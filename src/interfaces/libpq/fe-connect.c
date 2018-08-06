@@ -415,7 +415,8 @@ pgthreadlock_t pg_g_threadlock = default_threadlock;
  *
  * Close any physical connection to the server, and reset associated
  * state inside the connection object.  We don't release state that
- * would be needed to reconnect, though.
+ * would be needed to reconnect, though, nor local state that might still
+ * be useful later.
  *
  * We can always flush the output buffer, since there's no longer any hope
  * of sending that data.  However, unprocessed input data might still be
@@ -479,6 +480,64 @@ pqDropConnection(PGconn *conn, bool flushInput)
 		pg_fe_scram_free(conn->sasl_state);
 		conn->sasl_state = NULL;
 	}
+}
+
+
+/*
+ *		pqDropServerData
+ *
+ * Clear all connection state data that was received from (or deduced about)
+ * the server.  This is essential to do between connection attempts to
+ * different servers, else we may incorrectly hold over some data from the
+ * old server.
+ *
+ * It would be better to merge this into pqDropConnection, perhaps, but
+ * right now we cannot because that function is called immediately on
+ * detection of connection loss (cf. pqReadData, for instance).  This data
+ * should be kept until we are actually starting a new connection.
+ */
+static void
+pqDropServerData(PGconn *conn)
+{
+	PGnotify   *notify;
+	pgParameterStatus *pstatus;
+
+	/* Forget pending notifies */
+	notify = conn->notifyHead;
+	while (notify != NULL)
+	{
+		PGnotify   *prev = notify;
+
+		notify = notify->next;
+		free(prev);
+	}
+	conn->notifyHead = conn->notifyTail = NULL;
+
+	/* Reset ParameterStatus data, as well as variables deduced from it */
+	pstatus = conn->pstatus;
+	while (pstatus != NULL)
+	{
+		pgParameterStatus *prev = pstatus;
+
+		pstatus = pstatus->next;
+		free(prev);
+	}
+	conn->pstatus = NULL;
+	conn->client_encoding = PG_SQL_ASCII;
+	conn->std_strings = false;
+	conn->sversion = 0;
+
+	/* Drop large-object lookup data */
+	if (conn->lobjfuncs)
+		free(conn->lobjfuncs);
+	conn->lobjfuncs = NULL;
+
+	/* Reset assorted other per-connection state */
+	conn->last_sqlstate[0] = '\0';
+	conn->auth_req_received = false;
+	conn->password_needed = false;
+	conn->be_pid = 0;
+	conn->be_key = 0;
 }
 
 
@@ -1110,9 +1169,6 @@ connectOptions2(PGconn *conn)
 									 conn->dbName,
 									 conn->pguser,
 									 conn->pgpassfile);
-				/* If we got one, set pgpassfile_used */
-				if (conn->connhost[i].password != NULL)
-					conn->pgpassfile_used = true;
 			}
 		}
 	}
@@ -1701,6 +1757,14 @@ connectDBStart(PGconn *conn)
 	conn->outCount = 0;
 
 	/*
+	 * Ensure errorMessage is empty, too.  PQconnectPoll will append messages
+	 * to it in the process of scanning for a working server.  Thus, if we
+	 * fail to connect to multiple hosts, the final error message will include
+	 * details about each failure.
+	 */
+	resetPQExpBuffer(&conn->errorMessage);
+
+	/*
 	 * Look up socket addresses for each possible host using
 	 * pg_getaddrinfo_all.
 	 */
@@ -1795,21 +1859,14 @@ connectDBStart(PGconn *conn)
 		}
 	}
 
-#ifdef USE_SSL
-	/* setup values based on SSL mode */
-	if (conn->sslmode[0] == 'd')	/* "disable" */
-		conn->allow_ssl_try = false;
-	else if (conn->sslmode[0] == 'a')	/* "allow" */
-		conn->wait_ssl_try = true;
-#endif
-
 	/*
-	 * Set up to try to connect, with protocol 3.0 as the first attempt.
+	 * Set up to try to connect to the first host.  (Setting whichhost = -1 is
+	 * a bit of a cheat, but PQconnectPoll will advance it to 0 before
+	 * anything else looks at it.)
 	 */
-	conn->whichhost = 0;
-	conn->addr_cur = conn->connhost[0].addrlist;
-	conn->pversion = PG_PROTOCOL(3, 0);
-	conn->send_appname = true;
+	conn->whichhost = -1;
+	conn->try_next_addr = false;
+	conn->try_next_host = true;
 	conn->status = CONNECTION_NEEDED;
 
 	/*
@@ -1823,6 +1880,12 @@ connectDBStart(PGconn *conn)
 		return 1;
 
 connect_errReturn:
+
+	/*
+	 * If we managed to open a socket, close it immediately rather than
+	 * waiting till PQfinish.  (The application cannot have gotten the socket
+	 * from PQsocket yet, so this doesn't risk breaking anything.)
+	 */
 	pqDropConnection(conn, true);
 	conn->status = CONNECTION_BAD;
 	return 0;
@@ -1887,6 +1950,7 @@ connectDBComplete(PGconn *conn)
 				ret = pqWaitTimed(1, 0, conn, finish_time);
 				if (ret == -1)
 				{
+					/* hard failure, eg select() problem, aborts everything */
 					conn->status = CONNECTION_BAD;
 					return 0;
 				}
@@ -1896,6 +1960,7 @@ connectDBComplete(PGconn *conn)
 				ret = pqWaitTimed(0, 1, conn, finish_time);
 				if (ret == -1)
 				{
+					/* hard failure, eg select() problem, aborts everything */
 					conn->status = CONNECTION_BAD;
 					return 0;
 				}
@@ -1910,24 +1975,17 @@ connectDBComplete(PGconn *conn)
 		if (ret == 1)			/* connect_timeout elapsed */
 		{
 			/*
-			 * If there are no more hosts, return (the error message is
-			 * already set)
+			 * Attempt connection to the next host, ignoring any remaining
+			 * addresses for the current host.
 			 */
-			if (++conn->whichhost >= conn->nconnhost)
-			{
-				conn->whichhost = 0;
-				conn->status = CONNECTION_BAD;
-				return 0;
-			}
+			conn->try_next_addr = false;
+			conn->try_next_host = true;
+			conn->status = CONNECTION_NEEDED;
 
 			/*
-			 * Attempt connection to the next host, starting the
-			 * connect_timeout timer
+			 * Restart the connect_timeout timer for the new host.
 			 */
-			pqDropConnection(conn, true);
-			conn->addr_cur = conn->connhost[conn->whichhost].addrlist;
-			conn->status = CONNECTION_NEEDED;
-			if (conn->connect_timeout != NULL)
+			if (timeout > 0)
 				finish_time = time(NULL) + timeout;
 		}
 
@@ -1940,27 +1998,29 @@ connectDBComplete(PGconn *conn)
 
 /*
  * This subroutine saves conn->errorMessage, which will be restored back by
- * restoreErrorMessage subroutine.
+ * restoreErrorMessage subroutine.  Returns false on OOM failure.
  */
 static bool
 saveErrorMessage(PGconn *conn, PQExpBuffer savedMessage)
 {
 	initPQExpBuffer(savedMessage);
+	appendPQExpBufferStr(savedMessage,
+						 conn->errorMessage.data);
 	if (PQExpBufferBroken(savedMessage))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("out of memory\n"));
 		return false;
 	}
-
-	appendPQExpBufferStr(savedMessage,
-						 conn->errorMessage.data);
+	/* Clear whatever is in errorMessage now */
 	resetPQExpBuffer(&conn->errorMessage);
 	return true;
 }
 
 /*
- * Restores saved error messages back to conn->errorMessage.
+ * Restores saved error messages back to conn->errorMessage, prepending them
+ * to whatever is in conn->errorMessage already.  (This does the right thing
+ * if anything's been added to conn->errorMessage since saveErrorMessage.)
  */
 static void
 restoreErrorMessage(PGconn *conn, PQExpBuffer savedMessage)
@@ -1968,6 +2028,11 @@ restoreErrorMessage(PGconn *conn, PQExpBuffer savedMessage)
 	appendPQExpBufferStr(savedMessage, conn->errorMessage.data);
 	resetPQExpBuffer(&conn->errorMessage);
 	appendPQExpBufferStr(&conn->errorMessage, savedMessage->data);
+	/* If any step above hit OOM, just report that */
+	if (PQExpBufferBroken(savedMessage) ||
+		PQExpBufferBroken(&conn->errorMessage))
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("out of memory\n"));
 	termPQExpBuffer(savedMessage);
 }
 
@@ -2001,6 +2066,8 @@ restoreErrorMessage(PGconn *conn, PQExpBuffer savedMessage)
 PostgresPollingStatusType
 PQconnectPoll(PGconn *conn)
 {
+	bool		reset_connection_state_machine = false;
+	bool		need_new_connection = false;
 	PGresult   *res;
 	char		sebuf[256];
 	int			optval;
@@ -2064,6 +2131,82 @@ PQconnectPoll(PGconn *conn)
 
 keep_going:						/* We will come back to here until there is
 								 * nothing left to do. */
+
+	/* Time to advance to next address, or next host if no more addresses? */
+	if (conn->try_next_addr)
+	{
+		if (conn->addr_cur && conn->addr_cur->ai_next)
+		{
+			conn->addr_cur = conn->addr_cur->ai_next;
+			reset_connection_state_machine = true;
+		}
+		else
+			conn->try_next_host = true;
+		conn->try_next_addr = false;
+	}
+
+	/* Time to advance to next connhost[] entry? */
+	if (conn->try_next_host)
+	{
+		if (conn->whichhost + 1 >= conn->nconnhost)
+		{
+			/*
+			 * Oops, no more hosts.  An appropriate error message is already
+			 * set up, so just set the right status.
+			 */
+			goto error_return;
+		}
+		conn->whichhost++;
+		conn->addr_cur = conn->connhost[conn->whichhost].addrlist;
+		/* If no addresses for this host, just try the next one */
+		if (conn->addr_cur == NULL)
+			goto keep_going;
+		reset_connection_state_machine = true;
+		conn->try_next_host = false;
+	}
+
+	/* Reset connection state machine? */
+	if (reset_connection_state_machine)
+	{
+		/*
+		 * (Re) initialize our connection control variables for a set of
+		 * connection attempts to a single server address.  These variables
+		 * must persist across individual connection attempts, but we must
+		 * reset them when we start to consider a new server.
+		 */
+		conn->pversion = PG_PROTOCOL(3, 0);
+		conn->send_appname = true;
+#ifdef USE_SSL
+		/* initialize these values based on SSL mode */
+		conn->allow_ssl_try = (conn->sslmode[0] != 'd');	/* "disable" */
+		conn->wait_ssl_try = (conn->sslmode[0] == 'a'); /* "allow" */
+#endif
+
+		reset_connection_state_machine = false;
+		need_new_connection = true;
+	}
+
+	/* Force a new connection (perhaps to the same server as before)? */
+	if (need_new_connection)
+	{
+		/* Drop any existing connection */
+		pqDropConnection(conn, true);
+
+		/* Reset all state obtained from old server */
+		pqDropServerData(conn);
+
+		/* Drop any PGresult we might have, too */
+		conn->asyncStatus = PGASYNC_IDLE;
+		conn->xactStatus = PQTRANS_IDLE;
+		pqClearAsyncResult(conn);
+
+		/* Reset conn->status to put the state machine in the right state */
+		conn->status = CONNECTION_NEEDED;
+
+		need_new_connection = false;
+	}
+
+	/* Now try to advance the state machine for this connection */
 	switch (conn->status)
 	{
 		case CONNECTION_NEEDED:
@@ -2071,29 +2214,25 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Try to initiate a connection to one of the addresses
 				 * returned by pg_getaddrinfo_all().  conn->addr_cur is the
-				 * next one to try. We fail when we run out of addresses.
+				 * next one to try.
+				 *
+				 * The extra level of braces here is historical.  It's not
+				 * worth reindenting this whole switch case to remove 'em.
 				 */
-				for (;;)
 				{
-					struct addrinfo *addr_cur;
+					struct addrinfo *addr_cur = conn->addr_cur;
 
 					/*
 					 * Advance to next possible host, if we've tried all of
 					 * the addresses for the current host.
 					 */
-					if (conn->addr_cur == NULL)
+					if (addr_cur == NULL)
 					{
-						if (++conn->whichhost >= conn->nconnhost)
-						{
-							conn->whichhost = 0;
-							break;
-						}
-						conn->addr_cur =
-							conn->connhost[conn->whichhost].addrlist;
+						conn->try_next_host = true;
+						goto keep_going;
 					}
 
 					/* Remember current address for possible error msg */
-					addr_cur = conn->addr_cur;
 					memcpy(&conn->raddr.addr, addr_cur->ai_addr,
 						   addr_cur->ai_addrlen);
 					conn->raddr.salen = addr_cur->ai_addrlen;
@@ -2102,33 +2241,35 @@ keep_going:						/* We will come back to here until there is
 					if (conn->sock == PGINVALID_SOCKET)
 					{
 						/*
-						 * ignore socket() failure if we have more addresses
-						 * to try
+						 * Silently ignore socket() failure if we have more
+						 * addresses to try; this reduces useless chatter in
+						 * cases where the address list includes both IPv4 and
+						 * IPv6 but kernel only accepts one family.
 						 */
 						if (addr_cur->ai_next != NULL ||
 							conn->whichhost + 1 < conn->nconnhost)
 						{
-							conn->addr_cur = addr_cur->ai_next;
-							continue;
+							conn->try_next_addr = true;
+							goto keep_going;
 						}
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not create socket: %s\n"),
 										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-						break;
+						goto error_return;
 					}
 
 					/*
 					 * Select socket options: no delay of outgoing data for
-					 * TCP sockets, nonblock mode, close-on-exec. Fail if any
-					 * of this fails.
+					 * TCP sockets, nonblock mode, close-on-exec.  Try the
+					 * next address if any of this fails.
 					 */
 					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
 						if (!connectNoDelay(conn))
 						{
-							pqDropConnection(conn, true);
-							conn->addr_cur = addr_cur->ai_next;
-							continue;
+							/* error message already created */
+							conn->try_next_addr = true;
+							goto keep_going;
 						}
 					}
 					if (!pg_set_noblock(conn->sock))
@@ -2136,9 +2277,8 @@ keep_going:						/* We will come back to here until there is
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to nonblocking mode: %s\n"),
 										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-						pqDropConnection(conn, true);
-						conn->addr_cur = addr_cur->ai_next;
-						continue;
+						conn->try_next_addr = true;
+						goto keep_going;
 					}
 
 #ifdef F_SETFD
@@ -2147,9 +2287,8 @@ keep_going:						/* We will come back to here until there is
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to close-on-exec mode: %s\n"),
 										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-						pqDropConnection(conn, true);
-						conn->addr_cur = addr_cur->ai_next;
-						continue;
+						conn->try_next_addr = true;
+						goto keep_going;
 					}
 #endif							/* F_SETFD */
 
@@ -2195,9 +2334,8 @@ keep_going:						/* We will come back to here until there is
 
 						if (err)
 						{
-							pqDropConnection(conn, true);
-							conn->addr_cur = addr_cur->ai_next;
-							continue;
+							conn->try_next_addr = true;
+							goto keep_going;
 						}
 					}
 
@@ -2276,25 +2414,13 @@ keep_going:						/* We will come back to here until there is
 					}
 
 					/*
-					 * This connection failed --- set up error report, then
-					 * close socket (do it this way in case close() affects
-					 * the value of errno...).  We will ignore the connect()
-					 * failure and keep going if there are more addresses.
+					 * This connection failed.  Add the error report to
+					 * conn->errorMessage, then try the next address if any.
 					 */
 					connectFailureMessage(conn, SOCK_ERRNO);
-					pqDropConnection(conn, true);
-
-					/*
-					 * Try the next address, if any.
-					 */
-					conn->addr_cur = addr_cur->ai_next;
-				}				/* loop over addresses */
-
-				/*
-				 * Oops, no more addresses.  An appropriate error message is
-				 * already set up, so just set the right status.
-				 */
-				goto error_return;
+					conn->try_next_addr = true;
+					goto keep_going;
+				}
 			}
 
 		case CONNECTION_STARTED:
@@ -2327,20 +2453,13 @@ keep_going:						/* We will come back to here until there is
 					 * error message.
 					 */
 					connectFailureMessage(conn, optval);
-					pqDropConnection(conn, true);
 
 					/*
-					 * If more addresses remain, keep trying, just as in the
-					 * case where connect() returned failure immediately.
+					 * Try the next address if any, just as in the case where
+					 * connect() returned failure immediately.
 					 */
-					if (conn->addr_cur->ai_next != NULL ||
-						conn->whichhost + 1 < conn->nconnhost)
-					{
-						conn->addr_cur = conn->addr_cur->ai_next;
-						conn->status = CONNECTION_NEEDED;
-						goto keep_going;
-					}
-					goto error_return;
+					conn->try_next_addr = true;
+					goto keep_going;
 				}
 
 				/* Fill in the client address */
@@ -2615,12 +2734,13 @@ keep_going:						/* We will come back to here until there is
 					{
 						/* only retry once */
 						conn->allow_ssl_try = false;
-						/* Must drop the old connection */
-						pqDropConnection(conn, true);
-						conn->status = CONNECTION_NEEDED;
+						need_new_connection = true;
 						goto keep_going;
 					}
+					/* Else it's a hard failure */
+					goto error_return;
 				}
+				/* Else, return POLLING_READING or POLLING_WRITING status */
 				return pollres;
 #else							/* !USE_SSL */
 				/* can't get here */
@@ -2727,9 +2847,7 @@ keep_going:						/* We will come back to here until there is
 					if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
 					{
 						conn->pversion = PG_PROTOCOL(2, 0);
-						/* Must drop the old connection */
-						pqDropConnection(conn, true);
-						conn->status = CONNECTION_NEEDED;
+						need_new_connection = true;
 						goto keep_going;
 					}
 
@@ -2780,6 +2898,9 @@ keep_going:						/* We will come back to here until there is
 					/* OK, we read the message; mark data consumed */
 					conn->inStart = conn->inCursor;
 
+					/* Check to see if we should mention pgpassfile */
+					pgpassfileWarning(conn);
+
 #ifdef USE_SSL
 
 					/*
@@ -2793,9 +2914,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						/* only retry once */
 						conn->wait_ssl_try = false;
-						/* Must drop the old connection */
-						pqDropConnection(conn, true);
-						conn->status = CONNECTION_NEEDED;
+						need_new_connection = true;
 						goto keep_going;
 					}
 
@@ -2804,14 +2923,13 @@ keep_going:						/* We will come back to here until there is
 					 * then do a non-SSL retry
 					 */
 					if (conn->sslmode[0] == 'p' /* "prefer" */
-						&& conn->allow_ssl_try
+						&& conn->ssl_in_use
+						&& conn->allow_ssl_try	/* redundant? */
 						&& !conn->wait_ssl_try) /* redundant? */
 					{
 						/* only retry once */
 						conn->allow_ssl_try = false;
-						/* Must drop the old connection */
-						pqDropConnection(conn, true);
-						conn->status = CONNECTION_NEEDED;
+						need_new_connection = true;
 						goto keep_going;
 					}
 #endif
@@ -2947,9 +3065,7 @@ keep_going:						/* We will come back to here until there is
 						{
 							PQclear(res);
 							conn->send_appname = false;
-							/* Must drop the old connection */
-							pqDropConnection(conn, true);
-							conn->status = CONNECTION_NEEDED;
+							need_new_connection = true;
 							goto keep_going;
 						}
 					}
@@ -2978,17 +3094,21 @@ keep_going:						/* We will come back to here until there is
 
 				/*
 				 * If a read-write connection is required, see if we have one.
+				 *
+				 * Servers before 7.4 lack the transaction_read_only GUC, but
+				 * by the same token they don't have any read-only mode, so we
+				 * may just skip the test in that case.
 				 */
-				if (conn->target_session_attrs != NULL &&
+				if (conn->sversion >= 70400 &&
+					conn->target_session_attrs != NULL &&
 					strcmp(conn->target_session_attrs, "read-write") == 0)
 				{
 					/*
-					 * We are yet to make a connection. Save all existing
-					 * error messages until we make a successful connection
-					 * state. This is important because PQsendQuery is going
-					 * to reset conn->errorMessage and we will lose error
-					 * messages related to previous hosts we have tried to
-					 * connect and failed.
+					 * Save existing error messages across the PQsendQuery
+					 * attempt.  This is necessary because PQsendQuery is
+					 * going to reset conn->errorMessage, so we would lose
+					 * error messages related to previous hosts we have tried
+					 * and failed to connect to.
 					 */
 					if (!saveErrorMessage(conn, &savedMessage))
 						goto error_return;
@@ -3041,9 +3161,16 @@ keep_going:						/* We will come back to here until there is
 			}
 
 			/*
-			 * If a read-write connection is requested check for same.
+			 * If a read-write connection is required, see if we have one.
+			 * (This should match the stanza in the CONNECTION_AUTH_OK case
+			 * above.)
+			 *
+			 * Servers before 7.4 lack the transaction_read_only GUC, but by
+			 * the same token they don't have any read-only mode, so we may
+			 * just skip the test in that case.
 			 */
-			if (conn->target_session_attrs != NULL &&
+			if (conn->sversion >= 70400 &&
+				conn->target_session_attrs != NULL &&
 				strcmp(conn->target_session_attrs, "read-write") == 0)
 			{
 				if (!saveErrorMessage(conn, &savedMessage))
@@ -3077,7 +3204,6 @@ keep_going:						/* We will come back to here until there is
 				if (PQisBusy(conn))
 				{
 					conn->status = CONNECTION_CONSUME;
-					restoreErrorMessage(conn, &savedMessage);
 					return PGRES_POLLING_READING;
 				}
 
@@ -3127,9 +3253,14 @@ keep_going:						/* We will come back to here until there is
 					val = PQgetvalue(res, 0, 0);
 					if (strncmp(val, "on", 2) == 0)
 					{
+						/* Not writable; fail this connection. */
 						const char *displayed_host;
 						const char *displayed_port;
 
+						PQclear(res);
+						restoreErrorMessage(conn, &savedMessage);
+
+						/* Append error report to conn->errorMessage. */
 						if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
 							displayed_host = conn->connhost[conn->whichhost].hostaddr;
 						else
@@ -3138,30 +3269,25 @@ keep_going:						/* We will come back to here until there is
 						if (displayed_port == NULL || displayed_port[0] == '\0')
 							displayed_port = DEF_PGPORT_STR;
 
-						PQclear(res);
-						restoreErrorMessage(conn, &savedMessage);
-
-						/* Not writable; close connection. */
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not make a writable "
 														"connection to server "
 														"\"%s:%s\"\n"),
 										  displayed_host, displayed_port);
+
+						/* Close connection politely. */
 						conn->status = CONNECTION_OK;
 						sendTerminateConn(conn);
-						pqDropConnection(conn, true);
 
-						/* Skip any remaining addresses for this host. */
-						conn->addr_cur = NULL;
-						if (conn->whichhost + 1 < conn->nconnhost)
-						{
-							conn->status = CONNECTION_NEEDED;
-							goto keep_going;
-						}
-
-						/* No more addresses to try. So we fail. */
-						goto error_return;
+						/*
+						 * Try next host if any, but we don't want to consider
+						 * additional addresses for this host.
+						 */
+						conn->try_next_host = true;
+						goto keep_going;
 					}
+
+					/* Session is read-write, so we're good. */
 					PQclear(res);
 					termPQExpBuffer(&savedMessage);
 
@@ -3184,6 +3310,7 @@ keep_going:						/* We will come back to here until there is
 					PQclear(res);
 				restoreErrorMessage(conn, &savedMessage);
 
+				/* Append error report to conn->errorMessage. */
 				if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
 					displayed_host = conn->connhost[conn->whichhost].hostaddr;
 				else
@@ -3195,20 +3322,14 @@ keep_going:						/* We will come back to here until there is
 								  libpq_gettext("test \"SHOW transaction_read_only\" failed "
 												"on server \"%s:%s\"\n"),
 								  displayed_host, displayed_port);
+
+				/* Close connection politely. */
 				conn->status = CONNECTION_OK;
 				sendTerminateConn(conn);
-				pqDropConnection(conn, true);
 
-				if (conn->addr_cur->ai_next != NULL ||
-					conn->whichhost + 1 < conn->nconnhost)
-				{
-					conn->addr_cur = conn->addr_cur->ai_next;
-					conn->status = CONNECTION_NEEDED;
-					goto keep_going;
-				}
-
-				/* No more addresses to try. So we fail. */
-				goto error_return;
+				/* Try next address */
+				conn->try_next_addr = true;
+				goto keep_going;
 			}
 
 		default:
@@ -3222,8 +3343,6 @@ keep_going:						/* We will come back to here until there is
 	/* Unreachable */
 
 error_return:
-
-	pgpassfileWarning(conn);
 
 	/*
 	 * We used to close the socket at this point, but that makes it awkward
@@ -3352,14 +3471,6 @@ makeEmptyPGconn(void)
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->show_context = PQSHOW_CONTEXT_ERRORS;
 	conn->sock = PGINVALID_SOCKET;
-	conn->auth_req_received = false;
-	conn->password_needed = false;
-	conn->pgpassfile_used = false;
-#ifdef USE_SSL
-	conn->allow_ssl_try = true;
-	conn->wait_ssl_try = false;
-	conn->ssl_in_use = false;
-#endif
 
 	/*
 	 * We try to send at least 8K at a time, which is the usual size of pipe
@@ -3581,9 +3692,9 @@ sendTerminateConn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
-	PGnotify   *notify;
-	pgParameterStatus *pstatus;
-
+	/*
+	 * If possible, send Terminate message to close the connection politely.
+	 */
 	sendTerminateConn(conn);
 
 	/*
@@ -3600,31 +3711,13 @@ closePGconn(PGconn *conn)
 	pqDropConnection(conn, true);
 	conn->status = CONNECTION_BAD;	/* Well, not really _bad_ - just absent */
 	conn->asyncStatus = PGASYNC_IDLE;
+	conn->xactStatus = PQTRANS_IDLE;
 	pqClearAsyncResult(conn);	/* deallocate result */
 	resetPQExpBuffer(&conn->errorMessage);
 	release_all_addrinfo(conn);
 
-	notify = conn->notifyHead;
-	while (notify != NULL)
-	{
-		PGnotify   *prev = notify;
-
-		notify = notify->next;
-		free(prev);
-	}
-	conn->notifyHead = conn->notifyTail = NULL;
-	pstatus = conn->pstatus;
-	while (pstatus != NULL)
-	{
-		pgParameterStatus *prev = pstatus;
-
-		pstatus = pstatus->next;
-		free(prev);
-	}
-	conn->pstatus = NULL;
-	if (conn->lobjfuncs)
-		free(conn->lobjfuncs);
-	conn->lobjfuncs = NULL;
+	/* Reset all state obtained from server, too */
+	pqDropServerData(conn);
 }
 
 /*
@@ -6505,7 +6598,9 @@ pgpassfileWarning(PGconn *conn)
 {
 	/* If it was 'invalid authorization', add pgpassfile mention */
 	/* only works with >= 9.0 servers */
-	if (conn->pgpassfile_used && conn->password_needed && conn->result)
+	if (conn->password_needed &&
+		conn->connhost[conn->whichhost].password != NULL &&
+		conn->result)
 	{
 		const char *sqlstate = PQresultErrorField(conn->result,
 												  PG_DIAG_SQLSTATE);
