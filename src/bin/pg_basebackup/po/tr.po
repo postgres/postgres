@@ -1,0 +1,1176 @@
+# LANGUAGE message translation file for pg_basebackup
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+# İbrahim EDib Kökdemir, 2018.
+# Abdullah G. Gülner, 2018.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-04-20 21:53+0000\n"
+"PO-Revision-Date: 2018-04-27 15:34+0300\n"
+"Last-Translator: Abdullah G. Gülner\n"
+"Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
+#, c-format
+msgid "out of memory\n"
+msgstr "bellek yetersiz\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "null pointer duplicate edilemiyor (iç hata)\n"
+
+#: pg_basebackup.c:156
+#, c-format
+msgid "%s: directory name too long\n"
+msgstr "%s: dizin adı çok uzun\n"
+
+#: pg_basebackup.c:166
+#, c-format
+msgid "%s: multiple \"=\" signs in tablespace mapping\n"
+msgstr "%s: tablespace eşlemesinde çoklu \"=\" işareti\n"
+
+#: pg_basebackup.c:179
+#, c-format
+msgid "%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
+msgstr "%s: geçersiz tablespace eşleme biçimi \"%s\", \"ESKİDİZİN=YENİDİZİN\" olmalı\n"
+
+#: pg_basebackup.c:192
+#, c-format
+msgid "%s: old directory is not an absolute path in tablespace mapping: %s\n"
+msgstr "%s: eski dizin tablespace eşlemesinde mutlak bir yol değil: %s\n"
+
+#: pg_basebackup.c:199
+#, c-format
+msgid "%s: new directory is not an absolute path in tablespace mapping: %s\n"
+msgstr "%s: yeni dizin tablespace eşlemesinde mutlak bir yol değil: %s\n"
+
+#: pg_basebackup.c:238
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s çalışan bir PostgreSQL sunucusunun temel yedeğini (base backup) alır. \n"
+"\n"
+
+#: pg_basebackup.c:240 pg_receivexlog.c:66 pg_recvlogical.c:72
+#, c-format
+msgid "Usage:\n"
+msgstr "Kullanımı:\n"
+
+#: pg_basebackup.c:241 pg_receivexlog.c:67 pg_recvlogical.c:73
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [SEÇENEK]...\n"
+
+#: pg_basebackup.c:242
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"Çıktıyı kontrol eden seçenekler: \n"
+
+#: pg_basebackup.c:243
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
+msgstr "  -D, --pgdata=DİZİN temel yedeğin alınacağı dizin\n"
+
+#: pg_basebackup.c:244
+#, c-format
+msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
+msgstr "  -F, --format=p|t       çıktı formatı(p: düz metin(varsayılan), t: tar)\n"
+
+#: pg_basebackup.c:245
+#, c-format
+msgid ""
+"  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
+"                         (in kB/s, or use suffix \"k\" or \"M\")\n"
+msgstr ""
+"  -r, --max-rate=RATE    veri dizinini aktarmak için azami aktarım hızı\n"
+"                         (kB/s olarak, veya  \"k\" veya \"M\" son ekini kullanın)\n"
+
+#: pg_basebackup.c:247
+#, c-format
+msgid ""
+"  -R, --write-recovery-conf\n"
+"                         write recovery.conf for replication\n"
+msgstr ""
+"  -R, --write-recovery-conf\n"
+"                         replikasyon için recovery.conf yaz\n"
+"\n"
+
+#: pg_basebackup.c:249 pg_receivexlog.c:74
+#, c-format
+msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
+msgstr "  -S, --slot=SLOTADI    kullanılacak replikasyon slot'u\n"
+
+#: pg_basebackup.c:250
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                         relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=ESKİDİZİN=YENİDİZİN\n"
+"                         ESKİDİZİN'de bulunan tablespace'i YENİDİZİN'e taşır\n"
+
+#: pg_basebackup.c:252
+#, c-format
+msgid "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
+msgstr "  -x, --xlog             gerekli WAL dosyalarını yedeğe dahil et (fetch modu)\n"
+
+#: pg_basebackup.c:253
+#, c-format
+msgid ""
+"  -X, --xlog-method=fetch|stream\n"
+"                         include required WAL files with specified method\n"
+msgstr ""
+"  -X, --xlog-method=fetch|stream\n"
+"                         gerekli WAL dosyalarını belirtilen yöntemle dahil et\n"
+
+#: pg_basebackup.c:255
+#, c-format
+msgid "      --xlogdir=XLOGDIR  location for the transaction log directory\n"
+msgstr "      --xlogdir=XLOGDIR  transaction log dizini\n"
+
+#: pg_basebackup.c:256
+#, c-format
+msgid "  -z, --gzip             compress tar output\n"
+msgstr "  -z, --gzip             tar çıktısını sıkıştır\n"
+
+#: pg_basebackup.c:257
+#, c-format
+msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgstr "  -Z, --compress=0-9     tar çıktısını belirtilen sıkıştırma seviyesinde sıkıştır\n"
+
+#: pg_basebackup.c:258
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"Genel seçenekler:\n"
+
+#: pg_basebackup.c:259
+#, c-format
+msgid ""
+"  -c, --checkpoint=fast|spread\n"
+"                         set fast or spread checkpointing\n"
+msgstr ""
+"  -c, --checkpoint=fast|spread\n"
+"                         checkpoint işlemini fast veya spread olarak ayarla\n"
+
+#: pg_basebackup.c:261
+#, c-format
+msgid "  -l, --label=LABEL      set backup label\n"
+msgstr "  -l, --label=ETİKET      yedek etiketini ayarla\n"
+
+#: pg_basebackup.c:262
+#, c-format
+msgid "  -P, --progress         show progress information\n"
+msgstr "  -P, --progress         ilerleme bilgisini göster\n"
+
+#: pg_basebackup.c:263 pg_receivexlog.c:76 pg_recvlogical.c:92
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose          verbose modu\n"
+
+#: pg_basebackup.c:264 pg_receivexlog.c:77 pg_recvlogical.c:93
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          sürüm bilgisini gösterir ve sonra çıkar\n"
+
+#: pg_basebackup.c:265 pg_receivexlog.c:78 pg_recvlogical.c:94
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             bu yardımı göster, sonra çık\n"
+
+#: pg_basebackup.c:266 pg_receivexlog.c:79 pg_recvlogical.c:95
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Bağlantı Seçenekleri:\n"
+
+#: pg_basebackup.c:267 pg_receivexlog.c:80
+#, c-format
+msgid "  -d, --dbname=CONNSTR   connection string\n"
+msgstr "  -d, --dbname=CONNSTR   bağlantı dizgesi\n"
+
+#: pg_basebackup.c:268 pg_receivexlog.c:81 pg_recvlogical.c:97
+#, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME    veritabanı sunucusu adresi ya da soket dizini\n"
+
+#: pg_basebackup.c:269 pg_receivexlog.c:82 pg_recvlogical.c:98
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=PORT        veritabanı sunucusunun port numarası\n"
+
+#: pg_basebackup.c:270
+#, c-format
+msgid ""
+"  -s, --status-interval=INTERVAL\n"
+"                         time between status packets sent to server (in seconds)\n"
+msgstr ""
+"  -s, --status-interval=INTERVAL\n"
+"                         sunucuya gönderilen durum paketleri arasındaki zaman (saniye olarak)\n"
+
+#: pg_basebackup.c:272 pg_receivexlog.c:83 pg_recvlogical.c:99
+#, c-format
+msgid "  -U, --username=NAME    connect as specified database user\n"
+msgstr "  -U, --username=KULLANICI_ADI    belirtilen veritabanı kullanıcısı ile bağlan\n"
+
+#: pg_basebackup.c:273 pg_receivexlog.c:84 pg_recvlogical.c:100
+#, c-format
+msgid "  -w, --no-password      never prompt for password\n"
+msgstr "  -w, --no-password      bağlanmak için hiç bir zaman parola sorma\n"
+
+#: pg_basebackup.c:274 pg_receivexlog.c:85 pg_recvlogical.c:101
+#, c-format
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr "  -W, --password         parola sor (otomatik olarak her zaman açık)\n"
+
+#: pg_basebackup.c:275 pg_receivexlog.c:89 pg_recvlogical.c:102
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
+
+#: pg_basebackup.c:318
+#, c-format
+msgid "%s: could not read from ready pipe: %s\n"
+msgstr "%s:  ready pipe'dan okunamadı: %s\n"
+
+#: pg_basebackup.c:326 pg_basebackup.c:429 pg_basebackup.c:1920
+#: streamutil.c:316
+#, c-format
+msgid "%s: could not parse transaction log location \"%s\"\n"
+msgstr "%s: \"%s\" transaction log konumu ayrıştıramadı\n"
+
+#: pg_basebackup.c:442
+#, c-format
+msgid "%s: could not create pipe for background process: %s\n"
+msgstr "%s: artalan süreci için pipe oluşturulamadı: %s\n"
+
+#: pg_basebackup.c:467 pg_basebackup.c:522 pg_basebackup.c:1279
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "%s: \"%s\" dizini oluşturma başarısız: %s\n"
+
+#: pg_basebackup.c:485
+#, c-format
+msgid "%s: could not create background process: %s\n"
+msgstr "%s: artalan süreci oluşturulamadı: %s\n"
+
+#: pg_basebackup.c:497
+#, c-format
+msgid "%s: could not create background thread: %s\n"
+msgstr "%s: artalan iş parçası oluşturulamadı: %s\n"
+
+#: pg_basebackup.c:541
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "%s:  \"%s\" dizini mevcut, ama boş değil\n"
+
+#: pg_basebackup.c:549
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: \"%s\" dizine erişim hatası: %s\n"
+
+#: pg_basebackup.c:611
+#, c-format
+msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
+msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
+msgstr[0] "%*s/%s kB (100%%), %d/%d tablespace %*s"
+msgstr[1] "%*s/%s kB (100%%), %d/%d tablespace %*s"
+
+#: pg_basebackup.c:623
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+
+#: pg_basebackup.c:639
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace"
+msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespace"
+
+#: pg_basebackup.c:661
+#, c-format
+msgid "%s: transfer rate \"%s\" is not a valid value\n"
+msgstr "%s: \"%s\" aktarım hızı geçerli bir değer değil\n"
+
+#: pg_basebackup.c:668
+#, c-format
+msgid "%s: invalid transfer rate \"%s\": %s\n"
+msgstr "%s: geçersiz aktarım hızı \"%s\": %s\n"
+
+#: pg_basebackup.c:678
+#, c-format
+msgid "%s: transfer rate must be greater than zero\n"
+msgstr "%s: aktarım hızı sıfırdan büyük olmalı\n"
+
+#: pg_basebackup.c:712
+#, c-format
+msgid "%s: invalid --max-rate unit: \"%s\"\n"
+msgstr "%s: --max-rate için geçersiz birim: \"%s\"\n"
+
+#: pg_basebackup.c:721
+#, c-format
+msgid "%s: transfer rate \"%s\" exceeds integer range\n"
+msgstr "%s: \"%s\" aktarım hızı tamsayı aralığını aşıyor\n"
+
+#: pg_basebackup.c:733
+#, c-format
+msgid "%s: transfer rate \"%s\" is out of range\n"
+msgstr "%s: \"%s\" aktarım hızı sonuç sıra dışıdır\n"
+
+#: pg_basebackup.c:757
+#, c-format
+msgid "%s: could not write to compressed file \"%s\": %s\n"
+msgstr "%s: \"%s\" sıkıştırılmış dosyasına yazılamadı: %s\n"
+
+#: pg_basebackup.c:767 pg_basebackup.c:1373 pg_basebackup.c:1598
+#, c-format
+msgid "%s: could not write to file \"%s\": %s\n"
+msgstr "%s: \"%s\":dosyasına yazılamadı:  %s\n"
+
+#: pg_basebackup.c:826 pg_basebackup.c:847 pg_basebackup.c:875
+#, c-format
+msgid "%s: could not set compression level %d: %s\n"
+msgstr "%s: %d:sıkıştırma seviyesi ayarlanamadı %s\n"
+
+#: pg_basebackup.c:896
+#, c-format
+msgid "%s: could not create compressed file \"%s\": %s\n"
+msgstr "%s: \"%s\" sıkıştırılmış dosyası yaratılamadı: %s\n"
+
+#: pg_basebackup.c:907 pg_basebackup.c:1333 pg_basebackup.c:1591
+#, c-format
+msgid "%s: could not create file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyası yaratılamadı: %s\n"
+
+#: pg_basebackup.c:919 pg_basebackup.c:1188
+#, c-format
+msgid "%s: could not get COPY data stream: %s"
+msgstr "%s: COPY very akışı alınamadı: %s"
+
+#: pg_basebackup.c:976
+#, c-format
+msgid "%s: could not close compressed file \"%s\": %s\n"
+msgstr "%s: \"%s\" sıkıştırılmış dosyası kapatılamadı: %s\n"
+
+#: pg_basebackup.c:989 pg_recvlogical.c:580 receivelog.c:206 receivelog.c:354
+#: receivelog.c:743
+#, c-format
+msgid "%s: could not close file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyası kapatılamadı: %s\n"
+
+#: pg_basebackup.c:1000 pg_basebackup.c:1217 pg_recvlogical.c:446
+#: receivelog.c:1024
+#, c-format
+msgid "%s: could not read COPY data: %s"
+msgstr "%s: COPY verisi okunamadı: %s"
+
+#: pg_basebackup.c:1231
+#, c-format
+msgid "%s: invalid tar block header size: %d\n"
+msgstr "%s: geçersiz tar blok başlık boyutu: %d\n"
+
+#: pg_basebackup.c:1287
+#, c-format
+msgid "%s: could not set permissions on directory \"%s\": %s\n"
+msgstr "%s: \"%s\" dizininde izinler ayarlanamadı: %s\n"
+
+#: pg_basebackup.c:1311
+#, c-format
+msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyasından \"%s\" dosyasına sembolik bağlantı yaratılamadı: %s\n"
+
+#: pg_basebackup.c:1320
+#, c-format
+msgid "%s: unrecognized link indicator \"%c\"\n"
+msgstr "%s: tanımlanamayan bağlantı göstergesi \"%c\"\n"
+
+#: pg_basebackup.c:1340
+#, c-format
+msgid "%s: could not set permissions on file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyasının izinleri ayarlanamadı: %s\n"
+
+#: pg_basebackup.c:1399
+#, c-format
+msgid "%s: COPY stream ended before last file was finished\n"
+msgstr "%s: COPY akışı son dosyanın tamamlanmasından önce kesildi\n"
+
+#: pg_basebackup.c:1485 pg_basebackup.c:1505 pg_basebackup.c:1512
+#: pg_basebackup.c:1566
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: yetersiz bellek\n"
+
+#: pg_basebackup.c:1643
+#, c-format
+msgid "%s: incompatible server version %s\n"
+msgstr "%s: sunucu sürümü %s uyumsuz\n"
+
+#: pg_basebackup.c:1680
+#, c-format
+msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
+msgstr "%s: temel yedek başlatılıyor, checkpoin'in tamamlanması bekleniyor\n"
+
+#: pg_basebackup.c:1698 pg_recvlogical.c:264 receivelog.c:541 receivelog.c:592
+#: receivelog.c:632 streamutil.c:286 streamutil.c:390 streamutil.c:436
+#, c-format
+msgid "%s: could not send replication command \"%s\": %s"
+msgstr "%s: \"%s\" replikasyon komutu gönderilemedi: %s"
+
+#: pg_basebackup.c:1709
+#, c-format
+msgid "%s: could not initiate base backup: %s"
+msgstr "%s: temel yedek başlatılamadı: %s"
+
+#: pg_basebackup.c:1716
+#, c-format
+msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: sunucu BASE_BACKUP komutuna beklenmedik cevap döndü; %d satır ve %d alan alındı, %d satır ve %d alan bekleniyordu\n"
+
+#: pg_basebackup.c:1724
+#, c-format
+msgid "%s: checkpoint completed\n"
+msgstr "%s: checkpoint tamamlandı\n"
+
+#: pg_basebackup.c:1739
+#, c-format
+msgid "transaction log start point: %s on timeline %u\n"
+msgstr "transaction log başlama noktası: %2$u zaman çizelgesinde %1$s\n"
+
+#: pg_basebackup.c:1748
+#, c-format
+msgid "%s: could not get backup header: %s"
+msgstr "%s: yedek başlığı alınamadı %s"
+
+#: pg_basebackup.c:1754
+#, c-format
+msgid "%s: no data returned from server\n"
+msgstr "%s: sunucudan veri dönmedi\n"
+
+#: pg_basebackup.c:1786
+#, c-format
+msgid "%s: can only write single tablespace to stdout, database has %d\n"
+msgstr "%s: stdout'a sadece bir tablespace yazılabilir, veritabanında %d var\n"
+
+#: pg_basebackup.c:1798
+#, c-format
+msgid "%s: starting background WAL receiver\n"
+msgstr "%s: arka plan WAL alıcısı başlatılıyor\n"
+
+#: pg_basebackup.c:1829
+#, c-format
+msgid "%s: could not get transaction log end position from server: %s"
+msgstr "%s: sunucudan transaction log bitiş pozisyonu alınamadı: %s"
+
+#: pg_basebackup.c:1836
+#, c-format
+msgid "%s: no transaction log end position returned from server\n"
+msgstr "%s: sunucudan WAL bitiş pozisyonu dönmedi\n"
+
+#: pg_basebackup.c:1848
+#, c-format
+msgid "%s: final receive failed: %s"
+msgstr "%s: son alma işlemi başarısız oldu: %s"
+
+#: pg_basebackup.c:1872
+#, c-format
+msgid "%s: waiting for background process to finish streaming ...\n"
+msgstr "%s: artalan sürecinin akımı (streaming) bitirmesi bekleniyor ...\n"
+
+#: pg_basebackup.c:1878
+#, c-format
+msgid "%s: could not send command to background pipe: %s\n"
+msgstr "%s: artalan pipe'ına komut gönderilemedi: %s\n"
+
+#: pg_basebackup.c:1887
+#, c-format
+msgid "%s: could not wait for child process: %s\n"
+msgstr "%s: alt süreç için beklenemedi: %s\n"
+
+#: pg_basebackup.c:1893
+#, c-format
+msgid "%s: child %d died, expected %d\n"
+msgstr "%s: %d alt süreç sonlandı, beklenen %d\n"
+
+#: pg_basebackup.c:1899
+#, c-format
+msgid "%s: child process did not exit normally\n"
+msgstr "%s: alt süreç normal olarak sonlanmadı\n"
+
+#: pg_basebackup.c:1905
+#, c-format
+msgid "%s: child process exited with error %d\n"
+msgstr "%s: alt süreç %d hata kodu ile sonlandı\n"
+
+#: pg_basebackup.c:1932
+#, c-format
+msgid "%s: could not wait for child thread: %s\n"
+msgstr "%s: alt iş parçacığı (thread) için beklenemedi: %s\n"
+
+#: pg_basebackup.c:1939
+#, c-format
+msgid "%s: could not get child thread exit status: %s\n"
+msgstr "%s: alt iş parçacığı (thread) bitiş durumu alınamadı %s\n"
+
+#: pg_basebackup.c:1945
+#, c-format
+msgid "%s: child thread exited with error %u\n"
+msgstr "%s: alt iş parçacığı (thread) %u hata kodu ile sonlandı\n"
+
+#: pg_basebackup.c:2035
+#, c-format
+msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
+msgstr "%s: geçersiz çıktı biçimi \"%s\", \"plain\" ya da \"tar\" olmalı\n"
+
+#: pg_basebackup.c:2056 pg_basebackup.c:2068
+#, c-format
+msgid "%s: cannot specify both --xlog and --xlog-method\n"
+msgstr "%s: --xlog  ve --xlog-method değerlerinin ikisi birden belirtilemez\n"
+
+#: pg_basebackup.c:2083
+#, c-format
+msgid "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
+msgstr "%s: geçersiz xlog-yöntemi seçeneği \"%s\", \"fetch\" ya da \"stream\" olmalı\n"
+
+#: pg_basebackup.c:2105
+#, c-format
+msgid "%s: invalid compression level \"%s\"\n"
+msgstr "%s: geçersiz sıkıştırma seviyesi \"%s\"\n"
+
+#: pg_basebackup.c:2117
+#, c-format
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: geçersiz checkpoint argümanı \"%s\", \"fast\" ya da \"spread\" olmalı\n"
+
+#: pg_basebackup.c:2144 pg_receivexlog.c:445 pg_recvlogical.c:763
+#, c-format
+msgid "%s: invalid status interval \"%s\"\n"
+msgstr "%s: geçersiz durum aralığı \"%s\"\n"
+
+#: pg_basebackup.c:2160 pg_basebackup.c:2174 pg_basebackup.c:2185
+#: pg_basebackup.c:2198 pg_basebackup.c:2208 pg_basebackup.c:2218
+#: pg_basebackup.c:2230 pg_basebackup.c:2241 pg_receivexlog.c:477
+#: pg_receivexlog.c:491 pg_receivexlog.c:499 pg_receivexlog.c:509
+#: pg_receivexlog.c:520 pg_recvlogical.c:790 pg_recvlogical.c:804
+#: pg_recvlogical.c:815 pg_recvlogical.c:823 pg_recvlogical.c:831
+#: pg_recvlogical.c:839 pg_recvlogical.c:847 pg_recvlogical.c:855
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Ayrıntılı bilgi için  \"%s --help\" komutunu deneyebilirsiniz.\n"
+
+#: pg_basebackup.c:2172 pg_receivexlog.c:489 pg_recvlogical.c:802
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: Çok fazla komut satırı girdisi var (ilki \"%s\")\n"
+
+#: pg_basebackup.c:2184 pg_receivexlog.c:519
+#, c-format
+msgid "%s: no target directory specified\n"
+msgstr "%s: hedef dizin belirtilmedi\n"
+
+#: pg_basebackup.c:2196
+#, c-format
+msgid "%s: only tar mode backups can be compressed\n"
+msgstr "%s: sadece tar mod yedekleri sıkıştırılabilir\n"
+
+#: pg_basebackup.c:2206
+#, c-format
+msgid "%s: WAL streaming can only be used in plain mode\n"
+msgstr "%s: WAL streaming sadece düz metin modunda kullanılabilir\n"
+
+#: pg_basebackup.c:2216
+#, c-format
+msgid "%s: replication slots can only be used with WAL streaming\n"
+msgstr "%s: replikasyon slotları sadece WAL streaming ile kullanılabilir\n"
+
+#: pg_basebackup.c:2228
+#, c-format
+msgid "%s: transaction log directory location can only be specified in plain mode\n"
+msgstr "%s: WAL dizini lokasyonu sadece plain modunda belirtilebilir\n"
+
+#: pg_basebackup.c:2239
+#, c-format
+msgid "%s: transaction log directory location must be an absolute path\n"
+msgstr "%s: transaction log dizini mutlak bir yol olmalıdır\n"
+
+#: pg_basebackup.c:2251
+#, c-format
+msgid "%s: this build does not support compression\n"
+msgstr "%s: bu kurulum sıkıştırmayı desteklemiyor\n"
+
+#: pg_basebackup.c:2278
+#, c-format
+msgid "%s: could not create symbolic link \"%s\": %s\n"
+msgstr "%s: symbolic link \"%s\" oluşturma hatası: %s\n"
+
+#: pg_basebackup.c:2283
+#, c-format
+msgid "%s: symlinks are not supported on this platform\n"
+msgstr "%s: bu platformda sembolik bağlantı (symlink) desteklenmemektedir\n"
+
+#: pg_receivexlog.c:64
+#, c-format
+msgid ""
+"%s receives PostgreSQL streaming transaction logs.\n"
+"\n"
+msgstr ""
+"%s stream eden PostgreSQL write-ahead loglarını alır.\n"
+"\n"
+
+#: pg_receivexlog.c:68 pg_recvlogical.c:78
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Seçenekler:\n"
+
+#: pg_receivexlog.c:69
+#, c-format
+msgid "  -D, --directory=DIR    receive transaction log files into this directory\n"
+msgstr "  -D, --directory=DIZIN    write-ahead logları bu dizine al\n"
+
+#: pg_receivexlog.c:70 pg_recvlogical.c:82
+#, c-format
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr "      --if-not-exists    zaten mevcut olan bir slot oluşturulmaya çalışıldığında hata verme\n"
+
+#: pg_receivexlog.c:71 pg_recvlogical.c:84
+#, c-format
+msgid "  -n, --no-loop          do not loop on connection lost\n"
+msgstr "  -n, --no-loop          bağlantı sunucusunda loop yapma\n"
+
+#: pg_receivexlog.c:72 pg_recvlogical.c:89
+#, c-format
+msgid ""
+"  -s, --status-interval=SECS\n"
+"                         time between status packets sent to server (default: %d)\n"
+msgstr ""
+"  -s, --status-interval=SECS\n"
+"                         sunucuya yollanan durum paketleri arasındaki süre (varsayılan: %d)\n"
+
+#: pg_receivexlog.c:75
+#, c-format
+msgid "      --synchronous      flush transaction log immediately after writing\n"
+msgstr "      --synchronous      write-ahead logu yazıldıktan hemen sonra temizle\n"
+
+#: pg_receivexlog.c:86
+#, c-format
+msgid ""
+"\n"
+"Optional actions:\n"
+msgstr ""
+"\n"
+"Seçimli eylemler:\n"
+
+#: pg_receivexlog.c:87 pg_recvlogical.c:75
+#, c-format
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr "      --create-slot      yeni bir replikasyon slot'u oluştur (slot'u adı için bkz. --slot)\n"
+
+#: pg_receivexlog.c:88 pg_recvlogical.c:76
+#, c-format
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr "      --drop-slot        replikasyon slot'unu sil (slot'un adı için bkz. --slot)\n"
+
+#: pg_receivexlog.c:100
+#, c-format
+msgid "%s: finished segment at %X/%X (timeline %u)\n"
+msgstr "%s: segment %X/%X de bitirildi (%u zaman çizelgesi)\n"
+
+#: pg_receivexlog.c:113
+#, c-format
+msgid "%s: switched to timeline %u at %X/%X\n"
+msgstr ""
+
+#: pg_receivexlog.c:122
+#, c-format
+msgid "%s: received interrupt signal, exiting\n"
+msgstr "%s: kesme (interrupt) sinyali alındı, çıkılıyor\n"
+
+#: pg_receivexlog.c:142
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s:  \"%s\" dizini açılamadı: %s\n"
+
+#: pg_receivexlog.c:160
+#, c-format
+msgid "%s: could not close directory \"%s\": %s\n"
+msgstr "%s:  \"%s\" dizini kapatılamadı: %s\n"
+
+#: pg_receivexlog.c:218 pg_recvlogical.c:346
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyasının durumu görüntülenemiyor (stat): %s\n"
+
+#: pg_receivexlog.c:226
+#, c-format
+msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
+msgstr "%s: \"%s\" segment dosyasının boyutu %d yanlış, atlanıyor\n"
+
+#: pg_receivexlog.c:245
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s: \"%s\" dizini okunamadı: %s\n"
+
+#: pg_receivexlog.c:332
+#, c-format
+msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
+msgstr "%s: log streaming %X/%X konumunda başlatılıyor (%u zaman çizelgesi)\n"
+
+#: pg_receivexlog.c:426 pg_recvlogical.c:710
+#, c-format
+msgid "%s: invalid port number \"%s\"\n"
+msgstr "%s: geçersiz port numarası: \"%s\"\n"
+
+#: pg_receivexlog.c:498
+#, c-format
+msgid "%s: cannot use --create-slot together with --drop-slot\n"
+msgstr "%s: --create-slot ile --drop-slot birlikte kullanılamaz\n"
+
+#. translator: second %s is an option name
+#: pg_receivexlog.c:507
+#, c-format
+msgid "%s: %s needs a slot to be specified using --slot\n"
+msgstr "%s: %s bir slotun --slot kullanılarak tanımlanmasını gerektirir\n"
+
+#: pg_receivexlog.c:562
+#, c-format
+msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
+msgstr "%s: \"%s\" slotunu kullanan replikasyon bağlantısı beklenmedik şekilde veritabanı spesifik\n"
+
+#: pg_receivexlog.c:574 pg_recvlogical.c:895
+#, c-format
+msgid "%s: dropping replication slot \"%s\"\n"
+msgstr "%s: \"%s\" replikasyon slot'u siliniyor\n"
+
+#: pg_receivexlog.c:587 pg_recvlogical.c:907
+#, c-format
+msgid "%s: creating replication slot \"%s\"\n"
+msgstr "%s: \"%s\" replikasyon slot'u oluşturuluyor\n"
+
+#: pg_receivexlog.c:614 pg_recvlogical.c:933
+#, c-format
+msgid "%s: disconnected\n"
+msgstr "%s: bağlantı kesildi\n"
+
+#. translator: check source for value for %d
+#: pg_receivexlog.c:621 pg_recvlogical.c:940
+#, c-format
+msgid "%s: disconnected; waiting %d seconds to try again\n"
+msgstr "%s: bağlantı kesildi; tekrar denemek için %d saniye bekleniyor\n"
+
+#: pg_recvlogical.c:70
+#, c-format
+msgid ""
+"%s controls PostgreSQL logical decoding streams.\n"
+"\n"
+msgstr "%s PostgreSQL mantıksal kod çözme akımlarını (stream) kontrol eder\n"
+
+#: pg_recvlogical.c:74
+#, c-format
+msgid ""
+"\n"
+"Action to be performed:\n"
+msgstr ""
+"\n"
+"Gerçekleştirilecek eylem:\n"
+
+#: pg_recvlogical.c:77
+#, c-format
+msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
+msgstr "      --start            bir replikasyon slotunda streaming'i başlat (slotun ismi için bkz. --slot)\n"
+
+#: pg_recvlogical.c:79
+#, c-format
+msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
+msgstr ""
+"  -f, --file=DOSYAADI        logu bu dosyaya al, stdout için -\n"
+" \n"
+
+#: pg_recvlogical.c:80
+#, c-format
+msgid ""
+"  -F  --fsync-interval=SECS\n"
+"                         time between fsyncs to the output file (default: %d)\n"
+msgstr ""
+"  -F  --fsync-interval=SANIYE\n"
+"                         çıktı dosyasına yapılan fsync işlemleri arasındaki, süre (varsayılan: %d)\n"
+
+#: pg_recvlogical.c:83
+#, c-format
+msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
+msgstr "  -I, --startpos=LSN     mevcut bir slot'ta streaming işşleminin başlayacağı konum\n"
+
+#: pg_recvlogical.c:85
+#, c-format
+msgid ""
+"  -o, --option=NAME[=VALUE]\n"
+"                         pass option NAME with optional value VALUE to the\n"
+"                         output plugin\n"
+msgstr ""
+"  -o, --option=NAME[=VALUE]\n"
+"                         çıktı eklentisine NAME seçeneğini VALUE opsiyonel\n"
+"                         değeriyle geçir\n"
+
+#: pg_recvlogical.c:88
+#, c-format
+msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
+msgstr "  -P, --plugin=EKLENTI    EKLENTI çıktı eklentisini kullan(varsayılan: %s)\n"
+
+#: pg_recvlogical.c:91
+#, c-format
+msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
+msgstr "  -S, --slot=SLOTADI    mantıksal replikasyon slot'unun adı\n"
+
+#: pg_recvlogical.c:96
+#, c-format
+msgid "  -d, --dbname=DBNAME    database to connect to\n"
+msgstr "  -d, --dbname=VERITABANI_ADI    bağlanılacak veritabanı adı\n"
+
+#: pg_recvlogical.c:129
+#, c-format
+msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
+msgstr ""
+
+#: pg_recvlogical.c:154 receivelog.c:407
+#, c-format
+msgid "%s: could not send feedback packet: %s"
+msgstr "%s: geri bildirim (feedback) paketi gönderilemedi: %s"
+
+#: pg_recvlogical.c:193
+#, c-format
+msgid "%s: could not fsync log file \"%s\": %s\n"
+msgstr "%s: \"%s\" kayıt dosyası fsync hatası: %s\n"
+
+#: pg_recvlogical.c:232
+#, c-format
+msgid "%s: starting log streaming at %X/%X (slot %s)\n"
+msgstr "%s: log streaming %X/%X konumunda başlatılıyor (%s slot'u)\n"
+
+#: pg_recvlogical.c:274
+#, c-format
+msgid "%s: streaming initiated\n"
+msgstr "%s: streaming başlatıldı\n"
+
+#: pg_recvlogical.c:339
+#, c-format
+msgid "%s: could not open log file \"%s\": %s\n"
+msgstr "%s: \"%s\" kayıti dosyası açılamıyor: %s\n"
+
+#: pg_recvlogical.c:369 receivelog.c:938
+#, c-format
+msgid "%s: invalid socket: %s"
+msgstr "%s: geçersiz soket: %s"
+
+#: pg_recvlogical.c:423 receivelog.c:960
+#, c-format
+msgid "%s: select() failed: %s\n"
+msgstr "%s: select() başarısız oldu: %s\n"
+
+#: pg_recvlogical.c:432 receivelog.c:1010
+#, c-format
+msgid "%s: could not receive data from WAL stream: %s"
+msgstr "%s: WAL stream'den veri alınamadı: %s"
+
+#: pg_recvlogical.c:473 pg_recvlogical.c:512 receivelog.c:1055
+#: receivelog.c:1122
+#, c-format
+msgid "%s: streaming header too small: %d\n"
+msgstr "%s: streaming üst bilgisi çok küçük: %d\n"
+
+#: pg_recvlogical.c:495 receivelog.c:903
+#, c-format
+msgid "%s: unrecognized streaming header: \"%c\"\n"
+msgstr "%s: tanınmayan streraming üst bilgisi (header): \"%c\"\n"
+
+#: pg_recvlogical.c:541 pg_recvlogical.c:555
+#, c-format
+msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
+msgstr "%1$s: \"%3$s\" log dosyasına %2$u bayt yazılamadı: %4$s\n"
+
+#: pg_recvlogical.c:566 receivelog.c:696 receivelog.c:734
+#, c-format
+msgid "%s: unexpected termination of replication stream: %s"
+msgstr "%s: replikasyon akışında beklenmeyen sonlanma: %s"
+
+#: pg_recvlogical.c:689
+#, c-format
+msgid "%s: invalid fsync interval \"%s\"\n"
+msgstr "%s: geçersiz fsync aralığı \"%s\"\n"
+
+#: pg_recvlogical.c:730
+#, c-format
+msgid "%s: could not parse start position \"%s\"\n"
+msgstr "%s: \"%s\" başlama pozisyonu ayrıştırılamadı\n"
+
+#: pg_recvlogical.c:814
+#, c-format
+msgid "%s: no slot specified\n"
+msgstr "%s: hiç bir slot belirtilmedi\n"
+
+#: pg_recvlogical.c:822
+#, c-format
+msgid "%s: no target file specified\n"
+msgstr "%s: hiç bir hedef dosya belirtilmedi\n"
+
+#: pg_recvlogical.c:830
+#, c-format
+msgid "%s: no database specified\n"
+msgstr "%s: hiçbir veri tabanı belirtilmedi\n"
+
+#: pg_recvlogical.c:838
+#, c-format
+msgid "%s: at least one action needs to be specified\n"
+msgstr "%s: en az bir eylem belirtilmeli\n"
+
+#: pg_recvlogical.c:846
+#, c-format
+msgid "%s: cannot use --create-slot or --start together with --drop-slot\n"
+msgstr "%s: --create slot veya --start together --drop slot ile beraber kullanılamaz\n"
+
+#: pg_recvlogical.c:854
+#, c-format
+msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
+msgstr "%s: --create slot veya --drop slot --startpos ile beraber kullanılamaz\n"
+
+#: pg_recvlogical.c:885
+#, c-format
+msgid "%s: could not establish database-specific replication connection\n"
+msgstr "%s: veritabanına özel replikasyon bağlantısı kurulamadı\n"
+
+#: receivelog.c:69
+#, c-format
+msgid "%s: could not create archive status file \"%s\": %s\n"
+msgstr "%s: \"%s\" arşiv durum dosyası oluşturulamadı: %s\n"
+
+#: receivelog.c:76 receivelog.c:199 receivelog.c:347 receivelog.c:833
+#: receivelog.c:1076
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyası fsync işlemi başarısız: %s\n"
+
+#: receivelog.c:114
+#, c-format
+msgid "%s: could not open transaction log file \"%s\": %s\n"
+msgstr "%s: \"%s\" write-ahead log dosyası açılamadı: %s\n"
+
+#: receivelog.c:126
+#, c-format
+msgid "%s: could not stat transaction log file \"%s\": %s\n"
+msgstr "%s: \"%s\" wal log dosyasının durumu görüntülenemedi (stat): %s\n"
+
+#: receivelog.c:140
+#, c-format
+msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr "%s: \"%s\" wal log dosyası %d bayt, 0 veya %d olmalıydı\n"
+
+#: receivelog.c:153
+#, fuzzy, c-format
+msgid "%s: could not pad transaction log file \"%s\": %s\n"
+msgstr "\"%s\" transaction kayıt dizini açılamıyor: %m"
+
+#: receivelog.c:166
+#, fuzzy, c-format
+msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
+msgstr "\"%s\" lock dosyası silinemiyor: %m"
+
+#: receivelog.c:192
+#, c-format
+msgid "%s: could not determine seek position in file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyasınde arama pozisyonu belirlenemedi: %s\n"
+
+#: receivelog.c:225
+#, c-format
+msgid "%s: could not rename file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyasının ismi değiştirilemedi : %s\n"
+
+#: receivelog.c:232
+#, c-format
+msgid "%s: not renaming \"%s%s\", segment is not complete\n"
+msgstr "%s: \"%s%s\" isim değişikliği yapılmıyor, segment tam değil\n"
+
+#: receivelog.c:278
+#, fuzzy, c-format
+#| msgid "%s: could not open log file \"%s\": %s\n"
+msgid "%s: could not open timeline history file \"%s\": %s\n"
+msgstr "%s: \"%s\" kayıti dosyası açılamıyor: %s\n"
+
+#: receivelog.c:305
+#, c-format
+msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
+msgstr "%s: sunucu %u zaman çizelgesi için beklenmeyen geçmiş dosyası adı bildirdi: %s\n"
+
+#: receivelog.c:322
+#, c-format
+msgid "%s: could not create timeline history file \"%s\": %s\n"
+msgstr "%s: \"%s\" zaman çizelgesi geçmiş dosyası yaratılamadı: %s\n"
+
+#: receivelog.c:339
+#, c-format
+msgid "%s: could not write timeline history file \"%s\": %s\n"
+msgstr "%s: \"%s\" zaman çizelgesi geçmiş dosyasına yazılamadı: %s\n"
+
+#: receivelog.c:364
+#, c-format
+msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyasının ismi \"%s\" olarak değiştirilemedi : %s\n"
+
+#: receivelog.c:441
+#, c-format
+msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
+msgstr "%s: uyumsuz sunucu sürümü %s; istemci %s den daha eski sunucu sürümlerinden streaming işlemini desteklemiyor\n"
+
+#: receivelog.c:451
+#, c-format
+msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
+msgstr "%s: uyumsuz sunucu sürümü %s; istemci %s den daha yeni sunucu sürümlerinden streaming işlemini desteklemiyor\n"
+
+#: receivelog.c:549 streamutil.c:295 streamutil.c:334
+#, c-format
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: sistem belirlenemedi: %d satır ve %d alan alındı, %d satır ve %d veya daha fazla alan bekleniyordu\n"
+
+#: receivelog.c:557
+#, c-format
+msgid "%s: system identifier does not match between base backup and streaming connection\n"
+msgstr "%s: system tanımlayıcısı temel yedek ve streaming bağlantısı ile eşleşmiyor\n"
+
+#: receivelog.c:565
+#, c-format
+msgid "%s: starting timeline %u is not present in the server\n"
+msgstr "%s: başlayan zaman çizelgesi %u sunucuda mevcut değil\n"
+
+#: receivelog.c:605
+#, c-format
+msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: TIMELINE_HISTORY komutuna beklenmedik cevap; %d satır ve %d alan alındı, %d satır ve %d alan bekleniyordu\n"
+
+#: receivelog.c:677
+#, c-format
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr ""
+
+#: receivelog.c:684
+#, c-format
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr ""
+
+#: receivelog.c:725
+#, c-format
+msgid "%s: replication stream was terminated before stop point\n"
+msgstr "%s: durma noktasından önce replikasyon akışı sonlandırıldı\n"
+
+#: receivelog.c:774
+#, c-format
+msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: zaman çizelgesi sonundan sonar beklenmedik sonuç kümesi: %d satır ve %d alan alındı, %d satır ve %d alan bekleniyordu\n"
+
+#: receivelog.c:784
+#, c-format
+msgid "%s: could not parse next timeline's starting point \"%s\"\n"
+msgstr "%s: sonraki timeline'ın başlama noktası \"%s\" ayrıştırılamadı\n"
+
+#: receivelog.c:1141
+#, c-format
+msgid "%s: received transaction log record for offset %u with no file open\n"
+msgstr ""
+
+#: receivelog.c:1153
+#, c-format
+msgid "%s: got WAL data offset %08x, expected %08x\n"
+msgstr "%s: %08x WAL data offset'i alındı , %08x bekleniyordu\n"
+
+#: receivelog.c:1189
+#, c-format
+msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
+msgstr "%1$s: \"%3$s\" WAL dosyasına %2$u bayt yazılamadı: %4$s\n"
+
+#: receivelog.c:1214 receivelog.c:1255 receivelog.c:1286
+#, c-format
+msgid "%s: could not send copy-end packet: %s"
+msgstr "%s: kopya-sonu paketi gönderilemedi: %s"
+
+#: streamutil.c:154
+msgid "Password: "
+msgstr "Parola: "
+
+#: streamutil.c:178
+#, c-format
+msgid "%s: could not connect to server\n"
+msgstr "%s: sunucuya bağlanılamadı\n"
+
+#: streamutil.c:196
+#, c-format
+msgid "%s: could not connect to server: %s"
+msgstr "%s: sunucuya bağlanılamadı: %s"
+
+#: streamutil.c:225
+#, c-format
+msgid "%s: could not clear search_path: %s\n"
+msgstr "%s: search_path temizlenemedi: %s\n"
+
+#: streamutil.c:242
+#, c-format
+msgid "%s: could not determine server setting for integer_datetimes\n"
+msgstr "%s: integer_datetimes için sunucu ayarı belirlenemedi\n"
+
+#: streamutil.c:255
+#, c-format
+msgid "%s: integer_datetimes compile flag does not match server\n"
+msgstr ""
+
+#: streamutil.c:402
+#, c-format
+msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: \"%s\" replikasyon slot'u oluşturulamadı: %d satır ve %d alan alındı,%d satır ve %d alan bekleniyordu\n"
+
+#: streamutil.c:447
+#, c-format
+msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: \"%s\" replikasyon slot'u silinemedi: %d satır ve %d alan alındı,%d satır ve %d alan bekleniyordu\n"
+
+#~ msgid "%s: no start point returned from server\n"
+#~ msgstr "%s:sunucudan bir başlangıç noktası dönmedi\n"
+
+#~ msgid "%s: could not parse file mode\n"
+#~ msgstr "%s: dosya modu ayıklanamadı\n"
+
+#~ msgid "%s: could not parse file size\n"
+#~ msgstr "%s: dosya boyutu ayıklanamadı\n"
+
+#~ msgid "  --version                output version information, then exit\n"
+#~ msgstr "  --version                sürüm bilgisini gösterir ve çıkar\n"
+
+#~ msgid "  --help                   show this help, then exit\n"
+#~ msgstr "  --help                   bu yardımı gösterir ve çıkar\n"

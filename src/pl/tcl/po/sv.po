@@ -1,0 +1,91 @@
+# Swedish message translation file for pltcl
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pltcl (PostgreSQL) 9.6\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-06-16 20:26+0000\n"
+"PO-Revision-Date: 2018-06-17 22:36+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:559
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "kunde inte hitta modulen \"unknown\" i pltcl_modules"
+
+#: pltcl.c:597
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "kunde inte ladda modulen \"unknown\": %s"
+
+#: pltcl.c:1065
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "kunde inte dela på returvärde och utlösare: %s"
+
+#: pltcl.c:1074
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "utlösares returlista måste ha ett jämnt antal element"
+
+#: pltcl.c:1110
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "okänt attribut \"%s\""
+
+#: pltcl.c:1116
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "kan inte sätta systemattribut \"%s\""
+
+#: pltcl.c:1232 pltcl.c:1657
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1233
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"i PL/Tcl-funktion \"%s\""
+
+#: pltcl.c:1340 pltcl.c:1347
+#, c-format
+msgid "out of memory"
+msgstr "slut på minnet"
+
+#: pltcl.c:1395
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "Triggningsfunktioner kan bara anropas vid triggning."
+
+#: pltcl.c:1404
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl-funktioner kan inte returnera typ %s"
+
+#: pltcl.c:1416
+#, c-format
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl-funktioner kan inte returnera typen composite"
+
+#: pltcl.c:1455
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl-funktioner kan inte ta emot typ %s"
+
+#: pltcl.c:1578
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "kunde inte skapa en intern procedur \"%s\": %s"

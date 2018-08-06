@@ -1,0 +1,886 @@
+# LANGUAGE message translation file for plpgsql
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-05-06 19:58+0000\n"
+"PO-Revision-Date: 2018-05-07 11:36+0300\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
+"Language-Team: TR <devrim@commandprompt.com>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: pl_comp.c:430 pl_handler.c:450
+#, c-format
+msgid "PL/pgSQL functions cannot accept type %s"
+msgstr "PL/pgSQL fonksiyonları %s veri tipini kabul etmezler"
+
+#: pl_comp.c:511
+#, c-format
+msgid "could not determine actual return type for polymorphic function \"%s\""
+msgstr "\"%s\" polimorfik fonksiyonunun asıl dönüşdeğeri belirlenemedi"
+
+#: pl_comp.c:541
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "trigger fonksiyonları sadece trigger olarak çağırılabilirler"
+
+#: pl_comp.c:545 pl_handler.c:435
+#, c-format
+msgid "PL/pgSQL functions cannot return type %s"
+msgstr "PL/pgSQL fonksiyonları %s tipini döndüremezler"
+
+#: pl_comp.c:586
+#, c-format
+msgid "trigger functions cannot have declared arguments"
+msgstr "trigger fonksiyonları belirtilmiş (declared) argümanlara sahip olamaz"
+
+#: pl_comp.c:587
+#, c-format
+msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
+msgstr "Tetikleyici bağımsız değişkenlerine TG_NARGS ve TG_ARGV üzerinden erişilebilir."
+
+#: pl_comp.c:689
+#, c-format
+msgid "event trigger functions cannot have declared arguments"
+msgstr "olay tetikleyici (trigger) fonksiyonları belirtilmiş (declared) argümanlara sahip olamaz"
+
+#: pl_comp.c:940
+#, c-format
+msgid "compilation of PL/pgSQL function \"%s\" near line %d"
+msgstr "\"%s\" fonkiyonununun %d numaralı satırının civarlarında derlenmesi"
+
+#: pl_comp.c:963
+#, c-format
+msgid "parameter name \"%s\" used more than once"
+msgstr "\"%s\" parametresi birden fazla kez kullanılmıştır"
+
+#: pl_comp.c:1073
+#, c-format
+msgid "column reference \"%s\" is ambiguous"
+msgstr "\"%s\" sütun referansı iki anlamlı"
+
+#: pl_comp.c:1075
+#, c-format
+msgid "It could refer to either a PL/pgSQL variable or a table column."
+msgstr "Ya bir PL/pgSQL değişkenine ya da bir tablo sütununa atıfta bulunuyor olabilir."
+
+#: pl_comp.c:1255 pl_comp.c:1283 pl_exec.c:4393 pl_exec.c:4742 pl_exec.c:4827
+#: pl_exec.c:4918
+#, c-format
+msgid "record \"%s\" has no field \"%s\""
+msgstr "\"%s\" kaydı \"%s\" alanını içermiyor"
+
+#: pl_comp.c:1814
+#, c-format
+msgid "relation \"%s\" does not exist"
+msgstr "\"%s\" nesnesi mevcut değil"
+
+#: pl_comp.c:1923
+#, c-format
+msgid "variable \"%s\" has pseudo-type %s"
+msgstr "\"%s\" değişkeni %s pseudo tipine sahip"
+
+#: pl_comp.c:1990
+#, c-format
+msgid "relation \"%s\" is not a table"
+msgstr "\"%s\" bir tablo değil"
+
+#: pl_comp.c:2150
+#, c-format
+msgid "type \"%s\" is only a shell"
+msgstr "\"%s\" tipi bir shelldir"
+
+#: pl_comp.c:2244 pl_comp.c:2297
+#, c-format
+msgid "unrecognized exception condition \"%s\""
+msgstr "tanımlanamayan exception durumu \"%s\""
+
+#: pl_comp.c:2504
+#, c-format
+msgid "could not determine actual argument type for polymorphic function \"%s\""
+msgstr "\"%s\" polimorfik fonksiyonu için gerçek argüman tipi belirlenemedi"
+
+#: pl_exec.c:324 pl_exec.c:612 pl_exec.c:872
+msgid "during initialization of execution state"
+msgstr "çalıştırma durumu ilklendirmesi sırasında"
+
+#: pl_exec.c:331
+msgid "while storing call arguments into local variables"
+msgstr "çağrı argümanlarını yerel değişkenlerde saklarken"
+
+#: pl_exec.c:416 pl_exec.c:760
+msgid "during function entry"
+msgstr "fonksiyon girişi sırasında"
+
+#: pl_exec.c:441
+#, c-format
+msgid "control reached end of function without RETURN"
+msgstr "control fonksiyonun sonuna RETURNsüz ulaştı"
+
+#: pl_exec.c:448
+msgid "while casting return value to function's return type"
+msgstr "dönüş değerini fonksiyonun dönüş tipine dönüştürürken"
+
+#: pl_exec.c:461 pl_exec.c:2938
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "set değerini kabul etmediği ortamda set değeri alan fonksiyon çağırılmış"
+
+#: pl_exec.c:499 pl_exec.c:2779
+msgid "returned record type does not match expected record type"
+msgstr "dönen kayıt tipi beklenen kayıt tipine uymuyor"
+
+#: pl_exec.c:554 pl_exec.c:789 pl_exec.c:907
+msgid "during function exit"
+msgstr "fonksiyon çıkışı sırasında"
+
+#: pl_exec.c:785 pl_exec.c:903
+#, c-format
+msgid "control reached end of trigger procedure without RETURN"
+msgstr "trigger yordamı RETURN olmadan bitti"
+
+#: pl_exec.c:794
+#, c-format
+msgid "trigger procedure cannot return a set"
+msgstr "trigger yordamı bir küme döndüremez"
+
+#: pl_exec.c:816
+msgid "returned row structure does not match the structure of the triggering table"
+msgstr "dönen satır yapısı tetikleyen tablonun yapısına uymuyor"
+
+#. translator: last %s is a phrase such as "during statement block
+#. local variable initialization"
+#.
+#: pl_exec.c:954
+#, c-format
+msgid "PL/pgSQL function %s line %d %s"
+msgstr "PL/pgSQL fonksiyonu %s satır %d %s"
+
+#. translator: last %s is a phrase such as "while storing call
+#. arguments into local variables"
+#.
+#: pl_exec.c:965
+#, c-format
+msgid "PL/pgSQL function %s %s"
+msgstr "PL/pgSQL fonksiyonu %s %s"
+
+#. translator: last %s is a plpgsql statement type name
+#: pl_exec.c:973
+#, c-format
+msgid "PL/pgSQL function %s line %d at %s"
+msgstr "%s PL/pgSQL fonksiyonu, %d. satır, %s içinde"
+
+#: pl_exec.c:979
+#, c-format
+msgid "PL/pgSQL function %s"
+msgstr "PL/pgSQL fonksiyonu %s"
+
+#: pl_exec.c:1089
+msgid "during statement block local variable initialization"
+msgstr "ifade (statement) bloğu yerel değişken ilklendirmesi sırasında"
+
+#: pl_exec.c:1128
+#, c-format
+msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
+msgstr "NOT NULL olarak belirtilen \"%s\" değişkeni öntanımlı olarak NULL olamaz"
+
+#: pl_exec.c:1178
+msgid "during statement block entry"
+msgstr "ifade bloğu girişi sırasında"
+
+#: pl_exec.c:1199
+msgid "during statement block exit"
+msgstr "ifade bloğu çıkışı sırasında"
+
+#: pl_exec.c:1242
+msgid "during exception cleanup"
+msgstr "exception temizlemesi sırasında"
+
+#: pl_exec.c:1593
+#, c-format
+msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
+msgstr "GET STACKED DIAGNOSTICS özel durum işleyici (exception handler) dışında kullanılamaz"
+
+#: pl_exec.c:1789
+#, c-format
+msgid "case not found"
+msgstr "case bulunamadı"
+
+#: pl_exec.c:1790
+#, c-format
+msgid "CASE statement is missing ELSE part."
+msgstr "CASE ifadesindeki ELSE eksik."
+
+#: pl_exec.c:1944
+#, c-format
+msgid "lower bound of FOR loop cannot be null"
+msgstr "FOR döngüsünün alt sınırı null olamaz"
+
+#: pl_exec.c:1960
+#, c-format
+msgid "upper bound of FOR loop cannot be null"
+msgstr "For döngüsünün üst sınırı null olamaz"
+
+#: pl_exec.c:1978
+#, c-format
+msgid "BY value of FOR loop cannot be null"
+msgstr "FOR döngüsünün BY değeri null olamaz"
+
+#: pl_exec.c:1984
+#, c-format
+msgid "BY value of FOR loop must be greater than zero"
+msgstr "FOR döngüsünn BY değeri sıfırdan büyük olmalıdır"
+
+#: pl_exec.c:2153 pl_exec.c:3910
+#, c-format
+msgid "cursor \"%s\" already in use"
+msgstr "\"%s\" imleci kullanımda"
+
+#: pl_exec.c:2176 pl_exec.c:3972
+#, c-format
+msgid "arguments given for cursor without arguments"
+msgstr "argümansız imleç (cursor) için verilen argümanlar"
+
+#: pl_exec.c:2195 pl_exec.c:3991
+#, c-format
+msgid "arguments required for cursor"
+msgstr "imleç için gereken argümanlar"
+
+#: pl_exec.c:2280
+#, c-format
+msgid "FOREACH expression must not be null"
+msgstr "FOREACH ifadesi NULL olamaz"
+
+#: pl_exec.c:2286
+#, c-format
+msgid "FOREACH expression must yield an array, not type %s"
+msgstr "FOREACH ifadesi %s değil bir dizi (array) sağlamalı"
+
+#: pl_exec.c:2303
+#, c-format
+msgid "slice dimension (%d) is out of the valid range 0..%d"
+msgstr "slice boyutu (%d) geçerli kapsamın dışındadır: 0..%d"
+
+#: pl_exec.c:2330
+#, c-format
+msgid "FOREACH ... SLICE loop variable must be of an array type"
+msgstr "FOREACH ... SLICE döngü değişkeni bir dizi (array) tipinde olmalı"
+
+#: pl_exec.c:2334
+#, c-format
+msgid "FOREACH loop variable must not be of an array type"
+msgstr "FOREACH döngü değişkeni dizgi tipinde olamaz"
+
+#: pl_exec.c:2522 pl_exec.c:2604 pl_exec.c:2771
+#, c-format
+msgid "cannot return non-composite value from function returning composite type"
+msgstr "bileşik tip dönen fonksiyondan bileşik olmayan değer döndürülemez"
+
+#: pl_exec.c:2648 pl_gram.y:3190
+#, c-format
+msgid "cannot use RETURN NEXT in a non-SETOF function"
+msgstr "SETOF olmayan fonksiyonda RETURN NEXT kullanılamaz"
+
+#: pl_exec.c:2682 pl_exec.c:2813
+#, c-format
+msgid "wrong result type supplied in RETURN NEXT"
+msgstr "RETURN NEXT içinde yanlış dönüş tipi verildi"
+
+#: pl_exec.c:2711 pl_exec.c:4380 pl_exec.c:4709 pl_exec.c:4735 pl_exec.c:4801
+#: pl_exec.c:4820 pl_exec.c:4888 pl_exec.c:4911
+#, c-format
+msgid "record \"%s\" is not assigned yet"
+msgstr "\"%s\" kaydı henüz atanmamış"
+
+#: pl_exec.c:2713 pl_exec.c:4382 pl_exec.c:4711 pl_exec.c:4737 pl_exec.c:4803
+#: pl_exec.c:4822 pl_exec.c:4890 pl_exec.c:4913
+#, c-format
+msgid "The tuple structure of a not-yet-assigned record is indeterminate."
+msgstr "Henüz atanmamış kaydın satır yapısı belirsizdir."
+
+#: pl_exec.c:2717 pl_exec.c:2737
+#, c-format
+msgid "wrong record type supplied in RETURN NEXT"
+msgstr "RETURN NEXT içinde yanlış kayıt tipi verildi"
+
+#: pl_exec.c:2832
+#, c-format
+msgid "RETURN NEXT must have a parameter"
+msgstr "RETURN NEXT bir parameter içermeli"
+
+#: pl_exec.c:2865 pl_gram.y:3252
+#, c-format
+msgid "cannot use RETURN QUERY in a non-SETOF function"
+msgstr "RETURN QUERY, SETOF olmayan bir fonksiyon içinde bulunamaz"
+
+#: pl_exec.c:2886
+msgid "structure of query does not match function result type"
+msgstr "sorgunun yapısı fonksiyonun sonuç tipine uymuyor"
+
+#: pl_exec.c:2966 pl_exec.c:3096
+#, c-format
+msgid "RAISE option already specified: %s"
+msgstr "RAISE seçeneği zaten belirtilmiş: %s"
+
+#: pl_exec.c:2999
+#, c-format
+msgid "RAISE without parameters cannot be used outside an exception handler"
+msgstr "parametresi olmayan RAISE bir özel durum işleyici (exception handler) dışında kullanılamaz"
+
+#: pl_exec.c:3086
+#, c-format
+msgid "RAISE statement option cannot be null"
+msgstr "RAISE ifadesi seçeneği null olamaz"
+
+#: pl_exec.c:3155
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pl_exec.c:3226
+#, c-format
+msgid "assertion failed"
+msgstr "ısrar hatası"
+
+#: pl_exec.c:3416 pl_exec.c:3560 pl_exec.c:3749
+#, c-format
+msgid "cannot COPY to/from client in PL/pgSQL"
+msgstr "PL/pgSQL'de istemcide ya da istemciden COPY çalıştırılamaz"
+
+#: pl_exec.c:3420 pl_exec.c:3564 pl_exec.c:3753
+#, c-format
+msgid "cannot begin/end transactions in PL/pgSQL"
+msgstr "PL/pgSQL'de transactionlar başlatılıp durdurulamazlar"
+
+#: pl_exec.c:3421 pl_exec.c:3565 pl_exec.c:3754
+#, c-format
+msgid "Use a BEGIN block with an EXCEPTION clause instead."
+msgstr "Bunun yerine BEGIN bloğunu EXCEPTION yantümcesi ile kullanın."
+
+#: pl_exec.c:3588 pl_exec.c:3778
+#, c-format
+msgid "INTO used with a command that cannot return data"
+msgstr "Veri döndüremeyen bir komutta INTO kullanıldı"
+
+#: pl_exec.c:3616 pl_exec.c:3806
+#, c-format
+msgid "query returned no rows"
+msgstr "sorgu satır döndürmedi"
+
+#: pl_exec.c:3635 pl_exec.c:3825
+#, c-format
+msgid "query returned more than one row"
+msgstr "sorgu birden fazla satır döndürdü"
+
+#: pl_exec.c:3652
+#, c-format
+msgid "query has no destination for result data"
+msgstr "Sorgu sonuç verisi için bir hedef içermiyor"
+
+#: pl_exec.c:3653
+#, c-format
+msgid "If you want to discard the results of a SELECT, use PERFORM instead."
+msgstr "SELECT'den gelen sonuçları gözardı etmek istiyorsanız SELECT yerine PERFORM kullanın."
+
+#: pl_exec.c:3685 pl_exec.c:7130
+#, c-format
+msgid "query string argument of EXECUTE is null"
+msgstr "EXECUTE' un sorgu dizesi argümanı boştur (null)"
+
+#: pl_exec.c:3741
+#, c-format
+msgid "EXECUTE of SELECT ... INTO is not implemented"
+msgstr "EXECUTE of SELECT ... INTO kodlanmadı"
+
+#: pl_exec.c:3742
+#, c-format
+msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
+msgstr "Bunun yerine, EXECUTE ... INTO ya da EXECUTE CREATE TABLE ... AS kullanmak isteyebilirsiniz."
+
+#: pl_exec.c:4054 pl_exec.c:4146
+#, c-format
+msgid "cursor variable \"%s\" is null"
+msgstr "\"%s\" imleç değişkeni null'dır"
+
+#: pl_exec.c:4061 pl_exec.c:4153
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "\"%s\" imleci mevcut değil"
+
+#: pl_exec.c:4075
+#, c-format
+msgid "relative or absolute cursor position is null"
+msgstr "bağıl ya da mutlak imleç pozisyonu null"
+
+#: pl_exec.c:4255
+#, c-format
+msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
+msgstr "NOT NULL olarak belirtilen \"%s\" değişkenine null değer atanamaz"
+
+#: pl_exec.c:4324
+#, c-format
+msgid "cannot assign non-composite value to a row variable"
+msgstr "bir satır değişkenine bileşik olmayan bir değer atanamaz"
+
+#: pl_exec.c:4348
+#, c-format
+msgid "cannot assign non-composite value to a record variable"
+msgstr "bir kayıt değişkenine bileşik olmayan bir değer atanamaz"
+
+#: pl_exec.c:4491
+#, c-format
+msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
+msgstr "dizin boyut sayısı (%d), izin verilern en yüksek değerini (%d) aşmaktadır"
+
+#: pl_exec.c:4523
+#, c-format
+msgid "subscripted object is not an array"
+msgstr "subscript edilen nesne bir dizi (array) değil"
+
+#: pl_exec.c:4560
+#, c-format
+msgid "array subscript in assignment must not be null"
+msgstr "atamada array subscript null olamaz"
+
+#: pl_exec.c:5027
+#, c-format
+msgid "query \"%s\" did not return data"
+msgstr "\"%s\" sorgusu veri döndürmedi"
+
+#: pl_exec.c:5035
+#, c-format
+msgid "query \"%s\" returned %d column"
+msgid_plural "query \"%s\" returned %d columns"
+msgstr[0] "\"%s\" sorgusu %d kolon döndürdü"
+
+#: pl_exec.c:5062
+#, c-format
+msgid "query \"%s\" returned more than one row"
+msgstr "\"%s\" sorgusu birden fazla satır döndürdü"
+
+#: pl_exec.c:5126
+#, c-format
+msgid "query \"%s\" is not a SELECT"
+msgstr "\"%s\" sorgusu bir SELECT değil"
+
+#: pl_funcs.c:237
+msgid "statement block"
+msgstr "ifade bloğu"
+
+#: pl_funcs.c:239
+msgid "assignment"
+msgstr "atama"
+
+#: pl_funcs.c:249
+msgid "FOR with integer loop variable"
+msgstr "tamsayı döngüsünde FOR"
+
+#: pl_funcs.c:251
+msgid "FOR over SELECT rows"
+msgstr "FOR over SELECT rows"
+
+#: pl_funcs.c:253
+msgid "FOR over cursor"
+msgstr "FOR over cursor"
+
+#: pl_funcs.c:255
+msgid "FOREACH over array"
+msgstr "FOREACH dizgi üstünde"
+
+#: pl_funcs.c:269
+msgid "SQL statement"
+msgstr "SQL ifadesi"
+
+#: pl_funcs.c:273
+msgid "FOR over EXECUTE statement"
+msgstr "EXECUTE ifadesinde FOR"
+
+#: pl_gram.y:474
+#, c-format
+msgid "block label must be placed before DECLARE, not after"
+msgstr "blok etiketi DECLARE'den önce yerleştirilmelidir, sonra değil."
+
+#: pl_gram.y:494
+#, c-format
+msgid "collations are not supported by type %s"
+msgstr "%s veri tipinde collation desteklenmemektedir"
+
+#: pl_gram.y:509
+#, c-format
+msgid "row or record variable cannot be CONSTANT"
+msgstr "Satır ya da kayıt değişkeni CONSTANT olamaz"
+
+#: pl_gram.y:519
+#, c-format
+msgid "row or record variable cannot be NOT NULL"
+msgstr "satır ya da kayıt değişkeni NOT NULL olamaz"
+
+#: pl_gram.y:530
+#, c-format
+msgid "default value for row or record variable is not supported"
+msgstr "satır ya da kayıt değişkenlerine öntanımlı değer atanması desteklenmiyor"
+
+#: pl_gram.y:675 pl_gram.y:690 pl_gram.y:716
+#, c-format
+msgid "variable \"%s\" does not exist"
+msgstr "\"%s\" değişkeni mevcut değil"
+
+#: pl_gram.y:734 pl_gram.y:762
+msgid "duplicate declaration"
+msgstr "tekrarlanmış veri tipi deklarasyonu"
+
+#: pl_gram.y:745 pl_gram.y:773
+#, c-format
+msgid "variable \"%s\" shadows a previously defined variable"
+msgstr "\"%s\" değişkeni daha önce tanımlanan bir değişkeni gölgeliyor"
+
+#: pl_gram.y:952
+#, c-format
+msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
+msgstr "%s tanılayıcı elemanı GET STACKED DIAGNOSTICS içinde kullanılamaz"
+
+#: pl_gram.y:970
+#, c-format
+msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
+msgstr "%s tanılayıcı elemanı GET CURRENT DIAGNOSTICS içinde kullanılamaz"
+
+#: pl_gram.y:1068
+msgid "unrecognized GET DIAGNOSTICS item"
+msgstr "tanımlanamayan GET DIAGNOSTICS öğesi"
+
+#: pl_gram.y:1079 pl_gram.y:3439
+#, c-format
+msgid "\"%s\" is not a scalar variable"
+msgstr "\"%s\" scalar bir değişken değil"
+
+#: pl_gram.y:1331 pl_gram.y:1525
+#, c-format
+msgid "loop variable of loop over rows must be a record or row variable or list of scalar variables"
+msgstr ""
+
+#: pl_gram.y:1365
+#, c-format
+msgid "cursor FOR loop must have only one target variable"
+msgstr ""
+
+#: pl_gram.y:1372
+#, c-format
+msgid "cursor FOR loop must use a bound cursor variable"
+msgstr ""
+
+#: pl_gram.y:1456
+#, c-format
+msgid "integer FOR loop must have only one target variable"
+msgstr "Tamsayı FOR döngüsünde sadece bir tane hedef değişken olabilir"
+
+#: pl_gram.y:1492
+#, c-format
+msgid "cannot specify REVERSE in query FOR loop"
+msgstr "FOR döngü sorgusu içinde REVERSE belirtilemez"
+
+#: pl_gram.y:1639
+#, c-format
+msgid "loop variable of FOREACH must be a known variable or list of variables"
+msgstr ""
+
+#: pl_gram.y:1680
+#, c-format
+msgid "there is no label \"%s\" attached to any block or loop enclosing this statement"
+msgstr ""
+
+#: pl_gram.y:1688
+#, c-format
+msgid "block label \"%s\" cannot be used in CONTINUE"
+msgstr "\"%s\" blok etiketi CONTINUE içinde kullanılamaz"
+
+#: pl_gram.y:1703
+#, c-format
+msgid "EXIT cannot be used outside a loop, unless it has a label"
+msgstr "EXIT, bir etiketi olmadıkça bir döngü dışında kullanılamaz"
+
+#: pl_gram.y:1704
+#, c-format
+msgid "CONTINUE cannot be used outside a loop"
+msgstr "CONTINUE bir döngü dışında kullanılamaz"
+
+#: pl_gram.y:1728 pl_gram.y:1765 pl_gram.y:1813 pl_gram.y:2889 pl_gram.y:2974
+#: pl_gram.y:3085 pl_gram.y:3841
+msgid "unexpected end of function definition"
+msgstr "fonksiyon tanımında beklenmeyen sonlanma"
+
+#: pl_gram.y:1833 pl_gram.y:1857 pl_gram.y:1873 pl_gram.y:1879 pl_gram.y:1997
+#: pl_gram.y:2005 pl_gram.y:2019 pl_gram.y:2114 pl_gram.y:2295 pl_gram.y:2389
+#: pl_gram.y:2541 pl_gram.y:3682 pl_gram.y:3743 pl_gram.y:3822
+msgid "syntax error"
+msgstr "söz dizim hatası "
+
+#: pl_gram.y:1861 pl_gram.y:1863 pl_gram.y:2299 pl_gram.y:2301
+msgid "invalid SQLSTATE code"
+msgstr "geçersiz SQLSTATE kodu"
+
+#: pl_gram.y:2061
+msgid "syntax error, expected \"FOR\""
+msgstr "sözdizimi hatası, \"FOR\" bekleniyordu"
+
+#: pl_gram.y:2123
+#, c-format
+msgid "FETCH statement cannot return multiple rows"
+msgstr "RAISE ifadesi çoklu satır döndüremez"
+
+#: pl_gram.y:2179
+#, c-format
+msgid "cursor variable must be a simple variable"
+msgstr "imleç değişkeni basit bir değişken olmalıdır"
+
+#: pl_gram.y:2185
+#, c-format
+msgid "variable \"%s\" must be of type cursor or refcursor"
+msgstr "\"%s\" değişkeni cursor ya da refcursor tiplerinden birisi olmalıdır"
+
+#: pl_gram.y:2512 pl_gram.y:2523
+#, c-format
+msgid "\"%s\" is not a known variable"
+msgstr "\"%s\" bilinen bir değişken değil"
+
+#: pl_gram.y:2627 pl_gram.y:2637 pl_gram.y:2793
+msgid "mismatched parentheses"
+msgstr "eşlenmemiş parantezler"
+
+#: pl_gram.y:2641
+#, c-format
+msgid "missing \"%s\" at end of SQL expression"
+msgstr "SQL ifadesinin sonunda eksik \"%s\" "
+
+#: pl_gram.y:2647
+#, c-format
+msgid "missing \"%s\" at end of SQL statement"
+msgstr "SQL ifadesinin sonunda \"%s\" eksik"
+
+#: pl_gram.y:2664
+msgid "missing expression"
+msgstr "eksik ifade"
+
+#: pl_gram.y:2666
+msgid "missing SQL statement"
+msgstr "eksik SQL ifadesi"
+
+#: pl_gram.y:2795
+msgid "incomplete data type declaration"
+msgstr "eksik veri tipi deklarasyonu"
+
+#: pl_gram.y:2818
+msgid "missing data type declaration"
+msgstr "eksik veri tipi deklarasyonu"
+
+#: pl_gram.y:2897
+msgid "INTO specified more than once"
+msgstr "INTO birden fazla belirtildi"
+
+#: pl_gram.y:3066
+msgid "expected FROM or IN"
+msgstr "FROM ya da IN bekleniyordu"
+
+#: pl_gram.y:3126
+#, c-format
+msgid "RETURN cannot have a parameter in function returning set"
+msgstr "RETURN, fonksiyon return set içinde parametre alamaz"
+
+#: pl_gram.y:3127
+#, c-format
+msgid "Use RETURN NEXT or RETURN QUERY."
+msgstr "RETURN NEXT ya da RETURN QUERY kullanın."
+
+#: pl_gram.y:3135
+#, c-format
+msgid "RETURN cannot have a parameter in function with OUT parameters"
+msgstr "RETURN, OUT parametreleri olan fonksiyonda parametre içeremez"
+
+#: pl_gram.y:3144
+#, c-format
+msgid "RETURN cannot have a parameter in function returning void"
+msgstr "RETURN, void dönen bir fonksiyonda parametre alamaz"
+
+#: pl_gram.y:3204
+#, c-format
+msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
+msgstr "RETURN NEXT OUT parametreleri olan fonksiyonda parametre içeremez"
+
+#: pl_gram.y:3308
+#, c-format
+msgid "\"%s\" is declared CONSTANT"
+msgstr "\"%s\" CONSTANT olarak deklare edilmiş"
+
+#: pl_gram.y:3370 pl_gram.y:3382
+#, c-format
+msgid "record or row variable cannot be part of multiple-item INTO list"
+msgstr ""
+
+#: pl_gram.y:3427
+#, c-format
+msgid "too many INTO variables specified"
+msgstr "çok fazla INTO değişkeni belirtilmiş"
+
+#: pl_gram.y:3635
+#, c-format
+msgid "end label \"%s\" specified for unlabelled block"
+msgstr "etiketlenmemiş blok için \"%s\" bitiş etiketi tanımlanmış"
+
+#: pl_gram.y:3642
+#, c-format
+msgid "end label \"%s\" differs from block's label \"%s\""
+msgstr "\"%s\" bitiş etiketi bloğun etiketi \"%s\"den  farklı"
+
+#: pl_gram.y:3677
+#, c-format
+msgid "cursor \"%s\" has no arguments"
+msgstr "\"%s\" imlecinin argümanı yok"
+
+#: pl_gram.y:3691
+#, c-format
+msgid "cursor \"%s\" has arguments"
+msgstr "\"%s\" imlecinin argümanları var"
+
+#: pl_gram.y:3733
+#, c-format
+msgid "cursor \"%s\" has no argument named \"%s\""
+msgstr "\"%s\" imlecinin \"%s\" adlı bir argümanı yok"
+
+#: pl_gram.y:3753
+#, c-format
+msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
+msgstr "\"%2$s\" imlecinin \"%1$s\" parametre değeri birden fazla kez belirtilmiştir"
+
+#: pl_gram.y:3778
+#, c-format
+msgid "not enough arguments for cursor \"%s\""
+msgstr "\"%s\" imleci (cursor) için  yetersiz sayıda argüman "
+
+#: pl_gram.y:3785
+#, c-format
+msgid "too many arguments for cursor \"%s\""
+msgstr "\"%s\" imleci (cursor) için çok fazla argüman"
+
+#: pl_gram.y:3873
+msgid "unrecognized RAISE statement option"
+msgstr "tanımsız RAISE ifadesi seçeneği"
+
+#: pl_gram.y:3877
+msgid "syntax error, expected \"=\""
+msgstr "sözdizimi hatası, \"=\" bekleniyordu"
+
+#: pl_gram.y:3918
+#, c-format
+msgid "too many parameters specified for RAISE"
+msgstr "RAISE için çok fazla parametre var"
+
+#: pl_gram.y:3922
+#, c-format
+msgid "too few parameters specified for RAISE"
+msgstr "RAISE için çok az parametre var"
+
+#: pl_handler.c:151
+msgid "Sets handling of conflicts between PL/pgSQL variable names and table column names."
+msgstr ""
+
+#: pl_handler.c:160
+msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."
+msgstr ""
+
+#: pl_handler.c:168
+msgid "Perform checks given in ASSERT statements."
+msgstr ""
+
+#: pl_handler.c:176
+msgid "List of programming constructs that should produce a warning."
+msgstr "Uyarı üretmesi gereken programlama construct'larının listesi."
+
+#: pl_handler.c:186
+msgid "List of programming constructs that should produce an error."
+msgstr "Hata üretmesi gereken programlama construct'larının listesi."
+
+#. translator: %s is typically the translation of "syntax error"
+#: pl_scanner.c:622
+#, c-format
+msgid "%s at end of input"
+msgstr "giriş sonuna %s"
+
+#. translator: first %s is typically the translation of "syntax error"
+#: pl_scanner.c:638
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "\"%2$s\"  yerinde %1$s"
+
+#~ msgid "unterminated dollar-quoted string"
+#~ msgstr "sonuçlandırılmamış dolar işeretiyle sınırlandırılmış satır"
+
+#~ msgid "unterminated quoted string"
+#~ msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış satır"
+
+#~ msgid "unterminated /* comment"
+#~ msgstr "/* açıklama sonlandırılmamış"
+
+#~ msgid "unterminated quoted identifier"
+#~ msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış tanım"
+
+#~ msgid "unterminated \" in identifier: %s"
+#~ msgstr "belirteçte sonlandırılmamış *\" : %s"
+
+#~ msgid "variable \"%s\" does not exist in the current block"
+#~ msgstr "\"%s\" değişkeni mevcut bloğun içinde yok"
+
+#~ msgid "expected \")\""
+#~ msgstr "\")\" bekleniyordu"
+
+#~ msgid "cannot assign to tg_argv"
+#~ msgstr "tg_argv'ye atama yapılamadı"
+
+#~ msgid "too many variables specified in SQL statement"
+#~ msgstr "SQL ifadesinde çok fazla değişken belirtilmiş"
+
+#~ msgid "expected a cursor or refcursor variable"
+#~ msgstr "cursor ya da refcursonr değişkeni beklendi"
+
+#~ msgid "syntax error at \"%s\""
+#~ msgstr "\"%s\" içinde sözdizimi hatası"
+
+#~ msgid "expected an integer variable"
+#~ msgstr "tamsayı değişken bekleniyordu"
+
+#~ msgid "function has no parameter \"%s\""
+#~ msgstr "fonksiyonun \"%s\" parametresi var"
+
+#~ msgid "Number of returned columns (%d) does not match expected column count (%d)."
+#~ msgstr "Dönen kolonların sayısı (%d) beklenen kolon sayısı (%d) ile eşleşmiyor."
+
+#~ msgid "N/A (dropped column)"
+#~ msgstr "N/A (silinmiş kolon)"
+
+#~ msgid "row \"%s.%s\" has no field \"%s\""
+#~ msgstr "\"%s.%s\" satırında \"%s\" alanı yok."
+
+#~ msgid "row \"%s\" has no field \"%s\""
+#~ msgstr "\"%s\" satırının bir alanı yok \"%s\""
+
+#~ msgid "expected \"[\""
+#~ msgstr " \"[\" bekleniyordu"
+
+#~ msgid "relation \"%s.%s\" does not exist"
+#~ msgstr "\"%s.%s\" nesnesi mevcut değil"
+
+#~ msgid "EXECUTE statement"
+#~ msgstr "EXECUTE ifadesi"
+
+#~ msgid "RETURN NEXT must specify a record or row variable in function returning row"
+#~ msgstr "RETURN NEXT satır döndüren fonksiyonda kayıt ya da satır değişkeni belirtmelidir"
+
+#~ msgid "label does not exist"
+#~ msgstr "etiket bulunamadı"

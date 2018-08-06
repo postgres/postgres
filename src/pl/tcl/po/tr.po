@@ -7,21 +7,52 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-29 07:08+0000\n"
-"PO-Revision-Date: 2013-09-04 20:50-0400\n"
+"POT-Creation-Date: 2018-05-06 19:57+0000\n"
+"PO-Revision-Date: 2018-05-07 11:51+0300\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
-"Language-Team: TR <devrim@commandprompt.com>>\n"
+"Language-Team: TR <devrim@commandprompt.com>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
-#: pltcl.c:1027
+#: pltcl.c:559
+#, c-format
+msgid "module \"unknown\" not found in pltcl_modules"
+msgstr "\"bilinmeyen\" modül pltcl_modülleri içinde bulunamadı"
+
+#: pltcl.c:597
+#, c-format
+msgid "could not load module \"unknown\": %s"
+msgstr "\"bilinmeyen\" modül yüklenemedi: %s"
+
+#: pltcl.c:1065
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "dönüş değeri tetikleyiciden ayrılamadı: %s"
+
+#: pltcl.c:1074
+#, c-format
+msgid "trigger's return list must have even number of elements"
+msgstr "tetikleyicinin dönüş listesi listesinin çift sayıda öğesi olmalı"
+
+#: pltcl.c:1110
+#, c-format
+msgid "unrecognized attribute \"%s\""
+msgstr "\"%s\" tanınmayan nitelik"
+
+#: pltcl.c:1116
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "\"%s\" sistem niteliği ayarlanamıyor"
+
+#: pltcl.c:1232 pltcl.c:1657
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1028
+#: pltcl.c:1233
 #, c-format
 msgid ""
 "%s\n"
@@ -30,25 +61,32 @@ msgstr ""
 "%s\n"
 "Şu PL/Tcl fonksiyonunda: \"%s\""
 
-#: pltcl.c:1127
+#: pltcl.c:1340 pltcl.c:1347
+#, c-format
 msgid "out of memory"
 msgstr "yetersiz bellek"
 
-#: pltcl.c:1192
+#: pltcl.c:1395
+#, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "trigger fonksiyonları sadece trigger olarak çağırılabilirler"
 
-#: pltcl.c:1201
+#: pltcl.c:1404
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl fonksiyonları %s tipini döndüremezler"
 
-#: pltcl.c:1213
+#: pltcl.c:1416
+#, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "PL/Tcl fonksiyonları composit tip döndüremezler"
 
-#: pltcl.c:1253
+#: pltcl.c:1455
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl fonksiyonları %s veri tipini kabul etmezler"
 
+#: pltcl.c:1578
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "\"%s\" dahili yordamı oluşturulamadı: %s"
