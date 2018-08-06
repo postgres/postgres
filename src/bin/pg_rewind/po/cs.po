@@ -1,232 +1,239 @@
-# German message translation file for pg_rewind
-# Copyright (C) 2015-2018 PostgreSQL Global Development Group
-# This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut <peter_e@gmx.net>, 2015-2018.
+# LANGUAGE message translation file for pg_rewind
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_rewind (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-18 04:17+0000\n"
-"PO-Revision-Date: 2018-07-24 10:36+0200\n"
-"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
-"Language-Team: German <peter_e@gmx.net>\n"
-"Language: de\n"
+"POT-Creation-Date: 2018-07-13 19:47+0000\n"
+"PO-Revision-Date: 2018-07-13 23:49+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Poedit 2.0.7\n"
+"X-Poedit-Bookmarks: -1,-1,-1,-1,-1,-1,-1,-1,-1,17\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 parsexlog.c:75 parsexlog.c:129 parsexlog.c:187
 #, c-format
 msgid "out of memory\n"
-msgstr "Speicher aufgebraucht\n"
+msgstr "nedostatek paměti\n"
 
 #: ../../common/fe_memutils.c:92
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+msgstr "nelze duplikovat null pointer (interní chyba)\n"
 
 #: ../../common/restricted_token.c:68
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: WARNUNG: auf dieser Plattform können keine beschränkten Token erzeugt werden\n"
+msgstr "%s: WARNING: na této platformě nelze vytvářet vyhrazené tokeny\n"
 
 #: ../../common/restricted_token.c:77
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: konnte Prozess-Token nicht öffnen: Fehlercode %lu\n"
+msgstr "%s: nelze otevřít token procesu: chybový kód %lu\n"
 
 #: ../../common/restricted_token.c:90
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: konnte SIDs nicht erzeugen: Fehlercode %lu\n"
+msgstr "%s: nelze alokovat SIDs: chybový kód %lu\n"
 
 #: ../../common/restricted_token.c:110
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: konnte beschränktes Token nicht erzeugen: Fehlercode %lu\n"
+msgstr "%s: nelze vytvořit vyhrazený token: chybový kód %lu\n"
 
 #: ../../common/restricted_token.c:132
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s: konnte Prozess für Befehl »%s« nicht starten: Fehlercode %lu\n"
+msgstr "%s: nelze nastartovat proces pro příkaz \"%s\": chybový kód %lu\n"
 
 #: ../../common/restricted_token.c:170
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
-msgstr "%s: konnte Prozess nicht mit beschränktem Token neu starten: Fehlercode %lu\n"
+msgstr "%s: nelze znovu spustit s vyhrazeným tokenem: chybový kód %lu\n"
 
 #: ../../common/restricted_token.c:186
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "%s: konnte Statuscode des Subprozesses nicht ermitteln: Fehlercode %lu\n"
+msgstr "%s: nelze získat návratový kód z podprovesu: chybový kód %lu\n"
 
 #: copy_fetch.c:60
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis »%s« nicht öffnen: %s\n"
+msgstr "nelze otevřít adresář \"%s\": %s\n"
 
 #: copy_fetch.c:89 filemap.c:185 filemap.c:348
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
-msgstr "konnte »stat« für Datei »%s« nicht ausführen: %s\n"
+msgstr "nelze přistoupit k souboru \"%s\": %s\n"
 
 #: copy_fetch.c:118
 #, c-format
 msgid "could not read symbolic link \"%s\": %s\n"
-msgstr "konnte symbolische Verknüpfung »%s« nicht lesen: %s\n"
+msgstr "nelze přečíst symbolický odkaz \"%s\": %s\n"
 
 #: copy_fetch.c:121
 #, c-format
 msgid "symbolic link \"%s\" target is too long\n"
-msgstr "Ziel für symbolische Verknüpfung »%s« ist zu lang\n"
+msgstr "cíl symbolického odkazu \"%s\" je příliš dlouhý\n"
 
 #: copy_fetch.c:136
 #, c-format
-msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform\n"
-msgstr "»%s« ist eine symbolische Verknüpfung, aber symbolische Verknüpfungen werden auf dieser Plattform nicht unterstützt\n"
+msgid ""
+"\"%s\" is a symbolic link, but symbolic links are not supported on this "
+"platform\n"
+msgstr ""
+"\"%s\" je symbolický odkaz, ale symbolické odkazy nejsou na této platformě "
+"podporovány\n"
 
 #: copy_fetch.c:143
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis »%s« nicht lesen: %s\n"
+msgstr "nelze číst z adresáře \"%s\": %s\n"
 
 #: copy_fetch.c:147
 #, c-format
 msgid "could not close directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis »%s« nicht schließen: %s\n"
+msgstr "nelze uzavřít adresář \"%s\": %s\n"
 
 #: copy_fetch.c:167
 #, c-format
 msgid "could not open source file \"%s\": %s\n"
-msgstr "konnte Quelldatei »%s« nicht öffnen: %s\n"
+msgstr "nelze otevřít zdrojový soubor \"%s\": %s\n"
 
 #: copy_fetch.c:171
 #, c-format
 msgid "could not seek in source file: %s\n"
-msgstr "konnte Positionszeiger in Quelldatei nicht setzen: %s\n"
+msgstr "nelze změnit pozici (seek) ve zdrojovém souboru: %s\n"
 
 #: copy_fetch.c:188 file_ops.c:308
 #, c-format
 msgid "could not read file \"%s\": %s\n"
-msgstr "konnte Datei »%s« nicht lesen: %s\n"
+msgstr "nelze číst soubor \"%s\": %s\n"
 
 #: copy_fetch.c:191
 #, c-format
 msgid "unexpected EOF while reading file \"%s\"\n"
-msgstr "unerwartetes EOF beim Lesen der Datei »%s«\n"
+msgstr "neočekávaný znak EOF při čtení souboru \"%s\"\n"
 
 #: copy_fetch.c:198
 #, c-format
 msgid "could not close file \"%s\": %s\n"
-msgstr "konnte Datei »%s« nicht schließen: %s\n"
+msgstr "nelze uzavřít soubor \"%s\": %s\n"
 
 #: datapagemap.c:124
 #, c-format
 msgid "  block %u\n"
-msgstr "  Block %u\n"
+msgstr "  blok %u\n"
 
 #: file_ops.c:63
 #, c-format
 msgid "could not open target file \"%s\": %s\n"
-msgstr "konnte Zieldatei »%s« nicht öffnen: %s\n"
+msgstr "nelze otevřít cílový soubor \"%s\": %s\n"
 
 #: file_ops.c:77
 #, c-format
 msgid "could not close target file \"%s\": %s\n"
-msgstr "konnte Zieldatei »%s« nicht schließen: %s\n"
+msgstr "nelze uzavřít cílový soubor \"%s\": %s\n"
 
 #: file_ops.c:97
 #, c-format
 msgid "could not seek in target file \"%s\": %s\n"
-msgstr "konnte Positionszeiger in Zieldatei »%s« nicht setzen: %s\n"
+msgstr "nelze změnit pozici (seek) v cílovém souboru \"%s\": %s\n"
 
 #: file_ops.c:113
 #, c-format
 msgid "could not write file \"%s\": %s\n"
-msgstr "konnte Datei »%s« nicht schreiben: %s\n"
+msgstr "nelze zapsat soubor \"%s\": %s\n"
 
 #: file_ops.c:163
 #, c-format
 msgid "invalid action (CREATE) for regular file\n"
-msgstr "ungültige Aktion (CREATE) für normale Datei\n"
+msgstr "neplatná akce (CREATE) pro obyčejný soubor\n"
 
 #: file_ops.c:186
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
-msgstr "konnte Datei »%s« nicht löschen: %s\n"
+msgstr "nelze odstranit soubor \"%s\": %s\n"
 
 #: file_ops.c:204
 #, c-format
 msgid "could not open file \"%s\" for truncation: %s\n"
-msgstr "konnte Datei »%s« nicht zum Kürzen öffnen: %s\n"
+msgstr "nelze otevřít soubor \"%s\" pro zkrácení (truncate): %s\n"
 
 #: file_ops.c:208
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %s\n"
-msgstr "konnte Datei »%s« nicht auf %u kürzen: %s\n"
+msgstr "nelze zkrátit (truncate) soubor \"%s\" na %u: %s\n"
 
 #: file_ops.c:224
 #, c-format
 msgid "could not create directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis »%s« nicht erzeugen: %s\n"
+msgstr "nelze vytvořit adresář \"%s\": %s\n"
 
 #: file_ops.c:238
 #, c-format
 msgid "could not remove directory \"%s\": %s\n"
-msgstr "konnte Verzeichnis »%s« nicht löschen: %s\n"
+msgstr "nelze odstranit adresář \"%s\": %s\n"
 
 #: file_ops.c:252
 #, c-format
 msgid "could not create symbolic link at \"%s\": %s\n"
-msgstr "konnte symbolische Verknüpfung »%s« nicht erstellen: %s\n"
+msgstr "nelze vytvořit symbolický odkaz na \"%s\": %s\n"
 
 #: file_ops.c:266
 #, c-format
 msgid "could not remove symbolic link \"%s\": %s\n"
-msgstr "konnte symbolische Verknüpfung »%s« nicht löschen: %s\n"
+msgstr "nelze odstranit symbolický odkaz \"%s\": %s\n"
 
 #: file_ops.c:296 file_ops.c:300
 #, c-format
 msgid "could not open file \"%s\" for reading: %s\n"
-msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %s\n"
+msgstr "nelze otevřít soubor \"%s\" pro čtení: %s\n"
 
 #: filemap.c:177
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
-msgstr "Datendatei »%s« in der Quelle ist keine normale Datei\n"
+msgstr "datový soubor \"%s\" ve zdroji není obyčejný soubor\n"
 
 #: filemap.c:199
 #, c-format
 msgid "\"%s\" is not a directory\n"
-msgstr "»%s« ist kein Verzeichnis\n"
+msgstr "\"%s\" není adresář\n"
 
 #: filemap.c:222
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
-msgstr "»%s« ist keine symbolische Verknüpfung\n"
+msgstr "\"%s\" není symbolický odkaz\n"
 
 #: filemap.c:234
 #, c-format
 msgid "\"%s\" is not a regular file\n"
-msgstr "»%s« ist keine normale Datei\n"
+msgstr "\"%s\" není obyčejný soubor\n"
 
 #: filemap.c:360
 #, c-format
 msgid "source file list is empty\n"
-msgstr "Quelldateiliste ist leer\n"
+msgstr "seznam zdrojových souborů je prázdný\n"
 
 #: filemap.c:475
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
-msgstr "unerwartete Seitenänderung für Verzeichnis oder symbolische Verknüpfung »%s«\n"
+msgstr ""
+"neočekávaná modifikace stránky pro adresář nebo symbolický odkaz \"%s\"\n"
 
 #: filemap.c:509 filemap.c:525
 #, c-format
 msgid "entry \"%s\" excluded from %s file list\n"
-msgstr ""
+msgstr "položka \"%s\" vyloučena ze %s seznamu souborů\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
 #: filemap.c:656
@@ -237,196 +244,199 @@ msgstr "%s (%s)\n"
 #: libpq_fetch.c:52
 #, c-format
 msgid "could not connect to server: %s"
-msgstr "konnte nicht mit Server verbinden: %s"
+msgstr "nelze se připojit k serveru: %s"
 
 #: libpq_fetch.c:55
 #, c-format
 msgid "connected to server\n"
-msgstr "mit Server verbunden\n"
+msgstr "připojen k serveru\n"
 
 #: libpq_fetch.c:59
 #, c-format
 msgid "could not clear search_path: %s"
-msgstr "konnte search_path nicht auf leer setzen: %s"
+msgstr "nelze vyčistit search_path: %s"
 
 #: libpq_fetch.c:71
 #, c-format
 msgid "source server must not be in recovery mode\n"
-msgstr "Quell-Server darf nicht im Wiederherstellungsmodus sein\n"
+msgstr "zdrojový server musí být v recovery módu\n"
 
 #: libpq_fetch.c:81
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
-msgstr "full_page_writes muss im Quell-Server eingeschaltet sein\n"
+msgstr "full_page_writes musí být zapnuty na zdrojovém serveru\n"
 
 #: libpq_fetch.c:93
 #, c-format
 msgid "could not set up connection context: %s"
-msgstr "konnte Verbindungskontext nicht einrichten: %s"
+msgstr "nelze nastavit kontext spojení: %s"
 
 #: libpq_fetch.c:111
 #, c-format
 msgid "error running query (%s) in source server: %s"
-msgstr "Fehler beim Ausführen einer Anfrage (%s) im Quellserver: %s"
+msgstr "chyba při spuštění dotazu (%s) na zdrojovém serveru: %s"
 
 #: libpq_fetch.c:116
 #, c-format
 msgid "unexpected result set from query\n"
-msgstr "Anfrage ergab unerwartete Ergebnismenge\n"
+msgstr "neočekávaný výsledek dotazu\n"
 
 #: libpq_fetch.c:139
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
-msgstr "unbekanntes Ergebnis »%s« für aktuelle WAL-Einfügeposition\n"
+msgstr "nerozpoznaný výsledek \"%s\" pro aktuální WAL insert pozici\n"
 
 #: libpq_fetch.c:189
 #, c-format
 msgid "could not fetch file list: %s"
-msgstr "konnte Dateiliste nicht holen: %s"
+msgstr "nelze načíst seznam souborů: %s"
 
 #: libpq_fetch.c:194
 #, c-format
 msgid "unexpected result set while fetching file list\n"
-msgstr "unerwartete Ergebnismenge beim Holen der Dateiliste\n"
+msgstr "neočekávaný výsledek při načítání seznamu souborů\n"
 
 #: libpq_fetch.c:242
 #, c-format
 msgid "could not send query: %s"
-msgstr "konnte Anfrage nicht senden: %s"
+msgstr "nelze zaslat dotaz: %s"
 
 #: libpq_fetch.c:244
 #, c-format
 msgid "getting file chunks\n"
-msgstr "hole Dateistücke\n"
+msgstr "načítám části souborů\n"
 
 #: libpq_fetch.c:247
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
-msgstr "konnte libpq-Verbindung nicht in den Einzelzeilenmodus setzen\n"
+msgstr "nelze nastavit libpq spojení na single row mód\n"
 
 #: libpq_fetch.c:268
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
-msgstr "unerwartetes Ergebnis beim Holen von fernen Dateien: %s"
+msgstr "neočekávaný výsledek při načítání vzdálených souborů: %s"
 
 #: libpq_fetch.c:274
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
-msgstr "unerwartete Ergebnismengengröße beim Holen von fernen Dateien\n"
+msgstr "neočekávaná velikost výsledku při načítání vzdálených souborů\n"
 
 #: libpq_fetch.c:280
 #, c-format
-msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
-msgstr "unerwartete Datentypen in Ergebnismenge beim Holen von fernen Dateien: %u %u %u\n"
+msgid ""
+"unexpected data types in result set while fetching remote files: %u %u %u\n"
+msgstr ""
+"neočekávané datové typy ve vysledku při načítání vzdálených souborů: %u %u "
+"%u\n"
 
 #: libpq_fetch.c:288
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
-msgstr "unerwartetes Ergebnisformat beim Holen von fernen Dateien\n"
+msgstr "neočekávaný formát výsledku při načítání vzdálených souborů\n"
 
 #: libpq_fetch.c:294
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
-msgstr "unerwartete NULL-Werte im Ergebnis beim Holen von fernen Dateien\n"
+msgstr "neočekávané null hodnoty ve výsledku při načítání vzdálených souborů\n"
 
 #: libpq_fetch.c:298
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
-msgstr "unerwartete Ergebnislänge beim Holen von fernen Dateien\n"
+msgstr "neočekávaná délka výsledku při načítání vzdálených souborů\n"
 
 #: libpq_fetch.c:323
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
-msgstr "NULL-Wert für Stück von Datei »%s« empfangen, Datei wurde gelöscht\n"
+msgstr "přijata null hodnota pro chunk souboru \"%s\", soubor byl smazán\n"
 
 #: libpq_fetch.c:336
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
-msgstr "Stück von Datei »%s« empfangen, Offset %s, Größe %d\n"
+msgstr "přijat chunk souboru \"%s\", offset %s, délka %d\n"
 
 #: libpq_fetch.c:365
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
-msgstr "konnte ferne Datei »%s« nicht holen: %s"
+msgstr "nelze načíst vzdálený soubor \"%s\": %s"
 
 #: libpq_fetch.c:370
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
-msgstr "unerwartete Ergebnismenge beim Holen der fernen Datei »%s«\n"
+msgstr "neočekávaný výsledek při načítání vzdáleného souboru \"%s\"\n"
 
 #: libpq_fetch.c:381
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
-msgstr "Datei »%s« geholt, Länge %d\n"
+msgstr "načten soubor \"%s\", délka %d\n"
 
 #: libpq_fetch.c:414
 #, c-format
 msgid "could not send COPY data: %s"
-msgstr "konnte COPY-Daten nicht senden: %s"
+msgstr "nelze poslat COPY data: %s"
 
 #: libpq_fetch.c:440
 #, c-format
 msgid "could not create temporary table: %s"
-msgstr "konnte temporäre Tabelle nicht erzeugen: %s"
+msgstr "nelze vytvořit temporary tabulku: %s"
 
 #: libpq_fetch.c:448
 #, c-format
 msgid "could not send file list: %s"
-msgstr "konnte Dateiliste nicht senden: %s"
+msgstr "nelze poslat seznam souborů: %s"
 
 #: libpq_fetch.c:490
 #, c-format
 msgid "could not send end-of-COPY: %s"
-msgstr "konnte COPY-Ende nicht senden: %s"
+msgstr "nelze poslat end-of-COPY: %s"
 
 #: libpq_fetch.c:496
 #, c-format
 msgid "unexpected result while sending file list: %s"
-msgstr "unerwartetes Ergebnis beim Senden der Dateiliste: %s"
+msgstr "neočekávaný výsledek při posílání seznamu souborů: %s"
 
 #: logging.c:57
 msgid "Failure, exiting\n"
-msgstr "Fehlgeschlagen, Programm wird beendet\n"
+msgstr "Chyba, končím\n"
 
 #: logging.c:140
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
-msgstr "%*s/%s kB (%d%%) kopiert"
+msgstr "%*s/%s kB (%d%%) zkopírováno"
 
 #: parsexlog.c:88 parsexlog.c:135
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
-msgstr "konnte WAL-Eintrag bei %X/%X nicht lesen: %s\n"
+msgstr "nelze načíst WAL záznam na %X/%X: %s\n"
 
 #: parsexlog.c:92 parsexlog.c:138
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
-msgstr "konnte WAL-Eintrag bei %X/%X nicht lesen\n"
+msgstr "nelze načíst WAL záznam na %X/%X\n"
 
 #: parsexlog.c:199
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
-msgstr "konnte vorangegangenen WAL-Eintrag bei %X/%X nicht finden: %s\n"
+msgstr "nelze nalézt předchozí WAL záznam na %X/%X: %s\n"
 
 #: parsexlog.c:203
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
-msgstr "konnte vorangegangenen WAL-Eintrag bei %X/%X nicht finden\n"
+msgstr "nelze načíst předchozí WAL záznam na %X/%X\n"
 
 #: parsexlog.c:293
 #, c-format
 msgid "could not open file \"%s\": %s\n"
-msgstr "konnte Datei »%s« nicht öffnen: %s\n"
+msgstr "nelze otevřít soubor \"%s\": %s\n"
 
 #: parsexlog.c:307
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
-msgstr "konnte Positionszeiger in Datei »%s« nicht setzen: %s\n"
+msgstr "nelze nastavit pozici (seek) v souboru \"%s\": %s\n"
 
 #: parsexlog.c:314
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
-msgstr "konnte nicht aus Datei »%s« lesen: %s\n"
+msgstr "nelze číst ze souboru \"%s\": %s\n"
 
 #: parsexlog.c:382
 #, c-format
@@ -434,7 +444,7 @@ msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"
 "lsn: %X/%X, rmgr: %s, info: %02X\n"
 msgstr ""
-"WAL-Eintrag modifiziert eine Relation, aber Typ des Eintrags wurde nicht erkannt\n"
+"WAL záznam modifikuje relaci, ale typ záznamu není rozpoznán\n"
 "lsn: %X/%X, rmgr: %s, info: %02X\n"
 
 #: pg_rewind.c:66
@@ -443,7 +453,7 @@ msgid ""
 "%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
 "\n"
 msgstr ""
-"%s resynchronisiert einen PostgreSQL-Cluster mit einer Kopie des Clusters.\n"
+"%s resynchronizuje PostgreSQL cluster s jinou kopií daného clusteru.\n"
 "\n"
 
 #: pg_rewind.c:67
@@ -453,56 +463,63 @@ msgid ""
 "  %s [OPTION]...\n"
 "\n"
 msgstr ""
-"Aufruf:\n"
+"Použití:\n"
 "  %s [OPTION]...\n"
 "\n"
 
 #: pg_rewind.c:68
 #, c-format
 msgid "Options:\n"
-msgstr "Optionen:\n"
+msgstr "Přepínače:\n"
 
 #: pg_rewind.c:69
 #, c-format
 msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
-msgstr "  -D, --target-pgdata=VERZ       bestehendes zu modifizierendes Datenverzeichnis\n"
+msgstr ""
+"  -D, --target-pgdata=ADRESÁŘ    existující datový adresář pro modifikaci\n"
 
 #: pg_rewind.c:70
 #, c-format
-msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
+msgid ""
+"      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
 msgstr ""
-"      --source-pgdata=VERZ       Quelldatenverzeichnis, mit dem synchronisiert\n"
-"                                 werden soll\n"
+"      --source-pgdata=ADRESÁŘ    zdrojový datový adresář proti kterému se "
+"synchronizovat\n"
 
 #: pg_rewind.c:71
 #, c-format
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
-msgstr "      --source-server=VERB       Quellserver, mit dem synchronisiert werden soll\n"
+msgstr ""
+"      --source-server=CONNSTR    zdrojový server se kterým se "
+"synchronizovat\n"
 
 #: pg_rewind.c:72
 #, c-format
 msgid "  -n, --dry-run                  stop before modifying anything\n"
-msgstr "  -n, --dry-run                  anhalten, bevor etwas geändert wird\n"
+msgstr "  -n, --dry-run                  zastavit před modifikací čehokoliv\n"
 
 #: pg_rewind.c:73
 #, c-format
 msgid "  -P, --progress                 write progress messages\n"
-msgstr "  -P, --progress                 Fortschrittsmeldungen ausgeben\n"
+msgstr "  -P, --progress                 průběžně vypisovat zprávy o postupu\n"
 
 #: pg_rewind.c:74
 #, c-format
 msgid "      --debug                    write a lot of debug messages\n"
-msgstr "      --debug                    viele Debug-Meldungen ausgeben\n"
+msgstr ""
+"      --debug                    vypisovat mnoho zpráv s debug informacemi\n"
 
 #: pg_rewind.c:75
 #, c-format
-msgid "  -V, --version                  output version information, then exit\n"
-msgstr "  -V, --version                  Versionsinformationen anzeigen, dann beenden\n"
+msgid ""
+"  -V, --version                  output version information, then exit\n"
+msgstr ""
+"  -V, --version                  vypíše informaci o verzi, poté skončí\n"
 
 #: pg_rewind.c:76
 #, c-format
 msgid "  -?, --help                     show this help, then exit\n"
-msgstr "  -?, --help                     diese Hilfe anzeigen, dann beenden\n"
+msgstr "  -?, --help                     vypíše tuto nápovědu, poté skončí\n"
 
 #: pg_rewind.c:77
 #, c-format
@@ -511,88 +528,93 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
+"Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_rewind.c:132 pg_rewind.c:163 pg_rewind.c:170 pg_rewind.c:177
 #: pg_rewind.c:185
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
+msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
 #: pg_rewind.c:162
 #, c-format
 msgid "%s: no source specified (--source-pgdata or --source-server)\n"
-msgstr "%s: keine Quelle angegeben (--source-pgdata oder --source-server)\n"
+msgstr ""
+"%s: nespecifikován žádný zdroj (--source-pgdata nebo --source-server)\n"
 
 #: pg_rewind.c:169
 #, c-format
 msgid "%s: only one of --source-pgdata or --source-server can be specified\n"
-msgstr "%s: --source-pgdata und --source-server können nicht zusammen angegeben werden\n"
+msgstr ""
+"%s: pouze jedna z voleb --source-pgdata nebo --source-server může být "
+"zadána\n"
 
 #: pg_rewind.c:176
 #, c-format
 msgid "%s: no target data directory specified (--target-pgdata)\n"
-msgstr "%s: kein Zielverzeichnis angegeben (--target-pgdata)\n"
+msgstr "%s: cílový datový adresář nespecifikován (--target-pgdata)\n"
 
 #: pg_rewind.c:183
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
+msgstr "%s: příliš mnoho argumentů v příkazové řádce (první je \"%s\")\n"
 
-#: pg_rewind.c:192
-#, c-format
-msgid "%s: could not read permissions of directory \"%s\": %s\n"
-msgstr "%s: konnte Zugriffsrechte von Verzeichnis »%s« nicht lesen: %s\n"
-
-#: pg_rewind.c:208
+#: pg_rewind.c:198
 #, c-format
 msgid "cannot be executed by \"root\"\n"
-msgstr "kann nicht von »root« ausgeführt werden\n"
+msgstr "nelze spouštět jako \"root\"\n"
 
-#: pg_rewind.c:209
+#: pg_rewind.c:199
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
-msgstr "Sie müssen %s als PostgreSQL-Superuser ausführen.\n"
+msgstr "Musíte spustit %s jako PostgreSQL superuživatel.\n"
+
+#: pg_rewind.c:210
+#, c-format
+msgid "%s: could not read permissions of directory \"%s\": %s\n"
+msgstr "%s: nelze načíst práva adresáře \"%s\": %s\n"
 
 #: pg_rewind.c:241
 #, c-format
 msgid "source and target cluster are on the same timeline\n"
-msgstr "Quell- und Ziel-Cluster sind auf der gleichen Zeitleiste\n"
+msgstr "zdrojový a cílový cluster jsou na stejné timeline\n"
 
 #: pg_rewind.c:247
 #, c-format
 msgid "servers diverged at WAL location %X/%X on timeline %u\n"
-msgstr "Server divergierten bei WAL-Position %X/%X auf Zeitleiste %u\n"
+msgstr "servery se rozešly na WAL pozici %X/%X na timeline %u\n"
 
 #: pg_rewind.c:284
 #, c-format
 msgid "no rewind required\n"
-msgstr "kein Rückspulen nötig\n"
+msgstr "rewind není potřeba\n"
 
 #: pg_rewind.c:291
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u\n"
-msgstr "Rückspulen ab letztem gemeinsamen Checkpoint bei %X/%X auf Zeitleiste %u\n"
+msgstr ""
+"provádím rewind z posledního společného checkpointu na %X/%X na timeline %u\n"
 
 #: pg_rewind.c:299
 #, c-format
 msgid "reading source file list\n"
-msgstr "lese Quelldateiliste\n"
+msgstr "načítám seznam zdrojových souborů\n"
 
 #: pg_rewind.c:301
 #, c-format
 msgid "reading target file list\n"
-msgstr "lese Zieldateiliste\n"
+msgstr "načítám seznam cílových souborů\n"
 
 #: pg_rewind.c:311
 #, c-format
 msgid "reading WAL in target\n"
-msgstr "lese WAL im Ziel-Cluster\n"
+msgstr "čtu WAL na cílovém clusteru\n"
 
 #: pg_rewind.c:328
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)\n"
-msgstr "%lu MB müssen kopiert werden (Gesamtgröße des Quellverzeichnisses ist %lu MB)\n"
+msgstr ""
+"je třeba zkopírovat %lu MB (celková velikost zdrojového adresáře je %lu MB)\n"
 
 #: pg_rewind.c:345
 #, c-format
@@ -601,57 +623,59 @@ msgid ""
 "creating backup label and updating control file\n"
 msgstr ""
 "\n"
-"erzeuge Backup-Label und aktualisiere Kontrolldatei\n"
+"vytvářím backup label a aktualizuji control file\n"
 
 #: pg_rewind.c:373
 #, c-format
 msgid "syncing target data directory\n"
-msgstr "synchronisiere Zieldatenverzeichnis\n"
+msgstr "provádím sync cílového datového adresáře\n"
 
 #: pg_rewind.c:376
 #, c-format
 msgid "Done!\n"
-msgstr "Fertig!\n"
+msgstr "Hotovo!\n"
 
 #: pg_rewind.c:388
 #, c-format
 msgid "source and target clusters are from different systems\n"
-msgstr "Quell- und Ziel-Cluster sind von verschiedenen Systemen\n"
+msgstr "zdrojový a cílový cluster jsou z různých systémů\n"
 
 #: pg_rewind.c:396
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind\n"
-msgstr "die Cluster sind nicht mit dieser Version von pg_rewind kompatibel\n"
+msgstr "clustery nejsou kompatibilní s touto verzí pg_rewind\n"
 
 #: pg_rewind.c:406
 #, c-format
-msgid "target server needs to use either data checksums or \"wal_log_hints = on\"\n"
-msgstr "Zielserver muss entweder Datenprüfsummen oder »wal_log_hints = on« verwenden\n"
+msgid ""
+"target server needs to use either data checksums or \"wal_log_hints = on\"\n"
+msgstr ""
+"cílový server musí používat buď data checksums nebo \"wal_log_hints = on\"\n"
 
 #: pg_rewind.c:417
 #, c-format
 msgid "target server must be shut down cleanly\n"
-msgstr "Zielserver muss sauber heruntergefahren worden sein\n"
+msgstr "cílový server musí být zastaven čistě\n"
 
 #: pg_rewind.c:427
 #, c-format
 msgid "source data directory must be shut down cleanly\n"
-msgstr "Quelldatenverzeichnis muss sauber heruntergefahren worden sein\n"
+msgstr "zdrojový datový adresář musí být zastaven čistě\n"
 
 #: pg_rewind.c:482
 #, c-format
 msgid "invalid control file"
-msgstr "ungültige Kontrolldatei"
+msgstr "neplatný control file"
 
 #: pg_rewind.c:493
 #, c-format
 msgid "Source timeline history:\n"
-msgstr "Verlauf der Quellzeitleiste:\n"
+msgstr "Zdrojová timeline history:\n"
 
 #: pg_rewind.c:495
 #, c-format
 msgid "Target timeline history:\n"
-msgstr "Verlauf der Zielzeitleiste:\n"
+msgstr "Cílová timeline history:\n"
 
 #. translator: %d is a timeline number, others are LSN positions
 #: pg_rewind.c:509
@@ -661,30 +685,44 @@ msgstr "%d: %X/%X - %X/%X\n"
 
 #: pg_rewind.c:568
 #, c-format
-msgid "could not find common ancestor of the source and target cluster's timelines\n"
-msgstr "konnte keinen gemeinsamen Anfangspunkt in den Zeitleisten von Quell- und Ziel-Cluster finden\n"
+msgid ""
+"could not find common ancestor of the source and target cluster's timelines\n"
+msgstr ""
+"nelze najít společného předka pro timeline ze zdrojového a cílového "
+"clusteru\n"
 
 #: pg_rewind.c:609
 #, c-format
 msgid "backup label buffer too small\n"
-msgstr "Puffer für Backup-Label ist zu klein\n"
+msgstr "backup label buffer je příliš malý\n"
 
 #: pg_rewind.c:632
 #, c-format
 msgid "unexpected control file CRC\n"
-msgstr "unerwartete CRC in Kontrolldatei\n"
+msgstr "neočekávaná CRC hodnota control file\n"
 
 #: pg_rewind.c:642
 #, c-format
 msgid "unexpected control file size %d, expected %d\n"
-msgstr "unerwartete Kontrolldateigröße %d, erwartet wurde %d\n"
+msgstr "neočekávaná velikost control file %d, očekáváno %d\n"
 
 #: pg_rewind.c:651
 #, c-format
-msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte\n"
-msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes\n"
-msgstr[0] "WAL-Segmentgröße muss eine Zweierpotenz zwischen 1 MB und 1 GB sein, aber die Kontrolldatei gibt %d Byte an\n"
-msgstr[1] "WAL-Segmentgröße muss eine Zweierpotenz zwischen 1 MB und 1 GB sein, aber die Kontrolldatei gibt %d Bytes an\n"
+msgid ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the "
+"control file specifies %d byte\n"
+msgid_plural ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the "
+"control file specifies %d bytes\n"
+msgstr[0] ""
+"Velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale control "
+"file udává %d byte\n"
+msgstr[1] ""
+"Velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale control "
+"file udává %d bytů\n"
+msgstr[2] ""
+"Velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale control "
+"file udává %d bytů\n"
 
 #: pg_rewind.c:727
 #, c-format
@@ -693,9 +731,9 @@ msgid ""
 "not found in the same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Das Programm »initdb« wird von %s benötigt, aber wurde nicht im\n"
-"selben Verzeichnis wie »%s« gefunden.\n"
-"Prüfen Sie Ihre Installation.\n"
+"Program \"initdb\" je vyžadován %s ale nebyl\n"
+"nalezen ve stejném adresáři jako \"%s\".\n"
+"Zkontrolujte svou instalaci.\n"
 
 #: pg_rewind.c:731
 #, c-format
@@ -704,181 +742,205 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Das Programm »initdb« wurde von %s gefunden,\n"
-"aber es hatte nicht die gleiche Version wie %s.\n"
-"Prüfen Sie Ihre Installation.\n"
+"Program \"initdb\" byl nalezen \"%s\"\n"
+"ale nemá stejnou verzi jako \"%s\".\n"
+"Zkontrolujte svou instalaci.\n"
 
 #: pg_rewind.c:749
 #, c-format
 msgid "sync of target directory failed\n"
-msgstr "Synchronisieren des Zielverzeichnisses fehlgeschlagen\n"
+msgstr "sync na cílovém adresáři selhal\n"
 
 #: timeline.c:76 timeline.c:82
 #, c-format
 msgid "syntax error in history file: %s\n"
-msgstr "Syntaxfehler in History-Datei: %s\n"
+msgstr "syntaktická chyba v souboru s historií: %s\n"
 
 #: timeline.c:77
 #, c-format
 msgid "Expected a numeric timeline ID.\n"
-msgstr "Eine numerische Zeitleisten-ID wurde erwartet.\n"
+msgstr "Očekávána číselná hodnota timeline ID.\n"
 
 #: timeline.c:83
 #, c-format
 msgid "Expected a write-ahead log switchpoint location.\n"
-msgstr "Eine Write-Ahead-Log-Switchpoint-Position wurde erwartet.\n"
+msgstr "Očekávána pozice pro switchpoint write-ahead logu.\n"
 
 #: timeline.c:88
 #, c-format
 msgid "invalid data in history file: %s\n"
-msgstr "ungültige Daten in History-Datei: %s\n"
+msgstr "chybná data v souboru s historií: %s\n"
 
 #: timeline.c:89
 #, c-format
 msgid "Timeline IDs must be in increasing sequence.\n"
-msgstr "Zeitleisten-IDs müssen in aufsteigender Folge sein.\n"
+msgstr "Timeline IDs musí být rostoucí posloupnost.\n"
 
 #: timeline.c:109
 #, c-format
 msgid "invalid data in history file\n"
-msgstr "ungültige Daten in History-Datei\n"
+msgstr "chybná data v souboru s historií\n"
 
 #: timeline.c:110
 #, c-format
 msgid "Timeline IDs must be less than child timeline's ID.\n"
-msgstr "Zeitleisten-IDs müssen kleiner als die Zeitleisten-ID des Kindes sein.\n"
+msgstr "Timeline IDs musí být nižší než timeline ID potomka.\n"
 
-#: xlogreader.c:276
+#: xlogreader.c:299
 #, c-format
 msgid "invalid record offset at %X/%X"
-msgstr "ungültiger Datensatz-Offset bei %X/%X"
+msgstr "neplatný offset záznamu na %X/%X"
 
-#: xlogreader.c:284
+#: xlogreader.c:307
 #, c-format
 msgid "contrecord is requested by %X/%X"
-msgstr "Contrecord angefordert von %X/%X"
+msgstr "contrecord je vyžadován %X/%X"
 
-#: xlogreader.c:325 xlogreader.c:623
+#: xlogreader.c:348 xlogreader.c:646
 #, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
-msgstr "ungültige Datensatzlänge bei %X/%X: %u erwartet, %u erhalten"
+msgstr "neplatná délka záznamu na %X/%X: potřeba %u, získáno %u"
 
-#: xlogreader.c:340
+#: xlogreader.c:363
 #, c-format
 msgid "record length %u at %X/%X too long"
-msgstr "Datensatzlänge %u bei %X/%X ist zu lang"
+msgstr "délka záznamu %u na %X/%X je příliš vysoká"
 
-#: xlogreader.c:381
+#: xlogreader.c:404
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
-msgstr "keine Contrecord-Flag bei %X/%X"
+msgstr "na %X/%X není nastaven  contrecord flag"
 
-#: xlogreader.c:394
+#: xlogreader.c:417
 #, c-format
 msgid "invalid contrecord length %u at %X/%X"
-msgstr "ungültige Contrecord-Länge %u bei %X/%X"
+msgstr "chybná contrecord délka %u na %X/%X"
 
-#: xlogreader.c:631
+#: xlogreader.c:654
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
-msgstr "ungültige Resource-Manager-ID %u bei %X/%X"
+msgstr "chybný ID resource managera %u na %X/%X"
 
-#: xlogreader.c:645 xlogreader.c:662
+#: xlogreader.c:668 xlogreader.c:685
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
-msgstr "Datensatz mit falschem Prev-Link %X/%X bei %X/%X"
+msgstr "záznam s neplatnou hodnotou prev-link %X/%X na %X/%X"
 
-#: xlogreader.c:699
+#: xlogreader.c:722
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
-msgstr "ungültige Resource-Manager-Datenprüfsumme in Datensatz bei %X/%X"
+msgstr "neplatný data checksum resource managera v záznamu na %X/%X"
 
-#: xlogreader.c:736
+#: xlogreader.c:759
 #, c-format
 msgid "invalid magic number %04X in log segment %s, offset %u"
-msgstr "ungültige magische Zahl %04X in Logsegment %s, Offset %u"
+msgstr "neplatné magické číslo %04X v log segmentu %s, offset %u"
 
-#: xlogreader.c:750 xlogreader.c:801
+#: xlogreader.c:773 xlogreader.c:824
 #, c-format
 msgid "invalid info bits %04X in log segment %s, offset %u"
-msgstr "ungültige Info-Bits %04X in Logsegment %s, Offset %u"
+msgstr "neplatné info bity %04X v log segmentu %s, offset %u"
 
-#: xlogreader.c:776
+#: xlogreader.c:799
 #, c-format
-msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
-msgstr "WAL-Datei ist von einem anderen Datenbanksystem: Datenbanksystemidentifikator in WAL-Datei ist %s, Datenbanksystemidentifikator in pg_control ist %s"
+msgid ""
+"WAL file is from different database system: WAL file database system "
+"identifier is %s, pg_control database system identifier is %s"
+msgstr ""
+"WAL soubor je z jiného databázového systému: systémový identifikátor z WAL "
+"souboru je %s, systémový identifikátor z pg_control je %s"
 
-#: xlogreader.c:783
+#: xlogreader.c:806
 #, c-format
-msgid "WAL file is from different database system: incorrect segment size in page header"
-msgstr "WAL-Datei ist von einem anderen Datenbanksystem: falsche Segmentgröße im Seitenkopf"
+msgid ""
+"WAL file is from different database system: incorrect segment size in page "
+"header"
+msgstr ""
+"WAL soubor je z jiného databázového systému: neplatná velikost segmentu v "
+"hlavičce stránky"
 
-#: xlogreader.c:789
+#: xlogreader.c:812
 #, c-format
-msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
-msgstr "WAL-Datei ist von einem anderen Datenbanksystem: falsche XLOG_BLCKSZ im Seitenkopf"
+msgid ""
+"WAL file is from different database system: incorrect XLOG_BLCKSZ in page "
+"header"
+msgstr ""
+"WAL soubor je z jiného databázového systému: neplatná hodnota XLOG_BLCKSZ v "
+"hlavičce stránky"
 
-#: xlogreader.c:820
+#: xlogreader.c:843
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
-msgstr "unerwartete Pageaddr %X/%X in Logsegment %s, Offset %u"
+msgstr "neočekávaná pageaddr hodnota %X/%X v log segmentu %s, offset %u"
 
-#: xlogreader.c:845
+#: xlogreader.c:868
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
-msgstr "Zeitleisten-ID %u außer der Reihe (nach %u) in Logsegment %s, Offset %u"
-
-#: xlogreader.c:1090
-#, c-format
-msgid "out-of-order block_id %u at %X/%X"
-msgstr "block_id %u außer der Reihe bei %X/%X"
+msgstr "timeline ID %u mimo pořadí (po %u) v log segmentu %s, offset %u"
 
 #: xlogreader.c:1113
 #, c-format
-msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA gesetzt, aber keine Daten enthalten bei %X/%X"
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "block_id %u mimo pořadí na %X/%X"
 
-#: xlogreader.c:1120
+#: xlogreader.c:1136
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr ""
+"BKPBLOCK_HAS_DATA flag nastaven, ale žádná data nejsou přiložena na %X/%X"
+
+#: xlogreader.c:1143
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA nicht gesetzt, aber Datenlänge ist %u bei %X/%X"
+msgstr "BKPBLOCK_HAS_DATA flag nenastaven, ale délka dat je %u na %X/%X"
 
-#: xlogreader.c:1156
+#: xlogreader.c:1179
 #, c-format
-msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE gesetzt, aber Loch Offset %u Länge %u Block-Abbild-Länge %u bei %X/%X"
+msgid ""
+"BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
+"%X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE flag nastaven, ale hole offset %u length %u block image "
+"length %u na %X/%X"
 
-#: xlogreader.c:1172
+#: xlogreader.c:1195
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE nicht gesetzt, aber Loch Offset %u Länge %u bei %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE flag nenastaven, ale hole offset %u length %u na %X/%X"
 
-#: xlogreader.c:1187
+#: xlogreader.c:1210
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_IS_COMPRESSED gesetzt, aber Block-Abbild-Länge %u bei %X/%X"
+msgstr ""
+"BKPIMAGE_IS_COMPRESSED flag nastaven, ale block image length %u na %X/%X"
 
-#: xlogreader.c:1202
+#: xlogreader.c:1225
 #, c-format
-msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "weder BKPIMAGE_HAS_HOLE noch BKPIMAGE_IS_COMPRESSED gesetzt, aber Block-Abbild-Länge ist %u bei %X/%X"
+msgid ""
+"neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image "
+"length is %u at %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE ani BKPIMAGE_IS_COMPRESSED flag nenastaven, ale block "
+"image length je %u na %X/%X"
 
-#: xlogreader.c:1218
+#: xlogreader.c:1241
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
-msgstr "BKPBLOCK_SAME_REL gesetzt, aber keine vorangehende Relation bei %X/%X"
+msgstr ""
+"BKPBLOCK_SAME_REL flag nastaven, ale žádná předchozí rel hodnota na %X/%X"
 
-#: xlogreader.c:1230
+#: xlogreader.c:1253
 #, c-format
 msgid "invalid block_id %u at %X/%X"
-msgstr "ungültige block_id %u bei %X/%X"
+msgstr "neplatné block_id %u na %X/%X"
 
-#: xlogreader.c:1319
+#: xlogreader.c:1342
 #, c-format
 msgid "record with invalid length at %X/%X"
-msgstr "Datensatz mit ungültiger Länge bei %X/%X"
+msgstr "záznam s neplatnou délkou na %X/%X"
 
-#: xlogreader.c:1408
+#: xlogreader.c:1431
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
-msgstr "ungültiges komprimiertes Abbild bei %X/%X, Block %d"
+msgstr "neplatný komprimovaný image na %X/%X, block %d"

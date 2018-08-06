@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-09 19:46+0000\n"
-"PO-Revision-Date: 2018-05-09 22:55+0200\n"
+"POT-Creation-Date: 2018-06-27 20:17+0000\n"
+"PO-Revision-Date: 2018-06-28 07:10+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -1485,7 +1485,7 @@ msgstr "  -Z, --compress=0-9           komprimeringsnivå för komprimerade form
 msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr "  --lock-wait-timeout=TIMEOUT  misslyckas efter att ha väntat i TIMEOUT på tabellås\n"
 
-#: pg_dump.c:955 pg_dumpall.c:620
+#: pg_dump.c:955 pg_dumpall.c:621
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
 msgstr "  --no-sync                    vänta inte på att ändingar säkert skrivits till disk\n"
@@ -1627,50 +1627,50 @@ msgstr "  --if-exists                  använd IF EXISTS när objekt droppas\n"
 msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
 msgstr "  --inserts                    dumpa data som INSERT, istället för COPY\n"
 
-#: pg_dump.c:984 pg_dumpall.c:615 pg_restore.c:488
+#: pg_dump.c:984 pg_dumpall.c:615
+#, c-format
+msgid "  --load-via-partition-root    load partitions via the root table\n"
+msgstr "  --load-via-partition-root    ladda partitioner via root-tabellen\n"
+
+#: pg_dump.c:985 pg_dumpall.c:616
 #, c-format
 msgid "  --no-comments                do not dump comments\n"
 msgstr "  --no-comments                dumpa inte kommentarer\n"
 
-#: pg_dump.c:985 pg_dumpall.c:616
+#: pg_dump.c:986 pg_dumpall.c:617
 #, c-format
 msgid "  --no-publications            do not dump publications\n"
 msgstr "  --no-publications            dumpa inte publiceringar\n"
 
-#: pg_dump.c:986 pg_dumpall.c:618
+#: pg_dump.c:987 pg_dumpall.c:619
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
 msgstr "  --no-security-labels         dumpa inte tilldelning av säkerhetsetiketter\n"
 
-#: pg_dump.c:987 pg_dumpall.c:619
+#: pg_dump.c:988 pg_dumpall.c:620
 #, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgstr "  --no-subscriptions           dumpa inte prenumereringar\n"
 
-#: pg_dump.c:988
+#: pg_dump.c:989
 #, c-format
 msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
 msgstr "  --no-synchronized-snapshots  använd inte synkroniserade snapshots i parallella job\n"
 
-#: pg_dump.c:989 pg_dumpall.c:621
+#: pg_dump.c:990 pg_dumpall.c:622
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             dumpa inte användning av tabellutymmen\n"
 
-#: pg_dump.c:990 pg_dumpall.c:622
+#: pg_dump.c:991 pg_dumpall.c:623
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
 msgstr "  --no-unlogged-table-data     dumpa inte ologgad tabelldata\n"
 
-#: pg_dump.c:991 pg_dumpall.c:623
+#: pg_dump.c:992 pg_dumpall.c:624
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr "  --quote-all-identifiers      citera alla identifierar, även om de inte är nyckelord\n"
-
-#: pg_dump.c:992 pg_dumpall.c:624
-#, c-format
-msgid "  --load-via-partition-root    load partitions via the root table\n"
-msgstr "  --load-via-partition-root    ladda partitioner via root-tabellen\n"
 
 #: pg_dump.c:993
 #, c-format
@@ -1955,7 +1955,7 @@ msgstr "VARNING: ägare av funktion \"%s\" verkar vara ogiltig\n"
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "VARNING: ägare av tabell \"%s\" verkar vara ogiltig\n"
 
-#: pg_dump.c:6628 pg_dump.c:16823
+#: pg_dump.c:6628 pg_dump.c:16882
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found\n"
 msgstr "misslyckades med riktighetskontroll, föräldratabell med OID %u för sekvens med OID %u hittas inte\n"
@@ -1985,231 +1985,231 @@ msgstr "läser utlösare för tabell \"%s.%s\"\n"
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
 msgstr "fråga producerade null som refererad tabell för främmande nyckel-utlösare \"%s\" i tabell \"%s\" (OID för tabell : %u)\n"
 
-#: pg_dump.c:8129
+#: pg_dump.c:8130
 #, c-format
 msgid "finding the columns and types of table \"%s.%s\"\n"
 msgstr "hittar kolumner och typer för tabell \"%s.%s\"\n"
 
-#: pg_dump.c:8294
+#: pg_dump.c:8329
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "ogiltigt kolumnnumrering i tabell \"%s\"\n"
 
-#: pg_dump.c:8330
+#: pg_dump.c:8366
 #, c-format
 msgid "finding default expressions of table \"%s.%s\"\n"
 msgstr "hittar default-uttryck för tabell \"%s.%s\"\n"
 
-#: pg_dump.c:8353
+#: pg_dump.c:8389
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "felaktigt adnum-värde %d för tabell \"%s\"\n"
 
-#: pg_dump.c:8419
+#: pg_dump.c:8455
 #, c-format
 msgid "finding check constraints for table \"%s.%s\"\n"
 msgstr "hittar check-villkor för tabell \"%s.%s\"\n"
 
-#: pg_dump.c:8468
+#: pg_dump.c:8504
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d\n"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr[0] "förväntade %d check-villkor för tabell \"%s\" men hittade %d\n"
 msgstr[1] "förväntade %d check-villkor för tabell \"%s\" men hittade %d\n"
 
-#: pg_dump.c:8472
+#: pg_dump.c:8508
 #, c-format
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(systemkatalogerna kan vara trasiga.)\n"
 
-#: pg_dump.c:10028
+#: pg_dump.c:10064
 #, c-format
 msgid "WARNING: typtype of data type \"%s\" appears to be invalid\n"
 msgstr "VARNING: typtype för datatyp \"%s\" verkar vara ogiltig\n"
 
-#: pg_dump.c:11388
+#: pg_dump.c:11424
 #, c-format
 msgid "WARNING: bogus value in proargmodes array\n"
 msgstr "VARNING: felaktigt värde i arrayen proargmodes\n"
 
-#: pg_dump.c:11733
+#: pg_dump.c:11769
 #, c-format
 msgid "WARNING: could not parse proallargtypes array\n"
 msgstr "VARNING: kunde inte tolka arrayen proallargtypes\n"
 
-#: pg_dump.c:11749
+#: pg_dump.c:11785
 #, c-format
 msgid "WARNING: could not parse proargmodes array\n"
 msgstr "VARNING: kunde inte tolka arrayen proargmodes\n"
 
-#: pg_dump.c:11763
+#: pg_dump.c:11799
 #, c-format
 msgid "WARNING: could not parse proargnames array\n"
 msgstr "VARNING: kunde inte tolka arrayen proargnames\n"
 
-#: pg_dump.c:11774
+#: pg_dump.c:11810
 #, c-format
 msgid "WARNING: could not parse proconfig array\n"
 msgstr "VARNING: kunde inte tolka arrayen proconfig\n"
 
-#: pg_dump.c:11854
+#: pg_dump.c:11890
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "okänt provolatile-värde för funktion \"%s\"\n"
 
-#: pg_dump.c:11898 pg_dump.c:13924
+#: pg_dump.c:11934 pg_dump.c:13960
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\"\n"
 msgstr "okänt proparallel-värde för funktion \"%s\"\n"
 
-#: pg_dump.c:12010 pg_dump.c:12120 pg_dump.c:12127
+#: pg_dump.c:12046 pg_dump.c:12156 pg_dump.c:12163
 #, c-format
 msgid "could not find function definition for function with OID %u\n"
 msgstr "kunde inte hitta funktionsdefinitionen för funktion med OID %u\n"
 
-#: pg_dump.c:12049
+#: pg_dump.c:12085
 #, c-format
 msgid "WARNING: bogus value in pg_cast.castfunc or pg_cast.castmethod field\n"
 msgstr "VARNING: felaktigt värde i fältet pg_cast.castfunc eller pg_cast.castmethod\n"
 
-#: pg_dump.c:12052
+#: pg_dump.c:12088
 #, c-format
 msgid "WARNING: bogus value in pg_cast.castmethod field\n"
 msgstr "VARNING: felaktigt värde i fältet pg_cast.castmethod\n"
 
-#: pg_dump.c:12146
+#: pg_dump.c:12182
 #, c-format
 msgid "WARNING: bogus transform definition, at least one of trffromsql and trftosql should be nonzero\n"
 msgstr "VARNING: felaktig transform-definition, minst en av trffromsql och trftosql måste vara ickenoll\n"
 
-#: pg_dump.c:12163
+#: pg_dump.c:12199
 #, c-format
 msgid "WARNING: bogus value in pg_transform.trffromsql field\n"
 msgstr "VARNING: felaktigt värde i fältet pg_transform.trffromsql\n"
 
-#: pg_dump.c:12184
+#: pg_dump.c:12220
 #, c-format
 msgid "WARNING: bogus value in pg_transform.trftosql field\n"
 msgstr "VARNING: felaktigt värde i fältet pg_transform.trftosql\n"
 
-#: pg_dump.c:12500
+#: pg_dump.c:12536
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "VARNING: kunde inte hitta en operator med OID %s.\n"
 
-#: pg_dump.c:12565
+#: pg_dump.c:12601
 #, c-format
 msgid "WARNING: invalid type \"%c\" of access method \"%s\"\n"
 msgstr "VARNING: ogiltig typ \"%c\" för accessmetod \"%s\"\n"
 
-#: pg_dump.c:13317
+#: pg_dump.c:13353
 #, c-format
 msgid "unrecognized collation provider: %s\n"
 msgstr "okänd jämförelseleverantör: %s\n"
 
-#: pg_dump.c:13788
+#: pg_dump.c:13824
 #, c-format
 msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
 msgstr "VARNING: aggregatfunktion %s kunde inte dumpas korrekt för denna databasversion; ignorerad\n"
 
-#: pg_dump.c:13843
+#: pg_dump.c:13879
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\"\n"
 msgstr "okänt aggfinalmodify-värde för aggregat \"%s\"\n"
 
-#: pg_dump.c:13899
+#: pg_dump.c:13935
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\"\n"
 msgstr "okänt aggmfinalmodify-värde för aggregat \"%s\"\n"
 
-#: pg_dump.c:14634
+#: pg_dump.c:14670
 #, c-format
 msgid "unrecognized object type in default privileges: %d\n"
 msgstr "okänd objekttyp i standardrättigheter: %d\n"
 
-#: pg_dump.c:14652
+#: pg_dump.c:14688
 #, c-format
 msgid "could not parse default ACL list (%s)\n"
 msgstr "kunde inte parsa standard-ACL-lista (%s)\n"
 
-#: pg_dump.c:14734
+#: pg_dump.c:14770
 #, c-format
 msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "kunde inte parsa initial GRANT ACL-lista (%s) eller initial REVOKE ACL-lista (%s) för objekt \"%s\" (%s)\n"
 
-#: pg_dump.c:14743
+#: pg_dump.c:14779
 #, c-format
 msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "kunde inte parsa GRANT ACL-lista (%s) eller REVOKE ACL-lista (%s) för objekt \"%s\" (%s)\n"
 
-#: pg_dump.c:15237
+#: pg_dump.c:15273
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "fråga för att hämta definition av vy \"%s\" returnerade ingen data\n"
 
-#: pg_dump.c:15240
+#: pg_dump.c:15276
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "fråga för att hämta definition av vy \"%s\" returnerade mer än en definiton\n"
 
-#: pg_dump.c:15247
+#: pg_dump.c:15283
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "definition av vy \"%s\" verkar vara tom (längd noll)\n"
 
-#: pg_dump.c:15454
+#: pg_dump.c:15490
 #, c-format
 msgid "invalid number of parents %d for table \"%s\"\n"
 msgstr "ogiltigt antal (%d) föräldrar för tabell \"%s\"\n"
 
-#: pg_dump.c:16107
+#: pg_dump.c:16166
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "ogiltigt kolumnnummer %d för tabell \"%s\"\n"
 
-#: pg_dump.c:16328
+#: pg_dump.c:16387
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "saknar index för integritetsvillkor \"%s\"\n"
 
-#: pg_dump.c:16535
+#: pg_dump.c:16594
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "oväntad integritetsvillkorstyp: %c\n"
 
-#: pg_dump.c:16667 pg_dump.c:16888
+#: pg_dump.c:16726 pg_dump.c:16947
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr[0] "fråga för att hämta data för sekvens \"%s\" returnerade %d rad (förväntade 1)\n"
 msgstr[1] "fråga för att hämta data för sekvens \"%s\" returnerade %d rader (förväntade 1)\n"
 
-#: pg_dump.c:16701
+#: pg_dump.c:16760
 #, c-format
 msgid "unrecognized sequence type: %s\n"
 msgstr "okänd sekvenstyp: %s\n"
 
-#: pg_dump.c:16984
+#: pg_dump.c:17043
 #, c-format
 msgid "unexpected tgtype value: %d\n"
 msgstr "oväntat tgtype-värde: %d\n"
 
-#: pg_dump.c:17058
+#: pg_dump.c:17117
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "felaktig argumentsträng (%s) för utlösare \"%s\" i tabell \"%s\"\n"
 
-#: pg_dump.c:17284
+#: pg_dump.c:17343
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n"
 msgstr "fråga för att hämta regel \"%s\" för tabell \"%s\" misslyckades: fel antal rader returnerades\n"
 
-#: pg_dump.c:17665
+#: pg_dump.c:17724
 #, c-format
 msgid "reading dependency data\n"
 msgstr "läser beroendedata\n"
 
-#: pg_dump.c:18096
+#: pg_dump.c:18155
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "VARNING: kunde inte parsa arrayen reloptions\n"
@@ -2376,7 +2376,7 @@ msgstr "  -S, --superuser=NAMN         superanvändarens namn för användning i
 msgid "  -t, --tablespaces-only       dump only tablespaces, no databases or roles\n"
 msgstr "  -t, --tablespaces-only       dumpa endasdt tabellutrymmen, inte databaser eller roller\n"
 
-#: pg_dumpall.c:617
+#: pg_dumpall.c:618
 #, c-format
 msgid "  --no-role-passwords          do not dump passwords for roles\n"
 msgstr "  --no-role-passwords          dumpa inte lösenord för roller\n"
@@ -2647,6 +2647,11 @@ msgstr "  --enable-row-security        aktivera radsäkerhet\n"
 
 #: pg_restore.c:486
 #, c-format
+msgid "  --no-comments                do not restore comments\n"
+msgstr "  --no-comments                återställ inte kommentarer\n"
+
+#: pg_restore.c:487
+#, c-format
 msgid ""
 "  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 "                               created\n"
@@ -2705,271 +2710,3 @@ msgstr ""
 "\n"
 "Om inget indatafilnamn är angivet, så kommer standard in att användas.\n"
 "\n"
-
-#~ msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
-#~ msgstr "%s: kunde inte tolka ACL-listan (%s) för databas \"%s\"\n"
-
-#~ msgid ""
-#~ "Synchronized snapshots are not supported on standby servers.\n"
-#~ "Run with --no-synchronized-snapshots instead if you do not need\n"
-#~ "synchronized snapshots.\n"
-#~ msgstr ""
-#~ "Synkroniserade snapshots stöds inte av standby-servrar.\n"
-#~ "Kör med --no-synchronized-snapshots istället om du inte\n"
-#~ "behöver synkroniserade snapshots.\n"
-
-#~ msgid ""
-#~ "  --disable-dollar-quoting\n"
-#~ "                           disable dollar quoting, use SQL standard quoting\n"
-#~ msgstr "  -x, --no-privileges         dumpa inte rättigheter (grant/revoke)\n"
-
-#~ msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
-#~ msgstr "  -x, --no-privileges      dumpa inte rättigheter (grant/revoke)\n"
-
-#~ msgid "  -s, --schema-only        dump only the schema, no data\n"
-#~ msgstr "  -s, --schema-only        dumpa bara scheman, inte data\n"
-
-#~ msgid "  -o, --oids               include OIDs in dump\n"
-#~ msgstr "  -o, --oids               inkludera OID:er i dumpning\n"
-
-#~ msgid "  -D, --column-inserts     dump data as INSERT commands with column names\n"
-#~ msgstr "  -D, --column-inserts     dumpa data som INSERT med kolumnnamn\n"
-
-#~ msgid "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
-#~ msgstr "  -d, --inserts            dumpa data som INSERT, istället för COPY\n"
-
-#~ msgid "  -a, --data-only          dump only the data, not the schema\n"
-#~ msgstr "  -a, --data-only          dumpa bara data, inte schema\n"
-
-#~ msgid ""
-#~ "  -i, --ignore-version     proceed even when server version mismatches\n"
-#~ "                           pg_dumpall version\n"
-#~ msgstr ""
-#~ "  -i, --ignore-version     fortsätt även när serverns version inte är\n"
-#~ "                           samma som pg_dumpall-versionen\n"
-
-#~ msgid ""
-#~ "  --use-set-session-authorization\n"
-#~ "                           use SESSION AUTHORIZATION commands instead of\n"
-#~ "                           OWNER TO commands\n"
-#~ msgstr ""
-#~ "  --use-set-session-authorization\n"
-#~ "                           använd kommandot SESSION AUTHORIZATION istället för\n"
-#~ "                           OWNER TO\n"
-
-#~ msgid "  -c, --clean              clean (drop) schema prior to create\n"
-#~ msgstr "  -c, --clean              nollställ (drop) schema innan skapande\n"
-
-#~ msgid "  -i, --ignore-version     proceed even when server version mismatches\n"
-#~ msgstr "  -i, --ignore-version     fortsätt även när versionerna inte stämmer\n"
-
-#~ msgid "requested %d bytes, got %d from lookahead and %d from file\n"
-#~ msgstr "efterfrågade %d tecken, fick %d från lookahead och %d från filen\n"
-
-#~ msgid "%s: no result from server\n"
-#~ msgstr "%s: inget resultat från servern\n"
-
-#~ msgid "aborting because of version mismatch  (Use the -i option to proceed anyway.)\n"
-#~ msgstr "avbryter på grund av att versionerna inte matchar (använd flaggan -i för att fortsätta ändå.)\n"
-
-#~ msgid "archive format is %d\n"
-#~ msgstr "arkivformat är %d\n"
-
-#~ msgid "read %lu bytes into lookahead buffer\n"
-#~ msgstr "läste %lu tecken in i lookahead-bufferten\n"
-
-#~ msgid "expected %d triggers on table \"%s\" but found %d\n"
-#~ msgstr "förväntade %d utlösare på tabell \"%s\" men hittade %d\n"
-
-#~ msgid ""
-#~ "  -S, --superuser=NAME        specify the superuser user name to use in\n"
-#~ "                              plain text format\n"
-#~ msgstr ""
-#~ "  -S, --superuser=NAMN        ange superanvändarens användarnamn för\n"
-#~ "                              användning i textformat\n"
-
-#~ msgid "  -c, --clean                 clean (drop) schema prior to create\n"
-#~ msgstr "  -c, --clean                 nollställ (drop) schema innan skapande\n"
-
-#~ msgid ""
-#~ "  -i, --ignore-version     proceed even when server version mismatches\n"
-#~ "                           pg_dump version\n"
-#~ msgstr ""
-#~ "  -i, --ignore-version     fortsätt även när serverns version inte är\n"
-#~ "                           samma som pg_dump-versionen\n"
-
-#~ msgid "User name: "
-#~ msgstr "Användarnamn: "
-
-#~ msgid "compression support is disabled in this format\n"
-#~ msgstr "stöd för komprimering är avstängt för detta format\n"
-
-#~ msgid "dumping a specific TOC data block out of order is not supported without ID on this input stream (fseek required)\n"
-#~ msgstr ""
-#~ "dumpning av ett specifikt TOC-datablock utanför normal skrivordning stöds inte\n"
-#~ "utan ett ID för denna indataström (fseek krävs)\n"
-
-#~ msgid "no label definitions found for enum ID %u\n"
-#~ msgstr "inga etikettsdefinitioner hittades för enum med ID %u\n"
-
-#~ msgid "saving large object comments\n"
-#~ msgstr "sparar kommentar för stora objekt\n"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "kunde inte byta katalog till \"%s\""
-
-#~ msgid "%s: could not parse version \"%s\"\n"
-#~ msgstr "%s: kunde inte tolka versionen \"%s\"\n"
-
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s: slut på minne\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "  --use-set-session-authorization\n"
-#~ "                           use SET SESSION AUTHORIZATION commands instead of\n"
-#~ "                           ALTER OWNER commands to set ownership\n"
-#~ msgstr ""
-#~ "  --use-set-session-authorization\n"
-#~ "                              använd kommandot SESSION AUTHORIZATION istället\n"
-#~ "                              för ALTER OWNER för att sätta ägare\n"
-
-#~ msgid "  --disable-triggers       disable triggers during data-only restore\n"
-#~ msgstr "  --disable-triggers       slå av utlösare vid återställning av enbart data\n"
-
-#~ msgid "  -O, --no-owner           skip restoration of object ownership\n"
-#~ msgstr "  -O, --no-owner           återställ inte objektägare\n"
-
-#, fuzzy
-#~ msgid "  -c, --clean              clean (drop) database objects before recreating\n"
-#~ msgstr "  -c, --clean              nollställ (drop) databaser innan skapande\n"
-
-#~ msgid "  --version                output version information, then exit\n"
-#~ msgstr "  --version                visa versionsinformation och avsluta sedan\n"
-
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help                   visa denna hjälp och avsluta sedan\n"
-
-#~ msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
-#~ msgstr "verklig jämfört med förväntad filposition matchar inte (%s mot %s)\n"
-
-#~ msgid "could not output padding at end of tar member\n"
-#~ msgstr "kunde inte skriva utfyllnad i slutet av tar-medlem\n"
-
-#~ msgid "archive member too large for tar format\n"
-#~ msgstr "arkivdel för stor för formatet tar\n"
-
-#~ msgid "could not write null block at end of tar archive\n"
-#~ msgstr "kunde inte skriva null-block i slutet på tar-arkivet\n"
-
-#~ msgid "restoring large object OID %u\n"
-#~ msgstr "återställer stort objekt OID %u\n"
-
-#~ msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
-#~ msgstr "felaktig COPY-sats -- kunde inte hitta \"from stdin\" i strängen \"%s\" med början i position %lu\n"
-
-#~ msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
-#~ msgstr "felaktig COPY-sats -- kunde inte hitta \"copy\" i strängen \"%s\"\n"
-
-#~ msgid "could not close large object file\n"
-#~ msgstr "kunde inte stänga filen för stort objekt\n"
-
-#~ msgid "could not open large object TOC for output: %s\n"
-#~ msgstr "kunde inte öppna TOC-filen för stora objekt för utmatning: %s\n"
-
-#~ msgid "could not write byte\n"
-#~ msgstr "kunde inte skriva tecken\n"
-
-#~ msgid "could not open large object TOC for input: %s\n"
-#~ msgstr "kunde inte öppna TOC-filen för stora objekt: %s\n"
-
-#~ msgid "could not close data file after reading\n"
-#~ msgstr "kan inte stänga datafil efter läsning\n"
-
-#~ msgid ""
-#~ "WARNING:\n"
-#~ "  This format is for demonstration purposes; it is not intended for\n"
-#~ "  normal use. Files will be written in the current working directory.\n"
-#~ msgstr ""
-#~ "VARNING:\n"
-#~ "  Detta format är för demonstationsanvändning; det är inte tänkt\n"
-#~ "  för normal användning. Filer skrivs i aktuell katalog.\n"
-
-#~ msgid "file archiver"
-#~ msgstr "filarkiverare"
-
-#~ msgid "could not write byte: %s\n"
-#~ msgstr "kunde inte skriva tecken: %s\n"
-
-#~ msgid "unexpected end of file\n"
-#~ msgstr "oväntat slut på filen\n"
-
-#~ msgid "could not write to custom output routine\n"
-#~ msgstr "kunde inte skriva till egen utdatarutin\n"
-
-#~ msgid "-C and -c are incompatible options\n"
-#~ msgstr "-C och -c är inkompatibla flaggor\n"
-
-#~ msgid "cannot duplicate null pointer\n"
-#~ msgstr "kan inte duplicera null-pekaren\n"
-
-#~ msgid "SQL command failed\n"
-#~ msgstr "SQL-kommando misslyckades\n"
-
-#~ msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
-#~ msgstr "fråga för att hämta data för sekvens \"%s\" returnerade namn \"%s\"\n"
-
-#~ msgid "found more than one entry for pg_indexes in pg_class\n"
-#~ msgstr "hittade mer än en post för pg_indexes i pg_class\n"
-
-#~ msgid "could not find entry for pg_indexes in pg_class\n"
-#~ msgstr "kunde inte hitta post för pg_indexes i pg_class\n"
-
-#~ msgid "found more than one pg_database entry for this database\n"
-#~ msgstr "det finns mer än en pg_database-post för denna databas\n"
-
-#~ msgid "missing pg_database entry for this database\n"
-#~ msgstr "pg_database-posten för denna databas saknas\n"
-
-#~ msgid "query returned no rows: %s\n"
-#~ msgstr "frågan gav inga rader: %s\n"
-
-#, fuzzy
-#~ msgid "dumpDatabase(): could not find pg_largeobject.relfrozenxid\n"
-#~ msgstr "dumpBlobs(): kunde inte öppna det stora objektet: %s"
-
-#~ msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
-#~ msgstr "fråga har givit mer än en (%d) pg_database-post som resultat för databas \"%s\"\n"
-
-#~ msgid "missing pg_database entry for database \"%s\"\n"
-#~ msgstr "pg_database-post för databas \"%s\" saknas\n"
-
-#~ msgid "server version must be at least 7.3 to use schema selection switches\n"
-#~ msgstr "serverversionen måste vara minst 7.3 för att man skall kunna använda schemavalflaggorna\n"
-
-#~ msgid "*** aborted because of error\n"
-#~ msgstr "*** avbruten på grund av fel\n"
-
-#~ msgid "  --version                   output version information, then exit\n"
-#~ msgstr "  --version                   visa versionsinformation, avsluta sedan\n"
-
-#~ msgid "  --help                      show this help, then exit\n"
-#~ msgstr "  --help                      visa denna hjälp, avsluta sedan\n"
-
-#~ msgid "could not parse version string \"%s\"\n"
-#~ msgstr "kunde inte tolka versionsträngen \"%s\"\n"
-
-#~ msgid "could not open output file \"%s\" for writing\n"
-#~ msgstr "kunde inte öppna utfil \"%s\" för skrivning\n"
-
-#~ msgid "%s: invalid -X option -- %s\n"
-#~ msgstr "%s: ogiltig \"-X\"-flagga -- %s\n"
-
-#~ msgid "setting owner and privileges for %s \"%s\"\n"
-#~ msgstr "sätter ägare och rättigheter för %s \"%s\"\n"
-
-#~ msgid "setting owner and privileges for %s \"%s.%s\"\n"
-#~ msgstr "sätter ägare och rättigheter för %s \"%s.%s\"\n"
-
-#~ msgid "reading extended statistics for table \"%s.%s\"\n"
-#~ msgstr "läser utökad statistik för tabell \"%s.%s\"\n"

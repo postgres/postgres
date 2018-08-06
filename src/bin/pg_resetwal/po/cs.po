@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-09-23 20:18+0000\n"
-"PO-Revision-Date: 2013-12-01 20:46-0500\n"
+"POT-Creation-Date: 2018-07-13 19:46+0000\n"
+"PO-Revision-Date: 2018-07-14 17:16+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,110 +16,151 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Poedit 2.0.7\n"
 
-#: pg_resetxlog.c:133
+#: ../../common/restricted_token.c:68
 #, c-format
-msgid "%s: invalid argument for option -e\n"
-msgstr "%s: neplatný argument pro volbu -e\n"
+msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+msgstr "%s: WARNING: na této platformě nelze vytvářet vyhrazené tokeny\n"
 
-#: pg_resetxlog.c:134 pg_resetxlog.c:149 pg_resetxlog.c:164 pg_resetxlog.c:179
-#: pg_resetxlog.c:187 pg_resetxlog.c:213 pg_resetxlog.c:227 pg_resetxlog.c:234
-#: pg_resetxlog.c:242
+#: ../../common/restricted_token.c:77
+#, c-format
+msgid "%s: could not open process token: error code %lu\n"
+msgstr "%s: nelze otevřít process token: chybový kód %lu\n"
+
+#: ../../common/restricted_token.c:90
+#, c-format
+msgid "%s: could not allocate SIDs: error code %lu\n"
+msgstr "%s: nelze alokovat SIDs: chybový kód %lu\n"
+
+#: ../../common/restricted_token.c:110
+#, c-format
+msgid "%s: could not create restricted token: error code %lu\n"
+msgstr "%s: nelze vytvořit vyhrazený token: chybový kód %lu\n"
+
+#: ../../common/restricted_token.c:132
+#, c-format
+msgid "%s: could not start process for command \"%s\": error code %lu\n"
+msgstr "%s: nelze spustit proces pro příkaz \"%s\": chybový kód %lu\n"
+
+#: ../../common/restricted_token.c:170
+#, c-format
+msgid "%s: could not re-execute with restricted token: error code %lu\n"
+msgstr "%s: nelze znovu spustit s vyhrazeným tokenem: chybový kód %lu\n"
+
+#: ../../common/restricted_token.c:186
+#, c-format
+msgid "%s: could not get exit code from subprocess: error code %lu\n"
+msgstr "%s: nelze získat návratový kód ze subprocesu: chybový kód %lu\n"
+
+#. translator: the second %s is a command line argument (-e, etc)
+#: pg_resetwal.c:160 pg_resetwal.c:175 pg_resetwal.c:190 pg_resetwal.c:197
+#: pg_resetwal.c:221 pg_resetwal.c:236 pg_resetwal.c:244 pg_resetwal.c:270
+#: pg_resetwal.c:284
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: neplatný argument pro volbu %s\n"
+
+#: pg_resetwal.c:161 pg_resetwal.c:176 pg_resetwal.c:191 pg_resetwal.c:198
+#: pg_resetwal.c:222 pg_resetwal.c:237 pg_resetwal.c:245 pg_resetwal.c:271
+#: pg_resetwal.c:285 pg_resetwal.c:315 pg_resetwal.c:328 pg_resetwal.c:336
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
-#: pg_resetxlog.c:139
+#: pg_resetwal.c:166
 #, c-format
 msgid "%s: transaction ID epoch (-e) must not be -1\n"
 msgstr "%s: epocha ID transakce (-e) nesmí být -1\n"
 
-#: pg_resetxlog.c:148
-#, c-format
-msgid "%s: invalid argument for option -x\n"
-msgstr "%s: neplatný argument pro volbu -x\n"
-
-#: pg_resetxlog.c:154
+#: pg_resetwal.c:181
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
 msgstr "%s: ID transakce (-x) nesmí být 0\n"
 
-#: pg_resetxlog.c:163
+#: pg_resetwal.c:205 pg_resetwal.c:212
 #, c-format
-msgid "%s: invalid argument for option -o\n"
-msgstr "%s: neplatný argument pro volbu -o\n"
+msgid ""
+"%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"
+msgstr "%s: ID transakce (-c) musí být buď 0 nebo větší než nebo rovno 2\n"
 
-#: pg_resetxlog.c:169
+#: pg_resetwal.c:227
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
 msgstr "%s: OID (-o) nesmí být 0\n"
 
-#: pg_resetxlog.c:178 pg_resetxlog.c:186
-#, c-format
-msgid "%s: invalid argument for option -m\n"
-msgstr "%s: neplatný argument pro volbu -m\n"
-
-#: pg_resetxlog.c:192
+#: pg_resetwal.c:250
 #, c-format
 msgid "%s: multitransaction ID (-m) must not be 0\n"
 msgstr "%s: ID transakce (-m) nesmí být 0\n"
 
-#: pg_resetxlog.c:202
+#: pg_resetwal.c:260
 #, c-format
 msgid "%s: oldest multitransaction ID (-m) must not be 0\n"
 msgstr "%s: ID nejstarší multitransakce (-m) nesmí být 0\n"
 
-#: pg_resetxlog.c:212
-#, c-format
-msgid "%s: invalid argument for option -O\n"
-msgstr "%s: neplatný argument pro volbu -O\n"
-
-#: pg_resetxlog.c:218
+#: pg_resetwal.c:276
 #, c-format
 msgid "%s: multitransaction offset (-O) must not be -1\n"
 msgstr "%s: ID transakce (-O) nesmí být -1\n"
 
-#: pg_resetxlog.c:226
+#: pg_resetwal.c:301
 #, c-format
-msgid "%s: invalid argument for option -l\n"
-msgstr "%s: neplatný argument pro volbu -l\n"
+msgid "%s: argument of --wal-segsize must be a number\n"
+msgstr "%s: argument of --wal-segsize must be a number\n"
 
-#: pg_resetxlog.c:241
+#: pg_resetwal.c:308
+#, c-format
+msgid ""
+"%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"
+msgstr "%s: argument pro --wal-segsize musí být mocnina 2 mezi 1 a 1024\n"
+
+#: pg_resetwal.c:326
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: příliš mnoho parametrů na příkazové řádce (první je \"%s\")\n"
+
+#: pg_resetwal.c:335
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: není specifikován datový adresář\n"
 
-#: pg_resetxlog.c:255
+#: pg_resetwal.c:349
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
 msgstr "%s: nemůže být spuštěn uživatelem \"root\"\n"
 
-#: pg_resetxlog.c:257
+#: pg_resetwal.c:351
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Musíte spustit %s jako PostgreSQL superuživatel.\n"
 
-#: pg_resetxlog.c:267
+#: pg_resetwal.c:362
+#, c-format
+msgid "%s: could not read permissions of directory \"%s\": %s\n"
+msgstr "%s: nelze načíst přístupová práva pro adresář \"%s\": %s\n"
+
+#: pg_resetwal.c:371
 #, c-format
 msgid "%s: could not change directory to \"%s\": %s\n"
 msgstr "%s: nelze změnit adresář na \"%s\": %s\n"
 
-#: pg_resetxlog.c:280 pg_resetxlog.c:414
+#: pg_resetwal.c:387 pg_resetwal.c:548 pg_resetwal.c:611
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: nelze otevřít soubor \"%s\" pro čtení: %s\n"
 
-#: pg_resetxlog.c:287
+#: pg_resetwal.c:394
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s: soubor se zámkem \"%s\" existuje\n"
-"Neběží již server?  Jestliže ne, smažte soubor se zámkem a zkuste to znova.\n"
+"Neběží již server?  Jestliže ne, smažte soubor se zámkem a zkuste to "
+"znova.\n"
 
-#: pg_resetxlog.c:362
+#: pg_resetwal.c:495
 #, c-format
 msgid ""
 "\n"
@@ -129,23 +170,44 @@ msgstr ""
 "Jestliže tyto hodnoty vypadají akceptovatelně, použijte -f pro vynucený "
 "reset.\n"
 
-#: pg_resetxlog.c:374
+#: pg_resetwal.c:507
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
-"Resetting the transaction log might cause data to be lost.\n"
+"Resetting the write-ahead log might cause data to be lost.\n"
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
-"Databázový server nebyl ukončen standardně.\n"
+"Databázový server nebyl ukončen čistě.\n"
 "Resetování transakčního logu může způsobit ztrátu dat.\n"
 "Jestliže i přesto chcete pokračovat, použijte -f pro vynucený reset.\n"
 
-#: pg_resetxlog.c:388
+#: pg_resetwal.c:521
 #, c-format
-msgid "Transaction log reset\n"
+msgid "Write-ahead log reset\n"
 msgstr "Transakční log resetován\n"
 
-#: pg_resetxlog.c:417
+#: pg_resetwal.c:558
+#, c-format
+msgid "%s: unexpected empty file \"%s\"\n"
+msgstr "%s: neočekávaný prázdný soubor \"%s\"\n"
+
+#: pg_resetwal.c:563 pg_resetwal.c:627
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: nelze číst soubor \"%s\": %s\n"
+
+#: pg_resetwal.c:580
+#, c-format
+msgid ""
+"%s: data directory is of wrong version\n"
+"File \"%s\" contains \"%s\", which is not compatible with this program's "
+"version \"%s\".\n"
+msgstr ""
+"%s: datový adresář je z nesprávné verze\n"
+"Soubor \"%s\" obsahuje \"%s\", což je nekompatibilní s verzí \"%s\" tohoto "
+"programu.\n"
+
+#: pg_resetwal.c:614
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -156,25 +218,38 @@ msgstr ""
 "  touch %s\n"
 "a zkuste to znovu.\n"
 
-#: pg_resetxlog.c:430
-#, c-format
-msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: nelze číst soubor \"%s\": %s\n"
-
-#: pg_resetxlog.c:453
+#: pg_resetwal.c:647
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
 msgstr ""
 "%s: pg_control existuje, ale s neplatným kontrolním součtem CRC; postupujte "
 "opatrně\n"
 
-#: pg_resetxlog.c:462
+#: pg_resetwal.c:658
 #, c-format
-msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
+msgid ""
+"%s: pg_control specifies invalid WAL segment size (%d byte); proceed with "
+"caution\n"
+msgid_plural ""
+"%s: pg_control specifies invalid WAL segment size (%d bytes); proceed with "
+"caution\n"
+msgstr[0] ""
+"%s: pg_control obsahuje neplatnou velikost WAL segmentu (%d byte); "
+"pokračujte obezřetně\n"
+msgstr[1] ""
+"%s: pg_control obsahuje neplatnou velikost WAL segmentu (%d bytů); "
+"pokračujte obezřetně\n"
+msgstr[2] ""
+"%s: pg_control obsahuje neplatnou velikost WAL segmentu (%d bytů); "
+"pokračujte obezřetně\n"
+
+#: pg_resetwal.c:669
+#, c-format
+msgid "%s: pg_control exists but is broken or wrong version; ignoring it\n"
 msgstr ""
 "%s: pg_control existuje, ale je poškozen nebo neznámé verze; ignoruji to\n"
 
-#: pg_resetxlog.c:561
+#: pg_resetwal.c:767
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -183,234 +258,308 @@ msgstr ""
 "Odhadnuté hodnoty pg_controlu:\n"
 "\n"
 
-#: pg_resetxlog.c:563
+#: pg_resetwal.c:769
 #, c-format
 msgid ""
-"pg_control values:\n"
+"Current pg_control values:\n"
 "\n"
 msgstr ""
-"Hodnoty pg_controlu:\n"
+"Současné pg_control hodnoty:\n"
 "\n"
 
-#: pg_resetxlog.c:574
-#, c-format
-msgid "First log segment after reset:        %s\n"
-msgstr "První log segment po resetu:  %s\n"
-
-#: pg_resetxlog.c:576
+#: pg_resetwal.c:778
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "číslo verze pg_controlu:              %u\n"
+msgstr "Číslo verze pg_controlu:                   %u\n"
 
-#: pg_resetxlog.c:578
+#: pg_resetwal.c:780
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Číslo verze katalogu:               %u\n"
+msgstr "Číslo verze katalogu:                      %u\n"
 
-#: pg_resetxlog.c:580
+#: pg_resetwal.c:782
 #, c-format
 msgid "Database system identifier:           %s\n"
-msgstr "Identifikátor databázového systému:   %s\n"
+msgstr "Identifikátor databázového systému:        %s\n"
 
-#: pg_resetxlog.c:582
+#: pg_resetwal.c:784
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "TimeLineID posledního checkpointu:     %u\n"
+msgstr "TimeLineID posledního checkpointu:         %u\n"
 
-#: pg_resetxlog.c:584
+#: pg_resetwal.c:786
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "Poslední full_page_writes checkpointu:       %s\n"
+msgstr "Poslední full_page_writes checkpointu:     %s\n"
 
-#: pg_resetxlog.c:585
+#: pg_resetwal.c:787
 msgid "off"
 msgstr "vypnuto"
 
-#: pg_resetxlog.c:585
+#: pg_resetwal.c:787
 msgid "on"
 msgstr "zapnuto"
 
-#: pg_resetxlog.c:586
+#: pg_resetwal.c:788
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "Poslední umístění NextXID checkpointu:          %u/%u\n"
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "NextXID posledního checkpointu:            %u:%u\n"
 
-#: pg_resetxlog.c:589
+#: pg_resetwal.c:791
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "Poslední umístění NextOID checkpointu:          %u\n"
+msgstr "Poslední umístění NextOID checkpointu:     %u\n"
 
-#: pg_resetxlog.c:591
+#: pg_resetwal.c:793
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "NextMultiXactId posledního checkpointu:          %u\n"
+msgstr "NextMultiXactId posledního checkpointu:    %u\n"
 
-#: pg_resetxlog.c:593
+#: pg_resetwal.c:795
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "NextMultiOffset posledního checkpointu:          %u\n"
+msgstr "NextMultiOffset posledního checkpointu:    %u\n"
 
-#: pg_resetxlog.c:595
+#: pg_resetwal.c:797
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "oldestXID posledního checkpointu:          %u\n"
 
-#: pg_resetxlog.c:597
+#: pg_resetwal.c:799
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "DB k oldestXID posledního checkpointu:   %u\n"
+msgstr "DB k oldestXID posledního checkpointu:     %u\n"
 
-#: pg_resetxlog.c:599
+#: pg_resetwal.c:801
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID posledního checkpointu:          %u\n"
+msgstr "oldestActiveXID posledního checkpointu:    %u\n"
 
-#: pg_resetxlog.c:601
+#: pg_resetwal.c:803
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "oldestMultiXid posledního checkpointu:   %u\n"
+msgstr "oldestMultiXid posledního checkpointu:     %u\n"
 
-#: pg_resetxlog.c:603
+#: pg_resetwal.c:805
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "oldestMulti's DB posledního checkpointu: %u\n"
+msgstr "DB k oldestMulti posledního checkpointu:   %u\n"
 
-#: pg_resetxlog.c:605
+#: pg_resetwal.c:807
+#, c-format
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "oldestCommitTsXid posledního checkpointu:  %u\n"
+
+#: pg_resetwal.c:809
+#, c-format
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "newestCommitTsXid posledního checkpointu:  %u\n"
+
+#: pg_resetwal.c:811
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "Maximální zarovnání dat:              %u\n"
+msgstr "Maximální zarovnání dat:                   %u\n"
 
-#: pg_resetxlog.c:608
+#: pg_resetwal.c:814
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "Velikost databázového bloku:                  %u\n"
+msgstr "Velikost databázového bloku:               %u\n"
 
-#: pg_resetxlog.c:610
+#: pg_resetwal.c:816
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Bloků v segmentu velké relace: %u\n"
+msgstr "Bloků v segmentu velké relace:             %u\n"
 
-#: pg_resetxlog.c:612
+#: pg_resetwal.c:818
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "Velikost WAL bloku:                   %u\n"
+msgstr "Velikost WAL bloku:                        %u\n"
 
-#: pg_resetxlog.c:614
+#: pg_resetwal.c:820 pg_resetwal.c:908
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Bytů ve WAL segmentu:                  %u\n"
+msgstr "Bytů ve WAL segmentu:                      %u\n"
 
-#: pg_resetxlog.c:616
+#: pg_resetwal.c:822
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
-msgstr "Maximální délka identifikátorů:        %u\n"
+msgstr "Maximální délka identifikátorů:            %u\n"
 
-#: pg_resetxlog.c:618
+#: pg_resetwal.c:824
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "Maximální počet sloupců v indexu:     %u\n"
+msgstr "Maximální počet sloupců v indexu:          %u\n"
 
-#: pg_resetxlog.c:620
+#: pg_resetwal.c:826
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "Maximální velikost úseku TOAST:       %u\n"
+msgstr "Maximální velikost úseku TOAST:            %u\n"
 
-#: pg_resetxlog.c:622
+#: pg_resetwal.c:828
+#, c-format
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "Velikost large-object chunku:              %u\n"
+
+#: pg_resetwal.c:831
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "Způsob uložení typu date/time:               %s\n"
+msgstr "Způsob uložení typu date/time:             %s\n"
 
-#: pg_resetxlog.c:623
+#: pg_resetwal.c:832
 msgid "64-bit integers"
 msgstr "64-bitová čísla"
 
-#: pg_resetxlog.c:623
-msgid "floating-point numbers"
-msgstr "čísla s plovoucí řádovou čárkou"
-
-#: pg_resetxlog.c:624
+#: pg_resetwal.c:833
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "Způsob předávání float4 hodnot:        %s\n"
+msgstr "Způsob předávání float4 hodnot:            %s\n"
 
-#: pg_resetxlog.c:625 pg_resetxlog.c:627
+#: pg_resetwal.c:834 pg_resetwal.c:836
 msgid "by reference"
 msgstr "odkazem"
 
-#: pg_resetxlog.c:625 pg_resetxlog.c:627
+#: pg_resetwal.c:834 pg_resetwal.c:836
 msgid "by value"
 msgstr "hodnotou"
 
-#: pg_resetxlog.c:626
+#: pg_resetwal.c:835
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "Způsob předávání float8 hodnot:        %s\n"
+msgstr "Způsob předávání float8 hodnot:            %s\n"
 
-#: pg_resetxlog.c:628
+#: pg_resetwal.c:837
 #, c-format
-#| msgid "Catalog version number:               %u\n"
 msgid "Data page checksum version:           %u\n"
-msgstr "Verze kontrolních součtů datových stránek:           %u\n"
+msgstr "Verze kontrolních součtů datových stránek: %u\n"
 
-#: pg_resetxlog.c:690
+#: pg_resetwal.c:851
 #, c-format
 msgid ""
-"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
-"PG_CONTROL_SIZE\n"
+"\n"
+"\n"
+"Values to be changed:\n"
+"\n"
 msgstr ""
-"%s: interní chyba -- sizeof(ControlFileData) je příliš velký ... opravte "
-"PG_CONTROL_SIZE\n"
+"\n"
+"\n"
+"Hodnoty které se změní:\n"
+"\n"
 
-#: pg_resetxlog.c:705
+#: pg_resetwal.c:855
+#, c-format
+msgid "First log segment after reset:        %s\n"
+msgstr "První log segment po resetu:               %s\n"
+
+#: pg_resetwal.c:859
+#, c-format
+msgid "NextMultiXactId:                      %u\n"
+msgstr "NextMultiXactId:                           %u\n"
+
+#: pg_resetwal.c:861
+#, c-format
+msgid "OldestMultiXid:                       %u\n"
+msgstr "OldestMultiXid:                            %u\n"
+
+#: pg_resetwal.c:863
+#, c-format
+msgid "OldestMulti's DB:                     %u\n"
+msgstr "DB k OldestMulti:                          %u\n"
+
+#: pg_resetwal.c:869
+#, c-format
+msgid "NextMultiOffset:                      %u\n"
+msgstr "NextMultiOffset:                           %u\n"
+
+#: pg_resetwal.c:875
+#, c-format
+msgid "NextOID:                              %u\n"
+msgstr "NextOID:                                   %u\n"
+
+#: pg_resetwal.c:881
+#, c-format
+msgid "NextXID:                              %u\n"
+msgstr "NextXID:                                   %u\n"
+
+#: pg_resetwal.c:883
+#, c-format
+msgid "OldestXID:                            %u\n"
+msgstr "OldestXID:                                 %u\n"
+
+#: pg_resetwal.c:885
+#, c-format
+msgid "OldestXID's DB:                       %u\n"
+msgstr "DB k OldestXID:                            %u\n"
+
+#: pg_resetwal.c:891
+#, c-format
+msgid "NextXID epoch:                        %u\n"
+msgstr "NextXID epoch:                             %u\n"
+
+#: pg_resetwal.c:897
+#, c-format
+msgid "oldestCommitTsXid:                    %u\n"
+msgstr "oldestCommitTsXid:                         %u\n"
+
+#: pg_resetwal.c:902
+#, c-format
+msgid "newestCommitTsXid:                    %u\n"
+msgstr "newestCommitTsXid:                         %u\n"
+
+#: pg_resetwal.c:986
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
 msgstr "%s: nelze vytvořit pg_control soubor: %s\n"
 
-#: pg_resetxlog.c:716
+#: pg_resetwal.c:997
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: nelze zapsat pg_control soubor: %s\n"
 
-#: pg_resetxlog.c:723 pg_resetxlog.c:1022
+#: pg_resetwal.c:1004 pg_resetwal.c:1301
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: fsync chyba: %s\n"
 
-#: pg_resetxlog.c:763 pg_resetxlog.c:834 pg_resetxlog.c:890
+#: pg_resetwal.c:1044 pg_resetwal.c:1115 pg_resetwal.c:1166
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: nelze otevřít adresář \"%s\": %s\n"
 
-#: pg_resetxlog.c:805 pg_resetxlog.c:867 pg_resetxlog.c:924
+#: pg_resetwal.c:1080 pg_resetwal.c:1137 pg_resetwal.c:1191
 #, c-format
-msgid "%s: could not read from directory \"%s\": %s\n"
+msgid "%s: could not read directory \"%s\": %s\n"
 msgstr "%s: nelze číst z adresáře \"%s\": %s\n"
 
-#: pg_resetxlog.c:848 pg_resetxlog.c:905
+#: pg_resetwal.c:1087 pg_resetwal.c:1144 pg_resetwal.c:1198
+#, c-format
+msgid "%s: could not close directory \"%s\": %s\n"
+msgstr "%s: nelze zavřít adresář \"%s\": %s\n"
+
+#: pg_resetwal.c:1128 pg_resetwal.c:1182
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: nelze smazat soubor \"%s\": %s\n"
 
-#: pg_resetxlog.c:989
+#: pg_resetwal.c:1268
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: nelze otevřít soubor \"%s\": %s\n"
 
-#: pg_resetxlog.c:1000 pg_resetxlog.c:1014
+#: pg_resetwal.c:1279 pg_resetwal.c:1293
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: nelze zapsat do souboru \"%s\": %s\n"
 
-#: pg_resetxlog.c:1033
+#: pg_resetwal.c:1312
 #, c-format
 msgid ""
-"%s resets the PostgreSQL transaction log.\n"
+"%s resets the PostgreSQL write-ahead log.\n"
 "\n"
 msgstr ""
 "%s resetuje PostgreSQL transakční log.\n"
 "\n"
 
-#: pg_resetxlog.c:1034
+#: pg_resetwal.c:1313
 #, c-format
 msgid ""
 "Usage:\n"
@@ -421,71 +570,99 @@ msgstr ""
 "  %s [VOLBA]... ADRESÁŘ\n"
 "\n"
 
-#: pg_resetxlog.c:1035
+#: pg_resetwal.c:1314
 #, c-format
 msgid "Options:\n"
 msgstr "Přepínače:\n"
 
-#: pg_resetxlog.c:1036
-#, c-format
-msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
-msgstr "  -e XIDEPOCH      nastaví epochu následujícího ID transakce\n"
-
-#: pg_resetxlog.c:1037
-#, c-format
-msgid "  -f               force update to be done\n"
-msgstr "  -f              vynutí provedení update\n"
-
-#: pg_resetxlog.c:1038
+#: pg_resetwal.c:1315
 #, c-format
 msgid ""
-"  -l XLOGFILE      force minimum WAL starting location for new transaction "
-"log\n"
+"  -c, --commit-timestamp-ids=XID,XID\n"
+"                                 set oldest and newest transactions "
+"bearing\n"
+"                                 commit timestamp (zero means no change)\n"
 msgstr ""
-"  -l XLOGFILE      vynutí minimální počáteční WAL pozici pro nový transakční "
-"log\n"
+"  -c, --commit-timestamp-ids=XID,XID\n"
+"                                 nastaví nejstarší a nejnovější s "
+"nastaveným\n"
+"                                 commit timestamp (nula znamená beze "
+"změny)\n"
 
-#: pg_resetxlog.c:1039
+#: pg_resetwal.c:1318
 #, c-format
-#| msgid "  -x XID           set next transaction ID\n"
-msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
-msgstr "  -m MXID,MXID     nastav další a nejstarší ID multitransakce\n"
+msgid " [-D, --pgdata=]DATADIR          data directory\n"
+msgstr " [-D, --pgdata=]ADRESÁŘ          datový adresář\n"
 
-#: pg_resetxlog.c:1040
+#: pg_resetwal.c:1319
+#, c-format
+msgid "  -e, --epoch=XIDEPOCH           set next transaction ID epoch\n"
+msgstr ""
+"  -e, --epoch=XIDEPOCH           nastaví epochu následujícího ID transakce\n"
+
+#: pg_resetwal.c:1320
+#, c-format
+msgid "  -f, --force                    force update to be done\n"
+msgstr "  -f, --force                    vynutí provedení update\n"
+
+#: pg_resetwal.c:1321
 #, c-format
 msgid ""
-"  -n               no update, just show extracted control values (for "
-"testing)\n"
+"  -l, --next-wal-file=WALFILE    set minimum starting location for new WAL\n"
 msgstr ""
-"  -n              bez změny, jen ukáže získané kontrolní hodnoty (pro "
-"testování)\n"
+"  -l, --next-wal-file=WALFILE    vynutí minimální počáteční WAL pozici pro "
+"nový transakční log\n"
 
-#: pg_resetxlog.c:1041
+#: pg_resetwal.c:1322
 #, c-format
-msgid "  -o OID           set next OID\n"
-msgstr "  -o OID          nastaví následující OID\n"
+msgid ""
+"  -m, --multixact-ids=MXID,MXID  set next and oldest multitransaction ID\n"
+msgstr ""
+"  -m, --multixact-ids=MXID,MXID  nastav další a nejstarší ID "
+"multitransakce\n"
 
-#: pg_resetxlog.c:1042
+#: pg_resetwal.c:1323
 #, c-format
-msgid "  -O OFFSET        set next multitransaction offset\n"
-msgstr "  -O OFFSET       nastaví offset následující multitransakce\n"
+msgid ""
+"  -n, --dry-run                  no update, just show what would be done\n"
+msgstr ""
+"  -n, --dry-run                  bez update, pouze ukáže co by bylo "
+"provedeno\n"
 
-#: pg_resetxlog.c:1043
+#: pg_resetwal.c:1324
 #, c-format
-msgid "  -V, --version    output version information, then exit\n"
-msgstr "  -V, --version    ukáže informace o verzi a skončí\n"
+msgid "  -o, --next-oid=OID             set next OID\n"
+msgstr "  -o, --next-oid=OID             nastaví následující OID\n"
 
-#: pg_resetxlog.c:1044
+#: pg_resetwal.c:1325
 #, c-format
-msgid "  -x XID           set next transaction ID\n"
-msgstr "  -x XID          nastaví ID následující transakce\n"
+msgid "  -O, --multixact-offset=OFFSET  set next multitransaction offset\n"
+msgstr ""
+"  -O, --multixact-offset=OFFSET  nastaví offset následující multitransakce\n"
 
-#: pg_resetxlog.c:1045
+#: pg_resetwal.c:1326
 #, c-format
-msgid "  -?, --help       show this help, then exit\n"
-msgstr "  -?, --help       ukáže tuto nápovědu a skončí\n"
+msgid ""
+"  -V, --version                  output version information, then exit\n"
+msgstr "  -V, --version                  ukáže informace o verzi a skončí\n"
 
-#: pg_resetxlog.c:1046
+#: pg_resetwal.c:1327
+#, c-format
+msgid "  -x, --next-transaction-id=XID  set next transaction ID\n"
+msgstr "  -x, --next-transaction-id=XID  nastaví ID následující transakce\n"
+
+#: pg_resetwal.c:1328
+#, c-format
+msgid "      --wal-segsize=SIZE         size of WAL segments, in megabytes\n"
+msgstr ""
+"      --wal-segsize=VELIKOST     velikost WAL segmentů, v megabytech\n"
+
+#: pg_resetwal.c:1329
+#, c-format
+msgid "  -?, --help                     show this help, then exit\n"
+msgstr "  -?, --help                     ukáže tuto nápovědu a skončí\n"
+
+#: pg_resetwal.c:1330
 #, c-format
 msgid ""
 "\n"
@@ -493,6 +670,31 @@ msgid ""
 msgstr ""
 "\n"
 "Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
+
+#~ msgid "%s: invalid argument for option -x\n"
+#~ msgstr "%s: neplatný argument pro volbu -x\n"
+
+#~ msgid "%s: invalid argument for option -o\n"
+#~ msgstr "%s: neplatný argument pro volbu -o\n"
+
+#~ msgid "%s: invalid argument for option -m\n"
+#~ msgstr "%s: neplatný argument pro volbu -m\n"
+
+#~ msgid "%s: invalid argument for option -O\n"
+#~ msgstr "%s: neplatný argument pro volbu -O\n"
+
+#~ msgid "%s: invalid argument for option -l\n"
+#~ msgstr "%s: neplatný argument pro volbu -l\n"
+
+#~ msgid "floating-point numbers"
+#~ msgstr "čísla s plovoucí řádovou čárkou"
+
+#~ msgid ""
+#~ "%s: internal error -- sizeof(ControlFileData) is too large ... fix "
+#~ "PG_CONTROL_SIZE\n"
+#~ msgstr ""
+#~ "%s: interní chyba -- sizeof(ControlFileData) je příliš velký ... opravte "
+#~ "PG_CONTROL_SIZE\n"
 
 #~ msgid "First log file ID after reset:        %u\n"
 #~ msgstr "První ID log souboru po resetu:       %u\n"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-18 17:16+0000\n"
-"PO-Revision-Date: 2018-05-18 22:45+0200\n"
+"POT-Creation-Date: 2018-07-30 23:46+0000\n"
+"PO-Revision-Date: 2018-07-31 06:35+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -360,139 +360,164 @@ msgstr "misslyckades med att hämta systemlokalnamn för \"%s\"\n"
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "misslyckades med att återställa gamla lokalen \"%s\"\n"
 
-#: controldata.c:128
+#: controldata.c:129 controldata.c:437
 #, c-format
 msgid "could not get control data using %s: %s\n"
 msgstr "kunde inte hämta kontrolldata med %s: %s\n"
 
-#: controldata.c:141 dump.c:51 pg_upgrade.c:332 pg_upgrade.c:369
+#: controldata.c:142 dump.c:51 pg_upgrade.c:333 pg_upgrade.c:370
 #: relfilenode.c:244 util.c:80
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: controldata.c:148
+#: controldata.c:149
 #, c-format
 msgid "%d: pg_resetwal problem\n"
 msgstr "%d: pg_resetwal-problem\n"
 
-#: controldata.c:158 controldata.c:168 controldata.c:179 controldata.c:190
-#: controldata.c:201 controldata.c:220 controldata.c:231 controldata.c:242
-#: controldata.c:253 controldata.c:264 controldata.c:275 controldata.c:278
-#: controldata.c:282 controldata.c:292 controldata.c:304 controldata.c:315
-#: controldata.c:326 controldata.c:337 controldata.c:348 controldata.c:359
-#: controldata.c:370 controldata.c:381 controldata.c:392 controldata.c:403
-#: controldata.c:414
+#: controldata.c:159 controldata.c:169 controldata.c:180 controldata.c:191
+#: controldata.c:202 controldata.c:221 controldata.c:232 controldata.c:243
+#: controldata.c:254 controldata.c:265 controldata.c:276 controldata.c:279
+#: controldata.c:283 controldata.c:293 controldata.c:305 controldata.c:316
+#: controldata.c:327 controldata.c:338 controldata.c:349 controldata.c:360
+#: controldata.c:371 controldata.c:382 controldata.c:393 controldata.c:404
+#: controldata.c:415
 #, c-format
 msgid "%d: controldata retrieval problem\n"
 msgstr "%d: problem vid hämtning av kontrolldata\n"
 
+#: controldata.c:449
+#, c-format
+msgid "%d: database cluster state problem\n"
+msgstr "%d: state-problem för databaskluster\n"
+
+#: controldata.c:466
+#, c-format
+msgid "The source cluster was not shut down cleanly.\n"
+msgstr "Källklustret har inte stängts ner på ett korrekt sätt.\n"
+
+#: controldata.c:468
+#, c-format
+msgid "The target cluster was not shut down cleanly.\n"
+msgstr "Målklustret har inte stängts ner på ett korrekt sätt\n"
+
 #: controldata.c:479
+#, c-format
+msgid "The source cluster lacks cluster state information:\n"
+msgstr "Källklustret saknar information om kluster-state:\n"
+
+#: controldata.c:481
+#, c-format
+msgid "The target cluster lacks cluster state information:\n"
+msgstr "Målklustret saknar information om kluster-state:\n"
+
+#: controldata.c:538
 #, c-format
 msgid "The source cluster lacks some required control information:\n"
 msgstr "Källklustret saknar lite kontrolldata som krävs:\n"
 
-#: controldata.c:482
+#: controldata.c:541
 #, c-format
 msgid "The target cluster lacks some required control information:\n"
 msgstr "Målklustret saknar lite kontrolldata som krävs:\n"
 
-#: controldata.c:485
+#: controldata.c:544
 #, c-format
 msgid "  checkpoint next XID\n"
 msgstr "  checkpoint nästa-XID\n"
 
-#: controldata.c:488
+#: controldata.c:547
 #, c-format
 msgid "  latest checkpoint next OID\n"
 msgstr "  senaste checkpoint nästa-OID\n"
 
-#: controldata.c:491
+#: controldata.c:550
 #, c-format
 msgid "  latest checkpoint next MultiXactId\n"
 msgstr "  senaster checkpoint nästa-MultiXactId\n"
 
-#: controldata.c:495
+#: controldata.c:554
 #, c-format
 msgid "  latest checkpoint oldest MultiXactId\n"
 msgstr "  senaste checkpoint äldsta-MultiXactId\n"
 
-#: controldata.c:498
+#: controldata.c:557
 #, c-format
 msgid "  latest checkpoint next MultiXactOffset\n"
 msgstr "  senaste checkpoint nästa-MultiXactOffset\n"
 
-#: controldata.c:501
+#: controldata.c:560
 #, c-format
 msgid "  first WAL segment after reset\n"
 msgstr "  första WAL-segmentet efter reset\n"
 
-#: controldata.c:504
+#: controldata.c:563
 #, c-format
 msgid "  float8 argument passing method\n"
 msgstr "  float8 argumentöverföringsmetod\n"
 
-#: controldata.c:507
+#: controldata.c:566
 #, c-format
 msgid "  maximum alignment\n"
 msgstr "  maximal alignment\n"
 
-#: controldata.c:510
+#: controldata.c:569
 #, c-format
 msgid "  block size\n"
 msgstr "  blockstorlek\n"
 
-#: controldata.c:513
+#: controldata.c:572
 #, c-format
 msgid "  large relation segment size\n"
 msgstr "  stora relationers segmentstorlek\n"
 
-#: controldata.c:516
+#: controldata.c:575
 #, c-format
 msgid "  WAL block size\n"
 msgstr "  WAL-blockstorlek\n"
 
-#: controldata.c:519
+#: controldata.c:578
 #, c-format
 msgid "  WAL segment size\n"
 msgstr "  WAL-segmentstorlek\n"
 
-#: controldata.c:522
+#: controldata.c:581
 #, c-format
 msgid "  maximum identifier length\n"
 msgstr "  maximal identifierarlängd\n"
 
-#: controldata.c:525
+#: controldata.c:584
 #, c-format
 msgid "  maximum number of indexed columns\n"
 msgstr "  maximalt antal indexerade kolumner\n"
 
-#: controldata.c:528
+#: controldata.c:587
 #, c-format
 msgid "  maximum TOAST chunk size\n"
 msgstr "  maximal TOAST-chunkstorlek\n"
 
-#: controldata.c:532
+#: controldata.c:591
 #, c-format
 msgid "  large-object chunk size\n"
 msgstr "  stora-objekt chunkstorlek\n"
 
-#: controldata.c:535
+#: controldata.c:594
 #, c-format
 msgid "  dates/times are integers?\n"
 msgstr "  datum/tid är heltal?\n"
 
-#: controldata.c:539
+#: controldata.c:598
 #, c-format
 msgid "  data checksum version\n"
 msgstr "  datachecksumversion\n"
 
-#: controldata.c:541
+#: controldata.c:600
 #, c-format
 msgid "Cannot continue without required control information, terminating\n"
 msgstr "Kan inte fortsätta utan kontrollinformation som krävs, avslutar\n"
 
-#: controldata.c:556
+#: controldata.c:615
 #, c-format
 msgid ""
 "old and new pg_controldata alignments are invalid or do not match\n"
@@ -501,77 +526,77 @@ msgstr ""
 "gamla och nya pg_controldata-alignments är ogiltiga eller matchar inte.\n"
 "Troligen är ett kluster en 32-bitars-installation och den andra 64-bitars\n"
 
-#: controldata.c:560
+#: controldata.c:619
 #, c-format
 msgid "old and new pg_controldata block sizes are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata-blockstorlekar är ogiltiga eller matchar inte\n"
 
-#: controldata.c:563
+#: controldata.c:622
 #, c-format
 msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata maximala relationssegmentstorlekar är ogiltiga eller matchar inte\n"
 
-#: controldata.c:566
+#: controldata.c:625
 #, c-format
 msgid "old and new pg_controldata WAL block sizes are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata WAL-blockstorlekar är ogiltiga eller matchar inte\n"
 
-#: controldata.c:569
+#: controldata.c:628
 #, c-format
 msgid "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata WAL-segmentstorlekar är ogiltiga eller matchar inte\n"
 
-#: controldata.c:572
+#: controldata.c:631
 #, c-format
 msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata maximal identifierarlängder är ogiltiga eller matchar inte\n"
 
-#: controldata.c:575
+#: controldata.c:634
 #, c-format
 msgid "old and new pg_controldata maximum indexed columns are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata maxilmalt indexerade kolumner ogiltiga eller matchar inte\n"
 
-#: controldata.c:578
+#: controldata.c:637
 #, c-format
 msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata maximal TOAST-chunkstorlek ogiltiga eller matchar inte\n"
 
-#: controldata.c:583
+#: controldata.c:642
 #, c-format
 msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match\n"
 msgstr "gamla och nya pg_controldata stora-objekt-chunkstorlekar är ogiltiga eller matchar inte\n"
 
-#: controldata.c:586
+#: controldata.c:645
 #, c-format
 msgid "old and new pg_controldata date/time storage types do not match\n"
 msgstr "gamla och nya pg_controldata datum/tid-lagringstyper matchar inte\n"
 
-#: controldata.c:599
+#: controldata.c:658
 #, c-format
 msgid "old cluster does not use data checksums but the new one does\n"
 msgstr "gamla klustret använder inte datachecksummor men nya gör det\n"
 
-#: controldata.c:602
+#: controldata.c:661
 #, c-format
 msgid "old cluster uses data checksums but the new one does not\n"
 msgstr "gamla klustret använder datachecksummor men nya gör inte det\n"
 
-#: controldata.c:604
+#: controldata.c:663
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match\n"
 msgstr "gamla och nya klustrets pg_controldata checksumversioner matchar inte\n"
 
-#: controldata.c:615
+#: controldata.c:674
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "Lägger till \".old\"-suffix till gamla global/pg_control"
 
-#: controldata.c:620
+#: controldata.c:679
 #, c-format
 msgid "Unable to rename %s to %s.\n"
 msgstr "Kan inte byta namn på %s till %s.\n"
 
-#: controldata.c:623
+#: controldata.c:682
 #, c-format
 msgid ""
 "\n"
@@ -1234,7 +1259,7 @@ msgstr ""
 "Uppgradering klar\n"
 "-----------------\n"
 
-#: pg_upgrade.c:230
+#: pg_upgrade.c:231
 #, c-format
 msgid ""
 "There seems to be a postmaster servicing the old cluster.\n"
@@ -1243,7 +1268,7 @@ msgstr ""
 "Det verkar vara en postmaster igång som hanterar gamla klustret.\n"
 "Stänga ner den postmastern och försök igen.\n"
 
-#: pg_upgrade.c:243
+#: pg_upgrade.c:244
 #, c-format
 msgid ""
 "There seems to be a postmaster servicing the new cluster.\n"
@@ -1252,72 +1277,72 @@ msgstr ""
 "Det verkar vara en postmaster igång som hanterar nya klustret.\n"
 "Stänga ner den postmastern och försök igen.\n"
 
-#: pg_upgrade.c:249
+#: pg_upgrade.c:250
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: kunde inte hitta det egna programmets körbara fil\n"
 
-#: pg_upgrade.c:266
+#: pg_upgrade.c:267
 #, c-format
 msgid "Analyzing all rows in the new cluster"
 msgstr "Analyserar alla rader i nya klustret"
 
-#: pg_upgrade.c:279
+#: pg_upgrade.c:280
 #, c-format
 msgid "Freezing all rows in the new cluster"
 msgstr "Fryser alla rader i nya klustret"
 
-#: pg_upgrade.c:299
+#: pg_upgrade.c:300
 #, c-format
 msgid "Restoring global objects in the new cluster"
 msgstr "Återställer globala objekt i nya klustret"
 
-#: pg_upgrade.c:314
+#: pg_upgrade.c:315
 #, c-format
 msgid "Restoring database schemas in the new cluster\n"
 msgstr "Återställer databasscheman i nya klustret\n"
 
-#: pg_upgrade.c:420
+#: pg_upgrade.c:421
 #, c-format
 msgid "Deleting files from new %s"
 msgstr "Raderar filer från ny %s"
 
-#: pg_upgrade.c:424
+#: pg_upgrade.c:425
 #, c-format
 msgid "could not delete directory \"%s\"\n"
 msgstr "kunde inte ta bort katalog \"%s\"\n"
 
-#: pg_upgrade.c:443
+#: pg_upgrade.c:444
 #, c-format
 msgid "Copying old %s to new server"
 msgstr "Kopierar gammal %s till ny server"
 
-#: pg_upgrade.c:470
+#: pg_upgrade.c:471
 #, c-format
 msgid "Setting next transaction ID and epoch for new cluster"
 msgstr "Sätter nästa transaktions-ID och epoch för nytt kluster"
 
-#: pg_upgrade.c:500
+#: pg_upgrade.c:501
 #, c-format
 msgid "Setting next multixact ID and offset for new cluster"
 msgstr "Sätter nästa multixact-ID och offset för nytt kluster"
 
-#: pg_upgrade.c:524
+#: pg_upgrade.c:525
 #, c-format
 msgid "Setting oldest multixact ID in new cluster"
 msgstr "Sätter äldsta multixact-ID i nytt kluster"
 
-#: pg_upgrade.c:544
+#: pg_upgrade.c:545
 #, c-format
 msgid "Resetting WAL archives"
 msgstr "Resettar WAL-arkiv"
 
-#: pg_upgrade.c:587
+#: pg_upgrade.c:588
 #, c-format
 msgid "Setting frozenxid and minmxid counters in new cluster"
 msgstr "Sätter räknarna frozenxid och minmxid för nytt kluster"
 
-#: pg_upgrade.c:589
+#: pg_upgrade.c:590
 #, c-format
 msgid "Setting minmxid counter in new cluster"
 msgstr "Sätter räknarenm minmxid för nytt kluster"
@@ -1617,21 +1642,29 @@ msgstr ""
 "alla ogiltiga index; innan dess så kommer inget av dess index användas.\n"
 "\n"
 
-#~ msgid "------------------------------------------------\n"
-#~ msgstr "------------------------------------------------\n"
+#~ msgid "unable to read permissions from \"%s\"\n"
+#~ msgstr "kunde inte läsa rättigheter från \"%s\"\n"
 
-#~ msgid "-----------------------------\n"
-#~ msgstr "-----------------------------\n"
+#~ msgid "cannot write to log file %s\n"
+#~ msgstr "kan inte skriva till loggfil %s\n"
 
-#~ msgid ""
-#~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
-#~ "because of backend API changes made during development.\n"
-#~ msgstr ""
-#~ "Detta verktyg kan bara uppgradera till PostgreSQL version 9.0 efter 2010-01-11\n"
-#~ "då backend-API-ändringar gjorts under utvecklingen.\n"
+#~ msgid "cannot find current directory\n"
+#~ msgstr "kan inte hitta aktuell katalog\n"
 
-#~ msgid "%s is not a directory\n"
-#~ msgstr "%s är inte en katalog\n"
+#~ msgid "Cannot open file %s: %m\n"
+#~ msgstr "Kan inte öppna fil %s: %m\n"
+
+#~ msgid "Cannot read line %d from %s: %m\n"
+#~ msgstr "Kan inte läsa rad %d från %s: %m\n"
+
+#~ msgid "Checking for invalid \"line\" user columns"
+#~ msgstr "Letar efter ogiltiga användarkolumner av typen \"line\""
+
+#~ msgid "----------------\n"
+#~ msgstr "----------------\n"
+
+#~ msgid "------------------\n"
+#~ msgstr "------------------\n"
 
 #~ msgid ""
 #~ "could not load library \"%s\":\n"
@@ -1640,26 +1673,18 @@ msgstr ""
 #~ "kunde inte ladda bibliotek \"%s\":\n"
 #~ "%s\n"
 
-#~ msgid "------------------\n"
-#~ msgstr "------------------\n"
+#~ msgid "%s is not a directory\n"
+#~ msgstr "%s är inte en katalog\n"
 
-#~ msgid "----------------\n"
-#~ msgstr "----------------\n"
+#~ msgid ""
+#~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
+#~ "because of backend API changes made during development.\n"
+#~ msgstr ""
+#~ "Detta verktyg kan bara uppgradera till PostgreSQL version 9.0 efter 2010-01-11\n"
+#~ "då backend-API-ändringar gjorts under utvecklingen.\n"
 
-#~ msgid "Checking for invalid \"line\" user columns"
-#~ msgstr "Letar efter ogiltiga användarkolumner av typen \"line\""
+#~ msgid "-----------------------------\n"
+#~ msgstr "-----------------------------\n"
 
-#~ msgid "Cannot read line %d from %s: %m\n"
-#~ msgstr "Kan inte läsa rad %d från %s: %m\n"
-
-#~ msgid "Cannot open file %s: %m\n"
-#~ msgstr "Kan inte öppna fil %s: %m\n"
-
-#~ msgid "cannot find current directory\n"
-#~ msgstr "kan inte hitta aktuell katalog\n"
-
-#~ msgid "cannot write to log file %s\n"
-#~ msgstr "kan inte skriva till loggfil %s\n"
-
-#~ msgid "unable to read permissions from \"%s\"\n"
-#~ msgstr "kunde inte läsa rättigheter från \"%s\"\n"
+#~ msgid "------------------------------------------------\n"
+#~ msgstr "------------------------------------------------\n"
