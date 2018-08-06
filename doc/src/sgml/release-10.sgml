@@ -35,6 +35,73 @@
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d1c6a14ba] 2018-08-06 10:53:35 -0400
+Branch: REL_11_STABLE [f6f735f78] 2018-08-06 10:53:35 -0400
+Branch: REL_10_STABLE [ab5400469] 2018-08-06 10:53:35 -0400
+Branch: REL9_6_STABLE [a8094d0fe] 2018-08-06 10:53:35 -0400
+Branch: REL9_5_STABLE [7aabfd1d8] 2018-08-06 10:53:35 -0400
+Branch: REL9_4_STABLE [6de9766b8] 2018-08-06 10:53:35 -0400
+Branch: REL9_3_STABLE [243de06be] 2018-08-06 10:53:35 -0400
+-->
+     <para>
+      Fix failure to reset <application>libpq</application>'s state fully
+      between connection attempts (Tom Lane)
+     </para>
+
+     <para>
+      An unprivileged user of <filename>dblink</filename>
+      or <filename>postgres_fdw</filename> could bypass the checks intended
+      to prevent use of server-side credentials, such as
+      a <filename>~/.pgpass</filename> file owned by the operating-system
+      user running the server.  Servers allowing peer authentication on
+      local connections are particularly vulnerable.  Other attacks such
+      as SQL injection into a <filename>postgres_fdw</filename> session
+      are also possible.
+      Attacking <filename>postgres_fdw</filename> in this way requires the
+      ability to create a foreign server object with selected connection
+      parameters, but any user with access to <filename>dblink</filename>
+      could exploit the problem.
+      In general, an attacker with the ability to select the connection
+      parameters for a <application>libpq</application>-using application
+      could cause mischief, though other plausible attack scenarios are
+      harder to think of.
+      Our thanks to Andrew Krasichkov for reporting this issue.
+      (CVE-2018-10915)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b8a1247a3] 2018-08-04 19:38:58 -0400
+Branch: REL_11_STABLE [e7154b6ac] 2018-08-04 19:38:58 -0400
+Branch: REL_10_STABLE [f6a124d01] 2018-08-04 19:38:58 -0400
+Branch: REL9_6_STABLE [b484bffe7] 2018-08-04 19:38:58 -0400
+Branch: REL9_5_STABLE [5ad143cda] 2018-08-04 19:38:59 -0400
+-->
+     <para>
+      Fix <literal>INSERT ... ON CONFLICT UPDATE</literal> through a view
+      that isn't just <literal>SELECT * FROM ...</literal>
+      (Dean Rasheed, Amit Langote)
+     </para>
+
+     <para>
+      Erroneous expansion of an updatable view could lead to crashes
+      or <quote>attribute ... has the wrong type</quote> errors, if the
+      view's <literal>SELECT</literal> list doesn't match one-to-one with
+      the underlying table's columns.
+      Furthermore, this bug could be leveraged to allow updates of columns
+      that an attacking user lacks <literal>UPDATE</literal> privilege for,
+      if that user has <literal>INSERT</literal> and <literal>UPDATE</literal>
+      privileges for some other column(s) of the table.
+      Any user could also use it for disclosure of server memory.
+      (CVE-2018-10925)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Andres Freund <andres@anarazel.de>
 Branch: master Release: REL_11_BR [a54e1f158] 2018-06-12 11:13:21 -0700
 Branch: REL_10_STABLE [2ce64caaf] 2018-06-12 11:13:21 -0700
@@ -255,29 +322,6 @@ Branch: REL_10_STABLE [4beb25c63] 2018-07-16 17:55:13 -0400
       Previously, table synchronization could misbehave if any
       subtransactions were aborted after modifying a table being
       synchronized.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [b8a1247a3] 2018-08-04 19:38:58 -0400
-Branch: REL_11_STABLE [e7154b6ac] 2018-08-04 19:38:58 -0400
-Branch: REL_10_STABLE [f6a124d01] 2018-08-04 19:38:58 -0400
-Branch: REL9_6_STABLE [b484bffe7] 2018-08-04 19:38:58 -0400
-Branch: REL9_5_STABLE [5ad143cda] 2018-08-04 19:38:59 -0400
--->
-     <para>
-      Fix <literal>INSERT ... ON CONFLICT UPDATE</literal> through a view
-      that isn't just <literal>SELECT * FROM ...</literal>
-      (Dean Rasheed, Amit Langote)
-     </para>
-
-     <para>
-      Erroneous expansion of an updatable view could lead to crashes
-      or <quote>attribute ... has the wrong type</quote> errors, if the
-      view's <literal>SELECT</literal> list doesn't match one-to-one with
-      the underlying table's columns.
      </para>
     </listitem>
 
