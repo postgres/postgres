@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-09-18 16:39+0000\n"
-"PO-Revision-Date: 2012-09-19 01:51+0200\n"
+"POT-Creation-Date: 2018-07-13 23:43+0000\n"
+"PO-Revision-Date: 2018-07-14 02:21+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Poedit 2.0.7\n"
 
 #: plpy_cursorobject.c:98
 #, c-format
@@ -28,12 +28,12 @@ msgstr "plpy.cursor očekával dotaz nebo plán"
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor jako druhý argument očekává sekvenci"
 
-#: plpy_cursorobject.c:187 plpy_spi.c:222
+#: plpy_cursorobject.c:187 plpy_spi.c:223
 #, c-format
 msgid "could not execute plan"
 msgstr "nelze spustit plán"
 
-#: plpy_cursorobject.c:190 plpy_spi.c:225
+#: plpy_cursorobject.c:190 plpy_spi.c:226
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -46,93 +46,92 @@ msgstr[2] "Očekávána posloupnost %d argumentů, předáno %d: %s"
 msgid "iterating a closed cursor"
 msgstr "iterování uzavřeného kurzoru"
 
-#: plpy_cursorobject.c:348 plpy_cursorobject.c:415
+#: plpy_cursorobject.c:348 plpy_cursorobject.c:413
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterování kurzoru ve zrušené subtransakci"
 
-#: plpy_cursorobject.c:407
+#: plpy_cursorobject.c:405
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "fetch ze zavřeného kurzoru"
 
-#: plpy_cursorobject.c:486
+#: plpy_cursorobject.c:482
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "uzavření kurzoru ve zrušené subtransakci"
 
-#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:420
+#: plpy_elog.c:108 plpy_elog.c:109 plpy_plpymodule.c:441
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpy_exec.c:90
+#: plpy_exec.c:91
 #, c-format
 msgid "unsupported set function return mode"
 msgstr "nepodporovaný návratový mód funkce vracející tabulku"
 
-#: plpy_exec.c:91
+#: plpy_exec.c:92
 #, c-format
 msgid ""
-"PL/Python set-returning functions only support returning only value per call."
+"PL/Python set-returning functions only support returning one value per call."
 msgstr ""
-"PL/Python funkce vracející tabulku podporují pouze vracení hodnoty pro každé "
-"volání."
+"PL/Python funkce vracející tabulku podporují pouze vracení jedné hodnoty pro "
+"každé volání."
 
-#: plpy_exec.c:103
+#: plpy_exec.c:104
 #, c-format
 msgid "returned object cannot be iterated"
 msgstr "přes vrácený objekt nelze iterovat"
 
-#: plpy_exec.c:104
+#: plpy_exec.c:105
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
 msgstr "PL/Python funkce vracející tabulku musí vracet iterovatelný objekt."
 
-#: plpy_exec.c:129
+#: plpy_exec.c:130
 #, c-format
 msgid "error fetching next item from iterator"
 msgstr "chyba při načítání další položky z iterátoru"
 
-#: plpy_exec.c:164
+#: plpy_exec.c:165
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
-msgstr ""
-"PL/Python funkce s návratovým typem \"void\" nevrátila hodnotu \"None\""
+msgstr "PL/Python funkce s návratovým typem \"void\" nevrátila hodnotu None"
 
-#: plpy_exec.c:288 plpy_exec.c:314
+#: plpy_exec.c:289 plpy_exec.c:315
 #, c-format
 msgid "unexpected return value from trigger procedure"
 msgstr "neočekávaná návratová hodnota z trigger procedury"
 
-#: plpy_exec.c:289
+#: plpy_exec.c:290
 #, c-format
 msgid "Expected None or a string."
 msgstr "Očekáváno None nebo řetězec."
 
-#: plpy_exec.c:304
+#: plpy_exec.c:305
 #, c-format
 msgid ""
 "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr ""
 "PL/Python trigger funkce vrátila \"MODIFY\" v DELETE triggeru -- ignorováno"
 
-#: plpy_exec.c:315
+#: plpy_exec.c:316
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "Očekáváno None, \"OK\", \"SKIP\", nebo \"MODIFY\"."
 
-#: plpy_exec.c:396
+#: plpy_exec.c:397
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "volání PyList_SetItem() selhalo během vytváření argumentů"
 
-#: plpy_exec.c:400
+#: plpy_exec.c:401
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "volání PyDict_SetItemString() selhalo během přípravy argumentů"
 
-#: plpy_exec.c:412
+#: plpy_exec.c:413
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
@@ -140,17 +139,17 @@ msgstr ""
 "funkce vracející záznam byla zavolána z kontextu, který neumožňuje přijetí "
 "záznamu"
 
-#: plpy_exec.c:450
+#: plpy_exec.c:451
 #, c-format
 msgid "while creating return value"
 msgstr "během vytváření návratové hodnoty"
 
-#: plpy_exec.c:474
+#: plpy_exec.c:475
 #, c-format
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "během vytváření argumentů triggeru nelze vytvářet nový slovník"
 
-#: plpy_exec.c:664
+#: plpy_exec.c:663
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] smazáno, nelze modifikovat řádek"
@@ -173,22 +172,22 @@ msgid ""
 msgstr ""
 "klíč \"%s\" nalezený v TD[\"new\"] neexistuje jako sloupec v triggering řádku"
 
-#: plpy_exec.c:778
+#: plpy_exec.c:777
 #, c-format
 msgid "while modifying trigger row"
 msgstr "během modifikace řádku triggeru"
 
-#: plpy_exec.c:839
+#: plpy_exec.c:838
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "vynucené ukončení subtransakce která nebyla dokončena"
 
-#: plpy_main.c:100
+#: plpy_main.c:124
 #, c-format
 msgid "Python major version mismatch in session"
-msgstr "Rozpor mezi hlavními verzemi Pythonu v session"
+msgstr "Pouze jedna major verze Pythonu může být použita v jedné session"
 
-#: plpy_main.c:101
+#: plpy_main.c:125
 #, c-format
 msgid ""
 "This session has previously used Python major version %d, and it is now "
@@ -197,37 +196,47 @@ msgstr ""
 "Tato session již dříve používala Python s hlavní verzí %d, a nyní se pokouší "
 "použít Python s hlavní verzí %d."
 
-#: plpy_main.c:103
+#: plpy_main.c:127
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Spouští se nová session pro použití jiné hlavní verze Pythonu."
 
-#: plpy_main.c:118
+#: plpy_main.c:150
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "v session je načteno několik Python knihoven"
+
+#: plpy_main.c:151
+#, c-format
+msgid "Only one Python major version can be used in one session."
+msgstr "Pouze jedna major verze Pythonu může být použita v jedné session."
+
+#: plpy_main.c:167
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "nezachycená chyba v inicializaci"
 
-#: plpy_main.c:141
+#: plpy_main.c:190
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "nepodařilo se naimportovat \"__main__\" modul"
 
-#: plpy_main.c:146
+#: plpy_main.c:195
 #, c-format
 msgid "could not create globals"
 msgstr "nepodařilo se vytvořit globals"
 
-#: plpy_main.c:150
+#: plpy_main.c:199
 #, c-format
 msgid "could not initialize globals"
 msgstr "nepodařilo se inicializovat globální proměnné (globals)"
 
-#: plpy_main.c:347
+#: plpy_main.c:408
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "PL/Python funkce \"%s\""
 
-#: plpy_main.c:354
+#: plpy_main.c:415
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "PL/Python anonymní blok kódu"
@@ -237,58 +246,62 @@ msgstr "PL/Python anonymní blok kódu"
 msgid "plan.status takes no arguments"
 msgstr "plan.status nepřijímá žádné argumenty"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
-#| msgid "could not import \"__main__\" module"
 msgid "could not import \"plpy\" module"
 msgstr "nepodařilo se naimportovat \"plpy\" modul"
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "nepodařilo se vytvořit spiexceptions modul"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "nepodařilo se naimportovat \"__main__\" modul"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:237
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "nepodařilo se vygenerovat základní SPI výjimky"
+msgid "could not create exception \"%s\""
+msgstr "nepodařilo se vygenerovat výjimku \"%s\""
 
-#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
+#: plpy_plpymodule.c:272 plpy_plpymodule.c:276
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "nepodařilo se vygenerovat SPI výjimky"
 
-#: plpy_plpymodule.c:388
+#: plpy_plpymodule.c:409
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "nepodařilo se rozbalit argumenty v plpy.elog"
 
-#: plpy_plpymodule.c:396
+#: plpy_plpymodule.c:417
 msgid "could not parse error message in plpy.elog"
 msgstr "nepodařilo se naparsovat chybovou hlášku v plpy.elog"
 
-#: plpy_procedure.c:194
+#: plpy_procedure.c:208
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr ""
 "funkce pro obsluhu triggerů mohou být volané pouze prostřednictvím triggerů"
 
-#: plpy_procedure.c:199 plpy_typeio.c:406
+#: plpy_procedure.c:213 plpy_typeio.c:409
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python funkce nemohou vracet typ %s"
 
-#: plpy_procedure.c:281
+#: plpy_procedure.c:295
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python funkce nepodporují typ %s"
 
-#: plpy_procedure.c:377
+#: plpy_procedure.c:391
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "nelze zkompiloval PL/Python funkci \"%s\""
 
-#: plpy_procedure.c:380
+#: plpy_procedure.c:394
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "nelze zkompiloval anonymní PL/Python blok"
@@ -298,45 +311,40 @@ msgstr "nelze zkompiloval anonymní PL/Python blok"
 msgid "command did not produce a result set"
 msgstr "příkaz nevrátil žádný výsledek"
 
-#: plpy_spi.c:56
+#: plpy_spi.c:57
 #, c-format
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "druhý argument pro plpy.prepare musí být posloupnost"
 
-#: plpy_spi.c:105
+#: plpy_spi.c:106
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: název typu na pozici %d není řetězec"
 
-#: plpy_spi.c:137
+#: plpy_spi.c:138
 #, c-format
 msgid "plpy.prepare does not support composite types"
 msgstr "plpy.prepare nepodporuje složené typy"
 
-#: plpy_spi.c:187
+#: plpy_spi.c:188
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute očekávala dotaz nebo plán"
 
-#: plpy_spi.c:206
+#: plpy_spi.c:207
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute jako druhý argument očekává posloupnost"
 
-#: plpy_spi.c:330
+#: plpy_spi.c:331
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "volání SPI_execute_plan selhalo: %s"
 
-#: plpy_spi.c:372
+#: plpy_spi.c:373
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "volání SPI_execute selhalo: %s"
-
-#: plpy_spi.c:439
-#, c-format
-msgid "unrecognized error in PLy_spi_execute_fetch_result"
-msgstr "nerozpoznaná chyba v PLy_spi_execute_fetch_result"
 
 #: plpy_subxactobject.c:122
 #, c-format
@@ -358,42 +366,57 @@ msgstr "tato subtransakce nebyla zahájena"
 msgid "there is no subtransaction to exit from"
 msgstr "nenalezena subtransakce k ukončení"
 
-#: plpy_typeio.c:291
+#: plpy_typeio.c:294
 #, c-format
 msgid "could not create new dictionary"
 msgstr "nepodařilo se vytvořit nový slovník"
 
-#: plpy_typeio.c:408
+#: plpy_typeio.c:411
 #, c-format
 msgid "PL/Python does not support conversion to arrays of row types."
 msgstr "PL/Python nepodporuje konverzi na pole řádkových typů."
 
-#: plpy_typeio.c:584
+#: plpy_typeio.c:540
+#, c-format
+msgid "could not import a module for Decimal constructor"
+msgstr "nepodařilo se naimportovat modul pro Decimal constructor"
+
+#: plpy_typeio.c:544
+#, c-format
+msgid "no Decimal attribute in module"
+msgstr "modul nemá žádný Decimal atribut"
+
+#: plpy_typeio.c:550
+#, c-format
+msgid "conversion from numeric to Decimal failed"
+msgstr "konverze z numeric na Decimal selhala"
+
+#: plpy_typeio.c:619
 #, c-format
 msgid "cannot convert multidimensional array to Python list"
 msgstr "vícerozměrné pole nelze převést na Python seznam (list)"
 
-#: plpy_typeio.c:585
+#: plpy_typeio.c:620
 #, c-format
 msgid "PL/Python only supports one-dimensional arrays."
 msgstr "PL/Python podporuje pouze jednorozměrná pole."
 
-#: plpy_typeio.c:591
+#: plpy_typeio.c:626
 #, c-format
 msgid "could not create new Python list"
 msgstr "nelze vytvořit nový Python seznam"
 
-#: plpy_typeio.c:650
+#: plpy_typeio.c:685
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "nepodařilo se vytvořit bytovou reprezentaci Python objektu"
 
-#: plpy_typeio.c:742
+#: plpy_typeio.c:777
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "nepodařilo se vytvořit řetězcovou reprezentaci Python objektu"
 
-#: plpy_typeio.c:753
+#: plpy_typeio.c:788
 #, c-format
 msgid ""
 "could not convert Python object into cstring: Python string representation "
@@ -402,7 +425,7 @@ msgstr ""
 "nepodařilo se převést Python objekt na cstring: zdá se že řetězcová "
 "reprezentace Python objektu obsahuje null byty"
 
-#: plpy_typeio.c:787
+#: plpy_typeio.c:823
 #, c-format
 msgid ""
 "return value of function with array return type is not a Python sequence"
@@ -410,12 +433,12 @@ msgstr ""
 "návratová hodnota funkce s návratovým typem pole není Python posloupnost "
 "(sequence)"
 
-#: plpy_typeio.c:886
+#: plpy_typeio.c:940
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "klíč \"%s\" nenalezen v mapování"
 
-#: plpy_typeio.c:887
+#: plpy_typeio.c:941
 #, c-format
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
@@ -424,17 +447,17 @@ msgstr ""
 "Pro vrácení hodnoty null ve sloupci, přidejte do mapování hodnotu None s "
 "klíčem pojmenovaným jako sloupec."
 
-#: plpy_typeio.c:935
+#: plpy_typeio.c:989
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "délka vrácené posloupnosti neodpovídala počtu sloupců v řádku"
 
-#: plpy_typeio.c:1043
+#: plpy_typeio.c:1097
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "atribut \"%s\" v Python objektu neexistuje"
 
-#: plpy_typeio.c:1044
+#: plpy_typeio.c:1098
 #, c-format
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
@@ -443,18 +466,75 @@ msgstr ""
 "Pro vrácení null ve sloupci, nechť vracený objekt má atribut pojmenovaný po "
 "sloupcis hodnotou None."
 
-#: plpy_util.c:70
+#: plpy_util.c:72
 #, c-format
-#| msgid ""
-#| "could not convert Python Unicode object to PostgreSQL server encoding"
 msgid "could not convert Python Unicode object to bytes"
 msgstr "nelze převést Python Unicode objekt na byty"
 
-#: plpy_util.c:75
+#: plpy_util.c:78
 #, c-format
-#| msgid "could not generate SPI exceptions"
 msgid "could not extract bytes from encoded string"
 msgstr "nepodařilo se získat byty z kódovaného řetězce"
+
+#~ msgid "query result has too many rows to fit in a Python list"
+#~ msgstr ""
+#~ "výsledek dotazu má příliš mnoho řádek a nevejde se to Python seznamu"
+
+#~ msgid "Argument 'message' given by name and position"
+#~ msgstr "Argument 'message' zadán jménem a pozicí"
+
+#~ msgid "'%s' is an invalid keyword argument for this function"
+#~ msgstr "'%s' je neplatný keyword argument pro tuto funkci"
+
+#~ msgid "invalid SQLSTATE code"
+#~ msgstr "chybný SQLSTATE kód"
+
+#~ msgid "cannot set system attribute \"%s\""
+#~ msgstr "nelze nastavit systémový atribut \"%s\""
+
+#~ msgid "malformed record literal: \"%s\""
+#~ msgstr "chybný literál záznamu: \"%s\""
+
+#~ msgid "Missing left parenthesis."
+#~ msgstr "Chybějící levá závorka."
+
+#~ msgid ""
+#~ "To return a composite type in an array, return the composite type as a "
+#~ "Python tuple, e.g., \"[('foo',)]\"."
+#~ msgstr ""
+#~ "Pro vrácení kompozitního typu v poli, vracejte kompozitní typ jako Python "
+#~ "tuple, e.g., \"[('foo',)]\"."
+
+#~ msgid "number of array dimensions exceeds the maximum allowed (%d)"
+#~ msgstr "počet dimenzí pole překračuje povolené maximum (%d)"
+
+#~ msgid "could not determine sequence length for function return value"
+#~ msgstr "nelze určit délku posloupnosti pro návratovou hodnotu funkce"
+
+#~ msgid "array size exceeds the maximum allowed"
+#~ msgstr "velikost pole překračuje povolené maximum"
+
+#~ msgid "wrong length of inner sequence: has length %d, but %d was expected"
+#~ msgstr "chybná délka vnitční sekvence: má délku %d, ale očekáváno bylo %d"
+
+#~ msgid ""
+#~ "To construct a multidimensional array, the inner sequences must all have "
+#~ "the same length."
+#~ msgstr ""
+#~ "Pro vytvoření vícerozměrného pole musí mít včechny vnitřní sekvence "
+#~ "stejnou délku."
+
+#~ msgid "PL/Python procedure did not return None"
+#~ msgstr "PL/Python procedura nevrátila hodnotu None"
+
+#~ msgid "PL/Python procedure \"%s\""
+#~ msgstr "PL/Python procedura \"%s\""
+
+#~ msgid "could not create the base SPI exceptions"
+#~ msgstr "nepodařilo se vygenerovat základní SPI výjimky"
+
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "nerozpoznaná chyba v PLy_spi_execute_fetch_result"
 
 #~ msgid "could not initialize plpy"
 #~ msgstr "nepodařilo se inicializovat plpy"

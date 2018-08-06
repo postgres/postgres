@@ -11224,7 +11224,7 @@ msgstr "%s n'est pas autorisé avec UNION/INTERSECT/EXCEPT"
 #: optimizer/plan/planner.c:2802
 #, c-format
 msgid "could not implement GROUP BY"
-msgstr "n'a pas pu implanté GROUP BY"
+msgstr "n'a pas pu implanter GROUP BY"
 
 #: optimizer/plan/planner.c:2803 optimizer/plan/planner.c:2971 optimizer/prep/prepunion.c:826
 #, c-format
@@ -11236,7 +11236,7 @@ msgstr ""
 #: optimizer/plan/planner.c:2970
 #, c-format
 msgid "could not implement DISTINCT"
-msgstr "n'a pas pu implanté DISTINCT"
+msgstr "n'a pas pu implanter DISTINCT"
 
 #: optimizer/plan/planner.c:3576
 #, c-format
@@ -11268,7 +11268,7 @@ msgstr "trop d'enregistrements dans la table range"
 #: optimizer/prep/prepunion.c:419
 #, c-format
 msgid "could not implement recursive UNION"
-msgstr "n'a pas pu implanté le UNION récursif"
+msgstr "n'a pas pu implanter le UNION récursif"
 
 #: optimizer/prep/prepunion.c:420
 #, c-format
@@ -11285,7 +11285,7 @@ msgstr "%s sur aucune colonne n'est pas supportée"
 #: optimizer/prep/prepunion.c:825
 #, c-format
 msgid "could not implement %s"
-msgstr "n'a pas pu implanté %s"
+msgstr "n'a pas pu implanter %s"
 
 #: optimizer/util/clauses.c:4615
 #, c-format
