@@ -17302,6 +17302,10 @@ dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo)
 	appendPQExpBuffer(delqry, "DROP EVENT TRIGGER %s;\n",
 					  qevtname);
 
+	if (dopt->binary_upgrade)
+		binary_upgrade_extension_member(query, &evtinfo->dobj,
+										"EVENT TRIGGER", qevtname, NULL);
+
 	if (evtinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 		ArchiveEntry(fout, evtinfo->dobj.catId, evtinfo->dobj.dumpId,
 					 evtinfo->dobj.name, NULL, NULL,
