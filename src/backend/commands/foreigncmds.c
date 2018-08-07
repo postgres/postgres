@@ -1231,8 +1231,12 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 		recordDependencyOnOwner(UserMappingRelationId, umId, useId);
 	}
 
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself, false);
+	/*
+	 * Perhaps someday there should be a recordDependencyOnCurrentExtension
+	 * call here; but since roles aren't members of extensions, it seems like
+	 * user mappings shouldn't be either.  Note that the grammar and pg_dump
+	 * would need to be extended too if we change this.
+	 */
 
 	/* Post creation hook for new user mapping */
 	InvokeObjectPostCreateHook(UserMappingRelationId, umId, 0);
