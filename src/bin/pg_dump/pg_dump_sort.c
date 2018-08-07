@@ -223,7 +223,7 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	DumpableObject *obj2 = *(DumpableObject *const *) p2;
 	int			cmpval;
 
-	/* Sort by type */
+	/* Sort by type's priority */
 	cmpval = dbObjectTypePriority[obj1->objType] -
 		dbObjectTypePriority[obj2->objType];
 
@@ -231,17 +231,24 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		return cmpval;
 
 	/*
-	 * Sort by namespace.  Note that all objects of the same type should
-	 * either have or not have a namespace link, so we needn't be fancy about
-	 * cases where one link is null and the other not.
+	 * Sort by namespace.  Typically, all objects of the same priority would
+	 * either have or not have a namespace link, but there are exceptions.
+	 * Sort NULL namespace after non-NULL in such cases.
 	 */
-	if (obj1->namespace && obj2->namespace)
+	if (obj1->namespace)
 	{
-		cmpval = strcmp(obj1->namespace->dobj.name,
-						obj2->namespace->dobj.name);
-		if (cmpval != 0)
-			return cmpval;
+		if (obj2->namespace)
+		{
+			cmpval = strcmp(obj1->namespace->dobj.name,
+							obj2->namespace->dobj.name);
+			if (cmpval != 0)
+				return cmpval;
+		}
+		else
+			return -1;
 	}
+	else if (obj2->namespace)
+		return 1;
 
 	/* Sort by name */
 	cmpval = strcmp(obj1->name, obj2->name);
