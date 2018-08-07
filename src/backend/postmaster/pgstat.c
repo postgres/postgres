@@ -2695,7 +2695,7 @@ CreateSharedBackendStatus(void)
 
 	if (!found)
 	{
-		MemSet(BackendActivityBuffer, 0, size);
+		MemSet(BackendActivityBuffer, 0, BackendActivityBufferSize);
 
 		/* Initialize st_activity pointers. */
 		buffer = BackendActivityBuffer;
