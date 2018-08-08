@@ -375,6 +375,7 @@ ProcedureCreate(const char *procedureName,
 		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
 		Datum		proargnames;
 		bool		isnull;
+		const char *dropcmd;
 
 		if (!replace)
 			ereport(ERROR,
@@ -400,16 +401,26 @@ ProcedureCreate(const char *procedureName,
 					  errdetail("\"%s\" is a window function.", procedureName) :
 					  0)));
 
+		dropcmd = (prokind == PROKIND_PROCEDURE ? "DROP PROCEDURE" : "DROP FUNCTION");
+
 		/*
 		 * Not okay to change the return type of the existing proc, since
 		 * existing rules, views, etc may depend on the return type.
+		 *
+		 * In case of a procedure, a changing return type means that whether
+		 * the procedure has output parameters was changed.  Since there is no
+		 * user visible return type, we produce a more specific error message.
 		 */
 		if (returnType != oldproc->prorettype ||
 			returnsSet != oldproc->proretset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("cannot change return type of existing function"),
-					 errhint("Use DROP FUNCTION %s first.",
+					 prokind == PROKIND_PROCEDURE
+					 ? errmsg("cannot change whether a procedure has output parameters")
+					 : errmsg("cannot change return type of existing function"),
+					 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
+					 errhint("Use %s %s first.",
+							 dropcmd,
 							 format_procedure(HeapTupleGetOid(oldtup)))));
 
 		/*
@@ -434,7 +445,9 @@ ProcedureCreate(const char *procedureName,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("cannot change return type of existing function"),
 						 errdetail("Row type defined by OUT parameters is different."),
-						 errhint("Use DROP FUNCTION %s first.",
+						 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
+						 errhint("Use %s %s first.",
+								 dropcmd,
 								 format_procedure(HeapTupleGetOid(oldtup)))));
 		}
 
@@ -477,7 +490,9 @@ ProcedureCreate(const char *procedureName,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("cannot change name of input parameter \"%s\"",
 									old_arg_names[j]),
-							 errhint("Use DROP FUNCTION %s first.",
+							 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
+							 errhint("Use %s %s first.",
+									 dropcmd,
 									 format_procedure(HeapTupleGetOid(oldtup)))));
 			}
 		}
@@ -501,7 +516,9 @@ ProcedureCreate(const char *procedureName,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("cannot remove parameter defaults from existing function"),
-						 errhint("Use DROP FUNCTION %s first.",
+						 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
+						 errhint("Use %s %s first.",
+								 dropcmd,
 								 format_procedure(HeapTupleGetOid(oldtup)))));
 
 			proargdefaults = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
@@ -527,7 +544,9 @@ ProcedureCreate(const char *procedureName,
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("cannot change data type of existing parameter default value"),
-							 errhint("Use DROP FUNCTION %s first.",
+							 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
+							 errhint("Use %s %s first.",
+									 dropcmd,
 									 format_procedure(HeapTupleGetOid(oldtup)))));
 				newlc = lnext(newlc);
 			}
