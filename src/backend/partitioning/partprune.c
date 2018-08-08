@@ -384,7 +384,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 			 * because in later iterations of the loop for child partitions,
 			 * we want to translate from parent to child variables.
 			 */
-			if (parentrel != subpart)
+			if (!bms_equal(parentrel->relids, subpart->relids))
 			{
 				int			nappinfos;
 				AppendRelInfo **appinfos = find_appinfos_by_relids(root,

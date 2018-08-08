@@ -2477,6 +2477,85 @@ deallocate ab_q2;
 deallocate ab_q3;
 deallocate ab_q4;
 deallocate ab_q5;
+-- UPDATE on a partition subtree has been seen to have problems.
+insert into ab values (1,2);
+explain (analyze, costs off, summary off, timing off)
+update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Update on ab_a1 (actual rows=0 loops=1)
+   Update on ab_a1_b1
+   Update on ab_a1_b2
+   Update on ab_a1_b3
+   ->  Nested Loop (actual rows=0 loops=1)
+         ->  Append (actual rows=1 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_a1_b1_1 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
+                           Index Cond: (a = 1)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_a1_b2_1 (actual rows=1 loops=1)
+                     Recheck Cond: (a = 1)
+                     Heap Blocks: exact=1
+                     ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
+                           Index Cond: (a = 1)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_a1_b3_1 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=0 loops=1)
+                           Index Cond: (a = 1)
+         ->  Materialize (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b1 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
+                           Index Cond: (a = 1)
+   ->  Nested Loop (actual rows=1 loops=1)
+         ->  Append (actual rows=1 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_a1_b1_1 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
+                           Index Cond: (a = 1)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_a1_b2_1 (actual rows=1 loops=1)
+                     Recheck Cond: (a = 1)
+                     Heap Blocks: exact=1
+                     ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
+                           Index Cond: (a = 1)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_a1_b3_1 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
+                           Index Cond: (a = 1)
+         ->  Materialize (actual rows=1 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b2 (actual rows=1 loops=1)
+                     Recheck Cond: (a = 1)
+                     Heap Blocks: exact=1
+                     ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
+                           Index Cond: (a = 1)
+   ->  Nested Loop (actual rows=0 loops=1)
+         ->  Append (actual rows=1 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_a1_b1_1 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
+                           Index Cond: (a = 1)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_a1_b2_1 (actual rows=1 loops=1)
+                     Recheck Cond: (a = 1)
+                     Heap Blocks: exact=1
+                     ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
+                           Index Cond: (a = 1)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_a1_b3_1 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
+                           Index Cond: (a = 1)
+         ->  Materialize (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b3 (actual rows=0 loops=1)
+                     Recheck Cond: (a = 1)
+                     ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
+                           Index Cond: (a = 1)
+(65 rows)
+
+table ab;
+ a | b 
+---+---
+ 1 | 3
+(1 row)
+
 drop table ab, lprt_a;
 -- Join
 create table tbl1(col1 int);
