@@ -2616,6 +2616,16 @@ quickdie(SIGNAL_ARGS)
 		whereToSendOutput = DestNone;
 
 	/*
+	 * Notify the client before exiting, to give a clue on what happened.
+	 *
+	 * It's dubious to call ereport() from a signal handler.  It is certainly
+	 * not async-signal safe.  But it seems better to try, than to disconnect
+	 * abruptly and leave the client wondering what happened.  It's remotely
+	 * possible that we crash or hang while trying to send the message, but
+	 * receiving a SIGQUIT is a sign that something has already gone badly
+	 * wrong, so there's not much to lose.  Assuming the postmaster is still
+	 * running, it will SIGKILL us soon if we get stuck for some reason.
+	 *
 	 * Ideally this should be ereport(FATAL), but then we'd not get control
 	 * back...
 	 */
@@ -2630,24 +2640,20 @@ quickdie(SIGNAL_ARGS)
 					 " database and repeat your command.")));
 
 	/*
-	 * We DO NOT want to run proc_exit() callbacks -- we're here because
-	 * shared memory may be corrupted, so we don't want to try to clean up our
-	 * transaction.  Just nail the windows shut and get out of town.  Now that
-	 * there's an atexit callback to prevent third-party code from breaking
-	 * things by calling exit() directly, we have to reset the callbacks
-	 * explicitly to make this work as intended.
-	 */
-	on_exit_reset();
-
-	/*
-	 * Note we do exit(2) not exit(0).  This is to force the postmaster into a
-	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
+	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
+	 * because shared memory may be corrupted, so we don't want to try to
+	 * clean up our transaction.  Just nail the windows shut and get out of
+	 * town.  The callbacks wouldn't be safe to run from a signal handler,
+	 * anyway.
+	 *
+	 * Note we do _exit(2) not _exit(0).  This is to force the postmaster into
+	 * a system reset cycle if someone sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
 	 * should ensure the postmaster sees this as a crash, too, but no harm in
 	 * being doubly sure.)
 	 */
-	exit(2);
+	_exit(2);
 }
 
 /*
