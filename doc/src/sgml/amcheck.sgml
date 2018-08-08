@@ -35,7 +35,7 @@
   functions.
  </para>
  <para>
-  <filename>amcheck</filename> functions may be used only by superusers.
+  <filename>amcheck</filename> functions may only be used by superusers.
  </para>
 
  <sect2>
@@ -83,14 +83,13 @@ ORDER BY c.relpages DESC LIMIT 10;
                 | pg_amop_fam_strat_index         |        5
 (10 rows)
 </screen>
-      This example shows a session that performs verification of every
-      catalog index in the database <quote>test</quote>.  Details of just
-      the 10 largest indexes verified are displayed.  Verification of
-      the presence of heap tuples as index tuples is requested for
-      unique indexes only.  Since no error is raised, all indexes
-      tested appear to be logically consistent.  Naturally, this query
-      could easily be changed to call
-      <function>bt_index_check</function> for every index in the
+      This example shows a session that performs verification of the
+      10 largest catalog indexes in the database <quote>test</quote>.
+      Verification of the presence of heap tuples as index tuples is
+      requested for the subset that are unique indexes.  Since no
+      error is raised, all indexes tested appear to be logically
+      consistent.  Naturally, this query could easily be changed to
+      call <function>bt_index_check</function> for every index in the
       database where verification is supported.
      </para>
      <para>
@@ -292,8 +291,7 @@ ORDER BY c.relpages DESC LIMIT 10;
    </listitem>
    <listitem>
     <para>
-     Corruption caused by faulty RAM, and the broader memory subsystem
-     and operating system.
+     Corruption caused by faulty RAM, or the broader memory subsystem.
     </para>
     <para>
      <productname>PostgreSQL</productname> does not protect against correctable
