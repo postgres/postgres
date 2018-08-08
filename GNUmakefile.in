@@ -78,7 +78,6 @@ GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 
 distdir	= postgresql-$(VERSION)
 dummy	= =install=
-garbage = =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
 dist: $(distdir).tar.gz $(distdir).tar.bz2
 	rm -rf $(distdir)

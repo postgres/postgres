@@ -64,8 +64,6 @@ uninstall:
 
 clean distclean:
 	rm -f *.o ecpg$(X)
-# garbage from development
-	@rm -f core a.out
 
 # `make distclean' must not remove preproc.y, preproc.c, preproc.h, or pgc.c
 # since we want to ship those files in the distribution for people with
