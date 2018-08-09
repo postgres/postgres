@@ -347,8 +347,6 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		Assert(rti < root->simple_rel_array_size);
 		/* No duplicates please */
 		Assert(relid_subpart_map[rti] == 0);
-		/* Same rel cannot be both leaf and non-leaf */
-		Assert(relid_subplan_map[rti] == 0);
 
 		relid_subpart_map[rti] = i++;
 	}
