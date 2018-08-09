@@ -1599,12 +1599,13 @@ su - postgres
    <title>Build</title>
 
    <para>
-    To start the build, type:
+    To start the build, type either of:
 <screen>
 <userinput>make</userinput>
+<userinput>make all</userinput>
 </screen>
-    (Remember to use <acronym>GNU</acronym> <application>make</application>.) The build
-    will take a few minutes depending on your
+    (Remember to use <acronym>GNU</acronym> <application>make</application>.)
+    The build will take a few minutes depending on your
     hardware. The last line displayed should be:
 <screen>
 All of PostgreSQL successfully made. Ready to install.
@@ -1622,6 +1623,18 @@ All of PostgreSQL successfully made. Ready to install.
 <screen>
 PostgreSQL, contrib, and documentation successfully made. Ready to install.
 </screen>
+   </para>
+
+   <para>
+    If you want to invoke the build from another makefile rather than
+    manually, you must unset <varname>MAKELEVEL</varname> or set it to zero,
+    for instance like this:
+<programlisting>
+build-postgresql:
+        $(MAKE) -C postgresql MAKELEVEL=0 all
+</programlisting>
+    Failure to do that can lead to strange error messages, typically about
+    missing header files.
    </para>
   </step>
 
