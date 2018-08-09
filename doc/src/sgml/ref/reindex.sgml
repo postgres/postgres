@@ -225,10 +225,15 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
 
   <para>
    Reindexing a single index or table requires being the owner of that
-   index or table.  Reindexing a database requires being the owner of
-   the database (note that the owner can therefore rebuild indexes of
-   tables owned by other users).  Of course, superusers can always
-   reindex anything.
+   index or table.  Reindexing a schema or database requires being the
+   owner of that schema or database.  Note that is therefore sometimes
+   possible for non-superusers to rebuild indexes of tables owned by
+   other users.  However, as a special exception, when
+   <command>REINDEX DATABASE</command>, <command>REINDEX SCHEMA</command>
+   or <command>REINDEX SYSTEM</command> is issued by a non-superuser,
+   indexes on shared catalogs will be skipped unless the user owns the
+   catalog (which typically won't be the case).  Of course, superusers
+   can always reindex anything.
   </para>
 
   <para>
