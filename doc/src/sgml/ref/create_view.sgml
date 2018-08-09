@@ -82,7 +82,12 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RECURSIVE</literal></term>
+    <term><literal>RECURSIVE</literal>
+      <indexterm zone="sql-createview">
+       <primary>RECURSIVE</primary>
+       <secondary>in views</secondary>
+      </indexterm>
+    </term>
     <listitem>
      <para>
       Creates a recursive view.  The syntax

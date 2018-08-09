@@ -1981,6 +1981,10 @@ GROUP BY region, product;
   </para>
 
   <para>
+   <indexterm>
+    <primary>RECURSIVE</primary>
+    <secondary>in common table expressions</secondary>
+   </indexterm>
    The optional <literal>RECURSIVE</literal> modifier changes <literal>WITH</literal>
    from a mere syntactic convenience into a feature that accomplishes
    things not otherwise possible in standard SQL.  Using
