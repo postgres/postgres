@@ -1106,8 +1106,8 @@ PartitionSchemeData object.  This reduces memory consumed by
 PartitionSchemeData objects and makes it easy to compare the partition schemes
 of joining relations.
 
-Partition-wise aggregates/grouping
-----------------------------------
+Partitionwise aggregates/grouping
+---------------------------------
 
 If the GROUP BY clause has contains all of the partition keys, all the rows
 that belong to a given group must come from a single partition; therefore,
