@@ -2835,7 +2835,7 @@ same commits as above
 -->
 
        <para>
-        Add <link linkend="pgtrgm"><application>pgtrgm</application></link>
+        Add <link linkend="pgtrgm"><application>pg_trgm</application></link>
         function <function>strict_word_similarity()</function> to compute
         the similarity of whole words (Alexander Korotkov)
        </para>
