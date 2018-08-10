@@ -173,7 +173,7 @@ static char *pgdata_native;
 /* defaults */
 static int	n_connections = 10;
 static int	n_buffers = 50;
-static char *dynamic_shared_memory_type = NULL;
+static const char *dynamic_shared_memory_type = NULL;
 
 /*
  * Warning messages for authentication methods
@@ -916,7 +916,7 @@ set_null_conf(void)
  * the postmaster either, and configure the cluster for System V shared
  * memory instead.
  */
-static char *
+static const char *
 choose_dsm_implementation(void)
 {
 #ifdef HAVE_SHM_OPEN
@@ -952,9 +952,7 @@ choose_dsm_implementation(void)
 /*
  * Determine platform-specific config settings
  *
- * Use reasonable values if kernel will let us, else scale back.  Probe
- * for max_connections first since it is subject to more constraints than
- * shared_buffers.
+ * Use reasonable values if kernel will let us, else scale back.
  */
 static void
 test_config_settings(void)
@@ -983,7 +981,6 @@ test_config_settings(void)
 				test_buffs,
 				ok_buffers = 0;
 
-
 	/*
 	 * Need to determine working DSM implementation first so that subsequent
 	 * tests don't fail because DSM setting doesn't work.
@@ -993,6 +990,10 @@ test_config_settings(void)
 	dynamic_shared_memory_type = choose_dsm_implementation();
 	printf("%s\n", dynamic_shared_memory_type);
 
+	/*
+	 * Probe for max_connections before shared_buffers, since it is subject to
+	 * more constraints than shared_buffers.
+	 */
 	printf(_("selecting default max_connections ... "));
 	fflush(stdout);
 
