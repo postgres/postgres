@@ -300,7 +300,10 @@ struct DropRelationCallbackState
 #define child_dependency_type(child_is_partition)	\
 	((child_is_partition) ? DEPENDENCY_AUTO : DEPENDENCY_NORMAL)
 
-static void truncate_check_rel(Relation rel);
+static void truncate_check_rel(Oid relid, Form_pg_class reltuple);
+static void truncate_check_activity(Relation rel);
+static void RangeVarCallbackForTruncate(const RangeVar *relation,
+							Oid relId, Oid oldRelId, void *arg);
 static List *MergeAttributes(List *schema, List *supers, char relpersistence,
 				bool is_partition, List **supOids, List **supconstr,
 				int *supOidCount);
@@ -1336,15 +1339,26 @@ ExecuteTruncate(TruncateStmt *stmt)
 		bool		recurse = rv->inh;
 		Oid			myrelid;
 
-		rel = heap_openrv(rv, AccessExclusiveLock);
-		myrelid = RelationGetRelid(rel);
+		myrelid = RangeVarGetRelidExtended(rv, AccessExclusiveLock,
+										   0, RangeVarCallbackForTruncate,
+										   NULL);
+
+		/* open the relation, we already hold a lock on it */
+		rel = heap_open(myrelid, NoLock);
+
 		/* don't throw error for "TRUNCATE foo, foo" */
 		if (list_member_oid(relids, myrelid))
 		{
 			heap_close(rel, AccessExclusiveLock);
 			continue;
 		}
-		truncate_check_rel(rel);
+
+		/*
+		 * RangeVarGetRelidExtended() has done most checks with its callback,
+		 * but other checks with the now-opened Relation remain.
+		 */
+		truncate_check_activity(rel);
+
 		rels = lappend(rels, rel);
 		relids = lappend_oid(relids, myrelid);
 		/* Log this relation only if needed for logical decoding */
@@ -1367,7 +1381,9 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 				/* find_all_inheritors already got lock */
 				rel = heap_open(childrelid, NoLock);
-				truncate_check_rel(rel);
+				truncate_check_rel(RelationGetRelid(rel), rel->rd_rel);
+				truncate_check_activity(rel);
+
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
 				/* Log this relation only if needed for logical decoding */
@@ -1450,7 +1466,8 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 				ereport(NOTICE,
 						(errmsg("truncate cascades to table \"%s\"",
 								RelationGetRelationName(rel))));
-				truncate_check_rel(rel);
+				truncate_check_rel(relid, rel->rd_rel);
+				truncate_check_activity(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, relid);
 				/* Log this relation only if needed for logical decoding */
@@ -1700,38 +1717,47 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 }
 
 /*
- * Check that a given rel is safe to truncate.  Subroutine for ExecuteTruncate
+ * Check that a given relation is safe to truncate.  Subroutine for
+ * ExecuteTruncate() and RangeVarCallbackForTruncate().
  */
 static void
-truncate_check_rel(Relation rel)
+truncate_check_rel(Oid relid, Form_pg_class reltuple)
 {
 	AclResult	aclresult;
+	char	   *relname = NameStr(reltuple->relname);
 
 	/*
 	 * Only allow truncate on regular tables and partitioned tables (although,
 	 * the latter are only being included here for the following checks; no
 	 * physical truncation will occur in their case.)
 	 */
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+	if (reltuple->relkind != RELKIND_RELATION &&
+		reltuple->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						RelationGetRelationName(rel))));
+				 errmsg("\"%s\" is not a table", relname)));
 
 	/* Permissions checks */
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-								  ACL_TRUNCATE);
+	aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_TRUNCATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),
-					   RelationGetRelationName(rel));
+		aclcheck_error(aclresult, get_relkind_objtype(reltuple->relkind),
+					   relname);
 
-	if (!allowSystemTableMods && IsSystemRelation(rel))
+	if (!allowSystemTableMods && IsSystemClass(relid, reltuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
+						relname)));
+}
 
+/*
+ * Set of extra sanity checks to check if a given relation is safe to
+ * truncate.  This is split with truncate_check_rel() as
+ * RangeVarCallbackForTruncate() cannot open a Relation yet.
+ */
+static void
+truncate_check_activity(Relation rel)
+{
 	/*
 	 * Don't allow truncate on temp tables of other backends ... their local
 	 * buffer manager is not going to cope.
@@ -13417,6 +13443,28 @@ RangeVarCallbackOwnsTable(const RangeVar *relation,
 	/* Check permissions */
 	if (!pg_class_ownercheck(relId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relId)), relation->relname);
+}
+
+/*
+ * Callback to RangeVarGetRelidExtended() for TRUNCATE processing.
+ */
+static void
+RangeVarCallbackForTruncate(const RangeVar *relation,
+							Oid relId, Oid oldRelId, void *arg)
+{
+	HeapTuple	tuple;
+
+	/* Nothing to do if the relation was not found. */
+	if (!OidIsValid(relId))
+		return;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relId));
+	if (!HeapTupleIsValid(tuple))	/* should not happen */
+		elog(ERROR, "cache lookup failed for relation %u", relId);
+
+	truncate_check_rel(relId, (Form_pg_class) GETSTRUCT(tuple));
+
+	ReleaseSysCache(tuple);
 }
 
 /*
