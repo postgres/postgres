@@ -133,7 +133,7 @@ spgGetCache(Relation index)
 			if (!OidIsValid(index_getprocid(index, 1, SPGIST_COMPRESS_PROC)))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("compress method must not defined when leaf type is different from input type")));
+						 errmsg("compress method must be defined when leaf type is different from input type")));
 
 			fillTypeDesc(&cache->attLeafType, cache->config.leafType);
 		}
