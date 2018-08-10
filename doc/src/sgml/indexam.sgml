@@ -385,7 +385,8 @@ amcostestimate (PlannerInfo *root,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
                 Selectivity *indexSelectivity,
-                double *indexCorrelation);
+                double *indexCorrelation,
+                double *indexPages);
 </programlisting>
    Estimate the costs of an index scan.  This function is described fully
    in <xref linkend="index-cost-estimation"/>, below.
@@ -1155,7 +1156,8 @@ amcostestimate (PlannerInfo *root,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
                 Selectivity *indexSelectivity,
-                double *indexCorrelation);
+                double *indexCorrelation,
+                double *indexPages);
 </programlisting>
 
    The first three parameters are inputs:
@@ -1197,7 +1199,7 @@ amcostestimate (PlannerInfo *root,
   </para>
 
   <para>
-   The last four parameters are pass-by-reference outputs:
+   The last five parameters are pass-by-reference outputs:
 
    <variablelist>
     <varlistentry>
@@ -1233,6 +1235,15 @@ amcostestimate (PlannerInfo *root,
       <para>
        Set to correlation coefficient between index scan order and
        underlying table's order
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>*indexPages</parameter></term>
+     <listitem>
+      <para>
+       Set to number of index leaf pages
       </para>
      </listitem>
     </varlistentry>
@@ -1281,6 +1292,11 @@ amcostestimate (PlannerInfo *root,
    -1.0 and 1.0) between the index order and the table order.  This is used
    to adjust the estimate for the cost of fetching rows from the parent
    table.
+  </para>
+
+  <para>
+   The <parameter>indexPages</parameter> should be set to the number of leaf pages.
+   This is used to estimate the number of workers for parallel index scan.
   </para>
 
   <para>
