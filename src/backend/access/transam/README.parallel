@@ -125,6 +125,10 @@ worker.  This includes:
   - State related to pending REINDEX operations, which prevents access to
     an index that is currently being rebuilt.
 
+  - Active relmapper.c mapping state.  This is needed to allow consistent
+    answers when fetching the current relfilenode for relation oids of
+    mapped relations.
+
 To prevent unprincipled deadlocks when running in parallel mode, this code
 also arranges for the leader and all workers to participate in group
 locking.  See src/backend/storage/lmgr/README for more details.

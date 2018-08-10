@@ -37,6 +37,7 @@
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
+#include "utils/relmapper.h"
 #include "utils/snapmgr.h"
 #include "utils/typcache.h"
 
@@ -69,6 +70,7 @@
 #define PARALLEL_KEY_ENTRYPOINT				UINT64CONST(0xFFFFFFFFFFFF0009)
 #define PARALLEL_KEY_SESSION_DSM			UINT64CONST(0xFFFFFFFFFFFF000A)
 #define PARALLEL_KEY_REINDEX_STATE			UINT64CONST(0xFFFFFFFFFFFF000B)
+#define PARALLEL_KEY_RELMAPPER_STATE		UINT64CONST(0xFFFFFFFFFFFF000C)
 
 /* Fixed-size parallel state. */
 typedef struct FixedParallelState
@@ -205,6 +207,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	Size		asnaplen = 0;
 	Size		tstatelen = 0;
 	Size		reindexlen = 0;
+	Size		relmapperlen = 0;
 	Size		segsize = 0;
 	int			i;
 	FixedParallelState *fps;
@@ -256,8 +259,10 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_estimate_chunk(&pcxt->estimator, sizeof(dsm_handle));
 		reindexlen = EstimateReindexStateSpace();
 		shm_toc_estimate_chunk(&pcxt->estimator, reindexlen);
+		relmapperlen = EstimateRelationMapSpace();
+		shm_toc_estimate_chunk(&pcxt->estimator, relmapperlen);
 		/* If you add more chunks here, you probably need to add keys. */
-		shm_toc_estimate_keys(&pcxt->estimator, 8);
+		shm_toc_estimate_keys(&pcxt->estimator, 9);
 
 		/* Estimate space need for error queues. */
 		StaticAssertStmt(BUFFERALIGN(PARALLEL_ERROR_QUEUE_SIZE) ==
@@ -327,6 +332,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		char	   *asnapspace;
 		char	   *tstatespace;
 		char	   *reindexspace;
+		char	   *relmapperspace;
 		char	   *error_queue_space;
 		char	   *session_dsm_handle_space;
 		char	   *entrypointstate;
@@ -372,6 +378,12 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		reindexspace = shm_toc_allocate(pcxt->toc, reindexlen);
 		SerializeReindexState(reindexlen, reindexspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_REINDEX_STATE, reindexspace);
+
+		/* Serialize relmapper state. */
+		relmapperspace = shm_toc_allocate(pcxt->toc, relmapperlen);
+		SerializeRelationMap(relmapperlen, relmapperspace);
+		shm_toc_insert(pcxt->toc, PARALLEL_KEY_RELMAPPER_STATE,
+					   relmapperspace);
 
 		/* Allocate space for worker information. */
 		pcxt->worker = palloc0(sizeof(ParallelWorkerInfo) * pcxt->nworkers);
@@ -1205,6 +1217,7 @@ ParallelWorkerMain(Datum main_arg)
 	char	   *asnapspace;
 	char	   *tstatespace;
 	char	   *reindexspace;
+	char	   *relmapperspace;
 	StringInfoData msgbuf;
 	char	   *session_dsm_handle_space;
 
@@ -1379,6 +1392,10 @@ ParallelWorkerMain(Datum main_arg)
 	/* Restore reindex state. */
 	reindexspace = shm_toc_lookup(toc, PARALLEL_KEY_REINDEX_STATE, false);
 	RestoreReindexState(reindexspace);
+
+	/* Restore relmapper state. */
+	relmapperspace = shm_toc_lookup(toc, PARALLEL_KEY_RELMAPPER_STATE, false);
+	RestoreRelationMap(relmapperspace);
 
 	/*
 	 * We've initialized all of our state now; nothing should change
