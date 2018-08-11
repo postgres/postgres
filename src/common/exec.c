@@ -124,8 +124,10 @@ find_my_exec(const char *argv0, char *retpath)
 
 	if (!getcwd(cwd, MAXPGPATH))
 	{
+		int			save_errno = errno;
+
 		log_error(_("could not identify current directory: %s"),
-				  strerror(errno));
+				  strerror(save_errno));
 		return -1;
 	}
 
@@ -238,8 +240,10 @@ resolve_symlinks(char *path)
 	 */
 	if (!getcwd(orig_wd, MAXPGPATH))
 	{
+		int			save_errno = errno;
+
 		log_error(_("could not identify current directory: %s"),
-				  strerror(errno));
+				  strerror(save_errno));
 		return -1;
 	}
 
@@ -254,7 +258,10 @@ resolve_symlinks(char *path)
 			*lsep = '\0';
 			if (chdir(path) == -1)
 			{
-				log_error4(_("could not change directory to \"%s\": %s"), path, strerror(errno));
+				int			save_errno = errno;
+
+				log_error4(_("could not change directory to \"%s\": %s"),
+						   path, strerror(save_errno));
 				return -1;
 			}
 			fname = lsep + 1;
@@ -281,8 +288,10 @@ resolve_symlinks(char *path)
 
 	if (!getcwd(path, MAXPGPATH))
 	{
+		int			save_errno = errno;
+
 		log_error(_("could not identify current directory: %s"),
-				  strerror(errno));
+				  strerror(save_errno));
 		return -1;
 	}
 	join_path_components(path, path, link_buf);
@@ -290,7 +299,10 @@ resolve_symlinks(char *path)
 
 	if (chdir(orig_wd) == -1)
 	{
-		log_error4(_("could not change directory to \"%s\": %s"), orig_wd, strerror(errno));
+		int			save_errno = errno;
+
+		log_error4(_("could not change directory to \"%s\": %s"),
+				   orig_wd, strerror(save_errno));
 		return -1;
 	}
 #endif							/* HAVE_READLINK */
@@ -520,7 +532,10 @@ pclose_check(FILE *stream)
 	if (exitstatus == -1)
 	{
 		/* pclose() itself failed, and hopefully set errno */
-		log_error(_("pclose failed: %s"), strerror(errno));
+		int			save_errno = errno;
+
+		log_error(_("pclose failed: %s"),
+				  strerror(save_errno));
 	}
 	else
 	{

@@ -70,6 +70,23 @@
 /* SQLSTATE codes for errors are defined in a separate file */
 #include "utils/errcodes.h"
 
+/*
+ * Provide a way to prevent "errno" from being accidentally used inside an
+ * elog() or ereport() invocation.  Since we know that some operating systems
+ * define errno as something involving a function call, we'll put a local
+ * variable of the same name as that function in the local scope to force a
+ * compile error.  On platforms that don't define errno in that way, nothing
+ * happens, so we get no warning ... but we can live with that as long as it
+ * happens on some popular platforms.
+ */
+#if defined(errno) && defined(__linux__)
+#define pg_prevent_errno_in_scope() int __errno_location pg_attribute_unused()
+#elif defined(errno) && (defined(__darwin__) || defined(__freebsd__))
+#define pg_prevent_errno_in_scope() int __error pg_attribute_unused()
+#else
+#define pg_prevent_errno_in_scope()
+#endif
+
 
 /*----------
  * New-style error reporting API: to be used in this way:
@@ -103,6 +120,7 @@
 #ifdef HAVE__BUILTIN_CONSTANT_P
 #define ereport_domain(elevel, domain, rest)	\
 	do { \
+		pg_prevent_errno_in_scope(); \
 		if (errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
 			errfinish rest; \
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
@@ -112,6 +130,7 @@
 #define ereport_domain(elevel, domain, rest)	\
 	do { \
 		const int elevel_ = (elevel); \
+		pg_prevent_errno_in_scope(); \
 		if (errstart(elevel_, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
 			errfinish rest; \
 		if (elevel_ >= ERROR) \
@@ -198,6 +217,7 @@ extern int	getinternalerrposition(void);
 #ifdef HAVE__BUILTIN_CONSTANT_P
 #define elog(elevel, ...)  \
 	do { \
+		pg_prevent_errno_in_scope(); \
 		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
 		elog_finish(elevel, __VA_ARGS__); \
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
@@ -206,6 +226,7 @@ extern int	getinternalerrposition(void);
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
 #define elog(elevel, ...)  \
 	do { \
+		pg_prevent_errno_in_scope(); \
 		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
 		{ \
 			const int elevel_ = (elevel); \
