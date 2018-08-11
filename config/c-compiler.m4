@@ -19,12 +19,12 @@ fi])# PGAC_C_SIGNED
 
 # PGAC_C_PRINTF_ARCHETYPE
 # -----------------------
-# Set the format archetype used by gcc to check printf type functions.  We
-# prefer "gnu_printf", which includes what glibc uses, such as %m for error
-# strings and %lld for 64 bit long longs.  GCC 4.4 introduced it.  It makes a
-# dramatic difference on Windows.
+# Set the format archetype used by gcc to check elog/ereport functions.
+# This should accept %m, whether or not the platform's printf does.
+# We use "gnu_printf" if possible, which does that, although in some cases
+# it might do more than we could wish.
 AC_DEFUN([PGAC_PRINTF_ARCHETYPE],
-[AC_CACHE_CHECK([for printf format archetype], pgac_cv_printf_archetype,
+[AC_CACHE_CHECK([for printf format archetype for %m], pgac_cv_printf_archetype,
 [ac_save_c_werror_flag=$ac_c_werror_flag
 ac_c_werror_flag=yes
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
@@ -34,8 +34,8 @@ __attribute__((format(gnu_printf, 2, 3)));], [])],
                   [pgac_cv_printf_archetype=gnu_printf],
                   [pgac_cv_printf_archetype=printf])
 ac_c_werror_flag=$ac_save_c_werror_flag])
-AC_DEFINE_UNQUOTED([PG_PRINTF_ATTRIBUTE], [$pgac_cv_printf_archetype],
-                   [Define to gnu_printf if compiler supports it, else printf.])
+AC_DEFINE_UNQUOTED([PG_PRINTF_ATTRIBUTE_M], [$pgac_cv_printf_archetype],
+                   [Define as a format archetype that accepts %m, if available, else printf.])
 ])# PGAC_PRINTF_ARCHETYPE
 
 

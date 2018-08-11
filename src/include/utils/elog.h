@@ -133,25 +133,25 @@ extern int	errcode(int sqlerrcode);
 extern int	errcode_for_file_access(void);
 extern int	errcode_for_socket_access(void);
 
-extern int	errmsg(const char *fmt,...) pg_attribute_printf(1, 2);
-extern int	errmsg_internal(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errmsg(const char *fmt,...) pg_attribute_printf_m(1, 2);
+extern int	errmsg_internal(const char *fmt,...) pg_attribute_printf_m(1, 2);
 
 extern int errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-			  unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+			  unsigned long n,...) pg_attribute_printf_m(1, 4) pg_attribute_printf_m(2, 4);
 
-extern int	errdetail(const char *fmt,...) pg_attribute_printf(1, 2);
-extern int	errdetail_internal(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errdetail(const char *fmt,...) pg_attribute_printf_m(1, 2);
+extern int	errdetail_internal(const char *fmt,...) pg_attribute_printf_m(1, 2);
 
-extern int	errdetail_log(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errdetail_log(const char *fmt,...) pg_attribute_printf_m(1, 2);
 
 extern int errdetail_log_plural(const char *fmt_singular,
 					 const char *fmt_plural,
-					 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+					 unsigned long n,...) pg_attribute_printf_m(1, 4) pg_attribute_printf_m(2, 4);
 
 extern int errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-				 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+				 unsigned long n,...) pg_attribute_printf_m(1, 4) pg_attribute_printf_m(2, 4);
 
-extern int	errhint(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errhint(const char *fmt,...) pg_attribute_printf_m(1, 2);
 
 /*
  * errcontext() is typically called in error context callback functions, not
@@ -165,7 +165,7 @@ extern int	errhint(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int	set_errcontext_domain(const char *domain);
 
-extern int	errcontext_msg(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errcontext_msg(const char *fmt,...) pg_attribute_printf_m(1, 2);
 
 extern int	errhidestmt(bool hide_stmt);
 extern int	errhidecontext(bool hide_ctx);
@@ -222,13 +222,13 @@ extern int	getinternalerrposition(void);
 #endif							/* HAVE__VA_ARGS */
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
-extern void elog_finish(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);
+extern void elog_finish(int elevel, const char *fmt,...) pg_attribute_printf_m(2, 3);
 
 
 /* Support for constructing error strings separately from ereport() calls */
 
 extern void pre_format_elog_string(int errnumber, const char *domain);
-extern char *format_elog_string(const char *fmt,...) pg_attribute_printf(1, 2);
+extern char *format_elog_string(const char *fmt,...) pg_attribute_printf_m(1, 2);
 
 
 /* Support for attaching context information to error reports */
@@ -407,9 +407,9 @@ extern void set_syslog_parameters(const char *ident, int facility);
 #endif
 
 /*
- * Write errors to stderr (or by equal means when stderr is
- * not available). Used before ereport/elog can be used
- * safely (memory context, GUC load etc)
+ * Write errors to stderr (or by comparable means when stderr is not
+ * available).  Used before ereport/elog can be used safely (memory context,
+ * GUC load etc).  Note that this does *not* accept "%m".
  */
 extern void write_stderr(const char *fmt,...) pg_attribute_printf(1, 2);
 

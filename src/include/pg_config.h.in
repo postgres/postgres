@@ -809,8 +809,8 @@
 /* PostgreSQL major version as a string */
 #undef PG_MAJORVERSION
 
-/* Define to gnu_printf if compiler supports it, else printf. */
-#undef PG_PRINTF_ATTRIBUTE
+/* Define as a format archetype that accepts %m, if available, else printf. */
+#undef PG_PRINTF_ATTRIBUTE_M
 
 /* PostgreSQL version as a string */
 #undef PG_VERSION
