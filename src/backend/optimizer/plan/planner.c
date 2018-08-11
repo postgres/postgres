@@ -1324,6 +1324,59 @@ inheritance_planner(PlannerInfo *root)
 		parent_rte->securityQuals = NIL;
 
 		/*
+		 * Mark whether we're planning a query to a partitioned table or an
+		 * inheritance parent.
+		 */
+		subroot->inhTargetKind =
+			partitioned_relids ? INHKIND_PARTITIONED : INHKIND_INHERITED;
+
+		/*
+		 * If this child is further partitioned, remember it as a parent.
+		 * Since a partitioned table does not have any data, we don't need to
+		 * create a plan for it, and we can stop processing it here.  We do,
+		 * however, need to remember its modified PlannerInfo for use when
+		 * processing its children, since we'll update their varnos based on
+		 * the delta from immediate parent to child, not from top to child.
+		 *
+		 * Note: a very non-obvious point is that we have not yet added
+		 * duplicate subquery RTEs to the subroot's rtable.  We mustn't,
+		 * because then its children would have two sets of duplicates,
+		 * confusing matters.
+		 */
+		if (child_rte->inh)
+		{
+			Assert(child_rte->relkind == RELKIND_PARTITIONED_TABLE);
+			parent_relids = bms_add_member(parent_relids, appinfo->child_relid);
+			parent_roots[appinfo->child_relid] = subroot;
+
+			continue;
+		}
+
+		/*
+		 * Set the nominal target relation of the ModifyTable node if not
+		 * already done.  We use the inheritance parent RTE as the nominal
+		 * target relation if it's a partitioned table (see just above this
+		 * loop).  In the non-partitioned parent case, we'll use the first
+		 * child relation (even if it's excluded) as the nominal target
+		 * relation.  Because of the way expand_inherited_rtentry works, the
+		 * latter should be the RTE representing the parent table in its role
+		 * as a simple member of the inheritance set.
+		 *
+		 * It would be logically cleaner to *always* use the inheritance
+		 * parent RTE as the nominal relation; but that RTE is not otherwise
+		 * referenced in the plan in the non-partitioned inheritance case.
+		 * Instead the duplicate child RTE created by expand_inherited_rtentry
+		 * is used elsewhere in the plan, so using the original parent RTE
+		 * would give rise to confusing use of multiple aliases in EXPLAIN
+		 * output for what the user will think is the "same" table.  OTOH,
+		 * it's not a problem in the partitioned inheritance case, because the
+		 * duplicate child RTE added for the parent does not appear anywhere
+		 * else in the plan tree.
+		 */
+		if (nominalRelation < 0)
+			nominalRelation = appinfo->child_relid;
+
+		/*
 		 * The rowMarks list might contain references to subquery RTEs, so
 		 * make a copy that we can apply ChangeVarNodes to.  (Fortunately, the
 		 * executor doesn't need to see the modified copies --- we can just
@@ -1426,55 +1479,8 @@ inheritance_planner(PlannerInfo *root)
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot->placeholder_list == NIL);
 
-		/*
-		 * Mark if we're planning a query to a partitioned table or an
-		 * inheritance parent.
-		 */
-		subroot->inhTargetKind =
-			partitioned_relids ? INHKIND_PARTITIONED : INHKIND_INHERITED;
-
-		/*
-		 * If the child is further partitioned, remember it as a parent. Since
-		 * a partitioned table does not have any data, we don't need to create
-		 * a plan for it. We do, however, need to remember the PlannerInfo for
-		 * use when processing its children.
-		 */
-		if (child_rte->inh)
-		{
-			Assert(child_rte->relkind == RELKIND_PARTITIONED_TABLE);
-			parent_relids =
-				bms_add_member(parent_relids, appinfo->child_relid);
-			parent_roots[appinfo->child_relid] = subroot;
-
-			continue;
-		}
-
 		/* Generate Path(s) for accessing this result relation */
 		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
-
-		/*
-		 * Set the nomimal target relation of the ModifyTable node if not
-		 * already done.  We use the inheritance parent RTE as the nominal
-		 * target relation if it's a partitioned table (see just above this
-		 * loop).  In the non-partitioned parent case, we'll use the first
-		 * child relation (even if it's excluded) as the nominal target
-		 * relation.  Because of the way expand_inherited_rtentry works, the
-		 * latter should be the RTE representing the parent table in its role
-		 * as a simple member of the inheritance set.
-		 *
-		 * It would be logically cleaner to *always* use the inheritance
-		 * parent RTE as the nominal relation; but that RTE is not otherwise
-		 * referenced in the plan in the non-partitioned inheritance case.
-		 * Instead the duplicate child RTE created by expand_inherited_rtentry
-		 * is used elsewhere in the plan, so using the original parent RTE
-		 * would give rise to confusing use of multiple aliases in EXPLAIN
-		 * output for what the user will think is the "same" table.  OTOH,
-		 * it's not a problem in the partitioned inheritance case, because the
-		 * duplicate child RTE added for the parent does not appear anywhere
-		 * else in the plan tree.
-		 */
-		if (nominalRelation < 0)
-			nominalRelation = appinfo->child_relid;
 
 		/*
 		 * Select cheapest path in case there's more than one.  We always run
@@ -1493,9 +1499,9 @@ inheritance_planner(PlannerInfo *root)
 			continue;
 
 		/*
-		 * Add the current parent's RT index to the partitione_rels set if
-		 * we're going to create the ModifyTable path for a partitioned root
-		 * table.
+		 * Add the current parent's RT index to the partitioned_relids set if
+		 * we're creating the ModifyTable path for a partitioned root table.
+		 * (We only care about parents of non-excluded children.)
 		 */
 		if (partitioned_relids)
 			partitioned_relids = bms_add_member(partitioned_relids,
