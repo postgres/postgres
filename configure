@@ -13362,8 +13362,8 @@ _ACEOF
     ;;
 esac
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for printf format archetype for %m" >&5
-$as_echo_n "checking for printf format archetype for %m... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for printf format archetype" >&5
+$as_echo_n "checking for printf format archetype... " >&6; }
 if ${pgac_cv_printf_archetype+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -13394,7 +13394,7 @@ fi
 $as_echo "$pgac_cv_printf_archetype" >&6; }
 
 cat >>confdefs.h <<_ACEOF
-#define PG_PRINTF_ATTRIBUTE_M $pgac_cv_printf_archetype
+#define PG_PRINTF_ATTRIBUTE $pgac_cv_printf_archetype
 _ACEOF
 
 

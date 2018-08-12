@@ -126,14 +126,10 @@
 /* GCC and XLC support format attributes */
 #if defined(__GNUC__) || defined(__IBMC__)
 #define pg_attribute_format_arg(a) __attribute__((format_arg(a)))
-/* Use for functions wrapping stdio's printf, which often doesn't take %m: */
-#define pg_attribute_printf(f,a) __attribute__((format(printf, f, a)))
-/* Use for elog/ereport, which implement %m for themselves: */
-#define pg_attribute_printf_m(f,a) __attribute__((format(PG_PRINTF_ATTRIBUTE_M, f, a)))
+#define pg_attribute_printf(f,a) __attribute__((format(PG_PRINTF_ATTRIBUTE, f, a)))
 #else
 #define pg_attribute_format_arg(a)
 #define pg_attribute_printf(f,a)
-#define pg_attribute_printf_m(f,a)
 #endif
 
 /* GCC, Sunpro and XLC support aligned, packed and noreturn */
