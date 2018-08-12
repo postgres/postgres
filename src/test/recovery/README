@@ -9,6 +9,8 @@ Running the tests
 =================
 
 NOTE: You must have given the --enable-tap-tests argument to configure.
+Also, to use "make installcheck", you must have built and installed
+contrib/test_decoding in addition to the core code.
 
 Run
     make check
