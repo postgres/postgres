@@ -164,7 +164,7 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	/* Only XMLTABLE is supported currently */
 	scanstate->routine = &XmlTableRoutine;
 
-	scanstate->perValueCxt =
+	scanstate->perTableCxt =
 		AllocSetContextCreate(CurrentMemoryContext,
 							  "TableFunc per value context",
 							  ALLOCSET_DEFAULT_SIZES);
@@ -282,6 +282,16 @@ tfuncFetchRows(TableFuncScanState *tstate, ExprContext *econtext)
 	oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 	tstate->tupstore = tuplestore_begin_heap(false, false, work_mem);
 
+	/*
+	 * Each call to fetch a new set of rows - of which there may be very many
+	 * if XMLTABLE is being used in a lateral join - will allocate a possibly
+	 * substantial amount of memory, so we cannot use the per-query context
+	 * here. perTableCxt now serves the same function as "argcontext" does in
+	 * FunctionScan - a place to store per-one-call (i.e. one result table)
+	 * lifetime data (as opposed to per-query or per-result-tuple).
+	 */
+	MemoryContextSwitchTo(tstate->perTableCxt);
+
 	PG_TRY();
 	{
 		routine->InitOpaque(tstate,
@@ -313,14 +323,16 @@ tfuncFetchRows(TableFuncScanState *tstate, ExprContext *econtext)
 	}
 	PG_END_TRY();
 
-	/* return to original memory context, and clean up */
-	MemoryContextSwitchTo(oldcxt);
+	/* clean up and return to original memory context */
 
 	if (tstate->opaque != NULL)
 	{
 		routine->DestroyOpaque(tstate);
 		tstate->opaque = NULL;
 	}
+
+	MemoryContextSwitchTo(oldcxt);
+	MemoryContextReset(tstate->perTableCxt);
 
 	return;
 }
@@ -428,7 +440,14 @@ tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext)
 
 	ordinalitycol =
 		((TableFuncScan *) (tstate->ss.ps.plan))->tablefunc->ordinalitycol;
-	oldcxt = MemoryContextSwitchTo(tstate->perValueCxt);
+
+	/*
+	 * We need a short-lived memory context that we can clean up each time
+	 * around the loop, to avoid wasting space. Our default per-tuple context
+	 * is fine for the job, since we won't have used it for anything yet in
+	 * this tuple cycle.
+	 */
+	oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Keep requesting rows from the table builder until there aren't any.
@@ -493,7 +512,7 @@ tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext)
 
 		tuplestore_putvalues(tstate->tupstore, tupdesc, values, nulls);
 
-		MemoryContextReset(tstate->perValueCxt);
+		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 	}
 
 	MemoryContextSwitchTo(oldcxt);
