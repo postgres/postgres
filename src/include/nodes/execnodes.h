@@ -1580,7 +1580,7 @@ typedef struct TableFuncScanState
 	FmgrInfo   *in_functions;	/* input function for each column */
 	Oid		   *typioparams;	/* typioparam for each column */
 	int64		ordinal;		/* row number to be output next */
-	MemoryContext perValueCxt;	/* short life context for value evaluation */
+	MemoryContext perTableCxt;	/* per-table context */
 	Tuplestorestate *tupstore;	/* output tuple store */
 } TableFuncScanState;
 
