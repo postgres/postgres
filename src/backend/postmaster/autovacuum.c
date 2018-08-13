@@ -2080,14 +2080,11 @@ do_autovacuum(void)
 		 */
 		if (classForm->relpersistence == RELPERSISTENCE_TEMP)
 		{
-			int			backendID;
-
-			backendID = GetTempNamespaceBackendId(classForm->relnamespace);
-
-			/* We just ignore it if the owning backend is still active */
-			if (backendID != InvalidBackendId &&
-				(backendID == MyBackendId ||
-				 BackendIdGetProc(backendID) == NULL))
+			/*
+			 * We just ignore it if the owning backend is still active and
+			 * using the temporary schema.
+			 */
+			if (!isTempNamespaceInUse(classForm->relnamespace))
 			{
 				/*
 				 * The table seems to be orphaned -- although it might be that
@@ -2215,7 +2212,6 @@ do_autovacuum(void)
 	{
 		Oid			relid = lfirst_oid(cell);
 		Form_pg_class classForm;
-		int			backendID;
 		ObjectAddress object;
 
 		/*
@@ -2257,10 +2253,8 @@ do_autovacuum(void)
 			UnlockRelationOid(relid, AccessExclusiveLock);
 			continue;
 		}
-		backendID = GetTempNamespaceBackendId(classForm->relnamespace);
-		if (!(backendID != InvalidBackendId &&
-			  (backendID == MyBackendId ||
-			   BackendIdGetProc(backendID) == NULL)))
+
+		if (isTempNamespaceInUse(classForm->relnamespace))
 		{
 			UnlockRelationOid(relid, AccessExclusiveLock);
 			continue;
