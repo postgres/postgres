@@ -1110,10 +1110,11 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>connect_timeout</literal></term>
       <listitem>
       <para>
-       Maximum wait for connection, in seconds (write as a decimal integer
-       string). Zero or not specified means wait indefinitely.  It is not
-       recommended to use a timeout of less than 2 seconds.
-       This timeout applies separately to each connection attempt.
+       Maximum wait for connection, in seconds (write as a decimal integer,
+       e.g. <literal>10</literal>).  Zero, negative, or not specified means
+       wait indefinitely.  The minimum allowed timeout is 2 seconds, therefore
+       a value of <literal>1</literal> is interpreted as <literal>2</literal>.
+       This timeout applies separately to each host name or IP address.
        For example, if you specify two hosts and <literal>connect_timeout</literal>
        is 5, each host will time out if no connection is made within 5
        seconds, so the total time spent waiting for a connection might be
