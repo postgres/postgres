@@ -1571,8 +1571,12 @@ ExecutePlan(EState *estate,
 		 */
 		if (TupIsNull(slot))
 		{
-			/* Allow nodes to release or shut down resources. */
-			(void) ExecShutdownNode(planstate);
+			/*
+			 * If we know we won't need to back up, we can release
+			 * resources at this point.
+			 */
+			if (!(estate->es_top_eflags & EXEC_FLAG_BACKWARD))
+				(void) ExecShutdownNode(planstate);
 			break;
 		}
 
