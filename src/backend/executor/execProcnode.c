@@ -736,11 +736,7 @@ ExecEndNode(PlanState *node)
  * ExecShutdownNode
  *
  * Give execution nodes a chance to stop asynchronous resource consumption
- * and release any resources still held.  Currently, this is only used for
- * parallel query, but we might want to extend it to other cases also (e.g.
- * FDW).  We might also want to call it sooner, as soon as it's evident that
- * no more rows will be needed (e.g. when a Limit is filled) rather than only
- * at the end of ExecutorRun.
+ * and release any resources still held.
  */
 bool
 ExecShutdownNode(PlanState *node)
