@@ -150,7 +150,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				/* remove leading spaces */
 				while (*p == ' ')
 					p++;
-				if (strcmp(p, "shut down\n") != 0)
+				if (strcmp(p, "shut down\n") != 0 &&
+					strcmp(p, "shut down in recovery\n") != 0)
 				{
 					if (cluster == &old_cluster)
 						pg_fatal("The source cluster was not shut down cleanly.\n");
