@@ -2303,9 +2303,8 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    intermediate certificates were created with <literal>v3_ca</literal>
    extensions).  Certificate Revocation List (CRL) entries are also
    checked if the parameter <xref linkend="guc-ssl-crl-file"/> is set.
-   <!-- If this URL changes replace it with a URL to www.archive.org. -->
    (See <ulink
-   url="http://h71000.www7.hp.com/doc/83final/ba554_90007/ch04s02.html"></ulink>
+   url="http://h41379.www4.hpe.com/doc/83final/ba554_90007/ch04s02.html"></ulink>
    for diagrams showing SSL certificate usage.)
   </para>
 

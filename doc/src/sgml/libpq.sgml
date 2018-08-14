@@ -8053,9 +8053,8 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    that the <literal>libssl</literal> and/or <literal>libcrypto</literal> libraries
    have been initialized by your application, so that
    <application>libpq</application> will not also initialize those libraries.
-   <!-- If this URL changes replace it with a URL to www.archive.org. -->
    See <ulink
-   url="http://h71000.www7.hp.com/doc/83final/ba554_90007/ch04.html"></ulink>
+   url="http://h41379.www4.hpe.com/doc/83final/ba554_90007/ch04.html"></ulink>
    for details on the SSL API.
   </para>
 
