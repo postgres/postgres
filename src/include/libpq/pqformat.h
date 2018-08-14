@@ -31,9 +31,6 @@ extern void pq_send_ascii_string(StringInfo buf, const char *str);
 extern void pq_sendfloat4(StringInfo buf, float4 f);
 extern void pq_sendfloat8(StringInfo buf, float8 f);
 
-extern void pq_sendfloat4(StringInfo buf, float4 f);
-extern void pq_sendfloat8(StringInfo buf, float8 f);
-
 /*
  * Append a [u]int8 to a StringInfo buffer, which already has enough space
  * preallocated.
