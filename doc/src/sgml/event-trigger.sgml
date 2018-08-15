@@ -1044,7 +1044,7 @@ CREATE FUNCTION noddl() RETURNS event_trigger
     AS 'noddl' LANGUAGE C;
 
 CREATE EVENT TRIGGER noddl ON ddl_command_start
-    EXECUTE PROCEDURE noddl();
+    EXECUTE FUNCTION noddl();
 </programlisting>
    </para>
 
@@ -1129,7 +1129,7 @@ $$;
 
 CREATE EVENT TRIGGER no_rewrite_allowed
                   ON table_rewrite
-   EXECUTE PROCEDURE no_rewrite();
+   EXECUTE FUNCTION no_rewrite();
 </programlisting>
    </para>
  </sect1>

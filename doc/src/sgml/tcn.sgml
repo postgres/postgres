@@ -47,7 +47,7 @@ test(#   );
 CREATE TABLE
 test=# create trigger tcndata_tcn_trigger
 test-#   after insert or update or delete on tcndata
-test-#   for each row execute procedure triggered_change_notification();
+test-#   for each row execute function triggered_change_notification();
 CREATE TRIGGER
 test=# listen tcn;
 LISTEN

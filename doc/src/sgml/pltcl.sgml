@@ -789,7 +789,7 @@ $$ LANGUAGE pltcl;
 CREATE TABLE mytab (num integer, description text, modcnt integer);
 
 CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
-    FOR EACH ROW EXECUTE PROCEDURE trigfunc_modcount('modcnt');
+    FOR EACH ROW EXECUTE FUNCTION trigfunc_modcount('modcnt');
 </programlisting>
 
      Notice that the trigger function itself does not know the column
@@ -852,7 +852,7 @@ CREATE OR REPLACE FUNCTION tclsnitch() RETURNS event_trigger AS $$
   elog NOTICE "tclsnitch: $TG_event $TG_tag"
 $$ LANGUAGE pltcl;
 
-CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnitch();
+CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE FUNCTION tclsnitch();
 </programlisting>
     </para>
    </sect1>

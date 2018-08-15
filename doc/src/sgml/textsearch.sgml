@@ -1884,7 +1884,7 @@ CREATE TABLE messages (
 );
 
 CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
-ON messages FOR EACH ROW EXECUTE PROCEDURE
+ON messages FOR EACH ROW EXECUTE FUNCTION
 tsvector_update_trigger(tsv, 'pg_catalog.english', title, body);
 
 INSERT INTO messages VALUES('title here', 'the body text is here');
@@ -1940,7 +1940,7 @@ end
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
-    ON messages FOR EACH ROW EXECUTE PROCEDURE messages_trigger();
+    ON messages FOR EACH ROW EXECUTE FUNCTION messages_trigger();
 </programlisting>
    </para>
 

@@ -26,13 +26,13 @@ create unique index pkeys_i on pkeys (pkey1, pkey2);
 create trigger check_fkeys_pkey_exist
 	before insert or update on fkeys
 	for each row
-	execute procedure
+	execute function
 	check_primary_key ('fkey1', 'fkey2', 'pkeys', 'pkey1', 'pkey2');
 
 create trigger check_fkeys_pkey2_exist
 	before insert or update on fkeys
 	for each row
-	execute procedure check_primary_key ('fkey3', 'fkeys2', 'pkey23');
+	execute function check_primary_key ('fkey3', 'fkeys2', 'pkey23');
 
 --
 -- For fkeys2:

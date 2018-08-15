@@ -3580,7 +3580,7 @@ LANGUAGE plpgsql;
 <programlisting>
 CREATE TRIGGER insert_measurement_trigger
     BEFORE INSERT ON measurement
-    FOR EACH ROW EXECUTE PROCEDURE measurement_insert_trigger();
+    FOR EACH ROW EXECUTE FUNCTION measurement_insert_trigger();
 </programlisting>
 
          We must redefine the trigger function each month so that it always
