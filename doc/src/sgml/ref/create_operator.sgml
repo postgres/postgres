@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE OPERATOR <replaceable>name</replaceable> (
-    PROCEDURE = <replaceable class="parameter">function_name</replaceable>
+    {FUNCTION|PROCEDURE} = <replaceable class="parameter">function_name</replaceable>
     [, LEFTARG = <replaceable class="parameter">left_type</replaceable> ] [, RIGHTARG = <replaceable class="parameter">right_type</replaceable> ]
     [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
     [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
@@ -97,6 +97,14 @@ CREATE OPERATOR <replaceable>name</replaceable> (
    function must have been previously defined using <command>CREATE
    FUNCTION</command> and must be defined to accept the correct number
    of arguments (either one or two) of the indicated types.
+  </para>
+
+  <para>
+   In the syntax of <literal>CREATE OPERATOR</literal>, the keywords
+   <literal>FUNCTION</literal> and <literal>PROCEDURE</literal> are
+   equivalent, but the referenced function must in any case be a function, not
+   a procedure.  The use of the keyword <literal>PROCEDURE</literal> here is
+   historical and deprecated.
   </para>
 
   <para>
@@ -264,7 +272,7 @@ COMMUTATOR = OPERATOR(myschema.===) ,
 CREATE OPERATOR === (
     LEFTARG = box,
     RIGHTARG = box,
-    PROCEDURE = area_equal_function,
+    FUNCTION = area_equal_function,
     COMMUTATOR = ===,
     NEGATOR = !==,
     RESTRICT = area_restriction_function,

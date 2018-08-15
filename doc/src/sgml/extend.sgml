@@ -1015,7 +1015,7 @@ CREATE TYPE pair AS ( k text, v text );
 CREATE OR REPLACE FUNCTION pair(text, text)
 RETURNS pair LANGUAGE SQL AS 'SELECT ROW($1, $2)::@extschema@.pair;';
 
-CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, PROCEDURE = pair);
+CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, FUNCTION = pair);
 
 -- "SET search_path" is easy to get right, but qualified names perform better.
 CREATE OR REPLACE FUNCTION lower(pair)

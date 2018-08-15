@@ -44,7 +44,7 @@ CREATE FUNCTION complex_add(complex, complex)
 CREATE OPERATOR + (
     leftarg = complex,
     rightarg = complex,
-    procedure = complex_add,
+    function = complex_add,
     commutator = +
 );
 </programlisting>
@@ -66,7 +66,7 @@ SELECT (a + b) AS c FROM test_complex;
   <para>
    We've shown how to create a binary operator here.  To create unary
    operators, just omit one of <literal>leftarg</literal> (for left unary) or
-   <literal>rightarg</literal> (for right unary).  The <literal>procedure</literal>
+   <literal>rightarg</literal> (for right unary).  The <literal>function</literal>
    clause and the argument clauses are the only required items in
    <command>CREATE OPERATOR</command>.  The <literal>commutator</literal>
    clause shown in the example is an optional hint to the query

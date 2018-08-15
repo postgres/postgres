@@ -21,7 +21,7 @@
  * NOTES
  *	  These things must be defined and committed in the following order:
  *		"create function":
- *				input/output, recv/send procedures
+ *				input/output, recv/send functions
  *		"create type":
  *				type
  *		"create operator":
@@ -79,8 +79,8 @@ DefineOperator(List *names, List *parameters)
 	Oid			rettype;
 	List	   *commutatorName = NIL;	/* optional commutator operator name */
 	List	   *negatorName = NIL;	/* optional negator operator name */
-	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
-	List	   *joinName = NIL; /* optional join sel. procedure */
+	List	   *restrictionName = NIL;	/* optional restrict. sel. function */
+	List	   *joinName = NIL; /* optional join sel. function */
 	Oid			functionOid;	/* functions converted to OID */
 	Oid			restrictionOid;
 	Oid			joinOid;
@@ -120,6 +120,9 @@ DefineOperator(List *names, List *parameters)
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("SETOF type not allowed for operator argument")));
 		}
+		/* "function" and "procedure" are equivalent here */
+		else if (strcmp(defel->defname, "function") == 0)
+			functionName = defGetQualifiedName(defel);
 		else if (strcmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);
 		else if (strcmp(defel->defname, "commutator") == 0)
@@ -159,7 +162,7 @@ DefineOperator(List *names, List *parameters)
 	if (functionName == NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("operator procedure must be specified")));
+				 errmsg("operator function must be specified")));
 
 	/* Transform type names to type OIDs */
 	if (typeName1)
@@ -245,8 +248,8 @@ DefineOperator(List *names, List *parameters)
 					   functionOid, /* function for operator */
 					   commutatorName,	/* optional commutator operator name */
 					   negatorName, /* optional negator operator name */
-					   restrictionOid,	/* optional restrict. sel. procedure */
-					   joinOid, /* optional join sel. procedure name */
+					   restrictionOid,	/* optional restrict. sel. function */
+					   joinOid, /* optional join sel. function name */
 					   canMerge,	/* operator merges */
 					   canHash);	/* operator hashes */
 }
@@ -393,10 +396,10 @@ AlterOperator(AlterOperatorStmt *stmt)
 	Datum		values[Natts_pg_operator];
 	bool		nulls[Natts_pg_operator];
 	bool		replaces[Natts_pg_operator];
-	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
+	List	   *restrictionName = NIL;	/* optional restrict. sel. function */
 	bool		updateRestriction = false;
 	Oid			restrictionOid;
-	List	   *joinName = NIL; /* optional join sel. procedure */
+	List	   *joinName = NIL; /* optional join sel. function */
 	bool		updateJoin = false;
 	Oid			joinOid;
 
@@ -436,6 +439,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 		 */
 		else if (strcmp(defel->defname, "leftarg") == 0 ||
 				 strcmp(defel->defname, "rightarg") == 0 ||
+				 strcmp(defel->defname, "function") == 0 ||
 				 strcmp(defel->defname, "procedure") == 0 ||
 				 strcmp(defel->defname, "commutator") == 0 ||
 				 strcmp(defel->defname, "negator") == 0 ||
