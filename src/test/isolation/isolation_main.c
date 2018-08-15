@@ -54,14 +54,26 @@ isolation_start_test(const char *testname,
 	add_stringlist_item(expectfiles, expectfile);
 
 	if (launcher)
+	{
 		offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 						   "%s ", launcher);
+		if (offset >= sizeof(psql_cmd))
+		{
+			fprintf(stderr, _("command too long\n"));
+			exit(2);
+		}
+	}
 
-	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-			 SYSTEMQUOTE "\"./isolationtester\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
-			 dblist->str,
-			 infile,
-			 outfile);
+	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
+					   SYSTEMQUOTE "\"./isolationtester\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+					   dblist->str,
+					   infile,
+					   outfile);
+	if (offset >= sizeof(psql_cmd))
+	{
+		fprintf(stderr, _("command too long\n"));
+		exit(2);
+	}
 
 	pid = spawn_process(psql_cmd);
 
