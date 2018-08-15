@@ -5,7 +5,7 @@
 CREATE OPERATOR ## (
    leftarg = path,
    rightarg = path,
-   procedure = path_inter,
+   function = path_inter,
    commutator = ##
 );
 

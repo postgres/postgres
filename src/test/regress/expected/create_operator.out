@@ -4,7 +4,7 @@
 CREATE OPERATOR ## (
    leftarg = path,
    rightarg = path,
-   procedure = path_inter,
+   function = path_inter,
    commutator = ##
 );
 CREATE OPERATOR <% (
@@ -107,7 +107,7 @@ ERROR:  at least one of leftarg or rightarg must be specified
 CREATE OPERATOR #@%# (
    leftarg = int8
 );
-ERROR:  operator procedure must be specified
+ERROR:  operator function must be specified
 -- Should fail. CREATE OPERATOR requires USAGE on TYPE
 BEGIN TRANSACTION;
 CREATE ROLE regress_rol_op3;
@@ -202,4 +202,4 @@ WARNING:  operator attribute "Restrict" not recognized
 WARNING:  operator attribute "Join" not recognized
 WARNING:  operator attribute "Hashes" not recognized
 WARNING:  operator attribute "Merges" not recognized
-ERROR:  operator procedure must be specified
+ERROR:  operator function must be specified
