@@ -2,6 +2,7 @@
  * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,8 +53,8 @@
  *	SNPRINTF, VSNPRINTF and friends
  *
  * These versions have been grabbed off the net.  They have been
- * cleaned up to compile properly and support for most of the Single Unix
- * Specification has been added.  Remaining unimplemented features are:
+ * cleaned up to compile properly and support for most of the C99
+ * specification has been added.  Remaining unimplemented features are:
  *
  * 1. No locale support: the radix character is always '.' and the '
  * (single quote) format flag is ignored.
@@ -67,25 +68,24 @@
  * 5. Space and '#' flags are not implemented.
  *
  *
- * The result values of these functions are not the same across different
- * platforms.  This implementation is compatible with the Single Unix Spec:
+ * Historically the result values of sprintf/snprintf varied across platforms.
+ * This implementation now follows the C99 standard:
  *
- * 1. -1 is returned only if processing is abandoned due to an invalid
- * parameter, such as incorrect format string.  (Although not required by
- * the spec, this happens only when no characters have yet been transmitted
- * to the destination.)
+ * 1. -1 is returned if an error is detected in the format string, or if
+ * a write to the target stream fails (as reported by fwrite).  Note that
+ * overrunning snprintf's target buffer is *not* an error.
  *
- * 2. For snprintf and sprintf, 0 is returned if str == NULL or count == 0;
- * no data has been stored.
+ * 2. For successful writes to streams, the actual number of bytes written
+ * to the stream is returned.
  *
- * 3. Otherwise, the number of bytes actually transmitted to the destination
- * is returned (excluding the trailing '\0' for snprintf and sprintf).
+ * 3. For successful sprintf/snprintf, the number of bytes that would have
+ * been written to an infinite-size buffer (excluding the trailing '\0')
+ * is returned.  snprintf will truncate its output to fit in the buffer
+ * (ensuring a trailing '\0' unless count == 0), but this is not reflected
+ * in the function result.
  *
- * For snprintf with nonzero count, the result cannot be more than count-1
- * (a trailing '\0' is always stored); it is not possible to distinguish
- * buffer overrun from exact fit.  This is unlike some implementations that
- * return the number of bytes that would have been needed for the complete
- * result string.
+ * snprintf buffer overrun can be detected by checking for function result
+ * greater than or equal to the supplied count.
  */
 
 /**************************************************************
@@ -104,15 +104,27 @@
 #undef	fprintf
 #undef	printf
 
-/* Info about where the formatted output is going */
+/*
+ * Info about where the formatted output is going.
+ *
+ * dopr and subroutines will not write at/past bufend, but snprintf
+ * reserves one byte, ensuring it may place the trailing '\0' there.
+ *
+ * In snprintf, we use nchars to count the number of bytes dropped on the
+ * floor due to buffer overrun.  The correct result of snprintf is thus
+ * (bufptr - bufstart) + nchars.  (This isn't as inconsistent as it might
+ * seem: nchars is the number of emitted bytes that are not in the buffer now,
+ * either because we sent them to the stream or because we couldn't fit them
+ * into the buffer to begin with.)
+ */
 typedef struct
 {
 	char	   *bufptr;			/* next buffer output position */
 	char	   *bufstart;		/* first buffer element */
-	char	   *bufend;			/* last buffer element, or NULL */
+	char	   *bufend;			/* last+1 buffer element, or NULL */
 	/* bufend == NULL is for sprintf, where we assume buf is big enough */
 	FILE	   *stream;			/* eventual output destination, or NULL */
-	int			nchars;			/* # chars already sent to stream */
+	int			nchars;			/* # chars sent to stream, or dropped */
 	bool		failed;			/* call is a failure; errno is set */
 } PrintfTarget;
 
@@ -150,17 +162,28 @@ int
 pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
 	PrintfTarget target;
+	char		onebyte[1];
 
-	if (str == NULL || count == 0)
-		return 0;
+	/*
+	 * C99 allows the case str == NULL when count == 0.  Rather than
+	 * special-casing this situation further down, we substitute a one-byte
+	 * local buffer.  Callers cannot tell, since the function result doesn't
+	 * depend on count.
+	 */
+	if (count == 0)
+	{
+		str = onebyte;
+		count = 1;
+	}
 	target.bufstart = target.bufptr = str;
 	target.bufend = str + count - 1;
 	target.stream = NULL;
-	/* target.nchars is unused in this case */
+	target.nchars = 0;
 	target.failed = false;
 	dopr(&target, fmt, args);
 	*(target.bufptr) = '\0';
-	return target.failed ? -1 : (target.bufptr - target.bufstart);
+	return target.failed ? -1 : (target.bufptr - target.bufstart
+								 + target.nchars);
 }
 
 int
@@ -180,16 +203,15 @@ pg_vsprintf(char *str, const char *fmt, va_list args)
 {
 	PrintfTarget target;
 
-	if (str == NULL)
-		return 0;
 	target.bufstart = target.bufptr = str;
 	target.bufend = NULL;
 	target.stream = NULL;
-	/* target.nchars is unused in this case */
+	target.nchars = 0;			/* not really used in this case */
 	target.failed = false;
 	dopr(&target, fmt, args);
 	*(target.bufptr) = '\0';
-	return target.failed ? -1 : (target.bufptr - target.bufstart);
+	return target.failed ? -1 : (target.bufptr - target.bufstart
+								 + target.nchars);
 }
 
 int
@@ -216,7 +238,7 @@ pg_vfprintf(FILE *stream, const char *fmt, va_list args)
 		return -1;
 	}
 	target.bufstart = target.bufptr = buffer;
-	target.bufend = buffer + sizeof(buffer) - 1;
+	target.bufend = buffer + sizeof(buffer);	/* use the whole buffer */
 	target.stream = stream;
 	target.nchars = 0;
 	target.failed = false;
@@ -259,6 +281,10 @@ flushbuffer(PrintfTarget *target)
 {
 	size_t		nc = target->bufptr - target->bufstart;
 
+	/*
+	 * Don't write anything if we already failed; this is to ensure we
+	 * preserve the original failure's errno.
+	 */
 	if (!target->failed && nc > 0)
 	{
 		size_t		written;
@@ -1038,7 +1064,10 @@ dostr(const char *str, int slen, PrintfTarget *target)
 		{
 			/* buffer full, can we dump to stream? */
 			if (target->stream == NULL)
-				return;			/* no, lose the data */
+			{
+				target->nchars += slen; /* no, lose the data */
+				return;
+			}
 			flushbuffer(target);
 			continue;
 		}
@@ -1057,7 +1086,10 @@ dopr_outch(int c, PrintfTarget *target)
 	{
 		/* buffer full, can we dump to stream? */
 		if (target->stream == NULL)
-			return;				/* no, lose the data */
+		{
+			target->nchars++;	/* no, lose the data */
+			return;
+		}
 		flushbuffer(target);
 	}
 	*(target->bufptr++) = c;
