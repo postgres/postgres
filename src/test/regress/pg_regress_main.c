@@ -63,19 +63,31 @@ psql_start_test(const char *testname,
 	add_stringlist_item(expectfiles, expectfile);
 
 	if (launcher)
+	{
 		offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 						   "%s ", launcher);
+		if (offset >= sizeof(psql_cmd))
+		{
+			fprintf(stderr, _("command too long\n"));
+			exit(2);
+		}
+	}
+
+	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
+					   "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
+					   bindir ? bindir : "",
+					   bindir ? "/" : "",
+					   dblist->str,
+					   infile,
+					   outfile);
+	if (offset >= sizeof(psql_cmd))
+	{
+		fprintf(stderr, _("command too long\n"));
+		exit(2);
+	}
 
 	appnameenv = psprintf("PGAPPNAME=pg_regress/%s", testname);
 	putenv(appnameenv);
-
-	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-			 "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
-			 bindir ? bindir : "",
-			 bindir ? "/" : "",
-			 dblist->str,
-			 infile,
-			 outfile);
 
 	pid = spawn_process(psql_cmd);
 

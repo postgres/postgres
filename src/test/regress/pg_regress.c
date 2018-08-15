@@ -1024,7 +1024,7 @@ config_sspi_auth(const char *pgdata)
 	} while (0)
 
 	res = snprintf(fname, sizeof(fname), "%s/pg_hba.conf", pgdata);
-	if (res < 0 || res >= sizeof(fname) - 1)
+	if (res < 0 || res >= sizeof(fname))
 	{
 		/*
 		 * Truncating this name is a fatal error, because we must not fail to

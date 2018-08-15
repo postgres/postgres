@@ -4810,7 +4810,7 @@ get_dbstat_filename(bool permanent, bool tempname, Oid databaseid,
 					   pgstat_stat_directory,
 					   databaseid,
 					   tempname ? "tmp" : "stat");
-	if (printed > len)
+	if (printed >= len)
 		elog(ERROR, "overlength pgstat path");
 }
 
