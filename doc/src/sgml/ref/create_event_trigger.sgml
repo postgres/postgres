@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
     ON <replaceable class="parameter">event</replaceable>
     [ WHEN <replaceable class="parameter">filter_variable</replaceable> IN (filter_value [, ... ]) [ AND ... ] ]
-    EXECUTE PROCEDURE <replaceable class="parameter">function_name</replaceable>()
+    EXECUTE { FUNCTION | PROCEDURE } <replaceable class="parameter">function_name</replaceable>()
 </synopsis>
  </refsynopsisdiv>
 
@@ -98,6 +98,14 @@ CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
       A user-supplied function that is declared as taking no argument and
       returning type <literal>event_trigger</literal>.
      </para>
+
+     <para>
+      In the syntax of <literal>CREATE EVENT TRIGGER</literal>, the keywords
+      <literal>FUNCTION</literal> and <literal>PROCEDURE</literal> are
+      equivalent, but the referenced function must in any case be a function,
+      not a procedure.  The use of the keyword <literal>PROCEDURE</literal>
+      here is historical and deprecated.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -136,7 +144,7 @@ END;
 $$;
 
 CREATE EVENT TRIGGER abort_ddl ON ddl_command_start
-   EXECUTE PROCEDURE abort_any_command();
+   EXECUTE FUNCTION abort_any_command();
 </programlisting></para>
  </refsect1>
 

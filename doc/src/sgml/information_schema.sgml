@@ -5793,7 +5793,7 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>
        Statement that is executed by the trigger (currently always
-       <literal>EXECUTE PROCEDURE
+       <literal>EXECUTE FUNCTION
        <replaceable>function</replaceable>(...)</literal>)
       </entry>
      </row>

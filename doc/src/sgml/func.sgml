@@ -20594,7 +20594,7 @@ SELECT (pg_stat_file('filename')).modification;
 <programlisting>
 CREATE TRIGGER z_min_update
 BEFORE UPDATE ON tablename
-FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
 </programlisting>
       In most cases, you would want to fire this trigger last for each row.
       Bearing in mind that triggers fire in name order, you would then
@@ -20846,7 +20846,7 @@ END
 $$;
 CREATE EVENT TRIGGER test_event_trigger_for_drops
    ON sql_drop
-   EXECUTE PROCEDURE test_event_trigger_for_drops();
+   EXECUTE FUNCTION test_event_trigger_for_drops();
 </programlisting>
     </para>
   </sect2>
@@ -20911,7 +20911,7 @@ $$;
 
 CREATE EVENT TRIGGER test_table_rewrite_oid
                   ON table_rewrite
-   EXECUTE PROCEDURE test_event_trigger_table_rewrite_oid();
+   EXECUTE FUNCTION test_event_trigger_table_rewrite_oid();
 </programlisting>
     </para>
   </sect2>

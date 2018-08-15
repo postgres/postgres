@@ -1300,7 +1300,7 @@ $$ LANGUAGE plperl;
 
 CREATE TRIGGER test_valid_id_trig
     BEFORE INSERT OR UPDATE ON test
-    FOR EACH ROW EXECUTE PROCEDURE valid_id();
+    FOR EACH ROW EXECUTE FUNCTION valid_id();
 </programlisting>
   </para>
  </sect1>
@@ -1350,7 +1350,7 @@ $$ LANGUAGE plperl;
 
 CREATE EVENT TRIGGER perl_a_snitch
     ON ddl_command_start
-    EXECUTE PROCEDURE perlsnitch();
+    EXECUTE FUNCTION perlsnitch();
 </programlisting>
   </para>
  </sect1>

@@ -4069,7 +4069,7 @@ CREATE FUNCTION emp_stamp() RETURNS trigger AS $emp_stamp$
 $emp_stamp$ LANGUAGE plpgsql;
 
 CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
-    FOR EACH ROW EXECUTE PROCEDURE emp_stamp();
+    FOR EACH ROW EXECUTE FUNCTION emp_stamp();
 </programlisting>
    </example>
 
@@ -4124,7 +4124,7 @@ $emp_audit$ LANGUAGE plpgsql;
 
 CREATE TRIGGER emp_audit
 AFTER INSERT OR UPDATE OR DELETE ON emp
-    FOR EACH ROW EXECUTE PROCEDURE process_emp_audit();
+    FOR EACH ROW EXECUTE FUNCTION process_emp_audit();
 </programlisting>
    </example>
 
@@ -4203,7 +4203,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER emp_audit
 INSTEAD OF INSERT OR UPDATE OR DELETE ON emp_view
-    FOR EACH ROW EXECUTE PROCEDURE update_emp_view();
+    FOR EACH ROW EXECUTE FUNCTION update_emp_view();
 </programlisting>
    </example>
 
@@ -4348,7 +4348,7 @@ $maint_sales_summary_bytime$ LANGUAGE plpgsql;
 
 CREATE TRIGGER maint_sales_summary_bytime
 AFTER INSERT OR UPDATE OR DELETE ON sales_fact
-    FOR EACH ROW EXECUTE PROCEDURE maint_sales_summary_bytime();
+    FOR EACH ROW EXECUTE FUNCTION maint_sales_summary_bytime();
 
 INSERT INTO sales_fact VALUES(1,1,1,10,3,15);
 INSERT INTO sales_fact VALUES(1,2,1,20,5,35);
@@ -4425,15 +4425,15 @@ $emp_audit$ LANGUAGE plpgsql;
 CREATE TRIGGER emp_audit_ins
     AFTER INSERT ON emp
     REFERENCING NEW TABLE AS new_table
-    FOR EACH STATEMENT EXECUTE PROCEDURE process_emp_audit();
+    FOR EACH STATEMENT EXECUTE FUNCTION process_emp_audit();
 CREATE TRIGGER emp_audit_upd
     AFTER UPDATE ON emp
     REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
-    FOR EACH STATEMENT EXECUTE PROCEDURE process_emp_audit();
+    FOR EACH STATEMENT EXECUTE FUNCTION process_emp_audit();
 CREATE TRIGGER emp_audit_del
     AFTER DELETE ON emp
     REFERENCING OLD TABLE AS old_table
-    FOR EACH STATEMENT EXECUTE PROCEDURE process_emp_audit();
+    FOR EACH STATEMENT EXECUTE FUNCTION process_emp_audit();
 </programlisting>
    </example>
 
@@ -4498,7 +4498,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE EVENT TRIGGER snitch ON ddl_command_start EXECUTE PROCEDURE snitch();
+CREATE EVENT TRIGGER snitch ON ddl_command_start EXECUTE FUNCTION snitch();
 </programlisting>
    </example>
   </sect2>

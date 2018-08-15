@@ -33,7 +33,7 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
     [ REFERENCING { { OLD | NEW } TABLE [ AS ] <replaceable class="parameter">transition_relation_name</replaceable> } [ ... ] ]
     [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
-    EXECUTE PROCEDURE <replaceable class="parameter">function_name</replaceable> ( <replaceable class="parameter">arguments</replaceable> )
+    EXECUTE { FUNCTION | PROCEDURE } <replaceable class="parameter">function_name</replaceable> ( <replaceable class="parameter">arguments</replaceable> )
 
 <phrase>where <replaceable class="parameter">event</replaceable> can be one of:</phrase>
 
@@ -401,6 +401,14 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       and returning type <literal>trigger</literal>, which is executed when
       the trigger fires.
      </para>
+
+     <para>
+      In the syntax of <literal>CREATE TRIGGER</literal>, the keywords
+      <literal>FUNCTION</literal> and <literal>PROCEDURE</literal> are
+      equivalent, but the referenced function must in any case be a function,
+      not a procedure.  The use of the keyword <literal>PROCEDURE</literal>
+      here is historical and deprecated.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -555,7 +563,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
 CREATE TRIGGER check_update
     BEFORE UPDATE ON accounts
     FOR EACH ROW
-    EXECUTE PROCEDURE check_account_update();
+    EXECUTE FUNCTION check_account_update();
 </programlisting>
 
    The same, but only execute the function if column <literal>balance</literal>
@@ -565,7 +573,7 @@ CREATE TRIGGER check_update
 CREATE TRIGGER check_update
     BEFORE UPDATE OF balance ON accounts
     FOR EACH ROW
-    EXECUTE PROCEDURE check_account_update();
+    EXECUTE FUNCTION check_account_update();
 </programlisting>
 
    This form only executes the function if column <literal>balance</literal>
@@ -576,7 +584,7 @@ CREATE TRIGGER check_update
     BEFORE UPDATE ON accounts
     FOR EACH ROW
     WHEN (OLD.balance IS DISTINCT FROM NEW.balance)
-    EXECUTE PROCEDURE check_account_update();
+    EXECUTE FUNCTION check_account_update();
 </programlisting>
 
    Call a function to log updates of <literal>accounts</literal>, but only if
@@ -587,7 +595,7 @@ CREATE TRIGGER log_update
     AFTER UPDATE ON accounts
     FOR EACH ROW
     WHEN (OLD.* IS DISTINCT FROM NEW.*)
-    EXECUTE PROCEDURE log_account_update();
+    EXECUTE FUNCTION log_account_update();
 </programlisting>
 
    Execute the function <function>view_insert_row</function> for each row to insert
@@ -597,7 +605,7 @@ CREATE TRIGGER log_update
 CREATE TRIGGER view_insert
     INSTEAD OF INSERT ON my_view
     FOR EACH ROW
-    EXECUTE PROCEDURE view_insert_row();
+    EXECUTE FUNCTION view_insert_row();
 </programlisting>
 
    Execute the function <function>check_transfer_balances_to_zero</function> for each
@@ -609,7 +617,7 @@ CREATE TRIGGER transfer_insert
     AFTER INSERT ON transfer
     REFERENCING NEW TABLE AS inserted
     FOR EACH STATEMENT
-    EXECUTE PROCEDURE check_transfer_balances_to_zero();
+    EXECUTE FUNCTION check_transfer_balances_to_zero();
 </programlisting>
 
    Execute the function <function>check_matching_pairs</function> for each row to
@@ -621,7 +629,7 @@ CREATE TRIGGER paired_items_update
     AFTER UPDATE ON paired_items
     REFERENCING NEW TABLE AS newtab OLD TABLE AS oldtab
     FOR EACH ROW
-    EXECUTE PROCEDURE check_matching_pairs();
+    EXECUTE FUNCTION check_matching_pairs();
 </programlisting>
   </para>
 
