@@ -50,7 +50,7 @@
    <literal>WHERE</literal>-clause operators that can be used with an index
    (i.e., can be converted into an index-scan qualification).  An
    operator class can also specify some <firstterm>support
-   procedures</firstterm> that are needed by the internal operations of the
+   function</firstterm> that are needed by the internal operations of the
    index method, but do not directly correspond to any
    <literal>WHERE</literal>-clause operator that can be used with the index.
   </para>

@@ -517,7 +517,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (item->number <= 0 || item->number > maxProcNumber)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("invalid procedure number %d,"
+							 errmsg("invalid function number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
 				funcOid = LookupFuncWithArgs(OBJECT_FUNCTION, item->name, false);
@@ -891,7 +891,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 				if (item->number <= 0 || item->number > maxProcNumber)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("invalid procedure number %d,"
+							 errmsg("invalid function number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
 				funcOid = LookupFuncWithArgs(OBJECT_FUNCTION, item->name, false);
@@ -986,7 +986,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 				if (item->number <= 0 || item->number > maxProcNumber)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("invalid procedure number %d,"
+							 errmsg("invalid function number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
 				processTypesSpec(item->class_args, &lefttype, &righttype);
@@ -1141,11 +1141,11 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			if (procform->pronargs != 2)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree comparison procedures must have two arguments")));
+						 errmsg("btree comparison functions must have two arguments")));
 			if (procform->prorettype != INT4OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree comparison procedures must return integer")));
+						 errmsg("btree comparison functions must return integer")));
 
 			/*
 			 * If lefttype/righttype isn't specified, use the proc's input
@@ -1162,11 +1162,11 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 				procform->proargtypes.values[0] != INTERNALOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree sort support procedures must accept type \"internal\"")));
+						 errmsg("btree sort support functions must accept type \"internal\"")));
 			if (procform->prorettype != VOIDOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree sort support procedures must return void")));
+						 errmsg("btree sort support functions must return void")));
 
 			/*
 			 * Can't infer lefttype/righttype from proc, so use default rule
@@ -1177,11 +1177,11 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			if (procform->pronargs != 5)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree in_range procedures must have five arguments")));
+						 errmsg("btree in_range functions must have five arguments")));
 			if (procform->prorettype != BOOLOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree in_range procedures must return boolean")));
+						 errmsg("btree in_range functions must return boolean")));
 
 			/*
 			 * If lefttype/righttype isn't specified, use the proc's input
@@ -1200,22 +1200,22 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			if (procform->pronargs != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("hash procedure 1 must have one argument")));
+						 errmsg("hash function 1 must have one argument")));
 			if (procform->prorettype != INT4OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("hash procedure 1 must return integer")));
+						 errmsg("hash function 1 must return integer")));
 		}
 		else if (member->number == HASHEXTENDED_PROC)
 		{
 			if (procform->pronargs != 2)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("hash procedure 2 must have two arguments")));
+						 errmsg("hash function 2 must have two arguments")));
 			if (procform->prorettype != INT8OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("hash procedure 2 must return bigint")));
+						 errmsg("hash function 2 must return bigint")));
 		}
 
 		/*
@@ -1240,7 +1240,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	if (!OidIsValid(member->lefttype) || !OidIsValid(member->righttype))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("associated data types must be specified for index support procedure")));
+				 errmsg("associated data types must be specified for index support function")));
 
 	ReleaseSysCache(proctup);
 }
@@ -1265,7 +1265,7 @@ addFamilyMember(List **list, OpFamilyMember *member, bool isProc)
 			if (isProc)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("procedure number %d for (%s,%s) appears more than once",
+						 errmsg("function number %d for (%s,%s) appears more than once",
 								member->number,
 								format_type_be(member->lefttype),
 								format_type_be(member->righttype))));

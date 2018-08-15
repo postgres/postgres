@@ -348,7 +348,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
 
     <listitem>
      <para>
-      This specifies whether the trigger procedure should be fired
+      This specifies whether the trigger function should be fired
       once for every row affected by the trigger event, or just once
       per SQL statement. If neither is specified, <literal>FOR EACH
       STATEMENT</literal> is the default.  Constraint triggers can only

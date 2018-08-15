@@ -21,23 +21,16 @@
  <note>
   <para>
    The available procedural languages provide various means to
-   execute SQL commands from procedures.  Most of these facilities are
+   execute SQL commands from functions.  Most of these facilities are
    based on SPI, so this documentation might be of use for users
    of those languages as well.
   </para>
  </note>
 
  <para>
-  To avoid misunderstanding we'll use the term <quote>function</quote>
-  when we speak of <acronym>SPI</acronym> interface functions and
-  <quote>procedure</quote> for a user-defined C-function that is
-  using <acronym>SPI</acronym>.
- </para>
-
- <para>
   Note that if a command invoked via SPI fails, then control will not be
-  returned to your procedure.  Rather, the
-  transaction or subtransaction in which your procedure executes will be
+  returned to your C function.  Rather, the
+  transaction or subtransaction in which your C function executes will be
   rolled back.  (This might seem surprising given that the SPI functions mostly
   have documented error-return conventions.  Those conventions only apply
   for errors detected within the SPI functions themselves, however.)
@@ -73,7 +66,7 @@
   <refnamediv>
    <refname>SPI_connect</refname>
    <refname>SPI_connect_ext</refname>
-   <refpurpose>connect a procedure to the SPI manager</refpurpose>
+   <refpurpose>connect a C function to the SPI manager</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -91,9 +84,9 @@ int SPI_connect_ext(int <parameter>options</parameter>)
 
   <para>
    <function>SPI_connect</function> opens a connection from a
-   procedure invocation to the SPI manager.  You must call this
+   C function invocation to the SPI manager.  You must call this
    function if you want to execute commands through SPI.  Some utility
-   SPI functions can be called from unconnected procedures.
+   SPI functions can be called from unconnected C functions.
   </para>
 
   <para>
@@ -159,7 +152,7 @@ int SPI_connect_ext(int <parameter>options</parameter>)
 
  <refnamediv>
   <refname>SPI_finish</refname>
-  <refpurpose>disconnect a procedure from the SPI manager</refpurpose>
+  <refpurpose>disconnect a C function from the SPI manager</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -174,7 +167,7 @@ int SPI_finish(void)
   <para>
    <function>SPI_finish</function> closes an existing connection to
    the SPI manager.  You must call this function after completing the
-   SPI operations needed during your procedure's current invocation.
+   SPI operations needed during your C function's current invocation.
    You do not need to worry about making this happen, however, if you
    abort the transaction via <literal>elog(ERROR)</literal>.  In that
    case SPI will clean itself up automatically.
@@ -198,7 +191,7 @@ int SPI_finish(void)
     <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
     <listitem>
      <para>
-      if called from an unconnected procedure
+      if called from an unconnected C function
      </para>
     </listitem>
    </varlistentry>
@@ -238,7 +231,7 @@ int SPI_execute(const char * <parameter>command</parameter>, bool <parameter>rea
   </para>
 
   <para>
-   This function can only be called from a connected procedure.
+   This function can only be called from a connected C function.
   </para>
 
   <para>
@@ -345,7 +338,7 @@ typedef struct
   <para>
    <function>SPI_finish</function> frees all
    <structname>SPITupleTable</structname>s allocated during the current
-   procedure.  You can free a particular result table earlier, if you
+   C function.  You can free a particular result table earlier, if you
    are done with it, by calling <function>SPI_freetuptable</function>.
   </para>
  </refsect1>
@@ -539,7 +532,7 @@ typedef struct
      <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
      <listitem>
       <para>
-       if called from an unconnected procedure
+       if called from an unconnected C function
       </para>
      </listitem>
     </varlistentry>
@@ -555,7 +548,7 @@ typedef struct
    <varname>SPI_processed</varname> and
    <varname>SPI_tuptable</varname> (just the pointer, not the contents
    of the structure).  Save these two global variables into local
-   procedure variables if you need to access the result table of
+   C function variables if you need to access the result table of
    <function>SPI_execute</function> or another query-execution function
    across later calls.
   </para>
@@ -835,7 +828,7 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
 
   <para>
    The statement returned by <function>SPI_prepare</function> can be used
-   only in the current invocation of the procedure, since
+   only in the current invocation of the C function, since
    <function>SPI_finish</function> frees memory allocated for such a
    statement.  But the statement can be saved for longer using the functions
    <function>SPI_keepplan</function> or <function>SPI_saveplan</function>.
@@ -926,7 +919,7 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
   </para>
 
   <para>
-   This function should only be called from a connected procedure.
+   This function should only be called from a connected C function.
   </para>
 
   <para>
@@ -1702,9 +1695,9 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
    Using a cursor instead of executing the statement directly has two
    benefits.  First, the result rows can be retrieved a few at a time,
    avoiding memory overrun for queries that return many rows.  Second,
-   a portal can outlive the current procedure (it can, in fact, live
+   a portal can outlive the current C function (it can, in fact, live
    to the end of the current transaction).  Returning the portal name
-   to the procedure's caller provides a way of returning a row set as
+   to the C function's caller provides a way of returning a row set as
    result.
   </para>
 
@@ -2534,7 +2527,7 @@ int SPI_keepplan(SPIPlanPtr <parameter>plan</parameter>)
    <function>SPI_prepare</function>) so that it will not be freed
    by <function>SPI_finish</function> nor by the transaction manager.
    This gives you the ability to reuse prepared statements in the subsequent
-   invocations of your procedure in the current session.
+   invocations of your C function in the current session.
   </para>
  </refsect1>
 
@@ -2604,7 +2597,7 @@ SPIPlanPtr SPI_saveplan(SPIPlanPtr <parameter>plan</parameter>)
    by <function>SPI_finish</function> nor by the transaction manager,
    and returns a pointer to the copied statement.  This gives you the
    ability to reuse prepared statements in the subsequent invocations of
-   your procedure in the current session.
+   your C function in the current session.
   </para>
  </refsect1>
 
@@ -2644,7 +2637,7 @@ SPIPlanPtr SPI_saveplan(SPIPlanPtr <parameter>plan</parameter>)
      <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
      <listitem>
       <para>
-       if called from an unconnected procedure
+       if called from an unconnected C function
       </para>
      </listitem>
     </varlistentry>
@@ -2757,7 +2750,7 @@ int SPI_register_relation(EphemeralNamedRelation <parameter>enr</parameter>)
      <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
      <listitem>
       <para>
-       if called from an unconnected procedure
+       if called from an unconnected C function
       </para>
      </listitem>
     </varlistentry>
@@ -2862,7 +2855,7 @@ int SPI_unregister_relation(const char * <parameter>name</parameter>)
      <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
      <listitem>
       <para>
-       if called from an unconnected procedure
+       if called from an unconnected C function
       </para>
      </listitem>
     </varlistentry>
@@ -2977,7 +2970,7 @@ int SPI_register_trigger_data(TriggerData *<parameter>tdata</parameter>)
      <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
      <listitem>
       <para>
-       if called from an unconnected procedure
+       if called from an unconnected C function
       </para>
      </listitem>
     </varlistentry>
@@ -3011,7 +3004,7 @@ int SPI_register_trigger_data(TriggerData *<parameter>tdata</parameter>)
 
  <para>
   All functions described in this section can be used by both
-  connected and unconnected procedures.
+  connected and unconnected C functions.
  </para>
 
 <!-- *********************************************** -->
@@ -3655,37 +3648,37 @@ const char * SPI_result_code_string(int <parameter>code</parameter>);
    makes it current.  <function>SPI_finish</function> restores the
    previous current memory context and destroys the context created by
    <function>SPI_connect</function>.  These actions ensure that
-   transient memory allocations made inside your procedure are
-   reclaimed at procedure exit, avoiding memory leakage.
+   transient memory allocations made inside your C function are
+   reclaimed at C function exit, avoiding memory leakage.
   </para>
 
   <para>
-   However, if your procedure needs to return an object in allocated
+   However, if your C function needs to return an object in allocated
    memory (such as a value of a pass-by-reference data type), you
    cannot allocate that memory using <function>palloc</function>, at
    least not while you are connected to SPI.  If you try, the object
    will be deallocated by <function>SPI_finish</function>, and your
-   procedure will not work reliably.  To solve this problem, use
+   C function will not work reliably.  To solve this problem, use
    <function>SPI_palloc</function> to allocate memory for your return
    object.  <function>SPI_palloc</function> allocates memory in the
    <quote>upper executor context</quote>, that is, the memory context
    that was current when <function>SPI_connect</function> was called,
    which is precisely the right context for a value returned from your
-   procedure.  Several of the other utility procedures described in
+   C function.  Several of the other utility functions described in
    this section also return objects created in the upper executor context.
   </para>
 
   <para>
    When <function>SPI_connect</function> is called, the private
-   context of the procedure, which is created by
+   context of the C function, which is created by
    <function>SPI_connect</function>, is made the current context.  All
    allocations made by <function>palloc</function>,
    <function>repalloc</function>, or SPI utility functions (except as
    described in this section) are made in this context.  When a
-   procedure disconnects from the SPI manager (via
+   C function disconnects from the SPI manager (via
    <function>SPI_finish</function>) the current context is restored to
    the upper executor context, and all allocations made in the
-   procedure memory context are freed and cannot be used any more.
+   C function memory context are freed and cannot be used any more.
   </para>
 
 <!-- *********************************************** -->
@@ -4263,12 +4256,12 @@ void SPI_freetuptable(SPITupleTable * <parameter>tuptable</parameter>)
   </para>
 
   <para>
-   This function is useful if a SPI procedure needs to execute
+   This function is useful if an SPI-using C function needs to execute
    multiple commands and does not want to keep the results of earlier
    commands around until it ends.  Note that any unfreed row sets will
    be freed anyway at <function>SPI_finish</function>.
    Also, if a subtransaction is started and then aborted within execution
-   of a SPI procedure, SPI automatically frees any row sets created while
+   of an SPI-using C function, SPI automatically frees any row sets created while
    the subtransaction was running.
   </para>
 
@@ -4373,9 +4366,9 @@ int SPI_freeplan(SPIPlanPtr <parameter>plan</parameter>)
    is part of some SQL command will probably result in obscure internal errors
    or crashes.  The interface functions presented here are primarily intended
    to be used by procedural language implementations to support transaction
-   management in procedures that are invoked by the <command>CALL</command>
+   management in SQL-level procedures that are invoked by the <command>CALL</command>
    command, taking the context of the <command>CALL</command> invocation into
-   account.  SPI procedures implemented in C can implement the same logic, but
+   account.  SPI-using procedures implemented in C can implement the same logic, but
    the details of that are beyond the scope of this documentation.
   </para>
 
@@ -4487,7 +4480,7 @@ void SPI_start_transaction(void)
    <function>SPI_start_transaction</function> starts a new transaction.  It
    can only be called after <function>SPI_commit</function>
    or <function>SPI_rollback</function>, as there is no transaction active at
-   that point.  Normally, when an SPI procedure is called, there is already a
+   that point.  Normally, when an SPI-using procedure is called, there is already a
    transaction active, so attempting to start another one before closing out
    the current one will result in an error.
   </para>
@@ -4566,7 +4559,7 @@ INSERT INTO a SELECT * FROM a;
 
   <para>
    This section contains a very simple example of SPI usage. The
-   procedure <function>execq</function> takes an SQL command as its
+   C function <function>execq</function> takes an SQL command as its
    first argument and a row count as its second, executes the command
    using <function>SPI_exec</function> and returns the number of rows
    that were processed by the command.  You can find more complex

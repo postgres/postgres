@@ -73,10 +73,10 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 }
 
 /*
- * _hash_datum2hashkey -- given a Datum, call the index's hash procedure
+ * _hash_datum2hashkey -- given a Datum, call the index's hash function
  *
  * The Datum is assumed to be of the index's column type, so we can use the
- * "primary" hash procedure that's tracked for us by the generic index code.
+ * "primary" hash function that's tracked for us by the generic index code.
  */
 uint32
 _hash_datum2hashkey(Relation rel, Datum key)

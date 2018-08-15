@@ -185,7 +185,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
     <term><replaceable class="parameter">support_number</replaceable></term>
     <listitem>
      <para>
-      The index method's support procedure number for a
+      The index method's support function number for a
       function associated with the operator family.
      </para>
     </listitem>
@@ -196,7 +196,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
     <listitem>
      <para>
       The name (optionally schema-qualified) of a function that is an index
-      method support procedure for the operator family.  If no argument list
+      method support function for the operator family.  If no argument list
       is specified, the name must be unique in its schema.
      </para>
     </listitem>

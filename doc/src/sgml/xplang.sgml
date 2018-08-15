@@ -146,7 +146,7 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
       the language does not grant access to data that the user would
       not otherwise have.  Trusted languages are designed for ordinary
       database users (those without superuser privilege) and allows them
-      to safely create functions and trigger
+      to safely create functions and
       procedures. Since PL functions are executed inside the database
       server, the <literal>TRUSTED</literal> flag should only be given
       for languages that do not allow access to database server
@@ -206,7 +206,7 @@ CREATE TRUSTED PROCEDURAL LANGUAGE plperl
     VALIDATOR plperl_validator;
 </programlisting>
       then defines that the previously declared functions
-      should be invoked for functions and trigger procedures where the
+      should be invoked for functions and procedures where the
       language attribute is <literal>plperl</literal>.
      </para>
   </example>

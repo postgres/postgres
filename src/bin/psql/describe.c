@@ -3907,7 +3907,7 @@ listEventTriggers(const char *pattern, bool verbose)
 					  gettext_noop("always"),
 					  gettext_noop("disabled"),
 					  gettext_noop("Enabled"),
-					  gettext_noop("Procedure"),
+					  gettext_noop("Function"),
 					  gettext_noop("Tags"));
 	if (verbose)
 		appendPQExpBuffer(&buf,

@@ -33,7 +33,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
   <para>
    <command>CREATE LANGUAGE</command> registers a new
    procedural language with a <productname>PostgreSQL</productname>
-   database.  Subsequently, functions and trigger procedures can be
+   database.  Subsequently, functions and procedures can be
    defined in this new language.
   </para>
 

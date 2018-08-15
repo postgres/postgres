@@ -119,7 +119,7 @@ plsample_call_handler(PG_FUNCTION_ARGS)
     if (CALLED_AS_TRIGGER(fcinfo))
     {
         /*
-         * Called as a trigger procedure
+         * Called as a trigger function
          */
         TriggerData    *trigdata = (TriggerData *) fcinfo-&gt;context;
 

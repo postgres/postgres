@@ -1053,9 +1053,9 @@ CREATE EVENT TRIGGER noddl ON ddl_command_start
 <screen>
 =# \dy
                      List of event triggers
- Name  |       Event       | Owner | Enabled | Procedure | Tags
--------+-------------------+-------+---------+-----------+------
- noddl | ddl_command_start | dim   | enabled | noddl     |
+ Name  |       Event       | Owner | Enabled | Function | Tags
+-------+-------------------+-------+---------+----------+------
+ noddl | ddl_command_start | dim   | enabled | noddl    |
 (1 row)
 
 =# CREATE TABLE foo(id serial);

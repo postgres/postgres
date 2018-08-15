@@ -19,7 +19,7 @@
     <itemizedlist>
      <listitem>
       <para>
-       can be used to create functions and trigger procedures,
+       can be used to create functions and triggers,
       </para>
      </listitem>
      <listitem>
@@ -305,7 +305,7 @@ $$ LANGUAGE plpgsql;
      for transaction
      control.  <application>PL/pgSQL</application>'s <command>BEGIN</command>/<command>END</command>
      are only for grouping; they do not start or end a transaction.
-     Functions and trigger procedures are always executed within a transaction
+     Functions are always executed within a transaction
      established by an outer query &mdash; they cannot start or commit that
      transaction, since there would be no context for them to execute in.
      However, a block containing an <literal>EXCEPTION</literal> clause effectively
@@ -579,7 +579,7 @@ $$ LANGUAGE plpgsql;
     function parameters.  The main practical use for this is to assign
     a different name for variables with predetermined names, such as
     <varname>NEW</varname> or <varname>OLD</varname> within
-    a trigger procedure.
+    a trigger function.
    </para>
 
    <para>
@@ -3796,7 +3796,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
  </sect1>
 
  <sect1 id="plpgsql-trigger">
-  <title>Trigger Procedures</title>
+  <title>Trigger Functions</title>
 
   <indexterm zone="plpgsql-trigger">
    <primary>trigger</primary>
@@ -3805,8 +3805,8 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
 
   <para>
    <application>PL/pgSQL</application> can be used to define trigger
-   procedures on data changes or database events.
-   A trigger procedure is created with the <command>CREATE FUNCTION</command>
+   functions on data changes or database events.
+   A trigger function is created with the <command>CREATE FUNCTION</command>
    command, declaring it as a function with no arguments and a return type of
    <type>trigger</type> (for data change triggers) or
    <type>event_trigger</type> (for database event triggers).
@@ -3946,7 +3946,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
      <listitem>
       <para>
        Data type <type>integer</type>; the number of arguments given to the trigger
-       procedure in the <command>CREATE TRIGGER</command> statement.
+       function in the <command>CREATE TRIGGER</command> statement.
       </para>
      </listitem>
     </varlistentry>
@@ -4025,11 +4025,11 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
 
    <para>
     <xref linkend="plpgsql-trigger-example"/> shows an example of a
-    trigger procedure in <application>PL/pgSQL</application>.
+    trigger function in <application>PL/pgSQL</application>.
    </para>
 
    <example id="plpgsql-trigger-example">
-    <title>A <application>PL/pgSQL</application> Trigger Procedure</title>
+    <title>A <application>PL/pgSQL</application> Trigger Function</title>
 
     <para>
      This example trigger ensures that any time a row is inserted or updated
@@ -4078,11 +4078,11 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
     holds a row for each insert, update, or delete that occurs. This approach
     can be thought of as auditing changes to a table.
     <xref linkend="plpgsql-trigger-audit-example"/> shows an example of an
-    audit trigger procedure in <application>PL/pgSQL</application>.
+    audit trigger function in <application>PL/pgSQL</application>.
    </para>
 
    <example id="plpgsql-trigger-audit-example">
-    <title>A <application>PL/pgSQL</application> Trigger Procedure For Auditing</title>
+    <title>A <application>PL/pgSQL</application> Trigger Function For Auditing</title>
 
     <para>
      This example trigger ensures that any insert, update or delete of a row
@@ -4139,7 +4139,7 @@ AFTER INSERT OR UPDATE OR DELETE ON emp
    </para>
 
    <example id="plpgsql-view-trigger-audit-example">
-    <title>A <application>PL/pgSQL</application> View Trigger Procedure For Auditing</title>
+    <title>A <application>PL/pgSQL</application> View Trigger Function For Auditing</title>
 
     <para>
      This example uses a trigger on the view to make it updatable, and
@@ -4215,13 +4215,13 @@ INSTEAD OF INSERT OR UPDATE OR DELETE ON emp_view
     This technique is commonly used in Data Warehousing, where the tables
     of measured or observed data (called fact tables) might be extremely large.
     <xref linkend="plpgsql-trigger-summary-example"/> shows an example of a
-    trigger procedure in <application>PL/pgSQL</application> that maintains
+    trigger function in <application>PL/pgSQL</application> that maintains
     a summary table for a fact table in a data warehouse.
    </para>
 
 
    <example id="plpgsql-trigger-summary-example">
-    <title>A <application>PL/pgSQL</application> Trigger Procedure For Maintaining A Summary Table</title>
+    <title>A <application>PL/pgSQL</application> Trigger Function For Maintaining A Summary Table</title>
 
     <para>
      The schema detailed here is partly based on the <emphasis>Grocery Store
@@ -4445,7 +4445,7 @@ CREATE TRIGGER emp_audit_del
    <para>
     <application>PL/pgSQL</application> can be used to define
     <link linkend="event-triggers">event triggers</link>.
-    <productname>PostgreSQL</productname> requires that a procedure that
+    <productname>PostgreSQL</productname> requires that a function that
     is to be called as an event trigger must be declared as a function with
     no arguments and a return type of <literal>event_trigger</literal>.
    </para>
@@ -4480,11 +4480,11 @@ CREATE TRIGGER emp_audit_del
 
    <para>
     <xref linkend="plpgsql-event-trigger-example"/> shows an example of an
-    event trigger procedure in <application>PL/pgSQL</application>.
+    event trigger function in <application>PL/pgSQL</application>.
    </para>
 
    <example id="plpgsql-event-trigger-example">
-    <title>A <application>PL/pgSQL</application> Event Trigger Procedure</title>
+    <title>A <application>PL/pgSQL</application> Event Trigger Function</title>
 
     <para>
      This example trigger simply raises a <literal>NOTICE</literal> message

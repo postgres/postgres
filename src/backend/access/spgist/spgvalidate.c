@@ -96,7 +96,7 @@ spgvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("operator family \"%s\" of access method %s contains support procedure %s with different left and right input types",
+					 errmsg("operator family \"%s\" of access method %s contains support function %s with different left and right input types",
 							opfamilyname, "spgist",
 							format_procedure(procform->amproc))));
 			result = false;

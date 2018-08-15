@@ -12360,7 +12360,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</func
   <tip>
    <para>
     If your needs go beyond the capabilities of these conditional
-    expressions, you might want to consider writing a stored procedure
+    expressions, you might want to consider writing a server-side function
     in a more expressive programming language.
    </para>
   </tip>
