@@ -405,7 +405,7 @@ getnameinfo(const struct sockaddr *sa, int salen,
 			ret = snprintf(service, servicelen, "%d",
 						   pg_ntoh16(((struct sockaddr_in *) sa)->sin_port));
 		}
-		if (ret == -1 || ret >= servicelen)
+		if (ret < 0 || ret >= servicelen)
 			return EAI_MEMORY;
 	}
 
