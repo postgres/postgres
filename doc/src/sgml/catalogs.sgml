@@ -67,7 +67,7 @@
 
      <row>
       <entry><link linkend="catalog-pg-amproc"><structname>pg_amproc</structname></link></entry>
-      <entry>access method support procedures</entry>
+      <entry>access method support functions</entry>
      </row>
 
      <row>
@@ -814,8 +814,8 @@
 
   <para>
    The catalog <structname>pg_amproc</structname> stores information about
-   support procedures associated with access method operator families.  There
-   is one row for each support procedure belonging to an operator family.
+   support functions associated with access method operator families.  There
+   is one row for each support function belonging to an operator family.
   </para>
 
   <table>
@@ -864,14 +864,14 @@
       <entry><structfield>amprocnum</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>Support procedure number</entry>
+      <entry>Support function number</entry>
      </row>
 
      <row>
       <entry><structfield>amproc</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>OID of the procedure</entry>
+      <entry>OID of the function</entry>
      </row>
 
     </tbody>
@@ -882,9 +882,9 @@
    The usual interpretation of the
    <structfield>amproclefttype</structfield> and <structfield>amprocrighttype</structfield> fields
    is that they identify the left and right input types of the operator(s)
-   that a particular support procedure supports.  For some access methods
-   these match the input data type(s) of the support procedure itself, for
-   others not.  There is a notion of <quote>default</quote> support procedures for
+   that a particular support function supports.  For some access methods
+   these match the input data type(s) of the support function itself, for
+   others not.  There is a notion of <quote>default</quote> support functions for
    an index, which are those with <structfield>amproclefttype</structfield> and
    <structfield>amprocrighttype</structfield> both equal to the index operator class's
    <structfield>opcintype</structfield>.
@@ -2471,7 +2471,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_conversion</structname> describes
-   encoding conversion procedures.  See <xref linkend="sql-createconversion"/>
+   encoding conversion functions.  See <xref linkend="sql-createconversion"/>
    for more information.
   </para>
 
@@ -2537,7 +2537,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><structfield>conproc</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Conversion procedure</entry>
+      <entry>Conversion function</entry>
      </row>
 
      <row>

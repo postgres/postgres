@@ -15,8 +15,8 @@
    PL/Tcl is a loadable procedural language for the
    <productname>PostgreSQL</productname> database system
    that enables the <ulink url="http://www.tcl.tk/">
-   Tcl language</ulink> to be used to write functions and
-   trigger procedures.
+   Tcl language</ulink> to be used to write
+   <productname>PostgreSQL</productname> functions.
   </para>
 
   <!-- **** PL/Tcl overview **** -->
@@ -587,7 +587,7 @@ SELECT 'doesn''t' AS ret
    </sect1>
 
    <sect1 id="pltcl-trigger">
-    <title>Trigger Procedures in PL/Tcl</title>
+    <title>Trigger Functions in PL/Tcl</title>
 
     <indexterm>
      <primary>trigger</primary>
@@ -595,13 +595,13 @@ SELECT 'doesn''t' AS ret
     </indexterm>
 
     <para>
-     Trigger procedures can be written in PL/Tcl.
-     <productname>PostgreSQL</productname> requires that a procedure that is to be called
+     Trigger functions can be written in PL/Tcl.
+     <productname>PostgreSQL</productname> requires that a function that is to be called
      as a trigger must be declared as a function with no arguments
      and a return type of <literal>trigger</literal>.
     </para>
     <para>
-     The information from the trigger manager is passed to the procedure body
+     The information from the trigger manager is passed to the function body
      in the following variables:
 
      <variablelist>
@@ -619,7 +619,7 @@ SELECT 'doesn''t' AS ret
        <term><varname>$TG_relid</varname></term>
        <listitem>
         <para>
-         The object ID of the table that caused the trigger procedure
+         The object ID of the table that caused the trigger function
          to be invoked.
         </para>
        </listitem>
@@ -629,7 +629,7 @@ SELECT 'doesn''t' AS ret
        <term><varname>$TG_table_name</varname></term>
        <listitem>
         <para>
-         The name of the table that caused the trigger procedure
+         The name of the table that caused the trigger function
          to be invoked.
         </para>
        </listitem>
@@ -639,7 +639,7 @@ SELECT 'doesn''t' AS ret
        <term><varname>$TG_table_schema</varname></term>
        <listitem>
         <para>
-         The schema of the table that caused the trigger procedure
+         The schema of the table that caused the trigger function
          to be invoked.
         </para>
        </listitem>
@@ -722,9 +722,9 @@ SELECT 'doesn''t' AS ret
        <term><varname>$args</varname></term>
        <listitem>
         <para>
-         A Tcl list of the arguments to the procedure as given in the
+         A Tcl list of the arguments to the function as given in the
          <command>CREATE TRIGGER</command> statement. These arguments are also accessible as
-         <literal>$1</literal> ... <literal>$<replaceable>n</replaceable></literal> in the procedure body.
+         <literal>$1</literal> ... <literal>$<replaceable>n</replaceable></literal> in the function body.
         </para>
        </listitem>
       </varlistentry>
@@ -733,7 +733,7 @@ SELECT 'doesn''t' AS ret
     </para>
 
     <para>
-     The return value from a trigger procedure can be one of the strings
+     The return value from a trigger function can be one of the strings
      <literal>OK</literal> or <literal>SKIP</literal>, or a list of column name/value pairs.
      If the return value is <literal>OK</literal>,
      the operation (<command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>)
@@ -764,7 +764,7 @@ SELECT 'doesn''t' AS ret
     </tip>
 
     <para>
-     Here's a little example trigger procedure that forces an integer value
+     Here's a little example trigger function that forces an integer value
      in a table to keep track of the number of updates that are performed on the
      row. For new rows inserted, the value is initialized to 0 and then
      incremented on every update operation.
@@ -792,14 +792,14 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     FOR EACH ROW EXECUTE PROCEDURE trigfunc_modcount('modcnt');
 </programlisting>
 
-     Notice that the trigger procedure itself does not know the column
+     Notice that the trigger function itself does not know the column
      name; that's supplied from the trigger arguments.  This lets the
-     trigger procedure be reused with different tables.
+     trigger function be reused with different tables.
     </para>
    </sect1>
 
    <sect1 id="pltcl-event-trigger">
-    <title>Event Trigger Procedures in PL/Tcl</title>
+    <title>Event Trigger Functions in PL/Tcl</title>
 
     <indexterm>
      <primary>event trigger</primary>
@@ -807,13 +807,13 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     </indexterm>
 
     <para>
-     Event trigger procedures can be written in PL/Tcl.
-     <productname>PostgreSQL</productname> requires that a procedure that is
+     Event trigger functions can be written in PL/Tcl.
+     <productname>PostgreSQL</productname> requires that a function that is
      to be called as an event trigger must be declared as a function with no
      arguments and a return type of <literal>event_trigger</literal>.
     </para>
     <para>
-     The information from the trigger manager is passed to the procedure body
+     The information from the trigger manager is passed to the function body
      in the following variables:
 
      <variablelist>
@@ -839,11 +839,11 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     </para>
 
     <para>
-     The return value of the trigger procedure is ignored.
+     The return value of the trigger function is ignored.
     </para>
 
     <para>
-     Here's a little example event trigger procedure that simply raises
+     Here's a little example event trigger function that simply raises
      a <literal>NOTICE</literal> message each time a supported command is
      executed:
 

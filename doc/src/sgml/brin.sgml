@@ -537,7 +537,7 @@ typedef struct BrinOpcInfo
 } BrinOpcInfo;
 </programlisting>
       <structname>BrinOpcInfo</structname>.<structfield>oi_opaque</structfield> can be used by the
-      operator class routines to pass information between support procedures
+      operator class routines to pass information between support functions
       during an index scan.
      </para>
     </listitem>
@@ -587,27 +587,27 @@ typedef struct BrinOpcInfo
   defined by the user for other data types using equivalent definitions,
   without having to write any source code; appropriate catalog entries being
   declared is enough.  Note that assumptions about the semantics of operator
-  strategies are embedded in the support procedures' source code.
+  strategies are embedded in the support functions' source code.
  </para>
 
  <para>
   Operator classes that implement completely different semantics are also
-  possible, provided implementations of the four main support procedures
+  possible, provided implementations of the four main support functions
   described above are written.  Note that backwards compatibility across major
-  releases is not guaranteed: for example, additional support procedures might
+  releases is not guaranteed: for example, additional support functions might
   be required in later releases.
  </para>
 
  <para>
   To write an operator class for a data type that implements a totally
-  ordered set, it is possible to use the minmax support procedures
+  ordered set, it is possible to use the minmax support functions
   alongside the corresponding operators, as shown in
   <xref linkend="brin-extensibility-minmax-table"/>.
-  All operator class members (procedures and operators) are mandatory.
+  All operator class members (functions and operators) are mandatory.
  </para>
 
  <table id="brin-extensibility-minmax-table">
-  <title>Procedure and Support Numbers for Minmax Operator Classes</title>
+  <title>Function and Support Numbers for Minmax Operator Classes</title>
   <tgroup cols="2">
    <thead>
     <row>
@@ -617,19 +617,19 @@ typedef struct BrinOpcInfo
    </thead>
    <tbody>
     <row>
-     <entry>Support Procedure 1</entry>
+     <entry>Support Function 1</entry>
      <entry>internal function <function>brin_minmax_opcinfo()</function></entry>
     </row>
     <row>
-     <entry>Support Procedure 2</entry>
+     <entry>Support Function 2</entry>
      <entry>internal function <function>brin_minmax_add_value()</function></entry>
     </row>
     <row>
-     <entry>Support Procedure 3</entry>
+     <entry>Support Function 3</entry>
      <entry>internal function <function>brin_minmax_consistent()</function></entry>
     </row>
     <row>
-     <entry>Support Procedure 4</entry>
+     <entry>Support Function 4</entry>
      <entry>internal function <function>brin_minmax_union()</function></entry>
     </row>
     <row>
@@ -659,7 +659,7 @@ typedef struct BrinOpcInfo
  <para>
   To write an operator class for a complex data type which has values
   included within another type, it's possible to use the inclusion support
-  procedures alongside the corresponding operators, as shown
+  functions alongside the corresponding operators, as shown
   in <xref linkend="brin-extensibility-inclusion-table"/>.  It requires
   only a single additional function, which can be written in any language.
   More functions can be defined for additional functionality.  All operators
@@ -668,7 +668,7 @@ typedef struct BrinOpcInfo
  </para>
 
  <table id="brin-extensibility-inclusion-table">
-  <title>Procedure and Support Numbers for Inclusion Operator Classes</title>
+  <title>Function and Support Numbers for Inclusion Operator Classes</title>
   <tgroup cols="3">
    <thead>
     <row>
@@ -679,42 +679,42 @@ typedef struct BrinOpcInfo
    </thead>
    <tbody>
     <row>
-     <entry>Support Procedure 1</entry>
+     <entry>Support Function 1</entry>
      <entry>internal function <function>brin_inclusion_opcinfo()</function></entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Support Procedure 2</entry>
+     <entry>Support Function 2</entry>
      <entry>internal function <function>brin_inclusion_add_value()</function></entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Support Procedure 3</entry>
+     <entry>Support Function 3</entry>
      <entry>internal function <function>brin_inclusion_consistent()</function></entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Support Procedure 4</entry>
+     <entry>Support Function 4</entry>
      <entry>internal function <function>brin_inclusion_union()</function></entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Support Procedure 11</entry>
+     <entry>Support Function 11</entry>
      <entry>function to merge two elements</entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Support Procedure 12</entry>
+     <entry>Support Function 12</entry>
      <entry>optional function to check whether two elements are mergeable</entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Support Procedure 13</entry>
+     <entry>Support Function 13</entry>
      <entry>optional function to check if an element is contained within another</entry>
      <entry></entry>
     </row>
     <row>
-     <entry>Support Procedure 14</entry>
+     <entry>Support Function 14</entry>
      <entry>optional function to check whether an element is empty</entry>
      <entry></entry>
     </row>
@@ -803,7 +803,7 @@ typedef struct BrinOpcInfo
  </table>
 
  <para>
-    Support procedure numbers 1-10 are reserved for the BRIN internal
+    Support function numbers 1-10 are reserved for the BRIN internal
     functions, so the SQL level functions start with number 11.  Support
     function number 11 is the main function required to build the index.
     It should accept two arguments with the same data type as the operator class,
@@ -814,11 +814,11 @@ typedef struct BrinOpcInfo
  </para>
 
  <para>
-    Support procedure numbers 12 and 14 are provided to support
-    irregularities of built-in data types.  Procedure number 12
+    Support function numbers 12 and 14 are provided to support
+    irregularities of built-in data types.  Function number 12
     is used to support network addresses from different families which
-    are not mergeable.  Procedure number 14 is used to support
-    empty ranges.  Procedure number 13 is an optional but
+    are not mergeable.  Function number 14 is used to support
+    empty ranges.  Function number 13 is an optional but
     recommended one, which allows the new value to be checked before
     it is passed to the union function.  As the BRIN framework can shortcut
     some operations when the union is not changed, using this

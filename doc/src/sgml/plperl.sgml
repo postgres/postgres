@@ -1337,7 +1337,7 @@ CREATE TRIGGER test_valid_id_trig
   </para>
 
   <para>
-   The return value of the trigger procedure is ignored.
+   The return value of the trigger function is ignored.
   </para>
 
   <para>

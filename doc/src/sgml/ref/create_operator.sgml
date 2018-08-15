@@ -94,7 +94,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
 
   <para>
    The <replaceable class="parameter">function_name</replaceable>
-   procedure must have been previously defined using <command>CREATE
+   function must have been previously defined using <command>CREATE
    FUNCTION</command> and must be defined to accept the correct number
    of arguments (either one or two) of the indicated types.
   </para>
@@ -264,11 +264,11 @@ COMMUTATOR = OPERATOR(myschema.===) ,
 CREATE OPERATOR === (
     LEFTARG = box,
     RIGHTARG = box,
-    PROCEDURE = area_equal_procedure,
+    PROCEDURE = area_equal_function,
     COMMUTATOR = ===,
     NEGATOR = !==,
-    RESTRICT = area_restriction_procedure,
-    JOIN = area_join_procedure,
+    RESTRICT = area_restriction_function,
+    JOIN = area_join_function,
     HASHES, MERGES
 );
 </programlisting></para>

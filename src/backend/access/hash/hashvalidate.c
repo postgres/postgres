@@ -96,7 +96,7 @@ hashvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("operator family \"%s\" of access method %s contains support procedure %s with different left and right input types",
+					 errmsg("operator family \"%s\" of access method %s contains support function %s with different left and right input types",
 							opfamilyname, "hash",
 							format_procedure(procform->amproc))));
 			result = false;
@@ -182,7 +182,7 @@ hashvalidate(Oid opclassoid)
 			result = false;
 		}
 
-		/* There should be relevant hash procedures for each datatype */
+		/* There should be relevant hash functions for each datatype */
 		if (!list_member_oid(hashabletypes, oprform->amoplefttype) ||
 			!list_member_oid(hashabletypes, oprform->amoprighttype))
 		{
