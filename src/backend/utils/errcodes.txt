@@ -18,7 +18,7 @@
 #   src/pl/tcl/pltclerrcodes.h
 #      the same, for PL/Tcl
 #
-#   doc/src/sgml/errcodes-list.sgml
+#   doc/src/sgml/errcodes-table.sgml
 #      a SGML table of error codes for inclusion in the documentation
 #
 # The format of this file is one error code per line, with the following
