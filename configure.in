@@ -358,6 +358,7 @@ case $template in
 esac
 
 AC_PROG_CC([$pgac_cc_list])
+AC_PROG_CC_C99()
 AC_PROG_CXX([$pgac_cxx_list])
 
 # Check if it's Intel's compiler, which (usually) pretends to be gcc,
