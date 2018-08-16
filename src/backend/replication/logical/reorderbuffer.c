@@ -3278,11 +3278,13 @@ ApplyLogicalMappingFile(HTAB *tuplecid_data, Oid relid, const char *fname)
 			new_ent->combocid = ent->combocid;
 		}
 	}
+
+	CloseTransientFile(fd);
 }
 
 
 /*
- * Check whether the TransactionOId 'xid' is in the pre-sorted array 'xip'.
+ * Check whether the TransactionOid 'xid' is in the pre-sorted array 'xip'.
  */
 static bool
 TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)
