@@ -2423,12 +2423,7 @@ dist_ppoly_internal(Point *pt, POLYGON *poly)
 	LSEG		seg;
 
 	if (point_inside(pt, poly->npts, poly->p) != 0)
-	{
-#ifdef GEODEBUG
-		printf("dist_ppoly_internal- point inside of polygon\n");
-#endif
 		return 0.0;
-	}
 
 	/* initialize distance with segment between first and last points */
 	seg.p[0].x = poly->p[0].x;
@@ -2436,9 +2431,6 @@ dist_ppoly_internal(Point *pt, POLYGON *poly)
 	seg.p[1].x = poly->p[poly->npts - 1].x;
 	seg.p[1].y = poly->p[poly->npts - 1].y;
 	result = lseg_closept_point(NULL, &seg, pt);
-#ifdef GEODEBUG
-	printf("dist_ppoly_internal- segment 0/n distance is %f\n", result);
-#endif
 
 	/* check distances for other segments */
 	for (i = 0; i < poly->npts - 1; i++)
@@ -2448,9 +2440,6 @@ dist_ppoly_internal(Point *pt, POLYGON *poly)
 		seg.p[1].x = poly->p[i + 1].x;
 		seg.p[1].y = poly->p[i + 1].y;
 		d = lseg_closept_point(NULL, &seg, pt);
-#ifdef GEODEBUG
-		printf("dist_ppoly_internal- segment %d distance is %f\n", (i + 1), d);
-#endif
 		if (d < result)
 			result = d;
 	}
@@ -5233,16 +5222,8 @@ plist_same(int npts, Point *p1, Point *p2)
 				if (j >= npts)
 					j = 0;
 				if (!point_eq_point(&p2[j], &p1[ii]))
-				{
-#ifdef GEODEBUG
-					printf("plist_same- %d failed forward match with %d\n", j, ii);
-#endif
 					break;
-				}
 			}
-#ifdef GEODEBUG
-			printf("plist_same- ii = %d/%d after forward match\n", ii, npts);
-#endif
 			if (ii == npts)
 				return true;
 
@@ -5252,16 +5233,8 @@ plist_same(int npts, Point *p1, Point *p2)
 				if (j < 0)
 					j = (npts - 1);
 				if (!point_eq_point(&p2[j], &p1[ii]))
-				{
-#ifdef GEODEBUG
-					printf("plist_same- %d failed reverse match with %d\n", j, ii);
-#endif
 					break;
-				}
 			}
-#ifdef GEODEBUG
-			printf("plist_same- ii = %d/%d after reverse match\n", ii, npts);
-#endif
 			if (ii == npts)
 				return true;
 		}
