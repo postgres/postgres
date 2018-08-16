@@ -84,14 +84,14 @@
  * Comparator for qsort
  *
  * We don't need to use the floating point macros in here, because this
- * is going only going to be used in a place to effect the performance
+ * is only going to be used in a place to effect the performance
  * of the index, not the correctness.
  */
 static int
 compareDoubles(const void *a, const void *b)
 {
-	double		x = *(double *) a;
-	double		y = *(double *) b;
+	float8		x = *(float8 *) a;
+	float8		y = *(float8 *) b;
 
 	if (x == y)
 		return 0;
@@ -100,8 +100,8 @@ compareDoubles(const void *a, const void *b)
 
 typedef struct
 {
-	double		low;
-	double		high;
+	float8		low;
+	float8		high;
 } Range;
 
 typedef struct
@@ -175,7 +175,7 @@ static RectBox *
 initRectBox(void)
 {
 	RectBox    *rect_box = (RectBox *) palloc(sizeof(RectBox));
-	double		infinity = get_float8_infinity();
+	float8		infinity = get_float8_infinity();
 
 	rect_box->range_box_x.left.low = -infinity;
 	rect_box->range_box_x.left.high = infinity;
@@ -418,10 +418,10 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 	BOX		   *centroid;
 	int			median,
 				i;
-	double	   *lowXs = palloc(sizeof(double) * in->nTuples);
-	double	   *highXs = palloc(sizeof(double) * in->nTuples);
-	double	   *lowYs = palloc(sizeof(double) * in->nTuples);
-	double	   *highYs = palloc(sizeof(double) * in->nTuples);
+	float8	   *lowXs = palloc(sizeof(float8) * in->nTuples);
+	float8	   *highXs = palloc(sizeof(float8) * in->nTuples);
+	float8	   *lowYs = palloc(sizeof(float8) * in->nTuples);
+	float8	   *highYs = palloc(sizeof(float8) * in->nTuples);
 
 	/* Calculate median of all 4D coordinates */
 	for (i = 0; i < in->nTuples; i++)
@@ -434,10 +434,10 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 		highYs[i] = box->high.y;
 	}
 
-	qsort(lowXs, in->nTuples, sizeof(double), compareDoubles);
-	qsort(highXs, in->nTuples, sizeof(double), compareDoubles);
-	qsort(lowYs, in->nTuples, sizeof(double), compareDoubles);
-	qsort(highYs, in->nTuples, sizeof(double), compareDoubles);
+	qsort(lowXs, in->nTuples, sizeof(float8), compareDoubles);
+	qsort(highXs, in->nTuples, sizeof(float8), compareDoubles);
+	qsort(lowYs, in->nTuples, sizeof(float8), compareDoubles);
+	qsort(highYs, in->nTuples, sizeof(float8), compareDoubles);
 
 	median = in->nTuples / 2;
 

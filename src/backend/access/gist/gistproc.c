@@ -55,7 +55,7 @@ rt_box_union(BOX *n, const BOX *a, const BOX *b)
  * Size of a BOX for penalty-calculation purposes.
  * The result can be +Infinity, but not NaN.
  */
-static double
+static float8
 size_box(const BOX *box)
 {
 	/*
@@ -76,20 +76,21 @@ size_box(const BOX *box)
 	 */
 	if (isnan(box->high.x) || isnan(box->high.y))
 		return get_float8_infinity();
-	return (box->high.x - box->low.x) * (box->high.y - box->low.y);
+	return float8_mul(float8_mi(box->high.x, box->low.x),
+					  float8_mi(box->high.y, box->low.y));
 }
 
 /*
  * Return amount by which the union of the two boxes is larger than
  * the original BOX's area.  The result can be +Infinity, but not NaN.
  */
-static double
+static float8
 box_penalty(const BOX *original, const BOX *new)
 {
 	BOX			unionbox;
 
 	rt_box_union(&unionbox, original, new);
-	return size_box(&unionbox) - size_box(original);
+	return float8_mi(size_box(&unionbox), size_box(original));
 }
 
 /*
@@ -263,7 +264,7 @@ typedef struct
 	/* Index of entry in the initial array */
 	int			index;
 	/* Delta between penalties of entry insertion into different groups */
-	double		delta;
+	float8		delta;
 } CommonEntry;
 
 /*
@@ -279,13 +280,13 @@ typedef struct
 
 	bool		first;			/* true if no split was selected yet */
 
-	double		leftUpper;		/* upper bound of left interval */
-	double		rightLower;		/* lower bound of right interval */
+	float8		leftUpper;		/* upper bound of left interval */
+	float8		rightLower;		/* lower bound of right interval */
 
 	float4		ratio;
 	float4		overlap;
 	int			dim;			/* axis of this split */
-	double		range;			/* width of general MBR projection to the
+	float8		range;			/* width of general MBR projection to the
 								 * selected axis */
 } ConsiderSplitContext;
 
@@ -294,7 +295,7 @@ typedef struct
  */
 typedef struct
 {
-	double		lower,
+	float8		lower,
 				upper;
 } SplitInterval;
 
@@ -304,7 +305,7 @@ typedef struct
 static int
 interval_cmp_lower(const void *i1, const void *i2)
 {
-	double		lower1 = ((const SplitInterval *) i1)->lower,
+	float8		lower1 = ((const SplitInterval *) i1)->lower,
 				lower2 = ((const SplitInterval *) i2)->lower;
 
 	return float8_cmp_internal(lower1, lower2);
@@ -316,7 +317,7 @@ interval_cmp_lower(const void *i1, const void *i2)
 static int
 interval_cmp_upper(const void *i1, const void *i2)
 {
-	double		upper1 = ((const SplitInterval *) i1)->upper,
+	float8		upper1 = ((const SplitInterval *) i1)->upper,
 				upper2 = ((const SplitInterval *) i2)->upper;
 
 	return float8_cmp_internal(upper1, upper2);
@@ -339,14 +340,14 @@ non_negative(float val)
  */
 static inline void
 g_box_consider_split(ConsiderSplitContext *context, int dimNum,
-					 double rightLower, int minLeftCount,
-					 double leftUpper, int maxLeftCount)
+					 float8 rightLower, int minLeftCount,
+					 float8 leftUpper, int maxLeftCount)
 {
 	int			leftCount,
 				rightCount;
 	float4		ratio,
 				overlap;
-	double		range;
+	float8		range;
 
 	/*
 	 * Calculate entries distribution ratio assuming most uniform distribution
@@ -369,8 +370,7 @@ g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 	 * Ratio of split - quotient between size of lesser group and total
 	 * entries count.
 	 */
-	ratio = ((float4) Min(leftCount, rightCount)) /
-		((float4) context->entriesCount);
+	ratio = float4_div(Min(leftCount, rightCount), context->entriesCount);
 
 	if (ratio > LIMIT_RATIO)
 	{
@@ -384,11 +384,13 @@ g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 		 * or less range with same overlap.
 		 */
 		if (dimNum == 0)
-			range = context->boundingBox.high.x - context->boundingBox.low.x;
+			range = float8_mi(context->boundingBox.high.x,
+							  context->boundingBox.low.x);
 		else
-			range = context->boundingBox.high.y - context->boundingBox.low.y;
+			range = float8_mi(context->boundingBox.high.y,
+							  context->boundingBox.low.y);
 
-		overlap = (leftUpper - rightLower) / range;
+		overlap = float8_div(float8_mi(leftUpper, rightLower), range);
 
 		/* If there is no previous selection, select this */
 		if (context->first)
@@ -444,20 +446,14 @@ g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 
 /*
  * Compare common entries by their deltas.
- * (We assume the deltas can't be NaN.)
  */
 static int
 common_entry_cmp(const void *i1, const void *i2)
 {
-	double		delta1 = ((const CommonEntry *) i1)->delta,
+	float8		delta1 = ((const CommonEntry *) i1)->delta,
 				delta2 = ((const CommonEntry *) i2)->delta;
 
-	if (delta1 < delta2)
-		return -1;
-	else if (delta1 > delta2)
-		return 1;
-	else
-		return 0;
+	return float8_cmp_internal(delta1, delta2);
 }
 
 /*
@@ -531,7 +527,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	context.first = true;		/* nothing selected yet */
 	for (dim = 0; dim < 2; dim++)
 	{
-		double		leftUpper,
+		float8		leftUpper,
 					rightLower;
 		int			i1,
 					i2;
@@ -728,7 +724,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	 */
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-		double		lower,
+		float8		lower,
 					upper;
 
 		/*
@@ -783,7 +779,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		 * Calculate minimum number of entries that must be placed in both
 		 * groups, to reach LIMIT_RATIO.
 		 */
-		int			m = ceil(LIMIT_RATIO * (double) nentries);
+		int			m = ceil(LIMIT_RATIO * nentries);
 
 		/*
 		 * Calculate delta between penalties of join "common entries" to
@@ -792,8 +788,8 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		for (i = 0; i < commonEntriesCount; i++)
 		{
 			box = DatumGetBoxP(entryvec->vector[commonEntries[i].index].key);
-			commonEntries[i].delta = Abs(box_penalty(leftBox, box) -
-										 box_penalty(rightBox, box));
+			commonEntries[i].delta = Abs(float8_mi(box_penalty(leftBox, box),
+												   box_penalty(rightBox, box)));
 		}
 
 		/*
@@ -1107,10 +1103,10 @@ gist_circle_compress(PG_FUNCTION_ARGS)
 		BOX		   *r;
 
 		r = (BOX *) palloc(sizeof(BOX));
-		r->high.x = in->center.x + in->radius;
-		r->low.x = in->center.x - in->radius;
-		r->high.y = in->center.y + in->radius;
-		r->low.y = in->center.y - in->radius;
+		r->high.x = float8_pl(in->center.x, in->radius);
+		r->low.x = float8_mi(in->center.x, in->radius);
+		r->high.y = float8_pl(in->center.y, in->radius);
+		r->low.y = float8_mi(in->center.y, in->radius);
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
@@ -1148,10 +1144,10 @@ gist_circle_consistent(PG_FUNCTION_ARGS)
 	 * rtree_internal_consistent even at leaf nodes.  (This works in part
 	 * because the index entries are bounding boxes not circles.)
 	 */
-	bbox.high.x = query->center.x + query->radius;
-	bbox.low.x = query->center.x - query->radius;
-	bbox.high.y = query->center.y + query->radius;
-	bbox.low.y = query->center.y - query->radius;
+	bbox.high.x = float8_pl(query->center.x, query->radius);
+	bbox.low.x = float8_mi(query->center.x, query->radius);
+	bbox.high.y = float8_pl(query->center.y, query->radius);
+	bbox.low.y = float8_mi(query->center.y, query->radius);
 
 	result = rtree_internal_consistent(DatumGetBoxP(entry->key),
 									   &bbox, strategy);
@@ -1216,10 +1212,10 @@ gist_point_fetch(PG_FUNCTION_ARGS)
 	DatumGetFloat8(DirectFunctionCall2(point_distance, \
 									   PointPGetDatum(p1), PointPGetDatum(p2)))
 
-static double
+static float8
 computeDistance(bool isLeaf, BOX *box, Point *point)
 {
-	double		result = 0.0;
+	float8		result = 0.0;
 
 	if (isLeaf)
 	{
@@ -1237,9 +1233,9 @@ computeDistance(bool isLeaf, BOX *box, Point *point)
 		/* point is over or below box */
 		Assert(box->low.y <= box->high.y);
 		if (point->y > box->high.y)
-			result = point->y - box->high.y;
+			result = float8_mi(point->y, box->high.y);
 		else if (point->y < box->low.y)
-			result = box->low.y - point->y;
+			result = float8_mi(box->low.y, point->y);
 		else
 			elog(ERROR, "inconsistent point values");
 	}
@@ -1248,9 +1244,9 @@ computeDistance(bool isLeaf, BOX *box, Point *point)
 		/* point is to left or right of box */
 		Assert(box->low.x <= box->high.x);
 		if (point->x > box->high.x)
-			result = point->x - box->high.x;
+			result = float8_mi(point->x, box->high.x);
 		else if (point->x < box->low.x)
-			result = box->low.x - point->x;
+			result = float8_mi(box->low.x, point->x);
 		else
 			elog(ERROR, "inconsistent point values");
 	}
@@ -1258,7 +1254,7 @@ computeDistance(bool isLeaf, BOX *box, Point *point)
 	{
 		/* closest point will be a vertex */
 		Point		p;
-		double		subresult;
+		float8		subresult;
 
 		result = point_point_distance(point, &box->low);
 
@@ -1449,7 +1445,7 @@ gist_point_distance(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-	double		distance;
+	float8		distance;
 	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
 
 	switch (strategyGroup)
@@ -1478,11 +1474,11 @@ gist_point_distance(PG_FUNCTION_ARGS)
  * This is a lower bound estimate of distance from point to indexed geometric
  * type.
  */
-static double
+static float8
 gist_bbox_distance(GISTENTRY *entry, Datum query,
 				   StrategyNumber strategy, bool *recheck)
 {
-	double		distance;
+	float8		distance;
 	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
 
 	/* Bounding box distance is always inexact. */
@@ -1512,7 +1508,7 @@ gist_circle_distance(PG_FUNCTION_ARGS)
 
 	/* Oid subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	double		distance;
+	float8		distance;
 
 	distance = gist_bbox_distance(entry, query, strategy, recheck);
 
@@ -1528,7 +1524,7 @@ gist_poly_distance(PG_FUNCTION_ARGS)
 
 	/* Oid subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	double		distance;
+	float8		distance;
 
 	distance = gist_bbox_distance(entry, query, strategy, recheck);
 
