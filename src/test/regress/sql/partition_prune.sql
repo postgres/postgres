@@ -946,3 +946,15 @@ execute q (1, 1);
 
 reset plan_cache_mode;
 drop table p, q;
+
+-- Ensure run-time pruning works correctly when we match a partitioned table
+-- on the first level but find no matching partitions on the second level.
+create table listp (a int, b int) partition by list (a);
+create table listp1 partition of listp for values in(1);
+create table listp2 partition of listp for values in(2) partition by list(b);
+create table listp2_10 partition of listp2 for values in (10);
+
+explain (analyze, costs off, summary off, timing off)
+select * from listp where a = (select 2) and b <> 10;
+
+drop table listp;
