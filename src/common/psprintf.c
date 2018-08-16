@@ -77,7 +77,7 @@ psprintf(const char *fmt,...)
  * pvsnprintf
  *
  * Attempt to format text data under the control of fmt (an sprintf-style
- * format string) and insert it into buf (which has length len, len > 0).
+ * format string) and insert it into buf (which has length len).
  *
  * If successful, return the number of bytes emitted, not counting the
  * trailing zero byte.  This will always be strictly less than len.
@@ -89,14 +89,11 @@ psprintf(const char *fmt,...)
  * Other error cases do not return, but exit via elog(ERROR) or exit().
  * Hence, this shouldn't be used inside libpq.
  *
- * This function exists mainly to centralize our workarounds for
- * non-C99-compliant vsnprintf implementations.  Generally, any call that
- * pays any attention to the return value should go through here rather
- * than calling snprintf or vsnprintf directly.
- *
  * Note that the semantics of the return value are not exactly C99's.
  * First, we don't promise that the estimated buffer size is exactly right;
  * callers must be prepared to loop multiple times to get the right size.
+ * (Given a C99-compliant vsnprintf, that won't happen, but it is rumored
+ * that some implementations don't always return the same value ...)
  * Second, we return the recommended buffer size, not one less than that;
  * this lets overflow concerns be handled here rather than in the callers.
  */
@@ -105,28 +102,10 @@ pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
 {
 	int			nprinted;
 
-	Assert(len > 0);
-
-	errno = 0;
-
-	/*
-	 * Assert check here is to catch buggy vsnprintf that overruns the
-	 * specified buffer length.  Solaris 7 in 64-bit mode is an example of a
-	 * platform with such a bug.
-	 */
-#ifdef USE_ASSERT_CHECKING
-	buf[len - 1] = '\0';
-#endif
-
 	nprinted = vsnprintf(buf, len, fmt, args);
 
-	Assert(buf[len - 1] == '\0');
-
-	/*
-	 * If vsnprintf reports an error other than ENOMEM, fail.  The possible
-	 * causes of this are not user-facing errors, so elog should be enough.
-	 */
-	if (nprinted < 0 && errno != 0 && errno != ENOMEM)
+	/* We assume failure means the fmt is bogus, hence hard failure is OK */
+	if (unlikely(nprinted < 0))
 	{
 #ifndef FRONTEND
 		elog(ERROR, "vsnprintf failed: %m");
@@ -136,42 +115,21 @@ pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
 #endif
 	}
 
-	/*
-	 * Note: some versions of vsnprintf return the number of chars actually
-	 * stored, not the total space needed as C99 specifies.  And at least one
-	 * returns -1 on failure.  Be conservative about believing whether the
-	 * print worked.
-	 */
-	if (nprinted >= 0 && (size_t) nprinted < len - 1)
+	if ((size_t) nprinted < len)
 	{
 		/* Success.  Note nprinted does not include trailing null. */
 		return (size_t) nprinted;
 	}
 
-	if (nprinted >= 0 && (size_t) nprinted > len)
-	{
-		/*
-		 * This appears to be a C99-compliant vsnprintf, so believe its
-		 * estimate of the required space.  (If it's wrong, the logic will
-		 * still work, but we may loop multiple times.)  Note that the space
-		 * needed should be only nprinted+1 bytes, but we'd better allocate
-		 * one more than that so that the test above will succeed next time.
-		 *
-		 * In the corner case where the required space just barely overflows,
-		 * fall through so that we'll error out below (possibly after
-		 * looping).
-		 */
-		if ((size_t) nprinted <= MaxAllocSize - 2)
-			return nprinted + 2;
-	}
-
 	/*
-	 * Buffer overrun, and we don't know how much space is needed.  Estimate
-	 * twice the previous buffer size, but not more than MaxAllocSize; if we
-	 * are already at MaxAllocSize, choke.  Note we use this palloc-oriented
-	 * overflow limit even when in frontend.
+	 * We assume a C99-compliant vsnprintf, so believe its estimate of the
+	 * required space, and add one for the trailing null.  (If it's wrong, the
+	 * logic will still work, but we may loop multiple times.)
+	 *
+	 * Choke if the required space would exceed MaxAllocSize.  Note we use
+	 * this palloc-oriented overflow limit even when in frontend.
 	 */
-	if (len >= MaxAllocSize)
+	if (unlikely((size_t) nprinted > MaxAllocSize - 1))
 	{
 #ifndef FRONTEND
 		ereport(ERROR,
@@ -183,8 +141,5 @@ pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
 #endif
 	}
 
-	if (len >= MaxAllocSize / 2)
-		return MaxAllocSize;
-
-	return len * 2;
+	return nprinted + 1;
 }

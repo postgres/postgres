@@ -9441,26 +9441,19 @@ do_serialize(char **destptr, Size *maxbytes, const char *fmt,...)
 	if (*maxbytes <= 0)
 		elog(ERROR, "not enough space to serialize GUC state");
 
-	errno = 0;
-
 	va_start(vargs, fmt);
 	n = vsnprintf(*destptr, *maxbytes, fmt, vargs);
 	va_end(vargs);
 
-	/*
-	 * Cater to portability hazards in the vsnprintf() return value just like
-	 * appendPQExpBufferVA() does.  Note that this requires an extra byte of
-	 * slack at the end of the buffer.  Since serialize_variable() ends with a
-	 * do_serialize_binary() rather than a do_serialize(), we'll always have
-	 * that slack; estimate_variable_size() need not add a byte for it.
-	 */
-	if (n < 0 || n >= *maxbytes - 1)
+	if (n < 0)
 	{
-		if (n < 0 && errno != 0 && errno != ENOMEM)
-			/* Shouldn't happen. Better show errno description. */
-			elog(ERROR, "vsnprintf failed: %m");
-		else
-			elog(ERROR, "not enough space to serialize GUC state");
+		/* Shouldn't happen. Better show errno description. */
+		elog(ERROR, "vsnprintf failed: %m");
+	}
+	if (n >= *maxbytes)
+	{
+		/* This shouldn't happen either, really. */
+		elog(ERROR, "not enough space to serialize GUC state");
 	}
 
 	/* Shift the destptr ahead of the null terminator */

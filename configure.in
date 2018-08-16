@@ -1806,7 +1806,7 @@ for the exact reason.]])],
 # Run tests below here
 # --------------------
 
-# Force use of our snprintf if system's doesn't do arg control
+# For NLS, force use of our snprintf if system's doesn't do arg control.
 # See comment above at snprintf test for details.
 if test "$enable_nls" = yes -a "$pgac_need_repl_snprintf" = no; then
   PGAC_FUNC_SNPRINTF_ARG_CONTROL
@@ -1854,6 +1854,15 @@ AC_DEFINE_UNQUOTED(INT64_MODIFIER, $INT64_MODIFIER,
 if test "$pgac_need_repl_snprintf" = no; then
   PGAC_FUNC_SNPRINTF_SIZE_T_SUPPORT
   if test "$pgac_cv_snprintf_size_t_support" != yes; then
+    pgac_need_repl_snprintf=yes
+  fi
+fi
+
+# Force use of our snprintf if the system's doesn't handle buffer overrun
+# as specified by C99.
+if test "$pgac_need_repl_snprintf" = no; then
+  PGAC_FUNC_SNPRINTF_C99_RESULT
+  if test "$pgac_cv_snprintf_c99_result" != yes; then
     pgac_need_repl_snprintf=yes
   fi
 fi

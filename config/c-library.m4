@@ -238,6 +238,33 @@ int main()
 AC_MSG_RESULT([$pgac_cv_snprintf_size_t_support])
 ])# PGAC_FUNC_SNPRINTF_SIZE_T_SUPPORT
 
+# PGAC_FUNC_SNPRINTF_C99_RESULT
+# -----------------------------
+# Determine whether snprintf returns the desired buffer length when
+# it overruns the actual buffer length.  That's required by C99 and POSIX
+# but ancient platforms don't behave that way, so we must test.
+#
+AC_DEFUN([PGAC_FUNC_SNPRINTF_C99_RESULT],
+[AC_MSG_CHECKING([whether snprintf reports buffer overrun per C99])
+AC_CACHE_VAL(pgac_cv_snprintf_c99_result,
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
+#include <string.h>
+
+int main()
+{
+  char buf[10];
+
+  if (snprintf(buf, sizeof(buf), "12345678901234567890") != 20)
+    return 1;
+  return 0;
+}]])],
+[pgac_cv_snprintf_c99_result=yes],
+[pgac_cv_snprintf_c99_result=no],
+[pgac_cv_snprintf_c99_result=cross])
+])dnl AC_CACHE_VAL
+AC_MSG_RESULT([$pgac_cv_snprintf_c99_result])
+])# PGAC_FUNC_SNPRINTF_C99_RESULT
+
 
 # PGAC_TYPE_LOCALE_T
 # ------------------
