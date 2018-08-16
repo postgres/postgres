@@ -1887,8 +1887,13 @@ find_matching_subplans_recurse(PartitionPruningData *prunedata,
 											   initial_prune, validsubplans);
 			else
 			{
-				/* Shouldn't happen */
-				elog(ERROR, "partition missing from subplans");
+				/*
+				 * We get here if the planner already pruned all the sub-
+				 * partitions for this partition.  Silently ignore this
+				 * partition in this case.  The end result is the same: we
+				 * would have pruned all partitions just the same, but we
+				 * don't have any pruning steps to execute to verify this.
+				 */
 			}
 		}
 	}
