@@ -476,11 +476,9 @@ GetNewObjectId(void)
 
 	/*
 	 * Check for wraparound of the OID counter.  We *must* not return 0
-	 * (InvalidOid); and as long as we have to check that, it seems a good
-	 * idea to skip over everything below FirstNormalObjectId too. (This
-	 * basically just avoids lots of collisions with bootstrap-assigned OIDs
-	 * right after a wrap occurs, so as to avoid a possibly large number of
-	 * iterations in GetNewOid.)  Note we are relying on unsigned comparison.
+	 * (InvalidOid), and in normal operation we mustn't return anything below
+	 * FirstNormalObjectId since that range is reserved for initdb (see
+	 * IsCatalogClass()).  Note we are relying on unsigned comparison.
 	 *
 	 * During initdb, we start the OID generator at FirstBootstrapObjectId, so
 	 * we only wrap if before that point when in bootstrap or standalone mode.
