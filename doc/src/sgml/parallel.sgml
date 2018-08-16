@@ -533,7 +533,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     unsafe, because this would require predicting every operation which the
     function could possibly perform.  In general, this is equivalent to the
     Halting Problem and therefore impossible.  Even for simple functions
-    where it conceivably be done, we do not try, since this would be expensive
+    where it could conceivably be done, we do not try, since this would be expensive
     and error-prone.  Instead, all user-defined functions are assumed to
     be parallel unsafe unless otherwise marked.  When using
     <xref linkend="sql-createfunction"/> or
