@@ -65,6 +65,9 @@ ExecSubPlan(SubPlanState *node,
 			bool *isNull)
 {
 	SubPlan    *subplan = node->subplan;
+	EState	   *estate = node->planstate->state;
+	ScanDirection dir = estate->es_direction;
+	Datum		retval;
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -77,11 +80,19 @@ ExecSubPlan(SubPlanState *node,
 	if (subplan->setParam != NIL && subplan->subLinkType != MULTIEXPR_SUBLINK)
 		elog(ERROR, "cannot set parent params from subquery");
 
+	/* Force forward-scan mode for evaluation */
+	estate->es_direction = ForwardScanDirection;
+
 	/* Select appropriate evaluation strategy */
 	if (subplan->useHashTable)
-		return ExecHashSubPlan(node, econtext, isNull);
+		retval = ExecHashSubPlan(node, econtext, isNull);
 	else
-		return ExecScanSubPlan(node, econtext, isNull);
+		retval = ExecScanSubPlan(node, econtext, isNull);
+
+	/* restore scan direction */
+	estate->es_direction = dir;
+
+	return retval;
 }
 
 /*
@@ -1006,6 +1017,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	SubPlan    *subplan = node->subplan;
 	PlanState  *planstate = node->planstate;
 	SubLinkType subLinkType = subplan->subLinkType;
+	EState	   *estate = planstate->state;
+	ScanDirection dir = estate->es_direction;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	ListCell   *pvar;
@@ -1018,6 +1031,12 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
 	if (subLinkType == CTE_SUBLINK)
 		elog(ERROR, "CTE subplans should not be executed via ExecSetParamPlan");
+
+	/*
+	 * Enforce forward scan direction regardless of caller. It's hard but not
+	 * impossible to get here in backward scan, so make it work anyway.
+	 */
+	estate->es_direction = ForwardScanDirection;
 
 	/* Initialize ArrayBuildStateAny in caller's context, if needed */
 	if (subLinkType == ARRAY_SUBLINK)
@@ -1171,6 +1190,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	}
 
 	MemoryContextSwitchTo(oldcontext);
+
+	/* restore scan direction */
+	estate->es_direction = dir;
 }
 
 /*
