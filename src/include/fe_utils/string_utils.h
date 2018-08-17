@@ -25,8 +25,7 @@ extern PQExpBuffer (*getLocalPQExpBuffer) (void);
 
 /* Functions */
 extern const char *fmtId(const char *identifier);
-extern const char *fmtQualifiedId(int remoteVersion,
-			   const char *schema, const char *id);
+extern const char *fmtQualifiedId(const char *schema, const char *id);
 
 extern char *formatPGVersionNumber(int version_number, bool include_minor,
 					  char *buf, size_t buflen);

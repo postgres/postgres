@@ -138,8 +138,7 @@ fmtId(const char *rawid)
 }
 
 /*
- * fmtQualifiedId - convert a qualified name to the proper format for
- * the source database.
+ * fmtQualifiedId - construct a schema-qualified name, with quoting as needed.
  *
  * Like fmtId, use the result before calling again.
  *
@@ -147,13 +146,13 @@ fmtId(const char *rawid)
  * use that buffer until we're finished with calling fmtId().
  */
 const char *
-fmtQualifiedId(int remoteVersion, const char *schema, const char *id)
+fmtQualifiedId(const char *schema, const char *id)
 {
 	PQExpBuffer id_return;
 	PQExpBuffer lcl_pqexp = createPQExpBuffer();
 
-	/* Suppress schema name if fetching from pre-7.3 DB */
-	if (remoteVersion >= 70300 && schema && *schema)
+	/* Some callers might fail to provide a schema name */
+	if (schema && *schema)
 	{
 		appendPQExpBuffer(lcl_pqexp, "%s.", fmtId(schema));
 	}

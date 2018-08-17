@@ -901,9 +901,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 						ahprintf(AH, "TRUNCATE TABLE %s%s;\n\n",
 								 (PQserverVersion(AH->connection) >= 80400 ?
 								  "ONLY " : ""),
-								 fmtQualifiedId(PQserverVersion(AH->connection),
-												te->namespace,
-												te->tag));
+								 fmtQualifiedId(te->namespace, te->tag));
 					}
 
 					/*
@@ -991,9 +989,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te)
 	 * Disable them.
 	 */
 	ahprintf(AH, "ALTER TABLE %s DISABLE TRIGGER ALL;\n\n",
-			 fmtQualifiedId(PQserverVersion(AH->connection),
-							te->namespace,
-							te->tag));
+			 fmtQualifiedId(te->namespace, te->tag));
 }
 
 static void
@@ -1019,9 +1015,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te)
 	 * Enable them.
 	 */
 	ahprintf(AH, "ALTER TABLE %s ENABLE TRIGGER ALL;\n\n",
-			 fmtQualifiedId(PQserverVersion(AH->connection),
-							te->namespace,
-							te->tag));
+			 fmtQualifiedId(te->namespace, te->tag));
 }
 
 /*
