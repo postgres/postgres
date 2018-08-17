@@ -31,7 +31,8 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
 
   <para>
    <command>REFRESH MATERIALIZED VIEW</command> completely replaces the
-   contents of a materialized view.  The old contents are discarded.  If
+   contents of a materialized view.  To execute this command you must be the
+   owner of the materialized view.  The old contents are discarded.  If
    <literal>WITH DATA</literal> is specified (or defaults) the backing query
    is executed to provide the new data, and the materialized view is left in a
    scannable state.  If <literal>WITH NO DATA</literal> is specified no new
