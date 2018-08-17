@@ -406,8 +406,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (i = 0; i < ntups; i++)
 		{
 			appendPQExpBufferStr(&buf,
-								 fmtQualifiedId(PQserverVersion(conn),
-												PQgetvalue(res, i, 1),
+								 fmtQualifiedId(PQgetvalue(res, i, 1),
 												PQgetvalue(res, i, 0)));
 
 			simple_string_list_append(&dbtables, buf.data);

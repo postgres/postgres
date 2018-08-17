@@ -1334,7 +1334,7 @@ lockTableForWorker(ArchiveHandle *AH, TocEntry *te)
 
 	query = createPQExpBuffer();
 
-	qualId = fmtQualifiedId(AH->public.remoteVersion, te->namespace, te->tag);
+	qualId = fmtQualifiedId(te->namespace, te->tag);
 
 	appendPQExpBuffer(query, "LOCK TABLE %s IN ACCESS SHARE MODE NOWAIT",
 					  qualId);
