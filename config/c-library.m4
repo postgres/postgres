@@ -202,7 +202,7 @@ AC_MSG_RESULT([$pgac_cv_snprintf_arg_control])
 ])# PGAC_FUNC_SNPRINTF_ARG_CONTROL
 
 # PGAC_FUNC_SNPRINTF_SIZE_T_SUPPORT
-# ---------------------------------------
+# ---------------------------------
 # Determine if snprintf supports the z length modifier for printing
 # size_t-sized variables. That's supported by C99 and POSIX but not
 # all platforms play ball, so we must test whether it's working.
@@ -243,9 +243,11 @@ AC_MSG_RESULT([$pgac_cv_snprintf_size_t_support])
 # Determine whether snprintf returns the desired buffer length when
 # it overruns the actual buffer length.  That's required by C99 and POSIX
 # but ancient platforms don't behave that way, so we must test.
+# While we're at it, let's just verify that it doesn't physically overrun
+# the buffer.
 #
 AC_DEFUN([PGAC_FUNC_SNPRINTF_C99_RESULT],
-[AC_MSG_CHECKING([whether snprintf reports buffer overrun per C99])
+[AC_MSG_CHECKING([whether snprintf handles buffer overrun per C99])
 AC_CACHE_VAL(pgac_cv_snprintf_c99_result,
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
 #include <string.h>
@@ -254,7 +256,10 @@ int main()
 {
   char buf[10];
 
-  if (snprintf(buf, sizeof(buf), "12345678901234567890") != 20)
+  strcpy(buf, "abcdefghi");
+  if (snprintf(buf, 4, "%d", 123456) != 6)
+    return 1;
+  if (strcmp(buf, "123") != 0 || buf[4] != 'e')
     return 1;
   return 0;
 }]])],

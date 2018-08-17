@@ -16378,8 +16378,8 @@ fi
 # Force use of our snprintf if the system's doesn't handle buffer overrun
 # as specified by C99.
 if test "$pgac_need_repl_snprintf" = no; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether snprintf reports buffer overrun per C99" >&5
-$as_echo_n "checking whether snprintf reports buffer overrun per C99... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether snprintf handles buffer overrun per C99" >&5
+$as_echo_n "checking whether snprintf handles buffer overrun per C99... " >&6; }
 if ${pgac_cv_snprintf_c99_result+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -16395,7 +16395,10 @@ int main()
 {
   char buf[10];
 
-  if (snprintf(buf, sizeof(buf), "12345678901234567890") != 20)
+  strcpy(buf, "abcdefghi");
+  if (snprintf(buf, 4, "%d", 123456) != 6)
+    return 1;
+  if (strcmp(buf, "123") != 0 || buf[4] != 'e')
     return 1;
   return 0;
 }
