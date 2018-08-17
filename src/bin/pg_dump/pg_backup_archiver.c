@@ -892,10 +892,12 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	_becomeUser(AH, ropt->superuser);
 
 	/*
-	 * Disable them.
+	 * Disable them.  Assume that the table name should be schema-qualified
+	 * (we can't look at PQserverVersion, since we might not have any
+	 * connection; and anyway we don't promise our output will load pre-7.3).
 	 */
 	ahprintf(AH, "ALTER TABLE %s DISABLE TRIGGER ALL;\n\n",
-			 fmtQualifiedId(PQserverVersion(AH->connection),
+			 fmtQualifiedId(70300,
 							te->namespace,
 							te->tag));
 }
@@ -918,10 +920,10 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	_becomeUser(AH, ropt->superuser);
 
 	/*
-	 * Enable them.
+	 * Enable them.  As above, force schema qualification.
 	 */
 	ahprintf(AH, "ALTER TABLE %s ENABLE TRIGGER ALL;\n\n",
-			 fmtQualifiedId(PQserverVersion(AH->connection),
+			 fmtQualifiedId(70300,
 							te->namespace,
 							te->tag));
 }
