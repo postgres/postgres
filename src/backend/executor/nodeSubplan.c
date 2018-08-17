@@ -63,6 +63,9 @@ ExecSubPlan(SubPlanState *node,
 			ExprDoneCond *isDone)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
+	EState	   *estate = node->planstate->state;
+	ScanDirection dir = estate->es_direction;
+	Datum		retval;
 
 	/* Set default values for result flags: non-null, not a set result */
 	*isNull = false;
@@ -75,11 +78,19 @@ ExecSubPlan(SubPlanState *node,
 	if (subplan->setParam != NIL)
 		elog(ERROR, "cannot set parent params from subquery");
 
+	/* Force forward-scan mode for evaluation */
+	estate->es_direction = ForwardScanDirection;
+
 	/* Select appropriate evaluation strategy */
 	if (subplan->useHashTable)
-		return ExecHashSubPlan(node, econtext, isNull);
+		retval = ExecHashSubPlan(node, econtext, isNull);
 	else
-		return ExecScanSubPlan(node, econtext, isNull);
+		retval = ExecScanSubPlan(node, econtext, isNull);
+
+	/* restore scan direction */
+	estate->es_direction = dir;
+
+	return retval;
 }
 
 /*
@@ -906,6 +917,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
 	SubLinkType subLinkType = subplan->subLinkType;
+	EState	   *estate = planstate->state;
+	ScanDirection dir = estate->es_direction;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	ListCell   *l;
@@ -917,6 +930,12 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
 	if (subLinkType == CTE_SUBLINK)
 		elog(ERROR, "CTE subplans should not be executed via ExecSetParamPlan");
+
+	/*
+	 * Enforce forward scan direction regardless of caller. It's hard but not
+	 * impossible to get here in backward scan, so make it work anyway.
+	 */
+	estate->es_direction = ForwardScanDirection;
 
 	/*
 	 * Must switch to per-query memory context.
@@ -1048,6 +1067,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	}
 
 	MemoryContextSwitchTo(oldcontext);
+
+	/* restore scan direction */
+	estate->es_direction = dir;
 }
 
 /*
