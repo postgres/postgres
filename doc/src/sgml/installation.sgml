@@ -2637,30 +2637,6 @@ configure ... LDFLAGS="-R /usr/sfw/lib:/opt/sfw/lib:/usr/local/lib"
    </sect3>
 
    <sect3>
-    <title>64-bit Build Sometimes Crashes</title>
-
-    <para>
-     On Solaris 7 and older, the 64-bit version of libc has a buggy
-     <function>vsnprintf</function> routine, which leads to erratic
-     core dumps in PostgreSQL.  The simplest known workaround is to
-     force PostgreSQL to use its own version of <function>vsnprintf</function> rather than
-     the library copy.  To do this, after you
-     run <command>configure</command> edit a file produced by
-     <command>configure</command>:
-     In <filename>src/Makefile.global</filename>, change the line
-<programlisting>
-LIBOBJS =
-</programlisting>
-     to read
-<programlisting>
-LIBOBJS = snprintf.o
-</programlisting>
-     (There might be other files already listed in this variable.
-     Order does not matter.)  Then build as usual.
-    </para>
-   </sect3>
-
-   <sect3>
     <title>Compiling for Optimal Performance</title>
 
     <para>
