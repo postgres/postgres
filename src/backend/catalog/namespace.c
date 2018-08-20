@@ -3938,8 +3938,10 @@ InitTempTableNamespace(void)
 	 * decide if a temporary namespace is in use or not.  We assume that
 	 * assignment of namespaceId is an atomic operation.  Even if it is not,
 	 * the temporary relation which resulted in the creation of this temporary
-	 * namespace is still locked until the current transaction commits, so it
-	 * would not be accessible yet, acting as a barrier.
+	 * namespace is still locked until the current transaction commits, and
+	 * its pg_namespace row is not visible yet.  However it does not matter:
+	 * this flag makes the namespace as being in use, so no objects created on
+	 * it would be removed concurrently.
 	 */
 	MyProc->tempNamespaceId = namespaceId;
 
@@ -3976,10 +3978,12 @@ AtEOXact_Namespace(bool isCommit, bool parallel)
 
 			/*
 			 * Reset the temporary namespace flag in MyProc.  We assume that
-			 * this operation is atomic.  Even if it is not, the temporary
-			 * table which created this namespace is still locked until this
-			 * transaction aborts so it would not be visible yet, acting as a
-			 * barrier.
+			 * this operation is atomic.
+			 *
+			 * Because this transaction is aborting, the pg_namespace row is
+			 * not visible to anyone else anyway, but that doesn't matter:
+			 * it's not a problem if objects contained in this namespace are
+			 * removed concurrently.
 			 */
 			MyProc->tempNamespaceId = InvalidOid;
 		}
@@ -4037,10 +4041,12 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 
 			/*
 			 * Reset the temporary namespace flag in MyProc.  We assume that
-			 * this operation is atomic.  Even if it is not, the temporary
-			 * table which created this namespace is still locked until this
-			 * transaction aborts so it would not be visible yet, acting as a
-			 * barrier.
+			 * this operation is atomic.
+			 *
+			 * Because this subtransaction is aborting, the pg_namespace row
+			 * is not visible to anyone else anyway, but that doesn't matter:
+			 * it's not a problem if objects contained in this namespace are
+			 * removed concurrently.
 			 */
 			MyProc->tempNamespaceId = InvalidOid;
 		}
