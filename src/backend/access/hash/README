@@ -173,7 +173,7 @@ where a given tuple ought to be located.  To do this, we need the bucket
 count, highmask, and lowmask from the metapage; however, it's undesirable
 for performance reasons to have to have to lock and pin the metapage for
 every such operation.  Instead, we retain a cached copy of the metapage
-in each each backend's relcache entry.  This will produce the correct
+in each backend's relcache entry.  This will produce the correct
 bucket mapping as long as the target bucket hasn't been split since the
 last cache refresh.
 
