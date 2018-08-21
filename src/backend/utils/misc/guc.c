@@ -8454,13 +8454,13 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 		values[2] = NULL;
 
 	/* group */
-	values[3] = config_group_names[conf->group];
+	values[3] = _(config_group_names[conf->group]);
 
 	/* short_desc */
-	values[4] = conf->short_desc;
+	values[4] = _(conf->short_desc);
 
 	/* extra_desc */
-	values[5] = conf->long_desc;
+	values[5] = _(conf->long_desc);
 
 	/* context */
 	values[6] = GucContext_Names[conf->context];
