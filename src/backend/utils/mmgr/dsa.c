@@ -362,7 +362,7 @@ struct dsa_area
 	/*
 	 * This backend's array of segment maps, ordered by segment index
 	 * corresponding to control->segment_handles.  Some of the area's segments
-	 * may not be mapped in in this backend yet, and some slots may have been
+	 * may not be mapped in this backend yet, and some slots may have been
 	 * freed and need to be detached; these operations happen on demand.
 	 */
 	dsa_segment_map segment_maps[DSA_MAX_SEGMENTS];
