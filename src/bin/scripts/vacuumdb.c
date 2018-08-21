@@ -371,7 +371,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	{
 		if (stage != ANALYZE_NO_STAGE)
 			printf(_("%s: processing database \"%s\": %s\n"),
-				   progname, PQdb(conn), stage_messages[stage]);
+				   progname, PQdb(conn), _(stage_messages[stage]));
 		else
 			printf(_("%s: vacuuming database \"%s\"\n"),
 				   progname, PQdb(conn));

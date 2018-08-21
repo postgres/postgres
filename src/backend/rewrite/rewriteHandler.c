@@ -2217,6 +2217,9 @@ view_has_instead_trigger(Relation view, CmdType event)
  * is auto-updatable. Returns NULL (if the column can be updated) or a message
  * string giving the reason that it cannot be.
  *
+ * The returned string has not been translated; if it is shown as an error
+ * message, the caller should apply _() to translate it.
+ *
  * Note that the checks performed here are local to this view. We do not check
  * whether the referenced column of the underlying base relation is updatable.
  */
@@ -2256,6 +2259,9 @@ view_col_is_auto_updatable(RangeTblRef *rtr, TargetEntry *tle)
  * view_query_is_auto_updatable - test whether the specified view definition
  * represents an auto-updatable view. Returns NULL (if the view can be updated)
  * or a message string giving the reason that it cannot be.
+
+ * The returned string has not been translated; if it is shown as an error
+ * message, the caller should apply _() to translate it.
  *
  * If check_cols is true, the view is required to have at least one updatable
  * column (necessary for INSERT/UPDATE). Otherwise the view's columns are not
@@ -2395,6 +2401,9 @@ view_query_is_auto_updatable(Query *viewquery, bool check_cols)
  * an auto-updatable view are actually updatable. Returns NULL (if all the
  * required columns can be updated) or a message string giving the reason that
  * they cannot be.
+ *
+ * The returned string has not been translated; if it is shown as an error
+ * message, the caller should apply _() to translate it.
  *
  * This should be used for INSERT/UPDATE to ensure that we don't attempt to
  * assign to any non-updatable columns.

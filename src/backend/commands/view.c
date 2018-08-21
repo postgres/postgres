@@ -502,7 +502,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("WITH CHECK OPTION is supported only on automatically updatable views"),
-					 errhint("%s", view_updatable_error)));
+					 errhint("%s", _(view_updatable_error))));
 	}
 
 	/*
