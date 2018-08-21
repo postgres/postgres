@@ -962,7 +962,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"enable_parallel_hash", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables the planner's user of parallel hash plans."),
+			gettext_noop("Enables the planner's use of parallel hash plans."),
 			NULL
 		},
 		&enable_parallel_hash,
