@@ -1439,7 +1439,7 @@ same commits as above
        <para>
         Also add <link
         linkend="guc-ssl-passphrase-command-supports-reload"><varname>ssl_passphrase_command_supports_reload</varname></link>
-        to specify whether the the <acronym>SSL</acronym> configuration
+        to specify whether the <acronym>SSL</acronym> configuration
         should be reloaded and <varname>ssl_passphrase_command</varname>
         called during a server configuration reload.
        </para>
