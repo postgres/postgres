@@ -122,3 +122,31 @@ LINE 1: ANALYZE (nonexistant-arg) does_not_exist;
 DROP TABLE vaccluster;
 DROP TABLE vactst;
 DROP TABLE vacparted;
+-- relation ownership, WARNING logs generated as all are skipped.
+CREATE TABLE vacowned (a int);
+CREATE ROLE regress_vacuum;
+SET ROLE regress_vacuum;
+-- Simple table
+VACUUM vacowned;
+WARNING:  skipping "vacowned" --- only table or database owner can vacuum it
+ANALYZE vacowned;
+WARNING:  skipping "vacowned" --- only table or database owner can analyze it
+VACUUM (ANALYZE) vacowned;
+WARNING:  skipping "vacowned" --- only table or database owner can vacuum it
+-- Catalog
+VACUUM pg_catalog.pg_class;
+WARNING:  skipping "pg_class" --- only superuser or database owner can vacuum it
+ANALYZE pg_catalog.pg_class;
+WARNING:  skipping "pg_class" --- only superuser or database owner can analyze it
+VACUUM (ANALYZE) pg_catalog.pg_class;
+WARNING:  skipping "pg_class" --- only superuser or database owner can vacuum it
+-- Shared catalog
+VACUUM pg_catalog.pg_authid;
+WARNING:  skipping "pg_authid" --- only superuser can vacuum it
+ANALYZE pg_catalog.pg_authid;
+WARNING:  skipping "pg_authid" --- only superuser can analyze it
+VACUUM (ANALYZE) pg_catalog.pg_authid;
+WARNING:  skipping "pg_authid" --- only superuser can vacuum it
+RESET ROLE;
+DROP TABLE vacowned;
+DROP ROLE regress_vacuum;

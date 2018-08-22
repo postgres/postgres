@@ -96,3 +96,23 @@ ANALYZE (nonexistant-arg) does_not_exist;
 DROP TABLE vaccluster;
 DROP TABLE vactst;
 DROP TABLE vacparted;
+
+-- relation ownership, WARNING logs generated as all are skipped.
+CREATE TABLE vacowned (a int);
+CREATE ROLE regress_vacuum;
+SET ROLE regress_vacuum;
+-- Simple table
+VACUUM vacowned;
+ANALYZE vacowned;
+VACUUM (ANALYZE) vacowned;
+-- Catalog
+VACUUM pg_catalog.pg_class;
+ANALYZE pg_catalog.pg_class;
+VACUUM (ANALYZE) pg_catalog.pg_class;
+-- Shared catalog
+VACUUM pg_catalog.pg_authid;
+ANALYZE pg_catalog.pg_authid;
+VACUUM (ANALYZE) pg_catalog.pg_authid;
+RESET ROLE;
+DROP TABLE vacowned;
+DROP ROLE regress_vacuum;
