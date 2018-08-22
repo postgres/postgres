@@ -305,10 +305,9 @@ $$ LANGUAGE plpgsql;
      for transaction
      control.  <application>PL/pgSQL</application>'s <command>BEGIN</command>/<command>END</command>
      are only for grouping; they do not start or end a transaction.
-     Functions are always executed within a transaction
-     established by an outer query &mdash; they cannot start or commit that
-     transaction, since there would be no context for them to execute in.
-     However, a block containing an <literal>EXCEPTION</literal> clause effectively
+     See <xref linkend="plpgsql-transactions"/> for information on managing
+     transactions in <application>PL/pgSQL</application>.
+     Also, a block containing an <literal>EXCEPTION</literal> clause effectively
      forms a subtransaction that can be rolled back without affecting the
      outer transaction.  For more about that see <xref
      linkend="plpgsql-error-trapping"/>.
