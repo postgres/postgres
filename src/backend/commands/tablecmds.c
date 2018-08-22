@@ -985,7 +985,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 */
 	if (rawDefaults || stmt->constraints)
 		AddRelationNewConstraints(rel, rawDefaults, stmt->constraints,
-								  true, true, false);
+								  true, true, false, queryString);
 
 	ObjectAddressSet(address, RelationRelationId, relationId);
 
@@ -5587,7 +5587,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * _list_ of defaults, but we just do one.
 		 */
 		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
-								  false, true, false);
+								  false, true, false, NULL);
 
 		/* Make the additional catalog changes visible */
 		CommandCounterIncrement();
@@ -6178,7 +6178,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		 * _list_ of defaults, but we just do one.
 		 */
 		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
-								  false, true, false);
+								  false, true, false, NULL);
 	}
 
 	ObjectAddressSubSet(address, RelationRelationId,
@@ -7215,7 +7215,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 										list_make1(copyObject(constr)),
 										recursing | is_readd,	/* allow_merge */
 										!recursing, /* is_local */
-										is_readd);	/* is_internal */
+										is_readd,	/* is_internal */
+										NULL);		/* queryString not available here */
 
 	/* we don't expect more than one constraint here */
 	Assert(list_length(newcons) <= 1);
