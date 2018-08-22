@@ -328,11 +328,15 @@ CREATE TABLE partitioned (
 	a int
 ) PARTITION BY RANGE (b);
 ERROR:  column "b" named in partition key does not exist
+LINE 3: ) PARTITION BY RANGE (b);
+                              ^
 -- cannot use system columns in partition key
 CREATE TABLE partitioned (
 	a int
 ) PARTITION BY RANGE (xmin);
 ERROR:  cannot use system column "xmin" in partition key
+LINE 3: ) PARTITION BY RANGE (xmin);
+                              ^
 -- functions in key must be immutable
 CREATE FUNCTION immut_func (a int) RETURNS int AS $$ SELECT a + random()::int; $$ LANGUAGE SQL;
 CREATE TABLE partitioned (
@@ -719,6 +723,8 @@ SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::reg
 -- specify PARTITION BY for a partition
 CREATE TABLE fail_part_col_not_found PARTITION OF parted FOR VALUES IN ('c') PARTITION BY RANGE (c);
 ERROR:  column "c" named in partition key does not exist
+LINE 1: ...TITION OF parted FOR VALUES IN ('c') PARTITION BY RANGE (c);
+                                                                    ^
 CREATE TABLE part_c PARTITION OF parted (b WITH OPTIONS NOT NULL DEFAULT 0) FOR VALUES IN ('c') PARTITION BY RANGE ((b));
 -- create a level-2 partition
 CREATE TABLE part_c_1_10 PARTITION OF part_c FOR VALUES FROM (1) TO (10);
