@@ -1602,51 +1602,6 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 }
 
 /*
- * slot_getallattrs
- *		This function forces all the entries of the slot's Datum/isnull
- *		arrays to be valid.  The caller may then extract data directly
- *		from those arrays instead of using slot_getattr.
- */
-void
-slot_getallattrs(TupleTableSlot *slot)
-{
-	int			tdesc_natts = slot->tts_tupleDescriptor->natts;
-	int			attnum;
-	HeapTuple	tuple;
-
-	/* Quick out if we have 'em all already */
-	if (slot->tts_nvalid == tdesc_natts)
-		return;
-
-	/*
-	 * otherwise we had better have a physical tuple (tts_nvalid should equal
-	 * natts in all virtual-tuple cases)
-	 */
-	tuple = slot->tts_tuple;
-	if (tuple == NULL)			/* internal error */
-		elog(ERROR, "cannot extract attribute from empty tuple slot");
-
-	/*
-	 * load up any slots available from physical tuple
-	 */
-	attnum = HeapTupleHeaderGetNatts(tuple->t_data);
-	attnum = Min(attnum, tdesc_natts);
-
-	slot_deform_tuple(slot, attnum);
-
-	attnum = slot->tts_nvalid;
-
-	/*
-	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
-	 * rest as NULLS or missing values.
-	 */
-	if (attnum < tdesc_natts)
-		slot_getmissingattrs(slot, attnum, tdesc_natts);
-
-	slot->tts_nvalid = tdesc_natts;
-}
-
-/*
  * slot_getsomeattrs
  *		This function forces the entries of the slot's Datum/isnull
  *		arrays to be valid at least up through the attnum'th entry.
