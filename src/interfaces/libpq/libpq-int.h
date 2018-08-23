@@ -312,7 +312,7 @@ typedef struct pg_conn_host
 	char	   *password;		/* password for this host, read from the
 								 * password file; NULL if not sought or not
 								 * found in password file. */
-	struct addrinfo *addrlist;	/* list of possible backend addresses */
+	struct addrinfo *was_addrlist;	/* dummy for ABI compatibility */
 } pg_conn_host;
 
 /*
@@ -496,6 +496,10 @@ struct pg_conn
 
 	/* Buffer for receiving various parts of messages */
 	PQExpBufferData workBuffer; /* expansible string */
+
+	/* Placed at the end, in this branch, to minimize ABI breakage */
+	struct addrinfo *addrlist;	/* list of addresses for current connhost */
+	int			addrlist_family;	/* needed to know how to free addrlist */
 };
 
 /* PGcancel stores all data necessary to cancel a connection. A copy of this
