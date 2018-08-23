@@ -16,14 +16,20 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_verify_checksums</refname>
-  <refpurpose>verify data checksums in an offline <productname>PostgreSQL</productname> database cluster</refpurpose>
+  <refpurpose>verify data checksums in a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_verify_checksums</command>
-   <arg choice="opt"><replaceable class="parameter">option</replaceable></arg>
-   <arg choice="opt"><arg choice="opt"><option>-D</option></arg><arg choice="opt"><option>--pgdata</option></arg> <replaceable class="parameter">datadir</replaceable></arg>
+   <arg rep="repeat" choice="opt"><replaceable class="parameter">option</replaceable></arg>
+   <group choice="opt">
+    <group choice="opt">
+     <arg choice="plain"><option>-D</option></arg>
+     <arg choice="plain"><option>--pgdata</option></arg>
+    </group>
+    <replaceable class="parameter"> datadir</replaceable>
+   </group>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -31,7 +37,9 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <command>pg_verify_checksums</command> verifies data checksums in a
-   <productname>PostgreSQL</productname> cluster.
+   <productname>PostgreSQL</productname> cluster.  The server must be shut
+   down cleanly before running <application>pg_verify_checksums</application>.
+   The exit status is zero if there are no checksum errors, otherwise nonzero.
   </para>
  </refsect1>
 
@@ -42,22 +50,12 @@ PostgreSQL documentation
     The following command-line options are available:
 
     <variablelist>
-
      <varlistentry>
       <term><option>-D <replaceable>directory</replaceable></option></term>
       <term><option>--pgdata=<replaceable>directory</replaceable></option></term>
       <listitem>
        <para>
         Specifies the directory where the database cluster is stored.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-r <replaceable>relfilenode</replaceable></option></term>
-      <listitem>
-       <para>
-        Only validate checksums in the relation with specified relfilenode.
        </para>
       </listitem>
      </varlistentry>
@@ -72,11 +70,20 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-r <replaceable>relfilenode</replaceable></option></term>
+      <listitem>
+       <para>
+        Only validate checksums in the relation with specified relfilenode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>-V</option></term>
        <term><option>--version</option></term>
        <listitem>
        <para>
-       Print the <application>pg_verify_checksums</application> version and exit.
+        Print the <application>pg_verify_checksums</application> version and exit.
        </para>
        </listitem>
      </varlistentry>
@@ -104,20 +111,11 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Specifies the directory where the database cluster is 
+      Specifies the directory where the database cluster is
       stored; can be overridden using the <option>-D</option> option.
      </para>
     </listitem>
    </varlistentry>
   </variablelist>
  </refsect1>
-
- <refsect1>
-  <title>Notes</title>
-  <para>
-   The cluster must be shut down cleanly before running
-   <application>pg_verify_checksums</application>.
-  </para>
- </refsect1>
-
 </refentry>
