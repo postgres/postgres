@@ -212,6 +212,12 @@ BEGIN
   _a := 10; _b := 30; _c := 50;
   CALL test_proc8c(_a, b => _b);
   RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8c(_a, _b, _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8c(c => _c, b => _b, a => _a);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
 END
 $$;
 
