@@ -38,13 +38,13 @@ static const char *progname;
 static void
 usage()
 {
-	printf(_("%s verifies page level checksums in offline PostgreSQL database cluster.\n\n"), progname);
+	printf(_("%s verifies data checksums in a PostgreSQL database cluster.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s [OPTION] [DATADIR]\n"), progname);
+	printf(_("  %s [OPTION]... [DATADIR]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_(" [-D, --pgdata=]DATADIR  data directory\n"));
-	printf(_("  -r relfilenode         check only relation with specified relfilenode\n"));
-	printf(_("  -d                     debug output, listing all checked blocks\n"));
+	printf(_("  -d                     debug output, list all checked blocks\n"));
+	printf(_("  -r RELFILENODE         check only relation with specified relfilenode\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nIf no data directory (DATADIR) is specified, "
