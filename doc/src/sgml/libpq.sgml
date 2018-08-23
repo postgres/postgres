@@ -303,9 +303,9 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
        <itemizedlist>
         <listitem>
          <para>
-          The <literal>hostaddr</literal> and <literal>host</literal> parameters are used appropriately to ensure that
-          name and reverse name queries are not made. See the documentation of
-          these parameters in <xref linkend="libpq-paramkeywords"/> for details.
+          The <literal>hostaddr</literal> parameter must be used appropriately
+          to prevent DNS queries from being made.  See the documentation of
+          this parameter in <xref linkend="libpq-paramkeywords"/> for details.
          </para>
         </listitem>
 
@@ -318,7 +318,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 
         <listitem>
          <para>
-          You ensure that the socket is in the appropriate state
+          You must ensure that the socket is in the appropriate state
           before calling <function>PQconnectPoll</function>, as described below.
          </para>
         </listitem>
@@ -326,24 +326,27 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
       </para>
 
       <para>
-       Note: use of <function>PQconnectStartParams</function> is analogous to
-       <function>PQconnectStart</function> shown below.
+       To begin a nonblocking connection request,
+       call <function>PQconnectStart</function>
+       or <function>PQconnectStartParams</function>.  If the result is null,
+       then <application>libpq</application> has been unable to allocate a
+       new <structname>PGconn</structname> structure.  Otherwise, a
+       valid <structname>PGconn</structname> pointer is returned (though not
+       yet representing a valid connection to the database).  Next
+       call <literal>PQstatus(conn)</literal>.  If the result
+       is <symbol>CONNECTION_BAD</symbol>, the connection attempt has already
+       failed, typically because of invalid connection parameters.
       </para>
 
       <para>
-       To begin a nonblocking connection request, call <literal>conn = PQconnectStart("<replaceable>connection_info_string</replaceable>")</literal>.
-       If <varname>conn</varname> is null, then <application>libpq</application> has been unable to allocate a new <structname>PGconn</structname>
-       structure. Otherwise, a valid <structname>PGconn</structname> pointer is returned (though not yet
-       representing a valid connection to the database). On return from
-       <function>PQconnectStart</function>, call <literal>status = PQstatus(conn)</literal>. If <varname>status</varname> equals
-       <symbol>CONNECTION_BAD</symbol>, <function>PQconnectStart</function> has failed.
-      </para>
-
-      <para>
-       If <function>PQconnectStart</function> succeeds, the next stage is to poll
-       <application>libpq</application> so that it can proceed with the connection sequence.
+       If <function>PQconnectStart</function>
+       or <function>PQconnectStartParams</function> succeeds, the next stage
+       is to poll <application>libpq</application> so that it can proceed with
+       the connection sequence.
        Use <function>PQsocket(conn)</function> to obtain the descriptor of the
        socket underlying the database connection.
+       (Caution: do not assume that the socket remains the same
+       across <function>PQconnectPoll</function> calls.)
        Loop thus: If <function>PQconnectPoll(conn)</function> last returned
        <symbol>PGRES_POLLING_READING</symbol>, wait until the socket is ready to
        read (as indicated by <function>select()</function>, <function>poll()</function>, or
@@ -352,9 +355,8 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
        Conversely, if <function>PQconnectPoll(conn)</function> last returned
        <symbol>PGRES_POLLING_WRITING</symbol>, wait until the socket is ready
        to write, then call <function>PQconnectPoll(conn)</function> again.
-       If you have yet to call
-       <function>PQconnectPoll</function>, i.e., just after the call to
-       <function>PQconnectStart</function>, behave as if it last returned
+       On the first iteration, i.e. if you have yet to call
+       <function>PQconnectPoll</function>, behave as if it last returned
        <symbol>PGRES_POLLING_WRITING</symbol>.  Continue this loop until
        <function>PQconnectPoll(conn)</function> returns
        <symbol>PGRES_POLLING_FAILED</symbol>, indicating the connection procedure
@@ -479,10 +481,12 @@ switch(PQstatus(conn))
       </para>
 
       <para>
-       Note that if <function>PQconnectStart</function> returns a non-null pointer, you must call
-       <function>PQfinish</function> when you are finished with it, in order to dispose of
-       the structure and any associated memory blocks. This must be done even if
-       the connection attempt fails or is abandoned.
+       Note that when <function>PQconnectStart</function>
+       or <function>PQconnectStartParams</function> returns a non-null
+       pointer, you must call <function>PQfinish</function> when you are
+       finished with it, in order to dispose of the structure and any
+       associated memory blocks.  This must be done even if the connection
+       attempt fails or is abandoned.
       </para>
      </listitem>
     </varlistentry>
@@ -913,7 +917,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        It is possible to specify multiple hosts to connect to, so that they are
        tried in the given order. In the Keyword/Value format, the <literal>host</literal>,
        <literal>hostaddr</literal>, and <literal>port</literal> options accept a comma-separated
-       list of values. The same number of elements must be given in each option, such
+       list of values. The same number of elements must be given in each
+       option that is specified, such
        that e.g. the first <literal>hostaddr</literal> corresponds to the first host name,
        the second <literal>hostaddr</literal> corresponds to the second host name, and so
        forth. As an exception, if only one <literal>port</literal> is specified, it
@@ -922,9 +927,13 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 
      <para>
        In the connection URI format, you can list multiple <literal>host:port</literal> pairs
-       separated by commas, in the <literal>host</literal> component of the URI. In either
-       format, a single host name can also translate to multiple network addresses. A
-       common example of this is a host that has both an IPv4 and an IPv6 address.
+       separated by commas, in the <literal>host</literal> component of the URI.
+     </para>
+
+     <para>
+       In either format, a single host name can translate to multiple network
+       addresses. A common example of this is a host that has both an IPv4 and
+       an IPv6 address.
      </para>
 
      <para>
@@ -958,9 +967,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Name of host to connect to.<indexterm><primary>host name</primary></indexterm>
         If a host name begins with a slash, it specifies Unix-domain
         communication rather than TCP/IP communication; the value is the
-        name of the directory in which the socket file is stored.  If
-        multiple host names are specified, each will be tried in turn in
-        the order given.  The default behavior when <literal>host</literal> is
+        name of the directory in which the socket file is stored.
+        The default behavior when <literal>host</literal> is
         not specified, or is empty, is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</primary></indexterm> in
         <filename>/tmp</filename> (or whatever socket directory was specified
@@ -997,8 +1005,12 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         <itemizedlist>
          <listitem>
           <para>
-           If <literal>host</literal> is specified without <literal>hostaddr</literal>,
-           a host name lookup occurs.
+           If <literal>host</literal> is specified
+           without <literal>hostaddr</literal>, a host name lookup occurs.
+           (When using <function>PQconnectPoll</function>, the lookup occurs
+           when <function>PQconnectPoll</function> first considers this host
+           name, and it may cause <function>PQconnectPoll</function> to block
+           for a significant amount of time.)
           </para>
          </listitem>
          <listitem>

@@ -312,7 +312,6 @@ typedef struct pg_conn_host
 	char	   *password;		/* password for this host, read from the
 								 * password file; NULL if not sought or not
 								 * found in password file. */
-	struct addrinfo *addrlist;	/* list of possible backend addresses */
 } pg_conn_host;
 
 /*
@@ -412,7 +411,9 @@ struct pg_conn
 	/* Transient state needed while establishing connection */
 	bool		try_next_addr;	/* time to advance to next address/host? */
 	bool		try_next_host;	/* time to advance to next connhost[]? */
-	struct addrinfo *addr_cur;	/* backend address currently being tried */
+	struct addrinfo *addrlist;	/* list of addresses for current connhost */
+	struct addrinfo *addr_cur;	/* the one currently being tried */
+	int			addrlist_family;	/* needed to know how to free addrlist */
 	PGSetenvStatusType setenv_state;	/* for 2.0 protocol only */
 	const PQEnvironmentOption *next_eo;
 	bool		send_appname;	/* okay to send application_name? */
