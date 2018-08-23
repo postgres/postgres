@@ -1478,6 +1478,42 @@ select dfunc('a'::text, 'b', flag => true); -- mixed notation
  a
 (1 row)
 
+-- this tests lexer edge cases around =>
+select dfunc(a =>-1);
+ dfunc 
+-------
+    -1
+(1 row)
+
+select dfunc(a =>+1);
+ dfunc 
+-------
+     1
+(1 row)
+
+select dfunc(a =>/**/1);
+ dfunc 
+-------
+     1
+(1 row)
+
+select dfunc(a =>--comment to be removed by psql
+  1);
+ dfunc 
+-------
+     1
+(1 row)
+
+-- need DO to protect the -- from psql
+do $$
+  declare r integer;
+  begin
+    select dfunc(a=>-- comment
+      1) into r;
+    raise info 'r = %', r;
+  end;
+$$;
+INFO:  r = 1
 -- check reverse-listing of named-arg calls
 CREATE VIEW dfview AS
    SELECT q1, q2,

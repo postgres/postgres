@@ -785,6 +785,21 @@ select dfunc('a'::text, 'b', flag => false); -- mixed notation
 select dfunc('a'::text, 'b', true); -- full positional notation
 select dfunc('a'::text, 'b', flag => true); -- mixed notation
 
+-- this tests lexer edge cases around =>
+select dfunc(a =>-1);
+select dfunc(a =>+1);
+select dfunc(a =>/**/1);
+select dfunc(a =>--comment to be removed by psql
+  1);
+-- need DO to protect the -- from psql
+do $$
+  declare r integer;
+  begin
+    select dfunc(a=>-- comment
+      1) into r;
+    raise info 'r = %', r;
+  end;
+$$;
 
 -- check reverse-listing of named-arg calls
 CREATE VIEW dfview AS
