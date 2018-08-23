@@ -245,6 +245,15 @@ array			({ident_cont}|{whitespace}|[\[\]\+\-\*\%\/\(\)\>\.])*
 typecast		"::"
 dot_dot			\.\.
 colon_equals	":="
+
+/*
+ * These operator-like tokens (unlike the above ones) also match the {operator}
+ * rule, which means that they might be overridden by a longer match if they
+ * are followed by a comment start or a + or - character. Accordingly, if you
+ * add to this list, you must also add corresponding code to the {operator}
+ * block to return the correct token in such cases. (This is not needed in
+ * psqlscan.l since the token value is ignored there.)
+ */
 equals_greater	"=>"
 less_equals		"<="
 greater_equals	">="
@@ -732,6 +741,25 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 							if (nchars == 1 &&
 								strchr(",()[].;:+-*/%^<>=", yytext[0]))
 								return yytext[0];
+							/*
+							 * Likewise, if what we have left is two chars, and
+							 * those match the tokens ">=", "<=", "=>", "<>" or
+							 * "!=", then we must return the appropriate token
+							 * rather than the generic Op.
+							 */
+							if (nchars == 2)
+							{
+								if (yytext[0] == '=' && yytext[1] == '>')
+									return EQUALS_GREATER;
+								if (yytext[0] == '>' && yytext[1] == '=')
+									return GREATER_EQUALS;
+								if (yytext[0] == '<' && yytext[1] == '=')
+									return LESS_EQUALS;
+								if (yytext[0] == '<' && yytext[1] == '>')
+									return NOT_EQUALS;
+								if (yytext[0] == '!' && yytext[1] == '=')
+									return NOT_EQUALS;
+							}
 						}
 
 						base_yylval.str = mm_strdup(yytext);
