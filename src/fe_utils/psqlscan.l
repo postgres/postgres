@@ -817,20 +817,33 @@ other			.
 					 * to forbid operator names like '?-' that could not be
 					 * sequences of SQL operators.
 					 */
-					while (nchars > 1 &&
-						   (yytext[nchars - 1] == '+' ||
-							yytext[nchars - 1] == '-'))
+					if (nchars > 1 &&
+						(yytext[nchars - 1] == '+' ||
+						 yytext[nchars - 1] == '-'))
 					{
 						int			ic;
 
 						for (ic = nchars - 2; ic >= 0; ic--)
 						{
-							if (strchr("~!@#^&|`?%", yytext[ic]))
+							char c = yytext[ic];
+							if (c == '~' || c == '!' || c == '@' ||
+								c == '#' || c == '^' || c == '&' ||
+								c == '|' || c == '`' || c == '?' ||
+								c == '%')
 								break;
 						}
-						if (ic >= 0)
-							break; /* found a char that makes it OK */
-						nchars--; /* else remove the +/-, and check again */
+						if (ic < 0)
+						{
+							/*
+							 * didn't find a qualifying character, so remove
+							 * all trailing [+-]
+							 */
+							do {
+								nchars--;
+							} while (nchars > 1 &&
+								 (yytext[nchars - 1] == '+' ||
+								  yytext[nchars - 1] == '-'));
+						}
 					}
 
 					if (nchars < yyleng)
