@@ -387,6 +387,31 @@ $$;
 SELECT * FROM test2;
 
 
+-- Test transaction in procedure with output parameters.  This uses a
+-- different portal strategy and different code paths in pquery.c.
+CREATE PROCEDURE transaction_test10a(INOUT x int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  x := x + 1;
+  COMMIT;
+END;
+$$;
+
+CALL transaction_test10a(10);
+
+CREATE PROCEDURE transaction_test10b(INOUT x int)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  x := x - 1;
+  ROLLBACK;
+END;
+$$;
+
+CALL transaction_test10b(10);
+
+
 DROP TABLE test1;
 DROP TABLE test2;
 DROP TABLE test3;
