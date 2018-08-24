@@ -67,9 +67,24 @@ typedef struct f_smgr
 
 static const f_smgr smgrsw[] = {
 	/* magnetic disk */
-	{mdinit, NULL, mdclose, mdcreate, mdexists, mdunlink, mdextend,
-		mdprefetch, mdread, mdwrite, mdwriteback, mdnblocks, mdtruncate,
-		mdimmedsync, mdpreckpt, mdsync, mdpostckpt
+	{
+		.smgr_init = mdinit,
+		.smgr_shutdown = NULL,
+		.smgr_close = mdclose,
+		.smgr_create = mdcreate,
+		.smgr_exists = mdexists,
+		.smgr_unlink = mdunlink,
+		.smgr_extend = mdextend,
+		.smgr_prefetch = mdprefetch,
+		.smgr_read = mdread,
+		.smgr_write = mdwrite,
+		.smgr_writeback = mdwriteback,
+		.smgr_nblocks = mdnblocks,
+		.smgr_truncate = mdtruncate,
+		.smgr_immedsync = mdimmedsync,
+		.smgr_pre_ckpt = mdpreckpt,
+		.smgr_sync = mdsync,
+		.smgr_post_ckpt = mdpostckpt
 	}
 };
 

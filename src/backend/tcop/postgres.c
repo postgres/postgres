@@ -1310,7 +1310,6 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	{
 		Query	   *query;
 		bool		snapshot_set = false;
-		int			i;
 
 		raw_parse_tree = linitial_node(RawStmt, parsetree_list);
 
@@ -1366,7 +1365,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		/*
 		 * Check all parameter types got determined.
 		 */
-		for (i = 0; i < numParams; i++)
+		for (int i = 0; i < numParams; i++)
 		{
 			Oid			ptype = paramTypes[i];
 
@@ -1555,10 +1554,8 @@ exec_bind_message(StringInfo input_message)
 	numPFormats = pq_getmsgint(input_message, 2);
 	if (numPFormats > 0)
 	{
-		int			i;
-
 		pformats = (int16 *) palloc(numPFormats * sizeof(int16));
-		for (i = 0; i < numPFormats; i++)
+		for (int i = 0; i < numPFormats; i++)
 			pformats[i] = pq_getmsgint(input_message, 2);
 	}
 
@@ -1641,8 +1638,6 @@ exec_bind_message(StringInfo input_message)
 	 */
 	if (numParams > 0)
 	{
-		int			paramno;
-
 		params = (ParamListInfo) palloc(offsetof(ParamListInfoData, params) +
 										numParams * sizeof(ParamExternData));
 		/* we have static list of params, so no hooks needed */
@@ -1654,7 +1649,7 @@ exec_bind_message(StringInfo input_message)
 		params->parserSetupArg = NULL;
 		params->numParams = numParams;
 
-		for (paramno = 0; paramno < numParams; paramno++)
+		for (int paramno = 0; paramno < numParams; paramno++)
 		{
 			Oid			ptype = psrc->param_types[paramno];
 			int32		plength;
@@ -1782,10 +1777,8 @@ exec_bind_message(StringInfo input_message)
 	numRFormats = pq_getmsgint(input_message, 2);
 	if (numRFormats > 0)
 	{
-		int			i;
-
 		rformats = (int16 *) palloc(numRFormats * sizeof(int16));
-		for (i = 0; i < numRFormats; i++)
+		for (int i = 0; i < numRFormats; i++)
 			rformats[i] = pq_getmsgint(input_message, 2);
 	}
 
@@ -2212,7 +2205,6 @@ errdetail_params(ParamListInfo params)
 	{
 		StringInfoData param_str;
 		MemoryContext oldcontext;
-		int			paramno;
 
 		/* This code doesn't support dynamic param lists */
 		Assert(params->paramFetch == NULL);
@@ -2222,7 +2214,7 @@ errdetail_params(ParamListInfo params)
 
 		initStringInfo(&param_str);
 
-		for (paramno = 0; paramno < params->numParams; paramno++)
+		for (int paramno = 0; paramno < params->numParams; paramno++)
 		{
 			ParamExternData *prm = &params->params[paramno];
 			Oid			typoutput;
@@ -2325,7 +2317,6 @@ static void
 exec_describe_statement_message(const char *stmt_name)
 {
 	CachedPlanSource *psrc;
-	int			i;
 
 	/*
 	 * Start up a transaction command. (Note that this will normally change
@@ -2384,7 +2375,7 @@ exec_describe_statement_message(const char *stmt_name)
 														 * message type */
 	pq_sendint16(&row_description_buf, psrc->num_params);
 
-	for (i = 0; i < psrc->num_params; i++)
+	for (int i = 0; i < psrc->num_params; i++)
 	{
 		Oid			ptype = psrc->param_types[i];
 
@@ -4179,10 +4170,8 @@ PostgresMain(int argc, char *argv[],
 					numParams = pq_getmsgint(&input_message, 2);
 					if (numParams > 0)
 					{
-						int			i;
-
 						paramTypes = (Oid *) palloc(numParams * sizeof(Oid));
-						for (i = 0; i < numParams; i++)
+						for (int i = 0; i < numParams; i++)
 							paramTypes[i] = pq_getmsgint(&input_message, 4);
 					}
 					pq_getmsgend(&input_message);
