@@ -13,7 +13,6 @@ use warnings;
 use Exporter;
 use Project;
 use Solution;
-use VCBuildProject;
 use MSBuildProject;
 
 our (@ISA, @EXPORT);
@@ -31,23 +30,7 @@ sub CreateSolution
 		$visualStudioVersion = DetermineVisualStudioVersion();
 	}
 
-	if ($visualStudioVersion eq '8.00')
-	{
-		return new VS2005Solution(@_);
-	}
-	elsif ($visualStudioVersion eq '9.00')
-	{
-		return new VS2008Solution(@_);
-	}
-	elsif ($visualStudioVersion eq '10.00')
-	{
-		return new VS2010Solution(@_);
-	}
-	elsif ($visualStudioVersion eq '11.00')
-	{
-		return new VS2012Solution(@_);
-	}
-	elsif ($visualStudioVersion eq '12.00')
+	if ($visualStudioVersion eq '12.00')
 	{
 		return new VS2013Solution(@_);
 	}
@@ -78,23 +61,7 @@ sub CreateProject
 		$visualStudioVersion = DetermineVisualStudioVersion();
 	}
 
-	if ($visualStudioVersion eq '8.00')
-	{
-		return new VC2005Project(@_);
-	}
-	elsif ($visualStudioVersion eq '9.00')
-	{
-		return new VC2008Project(@_);
-	}
-	elsif ($visualStudioVersion eq '10.00')
-	{
-		return new VC2010Project(@_);
-	}
-	elsif ($visualStudioVersion eq '11.00')
-	{
-		return new VC2012Project(@_);
-	}
-	elsif ($visualStudioVersion eq '12.00')
+	if ($visualStudioVersion eq '12.00')
 	{
 		return new VC2013Project(@_);
 	}

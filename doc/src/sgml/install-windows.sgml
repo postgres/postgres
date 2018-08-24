@@ -22,7 +22,7 @@
   Microsoft tools is to install <productname>Visual Studio Express 2017
   for Windows Desktop</productname> and use the included
   compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2005 to 2017</productname>.
+  <productname>Microsoft Visual C++ 2013 to 2017</productname>.
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -77,20 +77,24 @@
  <para>
   Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
   32-bit PostgreSQL builds are possible with
-  <productname>Visual Studio 2005</productname> to
+  <productname>Visual Studio 2013</productname> to
   <productname>Visual Studio 2017</productname> (including Express editions),
   as well as standalone Windows SDK releases 6.0 to 8.1.
   64-bit PostgreSQL builds are supported with
   <productname>Microsoft Windows SDK</productname> version 6.0a to 8.1 or
-  <productname>Visual Studio 2008</productname> and above. Compilation
-  is supported down to <productname>Windows XP</productname> and
-  <productname>Windows Server 2003</productname> when building with
-  <productname>Visual Studio 2005</productname> to
-  <productname>Visual Studio 2013</productname>. Building with
-  <productname>Visual Studio 2015</productname> is supported down to
-  <productname>Windows Vista</productname> and <productname>Windows Server 2008</productname>.
-   Building with <productname>Visual Studio 2017</productname> is supported
-   down to <productname>Windows 7 SP1</productname> and <productname>Windows Server 2008 R2 SP1</productname>.
+  <productname>Visual Studio 2013</productname> and above. Compilation
+  is supported down to <productname>Windows 7</productname> and
+  <productname>Windows Server 2008 R2 SP1</productname> when building with
+  <productname>Visual Studio 2013</productname> to
+  <productname>Visual Studio 2017</productname>.
+   <!--
+       For 2013 requirements:
+       https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-sysrequirements-vs
+       For 2015 requirements:
+       https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2015-sysrequirements-vs
+       For 2017 requirements:
+       https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2017-system-requirements-vs
+   -->
  </para>
 
  <para>

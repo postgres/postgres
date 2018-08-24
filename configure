@@ -4602,6 +4602,13 @@ if test "x$ac_cv_prog_cc_c99" != xno; then :
 fi
 
 
+
+# Error out if the compiler does not support C99, as the codebase
+# relies on that.
+if test "$ac_cv_prog_cc_c99" = no; then
+    as_fn_error $? "C compiler \"$CC\" does not support C99" "$LINENO" 5
+fi
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5361,6 +5368,48 @@ fi
 
 
   # -Wdeclaration-after-statement isn't applicable for C++
+  # Really don't want VLAs to be used in our dialect of C
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Werror=vla, for CFLAGS" >&5
+$as_echo_n "checking whether ${CC} supports -Werror=vla, for CFLAGS... " >&6; }
+if ${pgac_cv_prog_CC_cflags__Werror_vla+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+pgac_save_CC=$CC
+CC=${CC}
+CFLAGS="${CFLAGS} -Werror=vla"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_prog_CC_cflags__Werror_vla=yes
+else
+  pgac_cv_prog_CC_cflags__Werror_vla=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"
+CC="$pgac_save_CC"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CC_cflags__Werror_vla" >&5
+$as_echo "$pgac_cv_prog_CC_cflags__Werror_vla" >&6; }
+if test x"$pgac_cv_prog_CC_cflags__Werror_vla" = x"yes"; then
+  CFLAGS="${CFLAGS} -Werror=vla"
+fi
+
+
+  # -Wvla is not applicable for C++
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Wendif-labels, for CFLAGS" >&5
 $as_echo_n "checking whether ${CC} supports -Wendif-labels, for CFLAGS... " >&6; }

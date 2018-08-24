@@ -4,7 +4,7 @@ MSVC build
 ==========
 
 This directory contains the tools required to build PostgreSQL using
-Microsoft Visual Studio 2005 - 2017. This builds the whole backend, not just
+Microsoft Visual Studio 2013 - 2017. This builds the whole backend, not just
 the libpq frontend library. For more information, see the documentation
 chapter "Installation on Windows" and the description below.
 
@@ -67,14 +67,12 @@ Install.pm             module containing the install logic
 Mkvcbuild.pm           module containing the code to generate the Visual
                        Studio build (project/solution) files
 MSBuildProject.pm      module containing the code to generate MSBuild based
-                       project files (Visual Studio 2010 or greater)
+                       project files (Visual Studio 2013 or greater)
 Project.pm             module containing the common code to generate the
                        Visual Studio project files. Also provides the
                        common interface of all project file generators
 Solution.pm            module containing the code to generate the Visual
                        Studio solution files.
-VCBuildProject.pm      module containing the code to generate VCBuild based
-                       project files (Visual Studio 2005/2008)
 VSObjectFactory.pm     factory module providing the code to create the
                        appropriate project/solution files for the current
                        environment
@@ -90,14 +88,12 @@ config_default.pl to create the configuration arguments.
 These configuration arguments are passed over to Mkvcbuild::mkvcbuild
 (Mkvcbuild.pm) which creates the Visual Studio project and solution files.
 It does this by using VSObjectFactory::CreateSolution to create an object
-implementing the Solution interface (this could be either a VS2005Solution,
-a VS2008Solution, a VS2010Solution or a VS2012Solution or a VS2013Solution,
+implementing the Solution interface (this could be either a VS2013Solution,
 or a VS2015Solution or a VS2017Solution, all in Solution.pm, depending on
 the user's build environment) and adding objects implementing the corresponding
-Project interface (VC2005Project or VC2008Project from VCBuildProject.pm or
-VC2010Project or VC2012Project or VC2013Project or VC2015Project or VC2017Project
-from MSBuildProject.pm) to it.
+Project interface (VC2013Project or VC2015Project or VC2017Project from
+MSBuildProject.pm) to it.
 When Solution::Save is called, the implementations of Solution and Project
 save their content in the appropriate format.
-The final step of starting the appropriate build program (msbuild or vcbuild)
-is performed in build.pl again.
+The final step of starting the appropriate build program (msbuild) is
+performed in build.pl again.

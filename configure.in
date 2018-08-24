@@ -359,6 +359,13 @@ esac
 
 AC_PROG_CC([$pgac_cc_list])
 AC_PROG_CC_C99()
+
+# Error out if the compiler does not support C99, as the codebase
+# relies on that.
+if test "$ac_cv_prog_cc_c99" = no; then
+    AC_MSG_ERROR([C compiler "$CC" does not support C99])
+fi
+
 AC_PROG_CXX([$pgac_cxx_list])
 
 # Check if it's Intel's compiler, which (usually) pretends to be gcc,
@@ -477,6 +484,9 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # These work in some but not all gcc versions
   PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
   # -Wdeclaration-after-statement isn't applicable for C++
+  # Really don't want VLAs to be used in our dialect of C
+  PGAC_PROG_CC_CFLAGS_OPT([-Werror=vla])
+  # -Wvla is not applicable for C++
   PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
   PGAC_PROG_CXX_CFLAGS_OPT([-Wendif-labels])
   PGAC_PROG_CC_CFLAGS_OPT([-Wmissing-format-attribute])

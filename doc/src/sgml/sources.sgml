@@ -867,19 +867,30 @@ BETTER: unrecognized node type: 42
     <title>C Standard</title>
     <para>
      Code in <productname>PostgreSQL</productname> should only rely on language
-     features available in the C89 standard. That means a conforming
-     C89 compiler has to be able to compile postgres, at least aside
-     from a few platform dependent pieces. Features from later
-     revision of the C standard or compiler specific features can be
-     used, if a fallback is provided.
+     features available in the C99 standard. That means a conforming
+     C99 compiler has to be able to compile postgres, at least aside
+     from a few platform dependent pieces.
     </para>
     <para>
-     For example <literal>static inline</literal> and
-     <literal>_StaticAssert()</literal> are currently used, even
-     though they are from newer revisions of the C standard. If not
-     available we respectively fall back to defining the functions
-     without inline, and to using a C89 compatible replacement that
-     performs the same checks, but emits rather cryptic messages.
+     A few features included in the C99 standard are, at this time, not be
+     permitted to be used in core <productname>PostgreSQL</productname>
+     code. This currently includes variable length arrays, intermingled
+     declarations and code, <literal>//</literal> comments, universal
+     character names. Reasons for that include portability and historical
+     practices.
+    </para>
+    <para>
+     Features from later revision of the C standard or compiler specific
+     features can be used, if a fallback is provided.
+    </para>
+    <para>
+     For example <literal>_StaticAssert()</literal> and
+     <literal>__builtin_constant_p</literal> are currently used, even though
+     they are from newer revisions of the C standard and a
+     <productname>GCC</productname> extension respectively. If not available
+     we respectively fall back to using a C99 compatible replacement that
+     performs the same checks, but emits rather cryptic messages and do not
+     use <literal>__builtin_constant_p</literal>.
     </para>
    </simplesect>
 
