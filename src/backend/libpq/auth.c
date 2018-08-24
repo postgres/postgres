@@ -865,7 +865,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	StringInfoData sasl_mechs;
 	int			mtype;
 	StringInfoData buf;
-	void	   *scram_opaq;
+	void	   *scram_opaq = NULL;
 	char	   *output = NULL;
 	int			outputlen = 0;
 	char	   *input;
