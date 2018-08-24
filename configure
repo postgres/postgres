@@ -5020,6 +5020,17 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_LLVMGETHOSTCPUNAME $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUFeatures" "ac_cv_have_decl_LLVMGetHostCPUFeatures" "#include <llvm-c/TargetMachine.h>
+"
+if test "x$ac_cv_have_decl_LLVMGetHostCPUFeatures" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMGETHOSTCPUFEATURES $ac_have_decl
+_ACEOF
 
   ac_fn_c_check_decl "$LINENO" "LLVMCreateGDBRegistrationListener" "ac_cv_have_decl_LLVMCreateGDBRegistrationListener" "#include <llvm-c/ExecutionEngine.h>
 "

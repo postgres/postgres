@@ -125,9 +125,11 @@ extern LLVMValueRef slot_compile_deform(struct LLVMJitContext *context, TupleDes
 extern char *LLVMGetHostCPUName(void);
 #endif
 
+#if defined(HAVE_DECL_LLVMGETHOSTCPUFEATURES) && !HAVE_DECL_LLVMGETHOSTCPUFEATURES
 /** Get the host CPU features as a string. The result needs to be disposed
   with LLVMDisposeMessage. */
 extern char *LLVMGetHostCPUFeatures(void);
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

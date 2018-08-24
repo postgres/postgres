@@ -119,6 +119,10 @@
    if you don't. */
 #define HAVE_DECL_LLVMGETHOSTCPUNAME 0
 
+/* Define to 1 if you have the declaration of `LLVMGetHostCPUFeatures', and to 0
+   if you don't. */
+#define HAVE_DECL_LLVMGETHOSTCPUFEATURES 0
+
 /* Define to 1 if you have the declaration of `LLVMOrcGetSymbolAddressIn', and
    to 0 if you don't. */
 #define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN 0
