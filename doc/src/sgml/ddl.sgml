@@ -3944,8 +3944,8 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     </para>
 
     <para>
-     Also, execution-time partition pruning currently only occurs for the
-     <literal>Append</literal> node type, not <literal>MergeAppend</literal>.
+     Execution-time partition pruning currently occurs for the
+     <literal>Append</literal> and <literal>MergeAppend</literal> node types.
     </para>
 
     <para>
