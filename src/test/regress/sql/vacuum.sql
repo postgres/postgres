@@ -99,6 +99,9 @@ DROP TABLE vacparted;
 
 -- relation ownership, WARNING logs generated as all are skipped.
 CREATE TABLE vacowned (a int);
+CREATE TABLE vacowned_parted (a int) PARTITION BY LIST (a);
+CREATE TABLE vacowned_part1 PARTITION OF vacowned_parted FOR VALUES IN (1);
+CREATE TABLE vacowned_part2 PARTITION OF vacowned_parted FOR VALUES IN (2);
 CREATE ROLE regress_vacuum;
 SET ROLE regress_vacuum;
 -- Simple table
@@ -113,6 +116,60 @@ VACUUM (ANALYZE) pg_catalog.pg_class;
 VACUUM pg_catalog.pg_authid;
 ANALYZE pg_catalog.pg_authid;
 VACUUM (ANALYZE) pg_catalog.pg_authid;
+-- Partitioned table and its partitions, nothing owned by other user.
+-- Relations are not listed in a single command to test ownership
+-- independently.
+VACUUM vacowned_parted;
+VACUUM vacowned_part1;
+VACUUM vacowned_part2;
+ANALYZE vacowned_parted;
+ANALYZE vacowned_part1;
+ANALYZE vacowned_part2;
+VACUUM (ANALYZE) vacowned_parted;
+VACUUM (ANALYZE) vacowned_part1;
+VACUUM (ANALYZE) vacowned_part2;
+RESET ROLE;
+-- Partitioned table and one partition owned by other user.
+ALTER TABLE vacowned_parted OWNER TO regress_vacuum;
+ALTER TABLE vacowned_part1 OWNER TO regress_vacuum;
+SET ROLE regress_vacuum;
+VACUUM vacowned_parted;
+VACUUM vacowned_part1;
+VACUUM vacowned_part2;
+ANALYZE vacowned_parted;
+ANALYZE vacowned_part1;
+ANALYZE vacowned_part2;
+VACUUM (ANALYZE) vacowned_parted;
+VACUUM (ANALYZE) vacowned_part1;
+VACUUM (ANALYZE) vacowned_part2;
+RESET ROLE;
+-- Only one partition owned by other user.
+ALTER TABLE vacowned_parted OWNER TO CURRENT_USER;
+SET ROLE regress_vacuum;
+VACUUM vacowned_parted;
+VACUUM vacowned_part1;
+VACUUM vacowned_part2;
+ANALYZE vacowned_parted;
+ANALYZE vacowned_part1;
+ANALYZE vacowned_part2;
+VACUUM (ANALYZE) vacowned_parted;
+VACUUM (ANALYZE) vacowned_part1;
+VACUUM (ANALYZE) vacowned_part2;
+RESET ROLE;
+-- Only partitioned table owned by other user.
+ALTER TABLE vacowned_parted OWNER TO regress_vacuum;
+ALTER TABLE vacowned_part1 OWNER TO CURRENT_USER;
+SET ROLE regress_vacuum;
+VACUUM vacowned_parted;
+VACUUM vacowned_part1;
+VACUUM vacowned_part2;
+ANALYZE vacowned_parted;
+ANALYZE vacowned_part1;
+ANALYZE vacowned_part2;
+VACUUM (ANALYZE) vacowned_parted;
+VACUUM (ANALYZE) vacowned_part1;
+VACUUM (ANALYZE) vacowned_part2;
 RESET ROLE;
 DROP TABLE vacowned;
+DROP TABLE vacowned_parted;
 DROP ROLE regress_vacuum;

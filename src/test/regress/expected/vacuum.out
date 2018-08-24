@@ -124,6 +124,9 @@ DROP TABLE vactst;
 DROP TABLE vacparted;
 -- relation ownership, WARNING logs generated as all are skipped.
 CREATE TABLE vacowned (a int);
+CREATE TABLE vacowned_parted (a int) PARTITION BY LIST (a);
+CREATE TABLE vacowned_part1 PARTITION OF vacowned_parted FOR VALUES IN (1);
+CREATE TABLE vacowned_part2 PARTITION OF vacowned_parted FOR VALUES IN (2);
 CREATE ROLE regress_vacuum;
 SET ROLE regress_vacuum;
 -- Simple table
@@ -147,6 +150,102 @@ ANALYZE pg_catalog.pg_authid;
 WARNING:  skipping "pg_authid" --- only superuser can analyze it
 VACUUM (ANALYZE) pg_catalog.pg_authid;
 WARNING:  skipping "pg_authid" --- only superuser can vacuum it
+-- Partitioned table and its partitions, nothing owned by other user.
+-- Relations are not listed in a single command to test ownership
+-- independently.
+VACUUM vacowned_parted;
+WARNING:  skipping "vacowned_parted" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM vacowned_part1;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+VACUUM vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+ANALYZE vacowned_parted;
+WARNING:  skipping "vacowned_parted" --- only table or database owner can analyze it
+WARNING:  skipping "vacowned_part1" --- only table or database owner can analyze it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+ANALYZE vacowned_part1;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can analyze it
+ANALYZE vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+VACUUM (ANALYZE) vacowned_parted;
+WARNING:  skipping "vacowned_parted" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM (ANALYZE) vacowned_part1;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+VACUUM (ANALYZE) vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+RESET ROLE;
+-- Partitioned table and one partition owned by other user.
+ALTER TABLE vacowned_parted OWNER TO regress_vacuum;
+ALTER TABLE vacowned_part1 OWNER TO regress_vacuum;
+SET ROLE regress_vacuum;
+VACUUM vacowned_parted;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM vacowned_part1;
+VACUUM vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+ANALYZE vacowned_parted;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+ANALYZE vacowned_part1;
+ANALYZE vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+VACUUM (ANALYZE) vacowned_parted;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM (ANALYZE) vacowned_part1;
+VACUUM (ANALYZE) vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+RESET ROLE;
+-- Only one partition owned by other user.
+ALTER TABLE vacowned_parted OWNER TO CURRENT_USER;
+SET ROLE regress_vacuum;
+VACUUM vacowned_parted;
+WARNING:  skipping "vacowned_parted" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM vacowned_part1;
+VACUUM vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+ANALYZE vacowned_parted;
+WARNING:  skipping "vacowned_parted" --- only table or database owner can analyze it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+ANALYZE vacowned_part1;
+ANALYZE vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+VACUUM (ANALYZE) vacowned_parted;
+WARNING:  skipping "vacowned_parted" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM (ANALYZE) vacowned_part1;
+VACUUM (ANALYZE) vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+RESET ROLE;
+-- Only partitioned table owned by other user.
+ALTER TABLE vacowned_parted OWNER TO regress_vacuum;
+ALTER TABLE vacowned_part1 OWNER TO CURRENT_USER;
+SET ROLE regress_vacuum;
+VACUUM vacowned_parted;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM vacowned_part1;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+VACUUM vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+ANALYZE vacowned_parted;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can analyze it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+ANALYZE vacowned_part1;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can analyze it
+ANALYZE vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can analyze it
+VACUUM (ANALYZE) vacowned_parted;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
+VACUUM (ANALYZE) vacowned_part1;
+WARNING:  skipping "vacowned_part1" --- only table or database owner can vacuum it
+VACUUM (ANALYZE) vacowned_part2;
+WARNING:  skipping "vacowned_part2" --- only table or database owner can vacuum it
 RESET ROLE;
 DROP TABLE vacowned;
+DROP TABLE vacowned_parted;
 DROP ROLE regress_vacuum;
