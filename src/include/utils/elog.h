@@ -207,9 +207,8 @@ extern int	getinternalerrposition(void);
  *		elog(ERROR, "portal \"%s\" not found", stmt->portalname);
  *----------
  */
-#ifdef HAVE__VA_ARGS
 /*
- * If we have variadic macros, we can give the compiler a hint about the
+ * Using variadic macros, we can give the compiler a hint about the
  * call not returning when elevel >= ERROR.  See comments for ereport().
  * Note that historically elog() has called elog_start (which saves errno)
  * before evaluating "elevel", so we preserve that behavior here.
@@ -236,11 +235,6 @@ extern int	getinternalerrposition(void);
 		} \
 	} while(0)
 #endif							/* HAVE__BUILTIN_CONSTANT_P */
-#else							/* !HAVE__VA_ARGS */
-#define elog  \
-	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), \
-	elog_finish
-#endif							/* HAVE__VA_ARGS */
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void elog_finish(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);

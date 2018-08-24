@@ -15,7 +15,6 @@ extern PyObject *PLy_exc_spi_error;
  *
  * See comments at elog() about the compiler hinting.
  */
-#ifdef HAVE__VA_ARGS
 #ifdef HAVE__BUILTIN_CONSTANT_P
 #define PLy_elog(elevel, ...) \
 	do { \
@@ -32,9 +31,6 @@ extern PyObject *PLy_exc_spi_error;
 			pg_unreachable(); \
 	} while(0)
 #endif							/* HAVE__BUILTIN_CONSTANT_P */
-#else							/* !HAVE__VA_ARGS */
-#define PLy_elog PLy_elog_impl
-#endif							/* HAVE__VA_ARGS */
 
 extern void PLy_elog_impl(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);
 
