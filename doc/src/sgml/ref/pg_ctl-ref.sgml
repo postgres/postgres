@@ -334,7 +334,7 @@ PostgreSQL documentation
         options being passed through.
        </para>
        <para>
-        The <replaceable>options</replaceable> should usually be surrounded by single or
+        The <replaceable>initdb-options</replaceable> should usually be surrounded by single or
         double quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
