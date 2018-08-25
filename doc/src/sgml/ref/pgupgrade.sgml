@@ -326,7 +326,8 @@ NET STOP postgresql-&majorversion;
      against the old primary and standby clusters.  Verify that the
      <quote>Latest checkpoint location</quote> values match in all clusters.
      (There will be a mismatch if old standby servers were shut down
-     before the old primary.)  Also, change <varname>wal_level</varname> to
+     before the old primary or if the old standby servers are still running.)
+     Also, change <varname>wal_level</varname> to
      <literal>replica</literal> in the <filename>postgresql.conf</filename> file on the
      new primary cluster.
     </para>
