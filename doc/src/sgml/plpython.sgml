@@ -768,9 +768,9 @@ SELECT * FROM multiout_simple_setof(3);
   <title>Sharing Data</title>
   <para>
    The global dictionary <varname>SD</varname> is available to store
-   data between function calls.  This variable is private static data.
+   private data between repeated calls to the same function.
    The global dictionary <varname>GD</varname> is public data,
-   available to all Python functions within a session.  Use with
+   that is available to all Python functions within a session;  use with
    care.<indexterm><primary>global data</primary>
    <secondary>in PL/Python</secondary></indexterm>
   </para>
