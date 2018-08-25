@@ -2621,8 +2621,9 @@ ORDER BY c.ordinal_position;
    For permission checking, the set of <quote>applicable roles</quote>
    is applied, which can be broader than the set of enabled roles.  So
    generally, it is better to use the view
-   <literal>applicable_roles</literal> instead of this one; see also
-   there.
+   <literal>applicable_roles</literal> instead of this one; See
+   <xref linkend="infoschema-applicable-roles"/> for details on
+   <literal>applicable_roles</literal> view.
   </para>
 
   <table>
