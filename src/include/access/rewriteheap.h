@@ -45,9 +45,9 @@ typedef struct LogicalRewriteMappingData
  * components:
  * 1) database oid or InvalidOid for shared relations
  * 2) the oid of the relation
- * 3) xid we are mapping for
- * 4) upper 32bit of the LSN at which a rewrite started
- * 5) lower 32bit of the LSN at which a rewrite started
+ * 3) upper 32bit of the LSN at which a rewrite started
+ * 4) lower 32bit of the LSN at which a rewrite started
+ * 5) xid we are mapping for
  * 6) xid of the xact performing the mapping
  * ---
  */
