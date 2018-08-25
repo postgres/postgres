@@ -143,7 +143,7 @@
    In the first string, the set of trigrams is
    <literal>{"  w"," wo","ord","wor","rd "}</literal>.
    In the second string, the ordered set of trigrams is
-   <literal>{"  t"," tw",two,"wo ","  w"," wo","wor","ord","rds", ds "}</literal>.
+   <literal>{"  t"," tw","two","wo ","  w"," wo","wor","ord","rds","ds "}</literal>.
    The most similar extent of an ordered set of trigrams in the second string
    is <literal>{"  w"," wo","wor","ord"}</literal>, and the similarity is
    <literal>0.8</literal>.
@@ -154,7 +154,7 @@
    greatest similarity between the first string and any substring of the second
    string.  However, this function does not add padding to the boundaries of
    the extent.  Thus, the number of additional characters present in the
-   second string is not considered, except for the mismatched word boundry.
+   second string is not considered, except for the mismatched word boundries.
   </para>
 
   <table id="pgtrgm-op-table">
