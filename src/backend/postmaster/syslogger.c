@@ -45,6 +45,7 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pg_shmem.h"
+#include "tcop/tcopprot.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/timestamp.h"
@@ -135,7 +136,6 @@ static void syslogger_parseArgs(int argc, char *argv[]);
 NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
-static void open_csvlogfile(void);
 static FILE *logfile_open(const char *filename, const char *mode,
 			 bool allow_errors);
 
@@ -272,11 +272,13 @@ SysLoggerMain(int argc, char *argv[])
 #endif							/* WIN32 */
 
 	/*
-	 * Remember active logfile's name.  We recompute this from the reference
+	 * Remember active logfiles' name(s).  We recompute 'em from the reference
 	 * time because passing down just the pg_time_t is a lot cheaper than
 	 * passing a whole file path in the EXEC_BACKEND case.
 	 */
 	last_file_name = logfile_getname(first_syslogger_file_time, NULL);
+	if (csvlogFile != NULL)
+		last_csv_file_name = logfile_getname(first_syslogger_file_time, ".csv");
 
 	/* remember active logfile parameters */
 	currentLogDir = pstrdup(Log_directory);
@@ -285,6 +287,13 @@ SysLoggerMain(int argc, char *argv[])
 	/* set next planned rotation time */
 	set_next_rotation_time();
 	update_metainfo_datafile();
+
+	/*
+	 * Reset whereToSendOutput, as the postmaster will do (but hasn't yet, at
+	 * the point where we forked).  This prevents duplicate output of messages
+	 * from syslogger itself.
+	 */
+	whereToSendOutput = DestNone;
 
 	/* main worker loop */
 	for (;;)
@@ -331,6 +340,14 @@ SysLoggerMain(int argc, char *argv[])
 				currentLogFilename = pstrdup(Log_filename);
 				rotation_requested = true;
 			}
+
+			/*
+			 * Force a rotation if CSVLOG output was just turned on or off and
+			 * we need to open or close csvlogFile accordingly.
+			 */
+			if (((Log_destination & LOG_DESTINATION_CSVLOG) != 0) !=
+				(csvlogFile != NULL))
+				rotation_requested = true;
 
 			/*
 			 * If rotation time parameter changed, reset next rotation time,
@@ -580,11 +597,26 @@ SysLogger_Start(void)
 	 * a time-based rotation.
 	 */
 	first_syslogger_file_time = time(NULL);
+
 	filename = logfile_getname(first_syslogger_file_time, NULL);
 
 	syslogFile = logfile_open(filename, "a", false);
 
 	pfree(filename);
+
+	/*
+	 * Likewise for the initial CSV log file, if that's enabled.  (Note that
+	 * we open syslogFile even when only CSV output is nominally enabled,
+	 * since some code paths will write to syslogFile anyway.)
+	 */
+	if (Log_destination & LOG_DESTINATION_CSVLOG)
+	{
+		filename = logfile_getname(first_syslogger_file_time, ".csv");
+
+		csvlogFile = logfile_open(filename, "a", false);
+
+		pfree(filename);
+	}
 
 #ifdef EXEC_BACKEND
 	switch ((sysloggerPid = syslogger_forkexec()))
@@ -675,9 +707,14 @@ SysLogger_Start(void)
 				redirection_done = true;
 			}
 
-			/* postmaster will never write the file; close it */
+			/* postmaster will never write the file(s); close 'em */
 			fclose(syslogFile);
 			syslogFile = NULL;
+			if (csvlogFile != NULL)
+			{
+				fclose(csvlogFile);
+				csvlogFile = NULL;
+			}
 			return (int) sysloggerPid;
 	}
 
@@ -699,6 +736,7 @@ syslogger_forkexec(void)
 	char	   *av[10];
 	int			ac = 0;
 	char		filenobuf[32];
+	char		csvfilenobuf[32];
 
 	av[ac++] = "postgres";
 	av[ac++] = "--forklog";
@@ -720,6 +758,21 @@ syslogger_forkexec(void)
 #endif							/* WIN32 */
 	av[ac++] = filenobuf;
 
+#ifndef WIN32
+	if (csvlogFile != NULL)
+		snprintf(csvfilenobuf, sizeof(csvfilenobuf), "%d",
+				 fileno(csvlogFile));
+	else
+		strcpy(csvfilenobuf, "-1");
+#else							/* WIN32 */
+	if (csvlogFile != NULL)
+		snprintf(csvfilenobuf, sizeof(csvfilenobuf), "%ld",
+				 (long) _get_osfhandle(_fileno(csvlogFile)));
+	else
+		strcpy(csvfilenobuf, "0");
+#endif							/* WIN32 */
+	av[ac++] = csvfilenobuf;
+
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
 
@@ -736,15 +789,28 @@ syslogger_parseArgs(int argc, char *argv[])
 {
 	int			fd;
 
-	Assert(argc == 4);
+	Assert(argc == 5);
 	argv += 3;
 
+	/*
+	 * Re-open the error output files that were opened by SysLogger_Start().
+	 *
+	 * We expect this will always succeed, which is too optimistic, but if it
+	 * fails there's not a lot we can do to report the problem anyway.  As
+	 * coded, we'll just crash on a null pointer dereference after failure...
+	 */
 #ifndef WIN32
 	fd = atoi(*argv++);
 	if (fd != -1)
 	{
 		syslogFile = fdopen(fd, "a");
 		setvbuf(syslogFile, NULL, PG_IOLBF, 0);
+	}
+	fd = atoi(*argv++);
+	if (fd != -1)
+	{
+		csvlogFile = fdopen(fd, "a");
+		setvbuf(csvlogFile, NULL, PG_IOLBF, 0);
 	}
 #else							/* WIN32 */
 	fd = atoi(*argv++);
@@ -755,6 +821,16 @@ syslogger_parseArgs(int argc, char *argv[])
 		{
 			syslogFile = fdopen(fd, "a");
 			setvbuf(syslogFile, NULL, PG_IOLBF, 0);
+		}
+	}
+	fd = atoi(*argv++);
+	if (fd != 0)
+	{
+		fd = _open_osfhandle(fd, _O_APPEND | _O_TEXT);
+		if (fd > 0)
+		{
+			csvlogFile = fdopen(fd, "a");
+			setvbuf(csvlogFile, NULL, PG_IOLBF, 0);
 		}
 	}
 #endif							/* WIN32 */
@@ -998,13 +1074,29 @@ write_syslogger_file(const char *buffer, int count, int destination)
 	int			rc;
 	FILE	   *logfile;
 
-	if (destination == LOG_DESTINATION_CSVLOG && csvlogFile == NULL)
-		open_csvlogfile();
+	/*
+	 * If we're told to write to csvlogFile, but it's not open, dump the data
+	 * to syslogFile (which is always open) instead.  This can happen if CSV
+	 * output is enabled after postmaster start and we've been unable to open
+	 * csvlogFile.  There are also race conditions during a parameter change
+	 * whereby backends might send us CSV output before we open csvlogFile or
+	 * after we close it.  Writing CSV-formatted output to the regular log
+	 * file isn't great, but it beats dropping log output on the floor.
+	 *
+	 * Think not to improve this by trying to open csvlogFile on-the-fly.  Any
+	 * failure in that would lead to recursion.
+	 */
+	logfile = (destination == LOG_DESTINATION_CSVLOG &&
+			   csvlogFile != NULL) ? csvlogFile : syslogFile;
 
-	logfile = destination == LOG_DESTINATION_CSVLOG ? csvlogFile : syslogFile;
 	rc = fwrite(buffer, 1, count, logfile);
 
-	/* can't use ereport here because of possible recursion */
+	/*
+	 * Try to report any failure.  We mustn't use ereport because it would
+	 * just recurse right back here, but write_stderr is OK: it will write
+	 * either to the postmaster's original stderr, or to /dev/null, but never
+	 * to our input pipe which would result in a different sort of looping.
+	 */
 	if (rc != count)
 		write_stderr("could not write to log file: %s\n", strerror(errno));
 }
@@ -1088,31 +1180,6 @@ pipeThread(void *arg)
 #endif							/* WIN32 */
 
 /*
- * Open the csv log file - we do this opportunistically, because
- * we don't know if CSV logging will be wanted.
- *
- * This is only used the first time we open the csv log in a given syslogger
- * process, not during rotations.  As with opening the main log file, we
- * always append in this situation.
- */
-static void
-open_csvlogfile(void)
-{
-	char	   *filename;
-
-	filename = logfile_getname(time(NULL), ".csv");
-
-	csvlogFile = logfile_open(filename, "a", false);
-
-	if (last_csv_file_name != NULL) /* probably shouldn't happen */
-		pfree(last_csv_file_name);
-
-	last_csv_file_name = filename;
-
-	update_metainfo_datafile();
-}
-
-/*
  * Open a new logfile with proper permissions and buffering options.
  *
  * If allow_errors is true, we just log any open failure and return NULL
@@ -1179,7 +1246,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 	else
 		fntime = time(NULL);
 	filename = logfile_getname(fntime, NULL);
-	if (csvlogFile != NULL)
+	if (Log_destination & LOG_DESTINATION_CSVLOG)
 		csvfilename = logfile_getname(fntime, ".csv");
 
 	/*
@@ -1231,10 +1298,16 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 		filename = NULL;
 	}
 
-	/* Same as above, but for csv file. */
-
-	if (csvlogFile != NULL &&
-		(time_based_rotation || (size_rotation_for & LOG_DESTINATION_CSVLOG)))
+	/*
+	 * Same as above, but for csv file.  Note that if LOG_DESTINATION_CSVLOG
+	 * was just turned on, we might have to open csvlogFile here though it was
+	 * not open before.  In such a case we'll append not overwrite (since
+	 * last_csv_file_name will be NULL); that is consistent with the normal
+	 * rules since it's not a time-based rotation.
+	 */
+	if ((Log_destination & LOG_DESTINATION_CSVLOG) &&
+		(csvlogFile == NULL ||
+		 time_based_rotation || (size_rotation_for & LOG_DESTINATION_CSVLOG)))
 	{
 		if (Log_truncate_on_rotation && time_based_rotation &&
 			last_csv_file_name != NULL &&
@@ -1265,7 +1338,8 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 			return;
 		}
 
-		fclose(csvlogFile);
+		if (csvlogFile != NULL)
+			fclose(csvlogFile);
 		csvlogFile = fh;
 
 		/* instead of pfree'ing filename, remember it for next time */
@@ -1273,6 +1347,16 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 			pfree(last_csv_file_name);
 		last_csv_file_name = csvfilename;
 		csvfilename = NULL;
+	}
+	else if (!(Log_destination & LOG_DESTINATION_CSVLOG) &&
+			 csvlogFile != NULL)
+	{
+		/* CSVLOG was just turned off, so close the old file */
+		fclose(csvlogFile);
+		csvlogFile = NULL;
+		if (last_csv_file_name != NULL)
+			pfree(last_csv_file_name);
+		last_csv_file_name = NULL;
 	}
 
 	if (filename)
