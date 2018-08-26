@@ -1428,7 +1428,7 @@ gen_prune_steps_from_opexps(PartitionScheme part_scheme,
 					/*
 					 * For each clause for the "last" column, after appending
 					 * the clause's own expression to the 'prefix', we'll
-					 * generate one step using the so generated vector and and
+					 * generate one step using the so generated vector and
 					 * assign = as its strategy.  Actually, 'prefix' might
 					 * contain multiple clauses for the same key, in which
 					 * case, we must generate steps for various combinations
@@ -2828,9 +2828,9 @@ get_matching_range_bounds(PartitionPruneContext *context,
 	}
 
 	/*
-	 * Skip a gap.  See the above comment about how we decide whether or or
-	 * not to scan the default partition based whether the datum that will
-	 * become the maximum datum is finite or not.
+	 * Skip a gap.  See the above comment about how we decide whether or not
+	 * to scan the default partition based whether the datum that will become
+	 * the maximum datum is finite or not.
 	 */
 	if (maxoff >= 1 && partindices[maxoff] < 0)
 	{
