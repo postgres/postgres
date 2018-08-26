@@ -395,7 +395,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 			degree = dependency_degree(numrows, rows, k, dependency, stats, attrs);
 
 			/*
-			 * if the dependency seems entirely invalid, don't store it it
+			 * if the dependency seems entirely invalid, don't store it
 			 */
 			if (degree == 0.0)
 				continue;

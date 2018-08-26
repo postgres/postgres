@@ -35,10 +35,10 @@
  *
  * We are using traversal values provided by SP-GiST to calculate and
  * to store the bounds of the quadrants, while traversing into the tree.
- * Traversal value has all the boundaries in the 4D space, and is is
- * capable of transferring the required boundaries to the following
- * traversal values.  In conclusion, three things are necessary
- * to calculate the next traversal value:
+ * Traversal value has all the boundaries in the 4D space, and is capable
+ * of transferring the required boundaries to the following traversal
+ * values.  In conclusion, three things are necessary to calculate the
+ * next traversal value:
  *
  *	(1) the traversal value of the parent
  *	(2) the quadrant of the current node
