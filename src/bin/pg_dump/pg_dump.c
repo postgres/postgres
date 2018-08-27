@@ -3471,8 +3471,8 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 
 		/*
 		 * Get row security enabled information for the table. We represent
-		 * RLS enabled on a table by creating PolicyInfo object with an empty
-		 * policy.
+		 * RLS being enabled on a table by creating a PolicyInfo object with
+		 * null polname.
 		 */
 		if (tbinfo->rowsec)
 		{
@@ -3613,8 +3613,13 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 		query = createPQExpBuffer();
 
 		appendPQExpBuffer(query, "ALTER TABLE %s ENABLE ROW LEVEL SECURITY;",
-						  fmtQualifiedDumpable(polinfo));
+						  fmtQualifiedDumpable(tbinfo));
 
+		/*
+		 * We must emit the ROW SECURITY object's dependency on its table
+		 * explicitly, because it will not match anything in pg_depend (unlike
+		 * the case for other PolicyInfo objects).
+		 */
 		if (polinfo->dobj.dump & DUMP_COMPONENT_POLICY)
 			ArchiveEntry(fout, polinfo->dobj.catId, polinfo->dobj.dumpId,
 						 polinfo->dobj.name,
@@ -3623,7 +3628,7 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 						 tbinfo->rolname, false,
 						 "ROW SECURITY", SECTION_POST_DATA,
 						 query->data, "", NULL,
-						 NULL, 0,
+						 &(tbinfo->dobj.dumpId), 1,
 						 NULL, NULL);
 
 		destroyPQExpBuffer(query);
