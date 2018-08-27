@@ -34,7 +34,7 @@ CATALOG(pg_default_acl,826,DefaultAclRelationId)
 	char		defaclobjtype;	/* see DEFACLOBJ_xxx constants below */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	aclitem		defaclacl[1];	/* permissions to add at CREATE time */
+	aclitem		defaclacl[1] BKI_FORCE_NOT_NULL;	/* permissions to add at CREATE time */
 #endif
 } FormData_pg_default_acl;
 
