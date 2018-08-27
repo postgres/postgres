@@ -319,9 +319,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 	indexTupDesc = CreateTemplateTupleDesc(numatts, false);
 
 	/*
-	 * For simple index columns, we copy the pg_attribute row from the parent
-	 * relation and modify it as necessary.  For expressions we have to cons
-	 * up a pg_attribute row the hard way.
+	 * Fill in the pg_attribute row.
 	 */
 	for (i = 0; i < numatts; i++)
 	{
@@ -332,6 +330,19 @@ ConstructTupleDescriptor(Relation heapRelation,
 		Form_pg_opclass opclassTup;
 		Oid			keyType;
 
+		MemSet(to, 0, ATTRIBUTE_FIXED_PART_SIZE);
+		to->attnum = i + 1;
+		to->attstattarget = -1;
+		to->attcacheoff = -1;
+		to->attislocal = true;
+		to->attcollation = (i < numkeyatts) ?
+			collationObjectId[i] : InvalidOid;
+
+		/*
+		 * For simple index columns, we copy some pg_attribute fields from the
+		 * parent relation.  For expressions we have to look at the expression
+		 * result.
+		 */
 		if (atnum != 0)
 		{
 			/* Simple index column */
@@ -356,35 +367,19 @@ ConstructTupleDescriptor(Relation heapRelation,
 									 AttrNumberGetAttrOffset(atnum));
 			}
 
-			/*
-			 * now that we've determined the "from", let's copy the tuple desc
-			 * data...
-			 */
-			memcpy(to, from, ATTRIBUTE_FIXED_PART_SIZE);
-
-			/*
-			 * Fix the stuff that should not be the same as the underlying
-			 * attr
-			 */
-			to->attnum = i + 1;
-
-			to->attstattarget = -1;
-			to->attcacheoff = -1;
-			to->attnotnull = false;
-			to->atthasdef = false;
-			to->atthasmissing = false;
-			to->attidentity = '\0';
-			to->attislocal = true;
-			to->attinhcount = 0;
-			to->attcollation = (i < numkeyatts) ?
-				collationObjectId[i] : InvalidOid;
+			namecpy(&to->attname, &from->attname);
+			to->atttypid = from->atttypid;
+			to->attlen = from->attlen;
+			to->attndims = from->attndims;
+			to->atttypmod = from->atttypmod;
+			to->attbyval = from->attbyval;
+			to->attstorage = from->attstorage;
+			to->attalign = from->attalign;
 		}
 		else
 		{
 			/* Expressional index */
 			Node	   *indexkey;
-
-			MemSet(to, 0, ATTRIBUTE_FIXED_PART_SIZE);
 
 			if (indexpr_item == NULL)	/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");
@@ -401,20 +396,14 @@ ConstructTupleDescriptor(Relation heapRelation,
 			typeTup = (Form_pg_type) GETSTRUCT(tuple);
 
 			/*
-			 * Assign some of the attributes values. Leave the rest as 0.
+			 * Assign some of the attributes values. Leave the rest.
 			 */
-			to->attnum = i + 1;
 			to->atttypid = keyType;
 			to->attlen = typeTup->typlen;
 			to->attbyval = typeTup->typbyval;
 			to->attstorage = typeTup->typstorage;
 			to->attalign = typeTup->typalign;
-			to->attstattarget = -1;
-			to->attcacheoff = -1;
 			to->atttypmod = exprTypmod(indexkey);
-			to->attislocal = true;
-			to->attcollation = (i < numkeyatts) ?
-				collationObjectId[i] : InvalidOid;
 
 			ReleaseSysCache(tuple);
 
