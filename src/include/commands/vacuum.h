@@ -15,6 +15,7 @@
 #define VACUUM_H
 
 #include "access/htup.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "nodes/parsenodes.h"
@@ -185,6 +186,8 @@ extern void vacuum_set_xid_limits(Relation rel,
 					  MultiXactId *mxactFullScanLimit);
 extern void vac_update_datfrozenxid(void);
 extern void vacuum_delay_point(void);
+extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
+						 int options);
 
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, int options,
