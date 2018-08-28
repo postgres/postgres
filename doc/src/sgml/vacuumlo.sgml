@@ -55,7 +55,8 @@
 
   <variablelist>
    <varlistentry>
-    <term><option>-l</option> <replaceable>limit</replaceable></term>
+    <term><option>-l <replaceable class="parameter">limit</replaceable></option></term>
+    <term><option>--limit=<replaceable class="parameter">limit</replaceable></option></term>
     <listitem>
      <para>
       Remove no more than <replaceable>limit</replaceable> large objects per
@@ -69,6 +70,7 @@
 
    <varlistentry>
     <term><option>-n</option></term>
+    <term><option>--dry-run</option></term>
     <listitem>
      <para>Don't remove anything, just show what would be done.</para>
     </listitem>
@@ -76,6 +78,7 @@
 
    <varlistentry>
     <term><option>-v</option></term>
+    <term><option>--verbose</option></term>
     <listitem>
      <para>Write a lot of progress messages.</para>
     </listitem>
@@ -110,21 +113,24 @@
 
   <variablelist>
    <varlistentry>
-    <term><option>-h</option> <replaceable>hostname</replaceable></term>
+    <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
+    <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
     <listitem>
      <para>Database server's host.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><option>-p</option> <replaceable>port</replaceable></term>
+    <term><option>-p <replaceable>port</replaceable></option></term>
+    <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
     <listitem>
      <para>Database server's port.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><option>-U</option> <replaceable>username</replaceable></term>
+    <term><option>-U <replaceable>username</replaceable></option></term>
+    <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
     <listitem>
      <para>User name to connect as.</para>
     </listitem>
@@ -146,6 +152,7 @@
 
    <varlistentry>
     <term><option>-W</option></term>
+    <term><option>--password</option></term>
     <listitem>
      <para>
       Force <application>vacuumlo</application> to prompt for a
@@ -164,6 +171,30 @@
     </listitem>
    </varlistentry>
   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGHOST</envar></term>
+    <term><envar>PGPORT</envar></term>
+    <term><envar>PGUSER</envar></term>
+
+    <listitem>
+     <para>
+      Default connection parameters.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   also uses the environment variables supported by <application>libpq</application>
+   (see <xref linkend="libpq-envars"/>).
   </para>
  </refsect1>
 

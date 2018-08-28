@@ -26,6 +26,7 @@
 #include "fe_utils/connect.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
+#include "getopt_long.h"
 
 #define BUFSIZE			1024
 
@@ -434,17 +435,17 @@ usage(const char *progname)
 	printf("%s removes unreferenced large objects from databases.\n\n", progname);
 	printf("Usage:\n  %s [OPTION]... DBNAME...\n\n", progname);
 	printf("Options:\n");
-	printf("  -l LIMIT       commit after removing each LIMIT large objects\n");
-	printf("  -n             don't remove large objects, just show what would be done\n");
-	printf("  -v             write a lot of progress messages\n");
-	printf("  -V, --version  output version information, then exit\n");
-	printf("  -?, --help     show this help, then exit\n");
+	printf("  -l, --limit=LIMIT         commit after removing each LIMIT large objects\n");
+	printf("  -n, --dry-run             don't remove large objects, just show what would be done\n");
+	printf("  -v, --verbose             write a lot of progress messages\n");
+	printf("  -V, --version             output version information, then exit\n");
+	printf("  -?, --help                show this help, then exit\n");
 	printf("\nConnection options:\n");
-	printf("  -h HOSTNAME    database server host or socket directory\n");
-	printf("  -p PORT        database server port\n");
-	printf("  -U USERNAME    user name to connect as\n");
-	printf("  -w             never prompt for password\n");
-	printf("  -W             force password prompt\n");
+	printf("  -h, --host=HOSTNAME       database server host or socket directory\n");
+	printf("  -p, --port=PORT           database server port\n");
+	printf("  -U, --username=USERNAME   user name to connect as\n");
+	printf("  -w, --no-password         never prompt for password\n");
+	printf("  -W, --password            force password prompt\n");
 	printf("\n");
 	printf("Report bugs to <pgsql-bugs@postgresql.org>.\n");
 }
@@ -453,11 +454,26 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
+	static struct option long_options[] = {
+		{"host", required_argument, NULL, 'h'},
+		{"limit", required_argument, NULL, 'l'},
+		{"dry-run", no_argument, NULL, 'n'},
+		{"port", required_argument, NULL, 'p'},
+		{"username", required_argument, NULL, 'U'},
+		{"verbose", no_argument, NULL, 'v'},
+		{"version", no_argument, NULL, 'V'},
+		{"no-password", no_argument, NULL, 'w'},
+		{"password", no_argument, NULL, 'W'},
+		{"help", no_argument, NULL, '?'},
+		{NULL, 0, NULL, 0}
+	};
+
 	int			rc = 0;
 	struct _param param;
 	int			c;
 	int			port;
 	const char *progname;
+	int			optindex;
 
 	progname = get_progname(argv[0]);
 
@@ -486,25 +502,15 @@ main(int argc, char **argv)
 		}
 	}
 
-	while (1)
+	while ((c = getopt_long(argc, argv, "h:l:np:U:vwW", long_options, &optindex)) != -1)
 	{
-		c = getopt(argc, argv, "h:l:U:p:vnwW");
-		if (c == -1)
-			break;
-
 		switch (c)
 		{
 			case '?':
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
-			case ':':
-				exit(1);
-			case 'v':
-				param.verbose = 1;
-				break;
-			case 'n':
-				param.dry_run = 1;
-				param.verbose = 1;
+			case 'h':
+				param.pg_host = pg_strdup(optarg);
 				break;
 			case 'l':
 				param.transaction_limit = strtol(optarg, NULL, 10);
@@ -516,14 +522,9 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
-			case 'U':
-				param.pg_user = pg_strdup(optarg);
-				break;
-			case 'w':
-				param.pg_prompt = TRI_NO;
-				break;
-			case 'W':
-				param.pg_prompt = TRI_YES;
+			case 'n':
+				param.dry_run = 1;
+				param.verbose = 1;
 				break;
 			case 'p':
 				port = strtol(optarg, NULL, 10);
@@ -534,9 +535,21 @@ main(int argc, char **argv)
 				}
 				param.pg_port = pg_strdup(optarg);
 				break;
-			case 'h':
-				param.pg_host = pg_strdup(optarg);
+			case 'U':
+				param.pg_user = pg_strdup(optarg);
 				break;
+			case 'v':
+				param.verbose = 1;
+				break;
+			case 'w':
+				param.pg_prompt = TRI_NO;
+				break;
+			case 'W':
+				param.pg_prompt = TRI_YES;
+				break;
+			default:
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				exit(1);
 		}
 	}
 
