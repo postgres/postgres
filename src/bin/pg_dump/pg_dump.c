@@ -16326,14 +16326,15 @@ dumpIndexAttach(Archive *fout, IndexAttachInfo *attachinfo)
 	{
 		PQExpBuffer q = createPQExpBuffer();
 
-		appendPQExpBuffer(q, "\nALTER INDEX %s ",
+		appendPQExpBuffer(q, "ALTER INDEX %s ",
 						  fmtQualifiedDumpable(attachinfo->parentIdx));
 		appendPQExpBuffer(q, "ATTACH PARTITION %s;\n",
 						  fmtQualifiedDumpable(attachinfo->partitionIdx));
 
 		ArchiveEntry(fout, attachinfo->dobj.catId, attachinfo->dobj.dumpId,
 					 attachinfo->dobj.name,
-					 NULL, NULL,
+					 attachinfo->dobj.namespace->dobj.name,
+					 NULL,
 					 "",
 					 false, "INDEX ATTACH", SECTION_POST_DATA,
 					 q->data, "", NULL,
