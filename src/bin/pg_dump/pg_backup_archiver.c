@@ -4589,16 +4589,24 @@ identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te)
 	int			nlockids;
 	int			i;
 
+	/*
+	 * We only care about this for POST_DATA items.  PRE_DATA items are not
+	 * run in parallel, and DATA items are all independent by assumption.
+	 */
+	if (te->section != SECTION_POST_DATA)
+		return;
+
 	/* Quick exit if no dependencies at all */
 	if (te->nDeps == 0)
 		return;
 
-	/* Exit if this entry doesn't need exclusive lock on other objects */
-	if (!(strcmp(te->desc, "CONSTRAINT") == 0 ||
-		  strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
-		  strcmp(te->desc, "FK CONSTRAINT") == 0 ||
-		  strcmp(te->desc, "RULE") == 0 ||
-		  strcmp(te->desc, "TRIGGER") == 0))
+	/*
+	 * Most POST_DATA items are ALTER TABLEs or some moral equivalent of that,
+	 * and hence require exclusive lock.  However, we know that CREATE INDEX
+	 * does not.  (Maybe someday index-creating CONSTRAINTs will fall in that
+	 * category too ... but today is not that day.)
+	 */
+	if (strcmp(te->desc, "INDEX") == 0)
 		return;
 
 	/*
