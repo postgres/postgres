@@ -5793,7 +5793,8 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 	{
 		EquivalenceMember *em = lfirst(lc_em);
 
-		if (bms_is_subset(em->em_relids, rel->relids))
+		if (bms_is_subset(em->em_relids, rel->relids) &&
+			!bms_is_empty(em->em_relids))
 		{
 			/*
 			 * If there is more than one equivalence member whose Vars are
