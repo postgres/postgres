@@ -359,10 +359,12 @@ check:
 else
 check: submake $(REGRESS_PREP)
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
-
-temp-install: EXTRA_INSTALL+=$(subdir)
 endif
 endif # REGRESS
+
+ifndef NO_TEMP_INSTALL
+temp-install: EXTRA_INSTALL+=$(subdir)
+endif
 
 
 # STANDARD RULES
