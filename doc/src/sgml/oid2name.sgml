@@ -60,41 +60,48 @@
    <variablelist>
 
     <varlistentry>
-     <term><option>-f</option> <replaceable>filenode</replaceable></term>
-     <listitem><para>show info for table with filenode <replaceable>filenode</replaceable></para></listitem>
+     <term><option>-f <replaceable class="parameter">filenode</replaceable></option></term>
+     <term><option>--filenode=<replaceable class="parameter">filenode</replaceable></option></term>
+     <listitem><para>show info for table with filenode <replaceable>filenode</replaceable>.</para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><option>-i</option></term>
-     <listitem><para>include indexes and sequences in the listing</para></listitem>
+     <term><option>--indexes</option></term>
+     <listitem><para>include indexes and sequences in the listing.</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-o</option> <replaceable>oid</replaceable></term>
-     <listitem><para>show info for table with OID <replaceable>oid</replaceable></para></listitem>
+     <term><option>-o <replaceable class="parameter">oid</replaceable></option></term>
+     <term><option>--oid=<replaceable class="parameter">oid</replaceable></option></term>
+     <listitem><para>show info for table with OID <replaceable>oid</replaceable>.</para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><option>-q</option></term>
-     <listitem><para>omit headers (useful for scripting)</para></listitem>
+     <term><option>--quiet</option></term>
+     <listitem><para>omit headers (useful for scripting).</para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><option>-s</option></term>
-     <listitem><para>show tablespace OIDs</para></listitem>
+     <term><option>--tablespaces</option></term>
+     <listitem><para>show tablespace OIDs.</para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><option>-S</option></term>
+     <term><option>--system-objects</option></term>
      <listitem><para>include system objects (those in
       <option>information_schema</option>, <option>pg_toast</option>
-      and <option>pg_catalog</option> schemas)
+      and <option>pg_catalog</option> schemas).
      </para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-t</option> <replaceable>tablename_pattern</replaceable></term>
-     <listitem><para>show info for table(s) matching <replaceable>tablename_pattern</replaceable></para></listitem>
+     <term><option>-t <replaceable class="parameter">tablename_pattern</replaceable></option></term>
+     <term><option>--table=<replaceable class="parameter">tablename_pattern</replaceable></option></term>
+     <listitem><para>show info for table(s) matching <replaceable class="parameter">tablename_pattern</replaceable>.</para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -109,8 +116,9 @@
 
     <varlistentry>
      <term><option>-x</option></term>
+     <term><option>--extended</option></term>
      <listitem><para>display more information about each object shown: tablespace name,
-      schema name, and OID
+      schema name, and OID.
      </para></listitem>
     </varlistentry>
 
@@ -133,29 +141,34 @@
 
    <variablelist>
     <varlistentry>
-     <term><option>-d</option> <replaceable>database</replaceable></term>
-     <listitem><para>database to connect to</para></listitem>
+     <term><option>-d <replaceable class="parameter">database</replaceable></option></term>
+     <term><option>--dbname=<replaceable class="parameter">database</replaceable></option></term>
+     <listitem><para>database to connect to.</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-H</option> <replaceable>host</replaceable></term>
-     <listitem><para>database server's host</para></listitem>
+     <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
+     <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
+     <listitem><para>database server's host.</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-p</option> <replaceable>port</replaceable></term>
-     <listitem><para>database server's port</para></listitem>
+     <term><option>-H <replaceable class="parameter">host</replaceable></option></term>
+     <listitem><para>database server's host.  Use of this parameter is
+     <emphasis>deprecated</emphasis> as of
+     <productname>PostgreSQL</productname> 12.</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-U</option> <replaceable>username</replaceable></term>
-     <listitem><para>user name to connect as</para></listitem>
+     <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+     <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
+     <listitem><para>database server's port.</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-P</option> <replaceable>password</replaceable></term>
-     <listitem><para>password (deprecated &mdash; putting this on the command line
-      is a security hazard)</para></listitem>
+     <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
+     <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
+     <listitem><para>user name to connect as.</para></listitem>
     </varlistentry>
 
    </variablelist>
@@ -185,6 +198,30 @@
    If you don't give <option>-d</option> either, it will show a listing of database
    OIDs.  Alternatively you can give <option>-s</option> to get a tablespace
    listing.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PGHOST</envar></term>
+    <term><envar>PGPORT</envar></term>
+    <term><envar>PGUSER</envar></term>
+
+    <listitem>
+     <para>
+      Default connection parameters.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</productname>
+   utilities, also uses the environment variables supported by
+   <application>libpq</application> (see <xref linkend="libpq-envars"/>).
   </para>
  </refsect1>
 

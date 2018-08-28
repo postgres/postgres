@@ -14,6 +14,8 @@
 #include "fe_utils/connect.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
+#include "getopt_long.h"
+
 
 /* an extensible array to keep track of elements to show */
 typedef struct
@@ -60,8 +62,28 @@ void		sql_exec_dumpalltbspc(PGconn *, struct options *);
 void
 get_opts(int argc, char **argv, struct options *my_opts)
 {
+	static struct option long_options[] = {
+		{"dbname", required_argument, NULL, 'd'},
+		{"host", required_argument, NULL, 'h'},
+		{"host", required_argument, NULL, 'H'}, /* deprecated */
+		{"filenode", required_argument, NULL, 'f'},
+		{"indexes", no_argument, NULL, 'i'},
+		{"oid", required_argument, NULL, 'o'},
+		{"port", required_argument, NULL, 'p'},
+		{"quiet", no_argument, NULL, 'q'},
+		{"tablespaces", no_argument, NULL, 's'},
+		{"system-objects", no_argument, NULL, 'S'},
+		{"table", required_argument, NULL, 't'},
+		{"username", required_argument, NULL, 'U'},
+		{"version", no_argument, NULL, 'V'},
+		{"extended", no_argument, NULL, 'x'},
+		{"help", no_argument, NULL, '?'},
+		{NULL, 0, NULL, 0}
+	};
+
 	int			c;
 	const char *progname;
+	int			optindex;
 
 	progname = get_progname(argv[0]);
 
@@ -93,7 +115,7 @@ get_opts(int argc, char **argv, struct options *my_opts)
 	}
 
 	/* get opts */
-	while ((c = getopt(argc, argv, "H:p:U:d:t:o:f:qSxish")) != -1)
+	while ((c = getopt_long(argc, argv, "d:f:h:H:io:p:qsSt:U:x", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -102,44 +124,15 @@ get_opts(int argc, char **argv, struct options *my_opts)
 				my_opts->dbname = pg_strdup(optarg);
 				break;
 
-				/* specify one tablename to show */
-			case 't':
-				add_one_elt(optarg, my_opts->tables);
-				break;
-
-				/* specify one Oid to show */
-			case 'o':
-				add_one_elt(optarg, my_opts->oids);
-				break;
-
 				/* specify one filenode to show */
 			case 'f':
 				add_one_elt(optarg, my_opts->filenodes);
 				break;
 
-				/* don't show headers */
-			case 'q':
-				my_opts->quiet = true;
-				break;
-
 				/* host to connect to */
-			case 'H':
+			case 'H':			/* deprecated */
+			case 'h':
 				my_opts->hostname = pg_strdup(optarg);
-				break;
-
-				/* port to connect to on remote host */
-			case 'p':
-				my_opts->port = pg_strdup(optarg);
-				break;
-
-				/* username */
-			case 'U':
-				my_opts->username = pg_strdup(optarg);
-				break;
-
-				/* display system tables */
-			case 'S':
-				my_opts->systables = true;
 				break;
 
 				/* also display indexes */
@@ -147,9 +140,19 @@ get_opts(int argc, char **argv, struct options *my_opts)
 				my_opts->indexes = true;
 				break;
 
-				/* display extra columns */
-			case 'x':
-				my_opts->extended = true;
+				/* specify one Oid to show */
+			case 'o':
+				add_one_elt(optarg, my_opts->oids);
+				break;
+
+				/* port to connect to on remote host */
+			case 'p':
+				my_opts->port = pg_strdup(optarg);
+				break;
+
+				/* don't show headers */
+			case 'q':
+				my_opts->quiet = true;
 				break;
 
 				/* dump tablespaces only */
@@ -157,9 +160,24 @@ get_opts(int argc, char **argv, struct options *my_opts)
 				my_opts->tablespaces = true;
 				break;
 
-			case 'h':
-				help(progname);
-				exit(0);
+				/* display system tables */
+			case 'S':
+				my_opts->systables = true;
+				break;
+
+				/* specify one tablename to show */
+			case 't':
+				add_one_elt(optarg, my_opts->tables);
+				break;
+
+				/* username */
+			case 'U':
+				my_opts->username = pg_strdup(optarg);
+				break;
+
+				/* display extra columns */
+			case 'x':
+				my_opts->extended = true;
 				break;
 
 			default:
@@ -176,20 +194,22 @@ help(const char *progname)
 		   "Usage:\n"
 		   "  %s [OPTION]...\n"
 		   "\nOptions:\n"
-		   "  -d DBNAME      database to connect to\n"
-		   "  -f FILENODE    show info for table with given file node\n"
-		   "  -H HOSTNAME    database server host or socket directory\n"
-		   "  -i             show indexes and sequences too\n"
-		   "  -o OID         show info for table with given OID\n"
-		   "  -p PORT        database server port number\n"
-		   "  -q             quiet (don't show headers)\n"
-		   "  -s             show all tablespaces\n"
-		   "  -S             show system objects too\n"
-		   "  -t TABLE       show info for named table\n"
-		   "  -U NAME        connect as specified database user\n"
-		   "  -V, --version  output version information, then exit\n"
-		   "  -x             extended (show additional columns)\n"
-		   "  -?, --help     show this help, then exit\n"
+		   "  -f, --filenode=FILENODE    show info for table with given file node\n"
+		   "  -i, --indexes              show indexes and sequences too\n"
+		   "  -o, --oid=OID              show info for table with given OID\n"
+		   "  -q, --quiet                quiet (don't show headers)\n"
+		   "  -s, --tablespaces          show all tablespaces\n"
+		   "  -S, --system-objects       show system objects too\n"
+		   "  -t, --table=TABLE          show info for named table\n"
+		   "  -V, --version              output version information, then exit\n"
+		   "  -x, --extended             extended (show additional columns)\n"
+		   "  -?, --help                 show this help, then exit\n"
+		   "\nConnection options:\n"
+		   "  -d, --dbname=DBNAME        database to connect to\n"
+		   "  -h, --host=HOSTNAME        database server host or socket directory\n"
+		   "  -H                         same as -h, deprecated option\n"
+		   "  -p, --port=PORT            database server port number\n"
+		   "  -U, --username=USERNAME    connect as specified database user\n"
 		   "\nThe default action is to show all database OIDs.\n\n"
 		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
 		   progname, progname);
