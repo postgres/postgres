@@ -145,39 +145,87 @@ static List *insert_ordered_unique_oid(List *list, Oid datum);
  */
 
 static FormData_pg_attribute a1 = {
-	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
-	SelfItemPointerAttributeNumber, 0, -1, -1,
-	false, 'p', 's', true, false, false, '\0', false, true, 0
+	.attname = {"ctid"},
+	.atttypid = TIDOID,
+	.attlen = sizeof(ItemPointerData),
+	.attnum = SelfItemPointerAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = false,
+	.attstorage = 'p',
+	.attalign = 's',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 static FormData_pg_attribute a2 = {
-	0, {"oid"}, OIDOID, 0, sizeof(Oid),
-	ObjectIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, '\0', false, true, 0
+	.attname = {"oid"},
+	.atttypid = OIDOID,
+	.attlen = sizeof(Oid),
+	.attnum = ObjectIdAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = true,
+	.attstorage = 'p',
+	.attalign = 'i',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 static FormData_pg_attribute a3 = {
-	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
-	MinTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, '\0', false, true, 0
+	.attname = {"xmin"},
+	.atttypid = XIDOID,
+	.attlen = sizeof(TransactionId),
+	.attnum = MinTransactionIdAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = true,
+	.attstorage = 'p',
+	.attalign = 'i',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 static FormData_pg_attribute a4 = {
-	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
-	MinCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, '\0', false, true, 0
+	.attname = {"cmin"},
+	.atttypid = CIDOID,
+	.attlen = sizeof(CommandId),
+	.attnum = MinCommandIdAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = true,
+	.attstorage = 'p',
+	.attalign = 'i',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 static FormData_pg_attribute a5 = {
-	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
-	MaxTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, '\0', false, true, 0
+	.attname = {"xmax"},
+	.atttypid = XIDOID,
+	.attlen = sizeof(TransactionId),
+	.attnum = MaxTransactionIdAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = true,
+	.attstorage = 'p',
+	.attalign = 'i',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 static FormData_pg_attribute a6 = {
-	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
-	MaxCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, '\0', false, true, 0
+	.attname = {"cmax"},
+	.atttypid = CIDOID,
+	.attlen = sizeof(CommandId),
+	.attnum = MaxCommandIdAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = true,
+	.attstorage = 'p',
+	.attalign = 'i',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 /*
@@ -187,9 +235,17 @@ static FormData_pg_attribute a6 = {
  * used in SQL.
  */
 static FormData_pg_attribute a7 = {
-	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
-	TableOidAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, '\0', false, true, 0
+	.attname = {"tableoid"},
+	.atttypid = OIDOID,
+	.attlen = sizeof(Oid),
+	.attnum = TableOidAttributeNumber,
+	.attcacheoff = -1,
+	.atttypmod = -1,
+	.attbyval = true,
+	.attstorage = 'p',
+	.attalign = 'i',
+	.attnotnull = true,
+	.attislocal = true,
 };
 
 static const Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};

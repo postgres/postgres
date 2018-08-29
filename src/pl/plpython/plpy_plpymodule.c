@@ -115,23 +115,17 @@ static PyMethodDef PLy_exc_methods[] = {
 
 #if PY_MAJOR_VERSION >= 3
 static PyModuleDef PLy_module = {
-	PyModuleDef_HEAD_INIT,		/* m_base */
-	"plpy",						/* m_name */
-	NULL,						/* m_doc */
-	-1,							/* m_size */
-	PLy_methods,				/* m_methods */
+	PyModuleDef_HEAD_INIT,
+	.m_name = "plpy",
+	.m_size = -1,
+	.m_methods = PLy_methods,
 };
 
 static PyModuleDef PLy_exc_module = {
-	PyModuleDef_HEAD_INIT,		/* m_base */
-	"spiexceptions",			/* m_name */
-	NULL,						/* m_doc */
-	-1,							/* m_size */
-	PLy_exc_methods,			/* m_methods */
-	NULL,						/* m_reload */
-	NULL,						/* m_traverse */
-	NULL,						/* m_clear */
-	NULL						/* m_free */
+	PyModuleDef_HEAD_INIT,
+	.m_name = "spiexceptions",
+	.m_size = -1,
+	.m_methods = PLy_exc_methods,
 };
 
 /*

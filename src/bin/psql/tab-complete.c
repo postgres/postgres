@@ -391,418 +391,222 @@ do { \
 
 static const SchemaQuery Query_for_list_of_aggregates[] = {
 	{
-		/* min_server_version */
-		110000,
-		/* catname */
-		"pg_catalog.pg_proc p",
-		/* selcondition */
-		"p.prokind = 'a'",
-		/* viscondition */
-		"pg_catalog.pg_function_is_visible(p.oid)",
-		/* namespace */
-		"p.pronamespace",
-		/* result */
-		"pg_catalog.quote_ident(p.proname)",
-		/* qualresult */
-		NULL
+		.min_server_version = 110000,
+		.catname = "pg_catalog.pg_proc p",
+		.selcondition = "p.prokind = 'a'",
+		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
+		.namespace = "p.pronamespace",
+		.result = "pg_catalog.quote_ident(p.proname)",
 	},
 	{
-		/* min_server_version */
-		0,
-		/* catname */
-		"pg_catalog.pg_proc p",
-		/* selcondition */
-		"p.proisagg",
-		/* viscondition */
-		"pg_catalog.pg_function_is_visible(p.oid)",
-		/* namespace */
-		"p.pronamespace",
-		/* result */
-		"pg_catalog.quote_ident(p.proname)",
-		/* qualresult */
-		NULL
+		.catname = "pg_catalog.pg_proc p",
+		.selcondition = "p.proisagg",
+		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
+		.namespace = "p.pronamespace",
+		.result = "pg_catalog.quote_ident(p.proname)",
 	}
 };
 
 static const SchemaQuery Query_for_list_of_datatypes = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_type t",
+	.catname = "pg_catalog.pg_type t",
 	/* selcondition --- ignore table rowtypes and array types */
-	"(t.typrelid = 0 "
+	.selcondition = "(t.typrelid = 0 "
 	" OR (SELECT c.relkind = " CppAsString2(RELKIND_COMPOSITE_TYPE)
 	"     FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid)) "
 	"AND t.typname !~ '^_'",
-	/* viscondition */
-	"pg_catalog.pg_type_is_visible(t.oid)",
-	/* namespace */
-	"t.typnamespace",
-	/* result */
-	"pg_catalog.format_type(t.oid, NULL)",
-	/* qualresult */
-	"pg_catalog.quote_ident(t.typname)"
+	.viscondition = "pg_catalog.pg_type_is_visible(t.oid)",
+	.namespace = "t.typnamespace",
+	.result = "pg_catalog.format_type(t.oid, NULL)",
+	.qualresult = "pg_catalog.quote_ident(t.typname)",
 };
 
 static const SchemaQuery Query_for_list_of_domains = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_type t",
-	/* selcondition */
-	"t.typtype = 'd'",
-	/* viscondition */
-	"pg_catalog.pg_type_is_visible(t.oid)",
-	/* namespace */
-	"t.typnamespace",
-	/* result */
-	"pg_catalog.quote_ident(t.typname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_type t",
+	.selcondition = "t.typtype = 'd'",
+	.viscondition = "pg_catalog.pg_type_is_visible(t.oid)",
+	.namespace = "t.typnamespace",
+	.result = "pg_catalog.quote_ident(t.typname)",
 };
 
 /* Note: this intentionally accepts aggregates as well as plain functions */
 static const SchemaQuery Query_for_list_of_functions[] = {
 	{
-		/* min_server_version */
-		110000,
-		/* catname */
-		"pg_catalog.pg_proc p",
-		/* selcondition */
-		"p.prokind != 'p'",
-		/* viscondition */
-		"pg_catalog.pg_function_is_visible(p.oid)",
-		/* namespace */
-		"p.pronamespace",
-		/* result */
-		"pg_catalog.quote_ident(p.proname)",
-		/* qualresult */
-		NULL
+		.min_server_version = 110000,
+		.catname = "pg_catalog.pg_proc p",
+		.selcondition = "p.prokind != 'p'",
+		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
+		.namespace = "p.pronamespace",
+		.result = "pg_catalog.quote_ident(p.proname)",
 	},
 	{
-		/* min_server_version */
-		0,
-		/* catname */
-		"pg_catalog.pg_proc p",
-		/* selcondition */
-		NULL,
-		/* viscondition */
-		"pg_catalog.pg_function_is_visible(p.oid)",
-		/* namespace */
-		"p.pronamespace",
-		/* result */
-		"pg_catalog.quote_ident(p.proname)",
-		/* qualresult */
-		NULL
+		.catname = "pg_catalog.pg_proc p",
+		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
+		.namespace = "p.pronamespace",
+		.result = "pg_catalog.quote_ident(p.proname)",
 	}
 };
 
 static const SchemaQuery Query_for_list_of_indexes = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_INDEX) ", "
 	CppAsString2(RELKIND_PARTITIONED_INDEX) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_procedures[] = {
 	{
-		/* min_server_version */
-		110000,
-		/* catname */
-		"pg_catalog.pg_proc p",
-		/* selcondition */
-		"p.prokind = 'p'",
-		/* viscondition */
-		"pg_catalog.pg_function_is_visible(p.oid)",
-		/* namespace */
-		"p.pronamespace",
-		/* result */
-		"pg_catalog.quote_ident(p.proname)",
-		/* qualresult */
-		NULL
+		.min_server_version = 110000,
+		.catname = "pg_catalog.pg_proc p",
+		.selcondition = "p.prokind = 'p'",
+		.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
+		.namespace = "p.pronamespace",
+		.result = "pg_catalog.quote_ident(p.proname)",
 	},
-	{0, NULL}
+	{
+		/* not supported in older versions */
+		.catname = NULL,
+	}
 };
 
 static const SchemaQuery Query_for_list_of_routines = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_proc p",
-	/* selcondition */
-	NULL,
-	/* viscondition */
-	"pg_catalog.pg_function_is_visible(p.oid)",
-	/* namespace */
-	"p.pronamespace",
-	/* result */
-	"pg_catalog.quote_ident(p.proname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_proc p",
+	.viscondition = "pg_catalog.pg_function_is_visible(p.oid)",
+	.namespace = "p.pronamespace",
+	.result = "pg_catalog.quote_ident(p.proname)",
 };
 
 static const SchemaQuery Query_for_list_of_sequences = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN (" CppAsString2(RELKIND_SEQUENCE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_class c",
+	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_SEQUENCE) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_foreign_tables = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN (" CppAsString2(RELKIND_FOREIGN_TABLE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_class c",
+	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_FOREIGN_TABLE) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_tables = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_partitioned_tables = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN (" CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_class c",
+	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_constraints_with_schema = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_constraint c",
-	/* selcondition */
-	"c.conrelid <> 0",
-	/* viscondition */
-	"true",						/* there is no pg_constraint_is_visible */
-	/* namespace */
-	"c.connamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.conname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_constraint c",
+	.selcondition = "c.conrelid <> 0",
+	.viscondition = "true",		/* there is no pg_constraint_is_visible */
+	.namespace = "c.connamespace",
+	.result = "pg_catalog.quote_ident(c.conname)",
 };
 
 /* Relations supporting INSERT, UPDATE or DELETE */
 static const SchemaQuery Query_for_list_of_updatables = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_FOREIGN_TABLE) ", "
 	CppAsString2(RELKIND_VIEW) ", "
 	CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_relations = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	NULL,
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_class c",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_tsvmf = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_SEQUENCE) ", "
 	CppAsString2(RELKIND_VIEW) ", "
 	CppAsString2(RELKIND_MATVIEW) ", "
 	CppAsString2(RELKIND_FOREIGN_TABLE) ", "
 	CppAsString2(RELKIND_PARTITIONED_TABLE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_tmf = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_MATVIEW) ", "
 	CppAsString2(RELKIND_FOREIGN_TABLE) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_tpm = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_PARTITIONED_TABLE) ", "
 	CppAsString2(RELKIND_MATVIEW) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_tm = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_MATVIEW) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_views = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN (" CppAsString2(RELKIND_VIEW) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_class c",
+	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_VIEW) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_matviews = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN (" CppAsString2(RELKIND_MATVIEW) ")",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_class c",
+	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_MATVIEW) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 static const SchemaQuery Query_for_list_of_statistics = {
-	/* min_server_version */
-	0,
-	/* catname */
-	"pg_catalog.pg_statistic_ext s",
-	/* selcondition */
-	NULL,
-	/* viscondition */
-	"pg_catalog.pg_statistics_obj_is_visible(s.oid)",
-	/* namespace */
-	"s.stxnamespace",
-	/* result */
-	"pg_catalog.quote_ident(s.stxname)",
-	/* qualresult */
-	NULL
+	.catname = "pg_catalog.pg_statistic_ext s",
+	.viscondition = "pg_catalog.pg_statistics_obj_is_visible(s.oid)",
+	.namespace = "s.stxnamespace",
+	.result = "pg_catalog.quote_ident(s.stxname)",
 };
 
 
