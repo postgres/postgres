@@ -31,7 +31,7 @@ static int64 badblocks = 0;
 static ControlFileData *ControlFile;
 
 static char *only_relfilenode = NULL;
-static bool debug = false;
+static bool verbose = false;
 
 static const char *progname;
 
@@ -43,7 +43,7 @@ usage()
 	printf(_("  %s [OPTION]... [DATADIR]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_(" [-D, --pgdata=]DATADIR  data directory\n"));
-	printf(_("  -d                     debug output, list all checked blocks\n"));
+	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -r RELFILENODE         check only relation with specified relfilenode\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -120,10 +120,11 @@ scan_file(char *fn, int segmentno)
 						progname, fn, blockno, csum, header->pd_checksum);
 			badblocks++;
 		}
-		else if (debug)
-			fprintf(stderr, _("%s: checksum verified in file \"%s\", block %d: %X\n"),
-					progname, fn, blockno, csum);
 	}
+
+	if (verbose)
+		fprintf(stderr,
+				_("%s: checksums verified in file \"%s\"\n"), progname, fn);
 
 	close(f);
 }
@@ -208,6 +209,7 @@ main(int argc, char *argv[])
 {
 	static struct option long_options[] = {
 		{"pgdata", required_argument, NULL, 'D'},
+		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -234,12 +236,12 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:r:d", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "D:r:v", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
-			case 'd':
-				debug = true;
+			case 'v':
+				verbose = true;
 				break;
 			case 'D':
 				DataDir = optarg;
