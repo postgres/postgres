@@ -61,10 +61,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-d</option></term>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
       <listitem>
        <para>
-        Enable debug output. Lists all checked blocks and their checksum.
+        Enable verbose output. Lists all checked files.
        </para>
       </listitem>
      </varlistentry>
