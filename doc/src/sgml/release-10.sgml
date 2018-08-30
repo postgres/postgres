@@ -4717,6 +4717,13 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
      </para>
 
      <para>
+      Also, sequences created for <literal>SERIAL</literal> columns now generate
+      positive 32-bit wide values, whereas previous versions generated 64-bit
+      wide values.  This has no visible effect if the values are only stored in
+      a column.
+     </para>
+
+     <para>
       The output of <application>psql</application>'s <command>\d</command> command for a
       sequence has been redesigned, too.
      </para>
