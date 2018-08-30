@@ -11,7 +11,7 @@ PGFILEDESC = "cube - multidimensional cube data type"
 
 HEADERS = cubedata.h
 
-REGRESS = cube
+REGRESS = cube cube_sci
 
 EXTRA_CLEAN = y.tab.c y.tab.h
 
