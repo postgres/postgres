@@ -6,7 +6,7 @@ OBJS= cube.o cubeparse.o
 EXTENSION = cube
 DATA = cube--1.0.sql cube--unpackaged--1.0.sql
 
-REGRESS = cube
+REGRESS = cube cube_sci
 
 EXTRA_CLEAN = y.tab.c y.tab.h
 
