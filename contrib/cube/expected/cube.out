@@ -62,90 +62,6 @@ SELECT '-1.0'::cube AS cube;
  (-1)
 (1 row)
 
-SELECT '1e27'::cube AS cube;
-  cube   
----------
- (1e+27)
-(1 row)
-
-SELECT '-1e27'::cube AS cube;
-   cube   
-----------
- (-1e+27)
-(1 row)
-
-SELECT '1.0e27'::cube AS cube;
-  cube   
----------
- (1e+27)
-(1 row)
-
-SELECT '-1.0e27'::cube AS cube;
-   cube   
-----------
- (-1e+27)
-(1 row)
-
-SELECT '1e+27'::cube AS cube;
-  cube   
----------
- (1e+27)
-(1 row)
-
-SELECT '-1e+27'::cube AS cube;
-   cube   
-----------
- (-1e+27)
-(1 row)
-
-SELECT '1.0e+27'::cube AS cube;
-  cube   
----------
- (1e+27)
-(1 row)
-
-SELECT '-1.0e+27'::cube AS cube;
-   cube   
-----------
- (-1e+27)
-(1 row)
-
-SELECT '1e-7'::cube AS cube;
-  cube   
----------
- (1e-07)
-(1 row)
-
-SELECT '-1e-7'::cube AS cube;
-   cube   
-----------
- (-1e-07)
-(1 row)
-
-SELECT '1.0e-7'::cube AS cube;
-  cube   
----------
- (1e-07)
-(1 row)
-
-SELECT '-1.0e-7'::cube AS cube;
-   cube   
-----------
- (-1e-07)
-(1 row)
-
-SELECT '1e-300'::cube AS cube;
-   cube   
-----------
- (1e-300)
-(1 row)
-
-SELECT '-1e-300'::cube AS cube;
-   cube    
------------
- (-1e-300)
-(1 row)
-
 SELECT 'infinity'::cube AS cube;
     cube    
 ------------
@@ -162,24 +78,6 @@ SELECT 'NaN'::cube AS cube;
  cube  
 -------
  (NaN)
-(1 row)
-
-SELECT '1234567890123456'::cube AS cube;
-          cube          
-------------------------
- (1.23456789012346e+15)
-(1 row)
-
-SELECT '+1234567890123456'::cube AS cube;
-          cube          
-------------------------
- (1.23456789012346e+15)
-(1 row)
-
-SELECT '-1234567890123456'::cube AS cube;
-          cube           
--------------------------
- (-1.23456789012346e+15)
 (1 row)
 
 SELECT '.1234567890123456'::cube AS cube;
