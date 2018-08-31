@@ -1109,7 +1109,7 @@ of joining relations.
 Partitionwise aggregates/grouping
 ---------------------------------
 
-If the GROUP BY clause has contains all of the partition keys, all the rows
+If the GROUP BY clause contains all of the partition keys, all the rows
 that belong to a given group must come from a single partition; therefore,
 aggregation can be done completely separately for each partition. Otherwise,
 partial aggregates can be computed for each partition, and then finalized
