@@ -2723,9 +2723,13 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 	 * i.e., we're doing crash recovery.  We never modify the control file's
 	 * value in that case, so we can short-circuit future checks here too. The
 	 * local values of minRecoveryPoint and minRecoveryPointTLI should not be
-	 * updated until crash recovery finishes.
+	 * updated until crash recovery finishes.  We only do this for the startup
+	 * process as it should not update its own reference of minRecoveryPoint
+	 * until it has finished crash recovery to make sure that all WAL
+	 * available is replayed in this case.  This also saves from extra locks
+	 * taken on the control file from the startup process.
 	 */
-	if (XLogRecPtrIsInvalid(minRecoveryPoint))
+	if (XLogRecPtrIsInvalid(minRecoveryPoint) && InRecovery)
 	{
 		updateMinRecoveryPoint = false;
 		return;
@@ -2737,7 +2741,9 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 	minRecoveryPoint = ControlFile->minRecoveryPoint;
 	minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 
-	if (force || minRecoveryPoint < lsn)
+	if (XLogRecPtrIsInvalid(minRecoveryPoint))
+		updateMinRecoveryPoint = false;
+	else if (force || minRecoveryPoint < lsn)
 	{
 		XLogRecPtr	newMinRecoveryPoint;
 		TimeLineID	newMinRecoveryPointTLI;
@@ -3127,9 +3133,11 @@ XLogNeedsFlush(XLogRecPtr record)
 		 * An invalid minRecoveryPoint means that we need to recover all the
 		 * WAL, i.e., we're doing crash recovery.  We never modify the control
 		 * file's value in that case, so we can short-circuit future checks
-		 * here too.
+		 * here too.  This triggers a quick exit path for the startup process,
+		 * which cannot update its local copy of minRecoveryPoint as long as
+		 * it has not replayed all WAL available when doing crash recovery.
 		 */
-		if (XLogRecPtrIsInvalid(minRecoveryPoint))
+		if (XLogRecPtrIsInvalid(minRecoveryPoint) && InRecovery)
 			updateMinRecoveryPoint = false;
 
 		/* Quick exit if already known to be updated or cannot be updated */
@@ -3146,8 +3154,19 @@ XLogNeedsFlush(XLogRecPtr record)
 		minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 		LWLockRelease(ControlFileLock);
 
+		/*
+		 * Check minRecoveryPoint for any other process than the startup
+		 * process doing crash recovery, which should not update the control
+		 * file value if crash recovery is still running.
+		 */
+		if (XLogRecPtrIsInvalid(minRecoveryPoint))
+			updateMinRecoveryPoint = false;
+
 		/* check again */
-		return record > minRecoveryPoint;
+		if (record <= minRecoveryPoint || !updateMinRecoveryPoint)
+			return false;
+		else
+			return true;
 	}
 
 	/* Quick exit if already known flushed */
