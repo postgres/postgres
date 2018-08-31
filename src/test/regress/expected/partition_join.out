@@ -62,33 +62,28 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.b =
  450 | 0450 | 450 | 0450
 (4 rows)
 
--- left outer join, with whole-row reference
+-- left outer join, with whole-row reference; partitionwise join does not apply
 EXPLAIN (COSTS OFF)
 SELECT t1, t2 FROM prt1 t1 LEFT JOIN prt2 t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
                     QUERY PLAN                    
 --------------------------------------------------
  Sort
    Sort Key: t1.a, t2.b
-   ->  Append
-         ->  Hash Right Join
-               Hash Cond: (t2.b = t1.a)
+   ->  Hash Right Join
+         Hash Cond: (t2.b = t1.a)
+         ->  Append
                ->  Seq Scan on prt2_p1 t2
-               ->  Hash
+               ->  Seq Scan on prt2_p2 t2_1
+               ->  Seq Scan on prt2_p3 t2_2
+         ->  Hash
+               ->  Append
                      ->  Seq Scan on prt1_p1 t1
                            Filter: (b = 0)
-         ->  Hash Right Join
-               Hash Cond: (t2_1.b = t1_1.a)
-               ->  Seq Scan on prt2_p2 t2_1
-               ->  Hash
                      ->  Seq Scan on prt1_p2 t1_1
                            Filter: (b = 0)
-         ->  Hash Right Join
-               Hash Cond: (t2_2.b = t1_2.a)
-               ->  Seq Scan on prt2_p3 t2_2
-               ->  Hash
                      ->  Seq Scan on prt1_p3 t1_2
                            Filter: (b = 0)
-(21 rows)
+(16 rows)
 
 SELECT t1, t2 FROM prt1 t1 LEFT JOIN prt2 t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
       t1      |      t2      
@@ -1041,6 +1036,40 @@ SELECT t1.a, t2.b FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT *
  350 |    
  400 |    
 (9 rows)
+
+-- merge join when expression with whole-row reference needs to be sorted;
+-- partitionwise join does not apply
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t2.b FROM prt1 t1, prt2 t2 WHERE t1::text = t2::text AND t1.a = t2.b ORDER BY t1.a;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Merge Join
+   Merge Cond: ((t1.a = t2.b) AND (((((t1.*)::prt1))::text) = ((((t2.*)::prt2))::text)))
+   ->  Sort
+         Sort Key: t1.a, ((((t1.*)::prt1))::text)
+         ->  Result
+               ->  Append
+                     ->  Seq Scan on prt1_p1 t1
+                     ->  Seq Scan on prt1_p2 t1_1
+                     ->  Seq Scan on prt1_p3 t1_2
+   ->  Sort
+         Sort Key: t2.b, ((((t2.*)::prt2))::text)
+         ->  Result
+               ->  Append
+                     ->  Seq Scan on prt2_p1 t2
+                     ->  Seq Scan on prt2_p2 t2_1
+                     ->  Seq Scan on prt2_p3 t2_2
+(16 rows)
+
+SELECT t1.a, t2.b FROM prt1 t1, prt2 t2 WHERE t1::text = t2::text AND t1.a = t2.b ORDER BY t1.a;
+ a  | b  
+----+----
+  0 |  0
+  6 |  6
+ 12 | 12
+ 18 | 18
+ 24 | 24
+(5 rows)
 
 RESET enable_hashjoin;
 RESET enable_nestloop;

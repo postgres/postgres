@@ -8337,8 +8337,9 @@ ALTER TABLE fprt2_p1 SET (autovacuum_enabled = 'false');
 ALTER TABLE fprt2_p2 SET (autovacuum_enabled = 'false');
 INSERT INTO fprt2_p1 SELECT i, i, to_char(i/50, 'FM0000') FROM generate_series(0, 249, 3) i;
 INSERT INTO fprt2_p2 SELECT i, i, to_char(i/50, 'FM0000') FROM generate_series(250, 499, 3) i;
-CREATE FOREIGN TABLE ftprt2_p1 PARTITION OF fprt2 FOR VALUES FROM (0) TO (250)
+CREATE FOREIGN TABLE ftprt2_p1 (b int, c varchar, a int)
 	SERVER loopback OPTIONS (table_name 'fprt2_p1', use_remote_estimate 'true');
+ALTER TABLE fprt2 ATTACH PARTITION ftprt2_p1 FOR VALUES FROM (0) TO (250);
 CREATE FOREIGN TABLE ftprt2_p2 PARTITION OF fprt2 FOR VALUES FROM (250) TO (500)
 	SERVER loopback OPTIONS (table_name 'fprt2_p2', use_remote_estimate 'true');
 ANALYZE fprt2;
@@ -8389,28 +8390,42 @@ SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10)
  8 |   | 
 (5 rows)
 
--- with whole-row reference
+-- with whole-row reference; partitionwise join does not apply
 EXPLAIN (COSTS OFF)
-SELECT t1,t2 FROM fprt1 t1 JOIN fprt2 t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a % 25 =0 ORDER BY 1,2;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+SELECT t1.wr, t2.wr FROM (SELECT t1 wr, a FROM fprt1 t1 WHERE t1.a % 25 = 0) t1 FULL JOIN (SELECT t2 wr, b FROM fprt2 t2 WHERE t2.b % 25 = 0) t2 ON (t1.a = t2.b) ORDER BY 1,2;
+                       QUERY PLAN                       
+--------------------------------------------------------
  Sort
    Sort Key: ((t1.*)::fprt1), ((t2.*)::fprt2)
-   ->  Append
-         ->  Foreign Scan
-               Relations: (public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)
-         ->  Foreign Scan
-               Relations: (public.ftprt1_p2 t1) INNER JOIN (public.ftprt2_p2 t2)
-(7 rows)
+   ->  Hash Full Join
+         Hash Cond: (t1.a = t2.b)
+         ->  Append
+               ->  Foreign Scan on ftprt1_p1 t1
+               ->  Foreign Scan on ftprt1_p2 t1_1
+         ->  Hash
+               ->  Append
+                     ->  Foreign Scan on ftprt2_p1 t2
+                     ->  Foreign Scan on ftprt2_p2 t2_1
+(11 rows)
 
-SELECT t1,t2 FROM fprt1 t1 JOIN fprt2 t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a % 25 =0 ORDER BY 1,2;
-       t1       |       t2       
+SELECT t1.wr, t2.wr FROM (SELECT t1 wr, a FROM fprt1 t1 WHERE t1.a % 25 = 0) t1 FULL JOIN (SELECT t2 wr, b FROM fprt2 t2 WHERE t2.b % 25 = 0) t2 ON (t1.a = t2.b) ORDER BY 1,2;
+       wr       |       wr       
 ----------------+----------------
  (0,0,0000)     | (0,0,0000)
+ (50,50,0001)   | 
+ (100,100,0002) | 
  (150,150,0003) | (150,150,0003)
+ (200,200,0004) | 
  (250,250,0005) | (250,250,0005)
+ (300,300,0006) | 
+ (350,350,0007) | 
  (400,400,0008) | (400,400,0008)
-(4 rows)
+ (450,450,0009) | 
+                | (75,75,0001)
+                | (225,225,0004)
+                | (325,325,0006)
+                | (475,475,0009)
+(14 rows)
 
 -- join with lateral reference
 EXPLAIN (COSTS OFF)
@@ -8473,6 +8488,34 @@ SELECT t1.a, t1.phv, t2.b, t2.phv FROM (SELECT 't1_phv' phv, * FROM fprt1 WHERE 
      |        | 325 | t2_phv
      |        | 475 | t2_phv
 (14 rows)
+
+-- test FOR UPDATE; partitionwise join does not apply
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t2.b FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) WHERE t1.a % 25 = 0 ORDER BY 1,2 FOR UPDATE OF t1;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ LockRows
+   ->  Sort
+         Sort Key: t1.a
+         ->  Hash Join
+               Hash Cond: (t2.b = t1.a)
+               ->  Append
+                     ->  Foreign Scan on ftprt2_p1 t2
+                     ->  Foreign Scan on ftprt2_p2 t2_1
+               ->  Hash
+                     ->  Append
+                           ->  Foreign Scan on ftprt1_p1 t1
+                           ->  Foreign Scan on ftprt1_p2 t1_1
+(12 rows)
+
+SELECT t1.a, t2.b FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) WHERE t1.a % 25 = 0 ORDER BY 1,2 FOR UPDATE OF t1;
+  a  |  b  
+-----+-----
+   0 |   0
+ 150 | 150
+ 250 | 250
+ 400 | 400
+(4 rows)
 
 RESET enable_partitionwise_join;
 -- ===================================================================
