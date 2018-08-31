@@ -15,6 +15,7 @@
 #include <ctype.h>
 
 #include "catalog/pg_attribute_d.h"
+#include "catalog/pg_cast_d.h"
 #include "catalog/pg_class_d.h"
 #include "catalog/pg_default_acl_d.h"
 #include "fe_utils/string_utils.h"
@@ -3953,37 +3954,56 @@ listCasts(const char *pattern, bool verbose)
 
 	initPQExpBuffer(&buf);
 
-	/*
-	 * We need a left join to pg_proc for binary casts; the others are just
-	 * paranoia.  Also note that we don't attempt to localize '(binary
-	 * coercible)', because there's too much risk of gettext translating a
-	 * function name that happens to match some string in the PO database.
-	 */
 	printfPQExpBuffer(&buf,
 					  "SELECT pg_catalog.format_type(castsource, NULL) AS \"%s\",\n"
-					  "       pg_catalog.format_type(casttarget, NULL) AS \"%s\",\n"
-					  "       CASE WHEN castfunc = 0 THEN '(binary coercible)'\n"
-					  "            ELSE p.proname\n"
-					  "       END as \"%s\",\n"
-					  "       CASE WHEN c.castcontext = 'e' THEN '%s'\n"
-					  "            WHEN c.castcontext = 'a' THEN '%s'\n"
-					  "            ELSE '%s'\n"
-					  "       END as \"%s\"",
+					  "       pg_catalog.format_type(casttarget, NULL) AS \"%s\",\n",
 					  gettext_noop("Source type"),
-					  gettext_noop("Target type"),
-					  gettext_noop("Function"),
+					  gettext_noop("Target type"));
+
+	/*
+	 * We don't attempt to localize '(binary coercible)' or '(with inout)',
+	 * because there's too much risk of gettext translating a function name
+	 * that happens to match some string in the PO database.
+	 */
+	if (pset.sversion >= 80400)
+		appendPQExpBuffer(&buf,
+						  "       CASE WHEN c.castmethod = '%c' THEN '(binary coercible)'\n"
+						  "            WHEN c.castmethod = '%c' THEN '(with inout)'\n"
+						  "            ELSE p.proname\n"
+						  "       END AS \"%s\",\n",
+						  COERCION_METHOD_BINARY,
+						  COERCION_METHOD_INOUT,
+						  gettext_noop("Function"));
+	else
+		appendPQExpBuffer(&buf,
+						  "       CASE WHEN c.castfunc = 0 THEN '(binary coercible)'\n"
+						  "            ELSE p.proname\n"
+						  "       END AS \"%s\",\n",
+						  gettext_noop("Function"));
+
+	appendPQExpBuffer(&buf,
+					  "       CASE WHEN c.castcontext = '%c' THEN '%s'\n"
+					  "            WHEN c.castcontext = '%c' THEN '%s'\n"
+					  "            ELSE '%s'\n"
+					  "       END AS \"%s\"",
+					  COERCION_CODE_EXPLICIT,
 					  gettext_noop("no"),
+					  COERCION_CODE_ASSIGNMENT,
 					  gettext_noop("in assignment"),
 					  gettext_noop("yes"),
 					  gettext_noop("Implicit?"));
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n       d.description AS \"%s\"\n",
+						  ",\n       d.description AS \"%s\"",
 						  gettext_noop("Description"));
 
+	/*
+	 * We need a left join to pg_proc for binary casts; the others are just
+	 * paranoia.
+	 */
 	appendPQExpBufferStr(&buf,
-						 "FROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n"
+						 "\nFROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n"
 						 "     ON c.castfunc = p.oid\n"
 						 "     LEFT JOIN pg_catalog.pg_type ts\n"
 						 "     ON c.castsource = ts.oid\n"
