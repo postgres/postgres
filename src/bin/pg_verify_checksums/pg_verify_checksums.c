@@ -83,7 +83,7 @@ scan_file(char *fn, int segmentno)
 	int			f;
 	int			blockno;
 
-	f = open(fn, 0);
+	f = open(fn, O_RDONLY | PG_BINARY);
 	if (f < 0)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
