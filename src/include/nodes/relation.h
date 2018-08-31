@@ -687,8 +687,12 @@ typedef struct RelOptInfo
 								 * involving this rel */
 	bool		has_eclass_joins;	/* T means joininfo is incomplete */
 
-	/* used by "other" relations */
-	Relids		top_parent_relids;	/* Relids of topmost parents */
+	/* used by partitionwise joins: */
+	bool		consider_partitionwise_join;	/* consider partitionwise
+												 * join paths? (if
+												 * partitioned rel) */
+	Relids		top_parent_relids;	/* Relids of topmost parents (if "other"
+									 * rel) */
 
 	/* used for partitioned relations */
 	PartitionScheme part_scheme;	/* Partitioning scheme. */

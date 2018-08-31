@@ -449,6 +449,38 @@ SELECT t1.x, sum(t1.y), count(*) FROM pagg_tab1 t1, pagg_tab2 t2 WHERE t1.x = t2
  24 |  900 |   100
 (5 rows)
 
+-- Check with whole-row reference; partitionwise aggregation does not apply
+EXPLAIN (COSTS OFF)
+SELECT t1.x, sum(t1.y), count(t1) FROM pagg_tab1 t1, pagg_tab2 t2 WHERE t1.x = t2.y GROUP BY t1.x ORDER BY 1, 2, 3;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Sort
+   Sort Key: t1.x, (sum(t1.y)), (count(((t1.*)::pagg_tab1)))
+   ->  HashAggregate
+         Group Key: t1.x
+         ->  Hash Join
+               Hash Cond: (t1.x = t2.y)
+               ->  Append
+                     ->  Seq Scan on pagg_tab1_p1 t1
+                     ->  Seq Scan on pagg_tab1_p2 t1_1
+                     ->  Seq Scan on pagg_tab1_p3 t1_2
+               ->  Hash
+                     ->  Append
+                           ->  Seq Scan on pagg_tab2_p1 t2
+                           ->  Seq Scan on pagg_tab2_p2 t2_1
+                           ->  Seq Scan on pagg_tab2_p3 t2_2
+(15 rows)
+
+SELECT t1.x, sum(t1.y), count(t1) FROM pagg_tab1 t1, pagg_tab2 t2 WHERE t1.x = t2.y GROUP BY t1.x ORDER BY 1, 2, 3;
+ x  | sum  | count 
+----+------+-------
+  0 |  500 |   100
+  6 | 1100 |   100
+ 12 |  700 |   100
+ 18 | 1300 |   100
+ 24 |  900 |   100
+(5 rows)
+
 -- GROUP BY having other matching key
 EXPLAIN (COSTS OFF)
 SELECT t2.y, sum(t1.y), count(*) FROM pagg_tab1 t1, pagg_tab2 t2 WHERE t1.x = t2.y GROUP BY t2.y ORDER BY 1, 2, 3;

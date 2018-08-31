@@ -20,7 +20,6 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
-#include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "utils/lsyscache.h"
 
@@ -415,10 +414,6 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 	Relids		relids = joinrel->relids;
 	ListCell   *lc;
 
-	/* This function is called only on the parent relations. */
-	Assert(!IS_OTHER_REL(joinrel) && !IS_OTHER_REL(outer_rel) &&
-		   !IS_OTHER_REL(inner_rel));
-
 	foreach(lc, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
@@ -463,57 +458,4 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 			}
 		}
 	}
-}
-
-/*
- * add_placeholders_to_child_joinrel
- *		Translate the PHVs in parent's targetlist and add them to the child's
- *		targetlist. Also adjust the cost
- */
-void
-add_placeholders_to_child_joinrel(PlannerInfo *root, RelOptInfo *childrel,
-								  RelOptInfo *parentrel)
-{
-	ListCell   *lc;
-	AppendRelInfo **appinfos;
-	int			nappinfos;
-
-	Assert(IS_JOIN_REL(childrel) && IS_JOIN_REL(parentrel));
-	Assert(IS_OTHER_REL(childrel));
-
-	/* Nothing to do if no PHVs. */
-	if (root->placeholder_list == NIL)
-		return;
-
-	appinfos = find_appinfos_by_relids(root, childrel->relids, &nappinfos);
-	foreach(lc, parentrel->reltarget->exprs)
-	{
-		PlaceHolderVar *phv = lfirst(lc);
-
-		if (IsA(phv, PlaceHolderVar))
-		{
-			/*
-			 * In case the placeholder Var refers to any of the parent
-			 * relations, translate it to refer to the corresponding child.
-			 */
-			if (bms_overlap(phv->phrels, parentrel->relids) &&
-				childrel->reloptkind == RELOPT_OTHER_JOINREL)
-			{
-				phv = (PlaceHolderVar *) adjust_appendrel_attrs(root,
-																(Node *) phv,
-																nappinfos,
-																appinfos);
-			}
-
-			childrel->reltarget->exprs = lappend(childrel->reltarget->exprs,
-												 phv);
-		}
-	}
-
-	/* Adjust the cost and width of child targetlist. */
-	childrel->reltarget->cost.startup = parentrel->reltarget->cost.startup;
-	childrel->reltarget->cost.per_tuple = parentrel->reltarget->cost.per_tuple;
-	childrel->reltarget->width = parentrel->reltarget->width;
-
-	pfree(appinfos);
 }
