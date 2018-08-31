@@ -7,22 +7,19 @@
  *
  *	src/bin/pg_verify_checksums/pg_verify_checksums.c
  */
+#include "postgres_fe.h"
 
-#define FRONTEND 1
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include "postgres.h"
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
 #include "getopt_long.h"
+#include "pg_getopt.h"
 #include "storage/bufpage.h"
 #include "storage/checksum.h"
 #include "storage/checksum_impl.h"
-
-#include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
-
-#include "pg_getopt.h"
 
 
 static int64 files = 0;
@@ -36,7 +33,7 @@ static bool verbose = false;
 static const char *progname;
 
 static void
-usage()
+usage(void)
 {
 	printf(_("%s verifies data checksums in a PostgreSQL database cluster.\n\n"), progname);
 	printf(_("Usage:\n"));
@@ -52,7 +49,7 @@ usage()
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
-static const char *skip[] = {
+static const char *const skip[] = {
 	"pg_control",
 	"pg_filenode.map",
 	"pg_internal.init",
@@ -61,9 +58,9 @@ static const char *skip[] = {
 };
 
 static bool
-skipfile(char *fn)
+skipfile(const char *fn)
 {
-	const char **f;
+	const char *const *f;
 
 	if (strcmp(fn, ".") == 0 ||
 		strcmp(fn, "..") == 0)
@@ -76,12 +73,12 @@ skipfile(char *fn)
 }
 
 static void
-scan_file(char *fn, int segmentno)
+scan_file(const char *fn, BlockNumber segmentno)
 {
 	char		buf[BLCKSZ];
 	PageHeader	header = (PageHeader) buf;
 	int			f;
-	int			blockno;
+	BlockNumber blockno;
 
 	f = open(fn, O_RDONLY | PG_BINARY);
 	if (f < 0)
@@ -102,21 +99,21 @@ scan_file(char *fn, int segmentno)
 			break;
 		if (r != BLCKSZ)
 		{
-			fprintf(stderr, _("%s: short read of block %d in file \"%s\", got only %d bytes\n"),
+			fprintf(stderr, _("%s: short read of block %u in file \"%s\", got only %d bytes\n"),
 					progname, blockno, fn, r);
 			exit(1);
 		}
 		blocks++;
 
 		/* New pages have no checksum yet */
-		if (PageIsNew(buf))
+		if (PageIsNew(header))
 			continue;
 
 		csum = pg_checksum_page(buf, blockno + segmentno * RELSEG_SIZE);
 		if (csum != header->pd_checksum)
 		{
 			if (ControlFile->data_checksum_version == PG_DATA_CHECKSUM_VERSION)
-				fprintf(stderr, _("%s: checksum verification failed in file \"%s\", block %d: calculated checksum %X but expected %X\n"),
+				fprintf(stderr, _("%s: checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X\n"),
 						progname, fn, blockno, csum, header->pd_checksum);
 			badblocks++;
 		}
@@ -130,7 +127,7 @@ scan_file(char *fn, int segmentno)
 }
 
 static void
-scan_directory(char *basedir, char *subdir)
+scan_directory(const char *basedir, const char *subdir)
 {
 	char		path[MAXPGPATH];
 	DIR		   *dir;
@@ -146,7 +143,7 @@ scan_directory(char *basedir, char *subdir)
 	}
 	while ((de = readdir(dir)) != NULL)
 	{
-		char		fn[MAXPGPATH + 1];
+		char		fn[MAXPGPATH];
 		struct stat st;
 
 		if (skipfile(de->d_name))
@@ -161,9 +158,10 @@ scan_directory(char *basedir, char *subdir)
 		}
 		if (S_ISREG(st.st_mode))
 		{
+			char		fnonly[MAXPGPATH];
 			char	   *forkpath,
 					   *segmentpath;
-			int			segmentno = 0;
+			BlockNumber segmentno = 0;
 
 			/*
 			 * Cut off at the segment boundary (".") to get the segment number
@@ -171,7 +169,8 @@ scan_directory(char *basedir, char *subdir)
 			 * fork boundary, to get the relfilenode the file belongs to for
 			 * filtering.
 			 */
-			segmentpath = strchr(de->d_name, '.');
+			strlcpy(fnonly, de->d_name, sizeof(fnonly));
+			segmentpath = strchr(fnonly, '.');
 			if (segmentpath != NULL)
 			{
 				*segmentpath++ = '\0';
@@ -184,11 +183,11 @@ scan_directory(char *basedir, char *subdir)
 				}
 			}
 
-			forkpath = strchr(de->d_name, '_');
+			forkpath = strchr(fnonly, '_');
 			if (forkpath != NULL)
 				*forkpath++ = '\0';
 
-			if (only_relfilenode && strcmp(only_relfilenode, de->d_name) != 0)
+			if (only_relfilenode && strcmp(only_relfilenode, fnonly) != 0)
 				/* Relfilenode not to be included */
 				continue;
 
@@ -247,7 +246,7 @@ main(int argc, char *argv[])
 				DataDir = optarg;
 				break;
 			case 'r':
-				if (atoi(optarg) <= 0)
+				if (atoi(optarg) == 0)
 				{
 					fprintf(stderr, _("%s: invalid relfilenode specification, must be numeric: %s\n"), progname, optarg);
 					exit(1);
