@@ -809,12 +809,12 @@ XLogCompressBackupBlock(char *page, uint16 hole_offset, uint16 hole_length,
 	int32		len;
 	int32		extra_bytes = 0;
 	char	   *source;
-	char		tmp[BLCKSZ];
+	PGAlignedBlock tmp;
 
 	if (hole_length != 0)
 	{
 		/* must skip the hole */
-		source = tmp;
+		source = tmp.data;
 		memcpy(source, page, hole_offset);
 		memcpy(source + hole_offset,
 			   page + (hole_offset + hole_length),
@@ -917,7 +917,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 	if (lsn <= RedoRecPtr)
 	{
 		int			flags;
-		char		copied_buffer[BLCKSZ];
+		PGAlignedBlock copied_buffer;
 		char	   *origdata = (char *) BufferGetBlock(buffer);
 		RelFileNode rnode;
 		ForkNumber	forkno;
@@ -935,11 +935,11 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 			uint16		lower = ((PageHeader) page)->pd_lower;
 			uint16		upper = ((PageHeader) page)->pd_upper;
 
-			memcpy(copied_buffer, origdata, lower);
-			memcpy(copied_buffer + upper, origdata + upper, BLCKSZ - upper);
+			memcpy(copied_buffer.data, origdata, lower);
+			memcpy(copied_buffer.data + upper, origdata + upper, BLCKSZ - upper);
 		}
 		else
-			memcpy(copied_buffer, origdata, BLCKSZ);
+			memcpy(copied_buffer.data, origdata, BLCKSZ);
 
 		XLogBeginInsert();
 
@@ -948,7 +948,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 			flags |= REGBUF_STANDARD;
 
 		BufferGetTag(buffer, &rnode, &forkno, &blkno);
-		XLogRegisterBlock(0, &rnode, forkno, blkno, copied_buffer, flags);
+		XLogRegisterBlock(0, &rnode, forkno, blkno, copied_buffer.data, flags);
 
 		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI_FOR_HINT);
 	}
