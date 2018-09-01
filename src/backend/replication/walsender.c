@@ -162,9 +162,12 @@ static StringInfoData output_message;
 static StringInfoData reply_message;
 static StringInfoData tmpbuf;
 
+/* Timestamp of last ProcessRepliesIfAny(). */
+static TimestampTz last_processing = 0;
+
 /*
- * Timestamp of the last receipt of the reply from the standby. Set to 0 if
- * wal_sender_timeout doesn't need to be active.
+ * Timestamp of last ProcessRepliesIfAny() that saw a reply from the
+ * standby. Set to 0 if wal_sender_timeout doesn't need to be active.
  */
 static TimestampTz last_reply_timestamp = 0;
 
@@ -241,8 +244,8 @@ static void ProcessStandbyReplyMessage(void);
 static void ProcessStandbyHSFeedbackMessage(void);
 static void ProcessRepliesIfAny(void);
 static void WalSndKeepalive(bool requestReply);
-static void WalSndKeepaliveIfNecessary(TimestampTz now);
-static void WalSndCheckTimeOut(TimestampTz now);
+static void WalSndKeepaliveIfNecessary(void);
+static void WalSndCheckTimeOut(void);
 static long WalSndComputeSleeptime(TimestampTz now);
 static void WalSndPrepareWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid, bool last_write);
 static void WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid, bool last_write);
@@ -1191,18 +1194,16 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 		/* Check for input from the client */
 		ProcessRepliesIfAny();
 
-		now = GetCurrentTimestamp();
-
 		/* die if timeout was reached */
-		WalSndCheckTimeOut(now);
+		WalSndCheckTimeOut();
 
 		/* Send keepalive if the time has come */
-		WalSndKeepaliveIfNecessary(now);
+		WalSndKeepaliveIfNecessary();
 
 		if (!pq_is_send_pending())
 			break;
 
-		sleeptime = WalSndComputeSleeptime(now);
+		sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
 
 		wakeEvents = WL_LATCH_SET | WL_POSTMASTER_DEATH |
 			WL_SOCKET_WRITEABLE | WL_SOCKET_READABLE | WL_TIMEOUT;
@@ -1297,7 +1298,6 @@ WalSndWaitForWal(XLogRecPtr loc)
 	for (;;)
 	{
 		long		sleeptime;
-		TimestampTz now;
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -1382,13 +1382,11 @@ WalSndWaitForWal(XLogRecPtr loc)
 			!pq_is_send_pending())
 			break;
 
-		now = GetCurrentTimestamp();
-
 		/* die if timeout was reached */
-		WalSndCheckTimeOut(now);
+		WalSndCheckTimeOut();
 
 		/* Send keepalive if the time has come */
-		WalSndKeepaliveIfNecessary(now);
+		WalSndKeepaliveIfNecessary();
 
 		/*
 		 * Sleep until something happens or we time out.  Also wait for the
@@ -1397,7 +1395,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 		 * new WAL to be generated.  (But if we have nothing to send, we don't
 		 * want to wake on socket-writable.)
 		 */
-		sleeptime = WalSndComputeSleeptime(now);
+		sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
 
 		wakeEvents = WL_LATCH_SET | WL_POSTMASTER_DEATH |
 			WL_SOCKET_READABLE | WL_TIMEOUT;
@@ -1594,6 +1592,8 @@ ProcessRepliesIfAny(void)
 	int			r;
 	bool		received = false;
 
+	last_processing = GetCurrentTimestamp();
+
 	for (;;)
 	{
 		pq_startmsgread();
@@ -1681,7 +1681,7 @@ ProcessRepliesIfAny(void)
 	 */
 	if (received)
 	{
-		last_reply_timestamp = GetCurrentTimestamp();
+		last_reply_timestamp = last_processing;
 		waiting_for_ping_response = false;
 	}
 }
@@ -2060,10 +2060,18 @@ WalSndComputeSleeptime(TimestampTz now)
 
 /*
  * Check whether there have been responses by the client within
- * wal_sender_timeout and shutdown if not.
+ * wal_sender_timeout and shutdown if not.  Using last_processing as the
+ * reference point avoids counting server-side stalls against the client.
+ * However, a long server-side stall can make WalSndKeepaliveIfNecessary()
+ * postdate last_processing by more than wal_sender_timeout.  If that happens,
+ * the client must reply almost immediately to avoid a timeout.  This rarely
+ * affects the default configuration, under which clients spontaneously send a
+ * message every standby_message_timeout = wal_sender_timeout/6 = 10s.  We
+ * could eliminate that problem by recognizing timeout expiration at
+ * wal_sender_timeout/2 after the keepalive.
  */
 static void
-WalSndCheckTimeOut(TimestampTz now)
+WalSndCheckTimeOut(void)
 {
 	TimestampTz timeout;
 
@@ -2074,7 +2082,7 @@ WalSndCheckTimeOut(TimestampTz now)
 	timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
 										  wal_sender_timeout);
 
-	if (wal_sender_timeout > 0 && now >= timeout)
+	if (wal_sender_timeout > 0 && last_processing >= timeout)
 	{
 		/*
 		 * Since typically expiration of replication timeout means
@@ -2105,8 +2113,6 @@ WalSndLoop(WalSndSendDataCallback send_data)
 	 */
 	for (;;)
 	{
-		TimestampTz now;
-
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
@@ -2184,13 +2190,11 @@ WalSndLoop(WalSndSendDataCallback send_data)
 				WalSndDone(send_data);
 		}
 
-		now = GetCurrentTimestamp();
-
 		/* Check for replication timeout. */
-		WalSndCheckTimeOut(now);
+		WalSndCheckTimeOut();
 
 		/* Send keepalive if the time has come */
-		WalSndKeepaliveIfNecessary(now);
+		WalSndKeepaliveIfNecessary();
 
 		/*
 		 * We don't block if not caught up, unless there is unsent data
@@ -2208,7 +2212,11 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			wakeEvents = WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_TIMEOUT |
 				WL_SOCKET_READABLE;
 
-			sleeptime = WalSndComputeSleeptime(now);
+			/*
+			 * Use fresh timestamp, not last_processed, to reduce the chance
+			 * of reaching wal_sender_timeout before sending a keepalive.
+			 */
+			sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
 
 			if (pq_is_send_pending())
 				wakeEvents |= WL_SOCKET_WRITEABLE;
@@ -3360,7 +3368,7 @@ WalSndKeepalive(bool requestReply)
  * Send keepalive message if too much time has elapsed.
  */
 static void
-WalSndKeepaliveIfNecessary(TimestampTz now)
+WalSndKeepaliveIfNecessary(void)
 {
 	TimestampTz ping_time;
 
@@ -3381,7 +3389,7 @@ WalSndKeepaliveIfNecessary(TimestampTz now)
 	 */
 	ping_time = TimestampTzPlusMilliseconds(last_reply_timestamp,
 											wal_sender_timeout / 2);
-	if (now >= ping_time)
+	if (last_processing >= ping_time)
 	{
 		WalSndKeepalive(true);
 		waiting_for_ping_response = true;
