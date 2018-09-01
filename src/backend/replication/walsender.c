@@ -499,11 +499,11 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	bytesleft = histfilelen;
 	while (bytesleft > 0)
 	{
-		char		rbuf[BLCKSZ];
+		PGAlignedBlock rbuf;
 		int			nread;
 
 		pgstat_report_wait_start(WAIT_EVENT_WALSENDER_TIMELINE_HISTORY_READ);
-		nread = read(fd, rbuf, sizeof(rbuf));
+		nread = read(fd, rbuf.data, sizeof(rbuf));
 		pgstat_report_wait_end();
 		if (nread < 0)
 			ereport(ERROR,
@@ -516,7 +516,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, nread, (Size) bytesleft)));
 
-		pq_sendbytes(&buf, rbuf, nread);
+		pq_sendbytes(&buf, rbuf.data, nread);
 		bytesleft -= nread;
 	}
 	CloseTransientFile(fd);

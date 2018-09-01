@@ -156,7 +156,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 static void
 rewind_copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
 {
-	char		buf[BLCKSZ];
+	PGAlignedBlock buf;
 	char		srcpath[MAXPGPATH];
 	int			srcfd;
 
@@ -182,7 +182,7 @@ rewind_copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
 		else
 			len = end - begin;
 
-		readlen = read(srcfd, buf, len);
+		readlen = read(srcfd, buf.data, len);
 
 		if (readlen < 0)
 			pg_fatal("could not read file \"%s\": %s\n",
@@ -190,7 +190,7 @@ rewind_copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
 		else if (readlen == 0)
 			pg_fatal("unexpected EOF while reading file \"%s\"\n", srcpath);
 
-		write_target_range(buf, begin, readlen);
+		write_target_range(buf.data, begin, readlen);
 		begin += readlen;
 	}
 

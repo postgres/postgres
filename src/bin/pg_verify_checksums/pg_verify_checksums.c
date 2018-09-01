@@ -75,8 +75,8 @@ skipfile(const char *fn)
 static void
 scan_file(const char *fn, BlockNumber segmentno)
 {
-	char		buf[BLCKSZ];
-	PageHeader	header = (PageHeader) buf;
+	PGAlignedBlock buf;
+	PageHeader	header = (PageHeader) buf.data;
 	int			f;
 	BlockNumber blockno;
 
@@ -93,7 +93,7 @@ scan_file(const char *fn, BlockNumber segmentno)
 	for (blockno = 0;; blockno++)
 	{
 		uint16		csum;
-		int			r = read(f, buf, BLCKSZ);
+		int			r = read(f, buf.data, BLCKSZ);
 
 		if (r == 0)
 			break;
@@ -109,7 +109,7 @@ scan_file(const char *fn, BlockNumber segmentno)
 		if (PageIsNew(header))
 			continue;
 
-		csum = pg_checksum_page(buf, blockno + segmentno * RELSEG_SIZE);
+		csum = pg_checksum_page(buf.data, blockno + segmentno * RELSEG_SIZE);
 		if (csum != header->pd_checksum)
 		{
 			if (ControlFile->data_checksum_version == PG_DATA_CHECKSUM_VERSION)

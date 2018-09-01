@@ -96,7 +96,7 @@ struct BufFile
 	off_t		curOffset;		/* offset part of current pos */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
-	char		buffer[BLCKSZ];
+	PGAlignedBlock buffer;
 };
 
 static BufFile *makeBufFileCommon(int nfiles);
@@ -437,7 +437,7 @@ BufFileLoadBuffer(BufFile *file)
 	 * Read whatever we can get, up to a full bufferload.
 	 */
 	file->nbytes = FileRead(thisfile,
-							file->buffer,
+							file->buffer.data,
 							sizeof(file->buffer),
 							WAIT_EVENT_BUFFILE_READ);
 	if (file->nbytes < 0)
@@ -502,7 +502,7 @@ BufFileDumpBuffer(BufFile *file)
 			file->offsets[file->curFile] = file->curOffset;
 		}
 		bytestowrite = FileWrite(thisfile,
-								 file->buffer + wpos,
+								 file->buffer.data + wpos,
 								 bytestowrite,
 								 WAIT_EVENT_BUFFILE_WRITE);
 		if (bytestowrite <= 0)
@@ -572,7 +572,7 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 			nthistime = size;
 		Assert(nthistime > 0);
 
-		memcpy(ptr, file->buffer + file->pos, nthistime);
+		memcpy(ptr, file->buffer.data + file->pos, nthistime);
 
 		file->pos += nthistime;
 		ptr = (void *) ((char *) ptr + nthistime);
@@ -621,7 +621,7 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
 			nthistime = size;
 		Assert(nthistime > 0);
 
-		memcpy(file->buffer + file->pos, ptr, nthistime);
+		memcpy(file->buffer.data + file->pos, ptr, nthistime);
 
 		file->dirty = true;
 		file->pos += nthistime;

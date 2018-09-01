@@ -209,13 +209,13 @@ search_directory(const char *directory, const char *fname)
 	/* set WalSegSz if file is successfully opened */
 	if (fd >= 0)
 	{
-		char		buf[XLOG_BLCKSZ];
+		PGAlignedXLogBlock buf;
 		int			r;
 
-		r = read(fd, buf, XLOG_BLCKSZ);
+		r = read(fd, buf.data, XLOG_BLCKSZ);
 		if (r == XLOG_BLCKSZ)
 		{
-			XLogLongPageHeader longhdr = (XLogLongPageHeader) buf;
+			XLogLongPageHeader longhdr = (XLogLongPageHeader) buf.data;
 
 			WalSegSz = longhdr->xlp_seg_size;
 

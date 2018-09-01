@@ -132,8 +132,8 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 {
 	int			src_fd;
 	int			dst_fd;
-	char	   *buffer;
-	char	   *new_vmbuf;
+	PGAlignedBlock buffer;
+	PGAlignedBlock new_vmbuf;
 	ssize_t		totalBytesRead = 0;
 	ssize_t		src_filesize;
 	int			rewriteVmBytesPerPage;
@@ -160,13 +160,6 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 	src_filesize = statbuf.st_size;
 
 	/*
-	 * Malloc the work buffers, rather than making them local arrays, to
-	 * ensure adequate alignment.
-	 */
-	buffer = (char *) pg_malloc(BLCKSZ);
-	new_vmbuf = (char *) pg_malloc(BLCKSZ);
-
-	/*
 	 * Turn each visibility map page into 2 pages one by one. Each new page
 	 * has the same page header as the old one.  If the last section of the
 	 * last page is empty, we skip it, mostly to avoid turning one-page
@@ -181,7 +174,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 		PageHeaderData pageheader;
 		bool		old_lastblk;
 
-		if ((bytesRead = read(src_fd, buffer, BLCKSZ)) != BLCKSZ)
+		if ((bytesRead = read(src_fd, buffer.data, BLCKSZ)) != BLCKSZ)
 		{
 			if (bytesRead < 0)
 				pg_fatal("error while copying relation \"%s.%s\": could not read file \"%s\": %s\n",
@@ -195,7 +188,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 		old_lastblk = (totalBytesRead == src_filesize);
 
 		/* Save the page header data */
-		memcpy(&pageheader, buffer, SizeOfPageHeaderData);
+		memcpy(&pageheader, buffer.data, SizeOfPageHeaderData);
 
 		/*
 		 * These old_* variables point to old visibility map page. old_cur
@@ -203,8 +196,8 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 		 * old block.  old_break is the end+1 position on the old page for the
 		 * data that will be transferred to the current new page.
 		 */
-		old_cur = buffer + SizeOfPageHeaderData;
-		old_blkend = buffer + bytesRead;
+		old_cur = buffer.data + SizeOfPageHeaderData;
+		old_blkend = buffer.data + bytesRead;
 		old_break = old_cur + rewriteVmBytesPerPage;
 
 		while (old_break <= old_blkend)
@@ -214,12 +207,12 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 			bool		old_lastpart;
 
 			/* First, copy old page header to new page */
-			memcpy(new_vmbuf, &pageheader, SizeOfPageHeaderData);
+			memcpy(new_vmbuf.data, &pageheader, SizeOfPageHeaderData);
 
 			/* Rewriting the last part of the last old page? */
 			old_lastpart = old_lastblk && (old_break == old_blkend);
 
-			new_cur = new_vmbuf + SizeOfPageHeaderData;
+			new_cur = new_vmbuf.data + SizeOfPageHeaderData;
 
 			/* Process old page bytes one by one, and turn it into new page. */
 			while (old_cur < old_break)
@@ -253,11 +246,11 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 
 			/* Set new checksum for visibility map page, if enabled */
 			if (new_cluster.controldata.data_checksum_version != 0)
-				((PageHeader) new_vmbuf)->pd_checksum =
-					pg_checksum_page(new_vmbuf, new_blkno);
+				((PageHeader) new_vmbuf.data)->pd_checksum =
+					pg_checksum_page(new_vmbuf.data, new_blkno);
 
 			errno = 0;
-			if (write(dst_fd, new_vmbuf, BLCKSZ) != BLCKSZ)
+			if (write(dst_fd, new_vmbuf.data, BLCKSZ) != BLCKSZ)
 			{
 				/* if write didn't set errno, assume problem is no disk space */
 				if (errno == 0)
@@ -273,8 +266,6 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 	}
 
 	/* Clean up */
-	pg_free(buffer);
-	pg_free(new_vmbuf);
 	close(dst_fd);
 	close(src_fd);
 }
