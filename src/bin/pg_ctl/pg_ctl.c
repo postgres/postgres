@@ -61,6 +61,7 @@ typedef enum
 	RELOAD_COMMAND,
 	STATUS_COMMAND,
 	PROMOTE_COMMAND,
+	LOGROTATE_COMMAND,
 	KILL_COMMAND,
 	REGISTER_COMMAND,
 	UNREGISTER_COMMAND,
@@ -100,6 +101,7 @@ static char version_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
+static char logrotate_file[MAXPGPATH];
 
 #ifdef WIN32
 static DWORD pgctl_start_type = SERVICE_AUTO_START;
@@ -125,6 +127,7 @@ static void do_restart(void);
 static void do_reload(void);
 static void do_status(void);
 static void do_promote(void);
+static void do_logrotate(void);
 static void do_kill(pgpid_t pid);
 static void print_msg(const char *msg);
 static void adjust_data_dir(void);
@@ -1171,6 +1174,62 @@ do_promote(void)
 		print_msg(_("server promoting\n"));
 }
 
+/*
+ * log rotate
+ */
+
+static void
+do_logrotate(void)
+{
+	FILE	   *logrotatefile;
+	pgpid_t		pid;
+
+	pid = get_pgpid(false);
+
+	if (pid == 0)				/* no pid file */
+	{
+		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
+		write_stderr(_("Is server running?\n"));
+		exit(1);
+	}
+	else if (pid < 0)			/* standalone backend, not postmaster */
+	{
+		pid = -pid;
+		write_stderr(_("%s: cannot rotate log file; "
+					   "single-user server is running (PID: %ld)\n"),
+					 progname, pid);
+		exit(1);
+	}
+
+	snprintf(logrotate_file, MAXPGPATH, "%s/logrotate", pg_data);
+
+	if ((logrotatefile = fopen(logrotate_file, "w")) == NULL)
+	{
+		write_stderr(_("%s: could not create log rotation signal file \"%s\": %s\n"),
+					 progname, logrotate_file, strerror(errno));
+		exit(1);
+	}
+	if (fclose(logrotatefile))
+	{
+		write_stderr(_("%s: could not write log rotation signal file \"%s\": %s\n"),
+					 progname, logrotate_file, strerror(errno));
+		exit(1);
+	}
+
+	sig = SIGUSR1;
+	if (kill((pid_t) pid, sig) != 0)
+	{
+		write_stderr(_("%s: could not send log rotation signal (PID: %ld): %s\n"),
+					 progname, pid, strerror(errno));
+		if (unlink(logrotate_file) != 0)
+			write_stderr(_("%s: could not remove log rotation signal file \"%s\": %s\n"),
+						 progname, logrotate_file, strerror(errno));
+		exit(1);
+	}
+
+	print_msg(_("server signaled to rotate log file\n"));
+}
+
 
 /*
  *	utility routines
@@ -1912,19 +1971,20 @@ do_help(void)
 {
 	printf(_("%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s init[db] [-D DATADIR] [-s] [-o OPTIONS]\n"), progname);
-	printf(_("  %s start    [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
-			 "                  [-o OPTIONS] [-p PATH] [-c]\n"), progname);
-	printf(_("  %s stop     [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"), progname);
-	printf(_("  %s restart  [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
-			 "                  [-o OPTIONS] [-c]\n"), progname);
-	printf(_("  %s reload   [-D DATADIR] [-s]\n"), progname);
-	printf(_("  %s status   [-D DATADIR]\n"), progname);
-	printf(_("  %s promote  [-D DATADIR] [-W] [-t SECS] [-s]\n"), progname);
-	printf(_("  %s kill     SIGNALNAME PID\n"), progname);
+	printf(_("  %s init[db]   [-D DATADIR] [-s] [-o OPTIONS]\n"), progname);
+	printf(_("  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
+			 "                    [-o OPTIONS] [-p PATH] [-c]\n"), progname);
+	printf(_("  %s stop       [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"), progname);
+	printf(_("  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+			 "                    [-o OPTIONS] [-c]\n"), progname);
+	printf(_("  %s reload     [-D DATADIR] [-s]\n"), progname);
+	printf(_("  %s status     [-D DATADIR]\n"), progname);
+	printf(_("  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"), progname);
+	printf(_("  %s logrotate  [-D DATADIR] [-s]\n"), progname);
+	printf(_("  %s kill       SIGNALNAME PID\n"), progname);
 #ifdef WIN32
-	printf(_("  %s register [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
-			 "                  [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"), progname);
+	printf(_("  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
+			 "                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
 
@@ -2337,6 +2397,8 @@ main(int argc, char **argv)
 				ctl_command = STATUS_COMMAND;
 			else if (strcmp(argv[optind], "promote") == 0)
 				ctl_command = PROMOTE_COMMAND;
+			else if (strcmp(argv[optind], "logrotate") == 0)
+				ctl_command = LOGROTATE_COMMAND;
 			else if (strcmp(argv[optind], "kill") == 0)
 			{
 				if (argc - optind < 3)
@@ -2442,6 +2504,9 @@ main(int argc, char **argv)
 			break;
 		case PROMOTE_COMMAND:
 			do_promote();
+			break;
+		case LOGROTATE_COMMAND:
+			do_logrotate();
 			break;
 		case KILL_COMMAND:
 			do_kill(killproc);

@@ -99,6 +99,13 @@ PostgreSQL documentation
 
   <cmdsynopsis>
    <command>pg_ctl</command>
+   <arg choice="plain"><option>logrotate</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
+   <command>pg_ctl</command>
    <arg choice="plain"><option>kill</option></arg>
    <arg choice="plain"><replaceable>signal_name</replaceable></arg>
    <arg choice="plain"><replaceable>process_id</replaceable></arg>
@@ -224,6 +231,12 @@ PostgreSQL documentation
    <option>promote</option> mode commands the standby server that is
    running in the specified data directory to end standby mode
    and begin read-write operations.
+  </para>
+
+  <para>
+   <option>logrotate</option> mode rotates the server log file.
+   For details on how to use this mode with external log rotation tools, see
+   <xref linkend="logfile-maintenance"/>.
   </para>
 
   <para>

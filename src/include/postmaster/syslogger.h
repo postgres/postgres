@@ -87,6 +87,9 @@ extern void write_syslogger_file(const char *buffer, int count, int dest);
 extern void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
 #endif
 
+extern bool CheckLogrotateSignal(void);
+extern void RemoveLogrotateSignalFiles(void);
+
 /*
  * Name of files saving meta-data information about the log
  * files currently in use by the syslogger
