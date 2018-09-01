@@ -557,7 +557,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[2];
 	static ginxlogSplit data;
-	static char tupstore[2 * BLCKSZ];
+	static PGAlignedBlock tupstore[2];
 
 	*prdata = rdata;
 	data.leftChildBlkno = (GinPageIsLeaf(lpage)) ?
@@ -565,7 +565,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 	data.updateBlkno = entryPreparePage(btree, lpage, off);
 
 	maxoff = PageGetMaxOffsetNumber(lpage);
-	ptr = tupstore;
+	ptr = tupstore[0].data;
 
 	for (i = FirstOffsetNumber; i <= maxoff; i++)
 	{
@@ -595,7 +595,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 	GinInitPage(rpage, GinPageGetOpaque(lpage)->flags, pageSize);
 	GinInitPage(lpage, GinPageGetOpaque(rpage)->flags, pageSize);
 
-	ptr = tupstore;
+	ptr = tupstore[0].data;
 	maxoff++;
 	lsize = 0;
 
@@ -643,7 +643,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 	rdata[0].next = &rdata[1];
 
 	rdata[1].buffer = InvalidBuffer;
-	rdata[1].data = tupstore;
+	rdata[1].data = tupstore[0].data;
 	rdata[1].len = MAXALIGN(totalsize);
 	rdata[1].next = NULL;
 

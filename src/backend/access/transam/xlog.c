@@ -2306,8 +2306,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-	char		zbuffer_raw[XLOG_BLCKSZ + MAXIMUM_ALIGNOF];
-	char	   *zbuffer;
+	PGAlignedXLogBlock zbuffer;
 	XLogSegNo	installed_segno;
 	int			max_advance;
 	int			fd;
@@ -2361,16 +2360,12 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	 * fsync below) that all the indirect blocks are down on disk.  Therefore,
 	 * fdatasync(2) or O_DSYNC will be sufficient to sync future writes to the
 	 * log file.
-	 *
-	 * Note: ensure the buffer is reasonably well-aligned; this may save a few
-	 * cycles transferring data to the kernel.
 	 */
-	zbuffer = (char *) MAXALIGN(zbuffer_raw);
-	memset(zbuffer, 0, XLOG_BLCKSZ);
+	memset(zbuffer.data, 0, XLOG_BLCKSZ);
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
-		if ((int) write(fd, zbuffer, XLOG_BLCKSZ) != (int) XLOG_BLCKSZ)
+		if ((int) write(fd, zbuffer.data, XLOG_BLCKSZ) != (int) XLOG_BLCKSZ)
 		{
 			int			save_errno = errno;
 
@@ -2461,7 +2456,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-	char		buffer[XLOG_BLCKSZ];
+	PGAlignedXLogBlock buffer;
 	int			srcfd;
 	int			fd;
 	int			nbytes;
@@ -2497,7 +2492,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += sizeof(buffer))
 	{
 		errno = 0;
-		if ((int) read(srcfd, buffer, sizeof(buffer)) != (int) sizeof(buffer))
+		if ((int) read(srcfd, buffer.data, sizeof(buffer)) != (int) sizeof(buffer))
 		{
 			if (errno != 0)
 				ereport(ERROR,
@@ -2508,7 +2503,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
 						(errmsg("not enough data in file \"%s\"", path)));
 		}
 		errno = 0;
-		if ((int) write(fd, buffer, sizeof(buffer)) != (int) sizeof(buffer))
+		if ((int) write(fd, buffer.data, sizeof(buffer)) != (int) sizeof(buffer))
 		{
 			int			save_errno = errno;
 
@@ -8017,7 +8012,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 	 */
 	if (XLogCheckBuffer(rdata, false, &lsn, &bkpb))
 	{
-		char		copied_buffer[BLCKSZ];
+		PGAlignedBlock copied_buffer;
 		char	   *origdata = (char *) BufferGetBlock(buffer);
 
 		/*
@@ -8028,8 +8023,8 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 		 * With buffer_std set to false, XLogCheckBuffer() sets hole_length and
 		 * hole_offset to 0; so the following code is safe for either case.
 		 */
-		memcpy(copied_buffer, origdata, bkpb.hole_offset);
-		memcpy(copied_buffer + bkpb.hole_offset,
+		memcpy(copied_buffer.data, origdata, bkpb.hole_offset);
+		memcpy(copied_buffer.data + bkpb.hole_offset,
 			   origdata + bkpb.hole_offset + bkpb.hole_length,
 			   BLCKSZ - bkpb.hole_offset - bkpb.hole_length);
 
@@ -8044,7 +8039,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 		/*
 		 * Save copy of the buffer.
 		 */
-		rdata[1].data = copied_buffer;
+		rdata[1].data = copied_buffer.data;
 		rdata[1].len = BLCKSZ - bkpb.hole_length;
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
