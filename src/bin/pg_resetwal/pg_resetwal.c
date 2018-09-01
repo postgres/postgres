@@ -1129,7 +1129,7 @@ KillExistingArchiveStatus(void)
 static void
 WriteEmptyXLOG(void)
 {
-	char	   *buffer;
+	PGAlignedXLogBlock buffer;
 	XLogPageHeader page;
 	XLogLongPageHeader longpage;
 	XLogRecord *record;
@@ -1139,12 +1139,10 @@ WriteEmptyXLOG(void)
 	int			nbytes;
 	char	   *recptr;
 
-	/* Use malloc() to ensure buffer is MAXALIGNED */
-	buffer = (char *) pg_malloc(XLOG_BLCKSZ);
-	page = (XLogPageHeader) buffer;
-	memset(buffer, 0, XLOG_BLCKSZ);
+	memset(buffer.data, 0, XLOG_BLCKSZ);
 
 	/* Set up the XLOG page header */
+	page = (XLogPageHeader) buffer.data;
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = XLP_LONG_HEADER;
 	page->xlp_tli = ControlFile.checkPointCopy.ThisTimeLineID;
@@ -1190,7 +1188,7 @@ WriteEmptyXLOG(void)
 	}
 
 	errno = 0;
-	if (write(fd, buffer, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+	if (write(fd, buffer.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
@@ -1201,11 +1199,11 @@ WriteEmptyXLOG(void)
 	}
 
 	/* Fill the rest of the file with zeroes */
-	memset(buffer, 0, XLOG_BLCKSZ);
+	memset(buffer.data, 0, XLOG_BLCKSZ);
 	for (nbytes = XLOG_BLCKSZ; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
-		if (write(fd, buffer, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+		if (write(fd, buffer.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
 			if (errno == 0)
 				errno = ENOSPC;

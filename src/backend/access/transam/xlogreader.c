@@ -1404,7 +1404,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 {
 	DecodedBkpBlock *bkpb;
 	char	   *ptr;
-	char		tmp[BLCKSZ];
+	PGAlignedBlock tmp;
 
 	if (!record->blocks[block_id].in_use)
 		return false;
@@ -1417,7 +1417,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 	if (bkpb->bimg_info & BKPIMAGE_IS_COMPRESSED)
 	{
 		/* If a backup block image is compressed, decompress it */
-		if (pglz_decompress(ptr, bkpb->bimg_len, tmp,
+		if (pglz_decompress(ptr, bkpb->bimg_len, tmp.data,
 							BLCKSZ - bkpb->hole_length) < 0)
 		{
 			report_invalid_record(record, "invalid compressed image at %X/%X, block %d",
@@ -1426,7 +1426,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 								  block_id);
 			return false;
 		}
-		ptr = tmp;
+		ptr = tmp.data;
 	}
 
 	/* generate page, taking into account hole if necessary */

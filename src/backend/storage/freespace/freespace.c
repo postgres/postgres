@@ -628,10 +628,9 @@ static void
 fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 {
 	BlockNumber fsm_nblocks_now;
-	Page		pg;
+	PGAlignedBlock pg;
 
-	pg = (Page) palloc(BLCKSZ);
-	PageInit(pg, BLCKSZ, 0);
+	PageInit((Page) pg.data, BLCKSZ, 0);
 
 	/*
 	 * We use the relation extension lock to lock out other backends trying to
@@ -661,10 +660,10 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 
 	while (fsm_nblocks_now < fsm_nblocks)
 	{
-		PageSetChecksumInplace(pg, fsm_nblocks_now);
+		PageSetChecksumInplace((Page) pg.data, fsm_nblocks_now);
 
 		smgrextend(rel->rd_smgr, FSM_FORKNUM, fsm_nblocks_now,
-				   (char *) pg, false);
+				   pg.data, false);
 		fsm_nblocks_now++;
 	}
 
@@ -672,8 +671,6 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 	rel->rd_smgr->smgr_fsm_nblocks = fsm_nblocks_now;
 
 	UnlockRelationForExtension(rel, ExclusiveLock);
-
-	pfree(pg);
 }
 
 /*
