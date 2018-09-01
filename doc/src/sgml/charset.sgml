@@ -1484,6 +1484,13 @@ $ <userinput>psql -l</userinput>
          </entry>
         </row>
         <row>
+         <entry><literal>EUC_JIS_2004</literal></entry>
+         <entry><emphasis>EUC_JIS_2004</emphasis>,
+         <literal>SHIFT_JIS_2004</literal>,
+         <literal>UTF8</literal>
+         </entry>
+        </row>
+        <row>
          <entry><literal>EUC_KR</literal></entry>
          <entry><emphasis>EUC_KR</emphasis>,
          <literal>MULE_INTERNAL</literal>,
@@ -1538,8 +1545,7 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>JOHAB</literal></entry>
-         <entry><emphasis>JOHAB</emphasis>,
-         <literal>UTF8</literal>
+         <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -1642,6 +1648,11 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>SJIS</literal></entry>
+         <entry><emphasis>not supported as a server encoding</emphasis>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>SHIFT_JIS_2004</literal></entry>
          <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
         </row>
