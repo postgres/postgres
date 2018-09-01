@@ -710,7 +710,7 @@ static bool
 _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 {
 	BlockNumber lastblock;
-	char		zerobuf[BLCKSZ];
+	PGAlignedBlock zerobuf;
 
 	lastblock = firstblock + nblocks - 1;
 
@@ -721,10 +721,10 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 	if (lastblock < firstblock || lastblock == InvalidBlockNumber)
 		return false;
 
-	MemSet(zerobuf, 0, sizeof(zerobuf));
+	MemSet(zerobuf.data, 0, sizeof(zerobuf));
 
 	RelationOpenSmgr(rel);
-	smgrextend(rel->rd_smgr, MAIN_FORKNUM, lastblock, zerobuf, false);
+	smgrextend(rel->rd_smgr, MAIN_FORKNUM, lastblock, zerobuf.data, false);
 
 	return true;
 }

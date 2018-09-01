@@ -633,7 +633,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 
 	/* these must be static so they can be returned to caller */
 	static ginxlogSplitEntry data;
-	static char tupstore[2 * BLCKSZ];
+	static PGAlignedBlock tupstore[2];
 
 	entryPreparePage(btree, lpage, off, insertData, updateblkno);
 
@@ -642,7 +642,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 	 * one after another in a temporary workspace.
 	 */
 	maxoff = PageGetMaxOffsetNumber(lpage);
-	ptr = tupstore;
+	ptr = tupstore[0].data;
 	for (i = FirstOffsetNumber; i <= maxoff; i++)
 	{
 		if (i == off)
@@ -667,7 +667,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 		ptr += size;
 		totalsize += size + sizeof(ItemIdData);
 	}
-	tupstoresize = ptr - tupstore;
+	tupstoresize = ptr - tupstore[0].data;
 
 	/*
 	 * Initialize the left and right pages, and copy all the tuples back to
@@ -676,7 +676,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 	GinInitPage(rpage, GinPageGetOpaque(lpage)->flags, pageSize);
 	GinInitPage(lpage, GinPageGetOpaque(rpage)->flags, pageSize);
 
-	ptr = tupstore;
+	ptr = tupstore[0].data;
 	maxoff++;
 	lsize = 0;
 
@@ -715,7 +715,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 	rdata[0].next = &rdata[1];
 
 	rdata[1].buffer = InvalidBuffer;
-	rdata[1].data = tupstore;
+	rdata[1].data = tupstore[0].data;
 	rdata[1].len = tupstoresize;
 	rdata[1].next = NULL;
 

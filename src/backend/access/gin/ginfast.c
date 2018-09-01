@@ -52,18 +52,15 @@ writeListPage(Relation index, Buffer buffer,
 				size = 0;
 	OffsetNumber l,
 				off;
-	char	   *workspace;
+	PGAlignedBlock workspace;
 	char	   *ptr;
-
-	/* workspace could be a local array; we use palloc for alignment */
-	workspace = palloc(BLCKSZ);
 
 	START_CRIT_SECTION();
 
 	GinInitBuffer(buffer, GIN_LIST);
 
 	off = FirstOffsetNumber;
-	ptr = workspace;
+	ptr = workspace.data;
 
 	for (i = 0; i < ntuples; i++)
 	{
@@ -120,7 +117,7 @@ writeListPage(Relation index, Buffer buffer,
 		rdata[0].next = rdata + 1;
 
 		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = workspace;
+		rdata[1].data = workspace.data;
 		rdata[1].len = size;
 		rdata[1].next = NULL;
 
@@ -134,8 +131,6 @@ writeListPage(Relation index, Buffer buffer,
 	UnlockReleaseBuffer(buffer);
 
 	END_CRIT_SECTION();
-
-	pfree(workspace);
 
 	return freesize;
 }

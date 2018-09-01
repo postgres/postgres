@@ -88,7 +88,7 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
 	int			f;
 	char		fn[MAXPGPATH];
 	struct stat statbuf;
-	char	   *zerobuf;
+	PGAlignedXLogBlock zerobuf;
 	int			bytes;
 	XLogSegNo	segno;
 
@@ -134,11 +134,11 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
 	}
 
 	/* New, empty, file. So pad it to 16Mb with zeroes */
-	zerobuf = pg_malloc0(XLOG_BLCKSZ);
+	memset(zerobuf.data, 0, XLOG_BLCKSZ);
 	for (bytes = 0; bytes < XLogSegSize; bytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
-		if (write(f, zerobuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+		if (write(f, zerobuf.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
@@ -146,13 +146,11 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
 			fprintf(stderr,
 					_("%s: could not pad transaction log file \"%s\": %s\n"),
 					progname, fn, strerror(errno));
-			free(zerobuf);
 			close(f);
 			unlink(fn);
 			return false;
 		}
 	}
-	free(zerobuf);
 
 	if (lseek(f, SEEK_SET, 0) != 0)
 	{
