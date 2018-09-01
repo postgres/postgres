@@ -29,6 +29,15 @@ import argparse
 import sys
 import xml.etree.ElementTree as ET
 
+# The ranges of Unicode characters that we consider to be "plain letters".
+# For now we are being conservative by including only Latin and Greek.  This
+# could be extended in future based on feedback from people with relevant
+# language knowledge.
+PLAIN_LETTER_RANGES = ((ord('a'), ord('z')), # Latin lower case
+                       (ord('A'), ord('Z')), # Latin upper case
+                       (0x03b1, 0x03c9),     # GREEK SMALL LETTER ALPHA, GREEK SMALL LETTER OMEGA
+                       (0x0391, 0x03a9))     # GREEK CAPITAL LETTER ALPHA, GREEK CAPITAL LETTER OMEGA
+
 def print_record(codepoint, letter):
     print (unichr(codepoint) + "\t" + letter).encode("UTF-8")
 
@@ -39,9 +48,11 @@ class Codepoint:
         self.combining_ids = combining_ids
 
 def is_plain_letter(codepoint):
-    """Return true if codepoint represents a plain ASCII letter."""
-    return (codepoint.id >= ord('a') and codepoint.id <= ord('z')) or \
-           (codepoint.id >= ord('A') and codepoint.id <= ord('Z'))
+    """Return true if codepoint represents a "plain letter"."""
+    for begin, end in PLAIN_LETTER_RANGES:
+      if codepoint.id >= begin and codepoint.id <= end:
+        return True
+    return False
 
 def is_mark(codepoint):
     """Returns true for diacritical marks (combining codepoints)."""
@@ -184,7 +195,7 @@ def main(args):
            len(codepoint.combining_ids) > 1:
             if is_letter_with_marks(codepoint, table):
                 charactersSet.add((codepoint.id,
-                             chr(get_plain_letter(codepoint, table).id)))
+                             unichr(get_plain_letter(codepoint, table).id)))
             elif args.noLigaturesExpansion is False and is_ligature(codepoint, table):
                 charactersSet.add((codepoint.id,
                              "".join(unichr(combining_codepoint.id)
