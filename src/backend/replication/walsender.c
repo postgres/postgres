@@ -497,16 +497,16 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	bytesleft = histfilelen;
 	while (bytesleft > 0)
 	{
-		char		rbuf[BLCKSZ];
+		PGAlignedBlock rbuf;
 		int			nread;
 
-		nread = read(fd, rbuf, sizeof(rbuf));
+		nread = read(fd, rbuf.data, sizeof(rbuf));
 		if (nread <= 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
 							path)));
-		pq_sendbytes(&buf, rbuf, nread);
+		pq_sendbytes(&buf, rbuf.data, nread);
 		bytesleft -= nread;
 	}
 	CloseTransientFile(fd);
