@@ -106,12 +106,6 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	int16		conkey[1];
 
 	/*
-	 * Columns of conrelid that the constraint does not apply to, but are
-	 * included into the same index as the key columns
-	 */
-	int16		conincluding[1];
-
-	/*
 	 * If a foreign key, the referenced columns of confrelid
 	 */
 	int16		confkey[1];

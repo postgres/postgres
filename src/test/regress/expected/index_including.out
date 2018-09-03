@@ -94,10 +94,10 @@ SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, i
  covering   |        4 |           2 | t           | f            | 1 2 3 4 | 1978 1978
 (1 row)
 
-SELECT pg_get_constraintdef(oid), conname, conkey, conincluding FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
-       pg_get_constraintdef       | conname  | conkey | conincluding 
-----------------------------------+----------+--------+--------------
- UNIQUE (c1, c2) INCLUDE (c3, c4) | covering | {1,2}  | {3,4}
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
+       pg_get_constraintdef       | conname  | conkey 
+----------------------------------+----------+--------
+ UNIQUE (c1, c2) INCLUDE (c3, c4) | covering | {1,2}
 (1 row)
 
 -- ensure that constraint works
@@ -113,10 +113,10 @@ SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, i
  covering   |        4 |           2 | t           | t            | 1 2 3 4 | 1978 1978
 (1 row)
 
-SELECT pg_get_constraintdef(oid), conname, conkey, conincluding FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
-         pg_get_constraintdef          | conname  | conkey | conincluding 
----------------------------------------+----------+--------+--------------
- PRIMARY KEY (c1, c2) INCLUDE (c3, c4) | covering | {1,2}  | {3,4}
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
+         pg_get_constraintdef          | conname  | conkey 
+---------------------------------------+----------+--------
+ PRIMARY KEY (c1, c2) INCLUDE (c3, c4) | covering | {1,2}
 (1 row)
 
 -- ensure that constraint works
@@ -136,10 +136,10 @@ SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, i
  tbl_c1_c2_c3_c4_key |        4 |           2 | t           | f            | 1 2 3 4 | 1978 1978
 (1 row)
 
-SELECT pg_get_constraintdef(oid), conname, conkey, conincluding FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
-       pg_get_constraintdef       |       conname       | conkey | conincluding 
-----------------------------------+---------------------+--------+--------------
- UNIQUE (c1, c2) INCLUDE (c3, c4) | tbl_c1_c2_c3_c4_key | {1,2}  | {3,4}
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
+       pg_get_constraintdef       |       conname       | conkey 
+----------------------------------+---------------------+--------
+ UNIQUE (c1, c2) INCLUDE (c3, c4) | tbl_c1_c2_c3_c4_key | {1,2}
 (1 row)
 
 -- ensure that constraint works
@@ -155,10 +155,10 @@ SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, i
  tbl_pkey   |        4 |           2 | t           | t            | 1 2 3 4 | 1978 1978
 (1 row)
 
-SELECT pg_get_constraintdef(oid), conname, conkey, conincluding FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
-         pg_get_constraintdef          | conname  | conkey | conincluding 
----------------------------------------+----------+--------+--------------
- PRIMARY KEY (c1, c2) INCLUDE (c3, c4) | tbl_pkey | {1,2}  | {3,4}
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
+         pg_get_constraintdef          | conname  | conkey 
+---------------------------------------+----------+--------
+ PRIMARY KEY (c1, c2) INCLUDE (c3, c4) | tbl_pkey | {1,2}
 (1 row)
 
 -- ensure that constraint works
@@ -178,10 +178,10 @@ SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, i
  tbl_c1_c3_c4_excl |        3 |           1 | f           | f            | 1 3 4  | 1978
 (1 row)
 
-SELECT pg_get_constraintdef(oid), conname, conkey, conincluding FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
-               pg_get_constraintdef               |      conname      | conkey | conincluding 
---------------------------------------------------+-------------------+--------+--------------
- EXCLUDE USING btree (c1 WITH =) INCLUDE (c3, c4) | tbl_c1_c3_c4_excl | {1}    | {3,4}
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
+               pg_get_constraintdef               |      conname      | conkey 
+--------------------------------------------------+-------------------+--------
+ EXCLUDE USING btree (c1 WITH =) INCLUDE (c3, c4) | tbl_c1_c3_c4_excl | {1}
 (1 row)
 
 -- ensure that constraint works
