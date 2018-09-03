@@ -402,6 +402,9 @@ void		ReorderBufferReturnTupleBuf(ReorderBuffer *, ReorderBufferTupleBuf *tuple)
 ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *);
 void		ReorderBufferReturnChange(ReorderBuffer *, ReorderBufferChange *);
 
+Oid * ReorderBufferGetRelids(ReorderBuffer *, int nrelids);
+void ReorderBufferReturnRelids(ReorderBuffer *, Oid *relids);
+
 void		ReorderBufferQueueChange(ReorderBuffer *, TransactionId, XLogRecPtr lsn, ReorderBufferChange *);
 void ReorderBufferQueueMessage(ReorderBuffer *, TransactionId, Snapshot snapshot, XLogRecPtr lsn,
 						  bool transactional, const char *prefix,

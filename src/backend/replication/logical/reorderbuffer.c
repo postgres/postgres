@@ -409,10 +409,16 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change)
 			}
 			break;
 			/* no data in addition to the struct itself */
+		case REORDER_BUFFER_CHANGE_TRUNCATE:
+			if (change->data.truncate.relids != NULL)
+			{
+				ReorderBufferReturnRelids(rb, change->data.truncate.relids);
+				change->data.truncate.relids = NULL;
+			}
+			break;
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
 		case REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID:
 		case REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID:
-		case REORDER_BUFFER_CHANGE_TRUNCATE:
 			break;
 	}
 
@@ -448,6 +454,37 @@ void
 ReorderBufferReturnTupleBuf(ReorderBuffer *rb, ReorderBufferTupleBuf *tuple)
 {
 	pfree(tuple);
+}
+
+/*
+ * Get an array for relids of truncated relations.
+ *
+ * We use the global memory context (for the whole reorder buffer), because
+ * none of the existing ones seems like a good match (some are SLAB, so we
+ * can't use those, and tup_context is meant for tuple data, not relids). We
+ * could add yet another context, but it seems like an overkill - TRUNCATE is
+ * not particularly common operation, so it does not seem worth it.
+ */
+Oid *
+ReorderBufferGetRelids(ReorderBuffer *rb, int nrelids)
+{
+	Oid	   *relids;
+	Size	alloc_len;
+
+	alloc_len = sizeof(Oid) * nrelids;
+
+	relids = (Oid *) MemoryContextAlloc(rb->context, alloc_len);
+
+	return relids;
+}
+
+/*
+ * Free an array of relids.
+ */
+void
+ReorderBufferReturnRelids(ReorderBuffer *rb, Oid *relids)
+{
+	pfree(relids);
 }
 
 /*
@@ -2412,6 +2449,26 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				break;
 			}
 		case REORDER_BUFFER_CHANGE_TRUNCATE:
+			{
+				Size	size;
+				char   *data;
+
+				/* account for the OIDs of truncated relations */
+				size = sizeof(Oid) * change->data.truncate.nrelids;
+				sz += size;
+
+				/* make sure we have enough space */
+				ReorderBufferSerializeReserve(rb, sz);
+
+				data = ((char *) rb->outbuf) + sizeof(ReorderBufferDiskChange);
+				/* might have been reallocated above */
+				ondisk = (ReorderBufferDiskChange *) rb->outbuf;
+
+				memcpy(data, change->data.truncate.relids, size);
+				data += size;
+
+				break;
+			}
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
 		case REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID:
 		case REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID:
@@ -2695,6 +2752,16 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			}
 			/* the base struct contains all the data, easy peasy */
 		case REORDER_BUFFER_CHANGE_TRUNCATE:
+			{
+				Oid	   *relids;
+
+				relids = ReorderBufferGetRelids(rb,
+												change->data.truncate.nrelids);
+				memcpy(relids, data, change->data.truncate.nrelids * sizeof(Oid));
+				change->data.truncate.relids = relids;
+
+				break;
+			}
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
 		case REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID:
 		case REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID:
