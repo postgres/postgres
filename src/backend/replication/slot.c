@@ -628,8 +628,7 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	 */
 	if (!rmtree(tmppath, true))
 		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not remove directory \"%s\"", tmppath)));
+				(errmsg("could not remove directory \"%s\"", tmppath)));
 
 	/*
 	 * We release this at the very end, so that nobody starts trying to create
@@ -1132,8 +1131,8 @@ StartupReplicationSlots(void)
 			if (!rmtree(path, true))
 			{
 				ereport(WARNING,
-						(errcode_for_file_access(),
-						 errmsg("could not remove directory \"%s\"", path)));
+						(errmsg("could not remove directory \"%s\"",
+								path)));
 				continue;
 			}
 			fsync_fname("pg_replslot", true);
@@ -1432,21 +1431,21 @@ RestoreSlotFromDisk(const char *name)
 	/* verify magic */
 	if (cp.magic != SLOT_MAGIC)
 		ereport(PANIC,
-				(errcode_for_file_access(),
+				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("replication slot file \"%s\" has wrong magic number: %u instead of %u",
 						path, cp.magic, SLOT_MAGIC)));
 
 	/* verify version */
 	if (cp.version != SLOT_VERSION)
 		ereport(PANIC,
-				(errcode_for_file_access(),
+				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("replication slot file \"%s\" has unsupported version %u",
 						path, cp.version)));
 
 	/* boundary check on length */
 	if (cp.length != ReplicationSlotOnDiskV2Size)
 		ereport(PANIC,
-				(errcode_for_file_access(),
+				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("replication slot file \"%s\" has corrupted length %u",
 						path, cp.length)));
 
@@ -1496,8 +1495,8 @@ RestoreSlotFromDisk(const char *name)
 		if (!rmtree(slotdir, true))
 		{
 			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not remove directory \"%s\"", slotdir)));
+					(errmsg("could not remove directory \"%s\"",
+							slotdir)));
 		}
 		fsync_fname("pg_replslot", true);
 		return;

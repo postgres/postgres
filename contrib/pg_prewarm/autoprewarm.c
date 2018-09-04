@@ -641,7 +641,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write to file \"%s\" : %m",
+				 errmsg("could not write to file \"%s\": %m",
 						transient_dump_file_path)));
 	}
 
@@ -664,7 +664,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 			errno = save_errno;
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not write to file \"%s\" : %m",
+					 errmsg("could not write to file \"%s\": %m",
 							transient_dump_file_path)));
 		}
 	}
@@ -684,7 +684,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close file \"%s\" : %m",
+				 errmsg("could not close file \"%s\": %m",
 						transient_dump_file_path)));
 	}
 

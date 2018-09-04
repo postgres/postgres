@@ -333,7 +333,7 @@ perform_base_backup(basebackup_options *opt)
 				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
 					ereport(ERROR,
 							(errcode_for_file_access(),
-							 errmsg("could not stat control file \"%s\": %m",
+							 errmsg("could not stat file \"%s\": %m",
 									XLOG_CONTROL_FILE)));
 				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
 			}
