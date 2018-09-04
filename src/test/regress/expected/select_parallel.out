@@ -958,6 +958,32 @@ select count(*) from tenk1;
 
 reset force_parallel_mode;
 reset role;
+-- Window function calculation can't be pushed to workers.
+explain (costs off, verbose)
+  select count(*) from tenk1 a where (unique1, two) in
+    (select unique1, row_number() over() from tenk1 b);
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Hash Semi Join
+         Hash Cond: ((a.unique1 = b.unique1) AND (a.two = (row_number() OVER (?))))
+         ->  Gather
+               Output: a.unique1, a.two
+               Workers Planned: 4
+               ->  Parallel Seq Scan on public.tenk1 a
+                     Output: a.unique1, a.two
+         ->  Hash
+               Output: b.unique1, (row_number() OVER (?))
+               ->  WindowAgg
+                     Output: b.unique1, row_number() OVER (?)
+                     ->  Gather
+                           Output: b.unique1
+                           Workers Planned: 4
+                           ->  Parallel Index Only Scan using tenk1_unique1 on public.tenk1 b
+                                 Output: b.unique1
+(18 rows)
+
 -- to increase the parallel query test coverage
 SAVEPOINT settings;
 SET LOCAL force_parallel_mode = 1;
