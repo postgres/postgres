@@ -474,7 +474,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>DROP CONSTRAINT [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
-      This form drops the specified constraint on a table.
+      This form drops the specified constraint on a table, along with
+      any index underlying the constraint.
       If <literal>IF EXISTS</literal> is specified and the constraint
       does not exist, no error is thrown. In this case a notice is issued instead.
      </para>
@@ -822,8 +823,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       The <literal>RENAME</literal> forms change the name of a table
-      (or an index, sequence, view, materialized view, or foreign table), the name
-      of an individual column in a table, or the name of a constraint of the table.
+      (or an index, sequence, view, materialized view, or foreign table), the
+      name of an individual column in a table, or the name of a constraint of
+      the table.  When renaming a constraint that has an underlying index,
+      the index is renamed as well.
       There is no effect on the stored data.
      </para>
     </listitem>
@@ -1270,10 +1273,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    <para>
     If a table has any descendant tables, it is not permitted to add,
     rename, or change the type of a column in the parent table without doing
-    same to the descendants.  This ensures that the descendants always have
-    columns matching the parent.  Similarly, a constraint cannot be renamed
-    in the parent without also renaming it in all descendants, so that
-    constraints also match between the parent and its descendants.
+    the same to the descendants.  This ensures that the descendants always
+    have columns matching the parent.  Similarly, a <literal>CHECK</literal>
+    constraint cannot be renamed in the parent without also renaming it in
+    all descendants, so that <literal>CHECK</literal> constraints also match
+    between the parent and its descendants.  (That restriction does not apply
+    to index-based constraints, however.)
     Also, because selecting from the parent also selects from its descendants,
     a constraint on the parent cannot be marked valid unless it is also marked
     valid for those descendants.  In all of these cases, <command>ALTER TABLE
@@ -1481,35 +1486,35 @@ ALTER TABLE distributors DROP CONSTRAINT distributors_pkey,
 </programlisting></para>
 
   <para>
-   Attach a partition to range partitioned table:
+   To attach a partition to a range-partitioned table:
 <programlisting>
 ALTER TABLE measurement
     ATTACH PARTITION measurement_y2016m07 FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
 </programlisting></para>
 
   <para>
-   Attach a partition to list partitioned table:
+   To attach a partition to a list-partitioned table:
 <programlisting>
 ALTER TABLE cities
     ATTACH PARTITION cities_ab FOR VALUES IN ('a', 'b');
 </programlisting></para>
 
   <para>
-   Attach a default partition to a partitioned table:
-<programlisting>
-ALTER TABLE cities
-    ATTACH PARTITION cities_partdef DEFAULT;
-</programlisting></para>
-
-  <para>
-   Attach a partition to hash partitioned table:
+   To attach a partition to a hash-partitioned table:
 <programlisting>
 ALTER TABLE orders
     ATTACH PARTITION orders_p4 FOR VALUES WITH (MODULUS 4, REMAINDER 3);
 </programlisting></para>
 
   <para>
-   Detach a partition from partitioned table:
+   To attach a default partition to a partitioned table:
+<programlisting>
+ALTER TABLE cities
+    ATTACH PARTITION cities_partdef DEFAULT;
+</programlisting></para>
+
+  <para>
+   To detach a partition from a partitioned table:
 <programlisting>
 ALTER TABLE measurement
     DETACH PARTITION measurement_y2015m12;

@@ -7116,7 +7116,6 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			{
 				if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
 										 RelationGetRelid(rel),
-										 RelationGetNamespace(rel),
 										 newConstraint->conname))
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -7770,10 +7769,9 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 	Constraint *cmdcon;
 	Relation	conrel;
 	SysScanDesc scan;
-	ScanKeyData key;
+	ScanKeyData skey[3];
 	HeapTuple	contuple;
-	Form_pg_constraint currcon = NULL;
-	bool		found = false;
+	Form_pg_constraint currcon;
 	ObjectAddress address;
 
 	cmdcon = castNode(Constraint, cmd->def);
@@ -7783,29 +7781,29 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 	/*
 	 * Find and check the target constraint
 	 */
-	ScanKeyInit(&key,
+	ScanKeyInit(&skey[0],
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(rel)));
-	scan = systable_beginscan(conrel, ConstraintRelidIndexId,
-							  true, NULL, 1, &key);
+	ScanKeyInit(&skey[1],
+				Anum_pg_constraint_contypid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(InvalidOid));
+	ScanKeyInit(&skey[2],
+				Anum_pg_constraint_conname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(cmdcon->conname));
+	scan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId,
+							  true, NULL, 3, skey);
 
-	while (HeapTupleIsValid(contuple = systable_getnext(scan)))
-	{
-		currcon = (Form_pg_constraint) GETSTRUCT(contuple);
-		if (strcmp(NameStr(currcon->conname), cmdcon->conname) == 0)
-		{
-			found = true;
-			break;
-		}
-	}
-
-	if (!found)
+	/* There can be at most one matching row */
+	if (!HeapTupleIsValid(contuple = systable_getnext(scan)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
 						cmdcon->conname, RelationGetRelationName(rel))));
 
+	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
 	if (currcon->contype != CONSTRAINT_FOREIGN)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -7938,10 +7936,9 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 {
 	Relation	conrel;
 	SysScanDesc scan;
-	ScanKeyData key;
+	ScanKeyData skey[3];
 	HeapTuple	tuple;
-	Form_pg_constraint con = NULL;
-	bool		found = false;
+	Form_pg_constraint con;
 	ObjectAddress address;
 
 	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
@@ -7949,29 +7946,29 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 	/*
 	 * Find and check the target constraint
 	 */
-	ScanKeyInit(&key,
+	ScanKeyInit(&skey[0],
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(rel)));
-	scan = systable_beginscan(conrel, ConstraintRelidIndexId,
-							  true, NULL, 1, &key);
+	ScanKeyInit(&skey[1],
+				Anum_pg_constraint_contypid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(InvalidOid));
+	ScanKeyInit(&skey[2],
+				Anum_pg_constraint_conname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(constrName));
+	scan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId,
+							  true, NULL, 3, skey);
 
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-	{
-		con = (Form_pg_constraint) GETSTRUCT(tuple);
-		if (strcmp(NameStr(con->conname), constrName) == 0)
-		{
-			found = true;
-			break;
-		}
-	}
-
-	if (!found)
+	/* There can be at most one matching row */
+	if (!HeapTupleIsValid(tuple = systable_getnext(scan)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
 						constrName, RelationGetRelationName(rel))));
 
+	con = (Form_pg_constraint) GETSTRUCT(tuple);
 	if (con->contype != CONSTRAINT_FOREIGN &&
 		con->contype != CONSTRAINT_CHECK)
 		ereport(ERROR,
@@ -8834,7 +8831,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	Relation	conrel;
 	Form_pg_constraint con;
 	SysScanDesc scan;
-	ScanKeyData key;
+	ScanKeyData skey[3];
 	HeapTuple	tuple;
 	bool		found = false;
 	bool		is_no_inherit_constraint = false;
@@ -8848,21 +8845,27 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	/*
 	 * Find and drop the target constraint
 	 */
-	ScanKeyInit(&key,
+	ScanKeyInit(&skey[0],
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(rel)));
-	scan = systable_beginscan(conrel, ConstraintRelidIndexId,
-							  true, NULL, 1, &key);
+	ScanKeyInit(&skey[1],
+				Anum_pg_constraint_contypid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(InvalidOid));
+	ScanKeyInit(&skey[2],
+				Anum_pg_constraint_conname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(constrName));
+	scan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId,
+							  true, NULL, 3, skey);
 
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	/* There can be at most one matching row */
+	if (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		ObjectAddress conobj;
 
 		con = (Form_pg_constraint) GETSTRUCT(tuple);
-
-		if (strcmp(NameStr(con->conname), constrName) != 0)
-			continue;
 
 		/* Don't drop inherited constraints */
 		if (con->coninhcount > 0 && !recursing)
@@ -8901,9 +8904,6 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		performDeletion(&conobj, behavior, 0);
 
 		found = true;
-
-		/* constraint found and dropped -- no need to keep looping */
-		break;
 	}
 
 	systable_endscan(scan);
@@ -8959,27 +8959,23 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		childrel = heap_open(childrelid, NoLock);
 		CheckTableNotInUse(childrel, "ALTER TABLE");
 
-		ScanKeyInit(&key,
+		ScanKeyInit(&skey[0],
 					Anum_pg_constraint_conrelid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(childrelid));
-		scan = systable_beginscan(conrel, ConstraintRelidIndexId,
-								  true, NULL, 1, &key);
+		ScanKeyInit(&skey[1],
+					Anum_pg_constraint_contypid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(InvalidOid));
+		ScanKeyInit(&skey[2],
+					Anum_pg_constraint_conname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(constrName));
+		scan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId,
+								  true, NULL, 3, skey);
 
-		/* scan for matching tuple - there should only be one */
-		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-		{
-			con = (Form_pg_constraint) GETSTRUCT(tuple);
-
-			/* Right now only CHECK constraints can be inherited */
-			if (con->contype != CONSTRAINT_CHECK)
-				continue;
-
-			if (strcmp(NameStr(con->conname), constrName) == 0)
-				break;
-		}
-
-		if (!HeapTupleIsValid(tuple))
+		/* There can be at most one matching row */
+		if (!HeapTupleIsValid(tuple = systable_getnext(scan)))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
@@ -8991,6 +8987,10 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		systable_endscan(scan);
 
 		con = (Form_pg_constraint) GETSTRUCT(copy_tuple);
+
+		/* Right now only CHECK constraints can be inherited */
+		if (con->contype != CONSTRAINT_CHECK)
+			elog(ERROR, "inherited constraint is not a CHECK constraint");
 
 		if (con->coninhcount <= 0)	/* shouldn't happen */
 			elog(ERROR, "relation %u has non-inherited constraint \"%s\"",
@@ -11793,7 +11793,7 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(parent_rel)));
-	parent_scan = systable_beginscan(catalog_relation, ConstraintRelidIndexId,
+	parent_scan = systable_beginscan(catalog_relation, ConstraintRelidTypidNameIndexId,
 									 true, NULL, 1, &parent_key);
 
 	while (HeapTupleIsValid(parent_tuple = systable_getnext(parent_scan)))
@@ -11816,7 +11816,7 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 					Anum_pg_constraint_conrelid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(RelationGetRelid(child_rel)));
-		child_scan = systable_beginscan(catalog_relation, ConstraintRelidIndexId,
+		child_scan = systable_beginscan(catalog_relation, ConstraintRelidTypidNameIndexId,
 										true, NULL, 1, &child_key);
 
 		while (HeapTupleIsValid(child_tuple = systable_getnext(child_scan)))
@@ -12037,7 +12037,7 @@ RemoveInheritance(Relation child_rel, Relation parent_rel)
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(parent_rel)));
-	scan = systable_beginscan(catalogRelation, ConstraintRelidIndexId,
+	scan = systable_beginscan(catalogRelation, ConstraintRelidTypidNameIndexId,
 							  true, NULL, 1, key);
 
 	connames = NIL;
@@ -12057,7 +12057,7 @@ RemoveInheritance(Relation child_rel, Relation parent_rel)
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(child_rel)));
-	scan = systable_beginscan(catalogRelation, ConstraintRelidIndexId,
+	scan = systable_beginscan(catalogRelation, ConstraintRelidTypidNameIndexId,
 							  true, NULL, 1, key);
 
 	while (HeapTupleIsValid(constraintTuple = systable_getnext(scan)))
@@ -12798,7 +12798,7 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(rel)));
 	scan = systable_beginscan(pg_constraint,
-							  toLogged ? ConstraintRelidIndexId : InvalidOid,
+							  toLogged ? ConstraintRelidTypidNameIndexId : InvalidOid,
 							  true, NULL, 1, skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))

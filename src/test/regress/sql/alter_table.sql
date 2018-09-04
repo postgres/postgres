@@ -1865,6 +1865,24 @@ ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
 DROP TABLE alter2.tt8;
 DROP SCHEMA alter2;
 
+--
+-- Check conflicts between index and CHECK constraint names
+--
+CREATE TABLE tt9(c integer);
+ALTER TABLE tt9 ADD CHECK(c > 1);
+ALTER TABLE tt9 ADD CHECK(c > 2);  -- picks nonconflicting name
+ALTER TABLE tt9 ADD CONSTRAINT foo CHECK(c > 3);
+ALTER TABLE tt9 ADD CONSTRAINT foo CHECK(c > 4);  -- fail, dup name
+ALTER TABLE tt9 ADD UNIQUE(c);
+ALTER TABLE tt9 ADD UNIQUE(c);  -- picks nonconflicting name
+ALTER TABLE tt9 ADD CONSTRAINT tt9_c_key UNIQUE(c);  -- fail, dup name
+ALTER TABLE tt9 ADD CONSTRAINT foo UNIQUE(c);  -- fail, dup name
+ALTER TABLE tt9 ADD CONSTRAINT tt9_c_key CHECK(c > 5);  -- fail, dup name
+ALTER TABLE tt9 ADD CONSTRAINT tt9_c_key2 CHECK(c > 6);
+ALTER TABLE tt9 ADD UNIQUE(c);  -- picks nonconflicting name
+\d tt9
+DROP TABLE tt9;
+
 
 -- Check that comments on constraints and indexes are not lost at ALTER TABLE.
 CREATE TABLE comment_test (
