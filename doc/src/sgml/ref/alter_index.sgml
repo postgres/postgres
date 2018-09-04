@@ -48,6 +48,9 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
     <listitem>
      <para>
       The <literal>RENAME</literal> form changes the name of the index.
+      If the index is associated with a table constraint (either
+      <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>,
+      or <literal>EXCLUDE</literal>), the constraint is renamed as well.
       There is no effect on the stored data.
      </para>
     </listitem>

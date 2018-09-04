@@ -2994,6 +2994,41 @@ Check constraints:
 
 DROP TABLE alter2.tt8;
 DROP SCHEMA alter2;
+--
+-- Check conflicts between index and CHECK constraint names
+--
+CREATE TABLE tt9(c integer);
+ALTER TABLE tt9 ADD CHECK(c > 1);
+ALTER TABLE tt9 ADD CHECK(c > 2);  -- picks nonconflicting name
+ALTER TABLE tt9 ADD CONSTRAINT foo CHECK(c > 3);
+ALTER TABLE tt9 ADD CONSTRAINT foo CHECK(c > 4);  -- fail, dup name
+ERROR:  constraint "foo" for relation "tt9" already exists
+ALTER TABLE tt9 ADD UNIQUE(c);
+ALTER TABLE tt9 ADD UNIQUE(c);  -- picks nonconflicting name
+ALTER TABLE tt9 ADD CONSTRAINT tt9_c_key UNIQUE(c);  -- fail, dup name
+ERROR:  relation "tt9_c_key" already exists
+ALTER TABLE tt9 ADD CONSTRAINT foo UNIQUE(c);  -- fail, dup name
+ERROR:  constraint "foo" for relation "tt9" already exists
+ALTER TABLE tt9 ADD CONSTRAINT tt9_c_key CHECK(c > 5);  -- fail, dup name
+ERROR:  constraint "tt9_c_key" for relation "tt9" already exists
+ALTER TABLE tt9 ADD CONSTRAINT tt9_c_key2 CHECK(c > 6);
+ALTER TABLE tt9 ADD UNIQUE(c);  -- picks nonconflicting name
+\d tt9
+                Table "public.tt9"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ c      | integer |           |          | 
+Indexes:
+    "tt9_c_key" UNIQUE CONSTRAINT, btree (c)
+    "tt9_c_key1" UNIQUE CONSTRAINT, btree (c)
+    "tt9_c_key3" UNIQUE CONSTRAINT, btree (c)
+Check constraints:
+    "foo" CHECK (c > 3)
+    "tt9_c_check" CHECK (c > 1)
+    "tt9_c_check1" CHECK (c > 2)
+    "tt9_c_key2" CHECK (c > 6)
+
+DROP TABLE tt9;
 -- Check that comments on constraints and indexes are not lost at ALTER TABLE.
 CREATE TABLE comment_test (
   id int,
