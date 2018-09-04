@@ -204,6 +204,12 @@ set force_parallel_mode=1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
 
+-- Window function calculation can't be pushed to workers.
+explain (costs off, verbose)
+  select count(*) from tenk1 a where (unique1, two) in
+    (select unique1, row_number() over() from tenk1 b);
+
+
 -- to increase the parallel query test coverage
 EXPLAIN (analyze, timing off, summary off, costs off) SELECT * FROM tenk1;
 
