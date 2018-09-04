@@ -1162,6 +1162,20 @@ has_parallel_hazard_walker(Node *node, has_parallel_hazard_arg *context)
 	}
 
 	/*
+	 * Treat window functions as parallel-restricted because we aren't sure
+	 * whether the input row ordering is fully deterministic, and the output
+	 * of window functions might vary across workers if not.  (In some cases,
+	 * like where the window frame orders by a primary key, we could relax
+	 * this restriction.  But it doesn't currently seem worth expending extra
+	 * effort to do so.)
+	 */
+	else if (IsA(node, WindowFunc))
+	{
+		if (!context->allow_restricted)
+			return true;
+	}
+
+	/*
 	 * As a notational convenience for callers, look through RestrictInfo.
 	 */
 	else if (IsA(node, RestrictInfo))

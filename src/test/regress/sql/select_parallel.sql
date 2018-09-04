@@ -83,6 +83,11 @@ drop role regress_parallel_worker;
 select count(*) from tenk1;
 reset role;
 
+-- Window function calculation can't be pushed to workers.
+explain (costs off, verbose)
+  select count(*) from tenk1 a where (unique1, two) in
+    (select unique1, row_number() over() from tenk1 b);
+
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
 
