@@ -9,6 +9,8 @@ OBJS	= vacuumlo.o $(WIN32RES)
 PG_CPPFLAGS = -I$(libpq_srcdir)
 PG_LIBS_INTERNAL = $(libpq_pgport)
 
+EXTRA_CLEAN = tmp_check
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
