@@ -8082,10 +8082,11 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
    </indexterm>
 
    <para>
-    The <literal>AT TIME ZONE</literal> construct allows conversions
-    of time stamps to different time zones.  <xref
-    linkend="functions-datetime-zoneconvert-table"/> shows its
-    variants.
+    The <literal>AT TIME ZONE</literal> converts time
+    stamp <emphasis>without time zone</emphasis> to/from
+    time stamp <emphasis>with time zone</emphasis>, and
+    <emphasis>time</emphasis> values to different time zones. <xref
+    linkend="functions-datetime-zoneconvert-table"/> shows its variants.
    </para>
 
     <table id="functions-datetime-zoneconvert-table">
@@ -8130,24 +8131,33 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
 
    <para>
     In these expressions, the desired time zone <replaceable>zone</replaceable> can be
-    specified either as a text string (e.g., <literal>'PST'</literal>)
+    specified either as a text string (e.g., <literal>'America/Los_Angeles'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
     In the text case, a time zone name can be specified in any of the ways
     described in <xref linkend="datatype-timezones"/>.
    </para>
 
    <para>
-    Examples (assuming the local time zone is <literal>PST8PDT</literal>):
+    Examples (assuming the local time zone is <literal>America/Los_Angeles</literal>):
 <screen>
-SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'MST';
+SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'America/Denver';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 19:38:40-08</computeroutput>
 
-SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'America/Denver';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 18:38:40</computeroutput>
+
+SELECT TIMESTAMP '2001-02-16 20:38:40-05' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'America/Chicago';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 05:38:40</computeroutput>
 </screen>
-    The first example takes a time stamp without time zone and interprets it as MST time
-    (UTC-7), which is then converted to PST (UTC-8) for display.  The second example takes
-    a time stamp specified in EST (UTC-5) and converts it to local time in MST (UTC-7).
+    The first example adds a time zone to a value that lacks it, and
+    displays the value using the current <varname>TimeZone</varname>
+    setting.  The second example shifts the time stamp with time zone value
+    to the specified time zone, and returns the value without a time zone.
+    This allows storage and display of values different from the current
+    <varname>TimeZone</varname> setting.  The third example converts
+    Tokyo time to Chicago time.   Converting <emphasis>time</emphasis>
+    values to other time zones uses the currently active time zone rules
+    since no date is supplied.
    </para>
 
    <para>
