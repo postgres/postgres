@@ -5907,7 +5907,7 @@
   prorettype => 'record', proargtypes => 'text _text _text',
   proallargtypes => '{text,_text,_text,oid,oid,int4}',
   proargmodes => '{i,i,i,o,o,o}',
-  proargnames => '{type,name,args,classid,objid,objsubid}',
+  proargnames => '{type,object_names,object_args,classid,objid,objsubid}',
   prosrc => 'pg_get_object_address' },
 
 { oid => '2079', descr => 'is table visible in search path?',
