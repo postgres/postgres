@@ -302,23 +302,11 @@ RelationBuildPartitionDesc(Relation rel)
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for relation %u", inhrelid);
 
-		/*
-		 * It is possible that the pg_class tuple of a partition has not been
-		 * updated yet to set its relpartbound field.  The only case where
-		 * this happens is when we open the parent relation to check using its
-		 * partition descriptor that a new partition's bound does not overlap
-		 * some existing partition.
-		 */
-		if (!((Form_pg_class) GETSTRUCT(tuple))->relispartition)
-		{
-			ReleaseSysCache(tuple);
-			continue;
-		}
-
 		datum = SysCacheGetAttr(RELOID, tuple,
 								Anum_pg_class_relpartbound,
 								&isnull);
-		Assert(!isnull);
+		if (isnull)
+			elog(ERROR, "null relpartbound for relation %u", inhrelid);
 		boundspec = (Node *) stringToNode(TextDatumGetCString(datum));
 
 		/*
@@ -883,9 +871,8 @@ generate_partition_qual(Relation rel)
 	boundDatum = SysCacheGetAttr(RELOID, tuple,
 								 Anum_pg_class_relpartbound,
 								 &isnull);
-	if (isnull)					/* should not happen */
-		elog(ERROR, "relation \"%s\" has relpartbound = null",
-			 RelationGetRelationName(rel));
+	if (isnull)
+		elog(ERROR, "null relpartbound for relation %u", RelationGetRelid(rel));
 	bound = castNode(PartitionBoundSpec,
 					 stringToNode(TextDatumGetCString(boundDatum)));
 	ReleaseSysCache(tuple);
