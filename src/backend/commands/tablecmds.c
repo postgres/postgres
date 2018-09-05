@@ -770,9 +770,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  InvalidOid,
 										  typaddress);
 
-	/* Store inheritance information for new rel. */
-	StoreCatalogInheritance(relationId, inheritOids, stmt->partbound != NULL);
-
 	/*
 	 * We must bump the command counter to make the newly-created relation
 	 * tuple visible for opening.
@@ -865,6 +862,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 		heap_close(parent, NoLock);
 	}
+
+	/* Store inheritance information for new rel. */
+	StoreCatalogInheritance(relationId, inheritOids, stmt->partbound != NULL);
 
 	/*
 	 * Process the partitioning specification (if any) and store the partition
@@ -14647,10 +14647,6 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		elog(ERROR, "cache lookup failed for relation %u",
 			 RelationGetRelid(partRel));
 	Assert(((Form_pg_class) GETSTRUCT(tuple))->relispartition);
-
-	(void) SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relpartbound,
-						   &isnull);
-	Assert(!isnull);
 
 	/* Clear relpartbound and reset relispartition */
 	memset(new_val, 0, sizeof(new_val));

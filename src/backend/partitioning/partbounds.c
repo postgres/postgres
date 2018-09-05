@@ -1641,8 +1641,9 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 			datum = SysCacheGetAttr(RELOID, tuple,
 									Anum_pg_class_relpartbound,
 									&isnull);
+			if (isnull)
+				elog(ERROR, "null relpartbound for relation %u", inhrelid);
 
-			Assert(!isnull);
 			bspec = (PartitionBoundSpec *)
 				stringToNode(TextDatumGetCString(datum));
 			if (!IsA(bspec, PartitionBoundSpec))
