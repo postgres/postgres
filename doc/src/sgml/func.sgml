@@ -17700,24 +17700,24 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
      <tbody>
       <row>
-       <entry><literal><function>pg_describe_object(<parameter>catalog_id</parameter>, <parameter>object_id</parameter>, <parameter>object_sub_id</parameter>)</function></literal></entry>
+       <entry><literal><function>pg_describe_object(<parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type>, <parameter>objsubid</parameter> <type>integer</type>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get description of a database object</entry>
       </row>
       <row>
-       <entry><literal><function>pg_identify_object(<parameter>catalog_id</parameter> <type>oid</type>, <parameter>object_id</parameter> <type>oid</type>, <parameter>object_sub_id</parameter> <type>integer</type>)</function></literal></entry>
+       <entry><literal><function>pg_identify_object(<parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type>, <parameter>objsubid</parameter> <type>integer</type>)</function></literal></entry>
        <entry><parameter>type</parameter> <type>text</type>, <parameter>schema</parameter> <type>text</type>, <parameter>name</parameter> <type>text</type>, <parameter>identity</parameter> <type>text</type></entry>
        <entry>get identity of a database object</entry>
       </row>
       <row>
-       <entry><literal><function>pg_identify_object_as_address(<parameter>catalog_id</parameter> <type>oid</type>, <parameter>object_id</parameter> <type>oid</type>, <parameter>object_sub_id</parameter> <type>integer</type>)</function></literal></entry>
-       <entry><parameter>type</parameter> <type>text</type>, <parameter>name</parameter> <type>text[]</type>, <parameter>args</parameter> <type>text[]</type></entry>
+       <entry><literal><function>pg_identify_object_as_address(<parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type>, <parameter>objsubid</parameter> <type>integer</type>)</function></literal></entry>
+       <entry><parameter>type</parameter> <type>text</type>, <parameter>object_names</parameter> <type>text[]</type>, <parameter>object_args</parameter> <type>text[]</type></entry>
        <entry>get external representation of a database object's address</entry>
       </row>
       <row>
-       <entry><literal><function>pg_get_object_address(<parameter>type</parameter> <type>text</type>, <parameter>name</parameter> <type>text[]</type>, <parameter>args</parameter> <type>text[]</type>)</function></literal></entry>
-       <entry><parameter>catalog_id</parameter> <type>oid</type>, <parameter>object_id</parameter> <type>oid</type>, <parameter>object_sub_id</parameter> <type>int32</type></entry>
-       <entry>get address of a database object, from its external representation</entry>
+       <entry><literal><function>pg_get_object_address(<parameter>type</parameter> <type>text</type>, <parameter>object_names</parameter> <type>text[]</type>, <parameter>object_args</parameter> <type>text[]</type>)</function></literal></entry>
+       <entry><parameter>classid</parameter> <type>oid</type>, <parameter>objid</parameter> <type>oid</type>, <parameter>objsubid</parameter> <type>integer</type></entry>
+       <entry>get address of a database object from its external representation</entry>
       </row>
      </tbody>
     </tgroup>
@@ -17725,7 +17725,9 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
   <para>
    <function>pg_describe_object</function> returns a textual description of a database
-   object specified by catalog OID, object OID and a (possibly zero) sub-object ID.
+   object specified by catalog OID, object OID, and sub-object ID (such as
+   a column number within a table; the sub-object ID is zero when referring
+   to a whole object).
    This description is intended to be human-readable, and might be translated,
    depending on server configuration.
    This is useful to determine the identity of an object as stored in the
@@ -17734,29 +17736,30 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
   <para>
    <function>pg_identify_object</function> returns a row containing enough information
-   to uniquely identify the database object specified by catalog OID, object OID and a
-   (possibly zero) sub-object ID.  This information is intended to be machine-readable,
+   to uniquely identify the database object specified by catalog OID, object OID and
+   sub-object ID.  This information is intended to be machine-readable,
    and is never translated.
    <parameter>type</parameter> identifies the type of database object;
    <parameter>schema</parameter> is the schema name that the object belongs in, or
    <literal>NULL</literal> for object types that do not belong to schemas;
-   <parameter>name</parameter> is the name of the object, quoted if necessary, only
-   present if it can be used (alongside schema name, if pertinent) as a unique
-   identifier of the object, otherwise <literal>NULL</literal>;
-   <parameter>identity</parameter> is the complete object identity, with the precise format
-   depending on object type, and each part within the format being
-   schema-qualified and quoted as necessary.
+   <parameter>name</parameter> is the name of the object, quoted if necessary,
+   if the name (along with schema name, if pertinent) is sufficient to
+   uniquely identify the object, otherwise <literal>NULL</literal>;
+   <parameter>identity</parameter> is the complete object identity, with the
+   precise format depending on object type, and each name within the format
+   being schema-qualified and quoted as necessary.
   </para>
 
   <para>
    <function>pg_identify_object_as_address</function> returns a row containing
    enough information to uniquely identify the database object specified by
-   catalog OID, object OID and a (possibly zero) sub-object ID.  The returned
+   catalog OID, object OID and sub-object ID.  The returned
    information is independent of the current server, that is, it could be used
    to identify an identically named object in another server.
    <parameter>type</parameter> identifies the type of database object;
-   <parameter>name</parameter> and <parameter>args</parameter> are text arrays that together
-   form a reference to the object.  These three columns can be passed to
+   <parameter>object_names</parameter> and <parameter>object_args</parameter>
+   are text arrays that together form a reference to the object.
+   These three values can be passed to
    <function>pg_get_object_address</function> to obtain the internal address
    of the object.
    This function is the inverse of <function>pg_get_object_address</function>.
@@ -17769,10 +17772,10 @@ SELECT collation for ('foo' COLLATE "de_DE");
    ones that would be used in system catalogs such as <structname>pg_depend</structname>
    and can be passed to other system functions such as
    <function>pg_identify_object</function> or <function>pg_describe_object</function>.
-   <parameter>catalog_id</parameter> is the OID of the system catalog containing the
+   <parameter>classid</parameter> is the OID of the system catalog containing the
    object;
-   <parameter>object_id</parameter> is the OID of the object itself, and
-   <parameter>object_sub_id</parameter> is the object sub-ID, or zero if none.
+   <parameter>objid</parameter> is the OID of the object itself, and
+   <parameter>objsubid</parameter> is the sub-object ID, or zero if none.
    This function is the inverse of <function>pg_identify_object_as_address</function>.
   </para>
 
@@ -20661,23 +20664,23 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
       <tbody>
        <row>
         <entry><literal>classid</literal></entry>
-        <entry><type>Oid</type></entry>
+        <entry><type>oid</type></entry>
         <entry>OID of catalog the object belongs in</entry>
        </row>
        <row>
         <entry><literal>objid</literal></entry>
-        <entry><type>Oid</type></entry>
-        <entry>OID of the object in the catalog</entry>
+        <entry><type>oid</type></entry>
+        <entry>OID of the object itself</entry>
        </row>
        <row>
         <entry><literal>objsubid</literal></entry>
         <entry><type>integer</type></entry>
-        <entry>Object sub-id (e.g. attribute number for columns)</entry>
+        <entry>Sub-object ID (e.g. attribute number for a column)</entry>
        </row>
        <row>
         <entry><literal>command_tag</literal></entry>
         <entry><type>text</type></entry>
-        <entry>command tag</entry>
+        <entry>Command tag</entry>
        </row>
        <row>
         <entry><literal>object_type</literal></entry>
@@ -20696,14 +20699,14 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
         <entry><literal>object_identity</literal></entry>
         <entry><type>text</type></entry>
         <entry>
-         Text rendering of the object identity, schema-qualified. Each and every
-         identifier present in the identity is quoted if necessary.
+         Text rendering of the object identity, schema-qualified. Each
+         identifier included in the identity is quoted if necessary.
         </entry>
        </row>
        <row>
         <entry><literal>in_extension</literal></entry>
         <entry><type>bool</type></entry>
-        <entry>whether the command is part of an extension script</entry>
+        <entry>True if the command is part of an extension script</entry>
        </row>
        <row>
         <entry><literal>command</literal></entry>
@@ -20748,29 +20751,29 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
       <tbody>
        <row>
         <entry><literal>classid</literal></entry>
-        <entry><type>Oid</type></entry>
+        <entry><type>oid</type></entry>
         <entry>OID of catalog the object belonged in</entry>
        </row>
        <row>
         <entry><literal>objid</literal></entry>
-        <entry><type>Oid</type></entry>
-        <entry>OID the object had within the catalog</entry>
+        <entry><type>oid</type></entry>
+        <entry>OID of the object itself</entry>
        </row>
        <row>
         <entry><literal>objsubid</literal></entry>
-        <entry><type>int32</type></entry>
-        <entry>Object sub-id (e.g. attribute number for columns)</entry>
+        <entry><type>integer</type></entry>
+        <entry>Sub-object ID (e.g. attribute number for a column)</entry>
        </row>
        <row>
         <entry><literal>original</literal></entry>
         <entry><type>bool</type></entry>
-        <entry>Flag used to identify the root object(s) of the deletion</entry>
+        <entry>True if this was one of the root object(s) of the deletion</entry>
        </row>
        <row>
         <entry><literal>normal</literal></entry>
         <entry><type>bool</type></entry>
         <entry>
-         Flag indicating that there's a normal dependency relationship
+         True if there was a normal dependency relationship
          in the dependency graph leading to this object
         </entry>
        </row>
@@ -20778,7 +20781,7 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
         <entry><literal>is_temporary</literal></entry>
         <entry><type>bool</type></entry>
         <entry>
-         Flag indicating that the object was a temporary object.
+         True if this was a temporary object
         </entry>
        </row>
        <row>
@@ -20807,8 +20810,8 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
         <entry><literal>object_identity</literal></entry>
         <entry><type>text</type></entry>
         <entry>
-         Text rendering of the object identity, schema-qualified. Each and every
-         identifier present in the identity is quoted if necessary.
+         Text rendering of the object identity, schema-qualified. Each
+         identifier included in the identity is quoted if necessary.
         </entry>
        </row>
        <row>
@@ -20816,17 +20819,17 @@ FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
         <entry><type>text[]</type></entry>
         <entry>
          An array that, together with <literal>object_type</literal> and
-         <literal>address_args</literal>,
-         can be used by the <function>pg_get_object_address()</function> to
+         <literal>address_args</literal>, can be used by
+         the <function>pg_get_object_address()</function> function to
          recreate the object address in a remote server containing an
-         identically named object of the same kind.
+         identically named object of the same kind
         </entry>
        </row>
        <row>
         <entry><literal>address_args</literal></entry>
         <entry><type>text[]</type></entry>
         <entry>
-         Complement for <literal>address_names</literal> above.
+         Complement for <literal>address_names</literal>
         </entry>
        </row>
       </tbody>
