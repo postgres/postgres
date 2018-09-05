@@ -14617,8 +14617,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	HeapTuple	tuple,
 				newtuple;
 	Datum		new_val[Natts_pg_class];
-	bool		isnull,
-				new_null[Natts_pg_class],
+	bool		new_null[Natts_pg_class],
 				new_repl[Natts_pg_class];
 	ObjectAddress address;
 	Oid			defaultPartOid;
