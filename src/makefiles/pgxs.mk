@@ -39,9 +39,11 @@
 #   SCRIPTS_built -- script files (not binaries) to install into $PREFIX/bin,
 #     which need to be built first
 #   HEADERS -- files to install into $(includedir_server)/$MODULEDIR/$MODULE_big
+#   HEADERS_built -- as above but built first
 #   HEADERS_$(MODULE) -- files to install into
 #     $(includedir_server)/$MODULEDIR/$MODULE; the value of $MODULE must be
 #     listed in MODULES or MODULE_big
+#   HEADERS_built_$(MODULE) -- as above but built first
 #   REGRESS -- list of regression test cases (without suffix)
 #   REGRESS_OPTS -- additional switches to pass to pg_regress
 #   NO_INSTALLCHECK -- don't define an installcheck target, useful e.g. if
@@ -115,26 +117,54 @@ ifdef PG_CPPFLAGS
 override CPPFLAGS := $(PG_CPPFLAGS) $(CPPFLAGS)
 endif
 
+# get list of all names used with or without built_ prefix
+# note that use of HEADERS_built_foo will get both "foo" and "built_foo",
+# we cope with that later when filtering this list against MODULES.
+# If someone wants to name a module "built_foo", they can do that and it
+# works, but if they have MODULES = foo built_foo  then they will need to
+# force building of all headers and use HEADERS_built_foo and
+# HEADERS_built_built_foo.
 HEADER_alldirs := $(patsubst HEADERS_%,%,$(filter HEADERS_%, $(.VARIABLES)))
+HEADER_alldirs += $(patsubst HEADERS_built_%,%,$(filter HEADERS_built_%, $(.VARIABLES)))
+
+# collect all names of built headers to use as a dependency
+HEADER_allbuilt =
 
 # HEADERS is an error in the absence of MODULE_big to provide a dir name
 ifdef MODULE_big
 ifdef HEADERS
 HEADER_dirs := $(MODULE_big)
-HEADERS_$(MODULE_big) = $(HEADERS)
+HEADER_unbuilt_$(MODULE_big) = $(HEADERS)
+HEADER_built_$(MODULE_big) = $(HEADERS_built)
+HEADER_allbuilt += $(HEADERS_built)
+else ifdef HEADERS_built
+HEADER_dirs := $(MODULE_big)
+HEADER_built_$(MODULE_big) = $(HEADERS_built)
+HEADER_allbuilt += $(HEADERS_built)
 else
-HEADER_dirs := $(filter $(MODULE_big),$(HEADER_alldirs))
+# file might have used HEADERS_foo or HEADERS_built_foo, so check for those
+HEADER_dirs := $(if $(filter $(MODULE_big) built_$(MODULE_big),$(HEADER_alldirs)),$(MODULE_big))
+HEADER_unbuilt_$(MODULE_big) = $(HEADERS_$(MODULE_big))
+HEADER_built_$(MODULE_big) = $(HEADERS_built_$(MODULE_big))
+HEADER_allbuilt += $(HEADERS_built_$(MODULE_big))
 endif
 else
 ifdef HEADERS
 $(error HEADERS requires MODULE_big to be set)
 endif
-HEADER_dirs := $(filter $(MODULES),$(HEADER_alldirs))
+# make list of modules that have either HEADERS_foo or HEADERS_built_foo
+HEADER_dirs := $(foreach m,$(MODULES),$(if $(filter $(m) built_$(m),$(HEADER_alldirs)),$(m)))
+# assign HEADER_unbuilt_foo and HEADER_built_foo, but make sure
+# that "built" takes precedence in the case of conflict, by removing
+# conflicting module names when matching the unbuilt name
+$(foreach m,$(filter-out $(addprefix built_,$(MODULES)),$(MODULES)),$(eval HEADER_unbuilt_$(m) = $$(HEADERS_$(m))))
+$(foreach m,$(MODULES),$(eval HEADER_built_$(m) = $$(HEADERS_built_$(m))))
+$(foreach m,$(MODULES),$(eval HEADER_allbuilt += $$(HEADERS_built_$(m))))
 endif
 
 # HEADERS_foo requires that "foo" is in MODULES as a sanity check
-ifneq ($(filter-out $(HEADER_dirs),$(HEADER_alldirs)),)
-$(error $(patsubst %,HEADERS_%,$(filter-out $(HEADER_dirs),$(HEADER_alldirs))) defined with no module)
+ifneq ($(filter-out $(HEADER_dirs) $(addprefix built_,$(HEADER_dirs)),$(HEADER_alldirs)),)
+$(error $(patsubst %,HEADERS_%,$(filter-out $(HEADER_dirs) $(addprefix built_,$(HEADER_dirs)),$(HEADER_alldirs))) defined with no module)
 endif
 
 # Functions for generating install/uninstall commands; the blank lines
@@ -142,7 +172,7 @@ endif
 # $(call install_headers,dir,headers)
 define install_headers
 $(MKDIR_P) '$(DESTDIR)$(includedir_server)/$(incmoduledir)/$(1)/'
-$(INSTALL_DATA) $(addprefix $(srcdir)/, $(2)) '$(DESTDIR)$(includedir_server)/$(incmoduledir)/$(1)/'
+$(INSTALL_DATA) $(2) '$(DESTDIR)$(includedir_server)/$(incmoduledir)/$(1)/'
 
 endef
 # $(call uninstall_headers,dir,headers)
@@ -152,7 +182,7 @@ rm -f $(addprefix '$(DESTDIR)$(includedir_server)/$(incmoduledir)/$(1)'/, $(notd
 endef
 
 
-all: $(PROGRAM) $(DATA_built) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULES)) $(addsuffix .control, $(EXTENSION))
+all: $(PROGRAM) $(DATA_built) $(HEADER_allbuilt) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULES)) $(addsuffix .control, $(EXTENSION))
 
 ifeq ($(with_llvm), yes)
 all: $(addsuffix .bc, $(MODULES)) $(patsubst %.o,%.bc, $(OBJS))
@@ -199,7 +229,8 @@ ifdef SCRIPTS_built
 	$(INSTALL_SCRIPT) $(SCRIPTS_built) '$(DESTDIR)$(bindir)/'
 endif # SCRIPTS_built
 ifneq ($(strip $(HEADER_dirs)),)
-	$(foreach dir,$(HEADER_dirs),$(if $(HEADERS_$(dir)),$(call install_headers,$(dir),$(HEADERS_$(dir)))))
+	$(foreach dir,$(HEADER_dirs),$(if $(HEADER_unbuilt_$(dir)),$(call install_headers,$(dir),$(addprefix $(srcdir)/, $(HEADER_unbuilt_$(dir))))))
+	$(foreach dir,$(HEADER_dirs),$(if $(HEADER_built_$(dir)),$(call install_headers,$(dir),$(HEADER_built_$(dir)))))
 endif # HEADERS
 ifdef MODULE_big
 ifeq ($(with_llvm), yes)
@@ -266,7 +297,7 @@ ifdef SCRIPTS_built
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(SCRIPTS_built))
 endif
 ifneq ($(strip $(HEADER_dirs)),)
-	$(foreach dir,$(HEADER_dirs),$(if $(HEADERS_$(dir)),$(call uninstall_headers,$(dir),$(HEADERS_$(dir)))))
+	$(foreach dir,$(HEADER_dirs),$(call uninstall_headers,$(dir),$(HEADER_unbuilt_$(dir)) $(HEADER_built_$(dir))))
 endif # HEADERS
 
 ifdef MODULE_big

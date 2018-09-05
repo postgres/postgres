@@ -1224,9 +1224,10 @@ include $(PGXS)
 
      <varlistentry>
       <term><varname>HEADERS</varname></term>
+      <term><varname>HEADERS_built</varname></term>
       <listitem>
        <para>
-        files to install under
+        files to (optionally build and) install under
         <literal><replaceable>prefix</replaceable>/include/server/$MODULEDIR/$MODULE_big</literal>
        </para>
       </listitem>
@@ -1234,12 +1235,21 @@ include $(PGXS)
 
      <varlistentry>
       <term><varname>HEADERS_$MODULE</varname></term>
+      <term><varname>HEADERS_built_$MODULE</varname></term>
       <listitem>
        <para>
-        files to install under
+        Files to install (after building if specified) under
         <literal><replaceable>prefix</replaceable>/include/server/$MODULEDIR/$MODULE</literal>,
         where <literal>$MODULE</literal> must be a module name used
-        in <literal>MODULES</literal> or <literal>MODULE_big</literal>
+        in <literal>MODULES</literal> or <literal>MODULE_big</literal>.
+       </para>
+       <para>
+        It is legal to use both variables for the same module, or any
+        combination, unless you have two module names in the
+        <literal>MODULES</literal> list that differ only by the presence of a
+        prefix <literal>built_</literal>, which would cause ambiguity. In
+        that (hopefully unlikely) case, you should use only the
+        <literal>HEADERS_built_$MODULE</literal> variables.
        </para>
       </listitem>
      </varlistentry>
