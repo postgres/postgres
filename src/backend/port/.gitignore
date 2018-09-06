@@ -1,4 +1,3 @@
-/dynloader.c
 /pg_sema.c
 /pg_shmem.c
 /tas.s

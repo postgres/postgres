@@ -15060,7 +15060,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in cbrt clock_gettime dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open symlink sync_file_range utime utimes wcstombs_l
+for ac_func in cbrt clock_gettime fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open symlink sync_file_range utime utimes wcstombs_l
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -15249,6 +15249,30 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_F_FULLFSYNC $ac_have_decl
+_ACEOF
+
+
+ac_fn_c_check_decl "$LINENO" "RTLD_GLOBAL" "ac_cv_have_decl_RTLD_GLOBAL" "#include <dlfcn.h>
+"
+if test "x$ac_cv_have_decl_RTLD_GLOBAL" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_RTLD_GLOBAL $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "RTLD_NOW" "ac_cv_have_decl_RTLD_NOW" "#include <dlfcn.h>
+"
+if test "x$ac_cv_have_decl_RTLD_NOW" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_RTLD_NOW $ac_have_decl
 _ACEOF
 
 
@@ -15456,6 +15480,19 @@ else
   case " $LIBOBJS " in
   *" crypt.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS crypt.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "dlopen" "ac_cv_func_dlopen"
+if test "x$ac_cv_func_dlopen" = xyes; then :
+  $as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" dlopen.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS dlopen.$ac_objext"
  ;;
 esac
 
@@ -19016,7 +19053,7 @@ fi
 ac_config_files="$ac_config_files GNUmakefile src/Makefile.global"
 
 
-ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/include/dynloader.h:src/backend/port/dynloader/${template}.h src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
+ac_config_links="$ac_config_links src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
 
 
 if test "$PORTNAME" = "win32"; then
@@ -19737,10 +19774,8 @@ do
     "src/backend/port/tas.s") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/tas.s:src/backend/port/tas/${tas_file}" ;;
     "GNUmakefile") CONFIG_FILES="$CONFIG_FILES GNUmakefile" ;;
     "src/Makefile.global") CONFIG_FILES="$CONFIG_FILES src/Makefile.global" ;;
-    "src/backend/port/dynloader.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c" ;;
     "src/backend/port/pg_sema.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION}" ;;
     "src/backend/port/pg_shmem.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION}" ;;
-    "src/include/dynloader.h") CONFIG_LINKS="$CONFIG_LINKS src/include/dynloader.h:src/backend/port/dynloader/${template}.h" ;;
     "src/include/pg_config_os.h") CONFIG_LINKS="$CONFIG_LINKS src/include/pg_config_os.h:src/include/port/${template}.h" ;;
     "src/Makefile.port") CONFIG_LINKS="$CONFIG_LINKS src/Makefile.port:src/makefiles/Makefile.${template}" ;;
     "check_win32_symlinks") CONFIG_COMMANDS="$CONFIG_COMMANDS check_win32_symlinks" ;;

@@ -158,6 +158,14 @@
    don't. */
 #undef HAVE_DECL_POSIX_FADVISE
 
+/* Define to 1 if you have the declaration of `RTLD_GLOBAL', and to 0 if you
+   don't. */
+#undef HAVE_DECL_RTLD_GLOBAL
+
+/* Define to 1 if you have the declaration of `RTLD_NOW', and to 0 if you
+   don't. */
+#undef HAVE_DECL_RTLD_NOW
+
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_SNPRINTF

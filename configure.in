@@ -1544,7 +1544,7 @@ PGAC_FUNC_WCSTOMBS_L
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_CHECK_FUNCS([cbrt clock_gettime dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open symlink sync_file_range utime utimes wcstombs_l])
+AC_CHECK_FUNCS([cbrt clock_gettime fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open symlink sync_file_range utime utimes wcstombs_l])
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -1569,6 +1569,8 @@ AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 AC_CHECK_DECLS([strlcat, strlcpy, strnlen])
 # This is probably only present on macOS, but may as well check always
 AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
+
+AC_CHECK_DECLS([RTLD_GLOBAL, RTLD_NOW], [], [], [#include <dlfcn.h>])
 
 HAVE_IPV6=no
 AC_CHECK_TYPE([struct sockaddr_in6],
@@ -1658,7 +1660,7 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-AC_REPLACE_FUNCS([crypt fls getopt getrusage inet_aton mkdtemp random rint srandom strerror strlcat strlcpy strnlen])
+AC_REPLACE_FUNCS([crypt dlopen fls getopt getrusage inet_aton mkdtemp random rint srandom strerror strlcat strlcpy strnlen])
 
 case $host_os in
 
@@ -2382,10 +2384,8 @@ AC_SUBST(vpath_build)
 AC_CONFIG_FILES([GNUmakefile src/Makefile.global])
 
 AC_CONFIG_LINKS([
-  src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c
   src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION}
   src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION}
-  src/include/dynloader.h:src/backend/port/dynloader/${template}.h
   src/include/pg_config_os.h:src/include/port/${template}.h
   src/Makefile.port:src/makefiles/Makefile.${template}
 ])

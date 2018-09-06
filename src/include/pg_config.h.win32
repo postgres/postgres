@@ -127,6 +127,14 @@
    to 0 if you don't. */
 #define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN 0
 
+/* Define to 1 if you have the declaration of `RTLD_GLOBAL', and to 0 if you
+   don't. */
+#define HAVE_DECL_RTLD_GLOBAL 0
+
+/* Define to 1 if you have the declaration of `RTLD_NOW', and to 0 if you
+   don't. */
+#define HAVE_DECL_RTLD_NOW 0
+
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #define HAVE_DECL_SNPRINTF 1

@@ -293,7 +293,7 @@ ifeq ($(PORTNAME), win32)
 endif
 
 distclean: clean
-	rm -f port/tas.s port/dynloader.c port/pg_sema.c port/pg_shmem.c
+	rm -f port/tas.s port/pg_sema.c port/pg_shmem.c
 
 maintainer-clean: distclean
 	$(MAKE) -C catalog $@
