@@ -230,9 +230,12 @@ typedef HashScanOpaqueData *HashScanOpaque;
  *
  * There is no particular upper limit on the size of mapp[], other than
  * needing to fit into the metapage.  (With 8K block size, 1024 bitmaps
- * limit us to 256 GB of overflow space...)
+ * limit us to 256 GB of overflow space...).  For smaller block size we
+ * can not use 1024 bitmaps as it will lead to the meta page data crossing
+ * the block size boundary.  So we use BLCKSZ to determine the maximum number
+ * of bitmaps.
  */
-#define HASH_MAX_BITMAPS			1024
+#define HASH_MAX_BITMAPS			Min(BLCKSZ / 8, 1024)
 
 #define HASH_SPLITPOINT_PHASE_BITS	2
 #define HASH_SPLITPOINT_PHASES_PER_GRP	(1 << HASH_SPLITPOINT_PHASE_BITS)
