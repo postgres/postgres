@@ -174,12 +174,14 @@ mydb=# select ts_headline('fr','H&ocirc;tel de la Mer',to_tsquery('fr','Hotels')
  </indexterm>
 
 <synopsis>
-unaccent(<optional><replaceable class="parameter">dictionary</replaceable>, </optional> <replaceable class="parameter">string</replaceable>) returns <type>text</type>
+unaccent(<optional><replaceable class="parameter">dictionary</replaceable> <type>regdictionary</type>, </optional> <replaceable class="parameter">string</replaceable> <type>text</type>) returns <type>text</type>
 </synopsis>
 
  <para>
   If the <replaceable class="parameter">dictionary</replaceable> argument is
-  omitted, <literal>unaccent</literal> is assumed.
+  omitted, the text search dictionary named <literal>unaccent</literal> and
+  appearing in the same schema as the <function>unaccent()</function>
+  function itself is used.
  </para>
 
  <para>
