@@ -33,7 +33,7 @@ dlopen(const char *file, int mode)
 		flags |= BIND_DEFERRED;
 #endif
 
-	return shl_load(filename, flags | BIND_VERBOSE, 0L);
+	return shl_load(file, flags | BIND_VERBOSE, 0L);
 }
 
 void *
@@ -123,14 +123,14 @@ dlsym(void *handle, const char *symbol)
 }
 
 void *
-dlopen(const char *path, int mode)
+dlopen(const char *file, int mode)
 {
 	HMODULE		h;
 	int			prevmode;
 
 	/* Disable popup error messages when loading DLLs */
 	prevmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
-	h = LoadLibrary(path);
+	h = LoadLibrary(file);
 	SetErrorMode(prevmode);
 
 	if (!h)
