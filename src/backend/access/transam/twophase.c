@@ -1207,10 +1207,12 @@ RegisterTwoPhaseRecord(TwoPhaseRmgrId rmid, uint16 info,
  * Read and validate the state file for xid.
  *
  * If it looks OK (has a valid magic number and CRC), return the palloc'd
- * contents of the file.  Otherwise return NULL.
+ * contents of the file, issuing an error when finding corrupted data.  If
+ * missing_ok is true, which indicates that missing files can be safely
+ * ignored, then return NULL.  This state can be reached when doing recovery.
  */
 static char *
-ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
+ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 {
 	char		path[MAXPGPATH];
 	char	   *buf;
@@ -1227,11 +1229,12 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
-		if (give_warnings)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not open file \"%s\": %m", path)));
-		return NULL;
+		if (missing_ok && errno == ENOENT)
+			return NULL;
+
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", path)));
 	}
 
 	/*
@@ -1241,35 +1244,27 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 	 * even on a valid file.
 	 */
 	if (fstat(fd, &stat))
-	{
-		int			save_errno = errno;
-
-		CloseTransientFile(fd);
-		if (give_warnings)
-		{
-			errno = save_errno;
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", path)));
-		}
-		return NULL;
-	}
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", path)));
 
 	if (stat.st_size < (MAXALIGN(sizeof(TwoPhaseFileHeader)) +
 						MAXALIGN(sizeof(TwoPhaseRecordOnDisk)) +
 						sizeof(pg_crc32c)) ||
 		stat.st_size > MaxAllocSize)
-	{
-		CloseTransientFile(fd);
-		return NULL;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg_plural("incorrect size of file \"%s\": %zu byte",
+							   "incorrect size of file \"%s\": %zu bytes",
+							   (Size) stat.st_size, path,
+							   (Size) stat.st_size)));
 
 	crc_offset = stat.st_size - sizeof(pg_crc32c);
 	if (crc_offset != MAXALIGN(crc_offset))
-	{
-		CloseTransientFile(fd);
-		return NULL;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("incorrect alignment of CRC offset for file \"%s\"",
+						path)));
 
 	/*
 	 * OK, slurp in the file.
@@ -1280,37 +1275,31 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 	r = read(fd, buf, stat.st_size);
 	if (r != stat.st_size)
 	{
-		int			save_errno = errno;
-
-		pgstat_report_wait_end();
-		CloseTransientFile(fd);
-		if (give_warnings)
-		{
-			if (r < 0)
-			{
-				errno = save_errno;
-				ereport(WARNING,
-						(errcode_for_file_access(),
-						 errmsg("could not read file \"%s\": %m", path)));
-			}
-			else
-				ereport(WARNING,
-						(errmsg("could not read file \"%s\": read %d of %zu",
-								path, r, (Size) stat.st_size)));
-		}
-		pfree(buf);
-		return NULL;
+		if (r < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", path)));
+		else
+			ereport(ERROR,
+					(errmsg("could not read file \"%s\": read %d of %zu",
+							path, r, (Size) stat.st_size)));
 	}
 
 	pgstat_report_wait_end();
 	CloseTransientFile(fd);
 
 	hdr = (TwoPhaseFileHeader *) buf;
-	if (hdr->magic != TWOPHASE_MAGIC || hdr->total_len != stat.st_size)
-	{
-		pfree(buf);
-		return NULL;
-	}
+	if (hdr->magic != TWOPHASE_MAGIC)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("invalid magic number stored in file \"%s\"",
+						path)));
+
+	if (hdr->total_len != stat.st_size)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("invalid size stored in file \"%s\"",
+						path)));
 
 	INIT_CRC32C(calc_crc);
 	COMP_CRC32C(calc_crc, buf, crc_offset);
@@ -1319,10 +1308,10 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 	file_crc = *((pg_crc32c *) (buf + crc_offset));
 
 	if (!EQ_CRC32C(calc_crc, file_crc))
-	{
-		pfree(buf);
-		return NULL;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("calculated CRC checksum does not match value stored in file \"%s\"",
+						path)));
 
 	return buf;
 }
@@ -1431,7 +1420,7 @@ StandbyTransactionIdIsPrepared(TransactionId xid)
 		return false;			/* nothing to do */
 
 	/* Read and validate file */
-	buf = ReadTwoPhaseFile(xid, false);
+	buf = ReadTwoPhaseFile(xid, true);
 	if (buf == NULL)
 		return false;
 
@@ -1479,7 +1468,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	 * to disk if for some reason they have lived for a long time.
 	 */
 	if (gxact->ondisk)
-		buf = ReadTwoPhaseFile(xid, true);
+		buf = ReadTwoPhaseFile(xid, false);
 	else
 		XlogReadTwoPhaseData(gxact->prepare_start_lsn, &buf, NULL);
 
@@ -1874,6 +1863,10 @@ restoreTwoPhaseData(void)
  * write a WAL entry, and so there might be no evidence in WAL of those
  * subxact XIDs.
  *
+ * On corrupted two-phase files, fail immediately.  Keeping around broken
+ * entries and let replay continue causes harm on the system, and a new
+ * backup should be rolled in.
+ *
  * Our other responsibility is to determine and return the oldest valid XID
  * among the prepared xacts (if none, return ShmemVariableCache->nextXid).
  * This is needed to synchronize pg_subtrans startup properly.
@@ -2164,15 +2157,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 	if (fromdisk)
 	{
 		/* Read and validate file */
-		buf = ReadTwoPhaseFile(xid, true);
-		if (buf == NULL)
-		{
-			ereport(WARNING,
-					(errmsg("removing corrupt two-phase state file for transaction %u",
-							xid)));
-			RemoveTwoPhaseFile(xid, true);
-			return NULL;
-		}
+		buf = ReadTwoPhaseFile(xid, false);
 	}
 	else
 	{
@@ -2185,21 +2170,15 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 	if (!TransactionIdEquals(hdr->xid, xid))
 	{
 		if (fromdisk)
-		{
-			ereport(WARNING,
-					(errmsg("removing corrupt two-phase state file for transaction %u",
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("corrupted two-phase state file for transaction \"%u\"",
 							xid)));
-			RemoveTwoPhaseFile(xid, true);
-		}
 		else
-		{
-			ereport(WARNING,
-					(errmsg("removing corrupt two-phase state from memory for transaction %u",
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("corrupted two-phase state in memory for transaction \"%u\"",
 							xid)));
-			PrepareRedoRemove(xid, true);
-		}
-		pfree(buf);
-		return NULL;
 	}
 
 	/*
