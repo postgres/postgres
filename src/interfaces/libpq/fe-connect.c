@@ -236,7 +236,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, pgtty)},
 
 	{"options", "PGOPTIONS", DefaultOption, NULL,
-		"Backend-Debug-Options", "D", 40,
+		"Backend-Options", "", 40,
 	offsetof(struct pg_conn, pgoptions)},
 
 	{"application_name", "PGAPPNAME", NULL, NULL,
