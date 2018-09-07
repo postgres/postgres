@@ -154,7 +154,7 @@
    greatest similarity between the first string and any substring of the second
    string.  However, this function does not add padding to the boundaries of
    the extent.  Thus, the number of additional characters present in the
-   second string is not considered, except for the mismatched word boundries.
+   second string is not considered, except for the mismatched word boundaries.
   </para>
 
   <table id="pgtrgm-op-table">
