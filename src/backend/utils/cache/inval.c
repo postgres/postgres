@@ -708,7 +708,17 @@ AcceptInvalidationMessages(void)
 		}
 	}
 #elif defined(CLOBBER_CACHE_RECURSIVELY)
-	InvalidateSystemCaches();
+	{
+		static int	recursion_depth = 0;
+
+		/* Maximum depth is arbitrary depending on your threshold of pain */
+		if (recursion_depth < 3)
+		{
+			recursion_depth++;
+			InvalidateSystemCaches();
+			recursion_depth--;
+		}
+	}
 #endif
 }
 
