@@ -1227,8 +1227,13 @@ include $(PGXS)
       <term><varname>HEADERS_built</varname></term>
       <listitem>
        <para>
-        files to (optionally build and) install under
-        <literal><replaceable>prefix</replaceable>/include/server/$MODULEDIR/$MODULE_big</literal>
+        Files to (optionally build and) install under
+        <literal><replaceable>prefix</replaceable>/include/server/$MODULEDIR/$MODULE_big</literal>.
+       </para>
+       <para>
+        Unlike <literal>DATA_built</literal>, files in <literal>HEADERS_built</literal>
+        are not removed by the <literal>clean</literal> target; if you want them removed,
+        also add them to <literal>EXTRA_CLEAN</literal> or add your own rules to do it.
        </para>
       </listitem>
      </varlistentry>
@@ -1242,6 +1247,11 @@ include $(PGXS)
         <literal><replaceable>prefix</replaceable>/include/server/$MODULEDIR/$MODULE</literal>,
         where <literal>$MODULE</literal> must be a module name used
         in <literal>MODULES</literal> or <literal>MODULE_big</literal>.
+       </para>
+       <para>
+        Unlike <literal>DATA_built</literal>, files in <literal>HEADERS_built_$MODULE</literal>
+        are not removed by the <literal>clean</literal> target; if you want them removed,
+        also add them to <literal>EXTRA_CLEAN</literal> or add your own rules to do it.
        </para>
        <para>
         It is legal to use both variables for the same module, or any
