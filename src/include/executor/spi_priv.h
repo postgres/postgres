@@ -31,6 +31,12 @@ typedef struct
 	MemoryContext execCxt;		/* executor context */
 	MemoryContext savedcxt;		/* context of SPI_connect's caller */
 	SubTransactionId connectSubid;		/* ID of connecting subtransaction */
+
+	/* saved values of API global variables for previous nesting level */
+	uint32		outer_processed;
+	Oid			outer_lastoid;
+	SPITupleTable *outer_tuptable;
+	int			outer_result;
 } _SPI_connection;
 
 /*
