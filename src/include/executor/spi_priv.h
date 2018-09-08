@@ -34,6 +34,12 @@ typedef struct
 
 	/* subtransaction in which current Executor call was started */
 	SubTransactionId execSubid;
+
+	/* saved values of API global variables for previous nesting level */
+	uint64		outer_processed;
+	Oid			outer_lastoid;
+	SPITupleTable *outer_tuptable;
+	int			outer_result;
 } _SPI_connection;
 
 /*
