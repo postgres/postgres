@@ -477,7 +477,7 @@ build_client_final_message(fe_scram_state *state)
 		printfPQExpBuffer(&conn->errorMessage,
 						  "channel binding not supported by this build\n");
 		return NULL;
-#endif	/* HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH */
+#endif							/* HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH */
 	}
 #ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 	else if (conn->ssl_in_use)
@@ -747,7 +747,7 @@ verify_server_signature(fe_scram_state *state)
 char *
 pg_fe_scram_build_verifier(const char *password)
 {
-	char	   *prep_password = NULL;
+	char	   *prep_password;
 	pg_saslprep_rc rc;
 	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
 	char	   *result;
