@@ -42,6 +42,12 @@ typedef struct
 								 * transactions */
 	bool		internal_xact;	/* SPI-managed transaction boundary, skip
 								 * cleanup */
+
+	/* saved values of API global variables for previous nesting level */
+	uint64		outer_processed;
+	Oid			outer_lastoid;
+	SPITupleTable *outer_tuptable;
+	int			outer_result;
 } _SPI_connection;
 
 /*
