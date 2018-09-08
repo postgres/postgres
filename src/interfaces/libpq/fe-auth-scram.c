@@ -621,7 +621,7 @@ verify_server_signature(fe_scram_state *state)
 char *
 pg_fe_scram_build_verifier(const char *password)
 {
-	char	   *prep_password = NULL;
+	char	   *prep_password;
 	pg_saslprep_rc rc;
 	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
 	char	   *result;
