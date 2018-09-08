@@ -115,7 +115,7 @@ BarrierInit(Barrier *barrier, int participants)
  *
  * While waiting, pg_stat_activity shows a wait_event_class and wait_event
  * controlled by the wait_event_info passed in, which should be a value from
- * from one of the WaitEventXXX enums defined in pgstat.h.
+ * one of the WaitEventXXX enums defined in pgstat.h.
  *
  * Return true in one arbitrarily chosen participant.  Return false in all
  * others.  The return code can be used to elect one participant to execute a

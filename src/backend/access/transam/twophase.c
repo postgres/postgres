@@ -1726,7 +1726,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
  * possible that GXACTs that were valid at checkpoint start will no longer
  * exist if we wait a little bit. With typical checkpoint settings this
  * will be about 3 minutes for an online checkpoint, so as a result we
- * we expect that there will be no GXACTs that need to be copied to disk.
+ * expect that there will be no GXACTs that need to be copied to disk.
  *
  * If a GXACT remains valid across multiple checkpoints, it will already
  * be on disk so we don't bother to repeat that write.

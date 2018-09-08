@@ -956,8 +956,8 @@ info_cb(const SSL *ssl, int type, int args)
  * precomputed.
  *
  * Since few sites will bother to create a parameter file, we also
- * also provide a fallback to the parameters provided by the
- * OpenSSL project.
+ * provide a fallback to the parameters provided by the OpenSSL
+ * project.
  *
  * These values can be static (once loaded or computed) since the
  * OpenSSL library can efficiently generate random keys from the

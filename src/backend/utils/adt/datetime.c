@@ -1144,8 +1144,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					 * Is this a YMD or HMS specification, or a year number?
 					 * YMD and HMS are required to be six digits or more, so
 					 * if it is 5 digits, it is a year.  If it is six or more
-					 * more digits, we assume it is YMD or HMS unless no date
-					 * and no time values have been specified.  This forces 6+
+					 * digits, we assume it is YMD or HMS unless no date and
+					 * no time values have been specified.  This forces 6+
 					 * digit years to be at the end of the string, or to use
 					 * the ISO date specification.
 					 */

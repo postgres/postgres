@@ -2483,7 +2483,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 
 	/*
 	 * If the query does not constrain all key columns, we'll need to scan the
-	 * the default partition, if any.
+	 * default partition, if any.
 	 */
 	if (nvalues < partnatts)
 		result->scan_default = partition_bound_has_default(boundinfo);

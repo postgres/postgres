@@ -422,7 +422,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 /*
  * A file was restored from the archive under a temporary filename (path),
  * and now we want to keep it. Rename it under the permanent filename in
- * in pg_wal (xlogfname), replacing any existing file with the same name.
+ * pg_wal (xlogfname), replacing any existing file with the same name.
  */
 void
 KeepFileRestoredFromArchive(const char *path, const char *xlogfname)

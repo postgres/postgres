@@ -321,7 +321,7 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 /*
  * SetSecurityLabel attempts to set the security label for the specified
  * provider on the specified object to the given value.  NULL means that any
- * any existing label should be deleted.
+ * existing label should be deleted.
  */
 void
 SetSecurityLabel(const ObjectAddress *object,

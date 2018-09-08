@@ -2888,7 +2888,7 @@ analyze_mcv_list(int *mcv_counts,
 	 * significantly more common than the estimated selectivity they would
 	 * have if they weren't in the list.  All non-MCV values are assumed to be
 	 * equally common, after taking into account the frequencies of all the
-	 * the values in the MCV list and the number of nulls (c.f. eqsel()).
+	 * values in the MCV list and the number of nulls (c.f. eqsel()).
 	 *
 	 * Here sumcount tracks the total count of all but the last (least common)
 	 * value in the MCV list, allowing us to determine the effect of excluding
