@@ -453,7 +453,7 @@ pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 char *
 pg_be_scram_build_verifier(const char *password)
 {
-	char	   *prep_password = NULL;
+	char	   *prep_password;
 	pg_saslprep_rc rc;
 	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
 	char	   *result;
@@ -499,7 +499,7 @@ scram_verify_plain_password(const char *username, const char *password,
 	uint8		stored_key[SCRAM_KEY_LEN];
 	uint8		server_key[SCRAM_KEY_LEN];
 	uint8		computed_key[SCRAM_KEY_LEN];
-	char	   *prep_password = NULL;
+	char	   *prep_password;
 	pg_saslprep_rc rc;
 
 	if (!parse_scram_verifier(verifier, &iterations, &encoded_salt,
