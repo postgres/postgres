@@ -6262,13 +6262,54 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
      <listitem>
       <para>
        <function>to_timestamp</function> and <function>to_date</function>
-       skip multiple blank spaces in the input string unless the
-       <literal>FX</literal> option is used. For example,
-       <literal>to_timestamp('2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'YYYY MON')</literal> works, but
+       skip multiple blank spaces at the beginning of the input string and
+       around date and time values unless the <literal>FX</literal> option is used.  For example,
+       <literal>to_timestamp('&nbsp;2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'YYYY MON')</literal> and
+       <literal>to_timestamp('2000 - JUN', 'YYYY-MON')</literal> work, but
        <literal>to_timestamp('2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'FXYYYY MON')</literal> returns an error
-       because <function>to_timestamp</function> expects one space only.
+       because <function>to_timestamp</function> expects a single space only.
        <literal>FX</literal> must be specified as the first item in
        the template.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       A separator (a space or a non-letter/non-digit character) in the template string of
+       <function>to_timestamp</function> and <function>to_date</function>
+       matches any single separator in the input string or is skipped,
+       unless the <literal>FX</literal> option is used.
+       For example, <literal>to_timestamp('2000JUN', 'YYYY///MON')</literal> and
+       <literal>to_timestamp('2000/JUN', 'YYYY MON')</literal> work, but
+       <literal>to_timestamp('2000//JUN', 'YYYY/MON')</literal>
+       returns an error because the number of separators in the input string
+       exceeds the number of separators in the template.
+      </para>
+      <para>
+       If <literal>FX</literal> is specified, separator in template string
+       matches to exactly one character in input string.  Notice we don't insist
+       input string character to be the same as template string separator.
+       For example, <literal>to_timestamp('2000/JUN', 'FXYYYY MON')</literal>
+       works, but <literal>to_timestamp('2000/JUN', 'FXYYYY&nbsp;&nbsp;MON')</literal>
+       returns an error because a space second template string space consumed
+       letter <literal>J</literal> from the input string.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>TZH</literal> template pattern can match a signed number.
+       Without the <literal>FX</literal> option, it may lead to ambiguity in
+       interpretation of the minus sign, which can also be interpreted as a separator.
+       This ambiguity is resolved as follows.  If the number of separators before
+       <literal>TZH</literal> in the template string is less than the number of
+       separators before the minus sign in the input string, the minus sign
+       is interpreted as part of <literal>TZH</literal>.
+       Otherwise, the minus sign is considered to be a separator between values.
+       For example, <literal>to_timestamp('2000 -10', 'YYYY TZH')</literal> matches
+       <literal>-10</literal> to <literal>TZH</literal>, but
+       <literal>to_timestamp('2000 -10', 'YYYY&nbsp;&nbsp;TZH')</literal>
+       matches <literal>10</literal> to <literal>TZH</literal>.
       </para>
      </listitem>
 
@@ -6287,6 +6328,19 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        string; for example <literal>"XX"</literal> skips two input characters
        (whether or not they are <literal>XX</literal>).
       </para>
+      <tip>
+        <para>
+          Prior to <productname>PostgreSQL</productname> 12, it was possible to
+          skip arbitrary text in the input string using non-letter or non-digit
+          characters. For example,
+          <literal>to_timestamp('2000y6m1d', 'yyyy-MM-DD')</literal> used to
+          work.  Now you can only use letter characters for this purpose.  For example,
+          <literal>to_timestamp('2000y6m1d', 'yyyytMMtDDt')</literal> and
+          <literal>to_timestamp('2000y6m1d', 'yyyy"y"MM"m"DD"d"')</literal>
+          skip <literal>y</literal>, <literal>m</literal>, and
+          <literal>d</literal>.
+        </para>
+      </tip>
      </listitem>
 
      <listitem>

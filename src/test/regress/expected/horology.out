@@ -2769,14 +2769,32 @@ SELECT to_timestamp('97/2/16 8:14:30', 'FMYYYY/FMMM/FMDD FMHH:FMMI:FMSS');
  Sat Feb 16 08:14:30 0097 PST
 (1 row)
 
+SELECT to_timestamp('2011$03!18 23_38_15', 'YYYY-MM-DD HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Fri Mar 18 23:38:15 2011 PDT
+(1 row)
+
 SELECT to_timestamp('1985 January 12', 'YYYY FMMonth DD');
          to_timestamp         
 ------------------------------
  Sat Jan 12 00:00:00 1985 PST
 (1 row)
 
+SELECT to_timestamp('1985 FMMonth 12', 'YYYY "FMMonth" DD');
+         to_timestamp         
+------------------------------
+ Sat Jan 12 00:00:00 1985 PST
+(1 row)
+
+SELECT to_timestamp('1985 \ 12', 'YYYY \\ DD');
+         to_timestamp         
+------------------------------
+ Sat Jan 12 00:00:00 1985 PST
+(1 row)
+
 SELECT to_timestamp('My birthday-> Year: 1976, Month: May, Day: 16',
-                    '"My birthday-> Year" YYYY, "Month:" FMMonth, "Day:" DD');
+                    '"My birthday-> Year:" YYYY, "Month:" FMMonth, "Day:" DD');
          to_timestamp         
 ------------------------------
  Sun May 16 00:00:00 1976 PDT
@@ -2789,7 +2807,7 @@ SELECT to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
 (1 row)
 
 SELECT to_timestamp('15 "text between quote marks" 98 54 45',
-                    E'HH24 "\\text between quote marks\\"" YY MI SS');
+                    E'HH24 "\\"text between quote marks\\"" YY MI SS');
          to_timestamp         
 ------------------------------
  Thu Jan 01 15:54:45 1998 PST
@@ -2810,6 +2828,24 @@ SELECT to_timestamp('2000January09Sunday', 'YYYYFMMonthDDFMDay');
 SELECT to_timestamp('97/Feb/16', 'YYMonDD');
 ERROR:  invalid value "/Fe" for "Mon"
 DETAIL:  The given value did not match any of the allowed values for this field.
+SELECT to_timestamp('97/Feb/16', 'YY:Mon:DD');
+         to_timestamp         
+------------------------------
+ Sun Feb 16 00:00:00 1997 PST
+(1 row)
+
+SELECT to_timestamp('97/Feb/16', 'FXYY:Mon:DD');
+         to_timestamp         
+------------------------------
+ Sun Feb 16 00:00:00 1997 PST
+(1 row)
+
+SELECT to_timestamp('97/Feb/16', 'FXYY/Mon/DD');
+         to_timestamp         
+------------------------------
+ Sun Feb 16 00:00:00 1997 PST
+(1 row)
+
 SELECT to_timestamp('19971116', 'YYYYMMDD');
          to_timestamp         
 ------------------------------
@@ -2966,7 +3002,7 @@ SELECT to_timestamp('2011-12-18 11:38 20',     'YYYY-MM-DD HH12:MI TZM');
 SELECT to_timestamp('2011-12-18 23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
          to_timestamp         
 ------------------------------
- Sun Dec 18 03:38:15 2011 PST
+ Sun Dec 18 23:38:15 2011 PST
 (1 row)
 
 SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
@@ -2996,7 +3032,64 @@ SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
 SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD   HH24:MI:SS');
          to_timestamp         
 ------------------------------
- Sun Dec 18 03:38:15 2011 PST
+ Sun Dec 18 23:38:15 2011 PST
+(1 row)
+
+SELECT to_timestamp('2000+   JUN', 'YYYY/MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('  2000 +JUN', 'YYYY/MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp(' 2000 +JUN', 'YYYY//MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000  +JUN', 'YYYY//MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 + JUN', 'YYYY MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 ++ JUN', 'YYYY  MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 + + JUN', 'YYYY  MON');
+ERROR:  invalid value "+ J" for "MON"
+DETAIL:  The given value did not match any of the allowed values for this field.
+SELECT to_timestamp('2000 + + JUN', 'YYYY   MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 -10', 'YYYY TZH');
+         to_timestamp         
+------------------------------
+ Sat Jan 01 02:00:00 2000 PST
+(1 row)
+
+SELECT to_timestamp('2000 -10', 'YYYY  TZH');
+         to_timestamp         
+------------------------------
+ Fri Dec 31 06:00:00 1999 PST
 (1 row)
 
 SELECT to_date('2011 12  18', 'YYYY MM DD');
@@ -3014,13 +3107,13 @@ SELECT to_date('2011 12  18', 'YYYY MM  DD');
 SELECT to_date('2011 12  18', 'YYYY MM   DD');
   to_date   
 ------------
- 12-08-2011
+ 12-18-2011
 (1 row)
 
 SELECT to_date('2011 12 18', 'YYYY  MM DD');
   to_date   
 ------------
- 02-18-2011
+ 12-18-2011
 (1 row)
 
 SELECT to_date('2011  12 18', 'YYYY  MM DD');

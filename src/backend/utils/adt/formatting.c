@@ -165,6 +165,8 @@ typedef struct
 #define NODE_TYPE_END		1
 #define NODE_TYPE_ACTION	2
 #define NODE_TYPE_CHAR		3
+#define NODE_TYPE_SEPARATOR	4
+#define NODE_TYPE_SPACE		5
 
 #define SUFFTYPE_PREFIX		1
 #define SUFFTYPE_POSTFIX	2
@@ -955,6 +957,7 @@ typedef struct NUMProc
 static const KeyWord *index_seq_search(const char *str, const KeyWord *kw,
 				 const int *index);
 static const KeySuffix *suff_search(const char *str, const KeySuffix *suf, int type);
+static bool is_separator_char(const char *str);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
@@ -1042,6 +1045,16 @@ suff_search(const char *str, const KeySuffix *suf, int type)
 			return s;
 	}
 	return NULL;
+}
+
+static bool
+is_separator_char(const char *str)
+{
+	/* ASCII printable character, but not letter or digit */
+	return (*str > 0x20 && *str < 0x7F &&
+			!(*str >= 'A' && *str <= 'Z') &&
+			!(*str >= 'a' && *str <= 'z') &&
+			!(*str >= '0' && *str <= '9'));
 }
 
 /* ----------
@@ -1319,7 +1332,14 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 				if (*str == '\\' && *(str + 1) == '"')
 					str++;
 				chlen = pg_mblen(str);
-				n->type = NODE_TYPE_CHAR;
+
+				if (ver == DCH_TYPE && is_separator_char(str))
+					n->type = NODE_TYPE_SEPARATOR;
+				else if (isspace((unsigned char) *str))
+					n->type = NODE_TYPE_SPACE;
+				else
+					n->type = NODE_TYPE_CHAR;
+
 				memcpy(n->character, str, chlen);
 				n->character[chlen] = '\0';
 				n->key = NULL;
@@ -2987,25 +3007,64 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 	int			len,
 				value;
 	bool		fx_mode = false;
+	/* number of extra skipped characters (more than given in format string) */
+	int			extra_skip = 0;
 
 	for (n = node, s = in; n->type != NODE_TYPE_END && *s != '\0'; n++)
 	{
-		if (n->type != NODE_TYPE_ACTION)
+		/*
+		 * Ignore spaces at the beginning of the string and before fields when
+		 * not in FX (fixed width) mode.
+		 */
+		if (!fx_mode && (n->type != NODE_TYPE_ACTION || n->key->id != DCH_FX) &&
+			(n->type == NODE_TYPE_ACTION || n == node))
+		{
+			while (*s != '\0' && isspace((unsigned char) *s))
+			{
+				s++;
+				extra_skip++;
+			}
+		}
+
+		if (n->type == NODE_TYPE_SPACE || n->type == NODE_TYPE_SEPARATOR)
+		{
+			if (!fx_mode)
+			{
+				/*
+				 * In non FX (fixed format) mode one format string space or
+				 * separator match to one space or separator in input string.
+				 * Or match nothing if there is no space or separator in
+				 * the current position of input string.
+				 */
+				extra_skip--;
+				if (isspace((unsigned char) *s) || is_separator_char(s))
+				{
+					s++;
+					extra_skip++;
+				}
+			}
+			else
+			{
+				/*
+				 * In FX mode, on format string space or separator we consume
+				 * exactly one character from input string.  Notice we don't
+				 * insist that the consumed character match the format's
+				 * character.
+				 */
+				s += pg_mblen(s);
+			}
+			continue;
+		}
+		else if (n->type != NODE_TYPE_ACTION)
 		{
 			/*
-			 * Separator, so consume one character from input string.  Notice
-			 * we don't insist that the consumed character match the format's
-			 * character.
+			 * Text character, so consume one character from input string.
+			 * Notice we don't insist that the consumed character match the
+			 * format's character.
+			 * Text field ignores FX mode.
 			 */
 			s += pg_mblen(s);
 			continue;
-		}
-
-		/* Ignore spaces before fields when not in FX (fixed width) mode */
-		if (!fx_mode && n->key->id != DCH_FX)
-		{
-			while (*s != '\0' && isspace((unsigned char) *s))
-				s++;
 		}
 
 		from_char_set_mode(out, n->key->date_mode);
@@ -3086,10 +3145,24 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 								n->key->name)));
 				break;
 			case DCH_TZH:
-				out->tzsign = *s == '-' ? -1 : +1;
-
+				/*
+				 * Value of TZH might be negative.  And the issue is that we
+				 * might swallow minus sign as the separator.  So, if we have
+				 * skipped more characters than specified in the format string,
+				 * then we consider prepending last skipped minus to TZH.
+				 */
 				if (*s == '+' || *s == '-' || *s == ' ')
+				{
+					out->tzsign = *s == '-' ? -1 : +1;
 					s++;
+				}
+				else
+				{
+					if (extra_skip > 0 && *(s - 1) == '-')
+						out->tzsign = -1;
+					else
+						out->tzsign = +1;
+				}
 
 				from_char_parse_int_len(&out->tzh, &s, 2, n);
 				break;
@@ -3260,6 +3333,17 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				from_char_parse_int(&out->j, &s, n);
 				SKIP_THth(s, n->suffix);
 				break;
+		}
+
+		/* Ignore all spaces after fields */
+		if (!fx_mode)
+		{
+			extra_skip = 0;
+			while (*s != '\0' && isspace((unsigned char) *s))
+			{
+				s++;
+				extra_skip++;
+			}
 		}
 	}
 }
