@@ -64,11 +64,6 @@
 #
 # Got that?  Look at src/interfaces/libpq/Makefile for an example.
 #
-# While the linker allows creation of most shared libraries,
-# -Bsymbolic requires resolution of all symbols, making the
-# compiler a better choice for shared library creation on ELF platforms.
-# With the linker, -Bsymbolic requires the crt1.o startup object file.
-# bjm 2001-02-10
 
 
 COMPILER = $(CC) $(CFLAGS)
@@ -149,6 +144,11 @@ ifeq ($(PORTNAME), openbsd)
     ifdef soname
       LINK.shared	+= -Wl,-x,-soname,$(soname)
     endif
+    BUILD.exports	= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+    exports_file	= $(SHLIB_EXPORTS:%.txt=%.list)
+    ifneq (,$(exports_file))
+      LINK.shared	+= -Wl,--version-script=$(exports_file)
+    endif
     SHLIB_LINK		+= -lc
   else
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
@@ -164,6 +164,11 @@ ifeq ($(PORTNAME), freebsd)
     ifdef soname
       LINK.shared	+= -Wl,-x,-soname,$(soname)
     endif
+    BUILD.exports	= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+    exports_file	= $(SHLIB_EXPORTS:%.txt=%.list)
+    ifneq (,$(exports_file))
+      LINK.shared	+= -Wl,--version-script=$(exports_file)
+    endif
   else
     ifdef SO_MAJOR_VERSION
       shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
@@ -177,6 +182,11 @@ ifeq ($(PORTNAME), netbsd)
     LINK.shared		= $(COMPILER) -shared
     ifdef soname
       LINK.shared	+= -Wl,-x,-soname,$(soname)
+    endif
+    BUILD.exports	= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+    exports_file	= $(SHLIB_EXPORTS:%.txt=%.list)
+    ifneq (,$(exports_file))
+      LINK.shared	+= -Wl,--version-script=$(exports_file)
     endif
   else
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
