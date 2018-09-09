@@ -18,7 +18,17 @@
 
 #ifdef HAVE_DLOPEN
 #include <dlfcn.h>
+
+/*
+ * On macOS, <dlfcn.h> insists on including <stdbool.h>.  If we're not
+ * using stdbool, undef bool to undo the damage.
+ */
+#ifndef USE_STDBOOL
+#ifdef bool
+#undef bool
 #endif
+#endif
+#endif							/* HAVE_DLOPEN */
 
 #include "fmgr.h"
 #include "lib/stringinfo.h"
