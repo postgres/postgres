@@ -71,6 +71,7 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #endif
 
 #include "common/ip.h"
+#include "common/link-canary.h"
 #include "common/scram-common.h"
 #include "mb/pg_wchar.h"
 #include "port/pg_bswap.h"
@@ -1747,6 +1748,19 @@ connectDBStart(PGconn *conn)
 
 	if (!conn->options_valid)
 		goto connect_errReturn;
+
+	/*
+	 * Check for bad linking to backend-internal versions of src/common
+	 * functions (see comments in link-canary.c for the reason we need this).
+	 * Nobody but developers should see this message, so we don't bother
+	 * translating it.
+	 */
+	if (!pg_link_canary_is_frontend())
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  "libpq is incorrectly linked to backend functions\n");
+		goto connect_errReturn;
+	}
 
 	/* Ensure our buffers are empty */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;

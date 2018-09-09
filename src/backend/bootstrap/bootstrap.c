@@ -24,6 +24,7 @@
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "common/link-canary.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -501,6 +502,13 @@ BootstrapModeMain(void)
 
 	Assert(!IsUnderPostmaster);
 	Assert(IsBootstrapProcessingMode());
+
+	/*
+	 * To ensure that src/common/link-canary.c is linked into the backend, we
+	 * must call it from somewhere.  Here is as good as anywhere.
+	 */
+	if (pg_link_canary_is_frontend())
+		elog(ERROR, "backend is incorrectly linked to frontend functions");
 
 	/*
 	 * Do backend-like initialization for bootstrap mode

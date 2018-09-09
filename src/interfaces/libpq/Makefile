@@ -49,7 +49,7 @@ endif
 # src/backend/utils/mb
 OBJS += encnames.o wchar.o
 # src/common
-OBJS += base64.o ip.o md5.o scram-common.o saslprep.o unicode_norm.o
+OBJS += base64.o ip.o link-canary.o md5.o scram-common.o saslprep.o unicode_norm.o
 
 ifeq ($(with_openssl),yes)
 OBJS += fe-secure-openssl.o fe-secure-common.o sha2_openssl.o
@@ -106,7 +106,7 @@ backend_src = $(top_srcdir)/src/backend
 chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32error.c win32setlocale.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
-ip.c md5.c base64.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c: % : $(top_srcdir)/src/common/%
+ip.c md5.c base64.c link-canary.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c: % : $(top_srcdir)/src/common/%
 	rm -f $@ && $(LN_S) $< .
 
 encnames.c wchar.c: % : $(backend_src)/utils/mb/%
@@ -156,7 +156,7 @@ clean distclean: clean-lib
 	rm -f pg_config_paths.h
 # Remove files we (may have) symlinked in from src/port and other places
 	rm -f chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32error.c win32setlocale.c
-	rm -f ip.c md5.c base64.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c
+	rm -f ip.c md5.c base64.c link-canary.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c
 	rm -f encnames.c wchar.c
 
 maintainer-clean: distclean maintainer-clean-lib
