@@ -261,8 +261,6 @@ sub check_mode_recursive
 		{
 			follow_fast => 1,
 			wanted      => sub {
-				my $file_stat = stat($File::Find::name);
-
 				# Is file in the ignore list?
 				foreach my $ignore ($ignore_list ? @{$ignore_list} : [])
 				{
@@ -272,8 +270,23 @@ sub check_mode_recursive
 					}
 				}
 
-				defined($file_stat)
-				  or die("unable to stat $File::Find::name");
+				# Allow ENOENT.  A running server can delete files, such as
+				# those in pg_stat.  Other stat() failures are fatal.
+				my $file_stat = stat($File::Find::name);
+				unless (defined($file_stat))
+				{
+					my $is_ENOENT = $!{ENOENT};
+					my $msg = "unable to stat $File::Find::name: $!";
+					if ($is_ENOENT)
+					{
+						warn $msg;
+						return;
+					}
+					else
+					{
+						die $msg;
+					}
+				}
 
 				my $file_mode = S_IMODE($file_stat->mode);
 
