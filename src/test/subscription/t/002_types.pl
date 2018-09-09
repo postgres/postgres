@@ -561,7 +561,8 @@ e|{e,d}
 # which needs an active snapshot in order to operate.
 $node_publisher->safe_psql('postgres', "INSERT INTO tst_dom_constr VALUES (11)");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->poll_query_until('postgres', $caughtup_query)
+  or die "Timed out while waiting for subscriber to catch up";
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT sum(a) FROM tst_dom_constr");
