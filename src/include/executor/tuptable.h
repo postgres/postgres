@@ -180,6 +180,8 @@ extern bool slot_getsysattr(TupleTableSlot *slot, int attnum,
 				Datum *value, bool *isnull);
 extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum);
 
+#ifndef FRONTEND
+
 /*
  * slot_getallattrs
  *		This function forces all the entries of the slot's Datum/isnull
@@ -191,5 +193,7 @@ slot_getallattrs(TupleTableSlot *slot)
 {
 	slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
 }
+
+#endif
 
 #endif							/* TUPTABLE_H */
