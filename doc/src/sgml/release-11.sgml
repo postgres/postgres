@@ -1942,7 +1942,7 @@ same commits as above
 -->
 
        <para>
-        Add SQL procedures, which can start and commit their own
+        Add SQL-level procedures, which can start and commit their own
         transactions (Peter Eisentraut)
        </para>
 
@@ -2685,15 +2685,10 @@ same commits as above
        </para>
 
        <para>
-        While <acronym>SCRAM</acronym> always prevents the
-        replay of transmitted hashed passwords in a later session,
-        <acronym>SCRAM</acronym> with channel binding can also prevent
-        man-in-the-middle attacks.  However, since there is no way
-        to <emphasis>force</emphasis> channel binding in libpq,
-        the feature currently does not prevent man-in-the-middle
-        attacks when using libpq and interfaces built using it.  It is
-        expected that future versions of libpq and interfaces not built
-        using libpq, e.g. JDBC, will allow this capability.
+        <acronym>SCRAM</acronym> cannot prevent man-in-the-middle attacks
+        unless it can be forced.  Unfortunately, there is no way to do
+        this in libpq.  This is expected in future versions of libpq
+        and in interfaces not built using libpq, e.g. JDBC.
        </para>
       </listitem>
 
@@ -2835,7 +2830,7 @@ same commits as above
 -->
 
        <para>
-        Add <link linkend="pgtrgm"><application>pgtrgm</application></link>
+        Add <link linkend="pgtrgm"><application>pg_trgm</application></link>
         function <function>strict_word_similarity()</function> to compute
         the similarity of whole words (Alexander Korotkov)
        </para>
