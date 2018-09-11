@@ -68,9 +68,9 @@ SELECT count(*) FROM varbittmp WHERE a >   '1110100111010'::varbit;
 SET enable_bitmapscan=off;
 EXPLAIN (COSTS OFF)
 SELECT a FROM bittmp WHERE a BETWEEN '1000000' and '1000001';
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Index Only Scan using bitidx on bittmp
-   Index Cond: ((a >= B'1000000'::"bit") AND (a <= B'1000001'::"bit"))
+   Index Cond: ((a >= '1000000'::"bit") AND (a <= '1000001'::"bit"))
 (2 rows)
 

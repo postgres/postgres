@@ -19,6 +19,7 @@ array_index_op_test|t
 array_op_test|f
 b|f
 b_star|f
+bit_defaults|f
 box_tbl|f
 bprime|f
 bt_f8_heap|t

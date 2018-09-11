@@ -9490,11 +9490,6 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 			}
 			break;
 
-		case BITOID:
-		case VARBITOID:
-			appendStringInfo(buf, "B'%s'", extval);
-			break;
-
 		case BOOLOID:
 			if (strcmp(extval, "t") == 0)
 				appendStringInfoString(buf, "true");
