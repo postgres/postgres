@@ -208,6 +208,8 @@ struct pg_result
 	PGresult_data *curBlock;	/* most recently allocated block */
 	int			curOffset;		/* start offset of free space in block */
 	int			spaceLeft;		/* number of free bytes remaining in block */
+
+	size_t		memorySize;		/* total space allocated for this PGresult */
 };
 
 /* PGAsyncStatusType defines the state of the query-execution state machine */

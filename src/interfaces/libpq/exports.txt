@@ -172,3 +172,4 @@ PQsslAttribute            169
 PQsetErrorContextVisibility 170
 PQresultVerboseErrorMessage 171
 PQencryptPasswordConn     172
+PQresultMemorySize        173

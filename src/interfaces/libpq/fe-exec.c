@@ -51,7 +51,7 @@ static int	static_client_encoding = PG_SQL_ASCII;
 static bool static_std_strings = false;
 
 
-static PGEvent *dupEvents(PGEvent *events, int count);
+static PGEvent *dupEvents(PGEvent *events, int count, size_t *memSize);
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup,
 		   const char **errmsgp);
 static bool PQsendQueryStart(PGconn *conn);
@@ -166,6 +166,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->curBlock = NULL;
 	result->curOffset = 0;
 	result->spaceLeft = 0;
+	result->memorySize = sizeof(PGresult);
 
 	if (conn)
 	{
@@ -193,7 +194,8 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 		/* copy events last; result must be valid if we need to PQclear */
 		if (conn->nEvents > 0)
 		{
-			result->events = dupEvents(conn->events, conn->nEvents);
+			result->events = dupEvents(conn->events, conn->nEvents,
+									   &result->memorySize);
 			if (!result->events)
 			{
 				PQclear(result);
@@ -344,7 +346,8 @@ PQcopyResult(const PGresult *src, int flags)
 	/* Wants to copy PGEvents? */
 	if ((flags & PG_COPYRES_EVENTS) && src->nEvents > 0)
 	{
-		dest->events = dupEvents(src->events, src->nEvents);
+		dest->events = dupEvents(src->events, src->nEvents,
+								 &dest->memorySize);
 		if (!dest->events)
 		{
 			PQclear(dest);
@@ -379,17 +382,20 @@ PQcopyResult(const PGresult *src, int flags)
  * Copy an array of PGEvents (with no extra space for more).
  * Does not duplicate the event instance data, sets this to NULL.
  * Also, the resultInitialized flags are all cleared.
+ * The total space allocated is added to *memSize.
  */
 static PGEvent *
-dupEvents(PGEvent *events, int count)
+dupEvents(PGEvent *events, int count, size_t *memSize)
 {
 	PGEvent    *newEvents;
+	size_t		msize;
 	int			i;
 
 	if (!events || count <= 0)
 		return NULL;
 
-	newEvents = (PGEvent *) malloc(count * sizeof(PGEvent));
+	msize = count * sizeof(PGEvent);
+	newEvents = (PGEvent *) malloc(msize);
 	if (!newEvents)
 		return NULL;
 
@@ -407,8 +413,10 @@ dupEvents(PGEvent *events, int count)
 			free(newEvents);
 			return NULL;
 		}
+		msize += strlen(events[i].name) + 1;
 	}
 
+	*memSize += msize;
 	return newEvents;
 }
 
@@ -567,9 +575,12 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 	 */
 	if (nBytes >= PGRESULT_SEP_ALLOC_THRESHOLD)
 	{
-		block = (PGresult_data *) malloc(nBytes + PGRESULT_BLOCK_OVERHEAD);
+		size_t		alloc_size = nBytes + PGRESULT_BLOCK_OVERHEAD;
+
+		block = (PGresult_data *) malloc(alloc_size);
 		if (!block)
 			return NULL;
+		res->memorySize += alloc_size;
 		space = block->space + PGRESULT_BLOCK_OVERHEAD;
 		if (res->curBlock)
 		{
@@ -594,6 +605,7 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 	block = (PGresult_data *) malloc(PGRESULT_DATA_BLOCKSIZE);
 	if (!block)
 		return NULL;
+	res->memorySize += PGRESULT_DATA_BLOCKSIZE;
 	block->next = res->curBlock;
 	res->curBlock = block;
 	if (isBinary)
@@ -613,6 +625,18 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 	res->curOffset += nBytes;
 	res->spaceLeft -= nBytes;
 	return space;
+}
+
+/*
+ * PQresultMemorySize -
+ *		Returns total space allocated for the PGresult.
+ */
+size_t
+PQresultMemorySize(const PGresult *res)
+{
+	if (!res)
+		return 0;
+	return res->memorySize;
 }
 
 /*
@@ -927,6 +951,8 @@ pqAddTuple(PGresult *res, PGresAttValue *tup, const char **errmsgp)
 				realloc(res->tuples, newSize * sizeof(PGresAttValue *));
 		if (!newTuples)
 			return false;		/* malloc or realloc failed */
+		res->memorySize +=
+			(newSize - res->tupArrSize) * sizeof(PGresAttValue *);
 		res->tupArrSize = newSize;
 		res->tuples = newTuples;
 	}

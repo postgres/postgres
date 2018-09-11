@@ -6387,6 +6387,32 @@ void *PQresultAlloc(PGresult *res, size_t nBytes);
     </listitem>
    </varlistentry>
 
+   <varlistentry id="libpq-pqresultmemorysize">
+    <term>
+     <function>PQresultMemorySize</function>
+     <indexterm>
+      <primary>PQresultMemorySize</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Retrieves the number of bytes allocated for
+      a <structname>PGresult</structname> object.
+<synopsis>
+size_t PQresultMemorySize(const PGresult *res);
+</synopsis>
+     </para>
+
+     <para>
+      This value is the sum of all <function>malloc</function> requests
+      associated with the <structname>PGresult</structname> object, that is,
+      all the space that will be freed by <function>PQclear</function>.
+      This information can be useful for managing memory consumption.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="libpq-pqlibversion">
     <term>
      <function>PQlibVersion</function>
@@ -6959,6 +6985,14 @@ void *PQinstanceData(const PGconn *conn, PGEventProc proc);
 <synopsis>
 int PQresultSetInstanceData(PGresult *res, PGEventProc proc, void *data);
 </synopsis>
+      </para>
+
+      <para>
+       Beware that any storage represented by <parameter>data</parameter>
+       will not be accounted for by <function>PQresultMemorySize</function>,
+       unless it is allocated using <function>PQresultAlloc</function>.
+       (Doing so is recommendable because it eliminates the need to free
+       such storage explicitly when the result is destroyed.)
       </para>
      </listitem>
     </varlistentry>
