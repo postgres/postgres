@@ -198,12 +198,12 @@ ifeq ($(PORTNAME), hpux)
     shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   endif
   ifeq ($(with_gnu_ld), yes)
-    LINK.shared		= $(CC) -shared
+    LINK.shared		= $(CC) -shared -Wl,-Bsymbolic
     ifdef soname
       LINK.shared	+= -Wl,-h -Wl,$(soname)
     endif
   else
-    LINK.shared		= $(LD) -b
+    LINK.shared		= $(LD) -b -Bsymbolic
     ifdef soname
       LINK.shared	+= +h $(soname)
     endif
@@ -240,9 +240,9 @@ endif
 
 ifeq ($(PORTNAME), solaris)
   ifeq ($(GCC), yes)
-    LINK.shared		= $(COMPILER) -shared
+    LINK.shared		= $(COMPILER) -shared -Wl,-Bsymbolic
   else
-    LINK.shared		= $(COMPILER) -G
+    LINK.shared		= $(COMPILER) -G -Bsymbolic
   endif
   ifdef soname
     ifeq ($(with_gnu_ld), yes)
