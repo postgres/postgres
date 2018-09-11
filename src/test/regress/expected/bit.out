@@ -549,3 +549,26 @@ SELECT overlay(B'0101011100' placing '001' from 20);
  0101011100001
 (1 row)
 
+-- This table is intentionally left around to exercise pg_dump/pg_upgrade
+CREATE TABLE bit_defaults(
+  b1 bit(4) DEFAULT '1001',
+  b2 bit(4) DEFAULT B'0101',
+  b3 bit varying(5) DEFAULT '1001',
+  b4 bit varying(5) DEFAULT B'0101'
+);
+\d bit_defaults
+                     Table "public.bit_defaults"
+ Column |      Type      | Collation | Nullable |       Default       
+--------+----------------+-----------+----------+---------------------
+ b1     | bit(4)         |           |          | '1001'::"bit"
+ b2     | bit(4)         |           |          | '0101'::"bit"
+ b3     | bit varying(5) |           |          | '1001'::bit varying
+ b4     | bit varying(5) |           |          | '0101'::"bit"
+
+INSERT INTO bit_defaults DEFAULT VALUES;
+TABLE bit_defaults;
+  b1  |  b2  |  b3  |  b4  
+------+------+------+------
+ 1001 | 0101 | 1001 | 0101
+(1 row)
+

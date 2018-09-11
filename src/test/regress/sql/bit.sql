@@ -195,3 +195,14 @@ SELECT overlay(B'0101011100' placing '001' from 2 for 3);
 SELECT overlay(B'0101011100' placing '101' from 6);
 SELECT overlay(B'0101011100' placing '001' from 11);
 SELECT overlay(B'0101011100' placing '001' from 20);
+
+-- This table is intentionally left around to exercise pg_dump/pg_upgrade
+CREATE TABLE bit_defaults(
+  b1 bit(4) DEFAULT '1001',
+  b2 bit(4) DEFAULT B'0101',
+  b3 bit varying(5) DEFAULT '1001',
+  b4 bit varying(5) DEFAULT B'0101'
+);
+\d bit_defaults
+INSERT INTO bit_defaults DEFAULT VALUES;
+TABLE bit_defaults;
