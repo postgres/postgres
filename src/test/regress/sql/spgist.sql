@@ -30,6 +30,21 @@ delete from spgist_point_tbl where id < 10000;
 
 vacuum spgist_point_tbl;
 
+-- Test rescan paths (cf. bug #15378)
+-- use box and && rather than point, so that rescan happens when the
+-- traverse stack is non-empty
+
+create table spgist_box_tbl(id serial, b box);
+insert into spgist_box_tbl(b)
+select box(point(i,j),point(i+s,j+s))
+  from generate_series(1,100,5) i,
+       generate_series(1,100,5) j,
+       generate_series(1,10) s;
+create index spgist_box_idx on spgist_box_tbl using spgist (b);
+
+select count(*)
+  from (values (point(5,5)),(point(8,8)),(point(12,12))) v(p)
+ where exists(select * from spgist_box_tbl b where b.b && box(v.p,v.p));
 
 -- The point opclass's choose method only uses the spgMatchNode action,
 -- so the other actions are not tested by the above. Create an index using
