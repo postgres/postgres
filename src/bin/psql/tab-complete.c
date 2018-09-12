@@ -558,6 +558,7 @@ static const SchemaQuery Query_for_list_of_tmf = {
 	.catname = "pg_catalog.pg_class c",
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+	CppAsString2(RELKIND_PARTITIONED_TABLE) ", "
 	CppAsString2(RELKIND_MATVIEW) ", "
 	CppAsString2(RELKIND_FOREIGN_TABLE) ")",
 	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
@@ -2026,6 +2027,7 @@ psql_completion(const char *text, int start, int end)
 			"fillfactor",
 			"parallel_workers",
 			"log_autovacuum_min_duration",
+			"toast_tuple_target",
 			"toast.autovacuum_enabled",
 			"toast.autovacuum_freeze_max_age",
 			"toast.autovacuum_freeze_min_age",
@@ -2507,7 +2509,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST2("TABLE", "MATERIALIZED VIEW");
 	/* Complete PARTITION BY with RANGE ( or LIST ( or ... */
 	else if (TailMatches2("PARTITION", "BY"))
-		COMPLETE_WITH_LIST2("RANGE (", "LIST (");
+		COMPLETE_WITH_LIST3("RANGE (", "LIST (", "HASH (");
 	/* If we have xxx PARTITION OF, provide a list of partitioned tables */
 	else if (TailMatches2("PARTITION", "OF"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_partitioned_tables, "");
