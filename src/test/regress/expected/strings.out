@@ -674,6 +674,24 @@ SELECT regexp_split_to_array('123456','.');
  {"","","","","","",""}
 (1 row)
 
+SELECT regexp_split_to_array('123456','');
+ regexp_split_to_array 
+-----------------------
+ {1,2,3,4,5,6}
+(1 row)
+
+SELECT regexp_split_to_array('123456','(?:)');
+ regexp_split_to_array 
+-----------------------
+ {1,2,3,4,5,6}
+(1 row)
+
+SELECT regexp_split_to_array('1','');
+ regexp_split_to_array 
+-----------------------
+ {1}
+(1 row)
+
 -- errors
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'zippy') AS foo;
 ERROR:  invalid regexp option: "z"

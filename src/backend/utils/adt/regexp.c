@@ -882,6 +882,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	int			array_len;
 	int			array_idx;
 	int			prev_match_end;
+	int			prev_valid_match_end;
 	int			start_search;
 	int			maxlen = 0;		/* largest fetch length in characters */
 
@@ -937,6 +938,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 
 	/* search for the pattern, perhaps repeatedly */
 	prev_match_end = 0;
+	prev_valid_match_end = 0;
 	start_search = 0;
 	while (RE_wchar_execute(cpattern, wide_str, wide_len, start_search,
 							pmatch_len, pmatch))
@@ -989,13 +991,15 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 			matchctx->nmatches++;
 
 			/*
-			 * check length of unmatched portion between end of previous match
-			 * and start of current one
+			 * check length of unmatched portion between end of previous valid
+			 * (nondegenerate, or degenerate but not ignored) match and start
+			 * of current one
 			 */
 			if (fetching_unmatched &&
 				pmatch[0].rm_so >= 0 &&
-				(pmatch[0].rm_so - prev_match_end) > maxlen)
-				maxlen = (pmatch[0].rm_so - prev_match_end);
+				(pmatch[0].rm_so - prev_valid_match_end) > maxlen)
+				maxlen = (pmatch[0].rm_so - prev_valid_match_end);
+			prev_valid_match_end = pmatch[0].rm_eo;
 		}
 		prev_match_end = pmatch[0].rm_eo;
 
@@ -1021,8 +1025,8 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	 * input string
 	 */
 	if (fetching_unmatched &&
-		(wide_len - prev_match_end) > maxlen)
-		maxlen = (wide_len - prev_match_end);
+		(wide_len - prev_valid_match_end) > maxlen)
+		maxlen = (wide_len - prev_valid_match_end);
 
 	/*
 	 * Keep a note of the end position of the string for the benefit of
