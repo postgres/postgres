@@ -683,8 +683,6 @@ read_extension_script_file(const ExtensionControlFile *control,
 /*
  * Execute given SQL string.
  *
- * filename is used only to report errors.
- *
  * Note: it's tempting to just use SPI to execute the string, but that does
  * not work very well.  The really serious problem is that SPI will parse,
  * analyze, and plan the whole string before executing any of it; of course
@@ -694,7 +692,7 @@ read_extension_script_file(const ExtensionControlFile *control,
  * could be very long.
  */
 static void
-execute_sql_string(const char *sql, const char *filename)
+execute_sql_string(const char *sql)
 {
 	List	   *raw_parsetree_list;
 	DestReceiver *dest;
@@ -921,7 +919,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 		/* And now back to C string */
 		c_sql = text_to_cstring(DatumGetTextPP(t_sql));
 
-		execute_sql_string(c_sql, filename);
+		execute_sql_string(c_sql);
 	}
 	PG_CATCH();
 	{
