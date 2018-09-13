@@ -624,6 +624,24 @@ choke me
 @%:@endif])], [], [AC_MSG_ERROR([do not put -ffast-math in CFLAGS])])
 fi
 
+# Defend against clang being used on x86-32 without SSE2 enabled.  As current
+# versions of clang do not understand -fexcess-precision=standard, the use of
+# x87 floating point operations leads to problems like isinf possibly returning
+# false for a value that is infinite when converted from the 80bit register to
+# the 8byte memory representation.
+#
+# Only perform the test if the compiler doesn't understand
+# -fexcess-precision=standard, that way a potentially fixed compiler will work
+# automatically.
+if test "$pgac_cv_prog_CC_cflags__fexcess_precision_standard" = no; then
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+@%:@if defined(__clang__) && defined(__i386__) && !defined(__SSE2_MATH__)
+choke me
+@%:@endif
+])], [],
+[AC_MSG_ERROR([Compiling PostgreSQL with clang, on 32bit x86, requires SSE2 support. Use -msse2 or use gcc.])])
+fi
+
 AC_PROG_CPP
 AC_SUBST(GCC)
 

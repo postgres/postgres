@@ -7023,6 +7023,39 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
+# Defend against clang being used on x86-32 without SSE2 enabled.  As current
+# versions of clang do not understand -fexcess-precision=standard, the use of
+# x87 floating point operations leads to problems like isinf possibly returning
+# false for a value that is infinite when converted from the 80bit register to
+# the 8byte memory representation.
+#
+# Only perform the test if the compiler doesn't understand
+# -fexcess-precision=standard, that way a potentially fixed compiler will work
+# automatically.
+if test "$pgac_cv_prog_CC_cflags__fexcess_precision_standard" = no; then
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+#if defined(__clang__) && defined(__i386__) && !defined(__SSE2_MATH__)
+choke me
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  as_fn_error $? "Compiling PostgreSQL with clang, on 32bit x86, requires SSE2 support. Use -msse2 or use gcc." "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
