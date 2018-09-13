@@ -99,8 +99,8 @@ scan_file(const char *fn, BlockNumber segmentno)
 			break;
 		if (r != BLCKSZ)
 		{
-			fprintf(stderr, _("%s: short read of block %u in file \"%s\", got only %d bytes\n"),
-					progname, blockno, fn, r);
+			fprintf(stderr, _("%s: could not read block %u in file \"%s\": read %d of %d\n"),
+					progname, blockno, fn, r, BLCKSZ);
 			exit(1);
 		}
 		blocks++;
