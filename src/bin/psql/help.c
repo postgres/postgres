@@ -369,7 +369,7 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  HISTFILE\n"
 					  "    file name used to store the command history\n"));
 	fprintf(output, _("  HISTSIZE\n"
-					  "    max number of commands to store in the command history\n"));
+					  "    maximum number of commands to store in the command history\n"));
 	fprintf(output, _("  HOST\n"
 					  "    the currently connected database server host\n"));
 	fprintf(output, _("  IGNOREEOF\n"
