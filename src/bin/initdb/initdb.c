@@ -174,6 +174,7 @@ static char *pgdata_native;
 static int	n_connections = 10;
 static int	n_buffers = 50;
 static const char *dynamic_shared_memory_type = NULL;
+static const char *default_timezone = NULL;
 
 /*
  * Warning messages for authentication methods
@@ -1058,6 +1059,11 @@ test_config_settings(void)
 		printf("%dMB\n", (n_buffers * (BLCKSZ / 1024)) / 1024);
 	else
 		printf("%dkB\n", n_buffers * (BLCKSZ / 1024));
+
+	printf(_("selecting default timezone ... "));
+	fflush(stdout);
+	default_timezone = select_default_timezone(share_path);
+	printf("%s\n", default_timezone ? default_timezone : "GMT");
 }
 
 /*
@@ -1086,7 +1092,6 @@ setup_config(void)
 	char	  **conflines;
 	char		repltok[MAXPGPATH];
 	char		path[MAXPGPATH];
-	const char *default_timezone;
 	char	   *autoconflines[3];
 
 	fputs(_("creating configuration files ... "), stdout);
@@ -1168,7 +1173,6 @@ setup_config(void)
 							  "#default_text_search_config = 'pg_catalog.simple'",
 							  repltok);
 
-	default_timezone = select_default_timezone(share_path);
 	if (default_timezone)
 	{
 		snprintf(repltok, sizeof(repltok), "timezone = '%s'",
