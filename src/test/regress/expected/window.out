@@ -504,9 +504,9 @@ SELECT sum(salary),
 FROM empsalary GROUP BY depname;
   sum  | row_number |  sum  
 -------+------------+-------
- 14600 |          3 | 14600
-  7400 |          2 | 22000
  25100 |          1 | 47100
+  7400 |          2 | 22000
+ 14600 |          3 | 14600
 (3 rows)
 
 -- identical windows with different names
@@ -2994,9 +2994,9 @@ SELECT sum(salary), row_number() OVER (ORDER BY depname), sum(
 FROM empsalary GROUP BY depname;
   sum  | row_number | filtered_sum |  depname  
 -------+------------+--------------+-----------
- 14600 |          3 |              | sales
-  7400 |          2 |         3500 | personnel
  25100 |          1 |        22600 | develop
+  7400 |          2 |         3500 | personnel
+ 14600 |          3 |              | sales
 (3 rows)
 
 -- Test pushdown of quals into a subquery containing window functions
@@ -3008,13 +3008,13 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Subquery Scan on emp
    ->  WindowAgg
-         ->  Sort
-               Sort Key: (((empsalary.depname)::text || 'A'::text))
-               ->  WindowAgg
+         ->  WindowAgg
+               ->  Sort
+                     Sort Key: (((empsalary.depname)::text || 'A'::text))
                      ->  Seq Scan on empsalary
                            Filter: ((depname)::text = 'sales'::text)
 (7 rows)
@@ -3027,18 +3027,52 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                        QUERY PLAN                         
------------------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Subquery Scan on emp
    Filter: ((emp.depname)::text = 'sales'::text)
    ->  WindowAgg
          ->  Sort
-               Sort Key: empsalary.depname
+               Sort Key: empsalary.enroll_date
                ->  WindowAgg
                      ->  Sort
-                           Sort Key: empsalary.enroll_date
+                           Sort Key: empsalary.depname
                            ->  Seq Scan on empsalary
 (9 rows)
+
+-- Test Sort node collapsing
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT depname,
+          sum(salary) OVER (PARTITION BY depname order by empno) depsalary,
+          min(salary) OVER (PARTITION BY depname, empno order by enroll_date) depminsalary
+   FROM empsalary) emp
+WHERE depname = 'sales';
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Subquery Scan on emp
+   ->  WindowAgg
+         ->  WindowAgg
+               ->  Sort
+                     Sort Key: empsalary.empno, empsalary.enroll_date
+                     ->  Seq Scan on empsalary
+                           Filter: ((depname)::text = 'sales'::text)
+(7 rows)
+
+-- Test Sort node reordering
+EXPLAIN (COSTS OFF)
+SELECT
+  lead(1) OVER (PARTITION BY depname ORDER BY salary, enroll_date),
+  lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
+FROM empsalary;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ WindowAgg
+   ->  WindowAgg
+         ->  Sort
+               Sort Key: depname, salary, enroll_date, empno
+               ->  Seq Scan on empsalary
+(5 rows)
 
 -- cleanup
 DROP TABLE empsalary;
