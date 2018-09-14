@@ -87,6 +87,7 @@ static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
 static void _LoadBlobs(ArchiveHandle *AH);
 
+static void _PrepParallelRestore(ArchiveHandle *AH);
 static void _Clone(ArchiveHandle *AH);
 static void _DeClone(ArchiveHandle *AH);
 
@@ -132,6 +133,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	AH->EndBlobPtr = _EndBlob;
 	AH->EndBlobsPtr = _EndBlobs;
 
+	AH->PrepParallelRestorePtr = _PrepParallelRestore;
 	AH->ClonePtr = _Clone;
 	AH->DeClonePtr = _DeClone;
 
@@ -240,13 +242,13 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	char		fn[MAXPGPATH];
 
 	tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
-	if (te->dataDumper)
+	if (strcmp(te->desc, "BLOBS") == 0)
+		tctx->filename = pg_strdup("blobs.toc");
+	else if (te->dataDumper)
 	{
 		snprintf(fn, MAXPGPATH, "%d.dat", te->dumpId);
 		tctx->filename = pg_strdup(fn);
 	}
-	else if (strcmp(te->desc, "BLOBS") == 0)
-		tctx->filename = pg_strdup("blobs.toc");
 	else
 		tctx->filename = NULL;
 
@@ -724,6 +726,68 @@ setFilePath(ArchiveHandle *AH, char *buf, const char *relativeFilename)
 	strcpy(buf, dname);
 	strcat(buf, "/");
 	strcat(buf, relativeFilename);
+}
+
+/*
+ * Prepare for parallel restore.
+ *
+ * The main thing that needs to happen here is to fill in TABLE DATA and BLOBS
+ * TOC entries' dataLength fields with appropriate values to guide the
+ * ordering of restore jobs.  The source of said data is format-dependent,
+ * as is the exact meaning of the values.
+ *
+ * A format module might also choose to do other setup here.
+ */
+static void
+_PrepParallelRestore(ArchiveHandle *AH)
+{
+	TocEntry   *te;
+
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		lclTocEntry *tctx = (lclTocEntry *) te->formatData;
+		char		fname[MAXPGPATH];
+		struct stat st;
+
+		/*
+		 * A dumpable object has set tctx->filename, any other object has not.
+		 * (see _ArchiveEntry).
+		 */
+		if (tctx->filename == NULL)
+			continue;
+
+		/* We may ignore items not due to be restored */
+		if ((te->reqs & REQ_DATA) == 0)
+			continue;
+
+		/*
+		 * Stat the file and, if successful, put its size in dataLength.  When
+		 * using compression, the physical file size might not be a very good
+		 * guide to the amount of work involved in restoring the file, but we
+		 * only need an approximate indicator of that.
+		 */
+		setFilePath(AH, fname, tctx->filename);
+
+		if (stat(fname, &st) == 0)
+			te->dataLength = st.st_size;
+		else
+		{
+			/* It might be compressed */
+			strlcat(fname, ".gz", sizeof(fname));
+			if (stat(fname, &st) == 0)
+				te->dataLength = st.st_size;
+		}
+
+		/*
+		 * If this is the BLOBS entry, what we stat'd was blobs.toc, which
+		 * most likely is a lot smaller than the actual blob data.  We don't
+		 * have a cheap way to estimate how much smaller, but fortunately it
+		 * doesn't matter too much as long as we get the blobs processed
+		 * reasonably early.  Arbitrarily scale up by a factor of 1K.
+		 */
+		if (strcmp(te->desc, "BLOBS") == 0)
+			te->dataLength *= 1024;
+	}
 }
 
 /*

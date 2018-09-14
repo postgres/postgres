@@ -35,10 +35,6 @@ static const char *modulename = gettext_noop("sorter");
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
  * must sort between them.
- *
- * Note: sortDataAndIndexObjectsBySize wants to have all DO_TABLE_DATA and
- * DO_INDEX objects in contiguous chunks, so do not reuse the values for those
- * for other object types.
  */
 static const int dbObjectTypePriority[] =
 {
@@ -111,96 +107,6 @@ static void repairDependencyLoop(DumpableObject **loop,
 static void describeDumpableObject(DumpableObject *obj,
 					   char *buf, int bufsize);
 
-static int	DOSizeCompare(const void *p1, const void *p2);
-
-static int
-findFirstEqualType(DumpableObjectType type, DumpableObject **objs, int numObjs)
-{
-	int			i;
-
-	for (i = 0; i < numObjs; i++)
-		if (objs[i]->objType == type)
-			return i;
-	return -1;
-}
-
-static int
-findFirstDifferentType(DumpableObjectType type, DumpableObject **objs, int numObjs, int start)
-{
-	int			i;
-
-	for (i = start; i < numObjs; i++)
-		if (objs[i]->objType != type)
-			return i;
-	return numObjs - 1;
-}
-
-/*
- * When we do a parallel dump, we want to start with the largest items first.
- *
- * Say we have the objects in this order:
- * ....DDDDD....III....
- *
- * with D = Table data, I = Index, . = other object
- *
- * This sorting function now takes each of the D or I blocks and sorts them
- * according to their size.
- */
-void
-sortDataAndIndexObjectsBySize(DumpableObject **objs, int numObjs)
-{
-	int			startIdx,
-				endIdx;
-	void	   *startPtr;
-
-	if (numObjs <= 1)
-		return;
-
-	startIdx = findFirstEqualType(DO_TABLE_DATA, objs, numObjs);
-	if (startIdx >= 0)
-	{
-		endIdx = findFirstDifferentType(DO_TABLE_DATA, objs, numObjs, startIdx);
-		startPtr = objs + startIdx;
-		qsort(startPtr, endIdx - startIdx, sizeof(DumpableObject *),
-			  DOSizeCompare);
-	}
-
-	startIdx = findFirstEqualType(DO_INDEX, objs, numObjs);
-	if (startIdx >= 0)
-	{
-		endIdx = findFirstDifferentType(DO_INDEX, objs, numObjs, startIdx);
-		startPtr = objs + startIdx;
-		qsort(startPtr, endIdx - startIdx, sizeof(DumpableObject *),
-			  DOSizeCompare);
-	}
-}
-
-static int
-DOSizeCompare(const void *p1, const void *p2)
-{
-	DumpableObject *obj1 = *(DumpableObject **) p1;
-	DumpableObject *obj2 = *(DumpableObject **) p2;
-	int			obj1_size = 0;
-	int			obj2_size = 0;
-
-	if (obj1->objType == DO_TABLE_DATA)
-		obj1_size = ((TableDataInfo *) obj1)->tdtable->relpages;
-	if (obj1->objType == DO_INDEX)
-		obj1_size = ((IndxInfo *) obj1)->relpages;
-
-	if (obj2->objType == DO_TABLE_DATA)
-		obj2_size = ((TableDataInfo *) obj2)->tdtable->relpages;
-	if (obj2->objType == DO_INDEX)
-		obj2_size = ((IndxInfo *) obj2)->relpages;
-
-	/* we want to see the biggest item go first */
-	if (obj1_size > obj2_size)
-		return -1;
-	if (obj2_size > obj1_size)
-		return 1;
-
-	return 0;
-}
 
 /*
  * Sort the given objects into a type/name-based ordering

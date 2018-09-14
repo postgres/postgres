@@ -59,6 +59,8 @@ static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
 static void _LoadBlobs(ArchiveHandle *AH, bool drop);
+
+static void _PrepParallelRestore(ArchiveHandle *AH);
 static void _Clone(ArchiveHandle *AH);
 static void _DeClone(ArchiveHandle *AH);
 
@@ -129,6 +131,8 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	AH->StartBlobPtr = _StartBlob;
 	AH->EndBlobPtr = _EndBlob;
 	AH->EndBlobsPtr = _EndBlobs;
+
+	AH->PrepParallelRestorePtr = _PrepParallelRestore;
 	AH->ClonePtr = _Clone;
 	AH->DeClonePtr = _DeClone;
 
@@ -773,6 +777,66 @@ _ReopenArchive(ArchiveHandle *AH)
 	if (fseeko(AH->FH, tpos, SEEK_SET) != 0)
 		exit_horribly(modulename, "could not set seek position in archive file: %s\n",
 					  strerror(errno));
+}
+
+/*
+ * Prepare for parallel restore.
+ *
+ * The main thing that needs to happen here is to fill in TABLE DATA and BLOBS
+ * TOC entries' dataLength fields with appropriate values to guide the
+ * ordering of restore jobs.  The source of said data is format-dependent,
+ * as is the exact meaning of the values.
+ *
+ * A format module might also choose to do other setup here.
+ */
+static void
+_PrepParallelRestore(ArchiveHandle *AH)
+{
+	lclContext *ctx = (lclContext *) AH->formatData;
+	TocEntry   *prev_te = NULL;
+	lclTocEntry *prev_tctx = NULL;
+	TocEntry   *te;
+
+	/*
+	 * Knowing that the data items were dumped out in TOC order, we can
+	 * reconstruct the length of each item as the delta to the start offset of
+	 * the next data item.
+	 */
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		lclTocEntry *tctx = (lclTocEntry *) te->formatData;
+
+		/*
+		 * Ignore entries without a known data offset; if we were unable to
+		 * seek to rewrite the TOC when creating the archive, this'll be all
+		 * of them, and we'll end up with no size estimates.
+		 */
+		if (tctx->dataState != K_OFFSET_POS_SET)
+			continue;
+
+		/* Compute previous data item's length */
+		if (prev_te)
+		{
+			if (tctx->dataPos > prev_tctx->dataPos)
+				prev_te->dataLength = tctx->dataPos - prev_tctx->dataPos;
+		}
+
+		prev_te = te;
+		prev_tctx = tctx;
+	}
+
+	/* If OK to seek, we can determine the length of the last item */
+	if (prev_te && ctx->hasSeek)
+	{
+		pgoff_t		endpos;
+
+		if (fseeko(AH->FH, 0, SEEK_END) != 0)
+			exit_horribly(modulename, "error during file seek: %s\n",
+						  strerror(errno));
+		endpos = ftello(AH->FH);
+		if (endpos > prev_tctx->dataPos)
+			prev_te->dataLength = endpos - prev_tctx->dataPos;
+	}
 }
 
 /*
