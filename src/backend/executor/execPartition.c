@@ -32,6 +32,36 @@
 #include "utils/ruleutils.h"
 
 
+/*-----------------------
+ * PartitionDispatch - information about one partitioned table in a partition
+ * hierarchy required to route a tuple to one of its partitions
+ *
+ *	reldesc		Relation descriptor of the table
+ *	key			Partition key information of the table
+ *	keystate	Execution state required for expressions in the partition key
+ *	partdesc	Partition descriptor of the table
+ *	tupslot		A standalone TupleTableSlot initialized with this table's tuple
+ *				descriptor
+ *	tupmap		TupleConversionMap to convert from the parent's rowtype to
+ *				this table's rowtype (when extracting the partition key of a
+ *				tuple just before routing it through this table)
+ *	indexes		Array with partdesc->nparts members (for details on what
+ *				individual members represent, see how they are set in
+ *				get_partition_dispatch_recurse())
+ *-----------------------
+ */
+typedef struct PartitionDispatchData
+{
+	Relation	reldesc;
+	PartitionKey key;
+	List	   *keystate;		/* list of ExprState */
+	PartitionDesc partdesc;
+	TupleTableSlot *tupslot;
+	TupleConversionMap *tupmap;
+	int		   *indexes;
+} PartitionDispatchData;
+
+
 static PartitionDispatch *RelationGetPartitionDispatchInfo(Relation rel,
 								 int *num_parted, List **leaf_part_oids);
 static void get_partition_dispatch_recurse(Relation rel, Relation parent,
