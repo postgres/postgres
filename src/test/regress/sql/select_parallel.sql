@@ -368,6 +368,11 @@ explain (costs off, verbose)
     (select unique1, row_number() over() from tenk1 b);
 
 
+-- LIMIT/OFFSET within sub-selects can't be pushed to workers.
+explain (costs off)
+  select * from tenk1 a where two in
+    (select two from tenk1 b where stringu1 like '%AAAA' limit 3);
+
 -- to increase the parallel query test coverage
 SAVEPOINT settings;
 SET LOCAL force_parallel_mode = 1;

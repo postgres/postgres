@@ -47,6 +47,8 @@ extern bool is_dummy_plan(Plan *plan);
 extern RowMarkType select_rowmark_type(RangeTblEntry *rte,
 					LockClauseStrength strength);
 
+extern bool limit_needed(Query *parse);
+
 extern void mark_partial_aggref(Aggref *agg, AggSplit aggsplit);
 
 extern Path *get_cheapest_fractional_path(RelOptInfo *rel,
