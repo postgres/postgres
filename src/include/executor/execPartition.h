@@ -18,35 +18,7 @@
 #include "nodes/plannodes.h"
 #include "partitioning/partprune.h"
 
-/*-----------------------
- * PartitionDispatch - information about one partitioned table in a partition
- * hierarchy required to route a tuple to one of its partitions
- *
- *	reldesc		Relation descriptor of the table
- *	key			Partition key information of the table
- *	keystate	Execution state required for expressions in the partition key
- *	partdesc	Partition descriptor of the table
- *	tupslot		A standalone TupleTableSlot initialized with this table's tuple
- *				descriptor
- *	tupmap		TupleConversionMap to convert from the parent's rowtype to
- *				this table's rowtype (when extracting the partition key of a
- *				tuple just before routing it through this table)
- *	indexes		Array with partdesc->nparts members (for details on what
- *				individual members represent, see how they are set in
- *				get_partition_dispatch_recurse())
- *-----------------------
- */
-typedef struct PartitionDispatchData
-{
-	Relation	reldesc;
-	PartitionKey key;
-	List	   *keystate;		/* list of ExprState */
-	PartitionDesc partdesc;
-	TupleTableSlot *tupslot;
-	TupleConversionMap *tupmap;
-	int		   *indexes;
-} PartitionDispatchData;
-
+/* See execPartition.c for the definition. */
 typedef struct PartitionDispatchData *PartitionDispatch;
 
 /*-----------------------
