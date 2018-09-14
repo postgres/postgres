@@ -205,6 +205,25 @@ explain (costs off, verbose)
                            Output: b.unique1
 (15 rows)
 
+-- LIMIT/OFFSET within sub-selects can't be pushed to workers.
+explain (costs off)
+  select * from tenk1 a where two in
+    (select two from tenk1 b where stringu1 like '%AAAA' limit 3);
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Hash Semi Join
+   Hash Cond: (a.two = b.two)
+   ->  Gather
+         Workers Planned: 4
+         ->  Parallel Seq Scan on tenk1 a
+   ->  Hash
+         ->  Limit
+               ->  Gather
+                     Workers Planned: 4
+                     ->  Parallel Seq Scan on tenk1 b
+                           Filter: (stringu1 ~~ '%AAAA'::text)
+(11 rows)
+
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
                   QUERY PLAN                   
