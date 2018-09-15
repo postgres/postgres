@@ -56,6 +56,36 @@ step "writep1"	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
 step "writep2"	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
 step "c1"	{ COMMIT; }
 
+# these tests are meant to exercise EvalPlanQualFetchRowMarks,
+# ie, handling non-locked tables in an EvalPlanQual recheck
+
+step "partiallock"	{
+	SELECT * FROM accounts a1, accounts a2
+	  WHERE a1.accountid = a2.accountid
+	  FOR UPDATE OF a1;
+}
+step "lockwithvalues"	{
+	SELECT * FROM accounts a1, (values('checking'),('savings')) v(id)
+	  WHERE a1.accountid = v.id
+	  FOR UPDATE OF a1;
+}
+
+# these tests exercise EvalPlanQual with a SubLink sub-select (which should be
+# unaffected by any EPQ recheck behavior in the outer query); cf bug #14034
+
+step "updateforss"	{
+	UPDATE table_a SET value = 'newTableAValue' WHERE id = 1;
+	UPDATE table_b SET value = 'newTableBValue' WHERE id = 1;
+}
+
+# these tests exercise EvalPlanQual with conditional InitPlans which
+# have not been executed prior to the EPQ
+
+step "updateforcip"	{
+	UPDATE table_a SET value = NULL WHERE id = 1;
+}
+
+
 session "s2"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step "wx2"	{ UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking'; }
@@ -73,12 +103,27 @@ step "returningp1" {
 	WITH u AS ( UPDATE p SET b = b WHERE a > 0 RETURNING * )
 	  SELECT * FROM u;
 }
+step "readforss"	{
+	SELECT ta.id AS ta_id, ta.value AS ta_value,
+		(SELECT ROW(tb.id, tb.value)
+		 FROM table_b tb WHERE ta.id = tb.id) AS tb_row
+	FROM table_a ta
+	WHERE ta.id = 1 FOR UPDATE OF ta;
+}
+step "updateforcip2"	{
+	UPDATE table_a SET value = COALESCE(value, (SELECT text 'newValue')) WHERE id = 1;
+}
+step "updateforcip3"	{
+	WITH d(val) AS (SELECT text 'newValue' FROM generate_series(1,1))
+	UPDATE table_a SET value = COALESCE(value, (SELECT val FROM d)) WHERE id = 1;
+}
 step "wrtwcte"	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
 step "c2"	{ COMMIT; }
 
 session "s3"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step "read"	{ SELECT * FROM accounts ORDER BY accountid; }
+step "read_a"	{ SELECT * FROM table_a ORDER BY id; }
 
 # this test exercises EvalPlanQual with a CTE, cf bug #14328
 step "readwcte"	{
@@ -109,5 +154,10 @@ permutation "wy1" "wy2" "c1" "c2" "read"
 permutation "upsert1" "upsert2" "c1" "c2" "read"
 permutation "readp1" "writep1" "readp2" "c1" "c2"
 permutation "writep2" "returningp1" "c1" "c2"
+permutation "wx2" "partiallock" "c2" "c1" "read"
+permutation "wx2" "lockwithvalues" "c2" "c1" "read"
+permutation "updateforss" "readforss" "c1" "c2"
+permutation "updateforcip" "updateforcip2" "c1" "c2" "read_a"
+permutation "updateforcip" "updateforcip3" "c1" "c2" "read_a"
 permutation "wrtwcte" "readwcte" "c1" "c2"
 permutation "wrtwcte" "multireadwcte" "c1" "c2"

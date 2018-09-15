@@ -44,6 +44,7 @@
 #include "catalog/namespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
+#include "executor/nodeSubplan.h"
 #include "foreign/fdwapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -2395,7 +2396,17 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 		/* Recopy current values of parent parameters */
 		if (parentestate->es_plannedstmt->nParamExec > 0)
 		{
-			int			i = parentestate->es_plannedstmt->nParamExec;
+			int			i;
+
+			/*
+			 * Force evaluation of any InitPlan outputs that could be needed
+			 * by the subplan, just in case they got reset since
+			 * EvalPlanQualStart (see comments therein).
+			 */
+			ExecSetParamPlanMulti(planstate->plan->extParam,
+								  GetPerTupleExprContext(parentestate));
+
+			i = parentestate->es_plannedstmt->nParamExec;
 
 			while (--i >= 0)
 			{
@@ -2485,10 +2496,34 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_param_list_info = parentestate->es_param_list_info;
 	if (parentestate->es_plannedstmt->nParamExec > 0)
 	{
-		int			i = parentestate->es_plannedstmt->nParamExec;
+		int			i;
 
+		/*
+		 * Force evaluation of any InitPlan outputs that could be needed by
+		 * the subplan.  (With more complexity, maybe we could postpone this
+		 * till the subplan actually demands them, but it doesn't seem worth
+		 * the trouble; this is a corner case already, since usually the
+		 * InitPlans would have been evaluated before reaching EvalPlanQual.)
+		 *
+		 * This will not touch output params of InitPlans that occur somewhere
+		 * within the subplan tree, only those that are attached to the
+		 * ModifyTable node or above it and are referenced within the subplan.
+		 * That's OK though, because the planner would only attach such
+		 * InitPlans to a lower-level SubqueryScan node, and EPQ execution
+		 * will not descend into a SubqueryScan.
+		 *
+		 * The EState's per-output-tuple econtext is sufficiently short-lived
+		 * for this, since it should get reset before there is any chance of
+		 * doing EvalPlanQual again.
+		 */
+		ExecSetParamPlanMulti(planTree->extParam,
+							  GetPerTupleExprContext(parentestate));
+
+		/* now make the internal param workspace ... */
+		i = parentestate->es_plannedstmt->nParamExec;
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(i * sizeof(ParamExecData));
+		/* ... and copy down all values, whether really needed or not */
 		while (--i >= 0)
 		{
 			/* copy value if any, but not execPlan link */
