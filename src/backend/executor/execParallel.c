@@ -23,7 +23,6 @@
 
 #include "postgres.h"
 
-#include "executor/execExpr.h"
 #include "executor/execParallel.h"
 #include "executor/executor.h"
 #include "executor/nodeAppend.h"
@@ -36,6 +35,7 @@
 #include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSort.h"
+#include "executor/nodeSubplan.h"
 #include "executor/tqueue.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
@@ -581,8 +581,18 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	char	   *query_string;
 	int			query_len;
 
-	/* Force parameters we're going to pass to workers to be evaluated. */
-	ExecEvalParamExecParams(sendParams, estate);
+	/*
+	 * Force any initplan outputs that we're going to pass to workers to be
+	 * evaluated, if they weren't already.
+	 *
+	 * For simplicity, we use the EState's per-output-tuple ExprContext here.
+	 * That risks intra-query memory leakage, since we might pass through here
+	 * many times before that ExprContext gets reset; but ExecSetParamPlan
+	 * doesn't normally leak any memory in the context (see its comments), so
+	 * it doesn't seem worth complicating this function's API to pass it a
+	 * shorter-lived ExprContext.  This might need to change someday.
+	 */
+	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate));
 
 	/* Allocate object for return value. */
 	pei = palloc0(sizeof(ParallelExecutorInfo));
@@ -831,8 +841,12 @@ ExecParallelReinitialize(PlanState *planstate,
 	/* Old workers must already be shut down */
 	Assert(pei->finished);
 
-	/* Force parameters we're going to pass to workers to be evaluated. */
-	ExecEvalParamExecParams(sendParams, estate);
+	/*
+	 * Force any initplan outputs that we're going to pass to workers to be
+	 * evaluated, if they weren't already (see comments in
+	 * ExecInitParallelPlan).
+	 */
+	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate));
 
 	ReinitializeParallelDSM(pei->pcxt);
 	pei->tqueue = ExecParallelSetupTupleQueues(pei->pcxt, true);

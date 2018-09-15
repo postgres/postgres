@@ -184,6 +184,37 @@ ta_id          ta_value       tb_row
 1              newTableAValue (1,tableBValue)
 step c2: COMMIT;
 
+starting permutation: updateforcip updateforcip2 c1 c2 read_a
+step updateforcip: 
+	UPDATE table_a SET value = NULL WHERE id = 1;
+
+step updateforcip2: 
+	UPDATE table_a SET value = COALESCE(value, (SELECT text 'newValue')) WHERE id = 1;
+ <waiting ...>
+step c1: COMMIT;
+step updateforcip2: <... completed>
+step c2: COMMIT;
+step read_a: SELECT * FROM table_a ORDER BY id;
+id             value          
+
+1              newValue       
+
+starting permutation: updateforcip updateforcip3 c1 c2 read_a
+step updateforcip: 
+	UPDATE table_a SET value = NULL WHERE id = 1;
+
+step updateforcip3: 
+	WITH d(val) AS (SELECT text 'newValue' FROM generate_series(1,1))
+	UPDATE table_a SET value = COALESCE(value, (SELECT val FROM d)) WHERE id = 1;
+ <waiting ...>
+step c1: COMMIT;
+step updateforcip3: <... completed>
+step c2: COMMIT;
+step read_a: SELECT * FROM table_a ORDER BY id;
+id             value          
+
+1              newValue       
+
 starting permutation: wrtwcte readwcte c1 c2
 step wrtwcte: UPDATE table_a SET value = 'tableAValue2' WHERE id = 1;
 step readwcte: 
