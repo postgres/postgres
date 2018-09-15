@@ -2253,33 +2253,6 @@ ExecEvalParamExec(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 }
 
 /*
- * ExecEvalParamExecParams
- *
- * Execute the subplan stored in PARAM_EXEC initplans params, if not executed
- * till now.
- */
-void
-ExecEvalParamExecParams(Bitmapset *params, EState *estate)
-{
-	ParamExecData *prm;
-	int			paramid;
-
-	paramid = -1;
-	while ((paramid = bms_next_member(params, paramid)) >= 0)
-	{
-		prm = &(estate->es_param_exec_vals[paramid]);
-
-		if (prm->execPlan != NULL)
-		{
-			/* Parameter not evaluated yet, so go do it */
-			ExecSetParamPlan(prm->execPlan, GetPerTupleExprContext(estate));
-			/* ExecSetParamPlan should have processed this param... */
-			Assert(prm->execPlan == NULL);
-		}
-	}
-}
-
-/*
  * Evaluate a PARAM_EXTERN parameter.
  *
  * PARAM_EXTERN parameters must be sought in ecxt_param_list_info.
