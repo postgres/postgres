@@ -4155,7 +4155,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-
      <varlistentry id="guc-jit-above-cost" xreflabel="jit_above_cost">
       <term><varname>jit_above_cost</varname> (<type>floating point</type>)
       <indexterm>
@@ -4164,29 +4163,12 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        Sets the planner's cutoff above which JIT compilation is used as part
-        of query execution (see <xref linkend="jit"/>). Performing
-        <acronym>JIT</acronym> costs time but can accelerate query execution.
-
+        Sets the query cost above which JIT compilation is activated, if
+        enabled (see <xref linkend="jit"/>).
+        Performing <acronym>JIT</acronym> costs planning time but can
+        accelerate query execution.
+        Setting this to <literal>-1</literal> disables JIT compilation.
         The default is <literal>100000</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-jit-optimize-above-cost" xreflabel="jit_optimize_above_cost">
-      <term><varname>jit_optimize_above_cost</varname> (<type>floating point</type>)
-      <indexterm>
-       <primary><varname>jit_optimize_above_cost</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Sets the planner's cutoff above which JIT compiled programs (see <xref
-        linkend="guc-jit-above-cost"/>) are optimized. Optimization initially
-        takes time, but can improve execution speed.  It is not meaningful to
-        set this to a lower value than <xref linkend="guc-jit-above-cost"/>.
-
-        The default is <literal>500000</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -4199,13 +4181,31 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        Sets the planner's cutoff above which JIT compiled programs (see <xref
-        linkend="guc-jit-above-cost"/>) attempt to inline functions and
-        operators. Inlining initially takes time, but can improve execution
-        speed.  It is unlikely to be beneficial to set
-        <varname>jit_inline_above_cost</varname> below
-        <varname>jit_optimize_above_cost</varname>.
+        Sets the query cost above which JIT compilation attempts to inline
+        functions and operators.  Inlining adds planning time, but can
+        improve execution speed.  It is not meaningful to set this to less
+        than <varname>jit_above_cost</varname>.
+        Setting this to <literal>-1</literal> disables inlining.
+        The default is <literal>500000</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
 
+     <varlistentry id="guc-jit-optimize-above-cost" xreflabel="jit_optimize_above_cost">
+      <term><varname>jit_optimize_above_cost</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>jit_optimize_above_cost</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the query cost above which JIT compilation applies expensive
+        optimizations.  Such optimization adds planning time, but can improve
+        execution speed.  It is not meaningful to set this to less
+        than <varname>jit_above_cost</varname>, and it is unlikely to be
+        beneficial to set it to more
+        than <varname>jit_inline_above_cost</varname>.
+        Setting this to <literal>-1</literal> disables expensive optimizations.
         The default is <literal>500000</literal>.
        </para>
       </listitem>
@@ -4500,11 +4500,10 @@ SELECT * FROM parent WHERE key = 2400;
       </term>
       <listitem>
        <para>
-        Determines whether <acronym>JIT</acronym> may be used by
+        Determines whether <acronym>JIT</acronym> compilation may be used by
         <productname>PostgreSQL</productname>, if available (see <xref
         linkend="jit"/>).
-
-        The default is <literal>on</literal>.
+        The default is <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -7552,16 +7551,17 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </term>
       <listitem>
        <para>
-        Determines which JIT provider (see <xref linkend="jit-extensibility"/>) is
-        used. The built-in default is <literal>llvmjit</literal>.
+        This variable is the name of the JIT provider library to be used
+        (see <xref linkend="jit-pluggable"/>).
+        The default is <literal>llvmjit</literal>.
+        This parameter can only be set at server start.
        </para>
+
        <para>
-        If set to a non-existent library <acronym>JIT</acronym> will not be
+        If set to a non-existent library, <acronym>JIT</acronym> will not be
         available, but no error will be raised. This allows JIT support to be
         installed separately from the main
         <productname>PostgreSQL</productname> package.
-
-        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -8840,9 +8840,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
        <para>
         If LLVM has the required functionality, register generated functions
         with <productname>GDB</productname>.  This makes debugging easier.
-
-        The default setting is <literal>off</literal>, and can only be set at
-        server start.
+        The default setting is <literal>off</literal>.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -8858,9 +8857,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         Writes the generated <productname>LLVM</productname> IR out to the
         file system, inside <xref linkend="guc-data-directory"/>. This is only
         useful for working on the internals of the JIT implementation.
-
-        The default setting is <literal>off</literal>, and it can only be
-        changed by a superuser.
+        The default setting is <literal>off</literal>.
+        This parameter can only be changed by a superuser.
        </para>
       </listitem>
      </varlistentry>
@@ -8873,8 +8871,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </term>
       <listitem>
        <para>
-        Determines whether expressions are JIT compiled, subject to costing
-        decisions (see <xref linkend="jit-decision"/>).  The default is
+        Determines whether expressions are JIT compiled, when JIT compilation
+        is activated (see <xref linkend="jit-decision"/>).  The default is
         <literal>on</literal>.
        </para>
       </listitem>
@@ -8888,13 +8886,12 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </term>
       <listitem>
        <para>
-        If LLVM has the required functionality, emit required data to allow
+        If LLVM has the required functionality, emit the data needed to allow
         <productname>perf</productname> to profile functions generated by JIT.
         This writes out files to <filename>$HOME/.debug/jit/</filename>; the
         user is responsible for performing cleanup when desired.
-
-        The default setting is <literal>off</literal>, and can only be set at
-        server start.
+        The default setting is <literal>off</literal>.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -8907,9 +8904,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </term>
       <listitem>
        <para>
-        Determines whether tuple deforming is JIT compiled, subject to costing
-        decisions (see <xref linkend="jit-decision"/>). The default is
-        <literal>on</literal>.
+        Determines whether tuple deforming is JIT compiled, when JIT
+        compilation is activated (see <xref linkend="jit-decision"/>).
+        The default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>

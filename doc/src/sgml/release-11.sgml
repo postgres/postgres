@@ -85,8 +85,8 @@
 
     <listitem>
      <para>
-      JIT compilation of some SQL code, including support for fast evaluation
-      of expressions
+      Optional Just-in-Time (JIT) compilation of some SQL code, including
+      support for fast evaluation of expressions
      </para>
     </listitem>
 
@@ -1076,9 +1076,15 @@ same commits as above
 -->
 
        <para>
-        Add <link linkend="jit">Just-In-Time</link>
+        Add <link linkend="jit">Just-in-Time</link>
         (<acronym>JIT</acronym>) compilation of some parts of query plans
         to improve execution speed (Andres Freund)
+       </para>
+
+       <para>
+        This feature requires <application>LLVM</application> to be
+        available, and it is not currently enabled by default, even in
+        builds that support it.
        </para>
       </listitem>
 

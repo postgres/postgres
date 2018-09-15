@@ -32,8 +32,8 @@
 
 
 /* GUCs */
-bool		jit_enabled = true;
-char	   *jit_provider = "llvmjit";
+bool		jit_enabled = false;
+char	   *jit_provider = NULL;
 bool		jit_debugging_support = false;
 bool		jit_dump_bitcode = false;
 bool		jit_expressions = true;
