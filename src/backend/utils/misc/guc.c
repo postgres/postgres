@@ -3895,7 +3895,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"jit_provider", PGC_POSTMASTER, FILE_LOCATIONS,
+		{"jit_provider", PGC_POSTMASTER, CLIENT_CONN_PRELOAD,
 			gettext_noop("JIT provider to use."),
 			NULL,
 			GUC_SUPERUSER_ONLY

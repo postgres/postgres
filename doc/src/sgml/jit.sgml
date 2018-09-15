@@ -21,22 +21,22 @@
   <title>What is <acronym>JIT</acronym> compilation?</title>
 
   <para>
-   Just-in-time compilation (<acronym>JIT</acronym>) is the process of turning
+   Just-in-Time (<acronym>JIT</acronym>) compilation is the process of turning
    some form of interpreted program evaluation into a native program, and
    doing so at run time.
-
-   For example, instead of using a facility that can evaluate arbitrary SQL
-   expressions to evaluate an SQL predicate like <literal>WHERE a.col =
-   3</literal>, it is possible to generate a function than can be natively
-   executed by the CPU that just handles that expression, yielding a speedup.
+   For example, instead of using general-purpose code that can evaluate
+   arbitrary SQL expressions to evaluate a particular SQL predicate
+   like <literal>WHERE a.col = 3</literal>, it is possible to generate a
+   function that is specific to that expression and can be natively executed
+   by the CPU, yielding a speedup.
   </para>
 
   <para>
    <productname>PostgreSQL</productname> has builtin support to perform
    <acronym>JIT</acronym> compilation using <ulink
    url="https://llvm.org/"><productname>LLVM</productname></ulink> when
-   <productname>PostgreSQL</productname> was built with
-   <literal>--with-llvm</literal> (see <xref linkend="configure-with-llvm"/>).
+   <productname>PostgreSQL</productname> is built with
+   <link linkend="configure-with-llvm"><literal>--with-llvm</literal></link>.
   </para>
 
   <para>
@@ -64,30 +64,29 @@
    </para>
   </sect2>
 
+  <sect2 id="jit-inlining">
+   <title>Inlining</title>
+   <para>
+    <productname>PostgreSQL</productname> is very extensible and allows new
+    data types, functions, operators and other database objects to be defined;
+    see <xref linkend="extend"/>. In fact the built-in objects are implemented
+    using nearly the same mechanisms.  This extensibility implies some
+    overhead, for example due to function calls (see <xref linkend="xfunc"/>).
+    To reduce that overhead, <acronym>JIT</acronym> compilation can inline the
+    bodies of small functions into the expressions using them. That allows a
+    significant percentage of the overhead to be optimized away.
+   </para>
+  </sect2>
+
   <sect2 id="jit-optimization">
    <title>Optimization</title>
    <para>
     <productname>LLVM</productname> has support for optimizing generated
     code. Some of the optimizations are cheap enough to be performed whenever
     <acronym>JIT</acronym> is used, while others are only beneficial for
-    longer running queries.
-
+    longer-running queries.
     See <ulink url="https://llvm.org/docs/Passes.html#transform-passes"/> for
     more details about optimizations.
-   </para>
-  </sect2>
-
-  <sect2 id="jit-inlining">
-   <title>Inlining</title>
-   <para>
-    <productname>PostgreSQL</productname> is very extensible and allows new
-    data types, functions, operators and other database objects to be defined;
-    see <xref linkend="extend"/>. In fact the built-in ones are implemented
-    using nearly the same mechanisms.  This extensibility implies some
-    overhead, for example due to function calls (see <xref linkend="xfunc"/>).
-    To reduce that overhead <acronym>JIT</acronym> compilation can inline the
-    body for small functions into the expression using them. That allows a
-    significant percentage of the overhead to be optimized away.
    </para>
   </sect2>
 
@@ -98,50 +97,46 @@
 
   <para>
    <acronym>JIT</acronym> compilation is beneficial primarily for long-running
-   CPU bound queries. Frequently these will be analytical queries.  For short
+   CPU-bound queries. Frequently these will be analytical queries.  For short
    queries the added overhead of performing <acronym>JIT</acronym> compilation
    will often be higher than the time it can save.
   </para>
 
   <para>
-   To determine whether <acronym>JIT</acronym> compilation is used, the total
-   cost of a query (see <xref linkend="planner-stats-details"/> and <xref
-   linkend="runtime-config-query-constants"/>) is used.
-  </para>
-
-  <para>
-   The cost of the query will be compared with the setting of <xref
+   To determine whether <acronym>JIT</acronym> compilation should be used,
+   the total estimated cost of a query (see
+   <xref linkend="planner-stats-details"/> and
+   <xref linkend="runtime-config-query-constants"/>) is used.
+   The estimated cost of the query will be compared with the setting of <xref
    linkend="guc-jit-above-cost"/>. If the cost is higher,
    <acronym>JIT</acronym> compilation will be performed.
-  </para>
-
-  <para>
-   If the planner, based on the above criterion, decided that
-   <acronym>JIT</acronym> compilation is beneficial, two further decisions are
-   made. Firstly, if the query is more costly than the setting of <xref
+   Two further decisions are then needed.
+   Firstly, if the estimated cost is more
+   than the setting of <xref linkend="guc-jit-inline-above-cost"/>, short
+   functions and operators used in the query will be inlined.
+   Secondly, if the estimated cost is more than the setting of <xref
    linkend="guc-jit-optimize-above-cost"/>, expensive optimizations are
-   used to improve the generated code. Secondly, if the query is more costly
-   than the setting of <xref linkend="guc-jit-inline-above-cost"/>, short functions
-   and operators used in the query will be inlined.  Both of these operations
-   increase the <acronym>JIT</acronym> overhead, but can reduce query
-   execution time considerably.
+   applied to improve the generated code.
+   Each of these options increases the <acronym>JIT</acronym> compilation
+   overhead, but can reduce query execution time considerably.
   </para>
 
   <para>
-   This cost based decision will be made at plan time, not execution
-   time. This means that when prepared statements are in use, and the generic
-   plan is used (see <xref linkend="sql-prepare-notes"/>), the values of the
-   configuration parameters set at prepare time take effect, not the settings at execution time.
+   These cost-based decisions will be made at plan time, not execution
+   time. This means that when prepared statements are in use, and a generic
+   plan is used (see <xref linkend="sql-prepare"/>), the values of the
+   configuration parameters in effect at prepare time control the decisions,
+   not the settings at execution time.
   </para>
 
   <note>
    <para>
-    If <xref linkend="guc-jit"/> is set to <literal>off</literal>, or no
+    If <xref linkend="guc-jit"/> is set to <literal>off</literal>, or if no
     <acronym>JIT</acronym> implementation is available (for example because
     the server was compiled without <literal>--with-llvm</literal>),
-    <acronym>JIT</acronym> will not be performed, even if considered to be
+    <acronym>JIT</acronym> will not be performed, even if it would be
     beneficial based on the above criteria.  Setting <xref linkend="guc-jit"/>
-    to <literal>off</literal> takes effect both at plan and at execution time.
+    to <literal>off</literal> has effects at both plan and execution time.
    </para>
   </note>
 
@@ -160,9 +155,9 @@
 (4 rows)
 </screen>
    Given the cost of the plan, it is entirely reasonable that no
-   <acronym>JIT</acronym> was used, the cost of <acronym>JIT</acronym> would
-   have been bigger than the savings. Adjusting the cost limits will lead to
-   <acronym>JIT</acronym> use:
+   <acronym>JIT</acronym> was used; the cost of <acronym>JIT</acronym> would
+   have been bigger than the potential savings. Adjusting the cost limits
+   will lead to <acronym>JIT</acronym> use:
 <screen>
 =# SET jit_above_cost = 10;
 SET
@@ -184,9 +179,9 @@ SET
 </screen>
    As visible here, <acronym>JIT</acronym> was used, but inlining and
    expensive optimization were not. If <xref
-   linkend="guc-jit-optimize-above-cost"/>, <xref
-   linkend="guc-jit-inline-above-cost"/> were lowered, just like <xref
-   linkend="guc-jit-above-cost"/>, that would change.
+   linkend="guc-jit-inline-above-cost"/> or <xref
+   linkend="guc-jit-optimize-above-cost"/> were also lowered,
+   that would change.
   </para>
  </sect1>
 
@@ -194,58 +189,53 @@ SET
   <title>Configuration</title>
 
   <para>
+   The configuration variable
    <xref linkend="guc-jit"/> determines whether <acronym>JIT</acronym>
    compilation is enabled or disabled.
-  </para>
-
-  <para>
-   As explained in <xref linkend="jit-decision"/> the configuration variables
+   If it is enabled, the configuration variables
    <xref linkend="guc-jit-above-cost"/>, <xref
-   linkend="guc-jit-optimize-above-cost"/>, <xref
-   linkend="guc-jit-inline-above-cost"/> decide whether <acronym>JIT</acronym>
-   compilation is performed for a query, and how much effort is spent doing
-   so.
-  </para>
-
-  <para>
-   For development and debugging purposes a few additional configuration parameters exist. <xref
-   linkend="guc-jit-dump-bitcode"/> allows the generated bitcode to be
-   inspected. <xref linkend="guc-jit-debugging-support"/> allows GDB to see
-   generated functions. <xref linkend="guc-jit-profiling-support"/> emits
-   information so the <productname>perf</productname> profiler can interpret
-   <acronym>JIT</acronym> generated functions sensibly.
+   linkend="guc-jit-inline-above-cost"/>, and <xref
+   linkend="guc-jit-optimize-above-cost"/> determine
+   whether <acronym>JIT</acronym> compilation is performed for a query,
+   and how much effort is spent doing so.
   </para>
 
   <para>
    <xref linkend="guc-jit-provider"/> determines which <acronym>JIT</acronym>
-   implementation is used. It rarely is required to be changed. See <xref
+   implementation is used. It is rarely required to be changed. See <xref
    linkend="jit-pluggable"/>.
+  </para>
+
+  <para>
+   For development and debugging purposes a few additional configuration
+   parameters exist, as described in
+   <xref linkend="runtime-config-developer"/>.
   </para>
  </sect1>
 
- <sect1 id="jit-extensibility" xreflabel="JIT Extensibility">
+ <sect1 id="jit-extensibility">
   <title>Extensibility</title>
 
   <sect2 id="jit-extensibility-bitcode">
    <title>Inlining Support for Extensions</title>
    <para>
     <productname>PostgreSQL</productname>'s <acronym>JIT</acronym>
-    implementation can inline the implementation of operators and functions
-    (of type <literal>C</literal> and <literal>internal</literal>). See <xref
-    linkend="jit-inlining"/>. To do so for functions in extensions, the
-    definition of these functions needs to be made available. When using <link
-    linkend="extend-pgxs">PGXS</link> to build an extension against a server
-    that has been compiled with LLVM support, the relevant files will be
-    installed automatically.
+    implementation can inline the bodies of functions
+    of types <literal>C</literal> and <literal>internal</literal>, as well as
+    operators based on such functions.  To do so for functions in extensions,
+    the definitions of those functions need to be made available.
+    When using <link linkend="extend-pgxs">PGXS</link> to build an extension
+    against a server that has been compiled with LLVM JIT support, the
+    relevant files will be built and installed automatically.
    </para>
 
    <para>
     The relevant files have to be installed into
     <filename>$pkglibdir/bitcode/$extension/</filename> and a summary of them
-    to <filename>$pkglibdir/bitcode/$extension.index.bc</filename>, where
+    into <filename>$pkglibdir/bitcode/$extension.index.bc</filename>, where
     <literal>$pkglibdir</literal> is the directory returned by
     <literal>pg_config --pkglibdir</literal> and <literal>$extension</literal>
-    the base name of the extension's shared library.
+    is the base name of the extension's shared library.
 
     <note>
      <para>
@@ -258,14 +248,16 @@ SET
   </sect2>
 
   <sect2 id="jit-pluggable">
-   <title>Pluggable <acronym>JIT</acronym> Provider</title>
+   <title>Pluggable <acronym>JIT</acronym> Providers</title>
 
    <para>
     <productname>PostgreSQL</productname> provides a <acronym>JIT</acronym>
     implementation based on <productname>LLVM</productname>.  The interface to
     the <acronym>JIT</acronym> provider is pluggable and the provider can be
-    changed without recompiling. The provider is chosen via the setting <xref
-    linkend="guc-jit-provider"/>.
+    changed without recompiling (although currently, the build process only
+    provides inlining support data for <productname>LLVM</productname>).
+    The active provider is chosen via the setting
+    <xref linkend="guc-jit-provider"/>.
    </para>
 
    <sect3>
@@ -275,10 +267,10 @@ SET
      named shared library. The normal library search path is used to locate
      the library. To provide the required <acronym>JIT</acronym> provider
      callbacks and to indicate that the library is actually a
-     <acronym>JIT</acronym> provider it needs to provide a function named
+     <acronym>JIT</acronym> provider, it needs to provide a C function named
      <function>_PG_jit_provider_init</function>. This function is passed a
      struct that needs to be filled with the callback function pointers for
-     individual actions.
+     individual actions:
 <programlisting>
 struct JitProviderCallbacks
 {
@@ -286,6 +278,7 @@ struct JitProviderCallbacks
     JitProviderReleaseContextCB release_context;
     JitProviderCompileExprCB compile_expr;
 };
+
 extern void _PG_jit_provider_init(JitProviderCallbacks *cb);
 </programlisting>
     </para>

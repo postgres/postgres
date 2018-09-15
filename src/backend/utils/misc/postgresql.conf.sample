@@ -320,11 +320,12 @@
 #parallel_setup_cost = 1000.0	# same scale as above
 
 #jit_above_cost = 100000		# perform JIT compilation if available
-					# and query more expensive, -1 disables
-#jit_optimize_above_cost = 500000	# optimize JITed functions if query is
-					# more expensive, -1 disables
-#jit_inline_above_cost = 500000		# attempt to inline operators and
-					# functions if query is more expensive,
+					# and query more expensive than this;
+					# -1 disables
+#jit_inline_above_cost = 500000		# inline small functions if query is
+					# more expensive than this; -1 disables
+#jit_optimize_above_cost = 500000	# use expensive JIT optimizations if
+					# query is more expensive than this;
 					# -1 disables
 
 #min_parallel_table_scan_size = 8MB
@@ -350,6 +351,7 @@
 #join_collapse_limit = 8		# 1 disables collapsing of explicit
 					# JOIN clauses
 #force_parallel_mode = off
+#jit = on				# allow JIT compilation
 #plan_cache_mode = auto			# auto, force_generic_plan or
 					# force_custom_plan
 
@@ -616,13 +618,12 @@
 #shared_preload_libraries = ''	# (change requires restart)
 #local_preload_libraries = ''
 #session_preload_libraries = ''
+#jit_provider = 'llvmjit'		# JIT library to use
 
 # - Other Defaults -
 
 #dynamic_library_path = '$libdir'
 
-#jit = on				# allow JIT compilation
-#jit_provider = 'llvmjit'		# JIT implementation to use
 
 #------------------------------------------------------------------------------
 # LOCK MANAGEMENT
