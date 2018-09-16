@@ -5,7 +5,7 @@
 #include "fmgr.h"
 #include "plperl.h"
 #include "plperl_helpers.h"
-#include "hstore.h"
+#include "hstore/hstore.h"
 
 PG_MODULE_MAGIC;
 

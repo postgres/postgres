@@ -39,6 +39,21 @@ ifeq ($(python_majorversion),2)
 DATA += plpythonu.control plpythonu--1.0.sql plpythonu--unpackaged--1.0.sql
 endif
 
+# header files to install - it's not clear which of these might be needed
+# so install them all.
+INCS = 	plpython.h \
+	plpy_cursorobject.h \
+	plpy_elog.h \
+	plpy_exec.h \
+	plpy_main.h \
+	plpy_planobject.h \
+	plpy_plpymodule.h \
+	plpy_procedure.h \
+	plpy_resultobject.h \
+	plpy_spi.h \
+	plpy_subxactobject.h \
+	plpy_typeio.h \
+	plpy_util.h
 
 # Python on win32 ships with import libraries only for Microsoft Visual C++,
 # which are not compatible with mingw gcc. Therefore we need to build a
@@ -105,13 +120,14 @@ $(OBJS): | submake-generated-headers
 install: all install-lib install-data
 
 installdirs: installdirs-lib
-	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension' '$(DESTDIR)$(includedir_server)'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension' '$(DESTDIR)$(includedir_server)' '$(DESTDIR)$(pgxsdir)/src/pl/plpython'
 
 uninstall: uninstall-lib uninstall-data
 
 install-data: installdirs
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) '$(DESTDIR)$(datadir)/extension/'
-	$(INSTALL_DATA) $(srcdir)/plpython.h $(srcdir)/plpy_util.h '$(DESTDIR)$(includedir_server)'
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(INCS)) '$(DESTDIR)$(includedir_server)'
+	$(INSTALL_DATA) $(srcdir)/regress-python3-mangle.mk '$(DESTDIR)$(pgxsdir)/src/pl/plpython'
 
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))

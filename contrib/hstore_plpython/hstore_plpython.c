@@ -3,7 +3,7 @@
 #include "fmgr.h"
 #include "plpython.h"
 #include "plpy_typeio.h"
-#include "hstore.h"
+#include "hstore/hstore.h"
 
 PG_MODULE_MAGIC;
 
