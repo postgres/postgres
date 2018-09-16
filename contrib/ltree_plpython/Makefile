@@ -4,19 +4,21 @@ MODULE_big = ltree_plpython$(python_majorversion)
 OBJS = ltree_plpython.o $(WIN32RES)
 PGFILEDESC = "ltree_plpython - ltree transform for plpython"
 
-PG_CPPFLAGS = -I$(top_srcdir)/src/pl/plpython $(python_includespec) -I$(top_srcdir)/contrib/ltree -DPLPYTHON_LIBNAME='"plpython$(python_majorversion)"'
-
 EXTENSION = ltree_plpythonu ltree_plpython2u ltree_plpython3u
 DATA = ltree_plpythonu--1.0.sql ltree_plpython2u--1.0.sql ltree_plpython3u--1.0.sql
 
 REGRESS = ltree_plpython
 REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
+PG_CPPFLAGS = $(python_includespec) -DPLPYTHON_LIBNAME='"plpython$(python_majorversion)"'
+
 ifdef USE_PGXS
+PG_CPPFLAGS += -I$(includedir_server)/extension
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
+PG_CPPFLAGS += -I$(top_srcdir)/src/pl/plpython -I$(top_srcdir)/contrib
 subdir = contrib/ltree_plpython
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global

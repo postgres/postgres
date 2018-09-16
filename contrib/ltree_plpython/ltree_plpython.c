@@ -2,7 +2,7 @@
 
 #include "fmgr.h"
 #include "plpython.h"
-#include "ltree.h"
+#include "ltree/ltree.h"
 
 PG_MODULE_MAGIC;
 
