@@ -387,9 +387,9 @@ PostgreSQL documentation
       <term><option>--create-slot</option></term>
       <listitem>
        <para>
-        This option causes the replication slot specified by the
-        option <literal>--slot</literal> to be created before starting the
-        backup.  In this case, an error is raised if the slot already exists.
+        This option causes creation of a replication slot named by the
+        <literal>--slot</literal> option before starting the backup.
+        An error is raised if the slot already exists.
        </para>
       </listitem>
      </varlistentry>
