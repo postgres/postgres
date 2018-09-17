@@ -287,7 +287,7 @@ FindStreamingStart(uint32 *tli)
 
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
 
-			fd = open(fullpath, O_RDONLY | PG_BINARY);
+			fd = open(fullpath, O_RDONLY | PG_BINARY, 0);
 			if (fd < 0)
 			{
 				fprintf(stderr, _("%s: could not open compressed file \"%s\": %s\n"),
