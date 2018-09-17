@@ -4434,37 +4434,11 @@ move_to_ready_list(TocEntry *pending_list,
  * and no requirements for locks that are incompatible with
  * items currently running.  Items in the ready_list are known to have
  * no remaining dependencies, but we have to check for lock conflicts.
- *
- * pref_non_data is for an alternative selection algorithm that gives
- * preference to non-data items if there is already a data load running.
- * It is currently disabled.
  */
 static TocEntry *
 pop_next_work_item(ArchiveHandle *AH, ParallelReadyList *ready_list,
 				   ParallelState *pstate)
 {
-	bool		pref_non_data = false;	/* or get from AH->ropt */
-	int			data_te_index = -1;
-
-	/*
-	 * Bogus heuristics for pref_non_data
-	 */
-	if (pref_non_data)
-	{
-		int			count = 0;
-
-		for (int k = 0; k < pstate->numWorkers; k++)
-		{
-			TocEntry   *running_te = pstate->te[k];
-
-			if (running_te != NULL &&
-				running_te->section == SECTION_DATA)
-				count++;
-		}
-		if (pstate->numWorkers == 0 || count * 4 < pstate->numWorkers)
-			pref_non_data = false;
-	}
-
 	/*
 	 * Sort the ready_list so that we'll tackle larger jobs first.
 	 */
@@ -4500,24 +4474,9 @@ pop_next_work_item(ArchiveHandle *AH, ParallelReadyList *ready_list,
 		if (conflicts)
 			continue;
 
-		if (pref_non_data && te->section == SECTION_DATA)
-		{
-			if (data_te_index < 0)
-				data_te_index = i;
-			continue;
-		}
-
 		/* passed all tests, so this item can run */
 		ready_list_remove(ready_list, i);
 		return te;
-	}
-
-	if (data_te_index >= 0)
-	{
-		TocEntry   *data_te = ready_list->tes[data_te_index];
-
-		ready_list_remove(ready_list, data_te_index);
-		return data_te;
 	}
 
 	ahlog(AH, 2, "no item ready\n");
