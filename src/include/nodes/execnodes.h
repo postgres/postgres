@@ -1564,8 +1564,8 @@ typedef struct TableFuncScanState
 	ExprState  *rowexpr;		/* state for row-generating expression */
 	List	   *colexprs;		/* state for column-generating expression */
 	List	   *coldefexprs;	/* state for column default expressions */
-	List	   *ns_names;		/* list of str nodes with namespace names */
-	List	   *ns_uris;		/* list of states of namespace uri exprs */
+	List	   *ns_names;		/* same as TableFunc.ns_names */
+	List	   *ns_uris;		/* list of states of namespace URI exprs */
 	Bitmapset  *notnulls;		/* nullability flag for each output column */
 	void	   *opaque;			/* table builder private space */
 	const struct TableFuncRoutine *routine; /* table builder methods */

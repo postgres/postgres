@@ -364,8 +364,9 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 	forboth(lc1, tstate->ns_uris, lc2, tstate->ns_names)
 	{
 		ExprState  *expr = (ExprState *) lfirst(lc1);
-		char	   *ns_name = strVal(lfirst(lc2));
+		Value	   *ns_node = (Value *) lfirst(lc2);
 		char	   *ns_uri;
+		char	   *ns_name;
 
 		value = ExecEvalExpr((ExprState *) expr, econtext, &isnull);
 		if (isnull)
@@ -373,6 +374,9 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("namespace URI must not be null")));
 		ns_uri = TextDatumGetCString(value);
+
+		/* DEFAULT is passed down to SetNamespace as NULL */
+		ns_name = ns_node ? strVal(ns_node) : NULL;
 
 		routine->SetNamespace(tstate, ns_name, ns_uri);
 	}
