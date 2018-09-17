@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-05-18 17:16+0000\n"
-"PO-Revision-Date: 2018-05-18 22:43+0200\n"
+"PO-Revision-Date: 2018-08-26 07:43+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -25,7 +25,7 @@ msgstr "%s: VARNING: \"Restricted Token\" stöds inte av plattformen.\n"
 #: ../../common/restricted_token.c:77
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: kunde inte skapa processmärke (token): felkod %lu\n"
+msgstr "%s: kunde inte öppna process-token: felkod %lu\n"
 
 #: ../../common/restricted_token.c:90
 #, c-format

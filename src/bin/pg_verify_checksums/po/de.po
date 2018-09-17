@@ -1,0 +1,184 @@
+# German message translation file for pg_verify_checksums
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_verify_checksums (PostgreSQL) package.
+# Peter Eisentraut <peter_e@gmx.net>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-09-14 05:17+0000\n"
+"PO-Revision-Date: 2018-09-14 08:21+0200\n"
+"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"Language-Team: German <pgsql-translators@postgresql.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_verify_checksums.c:38
+#, c-format
+msgid ""
+"%s verifies data checksums in a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s überprüft die Datenprüfsummen in einem PostgreSQL-Datenbankcluster.\n"
+"\n"
+
+#: pg_verify_checksums.c:39
+#, c-format
+msgid "Usage:\n"
+msgstr "Aufruf:\n"
+
+#: pg_verify_checksums.c:40
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [OPTION]... [DATENVERZEICHNIS]\n"
+
+#: pg_verify_checksums.c:41
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Optionen:\n"
+
+#: pg_verify_checksums.c:42
+#, c-format
+msgid " [-D, --pgdata=]DATADIR  data directory\n"
+msgstr " [-D, --pgdata=]VERZ     Datenbankverzeichnis\n"
+
+#: pg_verify_checksums.c:43
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose          »Verbose«-Modus\n"
+
+#: pg_verify_checksums.c:44
+#, c-format
+msgid "  -r RELFILENODE         check only relation with specified relfilenode\n"
+msgstr "  -r RELFILENODE         nur Relation mit angegebenem Relfilenode prüfen\n"
+
+#: pg_verify_checksums.c:45
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          Versionsinformationen anzeigen, dann beenden\n"
+
+#: pg_verify_checksums.c:46
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             diese Hilfe anzeigen, dann beenden\n"
+
+#: pg_verify_checksums.c:47
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Wenn kein Datenverzeichnis angegeben ist, wird die Umgebungsvariable\n"
+"PGDATA verwendet.\n"
+"\n"
+
+#: pg_verify_checksums.c:49
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_verify_checksums.c:86
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: konnte Datei »%s« nicht öffnen: %s\n"
+
+#: pg_verify_checksums.c:102
+#, c-format
+msgid "%s: could not read block %u in file \"%s\": read %d of %d\n"
+msgstr "%s: konnte Block %u in Datei »%s« nicht lesen: %d von %d gelesen\n"
+
+#: pg_verify_checksums.c:116
+#, c-format
+msgid "%s: checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X\n"
+msgstr "%s: Prüfsummenprüfung fehlgeschlagen in Datei »%s«, Block %u: berechnete Prüfsumme ist %X, aber der Block enthält %X\n"
+
+#: pg_verify_checksums.c:124
+#, c-format
+msgid "%s: checksums verified in file \"%s\"\n"
+msgstr "%s: Prüfsummen überprüft in Datei »%s«\n"
+
+#: pg_verify_checksums.c:140
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: konnte Verzeichnis »%s« nicht öffnen: %s\n"
+
+#: pg_verify_checksums.c:155
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: konnte »stat« für Datei »%s« nicht ausführen: %s\n"
+
+#: pg_verify_checksums.c:180
+#, c-format
+msgid "%s: invalid segment number %d in file name \"%s\"\n"
+msgstr "%s: ungültige Segmentnummer %d in Dateiname »%s«\n"
+
+#: pg_verify_checksums.c:251
+#, c-format
+msgid "%s: invalid relfilenode specification, must be numeric: %s\n"
+msgstr "%s: ungültige Relfilenode-Angabe, muss numerisch sein: %s\n"
+
+#: pg_verify_checksums.c:257 pg_verify_checksums.c:273
+#: pg_verify_checksums.c:283
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
+
+#: pg_verify_checksums.c:272
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: kein Datenverzeichnis angegeben\n"
+
+#: pg_verify_checksums.c:281
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
+
+#: pg_verify_checksums.c:292
+#, c-format
+msgid "%s: pg_control CRC value is incorrect\n"
+msgstr "%s: CRC-Wert in pg_control ist falsch\n"
+
+#: pg_verify_checksums.c:299
+#, c-format
+msgid "%s: cluster must be shut down to verify checksums\n"
+msgstr "%s: Cluster muss für die Prüfsummenprüfung heruntergefahren sein\n"
+
+#: pg_verify_checksums.c:305
+#, c-format
+msgid "%s: data checksums are not enabled in cluster\n"
+msgstr "%s: Datenprüfsummen sind im Cluster nicht eingeschaltet\n"
+
+#: pg_verify_checksums.c:314
+#, c-format
+msgid "Checksum scan completed\n"
+msgstr "Prüfsummenüberprüfung abgeschlossen\n"
+
+#: pg_verify_checksums.c:315
+#, c-format
+msgid "Data checksum version: %d\n"
+msgstr "Datenprüfsummenversion: %d\n"
+
+#: pg_verify_checksums.c:316
+#, c-format
+msgid "Files scanned:  %s\n"
+msgstr "Überprüfte Dateien:     %s\n"
+
+#: pg_verify_checksums.c:317
+#, c-format
+msgid "Blocks scanned: %s\n"
+msgstr "Überprüfte Blöcke:      %s\n"
+
+#: pg_verify_checksums.c:318
+#, c-format
+msgid "Bad checksums:  %s\n"
+msgstr "Falsche Prüfsummen:     %s\n"

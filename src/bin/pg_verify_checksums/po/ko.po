@@ -1,0 +1,184 @@
+# LANGUAGE message translation file for pg_verify_checksums
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_verify_checksums (PostgreSQL) package.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-09-07 14:38+0900\n"
+"PO-Revision-Date: 2018-09-04 16:19+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: PostgreSQL Korea <kr@postgresql.org>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_verify_checksums.c:38
+#, c-format
+msgid ""
+"%s verifies data checksums in a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s 명령은 PostgreSQL 데이터베이스 클러스터 내 자료 체크섬을 검사한다.\n"
+"\n"
+
+#: pg_verify_checksums.c:39
+#, c-format
+msgid "Usage:\n"
+msgstr "사용법:\n"
+
+#: pg_verify_checksums.c:40
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [옵션]... [DATADIR]\n"
+
+#: pg_verify_checksums.c:41
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"옵션들:\n"
+
+#: pg_verify_checksums.c:42
+#, c-format
+msgid " [-D, --pgdata=]DATADIR  data directory\n"
+msgstr " [-D, --pgdata=]DATADIR  데이터 디렉터리\n"
+
+#: pg_verify_checksums.c:43
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose          자세한 작업 메시지 보여줌\n"
+
+#: pg_verify_checksums.c:44
+#, c-format
+msgid "  -r RELFILENODE         check only relation with specified relfilenode\n"
+msgstr "  -r RELFILENODE         지정한 relfilenode의 릴레이션만 검사\n"
+
+#: pg_verify_checksums.c:45
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          버전 정보 보여주고 마침\n"
+
+#: pg_verify_checksums.c:46
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             이 도움말을 보여주고 마침\n"
+
+#: pg_verify_checksums.c:47
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"DATADIR인 데이터 디렉터리를 지정하지 않으며, PGDATA 환경 변수값을\n"
+"사용합니다.\n"
+"\n"
+
+#: pg_verify_checksums.c:49
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "오류보고: <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_verify_checksums.c:86
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: \"%s\" 파일을 열 수 없음: %s\n"
+
+#: pg_verify_checksums.c:102
+#, c-format
+msgid "%s: short read of block %u in file \"%s\", got only %d bytes\n"
+msgstr "%s: %u 블럭(해당 파일: \"%s\")에서 %d 바이트밖에 못 읽었음\n"
+
+#: pg_verify_checksums.c:116
+#, c-format
+msgid "%s: checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X\n"
+msgstr "%s: \"%s\" 파일, %u 블럭의  체크섬 검사 실패: 계산된 체크섬은 %X 값이지만, 블럭에는 %X 값이 있음\n"
+
+#: pg_verify_checksums.c:124
+#, c-format
+msgid "%s: checksums verified in file \"%s\"\n"
+msgstr "%s: \"%s\" 파일 체크섬 검사 마침\n"
+
+#: pg_verify_checksums.c:140
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: \"%s\" 디렉터리 열 수 없음: %s\n"
+
+#: pg_verify_checksums.c:155
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: \"%s\" 파일을 상태 정보를 읽을 수 없습니다: %s\n"
+
+#: pg_verify_checksums.c:180
+#, c-format
+msgid "%s: invalid segment number %d in file name \"%s\"\n"
+msgstr "%s: 잘못된 조각 번호 %d, 해당 파일: \"%s\"\n"
+
+#: pg_verify_checksums.c:251
+#, c-format
+msgid "%s: invalid relfilenode specification, must be numeric: %s\n"
+msgstr "%s: relfilenode 값이 이상함. 이 값은 숫자여야 함: %s\n"
+
+#: pg_verify_checksums.c:257 pg_verify_checksums.c:273
+#: pg_verify_checksums.c:283
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "자제한 사항은 \"%s --help\" 명령으로 살펴보십시오.\n"
+
+#: pg_verify_checksums.c:272
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: 데이터 디렉터리를 지정하지 않았습니다\n"
+
+#: pg_verify_checksums.c:281
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 너무 많은 명령행 인수를 지정했습니다. (처음 \"%s\")\n"
+
+#: pg_verify_checksums.c:292
+#, c-format
+msgid "%s: pg_control CRC value is incorrect\n"
+msgstr "%s: pg_control CRC 값이 잘못되었음\n"
+
+#: pg_verify_checksums.c:299
+#, c-format
+msgid "%s: cluster must be shut down to verify checksums\n"
+msgstr "%s: 체크섬 검사를 하려면 먼저 서버가 중지되어야 함\n"
+
+#: pg_verify_checksums.c:305
+#, c-format
+msgid "%s: data checksums are not enabled in cluster\n"
+msgstr "%s: 이 클러스터는 자료 체크섬 검사를 할 수 없음\n"
+
+#: pg_verify_checksums.c:314
+#, c-format
+msgid "Checksum scan completed\n"
+msgstr "체크섬 조사 완료\n"
+
+#: pg_verify_checksums.c:315
+#, c-format
+msgid "Data checksum version: %d\n"
+msgstr "자료 체크섬 버전: %d\n"
+
+#: pg_verify_checksums.c:316
+#, c-format
+msgid "Files scanned:  %s\n"
+msgstr "조사한 파일수: %s\n"
+
+#: pg_verify_checksums.c:317
+#, c-format
+msgid "Blocks scanned: %s\n"
+msgstr "조사한 블럭수: %s\n"
+
+#: pg_verify_checksums.c:318
+#, c-format
+msgid "Bad checksums:  %s\n"
+msgstr "잘못된 체크섬: %s\n"

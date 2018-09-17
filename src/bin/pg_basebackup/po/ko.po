@@ -5,12 +5,12 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
+"Project-Id-Version: pg_basebackup (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-19 09:51+0900\n"
-"PO-Revision-Date: 2017-09-19 10:25+0900\n"
+"POT-Creation-Date: 2018-09-04 15:55+0900\n"
+"PO-Revision-Date: 2018-09-07 15:08+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
-"Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
+"Language-Team: Korean <kr@postgresql.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -29,17 +29,17 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null 포인터를 복제할 수 없음(내부 오류)\n"
 
 #: ../../common/file_utils.c:82 ../../common/file_utils.c:186
-#: pg_receivewal.c:252 pg_recvlogical.c:353
+#: pg_receivewal.c:268 pg_recvlogical.c:354
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일 상태를 알 수 없음: %s\n"
 
-#: ../../common/file_utils.c:162 pg_receivewal.c:153
+#: ../../common/file_utils.c:162 pg_receivewal.c:169
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: \"%s\" 디렉터리 열 수 없음: %s\n"
 
-#: ../../common/file_utils.c:198 pg_receivewal.c:320
+#: ../../common/file_utils.c:198 pg_receivewal.c:336
 #, c-format
 msgid "%s: could not read directory \"%s\": %s\n"
 msgstr "%s: \"%s\" 디렉터리를 읽을 수 없음: %s\n"
@@ -50,8 +50,8 @@ msgstr "%s: \"%s\" 디렉터리를 읽을 수 없음: %s\n"
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일을 열 수 없음: %s\n"
 
-#: ../../common/file_utils.c:304 ../../common/file_utils.c:376
-#: receivelog.c:804 receivelog.c:1061
+#: ../../common/file_utils.c:304 ../../common/file_utils.c:376 receivelog.c:788
+#: receivelog.c:1045
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일을 fsync 할 수 없음: %s\n"
@@ -61,110 +61,106 @@ msgstr "%s: \"%s\" 파일을 fsync 할 수 없음: %s\n"
 msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %s\n"
 
-#: pg_basebackup.c:159
+#: pg_basebackup.c:166
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s: \"%s\" 디렉터리를 지우는 중\n"
 
-#: pg_basebackup.c:162
+#: pg_basebackup.c:169
 #, c-format
 msgid "%s: failed to remove data directory\n"
 msgstr "%s: 데이터 디렉터리 삭제 실패\n"
 
-#: pg_basebackup.c:168
+#: pg_basebackup.c:175
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s: \"%s\" 데이터 디렉터리의 내용을 지우는 중\n"
 
-#: pg_basebackup.c:171
+#: pg_basebackup.c:178
 #, c-format
 msgid "%s: failed to remove contents of data directory\n"
 msgstr "%s: 데이터 디렉터리의 내용을 지울 수 없음\n"
 
-#: pg_basebackup.c:177
+#: pg_basebackup.c:184
 #, c-format
 msgid "%s: removing WAL directory \"%s\"\n"
 msgstr "%s: \"%s\" WAL 디렉터리를 지우는 중\n"
 
-#: pg_basebackup.c:180
+#: pg_basebackup.c:187
 #, c-format
 msgid "%s: failed to remove WAL directory\n"
 msgstr "%s: WAL 디렉터리 삭제 실패\n"
 
-#: pg_basebackup.c:186
+#: pg_basebackup.c:193
 #, c-format
 msgid "%s: removing contents of WAL directory \"%s\"\n"
 msgstr "%s: \"%s\" WAL 디렉터리 내용을 지우는 중\n"
 
-#: pg_basebackup.c:189
+#: pg_basebackup.c:196
 #, c-format
 msgid "%s: failed to remove contents of WAL directory\n"
 msgstr "%s: WAL 디렉터리의 내용을 지울 수 없음\n"
 
-#: pg_basebackup.c:197
+#: pg_basebackup.c:204
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s: 사용자 요청으로 \"%s\" 데이터 디렉터리를 지우지 않았음\n"
 
-#: pg_basebackup.c:202
+#: pg_basebackup.c:209
 #, c-format
 msgid "%s: WAL directory \"%s\" not removed at user's request\n"
 msgstr "%s: 사용자 요청으로 \"%s\" WAL 디렉터리를 지우지 않았음\n"
 
-#: pg_basebackup.c:208
+#: pg_basebackup.c:215
 #, c-format
 msgid "%s: changes to tablespace directories will not be undone\n"
 msgstr "%s: 아직 마무리 되지 않은 테이블스페이스 디렉터리 변경함\n"
 
-#: pg_basebackup.c:250
+#: pg_basebackup.c:257
 #, c-format
 msgid "%s: directory name too long\n"
 msgstr "%s: 디렉터리 이름이 너무 김\n"
 
-#: pg_basebackup.c:260
+#: pg_basebackup.c:267
 #, c-format
 msgid "%s: multiple \"=\" signs in tablespace mapping\n"
 msgstr "%s: 테이블스페이스 맵핑 하는 곳에서 \"=\" 문자가 중복 되어 있음\n"
 
-#: pg_basebackup.c:273
+#: pg_basebackup.c:280
 #, c-format
-msgid ""
-"%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
-msgstr ""
-"%s: \"%s\" 형식의 테이블스페이스 맵핑이 잘못 되었음, \"OLDDIR=NEWDIR\" 형식이"
-"어야 함\n"
+msgid "%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
+msgstr "%s: \"%s\" 형식의 테이블스페이스 맵핑이 잘못 되었음, \"OLDDIR=NEWDIR\" 형식이어야 함\n"
 
-#: pg_basebackup.c:286
+#: pg_basebackup.c:293
 #, c-format
 msgid "%s: old directory is not an absolute path in tablespace mapping: %s\n"
 msgstr "%s: 테이블스페이스 맵핑용 옛 디렉터리가 절대 경로가 아님: %s\n"
 
-#: pg_basebackup.c:293
+#: pg_basebackup.c:300
 #, c-format
 msgid "%s: new directory is not an absolute path in tablespace mapping: %s\n"
 msgstr "%s: 테이블스페이스 맵핑용 새 디렉터리가 절대 경로가 아님: %s\n"
 
-#: pg_basebackup.c:327
+#: pg_basebackup.c:339
 #, c-format
 msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s 프로그램은 운영 중인 PostgreSQL 서버에 대해서 베이스 백업을 하는 도구입니"
-"다.\n"
+"%s 프로그램은 운영 중인 PostgreSQL 서버에 대해서 베이스 백업을 하는 도구입니다.\n"
 "\n"
 
-#: pg_basebackup.c:329 pg_receivewal.c:76 pg_recvlogical.c:77
+#: pg_basebackup.c:341 pg_receivewal.c:79 pg_recvlogical.c:78
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_basebackup.c:330 pg_receivewal.c:77 pg_recvlogical.c:78
+#: pg_basebackup.c:342 pg_receivewal.c:80 pg_recvlogical.c:79
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [옵션]...\n"
 
-#: pg_basebackup.c:331
+#: pg_basebackup.c:343
 #, c-format
 msgid ""
 "\n"
@@ -173,27 +169,26 @@ msgstr ""
 "\n"
 "출력물을 제어야하는 옵션들:\n"
 
-#: pg_basebackup.c:332
+#: pg_basebackup.c:344
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
 msgstr "  -D, --pgdata=디렉터리   베이스 백업 결과물이 저장될 디렉터리\n"
 
-#: pg_basebackup.c:333
+#: pg_basebackup.c:345
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
 msgstr "  -F, --format=p|t       출력 형식 (plain (초기값), tar)\n"
 
-#: pg_basebackup.c:334
+#: pg_basebackup.c:346
 #, c-format
 msgid ""
 "  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"
 msgstr ""
 "  -r, --max-rate=속도    최대 전송 속도\n"
-"                         (단위는 kB/s, 또는 숫자 뒤에 \"k\" 또는 \"M\" 단위 "
-"문자 지정 가능)\n"
+"                         (단위는 kB/s, 또는 숫자 뒤에 \"k\" 또는 \"M\" 단위 문자 지정 가능)\n"
 
-#: pg_basebackup.c:336
+#: pg_basebackup.c:348
 #, c-format
 msgid ""
 "  -R, --write-recovery-conf\n"
@@ -202,18 +197,7 @@ msgstr ""
 "  -R, --write-recovery-conf\n"
 "                         복제용 recovery.conf 파일도 만듬\n"
 
-#: pg_basebackup.c:338 pg_receivewal.c:84
-#, c-format
-msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
-msgstr "  -S, --slot=슬롯이름    지정한 복제 슬롯을 사용함\n"
-
-#: pg_basebackup.c:339
-#, c-format
-msgid ""
-"      --no-slot          prevent creation of temporary replication slot\n"
-msgstr "      --no-slot          임시 복제 슬롯 만들지 않음\n"
-
-#: pg_basebackup.c:340
+#: pg_basebackup.c:350
 #, c-format
 msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
@@ -222,7 +206,12 @@ msgstr ""
 "  -T, --tablespace-mapping=옛DIR=새DIR\n"
 "                         테이블스페이스 디렉터리 새 맵핑\n"
 
-#: pg_basebackup.c:342
+#: pg_basebackup.c:352
+#, c-format
+msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
+msgstr "      --waldir=WALDIR    트랜잭션 로그 디렉터리 지정\n"
+
+#: pg_basebackup.c:353
 #, c-format
 msgid ""
 "  -X, --wal-method=none|fetch|stream\n"
@@ -231,23 +220,17 @@ msgstr ""
 "  -X, --wal-method=none|fetch|stream\n"
 "                         필요한 WAL 파일을 백업하는 방법\n"
 
-#: pg_basebackup.c:344
-#, c-format
-msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
-msgstr "      --waldir=WALDIR    트랜잭션 로그 디렉터리 지정\n"
-
-#: pg_basebackup.c:345
+#: pg_basebackup.c:355
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
 msgstr "  -z, --gzip             tar 출력물을 압축\n"
 
-#: pg_basebackup.c:346
+#: pg_basebackup.c:356
 #, c-format
-msgid ""
-"  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
 msgstr "  -Z, --compress=0-9     압축된 tar 파일의 압축 수위 지정\n"
 
-#: pg_basebackup.c:347
+#: pg_basebackup.c:357
 #, c-format
 msgid ""
 "\n"
@@ -256,7 +239,7 @@ msgstr ""
 "\n"
 "일반 옵션들:\n"
 
-#: pg_basebackup.c:348
+#: pg_basebackup.c:358
 #, c-format
 msgid ""
 "  -c, --checkpoint=fast|spread\n"
@@ -265,44 +248,66 @@ msgstr ""
 "  -c, --checkpoint=fast|spread\n"
 "                         체크포인트 방법\n"
 
-#: pg_basebackup.c:350
+#: pg_basebackup.c:360
+#, c-format
+msgid "  -C, --create-slot      create replication slot\n"
+msgstr "  -C, --create-slot      새 복제 슬롯을 만듬\n"
+
+#: pg_basebackup.c:361
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
 msgstr "  -l, --label=라벨       백업 라벨 지정\n"
 
-#: pg_basebackup.c:351
+#: pg_basebackup.c:362
 #, c-format
 msgid "  -n, --no-clean         do not clean up after errors\n"
 msgstr "  -n, --no-clean         오류 발생 시 정리하지 않음\n"
 
-#: pg_basebackup.c:352
+#: pg_basebackup.c:363
 #, c-format
-msgid ""
-"  -N, --no-sync          do not wait for changes to be written safely to "
-"disk\n"
+msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync          디스크 쓰기 뒤 sync 작업 생략\n"
 
-#: pg_basebackup.c:353
+#: pg_basebackup.c:364
 #, c-format
 msgid "  -P, --progress         show progress information\n"
 msgstr "  -P, --progress         진행 과정 보여줌\n"
 
-#: pg_basebackup.c:354 pg_receivewal.c:86 pg_recvlogical.c:98
+#: pg_basebackup.c:365 pg_receivewal.c:89
+#, c-format
+msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
+msgstr "  -S, --slot=슬롯이름    지정한 복제 슬롯을 사용함\n"
+
+#: pg_basebackup.c:366 pg_receivewal.c:91 pg_recvlogical.c:99
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          자세한 작업 메시지 보여줌\n"
 
-#: pg_basebackup.c:355 pg_receivewal.c:87 pg_recvlogical.c:99
+#: pg_basebackup.c:367 pg_receivewal.c:92 pg_recvlogical.c:100
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          버전 정보 보여주고 마침\n"
 
-#: pg_basebackup.c:356 pg_receivewal.c:89 pg_recvlogical.c:100
+#: pg_basebackup.c:368
+#, c-format
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr "      --no-slot          임시 복제 슬롯 만들지 않음\n"
+
+#: pg_basebackup.c:369
+#, c-format
+msgid ""
+"      --no-verify-checksums\n"
+"                         do not verify checksums\n"
+msgstr ""
+"      --no-verify-checksums\n"
+"                         체크섬 검사 안함\n"
+
+#: pg_basebackup.c:371 pg_receivewal.c:94 pg_recvlogical.c:101
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             이 도움말을 보여주고 마침\n"
 
-#: pg_basebackup.c:357 pg_receivewal.c:90 pg_recvlogical.c:101
+#: pg_basebackup.c:372 pg_receivewal.c:95 pg_recvlogical.c:102
 #, c-format
 msgid ""
 "\n"
@@ -311,50 +316,46 @@ msgstr ""
 "\n"
 "연결 옵션들:\n"
 
-#: pg_basebackup.c:358 pg_receivewal.c:91
+#: pg_basebackup.c:373 pg_receivewal.c:96
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
 msgstr "  -d, --dbname=접속문자열 서버 접속 문자열\n"
 
-#: pg_basebackup.c:359 pg_receivewal.c:92 pg_recvlogical.c:103
+#: pg_basebackup.c:374 pg_receivewal.c:97 pg_recvlogical.c:104
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
 msgstr "  -h, --host=호스트이름   접속할 데이터베이스 서버나 소켓 디렉터리\n"
 
-#: pg_basebackup.c:360 pg_receivewal.c:93 pg_recvlogical.c:104
+#: pg_basebackup.c:375 pg_receivewal.c:98 pg_recvlogical.c:105
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
 msgstr "  -p, --port=포트        데이터베이스 서버 포트 번호\n"
 
-#: pg_basebackup.c:361
+#: pg_basebackup.c:376
 #, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
-"                         time between status packets sent to server (in "
-"seconds)\n"
+"                         time between status packets sent to server (in seconds)\n"
 msgstr ""
 "  -s, --status-interval=초\n"
 "                         초 단위 매번 서버로 상태 패킷을 보냄\n"
 
-#: pg_basebackup.c:363 pg_receivewal.c:94 pg_recvlogical.c:105
+#: pg_basebackup.c:378 pg_receivewal.c:99 pg_recvlogical.c:106
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
 msgstr "  -U, --username=사용자  접속할 특정 데이터베이스 사용자\n"
 
-#: pg_basebackup.c:364 pg_receivewal.c:95 pg_recvlogical.c:106
+#: pg_basebackup.c:379 pg_receivewal.c:100 pg_recvlogical.c:107
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
 msgstr "  -w, --no-password      비밀번호 물어 보지 않음\n"
 
-#: pg_basebackup.c:365 pg_receivewal.c:96 pg_recvlogical.c:107
+#: pg_basebackup.c:380 pg_receivewal.c:101 pg_recvlogical.c:108
 #, c-format
-msgid ""
-"  -W, --password         force password prompt (should happen "
-"automatically)\n"
-msgstr ""
-"  -W, --password         항상 비밀번호 프롬프트 보임 (자동으로 판단 함)\n"
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr "  -W, --password         항상 비밀번호 프롬프트 보임 (자동으로 판단 함)\n"
 
-#: pg_basebackup.c:366 pg_receivewal.c:100 pg_recvlogical.c:108
+#: pg_basebackup.c:381 pg_receivewal.c:105 pg_recvlogical.c:109
 #, c-format
 msgid ""
 "\n"
@@ -363,422 +364,435 @@ msgstr ""
 "\n"
 "오류보고: <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_basebackup.c:409
+#: pg_basebackup.c:424
 #, c-format
 msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: 준비된 파이프로부터 읽기 실패: %s\n"
 
-#: pg_basebackup.c:417 pg_basebackup.c:552 pg_basebackup.c:2005
-#: streamutil.c:286
+#: pg_basebackup.c:432 pg_basebackup.c:563 pg_basebackup.c:2064
+#: streamutil.c:460
 #, c-format
 msgid "%s: could not parse write-ahead log location \"%s\"\n"
 msgstr "%s: 트랜잭션 로그 위치 \"%s\" 분석 실패\n"
 
-#: pg_basebackup.c:515 pg_receivewal.c:428
+#: pg_basebackup.c:526 pg_receivewal.c:443
 #, c-format
 msgid "%s: could not finish writing WAL files: %s\n"
 msgstr "%s: WAL 파일 쓰기 마무리 실패: %s\n"
 
-#: pg_basebackup.c:565
+#: pg_basebackup.c:576
 #, c-format
 msgid "%s: could not create pipe for background process: %s\n"
 msgstr "%s: 백그라운드 프로세스를 위한 파이프 만들기 실패: %s\n"
 
-#: pg_basebackup.c:605 pg_basebackup.c:661 pg_basebackup.c:1423
+#: pg_basebackup.c:612
+#, c-format
+msgid "%s: created temporary replication slot \"%s\"\n"
+msgstr "%s: \"%s\" 임시 복제 슬롯을 만들 수 없음\n"
+
+#: pg_basebackup.c:615
+#, c-format
+msgid "%s: created replication slot \"%s\"\n"
+msgstr "%s: \"%s\" 이름의 복제 슬롯을 만듦\n"
+
+#: pg_basebackup.c:636 pg_basebackup.c:692 pg_basebackup.c:1462
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: \"%s\" 디렉터리 만들 수 없음: %s\n"
 
-#: pg_basebackup.c:624
+#: pg_basebackup.c:655
 #, c-format
 msgid "%s: could not create background process: %s\n"
 msgstr "%s: 백그라운드 프로세스 만들기 실패: %s\n"
 
-#: pg_basebackup.c:636
+#: pg_basebackup.c:667
 #, c-format
 msgid "%s: could not create background thread: %s\n"
 msgstr "%s: 백그라운드 스래드 만들기 실패: %s\n"
 
-#: pg_basebackup.c:684
+#: pg_basebackup.c:715
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: \"%s\" 디렉터리가 있지만 비어 있지 않음\n"
 
-#: pg_basebackup.c:692
+#: pg_basebackup.c:723
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: \"%s\" 디렉터리에 액세스할 수 없음: %s\n"
 
-#: pg_basebackup.c:754
+#: pg_basebackup.c:785
 #, c-format
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
 msgstr[0] "%*s/%s kB (100%%), %d/%d 테이블스페이스 %*s"
 
-#: pg_basebackup.c:766
+#: pg_basebackup.c:797
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
 msgstr[0] "%*s/%s kB (%d%%), %d/%d 테이블스페이스 (%s%-*.*s)"
 
-#: pg_basebackup.c:782
+#: pg_basebackup.c:813
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
 msgstr[0] "%*s/%s kB (%d%%), %d/%d 테이블스페이스"
 
-#: pg_basebackup.c:804
+#: pg_basebackup.c:838
 #, c-format
 msgid "%s: transfer rate \"%s\" is not a valid value\n"
 msgstr "%s: \"%s\" 전송 속도는 잘못된 값임\n"
 
-#: pg_basebackup.c:811
+#: pg_basebackup.c:845
 #, c-format
 msgid "%s: invalid transfer rate \"%s\": %s\n"
 msgstr "%s: 잘못된 전송 속도 \"%s\": %s\n"
 
-#: pg_basebackup.c:821
+#: pg_basebackup.c:855
 #, c-format
 msgid "%s: transfer rate must be greater than zero\n"
 msgstr "%s: 전송 속도는 0보다 커야 함\n"
 
-#: pg_basebackup.c:855
+#: pg_basebackup.c:889
 #, c-format
 msgid "%s: invalid --max-rate unit: \"%s\"\n"
 msgstr "%s: 잘못된 --max-rate 단위: \"%s\"\n"
 
-#: pg_basebackup.c:864
+#: pg_basebackup.c:898
 #, c-format
 msgid "%s: transfer rate \"%s\" exceeds integer range\n"
 msgstr "%s: \"%s\" 전송 속도는 정수형 범위가 아님\n"
 
-#: pg_basebackup.c:876
+#: pg_basebackup.c:910
 #, c-format
 msgid "%s: transfer rate \"%s\" is out of range\n"
 msgstr "%s: \"%s\" 전송 속도는 범위 초과\n"
 
-#: pg_basebackup.c:900
+#: pg_basebackup.c:934
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 쓰기 실패: %s\n"
 
-#: pg_basebackup.c:910 pg_basebackup.c:1517 pg_basebackup.c:1683
+#: pg_basebackup.c:944 pg_basebackup.c:1556 pg_basebackup.c:1722
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일 쓰기 실패: %s\n"
 
-#: pg_basebackup.c:969 pg_basebackup.c:990 pg_basebackup.c:1018
+#: pg_basebackup.c:1003 pg_basebackup.c:1024 pg_basebackup.c:1052
 #, c-format
 msgid "%s: could not set compression level %d: %s\n"
 msgstr "%s: 잘못된 압축 수위 %d: %s\n"
 
-#: pg_basebackup.c:1039
+#: pg_basebackup.c:1073
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 만들기 실패: %s\n"
 
-#: pg_basebackup.c:1050 pg_basebackup.c:1477 pg_basebackup.c:1676
+#: pg_basebackup.c:1084 pg_basebackup.c:1516 pg_basebackup.c:1715
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일 만들기 실패: %s\n"
 
-#: pg_basebackup.c:1062 pg_basebackup.c:1330
+#: pg_basebackup.c:1096 pg_basebackup.c:1369
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
 msgstr "%s: COPY 데이터 스트림을 사용할 수 없음: %s"
 
-#: pg_basebackup.c:1119
+#: pg_basebackup.c:1153
 #, c-format
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 닫기 실패: %s\n"
 
-#: pg_basebackup.c:1132 pg_recvlogical.c:631 receivelog.c:223 receivelog.c:308
-#: receivelog.c:714
+#: pg_basebackup.c:1166 pg_recvlogical.c:632 receivelog.c:224 receivelog.c:309
+#: receivelog.c:698
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일 닫기 실패: %s\n"
 
-#: pg_basebackup.c:1143 pg_basebackup.c:1359 pg_recvlogical.c:453
-#: receivelog.c:1009
+#: pg_basebackup.c:1177 pg_basebackup.c:1398 pg_recvlogical.c:454
+#: receivelog.c:993
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: COPY 자료를 읽을 수 없음: %s"
 
-#: pg_basebackup.c:1373
+#: pg_basebackup.c:1412
 #, c-format
 msgid "%s: invalid tar block header size: %d\n"
 msgstr "%s: 잘못된 블럭 헤더 크기: %d\n"
 
-#: pg_basebackup.c:1431
+#: pg_basebackup.c:1470
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
 msgstr "%s: \"%s\" 디렉터리의 접근 권한을 지정할 수 없음: %s\n"
 
-#: pg_basebackup.c:1455
+#: pg_basebackup.c:1494
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일을 \"%s\" 심볼릭 링크로 만들 수 없음: %s\n"
 
-#: pg_basebackup.c:1464
+#: pg_basebackup.c:1503
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
 msgstr "%s: 알 수 없는 링크 지시자 \"%c\"\n"
 
-#: pg_basebackup.c:1484
+#: pg_basebackup.c:1523
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일의 접근권한을 지정할 수 없음: %s\n"
 
-#: pg_basebackup.c:1543
+#: pg_basebackup.c:1582
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s: 마지막 파일을 끝내기 전에 COPY 스트림이 끝났음\n"
 
-#: pg_basebackup.c:1571 pg_basebackup.c:1591 pg_basebackup.c:1598
-#: pg_basebackup.c:1651
+#: pg_basebackup.c:1610 pg_basebackup.c:1630 pg_basebackup.c:1637
+#: pg_basebackup.c:1690
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: 메모리 부족\n"
 
-#: pg_basebackup.c:1724
+#: pg_basebackup.c:1763
 #, c-format
 msgid "%s: incompatible server version %s\n"
 msgstr "%s: 호환하지 않는 서버 버전 %s\n"
 
-#: pg_basebackup.c:1739
+#: pg_basebackup.c:1778
 #, c-format
 msgid "HINT: use -X none or -X fetch to disable log streaming\n"
-msgstr ""
-"힌트: 트랜잭션 로그 스트리밍을 사용하지 않으려면  -X none 또는 -X fetch 옵션"
-"을 사용하세요.\n"
+msgstr "힌트: 트랜잭션 로그 스트리밍을 사용하지 않으려면  -X none 또는 -X fetch 옵션을 사용하세요.\n"
 
-#: pg_basebackup.c:1765
+#: pg_basebackup.c:1804
 #, c-format
 msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: 베이스 백업을 초기화 중, 체크포인트 완료를 기다리는 중\n"
 
-#: pg_basebackup.c:1783 pg_recvlogical.c:270 receivelog.c:492 receivelog.c:563
-#: receivelog.c:603 streamutil.c:256 streamutil.c:364 streamutil.c:410
+#: pg_basebackup.c:1829 pg_recvlogical.c:271 receivelog.c:493 receivelog.c:546
+#: receivelog.c:586 streamutil.c:303 streamutil.c:377 streamutil.c:430
+#: streamutil.c:544 streamutil.c:590
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: \"%s\" 복제 명령을 보낼 수 없음: %s"
 
-#: pg_basebackup.c:1794
+#: pg_basebackup.c:1840
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s: 베이스 백업을 초기화 할 수 없음: %s"
 
-#: pg_basebackup.c:1801
+#: pg_basebackup.c:1847
 #, c-format
-msgid ""
-"%s: server returned unexpected response to BASE_BACKUP command; got %d rows "
-"and %d fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s: 서버가 BASE_BACKUP 명령에 대해서 잘못된 응답을 했습니다; 응답값: %d 로"
-"우, %d 필드, (기대값: %d 로우, %d 필드)\n"
+msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: 서버가 BASE_BACKUP 명령에 대해서 잘못된 응답을 했습니다; 응답값: %d 로우, %d 필드, (기대값: %d 로우, %d 필드)\n"
 
-#: pg_basebackup.c:1809
+#: pg_basebackup.c:1855
 #, c-format
 msgid "%s: checkpoint completed\n"
 msgstr "%s: 체크포인트 완료\n"
 
-#: pg_basebackup.c:1824
+#: pg_basebackup.c:1870
 #, c-format
 msgid "%s: write-ahead log start point: %s on timeline %u\n"
 msgstr "%s: 트랙잭션 로그 시작 위치: %s, 타임라인: %u\n"
 
-#: pg_basebackup.c:1833
+#: pg_basebackup.c:1879
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s: 백업 헤더를 구할 수 없음: %s"
 
-#: pg_basebackup.c:1839
+#: pg_basebackup.c:1885
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s: 서버가 아무런 자료도 주지 않았음\n"
 
-#: pg_basebackup.c:1871
+#: pg_basebackup.c:1917
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
-msgstr ""
-"%s: 표준 출력으로는 하나의 테이블스페이스만 쓸 수 있음, 데이터베이스는 %d 개"
-"의 테이블 스페이스가 있음\n"
+msgstr "%s: 표준 출력으로는 하나의 테이블스페이스만 쓸 수 있음, 데이터베이스는 %d 개의 테이블 스페이스가 있음\n"
 
-#: pg_basebackup.c:1883
+#: pg_basebackup.c:1929
 #, c-format
 msgid "%s: starting background WAL receiver\n"
 msgstr "%s: 백그라운드 WAL 수신자 시작 중\n"
 
-#: pg_basebackup.c:1914
+#: pg_basebackup.c:1961
 #, c-format
 msgid "%s: could not get write-ahead log end position from server: %s"
 msgstr "%s: 서버에서 트랜잭션 로그 마지막 위치를 구할 수 없음: %s"
 
-#: pg_basebackup.c:1921
+#: pg_basebackup.c:1968
 #, c-format
 msgid "%s: no write-ahead log end position returned from server\n"
 msgstr "%s: 서버에서 트랜잭션 로그 마지막 위치가 수신 되지 않았음\n"
 
-#: pg_basebackup.c:1927
+#: pg_basebackup.c:1974
 #, c-format
 msgid "%s: write-ahead log end point: %s\n"
 msgstr "%s: 트랜잭션 로그 마지막 위치: %s\n"
 
-#: pg_basebackup.c:1933
+#: pg_basebackup.c:1985
+#, c-format
+msgid "%s: checksum error occured\n"
+msgstr "%s: 체크섬 오류 발생\n"
+
+#: pg_basebackup.c:1991
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s: 수신 작업 마무리 실패: %s"
 
-#: pg_basebackup.c:1957
+#: pg_basebackup.c:2016
 #, c-format
 msgid "%s: waiting for background process to finish streaming ...\n"
 msgstr "%s: 스트리밍을 끝내기 위해서 백그라운드 프로세스를 기다리는 중 ...\n"
 
-#: pg_basebackup.c:1963
+#: pg_basebackup.c:2022
 #, c-format
 msgid "%s: could not send command to background pipe: %s\n"
 msgstr "%s: 백그라운드 파이프로 명령을 보낼 수 없음: %s\n"
 
-#: pg_basebackup.c:1972
+#: pg_basebackup.c:2031
 #, c-format
 msgid "%s: could not wait for child process: %s\n"
 msgstr "%s: 하위 프로세스를 기다릴 수 없음: %s\n"
 
-#: pg_basebackup.c:1978
+#: pg_basebackup.c:2037
 #, c-format
 msgid "%s: child %d died, expected %d\n"
 msgstr "%s: %d 개의 하위 프로세스가 종료됨, 기대값 %d\n"
 
-#: pg_basebackup.c:1984
+#: pg_basebackup.c:2043
 #, c-format
 msgid "%s: child process did not exit normally\n"
 msgstr "%s: 하위 프로세스가 정상 종료되지 못했음\n"
 
-#: pg_basebackup.c:1990
+#: pg_basebackup.c:2049
 #, c-format
 msgid "%s: child process exited with error %d\n"
 msgstr "%s: 하위 프로세스가 비정상 종료됨: 오류 코드 %d\n"
 
-#: pg_basebackup.c:2017
+#: pg_basebackup.c:2076
 #, c-format
 msgid "%s: could not wait for child thread: %s\n"
 msgstr "%s: 하위 스레드를 기다릴 수 없음: %s\n"
 
-#: pg_basebackup.c:2024
+#: pg_basebackup.c:2083
 #, c-format
 msgid "%s: could not get child thread exit status: %s\n"
 msgstr "%s: 하위 스레드 종료 상태가 정상적이지 않음: %s\n"
 
-#: pg_basebackup.c:2030
+#: pg_basebackup.c:2089
 #, c-format
 msgid "%s: child thread exited with error %u\n"
 msgstr "%s: 하위 스레드가 비정상 종료됨: 오류 코드 %u\n"
 
-#: pg_basebackup.c:2068
+#: pg_basebackup.c:2127
 #, c-format
 msgid "%s: base backup completed\n"
 msgstr "%s: 베이스 백업 완료\n"
 
-#: pg_basebackup.c:2145
+#: pg_basebackup.c:2208
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
-msgstr ""
-"%s: \"%s\" 값은 잘못된 출력 형식, \"plain\" 또는 \"tar\" 만 사용 가능\n"
+msgstr "%s: \"%s\" 값은 잘못된 출력 형식, \"plain\" 또는 \"tar\" 만 사용 가능\n"
 
-#: pg_basebackup.c:2190
+#: pg_basebackup.c:2253
 #, c-format
-msgid ""
-"%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or "
-"\"none\"\n"
-msgstr ""
-"%s: \"%s\" 값은 잘못된 wal-method 옵션값, \"fetch\", \"stream\" 또는 \"none"
-"\"만 사용 가능\n"
+msgid "%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\"\n"
+msgstr "%s: \"%s\" 값은 잘못된 wal-method 옵션값, \"fetch\", \"stream\" 또는 \"none\"만 사용 가능\n"
 
-#: pg_basebackup.c:2218 pg_receivewal.c:556
+#: pg_basebackup.c:2281 pg_receivewal.c:585
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s: 잘못된 압축 수위 \"%s\"\n"
 
-#: pg_basebackup.c:2230
+#: pg_basebackup.c:2293
 #, c-format
-msgid ""
-"%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
-msgstr ""
-"%s: 잘못된 체크포인트 옵션값 \"%s\", \"fast\" 또는 \"spread\"만 사용 가능\n"
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: 잘못된 체크포인트 옵션값 \"%s\", \"fast\" 또는 \"spread\"만 사용 가능\n"
 
-#: pg_basebackup.c:2257 pg_receivewal.c:538 pg_recvlogical.c:825
+#: pg_basebackup.c:2320 pg_receivewal.c:557 pg_recvlogical.c:826
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s: 잘못된 상태값 전단 간격: \"%s\"\n"
 
-#: pg_basebackup.c:2273 pg_basebackup.c:2287 pg_basebackup.c:2298
-#: pg_basebackup.c:2311 pg_basebackup.c:2321 pg_basebackup.c:2331
-#: pg_basebackup.c:2343 pg_basebackup.c:2357 pg_basebackup.c:2368
-#: pg_receivewal.c:579 pg_receivewal.c:593 pg_receivewal.c:601
-#: pg_receivewal.c:611 pg_receivewal.c:622 pg_recvlogical.c:852
-#: pg_recvlogical.c:866 pg_recvlogical.c:877 pg_recvlogical.c:885
-#: pg_recvlogical.c:893 pg_recvlogical.c:901 pg_recvlogical.c:909
-#: pg_recvlogical.c:917 pg_recvlogical.c:927
+#: pg_basebackup.c:2339 pg_basebackup.c:2353 pg_basebackup.c:2364
+#: pg_basebackup.c:2377 pg_basebackup.c:2387 pg_basebackup.c:2397
+#: pg_basebackup.c:2409 pg_basebackup.c:2423 pg_basebackup.c:2433
+#: pg_basebackup.c:2446 pg_basebackup.c:2457 pg_receivewal.c:611
+#: pg_receivewal.c:625 pg_receivewal.c:633 pg_receivewal.c:643
+#: pg_receivewal.c:651 pg_receivewal.c:662 pg_recvlogical.c:853
+#: pg_recvlogical.c:867 pg_recvlogical.c:878 pg_recvlogical.c:886
+#: pg_recvlogical.c:894 pg_recvlogical.c:902 pg_recvlogical.c:910
+#: pg_recvlogical.c:918 pg_recvlogical.c:928
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "자제한 사항은 \"%s --help\" 명령으로 살펴보십시오.\n"
 
-#: pg_basebackup.c:2285 pg_receivewal.c:591 pg_recvlogical.c:864
+#: pg_basebackup.c:2351 pg_receivewal.c:623 pg_recvlogical.c:865
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: 너무 많은 명령행 인수를 지정했습니다. (처음 \"%s\")\n"
 
-#: pg_basebackup.c:2297 pg_receivewal.c:621
+#: pg_basebackup.c:2363 pg_receivewal.c:661
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: 대상 디렉터리를 지정하지 않음\n"
 
-#: pg_basebackup.c:2309
+#: pg_basebackup.c:2375
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s: tar 형식만 압축을 사용할 수 있음\n"
 
-#: pg_basebackup.c:2319
+#: pg_basebackup.c:2385
 #, c-format
 msgid "%s: cannot stream write-ahead logs in tar mode to stdout\n"
 msgstr "%s: tar 방식에서 stdout으로 트랜잭션 로그 스트리밍 불가\n"
 
-#: pg_basebackup.c:2329
+#: pg_basebackup.c:2395
 #, c-format
 msgid "%s: replication slots can only be used with WAL streaming\n"
 msgstr "%s: 복제 슬롯은 WAL 스트리밍 방식에서만 사용할 수 있음\n"
 
-#: pg_basebackup.c:2341
+#: pg_basebackup.c:2407
 #, c-format
 msgid "%s: --no-slot cannot be used with slot name\n"
 msgstr "%s: 슬롯 이름을 지정한 경우 --no-slot 옵션을 사용할 수 없음\n"
 
-#: pg_basebackup.c:2355
+#. translator: second %s is an option name
+#: pg_basebackup.c:2421 pg_receivewal.c:641
+#, c-format
+msgid "%s: %s needs a slot to be specified using --slot\n"
+msgstr "%s: %s 옵션은 --slot 옵션을 함께 사용해야 함\n"
+
+#: pg_basebackup.c:2431
+#, c-format
+msgid "%s: --create-slot and --no-slot are incompatible options\n"
+msgstr "%s: --create-slot 옵션과 -no-slot 옵션은 함께 사용할 수 없음\n"
+
+#: pg_basebackup.c:2444
 #, c-format
 msgid "%s: WAL directory location can only be specified in plain mode\n"
 msgstr "%s: 트랜잭션 로그 디렉터리 위치는 plain 모드에서만 사용할 수 있음\n"
 
-#: pg_basebackup.c:2366
+#: pg_basebackup.c:2455
 #, c-format
 msgid "%s: WAL directory location must be an absolute path\n"
 msgstr "%s: 트랜잭션 로그 디렉터리 위치는 절대 경로여야 함\n"
 
-#: pg_basebackup.c:2378 pg_receivewal.c:631
+#: pg_basebackup.c:2467 pg_receivewal.c:671
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: 이 버전은 압축 하는 기능을 포함 하지 않고 빌드 되었습니다.\n"
 
-#: pg_basebackup.c:2418
+#: pg_basebackup.c:2521
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: \"%s\" 심벌릭 링크를 만들 수 없음: %s\n"
 
-#: pg_basebackup.c:2423
+#: pg_basebackup.c:2526
 #, c-format
 msgid "%s: symlinks are not supported on this platform\n"
 msgstr "%s: 이 운영체제에서는 심볼릭 링크 기능을 지원하지 않습니다.\n"
 
-#: pg_receivewal.c:74
+#: pg_receivewal.c:77
 #, c-format
 msgid ""
 "%s receives PostgreSQL streaming write-ahead logs.\n"
@@ -787,7 +801,7 @@ msgstr ""
 "%s 프로그램은 PostgreSQL 스트리밍 트랜잭션 로그를 수신하는 도구입니다.\n"
 "\n"
 
-#: pg_receivewal.c:78 pg_recvlogical.c:83
+#: pg_receivewal.c:81 pg_recvlogical.c:84
 #, c-format
 msgid ""
 "\n"
@@ -796,49 +810,51 @@ msgstr ""
 "\n"
 "옵션들:\n"
 
-#: pg_receivewal.c:79
+#: pg_receivewal.c:82
 #, c-format
-msgid ""
-"  -D, --directory=DIR    receive write-ahead log files into this directory\n"
-msgstr ""
-"  -D, --directory=DIR    지정한 디렉터리로 트랜잭션 로그 파일을 백업함\n"
+msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
+msgstr "  -D, --directory=DIR    지정한 디렉터리로 트랜잭션 로그 파일을 백업함\n"
 
-#: pg_receivewal.c:80 pg_recvlogical.c:88
+#: pg_receivewal.c:83 pg_recvlogical.c:85
 #, c-format
-msgid ""
-"      --if-not-exists    do not error if slot already exists when creating a "
-"slot\n"
-msgstr ""
-"      --if-not-exists    슬롯을 새로 만들 때 이미 있어도 오류 내지 않음\n"
+msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
+msgstr "  -E, --endpos=LSN       지정한 LSN까지 받고 종료함\n"
 
-#: pg_receivewal.c:81 pg_recvlogical.c:90
+#: pg_receivewal.c:84 pg_recvlogical.c:89
+#, c-format
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr "      --if-not-exists    슬롯을 새로 만들 때 이미 있어도 오류 내지 않음\n"
+
+#: pg_receivewal.c:85 pg_recvlogical.c:91
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
 msgstr "  -n, --no-loop          접속이 끊겼을 때 재연결 하지 않음\n"
 
-#: pg_receivewal.c:82 pg_recvlogical.c:95
+#: pg_receivewal.c:86
+#, c-format
+msgid "      --no-sync          do not wait for changes to be written safely to disk\n"
+msgstr "      --no-sync          디스크 쓰기 뒤 sync 작업 생략\n"
+
+#: pg_receivewal.c:87 pg_recvlogical.c:96
 #, c-format
 msgid ""
 "  -s, --status-interval=SECS\n"
-"                         time between status packets sent to server "
-"(default: %d)\n"
+"                         time between status packets sent to server (default: %d)\n"
 msgstr ""
 "  -s, --status-interval=초\n"
-"                         지정한 초 간격으로 서버로 상태 패킷을 보냄 (초기값: "
-"%d)\n"
+"                         지정한 초 간격으로 서버로 상태 패킷을 보냄 (초기값: %d)\n"
 
-#: pg_receivewal.c:85
+#: pg_receivewal.c:90
 #, c-format
-msgid ""
-"      --synchronous      flush write-ahead log immediately after writing\n"
+msgid "      --synchronous      flush write-ahead log immediately after writing\n"
 msgstr "      --synchronous      쓰기 작업 후 즉시 트랜잭션 로그를 플러시 함\n"
 
-#: pg_receivewal.c:88
+#: pg_receivewal.c:93
 #, c-format
 msgid "  -Z, --compress=0-9     compress logs with given compression level\n"
 msgstr "  -Z, --compress=0-9     압축된 로그 파일의 압축 수위 지정\n"
 
-#: pg_receivewal.c:97
+#: pg_receivewal.c:102
 #, c-format
 msgid ""
 "\n"
@@ -847,121 +863,118 @@ msgstr ""
 "\n"
 "추가 기능:\n"
 
-#: pg_receivewal.c:98 pg_recvlogical.c:80
+#: pg_receivewal.c:103 pg_recvlogical.c:81
 #, c-format
-msgid ""
-"      --create-slot      create a new replication slot (for the slot's name "
-"see --slot)\n"
-msgstr ""
-"      --create-slot      새 복제 슬롯을 만듬 (--slot 옵션에서 슬롯 이름 지"
-"정)\n"
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr "      --create-slot      새 복제 슬롯을 만듬 (--slot 옵션에서 슬롯 이름 지정)\n"
 
-#: pg_receivewal.c:99 pg_recvlogical.c:81
+#: pg_receivewal.c:104 pg_recvlogical.c:82
 #, c-format
-msgid ""
-"      --drop-slot        drop the replication slot (for the slot's name see "
-"--slot)\n"
-msgstr ""
-"      --drop-slot        복제 슬롯 삭제 (--slot 옵션에서 슬롯 이름 지정)\n"
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr "      --drop-slot        복제 슬롯 삭제 (--slot 옵션에서 슬롯 이름 지정)\n"
 
-#: pg_receivewal.c:111
+#: pg_receivewal.c:116
 #, c-format
 msgid "%s: finished segment at %X/%X (timeline %u)\n"
 msgstr "%s: 마무리된 세그먼트 위치: %X/%X (타임라인 %u)\n"
 
-#: pg_receivewal.c:124
+#: pg_receivewal.c:123
+#, c-format
+msgid "%s: stopped log streaming at %X/%X (timeline %u)\n"
+msgstr "%s: 로그 스트리밍 중지된 위치: %X/%X (타임라인 %u)\n"
+
+#: pg_receivewal.c:139
 #, c-format
 msgid "%s: switched to timeline %u at %X/%X\n"
 msgstr "%s: 전환됨: 타임라인 %u, 위치 %X/%X\n"
 
-#: pg_receivewal.c:133
+#: pg_receivewal.c:149
 #, c-format
 msgid "%s: received interrupt signal, exiting\n"
 msgstr "%s: 인터럽터 시그널을 받음, 종료함\n"
 
-#: pg_receivewal.c:171
+#: pg_receivewal.c:187
 #, c-format
 msgid "%s: could not close directory \"%s\": %s\n"
 msgstr "%s: \"%s\" 디렉터리를 닫을 수 없음: %s\n"
 
-#: pg_receivewal.c:260
+#: pg_receivewal.c:276
 #, c-format
 msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
 msgstr "%s: \"%s\" 조각 파일은 잘못된 크기임: %d, 무시함\n"
 
-#: pg_receivewal.c:277
+#: pg_receivewal.c:293
 #, c-format
 msgid "%s: could not open compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 열기 실패: %s\n"
 
-#: pg_receivewal.c:283
+#: pg_receivewal.c:299
 #, c-format
 msgid "%s: could not seek in compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 작업 위치 찾기 실패: %s\n"
 
-#: pg_receivewal.c:289
+#: pg_receivewal.c:305
 #, c-format
 msgid "%s: could not read compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 읽기 실패: %s\n"
 
-#: pg_receivewal.c:301
+#: pg_receivewal.c:317
 #, c-format
-msgid ""
-"%s: compressed segment file \"%s\" has incorrect uncompressed size %d, "
-"skipping\n"
+msgid "%s: compressed segment file \"%s\" has incorrect uncompressed size %d, skipping\n"
 msgstr "%s: \"%s\" 압축 파일은 압축 풀었을 때 잘못된 크기임: %d, 무시함\n"
 
-#: pg_receivewal.c:407
+#: pg_receivewal.c:423
 #, c-format
 msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
 msgstr "%s: 로그 스트리밍 시작 위치: %X/%X (타임라인 %u)\n"
 
-#: pg_receivewal.c:519 pg_recvlogical.c:762
+#: pg_receivewal.c:538 pg_recvlogical.c:763
 #, c-format
 msgid "%s: invalid port number \"%s\"\n"
 msgstr "%s: 잘못된 포트 번호 \"%s\"\n"
 
-#: pg_receivewal.c:600
+#: pg_receivewal.c:569 pg_recvlogical.c:793
+#, c-format
+msgid "%s: could not parse end position \"%s\"\n"
+msgstr "%s: 시작 위치 구문이 잘못됨 \"%s\"\n"
+
+#: pg_receivewal.c:632
 #, c-format
 msgid "%s: cannot use --create-slot together with --drop-slot\n"
 msgstr "%s: --create-slot 옵션과 --drop-slot 옵션을 함께 사용할 수 없음\n"
 
-#. translator: second %s is an option name
-#: pg_receivewal.c:609
+#: pg_receivewal.c:650
 #, c-format
-msgid "%s: %s needs a slot to be specified using --slot\n"
-msgstr "%s: %s 옵션은 --slot 옵션을 함께 사용해야 함\n"
+msgid "%s: cannot use --synchronous together with --no-sync\n"
+msgstr "%s: --synchronous 옵션과 --no-sync 옵션을 함께 사용할 수 없음\n"
 
-#: pg_receivewal.c:674
+#: pg_receivewal.c:728
 #, c-format
-msgid ""
-"%s: replication connection using slot \"%s\" is unexpectedly database "
-"specific\n"
-msgstr ""
-"%s: \"%s\" 슬롯을 이용한 복제 연결은 이 데이터베이스에서 사용할 수 없음\n"
+msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
+msgstr "%s: \"%s\" 슬롯을 이용한 복제 연결은 이 데이터베이스에서 사용할 수 없음\n"
 
-#: pg_receivewal.c:686 pg_recvlogical.c:967
+#: pg_receivewal.c:740 pg_recvlogical.c:978
 #, c-format
 msgid "%s: dropping replication slot \"%s\"\n"
 msgstr "%s: \"%s\" 이름의 복제 슬롯을 삭제 중\n"
 
-#: pg_receivewal.c:699 pg_recvlogical.c:979
+#: pg_receivewal.c:753 pg_recvlogical.c:990
 #, c-format
 msgid "%s: creating replication slot \"%s\"\n"
 msgstr "%s: \"%s\" 이름의 복제 슬롯을 만드는 중\n"
 
-#: pg_receivewal.c:726 pg_recvlogical.c:1005
+#: pg_receivewal.c:780 pg_recvlogical.c:1016
 #, c-format
 msgid "%s: disconnected\n"
 msgstr "%s: 연결 끊김\n"
 
 #. translator: check source for value for %d
-#: pg_receivewal.c:733 pg_recvlogical.c:1012
+#: pg_receivewal.c:787 pg_recvlogical.c:1023
 #, c-format
 msgid "%s: disconnected; waiting %d seconds to try again\n"
 msgstr "%s: 연결 끊김; 다시 연결 하기 위해 %d 초를 기다리는 중\n"
 
-#: pg_recvlogical.c:75
+#: pg_recvlogical.c:76
 #, c-format
 msgid ""
 "%s controls PostgreSQL logical decoding streams.\n"
@@ -970,7 +983,7 @@ msgstr ""
 "%s 프로그램은 논리 디코딩 스트림을 제어하는 도구입니다.\n"
 "\n"
 
-#: pg_recvlogical.c:79
+#: pg_recvlogical.c:80
 #, c-format
 msgid ""
 "\n"
@@ -979,44 +992,31 @@ msgstr ""
 "\n"
 "성능에 관계된 기능들:\n"
 
-#: pg_recvlogical.c:82
+#: pg_recvlogical.c:83
 #, c-format
-msgid ""
-"      --start            start streaming in a replication slot (for the "
-"slot's name see --slot)\n"
-msgstr ""
-"      --start            복제 슬롯을 이용한 스트리밍 시작 (--slot 옵션에서 슬"
-"롯 이름 지정)\n"
+msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
+msgstr "      --start            복제 슬롯을 이용한 스트리밍 시작 (--slot 옵션에서 슬롯 이름 지정)\n"
 
-#: pg_recvlogical.c:84
-#, c-format
-msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
-msgstr "  -E, --endpos=LSN       지정한 LSN까지 받고 종료함\n"
-
-#: pg_recvlogical.c:85
+#: pg_recvlogical.c:86
 #, c-format
 msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
 msgstr "  -f, --file=파일        작업 로그를 해당 파일에 기록, 표준 출력은 -\n"
 
-#: pg_recvlogical.c:86
+#: pg_recvlogical.c:87
 #, c-format
 msgid ""
 "  -F  --fsync-interval=SECS\n"
-"                         time between fsyncs to the output file (default: "
-"%d)\n"
+"                         time between fsyncs to the output file (default: %d)\n"
 msgstr ""
 "  -F  --fsync-interval=초\n"
-"                         지정한 초 간격으로 파일 fsync 작업을 함 (초기값: "
-"%d)\n"
+"                         지정한 초 간격으로 파일 fsync 작업을 함 (초기값: %d)\n"
 
-#: pg_recvlogical.c:89
+#: pg_recvlogical.c:90
 #, c-format
-msgid ""
-"  -I, --startpos=LSN     where in an existing slot should the streaming "
-"start\n"
+msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
 msgstr "  -I, --startpos=LSN     스트리밍을 시작할 기존 슬롯 위치\n"
 
-#: pg_recvlogical.c:91
+#: pg_recvlogical.c:92
 #, c-format
 msgid ""
 "  -o, --option=NAME[=VALUE]\n"
@@ -1024,145 +1024,135 @@ msgid ""
 "                         output plugin\n"
 msgstr ""
 "  -o, --option=이름[=값]\n"
-"                         출력 플러그인에서 사용할 옵션들의 옵션 이름과 그 "
-"값\n"
+"                         출력 플러그인에서 사용할 옵션들의 옵션 이름과 그 값\n"
 
-#: pg_recvlogical.c:94
+#: pg_recvlogical.c:95
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
 msgstr "  -P, --plugin=PLUGIN    사용할 출력 플러그인 (초기값: %s)\n"
 
-#: pg_recvlogical.c:97
+#: pg_recvlogical.c:98
 #, c-format
 msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
 msgstr "  -S, --slot=슬롯이름    논리 복제 슬롯 이름\n"
 
-#: pg_recvlogical.c:102
+#: pg_recvlogical.c:103
 #, c-format
 msgid "  -d, --dbname=DBNAME    database to connect to\n"
 msgstr "  -d, --dbname=디비이름  접속할 데이터베이스\n"
 
-#: pg_recvlogical.c:135
+#: pg_recvlogical.c:136
 #, c-format
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
 msgstr "%s: 쓰기 확인 위치: %X/%X, 플러시 위치 %X/%X (슬롯 %s)\n"
 
-#: pg_recvlogical.c:160 receivelog.c:351
+#: pg_recvlogical.c:161 receivelog.c:352
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: 피드백 패킷을 보낼 수 없음: %s"
 
-#: pg_recvlogical.c:199
+#: pg_recvlogical.c:200
 #, c-format
 msgid "%s: could not fsync log file \"%s\": %s\n"
 msgstr "%s: \"%s\" 로그 파일 fsync 실패: %s\n"
 
-#: pg_recvlogical.c:238
+#: pg_recvlogical.c:239
 #, c-format
 msgid "%s: starting log streaming at %X/%X (slot %s)\n"
 msgstr "%s: 로그 스트리밍 시작 함, 위치: %X/%X (슬롯 %s)\n"
 
-#: pg_recvlogical.c:280
+#: pg_recvlogical.c:281
 #, c-format
 msgid "%s: streaming initiated\n"
 msgstr "%s: 스트리밍 초기화 됨\n"
 
-#: pg_recvlogical.c:346
+#: pg_recvlogical.c:347
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: \"%s\" 로그 파일을 열 수 없음: %s\n"
 
-#: pg_recvlogical.c:376 receivelog.c:914
+#: pg_recvlogical.c:377 receivelog.c:898
 #, c-format
 msgid "%s: invalid socket: %s"
 msgstr "%s: 잘못된 소켓: %s"
 
-#: pg_recvlogical.c:430 receivelog.c:943
+#: pg_recvlogical.c:431 receivelog.c:927
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: select() 실패: %s\n"
 
-#: pg_recvlogical.c:439 receivelog.c:995
+#: pg_recvlogical.c:440 receivelog.c:979
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: WAL 스트림에서 자료 받기 실패: %s"
 
-#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1040
-#: receivelog.c:1107
+#: pg_recvlogical.c:482 pg_recvlogical.c:534 receivelog.c:1024
+#: receivelog.c:1091
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: 스트리밍 헤더 크기가 너무 작음: %d\n"
 
-#: pg_recvlogical.c:517 receivelog.c:874
+#: pg_recvlogical.c:518 receivelog.c:858
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: 알 수 없는 스트리밍 헤더: \"%c\"\n"
 
-#: pg_recvlogical.c:573 pg_recvlogical.c:587
+#: pg_recvlogical.c:574 pg_recvlogical.c:588
 #, c-format
 msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
 msgstr "%s: %u 바이트 쓰기 실패, 로그파일 \"%s\": %s\n"
 
-#: pg_recvlogical.c:617 receivelog.c:667 receivelog.c:705
+#: pg_recvlogical.c:618 receivelog.c:650 receivelog.c:689
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: 복제 스트림의 예상치 못한 종료: %s"
 
-#: pg_recvlogical.c:741
+#: pg_recvlogical.c:742
 #, c-format
 msgid "%s: invalid fsync interval \"%s\"\n"
 msgstr "%s: \"%s\" 값은 잘못된 fsync 반복주기 임\n"
 
-#: pg_recvlogical.c:782
+#: pg_recvlogical.c:783
 #, c-format
 msgid "%s: could not parse start position \"%s\"\n"
 msgstr "%s: 시작 위치 구문이 잘못됨 \"%s\"\n"
 
-#: pg_recvlogical.c:792
-#, c-format
-msgid "%s: could not parse end position \"%s\"\n"
-msgstr "%s: 시작 위치 구문이 잘못됨 \"%s\"\n"
-
-#: pg_recvlogical.c:876
+#: pg_recvlogical.c:877
 #, c-format
 msgid "%s: no slot specified\n"
 msgstr "%s: 슬롯을 지정하지 않았음\n"
 
-#: pg_recvlogical.c:884
+#: pg_recvlogical.c:885
 #, c-format
 msgid "%s: no target file specified\n"
 msgstr "%s: 대상 파일을 지정하지 않았음\n"
 
-#: pg_recvlogical.c:892
+#: pg_recvlogical.c:893
 #, c-format
 msgid "%s: no database specified\n"
 msgstr "%s: 데이터베이스 지정하지 않았음\n"
 
-#: pg_recvlogical.c:900
+#: pg_recvlogical.c:901
 #, c-format
 msgid "%s: at least one action needs to be specified\n"
 msgstr "%s: 적어도 하나 이상의 작업 방법을 지정해야 함\n"
 
-#: pg_recvlogical.c:908
+#: pg_recvlogical.c:909
 #, c-format
 msgid "%s: cannot use --create-slot or --start together with --drop-slot\n"
-msgstr ""
-"%s: --create-slot 옵션 또는 --start 옵션은 --drop-slot 옵션과 함께 사용할 수 "
-"없음\n"
+msgstr "%s: --create-slot 옵션 또는 --start 옵션은 --drop-slot 옵션과 함께 사용할 수 없음\n"
 
-#: pg_recvlogical.c:916
+#: pg_recvlogical.c:917
 #, c-format
 msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
-msgstr ""
-"%s: --create-slot 옵션이나 --drop-slot 옵션은 --startpos 옵션과 함께 쓸 수 없"
-"음\n"
+msgstr "%s: --create-slot 옵션이나 --drop-slot 옵션은 --startpos 옵션과 함께 쓸 수 없음\n"
 
-#: pg_recvlogical.c:925
+#: pg_recvlogical.c:926
 #, c-format
 msgid "%s: --endpos may only be specified with --start\n"
 msgstr "%s: --endpos 옵션은 --start 옵션과 함께 사용해야 함\n"
 
-#: pg_recvlogical.c:957
+#: pg_recvlogical.c:958
 #, c-format
 msgid "%s: could not establish database-specific replication connection\n"
 msgstr "%s: 데이터베이스 의존적인 복제 연결을 할 수 없음\n"
@@ -1190,219 +1180,208 @@ msgstr "%s: 이미 있는 \"%s\" WAL 파일 fsync 실패: %s\n"
 #: receivelog.c:154
 #, c-format
 msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
-msgid_plural ""
-"%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
-msgstr[0] ""
-"%s: \"%s\" 트랜잭션 로그파일의 크기가 %d 바이트임, 0 또는 %d 바이트여야 함\n"
+msgid_plural "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr[0] "%s: \"%s\" 트랜잭션 로그파일의 크기가 %d 바이트임, 0 또는 %d 바이트여야 함\n"
 
-#: receivelog.c:169
+#: receivelog.c:170
 #, c-format
 msgid "%s: could not open write-ahead log file \"%s\": %s\n"
 msgstr "%s: \"%s\" WAL 파일을 열 수 없음: %s\n"
 
-#: receivelog.c:196
+#: receivelog.c:197
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일의 시작 위치를 결정할 수 없음: %s\n"
 
-#: receivelog.c:211
+#: receivelog.c:212
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr "%s: \"%s%s\" 이름 변경 실패, 세그먼트가 완료되지 않았음\n"
 
-#: receivelog.c:280
+#: receivelog.c:281
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr "%s: 타임라인 %u 번을 위한 내역 파일 이름이 잘못 되었음: %s\n"
 
-#: receivelog.c:288
+#: receivelog.c:289
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: \"%s\" 타임라인 내역 파일을 만들 수 없음: %s\n"
 
-#: receivelog.c:295
+#: receivelog.c:296
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: \"%s\" 타임라인 내역 파일에 쓸 수 없음: %s\n"
 
-#: receivelog.c:385
+#: receivelog.c:386
 #, c-format
-msgid ""
-"%s: incompatible server version %s; client does not support streaming from "
-"server versions older than %s\n"
-msgstr ""
-"%s: %s 서버 버전은 호환되지 않음; 클라이언트는 %s 버전 보다 오래된 서버의 스"
-"트리밍은 지원하지 않음\n"
+msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
+msgstr "%s: %s 서버 버전은 호환되지 않음; 클라이언트는 %s 버전 보다 오래된 서버의 스트리밍은 지원하지 않음\n"
 
-#: receivelog.c:395
+#: receivelog.c:396
 #, c-format
-msgid ""
-"%s: incompatible server version %s; client does not support streaming from "
-"server versions newer than %s\n"
-msgstr ""
-"%s: %s 서버 버전은 호환되지 않음; 클라이언트는 %s 버전 보다 새로운 서버의 스"
-"트리밍은 지원하지 않음\n"
+msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
+msgstr "%s: %s 서버 버전은 호환되지 않음; 클라이언트는 %s 버전 보다 새로운 서버의 스트리밍은 지원하지 않음\n"
 
-#: receivelog.c:500 streamutil.c:265 streamutil.c:304
+#: receivelog.c:501 streamutil.c:439 streamutil.c:478
 #, c-format
-msgid ""
-"%s: could not identify system: got %d rows and %d fields, expected %d rows "
-"and %d or more fields\n"
-msgstr ""
-"%s: 시스템을 식별할 수 없음: 로우수 %d, 필드수 %d, 예상값: 로우수 %d, 필드수 "
-"%d 이상\n"
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: 시스템을 식별할 수 없음: 로우수 %d, 필드수 %d, 예상값: 로우수 %d, 필드수 %d 이상\n"
 
-#: receivelog.c:508
+#: receivelog.c:509
 #, c-format
-msgid ""
-"%s: system identifier does not match between base backup and streaming "
-"connection\n"
+msgid "%s: system identifier does not match between base backup and streaming connection\n"
 msgstr "%s: 시스템 식별자가 베이스 백업과 스트리밍 연결에서 서로 다름\n"
 
-#: receivelog.c:516
+#: receivelog.c:517
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: %u 타임라인으로 시작하는 것을 서버에서 제공 하지 않음\n"
 
-#: receivelog.c:535
+#: receivelog.c:559
 #, c-format
-msgid "%s: could not create temporary replication slot \"%s\": %s"
-msgstr "%s: \"%s\" 임시 복제 슬롯을 만들 수 없음: %s"
+msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: TIMELINE_HISTORY 명령 결과가 잘못됨: 받은 값: 로우수 %d, 필드수 %d, 예상값: 로우수 %d, 필드수 %d\n"
 
-#: receivelog.c:576
+#: receivelog.c:631
 #, c-format
-msgid ""
-"%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
-"fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s: TIMELINE_HISTORY 명령 결과가 잘못됨: 받은 값: 로우수 %d, 필드수 %d, 예상"
-"값: 로우수 %d, 필드수 %d\n"
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr "%s: 서버가 잘못된 다음 타임라인 번호 %u 보고함, 이전 타임라인 번호 %u\n"
 
-#: receivelog.c:648
+#: receivelog.c:638
 #, c-format
-msgid ""
-"%s: server reported unexpected next timeline %u, following timeline %u\n"
-msgstr ""
-"%s: 서버가 잘못된 다음 타임라인 번호 %u 보고함, 이전 타임라인 번호 %u\n"
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr "%s: 서버의 중지 위치: 타임라인 %u, 위치 %X/%X, 하지만 보고 받은 위치: 타임라인 %u 위치 %X/%X\n"
 
-#: receivelog.c:655
-#, c-format
-msgid ""
-"%s: server stopped streaming timeline %u at %X/%X, but reported next "
-"timeline %u to begin at %X/%X\n"
-msgstr ""
-"%s: 서버의 중지 위치: 타임라인 %u, 위치 %X/%X, 하지만 보고 받은 위치: 타임라"
-"인 %u 위치 %X/%X\n"
-
-#: receivelog.c:696
+#: receivelog.c:680
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: 복제 스트림이 중지 위치 전에 종료 되었음\n"
 
-#: receivelog.c:745
+#: receivelog.c:729
 #, c-format
-msgid ""
-"%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: 타임라인 끝에 잘못된 결과가 발견 됨: 로우수 %d, 필드수 %d / 예상값: 로우"
-"수 %d, 필드수 %d\n"
+msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: 타임라인 끝에 잘못된 결과가 발견 됨: 로우수 %d, 필드수 %d / 예상값: 로우수 %d, 필드수 %d\n"
 
-#: receivelog.c:755
+#: receivelog.c:739
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
 msgstr "%s: 다음 타임라인 시작 위치 분석 실패 \"%s\"\n"
 
-#: receivelog.c:1126
+#: receivelog.c:1110
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
 msgstr "%s: %u 위치의 수신된 트랜잭션 로그 레코드에 파일을 열 수 없음\n"
 
-#: receivelog.c:1137
+#: receivelog.c:1121
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: 잘못된 WAL 자료 위치 %08x, 기대값 %08x\n"
 
-#: receivelog.c:1172
+#: receivelog.c:1156
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: %u 바이트를 \"%s\" WAL 파일에 쓸 수 없음: %s\n"
 
-#: receivelog.c:1197 receivelog.c:1238 receivelog.c:1269
+#: receivelog.c:1181 receivelog.c:1222 receivelog.c:1253
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: copy-end 패킷을 보낼 수 없음: %s"
 
-#: streamutil.c:149
+#: streamutil.c:161
 msgid "Password: "
 msgstr "암호: "
 
-#: streamutil.c:174
+#: streamutil.c:186
 #, c-format
 msgid "%s: could not connect to server\n"
 msgstr "%s: 서버에 접속할 수 없음\n"
 
-#: streamutil.c:192
+#: streamutil.c:204
 #, c-format
 msgid "%s: could not connect to server: %s"
 msgstr "%s: 서버에 접속할 수 없음: %s"
 
-#: streamutil.c:216
+#: streamutil.c:233
+#, c-format
+msgid "%s: could not clear search_path: %s"
+msgstr "%s: search_path를 지울 수 없음: %s"
+
+#: streamutil.c:250
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
 msgstr "%s: integer_datetimes 서버 설정을 알 수 없음\n"
 
-#: streamutil.c:225
+#: streamutil.c:259
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr "%s: integer_datetimes 컴파일 플래그가 서버와 일치하지 않음\n"
 
-#: streamutil.c:376
+#: streamutil.c:312
 #, c-format
-msgid ""
-"%s: could not create replication slot \"%s\": got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: \"%s\" 복제 슬롯을 만들 수 없음: 로우수 %d, 필드수 %d, 기대값 로우수 %d, "
-"필드수 %d\n"
+msgid "%s: could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: WAL 조각 크기 계산 실패: 로우수 %d, 필드수 %d, 예상값: 로우수 %d, 필드수 %d 이상\n"
 
-#: streamutil.c:421
+#: streamutil.c:322
 #, c-format
-msgid ""
-"%s: could not drop replication slot \"%s\": got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: \"%s\" 복제 슬롯을 삭제할 수 없음: 로우수 %d, 필드수 %d, 기대값 로우수 "
-"%d, 필드수 %d\n"
+msgid "%s: WAL segment size could not be parsed\n"
+msgstr "%s: WAL 조각 크기 분석 못함\n"
 
-#: walmethods.c:435 walmethods.c:904
+#: streamutil.c:339
+#, c-format
+msgid "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte\n"
+msgid_plural "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes\n"
+msgstr[0] ""
+"%s: WAL 조각 크기는 1MB에서 1GB 사이 2^n 크기여야하는데, 원격 서버는 %d 바이트를 보고했음\n"
+
+#: streamutil.c:386
+#, c-format
+msgid "%s: could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: 그룹 접근 플래그를 가져올 수 없음: 로우수 %d, 필드수 %d, 예상값: 로우수 %d, 필드수 %d 이상\n"
+
+#: streamutil.c:395
+#, c-format
+msgid "%s: group access flag could not be parsed: %s\n"
+msgstr "%s: 그룹 접근 플래그를 분석 못함: %s\n"
+
+#: streamutil.c:556
+#, c-format
+msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: \"%s\" 복제 슬롯을 만들 수 없음: 로우수 %d, 필드수 %d, 기대값 로우수 %d, 필드수 %d\n"
+
+#: streamutil.c:601
+#, c-format
+msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: \"%s\" 복제 슬롯을 삭제할 수 없음: 로우수 %d, 필드수 %d, 기대값 로우수 %d, 필드수 %d\n"
+
+#: walmethods.c:439 walmethods.c:928
 msgid "could not compress data"
 msgstr "자료를 압축할 수 없음"
 
-#: walmethods.c:459
+#: walmethods.c:471
 msgid "could not reset compression stream"
 msgstr "압축 스트림을 리셋할 수 없음"
 
-#: walmethods.c:560
+#: walmethods.c:569
 msgid "could not initialize compression library"
 msgstr "압축 라이브러리를 초기화할 수 없음"
 
-#: walmethods.c:572
+#: walmethods.c:581
 msgid "implementation error: tar files can't have more than one open file"
 msgstr "구현 오류: tar 파일은 하나 이상 열 수 없음"
 
-#: walmethods.c:586
+#: walmethods.c:595
 msgid "could not create tar header"
 msgstr "tar 해더를 만들 수 없음"
 
-#: walmethods.c:600 walmethods.c:638 walmethods.c:827 walmethods.c:838
+#: walmethods.c:609 walmethods.c:649 walmethods.c:844 walmethods.c:855
 msgid "could not change compression parameters"
 msgstr "압축 매개 변수를 바꿀 수 없음"
 
-#: walmethods.c:720
+#: walmethods.c:731
 msgid "unlink not supported with compression"
 msgstr "압축 상태에서 파일 삭제는 지원하지 않음"
 
-#: walmethods.c:920
+#: walmethods.c:953
 msgid "could not close compression stream"
 msgstr "압축 스트림을 닫을 수 없음"

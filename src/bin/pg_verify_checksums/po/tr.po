@@ -1,0 +1,185 @@
+# Turkish message translation file for pg_verify_checksums
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_verify_checksums (PostgreSQL) package.
+# Abdullah GÜLNER <agulner@gmail.com>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-09-04 06:17+0000\n"
+"PO-Revision-Date: 2018-09-16 23:36+0200\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Abdullah Gülner \n"
+"Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: pg_verify_checksums.c:38
+#, c-format
+msgid ""
+"%s verifies data checksums in a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s bir PostgreSQL veritabanı kümesi (cluster) içindeki veri sağlama toplamlarını doğrular.\n"
+"\n"
+
+#: pg_verify_checksums.c:39
+#, c-format
+msgid "Usage:\n"
+msgstr "Kullanımı:\n"
+
+#: pg_verify_checksums.c:40
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [SEÇENEK]... [DATADIR]\n"
+
+#: pg_verify_checksums.c:41
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Seçenekler:\n"
+
+#: pg_verify_checksums.c:42
+#, c-format
+msgid " [-D, --pgdata=]DATADIR  data directory\n"
+msgstr " [-D, --pgdata=]DATADIR  veri dizini\n"
+
+#: pg_verify_checksums.c:43
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose            detaylı (verbose) mesajlar göster\n"
+
+#: pg_verify_checksums.c:44
+#, c-format
+msgid "  -r RELFILENODE         check only relation with specified relfilenode\n"
+msgstr "  -r RELFILENODE         sadece belirtilen relfilenode'lu nesneyi kontrol et\n"
+
+#: pg_verify_checksums.c:45
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          sürüm bilgisini göster, sonra çık\n"
+
+#: pg_verify_checksums.c:46
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             bu yardımı göster, sonra çık\n"
+
+#: pg_verify_checksums.c:47
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Eğer hiçbir veri dizini (DATADIR) belirtilmezse, PGDATA çevresel değişkeni\n"
+"kullanılır.\n"
+"\n"
+
+#: pg_verify_checksums.c:49
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
+
+#: pg_verify_checksums.c:86
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyası açılamadı: %s\n"
+
+#: pg_verify_checksums.c:102
+#, c-format
+msgid "%s: short read of block %u in file \"%s\", got only %d bytes\n"
+msgstr "%1$s: \"%3$s\" dosyasında %2$u bloğunun kısa okuması, sadece %4$d bayt alındı \n"
+
+#: pg_verify_checksums.c:116
+#, c-format
+msgid "%s: checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X\n"
+msgstr "%s:  \"%s\" dosyasında sağlama toplamı doğrulaması başarısız oldu, blok %u: hesaplanan sağlama toplamı %X fakat blokta %X bulundu\n"
+
+#: pg_verify_checksums.c:124
+#, c-format
+msgid "%s: checksums verified in file \"%s\"\n"
+msgstr "%s: \"%s\" dosyasında sağlama toplamları doğrulandı\n"
+
+#: pg_verify_checksums.c:140
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s:  \"%s\" dizini açılamadı: %s\n"
+
+#: pg_verify_checksums.c:155
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: \"%s\" dosyasının durumu görüntülenemedi (stat): %s\n"
+
+#: pg_verify_checksums.c:180
+#, c-format
+msgid "%s: invalid segment number %d in file name \"%s\"\n"
+msgstr "%1$s: \"%3$s\" dosyasında geçersiz segment numarası %2$d\n"
+
+#: pg_verify_checksums.c:251
+#, c-format
+msgid "%s: invalid relfilenode specification, must be numeric: %s\n"
+msgstr "%s: geçersiz relfilenode tanımlaması, sayısal olmalı: %s\n"
+
+#: pg_verify_checksums.c:257 pg_verify_checksums.c:273
+#: pg_verify_checksums.c:283
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Daha fazla bilgi için \"%s --help\" yazın\n"
+
+#: pg_verify_checksums.c:272
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: hiçbir veri dizini belirtilmedi\n"
+
+#: pg_verify_checksums.c:281
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: Çok fazla komut satırı girdisi var (ilki \"%s\")\n"
+
+#: pg_verify_checksums.c:292
+#, c-format
+msgid "%s: pg_control CRC value is incorrect\n"
+msgstr "%s: pg_control CRC değeri yanlış\n"
+
+#: pg_verify_checksums.c:299
+#, c-format
+msgid "%s: cluster must be shut down to verify checksums\n"
+msgstr "%s: sağlama toplamlarının doğrulanması için küme (cluster) kapatılmalı\n"
+
+#: pg_verify_checksums.c:305
+#, c-format
+msgid "%s: data checksums are not enabled in cluster\n"
+msgstr "%s: kümede (cluster) veri sağlama toplamaları etkinleştirilmemiş\n"
+
+#: pg_verify_checksums.c:314
+#, c-format
+msgid "Checksum scan completed\n"
+msgstr "Sağlama toplamı taraması tamamlandı\n"
+
+#: pg_verify_checksums.c:315
+#, c-format
+msgid "Data checksum version: %d\n"
+msgstr "Veri sağlama toplamı sürümü: %d\n"
+
+#: pg_verify_checksums.c:316
+#, c-format
+msgid "Files scanned:  %s\n"
+msgstr "Taranan dosyalar: %s\n"
+
+#: pg_verify_checksums.c:317
+#, c-format
+msgid "Blocks scanned: %s\n"
+msgstr "Taranan bloklar: %s\n"
+
+#: pg_verify_checksums.c:318
+#, c-format
+msgid "Bad checksums:  %s\n"
+msgstr "Yanlış sağlama toplamları: %s\n"

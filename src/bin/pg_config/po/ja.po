@@ -5,59 +5,61 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-18 11:27+0900\n"
-"PO-Revision-Date: 2012-08-11 16:53+0900\n"
-"Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
+"POT-Creation-Date: 2018-08-31 16:21+0900\n"
+"PO-Revision-Date: 2018-08-27 12:15+0900\n"
+"Last-Translator: Kyotaro Horiguchi <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.5.4\n"
 
-#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
+#: ../../common/config_info.c:130 ../../common/config_info.c:138
+#: ../../common/config_info.c:146 ../../common/config_info.c:154
+#: ../../common/config_info.c:162 ../../common/config_info.c:170
+#: ../../common/config_info.c:178 ../../common/config_info.c:186
+#: ../../common/config_info.c:194
+msgid "not recorded"
+msgstr "記録されていません"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "現在のディレクトリを認識できませんでした: %s"
 
-#: ../../port/exec.c:146
+#: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "バイナリ\"%s\"は無効です"
 
-#: ../../port/exec.c:195
+#: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "バイナリ\"%s\"を読み取れませんでした"
 
-#: ../../port/exec.c:202
+#: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "実行する\"%s\"がありませんでした"
 
-#: ../../port/exec.c:257 ../../port/exec.c:293
+#: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
 msgstr "ディレクトリ\"%s\"に移動できませんでした: %s"
 
-#: ../../port/exec.c:272
+#: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "シンボリックリンク\"%s\"を読み取ることができませんでした"
 
-#: ../../port/exec.c:523
+#: ../../common/exec.c:523
 #, c-format
 msgid "pclose failed: %s"
 msgstr "pcloseが失敗しました: %s"
 
-#: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
-#: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
-#: pg_config.c:371
-#, c-format
-msgid "not recorded\n"
-msgstr "記録されていません\n"
-
-#: pg_config.c:428
+#: pg_config.c:74
 #, c-format
 msgid ""
 "\n"
@@ -68,12 +70,12 @@ msgstr ""
 "%sはインストールされたバージョンのPostgreSQLに関する情報を提供します。\n"
 "\n"
 
-#: pg_config.c:429
+#: pg_config.c:75
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_config.c:430
+#: pg_config.c:76
 #, c-format
 msgid ""
 "  %s [OPTION]...\n"
@@ -82,136 +84,136 @@ msgstr ""
 "  %s [オプション]...\n"
 "\n"
 
-#: pg_config.c:431
+#: pg_config.c:77
 #, c-format
 msgid "Options:\n"
 msgstr "オプション:\n"
 
-#: pg_config.c:432
+#: pg_config.c:78
 #, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              ユーザ実行ファイルの場所を表示します\n"
 
-#: pg_config.c:433
+#: pg_config.c:79
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
 msgstr "  --docdir              文書ファイルの場所を表示します\n"
 
-#: pg_config.c:434
+#: pg_config.c:80
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
 msgstr "  --htmldir              html文書ファイルの場所を表示します\n"
 
-#: pg_config.c:435
+#: pg_config.c:81
 #, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr "  --includedir          クライアントインタフェース用Cヘッダファイルの場所を表示します\n"
 
-#: pg_config.c:437
+#: pg_config.c:83
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
 msgstr "  --pkgincludedir       その他のCヘッダファイルの場所を表示します\n"
 
-#: pg_config.c:438
+#: pg_config.c:84
 #, c-format
 msgid "  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   サーバ用Cヘッダファイルの場所を表示します\n"
 
-#: pg_config.c:439
+#: pg_config.c:85
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr "  --libdir              オブジェクトコードライブラリの場所を表示します\n"
 
-#: pg_config.c:440
+#: pg_config.c:86
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr "  --pkglibdir           動的ロード可能モジュールの場所を表示します\n"
 
-#: pg_config.c:441
+#: pg_config.c:87
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
 msgstr "  --localedir           ロケールサポートファイルの場所を表示します\n"
 
-#: pg_config.c:442
+#: pg_config.c:88
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
 msgstr "  --mandir              マニュアルページの場所を表示します\n"
 
-#: pg_config.c:443
+#: pg_config.c:89
 #, c-format
 msgid "  --sharedir            show location of architecture-independent support files\n"
 msgstr "  --sharedir            アーキテクチャに依存しないサポートファイルの場所を表示します。\n"
 
-#: pg_config.c:444
+#: pg_config.c:90
 #, c-format
 msgid "  --sysconfdir          show location of system-wide configuration files\n"
 msgstr "  --sysconfdir          システム全体の設定ファイルの場所を表示します\n"
 
-#: pg_config.c:445
+#: pg_config.c:91
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr "  --pgxs                拡張makefileの場所を表示します\n"
 
-#: pg_config.c:446
+#: pg_config.c:92
 #, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr "  --configure           PostgreSQL構築時の\"configure\"スクリプトで指定したオプションを表示します\n"
 
-#: pg_config.c:448
+#: pg_config.c:94
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
 msgstr "  --cc                  PostgreSQL構築時に使用したCCの値を表示します\n"
 
-#: pg_config.c:449
+#: pg_config.c:95
 #, c-format
 msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cppflags            PostgreSQL構築時に使用したCPPFLAGSの値を表示します\n"
 
-#: pg_config.c:450
+#: pg_config.c:96
 #, c-format
 msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cflags              PostgreSQL構築時に使用したCFLAGSの値を表示します\n"
 
-#: pg_config.c:451
+#: pg_config.c:97
 #, c-format
 msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
 msgstr "  --cflags_sl           PostgreSQL構築時に使用したCFLAGS_SLの値を表示します\n"
 
-#: pg_config.c:452
+#: pg_config.c:98
 #, c-format
 msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
 msgstr "  --ldflags             PostgreSQL構築時に使用したLDFLAGSの値を表示します\n"
 
-#: pg_config.c:453
+#: pg_config.c:99
 #, c-format
 msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
 msgstr "  --ldflags_ex          PostgreSQL構築時に使用したLDFLAGS_EXの値を表示します\n"
 
-#: pg_config.c:454
+#: pg_config.c:100
 #, c-format
 msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
 msgstr "  --ldflags_sl          PostgreSQL構築時に使用したLDFLAGS_SLの値を表示します\n"
 
-#: pg_config.c:455
+#: pg_config.c:101
 #, c-format
 msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr "  --libs                PostgreSQL構築時に使用したLIBSの値を表示します\n"
 
-#: pg_config.c:456
+#: pg_config.c:102
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
 msgstr "  --version             PostgreSQLのバージョンを表示します\n"
 
-#: pg_config.c:457
+#: pg_config.c:103
 #, c-format
 msgid "  -?, --help            show this help, then exit\n"
 msgstr "  -?, --help                このヘルプを表示し、終了します\n"
 
-#: pg_config.c:458
+#: pg_config.c:104
 #, c-format
 msgid ""
 "\n"
@@ -222,43 +224,43 @@ msgstr ""
 "引数がない場合、既知の項目をすべて表示します。\n"
 "\n"
 
-#: pg_config.c:459
+#: pg_config.c:105
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"
 
-#: pg_config.c:465
+#: pg_config.c:111
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "詳細は\"%s --help\"を行ってください\n"
 
-#: pg_config.c:504
+#: pg_config.c:153
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: 実行ファイル自体がありませんでした\n"
 
-#: pg_config.c:527
+#: pg_config.c:180
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: 無効な引数です: %s\n"
 
-#~ msgid "  --help                show this help, then exit\n"
-#~ msgstr "  --help                ヘルプを表示し、終了します\n"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "ディレクトリ\"%s\"に移動できませんでした"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "子プロセスがシグナル%sで終了しました"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "子プロセスが例外0x%Xで終了しました"
-
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "子プロセスが終了コード%dで終了しました"
+#~ msgid "child process was terminated by signal %d"
+#~ msgstr "子プロセスがシグナル%dで終了しました"
 
 #~ msgid "child process exited with unrecognized status %d"
 #~ msgstr "子プロセスが未知のステータス%dで終了しました"
 
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "子プロセスがシグナル%dで終了しました"
+#~ msgid "child process exited with exit code %d"
+#~ msgstr "子プロセスが終了コード%dで終了しました"
+
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "子プロセスが例外0x%Xで終了しました"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "子プロセスがシグナル%sで終了しました"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "ディレクトリ\"%s\"に移動できませんでした"
+
+#~ msgid "  --help                show this help, then exit\n"
+#~ msgstr "  --help                ヘルプを表示し、終了します\n"

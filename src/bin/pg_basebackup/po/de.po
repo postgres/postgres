@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-06-25 02:46+0000\n"
-"PO-Revision-Date: 2018-06-25 09:34+0200\n"
+"POT-Creation-Date: 2018-09-11 02:46+0000\n"
+"PO-Revision-Date: 2018-09-11 14:15+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -638,7 +638,7 @@ msgstr "%s: Write-Ahead-Log-Endposition: %s\n"
 #: pg_basebackup.c:1985
 #, c-format
 msgid "%s: checksum error occured\n"
-msgstr ""
+msgstr "%s: ein Prüfsummenfehler ist aufgetreten\n"
 
 #: pg_basebackup.c:1991
 #, c-format
@@ -1346,16 +1346,14 @@ msgstr[0] "%s: WAL-Segmentgröße muss eine Zweierpotenz zwischen 1 MB und 1 GB 
 msgstr[1] "%s: WAL-Segmentgröße muss eine Zweierpotenz zwischen 1 MB und 1 GB sein, aber der Server gab einen Wert von %d Bytes an\n"
 
 #: streamutil.c:386
-#, fuzzy, c-format
-#| msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+#, c-format
 msgid "%s: could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields\n"
-msgstr "%s: konnte System nicht identifizieren: %d Zeilen und %d Felder erhalten, %d Zeilen und %d oder mehr Felder erwartet\n"
+msgstr "%s: konnte Gruppenzugriffseinstellung nicht ermitteln: %d Zeilen und %d Felder erhalten, %d Zeilen und %d oder mehr Felder erwartet\n"
 
 #: streamutil.c:395
-#, fuzzy, c-format
-#| msgid "%s: path \"%s\" could not be opened: %s\n"
+#, c-format
 msgid "%s: group access flag could not be parsed: %s\n"
-msgstr "%s: Pfad »%s« konnte nicht geöffnet werden: %s\n"
+msgstr "%s: Gruppenzugriffseinstellung konnte nicht interpretiert werden: %s\n"
 
 #: streamutil.c:556
 #, c-format
@@ -1367,7 +1365,7 @@ msgstr "%s: konnte Replikations-Slot »%s« nicht erzeugen: %d Zeilen und %d Fel
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: konnte Replikations-Slot »%s« nicht löschen: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: walmethods.c:440 walmethods.c:928
+#: walmethods.c:439 walmethods.c:928
 msgid "could not compress data"
 msgstr "konnte Daten nicht komprimieren"
 
@@ -1375,26 +1373,26 @@ msgstr "konnte Daten nicht komprimieren"
 msgid "could not reset compression stream"
 msgstr "konnte Komprimierungsstrom nicht zurücksetzen"
 
-#: walmethods.c:573
+#: walmethods.c:569
 msgid "could not initialize compression library"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren"
 
-#: walmethods.c:585
+#: walmethods.c:581
 msgid "implementation error: tar files can't have more than one open file"
 msgstr "Implementierungsfehler: Tar-Dateien können nicht mehr als eine offene Datei haben"
 
-#: walmethods.c:599
+#: walmethods.c:595
 msgid "could not create tar header"
 msgstr "konnte Tar-Dateikopf nicht erzeugen"
 
-#: walmethods.c:613 walmethods.c:652 walmethods.c:846 walmethods.c:857
+#: walmethods.c:609 walmethods.c:649 walmethods.c:844 walmethods.c:855
 msgid "could not change compression parameters"
 msgstr "konnte Komprimierungsparameter nicht ändern"
 
-#: walmethods.c:734
+#: walmethods.c:731
 msgid "unlink not supported with compression"
 msgstr "Unlink wird bei Komprimierung nicht unterstützt"
 
-#: walmethods.c:952
+#: walmethods.c:953
 msgid "could not close compression stream"
 msgstr "konnte Komprimierungsstrom nicht schließen"
