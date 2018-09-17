@@ -67,7 +67,7 @@ nonspace		[^ \t\r\f\v\n]
 newline			[\n]
 
 /* Line continuation marker */
-continuation	\\{newline}
+continuation	\\\r?{newline}
 
 /* Exclusive states */
 %x EXPR
@@ -104,8 +104,12 @@ continuation	\\{newline}
 	 * a continuation marker just after a word:
 	 */
 {nonspace}+{continuation}	{
-					/* Found "word\\\n", emit and return just "word" */
-					psqlscan_emit(cur_state, yytext, yyleng - 2);
+					/* Found "word\\\r?\n", emit and return just "word" */
+					int		wordlen = yyleng - 2;
+					if (yytext[wordlen] == '\r')
+						wordlen--;
+					Assert(yytext[wordlen] == '\\');
+					psqlscan_emit(cur_state, yytext, wordlen);
 					return 1;
 				}
 
