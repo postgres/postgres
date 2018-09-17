@@ -9739,17 +9739,17 @@ get_tablefunc(TableFunc *tf, deparse_context *context, bool showimplicit)
 		forboth(lc1, tf->ns_uris, lc2, tf->ns_names)
 		{
 			Node	   *expr = (Node *) lfirst(lc1);
-			char	   *name = strVal(lfirst(lc2));
+			Value	   *ns_node = (Value *) lfirst(lc2);
 
 			if (!first)
 				appendStringInfoString(buf, ", ");
 			else
 				first = false;
 
-			if (name != NULL)
+			if (ns_node != NULL)
 			{
 				get_rule_expr(expr, context, showimplicit);
-				appendStringInfo(buf, " AS %s", name);
+				appendStringInfo(buf, " AS %s", strVal(ns_node));
 			}
 			else
 			{
