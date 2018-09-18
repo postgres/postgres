@@ -47,6 +47,7 @@
  */
 
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -333,6 +334,14 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 			shm_unlink(name);
 		errno = save_errno;
 
+		/*
+		 * If we received a query cancel or termination signal, we will have
+		 * EINTR set here.  If the caller said that errors are OK here, check
+		 * for interrupts immediately.
+		 */
+		if (errno == EINTR && elevel >= ERROR)
+			CHECK_FOR_INTERRUPTS();
+
 		ereport(elevel,
 				(errcode_for_dynamic_shared_memory(),
 				 errmsg("could not resize shared memory segment \"%s\" to %zu bytes: %m",
@@ -422,11 +431,15 @@ dsm_impl_posix_resize(int fd, off_t size)
 #if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
 	if (rc == 0)
 	{
-		/* We may get interrupted, if so just retry. */
+		/*
+		 * We may get interrupted.  If so, just retry unless there is an
+		 * interrupt pending.  This avoids the possibility of looping forever
+		 * if another backend is repeatedly trying to interrupt us.
+		 */
 		do
 		{
 			rc = posix_fallocate(fd, 0, size);
-		} while (rc == EINTR);
+		} while (rc == EINTR && !(ProcDiePending || QueryCancelPending));
 
 		/*
 		 * The caller expects errno to be set, but posix_fallocate() doesn't
