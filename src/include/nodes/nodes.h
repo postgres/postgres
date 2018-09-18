@@ -610,7 +610,10 @@ extern char *bmsToString(const struct Bitmapset *bms);
 /*
  * nodes/{readfuncs.c,read.c}
  */
-extern void *stringToNode(char *str);
+extern void *stringToNode(const char *str);
+#ifdef WRITE_READ_PARSE_PLAN_TREES
+extern void *stringToNodeWithLocations(const char *str);
+#endif
 extern struct Bitmapset *readBitmapset(void);
 extern uintptr_t readDatum(bool typbyval);
 extern bool *readBoolCols(int numCols);

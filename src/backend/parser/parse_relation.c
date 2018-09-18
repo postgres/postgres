@@ -1335,7 +1335,6 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	Assert(pstate != NULL);
 
 	rte->rtekind = RTE_SUBQUERY;
-	rte->relid = InvalidOid;
 	rte->subquery = subquery;
 	rte->alias = alias;
 

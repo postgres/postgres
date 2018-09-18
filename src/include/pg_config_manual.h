@@ -287,6 +287,13 @@
 /* #define COPY_PARSE_PLAN_TREES */
 
 /*
+ * Define this to force all parse and plan trees to be passed through
+ * outfuncs.c/readfuncs.c, to facilitate catching errors and omissions in
+ * those modules.
+ */
+/* #define WRITE_READ_PARSE_PLAN_TREES */
+
+/*
  * Define this to force all raw parse trees for DML statements to be scanned
  * by raw_expression_tree_walker(), to facilitate catching errors and
  * omissions in that function.

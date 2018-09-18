@@ -17,11 +17,18 @@
 #include "nodes/nodes.h"
 
 /*
+ * variable in read.c that needs to be accessible to readfuncs.c
+ */
+#ifdef WRITE_READ_PARSE_PLAN_TREES
+extern bool restore_location_fields;
+#endif
+
+/*
  * prototypes for functions in read.c (the lisp token parser)
  */
-extern char *pg_strtok(int *length);
-extern char *debackslash(char *token, int length);
-extern void *nodeRead(char *token, int tok_len);
+extern const char *pg_strtok(int *length);
+extern char *debackslash(const char *token, int length);
+extern void *nodeRead(const char *token, int tok_len);
 
 /*
  * prototypes for functions in readfuncs.c
