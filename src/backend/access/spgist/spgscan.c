@@ -15,64 +15,136 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/relscan.h"
 #include "access/spgist_private.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/datum.h"
+#include "utils/float.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
-
 typedef void (*storeRes_func) (SpGistScanOpaque so, ItemPointer heapPtr,
-							   Datum leafValue, bool isnull, bool recheck);
+							   Datum leafValue, bool isNull, bool recheck,
+							   bool recheckDistances, double *distances);
 
-typedef struct ScanStackEntry
+/*
+ * Pairing heap comparison function for the SpGistSearchItem queue.
+ * KNN-searches currently only support NULLS LAST.  So, preserve this logic
+ * here.
+ */
+static int
+pairingheap_SpGistSearchItem_cmp(const pairingheap_node *a,
+								 const pairingheap_node *b, void *arg)
 {
-	Datum		reconstructedValue; /* value reconstructed from parent */
-	void	   *traversalValue; /* opclass-specific traverse value */
-	int			level;			/* level of items on this page */
-	ItemPointerData ptr;		/* block and offset to scan from */
-} ScanStackEntry;
+	const		SpGistSearchItem *sa = (const SpGistSearchItem *) a;
+	const		SpGistSearchItem *sb = (const SpGistSearchItem *) b;
+	SpGistScanOpaque so = (SpGistScanOpaque) arg;
+	int			i;
 
+	if (sa->isNull)
+	{
+		if (!sb->isNull)
+			return -1;
+	}
+	else if (sb->isNull)
+	{
+		return 1;
+	}
+	else
+	{
+		/* Order according to distance comparison */
+		for (i = 0; i < so->numberOfOrderBys; i++)
+		{
+			if (isnan(sa->distances[i]) && isnan(sb->distances[i]))
+				continue;		/* NaN == NaN */
+			if (isnan(sa->distances[i]))
+				return -1;		/* NaN > number */
+			if (isnan(sb->distances[i]))
+				return 1;		/* number < NaN */
+			if (sa->distances[i] != sb->distances[i])
+				return (sa->distances[i] < sb->distances[i]) ? 1 : -1;
+		}
+	}
 
-/* Free a ScanStackEntry */
-static void
-freeScanStackEntry(SpGistScanOpaque so, ScanStackEntry *stackEntry)
-{
-	if (!so->state.attLeafType.attbyval &&
-		DatumGetPointer(stackEntry->reconstructedValue) != NULL)
-		pfree(DatumGetPointer(stackEntry->reconstructedValue));
-	if (stackEntry->traversalValue)
-		pfree(stackEntry->traversalValue);
+	/* Leaf items go before inner pages, to ensure a depth-first search */
+	if (sa->isLeaf && !sb->isLeaf)
+		return 1;
+	if (!sa->isLeaf && sb->isLeaf)
+		return -1;
 
-	pfree(stackEntry);
+	return 0;
 }
 
-/* Free the entire stack */
 static void
-freeScanStack(SpGistScanOpaque so)
+spgFreeSearchItem(SpGistScanOpaque so, SpGistSearchItem * item)
 {
-	ListCell   *lc;
+	if (!so->state.attLeafType.attbyval &&
+		DatumGetPointer(item->value) != NULL)
+		pfree(DatumGetPointer(item->value));
 
-	foreach(lc, so->scanStack)
-	{
-		freeScanStackEntry(so, (ScanStackEntry *) lfirst(lc));
-	}
-	list_free(so->scanStack);
-	so->scanStack = NIL;
+	if (item->traversalValue)
+		pfree(item->traversalValue);
+
+	pfree(item);
 }
 
 /*
- * Initialize scanStack to search the root page, resetting
+ * Add SpGistSearchItem to queue
+ *
+ * Called in queue context
+ */
+static void
+spgAddSearchItemToQueue(SpGistScanOpaque so, SpGistSearchItem * item)
+{
+	pairingheap_add(so->scanQueue, &item->phNode);
+}
+
+static SpGistSearchItem *
+spgAllocSearchItem(SpGistScanOpaque so, bool isnull, double *distances)
+{
+	/* allocate distance array only for non-NULL items */
+	SpGistSearchItem *item =
+	palloc(SizeOfSpGistSearchItem(isnull ? 0 : so->numberOfOrderBys));
+
+	item->isNull = isnull;
+
+	if (!isnull && so->numberOfOrderBys > 0)
+		memcpy(item->distances, distances,
+			   so->numberOfOrderBys * sizeof(double));
+
+	return item;
+}
+
+static void
+spgAddStartItem(SpGistScanOpaque so, bool isnull)
+{
+	SpGistSearchItem *startEntry =
+	spgAllocSearchItem(so, isnull, so->zeroDistances);
+
+	ItemPointerSet(&startEntry->heapPtr,
+				   isnull ? SPGIST_NULL_BLKNO : SPGIST_ROOT_BLKNO,
+				   FirstOffsetNumber);
+	startEntry->isLeaf = false;
+	startEntry->level = 0;
+	startEntry->value = (Datum) 0;
+	startEntry->traversalValue = NULL;
+	startEntry->recheck = false;
+	startEntry->recheckDistances = false;
+
+	spgAddSearchItemToQueue(so, startEntry);
+}
+
+/*
+ * Initialize queue to search the root page, resetting
  * any previously active scan
  */
 static void
 resetSpGistScanOpaque(SpGistScanOpaque so)
 {
-	ScanStackEntry *startEntry;
-
-	freeScanStack(so);
+	MemoryContext oldCtx;
 
 	/*
 	 * clear traversal context before proceeding to the next scan; this must
@@ -81,20 +153,29 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
 	 */
 	MemoryContextReset(so->traversalCxt);
 
+	oldCtx = MemoryContextSwitchTo(so->traversalCxt);
+
+	/* initialize queue only for distance-ordered scans */
+	so->scanQueue = pairingheap_allocate(pairingheap_SpGistSearchItem_cmp, so);
+
 	if (so->searchNulls)
-	{
-		/* Stack a work item to scan the null index entries */
-		startEntry = (ScanStackEntry *) palloc0(sizeof(ScanStackEntry));
-		ItemPointerSet(&startEntry->ptr, SPGIST_NULL_BLKNO, FirstOffsetNumber);
-		so->scanStack = lappend(so->scanStack, startEntry);
-	}
+		/* Add a work item to scan the null index entries */
+		spgAddStartItem(so, true);
 
 	if (so->searchNonNulls)
+		/* Add a work item to scan the non-null index entries */
+		spgAddStartItem(so, false);
+
+	MemoryContextSwitchTo(oldCtx);
+
+	if (so->numberOfOrderBys > 0)
 	{
-		/* Stack a work item to scan the non-null index entries */
-		startEntry = (ScanStackEntry *) palloc0(sizeof(ScanStackEntry));
-		ItemPointerSet(&startEntry->ptr, SPGIST_ROOT_BLKNO, FirstOffsetNumber);
-		so->scanStack = lappend(so->scanStack, startEntry);
+		/* Must pfree distances to avoid memory leak */
+		int			i;
+
+		for (i = 0; i < so->nPtrs; i++)
+			if (so->distances[i])
+				pfree(so->distances[i]);
 	}
 
 	if (so->want_itup)
@@ -128,6 +209,9 @@ spgPrepareScanKeys(IndexScanDesc scan)
 	bool		haveNotNull;
 	int			nkeys;
 	int			i;
+
+	so->numberOfOrderBys = scan->numberOfOrderBys;
+	so->orderByData = scan->orderByData;
 
 	if (scan->numberOfKeys <= 0)
 	{
@@ -189,8 +273,9 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 {
 	IndexScanDesc scan;
 	SpGistScanOpaque so;
+	int			i;
 
-	scan = RelationGetIndexScan(rel, keysz, 0);
+	scan = RelationGetIndexScan(rel, keysz, orderbysz);
 
 	so = (SpGistScanOpaque) palloc0(sizeof(SpGistScanOpaqueData));
 	if (keysz > 0)
@@ -198,6 +283,7 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 	else
 		so->keyData = NULL;
 	initSpGistState(&so->state, scan->indexRelation);
+
 	so->tempCxt = AllocSetContextCreate(CurrentMemoryContext,
 										"SP-GiST search temporary context",
 										ALLOCSET_DEFAULT_SIZES);
@@ -207,6 +293,32 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 
 	/* Set up indexTupDesc and xs_hitupdesc in case it's an index-only scan */
 	so->indexTupDesc = scan->xs_hitupdesc = RelationGetDescr(rel);
+
+	if (scan->numberOfOrderBys > 0)
+	{
+		so->zeroDistances = palloc(sizeof(double) * scan->numberOfOrderBys);
+		so->infDistances = palloc(sizeof(double) * scan->numberOfOrderBys);
+
+		for (i = 0; i < scan->numberOfOrderBys; i++)
+		{
+			so->zeroDistances[i] = 0.0;
+			so->infDistances[i] = get_float8_infinity();
+		}
+
+		scan->xs_orderbyvals = palloc0(sizeof(Datum) * scan->numberOfOrderBys);
+		scan->xs_orderbynulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
+		memset(scan->xs_orderbynulls, true, sizeof(bool) * scan->numberOfOrderBys);
+	}
+
+	fmgr_info_copy(&so->innerConsistentFn,
+				   index_getprocinfo(rel, 1, SPGIST_INNER_CONSISTENT_PROC),
+				   CurrentMemoryContext);
+
+	fmgr_info_copy(&so->leafConsistentFn,
+				   index_getprocinfo(rel, 1, SPGIST_LEAF_CONSISTENT_PROC),
+				   CurrentMemoryContext);
+
+	so->indexCollation = rel->rd_indcollation[0];
 
 	scan->opaque = so;
 
@@ -221,15 +333,42 @@ spgrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 
 	/* copy scankeys into local storage */
 	if (scankey && scan->numberOfKeys > 0)
-	{
 		memmove(scan->keyData, scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
+
+	if (orderbys && scan->numberOfOrderBys > 0)
+	{
+		int			i;
+
+		memmove(scan->orderByData, orderbys,
+				scan->numberOfOrderBys * sizeof(ScanKeyData));
+
+		so->orderByTypes = (Oid *) palloc(sizeof(Oid) * scan->numberOfOrderBys);
+
+		for (i = 0; i < scan->numberOfOrderBys; i++)
+		{
+			ScanKey		skey = &scan->orderByData[i];
+
+			/*
+			 * Look up the datatype returned by the original ordering
+			 * operator. SP-GiST always uses a float8 for the distance
+			 * function, but the ordering operator could be anything else.
+			 *
+			 * XXX: The distance function is only allowed to be lossy if the
+			 * ordering operator's result type is float4 or float8.  Otherwise
+			 * we don't know how to return the distance to the executor.  But
+			 * we cannot check that here, as we won't know if the distance
+			 * function is lossy until it returns *recheck = true for the
+			 * first time.
+			 */
+			so->orderByTypes[i] = get_func_rettype(skey->sk_func.fn_oid);
+		}
 	}
 
 	/* preprocess scankeys, set up the representation in *so */
 	spgPrepareScanKeys(scan);
 
-	/* set up starting stack entries */
+	/* set up starting queue entries */
 	resetSpGistScanOpaque(so);
 }
 
@@ -240,65 +379,332 @@ spgendscan(IndexScanDesc scan)
 
 	MemoryContextDelete(so->tempCxt);
 	MemoryContextDelete(so->traversalCxt);
+
+	if (scan->numberOfOrderBys > 0)
+	{
+		pfree(so->zeroDistances);
+		pfree(so->infDistances);
+	}
+}
+
+/*
+ * Leaf SpGistSearchItem constructor, called in queue context
+ */
+static SpGistSearchItem *
+spgNewHeapItem(SpGistScanOpaque so, int level, ItemPointer heapPtr,
+			   Datum leafValue, bool recheck, bool recheckDistances,
+			   bool isnull, double *distances)
+{
+	SpGistSearchItem *item = spgAllocSearchItem(so, isnull, distances);
+
+	item->level = level;
+	item->heapPtr = *heapPtr;
+	/* copy value to queue cxt out of tmp cxt */
+	item->value = isnull ? (Datum) 0 :
+		datumCopy(leafValue, so->state.attLeafType.attbyval,
+				  so->state.attLeafType.attlen);
+	item->traversalValue = NULL;
+	item->isLeaf = true;
+	item->recheck = recheck;
+	item->recheckDistances = recheckDistances;
+
+	return item;
 }
 
 /*
  * Test whether a leaf tuple satisfies all the scan keys
  *
- * *leafValue is set to the reconstructed datum, if provided
- * *recheck is set true if any of the operators are lossy
+ * *reportedSome is set to true if:
+ *		the scan is not ordered AND the item satisfies the scankeys
  */
 static bool
-spgLeafTest(Relation index, SpGistScanOpaque so,
+spgLeafTest(SpGistScanOpaque so, SpGistSearchItem * item,
 			SpGistLeafTuple leafTuple, bool isnull,
-			int level, Datum reconstructedValue,
-			void *traversalValue,
-			Datum *leafValue, bool *recheck)
+			bool *reportedSome, storeRes_func storeRes)
 {
+	Datum		leafValue;
+	double	   *distances;
 	bool		result;
-	Datum		leafDatum;
-	spgLeafConsistentIn in;
-	spgLeafConsistentOut out;
-	FmgrInfo   *procinfo;
-	MemoryContext oldCtx;
+	bool		recheck;
+	bool		recheckDistances;
 
 	if (isnull)
 	{
 		/* Should not have arrived on a nulls page unless nulls are wanted */
 		Assert(so->searchNulls);
-		*leafValue = (Datum) 0;
-		*recheck = false;
-		return true;
+		leafValue = (Datum) 0;
+		distances = NULL;
+		recheck = false;
+		recheckDistances = false;
+		result = true;
+	}
+	else
+	{
+		spgLeafConsistentIn in;
+		spgLeafConsistentOut out;
+
+		/* use temp context for calling leaf_consistent */
+		MemoryContext oldCxt = MemoryContextSwitchTo(so->tempCxt);
+
+		in.scankeys = so->keyData;
+		in.nkeys = so->numberOfKeys;
+		in.orderbys = so->orderByData;
+		in.norderbys = so->numberOfOrderBys;
+		in.reconstructedValue = item->value;
+		in.traversalValue = item->traversalValue;
+		in.level = item->level;
+		in.returnData = so->want_itup;
+		in.leafDatum = SGLTDATUM(leafTuple, &so->state);
+
+		out.leafValue = (Datum) 0;
+		out.recheck = false;
+		out.distances = NULL;
+		out.recheckDistances = false;
+
+		result = DatumGetBool(FunctionCall2Coll(&so->leafConsistentFn,
+												so->indexCollation,
+												PointerGetDatum(&in),
+												PointerGetDatum(&out)));
+		recheck = out.recheck;
+		recheckDistances = out.recheckDistances;
+		leafValue = out.leafValue;
+		distances = out.distances;
+
+		MemoryContextSwitchTo(oldCxt);
 	}
 
-	leafDatum = SGLTDATUM(leafTuple, &so->state);
+	if (result)
+	{
+		/* item passes the scankeys */
+		if (so->numberOfOrderBys > 0)
+		{
+			/* the scan is ordered -> add the item to the queue */
+			MemoryContext oldCxt = MemoryContextSwitchTo(so->traversalCxt);
+			SpGistSearchItem *heapItem = spgNewHeapItem(so, item->level,
+														&leafTuple->heapPtr,
+														leafValue,
+														recheck,
+														recheckDistances,
+														isnull,
+														distances);
 
-	/* use temp context for calling leaf_consistent */
-	oldCtx = MemoryContextSwitchTo(so->tempCxt);
+			spgAddSearchItemToQueue(so, heapItem);
 
-	in.scankeys = so->keyData;
-	in.nkeys = so->numberOfKeys;
-	in.reconstructedValue = reconstructedValue;
-	in.traversalValue = traversalValue;
-	in.level = level;
-	in.returnData = so->want_itup;
-	in.leafDatum = leafDatum;
-
-	out.leafValue = (Datum) 0;
-	out.recheck = false;
-
-	procinfo = index_getprocinfo(index, 1, SPGIST_LEAF_CONSISTENT_PROC);
-	result = DatumGetBool(FunctionCall2Coll(procinfo,
-											index->rd_indcollation[0],
-											PointerGetDatum(&in),
-											PointerGetDatum(&out)));
-
-	*leafValue = out.leafValue;
-	*recheck = out.recheck;
-
-	MemoryContextSwitchTo(oldCtx);
+			MemoryContextSwitchTo(oldCxt);
+		}
+		else
+		{
+			/* non-ordered scan, so report the item right away */
+			Assert(!recheckDistances);
+			storeRes(so, &leafTuple->heapPtr, leafValue, isnull,
+					 recheck, false, NULL);
+			*reportedSome = true;
+		}
+	}
 
 	return result;
+}
+
+/* A bundle initializer for inner_consistent methods */
+static void
+spgInitInnerConsistentIn(spgInnerConsistentIn *in,
+						 SpGistScanOpaque so,
+						 SpGistSearchItem * item,
+						 SpGistInnerTuple innerTuple)
+{
+	in->scankeys = so->keyData;
+	in->orderbys = so->orderByData;
+	in->nkeys = so->numberOfKeys;
+	in->norderbys = so->numberOfOrderBys;
+	in->reconstructedValue = item->value;
+	in->traversalMemoryContext = so->traversalCxt;
+	in->traversalValue = item->traversalValue;
+	in->level = item->level;
+	in->returnData = so->want_itup;
+	in->allTheSame = innerTuple->allTheSame;
+	in->hasPrefix = (innerTuple->prefixSize > 0);
+	in->prefixDatum = SGITDATUM(innerTuple, &so->state);
+	in->nNodes = innerTuple->nNodes;
+	in->nodeLabels = spgExtractNodeLabels(&so->state, innerTuple);
+}
+
+static SpGistSearchItem *
+spgMakeInnerItem(SpGistScanOpaque so,
+				 SpGistSearchItem * parentItem,
+				 SpGistNodeTuple tuple,
+				 spgInnerConsistentOut *out, int i, bool isnull,
+				 double *distances)
+{
+	SpGistSearchItem *item = spgAllocSearchItem(so, isnull, distances);
+
+	item->heapPtr = tuple->t_tid;
+	item->level = out->levelAdds ? parentItem->level + out->levelAdds[i]
+		: parentItem->level;
+
+	/* Must copy value out of temp context */
+	item->value = out->reconstructedValues
+		? datumCopy(out->reconstructedValues[i],
+					so->state.attLeafType.attbyval,
+					so->state.attLeafType.attlen)
+		: (Datum) 0;
+
+	/*
+	 * Elements of out.traversalValues should be allocated in
+	 * in.traversalMemoryContext, which is actually a long lived context of
+	 * index scan.
+	 */
+	item->traversalValue =
+		out->traversalValues ? out->traversalValues[i] : NULL;
+
+	item->isLeaf = false;
+	item->recheck = false;
+	item->recheckDistances = false;
+
+	return item;
+}
+
+static void
+spgInnerTest(SpGistScanOpaque so, SpGistSearchItem * item,
+			 SpGistInnerTuple innerTuple, bool isnull)
+{
+	MemoryContext oldCxt = MemoryContextSwitchTo(so->tempCxt);
+	spgInnerConsistentOut out;
+	int			nNodes = innerTuple->nNodes;
+	int			i;
+
+	memset(&out, 0, sizeof(out));
+
+	if (!isnull)
+	{
+		spgInnerConsistentIn in;
+
+		spgInitInnerConsistentIn(&in, so, item, innerTuple);
+
+		/* use user-defined inner consistent method */
+		FunctionCall2Coll(&so->innerConsistentFn,
+						  so->indexCollation,
+						  PointerGetDatum(&in),
+						  PointerGetDatum(&out));
+	}
+	else
+	{
+		/* force all children to be visited */
+		out.nNodes = nNodes;
+		out.nodeNumbers = (int *) palloc(sizeof(int) * nNodes);
+		for (i = 0; i < nNodes; i++)
+			out.nodeNumbers[i] = i;
+	}
+
+	/* If allTheSame, they should all or none of them match */
+	if (innerTuple->allTheSame && out.nNodes != 0 && out.nNodes != nNodes)
+		elog(ERROR, "inconsistent inner_consistent results for allTheSame inner tuple");
+
+	if (out.nNodes)
+	{
+		/* collect node pointers */
+		SpGistNodeTuple node;
+		SpGistNodeTuple *nodes = (SpGistNodeTuple *) palloc(
+															sizeof(SpGistNodeTuple) * nNodes);
+
+		SGITITERATE(innerTuple, i, node)
+		{
+			nodes[i] = node;
+		}
+
+		MemoryContextSwitchTo(so->traversalCxt);
+
+		for (i = 0; i < out.nNodes; i++)
+		{
+			int			nodeN = out.nodeNumbers[i];
+			SpGistSearchItem *innerItem;
+			double	   *distances;
+
+			Assert(nodeN >= 0 && nodeN < nNodes);
+
+			node = nodes[nodeN];
+
+			if (!ItemPointerIsValid(&node->t_tid))
+				continue;
+
+			/*
+			 * Use infinity distances if innerConsistent() failed to return
+			 * them or if is a NULL item (their distances are really unused).
+			 */
+			distances = out.distances ? out.distances[i] : so->infDistances;
+
+			innerItem = spgMakeInnerItem(so, item, node, &out, i, isnull,
+										 distances);
+
+			spgAddSearchItemToQueue(so, innerItem);
+		}
+	}
+
+	MemoryContextSwitchTo(oldCxt);
+}
+
+/* Returns a next item in an (ordered) scan or null if the index is exhausted */
+static SpGistSearchItem *
+spgGetNextQueueItem(SpGistScanOpaque so)
+{
+	if (pairingheap_is_empty(so->scanQueue))
+		return NULL;			/* Done when both heaps are empty */
+
+	/* Return item; caller is responsible to pfree it */
+	return (SpGistSearchItem *) pairingheap_remove_first(so->scanQueue);
+}
+
+enum SpGistSpecialOffsetNumbers
+{
+	SpGistBreakOffsetNumber = InvalidOffsetNumber,
+	SpGistRedirectOffsetNumber = MaxOffsetNumber + 1,
+	SpGistErrorOffsetNumber = MaxOffsetNumber + 2
+};
+
+static OffsetNumber
+spgTestLeafTuple(SpGistScanOpaque so,
+				 SpGistSearchItem * item,
+				 Page page, OffsetNumber offset,
+				 bool isnull, bool isroot,
+				 bool *reportedSome,
+				 storeRes_func storeRes)
+{
+	SpGistLeafTuple leafTuple = (SpGistLeafTuple)
+	PageGetItem(page, PageGetItemId(page, offset));
+
+	if (leafTuple->tupstate != SPGIST_LIVE)
+	{
+		if (!isroot)			/* all tuples on root should be live */
+		{
+			if (leafTuple->tupstate == SPGIST_REDIRECT)
+			{
+				/* redirection tuple should be first in chain */
+				Assert(offset == ItemPointerGetOffsetNumber(&item->heapPtr));
+				/* transfer attention to redirect point */
+				item->heapPtr = ((SpGistDeadTuple) leafTuple)->pointer;
+				Assert(ItemPointerGetBlockNumber(&item->heapPtr) != SPGIST_METAPAGE_BLKNO);
+				return SpGistRedirectOffsetNumber;
+			}
+
+			if (leafTuple->tupstate == SPGIST_DEAD)
+			{
+				/* dead tuple should be first in chain */
+				Assert(offset == ItemPointerGetOffsetNumber(&item->heapPtr));
+				/* No live entries on this page */
+				Assert(leafTuple->nextOffset == InvalidOffsetNumber);
+				return SpGistBreakOffsetNumber;
+			}
+		}
+
+		/* We should not arrive at a placeholder */
+		elog(ERROR, "unexpected SPGiST tuple state: %d", leafTuple->tupstate);
+		return SpGistErrorOffsetNumber;
+	}
+
+	Assert(ItemPointerIsValid(&leafTuple->heapPtr));
+
+	spgLeafTest(so, item, leafTuple, isnull, reportedSome, storeRes);
+
+	return leafTuple->nextOffset;
 }
 
 /*
@@ -317,247 +723,101 @@ spgWalk(Relation index, SpGistScanOpaque so, bool scanWholeIndex,
 
 	while (scanWholeIndex || !reportedSome)
 	{
-		ScanStackEntry *stackEntry;
-		BlockNumber blkno;
-		OffsetNumber offset;
-		Page		page;
-		bool		isnull;
+		SpGistSearchItem *item = spgGetNextQueueItem(so);
 
-		/* Pull next to-do item from the list */
-		if (so->scanStack == NIL)
-			break;				/* there are no more pages to scan */
-
-		stackEntry = (ScanStackEntry *) linitial(so->scanStack);
-		so->scanStack = list_delete_first(so->scanStack);
+		if (item == NULL)
+			break;				/* No more items in queue -> done */
 
 redirect:
 		/* Check for interrupts, just in case of infinite loop */
 		CHECK_FOR_INTERRUPTS();
 
-		blkno = ItemPointerGetBlockNumber(&stackEntry->ptr);
-		offset = ItemPointerGetOffsetNumber(&stackEntry->ptr);
-
-		if (buffer == InvalidBuffer)
+		if (item->isLeaf)
 		{
-			buffer = ReadBuffer(index, blkno);
-			LockBuffer(buffer, BUFFER_LOCK_SHARE);
+			/* We store heap items in the queue only in case of ordered search */
+			Assert(so->numberOfOrderBys > 0);
+			storeRes(so, &item->heapPtr, item->value, item->isNull,
+					 item->recheck, item->recheckDistances, item->distances);
+			reportedSome = true;
 		}
-		else if (blkno != BufferGetBlockNumber(buffer))
+		else
 		{
-			UnlockReleaseBuffer(buffer);
-			buffer = ReadBuffer(index, blkno);
-			LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		}
-		/* else new pointer points to the same page, no work needed */
+			BlockNumber blkno = ItemPointerGetBlockNumber(&item->heapPtr);
+			OffsetNumber offset = ItemPointerGetOffsetNumber(&item->heapPtr);
+			Page		page;
+			bool		isnull;
 
-		page = BufferGetPage(buffer);
-		TestForOldSnapshot(snapshot, index, page);
-
-		isnull = SpGistPageStoresNulls(page) ? true : false;
-
-		if (SpGistPageIsLeaf(page))
-		{
-			SpGistLeafTuple leafTuple;
-			OffsetNumber max = PageGetMaxOffsetNumber(page);
-			Datum		leafValue = (Datum) 0;
-			bool		recheck = false;
-
-			if (SpGistBlockIsRoot(blkno))
+			if (buffer == InvalidBuffer)
 			{
-				/* When root is a leaf, examine all its tuples */
-				for (offset = FirstOffsetNumber; offset <= max; offset++)
-				{
-					leafTuple = (SpGistLeafTuple)
-						PageGetItem(page, PageGetItemId(page, offset));
-					if (leafTuple->tupstate != SPGIST_LIVE)
-					{
-						/* all tuples on root should be live */
-						elog(ERROR, "unexpected SPGiST tuple state: %d",
-							 leafTuple->tupstate);
-					}
-
-					Assert(ItemPointerIsValid(&leafTuple->heapPtr));
-					if (spgLeafTest(index, so,
-									leafTuple, isnull,
-									stackEntry->level,
-									stackEntry->reconstructedValue,
-									stackEntry->traversalValue,
-									&leafValue,
-									&recheck))
-					{
-						storeRes(so, &leafTuple->heapPtr,
-								 leafValue, isnull, recheck);
-						reportedSome = true;
-					}
-				}
+				buffer = ReadBuffer(index, blkno);
+				LockBuffer(buffer, BUFFER_LOCK_SHARE);
 			}
-			else
+			else if (blkno != BufferGetBlockNumber(buffer))
 			{
-				/* Normal case: just examine the chain we arrived at */
-				while (offset != InvalidOffsetNumber)
+				UnlockReleaseBuffer(buffer);
+				buffer = ReadBuffer(index, blkno);
+				LockBuffer(buffer, BUFFER_LOCK_SHARE);
+			}
+
+			/* else new pointer points to the same page, no work needed */
+
+			page = BufferGetPage(buffer);
+			TestForOldSnapshot(snapshot, index, page);
+
+			isnull = SpGistPageStoresNulls(page) ? true : false;
+
+			if (SpGistPageIsLeaf(page))
+			{
+				/* Page is a leaf - that is, all it's tuples are heap items */
+				OffsetNumber max = PageGetMaxOffsetNumber(page);
+
+				if (SpGistBlockIsRoot(blkno))
 				{
-					Assert(offset >= FirstOffsetNumber && offset <= max);
-					leafTuple = (SpGistLeafTuple)
-						PageGetItem(page, PageGetItemId(page, offset));
-					if (leafTuple->tupstate != SPGIST_LIVE)
+					/* When root is a leaf, examine all its tuples */
+					for (offset = FirstOffsetNumber; offset <= max; offset++)
+						(void) spgTestLeafTuple(so, item, page, offset,
+												isnull, true,
+												&reportedSome, storeRes);
+				}
+				else
+				{
+					/* Normal case: just examine the chain we arrived at */
+					while (offset != InvalidOffsetNumber)
 					{
-						if (leafTuple->tupstate == SPGIST_REDIRECT)
-						{
-							/* redirection tuple should be first in chain */
-							Assert(offset == ItemPointerGetOffsetNumber(&stackEntry->ptr));
-							/* transfer attention to redirect point */
-							stackEntry->ptr = ((SpGistDeadTuple) leafTuple)->pointer;
-							Assert(ItemPointerGetBlockNumber(&stackEntry->ptr) != SPGIST_METAPAGE_BLKNO);
+						Assert(offset >= FirstOffsetNumber && offset <= max);
+						offset = spgTestLeafTuple(so, item, page, offset,
+												  isnull, false,
+												  &reportedSome, storeRes);
+						if (offset == SpGistRedirectOffsetNumber)
 							goto redirect;
-						}
-						if (leafTuple->tupstate == SPGIST_DEAD)
-						{
-							/* dead tuple should be first in chain */
-							Assert(offset == ItemPointerGetOffsetNumber(&stackEntry->ptr));
-							/* No live entries on this page */
-							Assert(leafTuple->nextOffset == InvalidOffsetNumber);
-							break;
-						}
-						/* We should not arrive at a placeholder */
-						elog(ERROR, "unexpected SPGiST tuple state: %d",
-							 leafTuple->tupstate);
 					}
+				}
+			}
+			else				/* page is inner */
+			{
+				SpGistInnerTuple innerTuple = (SpGistInnerTuple)
+				PageGetItem(page, PageGetItemId(page, offset));
 
-					Assert(ItemPointerIsValid(&leafTuple->heapPtr));
-					if (spgLeafTest(index, so,
-									leafTuple, isnull,
-									stackEntry->level,
-									stackEntry->reconstructedValue,
-									stackEntry->traversalValue,
-									&leafValue,
-									&recheck))
+				if (innerTuple->tupstate != SPGIST_LIVE)
+				{
+					if (innerTuple->tupstate == SPGIST_REDIRECT)
 					{
-						storeRes(so, &leafTuple->heapPtr,
-								 leafValue, isnull, recheck);
-						reportedSome = true;
+						/* transfer attention to redirect point */
+						item->heapPtr = ((SpGistDeadTuple) innerTuple)->pointer;
+						Assert(ItemPointerGetBlockNumber(&item->heapPtr) !=
+							   SPGIST_METAPAGE_BLKNO);
+						goto redirect;
 					}
-
-					offset = leafTuple->nextOffset;
+					elog(ERROR, "unexpected SPGiST tuple state: %d",
+						 innerTuple->tupstate);
 				}
-			}
-		}
-		else					/* page is inner */
-		{
-			SpGistInnerTuple innerTuple;
-			spgInnerConsistentIn in;
-			spgInnerConsistentOut out;
-			FmgrInfo   *procinfo;
-			SpGistNodeTuple *nodes;
-			SpGistNodeTuple node;
-			int			i;
-			MemoryContext oldCtx;
 
-			innerTuple = (SpGistInnerTuple) PageGetItem(page,
-														PageGetItemId(page, offset));
-
-			if (innerTuple->tupstate != SPGIST_LIVE)
-			{
-				if (innerTuple->tupstate == SPGIST_REDIRECT)
-				{
-					/* transfer attention to redirect point */
-					stackEntry->ptr = ((SpGistDeadTuple) innerTuple)->pointer;
-					Assert(ItemPointerGetBlockNumber(&stackEntry->ptr) != SPGIST_METAPAGE_BLKNO);
-					goto redirect;
-				}
-				elog(ERROR, "unexpected SPGiST tuple state: %d",
-					 innerTuple->tupstate);
-			}
-
-			/* use temp context for calling inner_consistent */
-			oldCtx = MemoryContextSwitchTo(so->tempCxt);
-
-			in.scankeys = so->keyData;
-			in.nkeys = so->numberOfKeys;
-			in.reconstructedValue = stackEntry->reconstructedValue;
-			in.traversalMemoryContext = so->traversalCxt;
-			in.traversalValue = stackEntry->traversalValue;
-			in.level = stackEntry->level;
-			in.returnData = so->want_itup;
-			in.allTheSame = innerTuple->allTheSame;
-			in.hasPrefix = (innerTuple->prefixSize > 0);
-			in.prefixDatum = SGITDATUM(innerTuple, &so->state);
-			in.nNodes = innerTuple->nNodes;
-			in.nodeLabels = spgExtractNodeLabels(&so->state, innerTuple);
-
-			/* collect node pointers */
-			nodes = (SpGistNodeTuple *) palloc(sizeof(SpGistNodeTuple) * in.nNodes);
-			SGITITERATE(innerTuple, i, node)
-			{
-				nodes[i] = node;
-			}
-
-			memset(&out, 0, sizeof(out));
-
-			if (!isnull)
-			{
-				/* use user-defined inner consistent method */
-				procinfo = index_getprocinfo(index, 1, SPGIST_INNER_CONSISTENT_PROC);
-				FunctionCall2Coll(procinfo,
-								  index->rd_indcollation[0],
-								  PointerGetDatum(&in),
-								  PointerGetDatum(&out));
-			}
-			else
-			{
-				/* force all children to be visited */
-				out.nNodes = in.nNodes;
-				out.nodeNumbers = (int *) palloc(sizeof(int) * in.nNodes);
-				for (i = 0; i < in.nNodes; i++)
-					out.nodeNumbers[i] = i;
-			}
-
-			MemoryContextSwitchTo(oldCtx);
-
-			/* If allTheSame, they should all or none of 'em match */
-			if (innerTuple->allTheSame)
-				if (out.nNodes != 0 && out.nNodes != in.nNodes)
-					elog(ERROR, "inconsistent inner_consistent results for allTheSame inner tuple");
-
-			for (i = 0; i < out.nNodes; i++)
-			{
-				int			nodeN = out.nodeNumbers[i];
-
-				Assert(nodeN >= 0 && nodeN < in.nNodes);
-				if (ItemPointerIsValid(&nodes[nodeN]->t_tid))
-				{
-					ScanStackEntry *newEntry;
-
-					/* Create new work item for this node */
-					newEntry = palloc(sizeof(ScanStackEntry));
-					newEntry->ptr = nodes[nodeN]->t_tid;
-					if (out.levelAdds)
-						newEntry->level = stackEntry->level + out.levelAdds[i];
-					else
-						newEntry->level = stackEntry->level;
-					/* Must copy value out of temp context */
-					if (out.reconstructedValues)
-						newEntry->reconstructedValue =
-							datumCopy(out.reconstructedValues[i],
-									  so->state.attLeafType.attbyval,
-									  so->state.attLeafType.attlen);
-					else
-						newEntry->reconstructedValue = (Datum) 0;
-
-					/*
-					 * Elements of out.traversalValues should be allocated in
-					 * in.traversalMemoryContext, which is actually a long
-					 * lived context of index scan.
-					 */
-					newEntry->traversalValue = (out.traversalValues) ?
-						out.traversalValues[i] : NULL;
-
-					so->scanStack = lcons(newEntry, so->scanStack);
-				}
+				spgInnerTest(so, item, innerTuple, isnull);
 			}
 		}
 
-		/* done with this scan stack entry */
-		freeScanStackEntry(so, stackEntry);
+		/* done with this scan item */
+		spgFreeSearchItem(so, item);
 		/* clear temp context before proceeding to the next one */
 		MemoryContextReset(so->tempCxt);
 	}
@@ -566,11 +826,14 @@ redirect:
 		UnlockReleaseBuffer(buffer);
 }
 
+
 /* storeRes subroutine for getbitmap case */
 static void
 storeBitmap(SpGistScanOpaque so, ItemPointer heapPtr,
-			Datum leafValue, bool isnull, bool recheck)
+			Datum leafValue, bool isnull, bool recheck, bool recheckDistances,
+			double *distances)
 {
+	Assert(!recheckDistances && !distances);
 	tbm_add_tuples(so->tbm, heapPtr, 1, recheck);
 	so->ntids++;
 }
@@ -594,11 +857,26 @@ spggetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 /* storeRes subroutine for gettuple case */
 static void
 storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
-			  Datum leafValue, bool isnull, bool recheck)
+			  Datum leafValue, bool isnull, bool recheck, bool recheckDistances,
+			  double *distances)
 {
 	Assert(so->nPtrs < MaxIndexTuplesPerPage);
 	so->heapPtrs[so->nPtrs] = *heapPtr;
 	so->recheck[so->nPtrs] = recheck;
+	so->recheckDistances[so->nPtrs] = recheckDistances;
+
+	if (so->numberOfOrderBys > 0)
+	{
+		if (isnull)
+			so->distances[so->nPtrs] = NULL;
+		else
+		{
+			Size		size = sizeof(double) * so->numberOfOrderBys;
+
+			so->distances[so->nPtrs] = memcpy(palloc(size), distances, size);
+		}
+	}
+
 	if (so->want_itup)
 	{
 		/*
@@ -627,12 +905,27 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 	{
 		if (so->iPtr < so->nPtrs)
 		{
-			/* continuing to return tuples from a leaf page */
+			/* continuing to return reported tuples */
 			scan->xs_ctup.t_self = so->heapPtrs[so->iPtr];
 			scan->xs_recheck = so->recheck[so->iPtr];
 			scan->xs_hitup = so->reconTups[so->iPtr];
+
+			if (so->numberOfOrderBys > 0)
+				index_store_float8_orderby_distances(scan, so->orderByTypes,
+													 so->distances[so->iPtr],
+													 so->recheckDistances[so->iPtr]);
 			so->iPtr++;
 			return true;
+		}
+
+		if (so->numberOfOrderBys > 0)
+		{
+			/* Must pfree distances to avoid memory leak */
+			int			i;
+
+			for (i = 0; i < so->nPtrs; i++)
+				if (so->distances[i])
+					pfree(so->distances[i]);
 		}
 
 		if (so->want_itup)

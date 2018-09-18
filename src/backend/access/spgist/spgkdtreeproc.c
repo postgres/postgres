@@ -16,9 +16,11 @@
 #include "postgres.h"
 
 #include "access/spgist.h"
+#include "access/spgist_private.h"
 #include "access/stratnum.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
+#include "utils/float.h"
 #include "utils/geo_decls.h"
 
 
@@ -162,6 +164,7 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 	double		coord;
 	int			which;
 	int			i;
+	BOX			bboxes[2];
 
 	Assert(in->hasPrefix);
 	coord = DatumGetFloat8(in->prefixDatum);
@@ -248,12 +251,87 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 	}
 
 	/* We must descend into the children identified by which */
-	out->nodeNumbers = (int *) palloc(sizeof(int) * 2);
 	out->nNodes = 0;
+
+	/* Fast-path for no matching children */
+	if (!which)
+		PG_RETURN_VOID();
+
+	out->nodeNumbers = (int *) palloc(sizeof(int) * 2);
+
+	/*
+	 * When ordering scan keys are specified, we've to calculate distance for
+	 * them.  In order to do that, we need calculate bounding boxes for both
+	 * children nodes.  Calculation of those bounding boxes on non-zero level
+	 * require knowledge of bounding box of upper node.  So, we save bounding
+	 * boxes to traversalValues.
+	 */
+	if (in->norderbys > 0)
+	{
+		BOX			infArea;
+		BOX		   *area;
+
+		out->distances = (double **) palloc(sizeof(double *) * in->nNodes);
+		out->traversalValues = (void **) palloc(sizeof(void *) * in->nNodes);
+
+		if (in->level == 0)
+		{
+			float8		inf = get_float8_infinity();
+
+			infArea.high.x = inf;
+			infArea.high.y = inf;
+			infArea.low.x = -inf;
+			infArea.low.y = -inf;
+			area = &infArea;
+		}
+		else
+		{
+			area = (BOX *) in->traversalValue;
+			Assert(area);
+		}
+
+		bboxes[0].low = area->low;
+		bboxes[1].high = area->high;
+
+		if (in->level % 2)
+		{
+			/* split box by x */
+			bboxes[0].high.x = bboxes[1].low.x = coord;
+			bboxes[0].high.y = area->high.y;
+			bboxes[1].low.y = area->low.y;
+		}
+		else
+		{
+			/* split box by y */
+			bboxes[0].high.y = bboxes[1].low.y = coord;
+			bboxes[0].high.x = area->high.x;
+			bboxes[1].low.x = area->low.x;
+		}
+	}
+
 	for (i = 1; i <= 2; i++)
 	{
 		if (which & (1 << i))
-			out->nodeNumbers[out->nNodes++] = i - 1;
+		{
+			out->nodeNumbers[out->nNodes] = i - 1;
+
+			if (in->norderbys > 0)
+			{
+				MemoryContext oldCtx = MemoryContextSwitchTo(
+															 in->traversalMemoryContext);
+				BOX		   *box = box_copy(&bboxes[i - 1]);
+
+				MemoryContextSwitchTo(oldCtx);
+
+				out->traversalValues[out->nNodes] = box;
+
+				out->distances[out->nNodes] = spg_key_orderbys_distances(
+																		 BoxPGetDatum(box), false,
+																		 in->orderbys, in->norderbys);
+			}
+
+			out->nNodes++;
+		}
 	}
 
 	/* Set up level increments, too */

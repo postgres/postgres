@@ -136,7 +136,10 @@ typedef struct spgPickSplitOut
 typedef struct spgInnerConsistentIn
 {
 	ScanKey		scankeys;		/* array of operators and comparison values */
-	int			nkeys;			/* length of array */
+	ScanKey		orderbys;		/* array of ordering operators and comparison
+								 * values */
+	int			nkeys;			/* length of scankeys array */
+	int			norderbys;		/* length of orderbys array */
 
 	Datum		reconstructedValue; /* value reconstructed at parent */
 	void	   *traversalValue; /* opclass-specific traverse value */
@@ -159,6 +162,7 @@ typedef struct spgInnerConsistentOut
 	int		   *levelAdds;		/* increment level by this much for each */
 	Datum	   *reconstructedValues;	/* associated reconstructed values */
 	void	  **traversalValues;	/* opclass-specific traverse values */
+	double	  **distances;		/* associated distances */
 } spgInnerConsistentOut;
 
 /*
@@ -167,7 +171,10 @@ typedef struct spgInnerConsistentOut
 typedef struct spgLeafConsistentIn
 {
 	ScanKey		scankeys;		/* array of operators and comparison values */
-	int			nkeys;			/* length of array */
+	ScanKey		orderbys;		/* array of ordering operators and comparison
+								 * values */
+	int			nkeys;			/* length of scankeys array */
+	int			norderbys;		/* length of orderbys array */
 
 	Datum		reconstructedValue; /* value reconstructed at parent */
 	void	   *traversalValue; /* opclass-specific traverse value */
@@ -181,6 +188,8 @@ typedef struct spgLeafConsistentOut
 {
 	Datum		leafValue;		/* reconstructed original data, if any */
 	bool		recheck;		/* set true if operator must be rechecked */
+	bool		recheckDistances;	/* set true if distances must be rechecked */
+	double	   *distances;		/* associated distances */
 } spgLeafConsistentOut;
 
 

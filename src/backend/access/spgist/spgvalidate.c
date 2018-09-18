@@ -187,6 +187,7 @@ spgvalidate(Oid opclassoid)
 	{
 		HeapTuple	oprtup = &oprlist->members[i]->tuple;
 		Form_pg_amop oprform = (Form_pg_amop) GETSTRUCT(oprtup);
+		Oid			op_rettype;
 
 		/* TODO: Check that only allowed strategy numbers exist */
 		if (oprform->amopstrategy < 1 || oprform->amopstrategy > 63)
@@ -200,20 +201,26 @@ spgvalidate(Oid opclassoid)
 			result = false;
 		}
 
-		/* spgist doesn't support ORDER BY operators */
-		if (oprform->amoppurpose != AMOP_SEARCH ||
-			OidIsValid(oprform->amopsortfamily))
+		/* spgist supports ORDER BY operators */
+		if (oprform->amoppurpose != AMOP_SEARCH)
 		{
-			ereport(INFO,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("operator family \"%s\" of access method %s contains invalid ORDER BY specification for operator %s",
-							opfamilyname, "spgist",
-							format_operator(oprform->amopopr))));
-			result = false;
+			/* ... and operator result must match the claimed btree opfamily */
+			op_rettype = get_op_rettype(oprform->amopopr);
+			if (!opfamily_can_sort_type(oprform->amopsortfamily, op_rettype))
+			{
+				ereport(INFO,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("operator family \"%s\" of access method %s contains invalid ORDER BY specification for operator %s",
+								opfamilyname, "spgist",
+								format_operator(oprform->amopopr))));
+				result = false;
+			}
 		}
+		else
+			op_rettype = BOOLOID;
 
 		/* Check operator signature --- same for all spgist strategies */
-		if (!check_amop_signature(oprform->amopopr, BOOLOID,
+		if (!check_amop_signature(oprform->amopopr, op_rettype,
 								  oprform->amoplefttype,
 								  oprform->amoprighttype))
 		{

@@ -14,6 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = spgutils.o spginsert.o spgscan.o spgvacuum.o spgvalidate.o \
 	spgdoinsert.o spgxlog.o \
-	spgtextproc.o spgquadtreeproc.o spgkdtreeproc.o
+	spgtextproc.o spgquadtreeproc.o spgkdtreeproc.o \
+	spgproc.o
 
 include $(top_srcdir)/src/backend/common.mk

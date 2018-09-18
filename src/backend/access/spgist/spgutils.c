@@ -15,17 +15,26 @@
 
 #include "postgres.h"
 
+#include "access/amvalidate.h"
+#include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/spgist_private.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/pg_amop.h"
+#include "optimizer/paths.h"
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/index_selfuncs.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
+extern Expr *spgcanorderbyop(IndexOptInfo *index,
+				PathKey *pathkey, int pathkeyno,
+				Expr *orderby_clause, int *indexcol_p);
 
 /*
  * SP-GiST handler function: return IndexAmRoutine with access method parameters
@@ -39,7 +48,7 @@ spghandler(PG_FUNCTION_ARGS)
 	amroutine->amstrategies = 0;
 	amroutine->amsupport = SPGISTNProc;
 	amroutine->amcanorder = false;
-	amroutine->amcanorderbyop = false;
+	amroutine->amcanorderbyop = true;
 	amroutine->amcanbackward = false;
 	amroutine->amcanunique = false;
 	amroutine->amcanmulticol = false;
@@ -61,7 +70,7 @@ spghandler(PG_FUNCTION_ARGS)
 	amroutine->amcanreturn = spgcanreturn;
 	amroutine->amcostestimate = spgcostestimate;
 	amroutine->amoptions = spgoptions;
-	amroutine->amproperty = NULL;
+	amroutine->amproperty = spgproperty;
 	amroutine->amvalidate = spgvalidate;
 	amroutine->ambeginscan = spgbeginscan;
 	amroutine->amrescan = spgrescan;
@@ -948,4 +957,83 @@ SpGistPageAddNewItem(SpGistState *state, Page page, Item item, Size size,
 			 (int) size);
 
 	return offnum;
+}
+
+/*
+ *	spgproperty() -- Check boolean properties of indexes.
+ *
+ * This is optional for most AMs, but is required for SP-GiST because the core
+ * property code doesn't support AMPROP_DISTANCE_ORDERABLE.
+ */
+bool
+spgproperty(Oid index_oid, int attno,
+			IndexAMProperty prop, const char *propname,
+			bool *res, bool *isnull)
+{
+	Oid			opclass,
+				opfamily,
+				opcintype;
+	CatCList   *catlist;
+	int			i;
+
+	/* Only answer column-level inquiries */
+	if (attno == 0)
+		return false;
+
+	switch (prop)
+	{
+		case AMPROP_DISTANCE_ORDERABLE:
+			break;
+		default:
+			return false;
+	}
+
+	/*
+	 * Currently, SP-GiST distance-ordered scans require that there be a
+	 * distance operator in the opclass with the default types. So we assume
+	 * that if such a operator exists, then there's a reason for it.
+	 */
+
+	/* First we need to know the column's opclass. */
+	opclass = get_index_column_opclass(index_oid, attno);
+	if (!OidIsValid(opclass))
+	{
+		*isnull = true;
+		return true;
+	}
+
+	/* Now look up the opclass family and input datatype. */
+	if (!get_opclass_opfamily_and_input_type(opclass, &opfamily, &opcintype))
+	{
+		*isnull = true;
+		return true;
+	}
+
+	/* And now we can check whether the operator is provided. */
+	catlist = SearchSysCacheList1(AMOPSTRATEGY,
+								  ObjectIdGetDatum(opfamily));
+
+	*res = false;
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	amoptup = &catlist->members[i]->tuple;
+		Form_pg_amop amopform = (Form_pg_amop) GETSTRUCT(amoptup);
+
+		if (amopform->amoppurpose == AMOP_ORDER &&
+			(amopform->amoplefttype == opcintype ||
+			 amopform->amoprighttype == opcintype) &&
+			opfamily_can_sort_type(amopform->amopsortfamily,
+								   get_op_rettype(amopform->amopopr)))
+		{
+			*res = true;
+			break;
+		}
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	*isnull = false;
+
+	return true;
 }

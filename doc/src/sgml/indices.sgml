@@ -282,6 +282,13 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
   </para>
 
   <para>
+   Like GiST, SP-GiST supports <quote>nearest-neighbor</quote> searches.
+   For SP-GiST operator classes that support distance ordering, the 
+   corresponding operator is specified in the <quote>Ordering Operators</quote>
+   column in <xref linkend="spgist-builtin-opclasses-table"/>.
+  </para>
+
+  <para>
    <indexterm>
     <primary>index</primary>
     <secondary>GIN</secondary>

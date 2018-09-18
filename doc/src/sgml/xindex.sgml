@@ -1242,7 +1242,7 @@ SELECT sum(x) OVER (ORDER BY x RANGE BETWEEN 5 PRECEDING AND 10 FOLLOWING)
   <title>Ordering Operators</title>
 
   <para>
-   Some index access methods (currently, only GiST) support the concept of
+   Some index access methods (currently, only GiST and SP-GiST) support the concept of
    <firstterm>ordering operators</firstterm>.  What we have been discussing so far
    are <firstterm>search operators</firstterm>.  A search operator is one for which
    the index can be searched to find all rows satisfying

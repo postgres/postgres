@@ -74,6 +74,7 @@
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "catalog/index.h"
+#include "catalog/pg_type.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
@@ -896,4 +897,73 @@ index_getprocinfo(Relation irel,
 	}
 
 	return locinfo;
+}
+
+/* ----------------
+ *		index_store_float8_orderby_distances
+ *
+ *		Convert AM distance function's results (that can be inexact)
+ *		to ORDER BY types and save them into xs_orderbyvals/xs_orderbynulls
+ *		for a possible recheck.
+ * ----------------
+ */
+void
+index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
+									 double *distances, bool recheckOrderBy)
+{
+	int			i;
+
+	scan->xs_recheckorderby = recheckOrderBy;
+
+	if (!distances)
+	{
+		Assert(!scan->xs_recheckorderby);
+
+		for (i = 0; i < scan->numberOfOrderBys; i++)
+		{
+			scan->xs_orderbyvals[i] = (Datum) 0;
+			scan->xs_orderbynulls[i] = true;
+		}
+
+		return;
+	}
+
+	for (i = 0; i < scan->numberOfOrderBys; i++)
+	{
+		if (orderByTypes[i] == FLOAT8OID)
+		{
+#ifndef USE_FLOAT8_BYVAL
+			/* must free any old value to avoid memory leakage */
+			if (!scan->xs_orderbynulls[i])
+				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
+#endif
+			scan->xs_orderbyvals[i] = Float8GetDatum(distances[i]);
+			scan->xs_orderbynulls[i] = false;
+		}
+		else if (orderByTypes[i] == FLOAT4OID)
+		{
+			/* convert distance function's result to ORDER BY type */
+#ifndef USE_FLOAT4_BYVAL
+			/* must free any old value to avoid memory leakage */
+			if (!scan->xs_orderbynulls[i])
+				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
+#endif
+			scan->xs_orderbyvals[i] = Float4GetDatum((float4) distances[i]);
+			scan->xs_orderbynulls[i] = false;
+		}
+		else
+		{
+			/*
+			 * If the ordering operator's return value is anything else, we
+			 * don't know how to convert the float8 bound calculated by the
+			 * distance function to that.  The executor won't actually need
+			 * the order by values we return here, if there are no lossy
+			 * results, so only insist on converting if the *recheck flag is
+			 * set.
+			 */
+			if (scan->xs_recheckorderby)
+				elog(ERROR, "ORDER BY operator must return float8 or float4 if the distance function is lossy");
+			scan->xs_orderbynulls[i] = true;
+		}
+	}
 }
