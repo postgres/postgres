@@ -179,9 +179,12 @@ get_subscription_oid(const char *subname, bool missing_ok)
 
 /*
  * get_subscription_name - given a subscription OID, look up the name
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return NULL.
  */
 char *
-get_subscription_name(Oid subid)
+get_subscription_name(Oid subid, bool missing_ok)
 {
 	HeapTuple	tup;
 	char	   *subname;
@@ -190,7 +193,11 @@ get_subscription_name(Oid subid)
 	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
 
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for subscription %u", subid);
+	{
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for subscription %u", subid);
+		return NULL;
+	}
 
 	subform = (Form_pg_subscription) GETSTRUCT(tup);
 	subname = pstrdup(NameStr(subform->subname));

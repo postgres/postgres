@@ -427,9 +427,12 @@ get_publication_oid(const char *pubname, bool missing_ok)
 
 /*
  * get_publication_name - given a publication Oid, look up the name
+ *
+ * If missing_ok is false, throw an error if name not found.  If true, just
+ * return NULL.
  */
 char *
-get_publication_name(Oid pubid)
+get_publication_name(Oid pubid, bool missing_ok)
 {
 	HeapTuple	tup;
 	char	   *pubname;
@@ -438,7 +441,11 @@ get_publication_name(Oid pubid)
 	tup = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
 
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for publication %u", pubid);
+	{
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for publication %u", pubid);
+		return NULL;
+	}
 
 	pubform = (Form_pg_publication) GETSTRUCT(tup);
 	pubname = pstrdup(NameStr(pubform->pubname));

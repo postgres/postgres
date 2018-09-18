@@ -80,7 +80,7 @@ typedef struct Subscription
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
 extern void FreeSubscription(Subscription *sub);
 extern Oid	get_subscription_oid(const char *subname, bool missing_ok);
-extern char *get_subscription_name(Oid subid);
+extern char *get_subscription_name(Oid subid, bool missing_ok);
 
 extern int	CountDBSubscriptions(Oid dbid);
 
