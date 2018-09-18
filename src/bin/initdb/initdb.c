@@ -490,15 +490,7 @@ readfile(const char *path)
 	char	   *buffer;
 	int			c;
 
-#ifdef WIN32
-	/*
-	 * On Windows, we have to open the file in text mode so that carriage
-	 * returns are stripped.
-	 */
-	if ((infile = fopen(path, "rt")) == NULL)
-#else
 	if ((infile = fopen(path, "r")) == NULL)
-#endif
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 				progname, path, strerror(errno));

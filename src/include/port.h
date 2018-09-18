@@ -249,8 +249,11 @@ extern bool rmtree(const char *path, bool rmtopdir);
 #define		O_DIRECT	0x80000000
 extern int	pgwin32_open(const char *, int,...);
 extern FILE *pgwin32_fopen(const char *, const char *);
+
+#ifndef FRONTEND
 #define		open(a,b,c) pgwin32_open(a,b,c)
 #define		fopen(a,b) pgwin32_fopen(a,b)
+#endif
 
 /*
  * Mingw-w64 headers #define popen and pclose to _popen and _pclose.  We want
