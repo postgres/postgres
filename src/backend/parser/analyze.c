@@ -1116,7 +1116,7 @@ BuildOnConflictExcludedTargetlist(Relation targetrel,
 			 * the Const claims to be.
 			 */
 			var = (Var *) makeNullConst(INT4OID, -1, InvalidOid);
-			name = "";
+			name = NULL;
 		}
 		else
 		{

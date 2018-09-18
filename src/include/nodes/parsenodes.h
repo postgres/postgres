@@ -168,9 +168,8 @@ typedef struct Query
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 
-	List	   *withCheckOptions;	/* a list of WithCheckOption's, which are
-									 * only added during rewrite and therefore
-									 * are not written out as part of Query. */
+	List	   *withCheckOptions;	/* a list of WithCheckOption's (added
+									 * during rewrite) */
 
 	/*
 	 * The following two fields identify the portion of the source text string

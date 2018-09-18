@@ -1582,15 +1582,18 @@ ApplyRetrieveRule(Query *parsetree,
 	rule_action = fireRIRrules(rule_action, activeRIRs);
 
 	/*
-	 * Now, plug the view query in as a subselect, replacing the relation's
-	 * original RTE.
+	 * Now, plug the view query in as a subselect, converting the relation's
+	 * original RTE to a subquery RTE.
 	 */
 	rte = rt_fetch(rt_index, parsetree->rtable);
 
 	rte->rtekind = RTE_SUBQUERY;
-	rte->relid = InvalidOid;
-	rte->security_barrier = RelationIsSecurityView(relation);
 	rte->subquery = rule_action;
+	rte->security_barrier = RelationIsSecurityView(relation);
+	/* Clear fields that should not be set in a subquery RTE */
+	rte->relid = InvalidOid;
+	rte->relkind = 0;
+	rte->tablesample = NULL;
 	rte->inh = false;			/* must not be set for a subquery */
 
 	/*

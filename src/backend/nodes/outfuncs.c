@@ -3003,7 +3003,7 @@ _outQuery(StringInfo str, const Query *node)
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(constraintDeps);
-	/* withCheckOptions intentionally omitted, see comment in parsenodes.h */
+	WRITE_NODE_FIELD(withCheckOptions);
 	WRITE_LOCATION_FIELD(stmt_location);
 	WRITE_LOCATION_FIELD(stmt_len);
 }

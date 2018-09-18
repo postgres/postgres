@@ -586,10 +586,13 @@ inline_set_returning_functions(PlannerInfo *root)
 			funcquery = inline_set_returning_function(root, rte);
 			if (funcquery)
 			{
-				/* Successful expansion, replace the rtable entry */
+				/* Successful expansion, convert the RTE to a subquery */
 				rte->rtekind = RTE_SUBQUERY;
 				rte->subquery = funcquery;
+				rte->security_barrier = false;
+				/* Clear fields that should not be set in a subquery RTE */
 				rte->functions = NIL;
+				rte->funcordinality = false;
 			}
 		}
 	}
