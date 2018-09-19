@@ -661,8 +661,7 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 
 	SET_LOCKTAG_RELATION(locktag, newlock->dbOid, newlock->relOid);
 
-	(void) LockAcquireExtended(&locktag, AccessExclusiveLock, true, false,
-							   false, NULL);
+	(void) LockAcquire(&locktag, AccessExclusiveLock, true, false);
 }
 
 static void
