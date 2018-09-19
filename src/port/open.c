@@ -71,6 +71,20 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 						 _O_SHORT_LIVED | O_DSYNC | O_DIRECT |
 						 (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
 
+#ifdef FRONTEND
+
+	/*
+	 * Since PostgreSQL 12, those concurrent-safe versions of open() and
+	 * fopen() can be used by frontends, having as side-effect to switch the
+	 * file-translation mode from O_TEXT to O_BINARY if none is specified.
+	 * Caller may want to enforce the binary or text mode, but if nothing is
+	 * defined make sure that the default mode maps with what versions older
+	 * than 12 have been doing.
+	 */
+	if ((fileFlags & O_BINARY) == 0)
+		fileFlags |= O_TEXT;
+#endif
+
 	sa.nLength = sizeof(sa);
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
