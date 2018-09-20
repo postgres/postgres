@@ -3327,7 +3327,7 @@ psql_completion(const char *text, int start, int end)
 
 /* TABLE, but not TABLE embedded in other commands */
 	else if (Matches1("TABLE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_relations, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
 
 /* TABLESAMPLE */
 	else if (TailMatches1("TABLESAMPLE"))
