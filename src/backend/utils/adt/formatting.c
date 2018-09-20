@@ -3061,9 +3061,24 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			 * Text character, so consume one character from input string.
 			 * Notice we don't insist that the consumed character match the
 			 * format's character.
-			 * Text field ignores FX mode.
 			 */
-			s += pg_mblen(s);
+			if (!fx_mode)
+			{
+				/*
+				 * In non FX mode we might have skipped some extra characters
+				 * (more than specified in format string) before.  In this
+				 * case we don't skip input string character, because it might
+				 * be part of field.
+				 */
+				if (extra_skip > 0)
+					extra_skip--;
+				else
+					s += pg_mblen(s);
+			}
+			else
+			{
+				s += pg_mblen(s);
+			}
 			continue;
 		}
 

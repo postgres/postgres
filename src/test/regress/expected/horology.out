@@ -3128,6 +3128,21 @@ SELECT to_date('2011   12 18', 'YYYY  MM DD');
  12-18-2011
 (1 row)
 
+SELECT to_date('2011 12 18', 'YYYYxMMxDD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+SELECT to_date('2011x 12x 18', 'YYYYxMMxDD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+SELECT to_date('2011 x12 x18', 'YYYYxMMxDD');
+ERROR:  invalid value "x1" for "MM"
+DETAIL:  Value must be an integer.
 --
 -- Check errors for some incorrect usages of to_timestamp() and to_date()
 --

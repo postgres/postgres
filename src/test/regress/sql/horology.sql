@@ -495,6 +495,10 @@ SELECT to_date('2011 12 18', 'YYYY  MM DD');
 SELECT to_date('2011  12 18', 'YYYY  MM DD');
 SELECT to_date('2011   12 18', 'YYYY  MM DD');
 
+SELECT to_date('2011 12 18', 'YYYYxMMxDD');
+SELECT to_date('2011x 12x 18', 'YYYYxMMxDD');
+SELECT to_date('2011 x12 x18', 'YYYYxMMxDD');
+
 --
 -- Check errors for some incorrect usages of to_timestamp() and to_date()
 --
