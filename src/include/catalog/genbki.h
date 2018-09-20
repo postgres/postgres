@@ -34,6 +34,8 @@
 #define BKI_FORCE_NOT_NULL
 /* Specifies a default value for a catalog field */
 #define BKI_DEFAULT(value)
+/* Specifies a default value for auto-generated array types */
+#define BKI_ARRAY_DEFAULT(value)
 /* Indicates how to perform name lookups for an OID or OID-array field */
 #define BKI_LOOKUP(catalog)
 

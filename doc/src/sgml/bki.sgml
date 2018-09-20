@@ -217,12 +217,14 @@
       <replaceable>value</replaceable> pairs.  The
       allowed <replaceable>key</replaceable>s are the names of the catalog's
       columns, plus the metadata keys <literal>oid</literal>,
-      <literal>oid_symbol</literal>, and <literal>descr</literal>.
+      <literal>oid_symbol</literal>,
+      <literal>array_type_oid</literal>, and <literal>descr</literal>.
       (The use of <literal>oid</literal> and <literal>oid_symbol</literal>
-      is described in <xref linkend="system-catalog-oid-assignment"/>
-      below.  <literal>descr</literal> supplies a description string for
-      the object, which will be inserted
-      into <structname>pg_description</structname>
+      is described in <xref linkend="system-catalog-oid-assignment"/> below,
+      while <literal>array_type_oid</literal> is described in
+      <xref linkend="system-catalog-auto-array-types"/>.
+      <literal>descr</literal> supplies a description string for the object,
+      which will be inserted into <structname>pg_description</structname>
       or <structname>pg_shdescription</structname> as appropriate.)
       While the metadata keys are optional, the catalog's defined columns
       must all be provided, except when the catalog's <literal>.h</literal>
@@ -282,8 +284,9 @@
         <para>
          Within each pair of curly braces, the metadata
          fields <literal>oid</literal>, <literal>oid_symbol</literal>,
-         and <literal>descr</literal> (if present) come first, in that
-         order, then the catalog's own fields appear in their defined order.
+         <literal>array_type_oid</literal>, and <literal>descr</literal>
+         (if present) come first, in that order, then the catalog's own
+         fields appear in their defined order.
         </para>
        </listitem>
 
@@ -495,6 +498,41 @@
     runs, and puts simple numeric OIDs into the emitted BKI file.  There is
     therefore no need for the bootstrap backend to deal with symbolic
     references.
+   </para>
+  </sect2>
+
+  <sect2 id="system-catalog-auto-array-types">
+   <title>Automatic Creation of Array Types</title>
+
+   <para>
+    Most scalar data types should have a corresponding array type (that is,
+    a standard varlena array type whose element type is the scalar type, and
+    which is referenced by the <structfield>typarray</structfield> field of
+    the scalar type's <structname>pg_type</structname>
+    entry).  <filename>genbki.pl</filename> is able to generate
+    the <structname>pg_type</structname> entry for the array type
+    automatically in most cases.
+   </para>
+
+   <para>
+    To use this facility, just write an <literal>array_type_oid
+    =&gt; <replaceable>nnnn</replaceable></literal> metadata field in the
+    scalar type's <structname>pg_type</structname> entry, specifying the OID
+    to use for the array type.  You may then omit
+    the <structfield>typarray</structfield> field, since it will be filled
+    automatically with that OID.
+   </para>
+
+   <para>
+    The generated array type's name is the scalar type's name with an
+    underscore prepended.  The array entry's other fields are filled from
+    <literal>BKI_ARRAY_DEFAULT(<replaceable>value</replaceable>)</literal>
+    annotations in <filename>pg_type.h</filename>, or if there isn't one,
+    copied from the scalar type.  (There's also a special case
+    for <structfield>typalign</structfield>.)  Then
+    the <structfield>typelem</structfield>
+    and <structfield>typarray</structfield> fields of the two entries are
+    set to cross-reference each other.
    </para>
   </sect2>
 
