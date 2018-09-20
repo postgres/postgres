@@ -1588,6 +1588,10 @@ psql_completion(const char *text, int start, int end)
 							"IS_TEMPLATE", "ALLOW_CONNECTIONS",
 							"CONNECTION LIMIT");
 
+	/* ALTER DATABASE <name> SET TABLESPACE */
+	else if (Matches5("ALTER", "DATABASE", MatchAny, "SET", "TABLESPACE"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
+
 	/* ALTER EVENT TRIGGER */
 	else if (Matches3("ALTER", "EVENT", "TRIGGER"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_event_triggers);
