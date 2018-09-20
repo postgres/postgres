@@ -411,6 +411,8 @@ sub GenerateArrayTypes
 	}
 
 	push @$types, @array_types;
+
+	return;
 }
 
 # Rename temporary files to final names.
