@@ -1304,14 +1304,6 @@ ParallelWorkerMain(Datum main_arg)
 		return;
 
 	/*
-	 * Load libraries that were loaded by original backend.  We want to do
-	 * this before restoring GUCs, because the libraries might define custom
-	 * variables.
-	 */
-	libraryspace = shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY, false);
-	RestoreLibraryState(libraryspace);
-
-	/*
 	 * Identify the entry point to be called.  In theory this could result in
 	 * loading an additional library, though most likely the entry point is in
 	 * the core backend or in a library we just loaded.
@@ -1333,9 +1325,17 @@ ParallelWorkerMain(Datum main_arg)
 	 */
 	SetClientEncoding(GetDatabaseEncoding());
 
+	/*
+	 * Load libraries that were loaded by original backend.  We want to do
+	 * this before restoring GUCs, because the libraries might define custom
+	 * variables.
+	 */
+	libraryspace = shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY, false);
+	StartTransactionCommand();
+	RestoreLibraryState(libraryspace);
+
 	/* Restore GUC values from launching backend. */
 	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC, false);
-	StartTransactionCommand();
 	RestoreGUCState(gucspace);
 	CommitTransactionCommand();
 
