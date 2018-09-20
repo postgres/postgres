@@ -48,6 +48,12 @@ DOING THE INDENT RUN:
    If you want to use some perltidy version that's not in your PATH,
    first set the PERLTIDY environment variable to point to it.
 
+5) Reformat the bootstrap catalog data files:
+
+	cd src/include/catalog
+	make reformat-dat-files
+	cd ../../..
+
 VALIDATION:
 
 1) Check for any newly-created files using "git status"; there shouldn't

@@ -1402,8 +1402,8 @@
   amoprighttype => 'box', amopstrategy => '8', amopopr => '<@(point,box)',
   amopmethod => 'spgist' },
 { amopfamily => 'spgist/quad_point_ops', amoplefttype => 'point',
-  amoprighttype => 'point', amopstrategy => '15', amopopr => '<->(point,point)',
-  amopmethod => 'spgist', amoppurpose => 'o',
+  amoprighttype => 'point', amopstrategy => '15', amoppurpose => 'o',
+  amopopr => '<->(point,point)', amopmethod => 'spgist',
   amopsortfamily => 'btree/float_ops' },
 
 # SP-GiST kd_point_ops
@@ -1426,8 +1426,8 @@
   amoprighttype => 'box', amopstrategy => '8', amopopr => '<@(point,box)',
   amopmethod => 'spgist' },
 { amopfamily => 'spgist/kd_point_ops', amoplefttype => 'point',
-  amoprighttype => 'point', amopstrategy => '15', amopopr => '<->(point,point)',
-  amopmethod => 'spgist', amoppurpose => 'o',
+  amoprighttype => 'point', amopstrategy => '15', amoppurpose => 'o',
+  amopopr => '<->(point,point)', amopmethod => 'spgist',
   amopsortfamily => 'btree/float_ops' },
 
 # SP-GiST text_ops
@@ -1599,8 +1599,8 @@
   amoprighttype => 'polygon', amopstrategy => '12',
   amopopr => '|&>(polygon,polygon)', amopmethod => 'spgist' },
 { amopfamily => 'spgist/poly_ops', amoplefttype => 'polygon',
-  amoprighttype => 'point', amopstrategy => '15',
-  amopopr => '<->(polygon,point)', amoppurpose => 'o', amopmethod => 'spgist',
+  amoprighttype => 'point', amopstrategy => '15', amoppurpose => 'o',
+  amopopr => '<->(polygon,point)', amopmethod => 'spgist',
   amopsortfamily => 'btree/float_ops' },
 
 # GiST inet_ops
