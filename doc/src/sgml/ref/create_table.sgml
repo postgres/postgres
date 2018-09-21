@@ -934,7 +934,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       is used.  The referenced columns must be the columns of a non-deferrable
       unique or primary key constraint in the referenced table.  The user
       must have <literal>REFERENCES</literal> permission on the referenced table
-      (either the whole table, or the specific referenced columns).
+      (either the whole table, or the specific referenced columns).  The
+      addition of a foreign key constraint requires a
+      <literal>SHARE ROW EXCLUSIVE</literal> lock on the referenced table.
       Note that foreign key constraints cannot be defined between temporary
       tables and permanent tables.  Also note that while it is possible to
       define a foreign key on a partitioned table, it is not possible to
