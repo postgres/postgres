@@ -1419,6 +1419,21 @@ psql_completion(const char *text, int start, int end)
 	 word_matches(p2, previous_words[previous_words_count - 2]) && \
 	 word_matches(p3, previous_words[previous_words_count - 3]))
 
+#define HeadMatches4(p1, p2, p3, p4) \
+	(previous_words_count >= 4 && \
+	 word_matches(p1, previous_words[previous_words_count - 1]) && \
+	 word_matches(p2, previous_words[previous_words_count - 2]) && \
+	 word_matches(p3, previous_words[previous_words_count - 3]) && \
+	 word_matches(p4, previous_words[previous_words_count - 4]))
+
+#define HeadMatches5(p1, p2, p3, p4, p5) \
+	(previous_words_count >= 5 && \
+	 word_matches(p1, previous_words[previous_words_count - 1]) && \
+	 word_matches(p2, previous_words[previous_words_count - 2]) && \
+	 word_matches(p3, previous_words[previous_words_count - 3]) && \
+	 word_matches(p4, previous_words[previous_words_count - 4]) && \
+	 word_matches(p5, previous_words[previous_words_count - 5]))
+
 	/* Known command-starting keywords. */
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CALL", "CHECKPOINT", "CLOSE", "CLUSTER",
@@ -2487,8 +2502,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST3("FOR TABLE", "FOR ALL TABLES", "WITH (");
 	else if (Matches4("CREATE", "PUBLICATION", MatchAny, "FOR"))
 		COMPLETE_WITH_LIST2("TABLE", "ALL TABLES");
-	/* Complete "CREATE PUBLICATION <name> FOR TABLE <table>" */
-	else if (Matches4("CREATE", "PUBLICATION", MatchAny, "FOR TABLE"))
+	/* Complete "CREATE PUBLICATION <name> FOR TABLE <table>, ..." */
+	else if (HeadMatches5("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 	/* Complete "CREATE PUBLICATION <name> [...] WITH" */
 	else if (HeadMatches2("CREATE", "PUBLICATION") && TailMatches2("WITH", "("))
