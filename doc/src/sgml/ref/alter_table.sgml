@@ -373,6 +373,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
+      The addition of a foreign key constraint requires a
+      <literal>SHARE ROW EXCLUSIVE</literal> lock on the referenced table.
+     </para>
+
+     <para>
       Additional restrictions apply when unique or primary key constraints
       are added to partitioned tables; see <xref linkend="sql-createtable" />.
      </para>
