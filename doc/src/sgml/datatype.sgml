@@ -1296,7 +1296,7 @@ SELECT b, char_length(b) FROM test2;
     strings are distinguished from character strings in two
     ways.  First, binary strings specifically allow storing
     octets of value zero and other <quote>non-printable</quote>
-    octets (usually, octets outside the range 32 to 126).
+    octets (usually, octets outside the decimal range 32 to 126).
     Character strings disallow zero octets, and also disallow any
     other octet values and sequences of octet values that are invalid
     according to the database's selected character set encoding.
@@ -1308,9 +1308,10 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    The <type>bytea</type> type supports two external formats for
-    input and output: <productname>PostgreSQL</productname>'s historical
-    <quote>escape</quote> format, and <quote>hex</quote> format.  Both
+    The <type>bytea</type> type supports two
+    formats for input and output: <quote>hex</quote> format
+    and <productname>PostgreSQL</productname>'s historical
+    <quote>escape</quote> format.  Both
     of these are always accepted on input.  The output format depends
     on the configuration parameter <xref linkend="guc-bytea-output"/>;
     the default is hex.  (Note that the hex format was introduced in
@@ -1348,7 +1349,7 @@ SELECT b, char_length(b) FROM test2;
    <para>
     Example:
 <programlisting>
-SELECT E'\\xDEADBEEF';
+SELECT '\xDEADBEEF';
 </programlisting>
    </para>
   </sect2>
@@ -1368,7 +1369,7 @@ SELECT E'\\xDEADBEEF';
     convenient.  But in practice it is usually confusing because it
     fuzzes up the distinction between binary strings and character
     strings, and also the particular escape mechanism that was chosen is
-    somewhat unwieldy.  So this format should probably be avoided
+    somewhat unwieldy.  Therefore, this format should probably be avoided
     for most new applications.
    </para>
 
@@ -1381,7 +1382,7 @@ SELECT E'\\xDEADBEEF';
     octal value and precede it
     by a backslash (or two backslashes, if writing the value as a
     literal using escape string syntax).
-    Backslash itself (octet value 92) can alternatively be represented by
+    Backslash itself (octet decimal value 92) can alternatively be represented by
     double backslashes.
     <xref linkend="datatype-binary-sqlesc"/>
     shows the characters that must be escaped, and gives the alternative
@@ -1405,33 +1406,33 @@ SELECT E'\\xDEADBEEF';
       <row>
        <entry>0</entry>
        <entry>zero octet</entry>
-       <entry><literal>E'\\000'</literal></entry>
-       <entry><literal>SELECT E'\\000'::bytea;</literal></entry>
-       <entry><literal>\000</literal></entry>
+       <entry><literal>'\000'</literal></entry>
+       <entry><literal>SELECT '\000'::bytea;</literal></entry>
+       <entry><literal>\x00</literal></entry>
       </row>
 
       <row>
        <entry>39</entry>
        <entry>single quote</entry>
-       <entry><literal>''''</literal> or <literal>E'\\047'</literal></entry>
-       <entry><literal>SELECT E'\''::bytea;</literal></entry>
-       <entry><literal>'</literal></entry>
+       <entry><literal>''''</literal> or <literal>'\047'</literal></entry>
+       <entry><literal>SELECT ''''::bytea;</literal></entry>
+       <entry><literal>\x27</literal></entry>
       </row>
 
       <row>
        <entry>92</entry>
        <entry>backslash</entry>
-       <entry><literal>E'\\\\'</literal> or <literal>E'\\134'</literal></entry>
-       <entry><literal>SELECT E'\\\\'::bytea;</literal></entry>
-       <entry><literal>\\</literal></entry>
+       <entry><literal>'\'</literal> or <literal>'\\134'</literal></entry>
+       <entry><literal>SELECT '\\'::bytea;</literal></entry>
+       <entry><literal>\x5c</literal></entry>
       </row>
 
       <row>
        <entry>0 to 31 and 127 to 255</entry>
        <entry><quote>non-printable</quote> octets</entry>
-       <entry><literal>E'\\<replaceable>xxx'</replaceable></literal> (octal value)</entry>
-       <entry><literal>SELECT E'\\001'::bytea;</literal></entry>
-       <entry><literal>\001</literal></entry>
+       <entry><literal>'\<replaceable>xxx'</replaceable></literal> (octal value)</entry>
+       <entry><literal>SELECT '\001'::bytea;</literal></entry>
+       <entry><literal>\x01</literal></entry>
       </row>
 
      </tbody>
@@ -1459,7 +1460,7 @@ SELECT E'\\xDEADBEEF';
     of escaping.)  The remaining backslash is then recognized by the
     <type>bytea</type> input function as starting either a three
     digit octal value or escaping another backslash.  For example,
-    a string literal passed to the server as <literal>E'\\001'</literal>
+    a string literal passed to the server as <literal>'\001'</literal>
     becomes <literal>\001</literal> after passing through the
     escape string parser. The <literal>\001</literal> is then sent
     to the <type>bytea</type> input function, where it is converted
@@ -1470,12 +1471,24 @@ SELECT E'\\xDEADBEEF';
    </para>
 
    <para>
-    <type>Bytea</type> octets are sometimes escaped when output. In general, each
-    <quote>non-printable</quote> octet is converted into
-    its equivalent three-digit octal value and preceded by one backslash.
-    Most <quote>printable</quote> octets are represented by their standard
-    representation in the client character set. The octet with decimal
-    value 92 (backslash) is doubled in the output.
+    <type>Bytea</type> octets are output in <literal>hex</literal>
+    format by default.  If you change <xref linkend="guc-bytea-output"/>
+    to <literal>escape</literal>,
+    <quote>non-printable</quote> octet are converted to
+    equivalent three-digit octal value and preceded by one backslash.
+    Most <quote>printable</quote> octets are output by their standard
+    representation in the client character set, e.g.:
+
+<programlisting>
+SET bytea_output = 'escape';
+
+SELECT 'abc \153\154\155 \052\251\124'::bytea;
+     bytea
+----------------
+ abc klm *\251T
+</programlisting>
+
+    The octet with decimal value 92 (backslash) is doubled in the output.
     Details are in <xref linkend="datatype-binary-resesc"/>.
    </para>
 
@@ -1498,7 +1511,7 @@ SELECT E'\\xDEADBEEF';
        <entry>92</entry>
        <entry>backslash</entry>
        <entry><literal>\\</literal></entry>
-       <entry><literal>SELECT E'\\134'::bytea;</literal></entry>
+       <entry><literal>SELECT '\134'::bytea;</literal></entry>
        <entry><literal>\\</literal></entry>
       </row>
 
@@ -1506,7 +1519,7 @@ SELECT E'\\xDEADBEEF';
        <entry>0 to 31 and 127 to 255</entry>
        <entry><quote>non-printable</quote> octets</entry>
        <entry><literal>\<replaceable>xxx</replaceable></literal> (octal value)</entry>
-       <entry><literal>SELECT E'\\001'::bytea;</literal></entry>
+       <entry><literal>SELECT '\001'::bytea;</literal></entry>
        <entry><literal>\001</literal></entry>
       </row>
 
@@ -1514,7 +1527,7 @@ SELECT E'\\xDEADBEEF';
        <entry>32 to 126</entry>
        <entry><quote>printable</quote> octets</entry>
        <entry>client character set representation</entry>
-       <entry><literal>SELECT E'\\176'::bytea;</literal></entry>
+       <entry><literal>SELECT '\176'::bytea;</literal></entry>
        <entry><literal>~</literal></entry>
       </row>
 

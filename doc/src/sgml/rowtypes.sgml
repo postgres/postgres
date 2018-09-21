@@ -510,7 +510,7 @@ SELECT c.somefunc FROM inventory_item c;
    containing a double quote and a backslash in a composite
    value, you'd need to write:
 <programlisting>
-INSERT ... VALUES (E'("\\"\\\\")');
+INSERT ... VALUES ('("\"\\")');
 </programlisting>
    The string-literal processor removes one level of backslashes, so that
    what arrives at the composite-value parser looks like
