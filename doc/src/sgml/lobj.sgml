@@ -568,7 +568,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
        Create a large object and store data there, returning its OID.
        Pass <literal>0</literal> to have the system choose an OID.
       </entry>
-      <entry><literal>lo_from_bytea(0, E'\\xffffff00')</literal></entry>
+      <entry><literal>lo_from_bytea(0, '\xffffff00')</literal></entry>
       <entry><literal>24528</literal></entry>
      </row>
 
@@ -583,7 +583,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
       <entry>
        Write data at the given offset.
       </entry>
-      <entry><literal>lo_put(24528, 1, E'\\xaa')</literal></entry>
+      <entry><literal>lo_put(24528, 1, '\xaa')</literal></entry>
       <entry></entry>
      </row>
 

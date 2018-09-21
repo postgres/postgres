@@ -766,9 +766,9 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    For example, elements containing curly braces, commas (or the data type's
    delimiter character), double quotes, backslashes, or leading or trailing
    whitespace must be double-quoted.  Empty strings and strings matching the
-   word <literal>NULL</literal> must be quoted, too.  To put a double quote or
-   backslash in a quoted array element value, use escape string syntax
-   and precede it with a backslash. Alternatively, you can avoid quotes and use
+   word <literal>NULL</literal> must be quoted, too.  To put a double
+   quote or backslash in a quoted array element value, precede it
+   with a backslash. Alternatively, you can avoid quotes and use
    backslash-escaping to protect all data characters that would otherwise
    be taken as array syntax.
   </para>
@@ -780,27 +780,6 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    whitespace within double-quoted elements, or surrounded on both sides by
    non-whitespace characters of an element, is not ignored.
   </para>
-
- <note>
-  <para>
-   Remember that what you write in an SQL command will first be interpreted
-   as a string literal, and then as an array.  This doubles the number of
-   backslashes you need.  For example, to insert a <type>text</type> array
-   value containing a backslash and a double quote, you'd need to write:
-<programlisting>
-INSERT ... VALUES (E'{"\\\\","\\""}');
-</programlisting>
-   The escape string processor removes one level of backslashes, so that
-   what arrives at the array-value parser looks like <literal>{"\\","\""}</literal>.
-   In turn, the strings fed to the <type>text</type> data type's input routine
-   become <literal>\</literal> and <literal>"</literal> respectively.  (If we were working
-   with a data type whose input routine also treated backslashes specially,
-   <type>bytea</type> for example, we might need as many as eight backslashes
-   in the command to get one backslash into the stored array element.)
-   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting"/>) can be
-   used to avoid the need to double backslashes.
-  </para>
- </note>
 
  <tip>
   <para>

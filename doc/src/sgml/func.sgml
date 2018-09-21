@@ -1776,7 +1776,7 @@
         octal sequences (<literal>\</literal><replaceable>nnn</replaceable>) and
         doubles backslashes.
        </entry>
-       <entry><literal>encode(E'123\\000\\001', 'base64')</literal></entry>
+       <entry><literal>encode('123\000\001', 'base64')</literal></entry>
        <entry><literal>MTIzAAE=</literal></entry>
       </row>
 
@@ -2100,7 +2100,7 @@
         the delimiter.  See <xref linkend="functions-posix-regexp"/> for more
         information.
        </entry>
-       <entry><literal>regexp_split_to_array('hello world', E'\\s+')</literal></entry>
+       <entry><literal>regexp_split_to_array('hello world', '\s+')</literal></entry>
        <entry><literal>{hello,world}</literal></entry>
       </row>
 
@@ -2117,7 +2117,7 @@
         the delimiter.  See <xref linkend="functions-posix-regexp"/> for more
         information.
        </entry>
-       <entry><literal>regexp_split_to_table('hello world', E'\\s+')</literal></entry>
+       <entry><literal>regexp_split_to_table('hello world', '\s+')</literal></entry>
        <entry><literal>hello</literal><para><literal>world</literal></para> (2 rows)</entry>
       </row>
 
@@ -3301,8 +3301,8 @@ SELECT format('Testing %s, %s, %s, %%', 'one', 'two', 'three');
 SELECT format('INSERT INTO %I VALUES(%L)', 'Foo bar', E'O\'Reilly');
 <lineannotation>Result: </lineannotation><computeroutput>INSERT INTO "Foo bar" VALUES('O''Reilly')</computeroutput>
 
-SELECT format('INSERT INTO %I VALUES(%L)', 'locations', E'C:\\Program Files');
-<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO locations VALUES(E'C:\\Program Files')</computeroutput>
+SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\Program Files');
+<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO locations VALUES('C:\Program Files')</computeroutput>
 </screen>
     </para>
 
@@ -3429,7 +3429,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
          <secondary>concatenation</secondary>
         </indexterm>
        </entry>
-       <entry><literal>E'\\\\Post'::bytea || E'\\047gres\\000'::bytea</literal></entry>
+       <entry><literal>'\\Post'::bytea || '\047gres\000'::bytea</literal></entry>
        <entry><literal>\\Post'gres\000</literal></entry>
       </row>
 
@@ -3442,7 +3442,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        </entry>
        <entry><type>int</type></entry>
        <entry>Number of bytes in binary string</entry>
-       <entry><literal>octet_length(E'jo\\000se'::bytea)</literal></entry>
+       <entry><literal>octet_length('jo\000se'::bytea)</literal></entry>
        <entry><literal>5</literal></entry>
       </row>
 
@@ -3457,7 +3457,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        <entry>
         Replace substring
        </entry>
-       <entry><literal>overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 2 for 3)</literal></entry>
+       <entry><literal>overlay('Th\000omas'::bytea placing '\002\003'::bytea from 2 for 3)</literal></entry>
        <entry><literal>T\\002\\003mas</literal></entry>
       </row>
 
@@ -3470,7 +3470,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        </entry>
        <entry><type>int</type></entry>
        <entry>Location of specified substring</entry>
-      <entry><literal>position(E'\\000om'::bytea in E'Th\\000omas'::bytea)</literal></entry>
+      <entry><literal>position('\000om'::bytea in 'Th\000omas'::bytea)</literal></entry>
        <entry><literal>3</literal></entry>
       </row>
 
@@ -3485,7 +3485,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        <entry>
         Extract substring
        </entry>
-       <entry><literal>substring(E'Th\\000omas'::bytea from 2 for 3)</literal></entry>
+       <entry><literal>substring('Th\000omas'::bytea from 2 for 3)</literal></entry>
        <entry><literal>h\000o</literal></entry>
       </row>
 
@@ -3504,7 +3504,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <parameter>bytes</parameter> from the start
         and end of <parameter>string</parameter>
        </entry>
-       <entry><literal>trim(E'\\000\\001'::bytea from E'\\000Tom\\001'::bytea)</literal></entry>
+       <entry><literal>trim('\000\001'::bytea from '\000Tom\001'::bytea)</literal></entry>
        <entry><literal>Tom</literal></entry>
       </row>
      </tbody>
@@ -3547,7 +3547,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <parameter>bytes</parameter> from the start and end of
         <parameter>string</parameter>
       </entry>
-      <entry><literal>btrim(E'\\000trim\\001'::bytea, E'\\000\\001'::bytea)</literal></entry>
+      <entry><literal>btrim('\000trim\001'::bytea, '\000\001'::bytea)</literal></entry>
       <entry><literal>trim</literal></entry>
      </row>
 
@@ -3564,7 +3564,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        Decode binary data from textual representation in <parameter>string</parameter>.
        Options for <parameter>format</parameter> are same as in <function>encode</function>.
       </entry>
-      <entry><literal>decode(E'123\\000456', 'escape')</literal></entry>
+      <entry><literal>decode('123\000456', 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
      </row>
 
@@ -3584,7 +3584,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        octal sequences (<literal>\</literal><replaceable>nnn</replaceable>) and
        doubles backslashes.
       </entry>
-      <entry><literal>encode(E'123\\000456'::bytea, 'escape')</literal></entry>
+      <entry><literal>encode('123\000456'::bytea, 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
      </row>
 
@@ -3599,7 +3599,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        <entry>
         Extract bit from string
        </entry>
-       <entry><literal>get_bit(E'Th\\000omas'::bytea, 45)</literal></entry>
+       <entry><literal>get_bit('Th\000omas'::bytea, 45)</literal></entry>
        <entry><literal>1</literal></entry>
       </row>
 
@@ -3614,7 +3614,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        <entry>
         Extract byte from string
        </entry>
-       <entry><literal>get_byte(E'Th\\000omas'::bytea, 4)</literal></entry>
+       <entry><literal>get_byte('Th\000omas'::bytea, 4)</literal></entry>
        <entry><literal>109</literal></entry>
       </row>
 
@@ -3638,7 +3638,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <see>binary strings, length</see>
        </indexterm>
       </entry>
-      <entry><literal>length(E'jo\\000se'::bytea)</literal></entry>
+      <entry><literal>length('jo\000se'::bytea)</literal></entry>
       <entry><literal>5</literal></entry>
      </row>
 
@@ -3654,7 +3654,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        Calculates the MD5 hash of <parameter>string</parameter>,
        returning the result in hexadecimal
       </entry>
-      <entry><literal>md5(E'Th\\000omas'::bytea)</literal></entry>
+      <entry><literal>md5('Th\000omas'::bytea)</literal></entry>
       <entry><literal>8ab2d3c9689aaf18&#x200B;b4958c334c82d8b1</literal></entry>
      </row>
 
@@ -3670,7 +3670,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        <entry>
         Set bit in string
        </entry>
-       <entry><literal>set_bit(E'Th\\000omas'::bytea, 45, 0)</literal></entry>
+       <entry><literal>set_bit('Th\000omas'::bytea, 45, 0)</literal></entry>
        <entry><literal>Th\000omAs</literal></entry>
       </row>
 
@@ -3686,7 +3686,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        <entry>
         Set byte in string
        </entry>
-       <entry><literal>set_byte(E'Th\\000omas'::bytea, 4, 64)</literal></entry>
+       <entry><literal>set_byte('Th\000omas'::bytea, 4, 64)</literal></entry>
        <entry><literal>Th\000o@as</literal></entry>
       </row>
 
@@ -4377,7 +4377,7 @@ regexp_replace('foobarbaz', 'b..', 'X')
                                    <lineannotation>fooXbaz</lineannotation>
 regexp_replace('foobarbaz', 'b..', 'X', 'g')
                                    <lineannotation>fooXX</lineannotation>
-regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
+regexp_replace('foobarbaz', 'b(..)', 'X\1Y', 'g')
                                    <lineannotation>fooXarYXazY</lineannotation>
 </programlisting>
    </para>
@@ -4513,7 +4513,7 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
     Some examples:
 <programlisting>
 
-SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', E'\\s+') AS foo;
+SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', '\s+') AS foo;
   foo   
 -------
  the    
@@ -4527,13 +4527,13 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy d
  dog    
 (9 rows)
 
-SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', E'\\s+');
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', '\s+');
               regexp_split_to_array             
 -----------------------------------------------
  {the,quick,brown,fox,jumps,over,the,lazy,dog}
 (1 row)
 
-SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
+SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
  foo 
 -----
  t         
