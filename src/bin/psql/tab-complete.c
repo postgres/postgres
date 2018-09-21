@@ -1131,9 +1131,8 @@ initialize_readline(void)
  * If pattern is NULL, it's a wild card that matches any word.
  * If pattern begins with '!', the result is negated, ie we check that 'word'
  * does *not* match any alternative appearing in the rest of 'pattern'.
- * Any alternative can end with '*' which is a wild card, i.e., it means
- * match any word that matches the characters so far.  (We do not currently
- * support '*' elsewhere than the end of an alternative.)
+ * Any alternative can contain '*' which is a wild card, i.e., it can match
+ * any substring; however, we allow at most one '*' per alternative.
  *
  * For readability, callers should use the macros MatchAny and MatchAnyExcept
  * to invoke those two special cases for 'pattern'.  (But '|' and '*' must
@@ -1147,8 +1146,10 @@ word_matches_internal(const char *pattern,
 					  const char *word,
 					  bool case_sensitive)
 {
-	size_t		wordlen,
-				patternlen;
+	size_t		wordlen;
+
+#define cimatch(s1, s2, n) \
+	(case_sensitive ? strncmp(s1, s2, n) == 0 : pg_strncasecmp(s1, s2, n) == 0)
 
 	/* NULL pattern matches anything. */
 	if (pattern == NULL)
@@ -1162,31 +1163,34 @@ word_matches_internal(const char *pattern,
 	wordlen = strlen(word);
 	for (;;)
 	{
+		const char *star = NULL;
 		const char *c;
 
-		/* Find end of current alternative. */
+		/* Find end of current alternative, and locate any wild card. */
 		c = pattern;
 		while (*c != '\0' && *c != '|')
+		{
+			if (*c == '*')
+				star = c;
 			c++;
-		/* Was there a wild card?  (Assumes first alternative is not empty) */
-		if (c[-1] == '*')
+		}
+		/* Was there a wild card? */
+		if (star)
 		{
 			/* Yes, wildcard match? */
-			patternlen = c - pattern - 1;
-			if (wordlen >= patternlen &&
-				(case_sensitive ?
-				 strncmp(word, pattern, patternlen) == 0 :
-				 pg_strncasecmp(word, pattern, patternlen) == 0))
+			size_t		beforelen = star - pattern,
+						afterlen = c - star - 1;
+
+			if (wordlen >= (beforelen + afterlen) &&
+				cimatch(word, pattern, beforelen) &&
+				cimatch(word + wordlen - afterlen, star + 1, afterlen))
 				return true;
 		}
 		else
 		{
 			/* No, plain match? */
-			patternlen = c - pattern;
-			if (wordlen == patternlen &&
-				(case_sensitive ?
-				 strncmp(word, pattern, wordlen) == 0 :
-				 pg_strncasecmp(word, pattern, wordlen) == 0))
+			if (wordlen == (c - pattern) &&
+				cimatch(word, pattern, wordlen))
 				return true;
 		}
 		/* Out of alternatives? */
@@ -2158,6 +2162,24 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches5("ALTER", "TYPE", MatchAny, "RENAME", "VALUE"))
 		COMPLETE_WITH_ENUM_VALUE(prev3_wd);
 
+/*
+ * ANALYZE [ ( option [, ...] ) ] [ table_and_columns [, ...] ]
+ * ANALYZE [ VERBOSE ] [ table_and_columns [, ...] ]
+ *
+ * Currently the only allowed option is VERBOSE, so we can be skimpier on
+ * the option processing than VACUUM has to be.
+ */
+	else if (Matches1("ANALYZE"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_analyzables,
+								   " UNION SELECT 'VERBOSE'");
+	else if (Matches2("ANALYZE", "("))
+		COMPLETE_WITH_CONST("VERBOSE)");
+	else if (HeadMatches1("ANALYZE") && TailMatches1("("))
+		/* "ANALYZE (" should be caught above, so assume we want columns */
+		COMPLETE_WITH_ATTR(prev2_wd, "");
+	else if (HeadMatches1("ANALYZE"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_analyzables, NULL);
+
 /* BEGIN */
 	else if (Matches1("BEGIN"))
 		COMPLETE_WITH_LIST6("WORK", "TRANSACTION", "ISOLATION LEVEL", "READ", "DEFERRABLE", "NOT DEFERRABLE");
@@ -2817,18 +2839,34 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches1("EXECUTE"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_prepared_statements);
 
-/* EXPLAIN */
-
-	/*
-	 * Complete EXPLAIN [ANALYZE] [VERBOSE] with list of EXPLAIN-able commands
-	 */
+/*
+ * EXPLAIN [ ( option [, ...] ) ] statement
+ * EXPLAIN [ ANALYZE ] [ VERBOSE ] statement
+ */
 	else if (Matches1("EXPLAIN"))
 		COMPLETE_WITH_LIST7("SELECT", "INSERT", "DELETE", "UPDATE", "DECLARE",
 							"ANALYZE", "VERBOSE");
+	else if (HeadMatches2("EXPLAIN", "(*") &&
+			 !HeadMatches2("EXPLAIN", "(*)"))
+	{
+		/*
+		 * This fires if we're in an unfinished parenthesized option list.
+		 * get_previous_words treats a completed parenthesized option list as
+		 * one word, so the above test is correct.
+		 */
+		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
+			COMPLETE_WITH_LIST7("ANALYZE", "VERBOSE", "COSTS", "BUFFERS",
+								"TIMING", "SUMMARY", "FORMAT");
+		else if (TailMatches1("ANALYZE|VERBOSE|COSTS|BUFFERS|TIMING|SUMMARY"))
+			COMPLETE_WITH_LIST2("ON", "OFF");
+		else if (TailMatches1("FORMAT"))
+			COMPLETE_WITH_LIST4("TEXT", "XML", "JSON", "YAML");
+	}
 	else if (Matches2("EXPLAIN", "ANALYZE"))
 		COMPLETE_WITH_LIST6("SELECT", "INSERT", "DELETE", "UPDATE", "DECLARE",
 							"VERBOSE");
-	else if (Matches2("EXPLAIN", "VERBOSE") ||
+	else if (Matches2("EXPLAIN", "(*)") ||
+			 Matches2("EXPLAIN", "VERBOSE") ||
 			 Matches3("EXPLAIN", "ANALYZE", "VERBOSE"))
 		COMPLETE_WITH_LIST5("SELECT", "INSERT", "DELETE", "UPDATE", "DECLARE");
 
@@ -3383,8 +3421,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("OPTIONS");
 
 /*
- * VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]
- * VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]
+ * VACUUM [ ( option [, ...] ) ] [ table_and_columns [, ...] ]
+ * VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ table_and_columns [, ...] ]
  */
 	else if (Matches1("VACUUM"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
@@ -3392,22 +3430,36 @@ psql_completion(const char *text, int start, int end)
 								   " UNION SELECT 'FREEZE'"
 								   " UNION SELECT 'ANALYZE'"
 								   " UNION SELECT 'VERBOSE'");
-	else if (Matches2("VACUUM", "FULL|FREEZE"))
+	else if (Matches2("VACUUM", "FULL"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
+								   " UNION SELECT 'FREEZE'"
 								   " UNION SELECT 'ANALYZE'"
 								   " UNION SELECT 'VERBOSE'");
-	else if (Matches3("VACUUM", "FULL|FREEZE", "ANALYZE"))
+	else if (Matches2("VACUUM", "FREEZE") ||
+			 Matches3("VACUUM", "FULL", "FREEZE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
-								   " UNION SELECT 'VERBOSE'");
-	else if (Matches3("VACUUM", "FULL|FREEZE", "VERBOSE"))
+								   " UNION SELECT 'VERBOSE'"
+								   " UNION SELECT 'ANALYZE'");
+	else if (Matches2("VACUUM", "VERBOSE") ||
+			 Matches3("VACUUM", "FULL|FREEZE", "VERBOSE") ||
+			 Matches4("VACUUM", "FULL", "FREEZE", "VERBOSE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
 								   " UNION SELECT 'ANALYZE'");
-	else if (Matches2("VACUUM", "VERBOSE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
-								   " UNION SELECT 'ANALYZE'");
-	else if (Matches2("VACUUM", "ANALYZE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
-								   " UNION SELECT 'VERBOSE'");
+	else if (HeadMatches2("VACUUM", "(*") &&
+			 !HeadMatches2("VACUUM", "(*)"))
+	{
+		/*
+		 * This fires if we're in an unfinished parenthesized option list.
+		 * get_previous_words treats a completed parenthesized option list as
+		 * one word, so the above test is correct.
+		 */
+		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
+			COMPLETE_WITH_LIST5("FULL", "FREEZE", "ANALYZE", "VERBOSE",
+								"DISABLE_PAGE_SKIPPING");
+	}
+	else if (HeadMatches1("VACUUM") && TailMatches1("("))
+		/* "VACUUM (" should be caught above, so assume we want columns */
+		COMPLETE_WITH_ATTR(prev2_wd, "");
 	else if (HeadMatches1("VACUUM"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables, NULL);
 
@@ -3419,11 +3471,6 @@ psql_completion(const char *text, int start, int end)
 	 */
 	else if (Matches1("WITH"))
 		COMPLETE_WITH_CONST("RECURSIVE");
-
-/* ANALYZE */
-	/* Complete with list of appropriate relations */
-	else if (Matches1("ANALYZE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_analyzables, NULL);
 
 /* WHERE */
 	/* Simple case of the word before the where being the table name */
