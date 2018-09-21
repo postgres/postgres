@@ -5158,6 +5158,66 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
+# Defend against clang being used on x86-32 without SSE2 enabled.  As current
+# versions of clang do not understand -fexcess-precision=standard, the use of
+# x87 floating point operations leads to problems like isinf possibly returning
+# false for a value that is infinite when converted from the 80bit register to
+# the 8byte memory representation.
+#
+# Only perform the test if the compiler doesn't understand
+# -fexcess-precision=standard, that way a potentially fixed compiler will work
+# automatically.
+if test "$pgac_cv_prog_cc_cflags__fexcess_precision_standard" = no; then
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+#if defined(__clang__) && defined(__i386__) && !defined(__SSE2_MATH__)
+choke me
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  :
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	{ { $as_echo "$as_me:$LINENO: error: Compiling PostgreSQL with clang, on 32bit x86, requires SSE2 support. Use -msse2 or use gcc." >&5
+$as_echo "$as_me: error: Compiling PostgreSQL with clang, on 32bit x86, requires SSE2 support. Use -msse2 or use gcc." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
