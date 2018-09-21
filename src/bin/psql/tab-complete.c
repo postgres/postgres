@@ -446,16 +446,6 @@ static const SchemaQuery Query_for_list_of_functions[] = {
 	}
 };
 
-static const SchemaQuery Query_for_list_of_indexes = {
-	.catname = "pg_catalog.pg_class c",
-	.selcondition =
-	"c.relkind IN (" CppAsString2(RELKIND_INDEX) ", "
-	CppAsString2(RELKIND_PARTITIONED_INDEX) ")",
-	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
-	.namespace = "c.relnamespace",
-	.result = "pg_catalog.quote_ident(c.relname)",
-};
-
 static const SchemaQuery Query_for_list_of_procedures[] = {
 	{
 		.min_server_version = 110000,
@@ -512,12 +502,38 @@ static const SchemaQuery Query_for_list_of_partitioned_tables = {
 	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
-static const SchemaQuery Query_for_list_of_constraints_with_schema = {
-	.catname = "pg_catalog.pg_constraint c",
-	.selcondition = "c.conrelid <> 0",
-	.viscondition = "true",		/* there is no pg_constraint_is_visible */
-	.namespace = "c.connamespace",
-	.result = "pg_catalog.quote_ident(c.conname)",
+static const SchemaQuery Query_for_list_of_views = {
+	.catname = "pg_catalog.pg_class c",
+	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_VIEW) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
+};
+
+static const SchemaQuery Query_for_list_of_matviews = {
+	.catname = "pg_catalog.pg_class c",
+	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_MATVIEW) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
+};
+
+static const SchemaQuery Query_for_list_of_indexes = {
+	.catname = "pg_catalog.pg_class c",
+	.selcondition =
+	"c.relkind IN (" CppAsString2(RELKIND_INDEX) ", "
+	CppAsString2(RELKIND_PARTITIONED_INDEX) ")",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
+};
+
+/* All relations */
+static const SchemaQuery Query_for_list_of_relations = {
+	.catname = "pg_catalog.pg_class c",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
+	.namespace = "c.relnamespace",
+	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
 /* Relations supporting INSERT, UPDATE or DELETE */
@@ -533,14 +549,8 @@ static const SchemaQuery Query_for_list_of_updatables = {
 	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
-static const SchemaQuery Query_for_list_of_relations = {
-	.catname = "pg_catalog.pg_class c",
-	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
-	.namespace = "c.relnamespace",
-	.result = "pg_catalog.quote_ident(c.relname)",
-};
-
-static const SchemaQuery Query_for_list_of_tsvmf = {
+/* Relations supporting SELECT */
+static const SchemaQuery Query_for_list_of_selectables = {
 	.catname = "pg_catalog.pg_class c",
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
@@ -554,7 +564,11 @@ static const SchemaQuery Query_for_list_of_tsvmf = {
 	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
-static const SchemaQuery Query_for_list_of_tmf = {
+/* Relations supporting GRANT are currently same as those supporting SELECT */
+#define Query_for_list_of_grantables Query_for_list_of_selectables
+
+/* Relations supporting ANALYZE */
+static const SchemaQuery Query_for_list_of_analyzables = {
 	.catname = "pg_catalog.pg_class c",
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
@@ -566,7 +580,8 @@ static const SchemaQuery Query_for_list_of_tmf = {
 	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
-static const SchemaQuery Query_for_list_of_tpm = {
+/* Relations supporting index creation */
+static const SchemaQuery Query_for_list_of_indexables = {
 	.catname = "pg_catalog.pg_class c",
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
@@ -577,7 +592,8 @@ static const SchemaQuery Query_for_list_of_tpm = {
 	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
-static const SchemaQuery Query_for_list_of_tm = {
+/* Relations supporting VACUUM */
+static const SchemaQuery Query_for_list_of_vacuumables = {
 	.catname = "pg_catalog.pg_class c",
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
@@ -587,20 +603,15 @@ static const SchemaQuery Query_for_list_of_tm = {
 	.result = "pg_catalog.quote_ident(c.relname)",
 };
 
-static const SchemaQuery Query_for_list_of_views = {
-	.catname = "pg_catalog.pg_class c",
-	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_VIEW) ")",
-	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
-	.namespace = "c.relnamespace",
-	.result = "pg_catalog.quote_ident(c.relname)",
-};
+/* Relations supporting CLUSTER are currently same as those supporting VACUUM */
+#define Query_for_list_of_clusterables Query_for_list_of_vacuumables
 
-static const SchemaQuery Query_for_list_of_matviews = {
-	.catname = "pg_catalog.pg_class c",
-	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_MATVIEW) ")",
-	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
-	.namespace = "c.relnamespace",
-	.result = "pg_catalog.quote_ident(c.relname)",
+static const SchemaQuery Query_for_list_of_constraints_with_schema = {
+	.catname = "pg_catalog.pg_constraint c",
+	.selcondition = "c.conrelid <> 0",
+	.viscondition = "true",		/* there is no pg_constraint_is_visible */
+	.namespace = "c.connamespace",
+	.result = "pg_catalog.quote_ident(c.conname)",
 };
 
 static const SchemaQuery Query_for_list_of_statistics = {
@@ -2169,9 +2180,9 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("(");
 /* CLUSTER */
 	else if (Matches1("CLUSTER"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, "UNION SELECT 'VERBOSE'");
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_clusterables, "UNION SELECT 'VERBOSE'");
 	else if (Matches2("CLUSTER", "VERBOSE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_clusterables, NULL);
 	/* If we have CLUSTER <sth>, then add "USING" */
 	else if (Matches2("CLUSTER", MatchAnyExcept("VERBOSE|ON")))
 		COMPLETE_WITH_CONST("USING");
@@ -2326,11 +2337,11 @@ psql_completion(const char *text, int start, int end)
 
 	/*
 	 * Complete ... INDEX|CONCURRENTLY [<name>] ON with a list of relations
-	 * that can indexes can be created on
+	 * that indexes can be created on
 	 */
 	else if (TailMatches3("INDEX|CONCURRENTLY", MatchAny, "ON") ||
 			 TailMatches2("INDEX|CONCURRENTLY", "ON"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tpm, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexables, NULL);
 
 	/*
 	 * Complete CREATE|UNIQUE INDEX CONCURRENTLY with "ON" and existing
@@ -2903,8 +2914,7 @@ psql_completion(const char *text, int start, int end)
 	}
 
 	/*
-	 * Complete GRANT/REVOKE <sth> ON with a list of tables, views, and
-	 * sequences.
+	 * Complete GRANT/REVOKE <sth> ON with a list of appropriate relations.
 	 *
 	 * Keywords like DATABASE, FUNCTION, LANGUAGE and SCHEMA added to query
 	 * result via UNION; seems to work intuitively.
@@ -2922,7 +2932,7 @@ psql_completion(const char *text, int start, int end)
 		if (HeadMatches3("ALTER", "DEFAULT", "PRIVILEGES"))
 			COMPLETE_WITH_LIST7("TABLES", "SEQUENCES", "FUNCTIONS", "PROCEDURES", "ROUTINES", "TYPES", "SCHEMAS");
 		else
-			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf,
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_grantables,
 									   " UNION SELECT 'ALL FUNCTIONS IN SCHEMA'"
 									   " UNION SELECT 'ALL PROCEDURES IN SCHEMA'"
 									   " UNION SELECT 'ALL ROUTINES IN SCHEMA'"
@@ -2977,7 +2987,7 @@ psql_completion(const char *text, int start, int end)
 		else if (TailMatches1("SEQUENCE"))
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences, NULL);
 		else if (TailMatches1("TABLE"))
-			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_grantables, NULL);
 		else if (TailMatches1("TABLESPACE"))
 			COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
 		else if (TailMatches1("TYPE"))
@@ -3180,7 +3190,7 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches1("REINDEX"))
 		COMPLETE_WITH_LIST5("TABLE", "INDEX", "SYSTEM", "SCHEMA", "DATABASE");
 	else if (Matches2("REINDEX", "TABLE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexables, NULL);
 	else if (Matches2("REINDEX", "INDEX"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
 	else if (Matches2("REINDEX", "SCHEMA"))
@@ -3327,7 +3337,7 @@ psql_completion(const char *text, int start, int end)
 
 /* TABLE, but not TABLE embedded in other commands */
 	else if (Matches1("TABLE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables, NULL);
 
 /* TABLESAMPLE */
 	else if (TailMatches1("TABLESAMPLE"))
@@ -3377,29 +3387,29 @@ psql_completion(const char *text, int start, int end)
  * VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]
  */
 	else if (Matches1("VACUUM"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
 								   " UNION SELECT 'FULL'"
 								   " UNION SELECT 'FREEZE'"
 								   " UNION SELECT 'ANALYZE'"
 								   " UNION SELECT 'VERBOSE'");
 	else if (Matches2("VACUUM", "FULL|FREEZE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
 								   " UNION SELECT 'ANALYZE'"
 								   " UNION SELECT 'VERBOSE'");
 	else if (Matches3("VACUUM", "FULL|FREEZE", "ANALYZE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
 								   " UNION SELECT 'VERBOSE'");
 	else if (Matches3("VACUUM", "FULL|FREEZE", "VERBOSE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
 								   " UNION SELECT 'ANALYZE'");
 	else if (Matches2("VACUUM", "VERBOSE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
 								   " UNION SELECT 'ANALYZE'");
 	else if (Matches2("VACUUM", "ANALYZE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables,
 								   " UNION SELECT 'VERBOSE'");
 	else if (HeadMatches1("VACUUM"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables, NULL);
 
 /* WITH [RECURSIVE] */
 
@@ -3411,9 +3421,9 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_CONST("RECURSIVE");
 
 /* ANALYZE */
-	/* Complete with list of tables */
+	/* Complete with list of appropriate relations */
 	else if (Matches1("ANALYZE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tmf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_analyzables, NULL);
 
 /* WHERE */
 	/* Simple case of the word before the where being the table name */
@@ -3423,11 +3433,11 @@ psql_completion(const char *text, int start, int end)
 /* ... FROM ... */
 /* TODO: also include SRF ? */
 	else if (TailMatches1("FROM") && !Matches3("COPY|\\copy", MatchAny, "FROM"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables, NULL);
 
 /* ... JOIN ... */
 	else if (TailMatches1("JOIN"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables, NULL);
 
 /* Backslash commands */
 /* TODO:  \dc \dd \dl */
@@ -3477,7 +3487,7 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatchesCS1("\\dn*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
 	else if (TailMatchesCS1("\\dp") || TailMatchesCS1("\\z"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_grantables, NULL);
 	else if (TailMatchesCS1("\\ds*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences, NULL);
 	else if (TailMatchesCS1("\\dt*"))
