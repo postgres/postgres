@@ -22,7 +22,7 @@ struct dsa_area;
 typedef struct dsa_area dsa_area;
 
 /*
- * If this system only uses a 32-bit value for Size, then use the 32-bit
+ * If this system only uses a 32-bit value for size_t, then use the 32-bit
  * implementation of DSA.  This limits the amount of DSA that can be created
  * to something significantly less than the entire 4GB address space because
  * the DSA pointer must encode both a segment identifier and an offset, but
@@ -102,7 +102,7 @@ typedef dsm_handle dsa_handle;
 extern void dsa_startup(void);
 
 extern dsa_area *dsa_create(int tranche_id);
-extern dsa_area *dsa_create_in_place(void *place, Size size,
+extern dsa_area *dsa_create_in_place(void *place, size_t size,
 					int tranche_id, dsm_segment *segment);
 extern dsa_area *dsa_attach(dsa_handle handle);
 extern dsa_area *dsa_attach_in_place(void *place, dsm_segment *segment);
@@ -113,10 +113,10 @@ extern void dsa_pin_mapping(dsa_area *area);
 extern void dsa_detach(dsa_area *area);
 extern void dsa_pin(dsa_area *area);
 extern void dsa_unpin(dsa_area *area);
-extern void dsa_set_size_limit(dsa_area *area, Size limit);
-extern Size dsa_minimum_size(void);
+extern void dsa_set_size_limit(dsa_area *area, size_t limit);
+extern size_t dsa_minimum_size(void);
 extern dsa_handle dsa_get_handle(dsa_area *area);
-extern dsa_pointer dsa_allocate_extended(dsa_area *area, Size size, int flags);
+extern dsa_pointer dsa_allocate_extended(dsa_area *area, size_t size, int flags);
 extern void dsa_free(dsa_area *area, dsa_pointer dp);
 extern void *dsa_get_address(dsa_area *area, dsa_pointer dp);
 extern void dsa_trim(dsa_area *area);

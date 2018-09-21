@@ -65,7 +65,7 @@
  * double this size, and so on.  Larger segments may be created if necessary
  * to satisfy large requests.
  */
-#define DSA_INITIAL_SEGMENT_SIZE ((Size) (1 * 1024 * 1024))
+#define DSA_INITIAL_SEGMENT_SIZE ((size_t) (1 * 1024 * 1024))
 
 /*
  * How many segments to create before we double the segment size.  If this is
@@ -98,7 +98,7 @@
 #define DSA_OFFSET_BITMASK (((dsa_pointer) 1 << DSA_OFFSET_WIDTH) - 1)
 
 /* The maximum size of a DSM segment. */
-#define DSA_MAX_SEGMENT_SIZE ((Size) 1 << DSA_OFFSET_WIDTH)
+#define DSA_MAX_SEGMENT_SIZE ((size_t) 1 << DSA_OFFSET_WIDTH)
 
 /* Number of pages (see FPM_PAGE_SIZE) per regular superblock. */
 #define DSA_PAGES_PER_SUPERBLOCK		16
@@ -121,7 +121,7 @@
 #define DSA_EXTRACT_OFFSET(dp) ((dp) & DSA_OFFSET_BITMASK)
 
 /* The type used for index segment indexes (zero based). */
-typedef Size dsa_segment_index;
+typedef size_t dsa_segment_index;
 
 /* Sentinel value for dsa_segment_index indicating 'none' or 'end'. */
 #define DSA_SEGMENT_INDEX_NONE (~(dsa_segment_index)0)
@@ -153,9 +153,9 @@ typedef struct
 	/* Sanity check magic value. */
 	uint32		magic;
 	/* Total number of pages in this segment (excluding metadata area). */
-	Size		usable_pages;
+	size_t		usable_pages;
 	/* Total size of this segment in bytes. */
-	Size		size;
+	size_t		size;
 
 	/*
 	 * Index of the segment that precedes this one in the same segment bin, or
@@ -169,7 +169,7 @@ typedef struct
 	 */
 	dsa_segment_index next;
 	/* The index of the bin that contains this segment. */
-	Size		bin;
+	size_t		bin;
 
 	/*
 	 * A flag raised to indicate that this segment is being returned to the
@@ -197,7 +197,7 @@ typedef struct
 	dsa_pointer prevspan;		/* Previous span. */
 	dsa_pointer nextspan;		/* Next span. */
 	dsa_pointer start;			/* Starting address. */
-	Size		npages;			/* Length of span in pages. */
+	size_t		npages;			/* Length of span in pages. */
 	uint16		size_class;		/* Size class. */
 	uint16		ninitialized;	/* Maximum number of objects ever allocated. */
 	uint16		nallocatable;	/* Number of objects currently allocatable. */
@@ -308,9 +308,9 @@ typedef struct
 	/* The object pools for each size class. */
 	dsa_area_pool pools[DSA_NUM_SIZE_CLASSES];
 	/* The total size of all active segments. */
-	Size		total_segment_size;
+	size_t		total_segment_size;
 	/* The maximum total size of backing storage we are allowed. */
-	Size		max_total_segment_size;
+	size_t		max_total_segment_size;
 	/* Highest used segment index in the history of this area. */
 	dsa_segment_index high_segment_index;
 	/* The reference count for this area. */
@@ -318,7 +318,7 @@ typedef struct
 	/* A flag indicating that this area has been pinned. */
 	bool		pinned;
 	/* The number of times that segments have been freed. */
-	Size		freed_segment_counter;
+	size_t		freed_segment_counter;
 	/* The LWLock tranche ID. */
 	int			lwlock_tranche_id;
 	/* The general lock (protects everything except object pools). */
@@ -371,7 +371,7 @@ struct dsa_area
 	dsa_segment_index high_segment_index;
 
 	/* The last observed freed_segment_counter. */
-	Size		freed_segment_counter;
+	size_t		freed_segment_counter;
 };
 
 #define DSA_SPAN_NOTHING_FREE	((uint16) -1)
@@ -382,7 +382,7 @@ struct dsa_area
 	(segment_map_ptr - &area->segment_maps[0])
 
 static void init_span(dsa_area *area, dsa_pointer span_pointer,
-		  dsa_area_pool *pool, dsa_pointer start, Size npages,
+		  dsa_area_pool *pool, dsa_pointer start, size_t npages,
 		  uint16 size_class);
 static bool transfer_first_span(dsa_area *area, dsa_area_pool *pool,
 					int fromclass, int toclass);
@@ -396,8 +396,8 @@ static void unlink_span(dsa_area *area, dsa_area_span *span);
 static void add_span_to_fullness_class(dsa_area *area, dsa_area_span *span,
 						   dsa_pointer span_pointer, int fclass);
 static void unlink_segment(dsa_area *area, dsa_segment_map *segment_map);
-static dsa_segment_map *get_best_segment(dsa_area *area, Size npages);
-static dsa_segment_map *make_new_segment(dsa_area *area, Size requested_pages);
+static dsa_segment_map *get_best_segment(dsa_area *area, size_t npages);
+static dsa_segment_map *make_new_segment(dsa_area *area, size_t requested_pages);
 static dsa_area *create_internal(void *place, size_t size,
 				int tranche_id,
 				dsm_handle control_handle,
@@ -662,7 +662,7 @@ dsa_pin_mapping(dsa_area *area)
  * flags.
  */
 dsa_pointer
-dsa_allocate_extended(dsa_area *area, Size size, int flags)
+dsa_allocate_extended(dsa_area *area, size_t size, int flags)
 {
 	uint16		size_class;
 	dsa_pointer start_pointer;
@@ -685,8 +685,8 @@ dsa_allocate_extended(dsa_area *area, Size size, int flags)
 	 */
 	if (size > dsa_size_classes[lengthof(dsa_size_classes) - 1])
 	{
-		Size		npages = fpm_size_to_pages(size);
-		Size		first_page;
+		size_t		npages = fpm_size_to_pages(size);
+		size_t		first_page;
 		dsa_pointer span_pointer;
 		dsa_area_pool *pool = &area->control->pools[DSA_SCLASS_SPAN_LARGE];
 
@@ -818,7 +818,7 @@ dsa_free(dsa_area *area, dsa_pointer dp)
 	dsa_area_span *span;
 	char	   *superblock;
 	char	   *object;
-	Size		size;
+	size_t		size;
 	int			size_class;
 
 	/* Make sure we don't have a stale segment in the slot 'dp' refers to. */
@@ -925,7 +925,7 @@ void *
 dsa_get_address(dsa_area *area, dsa_pointer dp)
 {
 	dsa_segment_index index;
-	Size		offset;
+	size_t		offset;
 
 	/* Convert InvalidDsaPointer to NULL. */
 	if (!DsaPointerIsValid(dp))
@@ -998,7 +998,7 @@ dsa_unpin(dsa_area *area)
  * backends that have attached to them.
  */
 void
-dsa_set_size_limit(dsa_area *area, Size limit)
+dsa_set_size_limit(dsa_area *area, size_t limit)
 {
 	LWLockAcquire(DSA_AREA_LOCK(area), LW_EXCLUSIVE);
 	area->control->max_total_segment_size = limit;
@@ -1057,7 +1057,7 @@ dsa_trim(dsa_area *area)
 void
 dsa_dump(dsa_area *area)
 {
-	Size		i,
+	size_t		i,
 				j;
 
 	/*
@@ -1158,10 +1158,10 @@ dsa_dump(dsa_area *area)
  * Return the smallest size that you can successfully provide to
  * dsa_create_in_place.
  */
-Size
+size_t
 dsa_minimum_size(void)
 {
-	Size		size;
+	size_t		size;
 	int			pages = 0;
 
 	size = MAXALIGN(sizeof(dsa_area_control)) +
@@ -1189,9 +1189,9 @@ create_internal(void *place, size_t size,
 	dsa_area_control *control;
 	dsa_area   *area;
 	dsa_segment_map *segment_map;
-	Size		usable_pages;
-	Size		total_pages;
-	Size		metadata_bytes;
+	size_t		usable_pages;
+	size_t		total_pages;
+	size_t		metadata_bytes;
 	int			i;
 
 	/* Sanity check on the space we have to work in. */
@@ -1224,7 +1224,7 @@ create_internal(void *place, size_t size,
 	control->segment_header.freed = false;
 	control->segment_header.size = DSA_INITIAL_SEGMENT_SIZE;
 	control->handle = control_handle;
-	control->max_total_segment_size = (Size) -1;
+	control->max_total_segment_size = (size_t) -1;
 	control->total_segment_size = size;
 	memset(&control->segment_handles[0], 0,
 		   sizeof(dsm_handle) * DSA_MAX_SEGMENTS);
@@ -1337,11 +1337,11 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 static void
 init_span(dsa_area *area,
 		  dsa_pointer span_pointer,
-		  dsa_area_pool *pool, dsa_pointer start, Size npages,
+		  dsa_area_pool *pool, dsa_pointer start, size_t npages,
 		  uint16 size_class)
 {
 	dsa_area_span *span = dsa_get_address(area, span_pointer);
-	Size		obsize = dsa_size_classes[size_class];
+	size_t		obsize = dsa_size_classes[size_class];
 
 	/*
 	 * The per-pool lock must be held because we manipulate the span list for
@@ -1437,7 +1437,7 @@ alloc_object(dsa_area *area, int size_class)
 	dsa_pointer block;
 	dsa_pointer result;
 	char	   *object;
-	Size		size;
+	size_t		size;
 
 	/*
 	 * Even though ensure_active_superblock can in turn call alloc_object if
@@ -1523,12 +1523,12 @@ ensure_active_superblock(dsa_area *area, dsa_area_pool *pool,
 {
 	dsa_pointer span_pointer;
 	dsa_pointer start_pointer;
-	Size		obsize = dsa_size_classes[size_class];
-	Size		nmax;
+	size_t		obsize = dsa_size_classes[size_class];
+	size_t		nmax;
 	int			fclass;
-	Size		npages = 1;
-	Size		first_page;
-	Size		i;
+	size_t		npages = 1;
+	size_t		first_page;
+	size_t		i;
 	dsa_segment_map *segment_map;
 
 	Assert(LWLockHeldByMe(DSA_SCLASS_LOCK(area, size_class)));
@@ -1959,9 +1959,9 @@ unlink_segment(dsa_area *area, dsa_segment_map *segment_map)
  * pages map.
  */
 static dsa_segment_map *
-get_best_segment(dsa_area *area, Size npages)
+get_best_segment(dsa_area *area, size_t npages)
 {
-	Size		bin;
+	size_t		bin;
 
 	Assert(LWLockHeldByMe(DSA_AREA_LOCK(area)));
 	check_for_freed_segments_locked(area);
@@ -1978,7 +1978,7 @@ get_best_segment(dsa_area *area, Size npages)
 		 * The minimum contiguous size that any segment in this bin should
 		 * have.  We'll re-bin if we see segments with fewer.
 		 */
-		Size		threshold = (Size) 1 << (bin - 1);
+		size_t		threshold = (size_t) 1 << (bin - 1);
 		dsa_segment_index segment_index;
 
 		/* Search this bin for a segment with enough contiguous space. */
@@ -1987,7 +1987,7 @@ get_best_segment(dsa_area *area, Size npages)
 		{
 			dsa_segment_map *segment_map;
 			dsa_segment_index next_segment_index;
-			Size		contiguous_pages;
+			size_t		contiguous_pages;
 
 			segment_map = get_segment_by_index(area, segment_index);
 			next_segment_index = segment_map->header->next;
@@ -2003,7 +2003,7 @@ get_best_segment(dsa_area *area, Size npages)
 			/* Re-bin it if it's no longer in the appropriate bin. */
 			if (contiguous_pages < threshold)
 			{
-				Size		new_bin;
+				size_t		new_bin;
 
 				new_bin = contiguous_pages_to_segment_bin(contiguous_pages);
 
@@ -2051,13 +2051,13 @@ get_best_segment(dsa_area *area, Size npages)
  * segments would be exceeded.
  */
 static dsa_segment_map *
-make_new_segment(dsa_area *area, Size requested_pages)
+make_new_segment(dsa_area *area, size_t requested_pages)
 {
 	dsa_segment_index new_index;
-	Size		metadata_bytes;
-	Size		total_size;
-	Size		total_pages;
-	Size		usable_pages;
+	size_t		metadata_bytes;
+	size_t		total_size;
+	size_t		total_pages;
+	size_t		usable_pages;
 	dsa_segment_map *segment_map;
 	dsm_segment *segment;
 
@@ -2095,7 +2095,7 @@ make_new_segment(dsa_area *area, Size requested_pages)
 	 * pages we can fit.
 	 */
 	total_size = DSA_INITIAL_SEGMENT_SIZE *
-		((Size) 1 << (new_index / DSA_NUM_SEGMENTS_AT_EACH_SIZE));
+		((size_t) 1 << (new_index / DSA_NUM_SEGMENTS_AT_EACH_SIZE));
 	total_size = Min(total_size, DSA_MAX_SEGMENT_SIZE);
 	total_size = Min(total_size,
 					 area->control->max_total_segment_size -
@@ -2222,7 +2222,7 @@ make_new_segment(dsa_area *area, Size requested_pages)
 static void
 check_for_freed_segments(dsa_area *area)
 {
-	Size		freed_segment_counter;
+	size_t		freed_segment_counter;
 
 	/*
 	 * Any other process that has freed a segment has incremented
@@ -2258,7 +2258,7 @@ check_for_freed_segments(dsa_area *area)
 static void
 check_for_freed_segments_locked(dsa_area *area)
 {
-	Size		freed_segment_counter;
+	size_t		freed_segment_counter;
 	int		i;
 
 	Assert(LWLockHeldByMe(DSA_AREA_LOCK(area)));
