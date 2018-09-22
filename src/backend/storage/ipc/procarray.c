@@ -542,14 +542,8 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	 * group XID clearing, saving a pointer to the head of the list.  Trying
 	 * to pop elements one at a time could lead to an ABA problem.
 	 */
-	while (true)
-	{
-		nextidx = pg_atomic_read_u32(&procglobal->procArrayGroupFirst);
-		if (pg_atomic_compare_exchange_u32(&procglobal->procArrayGroupFirst,
-										   &nextidx,
-										   INVALID_PGPROCNO))
-			break;
-	}
+	nextidx = pg_atomic_exchange_u32(&procglobal->procArrayGroupFirst,
+									 INVALID_PGPROCNO);
 
 	/* Remember head of list so we can perform wakeups after dropping lock. */
 	wakeidx = nextidx;
