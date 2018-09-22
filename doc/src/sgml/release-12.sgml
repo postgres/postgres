@@ -1,0 +1,11 @@
+<!-- doc/src/sgml/release-12.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-12">
+  <title>Release 12</title>
+
+  <para>JIT is enabled by default in this release.  It was disabled by
+  default in PG 11, so we document is enablement here.
+  </para>
+
+ </sect1>
