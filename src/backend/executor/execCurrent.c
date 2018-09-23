@@ -23,7 +23,8 @@
 
 
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);
-static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
+static ScanState *search_plan_tree(PlanState *node, Oid table_oid,
+				 bool *pending_rescan);
 
 
 /*
@@ -156,8 +157,10 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		 * aggregation.
 		 */
 		ScanState  *scanstate;
+		bool		pending_rescan = false;
 
-		scanstate = search_plan_tree(queryDesc->planstate, table_oid);
+		scanstate = search_plan_tree(queryDesc->planstate, table_oid,
+									 &pending_rescan);
 		if (!scanstate)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -177,8 +180,12 @@ execCurrentOf(CurrentOfExpr *cexpr,
 					 errmsg("cursor \"%s\" is not positioned on a row",
 							cursor_name)));
 
-		/* Now OK to return false if we found an inactive scan */
-		if (TupIsNull(scanstate->ss_ScanTupleSlot))
+		/*
+		 * Now OK to return false if we found an inactive scan.  It is
+		 * inactive either if it's not positioned on a row, or there's a
+		 * rescan pending for it.
+		 */
+		if (TupIsNull(scanstate->ss_ScanTupleSlot) || pending_rescan)
 			return false;
 
 		/*
@@ -291,10 +298,20 @@ fetch_cursor_param_value(ExprContext *econtext, int paramId)
  *
  * Search through a PlanState tree for a scan node on the specified table.
  * Return NULL if not found or multiple candidates.
+ *
+ * If a candidate is found, set *pending_rescan to true if that candidate
+ * or any node above it has a pending rescan action, i.e. chgParam != NULL.
+ * That indicates that we shouldn't consider the node to be positioned on a
+ * valid tuple, even if its own state would indicate that it is.  (Caller
+ * must initialize *pending_rescan to false, and should not trust its state
+ * if multiple candidates are found.)
  */
 static ScanState *
-search_plan_tree(PlanState *node, Oid table_oid)
+search_plan_tree(PlanState *node, Oid table_oid,
+				 bool *pending_rescan)
 {
+	ScanState  *result = NULL;
+
 	if (node == NULL)
 		return NULL;
 	switch (nodeTag(node))
@@ -314,7 +331,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 				ScanState  *sstate = (ScanState *) node;
 
 				if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
-					return sstate;
+					result = sstate;
 				break;
 			}
 
@@ -325,13 +342,13 @@ search_plan_tree(PlanState *node, Oid table_oid)
 		case T_AppendState:
 			{
 				AppendState *astate = (AppendState *) node;
-				ScanState  *result = NULL;
 				int			i;
 
 				for (i = 0; i < astate->as_nplans; i++)
 				{
 					ScanState  *elem = search_plan_tree(astate->appendplans[i],
-														table_oid);
+														table_oid,
+														pending_rescan);
 
 					if (!elem)
 						continue;
@@ -339,7 +356,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 						return NULL;	/* multiple matches */
 					result = elem;
 				}
-				return result;
+				break;
 			}
 
 			/*
@@ -348,13 +365,13 @@ search_plan_tree(PlanState *node, Oid table_oid)
 		case T_MergeAppendState:
 			{
 				MergeAppendState *mstate = (MergeAppendState *) node;
-				ScanState  *result = NULL;
 				int			i;
 
 				for (i = 0; i < mstate->ms_nplans; i++)
 				{
 					ScanState  *elem = search_plan_tree(mstate->mergeplans[i],
-														table_oid);
+														table_oid,
+														pending_rescan);
 
 					if (!elem)
 						continue;
@@ -362,7 +379,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 						return NULL;	/* multiple matches */
 					result = elem;
 				}
-				return result;
+				break;
 			}
 
 			/*
@@ -371,18 +388,31 @@ search_plan_tree(PlanState *node, Oid table_oid)
 			 */
 		case T_ResultState:
 		case T_LimitState:
-			return search_plan_tree(node->lefttree, table_oid);
+			result = search_plan_tree(node->lefttree,
+									  table_oid,
+									  pending_rescan);
+			break;
 
 			/*
 			 * SubqueryScan too, but it keeps the child in a different place
 			 */
 		case T_SubqueryScanState:
-			return search_plan_tree(((SubqueryScanState *) node)->subplan,
-									table_oid);
+			result = search_plan_tree(((SubqueryScanState *) node)->subplan,
+									  table_oid,
+									  pending_rescan);
+			break;
 
 		default:
 			/* Otherwise, assume we can't descend through it */
 			break;
 	}
-	return NULL;
+
+	/*
+	 * If we found a candidate at or below this node, then this node's
+	 * chgParam indicates a pending rescan that will affect the candidate.
+	 */
+	if (result && node->chgParam != NULL)
+		*pending_rescan = true;
+
+	return result;
 }
