@@ -1270,6 +1270,76 @@ SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
 (0 rows)
 
 ROLLBACK;
+-- Check behavior with rewinding to a previous child scan node,
+-- as per bug #15395
+BEGIN;
+CREATE TABLE current_check (currentid int, payload text);
+CREATE TABLE current_check_1 () INHERITS (current_check);
+CREATE TABLE current_check_2 () INHERITS (current_check);
+INSERT INTO current_check_1 SELECT i, 'p' || i FROM generate_series(1,9) i;
+INSERT INTO current_check_2 SELECT i, 'P' || i FROM generate_series(10,19) i;
+DECLARE c1 SCROLL CURSOR FOR SELECT * FROM current_check;
+-- This tests the fetch-backwards code path
+FETCH ABSOLUTE 12 FROM c1;
+ currentid | payload 
+-----------+---------
+        12 | P12
+(1 row)
+
+FETCH ABSOLUTE 8 FROM c1;
+ currentid | payload 
+-----------+---------
+         8 | p8
+(1 row)
+
+DELETE FROM current_check WHERE CURRENT OF c1 RETURNING *;
+ currentid | payload 
+-----------+---------
+         8 | p8
+(1 row)
+
+-- This tests the ExecutorRewind code path
+FETCH ABSOLUTE 13 FROM c1;
+ currentid | payload 
+-----------+---------
+        13 | P13
+(1 row)
+
+FETCH ABSOLUTE 1 FROM c1;
+ currentid | payload 
+-----------+---------
+         1 | p1
+(1 row)
+
+DELETE FROM current_check WHERE CURRENT OF c1 RETURNING *;
+ currentid | payload 
+-----------+---------
+         1 | p1
+(1 row)
+
+SELECT * FROM current_check;
+ currentid | payload 
+-----------+---------
+         2 | p2
+         3 | p3
+         4 | p4
+         5 | p5
+         6 | p6
+         7 | p7
+         9 | p9
+        10 | P10
+        11 | P11
+        12 | P12
+        13 | P13
+        14 | P14
+        15 | P15
+        16 | P16
+        17 | P17
+        18 | P18
+        19 | P19
+(17 rows)
+
+ROLLBACK;
 -- Make sure snapshot management works okay, per bug report in
 -- 235395b90909301035v7228ce63q392931f15aa74b31@mail.gmail.com
 BEGIN;
