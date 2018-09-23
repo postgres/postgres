@@ -263,6 +263,12 @@ ExecScanReScan(ScanState *node)
 {
 	EState	   *estate = node->ps.state;
 
+	/*
+	 * We must clear the scan tuple so that observers (e.g., execCurrent.c)
+	 * can tell that this plan node is not positioned on a tuple.
+	 */
+	ExecClearTuple(node->ss_ScanTupleSlot);
+
 	/* Rescan EvalPlanQual tuple if we're inside an EvalPlanQual recheck */
 	if (estate->es_epqScanDone != NULL)
 	{
