@@ -793,13 +793,26 @@ PostgreSQL documentation
       <term><option>--load-via-partition-root</option></term>
       <listitem>
        <para>
-        When dumping a <command>COPY</command> or <command>INSERT</command> statement for a partitioned table,
-        target the root of the partitioning hierarchy which contains it rather
-        than the partition itself.  This may be useful when reloading data on
-        a server where rows do not always fall into the same partitions as
-        they did on the original server.  This could happen, for example, if
-        the partitioning column is of type text and the two system have
-        different definitions of the collation used to partition the data.
+        When dumping data for a table partition, make
+        the <command>COPY</command> or <command>INSERT</command> statements
+        target the root of the partitioning hierarchy that contains it, rather
+        than the partition itself.  This causes the appropriate partition to
+        be re-determined for each row when the data is loaded.  This may be
+        useful when reloading data on a server where rows do not always fall
+        into the same partitions as they did on the original server.  That
+        could happen, for example, if the partitioning column is of type text
+        and the two systems have different definitions of the collation used
+        to sort the partitioning column.
+       </para>
+
+       <para>
+        It is best not to use parallelism when restoring from an archive made
+        with this option, because <application>pg_restore</application> will
+        not know exactly which partition(s) a given archive data item will
+        load data into.  This could result in inefficiency due to lock
+        conflicts between parallel jobs, or perhaps even reload failures due
+        to foreign key constraints being set up before all the relevant data
+        is loaded.
        </para>
       </listitem>
      </varlistentry>
