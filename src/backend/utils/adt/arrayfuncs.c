@@ -1030,8 +1030,8 @@ array_out(PG_FUNCTION_ARGS)
 	 */
 	bool	   *needquotes,
 				needdims = false;
+	size_t		overall_length;
 	int			nitems,
-				overall_length,
 				i,
 				j,
 				k,
@@ -1105,7 +1105,7 @@ array_out(PG_FUNCTION_ARGS)
 	 */
 	values = (char **) palloc(nitems * sizeof(char *));
 	needquotes = (bool *) palloc(nitems * sizeof(bool));
-	overall_length = 1;			/* don't forget to count \0 at end. */
+	overall_length = 0;
 
 	array_iter_setup(&iter, v);
 
@@ -1158,19 +1158,24 @@ array_out(PG_FUNCTION_ARGS)
 		/* Count the pair of double quotes, if needed */
 		if (needquote)
 			overall_length += 2;
-		/* and the comma */
+		/* and the comma (or other typdelim delimiter) */
 		overall_length += 1;
 	}
 
 	/*
-	 * count total number of curly braces in output string
+	 * The very last array element doesn't have a typdelim delimiter after it,
+	 * but that's OK; that space is needed for the trailing '\0'.
+	 *
+	 * Now count total number of curly brace pairs in output string.
 	 */
 	for (i = j = 0, k = 1; i < ndim; i++)
-		k *= dims[i], j += k;
+	{
+		j += k, k *= dims[i];
+	}
+	overall_length += 2 * j;
 
+	/* Format explicit dimensions if required */
 	dims_str[0] = '\0';
-
-	/* add explicit dimensions if required */
 	if (needdims)
 	{
 		char	   *ptr = dims_str;
@@ -1182,9 +1187,11 @@ array_out(PG_FUNCTION_ARGS)
 		}
 		*ptr++ = *ASSGN;
 		*ptr = '\0';
+		overall_length += ptr - dims_str;
 	}
 
-	retval = (char *) palloc(strlen(dims_str) + overall_length + 2 * j);
+	/* Now construct the output string */
+	retval = (char *) palloc(overall_length);
 	p = retval;
 
 #define APPENDSTR(str)	(strcpy(p, (str)), p += strlen(p))
@@ -1222,20 +1229,25 @@ array_out(PG_FUNCTION_ARGS)
 
 		for (i = ndim - 1; i >= 0; i--)
 		{
-			indx[i] = (indx[i] + 1) % dims[i];
-			if (indx[i])
+			if (++(indx[i]) < dims[i])
 			{
 				APPENDCHAR(typdelim);
 				break;
 			}
 			else
+			{
+				indx[i] = 0;
 				APPENDCHAR('}');
+			}
 		}
 		j = i;
 	} while (j != -1);
 
 #undef APPENDSTR
 #undef APPENDCHAR
+
+	/* Assert that we calculated the string length accurately */
+	Assert(overall_length == (p - retval + 1));
 
 	pfree(values);
 	pfree(needquotes);
