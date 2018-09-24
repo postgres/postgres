@@ -15962,7 +15962,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
  </sect1>
 
  <sect1 id="functions-info">
-  <title>System Information Functions</title>
+  <title>System Information Functions and Operators</title>
 
   <para>
    <xref linkend="functions-info-session-table"/> shows several
@@ -16891,6 +16891,141 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     security is active for the specified table in the context of the
     <function>current_user</function> and environment. The table can
     be specified by name or by OID.
+   </para>
+
+  <para>
+   <xref linkend="functions-aclitem-fn-table"/> shows the operators
+   available for the <type>aclitem</type> type, which is the internal
+   representation of access privileges. An <type>aclitem</type> entry
+   describes the permissions of a grantee, whether they are grantable
+   or not, and which grantor granted them. For instance,
+   <literal>calvin=r*w/hobbes</literal> specifies that the role
+   <literal>calvin</literal> has the grantable privilege
+   <literal>SELECT</literal> (<literal>r*</literal>) and the non-grantable
+   privilege <literal>UPDATE</literal> (<literal>w</literal>), granted by
+   the role <literal>hobbes</literal>. An empty grantee stands for
+   <literal>PUBLIC</literal>.
+  </para>
+
+   <indexterm>
+    <primary>aclitem</primary>
+   </indexterm>
+   <indexterm>
+    <primary>acldefault</primary>
+   </indexterm>
+   <indexterm>
+    <primary>aclitemeq</primary>
+   </indexterm>
+   <indexterm>
+    <primary>aclcontains</primary>
+   </indexterm>
+   <indexterm>
+    <primary>aclexplode</primary>
+   </indexterm>
+   <indexterm>
+    <primary>makeaclitem</primary>
+   </indexterm>
+
+    <table id="functions-aclitem-op-table">
+     <title><type>aclitem</type> Operators</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Operator</entry>
+        <entry>Description</entry>
+        <entry>Example</entry>
+        <entry>Result</entry>
+       </row>
+      </thead>
+      <tbody>
+
+       <row>
+        <entry> <literal>=</literal> </entry>
+        <entry>equal</entry>
+        <entry><literal>'calvin=r*w/hobbes'::aclitem = 'calvin=r*w*/hobbes'::aclitem</literal></entry>
+        <entry><literal>f</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>@&gt;</literal> </entry>
+        <entry>contains element</entry>
+        <entry><literal>'{calvin=r*w/hobbes,hobbes=r*w*/postgres}'::aclitem[] @> 'calvin=r*w/hobbes'::aclitem</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>~</literal> </entry>
+        <entry>contains element</entry>
+        <entry><literal>'{calvin=r*w/hobbes,hobbes=r*w*/postgres}'::aclitem[] ~ 'calvin=r*w/hobbes'::aclitem</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    <xref linkend="functions-aclitem-fn-table"/> shows some additional
+    functions to manage the <type>aclitem</type> type.
+   </para>
+
+   <table id="functions-aclitem-fn-table">
+    <title><type>aclitem</type> Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><literal><function>acldefault</function>(<parameter>type</parameter>,
+                                  <parameter>ownerId</parameter>)</literal></entry>
+       <entry><type>aclitem[]</type></entry>
+       <entry>get the hardcoded default access privileges for an object belonging to <parameter>ownerId</parameter></entry>
+      </row>
+      <row>
+       <entry><literal><function>aclexplode</function>(<parameter>aclitem[]</parameter>)</literal></entry>
+       <entry><type>setof record</type></entry>
+       <entry>get <type>aclitem</type> array as tuples</entry>
+      </row>
+      <row>
+       <entry><literal><function>makeaclitem</function>(<parameter>grantee</parameter>, <parameter>grantor</parameter>, <parameter>privilege</parameter>, <parameter>grantable</parameter>)</literal></entry>
+       <entry><type>aclitem</type></entry>
+       <entry>build an <type>aclitem</type> from input</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>acldefault</function> returns the hardcoded default access privileges
+    for an object of <parameter>type</parameter> belonging to role <parameter>ownerId</parameter>.
+    Notice that these are used in the absence of any pg_default_acl
+    (<xref linkend="catalog-pg-default-acl"/>) entry. Default access privileges are described in
+    <xref linkend="sql-grant"/> and can be overwritten with
+    <xref linkend="sql-alterdefaultprivileges"/>. In other words, this function will return
+    results which may be misleading when the defaults have been overridden.
+    Type is a <type>CHAR</type>, use
+    'c' for <literal>COLUMN</literal>,
+    'r' for relation-like objects such as <literal>TABLE</literal> or <literal>VIEW</literal>,
+    's' for <literal>SEQUENCE</literal>,
+    'd' for <literal>DATABASE</literal>,
+    'f' for <literal>FUNCTION</literal> or <literal>PROCEDURE</literal>,
+    'l' for <literal>LANGUAGE</literal>,
+    'L' for <literal>LARGE OBJECT</literal>,
+    'n' for <literal>SCHEMA</literal>,
+    't' for <literal>TABLESPACE</literal>,
+    'F' for <literal>FOREIGN DATA WRAPPER</literal>,
+    'S' for <literal>FOREIGN SERVER</literal>,
+    'T' for <literal>TYPE</literal> or <literal>DOMAIN</literal>.
+   </para>
+
+   <para>
+    <function>aclexplode</function> returns an <type>aclitem</type> array
+    as a set rows. Output columns are grantor <type>oid</type>,
+    grantee <type>oid</type> (<literal>0</literal> for <literal>PUBLIC</literal>),
+    granted privilege as <type>text</type> (<literal>SELECT</literal>, ...)
+    and whether the prilivege is grantable as <type>boolean</type>.
+    <function>makeaclitem</function> performs the inverse operation.
    </para>
 
   <para>

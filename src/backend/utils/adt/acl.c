@@ -855,8 +855,7 @@ acldefault(ObjectType objtype, Oid ownerId)
 
 /*
  * SQL-accessible version of acldefault().  Hackish mapping from "char" type to
- * OBJECT_* values, but it's only used in the information schema, not
- * documented for general use.
+ * OBJECT_* values.
  */
 Datum
 acldefault_sql(PG_FUNCTION_ARGS)
