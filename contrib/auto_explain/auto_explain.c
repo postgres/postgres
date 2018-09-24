@@ -16,6 +16,7 @@
 
 #include "commands/explain.h"
 #include "executor/instrument.h"
+#include "jit/jit.h"
 #include "utils/guc.h"
 
 PG_MODULE_MAGIC;
@@ -334,6 +335,9 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			ExplainPrintPlan(es, queryDesc);
 			if (es->analyze && auto_explain_log_triggers)
 				ExplainPrintTriggers(es, queryDesc);
+			if (queryDesc->estate->es_jit && es->costs &&
+				queryDesc->estate->es_jit->created_functions > 0)
+				ExplainPrintJIT(es, queryDesc);
 			ExplainEndOutput(es);
 
 			/* Remove last line break */
