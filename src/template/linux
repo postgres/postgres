@@ -6,6 +6,7 @@ if test x"$PREFERRED_SEMAPHORES" = x"" ; then
 fi
 
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
+# This is also required for ppoll(2), and perhaps other things
 CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 
 # If --enable-profiling is specified, we need -DLINUX_PROFILE
