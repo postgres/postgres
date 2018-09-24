@@ -92,7 +92,8 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
       <listitem>
        <para>
         The directory that will be used for the tablespace. The directory
-        should be empty and must be owned by the
+        must exist (<command>CREATE TABLESPACE</command> will not create it),
+        should be empty, and must be owned by the
         <productname>PostgreSQL</productname> system user.  The directory must be
         specified by an absolute path name.
        </para>
@@ -137,15 +138,23 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create a tablespace <literal>dbspace</literal> at <literal>/data/dbs</literal>:
+   To create a tablespace <literal>dbspace</literal> at file system location
+   <literal>/data/dbs</literal>, first create the directory using operating
+   system facilities and set the correct ownership:
+<programlisting>
+mkdir /data/dbs
+chown postgres:postgres /data/dbs
+</programlisting>
+   Then issue the tablespace creation command inside
+   <productname>PostgreSQL</productname>:
 <programlisting>
 CREATE TABLESPACE dbspace LOCATION '/data/dbs';
 </programlisting>
   </para>
 
   <para>
-   Create a tablespace <literal>indexspace</literal> at <literal>/data/indexes</literal>
-   owned by user <literal>genevieve</literal>:
+   To create a tablespace owned by a different database user, use a command
+   like this:
 <programlisting>
 CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';
 </programlisting></para>
