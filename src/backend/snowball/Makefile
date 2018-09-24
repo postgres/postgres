@@ -23,15 +23,18 @@ OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
 	stem_ISO_8859_1_finnish.o \
 	stem_ISO_8859_1_french.o \
 	stem_ISO_8859_1_german.o \
-	stem_ISO_8859_1_hungarian.o \
+	stem_ISO_8859_1_indonesian.o \
+	stem_ISO_8859_1_irish.o \
 	stem_ISO_8859_1_italian.o \
 	stem_ISO_8859_1_norwegian.o \
 	stem_ISO_8859_1_porter.o \
 	stem_ISO_8859_1_portuguese.o \
 	stem_ISO_8859_1_spanish.o \
 	stem_ISO_8859_1_swedish.o \
+	stem_ISO_8859_2_hungarian.o \
 	stem_ISO_8859_2_romanian.o \
 	stem_KOI8_R_russian.o \
+	stem_UTF_8_arabic.o \
 	stem_UTF_8_danish.o \
 	stem_UTF_8_dutch.o \
 	stem_UTF_8_english.o \
@@ -39,7 +42,11 @@ OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
 	stem_UTF_8_french.o \
 	stem_UTF_8_german.o \
 	stem_UTF_8_hungarian.o \
+	stem_UTF_8_indonesian.o \
+	stem_UTF_8_irish.o \
 	stem_UTF_8_italian.o \
+	stem_UTF_8_lithuanian.o \
+	stem_UTF_8_nepali.o \
 	stem_UTF_8_norwegian.o \
 	stem_UTF_8_porter.o \
 	stem_UTF_8_portuguese.o \
@@ -47,6 +54,7 @@ OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
 	stem_UTF_8_russian.o \
 	stem_UTF_8_spanish.o \
 	stem_UTF_8_swedish.o \
+	stem_UTF_8_tamil.o \
 	stem_UTF_8_turkish.o
 
 # first column is language name and also name of dictionary for not-all-ASCII
@@ -54,6 +62,7 @@ OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
 # Note order dependency: use of some other language as ASCII dictionary
 # must come after creation of that language
 LANGUAGES=  \
+	arabic		arabic		\
 	danish		danish 		\
 	dutch 		dutch 		\
 	english 	english		\
@@ -61,13 +70,18 @@ LANGUAGES=  \
 	french 		french		\
 	german 		german		\
 	hungarian 	hungarian	\
+	indonesian	indonesian	\
+	irish		irish		\
 	italian 	italian		\
+	lithuanian	lithuanian	\
+	nepali		nepali		\
 	norwegian 	norwegian	\
 	portuguese 	portuguese	\
 	romanian 	romanian	\
 	russian 	english		\
 	spanish 	spanish		\
 	swedish 	swedish		\
+	tamil		tamil		\
 	turkish		turkish
 
 

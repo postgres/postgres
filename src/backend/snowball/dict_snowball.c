@@ -32,15 +32,18 @@
 #include "snowball/libstemmer/stem_ISO_8859_1_finnish.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_french.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_german.h"
-#include "snowball/libstemmer/stem_ISO_8859_1_hungarian.h"
+#include "snowball/libstemmer/stem_ISO_8859_1_indonesian.h"
+#include "snowball/libstemmer/stem_ISO_8859_1_irish.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_italian.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_norwegian.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_porter.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_portuguese.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_spanish.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_swedish.h"
+#include "snowball/libstemmer/stem_ISO_8859_2_hungarian.h"
 #include "snowball/libstemmer/stem_ISO_8859_2_romanian.h"
 #include "snowball/libstemmer/stem_KOI8_R_russian.h"
+#include "snowball/libstemmer/stem_UTF_8_arabic.h"
 #include "snowball/libstemmer/stem_UTF_8_danish.h"
 #include "snowball/libstemmer/stem_UTF_8_dutch.h"
 #include "snowball/libstemmer/stem_UTF_8_english.h"
@@ -48,7 +51,11 @@
 #include "snowball/libstemmer/stem_UTF_8_french.h"
 #include "snowball/libstemmer/stem_UTF_8_german.h"
 #include "snowball/libstemmer/stem_UTF_8_hungarian.h"
+#include "snowball/libstemmer/stem_UTF_8_indonesian.h"
+#include "snowball/libstemmer/stem_UTF_8_irish.h"
 #include "snowball/libstemmer/stem_UTF_8_italian.h"
+#include "snowball/libstemmer/stem_UTF_8_lithuanian.h"
+#include "snowball/libstemmer/stem_UTF_8_nepali.h"
 #include "snowball/libstemmer/stem_UTF_8_norwegian.h"
 #include "snowball/libstemmer/stem_UTF_8_porter.h"
 #include "snowball/libstemmer/stem_UTF_8_portuguese.h"
@@ -56,6 +63,7 @@
 #include "snowball/libstemmer/stem_UTF_8_russian.h"
 #include "snowball/libstemmer/stem_UTF_8_spanish.h"
 #include "snowball/libstemmer/stem_UTF_8_swedish.h"
+#include "snowball/libstemmer/stem_UTF_8_tamil.h"
 #include "snowball/libstemmer/stem_UTF_8_turkish.h"
 
 PG_MODULE_MAGIC;
@@ -74,48 +82,60 @@ typedef struct stemmer_module
 	int			(*stem) (struct SN_env *);
 } stemmer_module;
 
+/* Args: stemmer name, PG code for encoding, Snowball's name for encoding */
+#define STEMMER_MODULE(name,enc,senc) \
+	{#name, enc, name##_##senc##_create_env, name##_##senc##_close_env, name##_##senc##_stem}
+
 static const stemmer_module stemmer_modules[] =
 {
 	/*
 	 * Stemmers list from Snowball distribution
 	 */
-	{"danish", PG_LATIN1, danish_ISO_8859_1_create_env, danish_ISO_8859_1_close_env, danish_ISO_8859_1_stem},
-	{"dutch", PG_LATIN1, dutch_ISO_8859_1_create_env, dutch_ISO_8859_1_close_env, dutch_ISO_8859_1_stem},
-	{"english", PG_LATIN1, english_ISO_8859_1_create_env, english_ISO_8859_1_close_env, english_ISO_8859_1_stem},
-	{"finnish", PG_LATIN1, finnish_ISO_8859_1_create_env, finnish_ISO_8859_1_close_env, finnish_ISO_8859_1_stem},
-	{"french", PG_LATIN1, french_ISO_8859_1_create_env, french_ISO_8859_1_close_env, french_ISO_8859_1_stem},
-	{"german", PG_LATIN1, german_ISO_8859_1_create_env, german_ISO_8859_1_close_env, german_ISO_8859_1_stem},
-	{"hungarian", PG_LATIN1, hungarian_ISO_8859_1_create_env, hungarian_ISO_8859_1_close_env, hungarian_ISO_8859_1_stem},
-	{"italian", PG_LATIN1, italian_ISO_8859_1_create_env, italian_ISO_8859_1_close_env, italian_ISO_8859_1_stem},
-	{"norwegian", PG_LATIN1, norwegian_ISO_8859_1_create_env, norwegian_ISO_8859_1_close_env, norwegian_ISO_8859_1_stem},
-	{"porter", PG_LATIN1, porter_ISO_8859_1_create_env, porter_ISO_8859_1_close_env, porter_ISO_8859_1_stem},
-	{"portuguese", PG_LATIN1, portuguese_ISO_8859_1_create_env, portuguese_ISO_8859_1_close_env, portuguese_ISO_8859_1_stem},
-	{"spanish", PG_LATIN1, spanish_ISO_8859_1_create_env, spanish_ISO_8859_1_close_env, spanish_ISO_8859_1_stem},
-	{"swedish", PG_LATIN1, swedish_ISO_8859_1_create_env, swedish_ISO_8859_1_close_env, swedish_ISO_8859_1_stem},
-	{"romanian", PG_LATIN2, romanian_ISO_8859_2_create_env, romanian_ISO_8859_2_close_env, romanian_ISO_8859_2_stem},
-	{"russian", PG_KOI8R, russian_KOI8_R_create_env, russian_KOI8_R_close_env, russian_KOI8_R_stem},
-	{"danish", PG_UTF8, danish_UTF_8_create_env, danish_UTF_8_close_env, danish_UTF_8_stem},
-	{"dutch", PG_UTF8, dutch_UTF_8_create_env, dutch_UTF_8_close_env, dutch_UTF_8_stem},
-	{"english", PG_UTF8, english_UTF_8_create_env, english_UTF_8_close_env, english_UTF_8_stem},
-	{"finnish", PG_UTF8, finnish_UTF_8_create_env, finnish_UTF_8_close_env, finnish_UTF_8_stem},
-	{"french", PG_UTF8, french_UTF_8_create_env, french_UTF_8_close_env, french_UTF_8_stem},
-	{"german", PG_UTF8, german_UTF_8_create_env, german_UTF_8_close_env, german_UTF_8_stem},
-	{"hungarian", PG_UTF8, hungarian_UTF_8_create_env, hungarian_UTF_8_close_env, hungarian_UTF_8_stem},
-	{"italian", PG_UTF8, italian_UTF_8_create_env, italian_UTF_8_close_env, italian_UTF_8_stem},
-	{"norwegian", PG_UTF8, norwegian_UTF_8_create_env, norwegian_UTF_8_close_env, norwegian_UTF_8_stem},
-	{"porter", PG_UTF8, porter_UTF_8_create_env, porter_UTF_8_close_env, porter_UTF_8_stem},
-	{"portuguese", PG_UTF8, portuguese_UTF_8_create_env, portuguese_UTF_8_close_env, portuguese_UTF_8_stem},
-	{"romanian", PG_UTF8, romanian_UTF_8_create_env, romanian_UTF_8_close_env, romanian_UTF_8_stem},
-	{"russian", PG_UTF8, russian_UTF_8_create_env, russian_UTF_8_close_env, russian_UTF_8_stem},
-	{"spanish", PG_UTF8, spanish_UTF_8_create_env, spanish_UTF_8_close_env, spanish_UTF_8_stem},
-	{"swedish", PG_UTF8, swedish_UTF_8_create_env, swedish_UTF_8_close_env, swedish_UTF_8_stem},
-	{"turkish", PG_UTF8, turkish_UTF_8_create_env, turkish_UTF_8_close_env, turkish_UTF_8_stem},
+	STEMMER_MODULE(danish, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(dutch, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(english, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(finnish, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(french, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(german, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(indonesian, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(irish, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(italian, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(norwegian, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(porter, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(portuguese, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(spanish, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(swedish, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(hungarian, PG_LATIN2, ISO_8859_2),
+	STEMMER_MODULE(romanian, PG_LATIN2, ISO_8859_2),
+	STEMMER_MODULE(russian, PG_KOI8R, KOI8_R),
+	STEMMER_MODULE(arabic, PG_UTF8, UTF_8),
+	STEMMER_MODULE(danish, PG_UTF8, UTF_8),
+	STEMMER_MODULE(dutch, PG_UTF8, UTF_8),
+	STEMMER_MODULE(english, PG_UTF8, UTF_8),
+	STEMMER_MODULE(finnish, PG_UTF8, UTF_8),
+	STEMMER_MODULE(french, PG_UTF8, UTF_8),
+	STEMMER_MODULE(german, PG_UTF8, UTF_8),
+	STEMMER_MODULE(hungarian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(indonesian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(irish, PG_UTF8, UTF_8),
+	STEMMER_MODULE(italian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(lithuanian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(nepali, PG_UTF8, UTF_8),
+	STEMMER_MODULE(norwegian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(porter, PG_UTF8, UTF_8),
+	STEMMER_MODULE(portuguese, PG_UTF8, UTF_8),
+	STEMMER_MODULE(romanian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(russian, PG_UTF8, UTF_8),
+	STEMMER_MODULE(spanish, PG_UTF8, UTF_8),
+	STEMMER_MODULE(swedish, PG_UTF8, UTF_8),
+	STEMMER_MODULE(tamil, PG_UTF8, UTF_8),
+	STEMMER_MODULE(turkish, PG_UTF8, UTF_8),
 
 	/*
 	 * Stemmer with PG_SQL_ASCII encoding should be valid for any server
 	 * encoding
 	 */
-	{"english", PG_SQL_ASCII, english_ISO_8859_1_create_env, english_ISO_8859_1_close_env, english_ISO_8859_1_stem},
+	STEMMER_MODULE(english, PG_SQL_ASCII, ISO_8859_1),
 
 	{NULL, 0, NULL, NULL, NULL} /* list end marker */
 };
