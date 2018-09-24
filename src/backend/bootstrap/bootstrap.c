@@ -202,6 +202,14 @@ AuxiliaryProcessMain(int argc, char *argv[])
 
 	MyStartTime = time(NULL);
 
+	/*
+	 * Initialize random() for the first time, like PostmasterMain() would.
+	 * In a regular IsUnderPostmaster backend, BackendRun() computes a
+	 * high-entropy seed before any user query.  Fewer distinct initial seeds
+	 * can occur here.
+	 */
+	srandom((unsigned int) (MyProcPid ^ MyStartTime));
+
 	/* Compute paths, if we didn't inherit them from postmaster */
 	if (my_exec_path[0] == '\0')
 	{
