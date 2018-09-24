@@ -823,44 +823,35 @@ expand_tuple(HeapTuple *targetHeapTuple,
 		{
 			if (attrmiss[firstmissingnum].am_present)
 				break;
+			else
+				hasNulls = true;
 		}
 
 		/*
-		 * If there are no more missing values everything else must be NULL
+		 * Now walk the missing attributes. If there is a missing value
+		 * make space for it. Otherwise, it's going to be NULL.
 		 */
-		if (firstmissingnum >= natts)
+		for (attnum = firstmissingnum;
+			 attnum < natts;
+			 attnum++)
 		{
-			hasNulls = true;
-		}
-		else
-		{
-
-			/*
-			 * Now walk the missing attributes. If there is a missing value
-			 * make space for it. Otherwise, it's going to be NULL.
-			 */
-			for (attnum = firstmissingnum;
-				 attnum < natts;
-				 attnum++)
+			if (attrmiss[attnum].am_present)
 			{
-				if (attrmiss[attnum].am_present)
-				{
-					Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum);
+				Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum);
 
-					targetDataLen = att_align_datum(targetDataLen,
-													att->attalign,
-													att->attlen,
-													attrmiss[attnum].am_value);
+				targetDataLen = att_align_datum(targetDataLen,
+												att->attalign,
+												att->attlen,
+												attrmiss[attnum].am_value);
 
-					targetDataLen = att_addlength_pointer(targetDataLen,
-														  att->attlen,
-														  attrmiss[attnum].am_value);
-				}
-				else
-				{
-					/* no missing value, so it must be null */
-					hasNulls = true;
-				}
+				targetDataLen = att_addlength_pointer(targetDataLen,
+													  att->attlen,
+													  attrmiss[attnum].am_value);
+			}
+			else
+			{
+				/* no missing value, so it must be null */
+				hasNulls = true;
 			}
 		}
 	}							/* end if have missing values */
