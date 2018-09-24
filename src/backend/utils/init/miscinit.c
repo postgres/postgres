@@ -320,6 +320,14 @@ InitStandaloneProcess(const char *argv0)
 
 	MyStartTime = time(NULL);	/* set our start time in case we call elog */
 
+	/*
+	 * Initialize random() for the first time, like PostmasterMain() would.
+	 * In a regular IsUnderPostmaster backend, BackendRun() computes a
+	 * high-entropy seed before any user query.  Fewer distinct initial seeds
+	 * can occur here.
+	 */
+	srandom((unsigned int) (MyProcPid ^ MyStartTime));
+
 	/* Initialize process-local latch support */
 	InitializeLatchSupport();
 	MyLatch = &LocalLatchData;

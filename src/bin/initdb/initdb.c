@@ -922,6 +922,9 @@ choose_dsm_implementation(void)
 #ifdef HAVE_SHM_OPEN
 	int			ntries = 10;
 
+	/* Initialize random(); this function is its only user in this program. */
+	srandom((unsigned int) (getpid() ^ time(NULL)));
+
 	while (ntries > 0)
 	{
 		uint32		handle;
