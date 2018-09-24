@@ -3396,7 +3396,10 @@ ltrmark:;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	}
 
-	result = heap_copytuple(&tuple);
+	if (HeapTupleHeaderGetNatts(tuple.t_data) < relation->rd_att->natts)
+		result = heap_expand_tuple(&tuple, relation->rd_att);
+	else
+		result = heap_copytuple(&tuple);
 	ReleaseBuffer(buffer);
 
 	return result;
