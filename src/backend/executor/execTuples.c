@@ -1126,28 +1126,6 @@ BlessTupleDesc(TupleDesc tupdesc)
 }
 
 /*
- * TupleDescGetSlot - Initialize a slot based on the supplied tupledesc
- *
- * Note: this is obsolete; it is sufficient to call BlessTupleDesc on
- * the tupdesc.  We keep it around just for backwards compatibility with
- * existing user-written SRFs.
- */
-TupleTableSlot *
-TupleDescGetSlot(TupleDesc tupdesc)
-{
-	TupleTableSlot *slot;
-
-	/* The useful work is here */
-	BlessTupleDesc(tupdesc);
-
-	/* Make a standalone slot */
-	slot = MakeSingleTupleTableSlot(tupdesc);
-
-	/* Return the slot */
-	return slot;
-}
-
-/*
  * TupleDescGetAttInMetadata - Build an AttInMetadata structure based on the
  * supplied TupleDesc. AttInMetadata can be used in conjunction with C strings
  * to produce a properly formed tuple.
