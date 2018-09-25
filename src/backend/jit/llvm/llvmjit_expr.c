@@ -2557,7 +2557,7 @@ llvm_compile_expr(ExprState *state)
 	llvm_leave_fatal_on_oom();
 
 	INSTR_TIME_SET_CURRENT(endtime);
-	INSTR_TIME_ACCUM_DIFF(context->base.generation_counter,
+	INSTR_TIME_ACCUM_DIFF(context->base.instr.generation_counter,
 						  endtime, starttime);
 
 	return true;

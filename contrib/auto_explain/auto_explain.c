@@ -335,9 +335,9 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			ExplainPrintPlan(es, queryDesc);
 			if (es->analyze && auto_explain_log_triggers)
 				ExplainPrintTriggers(es, queryDesc);
-			if (queryDesc->estate->es_jit && es->costs &&
-				queryDesc->estate->es_jit->created_functions > 0)
-				ExplainPrintJIT(es, queryDesc);
+			if (es->costs)
+				ExplainPrintJIT(es, queryDesc->estate->es_jit_flags,
+								queryDesc->estate->es_jit_combined_instr, -1);
 			ExplainEndOutput(es);
 
 			/* Remove last line break */

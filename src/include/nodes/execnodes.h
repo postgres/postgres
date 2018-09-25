@@ -569,9 +569,14 @@ typedef struct EState
 	 * JIT information. es_jit_flags indicates whether JIT should be performed
 	 * and with which options.  es_jit is created on-demand when JITing is
 	 * performed.
+	 *
+	 * es_jit_combined_instr, at the end of query execution with
+	 * instrumentation enabled, is the the combined instrumentation
+	 * information of leader and followers.
 	 */
 	int			es_jit_flags;
 	struct JitContext *es_jit;
+	struct JitInstrumentation *es_jit_combined_instr;
 } EState;
 
 
@@ -922,6 +927,9 @@ typedef struct PlanState
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
 	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
+
+	/* Per-worker JIT instrumentation */
+	struct SharedJitInstrumentation *worker_jit_instrument;
 
 	/*
 	 * Common structural data for all Plan types.  These links to subsidiary
