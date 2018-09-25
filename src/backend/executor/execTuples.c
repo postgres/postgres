@@ -12,44 +12,6 @@
  *	  This information is needed by routines manipulating tuples
  *	  (getattribute, formtuple, etc.).
  *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- *
- * IDENTIFICATION
- *	  src/backend/executor/execTuples.c
- *
- *-------------------------------------------------------------------------
- */
-/*
- * INTERFACE ROUTINES
- *
- *	 SLOT CREATION/DESTRUCTION
- *		MakeTupleTableSlot		- create an empty slot
- *		ExecAllocTableSlot		- create a slot within a tuple table
- *		ExecResetTupleTable		- clear and optionally delete a tuple table
- *		MakeSingleTupleTableSlot - make a standalone slot, set its descriptor
- *		ExecDropSingleTupleTableSlot - destroy a standalone slot
- *
- *	 SLOT ACCESSORS
- *		ExecSetSlotDescriptor	- set a slot's tuple descriptor
- *		ExecStoreTuple			- store a physical tuple in the slot
- *		ExecStoreMinimalTuple	- store a minimal physical tuple in the slot
- *		ExecClearTuple			- clear contents of a slot
- *		ExecStoreVirtualTuple	- mark slot as containing a virtual tuple
- *		ExecCopySlotTuple		- build a physical tuple from a slot
- *		ExecCopySlotMinimalTuple - build a minimal physical tuple from a slot
- *		ExecMaterializeSlot		- convert virtual to physical storage
- *		ExecCopySlot			- copy one slot's contents to another
- *
- *	 CONVENIENCE INITIALIZATION ROUTINES
- *		ExecInitResultTupleSlot    \	convenience routines to initialize
- *		ExecInitScanTupleSlot		\	the various tuple slots for nodes
- *		ExecInitExtraTupleSlot		/	which store copies of tuples.
- *		ExecInitNullTupleSlot	   /
- *
- *	 Routines that probably belong somewhere else:
- *		ExecTypeFromTL			- form a TupleDesc from a target list
  *
  *	 EXAMPLE OF HOW TABLE ROUTINES WORK
  *		Suppose we have a query such as SELECT emp.name FROM emp and we have
@@ -78,6 +40,16 @@
  *		(such as whether or not a tuple should be pfreed, what buffer contains
  *		this tuple, the tuple's tuple descriptor, etc).  It also allows us
  *		to avoid physically constructing projection tuples in many cases.
+ *
+ *
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  src/backend/executor/execTuples.c
+ *
+ *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
