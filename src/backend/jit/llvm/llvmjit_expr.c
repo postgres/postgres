@@ -324,7 +324,7 @@ llvm_compile_expr(ExprState *state)
 										  "");
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntUGE, v_nvalid,
-												  l_int32_const(op->d.fetch.last_var),
+												  l_int16_const(op->d.fetch.last_var),
 												  ""),
 									opblocks[i + 1], b_fetch);
 

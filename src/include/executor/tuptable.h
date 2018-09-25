@@ -125,7 +125,7 @@ typedef struct TupleTableSlot
 	MemoryContext tts_mcxt;		/* slot itself is in this context */
 	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
 #define FIELDNO_TUPLETABLESLOT_NVALID 9
-	int			tts_nvalid;		/* # of valid values in tts_values */
+	AttrNumber	tts_nvalid;		/* # of valid values in tts_values */
 #define FIELDNO_TUPLETABLESLOT_VALUES 10
 	Datum	   *tts_values;		/* current per-attribute values */
 #define FIELDNO_TUPLETABLESLOT_ISNULL 11

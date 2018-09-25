@@ -304,7 +304,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 
 		for (attnum = 0; attnum < natts; attnum++)
 		{
-			LLVMValueRef v_attno = l_int32_const(attnum);
+			LLVMValueRef v_attno = l_int16_const(attnum);
 
 			LLVMAddCase(v_switch, v_attno, attcheckattnoblocks[attnum]);
 		}
@@ -691,7 +691,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 	{
 		LLVMValueRef v_off = LLVMBuildLoad(b, v_offp, "");
 
-		LLVMBuildStore(b, l_int32_const(natts), v_nvalidp);
+		LLVMBuildStore(b, l_int16_const(natts), v_nvalidp);
 		v_off = LLVMBuildTrunc(b, v_off, LLVMInt32Type(), "");
 		LLVMBuildStore(b, v_off, v_slotoffp);
 		LLVMBuildStore(b, l_int8_const(1), v_slowp);
