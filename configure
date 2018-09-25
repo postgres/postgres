@@ -668,6 +668,7 @@ python_majorversion
 PYTHON
 perl_embed_ldflags
 perl_embed_ccflags
+perl_includedir
 perl_useshrplib
 perl_privlibexp
 perl_archlibexp
@@ -9773,6 +9774,14 @@ You might have to rebuild your Perl installation.  Refer to the
 documentation for details.  Use --without-perl to disable building
 PL/Perl." "$LINENO" 5
   fi
+  # On most platforms, archlibexp is also where the Perl include files live ...
+  perl_includedir="$perl_archlibexp"
+  # ... but on some macOS versions, we must look under $PG_SYSROOT instead
+  if test x"$PG_SYSROOT" != x"" ; then
+    if test -d "$PG_SYSROOT$perl_archlibexp" ; then
+      perl_includedir="$PG_SYSROOT$perl_archlibexp"
+    fi
+  fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLAGS recommended by Perl" >&5
 $as_echo_n "checking for CFLAGS recommended by Perl... " >&6; }
@@ -18306,7 +18315,14 @@ if test -z "$TCL_CONFIG_SH"; then
     set X $pgac_test_dirs; shift
     if test $# -eq 0; then
         test -z "$TCLSH" && as_fn_error $? "unable to locate tclConfig.sh because no Tcl shell was found" "$LINENO" 5
-        set X `echo 'puts $auto_path' | $TCLSH`; shift
+        pgac_test_dirs=`echo 'puts $auto_path' | $TCLSH`
+        # On newer macOS, $auto_path frequently doesn't include the place
+        # where tclConfig.sh actually lives.  Append that to the end, so as not
+        # to break cases where a non-default Tcl installation is being used.
+        if test -d "$PG_SYSROOT/System/Library/Frameworks/Tcl.framework" ; then
+            pgac_test_dirs="$pgac_test_dirs $PG_SYSROOT/System/Library/Frameworks/Tcl.framework"
+        fi
+        set X $pgac_test_dirs; shift
     fi
 
     for pgac_dir do
@@ -18355,7 +18371,7 @@ fi
 # check for <perl.h>
 if test "$with_perl" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$CPPFLAGS -I$perl_archlibexp/CORE"
+  CPPFLAGS="$CPPFLAGS -I$perl_includedir/CORE"
   ac_fn_c_check_header_compile "$LINENO" "perl.h" "ac_cv_header_perl_h" "#include <EXTERN.h>
 "
 if test "x$ac_cv_header_perl_h" = xyes; then :

@@ -39,4 +39,4 @@ endif
 # last, probably because it sometimes contains some header files with names
 # that clash with some of ours, or with some that we include, notably on
 # Windows.
-override CPPFLAGS := $(CPPFLAGS) $(perl_embed_ccflags) -I$(perl_archlibexp)/CORE
+override CPPFLAGS := $(CPPFLAGS) $(perl_embed_ccflags) -I$(perl_includedir)/CORE

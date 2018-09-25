@@ -1044,6 +1044,15 @@ You might have to rebuild your Perl installation.  Refer to the
 documentation for details.  Use --without-perl to disable building
 PL/Perl.])
   fi
+  # On most platforms, archlibexp is also where the Perl include files live ...
+  perl_includedir="$perl_archlibexp"
+  # ... but on some macOS versions, we must look under $PG_SYSROOT instead
+  if test x"$PG_SYSROOT" != x"" ; then
+    if test -d "$PG_SYSROOT$perl_archlibexp" ; then
+      perl_includedir="$PG_SYSROOT$perl_archlibexp"
+    fi
+  fi
+  AC_SUBST(perl_includedir)dnl
   PGAC_CHECK_PERL_EMBED_CCFLAGS
   PGAC_CHECK_PERL_EMBED_LDFLAGS
 fi
@@ -2229,7 +2238,7 @@ fi
 # check for <perl.h>
 if test "$with_perl" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$CPPFLAGS -I$perl_archlibexp/CORE"
+  CPPFLAGS="$CPPFLAGS -I$perl_includedir/CORE"
   AC_CHECK_HEADER(perl.h, [], [AC_MSG_ERROR([header file <perl.h> is required for Perl])],
                   [#include <EXTERN.h>])
   # While we're at it, check that we can link to libperl.
