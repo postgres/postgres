@@ -169,7 +169,7 @@ double		sample_rate = 0.0;
  * When threads are throttled to a given rate limit, this is the target delay
  * to reach that rate in usec.  0 is the default and means no throttling.
  */
-int64		throttle_delay = 0;
+double		throttle_delay = 0;
 
 /*
  * Transactions which take longer than this limit (in usec) are counted as
@@ -826,9 +826,12 @@ getGaussianRand(TState *thread, int64 min, int64 max, double parameter)
 /*
  * random number generator: generate a value, such that the series of values
  * will approximate a Poisson distribution centered on the given value.
+ *
+ * Individual results are rounded to integers, though the center value need
+ * not be one.
  */
 static int64
-getPoissonRand(TState *thread, int64 center)
+getPoissonRand(TState *thread, double center)
 {
 	/*
 	 * Use inverse transform sampling to generate a value > 0, such that the
@@ -839,7 +842,7 @@ getPoissonRand(TState *thread, int64 center)
 	/* erand in [0, 1), uniform in (0, 1] */
 	uniform = 1.0 - pg_erand48(thread->random_state);
 
-	return (int64) (-log(uniform) * ((double) center) + 0.5);
+	return (int64) (-log(uniform) * center + 0.5);
 }
 
 /* helper function for getZipfianRand */
@@ -5114,8 +5117,8 @@ main(int argc, char **argv)
 						fprintf(stderr, "invalid rate limit: \"%s\"\n", optarg);
 						exit(1);
 					}
-					/* Invert rate limit into a time offset */
-					throttle_delay = (int64) (1000000.0 / throttle_value);
+					/* Invert rate limit into per-transaction delay in usec */
+					throttle_delay = 1000000.0 / throttle_value;
 				}
 				break;
 			case 'L':
@@ -5239,7 +5242,11 @@ main(int argc, char **argv)
 	if (nthreads > nclients)
 		nthreads = nclients;
 
-	/* compute a per thread delay */
+	/*
+	 * Convert throttle_delay to a per-thread delay time.  Note that this
+	 * might be a fractional number of usec, but that's OK, since it's just
+	 * the center of a Poisson distribution of delays.
+	 */
 	throttle_delay *= nthreads;
 
 	if (argc > optind)
