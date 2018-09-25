@@ -27,6 +27,7 @@ typedef struct ParallelExecutorInfo
 	ParallelContext *pcxt;		/* parallel context we're using */
 	BufferUsage *buffer_usage;	/* points to bufusage area in DSM */
 	SharedExecutorInstrumentation *instrumentation; /* optional */
+	struct SharedJitInstrumentation *jit_instrumentation; /* optional */
 	dsa_area   *area;			/* points to DSA area in DSM */
 	dsa_pointer param_exec;		/* serialized PARAM_EXEC parameters */
 	bool		finished;		/* set true by ExecParallelFinish */

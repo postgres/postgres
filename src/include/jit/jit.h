@@ -24,13 +24,8 @@
 #define PGJIT_DEFORM   (1 << 4)
 
 
-typedef struct JitContext
+typedef struct JitInstrumentation
 {
-	/* see PGJIT_* above */
-	int			flags;
-
-	ResourceOwner resowner;
-
 	/* number of emitted functions */
 	size_t		created_functions;
 
@@ -45,6 +40,25 @@ typedef struct JitContext
 
 	/* accumulated time for code emission */
 	instr_time	emission_counter;
+} JitInstrumentation;
+
+/*
+ * DSM structure for accumulating jit instrumentation of all workers.
+ */
+typedef struct SharedJitInstrumentation
+{
+	int			num_workers;
+	JitInstrumentation jit_instr[FLEXIBLE_ARRAY_MEMBER];
+} SharedJitInstrumentation;
+
+typedef struct JitContext
+{
+	/* see PGJIT_* above */
+	int			flags;
+
+	ResourceOwner resowner;
+
+	JitInstrumentation instr;
 } JitContext;
 
 typedef struct JitProviderCallbacks JitProviderCallbacks;
@@ -85,6 +99,7 @@ extern void jit_release_context(JitContext *context);
  * not be able to perform JIT (i.e. return false).
  */
 extern bool jit_compile_expr(struct ExprState *state);
+extern void InstrJitAgg(JitInstrumentation *dst, JitInstrumentation *add);
 
 
 #endif							/* JIT_H */

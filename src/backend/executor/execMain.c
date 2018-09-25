@@ -48,6 +48,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeSubplan.h"
 #include "foreign/fdwapi.h"
+#include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -493,6 +494,21 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	ExecEndPlan(queryDesc->planstate, estate);
+
+	/*
+	 * If this process has done JIT, either merge stats into worker stats, or
+	 * use this process' stats as the global stats if no parallelism was used
+	 * / no workers did JIT.
+	 */
+	if (estate->es_instrument && queryDesc->estate->es_jit)
+	{
+		if (queryDesc->estate->es_jit_combined_instr)
+			InstrJitAgg(queryDesc->estate->es_jit_combined_instr,
+						&queryDesc->estate->es_jit->instr);
+		else
+			queryDesc->estate->es_jit_combined_instr =
+				&queryDesc->estate->es_jit->instr;
+	}
 
 	/* do away with our snapshots */
 	UnregisterSnapshot(estate->es_snapshot);
