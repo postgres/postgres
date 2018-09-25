@@ -2837,8 +2837,13 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 	if (ropt->aclsSkip && _tocEntryIsACL(te))
 		return 0;
 
-	/* If it's a publication, maybe ignore it */
-	if (ropt->no_publications && strcmp(te->desc, "PUBLICATION") == 0)
+	/*
+	 * If it's a publication or a table part of a publication, maybe ignore
+	 * it.
+	 */
+	if (ropt->no_publications &&
+		(strcmp(te->desc, "PUBLICATION") == 0 ||
+		 strcmp(te->desc, "PUBLICATION TABLE") == 0))
 		return 0;
 
 	/* If it's security labels, maybe ignore it */
