@@ -13,6 +13,10 @@ fi
 
 # PGAC_PATH_TCLCONFIGSH([SEARCH-PATH])
 # ------------------------------------
+# If the user doesn't specify $TCL_CONFIG_SH directly, search for it in
+# the list of directories passed as parameter (from --with-tclconfig).
+# If no list is given, try the Tcl shell's $auto_path.
+
 AC_DEFUN([PGAC_PATH_TCLCONFIGSH],
 [AC_REQUIRE([PGAC_PATH_TCLSH])[]dnl
 AC_BEFORE([$0], [PGAC_PATH_TKCONFIGSH])[]dnl
@@ -24,7 +28,14 @@ if test -z "$TCL_CONFIG_SH"; then
     set X $pgac_test_dirs; shift
     if test $[#] -eq 0; then
         test -z "$TCLSH" && AC_MSG_ERROR([unable to locate tclConfig.sh because no Tcl shell was found])
-        set X `echo 'puts $auto_path' | $TCLSH`; shift
+        pgac_test_dirs=`echo 'puts $auto_path' | $TCLSH`
+        # On newer macOS, $auto_path frequently doesn't include the place
+        # where tclConfig.sh actually lives.  Append that to the end, so as not
+        # to break cases where a non-default Tcl installation is being used.
+        if test -d "$PG_SYSROOT/System/Library/Frameworks/Tcl.framework" ; then
+            pgac_test_dirs="$pgac_test_dirs $PG_SYSROOT/System/Library/Frameworks/Tcl.framework"
+        fi
+        set X $pgac_test_dirs; shift
     fi
 
     for pgac_dir do
