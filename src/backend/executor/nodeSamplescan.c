@@ -63,10 +63,9 @@ SampleNext(SampleScanState *node)
 	slot = node->ss.ss_ScanTupleSlot;
 
 	if (tuple)
-		ExecStoreTuple(tuple,	/* tuple to store */
-					   slot,	/* slot to store in */
-					   node->ss.ss_currentScanDesc->rs_cbuf,	/* tuple's buffer */
-					   false);	/* don't pfree this pointer */
+		ExecStoreBufferHeapTuple(tuple,	/* tuple to store */
+								 slot,	/* slot to store in */
+								 node->ss.ss_currentScanDesc->rs_cbuf);	/* tuple's buffer */
 	else
 		ExecClearTuple(slot);
 

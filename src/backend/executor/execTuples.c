@@ -26,10 +26,10 @@
  *
  *		During ExecutorRun()
  *		----------------
- *		- SeqNext() calls ExecStoreTuple() to place the tuple returned
- *		  by the access methods into the scan tuple slot.
+ *		- SeqNext() calls ExecStoreBufferHeapTuple() to place the tuple
+ *		  returned by the access methods into the scan tuple slot.
  *
- *		- ExecSeqScan() calls ExecStoreTuple() to take the result
+ *		- ExecSeqScan() calls ExecStoreHeapTuple() to take the result
  *		  tuple from ExecProject() and place it into the result tuple slot.
  *
  *		- ExecutePlan() calls the output function.
@@ -287,48 +287,32 @@ ExecSetSlotDescriptor(TupleTableSlot *slot, /* slot to change */
 }
 
 /* --------------------------------
- *		ExecStoreTuple
+ *		ExecStoreHeapTuple
  *
- *		This function is used to store a physical tuple into a specified
+ *		This function is used to store an on-the-fly physical tuple into a specified
  *		slot in the tuple table.
  *
  *		tuple:	tuple to store
  *		slot:	slot to store it in
- *		buffer: disk buffer if tuple is in a disk page, else InvalidBuffer
  *		shouldFree: true if ExecClearTuple should pfree() the tuple
  *					when done with it
  *
- * If 'buffer' is not InvalidBuffer, the tuple table code acquires a pin
- * on the buffer which is held until the slot is cleared, so that the tuple
- * won't go away on us.
- *
- * shouldFree is normally set 'true' for tuples constructed on-the-fly.
- * It must always be 'false' for tuples that are stored in disk pages,
- * since we don't want to try to pfree those.
- *
- * Another case where it is 'false' is when the referenced tuple is held
- * in a tuple table slot belonging to a lower-level executor Proc node.
- * In this case the lower-level slot retains ownership and responsibility
- * for eventually releasing the tuple.  When this method is used, we must
- * be certain that the upper-level Proc node will lose interest in the tuple
- * sooner than the lower-level one does!  If you're not certain, copy the
- * lower-level tuple with heap_copytuple and let the upper-level table
- * slot assume ownership of the copy!
+ * shouldFree is normally set 'true' for tuples constructed on-the-fly.  But it
+ * can be 'false' when the referenced tuple is held in a tuple table slot
+ * belonging to a lower-level executor Proc node.  In this case the lower-level
+ * slot retains ownership and responsibility for eventually releasing the
+ * tuple.  When this method is used, we must be certain that the upper-level
+ * Proc node will lose interest in the tuple sooner than the lower-level one
+ * does!  If you're not certain, copy the lower-level tuple with heap_copytuple
+ * and let the upper-level table slot assume ownership of the copy!
  *
  * Return value is just the passed-in slot pointer.
- *
- * NOTE: before PostgreSQL 8.1, this function would accept a NULL tuple
- * pointer and effectively behave like ExecClearTuple (though you could
- * still specify a buffer to pin, which would be an odd combination).
- * This saved a couple lines of code in a few places, but seemed more likely
- * to mask logic errors than to be really useful, so it's now disallowed.
  * --------------------------------
  */
 TupleTableSlot *
-ExecStoreTuple(HeapTuple tuple,
-			   TupleTableSlot *slot,
-			   Buffer buffer,
-			   bool shouldFree)
+ExecStoreHeapTuple(HeapTuple tuple,
+				   TupleTableSlot *slot,
+				   bool shouldFree)
 {
 	/*
 	 * sanity checks
@@ -336,8 +320,6 @@ ExecStoreTuple(HeapTuple tuple,
 	Assert(tuple != NULL);
 	Assert(slot != NULL);
 	Assert(slot->tts_tupleDescriptor != NULL);
-	/* passing shouldFree=true for a tuple on a disk page is not sane */
-	Assert(BufferIsValid(buffer) ? (!shouldFree) : true);
 
 	/*
 	 * Free any old physical tuple belonging to the slot.
@@ -359,22 +341,78 @@ ExecStoreTuple(HeapTuple tuple,
 	/* Mark extracted state invalid */
 	slot->tts_nvalid = 0;
 
+	/* Unpin any buffer pinned by the slot. */
+	if (BufferIsValid(slot->tts_buffer))
+		ReleaseBuffer(slot->tts_buffer);
+	slot->tts_buffer = InvalidBuffer;
+
+	return slot;
+}
+
+/* --------------------------------
+ *		ExecStoreBufferHeapTuple
+ *
+ *		This function is used to store an on-disk physical tuple from a buffer
+ *		into a specified slot in the tuple table.
+ *
+ *		tuple:	tuple to store
+ *		slot:	slot to store it in
+ *		buffer: disk buffer if tuple is in a disk page, else InvalidBuffer
+ *
+ * The tuple table code acquires a pin on the buffer which is held until the
+ * slot is cleared, so that the tuple won't go away on us.
+ *
+ * Return value is just the passed-in slot pointer.
+ * --------------------------------
+ */
+TupleTableSlot *
+ExecStoreBufferHeapTuple(HeapTuple tuple,
+						 TupleTableSlot *slot,
+						 Buffer buffer)
+{
 	/*
-	 * If tuple is on a disk page, keep the page pinned as long as we hold a
-	 * pointer into it.  We assume the caller already has such a pin.
+	 * sanity checks
+	 */
+	Assert(tuple != NULL);
+	Assert(slot != NULL);
+	Assert(slot->tts_tupleDescriptor != NULL);
+	Assert(BufferIsValid(buffer));
+
+	/*
+	 * Free any old physical tuple belonging to the slot.
+	 */
+	if (slot->tts_shouldFree)
+		heap_freetuple(slot->tts_tuple);
+	if (slot->tts_shouldFreeMin)
+		heap_free_minimal_tuple(slot->tts_mintuple);
+
+	/*
+	 * Store the new tuple into the specified slot.
+	 */
+	slot->tts_isempty = false;
+	slot->tts_shouldFree = false;
+	slot->tts_shouldFreeMin = false;
+	slot->tts_tuple = tuple;
+	slot->tts_mintuple = NULL;
+
+	/* Mark extracted state invalid */
+	slot->tts_nvalid = 0;
+
+	/*
+	 * Keep the disk page containing the given tuple pinned as long as we hold
+	 * a pointer into it.  We assume the caller already has such a pin.
 	 *
 	 * This is coded to optimize the case where the slot previously held a
-	 * tuple on the same disk page: in that case releasing and re-acquiring
-	 * the pin is a waste of cycles.  This is a common situation during
-	 * seqscans, so it's worth troubling over.
+	 * tuple on the same disk page: in that case releasing and re-acquiring the
+	 * pin is a waste of cycles.  This is a common situation during seqscans,
+	 * so it's worth troubling over.
 	 */
 	if (slot->tts_buffer != buffer)
 	{
 		if (BufferIsValid(slot->tts_buffer))
 			ReleaseBuffer(slot->tts_buffer);
 		slot->tts_buffer = buffer;
-		if (BufferIsValid(buffer))
-			IncrBufferRefCount(buffer);
+		IncrBufferRefCount(buffer);
 	}
 
 	return slot;
@@ -383,7 +421,7 @@ ExecStoreTuple(HeapTuple tuple,
 /* --------------------------------
  *		ExecStoreMinimalTuple
  *
- *		Like ExecStoreTuple, but insert a "minimal" tuple into the slot.
+ *		Like ExecStoreHeapTuple, but insert a "minimal" tuple into the slot.
  *
  * No 'buffer' parameter since minimal tuples are never stored in relations.
  * --------------------------------
@@ -652,7 +690,7 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 			tuple = heap_expand_tuple(slot->tts_tuple,
 									  slot->tts_tupleDescriptor);
 			MemoryContextSwitchTo(oldContext);
-			slot = ExecStoreTuple(tuple, slot, InvalidBuffer, true);
+			slot = ExecStoreHeapTuple(tuple, slot, true);
 		}
 		return slot->tts_tuple;
 	}
@@ -834,7 +872,7 @@ ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 	newTuple = ExecCopySlotTuple(srcslot);
 	MemoryContextSwitchTo(oldContext);
 
-	return ExecStoreTuple(newTuple, dstslot, InvalidBuffer, true);
+	return ExecStoreHeapTuple(newTuple, dstslot, true);
 }
 
 

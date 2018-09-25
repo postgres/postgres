@@ -96,7 +96,7 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 
 	/* Need a slot to hold the tuple being examined */
 	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRelation));
-	ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
+	ExecStoreHeapTuple(heapTuple, slot, false);
 
 	/*
 	 * for each index, form and insert the index tuple

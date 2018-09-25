@@ -84,15 +84,14 @@ SeqNext(SeqScanState *node)
 	 * our scan tuple slot and return the slot.  Note: we pass 'false' because
 	 * tuples returned by heap_getnext() are pointers onto disk pages and were
 	 * not created with palloc() and so should not be pfree()'d.  Note also
-	 * that ExecStoreTuple will increment the refcount of the buffer; the
+	 * that ExecStoreHeapTuple will increment the refcount of the buffer; the
 	 * refcount will not be dropped until the tuple table slot is cleared.
 	 */
 	if (tuple)
-		ExecStoreTuple(tuple,	/* tuple to store */
-					   slot,	/* slot to store in */
-					   scandesc->rs_cbuf,	/* buffer associated with this
-											 * tuple */
-					   false);	/* don't pfree this pointer */
+		ExecStoreBufferHeapTuple(tuple,	/* tuple to store */
+								 slot,	/* slot to store in */
+								 scandesc->rs_cbuf);	/* buffer associated
+														 * with this tuple */
 	else
 		ExecClearTuple(slot);
 

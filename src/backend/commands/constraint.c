@@ -124,7 +124,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 */
 	slot = MakeSingleTupleTableSlot(RelationGetDescr(trigdata->tg_relation));
 
-	ExecStoreTuple(new_row, slot, InvalidBuffer, false);
+	ExecStoreHeapTuple(new_row, slot, false);
 
 	/*
 	 * Typically the index won't have expressions, but if it does we need an

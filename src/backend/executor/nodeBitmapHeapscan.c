@@ -340,10 +340,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 * Set up the result slot to point to this tuple.  Note that the
 			 * slot acquires a pin on the buffer.
 			 */
-			ExecStoreTuple(&scan->rs_ctup,
-						   slot,
-						   scan->rs_cbuf,
-						   false);
+			ExecStoreBufferHeapTuple(&scan->rs_ctup,
+									 slot,
+									 scan->rs_cbuf);
 
 			/*
 			 * If we are using lossy info, we have to recheck the qual

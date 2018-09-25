@@ -258,7 +258,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		if (myslot != NULL && map != NULL)
 		{
 			tuple = do_convert_tuple(tuple, map);
-			ExecStoreTuple(tuple, myslot, InvalidBuffer, true);
+			ExecStoreHeapTuple(tuple, myslot, true);
 			slot = myslot;
 		}
 
@@ -842,7 +842,7 @@ ConvertPartitionTupleSlot(TupleConversionMap *map,
 	*p_my_slot = new_slot;
 	Assert(new_slot != NULL);
 	ExecSetSlotDescriptor(new_slot, map->outdesc);
-	ExecStoreTuple(tuple, new_slot, InvalidBuffer, shouldFree);
+	ExecStoreHeapTuple(tuple, new_slot, shouldFree);
 
 	return tuple;
 }

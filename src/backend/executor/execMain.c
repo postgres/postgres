@@ -1957,7 +1957,7 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 		{
 			tuple = do_convert_tuple(tuple, map);
 			ExecSetSlotDescriptor(slot, tupdesc);
-			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+			ExecStoreHeapTuple(tuple, slot, false);
 		}
 	}
 
@@ -2036,7 +2036,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					{
 						tuple = do_convert_tuple(tuple, map);
 						ExecSetSlotDescriptor(slot, tupdesc);
-						ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+						ExecStoreHeapTuple(tuple, slot, false);
 					}
 				}
 
@@ -2084,7 +2084,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				{
 					tuple = do_convert_tuple(tuple, map);
 					ExecSetSlotDescriptor(slot, tupdesc);
-					ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+					ExecStoreHeapTuple(tuple, slot, false);
 				}
 			}
 
@@ -2190,7 +2190,7 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 						{
 							tuple = do_convert_tuple(tuple, map);
 							ExecSetSlotDescriptor(slot, tupdesc);
-							ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+							ExecStoreHeapTuple(tuple, slot, false);
 						}
 					}
 

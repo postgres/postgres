@@ -146,7 +146,7 @@ retry:
 	if ((scantuple = index_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		found = true;
-		ExecStoreTuple(scantuple, outslot, InvalidBuffer, false);
+		ExecStoreHeapTuple(scantuple, outslot, false);
 		ExecMaterializeSlot(outslot);
 
 		xwait = TransactionIdIsValid(snap.xmin) ?
@@ -310,7 +310,7 @@ retry:
 			continue;
 
 		found = true;
-		ExecStoreTuple(scantuple, outslot, InvalidBuffer, false);
+		ExecStoreHeapTuple(scantuple, outslot, false);
 		ExecMaterializeSlot(outslot);
 
 		xwait = TransactionIdIsValid(snap.xmin) ?

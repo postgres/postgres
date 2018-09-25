@@ -377,20 +377,18 @@ TidNext(TidScanState *node)
 		if (heap_fetch(heapRelation, snapshot, tuple, &buffer, false, NULL))
 		{
 			/*
-			 * store the scanned tuple in the scan tuple slot of the scan
+			 * Store the scanned tuple in the scan tuple slot of the scan
 			 * state.  Eventually we will only do this and not return a tuple.
-			 * Note: we pass 'false' because tuples returned by amgetnext are
-			 * pointers onto disk pages and were not created with palloc() and
-			 * so should not be pfree()'d.
 			 */
-			ExecStoreTuple(tuple,	/* tuple to store */
-						   slot,	/* slot to store in */
-						   buffer,	/* buffer associated with tuple  */
-						   false);	/* don't pfree */
+			ExecStoreBufferHeapTuple(tuple,	/* tuple to store */
+									 slot,	/* slot to store in */
+									 buffer);	/* buffer associated with
+												 * tuple */
 
 			/*
 			 * At this point we have an extra pin on the buffer, because
-			 * ExecStoreTuple incremented the pin count. Drop our local pin.
+			 * ExecStoreHeapTuple incremented the pin count. Drop our local
+			 * pin.
 			 */
 			ReleaseBuffer(buffer);
 

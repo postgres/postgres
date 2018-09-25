@@ -715,7 +715,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
-			ExecStoreTuple(tuple, tupslot, InvalidBuffer, false);
+			ExecStoreHeapTuple(tuple, tupslot, false);
 			econtext->ecxt_scantuple = tupslot;
 
 			if (!ExecCheck(partqualstate, econtext))

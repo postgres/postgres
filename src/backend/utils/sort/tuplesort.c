@@ -3792,11 +3792,11 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 
 		ecxt_scantuple = GetPerTupleExprContext(state->estate)->ecxt_scantuple;
 
-		ExecStoreTuple(ltup, ecxt_scantuple, InvalidBuffer, false);
+		ExecStoreHeapTuple(ltup, ecxt_scantuple, false);
 		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
 					   l_index_values, l_index_isnull);
 
-		ExecStoreTuple(rtup, ecxt_scantuple, InvalidBuffer, false);
+		ExecStoreHeapTuple(rtup, ecxt_scantuple, false);
 		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
 					   r_index_values, r_index_isnull);
 
