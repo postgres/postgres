@@ -16,7 +16,7 @@ endif
 # probably because it sometimes contains some header files with names
 # that clash with some of ours, or with some that we include, notably on
 # Windows.
-override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) $(perl_embed_ccflags) -I$(perl_archlibexp)/CORE
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) $(perl_embed_ccflags) -I$(perl_includedir)/CORE
 
 rpathdir = $(perl_archlibexp)/CORE
 

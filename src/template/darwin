@@ -3,6 +3,18 @@
 # Note: Darwin is the original code name for macOS, also known as OS X.
 # We still use "darwin" as the port name, partly because config.guess does.
 
+# Select where system include files should be sought.
+if test x"$PG_SYSROOT" = x"" ; then
+  PG_SYSROOT=`xcodebuild -version -sdk macosx Path 2>/dev/null`
+fi
+if test x"$PG_SYSROOT" != x"" ; then
+  if test -d "$PG_SYSROOT" ; then
+    CPPFLAGS="$CPPFLAGS -isysroot $PG_SYSROOT"
+  else
+    PG_SYSROOT=""
+  fi
+fi
+
 # Select appropriate semaphore support.  Darwin 6.0 (macOS 10.2) and up
 # support System V semaphores; before that we have to use named POSIX
 # semaphores, which are less good for our purposes because they eat a
