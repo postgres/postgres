@@ -13,7 +13,6 @@
 #ifndef PARTITION_H
 #define PARTITION_H
 
-#include "fmgr.h"
 #include "partitioning/partdefs.h"
 #include "utils/relcache.h"
 
