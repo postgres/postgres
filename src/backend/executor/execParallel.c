@@ -1199,14 +1199,7 @@ ExecParallelGetQueryDesc(shm_toc *toc, DestReceiver *receiver,
 	paramspace = shm_toc_lookup(toc, PARALLEL_KEY_PARAMLISTINFO, false);
 	paramLI = RestoreParamList(&paramspace);
 
-	/*
-	 * Create a QueryDesc for the query.
-	 *
-	 * It's not obvious how to obtain the query string from here; and even if
-	 * we could copying it would take more cycles than not copying it. But
-	 * it's a bit unsatisfying to just use a dummy string here, so consider
-	 * revising this someday.
-	 */
+	/* Create a QueryDesc for the query. */
 	return CreateQueryDesc(pstmt,
 						   queryString,
 						   GetActiveSnapshot(), InvalidSnapshot,
