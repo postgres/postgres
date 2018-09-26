@@ -102,13 +102,8 @@
 #ifdef vsnprintf
 #undef vsnprintf
 #endif
-#ifdef __GNUC__
-#define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
-#define snprintf(...)	pg_snprintf(__VA_ARGS__)
-#else
 #define vsnprintf		pg_vsnprintf
 #define snprintf		pg_snprintf
-#endif							/* __GNUC__ */
 
 /* perl version and platform portability */
 #define NEED_eval_pv

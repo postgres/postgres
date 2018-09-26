@@ -173,25 +173,19 @@ extern int	pg_fprintf(FILE *stream, const char *fmt,...) pg_attribute_printf(2, 
 extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 
 /*
- *	The GCC-specific code below prevents the pg_attribute_printf above from
- *	being replaced, and this is required because gcc doesn't know anything
- *	about pg_printf.
+ * We use __VA_ARGS__ for printf to prevent replacing references to
+ * the "printf" format archetype in format() attribute declarations.
+ * That unfortunately means that taking a function pointer to printf
+ * will not do what we'd wish.  (If you need to do that, you must name
+ * pg_printf explicitly.)  For printf's sibling functions, use
+ * parameterless macros so that function pointers will work unsurprisingly.
  */
-#ifdef __GNUC__
-#define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
-#define snprintf(...)	pg_snprintf(__VA_ARGS__)
-#define sprintf(...)	pg_sprintf(__VA_ARGS__)
-#define vfprintf(...)	pg_vfprintf(__VA_ARGS__)
-#define fprintf(...)	pg_fprintf(__VA_ARGS__)
-#define printf(...)		pg_printf(__VA_ARGS__)
-#else
 #define vsnprintf		pg_vsnprintf
 #define snprintf		pg_snprintf
 #define sprintf			pg_sprintf
 #define vfprintf		pg_vfprintf
 #define fprintf			pg_fprintf
-#define printf			pg_printf
-#endif
+#define printf(...)		pg_printf(__VA_ARGS__)
 
 /* Replace strerror() with our own, somewhat more robust wrapper */
 extern char *pg_strerror(int errnum);

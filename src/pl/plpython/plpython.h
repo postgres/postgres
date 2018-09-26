@@ -127,13 +127,8 @@ typedef int Py_ssize_t;
 #ifdef vsnprintf
 #undef vsnprintf
 #endif
-#ifdef __GNUC__
-#define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
-#define snprintf(...)	pg_snprintf(__VA_ARGS__)
-#else
 #define vsnprintf				pg_vsnprintf
 #define snprintf				pg_snprintf
-#endif							/* __GNUC__ */
 
 /*
  * Used throughout, and also by the Python 2/3 porting layer, so it's easier to
