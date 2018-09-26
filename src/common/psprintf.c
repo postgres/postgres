@@ -45,6 +45,7 @@
 char *
 psprintf(const char *fmt,...)
 {
+	int			save_errno = errno;
 	size_t		len = 128;		/* initial assumption about buffer size */
 
 	for (;;)
@@ -60,6 +61,7 @@ psprintf(const char *fmt,...)
 		result = (char *) palloc(len);
 
 		/* Try to format the data. */
+		errno = save_errno;
 		va_start(args, fmt);
 		newlen = pvsnprintf(result, len, fmt, args);
 		va_end(args);
@@ -88,6 +90,9 @@ psprintf(const char *fmt,...)
  *
  * Other error cases do not return, but exit via elog(ERROR) or exit().
  * Hence, this shouldn't be used inside libpq.
+ *
+ * Caution: callers must be sure to preserve their entry-time errno
+ * when looping, in case the fmt contains "%m".
  *
  * Note that the semantics of the return value are not exactly C99's.
  * First, we don't promise that the estimated buffer size is exactly right;

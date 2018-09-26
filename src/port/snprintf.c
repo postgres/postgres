@@ -64,6 +64,14 @@
  *
  * 5. Space and '#' flags are not implemented.
  *
+ * In addition, we support some extensions over C99:
+ *
+ * 1. Argument order control through "%n$" and "*n$", as required by POSIX.
+ *
+ * 2. "%m" expands to the value of strerror(errno), where errno is the
+ * value that variable had at the start of the call.  This is a glibc
+ * extension, but a very useful one.
+ *
  *
  * Historically the result values of sprintf/snprintf varied across platforms.
  * This implementation now follows the C99 standard:
@@ -154,6 +162,13 @@ typedef union
 static void flushbuffer(PrintfTarget *target);
 static void dopr(PrintfTarget *target, const char *format, va_list args);
 
+
+/*
+ * Externally visible entry points.
+ *
+ * All of these are just wrappers around dopr().  Note it's essential that
+ * they not change the value of "errno" before reaching dopr().
+ */
 
 int
 pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
@@ -315,11 +330,12 @@ static void trailing_pad(int *padlen, PrintfTarget *target);
 
 
 /*
- * dopr(): poor man's version of doprintf
+ * dopr(): the guts of *printf for all cases.
  */
 static void
 dopr(PrintfTarget *target, const char *format, va_list args)
 {
+	int			save_errno = errno;
 	const char *format_start = format;
 	int			ch;
 	bool		have_dollar;
@@ -497,6 +513,7 @@ nextch1:
 				else
 					have_non_dollar = true;
 				break;
+			case 'm':
 			case '%':
 				break;
 		}
@@ -801,6 +818,15 @@ nextch2:
 						 fieldwidth, zpad,
 						 precision, pointflag,
 						 target);
+				break;
+			case 'm':
+				{
+					char		errbuf[PG_STRERROR_R_BUFLEN];
+					const char *errm = strerror_r(save_errno,
+												  errbuf, sizeof(errbuf));
+
+					dostr(errm, strlen(errm), target);
+				}
 				break;
 			case '%':
 				dopr_outch('%', target);

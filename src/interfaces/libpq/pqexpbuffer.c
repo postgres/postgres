@@ -233,6 +233,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 void
 printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 {
+	int			save_errno = errno;
 	va_list		args;
 	bool		done;
 
@@ -244,6 +245,7 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	/* Loop in case we have to retry after enlarging the buffer. */
 	do
 	{
+		errno = save_errno;
 		va_start(args, fmt);
 		done = appendPQExpBufferVA(str, fmt, args);
 		va_end(args);
@@ -261,6 +263,7 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 void
 appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 {
+	int			save_errno = errno;
 	va_list		args;
 	bool		done;
 
@@ -270,6 +273,7 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	/* Loop in case we have to retry after enlarging the buffer. */
 	do
 	{
+		errno = save_errno;
 		va_start(args, fmt);
 		done = appendPQExpBufferVA(str, fmt, args);
 		va_end(args);
@@ -281,6 +285,9 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
  * Shared guts of printfPQExpBuffer/appendPQExpBuffer.
  * Attempt to format data and append it to str.  Returns true if done
  * (either successful or hard failure), false if need to retry.
+ *
+ * Caution: callers must be sure to preserve their entry-time errno
+ * when looping, in case the fmt contains "%m".
  */
 static bool
 appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
