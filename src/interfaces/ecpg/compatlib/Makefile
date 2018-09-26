@@ -31,7 +31,8 @@ SHLIB_EXPORTS = exports.txt
 # Need to recompile any libpgport object files
 LIBS := $(filter-out -lpgport, $(LIBS))
 
-OBJS= informix.o strerror.o $(filter snprintf.o strnlen.o, $(LIBOBJS)) $(WIN32RES)
+OBJS= informix.o snprintf.o strerror.o \
+	$(filter strnlen.o, $(LIBOBJS)) $(WIN32RES)
 
 PKG_CONFIG_REQUIRES_PRIVATE = libecpg libpgtypes
 

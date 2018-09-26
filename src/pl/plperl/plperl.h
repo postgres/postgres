@@ -29,11 +29,8 @@
  * Sometimes perl carefully scribbles on our *printf macros.
  * So we undefine them here and redefine them after it's done its dirty deed.
  */
-
-#ifdef USE_REPL_SNPRINTF
 #undef snprintf
 #undef vsnprintf
-#endif
 
 /*
  * ActivePerl 5.18 and later are MinGW-built, and their headers use GCC's
@@ -99,7 +96,6 @@
 #endif
 
 /* put back our snprintf and vsnprintf */
-#ifdef USE_REPL_SNPRINTF
 #ifdef snprintf
 #undef snprintf
 #endif
@@ -113,7 +109,6 @@
 #define vsnprintf		pg_vsnprintf
 #define snprintf		pg_snprintf
 #endif							/* __GNUC__ */
-#endif							/* USE_REPL_SNPRINTF */
 
 /* perl version and platform portability */
 #define NEED_eval_pv

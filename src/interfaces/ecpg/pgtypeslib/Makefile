@@ -30,8 +30,8 @@ SHLIB_LINK += $(filter -lm, $(LIBS))
 SHLIB_EXPORTS = exports.txt
 
 OBJS= numeric.o datetime.o common.o dt_common.o timestamp.o interval.o \
-	pgstrcasecmp.o strerror.o \
-	$(filter rint.o snprintf.o strnlen.o, $(LIBOBJS)) \
+	pgstrcasecmp.o snprintf.o strerror.o \
+	$(filter rint.o strnlen.o, $(LIBOBJS)) \
 	string.o \
 	$(WIN32RES)
 

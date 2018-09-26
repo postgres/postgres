@@ -1147,14 +1147,6 @@ typedef union PGAlignedXLogBlock
  * standard C library.
  */
 
-#if !HAVE_DECL_SNPRINTF
-extern int	snprintf(char *str, size_t count, const char *fmt,...) pg_attribute_printf(3, 4);
-#endif
-
-#if !HAVE_DECL_VSNPRINTF
-extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
-#endif
-
 #if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
 extern int	fdatasync(int fildes);
 #endif

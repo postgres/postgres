@@ -135,10 +135,6 @@
    don't. */
 #define HAVE_DECL_RTLD_NOW 0
 
-/* Define to 1 if you have the declaration of `snprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_SNPRINTF 1
-
 /* Define to 1 if you have the declaration of `strnlen', and to 0 if you
    don't. */
 #define HAVE_DECL_STRNLEN 1
@@ -150,10 +146,6 @@
 /* Define to 1 if you have the declaration of `strtoull', and to 0 if you
    don't. */
 #define HAVE_DECL_STRTOULL 1
-
-/* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_VSNPRINTF 1
 
 /* Define to 1 if you have the `dlopen' function. */
 /* #undef HAVE_DLOPEN */
@@ -376,9 +368,6 @@
 /* Define to 1 if you have the `setsid' function. */
 /* #undef HAVE_SETSID */
 
-/* Define to 1 if you have the `snprintf' function. */
-/* #undef HAVE_SNPRINTF */
-
 /* Define to 1 if you have spinlocks. */
 #define HAVE_SPINLOCKS 1
 
@@ -556,9 +545,6 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
 
-/* Define to 1 if you have the `vsnprintf' function. */
-#define HAVE_VSNPRINTF 1
-
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
@@ -714,9 +700,6 @@
 
 /* Define to 1 to build with PAM support. (--with-pam) */
 /* #undef USE_PAM */
-
-/* Use replacement snprintf() functions. */
-#define USE_REPL_SNPRINTF 1
 
 /* Define to 1 to use software CRC-32C implementation (slicing-by-8). */
 #if (_MSC_VER < 1500)

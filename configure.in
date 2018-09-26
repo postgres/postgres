@@ -1622,53 +1622,6 @@ if test "$pgac_cv_var_PS_STRINGS" = yes ; then
 fi
 
 
-# We use our snprintf.c emulation if either snprintf() or vsnprintf()
-# is missing.  Yes, there are machines that have only one.  We may
-# also decide to use snprintf.c if snprintf() is present but does not
-# have all the features we need --- see below.
-
-if test "$PORTNAME" = "win32"; then
-  # Win32 gets snprintf.c built unconditionally.
-  #
-  # To properly translate all NLS languages strings, we must support the
-  # *printf() %$ format, which allows *printf() arguments to be selected
-  # by position in the translated string.
-  #
-  # libintl versions < 0.13 use the native *printf() functions, and Win32
-  # *printf() doesn't understand %$, so we must use our /port versions,
-  # which do understand %$. libintl versions >= 0.13 include their own
-  # *printf versions on Win32.  The libintl 0.13 release note text is:
-  #
-  #   C format strings with positions, as they arise when a translator
-  #   needs to reorder a sentence, are now supported on all platforms.
-  #   On those few platforms (NetBSD and Woe32) for which the native
-  #   printf()/fprintf()/... functions don't support such format
-  #   strings, replacements are provided through <libintl.h>.
-  #
-  # We could use libintl >= 0.13's *printf() if we were sure that we had
-  # a libintl >= 0.13 at runtime, but seeing that there is no clean way
-  # to guarantee that, it is best to just use our own, so we are sure to
-  # get %$ support. In include/port.h we disable the *printf() macros
-  # that might have been defined by libintl.
-  #
-  # We do this unconditionally whether NLS is used or not so we are sure
-  # that all Win32 libraries and binaries behave the same.
-  pgac_need_repl_snprintf=yes
-else
-  pgac_need_repl_snprintf=no
-  AC_CHECK_FUNCS(snprintf, [], pgac_need_repl_snprintf=yes)
-  AC_CHECK_FUNCS(vsnprintf, [], pgac_need_repl_snprintf=yes)
-fi
-
-
-# Check whether <stdio.h> declares snprintf() and vsnprintf(); if not,
-# include/c.h will provide declarations.  Note this is a separate test
-# from whether the functions exist in the C library --- there are
-# systems that have the functions but don't bother to declare them :-(
-
-AC_CHECK_DECLS([snprintf, vsnprintf])
-
-
 dnl Cannot use AC_CHECK_FUNC because isinf may be a macro
 AC_CACHE_CHECK([for isinf], ac_cv_func_isinf,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([
@@ -1838,16 +1791,6 @@ for the exact reason.]])],
 # Run tests below here
 # --------------------
 
-# For NLS, force use of our snprintf if system's doesn't do arg control.
-# See comment above at snprintf test for details.
-if test "$enable_nls" = yes -a "$pgac_need_repl_snprintf" = no; then
-  PGAC_FUNC_SNPRINTF_ARG_CONTROL
-  if test $pgac_cv_snprintf_arg_control != yes ; then
-    pgac_need_repl_snprintf=yes
-  fi
-fi
-
-
 dnl Check to see if we have a working 64-bit integer type.
 dnl Since Postgres 8.4, we no longer support compilers without a working
 dnl 64-bit type; but we have to determine whether that type is called
@@ -1870,8 +1813,6 @@ AC_DEFINE_UNQUOTED(PG_INT64_TYPE, $pg_int64_type,
   [Define to the name of a signed 64-bit integer type.])
 
 # Select the printf length modifier that goes with that, too.
-# (This used to be bound up with replacement-snprintf selection, but now
-# we assume that the native *printf functions use standard length modifiers.)
 if test x"$pg_int64_type" = x"long long int" ; then
   INT64_MODIFIER='"ll"'
 else
@@ -1880,30 +1821,6 @@ fi
 
 AC_DEFINE_UNQUOTED(INT64_MODIFIER, $INT64_MODIFIER,
                    [Define to the appropriate printf length modifier for 64-bit ints.])
-
-# Force use of our snprintf if the system's doesn't support the %z flag.
-# (Note this test uses PG_INT64_TYPE and INT64_MODIFIER.)
-if test "$pgac_need_repl_snprintf" = no; then
-  PGAC_FUNC_SNPRINTF_SIZE_T_SUPPORT
-  if test "$pgac_cv_snprintf_size_t_support" != yes; then
-    pgac_need_repl_snprintf=yes
-  fi
-fi
-
-# Force use of our snprintf if the system's doesn't handle buffer overrun
-# as specified by C99.
-if test "$pgac_need_repl_snprintf" = no; then
-  PGAC_FUNC_SNPRINTF_C99_RESULT
-  if test "$pgac_cv_snprintf_c99_result" != yes; then
-    pgac_need_repl_snprintf=yes
-  fi
-fi
-
-# Now we have checked all the reasons to replace snprintf
-if test $pgac_need_repl_snprintf = yes; then
-  AC_DEFINE(USE_REPL_SNPRINTF, 1, [Use replacement snprintf() functions.])
-  AC_LIBOBJ(snprintf)
-fi
 
 # has to be down here, rather than with the other builtins, because
 # the test uses PG_INT64_TYPE.

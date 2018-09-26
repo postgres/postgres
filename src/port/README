@@ -18,7 +18,7 @@ and adding infrastructure to recompile the object files:
 
         OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
                 connect.o misc.o path.o exec.o \
-                $(filter snprintf.o, $(LIBOBJS))
+                $(filter strlcat.o, $(LIBOBJS))
 
 The problem is that there is no testing of which object files need to be
 added, but missing functions usually show up when linking user

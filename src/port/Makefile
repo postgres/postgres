@@ -33,7 +33,8 @@ LIBS += $(PTHREAD_LIBS)
 OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o erand48.o inet_net_ntop.o \
 	noblock.o path.o pgcheckdir.o pgmkdirp.o pgsleep.o \
 	pgstrcasecmp.o pqsignal.o \
-	qsort.o qsort_arg.o quotes.o sprompt.o strerror.o tar.o thread.o
+	qsort.o qsort_arg.o quotes.o snprintf.o sprompt.o strerror.o \
+	tar.o thread.o
 
 ifeq ($(enable_strong_random), yes)
 OBJS += pg_strong_random.o

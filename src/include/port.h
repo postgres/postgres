@@ -134,7 +134,12 @@ extern unsigned char pg_tolower(unsigned char ch);
 extern unsigned char pg_ascii_toupper(unsigned char ch);
 extern unsigned char pg_ascii_tolower(unsigned char ch);
 
-#ifdef USE_REPL_SNPRINTF
+/*
+ * Beginning in v12, we always replace snprintf() and friends with our own
+ * implementation.  This symbol is no longer consulted by the core code,
+ * but keep it defined anyway in case any extensions are looking at it.
+ */
+#define USE_REPL_SNPRINTF 1
 
 /*
  * Versions of libintl >= 0.13 try to replace printf() and friends with
@@ -187,7 +192,6 @@ extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 #define fprintf			pg_fprintf
 #define printf			pg_printf
 #endif
-#endif							/* USE_REPL_SNPRINTF */
 
 /* Replace strerror() with our own, somewhat more robust wrapper */
 extern char *pg_strerror(int errnum);
