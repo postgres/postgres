@@ -193,6 +193,11 @@ extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 extern char *pg_strerror(int errnum);
 #define strerror pg_strerror
 
+/* Likewise for strerror_r(); note we prefer the GNU API for that */
+extern char *pg_strerror_r(int errnum, char *buf, size_t buflen);
+#define strerror_r pg_strerror_r
+#define PG_STRERROR_R_BUFLEN 256	/* Recommended buffer size for strerror_r */
+
 /* Portable prompt handling */
 extern void simple_prompt(const char *prompt, char *destination, size_t destlen,
 			  bool echo);
@@ -428,8 +433,6 @@ extern char *dlerror(void);
 #endif
 
 /* thread.h */
-extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
-
 #ifndef WIN32
 extern int pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 		   size_t buflen, struct passwd **result);

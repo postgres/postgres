@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * strerror.c
- *	  Replacement for standard strerror() function
+ *	  Replacements for standard strerror() and strerror_r() functions
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -15,13 +15,16 @@
 #include "c.h"
 
 /*
- * Within this file, "strerror" means the platform's function not pg_strerror
+ * Within this file, "strerror" means the platform's function not pg_strerror,
+ * and likewise for "strerror_r"
  */
 #undef strerror
+#undef strerror_r
 
+static char *gnuish_strerror_r(int errnum, char *buf, size_t buflen);
 static char *get_errno_symbol(int errnum);
 #ifdef WIN32
-static char *win32_socket_strerror(int errnum);
+static char *win32_socket_strerror(int errnum, char *buf, size_t buflen);
 #endif
 
 
@@ -31,19 +34,28 @@ static char *win32_socket_strerror(int errnum);
 char *
 pg_strerror(int errnum)
 {
-	/* this buffer is only used if strerror() and get_errno_symbol() fail */
-	static char errorstr_buf[48];
+	static char errorstr_buf[PG_STRERROR_R_BUFLEN];
+
+	return pg_strerror_r(errnum, errorstr_buf, sizeof(errorstr_buf));
+}
+
+/*
+ * A slightly cleaned-up version of strerror_r()
+ */
+char *
+pg_strerror_r(int errnum, char *buf, size_t buflen)
+{
 	char	   *str;
 
 	/* If it's a Windows Winsock error, that needs special handling */
 #ifdef WIN32
 	/* Winsock error code range, per WinError.h */
 	if (errnum >= 10000 && errnum <= 11999)
-		return win32_socket_strerror(errnum);
+		return win32_socket_strerror(errnum, buf, buflen);
 #endif
 
-	/* Try the platform's strerror() */
-	str = strerror(errnum);
+	/* Try the platform's strerror_r(), or maybe just strerror() */
+	str = gnuish_strerror_r(errnum, buf, buflen);
 
 	/*
 	 * Some strerror()s return an empty string for out-of-range errno.  This
@@ -57,15 +69,40 @@ pg_strerror(int errnum)
 
 	if (str == NULL)
 	{
-		snprintf(errorstr_buf, sizeof(errorstr_buf),
-		/*------
-		  translator: This string will be truncated at 47
-		  characters expanded. */
-				 _("operating system error %d"), errnum);
-		str = errorstr_buf;
+		snprintf(buf, buflen, _("operating system error %d"), errnum);
+		str = buf;
 	}
 
 	return str;
+}
+
+/*
+ * Simple wrapper to emulate GNU strerror_r if what the platform provides is
+ * POSIX.  Also, if platform lacks strerror_r altogether, fall back to plain
+ * strerror; it might not be very thread-safe, but tough luck.
+ */
+static char *
+gnuish_strerror_r(int errnum, char *buf, size_t buflen)
+{
+#ifdef HAVE_STRERROR_R
+#ifdef STRERROR_R_INT
+	/* POSIX API */
+	if (strerror_r(errnum, buf, buflen) == 0)
+		return buf;
+	return NULL;				/* let caller deal with failure */
+#else
+	/* GNU API */
+	return strerror_r(errnum, buf, buflen);
+#endif
+#else							/* !HAVE_STRERROR_R */
+	char	   *sbuf = strerror(errnum);
+
+	if (sbuf == NULL)			/* can this still happen anywhere? */
+		return NULL;
+	/* To minimize thread-unsafety hazard, copy into caller's buffer */
+	strlcpy(buf, sbuf, buflen);
+	return buf;
+#endif
 }
 
 /*
@@ -247,9 +284,8 @@ get_errno_symbol(int errnum)
  * Windows' strerror() doesn't know the Winsock codes, so handle them this way
  */
 static char *
-win32_socket_strerror(int errnum)
+win32_socket_strerror(int errnum, char *buf, size_t buflen)
 {
-	static char wserrbuf[256];
 	static HANDLE handleDLL = INVALID_HANDLE_VALUE;
 
 	if (handleDLL == INVALID_HANDLE_VALUE)
@@ -258,28 +294,29 @@ win32_socket_strerror(int errnum)
 								  DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 		if (handleDLL == NULL)
 		{
-			sprintf(wserrbuf, "winsock error %d (could not load netmsg.dll to translate: error code %lu)",
-					errnum, GetLastError());
-			return wserrbuf;
+			snprintf(buf, buflen,
+					 "winsock error %d (could not load netmsg.dll to translate: error code %lu)",
+					 errnum, GetLastError());
+			return buf;
 		}
 	}
 
-	ZeroMemory(&wserrbuf, sizeof(wserrbuf));
+	ZeroMemory(buf, buflen);
 	if (FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS |
 					  FORMAT_MESSAGE_FROM_SYSTEM |
 					  FORMAT_MESSAGE_FROM_HMODULE,
 					  handleDLL,
 					  errnum,
 					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-					  wserrbuf,
-					  sizeof(wserrbuf) - 1,
+					  buf,
+					  buflen - 1,
 					  NULL) == 0)
 	{
 		/* Failed to get id */
-		sprintf(wserrbuf, "unrecognized winsock error %d", errnum);
+		snprintf(buf, buflen, "unrecognized winsock error %d", errnum);
 	}
 
-	return wserrbuf;
+	return buf;
 }
 
 #endif							/* WIN32 */

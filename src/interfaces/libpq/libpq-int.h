@@ -773,7 +773,7 @@ extern char *libpq_ngettext(const char *msgid, const char *msgid_plural, unsigne
 #define SOCK_ERRNO_SET(e) WSASetLastError(e)
 #else
 #define SOCK_ERRNO errno
-#define SOCK_STRERROR pqStrerror
+#define SOCK_STRERROR strerror_r
 #define SOCK_ERRNO_SET(e) (errno = (e))
 #endif
 

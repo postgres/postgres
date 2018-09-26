@@ -1459,7 +1459,7 @@ connectNoDelay(PGconn *conn)
 				   (char *) &on,
 				   sizeof(on)) < 0)
 	{
-		char		sebuf[256];
+		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
@@ -1480,7 +1480,7 @@ connectNoDelay(PGconn *conn)
 static void
 connectFailureMessage(PGconn *conn, int errorno)
 {
-	char		sebuf[256];
+	char		sebuf[PG_STRERROR_R_BUFLEN];
 
 #ifdef HAVE_UNIX_SOCKETS
 	if (IS_AF_UNIX(conn->raddr.addr.ss_family))
@@ -1637,7 +1637,7 @@ setKeepalivesIdle(PGconn *conn)
 	if (setsockopt(conn->sock, IPPROTO_TCP, PG_TCP_KEEPALIVE_IDLE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
-		char		sebuf[256];
+		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("setsockopt(%s) failed: %s\n"),
@@ -1671,7 +1671,7 @@ setKeepalivesInterval(PGconn *conn)
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPINTVL,
 				   (char *) &interval, sizeof(interval)) < 0)
 	{
-		char		sebuf[256];
+		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("setsockopt(%s) failed: %s\n"),
@@ -1706,7 +1706,7 @@ setKeepalivesCount(PGconn *conn)
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPCNT,
 				   (char *) &count, sizeof(count)) < 0)
 	{
-		char		sebuf[256];
+		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("setsockopt(%s) failed: %s\n"),
@@ -2036,7 +2036,7 @@ PQconnectPoll(PGconn *conn)
 	bool		reset_connection_state_machine = false;
 	bool		need_new_connection = false;
 	PGresult   *res;
-	char		sebuf[256];
+	char		sebuf[PG_STRERROR_R_BUFLEN];
 	int			optval;
 	PQExpBufferData savedMessage;
 
@@ -2580,7 +2580,7 @@ keep_going:						/* We will come back to here until there is
 						else
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("could not get peer credentials: %s\n"),
-											  pqStrerror(errno, sebuf, sizeof(sebuf)));
+											  strerror_r(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 
@@ -2591,7 +2591,7 @@ keep_going:						/* We will come back to here until there is
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("could not look up local user ID %d: %s\n"),
 											  (int) uid,
-											  pqStrerror(passerr, sebuf, sizeof(sebuf)));
+											  strerror_r(passerr, sebuf, sizeof(sebuf)));
 						else
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("local user with ID %d does not exist\n"),
@@ -3953,7 +3953,7 @@ internal_cancel(SockAddr *raddr, int be_pid, int be_key,
 {
 	int			save_errno = SOCK_ERRNO;
 	pgsocket	tmpsock = PGINVALID_SOCKET;
-	char		sebuf[256];
+	char		sebuf[PG_STRERROR_R_BUFLEN];
 	int			maxlen;
 	struct
 	{

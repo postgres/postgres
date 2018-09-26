@@ -54,33 +54,6 @@
 
 
 /*
- * Wrapper around strerror and strerror_r to use the former if it is
- * available and also return a more useful value (the error string).
- */
-char *
-pqStrerror(int errnum, char *strerrbuf, size_t buflen)
-{
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_STRERROR_R)
-	/* reentrant strerror_r is available */
-#ifdef STRERROR_R_INT
-	/* SUSv3 version */
-	if (strerror_r(errnum, strerrbuf, buflen) == 0)
-		return strerrbuf;
-	else
-		return "Unknown error";
-#else
-	/* GNU libc */
-	return strerror_r(errnum, strerrbuf, buflen);
-#endif
-#else
-	/* no strerror_r() available, just use strerror */
-	strlcpy(strerrbuf, strerror(errnum), buflen);
-
-	return strerrbuf;
-#endif
-}
-
-/*
  * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
  * behaviour, if that function is not available or required.
  *

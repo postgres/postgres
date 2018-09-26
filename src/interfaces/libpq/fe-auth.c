@@ -756,11 +756,11 @@ pg_local_sendauth(PGconn *conn)
 
 	if (sendmsg(conn->sock, &msg, 0) == -1)
 	{
-		char		sebuf[256];
+		char		sebuf[PG_STRERROR_R_BUFLEN];
 
 		printfPQExpBuffer(&conn->errorMessage,
 						  "pg_local_sendauth: sendmsg: %s\n",
-						  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						  strerror_r(errno, sebuf, sizeof(sebuf)));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
@@ -1098,7 +1098,7 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 			printfPQExpBuffer(errorMessage,
 							  libpq_gettext("could not look up local user ID %d: %s\n"),
 							  (int) user_id,
-							  pqStrerror(pwerr, pwdbuf, sizeof(pwdbuf)));
+							  strerror_r(pwerr, pwdbuf, sizeof(pwdbuf)));
 		else
 			printfPQExpBuffer(errorMessage,
 							  libpq_gettext("local user with ID %d does not exist\n"),
