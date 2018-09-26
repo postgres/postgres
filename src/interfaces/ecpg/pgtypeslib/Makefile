@@ -30,7 +30,7 @@ SHLIB_LINK += $(filter -lm, $(LIBS))
 SHLIB_EXPORTS = exports.txt
 
 OBJS= numeric.o datetime.o common.o dt_common.o timestamp.o interval.o \
-	pgstrcasecmp.o \
+	pgstrcasecmp.o strerror.o \
 	$(filter rint.o snprintf.o strnlen.o, $(LIBOBJS)) \
 	string.o \
 	$(WIN32RES)
@@ -45,7 +45,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
 
-pgstrcasecmp.c rint.c snprintf.c strnlen.c: % : $(top_srcdir)/src/port/%
+pgstrcasecmp.c rint.c snprintf.c strerror.c strnlen.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 string.c: % : $(top_srcdir)/src/common/%
@@ -58,6 +58,6 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 
 clean distclean: clean-lib
-	rm -f $(OBJS) pgstrcasecmp.c rint.c snprintf.c strnlen.c string.c
+	rm -f $(OBJS) pgstrcasecmp.c rint.c snprintf.c strerror.c strnlen.c string.c
 
 maintainer-clean: distclean maintainer-clean-lib

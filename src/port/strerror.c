@@ -1,30 +1,285 @@
-/* src/port/strerror.c */
-
-/*
- * strerror - map error number to descriptive string
+/*-------------------------------------------------------------------------
  *
- * This version is obviously somewhat Unix-specific.
+ * strerror.c
+ *	  Replacement for standard strerror() function
  *
- * based on code by Henry Spencer
- * modified for ANSI by D'Arcy J.M. Cain
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  src/port/strerror.c
+ *
+ *-------------------------------------------------------------------------
  */
-
 #include "c.h"
 
+/*
+ * Within this file, "strerror" means the platform's function not pg_strerror
+ */
+#undef strerror
 
-extern const char *const sys_errlist[];
-extern int	sys_nerr;
+static char *get_errno_symbol(int errnum);
+#ifdef WIN32
+static char *win32_socket_strerror(int errnum);
+#endif
 
-const char *
-strerror(int errnum)
+
+/*
+ * A slightly cleaned-up version of strerror()
+ */
+char *
+pg_strerror(int errnum)
 {
-	static char buf[24];
+	/* this buffer is only used if strerror() and get_errno_symbol() fail */
+	static char errorstr_buf[48];
+	char	   *str;
 
-	if (errnum < 0 || errnum > sys_nerr)
+	/* If it's a Windows Winsock error, that needs special handling */
+#ifdef WIN32
+	/* Winsock error code range, per WinError.h */
+	if (errnum >= 10000 && errnum <= 11999)
+		return win32_socket_strerror(errnum);
+#endif
+
+	/* Try the platform's strerror() */
+	str = strerror(errnum);
+
+	/*
+	 * Some strerror()s return an empty string for out-of-range errno.  This
+	 * is ANSI C spec compliant, but not exactly useful.  Also, we may get
+	 * back strings of question marks if libc cannot transcode the message to
+	 * the codeset specified by LC_CTYPE.  If we get nothing useful, first try
+	 * get_errno_symbol(), and if that fails, print the numeric errno.
+	 */
+	if (str == NULL || *str == '\0' || *str == '?')
+		str = get_errno_symbol(errnum);
+
+	if (str == NULL)
 	{
-		sprintf(buf, _("unrecognized error %d"), errnum);
-		return buf;
+		snprintf(errorstr_buf, sizeof(errorstr_buf),
+		/*------
+		  translator: This string will be truncated at 47
+		  characters expanded. */
+				 _("operating system error %d"), errnum);
+		str = errorstr_buf;
 	}
 
-	return sys_errlist[errnum];
+	return str;
 }
+
+/*
+ * Returns a symbol (e.g. "ENOENT") for an errno code.
+ * Returns NULL if the code is unrecognized.
+ */
+static char *
+get_errno_symbol(int errnum)
+{
+	switch (errnum)
+	{
+		case E2BIG:
+			return "E2BIG";
+		case EACCES:
+			return "EACCES";
+#ifdef EADDRINUSE
+		case EADDRINUSE:
+			return "EADDRINUSE";
+#endif
+#ifdef EADDRNOTAVAIL
+		case EADDRNOTAVAIL:
+			return "EADDRNOTAVAIL";
+#endif
+		case EAFNOSUPPORT:
+			return "EAFNOSUPPORT";
+#ifdef EAGAIN
+		case EAGAIN:
+			return "EAGAIN";
+#endif
+#ifdef EALREADY
+		case EALREADY:
+			return "EALREADY";
+#endif
+		case EBADF:
+			return "EBADF";
+#ifdef EBADMSG
+		case EBADMSG:
+			return "EBADMSG";
+#endif
+		case EBUSY:
+			return "EBUSY";
+		case ECHILD:
+			return "ECHILD";
+#ifdef ECONNABORTED
+		case ECONNABORTED:
+			return "ECONNABORTED";
+#endif
+		case ECONNREFUSED:
+			return "ECONNREFUSED";
+#ifdef ECONNRESET
+		case ECONNRESET:
+			return "ECONNRESET";
+#endif
+		case EDEADLK:
+			return "EDEADLK";
+		case EDOM:
+			return "EDOM";
+		case EEXIST:
+			return "EEXIST";
+		case EFAULT:
+			return "EFAULT";
+		case EFBIG:
+			return "EFBIG";
+#ifdef EHOSTUNREACH
+		case EHOSTUNREACH:
+			return "EHOSTUNREACH";
+#endif
+		case EIDRM:
+			return "EIDRM";
+		case EINPROGRESS:
+			return "EINPROGRESS";
+		case EINTR:
+			return "EINTR";
+		case EINVAL:
+			return "EINVAL";
+		case EIO:
+			return "EIO";
+#ifdef EISCONN
+		case EISCONN:
+			return "EISCONN";
+#endif
+		case EISDIR:
+			return "EISDIR";
+#ifdef ELOOP
+		case ELOOP:
+			return "ELOOP";
+#endif
+		case EMFILE:
+			return "EMFILE";
+		case EMLINK:
+			return "EMLINK";
+		case EMSGSIZE:
+			return "EMSGSIZE";
+		case ENAMETOOLONG:
+			return "ENAMETOOLONG";
+		case ENFILE:
+			return "ENFILE";
+		case ENOBUFS:
+			return "ENOBUFS";
+		case ENODEV:
+			return "ENODEV";
+		case ENOENT:
+			return "ENOENT";
+		case ENOEXEC:
+			return "ENOEXEC";
+		case ENOMEM:
+			return "ENOMEM";
+		case ENOSPC:
+			return "ENOSPC";
+		case ENOSYS:
+			return "ENOSYS";
+#ifdef ENOTCONN
+		case ENOTCONN:
+			return "ENOTCONN";
+#endif
+		case ENOTDIR:
+			return "ENOTDIR";
+#if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
+		case ENOTEMPTY:
+			return "ENOTEMPTY";
+#endif
+#ifdef ENOTSOCK
+		case ENOTSOCK:
+			return "ENOTSOCK";
+#endif
+#ifdef ENOTSUP
+		case ENOTSUP:
+			return "ENOTSUP";
+#endif
+		case ENOTTY:
+			return "ENOTTY";
+		case ENXIO:
+			return "ENXIO";
+#if defined(EOPNOTSUPP) && (!defined(ENOTSUP) || (EOPNOTSUPP != ENOTSUP))
+		case EOPNOTSUPP:
+			return "EOPNOTSUPP";
+#endif
+#ifdef EOVERFLOW
+		case EOVERFLOW:
+			return "EOVERFLOW";
+#endif
+		case EPERM:
+			return "EPERM";
+		case EPIPE:
+			return "EPIPE";
+		case EPROTONOSUPPORT:
+			return "EPROTONOSUPPORT";
+		case ERANGE:
+			return "ERANGE";
+#ifdef EROFS
+		case EROFS:
+			return "EROFS";
+#endif
+		case ESRCH:
+			return "ESRCH";
+#ifdef ETIMEDOUT
+		case ETIMEDOUT:
+			return "ETIMEDOUT";
+#endif
+#ifdef ETXTBSY
+		case ETXTBSY:
+			return "ETXTBSY";
+#endif
+#if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+		case EWOULDBLOCK:
+			return "EWOULDBLOCK";
+#endif
+		case EXDEV:
+			return "EXDEV";
+	}
+
+	return NULL;
+}
+
+
+#ifdef WIN32
+
+/*
+ * Windows' strerror() doesn't know the Winsock codes, so handle them this way
+ */
+static char *
+win32_socket_strerror(int errnum)
+{
+	static char wserrbuf[256];
+	static HANDLE handleDLL = INVALID_HANDLE_VALUE;
+
+	if (handleDLL == INVALID_HANDLE_VALUE)
+	{
+		handleDLL = LoadLibraryEx("netmsg.dll", NULL,
+								  DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		if (handleDLL == NULL)
+		{
+			sprintf(wserrbuf, "winsock error %d (could not load netmsg.dll to translate: error code %lu)",
+					errnum, GetLastError());
+			return wserrbuf;
+		}
+	}
+
+	ZeroMemory(&wserrbuf, sizeof(wserrbuf));
+	if (FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS |
+					  FORMAT_MESSAGE_FROM_SYSTEM |
+					  FORMAT_MESSAGE_FROM_HMODULE,
+					  handleDLL,
+					  errnum,
+					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+					  wserrbuf,
+					  sizeof(wserrbuf) - 1,
+					  NULL) == 0)
+	{
+		/* Failed to get id */
+		sprintf(wserrbuf, "unrecognized winsock error %d", errnum);
+	}
+
+	return wserrbuf;
+}
+
+#endif							/* WIN32 */

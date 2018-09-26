@@ -26,7 +26,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o memory.o \
-	connect.o misc.o path.o pgstrcasecmp.o \
+	connect.o misc.o path.o pgstrcasecmp.o strerror.o \
 	$(filter snprintf.o strlcpy.o strnlen.o win32setlocale.o isinf.o, $(LIBOBJS)) \
 	$(WIN32RES)
 
@@ -57,7 +57,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
 
-path.c pgstrcasecmp.c snprintf.c strlcpy.c strnlen.c thread.c win32setlocale.c isinf.c: % : $(top_srcdir)/src/port/%
+path.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32setlocale.c isinf.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 misc.o: misc.c $(top_builddir)/src/port/pg_config_paths.h
@@ -74,6 +74,6 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	rm -f $(OBJS)
-	rm -f path.c pgstrcasecmp.c snprintf.c strlcpy.c strnlen.c thread.c win32setlocale.c isinf.c
+	rm -f path.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32setlocale.c isinf.c
 
 maintainer-clean: distclean maintainer-clean-lib

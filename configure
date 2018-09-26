@@ -15644,19 +15644,6 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "strerror" "ac_cv_func_strerror"
-if test "x$ac_cv_func_strerror" = xyes; then :
-  $as_echo "#define HAVE_STRERROR 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" strerror.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS strerror.$ac_objext"
- ;;
-esac
-
-fi
-
 ac_fn_c_check_func "$LINENO" "strlcat" "ac_cv_func_strlcat"
 if test "x$ac_cv_func_strlcat" = xyes; then :
   $as_echo "#define HAVE_STRLCAT 1" >>confdefs.h

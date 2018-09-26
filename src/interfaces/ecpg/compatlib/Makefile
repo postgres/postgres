@@ -31,7 +31,7 @@ SHLIB_EXPORTS = exports.txt
 # Need to recompile any libpgport object files
 LIBS := $(filter-out -lpgport, $(LIBS))
 
-OBJS= informix.o $(filter snprintf.o strnlen.o, $(LIBOBJS)) $(WIN32RES)
+OBJS= informix.o strerror.o $(filter snprintf.o strnlen.o, $(LIBOBJS)) $(WIN32RES)
 
 PKG_CONFIG_REQUIRES_PRIVATE = libecpg libpgtypes
 
@@ -48,7 +48,7 @@ submake-pgtypeslib:
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 
-snprintf.c strnlen.c: % : $(top_srcdir)/src/port/%
+snprintf.c strerror.c strnlen.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs install-lib
@@ -58,6 +58,6 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 
 clean distclean: clean-lib
-	rm -f $(OBJS) snprintf.c strnlen.c
+	rm -f $(OBJS) snprintf.c strerror.c strnlen.c
 
 maintainer-clean: distclean maintainer-clean-lib

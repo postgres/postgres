@@ -4,5 +4,6 @@
 /pgstrcasecmp.c
 /rint.c
 /snprintf.c
+/strerror.c
 /string.c
 /strnlen.c

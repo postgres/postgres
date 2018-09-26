@@ -690,39 +690,3 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 		memcpy(writefds, &outwritefds, sizeof(fd_set));
 	return nummatches;
 }
-
-
-/*
- * Return win32 error string, since strerror can't
- * handle winsock codes
- */
-static char wserrbuf[256];
-const char *
-pgwin32_socket_strerror(int err)
-{
-	static HANDLE handleDLL = INVALID_HANDLE_VALUE;
-
-	if (handleDLL == INVALID_HANDLE_VALUE)
-	{
-		handleDLL = LoadLibraryEx("netmsg.dll", NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-		if (handleDLL == NULL)
-			ereport(FATAL,
-					(errmsg_internal("could not load netmsg.dll: error code %lu", GetLastError())));
-	}
-
-	ZeroMemory(&wserrbuf, sizeof(wserrbuf));
-	if (FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS |
-					  FORMAT_MESSAGE_FROM_SYSTEM |
-					  FORMAT_MESSAGE_FROM_HMODULE,
-					  handleDLL,
-					  err,
-					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-					  wserrbuf,
-					  sizeof(wserrbuf) - 1,
-					  NULL) == 0)
-	{
-		/* Failed to get id */
-		sprintf(wserrbuf, "unrecognized winsock error %d", err);
-	}
-	return wserrbuf;
-}

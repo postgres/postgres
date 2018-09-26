@@ -189,6 +189,10 @@ extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 #endif
 #endif							/* USE_REPL_SNPRINTF */
 
+/* Replace strerror() with our own, somewhat more robust wrapper */
+extern char *pg_strerror(int errnum);
+#define strerror pg_strerror
+
 /* Portable prompt handling */
 extern void simple_prompt(const char *prompt, char *destination, size_t destlen,
 			  bool echo);
@@ -355,7 +359,7 @@ extern int	isinf(double x);
 #undef isinf
 #define isinf __builtin_isinf
 #endif							/* __has_builtin(isinf) */
-#endif							/* __clang__ && !__cplusplus*/
+#endif							/* __clang__ && !__cplusplus */
 #endif							/* !HAVE_ISINF */
 
 #ifndef HAVE_MKDTEMP
@@ -403,7 +407,7 @@ extern void srandom(unsigned int seed);
 #ifndef HAVE_DLOPEN
 extern void *dlopen(const char *file, int mode);
 extern void *dlsym(void *handle, const char *symbol);
-extern int dlclose(void *handle);
+extern int	dlclose(void *handle);
 extern char *dlerror(void);
 #endif
 

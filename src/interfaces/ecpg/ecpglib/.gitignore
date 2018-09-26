@@ -4,6 +4,7 @@
 /path.c
 /pgstrcasecmp.c
 /snprintf.c
+/strerror.c
 /strlcpy.c
 /strnlen.c
 /thread.c
