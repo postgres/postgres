@@ -77,13 +77,13 @@
 
 /* in globals.c */
 /* these are marked volatile because they are set by signal handlers: */
-extern PGDLLIMPORT volatile bool InterruptPending;
-extern PGDLLIMPORT volatile bool QueryCancelPending;
-extern PGDLLIMPORT volatile bool ProcDiePending;
-extern PGDLLIMPORT volatile bool IdleInTransactionSessionTimeoutPending;
+extern PGDLLIMPORT volatile sig_atomic_t InterruptPending;
+extern PGDLLIMPORT volatile sig_atomic_t QueryCancelPending;
+extern PGDLLIMPORT volatile sig_atomic_t ProcDiePending;
+extern PGDLLIMPORT volatile sig_atomic_t IdleInTransactionSessionTimeoutPending;
 extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
 
-extern volatile bool ClientConnectionLost;
+extern PGDLLIMPORT volatile sig_atomic_t ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
 extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
