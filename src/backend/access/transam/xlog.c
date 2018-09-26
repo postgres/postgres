@@ -6775,11 +6775,12 @@ StartupXLOG(void)
 	StartupMultiXact();
 
 	/*
-	 * Ditto commit timestamps.  In a standby, we do it if setting is enabled
-	 * in ControlFile; in a master we base the decision on the GUC itself.
+	 * Ditto for commit timestamps.  Activate the facility if the setting is
+	 * enabled in the control file, as there should be no tracking of commit
+	 * timestamps done when the setting was disabled.  This facility can be
+	 * started or stopped when replaying a XLOG_PARAMETER_CHANGE record.
 	 */
-	if (ArchiveRecoveryRequested ?
-		ControlFile->track_commit_timestamp : track_commit_timestamp)
+	if (ControlFile->track_commit_timestamp)
 		StartupCommitTs();
 
 	/*

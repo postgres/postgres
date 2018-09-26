@@ -573,10 +573,9 @@ CompleteCommitTsInitialization(void)
 	 * any leftover data.
 	 *
 	 * Conversely, we activate the module if the feature is enabled.  This is
-	 * not necessary in a master system because we already did it earlier, but
-	 * if we're in a standby server that got promoted which had the feature
-	 * enabled and was following a master that had the feature disabled, this
-	 * is where we turn it on locally.
+	 * necessary for primary and standby as the activation depends on the
+	 * control file contents at the beginning of recovery or when a
+	 * XLOG_PARAMETER_CHANGE is replayed.
 	 */
 	if (!track_commit_timestamp)
 		DeactivateCommitTs();
@@ -586,7 +585,7 @@ CompleteCommitTsInitialization(void)
 
 /*
  * Activate or deactivate CommitTs' upon reception of a XLOG_PARAMETER_CHANGE
- * XLog record in a standby.
+ * XLog record during recovery.
  */
 void
 CommitTsParameterChange(bool newvalue, bool oldvalue)
