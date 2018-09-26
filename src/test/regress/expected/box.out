@@ -18,6 +18,7 @@
 CREATE TABLE BOX_TBL (f1 box);
 INSERT INTO BOX_TBL (f1) VALUES ('(2.0,2.0,0.0,0.0)');
 INSERT INTO BOX_TBL (f1) VALUES ('(1.0,1.0,3.0,3.0)');
+INSERT INTO BOX_TBL (f1) VALUES ('((-8, 2), (-2, -10))');
 -- degenerate cases where the box is a line or a point
 -- note that lines and points boxes all have zero area
 INSERT INTO BOX_TBL (f1) VALUES ('(2.5, 2.5, 2.5,3.5)');
@@ -26,6 +27,18 @@ INSERT INTO BOX_TBL (f1) VALUES ('(3.0, 3.0,3.0,3.0)');
 INSERT INTO BOX_TBL (f1) VALUES ('(2.3, 4.5)');
 ERROR:  invalid input syntax for type box: "(2.3, 4.5)"
 LINE 1: INSERT INTO BOX_TBL (f1) VALUES ('(2.3, 4.5)');
+                                         ^
+INSERT INTO BOX_TBL (f1) VALUES ('[1, 2, 3, 4)');
+ERROR:  invalid input syntax for type box: "[1, 2, 3, 4)"
+LINE 1: INSERT INTO BOX_TBL (f1) VALUES ('[1, 2, 3, 4)');
+                                         ^
+INSERT INTO BOX_TBL (f1) VALUES ('(1, 2, 3, 4]');
+ERROR:  invalid input syntax for type box: "(1, 2, 3, 4]"
+LINE 1: INSERT INTO BOX_TBL (f1) VALUES ('(1, 2, 3, 4]');
+                                         ^
+INSERT INTO BOX_TBL (f1) VALUES ('(1, 2, 3, 4) x');
+ERROR:  invalid input syntax for type box: "(1, 2, 3, 4) x"
+LINE 1: INSERT INTO BOX_TBL (f1) VALUES ('(1, 2, 3, 4) x');
                                          ^
 INSERT INTO BOX_TBL (f1) VALUES ('asdfasdf(ad');
 ERROR:  invalid input syntax for type box: "asdfasdf(ad"
@@ -36,9 +49,10 @@ SELECT '' AS four, * FROM BOX_TBL;
 ------+---------------------
       | (2,2),(0,0)
       | (3,3),(1,1)
+      | (-2,2),(-8,-10)
       | (2.5,3.5),(2.5,2.5)
       | (3,3),(3,3)
-(4 rows)
+(5 rows)
 
 SELECT '' AS four, b.*, area(b.f1) as barea
    FROM BOX_TBL b;
@@ -46,9 +60,10 @@ SELECT '' AS four, b.*, area(b.f1) as barea
 ------+---------------------+-------
       | (2,2),(0,0)         |     4
       | (3,3),(1,1)         |     4
+      | (-2,2),(-8,-10)     |    72
       | (2.5,3.5),(2.5,2.5) |     0
       | (3,3),(3,3)         |     0
-(4 rows)
+(5 rows)
 
 -- overlap
 SELECT '' AS three, b.f1
@@ -68,8 +83,9 @@ SELECT '' AS two, b1.*
  two |         f1          
 -----+---------------------
      | (2,2),(0,0)
+     | (-2,2),(-8,-10)
      | (2.5,3.5),(2.5,2.5)
-(2 rows)
+(3 rows)
 
 -- right-or-overlap (x only)
 SELECT '' AS two, b1.*
@@ -88,8 +104,9 @@ SELECT '' AS two, b.f1
  two |         f1          
 -----+---------------------
      | (2,2),(0,0)
+     | (-2,2),(-8,-10)
      | (2.5,3.5),(2.5,2.5)
-(2 rows)
+(3 rows)
 
 -- area <=
 SELECT '' AS four, b.f1
@@ -127,11 +144,12 @@ SELECT '' AS two, b.f1
 SELECT '' AS two, b.f1
    FROM BOX_TBL b				-- zero area
    WHERE b.f1 > box '(3.5,3.0,4.5,3.0)';
- two |     f1      
------+-------------
+ two |       f1        
+-----+-----------------
      | (2,2),(0,0)
      | (3,3),(1,1)
-(2 rows)
+     | (-2,2),(-8,-10)
+(3 rows)
 
 -- area >=
 SELECT '' AS four, b.f1
@@ -141,9 +159,10 @@ SELECT '' AS four, b.f1
 ------+---------------------
       | (2,2),(0,0)
       | (3,3),(1,1)
+      | (-2,2),(-8,-10)
       | (2.5,3.5),(2.5,2.5)
       | (3,3),(3,3)
-(4 rows)
+(5 rows)
 
 -- right of
 SELECT '' AS two, b.f1
@@ -152,8 +171,9 @@ SELECT '' AS two, b.f1
  two |         f1          
 -----+---------------------
      | (2,2),(0,0)
+     | (-2,2),(-8,-10)
      | (2.5,3.5),(2.5,2.5)
-(2 rows)
+(3 rows)
 
 -- contained in
 SELECT '' AS three, b.f1
@@ -193,9 +213,10 @@ SELECT '' AS four, @@(b1.f1) AS p
 ------+---------
       | (1,1)
       | (2,2)
+      | (-5,-4)
       | (2.5,3)
       | (3,3)
-(4 rows)
+(5 rows)
 
 -- wholly-contained
 SELECT '' AS one, b1.*, b2.*
@@ -211,9 +232,10 @@ SELECT '' AS four, height(f1), width(f1) FROM BOX_TBL;
 ------+--------+-------
       |      2 |     2
       |      2 |     2
+      |     12 |     6
       |      1 |     0
       |      0 |     0
-(4 rows)
+(5 rows)
 
 --
 -- Test the SP-GiST index

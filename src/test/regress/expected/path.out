@@ -4,14 +4,19 @@
 --DROP TABLE PATH_TBL;
 CREATE TABLE PATH_TBL (f1 path);
 INSERT INTO PATH_TBL VALUES ('[(1,2),(3,4)]');
-INSERT INTO PATH_TBL VALUES ('((1,2),(3,4))');
-INSERT INTO PATH_TBL VALUES ('[(0,0),(3,0),(4,5),(1,6)]');
-INSERT INTO PATH_TBL VALUES ('((1,2),(3,4))');
-INSERT INTO PATH_TBL VALUES ('1,2 ,3,4');
-INSERT INTO PATH_TBL VALUES ('[1,2,3, 4]');
-INSERT INTO PATH_TBL VALUES ('[11,12,13,14]');
-INSERT INTO PATH_TBL VALUES ('(11,12,13,14)');
+INSERT INTO PATH_TBL VALUES (' ( ( 1 , 2 ) , ( 3 , 4 ) ) ');
+INSERT INTO PATH_TBL VALUES ('[ (0,0),(3,0),(4,5),(1,6) ]');
+INSERT INTO PATH_TBL VALUES ('((1,2) ,(3,4 ))');
+INSERT INTO PATH_TBL VALUES ('1,2 ,3,4 ');
+INSERT INTO PATH_TBL VALUES (' [1,2,3, 4] ');
+INSERT INTO PATH_TBL VALUES ('((10,20))');	-- Only one point
+INSERT INTO PATH_TBL VALUES ('[ 11,12,13,14 ]');
+INSERT INTO PATH_TBL VALUES ('( 11,12,13,14) ');
 -- bad values for parser testing
+INSERT INTO PATH_TBL VALUES ('[]');
+ERROR:  invalid input syntax for type path: "[]"
+LINE 1: INSERT INTO PATH_TBL VALUES ('[]');
+                                     ^
 INSERT INTO PATH_TBL VALUES ('[(,2),(3,4)]');
 ERROR:  invalid input syntax for type path: "[(,2),(3,4)]"
 LINE 1: INSERT INTO PATH_TBL VALUES ('[(,2),(3,4)]');
@@ -20,19 +25,14 @@ INSERT INTO PATH_TBL VALUES ('[(1,2),(3,4)');
 ERROR:  invalid input syntax for type path: "[(1,2),(3,4)"
 LINE 1: INSERT INTO PATH_TBL VALUES ('[(1,2),(3,4)');
                                      ^
-SELECT f1 FROM PATH_TBL;
-            f1             
----------------------------
- [(1,2),(3,4)]
- ((1,2),(3,4))
- [(0,0),(3,0),(4,5),(1,6)]
- ((1,2),(3,4))
- ((1,2),(3,4))
- [(1,2),(3,4)]
- [(11,12),(13,14)]
- ((11,12),(13,14))
-(8 rows)
-
+INSERT INTO PATH_TBL VALUES ('(1,2,3,4');
+ERROR:  invalid input syntax for type path: "(1,2,3,4"
+LINE 1: INSERT INTO PATH_TBL VALUES ('(1,2,3,4');
+                                     ^
+INSERT INTO PATH_TBL VALUES ('(1,2),(3,4)]');
+ERROR:  invalid input syntax for type path: "(1,2),(3,4)]"
+LINE 1: INSERT INTO PATH_TBL VALUES ('(1,2),(3,4)]');
+                                     ^
 SELECT '' AS count, f1 AS open_path FROM PATH_TBL WHERE isopen(f1);
  count |         open_path         
 -------+---------------------------
@@ -48,8 +48,9 @@ SELECT '' AS count, f1 AS closed_path FROM PATH_TBL WHERE isclosed(f1);
        | ((1,2),(3,4))
        | ((1,2),(3,4))
        | ((1,2),(3,4))
+       | ((10,20))
        | ((11,12),(13,14))
-(4 rows)
+(5 rows)
 
 SELECT '' AS count, pclose(f1) AS closed_path FROM PATH_TBL;
  count |        closed_path        
@@ -60,9 +61,10 @@ SELECT '' AS count, pclose(f1) AS closed_path FROM PATH_TBL;
        | ((1,2),(3,4))
        | ((1,2),(3,4))
        | ((1,2),(3,4))
+       | ((10,20))
        | ((11,12),(13,14))
        | ((11,12),(13,14))
-(8 rows)
+(9 rows)
 
 SELECT '' AS count, popen(f1) AS open_path FROM PATH_TBL;
  count |         open_path         
@@ -73,7 +75,8 @@ SELECT '' AS count, popen(f1) AS open_path FROM PATH_TBL;
        | [(1,2),(3,4)]
        | [(1,2),(3,4)]
        | [(1,2),(3,4)]
+       | [(10,20)]
        | [(11,12),(13,14)]
        | [(11,12),(13,14)]
-(8 rows)
+(9 rows)
 
