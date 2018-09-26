@@ -48,6 +48,7 @@ static int	point_inside(Point *p, int npts, Point *plist);
 
 /* Routines for lines */
 static inline void line_construct(LINE *result, Point *pt, float8 m);
+static inline float8 line_sl(LINE *line);
 static inline float8 line_invsl(LINE *line);
 static bool	line_interpt_line(Point *result, LINE *l1, LINE *l2);
 static bool line_contain_point(LINE *line, Point *point);
@@ -980,6 +981,11 @@ line_recv(PG_FUNCTION_ARGS)
 	line->B = pq_getmsgfloat8(buf);
 	line->C = pq_getmsgfloat8(buf);
 
+	if (FPzero(line->A) && FPzero(line->B))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid line specification: A and B cannot both be zero")));
+
 	PG_RETURN_LINE_P(line);
 }
 
@@ -1040,6 +1046,11 @@ line_construct_pp(PG_FUNCTION_ARGS)
 	Point	   *pt2 = PG_GETARG_POINT_P(1);
 	LINE	   *result = (LINE *) palloc(sizeof(LINE));
 
+	if (point_eq_point(pt1, pt2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid line specification: must be two distinct points")));
+
 	line_construct(result, pt1, point_sl(pt1, pt2));
 
 	PG_RETURN_LINE_P(result);
@@ -1076,11 +1087,15 @@ line_perp(PG_FUNCTION_ARGS)
 
 	if (FPzero(l1->A))
 		PG_RETURN_BOOL(FPzero(l2->B));
-	else if (FPzero(l1->B))
+	if (FPzero(l2->A))
+		PG_RETURN_BOOL(FPzero(l1->B));
+	if (FPzero(l1->B))
 		PG_RETURN_BOOL(FPzero(l2->A));
+	if (FPzero(l2->B))
+		PG_RETURN_BOOL(FPzero(l1->A));
 
-	PG_RETURN_BOOL(FPeq(float8_div(float8_mul(l1->A, l2->B),
-								   float8_mul(l1->B, l2->A)), -1.0));
+	PG_RETURN_BOOL(FPeq(float8_div(float8_mul(l1->A, l2->A),
+								   float8_mul(l1->B, l2->B)), -1.0));
 }
 
 Datum
@@ -1136,6 +1151,20 @@ line_eq(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 /*
+ * Return slope of the line
+ */
+static inline float8
+line_sl(LINE *line)
+{
+	if (FPzero(line->A))
+		return 0.0;
+	if (FPzero(line->B))
+		return DBL_MAX;
+	return float8_div(line->A, -line->B);
+}
+
+
+/*
  * Return inverse slope of the line
  */
 static inline float8
@@ -1157,16 +1186,21 @@ line_distance(PG_FUNCTION_ARGS)
 {
 	LINE	   *l1 = PG_GETARG_LINE_P(0);
 	LINE	   *l2 = PG_GETARG_LINE_P(1);
-	float8		result;
-	Point		tmp;
+	float8		ratio;
 
 	if (line_interpt_line(NULL, l1, l2))	/* intersecting? */
 		PG_RETURN_FLOAT8(0.0);
-	if (FPzero(l1->B))			/* vertical? */
-		PG_RETURN_FLOAT8(fabs(float8_mi(l1->C, l2->C)));
-	point_construct(&tmp, 0.0, l1->C);
-	result = line_closept_point(NULL, l2, &tmp);
-	PG_RETURN_FLOAT8(result);
+
+	if (!FPzero(l1->A) && !isnan(l1->A) && !FPzero(l2->A) && !isnan(l2->A))
+		ratio = float8_div(l1->A, l2->A);
+	else if (!FPzero(l1->B) && !isnan(l1->B) && !FPzero(l2->B) && !isnan(l2->B))
+		ratio = float8_div(l1->B, l2->B);
+	else
+		ratio = 1.0;
+
+	PG_RETURN_FLOAT8(float8_div(fabs(float8_mi(l1->C,
+											   float8_mul(ratio, l2->C))),
+								HYPOT(l1->A, l1->B)));
 }
 
 /* line_interpt()
@@ -1207,27 +1241,36 @@ line_interpt_line(Point *result, LINE *l1, LINE *l2)
 	float8		x,
 				y;
 
-	if (FPzero(l1->B))			/* l1 vertical? */
-	{
-		if (FPzero(l2->B))		/* l2 vertical? */
-			return false;
-
-		x = l1->C;
-		y = float8_pl(float8_mul(l2->A, x), l2->C);
-	}
-	else if (FPzero(l2->B))		/* l2 vertical? */
-	{
-		x = l2->C;
-		y = float8_pl(float8_mul(l1->A, x), l1->C);
-	}
-	else
+	if (!FPzero(l1->B))
 	{
 		if (FPeq(l2->A, float8_mul(l1->A, float8_div(l2->B, l1->B))))
 			return false;
 
-		x = float8_div(float8_mi(l1->C, l2->C), float8_mi(l2->A, l1->A));
-		y = float8_pl(float8_mul(l1->A, x), l1->C);
+		x = float8_div(float8_mi(float8_mul(l1->B, l2->C),
+								 float8_mul(l2->B, l1->C)),
+					   float8_mi(float8_mul(l1->A, l2->B),
+								 float8_mul(l2->A, l1->B)));
+		y = float8_div(-float8_pl(float8_mul(l1->A, x), l1->C), l1->B);
 	}
+	else if (!FPzero(l2->B))
+	{
+		if (FPeq(l1->A, float8_mul(l2->A, float8_div(l1->B, l2->B))))
+			return false;
+
+		x = float8_div(float8_mi(float8_mul(l2->B, l1->C),
+								 float8_mul(l1->B, l2->C)),
+					   float8_mi(float8_mul(l2->A, l1->B),
+								 float8_mul(l1->A, l2->B)));
+		y = float8_div(-float8_pl(float8_mul(l2->A, x), l2->C), l2->B);
+	}
+	else
+		return false;
+
+	/* On some platforms, the preceding expressions tend to produce -0. */
+	if (x == 0.0)
+		x = 0.0;
+	if (y == 0.0)
+		y = 0.0;
 
 	if (result != NULL)
 		point_construct(result, x, y);
@@ -2347,16 +2390,8 @@ dist_sl(PG_FUNCTION_ARGS)
 {
 	LSEG	   *lseg = PG_GETARG_LSEG_P(0);
 	LINE	   *line = PG_GETARG_LINE_P(1);
-	float8		result;
 
-	if (lseg_interpt_line(NULL, lseg, line))
-		result = 0.0;
-	else
-		/* XXX shouldn't we take the min not max? */
-		result = float8_max(line_closept_point(NULL, line, &lseg->p[0]),
-							line_closept_point(NULL, line, &lseg->p[1]));
-
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8(lseg_closept_line(NULL, lseg, line));
 }
 
 /*
@@ -2533,20 +2568,26 @@ lseg_interpt_line(Point *result, LSEG *lseg, LINE *line)
 static float8
 line_closept_point(Point *result, LINE *line, Point *point)
 {
-	bool		retval PG_USED_FOR_ASSERTS_ONLY;
-	Point       closept;
+	Point		closept;
 	LINE		tmp;
 
-	/* We drop a perpendicular to find the intersection point. */
+	/*
+	 * We drop a perpendicular to find the intersection point.  Ordinarily
+	 * we should always find it, but that can fail in the presence of NaN
+	 * coordinates, and perhaps even from simple roundoff issues.
+	 */
 	line_construct(&tmp, point, line_invsl(line));
-	retval = line_interpt_line(&closept, line, &tmp);
+	if (!line_interpt_line(&closept, &tmp, line))
+	{
+		if (result != NULL)
+			*result = *point;
 
-	Assert(retval);	/* perpendicular lines always intersect */
+		return get_float8_nan();
+	}
 
 	if (result != NULL)
 		*result = closept;
 
-	/* Then we calculate the distance between the points. */
 	return point_dt(&closept, point);
 }
 
@@ -2620,27 +2661,38 @@ lseg_closept_lseg(Point *result, LSEG *l1, LSEG *l2)
 	float8		dist,
 				d;
 
-	d = lseg_closept_point(NULL, l1, &l2->p[0]);
-	dist = d;
-	if (result != NULL)
-		*result = l2->p[0];
+	/* First, we handle the case when the line segments are intersecting. */
+	if (lseg_interpt_lseg(result, l1, l2))
+		return 0.0;
 
-	d = lseg_closept_point(NULL, l1, &l2->p[1]);
+	/*
+	 * Then, we find the closest points from the endpoints of the second
+	 * line segment, and keep the closest one.
+	 */
+	dist = lseg_closept_point(result, l1, &l2->p[0]);
+	d = lseg_closept_point(&point, l1, &l2->p[1]);
 	if (float8_lt(d, dist))
 	{
 		dist = d;
 		if (result != NULL)
-			*result = l2->p[1];
+			*result = point;
 	}
 
-	if (float8_lt(lseg_closept_point(&point, l2, &l1->p[0]), dist))
-		d = lseg_closept_point(result, l1, &point);
-
-	if (float8_lt(lseg_closept_point(&point, l2, &l1->p[1]), dist))
-		d = lseg_closept_point(result, l1, &point);
-
+	/* The closest point can still be one of the endpoints, so we test them. */
+	d = lseg_closept_point(NULL, l2, &l1->p[0]);
 	if (float8_lt(d, dist))
+	{
 		dist = d;
+		if (result != NULL)
+			*result = l1->p[0];
+	}
+	d = lseg_closept_point(NULL, l2, &l1->p[1]);
+	if (float8_lt(d, dist))
+	{
+		dist = d;
+		if (result != NULL)
+			*result = l1->p[1];
+	}
 
 	return dist;
 }
@@ -2651,6 +2703,9 @@ close_lseg(PG_FUNCTION_ARGS)
 	LSEG	   *l1 = PG_GETARG_LSEG_P(0);
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
 	Point	   *result;
+
+	if (lseg_sl(l1) == lseg_sl(l2))
+		PG_RETURN_NULL();
 
 	result = (Point *) palloc(sizeof(Point));
 
@@ -2825,6 +2880,9 @@ close_ls(PG_FUNCTION_ARGS)
 	LINE	   *line = PG_GETARG_LINE_P(0);
 	LSEG	   *lseg = PG_GETARG_LSEG_P(1);
 	Point	   *result;
+
+	if (lseg_sl(lseg) == line_sl(line))
+		PG_RETURN_NULL();
 
 	result = (Point *) palloc(sizeof(Point));
 
