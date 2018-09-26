@@ -1,4 +1,4 @@
-# Testing of commit timestamps preservation across clean restarts
+# Testing of commit timestamps preservation across restarts
 use strict;
 use warnings;
 use PostgresNode;
@@ -71,11 +71,35 @@ is($after_restart_ts, $before_restart_ts,
 	'timestamps before and after restart are equal');
 
 # Now disable commit timestamps
-
 $node_master->append_conf('postgresql.conf', 'track_commit_timestamp = off');
-
 $node_master->stop('fast');
+
+# Start the server, which generates a XLOG_PARAMETER_CHANGE record where
+# the parameter change is registered.
 $node_master->start;
+
+# Now restart again the server so as no XLOG_PARAMETER_CHANGE record are
+# replayed with the follow-up immediate shutdown.
+$node_master->restart;
+
+# Move commit timestamps across page boundaries.  Things should still
+# be able to work across restarts with those transactions committed while
+# track_commit_timestamp is disabled.
+$node_master->safe_psql('postgres',
+qq(CREATE PROCEDURE consume_xid(cnt int)
+AS \$\$
+DECLARE
+    i int;
+    BEGIN
+        FOR i in 1..cnt LOOP
+            EXECUTE 'SELECT txid_current()';
+            COMMIT;
+        END LOOP;
+    END;
+\$\$
+LANGUAGE plpgsql;
+));
+$node_master->safe_psql('postgres', 'CALL consume_xid(2000)');
 
 ($ret, $stdout, $stderr) = $node_master->psql('postgres',
 	qq[SELECT pg_xact_commit_timestamp('$xid');]);
@@ -106,9 +130,11 @@ like(
 # Re-enable, restart and ensure we can still get the old timestamps
 $node_master->append_conf('postgresql.conf', 'track_commit_timestamp = on');
 
-$node_master->stop('fast');
+# An immediate shutdown is used here.  At next startup recovery will
+# replay transactions which committed when track_commit_timestamp was
+# disabled, and the facility should be able to work properly.
+$node_master->stop('immediate');
 $node_master->start;
-
 
 my $after_enable_ts = $node_master->safe_psql('postgres',
 	qq[SELECT pg_xact_commit_timestamp('$xid');]);
