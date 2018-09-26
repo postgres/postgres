@@ -3,4 +3,5 @@
 /exports.list
 /snprintf.c
 /strerror.c
+/strlcpy.c
 /strnlen.c
