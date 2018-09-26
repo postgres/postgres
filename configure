@@ -10792,12 +10792,10 @@ else
 int
 main ()
 {
-#ifndef _AIX
-int strerror_r(int, char *, size_t);
-#else
-/* Older AIX has 'int' for the third argument so we don't test the args. */
-int strerror_r();
-#endif
+char buf[100];
+  switch (strerror_r(1, buf, sizeof(buf)))
+  { case 0: break; default: break; }
+
   ;
   return 0;
 }
