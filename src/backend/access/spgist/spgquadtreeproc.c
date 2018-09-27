@@ -465,8 +465,7 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 
 	if (res && in->norderbys > 0)
 		/* ok, it passes -> let's compute the distances */
-		out->distances = spg_key_orderbys_distances(
-													BoxPGetDatum(in->leafDatum), true,
+		out->distances = spg_key_orderbys_distances(in->leafDatum, true,
 													in->orderbys, in->norderbys);
 
 	PG_RETURN_BOOL(res);
