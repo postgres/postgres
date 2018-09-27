@@ -88,7 +88,6 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		 */
 		retval->call_cntr = 0;
 		retval->max_calls = 0;
-		retval->slot = NULL;
 		retval->user_fctx = NULL;
 		retval->attinmeta = NULL;
 		retval->tuple_desc = NULL;
@@ -128,21 +127,6 @@ FuncCallContext *
 per_MultiFuncCall(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *retval = (FuncCallContext *) fcinfo->flinfo->fn_extra;
-
-	/*
-	 * Clear the TupleTableSlot, if present.  This is for safety's sake: the
-	 * Slot will be in a long-lived context (it better be, if the
-	 * FuncCallContext is pointing to it), but in most usage patterns the
-	 * tuples stored in it will be in the function's per-tuple context. So at
-	 * the beginning of each call, the Slot will hold a dangling pointer to an
-	 * already-recycled tuple.  We clear it out here.
-	 *
-	 * Note: use of retval->slot is obsolete as of 8.0, and we expect that it
-	 * will always be NULL.  This is just here for backwards compatibility in
-	 * case someone creates a slot anyway.
-	 */
-	if (retval->slot != NULL)
-		ExecClearTuple(retval->slot);
 
 	return retval;
 }
