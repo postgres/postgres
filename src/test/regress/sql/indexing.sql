@@ -44,6 +44,8 @@ create table idxpart1 (like idxpart);
 \d idxpart1
 alter table idxpart attach partition idxpart1 for values from (0) to (10);
 \d idxpart1
+\d+ idxpart1_a_idx
+\d+ idxpart1_b_c_idx
 drop table idxpart;
 
 -- If a partition already has an index, don't create a duplicative one
