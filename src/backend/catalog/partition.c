@@ -959,26 +959,36 @@ RelationGetPartitionQual(Relation rel)
  *
  * Returns an expression tree describing the passed-in relation's partition
  * constraint.
+ *
+ * If the relation is not found, or is not a partition, or there is no
+ * partition constraint, return NULL.  We must guard against the first two
+ * cases because this supports a SQL function that could be passed any OID.
+ * The last case shouldn't happen in v10, but cope anyway.
  */
 Expr *
 get_partition_qual_relid(Oid relid)
 {
-	Relation	rel = heap_open(relid, AccessShareLock);
 	Expr	   *result = NULL;
-	List	   *and_args;
 
-	/* Do the work only if this relation is a partition. */
-	if (rel->rd_rel->relispartition)
+	/* Do the work only if this relation exists and is a partition. */
+	if (get_rel_relispartition(relid))
 	{
+		Relation	rel = relation_open(relid, AccessShareLock);
+		List	   *and_args;
+
 		and_args = generate_partition_qual(rel);
-		if (list_length(and_args) > 1)
+
+		/* Convert implicit-AND list format to boolean expression */
+		if (and_args == NIL)
+			result = NULL;
+		else if (list_length(and_args) > 1)
 			result = makeBoolExpr(AND_EXPR, and_args, -1);
 		else
 			result = linitial(and_args);
-	}
 
-	/* Keep the lock. */
-	heap_close(rel, NoLock);
+		/* Keep the lock, to allow safe deparsing against the rel by caller. */
+		relation_close(rel, NoLock);
+	}
 
 	return result;
 }
@@ -1833,8 +1843,8 @@ generate_partition_qual(Relation rel)
 		return copyObject(rel->rd_partcheck);
 
 	/* Grab at least an AccessShareLock on the parent table */
-	parent = heap_open(get_partition_parent(RelationGetRelid(rel)),
-					   AccessShareLock);
+	parent = relation_open(get_partition_parent(RelationGetRelid(rel)),
+						   AccessShareLock);
 
 	/* Get pg_class.relpartbound */
 	tuple = SearchSysCache1(RELOID, RelationGetRelid(rel));
@@ -1878,7 +1888,7 @@ generate_partition_qual(Relation rel)
 	MemoryContextSwitchTo(oldcxt);
 
 	/* Keep the parent locked until commit */
-	heap_close(parent, NoLock);
+	relation_close(parent, NoLock);
 
 	return result;
 }
