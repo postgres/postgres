@@ -1,27 +1,6 @@
 /exports.list
 /libpq.rc
 # .c files that are symlinked in from elsewhere
-/chklocale.c
-/crypt.c
-/erand48.c
-/getaddrinfo.c
-/getpeereid.c
-/inet_aton.c
-/inet_net_ntop.c
-/noblock.c
-/open.c
-/system.c
-/pgsleep.c
-/pg_strong_random.c
-/pgstrcasecmp.c
-/pqsignal.c
-/snprintf.c
-/strerror.c
-/strlcpy.c
-/strnlen.c
-/thread.c
-/win32error.c
-/win32setlocale.c
 /ip.c
 /md5.c
 /base64.c

@@ -24,27 +24,11 @@ ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
-# Need to recompile any external C files because we need
-# all object files to use the same compile flags as libpq; some
-# platforms require special flags.
-LIBS := $(LIBS:-lpgport=)
-
 # We can't use Makefile variables here because the MSVC build system scrapes
 # OBJS from this file.
 OBJS=	fe-auth.o fe-auth-scram.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o fe-secure.o \
 	libpq-events.o
-# libpgport C files we always use
-OBJS += chklocale.o inet_net_ntop.o noblock.o pgstrcasecmp.o pqsignal.o \
-	snprintf.o strerror.o thread.o
-# libpgport C files that are needed if identified by configure
-OBJS += $(filter crypt.o getaddrinfo.o getpeereid.o inet_aton.o open.o system.o strlcpy.o strnlen.o win32error.o win32setlocale.o, $(LIBOBJS))
-
-ifeq ($(enable_strong_random), yes)
-OBJS += pg_strong_random.o
-else
-OBJS += erand48.o
-endif
 
 # src/backend/utils/mb
 OBJS += encnames.o wchar.o
@@ -62,8 +46,7 @@ override shlib = cyg$(NAME)$(DLSUFFIX)
 endif
 
 ifeq ($(PORTNAME), win32)
-# pgsleep.o is from libpgport
-OBJS += pgsleep.o win32.o libpqrc.o
+OBJS += win32.o libpqrc.o
 
 libpqrc.o: libpq.rc
 	$(WINDRES) -i $< -o $@
@@ -76,11 +59,12 @@ endif
 
 # Add libraries that libpq depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
-# matter.)
+# matter.)  Note that we filter out -lpgport from LIBS and instead
+# insert -lpgport_shlib, to get port files that are built correctly.
 ifneq ($(PORTNAME), win32)
-SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
+SHLIB_LINK += -lpgport_shlib $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
 else
-SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl -lm $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
+SHLIB_LINK += -lpgport_shlib $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl -lm $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
 endif
 ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshell32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
@@ -90,21 +74,18 @@ SHLIB_EXPORTS = exports.txt
 
 all: all-lib
 
+all-lib: | submake-libpgport
+
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 backend_src = $(top_srcdir)/src/backend
 
 
-# We use several libpgport and backend modules verbatim, but since we need
+# We use a few backend modules verbatim, but since we need
 # to compile with appropriate options to build a shared lib, we can't
-# necessarily use the same object files built for libpgport and the backend.
+# use the same object files built for the backend.
 # Instead, symlink the source files in here and build our own object files.
-# For some libpgport modules, this only happens if configure decides
-# the module is needed (see filter hack in OBJS, above).
 # When you add a file here, remember to add it in the "clean" target below.
-
-chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32error.c win32setlocale.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
 
 ip.c md5.c base64.c link-canary.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c: % : $(top_srcdir)/src/common/%
 	rm -f $@ && $(LN_S) $< .
@@ -123,6 +104,7 @@ libpq.rc libpq-dist.rc: libpq.rc.in
 # installations and is only updated by distprep.)
 libpq.rc: $(top_builddir)/src/Makefile.global
 
+# Make dependencies on pg_config_paths.h visible, too.
 fe-connect.o: fe-connect.c $(top_builddir)/src/port/pg_config_paths.h
 fe-misc.o: fe-misc.c $(top_builddir)/src/port/pg_config_paths.h
 
@@ -154,8 +136,7 @@ clean distclean: clean-lib
 	rm -f $(OBJS) pthread.h libpq.rc
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
-# Remove files we (may have) symlinked in from src/port and other places
-	rm -f chklocale.c crypt.c erand48.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c system.c pgsleep.c pg_strong_random.c pgstrcasecmp.c pqsignal.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32error.c win32setlocale.c
+# Remove files we (may have) symlinked in from src/common and other places
 	rm -f ip.c md5.c base64.c link-canary.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c
 	rm -f encnames.c wchar.c
 
