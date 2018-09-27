@@ -75,6 +75,25 @@ Indexes:
     "idxpart1_a_idx" btree (a)
     "idxpart1_b_c_idx" btree (b, c)
 
+\d+ idxpart1_a_idx
+                 Index "public.idxpart1_a_idx"
+ Column |  Type   | Key? | Definition | Storage | Stats target 
+--------+---------+------+------------+---------+--------------
+ a      | integer | yes  | a          | plain   | 
+Partition of: idxparti 
+No partition constraint
+btree, for table "public.idxpart1"
+
+\d+ idxpart1_b_c_idx
+                Index "public.idxpart1_b_c_idx"
+ Column |  Type   | Key? | Definition | Storage  | Stats target 
+--------+---------+------+------------+----------+--------------
+ b      | integer | yes  | b          | plain    | 
+ c      | text    | yes  | c          | extended | 
+Partition of: idxparti2 
+No partition constraint
+btree, for table "public.idxpart1"
+
 drop table idxpart;
 -- If a partition already has an index, don't create a duplicative one
 create table idxpart (a int, b int) partition by range (a, b);

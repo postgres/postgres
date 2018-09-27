@@ -1821,6 +1821,30 @@ get_rel_relkind(Oid relid)
 }
 
 /*
+ * get_rel_relispartition
+ *
+ *		Returns the relispartition flag associated with a given relation.
+ */
+bool
+get_rel_relispartition(Oid relid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+		bool		result;
+
+		result = reltup->relispartition;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return false;
+}
+
+/*
  * get_rel_tablespace
  *
  *		Returns the pg_tablespace OID associated with a given relation.
