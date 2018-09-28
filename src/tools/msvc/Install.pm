@@ -605,7 +605,7 @@ sub CopySubdirFiles
 
 		# Special case for contrib/spi
 		$flist =
-		  "autoinc.example insert_username.example moddatetime.example refint.example timetravel.example"
+		  "autoinc.example insert_username.example moddatetime.example refint.example"
 		  if ($module eq 'spi');
 		foreach my $f (split /\s+/, $flist)
 		{
