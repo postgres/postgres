@@ -620,9 +620,16 @@ XLogArchiveCheckDone(const char *xlog)
 {
 	char		archiveStatusPath[MAXPGPATH];
 	struct stat stat_buf;
+	bool		inRecovery = RecoveryInProgress();
 
-	/* Always deletable if archiving is off */
-	if (!XLogArchivingActive())
+	/*
+	 * The file is always deletable if archive_mode is "off".  On standbys
+	 * archiving is disabled if archive_mode is "on", and enabled with
+	 * "always".  On a primary, archiving is enabled if archive_mode is "on"
+	 * or "always".
+	 */
+	if (!((XLogArchivingActive() && !inRecovery) ||
+		  (XLogArchivingAlways() && inRecovery)))
 		return true;
 
 	/* First check for .done --- this means archiver is done with it */
