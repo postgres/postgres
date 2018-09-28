@@ -139,6 +139,13 @@ typedef struct Port
 	List	   *guc_options;
 
 	/*
+	 * The startup packet application name, only used here for the "connection
+	 * authorized" log message. We shouldn't use this post-startup, instead
+	 * the GUC should be used as application can change it afterward.
+	 */
+	char	   *application_name;
+
+	/*
 	 * Information that needs to be held during the authentication cycle.
 	 */
 	HbaLine    *hba;
