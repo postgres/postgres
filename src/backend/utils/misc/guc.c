@@ -2649,10 +2649,11 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&effective_io_concurrency,
 #ifdef USE_PREFETCH
-		1, 0, MAX_IO_CONCURRENCY,
+		1,
 #else
-		0, 0, 0,
+		0,
 #endif
+		0, MAX_IO_CONCURRENCY,
 		check_effective_io_concurrency, assign_effective_io_concurrency, NULL
 	},
 
@@ -10709,6 +10710,11 @@ check_effective_io_concurrency(int *newval, void **extra, GucSource source)
 	else
 		return false;
 #else
+	if (*newval != 0)
+	{
+		GUC_check_errdetail("effective_io_concurrency must be set to 0 on platforms that lack posix_fadvise()");
+		return false;
+	}
 	return true;
 #endif							/* USE_PREFETCH */
 }
