@@ -116,7 +116,7 @@ PQserverVersion           113
 PQgetssl                  114
 pg_char_to_encoding       115
 pg_valid_server_encoding  116
-pqsignal                  117
+# pqsignal                117  # no longer exported, see libpgport instead
 PQprepare                 118
 PQsendPrepare             119
 PQgetCancel               120
