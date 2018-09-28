@@ -24,8 +24,9 @@ ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
-# We can't use Makefile variables here because the MSVC build system scrapes
-# OBJS from this file.
+# The MSVC build system scrapes OBJS from this file.  If you change any of
+# the conditional additions of files to OBJS, update Mkvcbuild.pm to match.
+
 OBJS=	fe-auth.o fe-auth-scram.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o fe-secure.o \
 	libpq-events.o

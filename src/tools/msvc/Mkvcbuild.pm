@@ -182,8 +182,8 @@ sub mkvcbuild
 	$postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
 	$postgres->FullExportDLL('postgres.lib');
 
-	# The OBJS scraper doesn't know about ifdefs, so remove be-secure-openssl.c
-	# if building without OpenSSL
+	# The OBJS scraper doesn't know about ifdefs, so remove appropriate files
+	# if building without OpenSSL.
 	if (!$solution->{options}->{openssl})
 	{
 		$postgres->RemoveFile('src/backend/libpq/be-secure-common.c');
@@ -242,18 +242,12 @@ sub mkvcbuild
 		'src/interfaces/libpq/libpq.rc');
 	$libpq->AddReference($libpgport);
 
-	# The OBJS scraper doesn't know about ifdefs, so remove fe-secure-openssl.c
-	# and sha2_openssl.c if building without OpenSSL, and remove sha2.c if
-	# building with OpenSSL.
+	# The OBJS scraper doesn't know about ifdefs, so remove appropriate files
+	# if building without OpenSSL.
 	if (!$solution->{options}->{openssl})
 	{
 		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-common.c');
 		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-openssl.c');
-		$libpq->RemoveFile('src/common/sha2_openssl.c');
-	}
-	else
-	{
-		$libpq->RemoveFile('src/common/sha2.c');
 	}
 
 	my $libpqwalreceiver =
