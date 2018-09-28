@@ -160,6 +160,7 @@ extern void syntax_error(const char *source, int lineno, const char *line,
 			 const char *cmd, const char *msg,
 			 const char *more, int col) pg_attribute_noreturn();
 
-extern int64 strtoint64(const char *str);
+extern bool strtoint64(const char *str, bool errorOK, int64 *pi);
+extern bool strtodouble(const char *str, bool errorOK, double *pd);
 
 #endif							/* PGBENCH_H */

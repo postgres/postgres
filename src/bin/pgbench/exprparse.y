@@ -61,7 +61,8 @@ static PgBenchExpr *make_case(yyscan_t yyscanner, PgBenchExprList *when_then_lis
 %type <bval> BOOLEAN_CONST
 %type <str> VARIABLE FUNCTION
 
-%token NULL_CONST INTEGER_CONST DOUBLE_CONST BOOLEAN_CONST VARIABLE FUNCTION
+%token NULL_CONST INTEGER_CONST MAXINT_PLUS_ONE_CONST DOUBLE_CONST
+%token BOOLEAN_CONST VARIABLE FUNCTION
 %token AND_OP OR_OP NOT_OP NE_OP LE_OP GE_OP LS_OP RS_OP IS_OP
 %token CASE_KW WHEN_KW THEN_KW ELSE_KW END_KW
 
@@ -90,6 +91,9 @@ expr: '(' expr ')'			{ $$ = $2; }
 	/* unary minus "-x" implemented as "0 - x" */
 	| '-' expr %prec UNARY	{ $$ = make_op(yyscanner, "-",
 										   make_integer_constant(0), $2); }
+	/* special PG_INT64_MIN handling, only after a unary minus */
+	| '-' MAXINT_PLUS_ONE_CONST %prec UNARY
+							{ $$ = make_integer_constant(PG_INT64_MIN); }
 	/* binary ones complement "~x" implemented as 0xffff... xor x" */
 	| '~' expr				{ $$ = make_op(yyscanner, "#",
 										   make_integer_constant(~INT64CONST(0)), $2); }

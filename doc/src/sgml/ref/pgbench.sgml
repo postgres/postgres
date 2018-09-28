@@ -990,6 +990,13 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </para>
 
      <para>
+      Too large or small integer and double constants, as well as
+      integer arithmetic operators (<literal>+</literal>,
+      <literal>-</literal>, <literal>*</literal> and <literal>/</literal>)
+      raise errors on overflows.
+     </para>
+
+     <para>
       When no final <token>ELSE</token> clause is provided to a
       <token>CASE</token>, the default value is <literal>NULL</literal>.
      </para>
