@@ -240,7 +240,7 @@ sub mkvcbuild
 	$libpq->UseDef('src/interfaces/libpq/libpqdll.def');
 	$libpq->ReplaceFile('src/interfaces/libpq/libpqrc.c',
 		'src/interfaces/libpq/libpq.rc');
-	$libpq->AddReference($libpgport);
+	$libpq->AddReference($libpgcommon, $libpgport);
 
 	# The OBJS scraper doesn't know about ifdefs, so remove appropriate files
 	# if building without OpenSSL.
@@ -264,7 +264,7 @@ sub mkvcbuild
 		'libpgtypes', 'dll',
 		'interfaces', 'src/interfaces/ecpg/pgtypeslib');
 	$pgtypes->AddDefine('FRONTEND');
-	$pgtypes->AddReference($libpgport);
+	$pgtypes->AddReference($libpgcommon, $libpgport);
 	$pgtypes->UseDef('src/interfaces/ecpg/pgtypeslib/pgtypeslib.def');
 	$pgtypes->AddIncludeDir('src/interfaces/ecpg/include');
 
