@@ -136,7 +136,9 @@
 /*
  * USE_PREFETCH code should be compiled only if we have a way to implement
  * prefetching.  (This is decoupled from USE_POSIX_FADVISE because there
- * might in future be support for alternative low-level prefetch APIs.)
+ * might in future be support for alternative low-level prefetch APIs.
+ * If you change this, you probably need to adjust the error message in
+ * check_effective_io_concurrency.)
  */
 #ifdef USE_POSIX_FADVISE
 #define USE_PREFETCH
