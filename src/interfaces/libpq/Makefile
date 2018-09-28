@@ -32,13 +32,9 @@ OBJS=	fe-auth.o fe-auth-scram.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-l
 
 # src/backend/utils/mb
 OBJS += encnames.o wchar.o
-# src/common
-OBJS += base64.o ip.o link-canary.o md5.o scram-common.o saslprep.o unicode_norm.o
 
 ifeq ($(with_openssl),yes)
-OBJS += fe-secure-openssl.o fe-secure-common.o sha2_openssl.o
-else
-OBJS += sha2.o
+OBJS += fe-secure-openssl.o fe-secure-common.o
 endif
 
 ifeq ($(PORTNAME), cygwin)
@@ -59,12 +55,14 @@ endif
 
 # Add libraries that libpq depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
-# matter.)  Note that we filter out -lpgport from LIBS and instead
-# insert -lpgport_shlib, to get port files that are built correctly.
+# matter.)  Note that we filter out -lpgcommon and -lpgport from LIBS and
+# instead link with -lpgcommon_shlib and -lpgport_shlib, to get object files
+# that are built correctly for use in a shlib.
+SHLIB_LINK_INTERNAL = -lpgcommon_shlib -lpgport_shlib
 ifneq ($(PORTNAME), win32)
-SHLIB_LINK += -lpgport_shlib $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
+SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
 else
-SHLIB_LINK += -lpgport_shlib $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl -lm $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
+SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl -lm $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
 endif
 ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshell32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
@@ -86,9 +84,6 @@ backend_src = $(top_srcdir)/src/backend
 # use the same object files built for the backend.
 # Instead, symlink the source files in here and build our own object files.
 # When you add a file here, remember to add it in the "clean" target below.
-
-ip.c md5.c base64.c link-canary.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c: % : $(top_srcdir)/src/common/%
-	rm -f $@ && $(LN_S) $< .
 
 encnames.c wchar.c: % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
@@ -136,8 +131,7 @@ clean distclean: clean-lib
 	rm -f $(OBJS) pthread.h libpq.rc
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
-# Remove files we (may have) symlinked in from src/common and other places
-	rm -f ip.c md5.c base64.c link-canary.c scram-common.c sha2.c sha2_openssl.c saslprep.c unicode_norm.c
+# Remove files we (may have) symlinked in from other places
 	rm -f encnames.c wchar.c
 
 maintainer-clean: distclean maintainer-clean-lib

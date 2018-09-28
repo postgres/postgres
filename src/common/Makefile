@@ -3,17 +3,21 @@
 # Makefile
 #    Makefile for src/common
 #
-# This makefile generates two outputs:
+# These files are used by the Postgres backend, and also by frontend
+# programs.  These files provide common functionality that isn't directly
+# concerned with portability and thus doesn't belong in src/port.
+#
+# This makefile generates three outputs:
 #
 #	libpgcommon.a - contains object files with FRONTEND defined,
 #		for use by client applications
 #
-#	libpgcommon_srv.a - contains object files without FRONTEND defined,
-#		for use only by the backend binaries
+#	libpgcommon_shlib.a - contains object files with FRONTEND defined,
+#		built suitably for use in shared libraries; for use
+#		by frontend libraries
 #
-# You can also symlink/copy individual source files from this directory,
-# to compile with different options. (libpq does that, because it needs
-# to use -fPIC on some platforms.)
+#	libpgcommon_srv.a - contains object files without FRONTEND defined,
+#		for use only by the backend
 #
 # IDENTIFICATION
 #    src/common/Makefile
@@ -52,25 +56,47 @@ else
 OBJS_COMMON += sha2.o
 endif
 
+# A few files are currently only built for frontend, not server
 OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o file_utils.o restricted_token.o
 
+# foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c
+OBJS_SHLIB = $(OBJS_FRONTEND:%.o=%_shlib.o)
 OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
 
-all: libpgcommon.a libpgcommon_srv.a
+all: libpgcommon.a libpgcommon_shlib.a libpgcommon_srv.a
 
 # libpgcommon is needed by some contrib
 install: all installdirs
 	$(INSTALL_STLIB) libpgcommon.a '$(DESTDIR)$(libdir)/libpgcommon.a'
+	$(INSTALL_STLIB) libpgcommon_shlib.a '$(DESTDIR)$(libdir)/libpgcommon_shlib.a'
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(libdir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(libdir)/libpgcommon.a'
+	rm -f '$(DESTDIR)$(libdir)/libpgcommon_shlib.a'
 
 libpgcommon.a: $(OBJS_FRONTEND)
 	rm -f $@
 	$(AR) $(AROPT) $@ $^
+
+#
+# Shared library versions of object files
+#
+
+libpgcommon_shlib.a: $(OBJS_SHLIB)
+	rm -f $@
+	$(AR) $(AROPT) $@ $^
+
+# Because this uses its own compilation rule, it doesn't use the
+# dependency tracking logic from Makefile.global.  To make sure that
+# dependency tracking works anyway for the *_shlib.o files, depend on
+# their *.o siblings as well, which do have proper dependencies.  It's
+# a hack that might fail someday if there is a *_shlib.o without a
+# corresponding *.o, but there seems little reason for that.
+%_shlib.o: %.c %.o
+	$(CC) $(CFLAGS) $(CFLAGS_SL) $(CPPFLAGS) -c $< -o $@
 
 #
 # Server versions of object files
@@ -87,16 +113,18 @@ libpgcommon_srv.a: $(OBJS_SRV)
 # a hack that might fail someday if there is a *_srv.o without a
 # corresponding *.o, but it works for now.
 %_srv.o: %.c %.o
-	$(CC) $(CFLAGS) $(subst -DFRONTEND ,, $(CPPFLAGS)) -c $< -o $@
+	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
 # Dependencies of keywords.o need to be managed explicitly to make sure
 # that you don't get broken parsing code, even in a non-enable-depend build.
-# Note that gram.h isn't required for the frontend version of keywords.o.
+# Note that gram.h isn't required for the frontend versions of keywords.o.
 $(top_builddir)/src/include/parser/gram.h: $(top_srcdir)/src/backend/parser/gram.y
 	$(MAKE) -C $(top_builddir)/src/backend $(top_builddir)/src/include/parser/gram.h
 
 keywords.o: $(top_srcdir)/src/include/parser/kwlist.h
+keywords_shlib.o: $(top_srcdir)/src/include/parser/kwlist.h
 keywords_srv.o: $(top_builddir)/src/include/parser/gram.h $(top_srcdir)/src/include/parser/kwlist.h
 
 clean distclean maintainer-clean:
-	rm -f libpgcommon.a libpgcommon_srv.a $(OBJS_FRONTEND) $(OBJS_SRV)
+	rm -f libpgcommon.a libpgcommon_shlib.a libpgcommon_srv.a
+	rm -f $(OBJS_FRONTEND) $(OBJS_SHLIB) $(OBJS_SRV)

@@ -534,21 +534,26 @@ libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
 libpq_builddir = $(top_builddir)/src/interfaces/libpq
 endif
 
-# This macro is for use by libraries linking to libpq.  (Because libpgport
-# isn't created with the same link flags as libpq, it can't be used.)
+# How to link to libpq.  (This macro may be used as-is by backend extensions.
+# Client-side code should go through libpq_pgport or libpq_pgport_shlib,
+# instead.)
 libpq = -L$(libpq_builddir) -lpq
 
-# This macro is for use by client executables (not libraries) that use libpq.
+# libpq_pgport is for use by client executables (not libraries) that use libpq.
 # We force clients to pull symbols from the non-shared libraries libpgport
 # and libpgcommon rather than pulling some libpgport symbols from libpq just
 # because libpq uses those functions too.  This makes applications less
-# dependent on changes in libpq's usage of pgport.  To do this we link to
+# dependent on changes in libpq's usage of pgport (on platforms where we
+# don't have symbol export control for libpq).  To do this we link to
 # pgport before libpq.  This does cause duplicate -lpgport's to appear
-# on client link lines.
+# on client link lines, since that also appears in $(LIBS).
+# libpq_pgport_shlib is the same idea, but for use in client shared libraries.
 ifdef PGXS
 libpq_pgport = -L$(libdir) -lpgcommon -lpgport $(libpq)
+libpq_pgport_shlib = -L$(libdir) -lpgcommon_shlib -lpgport_shlib $(libpq)
 else
 libpq_pgport = -L$(top_builddir)/src/common -lpgcommon -L$(top_builddir)/src/port -lpgport $(libpq)
+libpq_pgport_shlib = -L$(top_builddir)/src/common -lpgcommon_shlib -L$(top_builddir)/src/port -lpgport_shlib $(libpq)
 endif
 
 # Cygwin seems to need ldap libraries to be mentioned here, too

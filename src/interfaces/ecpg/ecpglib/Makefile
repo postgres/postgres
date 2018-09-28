@@ -22,20 +22,10 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-# Need to recompile any libpgport object files
-LIBS := $(filter-out -lpgport, $(LIBS))
+OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o \
+	memory.o connect.o misc.o $(WIN32RES)
 
-OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o memory.o \
-	connect.o misc.o path.o pgstrcasecmp.o snprintf.o strerror.o \
-	$(filter strlcpy.o strnlen.o win32setlocale.o isinf.o, $(LIBOBJS)) \
-	$(WIN32RES)
-
-# thread.c is needed only for non-WIN32 implementation of path.c
-ifneq ($(PORTNAME), win32)
-OBJS += thread.o
-endif
-
-SHLIB_LINK_INTERNAL = -L../pgtypeslib -lpgtypes $(libpq)
+SHLIB_LINK_INTERNAL = -L../pgtypeslib -lpgtypes $(libpq_pgport_shlib)
 SHLIB_LINK = $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
 SHLIB_PREREQS = submake-libpq submake-pgtypeslib
 
@@ -52,16 +42,8 @@ submake-pgtypeslib:
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 
-# We use some port modules verbatim, but since we need to
-# compile with appropriate options to build a shared lib, we can't
-# necessarily use the same object files as the backend uses. Instead,
-# symlink the source files in here and build our own object file.
-
-path.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32setlocale.c isinf.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
-
+# Make dependency on pg_config_paths.h visible.
 misc.o: misc.c $(top_builddir)/src/port/pg_config_paths.h
-path.o: path.c $(top_builddir)/src/port/pg_config_paths.h
 
 $(top_builddir)/src/port/pg_config_paths.h:
 	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
@@ -74,6 +56,5 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	rm -f $(OBJS)
-	rm -f path.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c strnlen.c thread.c win32setlocale.c isinf.c
 
 maintainer-clean: distclean maintainer-clean-lib

@@ -14,7 +14,7 @@
 #
 #	libpgport_shlib.a - contains object files with FRONTEND defined,
 #		built suitably for use in shared libraries; for use
-#		by libpq and other frontend libraries
+#		by frontend libraries
 #
 #	libpgport_srv.a - contains object files without FRONTEND defined,
 #		for use only by the backend
@@ -53,15 +53,16 @@ OBJS_SRV = $(OBJS:%.o=%_srv.o)
 all: libpgport.a libpgport_shlib.a libpgport_srv.a
 
 # libpgport is needed by some contrib
-# currently we don't install libpgport_shlib.a, maybe we should?
 install: all installdirs
 	$(INSTALL_STLIB) libpgport.a '$(DESTDIR)$(libdir)/libpgport.a'
+	$(INSTALL_STLIB) libpgport_shlib.a '$(DESTDIR)$(libdir)/libpgport_shlib.a'
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(libdir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(libdir)/libpgport.a'
+	rm -f '$(DESTDIR)$(libdir)/libpgport_shlib.a'
 
 libpgport.a: $(OBJS)
 	rm -f $@

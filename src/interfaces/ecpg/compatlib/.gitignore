@@ -1,7 +1,3 @@
 /compatlib.def
 /blibecpg_compatdll.def
 /exports.list
-/snprintf.c
-/strerror.c
-/strlcpy.c
-/strnlen.c

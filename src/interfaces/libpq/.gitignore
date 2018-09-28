@@ -1,14 +1,5 @@
 /exports.list
 /libpq.rc
 # .c files that are symlinked in from elsewhere
-/ip.c
-/md5.c
-/base64.c
-/link-canary.c
-/scram-common.c
-/sha2.c
-/sha2_openssl.c
-/saslprep.c
-/unicode_norm.c
 /encnames.c
 /wchar.c
