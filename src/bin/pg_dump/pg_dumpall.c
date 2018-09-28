@@ -806,7 +806,7 @@ dumpRoles(PGconn *conn)
 						  "false as rolcanlogin, "
 						  "-1 as rolconnlimit, "
 						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil, "
+						  "null::timestamptz as rolvaliduntil, "
 						  "false as rolreplication, "
 						  "false as rolbypassrls, "
 						  "null as rolcomment, "

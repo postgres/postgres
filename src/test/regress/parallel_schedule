@@ -23,12 +23,12 @@ test: numerology
 # ----------
 # The second group of parallel tests
 # ----------
-test: point lseg line box path polygon circle date time timetz timestamp timestamptz interval abstime reltime tinterval inet macaddr macaddr8 tstypes
+test: point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes
 
 # ----------
 # Another group of parallel tests
 # geometry depends on point, lseg, box, path, polygon and circle
-# horology depends on interval, timetz, timestamp, timestamptz, reltime and abstime
+# horology depends on interval, timetz, timestamp, timestamptz
 # ----------
 test: geometry horology regex oidjoins type_sanity opr_sanity misc_sanity comments expressions
 

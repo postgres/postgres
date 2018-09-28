@@ -521,24 +521,6 @@ int24ge(smallint,integer)
 int42ge(integer,smallint)
 oideq(oid,oid)
 oidne(oid,oid)
-abstimeeq(abstime,abstime)
-abstimene(abstime,abstime)
-abstimelt(abstime,abstime)
-abstimegt(abstime,abstime)
-abstimele(abstime,abstime)
-abstimege(abstime,abstime)
-reltimeeq(reltime,reltime)
-reltimene(reltime,reltime)
-reltimelt(reltime,reltime)
-reltimegt(reltime,reltime)
-reltimele(reltime,reltime)
-reltimege(reltime,reltime)
-tintervalleneq(tinterval,reltime)
-tintervallenne(tinterval,reltime)
-tintervallenlt(tinterval,reltime)
-tintervallengt(tinterval,reltime)
-tintervallenle(tinterval,reltime)
-tintervallenge(tinterval,reltime)
 float4eq(real,real)
 float4ne(real,real)
 float4lt(real,real)
@@ -568,12 +550,9 @@ btint4cmp(integer,integer)
 btfloat4cmp(real,real)
 btfloat8cmp(double precision,double precision)
 btoidcmp(oid,oid)
-btabstimecmp(abstime,abstime)
 btcharcmp("char","char")
 btnamecmp(name,name)
 cash_cmp(money,money)
-btreltimecmp(reltime,reltime)
-bttintervalcmp(tinterval,tinterval)
 int8eq(bigint,bigint)
 int8ne(bigint,bigint)
 int8lt(bigint,bigint)
@@ -593,12 +572,6 @@ namege(name,name)
 namene(name,name)
 oidlt(oid,oid)
 oidle(oid,oid)
-tintervaleq(tinterval,tinterval)
-tintervalne(tinterval,tinterval)
-tintervallt(tinterval,tinterval)
-tintervalgt(tinterval,tinterval)
-tintervalle(tinterval,tinterval)
-tintervalge(tinterval,tinterval)
 macaddr_eq(macaddr,macaddr)
 macaddr_lt(macaddr,macaddr)
 macaddr_le(macaddr,macaddr)
@@ -1074,9 +1047,6 @@ ORDER BY 1, 2;
  !~*  | ~*
  !~~  | ~~
  !~~* | ~~*
- #<   | #>=
- #<=  | #>
- #<>  | #=
  *<   | *>=
  *<=  | *>
  *<>  | *=
@@ -1086,7 +1056,7 @@ ORDER BY 1, 2;
  <>   | ~=
  ~<=~ | ~>~
  ~<~  | ~>=~
-(16 rows)
+(13 rows)
 
 -- A mergejoinable or hashjoinable operator must be binary, must return
 -- boolean, and must have a commutator (itself, unless it's a cross-type
@@ -1354,7 +1324,6 @@ WHERE a.aggfnoid = p.oid AND
 
 -- Cross-check transfn against its entry in pg_proc.
 -- NOTE: use physically_coercible here, not binary_coercible, because
--- max and min on abstime are implemented using int4larger/int4smaller.
 SELECT a.aggfnoid::oid, p.proname, ptr.oid, ptr.proname
 FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr
 WHERE a.aggfnoid = p.oid AND
@@ -1535,7 +1504,6 @@ WHERE a.aggfnoid = p.oid AND
 -- Check that all combine functions have signature
 -- combine(transtype, transtype) returns transtype
 -- NOTE: use physically_coercible here, not binary_coercible, because
--- max and min on abstime are implemented using int4larger/int4smaller.
 SELECT a.aggfnoid, p.proname
 FROM pg_aggregate as a, pg_proc as p
 WHERE a.aggcombinefn = p.oid AND

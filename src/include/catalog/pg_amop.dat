@@ -371,24 +371,6 @@
   amoprighttype => 'bytea', amopstrategy => '5', amopopr => '>(bytea,bytea)',
   amopmethod => 'btree' },
 
-# btree abstime_ops
-
-{ amopfamily => 'btree/abstime_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '1',
-  amopopr => '<(abstime,abstime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/abstime_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '2',
-  amopopr => '<=(abstime,abstime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/abstime_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '3',
-  amopopr => '=(abstime,abstime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/abstime_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '4',
-  amopopr => '>=(abstime,abstime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/abstime_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '5',
-  amopopr => '>(abstime,abstime)', amopmethod => 'btree' },
-
 # btree datetime_ops
 
 # default operators date
@@ -773,42 +755,6 @@
   amoprighttype => 'money', amopstrategy => '5', amopopr => '>(money,money)',
   amopmethod => 'btree' },
 
-# btree reltime_ops
-
-{ amopfamily => 'btree/reltime_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '1',
-  amopopr => '<(reltime,reltime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/reltime_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '2',
-  amopopr => '<=(reltime,reltime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/reltime_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '3',
-  amopopr => '=(reltime,reltime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/reltime_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '4',
-  amopopr => '>=(reltime,reltime)', amopmethod => 'btree' },
-{ amopfamily => 'btree/reltime_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '5',
-  amopopr => '>(reltime,reltime)', amopmethod => 'btree' },
-
-# btree tinterval_ops
-
-{ amopfamily => 'btree/tinterval_ops', amoplefttype => 'tinterval',
-  amoprighttype => 'tinterval', amopstrategy => '1',
-  amopopr => '<(tinterval,tinterval)', amopmethod => 'btree' },
-{ amopfamily => 'btree/tinterval_ops', amoplefttype => 'tinterval',
-  amoprighttype => 'tinterval', amopstrategy => '2',
-  amopopr => '<=(tinterval,tinterval)', amopmethod => 'btree' },
-{ amopfamily => 'btree/tinterval_ops', amoplefttype => 'tinterval',
-  amoprighttype => 'tinterval', amopstrategy => '3',
-  amopopr => '=(tinterval,tinterval)', amopmethod => 'btree' },
-{ amopfamily => 'btree/tinterval_ops', amoplefttype => 'tinterval',
-  amoprighttype => 'tinterval', amopstrategy => '4',
-  amopopr => '>=(tinterval,tinterval)', amopmethod => 'btree' },
-{ amopfamily => 'btree/tinterval_ops', amoplefttype => 'tinterval',
-  amoprighttype => 'tinterval', amopstrategy => '5',
-  amopopr => '>(tinterval,tinterval)', amopmethod => 'btree' },
-
 # btree array_ops
 
 { amopfamily => 'btree/array_ops', amoplefttype => 'anyarray',
@@ -1035,16 +981,6 @@
 # cid_ops
 { amopfamily => 'hash/cid_ops', amoplefttype => 'cid', amoprighttype => 'cid',
   amopstrategy => '1', amopopr => '=(cid,cid)', amopmethod => 'hash' },
-
-# abstime_ops
-{ amopfamily => 'hash/abstime_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '1',
-  amopopr => '=(abstime,abstime)', amopmethod => 'hash' },
-
-# reltime_ops
-{ amopfamily => 'hash/reltime_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '1',
-  amopopr => '=(reltime,reltime)', amopmethod => 'hash' },
 
 # text_pattern_ops
 { amopfamily => 'hash/text_pattern_ops', amoplefttype => 'text',
@@ -1988,40 +1924,6 @@
 { amopfamily => 'brin/float_minmax_ops', amoplefttype => 'float8',
   amoprighttype => 'float8', amopstrategy => '5', amopopr => '>(float8,float8)',
   amopmethod => 'brin' },
-
-# minmax abstime
-{ amopfamily => 'brin/abstime_minmax_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '1',
-  amopopr => '<(abstime,abstime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/abstime_minmax_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '2',
-  amopopr => '<=(abstime,abstime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/abstime_minmax_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '3',
-  amopopr => '=(abstime,abstime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/abstime_minmax_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '4',
-  amopopr => '>=(abstime,abstime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/abstime_minmax_ops', amoplefttype => 'abstime',
-  amoprighttype => 'abstime', amopstrategy => '5',
-  amopopr => '>(abstime,abstime)', amopmethod => 'brin' },
-
-# minmax reltime
-{ amopfamily => 'brin/reltime_minmax_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '1',
-  amopopr => '<(reltime,reltime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/reltime_minmax_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '2',
-  amopopr => '<=(reltime,reltime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/reltime_minmax_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '3',
-  amopopr => '=(reltime,reltime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/reltime_minmax_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '4',
-  amopopr => '>=(reltime,reltime)', amopmethod => 'brin' },
-{ amopfamily => 'brin/reltime_minmax_ops', amoplefttype => 'reltime',
-  amoprighttype => 'reltime', amopstrategy => '5',
-  amopopr => '>(reltime,reltime)', amopmethod => 'brin' },
 
 # minmax macaddr
 { amopfamily => 'brin/macaddr_minmax_ops', amoplefttype => 'macaddr',

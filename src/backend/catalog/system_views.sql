@@ -41,7 +41,7 @@ CREATE VIEW pg_shadow AS
         rolreplication AS userepl,
         rolbypassrls AS usebypassrls,
         rolpassword AS passwd,
-        rolvaliduntil::abstime AS valuntil,
+        rolvaliduntil AS valuntil,
         setconfig AS useconfig
     FROM pg_authid LEFT JOIN pg_db_role_setting s
     ON (pg_authid.oid = setrole AND setdatabase = 0)

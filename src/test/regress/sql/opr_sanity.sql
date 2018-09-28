@@ -823,7 +823,6 @@ WHERE a.aggfnoid = p.oid AND
 
 -- Cross-check transfn against its entry in pg_proc.
 -- NOTE: use physically_coercible here, not binary_coercible, because
--- max and min on abstime are implemented using int4larger/int4smaller.
 SELECT a.aggfnoid::oid, p.proname, ptr.oid, ptr.proname
 FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr
 WHERE a.aggfnoid = p.oid AND
@@ -978,7 +977,6 @@ WHERE a.aggfnoid = p.oid AND
 -- Check that all combine functions have signature
 -- combine(transtype, transtype) returns transtype
 -- NOTE: use physically_coercible here, not binary_coercible, because
--- max and min on abstime are implemented using int4larger/int4smaller.
 
 SELECT a.aggfnoid, p.proname
 FROM pg_aggregate as a, pg_proc as p

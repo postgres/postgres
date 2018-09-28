@@ -36,9 +36,6 @@ test: timetz
 test: timestamp
 test: timestamptz
 test: interval
-test: abstime
-test: reltime
-test: tinterval
 test: inet
 test: macaddr
 test: macaddr8

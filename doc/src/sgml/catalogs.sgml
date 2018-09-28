@@ -10646,7 +10646,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>valuntil</structfield></entry>
-      <entry><type>abstime</type></entry>
+      <entry><type>timestamptz</type></entry>
       <entry></entry>
       <entry>Password expiry time (only used for password authentication)</entry>
      </row>
@@ -11125,7 +11125,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>valuntil</structfield></entry>
-      <entry><type>abstime</type></entry>
+      <entry><type>timestamptz</type></entry>
       <entry>Password expiry time (only used for password authentication)</entry>
      </row>
 

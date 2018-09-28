@@ -222,12 +222,6 @@ ecpg_is_type_an_array(int type, const struct statement *stmt, const struct varia
 			return ECPG_ARRAY_ERROR;
 		if (!ecpg_type_infocache_push(&(stmt->connection->cache_head), FLOAT8OID, ECPG_ARRAY_NONE, stmt->lineno))
 			return ECPG_ARRAY_ERROR;
-		if (!ecpg_type_infocache_push(&(stmt->connection->cache_head), ABSTIMEOID, ECPG_ARRAY_NONE, stmt->lineno))
-			return ECPG_ARRAY_ERROR;
-		if (!ecpg_type_infocache_push(&(stmt->connection->cache_head), RELTIMEOID, ECPG_ARRAY_NONE, stmt->lineno))
-			return ECPG_ARRAY_ERROR;
-		if (!ecpg_type_infocache_push(&(stmt->connection->cache_head), TINTERVALOID, ECPG_ARRAY_NONE, stmt->lineno))
-			return ECPG_ARRAY_ERROR;
 		if (!ecpg_type_infocache_push(&(stmt->connection->cache_head), UNKNOWNOID, ECPG_ARRAY_NONE, stmt->lineno))
 			return ECPG_ARRAY_ERROR;
 		if (!ecpg_type_infocache_push(&(stmt->connection->cache_head), CIRCLEOID, ECPG_ARRAY_NONE, stmt->lineno))

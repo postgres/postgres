@@ -268,35 +268,6 @@ SELECT '' AS "226", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS d
   ORDER BY timestamp1, timestamp2, difference;
 
 --
--- abstime, reltime arithmetic
---
-
-SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
-    FROM ABSTIME_TBL, RELTIME_TBL
-   WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1) < abstime 'Jan 14 14:00:00 1971'
-   ORDER BY abstime, reltime;
-
--- these four queries should return the same answer
--- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and
--- therefore, should not show up in the results.
-
-SELECT '' AS three, * FROM ABSTIME_TBL
-  WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year')         -- +3 years
-    < abstime 'Jan 14 14:00:00 1977';
-
-SELECT '' AS three, * FROM ABSTIME_TBL
-   WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year ago')    -- -3 years
-     < abstime 'Jan 14 14:00:00 1971';
-
-SELECT '' AS three, * FROM ABSTIME_TBL
-   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year')        -- -(+3) years
-    < abstime 'Jan 14 14:00:00 1971';
-
-SELECT '' AS three, * FROM ABSTIME_TBL
-   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year ago')    -- -(-3) years
-     < abstime 'Jan 14 14:00:00 1977';
-
---
 -- Conversions
 --
 
@@ -304,27 +275,6 @@ SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
   FROM TEMP_TIMESTAMP
   WHERE f1 <> timestamp 'now'
   ORDER BY date, "timestamp";
-
-SELECT '' AS "16", f1 AS "timestamp", abstime(f1) AS abstime
-  FROM TEMP_TIMESTAMP
-  ORDER BY abstime;
-
-SELECT '' AS four, f1 AS abstime, date(f1) AS date
-  FROM ABSTIME_TBL
-  WHERE isfinite(f1) AND f1 <> abstime 'now'
-  ORDER BY date, abstime;
-
-SELECT '' AS two, d1 AS "timestamp", abstime(d1) AS abstime
-  FROM TIMESTAMP_TBL WHERE NOT isfinite(d1);
-
-SELECT '' AS three, f1 as abstime, cast(f1 as timestamp) AS "timestamp"
-  FROM ABSTIME_TBL WHERE NOT isfinite(f1);
-
-SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime
-  FROM INTERVAL_TBL;
-
-SELECT '' AS six, f1 as reltime, CAST(f1 AS interval) AS interval
-  FROM RELTIME_TBL;
 
 DROP TABLE TEMP_TIMESTAMP;
 
@@ -338,21 +288,15 @@ SHOW DateStyle;
 
 SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
 
-SELECT '' AS seven, f1 AS us_postgres FROM ABSTIME_TBL;
-
 SET DateStyle TO 'US,ISO';
 
 SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
-
-SELECT '' AS seven, f1 AS us_iso FROM ABSTIME_TBL;
 
 SET DateStyle TO 'US,SQL';
 
 SHOW DateStyle;
 
 SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
-
-SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,Postgres';
 
@@ -364,23 +308,17 @@ SELECT count(*) as one FROM TIMESTAMP_TBL WHERE d1 = 'Jun 13 1957';
 
 SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_TBL;
 
-SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_TBL;
-
 SET DateStyle TO 'European,ISO';
 
 SHOW DateStyle;
 
 SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
 
-SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_TBL;
-
 SET DateStyle TO 'European,SQL';
 
 SHOW DateStyle;
 
 SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
-
-SELECT '' AS seven, f1 AS european_sql FROM ABSTIME_TBL;
 
 RESET DateStyle;
 

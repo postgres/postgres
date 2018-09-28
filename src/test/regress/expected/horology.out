@@ -2047,70 +2047,6 @@ SELECT '' AS "226", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS d
 (256 rows)
 
 --
--- abstime, reltime arithmetic
---
-SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
-    FROM ABSTIME_TBL, RELTIME_TBL
-   WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1) < abstime 'Jan 14 14:00:00 1971'
-   ORDER BY abstime, reltime;
- ten |           abstime            |    reltime    
------+------------------------------+---------------
-     | Sat May 10 23:59:12 1947 PST | @ 14 secs ago
-     | Sat May 10 23:59:12 1947 PST | @ 1 min
-     | Sat May 10 23:59:12 1947 PST | @ 5 hours
-     | Sat May 10 23:59:12 1947 PST | @ 10 days
-     | Sat May 10 23:59:12 1947 PST | @ 3 mons
-     | Wed Dec 31 16:00:00 1969 PST | @ 14 secs ago
-     | Wed Dec 31 16:00:00 1969 PST | @ 1 min
-     | Wed Dec 31 16:00:00 1969 PST | @ 5 hours
-     | Wed Dec 31 16:00:00 1969 PST | @ 10 days
-     | Wed Dec 31 16:00:00 1969 PST | @ 3 mons
-(10 rows)
-
--- these four queries should return the same answer
--- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and
--- therefore, should not show up in the results.
-SELECT '' AS three, * FROM ABSTIME_TBL
-  WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year')         -- +3 years
-    < abstime 'Jan 14 14:00:00 1977';
- three |              f1              
--------+------------------------------
-       | Sun Jan 14 03:14:21 1973 PST
-       | Wed Dec 31 16:00:00 1969 PST
-       | Sat May 10 23:59:12 1947 PST
-(3 rows)
-
-SELECT '' AS three, * FROM ABSTIME_TBL
-   WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year ago')    -- -3 years
-     < abstime 'Jan 14 14:00:00 1971';
- three |              f1              
--------+------------------------------
-       | Sun Jan 14 03:14:21 1973 PST
-       | Wed Dec 31 16:00:00 1969 PST
-       | Sat May 10 23:59:12 1947 PST
-(3 rows)
-
-SELECT '' AS three, * FROM ABSTIME_TBL
-   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year')        -- -(+3) years
-    < abstime 'Jan 14 14:00:00 1971';
- three |              f1              
--------+------------------------------
-       | Sun Jan 14 03:14:21 1973 PST
-       | Wed Dec 31 16:00:00 1969 PST
-       | Sat May 10 23:59:12 1947 PST
-(3 rows)
-
-SELECT '' AS three, * FROM ABSTIME_TBL
-   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year ago')    -- -(-3) years
-     < abstime 'Jan 14 14:00:00 1977';
- three |              f1              
--------+------------------------------
-       | Sun Jan 14 03:14:21 1973 PST
-       | Wed Dec 31 16:00:00 1969 PST
-       | Sat May 10 23:59:12 1947 PST
-(3 rows)
-
---
 -- Conversions
 --
 SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
@@ -2136,80 +2072,6 @@ SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
     | Mon Jan 01 17:32:01 2001 PST | 01-01-2001
     | Sat Sep 22 18:19:20 2001 PDT | 09-22-2001
 (16 rows)
-
-SELECT '' AS "16", f1 AS "timestamp", abstime(f1) AS abstime
-  FROM TEMP_TIMESTAMP
-  ORDER BY abstime;
- 16 |          timestamp           |           abstime            
-----+------------------------------+------------------------------
-    | Thu Jan 01 00:00:00 1970 PST | Thu Jan 01 00:00:00 1970 PST
-    | Wed Feb 28 17:32:01 1996 PST | Wed Feb 28 17:32:01 1996 PST
-    | Thu Feb 29 17:32:01 1996 PST | Thu Feb 29 17:32:01 1996 PST
-    | Fri Mar 01 17:32:01 1996 PST | Fri Mar 01 17:32:01 1996 PST
-    | Mon Dec 30 17:32:01 1996 PST | Mon Dec 30 17:32:01 1996 PST
-    | Tue Dec 31 17:32:01 1996 PST | Tue Dec 31 17:32:01 1996 PST
-    | Fri Dec 31 17:32:01 1999 PST | Fri Dec 31 17:32:01 1999 PST
-    | Sat Jan 01 17:32:01 2000 PST | Sat Jan 01 17:32:01 2000 PST
-    | Wed Mar 15 02:14:05 2000 PST | Wed Mar 15 02:14:05 2000 PST
-    | Wed Mar 15 03:14:04 2000 PST | Wed Mar 15 03:14:04 2000 PST
-    | Wed Mar 15 08:14:01 2000 PST | Wed Mar 15 08:14:01 2000 PST
-    | Wed Mar 15 12:14:03 2000 PST | Wed Mar 15 12:14:03 2000 PST
-    | Wed Mar 15 13:14:02 2000 PST | Wed Mar 15 13:14:02 2000 PST
-    | Sun Dec 31 17:32:01 2000 PST | Sun Dec 31 17:32:01 2000 PST
-    | Mon Jan 01 17:32:01 2001 PST | Mon Jan 01 17:32:01 2001 PST
-    | Sat Sep 22 18:19:20 2001 PDT | Sat Sep 22 18:19:20 2001 PDT
-(16 rows)
-
-SELECT '' AS four, f1 AS abstime, date(f1) AS date
-  FROM ABSTIME_TBL
-  WHERE isfinite(f1) AND f1 <> abstime 'now'
-  ORDER BY date, abstime;
- four |           abstime            |    date    
-------+------------------------------+------------
-      | Sat May 10 23:59:12 1947 PST | 05-10-1947
-      | Wed Dec 31 16:00:00 1969 PST | 12-31-1969
-      | Sun Jan 14 03:14:21 1973 PST | 01-14-1973
-      | Mon May 01 00:30:30 1995 PDT | 05-01-1995
-(4 rows)
-
-SELECT '' AS two, d1 AS "timestamp", abstime(d1) AS abstime
-  FROM TIMESTAMP_TBL WHERE NOT isfinite(d1);
- two | timestamp |  abstime  
------+-----------+-----------
-     | -infinity | -infinity
-     | infinity  | infinity
-(2 rows)
-
-SELECT '' AS three, f1 as abstime, cast(f1 as timestamp) AS "timestamp"
-  FROM ABSTIME_TBL WHERE NOT isfinite(f1);
-ERROR:  cannot convert abstime "invalid" to timestamp
-SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime
-  FROM INTERVAL_TBL;
- ten |           interval            |            reltime            
------+-------------------------------+-------------------------------
-     | @ 1 min                       | @ 1 min
-     | @ 5 hours                     | @ 5 hours
-     | @ 10 days                     | @ 10 days
-     | @ 34 years                    | @ 34 years
-     | @ 3 mons                      | @ 3 mons
-     | @ 14 secs ago                 | @ 14 secs ago
-     | @ 1 day 2 hours 3 mins 4 secs | @ 1 day 2 hours 3 mins 4 secs
-     | @ 6 years                     | @ 6 years
-     | @ 5 mons                      | @ 5 mons
-     | @ 5 mons 12 hours             | @ 5 mons 12 hours
-(10 rows)
-
-SELECT '' AS six, f1 as reltime, CAST(f1 AS interval) AS interval
-  FROM RELTIME_TBL;
- six |    reltime    |   interval    
------+---------------+---------------
-     | @ 1 min       | @ 1 min
-     | @ 5 hours     | @ 5 hours
-     | @ 10 days     | @ 10 days
-     | @ 34 years    | @ 34 years
-     | @ 3 mons      | @ 3 mons
-     | @ 14 secs ago | @ 14 secs ago
-(6 rows)
 
 DROP TABLE TEMP_TIMESTAMP;
 --
@@ -2292,18 +2154,6 @@ SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
     | Mon Jan 01 17:32:01 2001
 (65 rows)
 
-SELECT '' AS seven, f1 AS us_postgres FROM ABSTIME_TBL;
- seven |         us_postgres          
--------+------------------------------
-       | Sun Jan 14 03:14:21 1973 PST
-       | Mon May 01 00:30:30 1995 PDT
-       | Wed Dec 31 16:00:00 1969 PST
-       | infinity
-       | -infinity
-       | Sat May 10 23:59:12 1947 PST
-       | invalid
-(7 rows)
-
 SET DateStyle TO 'US,ISO';
 SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
  64 |         us_iso         
@@ -2374,18 +2224,6 @@ SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
     | 2000-12-31 17:32:01
     | 2001-01-01 17:32:01
 (65 rows)
-
-SELECT '' AS seven, f1 AS us_iso FROM ABSTIME_TBL;
- seven |         us_iso         
--------+------------------------
-       | 1973-01-14 03:14:21-08
-       | 1995-05-01 00:30:30-07
-       | 1969-12-31 16:00:00-08
-       | infinity
-       | -infinity
-       | 1947-05-10 23:59:12-08
-       | invalid
-(7 rows)
 
 SET DateStyle TO 'US,SQL';
 SHOW DateStyle;
@@ -2463,18 +2301,6 @@ SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
     | 12/31/2000 17:32:01
     | 01/01/2001 17:32:01
 (65 rows)
-
-SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_TBL;
- seven |         us_sql          
--------+-------------------------
-       | 01/14/1973 03:14:21 PST
-       | 05/01/1995 00:30:30 PDT
-       | 12/31/1969 16:00:00 PST
-       | infinity
-       | -infinity
-       | 05/10/1947 23:59:12 PST
-       | invalid
-(7 rows)
 
 SET DateStyle TO 'European,Postgres';
 SHOW DateStyle;
@@ -2561,18 +2387,6 @@ SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_TBL;
     | Thu 13 Jun 00:00:00 1957
 (66 rows)
 
-SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_TBL;
- seven |      european_postgres       
--------+------------------------------
-       | Sun 14 Jan 03:14:21 1973 PST
-       | Mon 01 May 00:30:30 1995 PDT
-       | Wed 31 Dec 16:00:00 1969 PST
-       | infinity
-       | -infinity
-       | Sat 10 May 23:59:12 1947 PST
-       | invalid
-(7 rows)
-
 SET DateStyle TO 'European,ISO';
 SHOW DateStyle;
  DateStyle 
@@ -2651,18 +2465,6 @@ SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
     | 1957-06-13 00:00:00
 (66 rows)
 
-SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_TBL;
- seven |      european_iso      
--------+------------------------
-       | 1973-01-14 03:14:21-08
-       | 1995-05-01 00:30:30-07
-       | 1969-12-31 16:00:00-08
-       | infinity
-       | -infinity
-       | 1947-05-10 23:59:12-08
-       | invalid
-(7 rows)
-
 SET DateStyle TO 'European,SQL';
 SHOW DateStyle;
  DateStyle 
@@ -2740,18 +2542,6 @@ SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
     | 01/01/2001 17:32:01
     | 13/06/1957 00:00:00
 (66 rows)
-
-SELECT '' AS seven, f1 AS european_sql FROM ABSTIME_TBL;
- seven |      european_sql       
--------+-------------------------
-       | 14/01/1973 03:14:21 PST
-       | 01/05/1995 00:30:30 PDT
-       | 31/12/1969 16:00:00 PST
-       | infinity
-       | -infinity
-       | 10/05/1947 23:59:12 PST
-       | invalid
-(7 rows)
 
 RESET DateStyle;
 --

@@ -1711,14 +1711,6 @@ MINUTE TO SECOND
     any application.
    </para>
 
-   <para>
-    The types <type>abstime</type>
-    and <type>reltime</type> are lower precision types which are used internally.
-    You are discouraged from using these types in
-    applications;  these internal types
-    might disappear in a future release.
-   </para>
-
    <sect2 id="datatype-datetime-input">
     <title>Date/Time Input</title>
 

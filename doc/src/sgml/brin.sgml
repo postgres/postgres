@@ -130,17 +130,6 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
    </thead>
    <tbody>
     <row>
-     <entry><literal>abstime_minmax_ops</literal></entry>
-     <entry><type>abstime</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
-    </row>
-    <row>
      <entry><literal>int8_minmax_ops</literal></entry>
      <entry><type>bigint</type></entry>
      <entry>
@@ -380,17 +369,6 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
     <row>
      <entry><literal>float4_minmax_ops</literal></entry>
      <entry><type>real</type></entry>
-     <entry>
-      <literal>&lt;</literal>
-      <literal>&lt;=</literal>
-      <literal>=</literal>
-      <literal>&gt;=</literal>
-      <literal>&gt;</literal>
-     </entry>
-    </row>
-    <row>
-     <entry><literal>reltime_minmax_ops</literal></entry>
-     <entry><type>reltime</type></entry>
      <entry>
       <literal>&lt;</literal>
       <literal>&lt;=</literal>

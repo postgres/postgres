@@ -2070,16 +2070,6 @@ memcpy(destination->data, buffer, 40);
        </thead>
        <tbody>
         <row>
-         <entry><type>abstime</type></entry>
-         <entry><type>AbsoluteTime</type></entry>
-         <entry><filename>utils/nabstime.h</filename></entry>
-        </row>
-        <row>
-         <entry><type>bigint</type> (<type>int8</type>)</entry>
-         <entry><type>int64</type></entry>
-         <entry><filename>postgres.h</filename></entry>
-        </row>
-        <row>
          <entry><type>boolean</type></entry>
          <entry><type>bool</type></entry>
          <entry><filename>postgres.h</filename> (maybe compiler built-in)</entry>
@@ -2180,11 +2170,6 @@ memcpy(destination->data, buffer, 40);
          <entry><filename>postgres.h</filename></entry>
         </row>
         <row>
-         <entry><type>reltime</type></entry>
-         <entry><type>RelativeTime</type></entry>
-         <entry><filename>utils/nabstime.h</filename></entry>
-        </row>
-        <row>
          <entry><type>text</type></entry>
          <entry><type>text*</type></entry>
          <entry><filename>postgres.h</filename></entry>
@@ -2208,11 +2193,6 @@ memcpy(destination->data, buffer, 40);
          <entry><type>timestamp</type></entry>
          <entry><type>Timestamp*</type></entry>
          <entry><filename>datatype/timestamp.h</filename></entry>
-        </row>
-        <row>
-         <entry><type>tinterval</type></entry>
-         <entry><type>TimeInterval</type></entry>
-         <entry><filename>utils/nabstime.h</filename></entry>
         </row>
         <row>
          <entry><type>varchar</type></entry>
