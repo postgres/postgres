@@ -855,7 +855,7 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
-/* Define to 1 if strerror_r() returns a int. */
+/* Define to 1 if strerror_r() returns int. */
 #undef STRERROR_R_INT
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */

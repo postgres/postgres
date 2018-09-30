@@ -82,23 +82,23 @@ AH_VERBATIM(GETTIMEOFDAY_1ARG_,
 
 # PGAC_FUNC_STRERROR_R_INT
 # ---------------------------
-# Check if strerror_r() returns an int (SUSv3) rather than a char * (GNU libc)
-# If so, define STRERROR_R_INT
+# Check if strerror_r() returns int (POSIX) rather than char * (GNU libc).
+# If so, define STRERROR_R_INT.
+# The result is uncertain if strerror_r() isn't provided,
+# but we don't much care.
 AC_DEFUN([PGAC_FUNC_STRERROR_R_INT],
 [AC_CACHE_CHECK(whether strerror_r returns int,
 pgac_cv_func_strerror_r_int,
 [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <string.h>],
-[#ifndef _AIX
-int strerror_r(int, char *, size_t);
-#else
-/* Older AIX has 'int' for the third argument so we don't test the args. */
-int strerror_r();
-#endif])],
+[[char buf[100];
+  switch (strerror_r(1, buf, sizeof(buf)))
+  { case 0: break; default: break; }
+]])],
 [pgac_cv_func_strerror_r_int=yes],
 [pgac_cv_func_strerror_r_int=no])])
 if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
   AC_DEFINE(STRERROR_R_INT, 1,
-            [Define to 1 if strerror_r() returns a int.])
+            [Define to 1 if strerror_r() returns int.])
 fi
 ])# PGAC_FUNC_STRERROR_R_INT
 
