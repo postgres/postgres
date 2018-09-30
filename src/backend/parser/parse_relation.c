@@ -1208,15 +1208,22 @@ addRangeTableEntry(ParseState *pstate,
 	rte->alias = alias;
 
 	/*
-	 * Get the rel's OID.  This access also ensures that we have an up-to-date
-	 * relcache entry for the rel.  Since this is typically the first access
-	 * to a rel in a statement, be careful to get the right access level
-	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
+	 * Identify the type of lock we'll need on this relation.  It's not the
+	 * query's target table (that case is handled elsewhere), so we need
+	 * either RowShareLock if it's locked by FOR UPDATE/SHARE, or plain
+	 * AccessShareLock otherwise.
 	 */
 	lockmode = isLockedRefname(pstate, refname) ? RowShareLock : AccessShareLock;
+
+	/*
+	 * Get the rel's OID.  This access also ensures that we have an up-to-date
+	 * relcache entry for the rel.  Since this is typically the first access
+	 * to a rel in a statement, we must open the rel with the proper lockmode.
+	 */
 	rel = parserOpenTable(pstate, relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
 	rte->relkind = rel->rd_rel->relkind;
+	rte->rellockmode = lockmode;
 
 	/*
 	 * Build the list of effective column names using user-supplied aliases
@@ -1262,10 +1269,20 @@ addRangeTableEntry(ParseState *pstate,
  *
  * This is just like addRangeTableEntry() except that it makes an RTE
  * given an already-open relation instead of a RangeVar reference.
+ *
+ * lockmode is the lock type required for query execution; it must be one
+ * of AccessShareLock, RowShareLock, or RowExclusiveLock depending on the
+ * RTE's role within the query.  The caller should always hold that lock mode
+ * or a stronger one.
+ *
+ * Note: properly, lockmode should be declared LOCKMODE not int, but that
+ * would require importing storage/lock.h into parse_relation.h.  Since
+ * LOCKMODE is typedef'd as int anyway, that seems like overkill.
  */
 RangeTblEntry *
 addRangeTableEntryForRelation(ParseState *pstate,
 							  Relation rel,
+							  int lockmode,
 							  Alias *alias,
 							  bool inh,
 							  bool inFromCl)
@@ -1275,10 +1292,15 @@ addRangeTableEntryForRelation(ParseState *pstate,
 
 	Assert(pstate != NULL);
 
+	Assert(lockmode == AccessShareLock ||
+		   lockmode == RowShareLock ||
+		   lockmode == RowExclusiveLock);
+
 	rte->rtekind = RTE_RELATION;
 	rte->alias = alias;
 	rte->relid = RelationGetRelid(rel);
 	rte->relkind = rel->rd_rel->relkind;
+	rte->rellockmode = lockmode;
 
 	/*
 	 * Build the list of effective column names using user-supplied aliases

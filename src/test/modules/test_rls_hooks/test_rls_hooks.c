@@ -80,8 +80,8 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 
 	qual_pstate = make_parsestate(NULL);
 
-	rte = addRangeTableEntryForRelation(qual_pstate, relation, NULL, false,
-										false);
+	rte = addRangeTableEntryForRelation(qual_pstate, relation, AccessShareLock,
+										NULL, false, false);
 	addRTEtoQuery(qual_pstate, rte, false, true, true);
 
 	role = ObjectIdGetDatum(ACL_ID_PUBLIC);
@@ -143,8 +143,8 @@ test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 
 	qual_pstate = make_parsestate(NULL);
 
-	rte = addRangeTableEntryForRelation(qual_pstate, relation, NULL, false,
-										false);
+	rte = addRangeTableEntryForRelation(qual_pstate, relation, AccessShareLock,
+										NULL, false, false);
 	addRTEtoQuery(qual_pstate, rte, false, true, true);
 
 	role = ObjectIdGetDatum(ACL_ID_PUBLIC);

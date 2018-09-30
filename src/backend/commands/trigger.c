@@ -577,10 +577,12 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		 * 'OLD' must always have varno equal to 1 and 'NEW' equal to 2.
 		 */
 		rte = addRangeTableEntryForRelation(pstate, rel,
+											AccessShareLock,
 											makeAlias("old", NIL),
 											false, false);
 		addRTEtoQuery(pstate, rte, false, true, true);
 		rte = addRangeTableEntryForRelation(pstate, rel,
+											AccessShareLock,
 											makeAlias("new", NIL),
 											false, false);
 		addRTEtoQuery(pstate, rte, false, true, true);

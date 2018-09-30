@@ -13632,7 +13632,8 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	 * rangetable entry.  We need a ParseState for transformExpr.
 	 */
 	pstate = make_parsestate(NULL);
-	rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, true);
+	rte = addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
+										NULL, false, true);
 	addRTEtoQuery(pstate, rte, true, true, true);
 
 	/* take care of any partition expressions */

@@ -1878,12 +1878,14 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	pkrte->rtekind = RTE_RELATION;
 	pkrte->relid = RelationGetRelid(pk_rel);
 	pkrte->relkind = pk_rel->rd_rel->relkind;
+	pkrte->rellockmode = AccessShareLock;
 	pkrte->requiredPerms = ACL_SELECT;
 
 	fkrte = makeNode(RangeTblEntry);
 	fkrte->rtekind = RTE_RELATION;
 	fkrte->relid = RelationGetRelid(fk_rel);
 	fkrte->relkind = fk_rel->rd_rel->relkind;
+	fkrte->rellockmode = AccessShareLock;
 	fkrte->requiredPerms = ACL_SELECT;
 
 	for (i = 0; i < riinfo->nkeys; i++)

@@ -107,7 +107,7 @@ static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
 
 /* GUC parameter */
-int	plan_cache_mode;
+int			plan_cache_mode;
 
 /*
  * InitPlanCache: initialize module during InitPostgres.
@@ -1539,6 +1539,8 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			else
 				lockmode = AccessShareLock;
 
+			Assert(lockmode == rte->rellockmode);
+
 			if (acquire)
 				LockRelationOid(rte->relid, lockmode);
 			else
@@ -1609,6 +1611,8 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 					lockmode = RowShareLock;
 				else
 					lockmode = AccessShareLock;
+				Assert(lockmode == rte->rellockmode ||
+					   (lockmode == AccessShareLock && rte->rellockmode == RowExclusiveLock));
 				if (acquire)
 					LockRelationOid(rte->relid, lockmode);
 				else

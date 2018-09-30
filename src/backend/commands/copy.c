@@ -833,20 +833,21 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 	if (stmt->relation)
 	{
+		LOCKMODE	lockmode = is_from ? RowExclusiveLock : AccessShareLock;
+		RangeTblEntry *rte;
 		TupleDesc	tupDesc;
 		List	   *attnums;
 		ListCell   *cur;
-		RangeTblEntry *rte;
 
 		Assert(!stmt->query);
 
 		/* Open and lock the relation, using the appropriate lock type. */
-		rel = heap_openrv(stmt->relation,
-						  (is_from ? RowExclusiveLock : AccessShareLock));
+		rel = heap_openrv(stmt->relation, lockmode);
 
 		relid = RelationGetRelid(rel);
 
-		rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, false);
+		rte = addRangeTableEntryForRelation(pstate, rel, lockmode,
+											NULL, false, false);
 		rte->requiredPerms = (is_from ? ACL_INSERT : ACL_SELECT);
 
 		tupDesc = RelationGetDescr(rel);

@@ -6021,6 +6021,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	rte->rtekind = RTE_RELATION;
 	rte->relid = tableOid;
 	rte->relkind = RELKIND_RELATION;	/* Don't be too picky. */
+	rte->rellockmode = AccessShareLock;
 	rte->lateral = false;
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -6143,6 +6144,7 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	rte->rtekind = RTE_RELATION;
 	rte->relid = tableOid;
 	rte->relkind = RELKIND_RELATION;	/* Don't be too picky. */
+	rte->rellockmode = AccessShareLock;
 	rte->lateral = false;
 	rte->inh = true;
 	rte->inFromCl = true;

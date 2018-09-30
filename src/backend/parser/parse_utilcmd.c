@@ -2526,7 +2526,9 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 * relation, but we still need to open it.
 	 */
 	rel = relation_open(relid, NoLock);
-	rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, true);
+	rte = addRangeTableEntryForRelation(pstate, rel,
+										AccessShareLock,
+										NULL, false, true);
 
 	/* no to join list, yes to namespaces */
 	addRTEtoQuery(pstate, rte, false, true, true);
@@ -2635,9 +2637,11 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	 * qualification.
 	 */
 	oldrte = addRangeTableEntryForRelation(pstate, rel,
+										   AccessShareLock,
 										   makeAlias("old", NIL),
 										   false, false);
 	newrte = addRangeTableEntryForRelation(pstate, rel,
+										   AccessShareLock,
 										   makeAlias("new", NIL),
 										   false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
@@ -2733,9 +2737,11 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 			 * them in the joinlist.
 			 */
 			oldrte = addRangeTableEntryForRelation(sub_pstate, rel,
+												   AccessShareLock,
 												   makeAlias("old", NIL),
 												   false, false);
 			newrte = addRangeTableEntryForRelation(sub_pstate, rel,
+												   AccessShareLock,
 												   makeAlias("new", NIL),
 												   false, false);
 			oldrte->requiredPerms = 0;
@@ -2938,6 +2944,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	pstate->p_sourcetext = queryString;
 	rte = addRangeTableEntryForRelation(pstate,
 										rel,
+										AccessShareLock,
 										NULL,
 										false,
 										true);

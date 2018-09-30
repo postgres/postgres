@@ -528,6 +528,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	rte->rtekind = RTE_RELATION;
 	rte->relid = intoRelationAddr.objectId;
 	rte->relkind = relkind;
+	rte->rellockmode = RowExclusiveLock;
 	rte->requiredPerms = ACL_INSERT;
 
 	for (attnum = 1; attnum <= intoRelationDesc->rd_att->natts; attnum++)

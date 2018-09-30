@@ -353,7 +353,7 @@ DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
  * by 2...
  *
  * These extra RT entries are not actually used in the query,
- * except for run-time permission checking.
+ * except for run-time locking and permission checking.
  *---------------------------------------------------------------
  */
 static Query *
@@ -386,9 +386,11 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 * OLD first, then NEW....
 	 */
 	rt_entry1 = addRangeTableEntryForRelation(pstate, viewRel,
+											  AccessShareLock,
 											  makeAlias("old", NIL),
 											  false, false);
 	rt_entry2 = addRangeTableEntryForRelation(pstate, viewRel,
+											  AccessShareLock,
 											  makeAlias("new", NIL),
 											  false, false);
 	/* Must override addRangeTableEntry's default access-check flags */

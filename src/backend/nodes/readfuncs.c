@@ -1361,6 +1361,7 @@ _readRangeTblEntry(void)
 		case RTE_RELATION:
 			READ_OID_FIELD(relid);
 			READ_CHAR_FIELD(relkind);
+			READ_INT_FIELD(rellockmode);
 			READ_NODE_FIELD(tablesample);
 			break;
 		case RTE_SUBQUERY:

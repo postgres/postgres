@@ -973,9 +973,21 @@ typedef struct RangeTblEntry
 	 * that the tuple format of the tuplestore is the same as the referenced
 	 * relation.  This allows plans referencing AFTER trigger transition
 	 * tables to be invalidated if the underlying table is altered.
+	 *
+	 * rellockmode is really LOCKMODE, but it's declared int to avoid having
+	 * to include lock-related headers here.  It must be RowExclusiveLock if
+	 * the RTE is an INSERT/UPDATE/DELETE target, else RowShareLock if the RTE
+	 * is a SELECT FOR UPDATE/FOR SHARE target, else AccessShareLock.
+	 *
+	 * Note: in some cases, rule expansion may result in RTEs that are marked
+	 * with RowExclusiveLock even though they are not the target of the
+	 * current query; this happens if a DO ALSO rule simply scans the original
+	 * target table.  We leave such RTEs with their original lockmode so as to
+	 * avoid getting an additional, lesser lock.
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
+	int			rellockmode;	/* lock level that query requires on the rel */
 	struct TableSampleClause *tablesample;	/* sampling info, or NULL */
 
 	/*
