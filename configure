@@ -24978,12 +24978,10 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-#ifndef _AIX
-int strerror_r(int, char *, size_t);
-#else
-/* Older AIX has 'int' for the third argument so we don't test the args. */
-int strerror_r();
-#endif
+char buf[100];
+  switch (strerror_r(1, buf, sizeof(buf)))
+  { case 0: break; default: break; }
+
   ;
   return 0;
 }
@@ -25021,7 +25019,7 @@ $as_echo "$pgac_cv_func_strerror_r_int" >&6; }
 if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define STRERROR_R_INT /**/
+#define STRERROR_R_INT 1
 _ACEOF
 
 fi
