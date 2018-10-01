@@ -188,6 +188,8 @@ extern void vac_update_datfrozenxid(void);
 extern void vacuum_delay_point(void);
 extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
 						 int options);
+extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
+					 VacuumParams *params, int options, LOCKMODE lmode);
 
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, int options,

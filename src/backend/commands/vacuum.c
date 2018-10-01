@@ -483,6 +483,112 @@ vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, int options)
 
 
 /*
+ * vacuum_open_relation
+ *
+ * This routine is used for attempting to open and lock a relation which
+ * is going to be vacuumed or analyzed.  If the relation cannot be opened
+ * or locked, a log is emitted if possible.
+ */
+Relation
+vacuum_open_relation(Oid relid, RangeVar *relation, VacuumParams *params,
+					 int options, LOCKMODE lmode)
+{
+	Relation	onerel;
+	bool		rel_lock = true;
+	int			elevel;
+
+	Assert(params != NULL);
+	Assert((options & (VACOPT_VACUUM | VACOPT_ANALYZE)) != 0);
+
+	/*
+	 * Open the relation and get the appropriate lock on it.
+	 *
+	 * There's a race condition here: the relation may have gone away since
+	 * the last time we saw it.  If so, we don't need to vacuum or analyze it.
+	 *
+	 * If we've been asked not to wait for the relation lock, acquire it first
+	 * in non-blocking mode, before calling try_relation_open().
+	 */
+	if (!(options & VACOPT_SKIP_LOCKED))
+		onerel = try_relation_open(relid, lmode);
+	else if (ConditionalLockRelationOid(relid, lmode))
+		onerel = try_relation_open(relid, NoLock);
+	else
+	{
+		onerel = NULL;
+		rel_lock = false;
+	}
+
+	/* if relation is opened, leave */
+	if (onerel)
+		return onerel;
+
+	/*
+	 * Relation could not be opened, hence generate if possible a log
+	 * informing on the situation.
+	 *
+	 * If the RangeVar is not defined, we do not have enough information to
+	 * provide a meaningful log statement.  Chances are that the caller has
+	 * intentionally not provided this information so that this logging is
+	 * skipped, anyway.
+	 */
+	if (relation == NULL)
+		return NULL;
+
+	/*
+	 * Determine the log level.
+	 *
+	 * For autovacuum logs, we emit a LOG if log_autovacuum_min_duration is
+	 * not disabled.  For manual VACUUM or ANALYZE, we emit a WARNING to match
+	 * the log statements in the permission checks.
+	 */
+	if (!IsAutoVacuumWorkerProcess())
+		elevel = WARNING;
+	else if (params->log_min_duration >= 0)
+		elevel = LOG;
+	else
+		return NULL;
+
+	if ((options & VACOPT_VACUUM) != 0)
+	{
+		if (!rel_lock)
+			ereport(elevel,
+					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+					 errmsg("skipping vacuum of \"%s\" --- lock not available",
+							relation->relname)));
+		else
+			ereport(elevel,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("skipping vacuum of \"%s\" --- relation no longer exists",
+							relation->relname)));
+
+		/*
+		 * For VACUUM ANALYZE, both logs could show up, but just generate
+		 * information for VACUUM as that would be the first one to be
+		 * processed.
+		 */
+		return NULL;
+	}
+
+	if ((options & VACOPT_ANALYZE) != 0)
+	{
+		if (!rel_lock)
+			ereport(elevel,
+					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+					 errmsg("skipping analyze of \"%s\" --- lock not available",
+							relation->relname)));
+		else
+			ereport(elevel,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("skipping analyze of \"%s\" --- relation no longer exists",
+							relation->relname)));
+	}
+
+	return NULL;
+}
+
+
+/*
  * Given a VacuumRelation, fill in the table OID if it wasn't specified,
  * and optionally add VacuumRelations for partitions of the table.
  *
@@ -1400,7 +1506,6 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-	bool		rel_lock = true;
 
 	Assert(params != NULL);
 
@@ -1455,68 +1560,12 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 */
 	lmode = (options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
 
-	/*
-	 * Open the relation and get the appropriate lock on it.
-	 *
-	 * There's a race condition here: the rel may have gone away since the
-	 * last time we saw it.  If so, we don't need to vacuum it.
-	 *
-	 * If we've been asked not to wait for the relation lock, acquire it first
-	 * in non-blocking mode, before calling try_relation_open().
-	 */
-	if (!(options & VACOPT_SKIP_LOCKED))
-		onerel = try_relation_open(relid, lmode);
-	else if (ConditionalLockRelationOid(relid, lmode))
-		onerel = try_relation_open(relid, NoLock);
-	else
-	{
-		onerel = NULL;
-		rel_lock = false;
-	}
+	/* open the relation and get the appropriate lock on it */
+	onerel = vacuum_open_relation(relid, relation, params, options, lmode);
 
-	/*
-	 * If we failed to open or lock the relation, emit a log message before
-	 * exiting.
-	 */
+	/* leave if relation could not be opened or locked */
 	if (!onerel)
 	{
-		int			elevel = 0;
-
-		/*
-		 * Determine the log level.
-		 *
-		 * If the RangeVar is not defined, we do not have enough information
-		 * to provide a meaningful log statement.  Chances are that
-		 * vacuum_rel's caller has intentionally not provided this information
-		 * so that this logging is skipped, anyway.
-		 *
-		 * Otherwise, for autovacuum logs, we emit a LOG if
-		 * log_autovacuum_min_duration is not disabled.  For manual VACUUM, we
-		 * emit a WARNING to match the log statements in the permission
-		 * checks.
-		 */
-		if (relation != NULL)
-		{
-			if (!IsAutoVacuumWorkerProcess())
-				elevel = WARNING;
-			else if (params->log_min_duration >= 0)
-				elevel = LOG;
-		}
-
-		if (elevel != 0)
-		{
-			if (!rel_lock)
-				ereport(elevel,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-						 errmsg("skipping vacuum of \"%s\" --- lock not available",
-								relation->relname)));
-			else
-				ereport(elevel,
-						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("skipping vacuum of \"%s\" --- relation no longer exists",
-								relation->relname)));
-		}
-
 		PopActiveSnapshot();
 		CommitTransactionCommand();
 		return false;

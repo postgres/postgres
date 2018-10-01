@@ -120,7 +120,6 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	int			elevel;
 	AcquireSampleRowsFunc acquirefunc = NULL;
 	BlockNumber relpages = 0;
-	bool		rel_lock = true;
 
 	/* Select logging level */
 	if (options & VACOPT_VERBOSE)
@@ -142,58 +141,16 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	 * concurrent VACUUM, which doesn't matter much at the moment but might
 	 * matter if we ever try to accumulate stats on dead tuples.) If the rel
 	 * has been dropped since we last saw it, we don't need to process it.
+	 *
+	 * Make sure to generate only logs for ANALYZE in this case.
 	 */
-	if (!(options & VACOPT_SKIP_LOCKED))
-		onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
-	else if (ConditionalLockRelationOid(relid, ShareUpdateExclusiveLock))
-		onerel = try_relation_open(relid, NoLock);
-	else
-	{
-		onerel = NULL;
-		rel_lock = false;
-	}
+	onerel = vacuum_open_relation(relid, relation, params,
+								  options & ~(VACOPT_VACUUM),
+								  ShareUpdateExclusiveLock);
 
-	/*
-	 * If we failed to open or lock the relation, emit a log message before
-	 * exiting.
-	 */
+	/* leave if relation could not be opened or locked */
 	if (!onerel)
-	{
-		/*
-		 * If the RangeVar is not defined, we do not have enough information
-		 * to provide a meaningful log statement.  Chances are that
-		 * analyze_rel's caller has intentionally not provided this
-		 * information so that this logging is skipped, anyway.
-		 */
-		if (relation == NULL)
-			return;
-
-		/*
-		 * Determine the log level.  For autovacuum logs, we emit a LOG if
-		 * log_autovacuum_min_duration is not disabled.  For manual ANALYZE,
-		 * we emit a WARNING to match the log statements in the permissions
-		 * checks.
-		 */
-		if (!IsAutoVacuumWorkerProcess())
-			elevel = WARNING;
-		else if (params->log_min_duration >= 0)
-			elevel = LOG;
-		else
-			return;
-
-		if (!rel_lock)
-			ereport(elevel,
-					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					 errmsg("skipping analyze of \"%s\" --- lock not available",
-							relation->relname)));
-		else
-			ereport(elevel,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("skipping analyze of \"%s\" --- relation no longer exists",
-							relation->relname)));
-
 		return;
-	}
 
 	/*
 	 * Check if relation needs to be skipped based on ownership.  This check
