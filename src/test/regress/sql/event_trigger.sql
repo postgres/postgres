@@ -28,7 +28,7 @@ create event trigger regress_event_trigger on ddl_command_start
 
 -- OK
 create event trigger regress_event_trigger_end on ddl_command_end
-   execute procedure test_event_trigger();
+   execute function test_event_trigger();
 
 -- should fail, food is not a valid filter variable
 create event trigger regress_event_trigger2 on ddl_command_start
