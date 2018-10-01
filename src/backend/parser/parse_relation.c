@@ -28,6 +28,7 @@
 #include "parser/parse_enr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -1272,7 +1273,7 @@ addRangeTableEntry(ParseState *pstate,
  *
  * lockmode is the lock type required for query execution; it must be one
  * of AccessShareLock, RowShareLock, or RowExclusiveLock depending on the
- * RTE's role within the query.  The caller should always hold that lock mode
+ * RTE's role within the query.  The caller must hold that lock mode
  * or a stronger one.
  *
  * Note: properly, lockmode should be declared LOCKMODE not int, but that
@@ -1295,6 +1296,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	Assert(lockmode == AccessShareLock ||
 		   lockmode == RowShareLock ||
 		   lockmode == RowExclusiveLock);
+	Assert(CheckRelationLockedByMe(rel, lockmode, true));
 
 	rte->rtekind = RTE_RELATION;
 	rte->alias = alias;

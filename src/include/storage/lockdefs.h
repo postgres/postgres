@@ -45,11 +45,15 @@ typedef int LOCKMODE;
 #define AccessExclusiveLock		8	/* ALTER TABLE, DROP TABLE, VACUUM FULL,
 									 * and unqualified LOCK TABLE */
 
+#define MaxLockMode				8
+
+
+/* WAL representation of an AccessExclusiveLock on a table */
 typedef struct xl_standby_lock
 {
 	TransactionId xid;			/* xid of holder of AccessExclusiveLock */
-	Oid			dbOid;
-	Oid			relOid;
+	Oid			dbOid;			/* DB containing table */
+	Oid			relOid;			/* OID of table */
 } xl_standby_lock;
 
 #endif							/* LOCKDEF_H_ */

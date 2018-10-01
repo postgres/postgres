@@ -288,6 +288,51 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 }
 
 /*
+ *		CheckRelationLockedByMe
+ *
+ * Returns true if current transaction holds a lock on 'relation' of mode
+ * 'lockmode'.  If 'orstronger' is true, a stronger lockmode is also OK.
+ * ("Stronger" is defined as "numerically higher", which is a bit
+ * semantically dubious but is OK for the purposes we use this for.)
+ */
+bool
+CheckRelationLockedByMe(Relation relation, LOCKMODE lockmode, bool orstronger)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION(tag,
+						 relation->rd_lockInfo.lockRelId.dbId,
+						 relation->rd_lockInfo.lockRelId.relId);
+
+	if (LockHeldByMe(&tag, lockmode))
+		return true;
+
+	if (orstronger)
+	{
+		LOCKMODE	slockmode;
+
+		for (slockmode = lockmode + 1;
+			 slockmode <= MaxLockMode;
+			 slockmode++)
+		{
+			if (LockHeldByMe(&tag, slockmode))
+			{
+#ifdef NOT_USED
+				/* Sometimes this might be useful for debugging purposes */
+				elog(WARNING, "lock mode %s substituted for %s on relation %s",
+					 GetLockmodeName(tag.locktag_lockmethodid, slockmode),
+					 GetLockmodeName(tag.locktag_lockmethodid, lockmode),
+					 RelationGetRelationName(relation));
+#endif
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/*
  *		LockHasWaitersRelation
  *
  * This is a function to check whether someone else is waiting for a
