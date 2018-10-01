@@ -296,9 +296,8 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 	TupleDesc	tupdesc;
 
 	/* Get tuple descriptor from relation OID */
-	rel = relation_open(relid, NoLock);
-	tupdesc = CreateTupleDescCopyConstr(rel->rd_att);
-	relation_close(rel, NoLock);
+	rel = relation_open(relid, AccessShareLock);
+	tupdesc = RelationGetDescr(rel);
 
 	raw_attrs = initArrayResult(BYTEAOID, CurrentMemoryContext, false);
 	nattrs = tupdesc->natts;
@@ -315,7 +314,6 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 		bytea	   *attr_data = NULL;
 
 		attr = tupdesc->attrs[i];
-		is_null = (t_infomask & HEAP_HASNULL) && att_isnull(i, t_bits);
 
 		/*
 		 * Tuple header can specify less attributes than tuple descriptor as
@@ -325,6 +323,8 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 		 */
 		if (i >= (t_infomask2 & HEAP_NATTS_MASK))
 			is_null = true;
+		else
+			is_null = (t_infomask & HEAP_HASNULL) && att_isnull(i, t_bits);
 
 		if (!is_null)
 		{
@@ -383,6 +383,8 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 			errmsg("end of tuple reached without looking at all its data")));
+
+	relation_close(rel, AccessShareLock);
 
 	return makeArrayResult(raw_attrs, CurrentMemoryContext);
 }
