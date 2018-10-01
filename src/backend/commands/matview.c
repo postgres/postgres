@@ -26,6 +26,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "rewrite/rewriteHandler.h"
+#include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/rel.h"
@@ -208,8 +209,13 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	tableSpace = matviewRel->rd_rel->reltablespace;
 
-	/* Create the transient table that will receive the regenerated data. */
+	/*
+	 * Create the transient table that will receive the regenerated data. Lock
+	 * it against access by any other process until commit (by which time it
+	 * will be gone).
+	 */
 	OIDNewHeap = make_new_heap(matviewOid, tableSpace);
+	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
 	dest = CreateTransientRelDestReceiver(OIDNewHeap);
 
 	/* Generate the data, if wanted. */
