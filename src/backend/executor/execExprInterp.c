@@ -3285,7 +3285,7 @@ ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op, ExprContext *econtext
 	if (op->d.convert_rowtype.map != NULL)
 	{
 		/* Full conversion with attribute rearrangement needed */
-		result = do_convert_tuple(&tmptup, op->d.convert_rowtype.map);
+		result = execute_attr_map_tuple(&tmptup, op->d.convert_rowtype.map);
 		/* Result already has appropriate composite-datum header fields */
 		*op->resvalue = HeapTupleGetDatum(result);
 	}

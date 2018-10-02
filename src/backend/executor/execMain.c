@@ -1955,21 +1955,22 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 	 */
 	if (resultRelInfo->ri_PartitionRoot)
 	{
-		HeapTuple	tuple = ExecFetchSlotTuple(slot);
 		TupleDesc	old_tupdesc = RelationGetDescr(rel);
-		TupleConversionMap *map;
+		AttrNumber *map;
 
 		rel = resultRelInfo->ri_PartitionRoot;
 		tupdesc = RelationGetDescr(rel);
 		/* a reverse map */
-		map = convert_tuples_by_name(old_tupdesc, tupdesc,
-									 gettext_noop("could not convert row type"));
+		map = convert_tuples_by_name_map_if_req(old_tupdesc, tupdesc,
+												gettext_noop("could not convert row type"));
+
+		/*
+		 * Partition-specific slot's tupdesc can't be changed, so allocate a
+		 * new one.
+		 */
 		if (map != NULL)
-		{
-			tuple = do_convert_tuple(tuple, map);
-			ExecSetSlotDescriptor(slot, tupdesc);
-			ExecStoreHeapTuple(tuple, slot, false);
-		}
+			slot = execute_attr_map_slot(map, slot,
+										 MakeTupleTableSlot(tupdesc));
 	}
 
 	insertedCols = GetInsertedColumns(resultRelInfo, estate);
@@ -2035,20 +2036,22 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				 */
 				if (resultRelInfo->ri_PartitionRoot)
 				{
-					HeapTuple	tuple = ExecFetchSlotTuple(slot);
-					TupleConversionMap *map;
+					AttrNumber *map;
 
 					rel = resultRelInfo->ri_PartitionRoot;
 					tupdesc = RelationGetDescr(rel);
 					/* a reverse map */
-					map = convert_tuples_by_name(orig_tupdesc, tupdesc,
-												 gettext_noop("could not convert row type"));
+					map = convert_tuples_by_name_map_if_req(orig_tupdesc,
+															tupdesc,
+															gettext_noop("could not convert row type"));
+
+					/*
+					 * Partition-specific slot's tupdesc can't be changed, so
+					 * allocate a new one.
+					 */
 					if (map != NULL)
-					{
-						tuple = do_convert_tuple(tuple, map);
-						ExecSetSlotDescriptor(slot, tupdesc);
-						ExecStoreHeapTuple(tuple, slot, false);
-					}
+						slot = execute_attr_map_slot(map, slot,
+													 MakeTupleTableSlot(tupdesc));
 				}
 
 				insertedCols = GetInsertedColumns(resultRelInfo, estate);
@@ -2082,21 +2085,23 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 			/* See the comment above. */
 			if (resultRelInfo->ri_PartitionRoot)
 			{
-				HeapTuple	tuple = ExecFetchSlotTuple(slot);
 				TupleDesc	old_tupdesc = RelationGetDescr(rel);
-				TupleConversionMap *map;
+				AttrNumber *map;
 
 				rel = resultRelInfo->ri_PartitionRoot;
 				tupdesc = RelationGetDescr(rel);
 				/* a reverse map */
-				map = convert_tuples_by_name(old_tupdesc, tupdesc,
-											 gettext_noop("could not convert row type"));
+				map = convert_tuples_by_name_map_if_req(old_tupdesc,
+														tupdesc,
+														gettext_noop("could not convert row type"));
+
+				/*
+				 * Partition-specific slot's tupdesc can't be changed, so
+				 * allocate a new one.
+				 */
 				if (map != NULL)
-				{
-					tuple = do_convert_tuple(tuple, map);
-					ExecSetSlotDescriptor(slot, tupdesc);
-					ExecStoreHeapTuple(tuple, slot, false);
-				}
+					slot = execute_attr_map_slot(map, slot,
+												 MakeTupleTableSlot(tupdesc));
 			}
 
 			insertedCols = GetInsertedColumns(resultRelInfo, estate);
@@ -2188,21 +2193,23 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					/* See the comment in ExecConstraints(). */
 					if (resultRelInfo->ri_PartitionRoot)
 					{
-						HeapTuple	tuple = ExecFetchSlotTuple(slot);
 						TupleDesc	old_tupdesc = RelationGetDescr(rel);
-						TupleConversionMap *map;
+						AttrNumber *map;
 
 						rel = resultRelInfo->ri_PartitionRoot;
 						tupdesc = RelationGetDescr(rel);
 						/* a reverse map */
-						map = convert_tuples_by_name(old_tupdesc, tupdesc,
-													 gettext_noop("could not convert row type"));
+						map = convert_tuples_by_name_map_if_req(old_tupdesc,
+																tupdesc,
+																gettext_noop("could not convert row type"));
+
+						/*
+						 * Partition-specific slot's tupdesc can't be changed,
+						 * so allocate a new one.
+						 */
 						if (map != NULL)
-						{
-							tuple = do_convert_tuple(tuple, map);
-							ExecSetSlotDescriptor(slot, tupdesc);
-							ExecStoreHeapTuple(tuple, slot, false);
-						}
+							slot = execute_attr_map_slot(map, slot,
+														 MakeTupleTableSlot(tupdesc));
 					}
 
 					insertedCols = GetInsertedColumns(resultRelInfo, estate);

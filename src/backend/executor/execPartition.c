@@ -57,7 +57,7 @@ typedef struct PartitionDispatchData
 	List	   *keystate;		/* list of ExprState */
 	PartitionDesc partdesc;
 	TupleTableSlot *tupslot;
-	TupleConversionMap *tupmap;
+	AttrNumber *tupmap;
 	int		   *indexes;
 } PartitionDispatchData;
 
@@ -144,16 +144,8 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 		 * We need an additional tuple slot for storing transient tuples that
 		 * are converted to the root table descriptor.
 		 */
-		proute->root_tuple_slot = MakeTupleTableSlot(NULL);
+		proute->root_tuple_slot = MakeTupleTableSlot(RelationGetDescr(rel));
 	}
-
-	/*
-	 * Initialize an empty slot that will be used to manipulate tuples of any
-	 * given partition's rowtype.  It is attached to the caller-specified node
-	 * (such as ModifyTableState) and released when the node finishes
-	 * processing.
-	 */
-	proute->partition_tuple_slot = MakeTupleTableSlot(NULL);
 
 	i = 0;
 	foreach(cell, leaf_parts)
@@ -228,7 +220,6 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	TupleTableSlot *ecxt_scantuple_old = ecxt->ecxt_scantuple;
 	TupleTableSlot *myslot = NULL;
 	MemoryContext	oldcxt;
-	HeapTuple		tuple;
 
 	/* use per-tuple context here to avoid leaking memory */
 	oldcxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
@@ -241,11 +232,10 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 	/* start with the root partitioned table */
-	tuple = ExecFetchSlotTuple(slot);
 	dispatch = pd[0];
 	while (true)
 	{
-		TupleConversionMap *map = dispatch->tupmap;
+		AttrNumber *map = dispatch->tupmap;
 		int			cur_index = -1;
 
 		rel = dispatch->reldesc;
@@ -256,11 +246,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		 */
 		myslot = dispatch->tupslot;
 		if (myslot != NULL && map != NULL)
-		{
-			tuple = do_convert_tuple(tuple, map);
-			ExecStoreHeapTuple(tuple, myslot, true);
-			slot = myslot;
-		}
+			slot = execute_attr_map_slot(map, slot, myslot);
 
 		/*
 		 * Extract partition key from tuple. Expression evaluation machinery
@@ -305,16 +291,6 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		{
 			/* move down one level */
 			dispatch = pd[-dispatch->indexes[cur_index]];
-
-			/*
-			 * Release the dedicated slot, if it was used.  Create a copy of
-			 * the tuple first, for the next iteration.
-			 */
-			if (slot == myslot)
-			{
-				tuple = ExecCopySlotTuple(myslot);
-				ExecClearTuple(myslot);
-			}
 		}
 	}
 
@@ -739,6 +715,35 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 							   gettext_noop("could not convert row type"));
 
 	/*
+	 * If a partition has a different rowtype than the root parent, initialize
+	 * a slot dedicated to storing this partition's tuples.  The slot is used
+	 * for various operations that are applied to tuples after routing, such
+	 * as checking constraints.
+	 */
+	if (proute->parent_child_tupconv_maps[partidx] != NULL)
+	{
+		Relation	partrel = partRelInfo->ri_RelationDesc;
+
+		/*
+		 * Initialize the array in proute where these slots are stored, if not
+		 * already done.
+		 */
+		if (proute->partition_tuple_slots == NULL)
+			proute->partition_tuple_slots = (TupleTableSlot **)
+				palloc0(proute->num_partitions *
+						sizeof(TupleTableSlot *));
+
+		/*
+		 * Initialize the slot itself setting its descriptor to this
+		 * partition's TupleDesc; TupleDesc reference will be released at the
+		 * end of the command.
+		 */
+		proute->partition_tuple_slots[partidx] =
+			ExecInitExtraTupleSlot(estate,
+								   RelationGetDescr(partrel));
+	}
+
+	/*
 	 * If the partition is a foreign table, let the FDW init itself for
 	 * routing tuples to the partition.
 	 */
@@ -816,38 +821,6 @@ TupConvMapForLeaf(PartitionTupleRouting *proute,
 }
 
 /*
- * ConvertPartitionTupleSlot -- convenience function for tuple conversion.
- * The tuple, if converted, is stored in new_slot, and *p_my_slot is
- * updated to point to it.  new_slot typically should be one of the
- * dedicated partition tuple slots. If map is NULL, *p_my_slot is not changed.
- *
- * Returns the converted tuple, unless map is NULL, in which case original
- * tuple is returned unmodified.
- */
-HeapTuple
-ConvertPartitionTupleSlot(TupleConversionMap *map,
-						  HeapTuple tuple,
-						  TupleTableSlot *new_slot,
-						  TupleTableSlot **p_my_slot,
-						  bool shouldFree)
-{
-	if (!map)
-		return tuple;
-
-	tuple = do_convert_tuple(tuple, map);
-
-	/*
-	 * Change the partition tuple slot descriptor, as per converted tuple.
-	 */
-	*p_my_slot = new_slot;
-	Assert(new_slot != NULL);
-	ExecSetSlotDescriptor(new_slot, map->outdesc);
-	ExecStoreHeapTuple(tuple, new_slot, shouldFree);
-
-	return tuple;
-}
-
-/*
  * ExecCleanupTupleRouting -- Clean up objects allocated for partition tuple
  * routing.
  *
@@ -915,8 +888,6 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 	/* Release the standalone partition tuple descriptors, if any */
 	if (proute->root_tuple_slot)
 		ExecDropSingleTupleTableSlot(proute->root_tuple_slot);
-	if (proute->partition_tuple_slot)
-		ExecDropSingleTupleTableSlot(proute->partition_tuple_slot);
 }
 
 /*
@@ -1004,9 +975,9 @@ get_partition_dispatch_recurse(Relation rel, Relation parent,
 		 * for tuple routing.
 		 */
 		pd->tupslot = MakeSingleTupleTableSlot(tupdesc);
-		pd->tupmap = convert_tuples_by_name(RelationGetDescr(parent),
-											tupdesc,
-											gettext_noop("could not convert row type"));
+		pd->tupmap = convert_tuples_by_name_map_if_req(RelationGetDescr(parent),
+													   tupdesc,
+													   gettext_noop("could not convert row type"));
 	}
 	else
 	{

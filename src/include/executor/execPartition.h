@@ -58,10 +58,13 @@ typedef struct PartitionDispatchData *PartitionDispatch;
  *								element of this array has the index into the
  *								corresponding partition in partitions array.
  * num_subplan_partition_offsets  Length of 'subplan_partition_offsets' array
- * partition_tuple_slot			TupleTableSlot to be used to manipulate any
- *								given leaf partition's rowtype after that
- *								partition is chosen for insertion by
- *								tuple-routing.
+ * partition_tuple_slots		Array of TupleTableSlot objects; if non-NULL,
+ *								contains one entry for every leaf partition,
+ *								of which only those of the leaf partitions
+ *								whose attribute numbers differ from the root
+ *								parent have a non-NULL value.  NULL if all of
+ *								the partitions encountered by a given command
+ *								happen to have same rowtype as the root parent
  * root_tuple_slot				TupleTableSlot to be used to transiently hold
  *								copy of a tuple that's being moved across
  *								partitions in the root partitioned table's
@@ -80,7 +83,7 @@ typedef struct PartitionTupleRouting
 	bool	   *child_parent_map_not_required;
 	int		   *subplan_partition_offsets;
 	int			num_subplan_partition_offsets;
-	TupleTableSlot *partition_tuple_slot;
+	TupleTableSlot **partition_tuple_slots;
 	TupleTableSlot *root_tuple_slot;
 } PartitionTupleRouting;
 
@@ -188,11 +191,6 @@ extern void ExecInitRoutingInfo(ModifyTableState *mtstate,
 extern void ExecSetupChildParentMapForLeaf(PartitionTupleRouting *proute);
 extern TupleConversionMap *TupConvMapForLeaf(PartitionTupleRouting *proute,
 				  ResultRelInfo *rootRelInfo, int leaf_index);
-extern HeapTuple ConvertPartitionTupleSlot(TupleConversionMap *map,
-						  HeapTuple tuple,
-						  TupleTableSlot *new_slot,
-						  TupleTableSlot **p_my_slot,
-						  bool shouldFree);
 extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
 						PartitionTupleRouting *proute);
 extern PartitionPruneState *ExecCreatePartitionPruneState(PlanState *planstate,

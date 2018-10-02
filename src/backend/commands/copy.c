@@ -31,6 +31,7 @@
 #include "commands/trigger.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
+#include "executor/tuptable.h"
 #include "foreign/fdwapi.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -2691,6 +2692,7 @@ CopyFrom(CopyState cstate)
 		if (proute)
 		{
 			int			leaf_part_index;
+			TupleConversionMap *map;
 
 			/*
 			 * Away we go ... If we end up not finding a partition after all,
@@ -2862,14 +2864,27 @@ CopyFrom(CopyState cstate)
 
 			/*
 			 * We might need to convert from the parent rowtype to the
-			 * partition rowtype.  Don't free the already stored tuple as it
-			 * may still be required for a multi-insert batch.
+			 * partition rowtype.
 			 */
-			tuple = ConvertPartitionTupleSlot(proute->parent_child_tupconv_maps[leaf_part_index],
-											  tuple,
-											  proute->partition_tuple_slot,
-											  &slot,
-											  false);
+			map = proute->parent_child_tupconv_maps[leaf_part_index];
+			if (map != NULL)
+			{
+				TupleTableSlot *new_slot;
+				MemoryContext oldcontext;
+
+				Assert(proute->partition_tuple_slots != NULL &&
+					   proute->partition_tuple_slots[leaf_part_index] != NULL);
+				new_slot = proute->partition_tuple_slots[leaf_part_index];
+				slot = execute_attr_map_slot(map->attrMap, slot, new_slot);
+
+				/*
+				 * Get the tuple in the per-tuple context, so that it will be
+				 * freed after each batch insert.
+				 */
+				oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+				tuple = ExecCopySlotTuple(slot);
+				MemoryContextSwitchTo(oldcontext);
+			}
 
 			tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 		}

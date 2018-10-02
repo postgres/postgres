@@ -1161,11 +1161,9 @@ lreplace:;
 			map_index = resultRelInfo - mtstate->resultRelInfo;
 			Assert(map_index >= 0 && map_index < mtstate->mt_nplans);
 			tupconv_map = tupconv_map_for_subplan(mtstate, map_index);
-			tuple = ConvertPartitionTupleSlot(tupconv_map,
-											  tuple,
-											  proute->root_tuple_slot,
-											  &slot,
-											  true);
+			if (tupconv_map != NULL)
+				slot = execute_attr_map_slot(tupconv_map->attrMap,
+											 slot, proute->root_tuple_slot);
 
 			/*
 			 * Prepare for tuple routing, making it look like we're inserting
@@ -1703,6 +1701,7 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	int			partidx;
 	ResultRelInfo *partrel;
 	HeapTuple	tuple;
+	TupleConversionMap *map;
 
 	/*
 	 * Determine the target partition.  If ExecFindPartition does not find a
@@ -1790,11 +1789,16 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	/*
 	 * Convert the tuple, if necessary.
 	 */
-	ConvertPartitionTupleSlot(proute->parent_child_tupconv_maps[partidx],
-							  tuple,
-							  proute->partition_tuple_slot,
-							  &slot,
-							  true);
+	map = proute->parent_child_tupconv_maps[partidx];
+	if (map != NULL)
+	{
+		TupleTableSlot *new_slot;
+
+		Assert(proute->partition_tuple_slots != NULL &&
+			   proute->partition_tuple_slots[partidx] != NULL);
+		new_slot = proute->partition_tuple_slots[partidx];
+		slot = execute_attr_map_slot(map->attrMap, slot, new_slot);
+	}
 
 	/* Initialize information needed to handle ON CONFLICT DO UPDATE. */
 	Assert(mtstate != NULL);
