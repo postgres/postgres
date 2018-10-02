@@ -41,9 +41,13 @@
 #endif
 #include <sys/param.h>
 
-#ifndef NL_ARGMAX
-#define NL_ARGMAX 16
-#endif
+/*
+ * We used to use the platform's NL_ARGMAX here, but that's a bad idea,
+ * first because the point of this module is to remove platform dependencies
+ * not perpetuate them, and second because some platforms use ridiculously
+ * large values, leading to excessive stack consumption in dopr().
+ */
+#define PG_NL_ARGMAX 31
 
 
 /*
@@ -358,8 +362,8 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	double		fvalue;
 	char	   *strvalue;
 	int			i;
-	PrintfArgType argtypes[NL_ARGMAX + 1];
-	PrintfArgValue argvalues[NL_ARGMAX + 1];
+	PrintfArgType argtypes[PG_NL_ARGMAX + 1];
+	PrintfArgValue argvalues[PG_NL_ARGMAX + 1];
 
 	/*
 	 * Parse the format string to determine whether there are %n$ format
@@ -409,7 +413,7 @@ nextch1:
 				goto nextch1;
 			case '$':
 				have_dollar = true;
-				if (accum <= 0 || accum > NL_ARGMAX)
+				if (accum <= 0 || accum > PG_NL_ARGMAX)
 					goto bad_format;
 				if (afterstar)
 				{
