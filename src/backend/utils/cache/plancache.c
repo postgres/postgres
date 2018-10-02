@@ -1493,7 +1493,6 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 	foreach(lc1, stmt_list)
 	{
 		PlannedStmt *plannedstmt = lfirst_node(PlannedStmt, lc1);
-		int			rt_index;
 		ListCell   *lc2;
 
 		if (plannedstmt->commandType == CMD_UTILITY)
@@ -1512,14 +1511,9 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			continue;
 		}
 
-		rt_index = 0;
 		foreach(lc2, plannedstmt->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
-			LOCKMODE	lockmode;
-			PlanRowMark *rc;
-
-			rt_index++;
 
 			if (rte->rtekind != RTE_RELATION)
 				continue;
@@ -1530,21 +1524,10 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			 * fail if it's been dropped entirely --- we'll just transiently
 			 * acquire a non-conflicting lock.
 			 */
-			if (list_member_int(plannedstmt->resultRelations, rt_index) ||
-				list_member_int(plannedstmt->nonleafResultRelations, rt_index))
-				lockmode = RowExclusiveLock;
-			else if ((rc = get_plan_rowmark(plannedstmt->rowMarks, rt_index)) != NULL &&
-					 RowMarkRequiresRowShareLock(rc->markType))
-				lockmode = RowShareLock;
-			else
-				lockmode = AccessShareLock;
-
-			Assert(lockmode == rte->rellockmode);
-
 			if (acquire)
-				LockRelationOid(rte->relid, lockmode);
+				LockRelationOid(rte->relid, rte->rellockmode);
 			else
-				UnlockRelationOid(rte->relid, lockmode);
+				UnlockRelationOid(rte->relid, rte->rellockmode);
 		}
 	}
 }
@@ -1586,7 +1569,6 @@ static void
 ScanQueryForLocks(Query *parsetree, bool acquire)
 {
 	ListCell   *lc;
-	int			rt_index;
 
 	/* Shouldn't get called on utility commands */
 	Assert(parsetree->commandType != CMD_UTILITY);
@@ -1594,29 +1576,18 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 	/*
 	 * First, process RTEs of the current query level.
 	 */
-	rt_index = 0;
 	foreach(lc, parsetree->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-		LOCKMODE	lockmode;
 
-		rt_index++;
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
 				/* Acquire or release the appropriate type of lock */
-				if (rt_index == parsetree->resultRelation)
-					lockmode = RowExclusiveLock;
-				else if (get_parse_rowmark(parsetree, rt_index) != NULL)
-					lockmode = RowShareLock;
-				else
-					lockmode = AccessShareLock;
-				Assert(lockmode == rte->rellockmode ||
-					   (lockmode == AccessShareLock && rte->rellockmode == RowExclusiveLock));
 				if (acquire)
-					LockRelationOid(rte->relid, lockmode);
+					LockRelationOid(rte->relid, rte->rellockmode);
 				else
-					UnlockRelationOid(rte->relid, lockmode);
+					UnlockRelationOid(rte->relid, rte->rellockmode);
 				break;
 
 			case RTE_SUBQUERY:

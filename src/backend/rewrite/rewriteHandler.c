@@ -87,17 +87,14 @@ static Bitmapset *adjust_view_column_set(Bitmapset *cols, List *targetlist);
  * AcquireRewriteLocks -
  *	  Acquire suitable locks on all the relations mentioned in the Query.
  *	  These locks will ensure that the relation schemas don't change under us
- *	  while we are rewriting and planning the query.
+ *	  while we are rewriting, planning, and executing the query.
  *
  * Caution: this may modify the querytree, therefore caller should usually
  * have done a copyObject() to make a writable copy of the querytree in the
  * current memory context.
  *
- * forExecute indicates that the query is about to be executed.
- * If so, we'll acquire RowExclusiveLock on the query's resultRelation,
- * RowShareLock on any relation accessed FOR [KEY] UPDATE/SHARE, and
- * AccessShareLock on all other relations mentioned.
- *
+ * forExecute indicates that the query is about to be executed.  If so,
+ * we'll acquire the lock modes specified in the RTE rellockmode fields.
  * If forExecute is false, AccessShareLock is acquired on all relations.
  * This case is suitable for ruleutils.c, for example, where we only need
  * schema stability and we don't intend to actually modify any relations.
@@ -162,31 +159,24 @@ AcquireRewriteLocks(Query *parsetree,
 
 				/*
 				 * Grab the appropriate lock type for the relation, and do not
-				 * release it until end of transaction. This protects the
-				 * rewriter and planner against schema changes mid-query.
+				 * release it until end of transaction.  This protects the
+				 * rewriter, planner, and executor against schema changes
+				 * mid-query.
 				 *
-				 * Assuming forExecute is true, this logic must match what the
-				 * executor will do, else we risk lock-upgrade deadlocks.
+				 * If forExecute is false, ignore rellockmode and just use
+				 * AccessShareLock.
 				 */
 				if (!forExecute)
 					lockmode = AccessShareLock;
-				else if (rt_index == parsetree->resultRelation)
-					lockmode = RowExclusiveLock;
 				else if (forUpdatePushedDown)
 				{
-					lockmode = RowShareLock;
 					/* Upgrade RTE's lock mode to reflect pushed-down lock */
 					if (rte->rellockmode == AccessShareLock)
 						rte->rellockmode = RowShareLock;
+					lockmode = rte->rellockmode;
 				}
-				else if (get_parse_rowmark(parsetree, rt_index) != NULL)
-					lockmode = RowShareLock;
 				else
-					lockmode = AccessShareLock;
-
-				Assert(!forExecute || lockmode == rte->rellockmode ||
-					   (lockmode == AccessShareLock &&
-						rte->rellockmode == RowExclusiveLock));
+					lockmode = rte->rellockmode;
 
 				rel = heap_open(rte->relid, lockmode);
 

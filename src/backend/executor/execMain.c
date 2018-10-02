@@ -970,26 +970,16 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 		/* get relation's OID (will produce InvalidOid if subquery) */
 		relid = getrelid(rc->rti, rangeTable);
-		rellockmode = rt_fetch(rc->rti, rangeTable)->rellockmode;
 
-		/*
-		 * If you change the conditions under which rel locks are acquired
-		 * here, be sure to adjust ExecOpenScanRelation to match.
-		 */
 		switch (rc->markType)
 		{
 			case ROW_MARK_EXCLUSIVE:
 			case ROW_MARK_NOKEYEXCLUSIVE:
 			case ROW_MARK_SHARE:
 			case ROW_MARK_KEYSHARE:
-				Assert(rellockmode == RowShareLock);
-				relation = heap_open(relid, RowShareLock);
-				break;
 			case ROW_MARK_REFERENCE:
-				/* RTE might be a query target table */
-				Assert(rellockmode == AccessShareLock ||
-					   rellockmode == RowExclusiveLock);
-				relation = heap_open(relid, AccessShareLock);
+				rellockmode = rt_fetch(rc->rti, rangeTable)->rellockmode;
+				relation = heap_open(relid, rellockmode);
 				break;
 			case ROW_MARK_COPY:
 				/* no physical table access is required */
