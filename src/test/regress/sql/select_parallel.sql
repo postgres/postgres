@@ -410,7 +410,23 @@ ORDER BY 1;
 SELECT * FROM information_schema.foreign_data_wrapper_options
 ORDER BY 1, 2, 3;
 
--- test interation between subquery and partial_paths
+-- test passing expanded-value representations to workers
+CREATE FUNCTION make_some_array(int,int) returns int[] as
+$$declare x int[];
+  begin
+    x[1] := $1;
+    x[2] := $2;
+    return x;
+  end$$ language plpgsql parallel safe;
+CREATE TABLE fooarr(f1 text, f2 int[], f3 text);
+INSERT INTO fooarr VALUES('1', ARRAY[1,2], 'one');
+
+PREPARE pstmt(text, int[]) AS SELECT * FROM fooarr WHERE f1 = $1 AND f2 = $2;
+EXPLAIN (COSTS OFF) EXECUTE pstmt('1', make_some_array(1,2));
+EXECUTE pstmt('1', make_some_array(1,2));
+DEALLOCATE pstmt;
+
+-- test interaction between subquery and partial_paths
 SET LOCAL min_parallel_table_scan_size TO 0;
 CREATE VIEW tenk1_vw_sec WITH (security_barrier) AS SELECT * FROM tenk1;
 EXPLAIN (COSTS OFF)
