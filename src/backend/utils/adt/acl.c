@@ -2448,8 +2448,12 @@ has_any_column_privilege_id_id(PG_FUNCTION_ARGS)
  *
  *		The result is a boolean value: true if user has the indicated
  *		privilege, false if not.  The variants that take a relation OID
- *		and an integer attnum return NULL (rather than throwing an error)
- *		if the column doesn't exist or is dropped.
+ *		return NULL (rather than throwing an error) if that relation OID
+ *		doesn't exist.  Likewise, the variants that take an integer attnum
+ *		return NULL (rather than throwing an error) if there is no such
+ *		pg_attribute entry.  All variants return NULL if an attisdropped
+ *		column is selected.  These rules are meant to avoid unnecessary
+ *		failures in queries that scan pg_attribute.
  */
 
 /*
@@ -2465,6 +2469,12 @@ column_privilege_check(Oid tableoid, AttrNumber attnum,
 	AclResult	aclresult;
 	HeapTuple	attTuple;
 	Form_pg_attribute attributeForm;
+
+	/*
+	 * If convert_column_name failed, we can just return -1 immediately.
+	 */
+	if (attnum == InvalidAttrNumber)
+		return -1;
 
 	/*
 	 * First check if we have the privilege at the table level.  We check
@@ -2827,21 +2837,59 @@ has_column_privilege_id_attnum(PG_FUNCTION_ARGS)
 
 /*
  * Given a table OID and a column name expressed as a string, look it up
- * and return the column number
+ * and return the column number.  Returns InvalidAttrNumber in cases
+ * where caller should return NULL instead of failing.
  */
 static AttrNumber
 convert_column_name(Oid tableoid, text *column)
 {
-	AttrNumber	attnum;
 	char	   *colname;
+	HeapTuple	attTuple;
+	AttrNumber	attnum;
 
 	colname = text_to_cstring(column);
-	attnum = get_attnum(tableoid, colname);
-	if (attnum == InvalidAttrNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column \"%s\" of relation \"%s\" does not exist",
-						colname, get_rel_name(tableoid))));
+
+	/*
+	 * We don't use get_attnum() here because it will report that dropped
+	 * columns don't exist.  We need to treat dropped columns differently from
+	 * nonexistent columns.
+	 */
+	attTuple = SearchSysCache2(ATTNAME,
+							   ObjectIdGetDatum(tableoid),
+							   CStringGetDatum(colname));
+	if (HeapTupleIsValid(attTuple))
+	{
+		Form_pg_attribute attributeForm;
+
+		attributeForm = (Form_pg_attribute) GETSTRUCT(attTuple);
+		/* We want to return NULL for dropped columns */
+		if (attributeForm->attisdropped)
+			attnum = InvalidAttrNumber;
+		else
+			attnum = attributeForm->attnum;
+		ReleaseSysCache(attTuple);
+	}
+	else
+	{
+		char	   *tablename = get_rel_name(tableoid);
+
+		/*
+		 * If the table OID is bogus, or it's just been dropped, we'll get
+		 * NULL back.  In such cases we want has_column_privilege to return
+		 * NULL too, so just return InvalidAttrNumber.
+		 */
+		if (tablename != NULL)
+		{
+			/* tableoid exists, colname does not, so throw error */
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							colname, tablename)));
+		}
+		/* tableoid doesn't exist, so act like attisdropped case */
+		attnum = InvalidAttrNumber;
+	}
+
 	pfree(colname);
 	return attnum;
 }
@@ -3145,6 +3193,9 @@ has_foreign_data_wrapper_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_role_oid_or_public(NameStr(*username));
 	mode = convert_foreign_data_wrapper_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdwid)))
+		PG_RETURN_NULL();
+
 	aclresult = pg_foreign_data_wrapper_aclcheck(fdwid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -3167,6 +3218,9 @@ has_foreign_data_wrapper_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_foreign_data_wrapper_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdwid)))
+		PG_RETURN_NULL();
 
 	aclresult = pg_foreign_data_wrapper_aclcheck(fdwid, roleid, mode);
 
@@ -3211,6 +3265,9 @@ has_foreign_data_wrapper_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_foreign_data_wrapper_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdwid)))
+		PG_RETURN_NULL();
 
 	aclresult = pg_foreign_data_wrapper_aclcheck(fdwid, roleid, mode);
 
@@ -3911,6 +3968,9 @@ has_server_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_role_oid_or_public(NameStr(*username));
 	mode = convert_server_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists1(FOREIGNSERVEROID, ObjectIdGetDatum(serverid)))
+		PG_RETURN_NULL();
+
 	aclresult = pg_foreign_server_aclcheck(serverid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -3933,6 +3993,9 @@ has_server_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_server_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists1(FOREIGNSERVEROID, ObjectIdGetDatum(serverid)))
+		PG_RETURN_NULL();
 
 	aclresult = pg_foreign_server_aclcheck(serverid, roleid, mode);
 
@@ -3977,6 +4040,9 @@ has_server_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_server_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists1(FOREIGNSERVEROID, ObjectIdGetDatum(serverid)))
+		PG_RETURN_NULL();
 
 	aclresult = pg_foreign_server_aclcheck(serverid, roleid, mode);
 
@@ -4093,6 +4159,9 @@ has_tablespace_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_role_oid_or_public(NameStr(*username));
 	mode = convert_tablespace_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists1(TABLESPACEOID, ObjectIdGetDatum(tablespaceoid)))
+		PG_RETURN_NULL();
+
 	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -4115,6 +4184,9 @@ has_tablespace_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_tablespace_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists1(TABLESPACEOID, ObjectIdGetDatum(tablespaceoid)))
+		PG_RETURN_NULL();
 
 	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
@@ -4159,6 +4231,9 @@ has_tablespace_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_tablespace_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists1(TABLESPACEOID, ObjectIdGetDatum(tablespaceoid)))
+		PG_RETURN_NULL();
 
 	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 

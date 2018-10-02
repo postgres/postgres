@@ -1132,6 +1132,63 @@ from (select oid from pg_class where relname = 'atest1') as t1;
  f
 (1 row)
 
+-- has_column_privilege function
+-- bad-input checks (as non-super-user)
+select has_column_privilege('pg_authid',NULL,'select');
+ has_column_privilege 
+----------------------
+ 
+(1 row)
+
+select has_column_privilege('pg_authid','nosuchcol','select');
+ERROR:  column "nosuchcol" of relation "pg_authid" does not exist
+select has_column_privilege(9999,'nosuchcol','select');
+ has_column_privilege 
+----------------------
+ 
+(1 row)
+
+select has_column_privilege(9999,99::int2,'select');
+ has_column_privilege 
+----------------------
+ 
+(1 row)
+
+select has_column_privilege('pg_authid',99::int2,'select');
+ has_column_privilege 
+----------------------
+ 
+(1 row)
+
+select has_column_privilege(9999,99::int2,'select');
+ has_column_privilege 
+----------------------
+ 
+(1 row)
+
+create temp table mytable(f1 int, f2 int, f3 int);
+alter table mytable drop column f2;
+select has_column_privilege('mytable','f2','select');
+ERROR:  column "f2" of relation "mytable" does not exist
+select has_column_privilege('mytable','........pg.dropped.2........','select');
+ has_column_privilege 
+----------------------
+ 
+(1 row)
+
+select has_column_privilege('mytable',2::int2,'select');
+ has_column_privilege 
+----------------------
+ t
+(1 row)
+
+revoke select on table mytable from regress_priv_user3;
+select has_column_privilege('mytable',2::int2,'select');
+ has_column_privilege 
+----------------------
+ 
+(1 row)
+
 -- Grant options
 SET SESSION AUTHORIZATION regress_priv_user1;
 CREATE TABLE atest4 (a int);
