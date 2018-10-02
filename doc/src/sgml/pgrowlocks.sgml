@@ -70,7 +70,7 @@ pgrowlocks(text) returns setof record
       <entry>Transaction IDs of lockers (more than one if multitransaction)</entry>
      </row>
      <row>
-      <entry><structfield>lock_type</structfield></entry>
+      <entry><structfield>modes</structfield></entry>
       <entry><type>text[]</type></entry>
       <entry>Lock mode of lockers (more than one if multitransaction),
        an array of <literal>Key Share</literal>, <literal>Share</literal>,
@@ -127,14 +127,14 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
  <sect2>
   <title>Sample Output</title>
 
-<screen>
-test=# SELECT * FROM pgrowlocks('t1');
- locked_row | lock_type | locker | multi |   xids    |     pids
-------------+-----------+--------+-------+-----------+---------------
-      (0,1) | Shared    |     19 | t     | {804,805} | {29066,29068}
-      (0,2) | Shared    |     19 | t     | {804,805} | {29066,29068}
-      (0,3) | Exclusive |    804 | f     | {804}     | {29066}
-      (0,4) | Exclusive |    804 | f     | {804}     | {29066}
+  <screen>
+=# SELECT * FROM pgrowlocks('t1');
+ locked_row | locker | multi | xids  |     modes      |  pids
+------------+--------+-------+-------+----------------+--------
+ (0,1)      |    609 | f     | {609} | {"For Share"}  | {3161}
+ (0,2)      |    609 | f     | {609} | {"For Share"}  | {3161}
+ (0,3)      |    607 | f     | {607} | {"For Update"} | {3107}
+ (0,4)      |    607 | f     | {607} | {"For Update"} | {3107}
 (4 rows)
 </screen>
  </sect2>
