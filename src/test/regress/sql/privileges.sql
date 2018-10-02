@@ -715,6 +715,23 @@ from (select oid from pg_class where relname = 'atest1') as t1;
 select has_table_privilege(t1.oid,'trigger')
 from (select oid from pg_class where relname = 'atest1') as t1;
 
+-- has_column_privilege function
+
+-- bad-input checks (as non-super-user)
+select has_column_privilege('pg_authid',NULL,'select');
+select has_column_privilege('pg_authid','nosuchcol','select');
+select has_column_privilege(9999,'nosuchcol','select');
+select has_column_privilege(9999,99::int2,'select');
+select has_column_privilege('pg_authid',99::int2,'select');
+select has_column_privilege(9999,99::int2,'select');
+
+create temp table mytable(f1 int, f2 int, f3 int);
+alter table mytable drop column f2;
+select has_column_privilege('mytable','f2','select');
+select has_column_privilege('mytable','........pg.dropped.2........','select');
+select has_column_privilege('mytable',2::int2,'select');
+revoke select on table mytable from regress_priv_user3;
+select has_column_privilege('mytable',2::int2,'select');
 
 -- Grant options
 
