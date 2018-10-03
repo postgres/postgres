@@ -235,6 +235,33 @@ explain (costs off)
          Index Cond: (unique1 = 1)
 (5 rows)
 
+-- test passing expanded-value representations to workers
+CREATE FUNCTION make_some_array(int,int) returns int[] as
+$$declare x int[];
+  begin
+    x[1] := $1;
+    x[2] := $2;
+    return x;
+  end$$ language plpgsql parallel safe;
+CREATE TABLE fooarr(f1 text, f2 int[], f3 text);
+INSERT INTO fooarr VALUES('1', ARRAY[1,2], 'one');
+PREPARE pstmt(text, int[]) AS SELECT * FROM fooarr WHERE f1 = $1 AND f2 = $2;
+EXPLAIN (COSTS OFF) EXECUTE pstmt('1', make_some_array(1,2));
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather
+   Workers Planned: 3
+   ->  Parallel Seq Scan on fooarr
+         Filter: ((f1 = '1'::text) AND (f2 = '{1,2}'::integer[]))
+(4 rows)
+
+EXECUTE pstmt('1', make_some_array(1,2));
+ f1 |  f2   | f3  
+----+-------+-----
+ 1  | {1,2} | one
+(1 row)
+
+DEALLOCATE pstmt;
 do $$begin
   -- Provoke error, possibly in worker.  If this error happens to occur in
   -- the worker, there will be a CONTEXT line which must be hidden.

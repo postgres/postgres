@@ -96,6 +96,22 @@ explain (costs off)
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
 
+-- test passing expanded-value representations to workers
+CREATE FUNCTION make_some_array(int,int) returns int[] as
+$$declare x int[];
+  begin
+    x[1] := $1;
+    x[2] := $2;
+    return x;
+  end$$ language plpgsql parallel safe;
+CREATE TABLE fooarr(f1 text, f2 int[], f3 text);
+INSERT INTO fooarr VALUES('1', ARRAY[1,2], 'one');
+
+PREPARE pstmt(text, int[]) AS SELECT * FROM fooarr WHERE f1 = $1 AND f2 = $2;
+EXPLAIN (COSTS OFF) EXECUTE pstmt('1', make_some_array(1,2));
+EXECUTE pstmt('1', make_some_array(1,2));
+DEALLOCATE pstmt;
+
 do $$begin
   -- Provoke error, possibly in worker.  If this error happens to occur in
   -- the worker, there will be a CONTEXT line which must be hidden.
