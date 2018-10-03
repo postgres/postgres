@@ -849,8 +849,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			Relation	resultRelation;
 
 			resultRelationOid = getrelid(resultRelationIndex, rangeTable);
-			Assert(rt_fetch(resultRelationIndex, rangeTable)->rellockmode == RowExclusiveLock);
-			resultRelation = heap_open(resultRelationOid, RowExclusiveLock);
+			resultRelation = heap_open(resultRelationOid, NoLock);
+			Assert(CheckRelationLockedByMe(resultRelation, RowExclusiveLock, true));
 
 			InitResultRelInfo(resultRelInfo,
 							  resultRelation,
@@ -890,8 +890,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				Relation	resultRelDesc;
 
 				resultRelOid = getrelid(resultRelIndex, rangeTable);
-				Assert(rt_fetch(resultRelIndex, rangeTable)->rellockmode == RowExclusiveLock);
-				resultRelDesc = heap_open(resultRelOid, RowExclusiveLock);
+				resultRelDesc = heap_open(resultRelOid, NoLock);
+				Assert(CheckRelationLockedByMe(resultRelDesc, RowExclusiveLock, true));
 				InitResultRelInfo(resultRelInfo,
 								  resultRelDesc,
 								  lfirst_int(l),
@@ -903,7 +903,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			estate->es_root_result_relations = resultRelInfos;
 			estate->es_num_root_result_relations = num_roots;
 
-			/* Simply lock the rest of them. */
+			/* Simply check the rest of them are locked. */
+#ifdef USE_ASSERT_CHECKING
 			foreach(l, plannedstmt->nonleafResultRelations)
 			{
 				Index		resultRelIndex = lfirst_int(l);
@@ -912,11 +913,15 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				if (!list_member_int(plannedstmt->rootResultRelations,
 									 resultRelIndex))
 				{
-					Assert(rt_fetch(resultRelIndex, rangeTable)->rellockmode == RowExclusiveLock);
-					LockRelationOid(getrelid(resultRelIndex, rangeTable),
-									RowExclusiveLock);
+					Relation	resultRelDesc;
+
+					resultRelDesc = heap_open(getrelid(resultRelIndex, rangeTable),
+											  NoLock);
+					Assert(CheckRelationLockedByMe(resultRelDesc, RowExclusiveLock, true));
+					heap_close(resultRelDesc, NoLock);
 				}
 			}
+#endif
 		}
 	}
 	else
@@ -945,7 +950,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	{
 		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
 		Oid			relid;
-		LOCKMODE	rellockmode;
 		Relation	relation;
 		ExecRowMark *erm;
 
@@ -963,8 +967,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			case ROW_MARK_SHARE:
 			case ROW_MARK_KEYSHARE:
 			case ROW_MARK_REFERENCE:
-				rellockmode = rt_fetch(rc->rti, rangeTable)->rellockmode;
-				relation = heap_open(relid, rellockmode);
+				relation = heap_open(relid, NoLock);
+				Assert(CheckRelationLockedByMe(relation,
+											   rt_fetch(rc->rti, rangeTable)->rellockmode,
+											   true));
 				break;
 			case ROW_MARK_COPY:
 				/* no physical table access is required */

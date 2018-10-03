@@ -1140,9 +1140,13 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	/*
 	 * If we didn't get the lock ourselves, assert that caller holds one,
 	 * except in bootstrap mode where no locks are used.
+	 *
+	 * Also, parallel workers currently assume that their parent holds locks
+	 * for tables used in the parallel query (a mighty shaky assumption).
 	 */
 	Assert(lockmode != NoLock ||
 		   IsBootstrapProcessingMode() ||
+		   IsParallelWorker() ||
 		   CheckRelationLockedByMe(r, AccessShareLock, true));
 
 	/* Make note that we've accessed a temporary relation */

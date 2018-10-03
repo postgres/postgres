@@ -42,6 +42,7 @@
 
 #include "postgres.h"
 
+#include "access/parallel.h"
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "executor/executor.h"
@@ -648,12 +649,14 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 {
 	Relation	rel;
 	Oid			reloid;
-	LOCKMODE	lockmode;
 
-	/* Open the relation and acquire lock as needed */
+	/* Open the relation and verify lock was obtained upstream */
 	reloid = getrelid(scanrelid, estate->es_range_table);
-	lockmode = rt_fetch(scanrelid, estate->es_range_table)->rellockmode;
-	rel = heap_open(reloid, lockmode);
+	rel = heap_open(reloid, NoLock);
+	Assert(IsParallelWorker() ||
+		   CheckRelationLockedByMe(rel,
+								   rt_fetch(scanrelid, estate->es_range_table)->rellockmode,
+								   true));
 
 	/*
 	 * Complain if we're attempting a scan of an unscannable relation, except
