@@ -314,7 +314,9 @@ flushbuffer(PrintfTarget *target)
 }
 
 
-static void fmtstr(char *value, int leftjust, int minlen, int maxwidth,
+static bool find_arguments(const char *format, va_list args,
+			   PrintfArgValue *argvalues);
+static void fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
 	   int pointflag, PrintfTarget *target);
 static void fmtptr(void *value, PrintfTarget *target);
 static void fmtint(int64 value, char type, int forcesign,
@@ -326,11 +328,43 @@ static void fmtfloat(double value, char type, int forcesign,
 		 PrintfTarget *target);
 static void dostr(const char *str, int slen, PrintfTarget *target);
 static void dopr_outch(int c, PrintfTarget *target);
+static void dopr_outchmulti(int c, int slen, PrintfTarget *target);
 static int	adjust_sign(int is_negative, int forcesign, int *signvalue);
-static void adjust_padlen(int minlen, int vallen, int leftjust, int *padlen);
-static void leading_pad(int zpad, int *signvalue, int *padlen,
+static int	compute_padlen(int minlen, int vallen, int leftjust);
+static void leading_pad(int zpad, int signvalue, int *padlen,
 			PrintfTarget *target);
-static void trailing_pad(int *padlen, PrintfTarget *target);
+static void trailing_pad(int padlen, PrintfTarget *target);
+
+/*
+ * If strchrnul exists (it's a glibc-ism), it's a good bit faster than the
+ * equivalent manual loop.  If it doesn't exist, provide a replacement.
+ *
+ * Note: glibc declares this as returning "char *", but that would require
+ * casting away const internally, so we don't follow that detail.
+ */
+#ifndef HAVE_STRCHRNUL
+
+static inline const char *
+strchrnul(const char *s, int c)
+{
+	while (*s != '\0' && *s != c)
+		s++;
+	return s;
+}
+
+#else
+
+/*
+ * glibc's <string.h> declares strchrnul only if _GNU_SOURCE is defined.
+ * While we typically use that on glibc platforms, configure will set
+ * HAVE_STRCHRNUL whether it's used or not.  Fill in the missing declaration
+ * so that this file will compile cleanly with or without _GNU_SOURCE.
+ */
+#ifndef _GNU_SOURCE
+extern char *strchrnul(const char *s, int c);
+#endif
+
+#endif							/* HAVE_STRCHRNUL */
 
 
 /*
@@ -340,10 +374,9 @@ static void
 dopr(PrintfTarget *target, const char *format, va_list args)
 {
 	int			save_errno = errno;
-	const char *format_start = format;
+	const char *first_pct = NULL;
 	int			ch;
 	bool		have_dollar;
-	bool		have_non_dollar;
 	bool		have_star;
 	bool		afterstar;
 	int			accum;
@@ -355,226 +388,49 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	int			precision;
 	int			zpad;
 	int			forcesign;
-	int			last_dollar;
 	int			fmtpos;
 	int			cvalue;
 	int64		numvalue;
 	double		fvalue;
 	char	   *strvalue;
-	int			i;
-	PrintfArgType argtypes[PG_NL_ARGMAX + 1];
 	PrintfArgValue argvalues[PG_NL_ARGMAX + 1];
 
 	/*
-	 * Parse the format string to determine whether there are %n$ format
-	 * specs, and identify the types and order of the format parameters.
+	 * Initially, we suppose the format string does not use %n$.  The first
+	 * time we come to a conversion spec that has that, we'll call
+	 * find_arguments() to check for consistent use of %n$ and fill the
+	 * argvalues array with the argument values in the correct order.
 	 */
-	have_dollar = have_non_dollar = false;
-	last_dollar = 0;
-	MemSet(argtypes, 0, sizeof(argtypes));
+	have_dollar = false;
 
-	while ((ch = *format++) != '\0')
+	while (*format != '\0')
 	{
-		if (ch != '%')
-			continue;
-		longflag = longlongflag = pointflag = 0;
-		fmtpos = accum = 0;
-		afterstar = false;
-nextch1:
-		ch = *format++;
-		if (ch == '\0')
-			break;				/* illegal, but we don't complain */
-		switch (ch)
+		/* Locate next conversion specifier */
+		if (*format != '%')
 		{
-			case '-':
-			case '+':
-				goto nextch1;
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				accum = accum * 10 + (ch - '0');
-				goto nextch1;
-			case '.':
-				pointflag = 1;
-				accum = 0;
-				goto nextch1;
-			case '*':
-				if (afterstar)
-					have_non_dollar = true; /* multiple stars */
-				afterstar = true;
-				accum = 0;
-				goto nextch1;
-			case '$':
-				have_dollar = true;
-				if (accum <= 0 || accum > PG_NL_ARGMAX)
-					goto bad_format;
-				if (afterstar)
-				{
-					if (argtypes[accum] &&
-						argtypes[accum] != ATYPE_INT)
-						goto bad_format;
-					argtypes[accum] = ATYPE_INT;
-					last_dollar = Max(last_dollar, accum);
-					afterstar = false;
-				}
-				else
-					fmtpos = accum;
-				accum = 0;
-				goto nextch1;
-			case 'l':
-				if (longflag)
-					longlongflag = 1;
-				else
-					longflag = 1;
-				goto nextch1;
-			case 'z':
-#if SIZEOF_SIZE_T == 8
-#ifdef HAVE_LONG_INT_64
-				longflag = 1;
-#elif defined(HAVE_LONG_LONG_INT_64)
-				longlongflag = 1;
-#else
-#error "Don't know how to print 64bit integers"
-#endif
-#else
-				/* assume size_t is same size as int */
-#endif
-				goto nextch1;
-			case 'h':
-			case '\'':
-				/* ignore these */
-				goto nextch1;
-			case 'd':
-			case 'i':
-			case 'o':
-			case 'u':
-			case 'x':
-			case 'X':
-				if (fmtpos)
-				{
-					PrintfArgType atype;
+			/* Scan to next '%' or end of string */
+			const char *next_pct = strchrnul(format + 1, '%');
 
-					if (longlongflag)
-						atype = ATYPE_LONGLONG;
-					else if (longflag)
-						atype = ATYPE_LONG;
-					else
-						atype = ATYPE_INT;
-					if (argtypes[fmtpos] &&
-						argtypes[fmtpos] != atype)
-						goto bad_format;
-					argtypes[fmtpos] = atype;
-					last_dollar = Max(last_dollar, fmtpos);
-				}
-				else
-					have_non_dollar = true;
+			/* Dump literal data we just scanned over */
+			dostr(format, next_pct - format, target);
+			if (target->failed)
 				break;
-			case 'c':
-				if (fmtpos)
-				{
-					if (argtypes[fmtpos] &&
-						argtypes[fmtpos] != ATYPE_INT)
-						goto bad_format;
-					argtypes[fmtpos] = ATYPE_INT;
-					last_dollar = Max(last_dollar, fmtpos);
-				}
-				else
-					have_non_dollar = true;
+
+			if (*next_pct == '\0')
 				break;
-			case 's':
-			case 'p':
-				if (fmtpos)
-				{
-					if (argtypes[fmtpos] &&
-						argtypes[fmtpos] != ATYPE_CHARPTR)
-						goto bad_format;
-					argtypes[fmtpos] = ATYPE_CHARPTR;
-					last_dollar = Max(last_dollar, fmtpos);
-				}
-				else
-					have_non_dollar = true;
-				break;
-			case 'e':
-			case 'E':
-			case 'f':
-			case 'g':
-			case 'G':
-				if (fmtpos)
-				{
-					if (argtypes[fmtpos] &&
-						argtypes[fmtpos] != ATYPE_DOUBLE)
-						goto bad_format;
-					argtypes[fmtpos] = ATYPE_DOUBLE;
-					last_dollar = Max(last_dollar, fmtpos);
-				}
-				else
-					have_non_dollar = true;
-				break;
-			case 'm':
-			case '%':
-				break;
+			format = next_pct;
 		}
 
 		/*
-		 * If we finish the spec with afterstar still set, there's a
-		 * non-dollar star in there.
+		 * Remember start of first conversion spec; if we find %n$, then it's
+		 * sufficient for find_arguments() to start here, without rescanning
+		 * earlier literal text.
 		 */
-		if (afterstar)
-			have_non_dollar = true;
-	}
+		if (first_pct == NULL)
+			first_pct = format;
 
-	/* Per spec, you use either all dollar or all not. */
-	if (have_dollar && have_non_dollar)
-		goto bad_format;
-
-	/*
-	 * In dollar mode, collect the arguments in physical order.
-	 */
-	for (i = 1; i <= last_dollar; i++)
-	{
-		switch (argtypes[i])
-		{
-			case ATYPE_NONE:
-				goto bad_format;
-			case ATYPE_INT:
-				argvalues[i].i = va_arg(args, int);
-				break;
-			case ATYPE_LONG:
-				argvalues[i].l = va_arg(args, long);
-				break;
-			case ATYPE_LONGLONG:
-				argvalues[i].ll = va_arg(args, int64);
-				break;
-			case ATYPE_DOUBLE:
-				argvalues[i].d = va_arg(args, double);
-				break;
-			case ATYPE_CHARPTR:
-				argvalues[i].cptr = va_arg(args, char *);
-				break;
-		}
-	}
-
-	/*
-	 * At last we can parse the format for real.
-	 */
-	format = format_start;
-	while ((ch = *format++) != '\0')
-	{
-		if (target->failed)
-			break;
-
-		if (ch != '%')
-		{
-			dopr_outch(ch, target);
-			continue;
-		}
+		/* Process conversion spec starting at *format */
+		format++;
 		fieldwidth = precision = zpad = leftjust = forcesign = 0;
 		longflag = longlongflag = pointflag = 0;
 		fmtpos = accum = 0;
@@ -618,7 +474,11 @@ nextch2:
 			case '*':
 				if (have_dollar)
 				{
-					/* process value after reading n$ */
+					/*
+					 * We'll process value after reading n$.  Note it's OK to
+					 * assume have_dollar is set correctly, because in a valid
+					 * format string the initial % must have had n$ if * does.
+					 */
 					afterstar = true;
 				}
 				else
@@ -649,6 +509,14 @@ nextch2:
 				accum = 0;
 				goto nextch2;
 			case '$':
+				/* First dollar sign? */
+				if (!have_dollar)
+				{
+					/* Yup, so examine all conversion specs in format */
+					if (!find_arguments(first_pct, args, argvalues))
+						goto bad_format;
+					have_dollar = true;
+				}
 				if (afterstar)
 				{
 					/* fetch and process star value */
@@ -836,6 +704,10 @@ nextch2:
 				dopr_outch('%', target);
 				break;
 		}
+
+		/* Check for failure after each conversion spec */
+		if (target->failed)
+			break;
 	}
 
 	return;
@@ -845,8 +717,236 @@ bad_format:
 	target->failed = true;
 }
 
+/*
+ * find_arguments(): sort out the arguments for a format spec with %n$
+ *
+ * If format is valid, return true and fill argvalues[i] with the value
+ * for the conversion spec that has %i$ or *i$.  Else return false.
+ */
+static bool
+find_arguments(const char *format, va_list args,
+			   PrintfArgValue *argvalues)
+{
+	int			ch;
+	bool		afterstar;
+	int			accum;
+	int			longlongflag;
+	int			longflag;
+	int			fmtpos;
+	int			i;
+	int			last_dollar;
+	PrintfArgType argtypes[PG_NL_ARGMAX + 1];
+
+	/* Initialize to "no dollar arguments known" */
+	last_dollar = 0;
+	MemSet(argtypes, 0, sizeof(argtypes));
+
+	/*
+	 * This loop must accept the same format strings as the one in dopr().
+	 * However, we don't need to analyze them to the same level of detail.
+	 *
+	 * Since we're only called if there's a dollar-type spec somewhere, we can
+	 * fail immediately if we find a non-dollar spec.  Per the C99 standard,
+	 * all argument references in the format string must be one or the other.
+	 */
+	while (*format != '\0')
+	{
+		/* Locate next conversion specifier */
+		if (*format != '%')
+		{
+			/* Unlike dopr, we can just quit if there's no more specifiers */
+			format = strchr(format + 1, '%');
+			if (format == NULL)
+				break;
+		}
+
+		/* Process conversion spec starting at *format */
+		format++;
+		longflag = longlongflag = 0;
+		fmtpos = accum = 0;
+		afterstar = false;
+nextch1:
+		ch = *format++;
+		if (ch == '\0')
+			break;				/* illegal, but we don't complain */
+		switch (ch)
+		{
+			case '-':
+			case '+':
+				goto nextch1;
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				accum = accum * 10 + (ch - '0');
+				goto nextch1;
+			case '.':
+				accum = 0;
+				goto nextch1;
+			case '*':
+				if (afterstar)
+					return false;	/* previous star missing dollar */
+				afterstar = true;
+				accum = 0;
+				goto nextch1;
+			case '$':
+				if (accum <= 0 || accum > PG_NL_ARGMAX)
+					return false;
+				if (afterstar)
+				{
+					if (argtypes[accum] &&
+						argtypes[accum] != ATYPE_INT)
+						return false;
+					argtypes[accum] = ATYPE_INT;
+					last_dollar = Max(last_dollar, accum);
+					afterstar = false;
+				}
+				else
+					fmtpos = accum;
+				accum = 0;
+				goto nextch1;
+			case 'l':
+				if (longflag)
+					longlongflag = 1;
+				else
+					longflag = 1;
+				goto nextch1;
+			case 'z':
+#if SIZEOF_SIZE_T == 8
+#ifdef HAVE_LONG_INT_64
+				longflag = 1;
+#elif defined(HAVE_LONG_LONG_INT_64)
+				longlongflag = 1;
+#else
+#error "Don't know how to print 64bit integers"
+#endif
+#else
+				/* assume size_t is same size as int */
+#endif
+				goto nextch1;
+			case 'h':
+			case '\'':
+				/* ignore these */
+				goto nextch1;
+			case 'd':
+			case 'i':
+			case 'o':
+			case 'u':
+			case 'x':
+			case 'X':
+				if (fmtpos)
+				{
+					PrintfArgType atype;
+
+					if (longlongflag)
+						atype = ATYPE_LONGLONG;
+					else if (longflag)
+						atype = ATYPE_LONG;
+					else
+						atype = ATYPE_INT;
+					if (argtypes[fmtpos] &&
+						argtypes[fmtpos] != atype)
+						return false;
+					argtypes[fmtpos] = atype;
+					last_dollar = Max(last_dollar, fmtpos);
+				}
+				else
+					return false;	/* non-dollar conversion spec */
+				break;
+			case 'c':
+				if (fmtpos)
+				{
+					if (argtypes[fmtpos] &&
+						argtypes[fmtpos] != ATYPE_INT)
+						return false;
+					argtypes[fmtpos] = ATYPE_INT;
+					last_dollar = Max(last_dollar, fmtpos);
+				}
+				else
+					return false;	/* non-dollar conversion spec */
+				break;
+			case 's':
+			case 'p':
+				if (fmtpos)
+				{
+					if (argtypes[fmtpos] &&
+						argtypes[fmtpos] != ATYPE_CHARPTR)
+						return false;
+					argtypes[fmtpos] = ATYPE_CHARPTR;
+					last_dollar = Max(last_dollar, fmtpos);
+				}
+				else
+					return false;	/* non-dollar conversion spec */
+				break;
+			case 'e':
+			case 'E':
+			case 'f':
+			case 'g':
+			case 'G':
+				if (fmtpos)
+				{
+					if (argtypes[fmtpos] &&
+						argtypes[fmtpos] != ATYPE_DOUBLE)
+						return false;
+					argtypes[fmtpos] = ATYPE_DOUBLE;
+					last_dollar = Max(last_dollar, fmtpos);
+				}
+				else
+					return false;	/* non-dollar conversion spec */
+				break;
+			case 'm':
+			case '%':
+				break;
+		}
+
+		/*
+		 * If we finish the spec with afterstar still set, there's a
+		 * non-dollar star in there.
+		 */
+		if (afterstar)
+			return false;		/* non-dollar conversion spec */
+	}
+
+	/*
+	 * Format appears valid so far, so collect the arguments in physical
+	 * order.  (Since we rejected any non-dollar specs that would have
+	 * collected arguments, we know that dopr() hasn't collected any yet.)
+	 */
+	for (i = 1; i <= last_dollar; i++)
+	{
+		switch (argtypes[i])
+		{
+			case ATYPE_NONE:
+				return false;
+			case ATYPE_INT:
+				argvalues[i].i = va_arg(args, int);
+				break;
+			case ATYPE_LONG:
+				argvalues[i].l = va_arg(args, long);
+				break;
+			case ATYPE_LONGLONG:
+				argvalues[i].ll = va_arg(args, int64);
+				break;
+			case ATYPE_DOUBLE:
+				argvalues[i].d = va_arg(args, double);
+				break;
+			case ATYPE_CHARPTR:
+				argvalues[i].cptr = va_arg(args, char *);
+				break;
+		}
+	}
+
+	return true;
+}
+
 static void
-fmtstr(char *value, int leftjust, int minlen, int maxwidth,
+fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
 	   int pointflag, PrintfTarget *target)
 {
 	int			padlen,
@@ -861,17 +961,17 @@ fmtstr(char *value, int leftjust, int minlen, int maxwidth,
 	else
 		vallen = strlen(value);
 
-	adjust_padlen(minlen, vallen, leftjust, &padlen);
+	padlen = compute_padlen(minlen, vallen, leftjust);
 
-	while (padlen > 0)
+	if (padlen > 0)
 	{
-		dopr_outch(' ', target);
-		--padlen;
+		dopr_outchmulti(' ', padlen, target);
+		padlen = 0;
 	}
 
 	dostr(value, vallen, target);
 
-	trailing_pad(&padlen, target);
+	trailing_pad(padlen, target);
 }
 
 static void
@@ -899,7 +999,7 @@ fmtint(int64 value, char type, int forcesign, int leftjust,
 	int			signvalue = 0;
 	char		convert[64];
 	int			vallen = 0;
-	int			padlen = 0;		/* amount to pad */
+	int			padlen;			/* amount to pad */
 	int			zeropad;		/* extra leading zeroes */
 
 	switch (type)
@@ -947,42 +1047,41 @@ fmtint(int64 value, char type, int forcesign, int leftjust,
 
 		do
 		{
-			convert[vallen++] = cvt[uvalue % base];
+			convert[sizeof(convert) - (++vallen)] = cvt[uvalue % base];
 			uvalue = uvalue / base;
 		} while (uvalue);
 	}
 
 	zeropad = Max(0, precision - vallen);
 
-	adjust_padlen(minlen, vallen + zeropad, leftjust, &padlen);
+	padlen = compute_padlen(minlen, vallen + zeropad, leftjust);
 
-	leading_pad(zpad, &signvalue, &padlen, target);
+	leading_pad(zpad, signvalue, &padlen, target);
 
-	while (zeropad-- > 0)
-		dopr_outch('0', target);
+	if (zeropad > 0)
+		dopr_outchmulti('0', zeropad, target);
 
-	while (vallen > 0)
-		dopr_outch(convert[--vallen], target);
+	dostr(convert + sizeof(convert) - vallen, vallen, target);
 
-	trailing_pad(&padlen, target);
+	trailing_pad(padlen, target);
 }
 
 static void
 fmtchar(int value, int leftjust, int minlen, PrintfTarget *target)
 {
-	int			padlen = 0;		/* amount to pad */
+	int			padlen;			/* amount to pad */
 
-	adjust_padlen(minlen, 1, leftjust, &padlen);
+	padlen = compute_padlen(minlen, 1, leftjust);
 
-	while (padlen > 0)
+	if (padlen > 0)
 	{
-		dopr_outch(' ', target);
-		--padlen;
+		dopr_outchmulti(' ', padlen, target);
+		padlen = 0;
 	}
 
 	dopr_outch(value, target);
 
-	trailing_pad(&padlen, target);
+	trailing_pad(padlen, target);
 }
 
 static void
@@ -993,10 +1092,14 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 	int			signvalue = 0;
 	int			prec;
 	int			vallen;
-	char		fmt[32];
+	char		fmt[8];
 	char		convert[1024];
 	int			zeropadlen = 0; /* amount to pad with zeroes */
-	int			padlen = 0;		/* amount to pad with spaces */
+	int			padlen;			/* amount to pad with spaces */
+
+	/* Handle sign (NaNs have no sign) */
+	if (!isnan(value) && adjust_sign((value < 0), forcesign, &signvalue))
+		value = -value;
 
 	/*
 	 * We rely on the regular C library's sprintf to do the basic conversion,
@@ -1018,17 +1121,21 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 
 	if (pointflag)
 	{
-		if (sprintf(fmt, "%%.%d%c", prec, type) < 0)
-			goto fail;
 		zeropadlen = precision - prec;
+		fmt[0] = '%';
+		fmt[1] = '.';
+		fmt[2] = '*';
+		fmt[3] = type;
+		fmt[4] = '\0';
+		vallen = sprintf(convert, fmt, prec, value);
 	}
-	else if (sprintf(fmt, "%%%c", type) < 0)
-		goto fail;
-
-	if (!isnan(value) && adjust_sign((value < 0), forcesign, &signvalue))
-		value = -value;
-
-	vallen = sprintf(convert, fmt, value);
+	else
+	{
+		fmt[0] = '%';
+		fmt[1] = type;
+		fmt[2] = '\0';
+		vallen = sprintf(convert, fmt, value);
+	}
 	if (vallen < 0)
 		goto fail;
 
@@ -1036,9 +1143,9 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 	if (zeropadlen > 0 && !isdigit((unsigned char) convert[vallen - 1]))
 		zeropadlen = 0;
 
-	adjust_padlen(minlen, vallen + zeropadlen, leftjust, &padlen);
+	padlen = compute_padlen(minlen, vallen + zeropadlen, leftjust);
 
-	leading_pad(zpad, &signvalue, &padlen, target);
+	leading_pad(zpad, signvalue, &padlen, target);
 
 	if (zeropadlen > 0)
 	{
@@ -1049,18 +1156,18 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 			epos = strrchr(convert, 'E');
 		if (epos)
 		{
-			/* pad after exponent */
+			/* pad before exponent */
 			dostr(convert, epos - convert, target);
-			while (zeropadlen-- > 0)
-				dopr_outch('0', target);
+			if (zeropadlen > 0)
+				dopr_outchmulti('0', zeropadlen, target);
 			dostr(epos, vallen - (epos - convert), target);
 		}
 		else
 		{
 			/* no exponent, pad after the digits */
 			dostr(convert, vallen, target);
-			while (zeropadlen-- > 0)
-				dopr_outch('0', target);
+			if (zeropadlen > 0)
+				dopr_outchmulti('0', zeropadlen, target);
 		}
 	}
 	else
@@ -1069,7 +1176,7 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 		dostr(convert, vallen, target);
 	}
 
-	trailing_pad(&padlen, target);
+	trailing_pad(padlen, target);
 	return;
 
 fail:
@@ -1079,6 +1186,13 @@ fail:
 static void
 dostr(const char *str, int slen, PrintfTarget *target)
 {
+	/* fast path for common case of slen == 1 */
+	if (slen == 1)
+	{
+		dopr_outch(*str, target);
+		return;
+	}
+
 	while (slen > 0)
 	{
 		int			avail;
@@ -1122,6 +1236,42 @@ dopr_outch(int c, PrintfTarget *target)
 	*(target->bufptr++) = c;
 }
 
+static void
+dopr_outchmulti(int c, int slen, PrintfTarget *target)
+{
+	/* fast path for common case of slen == 1 */
+	if (slen == 1)
+	{
+		dopr_outch(c, target);
+		return;
+	}
+
+	while (slen > 0)
+	{
+		int			avail;
+
+		if (target->bufend != NULL)
+			avail = target->bufend - target->bufptr;
+		else
+			avail = slen;
+		if (avail <= 0)
+		{
+			/* buffer full, can we dump to stream? */
+			if (target->stream == NULL)
+			{
+				target->nchars += slen; /* no, lose the data */
+				return;
+			}
+			flushbuffer(target);
+			continue;
+		}
+		avail = Min(avail, slen);
+		memset(target->bufptr, c, avail);
+		target->bufptr += avail;
+		slen -= avail;
+	}
+}
+
 
 static int
 adjust_sign(int is_negative, int forcesign, int *signvalue)
@@ -1137,42 +1287,48 @@ adjust_sign(int is_negative, int forcesign, int *signvalue)
 }
 
 
-static void
-adjust_padlen(int minlen, int vallen, int leftjust, int *padlen)
+static int
+compute_padlen(int minlen, int vallen, int leftjust)
 {
-	*padlen = minlen - vallen;
-	if (*padlen < 0)
-		*padlen = 0;
+	int			padlen;
+
+	padlen = minlen - vallen;
+	if (padlen < 0)
+		padlen = 0;
 	if (leftjust)
-		*padlen = -(*padlen);
+		padlen = -padlen;
+	return padlen;
 }
 
 
 static void
-leading_pad(int zpad, int *signvalue, int *padlen, PrintfTarget *target)
+leading_pad(int zpad, int signvalue, int *padlen, PrintfTarget *target)
 {
+	int			maxpad;
+
 	if (*padlen > 0 && zpad)
 	{
-		if (*signvalue)
+		if (signvalue)
 		{
-			dopr_outch(*signvalue, target);
+			dopr_outch(signvalue, target);
 			--(*padlen);
-			*signvalue = 0;
+			signvalue = 0;
 		}
-		while (*padlen > 0)
+		if (*padlen > 0)
 		{
-			dopr_outch(zpad, target);
-			--(*padlen);
+			dopr_outchmulti(zpad, *padlen, target);
+			*padlen = 0;
 		}
 	}
-	while (*padlen > (*signvalue != 0))
+	maxpad = (signvalue != 0);
+	if (*padlen > maxpad)
 	{
-		dopr_outch(' ', target);
-		--(*padlen);
+		dopr_outchmulti(' ', *padlen - maxpad, target);
+		*padlen = maxpad;
 	}
-	if (*signvalue)
+	if (signvalue)
 	{
-		dopr_outch(*signvalue, target);
+		dopr_outch(signvalue, target);
 		if (*padlen > 0)
 			--(*padlen);
 		else if (*padlen < 0)
@@ -1182,11 +1338,8 @@ leading_pad(int zpad, int *signvalue, int *padlen, PrintfTarget *target)
 
 
 static void
-trailing_pad(int *padlen, PrintfTarget *target)
+trailing_pad(int padlen, PrintfTarget *target)
 {
-	while (*padlen < 0)
-	{
-		dopr_outch(' ', target);
-		++(*padlen);
-	}
+	if (padlen < 0)
+		dopr_outchmulti(' ', -padlen, target);
 }
