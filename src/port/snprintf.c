@@ -157,7 +157,7 @@ typedef union
 {
 	int			i;
 	long		l;
-	int64		ll;
+	long long	ll;
 	double		d;
 	char	   *cptr;
 } PrintfArgValue;
@@ -319,7 +319,7 @@ static bool find_arguments(const char *format, va_list args,
 static void fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
 	   int pointflag, PrintfTarget *target);
 static void fmtptr(void *value, PrintfTarget *target);
-static void fmtint(int64 value, char type, int forcesign,
+static void fmtint(long long value, char type, int forcesign,
 	   int leftjust, int minlen, int zpad, int precision, int pointflag,
 	   PrintfTarget *target);
 static void fmtchar(int value, int leftjust, int minlen, PrintfTarget *target);
@@ -390,7 +390,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	int			forcesign;
 	int			fmtpos;
 	int			cvalue;
-	int64		numvalue;
+	long long	numvalue;
 	double		fvalue;
 	char	   *strvalue;
 	PrintfArgValue argvalues[PG_NL_ARGMAX + 1];
@@ -603,7 +603,7 @@ nextch2:
 				else
 				{
 					if (longlongflag)
-						numvalue = va_arg(args, int64);
+						numvalue = va_arg(args, long long);
 					else if (longflag)
 						numvalue = va_arg(args, long);
 					else
@@ -626,7 +626,7 @@ nextch2:
 				if (have_dollar)
 				{
 					if (longlongflag)
-						numvalue = (uint64) argvalues[fmtpos].ll;
+						numvalue = (unsigned long long) argvalues[fmtpos].ll;
 					else if (longflag)
 						numvalue = (unsigned long) argvalues[fmtpos].l;
 					else
@@ -635,7 +635,7 @@ nextch2:
 				else
 				{
 					if (longlongflag)
-						numvalue = (uint64) va_arg(args, int64);
+						numvalue = (unsigned long long) va_arg(args, long long);
 					else if (longflag)
 						numvalue = (unsigned long) va_arg(args, long);
 					else
@@ -944,7 +944,7 @@ nextch1:
 				argvalues[i].l = va_arg(args, long);
 				break;
 			case ATYPE_LONGLONG:
-				argvalues[i].ll = va_arg(args, int64);
+				argvalues[i].ll = va_arg(args, long long);
 				break;
 			case ATYPE_DOUBLE:
 				argvalues[i].d = va_arg(args, double);
@@ -1002,11 +1002,11 @@ fmtptr(void *value, PrintfTarget *target)
 }
 
 static void
-fmtint(int64 value, char type, int forcesign, int leftjust,
+fmtint(long long value, char type, int forcesign, int leftjust,
 	   int minlen, int zpad, int precision, int pointflag,
 	   PrintfTarget *target)
 {
-	uint64		base;
+	unsigned long long base;
 	int			dosign;
 	const char *cvt = "0123456789abcdef";
 	int			signvalue = 0;
@@ -1056,7 +1056,7 @@ fmtint(int64 value, char type, int forcesign, int leftjust,
 	else
 	{
 		/* make integer string */
-		uint64		uvalue = (uint64) value;
+		unsigned long long uvalue = (unsigned long long) value;
 
 		do
 		{
