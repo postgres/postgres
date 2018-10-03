@@ -1046,9 +1046,9 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 
 	/* Handle +/- */
 	if (dosign && adjust_sign((value < 0), forcesign, &signvalue))
-		uvalue = -(uint64) value;
+		uvalue = -(unsigned long long) value;
 	else
-		uvalue = (uint64) value;
+		uvalue = (unsigned long long) value;
 
 	/*
 	 * SUS: the result of converting 0 with an explicit precision of 0 is no
