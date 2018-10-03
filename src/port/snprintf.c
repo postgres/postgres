@@ -431,6 +431,19 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 
 		/* Process conversion spec starting at *format */
 		format++;
+
+		/* Fast path for conversion spec that is exactly %s */
+		if (*format == 's')
+		{
+			format++;
+			strvalue = va_arg(args, char *);
+			Assert(strvalue != NULL);
+			dostr(strvalue, strlen(strvalue), target);
+			if (target->failed)
+				break;
+			continue;
+		}
+
 		fieldwidth = precision = zpad = leftjust = forcesign = 0;
 		longflag = longlongflag = pointflag = 0;
 		fmtpos = accum = 0;
