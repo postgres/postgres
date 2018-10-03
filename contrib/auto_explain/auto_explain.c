@@ -363,8 +363,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			if (es->analyze && auto_explain_log_triggers)
 				ExplainPrintTriggers(es, queryDesc);
 			if (es->costs)
-				ExplainPrintJIT(es, queryDesc->estate->es_jit_flags,
-								queryDesc->estate->es_jit_combined_instr, -1);
+				ExplainPrintJITSummary(es, queryDesc);
 			ExplainEndOutput(es);
 
 			/* Remove last line break */

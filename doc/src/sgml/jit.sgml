@@ -169,12 +169,8 @@ SET
  Planning Time: 0.133 ms
  JIT:
    Functions: 3
-   Generation Time: 1.259 ms
-   Inlining: false
-   Inlining Time: 0.000 ms
-   Optimization: false
-   Optimization Time: 0.797 ms
-   Emission Time: 5.048 ms
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+   Timing: Generation 1.259 ms, Inlining 0.000 ms, Optimization 0.797 ms, Emission 5.048 ms, Total 7.104 ms
  Execution Time: 7.416 ms
 </screen>
    As visible here, <acronym>JIT</acronym> was used, but inlining and
