@@ -564,8 +564,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	 * at a later stage.
 	 */
 	if (es->costs)
-		ExplainPrintJIT(es, queryDesc->estate->es_jit_flags,
-						queryDesc->estate->es_jit_combined_instr, -1);
+		ExplainPrintJITSummary(es, queryDesc);
 
 	/*
 	 * Close down the query and free resources.  Include time for this in the
@@ -686,6 +685,32 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	}
 
 	ExplainCloseGroup("Triggers", "Triggers", false, es);
+}
+
+/*
+ * ExplainPrintJITSummary -
+ *    Print summarized JIT instrumentation from leader and workers
+ */
+void
+ExplainPrintJITSummary(ExplainState *es, QueryDesc *queryDesc)
+{
+	JitInstrumentation ji = {0};
+
+	if (!(queryDesc->estate->es_jit_flags & PGJIT_PERFORM))
+		return;
+
+	/*
+	 * Work with a copy instead of modifying the leader state, since this
+	 * function may be called twice
+	 */
+	if (queryDesc->estate->es_jit)
+		InstrJitAgg(&ji, &queryDesc->estate->es_jit->instr);
+
+	/* If this process has done JIT in parallel workers, merge stats */
+	if (queryDesc->estate->es_jit_worker_instr)
+		InstrJitAgg(&ji, queryDesc->estate->es_jit_worker_instr);
+
+	ExplainPrintJIT(es, queryDesc->estate->es_jit_flags, &ji, -1);
 }
 
 /*

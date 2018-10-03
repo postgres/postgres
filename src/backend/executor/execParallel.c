@@ -1043,13 +1043,12 @@ ExecParallelRetrieveJitInstrumentation(PlanState *planstate,
 
 	/*
 	 * Accumulate worker JIT instrumentation into the combined JIT
-	 * instrumentation, allocating it if required. Note this is kept separate
-	 * from the leader's own instrumentation.
+	 * instrumentation, allocating it if required.
 	 */
-	if (!planstate->state->es_jit_combined_instr)
-		planstate->state->es_jit_combined_instr =
+	if (!planstate->state->es_jit_worker_instr)
+		planstate->state->es_jit_worker_instr =
 			MemoryContextAllocZero(planstate->state->es_query_cxt, sizeof(JitInstrumentation));
-	combined = planstate->state->es_jit_combined_instr;
+	combined = planstate->state->es_jit_worker_instr;
 
 	/* Accummulate all the workers' instrumentations. */
 	for (n = 0; n < shared_jit->num_workers; ++n)
