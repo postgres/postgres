@@ -1007,6 +1007,7 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 	   PrintfTarget *target)
 {
 	unsigned long long base;
+	unsigned long long uvalue;
 	int			dosign;
 	const char *cvt = "0123456789abcdef";
 	int			signvalue = 0;
@@ -1045,7 +1046,9 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 
 	/* Handle +/- */
 	if (dosign && adjust_sign((value < 0), forcesign, &signvalue))
-		value = -value;
+		uvalue = -(uint64) value;
+	else
+		uvalue = (uint64) value;
 
 	/*
 	 * SUS: the result of converting 0 with an explicit precision of 0 is no
@@ -1056,8 +1059,6 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 	else
 	{
 		/* make integer string */
-		unsigned long long uvalue = (unsigned long long) value;
-
 		do
 		{
 			convert[sizeof(convert) - (++vallen)] = cvt[uvalue % base];
