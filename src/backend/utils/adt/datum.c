@@ -338,8 +338,19 @@ datumSerialize(Datum value, bool isnull, bool typByVal, int typLen,
 		}
 		else if (eoh)
 		{
-			EOH_flatten_into(eoh, (void *) *start_address, header);
+			char	   *tmp;
+
+			/*
+			 * EOH_flatten_into expects the target address to be maxaligned,
+			 * so we can't store directly to *start_address.
+			 */
+			tmp = (char *) palloc(header);
+			EOH_flatten_into(eoh, (void *) tmp, header);
+			memcpy(*start_address, tmp, header);
 			*start_address += header;
+
+			/* be tidy. */
+			pfree(tmp);
 		}
 		else
 		{
