@@ -335,12 +335,6 @@ ExecEndAppend(AppendState *node)
 	 */
 	for (i = 0; i < nplans; i++)
 		ExecEndNode(appendplans[i]);
-
-	/*
-	 * release any resources associated with run-time pruning
-	 */
-	if (node->as_prune_state)
-		ExecDestroyPartitionPruneState(node->as_prune_state);
 }
 
 void

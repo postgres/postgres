@@ -25,7 +25,8 @@
  *		etc
  *
  *		ExecOpenScanRelation	Common code for scan node init routines.
- *		ExecCloseScanRelation
+ *
+ *		ExecGetRangeTableRelation		Fetch Relation for a rangetable entry.
  *
  *		executor_errposition	Report syntactic position of an error.
  *
@@ -107,6 +108,7 @@ CreateExecutorState(void)
 	estate->es_snapshot = InvalidSnapshot;	/* caller must initialize this */
 	estate->es_crosscheck_snapshot = InvalidSnapshot;	/* no crosscheck */
 	estate->es_range_table = NIL;
+	estate->es_relations = NULL;
 	estate->es_plannedstmt = NULL;
 
 	estate->es_junkFilter = NULL;
@@ -648,15 +650,9 @@ Relation
 ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 {
 	Relation	rel;
-	Oid			reloid;
 
-	/* Open the relation and verify lock was obtained upstream */
-	reloid = getrelid(scanrelid, estate->es_range_table);
-	rel = heap_open(reloid, NoLock);
-	Assert(IsParallelWorker() ||
-		   CheckRelationLockedByMe(rel,
-								   rt_fetch(scanrelid, estate->es_range_table)->rellockmode,
-								   true));
+	/* Open the relation. */
+	rel = ExecGetRangeTableRelation(estate, scanrelid);
 
 	/*
 	 * Complain if we're attempting a scan of an unscannable relation, except
@@ -674,24 +670,40 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 	return rel;
 }
 
-/* ----------------------------------------------------------------
- *		ExecCloseScanRelation
+/*
+ * ExecGetRangeTableRelation
+ *		Open the Relation for a range table entry, if not already done
  *
- *		Close the heap relation scanned by a base-level scan plan node.
- *		This should be called during the node's ExecEnd routine.
- *
- * Currently, we do not release the lock acquired by ExecOpenScanRelation.
- * This lock should be held till end of transaction.  (There is a faction
- * that considers this too much locking, however.)
- *
- * If we did want to release the lock, we'd have to repeat the logic in
- * ExecOpenScanRelation in order to figure out what to release.
- * ----------------------------------------------------------------
+ * The Relations will be closed again in ExecEndPlan().
  */
-void
-ExecCloseScanRelation(Relation scanrel)
+Relation
+ExecGetRangeTableRelation(EState *estate, Index rti)
 {
-	heap_close(scanrel, NoLock);
+	Relation	rel;
+
+	Assert(rti > 0 && rti <= list_length(estate->es_range_table));
+
+	rel = estate->es_relations[rti - 1];
+	if (rel == NULL)
+	{
+		/* First time through, so open the relation */
+		RangeTblEntry *rte = rt_fetch(rti, estate->es_range_table);
+
+		Assert(rte->rtekind == RTE_RELATION);
+
+		rel = estate->es_relations[rti - 1] = heap_open(rte->relid, NoLock);
+
+		/*
+		 * Verify that appropriate lock was obtained before execution.
+		 *
+		 * In the case of parallel query, only the leader would've obtained
+		 * the lock (that needs to be fixed, though).
+		 */
+		Assert(IsParallelWorker() ||
+			   CheckRelationLockedByMe(rel, rte->rellockmode, false));
+	}
+
+	return rel;
 }
 
 /*

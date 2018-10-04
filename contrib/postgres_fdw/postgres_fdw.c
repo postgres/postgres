@@ -2546,10 +2546,6 @@ postgresEndDirectModify(ForeignScanState *node)
 	ReleaseConnection(dmstate->conn);
 	dmstate->conn = NULL;
 
-	/* close the target relation. */
-	if (dmstate->resultRel)
-		ExecCloseScanRelation(dmstate->resultRel);
-
 	/* MemoryContext will be deleted automatically. */
 }
 

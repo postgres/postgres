@@ -1032,7 +1032,7 @@ _outPartitionedRelPruneInfo(StringInfo str, const PartitionedRelPruneInfo *node)
 
 	WRITE_NODE_TYPE("PARTITIONEDRELPRUNEINFO");
 
-	WRITE_OID_FIELD(reloid);
+	WRITE_UINT_FIELD(rtindex);
 	WRITE_NODE_FIELD(pruning_steps);
 	WRITE_BITMAPSET_FIELD(present_parts);
 	WRITE_INT_FIELD(nparts);

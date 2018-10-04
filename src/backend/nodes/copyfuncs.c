@@ -1193,7 +1193,7 @@ _copyPartitionedRelPruneInfo(const PartitionedRelPruneInfo *from)
 {
 	PartitionedRelPruneInfo *newnode = makeNode(PartitionedRelPruneInfo);
 
-	COPY_SCALAR_FIELD(reloid);
+	COPY_SCALAR_FIELD(rtindex);
 	COPY_NODE_FIELD(pruning_steps);
 	COPY_BITMAPSET_FIELD(present_parts);
 	COPY_SCALAR_FIELD(nparts);

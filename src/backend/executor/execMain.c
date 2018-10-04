@@ -824,6 +824,15 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * initialize the node's execution state
 	 */
 	estate->es_range_table = rangeTable;
+
+	/*
+	 * Allocate an array to store an open Relation corresponding to each
+	 * rangeTable item, and initialize entries to NULL.  Relations are opened
+	 * and stored here as needed.
+	 */
+	estate->es_relations = (Relation *) palloc0(list_length(rangeTable) *
+												sizeof(Relation));
+
 	estate->es_plannedstmt = plannedstmt;
 
 	/*
@@ -845,13 +854,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		foreach(l, resultRelations)
 		{
 			Index		resultRelationIndex = lfirst_int(l);
-			Oid			resultRelationOid;
 			Relation	resultRelation;
 
-			resultRelationOid = getrelid(resultRelationIndex, rangeTable);
-			resultRelation = heap_open(resultRelationOid, NoLock);
-			Assert(CheckRelationLockedByMe(resultRelation, RowExclusiveLock, true));
-
+			resultRelation = ExecGetRangeTableRelation(estate,
+													   resultRelationIndex);
 			InitResultRelInfo(resultRelInfo,
 							  resultRelation,
 							  resultRelationIndex,
@@ -886,15 +892,13 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			foreach(l, plannedstmt->rootResultRelations)
 			{
 				Index		resultRelIndex = lfirst_int(l);
-				Oid			resultRelOid;
 				Relation	resultRelDesc;
 
-				resultRelOid = getrelid(resultRelIndex, rangeTable);
-				resultRelDesc = heap_open(resultRelOid, NoLock);
-				Assert(CheckRelationLockedByMe(resultRelDesc, RowExclusiveLock, true));
+				resultRelDesc = ExecGetRangeTableRelation(estate,
+														  resultRelIndex);
 				InitResultRelInfo(resultRelInfo,
 								  resultRelDesc,
-								  lfirst_int(l),
+								  resultRelIndex,
 								  NULL,
 								  estate->es_instrument);
 				resultRelInfo++;
@@ -967,10 +971,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			case ROW_MARK_SHARE:
 			case ROW_MARK_KEYSHARE:
 			case ROW_MARK_REFERENCE:
-				relation = heap_open(relid, NoLock);
-				Assert(CheckRelationLockedByMe(relation,
-											   rt_fetch(rc->rti, rangeTable)->rellockmode,
-											   true));
+				relation = ExecGetRangeTableRelation(estate, rc->rti);
 				break;
 			case ROW_MARK_COPY:
 				/* no physical table access is required */
@@ -1483,8 +1484,19 @@ ExecCleanUpTriggerState(EState *estate)
 	{
 		ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(l);
 
-		/* Close indices and then the relation itself */
-		ExecCloseIndices(resultRelInfo);
+		/*
+		 * Assert this is a "dummy" ResultRelInfo, see above.  Otherwise we
+		 * might be issuing a duplicate close against a Relation opened by
+		 * ExecGetRangeTableRelation.
+		 */
+		Assert(resultRelInfo->ri_RangeTableIndex == 0);
+
+		/*
+		 * Since ExecGetTriggerResultRel doesn't call ExecOpenIndices for
+		 * these rels, we needn't call ExecCloseIndices either.
+		 */
+		Assert(resultRelInfo->ri_NumIndices == 0);
+
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 	}
 }
@@ -1607,6 +1619,7 @@ static void
 ExecEndPlan(PlanState *planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
+	int			num_relations;
 	int			i;
 	ListCell   *l;
 
@@ -1634,39 +1647,29 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	ExecResetTupleTable(estate->es_tupleTable, false);
 
 	/*
-	 * close the result relation(s) if any, but hold locks until xact commit.
+	 * close indexes of result relation(s) if any.  (Rels themselves get
+	 * closed next.)
 	 */
 	resultRelInfo = estate->es_result_relations;
 	for (i = estate->es_num_result_relations; i > 0; i--)
 	{
-		/* Close indices and then the relation itself */
 		ExecCloseIndices(resultRelInfo);
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 		resultRelInfo++;
 	}
 
-	/* Close the root target relation(s). */
-	resultRelInfo = estate->es_root_result_relations;
-	for (i = estate->es_num_root_result_relations; i > 0; i--)
+	/*
+	 * close whatever rangetable Relations have been opened.  We did not
+	 * acquire locks in ExecGetRangeTableRelation, so don't release 'em here.
+	 */
+	num_relations = list_length(estate->es_range_table);
+	for (i = 0; i < num_relations; i++)
 	{
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-		resultRelInfo++;
+		if (estate->es_relations[i])
+			heap_close(estate->es_relations[i], NoLock);
 	}
 
 	/* likewise close any trigger target relations */
 	ExecCleanUpTriggerState(estate);
-
-	/*
-	 * close any relations selected FOR [KEY] UPDATE/SHARE, again keeping
-	 * locks
-	 */
-	foreach(l, estate->es_rowMarks)
-	{
-		ExecRowMark *erm = (ExecRowMark *) lfirst(l);
-
-		if (erm->relation)
-			heap_close(erm->relation, NoLock);
-	}
 }
 
 /* ----------------------------------------------------------------
@@ -3161,6 +3164,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_snapshot = parentestate->es_snapshot;
 	estate->es_crosscheck_snapshot = parentestate->es_crosscheck_snapshot;
 	estate->es_range_table = parentestate->es_range_table;
+	estate->es_relations = parentestate->es_relations;
 	estate->es_plannedstmt = parentestate->es_plannedstmt;
 	estate->es_junkFilter = parentestate->es_junkFilter;
 	estate->es_output_cid = parentestate->es_output_cid;

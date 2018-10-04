@@ -357,7 +357,6 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		Index		rti = lfirst_int(lc);
 		RelOptInfo *subpart = find_base_rel(root, rti);
 		PartitionedRelPruneInfo *pinfo;
-		RangeTblEntry *rte;
 		Bitmapset  *present_parts;
 		int			nparts = subpart->nparts;
 		int			partnatts = subpart->part_scheme->partnatts;
@@ -459,10 +458,8 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 				present_parts = bms_add_member(present_parts, i);
 		}
 
-		rte = root->simple_rte_array[subpart->relid];
-
 		pinfo = makeNode(PartitionedRelPruneInfo);
-		pinfo->reloid = rte->relid;
+		pinfo->rtindex = rti;
 		pinfo->pruning_steps = pruning_steps;
 		pinfo->present_parts = present_parts;
 		pinfo->nparts = nparts;
@@ -587,7 +584,6 @@ prune_append_rel_partitions(RelOptInfo *rel)
 	context.ppccontext = CurrentMemoryContext;
 
 	/* These are not valid when being called from the planner */
-	context.partrel = NULL;
 	context.planstate = NULL;
 	context.exprstates = NULL;
 	context.exprhasexecparam = NULL;

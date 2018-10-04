@@ -219,7 +219,7 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 	ExprContext *ecxt = GetPerTupleExprContext(estate);
 	TupleTableSlot *ecxt_scantuple_old = ecxt->ecxt_scantuple;
 	TupleTableSlot *myslot = NULL;
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 
 	/* use per-tuple context here to avoid leaking memory */
 	oldcxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
@@ -1389,9 +1389,6 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
  *		functions.  Details stored include how to map the partition index
  *		returned by the partition pruning code into subplan indexes.
  *
- * ExecDestroyPartitionPruneState:
- *		Deletes a PartitionPruneState. Must be called during executor shutdown.
- *
  * ExecFindInitialMatchingSubPlans:
  *		Returns indexes of matching subplans.  Partition pruning is attempted
  *		without any evaluation of expressions containing PARAM_EXEC Params.
@@ -1433,6 +1430,7 @@ PartitionPruneState *
 ExecCreatePartitionPruneState(PlanState *planstate,
 							  PartitionPruneInfo *partitionpruneinfo)
 {
+	EState	   *estate = planstate->state;
 	PartitionPruneState *prunestate;
 	int			n_part_hierarchies;
 	ListCell   *lc;
@@ -1487,6 +1485,7 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 			PartitionedRelPruneInfo *pinfo = lfirst_node(PartitionedRelPruneInfo, lc2);
 			PartitionedRelPruningData *pprune = &prunedata->partrelprunedata[j];
 			PartitionPruneContext *context = &pprune->context;
+			Relation	partrel;
 			PartitionDesc partdesc;
 			PartitionKey partkey;
 			int			partnatts;
@@ -1509,16 +1508,15 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 			pprune->present_parts = bms_copy(pinfo->present_parts);
 
 			/*
-			 * We need to hold a pin on the partitioned table's relcache entry
-			 * so that we can rely on its copies of the table's partition key
-			 * and partition descriptor.  We need not get a lock though; one
-			 * should have been acquired already by InitPlan or
-			 * ExecLockNonLeafAppendTables.
+			 * We can rely on the copies of the partitioned table's partition
+			 * key and partition descriptor appearing in its relcache entry,
+			 * because that entry will be held open and locked for the
+			 * duration of this executor run.
 			 */
-			context->partrel = relation_open(pinfo->reloid, NoLock);
+			partrel = ExecGetRangeTableRelation(estate, pinfo->rtindex);
+			partkey = RelationGetPartitionKey(partrel);
+			partdesc = RelationGetPartitionDesc(partrel);
 
-			partkey = RelationGetPartitionKey(context->partrel);
-			partdesc = RelationGetPartitionDesc(context->partrel);
 			n_steps = list_length(pinfo->pruning_steps);
 
 			context->strategy = partkey->strategy;
@@ -1593,30 +1591,6 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 	}
 
 	return prunestate;
-}
-
-/*
- * ExecDestroyPartitionPruneState
- *		Release resources at plan shutdown.
- *
- * We don't bother to free any memory here, since the whole executor context
- * will be going away shortly.  We do need to release our relcache pins.
- */
-void
-ExecDestroyPartitionPruneState(PartitionPruneState *prunestate)
-{
-	PartitionPruningData **partprunedata = prunestate->partprunedata;
-	int			i;
-
-	for (i = 0; i < prunestate->num_partprunedata; i++)
-	{
-		PartitionPruningData *prunedata = partprunedata[i];
-		PartitionedRelPruningData *pprune = prunedata->partrelprunedata;
-		int			j;
-
-		for (j = 0; j < prunedata->num_partrelprunedata; j++)
-			relation_close(pprune[j].context.partrel, NoLock);
-	}
 }
 
 /*

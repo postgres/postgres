@@ -2376,7 +2376,7 @@ _readPartitionedRelPruneInfo(void)
 {
 	READ_LOCALS(PartitionedRelPruneInfo);
 
-	READ_OID_FIELD(reloid);
+	READ_UINT_FIELD(rtindex);
 	READ_NODE_FIELD(pruning_steps);
 	READ_BITMAPSET_FIELD(present_parts);
 	READ_INT_FIELD(nparts);

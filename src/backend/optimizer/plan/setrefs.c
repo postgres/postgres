@@ -925,6 +925,21 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 											  (Plan *) lfirst(l),
 											  rtoffset);
 				}
+				if (splan->part_prune_info)
+				{
+					foreach(l, splan->part_prune_info->prune_infos)
+					{
+						List	   *prune_infos = lfirst(l);
+						ListCell   *l2;
+
+						foreach(l2, prune_infos)
+						{
+							PartitionedRelPruneInfo *pinfo = lfirst(l2);
+
+							pinfo->rtindex += rtoffset;
+						}
+					}
+				}
 			}
 			break;
 		case T_MergeAppend:
@@ -946,6 +961,21 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					lfirst(l) = set_plan_refs(root,
 											  (Plan *) lfirst(l),
 											  rtoffset);
+				}
+				if (splan->part_prune_info)
+				{
+					foreach(l, splan->part_prune_info->prune_infos)
+					{
+						List	   *prune_infos = lfirst(l);
+						ListCell   *l2;
+
+						foreach(l2, prune_infos)
+						{
+							PartitionedRelPruneInfo *pinfo = lfirst(l2);
+
+							pinfo->rtindex += rtoffset;
+						}
+					}
 				}
 			}
 			break;

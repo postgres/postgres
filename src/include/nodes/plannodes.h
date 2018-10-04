@@ -1105,7 +1105,7 @@ typedef struct PartitionPruneInfo
 typedef struct PartitionedRelPruneInfo
 {
 	NodeTag		type;
-	Oid			reloid;			/* OID of partition rel for this level */
+	Index		rtindex;		/* RT index of partition rel for this level */
 	List	   *pruning_steps;	/* List of PartitionPruneStep, see below */
 	Bitmapset  *present_parts;	/* Indexes of all partitions which subplans or
 								 * subparts are present for. */

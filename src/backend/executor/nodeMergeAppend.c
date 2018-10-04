@@ -369,12 +369,6 @@ ExecEndMergeAppend(MergeAppendState *node)
 	 */
 	for (i = 0; i < nplans; i++)
 		ExecEndNode(mergeplans[i]);
-
-	/*
-	 * release any resources associated with run-time pruning
-	 */
-	if (node->ms_prune_state)
-		ExecDestroyPartitionPruneState(node->ms_prune_state);
 }
 
 void

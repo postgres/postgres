@@ -140,7 +140,7 @@ IndexNext(IndexScanState *node)
 		 * Note: we pass 'false' because tuples returned by amgetnext are
 		 * pointers onto disk pages and must not be pfree()'d.
 		 */
-		ExecStoreBufferHeapTuple(tuple,	/* tuple to store */
+		ExecStoreBufferHeapTuple(tuple, /* tuple to store */
 								 slot,	/* slot to store in */
 								 scandesc->xs_cbuf);	/* buffer containing
 														 * tuple */
@@ -285,7 +285,7 @@ next_indextuple:
 		/*
 		 * Store the scanned tuple in the scan tuple slot of the scan state.
 		 */
-		ExecStoreBufferHeapTuple(tuple,	/* tuple to store */
+		ExecStoreBufferHeapTuple(tuple, /* tuple to store */
 								 slot,	/* slot to store in */
 								 scandesc->xs_cbuf);	/* buffer containing
 														 * tuple */
@@ -802,14 +802,12 @@ ExecEndIndexScan(IndexScanState *node)
 {
 	Relation	indexRelationDesc;
 	IndexScanDesc indexScanDesc;
-	Relation	relation;
 
 	/*
 	 * extract information from the node
 	 */
 	indexRelationDesc = node->iss_RelationDesc;
 	indexScanDesc = node->iss_ScanDesc;
-	relation = node->ss.ss_currentRelation;
 
 	/*
 	 * Free the exprcontext(s) ... now dead code, see ExecFreeExprContext
@@ -833,11 +831,6 @@ ExecEndIndexScan(IndexScanState *node)
 		index_endscan(indexScanDesc);
 	if (indexRelationDesc)
 		index_close(indexRelationDesc, NoLock);
-
-	/*
-	 * close the heap relation.
-	 */
-	ExecCloseScanRelation(relation);
 }
 
 /* ----------------------------------------------------------------

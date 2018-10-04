@@ -513,7 +513,8 @@ extern void ExecCreateScanSlotFromOuterPlan(EState *estate, ScanState *scanstate
 extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
-extern void ExecCloseScanRelation(Relation scanrel);
+
+extern Relation ExecGetRangeTableRelation(EState *estate, Index rti);
 
 extern int	executor_errposition(EState *estate, int location);
 

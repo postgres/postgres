@@ -63,9 +63,9 @@ SampleNext(SampleScanState *node)
 	slot = node->ss.ss_ScanTupleSlot;
 
 	if (tuple)
-		ExecStoreBufferHeapTuple(tuple,	/* tuple to store */
+		ExecStoreBufferHeapTuple(tuple, /* tuple to store */
 								 slot,	/* slot to store in */
-								 node->ss.ss_currentScanDesc->rs_cbuf);	/* tuple's buffer */
+								 node->ss.ss_currentScanDesc->rs_cbuf); /* tuple's buffer */
 	else
 		ExecClearTuple(slot);
 
@@ -222,11 +222,6 @@ ExecEndSampleScan(SampleScanState *node)
 	 */
 	if (node->ss.ss_currentScanDesc)
 		heap_endscan(node->ss.ss_currentScanDesc);
-
-	/*
-	 * close the heap relation.
-	 */
-	ExecCloseScanRelation(node->ss.ss_currentRelation);
 }
 
 /* ----------------------------------------------------------------

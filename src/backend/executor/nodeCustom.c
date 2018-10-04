@@ -126,10 +126,6 @@ ExecEndCustomScan(CustomScanState *node)
 	/* Clean out the tuple table */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
-	/* Close the heap relation */
-	if (node->ss.ss_currentRelation)
-		ExecCloseScanRelation(node->ss.ss_currentRelation);
 }
 
 void
