@@ -401,9 +401,16 @@ drop table idxpart;
 -- Verify that it works to add primary key / unique to partitioned tables
 create table idxpart (a int primary key, b int) partition by range (a);
 \d idxpart
+-- multiple primary key on child should fail
+create table failpart partition of idxpart (b primary key) for values from (0) to (100);
+drop table idxpart;
+-- primary key on child is okay if there's no PK in the parent, though
+create table idxpart (a int) partition by range (a);
+create table idxpart1pk partition of idxpart (a primary key) for values from (0) to (100);
+\d idxpart1pk
 drop table idxpart;
 
--- but not if you fail to use the full partition key
+-- Failing to use the full partition key is not allowed
 create table idxpart (a int unique, b int) partition by range (a, b);
 create table idxpart (a int, b int unique) partition by range (a, b);
 create table idxpart (a int primary key, b int) partition by range (b, a);
