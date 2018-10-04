@@ -800,8 +800,24 @@ Indexes:
     "idxpart_pkey" PRIMARY KEY, btree (a)
 Number of partitions: 0
 
+-- multiple primary key on child should fail
+create table failpart partition of idxpart (b primary key) for values from (0) to (100);
+ERROR:  multiple primary keys for table "failpart" are not allowed
 drop table idxpart;
--- but not if you fail to use the full partition key
+-- primary key on child is okay if there's no PK in the parent, though
+create table idxpart (a int) partition by range (a);
+create table idxpart1pk partition of idxpart (a primary key) for values from (0) to (100);
+\d idxpart1pk
+             Table "public.idxpart1pk"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+Partition of: idxpart FOR VALUES FROM (0) TO (100)
+Indexes:
+    "idxpart1pk_pkey" PRIMARY KEY, btree (a)
+
+drop table idxpart;
+-- Failing to use the full partition key is not allowed
 create table idxpart (a int unique, b int) partition by range (a, b);
 ERROR:  insufficient columns in UNIQUE constraint definition
 DETAIL:  UNIQUE constraint on table "idxpart" lacks column "b" which is part of the partition key.
