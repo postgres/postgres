@@ -36,6 +36,7 @@ struct PlanState;				/* forward references in this file */
 struct ParallelHashJoinState;
 struct ExprState;
 struct ExprContext;
+struct RangeTblEntry;			/* avoid including parsenodes.h here */
 struct ExprEvalStep;			/* avoid including execExpr.h everywhere */
 
 
@@ -486,7 +487,9 @@ typedef struct EState
 	Snapshot	es_snapshot;	/* time qual to use */
 	Snapshot	es_crosscheck_snapshot; /* crosscheck time qual for RI */
 	List	   *es_range_table; /* List of RangeTblEntry */
-	Relation   *es_relations;	/* Array of per-es_range_table-entry Relation
+	struct RangeTblEntry **es_range_table_array;	/* equivalent array */
+	Index		es_range_table_size;	/* size of the range table arrays */
+	Relation   *es_relations;	/* Array of per-range-table-entry Relation
 								 * pointers, or NULL if not yet opened */
 	PlannedStmt *es_plannedstmt;	/* link to top of plan tree */
 	const char *es_sourceText;	/* Source text from QueryDesc */
@@ -563,7 +566,7 @@ typedef struct EState
 	 * return, or NULL if nothing to return; es_epqTupleSet[] is true if a
 	 * particular array entry is valid; and es_epqScanDone[] is state to
 	 * remember if the tuple has been returned already.  Arrays are of size
-	 * list_length(es_range_table) and are indexed by scan node scanrelid - 1.
+	 * es_range_table_size and are indexed by scan node scanrelid - 1.
 	 */
 	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
 	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */

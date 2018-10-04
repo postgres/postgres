@@ -32,16 +32,6 @@
 	((RangeTblEntry *) list_nth(rangetable, (rangetable_index)-1))
 
 /*
- *		getrelid
- *
- *		Given the range index of a relation, return the corresponding
- *		relation OID.  Note that InvalidOid will be returned if the
- *		RTE is for a non-relation-type RTE.
- */
-#define getrelid(rangeindex,rangetable) \
-	(rt_fetch(rangeindex, rangetable)->relid)
-
-/*
  * Given an RTE and an attribute number, return the appropriate
  * variable name or alias for that attribute of that RTE.
  */

@@ -75,7 +75,7 @@ static int	MyTriggerDepth = 0;
  * to be changed, however.
  */
 #define GetUpdatedColumns(relinfo, estate) \
-	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->updatedCols)
+	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols)
 
 /* Local function prototypes */
 static void ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid);

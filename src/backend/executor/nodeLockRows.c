@@ -400,7 +400,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	/*
 	 * Create workspace in which we can remember per-RTE locked tuples
 	 */
-	lrstate->lr_ntables = list_length(estate->es_range_table);
+	lrstate->lr_ntables = estate->es_range_table_size;
 	lrstate->lr_curtuples = (HeapTuple *)
 		palloc0(lrstate->lr_ntables * sizeof(HeapTuple));
 

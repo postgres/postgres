@@ -3934,10 +3934,10 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 		 * perhaps other places.)
 		 */
 		if (econtext->ecxt_estate &&
-			variable->varno <= list_length(econtext->ecxt_estate->es_range_table))
+			variable->varno <= econtext->ecxt_estate->es_range_table_size)
 		{
-			RangeTblEntry *rte = rt_fetch(variable->varno,
-										  econtext->ecxt_estate->es_range_table);
+			RangeTblEntry *rte = exec_rt_fetch(variable->varno,
+											   econtext->ecxt_estate);
 
 			if (rte->eref)
 				ExecTypeSetColNames(output_tupdesc, rte->eref->colnames);

@@ -109,9 +109,9 @@ static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
  * to be changed, however.
  */
 #define GetInsertedColumns(relinfo, estate) \
-	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->insertedCols)
+	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->insertedCols)
 #define GetUpdatedColumns(relinfo, estate) \
-	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->updatedCols)
+	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols)
 
 /* end of local decls */
 
@@ -823,15 +823,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * initialize the node's execution state
 	 */
-	estate->es_range_table = rangeTable;
-
-	/*
-	 * Allocate an array to store an open Relation corresponding to each
-	 * rangeTable item, and initialize entries to NULL.  Relations are opened
-	 * and stored here as needed.
-	 */
-	estate->es_relations = (Relation *) palloc0(list_length(rangeTable) *
-												sizeof(Relation));
+	ExecInitRangeTable(estate, rangeTable);
 
 	estate->es_plannedstmt = plannedstmt;
 
@@ -918,9 +910,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 									 resultRelIndex))
 				{
 					Relation	resultRelDesc;
+					Oid			reloid = exec_rt_fetch(resultRelIndex, estate)->relid;
 
-					resultRelDesc = heap_open(getrelid(resultRelIndex, rangeTable),
-											  NoLock);
+					resultRelDesc = heap_open(reloid, NoLock);
 					Assert(CheckRelationLockedByMe(resultRelDesc, RowExclusiveLock, true));
 					heap_close(resultRelDesc, NoLock);
 				}
@@ -962,7 +954,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			continue;
 
 		/* get relation's OID (will produce InvalidOid if subquery) */
-		relid = getrelid(rc->rti, rangeTable);
+		relid = exec_rt_fetch(rc->rti, estate)->relid;
 
 		switch (rc->markType)
 		{
@@ -1619,8 +1611,8 @@ static void
 ExecEndPlan(PlanState *planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
-	int			num_relations;
-	int			i;
+	Index		num_relations;
+	Index		i;
 	ListCell   *l;
 
 	/*
@@ -1661,7 +1653,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	 * close whatever rangetable Relations have been opened.  We did not
 	 * acquire locks in ExecGetRangeTableRelation, so don't release 'em here.
 	 */
-	num_relations = list_length(estate->es_range_table);
+	num_relations = estate->es_range_table_size;
 	for (i = 0; i < num_relations; i++)
 	{
 		if (estate->es_relations[i])
@@ -3087,7 +3079,7 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 		/*
 		 * We already have a suitable child EPQ tree, so just reset it.
 		 */
-		int			rtsize = list_length(parentestate->es_range_table);
+		Index		rtsize = parentestate->es_range_table_size;
 		PlanState  *planstate = epqstate->planstate;
 
 		MemSet(estate->es_epqScanDone, 0, rtsize * sizeof(bool));
@@ -3136,11 +3128,11 @@ static void
 EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 {
 	EState	   *estate;
-	int			rtsize;
+	Index		rtsize;
 	MemoryContext oldcontext;
 	ListCell   *l;
 
-	rtsize = list_length(parentestate->es_range_table);
+	rtsize = parentestate->es_range_table_size;
 
 	epqstate->estate = estate = CreateExecutorState();
 
@@ -3164,6 +3156,8 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_snapshot = parentestate->es_snapshot;
 	estate->es_crosscheck_snapshot = parentestate->es_crosscheck_snapshot;
 	estate->es_range_table = parentestate->es_range_table;
+	estate->es_range_table_array = parentestate->es_range_table_array;
+	estate->es_range_table_size = parentestate->es_range_table_size;
 	estate->es_relations = parentestate->es_relations;
 	estate->es_plannedstmt = parentestate->es_plannedstmt;
 	estate->es_junkFilter = parentestate->es_junkFilter;

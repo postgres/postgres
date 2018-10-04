@@ -26,6 +26,8 @@
  *
  *		ExecOpenScanRelation	Common code for scan node init routines.
  *
+ *		ExecInitRangeTable		Set up executor's range-table-related data.
+ *
  *		ExecGetRangeTableRelation		Fetch Relation for a rangetable entry.
  *
  *		executor_errposition	Report syntactic position of an error.
@@ -108,6 +110,8 @@ CreateExecutorState(void)
 	estate->es_snapshot = InvalidSnapshot;	/* caller must initialize this */
 	estate->es_crosscheck_snapshot = InvalidSnapshot;	/* no crosscheck */
 	estate->es_range_table = NIL;
+	estate->es_range_table_array = NULL;
+	estate->es_range_table_size = 0;
 	estate->es_relations = NULL;
 	estate->es_plannedstmt = NULL;
 
@@ -671,6 +675,43 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 }
 
 /*
+ * ExecInitRangeTable
+ *		Set up executor's range-table-related data
+ *
+ * We build an array from the range table list to allow faster lookup by RTI.
+ * (The es_range_table field is now somewhat redundant, but we keep it to
+ * avoid breaking external code unnecessarily.)
+ * This is also a convenient place to set up the parallel es_relations array.
+ */
+void
+ExecInitRangeTable(EState *estate, List *rangeTable)
+{
+	Index		rti;
+	ListCell   *lc;
+
+	/* Remember the range table List as-is */
+	estate->es_range_table = rangeTable;
+
+	/* Set up the equivalent array representation */
+	estate->es_range_table_size = list_length(rangeTable);
+	estate->es_range_table_array = (RangeTblEntry **)
+		palloc(estate->es_range_table_size * sizeof(RangeTblEntry *));
+	rti = 0;
+	foreach(lc, rangeTable)
+	{
+		estate->es_range_table_array[rti++] = lfirst_node(RangeTblEntry, lc);
+	}
+
+	/*
+	 * Allocate an array to store an open Relation corresponding to each
+	 * rangetable entry, and initialize entries to NULL.  Relations are opened
+	 * and stored here as needed.
+	 */
+	estate->es_relations = (Relation *)
+		palloc0(estate->es_range_table_size * sizeof(Relation));
+}
+
+/*
  * ExecGetRangeTableRelation
  *		Open the Relation for a range table entry, if not already done
  *
@@ -681,13 +722,13 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 {
 	Relation	rel;
 
-	Assert(rti > 0 && rti <= list_length(estate->es_range_table));
+	Assert(rti > 0 && rti <= estate->es_range_table_size);
 
 	rel = estate->es_relations[rti - 1];
 	if (rel == NULL)
 	{
 		/* First time through, so open the relation */
-		RangeTblEntry *rte = rt_fetch(rti, estate->es_range_table);
+		RangeTblEntry *rte = exec_rt_fetch(rti, estate);
 
 		Assert(rte->rtekind == RTE_RELATION);
 
@@ -876,7 +917,7 @@ ExecLockNonLeafAppendTables(List *partitioned_rels, EState *estate)
 		ListCell   *l;
 		Index		rti = lfirst_int(lc);
 		bool		is_result_rel = false;
-		Oid			relid = getrelid(rti, estate->es_range_table);
+		Oid			relid = exec_rt_fetch(rti, estate)->relid;
 
 		/* If this is a result relation, already locked in InitPlan */
 		foreach(l, stmt->nonleafResultRelations)
@@ -911,7 +952,7 @@ ExecLockNonLeafAppendTables(List *partitioned_rels, EState *estate)
 			else
 				lockmode = AccessShareLock;
 
-			Assert(lockmode == rt_fetch(rti, estate->es_range_table)->rellockmode);
+			Assert(lockmode == exec_rt_fetch(rti, estate)->rellockmode);
 
 			LockRelationOid(relid, lockmode);
 		}
