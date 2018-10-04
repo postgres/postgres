@@ -91,7 +91,17 @@ ANALYZE vactst (i), vacparted (does_not_exist);
 
 -- parenthesized syntax for ANALYZE
 ANALYZE (VERBOSE) does_not_exist;
-ANALYZE (nonexistant-arg) does_not_exist;
+ANALYZE (nonexistent-arg) does_not_exist;
+
+-- ensure argument order independence, and that SKIP_LOCKED on non-existing
+-- relation still errors out.
+ANALYZE (SKIP_LOCKED, VERBOSE) does_not_exist;
+ANALYZE (VERBOSE, SKIP_LOCKED) does_not_exist;
+
+-- SKIP_LOCKED option
+VACUUM (SKIP_LOCKED) vactst;
+VACUUM (SKIP_LOCKED, FULL) vactst;
+ANALYZE (SKIP_LOCKED) vactst;
 
 DROP TABLE vaccluster;
 DROP TABLE vactst;

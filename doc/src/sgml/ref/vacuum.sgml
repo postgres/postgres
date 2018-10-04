@@ -31,6 +31,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     VERBOSE
     ANALYZE
     DISABLE_PAGE_SKIPPING
+    SKIP_LOCKED
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -156,6 +157,26 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       be used only when the contents of the visibility map are
       suspect, which should happen only if there is a hardware or software
       issue causing database corruption.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SKIP_LOCKED</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>VACUUM</command> should not wait for any
+      conflicting locks to be released when beginning work on a relation:
+      if a relation cannot be locked immediately without waiting, the relation
+      is skipped.  Note that even with this option,
+      <command>VACUUM</command> may still block when opening the relation's
+      indexes.  Additionally, <command>VACUUM ANALYZE</command> may still
+      block when acquiring sample rows from partitions, table inheritance
+      children, and some types of foreign tables.  Also, while
+      <command>VACUUM</command> ordinarily processes all partitions of
+      specified partitioned tables, this option will cause
+      <command>VACUUM</command> to skip all partitions if there is a
+      conflicting lock on the partitioned table.
      </para>
     </listitem>
    </varlistentry>

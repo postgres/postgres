@@ -10538,6 +10538,8 @@ vacuum_option_elem:
 				{
 					if (strcmp($1, "disable_page_skipping") == 0)
 						$$ = VACOPT_DISABLE_PAGE_SKIPPING;
+					else if (strcmp($1, "skip_locked") == 0)
+						$$ = VACOPT_SKIP_LOCKED;
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -10571,6 +10573,16 @@ analyze_option_list:
 
 analyze_option_elem:
 			VERBOSE				{ $$ = VACOPT_VERBOSE; }
+			| IDENT
+				{
+					if (strcmp($1, "skip_locked") == 0)
+						$$ = VACOPT_SKIP_LOCKED;
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("unrecognized ANALYZE option \"%s\"", $1),
+									 parser_errposition(@1)));
+				}
 		;
 
 analyze_keyword:

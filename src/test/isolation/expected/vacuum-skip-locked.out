@@ -1,0 +1,171 @@
+Parsed test spec with 2 sessions
+
+starting permutation: lock_share vac_specified commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+WARNING:  skipping vacuum of "part1" --- lock not available
+step vac_specified: VACUUM (SKIP_LOCKED) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_share vac_all_parts commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step vac_all_parts: VACUUM (SKIP_LOCKED) parted;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_share analyze_specified commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+WARNING:  skipping analyze of "part1" --- lock not available
+step analyze_specified: ANALYZE (SKIP_LOCKED) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_share analyze_all_parts commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step analyze_all_parts: ANALYZE (SKIP_LOCKED) parted;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_share vac_analyze_specified commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+WARNING:  skipping vacuum of "part1" --- lock not available
+step vac_analyze_specified: VACUUM (ANALYZE, SKIP_LOCKED) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_share vac_analyze_all_parts commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step vac_analyze_all_parts: VACUUM (ANALYZE, SKIP_LOCKED) parted;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_share vac_full_specified commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+WARNING:  skipping vacuum of "part1" --- lock not available
+step vac_full_specified: VACUUM (SKIP_LOCKED, FULL) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_share vac_full_all_parts commit
+step lock_share: 
+	BEGIN;
+	LOCK part1 IN SHARE MODE;
+
+step vac_full_all_parts: VACUUM (SKIP_LOCKED, FULL) parted;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_access_exclusive vac_specified commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+WARNING:  skipping vacuum of "part1" --- lock not available
+step vac_specified: VACUUM (SKIP_LOCKED) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_access_exclusive vac_all_parts commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+step vac_all_parts: VACUUM (SKIP_LOCKED) parted;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_access_exclusive analyze_specified commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+WARNING:  skipping analyze of "part1" --- lock not available
+step analyze_specified: ANALYZE (SKIP_LOCKED) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_access_exclusive analyze_all_parts commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+step analyze_all_parts: ANALYZE (SKIP_LOCKED) parted; <waiting ...>
+step commit: 
+	COMMIT;
+
+step analyze_all_parts: <... completed>
+
+starting permutation: lock_access_exclusive vac_analyze_specified commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+WARNING:  skipping vacuum of "part1" --- lock not available
+step vac_analyze_specified: VACUUM (ANALYZE, SKIP_LOCKED) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_access_exclusive vac_analyze_all_parts commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+step vac_analyze_all_parts: VACUUM (ANALYZE, SKIP_LOCKED) parted; <waiting ...>
+step commit: 
+	COMMIT;
+
+step vac_analyze_all_parts: <... completed>
+
+starting permutation: lock_access_exclusive vac_full_specified commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+WARNING:  skipping vacuum of "part1" --- lock not available
+step vac_full_specified: VACUUM (SKIP_LOCKED, FULL) part1, part2;
+step commit: 
+	COMMIT;
+
+
+starting permutation: lock_access_exclusive vac_full_all_parts commit
+step lock_access_exclusive: 
+	BEGIN;
+	LOCK part1 IN ACCESS EXCLUSIVE MODE;
+
+step vac_full_all_parts: VACUUM (SKIP_LOCKED, FULL) parted;
+step commit: 
+	COMMIT;
+

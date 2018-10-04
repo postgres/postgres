@@ -622,6 +622,7 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		HeapTuple	tuple;
 		Form_pg_class classForm;
 		bool		include_parts;
+		int			rvr_opts;
 
 		/*
 		 * Since autovacuum workers supply OIDs when calling vacuum(), no
@@ -634,7 +635,30 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		 * below, as well as find_all_inheritors's expectation that the caller
 		 * holds some lock on the starting relation.
 		 */
-		relid = RangeVarGetRelid(vrel->relation, AccessShareLock, false);
+		rvr_opts = (options & VACOPT_SKIP_LOCKED) ? RVR_SKIP_LOCKED : 0;
+		relid = RangeVarGetRelidExtended(vrel->relation,
+										 AccessShareLock,
+										 rvr_opts,
+										 NULL, NULL);
+
+		/*
+		 * If the lock is unavailable, emit the same log statement that
+		 * vacuum_rel() and analyze_rel() would.
+		 */
+		if (!OidIsValid(relid))
+		{
+			if (options & VACOPT_VACUUM)
+				ereport(WARNING,
+						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+						 errmsg("skipping vacuum of \"%s\" --- lock not available",
+								vrel->relation->relname)));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+						 errmsg("skipping analyze of \"%s\" --- lock not available",
+								vrel->relation->relname)));
+			return vacrels;
+		}
 
 		/*
 		 * To check whether the relation is a partitioned table and its

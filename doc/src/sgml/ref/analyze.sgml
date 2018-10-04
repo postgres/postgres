@@ -27,6 +27,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
     VERBOSE
+    SKIP_LOCKED
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -72,6 +73,24 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
     <listitem>
      <para>
       Enables display of progress messages.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SKIP_LOCKED</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>ANALYZE</command> should not wait for any
+      conflicting locks to be released when beginning work on a relation:
+      if a relation cannot be locked immediately without waiting, the relation
+      is skipped.  Note that even with this option, <command>ANALYZE</command>
+      may still block when opening the relation's indexes or when acquiring
+      sample rows from partitions, table inheritance children, and some
+      types of foreign tables.  Also, while <command>ANALYZE</command>
+      ordinarily processes all partitions of specified partitioned tables,
+      this option will cause <command>ANALYZE</command> to skip all
+      partitions if there is a conflicting lock on the partitioned table.
      </para>
     </listitem>
    </varlistentry>

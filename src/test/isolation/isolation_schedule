@@ -67,6 +67,7 @@ test: vacuum-reltuples
 test: timeouts
 test: vacuum-concurrent-drop
 test: vacuum-conflict
+test: vacuum-skip-locked
 test: predicate-hash
 test: predicate-gist
 test: predicate-gin
