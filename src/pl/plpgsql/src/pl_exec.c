@@ -2205,6 +2205,7 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 			row = palloc0(sizeof(*row));
 			row->dtype = PLPGSQL_DTYPE_ROW;
+			row->refname = "(unnamed row)";
 			row->lineno = -1;
 			row->varnos = palloc(sizeof(int) * FUNC_MAX_ARGS);
 
