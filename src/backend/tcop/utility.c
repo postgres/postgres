@@ -943,7 +943,7 @@ ProcessUtilitySlow(ParseState *pstate,
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-	bool		isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
+	bool		isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
 	bool		needCleanup;
 	bool		commandCollected = false;
 	ObjectAddress address;
