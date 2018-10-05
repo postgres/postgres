@@ -326,7 +326,12 @@ typedef struct PLpgSQL_var
  * Note that there's no way to name the row as such from PL/pgSQL code,
  * so many functions don't need to support these.
  *
- * refname, isconst, notnull, and default_val are unsupported (and hence
+ * That also means that there's no real name for the row variable, so we
+ * conventionally set refname to "(unnamed row)".  We could leave it NULL,
+ * but it's too convenient to be able to assume that refname is valid in
+ * all variants of PLpgSQL_variable.
+ *
+ * isconst, notnull, and default_val are unsupported (and hence
  * always zero/null) for a row.  The member variables of a row should have
  * been checked to be writable at compile time, so isconst is correctly set
  * to false.  notnull and default_val aren't applicable.
