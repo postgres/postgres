@@ -990,6 +990,14 @@ extern void ExceptionalCondition(const char *conditionName,
  */
 
 /*
+ * Invert the sign of a qsort-style comparison result, ie, exchange negative
+ * and positive integer values, being careful not to get the wrong answer
+ * for INT_MIN.  The argument should be an integral variable.
+ */
+#define INVERT_COMPARE_RESULT(var) \
+	((var) = ((var) < 0) ? 1 : -(var))
+
+/*
  * Use this, not "char buf[BLCKSZ]", to declare a field or local variable
  * holding a page buffer, if that page might be accessed as a page and not
  * just a string of bytes.  Otherwise the variable might be under-aligned,

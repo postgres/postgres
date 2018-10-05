@@ -469,9 +469,10 @@ reorderqueue_cmp(const pairingheap_node *a, const pairingheap_node *b,
 	ReorderTuple *rtb = (ReorderTuple *) b;
 	IndexScanState *node = (IndexScanState *) arg;
 
-	return -cmp_orderbyvals(rta->orderbyvals, rta->orderbynulls,
-							rtb->orderbyvals, rtb->orderbynulls,
-							node);
+	/* exchange argument order to invert the sort order */
+	return cmp_orderbyvals(rtb->orderbyvals, rtb->orderbynulls,
+						   rta->orderbyvals, rta->orderbynulls,
+						   node);
 }
 
 /*

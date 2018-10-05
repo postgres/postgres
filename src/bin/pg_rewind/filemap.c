@@ -810,7 +810,7 @@ final_filemap_cmp(const void *a, const void *b)
 		return -1;
 
 	if (fa->action == FILE_ACTION_REMOVE)
-		return -strcmp(fa->path, fb->path);
+		return strcmp(fb->path, fa->path);
 	else
 		return strcmp(fa->path, fb->path);
 }
