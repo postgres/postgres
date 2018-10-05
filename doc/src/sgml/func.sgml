@@ -20357,6 +20357,20 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
+        <literal><function>pg_ls_tmpdir(<optional><parameter>tablespace</parameter> <type>oid</type></optional>)</function></literal>
+       </entry>
+       <entry><type>setof record</type></entry>
+       <entry>
+        List the name, size, and last modification time of files in the
+        temporary directory for <parameter>tablespace</parameter>.  If
+        <parameter>tablespace</parameter> is not provided, the
+        <literal>pg_default</literal> tablespace is used.  Access is granted
+        to members of the <literal>pg_monitor</literal> role and may be
+        granted to other non-superuser roles.
+       </entry>
+      </row>
+      <row>
+       <entry>
         <literal><function>pg_read_file(<parameter>filename</parameter> <type>text</type> [, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> [, <parameter>missing_ok</parameter> <type>boolean</type>] ])</function></literal>
        </entry>
        <entry><type>text</type></entry>
@@ -20425,6 +20439,19 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     (mtime) of each file in the write ahead log (WAL) directory. By
     default only superusers and members of the <literal>pg_monitor</literal> role
     can use this function. Access may be granted to others using
+    <command>GRANT</command>.
+   </para>
+
+   <indexterm>
+    <primary>pg_ls_tmpdir</primary>
+   </indexterm>
+   <para>
+    <function>pg_ls_tmpdir</function> returns the name, size, and last modified
+    time (mtime) of each file in the temporary file directory for the specified
+    <parameter>tablespace</parameter>.  If <parameter>tablespace</parameter> is
+    not provided, the <literal>pg_default</literal> tablespace is used.  By
+    default only superusers and members of the <literal>pg_monitor</literal>
+    role can use this function.  Access may be granted to others using
     <command>GRANT</command>.
    </para>
 

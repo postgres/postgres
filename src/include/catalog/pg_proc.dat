@@ -10199,6 +10199,16 @@
   provolatile => 'v', prorettype => 'record', proargtypes => '',
   proallargtypes => '{text,int8,timestamptz}', proargmodes => '{o,o,o}',
   proargnames => '{name,size,modification}', prosrc => 'pg_ls_waldir' },
+{ oid => '5029', descr => 'list files in the pgsql_tmp directory',
+  proname => 'pg_ls_tmpdir', procost => '10', prorows => '20', proretset => 't',
+  provolatile => 'v', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{text,int8,timestamptz}', proargmodes => '{o,o,o}',
+  proargnames => '{name,size,modification}', prosrc => 'pg_ls_tmpdir_noargs' },
+{ oid => '5030', descr => 'list files in the pgsql_tmp directory',
+  proname => 'pg_ls_tmpdir', procost => '10', prorows => '20', proretset => 't',
+  provolatile => 'v', prorettype => 'record', proargtypes => 'oid',
+  proallargtypes => '{oid,text,int8,timestamptz}', proargmodes => '{i,o,o,o}',
+  proargnames => '{tablespace,name,size,modification}', prosrc => 'pg_ls_tmpdir_1arg' },
 
 # hash partitioning constraint function
 { oid => '5028', descr => 'hash partition CHECK constraint',
