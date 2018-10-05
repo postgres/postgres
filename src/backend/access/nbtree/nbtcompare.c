@@ -22,11 +22,10 @@
  *
  *	The result is always an int32 regardless of the input datatype.
  *
- *	Although any negative int32 (except INT_MIN) is acceptable for reporting
- *	"<", and any positive int32 is acceptable for reporting ">", routines
+ *	Although any negative int32 is acceptable for reporting "<",
+ *	and any positive int32 is acceptable for reporting ">", routines
  *	that work on 32-bit or wider datatypes can't just return "a - b".
- *	That could overflow and give the wrong answer.  Also, one must not
- *	return INT_MIN to report "<", since some callers will negate the result.
+ *	That could overflow and give the wrong answer.
  *
  *	NOTE: it is critical that the comparison function impose a total order
  *	on all non-NULL values of the data type, and that the datatype's
@@ -44,12 +43,30 @@
  *	during an index access won't be recovered till end of query.  This
  *	primarily affects comparison routines for toastable datatypes;
  *	they have to be careful to free any detoasted copy of an input datum.
+ *
+ *	NOTE: we used to forbid comparison functions from returning INT_MIN,
+ *	but that proves to be too error-prone because some platforms' versions
+ *	of memcmp() etc can return INT_MIN.  As a means of stress-testing
+ *	callers, this file can be compiled with STRESS_SORT_INT_MIN defined
+ *	to cause many of these functions to return INT_MIN or INT_MAX instead of
+ *	their customary -1/+1.  For production, though, that's not a good idea
+ *	since users or third-party code might expect the traditional results.
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "utils/builtins.h"
 #include "utils/sortsupport.h"
+
+#ifdef STRESS_SORT_INT_MIN
+#define A_LESS_THAN_B		INT_MIN
+#define A_GREATER_THAN_B	INT_MAX
+#else
+#define A_LESS_THAN_B		(-1)
+#define A_GREATER_THAN_B	1
+#endif
 
 
 Datum
@@ -95,11 +112,11 @@ btint4cmp(PG_FUNCTION_ARGS)
 	int32		b = PG_GETARG_INT32(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 static int
@@ -109,11 +126,11 @@ btint4fastcmp(Datum x, Datum y, SortSupport ssup)
 	int32		b = DatumGetInt32(y);
 
 	if (a > b)
-		return 1;
+		return A_GREATER_THAN_B;
 	else if (a == b)
 		return 0;
 	else
-		return -1;
+		return A_LESS_THAN_B;
 }
 
 Datum
@@ -132,11 +149,11 @@ btint8cmp(PG_FUNCTION_ARGS)
 	int64		b = PG_GETARG_INT64(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 static int
@@ -146,11 +163,11 @@ btint8fastcmp(Datum x, Datum y, SortSupport ssup)
 	int64		b = DatumGetInt64(y);
 
 	if (a > b)
-		return 1;
+		return A_GREATER_THAN_B;
 	else if (a == b)
 		return 0;
 	else
-		return -1;
+		return A_LESS_THAN_B;
 }
 
 Datum
@@ -169,11 +186,11 @@ btint48cmp(PG_FUNCTION_ARGS)
 	int64		b = PG_GETARG_INT64(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 Datum
@@ -183,11 +200,11 @@ btint84cmp(PG_FUNCTION_ARGS)
 	int32		b = PG_GETARG_INT32(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 Datum
@@ -197,11 +214,11 @@ btint24cmp(PG_FUNCTION_ARGS)
 	int32		b = PG_GETARG_INT32(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 Datum
@@ -211,11 +228,11 @@ btint42cmp(PG_FUNCTION_ARGS)
 	int16		b = PG_GETARG_INT16(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 Datum
@@ -225,11 +242,11 @@ btint28cmp(PG_FUNCTION_ARGS)
 	int64		b = PG_GETARG_INT64(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 Datum
@@ -239,11 +256,11 @@ btint82cmp(PG_FUNCTION_ARGS)
 	int16		b = PG_GETARG_INT16(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 Datum
@@ -253,11 +270,11 @@ btoidcmp(PG_FUNCTION_ARGS)
 	Oid			b = PG_GETARG_OID(1);
 
 	if (a > b)
-		PG_RETURN_INT32(1);
+		PG_RETURN_INT32(A_GREATER_THAN_B);
 	else if (a == b)
 		PG_RETURN_INT32(0);
 	else
-		PG_RETURN_INT32(-1);
+		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
 static int
@@ -267,11 +284,11 @@ btoidfastcmp(Datum x, Datum y, SortSupport ssup)
 	Oid			b = DatumGetObjectId(y);
 
 	if (a > b)
-		return 1;
+		return A_GREATER_THAN_B;
 	else if (a == b)
 		return 0;
 	else
-		return -1;
+		return A_LESS_THAN_B;
 }
 
 Datum
@@ -299,9 +316,9 @@ btoidvectorcmp(PG_FUNCTION_ARGS)
 		if (a->values[i] != b->values[i])
 		{
 			if (a->values[i] > b->values[i])
-				PG_RETURN_INT32(1);
+				PG_RETURN_INT32(A_GREATER_THAN_B);
 			else
-				PG_RETURN_INT32(-1);
+				PG_RETURN_INT32(A_LESS_THAN_B);
 		}
 	}
 	PG_RETURN_INT32(0);

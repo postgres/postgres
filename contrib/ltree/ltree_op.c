@@ -45,17 +45,24 @@ ltree_compare(const ltree *a, const ltree *b)
 	ltree_level *bl = LTREE_FIRST(b);
 	int			an = a->numlevel;
 	int			bn = b->numlevel;
-	int			res = 0;
 
 	while (an > 0 && bn > 0)
 	{
+		int			res;
+
 		if ((res = memcmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
 		{
 			if (al->len != bl->len)
 				return (al->len - bl->len) * 10 * (an + 1);
 		}
 		else
+		{
+			if (res < 0)
+				res = -1;
+			else
+				res = 1;
 			return res * 10 * (an + 1);
+		}
 
 		an--;
 		bn--;
@@ -146,7 +153,7 @@ inner_isparent(const ltree *c, const ltree *p)
 	{
 		if (cl->len != pl->len)
 			return false;
-		if (memcmp(cl->name, pl->name, cl->len))
+		if (memcmp(cl->name, pl->name, cl->len) != 0)
 			return false;
 
 		pn--;
