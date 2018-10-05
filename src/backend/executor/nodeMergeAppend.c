@@ -338,7 +338,10 @@ heap_compare_slots(Datum a, Datum b, void *arg)
 									  datum2, isNull2,
 									  sortKey);
 		if (compare != 0)
-			return -compare;
+		{
+			INVERT_COMPARE_RESULT(compare);
+			return compare;
+		}
 	}
 	return 0;
 }

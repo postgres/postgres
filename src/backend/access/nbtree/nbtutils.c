@@ -518,7 +518,7 @@ _bt_compare_array_elements(const void *a, const void *b, void *arg)
 											  cxt->collation,
 											  da, db));
 	if (cxt->reverse)
-		compare = -compare;
+		INVERT_COMPARE_RESULT(compare);
 	return compare;
 }
 
@@ -1652,7 +1652,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 													subkey->sk_argument));
 
 		if (subkey->sk_flags & SK_BT_DESC)
-			cmpresult = -cmpresult;
+			INVERT_COMPARE_RESULT(cmpresult);
 
 		/* Done comparing if unequal, else advance to next column */
 		if (cmpresult != 0)

@@ -1254,11 +1254,9 @@ mp_int_compare(mp_int a, mp_int b)
 		 * If they're both zero or positive, the normal comparison applies; if
 		 * both negative, the sense is reversed.
 		 */
-		if (sa == MP_ZPOS)
-			return cmp;
-		else
-			return -cmp;
-
+		if (sa != MP_ZPOS)
+			INVERT_COMPARE_RESULT(cmp);
+		return cmp;
 	}
 	else
 	{
@@ -1314,10 +1312,9 @@ mp_int_compare_value(mp_int z, int value)
 	{
 		cmp = s_vcmp(z, value);
 
-		if (vsign == MP_ZPOS)
-			return cmp;
-		else
-			return -cmp;
+		if (vsign != MP_ZPOS)
+			INVERT_COMPARE_RESULT(cmp);
+		return cmp;
 	}
 	else
 	{

@@ -530,7 +530,7 @@ _bt_compare(Relation rel,
 													 scankey->sk_argument));
 
 			if (!(scankey->sk_flags & SK_BT_DESC))
-				result = -result;
+				INVERT_COMPARE_RESULT(result);
 		}
 
 		/* if the keys are unequal, return the difference */
