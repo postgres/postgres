@@ -398,7 +398,6 @@ PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_ele
 	 */
 	else if (PyBool_Check(obj))
 	{
-		out = palloc(sizeof(JsonbValue));
 		out->type = jbvBool;
 		out->val.boolean = (obj == Py_True);
 	}
