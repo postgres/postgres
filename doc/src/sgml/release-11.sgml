@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2018-??-?? (CURRENT AS OF 2018-07-30)</para>
+   <para>2018-10-?? (CURRENT AS OF 2018-09-20)</para>
   </formalpara>
 
   <sect2>
@@ -22,7 +22,7 @@
 
     <listitem>
      <para>
-      Major improvements to partitioning:
+      Improvements to partitioning functionality, including:
       <itemizedlist>
        <listitem>
         <para>
@@ -37,9 +37,8 @@
        </listitem>
        <listitem>
         <para>
-         Improved <command>SELECT</command> query performance due to
-         enhanced partition elimination during query processing and
-         execution
+         Improved <command>SELECT</command> performance from enhanced partition
+         elimination strategies during query processing and execution
         </para>
        </listitem>
        <listitem>
@@ -48,22 +47,24 @@
          KEY</literal>, indexes, and triggers on partitioned tables
         </para>
        </listitem>
+       <listitem>
+        <para>
+         Having a "default" partition for storing data that does not match any
+         of the remaining partitions
+        </para>
+       </listitem>
       </itemizedlist>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Improvements to parallelism:
+      Improvements to parallelism, including:
       <itemizedlist>
        <listitem>
         <para>
-         Parallelized hash joins
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         Parallelized <command>CREATE INDEX</command> for B-tree indexes
+         B-tree indexes can now be built in parallel with
+         <command>CREATE INDEX</command>
         </para>
        </listitem>
        <listitem>
@@ -73,13 +74,22 @@
          queries using <literal>UNION</literal>
         </para>
        </listitem>
+       <listitem>
+        <para>
+         Performance improvements for parallelized hash joins and parallelized
+         sequential scans
+        </para>
+       </listitem>
       </itemizedlist>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      SQL stored procedures, with support for embedded transactions
+      SQL stored procedures that support embedded transactions. Stored
+      procedures can be created with <link linkend="sql-createprocedure">
+      <command>CREATE PROCEDURE</command></link> and executed with
+      <link linkend="sql-call"><command>CALL</command></link>
      </para>
     </listitem>
 
@@ -96,6 +106,13 @@
       standard, including <literal>RANGE <replaceable>distance</replaceable>
       PRECEDING/FOLLOWING</literal>, <literal>GROUPS</literal> mode, and
       frame exclusion options
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Covering indexes, which can be utilized using the
+      <literal>INCLUDE</literal> clause of <command>CREATE INDEX</command>
      </para>
     </listitem>
 
@@ -178,10 +195,6 @@
         the creation fails.  Previously <command>CREATE DATABASE</command>
         would be dumped without such specifications if the database locale
         and encoding matched the old cluster's defaults.
-       </para>
-
-       <para>
-        DID I GET EVERYTHING?
        </para>
       </listitem>
 
@@ -597,8 +610,7 @@
         The new command <link linkend="sql-alterindex"><command>ALTER
         INDEX ATTACH PARTITION</command></link> allows indexes to be
         attached to partitions.  This does not behave as a global index
-        since the contents are private to each index.  WARN WHEN USING
-        AN EXISTING INDEX?
+        since the contents are private to each index.
        </para>
       </listitem>
 
@@ -907,7 +919,7 @@ same commits as above
        </para>
 
        <para>
-        This reduces the likelihood of serialization conflicts.  ACCURATE?
+        This reduces the likelihood of serialization conflicts.
        </para>
       </listitem>
 
@@ -1980,7 +1992,6 @@ same commits as above
         <command>CALL</command>s or in nested PL/pgSQL DO and
         <command>CALL</command> blocks that only contain other PL/pgSQL
         <command>DO</command> and <command>CALL</command> blocks.
-        ACCURATE?
        </para>
       </listitem>
 
@@ -2404,11 +2415,6 @@ same commits as above
         the named replication slot (<option>--slot</option>)
         when the <acronym>WAL</acronym> streaming method
         (<option>--wal-method=stream</option>) is used.
-       </para>
-
-       <para>
-        IS IT CLEAR FROM THE DOCS THAT THE REPLICATION SLOT IS NOT
-        TEMPORARY?
        </para>
       </listitem>
 
@@ -2904,7 +2910,8 @@ same commits as above
        </para>
 
        <para>
-        This is useful for KNN-GiST searches.  HOW?
+        This is useful for KNN-GiST searches when looking for coordinates in
+        descending order.
        </para>
       </listitem>
 
