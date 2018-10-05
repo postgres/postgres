@@ -106,9 +106,28 @@ create table event_trigger_fire4 (a int);
 reset session_replication_role;
 -- fires all three
 create table event_trigger_fire5 (a int);
+-- non-top-level command
+create function f1() returns int
+language plpgsql
+as $$
+begin
+  create table event_trigger_fire6 (a int);
+  return 0;
+end $$;
+select f1();
+-- non-top-level command
+create procedure p1()
+language plpgsql
+as $$
+begin
+  create table event_trigger_fire7 (a int);
+end $$;
+call p1();
+
 -- clean up
 alter event trigger regress_event_trigger disable;
-drop table event_trigger_fire2, event_trigger_fire3, event_trigger_fire4, event_trigger_fire5;
+drop table event_trigger_fire2, event_trigger_fire3, event_trigger_fire4, event_trigger_fire5, event_trigger_fire6, event_trigger_fire7;
+drop routine f1(), p1();
 
 -- regress_event_trigger_end should fire on these commands
 grant all on table event_trigger_fire1 to public;

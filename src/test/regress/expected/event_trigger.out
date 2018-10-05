@@ -112,10 +112,45 @@ create table event_trigger_fire5 (a int);
 NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
 NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
 NOTICE:  test_event_trigger: ddl_command_end CREATE TABLE
+-- non-top-level command
+create function f1() returns int
+language plpgsql
+as $$
+begin
+  create table event_trigger_fire6 (a int);
+  return 0;
+end $$;
+NOTICE:  test_event_trigger: ddl_command_start CREATE FUNCTION
+NOTICE:  test_event_trigger: ddl_command_start CREATE FUNCTION
+NOTICE:  test_event_trigger: ddl_command_end CREATE FUNCTION
+select f1();
+NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
+NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
+NOTICE:  test_event_trigger: ddl_command_end CREATE TABLE
+ f1 
+----
+  0
+(1 row)
+
+-- non-top-level command
+create procedure p1()
+language plpgsql
+as $$
+begin
+  create table event_trigger_fire7 (a int);
+end $$;
+NOTICE:  test_event_trigger: ddl_command_start CREATE PROCEDURE
+NOTICE:  test_event_trigger: ddl_command_end CREATE PROCEDURE
+call p1();
+NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
+NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
+NOTICE:  test_event_trigger: ddl_command_end CREATE TABLE
 -- clean up
 alter event trigger regress_event_trigger disable;
-drop table event_trigger_fire2, event_trigger_fire3, event_trigger_fire4, event_trigger_fire5;
+drop table event_trigger_fire2, event_trigger_fire3, event_trigger_fire4, event_trigger_fire5, event_trigger_fire6, event_trigger_fire7;
 NOTICE:  test_event_trigger: ddl_command_end DROP TABLE
+drop routine f1(), p1();
+NOTICE:  test_event_trigger: ddl_command_end DROP ROUTINE
 -- regress_event_trigger_end should fire on these commands
 grant all on table event_trigger_fire1 to public;
 NOTICE:  test_event_trigger: ddl_command_end GRANT
