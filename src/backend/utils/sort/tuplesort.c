@@ -2764,7 +2764,7 @@ inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags, Oid collation,
 													datum1, datum2));
 
 		if (sk_flags & SK_BT_DESC)
-			compare = -compare;
+			INVERT_COMPARE_RESULT(compare);
 	}
 
 	return compare;

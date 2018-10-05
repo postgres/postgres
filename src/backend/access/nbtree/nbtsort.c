@@ -747,7 +747,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 															attrDatum2));
 
 						if (entry->sk_flags & SK_BT_DESC)
-							compare = -compare;
+							INVERT_COMPARE_RESULT(compare);
 					}
 					if (compare > 0)
 					{
