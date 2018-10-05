@@ -60,6 +60,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
+#include "pgstat.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -2219,6 +2220,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	EState	   *estate;
 	ExprContext *econtext;
 	HeapTuple	tp;
+	PgStat_FunctionCallUsage fcusage;
 	Datum		retval;
 
 	fexpr = stmt->funcexpr;
@@ -2302,7 +2304,9 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 		i++;
 	}
 
+	pgstat_init_function_usage(&fcinfo, &fcusage);
 	retval = FunctionCallInvoke(&fcinfo);
+	pgstat_end_function_usage(&fcusage, true);
 
 	if (fexpr->funcresulttype == VOIDOID)
 	{
