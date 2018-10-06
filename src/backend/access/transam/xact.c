@@ -675,6 +675,22 @@ GetCurrentCommandId(bool used)
 }
 
 /*
+ *	SetParallelStartTimestamps
+ *
+ * In a parallel worker, we should inherit the parent transaction's
+ * timestamps rather than setting our own.  The parallel worker
+ * infrastructure must call this to provide those values before
+ * calling StartTransaction() or SetCurrentStatementStartTimestamp().
+ */
+void
+SetParallelStartTimestamps(TimestampTz xact_ts, TimestampTz stmt_ts)
+{
+	Assert(IsParallelWorker());
+	xactStartTimestamp = xact_ts;
+	stmtStartTimestamp = stmt_ts;
+}
+
+/*
  *	GetCurrentTransactionStartTimestamp
  */
 TimestampTz
@@ -708,11 +724,17 @@ GetCurrentTransactionStopTimestamp(void)
 
 /*
  *	SetCurrentStatementStartTimestamp
+ *
+ * In a parallel worker, this should already have been provided by a call
+ * to SetParallelStartTimestamps().
  */
 void
 SetCurrentStatementStartTimestamp(void)
 {
-	stmtStartTimestamp = GetCurrentTimestamp();
+	if (!IsParallelWorker())
+		stmtStartTimestamp = GetCurrentTimestamp();
+	else
+		Assert(stmtStartTimestamp != 0);
 }
 
 /*
@@ -1867,10 +1889,16 @@ StartTransaction(void)
 	/*
 	 * set transaction_timestamp() (a/k/a now()).  We want this to be the same
 	 * as the first command's statement_timestamp(), so don't do a fresh
-	 * GetCurrentTimestamp() call (which'd be expensive anyway).  Also, mark
-	 * xactStopTimestamp as unset.
+	 * GetCurrentTimestamp() call (which'd be expensive anyway).  In a
+	 * parallel worker, this should already have been provided by a call to
+	 * SetParallelStartTimestamps().
+	 *
+	 * Also, mark xactStopTimestamp as unset.
 	 */
-	xactStartTimestamp = stmtStartTimestamp;
+	if (!IsParallelWorker())
+		xactStartTimestamp = stmtStartTimestamp;
+	else
+		Assert(xactStartTimestamp != 0);
 	xactStopTimestamp = 0;
 	pgstat_report_xact_timestamp(xactStartTimestamp);
 

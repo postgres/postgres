@@ -87,6 +87,8 @@ typedef struct FixedParallelState
 	PGPROC	   *parallel_master_pgproc;
 	pid_t		parallel_master_pid;
 	BackendId	parallel_master_backend_id;
+	TimestampTz xact_ts;
+	TimestampTz stmt_ts;
 
 	/* Mutex protects remaining fields. */
 	slock_t		mutex;
@@ -318,6 +320,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	fps->parallel_master_pgproc = MyProc;
 	fps->parallel_master_pid = MyProcPid;
 	fps->parallel_master_backend_id = MyBackendId;
+	fps->xact_ts = GetCurrentTransactionStartTimestamp();
+	fps->stmt_ts = GetCurrentStatementStartTimestamp();
 	SpinLockInit(&fps->mutex);
 	fps->last_xlog_end = 0;
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_FIXED, fps);
@@ -1310,6 +1314,13 @@ ParallelWorkerMain(Datum main_arg)
 	if (!BecomeLockGroupMember(fps->parallel_master_pgproc,
 							   fps->parallel_master_pid))
 		return;
+
+	/*
+	 * Restore transaction and statement start-time timestamps.  This must
+	 * happen before anything that would start a transaction, else asserts in
+	 * xact.c will fire.
+	 */
+	SetParallelStartTimestamps(fps->xact_ts, fps->stmt_ts);
 
 	/*
 	 * Identify the entry point to be called.  In theory this could result in
