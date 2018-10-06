@@ -61,6 +61,8 @@ validateWithCheckOption(const char *value)
  *
  * Create a view relation and use the rules system to store the query
  * for the view.
+ *
+ * EventTriggerAlterTableStart must have been called already.
  *---------------------------------------------------------------------
  */
 static ObjectAddress
@@ -186,6 +188,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 				atcmds = lappend(atcmds, atcmd);
 			}
 
+			/* EventTriggerAlterTableStart called by ProcessUtilitySlow */
 			AlterTableInternal(viewOid, atcmds, true);
 
 			/* Make the new view columns visible */
@@ -217,6 +220,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		atcmd->def = (Node *) options;
 		atcmds = list_make1(atcmd);
 
+		/* EventTriggerAlterTableStart called by ProcessUtilitySlow */
 		AlterTableInternal(viewOid, atcmds, true);
 
 		ObjectAddressSet(address, RelationRelationId, viewOid);
