@@ -17,6 +17,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/htup_details.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
@@ -750,19 +752,19 @@ get_position(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist1,
 static double
 get_len_position(double value, double hist1, double hist2)
 {
-	if (!is_infinite(hist1) && !is_infinite(hist2))
+	if (!isinf(hist1) && !isinf(hist2))
 	{
 		/*
 		 * Both bounds are finite. The value should be finite too, because it
 		 * lies somewhere between the bounds. If it doesn't, just return
 		 * something.
 		 */
-		if (is_infinite(value))
+		if (isinf(value))
 			return 0.5;
 
 		return 1.0 - (hist2 - value) / (hist2 - hist1);
 	}
-	else if (is_infinite(hist1) && !is_infinite(hist2))
+	else if (isinf(hist1) && !isinf(hist2))
 	{
 		/*
 		 * Lower bin boundary is -infinite, upper is finite. Return 1.0 to
@@ -770,7 +772,7 @@ get_len_position(double value, double hist1, double hist2)
 		 */
 		return 1.0;
 	}
-	else if (is_infinite(hist1) && is_infinite(hist2))
+	else if (isinf(hist1) && isinf(hist2))
 	{
 		/* same as above, but in reverse */
 		return 0.0;
@@ -851,7 +853,7 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
 		return 0.0;				/* shouldn't happen, but doesn't hurt to check */
 
 	/* All lengths in the table are <= infinite. */
-	if (is_infinite(length2) && equal)
+	if (isinf(length2) && equal)
 		return 1.0;
 
 	/*----------
@@ -978,7 +980,7 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
 	 * length2 is infinite. It's not clear what the correct value would be in
 	 * that case, so 0.5 seems as good as any value.
 	 */
-	if (is_infinite(area) && is_infinite(length2))
+	if (isinf(area) && isinf(length2))
 		frac = 0.5;
 	else
 		frac = area / (length2 - length1);
