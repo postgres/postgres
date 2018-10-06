@@ -732,16 +732,30 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 
 		Assert(rte->rtekind == RTE_RELATION);
 
-		rel = estate->es_relations[rti - 1] = heap_open(rte->relid, NoLock);
+		if (!IsParallelWorker())
+		{
+			/*
+			 * In a normal query, we should already have the appropriate lock,
+			 * but verify that through an Assert.  Since there's already an
+			 * Assert inside heap_open that insists on holding some lock, it
+			 * seems sufficient to check this only when rellockmode is higher
+			 * than the minimum.
+			 */
+			rel = heap_open(rte->relid, NoLock);
+			Assert(rte->rellockmode == AccessShareLock ||
+				   CheckRelationLockedByMe(rel, rte->rellockmode, false));
+		}
+		else
+		{
+			/*
+			 * If we are a parallel worker, we need to obtain our own local
+			 * lock on the relation.  This ensures sane behavior in case the
+			 * parent process exits before we do.
+			 */
+			rel = heap_open(rte->relid, rte->rellockmode);
+		}
 
-		/*
-		 * Verify that appropriate lock was obtained before execution.
-		 *
-		 * In the case of parallel query, only the leader would've obtained
-		 * the lock (that needs to be fixed, though).
-		 */
-		Assert(IsParallelWorker() ||
-			   CheckRelationLockedByMe(rel, rte->rellockmode, false));
+		estate->es_relations[rti - 1] = rel;
 	}
 
 	return rel;

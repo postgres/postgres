@@ -899,16 +899,12 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
 	/*
-	 * open the base relation and acquire appropriate lock on it.
+	 * open the scan relation
 	 */
 	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	/*
 	 * initialize child nodes
-	 *
-	 * We do this after ExecOpenScanRelation because the child nodes will open
-	 * indexscans on our relation's indexes, and we want to be sure we have
-	 * acquired a lock on the relation first.
 	 */
 	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate, eflags);
 

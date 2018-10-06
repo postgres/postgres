@@ -55,7 +55,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &css->ss.ps);
 
 	/*
-	 * open the base relation, if any, and acquire an appropriate lock on it
+	 * open the scan relation, if any
 	 */
 	if (scanrelid > 0)
 	{

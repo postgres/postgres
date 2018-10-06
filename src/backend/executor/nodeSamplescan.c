@@ -134,10 +134,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
 	/*
-	 * Initialize scan relation.
-	 *
-	 * Get the relation object id from the relid'th entry in the range table,
-	 * open that relation and acquire appropriate lock on it.
+	 * open the scan relation
 	 */
 	scanstate->ss.ss_currentRelation =
 		ExecOpenScanRelation(estate,

@@ -1622,8 +1622,8 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	}
 
 	/*
-	 * close whatever rangetable Relations have been opened.  We did not
-	 * acquire locks in ExecGetRangeTableRelation, so don't release 'em here.
+	 * close whatever rangetable Relations have been opened.  We do not
+	 * release any locks we might hold on those rels.
 	 */
 	num_relations = estate->es_range_table_size;
 	for (i = 0; i < num_relations; i++)

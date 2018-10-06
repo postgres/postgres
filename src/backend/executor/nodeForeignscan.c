@@ -156,8 +156,8 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
 	/*
-	 * open the base relation, if any, and acquire an appropriate lock on it;
-	 * also acquire function pointers from the FDW's handler
+	 * open the scan relation, if any; also acquire function pointers from the
+	 * FDW's handler
 	 */
 	if (scanrelid > 0)
 	{
