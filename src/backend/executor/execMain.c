@@ -828,10 +828,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_plannedstmt = plannedstmt;
 
 	/*
-	 * initialize result relation stuff, and open/lock the result rels.
-	 *
-	 * We must do this before initializing the plan tree, else we might try to
-	 * do a lock upgrade if a result rel is also a source rel.
+	 * Initialize ResultRelInfo data structures, and open the result rels.
 	 */
 	if (plannedstmt->resultRelations)
 	{
@@ -859,25 +856,19 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		}
 		estate->es_result_relations = resultRelInfos;
 		estate->es_num_result_relations = numResultRelations;
+
 		/* es_result_relation_info is NULL except when within ModifyTable */
 		estate->es_result_relation_info = NULL;
 
 		/*
-		 * In the partitioned result relation case, lock the non-leaf result
-		 * relations too.  A subset of these are the roots of respective
-		 * partitioned tables, for which we also allocate ResultRelInfos.
+		 * In the partitioned result relation case, also build ResultRelInfos
+		 * for all the partitioned table roots, because we will need them to
+		 * fire statement-level triggers, if any.
 		 */
-		estate->es_root_result_relations = NULL;
-		estate->es_num_root_result_relations = 0;
-		if (plannedstmt->nonleafResultRelations)
+		if (plannedstmt->rootResultRelations)
 		{
 			int			num_roots = list_length(plannedstmt->rootResultRelations);
 
-			/*
-			 * Firstly, build ResultRelInfos for all the partitioned table
-			 * roots, because we will need them to fire the statement-level
-			 * triggers, if any.
-			 */
 			resultRelInfos = (ResultRelInfo *)
 				palloc(num_roots * sizeof(ResultRelInfo));
 			resultRelInfo = resultRelInfos;
@@ -898,26 +889,11 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 			estate->es_root_result_relations = resultRelInfos;
 			estate->es_num_root_result_relations = num_roots;
-
-			/* Simply check the rest of them are locked. */
-#ifdef USE_ASSERT_CHECKING
-			foreach(l, plannedstmt->nonleafResultRelations)
-			{
-				Index		resultRelIndex = lfirst_int(l);
-
-				/* We locked the roots above. */
-				if (!list_member_int(plannedstmt->rootResultRelations,
-									 resultRelIndex))
-				{
-					Relation	resultRelDesc;
-					Oid			reloid = exec_rt_fetch(resultRelIndex, estate)->relid;
-
-					resultRelDesc = heap_open(reloid, NoLock);
-					Assert(CheckRelationLockedByMe(resultRelDesc, RowExclusiveLock, true));
-					heap_close(resultRelDesc, NoLock);
-				}
-			}
-#endif
+		}
+		else
+		{
+			estate->es_root_result_relations = NULL;
+			estate->es_num_root_result_relations = 0;
 		}
 	}
 	else
@@ -933,13 +909,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * Similarly, we have to lock relations selected FOR [KEY] UPDATE/SHARE
-	 * before we initialize the plan tree, else we'd be risking lock upgrades.
-	 * While we are at it, build the ExecRowMark list.  Any partitioned child
-	 * tables are ignored here (because isParent=true) and will be locked by
-	 * the first Append or MergeAppend node that references them.  (Note that
-	 * the RowMarks corresponding to partitioned child tables are present in
-	 * the same list as the rest, i.e., plannedstmt->rowMarks.)
+	 * Next, build the ExecRowMark list from the PlanRowMark(s), if any.
 	 */
 	estate->es_rowMarks = NIL;
 	foreach(l, plannedstmt->rowMarks)
@@ -956,6 +926,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		/* get relation's OID (will produce InvalidOid if subquery) */
 		relid = exec_rt_fetch(rc->rti, estate)->relid;
 
+		/* open relation, if we need to access it for this mark type */
 		switch (rc->markType)
 		{
 			case ROW_MARK_EXCLUSIVE:
@@ -991,6 +962,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		erm->ermActive = false;
 		ItemPointerSetInvalid(&(erm->curCtid));
 		erm->ermExtra = NULL;
+
 		estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
 	}
 

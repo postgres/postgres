@@ -534,8 +534,6 @@ extern void UnregisterExprContextCallback(ExprContext *econtext,
 							  ExprContextCallbackFunction function,
 							  Datum arg);
 
-extern void ExecLockNonLeafAppendTables(List *partitioned_rels, EState *estate);
-
 extern Datum GetAttributeByName(HeapTupleHeader tuple, const char *attname,
 				   bool *isNull);
 extern Datum GetAttributeByNum(HeapTupleHeader tuple, AttrNumber attrno,

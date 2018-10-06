@@ -900,66 +900,6 @@ ShutdownExprContext(ExprContext *econtext, bool isCommit)
 }
 
 /*
- * ExecLockNonLeafAppendTables
- *
- * Locks, if necessary, the tables indicated by the RT indexes contained in
- * the partitioned_rels list.  These are the non-leaf tables in the partition
- * tree controlled by a given Append or MergeAppend node.
- */
-void
-ExecLockNonLeafAppendTables(List *partitioned_rels, EState *estate)
-{
-	PlannedStmt *stmt = estate->es_plannedstmt;
-	ListCell   *lc;
-
-	foreach(lc, partitioned_rels)
-	{
-		ListCell   *l;
-		Index		rti = lfirst_int(lc);
-		bool		is_result_rel = false;
-		Oid			relid = exec_rt_fetch(rti, estate)->relid;
-
-		/* If this is a result relation, already locked in InitPlan */
-		foreach(l, stmt->nonleafResultRelations)
-		{
-			if (rti == lfirst_int(l))
-			{
-				is_result_rel = true;
-				break;
-			}
-		}
-
-		/*
-		 * Not a result relation; check if there is a RowMark that requires
-		 * taking a RowShareLock on this rel.
-		 */
-		if (!is_result_rel)
-		{
-			PlanRowMark *rc = NULL;
-			LOCKMODE	lockmode;
-
-			foreach(l, stmt->rowMarks)
-			{
-				if (((PlanRowMark *) lfirst(l))->rti == rti)
-				{
-					rc = lfirst(l);
-					break;
-				}
-			}
-
-			if (rc && RowMarkRequiresRowShareLock(rc->markType))
-				lockmode = RowShareLock;
-			else
-				lockmode = AccessShareLock;
-
-			Assert(lockmode == exec_rt_fetch(rti, estate)->rellockmode);
-
-			LockRelationOid(relid, lockmode);
-		}
-	}
-}
-
-/*
  *		GetAttributeByName
  *		GetAttributeByNum
  *
