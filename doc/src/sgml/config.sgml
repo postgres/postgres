@@ -66,7 +66,7 @@
       <para>
        <emphasis>Numeric with Unit:</emphasis>
        Some numeric parameters have an implicit unit, because they describe
-       quantities of memory or time. The unit might be kilobytes, blocks
+       quantities of memory or time. The unit might be bytes, kilobytes, blocks
        (typically eight kilobytes), milliseconds, seconds, or minutes.
        An unadorned numeric value for one of these settings will use the
        setting's default unit, which can be learned from
@@ -81,7 +81,8 @@
        <itemizedlist>
         <listitem>
          <para>
-          Valid memory units are <literal>kB</literal> (kilobytes),
+          Valid memory units are <literal>B</literal> (bytes),
+          <literal>kB</literal> (kilobytes),
           <literal>MB</literal> (megabytes), <literal>GB</literal>
           (gigabytes), and <literal>TB</literal> (terabytes).
           The multiplier for memory units is 1024, not 1000.
