@@ -574,6 +574,7 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 
 		fkconstraint = makeNode(Constraint);
 		/* for now this is all we need */
+		fkconstraint->conname = pstrdup(NameStr(constrForm->conname));
 		fkconstraint->fk_upd_action = constrForm->confupdtype;
 		fkconstraint->fk_del_action = constrForm->confdeltype;
 		fkconstraint->deferrable = constrForm->condeferrable;

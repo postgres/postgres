@@ -14275,21 +14275,21 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 							   RelationGetRelid(attachrel), &cloned);
 	foreach(l, cloned)
 	{
-		ClonedConstraint *cloned = lfirst(l);
+		ClonedConstraint *clonedcon = lfirst(l);
 		NewConstraint *newcon;
 		Relation	clonedrel;
 		AlteredTableInfo *parttab;
 
-		clonedrel = relation_open(cloned->relid, NoLock);
+		clonedrel = relation_open(clonedcon->relid, NoLock);
 		parttab = ATGetQueueEntry(wqueue, clonedrel);
 
 		newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
-		newcon->name = cloned->constraint->conname;
+		newcon->name = clonedcon->constraint->conname;
 		newcon->contype = CONSTR_FOREIGN;
-		newcon->refrelid = cloned->refrelid;
-		newcon->refindid = cloned->conindid;
-		newcon->conid = cloned->conid;
-		newcon->qual = (Node *) cloned->constraint;
+		newcon->refrelid = clonedcon->refrelid;
+		newcon->refindid = clonedcon->conindid;
+		newcon->conid = clonedcon->conid;
+		newcon->qual = (Node *) clonedcon->constraint;
 
 		parttab->constraints = lappend(parttab->constraints, newcon);
 
