@@ -40,7 +40,8 @@ typedef enum
 
 extern void index_check_primary_key(Relation heapRel,
 						IndexInfo *indexInfo,
-						bool is_alter_table);
+						bool is_alter_table,
+						IndexStmt *stmt);
 
 #define	INDEX_CREATE_IS_PRIMARY				(1 << 0)
 #define	INDEX_CREATE_ADD_CONSTRAINT			(1 << 1)

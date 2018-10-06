@@ -44,6 +44,7 @@ typedef struct CollectedATSubcmd
 typedef struct CollectedCommand
 {
 	CollectedCommandType type;
+
 	bool		in_extension;
 	Node	   *parsetree;
 
@@ -100,6 +101,8 @@ typedef struct CollectedCommand
 			ObjectType	objtype;
 		}			defprivs;
 	}			d;
+
+	struct CollectedCommand	*parent;		/* when nested */
 } CollectedCommand;
 
 #endif							/* DEPARSE_UTILITY_H */
