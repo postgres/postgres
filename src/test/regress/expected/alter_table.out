@@ -3960,3 +3960,18 @@ ERROR:  cannot attach a temporary relation as partition of permanent relation "p
 alter table temp_part_parent attach partition temp_part_child default; -- ok
 drop table perm_part_parent cascade;
 drop table temp_part_parent cascade;
+-- test case where the partitioning operator is a SQL function whose
+-- evaluation results in the table's relcache being rebuilt partway through
+-- the execution of an ATTACH PARTITION command
+create function at_test_sql_partop (int4, int4) returns int language sql
+as $$ select case when $1 = $2 then 0 when $1 > $2 then 1 else -1 end; $$;
+create operator class at_test_sql_partop for type int4 using btree as
+    operator 1 < (int4, int4), operator 2 <= (int4, int4),
+    operator 3 = (int4, int4), operator 4 >= (int4, int4),
+    operator 5 > (int4, int4), function 1 at_test_sql_partop(int4, int4);
+create table at_test_sql_partop (a int) partition by range (a at_test_sql_partop);
+create table at_test_sql_partop_1 (a int);
+alter table at_test_sql_partop attach partition at_test_sql_partop_1 for values from (0) to (10);
+drop table at_test_sql_partop;
+drop operator class at_test_sql_partop using btree;
+drop function at_test_sql_partop;
