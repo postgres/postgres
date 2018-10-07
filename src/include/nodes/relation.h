@@ -121,7 +121,6 @@ typedef struct PlannerGlobal
 
 	List	   *resultRelations;	/* "flat" list of integer RT indexes */
 
-	List	   *nonleafResultRelations; /* "flat" list of integer RT indexes */
 	List	   *rootResultRelations;	/* "flat" list of integer RT indexes */
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
@@ -1717,8 +1716,7 @@ typedef struct ModifyTablePath
 	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
 	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	Index		nominalRelation;	/* Parent RT index for use of EXPLAIN */
-	/* RT indexes of non-leaf tables in a partition tree */
-	List	   *partitioned_rels;
+	Index		rootRelation;	/* Root RT index, if target is partitioned */
 	bool		partColsUpdated;	/* some part key in hierarchy updated */
 	List	   *resultRelations;	/* integer list of RT indexes */
 	List	   *subpaths;		/* Path(s) producing source data */

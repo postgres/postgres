@@ -848,12 +848,10 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				}
 
 				splan->nominalRelation += rtoffset;
+				if (splan->rootRelation)
+					splan->rootRelation += rtoffset;
 				splan->exclRelRTI += rtoffset;
 
-				foreach(l, splan->partitioned_rels)
-				{
-					lfirst_int(l) += rtoffset;
-				}
 				foreach(l, splan->resultRelations)
 				{
 					lfirst_int(l) += rtoffset;
@@ -884,24 +882,17 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 								list_copy(splan->resultRelations));
 
 				/*
-				 * If the main target relation is a partitioned table, the
-				 * following list contains the RT indexes of partitioned child
-				 * relations including the root, which are not included in the
-				 * above list.  We also keep RT indexes of the roots
-				 * separately to be identified as such during the executor
-				 * initialization.
+				 * If the main target relation is a partitioned table, also
+				 * add the partition root's RT index to rootResultRelations,
+				 * and remember its index in that list in rootResultRelIndex.
 				 */
-				if (splan->partitioned_rels != NIL)
+				if (splan->rootRelation)
 				{
-					root->glob->nonleafResultRelations =
-						list_concat(root->glob->nonleafResultRelations,
-									list_copy(splan->partitioned_rels));
-					/* Remember where this root will be in the global list. */
 					splan->rootResultRelIndex =
 						list_length(root->glob->rootResultRelations);
 					root->glob->rootResultRelations =
 						lappend_int(root->glob->rootResultRelations,
-									linitial_int(splan->partitioned_rels));
+									splan->rootRelation);
 				}
 			}
 			break;
@@ -915,10 +906,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
-				foreach(l, splan->partitioned_rels)
-				{
-					lfirst_int(l) += rtoffset;
-				}
 				foreach(l, splan->appendplans)
 				{
 					lfirst(l) = set_plan_refs(root,
@@ -952,10 +939,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
-				foreach(l, splan->partitioned_rels)
-				{
-					lfirst_int(l) += rtoffset;
-				}
 				foreach(l, splan->mergeplans)
 				{
 					lfirst(l) = set_plan_refs(root,

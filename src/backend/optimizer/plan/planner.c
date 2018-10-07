@@ -303,7 +303,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->finalrtable = NIL;
 	glob->finalrowmarks = NIL;
 	glob->resultRelations = NIL;
-	glob->nonleafResultRelations = NIL;
 	glob->rootResultRelations = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
@@ -503,7 +502,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
-	Assert(glob->nonleafResultRelations == NIL);
 	Assert(glob->rootResultRelations == NIL);
 	top_plan = set_plan_references(root, top_plan);
 	/* ... and the subplans (both regular subplans and initplans) */
@@ -530,7 +528,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->planTree = top_plan;
 	result->rtable = glob->finalrtable;
 	result->resultRelations = glob->resultRelations;
-	result->nonleafResultRelations = glob->nonleafResultRelations;
 	result->rootResultRelations = glob->rootResultRelations;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
@@ -1170,6 +1167,7 @@ inheritance_planner(PlannerInfo *root)
 	Bitmapset  *subqueryRTindexes;
 	Bitmapset  *modifiableARIindexes;
 	int			nominalRelation = -1;
+	Index		rootRelation = 0;
 	List	   *final_rtable = NIL;
 	int			save_rel_array_size = 0;
 	RelOptInfo **save_rel_array = NULL;
@@ -1184,8 +1182,6 @@ inheritance_planner(PlannerInfo *root)
 	ListCell   *lc;
 	Index		rti;
 	RangeTblEntry *parent_rte;
-	Relids		partitioned_relids = NULL;
-	List	   *partitioned_rels = NIL;
 	PlannerInfo *parent_root;
 	Query	   *parent_parse;
 	Bitmapset  *parent_relids = bms_make_singleton(top_parentRTindex);
@@ -1249,24 +1245,16 @@ inheritance_planner(PlannerInfo *root)
 
 	/*
 	 * If the parent RTE is a partitioned table, we should use that as the
-	 * nominal relation, because the RTEs added for partitioned tables
+	 * nominal target relation, because the RTEs added for partitioned tables
 	 * (including the root parent) as child members of the inheritance set do
-	 * not appear anywhere else in the plan.  The situation is exactly the
-	 * opposite in the case of non-partitioned inheritance parent as described
-	 * below. For the same reason, collect the list of descendant partitioned
-	 * tables to be saved in ModifyTable node, so that executor can lock those
-	 * as well.
+	 * not appear anywhere else in the plan, so the confusion explained below
+	 * for non-partitioning inheritance cases is not possible.
 	 */
 	parent_rte = rt_fetch(top_parentRTindex, root->parse->rtable);
 	if (parent_rte->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		nominalRelation = top_parentRTindex;
-
-		/*
-		 * Root parent's RT index is always present in the partitioned_rels of
-		 * the ModifyTable node, if one is needed at all.
-		 */
-		partitioned_relids = bms_make_singleton(top_parentRTindex);
+		rootRelation = top_parentRTindex;
 	}
 
 	/*
@@ -1338,7 +1326,7 @@ inheritance_planner(PlannerInfo *root)
 		 * inheritance parent.
 		 */
 		subroot->inhTargetKind =
-			partitioned_relids ? INHKIND_PARTITIONED : INHKIND_INHERITED;
+			(rootRelation != 0) ? INHKIND_PARTITIONED : INHKIND_INHERITED;
 
 		/*
 		 * If this child is further partitioned, remember it as a parent.
@@ -1364,13 +1352,13 @@ inheritance_planner(PlannerInfo *root)
 
 		/*
 		 * Set the nominal target relation of the ModifyTable node if not
-		 * already done.  We use the inheritance parent RTE as the nominal
-		 * target relation if it's a partitioned table (see just above this
-		 * loop).  In the non-partitioned parent case, we'll use the first
-		 * child relation (even if it's excluded) as the nominal target
-		 * relation.  Because of the way expand_inherited_rtentry works, the
-		 * latter should be the RTE representing the parent table in its role
-		 * as a simple member of the inheritance set.
+		 * already done.  If the target is a partitioned table, we already set
+		 * nominalRelation to refer to the partition root, above.  For
+		 * non-partitioned inheritance cases, we'll use the first child
+		 * relation (even if it's excluded) as the nominal target relation.
+		 * Because of the way expand_inherited_rtentry works, that should be
+		 * the RTE representing the parent table in its role as a simple
+		 * member of the inheritance set.
 		 *
 		 * It would be logically cleaner to *always* use the inheritance
 		 * parent RTE as the nominal relation; but that RTE is not otherwise
@@ -1509,15 +1497,6 @@ inheritance_planner(PlannerInfo *root)
 			continue;
 
 		/*
-		 * Add the current parent's RT index to the partitioned_relids set if
-		 * we're creating the ModifyTable path for a partitioned root table.
-		 * (We only care about parents of non-excluded children.)
-		 */
-		if (partitioned_relids)
-			partitioned_relids = bms_add_member(partitioned_relids,
-												appinfo->parent_relid);
-
-		/*
 		 * If this is the first non-excluded child, its post-planning rtable
 		 * becomes the initial contents of final_rtable; otherwise, append
 		 * just its modified subquery RTEs to final_rtable.
@@ -1620,29 +1599,13 @@ inheritance_planner(PlannerInfo *root)
 	else
 		rowMarks = root->rowMarks;
 
-	if (partitioned_relids)
-	{
-		int			i;
-
-		i = -1;
-		while ((i = bms_next_member(partitioned_relids, i)) >= 0)
-			partitioned_rels = lappend_int(partitioned_rels, i);
-
-		/*
-		 * If we're going to create ModifyTable at all, the list should
-		 * contain at least one member, that is, the root parent's index.
-		 */
-		Assert(list_length(partitioned_rels) >= 1);
-		partitioned_rels = list_make1(partitioned_rels);
-	}
-
 	/* Create Path representing a ModifyTable to do the UPDATE/DELETE work */
 	add_path(final_rel, (Path *)
 			 create_modifytable_path(root, final_rel,
 									 parse->commandType,
 									 parse->canSetTag,
 									 nominalRelation,
-									 partitioned_rels,
+									 rootRelation,
 									 root->partColsUpdated,
 									 resultRelations,
 									 subpaths,
@@ -2186,9 +2149,20 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 */
 		if (parse->commandType != CMD_SELECT && !inheritance_update)
 		{
+			Index		rootRelation;
 			List	   *withCheckOptionLists;
 			List	   *returningLists;
 			List	   *rowMarks;
+
+			/*
+			 * If target is a partition root table, we need to mark the
+			 * ModifyTable node appropriately for that.
+			 */
+			if (rt_fetch(parse->resultRelation, parse->rtable)->relkind ==
+				RELKIND_PARTITIONED_TABLE)
+				rootRelation = parse->resultRelation;
+			else
+				rootRelation = 0;
 
 			/*
 			 * Set up the WITH CHECK OPTION and RETURNING lists-of-lists, if
@@ -2219,7 +2193,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										parse->commandType,
 										parse->canSetTag,
 										parse->resultRelation,
-										NIL,
+										rootRelation,
 										false,
 										list_make1_int(parse->resultRelation),
 										list_make1(path),

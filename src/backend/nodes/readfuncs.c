@@ -1504,7 +1504,6 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(planTree);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(resultRelations);
-	READ_NODE_FIELD(nonleafResultRelations);
 	READ_NODE_FIELD(rootResultRelations);
 	READ_NODE_FIELD(subplans);
 	READ_BITMAPSET_FIELD(rewindPlanIDs);
@@ -1598,7 +1597,7 @@ _readModifyTable(void)
 	READ_ENUM_FIELD(operation, CmdType);
 	READ_BOOL_FIELD(canSetTag);
 	READ_UINT_FIELD(nominalRelation);
-	READ_NODE_FIELD(partitioned_rels);
+	READ_UINT_FIELD(rootRelation);
 	READ_BOOL_FIELD(partColsUpdated);
 	READ_NODE_FIELD(resultRelations);
 	READ_INT_FIELD(resultRelIndex);
@@ -1632,7 +1631,6 @@ _readAppend(void)
 
 	READ_NODE_FIELD(appendplans);
 	READ_INT_FIELD(first_partial_plan);
-	READ_NODE_FIELD(partitioned_rels);
 	READ_NODE_FIELD(part_prune_info);
 
 	READ_DONE();
@@ -1648,7 +1646,6 @@ _readMergeAppend(void)
 
 	ReadCommonPlan(&local_node->plan);
 
-	READ_NODE_FIELD(partitioned_rels);
 	READ_NODE_FIELD(mergeplans);
 	READ_INT_FIELD(numCols);
 	READ_ATTRNUMBER_ARRAY(sortColIdx, local_node->numCols);

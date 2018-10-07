@@ -355,7 +355,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	leaf_part_rri = makeNode(ResultRelInfo);
 	InitResultRelInfo(leaf_part_rri,
 					  partrel,
-					  node ? node->nominalRelation : 1,
+					  node ? node->rootRelation : 1,
 					  rootrel,
 					  estate->es_instrument);
 

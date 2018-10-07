@@ -2050,7 +2050,7 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 		 * Vars contained in those expressions.
 		 */
 		if (plan && plan->operation == CMD_UPDATE &&
-			resultRelation == plan->nominalRelation)
+			resultRelation == plan->rootRelation)
 			resultRelation = mtstate->resultRelInfo[0].ri_RangeTableIndex;
 	}
 

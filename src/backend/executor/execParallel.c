@@ -183,7 +183,6 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->planTree = plan;
 	pstmt->rtable = estate->es_range_table;
 	pstmt->resultRelations = NIL;
-	pstmt->nonleafResultRelations = NIL;
 
 	/*
 	 * Transfer only parallel-safe subplans, leaving a NULL "hole" in the list

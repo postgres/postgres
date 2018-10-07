@@ -69,15 +69,8 @@ typedef struct PlannedStmt
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	/*
-	 * rtable indexes of non-leaf target relations for UPDATE/DELETE on all
-	 * the partitioned tables mentioned in the query.
-	 */
-	List	   *nonleafResultRelations;
-
-	/*
-	 * rtable indexes of root target relations for UPDATE/DELETE; this list
-	 * maintains a subset of the RT indexes in nonleafResultRelations,
-	 * indicating the roots of the respective partition hierarchies.
+	 * rtable indexes of partitioned table roots that are UPDATE/DELETE
+	 * targets; needed for trigger firing.
 	 */
 	List	   *rootResultRelations;
 
@@ -210,6 +203,12 @@ typedef struct ProjectSet
  *		Apply rows produced by subplan(s) to result table(s),
  *		by inserting, updating, or deleting.
  *
+ * If the originally named target table is a partitioned table, both
+ * nominalRelation and rootRelation contain the RT index of the partition
+ * root, which is not otherwise mentioned in the plan.  Otherwise rootRelation
+ * is zero.  However, nominalRelation will always be set, as it's the rel that
+ * EXPLAIN should claim is the INSERT/UPDATE/DELETE target.
+ *
  * Note that rowMarks and epqParam are presumed to be valid for all the
  * subplan(s); they can't contain any info that varies across subplans.
  * ----------------
@@ -220,8 +219,7 @@ typedef struct ModifyTable
 	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
 	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	Index		nominalRelation;	/* Parent RT index for use of EXPLAIN */
-	/* RT indexes of non-leaf tables in a partition tree */
-	List	   *partitioned_rels;
+	Index		rootRelation;	/* Root RT index, if target is partitioned */
 	bool		partColsUpdated;	/* some part key in hierarchy updated */
 	List	   *resultRelations;	/* integer list of RT indexes */
 	int			resultRelIndex; /* index of first resultRel in plan's list */
@@ -259,9 +257,6 @@ typedef struct Append
 	 */
 	int			first_partial_plan;
 
-	/* RT indexes of non-leaf tables in a partition tree */
-	List	   *partitioned_rels;
-
 	/* Info for run-time subplan pruning; NULL if we're not doing that */
 	struct PartitionPruneInfo *part_prune_info;
 } Append;
@@ -274,10 +269,8 @@ typedef struct Append
 typedef struct MergeAppend
 {
 	Plan		plan;
-	/* RT indexes of non-leaf tables in a partition tree */
-	List	   *partitioned_rels;
 	List	   *mergeplans;
-	/* remaining fields are just like the sort-key info in struct Sort */
+	/* these fields are just like the sort-key info in struct Sort: */
 	int			numCols;		/* number of sort-key columns */
 	AttrNumber *sortColIdx;		/* their indexes in the target list */
 	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
