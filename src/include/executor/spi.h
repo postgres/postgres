@@ -166,5 +166,6 @@ extern void SPI_rollback(void);
 extern void SPICleanup(void);
 extern void AtEOXact_SPI(bool isCommit);
 extern void AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid);
+extern bool SPI_inside_nonatomic_context(void);
 
 #endif							/* SPI_H */
