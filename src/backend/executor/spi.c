@@ -423,6 +423,19 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 	}
 }
 
+/*
+ * Are we executing inside a procedure (that is, a nonatomic SPI context)?
+ */
+bool
+SPI_inside_nonatomic_context(void)
+{
+	if (_SPI_current == NULL)
+		return false;			/* not in any SPI context at all */
+	if (_SPI_current->atomic)
+		return false;			/* it's atomic (ie function not procedure) */
+	return true;
+}
+
 
 /* Parse, plan, and execute a query string */
 int

@@ -1887,20 +1887,26 @@ StartTransaction(void)
 	TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
 
 	/*
-	 * set transaction_timestamp() (a/k/a now()).  We want this to be the same
-	 * as the first command's statement_timestamp(), so don't do a fresh
-	 * GetCurrentTimestamp() call (which'd be expensive anyway).  In a
-	 * parallel worker, this should already have been provided by a call to
+	 * set transaction_timestamp() (a/k/a now()).  Normally, we want this to
+	 * be the same as the first command's statement_timestamp(), so don't do a
+	 * fresh GetCurrentTimestamp() call (which'd be expensive anyway).  But
+	 * for transactions started inside procedures (i.e., nonatomic SPI
+	 * contexts), we do need to advance the timestamp.  Also, in a parallel
+	 * worker, the timestamp should already have been provided by a call to
 	 * SetParallelStartTimestamps().
-	 *
-	 * Also, mark xactStopTimestamp as unset.
 	 */
 	if (!IsParallelWorker())
-		xactStartTimestamp = stmtStartTimestamp;
+	{
+		if (!SPI_inside_nonatomic_context())
+			xactStartTimestamp = stmtStartTimestamp;
+		else
+			xactStartTimestamp = GetCurrentTimestamp();
+	}
 	else
 		Assert(xactStartTimestamp != 0);
-	xactStopTimestamp = 0;
 	pgstat_report_xact_timestamp(xactStartTimestamp);
+	/* Mark xactStopTimestamp as unset. */
+	xactStopTimestamp = 0;
 
 	/*
 	 * initialize current transaction state fields
