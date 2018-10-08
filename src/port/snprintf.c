@@ -102,9 +102,11 @@
 /* Prevent recursion */
 #undef	vsnprintf
 #undef	snprintf
+#undef	vsprintf
 #undef	sprintf
 #undef	vfprintf
 #undef	fprintf
+#undef	vprintf
 #undef	printf
 
 /*
@@ -208,7 +210,7 @@ pg_snprintf(char *str, size_t count, const char *fmt,...)
 	return len;
 }
 
-static int
+int
 pg_vsprintf(char *str, const char *fmt, va_list args)
 {
 	PrintfTarget target;
@@ -268,6 +270,12 @@ pg_fprintf(FILE *stream, const char *fmt,...)
 	len = pg_vfprintf(stream, fmt, args);
 	va_end(args);
 	return len;
+}
+
+int
+pg_vprintf(const char *fmt, va_list args)
+{
+	return pg_vfprintf(stdout, fmt, args);
 }
 
 int

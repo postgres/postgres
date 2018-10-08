@@ -152,6 +152,9 @@ extern unsigned char pg_ascii_tolower(unsigned char ch);
 #ifdef snprintf
 #undef snprintf
 #endif
+#ifdef vsprintf
+#undef vsprintf
+#endif
 #ifdef sprintf
 #undef sprintf
 #endif
@@ -161,15 +164,20 @@ extern unsigned char pg_ascii_tolower(unsigned char ch);
 #ifdef fprintf
 #undef fprintf
 #endif
+#ifdef vprintf
+#undef vprintf
+#endif
 #ifdef printf
 #undef printf
 #endif
 
 extern int	pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 extern int	pg_snprintf(char *str, size_t count, const char *fmt,...) pg_attribute_printf(3, 4);
+extern int	pg_vsprintf(char *str, const char *fmt, va_list args);
 extern int	pg_sprintf(char *str, const char *fmt,...) pg_attribute_printf(2, 3);
 extern int	pg_vfprintf(FILE *stream, const char *fmt, va_list args);
 extern int	pg_fprintf(FILE *stream, const char *fmt,...) pg_attribute_printf(2, 3);
+extern int	pg_vprintf(const char *fmt, va_list args);
 extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 
 /*
@@ -182,9 +190,11 @@ extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
  */
 #define vsnprintf		pg_vsnprintf
 #define snprintf		pg_snprintf
+#define vsprintf		pg_vsprintf
 #define sprintf			pg_sprintf
 #define vfprintf		pg_vfprintf
 #define fprintf			pg_fprintf
+#define vprintf			pg_vprintf
 #define printf(...)		pg_printf(__VA_ARGS__)
 
 /* This is also provided by snprintf.c */
