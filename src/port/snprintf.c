@@ -33,13 +33,7 @@
 
 #include "c.h"
 
-#include <ctype.h>
-#include <limits.h>
 #include <math.h>
-#ifndef WIN32
-#include <sys/ioctl.h>
-#endif
-#include <sys/param.h>
 
 /*
  * We used to use the platform's NL_ARGMAX here, but that's a bad idea,
@@ -1111,10 +1105,6 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 	int			zeropadlen = 0; /* amount to pad with zeroes */
 	int			padlen;			/* amount to pad with spaces */
 
-	/* Handle sign (NaNs have no sign) */
-	if (!isnan(value) && adjust_sign((value < 0), forcesign, &signvalue))
-		value = -value;
-
 	/*
 	 * We rely on the regular C library's sprintf to do the basic conversion,
 	 * then handle padding considerations here.
@@ -1128,34 +1118,62 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 	 * bytes and limit requested precision to 350 digits; this should prevent
 	 * buffer overrun even with non-IEEE math.  If the original precision
 	 * request was more than 350, separately pad with zeroes.
+	 *
+	 * We handle infinities and NaNs specially to ensure platform-independent
+	 * output.
 	 */
 	if (precision < 0)			/* cover possible overflow of "accum" */
 		precision = 0;
 	prec = Min(precision, 350);
 
-	if (pointflag)
+	if (isnan(value))
 	{
-		zeropadlen = precision - prec;
-		fmt[0] = '%';
-		fmt[1] = '.';
-		fmt[2] = '*';
-		fmt[3] = type;
-		fmt[4] = '\0';
-		vallen = sprintf(convert, fmt, prec, value);
+		strcpy(convert, "NaN");
+		vallen = 3;
+		/* no zero padding, regardless of precision spec */
 	}
 	else
 	{
-		fmt[0] = '%';
-		fmt[1] = type;
-		fmt[2] = '\0';
-		vallen = sprintf(convert, fmt, value);
-	}
-	if (vallen < 0)
-		goto fail;
+		/*
+		 * Handle sign (NaNs have no sign, so we don't do this in the case
+		 * above).  "value < 0.0" will not be true for IEEE minus zero, so we
+		 * detect that by looking for the case where value equals 0.0
+		 * according to == but not according to memcmp.
+		 */
+		static const double dzero = 0.0;
 
-	/* If it's infinity or NaN, forget about doing any zero-padding */
-	if (zeropadlen > 0 && !isdigit((unsigned char) convert[vallen - 1]))
-		zeropadlen = 0;
+		if (adjust_sign((value < 0.0 ||
+						 (value == 0.0 &&
+						  memcmp(&value, &dzero, sizeof(double)) != 0)),
+						forcesign, &signvalue))
+			value = -value;
+
+		if (isinf(value))
+		{
+			strcpy(convert, "Infinity");
+			vallen = 8;
+			/* no zero padding, regardless of precision spec */
+		}
+		else if (pointflag)
+		{
+			zeropadlen = precision - prec;
+			fmt[0] = '%';
+			fmt[1] = '.';
+			fmt[2] = '*';
+			fmt[3] = type;
+			fmt[4] = '\0';
+			vallen = sprintf(convert, fmt, prec, value);
+		}
+		else
+		{
+			fmt[0] = '%';
+			fmt[1] = type;
+			fmt[2] = '\0';
+			vallen = sprintf(convert, fmt, value);
+		}
+		if (vallen < 0)
+			goto fail;
+	}
 
 	padlen = compute_padlen(minlen, vallen + zeropadlen, leftjust);
 
@@ -1196,6 +1214,96 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 fail:
 	target->failed = true;
 }
+
+/*
+ * Nonstandard entry point to print a double value efficiently.
+ *
+ * This is approximately equivalent to strfromd(), but has an API more
+ * adapted to what float8out() wants.  The behavior is like snprintf()
+ * with a format of "%.ng", where n is the specified precision.
+ * However, the target buffer must be nonempty (i.e. count > 0), and
+ * the precision is silently bounded to a sane range.
+ */
+int
+pg_strfromd(char *str, size_t count, int precision, double value)
+{
+	PrintfTarget target;
+	int			signvalue = 0;
+	int			vallen;
+	char		fmt[8];
+	char		convert[64];
+
+	/* Set up the target like pg_snprintf, but require nonempty buffer */
+	Assert(count > 0);
+	target.bufstart = target.bufptr = str;
+	target.bufend = str + count - 1;
+	target.stream = NULL;
+	target.nchars = 0;
+	target.failed = false;
+
+	/*
+	 * We bound precision to a reasonable range; the combination of this and
+	 * the knowledge that we're using "g" format without padding allows the
+	 * convert[] buffer to be reasonably small.
+	 */
+	if (precision < 1)
+		precision = 1;
+	else if (precision > 32)
+		precision = 32;
+
+	/*
+	 * The rest is just an inlined version of the fmtfloat() logic above,
+	 * simplified using the knowledge that no padding is wanted.
+	 */
+	if (isnan(value))
+	{
+		strcpy(convert, "NaN");
+		vallen = 3;
+	}
+	else
+	{
+		static const double dzero = 0.0;
+
+		if (value < 0.0 ||
+			(value == 0.0 &&
+			 memcmp(&value, &dzero, sizeof(double)) != 0))
+		{
+			signvalue = '-';
+			value = -value;
+		}
+
+		if (isinf(value))
+		{
+			strcpy(convert, "Infinity");
+			vallen = 8;
+		}
+		else
+		{
+			fmt[0] = '%';
+			fmt[1] = '.';
+			fmt[2] = '*';
+			fmt[3] = 'g';
+			fmt[4] = '\0';
+			vallen = sprintf(convert, fmt, precision, value);
+			if (vallen < 0)
+			{
+				target.failed = true;
+				goto fail;
+			}
+		}
+	}
+
+	if (signvalue)
+		dopr_outch(signvalue, &target);
+
+	dostr(convert, vallen, &target);
+
+fail:
+	*(target.bufptr) = '\0';
+	return target.failed ? -1 : (target.bufptr - target.bufstart
+								 + target.nchars);
+}
+
 
 static void
 dostr(const char *str, int slen, PrintfTarget *target)

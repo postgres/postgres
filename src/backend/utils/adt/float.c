@@ -243,30 +243,10 @@ Datum
 float4out(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
-	char	   *ascii;
+	char	   *ascii = (char *) palloc(32);
+	int			ndig = FLT_DIG + extra_float_digits;
 
-	if (isnan(num))
-		PG_RETURN_CSTRING(pstrdup("NaN"));
-
-	switch (is_infinite(num))
-	{
-		case 1:
-			ascii = pstrdup("Infinity");
-			break;
-		case -1:
-			ascii = pstrdup("-Infinity");
-			break;
-		default:
-			{
-				int			ndig = FLT_DIG + extra_float_digits;
-
-				if (ndig < 1)
-					ndig = 1;
-
-				ascii = psprintf("%.*g", ndig, num);
-			}
-	}
-
+	(void) pg_strfromd(ascii, 32, ndig, num);
 	PG_RETURN_CSTRING(ascii);
 }
 
@@ -479,30 +459,10 @@ float8out(PG_FUNCTION_ARGS)
 char *
 float8out_internal(double num)
 {
-	char	   *ascii;
+	char	   *ascii = (char *) palloc(32);
+	int			ndig = DBL_DIG + extra_float_digits;
 
-	if (isnan(num))
-		return pstrdup("NaN");
-
-	switch (is_infinite(num))
-	{
-		case 1:
-			ascii = pstrdup("Infinity");
-			break;
-		case -1:
-			ascii = pstrdup("-Infinity");
-			break;
-		default:
-			{
-				int			ndig = DBL_DIG + extra_float_digits;
-
-				if (ndig < 1)
-					ndig = 1;
-
-				ascii = psprintf("%.*g", ndig, num);
-			}
-	}
-
+	(void) pg_strfromd(ascii, 32, ndig, num);
 	return ascii;
 }
 

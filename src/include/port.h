@@ -187,6 +187,9 @@ extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 #define fprintf			pg_fprintf
 #define printf(...)		pg_printf(__VA_ARGS__)
 
+/* This is also provided by snprintf.c */
+extern int	pg_strfromd(char *str, size_t count, int precision, double value);
+
 /* Replace strerror() with our own, somewhat more robust wrapper */
 extern char *pg_strerror(int errnum);
 #define strerror pg_strerror
