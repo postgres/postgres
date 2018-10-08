@@ -1982,7 +1982,7 @@ BaseBackup(void)
 		if (sqlstate &&
 			strcmp(sqlstate, ERRCODE_DATA_CORRUPTED) == 0)
 		{
-			fprintf(stderr, _("%s: checksum error occured\n"),
+			fprintf(stderr, _("%s: checksum error occurred\n"),
 					progname);
 			checksum_failure = true;
 		}
