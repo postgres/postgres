@@ -1439,7 +1439,7 @@ ProcessUtilitySlow(ParseState *pstate,
 				break;
 
 			case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
-				address = AlterEnum((AlterEnumStmt *) parsetree, isTopLevel);
+				address = AlterEnum((AlterEnumStmt *) parsetree);
 				break;
 
 			case T_ViewStmt:	/* CREATE VIEW */

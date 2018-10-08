@@ -52,5 +52,10 @@ extern void AddEnumLabel(Oid enumTypeOid, const char *newVal,
 			 bool skipIfExists);
 extern void RenameEnumLabel(Oid enumTypeOid,
 				const char *oldVal, const char *newVal);
+extern bool EnumBlacklisted(Oid enum_id);
+extern Size EstimateEnumBlacklistSpace(void);
+extern void SerializeEnumBlacklist(void *space, Size size);
+extern void RestoreEnumBlacklist(void *space);
+extern void AtEOXact_Enum(void);
 
 #endif							/* PG_ENUM_H */

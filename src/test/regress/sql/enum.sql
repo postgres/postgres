@@ -273,19 +273,34 @@ ALTER TYPE rainbow RENAME VALUE 'blue' TO 'green';
 --
 CREATE TYPE bogus AS ENUM('good');
 
--- check that we can't add new values to existing enums in a transaction
+-- check that we can add new values to existing enums in a transaction
+-- but we can't use them
 BEGIN;
-ALTER TYPE bogus ADD VALUE 'bad';
+ALTER TYPE bogus ADD VALUE 'new';
+SAVEPOINT x;
+SELECT 'new'::bogus;  -- unsafe
+ROLLBACK TO x;
+SELECT enum_first(null::bogus);  -- safe
+SELECT enum_last(null::bogus);  -- unsafe
+ROLLBACK TO x;
+SELECT enum_range(null::bogus);  -- unsafe
+ROLLBACK TO x;
 COMMIT;
+SELECT 'new'::bogus;  -- now safe
+SELECT enumlabel, enumsortorder
+FROM pg_enum
+WHERE enumtypid = 'bogus'::regtype
+ORDER BY 2;
 
 -- check that we recognize the case where the enum already existed but was
--- modified in the current txn
+-- modified in the current txn; this should not be considered safe
 BEGIN;
 ALTER TYPE bogus RENAME TO bogon;
 ALTER TYPE bogon ADD VALUE 'bad';
+SELECT 'bad'::bogon;
 ROLLBACK;
 
--- but ALTER TYPE RENAME VALUE is safe in a transaction
+-- but a renamed value is safe to use later in same transaction
 BEGIN;
 ALTER TYPE bogus RENAME VALUE 'good' to 'bad';
 SELECT 'bad'::bogus;
@@ -293,12 +308,21 @@ ROLLBACK;
 
 DROP TYPE bogus;
 
--- check that we *can* add new values to existing enums in a transaction,
--- if the type is new as well
+-- check that values created during CREATE TYPE can be used in any case
 BEGIN;
-CREATE TYPE bogus AS ENUM();
-ALTER TYPE bogus ADD VALUE 'good';
-ALTER TYPE bogus ADD VALUE 'ugly';
+CREATE TYPE bogus AS ENUM('good','bad','ugly');
+ALTER TYPE bogus RENAME TO bogon;
+select enum_range(null::bogon);
+ROLLBACK;
+
+-- ideally, we'd allow this usage; but it requires keeping track of whether
+-- the enum type was created in the current transaction, which is expensive
+BEGIN;
+CREATE TYPE bogus AS ENUM('good');
+ALTER TYPE bogus RENAME TO bogon;
+ALTER TYPE bogon ADD VALUE 'bad';
+ALTER TYPE bogon ADD VALUE 'ugly';
+select enum_range(null::bogon);  -- fails
 ROLLBACK;
 
 --

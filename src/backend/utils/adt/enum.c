@@ -19,6 +19,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_enum.h"
 #include "libpq/pqformat.h"
+#include "storage/procarray.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -29,6 +30,79 @@
 
 static Oid	enum_endpoint(Oid enumtypoid, ScanDirection direction);
 static ArrayType *enum_range_internal(Oid enumtypoid, Oid lower, Oid upper);
+
+
+/*
+ * Disallow use of an uncommitted pg_enum tuple.
+ *
+ * We need to make sure that uncommitted enum values don't get into indexes.
+ * If they did, and if we then rolled back the pg_enum addition, we'd have
+ * broken the index because value comparisons will not work reliably without
+ * an underlying pg_enum entry.  (Note that removal of the heap entry
+ * containing an enum value is not sufficient to ensure that it doesn't appear
+ * in upper levels of indexes.)  To do this we prevent an uncommitted row from
+ * being used for any SQL-level purpose.  This is stronger than necessary,
+ * since the value might not be getting inserted into a table or there might
+ * be no index on its column, but it's easy to enforce centrally.
+ *
+ * However, it's okay to allow use of uncommitted values belonging to enum
+ * types that were themselves created in the same transaction, because then
+ * any such index would also be new and would go away altogether on rollback.
+ * We don't implement that fully right now, but we do allow free use of enum
+ * values created during CREATE TYPE AS ENUM, which are surely of the same
+ * lifespan as the enum type.  (This case is required by "pg_restore -1".)
+ * Values added by ALTER TYPE ADD VALUE are currently restricted, but could
+ * be allowed if the enum type could be proven to have been created earlier
+ * in the same transaction.  (Note that comparing tuple xmins would not work
+ * for that, because the type tuple might have been updated in the current
+ * transaction.  Subtransactions also create hazards to be accounted for.)
+ *
+ * This function needs to be called (directly or indirectly) in any of the
+ * functions below that could return an enum value to SQL operations.
+ */
+static void
+check_safe_enum_use(HeapTuple enumval_tup)
+{
+	TransactionId xmin;
+	Form_pg_enum en;
+
+	/*
+	 * If the row is hinted as committed, it's surely safe.  This provides a
+	 * fast path for all normal use-cases.
+	 */
+	if (HeapTupleHeaderXminCommitted(enumval_tup->t_data))
+		return;
+
+	/*
+	 * Usually, a row would get hinted as committed when it's read or loaded
+	 * into syscache; but just in case not, let's check the xmin directly.
+	 */
+	xmin = HeapTupleHeaderGetXmin(enumval_tup->t_data);
+	if (!TransactionIdIsInProgress(xmin) &&
+		TransactionIdDidCommit(xmin))
+		return;
+
+	/*
+	 * Check if the enum value is blacklisted.  If not, it's safe, because it
+	 * was made during CREATE TYPE AS ENUM and can't be shorter-lived than its
+	 * owning type.  (This'd also be false for values made by other
+	 * transactions; but the previous tests should have handled all of those.)
+	 */
+	if (!EnumBlacklisted(HeapTupleGetOid(enumval_tup)))
+		return;
+
+	/*
+	 * There might well be other tests we could do here to narrow down the
+	 * unsafe conditions, but for now just raise an exception.
+	 */
+	en = (Form_pg_enum) GETSTRUCT(enumval_tup);
+	ereport(ERROR,
+			(errcode(ERRCODE_UNSAFE_NEW_ENUM_VALUE_USAGE),
+			 errmsg("unsafe use of new value \"%s\" of enum type %s",
+					NameStr(en->enumlabel),
+					format_type_be(en->enumtypid)),
+			 errhint("New enum values must be committed before they can be used.")));
+}
 
 
 /* Basic I/O support */
@@ -58,6 +132,9 @@ enum_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),
 						name)));
+
+	/* check it's safe to use in SQL */
+	check_safe_enum_use(tup);
 
 	/*
 	 * This comes from pg_enum.oid and stores system oids in user tables. This
@@ -123,6 +200,9 @@ enum_recv(PG_FUNCTION_ARGS)
 				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),
 						name)));
+
+	/* check it's safe to use in SQL */
+	check_safe_enum_use(tup);
 
 	enumoid = HeapTupleGetOid(tup);
 
@@ -331,9 +411,16 @@ enum_endpoint(Oid enumtypoid, ScanDirection direction)
 
 	enum_tuple = systable_getnext_ordered(enum_scan, direction);
 	if (HeapTupleIsValid(enum_tuple))
+	{
+		/* check it's safe to use in SQL */
+		check_safe_enum_use(enum_tuple);
 		minmax = HeapTupleGetOid(enum_tuple);
+	}
 	else
+	{
+		/* should only happen with an empty enum */
 		minmax = InvalidOid;
+	}
 
 	systable_endscan_ordered(enum_scan);
 	index_close(enum_idx, AccessShareLock);
@@ -494,6 +581,9 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 
 		if (left_found)
 		{
+			/* check it's safe to use in SQL */
+			check_safe_enum_use(enum_tuple);
+
 			if (cnt >= max)
 			{
 				max *= 2;

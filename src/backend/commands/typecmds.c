@@ -1270,10 +1270,10 @@ DefineEnum(CreateEnumStmt *stmt)
 
 /*
  * AlterEnum
- *		ALTER TYPE on an enum.
+ *		Adds a new label to an existing enum.
  */
 ObjectAddress
-AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
+AlterEnum(AlterEnumStmt *stmt)
 {
 	Oid			enum_type_oid;
 	TypeName   *typename;
@@ -1291,6 +1291,8 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 	/* Check it's an enum and check user has permission to ALTER the enum */
 	checkEnumOwner(tup);
 
+	ReleaseSysCache(tup);
+
 	if (stmt->oldVal)
 	{
 		/* Rename an existing label */
@@ -1299,27 +1301,6 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 	else
 	{
 		/* Add a new label */
-
-		/*
-		 * Ordinarily we disallow adding values within transaction blocks,
-		 * because we can't cope with enum OID values getting into indexes and
-		 * then having their defining pg_enum entries go away.  However, it's
-		 * okay if the enum type was created in the current transaction, since
-		 * then there can be no such indexes that wouldn't themselves go away
-		 * on rollback.  (We support this case because pg_dump
-		 * --binary-upgrade needs it.)  We test this by seeing if the pg_type
-		 * row has xmin == current XID and is not HEAP_UPDATED.  If it is
-		 * HEAP_UPDATED, we can't be sure whether the type was created or only
-		 * modified in this xact.  So we are disallowing some cases that could
-		 * theoretically be safe; but fortunately pg_dump only needs the
-		 * simplest case.
-		 */
-		if (HeapTupleHeaderGetXmin(tup->t_data) == GetCurrentTransactionId() &&
-			!(tup->t_data->t_infomask & HEAP_UPDATED))
-			 /* safe to do inside transaction block */ ;
-		else
-			PreventInTransactionBlock(isTopLevel, "ALTER TYPE ... ADD");
-
 		AddEnumLabel(enum_type_oid, stmt->newVal,
 					 stmt->newValNeighbor, stmt->newValIsAfter,
 					 stmt->skipIfNewValExists);
@@ -1328,8 +1309,6 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 	InvokeObjectPostAlterHook(TypeRelationId, enum_type_oid, 0);
 
 	ObjectAddressSet(address, TypeRelationId, enum_type_oid);
-
-	ReleaseSysCache(tup);
 
 	return address;
 }

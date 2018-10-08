@@ -28,12 +28,25 @@
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
+#include "utils/hsearch.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
+
+/*
+ * Hash table of enum value OIDs created during the current transaction by
+ * AddEnumLabel.  We disallow using these values until the transaction is
+ * committed; otherwise, they might get into indexes where we can't clean
+ * them up, and then if the transaction rolls back we have a broken index.
+ * (See comments for check_safe_enum_use() in enum.c.)  Values created by
+ * EnumValuesCreate are *not* blacklisted; we assume those are created during
+ * CREATE TYPE, so they can't go away unless the enum type itself does.
+ */
+static HTAB *enum_blacklist = NULL;
 
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	sort_order_cmp(const void *p1, const void *p2);
@@ -168,6 +181,23 @@ EnumValuesDelete(Oid enumTypeOid)
 	heap_close(pg_enum, RowExclusiveLock);
 }
 
+/*
+ * Initialize the enum blacklist for this transaction.
+ */
+static void
+init_enum_blacklist(void)
+{
+	HASHCTL		hash_ctl;
+
+	memset(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = sizeof(Oid);
+	hash_ctl.entrysize = sizeof(Oid);
+	hash_ctl.hcxt = TopTransactionContext;
+	enum_blacklist = hash_create("Enum value blacklist",
+								 32,
+								 &hash_ctl,
+								 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+}
 
 /*
  * AddEnumLabel
@@ -460,6 +490,13 @@ restart:
 	heap_freetuple(enum_tup);
 
 	heap_close(pg_enum, RowExclusiveLock);
+
+	/* Set up the blacklist hash if not already done in this transaction */
+	if (enum_blacklist == NULL)
+		init_enum_blacklist();
+
+	/* Add the new value to the blacklist */
+	(void) hash_search(enum_blacklist, &newOid, HASH_ENTER, NULL);
 }
 
 
@@ -548,6 +585,39 @@ RenameEnumLabel(Oid enumTypeOid,
 
 
 /*
+ * Test if the given enum value is on the blacklist
+ */
+bool
+EnumBlacklisted(Oid enum_id)
+{
+	bool		found;
+
+	/* If we've made no blacklist table, all values are safe */
+	if (enum_blacklist == NULL)
+		return false;
+
+	/* Else, is it in the table? */
+	(void) hash_search(enum_blacklist, &enum_id, HASH_FIND, &found);
+	return found;
+}
+
+
+/*
+ * Clean up enum stuff after end of top-level transaction.
+ */
+void
+AtEOXact_Enum(void)
+{
+	/*
+	 * Reset the blacklist table, as all our enum values are now committed.
+	 * The memory will go away automatically when TopTransactionContext is
+	 * freed; it's sufficient to clear our pointer.
+	 */
+	enum_blacklist = NULL;
+}
+
+
+/*
  * RenumberEnumType
  *		Renumber existing enum elements to have sort positions 1..n.
  *
@@ -619,4 +689,73 @@ sort_order_cmp(const void *p1, const void *p2)
 		return 1;
 	else
 		return 0;
+}
+
+Size
+EstimateEnumBlacklistSpace(void)
+{
+	size_t		entries;
+
+	if (enum_blacklist)
+		entries = hash_get_num_entries(enum_blacklist);
+	else
+		entries = 0;
+
+	/* Add one for the terminator. */
+	return sizeof(Oid) * (entries + 1);
+}
+
+void
+SerializeEnumBlacklist(void *space, Size size)
+{
+	Oid		   *serialized = (Oid *) space;
+
+	/*
+	 * Make sure the hash table hasn't changed in size since the caller
+	 * reserved the space.
+	 */
+	Assert(size == EstimateEnumBlacklistSpace());
+
+	/* Write out all the values from the hash table, if there is one. */
+	if (enum_blacklist)
+	{
+		HASH_SEQ_STATUS status;
+		Oid		   *value;
+
+		hash_seq_init(&status, enum_blacklist);
+		while ((value = (Oid *) hash_seq_search(&status)))
+			*serialized++ = *value;
+	}
+
+	/* Write out the terminator. */
+	*serialized = InvalidOid;
+
+	/*
+	 * Make sure the amount of space we actually used matches what was
+	 * estimated.
+	 */
+	Assert((char *) (serialized + 1) == ((char *) space) + size);
+}
+
+void
+RestoreEnumBlacklist(void *space)
+{
+	Oid		   *serialized = (Oid *) space;
+
+	Assert(!enum_blacklist);
+
+	/*
+	 * As a special case, if the list is empty then don't even bother to
+	 * create the hash table.  This is the usual case, since enum alteration
+	 * is expected to be rare.
+	 */
+	if (!OidIsValid(*serialized))
+		return;
+
+	/* Read all the values into a new hash table. */
+	init_enum_blacklist();
+	do
+	{
+		hash_search(enum_blacklist, serialized++, HASH_ENTER, NULL);
+	} while (OidIsValid(*serialized));
 }
