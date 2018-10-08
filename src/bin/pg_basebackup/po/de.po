@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-11 02:46+0000\n"
-"PO-Revision-Date: 2018-09-11 14:15+0200\n"
+"POT-Creation-Date: 2018-10-08 07:15+0000\n"
+"PO-Revision-Date: 2018-10-08 10:53+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -637,7 +637,7 @@ msgstr "%s: Write-Ahead-Log-Endposition: %s\n"
 
 #: pg_basebackup.c:1985
 #, c-format
-msgid "%s: checksum error occured\n"
+msgid "%s: checksum error occurred\n"
 msgstr "%s: ein Prüfsummenfehler ist aufgetreten\n"
 
 #: pg_basebackup.c:1991
