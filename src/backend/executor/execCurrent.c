@@ -91,21 +91,22 @@ execCurrentOf(CurrentOfExpr *cexpr,
 	 * the other code can't, while the non-FOR-UPDATE case allows use of WHERE
 	 * CURRENT OF with an insensitive cursor.
 	 */
-	if (queryDesc->estate->es_rowMarks)
+	if (queryDesc->estate->es_rowmarks)
 	{
 		ExecRowMark *erm;
-		ListCell   *lc;
+		Index		i;
 
 		/*
 		 * Here, the query must have exactly one FOR UPDATE/SHARE reference to
 		 * the target table, and we dig the ctid info out of that.
 		 */
 		erm = NULL;
-		foreach(lc, queryDesc->estate->es_rowMarks)
+		for (i = 0; i < queryDesc->estate->es_range_table_size; i++)
 		{
-			ExecRowMark *thiserm = (ExecRowMark *) lfirst(lc);
+			ExecRowMark *thiserm = queryDesc->estate->es_rowmarks[i];
 
-			if (!RowMarkRequiresRowShareLock(thiserm->markType))
+			if (thiserm == NULL ||
+				!RowMarkRequiresRowShareLock(thiserm->markType))
 				continue;		/* ignore non-FOR UPDATE/SHARE items */
 
 			if (thiserm->relid == table_oid)

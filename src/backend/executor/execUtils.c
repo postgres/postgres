@@ -113,6 +113,7 @@ CreateExecutorState(void)
 	estate->es_range_table_array = NULL;
 	estate->es_range_table_size = 0;
 	estate->es_relations = NULL;
+	estate->es_rowmarks = NULL;
 	estate->es_plannedstmt = NULL;
 
 	estate->es_junkFilter = NULL;
@@ -141,8 +142,6 @@ CreateExecutorState(void)
 	estate->es_query_cxt = qcontext;
 
 	estate->es_tupleTable = NIL;
-
-	estate->es_rowMarks = NIL;
 
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
@@ -709,6 +708,12 @@ ExecInitRangeTable(EState *estate, List *rangeTable)
 	 */
 	estate->es_relations = (Relation *)
 		palloc0(estate->es_range_table_size * sizeof(Relation));
+
+	/*
+	 * es_rowmarks is also parallel to the es_range_table_array, but it's
+	 * allocated only if needed.
+	 */
+	estate->es_rowmarks = NULL;
 }
 
 /*

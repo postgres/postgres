@@ -34,6 +34,7 @@
 
 struct PlanState;				/* forward references in this file */
 struct ParallelHashJoinState;
+struct ExecRowMark;
 struct ExprState;
 struct ExprContext;
 struct RangeTblEntry;			/* avoid including parsenodes.h here */
@@ -491,6 +492,8 @@ typedef struct EState
 	Index		es_range_table_size;	/* size of the range table arrays */
 	Relation   *es_relations;	/* Array of per-range-table-entry Relation
 								 * pointers, or NULL if not yet opened */
+	struct ExecRowMark **es_rowmarks;	/* Array of per-range-table-entry
+										 * ExecRowMarks, or NULL if none */
 	PlannedStmt *es_plannedstmt;	/* link to top of plan tree */
 	const char *es_sourceText;	/* Source text from QueryDesc */
 
@@ -536,8 +539,6 @@ typedef struct EState
 	MemoryContext es_query_cxt; /* per-query context in which EState lives */
 
 	List	   *es_tupleTable;	/* List of TupleTableSlots */
-
-	List	   *es_rowMarks;	/* List of ExecRowMarks */
 
 	uint64		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
@@ -607,7 +608,9 @@ typedef struct EState
  * node that sources the relation (e.g., for a foreign table the FDW can use
  * ermExtra to hold information).
  *
- * EState->es_rowMarks is a list of these structs.
+ * EState->es_rowmarks is an array of these structs, indexed by RT index,
+ * with NULLs for irrelevant RT indexes.  es_rowmarks itself is NULL if
+ * there are no rowmarks.
  */
 typedef struct ExecRowMark
 {
@@ -629,7 +632,7 @@ typedef struct ExecRowMark
  *	   additional runtime representation of FOR [KEY] UPDATE/SHARE clauses
  *
  * Each LockRows and ModifyTable node keeps a list of the rowmarks it needs to
- * deal with.  In addition to a pointer to the related entry in es_rowMarks,
+ * deal with.  In addition to a pointer to the related entry in es_rowmarks,
  * this struct carries the column number(s) of the resjunk columns associated
  * with the rowmark (see comments for PlanRowMark for more detail).  In the
  * case of ModifyTable, there has to be a separate ExecAuxRowMark list for
@@ -638,7 +641,7 @@ typedef struct ExecRowMark
  */
 typedef struct ExecAuxRowMark
 {
-	ExecRowMark *rowmark;		/* related entry in es_rowMarks */
+	ExecRowMark *rowmark;		/* related entry in es_rowmarks */
 	AttrNumber	ctidAttNo;		/* resno of ctid junk attribute, if any */
 	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
 	AttrNumber	wholeAttNo;		/* resno of whole-row junk attribute, if any */
