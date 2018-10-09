@@ -805,6 +805,18 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
  </refsect1>
 
  <refsect1>
+  <title>Exit Status</title>
+
+  <para>
+   A successful run will exit with status 0.  Exit status 1 indicates static
+   problems such as invalid command-line options.  Errors during the run such
+   as database errors or problems in the script will result in exit status 2.
+   In the latter case, <application>pgbench</application> will print partial
+   results.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Notes</title>
 
  <refsect2>
