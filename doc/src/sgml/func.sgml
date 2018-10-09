@@ -20357,6 +20357,18 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
+        <literal><function>pg_ls_archive_statusdir()</function></literal>
+       </entry>
+       <entry><type>setof record</type></entry>
+       <entry>
+        List the name, size, and last modification time of files in the WAL
+        archive status directory. Access is granted to members of the
+        <literal>pg_monitor</literal> role and may be granted to other
+        non-superuser roles.
+       </entry>
+      </row>
+      <row>
+       <entry>
         <literal><function>pg_ls_tmpdir(<optional><parameter>tablespace</parameter> <type>oid</type></optional>)</function></literal>
        </entry>
        <entry><type>setof record</type></entry>
@@ -20439,6 +20451,18 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     (mtime) of each file in the write ahead log (WAL) directory. By
     default only superusers and members of the <literal>pg_monitor</literal> role
     can use this function. Access may be granted to others using
+    <command>GRANT</command>.
+   </para>
+
+   <indexterm>
+    <primary>pg_ls_archive_statusdir</primary>
+   </indexterm>
+   <para>
+    <function>pg_ls_archive_statusdir</function> returns the name, size, and
+    last modified time (mtime) of each file in the WAL archive status
+    directory <literal>pg_wal/archive_status</literal>. By default only
+    superusers and members of the <literal>pg_monitor</literal> role can
+    use this function. Access may be granted to others using
     <command>GRANT</command>.
    </para>
 

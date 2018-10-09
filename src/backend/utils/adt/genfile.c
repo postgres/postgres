@@ -658,3 +658,12 @@ pg_ls_tmpdir_1arg(PG_FUNCTION_ARGS)
 {
 	return pg_ls_tmpdir(fcinfo, PG_GETARG_OID(0));
 }
+
+/*
+ * Function to return the list of files in the WAL archive status directory.
+ */
+Datum
+pg_ls_archive_statusdir(PG_FUNCTION_ARGS)
+{
+	return pg_ls_dir_files(fcinfo, XLOGDIR "/archive_status", true);
+}
