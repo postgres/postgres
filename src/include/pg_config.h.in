@@ -804,7 +804,7 @@
 /* PostgreSQL major version as a string */
 #undef PG_MAJORVERSION
 
-/* Define to gnu_printf if compiler supports it, else printf. */
+/* Define to best printf format archetype, usually gnu_printf if available. */
 #undef PG_PRINTF_ATTRIBUTE
 
 /* PostgreSQL version as a string */
