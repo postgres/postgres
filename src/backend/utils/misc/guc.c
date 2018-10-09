@@ -515,7 +515,6 @@ static int	server_version_num;
 static char *timezone_string;
 static char *log_timezone_string;
 static char *timezone_abbreviations_string;
-static char *XactIsoLevel_string;
 static char *data_directory;
 static char *session_authorization_string;
 static int	max_function_args;
@@ -3619,17 +3618,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the current transaction's isolation level."),
-			NULL,
-			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
-		},
-		&XactIsoLevel_string,
-		"default",
-		check_XactIsoLevel, assign_XactIsoLevel, show_XactIsoLevel
-	},
-
-	{
 		{"unix_socket_group", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the owning group of the Unix-domain socket."),
 			gettext_noop("The owning user of the socket is always the user "
@@ -3966,6 +3954,17 @@ static struct config_enum ConfigureNamesEnum[] =
 		&DefaultXactIsoLevel,
 		XACT_READ_COMMITTED, isolation_level_options,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the current transaction's isolation level."),
+			NULL,
+			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&XactIsoLevel,
+		XACT_READ_COMMITTED, isolation_level_options,
+		check_XactIsoLevel, NULL, NULL
 	},
 
 	{
@@ -4776,7 +4775,7 @@ InitializeGUCOptions(void)
 	 * Prevent any attempt to override the transaction modes from
 	 * non-interactive sources.
 	 */
-	SetConfigOption("transaction_isolation", "default",
+	SetConfigOption("transaction_isolation", "read committed",
 					PGC_POSTMASTER, PGC_S_OVERRIDE);
 	SetConfigOption("transaction_read_only", "no",
 					PGC_POSTMASTER, PGC_S_OVERRIDE);
