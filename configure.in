@@ -1292,7 +1292,34 @@ AC_SUBST(UUID_LIBS)
 
 AC_HEADER_STDBOOL
 
-AC_CHECK_HEADERS([atomic.h crypt.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/ipc.h sys/prctl.h sys/procctl.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
+AC_CHECK_HEADERS(m4_normalize([
+	atomic.h
+	crypt.h
+	fp_class.h
+	getopt.h
+	ieeefp.h
+	ifaddrs.h
+	langinfo.h
+	mbarrier.h
+	poll.h
+	sys/epoll.h
+	sys/ipc.h
+	sys/prctl.h
+	sys/procctl.h
+	sys/pstat.h
+	sys/resource.h
+	sys/select.h
+	sys/sem.h
+	sys/shm.h
+	sys/sockio.h
+	sys/tas.h
+	sys/un.h
+	termios.h
+	ucred.h
+	utime.h
+	wchar.h
+	wctype.h
+]))
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -1571,7 +1598,32 @@ PGAC_FUNC_WCSTOMBS_L
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_CHECK_FUNCS([cbrt clock_gettime fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open strchrnul symlink sync_file_range utime utimes wcstombs_l])
+AC_CHECK_FUNCS(m4_normalize([
+	cbrt
+	clock_gettime
+	fdatasync
+	getifaddrs
+	getpeerucred
+	getrlimit
+	mbstowcs_l
+	memmove
+	poll
+	posix_fallocate
+	ppoll
+	pstat
+	pthread_is_threaded_np
+	readlink
+	setproctitle
+	setproctitle_fast
+	setsid
+	shm_open
+	strchrnul
+	symlink
+	sync_file_range
+	utime
+	utimes
+	wcstombs_l
+]))
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -1640,7 +1692,21 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-AC_REPLACE_FUNCS([crypt dlopen fls getopt getrusage inet_aton mkdtemp random rint srandom strlcat strlcpy strnlen])
+AC_REPLACE_FUNCS(m4_normalize([
+	crypt
+	dlopen
+	fls
+	getopt
+	getrusage
+	inet_aton
+	mkdtemp
+	random
+	rint
+	srandom
+	strlcat
+	strlcpy
+	strnlen
+]))
 
 case $host_os in
 
