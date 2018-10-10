@@ -2036,6 +2036,18 @@ FreeBulkInsertState(BulkInsertState bistate)
  * This causes rows to be frozen, which is an MVCC violation and
  * requires explicit options chosen by user.
  *
+ * HEAP_INSERT_SPECULATIVE is used on so-called "speculative insertions",
+ * which can be backed out afterwards without aborting the whole transaction.
+ * Other sessions can wait for the speculative insertion to be confirmed,
+ * turning it into a regular tuple, or aborted, as if it never existed.
+ * Speculatively inserted tuples behave as "value locks" of short duration,
+ * used to implement INSERT .. ON CONFLICT.
+ *
+ * HEAP_INSERT_NO_LOGICAL force-disables the emitting of logical decoding
+ * information for the tuple. This should solely be used during table rewrites
+ * where RelationIsLogicallyLogged(relation) is not yet accurate for the new
+ * relation.
+ *
  * Note that these options will be applied when inserting into the heap's
  * TOAST table, too, if the tuple requires any out-of-line data.
  *
@@ -2138,7 +2150,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		 * Also, if this is a catalog, we need to transmit combocids to
 		 * properly decode, so log that as well.
 		 */
-		need_tuple_data = RelationIsLogicallyLogged(relation);
+		need_tuple_data = RelationIsLogicallyLogged(relation) &&
+			!(options & HEAP_INSERT_NO_LOGICAL);
 		if (RelationIsAccessibleInLogicalDecoding(relation))
 			log_heap_new_cid(relation, heaptup);
 
@@ -2324,6 +2337,9 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	Size		saveFreeSpace;
 	bool		need_tuple_data = RelationIsLogicallyLogged(relation);
 	bool		need_cids = RelationIsAccessibleInLogicalDecoding(relation);
+
+	/* currently not needed (thus unsupported) for heap_multi_insert() */
+	AssertArg(!(options & HEAP_INSERT_NO_LOGICAL));
 
 	needwal = !(options & HEAP_INSERT_SKIP_WAL) && RelationNeedsWAL(relation);
 	saveFreeSpace = RelationGetTargetPageFreeSpace(relation,
