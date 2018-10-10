@@ -1,3 +1,6 @@
+-- predictability
+SET synchronous_commit = on;
+
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 
 CREATE TABLE tab1 (id serial unique, data int);
