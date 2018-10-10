@@ -29,6 +29,7 @@
 #define HEAP_INSERT_SKIP_FSM	0x0002
 #define HEAP_INSERT_FROZEN		0x0004
 #define HEAP_INSERT_SPECULATIVE 0x0008
+#define HEAP_INSERT_NO_LOGICAL	0x0010
 
 typedef struct BulkInsertStateData *BulkInsertState;
 
