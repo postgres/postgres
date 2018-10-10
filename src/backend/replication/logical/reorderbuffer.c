@@ -1527,8 +1527,16 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 												change->data.tp.relnode.relNode);
 
 					/*
-					 * Catalog tuple without data, emitted while catalog was
-					 * in the process of being rewritten.
+					 * Mapped catalog tuple without data, emitted while
+					 * catalog table was in the process of being rewritten. We
+					 * can fail to look up the relfilenode, because the the
+					 * relmapper has no "historic" view, in contrast to normal
+					 * the normal catalog during decoding. Thus repeated
+					 * rewrites can cause a lookup failure. That's OK because
+					 * we do not decode catalog changes anyway. Normally such
+					 * tuples would be skipped over below, but we can't
+					 * identify whether the table should be logically logged
+					 * without mapping the relfilenode to the oid.
 					 */
 					if (reloid == InvalidOid &&
 						change->data.tp.newtuple == NULL &&
@@ -1590,10 +1598,17 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						 * transaction's changes. Otherwise it will get
 						 * freed/reused while restoring spooled data from
 						 * disk.
+						 *
+						 * But skip doing so if there's no tuple-data. That
+						 * happens if a non-mapped system catalog with a toast
+						 * table is rewritten.
 						 */
-						dlist_delete(&change->node);
-						ReorderBufferToastAppendChunk(rb, txn, relation,
-													  change);
+						if (change->data.tp.newtuple != NULL)
+						{
+							dlist_delete(&change->node);
+							ReorderBufferToastAppendChunk(rb, txn, relation,
+														  change);
+						}
 					}
 
 			change_done:
