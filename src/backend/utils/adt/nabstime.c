@@ -1539,32 +1539,3 @@ bogus:
 					"tinterval", i_string)));
 	*i_start = *i_end = INVALID_ABSTIME;	/* keep compiler quiet */
 }
-
-
-/*****************************************************************************
- *
- *****************************************************************************/
-
-/*
- * timeofday -
- *	   returns the current time as a text. similar to timenow() but returns
- *	   seconds with more precision (up to microsecs). (I need this to compare
- *	   the Wisconsin benchmark with Illustra whose TimeNow() shows current
- *	   time with precision up to microsecs.)			  - ay 3/95
- */
-Datum
-timeofday(PG_FUNCTION_ARGS)
-{
-	struct timeval tp;
-	char		templ[128];
-	char		buf[128];
-	pg_time_t	tt;
-
-	gettimeofday(&tp, NULL);
-	tt = (pg_time_t) tp.tv_sec;
-	pg_strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
-				pg_localtime(&tt, session_timezone));
-	snprintf(buf, sizeof(buf), templ, tp.tv_usec);
-
-	PG_RETURN_TEXT_P(cstring_to_text(buf));
-}
