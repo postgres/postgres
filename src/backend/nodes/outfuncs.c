@@ -3634,6 +3634,7 @@ _outForeignKeyCacheInfo(StringInfo str, const ForeignKeyCacheInfo *node)
 
 	WRITE_NODE_TYPE("FOREIGNKEYCACHEINFO");
 
+	WRITE_OID_FIELD(conoid);
 	WRITE_OID_FIELD(conrelid);
 	WRITE_OID_FIELD(confrelid);
 	WRITE_INT_FIELD(nkeys);
