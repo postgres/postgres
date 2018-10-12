@@ -13,7 +13,6 @@ SELECT relname, relhasindex
 -------------------------+-------------
  a                       | f
  a_star                  | f
- abstime_tbl             | f
  aggtest                 | f
  array_index_op_test     | t
  array_op_test           | f
@@ -142,7 +141,6 @@ SELECT relname, relhasindex
  radix_text_tbl          | t
  ramp                    | f
  real_city               | f
- reltime_tbl             | f
  road                    | t
  shighway                | t
  slow_emp4000            | f
@@ -166,9 +164,8 @@ SELECT relname, relhasindex
  timestamp_tbl           | f
  timestamptz_tbl         | f
  timetz_tbl              | f
- tinterval_tbl           | f
  varchar_tbl             | f
-(157 rows)
+(154 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have
