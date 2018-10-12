@@ -34,3 +34,9 @@ uninstall:
 clean distclean maintainer-clean:
 	rm -f pg_verify_checksums$(X) $(OBJS)
 	rm -rf tmp_check
+
+check:
+	$(prove_check)
+
+installcheck:
+	$(prove_installcheck)

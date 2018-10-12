@@ -8,7 +8,7 @@ use Fcntl ':mode';
 use File::stat qw{lstat};
 use PostgresNode;
 use TestLib;
-use Test::More tests => 18;
+use Test::More tests => 22;
 
 my $tempdir = TestLib::tempdir;
 my $xlogdir = "$tempdir/pgxlog";
@@ -58,6 +58,18 @@ mkdir $datadir;
 			"check PGDATA permissions");
 	}
 }
+
+# Control file should tell that data checksums are disabled by default.
+command_like(['pg_controldata', $datadir],
+			 qr/Data page checksum version:.*0/,
+			 'checksums are disabled in control file');
+# pg_verify_checksums fails with checksums disabled by default.  This is
+# not part of the tests included in pg_verify_checksums to save from
+# the creation of an extra instance.
+command_fails(
+	[ 'pg_verify_checksums', '-D', $datadir],
+	"pg_verify_checksums fails with data checksum disabled");
+
 command_ok([ 'initdb', '-S', $datadir ], 'sync only');
 command_fails([ 'initdb', $datadir ], 'existing data directory');
 
