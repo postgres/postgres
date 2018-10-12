@@ -4108,8 +4108,9 @@ RelationGetFKeyList(Relation relation)
 	if (relation->rd_fkeyvalid)
 		return relation->rd_fkeylist;
 
-	/* Fast path: if it doesn't have any triggers, it can't have FKs */
-	if (!relation->rd_rel->relhastriggers)
+	/* Fast path: non-partitioned tables without triggers can't have FKs */
+	if (!relation->rd_rel->relhastriggers &&
+		relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		return NIL;
 
 	/*
@@ -4144,6 +4145,7 @@ RelationGetFKeyList(Relation relation)
 			continue;
 
 		info = makeNode(ForeignKeyCacheInfo);
+		info->conoid = HeapTupleGetOid(htup);
 		info->conrelid = constraint->conrelid;
 		info->confrelid = constraint->confrelid;
 

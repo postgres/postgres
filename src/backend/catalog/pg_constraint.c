@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/tupconvert.h"
+#include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -35,6 +36,10 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+
+
+static void clone_fk_constraints(Relation pg_constraint, Relation parentRel,
+					 Relation partRel, List *clone, List **cloned);
 
 
 /*
@@ -400,34 +405,74 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 	Relation	rel;
 	ScanKeyData key;
 	SysScanDesc scan;
-	TupleDesc	tupdesc;
 	HeapTuple	tuple;
-	AttrNumber *attmap;
+	List	   *clone = NIL;
 
 	parentRel = heap_open(parentId, NoLock);	/* already got lock */
 	/* see ATAddForeignKeyConstraint about lock level */
 	rel = heap_open(relationId, AccessExclusiveLock);
-
 	pg_constraint = heap_open(ConstraintRelationId, RowShareLock);
+
+	/* Obtain the list of constraints to clone or attach */
+	ScanKeyInit(&key,
+				Anum_pg_constraint_conrelid, BTEqualStrategyNumber,
+				F_OIDEQ, ObjectIdGetDatum(parentId));
+	scan = systable_beginscan(pg_constraint, ConstraintRelidTypidNameIndexId, true,
+							  NULL, 1, &key);
+	while ((tuple = systable_getnext(scan)) != NULL)
+		clone = lappend_oid(clone, HeapTupleGetOid(tuple));
+	systable_endscan(scan);
+
+	/* Do the actual work, recursing to partitions as needed */
+	clone_fk_constraints(pg_constraint, parentRel, rel, clone, cloned);
+
+	/* We're done.  Clean up */
+	heap_close(parentRel, NoLock);
+	heap_close(rel, NoLock);	/* keep lock till commit */
+	heap_close(pg_constraint, RowShareLock);
+}
+
+/*
+ * clone_fk_constraints
+ *		Recursive subroutine for CloneForeignKeyConstraints
+ *
+ * Clone the given list of FK constraints when a partition is attached.
+ *
+ * When cloning foreign keys to a partition, it may happen that equivalent
+ * constraints already exist in the partition for some of them.  We can skip
+ * creating a clone in that case, and instead just attach the existing
+ * constraint to the one in the parent.
+ *
+ * This function recurses to partitions, if the new partition is partitioned;
+ * of course, only do this for FKs that were actually cloned.
+ */
+static void
+clone_fk_constraints(Relation pg_constraint, Relation parentRel,
+					 Relation partRel, List *clone, List **cloned)
+{
+	TupleDesc	tupdesc;
+	AttrNumber *attmap;
+	List	   *partFKs;
+	List	   *subclone = NIL;
+	ListCell   *cell;
+
 	tupdesc = RelationGetDescr(pg_constraint);
 
 	/*
 	 * The constraint key may differ, if the columns in the partition are
 	 * different.  This map is used to convert them.
 	 */
-	attmap = convert_tuples_by_name_map(RelationGetDescr(rel),
+	attmap = convert_tuples_by_name_map(RelationGetDescr(partRel),
 										RelationGetDescr(parentRel),
 										gettext_noop("could not convert row type"));
 
-	ScanKeyInit(&key,
-				Anum_pg_constraint_conrelid, BTEqualStrategyNumber,
-				F_OIDEQ, ObjectIdGetDatum(parentId));
-	scan = systable_beginscan(pg_constraint, ConstraintRelidTypidNameIndexId, true,
-							  NULL, 1, &key);
+	partFKs = copyObject(RelationGetFKeyList(partRel));
 
-	while ((tuple = systable_getnext(scan)) != NULL)
+	foreach(cell, clone)
 	{
-		Form_pg_constraint constrForm = (Form_pg_constraint) GETSTRUCT(tuple);
+		Oid			parentConstrOid = lfirst_oid(cell);
+		Form_pg_constraint constrForm;
+		HeapTuple	tuple;
 		AttrNumber	conkey[INDEX_MAX_KEYS];
 		AttrNumber	mapped_conkey[INDEX_MAX_KEYS];
 		AttrNumber	confkey[INDEX_MAX_KEYS];
@@ -435,22 +480,31 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 		Oid			conppeqop[INDEX_MAX_KEYS];
 		Oid			conffeqop[INDEX_MAX_KEYS];
 		Constraint *fkconstraint;
-		ClonedConstraint *newc;
+		bool		attach_it;
 		Oid			constrOid;
 		ObjectAddress parentAddr,
 					childAddr;
 		int			nelem;
+		ListCell   *cell;
 		int			i;
 		ArrayType  *arr;
 		Datum		datum;
 		bool		isnull;
 
+		tuple = SearchSysCache1(CONSTROID, parentConstrOid);
+		if (!tuple)
+			elog(ERROR, "cache lookup failed for constraint %u",
+				 parentConstrOid);
+		constrForm = (Form_pg_constraint) GETSTRUCT(tuple);
+
 		/* only foreign keys */
 		if (constrForm->contype != CONSTRAINT_FOREIGN)
+		{
+			ReleaseSysCache(tuple);
 			continue;
+		}
 
-		ObjectAddressSet(parentAddr, ConstraintRelationId,
-						 HeapTupleGetOid(tuple));
+		ObjectAddressSet(parentAddr, ConstraintRelationId, parentConstrOid);
 
 		datum = fastgetattr(tuple, Anum_pg_constraint_conkey,
 							tupdesc, &isnull);
@@ -539,6 +593,90 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 			elog(ERROR, "conffeqop is not a 1-D OID array");
 		memcpy(conffeqop, ARR_DATA_PTR(arr), nelem * sizeof(Oid));
 
+		/*
+		 * Before creating a new constraint, see whether any existing FKs are
+		 * fit for the purpose.  If one is, attach the parent constraint to it,
+		 * and don't clone anything.  This way we avoid the expensive
+		 * verification step and don't end up with a duplicate FK.  This also
+		 * means we don't consider this constraint when recursing to
+		 * partitions.
+		 */
+		attach_it = false;
+		foreach(cell, partFKs)
+		{
+			ForeignKeyCacheInfo *fk = lfirst_node(ForeignKeyCacheInfo, cell);
+			Form_pg_constraint partConstr;
+			HeapTuple	partcontup;
+
+			attach_it = true;
+
+			/*
+			 * Do some quick & easy initial checks.  If any of these fail, we
+			 * cannot use this constraint, but keep looking.
+			 */
+			if (fk->confrelid != constrForm->confrelid || fk->nkeys != nelem)
+			{
+				attach_it = false;
+				continue;
+			}
+			for (i = 0; i < nelem; i++)
+			{
+				if (fk->conkey[i] != mapped_conkey[i] ||
+					fk->confkey[i] != confkey[i] ||
+					fk->conpfeqop[i] != conpfeqop[i])
+				{
+					attach_it = false;
+					break;
+				}
+			}
+			if (!attach_it)
+				continue;
+
+			/*
+			 * Looks good so far; do some more extensive checks.  Presumably
+			 * the check for 'convalidated' could be dropped, since we don't
+			 * really care about that, but let's be careful for now.
+			 */
+			partcontup = SearchSysCache1(CONSTROID,
+										 ObjectIdGetDatum(fk->conoid));
+			if (!partcontup)
+				elog(ERROR, "cache lookup failed for constraint %u",
+					 fk->conoid);
+			partConstr = (Form_pg_constraint) GETSTRUCT(partcontup);
+			if (OidIsValid(partConstr->conparentid) ||
+				!partConstr->convalidated ||
+				partConstr->condeferrable != constrForm->condeferrable ||
+				partConstr->condeferred != constrForm->condeferred ||
+				partConstr->confupdtype != constrForm->confupdtype ||
+				partConstr->confdeltype != constrForm->confdeltype ||
+				partConstr->confmatchtype != constrForm->confmatchtype)
+			{
+				ReleaseSysCache(partcontup);
+				attach_it = false;
+				continue;
+			}
+
+			ReleaseSysCache(partcontup);
+
+			/* looks good!  Attach this constraint */
+			ConstraintSetParentConstraint(fk->conoid,
+										  HeapTupleGetOid(tuple));
+			CommandCounterIncrement();
+			attach_it = true;
+			break;
+		}
+
+		/*
+		 * If we attached to an existing constraint, there is no need to
+		 * create a new one.  In fact, there's no need to recurse for this
+		 * constraint to partitions, either.
+		 */
+		if (attach_it)
+		{
+			ReleaseSysCache(tuple);
+			continue;
+		}
+
 		constrOid =
 			CreateConstraintEntry(NameStr(constrForm->conname),
 								  constrForm->connamespace,
@@ -547,7 +685,7 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 								  constrForm->condeferred,
 								  constrForm->convalidated,
 								  HeapTupleGetOid(tuple),
-								  relationId,
+								  RelationGetRelid(partRel),
 								  mapped_conkey,
 								  nelem,
 								  nelem,
@@ -568,6 +706,7 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 								  NULL,
 								  false,
 								  1, false, true);
+		subclone = lappend_oid(subclone, constrOid);
 
 		ObjectAddressSet(childAddr, ConstraintRelationId, constrOid);
 		recordDependencyOn(&childAddr, &parentAddr, DEPENDENCY_INTERNAL_AUTO);
@@ -580,17 +719,19 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 		fkconstraint->deferrable = constrForm->condeferrable;
 		fkconstraint->initdeferred = constrForm->condeferred;
 
-		createForeignKeyTriggers(rel, constrForm->confrelid, fkconstraint,
+		createForeignKeyTriggers(partRel, constrForm->confrelid, fkconstraint,
 								 constrOid, constrForm->conindid, false);
 
 		if (cloned)
 		{
+			ClonedConstraint *newc;
+
 			/*
 			 * Feed back caller about the constraints we created, so that they
 			 * can set up constraint verification.
 			 */
 			newc = palloc(sizeof(ClonedConstraint));
-			newc->relid = relationId;
+			newc->relid = RelationGetRelid(partRel);
 			newc->refrelid = constrForm->confrelid;
 			newc->conindid = constrForm->conindid;
 			newc->conid = constrOid;
@@ -598,25 +739,36 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 
 			*cloned = lappend(*cloned, newc);
 		}
+
+		ReleaseSysCache(tuple);
 	}
-	systable_endscan(scan);
 
 	pfree(attmap);
+	list_free_deep(partFKs);
 
-	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+	/*
+	 * If the partition is partitioned, recurse to handle any constraints that
+	 * were cloned.
+	 */
+	if (partRel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
+		subclone != NIL)
 	{
-		PartitionDesc partdesc = RelationGetPartitionDesc(rel);
+		PartitionDesc partdesc = RelationGetPartitionDesc(partRel);
 		int			i;
 
 		for (i = 0; i < partdesc->nparts; i++)
-			CloneForeignKeyConstraints(RelationGetRelid(rel),
-									   partdesc->oids[i],
-									   cloned);
-	}
+		{
+			Relation	childRel;
 
-	heap_close(rel, NoLock);	/* keep lock till commit */
-	heap_close(parentRel, NoLock);
-	heap_close(pg_constraint, RowShareLock);
+			childRel = heap_open(partdesc->oids[i], AccessExclusiveLock);
+			clone_fk_constraints(pg_constraint,
+								 partRel,
+								 childRel,
+								 subclone,
+								 cloned);
+			heap_close(childRel, NoLock);	/* keep lock till commit */
+		}
+	}
 }
 
 /*
@@ -1028,17 +1180,33 @@ ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
 		elog(ERROR, "cache lookup failed for constraint %u", childConstrId);
 	newtup = heap_copytuple(tuple);
 	constrForm = (Form_pg_constraint) GETSTRUCT(newtup);
-	constrForm->conislocal = false;
-	constrForm->coninhcount++;
-	constrForm->conparentid = parentConstrId;
-	CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
+	if (OidIsValid(parentConstrId))
+	{
+		constrForm->conislocal = false;
+		constrForm->coninhcount++;
+		constrForm->conparentid = parentConstrId;
+
+		CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
+
+		ObjectAddressSet(referenced, ConstraintRelationId, parentConstrId);
+		ObjectAddressSet(depender, ConstraintRelationId, childConstrId);
+
+		recordDependencyOn(&depender, &referenced, DEPENDENCY_INTERNAL_AUTO);
+	}
+	else
+	{
+		constrForm->coninhcount--;
+		if (constrForm->coninhcount <= 0)
+			constrForm->conislocal = true;
+		constrForm->conparentid = InvalidOid;
+
+		deleteDependencyRecordsForClass(ConstraintRelationId, childConstrId,
+										ConstraintRelationId,
+										DEPENDENCY_INTERNAL_AUTO);
+		CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
+	}
+
 	ReleaseSysCache(tuple);
-
-	ObjectAddressSet(referenced, ConstraintRelationId, parentConstrId);
-	ObjectAddressSet(depender, ConstraintRelationId, childConstrId);
-
-	recordDependencyOn(&depender, &referenced, DEPENDENCY_INTERNAL_AUTO);
-
 	heap_close(constrRel, RowExclusiveLock);
 }
 

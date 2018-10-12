@@ -14092,6 +14092,11 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	attachrel = heap_openrv(cmd->name, AccessExclusiveLock);
 
 	/*
+	 * XXX I think it'd be a good idea to grab locks on all tables referenced
+	 * by FKs at this point also.
+	 */
+
+	/*
 	 * Must be owner of both parent and source table -- parent was checked by
 	 * ATSimplePermissions call in ATPrepCmd
 	 */
@@ -14663,6 +14668,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	ObjectAddress address;
 	Oid			defaultPartOid;
 	List	   *indexes;
+	List	   *fks;
 	ListCell   *cell;
 
 	/*
@@ -14737,6 +14743,23 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		relation_close(idx, AccessExclusiveLock);
 	}
 	heap_close(classRel, RowExclusiveLock);
+
+	/* Detach foreign keys */
+	fks = copyObject(RelationGetFKeyList(partRel));
+	foreach(cell, fks)
+	{
+		ForeignKeyCacheInfo *fk = lfirst(cell);
+		HeapTuple	contup;
+
+		contup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(fk->conoid));
+		if (!contup)
+			elog(ERROR, "cache lookup failed for constraint %u", fk->conoid);
+
+		ConstraintSetParentConstraint(fk->conoid, InvalidOid);
+
+		ReleaseSysCache(contup);
+	}
+	list_free_deep(fks);
 
 	/*
 	 * Invalidate the parent's relcache so that the partition is no longer
