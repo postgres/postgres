@@ -531,3 +531,12 @@ SELECT '2012-12-12 12:00 America/New_York'::timestamptz;
 SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
 
 RESET TIME ZONE;
+
+--
+-- Drop tables that we don't want to keep because they interfere with
+-- testing pg_upgrade to v12 and up
+--
+
+DROP TABLE abstime_tbl;
+DROP TABLE reltime_tbl;
+DROP TABLE tinterval_tbl;
