@@ -15,6 +15,7 @@ ECPG = ../../preproc/ecpg --regression -I$(srcdir)/../../include -I$(srcdir)
 # Files that most or all ecpg preprocessor test outputs depend on
 ECPG_TEST_DEPENDENCIES = ../../preproc/ecpg$(X) \
 	$(srcdir)/../regression.h \
+	$(srcdir)/../printf_hack.h \
 	$(srcdir)/../../include/sqlca.h \
 	$(srcdir)/../../include/sqlda.h \
 	$(srcdir)/../../include/sqltypes.h \

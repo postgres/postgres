@@ -28,12 +28,38 @@
 
 
 
+#line 1 "printf_hack.h"
 /*
+ * print_double(x) has the same effect as printf("%g", x), but is intended
+ * to produce the same formatting across all platforms.
+ */
+static void
+print_double(double x)
+{
+#ifdef WIN32
+	/* Change Windows' 3-digit exponents to look like everyone else's */
+	char		convert[128];
+	int			vallen;
 
-NOTE: This file has a different expect file for regression tests on MinGW32
+	sprintf(convert, "%g", x);
+	vallen = strlen(convert);
 
-*/
+	if (vallen >= 6 &&
+		convert[vallen - 5] == 'e' &&
+		convert[vallen - 3] == '0')
+	{
+		convert[vallen - 3] = convert[vallen - 2];
+		convert[vallen - 2] = convert[vallen - 1];
+		convert[vallen - 1] = '\0';
+	}
 
+	printf("%s", convert);
+#else
+	printf("%g", x);
+#endif
+}
+
+#line 10 "dec_test.pgc"
 
 
 
@@ -135,7 +161,9 @@ main(void)
 			/* this is a libc problem since we only call strtod() */
 			r = dectodbl(dec, &dbl);
 			if (r) check_errno();
-			printf("dec[%d,10]: %g (r: %d)\n", i, r?0.0:dbl, r);
+			printf("dec[%d,10]: ", i);
+			print_double(r ? 0.0 : dbl);
+			printf(" (r: %d)\n", r);
 		}
 
 		PGTYPESdecimal_free(din);
