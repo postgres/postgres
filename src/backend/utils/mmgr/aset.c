@@ -381,8 +381,10 @@ AllocSetFreeIndex(Size size)
  * maxBlockSize: maximum allocation block size
  *
  * Most callers should abstract the context size parameters using a macro
- * such as ALLOCSET_DEFAULT_SIZES.  (This is now *required* when going
- * through the AllocSetContextCreate macro.)
+ * such as ALLOCSET_DEFAULT_SIZES.
+ *
+ * Note: don't call this directly; go through the wrapper macro
+ * AllocSetContextCreate.
  */
 MemoryContext
 AllocSetContextCreateExtended(MemoryContext parent,

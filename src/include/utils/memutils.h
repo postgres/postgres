@@ -158,17 +158,16 @@ extern MemoryContext AllocSetContextCreateExtended(MemoryContext parent,
 /*
  * This wrapper macro exists to check for non-constant strings used as context
  * names; that's no longer supported.  (Use MemoryContextSetIdentifier if you
- * want to provide a variable identifier.)  Note you must specify block sizes
- * with one of the abstraction macros below.
+ * want to provide a variable identifier.)
  */
-#ifdef HAVE__BUILTIN_CONSTANT_P
-#define AllocSetContextCreate(parent, name, allocparams) \
+#if defined(HAVE__BUILTIN_CONSTANT_P) && defined(HAVE__VA_ARGS)
+#define AllocSetContextCreate(parent, name, ...) \
 	(StaticAssertExpr(__builtin_constant_p(name), \
 					  "memory context names must be constant strings"), \
-	 AllocSetContextCreateExtended(parent, name, allocparams))
+	 AllocSetContextCreateExtended(parent, name, __VA_ARGS__))
 #else
-#define AllocSetContextCreate(parent, name, allocparams) \
-	AllocSetContextCreateExtended(parent, name, allocparams)
+#define AllocSetContextCreate \
+	AllocSetContextCreateExtended
 #endif
 
 /* slab.c */
