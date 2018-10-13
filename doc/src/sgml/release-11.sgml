@@ -26,12 +26,12 @@
       <itemizedlist>
        <listitem>
         <para>
-         Partitioning by a hash key
+         Add support for partitioning by a hash key
         </para>
        </listitem>
        <listitem>
         <para>
-         Support for <literal>PRIMARY KEY</literal>, <literal>FOREIGN
+         Add support for <literal>PRIMARY KEY</literal>, <literal>FOREIGN
          KEY</literal>, indexes, and triggers on partitioned tables
         </para>
        </listitem>
@@ -44,13 +44,14 @@
        <listitem>
         <para>
          <command>UPDATE</command> statements that change a partition key
-         column now move affected rows to the appropriate partitions
+         column now cause affected rows to be moved to the appropriate
+         partitions
         </para>
        </listitem>
        <listitem>
         <para>
-         Improved <command>SELECT</command> performance due to enhanced
-         partition elimination strategies during query processing
+         Improve <command>SELECT</command> performance through enhanced
+         partition elimination strategies during query planning and execution
         </para>
        </listitem>
       </itemizedlist>
@@ -116,9 +117,9 @@
 
     <listitem>
      <para>
-      Many other useful performance improvements, including making
-      <command>ALTER TABLE ... ADD COLUMN</command> with a
-      non-null column default faster
+      Many other useful performance improvements, including a significant
+      speedup to <command>ALTER TABLE ... ADD COLUMN</command> with a
+      non-null column default, as it no longer rewrites the table data
      </para>
     </listitem>
 
@@ -187,7 +188,7 @@
         <application>pg_dumpall</application>'s output script will now always
         create databases with their original locale and encoding, and hence
         will fail if the locale or encoding name is unknown to the
-        destination system.  Previously <command>CREATE DATABASE</command>
+        destination system.  Previously, <command>CREATE DATABASE</command>
         would be emitted without these specifications if the database locale
         and encoding matched the old cluster's defaults.
        </para>
@@ -307,7 +308,7 @@
        </para>
 
        <para>
-        Previously they skipped one <emphasis>byte</emphasis> for each byte
+        Previously, they skipped one <emphasis>byte</emphasis> for each byte
         of template character, resulting in strange behavior if either string
         contained multibyte characters.
        </para>
@@ -345,7 +346,7 @@
        <para>
         Per the SQL standard, relative paths start from the document node of
         the XML input document, not the root node as these functions
-        formerly did it.
+        previously did.
        </para>
       </listitem>
 
@@ -620,7 +621,7 @@
 
        <para>
         Creation of a trigger on a partitioned table automatically creates
-        triggers on all existing partitions, and on newly-created ones.
+        triggers on all existing and future partitions.
         This also allows deferred unique constraints on partitioned tables.
        </para>
       </listitem>
@@ -648,8 +649,9 @@
 -->
 
        <para>
-        Allow updated rows to automatically move to new partitions based
-        on the new row contents (Amit Khandekar)
+        <command>UPDATE</command> statements that change a partition key
+        column now cause affected rows to be moved to the appropriate
+        partitions (Amit Khandekar)
        </para>
       </listitem>
 
@@ -699,7 +701,7 @@
        </para>
 
        <para>
-        Previously partition elimination only happened at planning
+        Previously, partition elimination only happened at planning
         time, meaning many joins and prepared queries could not use
         partition elimination.
        </para>
@@ -713,9 +715,8 @@
 -->
 
        <para>
-        Allow equality joins between partitioned tables with identically
-        partitioned child tables to join the child tables directly
-        (Ashutosh Bapat)
+        In an equality join between partitioned tables, allow matching
+        partitions to be joined directly (Ashutosh Bapat)
        </para>
 
        <para>
@@ -772,7 +773,7 @@
 -->
 
        <para>
-        Allow btree indexes to be built in parallel (Peter Geoghegan,
+        Allow parallel building of a btree index (Peter Geoghegan,
         Rushabh Lathia, Heikki Linnakangas)
        </para>
       </listitem>
@@ -1049,7 +1050,7 @@ same commits as above
        </para>
 
        <para>
-        Previously the most common values (<acronym>MCV</acronym>s) were
+        Previously, the most common values (<acronym>MCV</acronym>s) were
         identified based on their frequency compared to all column
         values.  Now, <acronym>MCV</acronym>s are chosen based on their
         frequency compared to the non-<acronym>MCV</acronym> values.
@@ -1069,7 +1070,7 @@ same commits as above
        </para>
 
        <para>
-        Previously such cases used the same selectivity estimates
+        Previously, such cases used the same selectivity estimates
         as <literal>&gt;</literal> and <literal>&lt;</literal>, respectively,
         unless the comparison constants are <acronym>MCV</acronym>s.
         This change is particularly helpful for queries
@@ -1233,7 +1234,7 @@ same commits as above
        </para>
 
        <para>
-        Previously only non-join <command>UPDATE</command>s and
+        Previously, only non-join <command>UPDATE</command>s and
         <command>DELETE</command>s were pushed.
        </para>
 
@@ -1426,7 +1427,7 @@ same commits as above
         <literal>pg_execute_server_program</literal>.  These roles now also
         control who can use server-side <command>COPY</command> and the <link
         linkend="file-fdw"><filename>file_fdw</filename></link> extension.
-        Previously only superusers could use these functions, and that
+        Previously, only superusers could use these functions, and that
         is still the default behavior.
        </para>
       </listitem>
@@ -1443,7 +1444,7 @@ same commits as above
        </para>
 
        <para>
-        Specifically, these functions were modified:  <link
+        Specifically, these functions were modified: <link
         linkend="functions-admin-genfile-table"><function>pg_ls_dir()</function></link>,
         <function>pg_read_file()</function>,
         <function>pg_read_binary_file()</function>,
@@ -1489,8 +1490,8 @@ same commits as above
        <para>
         <productname>PostgreSQL</productname> only allows superusers to
         access <filename>postgres_fdw</filename> tables without
-        passwords, e.g. via <literal>peer</literal>.  Previously the
-        session owner had to be a superuser to allow such access;  now
+        passwords, e.g. via <literal>peer</literal>.  Previously, the
+        session owner had to be a superuser to allow such access; now
         the view owner is checked instead.
        </para>
       </listitem>
@@ -1594,7 +1595,7 @@ same commits as above
        </para>
 
        <para>
-        Previously the 16MB default could only be changed at compile time.
+        Previously, the 16MB default could only be changed at compile time.
        </para>
       </listitem>
 
@@ -1604,13 +1605,12 @@ same commits as above
 -->
 
        <para>
-        No longer retain <acronym>WAL</acronym> that spans two checkpoints
+        Retain <acronym>WAL</acronym> data for only a single checkpoint
         (Simon Riggs)
        </para>
 
        <para>
-        Retention of <acronym>WAL</acronym> records is only required for one
-        checkpoint.
+        Previously, <acronym>WAL</acronym> was retained for two checkpoints.
        </para>
       </listitem>
 
@@ -1685,7 +1685,7 @@ same commits as above
 -->
 
        <para>
-        Allow heap pages' checksums to be checked during streaming base
+        Allow checksums of heap pages to be verified during streaming base
         backup (Michael Banck)
        </para>
       </listitem>
@@ -1965,8 +1965,8 @@ same commits as above
        <para>
         Allow <function>to_char()</function> and
         <function>to_timestamp()</function> to specify the time zone's
-        hours and minutes from <acronym>UTC</acronym> (Nikita Glukhov,
-        Andrew Dunstan)
+        offset from <acronym>UTC</acronym> in hours and minutes
+        (Nikita Glukhov, Andrew Dunstan)
        </para>
 
        <para>
@@ -2094,7 +2094,7 @@ same commits as above
        </para>
 
        <para>
-        Previously such circumstances generated errors.
+        Previously, such circumstances generated errors.
        </para>
       </listitem>
 
@@ -2268,7 +2268,7 @@ same commits as above
        </para>
 
        <para>
-        Previously partition information would not be displayed for a
+        Previously, partition information would not be displayed for a
         partitioned table if it had no partitions.  Also indicate which
         partitions are themselves partitioned.
        </para>
@@ -2350,7 +2350,7 @@ same commits as above
        </para>
 
        <para>
-        Previously tab completion queries could fail against older servers.
+        Previously, tab completion queries could fail against older servers.
        </para>
 
       </listitem>
@@ -2438,7 +2438,7 @@ same commits as above
 
        <para>
         Allow <application>pgbench</application> to do exponentiation
-        with <function>pow()</function> and  <function>power()</function>
+        with <function>pow()</function> and <function>power()</function>
         (Ra&uacute;l Mar&iacute;n Rodr&iacute;guez)
        </para>
       </listitem>
@@ -2909,9 +2909,10 @@ same commits as above
 -->
 
        <para>
-        Make the computation of system column
+        Make the computation of
         <structname>pg_class</structname>.<structfield>reltuples</structfield>
-        more consistent (Tomas Vondra)
+        by <command>VACUUM</command> consistent with its computation
+        by <command>ANALYZE</command> (Tomas Vondra)
        </para>
       </listitem>
 
@@ -3070,7 +3071,7 @@ same commits as above
        </para>
 
        <para>
-        Previously only superusers could call <filename>adminpack</filename>
+        Previously, only superusers could call <filename>adminpack</filename>
         functions; now role permissions are checked.
        </para>
       </listitem>
