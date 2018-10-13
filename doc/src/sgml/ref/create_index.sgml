@@ -612,11 +612,12 @@ Indexes:
 
    <para>
     Regular index builds permit other regular index builds on the
-    same table to occur in parallel, but only one concurrent index build
-    can occur on a table at a time.  In both cases, no other types of schema
-    modification on the table are allowed meanwhile.  Another difference
-    is that a regular <command>CREATE INDEX</command> command can be performed within
-    a transaction block, but <command>CREATE INDEX CONCURRENTLY</command> cannot.
+    same table to occur simultaneously, but only one concurrent index build
+    can occur on a table at a time.  In either case, schema modification of the
+    table is not allowed while the index is being built.  Another difference is
+    that a regular <command>CREATE INDEX</command> command can be performed
+    within a transaction block, but <command>CREATE INDEX CONCURRENTLY</command>
+    cannot.
    </para>
   </refsect2>
  </refsect1>
@@ -650,7 +651,7 @@ Indexes:
    ordering. For example, we might want to sort a complex-number data
    type either by absolute value or by real part. We could do this by
    defining two operator classes for the data type and then selecting
-   the proper class when making an index.  More information about
+   the proper class when creating an index.  More information about
    operator classes is in <xref linkend="indexes-opclass"/> and in <xref
    linkend="xindex"/>.
   </para>
@@ -668,12 +669,13 @@ Indexes:
    will be determined as if no index name had been specified in the
    command.
    If the <literal>ONLY</literal> option is specified, no recursion
-   is done, and the index is marked invalid
-   (<command>ALTER INDEX ... ATTACH PARTITION</command> turns the index
-   valid, once all partitions acquire the index.)  Note, however, that
-   any partition that is created in the future using
+   is done, and the index is marked invalid.
+   (<command>ALTER INDEX ... ATTACH PARTITION</command> marks the index
+   valid, once all partitions acquire matching indexes.)  Note, however,
+   that any partition that is created in the future using
    <command>CREATE TABLE ... PARTITION OF</command> will automatically
-   contain the index regardless of whether this option was specified.
+   have a matching index, regardless of whether <literal>ONLY</literal> is
+   specified.
   </para>
 
   <para>
