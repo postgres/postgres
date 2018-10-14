@@ -427,9 +427,9 @@ EXECUTE pstmt('1', make_some_array(1,2));
 DEALLOCATE pstmt;
 
 -- test interaction between subquery and partial_paths
-SET LOCAL min_parallel_table_scan_size TO 0;
 CREATE VIEW tenk1_vw_sec WITH (security_barrier) AS SELECT * FROM tenk1;
 EXPLAIN (COSTS OFF)
-SELECT 1 FROM tenk1_vw_sec WHERE EXISTS (SELECT 1 WHERE unique1 = 0);
+SELECT 1 FROM tenk1_vw_sec
+  WHERE (SELECT sum(f1) FROM int4_tbl WHERE f1 < unique1) < 100;
 
 rollback;

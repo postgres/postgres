@@ -1116,22 +1116,21 @@ EXECUTE pstmt('1', make_some_array(1,2));
 
 DEALLOCATE pstmt;
 -- test interaction between subquery and partial_paths
-SET LOCAL min_parallel_table_scan_size TO 0;
 CREATE VIEW tenk1_vw_sec WITH (security_barrier) AS SELECT * FROM tenk1;
 EXPLAIN (COSTS OFF)
-SELECT 1 FROM tenk1_vw_sec WHERE EXISTS (SELECT 1 WHERE unique1 = 0);
+SELECT 1 FROM tenk1_vw_sec
+  WHERE (SELECT sum(f1) FROM int4_tbl WHERE f1 < unique1) < 100;
                             QUERY PLAN                             
 -------------------------------------------------------------------
  Subquery Scan on tenk1_vw_sec
-   Filter: (alternatives: SubPlan 1 or hashed SubPlan 2)
+   Filter: ((SubPlan 1) < 100)
    ->  Gather
          Workers Planned: 4
          ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
    SubPlan 1
-     ->  Result
-           One-Time Filter: (tenk1_vw_sec.unique1 = 0)
-   SubPlan 2
-     ->  Result
-(10 rows)
+     ->  Aggregate
+           ->  Seq Scan on int4_tbl
+                 Filter: (f1 < tenk1_vw_sec.unique1)
+(9 rows)
 
 rollback;
