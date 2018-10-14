@@ -173,14 +173,18 @@ extern Datum ExecFetchSlotTupleDatum(TupleTableSlot *slot);
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot,
 			 TupleTableSlot *srcslot);
+extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
+					 int lastAttNum);
+extern Datum slot_getattr(TupleTableSlot *slot, int attnum,
+			 bool *isnull);
+extern void slot_getsomeattrs(TupleTableSlot *slot, int attnum);
 
 /* in access/common/heaptuple.c */
-extern Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull);
-extern void slot_getsomeattrs(TupleTableSlot *slot, int attnum);
 extern bool slot_attisnull(TupleTableSlot *slot, int attnum);
 extern bool slot_getsysattr(TupleTableSlot *slot, int attnum,
 				Datum *value, bool *isnull);
-extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum);
+extern Datum getmissingattr(TupleDesc tupleDesc,
+			   int attnum, bool *isnull);
 
 #ifndef FRONTEND
 

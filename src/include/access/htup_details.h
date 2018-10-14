@@ -835,5 +835,7 @@ extern MinimalTuple minimal_tuple_from_heap_tuple(HeapTuple htup);
 extern size_t varsize_any(void *p);
 extern HeapTuple heap_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleDesc);
 extern MinimalTuple minimal_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleDesc);
+struct TupleTableSlot;
+extern void slot_deform_tuple(struct TupleTableSlot *slot, int natts);
 
 #endif							/* HTUP_DETAILS_H */
