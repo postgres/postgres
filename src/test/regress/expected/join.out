@@ -2024,6 +2024,20 @@ NATURAL FULL JOIN
  ee   |      |   42 |    2 |     
 (4 rows)
 
+-- Constants as join keys can also be problematic
+SELECT * FROM
+  (SELECT name, n as s1_n FROM t1) as s1
+FULL JOIN
+  (SELECT name, 2 as s2_n FROM t2) as s2
+ON (s1_n = s2_n);
+ name | s1_n | name | s2_n 
+------+------+------+------
+      |      | bb   |    2
+      |      | cc   |    2
+      |      | ee   |    2
+ bb   |   11 |      |     
+(4 rows)
+
 -- Test for propagation of nullability constraints into sub-joins
 create temp table x (x1 int, x2 int);
 insert into x values (1,11);
@@ -2854,7 +2868,7 @@ SELECT qq, unique1
 ---------------------------------------------------------------------------------------------------------
  Nested Loop
    ->  Hash Full Join
-         Hash Cond: (COALESCE(a.q1, '0'::bigint) = COALESCE(b.q2, '-1'::bigint))
+         Hash Cond: ((COALESCE(a.q1, '0'::bigint)) = (COALESCE(b.q2, '-1'::bigint)))
          ->  Seq Scan on int8_tbl a
          ->  Hash
                ->  Seq Scan on int8_tbl b

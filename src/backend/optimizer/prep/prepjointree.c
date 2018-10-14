@@ -2044,6 +2044,18 @@ replace_vars_in_jointree(Node *jtnode,
 		}
 		replace_vars_in_jointree(j->larg, context, lowest_nulling_outer_join);
 		replace_vars_in_jointree(j->rarg, context, lowest_nulling_outer_join);
+
+		/*
+		 * Use PHVs within the join quals of a full join, even when it's the
+		 * lowest nulling outer join.  Otherwise, we cannot identify which
+		 * side of the join a pulled-up var-free expression came from, which
+		 * can lead to failure to make a plan at all because none of the quals
+		 * appear to be mergeable or hashable conditions.  For this purpose we
+		 * don't care about the state of wrap_non_vars, so leave it alone.
+		 */
+		if (j->jointype == JOIN_FULL)
+			context->need_phvs = true;
+
 		j->quals = pullup_replace_vars(j->quals, context);
 
 		/*
