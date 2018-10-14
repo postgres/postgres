@@ -65,7 +65,7 @@
        <listitem>
         <para>
          <command>CREATE INDEX</command> can now use parallel processing
-         while building B-tree indexes
+         while building a B-tree index
         </para>
        </listitem>
        <listitem>
@@ -117,9 +117,9 @@
 
     <listitem>
      <para>
-      Many other useful performance improvements, including a significant
-      speedup to <command>ALTER TABLE ... ADD COLUMN</command> with a
-      non-null column default, as it no longer rewrites the table data
+      Many other useful performance improvements, including the ability to
+      avoid a table rewrite for <command>ALTER TABLE ... ADD COLUMN</command>
+      with a non-null column default
      </para>
     </listitem>
 
@@ -570,32 +570,37 @@
 
       <listitem>
 <!--
+2018-01-19 [8b08f7d48] Local partitioned indexes
 2018-02-19 [eb7ed3f30] Allow UNIQUE indexes on partitioned tables
 2018-03-26 [555ee77a9] Handle INSERT .. ON CONFLICT with partitioned tables
 -->
 
        <para>
-        Allow <literal>UNIQUE</literal> indexes on partitioned tables if
-        the partition key is part of the index (&Aacute;lvaro Herrera,
+        Support indexes on partitioned tables (&Aacute;lvaro Herrera,
         Amit Langote)
        </para>
-      </listitem>
-
-      <listitem>
-<!--
-2018-01-19 [8b08f7d48] Local partitioned indexes
--->
 
        <para>
-        Allow indexes on a partitioned table to be automatically created
-        in new child partitions (&Aacute;lvaro Herrera)
+        An <quote>index</quote> on a partitioned table is not a physical
+        index across the whole partitioned table, but rather a template for
+        automatically creating similar indexes on each partition of the
+        table.
+       </para>
+
+       <para>
+        If the partition key is part of the index's column set, a
+        partitioned index may be declared <literal>UNIQUE</literal>.
+        It will represent a valid uniqueness constraint across the whole
+        partitioned table, even though each physical index only enforces
+        uniqueness within its own partition.
        </para>
 
        <para>
         The new command <link linkend="sql-alterindex"><command>ALTER
-        INDEX ATTACH PARTITION</command></link> allows indexes to be
-        attached to partitions.  This does not behave as a global index
-        since the contents are private to each index.
+        INDEX ATTACH PARTITION</command></link> causes an existing index on
+        a partition to be associated with a matching index template for its
+        partitioned table.  This provides flexibility in setting up a new
+        partitioned index for an existing partitioned table.
        </para>
       </listitem>
 
@@ -733,7 +738,8 @@
 -->
 
        <para>
-        Perform aggregation on each partition, and then merge the results
+        Allow aggregate functions on partitioned tables to be evaluated
+        separately for each partition, subsequently merging the results
         (Jeevan Chalke, Ashutosh Bapat, Robert Haas)
        </para>
 
@@ -1564,11 +1570,11 @@ same commits as above
 
        <para>
         Allow server options related to memory and file sizes to be
-        specified as a number of bytes (Beena Emerson)
+        specified in units of bytes (Beena Emerson)
        </para>
 
        <para>
-        The new unit is <quote>B</quote>.  This is in addition to the
+        The new unit suffix is <quote>B</quote>.  This is in addition to the
         existing units <quote>kB</quote>, <quote>MB</quote>, <quote>GB</quote>
         and <quote>TB</quote>.
        </para>
@@ -2199,8 +2205,8 @@ same commits as above
 
        <para>
         Add <application>psql</application> command <literal>\gdesc</literal>
-        to display the column names and types of the query output (Pavel
-        Stehule)
+        to display the names and types of the columns in a query result
+        (Pavel Stehule)
        </para>
       </listitem>
 
