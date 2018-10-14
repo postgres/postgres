@@ -51,8 +51,9 @@
     <term><literal>length</literal></term>
     <listitem>
      <para>
-      Length of each signature (index entry) in bits. The default
-      is <literal>80</literal> bits and maximum is <literal>4096</literal>.
+      Length of each signature (index entry) in bits, it is rounded up to the
+      nearest multiple of <literal>16</literal>. The default is
+      <literal>80</literal> bits and maximum is <literal>4096</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -240,6 +241,20 @@ DEFAULT FOR TYPE text USING bloom AS
       Only the <literal>=</literal> operator is supported for search.  But
       it is possible to add support for arrays with union and intersection
       operations in the future.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+       <literal>bloom</literal> access method doesn't support
+       <literal>UNIQUE</literal> indexes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+       <literal>bloom</literal> access method doesn't support searching for
+       <literal>NULL</literal> values.
      </para>
     </listitem>
    </itemizedlist>
