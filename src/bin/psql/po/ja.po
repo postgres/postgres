@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-08-31 16:22+0900\n"
-"PO-Revision-Date: 2018-08-27 12:27+0900\n"
+"POT-Creation-Date: 2018-10-12 14:12+0900\n"
+"PO-Revision-Date: 2018-10-12 14:18+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: \n"
 "Language: ja\n"
@@ -127,12 +127,15 @@ msgstr "割り込み\n"
 #: ../../fe_utils/print.c:2979
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
-msgstr "テーブルの内容にヘッダーを追加できません: 列数 %d が制限値を超えています。\n"
+msgstr ""
+"テーブルの内容にヘッダーを追加できません: 列数 %d が制限値を超えています。\n"
 
 #: ../../fe_utils/print.c:3019
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
-msgstr "テーブルの内容にセルを追加できません: セルの合計数 %d が制限値を超えています。\n"
+msgstr ""
+"テーブルの内容にセルを追加できません: セルの合計数 %d が制限値を超えていま"
+"す。\n"
 
 #: ../../fe_utils/print.c:3268
 #, c-format
@@ -161,8 +164,11 @@ msgstr "\\%s: 余分な引数 \"%s\" は無視されました\n"
 
 #: command.c:292
 #, c-format
-msgid "\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block\n"
-msgstr "\\%s コマンドは無視されます。現在の \\if ブロックを抜けるには \\endif または Ctrl-C を使用します。\n"
+msgid ""
+"\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block\n"
+msgstr ""
+"\\%s コマンドは無視されます。現在の \\if ブロックを抜けるには \\endif または "
+"Ctrl-C を使用します。\n"
 
 #: command.c:552
 #, c-format
@@ -181,13 +187,21 @@ msgstr "現在データベースに接続していません。\n"
 
 #: command.c:602
 #, c-format
-msgid "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
-msgstr "データベース \"%s\" にユーザ \"%s\" として、ソケット \"%s\" のポート \"%s\" を介して接続しています。\n"
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"データベース \"%s\" にユーザ \"%s\" として、ソケット \"%s\" のポート \"%s\" "
+"を介して接続しています。\n"
 
 #: command.c:605
 #, c-format
-msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
-msgstr "データベース \"%s\" にユーザ \"%s\" として、ホスト \"%s\" 上のポート \"%s\" を介して接続しています。\n"
+msgid ""
+"You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port "
+"\"%s\".\n"
+msgstr ""
+"データベース \"%s\" にユーザ \"%s\" として、ホスト \"%s\" 上のポート \"%s\" "
+"を介して接続しています。\n"
 
 #: command.c:895 command.c:991 command.c:2376
 #, c-format
@@ -202,12 +216,14 @@ msgstr "無効な行番号です: %s\n"
 #: command.c:982
 #, c-format
 msgid "The server (version %s) does not support editing function source.\n"
-msgstr "このサーバ (バージョン %s) は関数ソースコードの編集をサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) は関数ソースコードの編集をサポートしていません。\n"
 
 #: command.c:985
 #, c-format
 msgid "The server (version %s) does not support editing view definitions.\n"
-msgstr "このサーバ (バージョン %s) はビュー定義の編集をサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) はビュー定義の編集をサポートしていません。\n"
 
 #: command.c:1067
 msgid "No changes"
@@ -216,7 +232,8 @@ msgstr "変更されていません"
 #: command.c:1144
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
-msgstr "%s: エンコーディング名が無効か、または変換プロシージャが見つかりません。\n"
+msgstr ""
+"%s: エンコーディング名が無効か、または変換プロシージャが見つかりません。\n"
 
 #: command.c:1179 command.c:1818 command.c:3033 command.c:4750 common.c:174
 #: common.c:245 common.c:542 common.c:1338 common.c:1366 common.c:1474
@@ -304,12 +321,14 @@ msgstr "\\%s: 環境変数名に \"=\" を含めることはできません\n"
 #: command.c:2173
 #, c-format
 msgid "The server (version %s) does not support showing function source.\n"
-msgstr "このサーバ (バージョン %s) は関数ソースの表示をサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) は関数ソースの表示をサポートしていません。\n"
 
 #: command.c:2176
 #, c-format
 msgid "The server (version %s) does not support showing view definitions.\n"
-msgstr "このサーバ (バージョン %s) はビュー定義の表示をサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) はビュー定義の表示をサポートしていません。\n"
 
 #: command.c:2183
 #, c-format
@@ -349,8 +368,12 @@ msgstr "ユーザ %s のパスワード: "
 
 #: command.c:2869
 #, c-format
-msgid "All connection parameters must be supplied because no database connection exists\n"
-msgstr "データベース接続がないため、すべての接続パラメータを指定しなければなりません\n"
+msgid ""
+"All connection parameters must be supplied because no database connection "
+"exists\n"
+msgstr ""
+"データベース接続がないため、すべての接続パラメータを指定しなければなりませ"
+"ん\n"
 
 #: command.c:3037
 #, c-format
@@ -364,13 +387,21 @@ msgstr "\\connect: %s"
 
 #: command.c:3077
 #, c-format
-msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
-msgstr "データベース \"%s\" にユーザ \"%s\" として、ソケット \"%s\" のポート \"%s\" を介して接続しました。\n"
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
+"at port \"%s\".\n"
+msgstr ""
+"データベース \"%s\" にユーザ \"%s\" として、ソケット \"%s\" のポート \"%s\" "
+"を介して接続しました。\n"
 
 #: command.c:3080
 #, c-format
-msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
-msgstr "データベース \"%s\" にユーザ \"%s\" として、ホスト \"%s\" のポート \"%s\" を介して接続しました。\n"
+msgid ""
+"You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
+"port \"%s\".\n"
+msgstr ""
+"データベース \"%s\" にユーザ \"%s\" として、ホスト \"%s\" のポート \"%s\" を"
+"介して接続しました。\n"
 
 #: command.c:3084
 #, c-format
@@ -388,7 +419,8 @@ msgid ""
 "WARNING: %s major version %s, server major version %s.\n"
 "         Some psql features might not work.\n"
 msgstr ""
-"警告： %s のメジャーバージョンは %s ですが、サーバのメジャーバージョンは %s です。\n"
+"警告： %s のメジャーバージョンは %s ですが、サーバのメジャーバージョンは %s "
+"です。\n"
 "         psql の機能の中で、動作しないものがあるかもしれません。\n"
 
 #: command.c:3162
@@ -415,14 +447,20 @@ msgid ""
 "         8-bit characters might not work correctly. See psql reference\n"
 "         page \"Notes for Windows users\" for details.\n"
 msgstr ""
-"警告：コンソールのコードページ (%u) が Windows のコードページ (%u) と異なるため、\n"
-"      8 ビット文字列が正しく動作しない可能性があります。詳細は psql リファレンスマニュアルの\n"
-"      \"Notes for Windows users\"（Windowsユーザ向けの注意）を参照してください。\n"
+"警告：コンソールのコードページ (%u) が Windows のコードページ (%u) と異なるた"
+"め、\n"
+"      8 ビット文字列が正しく動作しない可能性があります。詳細は psql リファレ"
+"ンスマニュアルの\n"
+"      \"Notes for Windows users\"（Windowsユーザ向けの注意）を参照してくださ"
+"い。\n"
 
 #: command.c:3290
 #, c-format
-msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number\n"
-msgstr "環境変数 PSQL_EDITOR_LINENUMBER_ARG で行番号を指定する必要があります。\n"
+msgid ""
+"environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
+"line number\n"
+msgstr ""
+"環境変数 PSQL_EDITOR_LINENUMBER_ARG で行番号を指定する必要があります。\n"
 
 #: command.c:3319
 #, c-format
@@ -446,8 +484,12 @@ msgstr "一時ファイル \"%s\" を開けませんでした: %s\n"
 
 #: command.c:3660
 #, c-format
-msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n"
-msgstr "\\pset: 有効なフォーマットは unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms です。\n"
+msgid ""
+"\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, "
+"latex, latex-longtable, troff-ms\n"
+msgstr ""
+"\\pset: 有効なフォーマットは unaligned, aligned, wrapped, html, asciidoc, "
+"latex, latex-longtable, troff-ms です。\n"
 
 #: command.c:3678
 #, c-format
@@ -467,7 +509,8 @@ msgstr "\\pset: 有効な Unicode 列罫線のスタイルは single, double で
 #: command.c:3723
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double\n"
-msgstr "\\pset: 有効な Unicode ヘッダー罫線のスタイルは single, double です。\n"
+msgstr ""
+"\\pset: 有効な Unicode ヘッダー罫線のスタイルは single, double です。\n"
 
 #: command.c:3888 command.c:4067
 #, c-format
@@ -681,7 +724,9 @@ msgstr "有効な接続がないのでエスケープできません。\n"
 #: common.c:200
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
-msgstr "シェルコマンドの引数に改行(LF)またはキャリッジリターン(CR)が含まれています: \"%s\"\n"
+msgstr ""
+"シェルコマンドの引数に改行(LF)またはキャリッジリターン(CR)が含まれています: "
+"\"%s\"\n"
 
 #: common.c:416
 #, c-format
@@ -740,12 +785,17 @@ msgstr "\\watch で予期しない結果のステータス\n"
 
 #: common.c:843
 #, c-format
-msgid "Asynchronous notification \"%s\" with payload \"%s\" received from server process with PID %d.\n"
-msgstr "PID %3$d のサーバプロセスから、ペイロード \"%2$s\" を持つ非同期通知 \"%1$s\" を受信しました。\n"
+msgid ""
+"Asynchronous notification \"%s\" with payload \"%s\" received from server "
+"process with PID %d.\n"
+msgstr ""
+"PID %3$d のサーバプロセスから、ペイロード \"%2$s\" を持つ非同期通知 \"%1$s\" "
+"を受信しました。\n"
 
 #: common.c:846
 #, c-format
-msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgid ""
+"Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "PID %2$d のサーバプロセスから非同期通知 \"%1$s\" を受信しました。\n"
 
 #: common.c:908
@@ -761,9 +811,11 @@ msgstr "\\gset に対して複数の行が返されました\n"
 #: common.c:1301
 #, c-format
 msgid ""
-"***(Single step mode: verify command)*******************************************\n"
+"***(Single step mode: verify command)"
+"*******************************************\n"
 "%s\n"
-"***(press return to proceed or enter x and return to cancel)********************\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
 msgstr ""
 "***(シングルステップモード: コマンドを確認してください)********\n"
 "%s\n"
@@ -771,8 +823,11 @@ msgstr ""
 
 #: common.c:1356
 #, c-format
-msgid "The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n"
-msgstr "このサーバ (バージョン %s) は ON_ERROR_ROLLBACK 用のセーブポイントをサポートしていません。\n"
+msgid ""
+"The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n"
+msgstr ""
+"このサーバ (バージョン %s) は ON_ERROR_ROLLBACK 用のセーブポイントをサポート"
+"していません。\n"
 
 #: common.c:1419
 #, c-format
@@ -784,14 +839,14 @@ msgstr "ステートメント:  %s\n"
 msgid "unexpected transaction status (%d)\n"
 msgstr "予期しないトランザクションのステータス (%d)\n"
 
-#: common.c:1599 describe.c:1940
+#: common.c:1599 describe.c:1941
 msgid "Column"
 msgstr "列"
 
-#: common.c:1600 describe.c:174 describe.c:389 describe.c:407 describe.c:452
-#: describe.c:469 describe.c:958 describe.c:1122 describe.c:1663
-#: describe.c:1687 describe.c:1941 describe.c:3528 describe.c:3733
-#: describe.c:4905
+#: common.c:1600 describe.c:175 describe.c:390 describe.c:408 describe.c:453
+#: describe.c:470 describe.c:959 describe.c:1123 describe.c:1664
+#: describe.c:1688 describe.c:1942 describe.c:3529 describe.c:3734
+#: describe.c:4925
 msgid "Type"
 msgstr "型"
 
@@ -873,17 +928,25 @@ msgstr "\\crosstabview: ステートメントは結果セットを返しませ�
 #: crosstabview.c:129
 #, c-format
 msgid "\\crosstabview: query must return at least three columns\n"
-msgstr "\\crosstabview: 問い合わせは、少なくとも3つの列を返す必要があります。\n"
+msgstr ""
+"\\crosstabview: 問い合わせは、少なくとも3つの列を返す必要があります。\n"
 
 #: crosstabview.c:156
 #, c-format
-msgid "\\crosstabview: vertical and horizontal headers must be different columns\n"
-msgstr "\\crosstabview: 垂直方向と水平方向のヘッダーは異なった列にする必要があります。\n"
+msgid ""
+"\\crosstabview: vertical and horizontal headers must be different columns\n"
+msgstr ""
+"\\crosstabview: 垂直方向と水平方向のヘッダーは異なった列にする必要がありま"
+"す。\n"
 
 #: crosstabview.c:172
 #, c-format
-msgid "\\crosstabview: data column must be specified when query returns more than three columns\n"
-msgstr "\\crosstabview: 問い合わせが 4 つ以上の列を返す場合、データ列を指定する必要があります。\n"
+msgid ""
+"\\crosstabview: data column must be specified when query returns more than "
+"three columns\n"
+msgstr ""
+"\\crosstabview: 問い合わせが 4 つ以上の列を返す場合、データ列を指定する必要が"
+"あります。\n"
 
 #: crosstabview.c:228
 #, c-format
@@ -892,8 +955,12 @@ msgstr "列数が制限値 (%d) を超えています。\n"
 
 #: crosstabview.c:397
 #, c-format
-msgid "\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\"\n"
-msgstr "\\crosstabview: 問い合わせ結果の中の \"%s\" 行 \"%s\" 列に複数のデータ値が含まれています。\n"
+msgid ""
+"\\crosstabview: query result contains multiple data values for row \"%s\", "
+"column \"%s\"\n"
+msgstr ""
+"\\crosstabview: 問い合わせ結果の中の \"%s\" 行 \"%s\" 列に複数のデータ値が含"
+"まれています。\n"
 
 #: crosstabview.c:645
 #, c-format
@@ -910,1024 +977,1031 @@ msgstr "\\crosstabview: 列名を一意に特定できません: \"%s\"\n"
 msgid "\\crosstabview: column name not found: \"%s\"\n"
 msgstr "\\crosstabview: 列名が見つかりませんでした: \"%s\"\n"
 
-#: describe.c:74 describe.c:369 describe.c:674 describe.c:806 describe.c:950
-#: describe.c:1111 describe.c:1183 describe.c:3517 describe.c:3731
-#: describe.c:3822 describe.c:4070 describe.c:4215 describe.c:4456
-#: describe.c:4531 describe.c:4542 describe.c:4604 describe.c:5029
-#: describe.c:5112
+#: describe.c:75 describe.c:370 describe.c:675 describe.c:807 describe.c:951
+#: describe.c:1112 describe.c:1184 describe.c:3518 describe.c:3732
+#: describe.c:3823 describe.c:4090 describe.c:4235 describe.c:4476
+#: describe.c:4551 describe.c:4562 describe.c:4624 describe.c:5049
+#: describe.c:5132
 msgid "Schema"
 msgstr "スキーマ"
 
-#: describe.c:75 describe.c:172 describe.c:239 describe.c:247 describe.c:370
-#: describe.c:675 describe.c:807 describe.c:868 describe.c:951 describe.c:1184
-#: describe.c:3518 describe.c:3654 describe.c:3732 describe.c:3823
-#: describe.c:3902 describe.c:4071 describe.c:4140 describe.c:4216
-#: describe.c:4457 describe.c:4532 describe.c:4543 describe.c:4605
-#: describe.c:4802 describe.c:4886 describe.c:5110 describe.c:5282
-#: describe.c:5507
+#: describe.c:76 describe.c:173 describe.c:240 describe.c:248 describe.c:371
+#: describe.c:676 describe.c:808 describe.c:869 describe.c:952 describe.c:1185
+#: describe.c:3519 describe.c:3655 describe.c:3733 describe.c:3824
+#: describe.c:3903 describe.c:4091 describe.c:4160 describe.c:4236
+#: describe.c:4477 describe.c:4552 describe.c:4563 describe.c:4625
+#: describe.c:4822 describe.c:4906 describe.c:5130 describe.c:5302
+#: describe.c:5527
 msgid "Name"
 msgstr "名前"
 
-#: describe.c:76 describe.c:382 describe.c:400 describe.c:446 describe.c:463
+#: describe.c:77 describe.c:383 describe.c:401 describe.c:447 describe.c:464
 msgid "Result data type"
 msgstr "結果のデータ型"
 
-#: describe.c:84 describe.c:97 describe.c:101 describe.c:383 describe.c:401
-#: describe.c:447 describe.c:464
+#: describe.c:85 describe.c:98 describe.c:102 describe.c:384 describe.c:402
+#: describe.c:448 describe.c:465
 msgid "Argument data types"
 msgstr "引数のデータ型"
 
-#: describe.c:109 describe.c:116 describe.c:182 describe.c:270 describe.c:509
-#: describe.c:723 describe.c:822 describe.c:893 describe.c:1186 describe.c:1959
-#: describe.c:3306 describe.c:3553 describe.c:3685 describe.c:3759
-#: describe.c:3832 describe.c:3915 describe.c:3983 describe.c:4083
-#: describe.c:4149 describe.c:4217 describe.c:4358 describe.c:4400
-#: describe.c:4473 describe.c:4535 describe.c:4544 describe.c:4606
-#: describe.c:4828 describe.c:4908 describe.c:5043 describe.c:5113
-#: large_obj.c:289 large_obj.c:299
+#: describe.c:110 describe.c:117 describe.c:183 describe.c:271 describe.c:510
+#: describe.c:724 describe.c:823 describe.c:894 describe.c:1187
+#: describe.c:1960 describe.c:3307 describe.c:3554 describe.c:3686
+#: describe.c:3760 describe.c:3833 describe.c:3916 describe.c:3999
+#: describe.c:4103 describe.c:4169 describe.c:4237 describe.c:4378
+#: describe.c:4420 describe.c:4493 describe.c:4555 describe.c:4564
+#: describe.c:4626 describe.c:4848 describe.c:4928 describe.c:5063
+#: describe.c:5133 large_obj.c:289 large_obj.c:299
 msgid "Description"
 msgstr "説明"
 
-#: describe.c:134
+#: describe.c:135
 msgid "List of aggregate functions"
 msgstr "集約関数一覧"
 
-#: describe.c:159
+#: describe.c:160
 #, c-format
 msgid "The server (version %s) does not support access methods.\n"
-msgstr "このサーバ (バージョン %s) はアクセスメソッドをサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) はアクセスメソッドをサポートしていません。\n"
 
-#: describe.c:173
+#: describe.c:174
 msgid "Index"
 msgstr "インデックス"
 
-#: describe.c:181 describe.c:4807
+#: describe.c:182 describe.c:4827
 msgid "Handler"
 msgstr "ハンドラー"
 
-#: describe.c:200
+#: describe.c:201
 msgid "List of access methods"
 msgstr "アクセスメソッド一覧"
 
-#: describe.c:226
+#: describe.c:227
 #, c-format
 msgid "The server (version %s) does not support tablespaces.\n"
 msgstr "このサーバ (バージョン %s) はテーブル空間をサポートしていません。\n"
 
-#: describe.c:240 describe.c:248 describe.c:497 describe.c:713 describe.c:869
-#: describe.c:1110 describe.c:3529 describe.c:3658 describe.c:3904
-#: describe.c:4141 describe.c:4803 describe.c:4887 describe.c:5283
-#: describe.c:5409 describe.c:5508 large_obj.c:288
+#: describe.c:241 describe.c:249 describe.c:498 describe.c:714 describe.c:870
+#: describe.c:1111 describe.c:3530 describe.c:3659 describe.c:3905
+#: describe.c:4161 describe.c:4823 describe.c:4907 describe.c:5303
+#: describe.c:5429 describe.c:5528 large_obj.c:288
 msgid "Owner"
 msgstr "所有者"
 
-#: describe.c:241 describe.c:249
+#: describe.c:242 describe.c:250
 msgid "Location"
 msgstr "場所"
 
-#: describe.c:260 describe.c:3125
+#: describe.c:261 describe.c:3126
 msgid "Options"
 msgstr "オプション"
 
-#: describe.c:265 describe.c:686 describe.c:885 describe.c:3545 describe.c:3549
+#: describe.c:266 describe.c:687 describe.c:886 describe.c:3546
+#: describe.c:3550
 msgid "Size"
 msgstr "サイズ"
 
-#: describe.c:287
+#: describe.c:288
 msgid "List of tablespaces"
 msgstr "テーブル空間一覧"
 
-#: describe.c:329
+#: describe.c:330
 #, c-format
 msgid "\\df only takes [anptwS+] as options\n"
 msgstr "\\df で指定できるオプションは [anptwS+] のみです。\n"
 
-#: describe.c:337 describe.c:348
+#: describe.c:338 describe.c:349
 #, c-format
 msgid "\\df does not take a \"%c\" option with server version %s\n"
-msgstr "サーババージョン %2$s の \\df では \"%1$c\" オプションは指定できません。\n"
+msgstr ""
+"サーババージョン %2$s の \\df では \"%1$c\" オプションは指定できません。\n"
 
 #. translator: "agg" is short for "aggregate"
-#: describe.c:385 describe.c:403 describe.c:449 describe.c:466
+#: describe.c:386 describe.c:404 describe.c:450 describe.c:467
 msgid "agg"
 msgstr "集約"
 
-#: describe.c:386 describe.c:404
+#: describe.c:387 describe.c:405
 msgid "window"
 msgstr "ウィンドウ"
 
-#: describe.c:387
+#: describe.c:388
 msgid "proc"
 msgstr "プロシージャ"
 
-#: describe.c:388 describe.c:406 describe.c:451 describe.c:468
+#: describe.c:389 describe.c:407 describe.c:452 describe.c:469
 msgid "func"
 msgstr "関数"
 
-#: describe.c:405 describe.c:450 describe.c:467 describe.c:1320
+#: describe.c:406 describe.c:451 describe.c:468 describe.c:1321
 msgid "trigger"
 msgstr "トリガー"
 
-#: describe.c:479
+#: describe.c:480
 msgid "immutable"
 msgstr "IMMUTABLE"
 
-#: describe.c:480
+#: describe.c:481
 msgid "stable"
 msgstr "STABLE"
 
-#: describe.c:481
+#: describe.c:482
 msgid "volatile"
 msgstr "VOLATILE"
 
-#: describe.c:482
+#: describe.c:483
 msgid "Volatility"
 msgstr "関数の変動性分類"
 
-#: describe.c:490
+#: describe.c:491
 msgid "restricted"
 msgstr "制限付き"
 
-#: describe.c:491
+#: describe.c:492
 msgid "safe"
 msgstr "安全"
 
-#: describe.c:492
+#: describe.c:493
 msgid "unsafe"
 msgstr "危険"
 
-#: describe.c:493
+#: describe.c:494
 msgid "Parallel"
 msgstr "並列実行"
 
-#: describe.c:498
+#: describe.c:499
 msgid "definer"
 msgstr "定義ロール"
 
-#: describe.c:499
+#: describe.c:500
 msgid "invoker"
 msgstr "起動ロール"
 
-#: describe.c:500
+#: describe.c:501
 msgid "Security"
 msgstr "セキュリティ"
 
-#: describe.c:507
+#: describe.c:508
 msgid "Language"
 msgstr "手続き言語"
 
-#: describe.c:508
+#: describe.c:509
 msgid "Source code"
 msgstr "ソースコード"
 
-#: describe.c:637
+#: describe.c:638
 msgid "List of functions"
 msgstr "関数一覧"
 
-#: describe.c:685
+#: describe.c:686
 msgid "Internal name"
 msgstr "内部名"
 
-#: describe.c:707
+#: describe.c:708
 msgid "Elements"
 msgstr "構成要素"
 
-#: describe.c:764
+#: describe.c:765
 msgid "List of data types"
 msgstr "データ型一覧"
 
-#: describe.c:808
+#: describe.c:809
 msgid "Left arg type"
 msgstr "左辺の型"
 
-#: describe.c:809
+#: describe.c:810
 msgid "Right arg type"
 msgstr "右辺の型"
 
-#: describe.c:810
+#: describe.c:811
 msgid "Result type"
 msgstr "結果の型"
 
-#: describe.c:815 describe.c:3910 describe.c:3974 describe.c:4357
+#: describe.c:816 describe.c:3911 describe.c:3976 describe.c:3982
+#: describe.c:4377
 msgid "Function"
 msgstr "関数"
 
-#: describe.c:840
+#: describe.c:841
 msgid "List of operators"
 msgstr "演算子一覧"
 
-#: describe.c:870
+#: describe.c:871
 msgid "Encoding"
 msgstr "エンコーディング"
 
-#: describe.c:875 describe.c:4072
+#: describe.c:876 describe.c:4092
 msgid "Collate"
 msgstr "照合順序"
 
-#: describe.c:876 describe.c:4073
+#: describe.c:877 describe.c:4093
 msgid "Ctype"
 msgstr "Ctype(変換演算子)"
 
-#: describe.c:889
+#: describe.c:890
 msgid "Tablespace"
 msgstr "テーブル空間"
 
-#: describe.c:911
+#: describe.c:912
 msgid "List of databases"
 msgstr "データベース一覧"
 
-#: describe.c:952 describe.c:957 describe.c:1113 describe.c:3519
-#: describe.c:3526
+#: describe.c:953 describe.c:958 describe.c:1114 describe.c:3520
+#: describe.c:3527
 msgid "table"
 msgstr "テーブル"
 
-#: describe.c:953 describe.c:3520
+#: describe.c:954 describe.c:3521
 msgid "view"
 msgstr "ビュー"
 
-#: describe.c:954 describe.c:3521
+#: describe.c:955 describe.c:3522
 msgid "materialized view"
 msgstr "マテリアライズドビュー"
 
-#: describe.c:955 describe.c:1115 describe.c:3523
+#: describe.c:956 describe.c:1116 describe.c:3524
 msgid "sequence"
 msgstr "シーケンス"
 
-#: describe.c:956 describe.c:3525
+#: describe.c:957 describe.c:3526
 msgid "foreign table"
 msgstr "外部テーブル"
 
-#: describe.c:969
+#: describe.c:970
 msgid "Column privileges"
 msgstr "列の権限"
 
-#: describe.c:1000 describe.c:1034
+#: describe.c:1001 describe.c:1035
 msgid "Policies"
 msgstr "ポリシー"
 
-#: describe.c:1066 describe.c:5564 describe.c:5568
+#: describe.c:1067 describe.c:5584 describe.c:5588
 msgid "Access privileges"
 msgstr "アクセス権限"
 
-#: describe.c:1097
+#: describe.c:1098
 #, c-format
 msgid "The server (version %s) does not support altering default privileges.\n"
-msgstr "このサーバ (バージョン %s) はデフォルト権限の変更をサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) はデフォルト権限の変更をサポートしていません。\n"
 
-#: describe.c:1117
+#: describe.c:1118
 msgid "function"
 msgstr "関数"
 
-#: describe.c:1119
+#: describe.c:1120
 msgid "type"
 msgstr "型"
 
-#: describe.c:1121
+#: describe.c:1122
 msgid "schema"
 msgstr "スキーマ"
 
-#: describe.c:1145
+#: describe.c:1146
 msgid "Default access privileges"
 msgstr "デフォルトのアクセス権限"
 
-#: describe.c:1185
+#: describe.c:1186
 msgid "Object"
 msgstr "オブジェクト"
 
-#: describe.c:1199
+#: describe.c:1200
 msgid "table constraint"
 msgstr "テーブル制約"
 
-#: describe.c:1221
+#: describe.c:1222
 msgid "domain constraint"
 msgstr "ドメイン制約"
 
-#: describe.c:1249
+#: describe.c:1250
 msgid "operator class"
 msgstr "演算子クラス"
 
-#: describe.c:1278
+#: describe.c:1279
 msgid "operator family"
 msgstr "演算子族"
 
-#: describe.c:1300
+#: describe.c:1301
 msgid "rule"
 msgstr "ルール"
 
-#: describe.c:1342
+#: describe.c:1343
 msgid "Object descriptions"
 msgstr "オブジェクトの説明"
 
-#: describe.c:1398 describe.c:3617
+#: describe.c:1399 describe.c:3618
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "\"%s\" という名前のリレーションは見つかりませんでした。\n"
 
-#: describe.c:1401 describe.c:3620
+#: describe.c:1402 describe.c:3621
 #, c-format
 msgid "Did not find any relations.\n"
 msgstr "リレーションが見つかりませんでした。\n"
 
-#: describe.c:1618
+#: describe.c:1619
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "OID %s を持つリレーションが見つかりませんでした。\n"
 
-#: describe.c:1664 describe.c:1688
+#: describe.c:1665 describe.c:1689
 msgid "Start"
 msgstr "開始"
 
-#: describe.c:1665 describe.c:1689
+#: describe.c:1666 describe.c:1690
 msgid "Minimum"
 msgstr "最小"
 
-#: describe.c:1666 describe.c:1690
+#: describe.c:1667 describe.c:1691
 msgid "Maximum"
 msgstr "最大"
 
-#: describe.c:1667 describe.c:1691
+#: describe.c:1668 describe.c:1692
 msgid "Increment"
 msgstr "増分"
 
-#: describe.c:1668 describe.c:1692 describe.c:1817 describe.c:3826
-#: describe.c:3977
+#: describe.c:1669 describe.c:1693 describe.c:1818 describe.c:3827
+#: describe.c:3993
 msgid "yes"
 msgstr "はい"
 
-#: describe.c:1669 describe.c:1693 describe.c:1818 describe.c:3826
-#: describe.c:3975
+#: describe.c:1670 describe.c:1694 describe.c:1819 describe.c:3827
+#: describe.c:3990
 msgid "no"
 msgstr "いいえ"
 
-#: describe.c:1670 describe.c:1694
+#: describe.c:1671 describe.c:1695
 msgid "Cycles?"
 msgstr "循環？"
 
-#: describe.c:1671 describe.c:1695
+#: describe.c:1672 describe.c:1696
 msgid "Cache"
 msgstr "キャッシュ"
 
-#: describe.c:1738
+#: describe.c:1739
 #, c-format
 msgid "Owned by: %s"
 msgstr "所有者: %s"
 
-#: describe.c:1742
+#: describe.c:1743
 #, c-format
 msgid "Sequence for identity column: %s"
 msgstr "識別列のシーケンス: %s"
 
-#: describe.c:1749
+#: describe.c:1750
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "シーケンス \"%s.%s\""
 
-#: describe.c:1879 describe.c:1925
+#: describe.c:1880 describe.c:1926
 #, c-format
 msgid "Unlogged table \"%s.%s\""
 msgstr "ログを取らないテーブル \"%s.%s\""
 
-#: describe.c:1882 describe.c:1928
+#: describe.c:1883 describe.c:1929
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "テーブル \"%s.%s\""
 
-#: describe.c:1886
+#: describe.c:1887
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "ビュー \"%s.%s\""
 
-#: describe.c:1891
+#: describe.c:1892
 #, c-format
 msgid "Unlogged materialized view \"%s.%s\""
 msgstr "ログを取らないマテリアライズドビュー \"%s.%s\""
 
-#: describe.c:1894
+#: describe.c:1895
 #, c-format
 msgid "Materialized view \"%s.%s\""
 msgstr "マテリアライズドビュー \"%s.%s\""
 
-#: describe.c:1900
+#: describe.c:1901
 #, c-format
 msgid "Unlogged index \"%s.%s\""
 msgstr "ログを取らないインデックス \"%s.%s\""
 
-#: describe.c:1903
+#: describe.c:1904
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "インデックス \"%s.%s\""
 
-#: describe.c:1908
+#: describe.c:1909
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "特殊なリレーション \"%s.%s\""
 
-#: describe.c:1912
+#: describe.c:1913
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST テーブル \"%s.%s\""
 
-#: describe.c:1916
+#: describe.c:1917
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "複合型 \"%s.%s\""
 
-#: describe.c:1920
+#: describe.c:1921
 #, c-format
 msgid "Foreign table \"%s.%s\""
 msgstr "外部テーブル \"%s.%s\""
 
-#: describe.c:1944 describe.c:3739
+#: describe.c:1945 describe.c:3740
 msgid "Collation"
 msgstr "照合順序"
 
-#: describe.c:1945 describe.c:3746
+#: describe.c:1946 describe.c:3747
 msgid "Nullable"
 msgstr "Null 値を許容"
 
-#: describe.c:1946 describe.c:3747
+#: describe.c:1947 describe.c:3748
 msgid "Default"
 msgstr "デフォルト"
 
-#: describe.c:1949
+#: describe.c:1950
 msgid "Key?"
 msgstr "キー?"
 
-#: describe.c:1951
+#: describe.c:1952
 msgid "Definition"
 msgstr "定義"
 
-#: describe.c:1953 describe.c:4823 describe.c:4907 describe.c:4978
-#: describe.c:5042
+#: describe.c:1954 describe.c:4843 describe.c:4927 describe.c:4998
+#: describe.c:5062
 msgid "FDW options"
 msgstr "FDW オプション"
 
-#: describe.c:1955
+#: describe.c:1956
 msgid "Storage"
 msgstr "ストレージ"
 
-#: describe.c:1957
+#: describe.c:1958
 msgid "Stats target"
 msgstr "統計の対象"
 
-#: describe.c:2071
+#: describe.c:2072
 #, c-format
 msgid "Partition of: %s %s"
 msgstr "パーティション: %s %s"
 
-#: describe.c:2079
+#: describe.c:2080
 msgid "No partition constraint"
 msgstr "パーティション制約なし"
 
-#: describe.c:2081
+#: describe.c:2082
 #, c-format
 msgid "Partition constraint: %s"
 msgstr "パーティションの制約: %s"
 
-#: describe.c:2104
+#: describe.c:2105
 #, c-format
 msgid "Partition key: %s"
 msgstr "パーティションキー: %s"
 
-#: describe.c:2173
+#: describe.c:2174
 msgid "primary key, "
 msgstr "プライマリキー, "
 
-#: describe.c:2175
+#: describe.c:2176
 msgid "unique, "
 msgstr "ユニーク,"
 
-#: describe.c:2181
+#: describe.c:2182
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "テーブル \"%s.%s\" 用"
 
-#: describe.c:2185
+#: describe.c:2186
 #, c-format
 msgid ", predicate (%s)"
 msgstr "、述語 (%s)"
 
-#: describe.c:2188
+#: describe.c:2189
 msgid ", clustered"
 msgstr "、クラスター化"
 
-#: describe.c:2191
+#: describe.c:2192
 msgid ", invalid"
 msgstr "無効"
 
-#: describe.c:2194
+#: describe.c:2195
 msgid ", deferrable"
 msgstr "、遅延可能"
 
-#: describe.c:2197
+#: describe.c:2198
 msgid ", initially deferred"
 msgstr "、最初から遅延中"
 
-#: describe.c:2200
+#: describe.c:2201
 msgid ", replica identity"
 msgstr "、レプリカの id"
 
-#: describe.c:2259
+#: describe.c:2260
 msgid "Indexes:"
 msgstr "インデックス:"
 
-#: describe.c:2343
+#: describe.c:2344
 msgid "Check constraints:"
 msgstr "Check 制約:"
 
-#: describe.c:2379
+#: describe.c:2380
 msgid "Foreign-key constraints:"
 msgstr "外部キー制約:"
 
-#: describe.c:2410
+#: describe.c:2411
 msgid "Referenced by:"
 msgstr "参照元:"
 
-#: describe.c:2460
+#: describe.c:2461
 msgid "Policies:"
 msgstr "ポリシー:"
 
-#: describe.c:2463
+#: describe.c:2464
 msgid "Policies (forced row security enabled):"
 msgstr "ポリシー(行セキュリティを強制的に有効化):"
 
-#: describe.c:2466
+#: describe.c:2467
 msgid "Policies (row security enabled): (none)"
 msgstr "ポリシー(行セキュリティ有効化): (なし)"
 
-#: describe.c:2469
+#: describe.c:2470
 msgid "Policies (forced row security enabled): (none)"
 msgstr "ポリシー(行セキュリティを強制的に有効化): (なし)"
 
-#: describe.c:2472
+#: describe.c:2473
 msgid "Policies (row security disabled):"
 msgstr "ポリシー(行セキュリティを無効化):"
 
-#: describe.c:2534
+#: describe.c:2535
 msgid "Statistics objects:"
 msgstr "統計オブジェクト:"
 
-#: describe.c:2637 describe.c:2741
+#: describe.c:2638 describe.c:2742
 msgid "Rules:"
 msgstr "ルール:"
 
-#: describe.c:2640
+#: describe.c:2641
 msgid "Disabled rules:"
 msgstr "無効化されたルール:"
 
-#: describe.c:2643
+#: describe.c:2644
 msgid "Rules firing always:"
 msgstr "常に適用するルール:"
 
-#: describe.c:2646
+#: describe.c:2647
 msgid "Rules firing on replica only:"
 msgstr "レプリカ上でのみ適用するルール:"
 
-#: describe.c:2686
+#: describe.c:2687
 msgid "Publications:"
 msgstr "パブリケーション:"
 
-#: describe.c:2724
+#: describe.c:2725
 msgid "View definition:"
 msgstr "ビューの定義:"
 
-#: describe.c:2863
+#: describe.c:2864
 msgid "Triggers:"
 msgstr "トリガー:"
 
-#: describe.c:2867
+#: describe.c:2868
 msgid "Disabled user triggers:"
 msgstr "無効化されたユーザトリガ:"
 
-#: describe.c:2869
+#: describe.c:2870
 msgid "Disabled triggers:"
 msgstr "無効化されたトリガー:"
 
-#: describe.c:2872
+#: describe.c:2873
 msgid "Disabled internal triggers:"
 msgstr "無効化された内部トリガー:"
 
-#: describe.c:2875
+#: describe.c:2876
 msgid "Triggers firing always:"
 msgstr "常に適用するするトリガー:"
 
-#: describe.c:2878
+#: describe.c:2879
 msgid "Triggers firing on replica only:"
 msgstr "レプリカ上でのみ適用するトリガー:"
 
-#: describe.c:2937
+#: describe.c:2938
 #, c-format
 msgid "Server: %s"
 msgstr "サーバ: %s"
 
-#: describe.c:2945
+#: describe.c:2946
 #, c-format
 msgid "FDW options: (%s)"
 msgstr "FDW オプション: (%s)"
 
-#: describe.c:2964
+#: describe.c:2965
 msgid "Inherits"
 msgstr "継承元"
 
-#: describe.c:3023
+#: describe.c:3024
 #, c-format
 msgid "Number of partitions: %d"
 msgstr "パーティション数: %d"
 
-#: describe.c:3032
+#: describe.c:3033
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
 msgstr "子テーブル数: %d (\\d+ で一覧を表示)"
 
-#: describe.c:3034
+#: describe.c:3035
 #, c-format
 msgid "Number of partitions: %d (Use \\d+ to list them.)"
 msgstr "パーティション数: %d (\\d+ で一覧を表示)。"
 
-#: describe.c:3042
+#: describe.c:3043
 msgid "Child tables"
 msgstr "子テーブル"
 
-#: describe.c:3042
+#: describe.c:3043
 msgid "Partitions"
 msgstr "パーティション"
 
-#: describe.c:3085
+#: describe.c:3086
 #, c-format
 msgid "Typed table of type: %s"
 msgstr "%s 型の型付きテーブル"
 
-#: describe.c:3101
+#: describe.c:3102
 msgid "Replica Identity"
 msgstr "レプリカ識別"
 
-#: describe.c:3114
+#: describe.c:3115
 msgid "Has OIDs: yes"
 msgstr "OID あり: はい"
 
-#: describe.c:3194
+#: describe.c:3195
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "テーブル空間: \"%s\""
 
 #. translator: before this string there's an index description like
 #. '"foo_pkey" PRIMARY KEY, btree (a)'
-#: describe.c:3206
+#: describe.c:3207
 #, c-format
 msgid ", tablespace \"%s\""
 msgstr "、テーブル空間 \"%s\""
 
-#: describe.c:3299
+#: describe.c:3300
 msgid "List of roles"
 msgstr "ロール一覧"
 
-#: describe.c:3301
+#: describe.c:3302
 msgid "Role name"
 msgstr "ロール名"
 
-#: describe.c:3302
+#: describe.c:3303
 msgid "Attributes"
 msgstr "属性"
 
-#: describe.c:3303
+#: describe.c:3304
 msgid "Member of"
 msgstr "所属グループ"
 
-#: describe.c:3314
+#: describe.c:3315
 msgid "Superuser"
 msgstr "スーパーユーザ"
 
-#: describe.c:3317
+#: describe.c:3318
 msgid "No inheritance"
 msgstr "継承なし"
 
-#: describe.c:3320
+#: describe.c:3321
 msgid "Create role"
 msgstr "ロール作成可"
 
-#: describe.c:3323
+#: describe.c:3324
 msgid "Create DB"
 msgstr "DB作成可"
 
-#: describe.c:3326
+#: describe.c:3327
 msgid "Cannot login"
 msgstr "ログインできません"
 
-#: describe.c:3330
+#: describe.c:3331
 msgid "Replication"
 msgstr "レプリケーション可"
 
-#: describe.c:3334
+#: describe.c:3335
 msgid "Bypass RLS"
 msgstr "RLS のバイパス"
 
-#: describe.c:3343
+#: describe.c:3344
 msgid "No connections"
 msgstr "接続なし"
 
-#: describe.c:3345
+#: describe.c:3346
 #, c-format
 msgid "%d connection"
 msgid_plural "%d connections"
 msgstr[0] "%d 個の接続"
 
-#: describe.c:3355
+#: describe.c:3356
 msgid "Password valid until "
 msgstr "パスワードの有効期限 "
 
-#: describe.c:3405
+#: describe.c:3406
 #, c-format
 msgid "The server (version %s) does not support per-database role settings.\n"
-msgstr "このサーバ (バージョン %s) はデータベースごとのロール設定をサポートしていません\n"
+msgstr ""
+"このサーバ (バージョン %s) はデータベースごとのロール設定をサポートしていませ"
+"ん\n"
 
-#: describe.c:3418
+#: describe.c:3419
 msgid "Role"
 msgstr "ロール"
 
-#: describe.c:3419
+#: describe.c:3420
 msgid "Database"
 msgstr "データベース"
 
-#: describe.c:3420
+#: describe.c:3421
 msgid "Settings"
 msgstr "設定"
 
-#: describe.c:3441
+#: describe.c:3442
 #, c-format
 msgid "Did not find any settings for role \"%s\" and database \"%s\".\n"
 msgstr "ロール \"%s\" とデータベース \"%s\" の設定が見つかりませんでした。\n"
 
-#: describe.c:3444
+#: describe.c:3445
 #, c-format
 msgid "Did not find any settings for role \"%s\".\n"
 msgstr "ロール \"%s\" の設定が見つかりませんでした。\n"
 
-#: describe.c:3447
+#: describe.c:3448
 #, c-format
 msgid "Did not find any settings.\n"
 msgstr "設定が見つかりませんでした。\n"
 
-#: describe.c:3452
+#: describe.c:3453
 msgid "List of settings"
 msgstr "設定一覧"
 
-#: describe.c:3522 describe.c:3527
+#: describe.c:3523 describe.c:3528
 msgid "index"
 msgstr "インデックス"
 
-#: describe.c:3524
+#: describe.c:3525
 msgid "special"
 msgstr "特殊"
 
-#: describe.c:3534 describe.c:5030
+#: describe.c:3535 describe.c:5050
 msgid "Table"
 msgstr "テーブル"
 
-#: describe.c:3625
+#: describe.c:3626
 msgid "List of relations"
 msgstr "リレーション一覧"
 
-#: describe.c:3662
+#: describe.c:3663
 msgid "Trusted"
 msgstr "信頼済み"
 
-#: describe.c:3670
+#: describe.c:3671
 msgid "Internal language"
 msgstr "内部言語"
 
-#: describe.c:3671
+#: describe.c:3672
 msgid "Call handler"
 msgstr "呼び出しハンドラー"
 
-#: describe.c:3672 describe.c:4810
+#: describe.c:3673 describe.c:4830
 msgid "Validator"
 msgstr "バリデーター"
 
-#: describe.c:3675
+#: describe.c:3676
 msgid "Inline handler"
 msgstr "インラインハンドラー"
 
-#: describe.c:3703
+#: describe.c:3704
 msgid "List of languages"
 msgstr "手続き言語一覧"
 
-#: describe.c:3748
+#: describe.c:3749
 msgid "Check"
 msgstr "CHECK制約"
 
-#: describe.c:3790
+#: describe.c:3791
 msgid "List of domains"
 msgstr "ドメイン一覧"
 
-#: describe.c:3824
+#: describe.c:3825
 msgid "Source"
 msgstr "変換元"
 
-#: describe.c:3825
+#: describe.c:3826
 msgid "Destination"
 msgstr "変換先"
 
-#: describe.c:3827
+#: describe.c:3828
 msgid "Default?"
 msgstr "デフォルト?"
 
-#: describe.c:3864
+#: describe.c:3865
 msgid "List of conversions"
 msgstr "符号化方式一覧"
 
-#: describe.c:3903
+#: describe.c:3904
 msgid "Event"
 msgstr "イベント"
 
-#: describe.c:3905
+#: describe.c:3906
 msgid "enabled"
 msgstr "有効"
 
-#: describe.c:3906
+#: describe.c:3907
 msgid "replica"
 msgstr "レプリカ"
 
-#: describe.c:3907
+#: describe.c:3908
 msgid "always"
 msgstr "常時"
 
-#: describe.c:3908
+#: describe.c:3909
 msgid "disabled"
 msgstr "無効"
 
-#: describe.c:3909 describe.c:5509
+#: describe.c:3910 describe.c:5529
 msgid "Enabled"
 msgstr "有効状態"
 
-#: describe.c:3911
+#: describe.c:3912
 msgid "Tags"
 msgstr "タグ"
 
-#: describe.c:3930
+#: describe.c:3931
 msgid "List of event triggers"
 msgstr "イベントトリガー一覧"
 
-#: describe.c:3972
+#: describe.c:3960
 msgid "Source type"
 msgstr "変換元の型"
 
-#: describe.c:3973
+#: describe.c:3961
 msgid "Target type"
 msgstr "変換先の型"
 
-#: describe.c:3976
+#: describe.c:3992
 msgid "in assignment"
 msgstr "代入時のみ"
 
-#: describe.c:3978
+#: describe.c:3994
 msgid "Implicit?"
 msgstr "暗黙的に適用 ?"
 
-#: describe.c:4029
+#: describe.c:4049
 msgid "List of casts"
 msgstr "キャスト一覧"
 
-#: describe.c:4057
+#: describe.c:4077
 #, c-format
 msgid "The server (version %s) does not support collations.\n"
 msgstr "このサーバ (バージョン %s) は照合順序をサポートしていません。\n"
 
-#: describe.c:4078
+#: describe.c:4098
 msgid "Provider"
 msgstr "プロバイダー"
 
-#: describe.c:4113
+#: describe.c:4133
 msgid "List of collations"
 msgstr "照合順序一覧"
 
-#: describe.c:4172
+#: describe.c:4192
 msgid "List of schemas"
 msgstr "スキーマ一覧"
 
-#: describe.c:4197 describe.c:4444 describe.c:4515 describe.c:4586
+#: describe.c:4217 describe.c:4464 describe.c:4535 describe.c:4606
 #, c-format
 msgid "The server (version %s) does not support full text search.\n"
 msgstr "このサーバ (バージョン %s) は全文検索をサポートしていません。\n"
 
-#: describe.c:4232
+#: describe.c:4252
 msgid "List of text search parsers"
 msgstr "テキスト検索用パーサ一覧"
 
-#: describe.c:4277
+#: describe.c:4297
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
 msgstr "テキスト検索用パーサ \"%s\" が見つかりませんでした。\n"
 
-#: describe.c:4280
+#: describe.c:4300
 #, c-format
 msgid "Did not find any text search parsers.\n"
 msgstr "テキスト検索パーサが見つかりませんでした。\n"
 
-#: describe.c:4355
+#: describe.c:4375
 msgid "Start parse"
 msgstr "パース開始"
 
-#: describe.c:4356
+#: describe.c:4376
 msgid "Method"
 msgstr "メソッド"
 
-#: describe.c:4360
+#: describe.c:4380
 msgid "Get next token"
 msgstr "次のトークンを取得"
 
-#: describe.c:4362
+#: describe.c:4382
 msgid "End parse"
 msgstr "パース終了"
 
-#: describe.c:4364
+#: describe.c:4384
 msgid "Get headline"
 msgstr "見出しを取得"
 
-#: describe.c:4366
+#: describe.c:4386
 msgid "Get token types"
 msgstr "トークンタイプを取得"
 
-#: describe.c:4377
+#: describe.c:4397
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "テキスト検索パーサ \"%s.%s\""
 
-#: describe.c:4380
+#: describe.c:4400
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "テキスト検索パーサ \"%s\""
 
-#: describe.c:4399
+#: describe.c:4419
 msgid "Token name"
 msgstr "トークン名"
 
-#: describe.c:4410
+#: describe.c:4430
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "パーサ \"%s.%s\" のトークンタイプ"
 
-#: describe.c:4413
+#: describe.c:4433
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "パーサ \"%s\" のトークンタイプ"
 
-#: describe.c:4467
+#: describe.c:4487
 msgid "Template"
 msgstr "テンプレート"
 
-#: describe.c:4468
+#: describe.c:4488
 msgid "Init options"
 msgstr "初期化オプション"
 
-#: describe.c:4490
+#: describe.c:4510
 msgid "List of text search dictionaries"
 msgstr "テキスト検索用辞書一覧"
 
-#: describe.c:4533
+#: describe.c:4553
 msgid "Init"
 msgstr "初期化"
 
-#: describe.c:4534
+#: describe.c:4554
 msgid "Lexize"
 msgstr "Lex 処理"
 
-#: describe.c:4561
+#: describe.c:4581
 msgid "List of text search templates"
 msgstr "テキスト検索テンプレート一覧"
 
-#: describe.c:4621
+#: describe.c:4641
 msgid "List of text search configurations"
 msgstr "テキスト検索設定一覧"
 
-#: describe.c:4667
+#: describe.c:4687
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
 msgstr "テキスト検索用設定 \"%s\" が見つかりませんでした。\n"
 
-#: describe.c:4670
+#: describe.c:4690
 #, c-format
 msgid "Did not find any text search configurations.\n"
 msgstr "テキスト検索設定が見つかりませんでした。\n"
 
-#: describe.c:4736
+#: describe.c:4756
 msgid "Token"
 msgstr "トークン"
 
-#: describe.c:4737
+#: describe.c:4757
 msgid "Dictionaries"
 msgstr "辞書"
 
-#: describe.c:4748
+#: describe.c:4768
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "テキスト検索設定 \"%s.%s\""
 
-#: describe.c:4751
+#: describe.c:4771
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "テキスト検索設定 \"%s\""
 
-#: describe.c:4755
+#: describe.c:4775
 #, c-format
 msgid ""
 "\n"
@@ -1936,7 +2010,7 @@ msgstr ""
 "\n"
 "パーサ: \"%s.%s\""
 
-#: describe.c:4758
+#: describe.c:4778
 #, c-format
 msgid ""
 "\n"
@@ -1945,152 +2019,156 @@ msgstr ""
 "\n"
 "パーサ: \"%s\""
 
-#: describe.c:4792
+#: describe.c:4812
 #, c-format
 msgid "The server (version %s) does not support foreign-data wrappers.\n"
-msgstr "このサーバ (バージョン %s) は外部データラッパをサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) は外部データラッパをサポートしていません。\n"
 
-#: describe.c:4850
+#: describe.c:4870
 msgid "List of foreign-data wrappers"
 msgstr "外部データラッパ一覧"
 
-#: describe.c:4875
+#: describe.c:4895
 #, c-format
 msgid "The server (version %s) does not support foreign servers.\n"
 msgstr "このサーバ (バージョン %s) は外部サーバをサポートしていません。\n"
 
-#: describe.c:4888
+#: describe.c:4908
 msgid "Foreign-data wrapper"
 msgstr "外部データラッパ"
 
-#: describe.c:4906 describe.c:5111
+#: describe.c:4926 describe.c:5131
 msgid "Version"
 msgstr "バージョン"
 
-#: describe.c:4932
+#: describe.c:4952
 msgid "List of foreign servers"
 msgstr "外部サーバ一覧"
 
-#: describe.c:4957
+#: describe.c:4977
 #, c-format
 msgid "The server (version %s) does not support user mappings.\n"
-msgstr "このサーバ (バージョン %s) はユーザマッピングをサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) はユーザマッピングをサポートしていません。\n"
 
-#: describe.c:4967 describe.c:5031
+#: describe.c:4987 describe.c:5051
 msgid "Server"
 msgstr "サーバ"
 
-#: describe.c:4968
+#: describe.c:4988
 msgid "User name"
 msgstr "ユーザ名"
 
-#: describe.c:4993
+#: describe.c:5013
 msgid "List of user mappings"
 msgstr "ユーザマッピング一覧"
 
-#: describe.c:5018
+#: describe.c:5038
 #, c-format
 msgid "The server (version %s) does not support foreign tables.\n"
 msgstr "このサーバ (バージョン %s) は外部テーブルをサポートしていません。\n"
 
-#: describe.c:5071
+#: describe.c:5091
 msgid "List of foreign tables"
 msgstr "外部テーブル一覧"
 
-#: describe.c:5096 describe.c:5153
+#: describe.c:5116 describe.c:5173
 #, c-format
 msgid "The server (version %s) does not support extensions.\n"
 msgstr "このサーバ (バージョン %s) は拡張をサポートしていません。\n"
 
-#: describe.c:5128
+#: describe.c:5148
 msgid "List of installed extensions"
 msgstr "インストール済みの拡張一覧"
 
-#: describe.c:5181
+#: describe.c:5201
 #, c-format
 msgid "Did not find any extension named \"%s\".\n"
 msgstr "\"%s\" という名前の拡張が見つかりませんでした。\n"
 
-#: describe.c:5184
+#: describe.c:5204
 #, c-format
 msgid "Did not find any extensions.\n"
 msgstr "拡張が見つかりませんでした。\n"
 
-#: describe.c:5228
+#: describe.c:5248
 msgid "Object description"
 msgstr "オブジェクトの説明"
 
-#: describe.c:5238
+#: describe.c:5258
 #, c-format
 msgid "Objects in extension \"%s\""
 msgstr "拡張 \"%s\" 内のオブジェクト"
 
-#: describe.c:5267 describe.c:5338
+#: describe.c:5287 describe.c:5358
 #, c-format
 msgid "The server (version %s) does not support publications.\n"
-msgstr "このサーバ (バージョン %s) はパブリケーションをサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) はパブリケーションをサポートしていません。\n"
 
-#: describe.c:5284 describe.c:5410
+#: describe.c:5304 describe.c:5430
 msgid "All tables"
 msgstr "全テーブル"
 
-#: describe.c:5285 describe.c:5411
+#: describe.c:5305 describe.c:5431
 msgid "Inserts"
 msgstr "Insert文"
 
-#: describe.c:5286 describe.c:5412
+#: describe.c:5306 describe.c:5432
 msgid "Updates"
 msgstr "Update文"
 
-#: describe.c:5287 describe.c:5413
+#: describe.c:5307 describe.c:5433
 msgid "Deletes"
 msgstr "Delete文"
 
-#: describe.c:5291 describe.c:5415
+#: describe.c:5311 describe.c:5435
 msgid "Truncates"
 msgstr "Truncate文"
 
-#: describe.c:5308
+#: describe.c:5328
 msgid "List of publications"
 msgstr "パブリケーション一覧"
 
-#: describe.c:5376
+#: describe.c:5396
 #, c-format
 msgid "Did not find any publication named \"%s\".\n"
 msgstr "\"%s\" という名前のパブリケーションが見つかりませんでした。\n"
 
-#: describe.c:5379
+#: describe.c:5399
 #, c-format
 msgid "Did not find any publications.\n"
 msgstr "パブリケーションが見つかりませんでした。\n"
 
-#: describe.c:5406
+#: describe.c:5426
 #, c-format
 msgid "Publication %s"
 msgstr "パブリケーション %s"
 
-#: describe.c:5450
+#: describe.c:5470
 msgid "Tables:"
 msgstr "テーブル:"
 
-#: describe.c:5494
+#: describe.c:5514
 #, c-format
 msgid "The server (version %s) does not support subscriptions.\n"
-msgstr "このサーバ (バージョン %s) はサブスクリプションをサポートしていません。\n"
+msgstr ""
+"このサーバ (バージョン %s) はサブスクリプションをサポートしていません。\n"
 
-#: describe.c:5510
+#: describe.c:5530
 msgid "Publication"
 msgstr "パブリケーション"
 
-#: describe.c:5517
+#: describe.c:5537
 msgid "Synchronous commit"
 msgstr "同期コミット"
 
-#: describe.c:5518
+#: describe.c:5538
 msgid "Conninfo"
 msgstr "接続情報"
 
-#: describe.c:5540
+#: describe.c:5560
 msgid "List of subscriptions"
 msgstr "サブスクリプション一覧"
 
@@ -2129,18 +2207,25 @@ msgstr "一般的なオプション:\n"
 
 #: help.c:82
 #, c-format
-msgid "  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"
-msgstr "  -c, --command=コマンド   単一の（SQLまたは内部）コマンドを一つだけ実行して終了\n"
+msgid ""
+"  -c, --command=COMMAND    run only single command (SQL or internal) and "
+"exit\n"
+msgstr ""
+"  -c, --command=コマンド   単一の（SQLまたは内部）コマンドを一つだけ実行して"
+"終了\n"
 
 #: help.c:83
 #, c-format
-msgid "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
-msgstr "  -d, --dbname=DB名        接続するデータベース名 (デフォルト: \"%s\")\n"
+msgid ""
+"  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgstr ""
+"  -d, --dbname=DB名        接続するデータベース名 (デフォルト: \"%s\")\n"
 
 #: help.c:84
 #, c-format
 msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
-msgstr "  -f, --file=FILENAME      ファイルからコマンドを読み込んで実行後、終了\n"
+msgstr ""
+"  -f, --file=FILENAME      ファイルからコマンドを読み込んで実行後、終了\n"
 
 #: help.c:85
 #, c-format
@@ -2172,10 +2257,12 @@ msgstr "  -X, --no-psqlrc          初期化ファイル (~/.psqlrc) を読み�
 #, c-format
 msgid ""
 "  -1 (\"one\"), --single-transaction\n"
-"                           execute as a single transaction (if non-interactive)\n"
+"                           execute as a single transaction (if non-"
+"interactive)\n"
 msgstr ""
 "  -1 (数字の1), --single-transaction\n"
-"                           (対話形式でない場合)単一のトランザクションとして実行\n"
+"                           (対話形式でない場合)単一のトランザクションとして実"
+"行\n"
 
 #: help.c:93
 #, c-format
@@ -2185,7 +2272,8 @@ msgstr "  -?, --help[=options]     このヘルプを表示して終了\n"
 #: help.c:94
 #, c-format
 msgid "      --help=commands      list backslash commands, then exit\n"
-msgstr "      --help=commands      バックスラッシュコマンドの一覧を表示して終了\n"
+msgstr ""
+"      --help=commands      バックスラッシュコマンドの一覧を表示して終了\n"
 
 #: help.c:95
 #, c-format
@@ -2218,7 +2306,8 @@ msgstr "  -e, --echo-queries       サーバへ送信したコマンドを表示
 
 #: help.c:101
 #, c-format
-msgid "  -E, --echo-hidden        display queries that internal commands generate\n"
+msgid ""
+"  -E, --echo-hidden        display queries that internal commands generate\n"
 msgstr "  -E, --echo-hidden        内部コマンドが生成した問い合わせを表示\n"
 
 #: help.c:102
@@ -2228,27 +2317,37 @@ msgstr "  -L, --log-file=FILENAME  セッションログをファイルに書き
 
 #: help.c:103
 #, c-format
-msgid "  -n, --no-readline        disable enhanced command line editing (readline)\n"
-msgstr "  -n, --no-readline        拡張コマンドライン編集機能(readline)を無効にする\n"
+msgid ""
+"  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgstr ""
+"  -n, --no-readline        拡張コマンドライン編集機能(readline)を無効にする\n"
 
 #: help.c:104
 #, c-format
 msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
-msgstr "  -o, --output=FILENAME    問い合わせの結果をファイル (または |パイプ)に送る\n"
+msgstr ""
+"  -o, --output=FILENAME    問い合わせの結果をファイル (または |パイプ)に送"
+"る\n"
 
 #: help.c:105
 #, c-format
-msgid "  -q, --quiet              run quietly (no messages, only query output)\n"
-msgstr "  -q, --quiet              静かに実行 (メッセージなしで、問い合わせの出力のみ)\n"
+msgid ""
+"  -q, --quiet              run quietly (no messages, only query output)\n"
+msgstr ""
+"  -q, --quiet              静かに実行 (メッセージなしで、問い合わせの出力の"
+"み)\n"
 
 #: help.c:106
 #, c-format
 msgid "  -s, --single-step        single-step mode (confirm each query)\n"
-msgstr "  -s, --single-step        シングルステップモード (各問い合わせごとに確認)\n"
+msgstr ""
+"  -s, --single-step        シングルステップモード (各問い合わせごとに確認)\n"
 
 #: help.c:107
 #, c-format
-msgid "  -S, --single-line        single-line mode (end of line terminates SQL command)\n"
+msgid ""
+"  -S, --single-line        single-line mode (end of line terminates SQL "
+"command)\n"
 msgstr "  -S, --single-line        単一行モード (行末で SQL コマンドを終端)\n"
 
 #: help.c:109
@@ -2269,7 +2368,8 @@ msgstr "  -A, --no-align           桁揃えなしのテーブル出力モード
 #, c-format
 msgid ""
 "  -F, --field-separator=STRING\n"
-"                           field separator for unaligned output (default: \"%s\")\n"
+"                           field separator for unaligned output (default: "
+"\"%s\")\n"
 msgstr ""
 "  -F, --field-separator=文字列\n"
 "                           桁揃えなし出力時のフィールド区切り文字\n"
@@ -2282,7 +2382,9 @@ msgstr "  -H, --html               HTML テーブル出力モード\n"
 
 #: help.c:115
 #, c-format
-msgid "  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"
+msgid ""
+"  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
+"command)\n"
 msgstr ""
 "  -P, --pset=変数[=値]     表示オプション '変数' を '値' にセット\n"
 "                           (\\pset コマンドを参照)\n"
@@ -2291,7 +2393,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  -R, --record-separator=STRING\n"
-"                           record separator for unaligned output (default: newline)\n"
+"                           record separator for unaligned output (default: "
+"newline)\n"
 msgstr ""
 "  -R, --record-separator=文字列\n"
 "                           桁揃えなし出力におけるレコード区切り文字\n"
@@ -2304,8 +2407,11 @@ msgstr "  -t, --tuples-only        行のみを表示\n"
 
 #: help.c:119
 #, c-format
-msgid "  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"
-msgstr "  -T, --table-attr=TEXT    HTMLテーブルのタグ属性をセット (width, border等)\n"
+msgid ""
+"  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
+"border)\n"
+msgstr ""
+"  -T, --table-attr=TEXT    HTMLテーブルのタグ属性をセット (width, border等)\n"
 
 #: help.c:120
 #, c-format
@@ -2316,19 +2422,23 @@ msgstr "  -x, --expanded           拡張テーブル出力に切り替える\n"
 #, c-format
 msgid ""
 "  -z, --field-separator-zero\n"
-"                           set field separator for unaligned output to zero byte\n"
+"                           set field separator for unaligned output to zero "
+"byte\n"
 msgstr ""
 "  -z, --field-separator-zero\n"
-"                           桁揃えなし出力のフィールド区切りをバイト値の0に設定\n"
+"                           桁揃えなし出力のフィールド区切りをバイト値の0に設"
+"定\n"
 
 #: help.c:123
 #, c-format
 msgid ""
 "  -0, --record-separator-zero\n"
-"                           set record separator for unaligned output to zero byte\n"
+"                           set record separator for unaligned output to zero "
+"byte\n"
 msgstr ""
 "  -0, --record-separator-zero\n"
-"                           桁揃えなし出力のレコード区切りをバイト値の0に設定\n"
+"                           桁揃えなし出力のレコード区切りをバイト値の0に設"
+"定\n"
 
 #: help.c:126
 #, c-format
@@ -2341,7 +2451,9 @@ msgstr ""
 
 #: help.c:129
 #, c-format
-msgid "  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n"
+msgid ""
+"  -h, --host=HOSTNAME      database server host or socket directory "
+"(default: \"%s\")\n"
 msgstr ""
 "  -h, --host=HOSTNAME      データベースサーバのホストまたはソケットの\n"
 "                           ディレクトリ(デフォルト: \"%s\")\n"
@@ -2353,12 +2465,15 @@ msgstr "ローカルソケット"
 #: help.c:133
 #, c-format
 msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
-msgstr "  -p, --port=PORT          データベースサーバのポート番号(デフォルト： \"%s\")\n"
+msgstr ""
+"  -p, --port=PORT          データベースサーバのポート番号(デフォルト： \"%s"
+"\")\n"
 
 #: help.c:139
 #, c-format
 msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
-msgstr "  -U, --username=USERNAME  データベースのユーザ名 (デフォルト: \"%s\")\n"
+msgstr ""
+"  -U, --username=USERNAME  データベースのユーザ名 (デフォルト: \"%s\")\n"
 
 #: help.c:140
 #, c-format
@@ -2367,28 +2482,35 @@ msgstr "  -w, --no-password        パスワード入力を要求しない\n"
 
 #: help.c:141
 #, c-format
-msgid "  -W, --password           force password prompt (should happen automatically)\n"
-msgstr "  -W, --password           パスワードプロンプトの強制表示(本来は自動的に表示)\n"
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr ""
+"  -W, --password           パスワードプロンプトの強制表示(本来は自動的に表"
+"示)\n"
 
 #: help.c:143
 #, c-format
 msgid ""
 "\n"
-"For more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help"
+"\" (for SQL\n"
 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
 "documentation.\n"
 "\n"
 msgstr ""
 "\n"
 "詳細は psql の中で \"\\?\" (内部コマンドの場合)または \"\\help\"\n"
-"(SQL コマンドの場合)をタイプするか、または PostgreSQL ドキュメント中の psql の\n"
+"(SQL コマンドの場合)をタイプするか、または PostgreSQL ドキュメント中の psql "
+"の\n"
 "セクションを参照のこと。\n"
 "\n"
 
 #: help.c:146
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "不具合を見つけた場合、<pgsql-bugs@postgresql.org>まで報告してください。\n"
+msgstr ""
+"不具合を見つけた場合、<pgsql-bugs@postgresql.org>まで報告してください。\n"
 
 #: help.c:172
 #, c-format
@@ -2397,43 +2519,64 @@ msgstr "一般\n"
 
 #: help.c:173
 #, c-format
-msgid "  \\copyright             show PostgreSQL usage and distribution terms\n"
-msgstr "  \\copyright             PostgreSQL の使い方と配布条件を表示します。\n"
+msgid ""
+"  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgstr ""
+"  \\copyright             PostgreSQL の使い方と配布条件を表示します。\n"
 
 #: help.c:174
 #, c-format
-msgid "  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"
-msgstr "  \\crosstabview [列数]   問い合わせを実行し、結果をクロスタブに表示します。\n"
+msgid ""
+"  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"
+msgstr ""
+"  \\crosstabview [列数]   問い合わせを実行し、結果をクロスタブに表示しま"
+"す。\n"
 
 #: help.c:175
 #, c-format
-msgid "  \\errverbose            show most recent error message at maximum verbosity\n"
-msgstr "  \\errverbose            最後に発生したエラーメッセージを冗長性最大で表示します。\n"
+msgid ""
+"  \\errverbose            show most recent error message at maximum "
+"verbosity\n"
+msgstr ""
+"  \\errverbose            最後に発生したエラーメッセージを冗長性最大で表示し"
+"ます。\n"
 
 #: help.c:176
 #, c-format
-msgid "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
-msgstr "  \\g [ファイル] または ; 問い合わせを実行（し、結果をファイルまたは |パイプ へ出力）します。\n"
+msgid ""
+"  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
+msgstr ""
+"  \\g [ファイル] または ; 問い合わせを実行（し、結果をファイルまたは |パイプ "
+"へ出力）します。\n"
 
 #: help.c:177
 #, c-format
-msgid "  \\gdesc                 describe result of query, without executing it\n"
+msgid ""
+"  \\gdesc                 describe result of query, without executing it\n"
 msgstr "  \\gexec                 問い合わせを実行せずに結果の説明を行います\n"
 
 #: help.c:178
 #, c-format
-msgid "  \\gexec                 execute query, then execute each value in its result\n"
-msgstr "  \\gexec                 問い合わせを実行し、結果の中の個々の値を実行します。\n"
+msgid ""
+"  \\gexec                 execute query, then execute each value in its "
+"result\n"
+msgstr ""
+"  \\gexec                 問い合わせを実行し、結果の中の個々の値を実行しま"
+"す。\n"
 
 #: help.c:179
 #, c-format
-msgid "  \\gset [PREFIX]         execute query and store results in psql variables\n"
-msgstr "  \\gset [PREFIX]         問い合わせを実行して結果を psql 変数に格納します。\n"
+msgid ""
+"  \\gset [PREFIX]         execute query and store results in psql variables\n"
+msgstr ""
+"  \\gset [PREFIX]         問い合わせを実行して結果を psql 変数に格納しま"
+"す。\n"
 
 #: help.c:180
 #, c-format
 msgid "  \\gx [FILE]             as \\g, but forces expanded output mode\n"
-msgstr "  \\gx [ファイル名]       \\g と同じですが、拡張出力モードで実行します。\n"
+msgstr ""
+"  \\gx [ファイル名]       \\g と同じですが、拡張出力モードで実行します。\n"
 
 #: help.c:181
 #, c-format
@@ -2453,12 +2596,15 @@ msgstr "ヘルプ\n"
 #: help.c:187
 #, c-format
 msgid "  \\? [commands]          show help on backslash commands\n"
-msgstr "  \\? [コマンド]          バックスラッシュコマンドのヘルプを表示します。\n"
+msgstr ""
+"  \\? [コマンド]          バックスラッシュコマンドのヘルプを表示します。\n"
 
 #: help.c:188
 #, c-format
 msgid "  \\? options             show help on psql command-line options\n"
-msgstr "  \\? オプション          psql のコマンドライン・オプションのヘルプを表示します。\n"
+msgstr ""
+"  \\? オプション          psql のコマンドライン・オプションのヘルプを表示しま"
+"す。\n"
 
 #: help.c:189
 #, c-format
@@ -2467,8 +2613,12 @@ msgstr "  \\? 変数名              特殊変数のヘルプを表示します�
 
 #: help.c:190
 #, c-format
-msgid "  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"
-msgstr "  \\h [名前]              SQL コマンドの文法ヘルプの表示。* で全コマンドを表示します。\n"
+msgid ""
+"  \\h [NAME]              help on syntax of SQL commands, * for all "
+"commands\n"
+msgstr ""
+"  \\h [名前]              SQL コマンドの文法ヘルプの表示。* で全コマンドを表"
+"示します。\n"
 
 #: help.c:193
 #, c-format
@@ -2477,12 +2627,17 @@ msgstr "問い合わせバッファ\n"
 
 #: help.c:194
 #, c-format
-msgid "  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"
-msgstr "  \\e [ファイル] [行番号] 現在の問い合わせバッファ（やファイル）を外部エディタで編集します。\n"
+msgid ""
+"  \\e [FILE] [LINE]       edit the query buffer (or file) with external "
+"editor\n"
+msgstr ""
+"  \\e [ファイル] [行番号] 現在の問い合わせバッファ（やファイル）を外部エディ"
+"タで編集します。\n"
 
 #: help.c:195
 #, c-format
-msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
+msgid ""
+"  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
 msgstr "  \\ef [関数名 [行番号]]  関数定義を外部エディタで編集します。\n"
 
 #: help.c:196
@@ -2498,7 +2653,8 @@ msgstr "  \\p                     問い合わせバッファの中身を表示�
 #: help.c:198
 #, c-format
 msgid "  \\r                     reset (clear) the query buffer\n"
-msgstr "  \\r                     問い合わせバッファをリセット（クリア）します。\n"
+msgstr ""
+"  \\r                     問い合わせバッファをリセット（クリア）します。\n"
 
 #: help.c:200
 #, c-format
@@ -2517,8 +2673,12 @@ msgstr "入出力\n"
 
 #: help.c:206
 #, c-format
-msgid "  \\copy ...              perform SQL COPY with data stream to the client host\n"
-msgstr "  \\copy ...              クライアントホストに対し、データストリームを使って SQL コピーを行います。\n"
+msgid ""
+"  \\copy ...              perform SQL COPY with data stream to the client "
+"host\n"
+msgstr ""
+"  \\copy ...              クライアントホストに対し、データストリームを使って "
+"SQL コピーを行います。\n"
 
 #: help.c:207
 #, c-format
@@ -2528,22 +2688,32 @@ msgstr "  \\echo [文字列]         文字列を標準出力に書き出しま�
 #: help.c:208
 #, c-format
 msgid "  \\i FILE                execute commands from file\n"
-msgstr "  \\i ファイル            ファイルからコマンドを読み込んで実行します。\n"
+msgstr ""
+"  \\i ファイル            ファイルからコマンドを読み込んで実行します。\n"
 
 #: help.c:209
 #, c-format
-msgid "  \\ir FILE               as \\i, but relative to location of current script\n"
-msgstr "  \\ir ファイル           \\i と同じ。ただし現在のスクリプト位置からの相対パスで指定します。\n"
+msgid ""
+"  \\ir FILE               as \\i, but relative to location of current "
+"script\n"
+msgstr ""
+"  \\ir ファイル           \\i と同じ。ただし現在のスクリプト位置からの相対パ"
+"スで指定します。\n"
 
 #: help.c:210
 #, c-format
 msgid "  \\o [FILE]              send all query results to file or |pipe\n"
-msgstr "  \\o [ファイル]          問い合わせ結果をすべてファイルまたは |パイプ へ送ります。\n"
+msgstr ""
+"  \\o [ファイル]          問い合わせ結果をすべてファイルまたは |パイプ へ送り"
+"ます。\n"
 
 #: help.c:211
 #, c-format
-msgid "  \\qecho [STRING]        write string to query output stream (see \\o)\n"
-msgstr "  \\qecho [文字列]        文字列を問い合わせ出力ストリームに出力（\\o を参照）します。\n"
+msgid ""
+"  \\qecho [STRING]        write string to query output stream (see \\o)\n"
+msgstr ""
+"  \\qecho [文字列]        文字列を問い合わせ出力ストリームに出力（\\o を参"
+"照）します。\n"
 
 #: help.c:214
 #, c-format
@@ -2557,12 +2727,15 @@ msgstr "  \\if EXPR               条件ブロックの開始\n"
 
 #: help.c:216
 #, c-format
-msgid "  \\elif EXPR             alternative within current conditional block\n"
+msgid ""
+"  \\elif EXPR             alternative within current conditional block\n"
 msgstr "  \\elif EXPR             現在の条件ブロック内の代替条件\n"
 
 #: help.c:217
 #, c-format
-msgid "  \\else                  final alternative within current conditional block\n"
+msgid ""
+"  \\else                  final alternative within current conditional "
+"block\n"
 msgstr "  \\else                  現在の条件ブロックにおける最後の選択肢\n"
 
 #: help.c:218
@@ -2583,12 +2756,15 @@ msgstr "  （オプション：S = システムオブジェクトの表示, + = 
 #: help.c:223
 #, c-format
 msgid "  \\d[S+]                 list tables, views, and sequences\n"
-msgstr "  \\d[S+]                 テーブル、ビュー、シーケンスの一覧を表示します。\n"
+msgstr ""
+"  \\d[S+]                 テーブル、ビュー、シーケンスの一覧を表示します。\n"
 
 #: help.c:224
 #, c-format
 msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
-msgstr "  \\d[S+]  名前           テーブル、ビュー、シーケンス、インデックスの説明を表示します。\n"
+msgstr ""
+"  \\d[S+]  名前           テーブル、ビュー、シーケンス、インデックスの説明を"
+"表示します。\n"
 
 #: help.c:225
 #, c-format
@@ -2617,8 +2793,11 @@ msgstr "  \\dC[+]  [パターン]     キャスト一覧を表示します。\n"
 
 #: help.c:230
 #, c-format
-msgid "  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
-msgstr "  \\dd[S] [パターン]      他では表示されないオブジェクトの説明を表示します。\n"
+msgid ""
+"  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
+msgstr ""
+"  \\dd[S] [パターン]      他では表示されないオブジェクトの説明を表示しま"
+"す。\n"
 
 #: help.c:231
 #, c-format
@@ -2657,8 +2836,12 @@ msgstr "  \\dew[+] [パターン]     外部データラッパ一覧を表示し
 
 #: help.c:238
 #, c-format
-msgid "  \\df[anptw][S+] [PATRN] list [only agg/normal/procedures/trigger/window] functions\n"
-msgstr "  \\df[antw][S+] [パターン] (集約/通常/プロシージャ/トリガー/ウィンドウ)関数(のみ)の一覧を表示します\n"
+msgid ""
+"  \\df[anptw][S+] [PATRN] list [only agg/normal/procedures/trigger/window] "
+"functions\n"
+msgstr ""
+"  \\df[antw][S+] [パターン] (集約/通常/プロシージャ/トリガー/ウィンドウ)関数"
+"(のみ)の一覧を表示します\n"
 
 #: help.c:239
 #, c-format
@@ -2678,7 +2861,8 @@ msgstr "  \\dFp[+] [パターン]     テキスト検索用パーサ一覧を表
 #: help.c:242
 #, c-format
 msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
-msgstr "  \\dFt[+] [パターン]     テキスト検索用テンプレート一覧を表示します。\n"
+msgstr ""
+"  \\dFt[+] [パターン]     テキスト検索用テンプレート一覧を表示します。\n"
 
 #: help.c:243
 #, c-format
@@ -2693,7 +2877,9 @@ msgstr "  \\di[S+] [パターン]     インデックス一覧を表示します
 #: help.c:245
 #, c-format
 msgid "  \\dl                    list large objects, same as \\lo_list\n"
-msgstr "  \\dl                    ラージオブジェクト一覧を表示します。\\lo_list と同じです。\n"
+msgstr ""
+"  \\dl                    ラージオブジェクト一覧を表示します。\\lo_list と同"
+"じです。\n"
 
 #: help.c:246
 #, c-format
@@ -2722,23 +2908,32 @@ msgstr "  \\dO[S+] [パターン]     照合順序一覧を表示します。\n"
 
 #: help.c:251
 #, c-format
-msgid "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
-msgstr "  \\dp     [パターン]     テーブル、ビュー、シーケンスのアクセス権一覧を表示します。\n"
+msgid ""
+"  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgstr ""
+"  \\dp     [パターン]     テーブル、ビュー、シーケンスのアクセス権一覧を表示"
+"します。\n"
 
 #: help.c:252
 #, c-format
 msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
-msgstr "  \\drds [パターン1 [パターン2]] データベース毎のロール設定一覧を表示します。\n"
+msgstr ""
+"  \\drds [パターン1 [パターン2]] データベース毎のロール設定一覧を表示しま"
+"す。\n"
 
 #: help.c:253
 #, c-format
 msgid "  \\dRp[+] [PATTERN]      list replication publications\n"
-msgstr "  \\dRp[+] [パターン]     レプリケーションのパブリケーション一覧を表示します。\n"
+msgstr ""
+"  \\dRp[+] [パターン]     レプリケーションのパブリケーション一覧を表示しま"
+"す。\n"
 
 #: help.c:254
 #, c-format
 msgid "  \\dRs[+] [PATTERN]      list replication subscriptions\n"
-msgstr "  \\dRs[+] [パターン]     レプリケーションのサブスクリプション一覧を表示します。\n"
+msgstr ""
+"  \\dRs[+] [パターン]     レプリケーションのサブスクリプション一覧を表示しま"
+"す。\n"
 
 #: help.c:255
 #, c-format
@@ -2802,18 +2997,26 @@ msgstr "書式設定\n"
 
 #: help.c:269
 #, c-format
-msgid "  \\a                     toggle between unaligned and aligned output mode\n"
-msgstr "  \\a                     出力モード(unaligned / aligned)を切り替えます。\n"
+msgid ""
+"  \\a                     toggle between unaligned and aligned output mode\n"
+msgstr ""
+"  \\a                     出力モード(unaligned / aligned)を切り替えます。\n"
 
 #: help.c:270
 #, c-format
 msgid "  \\C [STRING]            set table title, or unset if none\n"
-msgstr "  \\C [文字列]            テーブルのタイトル設定。指定がなければ解除します。\n"
+msgstr ""
+"  \\C [文字列]            テーブルのタイトル設定。指定がなければ解除しま"
+"す。\n"
 
 #: help.c:271
 #, c-format
-msgid "  \\f [STRING]            show or set field separator for unaligned query output\n"
-msgstr "  \\f [文字列]            桁揃えなしの問い合わせ出力で使われるフィールド区切り文字を表示または設定します。\n"
+msgid ""
+"  \\f [STRING]            show or set field separator for unaligned query "
+"output\n"
+msgstr ""
+"  \\f [文字列]            桁揃えなしの問い合わせ出力で使われるフィールド区切"
+"り文字を表示または設定します。\n"
 
 #: help.c:272
 #, c-format
@@ -2824,18 +3027,24 @@ msgstr "  \\H                     HTML の出力モードを切り替えます(�
 #, c-format
 msgid ""
 "  \\pset [NAME [VALUE]]   set table output option\n"
-"                         (NAME := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
+"                         (NAME := {border|columns|expanded|fieldsep|"
+"fieldsep_zero|\n"
 "                         footer|format|linestyle|null|numericlocale|pager|\n"
-"                         pager_min_lines|recordsep|recordsep_zero|tableattr|title|\n"
+"                         pager_min_lines|recordsep|recordsep_zero|tableattr|"
+"title|\n"
 "                         tuples_only|unicode_border_linestyle|\n"
-"                         unicode_column_linestyle|unicode_header_linestyle})\n"
+"                         unicode_column_linestyle|"
+"unicode_header_linestyle})\n"
 msgstr ""
 "  \\pset [名前 [値]]      テーブル出力のオプション設定\n"
-"                         (名前 := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
+"                         (名前 := {border|columns|expanded|fieldsep|"
+"fieldsep_zero|\n"
 "                         footer|format|linestyle|null|numericlocale|pager|\n"
-"                         pager_min_lines|recordsep|recordsep_zero|tableattr|title|\n"
+"                         pager_min_lines|recordsep|recordsep_zero|tableattr|"
+"title|\n"
 "                         tuples_only|unicode_border_linestyle|\n"
-"                         unicode_column_linestyle|unicode_header_linestyle})\n"
+"                         unicode_column_linestyle|"
+"unicode_header_linestyle})\n"
 
 #: help.c:280
 #, c-format
@@ -2844,8 +3053,11 @@ msgstr "  \\t [on|off]            行のみ表示モード（現在: %s）\n"
 
 #: help.c:282
 #, c-format
-msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
-msgstr "  \\T [文字列]            HTML の <table> タグ属性のセット。引数がなければ解除します。\n"
+msgid ""
+"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr ""
+"  \\T [文字列]            HTML の <table> タグ属性のセット。引数がなければ解"
+"除します。\n"
 
 #: help.c:283
 #, c-format
@@ -2877,13 +3089,16 @@ msgstr ""
 
 #: help.c:295
 #, c-format
-msgid "  \\conninfo              display information about current connection\n"
+msgid ""
+"  \\conninfo              display information about current connection\n"
 msgstr "  \\conninfo              現在の接続に関する情報を表示します。\n"
 
 #: help.c:296
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
-msgstr "  \\encoding [エンコーディング] クライアントのエンコーディングを表示または設定します。\n"
+msgstr ""
+"  \\encoding [エンコーディング] クライアントのエンコーディングを表示または設"
+"定します。\n"
 
 #: help.c:297
 #, c-format
@@ -2908,12 +3123,17 @@ msgstr "  \\setenv 名前 [値]      環境変数を設定または解除しま�
 #: help.c:303
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
-msgstr "  \\timing [on|off]       コマンドのタイミングを切り替えます（現在: %s）\n"
+msgstr ""
+"  \\timing [on|off]       コマンドのタイミングを切り替えます（現在: %s）\n"
 
 #: help.c:305
 #, c-format
-msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
-msgstr "  \\! [コマンド]          シェルでコマンドを実行するか、もしくは対話型シェルを起動します。\n"
+msgid ""
+"  \\! [COMMAND]           execute command in shell or start interactive "
+"shell\n"
+msgstr ""
+"  \\! [コマンド]          シェルでコマンドを実行するか、もしくは対話型シェル"
+"を起動します。\n"
 
 #: help.c:308
 #, c-format
@@ -2923,12 +3143,17 @@ msgstr "変数\n"
 #: help.c:309
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
-msgstr "  \\prompt [テキスト] 変数名  ユーザに対して内部変数のセットを促します。\n"
+msgstr ""
+"  \\prompt [テキスト] 変数名  ユーザに対して内部変数のセットを促します。\n"
 
 #: help.c:310
 #, c-format
-msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
-msgstr "  \\set [変数名 [値]]     内部変数の値を設定します。引数がない場合は一覧を表示します。\n"
+msgid ""
+"  \\set [NAME [VALUE]]    set internal variable, or list all if no "
+"parameters\n"
+msgstr ""
+"  \\set [変数名 [値]]     内部変数の値を設定します。引数がない場合は一覧を表"
+"示します。\n"
 
 #: help.c:311
 #, c-format
@@ -3026,7 +3251,8 @@ msgid ""
 "    if set to \"noexec\", just show them without execution\n"
 msgstr ""
 "  ECHO_HIDDEN\n"
-"    セットされていれば、バックスラッシュコマンドで実行される内部問い合わせを\n"
+"    セットされていれば、バックスラッシュコマンドで実行される内部問い合わせ"
+"を\n"
 "    表示します;  \"noexec\" にセットした場合は実行せずに表示だけします\n"
 
 #: help.c:361
@@ -3051,7 +3277,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  FETCH_COUNT\n"
-"    the number of result rows to fetch and display at a time (0 = unlimited)\n"
+"    the number of result rows to fetch and display at a time (0 = "
+"unlimited)\n"
 msgstr ""
 "  FETCH_COUNT\n"
 "    一度に取得および表示する結果の行数 (0 = 無制限）\n"
@@ -3076,9 +3303,12 @@ msgstr ""
 
 #: help.c:371
 #, c-format
+#| msgid ""
+#| "  HISTSIZE\n"
+#| "    max number of commands to store in the command history\n"
 msgid ""
 "  HISTSIZE\n"
-"    max number of commands to store in the command history\n"
+"    maximum number of commands to store in the command history\n"
 msgstr ""
 "  HISTSIZE\n"
 "    コマンド履歴で保存するコマンド数の最大値\n"
@@ -3115,7 +3345,8 @@ msgstr ""
 msgid ""
 "  LAST_ERROR_MESSAGE\n"
 "  LAST_ERROR_SQLSTATE\n"
-"    message and SQLSTATE of last error, or empty string and \"00000\" if none\n"
+"    message and SQLSTATE of last error, or empty string and \"00000\" if "
+"none\n"
 msgstr ""
 "  LAST_ERROR_MESSAGE\n"
 "  LAST_ERROR_SQLSTATE\n"
@@ -3129,7 +3360,8 @@ msgid ""
 "    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"
 msgstr ""
 "  ON_ERROR_ROLLBACK\n"
-"    セットされている場合、エラーでトランザクションを停止しません（暗黙のセーブ\n"
+"    セットされている場合、エラーでトランザクションを停止しません（暗黙のセー"
+"ブ\n"
 "    ポイントを使用します）\n"
 
 #: help.c:384
@@ -3163,7 +3395,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  PROMPT2\n"
-"    specifies the prompt used when a statement continues from a previous line\n"
+"    specifies the prompt used when a statement continues from a previous "
+"line\n"
 msgstr ""
 "  PROMPT2\n"
 "    ステートメントが前行から継続する場合のプロンプトを指定します\n"
@@ -3354,7 +3587,8 @@ msgid ""
 "    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
 msgstr ""
 "  format\n"
-"    出力フォーマットを設定 [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+"    出力フォーマットを設定 [unaligned, aligned, wrapped, html, "
+"asciidoc, ...]\n"
 
 #: help.c:437
 #, c-format
@@ -3378,7 +3612,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  numericlocale\n"
-"    enable display of a locale-specific character to separate groups of digits\n"
+"    enable display of a locale-specific character to separate groups of "
+"digits\n"
 msgstr ""
 "  numericlocale\n"
 "    ロケール固有文字での桁区切りを表示するかどうかを指定\n"
@@ -3702,7 +3937,8 @@ msgid ""
 "Use the pg_restore command-line client to restore this dump to a database.\n"
 msgstr ""
 "この入力データは PostgreSQL のカスタムフォーマットのダンプです。\n"
-"このダンプをデータベースにリストアするには pg_restore コマンドを使ってください。\n"
+"このダンプをデータベースにリストアするには pg_restore コマンドを使ってくださ"
+"い。\n"
 
 #: mainloop.c:282
 msgid "Use \\? for help or press control-C to clear the input buffer."
@@ -3714,7 +3950,8 @@ msgstr " \\? でヘルプを表示します。"
 
 #: mainloop.c:288
 msgid "You are using psql, the command-line interface to PostgreSQL."
-msgstr "PostgreSQL へのコマンド ライン インターフェイス、psql を使用しています。"
+msgstr ""
+"PostgreSQL へのコマンド ライン インターフェイス、psql を使用しています。"
 
 #: mainloop.c:289
 #, c-format
@@ -3746,12 +3983,15 @@ msgstr "control-C で終了します。"
 #: mainloop.c:449 mainloop.c:591
 #, c-format
 msgid "query ignored; use \\endif or Ctrl-C to exit current \\if block\n"
-msgstr "問い合わせは無視されました。\\endif か Ctrl-C で現在の \\if ブロックを抜けてください\n"
+msgstr ""
+"問い合わせは無視されました。\\endif か Ctrl-C で現在の \\if ブロックを抜けて"
+"ください\n"
 
 #: mainloop.c:609
 #, c-format
 msgid "reached EOF without finding closing \\endif(s)\n"
-msgstr "ブロックを閉じる \\endif を検索中に、ファイルの終端(EOF)に達しました。\n"
+msgstr ""
+"ブロックを閉じる \\endif を検索中に、ファイルの終端(EOF)に達しました。\n"
 
 #: psqlscanslash.l:637
 #, c-format
@@ -3781,46 +4021,46 @@ msgstr "%s: メモリ不足です。\n"
 #: sql_help.c:807 sql_help.c:836 sql_help.c:841 sql_help.c:846 sql_help.c:851
 #: sql_help.c:856 sql_help.c:878 sql_help.c:880 sql_help.c:882 sql_help.c:884
 #: sql_help.c:887 sql_help.c:889 sql_help.c:930 sql_help.c:974 sql_help.c:979
-#: sql_help.c:984 sql_help.c:989 sql_help.c:994 sql_help.c:1013 sql_help.c:1024
-#: sql_help.c:1026 sql_help.c:1045 sql_help.c:1055 sql_help.c:1057
-#: sql_help.c:1059 sql_help.c:1071 sql_help.c:1075 sql_help.c:1077
-#: sql_help.c:1088 sql_help.c:1090 sql_help.c:1092 sql_help.c:1108
-#: sql_help.c:1110 sql_help.c:1114 sql_help.c:1117 sql_help.c:1118
-#: sql_help.c:1119 sql_help.c:1122 sql_help.c:1124 sql_help.c:1257
-#: sql_help.c:1259 sql_help.c:1262 sql_help.c:1265 sql_help.c:1267
-#: sql_help.c:1269 sql_help.c:1272 sql_help.c:1275 sql_help.c:1387
-#: sql_help.c:1389 sql_help.c:1391 sql_help.c:1394 sql_help.c:1415
-#: sql_help.c:1418 sql_help.c:1421 sql_help.c:1424 sql_help.c:1428
-#: sql_help.c:1430 sql_help.c:1432 sql_help.c:1434 sql_help.c:1448
-#: sql_help.c:1451 sql_help.c:1453 sql_help.c:1455 sql_help.c:1465
-#: sql_help.c:1467 sql_help.c:1477 sql_help.c:1479 sql_help.c:1489
-#: sql_help.c:1492 sql_help.c:1514 sql_help.c:1516 sql_help.c:1518
-#: sql_help.c:1521 sql_help.c:1523 sql_help.c:1525 sql_help.c:1528
-#: sql_help.c:1578 sql_help.c:1620 sql_help.c:1623 sql_help.c:1625
-#: sql_help.c:1627 sql_help.c:1629 sql_help.c:1631 sql_help.c:1634
-#: sql_help.c:1681 sql_help.c:1697 sql_help.c:1918 sql_help.c:1987
-#: sql_help.c:2006 sql_help.c:2019 sql_help.c:2075 sql_help.c:2081
-#: sql_help.c:2091 sql_help.c:2111 sql_help.c:2136 sql_help.c:2154
-#: sql_help.c:2183 sql_help.c:2275 sql_help.c:2316 sql_help.c:2339
-#: sql_help.c:2360 sql_help.c:2361 sql_help.c:2396 sql_help.c:2416
-#: sql_help.c:2438 sql_help.c:2452 sql_help.c:2472 sql_help.c:2495
-#: sql_help.c:2525 sql_help.c:2550 sql_help.c:2596 sql_help.c:2867
-#: sql_help.c:2880 sql_help.c:2897 sql_help.c:2913 sql_help.c:2953
-#: sql_help.c:3005 sql_help.c:3009 sql_help.c:3011 sql_help.c:3017
-#: sql_help.c:3035 sql_help.c:3062 sql_help.c:3097 sql_help.c:3109
-#: sql_help.c:3118 sql_help.c:3162 sql_help.c:3176 sql_help.c:3204
-#: sql_help.c:3212 sql_help.c:3220 sql_help.c:3228 sql_help.c:3236
-#: sql_help.c:3244 sql_help.c:3252 sql_help.c:3260 sql_help.c:3269
-#: sql_help.c:3280 sql_help.c:3288 sql_help.c:3296 sql_help.c:3304
-#: sql_help.c:3312 sql_help.c:3322 sql_help.c:3331 sql_help.c:3340
-#: sql_help.c:3348 sql_help.c:3358 sql_help.c:3369 sql_help.c:3377
-#: sql_help.c:3386 sql_help.c:3397 sql_help.c:3406 sql_help.c:3414
-#: sql_help.c:3422 sql_help.c:3430 sql_help.c:3438 sql_help.c:3446
-#: sql_help.c:3454 sql_help.c:3462 sql_help.c:3470 sql_help.c:3478
-#: sql_help.c:3486 sql_help.c:3503 sql_help.c:3512 sql_help.c:3520
-#: sql_help.c:3537 sql_help.c:3552 sql_help.c:3820 sql_help.c:3871
-#: sql_help.c:3900 sql_help.c:3908 sql_help.c:4341 sql_help.c:4389
-#: sql_help.c:4530
+#: sql_help.c:984 sql_help.c:989 sql_help.c:994 sql_help.c:1013
+#: sql_help.c:1024 sql_help.c:1026 sql_help.c:1045 sql_help.c:1055
+#: sql_help.c:1057 sql_help.c:1059 sql_help.c:1071 sql_help.c:1075
+#: sql_help.c:1077 sql_help.c:1088 sql_help.c:1090 sql_help.c:1092
+#: sql_help.c:1108 sql_help.c:1110 sql_help.c:1114 sql_help.c:1117
+#: sql_help.c:1118 sql_help.c:1119 sql_help.c:1122 sql_help.c:1124
+#: sql_help.c:1257 sql_help.c:1259 sql_help.c:1262 sql_help.c:1265
+#: sql_help.c:1267 sql_help.c:1269 sql_help.c:1272 sql_help.c:1275
+#: sql_help.c:1387 sql_help.c:1389 sql_help.c:1391 sql_help.c:1394
+#: sql_help.c:1415 sql_help.c:1418 sql_help.c:1421 sql_help.c:1424
+#: sql_help.c:1428 sql_help.c:1430 sql_help.c:1432 sql_help.c:1434
+#: sql_help.c:1448 sql_help.c:1451 sql_help.c:1453 sql_help.c:1455
+#: sql_help.c:1465 sql_help.c:1467 sql_help.c:1477 sql_help.c:1479
+#: sql_help.c:1489 sql_help.c:1492 sql_help.c:1514 sql_help.c:1516
+#: sql_help.c:1518 sql_help.c:1521 sql_help.c:1523 sql_help.c:1525
+#: sql_help.c:1528 sql_help.c:1578 sql_help.c:1620 sql_help.c:1623
+#: sql_help.c:1625 sql_help.c:1627 sql_help.c:1629 sql_help.c:1631
+#: sql_help.c:1634 sql_help.c:1681 sql_help.c:1697 sql_help.c:1918
+#: sql_help.c:1987 sql_help.c:2006 sql_help.c:2019 sql_help.c:2075
+#: sql_help.c:2081 sql_help.c:2091 sql_help.c:2111 sql_help.c:2136
+#: sql_help.c:2154 sql_help.c:2183 sql_help.c:2275 sql_help.c:2316
+#: sql_help.c:2339 sql_help.c:2360 sql_help.c:2361 sql_help.c:2396
+#: sql_help.c:2416 sql_help.c:2438 sql_help.c:2452 sql_help.c:2472
+#: sql_help.c:2495 sql_help.c:2525 sql_help.c:2550 sql_help.c:2596
+#: sql_help.c:2867 sql_help.c:2880 sql_help.c:2897 sql_help.c:2913
+#: sql_help.c:2953 sql_help.c:3005 sql_help.c:3009 sql_help.c:3011
+#: sql_help.c:3017 sql_help.c:3035 sql_help.c:3062 sql_help.c:3097
+#: sql_help.c:3109 sql_help.c:3118 sql_help.c:3162 sql_help.c:3176
+#: sql_help.c:3204 sql_help.c:3212 sql_help.c:3220 sql_help.c:3228
+#: sql_help.c:3236 sql_help.c:3244 sql_help.c:3252 sql_help.c:3260
+#: sql_help.c:3269 sql_help.c:3280 sql_help.c:3288 sql_help.c:3296
+#: sql_help.c:3304 sql_help.c:3312 sql_help.c:3322 sql_help.c:3331
+#: sql_help.c:3340 sql_help.c:3348 sql_help.c:3358 sql_help.c:3369
+#: sql_help.c:3377 sql_help.c:3386 sql_help.c:3397 sql_help.c:3406
+#: sql_help.c:3414 sql_help.c:3422 sql_help.c:3430 sql_help.c:3438
+#: sql_help.c:3446 sql_help.c:3454 sql_help.c:3462 sql_help.c:3470
+#: sql_help.c:3478 sql_help.c:3486 sql_help.c:3503 sql_help.c:3512
+#: sql_help.c:3520 sql_help.c:3537 sql_help.c:3552 sql_help.c:3820
+#: sql_help.c:3871 sql_help.c:3900 sql_help.c:3908 sql_help.c:4341
+#: sql_help.c:4389 sql_help.c:4530
 msgid "name"
 msgstr "名前"
 
@@ -3843,18 +4083,18 @@ msgstr "新しい名前"
 #: sql_help.c:40 sql_help.c:69 sql_help.c:84 sql_help.c:120 sql_help.c:248
 #: sql_help.c:266 sql_help.c:397 sql_help.c:483 sql_help.c:529 sql_help.c:617
 #: sql_help.c:626 sql_help.c:684 sql_help.c:704 sql_help.c:733 sql_help.c:788
-#: sql_help.c:850 sql_help.c:888 sql_help.c:988 sql_help.c:1027 sql_help.c:1056
-#: sql_help.c:1076 sql_help.c:1089 sql_help.c:1123 sql_help.c:1326
-#: sql_help.c:1390 sql_help.c:1433 sql_help.c:1454 sql_help.c:1517
-#: sql_help.c:1626 sql_help.c:2853
+#: sql_help.c:850 sql_help.c:888 sql_help.c:988 sql_help.c:1027
+#: sql_help.c:1056 sql_help.c:1076 sql_help.c:1089 sql_help.c:1123
+#: sql_help.c:1326 sql_help.c:1390 sql_help.c:1433 sql_help.c:1454
+#: sql_help.c:1517 sql_help.c:1626 sql_help.c:2853
 msgid "new_owner"
 msgstr "新しい所有者"
 
 #: sql_help.c:43 sql_help.c:71 sql_help.c:86 sql_help.c:252 sql_help.c:319
 #: sql_help.c:449 sql_help.c:534 sql_help.c:667 sql_help.c:708 sql_help.c:736
-#: sql_help.c:791 sql_help.c:855 sql_help.c:993 sql_help.c:1060 sql_help.c:1093
-#: sql_help.c:1268 sql_help.c:1435 sql_help.c:1456 sql_help.c:1468
-#: sql_help.c:1480 sql_help.c:1524 sql_help.c:1630
+#: sql_help.c:791 sql_help.c:855 sql_help.c:993 sql_help.c:1060
+#: sql_help.c:1093 sql_help.c:1268 sql_help.c:1435 sql_help.c:1456
+#: sql_help.c:1468 sql_help.c:1480 sql_help.c:1524 sql_help.c:1630
 msgid "new_schema"
 msgstr "新しいスキーマ"
 
@@ -3930,7 +4170,8 @@ msgstr "最大同時接続数"
 msgid "istemplate"
 msgstr "テンプレートかどうか（真偽値）"
 
-#: sql_help.c:122 sql_help.c:605 sql_help.c:670 sql_help.c:1271 sql_help.c:1319
+#: sql_help.c:122 sql_help.c:605 sql_help.c:670 sql_help.c:1271
+#: sql_help.c:1319
 msgid "new_tablespace"
 msgstr "新しいテーブル空間名"
 
@@ -4292,8 +4533,8 @@ msgid "strategy_number"
 msgstr "戦略番号"
 
 #: sql_help.c:767 sql_help.c:768 sql_help.c:771 sql_help.c:772 sql_help.c:778
-#: sql_help.c:779 sql_help.c:781 sql_help.c:782 sql_help.c:2422 sql_help.c:2423
-#: sql_help.c:2426 sql_help.c:2427
+#: sql_help.c:779 sql_help.c:781 sql_help.c:782 sql_help.c:2422
+#: sql_help.c:2423 sql_help.c:2426 sql_help.c:2427
 msgid "op_type"
 msgstr "演算子の型"
 
@@ -4485,7 +4726,8 @@ msgstr "テーブル制約は以下の通りです:"
 
 #: sql_help.c:1368 sql_help.c:2814
 msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
-msgstr "UNIQUE, PRIMARY KEY, EXCLUDE 制約のインデックスパラメーターは以下の通りです:"
+msgstr ""
+"UNIQUE, PRIMARY KEY, EXCLUDE 制約のインデックスパラメーターは以下の通りです:"
 
 #: sql_help.c:1373 sql_help.c:2819
 msgid "exclude_element in an EXCLUDE constraint is:"
@@ -5901,7 +6143,8 @@ msgstr "二相コミットに備えて現在のトランザクションを準備
 
 #: sql_help.c:5519
 msgid "change the ownership of database objects owned by a database role"
-msgstr "データベースロールが所有するデータベースオブジェクトの所有権を変更します。"
+msgstr ""
+"データベースロールが所有するデータベースオブジェクトの所有権を変更します。"
 
 #: sql_help.c:5524
 msgid "replace the contents of a materialized view"
@@ -5925,7 +6168,8 @@ msgstr "アクセス特権を削除します。"
 
 #: sql_help.c:5554
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
-msgstr "二相コミットのために事前に準備されたトランザクションをキャンセルします。"
+msgstr ""
+"二相コミットのために事前に準備されたトランザクションをキャンセルします。"
 
 #: sql_help.c:5559
 msgid "roll back to a savepoint"
@@ -5956,8 +6200,12 @@ msgid "set the current user identifier of the current session"
 msgstr "現在のセッションの現在のユーザ識別子を設定します。"
 
 #: sql_help.c:5599
-msgid "set the session user identifier and the current user identifier of the current session"
-msgstr "セッションのユーザ識別子および現在のセッションの現在のユーザ識別子を設定します。"
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
+msgstr ""
+"セッションのユーザ識別子および現在のセッションの現在のユーザ識別子を設定しま"
+"す。"
 
 #: sql_help.c:5604
 msgid "set the characteristics of the current transaction"
@@ -5981,7 +6229,8 @@ msgstr "テーブルの行を更新します。"
 
 #: sql_help.c:5639
 msgid "garbage-collect and optionally analyze a database"
-msgstr "ガーベッジコレクションを行い、また必要に応じてデータベースを分析します。"
+msgstr ""
+"ガーベッジコレクションを行い、また必要に応じてデータベースを分析します。"
 
 #: sql_help.c:5644
 msgid "compute a set of rows"
@@ -6026,7 +6275,7 @@ msgstr "%s: 警告: 余分なコマンドライン引数 \"%s\" は無視され�
 msgid "%s: could not find own program executable\n"
 msgstr "%s: 実行可能プログラムファイルが見つかりませんでした。\n"
 
-#: tab-complete.c:4480
+#: tab-complete.c:4497
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -6061,23 +6310,23 @@ msgstr ""
 "\"%2$s\" の値 \"%1$s\" が認識できません。\n"
 "有効な値は %3$s です。\n"
 
-#~ msgid "Procedure"
-#~ msgstr "プロシージャー名"
-
-#~ msgid "normal"
-#~ msgstr "通常"
-
-#~ msgid "  SERVER_VERSION_NAME  server's version (short string)\n"
-#~ msgstr "  SERVER_VERSION_NAME  サーバのバージョン名 (短い文字列)\n"
-
-#~ msgid "  VERSION            psql's version (verbose string)\n"
-#~ msgstr "  VERSION            psql のバージョン (詳細な文字列)\n"
-
-#~ msgid "  VERSION_NAME       psql's version (short string)\n"
-#~ msgstr "  VERSION_NAME       psql のバージョン (短い文字列)\n"
+#~ msgid "attribute"
+#~ msgstr "属性"
 
 #~ msgid "  VERSION_NUM        psql's version (numeric format)\n"
 #~ msgstr "  VERSION_NUM        psql のバージョン (数値フォーマット)\n"
 
-#~ msgid "attribute"
-#~ msgstr "属性"
+#~ msgid "  VERSION_NAME       psql's version (short string)\n"
+#~ msgstr "  VERSION_NAME       psql のバージョン (短い文字列)\n"
+
+#~ msgid "  VERSION            psql's version (verbose string)\n"
+#~ msgstr "  VERSION            psql のバージョン (詳細な文字列)\n"
+
+#~ msgid "  SERVER_VERSION_NAME  server's version (short string)\n"
+#~ msgstr "  SERVER_VERSION_NAME  サーバのバージョン名 (短い文字列)\n"
+
+#~ msgid "normal"
+#~ msgstr "通常"
+
+#~ msgid "Procedure"
+#~ msgstr "プロシージャー名"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-22 00:15+0000\n"
-"PO-Revision-Date: 2018-09-23 14:52+0200\n"
+"POT-Creation-Date: 2018-10-08 21:45+0000\n"
+"PO-Revision-Date: 2018-10-09 21:51+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -644,7 +644,7 @@ msgstr "%s : point final du journal de transactions : %s\n"
 
 #: pg_basebackup.c:1985
 #, c-format
-msgid "%s: checksum error occured\n"
+msgid "%s: checksum error occurred\n"
 msgstr "%s : erreur de somme de contrôle\n"
 
 #: pg_basebackup.c:1991
@@ -1443,116 +1443,116 @@ msgstr "suppression non supportée avec la compression"
 msgid "could not close compression stream"
 msgstr "n'a pas pu fermer le flux de compression"
 
-#~ msgid "deflate failed"
-#~ msgstr "échec en décompression"
+#~ msgid "%s: socket not open"
+#~ msgstr "%s : socket non ouvert"
 
-#~ msgid "deflateReset failed"
-#~ msgstr "échec de deflateReset"
-
-#~ msgid "deflateInit2 failed"
-#~ msgstr "échec de deflateInit2"
-
-#~ msgid "deflateParams failed"
-#~ msgstr "échec de deflateParams"
-
-#~ msgid "deflateEnd failed"
-#~ msgstr "échec de deflateEnd"
-
-#~ msgid "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
-#~ msgstr ""
-#~ "  -x, --xlog                   inclut les journaux de transactions nécessaires\n"
-#~ "                               dans la sauvegarde (mode fetch)\n"
-
-#~ msgid "%s: cannot specify both --xlog and --xlog-method\n"
-#~ msgstr "%s : ne peut pas spécifier à la fois --xlog et --xlog-method\n"
-
-#~ msgid "%s: WAL streaming can only be used in plain mode\n"
-#~ msgstr "%s : le flux de journaux de transactions peut seulement être utilisé en mode plain\n"
-
-#~ msgid "%s: could not stat transaction log file \"%s\": %s\n"
-#~ msgstr ""
-#~ "%s : n'a pas pu récupérer les informations sur le journal de transactions\n"
-#~ "« %s » : %s\n"
-
-#~ msgid "%s: could not pad transaction log file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu remplir de zéros le journal de transactions « %s » : %s\n"
-
-#~ msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu rechercher le début du journal de transaction « %s » : %s\n"
-
-#~ msgid "%s: could not rename file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu renommer le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not open timeline history file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le journal historique de la timeline « %s » : %s\n"
-
-#~ msgid "%s: could not parse file size\n"
-#~ msgstr "%s : n'a pas pu analyser la taille du fichier\n"
-
-#~ msgid "%s: could not parse file mode\n"
-#~ msgstr "%s : n'a pas pu analyser le mode du fichier\n"
-
-#~ msgid "%s: could not parse transaction log file name \"%s\"\n"
-#~ msgstr "%s : n'a pas pu analyser le nom du journal de transactions « %s »\n"
-
-#~ msgid "%s: could not close file %s: %s\n"
-#~ msgstr "%s : n'a pas pu fermer le fichier %s : %s\n"
-
-#~ msgid "  -V, --version            output version information, then exit\n"
-#~ msgstr "  -V, --version              affiche la version puis quitte\n"
-
-#~ msgid "  -?, --help               show this help, then exit\n"
-#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
-
-#~ msgid "%s: invalid format of xlog location: %s\n"
-#~ msgstr "%s : format invalide de l'emplacement du journal de transactions : %s\n"
-
-#~ msgid "%s: could not identify system: %s"
-#~ msgstr "%s : n'a pas pu identifier le système : %s"
-
-#~ msgid "%s: could not send base backup command: %s"
-#~ msgstr "%s : n'a pas pu envoyer la commande de sauvegarde de base : %s"
-
-#~ msgid "%s: could not identify system: %s\n"
-#~ msgstr "%s : n'a pas pu identifier le système : %s\n"
-
-#~ msgid "%s: could not parse log start position from value \"%s\"\n"
-#~ msgstr "%s : n'a pas pu analyser la position de départ des WAL à partir de la valeur « %s »\n"
-
-#~ msgid "%s: could not open WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le segment WAL %s : %s\n"
-
-#~ msgid "%s: could not stat WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu récupérer les informations sur le segment WAL %s : %s\n"
-
-#~ msgid "%s: could not pad WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu terminer le segment WAL %s : %s\n"
-
-#~ msgid "%s: could not seek back to beginning of WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu se déplacer au début du segment WAL %s : %s\n"
-
-#~ msgid "%s: could not get current position in file %s: %s\n"
-#~ msgstr "%s : n'a pas pu obtenir la position courant dans le fichier %s : %s\n"
-
-#~ msgid "%s: could not read copy data: %s\n"
-#~ msgstr "%s : n'a pas pu lire les données du COPY : %s\n"
-
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help                       affiche cette aide et quitte\n"
-
-#~ msgid "  --version                output version information, then exit\n"
-#~ msgstr "  --version                    affiche la version et quitte\n"
-
-#~ msgid "%s: keepalive message has incorrect size %d\n"
-#~ msgstr "%s : le message keepalive a une taille %d incorrecte\n"
+#~ msgid "%s: no start point returned from server\n"
+#~ msgstr "%s : aucun point de redémarrage renvoyé du serveur\n"
 
 #~ msgid "%s: timeline does not match between base backup and streaming connection\n"
 #~ msgstr ""
 #~ "%s : la timeline ne correspond pas entre la sauvegarde des fichiers et la\n"
 #~ "connexion de réplication\n"
 
-#~ msgid "%s: no start point returned from server\n"
-#~ msgstr "%s : aucun point de redémarrage renvoyé du serveur\n"
+#~ msgid "%s: keepalive message has incorrect size %d\n"
+#~ msgstr "%s : le message keepalive a une taille %d incorrecte\n"
 
-#~ msgid "%s: socket not open"
-#~ msgstr "%s : socket non ouvert"
+#~ msgid "  --version                output version information, then exit\n"
+#~ msgstr "  --version                    affiche la version et quitte\n"
+
+#~ msgid "  --help                   show this help, then exit\n"
+#~ msgstr "  --help                       affiche cette aide et quitte\n"
+
+#~ msgid "%s: could not read copy data: %s\n"
+#~ msgstr "%s : n'a pas pu lire les données du COPY : %s\n"
+
+#~ msgid "%s: could not get current position in file %s: %s\n"
+#~ msgstr "%s : n'a pas pu obtenir la position courant dans le fichier %s : %s\n"
+
+#~ msgid "%s: could not seek back to beginning of WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu se déplacer au début du segment WAL %s : %s\n"
+
+#~ msgid "%s: could not pad WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu terminer le segment WAL %s : %s\n"
+
+#~ msgid "%s: could not stat WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu récupérer les informations sur le segment WAL %s : %s\n"
+
+#~ msgid "%s: could not open WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le segment WAL %s : %s\n"
+
+#~ msgid "%s: could not parse log start position from value \"%s\"\n"
+#~ msgstr "%s : n'a pas pu analyser la position de départ des WAL à partir de la valeur « %s »\n"
+
+#~ msgid "%s: could not identify system: %s\n"
+#~ msgstr "%s : n'a pas pu identifier le système : %s\n"
+
+#~ msgid "%s: could not send base backup command: %s"
+#~ msgstr "%s : n'a pas pu envoyer la commande de sauvegarde de base : %s"
+
+#~ msgid "%s: could not identify system: %s"
+#~ msgstr "%s : n'a pas pu identifier le système : %s"
+
+#~ msgid "%s: invalid format of xlog location: %s\n"
+#~ msgstr "%s : format invalide de l'emplacement du journal de transactions : %s\n"
+
+#~ msgid "  -?, --help               show this help, then exit\n"
+#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+
+#~ msgid "  -V, --version            output version information, then exit\n"
+#~ msgstr "  -V, --version              affiche la version puis quitte\n"
+
+#~ msgid "%s: could not close file %s: %s\n"
+#~ msgstr "%s : n'a pas pu fermer le fichier %s : %s\n"
+
+#~ msgid "%s: could not parse transaction log file name \"%s\"\n"
+#~ msgstr "%s : n'a pas pu analyser le nom du journal de transactions « %s »\n"
+
+#~ msgid "%s: could not parse file mode\n"
+#~ msgstr "%s : n'a pas pu analyser le mode du fichier\n"
+
+#~ msgid "%s: could not parse file size\n"
+#~ msgstr "%s : n'a pas pu analyser la taille du fichier\n"
+
+#~ msgid "%s: could not open timeline history file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le journal historique de la timeline « %s » : %s\n"
+
+#~ msgid "%s: could not rename file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu renommer le fichier « %s » : %s\n"
+
+#~ msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu rechercher le début du journal de transaction « %s » : %s\n"
+
+#~ msgid "%s: could not pad transaction log file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu remplir de zéros le journal de transactions « %s » : %s\n"
+
+#~ msgid "%s: could not stat transaction log file \"%s\": %s\n"
+#~ msgstr ""
+#~ "%s : n'a pas pu récupérer les informations sur le journal de transactions\n"
+#~ "« %s » : %s\n"
+
+#~ msgid "%s: WAL streaming can only be used in plain mode\n"
+#~ msgstr "%s : le flux de journaux de transactions peut seulement être utilisé en mode plain\n"
+
+#~ msgid "%s: cannot specify both --xlog and --xlog-method\n"
+#~ msgstr "%s : ne peut pas spécifier à la fois --xlog et --xlog-method\n"
+
+#~ msgid "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
+#~ msgstr ""
+#~ "  -x, --xlog                   inclut les journaux de transactions nécessaires\n"
+#~ "                               dans la sauvegarde (mode fetch)\n"
+
+#~ msgid "deflateEnd failed"
+#~ msgstr "échec de deflateEnd"
+
+#~ msgid "deflateParams failed"
+#~ msgstr "échec de deflateParams"
+
+#~ msgid "deflateInit2 failed"
+#~ msgstr "échec de deflateInit2"
+
+#~ msgid "deflateReset failed"
+#~ msgstr "échec de deflateReset"
+
+#~ msgid "deflate failed"
+#~ msgstr "échec en décompression"

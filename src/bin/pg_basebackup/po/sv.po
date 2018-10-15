@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-23 18:47+0000\n"
-"PO-Revision-Date: 2018-05-23 22:43+0200\n"
+"POT-Creation-Date: 2018-10-12 23:45+0000\n"
+"PO-Revision-Date: 2018-10-13 06:13+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: SWEDISH <sv@li.org>\n"
 "Language: sv\n"
@@ -633,7 +633,7 @@ msgstr "%s: write-ahead-logg-slutposition: %s\n"
 
 #: pg_basebackup.c:1985
 #, c-format
-msgid "%s: checksum error occured\n"
+msgid "%s: checksum error occurred\n"
 msgstr "%s: felaktig checksumma upptäcktes\n"
 
 #: pg_basebackup.c:1991
@@ -1359,40 +1359,40 @@ msgstr "%s: kunde inte skapa replikeringsslot \"%s\": fick %d rader och %d fält
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: kunde inte slänga replikeringsslot \"%s\": fick %d rader och %d fält, förväntade %d rader och %d fält\n"
 
-#: walmethods.c:436 walmethods.c:906
+#: walmethods.c:439 walmethods.c:928
 msgid "could not compress data"
 msgstr "kunde inte komprimera data"
 
-#: walmethods.c:460
+#: walmethods.c:471
 msgid "could not reset compression stream"
 msgstr "kunde inte nollställa komprimeringsström"
 
-#: walmethods.c:562
+#: walmethods.c:569
 msgid "could not initialize compression library"
 msgstr "kunde inte initierar komprimeringsbibliotek"
 
-#: walmethods.c:574
+#: walmethods.c:581
 msgid "implementation error: tar files can't have more than one open file"
 msgstr "implementationsfel: tar-filer kan inte ha mer än en öppen fil"
 
-#: walmethods.c:588
+#: walmethods.c:595
 msgid "could not create tar header"
 msgstr "kunde inte skapa tar-header"
 
-#: walmethods.c:602 walmethods.c:640 walmethods.c:829 walmethods.c:840
+#: walmethods.c:609 walmethods.c:649 walmethods.c:844 walmethods.c:855
 msgid "could not change compression parameters"
 msgstr "kunde inte ändra komprimeringsparametrar"
 
-#: walmethods.c:722
+#: walmethods.c:731
 msgid "unlink not supported with compression"
 msgstr "unlink stöds inte med komprimering"
 
-#: walmethods.c:922
+#: walmethods.c:953
 msgid "could not close compression stream"
 msgstr "kunde inte stänga komprimeringsström"
 
-#~ msgid "%s: --create-slot needs a slot to be specified using --slot\n"
-#~ msgstr "%s: --create-slot kräver att en slot angivits med flaggan --slot\n"
-
 #~ msgid "%s: could not send replication command \"%s\": %s\n"
 #~ msgstr "%s: kunde inte skicka replikeringskommando \"%s\": %s\n"
+
+#~ msgid "%s: --create-slot needs a slot to be specified using --slot\n"
+#~ msgstr "%s: --create-slot kräver att en slot angivits med flaggan --slot\n"

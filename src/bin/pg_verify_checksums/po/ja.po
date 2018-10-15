@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-08-31 16:22+0900\n"
-"PO-Revision-Date: 2018-09-16 23:44+0200\n"
+"POT-Creation-Date: 2018-10-12 14:11+0900\n"
+"PO-Revision-Date: 2018-10-12 14:17+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: pg_verify_checksums.c:41
+#: pg_verify_checksums.c:38
 #, c-format
 msgid ""
 "%s verifies data checksums in a PostgreSQL database cluster.\n"
@@ -25,17 +25,17 @@ msgstr ""
 "%s は  PostgreSQL データベースクラスタのチェックサムを検証します。\n"
 "\n"
 
-#: pg_verify_checksums.c:42
+#: pg_verify_checksums.c:39
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_verify_checksums.c:43
+#: pg_verify_checksums.c:40
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPTION]... [DATADIR]\n"
 
-#: pg_verify_checksums.c:44
+#: pg_verify_checksums.c:41
 #, c-format
 msgid ""
 "\n"
@@ -44,34 +44,34 @@ msgstr ""
 "\n"
 "オプション:\n"
 
-#: pg_verify_checksums.c:45
+#: pg_verify_checksums.c:42
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
 msgstr " [-D, --pgdata=]DATADIR  データディレクトリ\n"
 
-#: pg_verify_checksums.c:46
+#: pg_verify_checksums.c:43
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          冗長なメッセージ出力\n"
 
-#: pg_verify_checksums.c:47
+#: pg_verify_checksums.c:44
 #, c-format
 msgid ""
 "  -r RELFILENODE         check only relation with specified relfilenode\n"
 msgstr ""
 "  -r RELFILENODE         指定した relfilenode のリレーションのみをチェック\n"
 
-#: pg_verify_checksums.c:48
+#: pg_verify_checksums.c:45
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          バージョン情報を表示して終了\n"
 
-#: pg_verify_checksums.c:49
+#: pg_verify_checksums.c:46
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             このヘルプを表示して終了\n"
 
-#: pg_verify_checksums.c:50
+#: pg_verify_checksums.c:47
 #, c-format
 msgid ""
 "\n"
@@ -85,111 +85,120 @@ msgstr ""
 "す。\n"
 "\n"
 
-#: pg_verify_checksums.c:52
+#: pg_verify_checksums.c:49
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"
 
-#: pg_verify_checksums.c:89
+#: pg_verify_checksums.c:86
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: ファイル\"%s\"をオープンできませんでした: %s\n"
 
-#: pg_verify_checksums.c:105
+#: pg_verify_checksums.c:102
 #, c-format
-msgid "%s: short read of block %d in file \"%s\", got only %d bytes\n"
+#| msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgid "%s: could not read block %u in file \"%s\": read %d of %d\n"
 msgstr ""
-"%1$s: ファイル\"%3$s\"のブロック%2$dの長さが足りません、%4$dバイトしか読み込"
-"めませんでした\n"
+"%1$s: ファイル\"%3$s\"のブロック%2$uを読み込めませんでした: %5$dバイトのう"
+"ち%4$dバイトを読み込みました\n"
 
-#: pg_verify_checksums.c:119
+#: pg_verify_checksums.c:116
 #, c-format
+#| msgid ""
+#| "%s: checksum verification failed in file \"%s\", block %d: calculated "
+#| "checksum %X but expected %X\n"
 msgid ""
-"%s: checksum verification failed in file \"%s\", block %d: calculated "
-"checksum %X but expected %X\n"
+"%s: checksum verification failed in file \"%s\", block %u: calculated "
+"checksum %X but block contains %X\n"
 msgstr ""
-"%s: ファイル\"%s\"、ブロック%dでチェックサム検証が失敗しました: 実際のチェッ"
-"クサムは %X ですが、期待していたのは %X です\n"
+"%s: ファイル\"%s\"、ブロック%uでチェックサム検証が失敗しました: 計算された"
+"チェックサムは %X ですが、ブロック内の値は %X です\n"
 
-#: pg_verify_checksums.c:127
+#: pg_verify_checksums.c:124
 #, c-format
 msgid "%s: checksums verified in file \"%s\"\n"
 msgstr "%s: ファイル\"%s\"のチェックサムを検証しました\n"
 
-#: pg_verify_checksums.c:143
+#: pg_verify_checksums.c:140
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: ディレクトリ\"%s\"をオープンできませんでした: %s\n"
 
-#: pg_verify_checksums.c:158
+#: pg_verify_checksums.c:155
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
 msgstr "%s: \"%s\"ファイルのstatに失敗しました: %s\n"
 
-#: pg_verify_checksums.c:181
+#: pg_verify_checksums.c:180
 #, c-format
 msgid "%s: invalid segment number %d in file name \"%s\"\n"
 msgstr "%1$s: ファイル名 \"%3$s\"の不正なセグメント番号%2$d\n"
 
-#: pg_verify_checksums.c:252
+#: pg_verify_checksums.c:251
 #, c-format
 msgid "%s: invalid relfilenode specification, must be numeric: %s\n"
 msgstr "%s: 不正な relfilenode 指定、数値でなければなりません: %s\n"
 
-#: pg_verify_checksums.c:258 pg_verify_checksums.c:274
-#: pg_verify_checksums.c:284
+#: pg_verify_checksums.c:257 pg_verify_checksums.c:273
+#: pg_verify_checksums.c:283
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "詳細については\"%s --help\"を実行してください。\n"
 
-#: pg_verify_checksums.c:273
+#: pg_verify_checksums.c:272
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: データディレクトリが指定されていません\n"
 
-#: pg_verify_checksums.c:282
+#: pg_verify_checksums.c:281
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: コマンドライン引数が多すぎます。(始めは\"%s\")\n"
 
-#: pg_verify_checksums.c:293
+#: pg_verify_checksums.c:292
 #, c-format
 msgid "%s: pg_control CRC value is incorrect\n"
 msgstr "%s: pg_control のCRC値が正しくありません\n"
 
-#: pg_verify_checksums.c:300
+#: pg_verify_checksums.c:299
 #, c-format
 msgid "%s: cluster must be shut down to verify checksums\n"
 msgstr ""
 "%s: チェックサムの検証を行うにはクラスタがシャットダウンされている必要があり"
 "ます\n"
 
-#: pg_verify_checksums.c:306
+#: pg_verify_checksums.c:305
 #, c-format
 msgid "%s: data checksums are not enabled in cluster\n"
 msgstr "%s: クラスタのデータチェックサムが有効になっていません\n"
 
-#: pg_verify_checksums.c:315
+#: pg_verify_checksums.c:314
 #, c-format
 msgid "Checksum scan completed\n"
 msgstr "チェックサムの検証が完了\n"
 
-#: pg_verify_checksums.c:316
+#: pg_verify_checksums.c:315
 #, c-format
 msgid "Data checksum version: %d\n"
 msgstr "データチェックサムバージョン: %d\n"
 
-#: pg_verify_checksums.c:317
+#: pg_verify_checksums.c:316
 #, c-format
 msgid "Files scanned:  %s\n"
 msgstr "スキャンしたファイル数: %s\n"
 
-#: pg_verify_checksums.c:318
+#: pg_verify_checksums.c:317
 #, c-format
 msgid "Blocks scanned: %s\n"
 msgstr "スキャンしたブロック数: %s\n"
 
-#: pg_verify_checksums.c:319
+#: pg_verify_checksums.c:318
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "チェックサム異常: %s\n"
+
+#~ msgid "%s: short read of block %d in file \"%s\", got only %d bytes\n"
+#~ msgstr ""
+#~ "%1$s: ファイル\"%3$s\"のブロック%2$dの長さが足りません、%4$dバイトしか読み"
+#~ "込めませんでした\n"
