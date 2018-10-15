@@ -387,6 +387,9 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 	bool		isAtomicContext = (!(context == PROCESS_UTILITY_TOPLEVEL || context == PROCESS_UTILITY_QUERY_NONATOMIC) || IsTransactionBlock());
 	ParseState *pstate;
 
+	/* This can recurse, so check for excessive recursion */
+	check_stack_depth();
+
 	check_xact_readonly(parsetree);
 
 	if (completionTag)
