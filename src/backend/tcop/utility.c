@@ -383,6 +383,9 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
 	ParseState *pstate;
 
+	/* This can recurse, so check for excessive recursion */
+	check_stack_depth();
+
 	check_xact_readonly(parsetree);
 
 	if (completionTag)
