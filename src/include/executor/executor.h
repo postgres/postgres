@@ -340,7 +340,7 @@ ExecProject(ProjectionInfo *projInfo)
 	 * Successfully formed a result row.  Mark the result slot as containing a
 	 * valid virtual tuple (inlined version of ExecStoreVirtualTuple()).
 	 */
-	slot->tts_isempty = false;
+	slot->tts_flags &= ~TTS_FLAG_EMPTY;
 	slot->tts_nvalid = slot->tts_tupleDescriptor->natts;
 
 	return slot;

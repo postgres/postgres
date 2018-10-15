@@ -65,11 +65,11 @@
  * ie, only as needed.  This serves to avoid repeated extraction of data
  * from the physical tuple.
  *
- * A TupleTableSlot can also be "empty", holding no valid data.  This is
- * the only valid state for a freshly-created slot that has not yet had a
- * tuple descriptor assigned to it.  In this state, tts_isempty must be
- * true, tts_shouldFree false, tts_tuple NULL, tts_buffer InvalidBuffer,
- * and tts_nvalid zero.
+ * A TupleTableSlot can also be "empty", indicated by flag TTS_EMPTY set in
+ * tts_flags, holding no valid data.  This is the only valid state for a
+ * freshly-created slot that has not yet had a tuple descriptor assigned to it.
+ * In this state, TTS_SHOULDFREE should not be set in tts_flag, tts_tuple must
+ * be NULL, tts_buffer InvalidBuffer, and tts_nvalid zero.
  *
  * The tupleDescriptor is simply referenced, not copied, by the TupleTableSlot
  * code.  The caller of ExecSetSlotDescriptor() is responsible for providing
@@ -79,8 +79,9 @@
  * mechanism to do more.  However, the slot will increment the tupdesc
  * reference count if a reference-counted tupdesc is supplied.)
  *
- * When tts_shouldFree is true, the physical tuple is "owned" by the slot
- * and should be freed when the slot's reference to the tuple is dropped.
+ * When TTS_SHOULDFREE is set in tts_flags, the physical tuple is "owned" by
+ * the slot and should be freed when the slot's reference to the tuple is
+ * dropped.
  *
  * If tts_buffer is not InvalidBuffer, then the slot is holding a pin
  * on the indicated buffer page; drop the pin when we release the
@@ -106,35 +107,52 @@
  * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.  This allows column
  * extraction to treat the case identically to regular physical tuples.
  *
- * tts_slow/tts_off are saved state for slot_deform_tuple, and should not
- * be touched by any other code.
+ * TTS_SLOW flag in tts_flags and tts_off are saved state for
+ * slot_deform_tuple, and should not be touched by any other code.
  *----------
  */
+
+/* true = slot is empty */
+#define			TTS_FLAG_EMPTY			(1 << 1)
+#define TTS_EMPTY(slot)	(((slot)->tts_flags & TTS_FLAG_EMPTY) != 0)
+
+/* should pfree tts_tuple? */
+#define			TTS_FLAG_SHOULDFREE		(1 << 2)
+#define TTS_SHOULDFREE(slot) (((slot)->tts_flags & TTS_FLAG_SHOULDFREE) != 0)
+
+/* should pfree tts_mintuple? */
+#define			TTS_FLAG_SHOULDFREEMIN	(1 << 3)
+#define TTS_SHOULDFREEMIN(slot) (((slot)->tts_flags & TTS_FLAG_SHOULDFREEMIN) != 0)
+
+/* saved state for slot_deform_tuple */
+#define			TTS_FLAG_SLOW		(1 << 4)
+#define TTS_SLOW(slot) (((slot)->tts_flags & TTS_FLAG_SLOW) != 0)
+
+/* fixed tuple descriptor */
+#define			TTS_FLAG_FIXED		(1 << 5)
+#define TTS_FIXED(slot) (((slot)->tts_flags & TTS_FLAG_FIXED) != 0)
+
 typedef struct TupleTableSlot
 {
 	NodeTag		type;
-	bool		tts_isempty;	/* true = slot is empty */
-	bool		tts_shouldFree; /* should pfree tts_tuple? */
-	bool		tts_shouldFreeMin;	/* should pfree tts_mintuple? */
-#define FIELDNO_TUPLETABLESLOT_SLOW 4
-	bool		tts_slow;		/* saved state for slot_deform_tuple */
-#define FIELDNO_TUPLETABLESLOT_TUPLE 5
+#define FIELDNO_TUPLETABLESLOT_FLAGS 1
+	uint16		tts_flags;		/* Boolean states */
+#define FIELDNO_TUPLETABLESLOT_NVALID 2
+	AttrNumber	tts_nvalid;		/* # of valid values in tts_values */
+#define FIELDNO_TUPLETABLESLOT_TUPLE 3
 	HeapTuple	tts_tuple;		/* physical tuple, or NULL if virtual */
-#define FIELDNO_TUPLETABLESLOT_TUPLEDESCRIPTOR 6
+#define FIELDNO_TUPLETABLESLOT_TUPLEDESCRIPTOR 4
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
 	MemoryContext tts_mcxt;		/* slot itself is in this context */
 	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
-#define FIELDNO_TUPLETABLESLOT_NVALID 9
-	AttrNumber	tts_nvalid;		/* # of valid values in tts_values */
-#define FIELDNO_TUPLETABLESLOT_VALUES 10
+#define FIELDNO_TUPLETABLESLOT_OFF 7
+	uint32		tts_off;		/* saved state for slot_deform_tuple */
+#define FIELDNO_TUPLETABLESLOT_VALUES 8
 	Datum	   *tts_values;		/* current per-attribute values */
-#define FIELDNO_TUPLETABLESLOT_ISNULL 11
+#define FIELDNO_TUPLETABLESLOT_ISNULL 9
 	bool	   *tts_isnull;		/* current per-attribute isnull flags */
 	MinimalTuple tts_mintuple;	/* minimal tuple, or NULL if none */
 	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
-#define FIELDNO_TUPLETABLESLOT_OFF 14
-	uint32		tts_off;		/* saved state for slot_deform_tuple */
-	bool		tts_fixedTupleDescriptor;	/* descriptor can't be changed */
 } TupleTableSlot;
 
 #define TTS_HAS_PHYSICAL_TUPLE(slot)  \
@@ -144,7 +162,7 @@ typedef struct TupleTableSlot
  * TupIsNull -- is a TupleTableSlot empty?
  */
 #define TupIsNull(slot) \
-	((slot) == NULL || (slot)->tts_isempty)
+	((slot) == NULL || TTS_EMPTY(slot))
 
 /* in executor/execTuples.c */
 extern TupleTableSlot *MakeTupleTableSlot(TupleDesc desc);

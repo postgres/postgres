@@ -101,11 +101,10 @@ MakeTupleTableSlot(TupleDesc tupleDesc)
 
 	slot = palloc0(sz);
 	slot->type = T_TupleTableSlot;
-	slot->tts_isempty = true;
-	slot->tts_shouldFree = false;
-	slot->tts_shouldFreeMin = false;
+	slot->tts_flags |= TTS_FLAG_EMPTY;
+	if (tupleDesc != NULL)
+		slot->tts_flags |= TTS_FLAG_FIXED;
 	slot->tts_tuple = NULL;
-	slot->tts_fixedTupleDescriptor = tupleDesc != NULL;
 	slot->tts_tupleDescriptor = tupleDesc;
 	slot->tts_mcxt = CurrentMemoryContext;
 	slot->tts_buffer = InvalidBuffer;
@@ -176,7 +175,7 @@ ExecResetTupleTable(List *tupleTable,	/* tuple table */
 		/* If shouldFree, release memory occupied by the slot itself */
 		if (shouldFree)
 		{
-			if (!slot->tts_fixedTupleDescriptor)
+			if (!TTS_FIXED(slot))
 			{
 				if (slot->tts_values)
 					pfree(slot->tts_values);
@@ -224,7 +223,7 @@ ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
 	ExecClearTuple(slot);
 	if (slot->tts_tupleDescriptor)
 		ReleaseTupleDesc(slot->tts_tupleDescriptor);
-	if (!slot->tts_fixedTupleDescriptor)
+	if (!TTS_FIXED(slot))
 	{
 		if (slot->tts_values)
 			pfree(slot->tts_values);
@@ -254,7 +253,7 @@ void
 ExecSetSlotDescriptor(TupleTableSlot *slot, /* slot to change */
 					  TupleDesc tupdesc)	/* new tuple descriptor */
 {
-	Assert(!slot->tts_fixedTupleDescriptor);
+	Assert(!TTS_FIXED(slot));
 
 	/* For safety, make sure slot is empty before changing it */
 	ExecClearTuple(slot);
@@ -325,17 +324,23 @@ ExecStoreHeapTuple(HeapTuple tuple,
 	/*
 	 * Free any old physical tuple belonging to the slot.
 	 */
-	if (slot->tts_shouldFree)
+	if (TTS_SHOULDFREE(slot))
+	{
 		heap_freetuple(slot->tts_tuple);
-	if (slot->tts_shouldFreeMin)
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREE;
+	}
+	if (TTS_SHOULDFREEMIN(slot))
+	{
 		heap_free_minimal_tuple(slot->tts_mintuple);
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREEMIN;
+	}
 
 	/*
 	 * Store the new tuple into the specified slot.
 	 */
-	slot->tts_isempty = false;
-	slot->tts_shouldFree = shouldFree;
-	slot->tts_shouldFreeMin = false;
+	slot->tts_flags &= ~TTS_FLAG_EMPTY;
+	if (shouldFree)
+		slot->tts_flags |= TTS_FLAG_SHOULDFREE;
 	slot->tts_tuple = tuple;
 	slot->tts_mintuple = NULL;
 
@@ -382,17 +387,21 @@ ExecStoreBufferHeapTuple(HeapTuple tuple,
 	/*
 	 * Free any old physical tuple belonging to the slot.
 	 */
-	if (slot->tts_shouldFree)
+	if (TTS_SHOULDFREE(slot))
+	{
 		heap_freetuple(slot->tts_tuple);
-	if (slot->tts_shouldFreeMin)
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREE;
+	}
+	if (TTS_SHOULDFREEMIN(slot))
+	{
 		heap_free_minimal_tuple(slot->tts_mintuple);
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREEMIN;
+	}
 
 	/*
 	 * Store the new tuple into the specified slot.
 	 */
-	slot->tts_isempty = false;
-	slot->tts_shouldFree = false;
-	slot->tts_shouldFreeMin = false;
+	slot->tts_flags &= ~TTS_FLAG_EMPTY;
 	slot->tts_tuple = tuple;
 	slot->tts_mintuple = NULL;
 
@@ -442,10 +451,16 @@ ExecStoreMinimalTuple(MinimalTuple mtup,
 	/*
 	 * Free any old physical tuple belonging to the slot.
 	 */
-	if (slot->tts_shouldFree)
+	if (TTS_SHOULDFREE(slot))
+	{
 		heap_freetuple(slot->tts_tuple);
-	if (slot->tts_shouldFreeMin)
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREE;
+	}
+	if (TTS_SHOULDFREEMIN(slot))
+	{
 		heap_free_minimal_tuple(slot->tts_mintuple);
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREEMIN;
+	}
 
 	/*
 	 * Drop the pin on the referenced buffer, if there is one.
@@ -458,9 +473,9 @@ ExecStoreMinimalTuple(MinimalTuple mtup,
 	/*
 	 * Store the new tuple into the specified slot.
 	 */
-	slot->tts_isempty = false;
-	slot->tts_shouldFree = false;
-	slot->tts_shouldFreeMin = shouldFree;
+	slot->tts_flags &= ~TTS_FLAG_EMPTY;
+	if (shouldFree)
+		slot->tts_flags |= TTS_FLAG_SHOULDFREEMIN;
 	slot->tts_tuple = &slot->tts_minhdr;
 	slot->tts_mintuple = mtup;
 
@@ -493,15 +508,19 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	/*
 	 * Free the old physical tuple if necessary.
 	 */
-	if (slot->tts_shouldFree)
+	if (TTS_SHOULDFREE(slot))
+	{
 		heap_freetuple(slot->tts_tuple);
-	if (slot->tts_shouldFreeMin)
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREE;
+	}
+	if (TTS_SHOULDFREEMIN(slot))
+	{
 		heap_free_minimal_tuple(slot->tts_mintuple);
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREEMIN;
+	}
 
 	slot->tts_tuple = NULL;
 	slot->tts_mintuple = NULL;
-	slot->tts_shouldFree = false;
-	slot->tts_shouldFreeMin = false;
 
 	/*
 	 * Drop the pin on the referenced buffer, if there is one.
@@ -514,7 +533,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	/*
 	 * Mark it empty.
 	 */
-	slot->tts_isempty = true;
+	slot->tts_flags |= TTS_FLAG_EMPTY;
 	slot->tts_nvalid = 0;
 
 	return slot;
@@ -539,9 +558,9 @@ ExecStoreVirtualTuple(TupleTableSlot *slot)
 	 */
 	Assert(slot != NULL);
 	Assert(slot->tts_tupleDescriptor != NULL);
-	Assert(slot->tts_isempty);
+	Assert(TTS_EMPTY(slot));
 
-	slot->tts_isempty = false;
+	slot->tts_flags &= ~TTS_FLAG_EMPTY;
 	slot->tts_nvalid = slot->tts_tupleDescriptor->natts;
 
 	return slot;
@@ -595,7 +614,7 @@ ExecCopySlotTuple(TupleTableSlot *slot)
 	 * sanity checks
 	 */
 	Assert(slot != NULL);
-	Assert(!slot->tts_isempty);
+	Assert(!TTS_EMPTY(slot));
 
 	/*
 	 * If we have a physical tuple (either format) then just copy it.
@@ -627,7 +646,7 @@ ExecCopySlotMinimalTuple(TupleTableSlot *slot)
 	 * sanity checks
 	 */
 	Assert(slot != NULL);
-	Assert(!slot->tts_isempty);
+	Assert(!TTS_EMPTY(slot));
 
 	/*
 	 * If we have a physical tuple then just copy it.  Prefer to copy
@@ -675,7 +694,7 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 	 * sanity checks
 	 */
 	Assert(slot != NULL);
-	Assert(!slot->tts_isempty);
+	Assert(!TTS_EMPTY(slot));
 
 	/*
 	 * If we have a regular physical tuple then just return it.
@@ -724,7 +743,8 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
 	 * sanity checks
 	 */
 	Assert(slot != NULL);
-	Assert(!slot->tts_isempty);
+	Assert(!TTS_EMPTY(slot));
+
 
 	/*
 	 * If we have a minimal physical tuple (local or not) then just return it.
@@ -741,7 +761,7 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
 	 */
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 	slot->tts_mintuple = ExecCopySlotMinimalTuple(slot);
-	slot->tts_shouldFreeMin = true;
+	slot->tts_flags |= TTS_FLAG_SHOULDFREEMIN;
 	MemoryContextSwitchTo(oldContext);
 
 	/*
@@ -797,13 +817,13 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	 * sanity checks
 	 */
 	Assert(slot != NULL);
-	Assert(!slot->tts_isempty);
+	Assert(!TTS_EMPTY(slot));
 
 	/*
 	 * If we have a regular physical tuple, and it's locally palloc'd, we have
 	 * nothing to do.
 	 */
-	if (slot->tts_tuple && slot->tts_shouldFree)
+	if (slot->tts_tuple && TTS_SHOULDFREE(slot))
 		return slot->tts_tuple;
 
 	/*
@@ -815,7 +835,7 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	 */
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 	slot->tts_tuple = ExecCopySlotTuple(slot);
-	slot->tts_shouldFree = true;
+	slot->tts_flags |= TTS_FLAG_SHOULDFREE;
 	MemoryContextSwitchTo(oldContext);
 
 	/*
@@ -842,7 +862,7 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	 * storage, we must not pfree it now, since callers might have already
 	 * fetched datum pointers referencing it.)
 	 */
-	if (!slot->tts_shouldFreeMin)
+	if (!TTS_SHOULDFREEMIN(slot))
 		slot->tts_mintuple = NULL;
 
 	return slot->tts_tuple;

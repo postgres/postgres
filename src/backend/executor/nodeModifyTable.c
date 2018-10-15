@@ -699,7 +699,7 @@ ExecDelete(ModifyTableState *mtstate,
 		 * RETURNING expressions might reference the tableoid column, so
 		 * initialize t_tableOid before evaluating them.
 		 */
-		if (slot->tts_isempty)
+		if (TTS_EMPTY(slot))
 			ExecStoreAllNullTuple(slot);
 		tuple = ExecMaterializeSlot(slot);
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);

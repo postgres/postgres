@@ -292,7 +292,7 @@ llvm_compile_expr(ExprState *state)
 						if (!desc &&
 							is &&
 							is->ps_ResultTupleSlot &&
-							is->ps_ResultTupleSlot->tts_fixedTupleDescriptor)
+							TTS_FIXED(is->ps_ResultTupleSlot))
 							desc = is->ps_ResultTupleSlot->tts_tupleDescriptor;
 					}
 					else if (opcode == EEOP_OUTER_FETCHSOME)
@@ -304,7 +304,7 @@ llvm_compile_expr(ExprState *state)
 						if (!desc &&
 							os &&
 							os->ps_ResultTupleSlot &&
-							os->ps_ResultTupleSlot->tts_fixedTupleDescriptor)
+							TTS_FIXED(os->ps_ResultTupleSlot))
 							desc = os->ps_ResultTupleSlot->tts_tupleDescriptor;
 					}
 					else
