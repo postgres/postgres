@@ -5890,7 +5890,7 @@ This was disabled in the PG 9.6 branch so there is no commit here.
 2016-12-19 [3901fd70c] Support quorum-based synchronous replication.
 -->
       <para>
-       Allow waiting for commit acknowledgement from standby
+       Allow waiting for commit acknowledgment from standby
        servers irrespective of the order they appear in <xref
        linkend="guc-synchronous-standby-names"/> (Masahiko Sawada)
       </para>
@@ -6462,7 +6462,7 @@ This was disabled in the PG 9.6 branch so there is no commit here.
       <para>
        This is useful for checking after an abrupt disconnection whether
        your previous transaction committed and you just didn't receive
-       the acknowledgement.
+       the acknowledgment.
       </para>
      </listitem>
 

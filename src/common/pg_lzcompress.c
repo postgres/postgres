@@ -159,7 +159,7 @@
  *			scanned for the history add's, otherwise a literal character
  *			is omitted and only his history entry added.
  *
- *		Acknowledgements:
+ *		Acknowledgments:
  *
  *			Many thanks to Adisak Pochanayon, who's article about SLZ
  *			inspired me to write the PostgreSQL compression this way.

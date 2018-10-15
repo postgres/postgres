@@ -1324,14 +1324,14 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
-    If primary restarts while commits are waiting for acknowledgement, those
+    If primary restarts while commits are waiting for acknowledgment, those
     waiting transactions will be marked fully committed once the primary
     database recovers.
     There is no way to be certain that all standbys have received all
     outstanding WAL data at time of the crash of the primary. Some
     transactions may not show as committed on the standby, even though
     they show as committed on the primary. The guarantee we offer is that
-    the application will not receive explicit acknowledgement of the
+    the application will not receive explicit acknowledgment of the
     successful commit of a transaction until the WAL data is known to be
     safely received by all the synchronous standbys.
    </para>
