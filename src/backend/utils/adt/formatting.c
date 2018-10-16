@@ -93,6 +93,7 @@
 #include "utils/float.h"
 #include "utils/formatting.h"
 #include "utils/int8.h"
+#include "utils/memutils.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
 
@@ -124,10 +125,10 @@
  */
 typedef struct
 {
-	char	   *name;			/* suffix string		*/
+	const char *name;			/* suffix string		*/
 	int			len,			/* suffix length		*/
 				id,				/* used in node->suffix */
-				type;			/* prefix / postfix			*/
+				type;			/* prefix / postfix		*/
 } KeySuffix;
 
 /* ----------
@@ -155,10 +156,10 @@ typedef struct
 
 typedef struct
 {
-	int			type;			/* NODE_TYPE_XXX, see below */
-	const KeyWord *key;			/* if type is ACTION */
+	uint8		type;			/* NODE_TYPE_XXX, see below */
 	char		character[MAX_MULTIBYTE_CHAR_LEN + 1];	/* if type is CHAR */
-	int			suffix;			/* keyword prefix/suffix code, if any */
+	uint8		suffix;			/* keyword prefix/suffix code, if any */
+	const KeyWord *key;			/* if type is ACTION */
 } FormatNode;
 
 #define NODE_TYPE_END		1
@@ -358,14 +359,27 @@ typedef struct
  * For simplicity, the cache entries are fixed-size, so they allow for the
  * worst case of a FormatNode for each byte in the picture string.
  *
- * The max number of entries in the caches is DCH_CACHE_ENTRIES
+ * The CACHE_SIZE constants are computed to make sizeof(DCHCacheEntry) and
+ * sizeof(NUMCacheEntry) be powers of 2, or just less than that, so that
+ * we don't waste too much space by palloc'ing them individually.  Be sure
+ * to adjust those macros if you add fields to those structs.
+ *
+ * The max number of entries in each cache is DCH_CACHE_ENTRIES
  * resp. NUM_CACHE_ENTRIES.
  * ----------
  */
-#define NUM_CACHE_SIZE		64
-#define NUM_CACHE_ENTRIES	20
-#define DCH_CACHE_SIZE		128
+#define DCH_CACHE_OVERHEAD \
+	MAXALIGN(sizeof(bool) + sizeof(int))
+#define NUM_CACHE_OVERHEAD \
+	MAXALIGN(sizeof(bool) + sizeof(int) + sizeof(NUMDesc))
+
+#define DCH_CACHE_SIZE \
+	((2048 - DCH_CACHE_OVERHEAD) / (sizeof(FormatNode) + sizeof(char)) - 1)
+#define NUM_CACHE_SIZE \
+	((1024 - NUM_CACHE_OVERHEAD) / (sizeof(FormatNode) + sizeof(char)) - 1)
+
 #define DCH_CACHE_ENTRIES	20
+#define NUM_CACHE_ENTRIES	20
 
 typedef struct
 {
@@ -385,12 +399,12 @@ typedef struct
 } NUMCacheEntry;
 
 /* global cache for date/time format pictures */
-static DCHCacheEntry DCHCache[DCH_CACHE_ENTRIES];
+static DCHCacheEntry *DCHCache[DCH_CACHE_ENTRIES];
 static int	n_DCHCache = 0;		/* current number of entries */
 static int	DCHCounter = 0;		/* aging-event counter */
 
 /* global cache for number format pictures */
-static NUMCacheEntry NUMCache[NUM_CACHE_ENTRIES];
+static NUMCacheEntry *NUMCache[NUM_CACHE_ENTRIES];
 static int	n_NUMCache = 0;		/* current number of entries */
 static int	NUMCounter = 0;		/* aging-event counter */
 
@@ -496,7 +510,7 @@ do { \
  *****************************************************************************/
 
 /* ----------
- * Suffixes:
+ * Suffixes (FormatNode.suffix is an OR of these codes)
  * ----------
  */
 #define DCH_S_FM	0x01
@@ -3368,13 +3382,13 @@ DCH_cache_getnew(const char *str)
 {
 	DCHCacheEntry *ent;
 
-	/* counter overflow check - paranoia? */
+	/* handle counter overflow by resetting all ages */
 	if (DCHCounter >= (INT_MAX - DCH_CACHE_ENTRIES))
 	{
 		DCHCounter = 0;
 
-		for (ent = DCHCache; ent < (DCHCache + DCH_CACHE_ENTRIES); ent++)
-			ent->age = (++DCHCounter);
+		for (int i = 0; i < n_DCHCache; i++)
+			DCHCache[i]->age = (++DCHCounter);
 	}
 
 	/*
@@ -3382,15 +3396,16 @@ DCH_cache_getnew(const char *str)
 	 */
 	if (n_DCHCache >= DCH_CACHE_ENTRIES)
 	{
-		DCHCacheEntry *old = DCHCache + 0;
+		DCHCacheEntry *old = DCHCache[0];
 
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "cache is full (%d)", n_DCHCache);
 #endif
 		if (old->valid)
 		{
-			for (ent = DCHCache + 1; ent < (DCHCache + DCH_CACHE_ENTRIES); ent++)
+			for (int i = 1; i < DCH_CACHE_ENTRIES; i++)
 			{
+				ent = DCHCache[i];
 				if (!ent->valid)
 				{
 					old = ent;
@@ -3414,7 +3429,9 @@ DCH_cache_getnew(const char *str)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "NEW (%d)", n_DCHCache);
 #endif
-		ent = DCHCache + n_DCHCache;
+		Assert(DCHCache[n_DCHCache] == NULL);
+		DCHCache[n_DCHCache] = ent = (DCHCacheEntry *)
+			MemoryContextAllocZero(TopMemoryContext, sizeof(DCHCacheEntry));
 		ent->valid = false;
 		StrNCpy(ent->str, str, DCH_CACHE_SIZE + 1);
 		ent->age = (++DCHCounter);
@@ -3428,20 +3445,19 @@ DCH_cache_getnew(const char *str)
 static DCHCacheEntry *
 DCH_cache_search(const char *str)
 {
-	int			i;
-	DCHCacheEntry *ent;
-
-	/* counter overflow check - paranoia? */
+	/* handle counter overflow by resetting all ages */
 	if (DCHCounter >= (INT_MAX - DCH_CACHE_ENTRIES))
 	{
 		DCHCounter = 0;
 
-		for (ent = DCHCache; ent < (DCHCache + DCH_CACHE_ENTRIES); ent++)
-			ent->age = (++DCHCounter);
+		for (int i = 0; i < n_DCHCache; i++)
+			DCHCache[i]->age = (++DCHCounter);
 	}
 
-	for (i = 0, ent = DCHCache; i < n_DCHCache; i++, ent++)
+	for (int i = 0; i < n_DCHCache; i++)
 	{
+		DCHCacheEntry *ent = DCHCache[i];
+
 		if (ent->valid && strcmp(ent->str, str) == 0)
 		{
 			ent->age = (++DCHCounter);
@@ -4047,13 +4063,13 @@ NUM_cache_getnew(const char *str)
 {
 	NUMCacheEntry *ent;
 
-	/* counter overflow check - paranoia? */
+	/* handle counter overflow by resetting all ages */
 	if (NUMCounter >= (INT_MAX - NUM_CACHE_ENTRIES))
 	{
 		NUMCounter = 0;
 
-		for (ent = NUMCache; ent < (NUMCache + NUM_CACHE_ENTRIES); ent++)
-			ent->age = (++NUMCounter);
+		for (int i = 0; i < n_NUMCache; i++)
+			NUMCache[i]->age = (++NUMCounter);
 	}
 
 	/*
@@ -4061,15 +4077,16 @@ NUM_cache_getnew(const char *str)
 	 */
 	if (n_NUMCache >= NUM_CACHE_ENTRIES)
 	{
-		NUMCacheEntry *old = NUMCache + 0;
+		NUMCacheEntry *old = NUMCache[0];
 
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Cache is full (%d)", n_NUMCache);
 #endif
 		if (old->valid)
 		{
-			for (ent = NUMCache + 1; ent < (NUMCache + NUM_CACHE_ENTRIES); ent++)
+			for (int i = 1; i < NUM_CACHE_ENTRIES; i++)
 			{
+				ent = NUMCache[i];
 				if (!ent->valid)
 				{
 					old = ent;
@@ -4093,7 +4110,9 @@ NUM_cache_getnew(const char *str)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "NEW (%d)", n_NUMCache);
 #endif
-		ent = NUMCache + n_NUMCache;
+		Assert(NUMCache[n_NUMCache] == NULL);
+		NUMCache[n_NUMCache] = ent = (NUMCacheEntry *)
+			MemoryContextAllocZero(TopMemoryContext, sizeof(NUMCacheEntry));
 		ent->valid = false;
 		StrNCpy(ent->str, str, NUM_CACHE_SIZE + 1);
 		ent->age = (++NUMCounter);
@@ -4107,20 +4126,19 @@ NUM_cache_getnew(const char *str)
 static NUMCacheEntry *
 NUM_cache_search(const char *str)
 {
-	int			i;
-	NUMCacheEntry *ent;
-
-	/* counter overflow check - paranoia? */
+	/* handle counter overflow by resetting all ages */
 	if (NUMCounter >= (INT_MAX - NUM_CACHE_ENTRIES))
 	{
 		NUMCounter = 0;
 
-		for (ent = NUMCache; ent < (NUMCache + NUM_CACHE_ENTRIES); ent++)
-			ent->age = (++NUMCounter);
+		for (int i = 0; i < n_NUMCache; i++)
+			NUMCache[i]->age = (++NUMCounter);
 	}
 
-	for (i = 0, ent = NUMCache; i < n_NUMCache; i++, ent++)
+	for (int i = 0; i < n_NUMCache; i++)
 	{
+		NUMCacheEntry *ent = NUMCache[i];
+
 		if (ent->valid && strcmp(ent->str, str) == 0)
 		{
 			ent->age = (++NUMCounter);
