@@ -67,29 +67,33 @@ donothingCleanup(DestReceiver *self)
  *		static DestReceiver structs for dest types needing no local state
  * ----------------
  */
-static DestReceiver donothingDR = {
+static const DestReceiver donothingDR = {
 	donothingReceive, donothingStartup, donothingCleanup, donothingCleanup,
 	DestNone
 };
 
-static DestReceiver debugtupDR = {
+static const DestReceiver debugtupDR = {
 	debugtup, debugStartup, donothingCleanup, donothingCleanup,
 	DestDebug
 };
 
-static DestReceiver printsimpleDR = {
+static const DestReceiver printsimpleDR = {
 	printsimple, printsimple_startup, donothingCleanup, donothingCleanup,
 	DestRemoteSimple
 };
 
-static DestReceiver spi_printtupDR = {
+static const DestReceiver spi_printtupDR = {
 	spi_printtup, spi_dest_startup, donothingCleanup, donothingCleanup,
 	DestSPI
 };
 
-/* Globally available receiver for DestNone */
-DestReceiver *None_Receiver = &donothingDR;
-
+/*
+ * Globally available receiver for DestNone.
+ *
+ * It's ok to cast the constness away as any modification of the none receiver
+ * would be a bug (which gets easier to catch this way).
+ */
+DestReceiver *None_Receiver = (DestReceiver *) &donothingDR;
 
 /* ----------------
  *		BeginCommand - initialize the destination at start of command
@@ -108,6 +112,11 @@ BeginCommand(const char *commandTag, CommandDest dest)
 DestReceiver *
 CreateDestReceiver(CommandDest dest)
 {
+	/*
+	 * It's ok to cast the constness away as any modification of the none receiver
+	 * would be a bug (which gets easier to catch this way).
+	 */
+
 	switch (dest)
 	{
 		case DestRemote:
@@ -115,16 +124,16 @@ CreateDestReceiver(CommandDest dest)
 			return printtup_create_DR(dest);
 
 		case DestRemoteSimple:
-			return &printsimpleDR;
+			return unconstify(DestReceiver *, &printsimpleDR);
 
 		case DestNone:
-			return &donothingDR;
+			return unconstify(DestReceiver *, &donothingDR);
 
 		case DestDebug:
-			return &debugtupDR;
+			return unconstify(DestReceiver *, &debugtupDR);
 
 		case DestSPI:
-			return &spi_printtupDR;
+			return unconstify(DestReceiver *, &spi_printtupDR);
 
 		case DestTuplestore:
 			return CreateTuplestoreDestReceiver();
@@ -146,7 +155,7 @@ CreateDestReceiver(CommandDest dest)
 	}
 
 	/* should never get here */
-	return &donothingDR;
+	pg_unreachable();
 }
 
 /* ----------------
