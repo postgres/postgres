@@ -1121,6 +1121,30 @@ typedef union PGAlignedXLogBlock
 #define PG_TEXTDOMAIN(domain) (domain "-" PG_MAJORVERSION)
 #endif
 
+/*
+ * Macro that allows to cast constness away from a variable, but doesn't
+ * allow changing the underlying type.  Enforcement of the latter
+ * currently only works for gcc like compilers.
+ *
+ * Please note IT IS NOT SAFE to cast constness away if the variable will ever
+ * be modified (it would be undefined behaviour). Doing so anyway can cause
+ * compiler misoptimizations or runtime crashes (modifying readonly memory).
+ * It is only safe to use when the the variable will not be modified, but API
+ * design or language restrictions prevent you from declaring that
+ * (e.g. because a function returns both const and non-const variables).
+ *
+ * Note that this only works in function scope, not for global variables (it'd
+ * be nice, but not trivial, to improve that).
+ */
+#if defined(HAVE__BUILTIN_TYPES_COMPATIBLE_P)
+#define unconstify(underlying_type, var) \
+	(StaticAssertExpr(__builtin_types_compatible_p(__typeof(var), const underlying_type), \
+					  "wrong cast"), \
+	 (underlying_type) (var))
+#else
+#define unconstify(underlying_type, var) \
+	((underlying_type) (var))
+#endif
 
 /* ----------------------------------------------------------------
  *				Section 9: system-specific hacks
