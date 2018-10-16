@@ -3376,20 +3376,32 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 	}
 }
 
+/*
+ * The invariant for DCH cache entry management is that DCHCounter is equal
+ * to the maximum age value among the existing entries, and we increment it
+ * whenever an access occurs.  If we approach overflow, deal with that by
+ * halving all the age values, so that we retain a fairly accurate idea of
+ * which entries are oldest.
+ */
+static inline void
+DCH_prevent_counter_overflow(void)
+{
+	if (DCHCounter >= (INT_MAX - 1))
+	{
+		for (int i = 0; i < n_DCHCache; i++)
+			DCHCache[i]->age >>= 1;
+		DCHCounter >>= 1;
+	}
+}
+
 /* select a DCHCacheEntry to hold the given format picture */
 static DCHCacheEntry *
 DCH_cache_getnew(const char *str)
 {
 	DCHCacheEntry *ent;
 
-	/* handle counter overflow by resetting all ages */
-	if (DCHCounter >= (INT_MAX - DCH_CACHE_ENTRIES))
-	{
-		DCHCounter = 0;
-
-		for (int i = 0; i < n_DCHCache; i++)
-			DCHCache[i]->age = (++DCHCounter);
-	}
+	/* Ensure we can advance DCHCounter below */
+	DCH_prevent_counter_overflow();
 
 	/*
 	 * If cache is full, remove oldest entry (or recycle first not-valid one)
@@ -3445,14 +3457,8 @@ DCH_cache_getnew(const char *str)
 static DCHCacheEntry *
 DCH_cache_search(const char *str)
 {
-	/* handle counter overflow by resetting all ages */
-	if (DCHCounter >= (INT_MAX - DCH_CACHE_ENTRIES))
-	{
-		DCHCounter = 0;
-
-		for (int i = 0; i < n_DCHCache; i++)
-			DCHCache[i]->age = (++DCHCounter);
-	}
+	/* Ensure we can advance DCHCounter below */
+	DCH_prevent_counter_overflow();
 
 	for (int i = 0; i < n_DCHCache; i++)
 	{
@@ -4057,20 +4063,26 @@ do { \
 	(_n)->zero_end		= 0;	\
 } while(0)
 
+/* This works the same as DCH_prevent_counter_overflow */
+static inline void
+NUM_prevent_counter_overflow(void)
+{
+	if (NUMCounter >= (INT_MAX - 1))
+	{
+		for (int i = 0; i < n_NUMCache; i++)
+			NUMCache[i]->age >>= 1;
+		NUMCounter >>= 1;
+	}
+}
+
 /* select a NUMCacheEntry to hold the given format picture */
 static NUMCacheEntry *
 NUM_cache_getnew(const char *str)
 {
 	NUMCacheEntry *ent;
 
-	/* handle counter overflow by resetting all ages */
-	if (NUMCounter >= (INT_MAX - NUM_CACHE_ENTRIES))
-	{
-		NUMCounter = 0;
-
-		for (int i = 0; i < n_NUMCache; i++)
-			NUMCache[i]->age = (++NUMCounter);
-	}
+	/* Ensure we can advance NUMCounter below */
+	NUM_prevent_counter_overflow();
 
 	/*
 	 * If cache is full, remove oldest entry (or recycle first not-valid one)
@@ -4126,14 +4138,8 @@ NUM_cache_getnew(const char *str)
 static NUMCacheEntry *
 NUM_cache_search(const char *str)
 {
-	/* handle counter overflow by resetting all ages */
-	if (NUMCounter >= (INT_MAX - NUM_CACHE_ENTRIES))
-	{
-		NUMCounter = 0;
-
-		for (int i = 0; i < n_NUMCache; i++)
-			NUMCache[i]->age = (++NUMCounter);
-	}
+	/* Ensure we can advance NUMCounter below */
+	NUM_prevent_counter_overflow();
 
 	for (int i = 0; i < n_NUMCache; i++)
 	{
