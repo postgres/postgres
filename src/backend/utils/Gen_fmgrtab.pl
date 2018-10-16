@@ -230,7 +230,7 @@ my $fmgr_count = 0;
 foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
 	print $tfh
-	  "  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} }";
+	  "  { $s->{oid}, $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, \"$s->{prosrc}\", $s->{prosrc} }";
 
 	$fmgr_builtin_oid_index[ $s->{oid} ] = $fmgr_count++;
 
