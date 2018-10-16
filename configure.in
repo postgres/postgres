@@ -919,7 +919,7 @@ if test "$with_perl" = yes; then
   perl_includedir="$perl_archlibexp"
   # ... but on some macOS versions, we must look under $PG_SYSROOT instead
   if test x"$PG_SYSROOT" != x"" ; then
-    if test -d "$PG_SYSROOT$perl_archlibexp" ; then
+    if test -f "$PG_SYSROOT$perl_archlibexp/CORE/perl.h" ; then
       perl_includedir="$PG_SYSROOT$perl_archlibexp"
     fi
   fi
@@ -1933,6 +1933,11 @@ if test "$with_tcl" = yes; then
     PGAC_EVAL_TCLCONFIGSH([$TCL_CONFIG_SH],
                           [TCL_INCLUDE_SPEC,TCL_LIB_FILE,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
     AC_SUBST(TCL_SHLIB_LD_LIBS)dnl don't want to double-evaluate that one
+    # Some macOS versions report an include spec that uses -iwithsysroot.
+    # We don't really want to use -isysroot, so translate that if we can.
+    if test x"$PG_SYSROOT" != x"" ; then
+        TCL_INCLUDE_SPEC="`echo "$TCL_INCLUDE_SPEC" | sed "s|-iwithsysroot */|-I $PG_SYSROOT/|"`"
+    fi
     # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
     ac_save_CPPFLAGS=$CPPFLAGS
     CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"
