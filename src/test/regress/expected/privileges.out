@@ -1189,6 +1189,7 @@ select has_column_privilege('mytable',2::int2,'select');
  
 (1 row)
 
+drop table mytable;
 -- Grant options
 SET SESSION AUTHORIZATION regress_priv_user1;
 CREATE TABLE atest4 (a int);
