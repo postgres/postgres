@@ -1246,7 +1246,7 @@ sub poll_query_until
 	diag qq(poll_query_until timed out executing this query:
 $query
 expecting this output:
-$expected
+t
 last actual query output:
 $stdout
 with stderr:
