@@ -30,7 +30,7 @@ SELECT count(*) FROM inettmp WHERE a >= '89.225.196.191'::inet;
 
 SELECT count(*) FROM inettmp WHERE a >  '89.225.196.191'::inet;
 
-VACUUM inettmp;
+VACUUM ANALYZE inettmp;
 
 -- gist_inet_ops lacks a fetch function, so this should not be index-only scan
 EXPLAIN (COSTS OFF)
