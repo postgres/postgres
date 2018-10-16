@@ -106,6 +106,9 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm *tm, char **tzn)
 	else
 		tx = pg_gmtime(&time);
 
+	if (tx == NULL)
+		elog(ERROR, "could not convert abstime to timestamp: %m");
+
 	tm->tm_year = tx->tm_year + 1900;
 	tm->tm_mon = tx->tm_mon + 1;
 	tm->tm_mday = tx->tm_mday;

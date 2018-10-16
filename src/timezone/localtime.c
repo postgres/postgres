@@ -1328,13 +1328,14 @@ gmtsub(pg_time_t const *timep, int32 offset, struct pg_tm *tmp)
 	struct pg_tm *result;
 
 	/* GMT timezone state data is kept here */
-	static struct state gmtmem;
-	static bool gmt_is_set = false;
-#define gmtptr		(&gmtmem)
+	static struct state *gmtptr = NULL;
 
-	if (!gmt_is_set)
+	if (gmtptr == NULL)
 	{
-		gmt_is_set = true;
+		/* Allocate on first use */
+		gmtptr = (struct state *) malloc(sizeof(struct state));
+		if (gmtptr == NULL)
+			return NULL;		/* errno should be set by malloc */
 		gmtload(gmtptr);
 	}
 	result = timesub(timep, offset, gmtptr, tmp);
