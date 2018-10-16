@@ -706,6 +706,7 @@ select has_column_privilege('mytable','........pg.dropped.2........','select');
 select has_column_privilege('mytable',2::int2,'select');
 revoke select on table mytable from regress_user3;
 select has_column_privilege('mytable',2::int2,'select');
+drop table mytable;
 
 -- Grant options
 
