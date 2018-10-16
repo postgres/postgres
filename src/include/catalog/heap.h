@@ -127,10 +127,10 @@ extern void RemoveAttrDefault(Oid relid, AttrNumber attnum,
 extern void RemoveAttrDefaultById(Oid attrdefId);
 extern void RemoveStatistics(Oid relid, AttrNumber attnum);
 
-extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,
+extern const FormData_pg_attribute *SystemAttributeDefinition(AttrNumber attno,
 						  bool relhasoids);
 
-extern Form_pg_attribute SystemAttributeByName(const char *attname,
+extern const FormData_pg_attribute *SystemAttributeByName(const char *attname,
 					  bool relhasoids);
 
 extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,

@@ -3135,7 +3135,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 static int
 specialAttNum(const char *attname)
 {
-	Form_pg_attribute sysatt;
+	const FormData_pg_attribute *sysatt;
 
 	sysatt = SystemAttributeByName(attname,
 								   true /* "oid" will be accepted */ );
@@ -3152,12 +3152,12 @@ specialAttNum(const char *attname)
  *	heap_open()'ed.  Use the cache version get_atttype()
  *	for access to non-opened relations.
  */
-Name
+const NameData *
 attnumAttName(Relation rd, int attid)
 {
 	if (attid <= 0)
 	{
-		Form_pg_attribute sysatt;
+		const FormData_pg_attribute *sysatt;
 
 		sysatt = SystemAttributeDefinition(attid, rd->rd_rel->relhasoids);
 		return &sysatt->attname;
@@ -3179,7 +3179,7 @@ attnumTypeId(Relation rd, int attid)
 {
 	if (attid <= 0)
 	{
-		Form_pg_attribute sysatt;
+		const FormData_pg_attribute *sysatt;
 
 		sysatt = SystemAttributeDefinition(attid, rd->rd_rel->relhasoids);
 		return sysatt->atttypid;

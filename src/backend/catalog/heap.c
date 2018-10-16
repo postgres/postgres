@@ -144,7 +144,7 @@ static List *insert_ordered_unique_oid(List *list, Oid datum);
  * fixed-size portion of the structure anyway.
  */
 
-static FormData_pg_attribute a1 = {
+static const FormData_pg_attribute a1 = {
 	.attname = {"ctid"},
 	.atttypid = TIDOID,
 	.attlen = sizeof(ItemPointerData),
@@ -158,7 +158,7 @@ static FormData_pg_attribute a1 = {
 	.attislocal = true,
 };
 
-static FormData_pg_attribute a2 = {
+static const FormData_pg_attribute a2 = {
 	.attname = {"oid"},
 	.atttypid = OIDOID,
 	.attlen = sizeof(Oid),
@@ -172,7 +172,7 @@ static FormData_pg_attribute a2 = {
 	.attislocal = true,
 };
 
-static FormData_pg_attribute a3 = {
+static const FormData_pg_attribute a3 = {
 	.attname = {"xmin"},
 	.atttypid = XIDOID,
 	.attlen = sizeof(TransactionId),
@@ -186,7 +186,7 @@ static FormData_pg_attribute a3 = {
 	.attislocal = true,
 };
 
-static FormData_pg_attribute a4 = {
+static const FormData_pg_attribute a4 = {
 	.attname = {"cmin"},
 	.atttypid = CIDOID,
 	.attlen = sizeof(CommandId),
@@ -200,7 +200,7 @@ static FormData_pg_attribute a4 = {
 	.attislocal = true,
 };
 
-static FormData_pg_attribute a5 = {
+static const FormData_pg_attribute a5 = {
 	.attname = {"xmax"},
 	.atttypid = XIDOID,
 	.attlen = sizeof(TransactionId),
@@ -214,7 +214,7 @@ static FormData_pg_attribute a5 = {
 	.attislocal = true,
 };
 
-static FormData_pg_attribute a6 = {
+static const FormData_pg_attribute a6 = {
 	.attname = {"cmax"},
 	.atttypid = CIDOID,
 	.attlen = sizeof(CommandId),
@@ -234,7 +234,7 @@ static FormData_pg_attribute a6 = {
  * table of a particular class/type. In any case table is still the word
  * used in SQL.
  */
-static FormData_pg_attribute a7 = {
+static const FormData_pg_attribute a7 = {
 	.attname = {"tableoid"},
 	.atttypid = OIDOID,
 	.attlen = sizeof(Oid),
@@ -248,14 +248,14 @@ static FormData_pg_attribute a7 = {
 	.attislocal = true,
 };
 
-static const Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
+static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
 
 /*
  * This function returns a Form_pg_attribute pointer for a system attribute.
  * Note that we elog if the presented attno is invalid, which would only
  * happen if there's a problem upstream.
  */
-Form_pg_attribute
+const FormData_pg_attribute *
 SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 {
 	if (attno >= 0 || attno < -(int) lengthof(SysAtt))
@@ -269,14 +269,14 @@ SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
  * If the given name is a system attribute name, return a Form_pg_attribute
  * pointer for a prototype definition.  If not, return NULL.
  */
-Form_pg_attribute
+const FormData_pg_attribute *
 SystemAttributeByName(const char *attname, bool relhasoids)
 {
 	int			j;
 
 	for (j = 0; j < (int) lengthof(SysAtt); j++)
 	{
-		Form_pg_attribute att = SysAtt[j];
+		const FormData_pg_attribute *att = SysAtt[j];
 
 		if (relhasoids || att->attnum != ObjectIdAttributeNumber)
 		{

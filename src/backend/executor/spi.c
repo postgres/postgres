@@ -899,7 +899,7 @@ int
 SPI_fnumber(TupleDesc tupdesc, const char *fname)
 {
 	int			res;
-	Form_pg_attribute sysatt;
+	const FormData_pg_attribute *sysatt;
 
 	for (res = 0; res < tupdesc->natts; res++)
 	{
@@ -921,7 +921,7 @@ SPI_fnumber(TupleDesc tupdesc, const char *fname)
 char *
 SPI_fname(TupleDesc tupdesc, int fnumber)
 {
-	Form_pg_attribute att;
+	const FormData_pg_attribute *att;
 
 	SPI_result = 0;
 

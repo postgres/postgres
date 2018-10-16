@@ -352,7 +352,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		if (atnum != 0)
 		{
 			/* Simple index column */
-			Form_pg_attribute from;
+			const FormData_pg_attribute *from;
 
 			if (atnum < 0)
 			{

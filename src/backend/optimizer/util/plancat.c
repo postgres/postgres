@@ -1692,7 +1692,7 @@ build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 		if (indexkey != 0)
 		{
 			/* simple column */
-			Form_pg_attribute att_tup;
+			const FormData_pg_attribute *att_tup;
 
 			if (indexkey < 0)
 				att_tup = SystemAttributeDefinition(indexkey,

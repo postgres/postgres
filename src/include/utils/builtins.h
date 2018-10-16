@@ -37,7 +37,7 @@ extern unsigned hex_decode(const char *src, unsigned len, char *dst);
 extern int2vector *buildint2vector(const int16 *int2s, int n);
 
 /* name.c */
-extern int	namecpy(Name n1, Name n2);
+extern int	namecpy(Name n1, const NameData *n2);
 extern int	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
 

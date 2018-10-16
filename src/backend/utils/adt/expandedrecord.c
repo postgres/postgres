@@ -1025,6 +1025,7 @@ expanded_record_lookup_field(ExpandedRecordHeader *erh, const char *fieldname,
 	TupleDesc	tupdesc;
 	int			fno;
 	Form_pg_attribute attr;
+	const FormData_pg_attribute *sysattr;
 
 	tupdesc = expanded_record_get_tupdesc(erh);
 
@@ -1044,13 +1045,13 @@ expanded_record_lookup_field(ExpandedRecordHeader *erh, const char *fieldname,
 	}
 
 	/* How about system attributes? */
-	attr = SystemAttributeByName(fieldname, tupdesc->tdhasoid);
-	if (attr != NULL)
+	sysattr = SystemAttributeByName(fieldname, tupdesc->tdhasoid);
+	if (sysattr != NULL)
 	{
-		finfo->fnumber = attr->attnum;
-		finfo->ftypeid = attr->atttypid;
-		finfo->ftypmod = attr->atttypmod;
-		finfo->fcollation = attr->attcollation;
+		finfo->fnumber = sysattr->attnum;
+		finfo->ftypeid = sysattr->atttypid;
+		finfo->ftypmod = sysattr->atttypmod;
+		finfo->fcollation = sysattr->attcollation;
 		return true;
 	}
 

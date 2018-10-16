@@ -188,7 +188,7 @@ namege(PG_FUNCTION_ARGS)
 /* (see char.c for comparison/operation routines) */
 
 int
-namecpy(Name n1, Name n2)
+namecpy(Name n1, const NameData *n2)
 {
 	if (!n1 || !n2)
 		return -1;

@@ -125,7 +125,7 @@ extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 			   int rtindex, int sublevels_up, int location);
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
-extern Name attnumAttName(Relation rd, int attid);
+extern const NameData *attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
 extern Oid	attnumCollationId(Relation rd, int attid);
 extern bool isQueryUsingTempRelation(Query *query);
