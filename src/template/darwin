@@ -3,14 +3,15 @@
 # Note: Darwin is the original code name for macOS, also known as OS X.
 # We still use "darwin" as the port name, partly because config.guess does.
 
-# Select where system include files should be sought.
+# Select where some include files should be sought.
+# We may eventually be forced to use "-isysroot" with this value,
+# but for now, it only affects Perl and Tcl include files.
 if test x"$PG_SYSROOT" = x"" ; then
   PG_SYSROOT=`xcodebuild -version -sdk macosx Path 2>/dev/null`
 fi
+# Old xcodebuild versions may produce garbage, so validate the result.
 if test x"$PG_SYSROOT" != x"" ; then
-  if test -d "$PG_SYSROOT" ; then
-    CPPFLAGS="$CPPFLAGS -isysroot $PG_SYSROOT"
-  else
+  if test \! -d "$PG_SYSROOT" ; then
     PG_SYSROOT=""
   fi
 fi
