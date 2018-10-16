@@ -36,7 +36,7 @@ static void mq_putmessage_noblock(char msgtype, const char *s, size_t len);
 static void mq_startcopyout(void);
 static void mq_endcopyout(bool errorAbort);
 
-static PQcommMethods PqCommMqMethods = {
+static const PQcommMethods PqCommMqMethods = {
 	mq_comm_reset,
 	mq_flush,
 	mq_flush_if_writable,

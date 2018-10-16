@@ -39,13 +39,13 @@ static const char *
 num_word(Cash value)
 {
 	static char buf[128];
-	static const char *small[] = {
+	static const char *const small[] = {
 		"zero", "one", "two", "three", "four", "five", "six", "seven",
 		"eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
 		"fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty",
 		"thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"
 	};
-	const char **big = small + 18;
+	const char *const *big = small + 18;
 	int			tu = value % 100;
 
 	/* deal with the simple cases first */

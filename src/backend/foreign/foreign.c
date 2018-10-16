@@ -560,7 +560,7 @@ struct ConnectionOption
  *
  * The list is small - don't bother with bsearch if it stays so.
  */
-static struct ConnectionOption libpq_conninfo_options[] = {
+static const struct ConnectionOption libpq_conninfo_options[] = {
 	{"authtype", ForeignServerRelationId},
 	{"service", ForeignServerRelationId},
 	{"user", UserMappingRelationId},
@@ -587,7 +587,7 @@ static struct ConnectionOption libpq_conninfo_options[] = {
 static bool
 is_conninfo_option(const char *option, Oid context)
 {
-	struct ConnectionOption *opt;
+	const struct ConnectionOption *opt;
 
 	for (opt = libpq_conninfo_options; opt->optname; opt++)
 		if (context == opt->optcontext && strcmp(opt->optname, option) == 0)
@@ -622,7 +622,7 @@ postgresql_fdw_validator(PG_FUNCTION_ARGS)
 
 		if (!is_conninfo_option(def->defname, catalog))
 		{
-			struct ConnectionOption *opt;
+			const struct ConnectionOption *opt;
 			StringInfoData buf;
 
 			/*

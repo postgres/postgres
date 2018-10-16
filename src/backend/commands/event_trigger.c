@@ -85,7 +85,7 @@ typedef enum
 } event_trigger_command_tag_check_result;
 
 /* XXX merge this with ObjectTypeMap? */
-static event_trigger_support_data event_trigger_support[] = {
+static const event_trigger_support_data event_trigger_support[] = {
 	{"ACCESS METHOD", true},
 	{"AGGREGATE", true},
 	{"CAST", true},
@@ -282,7 +282,7 @@ static event_trigger_command_tag_check_result
 check_ddl_tag(const char *tag)
 {
 	const char *obtypename;
-	event_trigger_support_data *etsd;
+	const event_trigger_support_data *etsd;
 
 	/*
 	 * Handle some idiosyncratic special cases.

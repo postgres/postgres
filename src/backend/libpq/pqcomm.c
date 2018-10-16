@@ -170,7 +170,7 @@ static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
 static int	Setup_AF_UNIX(char *sock_path);
 #endif							/* HAVE_UNIX_SOCKETS */
 
-static PQcommMethods PqCommSocketMethods = {
+static const PQcommMethods PqCommSocketMethods = {
 	socket_comm_reset,
 	socket_flush,
 	socket_flush_if_writable,
@@ -181,7 +181,7 @@ static PQcommMethods PqCommSocketMethods = {
 	socket_endcopyout
 };
 
-PQcommMethods *PqCommMethods = &PqCommSocketMethods;
+const PQcommMethods *PqCommMethods = &PqCommSocketMethods;
 
 WaitEventSet *FeBeWaitSet;
 

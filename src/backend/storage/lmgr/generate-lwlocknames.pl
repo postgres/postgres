@@ -23,7 +23,7 @@ print $h $autogen;
 print $h "/* there is deliberately not an #ifndef LWLOCKNAMES_H here */\n\n";
 print $c $autogen, "\n";
 
-print $c "char *MainLWLockNames[] = {";
+print $c "const char *const MainLWLockNames[] = {";
 
 while (<$lwlocknames>)
 {

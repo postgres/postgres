@@ -33,7 +33,7 @@ typedef struct
 	void		(*endcopyout) (bool errorAbort);
 } PQcommMethods;
 
-extern PGDLLIMPORT PQcommMethods *PqCommMethods;
+extern const PGDLLIMPORT PQcommMethods *PqCommMethods;
 
 #define pq_comm_reset() (PqCommMethods->comm_reset())
 #define pq_flush() (PqCommMethods->flush())
