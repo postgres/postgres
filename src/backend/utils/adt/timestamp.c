@@ -2008,6 +2008,9 @@ GetEpochTime(struct pg_tm *tm)
 
 	t0 = pg_gmtime(&epoch);
 
+	if (t0 == NULL)
+		elog(ERROR, "could not convert epoch to timestamp: %m");
+
 	tm->tm_year = t0->tm_year;
 	tm->tm_mon = t0->tm_mon;
 	tm->tm_mday = t0->tm_mday;
