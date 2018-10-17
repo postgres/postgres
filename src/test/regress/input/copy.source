@@ -162,4 +162,23 @@ copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv';
 select tableoid::regclass,count(*),sum(a) from parted_copytest
 group by tableoid order by tableoid::regclass::name;
 
+truncate parted_copytest;
+
+-- create before insert row trigger on parted_copytest_a2
+create function part_ins_func() returns trigger language plpgsql as $$
+begin
+  return new;
+end;
+$$;
+
+create trigger part_ins_trig
+	before insert on parted_copytest_a2
+	for each row
+	execute procedure part_ins_func();
+
+copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv';
+
+select tableoid::regclass,count(*),sum(a) from parted_copytest
+group by tableoid order by tableoid::regclass::name;
+
 drop table parted_copytest;

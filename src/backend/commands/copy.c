@@ -2783,21 +2783,7 @@ CopyFrom(CopyState cstate)
 						lastPartitionSampleLineNo = cstate->cur_lineno;
 						nPartitionChanges = 0;
 					}
-
-					/*
-					 * Tests have shown that using multi-inserts when the
-					 * partition changes on every tuple slightly decreases the
-					 * performance, however, there are benefits even when only
-					 * some batches have just 2 tuples, so let's enable
-					 * multi-inserts even when the average is quite low.
-					 */
-					leafpart_use_multi_insert = avgTuplesPerPartChange >= 1.3 &&
-						!has_before_insert_row_trig &&
-						!has_instead_insert_row_trig &&
-						resultRelInfo->ri_FdwRoutine == NULL;
 				}
-				else
-					leafpart_use_multi_insert = false;
 
 				/*
 				 * Overwrite resultRelInfo with the corresponding partition's
@@ -2820,6 +2806,19 @@ CopyFrom(CopyState cstate)
 
 				has_instead_insert_row_trig = (resultRelInfo->ri_TrigDesc &&
 											   resultRelInfo->ri_TrigDesc->trig_insert_instead_row);
+
+				/*
+				 * Tests have shown that using multi-inserts when the
+				 * partition changes on every tuple slightly decreases the
+				 * performance, however, there are benefits even when only
+				 * some batches have just 2 tuples, so let's enable
+				 * multi-inserts even when the average is quite low.
+				 */
+				leafpart_use_multi_insert = insertMethod == CIM_MULTI_CONDITIONAL &&
+					avgTuplesPerPartChange >= 1.3 &&
+					!has_before_insert_row_trig &&
+					!has_instead_insert_row_trig &&
+					resultRelInfo->ri_FdwRoutine == NULL;
 
 				/*
 				 * We'd better make the bulk insert mechanism gets a new
