@@ -13,6 +13,8 @@
 
 #define STMTID_SIZE 32
 
+#define N_STMTCACHE_ENTRIES 16384
+
 typedef struct
 {
 	int			lineno;
@@ -25,7 +27,7 @@ typedef struct
 static int	nextStmtID = 1;
 static const int stmtCacheNBuckets = 2039;	/* # buckets - a prime # */
 static const int stmtCacheEntPerBucket = 8; /* # entries/bucket */
-static stmtCacheEntry stmtCacheEntries[16384] = {{0, {0}, 0, 0, 0}};
+static stmtCacheEntry *stmtCacheEntries = NULL;
 
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
 			   struct prepared_statement *prev, struct prepared_statement *this);
@@ -362,6 +364,10 @@ SearchStmtCache(const char *ecpgQuery)
 	int			entNo,
 				entIx;
 
+	/* quick failure if cache not set up */
+	if (stmtCacheEntries == NULL)
+		return 0;
+
 	/* hash the statement */
 	entNo = HashStmt(ecpgQuery);
 
@@ -396,6 +402,10 @@ ecpg_freeStmtCacheEntry(int lineno, int compat,
 	struct connection *con;
 	struct prepared_statement *this,
 			   *prev;
+
+	/* fail if cache isn't set up */
+	if (stmtCacheEntries == NULL)
+		return -1;
 
 	entry = &stmtCacheEntries[entNo];
 	if (!entry->stmtID[0])		/* return if the entry isn't in use */
@@ -436,6 +446,15 @@ AddStmtToCache(int lineno,		/* line # of statement */
 				luEntNo,
 				entNo;
 	stmtCacheEntry *entry;
+
+	/* allocate and zero cache array if we haven't already */
+	if (stmtCacheEntries == NULL)
+	{
+		stmtCacheEntries = (stmtCacheEntry *)
+			ecpg_alloc(sizeof(stmtCacheEntry) * N_STMTCACHE_ENTRIES, lineno);
+		if (stmtCacheEntries == NULL)
+			return -1;
+	}
 
 	/* hash the statement */
 	initEntNo = HashStmt(ecpgQuery);
