@@ -1,4 +1,4 @@
-static struct
+static const struct
 {
 	unsigned short int nec;		/* SJIS UDC (NEC selection IBM kanji) */
 	unsigned short int sjis;	/* SJIS UDC (IBM kanji) */

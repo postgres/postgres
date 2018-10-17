@@ -10,13 +10,13 @@
 #include "dt.h"
 #include "pgtypes_timestamp.h"
 
-int			day_tab[2][13] = {
+const int	day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
 {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
 
 typedef long AbsoluteTime;
 
-static datetkn datetktbl[] = {
+static const datetkn datetktbl[] = {
 /*	text, token, lexval */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
 	{"acsst", DTZ, 37800},		/* Cent. Australia */
@@ -420,7 +420,7 @@ static datetkn datetktbl[] = {
 	{ZULU, TZ, 0},				/* UTC */
 };
 
-static datetkn deltatktbl[] = {
+static const datetkn deltatktbl[] = {
 	/* text, token, lexval */
 	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
@@ -490,9 +490,9 @@ static datetkn deltatktbl[] = {
 static const unsigned int szdatetktbl = lengthof(datetktbl);
 static const unsigned int szdeltatktbl = lengthof(deltatktbl);
 
-static datetkn *datecache[MAXDATEFIELDS] = {NULL};
+static const datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-static datetkn *deltacache[MAXDATEFIELDS] = {NULL};
+static const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 
 char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
@@ -502,12 +502,12 @@ char	   *pgtypes_date_weekdays_short[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fr
 
 char	   *pgtypes_date_months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", NULL};
 
-static datetkn *
-datebsearch(char *key, datetkn *base, unsigned int nel)
+static const datetkn *
+datebsearch(const char *key, const datetkn *base, unsigned int nel)
 {
 	if (nel > 0)
 	{
-		datetkn    *last = base + nel - 1,
+		const datetkn *last = base + nel - 1,
 				   *position;
 		int			result;
 
@@ -540,7 +540,7 @@ int
 DecodeUnits(int field, char *lowtoken, int *val)
 {
 	int			type;
-	datetkn    *tp;
+	const datetkn *tp;
 
 	/* use strncmp so that we match truncated tokens */
 	if (deltacache[field] != NULL &&
@@ -641,7 +641,7 @@ static int
 DecodeSpecial(int field, char *lowtoken, int *val)
 {
 	int			type;
-	datetkn    *tp;
+	const datetkn *tp;
 
 	/* use strncmp so that we match truncated tokens */
 	if (datecache[field] != NULL &&
