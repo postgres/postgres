@@ -594,7 +594,7 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		if (!PQsendQuery(conn, step->sql))
 		{
 			fprintf(stdout, "failed to send query for step %s: %s\n",
-					step->name, PQerrorMessage(conns[1 + step->session]));
+					step->name, PQerrorMessage(conn));
 			exit_nicely();
 		}
 
@@ -743,7 +743,7 @@ try_complete_step(Step *step, int flags)
 					PQntuples(res) != 1)
 				{
 					fprintf(stderr, "lock wait query failed: %s",
-							PQerrorMessage(conn));
+							PQerrorMessage(conns[0]));
 					exit_nicely();
 				}
 				waiting = ((PQgetvalue(res, 0, 0))[0] == 't');
