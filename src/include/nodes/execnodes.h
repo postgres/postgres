@@ -508,11 +508,10 @@ typedef struct EState
 	ResultRelInfo *es_result_relation_info; /* currently active array elt */
 
 	/*
-	 * Info about the target partitioned target table root(s) for
-	 * update/delete queries.  They required only to fire any per-statement
-	 * triggers defined on the table.  It exists separately from
-	 * es_result_relations, because partitioned tables don't appear in the
-	 * plan tree for the update/delete cases.
+	 * Info about the partition root table(s) for insert/update/delete queries
+	 * targeting partitioned tables.  Only leaf partitions are mentioned in
+	 * es_result_relations, but we need access to the roots for firing
+	 * triggers and for runtime tuple routing.
 	 */
 	ResultRelInfo *es_root_result_relations;	/* array of ResultRelInfos */
 	int			es_num_root_result_relations;	/* length of the array */

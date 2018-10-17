@@ -1347,14 +1347,16 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 }
 
 /*
- *		ExecGetTriggerResultRel
+ * ExecGetTriggerResultRel
+ *		Get a ResultRelInfo for a trigger target relation.
  *
- * Get a ResultRelInfo for a trigger target relation.  Most of the time,
- * triggers are fired on one of the result relations of the query, and so
- * we can just return a member of the es_result_relations array, the
- * es_root_result_relations array (if any), or the es_leaf_result_relations
- * list (if any).  (Note: in self-join situations there might be multiple
- * members with the same OID; if so it doesn't matter which one we pick.)
+ * Most of the time, triggers are fired on one of the result relations of the
+ * query, and so we can just return a member of the es_result_relations array,
+ * or the es_root_result_relations array (if any), or the
+ * es_tuple_routing_result_relations list (if any).  (Note: in self-join
+ * situations there might be multiple members with the same OID; if so it
+ * doesn't matter which one we pick.)
+ *
  * However, it is sometimes necessary to fire triggers on other relations;
  * this happens mainly when an RI update trigger queues additional triggers
  * on other relations, which will be processed in the context of the outer
@@ -1404,6 +1406,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
 			return rInfo;
 	}
+
 	/* Nope, but maybe we already made an extra ResultRelInfo for it */
 	foreach(l, estate->es_trig_target_relations)
 	{
