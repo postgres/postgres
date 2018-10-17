@@ -13,7 +13,17 @@
 
 #define STMTID_SIZE 32
 
-#define N_STMTCACHE_ENTRIES 16384
+/*
+ * The statement cache contains stmtCacheNBuckets hash buckets, each
+ * having stmtCacheEntPerBucket entries, which we recycle as needed,
+ * giving up the least-executed entry in the bucket.
+ * stmtCacheEntries[0] is never used, so that zero can be a "not found"
+ * indicator.
+ */
+#define stmtCacheNBuckets		2039	/* should be a prime number */
+#define stmtCacheEntPerBucket	8
+
+#define stmtCacheArraySize (stmtCacheNBuckets * stmtCacheEntPerBucket + 1)
 
 typedef struct
 {
@@ -25,8 +35,6 @@ typedef struct
 } stmtCacheEntry;
 
 static int	nextStmtID = 1;
-static const int stmtCacheNBuckets = 2039;	/* # buckets - a prime # */
-static const int stmtCacheEntPerBucket = 8; /* # entries/bucket */
 static stmtCacheEntry *stmtCacheEntries = NULL;
 
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
@@ -330,7 +338,7 @@ HashStmt(const char *ecpgQuery)
 				bucketNo,
 				hashLeng,
 				stmtLeng;
-	long long	hashVal,
+	uint64		hashVal,
 				rotVal;
 
 	stmtLeng = strlen(ecpgQuery);
@@ -341,16 +349,17 @@ HashStmt(const char *ecpgQuery)
 	hashVal = 0;
 	for (stmtIx = 0; stmtIx < hashLeng; ++stmtIx)
 	{
-		hashVal = hashVal + (int) ecpgQuery[stmtIx];
+		hashVal = hashVal + (unsigned char) ecpgQuery[stmtIx];
+		/* rotate 32-bit hash value left 13 bits */
 		hashVal = hashVal << 13;
-		rotVal = (hashVal & 0x1fff00000000LL) >> 32;
-		hashVal = (hashVal & 0xffffffffLL) | rotVal;
+		rotVal = (hashVal & UINT64CONST(0x1fff00000000)) >> 32;
+		hashVal = (hashVal & UINT64CONST(0xffffffff)) | rotVal;
 	}
 
 	bucketNo = hashVal % stmtCacheNBuckets;
-	bucketNo += 1;				/* don't use bucket # 0 */
 
-	return (bucketNo * stmtCacheEntPerBucket);
+	/* Add 1 so that array entry 0 is never used */
+	return bucketNo * stmtCacheEntPerBucket + 1;
 }
 
 /*
@@ -451,7 +460,7 @@ AddStmtToCache(int lineno,		/* line # of statement */
 	if (stmtCacheEntries == NULL)
 	{
 		stmtCacheEntries = (stmtCacheEntry *)
-			ecpg_alloc(sizeof(stmtCacheEntry) * N_STMTCACHE_ENTRIES, lineno);
+			ecpg_alloc(sizeof(stmtCacheEntry) * stmtCacheArraySize, lineno);
 		if (stmtCacheEntries == NULL)
 			return -1;
 	}
@@ -534,7 +543,9 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 
 		if (!ECPGprepare(lineno, connection_name, 0, stmtID, query))
 			return false;
-		if (AddStmtToCache(lineno, stmtID, connection_name, compat, query) < 0)
+
+		entNo = AddStmtToCache(lineno, stmtID, connection_name, compat, query);
+		if (entNo < 0)
 			return false;
 
 		*name = ecpg_strdup(stmtID, lineno);

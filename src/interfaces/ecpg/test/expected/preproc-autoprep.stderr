@@ -30,7 +30,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 24: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_auto_prepare on line 26: statement found in cache; entry 1640
+[NO_PID]: ecpg_auto_prepare on line 26: statement found in cache; entry 1633
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: query: insert into T values ( 1 , $1  ); with 1 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -168,7 +168,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 21: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_auto_prepare on line 23: statement found in cache; entry 15328
+[NO_PID]: ecpg_auto_prepare on line 23: statement found in cache; entry 15321
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 23: name ecpg1; query: "insert into T values ( 1 , null )"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -178,7 +178,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 23: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_auto_prepare on line 24: statement found in cache; entry 1640
+[NO_PID]: ecpg_auto_prepare on line 24: statement found in cache; entry 1633
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 24: name ecpg2; query: "insert into T values ( 1 , $1  )"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -190,7 +190,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 24: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_auto_prepare on line 26: statement found in cache; entry 1640
+[NO_PID]: ecpg_auto_prepare on line 26: statement found in cache; entry 1633
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: query: insert into T values ( 1 , $1  ); with 1 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -208,7 +208,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 28: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_auto_prepare on line 30: statement found in cache; entry 13056
+[NO_PID]: ecpg_auto_prepare on line 30: statement found in cache; entry 13049
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 30: name ecpg3; query: "select Item2 from T order by Item2 nulls last"
 [NO_PID]: sqlca: code: 0, state: 00000
