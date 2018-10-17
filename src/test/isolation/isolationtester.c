@@ -600,7 +600,7 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		if (!PQsendQuery(conn, step->sql))
 		{
 			fprintf(stdout, "failed to send query for step %s: %s\n",
-					step->name, PQerrorMessage(conns[1 + step->session]));
+					step->name, PQerrorMessage(conn));
 			exit_nicely();
 		}
 
@@ -728,7 +728,7 @@ try_complete_step(Step *step, int flags)
 			if (PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "lock wait query failed: %s",
-						PQerrorMessage(conn));
+						PQerrorMessage(conns[0]));
 				exit_nicely();
 			}
 			ntuples = PQntuples(res);
