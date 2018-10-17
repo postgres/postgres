@@ -84,8 +84,10 @@ other exposed names.
 slightly modified the API of the former, in part because it now relies
 on our own pg_open_tzfile() rather than opening files for itself.
 
-* tzparse() is adjusted to cache the result of loading the TZDEFRULES
-zone, so that that's not repeated more than once per process.
+* tzparse() is adjusted to avoid loading the TZDEFRULES zone unless
+really necessary, and to ignore any leap-second data it may supply.
+We also cache the result of loading the TZDEFRULES zone, so that
+that's not repeated more than once per process.
 
 * There's a fair amount of code we don't need and have removed,
 including all the nonstandard optional APIs.  We have also added
