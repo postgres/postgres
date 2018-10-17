@@ -54,7 +54,7 @@ static const char gmt[] = "GMT";
  * PG: We cache the result of trying to load the TZDEFRULES zone here.
  * tzdefrules_loaded is 0 if not tried yet, +1 if good, -1 if failed.
  */
-static struct state tzdefrules_s;
+static struct state *tzdefrules_s = NULL;
 static int	tzdefrules_loaded = 0;
 
 /*
@@ -908,20 +908,10 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 	stdname = name;
 	if (lastditch)
 	{
-		/*
-		 * This is intentionally somewhat different from the IANA code.  We do
-		 * not want to invoke tzload() in the lastditch case: we can't assume
-		 * pg_open_tzfile() is sane yet, and we don't care about leap seconds
-		 * anyway.
-		 */
+		/* Unlike IANA, don't assume name is exactly "GMT" */
 		stdlen = strlen(name);	/* length of standard zone name */
 		name += stdlen;
-		if (stdlen >= sizeof sp->chars)
-			stdlen = (sizeof sp->chars) - 1;
-		charcnt = stdlen + 1;
 		stdoffset = 0;
-		sp->goback = sp->goahead = false;	/* simulate failed tzload() */
-		load_ok = false;
 	}
 	else
 	{
@@ -945,27 +935,23 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		name = getoffset(name, &stdoffset);
 		if (name == NULL)
 			return false;
-		charcnt = stdlen + 1;
-		if (sizeof sp->chars < charcnt)
-			return false;
-
-		/*
-		 * This bit also differs from the IANA code, which doesn't make any
-		 * attempt to avoid repetitive loadings of the TZDEFRULES zone.
-		 */
-		if (tzdefrules_loaded == 0)
-		{
-			if (tzload(TZDEFRULES, NULL, &tzdefrules_s, false) == 0)
-				tzdefrules_loaded = 1;
-			else
-				tzdefrules_loaded = -1;
-		}
-		load_ok = (tzdefrules_loaded > 0);
-		if (load_ok)
-			memcpy(sp, &tzdefrules_s, sizeof(struct state));
 	}
-	if (!load_ok)
-		sp->leapcnt = 0;		/* so, we're off a little */
+	charcnt = stdlen + 1;
+	if (sizeof sp->chars < charcnt)
+		return false;
+
+	/*
+	 * The IANA code always tries tzload(TZDEFRULES) here.  We do not want to
+	 * do that; it would be bad news in the lastditch case, where we can't
+	 * assume pg_open_tzfile() is sane yet.  Moreover, the only reason to do
+	 * it unconditionally is to absorb the TZDEFRULES zone's leap second info,
+	 * which we don't want to do anyway.  Without that, we only need to load
+	 * TZDEFRULES if the zone name specifies DST but doesn't incorporate a
+	 * POSIX-style transition date rule, which is not a common case.
+	 */
+	sp->goback = sp->goahead = false;	/* simulate failed tzload() */
+	sp->leapcnt = 0;			/* intentionally assume no leap seconds */
+
 	if (*name != '\0')
 	{
 		if (*name == '<')
@@ -996,8 +982,38 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		}
 		else
 			dstoffset = stdoffset - SECSPERHOUR;
-		if (*name == '\0' && !load_ok)
-			name = TZDEFRULESTRING;
+		if (*name == '\0')
+		{
+			/*
+			 * The POSIX zone name does not provide a transition-date rule.
+			 * Here we must load the TZDEFRULES zone, if possible, to serve as
+			 * source data for the transition dates.  Unlike the IANA code, we
+			 * try to cache the data so it's only loaded once.
+			 */
+			if (tzdefrules_loaded == 0)
+			{
+				/* Allocate on first use */
+				if (tzdefrules_s == NULL)
+					tzdefrules_s = (struct state *) malloc(sizeof(struct state));
+				if (tzdefrules_s != NULL)
+				{
+					if (tzload(TZDEFRULES, NULL, tzdefrules_s, false) == 0)
+						tzdefrules_loaded = 1;
+					else
+						tzdefrules_loaded = -1;
+					/* In any case, we ignore leap-second data from the file */
+					tzdefrules_s->leapcnt = 0;
+				}
+			}
+			load_ok = (tzdefrules_loaded > 0);
+			if (load_ok)
+				memcpy(sp, tzdefrules_s, sizeof(struct state));
+			else
+			{
+				/* If we can't load TZDEFRULES, fall back to hard-wired rule */
+				name = TZDEFRULESTRING;
+			}
+		}
 		if (*name == ',' || *name == ';')
 		{
 			struct rule start;
