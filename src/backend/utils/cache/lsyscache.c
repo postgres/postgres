@@ -881,39 +881,12 @@ get_atttype(Oid relid, AttrNumber attnum)
 }
 
 /*
- * get_atttypmod
- *
- *		Given the relation id and the attribute number,
- *		return the "atttypmod" field from the attribute relation.
- */
-int32
-get_atttypmod(Oid relid, AttrNumber attnum)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache2(ATTNUM,
-						 ObjectIdGetDatum(relid),
-						 Int16GetDatum(attnum));
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		int32		result;
-
-		result = att_tup->atttypmod;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return -1;
-}
-
-/*
  * get_atttypetypmodcoll
  *
  *		A three-fer: given the relation id and the attribute number,
  *		fetch atttypid, atttypmod, and attcollation in a single cache lookup.
  *
- * Unlike the otherwise-similar get_atttype/get_atttypmod, this routine
+ * Unlike the otherwise-similar get_atttype, this routine
  * raises an error if it can't obtain the information.
  */
 void

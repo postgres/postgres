@@ -87,7 +87,6 @@ extern char *get_attname(Oid relid, AttrNumber attnum, bool missing_ok);
 extern AttrNumber get_attnum(Oid relid, const char *attname);
 extern char get_attidentity(Oid relid, AttrNumber attnum);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
-extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
 extern void get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
 					  Oid *typid, int32 *typmod, Oid *collid);
 extern char *get_collation_name(Oid colloid);
