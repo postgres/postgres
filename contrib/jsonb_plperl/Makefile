@@ -35,8 +35,5 @@ rpathdir = $(perl_archlibexp)/CORE
 SHLIB_LINK += $(perl_embed_ldflags)
 endif
 
-# As with plperl we need to make sure that the CORE directory is included
-# last, probably because it sometimes contains some header files with names
-# that clash with some of ours, or with some that we include, notably on
-# Windows.
-override CPPFLAGS := $(CPPFLAGS) $(perl_embed_ccflags) -I$(perl_includedir)/CORE
+# As with plperl we need to include the perl_includespec directory last.
+override CPPFLAGS := $(CPPFLAGS) $(perl_embed_ccflags) $(perl_includespec)
