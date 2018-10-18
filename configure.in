@@ -1045,14 +1045,15 @@ documentation for details.  Use --without-perl to disable building
 PL/Perl.])
   fi
   # On most platforms, archlibexp is also where the Perl include files live ...
-  perl_includedir="$perl_archlibexp"
-  # ... but on some macOS versions, we must look under $PG_SYSROOT instead
-  if test x"$PG_SYSROOT" != x"" ; then
+  perl_includespec="-I$perl_archlibexp/CORE"
+  # ... but on newer macOS versions, we must use -iwithsysroot to look
+  # under $PG_SYSROOT
+  if test \! -f "$perl_archlibexp/CORE/perl.h" ; then
     if test -f "$PG_SYSROOT$perl_archlibexp/CORE/perl.h" ; then
-      perl_includedir="$PG_SYSROOT$perl_archlibexp"
+      perl_includespec="-iwithsysroot $perl_archlibexp/CORE"
     fi
   fi
-  AC_SUBST(perl_includedir)dnl
+  AC_SUBST(perl_includespec)dnl
   PGAC_CHECK_PERL_EMBED_CCFLAGS
   PGAC_CHECK_PERL_EMBED_LDFLAGS
 fi
@@ -2211,11 +2212,6 @@ if test "$with_tcl" = yes; then
       AC_MSG_ERROR([cannot build PL/Tcl because Tcl is not a shared library
 Use --without-tcl to disable building PL/Tcl.])
     fi
-    # Some macOS versions report an include spec that uses -iwithsysroot.
-    # We don't really want to use -isysroot, so translate that if we can.
-    if test x"$PG_SYSROOT" != x"" ; then
-        TCL_INCLUDE_SPEC="`echo "$TCL_INCLUDE_SPEC" | sed "s|-iwithsysroot */|-I $PG_SYSROOT/|"`"
-    fi
     # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
     ac_save_CPPFLAGS=$CPPFLAGS
     CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"
@@ -2226,7 +2222,7 @@ fi
 # check for <perl.h>
 if test "$with_perl" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$CPPFLAGS -I$perl_includedir/CORE"
+  CPPFLAGS="$CPPFLAGS $perl_includespec"
   AC_CHECK_HEADER(perl.h, [], [AC_MSG_ERROR([header file <perl.h> is required for Perl])],
                   [#include <EXTERN.h>])
   # While we're at it, check that we can link to libperl.

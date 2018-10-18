@@ -668,7 +668,7 @@ python_majorversion
 PYTHON
 perl_embed_ldflags
 perl_embed_ccflags
-perl_includedir
+perl_includespec
 perl_useshrplib
 perl_privlibexp
 perl_archlibexp
@@ -9775,11 +9775,12 @@ documentation for details.  Use --without-perl to disable building
 PL/Perl." "$LINENO" 5
   fi
   # On most platforms, archlibexp is also where the Perl include files live ...
-  perl_includedir="$perl_archlibexp"
-  # ... but on some macOS versions, we must look under $PG_SYSROOT instead
-  if test x"$PG_SYSROOT" != x"" ; then
+  perl_includespec="-I$perl_archlibexp/CORE"
+  # ... but on newer macOS versions, we must use -iwithsysroot to look
+  # under $PG_SYSROOT
+  if test \! -f "$perl_archlibexp/CORE/perl.h" ; then
     if test -f "$PG_SYSROOT$perl_archlibexp/CORE/perl.h" ; then
-      perl_includedir="$PG_SYSROOT$perl_archlibexp"
+      perl_includespec="-iwithsysroot $perl_archlibexp/CORE"
     fi
   fi
 
@@ -18114,11 +18115,6 @@ eval TCL_SHARED_BUILD=\"$TCL_SHARED_BUILD\"
       as_fn_error $? "cannot build PL/Tcl because Tcl is not a shared library
 Use --without-tcl to disable building PL/Tcl." "$LINENO" 5
     fi
-    # Some macOS versions report an include spec that uses -iwithsysroot.
-    # We don't really want to use -isysroot, so translate that if we can.
-    if test x"$PG_SYSROOT" != x"" ; then
-        TCL_INCLUDE_SPEC="`echo "$TCL_INCLUDE_SPEC" | sed "s|-iwithsysroot */|-I $PG_SYSROOT/|"`"
-    fi
     # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
     ac_save_CPPFLAGS=$CPPFLAGS
     CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"
@@ -18136,7 +18132,7 @@ fi
 # check for <perl.h>
 if test "$with_perl" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$CPPFLAGS -I$perl_includedir/CORE"
+  CPPFLAGS="$CPPFLAGS $perl_includespec"
   ac_fn_c_check_header_compile "$LINENO" "perl.h" "ac_cv_header_perl_h" "#include <EXTERN.h>
 "
 if test "x$ac_cv_header_perl_h" = xyes; then :
