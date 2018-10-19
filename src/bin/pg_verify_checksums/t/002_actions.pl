@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 12;
+use Test::More tests => 36;
 
 # Initialize node with checksums enabled.
 my $node = get_new_node('node_checksum');
@@ -16,6 +16,31 @@ my $pgdata = $node->data_dir;
 command_like(['pg_controldata', $pgdata],
 	     qr/Data page checksum version:.*1/,
 		 'checksums enabled in control file');
+
+# Add set of dummy files with some contents.  These should not be scanned
+# by the tool.
+append_to_file "$pgdata/global/123.", "foo";
+append_to_file "$pgdata/global/123_", "foo";
+append_to_file "$pgdata/global/123_.", "foo";
+append_to_file "$pgdata/global/123.12t", "foo";
+append_to_file "$pgdata/global/foo", "foo2";
+append_to_file "$pgdata/global/t123", "bar";
+append_to_file "$pgdata/global/123a", "bar2";
+append_to_file "$pgdata/global/.123", "foobar";
+append_to_file "$pgdata/global/_fsm", "foobar2";
+append_to_file "$pgdata/global/_init", "foobar3";
+append_to_file "$pgdata/global/_vm.123", "foohoge";
+append_to_file "$pgdata/global/123_vm.123t", "foohoge2";
+
+# Those are correct but empty files, so they should pass through.
+append_to_file "$pgdata/global/99999", "";
+append_to_file "$pgdata/global/99999.123", "";
+append_to_file "$pgdata/global/99999_fsm", "";
+append_to_file "$pgdata/global/99999_init", "";
+append_to_file "$pgdata/global/99999_vm", "";
+append_to_file "$pgdata/global/99999_init.123", "";
+append_to_file "$pgdata/global/99999_fsm.123", "";
+append_to_file "$pgdata/global/99999_vm.123", "";
 
 # Checksums pass on a newly-created cluster
 command_ok(['pg_verify_checksums',  '-D', $pgdata],
@@ -67,3 +92,32 @@ $node->command_checks_all([ 'pg_verify_checksums', '-D', $pgdata, '-r',
 						  [qr/Bad checksums:.*1/],
 						  [qr/checksum verification failed/],
 						  'fails for corrupted data on single relfilenode');
+
+# Utility routine to check that pg_verify_checksums is able to detect
+# correctly-named relation files filled with some corrupted data.
+sub fail_corrupt
+{
+	my $node = shift;
+	my $file = shift;
+	my $pgdata = $node->data_dir;
+
+	# Create the file with some dummy data in it.
+	append_to_file "$pgdata/global/$file", "foo";
+
+	$node->command_checks_all([ 'pg_verify_checksums', '-D', $pgdata],
+						  1,
+						  [qr/^$/],
+						  [qr/could not read block/],
+						  "fails for corrupted data in $file");
+}
+
+# Authorized relation files filled with corrupted data cause the
+# checksum checks to fail.
+fail_corrupt($node, "99999");
+fail_corrupt($node, "99999.123");
+fail_corrupt($node, "99999_fsm");
+fail_corrupt($node, "99999_init");
+fail_corrupt($node, "99999_vm");
+fail_corrupt($node, "99999_init.123");
+fail_corrupt($node, "99999_fsm.123");
+fail_corrupt($node, "99999_vm.123");
