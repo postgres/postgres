@@ -49,10 +49,16 @@ struct state
 	pg_time_t	ats[TZ_MAX_TIMES];
 	unsigned char types[TZ_MAX_TIMES];
 	struct ttinfo ttis[TZ_MAX_TYPES];
-	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 3 /* sizeof gmt */ ),
+	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 4 /* sizeof gmt */ ),
 							  (2 * (TZ_STRLEN_MAX + 1)))];
 	struct lsinfo lsis[TZ_MAX_LEAPS];
-	int			defaulttype;	/* for early times or if no transitions */
+
+	/*
+	 * The time type to use for early times or if no transitions. It is always
+	 * zero for recent tzdb releases. It might be nonzero for data from tzdb
+	 * 2018e or earlier.
+	 */
+	int			defaulttype;
 };
 
 
