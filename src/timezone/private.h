@@ -1,4 +1,7 @@
+/* Private header for tzdb code.  */
+
 #ifndef PRIVATE_H
+
 #define PRIVATE_H
 
 /*
