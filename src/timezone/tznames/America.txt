@@ -237,6 +237,9 @@ PDT    -25200 D  # Pacific Daylight Time
 PET    -18000    # Peru Time (obsolete)
 PMDT    -7200 D  # Pierre & Miquelon Daylight Time (obsolete)
 PMST   -10800    # Pierre & Miquelon Standard Time (obsolete)
+# CONFLICT! PST is not unique
+# Other timezones:
+#  - PST: Philippine Standard Time
 PST    -28800    # Pacific Standard Time
                  #     (America/Dawson)
                  #     (America/Los_Angeles)
