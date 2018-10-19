@@ -109,6 +109,8 @@ sub fail_corrupt
 						  [qr/^$/],
 						  [qr/could not read block/],
 						  "fails for corrupted data in $file");
+
+	return;
 }
 
 # Authorized relation files filled with corrupted data cause the
