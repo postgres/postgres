@@ -954,22 +954,24 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	value = fastgetattr(ht_trig, Anum_pg_trigger_tgoldtable,
 						tgrel->rd_att, &isnull);
 	if (!isnull)
-		tgoldtable = NameStr(*((NameData *) DatumGetPointer(value)));
+		tgoldtable = NameStr(*DatumGetName(value));
 	else
 		tgoldtable = NULL;
 	value = fastgetattr(ht_trig, Anum_pg_trigger_tgnewtable,
 						tgrel->rd_att, &isnull);
 	if (!isnull)
-		tgnewtable = NameStr(*((NameData *) DatumGetPointer(value)));
+		tgnewtable = NameStr(*DatumGetName(value));
 	else
 		tgnewtable = NULL;
 	if (tgoldtable != NULL || tgnewtable != NULL)
 	{
 		appendStringInfoString(&buf, "REFERENCING ");
 		if (tgoldtable != NULL)
-			appendStringInfo(&buf, "OLD TABLE AS %s ", tgoldtable);
+			appendStringInfo(&buf, "OLD TABLE AS %s ",
+							 quote_identifier(tgoldtable));
 		if (tgnewtable != NULL)
-			appendStringInfo(&buf, "NEW TABLE AS %s ", tgnewtable);
+			appendStringInfo(&buf, "NEW TABLE AS %s ",
+							 quote_identifier(tgnewtable));
 	}
 
 	if (TRIGGER_FOR_ROW(trigrec->tgtype))
