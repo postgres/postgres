@@ -2784,21 +2784,13 @@ pgstat_initialize(void)
 void
 pgstat_bestart(void)
 {
-	TimestampTz proc_start_timestamp;
 	SockAddr	clientaddr;
 	volatile PgBackendStatus *beentry;
 
 	/*
 	 * To minimize the time spent modifying the PgBackendStatus entry, fetch
 	 * all the needed data first.
-	 *
-	 * If we have a MyProcPort, use its session start time (for consistency,
-	 * and to save a kernel call).
 	 */
-	if (MyProcPort)
-		proc_start_timestamp = MyProcPort->SessionStartTime;
-	else
-		proc_start_timestamp = GetCurrentTimestamp();
 
 	/*
 	 * We may not have a MyProcPort (eg, if this is the autovacuum process).
@@ -2883,7 +2875,7 @@ pgstat_bestart(void)
 	} while ((beentry->st_changecount & 1) == 0);
 
 	beentry->st_procpid = MyProcPid;
-	beentry->st_proc_start_timestamp = proc_start_timestamp;
+	beentry->st_proc_start_timestamp = MyStartTimestamp;
 	beentry->st_activity_start_timestamp = 0;
 	beentry->st_state_start_timestamp = 0;
 	beentry->st_xact_start_timestamp = 0;

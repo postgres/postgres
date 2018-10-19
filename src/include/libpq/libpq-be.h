@@ -151,13 +151,6 @@ typedef struct Port
 	HbaLine    *hba;
 
 	/*
-	 * Information that really has no business at all being in struct Port,
-	 * but since it gets used by elog.c in the same way as database_name and
-	 * other members of this struct, we may as well keep it here.
-	 */
-	TimestampTz SessionStartTime;	/* backend start time */
-
-	/*
 	 * TCP keepalive settings.
 	 *
 	 * default values are 0 if AF_UNIX or not yet known; current values are 0
