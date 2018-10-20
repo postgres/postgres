@@ -2081,6 +2081,8 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_regress"));
 
+	get_restricted_token(progname);
+
 	atexit(stop_postmaster);
 
 #ifndef HAVE_UNIX_SOCKETS
