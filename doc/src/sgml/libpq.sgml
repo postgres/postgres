@@ -5284,7 +5284,7 @@ typedef struct pgNotify
   <para>
    <function>PQnotifies</function> does not actually read data from the
    server; it just returns messages previously absorbed by another
-   <application>libpq</application> function.  In prior releases of
+   <application>libpq</application> function.  In ancient releases of
    <application>libpq</application>, the only way to ensure timely receipt
    of <command>NOTIFY</command> messages was to constantly submit commands, even
    empty ones, and then check <function>PQnotifies</function> after each
@@ -8711,6 +8711,7 @@ main(int argc, char **argv)
                     notify->relname, notify->be_pid);
             PQfreemem(notify);
             nnotifies++;
+            PQconsumeInput(conn);
         }
     }
 
