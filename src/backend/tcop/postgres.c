@@ -315,7 +315,7 @@ interactive_getc(void)
 
 	c = getc(stdin);
 
-	ProcessClientReadInterrupt(true);
+	ProcessClientReadInterrupt(false);
 
 	return c;
 }
@@ -520,8 +520,9 @@ ReadCommand(StringInfo inBuf)
 /*
  * ProcessClientReadInterrupt() - Process interrupts specific to client reads
  *
- * This is called just after low-level reads. That might be after the read
- * finished successfully, or it was interrupted via interrupt.
+ * This is called just before and after low-level reads.
+ * 'blocked' is true if no data was available to read and we plan to retry,
+ * false if about to read or done reading.
  *
  * Must preserve errno!
  */
@@ -532,23 +533,31 @@ ProcessClientReadInterrupt(bool blocked)
 
 	if (DoingCommandRead)
 	{
-		/* Check for general interrupts that arrived while reading */
+		/* Check for general interrupts that arrived before/while reading */
 		CHECK_FOR_INTERRUPTS();
 
-		/* Process sinval catchup interrupts that happened while reading */
+		/* Process sinval catchup interrupts, if any */
 		if (catchupInterruptPending)
 			ProcessCatchupInterrupt();
 
-		/* Process sinval catchup interrupts that happened while reading */
+		/* Process notify interrupts, if any */
 		if (notifyInterruptPending)
 			ProcessNotifyInterrupt();
 	}
-	else if (ProcDiePending && blocked)
+	else if (ProcDiePending)
 	{
 		/*
-		 * We're dying. It's safe (and sane) to handle that now.
+		 * We're dying.  If there is no data available to read, then it's safe
+		 * (and sane) to handle that now.  If we haven't tried to read yet,
+		 * make sure the process latch is set, so that if there is no data
+		 * then we'll come back here and die.  If we're done reading, also
+		 * make sure the process latch is set, as we might've undesirably
+		 * cleared it while reading.
 		 */
-		CHECK_FOR_INTERRUPTS();
+		if (blocked)
+			CHECK_FOR_INTERRUPTS();
+		else
+			SetLatch(MyLatch);
 	}
 
 	errno = save_errno;
@@ -557,9 +566,9 @@ ProcessClientReadInterrupt(bool blocked)
 /*
  * ProcessClientWriteInterrupt() - Process interrupts specific to client writes
  *
- * This is called just after low-level writes. That might be after the read
- * finished successfully, or it was interrupted via interrupt. 'blocked' tells
- * us whether the
+ * This is called just before and after low-level writes.
+ * 'blocked' is true if no data could be written and we plan to retry,
+ * false if about to write or done writing.
  *
  * Must preserve errno!
  */
@@ -568,25 +577,39 @@ ProcessClientWriteInterrupt(bool blocked)
 {
 	int			save_errno = errno;
 
-	/*
-	 * We only want to process the interrupt here if socket writes are
-	 * blocking to increase the chance to get an error message to the client.
-	 * If we're not blocked there'll soon be a CHECK_FOR_INTERRUPTS(). But if
-	 * we're blocked we'll never get out of that situation if the client has
-	 * died.
-	 */
-	if (ProcDiePending && blocked)
+	if (ProcDiePending)
 	{
 		/*
-		 * We're dying. It's safe (and sane) to handle that now. But we don't
-		 * want to send the client the error message as that a) would possibly
-		 * block again b) would possibly lead to sending an error message to
-		 * the client, while we already started to send something else.
+		 * We're dying.  If it's not possible to write, then we should handle
+		 * that immediately, else a stuck client could indefinitely delay our
+		 * response to the signal.  If we haven't tried to write yet, make
+		 * sure the process latch is set, so that if the write would block
+		 * then we'll come back here and die.  If we're done writing, also
+		 * make sure the process latch is set, as we might've undesirably
+		 * cleared it while writing.
 		 */
-		if (whereToSendOutput == DestRemote)
-			whereToSendOutput = DestNone;
+		if (blocked)
+		{
+			/*
+			 * Don't mess with whereToSendOutput if ProcessInterrupts wouldn't
+			 * do anything.
+			 */
+			if (InterruptHoldoffCount == 0 && CritSectionCount == 0)
+			{
+				/*
+				 * We don't want to send the client the error message, as a)
+				 * that would possibly block again, and b) it would likely
+				 * lead to loss of protocol sync because we may have already
+				 * sent a partial protocol message.
+				 */
+				if (whereToSendOutput == DestRemote)
+					whereToSendOutput = DestNone;
 
-		CHECK_FOR_INTERRUPTS();
+				CHECK_FOR_INTERRUPTS();
+			}
+		}
+		else
+			SetLatch(MyLatch);
 	}
 
 	errno = save_errno;
