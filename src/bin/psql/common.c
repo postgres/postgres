@@ -693,7 +693,8 @@ PrintNotifications(void)
 {
 	PGnotify   *notify;
 
-	while ((notify = PQnotifies(pset.db)))
+	PQconsumeInput(pset.db);
+	while ((notify = PQnotifies(pset.db)) != NULL)
 	{
 		/* for backward compatibility, only show payload if nonempty */
 		if (notify->extra[0])
@@ -704,6 +705,7 @@ PrintNotifications(void)
 					notify->relname, notify->be_pid);
 		fflush(pset.queryFout);
 		PQfreemem(notify);
+		PQconsumeInput(pset.db);
 	}
 }
 
