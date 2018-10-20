@@ -140,6 +140,7 @@ main(int argc, char **argv)
 					notify->relname, notify->be_pid);
 			PQfreemem(notify);
 			nnotifies++;
+			PQconsumeInput(conn);
 		}
 	}
 

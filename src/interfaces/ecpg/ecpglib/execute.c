@@ -1729,12 +1729,13 @@ ecpg_process_output(struct statement *stmt, bool clear_result)
 	}
 
 	/* check for asynchronous returns */
-	notify = PQnotifies(stmt->connection->connection);
-	if (notify)
+	PQconsumeInput(stmt->connection->connection);
+	while ((notify = PQnotifies(stmt->connection->connection)) != NULL)
 	{
 		ecpg_log("ecpg_process_output on line %d: asynchronous notification of \"%s\" from backend PID %d received\n",
 				 stmt->lineno, notify->relname, notify->be_pid);
 		PQfreemem(notify);
+		PQconsumeInput(stmt->connection->connection);
 	}
 
 	return status;
