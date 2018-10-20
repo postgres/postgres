@@ -2239,6 +2239,9 @@ sendFailed:
  * no unhandled async notification from the backend
  *
  * the CALLER is responsible for FREE'ing the structure returned
+ *
+ * Note that this function does not read any new data from the socket;
+ * so usually, caller should call PQconsumeInput() first.
  */
 PGnotify *
 PQnotifies(PGconn *conn)
