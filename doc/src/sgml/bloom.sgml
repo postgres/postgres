@@ -51,9 +51,9 @@
     <term><literal>length</literal></term>
     <listitem>
      <para>
-      Length of each signature (index entry) in bits, it is rounded up to the
+      Length of each signature (index entry) in bits. It is rounded up to the
       nearest multiple of <literal>16</literal>. The default is
-      <literal>80</literal> bits and maximum is <literal>4096</literal>.
+      <literal>80</literal> bits and the maximum is <literal>4096</literal>.
      </para>
     </listitem>
    </varlistentry>
