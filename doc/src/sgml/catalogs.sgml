@@ -1900,7 +1900,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><structfield>relhassubclass</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if table has (or once had) any inheritance children</entry>
+      <entry>
+       True if table or index has (or once had) any inheritance children
+      </entry>
      </row>
 
      <row>
@@ -1948,7 +1950,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><structfield>relispartition</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if table is a partition</entry>
+      <entry>True if table or index is a partition</entry>
      </row>
 
      <row>

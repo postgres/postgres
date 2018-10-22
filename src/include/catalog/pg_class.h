@@ -60,7 +60,7 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhasrules;	/* has (or has had) any rules */
 	bool		relhastriggers; /* has (or has had) any TRIGGERs */
-	bool		relhassubclass; /* has (or has had) derived classes */
+	bool		relhassubclass; /* has (or has had) child tables or indexes */
 	bool		relrowsecurity; /* row security is enabled or not */
 	bool		relforcerowsecurity;	/* row security forced for owners or
 										 * not */
