@@ -1,25 +1,45 @@
 -- Creating an index on a partitioned table makes the partitions
 -- automatically get the index
 create table idxpart (a int, b int, c text) partition by range (a);
+-- relhassubclass of a partitioned index is false before creating any partition.
+-- It will be set after the first partition is created.
+create index idxpart_idx on idxpart (a);
+select relhassubclass from pg_class where relname = 'idxpart_idx';
+ relhassubclass 
+----------------
+ f
+(1 row)
+
+drop index idxpart_idx;
 create table idxpart1 partition of idxpart for values from (0) to (10);
 create table idxpart2 partition of idxpart for values from (10) to (100)
 	partition by range (b);
 create table idxpart21 partition of idxpart2 for values from (0) to (100);
+-- Even with partitions, relhassubclass should not be set if a partitioned
+-- index is created only on the parent.
+create index idxpart_idx on only idxpart(a);
+select relhassubclass from pg_class where relname = 'idxpart_idx';
+ relhassubclass 
+----------------
+ f
+(1 row)
+
+drop index idxpart_idx;
 create index on idxpart (a);
-select relname, relkind, inhparent::regclass
+select relname, relkind, relhassubclass, inhparent::regclass
     from pg_class left join pg_index ix on (indexrelid = oid)
 	left join pg_inherits on (ix.indexrelid = inhrelid)
 	where relname like 'idxpart%' order by relname;
-     relname     | relkind |   inhparent    
------------------+---------+----------------
- idxpart         | p       | 
- idxpart1        | r       | 
- idxpart1_a_idx  | i       | idxpart_a_idx
- idxpart2        | p       | 
- idxpart21       | r       | 
- idxpart21_a_idx | i       | idxpart2_a_idx
- idxpart2_a_idx  | I       | idxpart_a_idx
- idxpart_a_idx   | I       | 
+     relname     | relkind | relhassubclass |   inhparent    
+-----------------+---------+----------------+----------------
+ idxpart         | p       | t              | 
+ idxpart1        | r       | f              | 
+ idxpart1_a_idx  | i       | f              | idxpart_a_idx
+ idxpart2        | p       | t              | 
+ idxpart21       | r       | f              | 
+ idxpart21_a_idx | i       | f              | idxpart2_a_idx
+ idxpart2_a_idx  | I       | t              | idxpart_a_idx
+ idxpart_a_idx   | I       | t              | 
 (8 rows)
 
 drop table idxpart;
@@ -110,16 +130,16 @@ Partition of: idxpart FOR VALUES FROM (0, 0) TO (10, 10)
 Indexes:
     "idxpart1_a_b_idx" btree (a, b)
 
-select relname, relkind, inhparent::regclass
+select relname, relkind, relhassubclass, inhparent::regclass
     from pg_class left join pg_index ix on (indexrelid = oid)
 	left join pg_inherits on (ix.indexrelid = inhrelid)
 	where relname like 'idxpart%' order by relname;
-     relname      | relkind |    inhparent    
-------------------+---------+-----------------
- idxpart          | p       | 
- idxpart1         | r       | 
- idxpart1_a_b_idx | i       | idxpart_a_b_idx
- idxpart_a_b_idx  | I       | 
+     relname      | relkind | relhassubclass |    inhparent    
+------------------+---------+----------------+-----------------
+ idxpart          | p       | t              | 
+ idxpart1         | r       | f              | 
+ idxpart1_a_b_idx | i       | f              | idxpart_a_b_idx
+ idxpart_a_b_idx  | I       | t              | 
 (4 rows)
 
 drop table idxpart;

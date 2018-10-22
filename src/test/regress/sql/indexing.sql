@@ -1,12 +1,26 @@
 -- Creating an index on a partitioned table makes the partitions
 -- automatically get the index
 create table idxpart (a int, b int, c text) partition by range (a);
+
+-- relhassubclass of a partitioned index is false before creating any partition.
+-- It will be set after the first partition is created.
+create index idxpart_idx on idxpart (a);
+select relhassubclass from pg_class where relname = 'idxpart_idx';
+drop index idxpart_idx;
+
 create table idxpart1 partition of idxpart for values from (0) to (10);
 create table idxpart2 partition of idxpart for values from (10) to (100)
 	partition by range (b);
 create table idxpart21 partition of idxpart2 for values from (0) to (100);
+
+-- Even with partitions, relhassubclass should not be set if a partitioned
+-- index is created only on the parent.
+create index idxpart_idx on only idxpart(a);
+select relhassubclass from pg_class where relname = 'idxpart_idx';
+drop index idxpart_idx;
+
 create index on idxpart (a);
-select relname, relkind, inhparent::regclass
+select relname, relkind, relhassubclass, inhparent::regclass
     from pg_class left join pg_index ix on (indexrelid = oid)
 	left join pg_inherits on (ix.indexrelid = inhrelid)
 	where relname like 'idxpart%' order by relname;
@@ -54,7 +68,7 @@ create table idxpart1 partition of idxpart for values from (0, 0) to (10, 10);
 create index on idxpart1 (a, b);
 create index on idxpart (a, b);
 \d idxpart1
-select relname, relkind, inhparent::regclass
+select relname, relkind, relhassubclass, inhparent::regclass
     from pg_class left join pg_index ix on (indexrelid = oid)
 	left join pg_inherits on (ix.indexrelid = inhrelid)
 	where relname like 'idxpart%' order by relname;
