@@ -41,7 +41,7 @@ extern Node *coerce_to_target_type(ParseState *pstate,
 					  CoercionContext ccontext,
 					  CoercionForm cformat,
 					  int location);
-extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
+extern bool can_coerce_type(int nargs, const Oid *input_typeids, const Oid *target_typeids,
 				CoercionContext ccontext);
 extern Node *coerce_type(ParseState *pstate, Node *node,
 			Oid inputTypeId, Oid targetTypeId, int32 targetTypeMod,
@@ -71,10 +71,10 @@ extern Node *coerce_to_common_type(ParseState *pstate, Node *node,
 					  Oid targetTypeId,
 					  const char *context);
 
-extern bool check_generic_type_consistency(Oid *actual_arg_types,
-							   Oid *declared_arg_types,
+extern bool check_generic_type_consistency(const Oid *actual_arg_types,
+							   const Oid *declared_arg_types,
 							   int nargs);
-extern Oid enforce_generic_type_consistency(Oid *actual_arg_types,
+extern Oid enforce_generic_type_consistency(const Oid *actual_arg_types,
 								 Oid *declared_arg_types,
 								 int nargs,
 								 Oid rettype,
