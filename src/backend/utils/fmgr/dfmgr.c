@@ -121,12 +121,8 @@ load_external_function(const char *filename, const char *funcname,
 	if (filehandle)
 		*filehandle = lib_handle;
 
-	/*
-	 * Look up the function within the library.  According to POSIX dlsym()
-	 * should declare its second argument as "const char *", but older
-	 * platforms might not, so for the time being we just cast away const.
-	 */
-	retval = (PGFunction) dlsym(lib_handle, (char *) funcname);
+	/* Look up the function within the library. */
+	retval = (PGFunction) dlsym(lib_handle, funcname);
 
 	if (retval == NULL && signalNotFound)
 		ereport(ERROR,
@@ -174,8 +170,7 @@ load_file(const char *filename, bool restricted)
 PGFunction
 lookup_external_function(void *filehandle, const char *funcname)
 {
-	/* as above, cast away const for the time being */
-	return (PGFunction) dlsym(filehandle, (char *) funcname);
+	return (PGFunction) dlsym(filehandle, funcname);
 }
 
 
