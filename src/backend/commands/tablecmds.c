@@ -5917,6 +5917,7 @@ static ObjectAddress
 ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 {
 	HeapTuple	tuple;
+	Form_pg_attribute attTup;
 	AttrNumber	attnum;
 	Relation	attr_rel;
 	List	   *indexoidlist;
@@ -5929,14 +5930,13 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 	attr_rel = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
-
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("column \"%s\" of relation \"%s\" does not exist",
 						colName, RelationGetRelationName(rel))));
-
-	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
+	attTup = (Form_pg_attribute) GETSTRUCT(tuple);
+	attnum = attTup->attnum;
 
 	/* Prevent them from altering a system attribute */
 	if (attnum <= 0)
@@ -5945,7 +5945,7 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
-	if (get_attidentity(RelationGetRelid(rel), attnum))
+	if (attTup->attidentity)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column \"%s\" of relation \"%s\" is an identity column",
@@ -6014,9 +6014,9 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 	/*
 	 * Okay, actually perform the catalog change ... if needed
 	 */
-	if (((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull)
+	if (attTup->attnotnull)
 	{
-		((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = false;
+		attTup->attnotnull = false;
 
 		CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
 
@@ -6128,6 +6128,7 @@ static ObjectAddress
 ATExecColumnDefault(Relation rel, const char *colName,
 					Node *newDefault, LOCKMODE lockmode)
 {
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 	AttrNumber	attnum;
 	ObjectAddress address;
 
@@ -6148,7 +6149,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
-	if (get_attidentity(RelationGetRelid(rel), attnum))
+	if (TupleDescAttr(tupdesc, attnum - 1)->attidentity)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column \"%s\" of relation \"%s\" is an identity column",
