@@ -1184,15 +1184,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in main loop of checkpointer process.</entry>
         </row>
         <row>
-         <entry><literal>LogicalLauncherMain</></entry>
-         <entry>Waiting in main loop of logical launcher process.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalApplyMain</></entry>
+         <entry><literal>LogicalApplyMain</literal></entry>
          <entry>Waiting in main loop of logical apply process.</entry>
         </row>
         <row>
-         <entry><literal>PgStatMain</></entry>
+         <entry><literal>LogicalLauncherMain</literal></entry>
+         <entry>Waiting in main loop of logical launcher process.</entry>
+        </row>
+        <row>
+         <entry><literal>PgStatMain</literal></entry>
          <entry>Waiting in main loop of the statistics collector process.</entry>
         </row>
         <row>
@@ -1299,19 +1299,19 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to send bytes to a shared message queue.</entry>
         </row>
         <row>
-         <entry><literal>ParallelFinish</></entry>
-         <entry>Waiting for parallel workers to finish computing.</entry>
-        </row>
-        <row>
-         <entry><literal>ParallelBitmapScan</></entry>
+         <entry><literal>ParallelBitmapScan</literal></entry>
          <entry>Waiting for parallel bitmap scan to become initialized.</entry>
         </row>
         <row>
-         <entry><literal>ProcArrayGroupUpdate</></entry>
+         <entry><literal>ParallelFinish</literal></entry>
+         <entry>Waiting for parallel workers to finish computing.</entry>
+        </row>
+        <row>
+         <entry><literal>ProcArrayGroupUpdate</literal></entry>
          <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationOriginDrop</></entry>
+         <entry><literal>ReplicationOriginDrop</literal></entry>
          <entry>Waiting for a replication origin to become inactive to be dropped.</entry>
         </row>
         <row>
