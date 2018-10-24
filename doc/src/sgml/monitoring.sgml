@@ -1194,12 +1194,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in main loop of checkpointer process.</entry>
         </row>
         <row>
-         <entry><literal>LogicalLauncherMain</literal></entry>
-         <entry>Waiting in main loop of logical launcher process.</entry>
-        </row>
-        <row>
          <entry><literal>LogicalApplyMain</literal></entry>
          <entry>Waiting in main loop of logical apply process.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalLauncherMain</literal></entry>
+         <entry>Waiting in main loop of logical launcher process.</entry>
         </row>
         <row>
          <entry><literal>PgStatMain</literal></entry>
@@ -1279,6 +1279,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>BtreePage</literal></entry>
          <entry>Waiting for the page number needed to continue a parallel B-tree scan to become available.</entry>
+        </row>
+        <row>
+         <entry><literal>ClogGroupUpdate</literal></entry>
+         <entry>Waiting for group leader to update transaction status at transaction end.</entry>
         </row>
         <row>
          <entry><literal>ExecuteGather</literal></entry>
@@ -1369,10 +1373,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to send bytes to a shared message queue.</entry>
         </row>
         <row>
-         <entry><literal>ParallelFinish</literal></entry>
-         <entry>Waiting for parallel workers to finish computing.</entry>
-        </row>
-        <row>
          <entry><literal>ParallelBitmapScan</literal></entry>
          <entry>Waiting for parallel bitmap scan to become initialized.</entry>
         </row>
@@ -1381,12 +1381,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting for parallel <command>CREATE INDEX</command> workers to finish heap scan.</entry>
         </row>
         <row>
-         <entry><literal>ProcArrayGroupUpdate</literal></entry>
-         <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+         <entry><literal>ParallelFinish</literal></entry>
+         <entry>Waiting for parallel workers to finish computing.</entry>
         </row>
         <row>
-         <entry><literal>ClogGroupUpdate</literal></entry>
-         <entry>Waiting for group leader to update transaction status at transaction end.</entry>
+         <entry><literal>ProcArrayGroupUpdate</literal></entry>
+         <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
         </row>
         <row>
          <entry><literal>ReplicationOriginDrop</literal></entry>
