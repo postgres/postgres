@@ -3484,11 +3484,11 @@ pgstat_get_wait_activity(WaitEventActivity w)
 		case WAIT_EVENT_CHECKPOINTER_MAIN:
 			event_name = "CheckpointerMain";
 			break;
-		case WAIT_EVENT_LOGICAL_LAUNCHER_MAIN:
-			event_name = "LogicalLauncherMain";
-			break;
 		case WAIT_EVENT_LOGICAL_APPLY_MAIN:
 			event_name = "LogicalApplyMain";
+			break;
+		case WAIT_EVENT_LOGICAL_LAUNCHER_MAIN:
+			event_name = "LogicalLauncherMain";
 			break;
 		case WAIT_EVENT_PGSTAT_MAIN:
 			event_name = "PgStatMain";
@@ -3582,6 +3582,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_BTREE_PAGE:
 			event_name = "BtreePage";
 			break;
+		case WAIT_EVENT_CLOG_GROUP_UPDATE:
+			event_name = "ClogGroupUpdate";
+			break;
 		case WAIT_EVENT_EXECUTE_GATHER:
 			event_name = "ExecuteGather";
 			break;
@@ -3648,20 +3651,17 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_MQ_SEND:
 			event_name = "MessageQueueSend";
 			break;
-		case WAIT_EVENT_PARALLEL_FINISH:
-			event_name = "ParallelFinish";
-			break;
 		case WAIT_EVENT_PARALLEL_BITMAP_SCAN:
 			event_name = "ParallelBitmapScan";
 			break;
 		case WAIT_EVENT_PARALLEL_CREATE_INDEX_SCAN:
 			event_name = "ParallelCreateIndexScan";
 			break;
+		case WAIT_EVENT_PARALLEL_FINISH:
+			event_name = "ParallelFinish";
+			break;
 		case WAIT_EVENT_PROCARRAY_GROUP_UPDATE:
 			event_name = "ProcArrayGroupUpdate";
-			break;
-		case WAIT_EVENT_CLOG_GROUP_UPDATE:
-			event_name = "ClogGroupUpdate";
 			break;
 		case WAIT_EVENT_REPLICATION_ORIGIN_DROP:
 			event_name = "ReplicationOriginDrop";
