@@ -856,7 +856,7 @@ expand_tuple(HeapTuple *targetHeapTuple,
 			= (HeapTupleHeader) ((char *) *targetHeapTuple + HEAPTUPLESIZE);
 		(*targetHeapTuple)->t_len = len;
 		(*targetHeapTuple)->t_tableOid = sourceTuple->t_tableOid;
-		ItemPointerSetInvalid(&((*targetHeapTuple)->t_self));
+		(*targetHeapTuple)->t_self = sourceTuple->t_self;
 
 		targetTHeader->t_infomask = sourceTHeader->t_infomask;
 		targetTHeader->t_hoff = hoff;

@@ -471,7 +471,19 @@ UPDATE t SET y = 2;
 SELECT * FROM t;
 DROP TABLE t;
 
+-- make sure expanded tuple has correct self pointer
+-- it will be required by the RI tigger doing the cascading delete
+
+CREATE TABLE leader (a int PRIMARY KEY, b int);
+CREATE TABLE follower (a int REFERENCES leader ON DELETE CASCADE, b int);
+INSERT INTO leader VALUES (1, 1), (2, 2);
+ALTER TABLE leader ADD c int;
+ALTER TABLE leader DROP c;
+DELETE FROM leader;
+
 -- cleanup
+DROP TABLE follower;
+DROP TABLE leader;
 DROP FUNCTION test_trigger();
 DROP TABLE t1;
 DROP FUNCTION set(name);
