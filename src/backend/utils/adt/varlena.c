@@ -182,7 +182,7 @@ char *
 text_to_cstring(const text *t)
 {
 	/* must cast away the const, unfortunately */
-	text	   *tunpacked = pg_detoast_datum_packed((struct varlena *) t);
+	text	   *tunpacked = pg_detoast_datum_packed(unconstify(text *, t));
 	int			len = VARSIZE_ANY_EXHDR(tunpacked);
 	char	   *result;
 
@@ -213,7 +213,7 @@ void
 text_to_cstring_buffer(const text *src, char *dst, size_t dst_len)
 {
 	/* must cast away the const, unfortunately */
-	text	   *srcunpacked = pg_detoast_datum_packed((struct varlena *) src);
+	text	   *srcunpacked = pg_detoast_datum_packed(unconstify(text *, src));
 	size_t		src_len = VARSIZE_ANY_EXHDR(srcunpacked);
 
 	if (dst_len > 0)

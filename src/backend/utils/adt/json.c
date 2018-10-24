@@ -207,12 +207,12 @@ IsValidJsonNumber(const char *str, int len)
 	 */
 	if (*str == '-')
 	{
-		dummy_lex.input = (char *) str + 1;
+		dummy_lex.input = unconstify(char *, str) + 1;
 		dummy_lex.input_length = len - 1;
 	}
 	else
 	{
-		dummy_lex.input = (char *) str;
+		dummy_lex.input = unconstify(char *, str);
 		dummy_lex.input_length = len;
 	}
 

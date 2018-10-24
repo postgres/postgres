@@ -183,7 +183,7 @@ pgwin32_setlocale(int category, const char *locale)
 	 * forbidden to modify, so casting away the "const" is innocuous.
 	 */
 	if (result)
-		result = (char *) map_locale(locale_map_result, result);
+		result = unconstify(char *, map_locale(locale_map_result, result));
 
 	return result;
 }

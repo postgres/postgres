@@ -423,7 +423,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		HeapTuple	tuple;
 
 		/* cast-away-const is ugly but alternatives aren't much better */
-		values[0] = (char *) ScanKeywords[funcctx->call_cntr].name;
+		values[0] = unconstify(char *, ScanKeywords[funcctx->call_cntr].name);
 
 		switch (ScanKeywords[funcctx->call_cntr].category)
 		{
