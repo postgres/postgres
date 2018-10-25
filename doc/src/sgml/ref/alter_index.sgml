@@ -39,7 +39,10 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
 
   <para>
    <command>ALTER INDEX</command> changes the definition of an existing index.
-   There are several subforms:
+   There are several subforms described below. Note that the lock level required
+   may differ for each subform. An <literal>ACCESS EXCLUSIVE</literal> lock is held
+   unless explicitly noted. When multiple subcommands are listed, the lock
+   held will be the strictest one required from any subcommand.
 
   <variablelist>
 
@@ -52,6 +55,10 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>,
       or <literal>EXCLUDE</literal>), the constraint is renamed as well.
       There is no effect on the stored data.
+     </para>
+     <para>
+      Renaming an index acquires a <literal>SHARE UPDATE EXCLUSIVE</literal>
+      lock.
      </para>
     </listitem>
    </varlistentry>

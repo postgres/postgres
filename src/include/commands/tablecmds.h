@@ -67,7 +67,8 @@ extern ObjectAddress RenameConstraint(RenameStmt *stmt);
 extern ObjectAddress RenameRelation(RenameStmt *stmt);
 
 extern void RenameRelationInternal(Oid myrelid,
-					   const char *newrelname, bool is_internal);
+					   const char *newrelname, bool is_internal,
+					   bool is_index);
 
 extern void find_composite_type_dependencies(Oid typeOid,
 								 Relation origRelation,

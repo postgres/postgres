@@ -926,10 +926,10 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
          <command>ANALYZE</command>, <command>CREATE INDEX CONCURRENTLY</command>,
-         <command>CREATE STATISTICS</command> and
-         <command>ALTER TABLE VALIDATE</command> and other
-         <command>ALTER TABLE</command> variants (for full details see
-         <xref linkend="sql-altertable"/>).
+         <command>CREATE STATISTICS</command>, and certain <command>ALTER
+         INDEX</command> and <command>ALTER TABLE</command> variants (for full
+         details see <xref linkend="sql-alterindex"/> and <xref
+         linkend="sql-altertable"/>).
         </para>
        </listitem>
       </varlistentry>
@@ -970,7 +970,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         Acquired by <command>CREATE TRIGGER</command> and many forms of
+         Acquired by <command>CREATE TRIGGER</command> and some forms of
          <command>ALTER TABLE</command> (see <xref linkend="sql-altertable"/>).
         </para>
        </listitem>
@@ -1020,7 +1020,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          <command>CLUSTER</command>, <command>VACUUM FULL</command>,
          and <command>REFRESH MATERIALIZED VIEW</command> (without
          <option>CONCURRENTLY</option>)
-         commands. Many forms of <command>ALTER TABLE</command> also acquire
+         commands. Many forms of <command>ALTER INDEX</command> and <command>ALTER TABLE</command> also acquire
          a lock at this level. This is also the default lock mode for
          <command>LOCK TABLE</command> statements that do not specify
          a mode explicitly.

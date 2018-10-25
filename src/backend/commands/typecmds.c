@@ -3255,7 +3255,7 @@ RenameType(RenameStmt *stmt)
 	 * RenameRelationInternal will call RenameTypeInternal automatically.
 	 */
 	if (typTup->typtype == TYPTYPE_COMPOSITE)
-		RenameRelationInternal(typTup->typrelid, newTypeName, false);
+		RenameRelationInternal(typTup->typrelid, newTypeName, false, false);
 	else
 		RenameTypeInternal(typeOid, newTypeName,
 						   typTup->typnamespace);

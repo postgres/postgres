@@ -3044,7 +3044,7 @@ rename_constraint_internal(Oid myrelid,
 			|| con->contype == CONSTRAINT_UNIQUE
 			|| con->contype == CONSTRAINT_EXCLUSION))
 		/* rename the index; this renames the constraint as well */
-		RenameRelationInternal(con->conindid, newconname, false);
+		RenameRelationInternal(con->conindid, newconname, false, true);
 	else
 		RenameConstraintById(constraintOid, newconname);
 
@@ -3112,6 +3112,7 @@ RenameConstraint(RenameStmt *stmt)
 ObjectAddress
 RenameRelation(RenameStmt *stmt)
 {
+	bool		is_index = stmt->renameType == OBJECT_INDEX;
 	Oid			relid;
 	ObjectAddress address;
 
@@ -3123,7 +3124,8 @@ RenameRelation(RenameStmt *stmt)
 	 * Lock level used here should match RenameRelationInternal, to avoid lock
 	 * escalation.
 	 */
-	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
+	relid = RangeVarGetRelidExtended(stmt->relation,
+									 is_index ? ShareUpdateExclusiveLock : AccessExclusiveLock,
 									 stmt->missing_ok ? RVR_MISSING_OK : 0,
 									 RangeVarCallbackForAlterRelation,
 									 (void *) stmt);
@@ -3137,7 +3139,7 @@ RenameRelation(RenameStmt *stmt)
 	}
 
 	/* Do the work */
-	RenameRelationInternal(relid, stmt->newname, false);
+	RenameRelationInternal(relid, stmt->newname, false, is_index);
 
 	ObjectAddressSet(address, RelationRelationId, relid);
 
@@ -3148,7 +3150,7 @@ RenameRelation(RenameStmt *stmt)
  *		RenameRelationInternal - change the name of a relation
  */
 void
-RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal)
+RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bool is_index)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
@@ -3157,11 +3159,16 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal)
 	Oid			namespaceId;
 
 	/*
-	 * Grab an exclusive lock on the target table, index, sequence, view,
-	 * materialized view, or foreign table, which we will NOT release until
-	 * end of transaction.
+	 * Grab a lock on the target relation, which we will NOT release until end
+	 * of transaction.  We need at least a self-exclusive lock so that
+	 * concurrent DDL doesn't overwrite the rename if they start updating
+	 * while still seeing the old version.  The lock also guards against
+	 * triggering relcache reloads in concurrent sessions, which might not
+	 * handle this information changing under them.  For indexes, we can use a
+	 * reduced lock level because RelationReloadIndexInfo() handles indexes
+	 * specially.
 	 */
-	targetrelation = relation_open(myrelid, AccessExclusiveLock);
+	targetrelation = relation_open(myrelid, is_index ? ShareUpdateExclusiveLock : AccessExclusiveLock);
 	namespaceId = RelationGetNamespace(targetrelation);
 
 	/*
@@ -3214,7 +3221,7 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal)
 	}
 
 	/*
-	 * Close rel, but keep exclusive lock!
+	 * Close rel, but keep lock!
 	 */
 	relation_close(targetrelation, NoLock);
 }
@@ -7076,7 +7083,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 		ereport(NOTICE,
 				(errmsg("ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index \"%s\" to \"%s\"",
 						indexName, constraintName)));
-		RenameRelationInternal(index_oid, constraintName, false);
+		RenameRelationInternal(index_oid, constraintName, false, true);
 	}
 
 	/* Extra checks needed if making primary key */
