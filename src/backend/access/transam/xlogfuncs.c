@@ -16,6 +16,8 @@
  */
 #include "postgres.h"
 
+#include <unistd.h>
+
 #include "access/htup_details.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
@@ -23,6 +25,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "replication/walreceiver.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -696,4 +699,78 @@ pg_backup_start_time(PG_FUNCTION_ARGS)
 								Int32GetDatum(-1));
 
 	PG_RETURN_DATUM(xtime);
+}
+
+/*
+ * Promotes a standby server.
+ *
+ * A result of "true" means that promotion has been completed if "wait" is
+ * "true", or initiated if "wait" is false.
+ */
+Datum
+pg_promote(PG_FUNCTION_ARGS)
+{
+	bool		wait = PG_GETARG_BOOL(0);
+	int			wait_seconds = PG_GETARG_INT32(1);
+	FILE	   *promote_file;
+	int			i;
+
+	if (!RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is not in progress"),
+				 errhint("Recovery control functions can only be executed during recovery.")));
+
+	if (wait_seconds <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("\"wait_seconds\" cannot be negative or equal zero")));
+
+	/* create the promote signal file */
+	promote_file = AllocateFile(PROMOTE_SIGNAL_FILE, "w");
+	if (!promote_file)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create file \"%s\": %m",
+						PROMOTE_SIGNAL_FILE)));
+
+	if (FreeFile(promote_file))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write file \"%s\": %m",
+						PROMOTE_SIGNAL_FILE)));
+
+	/* signal the postmaster */
+	if (kill(PostmasterPid, SIGUSR1) != 0)
+	{
+		ereport(WARNING,
+				(errmsg("failed to send signal to postmaster: %m")));
+		(void) unlink(PROMOTE_SIGNAL_FILE);
+		PG_RETURN_BOOL(false);
+	}
+
+	/* return immediately if waiting was not requested */
+	if (!wait)
+		PG_RETURN_BOOL(true);
+
+	/* wait for the amount of time wanted until promotion */
+#define WAITS_PER_SECOND 10
+	for (i = 0; i < WAITS_PER_SECOND * wait_seconds; i++)
+	{
+		ResetLatch(MyLatch);
+
+		if (!RecoveryInProgress())
+			PG_RETURN_BOOL(true);
+
+		CHECK_FOR_INTERRUPTS();
+
+		WaitLatch(MyLatch,
+				  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+				  1000L / WAITS_PER_SECOND,
+				  WAIT_EVENT_PROMOTE);
+	}
+
+	ereport(WARNING,
+			(errmsg("server did not promote within %d seconds", wait_seconds)));
+	PG_RETURN_BOOL(false);
 }

@@ -1471,14 +1471,17 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
-    To trigger failover of a log-shipping standby server,
-    run <command>pg_ctl promote</command> or create a trigger
-    file with the file name and path specified by the <varname>trigger_file</varname>
-    setting in <filename>recovery.conf</filename>. If you're planning to use
-    <command>pg_ctl promote</command> to fail over, <varname>trigger_file</varname> is
-    not required. If you're setting up the reporting servers that are
-    only used to offload read-only queries from the primary, not for high
-    availability purposes, you don't need to promote it.
+    To trigger failover of a log-shipping standby server, run
+    <command>pg_ctl promote</command>, call <function>pg_promote</function>,
+    or create a trigger file with the file name and path specified by the
+    <varname>trigger_file</varname> setting in
+    <filename>recovery.conf</filename>. If you're planning to use
+    <command>pg_ctl promote</command> or to call
+    <function>pg_promote</function> to fail over,
+    <varname>trigger_file</varname> is not required. If you're
+    setting up the reporting servers that are only used to offload read-only
+    queries from the primary, not for high availability purposes, you don't
+    need to promote it.
    </para>
   </sect1>
 

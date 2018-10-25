@@ -19203,6 +19203,9 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     <primary>pg_is_wal_replay_paused</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_promote</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_wal_replay_pause</primary>
    </indexterm>
    <indexterm>
@@ -19230,6 +19233,22 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>bool</type></entry>
        <entry>True if recovery is paused.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_promote(<parameter>wait</parameter> <type>boolean</type> DEFAULT true, <parameter>wait_seconds</parameter> <type>integer</type> DEFAULT 60)</function></literal>
+        </entry>
+       <entry><type>boolean</type></entry>
+       <entry>
+        Promotes a physical standby server.  Returns <literal>true</literal>
+        if promotion is successful and <literal>false</literal> otherwise.
+        With <parameter>wait</parameter> set to <literal>true</literal>, the
+        default, the function waits until promotion is completed or
+        <parameter>wait_seconds</parameter> seconds have passed, otherwise the
+        function returns immediately after sending the promotion signal to the
+        postmaster.  This function is restricted to superusers by default, but
+        other users can be granted EXECUTE to run the function.
        </entry>
       </row>
       <row>
