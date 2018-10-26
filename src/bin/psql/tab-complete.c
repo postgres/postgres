@@ -2608,6 +2608,29 @@ psql_completion(const char *text, int start, int end)
 	/* Complete CREATE EVENT TRIGGER <name> ON with event_type */
 	else if (Matches("CREATE", "EVENT", "TRIGGER", MatchAny, "ON"))
 		COMPLETE_WITH("ddl_command_start", "ddl_command_end", "sql_drop");
+	/*
+	 * Complete CREATE EVENT TRIGGER <name> ON <event_type>.  EXECUTE FUNCTION
+	 * is the recommended grammar instead of EXECUTE PROCEDURE in version 11
+	 * and upwards.
+	 */
+	else if (Matches("CREATE", "EVENT", "TRIGGER", MatchAny, "ON", MatchAny))
+	{
+		if (pset.sversion >= 110000)
+			COMPLETE_WITH("WHEN TAG IN (", "EXECUTE FUNCTION");
+		else
+			COMPLETE_WITH("WHEN TAG IN (", "EXECUTE PROCEDURE");
+	}
+	else if (HeadMatches("CREATE", "EVENT", "TRIGGER") &&
+			 TailMatches("WHEN|AND", MatchAny, "IN", "(*)"))
+	{
+		if (pset.sversion >= 110000)
+			COMPLETE_WITH("EXECUTE FUNCTION");
+		else
+			COMPLETE_WITH("EXECUTE PROCEDURE");
+	}
+	else if (HeadMatches("CREATE", "EVENT", "TRIGGER") &&
+			 TailMatches("EXECUTE", "FUNCTION|PROCEDURE"))
+		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
 
 /* DEALLOCATE */
 	else if (Matches("DEALLOCATE"))
