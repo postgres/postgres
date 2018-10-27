@@ -2152,7 +2152,6 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 				 Node *expr, bool is_internal, bool add_column_mode)
 {
 	char	   *adbin;
-	char	   *adsrc;
 	Relation	adrel;
 	HeapTuple	tuple;
 	Datum		values[4];
@@ -2170,20 +2169,11 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	adbin = nodeToString(expr);
 
 	/*
-	 * Also deparse it to form the mostly-obsolete adsrc field.
-	 */
-	adsrc = deparse_expression(expr,
-							   deparse_context_for(RelationGetRelationName(rel),
-												   RelationGetRelid(rel)),
-							   false, false);
-
-	/*
 	 * Make the pg_attrdef entry.
 	 */
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
 	values[Anum_pg_attrdef_adbin - 1] = CStringGetTextDatum(adbin);
-	values[Anum_pg_attrdef_adsrc - 1] = CStringGetTextDatum(adsrc);
 
 	adrel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
 
@@ -2198,10 +2188,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 
 	/* now can free some of the stuff allocated above */
 	pfree(DatumGetPointer(values[Anum_pg_attrdef_adbin - 1]));
-	pfree(DatumGetPointer(values[Anum_pg_attrdef_adsrc - 1]));
 	heap_freetuple(tuple);
 	pfree(adbin);
-	pfree(adsrc);
 
 	/*
 	 * Update the pg_attribute entry for the column to show that a default

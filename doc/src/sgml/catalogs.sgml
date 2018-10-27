@@ -947,27 +947,13 @@
       <entry><structfield>adbin</structfield></entry>
       <entry><type>pg_node_tree</type></entry>
       <entry></entry>
-      <entry>The internal representation of the column default value</entry>
-     </row>
-
-     <row>
-      <entry><structfield>adsrc</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>A human-readable representation of the default value</entry>
+      <entry>The column default value, in <function>nodeToString()</function>
+      representation.  Use <literal>pg_get_expr(adbin, adrelid)</literal> to
+      convert it to an SQL expression.</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
-
-   <para>
-    The <structfield>adsrc</structfield> field is historical, and is best
-    not used, because it does not track outside changes that might affect
-    the representation of the default value.  Reverse-compiling the
-    <structfield>adbin</structfield> field (with <function>pg_get_expr</function> for
-    example) is a better way to display the default value.
-   </para>
-
  </sect1>
 
 
