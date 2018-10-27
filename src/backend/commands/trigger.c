@@ -752,7 +752,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  NULL, /* no exclusion */
 											  NULL, /* no check constraint */
 											  NULL,
-											  NULL,
 											  true, /* islocal */
 											  0,	/* inhcount */
 											  true, /* isnoinherit */

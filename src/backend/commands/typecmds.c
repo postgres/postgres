@@ -3042,7 +3042,6 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 					const char *domainName, ObjectAddress *constrAddr)
 {
 	Node	   *expr;
-	char	   *ccsrc;
 	char	   *ccbin;
 	ParseState *pstate;
 	CoerceToDomainValue *domVal;
@@ -3117,12 +3116,6 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	ccbin = nodeToString(expr);
 
 	/*
-	 * Deparse it to produce text for consrc.
-	 */
-	ccsrc = deparse_expression(expr,
-							   NIL, false, false);
-
-	/*
 	 * Store the constraint in pg_constraint
 	 */
 	ccoid =
@@ -3151,7 +3144,6 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 							  NULL, /* not an exclusion constraint */
 							  expr, /* Tree form of check constraint */
 							  ccbin,	/* Binary form of check constraint */
-							  ccsrc,	/* Source form of check constraint */
 							  true, /* is local */
 							  0,	/* inhcount */
 							  false,	/* connoinherit */

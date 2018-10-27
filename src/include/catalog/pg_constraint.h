@@ -142,11 +142,6 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * If a check constraint, nodeToString representation of expression
 	 */
 	pg_node_tree conbin;
-
-	/*
-	 * If a check constraint, source-text representation of expression
-	 */
-	text		consrc;
 #endif
 } FormData_pg_constraint;
 
@@ -224,7 +219,6 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  const Oid *exclOp,
 					  Node *conExpr,
 					  const char *conBin,
-					  const char *conSrc,
 					  bool conIsLocal,
 					  int conInhCount,
 					  bool conNoInherit,

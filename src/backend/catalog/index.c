@@ -1336,7 +1336,6 @@ index_constraint_create(Relation heapRelation,
 								   indexInfo->ii_ExclusionOps,
 								   NULL,	/* no check constraint */
 								   NULL,
-								   NULL,
 								   islocal,
 								   inhcount,
 								   noinherit,

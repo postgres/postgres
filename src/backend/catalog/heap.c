@@ -2315,7 +2315,6 @@ StoreRelCheck(Relation rel, const char *ccname, Node *expr,
 			  bool is_no_inherit, bool is_internal)
 {
 	char	   *ccbin;
-	char	   *ccsrc;
 	List	   *varList;
 	int			keycount;
 	int16	   *attNos;
@@ -2325,14 +2324,6 @@ StoreRelCheck(Relation rel, const char *ccname, Node *expr,
 	 * Flatten expression to string form for storage.
 	 */
 	ccbin = nodeToString(expr);
-
-	/*
-	 * Also deparse it to form the mostly-obsolete consrc field.
-	 */
-	ccsrc = deparse_expression(expr,
-							   deparse_context_for(RelationGetRelationName(rel),
-												   RelationGetRelid(rel)),
-							   false, false);
 
 	/*
 	 * Find columns of rel that are used in expr
@@ -2406,14 +2397,12 @@ StoreRelCheck(Relation rel, const char *ccname, Node *expr,
 							  NULL, /* not an exclusion constraint */
 							  expr, /* Tree form of check constraint */
 							  ccbin,	/* Binary form of check constraint */
-							  ccsrc,	/* Source form of check constraint */
 							  is_local, /* conislocal */
 							  inhcount, /* coninhcount */
 							  is_no_inherit,	/* connoinherit */
 							  is_internal); /* internally constructed? */
 
 	pfree(ccbin);
-	pfree(ccsrc);
 
 	return constrOid;
 }

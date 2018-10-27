@@ -2400,14 +2400,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><structfield>conbin</structfield></entry>
       <entry><type>pg_node_tree</type></entry>
       <entry></entry>
-      <entry>If a check constraint, an internal representation of the expression</entry>
-     </row>
-
-     <row>
-      <entry><structfield>consrc</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>If a check constraint, a human-readable representation of the expression</entry>
+      <entry>If a check constraint, an internal representation of the
+      expression.  (It's recommended to use
+      <function>pg_get_constraintdef()</function> to extract the definition of
+      a check constraint.)</entry>
      </row>
     </tbody>
    </tgroup>
@@ -2422,15 +2418,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    same contents as <structname>pg_index</structname>.<structfield>indkey</structfield> for the
    index.)
   </para>
-
-  <note>
-   <para>
-    <structfield>consrc</structfield> is not updated when referenced objects
-    change; for example, it won't track renaming of columns.  Rather than
-    relying on this field, it's best to use <function>pg_get_constraintdef()</function>
-    to extract the definition of a check constraint.
-   </para>
-  </note>
 
   <note>
    <para>

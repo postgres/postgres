@@ -7704,7 +7704,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 									  NULL, /* no exclusion constraint */
 									  NULL, /* no check constraint */
 									  NULL,
-									  NULL,
 									  true, /* islocal */
 									  0,	/* inhcount */
 									  true, /* isnoinherit */

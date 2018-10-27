@@ -78,7 +78,6 @@ CreateConstraintEntry(const char *constraintName,
 					  const Oid *exclOp,
 					  Node *conExpr,
 					  const char *conBin,
-					  const char *conSrc,
 					  bool conIsLocal,
 					  int conInhCount,
 					  bool conNoInherit,
@@ -218,21 +217,10 @@ CreateConstraintEntry(const char *constraintName,
 	else
 		nulls[Anum_pg_constraint_conexclop - 1] = true;
 
-	/*
-	 * initialize the binary form of the check constraint.
-	 */
 	if (conBin)
 		values[Anum_pg_constraint_conbin - 1] = CStringGetTextDatum(conBin);
 	else
 		nulls[Anum_pg_constraint_conbin - 1] = true;
-
-	/*
-	 * initialize the text form of the check constraint
-	 */
-	if (conSrc)
-		values[Anum_pg_constraint_consrc - 1] = CStringGetTextDatum(conSrc);
-	else
-		nulls[Anum_pg_constraint_consrc - 1] = true;
 
 	tup = heap_form_tuple(RelationGetDescr(conDesc), values, nulls);
 
@@ -700,7 +688,6 @@ clone_fk_constraints(Relation pg_constraint, Relation parentRel,
 								  constrForm->confupdtype,
 								  constrForm->confdeltype,
 								  constrForm->confmatchtype,
-								  NULL,
 								  NULL,
 								  NULL,
 								  NULL,
