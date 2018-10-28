@@ -11,6 +11,8 @@ use File::Basename;
 use File::Copy;
 use File::Find ();
 use File::Path qw(rmtree);
+use File::Spec;
+BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
 
 use Install qw(Install);
 
