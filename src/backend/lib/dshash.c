@@ -672,9 +672,7 @@ delete_item(dshash_table *hash_table, dshash_table_item *item)
 
 /*
  * Grow the hash table if necessary to the requested number of buckets.  The
- * requested size must be double some previously observed size.  Returns true
- * if the table was successfully expanded or found to be big enough already
- * (because another backend expanded it).
+ * requested size must be double some previously observed size.
  *
  * Must be called without any partition lock held.
  */
