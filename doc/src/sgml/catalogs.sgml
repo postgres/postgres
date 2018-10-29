@@ -901,11 +901,11 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_attrdef</structname> stores column default values.  The main information
-   about columns is stored in <structname>pg_attribute</structname>
-   (see below).  Only columns that explicitly specify a default value
-   (when the table is created or the column is added) will have an
-   entry here.
+   The catalog <structname>pg_attrdef</structname> stores column default
+   values.  The main information about columns is stored in
+   <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.
+   Only columns for which a default value has been explicitly set will have
+   an entry here.
   </para>
 
   <table>
