@@ -82,7 +82,7 @@ PostgreSQL documentation
    can be used to examine the archive and/or select which parts of the
    database are to be restored. The most flexible output file formats are
    the <quote>custom</quote> format (<option>-Fc</option>) and the
-   <quote>directory</quote> format(<option>-Fd</option>). They allow
+   <quote>directory</quote> format (<option>-Fd</option>). They allow
    for selection and reordering of all archived items, support parallel
    restoration, and are compressed by default. The <quote>directory</quote>
    format is the only format that supports parallel dumps.
