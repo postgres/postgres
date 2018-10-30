@@ -1516,10 +1516,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				/*
 				 * Read from location identified by innermost_caseval.  Note
 				 * that innermost_caseval could be NULL, if this node isn't
-				 * actually within a CASE structure; some parts of the system
-				 * abuse CaseTestExpr to cause a read of a value externally
-				 * supplied in econtext->caseValue_datum.  We'll take care of
-				 * that scenario at runtime.
+				 * actually within a CaseExpr, ArrayCoerceExpr, etc structure.
+				 * That can happen because some parts of the system abuse
+				 * CaseTestExpr to cause a read of a value externally supplied
+				 * in econtext->caseValue_datum.  We'll take care of that
+				 * scenario at runtime.
 				 */
 				scratch.opcode = EEOP_CASE_TESTVAL;
 				scratch.d.casetest.value = state->innermost_caseval;

@@ -233,6 +233,19 @@ SELECT CASE make_ad(1,2)
 
 ROLLBACK;
 
+-- Test interaction of CASE with ArrayCoerceExpr (bug #15471)
+BEGIN;
+
+CREATE TYPE casetestenum AS ENUM ('e', 'f', 'g');
+
+SELECT
+  CASE 'foo'::text
+    WHEN 'foo' THEN ARRAY['a', 'b', 'c', 'd'] || enum_range(NULL::casetestenum)::text[]
+    ELSE ARRAY['x', 'y']
+    END;
+
+ROLLBACK;
+
 --
 -- Clean up
 --
