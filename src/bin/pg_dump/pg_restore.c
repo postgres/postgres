@@ -331,6 +331,17 @@ main(int argc, char **argv)
 		exit_nicely(1);
 	}
 
+	/*
+	 * -C is not compatible with -1, because we can't create a database inside
+	 * a transaction block.
+	 */
+	if (opts->createDB && opts->single_txn)
+	{
+		fprintf(stderr, _("%s: options -C/--create and -1/--single-transaction cannot be used together\n"),
+				progname);
+		exit_nicely(1);
+	}
+
 	if (numWorkers <= 0)
 	{
 		fprintf(stderr, _("%s: invalid number of parallel jobs\n"), progname);

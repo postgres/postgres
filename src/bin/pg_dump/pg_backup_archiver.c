@@ -359,15 +359,6 @@ RestoreArchive(Archive *AHX)
 	AH->stage = STAGE_INITIALIZING;
 
 	/*
-	 * Check for nonsensical option combinations.
-	 *
-	 * -C is not compatible with -1, because we can't create a database inside
-	 * a transaction block.
-	 */
-	if (ropt->createDB && ropt->single_txn)
-		exit_horribly(modulename, "-C and -1 are incompatible options\n");
-
-	/*
 	 * If we're going to do parallel restore, there are some restrictions.
 	 */
 	parallel_mode = (AH->public.numWorkers > 1 && ropt->useDB);
