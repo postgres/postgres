@@ -20,8 +20,8 @@ OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	jsonfuncs.o like.o lockfuncs.o mac.o mac8.o misc.o name.o \
 	network.o network_gist.o network_selfuncs.o network_spgist.o \
 	numeric.o numutils.o oid.o oracle_compat.o \
-	orderedsetaggs.o pg_locale.o pg_lsn.o pg_upgrade_support.o \
-	pgstatfuncs.o \
+	orderedsetaggs.o partitionfuncs.o pg_locale.o pg_lsn.o \
+	pg_upgrade_support.o pgstatfuncs.o \
 	pseudotypes.o quote.o rangetypes.o rangetypes_gist.o \
 	rangetypes_selfuncs.o rangetypes_spgist.o rangetypes_typanalyze.o \
 	regexp.o regproc.o ri_triggers.o rowtypes.o ruleutils.o \

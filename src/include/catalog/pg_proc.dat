@@ -10029,4 +10029,13 @@
   proisstrict => 'f', prorettype => 'bool', proargtypes => 'oid int4 int4 any',
   proargmodes => '{i,i,i,v}', prosrc => 'satisfies_hash_partition' },
 
+# information about a partition tree
+{ oid => '3423', descr => 'view partition tree tables',
+  proname => 'pg_partition_tree', prorows => '1000', proretset => 't',
+  provolatile => 'v', prorettype => 'record', proargtypes => 'regclass',
+  proallargtypes => '{regclass,regclass,regclass,bool,int4}',
+  proargmodes => '{i,o,o,o,o}',
+  proargnames => '{rootrelid,relid,parentrelid,isleaf,level}',
+  prosrc => 'pg_partition_tree' }
+
 ]

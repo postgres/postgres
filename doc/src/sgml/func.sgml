@@ -20216,6 +20216,49 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     The function returns the number of new collation objects it created.
    </para>
 
+   <table id="functions-info-partition">
+    <title>Partitioning Information Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody> 
+      <row>
+       <entry><literal><function>pg_partition_tree(<type>regclass</type>)</function></literal></entry>
+       <entry><type>setof record</type></entry>
+       <entry>
+        List information about tables or indexes in a partition tree for a
+        given partitioned table or partitioned index, with one row for each
+        partition.  Information provided includes the name of the partition,
+        the name of its immediate parent, a boolean value telling if the
+        partition is a leaf, and an integer telling its level in the hierarchy.
+        The value of level begins at <literal>0</literal> for the input table
+        or index in its role as the root of the partition tree,
+        <literal>1</literal> for its partitions, <literal>2</literal> for
+        their partitions, and so on.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    To check the total size of the data contained in
+    <structname>measurement</structname> table described in
+    <xref linkend="ddl-partitioning-declarative-example"/>, one could use the
+    following query:
+   </para>
+
+<programlisting>
+=# SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
+     FROM pg_partition_tree('measurement');
+ total_size 
+------------
+ 24 kB
+(1 row)
+</programlisting>
+
   </sect2>
 
   <sect2 id="functions-admin-index">
