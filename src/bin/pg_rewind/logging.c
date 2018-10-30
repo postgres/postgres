@@ -25,8 +25,6 @@ static pg_time_t last_progress_report = 0;
 
 #define QUERY_ALLOC			8192
 
-#define MESSAGE_WIDTH		60
-
 static
 pg_attribute_printf(2, 0)
 void
