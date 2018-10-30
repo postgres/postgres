@@ -907,7 +907,12 @@ build_coercion_expression(Node *node,
 		sourceBaseTypeId = getBaseTypeAndTypmod(exprType(node),
 												&sourceBaseTypeMod);
 
-		/* Set up CaseTestExpr representing one element of source array */
+		/*
+		 * Set up a CaseTestExpr representing one element of the source array.
+		 * This is an abuse of CaseTestExpr, but it's OK as long as there
+		 * can't be any CaseExpr or ArrayCoerceExpr within the completed
+		 * elemexpr.
+		 */
 		ctest->typeId = get_element_type(sourceBaseTypeId);
 		Assert(OidIsValid(ctest->typeId));
 		ctest->typeMod = sourceBaseTypeMod;
