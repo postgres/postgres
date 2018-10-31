@@ -294,10 +294,18 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 	/* Set up indexTupDesc and xs_hitupdesc in case it's an index-only scan */
 	so->indexTupDesc = scan->xs_hitupdesc = RelationGetDescr(rel);
 
+	/* Allocate various arrays needed for order-by scans */
 	if (scan->numberOfOrderBys > 0)
 	{
-		so->zeroDistances = palloc(sizeof(double) * scan->numberOfOrderBys);
-		so->infDistances = palloc(sizeof(double) * scan->numberOfOrderBys);
+		/* This will be filled in spgrescan, but allocate the space here */
+		so->orderByTypes = (Oid *)
+			palloc(sizeof(Oid) * scan->numberOfOrderBys);
+
+		/* These arrays have constant contents, so we can fill them now */
+		so->zeroDistances = (double *)
+			palloc(sizeof(double) * scan->numberOfOrderBys);
+		so->infDistances = (double *)
+			palloc(sizeof(double) * scan->numberOfOrderBys);
 
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 		{
@@ -305,9 +313,12 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 			so->infDistances[i] = get_float8_infinity();
 		}
 
-		scan->xs_orderbyvals = palloc0(sizeof(Datum) * scan->numberOfOrderBys);
-		scan->xs_orderbynulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
-		memset(scan->xs_orderbynulls, true, sizeof(bool) * scan->numberOfOrderBys);
+		scan->xs_orderbyvals = (Datum *)
+			palloc0(sizeof(Datum) * scan->numberOfOrderBys);
+		scan->xs_orderbynulls = (bool *)
+			palloc(sizeof(bool) * scan->numberOfOrderBys);
+		memset(scan->xs_orderbynulls, true,
+			   sizeof(bool) * scan->numberOfOrderBys);
 	}
 
 	fmgr_info_copy(&so->innerConsistentFn,
@@ -336,14 +347,13 @@ spgrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 		memmove(scan->keyData, scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
 
+	/* initialize order-by data if needed */
 	if (orderbys && scan->numberOfOrderBys > 0)
 	{
 		int			i;
 
 		memmove(scan->orderByData, orderbys,
 				scan->numberOfOrderBys * sizeof(ScanKeyData));
-
-		so->orderByTypes = (Oid *) palloc(sizeof(Oid) * scan->numberOfOrderBys);
 
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 		{
@@ -380,11 +390,22 @@ spgendscan(IndexScanDesc scan)
 	MemoryContextDelete(so->tempCxt);
 	MemoryContextDelete(so->traversalCxt);
 
+	if (so->keyData)
+		pfree(so->keyData);
+
+	if (so->state.deadTupleStorage)
+		pfree(so->state.deadTupleStorage);
+
 	if (scan->numberOfOrderBys > 0)
 	{
+		pfree(so->orderByTypes);
 		pfree(so->zeroDistances);
 		pfree(so->infDistances);
+		pfree(scan->xs_orderbyvals);
+		pfree(scan->xs_orderbynulls);
 	}
+
+	pfree(so);
 }
 
 /*

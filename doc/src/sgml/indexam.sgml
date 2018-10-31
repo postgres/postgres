@@ -614,7 +614,8 @@ amendscan (IndexScanDesc scan);
 </programlisting>
    End a scan and release resources.  The <literal>scan</literal> struct itself
    should not be freed, but any locks or pins taken internally by the
-   access method must be released.
+   access method must be released, as well as any other memory allocated
+   by <function>ambeginscan</function> and other scan-related functions.
   </para>
 
   <para>
