@@ -236,6 +236,14 @@ spgendscan(PG_FUNCTION_ARGS)
 
 	MemoryContextDelete(so->tempCxt);
 
+	if (so->keyData)
+		pfree(so->keyData);
+
+	if (so->state.deadTupleStorage)
+		pfree(so->state.deadTupleStorage);
+
+	pfree(so);
+
 	PG_RETURN_VOID();
 }
 
