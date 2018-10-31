@@ -55,7 +55,7 @@ match properly on the old version.
 Time Zone code
 ==============
 
-The code in this directory is currently synced with tzcode release 2018f.
+The code in this directory is currently synced with tzcode release 2018g.
 There are many cosmetic (and not so cosmetic) differences from the
 original tzcode library, but diffs in the upstream version should usually
 be propagated to our version.  Here are some notes about that.
@@ -73,12 +73,17 @@ fixed that.)
 includes relying on configure's results rather than hand-hacked #defines,
 and not relying on <stdint.h> features that may not exist on old systems.
 (In particular this means using Postgres' definitions of the int32 and
-int64 typedefs, not int_fast32_t/int_fast64_t.)
+int64 typedefs, not int_fast32_t/int_fast64_t.  Likewise we use
+PG_INT32_MIN/MAX not INT32_MIN/MAX.)
 
 * Since Postgres is typically built on a system that has its own copy
 of the <time.h> functions, we must avoid conflicting with those.  This
 mandates renaming typedef time_t to pg_time_t, and similarly for most
 other exposed names.
+
+* zic.c's typedef "lineno" is renamed to "lineno_t", because having
+"lineno" in our typedefs list would cause unfortunate pgindent behavior
+in some other files where we have variables named that.
 
 * We have exposed the tzload() and tzparse() internal functions, and
 slightly modified the API of the former, in part because it now relies
@@ -108,8 +113,11 @@ to first run the tzcode source files through a sed filter like this:
         -e 's/\bregister[ \t]//g' \
         -e 's/int_fast32_t/int32/g' \
         -e 's/int_fast64_t/int64/g' \
+        -e 's/INT32_MIN/PG_INT32_MIN/g' \
+        -e 's/INT32_MAX/PG_INT32_MAX/g' \
         -e 's/struct[ \t]+tm\b/struct pg_tm/g' \
         -e 's/\btime_t\b/pg_time_t/g' \
+        -e 's/lineno/lineno_t/g' \
 
 and then run them through pgindent.  (The first three sed patterns deal
 with conversion of their block comment style to something pgindent
