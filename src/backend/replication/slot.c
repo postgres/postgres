@@ -972,6 +972,11 @@ restart:
 void
 CheckSlotRequirements(void)
 {
+	/*
+	 * NB: Adding a new requirement likely means that RestoreSlotFromDisk()
+	 * needs the same check.
+	 */
+
 	if (max_replication_slots == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -1492,6 +1497,31 @@ RestoreSlotFromDisk(const char *name)
 		fsync_fname("pg_replslot", true);
 		return;
 	}
+
+	/*
+	 * Verify that requirements for the specific slot type are met. That's
+	 * important because if these aren't met we're not guaranteed to retain
+	 * all the necessary resources for the slot.
+	 *
+	 * NB: We have to do so *after* the above checks for ephemeral slots,
+	 * because otherwise a slot that shouldn't exist anymore could prevent
+	 * restarts.
+	 *
+	 * NB: Changing the requirements here also requires adapting
+	 * CheckSlotRequirements() and CheckLogicalDecodingRequirements().
+	 */
+	if (cp.slotdata.database != InvalidOid && wal_level < WAL_LEVEL_LOGICAL)
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("logical replication slots \"%s\" exists, but wal_level < logical",
+						NameStr(cp.slotdata.name)),
+				 errhint("Change wal_level to be replica or higher.")));
+	else if (wal_level < WAL_LEVEL_REPLICA)
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("physical replication slots \"%s\" exists, but wal_level < replica",
+						NameStr(cp.slotdata.name)),
+				 errhint("Change wal_level to be replica or higher.")));
 
 	/* nothing can be active yet, don't lock anything */
 	for (i = 0; i < max_replication_slots; i++)
