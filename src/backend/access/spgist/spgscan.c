@@ -240,6 +240,14 @@ spgendscan(IndexScanDesc scan)
 
 	MemoryContextDelete(so->tempCxt);
 	MemoryContextDelete(so->traversalCxt);
+
+	if (so->keyData)
+		pfree(so->keyData);
+
+	if (so->state.deadTupleStorage)
+		pfree(so->state.deadTupleStorage);
+
+	pfree(so);
 }
 
 /*
