@@ -5579,7 +5579,7 @@ readRecoveryCommandFile(void)
 	}
 
 	/*
-	 * Override any inconsistent requests. Not that this is a change of
+	 * Override any inconsistent requests. Note that this is a change of
 	 * behaviour in 9.5; prior to this we simply ignored a request to pause if
 	 * hot_standby = off, which was surprising behaviour.
 	 */
