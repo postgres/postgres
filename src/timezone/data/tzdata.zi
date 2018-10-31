@@ -1,4 +1,4 @@
-# version 2018f
+# version 2018g
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Sun>=1 23s 0 -
@@ -143,67 +143,56 @@ R MU 2008 o - O lastSun 2 1 -
 R MU 2009 o - Mar lastSun 2 0 -
 Z Indian/Mauritius 3:50 - LMT 1907
 4 MU +04/+05
-R M 1939 o - S 12 0 1 S
+R M 1939 o - S 12 0 1 -
 R M 1939 o - N 19 0 0 -
-R M 1940 o - F 25 0 1 S
+R M 1940 o - F 25 0 1 -
 R M 1945 o - N 18 0 0 -
-R M 1950 o - Jun 11 0 1 S
+R M 1950 o - Jun 11 0 1 -
 R M 1950 o - O 29 0 0 -
-R M 1967 o - Jun 3 12 1 S
+R M 1967 o - Jun 3 12 1 -
 R M 1967 o - O 1 0 0 -
-R M 1974 o - Jun 24 0 1 S
+R M 1974 o - Jun 24 0 1 -
 R M 1974 o - S 1 0 0 -
-R M 1976 1977 - May 1 0 1 S
+R M 1976 1977 - May 1 0 1 -
 R M 1976 o - Au 1 0 0 -
 R M 1977 o - S 28 0 0 -
-R M 1978 o - Jun 1 0 1 S
+R M 1978 o - Jun 1 0 1 -
 R M 1978 o - Au 4 0 0 -
-R M 2008 o - Jun 1 0 1 S
+R M 2008 o - Jun 1 0 1 -
 R M 2008 o - S 1 0 0 -
-R M 2009 o - Jun 1 0 1 S
+R M 2009 o - Jun 1 0 1 -
 R M 2009 o - Au 21 0 0 -
-R M 2010 o - May 2 0 1 S
+R M 2010 o - May 2 0 1 -
 R M 2010 o - Au 8 0 0 -
-R M 2011 o - Ap 3 0 1 S
+R M 2011 o - Ap 3 0 1 -
 R M 2011 o - Jul 31 0 0 -
-R M 2012 2013 - Ap lastSun 2 1 S
+R M 2012 2013 - Ap lastSun 2 1 -
 R M 2012 o - Jul 20 3 0 -
-R M 2012 o - Au 20 2 1 S
+R M 2012 o - Au 20 2 1 -
 R M 2012 o - S 30 3 0 -
 R M 2013 o - Jul 7 3 0 -
-R M 2013 o - Au 10 2 1 S
-R M 2013 ma - O lastSun 3 0 -
-R M 2014 2021 - Mar lastSun 2 1 S
+R M 2013 o - Au 10 2 1 -
+R M 2013 2018 - O lastSun 3 0 -
+R M 2014 2018 - Mar lastSun 2 1 -
 R M 2014 o - Jun 28 3 0 -
-R M 2014 o - Au 2 2 1 S
+R M 2014 o - Au 2 2 1 -
 R M 2015 o - Jun 14 3 0 -
-R M 2015 o - Jul 19 2 1 S
+R M 2015 o - Jul 19 2 1 -
 R M 2016 o - Jun 5 3 0 -
-R M 2016 o - Jul 10 2 1 S
+R M 2016 o - Jul 10 2 1 -
 R M 2017 o - May 21 3 0 -
-R M 2017 o - Jul 2 2 1 S
+R M 2017 o - Jul 2 2 1 -
 R M 2018 o - May 13 3 0 -
-R M 2018 o - Jun 17 2 1 S
-R M 2019 o - May 5 3 0 -
-R M 2019 o - Jun 9 2 1 S
-R M 2020 o - Ap 19 3 0 -
-R M 2020 o - May 24 2 1 S
-R M 2021 o - Ap 11 3 0 -
-R M 2021 o - May 16 2 1 S
-R M 2022 o - May 8 2 1 S
-R M 2023 o - Ap 23 2 1 S
-R M 2024 o - Ap 14 2 1 S
-R M 2025 o - Ap 6 2 1 S
-R M 2026 ma - Mar lastSun 2 1 S
-R M 2036 o - O 19 3 0 -
-R M 2037 o - O 4 3 0 -
+R M 2018 o - Jun 17 2 1 -
 Z Africa/Casablanca -0:30:20 - LMT 1913 O 26
-0 M WE%sT 1984 Mar 16
-1 - CET 1986
-0 M WE%sT
+0 M +00/+01 1984 Mar 16
+1 - +01 1986
+0 M +00/+01 2018 O 27
+1 - +01
 Z Africa/El_Aaiun -0:52:48 - LMT 1934
 -1 - -01 1976 Ap 14
-0 M WE%sT
+0 M +00/+01 2018 O 27
+1 - +01
 Z Africa/Maputo 2:10:20 - LMT 1903 Mar
 2 - CAT
 Li Africa/Maputo Africa/Blantyre
@@ -2433,6 +2422,15 @@ R s 1976 1977 - S lastSun 1 0 -
 R s 1977 o - Ap 2 23 1 S
 R s 1978 o - Ap 2 2s 1 S
 R s 1978 o - O 1 2s 0 -
+R Sp 1967 o - Jun 3 12 1 S
+R Sp 1967 o - O 1 0 0 -
+R Sp 1974 o - Jun 24 0 1 S
+R Sp 1974 o - S 1 0 0 -
+R Sp 1976 1977 - May 1 0 1 S
+R Sp 1976 o - Au 1 0 0 -
+R Sp 1977 o - S 28 0 0 -
+R Sp 1978 o - Jun 1 0 1 S
+R Sp 1978 o - Au 4 0 0 -
 Z Europe/Madrid -0:14:44 - LMT 1900 D 31 23:45:16
 0 s WE%sT 1940 Mar 16 23
 1 s CE%sT 1979
@@ -2443,7 +2441,7 @@ Z Africa/Ceuta -0:21:16 - LMT 1900 D 31 23:38:44
 0 - WET 1924
 0 s WE%sT 1929
 0 - WET 1967
-0 M WE%sT 1984 Mar 16
+0 Sp WE%sT 1984 Mar 16
 1 - CET 1986
 1 E CE%sT
 Z Atlantic/Canary -1:1:36 - LMT 1922 Mar
@@ -2695,9 +2693,7 @@ Z America/Adak 12:13:22 - LMT 1867 O 19 12:44:35
 Z Pacific/Honolulu -10:31:26 - LMT 1896 Ja 13 12
 -10:30 - HST 1933 Ap 30 2
 -10:30 1 HDT 1933 May 21 12
--10:30 - HST 1942 F 9 2
--10:30 1 HDT 1945 S 30 2
--10:30 - HST 1947 Jun 8 2
+-10:30 u H%sT 1947 Jun 8 2
 -10 - HST
 Z America/Phoenix -7:28:18 - LMT 1883 N 18 11:31:42
 -7 u M%sT 1944 Ja 1 0:1
