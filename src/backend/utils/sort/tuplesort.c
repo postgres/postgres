@@ -1259,11 +1259,11 @@ tuplesort_end(Tuplesortstate *state)
 	if (trace_sort)
 	{
 		if (state->tapeset)
-			elog(LOG, "%s of %d ended, %ld disk blocks used: %s",
+			elog(LOG, "%s of worker %d ended, %ld disk blocks used: %s",
 				 SERIAL(state) ? "external sort" : "parallel external sort",
 				 state->worker, spaceUsed, pg_rusage_show(&state->ru_start));
 		else
-			elog(LOG, "%s of %d ended, %ld KB used: %s",
+			elog(LOG, "%s of worker %d ended, %ld KB used: %s",
 				 SERIAL(state) ? "internal sort" : "unperformed parallel sort",
 				 state->worker, spaceUsed, pg_rusage_show(&state->ru_start));
 	}
@@ -1793,7 +1793,7 @@ tuplesort_performsort(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "performsort of %d starting: %s",
+		elog(LOG, "performsort of worker %d starting: %s",
 			 state->worker, pg_rusage_show(&state->ru_start));
 #endif
 
@@ -1878,11 +1878,11 @@ tuplesort_performsort(Tuplesortstate *state)
 	if (trace_sort)
 	{
 		if (state->status == TSS_FINALMERGE)
-			elog(LOG, "performsort of %d done (except %d-way final merge): %s",
+			elog(LOG, "performsort of worker %d done (except %d-way final merge): %s",
 				 state->worker, state->activeTapes,
 				 pg_rusage_show(&state->ru_start));
 		else
-			elog(LOG, "performsort of %d done: %s",
+			elog(LOG, "performsort of worker %d done: %s",
 				 state->worker, pg_rusage_show(&state->ru_start));
 	}
 #endif
@@ -2410,7 +2410,7 @@ inittapes(Tuplesortstate *state, bool mergeruns)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "%d switching to external sort with %d tapes: %s",
+		elog(LOG, "worker %d switching to external sort with %d tapes: %s",
 			 state->worker, maxTapes, pg_rusage_show(&state->ru_start));
 #endif
 
@@ -2660,7 +2660,7 @@ mergeruns(Tuplesortstate *state)
 	 */
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "%d using " INT64_FORMAT " KB of memory for read buffers among %d input tapes",
+		elog(LOG, "worker %d using " INT64_FORMAT " KB of memory for read buffers among %d input tapes",
 			 state->worker, state->availMem / 1024, numInputTapes);
 #endif
 
@@ -2836,7 +2836,7 @@ mergeonerun(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "%d finished %d-way merge step: %s", state->worker,
+		elog(LOG, "worker %d finished %d-way merge step: %s", state->worker,
 			 state->activeTapes, pg_rusage_show(&state->ru_start));
 #endif
 }
@@ -2971,7 +2971,7 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "%d starting quicksort of run %d: %s",
+		elog(LOG, "worker %d starting quicksort of run %d: %s",
 			 state->worker, state->currentRun,
 			 pg_rusage_show(&state->ru_start));
 #endif
@@ -2984,7 +2984,7 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "%d finished quicksort of run %d: %s",
+		elog(LOG, "worker %d finished quicksort of run %d: %s",
 			 state->worker, state->currentRun,
 			 pg_rusage_show(&state->ru_start));
 #endif
@@ -3012,7 +3012,7 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "%d finished writing run %d to tape %d: %s",
+		elog(LOG, "worker %d finished writing run %d to tape %d: %s",
 			 state->worker, state->currentRun, state->destTape,
 			 pg_rusage_show(&state->ru_start));
 #endif
