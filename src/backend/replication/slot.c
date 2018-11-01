@@ -1563,7 +1563,7 @@ RestoreSlotFromDisk(const char *name)
 	}
 
 	if (!restored)
-		ereport(PANIC,
+		ereport(FATAL,
 				(errmsg("too many replication slots active before shutdown"),
 				 errhint("Increase max_replication_slots and try again.")));
 }
