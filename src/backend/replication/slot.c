@@ -1256,13 +1256,13 @@ RestoreSlotFromDisk(const char *name)
 	if (cp.slotdata.database != InvalidOid && wal_level < WAL_LEVEL_LOGICAL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("logical replication slots \"%s\" exists, but wal_level < logical",
+				 errmsg("logical replication slot \"%s\" exists, but wal_level < logical",
 						NameStr(cp.slotdata.name)),
 				 errhint("Change wal_level to be replica or higher.")));
 	else if (wal_level < WAL_LEVEL_ARCHIVE)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("physical replication slots \"%s\" exists, but wal_level < archive",
+				 errmsg("physical replication slot \"%s\" exists, but wal_level < archive",
 						NameStr(cp.slotdata.name)),
 				 errhint("Change wal_level to be archive or higher.")));
 
