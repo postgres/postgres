@@ -377,7 +377,7 @@
      some care must be taken when truncating groups of tables connected by
      foreign keys.  When replicating a truncate action, the subscriber will
      truncate the same group of tables that was truncated on the publisher,
-     either explictly specified or implicitly collected via
+     either explicitly specified or implicitly collected via
      <literal>CASCADE</literal>, minus tables that are not part of the
      subscription.  This will work correctly if all affected tables are part
      of the same subscription.  But if some tables to be truncated on the
