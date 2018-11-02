@@ -2513,6 +2513,57 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
    </para>
   </sect2>
 
+  <sect2 id="installation-notes-macos">
+   <title>macOS</title>
+
+   <indexterm zone="installation-notes-macos">
+    <primary>macOS</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    On recent <productname>macOS</productname> releases, it's necessary to
+    embed the <quote>sysroot</quote> path in the include switches used to
+    find some system header files.  This results in the outputs of
+    the <application>configure</application> script varying depending on
+    which SDK version was used during <application>configure</application>.
+    That shouldn't pose any problem in simple scenarios, but if you are
+    trying to do something like building an extension on a different machine
+    than the server code was built on, you may need to force use of a
+    different sysroot path.  To do that, set <varname>PG_SYSROOT</varname>,
+    for example
+<programlisting>
+make PG_SYSROOT=<replaceable>/desired/path</replaceable> all
+</programlisting>
+    To find out the appropriate path on your machine, run
+<programlisting>
+xcodebuild -version -sdk macosx Path
+</programlisting>
+    Note that building an extension using a different sysroot version than
+    was used to build the core server is not really recommended; in the
+    worst case it could result in hard-to-debug ABI inconsistencies.
+   </para>
+
+   <para>
+    You can also select a non-default sysroot path when configuring, by
+    specifying <varname>PG_SYSROOT</varname>
+    to <application>configure</application>:
+<programlisting>
+./configure ... PG_SYSROOT=<replaceable>/desired/path</replaceable>
+</programlisting>
+   </para>
+
+   <para>
+    <productname>macOS</productname>'s <quote>System Integrity
+    Protection</quote> (SIP) feature breaks <literal>make check</literal>,
+    because it prevents passing the needed setting
+    of <literal>DYLD_LIBRARY_PATH</literal> down to the executables being
+    tested.  You can work around that by doing <literal>make
+    install</literal> before <literal>make check</literal>.
+    Most Postgres developers just turn off SIP, though.
+   </para>
+  </sect2>
+
   <sect2 id="installation-notes-mingw">
    <title>MinGW/Native Windows</title>
 
