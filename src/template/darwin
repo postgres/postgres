@@ -3,14 +3,15 @@
 # Note: Darwin is the original code name for macOS, also known as OS X.
 # We still use "darwin" as the port name, partly because config.guess does.
 
-# Some configure tests require explicit knowledge of where the Xcode "sysroot"
-# is.  We try to avoid having this leak into configure's results, though.
+# Select where system include files should be sought.
 if test x"$PG_SYSROOT" = x"" ; then
   PG_SYSROOT=`xcodebuild -version -sdk macosx Path 2>/dev/null`
 fi
 # Old xcodebuild versions may produce garbage, so validate the result.
 if test x"$PG_SYSROOT" != x"" ; then
-  if test \! -d "$PG_SYSROOT" ; then
+  if test -d "$PG_SYSROOT" ; then
+    CPPFLAGS="-isysroot $PG_SYSROOT $CPPFLAGS"
+  else
     PG_SYSROOT=""
   fi
 fi
