@@ -15246,7 +15246,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
    The result is <quote>false</quote> if the comparison returns false for every
    subquery row (including the case where the subquery returns no
    rows).
-   The result is NULL if the comparison does not return true for any row,
+   The result is NULL if no comparison with a subquery row returns true,
    and it returns NULL for at least one row.
   </para>
 
@@ -15272,7 +15272,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
    The result of <token>ALL</token> is <quote>true</quote> if all rows yield true
    (including the case where the subquery returns no rows).
    The result is <quote>false</quote> if any false result is found.
-   The result is NULL if the comparison does not return false for any row,
+   The result is NULL if no comparison with a subquery row returns false,
    and it returns NULL for at least one row.
   </para>
 
@@ -15302,8 +15302,8 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
    case where the subquery returns no rows).
    The result is <quote>false</quote> if the comparison returns false for any
    subquery row.
-   The result is NULL if the comparison does not return false for any
-   subquery row, and it returns NULL for at least one row.
+   The result is NULL if no comparison with a subquery row returns false,
+   and it returns NULL for at least one row.
   </para>
 
   <para>
