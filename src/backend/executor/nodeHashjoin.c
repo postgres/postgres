@@ -1395,7 +1395,7 @@ ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate)
 		if (ExecHashGetHashValue(hashtable, econtext,
 								 hjstate->hj_OuterHashKeys,
 								 true,	/* outer tuple */
-								 false, /* outer join, currently unsupported */
+								 HJ_FILL_OUTER(hjstate),
 								 &hashvalue))
 		{
 			int			batchno;
