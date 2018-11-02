@@ -4147,7 +4147,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         used. When setting this parameter you should consider both
         <productname>PostgreSQL</productname>'s shared buffers and the
         portion of the kernel's disk cache that will be used for
-        <productname>PostgreSQL</productname> data files.  Also, take
+        <productname>PostgreSQL</productname> data files, though some
+        data might exist in both places. Also, take
         into account the expected number of concurrent queries on different
         tables, since they will have to share the available
         space.  This parameter has no effect on the size of shared
