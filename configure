@@ -627,6 +627,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 vpath_build
+PG_SYSROOT
 PG_VERSION_NUM
 PROVE
 FOP
@@ -18813,6 +18814,15 @@ cat >>confdefs.h <<_ACEOF
 #define PG_VERSION_NUM $PG_VERSION_NUM
 _ACEOF
 
+
+
+# If we are inserting PG_SYSROOT into CPPFLAGS, do so symbolically not
+# literally, so that it's possible to override it at build time using
+# a command like "make ... PG_SYSROOT=path".  This has to be done after
+# we've finished all configure checks that depend on CPPFLAGS.
+if test x"$PG_SYSROOT" != x; then
+  CPPFLAGS=`echo "$CPPFLAGS" | sed -e "s| $PG_SYSROOT | \\\$(PG_SYSROOT) |"`
+fi
 
 
 
