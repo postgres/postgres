@@ -158,7 +158,7 @@ my @options = (
 		]
 	],
 
-	# loging sub-options
+	# logging sub-options
 	[
 		'sampling => log', '--sampling-rate=0.01',
 		[qr{log sampling .* only when}]

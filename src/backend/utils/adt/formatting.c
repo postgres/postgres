@@ -3706,7 +3706,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 
 /* ----------
  * TO_DATE
- *	Make Date from date_str which is formated at argument 'fmt'
+ *	Make Date from date_str which is formatted at argument 'fmt'
  * ----------
  */
 Datum

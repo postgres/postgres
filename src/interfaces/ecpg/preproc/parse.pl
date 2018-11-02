@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # src/interfaces/ecpg/preproc/parse.pl
-# parser generater for ecpg version 2
+# parser generator for ecpg version 2
 # call with backend parser as stdin
 #
 # Copyright (c) 2007-2018, PostgreSQL Global Development Group

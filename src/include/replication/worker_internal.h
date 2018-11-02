@@ -27,7 +27,7 @@ typedef struct LogicalRepWorker
 	/* Indicates if this slot is used or free. */
 	bool		in_use;
 
-	/* Increased everytime the slot is taken by new worker. */
+	/* Increased every time the slot is taken by new worker. */
 	uint16		generation;
 
 	/* Pointer to proc array. NULL if not running. */

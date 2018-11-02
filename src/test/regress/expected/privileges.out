@@ -738,7 +738,7 @@ SELECT '{1}'::int4[]::int8[];
 (1 row)
 
 REVOKE ALL ON FUNCTION int8(integer) FROM PUBLIC;
-SELECT '{1}'::int4[]::int8[]; --superuser, suceed
+SELECT '{1}'::int4[]::int8[]; --superuser, succeed
  int8 
 ------
  {1}

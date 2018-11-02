@@ -495,7 +495,7 @@ GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 BEGIN;
 SELECT '{1}'::int4[]::int8[];
 REVOKE ALL ON FUNCTION int8(integer) FROM PUBLIC;
-SELECT '{1}'::int4[]::int8[]; --superuser, suceed
+SELECT '{1}'::int4[]::int8[]; --superuser, succeed
 SET SESSION AUTHORIZATION regress_priv_user4;
 SELECT '{1}'::int4[]::int8[]; --other user, fail
 ROLLBACK;

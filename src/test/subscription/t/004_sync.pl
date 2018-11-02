@@ -116,7 +116,7 @@ is($result, qq(20), 'initial data synced for fourth sub');
 # add new table on subscriber
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_rep_next (a int)");
 
-# setup structure with existing data on pubisher
+# setup structure with existing data on publisher
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_rep_next (a) AS SELECT generate_series(1,10)");
 

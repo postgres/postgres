@@ -65,7 +65,7 @@
  * and Group, which need these values to be available in their inputs.
  *
  * CP_IGNORE_TLIST specifies that the caller plans to replace the targetlist,
- * and therefore it doens't matter a bit what target list gets generated.
+ * and therefore it doesn't matter a bit what target list gets generated.
  */
 #define CP_EXACT_TLIST		0x0001	/* Plan must return specified tlist */
 #define CP_SMALL_TLIST		0x0002	/* Prefer narrower tlists */

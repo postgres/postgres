@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # src/interfaces/ecpg/preproc/check_rules.pl
-# test parser generater for ecpg
+# test parser generator for ecpg
 # call with backend parser as stdin
 #
 # Copyright (c) 2009-2018, PostgreSQL Global Development Group

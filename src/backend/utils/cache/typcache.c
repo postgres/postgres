@@ -1869,7 +1869,7 @@ assign_record_type_identifier(Oid type_id, int32 typmod)
 }
 
 /*
- * Return the amout of shmem required to hold a SharedRecordTypmodRegistry.
+ * Return the amount of shmem required to hold a SharedRecordTypmodRegistry.
  * This exists only to avoid exposing private innards of
  * SharedRecordTypmodRegistry in a header.
  */

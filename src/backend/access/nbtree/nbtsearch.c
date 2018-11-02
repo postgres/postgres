@@ -184,7 +184,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 
 	/*
 	 * If we're asked to lock leaf in write mode, but didn't manage to, then
-	 * relock.  That may happend when root page appears to be leaf.
+	 * relock.  That may happen when the root page appears to be leaf.
 	 */
 	if (access == BT_WRITE && page_access == BT_READ)
 	{

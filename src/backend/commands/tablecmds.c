@@ -834,7 +834,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		if (OidIsValid(defaultPartOid))
 			defaultRel = heap_open(defaultPartOid, AccessExclusiveLock);
 
-		/* Tranform the bound values */
+		/* Transform the bound values */
 		pstate = make_parsestate(NULL);
 		pstate->p_sourcetext = queryString;
 

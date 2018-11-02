@@ -438,7 +438,7 @@ llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module)
 
 	if (context->base.flags & PGJIT_OPT3)
 	{
-		/* TODO: Unscientifically determined threshhold */
+		/* TODO: Unscientifically determined threshold */
 		LLVMPassManagerBuilderUseInlinerWithThreshold(llvm_pmb, 512);
 	}
 	else
@@ -853,7 +853,7 @@ llvm_split_symbol_name(const char *name, char **modname, char **funcname)
 	{
 		/*
 		 * Symbol names cannot contain a ., therefore we can split based on
-		 * first and last occurance of one.
+		 * first and last occurrence of one.
 		 */
 		*funcname = rindex(name, '.');
 		(*funcname)++;			/* jump over . */

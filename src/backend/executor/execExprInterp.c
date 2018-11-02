@@ -1622,7 +1622,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 		/*
 		 * Evaluate aggregate transition / combine function that has a
-		 * by-value transition type. That's a seperate case from the
+		 * by-value transition type. That's a separate case from the
 		 * by-reference implementation because it's a bit simpler.
 		 */
 		EEO_CASE(EEOP_AGG_PLAIN_TRANS_BYVAL)

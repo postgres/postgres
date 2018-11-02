@@ -1115,7 +1115,7 @@ ALTER TABLE ONLY fk_partitioned_fk ADD FOREIGN KEY (a, b)
 ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
   REFERENCES fk_notpartitioned_pk NOT VALID;
 
--- these inserts, targetting both the partition directly as well as the
+-- these inserts, targeting both the partition directly as well as the
 -- partitioned table, should all fail
 INSERT INTO fk_partitioned_fk (a,b) VALUES (500, 501);
 INSERT INTO fk_partitioned_fk_1 (a,b) VALUES (500, 501);

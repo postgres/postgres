@@ -1363,7 +1363,7 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 
 
 /*
- * Functions for manipulating the resizeable buffer used by convertJsonb and
+ * Functions for manipulating the resizable buffer used by convertJsonb and
  * its subroutines.
  */
 

@@ -1476,7 +1476,7 @@ ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
   REFERENCES fk_notpartitioned_pk NOT VALID;
 ERROR:  cannot add NOT VALID foreign key on partitioned table "fk_partitioned_fk" referencing relation "fk_notpartitioned_pk"
 DETAIL:  This feature is not yet supported on partitioned tables.
--- these inserts, targetting both the partition directly as well as the
+-- these inserts, targeting both the partition directly as well as the
 -- partitioned table, should all fail
 INSERT INTO fk_partitioned_fk (a,b) VALUES (500, 501);
 ERROR:  insert or update on table "fk_partitioned_fk_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"

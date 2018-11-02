@@ -852,7 +852,7 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 	{
 		ResultRelInfo *resultRelInfo = proute->partitions[i];
 
-		/* skip further processsing for uninitialized partitions */
+		/* skip further processing for uninitialized partitions */
 		if (resultRelInfo == NULL)
 			continue;
 

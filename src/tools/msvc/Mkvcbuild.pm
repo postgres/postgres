@@ -630,7 +630,7 @@ sub mkvcbuild
 				{
 
 					# Some builds exhibit runtime failure through Perl warning
-					# 'Can't spawn "conftest.exe"'; supress that.
+					# 'Can't spawn "conftest.exe"'; suppress that.
 					no warnings;
 
 					# Disable error dialog boxes like we do in the postmaster.

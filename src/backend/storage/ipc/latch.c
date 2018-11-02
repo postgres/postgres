@@ -1030,7 +1030,7 @@ WaitEventSetWait(WaitEventSet *set, long timeout,
 /*
  * Wait using linux's epoll_wait(2).
  *
- * This is the preferrable wait method, as several readiness notifications are
+ * This is the preferable wait method, as several readiness notifications are
  * delivered, without having to iterate through all of set->events. The return
  * epoll_event struct contain a pointer to our events, making association
  * easy.

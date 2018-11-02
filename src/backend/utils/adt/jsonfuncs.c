@@ -5040,7 +5040,7 @@ iterate_jsonb_values(Jsonb *jb, uint32 flags, void *state,
 
 	/*
 	 * Just recursively iterating over jsonb and call callback on all
-	 * correspoding elements
+	 * corresponding elements
 	 */
 	while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{
