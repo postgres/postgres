@@ -446,6 +446,7 @@ static bool ATPrepChangePersistence(Relation rel, bool toLogged);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 					const char *tablespacename, LOCKMODE lockmode);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
+static void ATExecPartedIdxSetTableSpace(Relation rel, Oid newTableSpace);
 static void ATExecSetRelOptions(Relation rel, List *defList,
 					AlterTableType operation,
 					LOCKMODE lockmode);
@@ -3845,7 +3846,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
-			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX |
+								ATT_PARTITIONED_INDEX);
 			/* This command never recurses */
 			ATPrepSetTableSpace(tab, rel, cmd->name, lockmode);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
@@ -4181,10 +4183,13 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			 */
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
-
 			/*
-			 * Nothing to do here; Phase 3 does the work
+			 * Only do this for partitioned indexes, for which this is just
+			 * a catalog change.  Other relation types are handled by Phase 3.
 			 */
+			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
+				ATExecPartedIdxSetTableSpace(rel, tab->newTableSpace);
+
 			break;
 		case AT_SetRelOptions:	/* SET (...) */
 		case AT_ResetRelOptions:	/* RESET (...) */
@@ -11047,6 +11052,55 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 
 	/* Clean up */
 	list_free(reltoastidxids);
+}
+
+/*
+ * Special handling of ALTER TABLE SET TABLESPACE for partitioned indexes,
+ * which have no storage (so not handled in Phase 3 like other relation types)
+ */
+static void
+ATExecPartedIdxSetTableSpace(Relation rel, Oid newTableSpace)
+{
+	HeapTuple	tuple;
+	Oid			oldTableSpace;
+	Relation	pg_class;
+	Form_pg_class rd_rel;
+	Oid			indexOid = RelationGetRelid(rel);
+
+	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX);
+
+	/*
+	 * No work if no change in tablespace.
+	 */
+	oldTableSpace = rel->rd_rel->reltablespace;
+	if (newTableSpace == oldTableSpace ||
+		(newTableSpace == MyDatabaseTableSpace && oldTableSpace == 0))
+	{
+		InvokeObjectPostAlterHook(RelationRelationId,
+								  indexOid, 0);
+		return;
+	}
+
+	/* Get a modifiable copy of the relation's pg_class row */
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(indexOid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", indexOid);
+	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
+
+	/* update the pg_class row */
+	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
+	CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId, indexOid, 0);
+
+	heap_freetuple(tuple);
+
+	heap_close(pg_class, RowExclusiveLock);
+
+	/* Make sure the reltablespace change is visible */
+	CommandCounterIncrement();
 }
 
 /*

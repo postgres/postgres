@@ -44,6 +44,14 @@ CREATE INDEX foo_idx on testschema.foo(i) TABLESPACE regress_tblspace;
 SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
     where c.reltablespace = t.oid AND c.relname = 'foo_idx';
 
+-- partitioned index
+CREATE TABLE testschema.part (a int) PARTITION BY LIST (a);
+CREATE TABLE testschema.part1 PARTITION OF testschema.part FOR VALUES IN (1);
+CREATE INDEX part_a_idx ON testschema.part (a) TABLESPACE regress_tblspace;
+CREATE TABLE testschema.part2 PARTITION OF testschema.part FOR VALUES IN (2);
+SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
+    where c.reltablespace = t.oid AND c.relname LIKE 'part%_idx';
+
 -- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
 CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
 INSERT INTO testschema.test_default_tab VALUES (1);
@@ -93,6 +101,8 @@ CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
 
 ALTER TABLE testschema.atable SET TABLESPACE regress_tblspace;
 ALTER INDEX testschema.anindex SET TABLESPACE regress_tblspace;
+ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_default;
+ALTER INDEX testschema.part_a_idx SET TABLESPACE regress_tblspace;
 
 INSERT INTO testschema.atable VALUES(3);	-- ok
 INSERT INTO testschema.atable VALUES(1);	-- fail (checks index)
