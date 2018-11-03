@@ -2124,6 +2124,8 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_nullp;
 					LLVMBasicBlockRef *b_checknulls;
 
+					Assert(nargs > 0);
+
 					jumpnull = op->d.agg_strict_input_check.jumpnull;
 					v_nullp = l_ptr_const(nulls, l_ptr(TypeStorageBool));
 
