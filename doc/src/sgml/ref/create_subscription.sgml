@@ -49,8 +49,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   </para>
 
   <para>
-   Additional info about subscriptions and logical replication as a whole
-   can is available at <xref linkend="logical-replication-subscription"/> and
+   Additional information about subscriptions and logical replication as a
+   whole is available at <xref linkend="logical-replication-subscription"/> and
    <xref linkend="logical-replication"/>.
   </para>
 
