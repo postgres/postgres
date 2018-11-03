@@ -3023,7 +3023,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		 * just keep the prior transValue. This is true for both plain and
 		 * sorted/distinct aggregates.
 		 */
-		if (trans_fcinfo->flinfo->fn_strict && numInputs > 0)
+		if (trans_fcinfo->flinfo->fn_strict && pertrans->numTransInputs > 0)
 		{
 			scratch.opcode = EEOP_AGG_STRICT_INPUT_CHECK;
 			scratch.d.agg_strict_input_check.nulls = strictnulls;
