@@ -2229,3 +2229,18 @@ SELECT dense_rank(x) WITHIN GROUP (ORDER BY x) FROM (VALUES (1),(1),(2),(2),(3),
           1
 (3 rows)
 
+-- Ensure that the STRICT checks for aggregates does not take NULLness
+-- of ORDER BY columns into account. See bug report around
+-- 2a505161-2727-2473-7c46-591ed108ac52@email.cz
+SELECT min(x ORDER BY y) FROM (VALUES(1, NULL)) AS d(x,y);
+ min 
+-----
+   1
+(1 row)
+
+SELECT min(x ORDER BY y) FROM (VALUES(1, 2)) AS d(x,y);
+ min 
+-----
+   1
+(1 row)
+

@@ -3028,7 +3028,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 			scratch.opcode = EEOP_AGG_STRICT_INPUT_CHECK;
 			scratch.d.agg_strict_input_check.nulls = strictnulls;
 			scratch.d.agg_strict_input_check.jumpnull = -1; /* adjust later */
-			scratch.d.agg_strict_input_check.nargs = numInputs;
+			scratch.d.agg_strict_input_check.nargs = pertrans->numTransInputs;
 			ExprEvalPushStep(state, &scratch);
 			adjust_bailout = lappend_int(adjust_bailout,
 										 state->steps_len - 1);
