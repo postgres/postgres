@@ -353,7 +353,6 @@ heap_create(const char *relname,
 		case RELKIND_COMPOSITE_TYPE:
 		case RELKIND_FOREIGN_TABLE:
 		case RELKIND_PARTITIONED_TABLE:
-		case RELKIND_PARTITIONED_INDEX:
 			create_storage = false;
 
 			/*
@@ -362,6 +361,15 @@ heap_create(const char *relname,
 			 */
 			reltablespace = InvalidOid;
 			break;
+
+		case RELKIND_PARTITIONED_INDEX:
+			/*
+			 * Preserve tablespace so that it's used as tablespace for indexes
+			 * on future partitions.
+			 */
+			create_storage = false;
+			break;
+
 		case RELKIND_SEQUENCE:
 			create_storage = true;
 

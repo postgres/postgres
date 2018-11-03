@@ -61,6 +61,20 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
  foo_idx | regress_tblspace
 (1 row)
 
+-- partitioned index
+CREATE TABLE testschema.part (a int) PARTITION BY LIST (a);
+CREATE TABLE testschema.part1 PARTITION OF testschema.part FOR VALUES IN (1);
+CREATE INDEX part_a_idx ON testschema.part (a) TABLESPACE regress_tblspace;
+CREATE TABLE testschema.part2 PARTITION OF testschema.part FOR VALUES IN (2);
+SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
+    where c.reltablespace = t.oid AND c.relname LIKE 'part%_idx';
+   relname   |     spcname      
+-------------+------------------
+ part1_a_idx | regress_tblspace
+ part2_a_idx | regress_tblspace
+ part_a_idx  | regress_tblspace
+(3 rows)
+
 -- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
 CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
 INSERT INTO testschema.test_default_tab VALUES (1);
@@ -200,6 +214,8 @@ CREATE TABLE testschema.atable AS VALUES (1), (2);
 CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
 ALTER TABLE testschema.atable SET TABLESPACE regress_tblspace;
 ALTER INDEX testschema.anindex SET TABLESPACE regress_tblspace;
+ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_default;
+ALTER INDEX testschema.part_a_idx SET TABLESPACE regress_tblspace;
 INSERT INTO testschema.atable VALUES(3);	-- ok
 INSERT INTO testschema.atable VALUES(1);	-- fail (checks index)
 ERROR:  duplicate key value violates unique constraint "anindex"
@@ -241,10 +257,11 @@ NOTICE:  no matching relations in tablespace "regress_tblspace_renamed" found
 -- Should succeed
 DROP TABLESPACE regress_tblspace_renamed;
 DROP SCHEMA testschema CASCADE;
-NOTICE:  drop cascades to 5 other objects
+NOTICE:  drop cascades to 6 other objects
 DETAIL:  drop cascades to table testschema.foo
 drop cascades to table testschema.asselect
 drop cascades to table testschema.asexecute
+drop cascades to table testschema.part
 drop cascades to table testschema.atable
 drop cascades to table testschema.tablespace_acl
 DROP ROLE regress_tablespace_user1;
