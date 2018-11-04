@@ -2861,7 +2861,6 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 	for (transno = 0; transno < aggstate->numtrans; transno++)
 	{
 		AggStatePerTrans pertrans = &aggstate->pertrans[transno];
-		int			numInputs = pertrans->numInputs;
 		int			argno;
 		int			setno;
 		FunctionCallInfo trans_fcinfo = &pertrans->transfn_fcinfo;
@@ -3016,7 +3015,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				argno++;
 			}
 		}
-		Assert(numInputs == argno);
+		Assert(pertrans->numInputs == argno);
 
 		/*
 		 * For a strict transfn, nothing happens when there's a NULL input; we
