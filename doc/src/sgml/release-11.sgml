@@ -1,6 +1,401 @@
 <!-- doc/src/sgml/release-11.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-11-1">
+  <title>Release 11.1</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2018-11-08</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 11.0.
+   For information about new features in major release 11, see
+   <xref linkend="release-11"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 11.1</title>
+
+   <para>
+    A dump/restore is not required for those running 11.X.
+   </para>
+
+   <para>
+    However, if you use the <filename>pg_stat_statements</filename> extension,
+    see the changelog entry below about that.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [dfa608141] 2018-11-03 13:25:19 -0300
+Branch: REL_11_STABLE [33e6c34c3] 2018-11-03 13:25:29 -0300
+-->
+     <para>
+      Apply the tablespace specified for a partitioned index when creating a
+      child index (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      Previously, child indexes were always created in the default
+      tablespace.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: master [1ce4a807e] 2018-11-03 11:05:35 +1300
+Branch: REL_11_STABLE [fd6449aa3] 2018-11-03 11:08:03 +1300
+-->
+     <para>
+      Fix NULL handling in parallel hashed multi-batch left joins (Andrew
+      Gierth, Thomas Munro)
+     </para>
+
+     <para>
+      Outer-relation rows with null values of the hash key were omitted from
+      the join result.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [14a158f9b] 2018-10-30 15:26:11 -0400
+Branch: REL_11_STABLE [2bd6dcdef] 2018-10-30 15:26:11 -0400
+-->
+     <para>
+      Fix incorrect processing of an array-type coercion expression
+      appearing within a <literal>CASE</literal> clause that has a constant
+      test expression (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [040a1df61] 2018-10-24 10:56:27 -0400
+Branch: REL_11_STABLE [372102b81] 2018-10-24 10:57:35 -0400
+-->
+     <para>
+      Fix incorrect expansion of tuples lacking recently-added columns
+      (Andrew Dunstan, Amit Langote)
+     </para>
+
+     <para>
+      This is known to lead to crashes in triggers on tables with
+      recently-added columns, and could have other symptoms as well.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [15c729347] 2018-11-04 13:25:39 -0500
+Branch: REL_11_STABLE [4b0c3712c] 2018-11-04 13:25:39 -0500
+Branch: master [9b6fb9fbb] 2018-11-04 14:50:55 -0500
+Branch: REL_11_STABLE [d358da814] 2018-11-04 14:50:55 -0500
+-->
+     <para>
+      Fix bugs with named or defaulted arguments in <command>CALL</command>
+      argument lists (Tom Lane, Pavel Stehule)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [4c640f4f3] 2018-11-03 14:48:42 -0700
+Branch: REL_11_STABLE [fd59b29c8] 2018-11-03 14:48:42 -0700
+Branch: master [793beab37] 2018-11-03 15:55:23 -0700
+Branch: REL_11_STABLE [6eb31cedb] 2018-11-03 16:00:00 -0700
+-->
+     <para>
+      Fix strictness check for strict aggregates with <literal>ORDER
+      BY</literal> columns (Andrew Gierth, Andres Freund)
+     </para>
+
+     <para>
+      The strictness logic incorrectly ignored rows for which
+      the <literal>ORDER BY</literal> value(s) were null.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [981dc2baa] 2018-11-03 13:56:10 -0400
+Branch: REL_11_STABLE [bf4a9562e] 2018-11-03 13:56:10 -0400
+Branch: REL_10_STABLE [f7ba6e951] 2018-11-03 13:56:10 -0400
+Branch: REL9_6_STABLE [73dbaed93] 2018-11-03 13:56:10 -0400
+Branch: REL9_5_STABLE [6e6092989] 2018-11-03 13:56:10 -0400
+Branch: REL9_4_STABLE [0ae902e39] 2018-11-03 13:56:10 -0400
+Branch: REL9_3_STABLE [33c697e9d] 2018-11-03 13:56:10 -0400
+-->
+     <para>
+      Fix character-class checks to not fail on Windows for Unicode
+      characters above U+FFFF (Tom Lane, Kenji Uno)
+     </para>
+
+     <para>
+      This bug affected full-text-search operations, as well
+      as <filename>contrib/ltree</filename>
+      and <filename>contrib/pg_trgm</filename>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2ddb9149d] 2018-10-19 21:39:21 -0400
+Branch: REL_11_STABLE [7aaeb7b45] 2018-10-19 21:39:21 -0400
+Branch: REL_10_STABLE [3bdef6d21] 2018-10-19 21:39:21 -0400
+Branch: REL9_6_STABLE [cbab94077] 2018-10-19 21:39:22 -0400
+Branch: REL9_5_STABLE [f4941666a] 2018-10-19 21:39:22 -0400
+-->
+     <para>
+      Ensure that the server will process
+      already-received <literal>NOTIFY</literal>
+      and <literal>SIGTERM</literal> interrupts before waiting for client
+      input (Jeff Janes, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [696b0c5fd] 2018-10-31 17:05:03 -0400
+Branch: REL_11_STABLE [2493e2c2d] 2018-10-31 17:04:42 -0400
+Branch: REL_10_STABLE [92e371f9b] 2018-10-31 17:04:43 -0400
+Branch: REL9_6_STABLE [558571afc] 2018-10-31 17:04:43 -0400
+Branch: REL9_5_STABLE [156a737a6] 2018-10-31 17:04:43 -0400
+Branch: REL9_4_STABLE [95015b1f8] 2018-10-31 17:04:43 -0400
+Branch: REL9_3_STABLE [82dd1c271] 2018-10-31 17:04:43 -0400
+-->
+     <para>
+      Fix memory leak in repeated SP-GiST index scans (Tom Lane)
+     </para>
+
+     <para>
+      This is only known to amount to anything significant in cases where
+      an exclusion constraint using SP-GiST receives many new index entries
+      in a single command.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [691d79a07] 2018-10-31 15:46:39 -0700
+Branch: REL_11_STABLE [c33a01c79] 2018-10-31 15:46:40 -0700
+Branch: REL_10_STABLE [021e1c329] 2018-10-31 15:46:40 -0700
+Branch: REL9_6_STABLE [d35fd17cb] 2018-10-31 15:46:40 -0700
+Branch: REL9_5_STABLE [679cb44e4] 2018-10-31 15:46:40 -0700
+Branch: REL9_4_STABLE [cf358a2c0] 2018-10-31 15:46:40 -0700
+-->
+     <para>
+      Prevent starting the server with <varname>wal_level</varname> set
+      to too low a value to support an existing replication slot (Andres
+      Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4247db625] 2018-10-19 22:22:57 -0400
+Branch: REL_11_STABLE [d30d27a52] 2018-10-19 22:22:57 -0400
+Branch: REL_10_STABLE [ecc59e31a] 2018-10-19 22:22:57 -0400
+Branch: REL9_6_STABLE [34aad21cb] 2018-10-19 22:22:57 -0400
+Branch: REL9_5_STABLE [ac3be116a] 2018-10-19 22:22:57 -0400
+-->
+     <para>
+      Fix <application>psql</application>, as well as documentation
+      examples, to call <function>PQconsumeInput()</function> before
+      each <function>PQnotifies()</function> call (Tom Lane)
+     </para>
+
+     <para>
+      This fixes cases in which <application>psql</application> would not
+      report receipt of a <literal>NOTIFY</literal> message until after the
+      next command.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [350410be4] 2018-10-19 00:50:16 -0400
+Branch: REL_11_STABLE [06292bb94] 2018-10-19 00:50:16 -0400
+Branch: REL_10_STABLE [09397f0ed] 2018-10-19 00:50:17 -0400
+-->
+     <para>
+      Ensure proper quoting of transition table names
+      when <application>pg_dump</application> emits <command>CREATE TRIGGER
+      ... REFERENCING</command> commands (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [d55241af7] 2018-10-19 22:44:12 +0900
+Branch: REL_11_STABLE [cc7f27eae] 2018-10-19 22:45:07 +0900
+-->
+     <para>
+      Fix <application>pg_verify_checksums</application>'s determination of
+      which files to check the checksums of (Michael Paquier)
+     </para>
+
+     <para>
+      In some cases it complained about files that are not expected to have
+      checksums.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1440c461f] 2018-11-02 18:54:00 -0400
+Branch: REL_11_STABLE [df1d749a7] 2018-11-02 18:54:00 -0400
+Branch: REL_10_STABLE [229a5c8ad] 2018-11-02 18:54:00 -0400
+Branch: REL9_6_STABLE [401202b79] 2018-11-02 18:54:00 -0400
+Branch: REL9_5_STABLE [94ea1cf73] 2018-11-02 18:54:00 -0400
+Branch: REL9_4_STABLE [1b5e8b408] 2018-11-02 18:54:00 -0400
+Branch: REL9_3_STABLE [1aad3a724] 2018-11-02 18:54:00 -0400
+Branch: master [e74dd00f5] 2018-10-18 14:55:23 -0400
+Branch: REL_11_STABLE [d1e869d1e] 2018-10-18 14:55:23 -0400
+Branch: REL_10_STABLE [34f9944c2] 2018-10-18 14:55:23 -0400
+Branch: REL9_6_STABLE [1b92ca9e2] 2018-10-18 14:55:23 -0400
+Branch: REL9_5_STABLE [021b355cd] 2018-10-18 14:55:23 -0400
+Branch: REL9_4_STABLE [0749acca5] 2018-10-18 14:55:23 -0400
+Branch: REL9_3_STABLE [015fd381f] 2018-10-18 14:55:23 -0400
+Branch: master [68fc227dd] 2018-10-16 16:27:15 -0400
+Branch: REL_11_STABLE [1a69f738d] 2018-10-16 16:27:15 -0400
+Branch: REL_10_STABLE [ee6c08b01] 2018-10-16 16:27:15 -0400
+Branch: REL9_6_STABLE [5777a9ff8] 2018-10-16 16:27:15 -0400
+Branch: REL9_5_STABLE [d0ab588cc] 2018-10-16 16:27:15 -0400
+Branch: REL9_4_STABLE [486e6f8d9] 2018-10-16 16:27:15 -0400
+Branch: REL9_3_STABLE [19ac2cb2a] 2018-10-16 16:27:15 -0400
+Branch: master [5e2217131] 2018-09-25 13:23:29 -0400
+Branch: REL_11_STABLE Release: REL_11_0 [9590f7d6c] 2018-09-25 13:23:29 -0400
+Branch: REL_10_STABLE [736c3a48c] 2018-09-25 13:23:29 -0400
+Branch: REL9_6_STABLE [0a4456a70] 2018-09-25 13:23:29 -0400
+Branch: REL9_5_STABLE [6dc28d291] 2018-09-25 13:23:29 -0400
+Branch: REL9_4_STABLE [a5361b593] 2018-09-25 13:23:29 -0400
+Branch: REL9_3_STABLE [6019247a5] 2018-09-25 13:23:29 -0400
+-->
+     <para>
+      Fix build problems on macOS 10.14 (Mojave) (Tom Lane)
+     </para>
+
+     <para>
+      Adjust <application>configure</application> to add
+      an <option>-isysroot</option> switch to <varname>CPPFLAGS</varname>;
+      without this, PL/Perl and PL/Tcl fail to configure or build on macOS
+      10.14.  The specific sysroot used can be overridden at configure time
+      or build time by setting the <varname>PG_SYSROOT</varname> variable in
+      the arguments of <application>configure</application>
+      or <application>make</application>.
+     </para>
+
+     <para>
+      It is now recommended that Perl-related extensions
+      write <literal>$(perl_includespec)</literal> rather
+      than <literal>-I$(perl_archlibexp)/CORE</literal> in their compiler
+      flags.  The latter continues to work on most platforms, but not recent
+      macOS.
+     </para>
+
+     <para>
+      Also, it should no longer be necessary to
+      specify <option>--with-tclconfig</option> manually to get PL/Tcl to
+      build on recent macOS releases.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [1df92eeaf] 2018-10-28 12:22:32 -0400
+Branch: REL_11_STABLE [8cb5e67d1] 2018-10-28 12:23:19 -0400
+Branch: REL_10_STABLE [a71f55652] 2018-10-28 12:25:10 -0400
+Branch: REL9_6_STABLE [9fd6d4eae] 2018-10-28 12:25:56 -0400
+Branch: REL9_5_STABLE [ba103dc87] 2018-10-28 12:26:05 -0400
+Branch: REL9_4_STABLE [698255147] 2018-10-28 12:26:14 -0400
+Branch: REL9_3_STABLE [075641fd0] 2018-10-28 12:27:58 -0400
+-->
+     <para>
+      Fix MSVC build and regression-test scripts to work on recent Perl
+      versions (Andrew Dunstan)
+     </para>
+
+     <para>
+      Perl no longer includes the current directory in its search path
+      by default; work around that.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [ce5d3424d] 2018-10-20 09:02:36 -0400
+Branch: REL_11_STABLE [a0a8671a6] 2018-10-20 09:10:02 -0400
+Branch: REL_10_STABLE [f4b67efdc] 2018-10-20 09:10:18 -0400
+Branch: REL9_6_STABLE [42a93da25] 2018-10-20 09:10:54 -0400
+Branch: REL9_5_STABLE [cc02db82c] 2018-10-20 09:11:18 -0400
+-->
+     <para>
+      On Windows, allow the regression tests to be run by an Administrator
+      account (Andrew Dunstan)
+     </para>
+
+     <para>
+      To do this safely, <application>pg_regress</application> now gives up
+      any such privileges at startup.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5c2e0ca5f] 2018-10-31 08:35:50 -0400
+Branch: REL_11_STABLE [58c45fdaa] 2018-10-31 08:36:06 -0400
+Branch: REL_10_STABLE [671f43d88] 2018-10-31 08:36:15 -0400
+Branch: REL9_6_STABLE [bb761c6a0] 2018-10-31 08:36:22 -0400
+Branch: REL9_5_STABLE [811d8cb87] 2018-10-31 08:36:29 -0400
+Branch: REL9_4_STABLE [d651e9e7c] 2018-10-31 08:36:35 -0400
+Branch: REL9_3_STABLE [3bf4edace] 2018-10-31 08:36:41 -0400
+Branch: master [13877d30f] 2018-10-19 17:01:34 -0400
+Branch: REL_11_STABLE [d2259c26b] 2018-10-19 17:01:49 -0400
+Branch: REL_10_STABLE [5777c93af] 2018-10-19 17:01:56 -0400
+Branch: REL9_6_STABLE [185f135c9] 2018-10-19 17:02:05 -0400
+Branch: REL9_5_STABLE [56170609b] 2018-10-19 17:02:12 -0400
+Branch: REL9_4_STABLE [9abbfc35c] 2018-10-19 17:02:20 -0400
+Branch: REL9_3_STABLE [84261eb10] 2018-10-19 17:02:26 -0400
+-->
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2018g for DST law changes in Chile, Fiji, Morocco, and Russia
+      (Volgograd), plus historical corrections for China, Hawaii, Japan,
+      Macau, and North Korea.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-11">
   <title>Release 11</title>
 
