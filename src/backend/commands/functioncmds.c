@@ -2225,6 +2225,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 
 	fexpr = stmt->funcexpr;
 	Assert(fexpr);
+	Assert(IsA(fexpr, FuncExpr));
 
 	aclresult = pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
@@ -2253,13 +2254,25 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	 * and AbortTransaction() resets the security context.  This could be
 	 * reorganized, but right now it doesn't work.
 	 */
-	if (((Form_pg_proc )GETSTRUCT(tp))->prosecdef)
+	if (((Form_pg_proc) GETSTRUCT(tp))->prosecdef)
 		callcontext->atomic = true;
 
 	/*
-	 * Expand named arguments, defaults, etc.
+	 * Expand named arguments, defaults, etc.  We do not want to scribble on
+	 * the passed-in CallStmt parse tree, so first flat-copy fexpr, allowing
+	 * us to replace its args field.  (Note that expand_function_arguments
+	 * will not modify any of the passed-in data structure.)
 	 */
-	fexpr->args = expand_function_arguments(fexpr->args, fexpr->funcresulttype, tp);
+	{
+		FuncExpr   *nexpr = makeNode(FuncExpr);
+
+		memcpy(nexpr, fexpr, sizeof(FuncExpr));
+		fexpr = nexpr;
+	}
+
+	fexpr->args = expand_function_arguments(fexpr->args,
+											fexpr->funcresulttype,
+											tp);
 	nargs = list_length(fexpr->args);
 
 	ReleaseSysCache(tp);
@@ -2362,8 +2375,8 @@ TupleDesc
 CallStmtResultDesc(CallStmt *stmt)
 {
 	FuncExpr   *fexpr;
-	HeapTuple   tuple;
-	TupleDesc   tupdesc;
+	HeapTuple	tuple;
+	TupleDesc	tupdesc;
 
 	fexpr = stmt->funcexpr;
 
