@@ -1864,15 +1864,29 @@ SELECT * FROM get_available_flightid(CURRENT_DATE);
 
     <para>
      A procedure does not have a return value.  A procedure can therefore end
-     without a <command>RETURN</command> statement.  If
-     a <command>RETURN</command> statement is desired to exit the code early,
-     then <symbol>NULL</symbol> must be returned.  Returning any other value
-     will result in an error.
+     without a <command>RETURN</command> statement.  If you wish to use
+     a <command>RETURN</command> statement to exit the code early, write
+     just <command>RETURN</command> with no expression.
     </para>
 
     <para>
-     If a procedure has output parameters, then the output values can be
-     assigned to the parameters as if they were variables.  For example:
+     If the procedure has output parameters, the final values of the output
+     parameter variables will be returned to the caller.
+    </para>
+   </sect2>
+
+   <sect2 id="plpgsql-statements-calling-procedure">
+    <title>Calling a Procedure</title>
+
+    <para>
+     A <application>PL/pgSQL</application> function, procedure,
+     or <command>DO</command> block can call a procedure
+     using <command>CALL</command>.  Output parameters are handled
+     differently from the way that <command>CALL</command> works in plain
+     SQL.  Each <literal>INOUT</literal> parameter of the procedure must
+     correspond to a variable in the <command>CALL</command> statement, and
+     whatever the procedure returns is assigned back to that variable after
+     it returns.  For example:
 <programlisting>
 CREATE PROCEDURE triple(INOUT x int)
 LANGUAGE plpgsql
@@ -1882,7 +1896,13 @@ BEGIN
 END;
 $$;
 
-CALL triple(5);
+DO $$
+DECLARE myvar int := 5;
+BEGIN
+  CALL triple(myvar);
+  RAISE NOTICE 'myvar = %', myvar;  -- prints 15
+END
+$$;
 </programlisting>
     </para>
    </sect2>

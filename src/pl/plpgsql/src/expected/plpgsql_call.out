@@ -114,7 +114,7 @@ BEGIN
     RAISE INFO 'x = %, y = %', x, y;
 END;
 $$;
-ERROR:  argument 2 is an output argument but is not writable
+ERROR:  procedure parameter "b" is an output parameter but corresponding argument is not writable
 CONTEXT:  PL/pgSQL function inline_code_block line 6 at CALL
 DO
 LANGUAGE plpgsql
@@ -228,27 +228,42 @@ DO $$
 DECLARE _a int; _b int; _c int;
 BEGIN
   _a := 10; _b := 30; _c := 50;
-  CALL test_proc8c(_a, _b);
-  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
-  _a := 10; _b := 30; _c := 50;
-  CALL test_proc8c(_a, b => _b);
-  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
-  _a := 10; _b := 30; _c := 50;
   CALL test_proc8c(_a, _b, _c);
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8c(_a, c => _c, b => _b);
   RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
   _a := 10; _b := 30; _c := 50;
   CALL test_proc8c(c => _c, b => _b, a => _a);
   RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
 END
 $$;
-NOTICE:  a: 10, b: 30, c: 11
-NOTICE:  _a: 100, _b: 40, _c: 50
-NOTICE:  a: 10, b: 30, c: 11
-NOTICE:  _a: 100, _b: 40, _c: 50
 NOTICE:  a: 10, b: 30, c: 50
 NOTICE:  _a: 100, _b: 40, _c: -500
 NOTICE:  a: 10, b: 30, c: 50
 NOTICE:  _a: 100, _b: 40, _c: -500
+NOTICE:  a: 10, b: 30, c: 50
+NOTICE:  _a: 100, _b: 40, _c: -500
+DO $$
+DECLARE _a int; _b int; _c int;
+BEGIN
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8c(_a, _b);  -- fail, no output argument for c
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+ERROR:  procedure parameter "c" is an output parameter but corresponding argument is not writable
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at CALL
+DO $$
+DECLARE _a int; _b int; _c int;
+BEGIN
+  _a := 10; _b := 30; _c := 50;
+  CALL test_proc8c(_a, b => _b);  -- fail, no output argument for c
+  RAISE NOTICE '_a: %, _b: %, _c: %', _a, _b, _c;
+END
+$$;
+ERROR:  procedure parameter "c" is an output parameter but corresponding argument is not writable
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at CALL
 -- transition variable assignment
 TRUNCATE test1;
 CREATE FUNCTION triggerfunc1() RETURNS trigger
@@ -276,3 +291,50 @@ DROP PROCEDURE test_proc1;
 DROP PROCEDURE test_proc3;
 DROP PROCEDURE test_proc4;
 DROP TABLE test1;
+-- more checks for named-parameter handling
+CREATE PROCEDURE p1(v_cnt int, v_Text inout text = NULL)
+AS $$
+BEGIN
+  v_Text := 'v_cnt = ' || v_cnt;
+END
+$$ LANGUAGE plpgsql;
+DO $$
+DECLARE
+  v_Text text;
+  v_cnt  integer := 42;
+BEGIN
+  CALL p1(v_cnt := v_cnt);  -- error, must supply something for v_Text
+  RAISE NOTICE '%', v_Text;
+END;
+$$;
+ERROR:  procedure parameter "v_text" is an output parameter but corresponding argument is not writable
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at CALL
+DO $$
+DECLARE
+  v_Text text;
+  v_cnt  integer := 42;
+BEGIN
+  CALL p1(v_cnt := v_cnt, v_Text := v_Text);
+  RAISE NOTICE '%', v_Text;
+END;
+$$;
+NOTICE:  v_cnt = 42
+DO $$
+DECLARE
+  v_Text text;
+BEGIN
+  CALL p1(10, v_Text := v_Text);
+  RAISE NOTICE '%', v_Text;
+END;
+$$;
+NOTICE:  v_cnt = 10
+DO $$
+DECLARE
+  v_Text text;
+  v_cnt  integer;
+BEGIN
+  CALL p1(v_Text := v_Text, v_cnt := v_cnt);
+  RAISE NOTICE '%', v_Text;
+END;
+$$;
+NOTICE:  <NULL>
