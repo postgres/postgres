@@ -1,6 +1,646 @@
 <!-- doc/src/sgml/release-9.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-5-15">
+  <title>Release 9.5.15</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2018-11-08</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.5.14.
+   For information about new features in the 9.5 major release, see
+   <xref linkend="release-9-5"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.5.15</title>
+
+   <para>
+    A dump/restore is not required for those running 9.5.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.5.13,
+    see <xref linkend="release-9-5-13"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix corner-case failures
+      in <function>has_<replaceable>foo</replaceable>_privilege()</function>
+      family of functions (Tom Lane)
+     </para>
+
+     <para>
+      Return NULL rather than throwing an error when an invalid object OID
+      is provided.  Some of these functions got that right already, but not
+      all.  <function>has_column_privilege()</function> was additionally
+      capable of crashing on some platforms.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid O(N^2) slowdown in regular expression match/split functions on
+      long strings (Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix parsing of standard multi-character operators that are immediately
+      followed by a comment or <literal>+</literal> or <literal>-</literal>
+      (Andrew Gierth)
+     </para>
+
+     <para>
+      This oversight could lead to parse errors, or to incorrect assignment
+      of precedence.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid O(N^3) slowdown in lexer for long strings
+      of <literal>+</literal> or <literal>-</literal> characters
+      (Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mis-execution of SubPlans when the outer query is being scanned
+      backwards (Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix failure of <command>UPDATE/DELETE ... WHERE CURRENT OF ...</command>
+      after rewinding the referenced cursor (Tom Lane)
+     </para>
+
+     <para>
+      A cursor that scans multiple relations (particularly an inheritance
+      tree) could produce wrong behavior if rewound to an earlier relation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>EvalPlanQual</function> to handle conditionally-executed
+      InitPlans properly (Andrew Gierth, Tom Lane)
+     </para>
+
+     <para>
+      This resulted in hard-to-reproduce crashes or wrong answers in
+      concurrent updates, if they contained code such as an uncorrelated
+      sub-<literal>SELECT</literal> inside a <literal>CASE</literal>
+      construct.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix character-class checks to not fail on Windows for Unicode
+      characters above U+FFFF (Tom Lane, Kenji Uno)
+     </para>
+
+     <para>
+      This bug affected full-text-search operations, as well
+      as <filename>contrib/ltree</filename>
+      and <filename>contrib/pg_trgm</filename>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that sequences owned by a foreign table are processed
+      by <literal>ALTER OWNER</literal> on the table (Peter Eisentraut)
+     </para>
+
+     <para>
+      The ownership change should propagate to such sequences as well, but
+      this was missed for foreign tables.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that the server will process
+      already-received <literal>NOTIFY</literal>
+      and <literal>SIGTERM</literal> interrupts before waiting for client
+      input (Jeff Janes, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix over-allocation of space for <function>array_out()</function>'s
+      result string (Keiichi Hirobe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak in repeated SP-GiST index scans (Tom Lane)
+     </para>
+
+     <para>
+      This is only known to amount to anything significant in cases where
+      an exclusion constraint using SP-GiST receives many new index entries
+      in a single command.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <function>ApplyLogicalMappingFile()</function> closes the
+      mapping file when done with it (Tomas Vondra)
+     </para>
+
+     <para>
+      Previously, the file descriptor was leaked, eventually resulting in
+      failures during logical decoding.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix logical decoding to handle cases where a mapped catalog table is
+      repeatedly rewritten, e.g. by <literal>VACUUM FULL</literal>
+      (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent starting the server with <varname>wal_level</varname> set
+      to too low a value to support an existing replication slot (Andres
+      Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crash if a utility command causes infinite recursion (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When initializing a hot standby, cope with duplicate XIDs caused by
+      two-phase transactions on the master
+      (Michael Paquier, Konstantin Knizhnik)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix event triggers to handle nested <command>ALTER TABLE</command>
+      commands (Michael Paquier, &Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Propagate parent process's transaction and statement start timestamps
+      to parallel workers (Konstantin Knizhnik)
+     </para>
+
+     <para>
+      This prevents misbehavior of functions such
+      as <function>transaction_timestamp()</function> when executed in a
+      worker.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix WAL file recycling logic to work correctly on standby servers
+      (Michael Paquier)
+     </para>
+
+     <para>
+      Depending on the setting of <varname>archive_mode</varname>, a standby
+      might fail to remove some WAL files that could be removed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of commit-timestamp tracking during recovery
+      (Masahiko Sawasa, Michael Paquier)
+     </para>
+
+     <para>
+      If commit timestamp tracking has been turned on or off, recovery might
+      fail due to trying to fetch the commit timestamp for a transaction
+      that did not record it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Randomize the <function>random()</function> seed in bootstrap and
+      standalone backends, and in <application>initdb</application>
+      (Noah Misch)
+     </para>
+
+     <para>
+      The main practical effect of this change is that it avoids a scenario
+      where <application>initdb</application> might mistakenly conclude that
+      POSIX shared memory is not available, due to name collisions caused by
+      always using the same random seed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow DSM allocation to be interrupted (Chris Travers)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly handle turning <varname>full_page_writes</varname> on
+      dynamically (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible buffer overrun when replaying GIN page recompression
+      from WAL (Alexander Korotkov, Sivasubramanian Ramasubramanian)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix missed fsync of a replication slot's directory (Konstantin
+      Knizhnik, Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix unexpected timeouts when
+      using <varname>wal_sender_timeout</varname> on a slow server
+      (Noah Misch)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that hot standby processes use the correct WAL consistency
+      point (Alexander Kukushkin, Michael Paquier)
+     </para>
+
+     <para>
+      This prevents possible misbehavior just after a standby server has
+      reached a consistent database state during WAL replay.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure background workers are stopped properly when the postmaster
+      receives a fast-shutdown request before completing database startup
+      (Alexander Kukushkin)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't run atexit callbacks when servicing <literal>SIGQUIT</literal>
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't record foreign-server user mappings as members of extensions
+      (Tom Lane)
+     </para>
+
+     <para>
+      If <command>CREATE USER MAPPING</command> is executed in an extension
+      script, an extension dependency was created for the user mapping,
+      which is unexpected.  Roles can't be extension members, so user
+      mappings shouldn't be either.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make syslogger more robust against failures in opening CSV log files
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</application>, as well as documentation
+      examples, to call <function>PQconsumeInput()</function> before
+      each <function>PQnotifies()</function> call (Tom Lane)
+     </para>
+
+     <para>
+      This fixes cases in which <application>psql</application> would not
+      report receipt of a <literal>NOTIFY</literal> message until after the
+      next command.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible inconsistency in <application>pg_dump</application>'s
+      sorting of dissimilar object names (Jacob Champion)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <application>pg_restore</application> will schema-qualify
+      the table name when
+      emitting <literal>DISABLE</literal>/<literal>ENABLE TRIGGER</literal>
+      commands (Tom Lane)
+     </para>
+
+     <para>
+      This avoids failures due to the new policy of running restores with
+      restrictive search path.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</application> to handle event triggers in
+      extensions correctly (Haribabu Kommi)
+     </para>
+
+     <para>
+      <application>pg_upgrade</application> failed to preserve an event
+      trigger's extension-membership status.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</application>'s cluster state check to
+      work correctly on a standby server (Bruce Momjian)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Enforce type <type>cube</type>'s dimension limit in
+      all <filename>contrib/cube</filename> functions (Andrey Borodin)
+     </para>
+
+     <para>
+      Previously, some cube-related functions could construct values that
+      would be rejected by <function>cube_in()</function>, leading to
+      dump/reload failures.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/unaccent</filename>'s
+      <function>unaccent()</function> function to use
+      the <literal>unaccent</literal> text search dictionary that is in the
+      same schema as the function (Tom Lane)
+     </para>
+
+     <para>
+      Previously it tried to look up the dictionary using the search path,
+      which could fail if the search path has a restrictive value.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix build problems on macOS 10.14 (Mojave) (Tom Lane)
+     </para>
+
+     <para>
+      Adjust <application>configure</application> to add
+      an <option>-isysroot</option> switch to <varname>CPPFLAGS</varname>;
+      without this, PL/Perl and PL/Tcl fail to configure or build on macOS
+      10.14.  The specific sysroot used can be overridden at configure time
+      or build time by setting the <varname>PG_SYSROOT</varname> variable in
+      the arguments of <application>configure</application>
+      or <application>make</application>.
+     </para>
+
+     <para>
+      It is now recommended that Perl-related extensions
+      write <literal>$(perl_includespec)</literal> rather
+      than <literal>-I$(perl_archlibexp)/CORE</literal> in their compiler
+      flags.  The latter continues to work on most platforms, but not recent
+      macOS.
+     </para>
+
+     <para>
+      Also, it should no longer be necessary to
+      specify <option>--with-tclconfig</option> manually to get PL/Tcl to
+      build on recent macOS releases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix MSVC build and regression-test scripts to work on recent Perl
+      versions (Andrew Dunstan)
+     </para>
+
+     <para>
+      Perl no longer includes the current directory in its search path
+      by default; work around that.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On Windows, allow the regression tests to be run by an Administrator
+      account (Andrew Dunstan)
+     </para>
+
+     <para>
+      To do this safely, <application>pg_regress</application> now gives up
+      any such privileges at startup.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: REL9_5_STABLE [f6c268c48] 2018-09-11 16:09:46 -0400
+Branch: REL9_4_STABLE [19acfd652] 2018-09-11 16:03:42 -0400
+Branch: REL9_3_STABLE [48c978f3e] 2018-09-11 16:05:20 -0400
+Branch: REL9_4_STABLE [9ca32a6eb] 2018-09-11 15:44:42 -0400
+Branch: REL9_3_STABLE [048257832] 2018-09-11 15:46:35 -0400
+Branch: REL9_4_STABLE [86e247583] 2018-09-12 12:24:11 -0400
+Branch: REL9_3_STABLE [520711d6e] 2018-09-12 12:25:57 -0400
+-->
+     <para>
+      Support building on Windows with Visual Studio 2015 or Visual Studio 2017
+      (Michael Paquier, Haribabu Kommi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow btree comparison functions to return <literal>INT_MIN</literal>
+      (Tom Lane)
+     </para>
+
+     <para>
+      Up to now, we've forbidden datatype-specific comparison functions from
+      returning <literal>INT_MIN</literal>, which allows callers to invert
+      the sort order just by negating the comparison result.  However, this
+      was never safe for comparison functions that directly return the
+      result of <function>memcmp()</function>, <function>strcmp()</function>,
+      etc, as POSIX doesn't place any such restriction on those functions.
+      At least some recent versions of <function>memcmp()</function> can
+      return <literal>INT_MIN</literal>, causing incorrect sort ordering.
+      Hence, we've removed this restriction.  Callers must now use
+      the <literal>INVERT_COMPARE_RESULT()</literal> macro if they wish to
+      invert the sort order.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix recursion hazard in shared-invalidation message processing
+      (Tom Lane)
+     </para>
+
+     <para>
+      This error could, for example, result in failure to access a system
+      catalog or index that had just been processed by <command>VACUUM
+      FULL</command>.
+     </para>
+
+     <para>
+      This change adds a new result code
+      for <function>LockAcquire</function>, which might possibly affect
+      external callers of that function, though only very unusual usage
+      patterns would have an issue with it.  The API
+      of <function>LockAcquireExtended</function> is also changed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Save and restore SPI's global variables
+      during <function>SPI_connect()</function>
+      and <function>SPI_finish()</function> (Chapman Flack, Tom Lane)
+     </para>
+
+     <para>
+      This prevents possible interference when one SPI-using function calls
+      another.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_5_STABLE [1245561df] 2018-10-12 14:49:33 -0400
+Branch: REL9_4_STABLE [ec185747a] 2018-10-12 14:49:33 -0400
+Branch: REL9_3_STABLE [01187f32c] 2018-10-12 14:49:33 -0400
+-->
+     <para>
+      Provide <literal>ALLOCSET_DEFAULT_SIZES</literal> and sibling macros
+      in back branches (Tom Lane)
+     </para>
+
+     <para>
+      These macros have existed since 9.6, but there were requests to add
+      them to older branches to allow extensions to rely on them without
+      branch-specific coding.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid using potentially-under-aligned page buffers (Tom Lane)
+     </para>
+
+     <para>
+      Invent new union types <type>PGAlignedBlock</type>
+      and <type>PGAlignedXLogBlock</type>, and use these in place of plain
+      char arrays, ensuring that the compiler can't place the buffer at a
+      misaligned start address.  This fixes potential core dumps on
+      alignment-picky platforms, and may improve performance even on
+      platforms that allow misalignment.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>src/port/snprintf.c</filename> follow the C99
+      standard's definition of <function>snprintf()</function>'s result
+      value (Tom Lane)
+     </para>
+
+     <para>
+      On platforms where this code is used (mostly Windows), its pre-C99
+      behavior could lead to failure to detect buffer overrun, if the
+      calling code assumed C99 semantics.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When building on i386 with the <application>clang</application>
+      compiler, require <option>-msse2</option> to be used (Andres Freund)
+     </para>
+
+     <para>
+      This avoids problems with missed floating point overflow checks.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>configure</application>'s detection of the result
+      type of <function>strerror_r()</function> (Tom Lane)
+     </para>
+
+     <para>
+      The previous coding got the wrong answer when building
+      with <application>icc</application> on Linux (and perhaps in other
+      cases), leading to <application>libpq</application> not returning
+      useful error messages for system-reported errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2018g for DST law changes in Chile, Fiji, Morocco, and Russia
+      (Volgograd), plus historical corrections for China, Hawaii, Japan,
+      Macau, and North Korea.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-5-14">
   <title>Release 9.5.14</title>
 
