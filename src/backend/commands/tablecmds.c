@@ -1964,6 +1964,14 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			relation = heap_openrv(parent, AccessExclusiveLock);
 
 		/*
+		 * Check for active uses of the parent partitioned table in the
+		 * current transaction, such as being used in some manner by an
+		 * enclosing command.
+		 */
+		if (is_partition)
+			CheckTableNotInUse(relation, "CREATE TABLE .. PARTITION OF");
+
+		/*
 		 * We do not allow partitioned tables and partitions to participate in
 		 * regular inheritance.
 		 */
