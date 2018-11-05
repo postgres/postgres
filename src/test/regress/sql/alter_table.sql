@@ -2607,6 +2607,22 @@ alter table temp_part_parent attach partition temp_part_child default; -- ok
 drop table perm_part_parent cascade;
 drop table temp_part_parent cascade;
 
+-- check that attaching partitions to a table while it is being used is
+-- prevented
+create table tab_part_attach (a int) partition by list (a);
+create or replace function func_part_attach() returns trigger
+  language plpgsql as $$
+  begin
+    execute 'create table tab_part_attach_1 (a int)';
+    execute 'alter table tab_part_attach attach partition tab_part_attach_1 for values in (1)';
+    return null;
+  end $$;
+create trigger trig_part_attach before insert on tab_part_attach
+  for each statement execute procedure func_part_attach();
+insert into tab_part_attach values (1);
+drop table tab_part_attach;
+drop function func_part_attach();
+
 -- test case where the partitioning operator is a SQL function whose
 -- evaluation results in the table's relcache being rebuilt partway through
 -- the execution of an ATTACH PARTITION command
