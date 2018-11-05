@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-22 15:37+0000\n"
+"POT-Creation-Date: 2018-10-01 13:23+0300\n"
 "PO-Revision-Date: 2017-08-18 16:07+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -465,7 +465,7 @@ msgstr "%s: не удалось создать файл pg_control: %s\n"
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: не удалось записать файл pg_control: %s\n"
 
-#: pg_resetxlog.c:862 pg_resetxlog.c:1146
+#: pg_resetxlog.c:862 pg_resetxlog.c:1144
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: ошибка синхронизации с ФС: %s\n"
@@ -490,54 +490,54 @@ msgstr "%s: не удалось закрыть каталог \"%s\": %s\n"
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: ошибка при удалении файла \"%s\": %s\n"
 
-#: pg_resetxlog.c:1113
+#: pg_resetxlog.c:1111
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
 
-#: pg_resetxlog.c:1124 pg_resetxlog.c:1138
+#: pg_resetxlog.c:1122 pg_resetxlog.c:1136
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл \"%s\": %s\n"
 
-#: pg_resetxlog.c:1192
+#: pg_resetxlog.c:1190
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
 msgstr "%s: ПРЕДУПРЕЖДЕНИЕ: в этой ОС нельзя создавать ограниченные маркеры\n"
 
-#: pg_resetxlog.c:1201
+#: pg_resetxlog.c:1199
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
 msgstr "%s: не удалось открыть маркер процесса (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1214
+#: pg_resetxlog.c:1212
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s: не удалось подготовить структуры SID (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1233
+#: pg_resetxlog.c:1231
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
 msgstr "%s: не удалось создать ограниченный маркер (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1254
+#: pg_resetxlog.c:1252
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
 msgstr ""
 "%s: не удалось запустить процесс для команды \"%s\" (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1286
+#: pg_resetxlog.c:1284
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
 msgstr ""
 "%s: не удалось перезапуститься с ограниченным маркером (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1301
+#: pg_resetxlog.c:1299
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
 msgstr "%s: не удалось получить код выхода от подпроцесса (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1313
+#: pg_resetxlog.c:1311
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -546,7 +546,7 @@ msgstr ""
 "%s сбрасывает журнал транзакций PostgreSQL.\n"
 "\n"
 
-#: pg_resetxlog.c:1314
+#: pg_resetxlog.c:1312
 #, c-format
 msgid ""
 "Usage:\n"
@@ -557,22 +557,22 @@ msgstr ""
 "  %s [ПАРАМЕТР]... КАТ_ДАННЫХ\n"
 "\n"
 
-#: pg_resetxlog.c:1315
+#: pg_resetxlog.c:1313
 #, c-format
 msgid "Options:\n"
 msgstr "Параметры:\n"
 
-#: pg_resetxlog.c:1316
+#: pg_resetxlog.c:1314
 #, c-format
 msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
 msgstr "  -e XIDEPOCH      задать эпоху в ID следующей транзакции\n"
 
-#: pg_resetxlog.c:1317
+#: pg_resetxlog.c:1315
 #, c-format
 msgid "  -f               force update to be done\n"
 msgstr "  -f               принудительное выполнение операции\n"
 
-#: pg_resetxlog.c:1318
+#: pg_resetxlog.c:1316
 #, c-format
 msgid ""
 "  -l XLOGFILE      force minimum WAL starting location for new transaction "
@@ -581,12 +581,12 @@ msgstr ""
 "  -l XLOGFILE      задать минимальное начальное положение WAL для нового\n"
 "                   журнала транзакций\n"
 
-#: pg_resetxlog.c:1319
+#: pg_resetxlog.c:1317
 #, c-format
 msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
 msgstr "  -m MXID,MXID     задать ID следующей и старейшей мультитранзакции\n"
 
-#: pg_resetxlog.c:1320
+#: pg_resetxlog.c:1318
 #, c-format
 msgid ""
 "  -n               no update, just show what would be done (for testing)\n"
@@ -595,32 +595,32 @@ msgstr ""
 "их\n"
 "                   (для проверки)\n"
 
-#: pg_resetxlog.c:1321
+#: pg_resetxlog.c:1319
 #, c-format
 msgid "  -o OID           set next OID\n"
 msgstr "  -o OID           задать следующий OID\n"
 
-#: pg_resetxlog.c:1322
+#: pg_resetxlog.c:1320
 #, c-format
 msgid "  -O OFFSET        set next multitransaction offset\n"
 msgstr "  -O СМЕЩЕНИЕ      задать смещение следующей мультитранзакции\n"
 
-#: pg_resetxlog.c:1323
+#: pg_resetxlog.c:1321
 #, c-format
 msgid "  -V, --version    output version information, then exit\n"
 msgstr "  -V, --version    показать версию и выйти\n"
 
-#: pg_resetxlog.c:1324
+#: pg_resetxlog.c:1322
 #, c-format
 msgid "  -x XID           set next transaction ID\n"
 msgstr "  -x XID           задать ID следующей транзакции\n"
 
-#: pg_resetxlog.c:1325
+#: pg_resetxlog.c:1323
 #, c-format
 msgid "  -?, --help       show this help, then exit\n"
 msgstr "  -?, --help       показать эту справку и выйти\n"
 
-#: pg_resetxlog.c:1326
+#: pg_resetxlog.c:1324
 #, c-format
 msgid ""
 "\n"
