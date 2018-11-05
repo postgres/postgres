@@ -3181,6 +3181,13 @@ heap_truncate_one_rel(Relation rel)
 {
 	Oid			toastrelid;
 
+	/*
+	 * Truncate the relation.  Partitioned tables have no storage, so there is
+	 * nothing to do for them here.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		return;
+
 	/* Truncate the actual file (and discard buffers) */
 	RelationTruncate(rel, 0);
 
