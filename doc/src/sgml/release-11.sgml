@@ -35,6 +35,26 @@
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [350410be4] 2018-10-19 00:50:16 -0400
+Branch: REL_11_STABLE [06292bb94] 2018-10-19 00:50:16 -0400
+Branch: REL_10_STABLE [09397f0ed] 2018-10-19 00:50:17 -0400
+-->
+     <para>
+      Ensure proper quoting of transition table names
+      when <application>pg_dump</application> emits <command>CREATE TRIGGER
+      ... REFERENCING</command> commands (Tom Lane)
+     </para>
+
+     <para>
+      This oversight could be exploited by an unprivileged user to gain
+      superuser privileges during the next dump/reload
+      or <application>pg_upgrade</application> run.  (CVE-2018-16850)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [dfa608141] 2018-11-03 13:25:19 -0300
 Branch: REL_11_STABLE [33e6c34c3] 2018-11-03 13:25:29 -0300
@@ -127,6 +147,37 @@ Branch: REL_11_STABLE [6eb31cedb] 2018-11-03 16:00:00 -0700
      <para>
       The strictness logic incorrectly ignored rows for which
       the <literal>ORDER BY</literal> value(s) were null.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [dc3e436b1] 2018-11-05 11:04:02 +0900
+Branch: REL_11_STABLE [7c222d5e5] 2018-11-05 11:04:14 +0900
+Branch: REL_10_STABLE [8aad248f7] 2018-11-05 11:04:20 +0900
+-->
+     <para>
+      Prevent creation of a partition in a trigger attached to its parent
+      table (Amit Langote)
+     </para>
+
+     <para>
+      Ideally we'd allow that, but for the moment it has to be blocked to
+      avoid crashes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [4bc772e2a] 2018-11-05 09:14:33 +0900
+Branch: REL_11_STABLE [948af5232] 2018-11-05 09:15:08 +0900
+Branch: REL_10_STABLE [70c38e708] 2018-11-05 09:15:25 +0900
+-->
+     <para>
+      Fix problems with applying <literal>ON COMMIT DELETE ROWS</literal> to
+      a partitioned temporary table (Amit Langote)
      </para>
     </listitem>
 
@@ -228,20 +279,6 @@ Branch: REL9_5_STABLE [ac3be116a] 2018-10-19 22:22:57 -0400
       This fixes cases in which <application>psql</application> would not
       report receipt of a <literal>NOTIFY</literal> message until after the
       next command.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [350410be4] 2018-10-19 00:50:16 -0400
-Branch: REL_11_STABLE [06292bb94] 2018-10-19 00:50:16 -0400
-Branch: REL_10_STABLE [09397f0ed] 2018-10-19 00:50:17 -0400
--->
-     <para>
-      Ensure proper quoting of transition table names
-      when <application>pg_dump</application> emits <command>CREATE TRIGGER
-      ... REFERENCING</command> commands (Tom Lane)
      </para>
     </listitem>
 
