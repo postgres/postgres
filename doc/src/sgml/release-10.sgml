@@ -1036,12 +1036,6 @@ Branch: REL9_3_STABLE [9f3ade1a6] 2018-08-31 20:21:30 +0300
     </listitem>
 
     <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [edb979766] 2018-09-25 09:55:44 +0900
-Branch: REL_11_STABLE Release: REL_11_0 [a3bb831ef] 2018-09-25 09:56:41 +0900
-Branch: REL_10_STABLE [90a1f9786] 2018-09-25 09:56:57 +0900
--->
      <para>
       In <filename>contrib/pg_stat_statements</filename>, disallow
       the <literal>pg_read_all_stats</literal> role from
@@ -1052,6 +1046,9 @@ Branch: REL_10_STABLE [90a1f9786] 2018-09-25 09:56:57 +0900
      <para>
       <literal>pg_read_all_stats</literal> is only meant to grant permission
       to read statistics, not to change them, so this grant was incorrect.
+     </para>
+
+     <para>
       To cause this change to take effect, run <literal>ALTER EXTENSION
       pg_stat_statements UPDATE</literal> in each database
       where <filename>pg_stat_statements</filename> has been installed.
