@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-08-05 21:36+0000\n"
-"PO-Revision-Date: 2018-05-06 09:09-0400\n"
+"PO-Revision-Date: 2018-11-05 09:31+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -11827,7 +11827,7 @@ msgstr "Constraint in der ON-CONFLICT-Klausel hat keinen zugehörigen Index"
 #: optimizer/util/plancat.c:558
 #, c-format
 msgid "ON CONFLICT DO UPDATE not supported with exclusion constraints"
-msgstr "ON CONFLICT DO UDPATE nicht unterstützt mit Exclusion-Constraints"
+msgstr "ON CONFLICT DO UPDATE nicht unterstützt mit Exclusion-Constraints"
 
 #: optimizer/util/plancat.c:663
 #, c-format

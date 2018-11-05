@@ -331,7 +331,7 @@ msgstr "%s : « %s » n'est pas un fichier\n"
 #: initdb.c:1112
 #, c-format
 msgid "selecting default max_connections ... "
-msgstr "sélection de la valeur par défaut de max_connections... "
+msgstr "sélection de la valeur par défaut pour max_connections... "
 
 #: initdb.c:1142
 #, c-format
@@ -669,7 +669,7 @@ msgstr "  -d, --debug                engendre un grand nombre de traces de débo
 #: initdb.c:2746
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
-msgstr "      -k, --data-checksums utilise les sommes de contrôles pour les pages de données\n"
+msgstr "  -k, --data-checksums       utilise les sommes de contrôle pour les pages de données\n"
 
 #: initdb.c:2747
 #, c-format
@@ -696,7 +696,7 @@ msgstr "  -s, --show                 affiche la configuration interne\n"
 #: initdb.c:2751
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
-msgstr "      -S, --sync-only     synchronise uniquement le répertoire des données\n"
+msgstr "  -S, --sync-only            synchronise uniquement le répertoire des données\n"
 
 #: initdb.c:2752
 #, c-format
@@ -802,7 +802,7 @@ msgstr ""
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr ""
-"%s : l'emplacement du fichier d'entrées doit être indiqué avec un chemin\n"
+"%s : l'emplacement du fichier d'entrée doit être indiqué avec un chemin\n"
 "absolu\n"
 
 #: initdb.c:2911
@@ -850,7 +850,7 @@ msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
 "The default database encoding will be set to \"%s\" instead.\n"
 msgstr ""
-"L'encodage « %s » déduit de la locale n'est pas autorisé en tant qu'encodage serveur.\n"
+"L'encodage « %s » a été déduit de la locale mais n'est pas autorisé en tant qu'encodage serveur.\n"
 "L'encodage par défaut des bases de données sera configuré à « %s ».\n"
 
 #: initdb.c:2961
@@ -983,7 +983,7 @@ msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
 "Create a subdirectory under the mount point.\n"
 msgstr ""
-"Utiliser un point de montage comme répertoire de données n'est pas recommandé.\n"
+"Utiliser un point de montage comme répertoire des données n'est pas recommandé.\n"
 "Créez un sous-répertoire sous le point de montage.\n"
 
 #: initdb.c:3309

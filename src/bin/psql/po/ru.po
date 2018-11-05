@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-31 07:57+0300\n"
+"POT-Creation-Date: 2018-10-01 13:05+0300\n"
 "PO-Revision-Date: 2017-11-21 15:42+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -259,7 +259,7 @@ msgstr "Секундомер выключен."
 #: command.c:1452 command.c:1472 command.c:2153 command.c:2156 command.c:2159
 #: command.c:2165 command.c:2167 command.c:2175 command.c:2185 command.c:2194
 #: command.c:2208 command.c:2225 command.c:2284 common.c:67 copy.c:331
-#: copy.c:391 copy.c:404 psqlscan.l:1702 psqlscan.l:1713 psqlscan.l:1723
+#: copy.c:391 copy.c:404 psqlscan.l:1723 psqlscan.l:1734 psqlscan.l:1744
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -289,7 +289,7 @@ msgstr ""
 
 #: command.c:1803 command.c:3268 common.c:140 common.c:437 common.c:1025
 #: common.c:1053 common.c:1153 copy.c:488 copy.c:708 large_obj.c:156
-#: large_obj.c:191 large_obj.c:253 psqlscan.l:1974
+#: large_obj.c:191 large_obj.c:253 psqlscan.l:1995
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -3352,22 +3352,22 @@ msgstr ""
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
 
-#: psqlscan.l:751
+#: psqlscan.l:760
 #, c-format
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "рекурсивное расширение переменной \"%s\" пропускается\n"
 
-#: psqlscan.l:1629
+#: psqlscan.l:1650
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "незавершённая строка в кавычках\n"
 
-#: psqlscan.l:1729
+#: psqlscan.l:1750
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: нехватка памяти\n"
 
-#: psqlscan.l:1958
+#: psqlscan.l:1979
 #, c-format
 msgid "can't escape without active connection\n"
 msgstr "экранирование строк не работает без подключения к БД\n"
