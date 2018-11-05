@@ -39,6 +39,20 @@
    <itemizedlist>
 
     <listitem>
+     <para>
+      Ensure proper quoting of transition table names
+      when <application>pg_dump</application> emits <command>CREATE TRIGGER
+      ... REFERENCING</command> commands (Tom Lane)
+     </para>
+
+     <para>
+      This oversight could be exploited by an unprivileged user to gain
+      superuser privileges during the next dump/reload
+      or <application>pg_upgrade</application> run.  (CVE-2018-16850)
+     </para>
+    </listitem>
+
+    <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [3d0f68dd3] 2018-10-02 11:54:12 -0400
@@ -199,6 +213,25 @@ Branch: REL9_3_STABLE [591d0ac88] 2018-09-15 13:42:34 -0400
       concurrent updates, if they contained code such as an uncorrelated
       sub-<literal>SELECT</literal> inside a <literal>CASE</literal>
       construct.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent creation of a partition in a trigger attached to its parent
+      table (Amit Langote)
+     </para>
+
+     <para>
+      Ideally we'd allow that, but for the moment it has to be blocked to
+      avoid crashes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix problems with applying <literal>ON COMMIT DELETE ROWS</literal> to
+      a partitioned temporary table (Amit Langote)
      </para>
     </listitem>
 
@@ -896,14 +929,6 @@ Branch: REL_10_STABLE [cb282eab1] 2018-08-22 14:23:03 +0900
      <para>
       In <application>pg_dump</application>, exclude identity sequences when
       their parent table is excluded from the dump (David Rowley)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Ensure proper quoting of transition table names
-      when <application>pg_dump</application> emits <command>CREATE TRIGGER
-      ... REFERENCING</command> commands (Tom Lane)
      </para>
     </listitem>
 
