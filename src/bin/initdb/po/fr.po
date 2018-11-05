@@ -335,7 +335,7 @@ msgstr "%s : « %s » n'est pas un fichier\n"
 #: initdb.c:933
 #, c-format
 msgid "selecting default max_connections ... "
-msgstr "sélection de la valeur par défaut de max_connections... "
+msgstr "sélection de la valeur par défaut pour max_connections... "
 
 #: initdb.c:963
 #, c-format
@@ -587,7 +587,7 @@ msgstr "  -d, --debug                engendre un grand nombre de traces de débo
 #: initdb.c:2296
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
-msgstr "      -k, --data-checksums utilise les sommes de contrôles pour les pages de données\n"
+msgstr "  -k, --data-checksums       utilise les sommes de contrôle pour les pages de données\n"
 
 #: initdb.c:2297
 #, c-format
@@ -604,7 +604,7 @@ msgstr "  -n, --noclean              ne nettoie pas après des erreurs\n"
 #: initdb.c:2299
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
-msgstr "      -N, --nosync        n'attend pas que les modifications sont proprement écrites sur disque\n"
+msgstr "  -N, --nosync               n'attend pas que les modifications soient proprement écrites sur disque\n"
 
 #: initdb.c:2300
 #, c-format
@@ -614,7 +614,7 @@ msgstr "  -s, --show                 affiche la configuration interne\n"
 #: initdb.c:2301
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
-msgstr "      -S, --sync-only     synchronise uniquement le répertoire des données\n"
+msgstr "  -S, --sync-only            synchronise uniquement le répertoire des données\n"
 
 #: initdb.c:2302
 #, c-format
@@ -720,7 +720,7 @@ msgstr ""
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr ""
-"%s : l'emplacement du fichier d'entrées doit être indiqué avec un chemin\n"
+"%s : l'emplacement du fichier d'entrée doit être indiqué avec un chemin\n"
 "absolu\n"
 
 #: initdb.c:2464
@@ -768,7 +768,7 @@ msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
 "The default database encoding will be set to \"%s\" instead.\n"
 msgstr ""
-"L'encodage « %s » déduit de la locale n'est pas autorisé en tant qu'encodage serveur.\n"
+"L'encodage « %s » a été déduit de la locale mais n'est pas autorisé en tant qu'encodage serveur.\n"
 "L'encodage par défaut des bases de données sera configuré à « %s ».\n"
 
 #: initdb.c:2514
@@ -901,7 +901,7 @@ msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
 "Create a subdirectory under the mount point.\n"
 msgstr ""
-"Utiliser un point de montage comme répertoire de données n'est pas recommandé.\n"
+"Utiliser un point de montage comme répertoire des données n'est pas recommandé.\n"
 "Créez un sous-répertoire sous le point de montage.\n"
 
 #: initdb.c:2863
@@ -942,7 +942,7 @@ msgstr ""
 #: initdb.c:3195
 #, c-format
 msgid "%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"
-msgstr "%s : le nom de superutilisateur « %s » est non autorisé ; les noms de rôle ne peuvent pas commencer avec « pg_ »\n"
+msgstr "%s : le nom de superutilisateur « %s » n'est pas autorisé ; les noms de rôle ne peuvent pas commencer par « pg_ »\n"
 
 #: initdb.c:3199
 #, c-format
@@ -979,7 +979,7 @@ msgstr ""
 #. translator: This is a placeholder in a shell command.
 #: initdb.c:3260
 msgid "logfile"
-msgstr "fichier de trace"
+msgstr "fichier_de_trace"
 
 #: initdb.c:3262
 #, c-format

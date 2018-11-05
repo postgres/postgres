@@ -21,7 +21,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-10-23 23:14+0000\n"
-"PO-Revision-Date: 2017-10-24 08:36+0100\n"
+"PO-Revision-Date: 2018-10-15 20:36+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -30,7 +30,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -996,8 +996,7 @@ msgstr "Posizione"
 msgid "Options"
 msgstr "Opzioni"
 
-#: describe.c:257 describe.c:615 describe.c:814 describe.c:3398
-#: describe.c:3402
+#: describe.c:257 describe.c:615 describe.c:814 describe.c:3398 describe.c:3402
 msgid "Size"
 msgstr "Dimensione"
 
@@ -1008,7 +1007,7 @@ msgstr "Lista dei tablespace"
 #: describe.c:320
 #, c-format
 msgid "\\df only takes [antwS+] as options\n"
-msgstr "\\df accetta come opzione solo [antwS+]\n"
+msgstr "\\df accetta come opzioni solo [antwS+]\n"
 
 #: describe.c:328
 #, c-format
@@ -3063,7 +3062,7 @@ msgid ""
 "  FETCH_COUNT        the number of result rows to fetch and display at a time\n"
 "                     (default: 0=unlimited)\n"
 msgstr ""
-"  FETCH_COUNT        il numero di righe del risultato da leggere e mostrare pr volta\n"
+"  FETCH_COUNT        il numero di righe del risultato da leggere e mostrare per volta\n"
 "                     (default: 0=tutte)\n"
 
 #: help.c:358
@@ -3276,7 +3275,7 @@ msgid ""
 "  tableattr (or T)   specify attributes for table tag in html format or proportional\n"
 "                     column widths for left-aligned data types in latex-longtable format\n"
 msgstr ""
-"  tableattr (or T)   specifica gli attributi per il tag table in formato html o la\n"
+"  tableattr (o T)   specifica gli attributi per il tag table in formato html o la\n"
 "                     larghezza colonna proporzionale dei dati allineati a sinistra\n"
 "                     in formato latex-longtable\n"
 
@@ -3625,9 +3624,9 @@ msgstr "nuovo_proprietario"
 
 #: sql_help.c:44 sql_help.c:72 sql_help.c:87 sql_help.c:253 sql_help.c:318
 #: sql_help.c:440 sql_help.c:525 sql_help.c:650 sql_help.c:691 sql_help.c:719
-#: sql_help.c:774 sql_help.c:929 sql_help.c:962 sql_help.c:1095
-#: sql_help.c:1216 sql_help.c:1237 sql_help.c:1249 sql_help.c:1261
-#: sql_help.c:1305 sql_help.c:1411
+#: sql_help.c:774 sql_help.c:929 sql_help.c:962 sql_help.c:1095 sql_help.c:1216
+#: sql_help.c:1237 sql_help.c:1249 sql_help.c:1261 sql_help.c:1305
+#: sql_help.c:1411
 msgid "new_schema"
 msgstr "nuovo_schema"
 
@@ -3691,8 +3690,7 @@ msgstr "limite_conn"
 msgid "istemplate"
 msgstr "è_template"
 
-#: sql_help.c:123 sql_help.c:588 sql_help.c:653 sql_help.c:1098
-#: sql_help.c:1146
+#: sql_help.c:123 sql_help.c:588 sql_help.c:653 sql_help.c:1098 sql_help.c:1146
 msgid "new_tablespace"
 msgstr "nuovo_tablespace"
 
@@ -3882,31 +3880,30 @@ msgstr "funzione_handler"
 msgid "validator_function"
 msgstr "funzione_validazione"
 
-#: sql_help.c:433 sql_help.c:510 sql_help.c:641 sql_help.c:1085
-#: sql_help.c:1296 sql_help.c:2498 sql_help.c:2499 sql_help.c:2515
-#: sql_help.c:2516
+#: sql_help.c:433 sql_help.c:510 sql_help.c:641 sql_help.c:1085 sql_help.c:1296
+#: sql_help.c:2498 sql_help.c:2499 sql_help.c:2515 sql_help.c:2516
 msgid "action"
 msgstr "azione"
 
 #: sql_help.c:435 sql_help.c:442 sql_help.c:446 sql_help.c:447 sql_help.c:450
 #: sql_help.c:452 sql_help.c:453 sql_help.c:454 sql_help.c:456 sql_help.c:459
 #: sql_help.c:461 sql_help.c:462 sql_help.c:645 sql_help.c:655 sql_help.c:657
-#: sql_help.c:660 sql_help.c:662 sql_help.c:923 sql_help.c:1087
-#: sql_help.c:1105 sql_help.c:1109 sql_help.c:1110 sql_help.c:1114
-#: sql_help.c:1116 sql_help.c:1117 sql_help.c:1118 sql_help.c:1120
-#: sql_help.c:1123 sql_help.c:1124 sql_help.c:1126 sql_help.c:1129
-#: sql_help.c:1131 sql_help.c:1402 sql_help.c:1405 sql_help.c:1425
-#: sql_help.c:1529 sql_help.c:1634 sql_help.c:1639 sql_help.c:1653
-#: sql_help.c:1654 sql_help.c:1655 sql_help.c:1968 sql_help.c:1981
-#: sql_help.c:2025 sql_help.c:2086 sql_help.c:2121 sql_help.c:2319
-#: sql_help.c:2347 sql_help.c:2348 sql_help.c:2449 sql_help.c:2457
-#: sql_help.c:2466 sql_help.c:2469 sql_help.c:2478 sql_help.c:2482
-#: sql_help.c:2503 sql_help.c:2505 sql_help.c:2512 sql_help.c:2530
-#: sql_help.c:2547 sql_help.c:2672 sql_help.c:2808 sql_help.c:3375
-#: sql_help.c:3376 sql_help.c:3456 sql_help.c:3471 sql_help.c:3473
-#: sql_help.c:3475 sql_help.c:3708 sql_help.c:3709 sql_help.c:3809
-#: sql_help.c:3952 sql_help.c:4191 sql_help.c:4233 sql_help.c:4235
-#: sql_help.c:4237 sql_help.c:4254 sql_help.c:4257 sql_help.c:4385
+#: sql_help.c:660 sql_help.c:662 sql_help.c:923 sql_help.c:1087 sql_help.c:1105
+#: sql_help.c:1109 sql_help.c:1110 sql_help.c:1114 sql_help.c:1116
+#: sql_help.c:1117 sql_help.c:1118 sql_help.c:1120 sql_help.c:1123
+#: sql_help.c:1124 sql_help.c:1126 sql_help.c:1129 sql_help.c:1131
+#: sql_help.c:1402 sql_help.c:1405 sql_help.c:1425 sql_help.c:1529
+#: sql_help.c:1634 sql_help.c:1639 sql_help.c:1653 sql_help.c:1654
+#: sql_help.c:1655 sql_help.c:1968 sql_help.c:1981 sql_help.c:2025
+#: sql_help.c:2086 sql_help.c:2121 sql_help.c:2319 sql_help.c:2347
+#: sql_help.c:2348 sql_help.c:2449 sql_help.c:2457 sql_help.c:2466
+#: sql_help.c:2469 sql_help.c:2478 sql_help.c:2482 sql_help.c:2503
+#: sql_help.c:2505 sql_help.c:2512 sql_help.c:2530 sql_help.c:2547
+#: sql_help.c:2672 sql_help.c:2808 sql_help.c:3375 sql_help.c:3376
+#: sql_help.c:3456 sql_help.c:3471 sql_help.c:3473 sql_help.c:3475
+#: sql_help.c:3708 sql_help.c:3709 sql_help.c:3809 sql_help.c:3952
+#: sql_help.c:4191 sql_help.c:4233 sql_help.c:4235 sql_help.c:4237
+#: sql_help.c:4254 sql_help.c:4257 sql_help.c:4385
 msgid "column_name"
 msgstr "nome_colonna"
 
@@ -3914,15 +3911,14 @@ msgstr "nome_colonna"
 msgid "new_column_name"
 msgstr "nuovo_nome_colonna"
 
-#: sql_help.c:441 sql_help.c:531 sql_help.c:654 sql_help.c:1104
-#: sql_help.c:1312
+#: sql_help.c:441 sql_help.c:531 sql_help.c:654 sql_help.c:1104 sql_help.c:1312
 msgid "where action is one of:"
 msgstr "dove azione è una di:"
 
-#: sql_help.c:443 sql_help.c:448 sql_help.c:915 sql_help.c:1106
-#: sql_help.c:1111 sql_help.c:1314 sql_help.c:1318 sql_help.c:1880
-#: sql_help.c:1969 sql_help.c:2160 sql_help.c:2312 sql_help.c:2450
-#: sql_help.c:2717 sql_help.c:3558
+#: sql_help.c:443 sql_help.c:448 sql_help.c:915 sql_help.c:1106 sql_help.c:1111
+#: sql_help.c:1314 sql_help.c:1318 sql_help.c:1880 sql_help.c:1969
+#: sql_help.c:2160 sql_help.c:2312 sql_help.c:2450 sql_help.c:2717
+#: sql_help.c:3558
 msgid "data_type"
 msgstr "tipo_di_dato"
 
@@ -3962,8 +3958,7 @@ msgstr "nome_trigger"
 msgid "parent_table"
 msgstr "tabella_padre"
 
-#: sql_help.c:530 sql_help.c:580 sql_help.c:643 sql_help.c:1275
-#: sql_help.c:1912
+#: sql_help.c:530 sql_help.c:580 sql_help.c:643 sql_help.c:1275 sql_help.c:1912
 msgid "extension_name"
 msgstr "nome_estensione"
 
@@ -4033,8 +4028,8 @@ msgid "strategy_number"
 msgstr "strategia_num"
 
 #: sql_help.c:750 sql_help.c:751 sql_help.c:754 sql_help.c:755 sql_help.c:761
-#: sql_help.c:762 sql_help.c:764 sql_help.c:765 sql_help.c:2165
-#: sql_help.c:2166 sql_help.c:2169 sql_help.c:2170
+#: sql_help.c:762 sql_help.c:764 sql_help.c:765 sql_help.c:2165 sql_help.c:2166
+#: sql_help.c:2169 sql_help.c:2170
 msgid "op_type"
 msgstr "tipo_op"
 

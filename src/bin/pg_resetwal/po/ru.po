@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-23 14:45+0000\n"
+"POT-Creation-Date: 2018-10-01 13:03+0300\n"
 "PO-Revision-Date: 2017-08-23 12:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -499,7 +499,7 @@ msgstr "%s: не удалось создать файл pg_control: %s\n"
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: не удалось записать файл pg_control: %s\n"
 
-#: pg_resetwal.c:924 pg_resetwal.c:1220
+#: pg_resetwal.c:924 pg_resetwal.c:1218
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: ошибка синхронизации с ФС: %s\n"
@@ -524,17 +524,17 @@ msgstr "%s: не удалось закрыть каталог \"%s\": %s\n"
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: ошибка при удалении файла \"%s\": %s\n"
 
-#: pg_resetwal.c:1187
+#: pg_resetwal.c:1185
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
 
-#: pg_resetwal.c:1198 pg_resetwal.c:1212
+#: pg_resetwal.c:1196 pg_resetwal.c:1210
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл \"%s\": %s\n"
 
-#: pg_resetwal.c:1231
+#: pg_resetwal.c:1229
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -543,7 +543,7 @@ msgstr ""
 "%s сбрасывает журнал предзаписи PostgreSQL.\n"
 "\n"
 
-#: pg_resetwal.c:1232
+#: pg_resetwal.c:1230
 #, c-format
 msgid ""
 "Usage:\n"
@@ -554,12 +554,12 @@ msgstr ""
 "  %s [ПАРАМЕТР]... КАТ_ДАННЫХ\n"
 "\n"
 
-#: pg_resetwal.c:1233
+#: pg_resetwal.c:1231
 #, c-format
 msgid "Options:\n"
 msgstr "Параметры:\n"
 
-#: pg_resetwal.c:1234
+#: pg_resetwal.c:1232
 #, c-format
 msgid ""
 "  -c XID,XID       set oldest and newest transactions bearing commit "
@@ -568,27 +568,27 @@ msgstr ""
 "  -c XID,XID       задать старейшую и новейшую транзакции, несущие метку "
 "времени фиксации\n"
 
-#: pg_resetwal.c:1235
+#: pg_resetwal.c:1233
 #, c-format
 msgid "                   (zero in either value means no change)\n"
 msgstr "                   (0 в любом из аргументов игнорируется)\n"
 
-#: pg_resetwal.c:1236
+#: pg_resetwal.c:1234
 #, c-format
 msgid " [-D] DATADIR      data directory\n"
 msgstr " [-D] КАТ_ДАННЫХ   каталог данных\n"
 
-#: pg_resetwal.c:1237
+#: pg_resetwal.c:1235
 #, c-format
 msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
 msgstr "  -e XIDEPOCH      задать эпоху в ID следующей транзакции\n"
 
-#: pg_resetwal.c:1238
+#: pg_resetwal.c:1236
 #, c-format
 msgid "  -f               force update to be done\n"
 msgstr "  -f               принудительное выполнение операции\n"
 
-#: pg_resetwal.c:1239
+#: pg_resetwal.c:1237
 #, c-format
 msgid ""
 "  -l WALFILE       force minimum WAL starting location for new write-ahead "
@@ -597,12 +597,12 @@ msgstr ""
 "  -l WALFILE       задать минимальное начальное положение WAL для нового\n"
 "                   журнала предзаписи\n"
 
-#: pg_resetwal.c:1240
+#: pg_resetwal.c:1238
 #, c-format
 msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
 msgstr "  -m MXID,MXID     задать ID следующей и старейшей мультитранзакции\n"
 
-#: pg_resetwal.c:1241
+#: pg_resetwal.c:1239
 #, c-format
 msgid ""
 "  -n               no update, just show what would be done (for testing)\n"
@@ -611,32 +611,32 @@ msgstr ""
 "их\n"
 "                   (для проверки)\n"
 
-#: pg_resetwal.c:1242
+#: pg_resetwal.c:1240
 #, c-format
 msgid "  -o OID           set next OID\n"
 msgstr "  -o OID           задать следующий OID\n"
 
-#: pg_resetwal.c:1243
+#: pg_resetwal.c:1241
 #, c-format
 msgid "  -O OFFSET        set next multitransaction offset\n"
 msgstr "  -O СМЕЩЕНИЕ      задать смещение следующей мультитранзакции\n"
 
-#: pg_resetwal.c:1244
+#: pg_resetwal.c:1242
 #, c-format
 msgid "  -V, --version    output version information, then exit\n"
 msgstr "  -V, --version    показать версию и выйти\n"
 
-#: pg_resetwal.c:1245
+#: pg_resetwal.c:1243
 #, c-format
 msgid "  -x XID           set next transaction ID\n"
 msgstr "  -x XID           задать ID следующей транзакции\n"
 
-#: pg_resetwal.c:1246
+#: pg_resetwal.c:1244
 #, c-format
 msgid "  -?, --help       show this help, then exit\n"
 msgstr "  -?, --help       показать эту справку и выйти\n"
 
-#: pg_resetwal.c:1247
+#: pg_resetwal.c:1245
 #, c-format
 msgid ""
 "\n"

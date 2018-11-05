@@ -18,8 +18,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-22 07:47+0000\n"
-"PO-Revision-Date: 2017-04-23 04:34+0100\n"
+"POT-Creation-Date: 2018-10-08 14:26+0000\n"
+"PO-Revision-Date: 2018-10-08 22:03+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -28,23 +28,28 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 2.0.6\n"
 
-#: ../../common/controldata_utils.c:61
+#: ../../common/controldata_utils.c:62
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: apertura del file \"%s\" per la lettura fallita: %s\n"
 
-#: ../../common/controldata_utils.c:74
+#: ../../common/controldata_utils.c:78
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: lettura del file \"%s\" fallita: %s\n"
 
-#: ../../common/controldata_utils.c:95
+#: ../../common/controldata_utils.c:90
+#, c-format
+msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgstr "%s: lettura del file \"%s\" fallita: letti %d di %d\n"
+
+#: ../../common/controldata_utils.c:112
 msgid "byte ordering mismatch"
 msgstr "ordinamento dei byte non combaciante"
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:114
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"

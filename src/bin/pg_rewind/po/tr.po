@@ -1,20 +1,20 @@
 # LANGUAGE message translation file for pg_rewind
 # Copyright (C) 2018 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_rewind (PostgreSQL) package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# Abdullah GÜLNER <agulner@gmail.com>, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-02-19 21:15+0000\n"
-"PO-Revision-Date: 2018-02-21 14:30+0300\n"
+"POT-Creation-Date: 2018-10-24 08:56+0000\n"
+"PO-Revision-Date: 2018-10-25 17:04+0300\n"
+"Last-Translator: Abdullah GÜLNER\n"
+"Language-Team: \n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: \n"
-"Language-Team: \n"
 "X-Generator: Poedit 1.8.7.1\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
@@ -68,7 +68,7 @@ msgstr "%s: alt-işlemden çıkış kodu alınamadı: hata kodu %lu\n"
 msgid "could not open directory \"%s\": %s\n"
 msgstr "\"%s\" dizini açılamıyor: %s\n"
 
-#: copy_fetch.c:91 filemap.c:111 filemap.c:266
+#: copy_fetch.c:91 filemap.c:112 filemap.c:267
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "\"%s\" dosyasının durumu görüntülenemedi (stat): %s\n"
@@ -86,7 +86,7 @@ msgstr "\"%s\" sembolik link hedefi çok uzun\n"
 #: copy_fetch.c:138
 #, c-format
 msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform\n"
-msgstr "\"%s\" bir sembolik link, Fakat u platformda sembolik linkler desteklenmiyor\n"
+msgstr "\"%s\" bir sembolik link, Fakat bu platformda sembolik linkler desteklenmiyor\n"
 
 #: copy_fetch.c:145
 #, c-format
@@ -108,7 +108,7 @@ msgstr "\"%s\" kaynak dosyası açılamadı: %s\n"
 msgid "could not seek in source file: %s\n"
 msgstr "kaynak dosyada arama yapılamadı: %s\n"
 
-#: copy_fetch.c:190 file_ops.c:299
+#: copy_fetch.c:190 file_ops.c:307
 #, c-format
 msgid "could not read file \"%s\": %s\n"
 msgstr "\"%s\" dosyası okunamadı: %s\n"
@@ -128,248 +128,253 @@ msgstr "\"%s\" dosyası kapatılamadı: %s\n"
 msgid "  block %u\n"
 msgstr "  blok %u\n"
 
-#: file_ops.c:63
+#: file_ops.c:62
 #, c-format
 msgid "could not open target file \"%s\": %s\n"
 msgstr "\"%s\" hedef dosyası açılamadı: %s\n"
 
-#: file_ops.c:77
+#: file_ops.c:76
 #, c-format
 msgid "could not close target file \"%s\": %s\n"
 msgstr "\"%s\" hedef dosyası kapatılamadı: %s\n"
 
-#: file_ops.c:97
+#: file_ops.c:96
 #, c-format
 msgid "could not seek in target file \"%s\": %s\n"
 msgstr "\"%s\" hedef dosyasında arama yapılamadı: %s\n"
 
-#: file_ops.c:113
+#: file_ops.c:112
 #, c-format
 msgid "could not write file \"%s\": %s\n"
 msgstr "\"%s\" dosyasına yazılamadı: %s\n"
 
-#: file_ops.c:163
+#: file_ops.c:162
 #, c-format
 msgid "invalid action (CREATE) for regular file\n"
 msgstr "normal (regular) dosya için geçersiz işlem (CREATE)\n"
 
-#: file_ops.c:178
+#: file_ops.c:185
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "\"%s\" dosyası silinemedi: %s\n"
 
-#: file_ops.c:195
+#: file_ops.c:203
 #, c-format
 msgid "could not open file \"%s\" for truncation: %s\n"
 msgstr "\"%s\" dosyası küçültme (truncation) için açılamadı: %s\n"
 
-#: file_ops.c:199
+#: file_ops.c:207
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %s\n"
 msgstr "\"%s\" dosyası %u'ya küçültülemedi (truncate): %s\n"
 
-#: file_ops.c:215
+#: file_ops.c:223
 #, c-format
 msgid "could not create directory \"%s\": %s\n"
 msgstr "\"%s\" dizini oluşturulamadı: %s\n"
 
-#: file_ops.c:229
+#: file_ops.c:237
 #, c-format
 msgid "could not remove directory \"%s\": %s\n"
 msgstr "\"%s\" dizini silinemedi: %s\n"
 
-#: file_ops.c:243
+#: file_ops.c:251
 #, c-format
 msgid "could not create symbolic link at \"%s\": %s\n"
 msgstr "\"%s\" de sembolik link oluşturulamadı: %s\n"
 
-#: file_ops.c:257
+#: file_ops.c:265
 #, c-format
 msgid "could not remove symbolic link \"%s\": %s\n"
 msgstr "\"%s\" sembolik linki kaldırılamadı: %s\n"
 
-#: file_ops.c:287 file_ops.c:291
+#: file_ops.c:295 file_ops.c:299
 #, c-format
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "\"%s\" dosyası okuma için açılamadı: %s\n"
 
-#: filemap.c:103
+#: filemap.c:104
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
 msgstr "kaynaktaki \"%s\" veri dosyası normal (regular) bir dosya değil\n"
 
-#: filemap.c:125
+#: filemap.c:126
 #, c-format
 msgid "\"%s\" is not a directory\n"
 msgstr "\"%s\" bir dizin değil\n"
 
-#: filemap.c:148
+#: filemap.c:149
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
 msgstr "\"%s\" bir sembolik link değil\n"
 
-#: filemap.c:160
+#: filemap.c:161
 #, c-format
 msgid "\"%s\" is not a regular file\n"
 msgstr "\"%s\" normal (regular) bir dosya değil\n"
 
-#: filemap.c:278
+#: filemap.c:279
 #, c-format
 msgid "source file list is empty\n"
 msgstr "kaynak dosya listesi boş\n"
 
-#: filemap.c:400
+#: filemap.c:401
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "\"%s\" dizini veya sembolik linki için beklenmedik sayfa değişikliği (page modification)\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:536
+#: filemap.c:537
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
 
-#: libpq_fetch.c:55
+#: libpq_fetch.c:56
 #, c-format
 msgid "could not connect to server: %s"
 msgstr "sunucuya bağlanamadı: %s"
 
-#: libpq_fetch.c:58
+#: libpq_fetch.c:59
 #, c-format
 msgid "connected to server\n"
 msgstr "sunucuya bağlandı\n"
 
-#: libpq_fetch.c:68
+#: libpq_fetch.c:63
+#, c-format
+msgid "could not clear search_path: %s"
+msgstr "search_path temizlenemedi: %s"
+
+#: libpq_fetch.c:75
 #, c-format
 msgid "source server must not be in recovery mode\n"
 msgstr "kaynak sunucu kurtarma (recovery) modunda olmamalı\n"
 
-#: libpq_fetch.c:78
+#: libpq_fetch.c:85
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
 msgstr "kaynak sunucuda full_page_writes etkinleştirilmiş olmalı\n"
 
-#: libpq_fetch.c:90
+#: libpq_fetch.c:97
 #, c-format
 msgid "could not set up connection context: %s"
 msgstr "bağlantı bağlamı (context) kurulamadı: %s"
 
-#: libpq_fetch.c:108
+#: libpq_fetch.c:115
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "kaynak sunucuda (%s) sorgusu hata üretti: %s"
 
-#: libpq_fetch.c:113
+#: libpq_fetch.c:120
 #, c-format
 msgid "unexpected result set from query\n"
 msgstr "sorgudan beklenmedik sonuç kümesi\n"
 
-#: libpq_fetch.c:136
+#: libpq_fetch.c:143
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
 msgstr "geçerli WAL ekleme (insert) yeri için bilinmeyen sonuç \"%s\"\n"
 
-#: libpq_fetch.c:186
+#: libpq_fetch.c:193
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "dosya listesi getirilemedi: %s"
 
-#: libpq_fetch.c:191
+#: libpq_fetch.c:198
 #, c-format
 msgid "unexpected result set while fetching file list\n"
 msgstr "dosya listesi getirilirken beklenmedik sonuç kümesi\n"
 
-#: libpq_fetch.c:261
+#: libpq_fetch.c:268
 #, c-format
 msgid "could not send query: %s"
 msgstr "sorgu gönderilemedi: %s"
 
-#: libpq_fetch.c:263
+#: libpq_fetch.c:270
 #, c-format
 msgid "getting file chunks\n"
 msgstr "dosya parçaları alınıyor\n"
 
-#: libpq_fetch.c:266
+#: libpq_fetch.c:273
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "libpq bağlantısı tek sıra moduna ayarlanamadı\n"
 
-#: libpq_fetch.c:287
+#: libpq_fetch.c:294
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "uzak dosyalar getirilirken beklenmedik sonuç: %s"
 
-#: libpq_fetch.c:293
+#: libpq_fetch.c:300
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "uzak dosyalar getirilirken beklenmedik sonuç kümesi\n"
 
-#: libpq_fetch.c:299
+#: libpq_fetch.c:306
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "uzak dosyalar getirilirken sonuç kümesinde beklenmedik veri tipleri: %u %u %u\n"
 
-#: libpq_fetch.c:307
+#: libpq_fetch.c:314
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "uzak dosyalar getirilirken beklenmedik sonuç formatı\n"
 
-#: libpq_fetch.c:313
+#: libpq_fetch.c:320
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "uzak dosyalar getirilirken sonuçta beklenmeyen boş (null) değerler\n"
 
-#: libpq_fetch.c:317
+#: libpq_fetch.c:324
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "uzak dosyalar getirilirken beklenmedik sonuç uzunluğu\n"
 
-#: libpq_fetch.c:339
+#: libpq_fetch.c:349
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "\"%s\" dosyası parçası (chunk) için boş (null) değer alındı, dosya silindi\n"
 
-#: libpq_fetch.c:351
+#: libpq_fetch.c:362
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
 msgstr "\"%s\" dosyası için parça (chunk) alındı, ofset %s, boyut %d\n"
 
-#: libpq_fetch.c:380
+#: libpq_fetch.c:391
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "\"%s\" uzak dosyası getirilemedi: %s"
 
-#: libpq_fetch.c:385
+#: libpq_fetch.c:396
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "\"%s\" uzak dosyası getirilirken beklenmedik sonuç kümesi\n"
 
-#: libpq_fetch.c:396
+#: libpq_fetch.c:407
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "\"%s\" dosyası getirildi, uzunluk %d\n"
 
-#: libpq_fetch.c:429
+#: libpq_fetch.c:440
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "COPY veri gönderilemedi: %s"
 
-#: libpq_fetch.c:455
+#: libpq_fetch.c:466
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "geçici dosya oluşturulamadı: %s"
 
-#: libpq_fetch.c:463
+#: libpq_fetch.c:474
 #, c-format
 msgid "could not send file list: %s"
 msgstr "dosya listesi gönderilemedi: %s"
 
-#: libpq_fetch.c:505
+#: libpq_fetch.c:516
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "kopya sonu (end-of-COPY) gönderilemedi: %s"
 
-#: libpq_fetch.c:511
+#: libpq_fetch.c:522
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "dosya listesi gönderilirken beklenmeye sonuç: %s"
@@ -609,7 +614,7 @@ msgstr "kümeler pg_rewind'in bu sürümüyle uyumlu değil\n"
 #: pg_rewind.c:393
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\"\n"
-msgstr "hedef sunucu ya veri sağlamaları (checksum) ya da \"wal_log_hints = on\" kullanmalı\n"
+msgstr "hedef sunucu ya veri sağlama toplamları (checksum) ya da \"wal_log_hints = on\" kullanmalı\n"
 
 #: pg_rewind.c:404
 #, c-format
@@ -724,137 +729,137 @@ msgstr "geçmiş dosyasında geçersiz veri\n"
 msgid "Timeline IDs must be less than child timeline's ID.\n"
 msgstr "Zamançizelgesi ID'leri alt zaman çizelgesinin ID'lerinden küçük olmalı.\n"
 
-#: xlogreader.c:276
+#: xlogreader.c:297
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "%X/%X adresinde geçersiz kayıt offseti"
 
-#: xlogreader.c:284
+#: xlogreader.c:305
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord %X/%X tarafından talep edilmiştir"
 
-#: xlogreader.c:325 xlogreader.c:625
+#: xlogreader.c:346 xlogreader.c:644
 #, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
 msgstr "%X/%X adresinde geçersiz kayıt uzunluğu: istenen %u, alınan %u"
 
-#: xlogreader.c:340
+#: xlogreader.c:361
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "%2$X/%3$X adresinde çok büyük kayıt uzunluğu: %1$u "
 
-#: xlogreader.c:381
+#: xlogreader.c:402
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "%X/%X de contrecord bayrağı (flag) bulunmuyor"
 
-#: xlogreader.c:394
+#: xlogreader.c:415
 #, c-format
 msgid "invalid contrecord length %u at %X/%X"
-msgstr "%X/%X adresinde geçersiz %u contrecord uzunluğu"
+msgstr "%2$X/%3$X adresinde geçersiz %1$u contrecord uzunluğu"
 
-#: xlogreader.c:633
+#: xlogreader.c:652
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "%2$X/%3$X adresinde geçersiz resource manager ID %1$u"
 
-#: xlogreader.c:647 xlogreader.c:664
+#: xlogreader.c:666 xlogreader.c:683
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "geçersiz incorrect prev-link olan kayıt: %X/%X at %X/%X"
 
-#: xlogreader.c:701
+#: xlogreader.c:720
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "resoource manager data checksum %X/%X kaydında geçersiz"
 
-#: xlogreader.c:734
+#: xlogreader.c:757
 #, c-format
 msgid "invalid magic number %04X in log segment %s, offset %u"
 msgstr "%04X geçersiz tanııtım kodu; %s kayıt segmentinde, offset %u"
 
-#: xlogreader.c:748 xlogreader.c:799
+#: xlogreader.c:771 xlogreader.c:822
 #, c-format
 msgid "invalid info bits %04X in log segment %s, offset %u"
 msgstr "%04X geçersiz info bits; %s kayıt segmentinde, offset %u"
 
-#: xlogreader.c:774
+#: xlogreader.c:797
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
 msgstr "WAL dosyası farklı veritabanı sisteminden: WAL dosya veritabanı sistem tanımlayıcı %s, pg_control veritabanı sistem tanımlayıcı %s"
 
-#: xlogreader.c:781
+#: xlogreader.c:804
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
 msgstr "WAL dosyası farklı veritabanı sisteminden: page header'da yanlış XLOG_SEG_SIZE değeri"
 
-#: xlogreader.c:787
+#: xlogreader.c:810
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL dosyası farklı veritabanı sisteminden: page header'da yanlış XLOG_BLCKSZ değeri"
 
-#: xlogreader.c:813
+#: xlogreader.c:841
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
 msgstr "beklenmeyen pageaddr %X/%X: log segmenti %s, offset %u"
 
-#: xlogreader.c:838
+#: xlogreader.c:866
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
 msgstr "sıra dışı timeline ID %u (%u'dan sonra), bulunduğu log segmenti %s, offset %u"
 
-#: xlogreader.c:1083
+#: xlogreader.c:1111
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "%X/%X deki %u block_id değeri bozuk"
 
-#: xlogreader.c:1106
+#: xlogreader.c:1134
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA ayarlandı, fakat %X/%X de veri yok"
 
-#: xlogreader.c:1113
+#: xlogreader.c:1141
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA ayarlanmadı, fakat veri uzunluğu %u (%X/%x de)"
+msgstr "BKPBLOCK_HAS_DATA ayarlanmadı, fakat veri uzunluğu %2$X/%3$X konumunda %1$u"
 
-#: xlogreader.c:1149
+#: xlogreader.c:1177
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE ayarlandı, fakat hole offset %u uzunluk %u  blok image uzunluğu %u (%X/%X de)"
 
-#: xlogreader.c:1165
+#: xlogreader.c:1193
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE  ayarlanmadı, fakat hole offset %u uzunluk %u (%X/%X de)"
 
-#: xlogreader.c:1180
+#: xlogreader.c:1208
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_IS_COMPRESSED ayarlandı, fakat block image uzunluğu %u (%X/%X de)"
 
-#: xlogreader.c:1195
+#: xlogreader.c:1223
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE ve BKPIMAGE_IS_COMPRESSED ayarlanmadı, fakat block image uzunluğu %u (%X/%X de)"
 
-#: xlogreader.c:1211
+#: xlogreader.c:1239
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL ayarlandı fakat %X/%X de önceki rel yok"
 
-#: xlogreader.c:1223
+#: xlogreader.c:1251
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "%X/%X adresinde %u  block_id geçersiz"
 
-#: xlogreader.c:1306
+#: xlogreader.c:1334
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "%X/%X adresinde geçersiz uzunlukta kayıt"
 
-#: xlogreader.c:1395
+#: xlogreader.c:1423
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "%X/%X adresinde (blok %d), geçersiz compressed image"

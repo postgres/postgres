@@ -2,21 +2,21 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Abdullah GÜLNER <agulner@gmail.com>, 2017, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-12-15 02:44+0000\n"
-"PO-Revision-Date: 2017-12-28 12:19+0300\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
+"POT-Creation-Date: 2018-10-24 08:54+0000\n"
+"PO-Revision-Date: 2018-10-25 16:16+0300\n"
+"Last-Translator: Abdullah GÜLNER\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 2.0.5\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -196,7 +196,7 @@ msgid ""
 "                         write recovery.conf for replication\n"
 msgstr ""
 "  -R, --write-recovery-conf\n"
-"                            replikasyon için recovery.conf dosyasını yazın\n"
+"                            replikasyon için recovery.conf dosyasını yaz\n"
 
 #: pg_basebackup.c:343 pg_receivewal.c:84
 #, c-format
@@ -359,7 +359,7 @@ msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: ready pipe'tan okunamadı: %s\n"
 
 #: pg_basebackup.c:422 pg_basebackup.c:557 pg_basebackup.c:2015
-#: streamutil.c:286
+#: streamutil.c:309
 #, c-format
 msgid "%s: could not parse write-ahead log location \"%s\"\n"
 msgstr "%s: \"%s\" write-ahead log konumu ayrıştırılamadı\n"
@@ -546,7 +546,7 @@ msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: temel (base) yedek başlatılıyor, checkpoint işleminin tamamlanması bekleniyor\n"
 
 #: pg_basebackup.c:1793 pg_recvlogical.c:270 receivelog.c:492 receivelog.c:563
-#: receivelog.c:603 streamutil.c:256 streamutil.c:364 streamutil.c:410
+#: receivelog.c:603 streamutil.c:279 streamutil.c:387 streamutil.c:433
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: \"%s\" replikasyon komutu gönderilemedi: %s"
@@ -731,7 +731,7 @@ msgstr "%s: --no-slot slot adıyla birlikte kullanılamaz\n"
 #: pg_basebackup.c:2365
 #, c-format
 msgid "%s: WAL directory location can only be specified in plain mode\n"
-msgstr "%s: WAL dizini lokasyonu sadece plain modunda belitrilebilir\n"
+msgstr "%s: WAL dizini lokasyonu sadece plain modunda belirtilebilir\n"
 
 #: pg_basebackup.c:2376
 #, c-format
@@ -827,12 +827,12 @@ msgstr "      --drop-slot        replikasyon slotunu sil (slotun adı için bkz.
 #: pg_receivewal.c:111
 #, c-format
 msgid "%s: finished segment at %X/%X (timeline %u)\n"
-msgstr ""
+msgstr "%s: segment %X/%X de bitirildi (%u zaman çizelgesi)\n"
 
 #: pg_receivewal.c:124
 #, c-format
 msgid "%s: switched to timeline %u at %X/%X\n"
-msgstr ""
+msgstr "%1$s: %3$X/%4$X konumunda%2$u zaman çizelgesine geçildi\n"
 
 #: pg_receivewal.c:133
 #, c-format
@@ -963,7 +963,7 @@ msgstr ""
 #: pg_recvlogical.c:89
 #, c-format
 msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
-msgstr "  -I, --startpos=LSN     mevcut bir slot'ta streaming işşleminin başlayacağı konum\n"
+msgstr "  -I, --startpos=LSN     mevcut bir slot'ta streaming işleminin başlayacağı konum\n"
 
 #: pg_recvlogical.c:91
 #, c-format
@@ -994,7 +994,7 @@ msgstr "  -d, --dbname=VERITABANI_ADI    bağlanılacak veritabanı adı\n"
 #: pg_recvlogical.c:135
 #, c-format
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
-msgstr ""
+msgstr "%s: %X/%X e kadar yazma, %X/%X'e kadar boşaltma (flush) için onaylama (slot %s)\n"
 
 #: pg_recvlogical.c:160 receivelog.c:351
 #, c-format
@@ -1178,7 +1178,7 @@ msgstr "%s: uyumsuz sunucu sürümü %s; istemci %s den daha eski sunucu sürüm
 msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
 msgstr "%s: uyumsuz sunucu sürümü %s; istemci %s den daha yeni sunucu sürümlerinden streaming işlemini desteklemiyor\n"
 
-#: receivelog.c:500 streamutil.c:265 streamutil.c:304
+#: receivelog.c:500 streamutil.c:288 streamutil.c:327
 #, c-format
 msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
 msgstr "%s: sistem belirlenemedi: %d satır ve %d alan alındı, %d satır ve %d veya daha fazla alan bekleniyordu\n"
@@ -1201,17 +1201,17 @@ msgstr "%s: geçici replikasyon slotu \"%s\" oluşturulamadı: %s"
 #: receivelog.c:576
 #, c-format
 msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
-msgstr ""
+msgstr "%s: TIMELINE_HISTORY komutuna beklenmedik cevap; %d satır ve %d alan alındı, %d satır ve %d alan bekleniyordu\n"
 
 #: receivelog.c:648
 #, c-format
 msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
-msgstr ""
+msgstr "%1$s: sunucu %3$u zaman çizelgesini takiben beklenmedik sonraki zaman çizelgesi %2$u bildirdi\n"
 
 #: receivelog.c:655
 #, c-format
 msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
-msgstr ""
+msgstr "%s: sunucu %u streaming zaman çizelgesini %X/%X de durdurdu, fakat sonraki %u zaman çizelgesinin %X/%X de başlayacağını bildirdi\n"
 
 #: receivelog.c:696
 #, c-format
@@ -1231,12 +1231,12 @@ msgstr "%s: bir sonraki zaman çizelgesinin (timeline) başlama noktası \"%s\" 
 #: receivelog.c:1126
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
-msgstr ""
+msgstr "%s: açık dosya yokken %u offset için write-ahead log kaydı alındı\n"
 
 #: receivelog.c:1137
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
-msgstr ""
+msgstr "%s: %08x WAL data offset'i alındı , %08x bekleniyordu\n"
 
 #: receivelog.c:1172
 #, c-format
@@ -1248,85 +1248,90 @@ msgstr "%s: %u bayt, \"%s\" WAL dosyasına yazılamadı: %s\n"
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: copy-end paketi gönderilemedi: %s"
 
-#: streamutil.c:149
+#: streamutil.c:150
 msgid "Password: "
 msgstr "Şifre: "
 
-#: streamutil.c:174
+#: streamutil.c:175
 #, c-format
 msgid "%s: could not connect to server\n"
 msgstr "%s: sunucuya bağlanılamadı\n"
 
-#: streamutil.c:192
+#: streamutil.c:193
 #, c-format
 msgid "%s: could not connect to server: %s"
 msgstr "%s: sunucuya bağlanılamadı: %s"
 
-#: streamutil.c:216
+#: streamutil.c:222
+#, c-format
+msgid "%s: could not clear search_path: %s"
+msgstr "%s: search_path temizlenemedi: %s"
+
+#: streamutil.c:239
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
 msgstr ""
 "%s: integer_datetimes için sunucu ayarı belirlenemedi\n"
 "\n"
 
-#: streamutil.c:225
+#: streamutil.c:248
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
-msgstr ""
+msgstr "%s: integer_datetimes derleme seçeneği sunucu ile eşleşmiyor\n"
 
-#: streamutil.c:376
+#: streamutil.c:399
 #, c-format
 msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: \"%s\" replikasyon slot'u oluşturulamadı: %d satır ve %d alan alındı,%d satır ve %d alan bekleniyordu\n"
 
-#: streamutil.c:421
+#: streamutil.c:444
 #, c-format
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: \"%s\" replikasyon slot'u silinemedi: %d satır ve %d alan alındı,%d satır ve %d alan bekleniyordu\n"
 
-#: walmethods.c:435 walmethods.c:904
+#: walmethods.c:438 walmethods.c:926
 msgid "could not compress data"
 msgstr "veri sıkıştırılamadı"
 
-#: walmethods.c:459
+#: walmethods.c:470
 msgid "could not reset compression stream"
 msgstr "sıkıştırma akımı sıfırlanamadı (reset)"
 
-#: walmethods.c:560
+#: walmethods.c:567
 msgid "could not initialize compression library"
 msgstr "sıkıştırma kütüphanesi ilklendirilemedi"
 
-#: walmethods.c:572
+#: walmethods.c:579
 msgid "implementation error: tar files can't have more than one open file"
 msgstr "uygulama hatası: tar dosyalarının birden fazla açık dosyası olamaz"
 
-#: walmethods.c:586
+#: walmethods.c:593
 msgid "could not create tar header"
 msgstr "tar başlığı (header) oluşturulamadı"
 
-#: walmethods.c:600 walmethods.c:638 walmethods.c:827 walmethods.c:838
+#: walmethods.c:607 walmethods.c:647 walmethods.c:842 walmethods.c:853
 msgid "could not change compression parameters"
 msgstr "sıkıştırma parametreleri değiştirilemedi"
 
-#: walmethods.c:720
+#: walmethods.c:729
 msgid "unlink not supported with compression"
 msgstr "unlink, sıkıştırma seçeneği ile desteklenmiyor"
 
-#: walmethods.c:920
+#: walmethods.c:951
 msgid "could not close compression stream"
 msgstr "sıkıştırma akımı kapatılamadı"
 
-#~ msgid "%s: no start point returned from server\n"
-#~ msgstr "%s:sunucudan bir başlangıç noktası dönmedi\n"
-
-#~ msgid "%s: could not parse file mode\n"
-#~ msgstr "%s: dosya modu ayıklanamadı\n"
-
-#~ msgid "%s: could not parse file size\n"
-#~ msgstr "%s: dosya boyutu ayıklanamadı\n"
+#~ msgid "  --help                   show this help, then exit\n"
+#~ msgstr "  --help                   bu yardımı gösterir ve çıkar\n"
 
 #~ msgid "  --version                output version information, then exit\n"
 #~ msgstr "  --version                sürüm bilgisini gösterir ve çıkar\n"
 
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help                   bu yardımı gösterir ve çıkar\n"
+#~ msgid "%s: could not parse file size\n"
+#~ msgstr "%s: dosya boyutu ayıklanamadı\n"
+
+#~ msgid "%s: could not parse file mode\n"
+#~ msgstr "%s: dosya modu ayıklanamadı\n"
+
+#~ msgid "%s: no start point returned from server\n"
+#~ msgstr "%s:sunucudan bir başlangıç noktası dönmedi\n"

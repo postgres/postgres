@@ -10,31 +10,36 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-06 14:46+0000\n"
-"PO-Revision-Date: 2017-07-06 18:24+0200\n"
+"POT-Creation-Date: 2018-09-22 00:26+0000\n"
+"PO-Revision-Date: 2018-09-23 09:01+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 2.1.1\n"
 
-#: ../../common/controldata_utils.c:61
+#: ../../common/controldata_utils.c:62
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
 
-#: ../../common/controldata_utils.c:74
+#: ../../common/controldata_utils.c:78
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s : n'a pas pu lire le fichier « %s » : %s\n"
 
-#: ../../common/controldata_utils.c:95
+#: ../../common/controldata_utils.c:90
+#, c-format
+msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgstr "%s : n'a pas pu lire le fichier « %s » : a lu %d sur %d\n"
+
+#: ../../common/controldata_utils.c:112
 msgid "byte ordering mismatch"
 msgstr "différence de l'ordre des octets"
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:114
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"
@@ -459,6 +464,12 @@ msgstr "Version des sommes de contrôle des pages de données :   %u\n"
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Nonce pour simuler une identité:            %s\n"
 
+#~ msgid "calculated CRC checksum does not match value stored in file"
+#~ msgstr "la somme de contrôle CRC calculée ne correspond par à la valeur enregistrée dans le fichier"
+
+#~ msgid "floating-point numbers"
+#~ msgstr "nombres à virgule flottante"
+
 #~ msgid ""
 #~ "Usage:\n"
 #~ "  %s [OPTION] [DATADIR]\n"
@@ -473,9 +484,3 @@ msgstr "Nonce pour simuler une identité:            %s\n"
 #~ "Options :\n"
 #~ "  --help         affiche cette aide et quitte\n"
 #~ "  --version      affiche les informations de version et quitte\n"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "nombres à virgule flottante"
-
-#~ msgid "calculated CRC checksum does not match value stored in file"
-#~ msgstr "la somme de contrôle CRC calculée ne correspond par à la valeur enregistrée dans le fichier"

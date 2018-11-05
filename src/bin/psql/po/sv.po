@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-10-01 18:14+0000\n"
-"PO-Revision-Date: 2018-06-25 08:40+0200\n"
+"PO-Revision-Date: 2018-09-16 22:56+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -678,7 +678,7 @@ msgstr "kunde inte parsa arrayen reloptions\n"
 #: common.c:158
 #, c-format
 msgid "cannot escape without active connection\n"
-msgstr "kan inte escape:a utan en aktiv upppkoppling\n"
+msgstr "kan inte escape:a utan en aktiv uppkoppling\n"
 
 #: common.c:199
 #, c-format
