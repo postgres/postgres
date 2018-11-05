@@ -1,6 +1,3 @@
-# Russian message translation file for pg_verify_checksums
-# Copyright (C) 2018 PostgreSQL Global Development Group
-# This file is distributed under the same license as the PostgreSQL package.
 # Alexander Lakhin <a.lakhin@postgrespro.ru>, 2018.
 msgid ""
 msgstr ""

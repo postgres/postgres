@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-08-06 20:15+0000\n"
-"PO-Revision-Date: 2018-09-06 15:46+0300\n"
+"PO-Revision-Date: 2018-10-16 14:25+0300\n"
 "Last-Translator: Abdullah Gülner <>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -362,7 +362,7 @@ msgid "Previous connection kept\n"
 msgstr "Önceki bağlantı kullanılacaktır\n"
 
 #: command.c:3041
-#, fuzzy, c-format
+#, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
@@ -1356,7 +1356,7 @@ msgstr "Varsayılan"
 
 #: describe.c:1949
 msgid "Key?"
-msgstr ""
+msgstr "Anahtar?"
 
 #: describe.c:1951
 msgid "Definition"
@@ -2418,12 +2418,12 @@ msgstr "  \\errverbose            en son hata mesajını azami açıklamalı ola
 #: help.c:176
 #, c-format
 msgid "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
-msgstr "  \\g [DOSYA] or ;         sorguyu çalıştır (anve sonucu dosyaya ya da |pipe'a gönder)\n"
+msgstr "  \\g [DOSYA] or ;         sorguyu çalıştır (ve sonucu dosyaya ya da |pipe'a gönder)\n"
 
 #: help.c:177
 #, c-format
 msgid "  \\gdesc                 describe result of query, without executing it\n"
-msgstr ""
+msgstr "  \\gdesc                 sorguyu çalıştırmadan sonuçlarını tarif et\n"
 
 #: help.c:178
 #, c-format
@@ -3702,6 +3702,8 @@ msgid ""
 "The input is a PostgreSQL custom-format dump.\n"
 "Use the pg_restore command-line client to restore this dump to a database.\n"
 msgstr ""
+"Girdi özel formatta bir PostgreSQL dökümüdür (dump).\n"
+"Bu dökümü bir veritabanına geri yüklemek için pg_restore komut satırı istemcisini kullanın.\n"
 
 #: mainloop.c:282
 msgid "Use \\? for help or press control-C to clear the input buffer."
@@ -4059,10 +4061,8 @@ msgid "object_name"
 msgstr "nesne_adı"
 
 #: sql_help.c:326 sql_help.c:1767 sql_help.c:4126
-#, fuzzy
-#| msgid "aggregate"
 msgid "aggregate_name"
-msgstr "aggregate"
+msgstr "toplam(aggregate)_adı"
 
 #: sql_help.c:328 sql_help.c:1769 sql_help.c:2053 sql_help.c:2057
 #: sql_help.c:2059 sql_help.c:3195
@@ -4407,36 +4407,28 @@ msgid "refresh_option"
 msgstr "tazeleme_seçeneği"
 
 #: sql_help.c:1120 sql_help.c:2648
-#, fuzzy
-#| msgid "configuration_parameter"
 msgid "subscription_parameter"
-msgstr "yapılandırma_parametresi"
+msgstr "abonelik_parametresi"
 
 #: sql_help.c:1273 sql_help.c:1276
-#, fuzzy
 msgid "partition_name"
-msgstr "dil_adı"
+msgstr "bölümleme(partition)_adı"
 
 #: sql_help.c:1274 sql_help.c:2241 sql_help.c:2768
 msgid "partition_bound_spec"
 msgstr ""
 
 #: sql_help.c:1292 sql_help.c:1341 sql_help.c:2780
-#, fuzzy
-#| msgid "sequence_name"
 msgid "sequence_options"
-msgstr "sequence_adı"
+msgstr "sequence_seçenekleri"
 
 #: sql_help.c:1294
-#, fuzzy
-#| msgid "sequence_name"
 msgid "sequence_option"
-msgstr "sequence_adı"
+msgstr "sequence_seçeneği"
 
 #: sql_help.c:1306
-#, fuzzy
 msgid "table_constraint_using_index"
-msgstr "tablo_kısıtlaması"
+msgstr "ve indeks_kullanan_tablo_kısıtlaması şöyledir:"
 
 #: sql_help.c:1314 sql_help.c:1315 sql_help.c:1316 sql_help.c:1317
 msgid "rewrite_rule_name"
@@ -4444,7 +4436,7 @@ msgstr "rewrite_kural_adı"
 
 #: sql_help.c:1328 sql_help.c:2805
 msgid "and partition_bound_spec is:"
-msgstr ""
+msgstr "ve partition_bound_spec şöyledir:"
 
 #: sql_help.c:1329 sql_help.c:1331 sql_help.c:1333 sql_help.c:1335
 #: sql_help.c:1336 sql_help.c:2806 sql_help.c:2808 sql_help.c:2810
@@ -4458,23 +4450,19 @@ msgid "string_literal"
 msgstr "dizgi_sabiti"
 
 #: sql_help.c:1337
-#, fuzzy
-#| msgid "where column_constraint is:"
 msgid "and column_constraint is:"
-msgstr "kolon_kısıtlaması aşağıdakilerden birisi olabilir:"
+msgstr "ve kolon_kısıtlaması şöyledir :"
 
 #: sql_help.c:1340 sql_help.c:2248 sql_help.c:2279 sql_help.c:2476
 #: sql_help.c:2779
-#, fuzzy
 msgid "default_expr"
-msgstr "öntanımlı %s"
+msgstr "öntanımlı_ifade"
 
 #: sql_help.c:1342 sql_help.c:1343 sql_help.c:1352 sql_help.c:1354
 #: sql_help.c:1358 sql_help.c:2781 sql_help.c:2782 sql_help.c:2791
 #: sql_help.c:2793 sql_help.c:2797
-#, fuzzy
 msgid "index_parameters"
-msgstr "%s parametresi"
+msgstr "indeks_parametreleri"
 
 #: sql_help.c:1344 sql_help.c:1361 sql_help.c:2783 sql_help.c:2800
 msgid "reftable"
@@ -4485,13 +4473,12 @@ msgid "refcolumn"
 msgstr "referans kolonu"
 
 #: sql_help.c:1348 sql_help.c:2249 sql_help.c:2787
-#, fuzzy
 msgid "and table_constraint is:"
-msgstr "%s constraint"
+msgstr "ve tablo_kısıtlaması şöyledir:"
 
 #: sql_help.c:1356 sql_help.c:2795
 msgid "exclude_element"
-msgstr "exclude_element"
+msgstr "hariçtutma(ecxlude)_öğesi"
 
 #: sql_help.c:1357 sql_help.c:2796 sql_help.c:4227 sql_help.c:4317
 #: sql_help.c:4466 sql_help.c:4608 sql_help.c:4673
@@ -4503,9 +4490,8 @@ msgid "predicate"
 msgstr "yüklem (predicate)"
 
 #: sql_help.c:1365
-#, fuzzy
 msgid "and table_constraint_using_index is:"
-msgstr "%s constraint"
+msgstr "ve indeks_kullanan_tablo_kısıtlaması şöyledir:"
 
 #: sql_help.c:1368 sql_help.c:2814
 msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
@@ -4542,28 +4528,24 @@ msgstr "yeni_sözlük"
 
 #: sql_help.c:1519 sql_help.c:1532 sql_help.c:1535 sql_help.c:1536
 #: sql_help.c:3006
-#, fuzzy
 msgid "attribute_name"
-msgstr "Özellikler"
+msgstr "özellik_adı"
 
 #: sql_help.c:1520
-#, fuzzy
 msgid "new_attribute_name"
-msgstr "Özellikler"
+msgstr "yeni_özellik_adı"
 
 #: sql_help.c:1526 sql_help.c:1530
-#, fuzzy
 msgid "new_enum_value"
-msgstr "yeni_adı"
+msgstr "yeni_enum_değeri"
 
 #: sql_help.c:1527
-#, fuzzy
 msgid "neighbor_enum_value"
-msgstr "yeni_adı"
+msgstr "komşu_enum_değeri"
 
 #: sql_help.c:1529
 msgid "existing_enum_value"
-msgstr ""
+msgstr "mevcut_enum_değeri"
 
 #: sql_help.c:1604 sql_help.c:2233 sql_help.c:2242 sql_help.c:2614
 #: sql_help.c:3084 sql_help.c:3529 sql_help.c:3702 sql_help.c:3737
@@ -4572,29 +4554,24 @@ msgid "server_name"
 msgstr "sunucu_adı"
 
 #: sql_help.c:1632 sql_help.c:1635 sql_help.c:3099
-#, fuzzy
 msgid "view_option_name"
-msgstr "dil_adı"
+msgstr "seçenek_adı_görüntüle"
 
 #: sql_help.c:1633 sql_help.c:3100
-#, fuzzy
 msgid "view_option_value"
-msgstr "yeni_adı"
+msgstr "seçenek_değeri_görüntüle"
 
 #: sql_help.c:1653 sql_help.c:1654 sql_help.c:4589 sql_help.c:4590
-#, fuzzy
-#| msgid "table_constraint"
 msgid "table_and_columns"
-msgstr "tablo_kısıtlaması"
+msgstr "tablolar_ve_sütunlar"
 
 #: sql_help.c:1655 sql_help.c:1896 sql_help.c:3575 sql_help.c:4591
 msgid "where option can be one of:"
 msgstr "seçenek aşağıdakilerden birisi olabilir:"
 
 #: sql_help.c:1656 sql_help.c:4592
-#, fuzzy
 msgid "and table_and_columns is:"
-msgstr "%s constraint"
+msgstr "ve tablolar_ve_sütunlar şöyledir:"
 
 #: sql_help.c:1672 sql_help.c:4377 sql_help.c:4379 sql_help.c:4403
 msgid "transaction_mode"
@@ -4612,44 +4589,37 @@ msgid "argument"
 msgstr "bağımsız değişken"
 
 #: sql_help.c:1772
-#, fuzzy
 msgid "relation_name"
-msgstr "dil_adı"
+msgstr "nesne_adı"
 
 #: sql_help.c:1777 sql_help.c:3698 sql_help.c:4031
-#, fuzzy
 msgid "domain_name"
-msgstr "Rol adı"
+msgstr "domain_adı"
 
 #: sql_help.c:1799
-#, fuzzy
-#| msgid "role_name"
 msgid "policy_name"
-msgstr "rol_adı"
+msgstr "ilke(policy)_adı"
 
 #: sql_help.c:1812
-#, fuzzy
 msgid "rule_name"
-msgstr "Rol adı"
+msgstr "kural_adı"
 
 #: sql_help.c:1831
 msgid "text"
 msgstr "metin"
 
 #: sql_help.c:1856 sql_help.c:3881 sql_help.c:4069
-#, fuzzy
 msgid "transaction_id"
-msgstr "transaction salt okunurdur"
+msgstr "işlem(transaction)_id"
 
 #: sql_help.c:1887 sql_help.c:1893 sql_help.c:3807
-#, fuzzy
 msgid "filename"
-msgstr "Rol adı"
+msgstr "dosyaadı"
 
 #: sql_help.c:1888 sql_help.c:1894 sql_help.c:2554 sql_help.c:2555
 #: sql_help.c:2556
 msgid "command"
-msgstr "komıt"
+msgstr "komut"
 
 #: sql_help.c:1892 sql_help.c:2382 sql_help.c:2841 sql_help.c:3101
 #: sql_help.c:3119 sql_help.c:3772
@@ -4657,9 +4627,8 @@ msgid "query"
 msgstr "sorgu"
 
 #: sql_help.c:1897
-#, fuzzy
 msgid "format_name"
-msgstr "Bilgi edinme\n"
+msgstr "biçim(format)_adı"
 
 #: sql_help.c:1898 sql_help.c:1899 sql_help.c:1902 sql_help.c:3576
 #: sql_help.c:3577 sql_help.c:3578 sql_help.c:3579 sql_help.c:3580
@@ -4669,101 +4638,83 @@ msgstr "boolean"
 
 #: sql_help.c:1900
 msgid "delimiter_character"
-msgstr "ayrıştırıcı_karaktersi"
+msgstr "ayrıştırıcı_karakteri"
 
 #: sql_help.c:1901
 msgid "null_string"
 msgstr "null_dizi"
 
 #: sql_help.c:1903
-#, fuzzy
 msgid "quote_character"
-msgstr " %d karakterinde "
+msgstr " quote_karakteri"
 
 #: sql_help.c:1904
-#, fuzzy
 msgid "escape_character"
-msgstr "escape satırı geçersiz"
+msgstr "kaçış(escape)_karakteri"
 
 #: sql_help.c:1908
-#, fuzzy
 msgid "encoding_name"
-msgstr "Dil Kodlaması"
+msgstr "dilkodlaması_adı"
 
 #: sql_help.c:1919
-#, fuzzy
-#| msgid "access method %s"
 msgid "access_method_type"
-msgstr "%s erişim yöntemi"
+msgstr "erişim_yöntemi_tipi"
 
 #: sql_help.c:1990 sql_help.c:2009 sql_help.c:2012
-#, fuzzy
-#| msgid "data_type"
 msgid "arg_data_type"
-msgstr "veri_tipi"
+msgstr "arg_veri_tipi"
 
 #: sql_help.c:1991 sql_help.c:2013 sql_help.c:2021
-#, fuzzy
 msgid "sfunc"
-msgstr "sequence"
+msgstr "sfunc"
 
 #: sql_help.c:1992 sql_help.c:2014 sql_help.c:2022
-#, fuzzy
 msgid "state_data_type"
-msgstr "veri tipi"
+msgstr "durum(state)_veri_tipi"
 
 #: sql_help.c:1993 sql_help.c:2015 sql_help.c:2023
-#, fuzzy
 msgid "state_data_size"
-msgstr "veri tipi"
+msgstr "durum(state)_veri_boyutu"
 
 #: sql_help.c:1994 sql_help.c:2016 sql_help.c:2024
-#, fuzzy
 msgid "ffunc"
-msgstr "fonksiyon"
+msgstr "ffunc"
 
 #: sql_help.c:1995 sql_help.c:2025
 msgid "combinefunc"
 msgstr ""
 
 #: sql_help.c:1996 sql_help.c:2026
-#, fuzzy
 msgid "serialfunc"
-msgstr "sequence"
+msgstr "serialfunc"
 
 #: sql_help.c:1997 sql_help.c:2027
 msgid "deserialfunc"
-msgstr ""
+msgstr "deserialfunc"
 
 #: sql_help.c:1998 sql_help.c:2017 sql_help.c:2028
 msgid "initial_condition"
 msgstr "ilk_durum"
 
 #: sql_help.c:1999 sql_help.c:2029
-#, fuzzy
 msgid "msfunc"
-msgstr "sequence"
+msgstr "msfunc"
 
 #: sql_help.c:2000 sql_help.c:2030
-#, fuzzy
-#| msgid "minvalue"
 msgid "minvfunc"
-msgstr "en düşük değer"
+msgstr "en düşük değer fonksiyonu (minvfunc)"
 
 #: sql_help.c:2001 sql_help.c:2031
-#, fuzzy
 msgid "mstate_data_type"
-msgstr "veri tipi"
+msgstr "mstate_veri_tipi"
 
 #: sql_help.c:2002 sql_help.c:2032
-#, fuzzy
 msgid "mstate_data_size"
-msgstr "veri tipi"
+msgstr "mstate_veri_boyutu"
 
 #: sql_help.c:2003 sql_help.c:2033
-#, fuzzy
 msgid "mffunc"
-msgstr "fonksiyon"
+msgstr "mffunc"
 
 #: sql_help.c:2004 sql_help.c:2034
 #, fuzzy
@@ -4772,9 +4723,8 @@ msgid "minitial_condition"
 msgstr "ilk_durum"
 
 #: sql_help.c:2005 sql_help.c:2035
-#, fuzzy
 msgid "sort_operator"
-msgstr "operatör"
+msgstr "sıralama(sort)_operatörü"
 
 #: sql_help.c:2018
 msgid "or the old syntax"
@@ -4786,52 +4736,44 @@ msgid "base_type"
 msgstr "Hedef tipi"
 
 #: sql_help.c:2076
-#, fuzzy
 msgid "locale"
-msgstr "yerel soket"
+msgstr "yerel ayar"
 
 #: sql_help.c:2077 sql_help.c:2115
 msgid "lc_collate"
-msgstr ""
+msgstr "lc_collate"
 
 #: sql_help.c:2078 sql_help.c:2116
-#, fuzzy
 msgid "lc_ctype"
-msgstr "Ctype"
+msgstr "lc_ctype"
 
 #: sql_help.c:2079 sql_help.c:4122
 msgid "provider"
-msgstr ""
+msgstr "sağlayıcı"
 
 #: sql_help.c:2080 sql_help.c:2171
-#, fuzzy
 msgid "version"
-msgstr "Sürüm"
+msgstr "sürüm"
 
 #: sql_help.c:2082
-#, fuzzy
 msgid "existing_collation"
-msgstr "Hedef"
+msgstr "mevcut_sıralama(collation)"
 
 #: sql_help.c:2092
-#, fuzzy
 msgid "source_encoding"
-msgstr "Kaynak kodu"
+msgstr "kaynak_dil kodlaması"
 
 #: sql_help.c:2093
-#, fuzzy
 msgid "dest_encoding"
-msgstr "Dil Kodlaması"
+msgstr "hedef_dil kodlaması"
 
 #: sql_help.c:2113 sql_help.c:2881
-#, fuzzy
 msgid "template"
-msgstr "Şablon"
+msgstr "şablon"
 
 #: sql_help.c:2114
-#, fuzzy
 msgid "encoding"
-msgstr "Dil Kodlaması"
+msgstr "dil kodlaması"
 
 #: sql_help.c:2140
 msgid "constraint"
@@ -4842,18 +4784,16 @@ msgid "where constraint is:"
 msgstr "kısıtlama şu şekilde olabilir:"
 
 #: sql_help.c:2155 sql_help.c:2551 sql_help.c:2954
-#, fuzzy
 msgid "event"
-msgstr "Elemanlar"
+msgstr "olay"
 
 #: sql_help.c:2156
 msgid "filter_variable"
-msgstr ""
+msgstr "filtre_değişkeni"
 
 #: sql_help.c:2172
-#, fuzzy
 msgid "old_version"
-msgstr "yeni_sürüm"
+msgstr "eski_sürüm"
 
 #: sql_help.c:2245 sql_help.c:2776
 msgid "where column_constraint is:"
@@ -5547,10 +5487,8 @@ msgid "start a transaction block"
 msgstr "transaction bloğunu başlat"
 
 #: sql_help.c:4959
-#, fuzzy
-#| msgid "remove a procedural language"
 msgid "invoke a procedure"
-msgstr "yordamsal dili kaldır"
+msgstr "bir prosedürü çağır"
 
 #: sql_help.c:4964
 msgid "force a write-ahead log checkpoint"

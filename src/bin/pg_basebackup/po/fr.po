@@ -210,7 +210,7 @@ msgstr ""
 #, c-format
 msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
 msgstr ""
-"  -X, --waldir=RÉP_WAL         emplacement du répertoire des journaux de\n"
+"      --waldir=RÉP_WAL         emplacement du répertoire des journaux de\n"
 "                               transactions\n"
 
 #: pg_basebackup.c:353
@@ -264,12 +264,12 @@ msgstr "  -l, --label=LABEL            configure le label de sauvegarde\n"
 #: pg_basebackup.c:362
 #, c-format
 msgid "  -n, --no-clean         do not clean up after errors\n"
-msgstr "  -n, --no-clean             ne nettoie pas en cas d'erreur\n"
+msgstr "  -n, --no-clean               ne nettoie pas en cas d'erreur\n"
 
 #: pg_basebackup.c:363
 #, c-format
 msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
-msgstr "      -N, --no-sync       n'attend pas que les modifications soient proprement écrites sur disque\n"
+msgstr "  -N, --no-sync                n'attend pas que les modifications soient proprement écrites sur disque\n"
 
 #: pg_basebackup.c:364
 #, c-format
@@ -289,12 +289,12 @@ msgstr "  -v, --verbose                affiche des messages verbeux\n"
 #: pg_basebackup.c:367 pg_receivewal.c:92 pg_recvlogical.c:100
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version                affiche la version puis quitte\n"
 
 #: pg_basebackup.c:368
 #, c-format
 msgid "      --no-slot          prevent creation of temporary replication slot\n"
-msgstr "      --no-slot          empêche la création de slots de réplication temporaires\n"
+msgstr "      --no-slot                empêche la création de slots de réplication temporaires\n"
 
 #: pg_basebackup.c:369
 #, c-format
@@ -302,8 +302,7 @@ msgid ""
 "      --no-verify-checksums\n"
 "                         do not verify checksums\n"
 msgstr ""
-"      --no-verify-checksums\n"
-"                         ne vérifie pas les sommes de contrôle\n"
+"      --no-verify-checksums           ne vérifie pas les sommes de contrôle\n"
 
 #: pg_basebackup.c:371 pg_receivewal.c:94 pg_recvlogical.c:101
 #, c-format

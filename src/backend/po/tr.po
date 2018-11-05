@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-08-06 08:44+0000\n"
-"PO-Revision-Date: 2018-09-16 23:34+0200\n"
+"PO-Revision-Date: 2018-10-16 17:18+0300\n"
 "Last-Translator: Abdullah Gülner <>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -5161,9 +5161,8 @@ msgstr "\"%s\" geçersiz indexi üzerinde cluster işlemi yapılamaz"
 
 #: commands/cluster.c:497
 #, fuzzy, c-format
-#| msgid "cannot create index on partitioned table \"%s\""
 msgid "cannot mark index clustered in partitioned table"
-msgstr "\"%s\" bölümlenmiş tablosu üzerinde indeks oluşturulamıyor"
+msgstr "bölümlenmiş tabloda index clustered olarak işaretleme yapılamaz"
 
 #: commands/cluster.c:938
 #, c-format
@@ -8427,9 +8426,9 @@ msgid "cannot alter type \"%s\" because column \"%s.%s\" uses it"
 msgstr "\"%s\" tipi değiştirilemez; çünkü \"%s.%s\" sütunu onu kullanıyor "
 
 #: commands/tablecmds.c:5201
-#, fuzzy, c-format
+#, c-format
 msgid "cannot alter foreign table \"%s\" because column \"%s.%s\" uses its row type"
-msgstr "\"%s\" uzak tablosu değiştirilemez çünkü \"%s.%s\" sütunu onun row type veri tipini kullanıyor"
+msgstr "\"%s\" uzak tablosu değiştirilemez çünkü \"%s.%s\" sütunu onun satır tipini kullanıyor"
 
 #: commands/tablecmds.c:5208
 #, c-format
@@ -8567,9 +8566,9 @@ msgid "column \"%s\" of relation \"%s\" is not an identity column, skipping"
 msgstr "\"%2$s\" nesnesinin \"%1$s\" sütunu bir identity değil, atlanıyor"
 
 #: commands/tablecmds.c:6432
-#, c-format
+#, fuzzy, c-format
 msgid "cannot refer to non-index column by number"
-msgstr ""
+msgstr "index-sütunu olmayan bir sütuna numarasıyla referans verilemez (partition la ilgili)"
 
 #: commands/tablecmds.c:6463
 #, c-format
@@ -8582,22 +8581,19 @@ msgid "lowering statistics target to %d"
 msgstr "statistics target, %d değerine düşürülmektedir"
 
 #: commands/tablecmds.c:6494
-#, fuzzy, c-format
-#| msgid "column %d of relation \"%s\" does not exist"
+#, c-format
 msgid "column number %d of relation \"%s\" does not exist"
-msgstr "\"%2$s\" tablosunun %1$d kolonu mevcut değil"
+msgstr "\"%2$s\" tablosunun %1$d sayılı sütunu mevcut değil"
 
 #: commands/tablecmds.c:6513
-#, fuzzy, c-format
-#| msgid "cannot insert into a view"
+#, c-format
 msgid "cannot alter statistics on included column \"%s\" of index \"%s\""
-msgstr "view yazma hatası"
+msgstr "\"%2$s\" indeksinin \"%1$s\" dahil edilmiş sütunu üzerindeki istatistikler değiştirilemiyor"
 
 #: commands/tablecmds.c:6518
 #, fuzzy, c-format
-#| msgid "cannot insert into a view"
 msgid "cannot alter statistics on non-expression column \"%s\" of index \"%s\""
-msgstr "view yazma hatası"
+msgstr "\"%2$s\" indeksinin \"%1$s\" non-expression sütunu üzerindeki istatistikler değiştirilemiyor"
 
 #: commands/tablecmds.c:6520
 #, c-format
@@ -9676,7 +9672,7 @@ msgstr "BEFORE STATEMENT tetikleyicisi bir değer döndüremez"
 #: commands/trigger.c:3305 executor/nodeModifyTable.c:756 executor/nodeModifyTable.c:1244
 #, c-format
 msgid "tuple to be updated was already modified by an operation triggered by the current command"
-msgstr ""
+msgstr "güncellenecek (update) satır geçerli komut tarafından tetiklenen bir operasyon tarafından zaten değiştirilmiş"
 
 #: commands/trigger.c:3306 executor/nodeModifyTable.c:757 executor/nodeModifyTable.c:1245
 #, c-format
@@ -9691,7 +9687,7 @@ msgstr "eşzamanlı update nedeniyle erişim sıralanamıyor"
 #: commands/trigger.c:3324 executor/execMain.c:2721 executor/execMain.c:2796 executor/nodeLockRows.c:224
 #, c-format
 msgid "tuple to be locked was already moved to another partition due to concurrent update"
-msgstr ""
+msgstr "kilitlenecek satır eş zamanlı bir güncelleme dolayısıyla zaten başka bir bölüme (partition) taşınmış"
 
 #: commands/trigger.c:5449
 #, c-format
@@ -10731,7 +10727,7 @@ msgstr "çok boyutlu dizinler boyut sayısı kadar dizin ifade sayısına sahip 
 #: executor/execExprInterp.c:2912 executor/execExprInterp.c:2959
 #, c-format
 msgid "attribute %d has wrong type"
-msgstr "attribute %d yalnış tipe sahiptir"
+msgstr "attribute %d yanlış tipe sahiptir"
 
 #: executor/execExprInterp.c:3069
 #, c-format
@@ -10973,7 +10969,7 @@ msgstr "Başarısız olan satırda bölümleme anahtarı %s içeriyor."
 #: executor/execReplication.c:197 executor/execReplication.c:361
 #, c-format
 msgid "tuple to be locked was already moved to another partition due to concurrent update, retrying"
-msgstr ""
+msgstr "kilitlenecek satır eş zamanlı bir güncelleme dolayısıyla zaten başka bir bölüme (partition) taşınmış, tekrar deneniyor"
 
 #: executor/execReplication.c:201 executor/execReplication.c:365
 #, c-format
@@ -11212,7 +11208,7 @@ msgstr "Sorgunun (query) sütun sayısı yetersiz"
 #: executor/nodeModifyTable.c:773
 #, c-format
 msgid "tuple to be deleted was already moved to another partition due to concurrent update"
-msgstr ""
+msgstr "silinecek satır eş zamanlı bir güncelleme dolayısıyla zaten başka bir bölüme (partiton) taşınmış"
 
 #: executor/nodeModifyTable.c:1085
 #, c-format
@@ -11220,14 +11216,14 @@ msgid "invalid ON UPDATE specification"
 msgstr "geçersiz ON UPDATE tanımlaması"
 
 #: executor/nodeModifyTable.c:1086
-#, c-format
+#, fuzzy, c-format
 msgid "The result tuple would appear in a different partition than the original tuple."
-msgstr ""
+msgstr "Sonuç satırı orjinal satırdan farklı bir bölmede (partition) görünecek"
 
 #: executor/nodeModifyTable.c:1261
 #, c-format
 msgid "tuple to be updated was already moved to another partition due to concurrent update"
-msgstr ""
+msgstr "güncellenecek satır eş zamanlı bir güncelleme dolayısıyla zaten başka bir bölüme (partiton) taşınmış"
 
 #: executor/nodeModifyTable.c:1412
 #, c-format
@@ -14581,7 +14577,7 @@ msgstr ""
 #: parser/parse_cte.c:319
 #, c-format
 msgid "Cast the output of the non-recursive term to the correct type."
-msgstr ""
+msgstr "Özyinelemeli olmayan terimin çıktısını doğru tipe dönüştürün"
 
 #: parser/parse_cte.c:324
 #, c-format
@@ -14599,9 +14595,9 @@ msgid "WITH query \"%s\" has %d columns available but %d columns specified"
 msgstr "\"%s\" WITH sorgusunda %d sütun bulunmakta ancak  %d sütun belirtilmiş"
 
 #: parser/parse_cte.c:598
-#, fuzzy, c-format
+#, c-format
 msgid "mutual recursion between WITH items is not implemented"
-msgstr "NEW için rule eylemleri implement edilmemiş"
+msgstr "WITH ögeleri arasındaki karşılıklı özyineleme implement edilmemiş"
 
 #: parser/parse_cte.c:650
 #, c-format
@@ -14611,7 +14607,7 @@ msgstr "\"%s\" recursive sorgusu veri değiştiren (data modifying) ifade içerm
 #: parser/parse_cte.c:658
 #, c-format
 msgid "recursive query \"%s\" does not have the form non-recursive-term UNION [ALL] recursive-term"
-msgstr ""
+msgstr "\"%s\" özyinelemeli sorgusu özyinelemeli olmayan terim UNION (ALL) özyinelemeli terim formuna sahip değil "
 
 #: parser/parse_cte.c:702
 #, c-format
@@ -14937,10 +14933,9 @@ msgid "window function %s cannot have WITHIN GROUP"
 msgstr "%s window fonksiyonu WITHIN GROUP ile kullanılamaz"
 
 #: parser/parse_func.c:548
-#, fuzzy, c-format
-#| msgid "procedure %s does not exist"
+#, c-format
 msgid "procedure %s is not unique"
-msgstr "\"%s\" prosedürü mevcut değil"
+msgstr "\"%s\" prosedürü biricik (unique) değil"
 
 #: parser/parse_func.c:551
 #, fuzzy, c-format
@@ -15633,10 +15628,9 @@ msgid "index \"%s\" is not partitioned"
 msgstr "\"%s\" indeksi bölümlendirilmemiş"
 
 #: parser/parse_utilcmd.c:3614
-#, fuzzy, c-format
-#| msgid "Partitioned tables cannot have ROW triggers."
+#, c-format
 msgid "a hash-partitioned table may not have a default partition"
-msgstr "Bölümlenmiş tabloların ROW tetikleyicileri olamaz."
+msgstr "bir hash-bölümlenmiş tablonun varsayılan bölmesi olamaz"
 
 #: parser/parse_utilcmd.c:3631
 #, c-format
@@ -15946,10 +15940,9 @@ msgid "Assign Lock Pages in Memory user right to the Windows user account which 
 msgstr ""
 
 #: port/win32_shmem.c:210
-#, fuzzy, c-format
-#| msgid "PostgreSQL does not support leap seconds."
+#, c-format
 msgid "the processor does not support large pages"
-msgstr "PostgreSQL, artış saniyeleri desteklememektedir."
+msgstr "işlemci büyük sayfaları (large page) desteklememektedir."
 
 #: port/win32_shmem.c:212 port/win32_shmem.c:217
 #, c-format
@@ -16002,9 +15995,9 @@ msgid "autovacuum launcher shutting down"
 msgstr "otomatik vacuum başlatma süreci kapatılıyor"
 
 #: postmaster/autovacuum.c:1494
-#, fuzzy, c-format
+#, c-format
 msgid "could not fork autovacuum worker process: %m"
-msgstr "Otomatik vacuum süreci fork edilemedi: %m"
+msgstr "Otomatik vakum worker süreci fork edilemedi: %m"
 
 #: postmaster/autovacuum.c:1700
 #, c-format
@@ -16088,10 +16081,9 @@ msgid "background worker \"%s\": only dynamic background workers can request not
 msgstr ""
 
 #: postmaster/bgworker.c:897
-#, fuzzy, c-format
-#| msgid "too many arguments"
+#, c-format
 msgid "too many background workers"
-msgstr "çok fazla argüman"
+msgstr "çok fazla background worker "
 
 #: postmaster/bgworker.c:898
 #, c-format
@@ -16145,7 +16137,7 @@ msgstr "archive_mode aktiftir, ancak archive_command ayarlanmadı"
 #: postmaster/pgarch.c:484
 #, c-format
 msgid "archiving write-ahead log file \"%s\" failed too many times, will try again later"
-msgstr ""
+msgstr "\"%s\" write-ahead log dosyasının arşivlenmesi bir çok kez başarısız oldu, sonra tekrar denenecek"
 
 #: postmaster/pgarch.c:587
 #, c-format
@@ -16301,7 +16293,7 @@ msgstr "bozuk istatistik dosyası \"%s\""
 #: postmaster/pgstat.c:5573
 #, c-format
 msgid "using stale statistics instead of current ones because stats collector is not responding"
-msgstr ""
+msgstr "istatistik toplayıcı (stats collector) cevap vermediği için güncelleri yerine eski istatistikler kullanılıyor "
 
 #: postmaster/pgstat.c:5900
 #, c-format
@@ -16324,20 +16316,19 @@ msgid "%s: invalid argument: \"%s\"\n"
 msgstr "%s: geçersiz parametre: \"%s\"\n"
 
 #: postmaster/postmaster.c:896
-#, fuzzy, c-format
-#| msgid "%s: superuser_reserved_connections must be less than max_connections\n"
+#, c-format
 msgid "%s: superuser_reserved_connections (%d) plus max_wal_senders (%d) must be less than max_connections (%d)\n"
-msgstr "%s: superuser_reserved_connections parametresi, max_connections parametresinden küçük olmalıdır\n"
+msgstr "%s: superuser_reserved_connections (%d) ve max_wal_senders (%d) değerlerinin toplamı max_connections parametresinden (%d) küçük olmalıdır\n"
 
 #: postmaster/postmaster.c:903
 #, c-format
 msgid "WAL archival cannot be enabled when wal_level is \"minimal\""
-msgstr ""
+msgstr "wal_level \"minimal\" olduğu için WAL arşivlemesi etkinleştirilemiyor"
 
 #: postmaster/postmaster.c:906
 #, c-format
 msgid "WAL streaming (max_wal_senders > 0) requires wal_level \"replica\" or \"logical\""
-msgstr ""
+msgstr "WAL streaming (max_wal_senders > 0)  wal_level parametresinin \"replica\" veya \"logical\" olmasını gerektirir"
 
 #: postmaster/postmaster.c:914
 #, c-format
@@ -20564,7 +20555,7 @@ msgstr "alt sınır üst sınırı ile eşit olamaz"
 #: utils/adt/formatting.c:488
 #, c-format
 msgid "invalid format specification for an interval value"
-msgstr "interval değer biçimi yalnış"
+msgstr "interval değer biçimi yanlış"
 
 #: utils/adt/formatting.c:489
 #, c-format
@@ -23006,7 +22997,7 @@ msgstr "HATA"
 
 #: utils/error/elog.c:3636
 msgid "FATAL"
-msgstr "ÖLÜMCÜL"
+msgstr "ÖLÜMCÜL (FATAL)"
 
 #: utils/error/elog.c:3639
 msgid "PANIC"
@@ -23038,35 +23029,34 @@ msgid "incompatible library \"%s\": version mismatch"
 msgstr "uyumsuz kütüphane \"%s\": sürüm uyuşmazlığı"
 
 #: utils/fmgr/dfmgr.c:321
-#, fuzzy, c-format
-#| msgid "Server is version %d.%d, library is version %d.%d."
+#, c-format
 msgid "Server is version %d, library is version %s."
-msgstr "Sunucu sürümü: %d.%d, kütüphane sürümü: %d.%d."
+msgstr "Sunucu sürümü: %d, kütüphane sürümü: %s."
 
 #: utils/fmgr/dfmgr.c:338
 #, c-format
 msgid "Server has FUNC_MAX_ARGS = %d, library has %d."
-msgstr ""
+msgstr "Sunucuda FUNC_MAX_ARGS = %d, kütüphanede %d."
 
 #: utils/fmgr/dfmgr.c:347
 #, c-format
 msgid "Server has INDEX_MAX_KEYS = %d, library has %d."
-msgstr ""
+msgstr "Sunucuda INDEX_MAX_KEYS = %d, kütüphanede %d."
 
 #: utils/fmgr/dfmgr.c:356
 #, c-format
 msgid "Server has NAMEDATALEN = %d, library has %d."
-msgstr ""
+msgstr "Sunucuda NAMEDATALEN = %d, kütüphanede %d."
 
 #: utils/fmgr/dfmgr.c:365
 #, c-format
 msgid "Server has FLOAT4PASSBYVAL = %s, library has %s."
-msgstr ""
+msgstr "Sunucuda FLOAT4PASSBYVAL = %s, kütüphanede %s."
 
 #: utils/fmgr/dfmgr.c:374
 #, c-format
 msgid "Server has FLOAT8PASSBYVAL = %s, library has %s."
-msgstr ""
+msgstr "Sunucuda FLOAT8PASSBYVAL = %s, kütüphanede %s."
 
 #: utils/fmgr/dfmgr.c:381
 msgid "Magic block has unexpected length or padding difference."
@@ -23103,10 +23093,9 @@ msgid "internal function \"%s\" is not in internal lookup table"
 msgstr "\"%s\" dahili fonksiyonu, dahili referans tablosunda yer almamaktadır"
 
 #: utils/fmgr/fmgr.c:485
-#, fuzzy, c-format
-#| msgid "could not find function \"%s\" in file \"%s\""
+#, c-format
 msgid "could not find function information for function \"%s\""
-msgstr "\"%2$s\" dosyasında \"%1$s\" fonksiyonu bulunamadı"
+msgstr "\"%s\" fonksiyonu için bilgi bulunamadı"
 
 #: utils/fmgr/fmgr.c:487
 #, c-format
@@ -23154,14 +23143,14 @@ msgid "could not read permissions of directory \"%s\": %m"
 msgstr "\"%s\" dizininin erişim haklarını okunamıyor: %m"
 
 #: utils/init/miscinit.c:121
-#, fuzzy, c-format
+#, c-format
 msgid "specified data directory \"%s\" is not a directory"
-msgstr "veritabanı deizini \"%s\" mevcut değil"
+msgstr "belirtilen veri dizini \"%s\" bir dizin değil"
 
 #: utils/init/miscinit.c:137
 #, c-format
 msgid "data directory \"%s\" has wrong ownership"
-msgstr "\"%s\" veritabanı dizininin erişim hakları yalnıştır"
+msgstr "\"%s\" veritabanı dizininin erişim hakları yanlıştır"
 
 #: utils/init/miscinit.c:139
 #, c-format
@@ -23169,10 +23158,9 @@ msgid "The server must be started by the user that owns the data directory."
 msgstr "Sunucu, veri dizini sahip kullanıcı tarafından başlatılmalıdır."
 
 #: utils/init/miscinit.c:157
-#, fuzzy, c-format
-#| msgid "data directory \"%s\" has wrong ownership"
+#, c-format
 msgid "data directory \"%s\" has invalid permissions"
-msgstr "\"%s\" veritabanı dizininin erişim hakları yalnıştır"
+msgstr "\"%s\" veri dizininin erişim hakları yanlıştır"
 
 #: utils/init/miscinit.c:159
 #, fuzzy, c-format
@@ -23236,10 +23224,9 @@ msgid "could not read lock file \"%s\": %m"
 msgstr "\"%s\" lock dosyası okuma hatası: %m"
 
 #: utils/init/miscinit.c:969
-#, fuzzy, c-format
-#| msgid "lock file \"%s\" already exists"
+#, c-format
 msgid "lock file \"%s\" is empty"
-msgstr "\"%s\" lock dosyası zaten mevcuttur"
+msgstr "\"%s\" kilit (lock) dosyası boştur"
 
 #: utils/init/miscinit.c:970
 #, c-format
@@ -23495,10 +23482,9 @@ msgid "unexpected encoding ID %d for WIN character sets"
 msgstr "WIN karakter kümeleri için beklemnmeyen kodlama ID %d"
 
 #: utils/mb/encnames.c:473
-#, fuzzy, c-format
-#| msgid "interval units \"%s\" not supported"
+#, c-format
 msgid "encoding \"%s\" not supported by ICU"
-msgstr "interval birimi \"%s\" desteklenmemektedir"
+msgstr "\"%s\" kodlaması ICU tarafından desteklenmemektedir"
 
 #: utils/mb/encnames.c:572
 #, c-format
@@ -23538,13 +23524,12 @@ msgstr "\"%s\" dil kodlaması için geçersiz bayt değeri: 0x%02x"
 #: utils/mb/mbutils.c:940
 #, c-format
 msgid "bind_textdomain_codeset failed"
-msgstr ""
+msgstr "bind_textdomain_codeset başarısız oldu"
 
 #: utils/mb/wchar.c:2015
-#, fuzzy, c-format
-#| msgid "invalid byte sequence for encoding \"%s\": 0x%s"
+#, c-format
 msgid "invalid byte sequence for encoding \"%s\": %s"
-msgstr "\"%s\" dil kodlaması için geçersiz bayt dizisi: 0x%s"
+msgstr "\"%s\" dil kodlaması için geçersiz bayt dizisi: %s"
 
 #: utils/mb/wchar.c:2048
 #, fuzzy, c-format
@@ -23566,19 +23551,15 @@ msgstr "Bağlantı ve Kimlik Doğrulamaları"
 
 #: utils/misc/guc.c:577
 msgid "Connections and Authentication / Connection Settings"
-msgstr "Bğlantılar ve Kimlik Doğrulaması/ Bağlantı Ayarları"
+msgstr "Bağlantılar ve Kimlik Doğrulaması/ Bağlantı Ayarları"
 
 #: utils/misc/guc.c:579
-#, fuzzy
-#| msgid "Connections and Authentication / Security and Authentication"
 msgid "Connections and Authentication / Authentication"
-msgstr "Bağlantı ve Kimlik Doğrulamaısı / Güvenlik ve Kimlik Doğrulaması"
+msgstr "Bağlantılar ve Kimlik Doğrulaması / Kimlik Doğrulaması"
 
 #: utils/misc/guc.c:581
-#, fuzzy
-#| msgid "Connections and Authentication"
 msgid "Connections and Authentication / SSL"
-msgstr "Bağlantı ve Kimlik Doğrulamaları"
+msgstr "Bağlantılar ve Kimlik Doğrulaması / SSL"
 
 #: utils/misc/guc.c:583
 msgid "Resource Usage"
@@ -23589,10 +23570,8 @@ msgid "Resource Usage / Memory"
 msgstr "Kaynak Kullanımı / Bellek"
 
 #: utils/misc/guc.c:587
-#, fuzzy
-#| msgid "Resource Usage"
 msgid "Resource Usage / Disk"
-msgstr "Kaynak Kullanımı"
+msgstr "Kaynak Kullanımı / Disk"
 
 #: utils/misc/guc.c:589
 msgid "Resource Usage / Kernel Resources"

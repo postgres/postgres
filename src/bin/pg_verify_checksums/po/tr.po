@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-04 06:17+0000\n"
-"PO-Revision-Date: 2018-09-16 23:36+0200\n"
+"POT-Creation-Date: 2018-10-10 21:17+0000\n"
+"PO-Revision-Date: 2018-10-13 10:13+0300\n"
+"Last-Translator: Abdullah Gülner\n"
+"Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Abdullah Gülner \n"
-"Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "X-Generator: Poedit 1.8.7.1\n"
 
 #: pg_verify_checksums.c:38
@@ -95,8 +95,8 @@ msgstr "%s: \"%s\" dosyası açılamadı: %s\n"
 
 #: pg_verify_checksums.c:102
 #, c-format
-msgid "%s: short read of block %u in file \"%s\", got only %d bytes\n"
-msgstr "%1$s: \"%3$s\" dosyasında %2$u bloğunun kısa okuması, sadece %4$d bayt alındı \n"
+msgid "%s: could not read block %u in file \"%s\": read %d of %d\n"
+msgstr "%1$s: \"%3$s\" dosyasında %2$u bloğu okunamadı: %5$d nin %4$d si okundu\n"
 
 #: pg_verify_checksums.c:116
 #, c-format
@@ -183,3 +183,6 @@ msgstr "Taranan bloklar: %s\n"
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "Yanlış sağlama toplamları: %s\n"
+
+#~ msgid "%s: short read of block %u in file \"%s\", got only %d bytes\n"
+#~ msgstr "%1$s: \"%3$s\" dosyasında %2$u bloğunun kısa okuması, sadece %4$d bayt alındı \n"

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-05 21:51+0300\n"
-"PO-Revision-Date: 2018-10-02 14:49+0300\n"
+"POT-Creation-Date: 2018-10-17 11:21+0300\n"
+"PO-Revision-Date: 2018-10-17 13:03+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -673,7 +673,7 @@ msgstr "%s: конечная точка в журнале предзаписи: 
 
 #: pg_basebackup.c:1985
 #, c-format
-msgid "%s: checksum error occured\n"
+msgid "%s: checksum error occurred\n"
 msgstr "%s: выявлена ошибка контрольной суммы\n"
 
 #: pg_basebackup.c:1991
