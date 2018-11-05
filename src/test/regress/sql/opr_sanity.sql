@@ -1122,6 +1122,14 @@ SELECT p1.oid
 FROM pg_opfamily as p1
 WHERE p1.opfmethod = 0 OR p1.opfnamespace = 0;
 
+-- Look for opfamilies having no opclasses.  While most validation of
+-- opfamilies is now handled by AM-specific amvalidate functions, that's
+-- driven from pg_opclass entries below, so an empty opfamily would not
+-- get noticed.
+
+SELECT oid, opfname FROM pg_opfamily f
+WHERE NOT EXISTS (SELECT 1 FROM pg_opclass WHERE opcfamily = f.oid);
+
 
 -- **************** pg_opclass ****************
 

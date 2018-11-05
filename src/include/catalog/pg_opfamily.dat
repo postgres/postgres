@@ -172,8 +172,6 @@
   opfmethod => 'btree', opfname => 'jsonb_ops' },
 { oid => '4034',
   opfmethod => 'hash', opfname => 'jsonb_ops' },
-{ oid => '4035',
-  opfmethod => 'gist', opfname => 'jsonb_ops' },
 { oid => '4036',
   opfmethod => 'gin', opfname => 'jsonb_ops' },
 { oid => '4037',
