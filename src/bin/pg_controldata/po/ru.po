@@ -4,13 +4,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2002-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Andrey Sudnik <sudnikand@gmail.com>, 2011.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-06 22:14+0000\n"
-"PO-Revision-Date: 2016-12-20 18:28+0300\n"
+"POT-Creation-Date: 2018-10-01 13:04+0300\n"
+"PO-Revision-Date: 2018-10-01 14:49+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -20,23 +20,28 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../../common/controldata_utils.c:56
+#: ../../common/controldata_utils.c:57
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: не удалось открыть файл \"%s\" для чтения: %s\n"
 
-#: ../../common/controldata_utils.c:69
+#: ../../common/controldata_utils.c:73
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: не удалось прочитать файл \"%s\": %s\n"
 
-#: ../../common/controldata_utils.c:86
+#: ../../common/controldata_utils.c:85
+#, c-format
+msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgstr "%s: не удалось прочитать файл \"%s\" (прочитано байт: %d из %d)\n"
+
+#: ../../common/controldata_utils.c:103
 msgid "calculated CRC checksum does not match value stored in file"
 msgstr ""
 "вычисленная контрольная сумма (CRC) не соответствует значению, сохранённому "
 "в файле"
 
-#: ../../common/controldata_utils.c:88
+#: ../../common/controldata_utils.c:105
 #, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
@@ -50,11 +55,11 @@ msgstr ""
 "Следующая информация может быть недостоверной.\n"
 "\n"
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:114
 msgid "byte ordering mismatch"
 msgstr "несоответствие порядка байт"
 
-#: ../../common/controldata_utils.c:99
+#: ../../common/controldata_utils.c:116
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"

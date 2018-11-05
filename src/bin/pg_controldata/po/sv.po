@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-06-18 02:33+0000\n"
-"PO-Revision-Date: 2018-06-18 21:59+0200\n"
+"POT-Creation-Date: 2018-08-25 19:22+0000\n"
+"PO-Revision-Date: 2018-08-26 07:39+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -31,8 +31,8 @@ msgstr "%s: kunde inte läsa fil \"%s\": %s\n"
 
 #: ../../common/controldata_utils.c:85
 #, c-format
-msgid "%s: could not read file \"%s\": read %d bytes, expected %d\n"
-msgstr "%s: kunde inte läsa fil \"%s\": läste %d byte, förväntade %d\n"
+msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgstr "%s: kunde inte läsa fil \"%s\": läste %d av %d\n"
 
 #: ../../common/controldata_utils.c:103
 msgid "calculated CRC checksum does not match value stored in file"
@@ -467,3 +467,6 @@ msgstr "Överföring av float8-argument:              %s\n"
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Checksummaversion för datasidor:            %u\n"
+
+#~ msgid "%s: could not read file \"%s\": read %d bytes, expected %d\n"
+#~ msgstr "%s: kunde inte läsa fil \"%s\": läste %d byte, förväntade %d\n"

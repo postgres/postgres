@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-31 07:55+0300\n"
+"POT-Creation-Date: 2018-10-01 13:04+0300\n"
 "PO-Revision-Date: 2017-11-21 15:42+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -146,7 +146,7 @@ msgstr ""
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
 
-#: ../../fe_utils/psqlscan.l:713
+#: ../../fe_utils/psqlscan.l:723
 #, c-format
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "рекурсивное расширение переменной \"%s\" пропускается\n"
