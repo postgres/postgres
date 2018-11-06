@@ -33,11 +33,9 @@ extern void dsm_detach_all(void);
 extern void dsm_set_control_handle(dsm_handle h);
 #endif
 
-/* Functions that create, update, or remove mappings. */
+/* Functions that create or remove mappings. */
 extern dsm_segment *dsm_create(Size size, int flags);
 extern dsm_segment *dsm_attach(dsm_handle h);
-extern void *dsm_resize(dsm_segment *seg, Size size);
-extern void *dsm_remap(dsm_segment *seg);
 extern void dsm_detach(dsm_segment *seg);
 
 /* Resource management functions. */

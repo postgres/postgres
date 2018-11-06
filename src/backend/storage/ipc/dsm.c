@@ -654,38 +654,6 @@ dsm_detach_all(void)
 }
 
 /*
- * Resize an existing shared memory segment.
- *
- * This may cause the shared memory segment to be remapped at a different
- * address.  For the caller's convenience, we return the mapped address.
- */
-void *
-dsm_resize(dsm_segment *seg, Size size)
-{
-	Assert(seg->control_slot != INVALID_CONTROL_SLOT);
-	dsm_impl_op(DSM_OP_RESIZE, seg->handle, size, &seg->impl_private,
-				&seg->mapped_address, &seg->mapped_size, ERROR);
-	return seg->mapped_address;
-}
-
-/*
- * Remap an existing shared memory segment.
- *
- * This is intended to be used when some other process has extended the
- * mapping using dsm_resize(), but we've still only got the initial
- * portion mapped.  Since this might change the address at which the
- * segment is mapped, we return the new mapped address.
- */
-void *
-dsm_remap(dsm_segment *seg)
-{
-	dsm_impl_op(DSM_OP_ATTACH, seg->handle, 0, &seg->impl_private,
-				&seg->mapped_address, &seg->mapped_size, ERROR);
-
-	return seg->mapped_address;
-}
-
-/*
  * Detach from a shared memory segment, destroying the segment if we
  * remove the last reference.
  *

@@ -59,7 +59,6 @@ typedef enum
 	DSM_OP_CREATE,
 	DSM_OP_ATTACH,
 	DSM_OP_DETACH,
-	DSM_OP_RESIZE,
 	DSM_OP_DESTROY
 } dsm_op;
 
@@ -67,9 +66,6 @@ typedef enum
 extern bool dsm_impl_op(dsm_op op, dsm_handle handle, Size request_size,
 			void **impl_private, void **mapped_address, Size *mapped_size,
 			int elevel);
-
-/* Some implementations cannot resize segments.  Can this one? */
-extern bool dsm_impl_can_resize(void);
 
 /* Implementation-dependent actions required to keep segment until shutdown. */
 extern void dsm_impl_pin_segment(dsm_handle handle, void *impl_private,
