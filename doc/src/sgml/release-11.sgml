@@ -152,6 +152,22 @@ Branch: REL_11_STABLE [6eb31cedb] 2018-11-03 16:00:00 -0700
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5d28c9bd7] 2018-11-06 18:33:28 -0500
+Branch: REL_11_STABLE [05f84605d] 2018-11-06 18:33:33 -0500
+-->
+     <para>
+      Disable <varname>recheck_on_update</varname> optimization (Tom Lane)
+     </para>
+
+     <para>
+      This new-in-v11 feature turns out not to have been ready for prime
+      time.  Disable it until something can be done about it.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [dc3e436b1] 2018-11-05 11:04:02 +0900
 Branch: REL_11_STABLE [7c222d5e5] 2018-11-05 11:04:14 +0900
@@ -327,6 +343,24 @@ Branch: REL_10_STABLE [90a1f9786] 2018-09-25 09:56:57 +0900
       the old version of <filename>pg_stat_statements</filename>.  The
       <literal>UPDATE</literal> command is harmless if the module was
       already updated.)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [003c68a3b] 2018-11-06 13:25:24 -0500
+Branch: REL_11_STABLE [1f28ec6be] 2018-11-06 13:25:24 -0500
+Branch: REL_10_STABLE [b2e754c14] 2018-11-06 13:25:24 -0500
+-->
+     <para>
+      Rename red-black tree support functions to use <literal>rbt</literal>
+      prefix not <literal>rb</literal> prefix (Tom Lane)
+     </para>
+
+     <para>
+      This avoids name collisions with Ruby functions, which broke
+      PL/Ruby.  It's hoped that there are no other affected extensions.
      </para>
     </listitem>
 
