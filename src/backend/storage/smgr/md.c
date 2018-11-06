@@ -522,22 +522,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	/*
-	 * Note: because caller usually obtained blocknum by calling mdnblocks,
-	 * which did a seek(SEEK_END), this seek is often redundant and will be
-	 * optimized away by fd.c.  It's not redundant, however, if there is a
-	 * partial page at the end of the file. In that case we want to try to
-	 * overwrite the partial page with a full page.  It's also not redundant
-	 * if bufmgr.c had to dump another buffer of the same file to make room
-	 * for the new page's buffer.
-	 */
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u in file \"%s\": %m",
-						blocknum, FilePathName(v->mdfd_vfd))));
-
-	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, WAIT_EVENT_DATA_FILE_EXTEND)) != BLCKSZ)
+	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_EXTEND)) != BLCKSZ)
 	{
 		if (nbytes < 0)
 			ereport(ERROR,
@@ -748,13 +733,7 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u in file \"%s\": %m",
-						blocknum, FilePathName(v->mdfd_vfd))));
-
-	nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ, WAIT_EVENT_DATA_FILE_READ);
+	nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_READ);
 
 	TRACE_POSTGRESQL_SMGR_MD_READ_DONE(forknum, blocknum,
 									   reln->smgr_rnode.node.spcNode,
@@ -824,13 +803,7 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u in file \"%s\": %m",
-						blocknum, FilePathName(v->mdfd_vfd))));
-
-	nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, WAIT_EVENT_DATA_FILE_WRITE);
+	nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_WRITE);
 
 	TRACE_POSTGRESQL_SMGR_MD_WRITE_DONE(forknum, blocknum,
 										reln->smgr_rnode.node.spcNode,
@@ -1979,7 +1952,7 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
 	off_t		len;
 
-	len = FileSeek(seg->mdfd_vfd, 0L, SEEK_END);
+	len = FileSize(seg->mdfd_vfd);
 	if (len < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

@@ -15,7 +15,7 @@
 /*
  * calls:
  *
- *	File {Close, Read, Write, Seek, Tell, Sync}
+ *	File {Close, Read, Write, Size, Sync}
  *	{Path Name Open, Allocate, Free} File
  *
  * These are NOT JUST RENAMINGS OF THE UNIX ROUTINES.
@@ -42,10 +42,6 @@
 #include <dirent.h>
 
 
-/*
- * FileSeek uses the standard UNIX lseek(2) flags.
- */
-
 typedef int File;
 
 
@@ -68,10 +64,10 @@ extern File PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fil
 extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info);
-extern int	FileRead(File file, char *buffer, int amount, uint32 wait_event_info);
-extern int	FileWrite(File file, char *buffer, int amount, uint32 wait_event_info);
+extern int	FileRead(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
+extern int	FileWrite(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
 extern int	FileSync(File file, uint32 wait_event_info);
-extern off_t FileSeek(File file, off_t offset, int whence);
+extern off_t FileSize(File file);
 extern int	FileTruncate(File file, off_t offset, uint32 wait_event_info);
 extern void FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info);
 extern char *FilePathName(File file);

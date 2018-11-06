@@ -67,12 +67,6 @@ struct BufFile
 	int			numFiles;		/* number of physical files in set */
 	/* all files except the last have length exactly MAX_PHYSICAL_FILESIZE */
 	File	   *files;			/* palloc'd array with numFiles entries */
-	off_t	   *offsets;		/* palloc'd array with numFiles entries */
-
-	/*
-	 * offsets[i] is the current seek position of files[i].  We use this to
-	 * avoid making redundant FileSeek calls.
-	 */
 
 	bool		isInterXact;	/* keep open over transactions? */
 	bool		dirty;			/* does buffer need to be written? */
@@ -116,7 +110,6 @@ makeBufFileCommon(int nfiles)
 	BufFile    *file = (BufFile *) palloc(sizeof(BufFile));
 
 	file->numFiles = nfiles;
-	file->offsets = (off_t *) palloc0(sizeof(off_t) * nfiles);
 	file->isInterXact = false;
 	file->dirty = false;
 	file->resowner = CurrentResourceOwner;
@@ -170,10 +163,7 @@ extendBufFile(BufFile *file)
 
 	file->files = (File *) repalloc(file->files,
 									(file->numFiles + 1) * sizeof(File));
-	file->offsets = (off_t *) repalloc(file->offsets,
-									   (file->numFiles + 1) * sizeof(off_t));
 	file->files[file->numFiles] = pfile;
-	file->offsets[file->numFiles] = 0L;
 	file->numFiles++;
 }
 
@@ -396,7 +386,6 @@ BufFileClose(BufFile *file)
 		FileClose(file->files[i]);
 	/* release the buffer space */
 	pfree(file->files);
-	pfree(file->offsets);
 	pfree(file);
 }
 
@@ -423,26 +412,16 @@ BufFileLoadBuffer(BufFile *file)
 	}
 
 	/*
-	 * May need to reposition physical file.
-	 */
-	thisfile = file->files[file->curFile];
-	if (file->curOffset != file->offsets[file->curFile])
-	{
-		if (FileSeek(thisfile, file->curOffset, SEEK_SET) != file->curOffset)
-			return;				/* seek failed, read nothing */
-		file->offsets[file->curFile] = file->curOffset;
-	}
-
-	/*
 	 * Read whatever we can get, up to a full bufferload.
 	 */
+	thisfile = file->files[file->curFile];
 	file->nbytes = FileRead(thisfile,
 							file->buffer.data,
 							sizeof(file->buffer),
+							file->curOffset,
 							WAIT_EVENT_BUFFILE_READ);
 	if (file->nbytes < 0)
 		file->nbytes = 0;
-	file->offsets[file->curFile] += file->nbytes;
 	/* we choose not to advance curOffset here */
 
 	if (file->nbytes > 0)
@@ -491,23 +470,14 @@ BufFileDumpBuffer(BufFile *file)
 		if ((off_t) bytestowrite > availbytes)
 			bytestowrite = (int) availbytes;
 
-		/*
-		 * May need to reposition physical file.
-		 */
 		thisfile = file->files[file->curFile];
-		if (file->curOffset != file->offsets[file->curFile])
-		{
-			if (FileSeek(thisfile, file->curOffset, SEEK_SET) != file->curOffset)
-				return;			/* seek failed, give up */
-			file->offsets[file->curFile] = file->curOffset;
-		}
 		bytestowrite = FileWrite(thisfile,
 								 file->buffer.data + wpos,
 								 bytestowrite,
+								 file->curOffset,
 								 WAIT_EVENT_BUFFILE_WRITE);
 		if (bytestowrite <= 0)
 			return;				/* failed to write */
-		file->offsets[file->curFile] += bytestowrite;
 		file->curOffset += bytestowrite;
 		wpos += bytestowrite;
 
@@ -803,11 +773,10 @@ BufFileSize(BufFile *file)
 {
 	off_t		lastFileSize;
 
-	/* Get the size of the last physical file by seeking to end. */
-	lastFileSize = FileSeek(file->files[file->numFiles - 1], 0, SEEK_END);
+	/* Get the size of the last physical file. */
+	lastFileSize = FileSize(file->files[file->numFiles - 1]);
 	if (lastFileSize < 0)
 		return -1;
-	file->offsets[file->numFiles - 1] = lastFileSize;
 
 	return ((file->numFiles - 1) * (off_t) MAX_PHYSICAL_FILESIZE) +
 		lastFileSize;
@@ -849,13 +818,8 @@ BufFileAppend(BufFile *target, BufFile *source)
 
 	target->files = (File *)
 		repalloc(target->files, sizeof(File) * newNumFiles);
-	target->offsets = (off_t *)
-		repalloc(target->offsets, sizeof(off_t) * newNumFiles);
 	for (i = target->numFiles; i < newNumFiles; i++)
-	{
 		target->files[i] = source->files[i - target->numFiles];
-		target->offsets[i] = source->offsets[i - target->numFiles];
-	}
 	target->numFiles = newNumFiles;
 
 	return startBlock;
