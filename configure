@@ -650,7 +650,6 @@ PG_CRC32C_OBJS
 CFLAGS_ARMV8_CRC32C
 CFLAGS_SSE42
 have_win32_dbghelp
-HAVE_IPV6
 LIBOBJS
 UUID_LIBS
 LDAP_LIBS_BE
@@ -15347,7 +15346,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-HAVE_IPV6=no
 ac_fn_c_check_type "$LINENO" "struct sockaddr_in6" "ac_cv_type_struct_sockaddr_in6" "$ac_includes_default
 #include <netinet/in.h>
 "
@@ -15355,9 +15353,7 @@ if test "x$ac_cv_type_struct_sockaddr_in6" = xyes; then :
 
 $as_echo "#define HAVE_IPV6 1" >>confdefs.h
 
-         HAVE_IPV6=yes
 fi
-
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PS_STRINGS" >&5

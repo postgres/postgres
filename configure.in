@@ -1652,14 +1652,11 @@ AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
 
 AC_CHECK_DECLS([RTLD_GLOBAL, RTLD_NOW], [], [], [#include <dlfcn.h>])
 
-HAVE_IPV6=no
 AC_CHECK_TYPE([struct sockaddr_in6],
-        [AC_DEFINE(HAVE_IPV6, 1, [Define to 1 if you have support for IPv6.])
-         HAVE_IPV6=yes],
+        [AC_DEFINE(HAVE_IPV6, 1, [Define to 1 if you have support for IPv6.])],
         [],
 [$ac_includes_default
 #include <netinet/in.h>])
-AC_SUBST(HAVE_IPV6)
 
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_LINK_IFELSE([AC_LANG_PROGRAM(

@@ -497,9 +497,6 @@ host_tuple = @host@
 host_os = @host_os@
 host_cpu = @host_cpu@
 
-# Make HAVE_IPV6 available for initdb script creation
-HAVE_IPV6= @HAVE_IPV6@
-
 # This is mainly for use on FreeBSD, where we have both a.out and elf
 # systems now.  May be applicable to other systems to?
 ELF_SYSTEM= @ELF_SYS@
