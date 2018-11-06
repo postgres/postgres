@@ -2803,8 +2803,8 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"effective_cache_size", PGC_USERSET, QUERY_TUNING_COST,
-			gettext_noop("Sets the planner's assumption about the size of the data cache."),
-			gettext_noop("That is, the size of the cache used for PostgreSQL data files. "
+			gettext_noop("Sets the planner's assumption about the total size of the data caches."),
+			gettext_noop("That is, the total size of the caches (kernel cache and shared buffers) used for PostgreSQL data files. "
 						 "This is measured in disk pages, which are normally 8 kB each."),
 			GUC_UNIT_BLOCKS,
 		},
