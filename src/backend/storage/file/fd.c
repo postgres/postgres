@@ -2004,14 +2004,10 @@ FileSync(File file, uint32 wait_event_info)
 off_t
 FileSize(File file)
 {
-	Vfd		   *vfdP;
-
 	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileSize %d (%s)",
 			   file, VfdCache[file].fileName));
-
-	vfdP = &VfdCache[file];
 
 	if (FileIsNotOpen(file))
 	{
