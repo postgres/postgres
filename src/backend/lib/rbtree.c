@@ -30,26 +30,26 @@
 
 
 /*
- * Colors of nodes (values of RBNode.color)
+ * Colors of nodes (values of RBTNode.color)
  */
-#define RBBLACK		(0)
-#define RBRED		(1)
+#define RBTBLACK	(0)
+#define RBTRED		(1)
 
 /*
  * RBTree control structure
  */
 struct RBTree
 {
-	RBNode	   *root;			/* root node, or RBNIL if tree is empty */
+	RBTNode    *root;			/* root node, or RBTNIL if tree is empty */
 
-	/* Remaining fields are constant after rb_create */
+	/* Remaining fields are constant after rbt_create */
 
 	Size		node_size;		/* actual size of tree nodes */
 	/* The caller-supplied manipulation functions */
-	rb_comparator comparator;
-	rb_combiner combiner;
-	rb_allocfunc allocfunc;
-	rb_freefunc freefunc;
+	rbt_comparator comparator;
+	rbt_combiner combiner;
+	rbt_allocfunc allocfunc;
+	rbt_freefunc freefunc;
 	/* Passthrough arg passed to all manipulation functions */
 	void	   *arg;
 };
@@ -58,28 +58,31 @@ struct RBTree
  * all leafs are sentinels, use customized NIL name to prevent
  * collision with system-wide constant NIL which is actually NULL
  */
-#define RBNIL (&sentinel)
+#define RBTNIL (&sentinel)
 
-static RBNode sentinel = {RBBLACK, RBNIL, RBNIL, NULL};
+static RBTNode sentinel =
+{
+	RBTBLACK, RBTNIL, RBTNIL, NULL
+};
 
 
 /*
- * rb_create: create an empty RBTree
+ * rbt_create: create an empty RBTree
  *
  * Arguments are:
- *	node_size: actual size of tree nodes (> sizeof(RBNode))
+ *	node_size: actual size of tree nodes (> sizeof(RBTNode))
  *	The manipulation functions:
- *	comparator: compare two RBNodes for less/equal/greater
+ *	comparator: compare two RBTNodes for less/equal/greater
  *	combiner: merge an existing tree entry with a new one
- *	allocfunc: allocate a new RBNode
- *	freefunc: free an old RBNode
+ *	allocfunc: allocate a new RBTNode
+ *	freefunc: free an old RBTNode
  *	arg: passthrough pointer that will be passed to the manipulation functions
  *
  * Note that the combiner's righthand argument will be a "proposed" tree node,
- * ie the input to rb_insert, in which the RBNode fields themselves aren't
+ * ie the input to rbt_insert, in which the RBTNode fields themselves aren't
  * valid.  Similarly, either input to the comparator may be a "proposed" node.
  * This shouldn't matter since the functions aren't supposed to look at the
- * RBNode fields, only the extra fields of the struct the RBNode is embedded
+ * RBTNode fields, only the extra fields of the struct the RBTNode is embedded
  * in.
  *
  * The freefunc should just be pfree or equivalent; it should NOT attempt
@@ -96,18 +99,18 @@ static RBNode sentinel = {RBBLACK, RBNIL, RBNIL, NULL};
  * the RBTree node if you feel the urge.
  */
 RBTree *
-rb_create(Size node_size,
-		  rb_comparator comparator,
-		  rb_combiner combiner,
-		  rb_allocfunc allocfunc,
-		  rb_freefunc freefunc,
-		  void *arg)
+rbt_create(Size node_size,
+		   rbt_comparator comparator,
+		   rbt_combiner combiner,
+		   rbt_allocfunc allocfunc,
+		   rbt_freefunc freefunc,
+		   void *arg)
 {
 	RBTree	   *tree = (RBTree *) palloc(sizeof(RBTree));
 
-	Assert(node_size > sizeof(RBNode));
+	Assert(node_size > sizeof(RBTNode));
 
-	tree->root = RBNIL;
+	tree->root = RBTNIL;
 	tree->node_size = node_size;
 	tree->comparator = comparator;
 	tree->combiner = combiner;
@@ -119,11 +122,11 @@ rb_create(Size node_size,
 	return tree;
 }
 
-/* Copy the additional data fields from one RBNode to another */
+/* Copy the additional data fields from one RBTNode to another */
 static inline void
-rb_copy_data(RBTree *rb, RBNode *dest, const RBNode *src)
+rbt_copy_data(RBTree *rbt, RBTNode *dest, const RBTNode *src)
 {
-	memcpy(dest + 1, src + 1, rb->node_size - sizeof(RBNode));
+	memcpy(dest + 1, src + 1, rbt->node_size - sizeof(RBTNode));
 }
 
 /**********************************************************************
@@ -131,21 +134,21 @@ rb_copy_data(RBTree *rb, RBNode *dest, const RBNode *src)
  **********************************************************************/
 
 /*
- * rb_find: search for a value in an RBTree
+ * rbt_find: search for a value in an RBTree
  *
- * data represents the value to try to find.  Its RBNode fields need not
+ * data represents the value to try to find.  Its RBTNode fields need not
  * be valid, it's the extra data in the larger struct that is of interest.
  *
  * Returns the matching tree entry, or NULL if no match is found.
  */
-RBNode *
-rb_find(RBTree *rb, const RBNode *data)
+RBTNode *
+rbt_find(RBTree *rbt, const RBTNode *data)
 {
-	RBNode	   *node = rb->root;
+	RBTNode    *node = rbt->root;
 
-	while (node != RBNIL)
+	while (node != RBTNIL)
 	{
-		int			cmp = rb->comparator(data, node, rb->arg);
+		int			cmp = rbt->comparator(data, node, rbt->arg);
 
 		if (cmp == 0)
 			return node;
@@ -159,26 +162,26 @@ rb_find(RBTree *rb, const RBNode *data)
 }
 
 /*
- * rb_leftmost: fetch the leftmost (smallest-valued) tree node.
+ * rbt_leftmost: fetch the leftmost (smallest-valued) tree node.
  * Returns NULL if tree is empty.
  *
  * Note: in the original implementation this included an unlink step, but
- * that's a bit awkward.  Just call rb_delete on the result if that's what
+ * that's a bit awkward.  Just call rbt_delete on the result if that's what
  * you want.
  */
-RBNode *
-rb_leftmost(RBTree *rb)
+RBTNode *
+rbt_leftmost(RBTree *rbt)
 {
-	RBNode	   *node = rb->root;
-	RBNode	   *leftmost = rb->root;
+	RBTNode    *node = rbt->root;
+	RBTNode    *leftmost = rbt->root;
 
-	while (node != RBNIL)
+	while (node != RBTNIL)
 	{
 		leftmost = node;
 		node = node->left;
 	}
 
-	if (leftmost != RBNIL)
+	if (leftmost != RBTNIL)
 		return leftmost;
 
 	return NULL;
@@ -195,17 +198,17 @@ rb_leftmost(RBTree *rb)
  * child of that node.
  */
 static void
-rb_rotate_left(RBTree *rb, RBNode *x)
+rbt_rotate_left(RBTree *rbt, RBTNode *x)
 {
-	RBNode	   *y = x->right;
+	RBTNode    *y = x->right;
 
 	/* establish x->right link */
 	x->right = y->left;
-	if (y->left != RBNIL)
+	if (y->left != RBTNIL)
 		y->left->parent = x;
 
 	/* establish y->parent link */
-	if (y != RBNIL)
+	if (y != RBTNIL)
 		y->parent = x->parent;
 	if (x->parent)
 	{
@@ -216,12 +219,12 @@ rb_rotate_left(RBTree *rb, RBNode *x)
 	}
 	else
 	{
-		rb->root = y;
+		rbt->root = y;
 	}
 
 	/* link x and y */
 	y->left = x;
-	if (x != RBNIL)
+	if (x != RBTNIL)
 		x->parent = y;
 }
 
@@ -232,17 +235,17 @@ rb_rotate_left(RBTree *rb, RBNode *x)
  * child of that node.
  */
 static void
-rb_rotate_right(RBTree *rb, RBNode *x)
+rbt_rotate_right(RBTree *rbt, RBTNode *x)
 {
-	RBNode	   *y = x->left;
+	RBTNode    *y = x->left;
 
 	/* establish x->left link */
 	x->left = y->right;
-	if (y->right != RBNIL)
+	if (y->right != RBTNIL)
 		y->right->parent = x;
 
 	/* establish y->parent link */
-	if (y != RBNIL)
+	if (y != RBTNIL)
 		y->parent = x->parent;
 	if (x->parent)
 	{
@@ -253,12 +256,12 @@ rb_rotate_right(RBTree *rb, RBNode *x)
 	}
 	else
 	{
-		rb->root = y;
+		rbt->root = y;
 	}
 
 	/* link x and y */
 	y->right = x;
-	if (x != RBNIL)
+	if (x != RBTNIL)
 		x->parent = y;
 }
 
@@ -276,13 +279,13 @@ rb_rotate_right(RBTree *rb, RBNode *x)
  * the invariant that every leaf has equal black-height.)
  */
 static void
-rb_insert_fixup(RBTree *rb, RBNode *x)
+rbt_insert_fixup(RBTree *rbt, RBTNode *x)
 {
 	/*
 	 * x is always a red node.  Initially, it is the newly inserted node. Each
 	 * iteration of this loop moves it higher up in the tree.
 	 */
-	while (x != rb->root && x->parent->color == RBRED)
+	while (x != rbt->root && x->parent->color == RBTRED)
 	{
 		/*
 		 * x and x->parent are both red.  Fix depends on whether x->parent is
@@ -302,60 +305,60 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 		 */
 		if (x->parent == x->parent->parent->left)
 		{
-			RBNode	   *y = x->parent->parent->right;
+			RBTNode    *y = x->parent->parent->right;
 
-			if (y->color == RBRED)
+			if (y->color == RBTRED)
 			{
-				/* uncle is RBRED */
-				x->parent->color = RBBLACK;
-				y->color = RBBLACK;
-				x->parent->parent->color = RBRED;
+				/* uncle is RBTRED */
+				x->parent->color = RBTBLACK;
+				y->color = RBTBLACK;
+				x->parent->parent->color = RBTRED;
 
 				x = x->parent->parent;
 			}
 			else
 			{
-				/* uncle is RBBLACK */
+				/* uncle is RBTBLACK */
 				if (x == x->parent->right)
 				{
 					/* make x a left child */
 					x = x->parent;
-					rb_rotate_left(rb, x);
+					rbt_rotate_left(rbt, x);
 				}
 
 				/* recolor and rotate */
-				x->parent->color = RBBLACK;
-				x->parent->parent->color = RBRED;
+				x->parent->color = RBTBLACK;
+				x->parent->parent->color = RBTRED;
 
-				rb_rotate_right(rb, x->parent->parent);
+				rbt_rotate_right(rbt, x->parent->parent);
 			}
 		}
 		else
 		{
 			/* mirror image of above code */
-			RBNode	   *y = x->parent->parent->left;
+			RBTNode    *y = x->parent->parent->left;
 
-			if (y->color == RBRED)
+			if (y->color == RBTRED)
 			{
-				/* uncle is RBRED */
-				x->parent->color = RBBLACK;
-				y->color = RBBLACK;
-				x->parent->parent->color = RBRED;
+				/* uncle is RBTRED */
+				x->parent->color = RBTBLACK;
+				y->color = RBTBLACK;
+				x->parent->parent->color = RBTRED;
 
 				x = x->parent->parent;
 			}
 			else
 			{
-				/* uncle is RBBLACK */
+				/* uncle is RBTBLACK */
 				if (x == x->parent->left)
 				{
 					x = x->parent;
-					rb_rotate_right(rb, x);
+					rbt_rotate_right(rbt, x);
 				}
-				x->parent->color = RBBLACK;
-				x->parent->parent->color = RBRED;
+				x->parent->color = RBTBLACK;
+				x->parent->parent->color = RBTRED;
 
-				rb_rotate_left(rb, x->parent->parent);
+				rbt_rotate_left(rbt, x->parent->parent);
 			}
 		}
 	}
@@ -364,13 +367,13 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 	 * The root may already have been black; if not, the black-height of every
 	 * node in the tree increases by one.
 	 */
-	rb->root->color = RBBLACK;
+	rbt->root->color = RBTBLACK;
 }
 
 /*
- * rb_insert: insert a new value into the tree.
+ * rbt_insert: insert a new value into the tree.
  *
- * data represents the value to insert.  Its RBNode fields need not
+ * data represents the value to insert.  Its RBTNode fields need not
  * be valid, it's the extra data in the larger struct that is of interest.
  *
  * If the value represented by "data" is not present in the tree, then
@@ -384,28 +387,28 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
  * "data" is unmodified in either case; it's typically just a local
  * variable in the caller.
  */
-RBNode *
-rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
+RBTNode *
+rbt_insert(RBTree *rbt, const RBTNode *data, bool *isNew)
 {
-	RBNode	   *current,
+	RBTNode    *current,
 			   *parent,
 			   *x;
 	int			cmp;
 
 	/* find where node belongs */
-	current = rb->root;
+	current = rbt->root;
 	parent = NULL;
 	cmp = 0;					/* just to prevent compiler warning */
 
-	while (current != RBNIL)
+	while (current != RBTNIL)
 	{
-		cmp = rb->comparator(data, current, rb->arg);
+		cmp = rbt->comparator(data, current, rbt->arg);
 		if (cmp == 0)
 		{
 			/*
 			 * Found node with given key.  Apply combiner.
 			 */
-			rb->combiner(current, data, rb->arg);
+			rbt->combiner(current, data, rbt->arg);
 			*isNew = false;
 			return current;
 		}
@@ -418,14 +421,14 @@ rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
 	 */
 	*isNew = true;
 
-	x = rb->allocfunc(rb->arg);
+	x = rbt->allocfunc(rbt->arg);
 
-	x->color = RBRED;
+	x->color = RBTRED;
 
-	x->left = RBNIL;
-	x->right = RBNIL;
+	x->left = RBTNIL;
+	x->right = RBTNIL;
 	x->parent = parent;
-	rb_copy_data(rb, x, data);
+	rbt_copy_data(rbt, x, data);
 
 	/* insert node in tree */
 	if (parent)
@@ -437,10 +440,10 @@ rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
 	}
 	else
 	{
-		rb->root = x;
+		rbt->root = x;
 	}
 
-	rb_insert_fixup(rb, x);
+	rbt_insert_fixup(rbt, x);
 
 	return x;
 }
@@ -453,14 +456,14 @@ rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
  * Maintain Red-Black tree balance after deleting a black node.
  */
 static void
-rb_delete_fixup(RBTree *rb, RBNode *x)
+rbt_delete_fixup(RBTree *rbt, RBTNode *x)
 {
 	/*
 	 * x is always a black node.  Initially, it is the former child of the
 	 * deleted node.  Each iteration of this loop moves it higher up in the
 	 * tree.
 	 */
-	while (x != rb->root && x->color == RBBLACK)
+	while (x != rbt->root && x->color == RBTBLACK)
 	{
 		/*
 		 * Left and right cases are symmetric.  Any nodes that are children of
@@ -471,93 +474,93 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 		 */
 		if (x == x->parent->left)
 		{
-			RBNode	   *w = x->parent->right;
+			RBTNode    *w = x->parent->right;
 
-			if (w->color == RBRED)
+			if (w->color == RBTRED)
 			{
-				w->color = RBBLACK;
-				x->parent->color = RBRED;
+				w->color = RBTBLACK;
+				x->parent->color = RBTRED;
 
-				rb_rotate_left(rb, x->parent);
+				rbt_rotate_left(rbt, x->parent);
 				w = x->parent->right;
 			}
 
-			if (w->left->color == RBBLACK && w->right->color == RBBLACK)
+			if (w->left->color == RBTBLACK && w->right->color == RBTBLACK)
 			{
-				w->color = RBRED;
+				w->color = RBTRED;
 
 				x = x->parent;
 			}
 			else
 			{
-				if (w->right->color == RBBLACK)
+				if (w->right->color == RBTBLACK)
 				{
-					w->left->color = RBBLACK;
-					w->color = RBRED;
+					w->left->color = RBTBLACK;
+					w->color = RBTRED;
 
-					rb_rotate_right(rb, w);
+					rbt_rotate_right(rbt, w);
 					w = x->parent->right;
 				}
 				w->color = x->parent->color;
-				x->parent->color = RBBLACK;
-				w->right->color = RBBLACK;
+				x->parent->color = RBTBLACK;
+				w->right->color = RBTBLACK;
 
-				rb_rotate_left(rb, x->parent);
-				x = rb->root;	/* Arrange for loop to terminate. */
+				rbt_rotate_left(rbt, x->parent);
+				x = rbt->root;	/* Arrange for loop to terminate. */
 			}
 		}
 		else
 		{
-			RBNode	   *w = x->parent->left;
+			RBTNode    *w = x->parent->left;
 
-			if (w->color == RBRED)
+			if (w->color == RBTRED)
 			{
-				w->color = RBBLACK;
-				x->parent->color = RBRED;
+				w->color = RBTBLACK;
+				x->parent->color = RBTRED;
 
-				rb_rotate_right(rb, x->parent);
+				rbt_rotate_right(rbt, x->parent);
 				w = x->parent->left;
 			}
 
-			if (w->right->color == RBBLACK && w->left->color == RBBLACK)
+			if (w->right->color == RBTBLACK && w->left->color == RBTBLACK)
 			{
-				w->color = RBRED;
+				w->color = RBTRED;
 
 				x = x->parent;
 			}
 			else
 			{
-				if (w->left->color == RBBLACK)
+				if (w->left->color == RBTBLACK)
 				{
-					w->right->color = RBBLACK;
-					w->color = RBRED;
+					w->right->color = RBTBLACK;
+					w->color = RBTRED;
 
-					rb_rotate_left(rb, w);
+					rbt_rotate_left(rbt, w);
 					w = x->parent->left;
 				}
 				w->color = x->parent->color;
-				x->parent->color = RBBLACK;
-				w->left->color = RBBLACK;
+				x->parent->color = RBTBLACK;
+				w->left->color = RBTBLACK;
 
-				rb_rotate_right(rb, x->parent);
-				x = rb->root;	/* Arrange for loop to terminate. */
+				rbt_rotate_right(rbt, x->parent);
+				x = rbt->root;	/* Arrange for loop to terminate. */
 			}
 		}
 	}
-	x->color = RBBLACK;
+	x->color = RBTBLACK;
 }
 
 /*
  * Delete node z from tree.
  */
 static void
-rb_delete_node(RBTree *rb, RBNode *z)
+rbt_delete_node(RBTree *rbt, RBTNode *z)
 {
-	RBNode	   *x,
+	RBTNode    *x,
 			   *y;
 
 	/* This is just paranoia: we should only get called on a valid node */
-	if (!z || z == RBNIL)
+	if (!z || z == RBTNIL)
 		return;
 
 	/*
@@ -565,21 +568,21 @@ rb_delete_node(RBTree *rb, RBNode *z)
 	 * be z if z has fewer than two children, or the tree successor of z
 	 * otherwise.
 	 */
-	if (z->left == RBNIL || z->right == RBNIL)
+	if (z->left == RBTNIL || z->right == RBTNIL)
 	{
-		/* y has a RBNIL node as a child */
+		/* y has a RBTNIL node as a child */
 		y = z;
 	}
 	else
 	{
 		/* find tree successor */
 		y = z->right;
-		while (y->left != RBNIL)
+		while (y->left != RBTNIL)
 			y = y->left;
 	}
 
 	/* x is y's only child */
-	if (y->left != RBNIL)
+	if (y->left != RBTNIL)
 		x = y->left;
 	else
 		x = y->right;
@@ -595,7 +598,7 @@ rb_delete_node(RBTree *rb, RBNode *z)
 	}
 	else
 	{
-		rb->root = x;
+		rbt->root = x;
 	}
 
 	/*
@@ -603,55 +606,55 @@ rb_delete_node(RBTree *rb, RBNode *z)
 	 * the data for the removed node to the one we were supposed to remove.
 	 */
 	if (y != z)
-		rb_copy_data(rb, z, y);
+		rbt_copy_data(rbt, z, y);
 
 	/*
 	 * Removing a black node might make some paths from root to leaf contain
 	 * fewer black nodes than others, or it might make two red nodes adjacent.
 	 */
-	if (y->color == RBBLACK)
-		rb_delete_fixup(rb, x);
+	if (y->color == RBTBLACK)
+		rbt_delete_fixup(rbt, x);
 
 	/* Now we can recycle the y node */
-	if (rb->freefunc)
-		rb->freefunc(y, rb->arg);
+	if (rbt->freefunc)
+		rbt->freefunc(y, rbt->arg);
 }
 
 /*
- * rb_delete: remove the given tree entry
+ * rbt_delete: remove the given tree entry
  *
- * "node" must have previously been found via rb_find or rb_leftmost.
+ * "node" must have previously been found via rbt_find or rbt_leftmost.
  * It is caller's responsibility to free any subsidiary data attached
- * to the node before calling rb_delete.  (Do *not* try to push that
+ * to the node before calling rbt_delete.  (Do *not* try to push that
  * responsibility off to the freefunc, as some other physical node
  * may be the one actually freed!)
  */
 void
-rb_delete(RBTree *rb, RBNode *node)
+rbt_delete(RBTree *rbt, RBTNode *node)
 {
-	rb_delete_node(rb, node);
+	rbt_delete_node(rbt, node);
 }
 
 /**********************************************************************
  *						  Traverse									  *
  **********************************************************************/
 
-static RBNode *
-rb_left_right_iterator(RBTreeIterator *iter)
+static RBTNode *
+rbt_left_right_iterator(RBTreeIterator *iter)
 {
 	if (iter->last_visited == NULL)
 	{
-		iter->last_visited = iter->rb->root;
-		while (iter->last_visited->left != RBNIL)
+		iter->last_visited = iter->rbt->root;
+		while (iter->last_visited->left != RBTNIL)
 			iter->last_visited = iter->last_visited->left;
 
 		return iter->last_visited;
 	}
 
-	if (iter->last_visited->right != RBNIL)
+	if (iter->last_visited->right != RBTNIL)
 	{
 		iter->last_visited = iter->last_visited->right;
-		while (iter->last_visited->left != RBNIL)
+		while (iter->last_visited->left != RBTNIL)
 			iter->last_visited = iter->last_visited->left;
 
 		return iter->last_visited;
@@ -659,7 +662,7 @@ rb_left_right_iterator(RBTreeIterator *iter)
 
 	for (;;)
 	{
-		RBNode	   *came_from = iter->last_visited;
+		RBTNode    *came_from = iter->last_visited;
 
 		iter->last_visited = iter->last_visited->parent;
 		if (iter->last_visited == NULL)
@@ -678,22 +681,22 @@ rb_left_right_iterator(RBTreeIterator *iter)
 	return iter->last_visited;
 }
 
-static RBNode *
-rb_right_left_iterator(RBTreeIterator *iter)
+static RBTNode *
+rbt_right_left_iterator(RBTreeIterator *iter)
 {
 	if (iter->last_visited == NULL)
 	{
-		iter->last_visited = iter->rb->root;
-		while (iter->last_visited->right != RBNIL)
+		iter->last_visited = iter->rbt->root;
+		while (iter->last_visited->right != RBTNIL)
 			iter->last_visited = iter->last_visited->right;
 
 		return iter->last_visited;
 	}
 
-	if (iter->last_visited->left != RBNIL)
+	if (iter->last_visited->left != RBTNIL)
 	{
 		iter->last_visited = iter->last_visited->left;
-		while (iter->last_visited->right != RBNIL)
+		while (iter->last_visited->right != RBTNIL)
 			iter->last_visited = iter->last_visited->right;
 
 		return iter->last_visited;
@@ -701,7 +704,7 @@ rb_right_left_iterator(RBTreeIterator *iter)
 
 	for (;;)
 	{
-		RBNode	   *came_from = iter->last_visited;
+		RBTNode    *came_from = iter->last_visited;
 
 		iter->last_visited = iter->last_visited->parent;
 		if (iter->last_visited == NULL)
@@ -721,33 +724,33 @@ rb_right_left_iterator(RBTreeIterator *iter)
 }
 
 /*
- * rb_begin_iterate: prepare to traverse the tree in any of several orders
+ * rbt_begin_iterate: prepare to traverse the tree in any of several orders
  *
- * After calling rb_begin_iterate, call rb_iterate repeatedly until it
+ * After calling rbt_begin_iterate, call rbt_iterate repeatedly until it
  * returns NULL or the traversal stops being of interest.
  *
  * If the tree is changed during traversal, results of further calls to
- * rb_iterate are unspecified.  Multiple concurrent iterators on the same
+ * rbt_iterate are unspecified.  Multiple concurrent iterators on the same
  * tree are allowed.
  *
  * The iterator state is stored in the 'iter' struct.  The caller should
  * treat it as an opaque struct.
  */
 void
-rb_begin_iterate(RBTree *rb, RBOrderControl ctrl, RBTreeIterator *iter)
+rbt_begin_iterate(RBTree *rbt, RBTOrderControl ctrl, RBTreeIterator *iter)
 {
 	/* Common initialization for all traversal orders */
-	iter->rb = rb;
+	iter->rbt = rbt;
 	iter->last_visited = NULL;
-	iter->is_over = (rb->root == RBNIL);
+	iter->is_over = (rbt->root == RBTNIL);
 
 	switch (ctrl)
 	{
 		case LeftRightWalk:		/* visit left, then self, then right */
-			iter->iterate = rb_left_right_iterator;
+			iter->iterate = rbt_left_right_iterator;
 			break;
 		case RightLeftWalk:		/* visit right, then self, then left */
-			iter->iterate = rb_right_left_iterator;
+			iter->iterate = rbt_right_left_iterator;
 			break;
 		default:
 			elog(ERROR, "unrecognized rbtree iteration order: %d", ctrl);
@@ -755,10 +758,10 @@ rb_begin_iterate(RBTree *rb, RBOrderControl ctrl, RBTreeIterator *iter)
 }
 
 /*
- * rb_iterate: return the next node in traversal order, or NULL if no more
+ * rbt_iterate: return the next node in traversal order, or NULL if no more
  */
-RBNode *
-rb_iterate(RBTreeIterator *iter)
+RBTNode *
+rbt_iterate(RBTreeIterator *iter)
 {
 	if (iter->is_over)
 		return NULL;
