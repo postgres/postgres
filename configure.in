@@ -1698,6 +1698,8 @@ AC_REPLACE_FUNCS(m4_normalize([
 	getrusage
 	inet_aton
 	mkdtemp
+	pread
+	pwrite
 	random
 	rint
 	srandom

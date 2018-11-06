@@ -15539,6 +15539,32 @@ esac
 
 fi
 
+ac_fn_c_check_func "$LINENO" "pread" "ac_cv_func_pread"
+if test "x$ac_cv_func_pread" = xyes; then :
+  $as_echo "#define HAVE_PREAD 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" pread.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS pread.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "pwrite" "ac_cv_func_pwrite"
+if test "x$ac_cv_func_pwrite" = xyes; then :
+  $as_echo "#define HAVE_PWRITE 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" pwrite.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS pwrite.$ac_objext"
+ ;;
+esac
+
+fi
+
 ac_fn_c_check_func "$LINENO" "random" "ac_cv_func_random"
 if test "x$ac_cv_func_random" = xyes; then :
   $as_echo "#define HAVE_RANDOM 1" >>confdefs.h

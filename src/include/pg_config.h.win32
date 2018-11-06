@@ -322,11 +322,17 @@
 /* Define to 1 if you have the `ppoll' function. */
 /* #undef HAVE_PPOLL */
 
+/* Define to 1 if you have the `pread' function. */
+/* #undef HAVE_PREAD */
+
 /* Define to 1 if you have the `pstat' function. */
 /* #undef HAVE_PSTAT */
 
 /* Define to 1 if the PS_STRINGS thing exists. */
 /* #undef HAVE_PS_STRINGS */
+
+/* Define to 1 if you have the `pwrite' function. */
+/* #undef HAVE_PWRITE */
 
 /* Define to 1 if you have the `random' function. */
 /* #undef HAVE_RANDOM */
