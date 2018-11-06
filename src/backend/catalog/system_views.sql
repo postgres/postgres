@@ -1030,7 +1030,7 @@ CREATE OR REPLACE FUNCTION pg_stop_backup (
 CREATE OR REPLACE FUNCTION
   pg_promote(wait boolean DEFAULT true, wait_seconds integer DEFAULT 60)
   RETURNS boolean STRICT VOLATILE LANGUAGE INTERNAL AS 'pg_promote'
-  PARALLEL RESTRICTED;
+  PARALLEL SAFE;
 
 -- legacy definition for compatibility with 9.3
 CREATE OR REPLACE FUNCTION
