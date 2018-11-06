@@ -245,7 +245,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	}
 
 	/*
-	 * Create new segment or open an existing one for attach or resize.
+	 * Create new segment or open an existing one for attach.
 	 *
 	 * Even though we're not going through fd.c, we should be safe against
 	 * running out of file descriptors, because of NUM_RESERVED_FDS.  We're
@@ -409,10 +409,6 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 	char	   *address;
 	char		name[64];
 	int		   *ident_cache;
-
-	/* Since resize isn't supported, reattach is a no-op. */
-	if (op == DSM_OP_ATTACH && *mapped_address != NULL)
-		return true;
 
 	/*
 	 * POSIX shared memory and mmap-based shared memory identify segments with
@@ -599,10 +595,6 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 	HANDLE		hmap;
 	char		name[64];
 	MEMORY_BASIC_INFORMATION info;
-
-	/* Since resize isn't supported, reattach is a no-op. */
-	if (op == DSM_OP_ATTACH && *mapped_address != NULL)
-		return true;
 
 	/*
 	 * Storing the shared memory segment in the Global\ namespace, can allow
@@ -814,7 +806,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 		return true;
 	}
 
-	/* Create new segment or open an existing one for attach or resize. */
+	/* Create new segment or open an existing one for attach. */
 	flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
 	if ((fd = OpenTransientFile(name, flags)) == -1)
 	{
