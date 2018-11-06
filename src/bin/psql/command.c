@@ -3560,20 +3560,14 @@ _align2string(enum printFormat in)
 		case PRINT_NOTHING:
 			return "nothing";
 			break;
-		case PRINT_UNALIGNED:
-			return "unaligned";
-			break;
 		case PRINT_ALIGNED:
 			return "aligned";
 			break;
-		case PRINT_WRAPPED:
-			return "wrapped";
+		case PRINT_ASCIIDOC:
+			return "asciidoc";
 			break;
 		case PRINT_HTML:
 			return "html";
-			break;
-		case PRINT_ASCIIDOC:
-			return "asciidoc";
 			break;
 		case PRINT_LATEX:
 			return "latex";
@@ -3583,6 +3577,12 @@ _align2string(enum printFormat in)
 			break;
 		case PRINT_TROFF_MS:
 			return "troff-ms";
+			break;
+		case PRINT_UNALIGNED:
+			return "unaligned";
+			break;
+		case PRINT_WRAPPED:
+			return "wrapped";
 			break;
 	}
 	return "unknown";
@@ -3639,25 +3639,25 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (!value)
 			;
-		else if (pg_strncasecmp("unaligned", value, vallen) == 0)
-			popt->topt.format = PRINT_UNALIGNED;
 		else if (pg_strncasecmp("aligned", value, vallen) == 0)
 			popt->topt.format = PRINT_ALIGNED;
-		else if (pg_strncasecmp("wrapped", value, vallen) == 0)
-			popt->topt.format = PRINT_WRAPPED;
-		else if (pg_strncasecmp("html", value, vallen) == 0)
-			popt->topt.format = PRINT_HTML;
 		else if (pg_strncasecmp("asciidoc", value, vallen) == 0)
 			popt->topt.format = PRINT_ASCIIDOC;
+		else if (pg_strncasecmp("html", value, vallen) == 0)
+			popt->topt.format = PRINT_HTML;
 		else if (pg_strncasecmp("latex", value, vallen) == 0)
 			popt->topt.format = PRINT_LATEX;
 		else if (pg_strncasecmp("latex-longtable", value, vallen) == 0)
 			popt->topt.format = PRINT_LATEX_LONGTABLE;
 		else if (pg_strncasecmp("troff-ms", value, vallen) == 0)
 			popt->topt.format = PRINT_TROFF_MS;
+		else if (pg_strncasecmp("unaligned", value, vallen) == 0)
+			popt->topt.format = PRINT_UNALIGNED;
+		else if (pg_strncasecmp("wrapped", value, vallen) == 0)
+			popt->topt.format = PRINT_WRAPPED;
 		else
 		{
-			psql_error("\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n");
+			psql_error("\\pset: allowed formats are aligned, asciidoc, html, latex, latex-longtable, troff-ms, unaligned, wrapped\n");
 			return false;
 		}
 	}

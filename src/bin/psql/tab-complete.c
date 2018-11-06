@@ -3539,9 +3539,9 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatchesCS("\\pset", MatchAny))
 	{
 		if (TailMatchesCS("format"))
-			COMPLETE_WITH_CS("unaligned", "aligned", "wrapped", "html",
-							 "asciidoc", "latex", "latex-longtable",
-							 "troff-ms");
+			COMPLETE_WITH_CS("aligned", "asciidoc", "html", "latex",
+							 "latex-longtable", "troff-ms", "unaligned",
+							 "wrapped");
 		else if (TailMatchesCS("linestyle"))
 			COMPLETE_WITH_CS("ascii", "old-ascii", "unicode");
 		else if (TailMatchesCS("pager"))

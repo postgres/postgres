@@ -2584,12 +2584,11 @@ lo_import 152801
           <term><literal>format</literal></term>
           <listitem>
           <para>
-          Sets the output format to one of <literal>unaligned</literal>,
-          <literal>aligned</literal>, <literal>wrapped</literal>,
-          <literal>html</literal>, <literal>asciidoc</literal>,
+          Sets the output format to one of <literal>aligned</literal>,
+          <literal>asciidoc</literal>, <literal>html</literal>,
           <literal>latex</literal> (uses <literal>tabular</literal>),
-          <literal>latex-longtable</literal>, or
-          <literal>troff-ms</literal>.
+          <literal>latex-longtable</literal>, <literal>troff-ms</literal>,
+          <literal>unaligned</literal>, or <literal>wrapped</literal>.
           Unique abbreviations are allowed.  (That would mean one letter
           is enough.)
           </para>
@@ -2615,10 +2614,10 @@ lo_import 152801
           </para>
 
           <para>
-          The <literal>html</literal>, <literal>asciidoc</literal>, <literal>latex</literal>,
-          <literal>latex-longtable</literal>, and <literal>troff-ms</literal>
-          formats put out tables that are intended to
-          be included in documents using the respective mark-up
+          The <literal>asciidoc</literal>, <literal>html</literal>,
+          <literal>latex</literal>, <literal>latex-longtable</literal>, and
+          <literal>troff-ms</literal> formats put out tables that are intended
+          to be included in documents using the respective mark-up
           language. They are not complete documents! This might not be
           necessary in <acronym>HTML</acronym>, but in
           <application>LaTeX</application> you must have a complete
