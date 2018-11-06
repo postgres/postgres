@@ -391,7 +391,7 @@ extern bool ginvalidate(Oid opclassoid);
 /* ginbulk.c */
 typedef struct GinEntryAccumulator
 {
-	RBNode		rbnode;
+	RBTNode		rbtnode;
 	Datum		key;
 	GinNullCategory category;
 	OffsetNumber attnum;

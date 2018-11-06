@@ -14,29 +14,29 @@
 #define RBTREE_H
 
 /*
- * RBNode is intended to be used as the first field of a larger struct,
+ * RBTNode is intended to be used as the first field of a larger struct,
  * whose additional fields carry whatever payload data the caller needs
  * for a tree entry.  (The total size of that larger struct is passed to
- * rb_create.)	RBNode is declared here to support this usage, but
+ * rbt_create.)	RBTNode is declared here to support this usage, but
  * callers must treat it as an opaque struct.
  */
-typedef struct RBNode
+typedef struct RBTNode
 {
 	char color;					/* node's current color, red or black */
-	struct RBNode *left;		/* left child, or RBNIL if none */
-	struct RBNode *right;		/* right child, or RBNIL if none */
-	struct RBNode *parent;		/* parent, or NULL (not RBNIL!) if none */
-} RBNode;
+	struct RBTNode *left;		/* left child, or RBTNIL if none */
+	struct RBTNode *right;		/* right child, or RBTNIL if none */
+	struct RBTNode *parent;		/* parent, or NULL (not RBTNIL!) if none */
+} RBTNode;
 
 /* Opaque struct representing a whole tree */
 typedef struct RBTree RBTree;
 
 /* Available tree iteration orderings */
-typedef enum RBOrderControl
+typedef enum RBTOrderControl
 {
 	LeftRightWalk,				/* inorder: left child, node, right child */
 	RightLeftWalk				/* reverse inorder: right, node, left */
-} RBOrderControl;
+} RBTOrderControl;
 
 /*
  * RBTreeIterator holds state while traversing a tree.  This is declared
@@ -47,33 +47,33 @@ typedef struct RBTreeIterator RBTreeIterator;
 
 struct RBTreeIterator
 {
-	RBTree	   *rb;
-	RBNode	   *(*iterate) (RBTreeIterator *iter);
-	RBNode	   *last_visited;
+	RBTree	   *rbt;
+	RBTNode    *(*iterate) (RBTreeIterator *iter);
+	RBTNode    *last_visited;
 	bool		is_over;
 };
 
 /* Support functions to be provided by caller */
-typedef int (*rb_comparator) (const RBNode *a, const RBNode *b, void *arg);
-typedef void (*rb_combiner) (RBNode *existing, const RBNode *newdata, void *arg);
-typedef RBNode *(*rb_allocfunc) (void *arg);
-typedef void (*rb_freefunc) (RBNode *x, void *arg);
+typedef int (*rbt_comparator) (const RBTNode *a, const RBTNode *b, void *arg);
+typedef void (*rbt_combiner) (RBTNode *existing, const RBTNode *newdata, void *arg);
+typedef RBTNode *(*rbt_allocfunc) (void *arg);
+typedef void (*rbt_freefunc) (RBTNode *x, void *arg);
 
-extern RBTree *rb_create(Size node_size,
-		  rb_comparator comparator,
-		  rb_combiner combiner,
-		  rb_allocfunc allocfunc,
-		  rb_freefunc freefunc,
-		  void *arg);
+extern RBTree *rbt_create(Size node_size,
+		   rbt_comparator comparator,
+		   rbt_combiner combiner,
+		   rbt_allocfunc allocfunc,
+		   rbt_freefunc freefunc,
+		   void *arg);
 
-extern RBNode *rb_find(RBTree *rb, const RBNode *data);
-extern RBNode *rb_leftmost(RBTree *rb);
+extern RBTNode *rbt_find(RBTree *rbt, const RBTNode *data);
+extern RBTNode *rbt_leftmost(RBTree *rbt);
 
-extern RBNode *rb_insert(RBTree *rb, const RBNode *data, bool *isNew);
-extern void rb_delete(RBTree *rb, RBNode *node);
+extern RBTNode *rbt_insert(RBTree *rbt, const RBTNode *data, bool *isNew);
+extern void rbt_delete(RBTree *rbt, RBTNode *node);
 
-extern void rb_begin_iterate(RBTree *rb, RBOrderControl ctrl,
-				 RBTreeIterator *iter);
-extern RBNode *rb_iterate(RBTreeIterator *iter);
+extern void rbt_begin_iterate(RBTree *rbt, RBTOrderControl ctrl,
+				  RBTreeIterator *iter);
+extern RBTNode *rbt_iterate(RBTreeIterator *iter);
 
 #endif							/* RBTREE_H */
