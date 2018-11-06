@@ -1437,19 +1437,6 @@ same commits as above
        </para>
       </listitem>
 
-      <listitem>
-<!--
-2018-03-27 [c203d6cf8] Allow HOT updates for some expression indexes
--->
-
-       <para>
-        Allow heap-only-tuple (<acronym>HOT</acronym>) updates for
-        expression indexes when the values of the expressions are unchanged
-        (Konstantin Knizhnik)
-       </para>
-
-      </listitem>
-
      </itemizedlist>
 
      <sect5>
