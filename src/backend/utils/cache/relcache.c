@@ -4755,6 +4755,7 @@ IsProjectionFunctionalIndex(Relation index, IndexInfo *ii)
 {
 	bool		is_projection = false;
 
+#ifdef NOT_USED
 	if (ii->ii_Expressions)
 	{
 		HeapTuple	tuple;
@@ -4800,6 +4801,8 @@ IsProjectionFunctionalIndex(Relation index, IndexInfo *ii)
 		}
 		ReleaseSysCache(tuple);
 	}
+#endif
+
 	return is_projection;
 }
 
