@@ -237,9 +237,14 @@ drop table p1 cascade;
 -- tables. See the pgsql-hackers thread beginning Dec. 4/04
 create table base (i integer);
 create table derived () inherits (base);
+create table more_derived (like derived, b int) inherits (derived);
 insert into derived (i) values (0);
 select derived::base from derived;
 select NULL::derived::base;
+-- remove redundant conversions.
+explain (verbose on, costs off) select row(i, b)::more_derived::derived::base from more_derived;
+explain (verbose on, costs off) select (1, 2)::more_derived::derived::base;
+drop table more_derived;
 drop table derived;
 drop table base;
 

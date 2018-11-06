@@ -764,6 +764,8 @@ NOTICE:  drop cascades to table c1
 -- tables. See the pgsql-hackers thread beginning Dec. 4/04
 create table base (i integer);
 create table derived () inherits (base);
+create table more_derived (like derived, b int) inherits (derived);
+NOTICE:  merging column "i" with inherited definition
 insert into derived (i) values (0);
 select derived::base from derived;
  derived 
@@ -777,6 +779,22 @@ select NULL::derived::base;
  
 (1 row)
 
+-- remove redundant conversions.
+explain (verbose on, costs off) select row(i, b)::more_derived::derived::base from more_derived;
+                QUERY PLAN                 
+-------------------------------------------
+ Seq Scan on public.more_derived
+   Output: (ROW(i, b)::more_derived)::base
+(2 rows)
+
+explain (verbose on, costs off) select (1, 2)::more_derived::derived::base;
+      QUERY PLAN       
+-----------------------
+ Result
+   Output: '(1)'::base
+(2 rows)
+
+drop table more_derived;
 drop table derived;
 drop table base;
 create table p1(ff1 int);

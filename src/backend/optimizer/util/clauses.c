@@ -3716,6 +3716,52 @@ eval_const_expressions_mutator(Node *node,
 													  context);
 			}
 			break;
+		case T_ConvertRowtypeExpr:
+			{
+				ConvertRowtypeExpr *cre = castNode(ConvertRowtypeExpr, node);
+				Node		   *arg;
+				ConvertRowtypeExpr *newcre;
+
+				arg = eval_const_expressions_mutator((Node *) cre->arg,
+													 context);
+
+				newcre = makeNode(ConvertRowtypeExpr);
+				newcre->resulttype = cre->resulttype;
+				newcre->convertformat = cre->convertformat;
+				newcre->location = cre->location;
+
+				/*
+				 * In case of a nested ConvertRowtypeExpr, we can convert the
+				 * leaf row directly to the topmost row format without any
+				 * intermediate conversions. (This works because
+				 * ConvertRowtypeExpr is used only for child->parent
+				 * conversion in inheritance trees, which works by exact match
+				 * of column name, and a column absent in an intermediate
+				 * result can't be present in the final result.)
+				 *
+				 * No need to check more than one level deep, because the
+				 * above recursion will have flattened anything else.
+				 */
+				if (arg != NULL && IsA(arg, ConvertRowtypeExpr))
+				{
+					ConvertRowtypeExpr *argcre = (ConvertRowtypeExpr *) arg;
+
+					arg = (Node *) argcre->arg;
+
+					/*
+					 * Make sure an outer implicit conversion can't hide an
+					 * inner explicit one.
+					 */
+					if (newcre->convertformat == COERCE_IMPLICIT_CAST)
+						newcre->convertformat = argcre->convertformat;
+				}
+
+				newcre->arg = (Expr *) arg;
+
+				if (arg != NULL && IsA(arg, Const))
+					return ece_evaluate_expr((Node *) newcre);
+				return (Node *) newcre;
+			}
 		default:
 			break;
 	}
