@@ -559,7 +559,7 @@ sub upgradecheck
 	generate_db('',       91, 127, '');
 
 	print "\nSetting up data for upgrading\n\n";
-	installcheck();
+	installcheck('parallel');
 
 	# now we can chdir into the source dir
 	chdir "$topdir/src/bin/pg_upgrade";
