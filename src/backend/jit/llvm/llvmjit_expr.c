@@ -422,7 +422,7 @@ llvm_compile_expr(ExprState *state)
 					v_params[3] = v_slot;
 
 					LLVMBuildCall(b,
-								  FuncExecEvalSysVar,
+								  llvm_get_decl(mod, FuncExecEvalSysVar),
 								  v_params, lengthof(v_params), "");
 
 					LLVMBuildBr(b, opblocks[i + 1]);
