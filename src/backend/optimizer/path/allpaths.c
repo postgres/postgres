@@ -147,6 +147,7 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 {
 	RelOptInfo *rel;
 	Index		rti;
+	double		total_pages;
 
 	/*
 	 * Construct the all_baserels Relids set.
@@ -173,10 +174,45 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 	set_base_rel_consider_startup(root);
 
 	/*
-	 * Compute size estimates and consider_parallel flags for each base rel,
-	 * then generate access paths.
+	 * Compute size estimates and consider_parallel flags for each base rel.
 	 */
 	set_base_rel_sizes(root);
+
+	/*
+	 * We should now have size estimates for every actual table involved in
+	 * the query, and we also know which if any have been deleted from the
+	 * query by join removal, pruned by partition pruning, or eliminated by
+	 * constraint exclusion.  So we can now compute total_table_pages.
+	 *
+	 * Note that appendrels are not double-counted here, even though we don't
+	 * bother to distinguish RelOptInfos for appendrel parents, because the
+	 * parents will have pages = 0.
+	 *
+	 * XXX if a table is self-joined, we will count it once per appearance,
+	 * which perhaps is the wrong thing ... but that's not completely clear,
+	 * and detecting self-joins here is difficult, so ignore it for now.
+	 */
+	total_pages = 0;
+	for (rti = 1; rti < root->simple_rel_array_size; rti++)
+	{
+		RelOptInfo *brel = root->simple_rel_array[rti];
+
+		if (brel == NULL)
+			continue;
+
+		Assert(brel->relid == rti); /* sanity check on array */
+
+		if (IS_DUMMY_REL(brel))
+			continue;
+
+		if (IS_SIMPLE_REL(brel))
+			total_pages += (double) brel->pages;
+	}
+	root->total_table_pages = total_pages;
+
+	/*
+	 * Generate access paths for each base rel.
+	 */
 	set_base_rel_pathlists(root);
 
 	/*
@@ -1271,6 +1307,11 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * because some places assume rel->tuples is valid for any baserel.
 		 */
 		rel->tuples = parent_rows;
+
+		/*
+		 * Note that we leave rel->pages as zero; this is important to avoid
+		 * double-counting the appendrel tree in total_table_pages.
+		 */
 	}
 	else
 	{

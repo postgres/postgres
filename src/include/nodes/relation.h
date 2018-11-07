@@ -310,7 +310,8 @@ typedef struct PlannerInfo
 
 	MemoryContext planner_cxt;	/* context holding PlannerInfo */
 
-	double		total_table_pages;	/* # of pages in all tables of query */
+	double		total_table_pages;	/* # of pages in all non-dummy tables of
+									 * query */
 
 	double		tuple_fraction; /* tuple_fraction passed to query_planner */
 	double		limit_tuples;	/* limit_tuples passed to query_planner */
@@ -687,9 +688,8 @@ typedef struct RelOptInfo
 	bool		has_eclass_joins;	/* T means joininfo is incomplete */
 
 	/* used by partitionwise joins: */
-	bool		consider_partitionwise_join;	/* consider partitionwise
-												 * join paths? (if
-												 * partitioned rel) */
+	bool		consider_partitionwise_join;	/* consider partitionwise join
+												 * paths? (if partitioned rel) */
 	Relids		top_parent_relids;	/* Relids of topmost parents (if "other"
 									 * rel) */
 

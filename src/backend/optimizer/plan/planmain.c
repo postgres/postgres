@@ -57,8 +57,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	Query	   *parse = root->parse;
 	List	   *joinlist;
 	RelOptInfo *final_rel;
-	Index		rti;
-	double		total_pages;
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like
@@ -230,34 +228,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * restriction OR clauses from.
 	 */
 	extract_restriction_or_clauses(root);
-
-	/*
-	 * We should now have size estimates for every actual table involved in
-	 * the query, and we also know which if any have been deleted from the
-	 * query by join removal; so we can compute total_table_pages.
-	 *
-	 * Note that appendrels are not double-counted here, even though we don't
-	 * bother to distinguish RelOptInfos for appendrel parents, because the
-	 * parents will still have size zero.
-	 *
-	 * XXX if a table is self-joined, we will count it once per appearance,
-	 * which perhaps is the wrong thing ... but that's not completely clear,
-	 * and detecting self-joins here is difficult, so ignore it for now.
-	 */
-	total_pages = 0;
-	for (rti = 1; rti < root->simple_rel_array_size; rti++)
-	{
-		RelOptInfo *brel = root->simple_rel_array[rti];
-
-		if (brel == NULL)
-			continue;
-
-		Assert(brel->relid == rti); /* sanity check on array */
-
-		if (IS_SIMPLE_REL(brel))
-			total_pages += (double) brel->pages;
-	}
-	root->total_table_pages = total_pages;
 
 	/*
 	 * Ready to do the primary planning.
