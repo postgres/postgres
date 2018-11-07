@@ -149,8 +149,17 @@ check_new_cluster(void)
 
 	check_loadable_libraries();
 
-	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
-		check_hard_link();
+	switch (user_opts.transfer_mode)
+	{
+		case TRANSFER_MODE_CLONE:
+			check_file_clone();
+			break;
+		case TRANSFER_MODE_COPY:
+			break;
+		case TRANSFER_MODE_LINK:
+			check_hard_link();
+			break;
+	}
 
 	check_is_install_user(&new_cluster);
 

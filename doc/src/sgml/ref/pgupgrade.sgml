@@ -183,6 +183,28 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>--clone</option></term>
+      <listitem>
+       <para>
+        Use efficient file cloning (also known as <quote>reflinks</quote> on
+        some systems) instead of copying files to the new cluster.  This can
+        result in near-instantaneous copying of the data files, giving the
+        speed advantages of <option>-k</option>/<option>--link</option> while
+        leaving the old cluster untouched.
+       </para>
+
+       <para>
+        File cloning is only supported on some operating systems and file
+        systems.  If it is selected but not supported, the
+        <application>pg_upgrade</application> run will error.  At present, it
+        is supported on Linux (kernel 4.5 or later) with Btrfs and XFS (on
+        file systems created with reflink support, which is not the default
+        for XFS at this writing), and on macOS with APFS.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-?</option></term>
       <term><option>--help</option></term>
       <listitem><para>show help, then exit</para></listitem>
@@ -340,7 +362,7 @@ NET STOP postgresql-&majorversion;
      Always run the <application>pg_upgrade</application> binary of the new server, not the old one.
      <application>pg_upgrade</application> requires the specification of the old and new cluster's
      data and executable (<filename>bin</filename>) directories. You can also specify
-     user and port values, and whether you want the data files linked
+     user and port values, and whether you want the data files linked or cloned
      instead of the default copy behavior.
     </para>
 
@@ -351,8 +373,12 @@ NET STOP postgresql-&majorversion;
      once you start the new cluster after the upgrade.  Link mode also
      requires that the old and new cluster data directories be in the
      same file system.  (Tablespaces and <filename>pg_wal</filename> can be on
-     different file systems.)  See <literal>pg_upgrade --help</literal> for a full
-     list of options.
+     different file systems.)
+     The clone mode provides the same speed and disk space advantages but will
+     not leave the old cluster unusable after the upgrade.  The clone mode
+     also requires that the old and new data directories be in the same file
+     system.  The clone mode is only available on certain operating systems
+     and file systems.
     </para>
 
     <para>
@@ -388,8 +414,9 @@ pg_upgrade.exe
      to perform only the checks, even if the old server is still
      running. <command>pg_upgrade --check</command> will also outline any
      manual adjustments you will need to make after the upgrade.  If you
-     are going to be using link mode, you should use the <option>--link</option>
-     option with <option>--check</option> to enable link-mode-specific checks.
+     are going to be using link or clone mode, you should use the option
+     <option>--link</option> or <option>--clone</option> with
+     <option>--check</option> to enable mode-specific checks.
      <command>pg_upgrade</command> requires write permission in the current directory.
     </para>
 
@@ -722,7 +749,8 @@ psql --username=postgres --file=script.sql postgres
 
   <para>
    If you want to use link mode and you do not want your old cluster
-   to be modified when the new cluster is started, make a copy of the
+   to be modified when the new cluster is started, consider using the clone mode.
+   If that is not available, make a copy of the
    old cluster and upgrade that in link mode. To make a valid copy
    of the old cluster, use <command>rsync</command> to create a dirty
    copy of the old cluster while the server is running, then shut down

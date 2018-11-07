@@ -18,11 +18,59 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef HAVE_COPYFILE
+#include <copyfile.h>
+#endif
+#ifdef __linux__
+#include <sys/ioctl.h>
+#include <linux/fs.h>
+#endif
 
 
 #ifdef WIN32
 static int	win32_pghardlink(const char *src, const char *dst);
 #endif
+
+
+/*
+ * cloneFile()
+ *
+ * Clones/reflinks a relation file from src to dst.
+ *
+ * schemaName/relName are relation's SQL name (used for error messages only).
+ */
+void
+cloneFile(const char *src, const char *dst,
+		  const char *schemaName, const char *relName)
+{
+#if defined(HAVE_COPYFILE) && defined(COPYFILE_CLONE_FORCE)
+	if (copyfile(src, dst, NULL, COPYFILE_CLONE_FORCE) < 0)
+		pg_fatal("error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+				 schemaName, relName, src, dst, strerror(errno));
+#elif defined(__linux__) && defined(FICLONE)
+	int			src_fd;
+	int			dest_fd;
+
+	if ((src_fd = open(src, O_RDONLY | PG_BINARY, 0)) < 0)
+		pg_fatal("error while cloning relation \"%s.%s\": could not open file \"%s\": %s\n",
+				 schemaName, relName, src, strerror(errno));
+
+	if ((dest_fd = open(dst, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+						pg_file_create_mode)) < 0)
+		pg_fatal("error while cloning relation \"%s.%s\": could not create file \"%s\": %s\n",
+				 schemaName, relName, dst, strerror(errno));
+
+	if (ioctl(dest_fd, FICLONE, src_fd) < 0)
+	{
+		unlink(dst);
+		pg_fatal("error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+				 schemaName, relName, src, dst, strerror(errno));
+	}
+
+	close(src_fd);
+	close(dest_fd);
+#endif
+}
 
 
 /*
@@ -268,6 +316,48 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 	/* Clean up */
 	close(dst_fd);
 	close(src_fd);
+}
+
+void
+check_file_clone(void)
+{
+	char		existing_file[MAXPGPATH];
+	char		new_link_file[MAXPGPATH];
+
+	snprintf(existing_file, sizeof(existing_file), "%s/PG_VERSION", old_cluster.pgdata);
+	snprintf(new_link_file, sizeof(new_link_file), "%s/PG_VERSION.clonetest", new_cluster.pgdata);
+	unlink(new_link_file);		/* might fail */
+
+#if defined(HAVE_COPYFILE) && defined(COPYFILE_CLONE_FORCE)
+	if (copyfile(existing_file, new_link_file, NULL, COPYFILE_CLONE_FORCE) < 0)
+		pg_fatal("could not clone file between old and new data directories: %s\n",
+				 strerror(errno));
+#elif defined(__linux__) && defined(FICLONE)
+	{
+		int			src_fd;
+		int			dest_fd;
+
+		if ((src_fd = open(existing_file, O_RDONLY | PG_BINARY, 0)) < 0)
+			pg_fatal("could not open file \"%s\": %s\n",
+					 existing_file, strerror(errno));
+
+		if ((dest_fd = open(new_link_file, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+							pg_file_create_mode)) < 0)
+			pg_fatal("could not create file \"%s\": %s\n",
+					 new_link_file, strerror(errno));
+
+		if (ioctl(dest_fd, FICLONE, src_fd) < 0)
+			pg_fatal("could not clone file between old and new data directories: %s\n",
+					 strerror(errno));
+
+		close(src_fd);
+		close(dest_fd);
+	}
+#else
+	pg_fatal("file cloning not supported on this platform\n");
+#endif
+
+	unlink(new_link_file);
 }
 
 void

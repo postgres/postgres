@@ -30,10 +30,18 @@ void
 transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 							 char *old_pgdata, char *new_pgdata)
 {
-	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
-		pg_log(PG_REPORT, "Linking user relation files\n");
-	else
-		pg_log(PG_REPORT, "Copying user relation files\n");
+	switch (user_opts.transfer_mode)
+	{
+		case TRANSFER_MODE_CLONE:
+			pg_log(PG_REPORT, "Cloning user relation files\n");
+			break;
+		case TRANSFER_MODE_COPY:
+			pg_log(PG_REPORT, "Copying user relation files\n");
+			break;
+		case TRANSFER_MODE_LINK:
+			pg_log(PG_REPORT, "Linking user relation files\n");
+			break;
+	}
 
 	/*
 	 * Transferring files by tablespace is tricky because a single database
@@ -250,17 +258,23 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 				   old_file, new_file);
 			rewriteVisibilityMap(old_file, new_file, map->nspname, map->relname);
 		}
-		else if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
-		{
-			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n",
-				   old_file, new_file);
-			copyFile(old_file, new_file, map->nspname, map->relname);
-		}
 		else
-		{
-			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n",
-				   old_file, new_file);
-			linkFile(old_file, new_file, map->nspname, map->relname);
-		}
+			switch (user_opts.transfer_mode)
+			{
+				case TRANSFER_MODE_CLONE:
+					pg_log(PG_VERBOSE, "cloning \"%s\" to \"%s\"\n",
+						   old_file, new_file);
+					cloneFile(old_file, new_file, map->nspname, map->relname);
+					break;
+				case TRANSFER_MODE_COPY:
+					pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n",
+						   old_file, new_file);
+					copyFile(old_file, new_file, map->nspname, map->relname);
+					break;
+				case TRANSFER_MODE_LINK:
+					pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n",
+						   old_file, new_file);
+					linkFile(old_file, new_file, map->nspname, map->relname);
+			}
 	}
 }

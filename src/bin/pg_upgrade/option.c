@@ -53,6 +53,8 @@ parseCommandLine(int argc, char *argv[])
 		{"retain", no_argument, NULL, 'r'},
 		{"jobs", required_argument, NULL, 'j'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"clone", no_argument, NULL, 1},
+
 		{NULL, 0, NULL, 0}
 	};
 	int			option;			/* Command line option */
@@ -203,6 +205,10 @@ parseCommandLine(int argc, char *argv[])
 				log_opts.verbose = true;
 				break;
 
+			case 1:
+				user_opts.transfer_mode = TRANSFER_MODE_CLONE;
+				break;
+
 			default:
 				pg_fatal("Try \"%s --help\" for more information.\n",
 						 os_info.progname);
@@ -293,6 +299,7 @@ usage(void)
 	printf(_("  -U, --username=NAME           cluster superuser (default \"%s\")\n"), os_info.user);
 	printf(_("  -v, --verbose                 enable verbose internal logging\n"));
 	printf(_("  -V, --version                 display version information, then exit\n"));
+	printf(_("  --clone                       clone instead of copying files to new cluster\n"));
 	printf(_("  -?, --help                    show this help, then exit\n"));
 	printf(_("\n"
 			 "Before running pg_upgrade you must:\n"
