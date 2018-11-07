@@ -734,6 +734,8 @@ extern void ExecEvalAlternativeSubPlan(ExprState *state, ExprEvalStep *op,
 						   ExprContext *econtext);
 extern void ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op,
 					ExprContext *econtext);
+extern void ExecEvalSysVar(ExprState *state, ExprEvalStep *op,
+			   ExprContext *econtext, TupleTableSlot *slot);
 
 extern void ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup pergroup);
 extern Datum ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,

@@ -79,9 +79,9 @@ extern LLVMValueRef FuncStrlen;
 extern LLVMValueRef FuncVarsizeAny;
 extern LLVMValueRef FuncSlotGetsomeattrs;
 extern LLVMValueRef FuncSlotGetmissingattrs;
-extern LLVMValueRef FuncHeapGetsysattr;
 extern LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
 extern LLVMValueRef FuncExecEvalArrayRefSubscript;
+extern LLVMValueRef FuncExecEvalSysVar;
 extern LLVMValueRef FuncExecAggTransReparent;
 extern LLVMValueRef FuncExecAggInitGroup;
 

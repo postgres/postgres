@@ -490,55 +490,19 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 		EEO_CASE(EEOP_INNER_SYSVAR)
 		{
-			int			attnum = op->d.var.attnum;
-			Datum		d;
-
-			/* these asserts must match defenses in slot_getattr */
-			Assert(innerslot->tts_tuple != NULL);
-			Assert(innerslot->tts_tuple != &(innerslot->tts_minhdr));
-
-			/* heap_getsysattr has sufficient defenses against bad attnums */
-			d = heap_getsysattr(innerslot->tts_tuple, attnum,
-								innerslot->tts_tupleDescriptor,
-								op->resnull);
-			*op->resvalue = d;
-
+			ExecEvalSysVar(state, op, econtext, innerslot);
 			EEO_NEXT();
 		}
 
 		EEO_CASE(EEOP_OUTER_SYSVAR)
 		{
-			int			attnum = op->d.var.attnum;
-			Datum		d;
-
-			/* these asserts must match defenses in slot_getattr */
-			Assert(outerslot->tts_tuple != NULL);
-			Assert(outerslot->tts_tuple != &(outerslot->tts_minhdr));
-
-			/* heap_getsysattr has sufficient defenses against bad attnums */
-			d = heap_getsysattr(outerslot->tts_tuple, attnum,
-								outerslot->tts_tupleDescriptor,
-								op->resnull);
-			*op->resvalue = d;
-
+			ExecEvalSysVar(state, op, econtext, outerslot);
 			EEO_NEXT();
 		}
 
 		EEO_CASE(EEOP_SCAN_SYSVAR)
 		{
-			int			attnum = op->d.var.attnum;
-			Datum		d;
-
-			/* these asserts must match defenses in slot_getattr */
-			Assert(scanslot->tts_tuple != NULL);
-			Assert(scanslot->tts_tuple != &(scanslot->tts_minhdr));
-
-			/* heap_getsysattr has sufficient defenses against bad attnums */
-			d = heap_getsysattr(scanslot->tts_tuple, attnum,
-								scanslot->tts_tupleDescriptor,
-								op->resnull);
-			*op->resvalue = d;
-
+			ExecEvalSysVar(state, op, econtext, scanslot);
 			EEO_NEXT();
 		}
 
@@ -4004,6 +3968,22 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 
 	*op->resvalue = PointerGetDatum(dtuple);
 	*op->resnull = false;
+}
+
+void
+ExecEvalSysVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext,
+			   TupleTableSlot *slot)
+{
+	bool success;
+
+	/* slot_getsysattr has sufficient defenses against bad attnums */
+	success = slot_getsysattr(slot,
+							  op->d.var.attnum,
+							  op->resvalue,
+							  op->resnull);
+	/* this ought to be unreachable, but it's cheap enough to check */
+	if (unlikely(!success))
+		elog(ERROR, "failed to fetch attribute from slot");
 }
 
 /*

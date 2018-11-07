@@ -99,9 +99,9 @@ void	   *referenced_functions[] =
 	varsize_any,
 	slot_getsomeattrs,
 	slot_getmissingattrs,
-	heap_getsysattr,
 	MakeExpandedObjectReadOnlyInternal,
 	ExecEvalArrayRefSubscript,
+	ExecEvalSysVar,
 	ExecAggTransReparent,
 	ExecAggInitGroup
 };
