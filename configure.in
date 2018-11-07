@@ -1295,6 +1295,7 @@ AC_HEADER_STDBOOL
 
 AC_CHECK_HEADERS(m4_normalize([
 	atomic.h
+	copyfile.h
 	crypt.h
 	fp_class.h
 	getopt.h

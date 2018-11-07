@@ -117,6 +117,9 @@
 /* Define to 1 if you have the `copyfile' function. */
 #undef HAVE_COPYFILE
 
+/* Define to 1 if you have the <copyfile.h> header file. */
+#undef HAVE_COPYFILE_H
+
 /* Define to 1 if you have the <crtdefs.h> header file. */
 #undef HAVE_CRTDEFS_H
 

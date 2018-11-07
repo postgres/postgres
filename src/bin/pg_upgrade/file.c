@@ -18,7 +18,7 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifdef HAVE_COPYFILE
+#ifdef HAVE_COPYFILE_H
 #include <copyfile.h>
 #endif
 #ifdef __linux__
