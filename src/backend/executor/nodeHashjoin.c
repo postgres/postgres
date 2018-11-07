@@ -595,6 +595,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	Hash	   *hashNode;
 	List	   *lclauses;
 	List	   *rclauses;
+	List	   *rhclauses;
 	List	   *hoperators;
 	TupleDesc	outerDesc,
 				innerDesc;
@@ -726,6 +727,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 */
 	lclauses = NIL;
 	rclauses = NIL;
+	rhclauses = NIL;
 	hoperators = NIL;
 	foreach(l, node->hashclauses)
 	{
@@ -735,13 +737,15 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 												  (PlanState *) hjstate));
 		rclauses = lappend(rclauses, ExecInitExpr(lsecond(hclause->args),
 												  (PlanState *) hjstate));
+		rhclauses = lappend(rhclauses, ExecInitExpr(lsecond(hclause->args),
+												   innerPlanState(hjstate)));
 		hoperators = lappend_oid(hoperators, hclause->opno);
 	}
 	hjstate->hj_OuterHashKeys = lclauses;
 	hjstate->hj_InnerHashKeys = rclauses;
 	hjstate->hj_HashOperators = hoperators;
 	/* child Hash node needs to evaluate inner hash keys, too */
-	((HashState *) innerPlanState(hjstate))->hashkeys = rclauses;
+	((HashState *) innerPlanState(hjstate))->hashkeys = rhclauses;
 
 	hjstate->hj_JoinState = HJ_BUILD_HASHTABLE;
 	hjstate->hj_MatchedOuter = false;
