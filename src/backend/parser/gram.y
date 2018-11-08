@@ -3240,7 +3240,6 @@ columnDef:	ColId Typename create_generic_options ColQualList
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->is_from_parent = false;
 					n->storage = 0;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
@@ -3262,7 +3261,6 @@ columnOptions:	ColId ColQualList
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->is_from_parent = false;
 					n->storage = 0;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
@@ -3281,7 +3279,6 @@ columnOptions:	ColId ColQualList
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->is_from_parent = false;
 					n->storage = 0;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
@@ -11884,7 +11881,6 @@ TableFuncElement:	ColId Typename opt_collate_clause
 					n->is_local = true;
 					n->is_not_null = false;
 					n->is_from_type = false;
-					n->is_from_parent = false;
 					n->storage = 0;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
