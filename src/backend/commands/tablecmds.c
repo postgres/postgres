@@ -1893,17 +1893,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 						MaxHeapAttributeNumber)));
 
 	/*
-	 * In case of a partition, there are no new column definitions, only dummy
-	 * ColumnDefs created for column constraints.  We merge them with the
-	 * constraints inherited from the parent.
-	 */
-	if (is_partition)
-	{
-		saved_schema = schema;
-		schema = NIL;
-	}
-
-	/*
 	 * Check for duplicate names in the explicit list of attributes.
 	 *
 	 * Although we might consider merging such entries in the same way that we
@@ -1916,17 +1905,19 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		ListCell   *rest = lnext(entry);
 		ListCell   *prev = entry;
 
-		if (coldef->typeName == NULL)
-
+		if (!is_partition && coldef->typeName == NULL)
+		{
 			/*
 			 * Typed table column option that does not belong to a column from
 			 * the type.  This works because the columns from the type come
-			 * first in the list.
+			 * first in the list.  (We omit this check for partition column
+			 * lists; those are processed separately below.)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column \"%s\" does not exist",
 							coldef->colname)));
+		}
 
 		while (rest != NULL)
 		{
@@ -1957,6 +1948,17 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			prev = rest;
 			rest = next;
 		}
+	}
+
+	/*
+	 * In case of a partition, there are no new column definitions, only dummy
+	 * ColumnDefs created for column constraints.  Set them aside for now and
+	 * process them at the end.
+	 */
+	if (is_partition)
+	{
+		saved_schema = schema;
+		schema = NIL;
 	}
 
 	/*
@@ -2175,7 +2177,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def->is_local = false;
 				def->is_not_null = attribute->attnotnull;
 				def->is_from_type = false;
-				def->is_from_parent = true;
 				def->storage = attribute->attstorage;
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
@@ -2428,59 +2429,51 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	/*
 	 * Now that we have the column definition list for a partition, we can
 	 * check whether the columns referenced in the column constraint specs
-	 * actually exist.  Also, we merge the constraints into the corresponding
-	 * column definitions.
+	 * actually exist.  Also, we merge NOT NULL and defaults into each
+	 * corresponding column definition.
 	 */
-	if (is_partition && list_length(saved_schema) > 0)
+	if (is_partition)
 	{
-		schema = list_concat(schema, saved_schema);
-
-		foreach(entry, schema)
+		foreach(entry, saved_schema)
 		{
-			ColumnDef  *coldef = lfirst(entry);
-			ListCell   *rest = lnext(entry);
-			ListCell   *prev = entry;
+			ColumnDef  *restdef = lfirst(entry);
+			bool		found = false;
+			ListCell   *l;
 
-			/*
-			 * Partition column option that does not belong to a column from
-			 * the parent.  This works because the columns from the parent
-			 * come first in the list (see above).
-			 */
-			if (coldef->typeName == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" does not exist",
-								coldef->colname)));
-			while (rest != NULL)
+			foreach(l, schema)
 			{
-				ColumnDef  *restdef = lfirst(rest);
-				ListCell   *next = lnext(rest); /* need to save it in case we
-												 * delete it */
+				ColumnDef  *coldef = lfirst(l);
 
 				if (strcmp(coldef->colname, restdef->colname) == 0)
 				{
+					found = true;
+					coldef->is_not_null |= restdef->is_not_null;
+
 					/*
-					 * merge the column options into the column from the
-					 * parent
+					 * Override the parent's default value for this column
+					 * (coldef->cooked_default) with the partition's local
+					 * definition (restdef->raw_default), if there's one. It
+					 * should be physically impossible to get a cooked default
+					 * in the local definition or a raw default in the
+					 * inherited definition, but make sure they're nulls, for
+					 * future-proofing.
 					 */
-					if (coldef->is_from_parent)
+					Assert(restdef->cooked_default == NULL);
+					Assert(coldef->raw_default == NULL);
+					if (restdef->raw_default)
 					{
-						coldef->is_not_null = restdef->is_not_null;
 						coldef->raw_default = restdef->raw_default;
-						coldef->cooked_default = restdef->cooked_default;
-						coldef->constraints = restdef->constraints;
-						coldef->is_from_parent = false;
-						list_delete_cell(schema, rest, prev);
+						coldef->cooked_default = NULL;
 					}
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DUPLICATE_COLUMN),
-								 errmsg("column \"%s\" specified more than once",
-										coldef->colname)));
 				}
-				prev = rest;
-				rest = next;
 			}
+
+			/* complain for constraints on columns not in parent */
+			if (!found)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" does not exist",
+								restdef->colname)));
 		}
 	}
 
