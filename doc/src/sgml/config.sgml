@@ -4799,28 +4799,6 @@ local0.*    /var/log/postgresql
 
      <variablelist>
 
-     <varlistentry id="guc-client-min-messages" xreflabel="client_min_messages">
-      <term><varname>client_min_messages</varname> (<type>enum</type>)
-      <indexterm>
-       <primary><varname>client_min_messages</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Controls which message levels are sent to the client.
-        Valid values are <literal>DEBUG5</>,
-        <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
-        <literal>DEBUG1</>, <literal>LOG</>, <literal>NOTICE</>,
-        <literal>WARNING</>, <literal>ERROR</>, <literal>FATAL</>,
-        and <literal>PANIC</>.  Each level
-        includes all the levels that follow it.  The later the level,
-        the fewer messages are sent.  The default is
-        <literal>NOTICE</>.  Note that <literal>LOG</> has a different
-        rank here than in <varname>log_min_messages</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-log-min-messages" xreflabel="log_min_messages">
       <term><varname>log_min_messages</varname> (<type>enum</type>)
       <indexterm>
@@ -4838,7 +4816,7 @@ local0.*    /var/log/postgresql
         follow it.  The later the level, the fewer messages are sent
         to the log.  The default is <literal>WARNING</>.  Note that
         <literal>LOG</> has a different rank here than in
-        <varname>client_min_messages</>.
+        <xref linkend="guc-client-min-messages">.
         Only superusers can change this setting.
        </para>
       </listitem>
@@ -6158,6 +6136,27 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
     <sect2 id="runtime-config-client-statement">
      <title>Statement Behavior</title>
      <variablelist>
+
+     <varlistentry id="guc-client-min-messages" xreflabel="client_min_messages">
+      <term><varname>client_min_messages</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>client_min_messages</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls which message levels are sent to the client.
+        Valid values are <literal>DEBUG5</>,
+        <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
+        <literal>DEBUG1</>, <literal>LOG</>, <literal>NOTICE</>,
+        <literal>WARNING</>, and <literal>ERROR</>.
+        Each level includes all the levels that follow it.  The later the level,
+        the fewer messages are sent.  The default is
+        <literal>NOTICE</>.  Note that <literal>LOG</> has a different
+        rank here than in <xref linkend="guc-log-min-messages">.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry id="guc-search-path" xreflabel="search_path">
       <term><varname>search_path</varname> (<type>string</type>)
