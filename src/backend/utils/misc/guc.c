@@ -164,6 +164,7 @@ static int	syslog_facility = 0;
 static void assign_syslog_facility(int newval, void *extra);
 static void assign_syslog_ident(const char *newval, void *extra);
 static void assign_session_replication_role(int newval, void *extra);
+static bool check_client_min_messages(int *newval, void **extra, GucSource source);
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
@@ -3912,14 +3913,14 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
+		{"client_min_messages", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the message levels that are sent to the client."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
 						 " the level, the fewer messages are sent.")
 		},
 		&client_min_messages,
 		NOTICE, client_message_level_options,
-		NULL, NULL, NULL
+		check_client_min_messages, NULL, NULL
 	},
 
 	{
@@ -10408,6 +10409,20 @@ assign_session_replication_role(int newval, void *extra)
 	 */
 	if (SessionReplicationRole != newval)
 		ResetPlanCache();
+}
+
+static bool
+check_client_min_messages(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * We disallow setting client_min_messages above ERROR, because not
+	 * sending an ErrorResponse message for an error breaks the FE/BE
+	 * protocol.  However, for backwards compatibility, we still accept FATAL
+	 * or PANIC as input values, and then adjust here.
+	 */
+	if (*newval > ERROR)
+		*newval = ERROR;
+	return true;
 }
 
 static bool
