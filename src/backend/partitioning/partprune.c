@@ -2400,7 +2400,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
 
 
 /*
- * get_matching_range_datums
+ * get_matching_range_bounds
  *		Determine the offsets of range bounds matching the specified values,
  *		according to the semantics of the given operator strategy
  *
