@@ -55,7 +55,6 @@
 	pwrite64(buf)
 
 	...
-	fun:pwrite
 	fun:XLogWrite
 }
 
