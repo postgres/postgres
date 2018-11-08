@@ -215,7 +215,8 @@ static const struct config_enum_entry bytea_output_options[] = {
 
 /*
  * We have different sets for client and server message level options because
- * they sort slightly different (see "log" level)
+ * they sort slightly different (see "log" level), and because "fatal"/"panic"
+ * aren't sensible for client_min_messages.
  */
 static const struct config_enum_entry client_message_level_options[] = {
 	{"debug5", DEBUG5, false},
@@ -229,8 +230,6 @@ static const struct config_enum_entry client_message_level_options[] = {
 	{"notice", NOTICE, false},
 	{"warning", WARNING, false},
 	{"error", ERROR, false},
-	{"fatal", FATAL, true},
-	{"panic", PANIC, true},
 	{NULL, 0, false}
 };
 
@@ -3924,7 +3923,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
+		{"client_min_messages", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the message levels that are sent to the client."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
 						 " the level, the fewer messages are sent.")

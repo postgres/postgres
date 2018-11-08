@@ -406,17 +406,6 @@
 
 # - When to Log -
 
-#client_min_messages = notice		# values in order of decreasing detail:
-					#   debug5
-					#   debug4
-					#   debug3
-					#   debug2
-					#   debug1
-					#   log
-					#   notice
-					#   warning
-					#   error
-
 #log_min_messages = warning		# values in order of decreasing detail:
 					#   debug5
 					#   debug4
@@ -561,6 +550,16 @@
 
 # - Statement Behavior -
 
+#client_min_messages = notice		# values in order of decreasing detail:
+					#   debug5
+					#   debug4
+					#   debug3
+					#   debug2
+					#   debug1
+					#   log
+					#   notice
+					#   warning
+					#   error
 #search_path = '"$user", public'	# schema names
 #row_security = on
 #default_tablespace = ''		# a tablespace name, '' uses the default
