@@ -12827,6 +12827,7 @@ PreCommit_on_commit_actions(void)
 {
 	ListCell   *l;
 	List	   *oids_to_truncate = NIL;
+	List	   *oids_to_drop = NIL;
 
 	foreach(l, on_commits)
 	{
@@ -12853,35 +12854,65 @@ PreCommit_on_commit_actions(void)
 					oids_to_truncate = lappend_oid(oids_to_truncate, oc->relid);
 				break;
 			case ONCOMMIT_DROP:
-				{
-					ObjectAddress object;
-
-					object.classId = RelationRelationId;
-					object.objectId = oc->relid;
-					object.objectSubId = 0;
-
-					/*
-					 * Since this is an automatic drop, rather than one
-					 * directly initiated by the user, we pass the
-					 * PERFORM_DELETION_INTERNAL flag.
-					 */
-					performDeletion(&object,
-									DROP_CASCADE, PERFORM_DELETION_INTERNAL);
-
-					/*
-					 * Note that table deletion will call
-					 * remove_on_commit_action, so the entry should get marked
-					 * as deleted.
-					 */
-					Assert(oc->deleting_subid != InvalidSubTransactionId);
-					break;
-				}
+				oids_to_drop = lappend_oid(oids_to_drop, oc->relid);
+				break;
 		}
 	}
+
+	/*
+	 * Truncate relations before dropping so that all dependencies between
+	 * relations are removed after they are worked on.  Doing it like this
+	 * might be a waste as it is possible that a relation being truncated will
+	 * be dropped anyway due to its parent being dropped, but this makes the
+	 * code more robust because of not having to re-check that the relation
+	 * exists at truncation time.
+	 */
 	if (oids_to_truncate != NIL)
 	{
 		heap_truncate(oids_to_truncate);
 		CommandCounterIncrement();	/* XXX needed? */
+	}
+	if (oids_to_drop != NIL)
+	{
+		ObjectAddresses *targetObjects = new_object_addresses();
+		ListCell   *l;
+
+		foreach(l, oids_to_drop)
+		{
+			ObjectAddress object;
+
+			object.classId = RelationRelationId;
+			object.objectId = lfirst_oid(l);
+			object.objectSubId = 0;
+
+			Assert(!object_address_present(&object, targetObjects));
+
+			add_exact_object_address(&object, targetObjects);
+		}
+
+		/*
+		 * Since this is an automatic drop, rather than one directly initiated
+		 * by the user, we pass the PERFORM_DELETION_INTERNAL flag.
+		 */
+		performMultipleDeletions(targetObjects, DROP_CASCADE,
+								 PERFORM_DELETION_INTERNAL | PERFORM_DELETION_QUIETLY);
+
+#ifdef USE_ASSERT_CHECKING
+
+		/*
+		 * Note that table deletion will call remove_on_commit_action, so the
+		 * entry should get marked as deleted.
+		 */
+		foreach(l, on_commits)
+		{
+			OnCommitItem *oc = (OnCommitItem *) lfirst(l);
+
+			if (oc->oncommit != ONCOMMIT_DROP)
+				continue;
+
+			Assert(oc->deleting_subid != InvalidSubTransactionId);
+		}
+#endif
 	}
 }
 
