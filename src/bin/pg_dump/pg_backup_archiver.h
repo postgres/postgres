@@ -346,7 +346,8 @@ struct _archiveHandle
 	char	   *currUser;		/* current username, or NULL if unknown */
 	char	   *currSchema;		/* current schema, or NULL */
 	char	   *currTablespace; /* current tablespace, or NULL */
-	bool		currWithOids;	/* current default_with_oids setting */
+	char		currWithOids;	/* current default_with_oids setting: true,
+								 * false, or -1 for unknown, forcing a SET */
 
 	void	   *lo_buf;
 	size_t		lo_buf_used;
