@@ -1215,7 +1215,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
           All rows in the temporary table will be deleted at the end
           of each transaction block.  Essentially, an automatic <xref
           linkend="sql-truncate"/> is done
-          at each commit.
+          at each commit.  When used on a partitioned table, this
+          is not cascaded to its partitions.
          </para>
         </listitem>
        </varlistentry>
@@ -1225,7 +1226,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
         <listitem>
          <para>
           The temporary table will be dropped at the end of the current
-          transaction block.
+          transaction block.  When used on a partitioned table, this action
+          drops its partitions and when used on tables with inheritance
+          children, it drops the dependent children.
          </para>
         </listitem>
        </varlistentry>

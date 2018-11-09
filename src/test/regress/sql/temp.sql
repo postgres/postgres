@@ -165,3 +165,62 @@ commit;
 -- partitions are emptied by the previous commit
 select * from temp_parted_oncommit;
 drop table temp_parted_oncommit;
+
+-- Check dependencies between ON COMMIT actions with a partitioned
+-- table and its partitions.  Using ON COMMIT DROP on a parent removes
+-- the whole set.
+begin;
+create temp table temp_parted_oncommit_test (a int)
+  partition by list (a) on commit drop;
+create temp table temp_parted_oncommit_test1
+  partition of temp_parted_oncommit_test
+  for values in (1) on commit delete rows;
+create temp table temp_parted_oncommit_test2
+  partition of temp_parted_oncommit_test
+  for values in (2) on commit drop;
+insert into temp_parted_oncommit_test values (1), (2);
+commit;
+-- no relations remain in this case.
+select relname from pg_class where relname like 'temp_parted_oncommit_test%';
+-- Using ON COMMIT DELETE on a partitioned table does not remove
+-- all rows if partitions preserve their data.
+begin;
+create temp table temp_parted_oncommit_test (a int)
+  partition by list (a) on commit delete rows;
+create temp table temp_parted_oncommit_test1
+  partition of temp_parted_oncommit_test
+  for values in (1) on commit preserve rows;
+create temp table temp_parted_oncommit_test2
+  partition of temp_parted_oncommit_test
+  for values in (2) on commit drop;
+insert into temp_parted_oncommit_test values (1), (2);
+commit;
+-- Data from the remaining partition is still here as its rows are
+-- preserved.
+select * from temp_parted_oncommit_test;
+-- two relations remain in this case.
+select relname from pg_class where relname like 'temp_parted_oncommit_test%';
+drop table temp_parted_oncommit_test;
+
+-- Check dependencies between ON COMMIT actions with inheritance trees.
+-- Using ON COMMIT DROP on a parent removes the whole set.
+begin;
+create temp table temp_inh_oncommit_test (a int) on commit drop;
+create temp table temp_inh_oncommit_test1 ()
+  inherits(temp_inh_oncommit_test) on commit delete rows;
+insert into temp_inh_oncommit_test1 values (1);
+commit;
+-- no relations remain in this case
+select relname from pg_class where relname like 'temp_inh_oncommit_test%';
+-- Data on the parent is removed, and the child goes away.
+begin;
+create temp table temp_inh_oncommit_test (a int) on commit delete rows;
+create temp table temp_inh_oncommit_test1 ()
+  inherits(temp_inh_oncommit_test) on commit drop;
+insert into temp_inh_oncommit_test1 values (1);
+insert into temp_inh_oncommit_test values (1);
+commit;
+select * from temp_inh_oncommit_test;
+-- one relation remains
+select relname from pg_class where relname like 'temp_inh_oncommit_test%';
+drop table temp_inh_oncommit_test;
