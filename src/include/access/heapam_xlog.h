@@ -111,7 +111,7 @@ typedef struct xl_heap_delete
 #define SizeOfHeapDelete	(offsetof(xl_heap_delete, flags) + sizeof(uint8))
 
 /*
- * xl_heap_delete flag values, 8 bits are available.
+ * xl_heap_truncate flag values, 8 bits are available.
  */
 #define XLH_TRUNCATE_CASCADE					(1<<0)
 #define XLH_TRUNCATE_RESTART_SEQS				(1<<1)
