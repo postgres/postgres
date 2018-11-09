@@ -4,7 +4,7 @@ starting permutation: s1_begin s1_lock s2_auth s2_vacuum s1_commit s2_reset
 step s1_begin: BEGIN;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;
 step s2_auth: SET ROLE regress_vacuum_conflict;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
 step s2_vacuum: VACUUM vacuum_tab;
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;
@@ -12,7 +12,7 @@ step s2_reset: RESET ROLE;
 starting permutation: s1_begin s2_auth s2_vacuum s1_lock s1_commit s2_reset
 step s1_begin: BEGIN;
 step s2_auth: SET ROLE regress_vacuum_conflict;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
 step s2_vacuum: VACUUM vacuum_tab;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;
 step s1_commit: COMMIT;
@@ -22,14 +22,14 @@ starting permutation: s1_begin s2_auth s1_lock s2_vacuum s1_commit s2_reset
 step s1_begin: BEGIN;
 step s2_auth: SET ROLE regress_vacuum_conflict;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
 step s2_vacuum: VACUUM vacuum_tab;
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;
 
 starting permutation: s2_auth s2_vacuum s1_begin s1_lock s1_commit s2_reset
 step s2_auth: SET ROLE regress_vacuum_conflict;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can vacuum it
 step s2_vacuum: VACUUM vacuum_tab;
 step s1_begin: BEGIN;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;
@@ -40,7 +40,7 @@ starting permutation: s1_begin s1_lock s2_auth s2_analyze s1_commit s2_reset
 step s1_begin: BEGIN;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;
 step s2_auth: SET ROLE regress_vacuum_conflict;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
 step s2_analyze: ANALYZE vacuum_tab;
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;
@@ -48,7 +48,7 @@ step s2_reset: RESET ROLE;
 starting permutation: s1_begin s2_auth s2_analyze s1_lock s1_commit s2_reset
 step s1_begin: BEGIN;
 step s2_auth: SET ROLE regress_vacuum_conflict;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
 step s2_analyze: ANALYZE vacuum_tab;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;
 step s1_commit: COMMIT;
@@ -58,14 +58,14 @@ starting permutation: s1_begin s2_auth s1_lock s2_analyze s1_commit s2_reset
 step s1_begin: BEGIN;
 step s2_auth: SET ROLE regress_vacuum_conflict;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
 step s2_analyze: ANALYZE vacuum_tab;
 step s1_commit: COMMIT;
 step s2_reset: RESET ROLE;
 
 starting permutation: s2_auth s2_analyze s1_begin s1_lock s1_commit s2_reset
 step s2_auth: SET ROLE regress_vacuum_conflict;
-WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
+s2: WARNING:  skipping "vacuum_tab" --- only table or database owner can analyze it
 step s2_analyze: ANALYZE vacuum_tab;
 step s1_begin: BEGIN;
 step s1_lock: LOCK vacuum_tab IN SHARE UPDATE EXCLUSIVE MODE;

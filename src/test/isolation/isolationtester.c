@@ -48,6 +48,8 @@ static int	step_qsort_cmp(const void *a, const void *b);
 static int	step_bsearch_cmp(const void *a, const void *b);
 
 static void printResultSet(PGresult *res);
+static void isotesterNoticeProcessor(void *arg, const char *message);
+static void blackholeNoticeProcessor(void *arg, const char *message);
 
 /* close all connections and exit */
 static void
@@ -170,6 +172,21 @@ main(int argc, char **argv)
 					i, PQerrorMessage(conns[i]));
 			exit_nicely();
 		}
+
+		/*
+		 * Set up notice processors for the user-defined connections, so that
+		 * messages can get printed prefixed with the session names.  The
+		 * control connection gets a "blackhole" processor instead (hides all
+		 * messages).
+		 */
+		if (i != 0)
+			PQsetNoticeProcessor(conns[i],
+								 isotesterNoticeProcessor,
+								 (void *) (testspec->sessions[i - 1]->name));
+		else
+			PQsetNoticeProcessor(conns[i],
+								 blackholeNoticeProcessor,
+								 NULL);
 
 		/*
 		 * Suppress NOTIFY messages, which otherwise pop into results at odd
@@ -880,4 +897,18 @@ printResultSet(PGresult *res)
 			printf("%-15s", PQgetvalue(res, i, j));
 		printf("\n");
 	}
+}
+
+/* notice processor, prefixes each message with the session name */
+static void
+isotesterNoticeProcessor(void *arg, const char *message)
+{
+	fprintf(stderr, "%s: %s", (char *) arg, message);
+}
+
+/* notice processor, hides the message */
+static void
+blackholeNoticeProcessor(void *arg, const char *message)
+{
+	/* do nothing */
 }

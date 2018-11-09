@@ -10,7 +10,7 @@ step drop_and_commit:
 	DROP TABLE part2;
 	COMMIT;
 
-WARNING:  skipping vacuum of "part2" --- relation no longer exists
+s2: WARNING:  skipping vacuum of "part2" --- relation no longer exists
 step vac_specified: <... completed>
 
 starting permutation: lock vac_all_parts drop_and_commit
@@ -35,7 +35,7 @@ step drop_and_commit:
 	DROP TABLE part2;
 	COMMIT;
 
-WARNING:  skipping analyze of "part2" --- relation no longer exists
+s2: WARNING:  skipping analyze of "part2" --- relation no longer exists
 step analyze_specified: <... completed>
 
 starting permutation: lock analyze_all_parts drop_and_commit
@@ -60,7 +60,7 @@ step drop_and_commit:
 	DROP TABLE part2;
 	COMMIT;
 
-WARNING:  skipping vacuum of "part2" --- relation no longer exists
+s2: WARNING:  skipping vacuum of "part2" --- relation no longer exists
 step vac_analyze_specified: <... completed>
 
 starting permutation: lock vac_analyze_all_parts drop_and_commit
