@@ -175,9 +175,9 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 						  RelationGetDescr(scanstate->ss.ss_currentRelation));
 
 	/*
-	 * Initialize result slot, type and projection.
+	 * Initialize result type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &scanstate->ss.ps);
+	ExecInitResultTypeTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
 
 	/*
@@ -213,7 +213,8 @@ ExecEndSeqScan(SeqScanState *node)
 	/*
 	 * clean out the tuple table
 	 */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*

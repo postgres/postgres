@@ -1512,7 +1512,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &mergestate->js.ps);
+	ExecInitResultTupleSlotTL(&mergestate->js.ps);
 	ExecAssignProjectionInfo(&mergestate->js.ps, NULL);
 
 	/*

@@ -126,15 +126,15 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	subquerystate->subplan = ExecInitNode(node->subplan, estate, eflags);
 
 	/*
-	 * Initialize scan slot and type (needed by ExecInitResultTupleSlotTL)
+	 * Initialize scan slot and type (needed by ExecAssignScanProjectionInfo)
 	 */
 	ExecInitScanTupleSlot(estate, &subquerystate->ss,
 						  ExecGetResultType(subquerystate->subplan));
 
 	/*
-	 * Initialize result slot, type and projection.
+	 * Initialize result type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &subquerystate->ss.ps);
+	ExecInitResultTypeTL(&subquerystate->ss.ps);
 	ExecAssignScanProjectionInfo(&subquerystate->ss);
 
 	/*
@@ -163,7 +163,8 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 	/*
 	 * clean out the upper tuple table
 	 */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*

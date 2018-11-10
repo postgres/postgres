@@ -822,7 +822,8 @@ ExecEndIndexScan(IndexScanState *node)
 	/*
 	 * clear out tuple table slots
 	 */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
@@ -947,9 +948,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 						  RelationGetDescr(currentRelation));
 
 	/*
-	 * Initialize result slot, type and projection.
+	 * Initialize result type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &indexstate->ss.ps);
+	ExecInitResultTypeTL(&indexstate->ss.ps);
 	ExecAssignScanProjectionInfo(&indexstate->ss);
 
 	/*

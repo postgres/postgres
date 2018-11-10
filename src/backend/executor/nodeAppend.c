@@ -196,7 +196,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	/*
 	 * Initialize result tuple type and slot.
 	 */
-	ExecInitResultTupleSlotTL(estate, &appendstate->ps);
+	ExecInitResultTupleSlotTL(&appendstate->ps);
 
 	appendplanstates = (PlanState **) palloc(nplans *
 											 sizeof(PlanState *));

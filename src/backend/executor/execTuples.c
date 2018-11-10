@@ -19,18 +19,22 @@
  *
  *		At ExecutorStart()
  *		----------------
- *		- ExecInitSeqScan() calls ExecInitScanTupleSlot() and
- *		  ExecInitResultTupleSlotTL() to construct TupleTableSlots
- *		  for the tuples returned by the access methods and the
- *		  tuples resulting from performing target list projections.
+
+ *		- ExecInitSeqScan() calls ExecInitScanTupleSlot() to construct a
+ *		  TupleTableSlots for the tuples returned by the access method, and
+ *		  ExecInitResultTypeTL() to define the node's return
+ *		  type. ExecAssignScanProjectionInfo() will, if necessary, create
+ *		  another TupleTableSlot for the tuples resulting from performing
+ *		  target list projections.
  *
  *		During ExecutorRun()
  *		----------------
  *		- SeqNext() calls ExecStoreBufferHeapTuple() to place the tuple
- *		  returned by the access methods into the scan tuple slot.
+ *		  returned by the access method into the scan tuple slot.
  *
- *		- ExecSeqScan() calls ExecStoreHeapTuple() to take the result
- *		  tuple from ExecProject() and place it into the result tuple slot.
+ *		- ExecSeqScan() (via ExecScan), if necessary, calls ExecProject(),
+ *		  putting the result of the projection in the result tuple slot. If
+ *		  not necessary, it directly returns the slot returned by SeqNext().
  *
  *		- ExecutePlan() calls the output function.
  *
@@ -902,23 +906,14 @@ ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
  * ----------------------------------------------------------------
  */
 
-/* --------------------------------
- *		ExecInit{Result,Scan,Extra}TupleSlot[TL]
- *
- *		These are convenience routines to initialize the specified slot
- *		in nodes inheriting the appropriate state.  ExecInitExtraTupleSlot
- *		is used for initializing special-purpose slots.
- * --------------------------------
- */
-
 /* ----------------
- *		ExecInitResultTupleSlotTL
+ *		ExecInitResultTypeTL
  *
- *		Initialize result tuple slot, using the plan node's targetlist.
+ *		Initialize result type, using the plan node's targetlist.
  * ----------------
  */
 void
-ExecInitResultTupleSlotTL(EState *estate, PlanState *planstate)
+ExecInitResultTypeTL(PlanState *planstate)
 {
 	bool		hasoid;
 	TupleDesc	tupDesc;
@@ -934,8 +929,46 @@ ExecInitResultTupleSlotTL(EState *estate, PlanState *planstate)
 	}
 
 	tupDesc = ExecTypeFromTL(planstate->plan->targetlist, hasoid);
+	planstate->ps_ResultTupleDesc = tupDesc;
+}
 
-	planstate->ps_ResultTupleSlot = ExecAllocTableSlot(&estate->es_tupleTable, tupDesc);
+/* --------------------------------
+ *		ExecInit{Result,Scan,Extra}TupleSlot[TL]
+ *
+ *		These are convenience routines to initialize the specified slot
+ *		in nodes inheriting the appropriate state.  ExecInitExtraTupleSlot
+ *		is used for initializing special-purpose slots.
+ * --------------------------------
+ */
+
+/* ----------------
+ *		ExecInitResultTupleSlotTL
+ *
+ *		Initialize result tuple slot, using the tuple descriptor previously
+ *		computed with ExecInitResultTypeTL().
+ * ----------------
+ */
+void
+ExecInitResultSlot(PlanState *planstate)
+{
+	TupleTableSlot *slot;
+
+	slot = ExecAllocTableSlot(&planstate->state->es_tupleTable,
+							  planstate->ps_ResultTupleDesc);
+	planstate->ps_ResultTupleSlot = slot;
+}
+
+/* ----------------
+ *		ExecInitResultTupleSlotTL
+ *
+ *		Initialize result tuple slot, using the plan node's targetlist.
+ * ----------------
+ */
+void
+ExecInitResultTupleSlotTL(PlanState *planstate)
+{
+	ExecInitResultTypeTL(planstate);
+	ExecInitResultSlot(planstate);
 }
 
 /* ----------------

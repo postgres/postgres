@@ -532,7 +532,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	 * Initialize result slot and type. Setop nodes do no projections, so
 	 * initialize projection info for this node appropriately.
 	 */
-	ExecInitResultTupleSlotTL(estate, &setopstate->ps);
+	ExecInitResultTupleSlotTL(&setopstate->ps);
 	setopstate->ps.ps_ProjInfo = NULL;
 
 	/*

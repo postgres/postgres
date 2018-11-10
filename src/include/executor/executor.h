@@ -429,7 +429,9 @@ extern void ExecScanReScan(ScanState *node);
 /*
  * prototypes from functions in execTuples.c
  */
-extern void ExecInitResultTupleSlotTL(EState *estate, PlanState *planstate);
+extern void ExecInitResultTypeTL(PlanState *planstate);
+extern void ExecInitResultSlot(PlanState *planstate);
+extern void ExecInitResultTupleSlotTL(PlanState *planstate);
 extern void ExecInitScanTupleSlot(EState *estate, ScanState *scanstate, TupleDesc tupleDesc);
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate,
 					   TupleDesc tupleDesc);

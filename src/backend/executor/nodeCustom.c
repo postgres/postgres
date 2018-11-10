@@ -87,7 +87,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &css->ss.ps);
+	ExecInitResultTupleSlotTL(&css->ss.ps);
 	ExecAssignScanProjectionInfoWithVarno(&css->ss, tlistvarno);
 
 	/* initialize child expressions */

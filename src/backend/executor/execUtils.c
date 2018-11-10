@@ -451,9 +451,7 @@ ExecAssignExprContext(EState *estate, PlanState *planstate)
 TupleDesc
 ExecGetResultType(PlanState *planstate)
 {
-	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
-
-	return slot->tts_tupleDescriptor;
+	return planstate->ps_ResultTupleDesc;
 }
 
 
@@ -496,7 +494,11 @@ ExecConditionalAssignProjectionInfo(PlanState *planstate, TupleDesc inputDesc,
 							  inputDesc))
 		planstate->ps_ProjInfo = NULL;
 	else
+	{
+		if (!planstate->ps_ResultTupleSlot)
+			ExecInitResultSlot(planstate);
 		ExecAssignProjectionInfo(planstate, inputDesc);
+	}
 }
 
 static bool

@@ -92,9 +92,9 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	tupDesc = ExecGetResultType(outerPlanState(gatherstate));
 
 	/*
-	 * Initialize result slot, type and projection.
+	 * Initialize result type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &gatherstate->ps);
+	ExecInitResultTypeTL(&gatherstate->ps);
 	ExecConditionalAssignProjectionInfo(&gatherstate->ps, tupDesc, OUTER_VAR);
 
 	/*
@@ -231,7 +231,8 @@ ExecEndGather(GatherState *node)
 	ExecEndNode(outerPlanState(node));	/* let children clean up first */
 	ExecShutdownGather(node);
 	ExecFreeExprContext(&node->ps);
-	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+	if (node->ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ps.ps_ResultTupleSlot);
 }
 
 /*

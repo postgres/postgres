@@ -399,7 +399,8 @@ ExecEndIndexOnlyScan(IndexOnlyScanState *node)
 	/*
 	 * clear out tuple table slots
 	 */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
@@ -529,11 +530,10 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	ExecInitScanTupleSlot(estate, &indexstate->ss, tupDesc);
 
 	/*
-	 * Initialize result slot, type and projection info.  The node's
-	 * targetlist will contain Vars with varno = INDEX_VAR, referencing the
-	 * scan tuple.
+	 * Initialize result type and projection info.  The node's targetlist will
+	 * contain Vars with varno = INDEX_VAR, referencing the scan tuple.
 	 */
-	ExecInitResultTupleSlotTL(estate, &indexstate->ss.ps);
+	ExecInitResultTypeTL(&indexstate->ss.ps);
 	ExecAssignScanProjectionInfoWithVarno(&indexstate->ss, INDEX_VAR);
 
 	/*

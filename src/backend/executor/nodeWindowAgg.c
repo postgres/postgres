@@ -2349,7 +2349,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &winstate->ss.ps);
+	ExecInitResultTupleSlotTL(&winstate->ss.ps);
 	ExecAssignProjectionInfo(&winstate->ss.ps, NULL);
 
 	/* Set up data for comparing tuples */

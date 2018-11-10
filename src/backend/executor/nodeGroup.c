@@ -193,7 +193,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &grpstate->ss.ps);
+	ExecInitResultTupleSlotTL(&grpstate->ss.ps);
 	ExecAssignProjectionInfo(&grpstate->ss.ps, NULL);
 
 	/*

@@ -256,7 +256,7 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	/*
 	 * tuple table and result type initialization
 	 */
-	ExecInitResultTupleSlotTL(estate, &state->ps);
+	ExecInitResultTupleSlotTL(&state->ps);
 
 	/* Create workspace for per-tlist-entry expr state & SRF-is-done state */
 	state->nelems = list_length(node->plan.targetlist);

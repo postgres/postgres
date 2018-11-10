@@ -217,7 +217,7 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &resstate->ps);
+	ExecInitResultTupleSlotTL(&resstate->ps);
 	ExecAssignProjectionInfo(&resstate->ps, NULL);
 
 	/*

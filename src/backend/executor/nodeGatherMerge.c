@@ -117,9 +117,9 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	gm_state->tupDesc = tupDesc;
 
 	/*
-	 * Initialize result slot, type and projection.
+	 * Initialize result type and projection.
 	 */
-	ExecInitResultTupleSlotTL(estate, &gm_state->ps);
+	ExecInitResultTypeTL(&gm_state->ps);
 	ExecConditionalAssignProjectionInfo(&gm_state->ps, tupDesc, OUTER_VAR);
 
 	/*
@@ -272,7 +272,8 @@ ExecEndGatherMerge(GatherMergeState *node)
 	ExecEndNode(outerPlanState(node));	/* let children clean up first */
 	ExecShutdownGatherMerge(node);
 	ExecFreeExprContext(&node->ps);
-	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+	if (node->ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ps.ps_ResultTupleSlot);
 }
 
 /* ----------------------------------------------------------------

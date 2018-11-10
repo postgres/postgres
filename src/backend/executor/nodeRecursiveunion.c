@@ -229,7 +229,7 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 * RecursiveUnion nodes still have Result slots, which hold pointers to
 	 * tuples, so we have to initialize them.
 	 */
-	ExecInitResultTupleSlotTL(estate, &rustate->ps);
+	ExecInitResultTypeTL(&rustate->ps);
 
 	/*
 	 * Initialize result tuple type.  (Note: we have to set up the result type
@@ -278,11 +278,6 @@ ExecEndRecursiveUnion(RecursiveUnionState *node)
 		MemoryContextDelete(node->tempContext);
 	if (node->tableContext)
 		MemoryContextDelete(node->tableContext);
-
-	/*
-	 * clean out the upper tuple table
-	 */
-	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
 	/*
 	 * close down subplans
