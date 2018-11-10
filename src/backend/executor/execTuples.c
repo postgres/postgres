@@ -1133,17 +1133,6 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 	}
 
 	/*
-	 * If the attribute's column has been dropped, we force a NULL result.
-	 * This case should not happen in normal use, but it could happen if we
-	 * are executing a plan cached before the column was dropped.
-	 */
-	if (TupleDescAttr(tupleDesc, attnum - 1)->attisdropped)
-	{
-		*isnull = true;
-		return (Datum) 0;
-	}
-
-	/*
 	 * Extract the attribute, along with any preceding attributes.
 	 */
 	slot_deform_tuple(slot, attnum);
