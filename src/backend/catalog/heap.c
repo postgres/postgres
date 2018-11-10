@@ -1301,12 +1301,15 @@ heap_create_with_catalog(const char *relname,
 		myself.classId = RelationRelationId;
 		myself.objectId = relid;
 		myself.objectSubId = 0;
+
 		referenced.classId = NamespaceRelationId;
 		referenced.objectId = relnamespace;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
+
+		recordDependencyOnNewAcl(RelationRelationId, relid, 0, ownerid, relacl);
 
 		if (relpersistence != RELPERSISTENCE_TEMP)
 			recordDependencyOnCurrentExtension(&myself, false);
@@ -1317,18 +1320,6 @@ heap_create_with_catalog(const char *relname,
 			referenced.objectId = reloftypeid;
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-		}
-
-		if (relacl != NULL)
-		{
-			int			nnewmembers;
-			Oid		   *newmembers;
-
-			nnewmembers = aclmembers(relacl, &newmembers);
-			updateAclDependencies(RelationRelationId, relid, 0,
-								  ownerid,
-								  0, NULL,
-								  nnewmembers, newmembers);
 		}
 	}
 
