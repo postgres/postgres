@@ -1589,14 +1589,11 @@ GetSnapshotData(Snapshot snapshot)
 			TransactionId xid;
 
 			/*
-			 * Backend is doing logical decoding which manages xmin
-			 * separately, check below.
+			 * Skip over backends doing logical decoding which manages xmin
+			 * separately (check below) and ones running LAZY VACUUM.
 			 */
-			if (pgxact->vacuumFlags & PROC_IN_LOGICAL_DECODING)
-				continue;
-
-			/* Ignore procs running LAZY VACUUM */
-			if (pgxact->vacuumFlags & PROC_IN_VACUUM)
+			if (pgxact->vacuumFlags &
+				(PROC_IN_LOGICAL_DECODING | PROC_IN_VACUUM))
 				continue;
 
 			/* Update globalxmin to be the smallest valid xmin */
