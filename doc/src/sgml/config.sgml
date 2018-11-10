@@ -8445,11 +8445,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        Reports the number of blocks (pages) in a WAL segment file.
-        The total size of a WAL segment file in bytes is equal to
-        <varname>wal_segment_size</varname> multiplied by <varname>wal_block_size</varname>;
-        by default this is 16MB.  See <xref linkend="wal-configuration"/> for
-        more information.
+        Reports the size of write ahead log segments.  The default value is
+        16MB. See <xref linkend="wal-configuration"/> for more information.
        </para>
       </listitem>
      </varlistentry>
