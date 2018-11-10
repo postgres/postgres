@@ -5445,7 +5445,10 @@ get_default_acl_internal(Oid roleId, Oid nsp_oid, char objtype)
 /*
  * Get default permissions for newly created object within given schema
  *
- * Returns NULL if built-in system defaults should be used
+ * Returns NULL if built-in system defaults should be used.
+ *
+ * If the result is not NULL, caller must call recordDependencyOnNewAcl
+ * once the OID of the new object is known.
  */
 Acl *
 get_user_default_acl(ObjectType objtype, Oid ownerId, Oid nsp_oid)
@@ -5518,6 +5521,30 @@ get_user_default_acl(ObjectType objtype, Oid ownerId, Oid nsp_oid)
 		result = NULL;
 
 	return result;
+}
+
+/*
+ * Record dependencies on roles mentioned in a new object's ACL.
+ */
+void
+recordDependencyOnNewAcl(Oid classId, Oid objectId, int32 objsubId,
+						 Oid ownerId, Acl *acl)
+{
+	int			nmembers;
+	Oid		   *members;
+
+	/* Nothing to do if ACL is defaulted */
+	if (acl == NULL)
+		return;
+
+	/* Extract roles mentioned in ACL */
+	nmembers = aclmembers(acl, &members);
+
+	/* Update the shared dependency ACL info */
+	updateAclDependencies(classId, objectId, objsubId,
+						  ownerId,
+						  0, NULL,
+						  nmembers, members);
 }
 
 /*

@@ -654,17 +654,9 @@ ProcedureCreate(const char *procedureName,
 		recordDependencyOnOwner(ProcedureRelationId, retval, proowner);
 
 	/* dependency on any roles mentioned in ACL */
-	if (!is_update && proacl != NULL)
-	{
-		int			nnewmembers;
-		Oid		   *newmembers;
-
-		nnewmembers = aclmembers(proacl, &newmembers);
-		updateAclDependencies(ProcedureRelationId, retval, 0,
-							  proowner,
-							  0, NULL,
-							  nnewmembers, newmembers);
-	}
+	if (!is_update)
+		recordDependencyOnNewAcl(ProcedureRelationId, retval, 0,
+								 proowner, proacl);
 
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, is_update);
