@@ -2072,39 +2072,50 @@ static int
 exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 {
 	PLpgSQL_expr *expr = stmt->expr;
-	ParamListInfo paramLI;
-	LocalTransactionId before_lxid;
+	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
-	bool		pushed_active_snap = false;
-	int			rc;
+	volatile bool pushed_active_snap = false;
+	volatile int rc;
 
-	if (expr->plan == NULL)
+	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
+	PG_TRY();
 	{
-		SPIPlanPtr	plan;
+		SPIPlanPtr	plan = expr->plan;
+		ParamListInfo paramLI;
 
-		/*
-		 * Don't save the plan if not in atomic context.  Otherwise,
-		 * transaction ends would cause errors about plancache leaks.  XXX
-		 * This would be fixable with some plancache/resowner surgery
-		 * elsewhere, but for now we'll just work around this here.
-		 */
-		exec_prepare_plan(estate, expr, 0, estate->atomic);
+		if (plan == NULL)
+		{
 
-		/*
-		 * The procedure call could end transactions, which would upset the
-		 * snapshot management in SPI_execute*, so don't let it do it.
-		 * Instead, we set the snapshots ourselves below.
-		 */
-		plan = expr->plan;
-		plan->no_snapshots = true;
+			/*
+			 * Don't save the plan if not in atomic context.  Otherwise,
+			 * transaction ends would cause errors about plancache leaks.
+			 *
+			 * XXX This would be fixable with some plancache/resowner surgery
+			 * elsewhere, but for now we'll just work around this here.
+			 */
+			exec_prepare_plan(estate, expr, 0, estate->atomic);
+
+			/*
+			 * The procedure call could end transactions, which would upset
+			 * the snapshot management in SPI_execute*, so don't let it do it.
+			 * Instead, we set the snapshots ourselves below.
+			 */
+			plan = expr->plan;
+			plan->no_snapshots = true;
+
+			/*
+			 * Force target to be recalculated whenever the plan changes, in
+			 * case the procedure's argument list has changed.
+			 */
+			stmt->target = NULL;
+		}
 
 		/*
 		 * We construct a DTYPE_ROW datum representing the plpgsql variables
 		 * associated with the procedure's output arguments.  Then we can use
-		 * exec_move_row() to do the assignments.  (We do this each time the
-		 * plan changes, in case the procedure's argument list has changed.)
+		 * exec_move_row() to do the assignments.
 		 */
-		if (stmt->is_call)
+		if (stmt->is_call && stmt->target == NULL)
 		{
 			Node	   *node;
 			FuncExpr   *funcexpr;
@@ -2206,24 +2217,21 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 
 			stmt->target = (PLpgSQL_variable *) row;
 		}
-	}
 
-	paramLI = setup_param_list(estate, expr);
+		paramLI = setup_param_list(estate, expr);
 
-	before_lxid = MyProc->lxid;
+		before_lxid = MyProc->lxid;
 
-	/*
-	 * Set snapshot only for non-read-only procedures, similar to SPI
-	 * behavior.
-	 */
-	if (!estate->readonly_func)
-	{
-		PushActiveSnapshot(GetTransactionSnapshot());
-		pushed_active_snap = true;
-	}
+		/*
+		 * Set snapshot only for non-read-only procedures, similar to SPI
+		 * behavior.
+		 */
+		if (!estate->readonly_func)
+		{
+			PushActiveSnapshot(GetTransactionSnapshot());
+			pushed_active_snap = true;
+		}
 
-	PG_TRY();
-	{
 		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 											 estate->readonly_func, 0);
 	}
