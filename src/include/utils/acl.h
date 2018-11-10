@@ -220,6 +220,8 @@ typedef enum AclObjectKind
 extern Acl *acldefault(GrantObjectType objtype, Oid ownerId);
 extern Acl *get_user_default_acl(GrantObjectType objtype, Oid ownerId,
 					 Oid nsp_oid);
+extern void recordDependencyOnNewAcl(Oid classId, Oid objectId, int32 objsubId,
+						 Oid ownerId, Acl *acl);
 
 extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 		  int modechg, Oid ownerId, DropBehavior behavior);
