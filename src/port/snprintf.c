@@ -1046,11 +1046,19 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 			return;				/* keep compiler quiet */
 	}
 
+	/* disable MSVC warning about applying unary minus to an unsigned value */
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4146)
+#endif
 	/* Handle +/- */
 	if (dosign && adjust_sign((value < 0), forcesign, &signvalue))
 		uvalue = -(unsigned long long) value;
 	else
 		uvalue = (unsigned long long) value;
+#if _MSC_VER
+#pragma warning(pop)
+#endif
 
 	/*
 	 * SUS: the result of converting 0 with an explicit precision of 0 is no
