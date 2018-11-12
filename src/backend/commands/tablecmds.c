@@ -13334,10 +13334,8 @@ PreCommit_on_commit_actions(void)
 	 * exists at truncation time.
 	 */
 	if (oids_to_truncate != NIL)
-	{
 		heap_truncate(oids_to_truncate);
-		CommandCounterIncrement();	/* XXX needed? */
-	}
+
 	if (oids_to_drop != NIL)
 	{
 		ObjectAddresses *targetObjects = new_object_addresses();
