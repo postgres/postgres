@@ -508,7 +508,7 @@ Branch: REL9_5_STABLE [69a568636] 2018-09-26 10:30:38 +0900
 -->
      <para>
       Fix handling of commit-timestamp tracking during recovery
-      (Masahiko Sawasa, Michael Paquier)
+      (Masahiko Sawada, Michael Paquier)
      </para>
 
      <para>

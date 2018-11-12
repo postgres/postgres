@@ -239,7 +239,7 @@
     <listitem>
      <para>
       Fix handling of commit-timestamp tracking during recovery
-      (Masahiko Sawasa, Michael Paquier)
+      (Masahiko Sawada, Michael Paquier)
      </para>
 
      <para>
