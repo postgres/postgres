@@ -67,6 +67,7 @@ typedef struct
 	List	   *quals;			/* the WHERE clauses it uses */
 	List	   *preds;			/* predicates of its partial index(es) */
 	Bitmapset  *clauseids;		/* quals+preds represented as a bitmapset */
+	bool		unclassifiable; /* has too many quals+preds to process? */
 } PathClauseUsage;
 
 /* Callback argument for ec_member_matches_indexcol */
@@ -1447,9 +1448,18 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 		Path	   *ipath = (Path *) lfirst(l);
 
 		pathinfo = classify_index_clause_usage(ipath, &clauselist);
+
+		/* If it's unclassifiable, treat it as distinct from all others */
+		if (pathinfo->unclassifiable)
+		{
+			pathinfoarray[npaths++] = pathinfo;
+			continue;
+		}
+
 		for (i = 0; i < npaths; i++)
 		{
-			if (bms_equal(pathinfo->clauseids, pathinfoarray[i]->clauseids))
+			if (!pathinfoarray[i]->unclassifiable &&
+				bms_equal(pathinfo->clauseids, pathinfoarray[i]->clauseids))
 				break;
 		}
 		if (i < npaths)
@@ -1484,6 +1494,10 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	 * For each surviving index, consider it as an "AND group leader", and see
 	 * whether adding on any of the later indexes results in an AND path with
 	 * cheaper total cost than before.  Then take the cheapest AND group.
+	 *
+	 * Note: paths that are either clauseless or unclassifiable will have
+	 * empty clauseids, so that they will not be rejected by the clauseids
+	 * filter here, nor will they cause later paths to be rejected by it.
 	 */
 	for (i = 0; i < npaths; i++)
 	{
@@ -1711,6 +1725,21 @@ classify_index_clause_usage(Path *path, List **clauselist)
 	result->preds = NIL;
 	find_indexpath_quals(path, &result->quals, &result->preds);
 
+	/*
+	 * Some machine-generated queries have outlandish numbers of qual clauses.
+	 * To avoid getting into O(N^2) behavior even in this preliminary
+	 * classification step, we want to limit the number of entries we can
+	 * accumulate in *clauselist.  Treat any path with more than 100 quals +
+	 * preds as unclassifiable, which will cause calling code to consider it
+	 * distinct from all other paths.
+	 */
+	if (list_length(result->quals) + list_length(result->preds) > 100)
+	{
+		result->clauseids = NULL;
+		result->unclassifiable = true;
+		return result;
+	}
+
 	/* Build up a bitmapset representing the quals and preds */
 	clauseids = NULL;
 	foreach(lc, result->quals)
@@ -1728,6 +1757,7 @@ classify_index_clause_usage(Path *path, List **clauselist)
 								   find_list_position(node, clauselist));
 	}
 	result->clauseids = clauseids;
+	result->unclassifiable = false;
 
 	return result;
 }
