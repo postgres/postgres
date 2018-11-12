@@ -2597,14 +2597,13 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 	{
 		/* squeeze out the target element */
 		Datum	   *dvalues;
-		bool	   *dnulls;
 		int			nelems;
 		int			i;
 
+		/* We already checked there are no nulls */
 		deconstruct_array(a, OIDOID, sizeof(Oid), true, 'i',
-						  &dvalues, &dnulls, &nelems);
+						  &dvalues, NULL, &nelems);
 
-		/* We already checked there are no nulls, so ignore dnulls */
 		for (i = arrayIndex; i < arrayLength - 1; i++)
 			dvalues[i] = dvalues[i + 1];
 
@@ -2644,14 +2643,13 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 	{
 		/* squeeze out the target element */
 		Datum	   *dvalues;
-		bool	   *dnulls;
 		int			nelems;
 		int			i;
 
+		/* We already checked there are no nulls */
 		deconstruct_array(a, TEXTOID, -1, false, 'i',
-						  &dvalues, &dnulls, &nelems);
+						  &dvalues, NULL, &nelems);
 
-		/* We already checked there are no nulls, so ignore dnulls */
 		for (i = arrayIndex; i < arrayLength - 1; i++)
 			dvalues[i] = dvalues[i + 1];
 
