@@ -3889,9 +3889,9 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     Partition pruning can be performed not only during the planning of a
     given query, but also during its execution.  This is useful as it can
     allow more partitions to be pruned when clauses contain expressions
-    whose values are not known at query planning time; for example,
+    whose values are not known at query planning time, for example,
     parameters defined in a <command>PREPARE</command> statement, using a
-    value obtained from a subquery or using a parameterized value on the
+    value obtained from a subquery, or using a parameterized value on the
     inner side of a nested loop join.  Partition pruning during execution
     can be performed at any of the following times:
 
