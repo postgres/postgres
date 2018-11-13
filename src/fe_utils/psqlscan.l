@@ -887,10 +887,9 @@ other			.
 				}
 {realfail1}		{
 					/*
-					 * throw back the [Ee], and treat as {decimal}.  Note
-					 * that it is possible the input is actually {integer},
-					 * but since this case will almost certainly lead to a
-					 * syntax error anyway, we don't bother to distinguish.
+					 * throw back the [Ee], and figure out whether what
+					 * remains is an {integer} or {decimal}.
+					 * (in psql, we don't actually care...)
 					 */
 					yyless(yyleng - 1);
 					ECHO;

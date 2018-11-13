@@ -900,20 +900,16 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 {realfail1}		{
 					/*
-					 * throw back the [Ee], and treat as {decimal}.  Note
-					 * that it is possible the input is actually {integer},
-					 * but since this case will almost certainly lead to a
-					 * syntax error anyway, we don't bother to distinguish.
+					 * throw back the [Ee], and figure out whether what
+					 * remains is an {integer} or {decimal}.
 					 */
 					yyless(yyleng - 1);
-					base_yylval.str = mm_strdup(yytext);
-					return FCONST;
+					return process_integer_literal(yytext, &base_yylval);
 				}
 {realfail2}		{
 					/* throw back the [Ee][+-], and proceed as above */
 					yyless(yyleng - 2);
-					base_yylval.str = mm_strdup(yytext);
-					return FCONST;
+					return process_integer_literal(yytext, &base_yylval);
 				}
 } /* <C,SQL> */
 
@@ -1473,6 +1469,10 @@ addlitchar(unsigned char ychar)
 	literalbuf[literallen] = '\0';
 }
 
+/*
+ * Process {integer}.  Note this will also do the right thing with {decimal},
+ * ie digits and a decimal point.
+ */
 static int
 process_integer_literal(const char *token, YYSTYPE *lval)
 {
@@ -1483,7 +1483,7 @@ process_integer_literal(const char *token, YYSTYPE *lval)
 	val = strtoint(token, &endptr, 10);
 	if (*endptr != '\0' || errno == ERANGE)
 	{
-		/* integer too large, treat it as a float */
+		/* integer too large (or contains decimal pt), treat it as a float */
 		lval->str = mm_strdup(token);
 		return FCONST;
 	}
