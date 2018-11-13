@@ -117,9 +117,12 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <para>
     The second form of <command>CREATE TYPE</command> creates an enumerated
     (enum) type, as described in <xref linkend="datatype-enum"/>.
-    Enum types take a list of one or more quoted labels, each of which
+    Enum types take a list of quoted labels, each of which
     must be less than <symbol>NAMEDATALEN</symbol> bytes long (64 bytes in a
-    standard <productname>PostgreSQL</productname> build).
+    standard <productname>PostgreSQL</productname> build).  (It is possible to
+    create an enumerated type with zero labels, but such a type cannot be used
+    to hold values before at least one label is added using <xref
+    linkend="sql-altertype"/>.)
    </para>
   </refsect2>
 
