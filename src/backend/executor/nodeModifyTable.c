@@ -163,12 +163,6 @@ ExecProcessReturning(ResultRelInfo *resultRelInfo,
 	ProjectionInfo *projectReturning = resultRelInfo->ri_projectReturning;
 	ExprContext *econtext = projectReturning->pi_exprContext;
 
-	/*
-	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous cycle.
-	 */
-	ResetExprContext(econtext);
-
 	/* Make tuple and any needed join variables available to ExecProject */
 	if (tupleSlot)
 		econtext->ecxt_scantuple = tupleSlot;
@@ -1453,13 +1447,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 			elog(ERROR, "unrecognized heap_lock_tuple status: %u", test);
 	}
 
-	/*
-	 * Success, the tuple is locked.
-	 *
-	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous cycle.
-	 */
-	ResetExprContext(econtext);
+	/* Success, the tuple is locked. */
 
 	/*
 	 * Verify that the tuple is visible to our MVCC snapshot if the current
@@ -2027,6 +2015,14 @@ ExecModifyTable(PlanState *pstate)
 		 * to rethink this later.
 		 */
 		ResetPerTupleExprContext(estate);
+
+		/*
+		 * Reset per-tuple memory context used for processing on conflict and
+		 * returning clauses, to free any expression evaluation storage
+		 * allocated in the previous cycle.
+		 */
+		if (pstate->ps_ExprContext)
+			ResetExprContext(pstate->ps_ExprContext);
 
 		planSlot = ExecProcNode(subplanstate);
 
