@@ -6,7 +6,7 @@ use Test::More;
 
 if ($ENV{with_ldap} eq 'yes')
 {
-	plan tests => 19;
+	plan tests => 22;
 }
 else
 {
@@ -168,6 +168,22 @@ note "search+bind";
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
 	qq{local all all ldap ldapserver=$ldap_server ldapport=$ldap_port ldapbasedn="$ldap_basedn"}
+);
+$node->restart;
+
+$ENV{"PGPASSWORD"} = 'wrong';
+test_access($node, 'test0', 2,
+	'search+bind authentication fails if user not found in LDAP');
+test_access($node, 'test1', 2,
+	'search+bind authentication fails with wrong password');
+$ENV{"PGPASSWORD"} = 'secret1';
+test_access($node, 'test1', 0, 'search+bind authentication succeeds');
+
+note "multiple servers";
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf',
+	qq{local all all ldap ldapserver="$ldap_server $ldap_server" ldapport=$ldap_port ldapbasedn="$ldap_basedn"}
 );
 $node->restart;
 
