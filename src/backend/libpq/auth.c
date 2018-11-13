@@ -2352,12 +2352,44 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 #else
 #ifdef HAVE_LDAP_INITIALIZE
 	{
-		char	   *uri;
+		const char *hostnames = port->hba->ldapserver;
+		char	   *uris = NULL;
 
-		uri = psprintf("%s://%s:%d", scheme, port->hba->ldapserver,
-					   port->hba->ldapport);
-		r = ldap_initialize(ldap, uri);
-		pfree(uri);
+		/*
+		 * We have a space-separated list of hostnames.  Convert it
+		 * to a space-separated list of URIs.
+		 */
+		do
+		{
+			const char *hostname;
+			size_t		hostname_size;
+			char	   *new_uris;
+
+			/* Find the leading hostname. */
+			hostname_size = strcspn(hostnames, " ");
+			hostname = pnstrdup(hostnames, hostname_size);
+
+			/* Append a URI for this hostname. */
+			new_uris = psprintf("%s%s%s://%s:%d",
+								uris ? uris : "",
+								uris ? " " : "",
+								scheme,
+								hostname,
+								port->hba->ldapport);
+
+			pfree(hostname);
+			if (uris)
+				pfree(uris);
+			uris = new_uris;
+
+			/* Step over this hostname and any spaces. */
+			hostnames += hostname_size;
+			while (*hostnames == ' ')
+				++hostnames;
+		} while (*hostnames);
+
+		r = ldap_initialize(ldap, uris);
+		pfree(uris);
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
