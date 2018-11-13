@@ -6,7 +6,8 @@
  *
  * NOTE NOTE NOTE:
  *
- * The rules in this file must be kept in sync with src/fe_utils/psqlscan.l!
+ * The rules in this file must be kept in sync with src/fe_utils/psqlscan.l
+ * and src/interfaces/ecpg/preproc/pgc.l!
  *
  * The rules are designed so that the scanner never has to backtrack,
  * in the sense that there is always a rule that can match the input
@@ -168,8 +169,8 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
 %x xc
 %x xd
 %x xh
-%x xe
 %x xq
+%x xe
 %x xdolq
 %x xui
 %x xuiend
@@ -192,7 +193,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  * XXX perhaps \f (formfeed) should be treated as a newline as well?
  *
  * XXX if you change the set of whitespace characters, fix scanner_isspace()
- * to agree, and see also the plpgsql lexer.
+ * to agree.
  */
 
 space			[ \t\n\r\f]
@@ -417,32 +418,36 @@ other			.
 					yyless(2);
 				}
 
-<xc>{xcstart}	{
+<xc>{
+{xcstart}		{
 					(yyextra->xcdepth)++;
 					/* Put back any characters past slash-star; see above */
 					yyless(2);
 				}
 
-<xc>{xcstop}	{
+{xcstop}		{
 					if (yyextra->xcdepth <= 0)
 						BEGIN(INITIAL);
 					else
 						(yyextra->xcdepth)--;
 				}
 
-<xc>{xcinside}	{
+{xcinside}		{
 					/* ignore */
 				}
 
-<xc>{op_chars}	{
+{op_chars}		{
 					/* ignore */
 				}
 
-<xc>\*+			{
+\*+				{
 					/* ignore */
 				}
 
-<xc><<EOF>>		{ yyerror("unterminated /* comment"); }
+<<EOF>>			{
+					yyerror("unterminated /* comment");
+				}
+} /* <xc> */
 
 {xbstart}		{
 					/* Binary bit type.

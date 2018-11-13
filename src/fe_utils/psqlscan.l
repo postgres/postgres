@@ -23,6 +23,7 @@
  *
  * See psqlscan_int.h for additional commentary.
  *
+ *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -39,6 +40,9 @@
 }
 
 %{
+
+/* LCOV_EXCL_START */
+
 #include "fe_utils/psqlscan_int.h"
 
 /*
@@ -70,8 +74,6 @@ typedef int YYSTYPE;
  */
 extern int	psql_yyget_column(yyscan_t yyscanner);
 extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
-
-/* LCOV_EXCL_START */
 
 %}
 
@@ -128,8 +130,8 @@ extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
 %x xc
 %x xd
 %x xh
-%x xe
 %x xq
+%x xe
 %x xdolq
 %x xui
 %x xuiend
@@ -151,7 +153,7 @@ extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
  * XXX perhaps \f (formfeed) should be treated as a newline as well?
  *
  * XXX if you change the set of whitespace characters, fix scanner_isspace()
- * to agree, and see also the plpgsql lexer.
+ * to agree.
  */
 
 space			[ \t\n\r\f]
@@ -402,14 +404,15 @@ other			.
 					ECHO;
 				}
 
-<xc>{xcstart}	{
+<xc>{
+{xcstart}		{
 					cur_state->xcdepth++;
 					/* Put back any characters past slash-star; see above */
 					yyless(2);
 					ECHO;
 				}
 
-<xc>{xcstop}	{
+{xcstop}		{
 					if (cur_state->xcdepth <= 0)
 						BEGIN(INITIAL);
 					else
@@ -417,17 +420,18 @@ other			.
 					ECHO;
 				}
 
-<xc>{xcinside}	{
+{xcinside}		{
 					ECHO;
 				}
 
-<xc>{op_chars}	{
+{op_chars}		{
 					ECHO;
 				}
 
-<xc>\*+			{
+\*+				{
 					ECHO;
 				}
+} /* <xc> */
 
 {xbstart}		{
 					BEGIN(xb);
