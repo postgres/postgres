@@ -34,8 +34,6 @@ extern YYSTYPE base_yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char	   *dolqstart = NULL;	/* current $foo$ quote start string */
-static YY_BUFFER_STATE scanbufhandle;
-static char *scanbuf;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -1436,7 +1434,7 @@ lex_init(void)
 	if (literalbuf == NULL)
 	{
 		literalalloc = 1024;
-		literalbuf = (char *) malloc(literalalloc);
+		literalbuf = (char *) mm_alloc(literalalloc);
 	}
 	startlit();
 
@@ -1663,45 +1661,4 @@ static bool isinformixdefine(void)
 	}
 
 	return false;
-}
-
-/*
- * Called before any actual parsing is done
- */
-void
-scanner_init(const char *str)
-{
-	Size	slen = strlen(str);
-
-	/*
-	 * Might be left over after ereport()
-	 */
-	if (YY_CURRENT_BUFFER)
-		yy_delete_buffer(YY_CURRENT_BUFFER);
-
-	/*
-	 * Make a scan buffer with special termination needed by flex.
-	 */
-	scanbuf = mm_alloc(slen + 2);
-	memcpy(scanbuf, str, slen);
-	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
-	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
-
-	/* initialize literal buffer to a reasonable but expansible size */
-	literalalloc = 128;
-	literalbuf = (char *) mm_alloc(literalalloc);
-	startlit();
-
-	BEGIN(INITIAL);
-}
-
-
-/*
- * Called after parsing is done to clean up after scanner_init()
- */
-void
-scanner_finish(void)
-{
-	yy_delete_buffer(scanbufhandle);
-	free(scanbuf);
 }
