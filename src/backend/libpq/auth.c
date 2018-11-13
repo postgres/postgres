@@ -2361,7 +2361,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		 */
 		do
 		{
-			const char *hostname;
+			char	   *hostname;
 			size_t		hostname_size;
 			char	   *new_uris;
 
