@@ -576,4 +576,30 @@ insert into parted_conflict values (50, 'cincuenta', 2)
 -- should see (50, 'cincuenta', 2)
 select * from parted_conflict order by a;
 
+-- test with statement level triggers
+create or replace function parted_conflict_update_func() returns trigger as $$
+declare
+    r record;
+begin
+ for r in select * from inserted loop
+	raise notice 'a = %, b = %, c = %', r.a, r.b, r.c;
+ end loop;
+ return new;
+end;
+$$ language plpgsql;
+
+create trigger parted_conflict_update
+    after update on parted_conflict
+    referencing new table as inserted
+    for each statement
+    execute procedure parted_conflict_update_func();
+
+truncate parted_conflict;
+
+insert into parted_conflict values (0, 'cero', 1);
+
+insert into parted_conflict values(0, 'cero', 1)
+  on conflict (a,b) do update set c = parted_conflict.c + 1;
+
 drop table parted_conflict;
+drop function parted_conflict_update_func();
