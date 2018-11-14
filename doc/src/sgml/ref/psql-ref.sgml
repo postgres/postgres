@@ -2120,8 +2120,7 @@ lo_import 152801
           <literal>latex</literal> (uses <literal>tabular</literal>),
           <literal>latex-longtable</literal>, or
           <literal>troff-ms</literal>.
-          Unique abbreviations are allowed.  (That would mean one letter
-          is enough.)
+          Unique abbreviations are allowed.
           </para>
 
           <para><literal>unaligned</> format writes all columns of a row on one
