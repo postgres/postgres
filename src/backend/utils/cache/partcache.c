@@ -38,12 +38,6 @@
 
 
 static List *generate_partition_qual(Relation rel);
-static int32 qsort_partition_hbound_cmp(const void *a, const void *b);
-static int32 qsort_partition_list_value_cmp(const void *a, const void *b,
-							   void *arg);
-static int32 qsort_partition_rbound_cmp(const void *a, const void *b,
-						   void *arg);
-
 
 /*
  * RelationBuildPartitionKey
@@ -260,36 +254,22 @@ RelationBuildPartitionKey(Relation relation)
 void
 RelationBuildPartitionDesc(Relation rel)
 {
-	List	   *inhoids,
-			   *partoids;
-	Oid		   *oids = NULL;
+	PartitionDesc partdesc;
+	PartitionBoundInfo boundinfo;
+	List	   *inhoids;
 	List	   *boundspecs = NIL;
 	ListCell   *cell;
 	int			i,
 				nparts;
 	PartitionKey key = RelationGetPartitionKey(rel);
-	PartitionDesc result;
 	MemoryContext oldcxt;
-
-	int			ndatums = 0;
-	int			default_index = -1;
-
-	/* Hash partitioning specific */
-	PartitionHashBound **hbounds = NULL;
-
-	/* List partitioning specific */
-	PartitionListValue **all_values = NULL;
-	int			null_index = -1;
-
-	/* Range partitioning specific */
-	PartitionRangeBound **rbounds = NULL;
+	Oid		   *oids_orig;
+	int		   *mapping;
 
 	/* Get partition oids from pg_inherits */
 	inhoids = find_inheritance_children(RelationGetRelid(rel), NoLock);
 
 	/* Collect bound spec nodes in a list */
-	i = 0;
-	partoids = NIL;
 	foreach(cell, inhoids)
 	{
 		Oid			inhrelid = lfirst_oid(cell);
@@ -325,245 +305,10 @@ RelationBuildPartitionDesc(Relation rel)
 		}
 
 		boundspecs = lappend(boundspecs, boundspec);
-		partoids = lappend_oid(partoids, inhrelid);
 		ReleaseSysCache(tuple);
 	}
 
-	nparts = list_length(partoids);
-
-	if (nparts > 0)
-	{
-		oids = (Oid *) palloc(nparts * sizeof(Oid));
-		i = 0;
-		foreach(cell, partoids)
-			oids[i++] = lfirst_oid(cell);
-
-		/* Convert from node to the internal representation */
-		if (key->strategy == PARTITION_STRATEGY_HASH)
-		{
-			ndatums = nparts;
-			hbounds = (PartitionHashBound **)
-				palloc(nparts * sizeof(PartitionHashBound *));
-
-			i = 0;
-			foreach(cell, boundspecs)
-			{
-				PartitionBoundSpec *spec = castNode(PartitionBoundSpec,
-													lfirst(cell));
-
-				if (spec->strategy != PARTITION_STRATEGY_HASH)
-					elog(ERROR, "invalid strategy in partition bound spec");
-
-				hbounds[i] = (PartitionHashBound *)
-					palloc(sizeof(PartitionHashBound));
-
-				hbounds[i]->modulus = spec->modulus;
-				hbounds[i]->remainder = spec->remainder;
-				hbounds[i]->index = i;
-				i++;
-			}
-
-			/* Sort all the bounds in ascending order */
-			qsort(hbounds, nparts, sizeof(PartitionHashBound *),
-				  qsort_partition_hbound_cmp);
-		}
-		else if (key->strategy == PARTITION_STRATEGY_LIST)
-		{
-			List	   *non_null_values = NIL;
-
-			/*
-			 * Create a unified list of non-null values across all partitions.
-			 */
-			i = 0;
-			null_index = -1;
-			foreach(cell, boundspecs)
-			{
-				PartitionBoundSpec *spec = castNode(PartitionBoundSpec,
-													lfirst(cell));
-				ListCell   *c;
-
-				if (spec->strategy != PARTITION_STRATEGY_LIST)
-					elog(ERROR, "invalid strategy in partition bound spec");
-
-				/*
-				 * Note the index of the partition bound spec for the default
-				 * partition. There's no datum to add to the list of non-null
-				 * datums for this partition.
-				 */
-				if (spec->is_default)
-				{
-					default_index = i;
-					i++;
-					continue;
-				}
-
-				foreach(c, spec->listdatums)
-				{
-					Const	   *val = castNode(Const, lfirst(c));
-					PartitionListValue *list_value = NULL;
-
-					if (!val->constisnull)
-					{
-						list_value = (PartitionListValue *)
-							palloc0(sizeof(PartitionListValue));
-						list_value->index = i;
-						list_value->value = val->constvalue;
-					}
-					else
-					{
-						/*
-						 * Never put a null into the values array, flag
-						 * instead for the code further down below where we
-						 * construct the actual relcache struct.
-						 */
-						if (null_index != -1)
-							elog(ERROR, "found null more than once");
-						null_index = i;
-					}
-
-					if (list_value)
-						non_null_values = lappend(non_null_values,
-												  list_value);
-				}
-
-				i++;
-			}
-
-			ndatums = list_length(non_null_values);
-
-			/*
-			 * Collect all list values in one array. Alongside the value, we
-			 * also save the index of partition the value comes from.
-			 */
-			all_values = (PartitionListValue **) palloc(ndatums *
-														sizeof(PartitionListValue *));
-			i = 0;
-			foreach(cell, non_null_values)
-			{
-				PartitionListValue *src = lfirst(cell);
-
-				all_values[i] = (PartitionListValue *)
-					palloc(sizeof(PartitionListValue));
-				all_values[i]->value = src->value;
-				all_values[i]->index = src->index;
-				i++;
-			}
-
-			qsort_arg(all_values, ndatums, sizeof(PartitionListValue *),
-					  qsort_partition_list_value_cmp, (void *) key);
-		}
-		else if (key->strategy == PARTITION_STRATEGY_RANGE)
-		{
-			int			k;
-			PartitionRangeBound **all_bounds,
-					   *prev;
-
-			all_bounds = (PartitionRangeBound **) palloc0(2 * nparts *
-														  sizeof(PartitionRangeBound *));
-
-			/*
-			 * Create a unified list of range bounds across all the
-			 * partitions.
-			 */
-			i = ndatums = 0;
-			foreach(cell, boundspecs)
-			{
-				PartitionBoundSpec *spec = castNode(PartitionBoundSpec,
-													lfirst(cell));
-				PartitionRangeBound *lower,
-						   *upper;
-
-				if (spec->strategy != PARTITION_STRATEGY_RANGE)
-					elog(ERROR, "invalid strategy in partition bound spec");
-
-				/*
-				 * Note the index of the partition bound spec for the default
-				 * partition. There's no datum to add to the allbounds array
-				 * for this partition.
-				 */
-				if (spec->is_default)
-				{
-					default_index = i++;
-					continue;
-				}
-
-				lower = make_one_partition_rbound(key, i, spec->lowerdatums,
-												  true);
-				upper = make_one_partition_rbound(key, i, spec->upperdatums,
-												  false);
-				all_bounds[ndatums++] = lower;
-				all_bounds[ndatums++] = upper;
-				i++;
-			}
-
-			Assert(ndatums == nparts * 2 ||
-				   (default_index != -1 && ndatums == (nparts - 1) * 2));
-
-			/* Sort all the bounds in ascending order */
-			qsort_arg(all_bounds, ndatums,
-					  sizeof(PartitionRangeBound *),
-					  qsort_partition_rbound_cmp,
-					  (void *) key);
-
-			/* Save distinct bounds from all_bounds into rbounds. */
-			rbounds = (PartitionRangeBound **)
-				palloc(ndatums * sizeof(PartitionRangeBound *));
-			k = 0;
-			prev = NULL;
-			for (i = 0; i < ndatums; i++)
-			{
-				PartitionRangeBound *cur = all_bounds[i];
-				bool		is_distinct = false;
-				int			j;
-
-				/* Is the current bound distinct from the previous one? */
-				for (j = 0; j < key->partnatts; j++)
-				{
-					Datum		cmpval;
-
-					if (prev == NULL || cur->kind[j] != prev->kind[j])
-					{
-						is_distinct = true;
-						break;
-					}
-
-					/*
-					 * If the bounds are both MINVALUE or MAXVALUE, stop now
-					 * and treat them as equal, since any values after this
-					 * point must be ignored.
-					 */
-					if (cur->kind[j] != PARTITION_RANGE_DATUM_VALUE)
-						break;
-
-					cmpval = FunctionCall2Coll(&key->partsupfunc[j],
-											   key->partcollation[j],
-											   cur->datums[j],
-											   prev->datums[j]);
-					if (DatumGetInt32(cmpval) != 0)
-					{
-						is_distinct = true;
-						break;
-					}
-				}
-
-				/*
-				 * Only if the bound is distinct save it into a temporary
-				 * array i.e. rbounds which is later copied into boundinfo
-				 * datums array.
-				 */
-				if (is_distinct)
-					rbounds[k++] = all_bounds[i];
-
-				prev = cur;
-			}
-
-			/* Update ndatums to hold the count of distinct datums. */
-			ndatums = k;
-		}
-		else
-			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) key->strategy);
-	}
+	nparts = list_length(boundspecs);
 
 	/* Now build the actual relcache partition descriptor */
 	rel->rd_pdcxt = AllocSetContextCreate(CacheMemoryContext,
@@ -572,210 +317,41 @@ RelationBuildPartitionDesc(Relation rel)
 	MemoryContextCopyAndSetIdentifier(rel->rd_pdcxt, RelationGetRelationName(rel));
 
 	oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
-
-	result = (PartitionDescData *) palloc0(sizeof(PartitionDescData));
-	result->nparts = nparts;
-	if (nparts > 0)
-	{
-		PartitionBoundInfo boundinfo;
-		int		   *mapping;
-		int			next_index = 0;
-
-		result->oids = (Oid *) palloc0(nparts * sizeof(Oid));
-
-		boundinfo = (PartitionBoundInfoData *)
-			palloc0(sizeof(PartitionBoundInfoData));
-		boundinfo->strategy = key->strategy;
-		boundinfo->default_index = -1;
-		boundinfo->ndatums = ndatums;
-		boundinfo->null_index = -1;
-		boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
-
-		/* Initialize mapping array with invalid values */
-		mapping = (int *) palloc(sizeof(int) * nparts);
-		for (i = 0; i < nparts; i++)
-			mapping[i] = -1;
-
-		switch (key->strategy)
-		{
-			case PARTITION_STRATEGY_HASH:
-				{
-					/* Moduli are stored in ascending order */
-					int			greatest_modulus = hbounds[ndatums - 1]->modulus;
-
-					boundinfo->indexes = (int *) palloc(greatest_modulus *
-														sizeof(int));
-
-					for (i = 0; i < greatest_modulus; i++)
-						boundinfo->indexes[i] = -1;
-
-					for (i = 0; i < nparts; i++)
-					{
-						int			modulus = hbounds[i]->modulus;
-						int			remainder = hbounds[i]->remainder;
-
-						boundinfo->datums[i] = (Datum *) palloc(2 *
-																sizeof(Datum));
-						boundinfo->datums[i][0] = Int32GetDatum(modulus);
-						boundinfo->datums[i][1] = Int32GetDatum(remainder);
-
-						while (remainder < greatest_modulus)
-						{
-							/* overlap? */
-							Assert(boundinfo->indexes[remainder] == -1);
-							boundinfo->indexes[remainder] = i;
-							remainder += modulus;
-						}
-
-						mapping[hbounds[i]->index] = i;
-						pfree(hbounds[i]);
-					}
-					pfree(hbounds);
-					break;
-				}
-
-			case PARTITION_STRATEGY_LIST:
-				{
-					boundinfo->indexes = (int *) palloc(ndatums * sizeof(int));
-
-					/*
-					 * Copy values.  Indexes of individual values are mapped
-					 * to canonical values so that they match for any two list
-					 * partitioned tables with same number of partitions and
-					 * same lists per partition.  One way to canonicalize is
-					 * to assign the index in all_values[] of the smallest
-					 * value of each partition, as the index of all of the
-					 * partition's values.
-					 */
-					for (i = 0; i < ndatums; i++)
-					{
-						boundinfo->datums[i] = (Datum *) palloc(sizeof(Datum));
-						boundinfo->datums[i][0] = datumCopy(all_values[i]->value,
-															key->parttypbyval[0],
-															key->parttyplen[0]);
-
-						/* If the old index has no mapping, assign one */
-						if (mapping[all_values[i]->index] == -1)
-							mapping[all_values[i]->index] = next_index++;
-
-						boundinfo->indexes[i] = mapping[all_values[i]->index];
-					}
-
-					/*
-					 * If null-accepting partition has no mapped index yet,
-					 * assign one.  This could happen if such partition
-					 * accepts only null and hence not covered in the above
-					 * loop which only handled non-null values.
-					 */
-					if (null_index != -1)
-					{
-						Assert(null_index >= 0);
-						if (mapping[null_index] == -1)
-							mapping[null_index] = next_index++;
-						boundinfo->null_index = mapping[null_index];
-					}
-
-					/* Assign mapped index for the default partition. */
-					if (default_index != -1)
-					{
-						/*
-						 * The default partition accepts any value not
-						 * specified in the lists of other partitions, hence
-						 * it should not get mapped index while assigning
-						 * those for non-null datums.
-						 */
-						Assert(default_index >= 0 &&
-							   mapping[default_index] == -1);
-						mapping[default_index] = next_index++;
-						boundinfo->default_index = mapping[default_index];
-					}
-
-					/* All partition must now have a valid mapping */
-					Assert(next_index == nparts);
-					break;
-				}
-
-			case PARTITION_STRATEGY_RANGE:
-				{
-					boundinfo->kind = (PartitionRangeDatumKind **)
-						palloc(ndatums *
-							   sizeof(PartitionRangeDatumKind *));
-					boundinfo->indexes = (int *) palloc((ndatums + 1) *
-														sizeof(int));
-
-					for (i = 0; i < ndatums; i++)
-					{
-						int			j;
-
-						boundinfo->datums[i] = (Datum *) palloc(key->partnatts *
-																sizeof(Datum));
-						boundinfo->kind[i] = (PartitionRangeDatumKind *)
-							palloc(key->partnatts *
-								   sizeof(PartitionRangeDatumKind));
-						for (j = 0; j < key->partnatts; j++)
-						{
-							if (rbounds[i]->kind[j] == PARTITION_RANGE_DATUM_VALUE)
-								boundinfo->datums[i][j] =
-									datumCopy(rbounds[i]->datums[j],
-											  key->parttypbyval[j],
-											  key->parttyplen[j]);
-							boundinfo->kind[i][j] = rbounds[i]->kind[j];
-						}
-
-						/*
-						 * There is no mapping for invalid indexes.
-						 *
-						 * Any lower bounds in the rbounds array have invalid
-						 * indexes assigned, because the values between the
-						 * previous bound (if there is one) and this (lower)
-						 * bound are not part of the range of any existing
-						 * partition.
-						 */
-						if (rbounds[i]->lower)
-							boundinfo->indexes[i] = -1;
-						else
-						{
-							int			orig_index = rbounds[i]->index;
-
-							/* If the old index has no mapping, assign one */
-							if (mapping[orig_index] == -1)
-								mapping[orig_index] = next_index++;
-
-							boundinfo->indexes[i] = mapping[orig_index];
-						}
-					}
-
-					/* Assign mapped index for the default partition. */
-					if (default_index != -1)
-					{
-						Assert(default_index >= 0 && mapping[default_index] == -1);
-						mapping[default_index] = next_index++;
-						boundinfo->default_index = mapping[default_index];
-					}
-					boundinfo->indexes[i] = -1;
-					break;
-				}
-
-			default:
-				elog(ERROR, "unexpected partition strategy: %d",
-					 (int) key->strategy);
-		}
-
-		result->boundinfo = boundinfo;
-
-		/*
-		 * Now assign OIDs from the original array into mapped indexes of the
-		 * result array.  Order of OIDs in the former is defined by the
-		 * catalog scan that retrieved them, whereas that in the latter is
-		 * defined by canonicalized representation of the partition bounds.
-		 */
-		for (i = 0; i < nparts; i++)
-			result->oids[mapping[i]] = oids[i];
-		pfree(mapping);
-	}
+	partdesc = (PartitionDescData *) palloc0(sizeof(PartitionDescData));
+	partdesc->nparts = nparts;
+	/* oids and boundinfo are allocated below. */
 
 	MemoryContextSwitchTo(oldcxt);
-	rel->rd_partdesc = result;
+
+	if (nparts == 0)
+	{
+		rel->rd_partdesc = partdesc;
+		return;
+	}
+
+	/* First create PartitionBoundInfo */
+	boundinfo = partition_bounds_create(boundspecs, key, &mapping);
+	oids_orig = (Oid *) palloc(sizeof(Oid) * partdesc->nparts);
+	i = 0;
+	foreach(cell, inhoids)
+		oids_orig[i++] = lfirst_oid(cell);
+
+	/* Now copy boundinfo and oids into partdesc. */
+	oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
+	partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
+	partdesc->oids = (Oid *) palloc(partdesc->nparts * sizeof(Oid));
+
+	/*
+	 * Now assign OIDs from the original array into mapped indexes of the
+	 * result array.  Order of OIDs in the former is defined by the catalog
+	 * scan that retrieved them, whereas that in the latter is defined by
+	 * canonicalized representation of the partition bounds.
+	 */
+	for (i = 0; i < partdesc->nparts; i++)
+		partdesc->oids[mapping[i]] = oids_orig[i];
+	MemoryContextSwitchTo(oldcxt);
+
+	rel->rd_partdesc = partdesc;
 }
 
 /*
@@ -916,49 +492,4 @@ generate_partition_qual(Relation rel)
 	relation_close(parent, NoLock);
 
 	return result;
-}
-
-/*
- * qsort_partition_hbound_cmp
- *
- * We sort hash bounds by modulus, then by remainder.
- */
-static int32
-qsort_partition_hbound_cmp(const void *a, const void *b)
-{
-	PartitionHashBound *h1 = (*(PartitionHashBound *const *) a);
-	PartitionHashBound *h2 = (*(PartitionHashBound *const *) b);
-
-	return partition_hbound_cmp(h1->modulus, h1->remainder,
-								h2->modulus, h2->remainder);
-}
-
-/*
- * qsort_partition_list_value_cmp
- *
- * Compare two list partition bound datums
- */
-static int32
-qsort_partition_list_value_cmp(const void *a, const void *b, void *arg)
-{
-	Datum		val1 = (*(const PartitionListValue **) a)->value,
-				val2 = (*(const PartitionListValue **) b)->value;
-	PartitionKey key = (PartitionKey) arg;
-
-	return DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[0],
-										   key->partcollation[0],
-										   val1, val2));
-}
-
-/* Used when sorting range bounds across all range partitions */
-static int32
-qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
-{
-	PartitionRangeBound *b1 = (*(PartitionRangeBound *const *) a);
-	PartitionRangeBound *b2 = (*(PartitionRangeBound *const *) b);
-	PartitionKey key = (PartitionKey) arg;
-
-	return partition_rbound_cmp(key->partnatts, key->partsupfunc,
-								key->partcollation, b1->datums, b1->kind,
-								b1->lower, b2);
 }
