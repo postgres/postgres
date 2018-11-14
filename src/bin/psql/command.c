@@ -3637,28 +3637,51 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* set format */
 	if (strcmp(param, "format") == 0)
 	{
+		static const struct fmt
+		{
+			const char *name;
+			enum printFormat number;
+		}			formats[] =
+		{
+			/* remember to update error message below when adding more */
+			{"aligned", PRINT_ALIGNED},
+			{"asciidoc", PRINT_ASCIIDOC},
+			{"html", PRINT_HTML},
+			{"latex", PRINT_LATEX},
+			{"latex-longtable", PRINT_LATEX_LONGTABLE},
+			{"troff-ms", PRINT_TROFF_MS},
+			{"unaligned", PRINT_UNALIGNED},
+			{"wrapped", PRINT_WRAPPED}
+		};
+
 		if (!value)
 			;
-		else if (pg_strncasecmp("aligned", value, vallen) == 0)
-			popt->topt.format = PRINT_ALIGNED;
-		else if (pg_strncasecmp("asciidoc", value, vallen) == 0)
-			popt->topt.format = PRINT_ASCIIDOC;
-		else if (pg_strncasecmp("html", value, vallen) == 0)
-			popt->topt.format = PRINT_HTML;
-		else if (pg_strncasecmp("latex", value, vallen) == 0)
-			popt->topt.format = PRINT_LATEX;
-		else if (pg_strncasecmp("latex-longtable", value, vallen) == 0)
-			popt->topt.format = PRINT_LATEX_LONGTABLE;
-		else if (pg_strncasecmp("troff-ms", value, vallen) == 0)
-			popt->topt.format = PRINT_TROFF_MS;
-		else if (pg_strncasecmp("unaligned", value, vallen) == 0)
-			popt->topt.format = PRINT_UNALIGNED;
-		else if (pg_strncasecmp("wrapped", value, vallen) == 0)
-			popt->topt.format = PRINT_WRAPPED;
 		else
 		{
-			psql_error("\\pset: allowed formats are aligned, asciidoc, html, latex, latex-longtable, troff-ms, unaligned, wrapped\n");
-			return false;
+			int			match_pos = -1;
+
+			for (int i = 0; i < lengthof(formats); i++)
+			{
+				if (pg_strncasecmp(formats[i].name, value, vallen) == 0)
+				{
+					if (match_pos < 0)
+						match_pos = i;
+					else
+					{
+						psql_error("\\pset: ambiguous abbreviation \"%s\" matches both \"%s\" and \"%s\"\n",
+								   value,
+								   formats[match_pos].name, formats[i].name);
+						return false;
+					}
+				}
+			}
+			if (match_pos < 0)
+			{
+				psql_error("\\pset: allowed formats are aligned, asciidoc, html, latex, latex-longtable, troff-ms, unaligned, wrapped\n");
+				return false;
+			}
+			else
+				popt->topt.format = formats[match_pos].number;
 		}
 	}
 
