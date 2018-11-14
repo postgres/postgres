@@ -22,7 +22,7 @@ name sqlda descriptor: 'big' value 3333333333333333333
 FETCH RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
-name sqlda descriptor: 'd1' value NUMERIC '4.0'
+name sqlda descriptor: 'd1' value NUMERIC 'NaN'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
 name sqlda descriptor: 'big' value 4444444444444444444
@@ -57,7 +57,7 @@ name sqlda descriptor: 'big' value 3333333333333333333
 FETCH RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
-name sqlda descriptor: 'd1' value NUMERIC '4.0'
+name sqlda descriptor: 'd1' value NUMERIC 'NaN'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
 name sqlda descriptor: 'big' value 4444444444444444444
@@ -71,14 +71,14 @@ name sqlda descriptor: 'big' value 5555555555555555555
 EXECUTE RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
-name sqlda descriptor: 'd1' value NUMERIC '4.0'
+name sqlda descriptor: 'd1' value NUMERIC 'NaN'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
 name sqlda descriptor: 'big' value 4444444444444444444
 EXECUTE RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
-name sqlda descriptor: 'd1' value NUMERIC '4.0'
+name sqlda descriptor: 'd1' value NUMERIC 'NaN'
 name sqlda descriptor: 'd2' value 4.000000
 name sqlda descriptor: 'c' value 'd         '
 name sqlda descriptor: 'big' value 4444444444444444444
