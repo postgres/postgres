@@ -43,7 +43,7 @@ extern size_t BufFileWrite(BufFile *file, void *ptr, size_t size);
 extern int	BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
 extern void BufFileTell(BufFile *file, int *fileno, off_t *offset);
 extern int	BufFileSeekBlock(BufFile *file, long blknum);
-extern off_t BufFileSize(BufFile *file);
+extern int64 BufFileSize(BufFile *file);
 extern long BufFileAppend(BufFile *target, BufFile *source);
 
 extern BufFile *BufFileCreateShared(SharedFileSet *fileset, const char *name);
