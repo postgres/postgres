@@ -426,7 +426,7 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 	{
 		char		filename[MAXPGPATH];
 		BufFile    *file;
-		off_t		filesize;
+		int64		filesize;
 
 		lt = &lts->tapes[i];
 

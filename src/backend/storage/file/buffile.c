@@ -768,17 +768,17 @@ BufFileTellBlock(BufFile *file)
  * Counts any holes left behind by BufFileAppend as part of the size.
  * Returns -1 on error.
  */
-off_t
+int64
 BufFileSize(BufFile *file)
 {
-	off_t		lastFileSize;
+	int64		lastFileSize;
 
 	/* Get the size of the last physical file. */
 	lastFileSize = FileSize(file->files[file->numFiles - 1]);
 	if (lastFileSize < 0)
 		return -1;
 
-	return ((file->numFiles - 1) * (off_t) MAX_PHYSICAL_FILESIZE) +
+	return ((file->numFiles - 1) * (int64) MAX_PHYSICAL_FILESIZE) +
 		lastFileSize;
 }
 
