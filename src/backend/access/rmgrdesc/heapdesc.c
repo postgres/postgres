@@ -42,22 +42,26 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_insert *xlrec = (xl_heap_insert *) rec;
 
-		appendStringInfo(buf, "off %u", xlrec->offnum);
+		appendStringInfo(buf, "off %u flags 0x%02X", xlrec->offnum,
+						 xlrec->flags);
 	}
 	else if (info == XLOG_HEAP_DELETE)
 	{
 		xl_heap_delete *xlrec = (xl_heap_delete *) rec;
 
-		appendStringInfo(buf, "off %u ", xlrec->offnum);
+		appendStringInfo(buf, "off %u flags 0x%02X ",
+						 xlrec->offnum,
+						 xlrec->flags);
 		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP_UPDATE)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		appendStringInfo(buf, "off %u xmax %u ",
+		appendStringInfo(buf, "off %u xmax %u flags 0x%02X ",
 						 xlrec->old_offnum,
-						 xlrec->old_xmax);
+						 xlrec->old_xmax,
+						 xlrec->flags);
 		out_infobits(buf, xlrec->old_infobits_set);
 		appendStringInfo(buf, "; new off %u xmax %u",
 						 xlrec->new_offnum,
@@ -67,9 +71,10 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		appendStringInfo(buf, "off %u xmax %u ",
+		appendStringInfo(buf, "off %u xmax %u flags 0x%02X ",
 						 xlrec->old_offnum,
-						 xlrec->old_xmax);
+						 xlrec->old_xmax,
+						 xlrec->flags);
 		out_infobits(buf, xlrec->old_infobits_set);
 		appendStringInfo(buf, "; new off %u xmax %u",
 						 xlrec->new_offnum,
@@ -98,7 +103,7 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
 
-		appendStringInfo(buf, "off %u: xid %u: flags %u ",
+		appendStringInfo(buf, "off %u: xid %u: flags 0x%02X ",
 						 xlrec->offnum, xlrec->locking_xid, xlrec->flags);
 		out_infobits(buf, xlrec->infobits_set);
 	}
@@ -139,20 +144,21 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_visible *xlrec = (xl_heap_visible *) rec;
 
-		appendStringInfo(buf, "cutoff xid %u flags %d",
+		appendStringInfo(buf, "cutoff xid %u flags 0x%02X",
 						 xlrec->cutoff_xid, xlrec->flags);
 	}
 	else if (info == XLOG_HEAP2_MULTI_INSERT)
 	{
 		xl_heap_multi_insert *xlrec = (xl_heap_multi_insert *) rec;
 
-		appendStringInfo(buf, "%d tuples", xlrec->ntuples);
+		appendStringInfo(buf, "%d tuples flags 0x%02X", xlrec->ntuples,
+						 xlrec->flags);
 	}
 	else if (info == XLOG_HEAP2_LOCK_UPDATED)
 	{
 		xl_heap_lock_updated *xlrec = (xl_heap_lock_updated *) rec;
 
-		appendStringInfo(buf, "off %u: xmax %u: flags %u ",
+		appendStringInfo(buf, "off %u: xmax %u: flags 0x%02X ",
 						 xlrec->offnum, xlrec->xmax, xlrec->flags);
 		out_infobits(buf, xlrec->infobits_set);
 	}
