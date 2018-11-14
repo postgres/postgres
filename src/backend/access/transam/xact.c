@@ -1809,19 +1809,37 @@ StartTransaction(void)
 
 	Assert(XactTopTransactionId == InvalidTransactionId);
 
-	/*
-	 * check the current transaction state
-	 */
-	if (s->state != TRANS_DEFAULT)
-		elog(WARNING, "StartTransaction while in %s state",
-			 TransStateAsString(s->state));
+	/* check the current transaction state */
+	Assert(s->state == TRANS_DEFAULT);
 
 	/*
-	 * set the current transaction state information appropriately during
-	 * start processing
+	 * Set the current transaction state information appropriately during
+	 * start processing.  Note that once the transaction status is switched
+	 * this process cannot fail until the user ID and the security context
+	 * flags are fetched below.
 	 */
 	s->state = TRANS_START;
 	s->transactionId = InvalidTransactionId;	/* until assigned */
+
+	/*
+	 * initialize current transaction state fields
+	 *
+	 * note: prevXactReadOnly is not used at the outermost level
+	 */
+	s->nestingLevel = 1;
+	s->gucNestLevel = 1;
+	s->childXids = NULL;
+	s->nChildXids = 0;
+	s->maxChildXids = 0;
+
+	/*
+	 * Once the current user ID and the security context flags are fetched,
+	 * both will be properly reset even if transaction startup fails.
+	 */
+	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
+
+	/* SecurityRestrictionContext should never be set outside a transaction */
+	Assert(s->prevSecContext == 0);
 
 	/*
 	 * Make sure we've reset xact state variables
@@ -1908,20 +1926,6 @@ StartTransaction(void)
 	pgstat_report_xact_timestamp(xactStartTimestamp);
 	/* Mark xactStopTimestamp as unset. */
 	xactStopTimestamp = 0;
-
-	/*
-	 * initialize current transaction state fields
-	 *
-	 * note: prevXactReadOnly is not used at the outermost level
-	 */
-	s->nestingLevel = 1;
-	s->gucNestLevel = 1;
-	s->childXids = NULL;
-	s->nChildXids = 0;
-	s->maxChildXids = 0;
-	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
-	/* SecurityRestrictionContext should never be set outside a transaction */
-	Assert(s->prevSecContext == 0);
 
 	/*
 	 * initialize other subsystems for new transaction
