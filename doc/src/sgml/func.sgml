@@ -7179,16 +7179,25 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          <literal><function>date_trunc(<type>text</type>, <type>timestamp</type>)</function></literal>
         </entry>
         <entry><type>timestamp</type></entry>
-        <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc"/>
+        <entry>Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
         </entry>
         <entry><literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
         <entry><literal>2001-02-16 20:00:00</literal></entry>
        </row>
 
        <row>
+        <entry><literal><function>date_trunc(<type>text</type>, <type>timestamp with time zone</type>, <type>text</type>)</function></literal></entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>Truncate to specified precision in the specified time zone; see <xref linkend="functions-datetime-trunc"/>
+        </entry>
+        <entry><literal>date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney')</literal></entry>
+        <entry><literal>2001-02-16 13:00:00+00</literal></entry>
+       </row>
+
+       <row>
         <entry><literal><function>date_trunc(<type>text</type>, <type>interval</type>)</function></literal></entry>
         <entry><type>interval</type></entry>
-        <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc"/>
+        <entry>Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
         </entry>
         <entry><literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal></entry>
         <entry><literal>2 days 03:00:00</literal></entry>
@@ -8078,17 +8087,19 @@ SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
 
    <para>
 <synopsis>
-date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
+date_trunc(<replaceable>field</replaceable>, <replaceable>source</replaceable> [, <replaceable>time_zone</replaceable> ])
 </synopsis>
     <replaceable>source</replaceable> is a value expression of type
-    <type>timestamp</type> or <type>interval</type>.
+    <type>timestamp</type>, <type>timestamp with time zone</type>,
+    or <type>interval</type>.
     (Values of type <type>date</type> and
     <type>time</type> are cast automatically to <type>timestamp</type> or
     <type>interval</type>, respectively.)
     <replaceable>field</replaceable> selects to which precision to
-    truncate the input value.  The return value is of type
-    <type>timestamp</type> or <type>interval</type>
-    with all fields that are less significant than the
+    truncate the input value.  The return value is likewise of type
+    <type>timestamp</type>, <type>timestamp with time zone</type>,
+    or <type>interval</type>,
+    and it has all fields that are less significant than the
     selected one set to zero (or one, for day and month).
    </para>
 
@@ -8112,13 +8123,39 @@ date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>
    </para>
 
    <para>
-    Examples:
+    When the input value is of type <type>timestamp with time zone</type>,
+    the truncation is performed with respect to a particular time zone;
+    for example, truncation to <literal>day</literal> produces a value that
+    is midnight in that zone.  By default, truncation is done with respect
+    to the current <xref linkend="guc-timezone"/> setting, but the
+    optional <replaceable>time_zone</replaceable> argument can be provided
+    to specify a different time zone.  The time zone name can be specified
+    in any of the ways described in <xref linkend="datatype-timezones"/>.
+   </para>
+
+   <para>
+    A time zone cannot be specified when processing <type>timestamp without
+    time zone</type> or <type>interval</type> inputs.  These are always
+    taken at face value.
+   </para>
+
+   <para>
+    Examples (assuming the local time zone is <literal>America/New_York</literal>):
 <screen>
 SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:00:00</computeroutput>
 
 SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>2001-01-01 00:00:00</computeroutput>
+
+SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00');
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 00:00:00-05</computeroutput>
+
+SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00', 'Australia/Sydney');
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 08:00:00-05</computeroutput>
+
+SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
+<lineannotation>Result: </lineannotation><computeroutput>3 days 02:00:00</computeroutput>
 </screen>
    </para>
   </sect2>

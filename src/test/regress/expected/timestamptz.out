@@ -649,6 +649,24 @@ SELECT '' AS date_trunc_week, date_trunc( 'week', timestamp with time zone '2004
                  | Mon Feb 23 00:00:00 2004 PST
 (1 row)
 
+SELECT '' AS date_trunc_at_tz, date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'Australia/Sydney') as sydney_trunc;  -- zone name
+ date_trunc_at_tz |         sydney_trunc         
+------------------+------------------------------
+                  | Fri Feb 16 05:00:00 2001 PST
+(1 row)
+
+SELECT '' AS date_trunc_at_tz, date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'GMT') as gmt_trunc;  -- fixed-offset abbreviation
+ date_trunc_at_tz |          gmt_trunc           
+------------------+------------------------------
+                  | Thu Feb 15 16:00:00 2001 PST
+(1 row)
+
+SELECT '' AS date_trunc_at_tz, date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'VET') as vet_trunc;  -- variable-offset abbreviation
+ date_trunc_at_tz |          vet_trunc           
+------------------+------------------------------
+                  | Thu Feb 15 20:00:00 2001 PST
+(1 row)
+
 -- Test casting within a BETWEEN qualifier
 SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
   FROM TIMESTAMPTZ_TBL
