@@ -122,7 +122,8 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 					num = PGTYPESnumeric_from_asc(val, NULL);
 					if (!num)
 						break;
-					ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->digits - num->buf + num->ndigits, &offset, &next_offset);
+					if (num->buf)
+						ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->digits - num->buf + num->ndigits, &offset, &next_offset);
 					PGTYPESnumeric_free(num);
 				}
 				break;
@@ -346,11 +347,14 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat ** _sqlda, const PGresult 
 
 					memcpy(sqlda->sqlvar[i].sqldata, num, sizeof(numeric));
 
-					ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->digits - num->buf + num->ndigits, &offset, &next_offset);
-					memcpy((char *) sqlda + offset, num->buf, num->digits - num->buf + num->ndigits);
+					if (num->buf)
+					{
+						ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->digits - num->buf + num->ndigits, &offset, &next_offset);
+						memcpy((char *) sqlda + offset, num->buf, num->digits - num->buf + num->ndigits);
 
-					((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
-					((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+						((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
+						((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+					}
 
 					PGTYPESnumeric_free(num);
 
@@ -532,11 +536,14 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct ** _sqlda, const PGresult 
 
 					memcpy(sqlda->sqlvar[i].sqldata, num, sizeof(numeric));
 
-					ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->digits - num->buf + num->ndigits, &offset, &next_offset);
-					memcpy((char *) sqlda + offset, num->buf, num->digits - num->buf + num->ndigits);
+					if (num->buf)
+					{
+						ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->digits - num->buf + num->ndigits, &offset, &next_offset);
+						memcpy((char *) sqlda + offset, num->buf, num->digits - num->buf + num->ndigits);
 
-					((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
-					((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+						((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
+						((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+					}
 
 					PGTYPESnumeric_free(num);
 
