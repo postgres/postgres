@@ -2525,8 +2525,16 @@ InitProcessGlobals(void)
 	random_start_time.tv_usec = 0;
 #endif
 
-	/* Set a different seed for random() in every backend. */
-	srandom((unsigned int) MyProcPid ^ (unsigned int) MyStartTimestamp);
+	/*
+	 * Set a different seed for random() in every backend.  Since PIDs and
+	 * timestamps tend to change more frequently in their least significant
+	 * bits, shift the timestamp left to allow a larger total number of seeds
+	 * in a given time period.  Since that would leave only 20 bits of the
+	 * timestamp that cycle every ~1 second, also mix in some higher bits.
+	 */
+	srandom(((unsigned int) MyProcPid) ^
+			((unsigned int) MyStartTimestamp << 12) ^
+			((unsigned int) MyStartTimestamp >> 20));
 }
 
 
