@@ -56,10 +56,14 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
 	HeapTuple	tuple;
 	shm_mq_result result;
+	bool		should_free;
 
 	/* Send the tuple itself. */
-	tuple = ExecMaterializeSlot(slot);
+	tuple = ExecFetchSlotHeapTuple(slot, true, &should_free);
 	result = shm_mq_send(tqueue->queue, tuple->t_len, tuple->t_data, false);
+
+	if (should_free)
+		heap_freetuple(tuple);
 
 	/* Check for failure. */
 	if (result == SHM_MQ_DETACHED)

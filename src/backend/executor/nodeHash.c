@@ -1590,7 +1590,8 @@ ExecHashTableInsert(HashJoinTable hashtable,
 					TupleTableSlot *slot,
 					uint32 hashvalue)
 {
-	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot);
+	bool		shouldFree;
+	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
 	int			bucketno;
 	int			batchno;
 
@@ -1664,6 +1665,9 @@ ExecHashTableInsert(HashJoinTable hashtable,
 							  hashvalue,
 							  &hashtable->innerBatchFile[batchno]);
 	}
+
+	if (shouldFree)
+		heap_free_minimal_tuple(tuple);
 }
 
 /*
@@ -1675,7 +1679,8 @@ ExecParallelHashTableInsert(HashJoinTable hashtable,
 							TupleTableSlot *slot,
 							uint32 hashvalue)
 {
-	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot);
+	bool		shouldFree;
+	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
 	dsa_pointer shared;
 	int			bucketno;
 	int			batchno;
@@ -1723,6 +1728,9 @@ retry:
 					 tuple);
 	}
 	++hashtable->batches[batchno].ntuples;
+
+	if (shouldFree)
+		heap_free_minimal_tuple(tuple);
 }
 
 /*
@@ -1736,7 +1744,8 @@ ExecParallelHashTableInsertCurrentBatch(HashJoinTable hashtable,
 										TupleTableSlot *slot,
 										uint32 hashvalue)
 {
-	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot);
+	bool		shouldFree;
+	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
 	HashJoinTuple hashTuple;
 	dsa_pointer shared;
 	int			batchno;
@@ -1752,6 +1761,9 @@ ExecParallelHashTableInsertCurrentBatch(HashJoinTable hashtable,
 	HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(hashTuple));
 	ExecParallelHashPushTuple(&hashtable->buckets.shared[bucketno],
 							  hashTuple, shared);
+
+	if (shouldFree)
+		heap_free_minimal_tuple(tuple);
 }
 
 /*
@@ -2391,7 +2403,8 @@ ExecHashSkewTableInsert(HashJoinTable hashtable,
 						uint32 hashvalue,
 						int bucketNumber)
 {
-	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot);
+	bool		shouldFree;
+	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
 	HashJoinTuple hashTuple;
 	int			hashTupleSize;
 
@@ -2419,6 +2432,9 @@ ExecHashSkewTableInsert(HashJoinTable hashtable,
 	/* Check we are not over the total spaceAllowed, either */
 	if (hashtable->spaceUsed > hashtable->spaceAllowed)
 		ExecHashIncreaseNumBatches(hashtable);
+
+	if (shouldFree)
+		heap_free_minimal_tuple(tuple);
 }
 
 /*

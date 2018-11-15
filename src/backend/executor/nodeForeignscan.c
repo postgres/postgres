@@ -62,7 +62,7 @@ ForeignNext(ForeignScanState *node)
 	 */
 	if (plan->fsSystemCol && !TupIsNull(slot))
 	{
-		HeapTuple	tup = ExecMaterializeSlot(slot);
+		HeapTuple	tup = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 		tup->t_tableOid = RelationGetRelid(node->ss.ss_currentRelation);
 	}

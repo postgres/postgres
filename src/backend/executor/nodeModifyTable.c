@@ -175,7 +175,7 @@ ExecProcessReturning(ResultRelInfo *resultRelInfo,
 		 * initialize t_tableOid before evaluating them.
 		 */
 		Assert(!TupIsNull(econtext->ecxt_scantuple));
-		tuple = ExecMaterializeSlot(econtext->ecxt_scantuple);
+		tuple = ExecFetchSlotHeapTuple(econtext->ecxt_scantuple, true, NULL);
 		tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 	}
 	econtext->ecxt_outertuple = planSlot;
@@ -274,7 +274,7 @@ ExecInsert(ModifyTableState *mtstate,
 	 * get the heap tuple out of the tuple table slot, making sure we have a
 	 * writable copy
 	 */
-	tuple = ExecMaterializeSlot(slot);
+	tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 	/*
 	 * get information on the (current) result relation
@@ -315,7 +315,7 @@ ExecInsert(ModifyTableState *mtstate,
 			return NULL;
 
 		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 	}
 
 	/* INSTEAD OF ROW INSERT Triggers */
@@ -328,7 +328,7 @@ ExecInsert(ModifyTableState *mtstate,
 			return NULL;
 
 		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 		newId = InvalidOid;
 	}
@@ -346,7 +346,7 @@ ExecInsert(ModifyTableState *mtstate,
 			return NULL;
 
 		/* FDW might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
@@ -695,7 +695,7 @@ ExecDelete(ModifyTableState *mtstate,
 		 */
 		if (TTS_EMPTY(slot))
 			ExecStoreAllNullTuple(slot);
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 	}
 	else
@@ -953,7 +953,7 @@ ExecUpdate(ModifyTableState *mtstate,
 	 * get the heap tuple out of the tuple table slot, making sure we have a
 	 * writable copy
 	 */
-	tuple = ExecMaterializeSlot(slot);
+	tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 	/*
 	 * get information on the (current) result relation
@@ -972,7 +972,7 @@ ExecUpdate(ModifyTableState *mtstate,
 			return NULL;
 
 		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 	}
 
 	/* INSTEAD OF ROW UPDATE Triggers */
@@ -986,7 +986,7 @@ ExecUpdate(ModifyTableState *mtstate,
 			return NULL;
 
 		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
@@ -1002,7 +1002,7 @@ ExecUpdate(ModifyTableState *mtstate,
 			return NULL;
 
 		/* FDW might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
@@ -1129,7 +1129,7 @@ lreplace:;
 				else
 				{
 					slot = ExecFilterJunk(resultRelInfo->ri_junkFilter, epqslot);
-					tuple = ExecMaterializeSlot(slot);
+					tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 					goto lreplace;
 				}
 			}
@@ -1268,7 +1268,7 @@ lreplace:;
 					{
 						*tupleid = hufd.ctid;
 						slot = ExecFilterJunk(resultRelInfo->ri_junkFilter, epqslot);
-						tuple = ExecMaterializeSlot(slot);
+						tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 						goto lreplace;
 					}
 				}
@@ -1739,7 +1739,7 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	estate->es_result_relation_info = partrel;
 
 	/* Get the heap tuple out of the given slot. */
-	tuple = ExecMaterializeSlot(slot);
+	tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 	/*
 	 * If we're capturing transition tuples, we might need to convert from the

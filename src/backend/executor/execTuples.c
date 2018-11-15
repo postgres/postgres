@@ -676,29 +676,37 @@ ExecCopySlotMinimalTuple(TupleTableSlot *slot)
 								   slot->tts_isnull);
 }
 
-/* --------------------------------
- *		ExecFetchSlotTuple
- *			Fetch the slot's regular physical tuple.
+/*
+ * ExecFetchSlotHeapTuple - fetch HeapTuple representing the slot's content
  *
- *		If the slot contains a virtual tuple, we convert it to physical
- *		form.  The slot retains ownership of the physical tuple.
- *		If it contains a minimal tuple we convert to regular form and store
- *		that in addition to the minimal tuple (not instead of, because
- *		callers may hold pointers to Datums within the minimal tuple).
+ * The returned HeapTuple represents the slot's content as closely as
+ * possible.
  *
- * The main difference between this and ExecMaterializeSlot() is that this
- * does not guarantee that the contained tuple is local storage.
- * Hence, the result must be treated as read-only.
- * --------------------------------
+ * If materialize is true, the contents of the slots will be made independent
+ * from the underlying storage (i.e. all buffer pins are release, memory is
+ * allocated in the slot's context).
+ *
+ * If shouldFree is not-NULL it'll be set to true if the returned tuple has
+ * been allocated in the calling memory context, and must be freed by the
+ * caller (via explicit pfree() or a memory context reset).
+ *
+ * NB: If materialize is true, modifications of the returned tuple are
+ * allowed. But it depends on the type of the slot whether such modifications
+ * will also affect the slot's contents. While that is not the nicest
+ * behaviour, all such modifcations are in the process of being removed.
  */
 HeapTuple
-ExecFetchSlotTuple(TupleTableSlot *slot)
+ExecFetchSlotHeapTuple(TupleTableSlot *slot, bool materialize, bool *shouldFree)
 {
 	/*
 	 * sanity checks
 	 */
 	Assert(slot != NULL);
 	Assert(!TTS_EMPTY(slot));
+
+	/* will be used in the near future */
+	if (shouldFree)
+		*shouldFree = false;
 
 	/*
 	 * If we have a regular physical tuple then just return it.
@@ -722,7 +730,9 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 	/*
 	 * Otherwise materialize the slot...
 	 */
-	return ExecMaterializeSlot(slot);
+	ExecMaterializeSlot(slot);
+
+	return slot->tts_tuple;
 }
 
 /* --------------------------------
@@ -739,7 +749,7 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
  * --------------------------------
  */
 MinimalTuple
-ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
+ExecFetchSlotMinimalTuple(TupleTableSlot *slot, bool *shouldFree)
 {
 	MemoryContext oldContext;
 
@@ -749,6 +759,9 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
 	Assert(slot != NULL);
 	Assert(!TTS_EMPTY(slot));
 
+	/* will be used in the near future */
+	if (shouldFree)
+		*shouldFree = false;
 
 	/*
 	 * If we have a minimal physical tuple (local or not) then just return it.
@@ -779,40 +792,44 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
 }
 
 /* --------------------------------
- *		ExecFetchSlotTupleDatum
+ *		ExecFetchSlotHeapTupleDatum
  *			Fetch the slot's tuple as a composite-type Datum.
  *
  *		The result is always freshly palloc'd in the caller's memory context.
  * --------------------------------
  */
 Datum
-ExecFetchSlotTupleDatum(TupleTableSlot *slot)
+ExecFetchSlotHeapTupleDatum(TupleTableSlot *slot)
 {
 	HeapTuple	tup;
 	TupleDesc	tupdesc;
+	bool		shouldFree;
+	Datum		ret;
 
 	/* Fetch slot's contents in regular-physical-tuple form */
-	tup = ExecFetchSlotTuple(slot);
+	tup = ExecFetchSlotHeapTuple(slot, false, &shouldFree);
 	tupdesc = slot->tts_tupleDescriptor;
 
 	/* Convert to Datum form */
-	return heap_copy_tuple_as_datum(tup, tupdesc);
+	ret = heap_copy_tuple_as_datum(tup, tupdesc);
+
+	if (shouldFree)
+		pfree(tup);
+
+	return ret;
 }
 
-/* --------------------------------
- *		ExecMaterializeSlot
- *			Force a slot into the "materialized" state.
+/* ExecMaterializeSlot - force a slot into the "materialized" state.
  *
- *		This causes the slot's tuple to be a local copy not dependent on
- *		any external storage.  A pointer to the contained tuple is returned.
+ * This causes the slot's tuple to be a local copy not dependent on any
+ * external storage (i.e. pointing into a Buffer, or having allocations in
+ * another memory context).
  *
- *		A typical use for this operation is to prepare a computed tuple
- *		for being stored on disk.  The original data may or may not be
- *		virtual, but in any case we need a private copy for heap_insert
- *		to scribble on.
- * --------------------------------
+ * A typical use for this operation is to prepare a computed tuple for being
+ * stored on disk.  The original data may or may not be virtual, but in any
+ * case we need a private copy for heap_insert to scribble on.
  */
-HeapTuple
+void
 ExecMaterializeSlot(TupleTableSlot *slot)
 {
 	MemoryContext oldContext;
@@ -828,7 +845,7 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	 * nothing to do.
 	 */
 	if (slot->tts_tuple && TTS_SHOULDFREE(slot))
-		return slot->tts_tuple;
+		return;
 
 	/*
 	 * Otherwise, copy or build a physical tuple, and store it into the slot.
@@ -868,8 +885,6 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	 */
 	if (!TTS_SHOULDFREEMIN(slot))
 		slot->tts_mintuple = NULL;
-
-	return slot->tts_tuple;
 }
 
 /* --------------------------------

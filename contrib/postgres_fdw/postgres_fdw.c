@@ -3947,11 +3947,12 @@ apply_returning_filter(PgFdwDirectModifyState *dmstate,
 	ExecStoreVirtualTuple(resultSlot);
 
 	/*
-	 * If we have any system columns to return, install them.
+	 * If we have any system columns to return, materialize a heap tuple in the
+	 * slot from column values set above and install system columns in that tuple.
 	 */
 	if (dmstate->hasSystemCols)
 	{
-		HeapTuple	resultTup = ExecMaterializeSlot(resultSlot);
+		HeapTuple	resultTup = ExecFetchSlotHeapTuple(resultSlot, true, NULL);
 
 		/* ctid */
 		if (dmstate->ctidAttno)

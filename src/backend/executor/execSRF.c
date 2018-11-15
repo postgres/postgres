@@ -521,7 +521,7 @@ restart:
 			{
 				/* We must return the whole tuple as a Datum. */
 				*isNull = false;
-				return ExecFetchSlotTupleDatum(fcache->funcResultSlot);
+				return ExecFetchSlotHeapTupleDatum(fcache->funcResultSlot);
 			}
 			else
 			{

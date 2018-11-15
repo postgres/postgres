@@ -484,7 +484,7 @@ transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 	 * get the heap tuple out of the tuple table slot, making sure we have a
 	 * writable copy
 	 */
-	tuple = ExecMaterializeSlot(slot);
+	tuple = ExecCopySlotTuple(slot);
 
 	heap_insert(myState->transientrel,
 				tuple,
@@ -493,6 +493,9 @@ transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 				myState->bistate);
 
 	/* We know this is a newly created relation, so there are no indexes */
+
+	/* Free the copied tuple. */
+	heap_freetuple(tuple);
 
 	return true;
 }

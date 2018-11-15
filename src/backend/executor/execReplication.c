@@ -418,7 +418,7 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 		/* Materialize slot into a tuple that we can scribble upon. */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 		/* OK, store the tuple and create index entries for it */
 		simple_heap_insert(rel, tuple);
@@ -485,7 +485,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 		/* Materialize slot into a tuple that we can scribble upon. */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 		/* OK, update the tuple and index entries for it */
 		simple_heap_update(rel, &searchslot->tts_tuple->t_self,
