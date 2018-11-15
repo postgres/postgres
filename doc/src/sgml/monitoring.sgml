@@ -804,10 +804,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry><type>text</type></entry>
      <entry>Type of current backend. Possible types are
       <literal>autovacuum launcher</literal>, <literal>autovacuum worker</literal>,
-      <literal>background worker</literal>, <literal>background writer</literal>,
+      <literal>logical replication launcher</literal>,
+      <literal>logical replication worker</literal>,
+      <literal>parallel worker</literal>, <literal>background writer</literal>,
       <literal>client backend</literal>, <literal>checkpointer</literal>,
       <literal>startup</literal>, <literal>walreceiver</literal>,
       <literal>walsender</literal> and <literal>walwriter</literal>.
+      In addition, background workers registered by extensions may have
+      additional types.
      </entry>
     </row>
    </tbody>
