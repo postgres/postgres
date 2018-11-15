@@ -2532,9 +2532,9 @@ InitProcessGlobals(void)
 	 * in a given time period.  Since that would leave only 20 bits of the
 	 * timestamp that cycle every ~1 second, also mix in some higher bits.
 	 */
-	srandom(((unsigned int) MyProcPid) ^
-			((unsigned int) MyStartTimestamp << 12) ^
-			((unsigned int) MyStartTimestamp >> 20));
+	srandom(((uint64) MyProcPid) ^
+			((uint64) MyStartTimestamp << 12) ^
+			((uint64) MyStartTimestamp >> 20));
 }
 
 
