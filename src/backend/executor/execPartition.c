@@ -1596,10 +1596,13 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 /*
  * ExecFindInitialMatchingSubPlans
  *		Identify the set of subplans that cannot be eliminated by initial
- *		pruning (disregarding any pruning constraints involving PARAM_EXEC
- *		Params).  Also re-map the translation matrix which allows conversion
- *		of partition indexes into subplan indexes to account for the unneeded
- *		subplans having been removed.
+ *		pruning, disregarding any pruning constraints involving PARAM_EXEC
+ *		Params.
+ *
+ * If additional pruning passes will be required (because of PARAM_EXEC
+ * Params), we must also update the translation data that allows conversion
+ * of partition indexes into subplan indexes to account for the unneeded
+ * subplans having been removed.
  *
  * Must only be called once per 'prunestate', and only if initial pruning
  * is required.
@@ -1613,17 +1616,18 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 	MemoryContext oldcontext;
 	int			i;
 
+	/* Caller error if we get here without do_initial_prune */
 	Assert(prunestate->do_initial_prune);
 
 	/*
 	 * Switch to a temp context to avoid leaking memory in the executor's
-	 * memory context.
+	 * query-lifespan memory context.
 	 */
 	oldcontext = MemoryContextSwitchTo(prunestate->prune_context);
 
 	/*
-	 * For each hierarchy, do the pruning tests, and add deletable subplans'
-	 * indexes to "result".
+	 * For each hierarchy, do the pruning tests, and add nondeletable
+	 * subplans' indexes to "result".
 	 */
 	for (i = 0; i < prunestate->num_partprunedata; i++)
 	{
@@ -1640,22 +1644,27 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 		ResetExprContext(pprune->context.planstate->ps_ExprContext);
 	}
 
+	/* Add in any subplans that partition pruning didn't account for */
+	result = bms_add_members(result, prunestate->other_subplans);
+
 	MemoryContextSwitchTo(oldcontext);
 
 	/* Copy result out of the temp context before we reset it */
 	result = bms_copy(result);
 
-	/* Add in any subplans that partition pruning didn't account for */
-	result = bms_add_members(result, prunestate->other_subplans);
-
 	MemoryContextReset(prunestate->prune_context);
 
 	/*
-	 * If any subplans were pruned, we must re-sequence the subplan indexes so
-	 * that ExecFindMatchingSubPlans properly returns the indexes from the
-	 * subplans which will remain after execution of this function.
+	 * If exec-time pruning is required and we pruned subplans above, then we
+	 * must re-sequence the subplan indexes so that ExecFindMatchingSubPlans
+	 * properly returns the indexes from the subplans which will remain after
+	 * execution of this function.
+	 *
+	 * We can safely skip this when !do_exec_prune, even though that leaves
+	 * invalid data in prunestate, because that data won't be consulted again
+	 * (cf initial Assert in ExecFindMatchingSubPlans).
 	 */
-	if (bms_num_members(result) < nsubplans)
+	if (prunestate->do_exec_prune && bms_num_members(result) < nsubplans)
 	{
 		int		   *new_subplan_indexes;
 		Bitmapset  *new_other_subplans;
@@ -1664,25 +1673,17 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 
 		/*
 		 * First we must build a temporary array which maps old subplan
-		 * indexes to new ones.  While we're at it, also recompute the
-		 * other_subplans set, since indexes in it may change.
+		 * indexes to new ones.  For convenience of initialization, we use
+		 * 1-based indexes in this array and leave pruned items as 0.
 		 */
-		new_subplan_indexes = (int *) palloc(sizeof(int) * nsubplans);
-		new_other_subplans = NULL;
-		newidx = 0;
-		for (i = 0; i < nsubplans; i++)
+		new_subplan_indexes = (int *) palloc0(sizeof(int) * nsubplans);
+		newidx = 1;
+		i = -1;
+		while ((i = bms_next_member(result, i)) >= 0)
 		{
-			if (bms_is_member(i, result))
-				new_subplan_indexes[i] = newidx++;
-			else
-				new_subplan_indexes[i] = -1;	/* Newly pruned */
-
-			if (bms_is_member(i, prunestate->other_subplans))
-				new_other_subplans = bms_add_member(new_other_subplans,
-													new_subplan_indexes[i]);
+			Assert(i < nsubplans);
+			new_subplan_indexes[i] = newidx++;
 		}
-		bms_free(prunestate->other_subplans);
-		prunestate->other_subplans = new_other_subplans;
 
 		/*
 		 * Now we can update each PartitionedRelPruneInfo's subplan_map with
@@ -1699,7 +1700,7 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 			 * order so that we determine present_parts for the lowest-level
 			 * partitioned tables first.  This way we can tell whether a
 			 * sub-partitioned table's partitions were entirely pruned so we
-			 * can exclude that from 'present_parts'.
+			 * can exclude it from the current level's present_parts.
 			 */
 			for (j = prunedata->num_partrelprunedata - 1; j >= 0; j--)
 			{
@@ -1728,9 +1729,9 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 					if (oldidx >= 0)
 					{
 						Assert(oldidx < nsubplans);
-						pprune->subplan_map[k] = new_subplan_indexes[oldidx];
+						pprune->subplan_map[k] = new_subplan_indexes[oldidx] - 1;
 
-						if (new_subplan_indexes[oldidx] >= 0)
+						if (new_subplan_indexes[oldidx] > 0)
 							pprune->present_parts =
 								bms_add_member(pprune->present_parts, k);
 					}
@@ -1747,6 +1748,19 @@ ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate, int nsubplans)
 				}
 			}
 		}
+
+		/*
+		 * We must also recompute the other_subplans set, since indexes in it
+		 * may change.
+		 */
+		new_other_subplans = NULL;
+		i = -1;
+		while ((i = bms_next_member(prunestate->other_subplans, i)) >= 0)
+			new_other_subplans = bms_add_member(new_other_subplans,
+												new_subplan_indexes[i] - 1);
+
+		bms_free(prunestate->other_subplans);
+		prunestate->other_subplans = new_other_subplans;
 
 		pfree(new_subplan_indexes);
 	}
@@ -1769,14 +1783,21 @@ ExecFindMatchingSubPlans(PartitionPruneState *prunestate)
 	int			i;
 
 	/*
+	 * If !do_exec_prune, we've got problems because
+	 * ExecFindInitialMatchingSubPlans will not have bothered to update
+	 * prunestate for whatever pruning it did.
+	 */
+	Assert(prunestate->do_exec_prune);
+
+	/*
 	 * Switch to a temp context to avoid leaking memory in the executor's
-	 * memory context.
+	 * query-lifespan memory context.
 	 */
 	oldcontext = MemoryContextSwitchTo(prunestate->prune_context);
 
 	/*
-	 * For each hierarchy, do the pruning tests, and add deletable subplans'
-	 * indexes to "result".
+	 * For each hierarchy, do the pruning tests, and add nondeletable
+	 * subplans' indexes to "result".
 	 */
 	for (i = 0; i < prunestate->num_partprunedata; i++)
 	{
@@ -1792,13 +1813,13 @@ ExecFindMatchingSubPlans(PartitionPruneState *prunestate)
 		ResetExprContext(pprune->context.planstate->ps_ExprContext);
 	}
 
+	/* Add in any subplans that partition pruning didn't account for */
+	result = bms_add_members(result, prunestate->other_subplans);
+
 	MemoryContextSwitchTo(oldcontext);
 
 	/* Copy result out of the temp context before we reset it */
 	result = bms_copy(result);
-
-	/* Add in any subplans that partition pruning didn't account for */
-	result = bms_add_members(result, prunestate->other_subplans);
 
 	MemoryContextReset(prunestate->prune_context);
 
