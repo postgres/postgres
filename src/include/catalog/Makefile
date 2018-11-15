@@ -20,12 +20,12 @@ catalogdir = $(top_srcdir)/src/backend/catalog
 # catalog data files in our standard format.  This includes collapsing
 # out any entries that are redundant with a BKI_DEFAULT annotation.
 reformat-dat-files:
-	$(PERL) -I $(catalogdir) reformat_dat_file.pl pg_*.dat
+	$(PERL) -I $(catalogdir) $(srcdir)/reformat_dat_file.pl -o $(srcdir) $(srcdir)/pg_*.dat
 
 # 'make expand-dat-files' is a convenience target for expanding out all
 # default values in the catalog data files.  This should be run before
 # altering or removing any BKI_DEFAULT annotation.
 expand-dat-files:
-	$(PERL) -I $(catalogdir) reformat_dat_file.pl pg_*.dat --full-tuples
+	$(PERL) -I $(catalogdir) $(srcdir)/reformat_dat_file.pl -o $(srcdir) $(srcdir)/pg_*.dat --full-tuples
 
 .PHONY: reformat-dat-files expand-dat-files
