@@ -3,6 +3,16 @@
  * geo_ops.c
  *	  2D geometric operations
  *
+ * This module implements the geometric functions and operators.  The
+ * geometric types are (from simple to more complicated):
+ *
+ * - point
+ * - line
+ * - line segment
+ * - box
+ * - circle
+ * - polygon
+ *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -25,6 +35,34 @@
 #include "utils/fmgrprotos.h"
 #include "utils/geo_decls.h"
 
+/*
+ * * Type constructors have this form:
+ *   void type_construct(Type *result, ...);
+ *
+ * * Operators commonly have signatures such as
+ *   void type1_operator_type2(Type *result, Type1 *obj1, Type2 *obj2);
+ *
+ * Common operators are:
+ * * Intersection point:
+ *   bool type1_interpt_type2(Point *result, Type1 *obj1, Type2 *obj2);
+ *		Return whether the two objects intersect. If *result is not NULL,
+ *		it is set to the intersection point.
+ *
+ * * Containment:
+ *   bool type1_contain_type2(Type1 *obj1, Type2 *obj2);
+ *		Return whether obj1 contains obj2.
+ *   bool type1_contain_type2(Type1 *contains_obj, Type1 *contained_obj);
+ *		Return whether obj1 contains obj2 (used when types are the same)
+ *
+ * * Distance of closest point in or on obj1 to obj2:
+ *   float8 type1_closept_type2(Point *result, Type1 *obj1, Type2 *obj2);
+ *		Returns the shortest distance between two objects.  If *result is not
+ *		NULL, it is set to the closest point in or on obj1 to obj2.
+ *
+ * These functions may be used to implement multiple SQL-level operators.  For
+ * example, determining whether two lines are parallel is done by checking
+ * whether they don't intersect.
+ */
 
 /*
  * Internal routines
@@ -64,7 +102,7 @@ static int	lseg_crossing(float8 x, float8 y, float8 px, float8 py);
 static bool	lseg_contain_point(LSEG *lseg, Point *point);
 static float8 lseg_closept_point(Point *result, LSEG *lseg, Point *pt);
 static float8 lseg_closept_line(Point *result, LSEG *lseg, LINE *line);
-static float8 lseg_closept_lseg(Point *result, LSEG *l1, LSEG *l2);
+static float8 lseg_closept_lseg(Point *result, LSEG *on_lseg, LSEG *to_lseg);
 
 /* Routines for boxes */
 static inline void box_construct(BOX *result, Point *pt1, Point *pt2);
@@ -74,7 +112,7 @@ static float8 box_ar(BOX *box);
 static float8 box_ht(BOX *box);
 static float8 box_wd(BOX *box);
 static bool box_contain_point(BOX *box, Point *point);
-static bool box_contain_box(BOX *box1, BOX *box2);
+static bool box_contain_box(BOX *contains_box, BOX *contained_box);
 static bool box_contain_lseg(BOX *box, LSEG *lseg);
 static bool box_interpt_lseg(Point *result, BOX *box, LSEG *lseg);
 static float8 box_closept_point(Point *result, BOX *box, Point *point);
@@ -87,7 +125,7 @@ static float8 circle_ar(CIRCLE *circle);
 static void make_bound_box(POLYGON *poly);
 static void poly_to_circle(CIRCLE *result, POLYGON *poly);
 static bool lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start);
-static bool poly_contain_poly(POLYGON *polya, POLYGON *polyb);
+static bool poly_contain_poly(POLYGON *contains_poly, POLYGON *contained_poly);
 static bool plist_same(int npts, Point *p1, Point *p2);
 static float8 dist_ppoly_internal(Point *pt, POLYGON *poly);
 
@@ -648,15 +686,15 @@ box_contain(PG_FUNCTION_ARGS)
 }
 
 /*
- * Check whether the box is in the box or on its border
+ * Check whether the second box is in the first box or on its border
  */
 static bool
-box_contain_box(BOX *box1, BOX *box2)
+box_contain_box(BOX *contains_box, BOX *contained_box)
 {
-	return FPge(box1->high.x, box2->high.x) &&
-		   FPle(box1->low.x, box2->low.x) &&
-		   FPge(box1->high.y, box2->high.y) &&
-		   FPle(box1->low.y, box2->low.y);
+	return FPge(contains_box->high.x, contained_box->high.x) &&
+		   FPle(contains_box->low.x, contained_box->low.x) &&
+		   FPge(contains_box->high.y, contained_box->high.y) &&
+		   FPle(contains_box->low.y, contained_box->low.y);
 }
 
 
@@ -1223,9 +1261,8 @@ line_interpt(PG_FUNCTION_ARGS)
 /*
  * Internal version of line_interpt
  *
- * This returns true if two lines intersect (they do, if they are not
- * parallel), false if they do not.  This also sets the intersection point
- * to *result, if it is not NULL.
+ * Return whether two lines intersect. If *result is not NULL, it is set to
+ * the intersection point.
  *
  * NOTE: If the lines are identical then we will find they are parallel
  * and report "no intersection".  This is a little weird, but since
@@ -2244,10 +2281,9 @@ lseg_center(PG_FUNCTION_ARGS)
 
 
 /*
- *		Find the intersection point of two segments (if any).
+ * Return whether the two segments intersect. If *result is not NULL,
+ * it is set to the intersection point.
  *
- * This returns true if two line segments intersect, false if they do not.
- * This also sets the intersection point to *result, if it is not NULL.
  * This function is almost perfectly symmetric, even though it doesn't look
  * like it.  See lseg_interpt_line() for the other half of it.
  */
@@ -2507,11 +2543,8 @@ dist_ppoly_internal(Point *pt, POLYGON *poly)
  *-------------------------------------------------------------------*/
 
 /*
- * Check if the line segment intersects with the line
- *
- * This returns true if line segment intersects with line, false if they
- * do not.  This also sets the intersection point to *result, if it is not
- * NULL.
+ * Return whether the line segment intersect with the line. If *result is not
+ * NULL, it is set to the intersection point.
  */
 static bool
 lseg_interpt_line(Point *result, LSEG *lseg, LINE *line)
@@ -2534,21 +2567,20 @@ lseg_interpt_line(Point *result, LSEG *lseg, LINE *line)
 	 */
 	if (!lseg_contain_point(lseg, &interpt))
 		return false;
-
-	if (result == NULL)
-		return true;
-
-	/*
-	 * If there is an intersection, then check explicitly for matching
-	 * endpoints since there may be rounding effects with annoying LSB
-	 * residue.
-	 */
-	if (point_eq_point(&lseg->p[0], &interpt))
-		*result = lseg->p[0];
-	else if (point_eq_point(&lseg->p[1], &interpt))
-		*result = lseg->p[1];
-	else
-		*result = interpt;
+	if (result != NULL)
+	{
+		/*
+		 * If there is an intersection, then check explicitly for matching
+		 * endpoints since there may be rounding effects with annoying LSB
+		 * residue.
+		 */
+		if (point_eq_point(&lseg->p[0], &interpt))
+			*result = lseg->p[0];
+		else if (point_eq_point(&lseg->p[1], &interpt))
+			*result = lseg->p[1];
+		else
+			*result = interpt;
+	}
 
 	return true;
 }
@@ -2559,11 +2591,9 @@ lseg_interpt_line(Point *result, LSEG *lseg, LINE *line)
  *-------------------------------------------------------------------*/
 
 /*
- *		The intersection point of a perpendicular of the line
- *		through the point.
- *
- * This sets the closest point to the *result if it is not NULL and returns
- * the distance to the closest point.
+ * If *result is not NULL, it is set to the intersection point of a
+ * perpendicular of the line through the point.  Returns the distance
+ * of those two points.
  */
 static float8
 line_closept_point(Point *result, LINE *line, Point *point)
@@ -2610,8 +2640,8 @@ close_pl(PG_FUNCTION_ARGS)
 /*
  * Closest point on line segment to specified point.
  *
- * This sets the closest point to the *result if it is not NULL and returns
- * the distance to the closest point.
+ * If *result is not NULL, set it to the closest point on the line segment
+ * to the point.  Returns the distance of the two points.
  */
 static float8
 lseg_closept_point(Point *result, LSEG *lseg, Point *pt)
@@ -2650,27 +2680,24 @@ close_ps(PG_FUNCTION_ARGS)
 
 /*
  * Closest point on line segment to line segment
- *
- * This sets the closest point to the *result if it is not NULL and returns
- * the distance to the closest point.
  */
 static float8
-lseg_closept_lseg(Point *result, LSEG *l1, LSEG *l2)
+lseg_closept_lseg(Point *result, LSEG *on_lseg, LSEG *to_lseg)
 {
 	Point		point;
 	float8		dist,
 				d;
 
 	/* First, we handle the case when the line segments are intersecting. */
-	if (lseg_interpt_lseg(result, l1, l2))
+	if (lseg_interpt_lseg(result, on_lseg, to_lseg))
 		return 0.0;
 
 	/*
 	 * Then, we find the closest points from the endpoints of the second
 	 * line segment, and keep the closest one.
 	 */
-	dist = lseg_closept_point(result, l1, &l2->p[0]);
-	d = lseg_closept_point(&point, l1, &l2->p[1]);
+	dist = lseg_closept_point(result, on_lseg, &to_lseg->p[0]);
+	d = lseg_closept_point(&point, on_lseg, &to_lseg->p[1]);
 	if (float8_lt(d, dist))
 	{
 		dist = d;
@@ -2679,19 +2706,19 @@ lseg_closept_lseg(Point *result, LSEG *l1, LSEG *l2)
 	}
 
 	/* The closest point can still be one of the endpoints, so we test them. */
-	d = lseg_closept_point(NULL, l2, &l1->p[0]);
+	d = lseg_closept_point(NULL, to_lseg, &on_lseg->p[0]);
 	if (float8_lt(d, dist))
 	{
 		dist = d;
 		if (result != NULL)
-			*result = l1->p[0];
+			*result = on_lseg->p[0];
 	}
-	d = lseg_closept_point(NULL, l2, &l1->p[1]);
+	d = lseg_closept_point(NULL, to_lseg, &on_lseg->p[1]);
 	if (float8_lt(d, dist))
 	{
 		dist = d;
 		if (result != NULL)
-			*result = l1->p[1];
+			*result = on_lseg->p[1];
 	}
 
 	return dist;
@@ -2719,8 +2746,8 @@ close_lseg(PG_FUNCTION_ARGS)
 /*
  * Closest point on or in box to specified point.
  *
- * This sets the closest point to the *result if it is not NULL and returns
- * the distance to the closest point.
+ * If *result is not NULL, set it to the closest point on the box to the
+ * given point, and return the distance of the two points.
  */
 static float8
 box_closept_point(Point *result, BOX *box, Point *pt)
@@ -2837,11 +2864,11 @@ close_sl(PG_FUNCTION_ARGS)
 /*
  * Closest point on line segment to line.
  *
- * This sets the closest point to the *result if it is not NULL and returns
- * the distance to the closest point.
+ * Return the distance between the line and the closest point of the line
+ * segment to the line.  If *result is not NULL, set it to that point.
  *
  * NOTE: When the lines are parallel, endpoints of one of the line segment
- * are FPeq(), in presence of NaN or Infinitive coordinates, or perhaps =
+ * are FPeq(), in presence of NaN or Infinite coordinates, or perhaps =
  * even because of simple roundoff issues, there may not be a single closest
  * point.  We are likely to set the result to the second endpoint in these
  * cases.
@@ -2896,8 +2923,8 @@ close_ls(PG_FUNCTION_ARGS)
 /*
  * Closest point on or in box to line segment.
  *
- * This sets the closest point to the *result if it is not NULL and returns
- * the distance to the closest point.
+ * Returns the distance between the closest point on or in the box to
+ * the line segment.  If *result is not NULL, it is set to that point.
  */
 static float8
 box_closept_lseg(Point *result, BOX *box, LSEG *lseg)
@@ -3753,7 +3780,7 @@ touched_lseg_inside_poly(Point *a, Point *b, LSEG *s, POLYGON *poly, int start)
 /*
  * Returns true if segment (a,b) is in polygon, option
  * start is used for optimization - function checks
- * polygon's edges started from start
+ * polygon's edges starting from start
  */
 static bool
 lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
@@ -3821,29 +3848,30 @@ lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 	return res;
 }
 
-/*-----------------------------------------------------------------
- * Determine if polygon A contains polygon B.
- *-----------------------------------------------------------------*/
+/*
+ * Check whether the first polygon contains the second
+ */
 static bool
-poly_contain_poly(POLYGON *polya, POLYGON *polyb)
+poly_contain_poly(POLYGON *contains_poly, POLYGON *contained_poly)
 {
 	int			i;
 	LSEG		s;
 
-	Assert(polya->npts > 0 && polyb->npts > 0);
+	Assert(contains_poly->npts > 0 && contained_poly->npts > 0);
 
 	/*
-	 * Quick check to see if bounding box is contained.
+	 * Quick check to see if contained's bounding box is contained in
+	 * contains' bb.
 	 */
-	if (!box_contain_box(&polya->boundbox, &polyb->boundbox))
+	if (!box_contain_box(&contains_poly->boundbox, &contained_poly->boundbox))
 		return false;
 
-	s.p[0] = polyb->p[polyb->npts - 1];
+	s.p[0] = contained_poly->p[contained_poly->npts - 1];
 
-	for (i = 0; i < polyb->npts; i++)
+	for (i = 0; i < contained_poly->npts; i++)
 	{
-		s.p[1] = polyb->p[i];
-		if (!lseg_inside_poly(s.p, s.p + 1, polya, 0))
+		s.p[1] = contained_poly->p[i];
+		if (!lseg_inside_poly(s.p, s.p + 1, contains_poly, 0))
 			return false;
 		s.p[0] = s.p[1];
 	}
