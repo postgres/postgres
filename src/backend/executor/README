@@ -45,13 +45,21 @@ Plan Trees and State Trees
 
 The plan tree delivered by the planner contains a tree of Plan nodes (struct
 types derived from struct Plan).  During executor startup we build a parallel
-tree of identical structure containing executor state nodes --- every plan
-node type has a corresponding executor state node type.  Each node in the
-state tree has a pointer to its corresponding node in the plan tree, plus
-executor state data as needed to implement that node type.  This arrangement
-allows the plan tree to be completely read-only so far as the executor is
-concerned: all data that is modified during execution is in the state tree.
-Read-only plan trees make life much simpler for plan caching and reuse.
+tree of identical structure containing executor state nodes --- generally,
+every plan node type has a corresponding executor state node type.  Each node
+in the state tree has a pointer to its corresponding node in the plan tree,
+plus executor state data as needed to implement that node type.  This
+arrangement allows the plan tree to be completely read-only so far as the
+executor is concerned: all data that is modified during execution is in the
+state tree.  Read-only plan trees make life much simpler for plan caching and
+reuse.
+
+A corresponding executor state node may not be created during executor startup
+if the executor determines that an entire subplan is not required due to
+execution time partition pruning determining that no matching records will be
+found there.  This currently only occurs for Append and MergeAppend nodes.  In
+this case the non-required subplans are ignored and the executor state's
+subnode array will become out of sequence to the plan's subplan list.
 
 Each Plan node may have expression trees associated with it, to represent
 its target list, qualification conditions, etc.  These trees are also
