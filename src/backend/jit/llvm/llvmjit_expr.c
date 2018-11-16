@@ -276,6 +276,8 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_slot;
 					LLVMBasicBlockRef b_fetch;
 					LLVMValueRef v_nvalid;
+					LLVMValueRef l_jit_deform = NULL;
+					const TupleTableSlotOps *tts_ops = NULL;
 
 					b_fetch = l_bb_before_v(opblocks[i + 1],
 											"op.%d.fetch", i);
@@ -283,40 +285,22 @@ llvm_compile_expr(ExprState *state)
 					if (op->d.fetch.known_desc)
 						desc = op->d.fetch.known_desc;
 
+					if (op->d.fetch.fixed)
+						tts_ops = op->d.fetch.kind;
+
 					if (opcode == EEOP_INNER_FETCHSOME)
-					{
-						PlanState  *is = innerPlanState(parent);
-
 						v_slot = v_innerslot;
-
-						if (!desc &&
-							is &&
-							is->ps_ResultTupleSlot &&
-							TTS_FIXED(is->ps_ResultTupleSlot))
-							desc = is->ps_ResultTupleSlot->tts_tupleDescriptor;
-					}
 					else if (opcode == EEOP_OUTER_FETCHSOME)
-					{
-						PlanState  *os = outerPlanState(parent);
-
 						v_slot = v_outerslot;
-
-						if (!desc &&
-							os &&
-							os->ps_ResultTupleSlot &&
-							TTS_FIXED(os->ps_ResultTupleSlot))
-							desc = os->ps_ResultTupleSlot->tts_tupleDescriptor;
-					}
 					else
-					{
 						v_slot = v_scanslot;
-						if (!desc && parent)
-							desc = parent->scandesc;
-					}
 
 					/*
 					 * Check if all required attributes are available, or
 					 * whether deforming is required.
+					 *
+					 * TODO: skip nvalid check if slot is fixed and known to
+					 * be a virtual slot.
 					 */
 					v_nvalid =
 						l_load_struct_gep(b, v_slot,
@@ -336,19 +320,21 @@ llvm_compile_expr(ExprState *state)
 					 * function specific to tupledesc and the exact number of
 					 * to-be-extracted attributes.
 					 */
-					if (desc && (context->base.flags & PGJIT_DEFORM))
+					if (tts_ops && desc && (context->base.flags & PGJIT_DEFORM))
 					{
-						LLVMValueRef params[1];
-						LLVMValueRef l_jit_deform;
-
 						l_jit_deform =
 							slot_compile_deform(context, desc,
 												op->d.fetch.last_var);
+					}
+
+					if (l_jit_deform)
+					{
+						LLVMValueRef params[1];
+
 						params[0] = v_slot;
 
 						LLVMBuildCall(b, l_jit_deform,
 									  params, lengthof(params), "");
-
 					}
 					else
 					{

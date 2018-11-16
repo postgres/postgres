@@ -65,6 +65,7 @@ static void ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args,
 static void ExecInitExprSlots(ExprState *state, Node *node);
 static void ExecPushExprSlots(ExprState *state, LastAttnumInfo *info);
 static bool get_last_attnums_walker(Node *node, LastAttnumInfo *info);
+static void ExecComputeSlotInfo(ExprState *state, ExprEvalStep *op);
 static void ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable,
 					ExprState *state);
 static void ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
@@ -2288,21 +2289,30 @@ ExecPushExprSlots(ExprState *state, LastAttnumInfo *info)
 	{
 		scratch.opcode = EEOP_INNER_FETCHSOME;
 		scratch.d.fetch.last_var = info->last_inner;
+		scratch.d.fetch.fixed = false;
+		scratch.d.fetch.kind = NULL;
 		scratch.d.fetch.known_desc = NULL;
+		ExecComputeSlotInfo(state, &scratch);
 		ExprEvalPushStep(state, &scratch);
 	}
 	if (info->last_outer > 0)
 	{
 		scratch.opcode = EEOP_OUTER_FETCHSOME;
 		scratch.d.fetch.last_var = info->last_outer;
+		scratch.d.fetch.fixed = false;
+		scratch.d.fetch.kind = NULL;
 		scratch.d.fetch.known_desc = NULL;
+		ExecComputeSlotInfo(state, &scratch);
 		ExprEvalPushStep(state, &scratch);
 	}
 	if (info->last_scan > 0)
 	{
 		scratch.opcode = EEOP_SCAN_FETCHSOME;
 		scratch.d.fetch.last_var = info->last_scan;
+		scratch.d.fetch.fixed = false;
+		scratch.d.fetch.kind = NULL;
 		scratch.d.fetch.known_desc = NULL;
+		ExecComputeSlotInfo(state, &scratch);
 		ExprEvalPushStep(state, &scratch);
 	}
 }
@@ -2353,6 +2363,94 @@ get_last_attnums_walker(Node *node, LastAttnumInfo *info)
 		return false;
 	return expression_tree_walker(node, get_last_attnums_walker,
 								  (void *) info);
+}
+
+/*
+ * Compute additional information for EEOP_*_FETCHSOME ops.
+ *
+ * The goal is to determine whether a slot is 'fixed', that is, every
+ * evaluation of the the expression will have the same type of slot, with an
+ * equivalent descriptor.
+ */
+static void
+ExecComputeSlotInfo(ExprState *state, ExprEvalStep *op)
+{
+	PlanState *parent = state->parent;
+	TupleDesc	desc = NULL;
+	const TupleTableSlotOps *tts_ops = NULL;
+	bool isfixed = false;
+
+	if (op->d.fetch.known_desc != NULL)
+	{
+		desc = op->d.fetch.known_desc;
+		tts_ops = op->d.fetch.kind;
+		isfixed = op->d.fetch.kind != NULL;
+	}
+	else if (!parent)
+	{
+		isfixed = false;
+	}
+	else if (op->opcode == EEOP_INNER_FETCHSOME)
+	{
+		PlanState  *is = innerPlanState(parent);
+
+		if (parent->inneropsset && !parent->inneropsfixed)
+		{
+			isfixed = false;
+		}
+		else if (parent->inneropsset && parent->innerops)
+		{
+			isfixed = true;
+			tts_ops = parent->innerops;
+		}
+		else if (is)
+		{
+			tts_ops = ExecGetResultSlotOps(is, &isfixed);
+			desc = ExecGetResultType(is);
+		}
+	}
+	else if (op->opcode == EEOP_OUTER_FETCHSOME)
+	{
+		PlanState  *os = outerPlanState(parent);
+
+		if (parent->outeropsset && !parent->outeropsfixed)
+		{
+			isfixed = false;
+		}
+		else if (parent->outeropsset && parent->outerops)
+		{
+			isfixed = true;
+			tts_ops = parent->outerops;
+		}
+		else if (os)
+		{
+			tts_ops = ExecGetResultSlotOps(os, &isfixed);
+			desc = ExecGetResultType(os);
+		}
+	}
+	else if (op->opcode == EEOP_SCAN_FETCHSOME)
+	{
+		desc = parent->scandesc;
+
+		if (parent && parent->scanops)
+			tts_ops = parent->scanops;
+
+		if (parent->scanopsset)
+			isfixed = parent->scanopsfixed;
+	}
+
+	if (isfixed && desc != NULL && tts_ops != NULL)
+	{
+		op->d.fetch.fixed = true;
+		op->d.fetch.kind = tts_ops;
+		op->d.fetch.known_desc = desc;
+	}
+	else
+	{
+		op->d.fetch.fixed = false;
+		op->d.fetch.kind = NULL;
+		op->d.fetch.known_desc = NULL;
+	}
 }
 
 /*
@@ -3255,12 +3353,18 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 	/* push deform steps */
 	scratch.opcode = EEOP_INNER_FETCHSOME;
 	scratch.d.fetch.last_var = maxatt;
+	scratch.d.fetch.fixed = false;
 	scratch.d.fetch.known_desc = ldesc;
+	scratch.d.fetch.kind = lops;
+	ExecComputeSlotInfo(state, &scratch);
 	ExprEvalPushStep(state, &scratch);
 
 	scratch.opcode = EEOP_OUTER_FETCHSOME;
 	scratch.d.fetch.last_var = maxatt;
+	scratch.d.fetch.fixed = false;
 	scratch.d.fetch.known_desc = rdesc;
+	scratch.d.fetch.kind = rops;
+	ExecComputeSlotInfo(state, &scratch);
 	ExprEvalPushStep(state, &scratch);
 
 	/*
