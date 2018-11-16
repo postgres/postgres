@@ -1657,9 +1657,6 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 /*
  * expand_partitioned_rtentry
  *		Recursively expand an RTE for a partitioned table.
- *
- * Note that RelationGetPartitionDispatchInfo will expand partitions in the
- * same order as this code.
  */
 static void
 expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,

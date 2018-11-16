@@ -33,6 +33,7 @@
 
 
 struct PlanState;				/* forward references in this file */
+struct PartitionRoutingInfo;
 struct ParallelHashJoinState;
 struct ExecRowMark;
 struct ExprState;
@@ -469,8 +470,8 @@ typedef struct ResultRelInfo
 	/* relation descriptor for root partitioned table */
 	Relation	ri_PartitionRoot;
 
-	/* true if ready for tuple routing */
-	bool		ri_PartitionReadyForRouting;
+	/* Additional information specific to partition tuple routing */
+	struct PartitionRoutingInfo *ri_PartitionInfo;
 } ResultRelInfo;
 
 /* ----------------
@@ -1111,6 +1112,12 @@ typedef struct ModifyTableState
 	TupleTableSlot *mt_existing;	/* slot to store existing target tuple in */
 	List	   *mt_excludedtlist;	/* the excluded pseudo relation's tlist  */
 	TupleTableSlot *mt_conflproj;	/* CONFLICT ... SET ... projection target */
+
+	/*
+	 * Slot for storing tuples in the root partitioned table's rowtype during
+	 * an UPDATE of a partitioned table.
+	 */
+	TupleTableSlot *mt_root_tuple_slot;
 
 	/* Tuple-routing support info */
 	struct PartitionTupleRouting *mt_partition_tuple_routing;

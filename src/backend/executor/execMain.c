@@ -1345,7 +1345,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 
 	resultRelInfo->ri_PartitionCheck = partition_check;
 	resultRelInfo->ri_PartitionRoot = partition_root;
-	resultRelInfo->ri_PartitionReadyForRouting = false;
+	resultRelInfo->ri_PartitionInfo = NULL; /* may be set later */
 }
 
 /*

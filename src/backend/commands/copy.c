@@ -2316,6 +2316,7 @@ CopyFrom(CopyState cstate)
 	bool	   *nulls;
 	ResultRelInfo *resultRelInfo;
 	ResultRelInfo *target_resultRelInfo;
+	ResultRelInfo *prevResultRelInfo = NULL;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	ModifyTableState *mtstate;
 	ExprContext *econtext;
@@ -2331,7 +2332,6 @@ CopyFrom(CopyState cstate)
 	CopyInsertMethod insertMethod;
 	uint64		processed = 0;
 	int			nBufferedTuples = 0;
-	int			prev_leaf_part_index = -1;
 	bool		has_before_insert_row_trig;
 	bool		has_instead_insert_row_trig;
 	bool		leafpart_use_multi_insert = false;
@@ -2515,8 +2515,12 @@ CopyFrom(CopyState cstate)
 	/*
 	 * If there are any triggers with transition tables on the named relation,
 	 * we need to be prepared to capture transition tuples.
+	 *
+	 * Because partition tuple routing would like to know about whether
+	 * transition capture is active, we also set it in mtstate, which is
+	 * passed to ExecFindPartition() below.
 	 */
-	cstate->transition_capture =
+	cstate->transition_capture = mtstate->mt_transition_capture =
 		MakeTransitionCaptureState(cstate->rel->trigdesc,
 								   RelationGetRelid(cstate->rel),
 								   CMD_INSERT);
@@ -2526,18 +2530,7 @@ CopyFrom(CopyState cstate)
 	 * CopyFrom tuple routing.
 	 */
 	if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-	{
 		proute = ExecSetupPartitionTupleRouting(NULL, cstate->rel);
-
-		/*
-		 * If we are capturing transition tuples, they may need to be
-		 * converted from partition format back to partitioned table format
-		 * (this is only ever necessary if a BEFORE trigger modifies the
-		 * tuple).
-		 */
-		if (cstate->transition_capture != NULL)
-			ExecSetupChildParentMapForLeaf(proute);
-	}
 
 	/*
 	 * It's more efficient to prepare a bunch of tuples for insertion, and
@@ -2694,25 +2687,17 @@ CopyFrom(CopyState cstate)
 		/* Determine the partition to heap_insert the tuple into */
 		if (proute)
 		{
-			int			leaf_part_index;
 			TupleConversionMap *map;
 
 			/*
-			 * Away we go ... If we end up not finding a partition after all,
-			 * ExecFindPartition() does not return and errors out instead.
-			 * Otherwise, the returned value is to be used as an index into
-			 * arrays mt_partitions[] and mt_partition_tupconv_maps[] that
-			 * will get us the ResultRelInfo and TupleConversionMap for the
-			 * partition, respectively.
+			 * Attempt to find a partition suitable for this tuple.
+			 * ExecFindPartition() will raise an error if none can be found or
+			 * if the found partition is not suitable for INSERTs.
 			 */
-			leaf_part_index = ExecFindPartition(target_resultRelInfo,
-												proute->partition_dispatch_info,
-												slot,
-												estate);
-			Assert(leaf_part_index >= 0 &&
-				   leaf_part_index < proute->num_partitions);
+			resultRelInfo = ExecFindPartition(mtstate, target_resultRelInfo,
+											  proute, slot, estate);
 
-			if (prev_leaf_part_index != leaf_part_index)
+			if (prevResultRelInfo != resultRelInfo)
 			{
 				/* Check if we can multi-insert into this partition */
 				if (insertMethod == CIM_MULTI_CONDITIONAL)
@@ -2725,12 +2710,9 @@ CopyFrom(CopyState cstate)
 					if (nBufferedTuples > 0)
 					{
 						ExprContext *swapcontext;
-						ResultRelInfo *presultRelInfo;
-
-						presultRelInfo = proute->partitions[prev_leaf_part_index];
 
 						CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-											presultRelInfo, myslot, bistate,
+											prevResultRelInfo, myslot, bistate,
 											nBufferedTuples, bufferedTuples,
 											firstBufferedLineNo);
 						nBufferedTuples = 0;
@@ -2787,21 +2769,6 @@ CopyFrom(CopyState cstate)
 					}
 				}
 
-				/*
-				 * Overwrite resultRelInfo with the corresponding partition's
-				 * one.
-				 */
-				resultRelInfo = proute->partitions[leaf_part_index];
-				if (unlikely(resultRelInfo == NULL))
-				{
-					resultRelInfo = ExecInitPartitionInfo(mtstate,
-														  target_resultRelInfo,
-														  proute, estate,
-														  leaf_part_index);
-					proute->partitions[leaf_part_index] = resultRelInfo;
-					Assert(resultRelInfo != NULL);
-				}
-
 				/* Determine which triggers exist on this partition */
 				has_before_insert_row_trig = (resultRelInfo->ri_TrigDesc &&
 											  resultRelInfo->ri_TrigDesc->trig_insert_before_row);
@@ -2827,7 +2794,7 @@ CopyFrom(CopyState cstate)
 				 * buffer when the partition being inserted into changes.
 				 */
 				ReleaseBulkInsertStatePin(bistate);
-				prev_leaf_part_index = leaf_part_index;
+				prevResultRelInfo = resultRelInfo;
 			}
 
 			/*
@@ -2837,7 +2804,7 @@ CopyFrom(CopyState cstate)
 
 			/*
 			 * If we're capturing transition tuples, we might need to convert
-			 * from the partition rowtype to parent rowtype.
+			 * from the partition rowtype to root rowtype.
 			 */
 			if (cstate->transition_capture != NULL)
 			{
@@ -2850,8 +2817,7 @@ CopyFrom(CopyState cstate)
 					 */
 					cstate->transition_capture->tcs_original_insert_tuple = NULL;
 					cstate->transition_capture->tcs_map =
-						TupConvMapForLeaf(proute, target_resultRelInfo,
-										  leaf_part_index);
+						resultRelInfo->ri_PartitionInfo->pi_PartitionToRootMap;
 				}
 				else
 				{
@@ -2865,18 +2831,18 @@ CopyFrom(CopyState cstate)
 			}
 
 			/*
-			 * We might need to convert from the parent rowtype to the
-			 * partition rowtype.
+			 * We might need to convert from the root rowtype to the partition
+			 * rowtype.
 			 */
-			map = proute->parent_child_tupconv_maps[leaf_part_index];
+			map = resultRelInfo->ri_PartitionInfo->pi_RootToPartitionMap;
 			if (map != NULL)
 			{
 				TupleTableSlot *new_slot;
 				MemoryContext oldcontext;
 
-				Assert(proute->partition_tuple_slots != NULL &&
-					   proute->partition_tuple_slots[leaf_part_index] != NULL);
-				new_slot = proute->partition_tuple_slots[leaf_part_index];
+				new_slot = resultRelInfo->ri_PartitionInfo->pi_PartitionTupleSlot;
+				Assert(new_slot != NULL);
+
 				slot = execute_attr_map_slot(map->attrMap, slot, new_slot);
 
 				/*
@@ -3021,12 +2987,8 @@ CopyFrom(CopyState cstate)
 	{
 		if (insertMethod == CIM_MULTI_CONDITIONAL)
 		{
-			ResultRelInfo *presultRelInfo;
-
-			presultRelInfo = proute->partitions[prev_leaf_part_index];
-
 			CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-								presultRelInfo, myslot, bistate,
+								prevResultRelInfo, myslot, bistate,
 								nBufferedTuples, bufferedTuples,
 								firstBufferedLineNo);
 		}

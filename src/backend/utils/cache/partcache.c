@@ -340,15 +340,23 @@ RelationBuildPartitionDesc(Relation rel)
 	oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
 	partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
 	partdesc->oids = (Oid *) palloc(partdesc->nparts * sizeof(Oid));
+	partdesc->is_leaf = (bool *) palloc(partdesc->nparts * sizeof(bool));
 
 	/*
 	 * Now assign OIDs from the original array into mapped indexes of the
-	 * result array.  Order of OIDs in the former is defined by the catalog
-	 * scan that retrieved them, whereas that in the latter is defined by
-	 * canonicalized representation of the partition bounds.
+	 * result array.  The order of OIDs in the former is defined by the
+	 * catalog scan that retrieved them, whereas that in the latter is defined
+	 * by canonicalized representation of the partition bounds.
 	 */
 	for (i = 0; i < partdesc->nparts; i++)
-		partdesc->oids[mapping[i]] = oids_orig[i];
+	{
+		int			index = mapping[i];
+
+		partdesc->oids[index] = oids_orig[i];
+		/* Record if the partition is a leaf partition */
+		partdesc->is_leaf[index] =
+				(get_rel_relkind(oids_orig[i]) != RELKIND_PARTITIONED_TABLE);
+	}
 	MemoryContextSwitchTo(oldcxt);
 
 	rel->rd_partdesc = partdesc;
