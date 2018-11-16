@@ -143,6 +143,7 @@ static void ExecInitInterpreter(void);
 
 /* support functions */
 static void CheckVarSlotCompatibility(TupleTableSlot *slot, int attnum, Oid vartype);
+static void CheckOpSlotCompatibility(ExprEvalStep *op, TupleTableSlot *slot);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
 static void ShutdownTupleDescRef(Datum arg);
@@ -425,6 +426,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 		EEO_CASE(EEOP_INNER_FETCHSOME)
 		{
+			CheckOpSlotCompatibility(op, innerslot);
+
 			/* XXX: worthwhile to check tts_nvalid inline first? */
 			slot_getsomeattrs(innerslot, op->d.fetch.last_var);
 
@@ -433,6 +436,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 		EEO_CASE(EEOP_OUTER_FETCHSOME)
 		{
+			CheckOpSlotCompatibility(op, outerslot);
+
 			slot_getsomeattrs(outerslot, op->d.fetch.last_var);
 
 			EEO_NEXT();
@@ -440,6 +445,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 		EEO_CASE(EEOP_SCAN_FETCHSOME)
 		{
+			CheckOpSlotCompatibility(op, scanslot);
+
 			slot_getsomeattrs(scanslot, op->d.fetch.last_var);
 
 			EEO_NEXT();
@@ -1855,6 +1862,39 @@ CheckVarSlotCompatibility(TupleTableSlot *slot, int attnum, Oid vartype)
 }
 
 /*
+ * Verify that the slot is compatible with a EEOP_*_FETCHSOME operation.
+ */
+static void
+CheckOpSlotCompatibility(ExprEvalStep *op, TupleTableSlot *slot)
+{
+#ifdef USE_ASSERT_CHECKING
+	/* there's nothing to check */
+	if (!op->d.fetch.fixed)
+		return;
+
+	/*
+	 * Should probably fixed at some point, but for now it's easier to allow
+	 * buffer and heap tuples to be used interchangably.
+	 */
+	if (slot->tts_ops == &TTSOpsBufferTuple &&
+		op->d.fetch.kind == &TTSOpsHeapTuple)
+		return;
+	if (slot->tts_ops == &TTSOpsHeapTuple &&
+		op->d.fetch.kind == &TTSOpsBufferTuple)
+		return;
+
+	/*
+	 * At the moment we consider it OK if a virtual slot is used instead of a
+	 * specific type of slot, as a virtual slot never needs to be deformed.
+	 */
+	if (slot->tts_ops == &TTSOpsVirtual)
+		return;
+
+	Assert(op->d.fetch.kind == slot->tts_ops);
+#endif
+}
+
+/*
  * get_cached_rowtype: utility function to lookup a rowtype tupdesc
  *
  * type_id, typmod: identity of the rowtype
@@ -1921,6 +1961,8 @@ ExecJustInnerVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	int			attnum = op->d.var.attnum + 1;
 	TupleTableSlot *slot = econtext->ecxt_innertuple;
 
+	CheckOpSlotCompatibility(&state->steps[0], slot);
+
 	/*
 	 * Since we use slot_getattr(), we don't need to implement the FETCHSOME
 	 * step explicitly, and we also needn't Assert that the attnum is in range
@@ -1937,6 +1979,8 @@ ExecJustOuterVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	int			attnum = op->d.var.attnum + 1;
 	TupleTableSlot *slot = econtext->ecxt_outertuple;
 
+	CheckOpSlotCompatibility(&state->steps[0], slot);
+
 	/* See comments in ExecJustInnerVar */
 	return slot_getattr(slot, attnum, isnull);
 }
@@ -1948,6 +1992,8 @@ ExecJustScanVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	ExprEvalStep *op = &state->steps[1];
 	int			attnum = op->d.var.attnum + 1;
 	TupleTableSlot *slot = econtext->ecxt_scantuple;
+
+	CheckOpSlotCompatibility(&state->steps[0], slot);
 
 	/* See comments in ExecJustInnerVar */
 	return slot_getattr(slot, attnum, isnull);
@@ -1973,6 +2019,8 @@ ExecJustAssignInnerVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	TupleTableSlot *inslot = econtext->ecxt_innertuple;
 	TupleTableSlot *outslot = state->resultslot;
 
+	CheckOpSlotCompatibility(&state->steps[0], inslot);
+
 	/*
 	 * We do not need CheckVarSlotCompatibility here; that was taken care of
 	 * at compilation time.
@@ -1996,6 +2044,8 @@ ExecJustAssignOuterVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	TupleTableSlot *inslot = econtext->ecxt_outertuple;
 	TupleTableSlot *outslot = state->resultslot;
 
+	CheckOpSlotCompatibility(&state->steps[0], inslot);
+
 	/* See comments in ExecJustAssignInnerVar */
 	outslot->tts_values[resultnum] =
 		slot_getattr(inslot, attnum, &outslot->tts_isnull[resultnum]);
@@ -2011,6 +2061,8 @@ ExecJustAssignScanVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	int			resultnum = op->d.assign_var.resultnum;
 	TupleTableSlot *inslot = econtext->ecxt_scantuple;
 	TupleTableSlot *outslot = state->resultslot;
+
+	CheckOpSlotCompatibility(&state->steps[0], inslot);
 
 	/* See comments in ExecJustAssignInnerVar */
 	outslot->tts_values[resultnum] =
