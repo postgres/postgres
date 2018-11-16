@@ -1052,10 +1052,12 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		if (junk_filter_needed)
 		{
 			JunkFilter *j;
+			TupleTableSlot *slot;
 
+			slot = ExecInitExtraTupleSlot(estate, NULL, &TTSOpsVirtual);
 			j = ExecInitJunkFilter(planstate->plan->targetlist,
 								   tupType->tdhasoid,
-								   ExecInitExtraTupleSlot(estate, NULL));
+								   slot);
 			estate->es_junkFilter = j;
 
 			/* Want to return the cleaned tuple type */
@@ -1928,7 +1930,7 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 		 */
 		if (map != NULL)
 			slot = execute_attr_map_slot(map, slot,
-										 MakeTupleTableSlot(tupdesc));
+										 MakeTupleTableSlot(tupdesc, &TTSOpsVirtual));
 	}
 
 	insertedCols = GetInsertedColumns(resultRelInfo, estate);
@@ -2009,7 +2011,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					 */
 					if (map != NULL)
 						slot = execute_attr_map_slot(map, slot,
-													 MakeTupleTableSlot(tupdesc));
+													 MakeTupleTableSlot(tupdesc, &TTSOpsVirtual));
 				}
 
 				insertedCols = GetInsertedColumns(resultRelInfo, estate);
@@ -2059,7 +2061,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				 */
 				if (map != NULL)
 					slot = execute_attr_map_slot(map, slot,
-												 MakeTupleTableSlot(tupdesc));
+												 MakeTupleTableSlot(tupdesc, &TTSOpsVirtual));
 			}
 
 			insertedCols = GetInsertedColumns(resultRelInfo, estate);
@@ -2167,7 +2169,7 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 						 */
 						if (map != NULL)
 							slot = execute_attr_map_slot(map, slot,
-														 MakeTupleTableSlot(tupdesc));
+														 MakeTupleTableSlot(tupdesc, &TTSOpsVirtual));
 					}
 
 					insertedCols = GetInsertedColumns(resultRelInfo, estate);

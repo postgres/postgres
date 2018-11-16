@@ -424,7 +424,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		 */
 		if (!scanstate->simple)
 		{
-			fs->func_slot = ExecInitExtraTupleSlot(estate, fs->tupdesc);
+			fs->func_slot = ExecInitExtraTupleSlot(estate, fs->tupdesc,
+												   &TTSOpsMinimalTuple);
 		}
 		else
 			fs->func_slot = NULL;
@@ -482,7 +483,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	/*
 	 * Initialize scan slot and type.
 	 */
-	ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc);
+	ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc,
+						  &TTSOpsMinimalTuple);
 
 	/*
 	 * Initialize result slot, type and projection.

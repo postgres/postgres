@@ -2423,7 +2423,8 @@ ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable, ExprState *state)
 				scratch->d.wholerow.junkFilter =
 					ExecInitJunkFilter(subplan->plan->targetlist,
 									   ExecGetResultType(subplan)->tdhasoid,
-									   ExecInitExtraTupleSlot(parent->state, NULL));
+									   ExecInitExtraTupleSlot(parent->state, NULL,
+															  &TTSOpsVirtual));
 			}
 		}
 	}
@@ -3214,6 +3215,7 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
  */
 ExprState *
 ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
+					   const TupleTableSlotOps *lops, const TupleTableSlotOps *rops,
 					   int numCols,
 					   AttrNumber *keyColIdx,
 					   Oid *eqfunctions,

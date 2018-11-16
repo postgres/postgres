@@ -382,7 +382,7 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 	 * initialize our result slot and type. No need to build projection
 	 * because this node doesn't do projections.
 	 */
-	ExecInitResultTupleSlotTL(&hashstate->ps);
+	ExecInitResultTupleSlotTL(&hashstate->ps, &TTSOpsMinimalTuple);
 	hashstate->ps.ps_ProjInfo = NULL;
 
 	/*

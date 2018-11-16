@@ -122,6 +122,13 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	ExecInitResultTypeTL(&gm_state->ps);
 	ExecConditionalAssignProjectionInfo(&gm_state->ps, tupDesc, OUTER_VAR);
 
+	/* leader accesses ExecProcNode result directly, others go through tuple queue */
+	if (gm_state->ps.ps_ProjInfo == NULL)
+	{
+		gm_state->ps.resultopsset = true;
+		gm_state->ps.resultopsfixed = false;
+	}
+
 	/*
 	 * initialize sort-key information
 	 */
@@ -404,7 +411,8 @@ gather_merge_setup(GatherMergeState *gm_state)
 
 		/* Initialize tuple slot for worker */
 		gm_state->gm_slots[i + 1] =
-			ExecInitExtraTupleSlot(gm_state->ps.state, gm_state->tupDesc);
+			ExecInitExtraTupleSlot(gm_state->ps.state, gm_state->tupDesc,
+								   &TTSOpsHeapTuple);
 	}
 
 	/* Allocate the resources for the merge */

@@ -266,7 +266,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 	Assert(es->indent == 0);
 
 	/* output tuples */
-	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
+	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt),
+									  &TTSOpsVirtual);
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 		do_text_output_multiline(tstate, es->str->data);
 	else

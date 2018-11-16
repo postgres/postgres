@@ -380,6 +380,10 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	 */
 	ExecInitResultTypeTL(&limitstate->ps);
 
+	limitstate->ps.resultopsset = true;
+	limitstate->ps.resultops = ExecGetResultSlotOps(outerPlanState(limitstate),
+													&limitstate->ps.resultopsfixed);
+
 	/*
 	 * limit nodes do no projections, so initialize projection info for this
 	 * node appropriately

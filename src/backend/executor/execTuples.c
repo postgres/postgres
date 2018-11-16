@@ -73,6 +73,12 @@ static TupleDesc ExecTypeFromTLInternal(List *targetList,
 					   bool hasoid, bool skipjunk);
 
 
+const TupleTableSlotOps TTSOpsVirtual;
+const TupleTableSlotOps TTSOpsHeapTuple;
+const TupleTableSlotOps TTSOpsMinimalTuple;
+const TupleTableSlotOps TTSOpsBufferTuple;
+
+
 /* ----------------------------------------------------------------
  *				  tuple table create/delete functions
  * ----------------------------------------------------------------
@@ -87,7 +93,8 @@ static TupleDesc ExecTypeFromTLInternal(List *targetList,
  * --------------------------------
  */
 TupleTableSlot *
-MakeTupleTableSlot(TupleDesc tupleDesc)
+MakeTupleTableSlot(TupleDesc tupleDesc,
+				   const TupleTableSlotOps *tts_ops)
 {
 	Size		sz;
 	TupleTableSlot *slot;
@@ -104,6 +111,8 @@ MakeTupleTableSlot(TupleDesc tupleDesc)
 		sz = sizeof(TupleTableSlot);
 
 	slot = palloc0(sz);
+	/* const for optimization purposes, OK to modify at allocation time */
+	*((const TupleTableSlotOps **) &slot->tts_ops) = tts_ops;
 	slot->type = T_TupleTableSlot;
 	slot->tts_flags |= TTS_FLAG_EMPTY;
 	if (tupleDesc != NULL)
@@ -140,9 +149,10 @@ MakeTupleTableSlot(TupleDesc tupleDesc)
  * --------------------------------
  */
 TupleTableSlot *
-ExecAllocTableSlot(List **tupleTable, TupleDesc desc)
+ExecAllocTableSlot(List **tupleTable, TupleDesc desc,
+				   const TupleTableSlotOps *tts_ops)
 {
-	TupleTableSlot *slot = MakeTupleTableSlot(desc);
+	TupleTableSlot *slot = MakeTupleTableSlot(desc, tts_ops);
 
 	*tupleTable = lappend(*tupleTable, slot);
 
@@ -198,16 +208,17 @@ ExecResetTupleTable(List *tupleTable,	/* tuple table */
 /* --------------------------------
  *		MakeSingleTupleTableSlot
  *
- *		This is a convenience routine for operations that need a
- *		standalone TupleTableSlot not gotten from the main executor
- *		tuple table.  It makes a single slot and initializes it
- *		to use the given tuple descriptor.
+ *		This is a convenience routine for operations that need a standalone
+ *		TupleTableSlot not gotten from the main executor tuple table.  It makes
+ *		a single slot of given TupleTableSlotType and initializes it to use the
+ *		given tuple descriptor.
  * --------------------------------
  */
 TupleTableSlot *
-MakeSingleTupleTableSlot(TupleDesc tupdesc)
+MakeSingleTupleTableSlot(TupleDesc tupdesc,
+						 const TupleTableSlotOps *tts_ops)
 {
-	TupleTableSlot *slot = MakeTupleTableSlot(tupdesc);
+	TupleTableSlot *slot = MakeTupleTableSlot(tupdesc, tts_ops);
 
 	return slot;
 }
@@ -964,13 +975,17 @@ ExecInitResultTypeTL(PlanState *planstate)
  * ----------------
  */
 void
-ExecInitResultSlot(PlanState *planstate)
+ExecInitResultSlot(PlanState *planstate, const TupleTableSlotOps *tts_ops)
 {
 	TupleTableSlot *slot;
 
 	slot = ExecAllocTableSlot(&planstate->state->es_tupleTable,
-							  planstate->ps_ResultTupleDesc);
+							  planstate->ps_ResultTupleDesc, tts_ops);
 	planstate->ps_ResultTupleSlot = slot;
+
+	planstate->resultopsfixed = planstate->ps_ResultTupleDesc != NULL;
+	planstate->resultops = tts_ops;
+	planstate->resultopsset = true;
 }
 
 /* ----------------
@@ -980,10 +995,11 @@ ExecInitResultSlot(PlanState *planstate)
  * ----------------
  */
 void
-ExecInitResultTupleSlotTL(PlanState *planstate)
+ExecInitResultTupleSlotTL(PlanState *planstate,
+						  const TupleTableSlotOps *tts_ops)
 {
 	ExecInitResultTypeTL(planstate);
-	ExecInitResultSlot(planstate);
+	ExecInitResultSlot(planstate, tts_ops);
 }
 
 /* ----------------
@@ -991,11 +1007,15 @@ ExecInitResultTupleSlotTL(PlanState *planstate)
  * ----------------
  */
 void
-ExecInitScanTupleSlot(EState *estate, ScanState *scanstate, TupleDesc tupledesc)
+ExecInitScanTupleSlot(EState *estate, ScanState *scanstate,
+					  TupleDesc tupledesc, const TupleTableSlotOps *tts_ops)
 {
 	scanstate->ss_ScanTupleSlot = ExecAllocTableSlot(&estate->es_tupleTable,
-													 tupledesc);
+													 tupledesc, tts_ops);
 	scanstate->ps.scandesc = tupledesc;
+	scanstate->ps.scanopsfixed = tupledesc != NULL;
+	scanstate->ps.scanops = tts_ops;
+	scanstate->ps.scanopsset = true;
 }
 
 /* ----------------
@@ -1007,9 +1027,11 @@ ExecInitScanTupleSlot(EState *estate, ScanState *scanstate, TupleDesc tupledesc)
  * ----------------
  */
 TupleTableSlot *
-ExecInitExtraTupleSlot(EState *estate, TupleDesc tupledesc)
+ExecInitExtraTupleSlot(EState *estate,
+					   TupleDesc tupledesc,
+					   const TupleTableSlotOps *tts_ops)
 {
-	return ExecAllocTableSlot(&estate->es_tupleTable, tupledesc);
+	return ExecAllocTableSlot(&estate->es_tupleTable, tupledesc, tts_ops);
 }
 
 /* ----------------
@@ -1021,9 +1043,10 @@ ExecInitExtraTupleSlot(EState *estate, TupleDesc tupledesc)
  * ----------------
  */
 TupleTableSlot *
-ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
+ExecInitNullTupleSlot(EState *estate, TupleDesc tupType,
+					  const TupleTableSlotOps *tts_ops)
 {
-	TupleTableSlot *slot = ExecInitExtraTupleSlot(estate, tupType);
+	TupleTableSlot *slot = ExecInitExtraTupleSlot(estate, tupType, tts_ops);
 
 	return ExecStoreAllNullTuple(slot);
 }
@@ -1547,13 +1570,15 @@ HeapTupleHeaderGetDatum(HeapTupleHeader tuple)
  * table function capability. Currently used by EXPLAIN and SHOW ALL.
  */
 TupOutputState *
-begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
+begin_tup_output_tupdesc(DestReceiver *dest,
+						 TupleDesc tupdesc,
+						 const TupleTableSlotOps *tts_ops)
 {
 	TupOutputState *tstate;
 
 	tstate = (TupOutputState *) palloc(sizeof(TupOutputState));
 
-	tstate->slot = MakeSingleTupleTableSlot(tupdesc);
+	tstate->slot = MakeSingleTupleTableSlot(tupdesc, tts_ops);
 	tstate->dest = dest;
 
 	tstate->dest->rStartup(tstate->dest, (int) CMD_SELECT, tupdesc);

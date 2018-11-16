@@ -1717,7 +1717,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 		/* Set up junk filter if needed */
 		if (junkFilter)
-			*junkFilter = ExecInitJunkFilter(tlist, false, NULL);
+			*junkFilter = ExecInitJunkFilter(tlist, false,
+											 MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple));
 	}
 	else if (fn_typtype == TYPTYPE_COMPOSITE || rettype == RECORDOID)
 	{
@@ -1770,7 +1771,12 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 				}
 				/* Set up junk filter if needed */
 				if (junkFilter)
-					*junkFilter = ExecInitJunkFilter(tlist, false, NULL);
+				{
+					TupleTableSlot *slot =
+						MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
+
+					*junkFilter = ExecInitJunkFilter(tlist, false, slot);
+				}
 				return false;	/* NOT returning whole tuple */
 			}
 		}
@@ -1786,7 +1792,12 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			 * what the caller expects will happen at runtime.
 			 */
 			if (junkFilter)
-				*junkFilter = ExecInitJunkFilter(tlist, false, NULL);
+			{
+				TupleTableSlot *slot;
+
+				slot = MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
+				*junkFilter = ExecInitJunkFilter(tlist, false, slot);
+			}
 			return true;
 		}
 		Assert(tupdesc);
@@ -1927,9 +1938,14 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 		/* Set up junk filter if needed */
 		if (junkFilter)
+		{
+			TupleTableSlot *slot =
+				MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
+
 			*junkFilter = ExecInitJunkFilterConversion(tlist,
 													   CreateTupleDescCopy(tupdesc),
-													   NULL);
+													   slot);
+		}
 
 		/* Report that we are returning entire tuple result */
 		return true;

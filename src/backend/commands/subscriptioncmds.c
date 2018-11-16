@@ -1148,7 +1148,7 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 						res->err)));
 
 	/* Process tables. */
-	slot = MakeSingleTupleTableSlot(res->tupledesc);
+	slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
 	while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
 	{
 		char	   *nspname;

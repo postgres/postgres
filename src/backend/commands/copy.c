@@ -2488,9 +2488,11 @@ CopyFrom(CopyState cstate)
 	ExecInitRangeTable(estate, cstate->range_table);
 
 	/* Set up a tuple slot too */
-	myslot = ExecInitExtraTupleSlot(estate, tupDesc);
+	myslot = ExecInitExtraTupleSlot(estate, tupDesc,
+									&TTSOpsHeapTuple);
 	/* Triggers might need a slot as well */
-	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL);
+	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL,
+														&TTSOpsHeapTuple);
 
 	/*
 	 * Set up a ModifyTableState so we can let FDW(s) init themselves for

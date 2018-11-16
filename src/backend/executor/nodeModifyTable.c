@@ -2056,6 +2056,15 @@ ExecModifyTable(PlanState *pstate)
 		}
 
 		/*
+		 * Ensure input tuple is the right format for the target relation.
+		 */
+		if (node->mt_scans[node->mt_whichplan]->tts_ops != planSlot->tts_ops)
+		{
+			ExecCopySlot(node->mt_scans[node->mt_whichplan], planSlot);
+			planSlot = node->mt_scans[node->mt_whichplan];
+		}
+
+		/*
 		 * If resultRelInfo->ri_usesFdwDirectModify is true, all we need to do
 		 * here is compute the RETURNING expressions.
 		 */
@@ -2238,6 +2247,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	mtstate->mt_plans = (PlanState **) palloc0(sizeof(PlanState *) * nplans);
 	mtstate->resultRelInfo = estate->es_result_relations + node->resultRelIndex;
+	mtstate->mt_scans = (TupleTableSlot **) palloc0(sizeof(TupleTableSlot *) * nplans);
 
 	/* If modifying a partitioned table, initialize the root table info */
 	if (node->rootResultRelIndex >= 0)
@@ -2304,6 +2314,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/* Now init the plan for this result rel */
 		estate->es_result_relation_info = resultRelInfo;
 		mtstate->mt_plans[i] = ExecInitNode(subplan, estate, eflags);
+		mtstate->mt_scans[i] =
+			ExecInitExtraTupleSlot(mtstate->ps.state, ExecGetResultType(mtstate->mt_plans[i]),
+								   &TTSOpsHeapTuple);
 
 		/* Also let FDWs init themselves for foreign-table result rels */
 		if (!resultRelInfo->ri_usesFdwDirectModify &&
@@ -2403,7 +2416,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->ps.plan->targetlist = (List *) linitial(node->returningLists);
 
 		/* Set up a slot for the output of the RETURNING projection(s) */
-		ExecInitResultTupleSlotTL(&mtstate->ps);
+		ExecInitResultTupleSlotTL(&mtstate->ps, &TTSOpsVirtual);
 		slot = mtstate->ps.ps_ResultTupleSlot;
 
 		/* Need an econtext too */
@@ -2472,7 +2485,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_existing =
 			ExecInitExtraTupleSlot(mtstate->ps.state,
 								   mtstate->mt_partition_tuple_routing ?
-								   NULL : relationDesc);
+								   NULL : relationDesc, &TTSOpsBufferTuple);
 
 		/* carried forward solely for the benefit of explain */
 		mtstate->mt_excludedtlist = node->exclRelTlist;
@@ -2494,7 +2507,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_conflproj =
 			ExecInitExtraTupleSlot(mtstate->ps.state,
 								   mtstate->mt_partition_tuple_routing ?
-								   NULL : tupDesc);
+								   NULL : tupDesc, &TTSOpsHeapTuple);
 		resultRelInfo->ri_onConflict->oc_ProjTupdesc = tupDesc;
 
 		/* build UPDATE SET projection state */
@@ -2605,7 +2618,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 				j = ExecInitJunkFilter(subplan->targetlist,
 									   resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
-									   ExecInitExtraTupleSlot(estate, NULL));
+									   ExecInitExtraTupleSlot(estate, NULL,
+															  &TTSOpsHeapTuple));
 
 				if (operation == CMD_UPDATE || operation == CMD_DELETE)
 				{
@@ -2652,10 +2666,12 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/*
 	 * Set up a tuple table slot for use for trigger output tuples. In a plan
 	 * containing multiple ModifyTable nodes, all can share one such slot, so
-	 * we keep it in the estate.
+	 * we keep it in the estate. The tuple being inserted doesn't come from a
+	 * buffer.
 	 */
 	if (estate->es_trig_tuple_slot == NULL)
-		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL);
+		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL,
+															&TTSOpsHeapTuple);
 
 	/*
 	 * Lastly, if this is not the primary (canSetTag) ModifyTable node, add it

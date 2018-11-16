@@ -390,6 +390,11 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	 */
 	outerPlanState(lrstate) = ExecInitNode(outerPlan, estate, eflags);
 
+	/* node returns unmodified slots from the outer plan */
+	lrstate->ps.resultopsset = true;
+	lrstate->ps.resultops = ExecGetResultSlotOps(outerPlanState(lrstate),
+													&lrstate->ps.resultopsfixed);
+
 	/*
 	 * LockRows nodes do no projections, so initialize projection info for
 	 * this node appropriately

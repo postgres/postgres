@@ -2316,16 +2316,25 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 * initialize source tuple type (which is also the tuple type that we'll
 	 * store in the tuplestore and use in all our working slots).
 	 */
-	ExecCreateScanSlotFromOuterPlan(estate, &winstate->ss);
+	ExecCreateScanSlotFromOuterPlan(estate, &winstate->ss, &TTSOpsMinimalTuple);
 	scanDesc = winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+
+	/* the outer tuple isn't the child's tuple, but always a minimal tuple */
+	winstate->ss.ps.outeropsset = true;
+	winstate->ss.ps.outerops = &TTSOpsMinimalTuple;
+	winstate->ss.ps.outeropsfixed = true;
 
 	/*
 	 * tuple table initialization
 	 */
-	winstate->first_part_slot = ExecInitExtraTupleSlot(estate, scanDesc);
-	winstate->agg_row_slot = ExecInitExtraTupleSlot(estate, scanDesc);
-	winstate->temp_slot_1 = ExecInitExtraTupleSlot(estate, scanDesc);
-	winstate->temp_slot_2 = ExecInitExtraTupleSlot(estate, scanDesc);
+	winstate->first_part_slot = ExecInitExtraTupleSlot(estate, scanDesc,
+													   &TTSOpsMinimalTuple);
+	winstate->agg_row_slot = ExecInitExtraTupleSlot(estate, scanDesc,
+													&TTSOpsMinimalTuple);
+	winstate->temp_slot_1 = ExecInitExtraTupleSlot(estate, scanDesc,
+												   &TTSOpsMinimalTuple);
+	winstate->temp_slot_2 = ExecInitExtraTupleSlot(estate, scanDesc,
+												   &TTSOpsMinimalTuple);
 
 	/*
 	 * create frame head and tail slots only if needed (must create slots in
@@ -2339,17 +2348,19 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		if (((frameOptions & FRAMEOPTION_START_CURRENT_ROW) &&
 			 node->ordNumCols != 0) ||
 			(frameOptions & FRAMEOPTION_START_OFFSET))
-			winstate->framehead_slot = ExecInitExtraTupleSlot(estate, scanDesc);
+			winstate->framehead_slot = ExecInitExtraTupleSlot(estate, scanDesc,
+															  &TTSOpsMinimalTuple);
 		if (((frameOptions & FRAMEOPTION_END_CURRENT_ROW) &&
 			 node->ordNumCols != 0) ||
 			(frameOptions & FRAMEOPTION_END_OFFSET))
-			winstate->frametail_slot = ExecInitExtraTupleSlot(estate, scanDesc);
+			winstate->frametail_slot = ExecInitExtraTupleSlot(estate, scanDesc,
+															  &TTSOpsMinimalTuple);
 	}
 
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(&winstate->ss.ps);
+	ExecInitResultTupleSlotTL(&winstate->ss.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&winstate->ss.ps, NULL);
 
 	/* Set up data for comparing tuples */

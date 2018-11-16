@@ -78,7 +78,7 @@ ExecInitJunkFilter(List *targetList, bool hasoid, TupleTableSlot *slot)
 	if (slot)
 		ExecSetSlotDescriptor(slot, cleanTupType);
 	else
-		slot = MakeSingleTupleTableSlot(cleanTupType);
+		slot = MakeSingleTupleTableSlot(cleanTupType, &TTSOpsVirtual);
 
 	/*
 	 * Now calculate the mapping between the original tuple's attributes and
@@ -149,7 +149,7 @@ ExecInitJunkFilterConversion(List *targetList,
 	if (slot)
 		ExecSetSlotDescriptor(slot, cleanTupType);
 	else
-		slot = MakeSingleTupleTableSlot(cleanTupType);
+		slot = MakeSingleTupleTableSlot(cleanTupType, &TTSOpsVirtual);
 
 	/*
 	 * Calculate the mapping between the original tuple's attributes and the

@@ -73,13 +73,14 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 		TupleDesc	scan_tupdesc;
 
 		scan_tupdesc = ExecTypeFromTL(cscan->custom_scan_tlist, false);
-		ExecInitScanTupleSlot(estate, &css->ss, scan_tupdesc);
+		ExecInitScanTupleSlot(estate, &css->ss, scan_tupdesc, &TTSOpsVirtual);
 		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
 		tlistvarno = INDEX_VAR;
 	}
 	else
 	{
-		ExecInitScanTupleSlot(estate, &css->ss, RelationGetDescr(scan_rel));
+		ExecInitScanTupleSlot(estate, &css->ss, RelationGetDescr(scan_rel),
+							  &TTSOpsVirtual);
 		/* Node's targetlist will contain Vars with varno = scanrelid */
 		tlistvarno = scanrelid;
 	}
@@ -87,7 +88,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(&css->ss.ps);
+	ExecInitResultTupleSlotTL(&css->ss.ps, &TTSOpsVirtual);
 	ExecAssignScanProjectionInfoWithVarno(&css->ss, tlistvarno);
 
 	/* initialize child expressions */

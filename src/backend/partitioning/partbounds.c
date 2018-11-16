@@ -1275,7 +1275,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 		econtext = GetPerTupleExprContext(estate);
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
 		scan = heap_beginscan(part_rel, snapshot, 0, NULL);
-		tupslot = MakeSingleTupleTableSlot(tupdesc);
+		tupslot = MakeSingleTupleTableSlot(tupdesc, &TTSOpsHeapTuple);
 
 		/*
 		 * Switch to per-tuple memory context and reset it for each tuple

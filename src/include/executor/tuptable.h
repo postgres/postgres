@@ -132,6 +132,9 @@
 #define			TTS_FLAG_FIXED		(1 << 5)
 #define TTS_FIXED(slot) (((slot)->tts_flags & TTS_FLAG_FIXED) != 0)
 
+struct TupleTableSlotOps;
+typedef struct TupleTableSlotOps TupleTableSlotOps;
+
 typedef struct TupleTableSlot
 {
 	NodeTag		type;
@@ -141,19 +144,34 @@ typedef struct TupleTableSlot
 	AttrNumber	tts_nvalid;		/* # of valid values in tts_values */
 #define FIELDNO_TUPLETABLESLOT_TUPLE 3
 	HeapTuple	tts_tuple;		/* physical tuple, or NULL if virtual */
-#define FIELDNO_TUPLETABLESLOT_TUPLEDESCRIPTOR 4
+	const TupleTableSlotOps *const tts_ops; /* implementation of slot */
+#define FIELDNO_TUPLETABLESLOT_TUPLEDESCRIPTOR 5
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
 	MemoryContext tts_mcxt;		/* slot itself is in this context */
 	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
-#define FIELDNO_TUPLETABLESLOT_OFF 7
+#define FIELDNO_TUPLETABLESLOT_OFF 8
 	uint32		tts_off;		/* saved state for slot_deform_tuple */
-#define FIELDNO_TUPLETABLESLOT_VALUES 8
+#define FIELDNO_TUPLETABLESLOT_VALUES 9
 	Datum	   *tts_values;		/* current per-attribute values */
-#define FIELDNO_TUPLETABLESLOT_ISNULL 9
+#define FIELDNO_TUPLETABLESLOT_ISNULL 10
 	bool	   *tts_isnull;		/* current per-attribute isnull flags */
 	MinimalTuple tts_mintuple;	/* minimal tuple, or NULL if none */
 	HeapTupleData tts_minhdr;	/* workspace for minimal-tuple-only case */
 } TupleTableSlot;
+
+/* routines for a TupleTableSlot implementation */
+struct TupleTableSlotOps
+{
+};
+
+/*
+ * Predefined TupleTableSlotOps for various types of TupleTableSlotOps. The
+ * same are used to identify the type of a given slot.
+ */
+extern PGDLLIMPORT const TupleTableSlotOps TTSOpsVirtual;
+extern PGDLLIMPORT const TupleTableSlotOps TTSOpsHeapTuple;
+extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMinimalTuple;
+extern PGDLLIMPORT const TupleTableSlotOps TTSOpsBufferTuple;
 
 #define TTS_HAS_PHYSICAL_TUPLE(slot)  \
 	((slot)->tts_tuple != NULL && (slot)->tts_tuple != &((slot)->tts_minhdr))
@@ -165,10 +183,13 @@ typedef struct TupleTableSlot
 	((slot) == NULL || TTS_EMPTY(slot))
 
 /* in executor/execTuples.c */
-extern TupleTableSlot *MakeTupleTableSlot(TupleDesc desc);
-extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable, TupleDesc desc);
+extern TupleTableSlot *MakeTupleTableSlot(TupleDesc tupleDesc,
+				   const TupleTableSlotOps *tts_ops);
+extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable, TupleDesc desc,
+				   const TupleTableSlotOps *tts_ops);
 extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
-extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc);
+extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc,
+						 const TupleTableSlotOps *tts_ops);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
 extern TupleTableSlot *ExecStoreHeapTuple(HeapTuple tuple,

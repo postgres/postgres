@@ -144,7 +144,8 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 		 * We need an additional tuple slot for storing transient tuples that
 		 * are converted to the root table descriptor.
 		 */
-		proute->root_tuple_slot = MakeTupleTableSlot(RelationGetDescr(rel));
+		proute->root_tuple_slot = MakeTupleTableSlot(RelationGetDescr(rel),
+													 &TTSOpsHeapTuple);
 	}
 
 	i = 0;
@@ -740,7 +741,8 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		 */
 		proute->partition_tuple_slots[partidx] =
 			ExecInitExtraTupleSlot(estate,
-								   RelationGetDescr(partrel));
+								   RelationGetDescr(partrel),
+								   &TTSOpsHeapTuple);
 	}
 
 	/*
@@ -974,7 +976,7 @@ get_partition_dispatch_recurse(Relation rel, Relation parent,
 		 * using the correct tuple descriptor when computing its partition key
 		 * for tuple routing.
 		 */
-		pd->tupslot = MakeSingleTupleTableSlot(tupdesc);
+		pd->tupslot = MakeSingleTupleTableSlot(tupdesc, &TTSOpsHeapTuple);
 		pd->tupmap = convert_tuples_by_name_map_if_req(RelationGetDescr(parent),
 													   tupdesc,
 													   gettext_noop("could not convert row type"));

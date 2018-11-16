@@ -91,6 +91,11 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
 	tupDesc = ExecGetResultType(outerPlanState(gatherstate));
 
+	/* this node uses tuples from the tuple queue as scan slot */
+	gatherstate->ps.scanops = &TTSOpsHeapTuple;
+	gatherstate->ps.scanopsfixed = true;
+	gatherstate->ps.scanopsset = true;
+
 	/*
 	 * Initialize result type and projection.
 	 */
@@ -100,7 +105,8 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	/*
 	 * Initialize funnel slot to same tuple descriptor as outer plan.
 	 */
-	gatherstate->funnel_slot = ExecInitExtraTupleSlot(estate, tupDesc);
+	gatherstate->funnel_slot = ExecInitExtraTupleSlot(estate, tupDesc,
+													  &TTSOpsHeapTuple);
 
 	/*
 	 * Gather doesn't support checking a qual (it's always more efficient to

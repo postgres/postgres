@@ -146,7 +146,8 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 
 	/* and create slot with appropriate rowtype */
 	ExecInitScanTupleSlot(estate, &scanstate->ss,
-						  RelationGetDescr(scanstate->ss.ss_currentRelation));
+						  RelationGetDescr(scanstate->ss.ss_currentRelation),
+						  &TTSOpsBufferTuple);
 
 	/*
 	 * Initialize result type and projection.

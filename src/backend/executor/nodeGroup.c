@@ -162,6 +162,7 @@ GroupState *
 ExecInitGroup(Group *node, EState *estate, int eflags)
 {
 	GroupState *grpstate;
+	const TupleTableSlotOps *tts_ops;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -188,12 +189,13 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	/*
 	 * Initialize scan slot and type.
 	 */
-	ExecCreateScanSlotFromOuterPlan(estate, &grpstate->ss);
+	tts_ops = ExecGetResultSlotOps(outerPlanState(&grpstate->ss), NULL);
+	ExecCreateScanSlotFromOuterPlan(estate, &grpstate->ss, tts_ops);
 
 	/*
 	 * Initialize result slot, type and projection.
 	 */
-	ExecInitResultTupleSlotTL(&grpstate->ss.ps);
+	ExecInitResultTupleSlotTL(&grpstate->ss.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&grpstate->ss.ps, NULL);
 
 	/*
