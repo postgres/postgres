@@ -162,6 +162,8 @@ typedef struct TupleTableSlot
 /* routines for a TupleTableSlot implementation */
 struct TupleTableSlotOps
 {
+	/* body will be replaced in later commit */
+	int dummy;
 };
 
 /*
