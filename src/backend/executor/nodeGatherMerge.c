@@ -110,6 +110,15 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	outerPlanState(gm_state) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
+	 * Leader may access ExecProcNode result directly (if
+	 * need_to_scan_locally), or from workers via tuple queue.  So we can't
+	 * trivially rely on the slot type being fixed for expressions evaluated
+	 * within this node.
+	 */
+	gm_state->ps.outeropsset = true;
+	gm_state->ps.outeropsfixed = false;
+
+	/*
 	 * Store the tuple descriptor into gather merge state, so we can use it
 	 * while initializing the gather merge slots.
 	 */
@@ -122,7 +131,10 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	ExecInitResultTypeTL(&gm_state->ps);
 	ExecConditionalAssignProjectionInfo(&gm_state->ps, tupDesc, OUTER_VAR);
 
-	/* leader accesses ExecProcNode result directly, others go through tuple queue */
+	/*
+	 * Without projections result slot type is not trivially known, see
+	 * comment above.
+	 */
 	if (gm_state->ps.ps_ProjInfo == NULL)
 	{
 		gm_state->ps.resultopsset = true;

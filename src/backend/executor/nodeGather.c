@@ -91,16 +91,30 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
 	tupDesc = ExecGetResultType(outerPlanState(gatherstate));
 
-	/* this node uses tuples from the tuple queue as scan slot */
-	gatherstate->ps.scanops = &TTSOpsHeapTuple;
-	gatherstate->ps.scanopsfixed = true;
-	gatherstate->ps.scanopsset = true;
+	/*
+	 * Leader may access ExecProcNode result directly (if
+	 * need_to_scan_locally), or from workers via tuple queue.  So we can't
+	 * trivially rely on the slot type being fixed for expressions evaluated
+	 * within this node.
+	 */
+	gatherstate->ps.outeropsset = true;
+	gatherstate->ps.outeropsfixed = false;
 
 	/*
 	 * Initialize result type and projection.
 	 */
 	ExecInitResultTypeTL(&gatherstate->ps);
 	ExecConditionalAssignProjectionInfo(&gatherstate->ps, tupDesc, OUTER_VAR);
+
+	/*
+	 * Without projections result slot type is not trivially known, see
+	 * comment above.
+	 */
+	if (gatherstate->ps.ps_ProjInfo == NULL)
+	{
+		gatherstate->ps.resultopsset = true;
+		gatherstate->ps.resultopsfixed = false;
+	}
 
 	/*
 	 * Initialize funnel slot to same tuple descriptor as outer plan.
