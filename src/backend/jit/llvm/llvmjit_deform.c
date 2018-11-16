@@ -31,7 +31,8 @@
  * Create a function that deforms a tuple of type desc up to natts columns.
  */
 LLVMValueRef
-slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
+slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
+					const TupleTableSlotOps *ops, int natts)
 {
 	char	   *funcname;
 
@@ -87,6 +88,10 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 	bool		attguaranteedalign = true;
 
 	int			attnum;
+
+	/* virtual tuples never need deforming, so don't generate code */
+	if (ops == &TTSOpsVirtual)
+		return NULL;
 
 	mod = llvm_mutable_module(context);
 
