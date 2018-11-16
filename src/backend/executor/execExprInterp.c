@@ -428,7 +428,6 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			CheckOpSlotCompatibility(op, innerslot);
 
-			/* XXX: worthwhile to check tts_nvalid inline first? */
 			slot_getsomeattrs(innerslot, op->d.fetch.last_var);
 
 			EEO_NEXT();

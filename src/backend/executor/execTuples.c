@@ -1183,22 +1183,19 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 }
 
 /*
- * slot_getsomeattrs
- *		This function forces the entries of the slot's Datum/isnull
- *		arrays to be valid at least up through the attnum'th entry.
+ * slot_getsomeattrs_int - workhorse for slot_getsomeattrs()
  */
 void
-slot_getsomeattrs(TupleTableSlot *slot, int attnum)
+slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
 {
 	HeapTuple	tuple;
 	int			attno;
 
-	/* Quick out if we have 'em all already */
-	if (slot->tts_nvalid >= attnum)
-		return;
+	/* Check for caller errors */
+	Assert(slot->tts_nvalid < attnum); /* slot_getsomeattr checked */
+	Assert(attnum > 0);
 
-	/* Check for caller error */
-	if (attnum <= 0 || attnum > slot->tts_tupleDescriptor->natts)
+	if (unlikely(attnum > slot->tts_tupleDescriptor->natts))
 		elog(ERROR, "invalid attribute number %d", attnum);
 
 	/*
@@ -1209,9 +1206,7 @@ slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 	if (tuple == NULL)			/* internal error */
 		elog(ERROR, "cannot extract attribute from empty tuple slot");
 
-	/*
-	 * load up any slots available from physical tuple
-	 */
+	/* Fetch as many attributes as possible from the underlying tuple. */
 	attno = HeapTupleHeaderGetNatts(tuple->t_data);
 	attno = Min(attno, attnum);
 
@@ -1220,13 +1215,14 @@ slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 	attno = slot->tts_nvalid;
 
 	/*
-	 * If tuple doesn't have all the atts indicated by attnum, read the rest
-	 * as NULLs or missing values
+	 * If the underlying tuple doesn't have enough attributes, tuple descriptor
+	 * must have the missing attributes.
 	 */
-	if (attno < attnum)
-		slot_getmissingattrs(slot, attno, attnum);
-
-	slot->tts_nvalid = attnum;
+	if (unlikely(slot->tts_nvalid < attnum))
+	{
+		slot_getmissingattrs(slot, slot->tts_nvalid, attnum);
+		slot->tts_nvalid = attnum;
+	}
 }
 
 /* ----------------------------------------------------------------

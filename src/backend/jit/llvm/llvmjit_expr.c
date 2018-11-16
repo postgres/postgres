@@ -345,7 +345,7 @@ llvm_compile_expr(ExprState *state)
 						params[1] = l_int32_const(op->d.fetch.last_var);
 
 						LLVMBuildCall(b,
-									  llvm_get_decl(mod, FuncSlotGetsomeattrs),
+									  llvm_get_decl(mod, FuncSlotGetsomeattrsInt),
 									  params, lengthof(params), "");
 					}
 

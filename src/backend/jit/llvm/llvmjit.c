@@ -79,7 +79,7 @@ LLVMTypeRef StructAggStatePerTransData;
 LLVMValueRef AttributeTemplate;
 LLVMValueRef FuncStrlen;
 LLVMValueRef FuncVarsizeAny;
-LLVMValueRef FuncSlotGetsomeattrs;
+LLVMValueRef FuncSlotGetsomeattrsInt;
 LLVMValueRef FuncSlotGetmissingattrs;
 LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
 LLVMValueRef FuncExecEvalArrayRefSubscript;
@@ -820,7 +820,7 @@ llvm_create_types(void)
 	AttributeTemplate = LLVMGetNamedFunction(mod, "AttributeTemplate");
 	FuncStrlen = LLVMGetNamedFunction(mod, "strlen");
 	FuncVarsizeAny = LLVMGetNamedFunction(mod, "varsize_any");
-	FuncSlotGetsomeattrs = LLVMGetNamedFunction(mod, "slot_getsomeattrs");
+	FuncSlotGetsomeattrsInt = LLVMGetNamedFunction(mod, "slot_getsomeattrs_int");
 	FuncSlotGetmissingattrs = LLVMGetNamedFunction(mod, "slot_getmissingattrs");
 	FuncMakeExpandedObjectReadOnlyInternal = LLVMGetNamedFunction(mod, "MakeExpandedObjectReadOnlyInternal");
 	FuncExecEvalArrayRefSubscript = LLVMGetNamedFunction(mod, "ExecEvalArrayRefSubscript");

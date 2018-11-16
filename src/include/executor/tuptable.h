@@ -219,7 +219,6 @@ extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
 					 int lastAttNum);
 extern Datum slot_getattr(TupleTableSlot *slot, int attnum,
 			 bool *isnull);
-extern void slot_getsomeattrs(TupleTableSlot *slot, int attnum);
 
 /* in access/common/heaptuple.c */
 extern bool slot_attisnull(TupleTableSlot *slot, int attnum);
@@ -227,8 +226,20 @@ extern bool slot_getsysattr(TupleTableSlot *slot, int attnum,
 				Datum *value, bool *isnull);
 extern Datum getmissingattr(TupleDesc tupleDesc,
 			   int attnum, bool *isnull);
+extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
 
 #ifndef FRONTEND
+
+/*
+ * This function forces the entries of the slot's Datum/isnull arrays to be
+ * valid at least up through the attnum'th entry.
+ */
+static inline void
+slot_getsomeattrs(TupleTableSlot *slot, int attnum)
+{
+	if (slot->tts_nvalid < attnum)
+		slot_getsomeattrs_int(slot, attnum);
+}
 
 /*
  * slot_getallattrs
