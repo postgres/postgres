@@ -82,7 +82,7 @@
  *		Memory context used to allocate subsidiary structs.
  *-----------------------
  */
-typedef struct PartitionTupleRouting
+struct PartitionTupleRouting
 {
 	Relation	partition_root;
 	PartitionDispatch *partition_dispatch_info;
@@ -93,7 +93,7 @@ typedef struct PartitionTupleRouting
 	int			max_partitions;
 	HTAB	   *subplan_resultrel_htab;
 	MemoryContext memcxt;
-} PartitionTupleRouting;
+};
 
 /*-----------------------
  * PartitionDispatch - information about one partitioned table in a partition
