@@ -173,7 +173,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	/* and create slot with the appropriate rowtype */
 	ExecInitScanTupleSlot(estate, &scanstate->ss,
 						  RelationGetDescr(scanstate->ss.ss_currentRelation),
-						  &TTSOpsBufferTuple);
+						  &TTSOpsBufferHeapTuple);
 
 	/*
 	 * Initialize result type and projection.

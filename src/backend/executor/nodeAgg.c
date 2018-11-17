@@ -1741,7 +1741,7 @@ agg_retrieve_direct(AggState *aggstate)
 					 * Make a copy of the first input tuple; we will use this
 					 * for comparisons (in group mode) and for projection.
 					 */
-					aggstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
+					aggstate->grp_firstTuple = ExecCopySlotHeapTuple(outerslot);
 				}
 				else
 				{
@@ -1800,9 +1800,8 @@ agg_retrieve_direct(AggState *aggstate)
 				 * reserved for it.  The tuple will be deleted when it is
 				 * cleared from the slot.
 				 */
-				ExecStoreHeapTuple(aggstate->grp_firstTuple,
-								   firstSlot,
-								   true);
+				ExecForceStoreHeapTuple(aggstate->grp_firstTuple,
+								   firstSlot);
 				aggstate->grp_firstTuple = NULL;	/* don't keep two pointers */
 
 				/* set up for first advance_aggregates call */
@@ -1858,7 +1857,7 @@ agg_retrieve_direct(AggState *aggstate)
 						if (!ExecQual(aggstate->phase->eqfunctions[node->numCols - 1],
 									  tmpcontext))
 						{
-							aggstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
+							aggstate->grp_firstTuple = ExecCopySlotHeapTuple(outerslot);
 							break;
 						}
 					}

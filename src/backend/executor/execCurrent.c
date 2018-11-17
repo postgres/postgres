@@ -218,27 +218,25 @@ execCurrentOf(CurrentOfExpr *cexpr,
 			ItemPointer tuple_tid;
 
 #ifdef USE_ASSERT_CHECKING
-			if (!slot_getsysattr(scanstate->ss_ScanTupleSlot,
-								 TableOidAttributeNumber,
-								 &ldatum,
-								 &lisnull))
+			ldatum = slot_getsysattr(scanstate->ss_ScanTupleSlot,
+									 TableOidAttributeNumber,
+									 &lisnull);
+			if (lisnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_CURSOR_STATE),
 						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 								cursor_name, table_name)));
-			Assert(!lisnull);
 			Assert(DatumGetObjectId(ldatum) == table_oid);
 #endif
 
-			if (!slot_getsysattr(scanstate->ss_ScanTupleSlot,
-								 SelfItemPointerAttributeNumber,
-								 &ldatum,
-								 &lisnull))
+			ldatum = slot_getsysattr(scanstate->ss_ScanTupleSlot,
+									 SelfItemPointerAttributeNumber,
+									 &lisnull);
+			if (lisnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_CURSOR_STATE),
 						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 								cursor_name, table_name)));
-			Assert(!lisnull);
 			tuple_tid = (ItemPointer) DatumGetPointer(ldatum);
 
 			*current_tid = *tuple_tid;

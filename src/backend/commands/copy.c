@@ -2850,7 +2850,7 @@ CopyFrom(CopyState cstate)
 				 * freed after each batch insert.
 				 */
 				oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-				tuple = ExecCopySlotTuple(slot);
+				tuple = ExecCopySlotHeapTuple(slot);
 				MemoryContextSwitchTo(oldcontext);
 			}
 

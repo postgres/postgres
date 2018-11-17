@@ -357,7 +357,7 @@ ExecScanSubPlan(SubPlanState *node,
 			 */
 			if (node->curTuple)
 				heap_freetuple(node->curTuple);
-			node->curTuple = ExecCopySlotTuple(slot);
+			node->curTuple = ExecCopySlotHeapTuple(slot);
 
 			result = heap_getattr(node->curTuple, 1, tdesc, isNull);
 			/* keep scanning subplan to make sure there's only one tuple */
@@ -1137,7 +1137,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		 */
 		if (node->curTuple)
 			heap_freetuple(node->curTuple);
-		node->curTuple = ExecCopySlotTuple(slot);
+		node->curTuple = ExecCopySlotHeapTuple(slot);
 
 		/*
 		 * Now set all the setParam params from the columns of the tuple

@@ -1875,11 +1875,11 @@ CheckOpSlotCompatibility(ExprEvalStep *op, TupleTableSlot *slot)
 	 * Should probably fixed at some point, but for now it's easier to allow
 	 * buffer and heap tuples to be used interchangably.
 	 */
-	if (slot->tts_ops == &TTSOpsBufferTuple &&
+	if (slot->tts_ops == &TTSOpsBufferHeapTuple &&
 		op->d.fetch.kind == &TTSOpsHeapTuple)
 		return;
 	if (slot->tts_ops == &TTSOpsHeapTuple &&
-		op->d.fetch.kind == &TTSOpsBufferTuple)
+		op->d.fetch.kind == &TTSOpsBufferHeapTuple)
 		return;
 
 	/*
@@ -4025,15 +4025,15 @@ void
 ExecEvalSysVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext,
 			   TupleTableSlot *slot)
 {
-	bool success;
+	Datum d;
 
 	/* slot_getsysattr has sufficient defenses against bad attnums */
-	success = slot_getsysattr(slot,
-							  op->d.var.attnum,
-							  op->resvalue,
-							  op->resnull);
+	d = slot_getsysattr(slot,
+						op->d.var.attnum,
+						op->resnull);
+	*op->resvalue = d;
 	/* this ought to be unreachable, but it's cheap enough to check */
-	if (unlikely(!success))
+	if (unlikely(*op->resnull))
 		elog(ERROR, "failed to fetch attribute from slot");
 }
 

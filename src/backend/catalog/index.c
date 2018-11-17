@@ -2041,7 +2041,9 @@ FormIndexDatum(IndexInfo *indexInfo,
 		Datum		iDatum;
 		bool		isNull;
 
-		if (keycol != 0)
+		if (keycol < 0)
+			iDatum = slot_getsysattr(slot, keycol, &isNull);
+		else if (keycol != 0)
 		{
 			/*
 			 * Plain index column; get the value we need directly from the

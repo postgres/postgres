@@ -65,6 +65,8 @@ LLVMTypeRef StructFormPgAttribute;
 LLVMTypeRef StructTupleConstr;
 LLVMTypeRef StructtupleDesc;
 LLVMTypeRef StructTupleTableSlot;
+LLVMTypeRef StructHeapTupleTableSlot;
+LLVMTypeRef StructMinimalTupleTableSlot;
 LLVMTypeRef StructMemoryContextData;
 LLVMTypeRef StructPGFinfoRecord;
 LLVMTypeRef StructFmgrInfo;
@@ -811,6 +813,8 @@ llvm_create_types(void)
 	StructFunctionCallInfoData = load_type(mod, "StructFunctionCallInfoData");
 	StructMemoryContextData = load_type(mod, "StructMemoryContextData");
 	StructTupleTableSlot = load_type(mod, "StructTupleTableSlot");
+	StructHeapTupleTableSlot = load_type(mod, "StructHeapTupleTableSlot");
+	StructMinimalTupleTableSlot = load_type(mod, "StructMinimalTupleTableSlot");
 	StructHeapTupleData = load_type(mod, "StructHeapTupleData");
 	StructtupleDesc = load_type(mod, "StructtupleDesc");
 	StructAggState = load_type(mod, "StructAggState");

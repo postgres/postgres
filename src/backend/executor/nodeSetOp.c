@@ -252,7 +252,7 @@ setop_retrieve_direct(SetOpState *setopstate)
 			if (!TupIsNull(outerslot))
 			{
 				/* Make a copy of the first input tuple */
-				setopstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
+				setopstate->grp_firstTuple = ExecCopySlotHeapTuple(outerslot);
 			}
 			else
 			{
@@ -303,7 +303,7 @@ setop_retrieve_direct(SetOpState *setopstate)
 				/*
 				 * Save the first input tuple of the next group.
 				 */
-				setopstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
+				setopstate->grp_firstTuple = ExecCopySlotHeapTuple(outerslot);
 				break;
 			}
 

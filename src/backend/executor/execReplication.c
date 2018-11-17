@@ -170,8 +170,11 @@ retry:
 		HeapUpdateFailureData hufd;
 		HTSU_Result res;
 		HeapTupleData locktup;
+		HeapTupleTableSlot *hslot = (HeapTupleTableSlot *)outslot;
 
-		ItemPointerCopy(&outslot->tts_tuple->t_self, &locktup.t_self);
+		/* Only a heap tuple has item pointers. */
+		Assert(TTS_IS_HEAPTUPLE(outslot) || TTS_IS_BUFFERTUPLE(outslot));
+		ItemPointerCopy(&hslot->tuple->t_self, &locktup.t_self);
 
 		PushActiveSnapshot(GetLatestSnapshot());
 
@@ -334,8 +337,11 @@ retry:
 		HeapUpdateFailureData hufd;
 		HTSU_Result res;
 		HeapTupleData locktup;
+		HeapTupleTableSlot *hslot = (HeapTupleTableSlot *)outslot;
 
-		ItemPointerCopy(&outslot->tts_tuple->t_self, &locktup.t_self);
+		/* Only a heap tuple has item pointers. */
+		Assert(TTS_IS_HEAPTUPLE(outslot) || TTS_IS_BUFFERTUPLE(outslot));
+		ItemPointerCopy(&hslot->tuple->t_self, &locktup.t_self);
 
 		PushActiveSnapshot(GetLatestSnapshot());
 
@@ -456,6 +462,12 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
+	HeapTupleTableSlot *hsearchslot = (HeapTupleTableSlot *)searchslot;
+	HeapTupleTableSlot *hslot = (HeapTupleTableSlot *)slot;
+
+	/* We expect both searchslot and the slot to contain a heap tuple. */
+	Assert(TTS_IS_HEAPTUPLE(searchslot) || TTS_IS_BUFFERTUPLE(searchslot));
+	Assert(TTS_IS_HEAPTUPLE(slot) || TTS_IS_BUFFERTUPLE(slot));
 
 	/* For now we support only tables. */
 	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
@@ -467,8 +479,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
 		slot = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
-									&searchslot->tts_tuple->t_self,
-									NULL, slot);
+									&hsearchslot->tuple->t_self, NULL, slot);
 
 		if (slot == NULL)		/* "do nothing" */
 			skip_tuple = true;
@@ -488,19 +499,18 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 
 		/* OK, update the tuple and index entries for it */
-		simple_heap_update(rel, &searchslot->tts_tuple->t_self,
-						   slot->tts_tuple);
+		simple_heap_update(rel, &hsearchslot->tuple->t_self, hslot->tuple);
 
 		if (resultRelInfo->ri_NumIndices > 0 &&
-			!HeapTupleIsHeapOnly(slot->tts_tuple))
+			!HeapTupleIsHeapOnly(hslot->tuple))
 			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
 												   estate, false, NULL,
 												   NIL);
 
 		/* AFTER ROW UPDATE Triggers */
 		ExecARUpdateTriggers(estate, resultRelInfo,
-							 &searchslot->tts_tuple->t_self,
-							 NULL, tuple, recheckIndexes, NULL);
+							 &hsearchslot->tuple->t_self, NULL, tuple,
+							 recheckIndexes, NULL);
 
 		list_free(recheckIndexes);
 	}
@@ -519,9 +529,11 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 	bool		skip_tuple = false;
 	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
+	HeapTupleTableSlot *hsearchslot = (HeapTupleTableSlot *)searchslot;
 
-	/* For now we support only tables. */
+	/* For now we support only tables and heap tuples. */
 	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
+	Assert(TTS_IS_HEAPTUPLE(searchslot) || TTS_IS_BUFFERTUPLE(searchslot));
 
 	CheckCmdReplicaIdentity(rel, CMD_DELETE);
 
@@ -530,8 +542,8 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 		resultRelInfo->ri_TrigDesc->trig_delete_before_row)
 	{
 		skip_tuple = !ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-										   &searchslot->tts_tuple->t_self,
-										   NULL, NULL);
+										   &hsearchslot->tuple->t_self, NULL,
+										   NULL);
 	}
 
 	if (!skip_tuple)
@@ -539,11 +551,11 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 		List	   *recheckIndexes = NIL;
 
 		/* OK, delete the tuple */
-		simple_heap_delete(rel, &searchslot->tts_tuple->t_self);
+		simple_heap_delete(rel, &hsearchslot->tuple->t_self);
 
 		/* AFTER ROW DELETE Triggers */
 		ExecARDeleteTriggers(estate, resultRelInfo,
-							 &searchslot->tts_tuple->t_self, NULL, NULL);
+							 &hsearchslot->tuple->t_self, NULL, NULL);
 
 		list_free(recheckIndexes);
 	}

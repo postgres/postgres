@@ -931,9 +931,10 @@ ExecParallelHashJoinOuterGetTuple(PlanState *outerNode,
 									   hashvalue);
 		if (tuple != NULL)
 		{
-			slot = ExecStoreMinimalTuple(tuple,
-										 hjstate->hj_OuterTupleSlot,
-										 false);
+			ExecForceStoreMinimalTuple(tuple,
+									   hjstate->hj_OuterTupleSlot,
+									   false);
+			slot = hjstate->hj_OuterTupleSlot;
 			return slot;
 		}
 		else
@@ -1160,9 +1161,10 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 					while ((tuple = sts_parallel_scan_next(inner_tuples,
 														   &hashvalue)))
 					{
-						slot = ExecStoreMinimalTuple(tuple,
-													 hjstate->hj_HashTupleSlot,
-													 false);
+						ExecForceStoreMinimalTuple(tuple,
+												   hjstate->hj_HashTupleSlot,
+												   false);
+						slot = hjstate->hj_HashTupleSlot;
 						ExecParallelHashTableInsertCurrentBatch(hashtable, slot,
 																hashvalue);
 					}
@@ -1296,7 +1298,8 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read from hash-join temporary file: %m")));
-	return ExecStoreMinimalTuple(tuple, tupleSlot, true);
+	ExecForceStoreMinimalTuple(tuple, tupleSlot, true);
+	return tupleSlot;
 }
 
 

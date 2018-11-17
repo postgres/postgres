@@ -950,7 +950,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 */
 	ExecInitScanTupleSlot(estate, &indexstate->ss,
 						  RelationGetDescr(currentRelation),
-						  &TTSOpsBufferTuple);
+						  &TTSOpsBufferHeapTuple);
 
 	/*
 	 * Initialize result type and projection.

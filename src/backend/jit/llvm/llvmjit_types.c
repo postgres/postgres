@@ -59,6 +59,8 @@ FunctionCallInfoData StructFunctionCallInfoData;
 HeapTupleData StructHeapTupleData;
 MemoryContextData StructMemoryContextData;
 TupleTableSlot StructTupleTableSlot;
+HeapTupleTableSlot StructHeapTupleTableSlot;
+MinimalTupleTableSlot StructMinimalTupleTableSlot;
 struct tupleDesc StructtupleDesc;
 
 

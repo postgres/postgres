@@ -65,6 +65,8 @@ extern LLVMTypeRef TypeStorageBool;
 extern LLVMTypeRef StructtupleDesc;
 extern LLVMTypeRef StructHeapTupleData;
 extern LLVMTypeRef StructTupleTableSlot;
+extern LLVMTypeRef StructHeapTupleTableSlot;
+extern LLVMTypeRef StructMinimalTupleTableSlot;
 extern LLVMTypeRef StructMemoryContextData;
 extern LLVMTypeRef StructFunctionCallInfoData;
 extern LLVMTypeRef StructExprContext;

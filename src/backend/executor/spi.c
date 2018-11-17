@@ -1857,7 +1857,7 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 	}
 
 	tuptable->vals[tuptable->alloced - tuptable->free] =
-		ExecCopySlotTuple(slot);
+		ExecCopySlotHeapTuple(slot);
 	(tuptable->free)--;
 
 	MemoryContextSwitchTo(oldcxt);

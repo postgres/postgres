@@ -78,8 +78,8 @@ ExecScanFetch(ScanState *node,
 				return ExecClearTuple(slot);
 
 			/* Store test tuple in the plan node's scan slot */
-			ExecStoreHeapTuple(estate->es_epqTuple[scanrelid - 1],
-							   slot, false);
+			ExecForceStoreHeapTuple(estate->es_epqTuple[scanrelid - 1],
+									slot);
 
 			/* Check if it meets the access-method conditions */
 			if (!(*recheckMtd) (node, slot))

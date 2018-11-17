@@ -93,6 +93,11 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	if (ops == &TTSOpsVirtual)
 		return NULL;
 
+	/* decline to JIT for slot types we don't know to handle */
+	if (ops != &TTSOpsHeapTuple && ops != &TTSOpsBufferHeapTuple &&
+		ops != &TTSOpsMinimalTuple)
+		return NULL;
+
 	mod = llvm_mutable_module(context);
 
 	funcname = llvm_expand_funcname(context, "deform");
@@ -171,14 +176,44 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	v_tts_nulls =
 		l_load_struct_gep(b, v_slot, FIELDNO_TUPLETABLESLOT_ISNULL,
 						  "tts_ISNULL");
-
-	v_slotoffp = LLVMBuildStructGEP(b, v_slot, FIELDNO_TUPLETABLESLOT_OFF, "");
 	v_flagsp = LLVMBuildStructGEP(b, v_slot, FIELDNO_TUPLETABLESLOT_FLAGS, "");
 	v_nvalidp = LLVMBuildStructGEP(b, v_slot, FIELDNO_TUPLETABLESLOT_NVALID, "");
 
-	v_tupleheaderp =
-		l_load_struct_gep(b, v_slot, FIELDNO_TUPLETABLESLOT_TUPLE,
-						  "tupleheader");
+	if (ops == &TTSOpsHeapTuple || ops == &TTSOpsBufferHeapTuple)
+	{
+		LLVMValueRef v_heapslot;
+
+		v_heapslot =
+			LLVMBuildBitCast(b,
+							 v_slot,
+							 l_ptr(StructHeapTupleTableSlot),
+							 "heapslot");
+		v_slotoffp = LLVMBuildStructGEP(b, v_heapslot, FIELDNO_HEAPTUPLETABLESLOT_OFF, "");
+		v_tupleheaderp =
+			l_load_struct_gep(b, v_heapslot, FIELDNO_HEAPTUPLETABLESLOT_TUPLE,
+							  "tupleheader");
+
+	}
+	else if (ops == &TTSOpsMinimalTuple)
+	{
+		LLVMValueRef v_minimalslot;
+
+		v_minimalslot =
+			LLVMBuildBitCast(b,
+							 v_slot,
+							 l_ptr(StructMinimalTupleTableSlot),
+							 "minimalslotslot");
+		v_slotoffp = LLVMBuildStructGEP(b, v_minimalslot, FIELDNO_MINIMALTUPLETABLESLOT_OFF, "");
+		v_tupleheaderp =
+			l_load_struct_gep(b, v_minimalslot, FIELDNO_MINIMALTUPLETABLESLOT_TUPLE,
+							  "tupleheader");
+	}
+	else
+	{
+		/* should've returned at the start of the function */
+		pg_unreachable();
+	}
+
 	v_tuplep =
 		l_load_struct_gep(b, v_tupleheaderp, FIELDNO_HEAPTUPLEDATA_DATA,
 						  "tuple");

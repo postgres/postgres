@@ -2384,7 +2384,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_existing =
 			ExecInitExtraTupleSlot(mtstate->ps.state,
 								   mtstate->mt_partition_tuple_routing ?
-								   NULL : relationDesc, &TTSOpsBufferTuple);
+								   NULL : relationDesc, &TTSOpsBufferHeapTuple);
 
 		/* carried forward solely for the benefit of explain */
 		mtstate->mt_excludedtlist = node->exclRelTlist;

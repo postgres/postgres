@@ -544,7 +544,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 */
 	ExecInitScanTupleSlot(estate, &tidstate->ss,
 						  RelationGetDescr(currentRelation),
-						  &TTSOpsBufferTuple);
+						  &TTSOpsBufferHeapTuple);
 
 	/*
 	 * Initialize result type and projection.
