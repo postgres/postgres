@@ -132,6 +132,8 @@ static Datum
 tts_virtual_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
 	elog(ERROR, "virtual tuple table slot does not have system atttributes");
+
+	return 0; /* silence compiler warnings */
 }
 
 /*
@@ -488,6 +490,8 @@ static Datum
 tts_minimal_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
 	elog(ERROR, "minimal tuple table slot does not have system atttributes");
+
+	return 0; /* silence compiler warnings */
 }
 
 static void
