@@ -654,8 +654,12 @@ PostmasterMain(int argc, char *argv[])
 	 * a standalone backend, their default handling is reasonable.  Hence, all
 	 * child processes should just allow the inherited settings to stand.
 	 */
+#ifdef SIGTTIN
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
+#endif
+#ifdef SIGTTOU
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
+#endif
 
 	/* ignore SIGXFSZ, so that ulimit violations work like disk full */
 #ifdef SIGXFSZ

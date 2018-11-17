@@ -171,8 +171,6 @@
 #define SIGTSTP				18
 #define SIGCONT				19
 #define SIGCHLD				20
-#define SIGTTIN				21
-#define SIGTTOU				22	/* Same as SIGABRT -- no problem, I hope */
 #define SIGWINCH			28
 #define SIGUSR1				30
 #define SIGUSR2				31
