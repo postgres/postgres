@@ -383,9 +383,8 @@ AC_SUBST(SUN_STUDIO_CC)
 PGAC_ARG_BOOL(with, llvm, no, [build with LLVM based JIT support],
               [AC_DEFINE([USE_LLVM], 1, [Define to 1 to build with LLVM based JIT support. (--with-llvm)])])
 AC_SUBST(with_llvm)
-if test "$with_llvm" = yes ; then
-   PGAC_LLVM_SUPPORT()
-fi
+dnl must use AS_IF here, else AC_REQUIRES inside PGAC_LLVM_SUPPORT malfunctions
+AS_IF([test "$with_llvm" = yes], [PGAC_LLVM_SUPPORT()])
 
 
 unset CFLAGS
@@ -1009,7 +1008,6 @@ AC_SUBST(install_bin)
 
 PGAC_PATH_PROGS(TAR, tar)
 AC_PROG_LN_S
-AC_PROG_AWK
 AC_PROG_MKDIR_P
 # When Autoconf chooses install-sh as mkdir -p program it tries to generate
 # a relative path to it in each makefile where it substitutes it. This clashes
