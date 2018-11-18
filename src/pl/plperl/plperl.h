@@ -46,7 +46,7 @@
  */
 #ifdef _MSC_VER
 #define __inline__ inline
-#ifdef isname
+#ifdef isnan
 #undef isnan
 #endif
 #endif
