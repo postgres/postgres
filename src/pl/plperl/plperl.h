@@ -40,10 +40,15 @@
 
 /*
  * ActivePerl 5.18 and later are MinGW-built, and their headers use GCC's
- * __inline__.  Translate to something MSVC recognizes.
+ * __inline__.  Translate to something MSVC recognizes. Also, perl.h sometimes
+ * defines isnan, so undefine it here and put back the definition later if
+ * perl.h doesn't.
  */
 #ifdef _MSC_VER
 #define __inline__ inline
+#ifdef isname
+#undef isnan
+#endif
 #endif
 
 /*
@@ -134,6 +139,13 @@
 #define fprintf			pg_fprintf
 #define vprintf			pg_vprintf
 #define printf(...)		pg_printf(__VA_ARGS__)
+
+/* put back the definition of isnan if needed */
+#ifdef _MSC_VER
+#ifndef isnan
+#define isnan(x) _isnan(x)
+#endif
+#endif
 
 /* perl version and platform portability */
 #define NEED_eval_pv
