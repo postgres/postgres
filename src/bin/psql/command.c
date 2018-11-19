@@ -596,14 +596,30 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 		else
 		{
 			char	   *host = PQhost(pset.db);
+			char	   *hostaddr = PQhostaddr(pset.db);
 
-			/* If the host is an absolute path, the connection is via socket */
+			/*
+			 * If the host is an absolute path, the connection is via socket
+			 * unless overriden by hostaddr
+			 */
 			if (is_absolute_path(host))
-				printf(_("You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
-					   db, PQuser(pset.db), host, PQport(pset.db));
+			{
+				if (hostaddr && *hostaddr)
+					printf(_("You are connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"),
+						   db, PQuser(pset.db), hostaddr, PQport(pset.db));
+				else
+					printf(_("You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
+						   db, PQuser(pset.db), host, PQport(pset.db));
+			}
 			else
-				printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
-					   db, PQuser(pset.db), host, PQport(pset.db));
+			{
+				if (hostaddr && *hostaddr && strcmp(host, hostaddr) != 0)
+					printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"),
+						   db, PQuser(pset.db), host, hostaddr, PQport(pset.db));
+				else
+					printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
+						   db, PQuser(pset.db), host, PQport(pset.db));
+			}
 			printSSLInfo();
 		}
 	}
@@ -2854,6 +2870,7 @@ do_connect(enum trivalue reuse_previous_specification,
 	PGconn	   *o_conn = pset.db,
 			   *n_conn;
 	char	   *password = NULL;
+	char	   *hostaddr = NULL;
 	bool		keep_password;
 	bool		has_connection_string;
 	bool		reuse_previous;
@@ -2894,12 +2911,27 @@ do_connect(enum trivalue reuse_previous_specification,
 	}
 
 	/* grab missing values from the old connection */
-	if (!user && reuse_previous)
-		user = PQuser(o_conn);
-	if (!host && reuse_previous)
-		host = PQhost(o_conn);
-	if (!port && reuse_previous)
-		port = PQport(o_conn);
+	if (reuse_previous)
+	{
+		if (!user)
+			user = PQuser(o_conn);
+		if (host && strcmp(host, PQhost(o_conn)) == 0)
+		{
+			/*
+			 * if we are targetting the same host, reuse its hostaddr for
+			 * consistency
+			 */
+			hostaddr = PQhostaddr(o_conn);
+		}
+		if (!host)
+		{
+			host = PQhost(o_conn);
+			/* also set hostaddr for consistency */
+			hostaddr = PQhostaddr(o_conn);
+		}
+		if (!port)
+			port = PQport(o_conn);
+	}
 
 	/*
 	 * Any change in the parameters read above makes us discard the password.
@@ -2961,13 +2993,18 @@ do_connect(enum trivalue reuse_previous_specification,
 
 	while (true)
 	{
-#define PARAMS_ARRAY_SIZE	8
+#define PARAMS_ARRAY_SIZE	9
 		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
 		int			paramnum = -1;
 
 		keywords[++paramnum] = "host";
 		values[paramnum] = host;
+		if (hostaddr && *hostaddr)
+		{
+			keywords[++paramnum] = "hostaddr";
+			values[paramnum] = hostaddr;
+		}
 		keywords[++paramnum] = "port";
 		values[paramnum] = port;
 		keywords[++paramnum] = "user";
@@ -3071,14 +3108,27 @@ do_connect(enum trivalue reuse_previous_specification,
 			param_is_newly_set(PQport(o_conn), PQport(pset.db)))
 		{
 			char	   *host = PQhost(pset.db);
+			char	   *hostaddr = PQhostaddr(pset.db);
 
 			/* If the host is an absolute path, the connection is via socket */
 			if (is_absolute_path(host))
-				printf(_("You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
-					   PQdb(pset.db), PQuser(pset.db), host, PQport(pset.db));
+			{
+				if (hostaddr && *hostaddr)
+					printf(_("You are now connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"),
+						   PQdb(pset.db), PQuser(pset.db), hostaddr, PQport(pset.db));
+				else
+					printf(_("You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
+						   PQdb(pset.db), PQuser(pset.db), host, PQport(pset.db));
+			}
 			else
-				printf(_("You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
-					   PQdb(pset.db), PQuser(pset.db), host, PQport(pset.db));
+			{
+				if (hostaddr && *hostaddr && strcmp(host, hostaddr) != 0)
+					printf(_("You are now connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"),
+						   PQdb(pset.db), PQuser(pset.db), host, hostaddr, PQport(pset.db));
+				else
+					printf(_("You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
+						   PQdb(pset.db), PQuser(pset.db), host, PQport(pset.db));
+			}
 		}
 		else
 			printf(_("You are now connected to database \"%s\" as user \"%s\".\n"),

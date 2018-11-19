@@ -397,6 +397,7 @@ struct pg_conn
 	int			nconnhost;		/* # of hosts named in conn string */
 	int			whichhost;		/* host we're currently trying/connected to */
 	pg_conn_host *connhost;		/* details about each named host */
+	char	   *connip;			/* IP address for current network connection */
 
 	/* Connection data */
 	pgsocket	sock;			/* FD for socket, PGINVALID_SOCKET if

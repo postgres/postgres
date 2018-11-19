@@ -1471,6 +1471,39 @@ connectNoDelay(PGconn *conn)
 	return 1;
 }
 
+/* ----------
+ * Write currently connected IP address into host_addr (of len host_addr_len).
+ * If unable to, set it to the empty string.
+ * ----------
+ */
+static void
+getHostaddr(PGconn *conn, char *host_addr, int host_addr_len)
+{
+	struct sockaddr_storage *addr = &conn->raddr.addr;
+
+	if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
+		strlcpy(host_addr, conn->connhost[conn->whichhost].hostaddr, host_addr_len);
+	else if (addr->ss_family == AF_INET)
+	{
+		if (inet_net_ntop(AF_INET,
+						  &((struct sockaddr_in *) addr)->sin_addr.s_addr,
+						  32,
+						  host_addr, host_addr_len) == NULL)
+			host_addr[0] = '\0';
+	}
+#ifdef HAVE_IPV6
+	else if (addr->ss_family == AF_INET6)
+	{
+		if (inet_net_ntop(AF_INET6,
+						  &((struct sockaddr_in6 *) addr)->sin6_addr.s6_addr,
+						  128,
+						  host_addr, host_addr_len) == NULL)
+			host_addr[0] = '\0';
+	}
+#endif
+	else
+		host_addr[0] = '\0';
+}
 
 /* ----------
  * connectFailureMessage -
@@ -1504,34 +1537,12 @@ connectFailureMessage(PGconn *conn, int errorno)
 		char		host_addr[NI_MAXHOST];
 		const char *displayed_host;
 		const char *displayed_port;
-		struct sockaddr_storage *addr = &conn->raddr.addr;
 
 		/*
 		 * Optionally display the network address with the hostname. This is
 		 * useful to distinguish between IPv4 and IPv6 connections.
 		 */
-		if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
-			strlcpy(host_addr, conn->connhost[conn->whichhost].hostaddr, NI_MAXHOST);
-		else if (addr->ss_family == AF_INET)
-		{
-			if (inet_net_ntop(AF_INET,
-							  &((struct sockaddr_in *) addr)->sin_addr.s_addr,
-							  32,
-							  host_addr, sizeof(host_addr)) == NULL)
-				strcpy(host_addr, "???");
-		}
-#ifdef HAVE_IPV6
-		else if (addr->ss_family == AF_INET6)
-		{
-			if (inet_net_ntop(AF_INET6,
-							  &((struct sockaddr_in6 *) addr)->sin6_addr.s6_addr,
-							  128,
-							  host_addr, sizeof(host_addr)) == NULL)
-				strcpy(host_addr, "???");
-		}
-#endif
-		else
-			strcpy(host_addr, "???");
+		getHostaddr(conn, host_addr, NI_MAXHOST);
 
 		/* To which host and port were we actually connecting? */
 		if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
@@ -1548,14 +1559,14 @@ connectFailureMessage(PGconn *conn, int errorno)
 		 * looked-up IP address.
 		 */
 		if (conn->connhost[conn->whichhost].type != CHT_HOST_ADDRESS &&
+			strlen(host_addr) > 0 &&
 			strcmp(displayed_host, host_addr) != 0)
 			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not connect to server: %s\n"
 											"\tIs the server running on host \"%s\" (%s) and accepting\n"
 											"\tTCP/IP connections on port %s?\n"),
 							  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
-							  displayed_host,
-							  host_addr,
+							  displayed_host, host_addr,
 							  displayed_port);
 		else
 			appendPQExpBuffer(&conn->errorMessage,
@@ -2286,6 +2297,7 @@ keep_going:						/* We will come back to here until there is
 				 */
 				{
 					struct addrinfo *addr_cur = conn->addr_cur;
+					char		host_addr[NI_MAXHOST];
 
 					/*
 					 * Advance to next possible host, if we've tried all of
@@ -2301,6 +2313,21 @@ keep_going:						/* We will come back to here until there is
 					memcpy(&conn->raddr.addr, addr_cur->ai_addr,
 						   addr_cur->ai_addrlen);
 					conn->raddr.salen = addr_cur->ai_addrlen;
+
+					/* set connip */
+					if (conn->connip != NULL)
+					{
+						free(conn->connip);
+						conn->connip = NULL;
+					}
+
+					getHostaddr(conn, host_addr, NI_MAXHOST);
+					if (strlen(host_addr) > 0)
+						conn->connip = strdup(host_addr);
+					/*
+					 * purposely ignore strdup failure; not a big problem if
+					 * it fails anyway.
+					 */
 
 					conn->sock = socket(addr_cur->ai_family, SOCK_STREAM, 0);
 					if (conn->sock == PGINVALID_SOCKET)
@@ -3665,6 +3692,8 @@ freePGconn(PGconn *conn)
 		free(conn->sslcompression);
 	if (conn->requirepeer)
 		free(conn->requirepeer);
+	if (conn->connip)
+		free(conn->connip);
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
@@ -6167,6 +6196,25 @@ PQhost(const PGconn *conn)
 		else if (conn->connhost[conn->whichhost].hostaddr != NULL &&
 				 conn->connhost[conn->whichhost].hostaddr[0] != '\0')
 			return conn->connhost[conn->whichhost].hostaddr;
+	}
+
+	return "";
+}
+
+char *
+PQhostaddr(const PGconn *conn)
+{
+	if (!conn)
+		return NULL;
+
+	if (conn->connhost != NULL)
+	{
+		if (conn->connhost[conn->whichhost].hostaddr != NULL &&
+			conn->connhost[conn->whichhost].hostaddr[0] != '\0')
+			return conn->connhost[conn->whichhost].hostaddr;
+
+		if (conn->connip != NULL)
+			return conn->connip;
 	}
 
 	return "";

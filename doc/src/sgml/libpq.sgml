@@ -1735,6 +1735,36 @@ char *PQhost(const PGconn *conn);
      </listitem>
     </varlistentry>
 
+
+    <varlistentry id="libpq-pqhostaddr">
+     <term>
+      <function>PQhostaddr</function>
+      <indexterm>
+       <primary>PQhostaddr</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+       Returns the server IP address of the active connection.
+       This can be the address that a host name resolved to,
+       or an IP address provided through the <literal>hostaddr</literal>
+       parameter.
+<synopsis>
+char *PQhostaddr(const PGconn *conn);
+</synopsis>
+      </para>
+
+      <para>
+       <function>PQhostaddr</function> returns <symbol>NULL</symbol> if the
+       <parameter>conn</parameter> argument is <symbol>NULL</symbol>.
+       Otherwise, if there is an error producing the host information
+       (perhaps if the connection has not been fully established or
+       there was an error), it returns an empty string.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry id="libpq-pqport">
      <term>
       <function>PQport</function>

@@ -173,3 +173,4 @@ PQsetErrorContextVisibility 170
 PQresultVerboseErrorMessage 171
 PQencryptPasswordConn     172
 PQresultMemorySize        173
+PQhostaddr                174
