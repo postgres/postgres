@@ -353,19 +353,6 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		gotheader = false;
 	}
 
-	/*
-	 * Enlarge readRecordBuf as needed.
-	 */
-	if (total_len > state->readRecordBufSize &&
-		!allocate_recordbuf(state, total_len))
-	{
-		/* We treat this as a "bogus data" condition */
-		report_invalid_record(state, "record length %u at %X/%X too long",
-							  total_len,
-							  (uint32) (RecPtr >> 32), (uint32) RecPtr);
-		goto err;
-	}
-
 	len = XLOG_BLCKSZ - RecPtr % XLOG_BLCKSZ;
 	if (total_len > len)
 	{
@@ -374,6 +361,19 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		XLogPageHeader pageHeader;
 		char	   *buffer;
 		uint32		gotlen;
+
+		/*
+		 * Enlarge readRecordBuf as needed.
+		 */
+		if (total_len > state->readRecordBufSize &&
+			!allocate_recordbuf(state, total_len))
+		{
+			/* We treat this as a "bogus data" condition */
+			report_invalid_record(state, "record length %u at %X/%X too long",
+								  total_len,
+								  (uint32) (RecPtr >> 32), (uint32) RecPtr);
+			goto err;
+		}
 
 		/* Copy the first fragment of the record from the first page. */
 		memcpy(state->readRecordBuf,
@@ -479,7 +479,6 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		state->EndRecPtr = RecPtr + MAXALIGN(total_len);
 
 		state->ReadRecPtr = RecPtr;
-		memcpy(state->readRecordBuf, record, total_len);
 	}
 
 	/*

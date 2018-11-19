@@ -4203,9 +4203,6 @@ CleanupBackupHistory(void)
  * If no valid record is available, returns NULL, or fails if emode is PANIC.
  * (emode must be either PANIC, LOG). In standby mode, retries until a valid
  * record is available.
- *
- * The record is copied into readRecordBuf, so that on successful return,
- * the returned record pointer always points there.
  */
 static XLogRecord *
 ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
