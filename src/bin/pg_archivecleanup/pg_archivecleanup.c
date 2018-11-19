@@ -1,14 +1,10 @@
 /*
- * src/bin/pg_archivecleanup/pg_archivecleanup.c
- *
  * pg_archivecleanup.c
  *
- * Production-ready example of an archive_cleanup_command
- * used to clean an archive when using standby_mode = on in 9.0
- * or for standalone use for any version of PostgreSQL 8.0+.
+ * To be used as archive_cleanup_command to clean an archive when using
+ * standby mode.
  *
- * Original author:		Simon Riggs  simon@2ndquadrant.com
- * Current maintainer:	Simon Riggs
+ * src/bin/pg_archivecleanup/pg_archivecleanup.c
  */
 #include "postgres_fe.h"
 
