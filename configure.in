@@ -384,7 +384,9 @@ PGAC_ARG_BOOL(with, llvm, no, [build with LLVM based JIT support],
               [AC_DEFINE([USE_LLVM], 1, [Define to 1 to build with LLVM based JIT support. (--with-llvm)])])
 AC_SUBST(with_llvm)
 dnl must use AS_IF here, else AC_REQUIRES inside PGAC_LLVM_SUPPORT malfunctions
-AS_IF([test "$with_llvm" = yes], [PGAC_LLVM_SUPPORT()])
+AS_IF([test "$with_llvm" = yes], [
+  PGAC_LLVM_SUPPORT()
+]) # fi
 
 
 unset CFLAGS
@@ -1582,10 +1584,11 @@ esac
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
 # http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
-if test "$PORTNAME" != "solaris"; then
+dnl must use AS_IF here, else AC_REQUIRES inside AC_CHECK_DECLS malfunctions
+AS_IF([test "$PORTNAME" != "solaris"], [
 AC_CHECK_FUNCS(posix_fadvise)
 AC_CHECK_DECLS(posix_fadvise, [], [], [#include <fcntl.h>])
-fi
+]) # fi
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 AC_CHECK_DECLS([strlcat, strlcpy, strnlen])
