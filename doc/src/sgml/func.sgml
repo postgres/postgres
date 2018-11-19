@@ -19278,14 +19278,16 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>boolean</type></entry>
        <entry>
-        Promotes a physical standby server.  Returns <literal>true</literal>
-        if promotion is successful and <literal>false</literal> otherwise.
-        With <parameter>wait</parameter> set to <literal>true</literal>, the
-        default, the function waits until promotion is completed or
-        <parameter>wait_seconds</parameter> seconds have passed, otherwise the
-        function returns immediately after sending the promotion signal to the
-        postmaster.  This function is restricted to superusers by default, but
-        other users can be granted EXECUTE to run the function.
+        Promotes a physical standby server.  With <parameter>wait</parameter>
+        set to <literal>true</literal> (the default), the function waits until
+        promotion is completed or <parameter>wait_seconds</parameter> seconds
+        have passed, and returns <literal>true</literal> if promotion is
+        successful and <literal>false</literal> otherwise.
+        If <parameter>wait</parameter> is set to <literal>false</literal>, the
+        function returns <literal>true</literal> immediately after sending
+        <literal>SIGUSR1</literal> to the postmaster to trigger the promotion.
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
        </entry>
       </row>
       <row>
