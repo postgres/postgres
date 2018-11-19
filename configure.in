@@ -944,6 +944,59 @@ program to use during the build.])
   fi
 fi
 
+#
+# Pthreads
+#
+# For each platform, we need to know about any special compile and link
+# libraries, and whether the normal C function names are thread-safe.
+# See the comment at the top of src/port/thread.c for more information.
+# WIN32 doesn't need the pthread tests;  it always uses threads
+#
+# These tests are run before the library-tests, because linking with the
+# other libraries can pull in the pthread functions as a side-effect.  We
+# want to use the -pthread or similar flags directly, and not rely on
+# the side-effects of linking with some other library.
+#
+# note: We have to use AS_IF here rather than plain if. The AC_CHECK_HEADER
+# invocation below is the first one in the script, and autoconf generates
+# additional code for that, which must not be inside the if-block. AS_IF
+# knows how to do that.
+AS_IF([test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"],
+[ # then
+AX_PTHREAD	# set thread flags
+
+# Some platforms use these, so just define them.  They can't hurt if they
+# are not supported.  For example, on Solaris -D_POSIX_PTHREAD_SEMANTICS
+# enables 5-arg getpwuid_r, among other things.
+PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
+
+# Check for *_r functions
+_CFLAGS="$CFLAGS"
+_LIBS="$LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+LIBS="$LIBS $PTHREAD_LIBS"
+
+AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([
+pthread.h not found;  use --disable-thread-safety to disable thread safety])])
+
+AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
+
+# Do test here with the proper thread flags
+PGAC_FUNC_GETPWUID_R_5ARG
+PGAC_FUNC_STRERROR_R_INT
+
+CFLAGS="$_CFLAGS"
+LIBS="$_LIBS"
+
+], [ # else
+# do not use values from template file
+PTHREAD_CFLAGS=
+PTHREAD_LIBS=
+]) # fi
+
+AC_SUBST(PTHREAD_CFLAGS)
+AC_SUBST(PTHREAD_LIBS)
+
 
 ##
 ## Libraries
@@ -1046,6 +1099,33 @@ fi
 if test "$with_libxslt" = yes ; then
   AC_CHECK_LIB(xslt, xsltCleanupGlobals, [], [AC_MSG_ERROR([library 'xslt' is required for XSLT support])])
 fi
+
+# Note: We can test for libldap_r only after we know PTHREAD_LIBS
+if test "$with_ldap" = yes ; then
+  _LIBS="$LIBS"
+  if test "$PORTNAME" != "win32"; then
+    AC_CHECK_LIB(ldap, ldap_bind, [],
+		 [AC_MSG_ERROR([library 'ldap' is required for LDAP])],
+		 [$EXTRA_LDAP_LIBS])
+    LDAP_LIBS_BE="-lldap $EXTRA_LDAP_LIBS"
+    if test "$enable_thread_safety" = yes; then
+      # on some platforms ldap_r fails to link without PTHREAD_LIBS
+      AC_CHECK_LIB(ldap_r, ldap_simple_bind, [],
+		   [AC_MSG_ERROR([library 'ldap_r' is required for LDAP])],
+		   [$PTHREAD_CFLAGS $PTHREAD_LIBS $EXTRA_LDAP_LIBS])
+      LDAP_LIBS_FE="-lldap_r $EXTRA_LDAP_LIBS"
+    else
+      LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
+    fi
+  else
+    AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])
+    LDAP_LIBS_FE="-lwldap32"
+    LDAP_LIBS_BE="-lwldap32"
+  fi
+  LIBS="$_LIBS"
+fi
+AC_SUBST(LDAP_LIBS_FE)
+AC_SUBST(LDAP_LIBS_BE)
 
 # for contrib/sepgsql
 if test "$with_selinux" = yes; then
@@ -1609,88 +1689,6 @@ if test "$with_readline" = yes; then
   AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function rl_reset_screen_size])
   AC_CHECK_FUNCS([append_history history_truncate_file])
 fi
-
-
-#
-# Pthreads
-#
-# For each platform, we need to know about any special compile and link
-# libraries, and whether the normal C function names are thread-safe.
-# See the comment at the top of src/port/thread.c for more information.
-# WIN32 doesn't need the pthread tests;  it always uses threads
-if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
-ACX_PTHREAD	# set thread flags
-
-# Some platforms use these, so just define them.  They can't hurt if they
-# are not supported.  For example, on Solaris -D_POSIX_PTHREAD_SEMANTICS
-# enables 5-arg getpwuid_r, among other things.
-PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
-
-
-# At this point, we don't want to muck with the compiler name for threading.
-# Let's see who fails, perhaps AIX.  2004-04-23
-if test "$PTHREAD_CC" != "$CC"; then
-AC_MSG_ERROR([
-PostgreSQL does not support platforms that require a special compiler
-for thread safety;  use --disable-thread-safety to disable thread safety.])
-fi
-
-# Check for *_r functions
-_CFLAGS="$CFLAGS"
-_LIBS="$LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LIBS="$LIBS $PTHREAD_LIBS"
-
-if test "$PORTNAME" != "win32"; then
-AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([
-pthread.h not found;  use --disable-thread-safety to disable thread safety])])
-fi
-
-AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
-
-# Do test here with the proper thread flags
-PGAC_FUNC_GETPWUID_R_5ARG
-PGAC_FUNC_STRERROR_R_INT
-
-CFLAGS="$_CFLAGS"
-LIBS="$_LIBS"
-
-else
-# do not use values from template file
-PTHREAD_CFLAGS=
-PTHREAD_LIBS=
-fi
-
-AC_SUBST(PTHREAD_CFLAGS)
-AC_SUBST(PTHREAD_LIBS)
-
-
-# We can test for libldap_r only after we know PTHREAD_LIBS
-if test "$with_ldap" = yes ; then
-  _LIBS="$LIBS"
-  if test "$PORTNAME" != "win32"; then
-    AC_CHECK_LIB(ldap, ldap_bind, [],
-		 [AC_MSG_ERROR([library 'ldap' is required for LDAP])],
-		 [$EXTRA_LDAP_LIBS])
-    LDAP_LIBS_BE="-lldap $EXTRA_LDAP_LIBS"
-    if test "$enable_thread_safety" = yes; then
-      # on some platforms ldap_r fails to link without PTHREAD_LIBS
-      AC_CHECK_LIB(ldap_r, ldap_simple_bind, [],
-		   [AC_MSG_ERROR([library 'ldap_r' is required for LDAP])],
-		   [$PTHREAD_CFLAGS $PTHREAD_LIBS $EXTRA_LDAP_LIBS])
-      LDAP_LIBS_FE="-lldap_r $EXTRA_LDAP_LIBS"
-    else
-      LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
-    fi
-  else
-    AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])
-    LDAP_LIBS_FE="-lwldap32"
-    LDAP_LIBS_BE="-lwldap32"
-  fi
-  LIBS="$_LIBS"
-fi
-AC_SUBST(LDAP_LIBS_FE)
-AC_SUBST(LDAP_LIBS_BE)
 
 
 # This test makes sure that run tests work at all.  Sometimes a shared
