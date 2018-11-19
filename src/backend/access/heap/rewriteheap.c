@@ -978,7 +978,7 @@ logical_end_heap_rewrite(RewriteState state)
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
 		if (FileSync(src->vfd, WAIT_EVENT_LOGICAL_REWRITE_SYNC) != 0)
-			ereport(ERROR,
+			ereport(data_sync_elevel(ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m", src->path)));
 		FileClose(src->vfd);
@@ -1199,7 +1199,7 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	 */
 	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_MAPPING_SYNC);
 	if (pg_fsync(fd) != 0)
-		ereport(ERROR,
+		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", path)));
 	pgstat_report_wait_end();
@@ -1298,7 +1298,7 @@ CheckPointLogicalRewriteHeap(void)
 			 */
 			pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_CHECKPOINT_SYNC);
 			if (pg_fsync(fd) != 0)
-				ereport(ERROR,
+				ereport(data_sync_elevel(ERROR),
 						(errcode_for_file_access(),
 						 errmsg("could not fsync file \"%s\": %m", path)));
 			pgstat_report_wait_end();
