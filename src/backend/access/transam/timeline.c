@@ -402,7 +402,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	}
 
 	if (pg_fsync(fd) != 0)
-		ereport(ERROR,
+		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 
@@ -478,7 +478,7 @@ writeTimeLineHistoryFile(TimeLineID tli, char *content, int size)
 	}
 
 	if (pg_fsync(fd) != 0)
-		ereport(ERROR,
+		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 

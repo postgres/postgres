@@ -979,7 +979,7 @@ mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 	while (v != NULL)
 	{
 		if (FileSync(v->mdfd_vfd) < 0)
-			ereport(ERROR,
+			ereport(data_sync_elevel(ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m",
 							FilePathName(v->mdfd_vfd))));
@@ -1222,7 +1222,7 @@ mdsync(void)
 							bms_join(new_requests, requests);
 
 						errno = save_errno;
-						ereport(ERROR,
+						ereport(data_sync_elevel(ERROR),
 								(errcode_for_file_access(),
 								 errmsg("could not fsync file \"%s\": %m",
 										path)));
@@ -1396,7 +1396,7 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 				(errmsg("could not forward fsync request because request queue is full")));
 
 		if (FileSync(seg->mdfd_vfd) < 0)
-			ereport(ERROR,
+			ereport(data_sync_elevel(ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m",
 							FilePathName(seg->mdfd_vfd))));
