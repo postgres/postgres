@@ -984,7 +984,7 @@ logical_end_heap_rewrite(RewriteState state)
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
 		if (FileSync(src->vfd) != 0)
-			ereport(ERROR,
+			ereport(data_sync_elevel(ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m", src->path)));
 		FileClose(src->vfd);
@@ -1202,7 +1202,7 @@ heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r)
 	 * doesn't seem worth the trouble.
 	 */
 	if (pg_fsync(fd) != 0)
-		ereport(ERROR,
+		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", path)));
 
@@ -1299,7 +1299,7 @@ CheckPointLogicalRewriteHeap(void)
 			 * but it's currently not deemed worth the effort.
 			 */
 			else if (pg_fsync(fd) != 0)
-				ereport(ERROR,
+				ereport(data_sync_elevel(ERROR),
 						(errcode_for_file_access(),
 						 errmsg("could not fsync file \"%s\": %m", path)));
 			CloseTransientFile(fd);
