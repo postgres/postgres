@@ -114,7 +114,9 @@ typedef struct CopyStateData
 	FILE	   *copy_file;		/* used if copy_dest == COPY_FILE */
 	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only for
 								 * dest == COPY_NEW_FE in COPY FROM */
-	bool		fe_eof;			/* true if detected end of copy data */
+	bool		is_copy_from;	/* COPY TO, or COPY FROM? */
+	bool		reached_eof;	/* true if we read to end of copy data (not
+								 * all copy_dest types maintain this) */
 	EolType		eol_type;		/* EOL type of input */
 	int			file_encoding;	/* file or remote side's character encoding */
 	bool		need_transcoding;	/* file encoding diff from server? */
@@ -575,6 +577,8 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not read from COPY file: %m")));
+			if (bytesread == 0)
+				cstate->reached_eof = true;
 			break;
 		case COPY_OLD_FE:
 
@@ -595,7 +599,7 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 			bytesread = minread;
 			break;
 		case COPY_NEW_FE:
-			while (maxread > 0 && bytesread < minread && !cstate->fe_eof)
+			while (maxread > 0 && bytesread < minread && !cstate->reached_eof)
 			{
 				int			avail;
 
@@ -623,7 +627,7 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 							break;
 						case 'c':	/* CopyDone */
 							/* COPY IN correctly terminated by frontend */
-							cstate->fe_eof = true;
+							cstate->reached_eof = true;
 							return bytesread;
 						case 'f':	/* CopyFail */
 							ereport(ERROR,
@@ -1049,6 +1053,8 @@ ProcessCopyOptions(ParseState *pstate,
 	/* Support external use for option sanity checking */
 	if (cstate == NULL)
 		cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
+
+	cstate->is_copy_from = is_from;
 
 	cstate->file_encoding = -1;
 
@@ -1727,11 +1733,23 @@ ClosePipeToProgram(CopyState cstate)
 				(errcode_for_file_access(),
 				 errmsg("could not close pipe to external command: %m")));
 	else if (pclose_rc != 0)
+	{
+		/*
+		 * If we ended a COPY FROM PROGRAM before reaching EOF, then it's
+		 * expectable for the called program to fail with SIGPIPE, and we
+		 * should not report that as an error.  Otherwise, SIGPIPE indicates a
+		 * problem.
+		 */
+		if (cstate->is_copy_from && !cstate->reached_eof &&
+			WIFSIGNALED(pclose_rc) && WTERMSIG(pclose_rc) == SIGPIPE)
+			return;
+
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 				 errmsg("program \"%s\" failed",
 						cstate->filename),
 				 errdetail_internal("%s", wait_result_to_str(pclose_rc))));
+	}
 }
 
 /*
@@ -3194,7 +3212,7 @@ BeginCopyFrom(ParseState *pstate,
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 
 	/* Initialize state variables */
-	cstate->fe_eof = false;
+	cstate->reached_eof = false;
 	cstate->eol_type = EOL_UNKNOWN;
 	cstate->cur_relname = RelationGetRelationName(cstate->rel);
 	cstate->cur_lineno = 0;
