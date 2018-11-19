@@ -80,9 +80,8 @@ extern uint64 compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc,
 							 Datum *values, bool *isnull);
 extern List *get_qual_from_partbound(Relation rel, Relation parent,
 						PartitionBoundSpec *spec);
-extern PartitionBoundInfo partition_bounds_create(List *boundspecs,
-						PartitionKey key,
-						int **mapping);
+extern PartitionBoundInfo partition_bounds_create(PartitionBoundSpec **boundspecs,
+						int nparts, PartitionKey key, int **mapping);
 extern bool partition_bounds_equal(int partnatts, int16 *parttyplen,
 					   bool *parttypbyval, PartitionBoundInfo b1,
 					   PartitionBoundInfo b2);

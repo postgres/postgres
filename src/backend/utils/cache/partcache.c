@@ -255,28 +255,36 @@ void
 RelationBuildPartitionDesc(Relation rel)
 {
 	PartitionDesc partdesc;
-	PartitionBoundInfo boundinfo;
+	PartitionBoundInfo boundinfo = NULL;
 	List	   *inhoids;
-	List	   *boundspecs = NIL;
+	PartitionBoundSpec **boundspecs = NULL;
+	Oid		   *oids = NULL;
 	ListCell   *cell;
 	int			i,
 				nparts;
 	PartitionKey key = RelationGetPartitionKey(rel);
 	MemoryContext oldcxt;
-	Oid		   *oids_orig;
 	int		   *mapping;
 
 	/* Get partition oids from pg_inherits */
 	inhoids = find_inheritance_children(RelationGetRelid(rel), NoLock);
+	nparts = list_length(inhoids);
 
-	/* Collect bound spec nodes in a list */
+	if (nparts > 0)
+	{
+		oids = palloc(nparts * sizeof(Oid));
+		boundspecs = palloc(nparts * sizeof(PartitionBoundSpec *));
+	}
+
+	/* Collect bound spec nodes for each partition */
+	i = 0;
 	foreach(cell, inhoids)
 	{
 		Oid			inhrelid = lfirst_oid(cell);
 		HeapTuple	tuple;
 		Datum		datum;
 		bool		isnull;
-		Node	   *boundspec;
+		PartitionBoundSpec *boundspec;
 
 		tuple = SearchSysCache1(RELOID, inhrelid);
 		if (!HeapTupleIsValid(tuple))
@@ -287,14 +295,16 @@ RelationBuildPartitionDesc(Relation rel)
 								&isnull);
 		if (isnull)
 			elog(ERROR, "null relpartbound for relation %u", inhrelid);
-		boundspec = (Node *) stringToNode(TextDatumGetCString(datum));
+		boundspec = stringToNode(TextDatumGetCString(datum));
+		if (!IsA(boundspec, PartitionBoundSpec))
+			elog(ERROR, "invalid relpartbound for relation %u", inhrelid);
 
 		/*
 		 * Sanity check: If the PartitionBoundSpec says this is the default
 		 * partition, its OID should correspond to whatever's stored in
 		 * pg_partitioned_table.partdefid; if not, the catalog is corrupt.
 		 */
-		if (castNode(PartitionBoundSpec, boundspec)->is_default)
+		if (boundspec->is_default)
 		{
 			Oid			partdefid;
 
@@ -304,11 +314,11 @@ RelationBuildPartitionDesc(Relation rel)
 					 inhrelid, partdefid);
 		}
 
-		boundspecs = lappend(boundspecs, boundspec);
+		oids[i] = inhrelid;
+		boundspecs[i] = boundspec;
+		++i;
 		ReleaseSysCache(tuple);
 	}
-
-	nparts = list_length(boundspecs);
 
 	/* Now build the actual relcache partition descriptor */
 	rel->rd_pdcxt = AllocSetContextCreate(CacheMemoryContext,
@@ -330,11 +340,7 @@ RelationBuildPartitionDesc(Relation rel)
 	}
 
 	/* First create PartitionBoundInfo */
-	boundinfo = partition_bounds_create(boundspecs, key, &mapping);
-	oids_orig = (Oid *) palloc(sizeof(Oid) * partdesc->nparts);
-	i = 0;
-	foreach(cell, inhoids)
-		oids_orig[i++] = lfirst_oid(cell);
+	boundinfo = partition_bounds_create(boundspecs, nparts, key, &mapping);
 
 	/* Now copy boundinfo and oids into partdesc. */
 	oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
@@ -352,10 +358,10 @@ RelationBuildPartitionDesc(Relation rel)
 	{
 		int			index = mapping[i];
 
-		partdesc->oids[index] = oids_orig[i];
+		partdesc->oids[index] = oids[i];
 		/* Record if the partition is a leaf partition */
 		partdesc->is_leaf[index] =
-				(get_rel_relkind(oids_orig[i]) != RELKIND_PARTITIONED_TABLE);
+				(get_rel_relkind(oids[i]) != RELKIND_PARTITIONED_TABLE);
 	}
 	MemoryContextSwitchTo(oldcxt);
 

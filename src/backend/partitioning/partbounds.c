@@ -70,15 +70,12 @@ static int32 qsort_partition_list_value_cmp(const void *a, const void *b,
 							   void *arg);
 static int32 qsort_partition_rbound_cmp(const void *a, const void *b,
 						   void *arg);
-static PartitionBoundInfo create_hash_bounds(List *boundspecs,
-				   PartitionKey key,
-				   int **mapping);
-static PartitionBoundInfo create_list_bounds(List *boundspecs,
-				   PartitionKey key,
-				   int **mapping);
-static PartitionBoundInfo create_range_bounds(List *boundspecs,
-					PartitionKey key,
-					int **mapping);
+static PartitionBoundInfo create_hash_bounds(PartitionBoundSpec **boundspecs,
+				   int nparts, PartitionKey key, int **mapping);
+static PartitionBoundInfo create_list_bounds(PartitionBoundSpec **boundspecs,
+				   int nparts, PartitionKey key, int **mapping);
+static PartitionBoundInfo create_range_bounds(PartitionBoundSpec **boundspecs,
+					int nparts, PartitionKey key, int **mapping);
 static PartitionRangeBound *make_one_partition_rbound(PartitionKey key, int index,
 						  List *datums, bool lower);
 static int32 partition_hbound_cmp(int modulus1, int remainder1, int modulus2,
@@ -169,9 +166,9 @@ get_qual_from_partbound(Relation rel, Relation parent,
  * current memory context.
  */
 PartitionBoundInfo
-partition_bounds_create(List *boundspecs, PartitionKey key, int **mapping)
+partition_bounds_create(PartitionBoundSpec **boundspecs, int nparts,
+						PartitionKey key, int **mapping)
 {
-	int			nparts = list_length(boundspecs);
 	int			i;
 
 	Assert(nparts > 0);
@@ -199,13 +196,13 @@ partition_bounds_create(List *boundspecs, PartitionKey key, int **mapping)
 	switch (key->strategy)
 	{
 		case PARTITION_STRATEGY_HASH:
-			return create_hash_bounds(boundspecs, key, mapping);
+			return create_hash_bounds(boundspecs, nparts, key, mapping);
 
 		case PARTITION_STRATEGY_LIST:
-			return create_list_bounds(boundspecs, key, mapping);
+			return create_list_bounds(boundspecs, nparts, key, mapping);
 
 		case PARTITION_STRATEGY_RANGE:
-			return create_range_bounds(boundspecs, key, mapping);
+			return create_range_bounds(boundspecs, nparts, key, mapping);
 
 		default:
 			elog(ERROR, "unexpected partition strategy: %d",
@@ -222,13 +219,12 @@ partition_bounds_create(List *boundspecs, PartitionKey key, int **mapping)
  *		Create a PartitionBoundInfo for a hash partitioned table
  */
 static PartitionBoundInfo
-create_hash_bounds(List *boundspecs, PartitionKey key, int **mapping)
+create_hash_bounds(PartitionBoundSpec **boundspecs, int nparts,
+				   PartitionKey key, int **mapping)
 {
 	PartitionBoundInfo boundinfo;
 	PartitionHashBound **hbounds = NULL;
-	ListCell   *cell;
-	int			i,
-				nparts = list_length(boundspecs);
+	int			i;
 	int			ndatums = 0;
 	int			greatest_modulus;
 
@@ -244,10 +240,9 @@ create_hash_bounds(List *boundspecs, PartitionKey key, int **mapping)
 		palloc(nparts * sizeof(PartitionHashBound *));
 
 	/* Convert from node to the internal representation */
-	i = 0;
-	foreach(cell, boundspecs)
+	for (i = 0; i < nparts; i++)
 	{
-		PartitionBoundSpec *spec = castNode(PartitionBoundSpec, lfirst(cell));
+		PartitionBoundSpec *spec = boundspecs[i];
 
 		if (spec->strategy != PARTITION_STRATEGY_HASH)
 			elog(ERROR, "invalid strategy in partition bound spec");
@@ -256,7 +251,6 @@ create_hash_bounds(List *boundspecs, PartitionKey key, int **mapping)
 		hbounds[i]->modulus = spec->modulus;
 		hbounds[i]->remainder = spec->remainder;
 		hbounds[i]->index = i;
-		i++;
 	}
 
 	/* Sort all the bounds in ascending order */
@@ -307,7 +301,8 @@ create_hash_bounds(List *boundspecs, PartitionKey key, int **mapping)
  *		Create a PartitionBoundInfo for a list partitioned table
  */
 static PartitionBoundInfo
-create_list_bounds(List *boundspecs, PartitionKey key, int **mapping)
+create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
+				   PartitionKey key, int **mapping)
 {
 	PartitionBoundInfo boundinfo;
 	PartitionListValue **all_values = NULL;
@@ -327,9 +322,9 @@ create_list_bounds(List *boundspecs, PartitionKey key, int **mapping)
 	boundinfo->default_index = -1;
 
 	/* Create a unified list of non-null values across all partitions. */
-	foreach(cell, boundspecs)
+	for (i = 0; i < nparts; i++)
 	{
-		PartitionBoundSpec *spec = castNode(PartitionBoundSpec, lfirst(cell));
+		PartitionBoundSpec *spec = boundspecs[i];
 		ListCell   *c;
 
 		if (spec->strategy != PARTITION_STRATEGY_LIST)
@@ -343,7 +338,6 @@ create_list_bounds(List *boundspecs, PartitionKey key, int **mapping)
 		if (spec->is_default)
 		{
 			default_index = i;
-			i++;
 			continue;
 		}
 
@@ -374,8 +368,6 @@ create_list_bounds(List *boundspecs, PartitionKey key, int **mapping)
 			if (list_value)
 				non_null_values = lappend(non_null_values, list_value);
 		}
-
-		i++;
 	}
 
 	ndatums = list_length(non_null_values);
@@ -458,7 +450,7 @@ create_list_bounds(List *boundspecs, PartitionKey key, int **mapping)
 	}
 
 	/* All partition must now have been assigned canonical indexes. */
-	Assert(next_index == list_length(boundspecs));
+	Assert(next_index == nparts);
 	return boundinfo;
 }
 
@@ -467,16 +459,15 @@ create_list_bounds(List *boundspecs, PartitionKey key, int **mapping)
  *		Create a PartitionBoundInfo for a range partitioned table
  */
 static PartitionBoundInfo
-create_range_bounds(List *boundspecs, PartitionKey key, int **mapping)
+create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
+					PartitionKey key, int **mapping)
 {
 	PartitionBoundInfo boundinfo;
 	PartitionRangeBound **rbounds = NULL;
 	PartitionRangeBound **all_bounds,
 			   *prev;
-	ListCell   *cell;
 	int			i,
-				k,
-				nparts = list_length(boundspecs);
+				k;
 	int			ndatums = 0;
 	int			default_index = -1;
 	int			next_index = 0;
@@ -493,10 +484,10 @@ create_range_bounds(List *boundspecs, PartitionKey key, int **mapping)
 		palloc0(2 * nparts * sizeof(PartitionRangeBound *));
 
 	/* Create a unified list of range bounds across all the partitions. */
-	i = ndatums = 0;
-	foreach(cell, boundspecs)
+	ndatums = 0;
+	for (i = 0; i < nparts; i++)
 	{
-		PartitionBoundSpec *spec = castNode(PartitionBoundSpec, lfirst(cell));
+		PartitionBoundSpec *spec = boundspecs[i];
 		PartitionRangeBound *lower,
 				   *upper;
 
@@ -510,7 +501,7 @@ create_range_bounds(List *boundspecs, PartitionKey key, int **mapping)
 		 */
 		if (spec->is_default)
 		{
-			default_index = i++;
+			default_index = i;
 			continue;
 		}
 
@@ -518,7 +509,6 @@ create_range_bounds(List *boundspecs, PartitionKey key, int **mapping)
 		upper = make_one_partition_rbound(key, i, spec->upperdatums, false);
 		all_bounds[ndatums++] = lower;
 		all_bounds[ndatums++] = upper;
-		i++;
 	}
 
 	Assert(ndatums == nparts * 2 ||
