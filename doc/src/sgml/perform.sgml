@@ -1535,8 +1535,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     needs to be written, because in case of an error, the files
     containing the newly loaded data will be removed anyway.
     However, this consideration only applies when
-    <xref linkend="guc-wal-level"/> is <literal>minimal</literal> as all commands
-    must write WAL otherwise.
+    <xref linkend="guc-wal-level"/> is <literal>minimal</literal> for
+    non-partitioned tables as all commands must write WAL otherwise.
    </para>
 
   </sect2>
