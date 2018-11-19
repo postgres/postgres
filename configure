@@ -1749,56 +1749,6 @@ fi
 
 } # ac_fn_cxx_try_compile
 
-# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
-# ---------------------------------------------
-# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
-# accordingly.
-ac_fn_c_check_decl ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  # Initialize each $ac_[]_AC_LANG_ABBREV[]_decl_warn_flag once.
-      as_decl_name=`echo $2|sed 's/ *(.*//'`
-  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
-$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_save_werror_flag=$ac_c_werror_flag
-  ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-#ifndef $as_decl_name
-#ifdef __cplusplus
-  (void) $as_decl_use;
-#else
-  (void) $as_decl_name;
-#endif
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_c_werror_flag=$ac_save_werror_flag
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_decl
-
 # ac_fn_c_try_link LINENO
 # -----------------------
 # Try to link conftest.$ac_ext, and return whether this succeeded.
@@ -2406,6 +2356,56 @@ rm -f conftest.val
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_compute_int
+
+# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
+# ---------------------------------------------
+# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
+# accordingly.
+ac_fn_c_check_decl ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  # Initialize each $ac_[]_AC_LANG_ABBREV[]_decl_warn_flag once.
+      as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_werror_flag=$ac_c_werror_flag
+  ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  ac_c_werror_flag=$ac_save_werror_flag
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_decl
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -4994,94 +4994,6 @@ fi
   test -n "$AWK" && break
 done
 
-# The Clang compiler raises a warning for an undeclared identifier that matches
-# a compiler builtin function.  All extant Clang versions are affected, as of
-# Clang 3.6.0.  Test a builtin known to every version.  This problem affects the
-# C and Objective C languages, but Clang does report an error under C++ and
-# Objective C++.
-#
-# Passing -fno-builtin to the compiler would suppress this problem.  That
-# strategy would have the advantage of being insensitive to stray warnings, but
-# it would make tests less realistic.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking how $CC reports undeclared, standard C functions" >&5
-$as_echo_n "checking how $CC reports undeclared, standard C functions... " >&6; }
-if ${ac_cv_c_decl_report+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-(void) strchr;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  if test -s conftest.err; then :
-      # For AC_CHECK_DECL to react to warnings, the compiler must be silent on
-    # valid AC_CHECK_DECL input.  No library function is consistently available
-    # on freestanding implementations, so test against a dummy declaration.
-    # Include always-available headers on the off chance that they somehow
-    # elicit warnings.
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <float.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stddef.h>
-extern void ac_decl (int, char *);
-int
-main ()
-{
-#ifdef __cplusplus
-  (void) ac_decl ((int) 0, (char *) 0);
-  (void) ac_decl;
-#else
-  (void) ac_decl;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  if test -s conftest.err; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot detect from compiler exit status or warnings
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  ac_cv_c_decl_report=warning
-fi
-else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot compile a simple declaration test
-See \`config.log' for more details" "$LINENO" 5; }
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "compiler does not report undeclared identifiers
-See \`config.log' for more details" "$LINENO" 5; }
-fi
-else
-  ac_cv_c_decl_report=error
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_decl_report" >&5
-$as_echo "$ac_cv_c_decl_report" >&6; }
-
-case $ac_cv_c_decl_report in
-  warning) ac_c_decl_warn_flag=yes ;;
-  *) ac_c_decl_warn_flag= ;;
-esac
-
 if test "$with_llvm" = yes; then :
 
 
@@ -5271,69 +5183,6 @@ fi
   done
 
   LLVM_BINPATH=`$LLVM_CONFIG --bindir`
-
-  # Check which functionality is present
-  SAVE_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
-  ac_fn_c_check_decl "$LINENO" "LLVMOrcGetSymbolAddressIn" "ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" "#include <llvm-c/OrcBindings.h>
-"
-if test "x$ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN $ac_have_decl
-_ACEOF
-
-  ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUName" "ac_cv_have_decl_LLVMGetHostCPUName" "#include <llvm-c/TargetMachine.h>
-"
-if test "x$ac_cv_have_decl_LLVMGetHostCPUName" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMGETHOSTCPUNAME $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUFeatures" "ac_cv_have_decl_LLVMGetHostCPUFeatures" "#include <llvm-c/TargetMachine.h>
-"
-if test "x$ac_cv_have_decl_LLVMGetHostCPUFeatures" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMGETHOSTCPUFEATURES $ac_have_decl
-_ACEOF
-
-  ac_fn_c_check_decl "$LINENO" "LLVMCreateGDBRegistrationListener" "ac_cv_have_decl_LLVMCreateGDBRegistrationListener" "#include <llvm-c/ExecutionEngine.h>
-"
-if test "x$ac_cv_have_decl_LLVMCreateGDBRegistrationListener" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "LLVMCreatePerfJITEventListener" "ac_cv_have_decl_LLVMCreatePerfJITEventListener" "#include <llvm-c/ExecutionEngine.h>
-"
-if test "x$ac_cv_have_decl_LLVMCreatePerfJITEventListener" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER $ac_have_decl
-_ACEOF
-
-  CPPFLAGS="$SAVE_CPPFLAGS"
 
   # LLVM_CONFIG, CLANG are already output via AC_ARG_VAR
 
@@ -15291,6 +15140,94 @@ esac
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
 # http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
+# The Clang compiler raises a warning for an undeclared identifier that matches
+# a compiler builtin function.  All extant Clang versions are affected, as of
+# Clang 3.6.0.  Test a builtin known to every version.  This problem affects the
+# C and Objective C languages, but Clang does report an error under C++ and
+# Objective C++.
+#
+# Passing -fno-builtin to the compiler would suppress this problem.  That
+# strategy would have the advantage of being insensitive to stray warnings, but
+# it would make tests less realistic.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking how $CC reports undeclared, standard C functions" >&5
+$as_echo_n "checking how $CC reports undeclared, standard C functions... " >&6; }
+if ${ac_cv_c_decl_report+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+(void) strchr;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  if test -s conftest.err; then :
+      # For AC_CHECK_DECL to react to warnings, the compiler must be silent on
+    # valid AC_CHECK_DECL input.  No library function is consistently available
+    # on freestanding implementations, so test against a dummy declaration.
+    # Include always-available headers on the off chance that they somehow
+    # elicit warnings.
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <float.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stddef.h>
+extern void ac_decl (int, char *);
+int
+main ()
+{
+#ifdef __cplusplus
+  (void) ac_decl ((int) 0, (char *) 0);
+  (void) ac_decl;
+#else
+  (void) ac_decl;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  if test -s conftest.err; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot detect from compiler exit status or warnings
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  ac_cv_c_decl_report=warning
+fi
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot compile a simple declaration test
+See \`config.log' for more details" "$LINENO" 5; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "compiler does not report undeclared identifiers
+See \`config.log' for more details" "$LINENO" 5; }
+fi
+else
+  ac_cv_c_decl_report=error
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_decl_report" >&5
+$as_echo "$ac_cv_c_decl_report" >&6; }
+
+case $ac_cv_c_decl_report in
+  warning) ac_c_decl_warn_flag=yes ;;
+  *) ac_c_decl_warn_flag= ;;
+esac
+
 if test "$PORTNAME" != "solaris"; then :
 
 for ac_func in posix_fadvise
@@ -16085,6 +16022,73 @@ fi
 
 
   CPPFLAGS=$ac_save_CPPFLAGS
+fi
+
+if test "$with_llvm" = yes; then
+
+  # Check which functionality is present
+  SAVE_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $LLVM_CPPFLAGS"
+  ac_fn_c_check_decl "$LINENO" "LLVMOrcGetSymbolAddressIn" "ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" "#include <llvm-c/OrcBindings.h>
+"
+if test "x$ac_cv_have_decl_LLVMOrcGetSymbolAddressIn" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN $ac_have_decl
+_ACEOF
+
+  ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUName" "ac_cv_have_decl_LLVMGetHostCPUName" "#include <llvm-c/TargetMachine.h>
+"
+if test "x$ac_cv_have_decl_LLVMGetHostCPUName" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMGETHOSTCPUNAME $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "LLVMGetHostCPUFeatures" "ac_cv_have_decl_LLVMGetHostCPUFeatures" "#include <llvm-c/TargetMachine.h>
+"
+if test "x$ac_cv_have_decl_LLVMGetHostCPUFeatures" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMGETHOSTCPUFEATURES $ac_have_decl
+_ACEOF
+
+  ac_fn_c_check_decl "$LINENO" "LLVMCreateGDBRegistrationListener" "ac_cv_have_decl_LLVMCreateGDBRegistrationListener" "#include <llvm-c/ExecutionEngine.h>
+"
+if test "x$ac_cv_have_decl_LLVMCreateGDBRegistrationListener" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "LLVMCreatePerfJITEventListener" "ac_cv_have_decl_LLVMCreatePerfJITEventListener" "#include <llvm-c/ExecutionEngine.h>
+"
+if test "x$ac_cv_have_decl_LLVMCreatePerfJITEventListener" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER $ac_have_decl
+_ACEOF
+
+  CPPFLAGS="$SAVE_CPPFLAGS"
+
 fi
 
 # Lastly, restore full LIBS list and check for readline/libedit symbols
