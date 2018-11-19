@@ -113,6 +113,12 @@ insert into parted_copytest select x,1,'One' from generate_series(1011,1020) x;
 copy (select * from parted_copytest order by a) to '@abs_builddir@/results/parted_copytest.csv';
 truncate parted_copytest;
 copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv';
+-- Ensure COPY FREEZE errors for partitioned tables.
+begin;
+truncate parted_copytest;
+copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv' (freeze);
+ERROR:  cannot perform FREEZE on a partitioned table
+rollback;
 select tableoid::regclass,count(*),sum(a) from parted_copytest
 group by tableoid order by tableoid::regclass::name;
       tableoid      | count |  sum   

@@ -159,6 +159,12 @@ truncate parted_copytest;
 
 copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv';
 
+-- Ensure COPY FREEZE errors for partitioned tables.
+begin;
+truncate parted_copytest;
+copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv' (freeze);
+rollback;
+
 select tableoid::regclass,count(*),sum(a) from parted_copytest
 group by tableoid order by tableoid::regclass::name;
 

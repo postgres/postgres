@@ -224,7 +224,9 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       This is intended as a performance option for initial data loading.
       Rows will be frozen only if the table being loaded has been created
       or truncated in the current subtransaction, there are no cursors
-      open and there are no older snapshots held by this transaction.
+      open and there are no older snapshots held by this transaction.  It is
+      currently not possible to perform a <command>COPY FREEZE</command> on
+      a partitioned table.
      </para>
      <para>
       Note that all other sessions will immediately be able to see the data

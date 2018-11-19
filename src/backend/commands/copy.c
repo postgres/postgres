@@ -2416,11 +2416,20 @@ CopyFrom(CopyState cstate)
 	 * go into pages containing tuples from any other transactions --- but this
 	 * must be the case if we have a new table or new relfilenode, so we need
 	 * no additional work to enforce that.
+	 *
+	 * We currently don't support this optimization if the COPY target is a
+	 * partitioned table as we currently only lazily initialize partition
+	 * information when routing the first tuple to the partition.  We cannot
+	 * know at this stage if we can perform this optimization.  It should be
+	 * possible to improve on this, but it does mean maintaining heap insert
+	 * option flags per partition and setting them when we first open the
+	 * partition.
 	 *----------
 	 */
 	/* createSubid is creation check, newRelfilenodeSubid is truncation check */
-	if (cstate->rel->rd_createSubid != InvalidSubTransactionId ||
-		cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId)
+	if (cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
+		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
+		 cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId))
 	{
 		hi_options |= HEAP_INSERT_SKIP_FSM;
 		if (!XLogIsNeeded())
@@ -2440,6 +2449,22 @@ CopyFrom(CopyState cstate)
 	 */
 	if (cstate->freeze)
 	{
+		/*
+		 * We currently disallow COPY FREEZE on partitioned tables.  The
+		 * reason for this is that we've simply not yet opened the partitions
+		 * to determine if the optimization can be applied to them.  We could
+		 * go and open them all here, but doing so may be quite a costly
+		 * overhead for small copies.  In any case, we may just end up routing
+		 * tuples to a small number of partitions.  It seems better just to
+		 * raise an ERROR for partitioned tables.
+		 */
+		if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot perform FREEZE on a partitioned table")));
+		}
+
 		/*
 		 * Tolerate one registration for the benefit of FirstXactSnapshot.
 		 * Scan-bearing queries generally create at least two registrations,
