@@ -1090,10 +1090,8 @@ mdsync(void)
 		 * The bitmap manipulations are slightly tricky, because we can call
 		 * AbsorbFsyncRequests() inside the loop and that could result in
 		 * bms_add_member() modifying and even re-palloc'ing the bitmapsets.
-		 * This is okay because we unlink each bitmapset from the hashtable
-		 * entry before scanning it.  That means that any incoming fsync
-		 * requests will be processed now if they reach the table before we
-		 * begin to scan their fork.
+		 * So we detach it, but if we fail we'll merge it with any new
+		 * requests that have arrived in the meantime.
 		 */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		{
@@ -1103,7 +1101,8 @@ mdsync(void)
 			entry->requests[forknum] = NULL;
 			entry->canceled[forknum] = false;
 
-			while ((segno = bms_first_member(requests)) >= 0)
+			segno = -1;
+			while ((segno = bms_next_member(requests, segno)) >= 0)
 			{
 				int			failures;
 
@@ -1182,6 +1181,7 @@ mdsync(void)
 							longest = elapsed;
 						total_elapsed += elapsed;
 						processed++;
+						requests = bms_del_member(requests, segno);
 						if (log_checkpoints)
 							elog(DEBUG1, "checkpoint sync: number=%d file=%s time=%.3f msec",
 								 processed,
@@ -1210,10 +1210,23 @@ mdsync(void)
 					 */
 					if (!FILE_POSSIBLY_DELETED(errno) ||
 						failures > 0)
+					{
+						Bitmapset  *new_requests;
+
+						/*
+						 * We need to merge these unsatisfied requests with
+						 * any others that have arrived since we started.
+						 */
+						new_requests = entry->requests[forknum];
+						entry->requests[forknum] =
+							bms_join(new_requests, requests);
+
+						errno = save_errno;
 						ereport(ERROR,
 								(errcode_for_file_access(),
 								 errmsg("could not fsync file \"%s\": %m",
 										path)));
+					}
 					else
 						ereport(DEBUG1,
 								(errcode_for_file_access(),
