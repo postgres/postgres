@@ -666,6 +666,7 @@
 
 #exit_on_error = off			# terminate session on any error?
 #restart_after_crash = on		# reinitialize after backend crash?
+#data_sync_retry = off			# retry or panic on failure to fsync data?
 
 
 #------------------------------------------------------------------------------

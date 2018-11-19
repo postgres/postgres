@@ -1629,6 +1629,9 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	 * fsync the file before renaming so that even if we crash after this we
 	 * have either a fully valid file or nothing.
 	 *
+	 * It's safe to just ERROR on fsync() here because we'll retry the whole
+	 * operation including the writes.
+	 *
 	 * TODO: Do the fsync() via checkpoints/restartpoints, doing it here has
 	 * some noticeable overhead since it's performed synchronously during
 	 * decoding?
