@@ -938,7 +938,7 @@ CREATE POLICY pp1 ON part_document AS PERMISSIVE
 CREATE POLICY pp1r ON part_document AS RESTRICTIVE TO regress_rls_dave
     USING (cid < 55);
 \d+ part_document
-                          Table "regress_rls_schema.part_document"
+                    Partitioned table "regress_rls_schema.part_document"
  Column  |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 ---------+---------+-----------+----------+---------+----------+--------------+-------------
  did     | integer |           |          |         | plain    |              | 

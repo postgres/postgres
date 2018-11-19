@@ -260,7 +260,7 @@ Indexes:
     "idxpart1_a_idx" btree (a)
 
 \d idxpart2
-              Table "public.idxpart2"
+        Partitioned table "public.idxpart2"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
@@ -305,7 +305,7 @@ where indexrelid::regclass::text like 'idxpart%'
 -- attaching idxpart22 is not enough to set idxpart22_a_idx valid ...
 alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 \d idxpart2
-              Table "public.idxpart2"
+        Partitioned table "public.idxpart2"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
@@ -319,7 +319,7 @@ Number of partitions: 2 (Use \d+ to list them.)
 create index on idxpart21 (a);
 alter index idxpart2_a_idx attach partition idxpart21_a_idx;
 \d idxpart2
-              Table "public.idxpart2"
+        Partitioned table "public.idxpart2"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
@@ -728,7 +728,7 @@ create table idxpart (col_keep int) partition by range (col_keep);
 create index on idxpart (col_keep);
 alter table idxpart attach partition idxpart1 for values from (0) to (1000);
 \d idxpart
-               Table "public.idxpart"
+         Partitioned table "public.idxpart"
   Column  |  Type   | Collation | Nullable | Default 
 ----------+---------+-----------+----------+---------
  col_keep | integer |           |          | 
@@ -771,7 +771,7 @@ create index on idxpart1 (col_keep);
 create index on idxpart (col_keep);
 alter table idxpart attach partition idxpart1 for values from (0) to (1000);
 \d idxpart
-               Table "public.idxpart"
+         Partitioned table "public.idxpart"
   Column  |  Type   | Collation | Nullable | Default 
 ----------+---------+-----------+----------+---------
  col_keep | integer |           |          | 
@@ -810,7 +810,7 @@ drop table idxpart;
 -- Verify that it works to add primary key / unique to partitioned tables
 create table idxpart (a int primary key, b int) partition by range (a);
 \d idxpart
-              Table "public.idxpart"
+        Partitioned table "public.idxpart"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           | not null | 
@@ -872,7 +872,7 @@ ERROR:  insufficient columns in PRIMARY KEY constraint definition
 DETAIL:  PRIMARY KEY constraint on table "idxpart" lacks column "b" which is part of the partition key.
 alter table idxpart add primary key (a, b);	-- this works
 \d idxpart
-              Table "public.idxpart"
+        Partitioned table "public.idxpart"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           | not null | 
@@ -903,7 +903,7 @@ ERROR:  insufficient columns in UNIQUE constraint definition
 DETAIL:  UNIQUE constraint on table "idxpart" lacks column "b" which is part of the partition key.
 alter table idxpart add unique (b, a);		-- this works
 \d idxpart
-              Table "public.idxpart"
+        Partitioned table "public.idxpart"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 

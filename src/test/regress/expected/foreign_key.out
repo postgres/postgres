@@ -1692,7 +1692,7 @@ ALTER TABLE fk_partitioned_fk DETACH PARTITION fk_partitioned_fk_4;
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_4 FOR VALUES IN (3500,3502);
 -- should only have one constraint
 \d fk_partitioned_fk_4
-        Table "public.fk_partitioned_fk_4"
+  Partitioned table "public.fk_partitioned_fk_4"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
@@ -1737,7 +1737,7 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_5 FOR VALUES IN
 -- this one has two constraints, similar but not quite the one in the parent,
 -- so it gets a new one
 \d fk_partitioned_fk_5
-        Table "public.fk_partitioned_fk_5"
+  Partitioned table "public.fk_partitioned_fk_5"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 

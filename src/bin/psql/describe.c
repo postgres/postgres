@@ -955,7 +955,7 @@ permissionsList(const char *pattern)
 					  gettext_noop("materialized view"),
 					  gettext_noop("sequence"),
 					  gettext_noop("foreign table"),
-					  gettext_noop("table"),	/* partitioned table */
+					  gettext_noop("partitioned table"),
 					  gettext_noop("Type"));
 
 	printACLColumn(&buf, "c.relacl");
@@ -1896,12 +1896,19 @@ describeOneTableDetails(const char *schemaname,
 								  schemaname, relationname);
 			break;
 		case RELKIND_INDEX:
-		case RELKIND_PARTITIONED_INDEX:
 			if (tableinfo.relpersistence == 'u')
 				printfPQExpBuffer(&title, _("Unlogged index \"%s.%s\""),
 								  schemaname, relationname);
 			else
 				printfPQExpBuffer(&title, _("Index \"%s.%s\""),
+								  schemaname, relationname);
+			break;
+		case RELKIND_PARTITIONED_INDEX:
+			if (tableinfo.relpersistence == 'u')
+				printfPQExpBuffer(&title, _("Unlogged partitioned index \"%s.%s\""),
+								  schemaname, relationname);
+			else
+				printfPQExpBuffer(&title, _("Partitioned index \"%s.%s\""),
 								  schemaname, relationname);
 			break;
 		case 's':
@@ -1923,10 +1930,10 @@ describeOneTableDetails(const char *schemaname,
 			break;
 		case RELKIND_PARTITIONED_TABLE:
 			if (tableinfo.relpersistence == 'u')
-				printfPQExpBuffer(&title, _("Unlogged table \"%s.%s\""),
+				printfPQExpBuffer(&title, _("Unlogged partitioned table \"%s.%s\""),
 								  schemaname, relationname);
 			else
-				printfPQExpBuffer(&title, _("Table \"%s.%s\""),
+				printfPQExpBuffer(&title, _("Partitioned table \"%s.%s\""),
 								  schemaname, relationname);
 			break;
 		default:
@@ -3524,8 +3531,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 					  gettext_noop("sequence"),
 					  gettext_noop("special"),
 					  gettext_noop("foreign table"),
-					  gettext_noop("table"),	/* partitioned table */
-					  gettext_noop("index"),	/* partitioned index */
+					  gettext_noop("partitioned table"),
+					  gettext_noop("partitioned index"),
 					  gettext_noop("Type"),
 					  gettext_noop("Owner"));
 

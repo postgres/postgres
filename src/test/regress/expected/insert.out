@@ -448,7 +448,7 @@ from hash_parted order by part;
 -- test \d+ output on a table which has both partitioned and unpartitioned
 -- partitions
 \d+ list_parted
-                                Table "public.list_parted"
+                          Partitioned table "public.list_parted"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -799,7 +799,7 @@ create table mcrparted6_common_ge_10 partition of mcrparted for values from ('co
 create table mcrparted7_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
 create table mcrparted8_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, maxvalue);
 \d+ mcrparted
-                                 Table "public.mcrparted"
+                           Partitioned table "public.mcrparted"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 

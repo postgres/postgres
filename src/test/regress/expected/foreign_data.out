@@ -1853,7 +1853,7 @@ CREATE TABLE fd_pt2 (
 CREATE FOREIGN TABLE fd_pt2_1 PARTITION OF fd_pt2 FOR VALUES IN (1)
   SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
 \d+ fd_pt2
-                                   Table "public.fd_pt2"
+                             Partitioned table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1898,7 +1898,7 @@ ERROR:  table "fd_pt2_1" contains column "c4" not found in parent "fd_pt2"
 DETAIL:  The new partition may contain only the columns present in parent.
 DROP FOREIGN TABLE fd_pt2_1;
 \d+ fd_pt2
-                                   Table "public.fd_pt2"
+                             Partitioned table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1925,7 +1925,7 @@ FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 -- no attach partition validation occurs for foreign tables
 ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
 \d+ fd_pt2
-                                   Table "public.fd_pt2"
+                             Partitioned table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1953,7 +1953,7 @@ ERROR:  cannot add column to a partition
 ALTER TABLE fd_pt2_1 ALTER c3 SET NOT NULL;
 ALTER TABLE fd_pt2_1 ADD CONSTRAINT p21chk CHECK (c2 <> '');
 \d+ fd_pt2
-                                   Table "public.fd_pt2"
+                             Partitioned table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -1983,7 +1983,7 @@ ERROR:  column "c1" is marked NOT NULL in parent table
 ALTER TABLE fd_pt2 DETACH PARTITION fd_pt2_1;
 ALTER TABLE fd_pt2 ALTER c2 SET NOT NULL;
 \d+ fd_pt2
-                                   Table "public.fd_pt2"
+                             Partitioned table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
@@ -2011,7 +2011,7 @@ ALTER TABLE fd_pt2 ATTACH PARTITION fd_pt2_1 FOR VALUES IN (1);
 ALTER TABLE fd_pt2 DETACH PARTITION fd_pt2_1;
 ALTER TABLE fd_pt2 ADD CONSTRAINT fd_pt2chk1 CHECK (c1 > 0);
 \d+ fd_pt2
-                                   Table "public.fd_pt2"
+                             Partitioned table "public.fd_pt2"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  c1     | integer |           | not null |         | plain    |              | 
