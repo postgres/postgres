@@ -102,6 +102,17 @@ extern WaitEventSet *FeBeWaitSet;
 extern char *SSLCipherSuites;
 extern char *SSLECDHCurve;
 extern bool SSLPreferServerCiphers;
+extern int	ssl_min_protocol_version;
+extern int	ssl_max_protocol_version;
+
+enum ssl_protocol_versions
+{
+	PG_TLS_ANY = 0,
+	PG_TLS1_VERSION,
+	PG_TLS1_1_VERSION,
+	PG_TLS1_2_VERSION,
+	PG_TLS1_3_VERSION,
+};
 
 /*
  * prototypes for functions in be-secure-common.c

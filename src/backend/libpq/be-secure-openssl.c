@@ -67,6 +67,12 @@ static bool SSL_initialized = false;
 static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
 
+static int ssl_protocol_version_to_openssl(int v, const char *guc_name);
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+static int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
+static int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
+#endif
+
 
 /* ------------------------------------------------------------ */
 /*						 Public interface						*/
@@ -183,8 +189,14 @@ be_tls_init(bool isServerStart)
 		goto error;
 	}
 
-	/* disallow SSL v2/v3 */
-	SSL_CTX_set_options(context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+	if (ssl_min_protocol_version)
+		SSL_CTX_set_min_proto_version(context,
+									  ssl_protocol_version_to_openssl(ssl_min_protocol_version,
+																	  "ssl_min_protocol_version"));
+	if (ssl_max_protocol_version)
+		SSL_CTX_set_max_proto_version(context,
+									  ssl_protocol_version_to_openssl(ssl_max_protocol_version,
+																	  "ssl_max_protocol_version"));
 
 	/* disallow SSL session tickets */
 #ifdef SSL_OP_NO_TICKET			/* added in OpenSSL 0.9.8f */
@@ -1209,3 +1221,110 @@ X509_NAME_to_cstring(X509_NAME *name)
 
 	return result;
 }
+
+/*
+ * Convert TLS protocol version GUC enum to OpenSSL values
+ *
+ * This is a straightforward one-to-one mapping, but doing it this way makes
+ * guc.c independent of OpenSSL availability and version.
+ *
+ * If a version is passed that is not supported by the current OpenSSL
+ * version, then we throw an error, so that subsequent code can assume it's
+ * working with a supported version.
+ */
+static int
+ssl_protocol_version_to_openssl(int v, const char *guc_name)
+{
+	switch (v)
+	{
+		case PG_TLS_ANY:
+			return 0;
+		case PG_TLS1_VERSION:
+			return TLS1_VERSION;
+		case PG_TLS1_1_VERSION:
+#ifdef TLS1_1_VERSION
+			return TLS1_1_VERSION;
+#else
+			goto error;
+#endif
+		case PG_TLS1_2_VERSION:
+#ifdef TLS1_2_VERSION
+			return TLS1_2_VERSION;
+#else
+			goto error;
+#endif
+		case PG_TLS1_3_VERSION:
+#ifdef TLS1_3_VERSION
+			return TLS1_3_VERSION;
+#else
+			goto error;
+#endif
+	}
+
+error:
+	pg_attribute_unused();
+	ereport(ERROR,
+			(errmsg("%s setting %s not supported by this build",
+					guc_name,
+					GetConfigOption(guc_name, false, false))));
+	return -1;
+}
+
+/*
+ * Replacements for APIs present in newer versions of OpenSSL
+ */
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+
+/*
+ * OpenSSL versions that support TLS 1.3 shouldn't get here because they
+ * already have these functions.  So we don't have to keep updating the below
+ * code for every new TLS version, and eventually it can go away.  But let's
+ * just check this to make sure ...
+ */
+#ifdef TLS1_3_VERSION
+#error OpenSSL version mismatch
+#endif
+
+static int
+SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version)
+{
+	int			ssl_options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+
+	if (version > TLS1_VERSION)
+		ssl_options |= SSL_OP_NO_TLSv1;
+#ifdef TLS1_1_VERSION
+	if (version > TLS1_1_VERSION)
+		ssl_options |= SSL_OP_NO_TLSv1_1;
+#endif
+#ifdef TLS1_2_VERSION
+	if (version > TLS1_2_VERSION)
+		ssl_options |= SSL_OP_NO_TLSv1_2;
+#endif
+
+	SSL_CTX_set_options(ctx, ssl_options);
+
+	return 1;					/* success */
+}
+
+static int
+SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version)
+{
+	int			ssl_options = 0;
+
+	AssertArg(version != 0);
+
+#ifdef TLS1_1_VERSION
+	if (version < TLS1_1_VERSION)
+		ssl_options |= SSL_OP_NO_TLSv1_1;
+#endif
+#ifdef TLS1_2_VERSION
+	if (version < TLS1_2_VERSION)
+		ssl_options |= SSL_OP_NO_TLSv1_2;
+#endif
+
+	SSL_CTX_set_options(ctx, ssl_options);
+
+	return 1;					/* success */
+}
+
+#endif							/* OPENSSL_VERSION_NUMBER */

@@ -1291,6 +1291,50 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ssl-min-protocol-version" xreflabel="ssl_min_protocol_version">
+      <term><varname>ssl_min_protocol_version</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>ssl_min_protocol_version</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the minimum SSL/TLS protocol version to use.  Valid values are
+        currently: <literal>TLSv1</literal>, <literal>TLSv1.1</literal>,
+        <literal>TLSv1.2</literal>, <literal>TLSv1.3</literal>.  Older
+        versions of the <productname>OpenSSL</productname> library do not
+        support all values; an error will be raised if an unsupported setting
+        is chosen.  Protocol versions before TLS 1.0, namely SSL version 2 and
+        3, are always disabled.
+       </para>
+
+       <para>
+        The default is <literal>TLSv1</literal>, mainly to support older
+        versions of the <productname>OpenSSL</productname> library.  You might
+        want to set this to a higher value if all software components can
+        support the newer protocol versions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ssl-max-protocol-version" xreflabel="ssl_max_protocol_version">
+      <term><varname>ssl_max_protocol_version</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>ssl_max_protocol_version</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the maximum SSL/TLS protocol version to use.  Valid values are as
+        for <xref linkend="guc-ssl-min-protocol-version"/>, with addition of
+        an empty string, which allows any protocol version.  The default is to
+        allow any version.  Setting the maximum protocol version is mainly
+        useful for testing or if some component has issues working with a
+        newer protocol.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-ssl-dh-params-file" xreflabel="ssl_dh_params_file">
       <term><varname>ssl_dh_params_file</varname> (<type>string</type>)
       <indexterm>
