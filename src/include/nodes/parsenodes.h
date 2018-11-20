@@ -1769,8 +1769,6 @@ typedef enum AlterTableType
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
 	AT_SetLogged,				/* SET LOGGED */
 	AT_SetUnLogged,				/* SET UNLOGGED */
-	AT_AddOids,					/* SET WITH OIDS */
-	AT_AddOidsRecurse,			/* internal to commands/tablecmds.c */
 	AT_DropOids,				/* SET WITHOUT OIDS */
 	AT_SetTableSpace,			/* SET TABLESPACE */
 	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */

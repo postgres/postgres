@@ -72,7 +72,7 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 		 */
 		partitions = find_all_inheritors(rootrelid, AccessShareLock, NULL);
 
-		tupdesc = CreateTemplateTupleDesc(PG_PARTITION_TREE_COLS, false);
+		tupdesc = CreateTemplateTupleDesc(PG_PARTITION_TREE_COLS);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relid",
 						   REGCLASSOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "parentid",

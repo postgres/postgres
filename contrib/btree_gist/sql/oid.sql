@@ -2,26 +2,29 @@
 
 SET enable_seqscan=on;
 
-SELECT count(*) FROM moneytmp WHERE oid <  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+CREATE TEMPORARY TABLE oidtmp (oid oid);
+INSERT INTO oidtmp SELECT g.i::oid FROM generate_series(1, 1000) g(i);
 
-SELECT count(*) FROM moneytmp WHERE oid <= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid <  17;
 
-SELECT count(*) FROM moneytmp WHERE oid  = ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid <= 17;
 
-SELECT count(*) FROM moneytmp WHERE oid >= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid  = 17;
 
-SELECT count(*) FROM moneytmp WHERE oid >  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid >= 17;
 
-CREATE INDEX oididx ON moneytmp USING gist ( oid );
+SELECT count(*) FROM oidtmp WHERE oid >  17;
+
+CREATE INDEX oididx ON oidtmp USING gist ( oid );
 
 SET enable_seqscan=off;
 
-SELECT count(*) FROM moneytmp WHERE oid <  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid <  17;
 
-SELECT count(*) FROM moneytmp WHERE oid <= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid <= 17;
 
-SELECT count(*) FROM moneytmp WHERE oid  = ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid  = 17;
 
-SELECT count(*) FROM moneytmp WHERE oid >= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid >= 17;
 
-SELECT count(*) FROM moneytmp WHERE oid >  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid >  17;

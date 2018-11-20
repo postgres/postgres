@@ -38,7 +38,7 @@
  *		typedef struct FormData_pg_depend
  * ----------------
  */
-CATALOG(pg_depend,2608,DependRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_depend,2608,DependRelationId)
 {
 	/*
 	 * Identification of the dependent (referencing) object.

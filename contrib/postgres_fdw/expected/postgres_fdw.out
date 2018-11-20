@@ -129,13 +129,6 @@ CREATE FOREIGN TABLE ft6 (
 	c2 int NOT NULL,
 	c3 text
 ) SERVER loopback2 OPTIONS (schema_name 'S 1', table_name 'T 4');
--- A table with oids. CREATE FOREIGN TABLE doesn't support the
--- WITH OIDS option, but ALTER does.
-CREATE FOREIGN TABLE ft_pg_type (
-	typname name,
-	typlen smallint
-) SERVER loopback OPTIONS (schema_name 'pg_catalog', table_name 'pg_type');
-ALTER TABLE ft_pg_type SET WITH OIDS;
 -- ===================================================================
 -- tests for validator
 -- ===================================================================
@@ -185,16 +178,15 @@ ALTER FOREIGN TABLE ft2 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
 ALTER FOREIGN TABLE ft2 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
 \det+
-                                      List of foreign tables
- Schema |   Table    |  Server   |                   FDW options                    | Description 
---------+------------+-----------+--------------------------------------------------+-------------
- public | ft1        | loopback  | (schema_name 'S 1', table_name 'T 1')            | 
- public | ft2        | loopback  | (schema_name 'S 1', table_name 'T 1')            | 
- public | ft4        | loopback  | (schema_name 'S 1', table_name 'T 3')            | 
- public | ft5        | loopback  | (schema_name 'S 1', table_name 'T 4')            | 
- public | ft6        | loopback2 | (schema_name 'S 1', table_name 'T 4')            | 
- public | ft_pg_type | loopback  | (schema_name 'pg_catalog', table_name 'pg_type') | 
-(6 rows)
+                              List of foreign tables
+ Schema | Table |  Server   |              FDW options              | Description 
+--------+-------+-----------+---------------------------------------+-------------
+ public | ft1   | loopback  | (schema_name 'S 1', table_name 'T 1') | 
+ public | ft2   | loopback  | (schema_name 'S 1', table_name 'T 1') | 
+ public | ft4   | loopback  | (schema_name 'S 1', table_name 'T 3') | 
+ public | ft5   | loopback  | (schema_name 'S 1', table_name 'T 4') | 
+ public | ft6   | loopback2 | (schema_name 'S 1', table_name 'T 4') | 
+(5 rows)
 
 -- Test that alteration of server options causes reconnection
 -- Remote's errors might be non-English, so hide them to ensure stable results
@@ -4046,21 +4038,6 @@ SELECT ctid, * FROM ft1 t1 LIMIT 1;
  ctid  | c1 | c2 |  c3   |              c4              |            c5            | c6 |     c7     | c8  
 -------+----+----+-------+------------------------------+--------------------------+----+------------+-----
  (0,1) |  1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
-(1 row)
-
-EXPLAIN (VERBOSE, COSTS OFF)
-SELECT oid, * FROM ft_pg_type WHERE typname = 'int4';
-                                             QUERY PLAN                                             
-----------------------------------------------------------------------------------------------------
- Foreign Scan on public.ft_pg_type
-   Output: oid, typname, typlen
-   Remote SQL: SELECT typname, typlen, oid FROM pg_catalog.pg_type WHERE ((typname = 'int4'::name))
-(3 rows)
-
-SELECT oid, * FROM ft_pg_type WHERE typname = 'int4';
- oid | typname | typlen 
------+---------+--------
-  23 | int4    |      4
 (1 row)
 
 -- ===================================================================

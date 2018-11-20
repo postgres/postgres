@@ -29,6 +29,8 @@
  */
 CATALOG(pg_publication,6104,PublicationRelationId)
 {
+	Oid			oid;			/* oid */
+
 	NameData	pubname;		/* name of the publication */
 
 	Oid			pubowner;		/* publication owner */

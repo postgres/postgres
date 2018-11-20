@@ -775,7 +775,7 @@ TypenameGetTypid(const char *typname)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
-		typid = GetSysCacheOid2(TYPENAMENSP,
+		typid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 								PointerGetDatum(typname),
 								ObjectIdGetDatum(namespaceId));
 		if (OidIsValid(typid))
@@ -1084,7 +1084,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 			palloc(offsetof(struct _FuncCandidateList, args) +
 				   effective_nargs * sizeof(Oid));
 		newResult->pathpos = pathpos;
-		newResult->oid = HeapTupleGetOid(proctup);
+		newResult->oid = procform->oid;
 		newResult->nargs = effective_nargs;
 		newResult->argnumbers = argnumbers;
 		if (argnumbers)
@@ -1488,7 +1488,8 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 									  ObjectIdGetDatum(namespaceId));
 			if (HeapTupleIsValid(opertup))
 			{
-				Oid			result = HeapTupleGetOid(opertup);
+				Form_pg_operator operclass = (Form_pg_operator) GETSTRUCT(opertup);
+				Oid			result = operclass->oid;
 
 				ReleaseSysCache(opertup);
 				return result;
@@ -1533,7 +1534,7 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 
 			if (operform->oprnamespace == namespaceId)
 			{
-				Oid			result = HeapTupleGetOid(opertup);
+				Oid			result = operform->oid;
 
 				ReleaseSysCacheList(catlist);
 				return result;
@@ -1687,7 +1688,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 						continue;	/* keep previous result */
 					/* replace previous result */
 					prevResult->pathpos = pathpos;
-					prevResult->oid = HeapTupleGetOid(opertup);
+					prevResult->oid = operform->oid;
 					continue;	/* args are same, of course */
 				}
 			}
@@ -1700,7 +1701,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 		nextResult += SPACE_PER_OP;
 
 		newResult->pathpos = pathpos;
-		newResult->oid = HeapTupleGetOid(opertup);
+		newResult->oid = operform->oid;
 		newResult->nargs = 2;
 		newResult->nvargs = 0;
 		newResult->ndargs = 0;
@@ -1790,7 +1791,7 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
 		if (namespaceId == myTempNamespace)
 			continue;			/* do not look in temp namespace */
 
-		opcid = GetSysCacheOid3(CLAAMNAMENSP,
+		opcid = GetSysCacheOid3(CLAAMNAMENSP, Anum_pg_opclass_oid,
 								ObjectIdGetDatum(amid),
 								PointerGetDatum(opcname),
 								ObjectIdGetDatum(namespaceId));
@@ -1873,7 +1874,7 @@ OpfamilynameGetOpfid(Oid amid, const char *opfname)
 		if (namespaceId == myTempNamespace)
 			continue;			/* do not look in temp namespace */
 
-		opfid = GetSysCacheOid3(OPFAMILYAMNAMENSP,
+		opfid = GetSysCacheOid3(OPFAMILYAMNAMENSP, Anum_pg_opfamily_oid,
 								ObjectIdGetDatum(amid),
 								PointerGetDatum(opfname),
 								ObjectIdGetDatum(namespaceId));
@@ -1946,7 +1947,7 @@ lookup_collation(const char *collname, Oid collnamespace, int32 encoding)
 	Form_pg_collation collform;
 
 	/* Check for encoding-specific entry (exact match) */
-	collid = GetSysCacheOid3(COLLNAMEENCNSP,
+	collid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
 							 PointerGetDatum(collname),
 							 Int32GetDatum(encoding),
 							 ObjectIdGetDatum(collnamespace));
@@ -1969,13 +1970,13 @@ lookup_collation(const char *collname, Oid collnamespace, int32 encoding)
 	if (collform->collprovider == COLLPROVIDER_ICU)
 	{
 		if (is_encoding_supported_by_icu(encoding))
-			collid = HeapTupleGetOid(colltup);
+			collid = collform->oid;
 		else
 			collid = InvalidOid;
 	}
 	else
 	{
-		collid = HeapTupleGetOid(colltup);
+		collid = collform->oid;
 	}
 	ReleaseSysCache(colltup);
 	return collid;
@@ -2089,7 +2090,7 @@ ConversionGetConid(const char *conname)
 		if (namespaceId == myTempNamespace)
 			continue;			/* do not look in temp namespace */
 
-		conid = GetSysCacheOid2(CONNAMENSP,
+		conid = GetSysCacheOid2(CONNAMENSP, Anum_pg_conversion_oid,
 								PointerGetDatum(conname),
 								ObjectIdGetDatum(namespaceId));
 		if (OidIsValid(conid))
@@ -2172,7 +2173,7 @@ get_statistics_object_oid(List *names, bool missing_ok)
 		if (missing_ok && !OidIsValid(namespaceId))
 			stats_oid = InvalidOid;
 		else
-			stats_oid = GetSysCacheOid2(STATEXTNAMENSP,
+			stats_oid = GetSysCacheOid2(STATEXTNAMENSP, Anum_pg_statistic_ext_oid,
 										PointerGetDatum(stats_name),
 										ObjectIdGetDatum(namespaceId));
 	}
@@ -2187,7 +2188,7 @@ get_statistics_object_oid(List *names, bool missing_ok)
 
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
-			stats_oid = GetSysCacheOid2(STATEXTNAMENSP,
+			stats_oid = GetSysCacheOid2(STATEXTNAMENSP, Anum_pg_statistic_ext_oid,
 										PointerGetDatum(stats_name),
 										ObjectIdGetDatum(namespaceId));
 			if (OidIsValid(stats_oid))
@@ -2294,7 +2295,7 @@ get_ts_parser_oid(List *names, bool missing_ok)
 		if (missing_ok && !OidIsValid(namespaceId))
 			prsoid = InvalidOid;
 		else
-			prsoid = GetSysCacheOid2(TSPARSERNAMENSP,
+			prsoid = GetSysCacheOid2(TSPARSERNAMENSP, Anum_pg_ts_parser_oid,
 									 PointerGetDatum(parser_name),
 									 ObjectIdGetDatum(namespaceId));
 	}
@@ -2310,7 +2311,7 @@ get_ts_parser_oid(List *names, bool missing_ok)
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
 
-			prsoid = GetSysCacheOid2(TSPARSERNAMENSP,
+			prsoid = GetSysCacheOid2(TSPARSERNAMENSP, Anum_pg_ts_parser_oid,
 									 PointerGetDatum(parser_name),
 									 ObjectIdGetDatum(namespaceId));
 			if (OidIsValid(prsoid))
@@ -2420,7 +2421,7 @@ get_ts_dict_oid(List *names, bool missing_ok)
 		if (missing_ok && !OidIsValid(namespaceId))
 			dictoid = InvalidOid;
 		else
-			dictoid = GetSysCacheOid2(TSDICTNAMENSP,
+			dictoid = GetSysCacheOid2(TSDICTNAMENSP, Anum_pg_ts_dict_oid,
 									  PointerGetDatum(dict_name),
 									  ObjectIdGetDatum(namespaceId));
 	}
@@ -2436,7 +2437,7 @@ get_ts_dict_oid(List *names, bool missing_ok)
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
 
-			dictoid = GetSysCacheOid2(TSDICTNAMENSP,
+			dictoid = GetSysCacheOid2(TSDICTNAMENSP, Anum_pg_ts_dict_oid,
 									  PointerGetDatum(dict_name),
 									  ObjectIdGetDatum(namespaceId));
 			if (OidIsValid(dictoid))
@@ -2547,7 +2548,7 @@ get_ts_template_oid(List *names, bool missing_ok)
 		if (missing_ok && !OidIsValid(namespaceId))
 			tmploid = InvalidOid;
 		else
-			tmploid = GetSysCacheOid2(TSTEMPLATENAMENSP,
+			tmploid = GetSysCacheOid2(TSTEMPLATENAMENSP, Anum_pg_ts_template_oid,
 									  PointerGetDatum(template_name),
 									  ObjectIdGetDatum(namespaceId));
 	}
@@ -2563,7 +2564,7 @@ get_ts_template_oid(List *names, bool missing_ok)
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
 
-			tmploid = GetSysCacheOid2(TSTEMPLATENAMENSP,
+			tmploid = GetSysCacheOid2(TSTEMPLATENAMENSP, Anum_pg_ts_template_oid,
 									  PointerGetDatum(template_name),
 									  ObjectIdGetDatum(namespaceId));
 			if (OidIsValid(tmploid))
@@ -2673,7 +2674,7 @@ get_ts_config_oid(List *names, bool missing_ok)
 		if (missing_ok && !OidIsValid(namespaceId))
 			cfgoid = InvalidOid;
 		else
-			cfgoid = GetSysCacheOid2(TSCONFIGNAMENSP,
+			cfgoid = GetSysCacheOid2(TSCONFIGNAMENSP, Anum_pg_ts_config_oid,
 									 PointerGetDatum(config_name),
 									 ObjectIdGetDatum(namespaceId));
 	}
@@ -2689,7 +2690,7 @@ get_ts_config_oid(List *names, bool missing_ok)
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
 
-			cfgoid = GetSysCacheOid2(TSCONFIGNAMENSP,
+			cfgoid = GetSysCacheOid2(TSCONFIGNAMENSP, Anum_pg_ts_config_oid,
 									 PointerGetDatum(config_name),
 									 ObjectIdGetDatum(namespaceId));
 			if (OidIsValid(cfgoid))
@@ -3025,7 +3026,8 @@ get_namespace_oid(const char *nspname, bool missing_ok)
 {
 	Oid			oid;
 
-	oid = GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(nspname));
+	oid = GetSysCacheOid1(NAMESPACENAME, Anum_pg_namespace_oid,
+						  CStringGetDatum(nspname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -3621,7 +3623,7 @@ get_conversion_oid(List *name, bool missing_ok)
 		if (missing_ok && !OidIsValid(namespaceId))
 			conoid = InvalidOid;
 		else
-			conoid = GetSysCacheOid2(CONNAMENSP,
+			conoid = GetSysCacheOid2(CONNAMENSP, Anum_pg_conversion_oid,
 									 PointerGetDatum(conversion_name),
 									 ObjectIdGetDatum(namespaceId));
 	}
@@ -3637,7 +3639,7 @@ get_conversion_oid(List *name, bool missing_ok)
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
 
-			conoid = GetSysCacheOid2(CONNAMENSP,
+			conoid = GetSysCacheOid2(CONNAMENSP, Anum_pg_conversion_oid,
 									 PointerGetDatum(conversion_name),
 									 ObjectIdGetDatum(namespaceId));
 			if (OidIsValid(conoid))

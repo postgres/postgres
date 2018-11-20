@@ -38,7 +38,7 @@
  *		typedef struct FormData_pg_shdescription
  * ----------------
  */
-CATALOG(pg_shdescription,2396,SharedDescriptionRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_shdescription,2396,SharedDescriptionRelationId) BKI_SHARED_RELATION
 {
 	Oid			objoid;			/* OID of object itself */
 	Oid			classoid;		/* OID of table containing object */

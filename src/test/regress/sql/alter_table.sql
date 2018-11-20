@@ -626,7 +626,7 @@ drop table atacc1;
 
 -- test unique constraint adding
 
-create table atacc1 ( test int ) with oids;
+create table atacc1 ( test int ) ;
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
 -- insert first value
@@ -635,8 +635,6 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- should succeed
 insert into atacc1 (test) values (4);
--- try adding a unique oid constraint
-alter table atacc1 add constraint atacc_oid1 unique(oid);
 -- try to create duplicates via alter table using - should fail
 alter table atacc1 alter column test type integer using 0;
 drop table atacc1;
@@ -682,7 +680,7 @@ drop table atacc1;
 
 -- test primary key constraint adding
 
-create table atacc1 ( test int ) with oids;
+create table atacc1 ( id serial, test int) ;
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
 -- insert first value
@@ -694,11 +692,11 @@ insert into atacc1 (test) values (4);
 -- inserting NULL should fail
 insert into atacc1 (test) values(NULL);
 -- try adding a second primary key (should fail)
-alter table atacc1 add constraint atacc_oid1 primary key(oid);
+alter table atacc1 add constraint atacc_oid1 primary key(id);
 -- drop first primary key constraint
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should succeed)
-alter table atacc1 add constraint atacc_oid1 primary key(oid);
+alter table atacc1 add constraint atacc_oid1 primary key(id);
 drop table atacc1;
 
 -- let's do one where the primary key constraint fails when added
@@ -775,7 +773,7 @@ alter table non_existent alter column bar drop not null;
 
 -- test setting columns to null and not null and vice versa
 -- test checking for null values and primary key
-create table atacc1 (test int not null) with oids;
+create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 alter table atacc1 alter column test drop not null;
 alter table atacc1 drop constraint "atacc1_pkey";
@@ -788,10 +786,6 @@ alter table atacc1 alter test set not null;
 -- try altering a non-existent column, should fail
 alter table atacc1 alter bar set not null;
 alter table atacc1 alter bar drop not null;
-
--- try altering the oid column, should fail
-alter table atacc1 alter oid set not null;
-alter table atacc1 alter oid drop not null;
 
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
@@ -872,7 +866,7 @@ alter table pg_class drop column relname;
 alter table nosuchtable drop column bar;
 
 -- test dropping columns
-create table atacc1 (a int4 not null, b int4, c int4 not null, d int4) with oids;
+create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
 insert into atacc1 values (1, 2, 3, 4);
 alter table atacc1 drop a;
 alter table atacc1 drop a;
@@ -922,8 +916,11 @@ delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
 
--- try dropping the oid column, should succeed
-alter table atacc1 drop oid;
+-- try removing an oid column, should succeed (as it's nonexistant)
+alter table atacc1 SET WITHOUT OIDS;
+
+-- try adding an oid column, should fail (not supported)
+alter table atacc1 SET WITH OIDS;
 
 -- try dropping the xmin column, should fail
 alter table atacc1 drop xmin;
@@ -1182,74 +1179,6 @@ select attrelid::regclass, attname, attinhcount, attislocal
 from pg_attribute
 where attnum > 0 and attrelid::regclass in ('depth0', 'depth1', 'depth2')
 order by attrelid::regclass::text, attnum;
-
---
--- Test the ALTER TABLE SET WITH/WITHOUT OIDS command
---
-create table altstartwith (col integer) with oids;
-
-insert into altstartwith values (1);
-
-select oid > 0, * from altstartwith;
-
-alter table altstartwith set without oids;
-
-select oid > 0, * from altstartwith; -- fails
-select * from altstartwith;
-
-alter table altstartwith set with oids;
-
-select oid > 0, * from altstartwith;
-
-drop table altstartwith;
-
--- Check inheritance cases
-create table altwithoid (col integer) with oids;
-
--- Inherits parents oid column anyway
-create table altinhoid () inherits (altwithoid) without oids;
-
-insert into altinhoid values (1);
-
-select oid > 0, * from altwithoid;
-select oid > 0, * from altinhoid;
-
-alter table altwithoid set without oids;
-
-select oid > 0, * from altwithoid; -- fails
-select oid > 0, * from altinhoid; -- fails
-select * from altwithoid;
-select * from altinhoid;
-
-alter table altwithoid set with oids;
-
-select oid > 0, * from altwithoid;
-select oid > 0, * from altinhoid;
-
-drop table altwithoid cascade;
-
-create table altwithoid (col integer) without oids;
-
--- child can have local oid column
-create table altinhoid () inherits (altwithoid) with oids;
-
-insert into altinhoid values (1);
-
-select oid > 0, * from altwithoid; -- fails
-select oid > 0, * from altinhoid;
-
-alter table altwithoid set with oids;
-
-select oid > 0, * from altwithoid;
-select oid > 0, * from altinhoid;
-
--- the child's local definition should remain
-alter table altwithoid set without oids;
-
-select oid > 0, * from altwithoid; -- fails
-select oid > 0, * from altinhoid;
-
-drop table altwithoid cascade;
 
 -- test renumbering of child-table columns in inherited operations
 
@@ -1803,7 +1732,7 @@ CREATE TABLE tt3 (y numeric(8,2), x int);			-- wrong column order
 CREATE TABLE tt4 (x int);							-- too few columns
 CREATE TABLE tt5 (x int, y numeric(8,2), z int);	-- too few columns
 CREATE TABLE tt6 () INHERITS (tt0);					-- can't have a parent
-CREATE TABLE tt7 (x int, q text, y numeric(8,2)) WITH OIDS;
+CREATE TABLE tt7 (x int, q text, y numeric(8,2));
 ALTER TABLE tt7 DROP q;								-- OK
 
 ALTER TABLE tt0 OF tt_t0;
@@ -2135,16 +2064,6 @@ CREATE TYPE mytype AS (a int);
 CREATE TABLE fail_part OF mytype;
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 DROP TYPE mytype CASCADE;
-
--- check existence (or non-existence) of oid column
-ALTER TABLE list_parted SET WITH OIDS;
-CREATE TABLE fail_part (a int);
-ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
-
-ALTER TABLE list_parted SET WITHOUT OIDS;
-ALTER TABLE fail_part SET WITH OIDS;
-ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
-DROP TABLE fail_part;
 
 -- check that the table being attached has only columns present in the parent
 CREATE TABLE fail_part (like list_parted, c int);

@@ -25,7 +25,7 @@
  *		typedef struct FormData_pg_foreign_table
  * ----------------
  */
-CATALOG(pg_foreign_table,3118,ForeignTableRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_foreign_table,3118,ForeignTableRelationId)
 {
 	Oid			ftrelid;		/* OID of foreign table */
 	Oid			ftserver;		/* OID of foreign server */

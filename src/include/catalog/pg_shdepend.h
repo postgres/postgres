@@ -34,7 +34,7 @@
  *		typedef struct FormData_pg_shdepend
  * ----------------
  */
-CATALOG(pg_shdepend,1214,SharedDependRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_shdepend,1214,SharedDependRelationId) BKI_SHARED_RELATION
 {
 	/*
 	 * Identification of the dependent (referencing) object.

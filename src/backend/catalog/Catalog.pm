@@ -111,8 +111,6 @@ sub ParseHeader
 			$catalog{bootstrap} = /BKI_BOOTSTRAP/ ? ' bootstrap' : '';
 			$catalog{shared_relation} =
 			  /BKI_SHARED_RELATION/ ? ' shared_relation' : '';
-			$catalog{without_oids} =
-			  /BKI_WITHOUT_OIDS/ ? ' without_oids' : '';
 			if (/BKI_ROWTYPE_OID\((\d+),(\w+)\)/)
 			{
 				$catalog{rowtype_oid}        = $1;
@@ -334,6 +332,10 @@ sub AddDefaultValues
 		my $atttype = $column->{type};
 
 		if (defined $row->{$attname})
+		{
+			;
+		}
+		elsif ($attname eq 'oid')
 		{
 			;
 		}

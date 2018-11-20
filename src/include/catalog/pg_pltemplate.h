@@ -26,7 +26,7 @@
  *		typedef struct FormData_pg_pltemplate
  * ----------------
  */
-CATALOG(pg_pltemplate,1136,PLTemplateRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_pltemplate,1136,PLTemplateRelationId) BKI_SHARED_RELATION
 {
 	NameData	tmplname;		/* name of PL */
 	bool		tmpltrusted;	/* PL is trusted? */

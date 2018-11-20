@@ -20,7 +20,7 @@
 #include "catalog/genbki.h"
 #include "catalog/pg_sequence_d.h"
 
-CATALOG(pg_sequence,2224,SequenceRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_sequence,2224,SequenceRelationId)
 {
 	Oid			seqrelid;
 	Oid			seqtypid;

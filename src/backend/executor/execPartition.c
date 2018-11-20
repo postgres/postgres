@@ -786,7 +786,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				 * partition that's tupdesc-equal to the partitioned table;
 				 * partitions of different tupdescs must generate their own.
 				 */
-				tupDesc = ExecTypeFromTL(onconflset, partrelDesc->tdhasoid);
+				tupDesc = ExecTypeFromTL(onconflset);
 				ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
 				leaf_part_rri->ri_onConflict->oc_ProjInfo =
 					ExecBuildProjectionInfo(onconflset, econtext,

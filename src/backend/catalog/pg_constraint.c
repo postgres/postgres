@@ -20,6 +20,7 @@
 #include "access/sysattr.h"
 #include "access/tupconvert.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -169,6 +170,9 @@ CreateConstraintEntry(const char *constraintName,
 		values[i] = (Datum) NULL;
 	}
 
+	conOid = GetNewOidWithIndex(conDesc, ConstraintOidIndexId,
+								Anum_pg_constraint_oid);
+	values[Anum_pg_constraint_oid - 1] = ObjectIdGetDatum(conOid);
 	values[Anum_pg_constraint_conname - 1] = NameGetDatum(&cname);
 	values[Anum_pg_constraint_connamespace - 1] = ObjectIdGetDatum(constraintNamespace);
 	values[Anum_pg_constraint_contype - 1] = CharGetDatum(constraintType);
@@ -224,7 +228,7 @@ CreateConstraintEntry(const char *constraintName,
 
 	tup = heap_form_tuple(RelationGetDescr(conDesc), values, nulls);
 
-	conOid = CatalogTupleInsert(conDesc, tup);
+	CatalogTupleInsert(conDesc, tup);
 
 	conobject.classId = ConstraintRelationId;
 	conobject.objectId = conOid;
@@ -408,7 +412,11 @@ CloneForeignKeyConstraints(Oid parentId, Oid relationId, List **cloned)
 	scan = systable_beginscan(pg_constraint, ConstraintRelidTypidNameIndexId, true,
 							  NULL, 1, &key);
 	while ((tuple = systable_getnext(scan)) != NULL)
-		clone = lappend_oid(clone, HeapTupleGetOid(tuple));
+	{
+		Oid		oid = ((Form_pg_constraint) GETSTRUCT(tuple))->oid;
+
+		clone = lappend_oid(clone, oid);
+	}
 	systable_endscan(scan);
 
 	/* Do the actual work, recursing to partitions as needed */
@@ -647,8 +655,7 @@ clone_fk_constraints(Relation pg_constraint, Relation parentRel,
 			ReleaseSysCache(partcontup);
 
 			/* looks good!  Attach this constraint */
-			ConstraintSetParentConstraint(fk->conoid,
-										  HeapTupleGetOid(tuple));
+			ConstraintSetParentConstraint(fk->conoid, constrForm->oid);
 			CommandCounterIncrement();
 			attach_it = true;
 			break;
@@ -672,7 +679,7 @@ clone_fk_constraints(Relation pg_constraint, Relation parentRel,
 								  constrForm->condeferrable,
 								  constrForm->condeferred,
 								  constrForm->convalidated,
-								  HeapTupleGetOid(tuple),
+								  constrForm->oid,
 								  RelationGetRelid(partRel),
 								  mapped_conkey,
 								  nelem,
@@ -1111,7 +1118,7 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 		ObjectAddress thisobj;
 
 		thisobj.classId = ConstraintRelationId;
-		thisobj.objectId = HeapTupleGetOid(tup);
+		thisobj.objectId = conform->oid;
 		thisobj.objectSubId = 0;
 
 		if (object_address_present(&thisobj, objsMoved))
@@ -1232,7 +1239,7 @@ get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok)
 
 	/* There can be at most one matching row */
 	if (HeapTupleIsValid(tuple = systable_getnext(scan)))
-		conOid = HeapTupleGetOid(tuple);
+		conOid = ((Form_pg_constraint) GETSTRUCT(tuple))->oid;
 
 	systable_endscan(scan);
 
@@ -1297,7 +1304,7 @@ get_relation_constraint_attnos(Oid relid, const char *conname,
 		Datum		adatum;
 		bool		isNull;
 
-		*constraintOid = HeapTupleGetOid(tuple);
+		*constraintOid = ((Form_pg_constraint) GETSTRUCT(tuple))->oid;
 
 		/* Extract the conkey array, ie, attnums of constrained columns */
 		adatum = heap_getattr(tuple, Anum_pg_constraint_conkey,
@@ -1370,7 +1377,7 @@ get_relation_idx_constraint_oid(Oid relationId, Oid indexId)
 		constrForm = (Form_pg_constraint) GETSTRUCT(tuple);
 		if (constrForm->conindid == indexId)
 		{
-			constraintId = HeapTupleGetOid(tuple);
+			constraintId = constrForm->oid;
 			break;
 		}
 	}
@@ -1414,7 +1421,7 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 
 	/* There can be at most one matching row */
 	if (HeapTupleIsValid(tuple = systable_getnext(scan)))
-		conOid = HeapTupleGetOid(tuple);
+		conOid = ((Form_pg_constraint) GETSTRUCT(tuple))->oid;
 
 	systable_endscan(scan);
 
@@ -1494,7 +1501,7 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 							  RelationGetDescr(pg_constraint), &isNull);
 		if (isNull)
 			elog(ERROR, "null conkey for constraint %u",
-				 HeapTupleGetOid(tuple));
+				 ((Form_pg_constraint) GETSTRUCT(tuple))->oid);
 		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 		numkeys = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
@@ -1510,7 +1517,7 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 			pkattnos = bms_add_member(pkattnos,
 									  attnums[i] - FirstLowInvalidHeapAttributeNumber);
 		}
-		*constraintOid = HeapTupleGetOid(tuple);
+		*constraintOid = ((Form_pg_constraint) GETSTRUCT(tuple))->oid;
 
 		/* No need to search further */
 		break;

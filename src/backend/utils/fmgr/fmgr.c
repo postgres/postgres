@@ -529,7 +529,7 @@ fetch_finfo_record(void *filehandle, const char *funcname)
 static CFuncHashTabEntry *
 lookup_C_func(HeapTuple procedureTuple)
 {
-	Oid			fn_oid = HeapTupleGetOid(procedureTuple);
+	Oid			fn_oid = ((Form_pg_proc) GETSTRUCT(procedureTuple))->oid;
 	CFuncHashTabEntry *entry;
 
 	if (CFuncHash == NULL)
@@ -554,7 +554,7 @@ static void
 record_C_func(HeapTuple procedureTuple,
 			  PGFunction user_fn, const Pg_finfo_record *inforec)
 {
-	Oid			fn_oid = HeapTupleGetOid(procedureTuple);
+	Oid			fn_oid =  ((Form_pg_proc) GETSTRUCT(procedureTuple))->oid;
 	CFuncHashTabEntry *entry;
 	bool		found;
 

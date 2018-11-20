@@ -86,7 +86,7 @@ CREATE TABLE person (
 CREATE TABLE emp (
 	salary 		int4,
 	manager 	name
-) INHERITS (person) WITH OIDS;
+) INHERITS (person);
 
 
 CREATE TABLE student (

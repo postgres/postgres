@@ -757,8 +757,8 @@ add_string_reloption(bits32 kinds, const char *name, const char *desc, const cha
  * reloptions value (possibly NULL), and we replace or remove entries
  * as needed.
  *
- * If ignoreOids is true, then we should ignore any occurrence of "oids"
- * in the list (it will be or has been handled by interpretOidsOption()).
+ * If acceptOidsOff is true, then we allow oids = false, but throw error when
+ * on. This is solely needed for backwards compatibility.
  *
  * Note that this is not responsible for determining whether the options
  * are valid, but it does check that namespaces for all the options given are
@@ -771,7 +771,7 @@ add_string_reloption(bits32 kinds, const char *name, const char *desc, const cha
  */
 Datum
 transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
-					char *validnsps[], bool ignoreOids, bool isReset)
+					char *validnsps[], bool acceptOidsOff, bool isReset)
 {
 	Datum		result;
 	ArrayBuildState *astate;
@@ -882,9 +882,6 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 									def->defnamespace)));
 			}
 
-			if (ignoreOids && strcmp(def->defname, "oids") == 0)
-				continue;
-
 			/* ignore if not in the same namespace */
 			if (namspace == NULL)
 			{
@@ -905,6 +902,24 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 				value = defGetString(def);
 			else
 				value = "true";
+
+			/*
+			 * This is not a great place for this test, but there's no other
+			 * convenient place to filter the option out. As WITH (oids =
+			 * false) will be removed someday, this seems like an acceptable
+			 * amount of ugly.
+			 */
+			if (acceptOidsOff && def->defnamespace == NULL &&
+				strcmp(def->defname, "oids") == 0)
+			{
+				if (defGetBoolean(def))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("tables declared WITH OIDS are not supported")));
+				/* skip over option, reloptions machinery doesn't know it */
+				continue;
+			}
+
 			len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
 			/* +1 leaves room for sprintf's trailing null */
 			t = (text *) palloc(len + 1);

@@ -471,24 +471,6 @@ $$ LANGUAGE pltcl;
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <function>spi_lastoid</function>
-       <indexterm>
-        <primary>spi_lastoid</primary>
-        <secondary>in PL/Tcl</secondary>
-       </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Returns the OID of the row inserted by the last
-        <function>spi_exec</function> or <function>spi_execp</function>, if the
-        command was a single-row <command>INSERT</command> and the modified
-        table contained OIDs.  (If not, you get zero.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><function>subtransaction</function> <replaceable>command</replaceable></term>
       <listitem>
        <para>

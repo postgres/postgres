@@ -28,6 +28,8 @@
  */
 CATALOG(pg_language,2612,LanguageRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* Language name */
 	NameData	lanname;
 

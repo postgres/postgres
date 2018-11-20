@@ -758,7 +758,7 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 											NULL, NULL, NULL);
 
 				object.classId = DatabaseRelationId;
-				object.objectId = HeapTupleGetOid(tuple);
+				object.objectId = datForm->oid;
 				object.objectSubId = 0;
 				break;
 
@@ -772,7 +772,7 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 											NULL, NULL);
 
 				object.classId = NamespaceRelationId;
-				object.objectId = HeapTupleGetOid(tuple);
+				object.objectId = nspForm->oid;
 				object.objectSubId = 0;
 				break;
 
@@ -797,7 +797,7 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 				pfree(namespace_name);
 
 				object.classId = RelationRelationId;
-				object.objectId = HeapTupleGetOid(tuple);
+				object.objectId = relForm->oid;
 				object.objectSubId = 0;
 				break;
 
@@ -838,7 +838,7 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 				pfree(namespace_name);
 
 				object.classId = ProcedureRelationId;
-				object.objectId = HeapTupleGetOid(tuple);
+				object.objectId = proForm->oid;
 				object.objectSubId = 0;
 				break;
 

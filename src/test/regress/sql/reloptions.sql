@@ -52,11 +52,6 @@ SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass AND
 -- RESET fails if a value is specified
 ALTER TABLE reloptions_test RESET (fillfactor=12);
 
--- The OIDS option is not stored as reloption
-DROP TABLE reloptions_test;
-CREATE TABLE reloptions_test(i INT) WITH (fillfactor=20, oids=true);
-SELECT reloptions, relhasoids FROM pg_class WHERE oid = 'reloptions_test'::regclass;
-
 -- Test toast.* options
 DROP TABLE reloptions_test;
 

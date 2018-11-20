@@ -951,21 +951,18 @@ DROP TABLE cwi_test;
 --
 -- Check handling of indexes on system columns
 --
-CREATE TABLE oid_table (a INT) WITH OIDS;
+CREATE TABLE syscol_table (a INT);
 
--- An index on the OID column should be allowed
-CREATE INDEX ON oid_table (oid);
-
--- Other system columns cannot be indexed
-CREATE INDEX ON oid_table (ctid);
+-- System columns cannot be indexed
+CREATE INDEX ON syscolcol_table (ctid);
 
 -- nor used in expressions
-CREATE INDEX ON oid_table ((ctid >= '(1000,0)'));
+CREATE INDEX ON syscol_table ((ctid >= '(1000,0)'));
 
 -- nor used in predicates
-CREATE INDEX ON oid_table (a) WHERE ctid >= '(1000,0)';
+CREATE INDEX ON syscol_table (a) WHERE ctid >= '(1000,0)';
 
-DROP TABLE oid_table;
+DROP TABLE syscol_table;
 
 --
 -- Tests for IS NULL/IS NOT NULL with b-tree indexes

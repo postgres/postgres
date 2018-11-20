@@ -65,8 +65,6 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 char relpersistence,
 						 bool shared_relation,
 						 bool mapped_relation,
-						 bool oidislocal,
-						 int oidinhcount,
 						 OnCommitAction oncommit,
 						 Datum reloptions,
 						 bool use_user_acl,
@@ -127,11 +125,9 @@ extern void RemoveAttrDefault(Oid relid, AttrNumber attnum,
 extern void RemoveAttrDefaultById(Oid attrdefId);
 extern void RemoveStatistics(Oid relid, AttrNumber attnum);
 
-extern const FormData_pg_attribute *SystemAttributeDefinition(AttrNumber attno,
-						  bool relhasoids);
+extern const FormData_pg_attribute *SystemAttributeDefinition(AttrNumber attno);
 
-extern const FormData_pg_attribute *SystemAttributeByName(const char *attname,
-					  bool relhasoids);
+extern const FormData_pg_attribute *SystemAttributeByName(const char *attname);
 
 extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 						 bool allow_system_table_mods);

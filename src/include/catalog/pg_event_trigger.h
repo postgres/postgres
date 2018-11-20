@@ -28,6 +28,7 @@
  */
 CATALOG(pg_event_trigger,3466,EventTriggerRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	evtname;		/* trigger's name */
 	NameData	evtevent;		/* trigger's event */
 	Oid			evtowner;		/* trigger's owner */

@@ -48,28 +48,26 @@ sub pgbench
 	return;
 }
 
-# Test concurrent insertion into table with UNIQUE oid column.  DDL expects
-# GetNewOidWithIndex() to successfully avoid violating uniqueness for indexes
-# like pg_class_oid_index and pg_proc_oid_index.  This indirectly exercises
-# LWLock and spinlock concurrency.  This test makes a 5-MiB table.
+# Test concurrent insertion into table with serial column.  This
+# indirectly exercises LWLock and spinlock concurrency.  This test
+# makes a 5-MiB table.
 
 $node->safe_psql('postgres',
-	    'CREATE UNLOGGED TABLE oid_tbl () WITH OIDS; '
-	  . 'ALTER TABLE oid_tbl ADD UNIQUE (oid);');
+				 'CREATE UNLOGGED TABLE insert_tbl (id serial primary key); ');
 
 pgbench(
 	'--no-vacuum --client=5 --protocol=prepared --transactions=25',
 	0,
 	[qr{processed: 125/125}],
 	[qr{^$}],
-	'concurrency OID generation',
+	'concurrent insert workload',
 	{
-		'001_pgbench_concurrent_oid_generation' =>
-		  'INSERT INTO oid_tbl SELECT FROM generate_series(1,1000);'
+		'001_pgbench_concurrent_insert' =>
+		  'INSERT INTO insert_tbl SELECT FROM generate_series(1,1000);'
 	});
 
 # cleanup
-$node->safe_psql('postgres', 'DROP TABLE oid_tbl;');
+$node->safe_psql('postgres', 'DROP TABLE insert_tbl;');
 
 # Trigger various connection errors
 pgbench(

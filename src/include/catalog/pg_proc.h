@@ -30,6 +30,8 @@
  */
 CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,ProcedureRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
+	Oid			oid;			/* oid */
+
 	/* procedure name */
 	NameData	proname;
 

@@ -33,6 +33,7 @@
  */
 CATALOG(pg_trigger,2620,TriggerRelationId)
 {
+	Oid			oid;			/* oid */
 	Oid			tgrelid;		/* relation trigger is attached to */
 	NameData	tgname;			/* trigger's name */
 	Oid			tgfoid;			/* OID of function to be called */

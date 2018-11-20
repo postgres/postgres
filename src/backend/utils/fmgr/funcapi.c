@@ -1301,7 +1301,7 @@ build_function_result_tupdesc_d(char prokind,
 	if (numoutargs < 2 && prokind != PROKIND_PROCEDURE)
 		return NULL;
 
-	desc = CreateTemplateTupleDesc(numoutargs, false);
+	desc = CreateTemplateTupleDesc(numoutargs);
 	for (i = 0; i < numoutargs; i++)
 	{
 		TupleDescInitEntry(desc, i + 1,
@@ -1421,7 +1421,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 		/* OK, get the column alias */
 		attname = strVal(linitial(colaliases));
 
-		tupdesc = CreateTemplateTupleDesc(1, false);
+		tupdesc = CreateTemplateTupleDesc(1);
 		TupleDescInitEntry(tupdesc,
 						   (AttrNumber) 1,
 						   attname,

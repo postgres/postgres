@@ -250,46 +250,6 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 }
 
 /*
- * Given a relation-options list (of DefElems), return true iff the specified
- * table/result set should be created with OIDs. This needs to be done after
- * parsing the query string because the return value can depend upon the
- * default_with_oids GUC var.
- *
- * In some situations, we want to reject an OIDS option even if it's present.
- * That's (rather messily) handled here rather than reloptions.c, because that
- * code explicitly punts checking for oids to here.
- */
-bool
-interpretOidsOption(List *defList, bool allowOids)
-{
-	ListCell   *cell;
-
-	/* Scan list to see if OIDS was included */
-	foreach(cell, defList)
-	{
-		DefElem    *def = (DefElem *) lfirst(cell);
-
-		if (def->defnamespace == NULL &&
-			strcmp(def->defname, "oids") == 0)
-		{
-			if (!allowOids)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized parameter \"%s\"",
-								def->defname)));
-			return defGetBoolean(def);
-		}
-	}
-
-	/* Force no-OIDS result if caller disallows OIDS. */
-	if (!allowOids)
-		return false;
-
-	/* OIDS option was not specified, so use default. */
-	return default_with_oids;
-}
-
-/*
  * Extract all not-in-common columns from column lists of a source table
  */
 static void

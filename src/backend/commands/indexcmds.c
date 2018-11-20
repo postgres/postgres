@@ -172,8 +172,8 @@ CheckIndexCompatible(Oid oldId,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("access method \"%s\" does not exist",
 						accessMethodName)));
-	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
+	accessMethodId = accessMethodForm->oid;
 	amRoutine = GetIndexAmRoutine(accessMethodForm->amhandler);
 	ReleaseSysCache(tuple);
 
@@ -583,8 +583,8 @@ DefineIndex(Oid relationId,
 					 errmsg("access method \"%s\" does not exist",
 							accessMethodName)));
 	}
-	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
+	accessMethodId = accessMethodForm->oid;
 	amRoutine = GetIndexAmRoutine(accessMethodForm->amhandler);
 
 	if (stmt->unique && !amRoutine->amcanunique)
@@ -748,14 +748,14 @@ DefineIndex(Oid relationId,
 
 
 	/*
-	 * We disallow indexes on system columns other than OID.  They would not
-	 * necessarily get updated correctly, and they don't seem useful anyway.
+	 * We disallow indexes on system columns.  They would not necessarily get
+	 * updated correctly, and they don't seem useful anyway.
 	 */
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 	{
 		AttrNumber	attno = indexInfo->ii_IndexAttrNumbers[i];
 
-		if (attno < 0 && attno != ObjectIdAttributeNumber)
+		if (attno < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("index creation on system columns is not supported")));
@@ -773,8 +773,7 @@ DefineIndex(Oid relationId,
 
 		for (i = FirstLowInvalidHeapAttributeNumber + 1; i < 0; i++)
 		{
-			if (i != ObjectIdAttributeNumber &&
-				bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
+			if (bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
 							  indexattrs))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1712,6 +1711,7 @@ ResolveOpClass(List *opclass, Oid attrType,
 	char	   *schemaname;
 	char	   *opcname;
 	HeapTuple	tuple;
+	Form_pg_opclass opform;
 	Oid			opClassId,
 				opInputType;
 
@@ -1796,8 +1796,9 @@ ResolveOpClass(List *opclass, Oid attrType,
 	 * Verify that the index operator class accepts this datatype.  Note we
 	 * will accept binary compatibility.
 	 */
-	opClassId = HeapTupleGetOid(tuple);
-	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
+	opform = (Form_pg_opclass) GETSTRUCT(tuple);
+	opClassId = opform->oid;
+	opInputType = opform->opcintype;
 
 	if (!IsBinaryCoercible(attrType, opInputType))
 		ereport(ERROR,
@@ -1866,7 +1867,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 		if (opclass->opcintype == type_id)
 		{
 			nexact++;
-			result = HeapTupleGetOid(tup);
+			result = opclass->oid;
 		}
 		else if (nexact == 0 &&
 				 IsBinaryCoercible(type_id, opclass->opcintype))
@@ -1874,12 +1875,12 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 			if (IsPreferredType(tcategory, opclass->opcintype))
 			{
 				ncompatiblepreferred++;
-				result = HeapTupleGetOid(tup);
+				result = opclass->oid;
 			}
 			else if (ncompatiblepreferred == 0)
 			{
 				ncompatible++;
-				result = HeapTupleGetOid(tup);
+				result = opclass->oid;
 			}
 		}
 	}
@@ -2405,7 +2406,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classtuple = (Form_pg_class) GETSTRUCT(tuple);
-		Oid			relid = HeapTupleGetOid(tuple);
+		Oid			relid = classtuple->oid;
 
 		/*
 		 * Only regular tables and matviews can have indexes, so ignore any

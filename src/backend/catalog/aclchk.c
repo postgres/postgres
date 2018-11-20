@@ -848,7 +848,9 @@ objectsInSchemaToOids(ObjectType objtype, List *nspnames)
 
 					while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 					{
-						objects = lappend_oid(objects, HeapTupleGetOid(tuple));
+						Oid		oid = ((Form_pg_proc) GETSTRUCT(tuple))->oid;
+
+						objects = lappend_oid(objects, oid);
 					}
 
 					heap_endscan(scan);
@@ -893,7 +895,9 @@ getRelationsInNamespace(Oid namespaceId, char relkind)
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		relations = lappend_oid(relations, HeapTupleGetOid(tuple));
+		Oid		oid  = ((Form_pg_class) GETSTRUCT(tuple))->oid;
+
+		relations = lappend_oid(relations, oid);
 	}
 
 	heap_endscan(scan);
@@ -1299,7 +1303,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			 * there shouldn't be anything depending on this entry.
 			 */
 			myself.classId = DefaultAclRelationId;
-			myself.objectId = HeapTupleGetOid(tuple);
+			myself.objectId = ((Form_pg_default_acl) GETSTRUCT(tuple))->oid;
 			myself.objectSubId = 0;
 
 			performDeletion(&myself, DROP_RESTRICT, 0);
@@ -1307,6 +1311,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	}
 	else
 	{
+		Oid		defAclOid;
+
 		/* Prepare to insert or update pg_default_acl entry */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
@@ -1315,6 +1321,9 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		if (isNew)
 		{
 			/* insert new entry */
+			defAclOid = GetNewOidWithIndex(rel, DefaultAclOidIndexId,
+										   Anum_pg_default_acl_oid);
+			values[Anum_pg_default_acl_oid - 1] = ObjectIdGetDatum(defAclOid);
 			values[Anum_pg_default_acl_defaclrole - 1] = ObjectIdGetDatum(iacls->roleid);
 			values[Anum_pg_default_acl_defaclnamespace - 1] = ObjectIdGetDatum(iacls->nspid);
 			values[Anum_pg_default_acl_defaclobjtype - 1] = CharGetDatum(objtype);
@@ -1325,6 +1334,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		}
 		else
 		{
+			defAclOid = ((Form_pg_default_acl) GETSTRUCT(tuple))->oid;
+
 			/* update existing entry */
 			values[Anum_pg_default_acl_defaclacl - 1] = PointerGetDatum(new_acl);
 			replaces[Anum_pg_default_acl_defaclacl - 1] = true;
@@ -1338,8 +1349,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		if (isNew)
 		{
 			/* dependency on role */
-			recordDependencyOnOwner(DefaultAclRelationId,
-									HeapTupleGetOid(newtuple),
+			recordDependencyOnOwner(DefaultAclRelationId, defAclOid,
 									iacls->roleid);
 
 			/* dependency on namespace */
@@ -1349,7 +1359,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 							referenced;
 
 				myself.classId = DefaultAclRelationId;
-				myself.objectId = HeapTupleGetOid(newtuple);
+				myself.objectId = defAclOid;
 				myself.objectSubId = 0;
 
 				referenced.classId = NamespaceRelationId;
@@ -1366,17 +1376,15 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		updateAclDependencies(DefaultAclRelationId,
-							  HeapTupleGetOid(newtuple), 0,
+							  defAclOid, 0,
 							  iacls->roleid,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
 		if (isNew)
-			InvokeObjectPostCreateHook(DefaultAclRelationId,
-									   HeapTupleGetOid(newtuple), 0);
+			InvokeObjectPostCreateHook(DefaultAclRelationId, defAclOid, 0);
 		else
-			InvokeObjectPostAlterHook(DefaultAclRelationId,
-									  HeapTupleGetOid(newtuple), 0);
+			InvokeObjectPostAlterHook(DefaultAclRelationId,  defAclOid, 0);
 	}
 
 	if (HeapTupleIsValid(tuple))
@@ -1407,7 +1415,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 		rel = heap_open(DefaultAclRelationId, AccessShareLock);
 
 		ScanKeyInit(&skey[0],
-					ObjectIdAttributeNumber,
+					Anum_pg_default_acl_oid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objid));
 
@@ -1530,7 +1538,7 @@ RemoveDefaultACLById(Oid defaclOid)
 	rel = heap_open(DefaultAclRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_default_acl_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(defaclOid));
 
@@ -1606,10 +1614,6 @@ expand_all_col_privileges(Oid table_oid, Form_pg_class classForm,
 		bool		isdropped;
 
 		if (curr_att == InvalidAttrNumber)
-			continue;
-
-		/* Skip OID column if it doesn't exist */
-		if (curr_att == ObjectIdAttributeNumber && !classForm->relhasoids)
 			continue;
 
 		/* Views don't have any system columns at all */
@@ -2223,7 +2227,7 @@ ExecGrant_Database(InternalGrant *istmt)
 		CatalogTupleUpdate(relation, &newtuple->t_self, newtuple);
 
 		/* Update the shared dependency ACL info */
-		updateAclDependencies(DatabaseRelationId, HeapTupleGetOid(tuple), 0,
+		updateAclDependencies(DatabaseRelationId, pg_database_tuple->oid, 0,
 							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -2350,7 +2354,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ForeignDataWrapperRelationId,
-							  HeapTupleGetOid(tuple), 0,
+							  pg_fdw_tuple->oid, 0,
 							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -2475,7 +2479,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ForeignServerRelationId,
-							  HeapTupleGetOid(tuple), 0,
+							  pg_server_tuple->oid, 0,
 							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -2729,7 +2733,7 @@ ExecGrant_Language(InternalGrant *istmt)
 		recordExtensionInitPriv(langId, LanguageRelationId, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
-		updateAclDependencies(LanguageRelationId, HeapTupleGetOid(tuple), 0,
+		updateAclDependencies(LanguageRelationId, pg_language_tuple->oid, 0,
 							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -2784,7 +2788,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 
 		/* There's no syscache for pg_largeobject_metadata */
 		ScanKeyInit(&entry[0],
-					ObjectIdAttributeNumber,
+					Anum_pg_largeobject_metadata_oid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(loid));
 
@@ -2869,7 +2873,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LargeObjectRelationId,
-							  HeapTupleGetOid(tuple), 0,
+							  form_lo_meta->oid, 0,
 							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -2993,7 +2997,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		recordExtensionInitPriv(nspid, NamespaceRelationId, 0, new_acl);
 
 		/* Update the shared dependency ACL info */
-		updateAclDependencies(NamespaceRelationId, HeapTupleGetOid(tuple), 0,
+		updateAclDependencies(NamespaceRelationId, pg_namespace_tuple->oid, 0,
 							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -4116,7 +4120,7 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 						   AccessShareLock);
 
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_largeobject_metadata_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(lobj_oid));
 
@@ -4898,7 +4902,7 @@ pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
 						   AccessShareLock);
 
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_largeobject_metadata_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(lobj_oid));
 
@@ -5260,7 +5264,7 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 	pg_extension = heap_open(ExtensionRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extension_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(ext_oid));
 
@@ -5726,7 +5730,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 
 		/* There's no syscache for pg_largeobject_metadata */
 		ScanKeyInit(&entry[0],
-					ObjectIdAttributeNumber,
+					Anum_pg_largeobject_metadata_oid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objoid));
 

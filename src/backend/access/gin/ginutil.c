@@ -104,7 +104,7 @@ initGinState(GinState *state, Relation index)
 			state->tupdesc[i] = state->origTupdesc;
 		else
 		{
-			state->tupdesc[i] = CreateTemplateTupleDesc(2, false);
+			state->tupdesc[i] = CreateTemplateTupleDesc(2);
 
 			TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 1, NULL,
 							   INT2OID, -1, 0);

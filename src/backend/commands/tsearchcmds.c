@@ -21,6 +21,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -132,7 +133,7 @@ makeParserDependencies(HeapTuple tuple)
 				referenced;
 
 	myself.classId = TSParserRelationId;
-	myself.objectId = HeapTupleGetOid(tuple);
+	myself.objectId = prs->oid;
 	myself.objectSubId = 0;
 
 	/* dependency on namespace */
@@ -191,6 +192,8 @@ DefineTSParser(List *names, List *parameters)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to create text search parsers")));
 
+	prsRel = heap_open(TSParserRelationId, RowExclusiveLock);
+
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &prsname);
 
@@ -198,6 +201,9 @@ DefineTSParser(List *names, List *parameters)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	prsOid = GetNewOidWithIndex(prsRel, TSParserOidIndexId,
+								Anum_pg_ts_parser_oid);
+	values[Anum_pg_ts_parser_oid - 1] = ObjectIdGetDatum(prsOid);
 	namestrcpy(&pname, prsname);
 	values[Anum_pg_ts_parser_prsname - 1] = NameGetDatum(&pname);
 	values[Anum_pg_ts_parser_prsnamespace - 1] = ObjectIdGetDatum(namespaceoid);
@@ -267,11 +273,9 @@ DefineTSParser(List *names, List *parameters)
 	/*
 	 * Looks good, insert
 	 */
-	prsRel = heap_open(TSParserRelationId, RowExclusiveLock);
-
 	tup = heap_form_tuple(prsRel->rd_att, values, nulls);
 
-	prsOid = CatalogTupleInsert(prsRel, tup);
+	CatalogTupleInsert(prsRel, tup);
 
 	address = makeParserDependencies(tup);
 
@@ -323,7 +327,7 @@ makeDictionaryDependencies(HeapTuple tuple)
 				referenced;
 
 	myself.classId = TSDictionaryRelationId;
-	myself.objectId = HeapTupleGetOid(tuple);
+	myself.objectId = dict->oid;
 	myself.objectSubId = 0;
 
 	/* dependency on namespace */
@@ -459,12 +463,18 @@ DefineTSDictionary(List *names, List *parameters)
 
 	verify_dictoptions(templId, dictoptions);
 
+
+	dictRel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
+
 	/*
 	 * Looks good, insert
 	 */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	dictOid = GetNewOidWithIndex(dictRel, TSDictionaryOidIndexId,
+								 Anum_pg_ts_dict_oid);
+	values[Anum_pg_ts_dict_oid - 1] = ObjectIdGetDatum(dictOid);
 	namestrcpy(&dname, dictname);
 	values[Anum_pg_ts_dict_dictname - 1] = NameGetDatum(&dname);
 	values[Anum_pg_ts_dict_dictnamespace - 1] = ObjectIdGetDatum(namespaceoid);
@@ -476,11 +486,9 @@ DefineTSDictionary(List *names, List *parameters)
 	else
 		nulls[Anum_pg_ts_dict_dictinitoption - 1] = true;
 
-	dictRel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
-
 	tup = heap_form_tuple(dictRel->rd_att, values, nulls);
 
-	dictOid = CatalogTupleInsert(dictRel, tup);
+	CatalogTupleInsert(dictRel, tup);
 
 	address = makeDictionaryDependencies(tup);
 
@@ -694,7 +702,7 @@ makeTSTemplateDependencies(HeapTuple tuple)
 				referenced;
 
 	myself.classId = TSTemplateRelationId;
-	myself.objectId = HeapTupleGetOid(tuple);
+	myself.objectId = tmpl->oid;
 	myself.objectSubId = 0;
 
 	/* dependency on namespace */
@@ -748,12 +756,17 @@ DefineTSTemplate(List *names, List *parameters)
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &tmplname);
 
+	tmplRel = heap_open(TSTemplateRelationId, RowExclusiveLock);
+
 	for (i = 0; i < Natts_pg_ts_template; i++)
 	{
 		nulls[i] = false;
 		values[i] = ObjectIdGetDatum(InvalidOid);
 	}
 
+	tmplOid = GetNewOidWithIndex(tmplRel, TSTemplateOidIndexId,
+								 Anum_pg_ts_dict_oid);
+	values[Anum_pg_ts_template_oid - 1] = ObjectIdGetDatum(tmplOid);
 	namestrcpy(&dname, tmplname);
 	values[Anum_pg_ts_template_tmplname - 1] = NameGetDatum(&dname);
 	values[Anum_pg_ts_template_tmplnamespace - 1] = ObjectIdGetDatum(namespaceoid);
@@ -795,12 +808,9 @@ DefineTSTemplate(List *names, List *parameters)
 	/*
 	 * Looks good, insert
 	 */
-
-	tmplRel = heap_open(TSTemplateRelationId, RowExclusiveLock);
-
 	tup = heap_form_tuple(tmplRel->rd_att, values, nulls);
 
-	tmplOid = CatalogTupleInsert(tmplRel, tup);
+	CatalogTupleInsert(tmplRel, tup);
 
 	address = makeTSTemplateDependencies(tup);
 
@@ -879,7 +889,7 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 				referenced;
 
 	myself.classId = TSConfigRelationId;
-	myself.objectId = HeapTupleGetOid(tuple);
+	myself.objectId = cfg->oid;
 	myself.objectSubId = 0;
 
 	/* for ALTER case, first flush old dependencies, except extension deps */
@@ -1042,23 +1052,26 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("text search parser is required")));
 
+	cfgRel = heap_open(TSConfigRelationId, RowExclusiveLock);
+
 	/*
 	 * Looks good, build tuple and insert
 	 */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	cfgOid = GetNewOidWithIndex(cfgRel, TSConfigOidIndexId,
+								Anum_pg_ts_config_oid);
+	values[Anum_pg_ts_config_oid - 1] = ObjectIdGetDatum(cfgOid);
 	namestrcpy(&cname, cfgname);
 	values[Anum_pg_ts_config_cfgname - 1] = NameGetDatum(&cname);
 	values[Anum_pg_ts_config_cfgnamespace - 1] = ObjectIdGetDatum(namespaceoid);
 	values[Anum_pg_ts_config_cfgowner - 1] = ObjectIdGetDatum(GetUserId());
 	values[Anum_pg_ts_config_cfgparser - 1] = ObjectIdGetDatum(prsOid);
 
-	cfgRel = heap_open(TSConfigRelationId, RowExclusiveLock);
-
 	tup = heap_form_tuple(cfgRel->rd_att, values, nulls);
 
-	cfgOid = CatalogTupleInsert(cfgRel, tup);
+	CatalogTupleInsert(cfgRel, tup);
 
 	if (OidIsValid(sourceOid))
 	{
@@ -1185,10 +1198,10 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 				 errmsg("text search configuration \"%s\" does not exist",
 						NameListToString(stmt->cfgname))));
 
-	cfgId = HeapTupleGetOid(tup);
+	cfgId = ((Form_pg_ts_config) GETSTRUCT(tup))->oid;
 
 	/* must be owner */
-	if (!pg_ts_config_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+	if (!pg_ts_config_ownercheck(cfgId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TSCONFIGURATION,
 					   NameListToString(stmt->cfgname));
 
@@ -1203,8 +1216,7 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 	/* Update dependencies */
 	makeConfigurationDependencies(tup, true, relMap);
 
-	InvokeObjectPostAlterHook(TSConfigRelationId,
-							  HeapTupleGetOid(tup), 0);
+	InvokeObjectPostAlterHook(TSConfigRelationId, cfgId, 0);
 
 	ObjectAddressSet(address, TSConfigRelationId, cfgId);
 
@@ -1277,7 +1289,8 @@ static void
 MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 						 HeapTuple tup, Relation relMap)
 {
-	Oid			cfgId = HeapTupleGetOid(tup);
+	Form_pg_ts_config tsform;
+	Oid			cfgId;
 	ScanKeyData skey[2];
 	SysScanDesc scan;
 	HeapTuple	maptup;
@@ -1290,7 +1303,9 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	int			ndict;
 	ListCell   *c;
 
-	prsId = ((Form_pg_ts_config) GETSTRUCT(tup))->cfgparser;
+	tsform = (Form_pg_ts_config) GETSTRUCT(tup);
+	cfgId = tsform->oid;
+	prsId = tsform->cfgparser;
 
 	tokens = getTokenTypes(prsId, stmt->tokentype);
 	ntoken = list_length(stmt->tokentype);
@@ -1438,7 +1453,8 @@ static void
 DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 						 HeapTuple tup, Relation relMap)
 {
-	Oid			cfgId = HeapTupleGetOid(tup);
+	Form_pg_ts_config tsform;
+	Oid			cfgId;
 	ScanKeyData skey[2];
 	SysScanDesc scan;
 	HeapTuple	maptup;
@@ -1447,7 +1463,9 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	int		   *tokens;
 	ListCell   *c;
 
-	prsId = ((Form_pg_ts_config) GETSTRUCT(tup))->cfgparser;
+	tsform = (Form_pg_ts_config) GETSTRUCT(tup);
+	cfgId = tsform->oid;
+	prsId = tsform->cfgparser;
 
 	tokens = getTokenTypes(prsId, stmt->tokentype);
 

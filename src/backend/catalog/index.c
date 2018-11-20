@@ -322,7 +322,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 	/*
 	 * allocate the new tuple descriptor
 	 */
-	indexTupDesc = CreateTemplateTupleDesc(numatts, false);
+	indexTupDesc = CreateTemplateTupleDesc(numatts);
 
 	/*
 	 * Fill in the pg_attribute row.
@@ -354,24 +354,12 @@ ConstructTupleDescriptor(Relation heapRelation,
 			/* Simple index column */
 			const FormData_pg_attribute *from;
 
-			if (atnum < 0)
-			{
-				/*
-				 * here we are indexing on a system attribute (-1...-n)
-				 */
-				from = SystemAttributeDefinition(atnum,
-												 heapRelation->rd_rel->relhasoids);
-			}
-			else
-			{
-				/*
-				 * here we are indexing on a normal attribute (1...n)
-				 */
-				if (atnum > natts)	/* safety check */
-					elog(ERROR, "invalid column number %d", atnum);
-				from = TupleDescAttr(heapTupDesc,
-									 AttrNumberGetAttrOffset(atnum));
-			}
+			Assert(atnum > 0); /* should've been caught above */
+
+			if (atnum > natts)	/* safety check */
+				elog(ERROR, "invalid column number %d", atnum);
+			from = TupleDescAttr(heapTupDesc,
+								 AttrNumberGetAttrOffset(atnum));
 
 			namecpy(&to->attname, &from->attname);
 			to->atttypid = from->atttypid;
@@ -945,7 +933,6 @@ index_create(Relation heapRelation,
 	 */
 	indexRelation->rd_rel->relowner = heapRelation->rd_rel->relowner;
 	indexRelation->rd_rel->relam = accessMethodObjectId;
-	indexRelation->rd_rel->relhasoids = false;
 	indexRelation->rd_rel->relispartition = OidIsValid(parentIndexRelid);
 
 	/*
@@ -2147,7 +2134,7 @@ index_update_stats(Relation rel,
 		ScanKeyData key[1];
 
 		ScanKeyInit(&key[0],
-					ObjectIdAttributeNumber,
+					Anum_pg_class_oid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(relid));
 
@@ -3910,11 +3897,6 @@ reindex_relation(Oid relid, int flags, int options)
 	 * have index entries.  Also, a new pg_class index will be created with a
 	 * correct entry for its own pg_class row because we do
 	 * RelationSetNewRelfilenode() before we do index_build().
-	 *
-	 * Note that we also clear pg_class's rd_oidindex until the loop is done,
-	 * so that that index can't be accessed either.  This means we cannot
-	 * safely generate new relation OIDs while in the loop; shouldn't be a
-	 * problem.
 	 */
 	is_pg_class = (RelationGetRelid(rel) == RelationRelationId);
 
@@ -3958,7 +3940,7 @@ reindex_relation(Oid relid, int flags, int options)
 			Oid			indexOid = lfirst_oid(indexId);
 
 			if (is_pg_class)
-				RelationSetIndexList(rel, doneIndexes, InvalidOid);
+				RelationSetIndexList(rel, doneIndexes);
 
 			reindex_index(indexOid, !(flags & REINDEX_REL_CHECK_CONSTRAINTS),
 						  persistence, options);
@@ -3982,7 +3964,7 @@ reindex_relation(Oid relid, int flags, int options)
 	ResetReindexPending();
 
 	if (is_pg_class)
-		RelationSetIndexList(rel, indexIds, ClassOidIndexId);
+		RelationSetIndexList(rel, indexIds);
 
 	/*
 	 * Close rel, but continue to hold the lock.

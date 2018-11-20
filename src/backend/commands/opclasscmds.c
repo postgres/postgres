@@ -23,6 +23,7 @@
 #include "access/nbtree.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -142,12 +143,14 @@ Oid
 get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok)
 {
 	HeapTuple	htup;
+	Form_pg_opfamily opfamform;
 	Oid			opfID;
 
 	htup = OpFamilyCacheLookup(amID, opfamilyname, missing_ok);
 	if (!HeapTupleIsValid(htup))
 		return InvalidOid;
-	opfID = HeapTupleGetOid(htup);
+	opfamform = (Form_pg_opfamily) GETSTRUCT(htup);
+	opfID = opfamform->oid;
 	ReleaseSysCache(htup);
 
 	return opfID;
@@ -221,12 +224,14 @@ Oid
 get_opclass_oid(Oid amID, List *opclassname, bool missing_ok)
 {
 	HeapTuple	htup;
+	Form_pg_opclass opcform;
 	Oid			opcID;
 
 	htup = OpClassCacheLookup(amID, opclassname, missing_ok);
 	if (!HeapTupleIsValid(htup))
 		return InvalidOid;
-	opcID = HeapTupleGetOid(htup);
+	opcform = (Form_pg_opclass) GETSTRUCT(htup);
+	opcID = opcform->oid;
 	ReleaseSysCache(htup);
 
 	return opcID;
@@ -271,6 +276,9 @@ CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid am
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	opfamilyoid = GetNewOidWithIndex(rel, OpfamilyOidIndexId,
+									 Anum_pg_opfamily_oid);
+	values[Anum_pg_opfamily_oid - 1] = ObjectIdGetDatum(opfamilyoid);
 	values[Anum_pg_opfamily_opfmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opfName, opfname);
 	values[Anum_pg_opfamily_opfname - 1] = NameGetDatum(&opfName);
@@ -279,7 +287,7 @@ CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid am
 
 	tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-	opfamilyoid = CatalogTupleInsert(rel, tup);
+	CatalogTupleInsert(rel, tup);
 
 	heap_freetuple(tup);
 
@@ -338,6 +346,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	ListCell   *l;
 	Relation	rel;
 	HeapTuple	tup;
+	Form_pg_am	amform;
 	IndexAmRoutine *amroutine;
 	Datum		values[Natts_pg_opclass];
 	bool		nulls[Natts_pg_opclass];
@@ -364,7 +373,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				 errmsg("access method \"%s\" does not exist",
 						stmt->amname)));
 
-	amoid = HeapTupleGetOid(tup);
+	amform = (Form_pg_am) GETSTRUCT(tup);
+	amoid = amform->oid;
 	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	ReleaseSysCache(tup);
 
@@ -429,7 +439,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							  ObjectIdGetDatum(namespaceoid));
 		if (HeapTupleIsValid(tup))
 		{
-			opfamilyoid = HeapTupleGetOid(tup);
+			opfamilyoid = ((Form_pg_opfamily) GETSTRUCT(tup))->oid;
 
 			/*
 			 * XXX given the superuser check above, there's no need for an
@@ -633,6 +643,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	opclassoid = GetNewOidWithIndex(rel, OpclassOidIndexId,
+									Anum_pg_opclass_oid);
+	values[Anum_pg_opclass_oid - 1] = ObjectIdGetDatum(opclassoid);
 	values[Anum_pg_opclass_opcmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opcName, opcname);
 	values[Anum_pg_opclass_opcname - 1] = NameGetDatum(&opcName);
@@ -645,7 +658,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-	opclassoid = CatalogTupleInsert(rel, tup);
+	CatalogTupleInsert(rel, tup);
 
 	heap_freetuple(tup);
 
@@ -768,6 +781,7 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 	int			maxOpNumber,	/* amstrategies value */
 				maxProcNumber;	/* amsupport value */
 	HeapTuple	tup;
+	Form_pg_am	amform;
 	IndexAmRoutine *amroutine;
 
 	/* Get necessary info about access method */
@@ -778,7 +792,8 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 				 errmsg("access method \"%s\" does not exist",
 						stmt->amname)));
 
-	amoid = HeapTupleGetOid(tup);
+	amform = (Form_pg_am) GETSTRUCT(tup);
+	amoid = amform->oid;
 	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	ReleaseSysCache(tup);
 
@@ -1333,6 +1348,9 @@ storeOperators(List *opfamilyname, Oid amoid,
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));
 
+		entryoid = GetNewOidWithIndex(rel, AccessMethodOperatorOidIndexId,
+									  Anum_pg_amop_oid);
+		values[Anum_pg_amop_oid - 1] = ObjectIdGetDatum(entryoid);
 		values[Anum_pg_amop_amopfamily - 1] = ObjectIdGetDatum(opfamilyoid);
 		values[Anum_pg_amop_amoplefttype - 1] = ObjectIdGetDatum(op->lefttype);
 		values[Anum_pg_amop_amoprighttype - 1] = ObjectIdGetDatum(op->righttype);
@@ -1344,7 +1362,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 
 		tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-		entryoid = CatalogTupleInsert(rel, tup);
+		CatalogTupleInsert(rel, tup);
 
 		heap_freetuple(tup);
 
@@ -1445,6 +1463,9 @@ storeProcedures(List *opfamilyname, Oid amoid,
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));
 
+		entryoid = GetNewOidWithIndex(rel, AccessMethodProcedureOidIndexId,
+									  Anum_pg_amproc_oid);
+		values[Anum_pg_amproc_oid - 1] = ObjectIdGetDatum(entryoid);
 		values[Anum_pg_amproc_amprocfamily - 1] = ObjectIdGetDatum(opfamilyoid);
 		values[Anum_pg_amproc_amproclefttype - 1] = ObjectIdGetDatum(proc->lefttype);
 		values[Anum_pg_amproc_amprocrighttype - 1] = ObjectIdGetDatum(proc->righttype);
@@ -1453,7 +1474,7 @@ storeProcedures(List *opfamilyname, Oid amoid,
 
 		tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-		entryoid = CatalogTupleInsert(rel, tup);
+		CatalogTupleInsert(rel, tup);
 
 		heap_freetuple(tup);
 
@@ -1515,7 +1536,7 @@ dropOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		Oid			amopid;
 		ObjectAddress object;
 
-		amopid = GetSysCacheOid4(AMOPSTRATEGY,
+		amopid = GetSysCacheOid4(AMOPSTRATEGY, Anum_pg_amop_oid,
 								 ObjectIdGetDatum(opfamilyoid),
 								 ObjectIdGetDatum(op->lefttype),
 								 ObjectIdGetDatum(op->righttype),
@@ -1555,7 +1576,7 @@ dropProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		Oid			amprocid;
 		ObjectAddress object;
 
-		amprocid = GetSysCacheOid4(AMPROCNUM,
+		amprocid = GetSysCacheOid4(AMPROCNUM, Anum_pg_amproc_oid,
 								   ObjectIdGetDatum(opfamilyoid),
 								   ObjectIdGetDatum(op->lefttype),
 								   ObjectIdGetDatum(op->righttype),
@@ -1627,7 +1648,7 @@ RemoveAmOpEntryById(Oid entryOid)
 	SysScanDesc scan;
 
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_amop_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(entryOid));
 
@@ -1656,7 +1677,7 @@ RemoveAmProcEntryById(Oid entryOid)
 	SysScanDesc scan;
 
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_amproc_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(entryOid));
 

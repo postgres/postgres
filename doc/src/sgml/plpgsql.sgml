@@ -1486,14 +1486,6 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
           recent <acronym>SQL</acronym> command</entry>
         </row>
         <row>
-         <entry><varname>RESULT_OID</varname></entry>
-         <entry><type>oid</type></entry>
-         <entry>the OID of the last row inserted by the most
-          recent <acronym>SQL</acronym> command (only useful after
-          an <command>INSERT</command> command into a table having
-          OIDs)</entry>
-        </row>
-        <row>
          <entry><literal>PG_CONTEXT</literal></entry>
          <entry><type>text</type></entry>
          <entry>line(s) of text describing the current call stack

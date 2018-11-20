@@ -27,7 +27,7 @@
  *		typedef struct FormData_pg_ts_config_map
  * ----------------
  */
-CATALOG(pg_ts_config_map,3603,TSConfigMapRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_ts_config_map,3603,TSConfigMapRelationId)
 {
 	Oid			mapcfg;			/* OID of configuration owning this entry */
 	int32		maptokentype;	/* token type from parser */

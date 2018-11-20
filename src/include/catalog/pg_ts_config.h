@@ -29,6 +29,7 @@
  */
 CATALOG(pg_ts_config,3602,TSConfigRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	cfgname;		/* name of configuration */
 	Oid			cfgnamespace;	/* name space */
 	Oid			cfgowner;		/* owner */

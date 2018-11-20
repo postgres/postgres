@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
     [ (<replaceable>column_name</replaceable> [, ...] ) ]
-    [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+    [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITHOUT OIDS ]
     [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
     [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
     AS <replaceable>query</replaceable>
@@ -127,25 +127,22 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       This clause specifies optional storage parameters for the new table;
       see <xref linkend="sql-createtable-storage-parameters"
       endterm="sql-createtable-storage-parameters-title"/> for more
-      information.  The <literal>WITH</literal> clause
-      can also include <literal>OIDS=TRUE</literal> (or just <literal>OIDS</literal>)
-      to specify that rows of the new table
-      should have OIDs (object identifiers) assigned to them, or
-      <literal>OIDS=FALSE</literal> to specify that the rows should not have OIDs.
-      See <xref linkend="sql-createtable"/> for more information.
+      information.   For backward-compatibility the <literal>WITH</literal>
+      clause for a table can also include <literal>OIDS=FALSE</literal> to
+      specify that rows of the new table should contain no OIDs (object
+      identifiers), <literal>OIDS=TRUE</literal> is not supported anymore.
+      OIDs.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH OIDS</literal></term>
     <term><literal>WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      These are obsolescent syntaxes equivalent to <literal>WITH (OIDS)</literal>
-      and <literal>WITH (OIDS=FALSE)</literal>, respectively.  If you wish to give
-      both an <literal>OIDS</literal> setting and storage parameters, you must use
-      the <literal>WITH ( ... )</literal> syntax; see above.
+      This is backward-compatible syntax for declaring a table
+      <literal>WITHOUT OIDS</literal>, creating a table <literal>WITH
+      OIDS</literal> is not supported anymore.
      </para>
     </listitem>
    </varlistentry>
@@ -245,14 +242,6 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    TABLE AS</command> offers a superset of the functionality offered
    by <command>SELECT INTO</command>.
   </para>
-
-  <para>
-   The <command>CREATE TABLE AS</command> command allows the user to
-   explicitly specify whether OIDs should be included. If the
-   presence of OIDs is not explicitly specified,
-   the <xref linkend="guc-default-with-oids"/> configuration variable is
-   used.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -281,12 +270,12 @@ CREATE TABLE films2 AS
   <para>
    Create a new temporary table <literal>films_recent</literal>, consisting of
    only recent entries from the table <literal>films</literal>, using a
-   prepared statement.  The new table has OIDs and will be dropped at commit:
+   prepared statement.  The new table will be dropped at commit:
 
 <programlisting>
 PREPARE recentfilms(date) AS
   SELECT * FROM films WHERE date_prod &gt; $1;
-CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
+CREATE TEMP TABLE films_recent ON COMMIT DROP AS
   EXECUTE recentfilms('2002-01-01');
 </programlisting></para>
  </refsect1>
@@ -325,7 +314,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
     <listitem>
      <para>
       The <literal>WITH</literal> clause is a <productname>PostgreSQL</productname>
-      extension; neither storage parameters nor OIDs are in the standard.
+      extension; storage parameters are not in the standard.
      </para>
     </listitem>
 

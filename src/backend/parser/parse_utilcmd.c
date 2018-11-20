@@ -80,7 +80,6 @@ typedef struct
 	List	   *inhRelations;	/* relations to inherit from */
 	bool		isforeign;		/* true if CREATE/ALTER FOREIGN TABLE */
 	bool		isalter;		/* true if altering existing table */
-	bool		hasoids;		/* does relation have an OID column? */
 	List	   *columns;		/* ColumnDef items */
 	List	   *ckconstraints;	/* CHECK constraints */
 	List	   *fkconstraints;	/* FOREIGN KEY constraints */
@@ -168,7 +167,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	Oid			namespaceid;
 	Oid			existing_relid;
 	ParseCallbackState pcbstate;
-	bool		like_found = false;
 	bool		is_foreign_table = IsA(stmt, CreateForeignTableStmt);
 
 	/*
@@ -247,18 +245,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.partbound = stmt->partbound;
 	cxt.ofType = (stmt->ofTypename != NULL);
 
-	/*
-	 * Notice that we allow OIDs here only for plain tables, even though
-	 * foreign tables also support them.  This is necessary because the
-	 * default_with_oids GUC must apply only to plain tables and not any other
-	 * relkind; doing otherwise would break existing pg_dump files.  We could
-	 * allow explicit "WITH OIDS" while not allowing default_with_oids to
-	 * affect other relkinds, but it would complicate interpretOidsOption(),
-	 * and right now there's no WITH OIDS option in CREATE FOREIGN TABLE
-	 * anyway.
-	 */
-	cxt.hasoids = interpretOidsOption(stmt->options, !cxt.isforeign);
-
 	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
 
 	if (stmt->ofTypename)
@@ -291,7 +277,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				break;
 
 			case T_TableLikeClause:
-				like_found = true;
 				transformTableLikeClause(&cxt, (TableLikeClause *) element);
 				break;
 
@@ -301,20 +286,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				break;
 		}
 	}
-
-	/*
-	 * If we had any LIKE tables, they may require creation of an OID column
-	 * even though the command's own WITH clause didn't ask for one (or,
-	 * perhaps, even specifically rejected having one).  Insert a WITH option
-	 * to ensure that happens.  We prepend to the list because the first oid
-	 * option will be honored, and we want to override anything already there.
-	 * (But note that DefineRelation will override this again to add an OID
-	 * column if one appears in an inheritance parent table.)
-	 */
-	if (like_found && cxt.hasoids)
-		stmt->options = lcons(makeDefElem("oids",
-										  (Node *) makeInteger(true), -1),
-							  stmt->options);
 
 	/*
 	 * transformIndexConstraints wants cxt.alist to contain only index
@@ -692,7 +663,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 								 errmsg("identity columns are not supported on partitions")));
 
 					ctype = typenameType(cxt->pstate, column->typeName, NULL);
-					typeOid = HeapTupleGetOid(ctype);
+					typeOid = ((Form_pg_type) GETSTRUCT(ctype))->oid;
 					ReleaseSysCache(ctype);
 
 					if (saw_identity)
@@ -1079,9 +1050,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		}
 	}
 
-	/* We use oids if at least one LIKE'ed table has oids. */
-	cxt->hasoids |= relation->rd_rel->relhasoids;
-
 	/*
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
 	 * numbers so they match the child.
@@ -1245,7 +1213,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 
 	tuple = typenameType(NULL, ofTypename, NULL);
 	check_of_type(tuple);
-	ofTypeId = HeapTupleGetOid(tuple);
+	ofTypeId = ((Form_pg_type) GETSTRUCT(tuple))->oid;
 	ofTypename->typeOid = ofTypeId; /* cached for later */
 
 	tupdesc = lookup_rowtype_tupdesc(ofTypeId, -1);
@@ -2078,8 +2046,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				attform = TupleDescAttr(heap_rel->rd_att, attnum - 1);
 			}
 			else
-				attform = SystemAttributeDefinition(attnum,
-													heap_rel->rd_rel->relhasoids);
+				attform = SystemAttributeDefinition(attnum);
 			attname = pstrdup(NameStr(attform->attname));
 
 			if (i < index_form->indnkeyatts)
@@ -2169,7 +2136,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				if (constraint->contype == CONSTR_PRIMARY)
 					column->is_not_null = true;
 			}
-			else if (SystemAttributeByName(key, cxt->hasoids) != NULL)
+			else if (SystemAttributeByName(key) != NULL)
 			{
 				/*
 				 * column will be a system column in the new table, so accept
@@ -2292,7 +2259,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 		if (!found)
 		{
-			if (SystemAttributeByName(key, cxt->hasoids) != NULL)
+			if (SystemAttributeByName(key) != NULL)
 			{
 				/*
 				 * column will be a system column in the new table, so accept
@@ -2966,7 +2933,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.rel = rel;
 	cxt.inhRelations = NIL;
 	cxt.isalter = true;
-	cxt.hasoids = false;		/* need not be right */
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -3400,7 +3366,7 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("collations are not supported by type %s",
-							format_type_be(HeapTupleGetOid(ctype))),
+							format_type_be(typtup->oid)),
 					 parser_errposition(cxt->pstate,
 										column->collClause->location)));
 	}

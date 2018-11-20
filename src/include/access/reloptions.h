@@ -258,7 +258,7 @@ extern void add_string_reloption(bits32 kinds, const char *name, const char *des
 
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
 					const char *namspace, char *validnsps[],
-					bool ignoreOids, bool isReset);
+					bool acceptOidsOff, bool isReset);
 extern List *untransformRelOptions(Datum options);
 extern bytea *extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
 				  amoptions_function amoptions);

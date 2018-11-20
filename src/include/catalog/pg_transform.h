@@ -28,6 +28,7 @@
  */
 CATALOG(pg_transform,3576,TransformRelationId)
 {
+	Oid			oid;			/* oid */
 	Oid			trftype;
 	Oid			trflang;
 	regproc		trffromsql;

@@ -28,6 +28,8 @@
  */
 CATALOG(pg_attrdef,2604,AttrDefaultRelationId)
 {
+	Oid			oid;			/* oid */
+
 	Oid			adrelid;		/* OID of table containing attribute */
 	int16		adnum;			/* attnum of attribute */
 

@@ -66,17 +66,6 @@ suppress_redundant_updates_trigger(PG_FUNCTION_ARGS)
 	newheader = newtuple->t_data;
 	oldheader = oldtuple->t_data;
 
-	/*
-	 * We are called before the OID, if any, has been transcribed from the old
-	 * tuple to the new (in heap_update).  To avoid a bogus compare failure,
-	 * copy the OID now.  But check that someone didn't already put another
-	 * OID value into newtuple.  (That's not actually possible at present, but
-	 * maybe someday.)
-	 */
-	if (trigdata->tg_relation->rd_rel->relhasoids &&
-		!OidIsValid(HeapTupleHeaderGetOid(newheader)))
-		HeapTupleHeaderSetOid(newheader, HeapTupleHeaderGetOid(oldheader));
-
 	/* if the tuple payload is the same ... */
 	if (newtuple->t_len == oldtuple->t_len &&
 		newheader->t_hoff == oldheader->t_hoff &&

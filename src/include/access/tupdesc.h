@@ -55,7 +55,7 @@ typedef struct tupleConstr
  * structure is designed to let the constraints be omitted efficiently.
  *
  * Note that only user attributes, not system attributes, are mentioned in
- * TupleDesc; with the exception that tdhasoid indicates if OID is present.
+ * TupleDesc.
  *
  * If the tupdesc is known to correspond to a named rowtype (such as a table's
  * rowtype) then tdtypeid identifies that type and tdtypmod is -1.  Otherwise
@@ -82,7 +82,6 @@ typedef struct tupleDesc
 	int			natts;			/* number of attributes in the tuple */
 	Oid			tdtypeid;		/* composite type ID for tuple type */
 	int32		tdtypmod;		/* typmod for tuple type */
-	bool		tdhasoid;		/* tuple has oid attribute in its header */
 	int			tdrefcount;		/* reference count, or -1 if not counting */
 	TupleConstr *constr;		/* constraints, or NULL if none */
 	/* attrs[N] is the description of Attribute Number N+1 */
@@ -92,10 +91,9 @@ typedef struct tupleDesc
 /* Accessor for the i'th attribute of tupdesc. */
 #define TupleDescAttr(tupdesc, i) (&(tupdesc)->attrs[(i)])
 
-extern TupleDesc CreateTemplateTupleDesc(int natts, bool hasoid);
+extern TupleDesc CreateTemplateTupleDesc(int natts);
 
-extern TupleDesc CreateTupleDesc(int natts, bool hasoid,
-				Form_pg_attribute *attrs);
+extern TupleDesc CreateTupleDesc(int natts, Form_pg_attribute *attrs);
 
 extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 

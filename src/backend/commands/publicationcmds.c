@@ -168,7 +168,8 @@ CreatePublication(CreatePublicationStmt *stmt)
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
 
 	/* Check if name is used */
-	puboid = GetSysCacheOid1(PUBLICATIONNAME, CStringGetDatum(stmt->pubname));
+	puboid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
+							 CStringGetDatum(stmt->pubname));
 	if (OidIsValid(puboid))
 	{
 		ereport(ERROR,
@@ -190,6 +191,9 @@ CreatePublication(CreatePublicationStmt *stmt)
 							  &publish_update, &publish_delete,
 							  &publish_truncate);
 
+	puboid = GetNewOidWithIndex(rel, PublicationObjectIndexId,
+								Anum_pg_publication_oid);
+	values[Anum_pg_publication_oid - 1] = ObjectIdGetDatum(puboid);
 	values[Anum_pg_publication_puballtables - 1] =
 		BoolGetDatum(stmt->for_all_tables);
 	values[Anum_pg_publication_pubinsert - 1] =
@@ -204,7 +208,7 @@ CreatePublication(CreatePublicationStmt *stmt)
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	/* Insert tuple into catalog. */
-	puboid = CatalogTupleInsert(rel, tup);
+	CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
 	recordDependencyOnOwner(PublicationRelationId, puboid, GetUserId());
@@ -248,6 +252,7 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 	bool		publish_delete;
 	bool		publish_truncate;
 	ObjectAddress obj;
+	Form_pg_publication pubform;
 
 	parse_publication_options(stmt->options,
 							  &publish_given, &publish_insert,
@@ -282,14 +287,16 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 
 	CommandCounterIncrement();
 
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+
 	/* Invalidate the relcache. */
-	if (((Form_pg_publication) GETSTRUCT(tup))->puballtables)
+	if (pubform->puballtables)
 	{
 		CacheInvalidateRelcacheAll();
 	}
 	else
 	{
-		List	   *relids = GetPublicationRelations(HeapTupleGetOid(tup));
+		List	   *relids = GetPublicationRelations(pubform->oid);
 
 		/*
 		 * We don't want to send too many individual messages, at some point
@@ -310,11 +317,11 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 			CacheInvalidateRelcacheAll();
 	}
 
-	ObjectAddressSet(obj, PublicationRelationId, HeapTupleGetOid(tup));
+	ObjectAddressSet(obj, PublicationRelationId, pubform->oid);
 	EventTriggerCollectSimpleCommand(obj, InvalidObjectAddress,
 									 (Node *) stmt);
 
-	InvokeObjectPostAlterHook(PublicationRelationId, HeapTupleGetOid(tup), 0);
+	InvokeObjectPostAlterHook(PublicationRelationId, pubform->oid, 0);
 }
 
 /*
@@ -324,9 +331,9 @@ static void
 AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
 					   HeapTuple tup)
 {
-	Oid			pubid = HeapTupleGetOid(tup);
 	List	   *rels = NIL;
 	Form_pg_publication pubform = (Form_pg_publication) GETSTRUCT(tup);
+	Oid			pubid = pubform->oid;
 
 	/* Check that user is allowed to manipulate the publication tables. */
 	if (pubform->puballtables)
@@ -403,6 +410,7 @@ AlterPublication(AlterPublicationStmt *stmt)
 {
 	Relation	rel;
 	HeapTuple	tup;
+	Form_pg_publication pubform;
 
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
 
@@ -415,8 +423,10 @@ AlterPublication(AlterPublicationStmt *stmt)
 				 errmsg("publication \"%s\" does not exist",
 						stmt->pubname)));
 
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+
 	/* must be owner */
-	if (!pg_publication_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+	if (!pg_publication_ownercheck(pubform->oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_PUBLICATION,
 					   stmt->pubname);
 
@@ -626,7 +636,8 @@ PublicationDropTables(Oid pubid, List *rels, bool missing_ok)
 		Relation	rel = (Relation) lfirst(lc);
 		Oid			relid = RelationGetRelid(rel);
 
-		prid = GetSysCacheOid2(PUBLICATIONRELMAP, ObjectIdGetDatum(relid),
+		prid = GetSysCacheOid2(PUBLICATIONRELMAP, Anum_pg_publication_rel_oid,
+							   ObjectIdGetDatum(relid),
 							   ObjectIdGetDatum(pubid));
 		if (!OidIsValid(prid))
 		{
@@ -662,7 +673,7 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		AclResult	aclresult;
 
 		/* Must be owner */
-		if (!pg_publication_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+		if (!pg_publication_ownercheck(form->oid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_PUBLICATION,
 						   NameStr(form->pubname));
 
@@ -688,11 +699,11 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 	/* Update owner dependency reference */
 	changeDependencyOnOwner(PublicationRelationId,
-							HeapTupleGetOid(tup),
+							form->oid,
 							newOwnerId);
 
 	InvokeObjectPostAlterHook(PublicationRelationId,
-							  HeapTupleGetOid(tup), 0);
+							  form->oid, 0);
 }
 
 /*
@@ -705,6 +716,7 @@ AlterPublicationOwner(const char *name, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 	ObjectAddress address;
+	Form_pg_publication pubform;
 
 	rel = heap_open(PublicationRelationId, RowExclusiveLock);
 
@@ -715,7 +727,8 @@ AlterPublicationOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("publication \"%s\" does not exist", name)));
 
-	subid = HeapTupleGetOid(tup);
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+	subid = pubform->oid;
 
 	AlterPublicationOwner_internal(rel, tup, newOwnerId);
 

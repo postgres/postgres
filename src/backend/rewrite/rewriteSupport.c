@@ -94,6 +94,7 @@ Oid
 get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok)
 {
 	HeapTuple	tuple;
+	Form_pg_rewrite ruleform;
 	Oid			ruleoid;
 
 	/* Find the rule's pg_rewrite tuple, get its OID */
@@ -109,8 +110,9 @@ get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok)
 				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
 						rulename, get_rel_name(relid))));
 	}
-	Assert(relid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
-	ruleoid = HeapTupleGetOid(tuple);
+	ruleform = (Form_pg_rewrite) GETSTRUCT(tuple);
+	Assert(relid == ruleform->ev_class);
+	ruleoid = ruleform->oid;
 	ReleaseSysCache(tuple);
 	return ruleoid;
 }

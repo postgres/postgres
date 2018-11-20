@@ -587,10 +587,10 @@ ERROR:  permission denied for table atest5
 DELETE FROM atest5 WHERE two = 2; -- ok
 -- check inheritance cases
 SET SESSION AUTHORIZATION regress_priv_user1;
-CREATE TABLE atestp1 (f1 int, f2 int) WITH OIDS;
-CREATE TABLE atestp2 (fx int, fy int) WITH OIDS;
+CREATE TABLE atestp1 (f1 int, f2 int);
+CREATE TABLE atestp2 (fx int, fy int);
 CREATE TABLE atestc (fz int) INHERITS (atestp1, atestp2);
-GRANT SELECT(fx,fy,oid) ON atestp2 TO regress_priv_user2;
+GRANT SELECT(fx,fy,tableoid) ON atestp2 TO regress_priv_user2;
 GRANT SELECT(fx) ON atestc TO regress_priv_user2;
 SET SESSION AUTHORIZATION regress_priv_user2;
 SELECT fx FROM atestp2; -- ok
@@ -608,15 +608,15 @@ SELECT atestp2 FROM atestp2; -- ok
 ---------
 (0 rows)
 
-SELECT oid FROM atestp2; -- ok
- oid 
------
+SELECT tableoid FROM atestp2; -- ok
+ tableoid 
+----------
 (0 rows)
 
 SELECT fy FROM atestc; -- fail
 ERROR:  permission denied for table atestc
 SET SESSION AUTHORIZATION regress_priv_user1;
-GRANT SELECT(fy,oid) ON atestc TO regress_priv_user2;
+GRANT SELECT(fy,tableoid) ON atestc TO regress_priv_user2;
 SET SESSION AUTHORIZATION regress_priv_user2;
 SELECT fx FROM atestp2; -- still ok
  fx 
@@ -633,9 +633,9 @@ SELECT atestp2 FROM atestp2; -- ok
 ---------
 (0 rows)
 
-SELECT oid FROM atestp2; -- ok
- oid 
------
+SELECT tableoid FROM atestp2; -- ok
+ tableoid 
+----------
 (0 rows)
 
 -- privileges on functions, languages
@@ -1720,8 +1720,8 @@ DROP SCHEMA testns5 CASCADE;
 SELECT d.*     -- check that entries went away
   FROM pg_default_acl d LEFT JOIN pg_namespace n ON defaclnamespace = n.oid
   WHERE nspname IS NULL AND defaclnamespace != 0;
- defaclrole | defaclnamespace | defaclobjtype | defaclacl 
-------------+-----------------+---------------+-----------
+ oid | defaclrole | defaclnamespace | defaclobjtype | defaclacl 
+-----+------------+-----------------+---------------+-----------
 (0 rows)
 
 -- Grant on all objects of given type in a schema

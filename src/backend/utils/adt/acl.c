@@ -1763,7 +1763,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		 * build tupdesc for result tuples (matches out parameters in pg_proc
 		 * entry)
 		 */
-		tupdesc = CreateTemplateTupleDesc(4, false);
+		tupdesc = CreateTemplateTupleDesc(4);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "grantor",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "grantee",
@@ -5191,7 +5191,8 @@ get_role_oid(const char *rolname, bool missing_ok)
 {
 	Oid			oid;
 
-	oid = GetSysCacheOid1(AUTHNAME, CStringGetDatum(rolname));
+	oid = GetSysCacheOid1(AUTHNAME, Anum_pg_authid_oid,
+						  CStringGetDatum(rolname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

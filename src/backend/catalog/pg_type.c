@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -121,11 +122,6 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	nulls[Anum_pg_type_typdefault - 1] = true;
 	nulls[Anum_pg_type_typacl - 1] = true;
 
-	/*
-	 * create a new type tuple
-	 */
-	tup = heap_form_tuple(tupDesc, values, nulls);
-
 	/* Use binary-upgrade override for pg_type.oid? */
 	if (IsBinaryUpgrade)
 	{
@@ -134,14 +130,26 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("pg_type OID value not set when in binary upgrade mode")));
 
-		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
+		typoid = binary_upgrade_next_pg_type_oid;
 		binary_upgrade_next_pg_type_oid = InvalidOid;
 	}
+	else
+	{
+		typoid = GetNewOidWithIndex(pg_type_desc, TypeOidIndexId,
+									Anum_pg_type_oid);
+	}
+
+	values[Anum_pg_type_oid - 1] = ObjectIdGetDatum(typoid);
+
+	/*
+	 * create a new type tuple
+	 */
+	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
 	 */
-	typoid = CatalogTupleInsert(pg_type_desc, tup);
+	CatalogTupleInsert(pg_type_desc, tup);
 
 	/*
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
@@ -407,11 +415,13 @@ TypeCreate(Oid newTypeOid,
 							  ObjectIdGetDatum(typeNamespace));
 	if (HeapTupleIsValid(tup))
 	{
+		Form_pg_type typform = (Form_pg_type) GETSTRUCT(tup);
+
 		/*
 		 * check that the type is not already defined.  It may exist as a
 		 * shell type, however.
 		 */
-		if (((Form_pg_type) GETSTRUCT(tup))->typisdefined)
+		if (typform->typisdefined)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("type \"%s\" already exists", typeName)));
@@ -419,12 +429,14 @@ TypeCreate(Oid newTypeOid,
 		/*
 		 * shell type must have been created by same owner
 		 */
-		if (((Form_pg_type) GETSTRUCT(tup))->typowner != ownerId)
+		if (typform->typowner != ownerId)
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TYPE, typeName);
 
 		/* trouble if caller wanted to force the OID */
 		if (OidIsValid(newTypeOid))
 			elog(ERROR, "cannot assign new OID to existing shell type");
+
+		replaces[Anum_pg_type_oid - 1] = false;
 
 		/*
 		 * Okay to update existing shell type tuple
@@ -437,19 +449,15 @@ TypeCreate(Oid newTypeOid,
 
 		CatalogTupleUpdate(pg_type_desc, &tup->t_self, tup);
 
-		typeObjectId = HeapTupleGetOid(tup);
+		typeObjectId = typform->oid;
 
 		rebuildDeps = true;		/* get rid of shell type's dependencies */
 	}
 	else
 	{
-		tup = heap_form_tuple(RelationGetDescr(pg_type_desc),
-							  values,
-							  nulls);
-
 		/* Force the OID if requested by caller */
 		if (OidIsValid(newTypeOid))
-			HeapTupleSetOid(tup, newTypeOid);
+			typeObjectId = newTypeOid;
 		/* Use binary-upgrade override for pg_type.oid, if supplied. */
 		else if (IsBinaryUpgrade)
 		{
@@ -458,12 +466,21 @@ TypeCreate(Oid newTypeOid,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("pg_type OID value not set when in binary upgrade mode")));
 
-			HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
+			typeObjectId = binary_upgrade_next_pg_type_oid;
 			binary_upgrade_next_pg_type_oid = InvalidOid;
 		}
-		/* else allow system to assign oid */
+		else
+		{
+			typeObjectId = GetNewOidWithIndex(pg_type_desc, TypeOidIndexId,
+											  Anum_pg_type_oid);
+		}
 
-		typeObjectId = CatalogTupleInsert(pg_type_desc, tup);
+		values[Anum_pg_type_oid - 1] = ObjectIdGetDatum(typeObjectId);
+
+		tup = heap_form_tuple(RelationGetDescr(pg_type_desc),
+							  values, nulls);
+
+		CatalogTupleInsert(pg_type_desc, tup);
 	}
 
 	/*
@@ -710,7 +727,7 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	arrayOid = typ->typarray;
 
 	/* Check for a conflicting type name. */
-	oldTypeOid = GetSysCacheOid2(TYPENAMENSP,
+	oldTypeOid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 								 CStringGetDatum(newTypeName),
 								 ObjectIdGetDatum(typeNamespace));
 

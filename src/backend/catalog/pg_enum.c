@@ -102,7 +102,8 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 
 		do
 		{
-			new_oid = GetNewOid(pg_enum);
+			new_oid = GetNewOidWithIndex(pg_enum, EnumOidIndexId,
+										 Anum_pg_enum_oid);
 		} while (new_oid & 1);
 		oids[elemno] = new_oid;
 	}
@@ -129,13 +130,13 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 					 errdetail("Labels must be %d characters or less.",
 							   NAMEDATALEN - 1)));
 
+		values[Anum_pg_enum_oid - 1] = ObjectIdGetDatum(oids[elemno]);
 		values[Anum_pg_enum_enumtypid - 1] = ObjectIdGetDatum(enumTypeOid);
 		values[Anum_pg_enum_enumsortorder - 1] = Float4GetDatum(elemno + 1);
 		namestrcpy(&enumlabel, lab);
 		values[Anum_pg_enum_enumlabel - 1] = NameGetDatum(&enumlabel);
 
 		tup = heap_form_tuple(RelationGetDescr(pg_enum), values, nulls);
-		HeapTupleSetOid(tup, oids[elemno]);
 
 		CatalogTupleInsert(pg_enum, tup);
 		heap_freetuple(tup);
@@ -406,7 +407,8 @@ restart:
 			bool		sorts_ok;
 
 			/* Get a new OID (different from all existing pg_enum tuples) */
-			newOid = GetNewOid(pg_enum);
+			newOid = GetNewOidWithIndex(pg_enum, EnumOidIndexId,
+										Anum_pg_enum_oid);
 
 			/*
 			 * Detect whether it sorts correctly relative to existing
@@ -419,7 +421,7 @@ restart:
 			{
 				HeapTuple	exists_tup = existing[i];
 				Form_pg_enum exists_en = (Form_pg_enum) GETSTRUCT(exists_tup);
-				Oid			exists_oid = HeapTupleGetOid(exists_tup);
+				Oid			exists_oid = exists_en->oid;
 
 				if (exists_oid & 1)
 					continue;	/* ignore odd Oids */
@@ -480,12 +482,12 @@ restart:
 
 	/* Create the new pg_enum entry */
 	memset(nulls, false, sizeof(nulls));
+	values[Anum_pg_enum_oid - 1] = ObjectIdGetDatum(newOid);
 	values[Anum_pg_enum_enumtypid - 1] = ObjectIdGetDatum(enumTypeOid);
 	values[Anum_pg_enum_enumsortorder - 1] = Float4GetDatum(newelemorder);
 	namestrcpy(&enumlabel, newVal);
 	values[Anum_pg_enum_enumlabel - 1] = NameGetDatum(&enumlabel);
 	enum_tup = heap_form_tuple(RelationGetDescr(pg_enum), values, nulls);
-	HeapTupleSetOid(enum_tup, newOid);
 	CatalogTupleInsert(pg_enum, enum_tup);
 	heap_freetuple(enum_tup);
 

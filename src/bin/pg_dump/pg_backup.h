@@ -131,7 +131,6 @@ typedef struct _dumpOptions
 	const char *pghost;
 	const char *pgport;
 	const char *username;
-	bool		oids;
 
 	int			binary_upgrade;
 

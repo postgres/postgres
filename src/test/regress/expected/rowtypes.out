@@ -1067,7 +1067,7 @@ select r, r is null as isnull, r is not null as isnotnull from r;
 --
 -- Tests for component access / FieldSelect
 --
-CREATE TABLE compositetable(a text, b text) WITH OIDS;
+CREATE TABLE compositetable(a text, b text);
 INSERT INTO compositetable(a, b) VALUES('fa', 'fb');
 -- composite type columns can't directly be accessed (error)
 SELECT d.a FROM (SELECT compositetable AS d FROM compositetable) s;
@@ -1081,10 +1081,10 @@ SELECT (d).a, (d).b FROM (SELECT compositetable AS d FROM compositetable) s;
  fa | fb
 (1 row)
 
--- oids can't be accessed in composite types (error)
-SELECT (d).oid FROM (SELECT compositetable AS d FROM compositetable) s;
-ERROR:  column "oid" not found in data type compositetable
-LINE 1: SELECT (d).oid FROM (SELECT compositetable AS d FROM composi...
+-- system columns can't be accessed in composite types (error)
+SELECT (d).ctid FROM (SELECT compositetable AS d FROM compositetable) s;
+ERROR:  column "ctid" not found in data type compositetable
+LINE 1: SELECT (d).ctid FROM (SELECT compositetable AS d FROM compos...
                 ^
 -- accessing non-existing column in NULL datum errors out
 SELECT (NULL::compositetable).nonexistant;

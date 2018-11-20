@@ -283,7 +283,6 @@ CREATE SCHEMA foreign_schema;
 CREATE SERVER s0 FOREIGN DATA WRAPPER dummy;
 CREATE FOREIGN TABLE ft1 ();                                    -- ERROR
 CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
-CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;                -- ERROR
 CREATE FOREIGN TABLE ft1 (
 	c1 integer OPTIONS ("param 1" 'val1') PRIMARY KEY,
 	c2 text OPTIONS (param2 'val2', param3 'val3'),
@@ -362,7 +361,6 @@ ALTER FOREIGN TABLE ft1 ALTER CONSTRAINT ft1_c9_check DEFERRABLE; -- ERROR
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT ft1_c9_check;
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
-ALTER FOREIGN TABLE ft1 SET WITH OIDS;
 ALTER FOREIGN TABLE ft1 OWNER TO regress_test_role;
 ALTER FOREIGN TABLE ft1 OPTIONS (DROP delimiter, SET quote '~', ADD escape '@');
 ALTER FOREIGN TABLE ft1 DROP COLUMN no_column;                  -- ERROR
@@ -690,15 +688,6 @@ ALTER TABLE fd_pt1 ADD CONSTRAINT fd_pt1chk3 CHECK (c2 <> '') NOT VALID;
 \d+ ft2
 -- VALIDATE CONSTRAINT need do nothing on foreign tables
 ALTER TABLE fd_pt1 VALIDATE CONSTRAINT fd_pt1chk3;
-\d+ fd_pt1
-\d+ ft2
-
--- OID system column
-ALTER TABLE fd_pt1 SET WITH OIDS;
-\d+ fd_pt1
-\d+ ft2
-ALTER TABLE ft2 SET WITHOUT OIDS;  -- ERROR
-ALTER TABLE fd_pt1 SET WITHOUT OIDS;
 \d+ fd_pt1
 \d+ ft2
 

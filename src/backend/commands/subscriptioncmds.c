@@ -20,6 +20,7 @@
 #include "access/htup_details.h"
 #include "access/xact.h"
 
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -349,8 +350,8 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
 
 	/* Check if name is used */
-	subid = GetSysCacheOid2(SUBSCRIPTIONNAME, MyDatabaseId,
-							CStringGetDatum(stmt->subname));
+	subid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
+							MyDatabaseId, CStringGetDatum(stmt->subname));
 	if (OidIsValid(subid))
 	{
 		ereport(ERROR,
@@ -379,6 +380,9 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	subid = GetNewOidWithIndex(rel, SubscriptionObjectIndexId,
+							   Anum_pg_subscription_oid);
+	values[Anum_pg_subscription_oid - 1] = ObjectIdGetDatum(subid);
 	values[Anum_pg_subscription_subdbid - 1] = ObjectIdGetDatum(MyDatabaseId);
 	values[Anum_pg_subscription_subname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->subname));
@@ -399,7 +403,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	/* Insert tuple into catalog. */
-	subid = CatalogTupleInsert(rel, tup);
+	CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
 	recordDependencyOnOwner(SubscriptionRelationId, subid, owner);
@@ -620,6 +624,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 	Oid			subid;
 	bool		update_tuple = false;
 	Subscription *sub;
+	Form_pg_subscription form;
 
 	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
 
@@ -633,12 +638,14 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 				 errmsg("subscription \"%s\" does not exist",
 						stmt->subname)));
 
+	form = (Form_pg_subscription) GETSTRUCT(tup);
+	subid = form->oid;
+
 	/* must be owner */
-	if (!pg_subscription_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+	if (!pg_subscription_ownercheck(subid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   stmt->subname);
 
-	subid = HeapTupleGetOid(tup);
 	sub = GetSubscription(subid, false);
 
 	/* Lock the subscription so nobody else can do anything with it. */
@@ -823,6 +830,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	RepOriginId originid;
 	WalReceiverConn *wrconn = NULL;
 	StringInfoData cmd;
+	Form_pg_subscription form;
 
 	/*
 	 * Lock pg_subscription with AccessExclusiveLock to ensure that the
@@ -850,7 +858,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		return;
 	}
 
-	subid = HeapTupleGetOid(tup);
+	form = (Form_pg_subscription) GETSTRUCT(tup);
+	subid = form->oid;
 
 	/* must be owner */
 	if (!pg_subscription_ownercheck(subid, GetUserId()))
@@ -1021,7 +1030,7 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (form->subowner == newOwnerId)
 		return;
 
-	if (!pg_subscription_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+	if (!pg_subscription_ownercheck(form->oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   NameStr(form->subname));
 
@@ -1038,11 +1047,11 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 	/* Update owner dependency reference */
 	changeDependencyOnOwner(SubscriptionRelationId,
-							HeapTupleGetOid(tup),
+							form->oid,
 							newOwnerId);
 
 	InvokeObjectPostAlterHook(SubscriptionRelationId,
-							  HeapTupleGetOid(tup), 0);
+							  form->oid, 0);
 }
 
 /*
@@ -1055,6 +1064,7 @@ AlterSubscriptionOwner(const char *name, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 	ObjectAddress address;
+	Form_pg_subscription form;
 
 	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
 
@@ -1066,7 +1076,8 @@ AlterSubscriptionOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("subscription \"%s\" does not exist", name)));
 
-	subid = HeapTupleGetOid(tup);
+	form = (Form_pg_subscription) GETSTRUCT(tup);
+	subid = form->oid;
 
 	AlterSubscriptionOwner_internal(rel, tup, newOwnerId);
 

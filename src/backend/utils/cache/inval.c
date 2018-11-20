@@ -1166,7 +1166,7 @@ CacheInvalidateHeapTuple(Relation relation,
 	{
 		Form_pg_class classtup = (Form_pg_class) GETSTRUCT(tuple);
 
-		relationId = HeapTupleGetOid(tuple);
+		relationId = classtup->oid;
 		if (classtup->relisshared)
 			databaseId = InvalidOid;
 		else
@@ -1292,7 +1292,7 @@ CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
 
 	PrepareInvalidationState();
 
-	relationId = HeapTupleGetOid(classTuple);
+	relationId = classtup->oid;
 	if (classtup->relisshared)
 		databaseId = InvalidOid;
 	else

@@ -28,6 +28,7 @@
  */
 CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(1248,DatabaseRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
+	Oid			oid;			/* oid */
 	NameData	datname;		/* database name */
 	Oid			datdba;			/* owner of database */
 	int32		encoding;		/* character encoding */

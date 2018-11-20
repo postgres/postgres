@@ -51,7 +51,7 @@ CREATE TABLE tenk1 (
 	stringu1	name,
 	stringu2	name,
 	string4		name
-) WITH OIDS;
+);
 
 CREATE TABLE tenk2 (
 	unique1 	int4,
@@ -83,7 +83,7 @@ CREATE TABLE person (
 CREATE TABLE emp (
 	salary 		int4,
 	manager 	name
-) INHERITS (person) WITH OIDS;
+) INHERITS (person);
 
 
 CREATE TABLE student (
@@ -255,7 +255,6 @@ CREATE TABLE IF NOT EXISTS test_tsvector(
 
 -- invalid: non-lowercase quoted reloptions identifiers
 CREATE TABLE tas_case WITH ("Fillfactor" = 10) AS SELECT 1 a;
-CREATE TABLE tas_case (a text) WITH ("Oids" = true);
 
 CREATE UNLOGGED TABLE unlogged1 (a int primary key);			-- OK
 CREATE TEMPORARY TABLE unlogged2 (a int primary key);			-- OK
@@ -278,9 +277,14 @@ CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 DROP TABLE as_select1;
 
--- check that the oid column is added before the primary key is checked
-CREATE TABLE oid_pk (f1 INT, PRIMARY KEY(oid)) WITH OIDS;
-DROP TABLE oid_pk;
+-- check that tables with oids cannot be created anymore
+CREATE TABLE withoid() WITH OIDS;
+CREATE TABLE withoid() WITH (oids);
+CREATE TABLE withoid() WITH (oids = true);
+
+-- but explicitly not adding oids is still supported
+CREATE TEMP TABLE withoutoid() WITHOUT OIDS; DROP TABLE withoutoid;
+CREATE TEMP TABLE withoutoid() WITH (oids = false); DROP TABLE withoutoid;
 
 --
 -- Partitioned tables
@@ -519,22 +523,6 @@ CREATE TEMP TABLE temp_parted (
 ) PARTITION BY LIST (a);
 CREATE TABLE fail_part PARTITION OF temp_parted FOR VALUES IN ('a');
 DROP TABLE temp_parted;
-
--- cannot create a table with oids as partition of table without oids
-CREATE TABLE no_oids_parted (
-	a int
-) PARTITION BY RANGE (a) WITHOUT OIDS;
-CREATE TABLE fail_part PARTITION OF no_oids_parted FOR VALUES FROM (1) TO (10) WITH OIDS;
-DROP TABLE no_oids_parted;
-
--- If the partitioned table has oids, then the partition must have them.
--- If the WITHOUT OIDS option is specified for partition, it is overridden.
-CREATE TABLE oids_parted (
-	a int
-) PARTITION BY RANGE (a) WITH OIDS;
-CREATE TABLE part_forced_oids PARTITION OF oids_parted FOR VALUES FROM (1) TO (10) WITHOUT OIDS;
-\d+ part_forced_oids
-DROP TABLE oids_parted, part_forced_oids;
 
 -- check for partition bound overlap and other invalid specifications
 

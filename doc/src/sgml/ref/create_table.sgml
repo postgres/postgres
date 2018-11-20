@@ -29,7 +29,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
 [ PARTITION BY { RANGE | LIST | HASH } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
-[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
@@ -40,7 +40,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     [, ... ]
 ) ]
 [ PARTITION BY { RANGE | LIST | HASH } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
-[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
@@ -51,7 +51,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     [, ... ]
 ) ] { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }
 [ PARTITION BY { RANGE | LIST | HASH } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
-[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
@@ -531,17 +531,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       A partition must have the same column names and types as the partitioned
-      table to which it belongs.  If the parent is specified <literal>WITH
-      OIDS</literal> then all partitions must have OIDs; the parent's OID
-      column will be inherited by all partitions just like any other column.
-      Modifications to the column names or types of a partitioned table, or
-      the addition or removal of an OID column, will automatically propagate
-      to all partitions.  <literal>CHECK</literal> constraints will be inherited
-      automatically by every partition, but an individual partition may specify
-      additional <literal>CHECK</literal> constraints; additional constraints with
-      the same name and condition as in the parent will be merged with the
-      parent constraint.  Defaults may be specified separately for each
-      partition.
+      table to which it belongs. Modifications to the column names or types of
+      a partitioned table will automatically propagate to all partitions.
+      <literal>CHECK</literal> constraints will be inherited automatically by
+      every partition, but an individual partition may specify additional
+      <literal>CHECK</literal> constraints; additional constraints with the
+      same name and condition as in the parent will be merged with the parent
+      constraint.  Defaults may be specified separately for each partition.
      </para>
 
      <para>
@@ -1145,46 +1141,21 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This clause specifies optional storage parameters for a table or index;
       see <xref linkend="sql-createtable-storage-parameters"
       endterm="sql-createtable-storage-parameters-title"/> for more
-      information.  The <literal>WITH</literal> clause for a
-      table can also include <literal>OIDS=TRUE</literal> (or just <literal>OIDS</literal>)
-      to specify that rows of the new table
-      should have OIDs (object identifiers) assigned to them, or
-      <literal>OIDS=FALSE</literal> to specify that the rows should not have OIDs.
-      If <literal>OIDS</literal> is not specified, the default setting depends upon
-      the <xref linkend="guc-default-with-oids"/> configuration parameter.
-      (If the new table inherits from any tables that have OIDs, then
-      <literal>OIDS=TRUE</literal> is forced even if the command says
-      <literal>OIDS=FALSE</literal>.)
-     </para>
-
-     <para>
-      If <literal>OIDS=FALSE</literal> is specified or implied, the new
-      table does not store OIDs and no OID will be assigned for a row inserted
-      into it. This is generally considered worthwhile, since it
-      will reduce OID consumption and thereby postpone the wraparound
-      of the 32-bit OID counter. Once the counter wraps around, OIDs
-      can no longer be assumed to be unique, which makes them
-      considerably less useful. In addition, excluding OIDs from a
-      table reduces the space required to store the table on disk by
-      4 bytes per row (on most machines), slightly improving performance.
-     </para>
-
-     <para>
-      To remove OIDs from a table after it has been created, use <xref
-      linkend="sql-altertable"/>.
+      information.  For backward-compatibility the <literal>WITH</literal>
+      clause for a table can also include <literal>OIDS=FALSE</literal> to
+      specify that rows of the new table should not contain OIDs (object
+      identifiers), <literal>OIDS=TRUE</literal> is not supported anymore.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH OIDS</literal></term>
     <term><literal>WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      These are obsolescent syntaxes equivalent to <literal>WITH (OIDS)</literal>
-      and <literal>WITH (OIDS=FALSE)</literal>, respectively.  If you wish to give
-      both an <literal>OIDS</literal> setting and storage parameters, you must use
-      the <literal>WITH ( ... )</literal> syntax; see above.
+      This is backward-compatible syntax for declaring a table
+      <literal>WITHOUT OIDS</literal>, creating a table <literal>WITH
+      OIDS</literal> is not supported anymore.
      </para>
     </listitem>
    </varlistentry>
@@ -1528,29 +1499,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
  <refsect1 id="sql-createtable-notes">
   <title>Notes</title>
-
-    <para>
-     Using OIDs in new applications is not recommended: where
-     possible, using an identity column or other sequence
-     generator as the table's primary key is preferred. However, if
-     your application does make use of OIDs to identify specific
-     rows of a table, it is recommended to create a unique constraint
-     on the <structfield>oid</structfield> column of that table, to ensure that
-     OIDs in the table will indeed uniquely identify rows even after
-     counter wraparound.  Avoid assuming that OIDs are unique across
-     tables; if you need a database-wide unique identifier, use the
-     combination of <structfield>tableoid</structfield> and row OID for the
-     purpose.
-    </para>
-
-    <tip>
-     <para>
-      The use of <literal>OIDS=FALSE</literal> is not recommended
-      for tables with no primary key, since without either an OID or a
-      unique data key, it is difficult to identify specific rows.
-     </para>
-    </tip>
-
     <para>
      <productname>PostgreSQL</productname> automatically creates an
      index for each unique constraint and primary key constraint to
@@ -2089,7 +2037,7 @@ CREATE TABLE cities_partdef
 
    <para>
     The <literal>WITH</literal> clause is a <productname>PostgreSQL</productname>
-    extension; neither storage parameters nor OIDs are in the standard.
+    extension; storage parameters are not in the standard.
    </para>
   </refsect2>
 

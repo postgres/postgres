@@ -58,6 +58,7 @@ extern bool is_objectclass_supported(Oid class_id);
 extern Oid	get_object_oid_index(Oid class_id);
 extern int	get_object_catcache_oid(Oid class_id);
 extern int	get_object_catcache_name(Oid class_id);
+extern AttrNumber get_object_attnum_oid(Oid class_id);
 extern AttrNumber get_object_attnum_name(Oid class_id);
 extern AttrNumber get_object_attnum_namespace(Oid class_id);
 extern AttrNumber get_object_attnum_owner(Oid class_id);
@@ -66,7 +67,7 @@ extern ObjectType get_object_type(Oid class_id, Oid object_id);
 extern bool get_object_namensp_unique(Oid class_id);
 
 extern HeapTuple get_catalog_object_by_oid(Relation catalog,
-						  Oid objectId);
+						  AttrNumber oidcol, Oid objectId);
 
 extern char *getObjectDescription(const ObjectAddress *object);
 extern char *getObjectDescriptionOids(Oid classid, Oid objid);

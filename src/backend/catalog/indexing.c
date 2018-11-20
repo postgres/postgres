@@ -160,20 +160,17 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
  * and building the index info structures is moderately expensive.
  * (Use CatalogTupleInsertWithInfo in such cases.)
  */
-Oid
+void
 CatalogTupleInsert(Relation heapRel, HeapTuple tup)
 {
 	CatalogIndexState indstate;
-	Oid			oid;
 
 	indstate = CatalogOpenIndexes(heapRel);
 
-	oid = simple_heap_insert(heapRel, tup);
+	simple_heap_insert(heapRel, tup);
 
 	CatalogIndexInsert(indstate, tup);
 	CatalogCloseIndexes(indstate);
-
-	return oid;
 }
 
 /*
@@ -184,17 +181,13 @@ CatalogTupleInsert(Relation heapRel, HeapTuple tup)
  * might cache the CatalogIndexState data somewhere (perhaps in the relcache)
  * so that callers needn't trouble over this ... but we don't do so today.
  */
-Oid
+void
 CatalogTupleInsertWithInfo(Relation heapRel, HeapTuple tup,
 						   CatalogIndexState indstate)
 {
-	Oid			oid;
-
-	oid = simple_heap_insert(heapRel, tup);
+	simple_heap_insert(heapRel, tup);
 
 	CatalogIndexInsert(indstate, tup);
-
-	return oid;
 }
 
 /*

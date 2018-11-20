@@ -9237,7 +9237,7 @@ Branch: REL9_1_STABLE [dd1a5b09b] 2014-06-24 13:30:41 +0300
     <listitem>
      <para>
       Prevent foreign tables from being created with OIDS
-      when <xref linkend="guc-default-with-oids"/> is true
+      when <literal>default_with_oids"</literal> is true
       (Etsuro Fujita)
      </para>
     </listitem>

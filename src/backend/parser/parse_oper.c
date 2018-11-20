@@ -244,7 +244,7 @@ get_sort_group_operators(Oid argtype,
 Oid
 oprid(Operator op)
 {
-	return HeapTupleGetOid(op);
+	return ((Form_pg_operator) GETSTRUCT(op))->oid;
 }
 
 /* given operator tuple, return the underlying function's OID */

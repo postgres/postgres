@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_ts_dict.h"
 #include "commands/defrem.h"
 #include "lib/stringinfo.h"
 #include "tsearch/ts_cache.h"
@@ -385,7 +386,7 @@ unaccent_dict(PG_FUNCTION_ARGS)
 		Oid			procnspid = get_func_namespace(fcinfo->flinfo->fn_oid);
 		const char *dictname = "unaccent";
 
-		dictOid = GetSysCacheOid2(TSDICTNAMENSP,
+		dictOid = GetSysCacheOid2(TSDICTNAMENSP, Anum_pg_ts_dict_oid,
 								  PointerGetDatum(dictname),
 								  ObjectIdGetDatum(procnspid));
 		if (!OidIsValid(dictOid))

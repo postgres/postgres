@@ -28,6 +28,8 @@
  */
 CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
 {
+	Oid			oid;			/* oid */
+
 	Oid			stxrelid;		/* relation containing attributes */
 
 	/* These two fields form the unique key for the entry: */

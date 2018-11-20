@@ -304,7 +304,7 @@ static bool pgstat_db_requested(Oid databaseid);
 
 static void pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg);
 static void pgstat_send_funcstats(void);
-static HTAB *pgstat_collect_oids(Oid catalogid);
+static HTAB *pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid);
 
 static PgStat_TableStatus *get_tabstat_entry(Oid rel_id, bool isshared);
 
@@ -1042,7 +1042,7 @@ pgstat_vacuum_stat(void)
 	/*
 	 * Read pg_database and make a list of OIDs of all existing databases
 	 */
-	htab = pgstat_collect_oids(DatabaseRelationId);
+	htab = pgstat_collect_oids(DatabaseRelationId, Anum_pg_database_oid);
 
 	/*
 	 * Search the database hash table for dead databases and tell the
@@ -1076,7 +1076,7 @@ pgstat_vacuum_stat(void)
 	/*
 	 * Similarly to above, make a list of all known relations in this DB.
 	 */
-	htab = pgstat_collect_oids(RelationRelationId);
+	htab = pgstat_collect_oids(RelationRelationId, Anum_pg_class_oid);
 
 	/*
 	 * Initialize our messages table counter to zero
@@ -1140,7 +1140,7 @@ pgstat_vacuum_stat(void)
 	if (dbentry->functions != NULL &&
 		hash_get_num_entries(dbentry->functions) > 0)
 	{
-		htab = pgstat_collect_oids(ProcedureRelationId);
+		htab = pgstat_collect_oids(ProcedureRelationId, Anum_pg_proc_oid);
 
 		pgstat_setheader(&f_msg.m_hdr, PGSTAT_MTYPE_FUNCPURGE);
 		f_msg.m_databaseid = MyDatabaseId;
@@ -1201,7 +1201,7 @@ pgstat_vacuum_stat(void)
  * ----------
  */
 static HTAB *
-pgstat_collect_oids(Oid catalogid)
+pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 {
 	HTAB	   *htab;
 	HASHCTL		hash_ctl;
@@ -1224,7 +1224,11 @@ pgstat_collect_oids(Oid catalogid)
 	scan = heap_beginscan(rel, snapshot, 0, NULL);
 	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid			thisoid = HeapTupleGetOid(tup);
+		Oid			thisoid;
+		bool		isnull;
+
+		thisoid = heap_getattr(tup, anum_oid, RelationGetDescr(rel), &isnull);
+		Assert(!isnull);
 
 		CHECK_FOR_INTERRUPTS();
 

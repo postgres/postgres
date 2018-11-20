@@ -45,7 +45,7 @@
  *		typedef struct FormData_pg_description
  * ----------------
  */
-CATALOG(pg_description,2609,DescriptionRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_description,2609,DescriptionRelationId)
 {
 	Oid			objoid;			/* OID of object itself */
 	Oid			classoid;		/* OID of table containing object */

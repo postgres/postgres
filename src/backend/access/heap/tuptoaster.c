@@ -723,8 +723,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	hoff = SizeofHeapTupleHeader;
 	if (has_nulls)
 		hoff += BITMAPLEN(numAttrs);
-	if (newtup->t_data->t_infomask & HEAP_HASOID)
-		hoff += sizeof(Oid);
 	hoff = MAXALIGN(hoff);
 	/* now convert to a limit on the tuple data size */
 	maxDataLen = RelationGetToastTupleTarget(rel, TOAST_TUPLE_TARGET) - hoff;
@@ -1013,8 +1011,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		new_header_len = SizeofHeapTupleHeader;
 		if (has_nulls)
 			new_header_len += BITMAPLEN(numAttrs);
-		if (olddata->t_infomask & HEAP_HASOID)
-			new_header_len += sizeof(Oid);
 		new_header_len = MAXALIGN(new_header_len);
 		new_data_len = heap_compute_data_size(tupleDesc,
 											  toast_values, toast_isnull);
@@ -1036,8 +1032,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		memcpy(new_data, olddata, SizeofHeapTupleHeader);
 		HeapTupleHeaderSetNatts(new_data, numAttrs);
 		new_data->t_hoff = new_header_len;
-		if (olddata->t_infomask & HEAP_HASOID)
-			HeapTupleHeaderSetOid(new_data, HeapTupleHeaderGetOid(olddata));
 
 		/* Copy over the data, and fill the null bitmap if needed */
 		heap_fill_tuple(tupleDesc,
@@ -1124,13 +1118,10 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 	new_tuple = heap_form_tuple(tupleDesc, toast_values, toast_isnull);
 
 	/*
-	 * Be sure to copy the tuple's OID and identity fields.  We also make a
-	 * point of copying visibility info, just in case anybody looks at those
-	 * fields in a syscache entry.
+	 * Be sure to copy the tuple's identity fields.  We also make a point of
+	 * copying visibility info, just in case anybody looks at those fields in
+	 * a syscache entry.
 	 */
-	if (tupleDesc->tdhasoid)
-		HeapTupleSetOid(new_tuple, HeapTupleGetOid(tup));
-
 	new_tuple->t_self = tup->t_self;
 	new_tuple->t_tableOid = tup->t_tableOid;
 
@@ -1244,8 +1235,6 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	new_header_len = SizeofHeapTupleHeader;
 	if (has_nulls)
 		new_header_len += BITMAPLEN(numAttrs);
-	if (tup->t_infomask & HEAP_HASOID)
-		new_header_len += sizeof(Oid);
 	new_header_len = MAXALIGN(new_header_len);
 	new_data_len = heap_compute_data_size(tupleDesc,
 										  toast_values, toast_isnull);
@@ -1259,8 +1248,6 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	memcpy(new_data, tup, SizeofHeapTupleHeader);
 	HeapTupleHeaderSetNatts(new_data, numAttrs);
 	new_data->t_hoff = new_header_len;
-	if (tup->t_infomask & HEAP_HASOID)
-		HeapTupleHeaderSetOid(new_data, HeapTupleHeaderGetOid(tup));
 
 	/* Set the composite-Datum header fields correctly */
 	HeapTupleHeaderSetDatumLength(new_data, new_tuple_len);
@@ -1796,7 +1783,7 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
  *
  *	Test whether a toast value with the given ID exists in the toast relation.
  *	For safety, we consider a value to exist if there are either live or dead
- *	toast rows with that ID; see notes for GetNewOid().
+ *	toast rows with that ID; see notes for GetNewOidWithIndex().
  * ----------
  */
 static bool

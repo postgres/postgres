@@ -103,7 +103,6 @@ typedef struct RelationData
 
 	/* data managed by RelationGetIndexList: */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
-	Oid			rd_oidindex;	/* OID of unique index on OID, if any */
 	Oid			rd_pkindex;		/* OID of primary key, if any */
 	Oid			rd_replidindex; /* OID of replica identity index, if any */
 

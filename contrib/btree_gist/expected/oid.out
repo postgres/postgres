@@ -1,64 +1,66 @@
 -- oid check
 SET enable_seqscan=on;
-SELECT count(*) FROM moneytmp WHERE oid <  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+CREATE TEMPORARY TABLE oidtmp (oid oid);
+INSERT INTO oidtmp SELECT g.i::oid FROM generate_series(1, 1000) g(i);
+SELECT count(*) FROM oidtmp WHERE oid <  17;
  count 
 -------
-   372
+    16
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid <= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid <= 17;
  count 
 -------
-   373
+    17
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid  = ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid  = 17;
  count 
 -------
      1
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid >= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid >= 17;
  count 
 -------
-   228
+   984
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid >  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid >  17;
  count 
 -------
-   227
+   983
 (1 row)
 
-CREATE INDEX oididx ON moneytmp USING gist ( oid );
+CREATE INDEX oididx ON oidtmp USING gist ( oid );
 SET enable_seqscan=off;
-SELECT count(*) FROM moneytmp WHERE oid <  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid <  17;
  count 
 -------
-   372
+    16
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid <= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid <= 17;
  count 
 -------
-   373
+    17
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid  = ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid  = 17;
  count 
 -------
      1
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid >= ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid >= 17;
  count 
 -------
-   228
+   984
 (1 row)
 
-SELECT count(*) FROM moneytmp WHERE oid >  ( SELECT oid FROM moneytmp WHERE a  = '22649.64' );
+SELECT count(*) FROM oidtmp WHERE oid >  17;
  count 
 -------
-   227
+   983
 (1 row)
 

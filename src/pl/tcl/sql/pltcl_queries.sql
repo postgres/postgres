@@ -117,12 +117,6 @@ select tcl_argisnull(null);
 insert into trigger_test(test_argisnull) values(true);
 select trigger_data();
 
--- Test spi_lastoid primitive
-create temp table t1 (f1 int);
-select tcl_lastoid('t1');
-create temp table t2 (f1 int) with oids;
-select tcl_lastoid('t2') > 0;
-
 -- test some error cases
 create function tcl_error(out a int, out b int) as $$return {$$ language pltcl;
 select tcl_error();

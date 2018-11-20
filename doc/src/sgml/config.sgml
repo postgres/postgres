@@ -7942,35 +7942,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-default-with-oids" xreflabel="default_with_oids">
-      <term><varname>default_with_oids</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>default_with_oids</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        This controls whether <command>CREATE TABLE</command> and
-        <command>CREATE TABLE AS</command> include an OID column in
-        newly-created tables, if neither <literal>WITH OIDS</literal>
-        nor <literal>WITHOUT OIDS</literal> is specified. It also
-        determines whether OIDs will be included in tables created by
-        <command>SELECT INTO</command>. The parameter is <literal>off</literal>
-        by default; in <productname>PostgreSQL</productname> 8.0 and earlier, it
-        was <literal>on</literal> by default.
-       </para>
-
-       <para>
-        The use of OIDs in user tables is considered deprecated, so
-        most installations should leave this variable disabled.
-        Applications that require OIDs for a particular table should
-        specify <literal>WITH OIDS</literal> when creating the
-        table. This variable can be enabled for compatibility with old
-        applications that do not follow this behavior.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-escape-string-warning" xreflabel="escape_string_warning">
       <term><varname>escape_string_warning</varname> (<type>boolean</type>)
       <indexterm><primary>strings</primary><secondary>escape warning</secondary></indexterm>

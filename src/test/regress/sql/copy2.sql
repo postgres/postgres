@@ -4,7 +4,7 @@ CREATE TEMP TABLE x (
 	c text not null default 'stuff',
 	d text,
 	e text
-) WITH OIDS;
+) ;
 
 CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
@@ -73,10 +73,10 @@ COPY x from stdin;
 \.
 
 -- various COPY options: delimiters, oids, NULL string, encoding
-COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
-500000,x,45,80,90
-500001,x,\x,\\x,\\\x
-500002,x,\,,\\\,,\\
+COPY x (b, c, d, e) from stdin delimiter ',' null 'x';
+x,45,80,90
+x,\x,\\x,\\\x
+x,\,,\\\,,\\
 \.
 
 COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
@@ -97,19 +97,6 @@ COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X' ENCODING 'sql_ascii';
 
 -- check results of copy in
 SELECT * FROM x;
-
--- COPY w/ oids on a table w/o oids should fail
-CREATE TABLE no_oids (
-	a	int,
-	b	int
-) WITHOUT OIDS;
-
-INSERT INTO no_oids (a, b) VALUES (5, 10);
-INSERT INTO no_oids (a, b) VALUES (20, 30);
-
--- should fail
-COPY no_oids FROM stdin WITH OIDS;
-COPY no_oids TO stdout WITH OIDS;
 
 -- check copy out
 COPY x TO stdout;

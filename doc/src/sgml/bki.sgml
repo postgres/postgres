@@ -89,7 +89,7 @@
    The <literal>CATALOG</literal> line can also be annotated, with some
    other BKI property macros described in <filename>genbki.h</filename>, to
    define other properties of the catalog as a whole, such as whether
-   it has OIDs (by default, it does).
+   it is a shared relation.
   </para>
 
   <para>
@@ -354,7 +354,7 @@
     also needed if the row's OID must be referenced from C code.
     If neither case applies, the <literal>oid</literal> metadata field can
     be omitted, in which case the bootstrap code assigns an OID
-    automatically, or leaves it zero in a catalog that has no OIDs.
+    automatically.
     In practice we usually preassign OIDs for all or none of the pre-loaded
     rows in a given catalog, even if only some of them are actually
     cross-referenced.
@@ -387,15 +387,16 @@
     through the catalog headers and <filename>.dat</filename> files
     to see which ones do not appear.  You can also use
     the <filename>duplicate_oids</filename> script to check for mistakes.
-    (<filename>genbki.pl</filename> will also detect duplicate OIDs
+    (<filename>genbki.pl</filename> will assign OIDs for any rows that
+    didn't get one hand-assigned to them and also detect duplicate OIDs
     at compile time.)
    </para>
 
    <para>
     The OID counter starts at 10000 at the beginning of a bootstrap run.
-    If a catalog row is in a table that requires OIDs, but no OID was
-    preassigned by an <literal>oid</literal> field, then it will
-    receive an OID of 10000 or above.
+    If a row from a source other than <filename>postgres.bki</filename>
+    is inserted into a table that requires OIDs, then it will receive an
+    OID of 10000 or above.
    </para>
   </sect2>
 
@@ -714,7 +715,6 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
      <replaceable class="parameter">tableoid</replaceable>
      <optional><literal>bootstrap</literal></optional>
      <optional><literal>shared_relation</literal></optional>
-     <optional><literal>without_oids</literal></optional>
      <optional><literal>rowtype_oid</literal> <replaceable>oid</replaceable></optional>
      (<replaceable class="parameter">name1</replaceable> =
      <replaceable class="parameter">type1</replaceable>
@@ -766,7 +766,6 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
      <para>
       The table is created as shared if <literal>shared_relation</literal> is
       specified.
-      It will have OIDs unless <literal>without_oids</literal> is specified.
       The table's row type OID (<structname>pg_type</structname> OID) can optionally
       be specified via the <literal>rowtype_oid</literal> clause; if not specified,
       an OID is automatically generated for it.  (The <literal>rowtype_oid</literal>
@@ -805,7 +804,7 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
 
    <varlistentry>
     <term>
-     <literal>insert</literal> <optional><literal>OID =</literal> <replaceable class="parameter">oid_value</replaceable></optional> <literal>(</literal> <replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ... <literal>)</literal>
+     <literal>insert</literal> <literal>(</literal> <optional><replaceable class="parameter">oid_value</replaceable></optional> <replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ... <literal>)</literal>
     </term>
 
     <listitem>
@@ -813,11 +812,7 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
       Insert a new row into the open table using <replaceable
       class="parameter">value1</replaceable>, <replaceable
       class="parameter">value2</replaceable>, etc., for its column
-      values and <replaceable
-      class="parameter">oid_value</replaceable> for its OID.  If
-      <replaceable class="parameter">oid_value</replaceable> is zero
-      (0) or the clause is omitted, and the table has OIDs, then the
-      next available OID is assigned.
+      values.
      </para>
 
      <para>
@@ -985,16 +980,16 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
   <title>BKI Example</title>
 
   <para>
-   The following sequence of commands will create the
-   table <literal>test_table</literal> with OID 420, having two columns
-   <literal>cola</literal> and <literal>colb</literal> of type
-   <type>int4</type> and <type>text</type>, respectively, and insert
-   two rows into the table:
+   The following sequence of commands will create the table
+   <literal>test_table</literal> with OID 420, having three columns
+   <literal>oid</literal>, <literal>cola</literal> and <literal>colb</literal>
+   of type <type>oid</type>, <type>int4</type> and <type>text</type>,
+   respectively, and insert two rows into the table:
 <programlisting>
-create test_table 420 (cola = int4, colb = text)
+create test_table 420 (oid = oid, cola = int4, colb = text)
 open test_table
-insert OID=421 ( 1 "value1" )
-insert OID=422 ( 2 _null_ )
+insert ( 421 1 "value1" )
+insert ( 422 2 _null_ )
 close test_table
 </programlisting>
   </para>

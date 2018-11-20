@@ -504,7 +504,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 
 	do
 	{
-		dboid = GetNewOid(pg_database_rel);
+		dboid = GetNewOidWithIndex(pg_database_rel, DatabaseOidIndexId,
+								   Anum_pg_database_oid);
 	} while (check_db_file_conflict(dboid));
 
 	/*
@@ -517,6 +518,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	MemSet(new_record, 0, sizeof(new_record));
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 
+	new_record[Anum_pg_database_oid - 1] = ObjectIdGetDatum(dboid);
 	new_record[Anum_pg_database_datname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(datdba);
@@ -542,8 +544,6 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 
 	tuple = heap_form_tuple(RelationGetDescr(pg_database_rel),
 							new_record, new_record_nulls);
-
-	HeapTupleSetOid(tuple, dboid);
 
 	CatalogTupleInsert(pg_database_rel, tuple);
 
@@ -593,7 +593,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		scan = heap_beginscan_catalog(rel, 0, NULL);
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
-			Oid			srctablespace = HeapTupleGetOid(tuple);
+			Form_pg_tablespace spaceform = (Form_pg_tablespace) GETSTRUCT(tuple);
+			Oid			srctablespace = spaceform->oid;
 			Oid			dsttablespace;
 			char	   *srcpath;
 			char	   *dstpath;
@@ -1301,8 +1302,7 @@ movedb(const char *dbname, const char *tblspcname)
 									 new_record_nulls, new_record_repl);
 		CatalogTupleUpdate(pgdbrel, &oldtuple->t_self, newtuple);
 
-		InvokeObjectPostAlterHook(DatabaseRelationId,
-								  HeapTupleGetOid(newtuple), 0);
+		InvokeObjectPostAlterHook(DatabaseRelationId, db_id, 0);
 
 		systable_endscan(sysscan);
 
@@ -1400,6 +1400,7 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 	Oid			dboid;
 	HeapTuple	tuple,
 				newtuple;
+	Form_pg_database datform;
 	ScanKeyData scankey;
 	SysScanDesc scan;
 	ListCell   *option;
@@ -1512,9 +1513,10 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->dbname)));
 
-	dboid = HeapTupleGetOid(tuple);
+	datform = (Form_pg_database) GETSTRUCT(tuple);
+	dboid = datform->oid;
 
-	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
+	if (!pg_database_ownercheck(dboid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 					   stmt->dbname);
 
@@ -1556,8 +1558,7 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 								 new_record_nulls, new_record_repl);
 	CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
 
-	InvokeObjectPostAlterHook(DatabaseRelationId,
-							  HeapTupleGetOid(newtuple), 0);
+	InvokeObjectPostAlterHook(DatabaseRelationId, dboid, 0);
 
 	systable_endscan(scan);
 
@@ -1626,8 +1627,8 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
 
-	db_id = HeapTupleGetOid(tuple);
 	datForm = (Form_pg_database) GETSTRUCT(tuple);
+	db_id = datForm->oid;
 
 	/*
 	 * If the new owner is the same as the existing owner, consider the
@@ -1645,7 +1646,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		HeapTuple	newtuple;
 
 		/* Otherwise, must be owner of the existing object */
-		if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
+		if (!pg_database_ownercheck(db_id, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 
@@ -1694,11 +1695,10 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		heap_freetuple(newtuple);
 
 		/* Update owner dependency reference */
-		changeDependencyOnOwner(DatabaseRelationId, HeapTupleGetOid(tuple),
-								newOwnerId);
+		changeDependencyOnOwner(DatabaseRelationId, db_id, newOwnerId);
 	}
 
-	InvokeObjectPostAlterHook(DatabaseRelationId, HeapTupleGetOid(tuple), 0);
+	InvokeObjectPostAlterHook(DatabaseRelationId, db_id, 0);
 
 	ObjectAddressSet(address, DatabaseRelationId, db_id);
 
@@ -1770,7 +1770,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			break;
 		}
 
-		dbOid = HeapTupleGetOid(tuple);
+		dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
 
 		systable_endscan(scan);
 
@@ -1878,7 +1878,8 @@ remove_dbtablespaces(Oid db_id)
 	scan = heap_beginscan_catalog(rel, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid			dsttablespace = HeapTupleGetOid(tuple);
+		Form_pg_tablespace spcform = (Form_pg_tablespace) GETSTRUCT(tuple);
+		Oid			dsttablespace = spcform->oid;
 		char	   *dstpath;
 		struct stat st;
 
@@ -1945,7 +1946,8 @@ check_db_file_conflict(Oid db_id)
 	scan = heap_beginscan_catalog(rel, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid			dsttablespace = HeapTupleGetOid(tuple);
+		Form_pg_tablespace spcform = (Form_pg_tablespace) GETSTRUCT(tuple);
+		Oid			dsttablespace = spcform->oid;
 		char	   *dstpath;
 		struct stat st;
 
@@ -2030,7 +2032,7 @@ get_database_oid(const char *dbname, bool missing_ok)
 
 	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(dbtuple))
-		oid = HeapTupleGetOid(dbtuple);
+		oid = ((Form_pg_database)GETSTRUCT(dbtuple))->oid;
 	else
 		oid = InvalidOid;
 

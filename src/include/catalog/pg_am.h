@@ -28,6 +28,8 @@
  */
 CATALOG(pg_am,2601,AccessMethodRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* access method name */
 	NameData	amname;
 

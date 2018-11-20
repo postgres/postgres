@@ -184,9 +184,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("CONCURRENTLY and WITH NO DATA options cannot be used together")));
 
-	/* We don't allow an oid column for a materialized view. */
-	Assert(!matviewRel->rd_rel->relhasoids);
-
 	/*
 	 * Check that everything is correct for a refresh. Problems at this point
 	 * are internal errors, so elog is sufficient.
@@ -408,7 +405,7 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 								dest, NULL, NULL, 0);
 
 	/* call ExecutorStart to prepare the plan for execution */
-	ExecutorStart(queryDesc, EXEC_FLAG_WITHOUT_OIDS);
+	ExecutorStart(queryDesc, 0);
 
 	/* run the plan */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);

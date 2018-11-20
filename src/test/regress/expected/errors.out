@@ -103,8 +103,8 @@ ERROR:  column "nonesuchatt" does not exist
 alter table emp rename column salary to manager;
 ERROR:  column "manager" of relation "stud_emp" already exists
 -- conflict
-alter table emp rename column salary to oid;
-ERROR:  column name "oid" conflicts with a system column name
+alter table emp rename column salary to ctid;
+ERROR:  column name "ctid" conflicts with a system column name
 --
 -- TRANSACTION STUFF
 -- not in a xact

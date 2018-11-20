@@ -28,7 +28,7 @@
  *		typedef struct FormData_pg_replication_origin
  * ----------------
  */
-CATALOG(pg_replication_origin,6000,ReplicationOriginRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_replication_origin,6000,ReplicationOriginRelationId) BKI_SHARED_RELATION
 {
 	/*
 	 * Locally known id that get included into WAL.

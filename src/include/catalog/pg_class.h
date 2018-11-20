@@ -28,6 +28,7 @@
  */
 CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,RelationRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
+	Oid			oid;			/* oid */
 	NameData	relname;		/* class name */
 	Oid			relnamespace;	/* OID of namespace containing this class */
 	Oid			reltype;		/* OID of entry in pg_type for table's
@@ -57,7 +58,6 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	 * contain entries with negative attnums for system attributes.
 	 */
 	int16		relchecks;		/* # of CHECK constraints for class */
-	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhasrules;	/* has (or has had) any rules */
 	bool		relhastriggers; /* has (or has had) any TRIGGERs */
 	bool		relhassubclass; /* has (or has had) child tables or indexes */

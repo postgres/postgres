@@ -1583,7 +1583,7 @@ CREATE TABLE sql_features (
     is_supported        yes_or_no,
     is_verified_by      character_data,
     comments            character_data
-) WITHOUT OIDS;
+);
 
 -- Will be filled with external data by initdb.
 
@@ -1604,7 +1604,7 @@ CREATE TABLE sql_implementation_info (
     integer_value               cardinal_number,
     character_value             character_data,
     comments                    character_data
-) WITHOUT OIDS;
+);
 
 INSERT INTO sql_implementation_info VALUES ('10003', 'CATALOG NAME', NULL, 'Y', NULL);
 INSERT INTO sql_implementation_info VALUES ('10004', 'COLLATING SEQUENCE', NULL, (SELECT default_collate_name FROM character_sets), NULL);
@@ -1635,7 +1635,7 @@ CREATE TABLE sql_languages (
     sql_language_implementation character_data,
     sql_language_binding_style  character_data,
     sql_language_programming_language character_data
-) WITHOUT OIDS;
+);
 
 INSERT INTO sql_languages VALUES ('ISO 9075', '1999', 'CORE', NULL, NULL, 'DIRECT', NULL);
 INSERT INTO sql_languages VALUES ('ISO 9075', '1999', 'CORE', NULL, NULL, 'EMBEDDED', 'C');
@@ -1656,7 +1656,7 @@ CREATE TABLE sql_packages (
     is_supported    yes_or_no,
     is_verified_by  character_data,
     comments        character_data
-) WITHOUT OIDS;
+);
 
 INSERT INTO sql_packages VALUES ('PKG000', 'Core', 'NO', NULL, '');
 INSERT INTO sql_packages VALUES ('PKG001', 'Enhanced datetime facilities', 'YES', NULL, '');
@@ -1683,7 +1683,7 @@ CREATE TABLE sql_parts (
     is_supported    yes_or_no,
     is_verified_by  character_data,
     comments        character_data
-) WITHOUT OIDS;
+);
 
 INSERT INTO sql_parts VALUES ('1', 'Framework (SQL/Framework)', 'NO', NULL, '');
 INSERT INTO sql_parts VALUES ('2', 'Foundation (SQL/Foundation)', 'NO', NULL, '');
@@ -1708,7 +1708,7 @@ CREATE TABLE sql_sizing (
     sizing_name     character_data,
     supported_value cardinal_number,
     comments        character_data
-) WITHOUT OIDS;
+);
 
 INSERT INTO sql_sizing VALUES (34,    'MAXIMUM CATALOG NAME LENGTH', 63, NULL);
 INSERT INTO sql_sizing VALUES (30,    'MAXIMUM COLUMN NAME LENGTH', 63, NULL);
@@ -1757,7 +1757,7 @@ CREATE TABLE sql_sizing_profiles (
     profile_id      character_data,
     required_value  cardinal_number,
     comments        character_data
-) WITHOUT OIDS;
+);
 
 GRANT SELECT ON sql_sizing_profiles TO PUBLIC;
 

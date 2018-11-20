@@ -48,6 +48,8 @@
  */
 CATALOG(pg_opclass,2616,OperatorClassRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* index access method opclass is for */
 	Oid			opcmethod BKI_LOOKUP(pg_am);
 

@@ -843,7 +843,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	tgrel = heap_open(TriggerRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_trigger_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(trigid));
 
@@ -1883,7 +1883,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 	Relation	relation = heap_open(ConstraintRelationId, AccessShareLock);
 
 	ScanKeyInit(&scankey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_constraint_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(constraintId));
 
@@ -2930,11 +2930,10 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		HeapTuple	aggtup;
 		Form_pg_aggregate agg;
 
-		aggtup = SearchSysCache1(AGGFNOID,
-								 ObjectIdGetDatum(HeapTupleGetOid(proctup)));
+		aggtup = SearchSysCache1(AGGFNOID, proc->oid);
 		if (!HeapTupleIsValid(aggtup))
 			elog(ERROR, "cache lookup failed for aggregate %u",
-				 HeapTupleGetOid(proctup));
+				 proc->oid);
 		agg = (Form_pg_aggregate) GETSTRUCT(aggtup);
 		if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
 			insertorderbyat = agg->aggnumdirectargs;

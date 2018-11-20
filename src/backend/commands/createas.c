@@ -391,20 +391,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 int
 GetIntoRelEFlags(IntoClause *intoClause)
 {
-	int			flags;
-
-	/*
-	 * We need to tell the executor whether it has to produce OIDs or not,
-	 * because it doesn't have enough information to do so itself (since we
-	 * can't build the target relation until after ExecutorStart).
-	 *
-	 * Disallow the OIDS option for materialized views.
-	 */
-	if (interpretOidsOption(intoClause->options,
-							(intoClause->viewQuery == NULL)))
-		flags = EXEC_FLAG_WITH_OIDS;
-	else
-		flags = EXEC_FLAG_WITHOUT_OIDS;
+	int			flags = 0;
 
 	if (intoClause->skipData)
 		flags |= EXEC_FLAG_WITH_NO_DATA;
@@ -590,12 +577,6 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 	 * writable copy
 	 */
 	tuple = ExecCopySlotHeapTuple(slot);
-
-	/*
-	 * force assignment of new OID (see comments in ExecInsert)
-	 */
-	if (myState->rel->rd_rel->relhasoids)
-		HeapTupleSetOid(tuple, InvalidOid);
 
 	heap_insert(myState->rel,
 				tuple,

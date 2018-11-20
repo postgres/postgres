@@ -54,7 +54,10 @@ declare relnm text;
 begin
 for relnm, reloid, shared in
   select relname, oid, relisshared from pg_class
-  where relhasoids and oid < 16384 order by 1
+  where EXISTS(
+      SELECT * FROM pg_attribute
+      WHERE attrelid = pg_class.oid AND attname = 'oid')
+    and relkind = 'r' and oid < 16384 order by 1
 loop
   execute 'select min(oid) from ' || relnm into lowoid;
   continue when lowoid is null or lowoid >= 16384;

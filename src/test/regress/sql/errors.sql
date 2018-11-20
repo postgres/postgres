@@ -91,7 +91,7 @@ alter table emp rename column nonesuchatt to newnonesuchatt;
 alter table emp rename column salary to manager;
 
 -- conflict
-alter table emp rename column salary to oid;
+alter table emp rename column salary to ctid;
 
 
 --

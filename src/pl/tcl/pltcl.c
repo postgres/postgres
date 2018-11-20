@@ -307,8 +307,6 @@ static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[]);
 static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 					   int objc, Tcl_Obj *const objv[]);
-static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
-				  int objc, Tcl_Obj *const objv[]);
 static int pltcl_subtransaction(ClientData cdata, Tcl_Interp *interp,
 					 int objc, Tcl_Obj *const objv[]);
 static int pltcl_commit(ClientData cdata, Tcl_Interp *interp,
@@ -523,8 +521,6 @@ pltcl_init_interp(pltcl_interp_desc *interp_desc, Oid prolang, bool pltrusted)
 						 pltcl_SPI_prepare, NULL, NULL);
 	Tcl_CreateObjCommand(interp, "spi_execp",
 						 pltcl_SPI_execute_plan, NULL, NULL);
-	Tcl_CreateObjCommand(interp, "spi_lastoid",
-						 pltcl_SPI_lastoid, NULL, NULL);
 	Tcl_CreateObjCommand(interp, "subtransaction",
 						 pltcl_subtransaction, NULL, NULL);
 	Tcl_CreateObjCommand(interp, "commit",
@@ -2870,28 +2866,6 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	PG_END_TRY();
 
 	return my_rc;
-}
-
-
-/**********************************************************************
- * pltcl_SPI_lastoid()	- return the last oid. To
- *		  be used after insert queries
- **********************************************************************/
-static int
-pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
-				  int objc, Tcl_Obj *const objv[])
-{
-	/*
-	 * Check call syntax
-	 */
-	if (objc != 1)
-	{
-		Tcl_WrongNumArgs(interp, 1, objv, "");
-		return TCL_ERROR;
-	}
-
-	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(SPI_lastoid));
-	return TCL_OK;
 }
 
 

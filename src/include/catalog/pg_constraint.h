@@ -31,6 +31,8 @@
  */
 CATALOG(pg_constraint,2606,ConstraintRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/*
 	 * conname + connamespace is deliberately not unique; we allow, for
 	 * example, the same name to be used for constraints of different

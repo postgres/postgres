@@ -138,7 +138,7 @@ extern HeapTuple SearchSysCacheCopy(int cacheId,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
 extern bool SearchSysCacheExists(int cacheId,
 					 Datum key1, Datum key2, Datum key3, Datum key4);
-extern Oid GetSysCacheOid(int cacheId,
+extern Oid GetSysCacheOid(int cacheId, AttrNumber oidcol,
 			   Datum key1, Datum key2, Datum key3, Datum key4);
 
 extern HeapTuple SearchSysCacheAttName(Oid relid, const char *attname);
@@ -188,14 +188,14 @@ extern bool RelationSupportsSysCache(Oid relid);
 #define SearchSysCacheExists4(cacheId, key1, key2, key3, key4) \
 	SearchSysCacheExists(cacheId, key1, key2, key3, key4)
 
-#define GetSysCacheOid1(cacheId, key1) \
-	GetSysCacheOid(cacheId, key1, 0, 0, 0)
-#define GetSysCacheOid2(cacheId, key1, key2) \
-	GetSysCacheOid(cacheId, key1, key2, 0, 0)
-#define GetSysCacheOid3(cacheId, key1, key2, key3) \
-	GetSysCacheOid(cacheId, key1, key2, key3, 0)
-#define GetSysCacheOid4(cacheId, key1, key2, key3, key4) \
-	GetSysCacheOid(cacheId, key1, key2, key3, key4)
+#define GetSysCacheOid1(cacheId, oidcol, key1) \
+	GetSysCacheOid(cacheId, oidcol, key1, 0, 0, 0)
+#define GetSysCacheOid2(cacheId, oidcol, key1, key2) \
+	GetSysCacheOid(cacheId, oidcol, key1, key2, 0, 0)
+#define GetSysCacheOid3(cacheId, oidcol, key1, key2, key3) \
+	GetSysCacheOid(cacheId, oidcol, key1, key2, key3, 0)
+#define GetSysCacheOid4(cacheId, oidcol, key1, key2, key3, key4) \
+	GetSysCacheOid(cacheId, oidcol, key1, key2, key3, key4)
 
 #define GetSysCacheHashValue1(cacheId, key1) \
 	GetSysCacheHashValue(cacheId, key1, 0, 0, 0)

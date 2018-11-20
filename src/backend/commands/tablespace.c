@@ -327,6 +327,9 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	MemSet(nulls, false, sizeof(nulls));
 
+	tablespaceoid = GetNewOidWithIndex(rel, TablespaceOidIndexId,
+									   Anum_pg_tablespace_oid);
+	values[Anum_pg_tablespace_oid - 1] = ObjectIdGetDatum(tablespaceoid);
 	values[Anum_pg_tablespace_spcname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->tablespacename));
 	values[Anum_pg_tablespace_spcowner - 1] =
@@ -345,7 +348,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
-	tablespaceoid = CatalogTupleInsert(rel, tuple);
+	CatalogTupleInsert(rel, tuple);
 
 	heap_freetuple(tuple);
 
@@ -406,6 +409,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	HeapScanDesc scandesc;
 	Relation	rel;
 	HeapTuple	tuple;
+	Form_pg_tablespace spcform;
 	ScanKeyData entry[1];
 	Oid			tablespaceoid;
 
@@ -442,7 +446,8 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		return;
 	}
 
-	tablespaceoid = HeapTupleGetOid(tuple);
+	spcform = (Form_pg_tablespace) GETSTRUCT(tuple);
+	tablespaceoid = spcform->oid;
 
 	/* Must be tablespace owner */
 	if (!pg_tablespace_ownercheck(tablespaceoid, GetUserId()))
@@ -935,14 +940,14 @@ RenameTableSpace(const char *oldname, const char *newname)
 				 errmsg("tablespace \"%s\" does not exist",
 						oldname)));
 
-	tspId = HeapTupleGetOid(tup);
 	newtuple = heap_copytuple(tup);
 	newform = (Form_pg_tablespace) GETSTRUCT(newtuple);
+	tspId = newform->oid;
 
 	heap_endscan(scan);
 
 	/* Must be owner */
-	if (!pg_tablespace_ownercheck(HeapTupleGetOid(newtuple), GetUserId()))
+	if (!pg_tablespace_ownercheck(tspId, GetUserId()))
 		aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLESPACE, oldname);
 
 	/* Validate new name */
@@ -1015,10 +1020,10 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 				 errmsg("tablespace \"%s\" does not exist",
 						stmt->tablespacename)));
 
-	tablespaceoid = HeapTupleGetOid(tup);
+	tablespaceoid = ((Form_pg_tablespace) GETSTRUCT(tup))->oid;
 
 	/* Must be owner of the existing object */
-	if (!pg_tablespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+	if (!pg_tablespace_ownercheck(tablespaceoid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TABLESPACE,
 					   stmt->tablespacename);
 
@@ -1044,7 +1049,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 	/* Update system catalog. */
 	CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
 
-	InvokeObjectPostAlterHook(TableSpaceRelationId, HeapTupleGetOid(tup), 0);
+	InvokeObjectPostAlterHook(TableSpaceRelationId, tablespaceoid, 0);
 
 	heap_freetuple(newtuple);
 
@@ -1403,7 +1408,7 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 
 	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(tuple))
-		result = HeapTupleGetOid(tuple);
+		result = ((Form_pg_tablespace) GETSTRUCT(tuple))->oid;
 	else
 		result = InvalidOid;
 
@@ -1441,7 +1446,7 @@ get_tablespace_name(Oid spc_oid)
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_tablespace_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(spc_oid));
 	scandesc = heap_beginscan_catalog(rel, 1, entry);

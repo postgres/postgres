@@ -27,7 +27,7 @@
  *		typedef struct FormData_pg_partitioned_table
  * ----------------
  */
-CATALOG(pg_partitioned_table,3350,PartitionedRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_partitioned_table,3350,PartitionedRelationId)
 {
 	Oid			partrelid;		/* partitioned table oid */
 	char		partstrat;		/* partitioning strategy */

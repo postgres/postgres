@@ -63,7 +63,9 @@ main(int argc, char **argv)
 					  "pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
 					  "FROM pg_catalog.pg_class c "
 					  "WHERE c.relkind = " CppAsString2(RELKIND_RELATION)
-					  " AND c.relhasoids "
+					  " AND EXISTS(SELECT * FROM pg_attribute a"
+					  "            WHERE a.attrelid = c.oid AND a.attname = 'oid' "
+					  "                  AND a.atttypid = 'oid'::regtype)"
 					  "ORDER BY nspname, c.relname"
 		);
 

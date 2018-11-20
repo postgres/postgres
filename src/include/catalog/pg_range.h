@@ -26,7 +26,7 @@
  *		typedef struct FormData_pg_range
  * ----------------
  */
-CATALOG(pg_range,3541,RangeRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_range,3541,RangeRelationId)
 {
 	/* OID of owning range type */
 	Oid			rngtypid BKI_LOOKUP(pg_type);

@@ -402,21 +402,6 @@ NOTICE:  args: {42 {statement trigger}}
 ERROR:  argisnull cannot be used in triggers
 select trigger_data();
 ERROR:  trigger functions can only be called as triggers
--- Test spi_lastoid primitive
-create temp table t1 (f1 int);
-select tcl_lastoid('t1');
- tcl_lastoid 
--------------
-           0
-(1 row)
-
-create temp table t2 (f1 int) with oids;
-select tcl_lastoid('t2') > 0;
- ?column? 
-----------
- t
-(1 row)
-
 -- test some error cases
 create function tcl_error(out a int, out b int) as $$return {$$ language pltcl;
 select tcl_error();

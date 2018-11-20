@@ -639,6 +639,8 @@ AggregateCreate(const char *aggName,
 	/*
 	 * Okay to create the pg_aggregate entry.
 	 */
+	aggdesc = heap_open(AggregateRelationId, RowExclusiveLock);
+	tupDesc = aggdesc->rd_att;
 
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_aggregate; i++)
@@ -674,9 +676,6 @@ AggregateCreate(const char *aggName,
 		values[Anum_pg_aggregate_aggminitval - 1] = CStringGetTextDatum(aggminitval);
 	else
 		nulls[Anum_pg_aggregate_aggminitval - 1] = true;
-
-	aggdesc = heap_open(AggregateRelationId, RowExclusiveLock);
-	tupDesc = aggdesc->rd_att;
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
 	CatalogTupleInsert(aggdesc, tup);

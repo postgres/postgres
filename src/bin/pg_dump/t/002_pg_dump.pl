@@ -322,13 +322,6 @@ my %pgdump_runs = (
 
 			'--schema=dump_test', '-b', '-B', '--no-sync', 'postgres',
 		],
-	},
-	with_oids => {
-		dump_cmd => [
-			'pg_dump',   '--oids',
-			'--no-sync', "--file=$tempdir/with_oids.sql",
-			'postgres',
-		],
 	},);
 
 ###############################################################
@@ -387,8 +380,7 @@ my %full_runs = (
 	no_owner                 => 1,
 	no_privs                 => 1,
 	pg_dumpall_dbprivs       => 1,
-	schema_only              => 1,
-	with_oids                => 1,);
+	schema_only              => 1,);
 
 # This is where the actual tests are defined.
 my %tests = (
@@ -603,17 +595,6 @@ my %tests = (
 		},
 	},
 
-	'ALTER SEQUENCE test_third_table_col1_seq' => {
-		regexp => qr/^
-			\QALTER SEQUENCE dump_test_second_schema.test_third_table_col1_seq OWNED BY dump_test_second_schema.test_third_table.col1;\E
-			/xm,
-		like => {
-			%full_runs,
-			role             => 1,
-			section_pre_data => 1,
-		},
-	},
-
 	'ALTER TABLE ONLY test_table ADD CONSTRAINT ... PRIMARY KEY' => {
 		regexp => qr/^
 			\QALTER TABLE ONLY dump_test.test_table\E \n^\s+
@@ -816,17 +797,6 @@ my %tests = (
 			exclude_dump_test_schema => 1,
 			no_owner                 => 1,
 		},
-	},
-
-	'ALTER TABLE test_third_table OWNER TO' => {
-		regexp =>
-		  qr/^ALTER TABLE dump_test_second_schema.test_third_table OWNER TO .*;/m,
-		like => {
-			%full_runs,
-			role             => 1,
-			section_pre_data => 1,
-		},
-		unlike => { no_owner => 1, },
 	},
 
 	'ALTER TABLE measurement OWNER TO' => {
@@ -1247,37 +1217,6 @@ my %tests = (
 		},
 	},
 
-	'COPY test_third_table' => {
-		create_order => 12,
-		create_sql =>
-		  'INSERT INTO dump_test_second_schema.test_third_table (col1) '
-		  . 'SELECT generate_series FROM generate_series(1,9);',
-		regexp => qr/^
-			\QCOPY dump_test_second_schema.test_third_table (col1) FROM stdin;\E
-			\n(?:\d\n){9}\\\.\n
-			/xm,
-		like => {
-			%full_runs,
-			data_only    => 1,
-			role         => 1,
-			section_data => 1,
-		},
-		unlike => {
-			binary_upgrade          => 1,
-			exclude_test_table_data => 1,
-			schema_only             => 1,
-			with_oids               => 1,
-		},
-	},
-
-	'COPY test_third_table WITH OIDS' => {
-		regexp => qr/^
-			\QCOPY dump_test_second_schema.test_third_table (col1) WITH OIDS FROM stdin;\E
-			\n(?:\d+\t\d\n){9}\\\.\n
-			/xm,
-		like => { with_oids => 1, },
-	},
-
 	'COPY test_fourth_table' => {
 		create_order => 7,
 		create_sql =>
@@ -1352,13 +1291,6 @@ my %tests = (
 		regexp => qr/^
 			(?:INSERT\ INTO\ dump_test.test_second_table\ \(col1,\ col2\)
 			   \ VALUES\ \(\d,\ '\d'\);\n){9}/xm,
-		like => { column_inserts => 1, },
-	},
-
-	'INSERT INTO test_third_table' => {
-		regexp => qr/^
-			(?:INSERT\ INTO\ dump_test_second_schema.test_third_table\ \(col1\)
-			   \ VALUES\ \(\d\);\n){9}/xm,
 		like => { column_inserts => 1, },
 	},
 
@@ -2283,34 +2215,6 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
-	'CREATE UNLOGGED TABLE test_third_table WITH OIDS' => {
-		create_order => 11,
-		create_sql =>
-		  'CREATE UNLOGGED TABLE dump_test_second_schema.test_third_table (
-						   col1 serial
-					   ) WITH OIDS;',
-		regexp => qr/^
-			\QSET default_with_oids = true;\E\n\n
-			\Q--\E\n
-			(\Q-- TOC entry \E[0-9]+\ \(class\ 1259\ OID\ [0-9]+\)\n)?
-			\Q-- Name: test_third_table;\E.*\n
-			\Q--\E\n\n
-			\QCREATE UNLOGGED TABLE dump_test_second_schema.test_third_table (\E
-			\n\s+\Qcol1 integer NOT NULL\E
-			\n\);\n
-			/xm,
-		like => {
-			%full_runs,
-			role             => 1,
-			section_pre_data => 1,
-		},
-		unlike => {
-
-			# FIXME figure out why/how binary upgrade drops OIDs.
-			binary_upgrade => 1,
-		},
-	},
-
 	'CREATE TABLE measurement PARTITIONED BY' => {
 		create_order => 90,
 		create_sql   => 'CREATE TABLE dump_test.measurement (
@@ -2463,38 +2367,6 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
-	'CREATE SEQUENCE test_third_table_col1_seq' => {
-		regexp => qr/^
-			\QCREATE SEQUENCE dump_test_second_schema.test_third_table_col1_seq\E
-			\n\s+\QAS integer\E
-			\n\s+\QSTART WITH 1\E
-			\n\s+\QINCREMENT BY 1\E
-			\n\s+\QNO MINVALUE\E
-			\n\s+\QNO MAXVALUE\E
-			\n\s+\QCACHE 1;\E
-			/xm,
-		like => {
-			%full_runs,
-			role             => 1,
-			section_pre_data => 1,
-		},
-	},
-
-	'CREATE UNIQUE INDEX test_third_table_idx ON test_third_table' => {
-		create_order => 13,
-		create_sql   => 'CREATE UNIQUE INDEX test_third_table_idx
-					   ON dump_test_second_schema.test_third_table (col1);',
-		regexp => qr/^
-			\QCREATE UNIQUE INDEX test_third_table_idx \E
-			\QON dump_test_second_schema.test_third_table USING btree (col1);\E
-			/xm,
-		like => {
-			%full_runs,
-			role              => 1,
-			section_post_data => 1,
-		},
-	},
-
 	'CREATE INDEX ON ONLY measurement' => {
 		create_order => 92,
 		create_sql =>
@@ -2518,7 +2390,6 @@ my %tests = (
 			schema_only             => 1,
 			section_post_data       => 1,
 			test_schema_plus_blobs  => 1,
-			with_oids               => 1,
 		},
 		unlike => {
 			exclude_dump_test_schema => 1,
@@ -2589,7 +2460,6 @@ my %tests = (
 			role                     => 1,
 			schema_only              => 1,
 			section_post_data        => 1,
-			with_oids                => 1,
 		},
 		unlike => {
 			only_dump_test_schema    => 1,
@@ -2692,11 +2562,6 @@ my %tests = (
 		like   => { clean => 1, },
 	},
 
-	'DROP TABLE test_third_table' => {
-		regexp => qr/^DROP TABLE dump_test_second_schema\.test_third_table;/m,
-		like   => { clean => 1, },
-	},
-
 	'DROP EXTENSION IF EXISTS plpgsql' => {
 		regexp => qr/^DROP EXTENSION IF EXISTS plpgsql;/m,
 
@@ -2734,13 +2599,6 @@ my %tests = (
 	'DROP TABLE IF EXISTS test_second_table' => {
 		regexp => qr/^DROP TABLE IF EXISTS dump_test\.test_second_table;/m,
 		like   => { clean_if_exists => 1, },
-	},
-
-	'DROP TABLE IF EXISTS test_third_table' => {
-		regexp => qr/^
-			\QDROP TABLE IF EXISTS dump_test_second_schema.test_third_table;\E
-			/xm,
-		like => { clean_if_exists => 1, },
 	},
 
 	'DROP ROLE regress_dump_test_role' => {
@@ -2883,37 +2741,6 @@ my %tests = (
 			exclude_test_table       => 1,
 			no_privs                 => 1,
 		},
-	},
-
-	'GRANT SELECT ON TABLE test_third_table' => {
-		create_order => 19,
-		create_sql   => 'GRANT SELECT ON
-						   TABLE dump_test_second_schema.test_third_table
-						   TO regress_dump_test_role;',
-		regexp =>
-		  qr/^GRANT SELECT ON TABLE dump_test_second_schema.test_third_table TO regress_dump_test_role;/m,
-		like => {
-			%full_runs,
-			role             => 1,
-			section_pre_data => 1,
-		},
-		unlike => { no_privs => 1, },
-	},
-
-	'GRANT ALL ON SEQUENCE test_third_table_col1_seq' => {
-		create_order => 28,
-		create_sql   => 'GRANT ALL ON SEQUENCE
-						   dump_test_second_schema.test_third_table_col1_seq
-						   TO regress_dump_test_role;',
-		regexp => qr/^
-			\QGRANT ALL ON SEQUENCE dump_test_second_schema.test_third_table_col1_seq TO regress_dump_test_role;\E
-			/xm,
-		like => {
-			%full_runs,
-			role             => 1,
-			section_pre_data => 1,
-		},
-		unlike => { no_privs => 1, },
 	},
 
 	'GRANT SELECT ON TABLE measurement' => {

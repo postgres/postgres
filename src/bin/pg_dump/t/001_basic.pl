@@ -4,7 +4,7 @@ use warnings;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 72;
+use Test::More tests => 70;
 
 my $tempdir       = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
@@ -69,12 +69,6 @@ command_fails_like(
 	[ 'pg_restore', '-c', '-a' ],
 	qr/\Qpg_restore: options -c\/--clean and -a\/--data-only cannot be used together\E/,
 	'pg_restore: options -c/--clean and -a/--data-only cannot be used together'
-);
-
-command_fails_like(
-	[ 'pg_dump', '--inserts', '-o' ],
-	qr/\Qpg_dump: options --inserts\/--column-inserts and -o\/--oids cannot be used together\E/,
-	'pg_dump: options --inserts/--column-inserts and -o/--oids cannot be used together'
 );
 
 command_fails_like(

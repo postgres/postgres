@@ -741,9 +741,6 @@ ER_get_flat_size(ExpandedObjectHeader *eohptr)
 	if (hasnull)
 		len += BITMAPLEN(tupdesc->natts);
 
-	if (tupdesc->tdhasoid)
-		len += sizeof(Oid);
-
 	hoff = len = MAXALIGN(len); /* align user data safely */
 
 	data_len = heap_compute_data_size(tupdesc, erh->dvalues, erh->dnulls);
@@ -803,9 +800,6 @@ ER_flatten_into(ExpandedObjectHeader *eohptr,
 
 	HeapTupleHeaderSetNatts(tuphdr, tupdesc->natts);
 	tuphdr->t_hoff = erh->hoff;
-
-	if (tupdesc->tdhasoid)		/* else leave infomask = 0 */
-		tuphdr->t_infomask = HEAP_HASOID;
 
 	/* And fill the data area from dvalues/dnulls */
 	heap_fill_tuple(tupdesc,
@@ -1045,7 +1039,7 @@ expanded_record_lookup_field(ExpandedRecordHeader *erh, const char *fieldname,
 	}
 
 	/* How about system attributes? */
-	sysattr = SystemAttributeByName(fieldname, tupdesc->tdhasoid);
+	sysattr = SystemAttributeByName(fieldname);
 	if (sysattr != NULL)
 	{
 		finfo->fnumber = sysattr->attnum;

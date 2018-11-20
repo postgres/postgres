@@ -42,6 +42,8 @@
  */
 CATALOG(pg_amproc,2603,AccessMethodProcedureRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* the index opfamily this entry is for */
 	Oid			amprocfamily BKI_LOOKUP(pg_opfamily);
 

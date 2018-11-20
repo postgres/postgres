@@ -138,13 +138,9 @@ convert_tuples_by_position(TupleDesc indesc,
 
 	/*
 	 * Check to see if the map is one-to-one, in which case we need not do a
-	 * tuple conversion.  We must also insist that both tupdescs either
-	 * specify or don't specify an OID column, else we need a conversion to
-	 * add/remove space for that.  (For some callers, presence or absence of
-	 * an OID column perhaps would not really matter, but let's be safe.)
+	 * tuple conversion.
 	 */
-	if (indesc->natts == outdesc->natts &&
-		indesc->tdhasoid == outdesc->tdhasoid)
+	if (indesc->natts == outdesc->natts)
 	{
 		for (i = 0; i < n; i++)
 		{
@@ -344,13 +340,9 @@ convert_tuples_by_name_map_if_req(TupleDesc indesc,
 
 	/*
 	 * Check to see if the map is one-to-one, in which case we need not do a
-	 * tuple conversion.  We must also insist that both tupdescs either
-	 * specify or don't specify an OID column, else we need a conversion to
-	 * add/remove space for that.  (For some callers, presence or absence of
-	 * an OID column perhaps would not really matter, but let's be safe.)
+	 * tuple conversion.
 	 */
-	if (indesc->natts == outdesc->natts &&
-		indesc->tdhasoid == outdesc->tdhasoid)
+	if (indesc->natts == outdesc->natts)
 	{
 		same = true;
 		for (i = 0; i < n; i++)

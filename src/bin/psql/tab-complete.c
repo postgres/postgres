@@ -1884,9 +1884,6 @@ psql_completion(const char *text, int start, int end)
 	 */
 	else if (Matches("ALTER", "TABLE", MatchAny, "SET", "TABLESPACE"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
-	/* If we have ALTER TABLE <sth> SET WITH provide OIDS */
-	else if (Matches("ALTER", "TABLE", MatchAny, "SET", "WITH"))
-		COMPLETE_WITH("OIDS");
 	/* If we have ALTER TABLE <sth> SET WITHOUT provide CLUSTER or OIDS */
 	else if (Matches("ALTER", "TABLE", MatchAny, "SET", "WITHOUT"))
 		COMPLETE_WITH("CLUSTER", "OIDS");
@@ -2155,7 +2152,7 @@ psql_completion(const char *text, int start, int end)
 	/* Handle COPY [BINARY] <sth> FROM|TO filename */
 	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO", MatchAny) ||
 			 Matches("COPY", "BINARY", MatchAny, "FROM|TO", MatchAny))
-		COMPLETE_WITH("BINARY", "OIDS", "DELIMITER", "NULL", "CSV",
+		COMPLETE_WITH("BINARY", "DELIMITER", "NULL", "CSV",
 					  "ENCODING");
 
 	/* Handle COPY [BINARY] <sth> FROM|TO filename CSV */

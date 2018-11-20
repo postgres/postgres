@@ -30,8 +30,8 @@ SELECT srvname, srvoptions FROM pg_foreign_server;
 (0 rows)
 
 SELECT * FROM pg_user_mapping;
- umuser | umserver | umoptions 
---------+----------+-----------
+ oid | umuser | umserver | umoptions 
+-----+--------+----------+-----------
 (0 rows)
 
 -- CREATE FOREIGN DATA WRAPPER
@@ -684,10 +684,6 @@ LINE 1: CREATE FOREIGN TABLE ft1 ();
                                    ^
 CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
 ERROR:  server "no_server" does not exist
-CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;                -- ERROR
-ERROR:  syntax error at or near "WITH"
-LINE 1: CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;
-                                              ^
 CREATE FOREIGN TABLE ft1 (
 	c1 integer OPTIONS ("param 1" 'val1') PRIMARY KEY,
 	c2 text OPTIONS (param2 'val2', param3 'val3'),
@@ -822,7 +818,6 @@ ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
 ERROR:  constraint "no_const" of relation "ft1" does not exist
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
 NOTICE:  constraint "no_const" of relation "ft1" does not exist, skipping
-ALTER FOREIGN TABLE ft1 SET WITH OIDS;
 ALTER FOREIGN TABLE ft1 OWNER TO regress_test_role;
 ALTER FOREIGN TABLE ft1 OPTIONS (DROP delimiter, SET quote '~', ADD escape '@');
 ALTER FOREIGN TABLE ft1 DROP COLUMN no_column;                  -- ERROR
@@ -1725,63 +1720,6 @@ Server: s0
 FDW options: (delimiter ',', quote '"', "be quoted" 'value')
 Inherits: fd_pt1
 
--- OID system column
-ALTER TABLE fd_pt1 SET WITH OIDS;
-\d+ fd_pt1
-                                   Table "public.fd_pt1"
- Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
---------+---------+-----------+----------+---------+----------+--------------+-------------
- c1     | integer |           | not null |         | plain    | 10000        | 
- c2     | text    |           |          |         | extended |              | 
- c3     | date    |           |          |         | plain    |              | 
-Check constraints:
-    "fd_pt1chk3" CHECK (c2 <> ''::text)
-Child tables: ft2
-Has OIDs: yes
-
-\d+ ft2
-                                       Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
---------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
- c1     | integer |           | not null |         |             | plain    |              | 
- c2     | text    |           |          |         |             | extended |              | 
- c3     | date    |           |          |         |             | plain    |              | 
-Check constraints:
-    "fd_pt1chk2" CHECK (c2 <> ''::text)
-    "fd_pt1chk3" CHECK (c2 <> ''::text)
-Server: s0
-FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
-Has OIDs: yes
-
-ALTER TABLE ft2 SET WITHOUT OIDS;  -- ERROR
-ERROR:  cannot drop inherited column "oid"
-ALTER TABLE fd_pt1 SET WITHOUT OIDS;
-\d+ fd_pt1
-                                   Table "public.fd_pt1"
- Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
---------+---------+-----------+----------+---------+----------+--------------+-------------
- c1     | integer |           | not null |         | plain    | 10000        | 
- c2     | text    |           |          |         | extended |              | 
- c3     | date    |           |          |         | plain    |              | 
-Check constraints:
-    "fd_pt1chk3" CHECK (c2 <> ''::text)
-Child tables: ft2
-
-\d+ ft2
-                                       Foreign table "public.ft2"
- Column |  Type   | Collation | Nullable | Default | FDW options | Storage  | Stats target | Description 
---------+---------+-----------+----------+---------+-------------+----------+--------------+-------------
- c1     | integer |           | not null |         |             | plain    |              | 
- c2     | text    |           |          |         |             | extended |              | 
- c3     | date    |           |          |         |             | plain    |              | 
-Check constraints:
-    "fd_pt1chk2" CHECK (c2 <> ''::text)
-    "fd_pt1chk3" CHECK (c2 <> ''::text)
-Server: s0
-FDW options: (delimiter ',', quote '"', "be quoted" 'value')
-Inherits: fd_pt1
-
 -- changes name of an attribute recursively
 ALTER TABLE fd_pt1 RENAME COLUMN c1 TO f1;
 ALTER TABLE fd_pt1 RENAME COLUMN c2 TO f2;
@@ -2097,7 +2035,7 @@ SELECT srvname, srvoptions FROM pg_foreign_server;
 (0 rows)
 
 SELECT * FROM pg_user_mapping;
- umuser | umserver | umoptions 
---------+----------+-----------
+ oid | umuser | umserver | umoptions 
+-----+--------+----------+-----------
 (0 rows)
 

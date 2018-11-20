@@ -439,20 +439,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-o</option></term>
-      <term><option>--oids</option></term>
-      <listitem>
-       <para>
-        Dump object identifiers (<acronym>OID</acronym>s) as part of the
-        data for every table.  Use this option if your application references
-        the <acronym>OID</acronym>
-        columns in some way (e.g., in a foreign key constraint).
-        Otherwise, this option should not be used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-O</option></term>
       <term><option>--no-owner</option></term>
       <listitem>

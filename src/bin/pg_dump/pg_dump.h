@@ -350,7 +350,6 @@ typedef struct _tableDataInfo
 {
 	DumpableObject dobj;
 	TableInfo  *tdtable;		/* link to table to dump */
-	bool		oids;			/* include OIDs in data? */
 	char	   *filtercond;		/* WHERE condition to limit rows dumped */
 } TableDataInfo;
 

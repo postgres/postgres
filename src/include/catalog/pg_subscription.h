@@ -38,6 +38,8 @@
  */
 CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(6101,SubscriptionRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
+	Oid			oid;			/* oid */
+
 	Oid			subdbid;		/* Database the subscription is in. */
 	NameData	subname;		/* Name of the subscription */
 

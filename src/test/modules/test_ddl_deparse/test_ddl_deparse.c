@@ -195,12 +195,6 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_SetUnLogged:
 				strtype = "SET UNLOGGED";
 				break;
-			case AT_AddOids:
-				strtype = "ADD OIDS";
-				break;
-			case AT_AddOidsRecurse:
-				strtype = "ADD OIDS (and recurse)";
-				break;
 			case AT_DropOids:
 				strtype = "DROP OIDS";
 				break;

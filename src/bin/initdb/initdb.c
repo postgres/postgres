@@ -1710,7 +1710,7 @@ setup_description(FILE *cmdfd)
 				"	objoid oid, "
 				"	classname name, "
 				"	objsubid int4, "
-				"	description text) WITHOUT OIDS;\n\n");
+				"	description text);\n\n");
 
 	PG_CMD_PRINTF1("COPY tmp_pg_description FROM E'%s';\n\n",
 				   escape_quotes(desc_file));
@@ -1723,7 +1723,7 @@ setup_description(FILE *cmdfd)
 	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_shdescription ( "
 				" objoid oid, "
 				" classname name, "
-				" description text) WITHOUT OIDS;\n\n");
+				" description text);\n\n");
 
 	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM E'%s';\n\n",
 				   escape_quotes(shdesc_file));
@@ -1766,7 +1766,8 @@ setup_collation(FILE *cmdfd)
 	 * in pg_collation.h.  But add it before reading system collations, so
 	 * that it wins if libc defines a locale named ucs_basic.
 	 */
-	PG_CMD_PRINTF3("INSERT INTO pg_collation (collname, collnamespace, collowner, collprovider, collencoding, collcollate, collctype) VALUES ('ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', %d, 'C', 'C');\n\n",
+	PG_CMD_PRINTF3("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collencoding, collcollate, collctype)"
+				   "VALUES (pg_nextoid('pg_catalog.pg_collation', 'oid', 'pg_catalog.pg_collation_oid_index'), 'ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', %d, 'C', 'C');\n\n",
 				   BOOTSTRAP_SUPERUSERID, COLLPROVIDER_LIBC, PG_UTF8);
 
 	/* Now import all collations we can find in the operating system */

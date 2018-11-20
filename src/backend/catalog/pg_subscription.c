@@ -168,8 +168,8 @@ get_subscription_oid(const char *subname, bool missing_ok)
 {
 	Oid			oid;
 
-	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, MyDatabaseId,
-						  CStringGetDatum(subname));
+	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
+						  MyDatabaseId, CStringGetDatum(subname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -236,13 +236,12 @@ textarray_to_stringlist(ArrayType *textarray)
 /*
  * Add new state record for a subscription table.
  */
-Oid
+void
 AddSubscriptionRelState(Oid subid, Oid relid, char state,
 						XLogRecPtr sublsn)
 {
 	Relation	rel;
 	HeapTuple	tup;
-	Oid			subrelid;
 	bool		nulls[Natts_pg_subscription_rel];
 	Datum		values[Natts_pg_subscription_rel];
 
@@ -272,26 +271,23 @@ AddSubscriptionRelState(Oid subid, Oid relid, char state,
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	/* Insert tuple into catalog. */
-	subrelid = CatalogTupleInsert(rel, tup);
+	CatalogTupleInsert(rel, tup);
 
 	heap_freetuple(tup);
 
 	/* Cleanup. */
 	heap_close(rel, NoLock);
-
-	return subrelid;
 }
 
 /*
  * Update the state of a subscription table.
  */
-Oid
+void
 UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
 						   XLogRecPtr sublsn)
 {
 	Relation	rel;
 	HeapTuple	tup;
-	Oid			subrelid;
 	bool		nulls[Natts_pg_subscription_rel];
 	Datum		values[Natts_pg_subscription_rel];
 	bool		replaces[Natts_pg_subscription_rel];
@@ -328,12 +324,8 @@ UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
 	/* Update the catalog. */
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
 
-	subrelid = HeapTupleGetOid(tup);
-
 	/* Cleanup. */
 	heap_close(rel, NoLock);
-
-	return subrelid;
 }
 
 /*

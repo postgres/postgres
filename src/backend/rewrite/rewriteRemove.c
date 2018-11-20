@@ -53,7 +53,7 @@ RemoveRewriteRuleById(Oid ruleOid)
 	 * Find the tuple for the target rule.
 	 */
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_rewrite_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(ruleOid));
 

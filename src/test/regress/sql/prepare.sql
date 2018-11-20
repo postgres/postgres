@@ -36,21 +36,21 @@ PREPARE q2(text) AS
 
 EXECUTE q2('postgres');
 
-PREPARE q3(text, int, float, boolean, oid, smallint) AS
+PREPARE q3(text, int, float, boolean, smallint) AS
 	SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR
-	ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int)
+	ten = $3::bigint OR true = $4 OR odd = $5::int)
 	ORDER BY unique1;
 
-EXECUTE q3('AAAAxx', 5::smallint, 10.5::float, false, 500::oid, 4::bigint);
+EXECUTE q3('AAAAxx', 5::smallint, 10.5::float, false, 4::bigint);
 
 -- too few params
 EXECUTE q3('bool');
 
 -- too many params
-EXECUTE q3('bytea', 5::smallint, 10.5::float, false, 500::oid, 4::bigint, true);
+EXECUTE q3('bytea', 5::smallint, 10.5::float, false, 4::bigint, true);
 
 -- wrong param types
-EXECUTE q3(5::smallint, 10.5::float, false, 500::oid, 4::bigint, 'bytea');
+EXECUTE q3(5::smallint, 10.5::float, false, 4::bigint, 'bytea');
 
 -- invalid type
 PREPARE q4(nonexistenttype) AS SELECT $1;

@@ -344,7 +344,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 * startup tuple receiver, if we will be emitting tuples
 	 */
 	estate->es_processed = 0;
-	estate->es_lastoid = InvalidOid;
 
 	sendTuples = (operation == CMD_SELECT ||
 				  queryDesc->plannedstmt->hasReturning);
@@ -1056,7 +1055,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 			slot = ExecInitExtraTupleSlot(estate, NULL, &TTSOpsVirtual);
 			j = ExecInitJunkFilter(planstate->plan->targetlist,
-								   tupType->tdhasoid,
 								   slot);
 			estate->es_junkFilter = j;
 
@@ -1475,68 +1473,6 @@ ExecCleanUpTriggerState(EState *estate)
 
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 	}
-}
-
-/*
- *		ExecContextForcesOids
- *
- * This is pretty grotty: when doing INSERT, UPDATE, or CREATE TABLE AS,
- * we need to ensure that result tuples have space for an OID iff they are
- * going to be stored into a relation that has OIDs.  In other contexts
- * we are free to choose whether to leave space for OIDs in result tuples
- * (we generally don't want to, but we do if a physical-tlist optimization
- * is possible).  This routine checks the plan context and returns true if the
- * choice is forced, false if the choice is not forced.  In the true case,
- * *hasoids is set to the required value.
- *
- * One reason this is ugly is that all plan nodes in the plan tree will emit
- * tuples with space for an OID, though we really only need the topmost node
- * to do so.  However, node types like Sort don't project new tuples but just
- * return their inputs, and in those cases the requirement propagates down
- * to the input node.  Eventually we might make this code smart enough to
- * recognize how far down the requirement really goes, but for now we just
- * make all plan nodes do the same thing if the top level forces the choice.
- *
- * We assume that if we are generating tuples for INSERT or UPDATE,
- * estate->es_result_relation_info is already set up to describe the target
- * relation.  Note that in an UPDATE that spans an inheritance tree, some of
- * the target relations may have OIDs and some not.  We have to make the
- * decisions on a per-relation basis as we initialize each of the subplans of
- * the ModifyTable node, so ModifyTable has to set es_result_relation_info
- * while initializing each subplan.
- *
- * CREATE TABLE AS is even uglier, because we don't have the target relation's
- * descriptor available when this code runs; we have to look aside at the
- * flags passed to ExecutorStart().
- */
-bool
-ExecContextForcesOids(PlanState *planstate, bool *hasoids)
-{
-	ResultRelInfo *ri = planstate->state->es_result_relation_info;
-
-	if (ri != NULL)
-	{
-		Relation	rel = ri->ri_RelationDesc;
-
-		if (rel != NULL)
-		{
-			*hasoids = rel->rd_rel->relhasoids;
-			return true;
-		}
-	}
-
-	if (planstate->state->es_top_eflags & EXEC_FLAG_WITH_OIDS)
-	{
-		*hasoids = true;
-		return true;
-	}
-	if (planstate->state->es_top_eflags & EXEC_FLAG_WITHOUT_OIDS)
-	{
-		*hasoids = false;
-		return true;
-	}
-
-	return false;
 }
 
 /* ----------------------------------------------------------------

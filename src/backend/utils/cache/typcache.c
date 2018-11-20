@@ -2351,7 +2351,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 			maxitems *= 2;
 			items = (EnumItem *) repalloc(items, sizeof(EnumItem) * maxitems);
 		}
-		items[numitems].enum_oid = HeapTupleGetOid(enum_tuple);
+		items[numitems].enum_oid = en->oid;
 		items[numitems].sort_order = en->enumsortorder;
 		numitems++;
 	}

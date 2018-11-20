@@ -16,6 +16,7 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -382,7 +383,7 @@ ProcedureCreate(const char *procedureName,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
 					 errmsg("function \"%s\" already exists with same argument types",
 							procedureName)));
-		if (!pg_proc_ownercheck(HeapTupleGetOid(oldtup), proowner))
+		if (!pg_proc_ownercheck(oldproc->oid, proowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 						   procedureName);
 
@@ -421,7 +422,7 @@ ProcedureCreate(const char *procedureName,
 					 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
 					 errhint("Use %s %s first.",
 							 dropcmd,
-							 format_procedure(HeapTupleGetOid(oldtup)))));
+							 format_procedure(oldproc->oid))));
 
 		/*
 		 * If it returns RECORD, check for possible change of record type
@@ -448,7 +449,7 @@ ProcedureCreate(const char *procedureName,
 						 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
 						 errhint("Use %s %s first.",
 								 dropcmd,
-								 format_procedure(HeapTupleGetOid(oldtup)))));
+								 format_procedure(oldproc->oid))));
 		}
 
 		/*
@@ -493,7 +494,7 @@ ProcedureCreate(const char *procedureName,
 							 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
 							 errhint("Use %s %s first.",
 									 dropcmd,
-									 format_procedure(HeapTupleGetOid(oldtup)))));
+									 format_procedure(oldproc->oid))));
 			}
 		}
 
@@ -519,7 +520,7 @@ ProcedureCreate(const char *procedureName,
 						 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
 						 errhint("Use %s %s first.",
 								 dropcmd,
-								 format_procedure(HeapTupleGetOid(oldtup)))));
+								 format_procedure(oldproc->oid))));
 
 			proargdefaults = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
 											 Anum_pg_proc_proargdefaults,
@@ -547,15 +548,16 @@ ProcedureCreate(const char *procedureName,
 							 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
 							 errhint("Use %s %s first.",
 									 dropcmd,
-									 format_procedure(HeapTupleGetOid(oldtup)))));
+									 format_procedure(oldproc->oid))));
 				newlc = lnext(newlc);
 			}
 		}
 
 		/*
-		 * Do not change existing ownership or permissions, either.  Note
+		 * Do not change existing oid, ownership or permissions, either.  Note
 		 * dependency-update code below has to agree with this decision.
 		 */
+		replaces[Anum_pg_proc_oid - 1] = false;
 		replaces[Anum_pg_proc_proowner - 1] = false;
 		replaces[Anum_pg_proc_proacl - 1] = false;
 
@@ -569,6 +571,7 @@ ProcedureCreate(const char *procedureName,
 	else
 	{
 		/* Creating a new procedure */
+		Oid		newOid;
 
 		/* First, get default permissions and set up proacl */
 		proacl = get_user_default_acl(OBJECT_FUNCTION, proowner,
@@ -578,13 +581,16 @@ ProcedureCreate(const char *procedureName,
 		else
 			nulls[Anum_pg_proc_proacl - 1] = true;
 
+		newOid = GetNewOidWithIndex(rel, ProcedureOidIndexId,
+									Anum_pg_proc_oid);
+		values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(newOid);
 		tup = heap_form_tuple(tupDesc, values, nulls);
 		CatalogTupleInsert(rel, tup);
 		is_update = false;
 	}
 
 
-	retval = HeapTupleGetOid(tup);
+	retval = ((Form_pg_proc) GETSTRUCT(tup))->oid;
 
 	/*
 	 * Create dependencies for the new function.  If we are updating an

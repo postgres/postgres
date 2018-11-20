@@ -19,12 +19,11 @@
  * Attribute numbers for the system-defined attributes
  */
 #define SelfItemPointerAttributeNumber			(-1)
-#define ObjectIdAttributeNumber					(-2)
-#define MinTransactionIdAttributeNumber			(-3)
-#define MinCommandIdAttributeNumber				(-4)
-#define MaxTransactionIdAttributeNumber			(-5)
-#define MaxCommandIdAttributeNumber				(-6)
-#define TableOidAttributeNumber					(-7)
-#define FirstLowInvalidHeapAttributeNumber		(-8)
+#define MinTransactionIdAttributeNumber			(-2)
+#define MinCommandIdAttributeNumber				(-3)
+#define MaxTransactionIdAttributeNumber			(-4)
+#define MaxCommandIdAttributeNumber				(-5)
+#define TableOidAttributeNumber					(-6)
+#define FirstLowInvalidHeapAttributeNumber		(-7)
 
 #endif							/* SYSATTR_H */

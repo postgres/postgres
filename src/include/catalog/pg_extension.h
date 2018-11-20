@@ -28,6 +28,7 @@
  */
 CATALOG(pg_extension,3079,ExtensionRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	extname;		/* extension name */
 	Oid			extowner;		/* extension owner */
 	Oid			extnamespace;	/* namespace of contained objects */

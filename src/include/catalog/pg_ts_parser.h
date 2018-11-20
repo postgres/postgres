@@ -28,6 +28,8 @@
  */
 CATALOG(pg_ts_parser,3601,TSParserRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* parser's name */
 	NameData	prsname;
 

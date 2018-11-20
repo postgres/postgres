@@ -15,6 +15,7 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -391,6 +392,9 @@ insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtO
 	tgrel = heap_open(EventTriggerRelationId, RowExclusiveLock);
 
 	/* Build the new pg_trigger tuple. */
+	trigoid = GetNewOidWithIndex(tgrel, EventTriggerOidIndexId,
+								 Anum_pg_event_trigger_oid);
+	values[Anum_pg_event_trigger_oid - 1] = ObjectIdGetDatum(trigoid);
 	memset(nulls, false, sizeof(nulls));
 	namestrcpy(&evtnamedata, trigname);
 	values[Anum_pg_event_trigger_evtname - 1] = NameGetDatum(&evtnamedata);
@@ -408,7 +412,7 @@ insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtO
 
 	/* Insert heap tuple. */
 	tuple = heap_form_tuple(tgrel->rd_att, values, nulls);
-	trigoid = CatalogTupleInsert(tgrel, tuple);
+	CatalogTupleInsert(tgrel, tuple);
 	heap_freetuple(tuple);
 
 	/* Depend on owner. */
@@ -516,14 +520,14 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 				 errmsg("event trigger \"%s\" does not exist",
 						stmt->trigname)));
 
-	trigoid = HeapTupleGetOid(tup);
+	evtForm = (Form_pg_event_trigger) GETSTRUCT(tup);
+	trigoid = evtForm->oid;
 
 	if (!pg_event_trigger_ownercheck(trigoid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_EVENT_TRIGGER,
 					   stmt->trigname);
 
 	/* tuple is a copy, so we can modify it below */
-	evtForm = (Form_pg_event_trigger) GETSTRUCT(tup);
 	evtForm->evtenabled = tgenabled;
 
 	CatalogTupleUpdate(tgrel, &tup->t_self, tup);
@@ -546,6 +550,7 @@ AlterEventTriggerOwner(const char *name, Oid newOwnerId)
 {
 	Oid			evtOid;
 	HeapTuple	tup;
+	Form_pg_event_trigger evtForm;
 	Relation	rel;
 	ObjectAddress address;
 
@@ -558,7 +563,8 @@ AlterEventTriggerOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("event trigger \"%s\" does not exist", name)));
 
-	evtOid = HeapTupleGetOid(tup);
+	evtForm = (Form_pg_event_trigger) GETSTRUCT(tup);
+	evtOid = evtForm->oid;
 
 	AlterEventTriggerOwner_internal(rel, tup, newOwnerId);
 
@@ -609,7 +615,7 @@ AlterEventTriggerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (form->evtowner == newOwnerId)
 		return;
 
-	if (!pg_event_trigger_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+	if (!pg_event_trigger_ownercheck(form->oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_EVENT_TRIGGER,
 					   NameStr(form->evtname));
 
@@ -626,11 +632,11 @@ AlterEventTriggerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 	/* Update owner dependency reference */
 	changeDependencyOnOwner(EventTriggerRelationId,
-							HeapTupleGetOid(tup),
+							form->oid,
 							newOwnerId);
 
 	InvokeObjectPostAlterHook(EventTriggerRelationId,
-							  HeapTupleGetOid(tup), 0);
+							  form->oid, 0);
 }
 
 /*
@@ -644,7 +650,8 @@ get_event_trigger_oid(const char *trigname, bool missing_ok)
 {
 	Oid			oid;
 
-	oid = GetSysCacheOid1(EVENTTRIGGERNAME, CStringGetDatum(trigname));
+	oid = GetSysCacheOid1(EVENTTRIGGERNAME, Anum_pg_event_trigger_oid,
+						  CStringGetDatum(trigname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1357,7 +1364,9 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 		HeapTuple	tuple;
 
 		catalog = heap_open(obj->address.classId, AccessShareLock);
-		tuple = get_catalog_object_by_oid(catalog, obj->address.objectId);
+		tuple = get_catalog_object_by_oid(catalog,
+										  get_object_attnum_oid(object->classId),
+										  obj->address.objectId);
 
 		if (tuple)
 		{
@@ -2106,6 +2115,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 
 							catalog = heap_open(addr.classId, AccessShareLock);
 							objtup = get_catalog_object_by_oid(catalog,
+															   get_object_attnum_oid(addr.classId),
 															   addr.objectId);
 							if (!HeapTupleIsValid(objtup))
 								elog(ERROR, "cache lookup failed for object %u/%u",

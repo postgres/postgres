@@ -27,6 +27,8 @@
  */
 CATALOG(pg_user_mapping,1418,UserMappingRelationId)
 {
+	Oid			oid;			/* oid */
+
 	Oid			umuser;			/* Id of the user, InvalidOid if PUBLIC is
 								 * wanted */
 	Oid			umserver;		/* server of this mapping */

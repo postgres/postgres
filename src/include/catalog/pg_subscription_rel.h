@@ -29,7 +29,7 @@
  *		typedef struct FormData_pg_subscription_rel
  * ----------------
  */
-CATALOG(pg_subscription_rel,6102,SubscriptionRelRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_subscription_rel,6102,SubscriptionRelRelationId)
 {
 	Oid			srsubid;		/* Oid of subscription */
 	Oid			srrelid;		/* Oid of relation */
@@ -67,9 +67,9 @@ typedef struct SubscriptionRelState
 	char		state;
 } SubscriptionRelState;
 
-extern Oid AddSubscriptionRelState(Oid subid, Oid relid, char state,
+extern void AddSubscriptionRelState(Oid subid, Oid relid, char state,
 						XLogRecPtr sublsn);
-extern Oid UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
+extern void UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
 						   XLogRecPtr sublsn);
 extern char GetSubscriptionRelState(Oid subid, Oid relid,
 						XLogRecPtr *sublsn, bool missing_ok);

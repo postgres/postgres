@@ -253,12 +253,11 @@ drop table insertconflicttest;
 --
 -- Verify that EXCLUDED does not allow system column references. These
 -- do not make sense because EXCLUDED isn't an already stored tuple
--- (and thus doesn't have a ctid, oids are not assigned yet, etc).
+-- (and thus doesn't have a ctid etc).
 --
-create table syscolconflicttest(key int4, data text) WITH OIDS;
+create table syscolconflicttest(key int4, data text);
 insert into syscolconflicttest values (1);
 insert into syscolconflicttest values (1) on conflict (key) do update set data = excluded.ctid::text;
-insert into syscolconflicttest values (1) on conflict (key) do update set data = excluded.oid::text;
 drop table syscolconflicttest;
 
 --
@@ -371,28 +370,6 @@ insert into excluded values(1, '2') on conflict (key) do update set data = 3 RET
 
 -- clean up
 drop table excluded;
-
-
--- Check tables w/o oids are handled correctly
-create table testoids(key int primary key, data text) without oids;
--- first without oids
-insert into testoids values(1, '1') on conflict (key) do update set data = excluded.data RETURNING *;
-insert into testoids values(1, '2') on conflict (key) do update set data = excluded.data RETURNING *;
--- add oids
-alter table testoids set with oids;
--- update existing row, that didn't have an oid
-insert into testoids values(1, '3') on conflict (key) do update set data = excluded.data RETURNING *;
--- insert a new row
-insert into testoids values(2, '1') on conflict (key) do update set data = excluded.data RETURNING *;
--- and update it
-insert into testoids values(2, '2') on conflict (key) do update set data = excluded.data RETURNING *;
--- remove oids again, test
-alter table testoids set without oids;
-insert into testoids values(1, '4') on conflict (key) do update set data = excluded.data RETURNING *;
-insert into testoids values(3, '1') on conflict (key) do update set data = excluded.data RETURNING *;
-insert into testoids values(3, '2') on conflict (key) do update set data = excluded.data RETURNING *;
-
-DROP TABLE testoids;
 
 
 -- check that references to columns after dropped columns are handled correctly

@@ -175,10 +175,8 @@ ProcessQuery(PlannedStmt *plan,
 						 queryDesc->estate->es_processed);
 				break;
 			case CMD_INSERT:
-				if (queryDesc->estate->es_processed == 1)
-					lastOid = queryDesc->estate->es_lastoid;
-				else
-					lastOid = InvalidOid;
+				/* lastoid doesn't exist anymore */
+				lastOid = InvalidOid;
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 "INSERT %u " UINT64_FORMAT,
 						 lastOid, queryDesc->estate->es_processed);
@@ -551,8 +549,7 @@ PortalStart(Portal portal, ParamListInfo params,
 
 					pstmt = PortalGetPrimaryStmt(portal);
 					portal->tupDesc =
-						ExecCleanTypeFromTL(pstmt->planTree->targetlist,
-											false);
+						ExecCleanTypeFromTL(pstmt->planTree->targetlist);
 				}
 
 				/*

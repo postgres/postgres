@@ -159,20 +159,6 @@ static const FormData_pg_attribute a1 = {
 };
 
 static const FormData_pg_attribute a2 = {
-	.attname = {"oid"},
-	.atttypid = OIDOID,
-	.attlen = sizeof(Oid),
-	.attnum = ObjectIdAttributeNumber,
-	.attcacheoff = -1,
-	.atttypmod = -1,
-	.attbyval = true,
-	.attstorage = 'p',
-	.attalign = 'i',
-	.attnotnull = true,
-	.attislocal = true,
-};
-
-static const FormData_pg_attribute a3 = {
 	.attname = {"xmin"},
 	.atttypid = XIDOID,
 	.attlen = sizeof(TransactionId),
@@ -186,7 +172,7 @@ static const FormData_pg_attribute a3 = {
 	.attislocal = true,
 };
 
-static const FormData_pg_attribute a4 = {
+static const FormData_pg_attribute a3 = {
 	.attname = {"cmin"},
 	.atttypid = CIDOID,
 	.attlen = sizeof(CommandId),
@@ -200,7 +186,7 @@ static const FormData_pg_attribute a4 = {
 	.attislocal = true,
 };
 
-static const FormData_pg_attribute a5 = {
+static const FormData_pg_attribute a4 = {
 	.attname = {"xmax"},
 	.atttypid = XIDOID,
 	.attlen = sizeof(TransactionId),
@@ -214,7 +200,7 @@ static const FormData_pg_attribute a5 = {
 	.attislocal = true,
 };
 
-static const FormData_pg_attribute a6 = {
+static const FormData_pg_attribute a5 = {
 	.attname = {"cmax"},
 	.atttypid = CIDOID,
 	.attlen = sizeof(CommandId),
@@ -234,7 +220,7 @@ static const FormData_pg_attribute a6 = {
  * table of a particular class/type. In any case table is still the word
  * used in SQL.
  */
-static const FormData_pg_attribute a7 = {
+static const FormData_pg_attribute a6 = {
 	.attname = {"tableoid"},
 	.atttypid = OIDOID,
 	.attlen = sizeof(Oid),
@@ -248,7 +234,7 @@ static const FormData_pg_attribute a7 = {
 	.attislocal = true,
 };
 
-static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
+static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6};
 
 /*
  * This function returns a Form_pg_attribute pointer for a system attribute.
@@ -256,11 +242,9 @@ static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a
  * happen if there's a problem upstream.
  */
 const FormData_pg_attribute *
-SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
+SystemAttributeDefinition(AttrNumber attno)
 {
 	if (attno >= 0 || attno < -(int) lengthof(SysAtt))
-		elog(ERROR, "invalid system attribute number %d", attno);
-	if (attno == ObjectIdAttributeNumber && !relhasoids)
 		elog(ERROR, "invalid system attribute number %d", attno);
 	return SysAtt[-attno - 1];
 }
@@ -270,7 +254,7 @@ SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
  * pointer for a prototype definition.  If not, return NULL.
  */
 const FormData_pg_attribute *
-SystemAttributeByName(const char *attname, bool relhasoids)
+SystemAttributeByName(const char *attname)
 {
 	int			j;
 
@@ -278,11 +262,8 @@ SystemAttributeByName(const char *attname, bool relhasoids)
 	{
 		const FormData_pg_attribute *att = SysAtt[j];
 
-		if (relhasoids || att->attnum != ObjectIdAttributeNumber)
-		{
-			if (strcmp(NameStr(att->attname), attname) == 0)
-				return att;
-		}
+		if (strcmp(NameStr(att->attname), attname) == 0)
+			return att;
 	}
 
 	return NULL;
@@ -501,8 +482,7 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 		{
 			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
-			if (SystemAttributeByName(NameStr(attr->attname),
-									  tupdesc->tdhasoid) != NULL)
+			if (SystemAttributeByName(NameStr(attr->attname)) != NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
 						 errmsg("column name \"%s\" conflicts with a system column name",
@@ -725,9 +705,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 static void
 AddNewAttributeTuples(Oid new_rel_oid,
 					  TupleDesc tupdesc,
-					  char relkind,
-					  bool oidislocal,
-					  int oidinhcount)
+					  char relkind)
 {
 	Form_pg_attribute attr;
 	int			i;
@@ -789,22 +767,10 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		{
 			FormData_pg_attribute attStruct;
 
-			/* skip OID where appropriate */
-			if (!tupdesc->tdhasoid &&
-				SysAtt[i]->attnum == ObjectIdAttributeNumber)
-				continue;
-
 			memcpy(&attStruct, (char *) SysAtt[i], sizeof(FormData_pg_attribute));
 
 			/* Fill in the correct relation OID in the copied tuple */
 			attStruct.attrelid = new_rel_oid;
-
-			/* Fill in correct inheritance info for the OID column */
-			if (attStruct.attnum == ObjectIdAttributeNumber)
-			{
-				attStruct.attislocal = oidislocal;
-				attStruct.attinhcount = oidinhcount;
-			}
 
 			InsertPgAttributeTuple(rel, &attStruct, indstate);
 		}
@@ -847,6 +813,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	values[Anum_pg_class_oid - 1] = ObjectIdGetDatum(new_rel_oid);
 	values[Anum_pg_class_relname - 1] = NameGetDatum(&rd_rel->relname);
 	values[Anum_pg_class_relnamespace - 1] = ObjectIdGetDatum(rd_rel->relnamespace);
 	values[Anum_pg_class_reltype - 1] = ObjectIdGetDatum(rd_rel->reltype);
@@ -865,7 +832,6 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relkind - 1] = CharGetDatum(rd_rel->relkind);
 	values[Anum_pg_class_relnatts - 1] = Int16GetDatum(rd_rel->relnatts);
 	values[Anum_pg_class_relchecks - 1] = Int16GetDatum(rd_rel->relchecks);
-	values[Anum_pg_class_relhasoids - 1] = BoolGetDatum(rd_rel->relhasoids);
 	values[Anum_pg_class_relhasrules - 1] = BoolGetDatum(rd_rel->relhasrules);
 	values[Anum_pg_class_relhastriggers - 1] = BoolGetDatum(rd_rel->relhastriggers);
 	values[Anum_pg_class_relrowsecurity - 1] = BoolGetDatum(rd_rel->relrowsecurity);
@@ -890,12 +856,6 @@ InsertPgClassTuple(Relation pg_class_desc,
 	nulls[Anum_pg_class_relpartbound - 1] = true;
 
 	tup = heap_form_tuple(RelationGetDescr(pg_class_desc), values, nulls);
-
-	/*
-	 * The new tuple must have the oid already chosen for the rel.  Sure would
-	 * be embarrassing to do this sort of thing in polite company.
-	 */
-	HeapTupleSetOid(tup, new_rel_oid);
 
 	/* finally insert the new tuple, update the indexes, and clean up */
 	CatalogTupleInsert(pg_class_desc, tup);
@@ -1071,8 +1031,6 @@ AddNewRelationType(const char *typeName,
  *	relpersistence: rel's persistence status (permanent, temp, or unlogged)
  *	shared_relation: true if it's to be a shared relation
  *	mapped_relation: true if the relation will use the relfilenode map
- *	oidislocal: true if oid column (if any) should be marked attislocal
- *	oidinhcount: attinhcount to assign to oid column (if any)
  *	oncommit: ON COMMIT marking (only relevant if it's a temp table)
  *	reloptions: reloptions in Datum form, or (Datum) 0 if none
  *	use_user_acl: true if should look for user-defined default permissions;
@@ -1100,8 +1058,6 @@ heap_create_with_catalog(const char *relname,
 						 char relpersistence,
 						 bool shared_relation,
 						 bool mapped_relation,
-						 bool oidislocal,
-						 int oidinhcount,
 						 OnCommitAction oncommit,
 						 Datum reloptions,
 						 bool use_user_acl,
@@ -1144,7 +1100,7 @@ heap_create_with_catalog(const char *relname,
 	 * autogenerated array, we can rename it out of the way; otherwise we can
 	 * at least give a good error message.
 	 */
-	old_type_oid = GetSysCacheOid2(TYPENAMENSP,
+	old_type_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 								   CStringGetDatum(relname),
 								   ObjectIdGetDatum(relnamespace));
 	if (OidIsValid(old_type_oid))
@@ -1347,8 +1303,7 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * now add tuples to pg_attribute for the attributes in our new relation.
 	 */
-	AddNewAttributeTuples(relid, new_rel_desc->rd_att, relkind,
-						  oidislocal, oidinhcount);
+	AddNewAttributeTuples(relid, new_rel_desc->rd_att, relkind);
 
 	/*
 	 * Make a dependency link to force the relation to be deleted if its
@@ -1741,9 +1696,10 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		ObjectAddress object;
+		Form_pg_attrdef attrtuple = (Form_pg_attrdef) GETSTRUCT(tuple);
 
 		object.classId = AttrDefaultRelationId;
-		object.objectId = HeapTupleGetOid(tuple);
+		object.objectId = attrtuple->oid;
 		object.objectSubId = 0;
 
 		performDeletion(&object, behavior,
@@ -1784,7 +1740,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 
 	/* Find the pg_attrdef tuple */
 	ScanKeyInit(&scankeys[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_attrdef_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(attrdefId));
 
@@ -2162,6 +2118,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	ObjectAddress colobject,
 				defobject;
 
+	adrel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
+
 	/*
 	 * Flatten expression to string form for storage.
 	 */
@@ -2170,14 +2128,15 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	/*
 	 * Make the pg_attrdef entry.
 	 */
+	attrdefOid = GetNewOidWithIndex(adrel, AttrDefaultOidIndexId,
+									Anum_pg_attrdef_oid);
+	values[Anum_pg_attrdef_oid - 1] = ObjectIdGetDatum(attrdefOid);
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
 	values[Anum_pg_attrdef_adbin - 1] = CStringGetTextDatum(adbin);
 
-	adrel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
-
 	tuple = heap_form_tuple(adrel->rd_att, values, nulls);
-	attrdefOid = CatalogTupleInsert(adrel, tuple);
+	CatalogTupleInsert(adrel, tuple);
 
 	defobject.classId = AttrDefaultRelationId;
 	defobject.objectId = attrdefOid;

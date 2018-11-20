@@ -327,7 +327,6 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 %token <keyword>	K_RAISE
 %token <keyword>	K_RELATIVE
 %token <keyword>	K_RESET
-%token <keyword>	K_RESULT_OID
 %token <keyword>	K_RETURN
 %token <keyword>	K_RETURNED_SQLSTATE
 %token <keyword>	K_REVERSE
@@ -977,7 +976,6 @@ stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list ';'
 							{
 								/* these fields are disallowed in stacked case */
 								case PLPGSQL_GETDIAG_ROW_COUNT:
-								case PLPGSQL_GETDIAG_RESULT_OID:
 									if (new->is_stacked)
 										ereport(ERROR,
 												(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1060,9 +1058,6 @@ getdiag_item :
 						if (tok_is_keyword(tok, &yylval,
 										   K_ROW_COUNT, "row_count"))
 							$$ = PLPGSQL_GETDIAG_ROW_COUNT;
-						else if (tok_is_keyword(tok, &yylval,
-												K_RESULT_OID, "result_oid"))
-							$$ = PLPGSQL_GETDIAG_RESULT_OID;
 						else if (tok_is_keyword(tok, &yylval,
 												K_PG_CONTEXT, "pg_context"))
 							$$ = PLPGSQL_GETDIAG_CONTEXT;
@@ -2518,7 +2513,6 @@ unreserved_keyword	:
 				| K_RAISE
 				| K_RELATIVE
 				| K_RESET
-				| K_RESULT_OID
 				| K_RETURN
 				| K_RETURNED_SQLSTATE
 				| K_REVERSE

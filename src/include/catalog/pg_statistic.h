@@ -26,7 +26,7 @@
  *		typedef struct FormData_pg_statistic
  * ----------------
  */
-CATALOG(pg_statistic,2619,StatisticRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_statistic,2619,StatisticRelationId)
 {
 	/* These fields form the unique key for the entry: */
 	Oid			starelid;		/* relation containing attribute */

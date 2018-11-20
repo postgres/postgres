@@ -30,7 +30,7 @@ CREATE TABLE regtest_table (x serial primary key, y text);
 
 ALTER TABLE regtest_table ADD COLUMN z int;
 
-CREATE TABLE regtest_table_2 (a int) WITH OIDS;
+CREATE TABLE regtest_table_2 (a int);
 
 CREATE TABLE regtest_ptable (a int) PARTITION BY RANGE (a);
 CREATE TABLE regtest_ptable_ones PARTITION OF regtest_ptable FOR VALUES FROM ('0') TO ('10');
@@ -112,7 +112,6 @@ DROP SEQUENCE regtest_seq;
 DROP VIEW regtest_view;
 
 ALTER TABLE regtest_table DROP COLUMN y;
-ALTER TABLE regtest_table_2 SET WITHOUT OIDS;
 
 ALTER TABLE regtest_ptable DROP COLUMN q CASCADE;
 

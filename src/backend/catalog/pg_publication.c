@@ -182,6 +182,9 @@ publication_add_relation(Oid pubid, Relation targetrel,
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	prrelid = GetNewOidWithIndex(rel, PublicationRelObjectIndexId,
+								 Anum_pg_publication_rel_oid);
+	values[Anum_pg_publication_rel_oid - 1] = ObjectIdGetDatum(prrelid);
 	values[Anum_pg_publication_rel_prpubid - 1] =
 		ObjectIdGetDatum(pubid);
 	values[Anum_pg_publication_rel_prrelid - 1] =
@@ -190,7 +193,7 @@ publication_add_relation(Oid pubid, Relation targetrel,
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	/* Insert tuple into catalog. */
-	prrelid = CatalogTupleInsert(rel, tup);
+	CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
 	ObjectAddressSet(myself, PublicationRelRelationId, prrelid);
@@ -306,7 +309,11 @@ GetAllTablesPublications(void)
 
 	result = NIL;
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-		result = lappend_oid(result, HeapTupleGetOid(tup));
+	{
+		Oid		oid = ((Form_pg_publication) GETSTRUCT(tup))->oid;
+
+		result = lappend_oid(result, oid);
+	}
 
 	systable_endscan(scan);
 	heap_close(rel, AccessShareLock);
@@ -337,8 +344,8 @@ GetAllTablesPublicationRelations(void)
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid			relid = HeapTupleGetOid(tuple);
 		Form_pg_class relForm = (Form_pg_class) GETSTRUCT(tuple);
+		Oid			relid = relForm->oid;
 
 		if (is_publishable_class(relid, relForm))
 			result = lappend_oid(result, relid);
@@ -392,7 +399,8 @@ GetPublicationByName(const char *pubname, bool missing_ok)
 {
 	Oid			oid;
 
-	oid = GetSysCacheOid1(PUBLICATIONNAME, CStringGetDatum(pubname));
+	oid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
+						  CStringGetDatum(pubname));
 	if (!OidIsValid(oid))
 	{
 		if (missing_ok)
@@ -417,7 +425,8 @@ get_publication_oid(const char *pubname, bool missing_ok)
 {
 	Oid			oid;
 
-	oid = GetSysCacheOid1(PUBLICATIONNAME, CStringGetDatum(pubname));
+	oid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
+						  CStringGetDatum(pubname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

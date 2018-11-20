@@ -148,7 +148,6 @@ enum
 typedef enum PLpgSQL_getdiag_kind
 {
 	PLPGSQL_GETDIAG_ROW_COUNT,
-	PLPGSQL_GETDIAG_RESULT_OID,
 	PLPGSQL_GETDIAG_CONTEXT,
 	PLPGSQL_GETDIAG_ERROR_CONTEXT,
 	PLPGSQL_GETDIAG_ERROR_DETAIL,
@@ -1043,7 +1042,6 @@ typedef struct PLpgSQL_execstate
 	/* temporary state for results from evaluation of query or expr */
 	SPITupleTable *eval_tuptable;
 	uint64		eval_processed;
-	Oid			eval_lastoid;
 	ExprContext *eval_econtext; /* for executing simple expressions */
 
 	/* status information for error context reporting */

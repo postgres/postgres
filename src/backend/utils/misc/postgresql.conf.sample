@@ -649,7 +649,6 @@
 
 #array_nulls = on
 #backslash_quote = safe_encoding	# on, off, or safe_encoding
-#default_with_oids = off
 #escape_string_warning = on
 #lo_compat_privileges = off
 #operator_precedence_warning = off

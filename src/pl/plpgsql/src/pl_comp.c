@@ -1898,7 +1898,7 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->refname = "(unnamed row)";
 	row->lineno = -1;
-	row->rowtupdesc = CreateTemplateTupleDesc(numvars, false);
+	row->rowtupdesc = CreateTemplateTupleDesc(numvars);
 	row->nfields = numvars;
 	row->fieldnames = palloc(numvars * sizeof(char *));
 	row->varnos = palloc(numvars * sizeof(int));
@@ -2031,7 +2031,7 @@ build_datatype(HeapTuple typeTup, int32 typmod, Oid collation)
 	typ = (PLpgSQL_type *) palloc(sizeof(PLpgSQL_type));
 
 	typ->typname = pstrdup(NameStr(typeStruct->typname));
-	typ->typoid = HeapTupleGetOid(typeTup);
+	typ->typoid = typeStruct->oid;
 	switch (typeStruct->typtype)
 	{
 		case TYPTYPE_BASE:

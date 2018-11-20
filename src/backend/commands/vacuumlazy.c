@@ -1053,12 +1053,6 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 					all_visible = false;
 					break;
 				case HEAPTUPLE_LIVE:
-					/* Tuple is good --- but let's do some validity checks */
-					if (onerel->rd_rel->relhasoids &&
-						!OidIsValid(HeapTupleGetOid(&tuple)))
-						elog(WARNING, "relation \"%s\" TID %u/%u: OID is invalid",
-							 relname, blkno, offnum);
-
 					/*
 					 * Count it as live.  Not only is this natural, but it's
 					 * also what acquire_sample_rows() does.

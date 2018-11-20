@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -153,6 +154,9 @@ CollationCreate(const char *collname, Oid collnamespace,
 	memset(nulls, 0, sizeof(nulls));
 
 	namestrcpy(&name_name, collname);
+	oid = GetNewOidWithIndex(rel, CollationOidIndexId,
+							 Anum_pg_collation_oid);
+	values[Anum_pg_collation_oid - 1] = ObjectIdGetDatum(oid);
 	values[Anum_pg_collation_collname - 1] = NameGetDatum(&name_name);
 	values[Anum_pg_collation_collnamespace - 1] = ObjectIdGetDatum(collnamespace);
 	values[Anum_pg_collation_collowner - 1] = ObjectIdGetDatum(collowner);
@@ -170,7 +174,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/* insert a new tuple */
-	oid = CatalogTupleInsert(rel, tup);
+	CatalogTupleInsert(rel, tup);
 	Assert(OidIsValid(oid));
 
 	/* set up dependencies for the new collation */
@@ -185,8 +189,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* create dependency on owner */
-	recordDependencyOnOwner(CollationRelationId, HeapTupleGetOid(tup),
-							collowner);
+	recordDependencyOnOwner(CollationRelationId, oid, collowner);
 
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
@@ -217,7 +220,7 @@ RemoveCollationById(Oid collationOid)
 	rel = heap_open(CollationRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scanKeyData,
-				ObjectIdAttributeNumber,
+				Anum_pg_collation_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(collationOid));
 

@@ -616,7 +616,7 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 	}
 
 	rform = (Form_pg_authid) GETSTRUCT(roleTup);
-	roleid = HeapTupleGetOid(roleTup);
+	roleid = rform->oid;
 	rname = NameStr(rform->rolname);
 
 	AuthenticatedUserId = roleid;

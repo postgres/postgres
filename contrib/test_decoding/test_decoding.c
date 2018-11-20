@@ -319,13 +319,6 @@ static void
 tuple_to_stringinfo(StringInfo s, TupleDesc tupdesc, HeapTuple tuple, bool skip_nulls)
 {
 	int			natt;
-	Oid			oid;
-
-	/* print oid of tuple, it's not included in the TupleDesc */
-	if ((oid = HeapTupleHeaderGetOid(tuple->t_data)) != InvalidOid)
-	{
-		appendStringInfo(s, " oid[oid]:%u", oid);
-	}
 
 	/* print all columns individually */
 	for (natt = 0; natt < tupdesc->natts; natt++)

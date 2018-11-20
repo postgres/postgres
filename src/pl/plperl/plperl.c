@@ -2825,7 +2825,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 			elog(ERROR, "cache lookup failed for language %u",
 				 procStruct->prolang);
 		langStruct = (Form_pg_language) GETSTRUCT(langTup);
-		prodesc->lang_oid = HeapTupleGetOid(langTup);
+		prodesc->lang_oid = langStruct->oid;
 		prodesc->lanpltrusted = langStruct->lanpltrusted;
 		ReleaseSysCache(langTup);
 

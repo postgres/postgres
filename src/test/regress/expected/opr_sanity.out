@@ -794,8 +794,8 @@ SELECT *
 FROM pg_cast c
 WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i')
     OR castmethod NOT IN ('f', 'b' ,'i');
- castsource | casttarget | castfunc | castcontext | castmethod 
-------------+------------+----------+-------------+------------
+ oid | castsource | casttarget | castfunc | castcontext | castmethod 
+-----+------------+------------+----------+-------------+------------
 (0 rows)
 
 -- Check that castfunc is nonzero only for cast methods that need a function,
@@ -804,8 +804,8 @@ SELECT *
 FROM pg_cast c
 WHERE (castmethod = 'f' AND castfunc = 0)
    OR (castmethod IN ('b', 'i') AND castfunc <> 0);
- castsource | casttarget | castfunc | castcontext | castmethod 
-------------+------------+----------+-------------+------------
+ oid | castsource | casttarget | castfunc | castcontext | castmethod 
+-----+------------+------------+----------+-------------+------------
 (0 rows)
 
 -- Look for casts to/from the same type that aren't length coercion functions.
@@ -814,15 +814,15 @@ WHERE (castmethod = 'f' AND castfunc = 0)
 SELECT *
 FROM pg_cast c
 WHERE castsource = casttarget AND castfunc = 0;
- castsource | casttarget | castfunc | castcontext | castmethod 
-------------+------------+----------+-------------+------------
+ oid | castsource | casttarget | castfunc | castcontext | castmethod 
+-----+------------+------------+----------+-------------+------------
 (0 rows)
 
 SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND p.pronargs < 2 AND castsource = casttarget;
- castsource | casttarget | castfunc | castcontext | castmethod 
-------------+------------+----------+-------------+------------
+ oid | castsource | casttarget | castfunc | castcontext | castmethod 
+-----+------------+------------+----------+-------------+------------
 (0 rows)
 
 -- Look for cast functions that don't have the right signature.  The
@@ -840,8 +840,8 @@ WHERE c.castfunc = p.oid AND
              OR (c.castsource = 'character'::regtype AND
                  p.proargtypes[0] = 'text'::regtype))
      OR NOT binary_coercible(p.prorettype, c.casttarget));
- castsource | casttarget | castfunc | castcontext | castmethod 
-------------+------------+----------+-------------+------------
+ oid | castsource | casttarget | castfunc | castcontext | castmethod 
+-----+------------+------------+----------+-------------+------------
 (0 rows)
 
 SELECT c.*
@@ -849,8 +849,8 @@ FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
     ((p.pronargs > 1 AND p.proargtypes[1] != 'int4'::regtype) OR
      (p.pronargs > 2 AND p.proargtypes[2] != 'bool'::regtype));
- castsource | casttarget | castfunc | castcontext | castmethod 
-------------+------------+----------+-------------+------------
+ oid | castsource | casttarget | castfunc | castcontext | castmethod 
+-----+------------+------------+----------+-------------+------------
 (0 rows)
 
 -- Look for binary compatible casts that do not have the reverse

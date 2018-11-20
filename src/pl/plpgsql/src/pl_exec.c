@@ -2332,12 +2332,6 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 								  false, INT8OID, -1);
 				break;
 
-			case PLPGSQL_GETDIAG_RESULT_OID:
-				exec_assign_value(estate, var,
-								  ObjectIdGetDatum(estate->eval_lastoid),
-								  false, OIDOID, -1);
-				break;
-
 			case PLPGSQL_GETDIAG_ERROR_CONTEXT:
 				exec_assign_c_string(estate, var,
 									 estate->cur_error->context);
@@ -3936,7 +3930,6 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 
 	estate->eval_tuptable = NULL;
 	estate->eval_processed = 0;
-	estate->eval_lastoid = InvalidOid;
 	estate->eval_econtext = NULL;
 
 	estate->err_stmt = NULL;
@@ -4180,7 +4173,6 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 	/* All variants should save result info for GET DIAGNOSTICS */
 	estate->eval_processed = SPI_processed;
-	estate->eval_lastoid = SPI_lastoid;
 
 	/* Process INTO if present */
 	if (stmt->into)
@@ -4371,7 +4363,6 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 
 	/* Save result info for GET DIAGNOSTICS */
 	estate->eval_processed = SPI_processed;
-	estate->eval_lastoid = SPI_lastoid;
 
 	/* Process INTO if present */
 	if (stmt->into)
@@ -5841,7 +5832,6 @@ exec_run_select(PLpgSQL_execstate *estate,
 	Assert(estate->eval_tuptable == NULL);
 	estate->eval_tuptable = SPI_tuptable;
 	estate->eval_processed = SPI_processed;
-	estate->eval_lastoid = SPI_lastoid;
 
 	return rc;
 }

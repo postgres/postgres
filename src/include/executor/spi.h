@@ -75,7 +75,6 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_restore_connection()	((void) 0)
 
 extern PGDLLIMPORT uint64 SPI_processed;
-extern PGDLLIMPORT Oid SPI_lastoid;
 extern PGDLLIMPORT SPITupleTable *SPI_tuptable;
 extern PGDLLIMPORT int SPI_result;
 

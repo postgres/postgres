@@ -28,6 +28,7 @@
  */
 CATALOG(pg_policy,3256,PolicyRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	polname;		/* Policy name. */
 	Oid			polrelid;		/* Oid of the relation with policy. */
 	char		polcmd;			/* One of ACL_*_CHR, or '*' for all */

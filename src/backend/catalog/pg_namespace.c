@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -68,12 +69,19 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	else
 		nspacl = NULL;
 
+	nspdesc = heap_open(NamespaceRelationId, RowExclusiveLock);
+	tupDesc = nspdesc->rd_att;
+
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_namespace; i++)
 	{
 		nulls[i] = false;
 		values[i] = (Datum) NULL;
 	}
+
+	nspoid = GetNewOidWithIndex(nspdesc, NamespaceOidIndexId,
+								Anum_pg_namespace_oid);
+	values[Anum_pg_namespace_oid - 1] = ObjectIdGetDatum(nspoid);
 	namestrcpy(&nname, nspName);
 	values[Anum_pg_namespace_nspname - 1] = NameGetDatum(&nname);
 	values[Anum_pg_namespace_nspowner - 1] = ObjectIdGetDatum(ownerId);
@@ -82,12 +90,10 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	else
 		nulls[Anum_pg_namespace_nspacl - 1] = true;
 
-	nspdesc = heap_open(NamespaceRelationId, RowExclusiveLock);
-	tupDesc = nspdesc->rd_att;
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
-	nspoid = CatalogTupleInsert(nspdesc, tup);
+	CatalogTupleInsert(nspdesc, tup);
 	Assert(OidIsValid(nspoid));
 
 	heap_close(nspdesc, RowExclusiveLock);

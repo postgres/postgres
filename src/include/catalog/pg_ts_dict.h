@@ -28,6 +28,7 @@
  */
 CATALOG(pg_ts_dict,3600,TSDictionaryRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	dictname;		/* dictionary name */
 	Oid			dictnamespace;	/* name space */
 	Oid			dictowner;		/* owner */

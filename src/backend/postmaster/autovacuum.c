@@ -1910,7 +1910,7 @@ get_database_list(void)
 
 		avdb = (avw_dbase *) palloc(sizeof(avw_dbase));
 
-		avdb->adw_datid = HeapTupleGetOid(tup);
+		avdb->adw_datid = pgdatabase->oid;
 		avdb->adw_name = pstrdup(NameStr(pgdatabase->datname));
 		avdb->adw_frozenxid = pgdatabase->datfrozenxid;
 		avdb->adw_minmulti = pgdatabase->datminmxid;
@@ -2072,7 +2072,7 @@ do_autovacuum(void)
 			classForm->relkind != RELKIND_MATVIEW)
 			continue;
 
-		relid = HeapTupleGetOid(tuple);
+		relid = classForm->oid;
 
 		/*
 		 * Check if it is a temp table (presumably, of some other backend's).
@@ -2166,7 +2166,7 @@ do_autovacuum(void)
 		if (classForm->relpersistence == RELPERSISTENCE_TEMP)
 			continue;
 
-		relid = HeapTupleGetOid(tuple);
+		relid = classForm->oid;
 
 		/*
 		 * fetch reloptions -- if this toast table does not have them, try the

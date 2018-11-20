@@ -27,6 +27,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_default_acl.h"
+#include "catalog/pg_enum.h"
 #include "catalog/pg_event_trigger.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -99,6 +100,7 @@ typedef struct
 	int			name_catcache_id;	/* id of catcache on (name,namespace), or
 									 * (name) if the object does not live in a
 									 * namespace */
+	AttrNumber	attnum_oid;		/* attribute number of oid column */
 	AttrNumber	attnum_name;	/* attnum of name field */
 	AttrNumber	attnum_namespace;	/* attnum of namespace field */
 	AttrNumber	attnum_owner;	/* attnum of owner field */
@@ -117,6 +119,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		AmOidIndexId,
 		AMOID,
 		AMNAME,
+		Anum_pg_am_oid,
 		Anum_pg_am_amname,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
@@ -129,6 +132,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		CastOidIndexId,
 		-1,
 		-1,
+		Anum_pg_cast_oid,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
@@ -141,6 +145,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		CollationOidIndexId,
 		COLLOID,
 		-1,						/* COLLNAMEENCNSP also takes encoding */
+		Anum_pg_collation_oid,
 		Anum_pg_collation_collname,
 		Anum_pg_collation_collnamespace,
 		Anum_pg_collation_collowner,
@@ -153,6 +158,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ConstraintOidIndexId,
 		CONSTROID,
 		-1,
+		Anum_pg_constraint_oid,
 		Anum_pg_constraint_conname,
 		Anum_pg_constraint_connamespace,
 		InvalidAttrNumber,
@@ -165,6 +171,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ConversionOidIndexId,
 		CONVOID,
 		CONNAMENSP,
+		Anum_pg_conversion_oid,
 		Anum_pg_conversion_conname,
 		Anum_pg_conversion_connamespace,
 		Anum_pg_conversion_conowner,
@@ -177,6 +184,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		DatabaseOidIndexId,
 		DATABASEOID,
 		-1,
+		Anum_pg_database_oid,
 		Anum_pg_database_datname,
 		InvalidAttrNumber,
 		Anum_pg_database_datdba,
@@ -189,6 +197,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ExtensionOidIndexId,
 		-1,
 		-1,
+		Anum_pg_extension_oid,
 		Anum_pg_extension_extname,
 		InvalidAttrNumber,		/* extension doesn't belong to extnamespace */
 		Anum_pg_extension_extowner,
@@ -201,6 +210,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ForeignDataWrapperOidIndexId,
 		FOREIGNDATAWRAPPEROID,
 		FOREIGNDATAWRAPPERNAME,
+		Anum_pg_foreign_data_wrapper_oid,
 		Anum_pg_foreign_data_wrapper_fdwname,
 		InvalidAttrNumber,
 		Anum_pg_foreign_data_wrapper_fdwowner,
@@ -213,6 +223,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ForeignServerOidIndexId,
 		FOREIGNSERVEROID,
 		FOREIGNSERVERNAME,
+		Anum_pg_foreign_server_oid,
 		Anum_pg_foreign_server_srvname,
 		InvalidAttrNumber,
 		Anum_pg_foreign_server_srvowner,
@@ -225,6 +236,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ProcedureOidIndexId,
 		PROCOID,
 		-1,						/* PROCNAMEARGSNSP also takes argument types */
+		Anum_pg_proc_oid,
 		Anum_pg_proc_proname,
 		Anum_pg_proc_pronamespace,
 		Anum_pg_proc_proowner,
@@ -237,6 +249,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		LanguageOidIndexId,
 		LANGOID,
 		LANGNAME,
+		Anum_pg_language_oid,
 		Anum_pg_language_lanname,
 		InvalidAttrNumber,
 		Anum_pg_language_lanowner,
@@ -249,6 +262,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		LargeObjectMetadataOidIndexId,
 		-1,
 		-1,
+		Anum_pg_largeobject_metadata_oid,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		Anum_pg_largeobject_metadata_lomowner,
@@ -261,6 +275,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		OpclassOidIndexId,
 		CLAOID,
 		-1,						/* CLAAMNAMENSP also takes opcmethod */
+		Anum_pg_opclass_oid,
 		Anum_pg_opclass_opcname,
 		Anum_pg_opclass_opcnamespace,
 		Anum_pg_opclass_opcowner,
@@ -273,6 +288,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		OperatorOidIndexId,
 		OPEROID,
 		-1,						/* OPERNAMENSP also takes left and right type */
+		Anum_pg_operator_oid,
 		Anum_pg_operator_oprname,
 		Anum_pg_operator_oprnamespace,
 		Anum_pg_operator_oprowner,
@@ -285,6 +301,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		OpfamilyOidIndexId,
 		OPFAMILYOID,
 		-1,						/* OPFAMILYAMNAMENSP also takes opfmethod */
+		Anum_pg_opfamily_oid,
 		Anum_pg_opfamily_opfname,
 		Anum_pg_opfamily_opfnamespace,
 		Anum_pg_opfamily_opfowner,
@@ -297,6 +314,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		AuthIdOidIndexId,
 		AUTHOID,
 		AUTHNAME,
+		Anum_pg_authid_oid,
 		Anum_pg_authid_rolname,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
@@ -309,6 +327,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		RewriteOidIndexId,
 		-1,
 		-1,
+		Anum_pg_rewrite_oid,
 		Anum_pg_rewrite_rulename,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
@@ -321,6 +340,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		NamespaceOidIndexId,
 		NAMESPACEOID,
 		NAMESPACENAME,
+		Anum_pg_namespace_oid,
 		Anum_pg_namespace_nspname,
 		InvalidAttrNumber,
 		Anum_pg_namespace_nspowner,
@@ -333,6 +353,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		ClassOidIndexId,
 		RELOID,
 		RELNAMENSP,
+		Anum_pg_class_oid,
 		Anum_pg_class_relname,
 		Anum_pg_class_relnamespace,
 		Anum_pg_class_relowner,
@@ -345,6 +366,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		TablespaceOidIndexId,
 		TABLESPACEOID,
 		-1,
+		Anum_pg_tablespace_oid,
 		Anum_pg_tablespace_spcname,
 		InvalidAttrNumber,
 		Anum_pg_tablespace_spcowner,
@@ -356,13 +378,15 @@ static const ObjectPropertyType ObjectProperty[] =
 		TransformRelationId,
 		TransformOidIndexId,
 		TRFOID,
-		InvalidAttrNumber
+		InvalidAttrNumber,
+		Anum_pg_transform_oid
 	},
 	{
 		TriggerRelationId,
 		TriggerOidIndexId,
 		-1,
 		-1,
+		Anum_pg_trigger_oid,
 		Anum_pg_trigger_tgname,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
@@ -375,6 +399,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		PolicyOidIndexId,
 		-1,
 		-1,
+		Anum_pg_policy_oid,
 		Anum_pg_policy_polname,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
@@ -387,6 +412,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		EventTriggerOidIndexId,
 		EVENTTRIGGEROID,
 		EVENTTRIGGERNAME,
+		Anum_pg_event_trigger_oid,
 		Anum_pg_event_trigger_evtname,
 		InvalidAttrNumber,
 		Anum_pg_event_trigger_evtowner,
@@ -399,6 +425,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		TSConfigOidIndexId,
 		TSCONFIGOID,
 		TSCONFIGNAMENSP,
+		Anum_pg_ts_config_oid,
 		Anum_pg_ts_config_cfgname,
 		Anum_pg_ts_config_cfgnamespace,
 		Anum_pg_ts_config_cfgowner,
@@ -411,6 +438,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		TSDictionaryOidIndexId,
 		TSDICTOID,
 		TSDICTNAMENSP,
+		Anum_pg_ts_dict_oid,
 		Anum_pg_ts_dict_dictname,
 		Anum_pg_ts_dict_dictnamespace,
 		Anum_pg_ts_dict_dictowner,
@@ -423,6 +451,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		TSParserOidIndexId,
 		TSPARSEROID,
 		TSPARSERNAMENSP,
+		Anum_pg_ts_parser_oid,
 		Anum_pg_ts_parser_prsname,
 		Anum_pg_ts_parser_prsnamespace,
 		InvalidAttrNumber,
@@ -435,6 +464,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		TSTemplateOidIndexId,
 		TSTEMPLATEOID,
 		TSTEMPLATENAMENSP,
+		Anum_pg_ts_template_oid,
 		Anum_pg_ts_template_tmplname,
 		Anum_pg_ts_template_tmplnamespace,
 		InvalidAttrNumber,
@@ -447,6 +477,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		TypeOidIndexId,
 		TYPEOID,
 		TYPENAMENSP,
+		Anum_pg_type_oid,
 		Anum_pg_type_typname,
 		Anum_pg_type_typnamespace,
 		Anum_pg_type_typowner,
@@ -459,6 +490,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		PublicationObjectIndexId,
 		PUBLICATIONOID,
 		PUBLICATIONNAME,
+		Anum_pg_publication_oid,
 		Anum_pg_publication_pubname,
 		InvalidAttrNumber,
 		Anum_pg_publication_pubowner,
@@ -471,6 +503,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		SubscriptionObjectIndexId,
 		SUBSCRIPTIONOID,
 		SUBSCRIPTIONNAME,
+		Anum_pg_subscription_oid,
 		Anum_pg_subscription_subname,
 		InvalidAttrNumber,
 		Anum_pg_subscription_subowner,
@@ -483,6 +516,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		StatisticExtOidIndexId,
 		STATEXTOID,
 		STATEXTNAMENSP,
+		Anum_pg_statistic_ext_oid,
 		Anum_pg_statistic_ext_stxname,
 		Anum_pg_statistic_ext_stxnamespace,
 		Anum_pg_statistic_ext_stxowner,
@@ -1459,7 +1493,11 @@ get_object_address_attrdef(ObjectType objtype, List *object,
 		scan = systable_beginscan(attrdef, AttrDefaultIndexId, true,
 								  NULL, 2, keys);
 		if (HeapTupleIsValid(tup = systable_getnext(scan)))
-			defoid = HeapTupleGetOid(tup);
+		{
+			Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tup);
+
+			defoid = atdform->oid;
+		}
 
 		systable_endscan(scan);
 		relation_close(attrdef, AccessShareLock);
@@ -1633,7 +1671,7 @@ get_object_address_opf_member(ObjectType objtype,
 				}
 				else
 				{
-					address.objectId = HeapTupleGetOid(tp);
+					address.objectId = ((Form_pg_amop) GETSTRUCT(tp))->oid;
 					ReleaseSysCache(tp);
 				}
 			}
@@ -1664,7 +1702,7 @@ get_object_address_opf_member(ObjectType objtype,
 				}
 				else
 				{
-					address.objectId = HeapTupleGetOid(tp);
+					address.objectId = ((Form_pg_amproc) GETSTRUCT(tp))->oid;
 					ReleaseSysCache(tp);
 				}
 			}
@@ -1711,7 +1749,7 @@ get_object_address_usermapping(List *object, bool missing_ok)
 								username, servername)));
 			return address;
 		}
-		userid = HeapTupleGetOid(tp);
+		userid = ((Form_pg_authid) GETSTRUCT(tp))->oid;
 		ReleaseSysCache(tp);
 	}
 
@@ -1738,7 +1776,7 @@ get_object_address_usermapping(List *object, bool missing_ok)
 		return address;
 	}
 
-	address.objectId = HeapTupleGetOid(tp);
+	address.objectId = ((Form_pg_user_mapping) GETSTRUCT(tp))->oid;
 
 	ReleaseSysCache(tp);
 
@@ -1781,7 +1819,7 @@ get_object_address_publication_rel(List *object,
 
 	/* Find the publication relation mapping in syscache. */
 	address.objectId =
-		GetSysCacheOid2(PUBLICATIONRELMAP,
+		GetSysCacheOid2(PUBLICATIONRELMAP, Anum_pg_publication_rel_oid,
 						ObjectIdGetDatum(RelationGetRelid(relation)),
 						ObjectIdGetDatum(pub->oid));
 	if (!OidIsValid(address.objectId))
@@ -1868,7 +1906,7 @@ get_object_address_defacl(List *object, bool missing_ok)
 						 CStringGetDatum(username));
 	if (!HeapTupleIsValid(tp))
 		goto not_found;
-	userid = HeapTupleGetOid(tp);
+	userid = ((Form_pg_authid) GETSTRUCT(tp))->oid;
 	ReleaseSysCache(tp);
 
 	/*
@@ -1892,7 +1930,7 @@ get_object_address_defacl(List *object, bool missing_ok)
 	if (!HeapTupleIsValid(tp))
 		goto not_found;
 
-	address.objectId = HeapTupleGetOid(tp);
+	address.objectId = ((Form_pg_default_acl) GETSTRUCT(tp))->oid;
 	ReleaseSysCache(tp);
 
 	return address;
@@ -2202,7 +2240,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	if (relation)
 		relation_close(relation, AccessShareLock);
 
-	tupdesc = CreateTemplateTupleDesc(3, false);
+	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "classid",
 					   OIDOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "objid",
@@ -2511,6 +2549,14 @@ get_object_catcache_name(Oid class_id)
 }
 
 AttrNumber
+get_object_attnum_oid(Oid class_id)
+{
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->attnum_oid;
+}
+
+AttrNumber
 get_object_attnum_name(Oid class_id)
 {
 	const ObjectPropertyType *prop = get_object_property_data(class_id);
@@ -2625,7 +2671,7 @@ get_object_property_data(Oid class_id)
  * We try a syscache first, if available.
  */
 HeapTuple
-get_catalog_object_by_oid(Relation catalog, Oid objectId)
+get_catalog_object_by_oid(Relation catalog, AttrNumber oidcol, Oid objectId)
 {
 	HeapTuple	tuple;
 	Oid			classId = RelationGetRelid(catalog);
@@ -2646,7 +2692,7 @@ get_catalog_object_by_oid(Relation catalog, Oid objectId)
 		Assert(OidIsValid(oidIndexId));
 
 		ScanKeyInit(&skey,
-					ObjectIdAttributeNumber,
+					oidcol,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objectId));
 
@@ -2721,7 +2767,7 @@ getObjectDescription(const ObjectAddress *object)
 				castDesc = heap_open(CastRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_cast_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -2842,7 +2888,7 @@ getObjectDescription(const ObjectAddress *object)
 				attrdefDesc = heap_open(AttrDefaultRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_attrdef_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -2955,7 +3001,7 @@ getObjectDescription(const ObjectAddress *object)
 									 AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_amop_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -3005,7 +3051,7 @@ getObjectDescription(const ObjectAddress *object)
 									   AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_amproc_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -3054,7 +3100,7 @@ getObjectDescription(const ObjectAddress *object)
 				ruleDesc = heap_open(RewriteRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_rewrite_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -3092,7 +3138,7 @@ getObjectDescription(const ObjectAddress *object)
 				trigDesc = heap_open(TriggerRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_trigger_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -3352,7 +3398,7 @@ getObjectDescription(const ObjectAddress *object)
 				defaclrel = heap_open(DefaultAclRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_default_acl_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -3479,7 +3525,7 @@ getObjectDescription(const ObjectAddress *object)
 				policy_rel = heap_open(PolicyRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_policy_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -3753,7 +3799,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(4, false);
+	tupdesc = CreateTemplateTupleDesc(4);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "type",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "schema",
@@ -3770,7 +3816,9 @@ pg_identify_object(PG_FUNCTION_ARGS)
 		HeapTuple	objtup;
 		Relation	catalog = heap_open(address.classId, AccessShareLock);
 
-		objtup = get_catalog_object_by_oid(catalog, address.objectId);
+		objtup = get_catalog_object_by_oid(catalog,
+										   get_object_attnum_oid(address.classId),
+										   address.objectId);
 		if (objtup != NULL)
 		{
 			bool		isnull;
@@ -3870,7 +3918,7 @@ pg_identify_object_as_address(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(3, false);
+	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "type",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "object_names",
@@ -4147,7 +4195,8 @@ getConstraintTypeDescription(StringInfo buffer, Oid constroid)
 	Form_pg_constraint constrForm;
 
 	constrRel = heap_open(ConstraintRelationId, AccessShareLock);
-	constrTup = get_catalog_object_by_oid(constrRel, constroid);
+	constrTup = get_catalog_object_by_oid(constrRel, Anum_pg_constraint_oid,
+										  constroid);
 	if (!HeapTupleIsValid(constrTup))
 		elog(ERROR, "cache lookup failed for constraint %u", constroid);
 
@@ -4158,7 +4207,7 @@ getConstraintTypeDescription(StringInfo buffer, Oid constroid)
 	else if (OidIsValid(constrForm->contypid))
 		appendStringInfoString(buffer, "domain constraint");
 	else
-		elog(ERROR, "invalid constraint %u", HeapTupleGetOid(constrTup));
+		elog(ERROR, "invalid constraint %u", constrForm->oid);
 
 	heap_close(constrRel, AccessShareLock);
 }
@@ -4271,7 +4320,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				castRel = heap_open(CastRelationId, AccessShareLock);
 
-				tup = get_catalog_object_by_oid(castRel, object->objectId);
+				tup = get_catalog_object_by_oid(castRel, Anum_pg_cast_oid,
+												object->objectId);
 
 				if (!HeapTupleIsValid(tup))
 					elog(ERROR, "could not find tuple for cast %u",
@@ -4393,7 +4443,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				attrdefDesc = heap_open(AttrDefaultRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_attrdef_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -4523,7 +4573,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 									 AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_amop_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -4577,7 +4627,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 									   AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_amproc_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -4624,7 +4674,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				ruleDesc = heap_open(RewriteRelationId, AccessShareLock);
 
-				tup = get_catalog_object_by_oid(ruleDesc, object->objectId);
+				tup = get_catalog_object_by_oid(ruleDesc, Anum_pg_rewrite_oid,
+												object->objectId);
 
 				if (!HeapTupleIsValid(tup))
 					elog(ERROR, "could not find tuple for rule %u",
@@ -4650,7 +4701,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				trigDesc = heap_open(TriggerRelationId, AccessShareLock);
 
-				tup = get_catalog_object_by_oid(trigDesc, object->objectId);
+				tup = get_catalog_object_by_oid(trigDesc, Anum_pg_trigger_oid,
+												object->objectId);
 
 				if (!HeapTupleIsValid(tup))
 					elog(ERROR, "could not find tuple for trigger %u",
@@ -4912,7 +4964,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 				defaclrel = heap_open(DefaultAclRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
+							Anum_pg_default_acl_oid,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
@@ -5022,7 +5074,8 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				polDesc = heap_open(PolicyRelationId, AccessShareLock);
 
-				tup = get_catalog_object_by_oid(polDesc, object->objectId);
+				tup = get_catalog_object_by_oid(polDesc, Anum_pg_policy_oid,
+												object->objectId);
 
 				if (!HeapTupleIsValid(tup))
 					elog(ERROR, "could not find tuple for policy %u",
@@ -5099,7 +5152,9 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				transformDesc = heap_open(TransformRelationId, AccessShareLock);
 
-				tup = get_catalog_object_by_oid(transformDesc, object->objectId);
+				tup = get_catalog_object_by_oid(transformDesc,
+												Anum_pg_transform_oid,
+												object->objectId);
 
 				if (!HeapTupleIsValid(tup))
 					elog(ERROR, "could not find tuple for transform %u",

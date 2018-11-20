@@ -632,30 +632,30 @@ SELECT * FROM category;
 --
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO ON;
-CREATE TABLE t1 (a int, junk1 text, b text) WITH OIDS;
+CREATE TABLE t1 (id int not null primary key, a int, junk1 text, b text);
 ALTER TABLE t1 DROP COLUMN junk1;    -- just a disturbing factor
 GRANT ALL ON t1 TO public;
-COPY t1 FROM stdin WITH (oids);
+COPY t1 FROM stdin WITH ;
 CREATE TABLE t2 (c float) INHERITS (t1);
 GRANT ALL ON t2 TO public;
-COPY t2 FROM stdin WITH (oids);
-CREATE TABLE t3 (c text, b text, a int) WITH OIDS;
+COPY t2 FROM stdin;
+CREATE TABLE t3 (id int not null primary key, c text, b text, a int);
 ALTER TABLE t3 INHERIT t1;
 GRANT ALL ON t3 TO public;
-COPY t3(a,b,c) FROM stdin WITH (oids);
+COPY t3(id, a,b,c) FROM stdin;
 CREATE POLICY p1 ON t1 FOR ALL TO PUBLIC USING (a % 2 = 0); -- be even number
 CREATE POLICY p2 ON t2 FOR ALL TO PUBLIC USING (a % 2 = 1); -- be odd number
 ALTER TABLE t1 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE t2 ENABLE ROW LEVEL SECURITY;
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM t1;
- a |  b  
----+-----
- 2 | bbb
- 4 | dad
- 2 | bcd
- 4 | def
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 104 | 4 | dad
+ 202 | 2 | bcd
+ 204 | 4 | def
+ 302 | 2 | yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1;
@@ -676,13 +676,13 @@ NOTICE:  f_leak => dad
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
- a |  b  
----+-----
- 2 | bbb
- 4 | dad
- 2 | bcd
- 4 | def
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 104 | 4 | dad
+ 202 | 2 | bcd
+ 204 | 4 | def
+ 302 | 2 | yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
@@ -698,14 +698,14 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
 (7 rows)
 
 -- reference to system column
-SELECT oid, * FROM t1;
- oid | a |  b  
------+---+-----
- 102 | 2 | bbb
- 104 | 4 | dad
- 202 | 2 | bcd
- 204 | 4 | def
- 302 | 2 | yyy
+SELECT tableoid::regclass, * FROM t1;
+ tableoid | id  | a |  b  
+----------+-----+---+-----
+ t1       | 102 | 2 | bbb
+ t1       | 104 | 4 | dad
+ t2       | 202 | 2 | bcd
+ t2       | 204 | 4 | def
+ t3       | 302 | 2 | yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
@@ -722,13 +722,13 @@ EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
 
 -- reference to whole-row reference
 SELECT *, t1 FROM t1;
- a |  b  |   t1    
----+-----+---------
- 2 | bbb | (2,bbb)
- 4 | dad | (4,dad)
- 2 | bcd | (2,bcd)
- 4 | def | (4,def)
- 2 | yyy | (2,yyy)
+ id  | a |  b  |     t1      
+-----+---+-----+-------------
+ 102 | 2 | bbb | (102,2,bbb)
+ 104 | 4 | dad | (104,4,dad)
+ 202 | 2 | bcd | (202,2,bcd)
+ 204 | 4 | def | (204,4,def)
+ 302 | 2 | yyy | (302,2,yyy)
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
@@ -745,13 +745,13 @@ EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
 
 -- for share/update lock
 SELECT * FROM t1 FOR SHARE;
- a |  b  
----+-----
- 2 | bbb
- 4 | dad
- 2 | bcd
- 4 | def
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 104 | 4 | dad
+ 202 | 2 | bcd
+ 204 | 4 | def
+ 302 | 2 | yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
@@ -773,13 +773,13 @@ NOTICE:  f_leak => dad
 NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
- a |  b  
----+-----
- 2 | bbb
- 4 | dad
- 2 | bcd
- 4 | def
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 104 | 4 | dad
+ 202 | 2 | bcd
+ 204 | 4 | def
+ 302 | 2 | yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
@@ -796,17 +796,17 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 (8 rows)
 
 -- union all query
-SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
- a |  b  | oid 
----+-----+-----
- 1 | abc | 201
- 3 | cde | 203
- 1 | xxx | 301
- 2 | yyy | 302
- 3 | zzz | 303
+SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclass FROM t3;
+ a |  b  | tableoid 
+---+-----+----------
+ 1 | abc | t2
+ 3 | cde | t2
+ 1 | xxx | t3
+ 2 | yyy | t3
+ 3 | zzz | t3
 (5 rows)
 
-EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+EXPLAIN (COSTS OFF) SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclass FROM t3;
           QUERY PLAN           
 -------------------------------
  Append
@@ -830,19 +830,19 @@ NOTICE:  f_leak => def
 NOTICE:  f_leak => xxx
 NOTICE:  f_leak => yyy
 NOTICE:  f_leak => zzz
- a |  b  
----+-----
- 1 | aba
- 2 | bbb
- 3 | ccc
- 4 | dad
- 1 | abc
- 2 | bcd
- 3 | cde
- 4 | def
- 1 | xxx
- 2 | yyy
- 3 | zzz
+ id  | a |  b  
+-----+---+-----
+ 101 | 1 | aba
+ 102 | 2 | bbb
+ 103 | 3 | ccc
+ 104 | 4 | dad
+ 201 | 1 | abc
+ 202 | 2 | bcd
+ 203 | 3 | cde
+ 204 | 4 | def
+ 301 | 1 | xxx
+ 302 | 2 | yyy
+ 303 | 3 | zzz
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
@@ -872,19 +872,19 @@ NOTICE:  f_leak => def
 NOTICE:  f_leak => xxx
 NOTICE:  f_leak => yyy
 NOTICE:  f_leak => zzz
- a |  b  
----+-----
- 1 | aba
- 2 | bbb
- 3 | ccc
- 4 | dad
- 1 | abc
- 2 | bcd
- 3 | cde
- 4 | def
- 1 | xxx
- 2 | yyy
- 3 | zzz
+ id  | a |  b  
+-----+---+-----
+ 101 | 1 | aba
+ 102 | 2 | bbb
+ 103 | 3 | ccc
+ 104 | 4 | dad
+ 201 | 1 | abc
+ 202 | 2 | bcd
+ 203 | 3 | cde
+ 204 | 4 | def
+ 301 | 1 | xxx
+ 302 | 2 | yyy
+ 303 | 3 | zzz
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
@@ -1500,11 +1500,11 @@ ERROR:  infinite recursion detected in policy for relation "s1"
 -- prepared statement with regress_rls_alice privilege
 PREPARE p1(int) AS SELECT * FROM t1 WHERE a <= $1;
 EXECUTE p1(2);
- a |  b  
----+-----
- 2 | bbb
- 2 | bcd
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 202 | 2 | bcd
+ 302 | 2 | yyy
 (3 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE p1(2);
@@ -1534,19 +1534,19 @@ NOTICE:  f_leak => def
 NOTICE:  f_leak => xxx
 NOTICE:  f_leak => yyy
 NOTICE:  f_leak => zzz
- a |  b  
----+-----
- 1 | aba
- 2 | bbb
- 3 | ccc
- 4 | dad
- 1 | abc
- 2 | bcd
- 3 | cde
- 4 | def
- 1 | xxx
- 2 | yyy
- 3 | zzz
+ id  | a |  b  
+-----+---+-----
+ 101 | 1 | aba
+ 102 | 2 | bbb
+ 103 | 3 | ccc
+ 104 | 4 | dad
+ 201 | 1 | abc
+ 202 | 2 | bcd
+ 203 | 3 | cde
+ 204 | 4 | def
+ 301 | 1 | xxx
+ 302 | 2 | yyy
+ 303 | 3 | zzz
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
@@ -1563,14 +1563,14 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
 
 -- plan cache should be invalidated
 EXECUTE p1(2);
- a |  b  
----+-----
- 1 | aba
- 2 | bbb
- 1 | abc
- 2 | bcd
- 1 | xxx
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 101 | 1 | aba
+ 102 | 2 | bbb
+ 201 | 1 | abc
+ 202 | 2 | bcd
+ 301 | 1 | xxx
+ 302 | 2 | yyy
 (6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE p1(2);
@@ -1587,11 +1587,11 @@ EXPLAIN (COSTS OFF) EXECUTE p1(2);
 
 PREPARE p2(int) AS SELECT * FROM t1 WHERE a = $1;
 EXECUTE p2(2);
- a |  b  
----+-----
- 2 | bbb
- 2 | bcd
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 202 | 2 | bcd
+ 302 | 2 | yyy
 (3 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE p2(2);
@@ -1610,11 +1610,11 @@ EXPLAIN (COSTS OFF) EXECUTE p2(2);
 SET SESSION AUTHORIZATION regress_rls_bob;
 SET row_security TO ON;
 EXECUTE p2(2);
- a |  b  
----+-----
- 2 | bbb
- 2 | bcd
- 2 | yyy
+ id  | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 202 | 2 | bcd
+ 302 | 2 | yyy
 (3 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE p2(2);
@@ -1666,13 +1666,13 @@ UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 NOTICE:  f_leak => bbbbbb
 NOTICE:  f_leak => daddad
 -- returning clause with system column
-UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
 NOTICE:  f_leak => daddad_updt
- oid | a |      b      |       t1        
------+---+-------------+-----------------
- 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 104 | 4 | daddad_updt | (4,daddad_updt)
+ tableoid | id  | a |      b      |         t1          
+----------+-----+---+-------------+---------------------
+ t1       | 102 | 2 | bbbbbb_updt | (102,2,bbbbbb_updt)
+ t1       | 104 | 4 | daddad_updt | (104,4,daddad_updt)
 (2 rows)
 
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *;
@@ -1681,28 +1681,28 @@ NOTICE:  f_leak => daddad_updt
 NOTICE:  f_leak => bcdbcd
 NOTICE:  f_leak => defdef
 NOTICE:  f_leak => yyyyyy
- a |      b      
----+-------------
- 2 | bbbbbb_updt
- 4 | daddad_updt
- 2 | bcdbcd
- 4 | defdef
- 2 | yyyyyy
+ id  | a |      b      
+-----+---+-------------
+ 102 | 2 | bbbbbb_updt
+ 104 | 4 | daddad_updt
+ 202 | 2 | bcdbcd
+ 204 | 4 | defdef
+ 302 | 2 | yyyyyy
 (5 rows)
 
-UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+UPDATE t1 SET b = b WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
 NOTICE:  f_leak => daddad_updt
 NOTICE:  f_leak => bcdbcd
 NOTICE:  f_leak => defdef
 NOTICE:  f_leak => yyyyyy
- oid | a |      b      |       t1        
------+---+-------------+-----------------
- 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 104 | 4 | daddad_updt | (4,daddad_updt)
- 202 | 2 | bcdbcd      | (2,bcdbcd)
- 204 | 4 | defdef      | (4,defdef)
- 302 | 2 | yyyyyy      | (2,yyyyyy)
+ tableoid | id  | a |      b      |         t1          
+----------+-----+---+-------------+---------------------
+ t1       | 102 | 2 | bbbbbb_updt | (102,2,bbbbbb_updt)
+ t1       | 104 | 4 | daddad_updt | (104,4,daddad_updt)
+ t2       | 202 | 2 | bcdbcd      | (202,2,bcdbcd)
+ t2       | 204 | 4 | defdef      | (204,4,defdef)
+ t3       | 302 | 2 | yyyyyy      | (302,2,yyyyyy)
 (5 rows)
 
 -- updates with from clause
@@ -1789,9 +1789,9 @@ WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
 AND f_leak(t2_1.b) AND f_leak(t2_2.b) RETURNING *, t2_1, t2_2;
 NOTICE:  f_leak => cde
 NOTICE:  f_leak => cde
- a |  b  |  c  | a |  b  |  c  |    t2_1     |    t2_2     
----+-----+-----+---+-----+-----+-------------+-------------
- 3 | cde | 3.3 | 3 | cde | 3.3 | (3,cde,3.3) | (3,cde,3.3)
+ id  | a |  b  |  c  | id  | a |  b  |  c  |      t2_1       |      t2_2       
+-----+---+-----+-----+-----+---+-----+-----+-----------------+-----------------
+ 203 | 3 | cde | 3.3 | 203 | 3 | cde | 3.3 | (203,3,cde,3.3) | (203,3,cde,3.3)
 (1 row)
 
 EXPLAIN (COSTS OFF) UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
@@ -1847,28 +1847,28 @@ NOTICE:  f_leak => defdef
 NOTICE:  f_leak => defdef
 NOTICE:  f_leak => daddad_updt
 NOTICE:  f_leak => defdef
- a |      b      | a |      b      |      t1_1       |      t1_2       
----+-------------+---+-------------+-----------------+-----------------
- 4 | daddad_updt | 4 | daddad_updt | (4,daddad_updt) | (4,daddad_updt)
- 4 | defdef      | 4 | defdef      | (4,defdef)      | (4,defdef)
+ id  | a |      b      | id  | a |      b      |        t1_1         |        t1_2         
+-----+---+-------------+-----+---+-------------+---------------------+---------------------
+ 104 | 4 | daddad_updt | 104 | 4 | daddad_updt | (104,4,daddad_updt) | (104,4,daddad_updt)
+ 204 | 4 | defdef      | 204 | 4 | defdef      | (204,4,defdef)      | (204,4,defdef)
 (2 rows)
 
 RESET SESSION AUTHORIZATION;
 SET row_security TO OFF;
 SELECT * FROM t1 ORDER BY a,b;
- a |      b      
----+-------------
- 1 | aba
- 1 | abc
- 1 | xxx
- 2 | bbbbbb_updt
- 2 | bcdbcd
- 2 | yyyyyy
- 3 | ccc
- 3 | cde
- 3 | zzz
- 4 | daddad_updt
- 4 | defdef
+ id  | a |      b      
+-----+---+-------------
+ 101 | 1 | aba
+ 201 | 1 | abc
+ 301 | 1 | xxx
+ 102 | 2 | bbbbbb_updt
+ 202 | 2 | bcdbcd
+ 302 | 2 | yyyyyy
+ 103 | 3 | ccc
+ 203 | 3 | cde
+ 303 | 3 | zzz
+ 104 | 4 | daddad_updt
+ 204 | 4 | defdef
 (11 rows)
 
 SET SESSION AUTHORIZATION regress_rls_bob;
@@ -1896,24 +1896,24 @@ EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
          Filter: (((a % 2) = 0) AND f_leak(b))
 (10 rows)
 
-DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
+DELETE FROM only t1 WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
 NOTICE:  f_leak => daddad_updt
- oid | a |      b      |       t1        
------+---+-------------+-----------------
- 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 104 | 4 | daddad_updt | (4,daddad_updt)
+ tableoid | id  | a |      b      |         t1          
+----------+-----+---+-------------+---------------------
+ t1       | 102 | 2 | bbbbbb_updt | (102,2,bbbbbb_updt)
+ t1       | 104 | 4 | daddad_updt | (104,4,daddad_updt)
 (2 rows)
 
-DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
+DELETE FROM t1 WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
 NOTICE:  f_leak => bcdbcd
 NOTICE:  f_leak => defdef
 NOTICE:  f_leak => yyyyyy
- oid | a |   b    |     t1     
------+---+--------+------------
- 202 | 2 | bcdbcd | (2,bcdbcd)
- 204 | 4 | defdef | (4,defdef)
- 302 | 2 | yyyyyy | (2,yyyyyy)
+ tableoid | id  | a |   b    |       t1       
+----------+-----+---+--------+----------------
+ t2       | 202 | 2 | bcdbcd | (202,2,bcdbcd)
+ t2       | 204 | 4 | defdef | (204,4,defdef)
+ t3       | 302 | 2 | yyyyyy | (302,2,yyyyyy)
 (3 rows)
 
 --

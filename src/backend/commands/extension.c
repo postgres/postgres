@@ -32,6 +32,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -154,7 +155,7 @@ get_extension_oid(const char *extname, bool missing_ok)
 
 	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(tuple))
-		result = HeapTupleGetOid(tuple);
+		result = ((Form_pg_extension) GETSTRUCT(tuple))->oid;
 	else
 		result = InvalidOid;
 
@@ -188,7 +189,7 @@ get_extension_name(Oid ext_oid)
 	rel = heap_open(ExtensionRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extension_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(ext_oid));
 
@@ -227,7 +228,7 @@ get_extension_schema(Oid ext_oid)
 	rel = heap_open(ExtensionRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extension_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(ext_oid));
 
@@ -1758,6 +1759,9 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 	memset(values, 0, sizeof(values));
 	memset(nulls, 0, sizeof(nulls));
 
+	extensionOid = GetNewOidWithIndex(rel, ExtensionOidIndexId,
+									  Anum_pg_extension_oid);
+	values[Anum_pg_extension_oid - 1] = ObjectIdGetDatum(extensionOid);
 	values[Anum_pg_extension_extname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(extName));
 	values[Anum_pg_extension_extowner - 1] = ObjectIdGetDatum(extOwner);
@@ -1777,7 +1781,7 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
-	extensionOid = CatalogTupleInsert(rel, tuple);
+	CatalogTupleInsert(rel, tuple);
 
 	heap_freetuple(tuple);
 	heap_close(rel, RowExclusiveLock);
@@ -1848,7 +1852,7 @@ RemoveExtensionById(Oid extId)
 	rel = heap_open(ExtensionRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extension_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(extId));
 	scandesc = systable_beginscan(rel, ExtensionOidIndexId, true,
@@ -2376,7 +2380,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 	extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extension_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(CurrentExtensionObject));
 
@@ -2524,7 +2528,7 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 	extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extension_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(extensionoid));
 
@@ -2723,7 +2727,7 @@ AlterExtensionNamespace(const char *extensionName, const char *newschema, Oid *o
 	extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extension_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(extensionOid));
 
@@ -2903,7 +2907,7 @@ ExecAlterExtensionStmt(ParseState *pstate, AlterExtensionStmt *stmt)
 				 errmsg("extension \"%s\" does not exist",
 						stmt->extname)));
 
-	extensionOid = HeapTupleGetOid(extTup);
+	extensionOid = ((Form_pg_extension) GETSTRUCT(extTup))->oid;
 
 	/*
 	 * Determine the existing version we are updating from
@@ -3045,7 +3049,7 @@ ApplyExtensionUpdates(Oid extensionOid,
 		extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
 
 		ScanKeyInit(&key[0],
-					ObjectIdAttributeNumber,
+					Anum_pg_extension_oid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(extensionOid));
 

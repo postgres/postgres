@@ -144,7 +144,6 @@ CreateExecutorState(void)
 	estate->es_tupleTable = NIL;
 
 	estate->es_processed = 0;
-	estate->es_lastoid = InvalidOid;
 
 	estate->es_top_eflags = 0;
 	estate->es_instrument = 0;
@@ -545,7 +544,6 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 {
 	int			numattrs = tupdesc->natts;
 	int			attrno;
-	bool		hasoid;
 	ListCell   *tlist_item = list_head(tlist);
 
 	/* Check the tlist attributes */
@@ -589,14 +587,6 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 
 	if (tlist_item)
 		return false;			/* tlist too long */
-
-	/*
-	 * If the plan context requires a particular hasoid setting, then that has
-	 * to match, too.
-	 */
-	if (ExecContextForcesOids(ps, &hasoid) &&
-		hasoid != tupdesc->tdhasoid)
-		return false;
 
 	return true;
 }

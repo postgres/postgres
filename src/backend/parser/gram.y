@@ -440,7 +440,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <boolean> opt_instead
 %type <boolean> opt_unique opt_concurrently opt_verbose opt_full
 %type <boolean> opt_freeze opt_analyze opt_default opt_recheck
-%type <defelt>	opt_binary opt_oids copy_delimiter
+%type <defelt>	opt_binary copy_delimiter
 
 %type <boolean> copy_from opt_program
 
@@ -2311,14 +2311,7 @@ alter_table_cmd:
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> SET WITH OIDS  */
-			| SET WITH OIDS
-				{
-					AlterTableCmd *n = makeNode(AlterTableCmd);
-					n->subtype = AT_AddOids;
-					$$ = (Node *)n;
-				}
-			/* ALTER TABLE <name> SET WITHOUT OIDS  */
+			/* ALTER TABLE <name> SET WITHOUT OIDS, for backward compat  */
 			| SET WITHOUT OIDS
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -2961,23 +2954,23 @@ ClosePortalStmt:
  *				syntax had a hard-wired, space-separated set of options.
  *
  *				Really old syntax, from versions 7.2 and prior:
- *				COPY [ BINARY ] table [ WITH OIDS ] FROM/TO file
+ *				COPY [ BINARY ] table FROM/TO file
  *					[ [ USING ] DELIMITERS 'delimiter' ] ]
  *					[ WITH NULL AS 'null string' ]
  *				This option placement is not supported with COPY (query...).
  *
  *****************************************************************************/
 
-CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
+CopyStmt:	COPY opt_binary qualified_name opt_column_list
 			copy_from opt_program copy_file_name copy_delimiter opt_with copy_options
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
 					n->query = NULL;
 					n->attlist = $4;
-					n->is_from = $6;
-					n->is_program = $7;
-					n->filename = $8;
+					n->is_from = $5;
+					n->is_program = $6;
+					n->filename = $7;
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
@@ -2989,12 +2982,10 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 					/* Concatenate user-supplied flags */
 					if ($2)
 						n->options = lappend(n->options, $2);
-					if ($5)
-						n->options = lappend(n->options, $5);
-					if ($9)
-						n->options = lappend(n->options, $9);
-					if ($11)
-						n->options = list_concat(n->options, $11);
+					if ($8)
+						n->options = lappend(n->options, $8);
+					if ($10)
+						n->options = list_concat(n->options, $10);
 					$$ = (Node *)n;
 				}
 			| COPY '(' PreparableStmt ')' TO opt_program copy_file_name opt_with copy_options
@@ -3054,10 +3045,6 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("format", (Node *)makeString("binary"), @1);
 				}
-			| OIDS
-				{
-					$$ = makeDefElem("oids", (Node *)makeInteger(true), @1);
-				}
 			| FREEZE
 				{
 					$$ = makeDefElem("freeze", (Node *)makeInteger(true), @1);
@@ -3114,14 +3101,6 @@ opt_binary:
 			BINARY
 				{
 					$$ = makeDefElem("format", (Node *)makeString("binary"), @1);
-				}
-			| /*EMPTY*/								{ $$ = NULL; }
-		;
-
-opt_oids:
-			WITH OIDS
-				{
-					$$ = makeDefElem("oids", (Node *)makeInteger(true), @1);
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -3942,11 +3921,10 @@ part_elem: ColId opt_collate opt_class
 					$$ = n;
 				}
 		;
-/* WITH (options) is preferred, WITH OIDS and WITHOUT OIDS are legacy forms */
+/* WITHOUT OIDS is legacy only */
 OptWith:
 			WITH reloptions				{ $$ = $2; }
-			| WITH OIDS					{ $$ = list_make1(makeDefElem("oids", (Node *) makeInteger(true), @1)); }
-			| WITHOUT OIDS				{ $$ = list_make1(makeDefElem("oids", (Node *) makeInteger(false), @1)); }
+			| WITHOUT OIDS				{ $$ = NIL; }
 			| /*EMPTY*/					{ $$ = NIL; }
 		;
 

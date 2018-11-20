@@ -39,6 +39,7 @@
  */
 CATALOG(pg_conversion,2607,ConversionRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	conname;
 	Oid			connamespace;
 	Oid			conowner;

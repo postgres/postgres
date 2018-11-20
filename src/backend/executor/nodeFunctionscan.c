@@ -383,7 +383,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		else if (functypclass == TYPEFUNC_SCALAR)
 		{
 			/* Base data type, i.e. scalar */
-			tupdesc = CreateTemplateTupleDesc(1, false);
+			tupdesc = CreateTemplateTupleDesc(1);
 			TupleDescInitEntry(tupdesc,
 							   (AttrNumber) 1,
 							   NULL,	/* don't care about the name here */
@@ -454,7 +454,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		if (node->funcordinality)
 			natts++;
 
-		scan_tupdesc = CreateTemplateTupleDesc(natts, false);
+		scan_tupdesc = CreateTemplateTupleDesc(natts);
 
 		for (i = 0; i < nfuncs; i++)
 		{

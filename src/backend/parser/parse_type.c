@@ -161,7 +161,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 
 			namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
 			if (OidIsValid(namespaceId))
-				typoid = GetSysCacheOid2(TYPENAMENSP,
+				typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 										 PointerGetDatum(typname),
 										 ObjectIdGetDatum(namespaceId));
 			else
@@ -230,7 +230,7 @@ LookupTypeNameOid(ParseState *pstate, const TypeName *typeName, bool missing_ok)
 		return InvalidOid;
 	}
 
-	typoid = HeapTupleGetOid(tup);
+	typoid = ((Form_pg_type) GETSTRUCT(tup))->oid;
 	ReleaseSysCache(tup);
 
 	return typoid;
@@ -277,7 +277,7 @@ typenameTypeId(ParseState *pstate, const TypeName *typeName)
 	Type		tup;
 
 	tup = typenameType(pstate, typeName, NULL);
-	typoid = HeapTupleGetOid(tup);
+	typoid = ((Form_pg_type) GETSTRUCT(tup))->oid;
 	ReleaseSysCache(tup);
 
 	return typoid;
@@ -296,7 +296,7 @@ typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
 	Type		tup;
 
 	tup = typenameType(pstate, typeName, typmod_p);
-	*typeid_p = HeapTupleGetOid(tup);
+	*typeid_p = ((Form_pg_type) GETSTRUCT(tup))->oid;
 	ReleaseSysCache(tup);
 }
 
@@ -572,7 +572,7 @@ typeTypeId(Type tp)
 {
 	if (tp == NULL)				/* probably useless */
 		elog(ERROR, "typeTypeId() called with NULL type struct");
-	return HeapTupleGetOid(tp);
+	return ((Form_pg_type) GETSTRUCT(tp))->oid;
 }
 
 /* given type (as type struct), return the length of type */
@@ -832,13 +832,15 @@ parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p, bool missing_ok
 	}
 	else
 	{
-		if (!((Form_pg_type) GETSTRUCT(tup))->typisdefined)
+		Form_pg_type typ = (Form_pg_type) GETSTRUCT(tup);
+
+		if (!typ->typisdefined)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("type \"%s\" is only a shell",
 							TypeNameToString(typeName)),
 					 parser_errposition(NULL, typeName->location)));
-		*typeid_p = HeapTupleGetOid(tup);
+		*typeid_p = typ->oid;
 		ReleaseSysCache(tup);
 	}
 }

@@ -28,6 +28,8 @@
  */
 CATALOG(pg_opfamily,2753,OperatorFamilyRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* index access method opfamily is for */
 	Oid			opfmethod BKI_LOOKUP(pg_am);
 

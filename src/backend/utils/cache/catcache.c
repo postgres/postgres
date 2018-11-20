@@ -338,39 +338,31 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, int nkeys, HeapTuple tuple)
 	switch (nkeys)
 	{
 		case 4:
-			v4 = (cc_keyno[3] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
-				: fastgetattr(tuple,
-							  cc_keyno[3],
-							  cc_tupdesc,
-							  &isNull);
+			v4 = fastgetattr(tuple,
+							 cc_keyno[3],
+							 cc_tupdesc,
+							 &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 3:
-			v3 = (cc_keyno[2] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
-				: fastgetattr(tuple,
-							  cc_keyno[2],
-							  cc_tupdesc,
-							  &isNull);
+			v3 = fastgetattr(tuple,
+							 cc_keyno[2],
+							 cc_tupdesc,
+							 &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 2:
-			v2 = (cc_keyno[1] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
-				: fastgetattr(tuple,
-							  cc_keyno[1],
-							  cc_tupdesc,
-							  &isNull);
+			v2 = fastgetattr(tuple,
+							 cc_keyno[1],
+							 cc_tupdesc,
+							 &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 1:
-			v1 = (cc_keyno[0] == ObjectIdAttributeNumber)
-				? ObjectIdGetDatum(HeapTupleGetOid(tuple))
-				: fastgetattr(tuple,
-							  cc_keyno[0],
-							  cc_tupdesc,
-							  &isNull);
+			v1 = fastgetattr(tuple,
+							 cc_keyno[0],
+							 cc_tupdesc,
+							 &isNull);
 			Assert(!isNull);
 			break;
 		default:
@@ -998,8 +990,8 @@ CatalogCacheInitializeCache(CatCache *cache)
 		}
 		else
 		{
-			if (cache->cc_keyno[i] != ObjectIdAttributeNumber)
-				elog(FATAL, "only sys attr supported in caches is OID");
+			if (cache->cc_keyno[i] < 0)
+				elog(FATAL, "sys attributes are not supported in caches");
 			keytype = OIDOID;
 		}
 
@@ -1935,9 +1927,7 @@ CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, int *attnos, Datum *keys)
 		int			attnum = attnos[i];
 		Form_pg_attribute att;
 
-		/* only valid system attribute is the oid, which is by value */
-		if (attnum == ObjectIdAttributeNumber)
-			continue;
+		/* system attribute are not supported in caches */
 		Assert(attnum > 0);
 
 		att = TupleDescAttr(tupdesc, attnum - 1);
@@ -1966,33 +1956,25 @@ CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, int *attnos,
 	for (i = 0; i < nkeys; i++)
 	{
 		int			attnum = attnos[i];
+		Form_pg_attribute att = TupleDescAttr(tupdesc, attnum - 1);
+		Datum		src = srckeys[i];
+		NameData	srcname;
 
-		if (attnum == ObjectIdAttributeNumber)
+		/*
+		 * Must be careful in case the caller passed a C string where a
+		 * NAME is wanted: convert the given argument to a correctly
+		 * padded NAME.  Otherwise the memcpy() done by datumCopy() could
+		 * fall off the end of memory.
+		 */
+		if (att->atttypid == NAMEOID)
 		{
-			dstkeys[i] = srckeys[i];
+			namestrcpy(&srcname, DatumGetCString(src));
+			src = NameGetDatum(&srcname);
 		}
-		else
-		{
-			Form_pg_attribute att = TupleDescAttr(tupdesc, attnum - 1);
-			Datum		src = srckeys[i];
-			NameData	srcname;
 
-			/*
-			 * Must be careful in case the caller passed a C string where a
-			 * NAME is wanted: convert the given argument to a correctly
-			 * padded NAME.  Otherwise the memcpy() done by datumCopy() could
-			 * fall off the end of memory.
-			 */
-			if (att->atttypid == NAMEOID)
-			{
-				namestrcpy(&srcname, DatumGetCString(src));
-				src = NameGetDatum(&srcname);
-			}
-
-			dstkeys[i] = datumCopy(src,
-								   att->attbyval,
-								   att->attlen);
-		}
+		dstkeys[i] = datumCopy(src,
+							   att->attbyval,
+							   att->attlen);
 	}
 
 }

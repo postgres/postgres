@@ -41,7 +41,7 @@ pg_control_system(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(4, false);
+	tupdesc = CreateTemplateTupleDesc(4);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_control_version",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catalog_version_no",
@@ -91,7 +91,7 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(18, false);
+	tupdesc = CreateTemplateTupleDesc(18);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "checkpoint_lsn",
 					   LSNOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "redo_lsn",
@@ -221,7 +221,7 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(5, false);
+	tupdesc = CreateTemplateTupleDesc(5);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "min_recovery_end_lsn",
 					   LSNOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "min_recovery_end_timeline",
@@ -274,7 +274,7 @@ pg_control_init(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(12, false);
+	tupdesc = CreateTemplateTupleDesc(12);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "max_data_alignment",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database_block_size",

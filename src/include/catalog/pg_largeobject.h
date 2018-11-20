@@ -26,7 +26,7 @@
  *		typedef struct FormData_pg_largeobject
  * ----------------
  */
-CATALOG(pg_largeobject,2613,LargeObjectRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_largeobject,2613,LargeObjectRelationId)
 {
 	Oid			loid;			/* Identifier of large object */
 	int32		pageno;			/* Page number (starting from 0) */

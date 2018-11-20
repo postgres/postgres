@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/relscan.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -305,11 +306,17 @@ CreateStatistics(CreateStatsStmt *stmt)
 	Assert(ntypes > 0 && ntypes <= lengthof(types));
 	stxkind = construct_array(types, ntypes, CHAROID, 1, true, 'c');
 
+	statrel = heap_open(StatisticExtRelationId, RowExclusiveLock);
+
 	/*
 	 * Everything seems fine, so let's build the pg_statistic_ext tuple.
 	 */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
+
+	statoid = GetNewOidWithIndex(statrel, StatisticExtOidIndexId,
+								 Anum_pg_statistic_ext_oid);
+	values[Anum_pg_statistic_ext_oid - 1] = ObjectIdGetDatum(statoid);
 	values[Anum_pg_statistic_ext_stxrelid - 1] = ObjectIdGetDatum(relid);
 	values[Anum_pg_statistic_ext_stxname - 1] = NameGetDatum(&stxname);
 	values[Anum_pg_statistic_ext_stxnamespace - 1] = ObjectIdGetDatum(namespaceId);
@@ -322,10 +329,10 @@ CreateStatistics(CreateStatsStmt *stmt)
 	nulls[Anum_pg_statistic_ext_stxdependencies - 1] = true;
 
 	/* insert it into pg_statistic_ext */
-	statrel = heap_open(StatisticExtRelationId, RowExclusiveLock);
 	htup = heap_form_tuple(statrel->rd_att, values, nulls);
-	statoid = CatalogTupleInsert(statrel, htup);
+	CatalogTupleInsert(statrel, htup);
 	heap_freetuple(htup);
+
 	relation_close(statrel, RowExclusiveLock);
 
 	/*
@@ -467,7 +474,7 @@ ChooseExtendedStatisticName(const char *name1, const char *name2,
 
 		stxname = makeObjectName(name1, name2, modlabel);
 
-		existingstats = GetSysCacheOid2(STATEXTNAMENSP,
+		existingstats = GetSysCacheOid2(STATEXTNAMENSP, Anum_pg_statistic_ext_oid,
 										PointerGetDatum(stxname),
 										ObjectIdGetDatum(namespaceid));
 		if (!OidIsValid(existingstats))

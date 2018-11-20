@@ -53,6 +53,8 @@
  */
 CATALOG(pg_amop,2602,AccessMethodOperatorRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* the index opfamily this entry is for */
 	Oid			amopfamily BKI_LOOKUP(pg_opfamily);
 

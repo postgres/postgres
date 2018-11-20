@@ -131,7 +131,6 @@ typedef struct CopyStateData
 	bool		is_program;		/* is 'filename' a program to popen? */
 	copy_data_source_cb data_source_cb; /* function for reading data */
 	bool		binary;			/* binary format? */
-	bool		oids;			/* include OIDs? */
 	bool		freeze;			/* freeze rows on loading? */
 	bool		csv_mode;		/* Comma Separated Value format? */
 	bool		header_line;	/* CSV header line? */
@@ -173,7 +172,6 @@ typedef struct CopyStateData
 	 * Working state for COPY FROM
 	 */
 	AttrNumber	num_defaults;
-	bool		file_has_oids;
 	FmgrInfo	oid_in_function;
 	Oid			oid_typioparam;
 	FmgrInfo   *in_functions;	/* array of input functions for each attrs */
@@ -313,7 +311,7 @@ static CopyState BeginCopyTo(ParseState *pstate, Relation rel, RawStmt *query,
 static void EndCopyTo(CopyState cstate);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
-static void CopyOneRowTo(CopyState cstate, Oid tupleOid,
+static void CopyOneRowTo(CopyState cstate,
 			 Datum *values, bool *nulls);
 static void CopyFromInsertBatch(CopyState cstate, EState *estate,
 					CommandId mycid, int hi_options,
@@ -1086,15 +1084,6 @@ ProcessCopyOptions(ParseState *pstate,
 						 errmsg("COPY format \"%s\" not recognized", fmt),
 						 parser_errposition(pstate, defel->location)));
 		}
-		else if (strcmp(defel->defname, "oids") == 0)
-		{
-			if (cstate->oids)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
-			cstate->oids = defGetBoolean(defel);
-		}
 		else if (strcmp(defel->defname, "freeze") == 0)
 		{
 			if (cstate->freeze)
@@ -1440,13 +1429,6 @@ BeginCopy(ParseState *pstate,
 		cstate->rel = rel;
 
 		tupDesc = RelationGetDescr(cstate->rel);
-
-		/* Don't allow COPY w/ OIDs to or from a table without them */
-		if (cstate->oids && !cstate->rel->rd_rel->relhasoids)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("table \"%s\" does not have OIDs",
-							RelationGetRelationName(cstate->rel))));
 	}
 	else
 	{
@@ -1457,12 +1439,6 @@ BeginCopy(ParseState *pstate,
 
 		Assert(!is_from);
 		cstate->rel = NULL;
-
-		/* Don't allow COPY w/ OIDs from a query */
-		if (cstate->oids)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("COPY (query) WITH OIDS is not supported")));
 
 		/*
 		 * Run parse analysis and rewrite.  Note this also acquires sufficient
@@ -2028,8 +2004,6 @@ CopyTo(CopyState cstate)
 		CopySendData(cstate, BinarySignature, 11);
 		/* Flags field */
 		tmp = 0;
-		if (cstate->oids)
-			tmp |= (1 << 16);
 		CopySendInt32(cstate, tmp);
 		/* No header extension */
 		tmp = 0;
@@ -2091,7 +2065,7 @@ CopyTo(CopyState cstate)
 			heap_deform_tuple(tuple, tupDesc, values, nulls);
 
 			/* Format and send the data */
-			CopyOneRowTo(cstate, HeapTupleGetOid(tuple), values, nulls);
+			CopyOneRowTo(cstate, values, nulls);
 			processed++;
 		}
 
@@ -2124,7 +2098,7 @@ CopyTo(CopyState cstate)
  * Emit one row during CopyTo().
  */
 static void
-CopyOneRowTo(CopyState cstate, Oid tupleOid, Datum *values, bool *nulls)
+CopyOneRowTo(CopyState cstate, Datum *values, bool *nulls)
 {
 	bool		need_delim = false;
 	FmgrInfo   *out_functions = cstate->out_functions;
@@ -2139,25 +2113,6 @@ CopyOneRowTo(CopyState cstate, Oid tupleOid, Datum *values, bool *nulls)
 	{
 		/* Binary per-tuple header */
 		CopySendInt16(cstate, list_length(cstate->attnumlist));
-		/* Send OID if wanted --- note attnumlist doesn't include it */
-		if (cstate->oids)
-		{
-			/* Hack --- assume Oid is same size as int32 */
-			CopySendInt32(cstate, sizeof(int32));
-			CopySendInt32(cstate, tupleOid);
-		}
-	}
-	else
-	{
-		/* Text format has no per-tuple header, but send OID if wanted */
-		/* Assume digits don't need any quoting or encoding conversion */
-		if (cstate->oids)
-		{
-			string = DatumGetCString(DirectFunctionCall1(oidout,
-														 ObjectIdGetDatum(tupleOid)));
-			CopySendString(cstate, string);
-			need_delim = true;
-		}
 	}
 
 	foreach(cur, cstate->attnumlist)
@@ -2689,7 +2644,6 @@ CopyFrom(CopyState cstate)
 	{
 		TupleTableSlot *slot;
 		bool		skip_tuple;
-		Oid			loaded_oid = InvalidOid;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -2706,14 +2660,11 @@ CopyFrom(CopyState cstate)
 		/* Switch into its memory context */
 		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
-		if (!NextCopyFrom(cstate, econtext, values, nulls, &loaded_oid))
+		if (!NextCopyFrom(cstate, econtext, values, nulls))
 			break;
 
 		/* And now we can form the input tuple. */
 		tuple = heap_form_tuple(tupDesc, values, nulls);
-
-		if (loaded_oid != InvalidOid)
-			HeapTupleSetOid(tuple, loaded_oid);
 
 		/*
 		 * Constraints might reference the tableoid column, so initialize
@@ -3368,12 +3319,7 @@ BeginCopyFrom(ParseState *pstate,
 		}
 	}
 
-	if (!cstate->binary)
-	{
-		/* must rely on user to tell us... */
-		cstate->file_has_oids = cstate->oids;
-	}
-	else
+	if (cstate->binary)
 	{
 		/* Read and verify binary header */
 		char		readSig[11];
@@ -3390,7 +3336,10 @@ BeginCopyFrom(ParseState *pstate,
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("invalid COPY file header (missing flags)")));
-		cstate->file_has_oids = (tmp & (1 << 16)) != 0;
+		if ((tmp & (1 << 16)) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("invalid COPY file header (WITH OIDS)")));
 		tmp &= ~(1 << 16);
 		if ((tmp >> 16) != 0)
 			ereport(ERROR,
@@ -3412,21 +3361,13 @@ BeginCopyFrom(ParseState *pstate,
 		}
 	}
 
-	if (cstate->file_has_oids && cstate->binary)
-	{
-		getTypeBinaryInputInfo(OIDOID,
-							   &in_func_oid, &cstate->oid_typioparam);
-		fmgr_info(in_func_oid, &cstate->oid_in_function);
-	}
-
 	/* create workspace for CopyReadAttributes results */
 	if (!cstate->binary)
 	{
 		AttrNumber	attr_count = list_length(cstate->attnumlist);
-		int			nfields = cstate->file_has_oids ? (attr_count + 1) : attr_count;
 
-		cstate->max_fields = nfields;
-		cstate->raw_fields = (char **) palloc(nfields * sizeof(char *));
+		cstate->max_fields = attr_count;
+		cstate->raw_fields = (char **) palloc(attr_count * sizeof(char *));
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -3499,7 +3440,7 @@ NextCopyFromRawFields(CopyState cstate, char ***fields, int *nfields)
  */
 bool
 NextCopyFrom(CopyState cstate, ExprContext *econtext,
-			 Datum *values, bool *nulls, Oid *tupleOid)
+			 Datum *values, bool *nulls)
 {
 	TupleDesc	tupDesc;
 	AttrNumber	num_phys_attrs,
@@ -3508,16 +3449,12 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 	FmgrInfo   *in_functions = cstate->in_functions;
 	Oid		   *typioparams = cstate->typioparams;
 	int			i;
-	int			nfields;
-	bool		isnull;
-	bool		file_has_oids = cstate->file_has_oids;
 	int		   *defmap = cstate->defmap;
 	ExprState **defexprs = cstate->defexprs;
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	num_phys_attrs = tupDesc->natts;
 	attr_count = list_length(cstate->attnumlist);
-	nfields = file_has_oids ? (attr_count + 1) : attr_count;
 
 	/* Initialize all values for row to NULL */
 	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
@@ -3536,40 +3473,12 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 			return false;
 
 		/* check for overflowing fields */
-		if (nfields > 0 && fldct > nfields)
+		if (attr_count > 0 && fldct > attr_count)
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("extra data after last expected column")));
 
 		fieldno = 0;
-
-		/* Read the OID field if present */
-		if (file_has_oids)
-		{
-			if (fieldno >= fldct)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("missing data for OID column")));
-			string = field_strings[fieldno++];
-
-			if (string == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("null OID in COPY data")));
-			else if (cstate->oids && tupleOid != NULL)
-			{
-				cstate->cur_attname = "oid";
-				cstate->cur_attval = string;
-				*tupleOid = DatumGetObjectId(DirectFunctionCall1(oidin,
-																 CStringGetDatum(string)));
-				if (*tupleOid == InvalidOid)
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("invalid OID in COPY data")));
-				cstate->cur_attname = NULL;
-				cstate->cur_attval = NULL;
-			}
-		}
 
 		/* Loop to read the user attributes on the line. */
 		foreach(cur, cstate->attnumlist)
@@ -3628,7 +3537,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 			cstate->cur_attval = NULL;
 		}
 
-		Assert(fieldno == nfields);
+		Assert(fieldno == attr_count);
 	}
 	else
 	{
@@ -3673,27 +3582,6 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("row field count is %d, expected %d",
 							(int) fld_count, attr_count)));
-
-		if (file_has_oids)
-		{
-			Oid			loaded_oid;
-
-			cstate->cur_attname = "oid";
-			loaded_oid =
-				DatumGetObjectId(CopyReadBinaryAttribute(cstate,
-														 0,
-														 &cstate->oid_in_function,
-														 cstate->oid_typioparam,
-														 -1,
-														 &isnull));
-			if (isnull || loaded_oid == InvalidOid)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("invalid OID in COPY data")));
-			cstate->cur_attname = NULL;
-			if (cstate->oids && tupleOid != NULL)
-				*tupleOid = loaded_oid;
-		}
 
 		i = 0;
 		foreach(cur, cstate->attnumlist)
@@ -5022,7 +4910,7 @@ copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
 	slot_getallattrs(slot);
 
 	/* And send the data */
-	CopyOneRowTo(cstate, InvalidOid, slot->tts_values, slot->tts_isnull);
+	CopyOneRowTo(cstate, slot->tts_values, slot->tts_isnull);
 	myState->processed++;
 
 	return true;

@@ -167,7 +167,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		 * types.
 		 */
 		natts = RelationGetNumberOfAttributes(scan->indexRelation);
-		so->giststate->fetchTupdesc = CreateTemplateTupleDesc(natts, false);
+		so->giststate->fetchTupdesc = CreateTemplateTupleDesc(natts);
 		for (attno = 1; attno <= natts; attno++)
 		{
 			TupleDescInitEntry(so->giststate->fetchTupdesc, attno, NULL,

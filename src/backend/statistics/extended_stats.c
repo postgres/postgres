@@ -196,8 +196,8 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 		Form_pg_statistic_ext staForm;
 
 		entry = palloc0(sizeof(StatExtEntry));
-		entry->statOid = HeapTupleGetOid(htup);
 		staForm = (Form_pg_statistic_ext) GETSTRUCT(htup);
+		entry->statOid = staForm->oid;
 		entry->schema = get_namespace_name(staForm->stxnamespace);
 		entry->name = pstrdup(NameStr(staForm->stxname));
 		for (i = 0; i < staForm->stxkeys.dim1; i++)

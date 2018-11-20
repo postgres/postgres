@@ -4497,25 +4497,22 @@ INSERT INTO mytable VALUES(-1);  -- fails
    <para>
     Object identifiers (OIDs) are used internally by
     <productname>PostgreSQL</productname> as primary keys for various
-    system tables.  OIDs are not added to user-created tables, unless
-    <literal>WITH OIDS</literal> is specified when the table is
-    created, or the <xref linkend="guc-default-with-oids"/>
-    configuration variable is enabled.  Type <type>oid</type> represents
-    an object identifier.  There are also several alias types for
-    <type>oid</type>: <type>regproc</type>, <type>regprocedure</type>,
-    <type>regoper</type>, <type>regoperator</type>, <type>regclass</type>,
-    <type>regtype</type>, <type>regrole</type>, <type>regnamespace</type>,
-    <type>regconfig</type>, and <type>regdictionary</type>.
-    <xref linkend="datatype-oid-table"/> shows an overview.
+    system tables.
+
+    Type <type>oid</type> represents an object identifier.  There are also
+    several alias types for <type>oid</type>: <type>regproc</type>,
+    <type>regprocedure</type>, <type>regoper</type>, <type>regoperator</type>,
+    <type>regclass</type>, <type>regtype</type>, <type>regrole</type>,
+    <type>regnamespace</type>, <type>regconfig</type>, and
+    <type>regdictionary</type>.  <xref linkend="datatype-oid-table"/> shows an
+    overview.
    </para>
 
    <para>
     The <type>oid</type> type is currently implemented as an unsigned
     four-byte integer.  Therefore, it is not large enough to provide
     database-wide uniqueness in large databases, or even in large
-    individual tables.  So, using a user-created table's OID column as
-    a primary key is discouraged.  OIDs are best used only for
-    references to system tables.
+    individual tables.
    </para>
 
    <para>

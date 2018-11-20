@@ -903,6 +903,7 @@ void
 AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 {
 	Oid			classId = RelationGetRelid(rel);
+	AttrNumber	Anum_oid = get_object_attnum_oid(classId);
 	AttrNumber	Anum_owner = get_object_attnum_owner(classId);
 	AttrNumber	Anum_namespace = get_object_attnum_namespace(classId);
 	AttrNumber	Anum_acl = get_object_attnum_acl(classId);
@@ -913,7 +914,7 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 	Oid			old_ownerId;
 	Oid			namespaceId = InvalidOid;
 
-	oldtup = get_catalog_object_by_oid(rel, objectId);
+	oldtup = get_catalog_object_by_oid(rel, Anum_oid, objectId);
 	if (oldtup == NULL)
 		elog(ERROR, "cache lookup failed for object %u of catalog \"%s\"",
 			 objectId, RelationGetRelationName(rel));
@@ -959,8 +960,7 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 				}
 				else
 				{
-					snprintf(namebuf, sizeof(namebuf), "%u",
-							 HeapTupleGetOid(oldtup));
+					snprintf(namebuf, sizeof(namebuf), "%u", objectId);
 					objname = namebuf;
 				}
 				aclcheck_error(ACLCHECK_NOT_OWNER, objtype, objname);
@@ -1017,7 +1017,7 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 		/* Update owner dependency reference */
 		if (classId == LargeObjectMetadataRelationId)
 			classId = LargeObjectRelationId;
-		changeDependencyOnOwner(classId, HeapTupleGetOid(newtup), new_ownerId);
+		changeDependencyOnOwner(classId, objectId, new_ownerId);
 
 		/* Release memory */
 		pfree(values);

@@ -3837,10 +3837,11 @@ CommandComplete (B)
         <literal>INSERT <replaceable>oid</replaceable>
         <replaceable>rows</replaceable></literal>, where
         <replaceable>rows</replaceable> is the number of rows
-        inserted. <replaceable>oid</replaceable> is the object ID
-        of the inserted row if <replaceable>rows</replaceable> is 1
-        and the target table has OIDs;
-        otherwise <replaceable>oid</replaceable> is 0.
+        inserted. <replaceable>oid</replaceable> used to be the object ID
+        of the inserted row if <replaceable>rows</replaceable> was 1
+        and the target table had OIDs, but OIDs system columns are
+        not supported anymore; therefore <replaceable>oid</replaceable>
+        is always 0.
        </para>
 
        <para>

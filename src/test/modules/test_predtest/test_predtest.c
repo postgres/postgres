@@ -185,7 +185,7 @@ test_predtest(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
 
-	tupdesc = CreateTemplateTupleDesc(8, false);
+	tupdesc = CreateTemplateTupleDesc(8);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "strong_implied_by", BOOLOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2,

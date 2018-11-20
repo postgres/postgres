@@ -31,7 +31,7 @@
  *		typedef struct FormData_pg_db_role_setting
  * ----------------
  */
-CATALOG(pg_db_role_setting,2964,DbRoleSettingRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_db_role_setting,2964,DbRoleSettingRelationId) BKI_SHARED_RELATION
 {
 	Oid			setdatabase;	/* database */
 	Oid			setrole;		/* role */

@@ -744,6 +744,7 @@ bool
 check_session_authorization(char **newval, void **extra, GucSource source)
 {
 	HeapTuple	roleTup;
+	Form_pg_authid roleform;
 	Oid			roleid;
 	bool		is_superuser;
 	role_auth_extra *myextra;
@@ -770,8 +771,9 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
-	roleid = HeapTupleGetOid(roleTup);
-	is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
+	roleform = (Form_pg_authid) GETSTRUCT(roleTup);
+	roleid = roleform->oid;
+	is_superuser = roleform->rolsuper;
 
 	ReleaseSysCache(roleTup);
 
@@ -815,6 +817,7 @@ check_role(char **newval, void **extra, GucSource source)
 	Oid			roleid;
 	bool		is_superuser;
 	role_auth_extra *myextra;
+	Form_pg_authid roleform;
 
 	if (strcmp(*newval, "none") == 0)
 	{
@@ -842,8 +845,9 @@ check_role(char **newval, void **extra, GucSource source)
 			return false;
 		}
 
-		roleid = HeapTupleGetOid(roleTup);
-		is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
+		roleform = (Form_pg_authid) GETSTRUCT(roleTup);
+		roleid = roleform->oid;
+		is_superuser = roleform->rolsuper;
 
 		ReleaseSysCache(roleTup);
 

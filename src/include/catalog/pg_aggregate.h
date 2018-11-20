@@ -29,7 +29,7 @@
  *		cpp turns this into typedef struct FormData_pg_aggregate
  * ----------------------------------------------------------------
  */
-CATALOG(pg_aggregate,2600,AggregateRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_aggregate,2600,AggregateRelationId)
 {
 	/* pg_proc OID of the aggregate itself */
 	regproc		aggfnoid BKI_LOOKUP(pg_proc);

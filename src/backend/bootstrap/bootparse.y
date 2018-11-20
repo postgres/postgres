@@ -113,8 +113,8 @@ static int num_columns_read = 0;
 %type <list>  boot_index_params
 %type <ielem> boot_index_param
 %type <str>   boot_ident
-%type <ival>  optbootstrap optsharedrelation optwithoutoids boot_column_nullness
-%type <oidval> oidspec optoideq optrowtypeoid
+%type <ival>  optbootstrap optsharedrelation boot_column_nullness
+%type <oidval> oidspec optrowtypeoid
 
 %token <str> ID
 %token COMMA EQUALS LPAREN RPAREN
@@ -123,7 +123,7 @@ static int num_columns_read = 0;
 /* All the rest are unreserved, and should be handled in boot_ident! */
 %token <kw> OPEN XCLOSE XCREATE INSERT_TUPLE
 %token <kw> XDECLARE INDEX ON USING XBUILD INDICES UNIQUE XTOAST
-%token <kw> OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS XROWTYPE_OID
+%token <kw> OBJ_ID XBOOTSTRAP XSHARED_RELATION XROWTYPE_OID
 %token <kw> XFORCE XNOT XNULL
 
 %start TopLevel
@@ -170,7 +170,7 @@ Boot_CloseStmt:
 		;
 
 Boot_CreateStmt:
-		  XCREATE boot_ident oidspec optbootstrap optsharedrelation optwithoutoids optrowtypeoid LPAREN
+		  XCREATE boot_ident oidspec optbootstrap optsharedrelation optrowtypeoid LPAREN
 				{
 					do_start();
 					numattr = 0;
@@ -192,7 +192,7 @@ Boot_CreateStmt:
 
 					do_start();
 
-					tupdesc = CreateTupleDesc(numattr, !($6), attrtypes);
+					tupdesc = CreateTupleDesc(numattr, attrtypes);
 
 					shared_relation = $5;
 
@@ -236,7 +236,7 @@ Boot_CreateStmt:
 													  PG_CATALOG_NAMESPACE,
 													  shared_relation ? GLOBALTABLESPACE_OID : 0,
 													  $3,
-													  $7,
+													  $6,
 													  InvalidOid,
 													  BOOTSTRAP_SUPERUSERID,
 													  tupdesc,
@@ -245,8 +245,6 @@ Boot_CreateStmt:
 													  RELPERSISTENCE_PERMANENT,
 													  shared_relation,
 													  mapped_relation,
-													  true,
-													  0,
 													  ONCOMMIT_NOOP,
 													  (Datum) 0,
 													  false,
@@ -261,13 +259,10 @@ Boot_CreateStmt:
 		;
 
 Boot_InsertStmt:
-		  INSERT_TUPLE optoideq
+		  INSERT_TUPLE
 				{
 					do_start();
-					if ($2)
-						elog(DEBUG4, "inserting row with oid %u", $2);
-					else
-						elog(DEBUG4, "inserting row");
+					elog(DEBUG4, "inserting row");
 					num_columns_read = 0;
 				}
 		  LPAREN boot_column_val_list RPAREN
@@ -277,7 +272,7 @@ Boot_InsertStmt:
 							 numattr, num_columns_read);
 					if (boot_reldesc == NULL)
 						elog(FATAL, "relation not open");
-					InsertOneTuple($2);
+					InsertOneTuple();
 					do_end();
 				}
 		;
@@ -432,11 +427,6 @@ optsharedrelation:
 		|						{ $$ = 0; }
 		;
 
-optwithoutoids:
-			XWITHOUT_OIDS	{ $$ = 1; }
-		|					{ $$ = 0; }
-		;
-
 optrowtypeoid:
 			XROWTYPE_OID oidspec	{ $$ = $2; }
 		|							{ $$ = InvalidOid; }
@@ -464,11 +454,6 @@ boot_column_nullness:
 
 oidspec:
 			boot_ident							{ $$ = atooid($1); }
-		;
-
-optoideq:
-			OBJ_ID EQUALS oidspec				{ $$ = $3; }
-		|										{ $$ = InvalidOid; }
 		;
 
 boot_column_val_list:
@@ -501,7 +486,6 @@ boot_ident:
 		| OBJ_ID		{ $$ = pstrdup($1); }
 		| XBOOTSTRAP	{ $$ = pstrdup($1); }
 		| XSHARED_RELATION	{ $$ = pstrdup($1); }
-		| XWITHOUT_OIDS	{ $$ = pstrdup($1); }
 		| XROWTYPE_OID	{ $$ = pstrdup($1); }
 		| XFORCE		{ $$ = pstrdup($1); }
 		| XNOT			{ $$ = pstrdup($1); }

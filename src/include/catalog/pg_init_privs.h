@@ -43,7 +43,7 @@
  *		typedef struct FormData_pg_init_privs
  * ----------------
  */
-CATALOG(pg_init_privs,3394,InitPrivsRelationId) BKI_WITHOUT_OIDS
+CATALOG(pg_init_privs,3394,InitPrivsRelationId)
 {
 	Oid			objoid;			/* OID of object itself */
 	Oid			classoid;		/* OID of table containing object */

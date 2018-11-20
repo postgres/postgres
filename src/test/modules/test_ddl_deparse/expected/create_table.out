@@ -98,7 +98,7 @@ NOTICE:  DDL test: type simple, tag CREATE INDEX
 CREATE TABLE emp (
 	salary 		int4,
 	manager 	name
-) INHERITS (person) WITH OIDS;
+) INHERITS (person);
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 CREATE TABLE student (
 	gpa 		float8

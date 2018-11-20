@@ -3632,8 +3632,7 @@ build_remote_returning(Index rtindex, Relation rel, List *returningList)
 		if (IsA(var, Var) &&
 			var->varno == rtindex &&
 			var->varattno <= InvalidAttrNumber &&
-			var->varattno != SelfItemPointerAttributeNumber &&
-			var->varattno != ObjectIdAttributeNumber)
+			var->varattno != SelfItemPointerAttributeNumber)
 			continue;			/* don't need it */
 
 		if (tlist_member((Expr *) var, tlist))
@@ -3864,8 +3863,6 @@ init_returning_filter(PgFdwDirectModifyState *dmstate,
 				 */
 				if (attrno == SelfItemPointerAttributeNumber)
 					dmstate->ctidAttno = i;
-				else if (attrno == ObjectIdAttributeNumber)
-					dmstate->oidAttno = i;
 				else
 					Assert(false);
 				dmstate->hasSystemCols = true;
@@ -3961,15 +3958,6 @@ apply_returning_filter(PgFdwDirectModifyState *dmstate,
 
 			ctid = (ItemPointer) DatumGetPointer(old_values[dmstate->ctidAttno - 1]);
 			resultTup->t_self = *ctid;
-		}
-
-		/* oid */
-		if (dmstate->oidAttno)
-		{
-			Oid			oid = InvalidOid;
-
-			oid = DatumGetObjectId(old_values[dmstate->oidAttno - 1]);
-			HeapTupleSetOid(resultTup, oid);
 		}
 
 		/*
@@ -5556,7 +5544,6 @@ make_tuple_from_result_row(PGresult *res,
 	Datum	   *values;
 	bool	   *nulls;
 	ItemPointer ctid = NULL;
-	Oid			oid = InvalidOid;
 	ConversionLocation errpos;
 	ErrorContextCallback errcallback;
 	MemoryContext oldcontext;
@@ -5639,17 +5626,6 @@ make_tuple_from_result_row(PGresult *res,
 				ctid = (ItemPointer) DatumGetPointer(datum);
 			}
 		}
-		else if (i == ObjectIdAttributeNumber)
-		{
-			/* oid */
-			if (valstr != NULL)
-			{
-				Datum		datum;
-
-				datum = DirectFunctionCall1(oidin, CStringGetDatum(valstr));
-				oid = DatumGetObjectId(datum);
-			}
-		}
 		errpos.cur_attno = 0;
 
 		j++;
@@ -5693,12 +5669,6 @@ make_tuple_from_result_row(PGresult *res,
 	HeapTupleHeaderSetXmin(tuple->t_data, InvalidTransactionId);
 	HeapTupleHeaderSetCmin(tuple->t_data, InvalidTransactionId);
 
-	/*
-	 * If we have an OID to return, install it.
-	 */
-	if (OidIsValid(oid))
-		HeapTupleSetOid(tuple, oid);
-
 	/* Clean up */
 	MemoryContextReset(temp_context);
 
@@ -5727,8 +5697,6 @@ conversion_error_callback(void *arg)
 			attname = NameStr(attr->attname);
 		else if (errpos->cur_attno == SelfItemPointerAttributeNumber)
 			attname = "ctid";
-		else if (errpos->cur_attno == ObjectIdAttributeNumber)
-			attname = "oid";
 
 		relname = RelationGetRelationName(errpos->rel);
 	}

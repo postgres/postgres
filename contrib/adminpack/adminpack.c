@@ -502,7 +502,7 @@ pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 
 		fctx = palloc(sizeof(directory_fctx));
 
-		tupdesc = CreateTemplateTupleDesc(2, false);
+		tupdesc = CreateTemplateTupleDesc(2);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "starttime",
 						   TIMESTAMPOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "filename",

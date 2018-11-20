@@ -31,6 +31,8 @@
  */
 CATALOG(pg_operator,2617,OperatorRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* name of operator */
 	NameData	oprname;
 

@@ -305,8 +305,7 @@ static void truncate_check_activity(Relation rel);
 static void RangeVarCallbackForTruncate(const RangeVar *relation,
 							Oid relId, Oid oldRelId, void *arg);
 static List *MergeAttributes(List *schema, List *supers, char relpersistence,
-				bool is_partition, List **supOids, List **supconstr,
-				int *supOidCount);
+				bool is_partition, List **supOids, List **supconstr);
 static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
@@ -363,15 +362,13 @@ static List *find_typed_table_dependencies(Oid typeOid, const char *typeName,
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode);
 static ObjectAddress ATExecAddColumn(List **wqueue, AlteredTableInfo *tab,
-				Relation rel, ColumnDef *colDef, bool isOid,
+				Relation rel, ColumnDef *colDef,
 				bool recurse, bool recursing,
 				bool if_not_exists, LOCKMODE lockmode);
 static bool check_for_column_name_collision(Relation rel, const char *colname,
 								bool if_not_exists);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
 static void add_column_collation_dependency(Oid relid, int32 attnum, Oid collid);
-static void ATPrepAddOids(List **wqueue, Relation rel, bool recurse,
-			  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATPrepDropNotNull(Relation rel, bool recurse, bool recursing);
 static ObjectAddress ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode);
 static void ATPrepSetNotNull(Relation rel, bool recurse, bool recursing);
@@ -531,8 +528,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	TupleDesc	descriptor;
 	List	   *inheritOids;
 	List	   *old_constraints;
-	bool		localHasOids;
-	int			parentOidCount;
 	List	   *rawDefaults;
 	List	   *cookedDefaults;
 	Datum		reloptions;
@@ -654,7 +649,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		MergeAttributes(stmt->tableElts, stmt->inhRelations,
 						stmt->relation->relpersistence,
 						stmt->partbound != NULL,
-						&inheritOids, &old_constraints, &parentOidCount);
+						&inheritOids, &old_constraints);
 
 	/*
 	 * Create a tuple descriptor from the relation schema.  Note that this
@@ -662,29 +657,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * default values or CHECK constraints; we handle those below.
 	 */
 	descriptor = BuildDescForRelation(stmt->tableElts);
-
-	/*
-	 * Notice that we allow OIDs here only for plain tables and partitioned
-	 * tables, even though some other relkinds can support them.  This is
-	 * necessary because the default_with_oids GUC must apply only to plain
-	 * tables and not any other relkind; doing otherwise would break existing
-	 * pg_dump files.  We could allow explicit "WITH OIDS" while not allowing
-	 * default_with_oids to affect other relkinds, but it would complicate
-	 * interpretOidsOption().
-	 */
-	localHasOids = interpretOidsOption(stmt->options,
-									   (relkind == RELKIND_RELATION ||
-										relkind == RELKIND_PARTITIONED_TABLE));
-	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
-
-	/*
-	 * If a partitioned table doesn't have the system OID column, then none of
-	 * its partitions should have it.
-	 */
-	if (stmt->partbound && parentOidCount == 0 && localHasOids)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot create table with OIDs as partition of table without OIDs")));
 
 	/*
 	 * Find columns with default values and prepare for insertion of the
@@ -764,8 +736,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  stmt->relation->relpersistence,
 										  false,
 										  false,
-										  localHasOids,
-										  parentOidCount,
 										  stmt->oncommit,
 										  reloptions,
 										  true,
@@ -1816,7 +1786,6 @@ storage_name(char c)
  * 'supOids' receives a list of the OIDs of the parent relations.
  * 'supconstr' receives a list of constraints belonging to the parents,
  *		updated as necessary to be valid for the child.
- * 'supOidCount' is set to the number of parents that have OID columns.
  *
  * Return value:
  * Completed schema list.
@@ -1862,14 +1831,12 @@ storage_name(char c)
  */
 static List *
 MergeAttributes(List *schema, List *supers, char relpersistence,
-				bool is_partition, List **supOids, List **supconstr,
-				int *supOidCount)
+				bool is_partition, List **supOids, List **supconstr)
 {
 	ListCell   *entry;
 	List	   *inhSchema = NIL;
 	List	   *parentOids = NIL;
 	List	   *constraints = NIL;
-	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
 	int			child_attno;
 	static Node bogus_marker = {0}; /* marks conflicting defaults */
@@ -2076,9 +2043,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 							parent->relname)));
 
 		parentOids = lappend_oid(parentOids, RelationGetRelid(relation));
-
-		if (relation->rd_rel->relhasoids)
-			parentsWithOids++;
 
 		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
@@ -2498,7 +2462,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 
 	*supOids = parentOids;
 	*supconstr = constraints;
-	*supOidCount = parentsWithOids;
 	return schema;
 }
 
@@ -3424,7 +3387,6 @@ AlterTableGetLockLevel(List *cmds)
 								 * to SELECT */
 			case AT_SetTableSpace:	/* must rewrite heap */
 			case AT_AlterColumnType:	/* must rewrite heap */
-			case AT_AddOids:	/* must rewrite heap */
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -3453,7 +3415,7 @@ AlterTableGetLockLevel(List *cmds)
 				 */
 			case AT_DropColumn: /* change visible to SELECT */
 			case AT_AddColumnToView:	/* CREATE VIEW */
-			case AT_DropOids:	/* calls AT_DropColumn */
+			case AT_DropOids:	/* used to equiv to DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
 			case AT_EnableReplicaRule:	/* may change SELECT rules */
 			case AT_EnableRule: /* may change SELECT rules */
@@ -3862,25 +3824,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			}
 			pass = AT_PASS_MISC;
 			break;
-		case AT_AddOids:		/* SET WITH OIDS */
-			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			if (!rel->rd_rel->relhasoids || recursing)
-				ATPrepAddOids(wqueue, rel, recurse, cmd, lockmode);
-			/* Recursion occurs during execution phase */
-			pass = AT_PASS_ADD_COL;
-			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			/* Performs own recursion */
-			if (rel->rd_rel->relhasoids)
-			{
-				AlterTableCmd *dropCmd = makeNode(AlterTableCmd);
-
-				dropCmd->subtype = AT_DropColumn;
-				dropCmd->name = pstrdup("oid");
-				dropCmd->behavior = cmd->behavior;
-				ATPrepCmd(wqueue, rel, dropCmd, recurse, false, lockmode);
-			}
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
@@ -4068,12 +4013,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_AddColumn:		/* ADD COLUMN */
 		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
 			address = ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
-									  false, false, false,
+									  false, false,
 									  false, lockmode);
 			break;
 		case AT_AddColumnRecurse:
 			address = ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
-									  false, true, false,
+									  true, false,
 									  cmd->missing_ok, lockmode);
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
@@ -4197,28 +4142,8 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_SetLogged:		/* SET LOGGED */
 		case AT_SetUnLogged:	/* SET UNLOGGED */
 			break;
-		case AT_AddOids:		/* SET WITH OIDS */
-			/* Use the ADD COLUMN code, unless prep decided to do nothing */
-			if (cmd->def != NULL)
-				address =
-					ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
-									true, false, false,
-									cmd->missing_ok, lockmode);
-			break;
-		case AT_AddOidsRecurse: /* SET WITH OIDS */
-			/* Use the ADD COLUMN code, unless prep decided to do nothing */
-			if (cmd->def != NULL)
-				address =
-					ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
-									true, true, false,
-									cmd->missing_ok, lockmode);
-			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
-
-			/*
-			 * Nothing to do here; we'll have generated a DropColumn
-			 * subcommand to do the real work
-			 */
+			/* nothing to do here, oid columns don't exist anymore */
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
 			/*
@@ -4774,12 +4699,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		{
 			if (tab->rewrite > 0)
 			{
-				Oid			tupOid = InvalidOid;
-
 				/* Extract data from old tuple */
 				heap_deform_tuple(tuple, oldTupDesc, values, isnull);
-				if (oldTupDesc->tdhasoid)
-					tupOid = HeapTupleGetOid(tuple);
 
 				/* Set dropped attributes to null in new tuple */
 				foreach(lc, dropped_attrs)
@@ -4806,10 +4727,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				 * since the per-tuple memory context will be reset shortly.
 				 */
 				tuple = heap_form_tuple(newTupDesc, values, isnull);
-
-				/* Preserve OID, if any */
-				if (newTupDesc->tdhasoid)
-					HeapTupleSetOid(tuple, tupOid);
 
 				/*
 				 * Constraints might reference the tableoid column, so
@@ -5293,6 +5210,8 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
+		Form_pg_class classform = (Form_pg_class) GETSTRUCT(tuple);
+
 		if (behavior == DROP_RESTRICT)
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
@@ -5300,7 +5219,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
 							typeName),
 					 errhint("Use ALTER ... CASCADE to alter the typed tables too.")));
 		else
-			result = lappend_oid(result, HeapTupleGetOid(tuple));
+			result = lappend_oid(result, classform->oid);
 	}
 
 	heap_endscan(scan);
@@ -5345,7 +5264,7 @@ check_of_type(HeapTuple typetuple)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("type %s is not a composite type",
-						format_type_be(HeapTupleGetOid(typetuple)))));
+						format_type_be(typ->oid))));
 }
 
 
@@ -5385,7 +5304,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
  */
 static ObjectAddress
 ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
-				ColumnDef *colDef, bool isOid,
+				ColumnDef *colDef,
 				bool recurse, bool recursing,
 				bool if_not_exists, LOCKMODE lockmode)
 {
@@ -5455,13 +5374,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 								   get_collation_name(ccollid),
 								   get_collation_name(childatt->attcollation))));
 
-			/* If it's OID, child column must actually be OID */
-			if (isOid && childatt->attnum != ObjectIdAttributeNumber)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("child table \"%s\" has a conflicting \"%s\" column",
-								RelationGetRelationName(rel), colDef->colname)));
-
 			/* Bump the existing child att's inhcount */
 			childatt->attinhcount++;
 			CatalogTupleUpdate(attrdesc, &tuple->t_self, tuple);
@@ -5506,21 +5418,16 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	/* Determine the new attribute's number */
-	if (isOid)
-		newattnum = ObjectIdAttributeNumber;
-	else
-	{
-		newattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts + 1;
-		if (newattnum > MaxHeapAttributeNumber)
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_COLUMNS),
-					 errmsg("tables can have at most %d columns",
-							MaxHeapAttributeNumber)));
-	}
+	newattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts + 1;
+	if (newattnum > MaxHeapAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("tables can have at most %d columns",
+						MaxHeapAttributeNumber)));
 
 	typeTuple = typenameType(NULL, colDef->typeName, &typmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
-	typeOid = HeapTupleGetOid(typeTuple);
+	typeOid = tform->oid;
 
 	aclresult = pg_type_aclcheck(typeOid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
@@ -5564,10 +5471,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Update pg_class tuple as appropriate
 	 */
-	if (isOid)
-		((Form_pg_class) GETSTRUCT(reltup))->relhasoids = true;
-	else
-		((Form_pg_class) GETSTRUCT(reltup))->relnatts = newattnum;
+	((Form_pg_class) GETSTRUCT(reltup))->relnatts = newattnum;
 
 	CatalogTupleUpdate(pgclass, &reltup->t_self, reltup);
 
@@ -5716,13 +5620,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	/*
-	 * If we are adding an OID column, we have to tell Phase 3 to rewrite the
-	 * table to fix that.
-	 */
-	if (isOid)
-		tab->rewrite |= AT_REWRITE_ALTER_OID;
-
-	/*
 	 * Add needed dependency entries for the new column.
 	 */
 	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid);
@@ -5767,7 +5664,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		/* Recurse to child; return value is ignored */
 		ATExecAddColumn(wqueue, childtab, childrel,
-						colDef, isOid, recurse, true,
+						colDef, recurse, true,
 						if_not_exists, lockmode);
 
 		heap_close(childrel, NoLock);
@@ -5869,35 +5766,6 @@ add_column_collation_dependency(Oid relid, int32 attnum, Oid collid)
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
-}
-
-/*
- * ALTER TABLE SET WITH OIDS
- *
- * Basically this is an ADD COLUMN for the special OID column.  We have
- * to cons up a ColumnDef node because the ADD COLUMN code needs one.
- */
-static void
-ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd, LOCKMODE lockmode)
-{
-	/* If we're recursing to a child table, the ColumnDef is already set up */
-	if (cmd->def == NULL)
-	{
-		ColumnDef  *cdef = makeNode(ColumnDef);
-
-		cdef->colname = pstrdup("oid");
-		cdef->typeName = makeTypeNameFromOid(OIDOID, -1);
-		cdef->inhcount = 0;
-		cdef->is_local = true;
-		cdef->is_not_null = true;
-		cdef->storage = 0;
-		cdef->location = -1;
-		cmd->def = (Node *) cdef;
-	}
-	ATPrepAddColumn(wqueue, rel, recurse, false, false, cmd, lockmode);
-
-	if (recurse)
-		cmd->subtype = AT_AddOidsRecurse;
 }
 
 /*
@@ -6801,8 +6669,8 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 
 	attnum = targetatt->attnum;
 
-	/* Can't drop a system attribute, except OID */
-	if (attnum <= 0 && attnum != ObjectIdAttributeNumber)
+	/* Can't drop a system attribute */
+	if (attnum <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot drop system column \"%s\"",
@@ -6931,39 +6799,6 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	object.objectSubId = attnum;
 
 	performDeletion(&object, behavior, 0);
-
-	/*
-	 * If we dropped the OID column, must adjust pg_class.relhasoids and tell
-	 * Phase 3 to physically get rid of the column.  We formerly left the
-	 * column in place physically, but this caused subtle problems.  See
-	 * http://archives.postgresql.org/pgsql-hackers/2009-02/msg00363.php
-	 */
-	if (attnum == ObjectIdAttributeNumber)
-	{
-		Relation	class_rel;
-		Form_pg_class tuple_class;
-		AlteredTableInfo *tab;
-
-		class_rel = heap_open(RelationRelationId, RowExclusiveLock);
-
-		tuple = SearchSysCacheCopy1(RELOID,
-									ObjectIdGetDatum(RelationGetRelid(rel)));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for relation %u",
-				 RelationGetRelid(rel));
-		tuple_class = (Form_pg_class) GETSTRUCT(tuple);
-
-		tuple_class->relhasoids = false;
-		CatalogTupleUpdate(class_rel, &tuple->t_self, tuple);
-
-		heap_close(class_rel, RowExclusiveLock);
-
-		/* Find or create work queue entry for this table */
-		tab = ATGetQueueEntry(wqueue, rel);
-
-		/* Tell Phase 3 to physically remove the OID column */
-		tab->rewrite |= AT_REWRITE_ALTER_OID;
-	}
 
 	return object;
 }
@@ -7878,7 +7713,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 		CatalogTupleUpdate(conrel, &copyTuple->t_self, copyTuple);
 
 		InvokeObjectPostAlterHook(ConstraintRelationId,
-								  HeapTupleGetOid(contuple), 0);
+								  currcon->oid, 0);
 
 		heap_freetuple(copyTuple);
 
@@ -7891,7 +7726,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 		ScanKeyInit(&tgkey,
 					Anum_pg_trigger_tgconstraint,
 					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(HeapTupleGetOid(contuple)));
+					ObjectIdGetDatum(currcon->oid));
 
 		tgscan = systable_beginscan(tgrel, TriggerConstraintIndexId, true,
 									NULL, 1, &tgkey);
@@ -7930,8 +7765,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 			copy_tg->tginitdeferred = cmdcon->initdeferred;
 			CatalogTupleUpdate(tgrel, &copyTuple->t_self, copyTuple);
 
-			InvokeObjectPostAlterHook(TriggerRelationId,
-									  HeapTupleGetOid(tgtuple), 0);
+			InvokeObjectPostAlterHook(TriggerRelationId, currcon->oid, 0);
 
 			heap_freetuple(copyTuple);
 		}
@@ -7952,8 +7786,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 			CacheInvalidateRelcacheByRelid(lfirst_oid(lc));
 		}
 
-		ObjectAddressSet(address, ConstraintRelationId,
-						 HeapTupleGetOid(contuple));
+		ObjectAddressSet(address, ConstraintRelationId, currcon->oid);
 	}
 	else
 		address = InvalidObjectAddress;
@@ -8043,7 +7876,7 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 
 			validateForeignKeyConstraint(constrName, rel, refrel,
 										 con->conindid,
-										 HeapTupleGetOid(tuple));
+										 con->oid);
 			heap_close(refrel, NoLock);
 
 			/*
@@ -8116,13 +7949,11 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 		copy_con->convalidated = true;
 		CatalogTupleUpdate(conrel, &copyTuple->t_self, copyTuple);
 
-		InvokeObjectPostAlterHook(ConstraintRelationId,
-								  HeapTupleGetOid(tuple), 0);
+		InvokeObjectPostAlterHook(ConstraintRelationId, con->oid, 0);
 
 		heap_freetuple(copyTuple);
 
-		ObjectAddressSet(address, ConstraintRelationId,
-						 HeapTupleGetOid(tuple));
+		ObjectAddressSet(address, ConstraintRelationId, con->oid);
 	}
 	else
 		address = InvalidObjectAddress; /* already validated */
@@ -8520,7 +8351,7 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 						  &isnull);
 	if (isnull)
 		elog(ERROR, "null conbin for constraint %u",
-			 HeapTupleGetOid(constrtup));
+			 constrForm->oid);
 	conbin = TextDatumGetCString(val);
 	origexpr = (Expr *) stringToNode(conbin);
 	exprstate = ExecPrepareExpr(origexpr, estate);
@@ -8944,7 +8775,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		 * Perform the actual constraint deletion
 		 */
 		conobj.classId = ConstraintRelationId;
-		conobj.objectId = HeapTupleGetOid(tuple);
+		conobj.objectId = con->oid;
 		conobj.objectSubId = 0;
 
 		performDeletion(&conobj, behavior, 0);
@@ -9419,7 +9250,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	/* Look up the target type (should not fail, since prep found it) */
 	typeTuple = typenameType(NULL, typeName, &targettypmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
-	targettype = HeapTupleGetOid(typeTuple);
+	targettype = tform->oid;
 	/* And the collation */
 	targetcollid = GetColumnDefCollation(NULL, def, targettype);
 
@@ -11229,10 +11060,8 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 	scan = heap_beginscan_catalog(rel, 1, key);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid			relOid = HeapTupleGetOid(tuple);
-		Form_pg_class relForm;
-
-		relForm = (Form_pg_class) GETSTRUCT(tuple);
+		Form_pg_class relForm = (Form_pg_class) GETSTRUCT(tuple);
+		Oid			relOid = relForm->oid;
 
 		/*
 		 * Do not move objects in pg_catalog as part of this, if an admin
@@ -11536,14 +11365,6 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 						   parent->relname,
 						   RelationGetRelationName(child_rel))));
 
-	/* If parent has OIDs then child must have OIDs */
-	if (parent_rel->rd_rel->relhasoids && !child_rel->rd_rel->relhasoids)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs",
-						RelationGetRelationName(child_rel),
-						RelationGetRelationName(parent_rel))));
-
 	/*
 	 * If child_rel has row-level triggers with transition tables, we
 	 * currently don't allow it to become an inheritance child.  See also
@@ -11656,7 +11477,7 @@ decompile_conbin(HeapTuple contup, TupleDesc tupdesc)
 	con = (Form_pg_constraint) GETSTRUCT(contup);
 	attr = heap_getattr(contup, Anum_pg_constraint_conbin, tupdesc, &isnull);
 	if (isnull)
-		elog(ERROR, "null conbin for constraint %u", HeapTupleGetOid(contup));
+		elog(ERROR, "null conbin for constraint %u", con->oid);
 
 	expr = DirectFunctionCall2(pg_get_expr, attr,
 							   ObjectIdGetDatum(con->conrelid));
@@ -11787,45 +11608,6 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("child table is missing column \"%s\"",
 							attributeName)));
-		}
-	}
-
-	/*
-	 * If the parent has an OID column, so must the child, and we'd better
-	 * update the child's attinhcount and attislocal the same as for normal
-	 * columns.  We needn't check data type or not-nullness though.
-	 */
-	if (tupleDesc->tdhasoid)
-	{
-		/*
-		 * Here we match by column number not name; the match *must* be the
-		 * system column, not some random column named "oid".
-		 */
-		tuple = SearchSysCacheCopy2(ATTNUM,
-									ObjectIdGetDatum(RelationGetRelid(child_rel)),
-									Int16GetDatum(ObjectIdAttributeNumber));
-		if (HeapTupleIsValid(tuple))
-		{
-			Form_pg_attribute childatt = (Form_pg_attribute) GETSTRUCT(tuple);
-
-			/* See comments above; these changes should be the same */
-			childatt->attinhcount++;
-
-			if (child_is_partition)
-			{
-				Assert(childatt->attinhcount == 1);
-				childatt->attislocal = false;
-			}
-
-			CatalogTupleUpdate(attrrel, &tuple->t_self, tuple);
-			heap_freetuple(tuple);
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("child table is missing column \"%s\"",
-							"oid")));
 		}
 	}
 
@@ -12258,6 +12040,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 {
 	Oid			relid = RelationGetRelid(rel);
 	Type		typetuple;
+	Form_pg_type typeform;
 	Oid			typeid;
 	Relation	inheritsRelation,
 				relationRelation;
@@ -12274,7 +12057,8 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	/* Validate the type. */
 	typetuple = typenameType(NULL, ofTypename, NULL);
 	check_of_type(typetuple);
-	typeid = HeapTupleGetOid(typetuple);
+	typeform = (Form_pg_type) GETSTRUCT(typetuple);
+	typeid = typeform->oid;
 
 	/* Fail if the table has any inheritance parents. */
 	inheritsRelation = heap_open(InheritsRelationId, AccessShareLock);
@@ -12294,7 +12078,6 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	/*
 	 * Check the tuple descriptors for compatibility.  Unlike inheritance, we
 	 * require that the order also match.  However, attnotnull need not match.
-	 * Also unlike inheritance, we do not require matching relhasoids.
 	 */
 	typeTupleDesc = lookup_rowtype_tupdesc(typeid, -1);
 	tableTupleDesc = RelationGetDescr(rel);
@@ -12618,10 +12401,6 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 	{
 		int16		attno = indexRel->rd_index->indkey.values[key];
 		Form_pg_attribute attr;
-
-		/* Allow OID column to be indexed; it's certainly not nullable */
-		if (attno == ObjectIdAttributeNumber)
-			continue;
 
 		/*
 		 * Reject any other system columns.  (Going forward, we'll disallow
@@ -14292,22 +14071,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach temporary relation of another session as partition")));
 
-	/* If parent has OIDs then child must have OIDs */
-	if (rel->rd_rel->relhasoids && !attachrel->rd_rel->relhasoids)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot attach table \"%s\" without OIDs as partition of"
-						" table \"%s\" with OIDs", RelationGetRelationName(attachrel),
-						RelationGetRelationName(rel))));
-
-	/* OTOH, if parent doesn't have them, do not allow in attachrel either */
-	if (attachrel->rd_rel->relhasoids && !rel->rd_rel->relhasoids)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot attach table \"%s\" with OIDs as partition of table"
-						" \"%s\" without OIDs", RelationGetRelationName(attachrel),
-						RelationGetRelationName(rel))));
-
 	/* Check if there are any columns in attachrel that aren't in the parent */
 	tupleDesc = RelationGetDescr(attachrel);
 	natts = tupleDesc->natts;
@@ -14728,7 +14491,7 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 
 		CreateTrigger(trigStmt, NULL, RelationGetRelid(partition),
 					  trigForm->tgconstrrelid, InvalidOid, InvalidOid,
-					  trigForm->tgfoid, HeapTupleGetOid(tuple), qual,
+					  trigForm->tgfoid, trigForm->oid, qual,
 					  false, true);
 
 		MemoryContextReset(perTupCxt);

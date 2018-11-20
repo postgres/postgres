@@ -384,7 +384,6 @@ heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc)
 	{
 		case TableOidAttributeNumber:
 		case SelfItemPointerAttributeNumber:
-		case ObjectIdAttributeNumber:
 		case MinTransactionIdAttributeNumber:
 		case MinCommandIdAttributeNumber:
 		case MaxTransactionIdAttributeNumber:
@@ -642,9 +641,6 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 			/* pass-by-reference datatype */
 			result = PointerGetDatum(&(tup->t_self));
 			break;
-		case ObjectIdAttributeNumber:
-			result = ObjectIdGetDatum(HeapTupleGetOid(tup));
-			break;
 		case MinTransactionIdAttributeNumber:
 			result = TransactionIdGetDatum(HeapTupleHeaderGetRawXmin(tup->t_data));
 			break;
@@ -838,9 +834,6 @@ expand_tuple(HeapTuple *targetHeapTuple,
 	}
 	else
 		targetNullLen = 0;
-
-	if (tupleDesc->tdhasoid)
-		len += sizeof(Oid);
 
 	/*
 	 * Allocate and zero the space needed.  Note that the tuple body and
@@ -1065,9 +1058,6 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	if (hasnull)
 		len += BITMAPLEN(numberOfAttributes);
 
-	if (tupleDescriptor->tdhasoid)
-		len += sizeof(Oid);
-
 	hoff = len = MAXALIGN(len); /* align user data safely */
 
 	data_len = heap_compute_data_size(tupleDescriptor, values, isnull);
@@ -1098,9 +1088,6 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 
 	HeapTupleHeaderSetNatts(td, numberOfAttributes);
 	td->t_hoff = hoff;
-
-	if (tupleDescriptor->tdhasoid)	/* else leave infomask = 0 */
-		td->t_infomask = HEAP_HASOID;
 
 	heap_fill_tuple(tupleDescriptor,
 					values,
@@ -1171,14 +1158,11 @@ heap_modify_tuple(HeapTuple tuple,
 	pfree(isnull);
 
 	/*
-	 * copy the identification info of the old tuple: t_ctid, t_self, and OID
-	 * (if any)
+	 * copy the identification info of the old tuple: t_ctid, t_self
 	 */
 	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
-	if (tupleDesc->tdhasoid)
-		HeapTupleSetOid(newTuple, HeapTupleGetOid(tuple));
 
 	return newTuple;
 }
@@ -1237,14 +1221,11 @@ heap_modify_tuple_by_cols(HeapTuple tuple,
 	pfree(isnull);
 
 	/*
-	 * copy the identification info of the old tuple: t_ctid, t_self, and OID
-	 * (if any)
+	 * copy the identification info of the old tuple: t_ctid, t_self
 	 */
 	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
-	if (tupleDesc->tdhasoid)
-		HeapTupleSetOid(newTuple, HeapTupleGetOid(tuple));
 
 	return newTuple;
 }
@@ -1412,9 +1393,6 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 	if (hasnull)
 		len += BITMAPLEN(numberOfAttributes);
 
-	if (tupleDescriptor->tdhasoid)
-		len += sizeof(Oid);
-
 	hoff = len = MAXALIGN(len); /* align user data safely */
 
 	data_len = heap_compute_data_size(tupleDescriptor, values, isnull);
@@ -1432,9 +1410,6 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 	tuple->t_len = len;
 	HeapTupleHeaderSetNatts(tuple, numberOfAttributes);
 	tuple->t_hoff = hoff + MINIMAL_TUPLE_OFFSET;
-
-	if (tupleDescriptor->tdhasoid)	/* else leave infomask = 0 */
-		tuple->t_infomask = HEAP_HASOID;
 
 	heap_fill_tuple(tupleDescriptor,
 					values,

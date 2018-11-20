@@ -137,7 +137,7 @@ myLargeObjectExists(Oid loid, Snapshot snapshot)
 	bool		retval = false;
 
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_largeobject_metadata_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 

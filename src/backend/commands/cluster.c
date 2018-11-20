@@ -75,7 +75,7 @@ static List *get_tables_to_cluster(MemoryContext cluster_context);
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
 						 Datum *values, bool *isnull,
-						 bool newRelHasOids, RewriteState rwstate);
+						 RewriteState rwstate);
 
 
 /*---------------------------------------------------------------------------
@@ -688,8 +688,6 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  relpersistence,
 										  false,
 										  RelationIsMapped(OldHeap),
-										  true,
-										  0,
 										  ONCOMMIT_NOOP,
 										  reloptions,
 										  false,
@@ -1061,7 +1059,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 			reform_and_rewrite_tuple(tuple,
 									 oldTupDesc, newTupDesc,
 									 values, isnull,
-									 NewHeap->rd_rel->relhasoids, rwstate);
+									 rwstate);
 	}
 
 	if (indexScan != NULL)
@@ -1090,7 +1088,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 			reform_and_rewrite_tuple(tuple,
 									 oldTupDesc, newTupDesc,
 									 values, isnull,
-									 NewHeap->rd_rel->relhasoids, rwstate);
+									 rwstate);
 		}
 
 		tuplesort_end(tuplesort);
@@ -1755,7 +1753,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
  *
  * 2. The tuple might not even be legal for the new table; this is
  * currently only known to happen as an after-effect of ALTER TABLE
- * SET WITHOUT OIDS.
+ * SET WITHOUT OIDS (in an older version, via pg_upgrade).
  *
  * So, we must reconstruct the tuple from component Datums.
  */
@@ -1763,7 +1761,7 @@ static void
 reform_and_rewrite_tuple(HeapTuple tuple,
 						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
 						 Datum *values, bool *isnull,
-						 bool newRelHasOids, RewriteState rwstate)
+						 RewriteState rwstate)
 {
 	HeapTuple	copiedTuple;
 	int			i;
@@ -1778,10 +1776,6 @@ reform_and_rewrite_tuple(HeapTuple tuple,
 	}
 
 	copiedTuple = heap_form_tuple(newTupDesc, values, isnull);
-
-	/* Preserve OID, if any */
-	if (newRelHasOids)
-		HeapTupleSetOid(copiedTuple, HeapTupleGetOid(tuple));
 
 	/* The heap rewrite module does the rest */
 	rewrite_heap_tuple(rwstate, tuple, copiedTuple);

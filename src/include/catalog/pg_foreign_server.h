@@ -27,6 +27,7 @@
  */
 CATALOG(pg_foreign_server,1417,ForeignServerRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	srvname;		/* foreign server name */
 	Oid			srvowner;		/* server owner */
 	Oid			srvfdw;			/* server FDW */

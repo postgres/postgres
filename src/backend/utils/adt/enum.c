@@ -64,7 +64,7 @@ static void
 check_safe_enum_use(HeapTuple enumval_tup)
 {
 	TransactionId xmin;
-	Form_pg_enum en;
+	Form_pg_enum en = (Form_pg_enum) GETSTRUCT(enumval_tup);
 
 	/*
 	 * If the row is hinted as committed, it's surely safe.  This provides a
@@ -88,14 +88,13 @@ check_safe_enum_use(HeapTuple enumval_tup)
 	 * owning type.  (This'd also be false for values made by other
 	 * transactions; but the previous tests should have handled all of those.)
 	 */
-	if (!EnumBlacklisted(HeapTupleGetOid(enumval_tup)))
+	if (!EnumBlacklisted(en->oid))
 		return;
 
 	/*
 	 * There might well be other tests we could do here to narrow down the
 	 * unsafe conditions, but for now just raise an exception.
 	 */
-	en = (Form_pg_enum) GETSTRUCT(enumval_tup);
 	ereport(ERROR,
 			(errcode(ERRCODE_UNSAFE_NEW_ENUM_VALUE_USAGE),
 			 errmsg("unsafe use of new value \"%s\" of enum type %s",
@@ -140,7 +139,7 @@ enum_in(PG_FUNCTION_ARGS)
 	 * This comes from pg_enum.oid and stores system oids in user tables. This
 	 * oid must be preserved by binary upgrades.
 	 */
-	enumoid = HeapTupleGetOid(tup);
+	enumoid = ((Form_pg_enum) GETSTRUCT(tup))->oid;
 
 	ReleaseSysCache(tup);
 
@@ -204,7 +203,7 @@ enum_recv(PG_FUNCTION_ARGS)
 	/* check it's safe to use in SQL */
 	check_safe_enum_use(tup);
 
-	enumoid = HeapTupleGetOid(tup);
+	enumoid = ((Form_pg_enum) GETSTRUCT(tup))->oid;
 
 	ReleaseSysCache(tup);
 
@@ -414,7 +413,7 @@ enum_endpoint(Oid enumtypoid, ScanDirection direction)
 	{
 		/* check it's safe to use in SQL */
 		check_safe_enum_use(enum_tuple);
-		minmax = HeapTupleGetOid(enum_tuple);
+		minmax = ((Form_pg_enum) GETSTRUCT(enum_tuple))->oid;
 	}
 	else
 	{
@@ -574,7 +573,7 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 
 	while (HeapTupleIsValid(enum_tuple = systable_getnext_ordered(enum_scan, ForwardScanDirection)))
 	{
-		Oid			enum_oid = HeapTupleGetOid(enum_tuple);
+		Oid			enum_oid = ((Form_pg_enum) GETSTRUCT(enum_tuple))->oid;
 
 		if (!left_found && lower == enum_oid)
 			left_found = true;

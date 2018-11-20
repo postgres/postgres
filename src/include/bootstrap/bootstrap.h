@@ -40,7 +40,7 @@ extern void closerel(char *name);
 extern void boot_openrel(char *name);
 
 extern void DefineAttr(char *name, char *type, int attnum, int nullness);
-extern void InsertOneTuple(Oid objectid);
+extern void InsertOneTuple(void);
 extern void InsertOneValue(char *value, int i);
 extern void InsertOneNull(int i);
 

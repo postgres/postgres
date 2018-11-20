@@ -28,6 +28,7 @@
  */
 CATALOG(pg_collation,3456,CollationRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	collname;		/* collation name */
 	Oid			collnamespace;	/* OID of namespace containing collation */
 	Oid			collowner;		/* owner of collation */

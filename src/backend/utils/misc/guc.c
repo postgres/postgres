@@ -464,7 +464,6 @@ char	   *event_source;
 
 bool		row_security;
 bool		check_function_bodies = true;
-bool		default_with_oids = false;
 bool		session_auth_is_superuser;
 
 int			log_min_error_statement = ERROR;
@@ -1510,15 +1509,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&Array_nulls,
 		true,
-		NULL, NULL, NULL
-	},
-	{
-		{"default_with_oids", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Create new tables with OIDs by default."),
-			NULL
-		},
-		&default_with_oids,
-		false,
 		NULL, NULL, NULL
 	},
 	{
@@ -8260,7 +8250,7 @@ GetPGVariableResultDesc(const char *name)
 	if (guc_name_compare(name, "all") == 0)
 	{
 		/* need a tuple descriptor representing three TEXT columns */
-		tupdesc = CreateTemplateTupleDesc(3, false);
+		tupdesc = CreateTemplateTupleDesc(3);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
@@ -8276,7 +8266,7 @@ GetPGVariableResultDesc(const char *name)
 		(void) GetConfigOptionByName(name, &varname, false);
 
 		/* need a tuple descriptor representing a single TEXT column */
-		tupdesc = CreateTemplateTupleDesc(1, false);
+		tupdesc = CreateTemplateTupleDesc(1);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, varname,
 						   TEXTOID, -1, 0);
 	}
@@ -8299,7 +8289,7 @@ ShowGUCConfigOption(const char *name, DestReceiver *dest)
 	value = GetConfigOptionByName(name, &varname, false);
 
 	/* need a tuple descriptor representing a single TEXT column */
-	tupdesc = CreateTemplateTupleDesc(1, false);
+	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, varname,
 							  TEXTOID, -1, 0);
 
@@ -8325,7 +8315,7 @@ ShowAllGUCConfig(DestReceiver *dest)
 	bool		isnull[3] = {false, false, false};
 
 	/* need a tuple descriptor representing three TEXT columns */
-	tupdesc = CreateTemplateTupleDesc(3, false);
+	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "name",
 							  TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "setting",
@@ -8767,7 +8757,7 @@ show_all_settings(PG_FUNCTION_ARGS)
 		 * need a tuple descriptor representing NUM_PG_SETTINGS_ATTS columns
 		 * of the appropriate types
 		 */
-		tupdesc = CreateTemplateTupleDesc(NUM_PG_SETTINGS_ATTS, false);
+		tupdesc = CreateTemplateTupleDesc(NUM_PG_SETTINGS_ATTS);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
@@ -8907,7 +8897,7 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* Build a tuple descriptor for our result type */
-	tupdesc = CreateTemplateTupleDesc(NUM_PG_FILE_SETTINGS_ATTS, false);
+	tupdesc = CreateTemplateTupleDesc(NUM_PG_FILE_SETTINGS_ATTS);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "sourcefile",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "sourceline",

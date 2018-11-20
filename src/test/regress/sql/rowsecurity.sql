@@ -232,11 +232,11 @@ SET SESSION AUTHORIZATION regress_rls_alice;
 
 SET row_security TO ON;
 
-CREATE TABLE t1 (a int, junk1 text, b text) WITH OIDS;
+CREATE TABLE t1 (id int not null primary key, a int, junk1 text, b text);
 ALTER TABLE t1 DROP COLUMN junk1;    -- just a disturbing factor
 GRANT ALL ON t1 TO public;
 
-COPY t1 FROM stdin WITH (oids);
+COPY t1 FROM stdin WITH ;
 101	1	aba
 102	2	bbb
 103	3	ccc
@@ -246,18 +246,18 @@ COPY t1 FROM stdin WITH (oids);
 CREATE TABLE t2 (c float) INHERITS (t1);
 GRANT ALL ON t2 TO public;
 
-COPY t2 FROM stdin WITH (oids);
+COPY t2 FROM stdin;
 201	1	abc	1.1
 202	2	bcd	2.2
 203	3	cde	3.3
 204	4	def	4.4
 \.
 
-CREATE TABLE t3 (c text, b text, a int) WITH OIDS;
+CREATE TABLE t3 (id int not null primary key, c text, b text, a int);
 ALTER TABLE t3 INHERIT t1;
 GRANT ALL ON t3 TO public;
 
-COPY t3(a,b,c) FROM stdin WITH (oids);
+COPY t3(id, a,b,c) FROM stdin;
 301	1	xxx	X
 302	2	yyy	Y
 303	3	zzz	Z
@@ -278,7 +278,7 @@ SELECT * FROM t1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
 
 -- reference to system column
-SELECT oid, * FROM t1;
+SELECT tableoid::regclass, * FROM t1;
 EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
 
 -- reference to whole-row reference
@@ -293,8 +293,8 @@ SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
 
 -- union all query
-SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
-EXPLAIN (COSTS OFF) SELECT a, b, oid FROM t2 UNION ALL SELECT a, b, oid FROM t3;
+SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclass FROM t3;
+EXPLAIN (COSTS OFF) SELECT a, b, tableoid::regclass FROM t2 UNION ALL SELECT a, b, tableoid::regclass FROM t3;
 
 -- superuser is allowed to bypass RLS checks
 RESET SESSION AUTHORIZATION;
@@ -614,9 +614,9 @@ EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 
 -- returning clause with system column
-UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *;
-UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+UPDATE t1 SET b = b WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
 
 -- updates with from clause
 EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t3
@@ -663,8 +663,8 @@ SET row_security TO ON;
 EXPLAIN (COSTS OFF) DELETE FROM only t1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
 
-DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
-DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
+DELETE FROM only t1 WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
+DELETE FROM t1 WHERE f_leak(b) RETURNING tableoid::regclass, *, t1;
 
 --
 -- S.b. view on top of Row-level security

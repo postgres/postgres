@@ -283,7 +283,6 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot drop columns from view")));
-	/* we can ignore tdhasoid */
 
 	for (i = 0; i < olddesc->natts; i++)
 	{

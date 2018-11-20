@@ -62,7 +62,7 @@ brtuple_disk_tupdesc(BrinDesc *brdesc)
 		/* make sure it's in the bdesc's context */
 		oldcxt = MemoryContextSwitchTo(brdesc->bd_context);
 
-		tupdesc = CreateTemplateTupleDesc(brdesc->bd_totalstored, false);
+		tupdesc = CreateTemplateTupleDesc(brdesc->bd_totalstored);
 
 		for (i = 0; i < brdesc->bd_tupdesc->natts; i++)
 		{

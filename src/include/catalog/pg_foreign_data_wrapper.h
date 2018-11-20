@@ -28,6 +28,7 @@
  */
 CATALOG(pg_foreign_data_wrapper,2328,ForeignDataWrapperRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	fdwname;		/* foreign-data wrapper name */
 	Oid			fdwowner;		/* FDW owner */
 	Oid			fdwhandler;		/* handler function, or 0 if none */

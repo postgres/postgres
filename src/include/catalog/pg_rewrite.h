@@ -31,6 +31,7 @@
  */
 CATALOG(pg_rewrite,2618,RewriteRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	rulename;
 	Oid			ev_class;
 	char		ev_type;

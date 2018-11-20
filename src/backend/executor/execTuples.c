@@ -70,7 +70,7 @@
 
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
-					   bool hasoid, bool skipjunk);
+					   bool skipjunk);
 static pg_attribute_always_inline void
 slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 					   int natts);
@@ -1602,20 +1602,9 @@ ExecFetchSlotHeapTupleDatum(TupleTableSlot *slot)
 void
 ExecInitResultTypeTL(PlanState *planstate)
 {
-	bool		hasoid;
-	TupleDesc	tupDesc;
+	TupleDesc	tupDesc = ExecTypeFromTL(planstate->plan->targetlist);
 
-	if (ExecContextForcesOids(planstate, &hasoid))
-	{
-		/* context forces OID choice; hasoid is now set correctly */
-	}
-	else
-	{
-		/* given free choice, don't leave space for OIDs in result tuples */
-		hasoid = false;
-	}
-
-	tupDesc = ExecTypeFromTL(planstate->plan->targetlist, hasoid);
+	tupDesc = ExecTypeFromTL(planstate->plan->targetlist);
 	planstate->ps_ResultTupleDesc = tupDesc;
 }
 
@@ -1796,9 +1785,9 @@ slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
  * ----------------------------------------------------------------
  */
 TupleDesc
-ExecTypeFromTL(List *targetList, bool hasoid)
+ExecTypeFromTL(List *targetList)
 {
-	return ExecTypeFromTLInternal(targetList, hasoid, false);
+	return ExecTypeFromTLInternal(targetList, false);
 }
 
 /* ----------------------------------------------------------------
@@ -1808,13 +1797,13 @@ ExecTypeFromTL(List *targetList, bool hasoid)
  * ----------------------------------------------------------------
  */
 TupleDesc
-ExecCleanTypeFromTL(List *targetList, bool hasoid)
+ExecCleanTypeFromTL(List *targetList)
 {
-	return ExecTypeFromTLInternal(targetList, hasoid, true);
+	return ExecTypeFromTLInternal(targetList, true);
 }
 
 static TupleDesc
-ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
+ExecTypeFromTLInternal(List *targetList, bool skipjunk)
 {
 	TupleDesc	typeInfo;
 	ListCell   *l;
@@ -1825,7 +1814,7 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 		len = ExecCleanTargetListLength(targetList);
 	else
 		len = ExecTargetListLength(targetList);
-	typeInfo = CreateTemplateTupleDesc(len, hasoid);
+	typeInfo = CreateTemplateTupleDesc(len);
 
 	foreach(l, targetList)
 	{
@@ -1861,7 +1850,7 @@ ExecTypeFromExprList(List *exprList)
 	ListCell   *lc;
 	int			cur_resno = 1;
 
-	typeInfo = CreateTemplateTupleDesc(list_length(exprList), false);
+	typeInfo = CreateTemplateTupleDesc(list_length(exprList));
 
 	foreach(lc, exprList)
 	{

@@ -39,6 +39,7 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "commands/trigger.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
@@ -262,7 +263,6 @@ ExecInsert(ModifyTableState *mtstate,
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
-	Oid			newId;
 	List	   *recheckIndexes = NIL;
 	TupleTableSlot *result = NULL;
 	TransitionCaptureState *ar_insert_trig_tcs;
@@ -280,21 +280,6 @@ ExecInsert(ModifyTableState *mtstate,
 	 */
 	resultRelInfo = estate->es_result_relation_info;
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
-
-	/*
-	 * If the result relation has OIDs, force the tuple's OID to zero so that
-	 * heap_insert will assign a fresh OID.  Usually the OID already will be
-	 * zero at this point, but there are corner cases where the plan tree can
-	 * return a tuple extracted literally from some table with the same
-	 * rowtype.
-	 *
-	 * XXX if we ever wanted to allow users to assign their own OIDs to new
-	 * rows, this'd be the place to do it.  For the moment, we make a point of
-	 * doing this before calling triggers, so that a user-supplied trigger
-	 * could hack the OID if desired.
-	 */
-	if (resultRelationDesc->rd_rel->relhasoids)
-		HeapTupleSetOid(tuple, InvalidOid);
 
 	/*
 	 * BEFORE ROW INSERT Triggers.
@@ -328,8 +313,6 @@ ExecInsert(ModifyTableState *mtstate,
 
 		/* trigger might have changed tuple */
 		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
-
-		newId = InvalidOid;
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
@@ -352,8 +335,6 @@ ExecInsert(ModifyTableState *mtstate,
 		 * tableoid column, so initialize t_tableOid before evaluating them.
 		 */
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-
-		newId = InvalidOid;
 	}
 	else
 	{
@@ -473,10 +454,10 @@ ExecInsert(ModifyTableState *mtstate,
 			HeapTupleHeaderSetSpeculativeToken(tuple->t_data, specToken);
 
 			/* insert the tuple, with the speculative token */
-			newId = heap_insert(resultRelationDesc, tuple,
-								estate->es_output_cid,
-								HEAP_INSERT_SPECULATIVE,
-								NULL);
+			heap_insert(resultRelationDesc, tuple,
+						estate->es_output_cid,
+						HEAP_INSERT_SPECULATIVE,
+						NULL);
 
 			/* insert index entries for tuple */
 			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
@@ -519,9 +500,9 @@ ExecInsert(ModifyTableState *mtstate,
 			 * Note: heap_insert returns the tid (location) of the new tuple
 			 * in the t_self field.
 			 */
-			newId = heap_insert(resultRelationDesc, tuple,
-								estate->es_output_cid,
-								0, NULL);
+			heap_insert(resultRelationDesc, tuple,
+						estate->es_output_cid,
+						0, NULL);
 
 			/* insert index entries for tuple */
 			if (resultRelInfo->ri_NumIndices > 0)
@@ -534,7 +515,6 @@ ExecInsert(ModifyTableState *mtstate,
 	if (canSetTag)
 	{
 		(estate->es_processed)++;
-		estate->es_lastoid = newId;
 		setLastTid(&(tuple->t_self));
 	}
 
@@ -2401,8 +2381,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * the tupdesc in the parent's state: it can be reused by partitions
 		 * with an identical descriptor to the parent.
 		 */
-		tupDesc = ExecTypeFromTL((List *) node->onConflictSet,
-								 relationDesc->tdhasoid);
+		tupDesc = ExecTypeFromTL((List *) node->onConflictSet);
 		mtstate->mt_conflproj =
 			ExecInitExtraTupleSlot(mtstate->ps.state,
 								   mtstate->mt_partition_tuple_routing ?
@@ -2516,7 +2495,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 										subplan->targetlist);
 
 				j = ExecInitJunkFilter(subplan->targetlist,
-									   resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
 									   ExecInitExtraTupleSlot(estate, NULL,
 															  &TTSOpsHeapTuple));
 

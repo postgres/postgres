@@ -849,7 +849,7 @@ ERROR:  check constraint "foo" is violated by some row
 drop table atacc2;
 drop table atacc1;
 -- test unique constraint adding
-create table atacc1 ( test int ) with oids;
+create table atacc1 ( test int ) ;
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
 -- insert first value
@@ -860,8 +860,6 @@ ERROR:  duplicate key value violates unique constraint "atacc_test1"
 DETAIL:  Key (test)=(2) already exists.
 -- should succeed
 insert into atacc1 (test) values (4);
--- try adding a unique oid constraint
-alter table atacc1 add constraint atacc_oid1 unique(oid);
 -- try to create duplicates via alter table using - should fail
 alter table atacc1 alter column test type integer using 0;
 ERROR:  could not create unique index "atacc_test1"
@@ -910,7 +908,7 @@ ERROR:  duplicate key value violates unique constraint "atacc1_test_key"
 DETAIL:  Key (test)=(3) already exists.
 drop table atacc1;
 -- test primary key constraint adding
-create table atacc1 ( test int ) with oids;
+create table atacc1 ( id serial, test int) ;
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
 -- insert first value
@@ -924,14 +922,14 @@ insert into atacc1 (test) values (4);
 -- inserting NULL should fail
 insert into atacc1 (test) values(NULL);
 ERROR:  null value in column "test" violates not-null constraint
-DETAIL:  Failing row contains (null).
+DETAIL:  Failing row contains (4, null).
 -- try adding a second primary key (should fail)
-alter table atacc1 add constraint atacc_oid1 primary key(oid);
+alter table atacc1 add constraint atacc_oid1 primary key(id);
 ERROR:  multiple primary keys for table "atacc1" are not allowed
 -- drop first primary key constraint
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should succeed)
-alter table atacc1 add constraint atacc_oid1 primary key(oid);
+alter table atacc1 add constraint atacc_oid1 primary key(id);
 drop table atacc1;
 -- let's do one where the primary key constraint fails when added
 create table atacc1 ( test int );
@@ -1021,7 +1019,7 @@ alter table non_existent alter column bar drop not null;
 ERROR:  relation "non_existent" does not exist
 -- test setting columns to null and not null and vice versa
 -- test checking for null values and primary key
-create table atacc1 (test int not null) with oids;
+create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 alter table atacc1 alter column test drop not null;
 ERROR:  column "test" is in a primary key
@@ -1037,11 +1035,6 @@ alter table atacc1 alter bar set not null;
 ERROR:  column "bar" of relation "atacc1" does not exist
 alter table atacc1 alter bar drop not null;
 ERROR:  column "bar" of relation "atacc1" does not exist
--- try altering the oid column, should fail
-alter table atacc1 alter oid set not null;
-ERROR:  cannot alter system column "oid"
-alter table atacc1 alter oid drop not null;
-ERROR:  cannot alter system column "oid"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 alter table myview alter column test drop not null;
@@ -1147,7 +1140,7 @@ ERROR:  permission denied: "pg_class" is a system catalog
 alter table nosuchtable drop column bar;
 ERROR:  relation "nosuchtable" does not exist
 -- test dropping columns
-create table atacc1 (a int4 not null, b int4, c int4 not null, d int4) with oids;
+create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
 insert into atacc1 values (1, 2, 3, 4);
 alter table atacc1 drop a;
 alter table atacc1 drop a;
@@ -1292,8 +1285,13 @@ delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
 ERROR:  column "bar" of relation "atacc1" does not exist
--- try dropping the oid column, should succeed
-alter table atacc1 drop oid;
+-- try removing an oid column, should succeed (as it's nonexistant)
+alter table atacc1 SET WITHOUT OIDS;
+-- try adding an oid column, should fail (not supported)
+alter table atacc1 SET WITH OIDS;
+ERROR:  syntax error at or near "WITH"
+LINE 1: alter table atacc1 SET WITH OIDS;
+                               ^
 -- try dropping the xmin column, should fail
 alter table atacc1 drop xmin;
 ERROR:  cannot drop system column "xmin"
@@ -1691,131 +1689,6 @@ order by attrelid::regclass::text, attnum;
  depth2   | c       |           1 | f
 (3 rows)
 
---
--- Test the ALTER TABLE SET WITH/WITHOUT OIDS command
---
-create table altstartwith (col integer) with oids;
-insert into altstartwith values (1);
-select oid > 0, * from altstartwith;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-alter table altstartwith set without oids;
-select oid > 0, * from altstartwith; -- fails
-ERROR:  column "oid" does not exist
-LINE 1: select oid > 0, * from altstartwith;
-               ^
-select * from altstartwith;
- col 
------
-   1
-(1 row)
-
-alter table altstartwith set with oids;
-select oid > 0, * from altstartwith;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-drop table altstartwith;
--- Check inheritance cases
-create table altwithoid (col integer) with oids;
--- Inherits parents oid column anyway
-create table altinhoid () inherits (altwithoid) without oids;
-insert into altinhoid values (1);
-select oid > 0, * from altwithoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-select oid > 0, * from altinhoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-alter table altwithoid set without oids;
-select oid > 0, * from altwithoid; -- fails
-ERROR:  column "oid" does not exist
-LINE 1: select oid > 0, * from altwithoid;
-               ^
-select oid > 0, * from altinhoid; -- fails
-ERROR:  column "oid" does not exist
-LINE 1: select oid > 0, * from altinhoid;
-               ^
-select * from altwithoid;
- col 
------
-   1
-(1 row)
-
-select * from altinhoid;
- col 
------
-   1
-(1 row)
-
-alter table altwithoid set with oids;
-select oid > 0, * from altwithoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-select oid > 0, * from altinhoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-drop table altwithoid cascade;
-NOTICE:  drop cascades to table altinhoid
-create table altwithoid (col integer) without oids;
--- child can have local oid column
-create table altinhoid () inherits (altwithoid) with oids;
-insert into altinhoid values (1);
-select oid > 0, * from altwithoid; -- fails
-ERROR:  column "oid" does not exist
-LINE 1: select oid > 0, * from altwithoid;
-               ^
-select oid > 0, * from altinhoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-alter table altwithoid set with oids;
-NOTICE:  merging definition of column "oid" for child "altinhoid"
-select oid > 0, * from altwithoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-select oid > 0, * from altinhoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
--- the child's local definition should remain
-alter table altwithoid set without oids;
-select oid > 0, * from altwithoid; -- fails
-ERROR:  column "oid" does not exist
-LINE 1: select oid > 0, * from altwithoid;
-               ^
-select oid > 0, * from altinhoid;
- ?column? | col 
-----------+-----
- t        |   1
-(1 row)
-
-drop table altwithoid cascade;
-NOTICE:  drop cascades to table altinhoid
 -- test renumbering of child-table columns in inherited operations
 create table p1 (f1 int);
 create table c1 (f2 text, f3 int) inherits (p1);
@@ -2916,7 +2789,7 @@ CREATE TABLE tt3 (y numeric(8,2), x int);			-- wrong column order
 CREATE TABLE tt4 (x int);							-- too few columns
 CREATE TABLE tt5 (x int, y numeric(8,2), z int);	-- too few columns
 CREATE TABLE tt6 () INHERITS (tt0);					-- can't have a parent
-CREATE TABLE tt7 (x int, q text, y numeric(8,2)) WITH OIDS;
+CREATE TABLE tt7 (x int, q text, y numeric(8,2));
 ALTER TABLE tt7 DROP q;								-- OK
 ALTER TABLE tt0 OF tt_t0;
 ALTER TABLE tt1 OF tt_t0;
@@ -3441,16 +3314,6 @@ ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ERROR:  cannot attach a typed table as partition
 DROP TYPE mytype CASCADE;
 NOTICE:  drop cascades to table fail_part
--- check existence (or non-existence) of oid column
-ALTER TABLE list_parted SET WITH OIDS;
-CREATE TABLE fail_part (a int);
-ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
-ERROR:  cannot attach table "fail_part" without OIDs as partition of table "list_parted" with OIDs
-ALTER TABLE list_parted SET WITHOUT OIDS;
-ALTER TABLE fail_part SET WITH OIDS;
-ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
-ERROR:  cannot attach table "fail_part" with OIDs as partition of table "list_parted" without OIDs
-DROP TABLE fail_part;
 -- check that the table being attached has only columns present in the parent
 CREATE TABLE fail_part (like list_parted, c int);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);

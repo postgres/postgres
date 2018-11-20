@@ -4,7 +4,7 @@ CREATE TEMP TABLE x (
 	c text not null default 'stuff',
 	d text,
 	e text
-) WITH OIDS;
+) ;
 CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
 		NEW.e := ''before trigger fired''::text;
@@ -46,7 +46,7 @@ COPY x from stdin;
 ERROR:  extra data after last expected column
 CONTEXT:  COPY x, line 1: "2002	232	40	50	60	70	80"
 -- various COPY options: delimiters, oids, NULL string, encoding
-COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
+COPY x (b, c, d, e) from stdin delimiter ',' null 'x';
 COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
 COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X' ENCODING 'sql_ascii';
 -- check results of copy in
@@ -80,18 +80,6 @@ SELECT * FROM x;
      5 |  5 | stuff      | test_5 | after trigger fired
 (25 rows)
 
--- COPY w/ oids on a table w/o oids should fail
-CREATE TABLE no_oids (
-	a	int,
-	b	int
-) WITHOUT OIDS;
-INSERT INTO no_oids (a, b) VALUES (5, 10);
-INSERT INTO no_oids (a, b) VALUES (20, 30);
--- should fail
-COPY no_oids FROM stdin WITH OIDS;
-ERROR:  table "no_oids" does not have OIDs
-COPY no_oids TO stdout WITH OIDS;
-ERROR:  table "no_oids" does not have OIDs
 -- check copy out
 COPY x TO stdout;
 9999	\N	\\N	NN	before trigger fired

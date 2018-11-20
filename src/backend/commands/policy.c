@@ -365,7 +365,7 @@ RemovePolicyById(Oid policy_id)
 	 * Find the policy to delete.
 	 */
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_policy_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(policy_id));
 
@@ -457,7 +457,7 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 	 * Find the policy to update.
 	 */
 	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_policy_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(policy_id));
 
@@ -807,6 +807,9 @@ CreatePolicy(CreatePolicyStmt *stmt)
 				 errmsg("policy \"%s\" for table \"%s\" already exists",
 						stmt->policy_name, RelationGetRelationName(target_table))));
 
+	policy_id = GetNewOidWithIndex(pg_policy_rel, PolicyOidIndexId,
+								   Anum_pg_policy_oid);
+	values[Anum_pg_policy_oid - 1] = ObjectIdGetDatum(policy_id);
 	values[Anum_pg_policy_polrelid - 1] = ObjectIdGetDatum(table_id);
 	values[Anum_pg_policy_polname - 1] = DirectFunctionCall1(namein,
 															 CStringGetDatum(stmt->policy_name));
@@ -829,7 +832,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	policy_tuple = heap_form_tuple(RelationGetDescr(pg_policy_rel), values,
 								   isnull);
 
-	policy_id = CatalogTupleInsert(pg_policy_rel, policy_tuple);
+	CatalogTupleInsert(pg_policy_rel, policy_tuple);
 
 	/* Record Dependencies */
 	target.classId = RelationRelationId;
@@ -1033,7 +1036,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("only WITH CHECK expression allowed for INSERT")));
 
-	policy_id = HeapTupleGetOid(policy_tuple);
+	policy_id = ((Form_pg_policy) GETSTRUCT(policy_tuple))->oid;
 
 	if (role_ids != NULL)
 	{
@@ -1284,7 +1287,7 @@ rename_policy(RenameStmt *stmt)
 				 errmsg("policy \"%s\" for table \"%s\" does not exist",
 						stmt->subname, RelationGetRelationName(target_table))));
 
-	opoloid = HeapTupleGetOid(policy_tuple);
+	opoloid = ((Form_pg_policy) GETSTRUCT(policy_tuple))->oid;
 
 	policy_tuple = heap_copytuple(policy_tuple);
 
@@ -1293,8 +1296,7 @@ rename_policy(RenameStmt *stmt)
 
 	CatalogTupleUpdate(pg_policy_rel, &policy_tuple->t_self, policy_tuple);
 
-	InvokeObjectPostAlterHook(PolicyRelationId,
-							  HeapTupleGetOid(policy_tuple), 0);
+	InvokeObjectPostAlterHook(PolicyRelationId, opoloid, 0);
 
 	ObjectAddressSet(address, PolicyRelationId, opoloid);
 
@@ -1359,7 +1361,7 @@ get_relation_policy_oid(Oid relid, const char *policy_name, bool missing_ok)
 		policy_oid = InvalidOid;
 	}
 	else
-		policy_oid = HeapTupleGetOid(policy_tuple);
+		policy_oid = ((Form_pg_policy) GETSTRUCT(policy_tuple))->oid;
 
 	/* Clean up. */
 	systable_endscan(sscan);

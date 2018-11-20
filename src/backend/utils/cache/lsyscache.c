@@ -1653,7 +1653,7 @@ get_func_rows(Oid funcid)
 Oid
 get_relname_relid(const char *relname, Oid relnamespace)
 {
-	return GetSysCacheOid2(RELNAMENSP,
+	return GetSysCacheOid2(RELNAMENSP, Anum_pg_class_oid,
 						   PointerGetDatum(relname),
 						   ObjectIdGetDatum(relnamespace));
 }
@@ -2056,7 +2056,7 @@ getTypeIOParam(HeapTuple typeTuple)
 	if (OidIsValid(typeStruct->typelem))
 		return typeStruct->typelem;
 	else
-		return HeapTupleGetOid(typeTuple);
+		return typeStruct->oid;
 }
 
 /*

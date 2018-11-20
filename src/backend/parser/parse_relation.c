@@ -1528,7 +1528,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		else if (functypclass == TYPEFUNC_SCALAR)
 		{
 			/* Base data type, i.e. scalar */
-			tupdesc = CreateTemplateTupleDesc(1, false);
+			tupdesc = CreateTemplateTupleDesc(1);
 			TupleDescInitEntry(tupdesc,
 							   (AttrNumber) 1,
 							   chooseScalarFunctionAlias(funcexpr, funcname,
@@ -1545,7 +1545,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			 * Use the column definition list to construct a tupdesc and fill
 			 * in the RangeTblFunction's lists.
 			 */
-			tupdesc = CreateTemplateTupleDesc(list_length(coldeflist), false);
+			tupdesc = CreateTemplateTupleDesc(list_length(coldeflist));
 			i = 1;
 			foreach(col, coldeflist)
 			{
@@ -1619,7 +1619,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			totalatts++;
 
 		/* Merge the tuple descs of each function into a composite one */
-		tupdesc = CreateTemplateTupleDesc(totalatts, false);
+		tupdesc = CreateTemplateTupleDesc(totalatts);
 		natts = 0;
 		for (i = 0; i < nfuncs; i++)
 		{
@@ -3113,10 +3113,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 	if (sysColOK)
 	{
 		if ((i = specialAttNum(attname)) != InvalidAttrNumber)
-		{
-			if (i != ObjectIdAttributeNumber || rd->rd_rel->relhasoids)
-				return i;
-		}
+			return i;
 	}
 
 	/* on failure */
@@ -3125,20 +3122,18 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 
 /* specialAttNum()
  *
- * Check attribute name to see if it is "special", e.g. "oid".
+ * Check attribute name to see if it is "special", e.g. "xmin".
  * - thomas 2000-02-07
  *
  * Note: this only discovers whether the name could be a system attribute.
- * Caller needs to verify that it really is an attribute of the rel,
- * at least in the case of "oid", which is now optional.
+ * Caller needs to ensure that it really is an attribute of the rel.
  */
 static int
 specialAttNum(const char *attname)
 {
 	const FormData_pg_attribute *sysatt;
 
-	sysatt = SystemAttributeByName(attname,
-								   true /* "oid" will be accepted */ );
+	sysatt = SystemAttributeByName(attname);
 	if (sysatt != NULL)
 		return sysatt->attnum;
 	return InvalidAttrNumber;
@@ -3159,7 +3154,7 @@ attnumAttName(Relation rd, int attid)
 	{
 		const FormData_pg_attribute *sysatt;
 
-		sysatt = SystemAttributeDefinition(attid, rd->rd_rel->relhasoids);
+		sysatt = SystemAttributeDefinition(attid);
 		return &sysatt->attname;
 	}
 	if (attid > rd->rd_att->natts)
@@ -3181,7 +3176,7 @@ attnumTypeId(Relation rd, int attid)
 	{
 		const FormData_pg_attribute *sysatt;
 
-		sysatt = SystemAttributeDefinition(attid, rd->rd_rel->relhasoids);
+		sysatt = SystemAttributeDefinition(attid);
 		return sysatt->atttypid;
 	}
 	if (attid > rd->rd_att->natts)

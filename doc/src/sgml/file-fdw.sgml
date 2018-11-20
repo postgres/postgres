@@ -174,9 +174,8 @@
  </variablelist>
 
  <para>
-  <command>COPY</command>'s <literal>OIDS</literal> and
-  <literal>FORCE_QUOTE</literal> options are currently not supported by
-  <literal>file_fdw</literal>.
+  <command>COPY</command>'s <literal>FORCE_QUOTE</literal> options is
+  currently not supported by <literal>file_fdw</literal>.
  </para>
 
  <para>

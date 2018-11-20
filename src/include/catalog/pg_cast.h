@@ -30,6 +30,8 @@
  */
 CATALOG(pg_cast,2605,CastRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* source datatype for cast */
 	Oid			castsource BKI_LOOKUP(pg_type);
 

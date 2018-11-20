@@ -2779,19 +2779,17 @@ DROP TABLE cwi_test;
 --
 -- Check handling of indexes on system columns
 --
-CREATE TABLE oid_table (a INT) WITH OIDS;
--- An index on the OID column should be allowed
-CREATE INDEX ON oid_table (oid);
--- Other system columns cannot be indexed
-CREATE INDEX ON oid_table (ctid);
-ERROR:  index creation on system columns is not supported
+CREATE TABLE syscol_table (a INT);
+-- System columns cannot be indexed
+CREATE INDEX ON syscolcol_table (ctid);
+ERROR:  relation "syscolcol_table" does not exist
 -- nor used in expressions
-CREATE INDEX ON oid_table ((ctid >= '(1000,0)'));
+CREATE INDEX ON syscol_table ((ctid >= '(1000,0)'));
 ERROR:  index creation on system columns is not supported
 -- nor used in predicates
-CREATE INDEX ON oid_table (a) WHERE ctid >= '(1000,0)';
+CREATE INDEX ON syscol_table (a) WHERE ctid >= '(1000,0)';
 ERROR:  index creation on system columns is not supported
-DROP TABLE oid_table;
+DROP TABLE syscol_table;
 --
 -- Tests for IS NULL/IS NOT NULL with b-tree indexes
 --

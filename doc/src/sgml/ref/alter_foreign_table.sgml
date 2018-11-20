@@ -50,7 +50,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     ENABLE TRIGGER [ <replaceable class="parameter">trigger_name</replaceable> | ALL | USER ]
     ENABLE REPLICA TRIGGER <replaceable class="parameter">trigger_name</replaceable>
     ENABLE ALWAYS TRIGGER <replaceable class="parameter">trigger_name</replaceable>
-    SET WITH OIDS
     SET WITHOUT OIDS
     INHERIT <replaceable class="parameter">parent_table</replaceable>
     NO INHERIT <replaceable class="parameter">parent_table</replaceable>
@@ -224,33 +223,12 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET WITH OIDS</literal></term>
-    <listitem>
-     <para>
-      This form adds an <literal>oid</literal> system column to the
-      table (see <xref linkend="ddl-system-columns"/>).
-      It does nothing if the table already has OIDs.
-      Unless the table's foreign-data wrapper supports OIDs, this column
-      will simply read as zeroes.
-     </para>
-
-     <para>
-      Note that this is not equivalent to <literal>ADD COLUMN oid oid</literal>;
-      that would add a normal column that happened to be named
-      <literal>oid</literal>, not a system column.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><literal>SET WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      This form removes the <literal>oid</literal> system column from the
-      table.  This is exactly equivalent to
-      <literal>DROP COLUMN oid RESTRICT</literal>,
-      except that it will not complain if there is already no
-      <literal>oid</literal> column.
+      Backward compatibility syntax for removing the <literal>oid</literal>
+      system column. As oid system columns cannot be added anymore, this never
+      has an effect.
      </para>
     </listitem>
    </varlistentry>

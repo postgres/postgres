@@ -25,7 +25,7 @@
  *		typedef struct FormData_pg_shseclabel
  * ----------------
  */
-CATALOG(pg_shseclabel,3592,SharedSecLabelRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(4066,SharedSecLabelRelation_Rowtype_Id) BKI_WITHOUT_OIDS BKI_SCHEMA_MACRO
+CATALOG(pg_shseclabel,3592,SharedSecLabelRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(4066,SharedSecLabelRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
 	Oid			objoid;			/* OID of the shared object itself */
 	Oid			classoid;		/* OID of table containing the shared object */

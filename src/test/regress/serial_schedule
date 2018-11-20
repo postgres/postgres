@@ -166,7 +166,6 @@ test: temp
 test: domain
 test: rangefuncs
 test: prepare
-test: without_oid
 test: conversion
 test: truncate
 test: alter_table

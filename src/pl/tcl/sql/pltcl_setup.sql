@@ -465,11 +465,6 @@ create function tcl_argisnull(text) returns bool as '
     argisnull 1
 ' language pltcl;
 
-create function tcl_lastoid(tabname text) returns int8 as '
-    spi_exec "insert into $1 default values"
-    spi_lastoid
-' language pltcl;
-
 
 create function tcl_int4add(int4,int4) returns int4 as '
     return [expr $1 + $2]

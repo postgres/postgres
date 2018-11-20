@@ -104,13 +104,6 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
    <command>CREATE TABLE AS</command> offers a superset of the
    functionality provided by <command>SELECT INTO</command>.
   </para>
-
-  <para>
-   To add OIDs to the table created by <command>SELECT INTO</command>,
-   enable the <xref linkend="guc-default-with-oids"/> configuration
-   variable.  Alternatively, <command>CREATE TABLE AS</command> can be
-   used with the <literal>WITH OIDS</literal> clause.
-  </para>
  </refsect1>
 
  <refsect1>

@@ -43,7 +43,6 @@
  * when entering/exiting a SPI nesting level.
  */
 uint64		SPI_processed = 0;
-Oid			SPI_lastoid = InvalidOid;
 SPITupleTable *SPI_tuptable = NULL;
 int			SPI_result = 0;
 
@@ -128,7 +127,6 @@ SPI_connect_ext(int options)
 
 	_SPI_current = &(_SPI_stack[_SPI_connected]);
 	_SPI_current->processed = 0;
-	_SPI_current->lastoid = InvalidOid;
 	_SPI_current->tuptable = NULL;
 	_SPI_current->execSubid = InvalidSubTransactionId;
 	slist_init(&_SPI_current->tuptables);
@@ -139,7 +137,6 @@ SPI_connect_ext(int options)
 	_SPI_current->atomic = (options & SPI_OPT_NONATOMIC ? false : true);
 	_SPI_current->internal_xact = false;
 	_SPI_current->outer_processed = SPI_processed;
-	_SPI_current->outer_lastoid = SPI_lastoid;
 	_SPI_current->outer_tuptable = SPI_tuptable;
 	_SPI_current->outer_result = SPI_result;
 
@@ -169,7 +166,6 @@ SPI_connect_ext(int options)
 	 * depend on state of an outer caller.
 	 */
 	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 	SPI_result = 0;
 
@@ -199,7 +195,6 @@ SPI_finish(void)
 	 * pointing at a just-deleted tuptable
 	 */
 	SPI_processed = _SPI_current->outer_processed;
-	SPI_lastoid = _SPI_current->outer_lastoid;
 	SPI_tuptable = _SPI_current->outer_tuptable;
 	SPI_result = _SPI_current->outer_result;
 
@@ -296,7 +291,6 @@ SPICleanup(void)
 	_SPI_connected = -1;
 	/* Reset API global variables, too */
 	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 	SPI_result = 0;
 }
@@ -363,7 +357,6 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 		 * be already gone.
 		 */
 		SPI_processed = connection->outer_processed;
-		SPI_lastoid = connection->outer_lastoid;
 		SPI_tuptable = connection->outer_tuptable;
 		SPI_result = connection->outer_result;
 
@@ -878,8 +871,6 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		mtuple->t_data->t_ctid = tuple->t_data->t_ctid;
 		mtuple->t_self = tuple->t_self;
 		mtuple->t_tableOid = tuple->t_tableOid;
-		if (rel->rd_att->tdhasoid)
-			HeapTupleSetOid(mtuple, HeapTupleGetOid(tuple));
 	}
 	else
 	{
@@ -910,7 +901,7 @@ SPI_fnumber(TupleDesc tupdesc, const char *fname)
 			return res + 1;
 	}
 
-	sysatt = SystemAttributeByName(fname, true /* "oid" will be accepted */ );
+	sysatt = SystemAttributeByName(fname);
 	if (sysatt != NULL)
 		return sysatt->attnum;
 
@@ -935,7 +926,7 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 	if (fnumber > 0)
 		att = TupleDescAttr(tupdesc, fnumber - 1);
 	else
-		att = SystemAttributeDefinition(fnumber, true);
+		att = SystemAttributeDefinition(fnumber);
 
 	return pstrdup(NameStr(att->attname));
 }
@@ -965,7 +956,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	if (fnumber > 0)
 		typoid = TupleDescAttr(tupdesc, fnumber - 1)->atttypid;
 	else
-		typoid = (SystemAttributeDefinition(fnumber, true))->atttypid;
+		typoid = (SystemAttributeDefinition(fnumber))->atttypid;
 
 	getTypeOutputInfo(typoid, &foutoid, &typisvarlena);
 
@@ -1007,7 +998,7 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	if (fnumber > 0)
 		typoid = TupleDescAttr(tupdesc, fnumber - 1)->atttypid;
 	else
-		typoid = (SystemAttributeDefinition(fnumber, true))->atttypid;
+		typoid = (SystemAttributeDefinition(fnumber))->atttypid;
 
 	typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typoid));
 
@@ -1043,7 +1034,7 @@ SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 	if (fnumber > 0)
 		return TupleDescAttr(tupdesc, fnumber - 1)->atttypid;
 	else
-		return (SystemAttributeDefinition(fnumber, true))->atttypid;
+		return (SystemAttributeDefinition(fnumber))->atttypid;
 }
 
 char *
@@ -2051,7 +2042,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 {
 	int			my_res = 0;
 	uint64		my_processed = 0;
-	Oid			my_lastoid = InvalidOid;
 	SPITupleTable *my_tuptable = NULL;
 	int			res = 0;
 	bool		pushed_active_snap = false;
@@ -2183,7 +2173,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			DestReceiver *dest;
 
 			_SPI_current->processed = 0;
-			_SPI_current->lastoid = InvalidOid;
 			_SPI_current->tuptable = NULL;
 
 			if (stmt->utilityStmt)
@@ -2324,7 +2313,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			if (canSetTag)
 			{
 				my_processed = _SPI_current->processed;
-				my_lastoid = _SPI_current->lastoid;
 				SPI_freetuptable(my_tuptable);
 				my_tuptable = _SPI_current->tuptable;
 				my_res = res;
@@ -2372,7 +2360,6 @@ fail:
 
 	/* Save results for caller */
 	SPI_processed = my_processed;
-	SPI_lastoid = my_lastoid;
 	SPI_tuptable = my_tuptable;
 
 	/* tuptable now is caller's responsibility, not SPI's */
@@ -2484,7 +2471,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 	ExecutorRun(queryDesc, ForwardScanDirection, tcount, true);
 
 	_SPI_current->processed = queryDesc->estate->es_processed;
-	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
 
 	if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->hasReturning) &&
 		queryDesc->dest->mydest == DestSPI)

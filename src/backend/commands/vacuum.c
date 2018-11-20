@@ -757,7 +757,7 @@ get_all_vacuum_rels(int options)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 		MemoryContext oldcontext;
-		Oid			relid = HeapTupleGetOid(tuple);
+		Oid			relid = classForm->oid;
 
 		/* check permissions of relation */
 		if (!vacuum_is_relation_owner(relid, classForm, options))
@@ -1442,13 +1442,13 @@ vac_truncate_clog(TransactionId frozenXID,
 		else if (TransactionIdPrecedes(datfrozenxid, frozenXID))
 		{
 			frozenXID = datfrozenxid;
-			oldestxid_datoid = HeapTupleGetOid(tuple);
+			oldestxid_datoid = dbform->oid;
 		}
 
 		if (MultiXactIdPrecedes(datminmxid, minMulti))
 		{
 			minMulti = datminmxid;
-			minmulti_datoid = HeapTupleGetOid(tuple);
+			minmulti_datoid = dbform->oid;
 		}
 	}
 

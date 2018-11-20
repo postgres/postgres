@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -260,12 +261,12 @@ AlterForeignDataWrapperOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerI
 
 		/* Update owner dependency reference */
 		changeDependencyOnOwner(ForeignDataWrapperRelationId,
-								HeapTupleGetOid(tup),
+								form->oid,
 								newOwnerId);
 	}
 
 	InvokeObjectPostAlterHook(ForeignDataWrapperRelationId,
-							  HeapTupleGetOid(tup), 0);
+							  form->oid, 0);
 }
 
 /*
@@ -280,6 +281,8 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 	ObjectAddress address;
+	Form_pg_foreign_data_wrapper form;
+
 
 	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
@@ -290,7 +293,8 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("foreign-data wrapper \"%s\" does not exist", name)));
 
-	fdwId = HeapTupleGetOid(tup);
+	form = (Form_pg_foreign_data_wrapper) GETSTRUCT(tup);
+	fdwId = form->oid;
 
 	AlterForeignDataWrapperOwner_internal(rel, tup, newOwnerId);
 
@@ -354,7 +358,7 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			Oid			srvId;
 			AclResult	aclresult;
 
-			srvId = HeapTupleGetOid(tup);
+			srvId = form->oid;
 
 			/* Must be owner */
 			if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
@@ -399,12 +403,12 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		CatalogTupleUpdate(rel, &tup->t_self, tup);
 
 		/* Update owner dependency reference */
-		changeDependencyOnOwner(ForeignServerRelationId, HeapTupleGetOid(tup),
+		changeDependencyOnOwner(ForeignServerRelationId, form->oid,
 								newOwnerId);
 	}
 
 	InvokeObjectPostAlterHook(ForeignServerRelationId,
-							  HeapTupleGetOid(tup), 0);
+							  form->oid, 0);
 }
 
 /*
@@ -417,6 +421,7 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 	ObjectAddress address;
+	Form_pg_foreign_server form;
 
 	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
 
@@ -427,7 +432,8 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("server \"%s\" does not exist", name)));
 
-	servOid = HeapTupleGetOid(tup);
+	form = (Form_pg_foreign_server) GETSTRUCT(tup);
+	servOid = form->oid;
 
 	AlterForeignServerOwner_internal(rel, tup, newOwnerId);
 
@@ -601,6 +607,9 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	fdwId = GetNewOidWithIndex(rel, ForeignDataWrapperOidIndexId,
+							   Anum_pg_foreign_data_wrapper_oid);
+	values[Anum_pg_foreign_data_wrapper_oid - 1] = ObjectIdGetDatum(fdwId);
 	values[Anum_pg_foreign_data_wrapper_fdwname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->fdwname));
 	values[Anum_pg_foreign_data_wrapper_fdwowner - 1] = ObjectIdGetDatum(ownerId);
@@ -627,7 +636,7 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
-	fdwId = CatalogTupleInsert(rel, tuple);
+	CatalogTupleInsert(rel, tuple);
 
 	heap_freetuple(tuple);
 
@@ -706,7 +715,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 				 errmsg("foreign-data wrapper \"%s\" does not exist", stmt->fdwname)));
 
 	fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tp);
-	fdwId = HeapTupleGetOid(tp);
+	fdwId = fdwForm->oid;
 
 	memset(repl_val, 0, sizeof(repl_val));
 	memset(repl_null, false, sizeof(repl_null));
@@ -915,6 +924,9 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	srvId = GetNewOidWithIndex(rel, ForeignServerOidIndexId,
+							   Anum_pg_foreign_server_oid);
+	values[Anum_pg_foreign_server_oid - 1] = ObjectIdGetDatum(srvId);
 	values[Anum_pg_foreign_server_srvname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->servername));
 	values[Anum_pg_foreign_server_srvowner - 1] = ObjectIdGetDatum(ownerId);
@@ -950,7 +962,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
-	srvId = CatalogTupleInsert(rel, tuple);
+	CatalogTupleInsert(rel, tuple);
 
 	heap_freetuple(tuple);
 
@@ -1003,8 +1015,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("server \"%s\" does not exist", stmt->servername)));
 
-	srvId = HeapTupleGetOid(tp);
 	srvForm = (Form_pg_foreign_server) GETSTRUCT(tp);
+	srvId = srvForm->oid;
 
 	/*
 	 * Only owner or a superuser can ALTER a SERVER.
@@ -1162,7 +1174,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	/*
 	 * Check that the user mapping is unique within server.
 	 */
-	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
+	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER, Anum_pg_user_mapping_oid,
 						   ObjectIdGetDatum(useId),
 						   ObjectIdGetDatum(srv->serverid));
 
@@ -1195,6 +1207,9 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
+	umId = GetNewOidWithIndex(rel, UserMappingOidIndexId,
+							  Anum_pg_user_mapping_oid);
+	values[Anum_pg_user_mapping_oid - 1] = ObjectIdGetDatum(umId);
 	values[Anum_pg_user_mapping_umuser - 1] = ObjectIdGetDatum(useId);
 	values[Anum_pg_user_mapping_umserver - 1] = ObjectIdGetDatum(srv->serverid);
 
@@ -1211,7 +1226,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
-	umId = CatalogTupleInsert(rel, tuple);
+	CatalogTupleInsert(rel, tuple);
 
 	heap_freetuple(tuple);
 
@@ -1273,7 +1288,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 
 	srv = GetForeignServerByName(stmt->servername, false);
 
-	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
+	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER, Anum_pg_user_mapping_oid,
 						   ObjectIdGetDatum(useId),
 						   ObjectIdGetDatum(srv->serverid));
 	if (!OidIsValid(umId))
@@ -1385,7 +1400,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		return InvalidOid;
 	}
 
-	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
+	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER, Anum_pg_user_mapping_oid,
 						   ObjectIdGetDatum(useId),
 						   ObjectIdGetDatum(srv->serverid));
 

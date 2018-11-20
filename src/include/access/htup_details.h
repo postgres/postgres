@@ -65,7 +65,8 @@
  *			fixed fields (HeapTupleHeaderData struct)
  *			nulls bitmap (if HEAP_HASNULL is set in t_infomask)
  *			alignment padding (as needed to make user data MAXALIGN'd)
- *			object ID (if HEAP_HASOID is set in t_infomask)
+ *			object ID (if HEAP_HASOID_OLD is set in t_infomask, not created
+ *          anymore)
  *			user data fields
  *
  * We store five "virtual" fields Xmin, Cmin, Xmax, Cmax, and Xvac in three
@@ -188,7 +189,7 @@ struct HeapTupleHeaderData
 #define HEAP_HASNULL			0x0001	/* has null attribute(s) */
 #define HEAP_HASVARWIDTH		0x0002	/* has variable-width attribute(s) */
 #define HEAP_HASEXTERNAL		0x0004	/* has external stored attribute(s) */
-#define HEAP_HASOID				0x0008	/* has an object-id field */
+#define HEAP_HASOID_OLD			0x0008	/* has an object-id field */
 #define HEAP_XMAX_KEYSHR_LOCK	0x0010	/* xmax is a key-shared locker */
 #define HEAP_COMBOCID			0x0020	/* t_cid is a combo cid */
 #define HEAP_XMAX_EXCL_LOCK		0x0040	/* xmax is exclusive locker */
@@ -474,20 +475,6 @@ do { \
 	(tup)->t_choice.t_datum.datum_typmod = (typmod) \
 )
 
-#define HeapTupleHeaderGetOid(tup) \
-( \
-	((tup)->t_infomask & HEAP_HASOID) ? \
-		*((Oid *) ((char *)(tup) + (tup)->t_hoff - sizeof(Oid))) \
-	: \
-		InvalidOid \
-)
-
-#define HeapTupleHeaderSetOid(tup, oid) \
-do { \
-	Assert((tup)->t_infomask & HEAP_HASOID); \
-	*((Oid *) ((char *)(tup) + (tup)->t_hoff - sizeof(Oid))) = (oid); \
-} while (0)
-
 /*
  * Note that we stop considering a tuple HOT-updated as soon as it is known
  * aborted or the would-be updating transaction is known aborted.  For best
@@ -703,12 +690,6 @@ struct MinimalTupleData
 
 #define HeapTupleClearHeapOnly(tuple) \
 		HeapTupleHeaderClearHeapOnly((tuple)->t_data)
-
-#define HeapTupleGetOid(tuple) \
-		HeapTupleHeaderGetOid((tuple)->t_data)
-
-#define HeapTupleSetOid(tuple, oid) \
-		HeapTupleHeaderSetOid((tuple)->t_data, (oid))
 
 
 /* ----------------

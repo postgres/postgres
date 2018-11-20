@@ -28,6 +28,8 @@
  */
 CATALOG(pg_ts_template,3764,TSTemplateRelationId)
 {
+	Oid			oid;			/* oid */
+
 	/* template name */
 	NameData	tmplname;
 

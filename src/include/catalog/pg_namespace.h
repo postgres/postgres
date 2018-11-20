@@ -33,6 +33,8 @@
  */
 CATALOG(pg_namespace,2615,NamespaceRelationId)
 {
+	Oid			oid;			/* oid */
+
 	NameData	nspname;
 	Oid			nspowner;
 

@@ -2454,7 +2454,7 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  * TID where the tuple was stored.  But note that any toasting of fields
  * within the tuple data is NOT reflected into *tup.
  */
-Oid
+void
 heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 			int options, BulkInsertState bistate)
 {
@@ -2628,8 +2628,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		tup->t_self = heaptup->t_self;
 		heap_freetuple(heaptup);
 	}
-
-	return HeapTupleGetOid(tup);
 }
 
 /*
@@ -2655,30 +2653,6 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 				 errmsg("cannot insert tuples in a parallel worker")));
-
-	if (relation->rd_rel->relhasoids)
-	{
-#ifdef NOT_USED
-		/* this is redundant with an Assert in HeapTupleSetOid */
-		Assert(tup->t_data->t_infomask & HEAP_HASOID);
-#endif
-
-		/*
-		 * If the object id of this tuple has already been assigned, trust the
-		 * caller.  There are a couple of ways this can happen.  At initial db
-		 * creation, the backend program sets oids for tuples. When we define
-		 * an index, we set the oid.  Finally, in the future, we may allow
-		 * users to set their own object ids in order to support a persistent
-		 * object store (objects need to contain pointers to one another).
-		 */
-		if (!OidIsValid(HeapTupleGetOid(tup)))
-			HeapTupleSetOid(tup, GetNewOid(relation));
-	}
-	else
-	{
-		/* check there is not space for an OID */
-		Assert(!(tup->t_data->t_infomask & HEAP_HASOID));
-	}
 
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask2 &= ~(HEAP2_XACT_MASK);
@@ -2995,10 +2969,10 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
  * This should be used rather than using heap_insert directly in most places
  * where we are modifying system catalogs.
  */
-Oid
+void
 simple_heap_insert(Relation relation, HeapTuple tup)
 {
-	return heap_insert(relation, tup, GetCurrentCommandId(true), 0, NULL);
+	heap_insert(relation, tup, GetCurrentCommandId(true), 0, NULL);
 }
 
 /*
@@ -3655,21 +3629,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	/* the new tuple is ready, except for this: */
 	newtup->t_tableOid = RelationGetRelid(relation);
-
-	/* Fill in OID for newtup */
-	if (relation->rd_rel->relhasoids)
-	{
-#ifdef NOT_USED
-		/* this is redundant with an Assert in HeapTupleSetOid */
-		Assert(newtup->t_data->t_infomask & HEAP_HASOID);
-#endif
-		HeapTupleSetOid(newtup, HeapTupleGetOid(&oldtup));
-	}
-	else
-	{
-		/* check there is not space for an OID */
-		Assert(!(newtup->t_data->t_infomask & HEAP_HASOID));
-	}
 
 	/* Determine columns modified by the update. */
 	modified_attrs = HeapDetermineModifiedColumns(relation, interesting_attrs,
@@ -4437,13 +4396,12 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 
 	/*
 	 * Likewise, automatically say "not equal" for any system attribute other
-	 * than OID and tableOID; we cannot expect these to be consistent in a HOT
-	 * chain, or even to be set correctly yet in the new tuple.
+	 * than tableOID; we cannot expect these to be consistent in a HOT chain,
+	 * or even to be set correctly yet in the new tuple.
 	 */
 	if (attrnum < 0)
 	{
-		if (attrnum != ObjectIdAttributeNumber &&
-			attrnum != TableOidAttributeNumber)
+		if (attrnum != TableOidAttributeNumber)
 			return false;
 	}
 
@@ -8123,30 +8081,13 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 		int			attno = idx_rel->rd_index->indkey.values[natt];
 
 		if (attno < 0)
-		{
-			/*
-			 * The OID column can appear in an index definition, but that's
-			 * OK, because we always copy the OID if present (see below).
-			 * Other system columns may not.
-			 */
-			if (attno == ObjectIdAttributeNumber)
-				continue;
 			elog(ERROR, "system column in index");
-		}
 		nulls[attno - 1] = false;
 	}
 
 	key_tuple = heap_form_tuple(desc, values, nulls);
 	*copy = true;
 	RelationClose(idx_rel);
-
-	/*
-	 * Always copy oids if the table has them, even if not included in the
-	 * index. The space in the logged tuple is used anyway, so there's little
-	 * point in not including the information.
-	 */
-	if (relation->rd_rel->relhasoids)
-		HeapTupleSetOid(key_tuple, HeapTupleGetOid(tp));
 
 	/*
 	 * If the tuple, which by here only contains indexed columns, still has

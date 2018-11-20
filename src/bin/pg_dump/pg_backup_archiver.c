@@ -80,7 +80,6 @@ static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
 static char *replace_line_endings(const char *str);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
-static void _doSetWithOids(ArchiveHandle *AH, const bool withOids);
 static void _reconnectToDB(ArchiveHandle *AH, const char *dbname);
 static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
@@ -1072,7 +1071,7 @@ ArchiveEntry(Archive *AHX,
 			 const char *tag,
 			 const char *namespace,
 			 const char *tablespace,
-			 const char *owner, bool withOids,
+			 const char *owner,
 			 const char *desc, teSection section,
 			 const char *defn,
 			 const char *dropStmt, const char *copyStmt,
@@ -1101,7 +1100,6 @@ ArchiveEntry(Archive *AHX,
 	newToc->namespace = namespace ? pg_strdup(namespace) : NULL;
 	newToc->tablespace = tablespace ? pg_strdup(tablespace) : NULL;
 	newToc->owner = pg_strdup(owner);
-	newToc->withOids = withOids;
 	newToc->desc = pg_strdup(desc);
 	newToc->defn = pg_strdup(defn);
 	newToc->dropStmt = pg_strdup(dropStmt);
@@ -2369,7 +2367,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->currUser = NULL;		/* unknown */
 	AH->currSchema = NULL;		/* ditto */
 	AH->currTablespace = NULL;	/* ditto */
-	AH->currWithOids = -1;		/* force SET */
 
 	AH->toc = (TocEntry *) pg_malloc0(sizeof(TocEntry));
 
@@ -2597,7 +2594,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, te->namespace);
 		WriteStr(AH, te->tablespace);
 		WriteStr(AH, te->owner);
-		WriteStr(AH, te->withOids ? "true" : "false");
+		WriteStr(AH, "false");
 
 		/* Dump list of dependencies */
 		for (i = 0; i < te->nDeps; i++)
@@ -2699,15 +2696,9 @@ ReadToc(ArchiveHandle *AH)
 			te->tablespace = ReadStr(AH);
 
 		te->owner = ReadStr(AH);
-		if (AH->version >= K_VERS_1_9)
-		{
-			if (strcmp(ReadStr(AH), "true") == 0)
-				te->withOids = true;
-			else
-				te->withOids = false;
-		}
-		else
-			te->withOids = true;
+		if (AH->version < K_VERS_1_9 || strcmp(ReadStr(AH), "true") == 0)
+			write_msg(modulename,
+					  "WARNING: restoring tables WITH OIDS is not supported anymore");
 
 		/* Read TOC entry dependencies */
 		if (AH->version >= K_VERS_1_5)
@@ -3254,38 +3245,6 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 
 
 /*
- * Issue a SET default_with_oids command.  Caller is responsible
- * for updating state if appropriate.
- */
-static void
-_doSetWithOids(ArchiveHandle *AH, const bool withOids)
-{
-	PQExpBuffer cmd = createPQExpBuffer();
-
-	appendPQExpBuffer(cmd, "SET default_with_oids = %s;", withOids ?
-					  "true" : "false");
-
-	if (RestoringToDB(AH))
-	{
-		PGresult   *res;
-
-		res = PQexec(AH->connection, cmd->data);
-
-		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			warn_or_exit_horribly(AH, modulename,
-								  "could not set default_with_oids: %s",
-								  PQerrorMessage(AH->connection));
-
-		PQclear(res);
-	}
-	else
-		ahprintf(AH, "%s\n\n", cmd->data);
-
-	destroyPQExpBuffer(cmd);
-}
-
-
-/*
  * Issue the commands to connect to the specified database.
  *
  * If we're currently restoring right into a database, this will
@@ -3329,7 +3288,6 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname)
 	if (AH->currTablespace)
 		free(AH->currTablespace);
 	AH->currTablespace = NULL;
-	AH->currWithOids = -1;
 
 	/* re-establish fixed state */
 	_doSetFixedOutputState(AH);
@@ -3373,20 +3331,6 @@ _becomeOwner(ArchiveHandle *AH, TocEntry *te)
 		return;
 
 	_becomeUser(AH, te->owner);
-}
-
-
-/*
- * Set the proper default_with_oids value for the table.
- */
-static void
-_setWithOids(ArchiveHandle *AH, TocEntry *te)
-{
-	if (AH->currWithOids != te->withOids)
-	{
-		_doSetWithOids(AH, te->withOids);
-		AH->currWithOids = te->withOids;
-	}
 }
 
 
@@ -3603,10 +3547,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	_becomeOwner(AH, te);
 	_selectOutputSchema(AH, te->namespace);
 	_selectTablespace(AH, te->tablespace);
-
-	/* Set up OID mode too */
-	if (strcmp(te->desc, "TABLE") == 0)
-		_setWithOids(AH, te);
 
 	/* Emit header comment for item */
 	if (!AH->noTocComments)
@@ -4081,7 +4021,6 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 	if (AH->currTablespace)
 		free(AH->currTablespace);
 	AH->currTablespace = NULL;
-	AH->currWithOids = -1;
 }
 
 /*
@@ -4877,7 +4816,6 @@ CloneArchive(ArchiveHandle *AH)
 	clone->currUser = NULL;
 	clone->currSchema = NULL;
 	clone->currTablespace = NULL;
-	clone->currWithOids = -1;
 
 	/* savedPassword must be local in case we change it while connecting */
 	if (clone->savedPassword)

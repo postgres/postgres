@@ -128,14 +128,19 @@ InsertRule(const char *rulname,
 
 		ReleaseSysCache(oldtup);
 
-		rewriteObjectId = HeapTupleGetOid(tup);
+		rewriteObjectId = ((Form_pg_rewrite) GETSTRUCT(tup))->oid;
 		is_update = true;
 	}
 	else
 	{
+		rewriteObjectId = GetNewOidWithIndex(pg_rewrite_desc,
+											 RewriteOidIndexId,
+											 Anum_pg_rewrite_oid);
+		values[Anum_pg_rewrite_oid - 1] = ObjectIdGetDatum(rewriteObjectId);
+
 		tup = heap_form_tuple(pg_rewrite_desc->rd_att, values, nulls);
 
-		rewriteObjectId = CatalogTupleInsert(pg_rewrite_desc, tup);
+		CatalogTupleInsert(pg_rewrite_desc, tup);
 	}
 
 
@@ -617,7 +622,6 @@ DefineQueryRewrite(const char *rulename,
 		classForm->reltoastrelid = InvalidOid;
 		classForm->relhasindex = false;
 		classForm->relkind = RELKIND_VIEW;
-		classForm->relhasoids = false;
 		classForm->relfrozenxid = InvalidTransactionId;
 		classForm->relminmxid = InvalidMultiXactId;
 		classForm->relreplident = REPLICA_IDENTITY_NOTHING;
@@ -842,6 +846,7 @@ EnableDisableRule(Relation rel, const char *rulename,
 	Oid			owningRel = RelationGetRelid(rel);
 	Oid			eventRelationOid;
 	HeapTuple	ruletup;
+	Form_pg_rewrite ruleform;
 	bool		changed = false;
 
 	/*
@@ -857,10 +862,12 @@ EnableDisableRule(Relation rel, const char *rulename,
 				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
 						rulename, get_rel_name(owningRel))));
 
+	ruleform = (Form_pg_rewrite) GETSTRUCT(ruletup);
+
 	/*
 	 * Verify that the user has appropriate permissions.
 	 */
-	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_class;
+	eventRelationOid = ruleform->ev_class;
 	Assert(eventRelationOid == owningRel);
 	if (!pg_class_ownercheck(eventRelationOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(eventRelationOid)),
@@ -869,18 +876,16 @@ EnableDisableRule(Relation rel, const char *rulename,
 	/*
 	 * Change ev_enabled if it is different from the desired new state.
 	 */
-	if (DatumGetChar(((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled) !=
+	if (DatumGetChar(ruleform->ev_enabled) !=
 		fires_when)
 	{
-		((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled =
-			CharGetDatum(fires_when);
+		ruleform->ev_enabled = CharGetDatum(fires_when);
 		CatalogTupleUpdate(pg_rewrite_desc, &ruletup->t_self, ruletup);
 
 		changed = true;
 	}
 
-	InvokeObjectPostAlterHook(RewriteRelationId,
-							  HeapTupleGetOid(ruletup), 0);
+	InvokeObjectPostAlterHook(RewriteRelationId, ruleform->oid, 0);
 
 	heap_freetuple(ruletup);
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
@@ -971,7 +976,7 @@ RenameRewriteRule(RangeVar *relation, const char *oldName,
 				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
 						oldName, RelationGetRelationName(targetrel))));
 	ruleform = (Form_pg_rewrite) GETSTRUCT(ruletup);
-	ruleOid = HeapTupleGetOid(ruletup);
+	ruleOid = ruleform->oid;
 
 	/* rule with the new name should not already exist */
 	if (IsDefinedRewriteRule(relid, newName))
