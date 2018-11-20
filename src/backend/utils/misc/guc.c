@@ -1976,7 +1976,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_receiver_status_interval", PGC_SIGHUP, REPLICATION_STANDBY,
-			gettext_noop("Sets the maximum interval between WAL receiver status reports to the primary."),
+			gettext_noop("Sets the maximum interval between WAL receiver status reports to the sending server."),
 			NULL,
 			GUC_UNIT_S
 		},
@@ -1987,7 +1987,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_receiver_timeout", PGC_SIGHUP, REPLICATION_STANDBY,
-			gettext_noop("Sets the maximum wait time to receive data from the primary."),
+			gettext_noop("Sets the maximum wait time to receive data from the sending server."),
 			NULL,
 			GUC_UNIT_MS
 		},
