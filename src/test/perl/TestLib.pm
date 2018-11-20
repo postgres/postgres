@@ -100,7 +100,12 @@ if (!$ENV{PGPORT})
 	$ENV{PGPORT} = 65432;
 }
 
-$ENV{PGPORT} = int($ENV{PGPORT}) % 65536;
+# Force a sane value of PGPORT
+$ENV{PGPORT} = int($ENV{PGPORT});
+if ($ENV{PGPORT} < 1024 || $ENV{PGPORT} > 65535)
+{
+	$ENV{PGPORT} = ($ENV{PGPORT} % 16384) + 49152;
+}
 
 
 #
