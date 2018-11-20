@@ -185,7 +185,10 @@ struct XLogReaderState
 	 */
 	TimeLineID	nextTLI;
 
-	/* Buffer for current ReadRecord result (expandable) */
+	/*
+	 * Buffer for current ReadRecord result (expandable), used when a record
+	 * crosses a page boundary.
+	 */
 	char	   *readRecordBuf;
 	uint32		readRecordBufSize;
 
