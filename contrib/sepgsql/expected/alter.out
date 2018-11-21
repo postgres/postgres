@@ -212,6 +212,10 @@ ALTER TABLE regtest_table ENABLE  TRIGGER regtest_test_trig;    -- not supported
 CREATE RULE regtest_test_rule AS ON INSERT TO regtest_table_3 DO ALSO NOTHING;
 ALTER TABLE regtest_table_3 DISABLE RULE regtest_test_rule;     -- not supported
 ALTER TABLE regtest_table_3 ENABLE RULE regtest_test_rule;      -- not supported
+ALTER TABLE regtest_table SET (fillfactor = 75);
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
+ALTER TABLE regtest_table RESET (fillfactor);
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema_2.regtest_table"
 ALTER TABLE regtest_table_2 NO INHERIT regtest_table;   -- not supported
 ALTER TABLE regtest_table_2 INHERIT regtest_table;      -- not supported
 ALTER TABLE regtest_table SET TABLESPACE pg_default;
