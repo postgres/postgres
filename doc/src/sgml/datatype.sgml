@@ -2437,7 +2437,7 @@ January 8 04:05:06 1999 PST
         linkend="view-pg-timezone-names">).
         <productname>PostgreSQL</productname> uses the widely-used IANA
         time zone data for this purpose, so the same time zone
-        names are also recognized other software.
+        names are also recognized by other software.
        </para>
       </listitem>
       <listitem>
