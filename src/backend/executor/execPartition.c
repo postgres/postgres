@@ -103,21 +103,27 @@ struct PartitionTupleRouting
  *
  * reldesc
  *		Relation descriptor of the table
+ *
  * key
  *		Partition key information of the table
+ *
  * keystate
  *		Execution state required for expressions in the partition key
+ *
  * partdesc
  *		Partition descriptor of the table
+ *
  * tupslot
  *		A standalone TupleTableSlot initialized with this table's tuple
  *		descriptor, or NULL if no tuple conversion between the parent is
  *		required.
+ *
  * tupmap
  *		TupleConversionMap to convert from the parent's rowtype to this table's
  *		rowtype  (when extracting the partition key of a tuple just before
  *		routing it through this table). A NULL value is stored if no tuple
  *		conversion is required.
+ *
  * indexes
  *		Array of partdesc->nparts elements.  For leaf partitions the index
  *		corresponds to the partition's ResultRelInfo in the encapsulating
