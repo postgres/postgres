@@ -59,7 +59,7 @@ sepgsql_schema_post_create(Oid namespaceId)
 	rel = heap_open(NamespaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
-				ObjectIdAttributeNumber,
+				Anum_pg_namespace_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(namespaceId));
 

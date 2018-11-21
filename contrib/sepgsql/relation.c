@@ -262,7 +262,7 @@ sepgsql_relation_post_create(Oid relOid)
 	rel = heap_open(RelationRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
-				ObjectIdAttributeNumber,
+				Anum_pg_class_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relOid));
 
@@ -614,7 +614,7 @@ sepgsql_relation_setattr(Oid relOid)
 	rel = heap_open(RelationRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
-				ObjectIdAttributeNumber,
+				Anum_pg_class_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relOid));
 

@@ -80,7 +80,7 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	rel = heap_open(DatabaseRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
-				ObjectIdAttributeNumber,
+				Anum_pg_database_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(databaseId));
 
