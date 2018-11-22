@@ -3658,6 +3658,12 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	if (PG_ARGISNULL(json_arg_num))
 		PG_RETURN_NULL();
 
+	/*
+	 * Forcibly update the cached tupdesc, to ensure we have the right tupdesc
+	 * to return even if the JSON contains no rows.
+	 */
+	update_cached_tupdesc(&cache->c.io.composite, cache->fn_mcxt);
+
 	state = palloc0(sizeof(PopulateRecordsetState));
 
 	/* make tuplestore in a sufficiently long-lived memory context */
