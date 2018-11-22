@@ -1851,6 +1851,19 @@ FROM (VALUES (1),(2)) v(i);
  2 | (2,43)
 (4 rows)
 
+-- empty array is a corner case
+SELECT json_populate_recordset(null::record, '[]');
+ERROR:  record type has not been registered
+SELECT json_populate_recordset(row(1,2), '[]');
+ json_populate_recordset 
+-------------------------
+(0 rows)
+
+SELECT * FROM json_populate_recordset(NULL::jpop,'[]') q;
+ a | b | c 
+---+---+---
+(0 rows)
+
 -- composite domain
 SELECT json_populate_recordset(null::j_ordered_pair, '[{"x": 0, "y": 1}]');
  json_populate_recordset 
