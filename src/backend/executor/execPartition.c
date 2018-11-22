@@ -259,8 +259,8 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
  * scratch space.
  *
  * If no leaf partition is found, this routine errors out with the appropriate
- * error message.  An error may also raised if the found target partition is
- * not a valid target for an INSERT.
+ * error message.  An error may also be raised if the found target partition
+ * is not a valid target for an INSERT.
  */
 ResultRelInfo *
 ExecFindPartition(ModifyTableState *mtstate,
