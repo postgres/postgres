@@ -1240,10 +1240,34 @@ hstore_hash(PG_FUNCTION_ARGS)
 								VARSIZE(hs) - VARHDRSZ);
 
 	/*
-	 * this is the only place in the code that cares whether the overall
-	 * varlena size exactly matches the true data size; this assertion should
-	 * be maintained by all the other code, but we make it explicit here.
+	 * This (along with hstore_hash_extended) is the only place in the code
+	 * that cares whether the overall varlena size exactly matches the true
+	 * data size; this assertion should be maintained by all the other code,
+	 * but we make it explicit here.
 	 */
+	Assert(VARSIZE(hs) ==
+		   (HS_COUNT(hs) != 0 ?
+			CALCDATASIZE(HS_COUNT(hs),
+						 HSE_ENDPOS(ARRPTR(hs)[2 * HS_COUNT(hs) - 1])) :
+			HSHRDSIZE));
+
+	PG_FREE_IF_COPY(hs, 0);
+	PG_RETURN_DATUM(hval);
+}
+
+PG_FUNCTION_INFO_V1(hstore_hash_extended);
+Datum
+hstore_hash_extended(PG_FUNCTION_ARGS)
+{
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	Datum		hval;
+
+	hval = hash_any_extended((unsigned char *) VARDATA(hs),
+							 VARSIZE(hs) - VARHDRSZ,
+							 seed);
+
+	/* See comment in hstore_hash */
 	Assert(VARSIZE(hs) ==
 		   (HS_COUNT(hs) != 0 ?
 			CALCDATASIZE(HS_COUNT(hs),
