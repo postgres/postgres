@@ -101,6 +101,7 @@ CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
 
 ALTER TABLE testschema.atable SET TABLESPACE regress_tblspace;
 ALTER INDEX testschema.anindex SET TABLESPACE regress_tblspace;
+ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_global;
 ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_default;
 ALTER INDEX testschema.part_a_idx SET TABLESPACE regress_tblspace;
 

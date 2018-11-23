@@ -10939,6 +10939,12 @@ ATExecPartedIdxSetTableSpace(Relation rel, Oid newTableSpace)
 
 	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX);
 
+	/* Can't allow a non-shared relation in pg_global */
+	if (newTableSpace == GLOBALTABLESPACE_OID)
+		ereport(ERROR,
+		(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("only shared relations can be placed in pg_global tablespace")));
+
 	/*
 	 * No work if no change in tablespace.
 	 */
