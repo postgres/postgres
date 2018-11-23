@@ -801,8 +801,8 @@ SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1, prt1_e t2 WHER
 
 EXPLAIN (COSTS OFF)
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Sort
    Sort Key: t1.a
    ->  Append
@@ -831,19 +831,18 @@ SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (
                      Index Cond: (a = t1_4.b)
                      Filter: (b = 0)
          ->  Nested Loop
-               ->  Unique
-                     ->  Sort
-                           Sort Key: t1_5.b
-                           ->  Hash Semi Join
-                                 Hash Cond: (t1_5.b = ((t1_8.a + t1_8.b) / 2))
-                                 ->  Seq Scan on prt2_p3 t1_5
-                                 ->  Hash
-                                       ->  Seq Scan on prt1_e_p3 t1_8
-                                             Filter: (c = 0)
+               ->  HashAggregate
+                     Group Key: t1_5.b
+                     ->  Hash Semi Join
+                           Hash Cond: (t1_5.b = ((t1_8.a + t1_8.b) / 2))
+                           ->  Seq Scan on prt2_p3 t1_5
+                           ->  Hash
+                                 ->  Seq Scan on prt1_e_p3 t1_8
+                                       Filter: (c = 0)
                ->  Index Scan using iprt1_p3_a on prt1_p3 t1_2
                      Index Cond: (a = t1_5.b)
                      Filter: (b = 0)
-(40 rows)
+(39 rows)
 
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
   a  | b |  c   
