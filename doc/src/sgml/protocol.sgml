@@ -1625,7 +1625,7 @@ PostgreSQL is <literal>tls-server-end-point</literal>.
 <step id="scram-server-first">
 <para>
   Server sends an AuthenticationSASLContinue message, with a SCRAM
-  <structname>server-first message</structname> as the content.
+  <structname>server-first-message</structname> as the content.
 </para>
 </step>
 <step id="scram-client-final">
