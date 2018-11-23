@@ -33,7 +33,7 @@ ALTER USER <replaceable class="parameter">role_specification</replaceable> [ WIT
     | REPLICATION | NOREPLICATION
     | BYPASSRLS | NOBYPASSRLS
     | CONNECTION LIMIT <replaceable class="parameter">connlimit</replaceable>
-    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>'
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>' | PASSWORD NULL
     | VALID UNTIL '<replaceable class="parameter">timestamp</replaceable>'
 
 ALTER USER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
