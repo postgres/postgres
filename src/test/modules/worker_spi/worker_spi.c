@@ -217,7 +217,6 @@ worker_spi_main(Datum main_arg)
 	while (!got_sigterm)
 	{
 		int			ret;
-		int			rc;
 
 		/*
 		 * Background workers mustn't call usleep() or any direct equivalent:
@@ -225,10 +224,10 @@ worker_spi_main(Datum main_arg)
 		 * necessary, but is awakened if postmaster dies.  That way the
 		 * background process goes away immediately in an emergency.
 		 */
-		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-					   worker_spi_naptime * 1000L,
-					   PG_WAIT_EXTENSION);
+		(void) WaitLatch(MyLatch,
+						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+						 worker_spi_naptime * 1000L,
+						 PG_WAIT_EXTENSION);
 		ResetLatch(MyLatch);
 
 		CHECK_FOR_INTERRUPTS();

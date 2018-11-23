@@ -361,10 +361,10 @@ BackgroundWriterMain(void)
 			/* Ask for notification at next buffer allocation */
 			StrategyNotifyBgWriter(MyProc->pgprocno);
 			/* Sleep ... */
-			rc = WaitLatch(MyLatch,
-						   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-						   BgWriterDelay * HIBERNATE_FACTOR,
-						   WAIT_EVENT_BGWRITER_HIBERNATE);
+			(void) WaitLatch(MyLatch,
+							 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+							 BgWriterDelay * HIBERNATE_FACTOR,
+							 WAIT_EVENT_BGWRITER_HIBERNATE);
 			/* Reset the notification request in case we timed out */
 			StrategyNotifyBgWriter(-1);
 		}

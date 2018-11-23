@@ -207,8 +207,6 @@ autoprewarm_main(Datum main_arg)
 	/* Periodically dump buffers until terminated. */
 	while (!got_sigterm)
 	{
-		int			rc;
-
 		/* In case of a SIGHUP, just reload the configuration. */
 		if (got_sighup)
 		{
@@ -219,10 +217,10 @@ autoprewarm_main(Datum main_arg)
 		if (autoprewarm_interval <= 0)
 		{
 			/* We're only dumping at shutdown, so just wait forever. */
-			rc = WaitLatch(&MyProc->procLatch,
-						   WL_LATCH_SET | WL_EXIT_ON_PM_DEATH,
-						   -1L,
-						   PG_WAIT_EXTENSION);
+			(void) WaitLatch(&MyProc->procLatch,
+							 WL_LATCH_SET | WL_EXIT_ON_PM_DEATH,
+							 -1L,
+							 PG_WAIT_EXTENSION);
 		}
 		else
 		{
@@ -248,10 +246,10 @@ autoprewarm_main(Datum main_arg)
 			}
 
 			/* Sleep until the next dump time. */
-			rc = WaitLatch(&MyProc->procLatch,
-						   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-						   delay_in_ms,
-						   PG_WAIT_EXTENSION);
+			(void) WaitLatch(&MyProc->procLatch,
+							 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+							 delay_in_ms,
+							 PG_WAIT_EXTENSION);
 		}
 
 		/* Reset the latch, loop. */
