@@ -11,6 +11,17 @@
 #define GETENTRY(vec,pos) ((ArrayType *) DatumGetPointer((vec)->vector[(pos)].key))
 
 /*
+ * Control the maximum sparseness of compressed keys.
+ *
+ * The upper safe bound for this limit is half the maximum allocatable array
+ * size. A lower bound would give more guarantees that pathological data
+ * wouldn't eat excessive CPU and memory, but at the expense of breaking
+ * possibly working (after a fashion) indexes.
+ */
+#define MAXNUMELTS (Min((MaxAllocSize / sizeof(Datum)),((MaxAllocSize - ARR_OVERHEAD_NONULLS(1)) / sizeof(int)))/2)
+/* or: #define MAXNUMELTS 1000000 */
+
+/*
 ** GiST support methods
 */
 PG_FUNCTION_INFO_V1(g_int_consistent);
@@ -139,11 +150,13 @@ g_int_compress(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 	ArrayType  *r;
-	int			len;
+	int			len,
+				lenr;
 	int		   *dr;
 	int			i,
-				min,
+				j,
 				cand;
+	int64		min;
 
 	if (entry->leafkey)
 	{
@@ -184,23 +197,62 @@ g_int_compress(PG_FUNCTION_ARGS)
 
 		dr = ARRPTR(r);
 
-		for (i = len - 1; i >= 0; i--)
-			dr[2 * i] = dr[2 * i + 1] = dr[i];
+		/*
+		 * "len" at this point is the number of ranges we will construct.
+		 * "lenr" is the number of ranges we must eventually remove by
+		 * merging, we must be careful to remove no more than this number.
+		 */
+		lenr = len - MAXNUMRANGE;
 
-		len *= 2;
+		/*
+		 * Initially assume we can merge consecutive ints into a range. but we
+		 * must count every value removed and stop when lenr runs out
+		 */
+		for (j = i = len - 1; i > 0 && lenr > 0; i--, j--)
+		{
+			int		r_end = dr[i];
+			int		r_start = r_end;
+			while (i > 0 && lenr > 0 && dr[i-1] == r_start - 1)
+				--r_start, --i, --lenr;
+			dr[2*j] = r_start;
+			dr[2*j+1] = r_end;
+		}
+		/* just copy the rest, if any, as trivial ranges */
+		for (; i >= 0; i--, j--)
+			dr[2*j] = dr[2*j + 1] = dr[i];
+
+		if (++j)
+		{
+			/*
+			 * shunt everything down to start at the right place
+			 */
+			memmove((void *) &dr[0], (void *) &dr[2*j], 2*(len - j) * sizeof(int32));
+		}
+		/*
+		 * make "len" be number of array elements, not ranges
+		 */
+		len = 2*(len - j);
 		cand = 1;
 		while (len > MAXNUMRANGE * 2)
 		{
-			min = 0x7fffffff;
+			min = INT64CONST(0x7fffffffffffffff);
 			for (i = 2; i < len; i += 2)
-				if (min > (dr[i] - dr[i - 1]))
+				if (min > ((int64)dr[i] - (int64)dr[i - 1]))
 				{
-					min = (dr[i] - dr[i - 1]);
+					min = ((int64)dr[i] - (int64)dr[i - 1]);
 					cand = i;
 				}
 			memmove((void *) &dr[cand - 1], (void *) &dr[cand + 1], (len - cand - 1) * sizeof(int32));
 			len -= 2;
 		}
+		/*
+		 * check sparseness of result
+		 */
+		lenr = internal_size(dr, len);
+		if (lenr < 0 || lenr > MAXNUMELTS)
+			ereport(ERROR,
+					(errmsg("data is too sparse, recreate index using gist__intbig_ops opclass instead")));
+
 		r = resize_intArrayType(r, len);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
@@ -258,6 +310,9 @@ g_int_decompress(PG_FUNCTION_ARGS)
 
 	din = ARRPTR(in);
 	lenr = internal_size(din, lenin);
+	if (lenr < 0 || lenr > MAXNUMELTS)
+		ereport(ERROR,
+				(errmsg("compressed array is too big, recreate index using gist__intbig_ops opclass instead")));
 
 	r = new_intArrayType(lenr);
 	dr = ARRPTR(r);
