@@ -692,12 +692,8 @@ WaitForParallelWorkersToAttach(ParallelContext *pcxt)
 				 * just end up waiting for the same worker again.
 				 */
 				rc = WaitLatch(MyLatch,
-							   WL_LATCH_SET | WL_POSTMASTER_DEATH,
+							   WL_LATCH_SET | WL_EXIT_ON_PM_DEATH,
 							   -1, WAIT_EVENT_BGWORKER_STARTUP);
-
-				/* emergency bailout if postmaster has died */
-				if (rc & WL_POSTMASTER_DEATH)
-					proc_exit(1);
 
 				if (rc & WL_LATCH_SET)
 					ResetLatch(MyLatch);
@@ -815,8 +811,8 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 			}
 		}
 
-		WaitLatch(MyLatch, WL_LATCH_SET, -1,
-				  WAIT_EVENT_PARALLEL_FINISH);
+		(void) WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH, -1,
+						 WAIT_EVENT_PARALLEL_FINISH);
 		ResetLatch(MyLatch);
 	}
 

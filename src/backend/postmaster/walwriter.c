@@ -223,7 +223,6 @@ WalWriterMain(void)
 	for (;;)
 	{
 		long		cur_timeout;
-		int			rc;
 
 		/*
 		 * Advertise whether we might hibernate in this cycle.  We do this
@@ -276,17 +275,10 @@ WalWriterMain(void)
 		else
 			cur_timeout = WalWriterDelay * HIBERNATE_FACTOR;
 
-		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   cur_timeout,
-					   WAIT_EVENT_WAL_WRITER_MAIN);
-
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (rc & WL_POSTMASTER_DEATH)
-			exit(1);
+		(void) WaitLatch(MyLatch,
+						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+						 cur_timeout,
+						 WAIT_EVENT_WAL_WRITER_MAIN);
 	}
 }
 

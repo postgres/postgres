@@ -1686,7 +1686,7 @@ throttle(size_t increment)
 		 * the maximum time to sleep. Thus the cast to long is safe.
 		 */
 		wait_result = WaitLatch(MyLatch,
-								WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+								WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 								(long) (sleep / 1000),
 								WAIT_EVENT_BASE_BACKUP_THROTTLE);
 

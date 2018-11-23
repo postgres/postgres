@@ -226,14 +226,10 @@ worker_spi_main(Datum main_arg)
 		 * background process goes away immediately in an emergency.
 		 */
 		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 					   worker_spi_naptime * 1000L,
 					   PG_WAIT_EXTENSION);
 		ResetLatch(MyLatch);
-
-		/* emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
 
 		CHECK_FOR_INTERRUPTS();
 

@@ -159,7 +159,6 @@ finish_sync_worker(void)
 static bool
 wait_for_relation_state_change(Oid relid, char expected_state)
 {
-	int			rc;
 	char		state;
 
 	for (;;)
@@ -192,13 +191,9 @@ wait_for_relation_state_change(Oid relid, char expected_state)
 		if (!worker)
 			return false;
 
-		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   1000L, WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE);
-
-		/* emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
+		(void) WaitLatch(MyLatch,
+						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+						 1000L, WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE);
 
 		ResetLatch(MyLatch);
 	}
@@ -250,12 +245,8 @@ wait_for_worker_state_change(char expected_state)
 		 * but use a timeout in case it dies without sending one.
 		 */
 		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 					   1000L, WAIT_EVENT_LOGICAL_SYNC_STATE_CHANGE);
-
-		/* emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
 
 		if (rc & WL_LATCH_SET)
 			ResetLatch(MyLatch);
@@ -593,7 +584,6 @@ copy_read_data(void *outbuf, int minread, int maxread)
 	while (maxread > 0 && bytesread < minread)
 	{
 		pgsocket	fd = PGINVALID_SOCKET;
-		int			rc;
 		int			len;
 		char	   *buf = NULL;
 
@@ -632,14 +622,10 @@ copy_read_data(void *outbuf, int minread, int maxread)
 		/*
 		 * Wait for more data or latch.
 		 */
-		rc = WaitLatchOrSocket(MyLatch,
-							   WL_SOCKET_READABLE | WL_LATCH_SET |
-							   WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							   fd, 1000L, WAIT_EVENT_LOGICAL_SYNC_DATA);
-
-		/* Emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
+		(void) WaitLatchOrSocket(MyLatch,
+								 WL_SOCKET_READABLE | WL_LATCH_SET |
+								 WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+								 fd, 1000L, WAIT_EVENT_LOGICAL_SYNC_DATA);
 
 		ResetLatch(MyLatch);
 	}

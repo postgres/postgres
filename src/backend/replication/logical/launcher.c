@@ -221,12 +221,8 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 		 * about the worker attach.  But we don't expect to have to wait long.
 		 */
 		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 					   10L, WAIT_EVENT_BGWORKER_STARTUP);
-
-		/* emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
 
 		if (rc & WL_LATCH_SET)
 		{
@@ -498,12 +494,8 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 
 		/* Wait a bit --- we don't expect to have to wait long. */
 		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 					   10L, WAIT_EVENT_BGWORKER_STARTUP);
-
-		/* emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
 
 		if (rc & WL_LATCH_SET)
 		{
@@ -546,12 +538,8 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 
 		/* Wait a bit --- we don't expect to have to wait long. */
 		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 					   10L, WAIT_EVENT_BGWORKER_SHUTDOWN);
-
-		/* emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
 
 		if (rc & WL_LATCH_SET)
 		{
@@ -1072,13 +1060,9 @@ ApplyLauncherMain(Datum main_arg)
 
 		/* Wait for more work. */
 		rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 					   wait_time,
 					   WAIT_EVENT_LOGICAL_LAUNCHER_MAIN);
-
-		/* emergency bailout if postmaster has died */
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
 
 		if (rc & WL_LATCH_SET)
 		{

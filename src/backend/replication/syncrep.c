@@ -214,6 +214,8 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	 */
 	for (;;)
 	{
+		int			rc;
+
 		/* Must reset the latch before testing state. */
 		ResetLatch(MyLatch);
 
@@ -267,24 +269,24 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		}
 
 		/*
+		 * Wait on latch.  Any condition that should wake us up will set the
+		 * latch, so no need for timeout.
+		 */
+		rc = WaitLatch(MyLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1,
+					   WAIT_EVENT_SYNC_REP);
+
+		/*
 		 * If the postmaster dies, we'll probably never get an
 		 * acknowledgment, because all the wal sender processes will exit. So
 		 * just bail out.
 		 */
-		if (!PostmasterIsAlive())
+		if (rc & WL_POSTMASTER_DEATH)
 		{
 			ProcDiePending = true;
 			whereToSendOutput = DestNone;
 			SyncRepCancelWait();
 			break;
 		}
-
-		/*
-		 * Wait on latch.  Any condition that should wake us up will set the
-		 * latch, so no need for timeout.
-		 */
-		WaitLatch(MyLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1,
-				  WAIT_EVENT_SYNC_REP);
 	}
 
 	/*

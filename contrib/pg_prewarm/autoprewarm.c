@@ -220,7 +220,7 @@ autoprewarm_main(Datum main_arg)
 		{
 			/* We're only dumping at shutdown, so just wait forever. */
 			rc = WaitLatch(&MyProc->procLatch,
-						   WL_LATCH_SET | WL_POSTMASTER_DEATH,
+						   WL_LATCH_SET | WL_EXIT_ON_PM_DEATH,
 						   -1L,
 						   PG_WAIT_EXTENSION);
 		}
@@ -249,15 +249,13 @@ autoprewarm_main(Datum main_arg)
 
 			/* Sleep until the next dump time. */
 			rc = WaitLatch(&MyProc->procLatch,
-						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+						   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 						   delay_in_ms,
 						   PG_WAIT_EXTENSION);
 		}
 
-		/* Reset the latch, bail out if postmaster died, otherwise loop. */
+		/* Reset the latch, loop. */
 		ResetLatch(&MyProc->procLatch);
-		if (rc & WL_POSTMASTER_DEATH)
-			proc_exit(1);
 	}
 
 	/*

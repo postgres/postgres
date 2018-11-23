@@ -186,15 +186,10 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 			io_flag = WL_SOCKET_WRITEABLE;
 
 		rc = WaitLatchOrSocket(MyLatch,
-							   WL_POSTMASTER_DEATH |
-							   WL_LATCH_SET | io_flag,
+							   WL_EXIT_ON_PM_DEATH | WL_LATCH_SET | io_flag,
 							   PQsocket(conn->streamConn),
 							   0,
 							   WAIT_EVENT_LIBPQWALRECEIVER_CONNECT);
-
-		/* Emergency bailout? */
-		if (rc & WL_POSTMASTER_DEATH)
-			exit(1);
 
 		/* Interrupted? */
 		if (rc & WL_LATCH_SET)
@@ -610,15 +605,11 @@ libpqrcv_PQexec(PGconn *streamConn, const char *query)
 			 * replication connection.
 			 */
 			rc = WaitLatchOrSocket(MyLatch,
-								   WL_POSTMASTER_DEATH | WL_SOCKET_READABLE |
+								   WL_EXIT_ON_PM_DEATH | WL_SOCKET_READABLE |
 								   WL_LATCH_SET,
 								   PQsocket(streamConn),
 								   0,
 								   WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE);
-
-			/* Emergency bailout? */
-			if (rc & WL_POSTMASTER_DEATH)
-				exit(1);
 
 			/* Interrupted? */
 			if (rc & WL_LATCH_SET)

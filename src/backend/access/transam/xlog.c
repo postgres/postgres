@@ -6189,10 +6189,10 @@ recoveryApplyDelay(XLogReaderState *record)
 		elog(DEBUG2, "recovery apply delay %ld seconds, %d milliseconds",
 			 secs, microsecs / 1000);
 
-		WaitLatch(&XLogCtl->recoveryWakeupLatch,
-				  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-				  secs * 1000L + microsecs / 1000,
-				  WAIT_EVENT_RECOVERY_APPLY_DELAY);
+		(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
+						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+						 secs * 1000L + microsecs / 1000,
+						 WAIT_EVENT_RECOVERY_APPLY_DELAY);
 	}
 	return true;
 }
@@ -12093,9 +12093,11 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						wait_time = wal_retrieve_retry_interval -
 							(secs * 1000 + usecs / 1000);
 
-						WaitLatch(&XLogCtl->recoveryWakeupLatch,
-								  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-								  wait_time, WAIT_EVENT_RECOVERY_WAL_STREAM);
+						(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
+										 WL_LATCH_SET | WL_TIMEOUT |
+										 WL_EXIT_ON_PM_DEATH,
+										 wait_time,
+										 WAIT_EVENT_RECOVERY_WAL_STREAM);
 						ResetLatch(&XLogCtl->recoveryWakeupLatch);
 						now = GetCurrentTimestamp();
 					}
@@ -12269,9 +12271,10 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * Wait for more WAL to arrive. Time out after 5 seconds
 					 * to react to a trigger file promptly.
 					 */
-					WaitLatch(&XLogCtl->recoveryWakeupLatch,
-							  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							  5000L, WAIT_EVENT_RECOVERY_WAL_ALL);
+					(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
+									 WL_LATCH_SET | WL_TIMEOUT |
+									 WL_EXIT_ON_PM_DEATH,
+									 5000L, WAIT_EVENT_RECOVERY_WAL_ALL);
 					ResetLatch(&XLogCtl->recoveryWakeupLatch);
 					break;
 				}

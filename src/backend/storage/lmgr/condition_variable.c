@@ -72,7 +72,7 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 		new_event_set = CreateWaitEventSet(TopMemoryContext, 2);
 		AddWaitEventToSet(new_event_set, WL_LATCH_SET, PGINVALID_SOCKET,
 						  MyLatch, NULL);
-		AddWaitEventToSet(new_event_set, WL_POSTMASTER_DEATH, PGINVALID_SOCKET,
+		AddWaitEventToSet(new_event_set, WL_EXIT_ON_PM_DEATH, PGINVALID_SOCKET,
 						  NULL, NULL);
 		/* Don't set cv_wait_event_set until we have a correct WES. */
 		cv_wait_event_set = new_event_set;
@@ -154,16 +154,8 @@ ConditionVariableSleep(ConditionVariable *cv, uint32 wait_event_info)
 		 * Wait for latch to be set.  (If we're awakened for some other
 		 * reason, the code below will cope anyway.)
 		 */
-		WaitEventSetWait(cv_wait_event_set, -1, &event, 1, wait_event_info);
-
-		if (event.events & WL_POSTMASTER_DEATH)
-		{
-			/*
-			 * Emergency bailout if postmaster has died.  This is to avoid the
-			 * necessity for manual cleanup of all postmaster children.
-			 */
-			exit(1);
-		}
+		(void) WaitEventSetWait(cv_wait_event_set, -1, &event, 1,
+								wait_event_info);
 
 		/* Reset latch before examining the state of the wait list. */
 		ResetLatch(MyLatch);

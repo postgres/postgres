@@ -410,8 +410,8 @@ aloop:
 				else
 					waitfor = WL_SOCKET_WRITEABLE;
 
-				WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0,
-								  WAIT_EVENT_SSL_OPEN_SERVER);
+				(void) WaitLatchOrSocket(MyLatch, waitfor, port->sock, 0,
+										 WAIT_EVENT_SSL_OPEN_SERVER);
 				goto aloop;
 			case SSL_ERROR_SYSCALL:
 				if (r < 0)
