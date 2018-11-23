@@ -89,6 +89,15 @@ SELECT citext_cmp('aardvark'::citext, 'aardVark'::citext) AS zero;
 SELECT citext_cmp('AARDVARK'::citext, 'AARDVARK'::citext) AS zero;
 SELECT citext_cmp('B'::citext, 'a'::citext) > 0 AS true;
 
+-- Check the citext_hash() and citext_hash_extended() function explicitly.
+SELECT v as value, citext_hash(v)::bit(32) as standard,
+       citext_hash_extended(v, 0)::bit(32) as extended0,
+       citext_hash_extended(v, 1)::bit(32) as extended1
+FROM   (VALUES (NULL::citext), ('PostgreSQL'), ('eIpUEtqmY89'), ('AXKEJBTK'),
+       ('muop28x03'), ('yi3nm0d73')) x(v)
+WHERE  citext_hash(v)::bit(32) != citext_hash_extended(v, 0)::bit(32)
+       OR citext_hash(v)::bit(32) = citext_hash_extended(v, 1)::bit(32);
+
 -- Do some tests using a table and index.
 
 CREATE TEMP TABLE try (

@@ -153,6 +153,26 @@ citext_hash(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(result);
 }
 
+PG_FUNCTION_INFO_V1(citext_hash_extended);
+
+Datum
+citext_hash_extended(PG_FUNCTION_ARGS)
+{
+	text	   *txt = PG_GETARG_TEXT_PP(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	char	   *str;
+	Datum		result;
+
+	str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
+	result = hash_any_extended((unsigned char *) str, strlen(str), seed);
+	pfree(str);
+
+	/* Avoid leaking memory for toasted inputs */
+	PG_FREE_IF_COPY(txt, 0);
+
+	PG_RETURN_DATUM(result);
+}
+
 /*
  *		==================
  *		OPERATOR FUNCTIONS
