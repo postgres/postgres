@@ -214,6 +214,8 @@ CREATE TABLE testschema.atable AS VALUES (1), (2);
 CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
 ALTER TABLE testschema.atable SET TABLESPACE regress_tblspace;
 ALTER INDEX testschema.anindex SET TABLESPACE regress_tblspace;
+ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_global;
+ERROR:  only shared relations can be placed in pg_global tablespace
 ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_default;
 ALTER INDEX testschema.part_a_idx SET TABLESPACE regress_tblspace;
 INSERT INTO testschema.atable VALUES(3);	-- ok
