@@ -33,7 +33,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
     | REPLICATION | NOREPLICATION
     | BYPASSRLS | NOBYPASSRLS
     | CONNECTION LIMIT <replaceable class="parameter">connlimit</replaceable>
-    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>'
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>' | PASSWORD NULL
     | VALID UNTIL '<replaceable class="parameter">timestamp</replaceable>'
     | IN ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="parameter">role_name</replaceable> [, ...]
@@ -210,7 +210,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term>[ <literal>ENCRYPTED</literal> ] <literal>PASSWORD</literal> <replaceable class="parameter">password</replaceable></term>
+      <term>[ <literal>ENCRYPTED</literal> ] <literal>PASSWORD</literal> '<replaceable class="parameter">password</replaceable>'</term>
+      <term><literal>PASSWORD NULL</literal></term>
       <listitem>
        <para>
         Sets the role's password.  (A password is only of use for
