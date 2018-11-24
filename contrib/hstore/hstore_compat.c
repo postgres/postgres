@@ -238,34 +238,35 @@ hstoreUpgrade(Datum orig)
 	HStore	   *hs = (HStore *) PG_DETOAST_DATUM(orig);
 	int			valid_new;
 	int			valid_old;
-	bool		writable;
 
 	/* Return immediately if no conversion needed */
-	if ((hs->size_ & HS_FLAG_NEWVERSION) ||
-		hs->size_ == 0 ||
-		(VARSIZE(hs) < 32768 && HSE_ISFIRST((ARRPTR(hs)[0]))))
+	if (hs->size_ & HS_FLAG_NEWVERSION)
 		return hs;
+
+	/* Do we have a writable copy? If not, make one. */
+	if ((void *) hs == (void *) DatumGetPointer(orig))
+		hs = (HStore *) PG_DETOAST_DATUM_COPY(orig);
+
+	if (hs->size_ == 0 ||
+		(VARSIZE(hs) < 32768 && HSE_ISFIRST((ARRPTR(hs)[0]))))
+	{
+		HS_SETCOUNT(hs, HS_COUNT(hs));
+		HS_FIXSIZE(hs, HS_COUNT(hs));
+		return hs;
+	}
 
 	valid_new = hstoreValidNewFormat(hs);
 	valid_old = hstoreValidOldFormat(hs);
-	/* Do we have a writable copy? */
-	writable = ((void *) hs != (void *) DatumGetPointer(orig));
 
 	if (!valid_old || hs->size_ == 0)
 	{
 		if (valid_new)
 		{
 			/*
-			 * force the "new version" flag and the correct varlena length,
-			 * but only if we have a writable copy already (which we almost
-			 * always will, since short new-format values won't come through
-			 * here)
+			 * force the "new version" flag and the correct varlena length.
 			 */
-			if (writable)
-			{
-				HS_SETCOUNT(hs, HS_COUNT(hs));
-				HS_FIXSIZE(hs, HS_COUNT(hs));
-			}
+			HS_SETCOUNT(hs, HS_COUNT(hs));
+			HS_FIXSIZE(hs, HS_COUNT(hs));
 			return hs;
 		}
 		else
@@ -302,15 +303,10 @@ hstoreUpgrade(Datum orig)
 		elog(WARNING, "ambiguous hstore value resolved as hstore-new");
 
 		/*
-		 * force the "new version" flag and the correct varlena length, but
-		 * only if we have a writable copy already (which we almost always
-		 * will, since short new-format values won't come through here)
+		 * force the "new version" flag and the correct varlena length.
 		 */
-		if (writable)
-		{
-			HS_SETCOUNT(hs, HS_COUNT(hs));
-			HS_FIXSIZE(hs, HS_COUNT(hs));
-		}
+		HS_SETCOUNT(hs, HS_COUNT(hs));
+		HS_FIXSIZE(hs, HS_COUNT(hs));
 		return hs;
 #else
 		elog(WARNING, "ambiguous hstore value resolved as hstore-old");
@@ -318,13 +314,8 @@ hstoreUpgrade(Datum orig)
 	}
 
 	/*
-	 * must have an old-style value. Overwrite it in place as a new-style one,
-	 * making sure we have a writable copy first.
+	 * must have an old-style value. Overwrite it in place as a new-style one.
 	 */
-
-	if (!writable)
-		hs = (HStore *) PG_DETOAST_DATUM_COPY(orig);
-
 	{
 		int			count = hs->size_;
 		HEntry	   *new_entries = ARRPTR(hs);
