@@ -1342,25 +1342,29 @@ i8tod(PG_FUNCTION_ARGS)
 Datum
 dtoi8(PG_FUNCTION_ARGS)
 {
-	float8		arg = PG_GETARG_FLOAT8(0);
-	int64		result;
-
-	/* Round arg to nearest integer (but it's still in float form) */
-	arg = rint(arg);
+	float8		num = PG_GETARG_FLOAT8(0);
 
 	/*
-	 * Does it fit in an int64?  Avoid assuming that we have handy constants
-	 * defined for the range boundaries, instead test for overflow by
-	 * reverse-conversion.
+	 * Get rid of any fractional part in the input.  This is so we don't fail
+	 * on just-out-of-range values that would round into range.  Note
+	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
-	result = (int64) arg;
+	num = rint(num);
 
-	if ((float8) result != arg)
+	/*
+	 * Range check.  We must be careful here that the boundary values are
+	 * expressed exactly in the float domain.  We expect PG_INT64_MIN to be an
+	 * exact power of 2, so it will be represented exactly; but PG_INT64_MAX
+	 * isn't, and might get rounded off, so avoid using it.
+	 */
+	if (num < (float8) PG_INT64_MIN ||
+		num >= -((float8) PG_INT64_MIN) ||
+		isnan(num))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
 
-	PG_RETURN_INT64(result);
+	PG_RETURN_INT64((int64) num);
 }
 
 Datum
@@ -1380,26 +1384,29 @@ i8tof(PG_FUNCTION_ARGS)
 Datum
 ftoi8(PG_FUNCTION_ARGS)
 {
-	float4		arg = PG_GETARG_FLOAT4(0);
-	int64		result;
-	float8		darg;
-
-	/* Round arg to nearest integer (but it's still in float form) */
-	darg = rint(arg);
+	float4		num = PG_GETARG_FLOAT4(0);
 
 	/*
-	 * Does it fit in an int64?  Avoid assuming that we have handy constants
-	 * defined for the range boundaries, instead test for overflow by
-	 * reverse-conversion.
+	 * Get rid of any fractional part in the input.  This is so we don't fail
+	 * on just-out-of-range values that would round into range.  Note
+	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
-	result = (int64) darg;
+	num = rint(num);
 
-	if ((float8) result != darg)
+	/*
+	 * Range check.  We must be careful here that the boundary values are
+	 * expressed exactly in the float domain.  We expect PG_INT64_MIN to be an
+	 * exact power of 2, so it will be represented exactly; but PG_INT64_MAX
+	 * isn't, and might get rounded off, so avoid using it.
+	 */
+	if (num < (float4) PG_INT64_MIN ||
+		num >= -((float4) PG_INT64_MIN) ||
+		isnan(num))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
 
-	PG_RETURN_INT64(result);
+	PG_RETURN_INT64((int64) num);
 }
 
 Datum
