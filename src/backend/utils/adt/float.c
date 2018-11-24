@@ -1354,16 +1354,28 @@ Datum
 dtoi4(PG_FUNCTION_ARGS)
 {
 	float8		num = PG_GETARG_FLOAT8(0);
-	int32		result;
 
-	/* 'Inf' is handled by INT_MAX */
-	if (num < INT_MIN || num > INT_MAX || isnan(num))
+	/*
+	 * Get rid of any fractional part in the input.  This is so we don't fail
+	 * on just-out-of-range values that would round into range.  Note
+	 * assumption that rint() will pass through a NaN or Inf unchanged.
+	 */
+	num = rint(num);
+
+	/*
+	 * Range check.  We must be careful here that the boundary values are
+	 * expressed exactly in the float domain.  We expect PG_INT32_MIN to be an
+	 * exact power of 2, so it will be represented exactly; but PG_INT32_MAX
+	 * isn't, and might get rounded off, so avoid using it.
+	 */
+	if (unlikely(num < (float8) PG_INT32_MIN ||
+				 num >= -((float8) PG_INT32_MIN) ||
+				 isnan(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	result = (int32) rint(num);
-	PG_RETURN_INT32(result);
+	PG_RETURN_INT32((int32) num);
 }
 
 
@@ -1375,12 +1387,27 @@ dtoi2(PG_FUNCTION_ARGS)
 {
 	float8		num = PG_GETARG_FLOAT8(0);
 
-	if (num < SHRT_MIN || num > SHRT_MAX || isnan(num))
+	/*
+	 * Get rid of any fractional part in the input.  This is so we don't fail
+	 * on just-out-of-range values that would round into range.  Note
+	 * assumption that rint() will pass through a NaN or Inf unchanged.
+	 */
+	num = rint(num);
+
+	/*
+	 * Range check.  We must be careful here that the boundary values are
+	 * expressed exactly in the float domain.  We expect PG_INT16_MIN to be an
+	 * exact power of 2, so it will be represented exactly; but PG_INT16_MAX
+	 * isn't, and might get rounded off, so avoid using it.
+	 */
+	if (unlikely(num < (float8) PG_INT16_MIN ||
+				 num >= -((float8) PG_INT16_MIN) ||
+				 isnan(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
 
-	PG_RETURN_INT16((int16) rint(num));
+	PG_RETURN_INT16((int16) num);
 }
 
 
@@ -1416,12 +1443,27 @@ ftoi4(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
 
-	if (num < INT_MIN || num > INT_MAX || isnan(num))
+	/*
+	 * Get rid of any fractional part in the input.  This is so we don't fail
+	 * on just-out-of-range values that would round into range.  Note
+	 * assumption that rint() will pass through a NaN or Inf unchanged.
+	 */
+	num = rint(num);
+
+	/*
+	 * Range check.  We must be careful here that the boundary values are
+	 * expressed exactly in the float domain.  We expect PG_INT32_MIN to be an
+	 * exact power of 2, so it will be represented exactly; but PG_INT32_MAX
+	 * isn't, and might get rounded off, so avoid using it.
+	 */
+	if (unlikely(num < (float4) PG_INT32_MIN ||
+				 num >= -((float4) PG_INT32_MIN) ||
+				 isnan(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	PG_RETURN_INT32((int32) rint(num));
+	PG_RETURN_INT32((int32) num);
 }
 
 
@@ -1433,12 +1475,27 @@ ftoi2(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
 
-	if (num < SHRT_MIN || num > SHRT_MAX || isnan(num))
+	/*
+	 * Get rid of any fractional part in the input.  This is so we don't fail
+	 * on just-out-of-range values that would round into range.  Note
+	 * assumption that rint() will pass through a NaN or Inf unchanged.
+	 */
+	num = rint(num);
+
+	/*
+	 * Range check.  We must be careful here that the boundary values are
+	 * expressed exactly in the float domain.  We expect PG_INT16_MIN to be an
+	 * exact power of 2, so it will be represented exactly; but PG_INT16_MAX
+	 * isn't, and might get rounded off, so avoid using it.
+	 */
+	if (unlikely(num < (float4) PG_INT16_MIN ||
+				 num >= -((float4) PG_INT16_MIN) ||
+				 isnan(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
 
-	PG_RETURN_INT16((int16) rint(num));
+	PG_RETURN_INT16((int16) num);
 }
 
 
