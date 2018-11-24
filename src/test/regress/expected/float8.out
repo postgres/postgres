@@ -444,3 +444,52 @@ SELECT '' AS five, * FROM FLOAT8_TBL;
       | -1.2345678901234e-200
 (5 rows)
 
+-- test edge-case coercions to integer
+SELECT '32767.4'::float8::int2;
+ int2  
+-------
+ 32767
+(1 row)
+
+SELECT '32767.6'::float8::int2;
+ERROR:  smallint out of range
+SELECT '-32768.4'::float8::int2;
+  int2  
+--------
+ -32768
+(1 row)
+
+SELECT '-32768.6'::float8::int2;
+ERROR:  smallint out of range
+SELECT '2147483647.4'::float8::int4;
+    int4    
+------------
+ 2147483647
+(1 row)
+
+SELECT '2147483647.6'::float8::int4;
+ERROR:  integer out of range
+SELECT '-2147483648.4'::float8::int4;
+    int4     
+-------------
+ -2147483648
+(1 row)
+
+SELECT '-2147483648.6'::float8::int4;
+ERROR:  integer out of range
+SELECT '9223372036854773760'::float8::int8;
+        int8         
+---------------------
+ 9223372036854773760
+(1 row)
+
+SELECT '9223372036854775807'::float8::int8;
+ERROR:  bigint out of range
+SELECT '-9223372036854775808.5'::float8::int8;
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT '-9223372036854780000'::float8::int8;
+ERROR:  bigint out of range
