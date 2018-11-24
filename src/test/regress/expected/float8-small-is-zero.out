@@ -511,10 +511,10 @@ SELECT '-2147483648.4'::float8::int4;
 
 SELECT '-2147483648.6'::float8::int4;
 ERROR:  integer out of range
-SELECT '9223372036854774784'::float8::int8;
+SELECT '9223372036854773760'::float8::int8;
         int8         
 ---------------------
- 9223372036854774784
+ 9223372036854773760
 (1 row)
 
 SELECT '9223372036854775807'::float8::int8;
