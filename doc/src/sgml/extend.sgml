@@ -1304,6 +1304,34 @@ include $(PGXS)
      </varlistentry>
 
      <varlistentry>
+      <term><varname>ISOLATION</varname></term>
+      <listitem>
+       <para>
+        list of isolation test cases, see below for more details
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>ISOLATION_OPTS</varname></term>
+      <listitem>
+       <para>
+        additional switches to pass to
+        <application>pg_isolation_regress</application>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>TAP_TESTS</varname></term>
+      <listitem>
+       <para>
+        switch defining if TAP tests need to be run, see below
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>NO_INSTALLCHECK</varname></term>
       <listitem>
        <para>
@@ -1423,13 +1451,42 @@ make VPATH=/path/to/extension/source/tree install
     have all expected files.
    </para>
 
+   <para>
+    The scripts listed in the <varname>ISOLATION</varname> variable are used
+    for tests stressing behavior of concurrent session with your module, which
+    can be invoked by <literal>make installcheck</literal> after doing
+    <literal>make install</literal>.  For this to work you must have a
+    running <productname>PostgreSQL</productname> server.  The script files
+    listed in <varname>ISOLATION</varname> must appear in a subdirectory
+    named <literal>specs/</literal> in your extension's directory.  These files
+    must have extension <literal>.spec</literal>, which must not be included
+    in the <varname>ISOLATION</varname> list in the makefile.  For each test
+    there should also be a file containing the expected output in a
+    subdirectory named <literal>expected/</literal>, with the same stem and
+    extension <literal>.out</literal>.  <literal>make installcheck</literal>
+    executes each test script, and compares the resulting output to the
+    matching expected file.  Any differences will be written to the file
+    <literal>output_iso/regression.diffs</literal> in
+    <command>diff -c</command> format.  Note that trying to run a test that is
+    missing its expected file will be reported as <quote>trouble</quote>, so
+    make sure you have all expected files.
+   </para>
+
+   <para>
+    <literal>TAP_TESTS</literal> enables the use of TAP tests.  Data from each
+    run is present in a subdirectory named <literal>tmp_check/</literal>.
+    See also <xref linkend="regress-tap"/> for more details.
+   </para>
+
    <tip>
     <para>
      The easiest way to create the expected files is to create empty files,
      then do a test run (which will of course report differences).  Inspect
      the actual result files found in the <literal>results/</literal>
-     directory, then copy them to <literal>expected/</literal> if they match
-     what you expect from the test.
+     directory (for tests in <literal>REGRESS</literal>), or
+     <literal>output_iso/results/</literal> directory (for tests in
+     <literal>ISOLATION</literal>), then copy them to
+     <literal>expected/</literal> if they match what you expect from the test.
     </para>
 
    </tip>

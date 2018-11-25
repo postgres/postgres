@@ -7,6 +7,7 @@ EXTENSION = test_pg_dump
 DATA = test_pg_dump--1.0.sql
 
 REGRESS = test_pg_dump
+TAP_TESTS = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -18,8 +19,3 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-
-check: prove-check
-
-prove-check: | temp-install
-	$(prove_check)
