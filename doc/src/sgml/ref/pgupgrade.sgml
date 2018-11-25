@@ -506,7 +506,7 @@ pg_upgrade.exe
       <para>
        Save any configuration files from the old standbys' configuration
        directories you need to keep, e.g.  <filename>postgresql.conf</filename>,
-       <literal>recovery.conf</literal>, because these will be overwritten or
+       <literal>pg_hba.conf</literal>, because these will be overwritten or
        removed in the next step.
       </para>
      </step>

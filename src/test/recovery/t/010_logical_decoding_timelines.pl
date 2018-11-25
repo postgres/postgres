@@ -76,7 +76,7 @@ $node_replica->init_from_backup(
 	$node_master, $backup_name,
 	has_streaming => 1,
 	has_restoring => 1);
-$node_replica->append_conf('recovery.conf',
+$node_replica->append_conf('postgresql.conf',
 	q[primary_slot_name = 'phys_slot']);
 
 $node_replica->start;

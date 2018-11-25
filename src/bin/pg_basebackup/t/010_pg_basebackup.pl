@@ -358,19 +358,16 @@ SKIP:
 
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '-R' ],
 	'pg_basebackup -R runs');
-ok(-f "$tempdir/backupR/recovery.conf", 'recovery.conf was created');
-my $recovery_conf = slurp_file "$tempdir/backupR/recovery.conf";
+ok(-f "$tempdir/backupR/postgresql.auto.conf", 'postgresql.auto.conf exists');
+ok(-f "$tempdir/backupR/standby.signal", 'standby.signal was created');
+my $recovery_conf = slurp_file "$tempdir/backupR/postgresql.auto.conf";
 rmtree("$tempdir/backupR");
 
 my $port = $node->port;
 like(
 	$recovery_conf,
-	qr/^standby_mode = 'on'\n/m,
-	'recovery.conf sets standby_mode');
-like(
-	$recovery_conf,
 	qr/^primary_conninfo = '.*port=$port.*'\n/m,
-	'recovery.conf sets primary_conninfo');
+	'postgresql.auto.conf sets primary_conninfo');
 
 $node->command_ok(
 	[ 'pg_basebackup', '-D', "$tempdir/backupxd" ],
@@ -478,9 +475,9 @@ $node->command_ok(
 	],
 	'pg_basebackup with replication slot and -R runs');
 like(
-	slurp_file("$tempdir/backupxs_sl_R/recovery.conf"),
+	slurp_file("$tempdir/backupxs_sl_R/postgresql.auto.conf"),
 	qr/^primary_slot_name = 'slot1'\n/m,
-	'recovery.conf sets primary_slot_name');
+	'recovery conf file sets primary_slot_name');
 
 my $checksum = $node->safe_psql('postgres', 'SHOW data_checksums;');
 is($checksum, 'on', 'checksums are enabled');

@@ -611,7 +611,7 @@ usage(void)
 	printf("  -w MAXWAITTIME     max seconds to wait for a file (0=no limit) (default=0)\n");
 	printf("  -?, --help         show this help, then exit\n");
 	printf("\n"
-		   "Main intended use as restore_command in recovery.conf:\n"
+		   "Main intended use as restore_command in postgresql.conf:\n"
 		   "  restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n"
 		   "e.g.\n"
 		   "  restore_command = 'pg_standby /mnt/server/archiverdir %%f %%p %%r'\n");

@@ -214,10 +214,11 @@ PostgreSQL documentation
       <listitem>
 
        <para>
-        Write a minimal <filename>recovery.conf</filename> in the output
+        Create <filename>standby.signal</filename> and append connection settings
+        to <filename>postgresql.auto.conf</filename> in the output
         directory (or into the base archive file when using tar format) to
         ease setting up a standby server.
-        The <filename>recovery.conf</filename> file will record the connection
+        The <filename>postgresql.auto.conf</filename> file will record the connection
         settings and, if specified, the replication slot
         that <application>pg_basebackup</application> is using, so that the
         streaming replication will use the same settings later on.
@@ -470,7 +471,7 @@ PostgreSQL documentation
         replication slot.  If the base backup is intended to be used as a
         streaming replication standby using replication slots, it should then
         use the same replication slot name
-        in <filename>recovery.conf</filename>.  That way, it is ensured that
+        in <xref linkend="guc-primary-slot-name"/>.  That way, it is ensured that
         the server does not remove any necessary WAL data in the time between
         the end of the base backup and the start of streaming replication.
        </para>

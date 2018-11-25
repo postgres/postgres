@@ -66,7 +66,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	TimeLineID	restartTli;
 
 	/* In standby mode, restore_command might not be supplied */
-	if (recoveryRestoreCommand == NULL)
+	if (recoveryRestoreCommand == NULL || strcmp(recoveryRestoreCommand, "") == 0)
 		goto not_available;
 
 	/*
@@ -410,7 +410,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 
 		ereport((signaled && failOnSignal) ? FATAL : WARNING,
 		/*------
-		   translator: First %s represents a recovery.conf parameter name like
+		   translator: First %s represents a postgresql.conf parameter name like
 		  "recovery_end_command", the 2nd is the value of that parameter, the
 		  third an already translated error message. */
 				(errmsg("%s \"%s\": %s", commandName,

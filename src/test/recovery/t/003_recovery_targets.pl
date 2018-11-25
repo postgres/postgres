@@ -23,7 +23,7 @@ sub test_recovery_standby
 
 	foreach my $param_item (@$recovery_params)
 	{
-		$node_standby->append_conf('recovery.conf', qq($param_item));
+		$node_standby->append_conf('postgresql.conf', qq($param_item));
 	}
 
 	$node_standby->start;

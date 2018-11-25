@@ -42,7 +42,6 @@
 <!ENTITY manage-ag     SYSTEM "manage-ag.sgml">
 <!ENTITY monitoring    SYSTEM "monitoring.sgml">
 <!ENTITY regress       SYSTEM "regress.sgml">
-<!ENTITY recovery-config SYSTEM "recovery-config.sgml">
 <!ENTITY runtime       SYSTEM "runtime.sgml">
 <!ENTITY config        SYSTEM "config.sgml">
 <!ENTITY user-manag    SYSTEM "user-manag.sgml">

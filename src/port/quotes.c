@@ -19,7 +19,7 @@
  * Escape (by doubling) any single quotes or backslashes in given string
  *
  * Note: this is used to process postgresql.conf entries and to quote
- * string literals in pg_basebackup for creating recovery.conf.
+ * string literals in pg_basebackup for writing the recovery configuration.
  * Since postgresql.conf strings are defined to treat backslashes as escapes,
  * we have to double backslashes here.
  *

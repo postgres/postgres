@@ -131,7 +131,7 @@ is( $node_master->psql(
 		qq[SELECT pg_create_physical_replication_slot('$slotname_1');]),
 	0,
 	'physical slot created on master');
-$node_standby_1->append_conf('recovery.conf',
+$node_standby_1->append_conf('postgresql.conf',
 	"primary_slot_name = $slotname_1");
 $node_standby_1->append_conf('postgresql.conf',
 	"wal_receiver_status_interval = 1");
@@ -142,7 +142,7 @@ is( $node_standby_1->psql(
 		qq[SELECT pg_create_physical_replication_slot('$slotname_2');]),
 	0,
 	'physical slot created on intermediate replica');
-$node_standby_2->append_conf('recovery.conf',
+$node_standby_2->append_conf('postgresql.conf',
 	"primary_slot_name = $slotname_2");
 $node_standby_2->append_conf('postgresql.conf',
 	"wal_receiver_status_interval = 1");

@@ -618,7 +618,7 @@ protocol to make nodes agree on a serializable transactional order.
    <para>
     In standby mode, the server continuously applies WAL received from the
     master server. The standby server can read WAL from a WAL archive
-    (see <xref linkend="restore-command"/>) or directly from the master
+    (see <xref linkend="guc-restore-command"/>) or directly from the master
     over a TCP connection (streaming replication). The standby server will
     also attempt to restore any WAL found in the standby cluster's
     <filename>pg_wal</filename> directory. That typically happens after a server
@@ -645,7 +645,7 @@ protocol to make nodes agree on a serializable transactional order.
    <para>
     Standby mode is exited and the server switches to normal operation
     when <command>pg_ctl promote</command> is run or a trigger file is found
-    (<varname>trigger_file</varname>). Before failover,
+    (<varname>promote_trigger_file</varname>). Before failover,
     any WAL immediately available in the archive or in <filename>pg_wal</filename> will be
     restored, but no attempt is made to connect to the master.
    </para>
@@ -686,10 +686,9 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     To set up the standby server, restore the base backup taken from primary
-    server (see <xref linkend="backup-pitr-recovery"/>). Create a recovery
-    command file <filename>recovery.conf</filename> in the standby's cluster data
-    directory, and turn on <varname>standby_mode</varname>. Set
-    <varname>restore_command</varname> to a simple command to copy files from
+    server (see <xref linkend="backup-pitr-recovery"/>). Create a file
+    <filename>standby.signal</filename> in the standby's cluster data
+    directory. Set <xref linkend="guc-restore-command"/> to a simple command to copy files from
     the WAL archive. If you plan to have multiple standby servers for high
     availability purposes, set <varname>recovery_target_timeline</varname> to
     <literal>latest</literal>, to make the standby server follow the timeline change
@@ -699,7 +698,7 @@ protocol to make nodes agree on a serializable transactional order.
    <note>
      <para>
      Do not use pg_standby or similar tools with the built-in standby mode
-     described here. <varname>restore_command</varname> should return immediately
+     described here. <xref linkend="guc-restore-command"/> should return immediately
      if the file does not exist; the server will retry the command again if
      necessary. See <xref linkend="log-shipping-alternative"/>
      for using tools like pg_standby.
@@ -708,11 +707,11 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
      If you want to use streaming replication, fill in
-     <varname>primary_conninfo</varname> with a libpq connection string, including
+     <xref linkend="guc-primary-conninfo"/> with a libpq connection string, including
      the host name (or IP address) and any additional details needed to
      connect to the primary server. If the primary needs a password for
      authentication, the password needs to be specified in
-     <varname>primary_conninfo</varname> as well.
+     <xref linkend="guc-primary-conninfo"/> as well.
    </para>
 
    <para>
@@ -724,7 +723,7 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     If you're using a WAL archive, its size can be minimized using the <xref
-    linkend="archive-cleanup-command"/> parameter to remove files that are no
+    linkend="guc-archive-cleanup-command"/> parameter to remove files that are no
     longer required by the standby server.
     The <application>pg_archivecleanup</application> utility is designed specifically to
     be used with <varname>archive_cleanup_command</varname> in typical single-standby
@@ -735,9 +734,8 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
-    A simple example of a <filename>recovery.conf</filename> is:
+    A simple example of configuration is:
 <programlisting>
-standby_mode = 'on'
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass options=''-c wal_sender_timeout=5000'''
 restore_command = 'cp /path/to/archive/%f %p'
 archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
@@ -793,8 +791,8 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
     To use streaming replication, set up a file-based log-shipping standby
     server as described in <xref linkend="warm-standby"/>. The step that
     turns a file-based log-shipping standby into streaming replication
-    standby is setting <varname>primary_conninfo</varname> setting in the
-    <filename>recovery.conf</filename> file to point to the primary server. Set
+    standby is setting the <varname>primary_conninfo</varname> setting
+    to point to the primary server. Set
     <xref linkend="guc-listen-addresses"/> and authentication options
     (see <filename>pg_hba.conf</filename>) on the primary so that the standby server
     can connect to the <literal>replication</literal> pseudo-database on the primary
@@ -854,14 +852,14 @@ host    replication     foo             192.168.1.100/32        md5
     </para>
     <para>
      The host name and port number of the primary, connection user name,
-     and password are specified in the <filename>recovery.conf</filename> file.
+     and password are specified in the <xref linkend="guc-primary-conninfo"/>.
      The password can also be set in the <filename>~/.pgpass</filename> file on the
      standby (specify <literal>replication</literal> in the <replaceable>database</replaceable>
      field).
      For example, if the primary is running on host IP <literal>192.168.1.50</literal>,
      port <literal>5432</literal>, the account name for replication is
      <literal>foo</literal>, and the password is <literal>foopass</literal>, the administrator
-     can add the following line to the <filename>recovery.conf</filename> file on the
+     can add the following line to the <filename>postgresql.conf</filename> file on the
      standby:
 
 <programlisting>
@@ -973,10 +971,8 @@ postgres=# SELECT slot_name, slot_type, active FROM pg_replication_slots;
 (1 row)
 </programlisting>
      To configure the standby to use this slot, <varname>primary_slot_name</varname>
-     should be configured in the standby's <filename>recovery.conf</filename>.
-     Here is a simple example:
+     should be configured on the standby. Here is a simple example:
 <programlisting>
-standby_mode = 'on'
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 primary_slot_name = 'node_a_slot'
 </programlisting>
@@ -1474,11 +1470,10 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     To trigger failover of a log-shipping standby server, run
     <command>pg_ctl promote</command>, call <function>pg_promote</function>,
     or create a trigger file with the file name and path specified by the
-    <varname>trigger_file</varname> setting in
-    <filename>recovery.conf</filename>. If you're planning to use
+    <varname>promote_trigger_file</varname>. If you're planning to use
     <command>pg_ctl promote</command> or to call
     <function>pg_promote</function> to fail over,
-    <varname>trigger_file</varname> is not required. If you're
+    <varname>promote_trigger_file</varname> is not required. If you're
     setting up the reporting servers that are only used to offload read-only
     queries from the primary, not for high availability purposes, you don't
     need to promote it.
@@ -1491,11 +1486,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    <para>
     An alternative to the built-in standby mode described in the previous
     sections is to use a <varname>restore_command</varname> that polls the archive location.
-    This was the only option available in versions 8.4 and below. In this
-    setup, set <varname>standby_mode</varname> off, because you are implementing
-    the polling required for standby operation yourself. See the
-    <xref linkend="pgstandby"/> module for a reference
-    implementation of this.
+    This was the only option available in versions 8.4 and below. See the
+    <xref linkend="pgstandby"/> module for a reference implementation of this.
    </para>
 
    <para>
@@ -1522,8 +1514,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     The magic that makes the two loosely coupled servers work together is
     simply a <varname>restore_command</varname> used on the standby that,
     when asked for the next WAL file, waits for it to become available from
-    the primary. The <varname>restore_command</varname> is specified in the
-    <filename>recovery.conf</filename> file on the standby server. Normal recovery
+    the primary. Normal recovery
     processing would request a file from the WAL archive, reporting failure
     if the file was unavailable.  For standby processing it is normal for
     the next WAL file to be unavailable, so the standby must wait for
@@ -1611,9 +1602,8 @@ if (!triggered)
      <listitem>
       <para>
        Begin recovery on the standby server from the local WAL
-       archive, using a <filename>recovery.conf</filename> that specifies a
-       <varname>restore_command</varname> that waits as described
-       previously (see <xref linkend="backup-pitr-recovery"/>).
+       archive, using <varname>restore_command</varname> that waits
+       as described previously (see <xref linkend="backup-pitr-recovery"/>).
       </para>
      </listitem>
     </orderedlist>
@@ -2108,7 +2098,7 @@ if (!triggered)
 
    <para>
     If <varname>hot_standby</varname> is <literal>on</literal> in <filename>postgresql.conf</filename>
-    (the default value) and there is a <filename>recovery.conf</filename>
+    (the default value) and there is a <filename>standby.signal</filename>
     file present, the server will run in Hot Standby mode.
     However, it may take some time for Hot Standby connections to be allowed,
     because the server will not accept connections until it has completed

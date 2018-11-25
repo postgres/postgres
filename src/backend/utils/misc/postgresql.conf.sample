@@ -228,6 +228,45 @@
 #archive_timeout = 0		# force a logfile segment switch after this
 				# number of seconds; 0 disables
 
+# - Archive Recovery -
+
+# These are only used in recovery mode.
+
+#restore_command = ''		# command to use to restore an archived logfile segment
+				# placeholders: %p = path of file to restore
+				#               %f = file name only
+				# e.g. 'cp /mnt/server/archivedir/%f %p'
+				# (change requires restart)
+#archive_cleanup_command = ''	# command to execute at every restartpoint
+				# (change requires restart)
+#recovery_end_command = ''	# command to execute at completion of recovery
+				# (change requires restart)
+
+# - Recovery Target -
+
+# Set these only when performing a targeted recovery.
+
+#recovery_target = ''		# 'immediate' to end recovery as soon as a
+                                # consistent state is reached
+				# (change requires restart)
+#recovery_target_name = ''	# the named restore point to which recovery will proceed
+				# (change requires restart)
+#recovery_target_time = ''	# the time stamp up to which recovery will proceed
+				# (change requires restart)
+#recovery_target_xid = ''	# the transaction ID up to which recovery will proceed
+				# (change requires restart)
+#recovery_target_lsn = ''	# the WAL LSN up to which recovery will proceed
+				# (change requires restart)
+#recovery_target_inclusive = on # Specifies whether to stop:
+				# just after the specified recovery target (on)
+				# just before the recovery target (off)
+				# (change requires restart)
+#recovery_target_timeline = ''	# unset means read from control file (default),
+				# or set to 'latest' or timeline ID
+				# (change requires restart)
+#recovery_target_action = 'pause'	# 'pause', 'promote', 'shutdown'
+				# (change requires restart)
+
 
 #------------------------------------------------------------------------------
 # REPLICATION
@@ -261,6 +300,12 @@
 
 # These settings are ignored on a master server.
 
+#primary_conninfo = ''			# connection string to sending server
+					# (change requires restart)
+#primary_slot_name = ''			# replication slot on sending server
+					# (change requires restart)
+#promote_trigger_file = ''		# file name whose presence ends recovery
+					# (change requires restart)
 #hot_standby = on			# "off" disallows queries during recovery
 					# (change requires restart)
 #max_standby_archive_delay = 30s	# max delay before canceling queries
@@ -278,6 +323,8 @@
 					# in milliseconds; 0 disables
 #wal_retrieve_retry_interval = 5s	# time to wait before retrying to
 					# retrieve WAL after a failed attempt
+#recovery_min_apply_delay = 0		# minimum delay for applying changes during recovery
+					# (change requires restart)
 
 # - Subscribers -
 

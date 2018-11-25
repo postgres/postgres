@@ -47,7 +47,7 @@
   <para>
    To configure a standby
    server to use <application>pg_standby</application>, put this into its
-   <filename>recovery.conf</filename> configuration file:
+   <filename>postgresql.conf</filename> configuration file:
 <programlisting>
 restore_command = 'pg_standby <replaceable>archiveDir</replaceable> %f %p %r'
 </programlisting>

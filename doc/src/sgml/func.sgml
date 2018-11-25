@@ -19094,7 +19094,7 @@ postgres=# select pg_start_backup('label_goes_here');
     <function>pg_create_restore_point</function> creates a named write-ahead log
     record that can be used as recovery target, and returns the corresponding
     write-ahead log location.  The given name can then be used with
-    <xref linkend="recovery-target-name"/> to specify the point up to which
+    <xref linkend="guc-recovery-target-name"/> to specify the point up to which
     recovery will proceed.  Avoid creating multiple restore points with the
     same name, since recovery will stop at the first one whose name matches
     the recovery target.

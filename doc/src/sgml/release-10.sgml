@@ -7303,7 +7303,7 @@ This was disabled in the PG 9.6 branch so there is no commit here.
       <para>
        Allow specification of the recovery stopping point by Log Sequence
        Number (<acronym>LSN</acronym>) in
-       <link linkend="recovery-config"><filename>recovery.conf</filename></link>
+       <filename>recovery.conf</filename>
        (Michael Paquier)
       </para>
 

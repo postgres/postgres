@@ -635,8 +635,6 @@ of a backup previously created on that node with $node->backup.
 
 Does not start the node after initializing it.
 
-A recovery.conf is not created.
-
 Streaming replication can be enabled on this node by passing the keyword
 parameter has_streaming => 1. This is disabled by default.
 
@@ -834,10 +832,10 @@ sub enable_streaming
 
 	print "### Enabling streaming replication for node \"$name\"\n";
 	$self->append_conf(
-		'recovery.conf', qq(
+		'postgresql.conf', qq(
 primary_conninfo='$root_connstr application_name=$name'
-standby_mode=on
 ));
+	$self->set_standby_mode();
 	return;
 }
 
@@ -863,10 +861,26 @@ sub enable_restoring
 	  : qq{cp "$path/%f" "%p"};
 
 	$self->append_conf(
-		'recovery.conf', qq(
+		'postgresql.conf', qq(
 restore_command = '$copy_command'
-standby_mode = on
 ));
+	$self->set_standby_mode();
+	return;
+}
+
+=pod
+
+=item $node->set_standby_mode()
+
+Place standby.signal file.
+
+=cut
+
+sub set_standby_mode
+{
+	my ($self) = @_;
+
+	$self->append_conf('standby.signal', '');
 	return;
 }
 

@@ -120,7 +120,7 @@ is($psql_out, '8128', "Visible");
 ($node_master, $node_standby) = ($node_standby, $node_master);
 $node_standby->enable_streaming($node_master);
 $node_standby->append_conf(
-	'recovery.conf', qq(
+	'postgresql.conf', qq(
 recovery_target_timeline='latest'
 ));
 $node_standby->start;
@@ -171,7 +171,7 @@ is($psql_out, '-1', "Not visible");
 ($node_master, $node_standby) = ($node_standby, $node_master);
 $node_standby->enable_streaming($node_master);
 $node_standby->append_conf(
-	'recovery.conf', qq(
+	'postgresql.conf', qq(
 recovery_target_timeline='latest'
 ));
 $node_standby->start;
@@ -212,7 +212,7 @@ is($psql_out, '-1', "Not visible");
 ($node_master, $node_standby) = ($node_standby, $node_master);
 $node_standby->enable_streaming($node_master);
 $node_standby->append_conf(
-	'recovery.conf', qq(
+	'postgresql.conf', qq(
 recovery_target_timeline='latest'
 ));
 $node_standby->start;

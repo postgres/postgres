@@ -9811,7 +9811,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
        <para>
         These named restore points can be specified as recovery
         targets using the new <filename>recovery.conf</filename> setting
-        <link linkend="recovery-target-name"><varname>recovery_target_name</varname></link>.
+        <varname>recovery_target_name</varname>.
        </para>
       </listitem>
 
@@ -9843,8 +9843,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
       <listitem>
        <para>
-        Allow <link
-        linkend="recovery-config"><filename>recovery.conf</filename></link>
+        Allow <filename>recovery.conf</filename>
         to use the same quoting behavior as <filename>postgresql.conf</filename>
         (Dimitri Fontaine)
        </para>

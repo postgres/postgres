@@ -9,8 +9,8 @@
  * dependent objects can be associated with it.  An extension is created by
  * populating the pg_extension catalog from a "control" file.
  * The extension control file is parsed with the same parser we use for
- * postgresql.conf and recovery.conf.  An extension also has an installation
- * script file, containing SQL commands to create the extension's objects.
+ * postgresql.conf.  An extension also has an installation script file,
+ * containing SQL commands to create the extension's objects.
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

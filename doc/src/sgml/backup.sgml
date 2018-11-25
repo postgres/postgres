@@ -1220,8 +1220,11 @@ SELECT pg_stop_backup();
    </listitem>
    <listitem>
     <para>
-     Create a recovery command file <filename>recovery.conf</filename> in the cluster
-     data directory (see <xref linkend="recovery-config"/>). You might
+     Set recovery configuration settings in
+     <filename>postgresql.conf</filename> (see <xref
+     linkend="runtime-config-wal-archive-recovery"/>) and create a file
+     <filename>recovery.signal</filename> in the cluster
+     data directory. You might
      also want to temporarily modify <filename>pg_hba.conf</filename> to prevent
      ordinary users from connecting until you are sure the recovery was successful.
     </para>
@@ -1232,8 +1235,8 @@ SELECT pg_stop_backup();
      proceed to read through the archived WAL files it needs.  Should the
      recovery be terminated because of an external error, the server can
      simply be restarted and it will continue recovery.  Upon completion
-     of the recovery process, the server will rename
-     <filename>recovery.conf</filename> to <filename>recovery.done</filename> (to prevent
+     of the recovery process, the server will remove
+     <filename>recovery.signal</filename> (to prevent
      accidentally re-entering recovery mode later) and then
      commence normal database operations.
     </para>
@@ -1249,12 +1252,9 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    The key part of all this is to set up a recovery configuration file that
+    The key part of all this is to set up a recovery configuration that
     describes how you want to recover and how far the recovery should
-    run.  You can use <filename>recovery.conf.sample</filename> (normally
-    located in the installation's <filename>share/</filename> directory) as a
-    prototype.  The one thing that you absolutely must specify in
-    <filename>recovery.conf</filename> is the <varname>restore_command</varname>,
+    run.  The one thing that you absolutely must specify is the <varname>restore_command</varname>,
     which tells <productname>PostgreSQL</productname> how to retrieve archived
     WAL file segments.  Like the <varname>archive_command</varname>, this is
     a shell command string.  It can contain <literal>%f</literal>, which is
@@ -1316,7 +1316,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    <para>
     If you want to recover to some previous point in time (say, right before
     the junior DBA dropped your main transaction table), just specify the
-    required <link linkend="recovery-target-settings">stopping point</link> in <filename>recovery.conf</filename>.  You can specify
+    required <link linkend="runtime-config-wal-recovery-target">stopping point</link>.  You can specify
     the stop point, known as the <quote>recovery target</quote>, either by
     date/time, named restore point or by completion of a specific transaction
     ID.  As of this writing only the date/time and named restore point options
@@ -1414,7 +1414,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     that was current when the base backup was taken.  If you wish to recover
     into some child timeline (that is, you want to return to some state that
     was itself generated after a recovery attempt), you need to specify the
-    target timeline ID in <filename>recovery.conf</filename>.  You cannot recover into
+    target timeline ID in <xref linkend="guc-recovery-target-timeline"/>. You cannot recover into
     timelines that branched off earlier than the base backup.
    </para>
   </sect2>

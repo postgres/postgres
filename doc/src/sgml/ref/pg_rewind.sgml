@@ -69,7 +69,8 @@ PostgreSQL documentation
    target cluster ran for a long time after the divergence, the old WAL
    files might no longer be present. In that case, they can be manually
    copied from the WAL archive to the <filename>pg_wal</filename> directory, or
-   fetched on startup by configuring <filename>recovery.conf</filename>.  The use of
+   fetched on startup by configuring <xref linkend="guc-primary-conninfo"/> or
+   <xref linkend="guc-restore-command"/>.  The use of
    <application>pg_rewind</application> is not limited to failover, e.g.  a standby
    server can be promoted, run some write transactions, and then rewinded
    to become a standby again.
@@ -83,8 +84,9 @@ PostgreSQL documentation
    <application>pg_rewind</application> was run, and therefore could not be copied by the
    <application>pg_rewind</application> session, it must be made available when the
    target server is started. This can be done by creating a
-   <filename>recovery.conf</filename> file in the target data directory with a
-   suitable <varname>restore_command</varname>.
+   <filename>recovery.signal</filename> file in the target data directory
+   and configuring suitable <xref linkend="guc-restore-command"/>
+   in <filename>postgresql.conf</filename>.
   </para>
 
   <para>

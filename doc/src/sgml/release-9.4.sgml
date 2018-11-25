@@ -5350,7 +5350,7 @@ Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
 
     <listitem>
      <para>
-      Ignore <xref linkend="recovery-min-apply-delay"/> parameter until
+      Ignore <varname>recovery_min_apply_delay</varname> parameter until
       recovery has reached a consistent state (Michael Paquier)
      </para>
 
@@ -10869,8 +10869,8 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
     <listitem>
      <para>
-      Use the last specified <link linkend="recovery-target-settings">recovery
-      target parameter</link> if multiple target parameters are specified
+      Use the last specified recovery
+      target parameter if multiple target parameters are specified
       (Heikki Linnakangas)
      </para>
 
@@ -10889,7 +10889,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
      <para>
       User commands that did their own quote preservation might need
       adjustment.  This is likely to be an issue for commands used in
-      <xref linkend="guc-archive-command"/>, <xref linkend="restore-command"/>,
+      <xref linkend="guc-archive-command"/>, <xref linkend="guc-restore-command"/>,
       and <link linkend="sql-copy"><command>COPY TO/FROM PROGRAM</command></link>.
      </para>
     </listitem>
@@ -11510,7 +11510,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Add recovery parameter <xref linkend="recovery-min-apply-delay"/>
+        Add recovery parameter <varname>recovery_min_apply_delay</varname>
         to delay replication (Robert Haas, Fabr&iacute;zio de Royes Mello,
         Simon Riggs)
        </para>
@@ -11523,7 +11523,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Add <xref linkend="recovery-target"/>
+        Add <varname>recovery_target</varname>
         option <option>immediate</option> to stop <link
         linkend="wal"><acronym>WAL</acronym></link> recovery as soon as a
         consistent state is reached (MauMau, Heikki Linnakangas)
@@ -11559,8 +11559,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Report failure return codes from <link
-        linkend="archive-recovery-settings">external recovery commands</link>
+        Report failure return codes from external recovery commands
         (Peter Eisentraut)
        </para>
       </listitem>
