@@ -3443,7 +3443,7 @@ Type & func \\
 \noindent 
 \pset tuples_only false
 prepare q as
-  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+  select 'some\more_text' as "a$title", E'  #<foo>%&^~|\n{bar}' as "junk",
          '   ' as "empty", n as int
   from generate_series(1,2) as n;
 \pset expanded off
@@ -3452,8 +3452,8 @@ execute q;
 \begin{tabular}{lllr}
 \textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
 \hline
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 1 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 2 \\
 \end{tabular}
 
 \noindent (2 rows) \\
@@ -3463,8 +3463,8 @@ execute q;
 \begin{tabular}{l | l | l | r}
 \textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
 \hline
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 1 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 2 \\
 \end{tabular}
 
 \noindent (2 rows) \\
@@ -3475,8 +3475,8 @@ execute q;
 \hline
 \textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
 \hline
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 1 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 2 \\
 \hline
 \end{tabular}
 
@@ -3488,9 +3488,9 @@ execute q;
 \hline
 \textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
 \hline
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 1 \\
 \hline
-some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+some\textbackslash{}more\_text &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} &     & 2 \\
 \hline
 \end{tabular}
 
@@ -3501,13 +3501,13 @@ some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
 execute q;
 \begin{tabular}{cl}
 \multicolumn{2}{c}{\textit{Record 1}} \\
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \multicolumn{2}{c}{\textit{Record 2}} \\
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \end{tabular}
@@ -3518,14 +3518,14 @@ execute q;
 \begin{tabular}{c|l}
 \multicolumn{2}{c}{\textit{Record 1}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \multicolumn{2}{c}{\textit{Record 2}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \end{tabular}
@@ -3537,15 +3537,15 @@ execute q;
 \hline
 \multicolumn{2}{|c|}{\textit{Record 1}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \hline
 \multicolumn{2}{|c|}{\textit{Record 2}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \hline
@@ -3558,15 +3558,15 @@ execute q;
 \hline
 \multicolumn{2}{|c|}{\textit{Record 1}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \hline
 \multicolumn{2}{|c|}{\textit{Record 2}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \hline
@@ -3667,7 +3667,7 @@ Type & func \\
 \noindent 
 \pset tuples_only false
 prepare q as
-  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+  select 'some\more_text' as "a$title", E'  #<foo>%&^~|\n{bar}' as "junk",
          '   ' as "empty", n as int
   from generate_series(1,2) as n;
 \pset expanded off
@@ -3680,16 +3680,16 @@ execute q;
 \small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
 \midrule
 \endhead
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
 \raggedright{1} \tabularnewline
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
@@ -3704,16 +3704,16 @@ execute q;
 \small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
 \midrule
 \endhead
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
 \raggedright{1} \tabularnewline
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
@@ -3734,16 +3734,16 @@ execute q;
 \endfoot
 \bottomrule
 \endlastfoot
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
 \raggedright{1} \tabularnewline
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
@@ -3763,17 +3763,17 @@ execute q;
 \endfoot
 \bottomrule
 \endlastfoot
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
 \raggedright{1} \tabularnewline
  \hline
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
@@ -3794,17 +3794,17 @@ execute q;
 \endfoot
 \bottomrule
 \endlastfoot
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
 \raggedright{1} \tabularnewline
  \hline
-\raggedright{some\backslashmore\_text}
+\raggedright{some\textbackslash{}more\_text}
 &
-\raggedright{  \&foo\%\\\{bar\}}
+\raggedright{  \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\}}
 &
 \raggedright{   }
 &
@@ -3817,13 +3817,13 @@ execute q;
 execute q;
 \begin{tabular}{cl}
 \multicolumn{2}{c}{\textit{Record 1}} \\
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \multicolumn{2}{c}{\textit{Record 2}} \\
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \end{tabular}
@@ -3834,14 +3834,14 @@ execute q;
 \begin{tabular}{c|l}
 \multicolumn{2}{c}{\textit{Record 1}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \multicolumn{2}{c}{\textit{Record 2}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \end{tabular}
@@ -3853,15 +3853,15 @@ execute q;
 \hline
 \multicolumn{2}{|c|}{\textit{Record 1}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \hline
 \multicolumn{2}{|c|}{\textit{Record 2}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \hline
@@ -3874,15 +3874,15 @@ execute q;
 \hline
 \multicolumn{2}{|c|}{\textit{Record 1}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \hline
 \multicolumn{2}{|c|}{\textit{Record 2}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \hline
@@ -3895,15 +3895,15 @@ execute q;
 \hline
 \multicolumn{2}{|c|}{\textit{Record 1}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 1 \\
 \hline
 \multicolumn{2}{|c|}{\textit{Record 2}} \\
 \hline
-a\$title & some\backslashmore\_text \\
-junk &   \&foo\%\\\{bar\} \\
+a\$title & some\textbackslash{}more\_text \\
+junk &   \#\textless{}foo\textgreater{}\%\&\^{}\~{}\textbar{}\\\{bar\} \\
 empty &     \\
 int & 2 \\
 \hline

@@ -611,7 +611,7 @@ deallocate q;
 \pset tuples_only false
 
 prepare q as
-  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+  select 'some\more_text' as "a$title", E'  #<foo>%&^~|\n{bar}' as "junk",
          '   ' as "empty", n as int
   from generate_series(1,2) as n;
 
@@ -660,7 +660,7 @@ deallocate q;
 \pset tuples_only false
 
 prepare q as
-  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+  select 'some\more_text' as "a$title", E'  #<foo>%&^~|\n{bar}' as "junk",
          '   ' as "empty", n as int
   from generate_series(1,2) as n;
 
