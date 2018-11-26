@@ -3698,7 +3698,6 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			{"asciidoc", PRINT_ASCIIDOC},
 			{"html", PRINT_HTML},
 			{"latex", PRINT_LATEX},
-			{"latex-longtable", PRINT_LATEX_LONGTABLE},
 			{"troff-ms", PRINT_TROFF_MS},
 			{"unaligned", PRINT_UNALIGNED},
 			{"wrapped", PRINT_WRAPPED}
@@ -3725,13 +3724,22 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 					}
 				}
 			}
-			if (match_pos < 0)
+			if (match_pos >= 0)
+				popt->topt.format = formats[match_pos].number;
+			else if (pg_strncasecmp("latex-longtable", value, vallen) == 0)
+			{
+				/*
+				 * We must treat latex-longtable specially because latex is a
+				 * prefix of it; if both were in the table above, we'd think
+				 * "latex" is ambiguous.
+				 */
+				popt->topt.format = PRINT_LATEX_LONGTABLE;
+			}
+			else
 			{
 				psql_error("\\pset: allowed formats are aligned, asciidoc, html, latex, latex-longtable, troff-ms, unaligned, wrapped\n");
 				return false;
 			}
-			else
-				popt->topt.format = formats[match_pos].number;
 		}
 	}
 
