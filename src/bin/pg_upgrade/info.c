@@ -441,8 +441,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 *
 	 * pg_largeobject contains user data that does not appear in pg_dump
 	 * output, so we have to copy that system table.  It's easiest to do that
-	 * by treating it as a user table.  Likewise for pg_largeobject_metadata,
-	 * if it exists.
+	 * by treating it as a user table.
 	 */
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "WITH regular_heap (reloid, indtable, toastheap) AS ( "
@@ -458,10 +457,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "                        'binary_upgrade', 'pg_toast') AND "
 			 "      c.oid >= %u::pg_catalog.oid) OR "
 			 "     (n.nspname = 'pg_catalog' AND "
-			 "      relname IN ('pg_largeobject'%s) ))), ",
-			 FirstNormalObjectId,
-			 (GET_MAJOR_VERSION(old_cluster.major_version) >= 900) ?
-			 ", 'pg_largeobject_metadata'" : "");
+			 "      relname IN ('pg_largeobject') ))), ",
+			 FirstNormalObjectId);
 
 	/*
 	 * Add a CTE that collects OIDs of toast tables belonging to the tables

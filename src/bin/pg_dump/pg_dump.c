@@ -2866,8 +2866,8 @@ dumpDatabase(Archive *fout)
 					 NULL, NULL);
 
 	/*
-	 * pg_largeobject and pg_largeobject_metadata come from the old system
-	 * intact, so set their relfrozenxids and relminmxids.
+	 * pg_largeobject comes from the old system intact, so set its
+	 * relfrozenxids and relminmxids.
 	 */
 	if (dopt->binary_upgrade)
 	{
@@ -2911,47 +2911,6 @@ dumpDatabase(Archive *fout)
 					 NULL, NULL);
 
 		PQclear(lo_res);
-
-		/*
-		 * pg_largeobject_metadata
-		 */
-		if (fout->remoteVersion >= 90000)
-		{
-			resetPQExpBuffer(loFrozenQry);
-			resetPQExpBuffer(loOutQry);
-
-			if (fout->remoteVersion >= 90300)
-				appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, relminmxid\n"
-								  "FROM pg_catalog.pg_class\n"
-								  "WHERE oid = %u;\n",
-								  LargeObjectMetadataRelationId);
-			else
-				appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid, 0 AS relminmxid\n"
-								  "FROM pg_catalog.pg_class\n"
-								  "WHERE oid = %u;\n",
-								  LargeObjectMetadataRelationId);
-
-			lo_res = ExecuteSqlQueryForSingleRow(fout, loFrozenQry->data);
-
-			i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
-			i_relminmxid = PQfnumber(lo_res, "relminmxid");
-
-			appendPQExpBufferStr(loOutQry, "\n-- For binary upgrade, set pg_largeobject_metadata relfrozenxid and relminmxid\n");
-			appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
-							  "SET relfrozenxid = '%u', relminmxid = '%u'\n"
-							  "WHERE oid = %u;\n",
-							  atooid(PQgetvalue(lo_res, 0, i_relfrozenxid)),
-							  atooid(PQgetvalue(lo_res, 0, i_relminmxid)),
-							  LargeObjectMetadataRelationId);
-			ArchiveEntry(fout, nilCatalogId, createDumpId(),
-						 "pg_largeobject_metadata", NULL, NULL, "",
-						 "pg_largeobject_metadata", SECTION_PRE_DATA,
-						 loOutQry->data, "", NULL,
-						 NULL, 0,
-						 NULL, NULL);
-
-			PQclear(lo_res);
-		}
 
 		destroyPQExpBuffer(loFrozenQry);
 		destroyPQExpBuffer(loOutQry);
@@ -3266,18 +3225,14 @@ getBlobs(Archive *fout)
 			binfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
 
 		/*
-		 * In binary-upgrade mode for blobs, we do *not* dump out the data or
-		 * the ACLs, should any exist.  The data and ACL (if any) will be
-		 * copied by pg_upgrade, which simply copies the pg_largeobject and
-		 * pg_largeobject_metadata tables.
-		 *
-		 * We *do* dump out the definition of the blob because we need that to
-		 * make the restoration of the comments, and anything else, work since
-		 * pg_upgrade copies the files behind pg_largeobject and
-		 * pg_largeobject_metadata after the dump is restored.
+		 * In binary-upgrade mode for blobs, we do *not* dump out the blob
+		 * data, as it will be copied by pg_upgrade, which simply copies the
+		 * pg_largeobject table. We *do* however dump out anything but the
+		 * data, as pg_upgrade copies just pg_largeobject, but not
+		 * pg_largeobject_metadata, after the dump is restored.
 		 */
 		if (dopt->binary_upgrade)
-			binfo[i].dobj.dump &= ~(DUMP_COMPONENT_DATA | DUMP_COMPONENT_ACL);
+			binfo[i].dobj.dump &= ~DUMP_COMPONENT_DATA;
 	}
 
 	/*

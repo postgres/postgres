@@ -2791,9 +2791,9 @@ my %tests = (
 			data_only              => 1,
 			section_pre_data       => 1,
 			test_schema_plus_blobs => 1,
+			binary_upgrade => 1,
 		},
 		unlike => {
-			binary_upgrade => 1,
 			no_blobs       => 1,
 			no_privs       => 1,
 			schema_only    => 1,
