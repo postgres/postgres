@@ -8,7 +8,10 @@ DATA = bloom--1.0.sql
 PGFILEDESC = "bloom access method - signature file based index"
 
 REGRESS = bloom
-TAP_TESTS = 1
+
+# Disable TAP tests for this module for now, as these are unstable on several
+# platforms, including recent Windows and macOS.
+# TAP_TESTS = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
