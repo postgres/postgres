@@ -3654,7 +3654,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     <listitem>
      <para>
       Prevent foreign tables from being created with OIDS
-      when <literal>default_with_oids"</literal> is true
+      when <literal>default_with_oids</literal> is true
       (Etsuro Fujita)
      </para>
     </listitem>
