@@ -2,7 +2,6 @@
 
 REGRESS = commit_timestamp
 REGRESS_OPTS = --temp-config=$(top_srcdir)/src/test/modules/commit_ts/commit_ts.conf
-TAP_TESTS = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -14,3 +13,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+check: prove-check
+
+prove-check: | temp-install
+	$(prove_check)
