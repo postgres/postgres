@@ -226,7 +226,7 @@ segments as well, though this is unlikely to happen in practice.
 <para>
 A table that has columns with potentially large entries will have an
 associated <firstterm>TOAST</> table, which is used for out-of-line storage of
-field values that are too large to keep in the table rows proper.
+field values that are too large to keep in the table rows properly.
 <structname>pg_class</>.<structfield>reltoastrelid</> links from a table to
 its <acronym>TOAST</> table, if any.
 See <xref linkend="storage-toast"> for more information.
