@@ -1737,7 +1737,119 @@ print_aligned_vertical(const printTableContent *cont,
 
 
 /**********************/
-/* HTML printing ******/
+/* CSV format		  */
+/**********************/
+
+
+static void
+csv_escaped_print(const char *str, FILE *fout)
+{
+	const char *p;
+
+	fputc('"', fout);
+	for (p = str; *p; p++)
+	{
+		if (*p == '"')
+			fputc('"', fout);	/* double quotes are doubled */
+		fputc(*p, fout);
+	}
+	fputc('"', fout);
+}
+
+static void
+csv_print_field(const char *str, FILE *fout, char sep)
+{
+	/*----------------
+	 * Enclose and escape field contents when one of these conditions is met:
+	 * - the field separator is found in the contents.
+	 * - the field contains a CR or LF.
+	 * - the field contains a double quote.
+	 * - the field is exactly "\.".
+	 * - the field separator is either "\" or ".".
+	 * The last two cases prevent producing a line that the server's COPY
+	 * command would interpret as an end-of-data marker.  We only really
+	 * need to ensure that the complete line isn't exactly "\.", but for
+	 * simplicity we apply stronger restrictions here.
+	 *----------------
+	 */
+	if (strchr(str, sep) != NULL ||
+		strcspn(str, "\r\n\"") != strlen(str) ||
+		strcmp(str, "\\.") == 0 ||
+		sep == '\\' || sep == '.')
+		csv_escaped_print(str, fout);
+	else
+		fputs(str, fout);
+}
+
+static void
+print_csv_text(const printTableContent *cont, FILE *fout)
+{
+	const char *const *ptr;
+	int			i;
+
+	if (cancel_pressed)
+		return;
+
+	/*
+	 * The title and footer are never printed in csv format. The header is
+	 * printed if opt_tuples_only is false.
+	 *
+	 * Despite RFC 4180 saying that end of lines are CRLF, terminate lines
+	 * with '\n', which prints out as the system-dependent EOL string in text
+	 * mode (typically LF on Unix and CRLF on Windows).
+	 */
+	if (cont->opt->start_table && !cont->opt->tuples_only)
+	{
+		/* print headers */
+		for (ptr = cont->headers; *ptr; ptr++)
+		{
+			if (ptr != cont->headers)
+				fputc(cont->opt->csvFieldSep[0], fout);
+			csv_print_field(*ptr, fout, cont->opt->csvFieldSep[0]);
+		}
+		fputc('\n', fout);
+	}
+
+	/* print cells */
+	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
+	{
+		csv_print_field(*ptr, fout, cont->opt->csvFieldSep[0]);
+		if ((i + 1) % cont->ncolumns)
+			fputc(cont->opt->csvFieldSep[0], fout);
+		else
+			fputc('\n', fout);
+	}
+}
+
+static void
+print_csv_vertical(const printTableContent *cont, FILE *fout)
+{
+	const char *const *ptr;
+	int			i;
+
+	/* print records */
+	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
+	{
+		if (cancel_pressed)
+			return;
+
+		/* print name of column */
+		csv_print_field(cont->headers[i % cont->ncolumns], fout,
+						cont->opt->csvFieldSep[0]);
+
+		/* print field separator */
+		fputc(cont->opt->csvFieldSep[0], fout);
+
+		/* print field value */
+		csv_print_field(*ptr, fout, cont->opt->csvFieldSep[0]);
+
+		fputc('\n', fout);
+	}
+}
+
+
+/**********************/
+/* HTML				  */
 /**********************/
 
 
@@ -1953,8 +2065,9 @@ print_html_vertical(const printTableContent *cont, FILE *fout)
 
 
 /*************************/
-/* ASCIIDOC		 */
+/* ASCIIDOC				 */
 /*************************/
+
 
 static void
 asciidoc_escaped_print(const char *in, FILE *fout)
@@ -2174,6 +2287,7 @@ print_asciidoc_vertical(const printTableContent *cont, FILE *fout)
 	}
 }
 
+
 /*************************/
 /* LaTeX				 */
 /*************************/
@@ -2317,6 +2431,11 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 		fputc('\n', fout);
 	}
 }
+
+
+/*************************/
+/* LaTeX longtable		 */
+/*************************/
 
 
 static void
@@ -2564,7 +2683,7 @@ print_latex_vertical(const printTableContent *cont, FILE *fout)
 
 
 /*************************/
-/* Troff -ms		 */
+/* Troff -ms			 */
 /*************************/
 
 
@@ -3233,6 +3352,12 @@ printTable(const printTableContent *cont,
 				print_aligned_vertical(cont, fout, is_pager);
 			else
 				print_aligned_text(cont, fout, is_pager);
+			break;
+		case PRINT_CSV:
+			if (cont->opt->expanded == 1)
+				print_csv_vertical(cont, fout);
+			else
+				print_csv_text(cont, fout);
 			break;
 		case PRINT_HTML:
 			if (cont->opt->expanded == 1)

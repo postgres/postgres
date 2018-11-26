@@ -2605,6 +2605,7 @@ psql_completion(const char *text, int start, int end)
 	/* Complete CREATE EVENT TRIGGER <name> ON with event_type */
 	else if (Matches("CREATE", "EVENT", "TRIGGER", MatchAny, "ON"))
 		COMPLETE_WITH("ddl_command_start", "ddl_command_end", "sql_drop");
+
 	/*
 	 * Complete CREATE EVENT TRIGGER <name> ON <event_type>.  EXECUTE FUNCTION
 	 * is the recommended grammar instead of EXECUTE PROCEDURE in version 11
@@ -3524,7 +3525,7 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatchesCS("\\password"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (TailMatchesCS("\\pset"))
-		COMPLETE_WITH_CS("border", "columns", "expanded",
+		COMPLETE_WITH_CS("border", "columns", "csv_fieldsep", "expanded",
 						 "fieldsep", "fieldsep_zero", "footer", "format",
 						 "linestyle", "null", "numericlocale",
 						 "pager", "pager_min_lines",
@@ -3536,7 +3537,7 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatchesCS("\\pset", MatchAny))
 	{
 		if (TailMatchesCS("format"))
-			COMPLETE_WITH_CS("aligned", "asciidoc", "html", "latex",
+			COMPLETE_WITH_CS("aligned", "asciidoc", "csv", "html", "latex",
 							 "latex-longtable", "troff-ms", "unaligned",
 							 "wrapped");
 		else if (TailMatchesCS("linestyle"))

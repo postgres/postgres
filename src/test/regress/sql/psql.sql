@@ -501,6 +501,54 @@ execute q;
 
 deallocate q;
 
+-- test csv output format
+
+\pset format csv
+
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+prepare q as
+  select 'some"text' as "a""title", E'  <foo>\n<bar>' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+
+\pset expanded off
+execute q;
+
+\pset expanded on
+execute q;
+
+deallocate q;
+
+-- special cases
+\pset expanded off
+select 'comma,comma' as comma, 'semi;semi' as semi;
+\pset csv_fieldsep ';'
+select 'comma,comma' as comma, 'semi;semi' as semi;
+select '\.' as data;
+\pset csv_fieldsep '.'
+select '\' as d1, '' as d2;
+
+-- illegal csv separators
+\pset csv_fieldsep ''
+\pset csv_fieldsep '\0'
+\pset csv_fieldsep '\n'
+\pset csv_fieldsep '\r'
+\pset csv_fieldsep '"'
+\pset csv_fieldsep ',,'
+
+\pset csv_fieldsep ','
+
 -- test html output format
 
 \pset format html

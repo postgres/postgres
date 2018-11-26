@@ -1957,8 +1957,8 @@ exec_command_pset(PsqlScanState scan_state, bool active_branch)
 
 			int			i;
 			static const char *const my_list[] = {
-				"border", "columns", "expanded", "fieldsep", "fieldsep_zero",
-				"footer", "format", "linestyle", "null",
+				"border", "columns", "csv_fieldsep", "expanded", "fieldsep",
+				"fieldsep_zero", "footer", "format", "linestyle", "null",
 				"numericlocale", "pager", "pager_min_lines",
 				"recordsep", "recordsep_zero",
 				"tableattr", "title", "tuples_only",
@@ -3616,6 +3616,9 @@ _align2string(enum printFormat in)
 		case PRINT_ASCIIDOC:
 			return "asciidoc";
 			break;
+		case PRINT_CSV:
+			return "csv";
+			break;
 		case PRINT_HTML:
 			return "html";
 			break;
@@ -3696,6 +3699,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			/* remember to update error message below when adding more */
 			{"aligned", PRINT_ALIGNED},
 			{"asciidoc", PRINT_ASCIIDOC},
+			{"csv", PRINT_CSV},
 			{"html", PRINT_HTML},
 			{"latex", PRINT_LATEX},
 			{"troff-ms", PRINT_TROFF_MS},
@@ -3737,7 +3741,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			}
 			else
 			{
-				psql_error("\\pset: allowed formats are aligned, asciidoc, html, latex, latex-longtable, troff-ms, unaligned, wrapped\n");
+				psql_error("\\pset: allowed formats are aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped\n");
 				return false;
 			}
 		}
@@ -3834,6 +3838,26 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		}
 		else
 			popt->topt.expanded = !popt->topt.expanded;
+	}
+
+	/* field separator for CSV format */
+	else if (strcmp(param, "csv_fieldsep") == 0)
+	{
+		if (value)
+		{
+			/* CSV separator has to be a one-byte character */
+			if (strlen(value) != 1)
+			{
+				psql_error("\\pset: csv_fieldsep must be a single one-byte character\n");
+				return false;
+			}
+			if (value[0] == '"' || value[0] == '\n' || value[0] == '\r')
+			{
+				psql_error("\\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return\n");
+				return false;
+			}
+			popt->topt.csvFieldSep[0] = value[0];
+		}
 	}
 
 	/* locale-aware numeric output */
@@ -4004,6 +4028,13 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Expanded display is used automatically.\n"));
 		else
 			printf(_("Expanded display is off.\n"));
+	}
+
+	/* show field separator for CSV format */
+	else if (strcmp(param, "csv_fieldsep") == 0)
+	{
+		printf(_("Field separator for CSV is \"%s\".\n"),
+			   popt->topt.csvFieldSep);
 	}
 
 	/* show field separator for unaligned text */
@@ -4207,6 +4238,8 @@ pset_value_string(const char *param, struct printQueryOpt *popt)
 		return psprintf("%d", popt->topt.border);
 	else if (strcmp(param, "columns") == 0)
 		return psprintf("%d", popt->topt.columns);
+	else if (strcmp(param, "csv_fieldsep") == 0)
+		return pset_quoted_string(popt->topt.csvFieldSep);
 	else if (strcmp(param, "expanded") == 0)
 		return pstrdup(popt->topt.expanded == 2
 					   ? "auto"

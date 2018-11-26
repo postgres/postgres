@@ -260,6 +260,7 @@ select '2000-01-01'::date as party_over
 \pset
 border                   1
 columns                  0
+csv_fieldsep             ','
 expanded                 off
 fieldsep                 '|'
 fieldsep_zero            off
@@ -2937,6 +2938,94 @@ execute q;
 <l|int >l|2
 |====
 deallocate q;
+-- test csv output format
+\pset format csv
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+Type,Start,Minimum,Maximum,Increment,Cycles?,Cache
+integer,1,1,2147483647,1,no,1
+\pset tuples_only true
+\df exp
+pg_catalog,exp,double precision,double precision,func
+pg_catalog,exp,numeric,numeric,func
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+Type,integer
+Start,1
+Minimum,1
+Maximum,2147483647
+Increment,1
+Cycles?,no
+Cache,1
+\pset tuples_only true
+\df exp
+Schema,pg_catalog
+Name,exp
+Result data type,double precision
+Argument data types,double precision
+Type,func
+Schema,pg_catalog
+Name,exp
+Result data type,numeric
+Argument data types,numeric
+Type,func
+\pset tuples_only false
+prepare q as
+  select 'some"text' as "a""title", E'  <foo>\n<bar>' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+\pset expanded off
+execute q;
+"a""title",junk,empty,int
+"some""text","  <foo>
+<bar>",   ,1
+"some""text","  <foo>
+<bar>",   ,2
+\pset expanded on
+execute q;
+"a""title","some""text"
+junk,"  <foo>
+<bar>"
+empty,   
+int,1
+"a""title","some""text"
+junk,"  <foo>
+<bar>"
+empty,   
+int,2
+deallocate q;
+-- special cases
+\pset expanded off
+select 'comma,comma' as comma, 'semi;semi' as semi;
+comma,semi
+"comma,comma",semi;semi
+\pset csv_fieldsep ';'
+select 'comma,comma' as comma, 'semi;semi' as semi;
+comma;semi
+comma,comma;"semi;semi"
+select '\.' as data;
+data
+"\."
+\pset csv_fieldsep '.'
+select '\' as d1, '' as d2;
+"d1"."d2"
+"\".""
+-- illegal csv separators
+\pset csv_fieldsep ''
+\pset: csv_fieldsep must be a single one-byte character
+\pset csv_fieldsep '\0'
+\pset: csv_fieldsep must be a single one-byte character
+\pset csv_fieldsep '\n'
+\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return
+\pset csv_fieldsep '\r'
+\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return
+\pset csv_fieldsep '"'
+\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return
+\pset csv_fieldsep ',,'
+\pset: csv_fieldsep must be a single one-byte character
+\pset csv_fieldsep ','
 -- test html output format
 \pset format html
 \pset border 1

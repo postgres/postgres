@@ -28,6 +28,7 @@ enum printFormat
 	PRINT_NOTHING = 0,			/* to make sure someone initializes this */
 	PRINT_ALIGNED,
 	PRINT_ASCIIDOC,
+	PRINT_CSV,
 	PRINT_HTML,
 	PRINT_LATEX,
 	PRINT_LATEX_LONGTABLE,
@@ -112,6 +113,7 @@ typedef struct printTableOpt
 	const printTextFormat *line_style;	/* line style (NULL for default) */
 	struct separator fieldSep;	/* field separator for unaligned text mode */
 	struct separator recordSep; /* record separator for unaligned text mode */
+	char		csvFieldSep[2]; /* field separator for csv format */
 	bool		numericLocale;	/* locale-aware numeric units separator and
 								 * decimal marker */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */

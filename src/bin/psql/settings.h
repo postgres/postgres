@@ -12,6 +12,7 @@
 #include "variables.h"
 #include "fe_utils/print.h"
 
+#define DEFAULT_CSV_FIELD_SEP ','
 #define DEFAULT_FIELD_SEP "|"
 #define DEFAULT_RECORD_SEP "\n"
 

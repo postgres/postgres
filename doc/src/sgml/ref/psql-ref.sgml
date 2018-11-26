@@ -68,8 +68,8 @@ PostgreSQL documentation
       <listitem>
       <para>
       Switches to unaligned output mode. (The default output mode is
-      otherwise aligned.)  This is equivalent to <command>\pset format
-      unaligned</command>.
+      <literal>aligned</literal>.)  This is equivalent to
+      <command>\pset format unaligned</command>.
       </para>
       </listitem>
     </varlistentry>
@@ -147,6 +147,16 @@ psql &lt;&lt;EOF
 SELECT * FROM foo;
 EOF
 </programlisting>
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>--csv</option></term>
+      <listitem>
+      <para>
+      Switches to <acronym>CSV</acronym> (Comma-Separated Values) output
+      mode.  This is equivalent to <command>\pset format csv</command>.
       </para>
       </listitem>
     </varlistentry>
@@ -270,8 +280,8 @@ EOF
       <term><option>--html</option></term>
       <listitem>
       <para>
-      Turn on <acronym>HTML</acronym> tabular output. This is
-      equivalent to <literal>\pset format html</literal> or the
+      Switches to <acronym>HTML</acronym> output mode.  This is
+      equivalent to <command>\pset format html</command> or the
       <command>\H</command> command.
       </para>
       </listitem>
@@ -2521,6 +2531,19 @@ lo_import 152801
           </varlistentry>
 
           <varlistentry>
+          <term><literal>csv_fieldsep</literal></term>
+          <listitem>
+          <para>
+          Specifies the field separator to be used in
+          <acronym>CSV</acronym> output format.  If the separator character
+          appears in a field's value, that field is output within double
+          quotes, following standard <acronym>CSV</acronym> rules.
+          The default is a comma.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
           <term><literal>expanded</literal> (or <literal>x</literal>)</term>
           <listitem>
           <para>
@@ -2547,8 +2570,8 @@ lo_import 152801
           <listitem>
           <para>
           Specifies the field separator to be used in unaligned output
-          format. That way one can create, for example, tab- or
-          comma-separated output, which other programs might prefer. To
+          format. That way one can create, for example, tab-separated
+          output, which other programs might prefer. To
           set a tab as field separator, type <literal>\pset fieldsep
           '\t'</literal>. The default field separator is
           <literal>'|'</literal> (a vertical bar).
@@ -2585,22 +2608,48 @@ lo_import 152801
           <listitem>
           <para>
           Sets the output format to one of <literal>aligned</literal>,
-          <literal>asciidoc</literal>, <literal>html</literal>,
-          <literal>latex</literal> (uses <literal>tabular</literal>),
+          <literal>asciidoc</literal>,
+          <literal>csv</literal>,
+          <literal>html</literal>,
+          <literal>latex</literal>,
           <literal>latex-longtable</literal>, <literal>troff-ms</literal>,
           <literal>unaligned</literal>, or <literal>wrapped</literal>.
           Unique abbreviations are allowed.
           </para>
 
+          <para><literal>aligned</literal> format is the standard,
+          human-readable, nicely formatted text output; this is the default.
+          </para>
+
           <para><literal>unaligned</literal> format writes all columns of a row on one
           line, separated by the currently active field separator. This
           is useful for creating output that might be intended to be read
-          in by other programs (for example, tab-separated or comma-separated
-          format).
+          in by other programs, for example, tab-separated or comma-separated
+          format.  However, the field separator character is not treated
+          specially if it appears in a column's value;
+          so <acronym>CSV</acronym> format may be better suited for such
+          purposes.
           </para>
 
-          <para><literal>aligned</literal> format is the standard, human-readable,
-          nicely formatted text output;  this is the default.
+          <para><literal>csv</literal> format
+          <indexterm>
+           <primary>CSV (Comma-Separated Values) format</primary>
+           <secondary>in psql</secondary>
+          </indexterm>
+          writes column values separated by commas, applying the quoting
+          rules described in
+          <ulink url="https://tools.ietf.org/html/rfc4180">RFC 4180</ulink>.
+          This output is compatible with the CSV format of the server's
+          <command>COPY</command> command.
+          A header line with column names is generated unless
+          the <literal>tuples_only</literal> parameter is
+          <literal>on</literal>. Titles and footers are not printed.
+          Each row is terminated by the system-dependent end-of-line character,
+          which is typically a single newline (<literal>\n</literal>) for
+          Unix-like systems or a carriage return and newline sequence
+          (<literal>\r\n</literal>) for Microsoft Windows.
+          Field separator characters other than comma can be selected with
+          <command>\pset csv_fieldsep</command>.
           </para>
 
           <para><literal>wrapped</literal> format is like <literal>aligned</literal> but wraps
@@ -2620,8 +2669,12 @@ lo_import 152801
           language. They are not complete documents! This might not be
           necessary in <acronym>HTML</acronym>, but in
           <application>LaTeX</application> you must have a complete
-          document wrapper.  <literal>latex-longtable</literal>
-          also requires the <application>LaTeX</application>
+          document wrapper.
+          The <literal>latex</literal> format
+          uses <application>LaTeX</application>'s <literal>tabular</literal>
+          environment.
+          The <literal>latex-longtable</literal> format
+          requires the <application>LaTeX</application>
           <literal>longtable</literal> and <literal>booktabs</literal> packages.
           </para>
           </listitem>
@@ -4588,17 +4641,24 @@ first second
 
 peter@localhost testdb=&gt; <userinput>\pset border 1</userinput>
 Border style is 1.
-peter@localhost testdb=&gt; <userinput>\pset format unaligned</userinput>
-Output format is unaligned.
-peter@localhost testdb=&gt; <userinput>\pset fieldsep ","</userinput>
-Field separator is ",".
+peter@localhost testdb=&gt; <userinput>\pset format csv</userinput>
+Output format is csv.
 peter@localhost testdb=&gt; <userinput>\pset tuples_only</userinput>
-Showing only tuples.
+Tuples only is on.
 peter@localhost testdb=&gt; <userinput>SELECT second, first FROM my_table;</userinput>
 one,1
 two,2
 three,3
 four,4
+peter@localhost testdb=&gt; <userinput>\pset format unaligned</userinput>
+Output format is unaligned.
+peter@localhost testdb=&gt; <userinput>\pset fieldsep '\t'</userinput>
+Field separator is "    ".
+peter@localhost testdb=&gt; <userinput>SELECT second, first FROM my_table;</userinput>
+one     1
+two     2
+three   3
+four    4
 </programlisting>
   Alternatively, use the short commands:
 <programlisting>
