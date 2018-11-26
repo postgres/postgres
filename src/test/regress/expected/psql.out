@@ -279,6 +279,7 @@ unicode_border_linestyle single
 unicode_column_linestyle single
 unicode_header_linestyle single
 -- test multi-line headers, wrapping, and newline indicators
+-- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
 
 c", array_to_string(array_agg(repeat('y',20-2*n)),E'\n') as "a
@@ -2636,71 +2637,261 @@ execute q;
 
 deallocate q;
 \pset linestyle ascii
-prepare q as select ' | = | lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&' as " | -- | 012345678 9abc def!*@#&!@(*&*~~_+-=\ \", '11' as "0123456789", 11 as int from generate_series(1,10) as n;
+\pset border 1
+-- support table for output-format tests (useful to create a footer)
+create table psql_serial_tab (id serial);
+-- test header/footer/tuples_only behavior in aligned/unaligned/wrapped cases
+\pset format aligned
+\pset expanded off
+\d psql_serial_tab_id_seq
+               Sequence "public.psql_serial_tab_id_seq"
+  Type   | Start | Minimum |  Maximum   | Increment | Cycles? | Cache 
+---------+-------+---------+------------+-----------+---------+-------
+ integer |     1 |       1 | 2147483647 |         1 | no      |     1
+Owned by: public.psql_serial_tab.id
+
+\pset tuples_only true
+\df exp
+ pg_catalog | exp  | double precision | double precision    | func
+ pg_catalog | exp  | numeric          | numeric             | func
+
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+Sequence "public.psql_serial_tab_id_seq"
+-[ RECORD 1 ]---------
+Type      | integer
+Start     | 1
+Minimum   | 1
+Maximum   | 2147483647
+Increment | 1
+Cycles?   | no
+Cache     | 1
+
+Owned by: public.psql_serial_tab.id
+
+\pset tuples_only true
+\df exp
+Schema              | pg_catalog
+Name                | exp
+Result data type    | double precision
+Argument data types | double precision
+Type                | func
+--------------------+-----------------
+Schema              | pg_catalog
+Name                | exp
+Result data type    | numeric
+Argument data types | numeric
+Type                | func
+
+\pset tuples_only false
+-- empty table is a special case for this format
+select 1 where false;
+(0 rows)
+
+\pset format unaligned
+\pset expanded off
+\d psql_serial_tab_id_seq
+Sequence "public.psql_serial_tab_id_seq"
+Type|Start|Minimum|Maximum|Increment|Cycles?|Cache
+integer|1|1|2147483647|1|no|1
+Owned by: public.psql_serial_tab.id
+\pset tuples_only true
+\df exp
+pg_catalog|exp|double precision|double precision|func
+pg_catalog|exp|numeric|numeric|func
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+Sequence "public.psql_serial_tab_id_seq"
+
+Type|integer
+Start|1
+Minimum|1
+Maximum|2147483647
+Increment|1
+Cycles?|no
+Cache|1
+
+Owned by: public.psql_serial_tab.id
+\pset tuples_only true
+\df exp
+Schema|pg_catalog
+Name|exp
+Result data type|double precision
+Argument data types|double precision
+Type|func
+
+Schema|pg_catalog
+Name|exp
+Result data type|numeric
+Argument data types|numeric
+Type|func
+\pset tuples_only false
+\pset format wrapped
+\pset expanded off
+\d psql_serial_tab_id_seq
+               Sequence "public.psql_serial_tab_id_seq"
+  Type   | Start | Minimum |  Maximum   | Increment | Cycles? | Cache 
+---------+-------+---------+------------+-----------+---------+-------
+ integer |     1 |       1 | 2147483647 |         1 | no      |     1
+Owned by: public.psql_serial_tab.id
+
+\pset tuples_only true
+\df exp
+ pg_catalog | exp  | double precision | double precision    | func
+ pg_catalog | exp  | numeric          | numeric             | func
+
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+Sequence "public.psql_serial_tab_id_seq"
+-[ RECORD 1 ]---------
+Type      | integer
+Start     | 1
+Minimum   | 1
+Maximum   | 2147483647
+Increment | 1
+Cycles?   | no
+Cache     | 1
+
+Owned by: public.psql_serial_tab.id
+
+\pset tuples_only true
+\df exp
+Schema              | pg_catalog
+Name                | exp
+Result data type    | double precision
+Argument data types | double precision
+Type                | func
+--------------------+-----------------
+Schema              | pg_catalog
+Name                | exp
+Result data type    | numeric
+Argument data types | numeric
+Type                | func
+
+\pset tuples_only false
+-- test numericlocale (not too interesting in C locale, but ...)
+\pset format aligned
+\pset expanded off
+\pset numericlocale true
+select n, -n as m, n * 1000 + 111.1111 as x, '1e90'::float8 as f
+from generate_series(0,3) n;
+ n | m  |     x      |   f   
+---+----+------------+-------
+ 0 |  0 |   111.1111 | 1e+90
+ 1 | -1 | 1,111.1111 | 1e+90
+ 2 | -2 | 2,111.1111 | 1e+90
+ 3 | -3 | 3,111.1111 | 1e+90
+(4 rows)
+
+\pset numericlocale false
+-- test asciidoc output format
 \pset format asciidoc
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+
+.Sequence "public.psql_serial_tab_id_seq"
+[options="header",cols="<l,>l,>l,>l,>l,<l,>l",frame="none"]
+|====
+^l|Type ^l|Start ^l|Minimum ^l|Maximum ^l|Increment ^l|Cycles? ^l|Cache
+|integer |1 |1 |2147483647 |1 |no |1
+|====
+
+....
+Owned by: public.psql_serial_tab.id
+....
+\pset tuples_only true
+\df exp
+
+[cols="<l,<l,<l,<l,<l",frame="none"]
+|====
+|pg_catalog |exp |double precision |double precision |func
+|pg_catalog |exp |numeric |numeric |func
+|====
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+
+.Sequence "public.psql_serial_tab_id_seq"
+[cols="h,l",frame="none"]
+|====
+2+^|Record 1
+<l|Type <l|integer
+<l|Start >l|1
+<l|Minimum >l|1
+<l|Maximum >l|2147483647
+<l|Increment >l|1
+<l|Cycles? <l|no
+<l|Cache >l|1
+|====
+
+....
+Owned by: public.psql_serial_tab.id
+....
+\pset tuples_only true
+\df exp
+
+[cols="h,l",frame="none"]
+|====
+2+|
+<l|Schema <l|pg_catalog
+<l|Name <l|exp
+<l|Result data type <l|double precision
+<l|Argument data types <l|double precision
+<l|Type <l|func
+2+|
+<l|Schema <l|pg_catalog
+<l|Name <l|exp
+<l|Result data type <l|numeric
+<l|Argument data types <l|numeric
+<l|Type <l|func
+|====
+\pset tuples_only false
+prepare q as
+  select 'some|text' as "a|title", '        ' as "empty ", n as int
+  from generate_series(1,2) as n;
 \pset expanded off
 \pset border 0
 execute q;
 
 [options="header",cols="<l,<l,>l",frame="none",grid="none"]
 |====
-^l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ ^l|0123456789 ^l|int
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
+^l|a\|title ^l|empty  ^l|int
+|some\|text |  |1
+|some\|text |  |2
 |====
 
 ....
-(10 rows)
+(2 rows)
 ....
 \pset border 1
 execute q;
 
 [options="header",cols="<l,<l,>l",frame="none"]
 |====
-^l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ ^l|0123456789 ^l|int
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
+^l|a\|title ^l|empty  ^l|int
+|some\|text |  |1
+|some\|text |  |2
 |====
 
 ....
-(10 rows)
+(2 rows)
 ....
 \pset border 2
 execute q;
 
 [options="header",cols="<l,<l,>l",frame="all",grid="all"]
 |====
-^l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ ^l|0123456789 ^l|int
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
-| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (& |11 |11
+^l|a\|title ^l|empty  ^l|int
+|some\|text |  |1
+|some\|text |  |2
 |====
 
 ....
-(10 rows)
+(2 rows)
 ....
 \pset expanded on
 \pset border 0
@@ -2709,45 +2900,13 @@ execute q;
 [cols="h,l",frame="none",grid="none"]
 |====
 2+^|Record 1
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
+<l|a\|title <l|some\|text
+<l|empty  <l| 
+<l|int >l|1
 2+^|Record 2
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 3
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 4
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 5
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 6
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 7
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 8
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 9
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 10
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
+<l|a\|title <l|some\|text
+<l|empty  <l| 
+<l|int >l|2
 |====
 \pset border 1
 execute q;
@@ -2755,45 +2914,13 @@ execute q;
 [cols="h,l",frame="none"]
 |====
 2+^|Record 1
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
+<l|a\|title <l|some\|text
+<l|empty  <l| 
+<l|int >l|1
 2+^|Record 2
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 3
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 4
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 5
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 6
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 7
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 8
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 9
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 10
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
+<l|a\|title <l|some\|text
+<l|empty  <l| 
+<l|int >l|2
 |====
 \pset border 2
 execute q;
@@ -2801,47 +2928,1127 @@ execute q;
 [cols="h,l",frame="all",grid="all"]
 |====
 2+^|Record 1
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
+<l|a\|title <l|some\|text
+<l|empty  <l| 
+<l|int >l|1
 2+^|Record 2
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 3
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 4
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 5
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 6
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 7
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 8
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 9
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
-2+^|Record 10
-<l| \| -- \| 012345678 9abc def!*@#&!@(*&*~~_+-=\ \ <l| \| = \| lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&
-<l|0123456789 <l|11
-<l|int >l|11
+<l|a\|title <l|some\|text
+<l|empty  <l| 
+<l|int >l|2
 |====
 deallocate q;
+-- test html output format
+\pset format html
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+<table border="1">
+  <caption>Sequence &quot;public.psql_serial_tab_id_seq&quot;</caption>
+  <tr>
+    <th align="center">Type</th>
+    <th align="center">Start</th>
+    <th align="center">Minimum</th>
+    <th align="center">Maximum</th>
+    <th align="center">Increment</th>
+    <th align="center">Cycles?</th>
+    <th align="center">Cache</th>
+  </tr>
+  <tr valign="top">
+    <td align="left">integer</td>
+    <td align="right">1</td>
+    <td align="right">1</td>
+    <td align="right">2147483647</td>
+    <td align="right">1</td>
+    <td align="left">no</td>
+    <td align="right">1</td>
+  </tr>
+</table>
+<p>Owned by: public.psql_serial_tab.id<br />
+</p>
+\pset tuples_only true
+\df exp
+<table border="1">
+  <tr valign="top">
+    <td align="left">pg_catalog</td>
+    <td align="left">exp</td>
+    <td align="left">double precision</td>
+    <td align="left">double precision</td>
+    <td align="left">func</td>
+  </tr>
+  <tr valign="top">
+    <td align="left">pg_catalog</td>
+    <td align="left">exp</td>
+    <td align="left">numeric</td>
+    <td align="left">numeric</td>
+    <td align="left">func</td>
+  </tr>
+</table>
+
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+<table border="1">
+  <caption>Sequence &quot;public.psql_serial_tab_id_seq&quot;</caption>
+
+  <tr><td colspan="2" align="center">Record 1</td></tr>
+  <tr valign="top">
+    <th>Type</th>
+    <td align="left">integer</td>
+  </tr>
+  <tr valign="top">
+    <th>Start</th>
+    <td align="right">1</td>
+  </tr>
+  <tr valign="top">
+    <th>Minimum</th>
+    <td align="right">1</td>
+  </tr>
+  <tr valign="top">
+    <th>Maximum</th>
+    <td align="right">2147483647</td>
+  </tr>
+  <tr valign="top">
+    <th>Increment</th>
+    <td align="right">1</td>
+  </tr>
+  <tr valign="top">
+    <th>Cycles?</th>
+    <td align="left">no</td>
+  </tr>
+  <tr valign="top">
+    <th>Cache</th>
+    <td align="right">1</td>
+  </tr>
+</table>
+<p>Owned by: public.psql_serial_tab.id<br />
+</p>
+\pset tuples_only true
+\df exp
+<table border="1">
+
+  <tr><td colspan="2">&nbsp;</td></tr>
+  <tr valign="top">
+    <th>Schema</th>
+    <td align="left">pg_catalog</td>
+  </tr>
+  <tr valign="top">
+    <th>Name</th>
+    <td align="left">exp</td>
+  </tr>
+  <tr valign="top">
+    <th>Result data type</th>
+    <td align="left">double precision</td>
+  </tr>
+  <tr valign="top">
+    <th>Argument data types</th>
+    <td align="left">double precision</td>
+  </tr>
+  <tr valign="top">
+    <th>Type</th>
+    <td align="left">func</td>
+  </tr>
+
+  <tr><td colspan="2">&nbsp;</td></tr>
+  <tr valign="top">
+    <th>Schema</th>
+    <td align="left">pg_catalog</td>
+  </tr>
+  <tr valign="top">
+    <th>Name</th>
+    <td align="left">exp</td>
+  </tr>
+  <tr valign="top">
+    <th>Result data type</th>
+    <td align="left">numeric</td>
+  </tr>
+  <tr valign="top">
+    <th>Argument data types</th>
+    <td align="left">numeric</td>
+  </tr>
+  <tr valign="top">
+    <th>Type</th>
+    <td align="left">func</td>
+  </tr>
+</table>
+
+\pset tuples_only false
+prepare q as
+  select 'some"text' as "a&title", E'  <foo>\n<bar>' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+\pset expanded off
+\pset border 0
+execute q;
+<table border="0">
+  <tr>
+    <th align="center">a&amp;title</th>
+    <th align="center">junk</th>
+    <th align="center">empty</th>
+    <th align="center">int</th>
+  </tr>
+  <tr valign="top">
+    <td align="left">some&quot;text</td>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+    <td align="left">&nbsp; </td>
+    <td align="right">1</td>
+  </tr>
+  <tr valign="top">
+    <td align="left">some&quot;text</td>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+    <td align="left">&nbsp; </td>
+    <td align="right">2</td>
+  </tr>
+</table>
+<p>(2 rows)<br />
+</p>
+\pset border 1
+execute q;
+<table border="1">
+  <tr>
+    <th align="center">a&amp;title</th>
+    <th align="center">junk</th>
+    <th align="center">empty</th>
+    <th align="center">int</th>
+  </tr>
+  <tr valign="top">
+    <td align="left">some&quot;text</td>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+    <td align="left">&nbsp; </td>
+    <td align="right">1</td>
+  </tr>
+  <tr valign="top">
+    <td align="left">some&quot;text</td>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+    <td align="left">&nbsp; </td>
+    <td align="right">2</td>
+  </tr>
+</table>
+<p>(2 rows)<br />
+</p>
+\pset tableattr foobar
+execute q;
+<table border="1" foobar>
+  <tr>
+    <th align="center">a&amp;title</th>
+    <th align="center">junk</th>
+    <th align="center">empty</th>
+    <th align="center">int</th>
+  </tr>
+  <tr valign="top">
+    <td align="left">some&quot;text</td>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+    <td align="left">&nbsp; </td>
+    <td align="right">1</td>
+  </tr>
+  <tr valign="top">
+    <td align="left">some&quot;text</td>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+    <td align="left">&nbsp; </td>
+    <td align="right">2</td>
+  </tr>
+</table>
+<p>(2 rows)<br />
+</p>
+\pset tableattr
+\pset expanded on
+\pset border 0
+execute q;
+<table border="0">
+
+  <tr><td colspan="2" align="center">Record 1</td></tr>
+  <tr valign="top">
+    <th>a&amp;title</th>
+    <td align="left">some&quot;text</td>
+  </tr>
+  <tr valign="top">
+    <th>junk</th>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+  </tr>
+  <tr valign="top">
+    <th>empty</th>
+    <td align="left">&nbsp; </td>
+  </tr>
+  <tr valign="top">
+    <th>int</th>
+    <td align="right">1</td>
+  </tr>
+
+  <tr><td colspan="2" align="center">Record 2</td></tr>
+  <tr valign="top">
+    <th>a&amp;title</th>
+    <td align="left">some&quot;text</td>
+  </tr>
+  <tr valign="top">
+    <th>junk</th>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+  </tr>
+  <tr valign="top">
+    <th>empty</th>
+    <td align="left">&nbsp; </td>
+  </tr>
+  <tr valign="top">
+    <th>int</th>
+    <td align="right">2</td>
+  </tr>
+</table>
+
+\pset border 1
+execute q;
+<table border="1">
+
+  <tr><td colspan="2" align="center">Record 1</td></tr>
+  <tr valign="top">
+    <th>a&amp;title</th>
+    <td align="left">some&quot;text</td>
+  </tr>
+  <tr valign="top">
+    <th>junk</th>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+  </tr>
+  <tr valign="top">
+    <th>empty</th>
+    <td align="left">&nbsp; </td>
+  </tr>
+  <tr valign="top">
+    <th>int</th>
+    <td align="right">1</td>
+  </tr>
+
+  <tr><td colspan="2" align="center">Record 2</td></tr>
+  <tr valign="top">
+    <th>a&amp;title</th>
+    <td align="left">some&quot;text</td>
+  </tr>
+  <tr valign="top">
+    <th>junk</th>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+  </tr>
+  <tr valign="top">
+    <th>empty</th>
+    <td align="left">&nbsp; </td>
+  </tr>
+  <tr valign="top">
+    <th>int</th>
+    <td align="right">2</td>
+  </tr>
+</table>
+
+\pset tableattr foobar
+execute q;
+<table border="1" foobar>
+
+  <tr><td colspan="2" align="center">Record 1</td></tr>
+  <tr valign="top">
+    <th>a&amp;title</th>
+    <td align="left">some&quot;text</td>
+  </tr>
+  <tr valign="top">
+    <th>junk</th>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+  </tr>
+  <tr valign="top">
+    <th>empty</th>
+    <td align="left">&nbsp; </td>
+  </tr>
+  <tr valign="top">
+    <th>int</th>
+    <td align="right">1</td>
+  </tr>
+
+  <tr><td colspan="2" align="center">Record 2</td></tr>
+  <tr valign="top">
+    <th>a&amp;title</th>
+    <td align="left">some&quot;text</td>
+  </tr>
+  <tr valign="top">
+    <th>junk</th>
+    <td align="left">&nbsp;&nbsp;&lt;foo&gt;<br />
+&lt;bar&gt;</td>
+  </tr>
+  <tr valign="top">
+    <th>empty</th>
+    <td align="left">&nbsp; </td>
+  </tr>
+  <tr valign="top">
+    <th>int</th>
+    <td align="right">2</td>
+  </tr>
+</table>
+
+\pset tableattr
+deallocate q;
+-- test latex output format
+\pset format latex
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\begin{center}
+Sequence "public.psql\_serial\_tab\_id\_seq"
+\end{center}
+
+\begin{tabular}{l | r | r | r | r | l | r}
+\textit{Type} & \textit{Start} & \textit{Minimum} & \textit{Maximum} & \textit{Increment} & \textit{Cycles?} & \textit{Cache} \\
+\hline
+integer & 1 & 1 & 2147483647 & 1 & no & 1 \\
+\end{tabular}
+
+\noindent Owned by: public.psql\_serial\_tab.id \\
+
+\pset tuples_only true
+\df exp
+\begin{tabular}{l | l | l | l | l}
+pg\_catalog & exp & double precision & double precision & func \\
+pg\_catalog & exp & numeric & numeric & func \\
+\end{tabular}
+
+\noindent 
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\begin{center}
+Sequence "public.psql\_serial\_tab\_id\_seq"
+\end{center}
+
+\begin{tabular}{c|l}
+\multicolumn{2}{c}{\textit{Record 1}} \\
+\hline
+Type & integer \\
+Start & 1 \\
+Minimum & 1 \\
+Maximum & 2147483647 \\
+Increment & 1 \\
+Cycles? & no \\
+Cache & 1 \\
+\end{tabular}
+
+\noindent Owned by: public.psql\_serial\_tab.id \\
+
+\pset tuples_only true
+\df exp
+\begin{tabular}{c|l}
+\hline
+Schema & pg\_catalog \\
+Name & exp \\
+Result data type & double precision \\
+Argument data types & double precision \\
+Type & func \\
+\hline
+Schema & pg\_catalog \\
+Name & exp \\
+Result data type & numeric \\
+Argument data types & numeric \\
+Type & func \\
+\end{tabular}
+
+\noindent 
+\pset tuples_only false
+prepare q as
+  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+\pset expanded off
+\pset border 0
+execute q;
+\begin{tabular}{lllr}
+\textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
+\hline
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+\end{tabular}
+
+\noindent (2 rows) \\
+
+\pset border 1
+execute q;
+\begin{tabular}{l | l | l | r}
+\textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
+\hline
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+\end{tabular}
+
+\noindent (2 rows) \\
+
+\pset border 2
+execute q;
+\begin{tabular}{| l | l | l | r |}
+\hline
+\textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
+\hline
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+\hline
+\end{tabular}
+
+\noindent (2 rows) \\
+
+\pset border 3
+execute q;
+\begin{tabular}{| l | l | l | r |}
+\hline
+\textit{a\$title} & \textit{junk} & \textit{empty} & \textit{int} \\
+\hline
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 1 \\
+\hline
+some\backslashmore\_text &   \&foo\%\\\{bar\} &     & 2 \\
+\hline
+\end{tabular}
+
+\noindent (2 rows) \\
+
+\pset expanded on
+\pset border 0
+execute q;
+\begin{tabular}{cl}
+\multicolumn{2}{c}{\textit{Record 1}} \\
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\multicolumn{2}{c}{\textit{Record 2}} \\
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\end{tabular}
+
+\noindent 
+\pset border 1
+execute q;
+\begin{tabular}{c|l}
+\multicolumn{2}{c}{\textit{Record 1}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\multicolumn{2}{c}{\textit{Record 2}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\end{tabular}
+
+\noindent 
+\pset border 2
+execute q;
+\begin{tabular}{|c|l|}
+\hline
+\multicolumn{2}{|c|}{\textit{Record 1}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\hline
+\multicolumn{2}{|c|}{\textit{Record 2}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\hline
+\end{tabular}
+
+\noindent 
+\pset border 3
+execute q;
+\begin{tabular}{|c|l|}
+\hline
+\multicolumn{2}{|c|}{\textit{Record 1}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\hline
+\multicolumn{2}{|c|}{\textit{Record 2}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\hline
+\end{tabular}
+
+\noindent 
+deallocate q;
+-- test latex-longtable output format
+\pset format latex-longtable
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\begin{longtable}{l | r | r | r | r | l | r}
+\small\textbf{\textit{Type}} & \small\textbf{\textit{Start}} & \small\textbf{\textit{Minimum}} & \small\textbf{\textit{Maximum}} & \small\textbf{\textit{Increment}} & \small\textbf{\textit{Cycles?}} & \small\textbf{\textit{Cache}} \\
+\midrule
+\endfirsthead
+\small\textbf{\textit{Type}} & \small\textbf{\textit{Start}} & \small\textbf{\textit{Minimum}} & \small\textbf{\textit{Maximum}} & \small\textbf{\textit{Increment}} & \small\textbf{\textit{Cycles?}} & \small\textbf{\textit{Cache}} \\
+\midrule
+\endhead
+\caption[Sequence "public.psql\_serial\_tab\_id\_seq" (Continued)]{Sequence "public.psql\_serial\_tab\_id\_seq"}
+\endfoot
+\caption[Sequence "public.psql\_serial\_tab\_id\_seq"]{Sequence "public.psql\_serial\_tab\_id\_seq"}
+\endlastfoot
+\raggedright{integer}
+&
+\raggedright{1}
+&
+\raggedright{1}
+&
+\raggedright{2147483647}
+&
+\raggedright{1}
+&
+\raggedright{no}
+&
+\raggedright{1} \tabularnewline
+\end{longtable}
+\pset tuples_only true
+\df exp
+\begin{longtable}{l | l | l | l | l}
+\raggedright{pg\_catalog}
+&
+\raggedright{exp}
+&
+\raggedright{double precision}
+&
+\raggedright{double precision}
+&
+\raggedright{func} \tabularnewline
+\raggedright{pg\_catalog}
+&
+\raggedright{exp}
+&
+\raggedright{numeric}
+&
+\raggedright{numeric}
+&
+\raggedright{func} \tabularnewline
+\end{longtable}
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\begin{center}
+Sequence "public.psql\_serial\_tab\_id\_seq"
+\end{center}
+
+\begin{tabular}{c|l}
+\multicolumn{2}{c}{\textit{Record 1}} \\
+\hline
+Type & integer \\
+Start & 1 \\
+Minimum & 1 \\
+Maximum & 2147483647 \\
+Increment & 1 \\
+Cycles? & no \\
+Cache & 1 \\
+\end{tabular}
+
+\noindent Owned by: public.psql\_serial\_tab.id \\
+
+\pset tuples_only true
+\df exp
+\begin{tabular}{c|l}
+\hline
+Schema & pg\_catalog \\
+Name & exp \\
+Result data type & double precision \\
+Argument data types & double precision \\
+Type & func \\
+\hline
+Schema & pg\_catalog \\
+Name & exp \\
+Result data type & numeric \\
+Argument data types & numeric \\
+Type & func \\
+\end{tabular}
+
+\noindent 
+\pset tuples_only false
+prepare q as
+  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+\pset expanded off
+\pset border 0
+execute q;
+\begin{longtable}{lllr}
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endfirsthead
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endhead
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{1} \tabularnewline
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{2} \tabularnewline
+\end{longtable}
+\pset border 1
+execute q;
+\begin{longtable}{l | l | l | r}
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endfirsthead
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endhead
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{1} \tabularnewline
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{2} \tabularnewline
+\end{longtable}
+\pset border 2
+execute q;
+\begin{longtable}{| l | l | l | r |}
+\toprule
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endfirsthead
+\toprule
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{1} \tabularnewline
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{2} \tabularnewline
+\end{longtable}
+\pset border 3
+execute q;
+\begin{longtable}{| l | l | l | r |}
+\toprule
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endfirsthead
+\toprule
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{1} \tabularnewline
+ \hline
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{2} \tabularnewline
+ \hline
+\end{longtable}
+\pset tableattr lr
+execute q;
+\begin{longtable}{| p{lr\textwidth} | p{lr\textwidth} | p{lr\textwidth} | r |}
+\toprule
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\midrule
+\endfirsthead
+\toprule
+\small\textbf{\textit{a\$title}} & \small\textbf{\textit{junk}} & \small\textbf{\textit{empty}} & \small\textbf{\textit{int}} \\
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{1} \tabularnewline
+ \hline
+\raggedright{some\backslashmore\_text}
+&
+\raggedright{  \&foo\%\\\{bar\}}
+&
+\raggedright{   }
+&
+\raggedright{2} \tabularnewline
+ \hline
+\end{longtable}
+\pset tableattr
+\pset expanded on
+\pset border 0
+execute q;
+\begin{tabular}{cl}
+\multicolumn{2}{c}{\textit{Record 1}} \\
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\multicolumn{2}{c}{\textit{Record 2}} \\
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\end{tabular}
+
+\noindent 
+\pset border 1
+execute q;
+\begin{tabular}{c|l}
+\multicolumn{2}{c}{\textit{Record 1}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\multicolumn{2}{c}{\textit{Record 2}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\end{tabular}
+
+\noindent 
+\pset border 2
+execute q;
+\begin{tabular}{|c|l|}
+\hline
+\multicolumn{2}{|c|}{\textit{Record 1}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\hline
+\multicolumn{2}{|c|}{\textit{Record 2}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\hline
+\end{tabular}
+
+\noindent 
+\pset border 3
+execute q;
+\begin{tabular}{|c|l|}
+\hline
+\multicolumn{2}{|c|}{\textit{Record 1}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\hline
+\multicolumn{2}{|c|}{\textit{Record 2}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\hline
+\end{tabular}
+
+\noindent 
+\pset tableattr lr
+execute q;
+\begin{tabular}{|c|l|}
+\hline
+\multicolumn{2}{|c|}{\textit{Record 1}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 1 \\
+\hline
+\multicolumn{2}{|c|}{\textit{Record 2}} \\
+\hline
+a\$title & some\backslashmore\_text \\
+junk &   \&foo\%\\\{bar\} \\
+empty &     \\
+int & 2 \\
+\hline
+\end{tabular}
+
+\noindent 
+\pset tableattr
+deallocate q;
+-- test troff-ms output format
+\pset format troff-ms
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+.LP
+.DS C
+Sequence "public.psql_serial_tab_id_seq"
+.DE
+.LP
+.TS
+center;
+l | r | r | r | r | l | r.
+\fIType\fP	\fIStart\fP	\fIMinimum\fP	\fIMaximum\fP	\fIIncrement\fP	\fICycles?\fP	\fICache\fP
+_
+integer	1	1	2147483647	1	no	1
+.TE
+.DS L
+Owned by: public.psql_serial_tab.id
+.DE
+\pset tuples_only true
+\df exp
+.LP
+.TS
+center;
+l | l | l | l | l.
+pg_catalog	exp	double precision	double precision	func
+pg_catalog	exp	numeric	numeric	func
+.TE
+.DS L
+.DE
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+.LP
+.DS C
+Sequence "public.psql_serial_tab_id_seq"
+.DE
+.LP
+.TS
+center;
+c s.
+\fIRecord 1\fP
+_
+.T&
+c | l.
+Type	integer
+Start	1
+Minimum	1
+Maximum	2147483647
+Increment	1
+Cycles?	no
+Cache	1
+.TE
+.DS L
+Owned by: public.psql_serial_tab.id
+.DE
+\pset tuples_only true
+\df exp
+.LP
+.TS
+center;
+c l;
+_
+Schema	pg_catalog
+Name	exp
+Result data type	double precision
+Argument data types	double precision
+Type	func
+_
+Schema	pg_catalog
+Name	exp
+Result data type	numeric
+Argument data types	numeric
+Type	func
+.TE
+.DS L
+.DE
+\pset tuples_only false
+prepare q as
+  select 'some\text' as "a\title", E'  <foo>\n<bar>' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+\pset expanded off
+\pset border 0
+execute q;
+.LP
+.TS
+center;
+lllr.
+\fIa\(rstitle\fP	\fIjunk\fP	\fIempty\fP	\fIint\fP
+_
+some\(rstext	  <foo>
+<bar>	   	1
+some\(rstext	  <foo>
+<bar>	   	2
+.TE
+.DS L
+(2 rows)
+.DE
+\pset border 1
+execute q;
+.LP
+.TS
+center;
+l | l | l | r.
+\fIa\(rstitle\fP	\fIjunk\fP	\fIempty\fP	\fIint\fP
+_
+some\(rstext	  <foo>
+<bar>	   	1
+some\(rstext	  <foo>
+<bar>	   	2
+.TE
+.DS L
+(2 rows)
+.DE
+\pset border 2
+execute q;
+.LP
+.TS
+center box;
+l | l | l | r.
+\fIa\(rstitle\fP	\fIjunk\fP	\fIempty\fP	\fIint\fP
+_
+some\(rstext	  <foo>
+<bar>	   	1
+some\(rstext	  <foo>
+<bar>	   	2
+.TE
+.DS L
+(2 rows)
+.DE
+\pset expanded on
+\pset border 0
+execute q;
+.LP
+.TS
+center;
+c s.
+\fIRecord 1\fP
+.T&
+c l.
+a\(rstitle	some\(rstext
+junk	  <foo>
+<bar>
+empty	   
+int	1
+.T&
+c s.
+\fIRecord 2\fP
+.T&
+c l.
+a\(rstitle	some\(rstext
+junk	  <foo>
+<bar>
+empty	   
+int	2
+.TE
+.DS L
+.DE
+\pset border 1
+execute q;
+.LP
+.TS
+center;
+c s.
+\fIRecord 1\fP
+_
+.T&
+c | l.
+a\(rstitle	some\(rstext
+junk	  <foo>
+<bar>
+empty	   
+int	1
+.T&
+c s.
+\fIRecord 2\fP
+_
+.T&
+c | l.
+a\(rstitle	some\(rstext
+junk	  <foo>
+<bar>
+empty	   
+int	2
+.TE
+.DS L
+.DE
+\pset border 2
+execute q;
+.LP
+.TS
+center box;
+c s.
+\fIRecord 1\fP
+_
+.T&
+c l.
+a\(rstitle	some\(rstext
+junk	  <foo>
+<bar>
+empty	   
+int	1
+_
+.T&
+c s.
+\fIRecord 2\fP
+_
+.T&
+c l.
+a\(rstitle	some\(rstext
+junk	  <foo>
+<bar>
+empty	   
+int	2
+.TE
+.DS L
+.DE
+deallocate q;
+-- check ambiguous format requests
+\pset format a
+\pset: ambiguous abbreviation "a" matches both "aligned" and "asciidoc"
+\pset format l
+-- clean up after output format tests
+drop table psql_serial_tab;
 \pset format aligned
 \pset expanded off
 \pset border 1

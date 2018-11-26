@@ -135,6 +135,7 @@ select 'drop table gexec_test', 'select ''2000-01-01''::date as party_over'
 \pset
 
 -- test multi-line headers, wrapping, and newline indicators
+-- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
 
 c", array_to_string(array_agg(repeat('y',20-2*n)),E'\n') as "a
@@ -398,10 +399,86 @@ execute q;
 deallocate q;
 
 \pset linestyle ascii
+\pset border 1
 
-prepare q as select ' | = | lkjsafi\\/ /oeu rio)(!@&*#)*(!&@*) \ (&' as " | -- | 012345678 9abc def!*@#&!@(*&*~~_+-=\ \", '11' as "0123456789", 11 as int from generate_series(1,10) as n;
+-- support table for output-format tests (useful to create a footer)
+
+create table psql_serial_tab (id serial);
+
+-- test header/footer/tuples_only behavior in aligned/unaligned/wrapped cases
+
+\pset format aligned
+
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+-- empty table is a special case for this format
+select 1 where false;
+
+\pset format unaligned
+
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+\pset format wrapped
+
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+-- test numericlocale (not too interesting in C locale, but ...)
+
+\pset format aligned
+\pset expanded off
+\pset numericlocale true
+
+select n, -n as m, n * 1000 + 111.1111 as x, '1e90'::float8 as f
+from generate_series(0,3) n;
+
+\pset numericlocale false
+
+-- test asciidoc output format
 
 \pset format asciidoc
+
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+prepare q as
+  select 'some|text' as "a|title", '        ' as "empty ", n as int
+  from generate_series(1,2) as n;
+
 \pset expanded off
 \pset border 0
 execute q;
@@ -423,6 +500,209 @@ execute q;
 execute q;
 
 deallocate q;
+
+-- test html output format
+
+\pset format html
+
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+prepare q as
+  select 'some"text' as "a&title", E'  <foo>\n<bar>' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+
+\pset expanded off
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset tableattr foobar
+execute q;
+\pset tableattr
+
+\pset expanded on
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset tableattr foobar
+execute q;
+\pset tableattr
+
+deallocate q;
+
+-- test latex output format
+
+\pset format latex
+
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+prepare q as
+  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+
+\pset expanded off
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+\pset border 3
+execute q;
+
+\pset expanded on
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+\pset border 3
+execute q;
+
+deallocate q;
+
+-- test latex-longtable output format
+
+\pset format latex-longtable
+
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+prepare q as
+  select 'some\more_text' as "a$title", E'  &foo%\n{bar}' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+
+\pset expanded off
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+\pset border 3
+execute q;
+
+\pset tableattr lr
+execute q;
+\pset tableattr
+
+\pset expanded on
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+\pset border 3
+execute q;
+
+\pset tableattr lr
+execute q;
+\pset tableattr
+
+deallocate q;
+
+-- test troff-ms output format
+
+\pset format troff-ms
+
+\pset border 1
+\pset expanded off
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+\pset expanded on
+\d psql_serial_tab_id_seq
+\pset tuples_only true
+\df exp
+\pset tuples_only false
+
+prepare q as
+  select 'some\text' as "a\title", E'  <foo>\n<bar>' as "junk",
+         '   ' as "empty", n as int
+  from generate_series(1,2) as n;
+
+\pset expanded off
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+\pset expanded on
+\pset border 0
+execute q;
+
+\pset border 1
+execute q;
+
+\pset border 2
+execute q;
+
+deallocate q;
+
+-- check ambiguous format requests
+
+\pset format a
+\pset format l
+
+-- clean up after output format tests
+
+drop table psql_serial_tab;
 
 \pset format aligned
 \pset expanded off
