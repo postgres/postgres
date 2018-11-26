@@ -448,13 +448,13 @@ select 1 where false;
 \df exp
 \pset tuples_only false
 
--- test numericlocale (not too interesting in C locale, but ...)
+-- test numericlocale (as best we can without control of psql's locale)
 
 \pset format aligned
 \pset expanded off
 \pset numericlocale true
 
-select n, -n as m, n * 1000 + 111.1111 as x, '1e90'::float8 as f
+select n, -n as m, n * 111 as x, '1e90'::float8 as f
 from generate_series(0,3) n;
 
 \pset numericlocale false
