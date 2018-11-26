@@ -2184,14 +2184,34 @@ latex_escaped_print(const char *in, FILE *fout)
 	for (p = in; *p; p++)
 		switch (*p)
 		{
-			case '&':
-				fputs("\\&", fout);
+				/*
+				 * We convert ASCII characters per the recommendations in
+				 * Scott Pakin's "The Comprehensive LATEX Symbol List",
+				 * available from CTAN.  For non-ASCII, you're on your own.
+				 */
+			case '#':
+				fputs("\\#", fout);
+				break;
+			case '$':
+				fputs("\\$", fout);
 				break;
 			case '%':
 				fputs("\\%", fout);
 				break;
-			case '$':
-				fputs("\\$", fout);
+			case '&':
+				fputs("\\&", fout);
+				break;
+			case '<':
+				fputs("\\textless{}", fout);
+				break;
+			case '>':
+				fputs("\\textgreater{}", fout);
+				break;
+			case '\\':
+				fputs("\\textbackslash{}", fout);
+				break;
+			case '^':
+				fputs("\\^{}", fout);
 				break;
 			case '_':
 				fputs("\\_", fout);
@@ -2199,13 +2219,17 @@ latex_escaped_print(const char *in, FILE *fout)
 			case '{':
 				fputs("\\{", fout);
 				break;
+			case '|':
+				fputs("\\textbar{}", fout);
+				break;
 			case '}':
 				fputs("\\}", fout);
 				break;
-			case '\\':
-				fputs("\\backslash", fout);
+			case '~':
+				fputs("\\~{}", fout);
 				break;
 			case '\n':
+				/* This is not right, but doing it right seems too hard */
 				fputs("\\\\", fout);
 				break;
 			default:
