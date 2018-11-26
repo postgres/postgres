@@ -11,8 +11,8 @@ REGRESS = ddl xact rewrite toast permissions decoding_in_xact \
 ISOLATION = mxact delayed_startup ondisk_startup concurrent_ddl_dml \
 	oldest_xmin snapshot_transfer
 
-REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf
-ISOLATION_OPTS = --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf
+REGRESS_OPTS = --temp-config=$(top_builddir)/contrib/test_decoding/logical.conf
+ISOLATION_OPTS = --temp-config=$(top_builddir)/contrib/test_decoding/logical.conf
 
 # Disabled because these tests require "wal_level=logical", which
 # typical installcheck users do not have (e.g. buildfarm clients).
