@@ -4826,7 +4826,7 @@ CREATE FUNCTION
   <para>
    <application>PL/pgSQL</application> is similar to PL/SQL in many
    aspects. It is a block-structured, imperative language, and all
-   variables have to be declared.  Assignments, loops, conditionals
+   variables have to be declared.  Assignments, loops, and conditionals
    are similar.  The main differences you should keep in mind when
    porting from <application>PL/SQL</> to
    <application>PL/pgSQL</application> are:
