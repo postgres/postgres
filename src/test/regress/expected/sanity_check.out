@@ -44,6 +44,7 @@ dupindexcols|t
 e_star|f
 emp|f
 equipment_r|f
+extra_wide_table|f
 f_star|f
 fast_emp4000|t
 float4_tbl|f

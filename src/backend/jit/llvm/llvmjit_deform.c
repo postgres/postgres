@@ -208,10 +208,16 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc, int natts)
 							v_infomask2,
 							"maxatt");
 
+	/*
+	 * Need to zext, as getelementptr otherwise treats hoff as a signed 8bit
+	 * integer, which'd yield a negative offset for t_hoff > 127.
+	 */
 	v_hoff =
-		l_load_struct_gep(b, v_tuplep,
-						  FIELDNO_HEAPTUPLEHEADERDATA_HOFF,
-						  "t_hoff");
+		LLVMBuildZExt(b,
+					  l_load_struct_gep(b, v_tuplep,
+										FIELDNO_HEAPTUPLEHEADERDATA_HOFF,
+										""),
+					  LLVMInt32Type(), "t_hoff");
 
 	v_tupdata_base =
 		LLVMBuildGEP(b,
