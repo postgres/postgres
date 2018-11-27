@@ -2390,9 +2390,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("(", "ON");
 	else if (Matches("CREATE", "STATISTICS", MatchAny, "("))
 		COMPLETE_WITH("ndistinct", "dependencies");
-	else if (HeadMatches("CREATE", "STATISTICS", MatchAny) &&
-			 previous_words[0][0] == '(' &&
-			 previous_words[0][strlen(previous_words[0]) - 1] == ')')
+	else if (Matches("CREATE", "STATISTICS", MatchAny, "(*)"))
 		COMPLETE_WITH("ON");
 	else if (HeadMatches("CREATE", "STATISTICS", MatchAny) &&
 			 TailMatches("FROM"))
