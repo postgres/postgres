@@ -919,14 +919,17 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid IN ( "
-								"			'pg_catalog.regproc'::pg_catalog.regtype, "
-								"			'pg_catalog.regprocedure'::pg_catalog.regtype, "
+		/* regclass.oid is preserved, so 'regclass' is OK */
+								"			'pg_catalog.regconfig'::pg_catalog.regtype, "
+								"			'pg_catalog.regdictionary'::pg_catalog.regtype, "
+								"			'pg_catalog.regnamespace'::pg_catalog.regtype, "
 								"			'pg_catalog.regoper'::pg_catalog.regtype, "
 								"			'pg_catalog.regoperator'::pg_catalog.regtype, "
-		/* regclass.oid is preserved, so 'regclass' is OK */
+								"			'pg_catalog.regproc'::pg_catalog.regtype, "
+								"			'pg_catalog.regprocedure'::pg_catalog.regtype "
+		/* regrole.oid is preserved, so 'regrole' is OK */
 		/* regtype.oid is preserved, so 'regtype' is OK */
-								"			'pg_catalog.regconfig'::pg_catalog.regtype, "
-								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
+								"			) AND "
 								"		c.relnamespace = n.oid AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
