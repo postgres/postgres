@@ -1598,17 +1598,12 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						 * transaction's changes. Otherwise it will get
 						 * freed/reused while restoring spooled data from
 						 * disk.
-						 *
-						 * But skip doing so if there's no tuple-data. That
-						 * happens if a non-mapped system catalog with a toast
-						 * table is rewritten.
 						 */
-						if (change->data.tp.newtuple != NULL)
-						{
-							dlist_delete(&change->node);
-							ReorderBufferToastAppendChunk(rb, txn, relation,
-														  change);
-						}
+						Assert(change->data.tp.newtuple != NULL);
+
+						dlist_delete(&change->node);
+						ReorderBufferToastAppendChunk(rb, txn, relation,
+													  change);
 					}
 
 			change_done:
