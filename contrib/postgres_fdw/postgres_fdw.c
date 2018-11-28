@@ -2887,7 +2887,7 @@ estimate_path_cost_size(PlannerInfo *root,
 
 			/*-----
 			 * Startup cost includes:
-			 *	  1. Startup cost for underneath input * relation
+			 *	  1. Startup cost for underneath input relation
 			 *	  2. Cost of performing aggregation, per cost_agg()
 			 *	  3. Startup cost for PathTarget eval
 			 *-----
