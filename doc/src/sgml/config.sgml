@@ -3221,7 +3221,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <varname>recovery_target_lsn</varname>, <varname>recovery_target_name</varname>,
       <varname>recovery_target_time</varname>, or <varname>recovery_target_xid</varname>
       can be used; if more than one of these is specified in the configuration
-      file, the last entry will be used.
+      file, an error will be raised.
       These parameters can only be set at server start.
      </para>
 

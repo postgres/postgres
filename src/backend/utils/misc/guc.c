@@ -11051,6 +11051,28 @@ assign_recovery_target_timeline(const char *newval, void *extra)
 		recoveryTargetTLIRequested = 0;
 }
 
+/*
+ * Recovery target settings: Only one of the several recovery_target* settings
+ * may be set.  Setting a second one results in an error.  The global variable
+ * recoveryTarget tracks which kind of recovery target was chosen.  Other
+ * variables store the actual target value (for example a string or a xid).
+ * The assign functions of the parameters check whether a competing parameter
+ * was already set.  But we want to allow setting the same parameter multiple
+ * times.  We also want to allow unsetting a parameter and setting a different
+ * one, so we unset recoveryTarget when the parameter is set to an empty
+ * string.
+ */
+
+static void
+pg_attribute_noreturn()
+error_multiple_recovery_targets(void)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("multiple recovery targets specified"),
+			 errdetail("At most one of recovery_target, recovery_target_lsn, recovery_target_name, recovery_target_time, recovery_target_xid may be set.")));
+}
+
 static bool
 check_recovery_target(char **newval, void **extra, GucSource source)
 {
@@ -11065,13 +11087,13 @@ check_recovery_target(char **newval, void **extra, GucSource source)
 static void
 assign_recovery_target(const char *newval, void *extra)
 {
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_IMMEDIATE)
+		error_multiple_recovery_targets();
+
 	if (newval && strcmp(newval, "") != 0)
 		recoveryTarget = RECOVERY_TARGET_IMMEDIATE;
 	else
-		/*
-		 * Reset recoveryTarget to RECOVERY_TARGET_UNSET to proper handle user
-		 * setting multiple recovery_target with blank value on last.
-		 */
 		recoveryTarget = RECOVERY_TARGET_UNSET;
 }
 
@@ -11098,6 +11120,10 @@ check_recovery_target_xid(char **newval, void **extra, GucSource source)
 static void
 assign_recovery_target_xid(const char *newval, void *extra)
 {
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_XID)
+		error_multiple_recovery_targets();
+
 	if (newval && strcmp(newval, "") != 0)
 	{
 		recoveryTarget = RECOVERY_TARGET_XID;
@@ -11161,6 +11187,10 @@ check_recovery_target_time(char **newval, void **extra, GucSource source)
 static void
 assign_recovery_target_time(const char *newval, void *extra)
 {
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_TIME)
+		error_multiple_recovery_targets();
+
 	if (newval && strcmp(newval, "") != 0)
 	{
 		recoveryTarget = RECOVERY_TARGET_TIME;
@@ -11186,6 +11216,10 @@ check_recovery_target_name(char **newval, void **extra, GucSource source)
 static void
 assign_recovery_target_name(const char *newval, void *extra)
 {
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_NAME)
+		error_multiple_recovery_targets();
+
 	if (newval && strcmp(newval, "") != 0)
 	{
 		recoveryTarget = RECOVERY_TARGET_NAME;
@@ -11240,6 +11274,10 @@ check_recovery_target_lsn(char **newval, void **extra, GucSource source)
 static void
 assign_recovery_target_lsn(const char *newval, void *extra)
 {
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_LSN)
+		error_multiple_recovery_targets();
+
 	if (newval && strcmp(newval, "") != 0)
 	{
 		recoveryTarget = RECOVERY_TARGET_LSN;
