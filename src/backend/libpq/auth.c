@@ -2162,18 +2162,6 @@ CheckPAMAuth(Port *port, const char *user, const char *password)
 {
 	int			retval;
 	pam_handle_t *pamh = NULL;
-	char		hostinfo[NI_MAXHOST];
-
-	retval = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-								hostinfo, sizeof(hostinfo), NULL, 0,
-								port->hba->pam_use_hostname ? 0 : NI_NUMERICHOST | NI_NUMERICSERV);
-	if (retval != 0)
-	{
-		ereport(WARNING,
-				(errmsg_internal("pg_getnameinfo_all() failed: %s",
-								 gai_strerror(retval))));
-		return STATUS_ERROR;
-	}
 
 	/*
 	 * We can't entirely rely on PAM to pass through appdata --- it appears
@@ -2219,15 +2207,37 @@ CheckPAMAuth(Port *port, const char *user, const char *password)
 		return STATUS_ERROR;
 	}
 
-	retval = pam_set_item(pamh, PAM_RHOST, hostinfo);
-
-	if (retval != PAM_SUCCESS)
+	if (port->hba->conntype != ctLocal)
 	{
-		ereport(LOG,
-				(errmsg("pam_set_item(PAM_RHOST) failed: %s",
-						pam_strerror(pamh, retval))));
-		pam_passwd = NULL;
-		return STATUS_ERROR;
+		char		hostinfo[NI_MAXHOST];
+		int			flags;
+
+		if (port->hba->pam_use_hostname)
+			flags = 0;
+		else
+			flags = NI_NUMERICHOST | NI_NUMERICSERV;
+
+		retval = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+									hostinfo, sizeof(hostinfo), NULL, 0,
+									flags);
+		if (retval != 0)
+		{
+			ereport(WARNING,
+					(errmsg_internal("pg_getnameinfo_all() failed: %s",
+									 gai_strerror(retval))));
+			return STATUS_ERROR;
+		}
+
+		retval = pam_set_item(pamh, PAM_RHOST, hostinfo);
+
+		if (retval != PAM_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("pam_set_item(PAM_RHOST) failed: %s",
+							pam_strerror(pamh, retval))));
+			pam_passwd = NULL;
+			return STATUS_ERROR;
+		}
 	}
 
 	retval = pam_set_item(pamh, PAM_CONV, &pam_passw_conv);
