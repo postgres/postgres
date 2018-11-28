@@ -659,12 +659,11 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			options |= HEAP_INSERT_SKIP_WAL;
 
 		/*
-		 * The new relfilenode's relcache entrye doesn't have the necessary
-		 * information to determine whether a relation should emit data for
-		 * logical decoding.  Force it to off if necessary.
+		 * While rewriting the heap for VACUUM FULL / CLUSTER, make sure data
+		 * for the TOAST table are not logically decoded.  The main heap is
+		 * WAL-logged as XLOG FPI records, which are not logically decoded.
 		 */
-		if (!RelationIsLogicallyLogged(state->rs_old_rel))
-			options |= HEAP_INSERT_NO_LOGICAL;
+		options |= HEAP_INSERT_NO_LOGICAL;
 
 		heaptup = toast_insert_or_update(state->rs_new_rel, tup, NULL,
 										 options);
