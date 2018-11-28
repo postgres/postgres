@@ -314,7 +314,8 @@ BufFileOpenShared(SharedFileSet *fileset, const char *name)
 	if (nfiles == 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open BufFile \"%s\"", name)));
+				 errmsg("could not open temporary file \"%s\" from BufFile \"%s\": %m",
+						segment_name, name)));
 
 	file = makeBufFileCommon(nfiles);
 	file->files = files;
@@ -793,20 +794,26 @@ BufFileTellBlock(BufFile *file)
 #endif
 
 /*
- * Return the current file size.
+ * Return the current shared BufFile size.
  *
  * Counts any holes left behind by BufFileAppend as part of the size.
- * Returns -1 on error.
+ * ereport()s on failure.
  */
 int64
 BufFileSize(BufFile *file)
 {
 	int64		lastFileSize;
 
+	Assert(file->fileset != NULL);
+
 	/* Get the size of the last physical file by seeking to end. */
 	lastFileSize = FileSeek(file->files[file->numFiles - 1], 0, SEEK_END);
 	if (lastFileSize < 0)
-		return -1;
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not determine size of temporary file \"%s\" from BufFile \"%s\": %m",
+						FilePathName(file->files[file->numFiles - 1]),
+						file->name)));
 	file->offsets[file->numFiles - 1] = lastFileSize;
 
 	return ((file->numFiles - 1) * (int64) MAX_PHYSICAL_FILESIZE) +
