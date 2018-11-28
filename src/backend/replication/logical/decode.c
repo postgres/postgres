@@ -607,11 +607,20 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 static void
 DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
+	Size		datalen;
+	Size		tuplelen;
 	XLogRecord *r = &buf->record;
 	xl_heap_insert *xlrec;
 	ReorderBufferChange *change;
 
 	xlrec = (xl_heap_insert *) buf->record_data;
+
+	/*
+	 * Ignore insert records without new tuples (this does happen when
+	 * raw_heap_insert marks the TOAST record as HEAP_INSERT_NO_LOGICAL).
+	 */
+	if (!(xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE))
+		return;
 
 	/* only interested in our database */
 	if (xlrec->target.node.dbNode != ctx->slot->data.database)
@@ -621,19 +630,16 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	change->action = REORDER_BUFFER_CHANGE_INSERT;
 	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
 
-	if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
-	{
-		Size		datalen = r->xl_len - SizeOfHeapInsert;
-		Size		tuplelen = datalen - SizeOfHeapHeader;
+	datalen = r->xl_len - SizeOfHeapInsert;
+	tuplelen = datalen - SizeOfHeapHeader;
 
-		Assert(r->xl_len > (SizeOfHeapInsert + SizeOfHeapHeader));
+	Assert(r->xl_len > (SizeOfHeapInsert + SizeOfHeapHeader));
 
-		change->data.tp.newtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
+	change->data.tp.newtuple =
+		ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
-		DecodeXLogTuple((char *) xlrec + SizeOfHeapInsert,
-						datalen, change->data.tp.newtuple);
-	}
+	DecodeXLogTuple((char *) xlrec + SizeOfHeapInsert,
+					datalen, change->data.tp.newtuple);
 
 	change->data.tp.clear_toast_afterwards = true;
 
