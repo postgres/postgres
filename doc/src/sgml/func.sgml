@@ -20264,7 +20264,10 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
 
      <tbody> 
       <row>
-       <entry><literal><function>pg_partition_tree(<type>regclass</type>)</function></literal></entry>
+       <entry>
+        <indexterm><primary>pg_partition_tree</primary></indexterm>
+        <literal><function>pg_partition_tree(<type>regclass</type>)</function></literal>
+       </entry>
        <entry><type>setof record</type></entry>
        <entry>
         List information about tables or indexes in a partition tree for a
