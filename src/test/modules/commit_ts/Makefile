@@ -2,6 +2,9 @@
 
 REGRESS = commit_timestamp
 REGRESS_OPTS = --temp-config=$(top_srcdir)/src/test/modules/commit_ts/commit_ts.conf
+# Disabled because these tests require "track_commit_timestamp = on",
+# which typical installcheck users do not have (e.g. buildfarm clients).
+NO_INSTALLCHECK = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
