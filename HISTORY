@@ -3,3 +3,6 @@ https://www.postgresql.org/docs/current/static/release.html
 
 Distribution file sets include release notes for their version and preceding
 versions.  Visit the file doc/src/sgml/html/release.html in an HTML browser.
+Development of the concepts in INGRES with a focus on object orientation and the query language Quel.
+The code base of INGRES was not used as a basis for POSTGRES.
+Commercialized as Illustra (bought by Informix, bought by IBM).
