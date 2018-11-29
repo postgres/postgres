@@ -1,0 +1,120 @@
+<!-- doc/src/sgml/limits.sgml -->
+
+<appendix id="limits">
+ <title><productname>PostgreSQL</productname> Limits</title>
+
+ <para>
+  <xref linkend="limits-table"/> describes various hard limits of
+  <productname>PostgreSQL</productname>.  However, practical limits, such as
+  performance limitations or available disk space may apply before absolute
+  hard limits are reached.
+ </para>
+
+ <table id="limits-table">
+  <title><productname>PostgreSQL</productname> limitations</title>
+  <tgroup cols="3">
+   <thead>
+    <row>
+     <entry>Item</entry>
+     <entry>Upper Limit</entry>
+     <entry>Comment</entry>
+    </row>
+   </thead>
+
+   <tbody>
+    <row>
+     <entry>database size</entry>
+     <entry>unlimited</entry>
+     <entry></entry>
+    </row>
+
+    <row>
+     <entry>number of databases</entry>
+     <!-- 2^32 - FirstNormalObjectId - 1 -->
+     <entry>4,294,950,911</entry>
+     <entry></entry>
+    </row>
+
+    <row>
+     <entry>relations per database</entry>
+     <!-- (2^32 - FirstNormalObjectId - 1) / 3 (3 because of the table and the
+          two types that are created to go with it) -->
+     <entry>1,431,650,303</entry>
+     <entry></entry>
+    </row>
+
+    <row>
+     <entry>relation size</entry>
+     <entry>32 TB</entry>
+     <entry>with the default <symbol>BLCKSZ</symbol> of 8192 bytes</entry>
+    </row>
+
+    <row>
+     <entry>rows per table</entry>
+     <entry>limited by the number of tuples that can fit onto 4,294,967,295 pages</entry>
+     <entry></entry>
+    </row>
+
+    <row>
+     <entry>columns per table</entry>
+     <entry>1600</entry>
+     <entry>further limited by tuple size fitting on a single page; see note
+     below</entry>
+    </row>
+
+    <row>
+     <entry>field size</entry>
+     <entry>1 GB</entry>
+     <entry></entry>
+    </row>
+
+    <row>
+     <entry>identifier length</entry>
+     <entry>63 bytes</entry>
+     <entry>can be increased by recompiling <productname>PostgreSQL</productname></entry>
+    </row>
+
+    <row>
+     <entry>indexes per table</entry>
+     <entry>unlimited</entry>
+     <entry>constrained by maximum relations per database</entry>
+    </row>
+
+    <row>
+     <entry>columns per index</entry>
+     <entry>32</entry>
+     <entry>can be increased by recompiling <productname>PostgreSQL</productname></entry>
+    </row>
+
+   <row>
+    <entry>partition keys</entry>
+    <entry>32</entry>
+    <entry>can be increased by recompiling <productname>PostgreSQL</productname></entry>
+   </row>
+   </tbody>
+  </tgroup>
+ </table>
+
+ <para>
+  The maximum number of columns for a table is further reduced as the tuple
+  being stored must fit in a single 8192-byte heap page.  For example,
+  excluding the tuple header, a tuple made up of 1600 <type>int</type> columns
+  would consume 6400 bytes and could be stored in a heap page, but a tuple of
+  1600 <type>bigint</type> columns would consume 12800 bytes and would
+  therefore not fit inside a heap page.
+  Variable-length fields of
+  types such as <type>text</type>, <type>varchar</type>, and <type>char</type>
+  can have their values stored out of line in the table's TOAST table when the
+  values are large enough to require it.  Only an 18-byte pointer must remain
+  inside the tuple in the table's heap.  For shorter length variable-length
+  fields, either a 4-byte or 1-byte field header is used and the value is
+  stored inside the heap tuple.
+ </para>
+
+ <para>
+  Columns that have been dropped from the table also contribute to the maximum
+  column limit.  Moreover, although the dropped column values for newly
+  created tuples are internally marked as null in the tuple's null bitmap, the
+  null bitmap also occupies space.
+ </para>
+</appendix>

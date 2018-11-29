@@ -183,6 +183,7 @@
 <!ENTITY release-7.4    SYSTEM "release-7.4.sgml">
 <!ENTITY release-old    SYSTEM "release-old.sgml">
 
+<!ENTITY limits     SYSTEM "limits.sgml">
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">
 
 <!ENTITY features-supported   SYSTEM "features-supported.sgml">
