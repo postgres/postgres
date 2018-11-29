@@ -304,11 +304,17 @@ all-static-lib: $(stlib)
 
 all-shared-lib: $(shlib)
 
+# In this rule, "touch $@" works around a problem on some platforms wherein
+# ranlib updates the library file's mod time with a value calculated to
+# seconds precision.  If the filesystem has sub-second timestamps, this can
+# cause the library file to appear older than its input files, triggering
+# parallel-make problems.
 ifndef haslibarule
 $(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	rm -f $@
 	$(LINK.static) $@ $^
 	$(RANLIB) $@
+	touch $@
 endif #haslibarule
 
 
@@ -476,7 +482,7 @@ install-lib-static: $(stlib) installdirs-lib
 	$(INSTALL_STLIB) $< '$(DESTDIR)$(libdir)/$(stlib)'
 ifeq ($(PORTNAME), darwin)
 	cd '$(DESTDIR)$(libdir)' && \
-	ranlib $(stlib)
+	$(RANLIB) $(stlib)
 endif
 
 install-lib-shared: $(shlib) installdirs-lib
