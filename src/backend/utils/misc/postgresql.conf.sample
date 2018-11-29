@@ -483,11 +483,14 @@
 					#   fatal
 					#   panic (effectively off)
 
-#log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
-					# and their durations, > 0 logs only
-					# statements running at least this number
-					# of milliseconds
+#log_min_duration_statement = -1	# logs statements and their durations
+					# according to log_statement_sample_rate. -1 is disabled,
+					# 0 logs all statement, > 0 logs only statements running at
+					# least this number of milliseconds.
 
+#log_statement_sample_rate = 1	# Fraction of logged statements over
+					# log_min_duration_statement. 1.0 logs all statements,
+					# 0 never logs.
 
 # - What to Log -
 
