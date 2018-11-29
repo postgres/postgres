@@ -425,10 +425,12 @@ SyncRepReleaseWaiters(void)
 	 * If this WALSender is serving a standby that is not on the list of
 	 * potential sync standbys then we have nothing to do. If we are still
 	 * starting up, still running base backup or the current flush position is
-	 * still invalid, then leave quickly also.
+	 * still invalid, then leave quickly also.  Streaming or stopping WAL
+	 * senders are allowed to release waiters.
 	 */
 	if (MyWalSnd->sync_standby_priority == 0 ||
-		MyWalSnd->state < WALSNDSTATE_STREAMING ||
+		(MyWalSnd->state != WALSNDSTATE_STREAMING &&
+		 MyWalSnd->state != WALSNDSTATE_STOPPING) ||
 		XLogRecPtrIsInvalid(MyWalSnd->flush))
 	{
 		announce_next_takeover = true;
@@ -730,8 +732,9 @@ SyncRepGetSyncStandbysQuorum(bool *am_sync)
 		if (pid == 0)
 			continue;
 
-		/* Must be streaming */
-		if (state != WALSNDSTATE_STREAMING)
+		/* Must be streaming or stopping */
+		if (state != WALSNDSTATE_STREAMING &&
+			state != WALSNDSTATE_STOPPING)
 			continue;
 
 		/* Must be synchronous */
@@ -809,8 +812,9 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 		if (pid == 0)
 			continue;
 
-		/* Must be streaming */
-		if (state != WALSNDSTATE_STREAMING)
+		/* Must be streaming or stopping */
+		if (state != WALSNDSTATE_STREAMING &&
+			state != WALSNDSTATE_STOPPING)
 			continue;
 
 		/* Must be synchronous */
