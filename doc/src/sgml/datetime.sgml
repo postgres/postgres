@@ -24,7 +24,7 @@
    <title>Date/Time Input Interpretation</title>
 
    <para>
-    The date/time type inputs are all decoded using the following procedure.
+    Date/time input strings are decoded using the following procedure.
    </para>
 
    <procedure>
@@ -73,20 +73,21 @@
 
     <step>
      <para>
-      If the token is a text string, match up with possible strings:
+      If the token is an alphabetic string, match up with possible strings:
      </para>
 
      <substeps>
       <step>
        <para>
-        Do a binary-search table lookup for the token as a time zone
-        abbreviation.
+        See if the token matches any known time zone abbreviation.
+        These abbreviations are supplied by the configuration file
+        described in <xref linkend="datetime-config-files">.
        </para>
       </step>
 
       <step>
        <para>
-        If not found, do a similar binary-search table lookup to match
+        If not found, search an internal table to match
         the token as either a special string (e.g., <literal>today</literal>),
         day (e.g., <literal>Thursday</literal>),
         month (e.g., <literal>January</literal>),
@@ -173,6 +174,83 @@
      </para>
     </step>
    </procedure>
+  </sect1>
+
+
+  <sect1 id="datetime-invalid-input">
+   <title>Handling of Invalid or Ambiguous Timestamps</title>
+
+   <para>
+    Ordinarily, if a date/time string is syntactically valid but contains
+    out-of-range field values, an error will be thrown.  For example, input
+    specifying the 31st of February will be rejected.
+   </para>
+
+   <para>
+    During a daylight-savings-time transition, it is possible for a
+    seemingly valid timestamp string to represent a nonexistent or ambiguous
+    timestamp.  Such cases are not rejected; the ambiguity is resolved by
+    determining which UTC offset to apply.  For example, supposing that the
+    <xref linkend="guc-timezone"> parameter is set
+    to <literal>America/New_York</literal>, consider
+<programlisting>
+=&gt; SELECT '2018-03-11 02:30'::timestamptz;
+      timestamptz
+------------------------
+ 2018-03-11 03:30:00-04
+(1 row)
+</programlisting>
+    Because that day was a spring-forward transition date in that time zone,
+    there was no civil time instant 2:30AM; clocks jumped forward from 2AM
+    EST to 3AM EDT.  <productname>PostgreSQL</productname> interprets the
+    given time as if it were standard time (UTC-5), which then renders as
+    3:30AM EDT (UTC-4).
+   </para>
+
+   <para>
+    Conversely, consider the behavior during a fall-back transition:
+<programlisting>
+=&gt; SELECT '2018-11-04 02:30'::timestamptz;
+      timestamptz
+------------------------
+ 2018-11-04 02:30:00-05
+(1 row)
+</programlisting>
+    On that date, there were two possible interpretations of 2:30AM; there
+    was 2:30AM EDT, and then an hour later after the reversion to standard
+    time, there was 2:30AM EST.
+    Again, <productname>PostgreSQL</productname> interprets the given time
+    as if it were standard time (UTC-5).  We can force the matter by
+    specifying daylight-savings time:
+<programlisting>
+=&gt; SELECT '2018-11-04 02:30 EDT'::timestamptz;
+      timestamptz
+------------------------
+ 2018-11-04 01:30:00-05
+(1 row)
+</programlisting>
+    This timestamp could validly be rendered as either 2:30 UTC-4 or
+    1:30 UTC-5; the timestamp output code chooses the latter.
+   </para>
+
+   <para>
+    The precise rule that is applied in such cases is that an invalid
+    timestamp that appears to fall within a jump-forward daylight savings
+    transition is assigned the UTC offset that prevailed in the time zone
+    just before the transition, while an ambiguous timestamp that could fall
+    on either side of a jump-back transition is assigned the UTC offset that
+    prevailed just after the transition.  In most time zones this is
+    equivalent to saying that <quote>the standard-time interpretation is
+    preferred when in doubt</quote>.
+   </para>
+
+   <para>
+    In all cases, the UTC offset associated with a timestamp can be
+    specified explicitly, using either a numeric UTC offset or a time zone
+    abbreviation that corresponds to a fixed UTC offset.  The rule just
+    given applies only when it is necessary to infer a UTC offset for a time
+    zone in which the offset varies.
+   </para>
   </sect1>
 
 
@@ -553,7 +631,7 @@
    is now the USA) in 1752.
    Thus 2 September 1752 was followed by 14 September 1752.
 
-   This is why Unix systems have the <command>cal</command> program
+   This is why Unix systems that have the <command>cal</command> program
    produce the following:
 
 <screen>
