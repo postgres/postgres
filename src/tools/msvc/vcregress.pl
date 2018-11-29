@@ -361,6 +361,10 @@ sub plcheck
 		{
 			@lang_args = ();
 		}
+
+		# Move on if no tests are listed.
+		next if (scalar @tests == 0);
+
 		print
 		  "============================================================\n";
 		print "Checking $lang\n";
@@ -391,6 +395,14 @@ sub subdircheck
 
 	chdir $module;
 	my @tests = fetchTests();
+
+	# Leave if no tests are listed in the module.
+	if (scalar @tests == 0)
+	{
+		chdir "..";
+		return;
+	}
+
 	my @opts  = fetchRegressOpts();
 
 	# Special processing for python transform modules, see their respective
@@ -638,6 +650,8 @@ sub fetchRegressOpts
 	return @opts;
 }
 
+# Fetch the list of tests by parsing a module's Makefile.  An empty
+# list is returned if the module does not need to run anything.
 sub fetchTests
 {
 
@@ -651,6 +665,14 @@ sub fetchTests
 	my $t = "";
 
 	$m =~ s{\\\r?\n}{}g;
+
+	# A module specifying NO_INSTALLCHECK does not support installcheck,
+	# so bypass its run by returning an empty set of tests.
+	if ($m =~ /^\s*NO_INSTALLCHECK\s*=\s*\S+/m)
+	{
+		return ();
+	}
+
 	if ($m =~ /^REGRESS\s*=\s*(.*)$/gm)
 	{
 		$t = $1;
