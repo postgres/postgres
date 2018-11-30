@@ -189,12 +189,19 @@ static const char *excludeFiles[] =
 
 /*
  * List of files excluded from checksum validation.
+ *
+ * Note: this list should be kept in sync with what pg_verify_checksums.c
+ * includes.
  */
 static const char *noChecksumFiles[] = {
 	"pg_control",
 	"pg_filenode.map",
 	"pg_internal.init",
 	"PG_VERSION",
+#ifdef EXEC_BACKEND
+	"config_exec_params",
+	"config_exec_params.new",
+#endif
 	NULL,
 };
 
