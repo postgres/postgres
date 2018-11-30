@@ -15,7 +15,6 @@
 
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
-#include "common/relpath.h"
 #include "getopt_long.h"
 #include "pg_getopt.h"
 #include "storage/bufpage.h"
@@ -50,69 +49,27 @@ usage(void)
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
-/*
- * isRelFileName
- *
- * Check if the given file name is authorized for checksum verification.
- */
+static const char *const skip[] = {
+	"pg_control",
+	"pg_filenode.map",
+	"pg_internal.init",
+	"PG_VERSION",
+	NULL,
+};
+
 static bool
-isRelFileName(const char *fn)
+skipfile(const char *fn)
 {
-	int			pos;
+	const char *const *f;
 
-	/*----------
-	 * Only files including data checksums are authorized for verification.
-	 * This is guessed based on the file name by reverse-engineering
-	 * GetRelationPath() so make sure to update both code paths if any
-	 * updates are done.  The following file name formats are allowed:
-	 * <digits>
-	 * <digits>.<segment>
-	 * <digits>_<forkname>
-	 * <digits>_<forkname>.<segment>
-	 *
-	 * Note that temporary files, beginning with 't', are also skipped.
-	 *
-	 *----------
-	 */
-
-	/* A non-empty string of digits should follow */
-	for (pos = 0; isdigit((unsigned char) fn[pos]); ++pos)
-		;
-	/* leave if no digits */
-	if (pos == 0)
-		return false;
-	/* good to go if only digits */
-	if (fn[pos] == '\0')
+	if (strcmp(fn, ".") == 0 ||
+		strcmp(fn, "..") == 0)
 		return true;
 
-	/* Authorized fork files can be scanned */
-	if (fn[pos] == '_')
-	{
-		int			forkchar = forkname_chars(&fn[pos + 1], NULL);
-
-		if (forkchar <= 0)
-			return false;
-
-		pos += forkchar + 1;
-	}
-
-	/* Check for an optional segment number */
-	if (fn[pos] == '.')
-	{
-		int			segchar;
-
-		for (segchar = 1; isdigit((unsigned char) fn[pos + segchar]); ++segchar)
-			;
-
-		if (segchar <= 1)
-			return false;
-		pos += segchar;
-	}
-
-	/* Now this should be the end */
-	if (fn[pos] != '\0')
-		return false;
-	return true;
+	for (f = skip; *f; f++)
+		if (strcmp(*f, fn) == 0)
+			return true;
+	return false;
 }
 
 static void
@@ -189,7 +146,7 @@ scan_directory(const char *basedir, const char *subdir)
 		char		fn[MAXPGPATH];
 		struct stat st;
 
-		if (!isRelFileName(de->d_name))
+		if (skipfile(de->d_name))
 			continue;
 
 		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);

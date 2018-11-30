@@ -17,23 +17,6 @@ command_like(['pg_controldata', $pgdata],
 	     qr/Data page checksum version:.*1/,
 		 'checksums enabled in control file');
 
-# Add set of dummy files with some contents.  These should not be scanned
-# by the tool.
-
-# On Windows, file name "foo." == "foo", so skip that pattern there.
-append_to_file "$pgdata/global/123.", "foo" unless $windows_os;
-append_to_file "$pgdata/global/123_", "foo";
-append_to_file "$pgdata/global/123_.", "foo" unless $windows_os;;
-append_to_file "$pgdata/global/123.12t", "foo";
-append_to_file "$pgdata/global/foo", "foo2";
-append_to_file "$pgdata/global/t123", "bar";
-append_to_file "$pgdata/global/123a", "bar2";
-append_to_file "$pgdata/global/.123", "foobar";
-append_to_file "$pgdata/global/_fsm", "foobar2";
-append_to_file "$pgdata/global/_init", "foobar3";
-append_to_file "$pgdata/global/_vm.123", "foohoge";
-append_to_file "$pgdata/global/123_vm.123t", "foohoge2";
-
 # These are correct but empty files, so they should pass through.
 append_to_file "$pgdata/global/99999", "";
 append_to_file "$pgdata/global/99999.123", "";
