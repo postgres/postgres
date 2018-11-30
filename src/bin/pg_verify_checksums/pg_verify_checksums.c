@@ -20,6 +20,7 @@
 #include "storage/bufpage.h"
 #include "storage/checksum.h"
 #include "storage/checksum_impl.h"
+#include "storage/fd.h"
 
 
 static int64 files = 0;
@@ -49,11 +50,20 @@ usage(void)
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
+/*
+ * List of files excluded from checksum validation.
+ *
+ * Note: this list should be kept in sync with what basebackup.c includes.
+ */
 static const char *const skip[] = {
 	"pg_control",
 	"pg_filenode.map",
 	"pg_internal.init",
 	"PG_VERSION",
+#ifdef EXEC_BACKEND
+	"config_exec_params",
+	"config_exec_params.new",
+#endif
 	NULL,
 };
 
@@ -62,13 +72,10 @@ skipfile(const char *fn)
 {
 	const char *const *f;
 
-	if (strcmp(fn, ".") == 0 ||
-		strcmp(fn, "..") == 0)
-		return true;
-
 	for (f = skip; *f; f++)
 		if (strcmp(*f, fn) == 0)
 			return true;
+
 	return false;
 }
 
@@ -146,8 +153,21 @@ scan_directory(const char *basedir, const char *subdir)
 		char		fn[MAXPGPATH];
 		struct stat st;
 
-		if (skipfile(de->d_name))
+		if (strcmp(de->d_name, ".") == 0 ||
+			strcmp(de->d_name, "..") == 0)
 			continue;
+
+		/* Skip temporary files */
+		if (strncmp(de->d_name,
+					PG_TEMP_FILE_PREFIX,
+					strlen(PG_TEMP_FILE_PREFIX)) == 0)
+			continue;
+
+		/* Skip temporary folders */
+		if (strncmp(de->d_name,
+					PG_TEMP_FILES_DIR,
+					strlen(PG_TEMP_FILES_DIR)) == 0)
+			return;
 
 		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);
 		if (lstat(fn, &st) < 0)
@@ -162,6 +182,9 @@ scan_directory(const char *basedir, const char *subdir)
 			char	   *forkpath,
 					   *segmentpath;
 			BlockNumber segmentno = 0;
+
+			if (skipfile(de->d_name))
+				continue;
 
 			/*
 			 * Cut off at the segment boundary (".") to get the segment number
