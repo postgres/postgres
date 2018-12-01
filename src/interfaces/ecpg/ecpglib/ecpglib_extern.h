@@ -1,7 +1,7 @@
-/* src/interfaces/ecpg/ecpglib/extern.h */
+/* src/interfaces/ecpg/ecpglib/ecpglib_extern.h */
 
-#ifndef _ECPG_LIB_EXTERN_H
-#define _ECPG_LIB_EXTERN_H
+#ifndef _ECPG_ECPGLIB_EXTERN_H
+#define _ECPG_ECPGLIB_EXTERN_H
 
 #include "libpq-fe.h"
 #include "sqlca.h"
@@ -221,4 +221,4 @@ void		ecpg_set_native_sqlda(int, struct sqlda_struct **, const PGresult *, int, 
 #define ECPG_SQLSTATE_ECPG_INTERNAL_ERROR	"YE000"
 #define ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY	"YE001"
 
-#endif							/* _ECPG_LIB_EXTERN_H */
+#endif							/* _ECPG_ECPGLIB_EXTERN_H */

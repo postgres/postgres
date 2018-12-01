@@ -1,7 +1,7 @@
-/* src/interfaces/ecpg/pgtypeslib/extern.h */
+/* src/interfaces/ecpg/pgtypeslib/pgtypeslib_extern.h */
 
-#ifndef __PGTYPES_COMMON_H__
-#define __PGTYPES_COMMON_H__
+#ifndef _ECPG_PGTYPESLIB_EXTERN_H
+#define _ECPG_PGTYPESLIB_EXTERN_H
 
 #include "pgtypes_error.h"
 
@@ -50,4 +50,4 @@ char	   *pgtypes_strdup(const char *);
 #define TRUE	   1
 #endif							/* TRUE */
 
-#endif							/* __PGTYPES_COMMON_H__ */
+#endif							/* _ECPG_PGTYPESLIB_EXTERN_H */

@@ -11,7 +11,7 @@
 
 #include "common/string.h"
 
-#include "extern.h"
+#include "pgtypeslib_extern.h"
 #include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_interval.h"

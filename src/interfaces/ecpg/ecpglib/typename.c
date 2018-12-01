@@ -7,7 +7,7 @@
 
 #include "ecpgtype.h"
 #include "ecpglib.h"
-#include "extern.h"
+#include "ecpglib_extern.h"
 #include "sqltypes.h"
 #include "sql3types.h"
 

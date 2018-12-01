@@ -2,7 +2,7 @@
 
 #include "postgres_fe.h"
 
-#include "extern.h"
+#include "preproc_extern.h"
 
 #define indicator_set ind_type != NULL && ind_type->type != ECPGt_NO_INDICATOR
 

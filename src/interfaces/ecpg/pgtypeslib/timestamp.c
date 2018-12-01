@@ -11,7 +11,7 @@
 #error -ffast-math is known to break this code
 #endif
 
-#include "extern.h"
+#include "pgtypeslib_extern.h"
 #include "dt.h"
 #include "pgtypes_timestamp.h"
 #include "pgtypes_date.h"

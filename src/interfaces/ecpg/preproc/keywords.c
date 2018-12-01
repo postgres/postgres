@@ -27,7 +27,7 @@
 
 #include "common/keywords.h"
 
-#include "extern.h"
+#include "preproc_extern.h"
 #include "preproc.h"
 
 

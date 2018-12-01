@@ -9,7 +9,7 @@
 
 #include "postgres_fe.h"
 
-#include "extern.h"
+#include "preproc_extern.h"
 
 /*
  * assignment handling function (descriptor)

@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include "extern.h"
+#include "pgtypeslib_extern.h"
 #include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_date.h"

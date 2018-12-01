@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "extern.h"
+#include "pgtypeslib_extern.h"
 #include "dt.h"
 #include "pgtypes_timestamp.h"
 

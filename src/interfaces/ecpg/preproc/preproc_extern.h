@@ -1,4 +1,4 @@
-/* src/interfaces/ecpg/preproc/extern.h */
+/* src/interfaces/ecpg/preproc/preproc_extern.h */
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
@@ -7,7 +7,6 @@
 
 #include "common/keywords.h"
 
-#include <errno.h>
 #ifndef CHAR_BIT
 #include <limits.h>
 #endif

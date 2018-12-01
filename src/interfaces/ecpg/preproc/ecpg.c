@@ -9,7 +9,7 @@
 
 #include "getopt_long.h"
 
-#include "extern.h"
+#include "preproc_extern.h"
 
 int			ret_value = 0;
 bool		autocommit = false,

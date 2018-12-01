@@ -12,7 +12,7 @@
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpgerrno.h"
-#include "extern.h"
+#include "ecpglib_extern.h"
 #include "sqlca.h"
 #include "sqlda.h"
 #include "sql3types.h"

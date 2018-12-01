@@ -5,7 +5,7 @@
 #include <float.h>
 #include <limits.h>
 
-#include "extern.h"
+#include "pgtypeslib_extern.h"
 #include "pgtypes_error.h"
 
 #define Max(x, y)				((x) > (y) ? (x) : (y))

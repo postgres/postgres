@@ -22,7 +22,7 @@
 
 #include "common/string.h"
 
-#include "extern.h"
+#include "preproc_extern.h"
 #include "preproc.h"
 }
 

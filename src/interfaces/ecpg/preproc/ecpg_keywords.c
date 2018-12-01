@@ -13,7 +13,7 @@
 
 #include <ctype.h>
 
-#include "extern.h"
+#include "preproc_extern.h"
 #include "preproc.h"
 
 /*
