@@ -16,13 +16,16 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-	-I. -I$(srcdir) -DECPG_COMPILE \
-	 $(CPPFLAGS)
+	-I. -I$(srcdir) \
+	-I$(top_srcdir)/src/interfaces/ecpg/ecpglib \
+	-I$(libpq_srcdir) \
+	-DECPG_COMPILE \
+	$(CPPFLAGS)
 
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS=	preproc.o pgc.o type.o ecpg.o output.o parser.o \
-	keywords.o c_keywords.o ecpg_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
+	keywords.o c_keywords.o ecpg_keywords.o typename.o descriptor.o variable.o \
 	$(WIN32RES)
 
 # Suppress parallel build to avoid a bug in GNU make 3.82
@@ -36,8 +39,9 @@ all: ecpg
 ecpg: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
 
-../ecpglib/typename.o: ../ecpglib/typename.c
-	$(MAKE) -C $(dir $@) $(notdir $@)
+# We symlink typename.c from ecpglib and recompile it here
+typename.c: % : $(top_srcdir)/src/interfaces/ecpg/ecpglib/%
+	rm -f $@ && $(LN_S) $< .
 
 # See notes in src/backend/parser/Makefile about the following two rules
 preproc.h: preproc.c
@@ -64,6 +68,7 @@ uninstall:
 
 clean distclean:
 	rm -f *.o ecpg$(X)
+	rm -f typename.c
 
 # `make distclean' must not remove preproc.y, preproc.c, preproc.h, or pgc.c
 # since we want to ship those files in the distribution for people with
