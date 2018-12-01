@@ -164,6 +164,14 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-s</option> <replaceable>dir</replaceable></term>
+      <term><option>--socketdir=</option><replaceable>dir</replaceable></term>
+      <listitem><para>directory to use for postmaster sockets during upgrade;
+      default is current working directory; environment
+      variable <envar>PGSOCKETDIR</envar></para></listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-U</option> <replaceable>username</replaceable></term>
       <term><option>--username=</option><replaceable>username</replaceable></term>
       <listitem><para>cluster's install user name; environment
@@ -709,11 +717,21 @@ psql --username=postgres --file=script.sql postgres
   <title>Notes</title>
 
   <para>
-   <application>pg_upgrade</application> does not support upgrading of databases
-   containing table columns using these <type>reg*</type> OID-referencing system data types:
-   <type>regproc</type>, <type>regprocedure</type>, <type>regoper</type>,
-   <type>regoperator</type>, <type>regconfig</type>, and
-   <type>regdictionary</type>.  (<type>regtype</type> can be upgraded.)
+   <application>pg_upgrade</application> creates various working files, such
+   as schema dumps, in the current working directory.  For security, be sure
+   that that directory is not readable or writable by any other users.
+  </para>
+
+  <para>
+   <application>pg_upgrade</application> launches short-lived postmasters in
+   the old and new data directories.  Temporary Unix socket files for
+   communication with these postmasters are, by default, made in the current
+   working directory.  In some situations the path name for the current
+   directory might be too long to be a valid socket name.  In that case you
+   can use the <option>-s</option> option to put the socket files in some
+   directory with a shorter path name.  For security, be sure that that
+   directory is not readable or writable by any other users.
+   (This is not relevant on Windows.)
   </para>
 
   <para>
@@ -730,6 +748,14 @@ psql --username=postgres --file=script.sql postgres
   <para>
    For deployment testing, create a schema-only copy of the old cluster,
    insert dummy data, and upgrade that.
+  </para>
+
+  <para>
+   <application>pg_upgrade</application> does not support upgrading of databases
+   containing table columns using these <type>reg*</type> OID-referencing system data types:
+   <type>regproc</type>, <type>regprocedure</type>, <type>regoper</type>,
+   <type>regoperator</type>, <type>regconfig</type>, and
+   <type>regdictionary</type>.  (<type>regtype</type> can be upgraded.)
   </para>
 
   <para>

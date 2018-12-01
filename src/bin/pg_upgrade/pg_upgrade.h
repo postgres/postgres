@@ -298,7 +298,8 @@ typedef struct
 	bool		check;			/* true -> ask user for permission to make
 								 * changes */
 	transferMode transfer_mode; /* copy files or link them? */
-	int			jobs;
+	int			jobs;			/* number of processes/threads to use */
+	char	   *socketdir;		/* directory to use for Unix sockets */
 } UserOpts;
 
 typedef struct
@@ -374,7 +375,7 @@ bool		pid_lock_file_exists(const char *datadir);
 /* file.c */
 
 void cloneFile(const char *src, const char *dst,
-		 const char *schemaName, const char *relName);
+		  const char *schemaName, const char *relName);
 void copyFile(const char *src, const char *dst,
 		 const char *schemaName, const char *relName);
 void linkFile(const char *src, const char *dst,
