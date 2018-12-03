@@ -761,7 +761,7 @@ $$  LANGUAGE plpgsql
    <para>
     Another point to keep in mind is that by default, execute privilege
     is granted to <literal>PUBLIC</literal> for newly created functions
-    (see <xref linkend="sql-grant"/> for more
+    (see <xref linkend="ddl-priv"/> for more
     information).  Frequently you will wish to restrict use of a security
     definer function to only some users.  To do that, you must revoke
     the default <literal>PUBLIC</literal> privileges and then grant execute

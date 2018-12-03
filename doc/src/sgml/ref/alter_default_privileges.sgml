@@ -112,7 +112,7 @@ REVOKE [ GRANT OPTION FOR ]
   </para>
 
   <para>
-   As explained under <xref linkend="sql-grant"/>,
+   As explained in <xref linkend="ddl-priv"/>,
    the default privileges for any object type normally grant all grantable
    permissions to the object owner, and may grant some privileges to
    <literal>PUBLIC</literal> as well.  However, this behavior can be changed by
@@ -173,9 +173,8 @@ REVOKE [ GRANT OPTION FOR ]
   <para>
    Use <xref linkend="app-psql"/>'s <command>\ddp</command> command
    to obtain information about existing assignments of default privileges.
-   The meaning of the privilege values is the same as explained for
-   <command>\dp</command> under
-   <xref linkend="sql-grant"/>.
+   The meaning of the privilege display is the same as explained for
+   <command>\dp</command> in <xref linkend="ddl-priv"/>.
   </para>
 
   <para>

@@ -1324,8 +1324,8 @@ testdb=&gt;
         <para>
         The <xref linkend="sql-alterdefaultprivileges"/> command is used to set
         default access privileges.  The meaning of the
-        privilege display is explained under
-        <xref linkend="sql-grant"/>.
+        privilege display is explained in
+        <xref linkend="ddl-priv"/>.
         </para>
         </listitem>
       </varlistentry>
@@ -1372,7 +1372,7 @@ testdb=&gt;
         specified, only those servers whose name matches the pattern
         are listed.  If the form <literal>\des+</literal> is used, a
         full description of each server is shown, including the
-        server's ACL, type, version, options, and description.
+        server's access privileges, type, version, options, and description.
         </para>
         </listitem>
       </varlistentry>
@@ -1425,8 +1425,8 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those foreign-data wrappers whose name matches
         the pattern are listed.  If the form <literal>\dew+</literal>
-        is used, the ACL, options, and description of the foreign-data
-        wrapper are also shown.
+        is used, the access privileges, options, and description of the
+        foreign-data wrapper are also shown.
         </para>
         </listitem>
       </varlistentry>
@@ -1639,8 +1639,8 @@ testdb=&gt;
         The <xref linkend="sql-grant"/> and
         <xref linkend="sql-revoke"/>
         commands are used to set access privileges.  The meaning of the
-        privilege display is explained under
-        <xref linkend="sql-grant"/>.
+        privilege display is explained in
+        <xref linkend="ddl-priv"/>.
         </para>
         </listitem>
       </varlistentry>

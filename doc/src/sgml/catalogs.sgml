@@ -1973,10 +1973,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
 
@@ -2679,10 +2676,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
     </tbody>
@@ -3491,10 +3485,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
 
@@ -3587,10 +3578,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
 
@@ -4052,9 +4040,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        The initial access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
 
@@ -4179,10 +4165,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
     </tbody>
@@ -4319,10 +4302,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
 
@@ -4386,10 +4366,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
     </tbody>
@@ -5396,10 +5373,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
     </tbody>
@@ -6810,10 +6784,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
 
@@ -7923,10 +7894,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access privileges; see
-       <xref linkend="sql-grant"/> and
-       <xref linkend="sql-revoke"/>
-       for details
+       Access privileges; see <xref linkend="ddl-priv"/> for details
       </entry>
      </row>
     </tbody>

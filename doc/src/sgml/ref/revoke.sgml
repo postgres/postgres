@@ -178,14 +178,6 @@ REVOKE [ ADMIN OPTION FOR ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="app-psql"/>'s <command>\dp</command> command to
-   display the privileges granted on existing tables and columns.  See <xref
-   linkend="sql-grant"/> for information about the
-   format.  For non-table objects there are other <command>\d</command> commands
-   that can display their privileges.
-  </para>
-
-  <para>
    A user can only revoke privileges that were granted directly by
    that user.  If, for example, user A has granted a privilege with
    grant option to user B, and user B has in turn granted it to user
@@ -244,6 +236,11 @@ REVOKE [ ADMIN OPTION FOR ]
     lead to revoking privileges other than the ones you intended, or not
     revoking anything at all.
    </para>
+
+   <para>
+    See <xref linkend="ddl-priv"/> for more information about specific
+    privilege types, as well as how to inspect objects' privileges.
+   </para>
  </refsect1>
 
  <refsect1 id="sql-revoke-examples">
@@ -293,9 +290,10 @@ REVOKE admins FROM joe;
  <refsect1>
   <title>See Also</title>
 
-  <simpara>
-   <xref linkend="sql-grant"/>
-  </simpara>
+  <simplelist type="inline">
+   <member><xref linkend="sql-grant"/></member>
+   <member><xref linkend="sql-alterdefaultprivileges"/></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

@@ -1396,6 +1396,10 @@ ALTER TABLE products RENAME TO items;
    <primary>REVOKE</primary>
   </indexterm>
 
+  <indexterm zone="ddl-priv">
+   <primary>ACL</primary>
+  </indexterm>
+
   <para>
    When an object is created, it is assigned an owner. The
    owner is normally the role that executed the creation statement.
@@ -1413,11 +1417,9 @@ ALTER TABLE products RENAME TO items;
    <literal>EXECUTE</literal>, and <literal>USAGE</literal>.
    The privileges applicable to a particular
    object vary depending on the object's type (table, function, etc).
-   For complete information on the different types of privileges
-   supported by <productname>PostgreSQL</productname>, refer to the
-   <xref linkend="sql-grant"/> reference
-   page.  The following sections and chapters will also show you how
-   those privileges are used.
+   More detail about the meanings of these privileges appears below.
+   The following sections and chapters will also show you how
+   these privileges are used.
   </para>
 
   <para>
@@ -1427,15 +1429,17 @@ ALTER TABLE products RENAME TO items;
 
   <para>
    An object can be assigned to a new owner with an <command>ALTER</command>
-   command of the appropriate kind for the object, e.g. <xref
-   linkend="sql-altertable"/>.  Superusers can always do
-   this; ordinary roles can only do it if they are both the current owner
-   of the object (or a member of the owning role) and a member of the new
-   owning role.
+   command of the appropriate kind for the object, for example
+<programlisting>
+ALTER TABLE <replaceable>table_name</replaceable> OWNER TO <replaceable>new_owner</replaceable>;
+</programlisting>
+   Superusers can always do this; ordinary roles can only do it if they are
+   both the current owner of the object (or a member of the owning role) and
+   a member of the new owning role.
   </para>
 
   <para>
-   To assign privileges, the <command>GRANT</command> command is
+   To assign privileges, the <xref linkend="sql-grant"/> command is
    used. For example, if <literal>joe</literal> is an existing role, and
    <literal>accounts</literal> is an existing table, the privilege to
    update the table can be granted with:
@@ -1456,7 +1460,7 @@ GRANT UPDATE ON accounts TO joe;
 
   <para>
    To revoke a privilege, use the fittingly named
-   <command>REVOKE</command> command:
+   <xref linkend="sql-revoke"/> command:
 <programlisting>
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
@@ -1477,6 +1481,507 @@ REVOKE ALL ON accounts FROM PUBLIC;
    recipient (directly or through a chain of grants) will lose the
    privilege.  For details see the <xref linkend="sql-grant"/> and
    <xref linkend="sql-revoke"/> reference pages.
+  </para>
+
+  <para>
+   The available privileges are:
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>SELECT</literal></term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-select"/> from
+       any column, or specific column(s), of a table, view, materialized
+       view, or other table-like object.
+       Also allows use of <xref linkend="sql-copy"/> TO.
+       This privilege is also needed to reference existing column values in
+       <xref linkend="sql-update"/> or <xref linkend="sql-delete"/>.
+       For sequences, this privilege also allows use of the
+       <function>currval</function> function.
+       For large objects, this privilege allows the object to be read.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>INSERT</literal></term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-insert"/> of a new row into a table, view,
+       etc.  Can be granted on specific column(s), in which case
+       only those columns may be assigned to in the <command>INSERT</command>
+       command (other columns will therefore receive default values).
+       Also allows use of <xref linkend="sql-copy"/> FROM.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>UPDATE</literal></term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-update"/> of any
+       column, or specific column(s), of a table, view, etc.
+       (In practice, any nontrivial <command>UPDATE</command> command will
+       require <literal>SELECT</literal> privilege as well, since it must
+       reference table columns to determine which rows to update, and/or to
+       compute new values for columns.)
+       <literal>SELECT ... FOR UPDATE</literal>
+       and <literal>SELECT ... FOR SHARE</literal>
+       also require this privilege on at least one column, in addition to the
+       <literal>SELECT</literal> privilege.  For sequences, this
+       privilege allows use of the <function>nextval</function> and
+       <function>setval</function> functions.
+       For large objects, this privilege allows writing or truncating the
+       object.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>DELETE</literal></term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-delete"/> of a row from a table, view, etc.
+       (In practice, any nontrivial <command>DELETE</command> command will
+       require <literal>SELECT</literal> privilege as well, since it must
+       reference table columns to determine which rows to delete.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TRUNCATE</literal></term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-truncate"/> on a table, view, etc.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>REFERENCES</literal></term>
+     <listitem>
+      <para>
+       Allows creation of a foreign key constraint referencing a
+       table, or specific column(s) of a table.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TRIGGER</literal></term>
+     <listitem>
+      <para>
+       Allows creation of a trigger on a table, view, etc.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>CREATE</literal></term>
+     <listitem>
+      <para>
+       For databases, allows new schemas and publications to be created within
+       the database.
+      </para>
+      <para>
+       For schemas, allows new objects to be created within the schema.
+       To rename an existing object, you must own the
+       object <emphasis>and</emphasis> have this privilege for the containing
+       schema.
+      </para>
+      <para>
+       For tablespaces, allows tables, indexes, and temporary files to be
+       created within the tablespace, and allows databases to be created that
+       have the tablespace as their default tablespace.  (Note that revoking
+       this privilege will not alter the placement of existing objects.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>CONNECT</literal></term>
+     <listitem>
+      <para>
+       Allows the grantee to connect to the database.  This
+       privilege is checked at connection startup (in addition to checking
+       any restrictions imposed by <filename>pg_hba.conf</filename>).
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TEMPORARY</literal></term>
+     <listitem>
+      <para>
+       Allows temporary tables to be created while using the database.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>EXECUTE</literal></term>
+     <listitem>
+      <para>
+       Allows calling a function or procedure, including use of
+       any operators that are implemented on top of the function.  This is the
+       only type of privilege that is applicable to functions and procedures.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>USAGE</literal></term>
+     <listitem>
+      <para>
+       For procedural languages, allows use of the language for
+       the creation of functions in that language.  This is the only type
+       of privilege that is applicable to procedural languages.
+      </para>
+      <para>
+       For schemas, allows access to objects contained in the
+       schema (assuming that the objects' own privilege requirements are
+       also met).  Essentially this allows the grantee to <quote>look up</quote>
+       objects within the schema.  Without this permission, it is still
+       possible to see the object names, e.g. by querying system catalogs.
+       Also, after revoking this permission, existing sessions might have
+       statements that have previously performed this lookup, so this is not
+       a completely secure way to prevent object access.
+      </para>
+      <para>
+       For sequences, allows use of the
+       <function>currval</function> and <function>nextval</function> functions.
+      </para>
+      <para>
+       For types and domains, allows use of the type or domain in the
+       creation of tables, functions, and other schema objects.  (Note that
+       this privilege does not control all <quote>usage</quote> of the
+       type, such as values of the type appearing in queries.  It only
+       prevents objects from being created that depend on the type.  The
+       main purpose of this privilege is controlling which users can create
+       dependencies on a type, which could prevent the owner from changing
+       the type later.)
+      </para>
+      <para>
+       For foreign-data wrappers, allows creation of new servers using the
+       foreign-data wrapper.
+      </para>
+      <para>
+       For foreign servers, allows creation of foreign tables using the
+       server.  Grantees may also create, alter, or drop their own user
+       mappings associated with that server.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   The privileges required by other commands are listed on the
+   reference page of the respective command.
+  </para>
+
+  <para>
+   PostgreSQL grants privileges on some types of objects to
+   <literal>PUBLIC</literal> by default when the objects are created.
+   No privileges are granted to <literal>PUBLIC</literal> by default on
+   tables,
+   table columns,
+   sequences,
+   foreign data wrappers,
+   foreign servers,
+   large objects,
+   schemas,
+   or tablespaces.
+   For other types of objects, the default privileges
+   granted to <literal>PUBLIC</literal> are as follows:
+   <literal>CONNECT</literal> and <literal>TEMPORARY</literal> (create
+   temporary tables) privileges for databases;
+   <literal>EXECUTE</literal> privilege for functions and procedures; and
+   <literal>USAGE</literal> privilege for languages and data types
+   (including domains).
+   The object owner can, of course, <command>REVOKE</command>
+   both default and expressly granted privileges. (For maximum
+   security, issue the <command>REVOKE</command> in the same transaction that
+   creates the object; then there is no window in which another user
+   can use the object.)
+   Also, these default privilege settings can be overridden using the
+   <xref linkend="sql-alterdefaultprivileges"/> command.
+  </para>
+
+  <para>
+   <xref linkend="privilege-abbrevs-table"/> shows the one-letter
+   abbreviations that are used for these privilege types in
+   <firstterm>ACL</firstterm> (Access Control List) values.
+   You will see these letters in the output of the <xref linkend="app-psql"/>
+   commands listed below, or when looking at ACL columns of system catalogs.
+  </para>
+
+  <table id="privilege-abbrevs-table">
+   <title>ACL Privilege Abbreviations</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Privilege</entry>
+      <entry>Abbreviation</entry>
+      <entry>Applicable Object Types</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>SELECT</literal></entry>
+      <entry><literal>r</literal> (<quote>read</quote>)</entry>
+      <entry>
+       <literal>LARGE OBJECT</literal>,
+       <literal>SEQUENCE</literal>,
+       <literal>TABLE</literal> (and table-like objects),
+       table column
+      </entry>
+     </row>
+     <row>
+      <entry><literal>INSERT</literal></entry>
+      <entry><literal>a</literal> (<quote>append</quote>)</entry>
+      <entry><literal>TABLE</literal>, table column</entry>
+     </row>
+     <row>
+      <entry><literal>UPDATE</literal></entry>
+      <entry><literal>w</literal> (<quote>write</quote>)</entry>
+      <entry>
+       <literal>LARGE OBJECT</literal>,
+       <literal>SEQUENCE</literal>,
+       <literal>TABLE</literal>,
+       table column
+      </entry>
+     </row>
+     <row>
+      <entry><literal>DELETE</literal></entry>
+      <entry><literal>d</literal></entry>
+      <entry><literal>TABLE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>TRUNCATE</literal></entry>
+      <entry><literal>D</literal></entry>
+      <entry><literal>TABLE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>REFERENCES</literal></entry>
+      <entry><literal>x</literal></entry>
+      <entry><literal>TABLE</literal>, table column</entry>
+     </row>
+     <row>
+      <entry><literal>TRIGGER</literal></entry>
+      <entry><literal>t</literal></entry>
+      <entry><literal>TABLE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>CREATE</literal></entry>
+      <entry><literal>C</literal></entry>
+      <entry>
+       <literal>DATABASE</literal>,
+       <literal>SCHEMA</literal>,
+       <literal>TABLESPACE</literal>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>CONNECT</literal></entry>
+      <entry><literal>c</literal></entry>
+      <entry><literal>DATABASE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>TEMPORARY</literal></entry>
+      <entry><literal>T</literal></entry>
+      <entry><literal>DATABASE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>EXECUTE</literal></entry>
+      <entry><literal>X</literal></entry>
+      <entry><literal>FUNCTION</literal>, <literal>PROCEDURE</literal></entry>
+     </row>
+     <row>
+      <entry><literal>USAGE</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry>
+       <literal>DOMAIN</literal>,
+       <literal>FOREIGN DATA WRAPPER</literal>,
+       <literal>FOREIGN SERVER</literal>,
+       <literal>LANGUAGE</literal>,
+       <literal>SCHEMA</literal>,
+       <literal>SEQUENCE</literal>,
+       <literal>TYPE</literal>
+      </entry>
+     </row>
+     </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   <xref linkend="privileges-summary-table"/> summarizes the privileges
+   available for each type of SQL object, using the abbreviations shown
+   above.
+   It also shows the <application>psql</application> command
+   that can be used to examine privilege settings for each object type.
+  </para>
+
+  <table id="privileges-summary-table">
+   <title>Summary of Access Privileges</title>
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Object Type</entry>
+      <entry>All Privileges</entry>
+      <entry>Default <literal>PUBLIC</literal> Privileges</entry>
+      <entry><application>psql</application> Command</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>DATABASE</literal></entry>
+      <entry><literal>CTc</literal></entry>
+      <entry><literal>Tc</literal></entry>
+      <entry><literal>\l</literal></entry>
+     </row>
+     <row>
+      <entry><literal>DOMAIN</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry><literal>\dD+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>FUNCTION</literal> or <literal>PROCEDURE</literal></entry>
+      <entry><literal>X</literal></entry>
+      <entry><literal>X</literal></entry>
+      <entry><literal>\df+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>FOREIGN DATA WRAPPER</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\dew+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>FOREIGN SERVER</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\des+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>LANGUAGE</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry><literal>\dL+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>LARGE OBJECT</literal></entry>
+      <entry><literal>rw</literal></entry>
+      <entry>none</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>SCHEMA</literal></entry>
+      <entry><literal>UC</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\dn+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>SEQUENCE</literal></entry>
+      <entry><literal>rwU</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\dp</literal></entry>
+     </row>
+     <row>
+      <entry><literal>TABLE</literal> (and table-like objects)</entry>
+      <entry><literal>arwdDxt</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\dp</literal></entry>
+     </row>
+     <row>
+      <entry>Table column</entry>
+      <entry><literal>arwx</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\dp</literal></entry>
+     </row>
+     <row>
+      <entry><literal>TABLESPACE</literal></entry>
+      <entry><literal>C</literal></entry>
+      <entry>none</entry>
+      <entry><literal>\db+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>TYPE</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry><literal>U</literal></entry>
+      <entry><literal>\dT+</literal></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   <indexterm>
+    <primary><type>aclitem</type></primary>
+   </indexterm>
+   The privileges that have been granted for a particular object are
+   displayed as a list of <type>aclitem</type> entries, where each
+   <type>aclitem</type> describes the permissions of one grantee that
+   have been granted by a particular grantor.  For example,
+   <literal>calvin=r*w/hobbes</literal> specifies that the role
+   <literal>calvin</literal> has the privilege
+   <literal>SELECT</literal> (<literal>r</literal>) with grant option
+   (<literal>*</literal>) as well as the non-grantable
+   privilege <literal>UPDATE</literal> (<literal>w</literal>), both granted
+   by the role <literal>hobbes</literal>.  If <literal>calvin</literal>
+   also has some privileges on the same object granted by a different
+   grantor, those would appear as a separate <type>aclitem</type> entry.
+   An empty grantee field in an <type>aclitem</type> stands
+   for <literal>PUBLIC</literal>.
+  </para>
+
+  <para>
+   As an example, suppose that user <literal>miriam</literal> creates
+   table <literal>mytable</literal> and does:
+<programlisting>
+GRANT SELECT ON mytable TO PUBLIC;
+GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
+GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;
+</programlisting>
+   Then <application>psql</application>'s <literal>\dp</literal> command
+   would show:
+<programlisting>
+=&gt; \dp mytable
+                                  Access privileges
+ Schema |  Name   | Type  |   Access privileges   |   Column privileges   | Policies
+--------+---------+-------+-----------------------+-----------------------+----------
+ public | mytable | table | miriam=arwdDxt/miriam+| col1:                +|
+        |         |       | =r/miriam            +|   miriam_rw=rw/miriam |
+        |         |       | admin=arw/miriam      |                       |
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
+   If the <quote>Access privileges</quote> column is empty for a given
+   object, it means the object has default privileges (that is, its
+   privileges entry in the relevant system catalog is null).  Default
+   privileges always include all privileges for the owner, and can include
+   some privileges for <literal>PUBLIC</literal> depending on the object
+   type, as explained above.  The first <command>GRANT</command>
+   or <command>REVOKE</command> on an object will instantiate the default
+   privileges (producing, for
+   example, <literal>miriam=arwdDxt/miriam</literal>) and then modify them
+   per the specified request.  Similarly, entries are shown in <quote>Column
+   privileges</quote> only for columns with nondefault privileges.
+   (Note: for this purpose, <quote>default privileges</quote> always means
+   the built-in default privileges for the object's type.  An object whose
+   privileges have been affected by an <command>ALTER DEFAULT
+   PRIVILEGES</command> command will always be shown with an explicit
+   privilege entry that includes the effects of
+   the <command>ALTER</command>.)
+  </para>
+
+  <para>
+   Notice that the owner's implicit grant options are not marked in the
+   access privileges display.  A <literal>*</literal> will appear only when
+   grant options have been explicitly granted to someone.
   </para>
  </sect1>
 

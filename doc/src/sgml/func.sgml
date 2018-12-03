@@ -16932,21 +16932,11 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
 
   <para>
    <xref linkend="functions-aclitem-fn-table"/> shows the operators
-   available for the <type>aclitem</type> type, which is the internal
-   representation of access privileges. An <type>aclitem</type> entry
-   describes the permissions of a grantee, whether they are grantable
-   or not, and which grantor granted them. For instance,
-   <literal>calvin=r*w/hobbes</literal> specifies that the role
-   <literal>calvin</literal> has the grantable privilege
-   <literal>SELECT</literal> (<literal>r*</literal>) and the non-grantable
-   privilege <literal>UPDATE</literal> (<literal>w</literal>), granted by
-   the role <literal>hobbes</literal>. An empty grantee stands for
-   <literal>PUBLIC</literal>.
+   available for the <type>aclitem</type> type, which is the catalog
+   representation of access privileges.  See <xref linkend="ddl-priv"/>
+   for information about how to read access privilege values.
   </para>
 
-   <indexterm>
-    <primary>aclitem</primary>
-   </indexterm>
    <indexterm>
     <primary>acldefault</primary>
    </indexterm>
@@ -17015,9 +17005,9 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
      <tbody>
       <row>
        <entry><literal><function>acldefault</function>(<parameter>type</parameter>,
-                                  <parameter>ownerId</parameter>)</literal></entry>
+        <parameter>ownerId</parameter>)</literal></entry>
        <entry><type>aclitem[]</type></entry>
-       <entry>get the hardcoded default access privileges for an object belonging to <parameter>ownerId</parameter></entry>
+       <entry>get the default access privileges for an object belonging to <parameter>ownerId</parameter></entry>
       </row>
       <row>
        <entry><literal><function>aclexplode</function>(<parameter>aclitem[]</parameter>)</literal></entry>
@@ -17034,16 +17024,14 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
    </table>
 
    <para>
-    <function>acldefault</function> returns the hardcoded default access privileges
-    for an object of <parameter>type</parameter> belonging to role <parameter>ownerId</parameter>.
-    Notice that these are used in the absence of any pg_default_acl
-    (<xref linkend="catalog-pg-default-acl"/>) entry. Default access privileges are described in
-    <xref linkend="sql-grant"/> and can be overwritten with
-    <xref linkend="sql-alterdefaultprivileges"/>. In other words, this function will return
-    results which may be misleading when the defaults have been overridden.
-    Type is a <type>CHAR</type>, use
+    <function>acldefault</function> returns the built-in default access
+    privileges for an object of type <parameter>type</parameter> belonging to
+    role <parameter>ownerId</parameter>.  These represent the access
+    privileges that will be assumed when an object's ACL entry is null.
+    (The default access privileges are described in <xref linkend="ddl-priv"/>.)
+    The <parameter>type</parameter> parameter is a <type>CHAR</type>: write
     'c' for <literal>COLUMN</literal>,
-    'r' for relation-like objects such as <literal>TABLE</literal> or <literal>VIEW</literal>,
+    'r' for <literal>TABLE</literal> and table-like objects,
     's' for <literal>SEQUENCE</literal>,
     'd' for <literal>DATABASE</literal>,
     'f' for <literal>FUNCTION</literal> or <literal>PROCEDURE</literal>,
@@ -17053,15 +17041,16 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     't' for <literal>TABLESPACE</literal>,
     'F' for <literal>FOREIGN DATA WRAPPER</literal>,
     'S' for <literal>FOREIGN SERVER</literal>,
+    or
     'T' for <literal>TYPE</literal> or <literal>DOMAIN</literal>.
    </para>
 
    <para>
     <function>aclexplode</function> returns an <type>aclitem</type> array
-    as a set rows. Output columns are grantor <type>oid</type>,
+    as a set of rows. Output columns are grantor <type>oid</type>,
     grantee <type>oid</type> (<literal>0</literal> for <literal>PUBLIC</literal>),
     granted privilege as <type>text</type> (<literal>SELECT</literal>, ...)
-    and whether the prilivege is grantable as <type>boolean</type>.
+    and whether the privilege is grantable as <type>boolean</type>.
     <function>makeaclitem</function> performs the inverse operation.
    </para>
 
