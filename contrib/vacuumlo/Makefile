@@ -6,10 +6,10 @@ PGAPPICON = win32
 PROGRAM = vacuumlo
 OBJS	= vacuumlo.o $(WIN32RES)
 
+TAP_TESTS = 1
+
 PG_CPPFLAGS = -I$(libpq_srcdir)
 PG_LIBS_INTERNAL = $(libpq_pgport)
-
-EXTRA_CLEAN = tmp_check
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -21,9 +21,3 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-
-check:
-	$(prove_check)
-
-installcheck:
-	$(prove_installcheck)
