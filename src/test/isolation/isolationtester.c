@@ -201,7 +201,7 @@ main(int argc, char **argv)
 		PQclear(res);
 
 		/* Get the backend pid for lock wait checking. */
-		res = PQexec(conns[i], "SELECT pg_backend_pid()");
+		res = PQexec(conns[i], "SELECT pg_catalog.pg_backend_pid()");
 		if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		{
 			if (PQntuples(res) == 1 && PQnfields(res) == 1)
