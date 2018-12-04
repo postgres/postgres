@@ -807,6 +807,9 @@ create operator class my_op_class for type int using btree family my_op_family a
 explain (verbose, costs off)
 select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
 
+-- Update local stats on ft2
+ANALYZE ft2;
+
 -- Add into extension
 alter extension postgres_fdw add operator class my_op_class using btree;
 alter extension postgres_fdw add function my_op_cmp(a int, b int);
