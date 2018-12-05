@@ -1778,7 +1778,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       notification that this standby server has written and flushed it
       (but not yet applied it).  This can be used to gauge the delay that
       <literal>synchronous_commit</literal> level
-      <literal>remote_flush</literal> incurred while committing if this
+      <literal>on</literal> incurred while committing if this
       server was configured as a synchronous standby.</entry>
     </row>
     <row>
