@@ -834,8 +834,18 @@ DefineIndex(Oid relationId,
 		flags |= INDEX_CREATE_PARTITIONED;
 	if (stmt->primary)
 		flags |= INDEX_CREATE_IS_PRIMARY;
+
+	/*
+	 * If the table is partitioned, and recursion was declined but partitions
+	 * exist, mark the index as invalid.
+	 */
 	if (partitioned && stmt->relation && !stmt->relation->inh)
-		flags |= INDEX_CREATE_INVALID;
+	{
+		PartitionDesc	pd = RelationGetPartitionDesc(rel);
+
+		if (pd->nparts != 0)
+			flags |= INDEX_CREATE_INVALID;
+	}
 
 	if (stmt->deferrable)
 		constr_flags |= INDEX_CONSTR_CREATE_DEFERRABLE;

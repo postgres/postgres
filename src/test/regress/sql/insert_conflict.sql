@@ -551,10 +551,10 @@ drop table parted_conflict;
 -- partition
 create table parted_conflict (a int, b text) partition by range (a);
 create table parted_conflict_1 partition of parted_conflict for values from (0) to (1000) partition by range (a);
+create table parted_conflict_1_1 partition of parted_conflict_1 for values from (0) to (500);
 create unique index on only parted_conflict_1 (a);
 create unique index on only parted_conflict (a);
 alter index parted_conflict_a_idx attach partition parted_conflict_1_a_idx;
-create table parted_conflict_1_1 partition of parted_conflict_1 for values from (0) to (500);
 insert into parted_conflict values (40, 'forty');
 insert into parted_conflict_1 values (40, 'cuarenta')
   on conflict (a) do update set b = excluded.b;
