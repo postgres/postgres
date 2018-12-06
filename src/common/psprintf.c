@@ -113,9 +113,9 @@ pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
 	if (unlikely(nprinted < 0))
 	{
 #ifndef FRONTEND
-		elog(ERROR, "vsnprintf failed: %m");
+		elog(ERROR, "vsnprintf failed: %m with format string \"%s\"", fmt);
 #else
-		fprintf(stderr, "vsnprintf failed: %s\n", strerror(errno));
+		fprintf(stderr, "vsnprintf failed: %m with format string \"%s\"\n", fmt);
 		exit(EXIT_FAILURE);
 #endif
 	}

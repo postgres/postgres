@@ -4387,7 +4387,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&ssl_min_protocol_version,
 		PG_TLS1_VERSION,
-		ssl_protocol_versions_info + 1 /* don't allow PG_TLS_ANY */,
+		ssl_protocol_versions_info + 1, /* don't allow PG_TLS_ANY */
 		NULL, NULL, NULL
 	},
 
@@ -9666,7 +9666,7 @@ do_serialize(char **destptr, Size *maxbytes, const char *fmt,...)
 	if (n < 0)
 	{
 		/* Shouldn't happen. Better show errno description. */
-		elog(ERROR, "vsnprintf failed: %m");
+		elog(ERROR, "vsnprintf failed: %m with format string \"%s\"", fmt);
 	}
 	if (n >= *maxbytes)
 	{

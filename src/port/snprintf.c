@@ -452,8 +452,6 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 		have_star = afterstar = false;
 nextch2:
 		ch = *format++;
-		if (ch == '\0')
-			break;				/* illegal, but we don't complain */
 		switch (ch)
 		{
 			case '-':
@@ -718,6 +716,13 @@ nextch2:
 			case '%':
 				dopr_outch('%', target);
 				break;
+			default:
+
+				/*
+				 * Anything else --- in particular, '\0' indicating end of
+				 * format string --- is bogus.
+				 */
+				goto bad_format;
 		}
 
 		/* Check for failure after each conversion spec */
@@ -782,8 +787,6 @@ find_arguments(const char *format, va_list args,
 		afterstar = false;
 nextch1:
 		ch = *format++;
-		if (ch == '\0')
-			break;				/* illegal, but we don't complain */
 		switch (ch)
 		{
 			case '-':
@@ -918,6 +921,8 @@ nextch1:
 			case 'm':
 			case '%':
 				break;
+			default:
+				return false;	/* bogus format string */
 		}
 
 		/*
