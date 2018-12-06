@@ -107,15 +107,14 @@ typedef struct XLogRecordBlockHeader
  * Additional header information when a full-page image is included
  * (i.e. when BKPBLOCK_HAS_IMAGE is set).
  *
- * As a trivial form of data compression, the XLOG code is aware that
- * PG data pages usually contain an unused "hole" in the middle, which
- * contains only zero bytes.  If the length of "hole" > 0 then we have removed
- * such a "hole" from the stored data (and it's not counted in the
- * XLOG record's CRC, either).  Hence, the amount of block data actually
- * present is BLCKSZ - the length of "hole" bytes.
+ * The XLOG code is aware that PG data pages usually contain an unused "hole"
+ * in the middle, which contains only zero bytes.  Since we know that the
+ * "hole" is all zeros, we remove it from the stored data (and it's not counted
+ * in the XLOG record's CRC, either).  Hence, the amount of block data actually
+ * present is (BLCKSZ - <length of "hole" bytes>).
  *
- * When wal_compression is enabled, a full page image which "hole" was
- * removed is additionally compressed using PGLZ compression algorithm.
+ * Additionally, when wal_compression is enabled, we will try to compress full
+ * page images using the PGLZ compression algorithm, after removing the "hole".
  * This can reduce the WAL volume, but at some extra cost of CPU spent
  * on the compression during WAL logging. In this case, since the "hole"
  * length cannot be calculated by subtracting the number of page image bytes

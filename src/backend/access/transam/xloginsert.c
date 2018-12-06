@@ -605,7 +605,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 				}
 				else
 				{
-					/* No "hole" to compress out */
+					/* No "hole" to remove */
 					bimg.hole_offset = 0;
 					cbimg.hole_length = 0;
 				}
