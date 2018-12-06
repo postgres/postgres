@@ -1249,7 +1249,7 @@ include_dir 'conf.d'
         than the client's.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
-        The default is <literal>true</literal>.
+        The default is <literal>on</literal>.
        </para>
 
        <para>
@@ -1404,12 +1404,12 @@ include_dir 'conf.d'
         This parameter determines whether the passphrase command set by
         <varname>ssl_passphrase_command</varname> will also be called during a
         configuration reload if a key file needs a passphrase.  If this
-        parameter is false (the default), then
+        parameter is off (the default), then
         <varname>ssl_passphrase_command</varname> will be ignored during a
         reload and the SSL configuration will not be reloaded if a passphrase
         is needed.  That setting is appropriate for a command that requires a
         TTY for prompting, which might not be available when the server is
-        running.  Setting this parameter to true might be appropriate if the
+        running.  Setting this parameter to on might be appropriate if the
         passphrase is obtained from a file, for example.
        </para>
        <para>
@@ -3330,14 +3330,14 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <listitem>
        <para>
         Specifies whether to stop just after the specified recovery target
-        (<literal>true</literal>), or just before the recovery target
-        (<literal>false</literal>).
+        (<literal>on</literal>), or just before the recovery target
+        (<literal>off</literal>).
         Applies when <xref linkend="guc-recovery-target-lsn"/>,
         <xref linkend="guc-recovery-target-time"/>, or
         <xref linkend="guc-recovery-target-xid"/> is specified.
         This setting controls whether transactions
         having exactly the target WAL location (LSN), commit time, or transaction ID, respectively, will
-        be included in the recovery.  Default is <literal>true</literal>.
+        be included in the recovery.  Default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -8675,8 +8675,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        If true, any error will terminate the current session.  By default,
-        this is set to false, so that only FATAL errors will terminate the
+        If on, any error will terminate the current session.  By default,
+        this is set to off, so that only FATAL errors will terminate the
         session.
        </para>
       </listitem>
@@ -8690,9 +8690,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        When set to true, which is the default, <productname>PostgreSQL</productname>
+        When set to on, which is the default, <productname>PostgreSQL</productname>
         will automatically reinitialize after a backend crash.  Leaving this
-        value set to true is normally the best way to maximize the availability
+        value set to on is normally the best way to maximize the availability
         of the database.  However, in some circumstances, such as when
         <productname>PostgreSQL</productname> is being invoked by clusterware, it may be
         useful to disable the restart so that the clusterware can gain
@@ -8709,7 +8709,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        When set to false, which is the default, <productname>PostgreSQL</productname>
+        When set to off, which is the default, <productname>PostgreSQL</productname>
         will raise a PANIC-level error on failure to flush modified data files
         to the filesystem.  This causes the database server to crash.
        </para>
@@ -8724,9 +8724,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         faulty hardware.
        </para>
        <para>
-        If set to true, <productname>PostgreSQL</productname> will instead
+        If set to on, <productname>PostgreSQL</productname> will instead
         report an error but continue to run so that the data flushing
-        operation can be retried in a later checkpoint.  Only set it to true
+        operation can be retried in a later checkpoint.  Only set it to on
         after investigating the operating system's treatment of buffered data
         in case of write-back failure.
        </para>
