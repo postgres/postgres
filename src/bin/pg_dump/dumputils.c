@@ -95,6 +95,8 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 	{
 		if (!parsePGArray(racls, &raclitems, &nraclitems))
 		{
+			if (aclitems)
+				free(aclitems);
 			if (raclitems)
 				free(raclitems);
 			return false;
