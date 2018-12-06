@@ -1098,8 +1098,8 @@ WHERE tablename = 'road';
    </para>
 
    <para>
-    Statistics objects are created using
-    <xref linkend="sql-createstatistics"/>, which see for more details.
+    Statistics objects are created using the
+    <xref linkend="sql-createstatistics"/> command.
     Creation of such an object merely creates a catalog entry expressing
     interest in the statistics.  Actual data collection is performed
     by <command>ANALYZE</command> (either a manual command, or background
