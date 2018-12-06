@@ -2564,7 +2564,7 @@ create trigger child_row_trig
 -- but now we're not allowed to make it inherit anymore
 alter table child inherit parent;
 ERROR:  trigger "child_row_trig" prevents table "child" from becoming an inheritance child
-DETAIL:  ROW triggers with transition tables are not supported in inheritance hierarchies
+DETAIL:  ROW triggers with transition tables are not supported in inheritance hierarchies.
 -- drop the trigger, and now we're allowed to make it inherit again
 drop trigger child_row_trig on child;
 alter table child inherit parent;

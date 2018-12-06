@@ -11382,7 +11382,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("trigger \"%s\" prevents table \"%s\" from becoming an inheritance child",
 						trigger_name, RelationGetRelationName(child_rel)),
-				 errdetail("ROW triggers with transition tables are not supported in inheritance hierarchies")));
+				 errdetail("ROW triggers with transition tables are not supported in inheritance hierarchies.")));
 
 	/* OK to create inheritance */
 	CreateInheritance(child_rel, parent_rel);

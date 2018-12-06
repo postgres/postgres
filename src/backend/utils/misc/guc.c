@@ -10929,7 +10929,7 @@ check_effective_io_concurrency(int *newval, void **extra, GucSource source)
 #else
 	if (*newval != 0)
 	{
-		GUC_check_errdetail("effective_io_concurrency must be set to 0 on platforms that lack posix_fadvise()");
+		GUC_check_errdetail("effective_io_concurrency must be set to 0 on platforms that lack posix_fadvise().");
 		return false;
 	}
 	return true;
@@ -11041,7 +11041,7 @@ check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 		strtoul(*newval, NULL, 0);
 		if (errno == EINVAL || errno == ERANGE)
 		{
-			GUC_check_errdetail("recovery_target_timeline is not a valid number");
+			GUC_check_errdetail("recovery_target_timeline is not a valid number.");
 			return false;
 		}
 		rttg = RECOVERY_TARGET_TIMELINE_NUMERIC;
@@ -11219,7 +11219,7 @@ check_recovery_target_name(char **newval, void **extra, GucSource source)
 	/* Use the value of newval directly */
 	if (strlen(*newval) >= MAXFNAMELEN)
 	{
-		GUC_check_errdetail("recovery_target_name is too long (maximum %d characters)",
+		GUC_check_errdetail("recovery_target_name is too long (maximum %d characters).",
 							MAXFNAMELEN - 1);
 		return false;
 	}

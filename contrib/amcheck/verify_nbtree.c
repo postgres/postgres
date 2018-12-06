@@ -294,7 +294,7 @@ btree_index_checkable(Relation rel)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot check index \"%s\"",
 						RelationGetRelationName(rel)),
-				 errdetail("Index is not valid")));
+				 errdetail("Index is not valid.")));
 }
 
 /*
