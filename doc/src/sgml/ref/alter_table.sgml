@@ -616,9 +616,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>SET WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      Backward compatibility syntax for removing the <literal>oid</literal>
-      system column. As oid system columns cannot be added anymore, this never
-      has an effect.
+      Backward-compatible syntax for removing the <literal>oid</literal>
+      system column.  As <literal>oid</literal> system columns cannot be
+      added anymore, this never has an effect.
      </para>
     </listitem>
    </varlistentry>
@@ -744,8 +744,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       This form links the table to a composite type as though <command>CREATE
       TABLE OF</command> had formed it.  The table's list of column names and types
-      must precisely match that of the composite type; the presence of
-      an <literal>oid</literal> system column is permitted to differ.  The table must
+      must precisely match that of the composite type.  The table must
       not inherit from any other table.  These restrictions ensure
       that <command>CREATE TABLE OF</command> would permit an equivalent table
       definition.
@@ -1178,8 +1177,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     the column contents and the old type is either binary coercible to the new
     type or an unconstrained domain over the new type, a table rewrite is not
     needed; but any indexes on the affected columns must still be rebuilt.
-    Adding or removing a system <literal>oid</literal> column also requires
-    rewriting the entire table.  Table and/or index rebuilds may take a
+    Table and/or index rebuilds may take a
     significant amount of time for a large table; and will temporarily require
     as much as double the disk space.
    </para>
@@ -1208,9 +1206,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     column. Thus, dropping a column is quick but it will not immediately
     reduce the on-disk size of your table, as the space occupied
     by the dropped column is not reclaimed.  The space will be
-    reclaimed over time as existing rows are updated.  (These statements do
-    not apply when dropping the system <literal>oid</literal> column; that is done
-    with an immediate rewrite.)
+    reclaimed over time as existing rows are updated.
    </para>
 
    <para>
