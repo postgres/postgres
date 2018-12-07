@@ -1414,7 +1414,7 @@ EXECUTE 'UPDATE tbl SET '
     <para>
      Dynamic SQL statements can also be safely constructed using the
      <function>format</function> function (see <xref
-     linkend="functions-string"/>). For example:
+     linkend="functions-string-format"/>). For example:
 <programlisting>
 EXECUTE format('UPDATE tbl SET %I = %L '
    'WHERE key = %L', colname, newvalue, keyvalue);
