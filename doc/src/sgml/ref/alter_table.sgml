@@ -358,27 +358,36 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <xref linkend="sql-createtable"/>, plus the option <literal>NOT
       VALID</literal>, which is currently only allowed for foreign key
       and CHECK constraints.
-      If the constraint is marked <literal>NOT VALID</literal>, the
-      potentially-lengthy initial check to verify that all rows in the table
-      satisfy the constraint is skipped.  The constraint will still be
-      enforced against subsequent inserts or updates (that is, they'll fail
-      unless there is a matching row in the referenced table, in the case
-      of foreign keys; and they'll fail unless the new row matches the
-      specified check constraints).  But the
-      database will not assume that the constraint holds for all rows in
-      the table, until it is validated by using the <literal>VALIDATE
-      CONSTRAINT</literal> option.  Foreign key constraints on partitioned
-      tables may not be declared <literal>NOT VALID</literal> at present.
      </para>
 
      <para>
-      The addition of a foreign key constraint requires a
-      <literal>SHARE ROW EXCLUSIVE</literal> lock on the referenced table.
+      Normally, this form will cause a scan of the table to verify that all
+      existing rows in the table satisfy the new constraint.  But if
+      the <literal>NOT VALID</literal> option is used, this
+      potentially-lengthy scan is skipped.  The constraint will still be
+      enforced against subsequent inserts or updates (that is, they'll fail
+      unless there is a matching row in the referenced table, in the case
+      of foreign keys, or they'll fail unless the new row matches the
+      specified check condition).  But the
+      database will not assume that the constraint holds for all rows in
+      the table, until it is validated by using the <literal>VALIDATE
+      CONSTRAINT</literal> option.
+      See <xref linkend="sql-altertable-notes"
+      endterm="sql-altertable-notes-title"/> below for more information
+      about using the <literal>NOT VALID</literal> option.
+     </para>
+
+     <para>
+      Addition of a foreign key constraint requires a
+      <literal>SHARE ROW EXCLUSIVE</literal> lock on the referenced table,
+      in addition to the lock on the table receiving the constraint.
      </para>
 
      <para>
       Additional restrictions apply when unique or primary key constraints
-      are added to partitioned tables; see <xref linkend="sql-createtable" />.
+      are added to partitioned tables; see <xref linkend="sql-createtable"/>.
+      Also, foreign key constraints on partitioned
+      tables may not be declared <literal>NOT VALID</literal> at present.
      </para>
 
     </listitem>
@@ -453,23 +462,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>VALIDATE CONSTRAINT</literal></term>
     <listitem>
      <para>
-      This form validates a foreign key or check constraint that was previously created
-      as <literal>NOT VALID</literal>, by scanning the table to ensure there
-      are no rows for which the constraint is not satisfied.
-      Nothing happens if the constraint is already marked valid.
-     </para>
-     <para>
-      Validation can be a long process on larger tables. The value of separating
-      validation from initial creation is that you can defer validation to less
-      busy times, or can be used to give additional time to correct pre-existing
-      errors while preventing new errors. Note also that validation on its own
-      does not prevent normal write commands against the table while it runs.
-     </para>
-     <para>
-      Validation acquires only a <literal>SHARE UPDATE EXCLUSIVE</literal> lock
-      on the table being altered. If the constraint is a foreign key then
-      a <literal>ROW SHARE</literal> lock is also required on
-      the table referenced by the constraint.
+      This form validates a foreign key or check constraint that was
+      previously created as <literal>NOT VALID</literal>, by scanning the
+      table to ensure there are no rows for which the constraint is not
+      satisfied.  Nothing happens if the constraint is already marked valid.
+      (See <xref linkend="sql-altertable-notes"
+      endterm="sql-altertable-notes-title"/> below for an explanation of the
+      usefulness of this command.)
      </para>
     </listitem>
    </varlistentry>
@@ -1153,8 +1152,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </variablelist>
  </refsect1>
 
- <refsect1>
-  <title>Notes</title>
+ <refsect1 id="sql-altertable-notes">
+  <title id="sql-altertable-notes-title">Notes</title>
 
    <para>
     The key word <literal>COLUMN</literal> is noise and can be omitted.
@@ -1197,6 +1196,32 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     The main reason for providing the option to specify multiple changes
     in a single <command>ALTER TABLE</command> is that multiple table scans or
     rewrites can thereby be combined into a single pass over the table.
+   </para>
+
+   <para>
+    Scanning a large table to verify a new foreign key or check constraint
+    can take a long time, and other updates to the table are locked out
+    until the <command>ALTER TABLE ADD CONSTRAINT</command> command is
+    committed.  The main purpose of the <literal>NOT VALID</literal>
+    constraint option is to reduce the impact of adding a constraint on
+    concurrent updates.  With <literal>NOT VALID</literal>,
+    the <command>ADD CONSTRAINT</command> command does not scan the table
+    and can be committed immediately.  After that, a <literal>VALIDATE
+    CONSTRAINT</literal> command can be issued to verify that existing rows
+    satisfy the constraint.  The validation step does not need to lock out
+    concurrent updates, since it knows that other transactions will be
+    enforcing the constraint for rows that they insert or update; only
+    pre-existing rows need to be checked.  Hence, validation acquires only
+    a <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the table being
+    altered.  (If the constraint is a foreign key then a <literal>ROW
+    SHARE</literal> lock is also required on the table referenced by the
+    constraint.)  In addition to improving concurrency, it can be useful to
+    use <literal>NOT VALID</literal> and <literal>VALIDATE
+    CONSTRAINT</literal> in cases where the table is known to contain
+    pre-existing violations.  Once the constraint is in place, no new
+    violations can be inserted, and the existing problems can be corrected
+    at leisure until <literal>VALIDATE CONSTRAINT</literal> finally
+    succeeds.
    </para>
 
    <para>

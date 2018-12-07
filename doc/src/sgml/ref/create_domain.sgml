@@ -214,6 +214,30 @@ INSERT INTO tab (domcol) VALUES ((SELECT domcol FROM tab WHERE false));
    and then to apply column <literal>NOT NULL</literal> constraints to columns of
    the domain type as needed, rather than directly to the domain type.
   </para>
+
+  <para>
+   <productname>PostgreSQL</productname> assumes that
+   <literal>CHECK</literal> constraints' conditions are immutable, that is,
+   they will always give the same result for the same input value.  This
+   assumption is what justifies examining <literal>CHECK</literal>
+   constraints only when a value is first converted to be of a domain type,
+   and not at other times.  (This is essentially the same as the treatment
+   of table <literal>CHECK</literal> constraints, as described in
+   <xref linkend="ddl-constraints-check-constraints"/>.)
+  </para>
+
+  <para>
+   An example of a common way to break this assumption is to reference a
+   user-defined function in a <literal>CHECK</literal> expression, and then
+   change the behavior of that
+   function.  <productname>PostgreSQL</productname> does not disallow that,
+   but it will not notice if there are stored values of the domain type that
+   now violate the <literal>CHECK</literal> constraint. That would cause a
+   subsequent database dump and reload to fail.  The recommended way to
+   handle such a change is to drop the constraint (using <command>ALTER
+   DOMAIN</command>), adjust the function definition, and re-add the
+   constraint, thereby rechecking it against stored data.
+  </para>
  </refsect1>
 
  <refsect1>
