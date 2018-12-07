@@ -484,7 +484,7 @@ RemovePublicationRelById(Oid proid)
 }
 
 /*
- * Open relations based on provided by RangeVar list.
+ * Open relations specified by a RangeVar list.
  * The returned tables are locked in ShareUpdateExclusiveLock mode.
  */
 static List *
@@ -499,11 +499,12 @@ OpenTableList(List *tables)
 	 */
 	foreach(lc, tables)
 	{
-		RangeVar   *rv = lfirst(lc);
-		Relation	rel;
+		RangeVar   *rv = castNode(RangeVar, lfirst(lc));
 		bool		recurse = rv->inh;
+		Relation	rel;
 		Oid			myrelid;
 
+		/* Allow query cancel in case this takes a long time */
 		CHECK_FOR_INTERRUPTS();
 
 		rel = heap_openrv(rv, ShareUpdateExclusiveLock);
@@ -521,13 +522,15 @@ OpenTableList(List *tables)
 			heap_close(rel, ShareUpdateExclusiveLock);
 			continue;
 		}
+
 		rels = lappend(rels, rel);
 		relids = lappend_oid(relids, myrelid);
 
+		/* Add children of this rel, if requested */
 		if (recurse)
 		{
-			ListCell   *child;
 			List	   *children;
+			ListCell   *child;
 
 			children = find_all_inheritors(myrelid, ShareUpdateExclusiveLock,
 										   NULL);
@@ -536,18 +539,15 @@ OpenTableList(List *tables)
 			{
 				Oid			childrelid = lfirst_oid(child);
 
-				if (list_member_oid(relids, childrelid))
-					continue;
+				/* Allow query cancel in case this takes a long time */
+				CHECK_FOR_INTERRUPTS();
 
 				/*
 				 * Skip duplicates if user specified both parent and child
 				 * tables.
 				 */
 				if (list_member_oid(relids, childrelid))
-				{
-					heap_close(rel, ShareUpdateExclusiveLock);
 					continue;
-				}
 
 				/* find_all_inheritors already got lock */
 				rel = heap_open(childrelid, NoLock);
