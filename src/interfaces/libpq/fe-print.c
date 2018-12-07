@@ -304,6 +304,8 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 		if (po->header && !po->html3)
 			fprintf(fout, "(%d row%s)\n\n", PQntuples(res),
 					(PQntuples(res) == 1) ? "" : "s");
+		if (po->html3 && !po->expanded)
+			fputs("</table>\n", fout);
 		free(fieldMax);
 		free(fieldNotNum);
 		free((void *) fieldNames);
@@ -323,8 +325,6 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 #endif							/* ENABLE_THREAD_SAFETY */
 #endif							/* WIN32 */
 		}
-		if (po->html3 && !po->expanded)
-			fputs("</table>\n", fout);
 	}
 }
 
