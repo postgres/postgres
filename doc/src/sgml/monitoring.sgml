@@ -1920,6 +1920,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        </itemizedlist>
      </entry>
     </row>
+    <row>
+     <entry><structfield>reply_time</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
+     <entry>Send time of last reply message received from standby server</entry>
+    </row>
    </tbody>
    </tgroup>
   </table>
