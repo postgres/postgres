@@ -2026,6 +2026,8 @@ toast_fetch_datum(struct varlena *attr)
  *
  *	Reconstruct a segment of a Datum from the chunks saved
  *	in the toast relation
+ *
+ *	Note that this function only supports non-compressed external datums.
  * ----------
  */
 static struct varlena *
@@ -2085,10 +2087,7 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset, int32 length)
 
 	result = (struct varlena *) palloc(length + VARHDRSZ);
 
-	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
-		SET_VARSIZE_COMPRESSED(result, length + VARHDRSZ);
-	else
-		SET_VARSIZE(result, length + VARHDRSZ);
+	SET_VARSIZE(result, length + VARHDRSZ);
 
 	if (length == 0)
 		return result;			/* Can save a lot of work at this point! */
