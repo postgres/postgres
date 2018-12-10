@@ -2246,12 +2246,16 @@ my %tests = (
 		create_order => 91,
 		create_sql =>
 		  'CREATE TABLE dump_test_second_schema.measurement_y2006m2
-					   PARTITION OF dump_test.measurement FOR VALUES
-					   FROM (\'2006-02-01\') TO (\'2006-03-01\');',
+						PARTITION OF dump_test.measurement (
+							unitsales DEFAULT 0 CHECK (unitsales >= 0)
+						)
+						FOR VALUES FROM (\'2006-02-01\') TO (\'2006-03-01\');',
 		regexp => qr/^
 			\Q-- Name: measurement_y2006m2;\E.*\n
 			\Q--\E\n\n
-			\QCREATE TABLE dump_test_second_schema.measurement_y2006m2 PARTITION OF dump_test.measurement\E\n
+			\QCREATE TABLE dump_test_second_schema.measurement_y2006m2 PARTITION OF dump_test.measurement (\E\n
+			\s+\QCONSTRAINT measurement_y2006m2_unitsales_check CHECK ((unitsales >= 0))\E\n
+			\)\n
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
 		like => {

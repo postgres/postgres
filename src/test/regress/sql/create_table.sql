@@ -639,11 +639,26 @@ CREATE TABLE part_b PARTITION OF parted (
 ) FOR VALUES IN ('b');
 
 CREATE TABLE part_b PARTITION OF parted (
-	b NOT NULL DEFAULT 1 CHECK (b >= 0),
-	CONSTRAINT check_a CHECK (length(a) > 0)
+	b NOT NULL DEFAULT 1,
+	CONSTRAINT check_a CHECK (length(a) > 0),
+	CONSTRAINT check_b CHECK (b >= 0)
 ) FOR VALUES IN ('b');
--- conislocal should be false for any merged constraints
-SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass AND conname = 'check_a';
+-- conislocal should be false for any merged constraints, true otherwise
+SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass ORDER BY conislocal, coninhcount;
+
+-- Once check_b is added to the parent, it should be made non-local for part_b
+ALTER TABLE parted ADD CONSTRAINT check_b CHECK (b >= 0);
+SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass;
+
+-- Neither check_a nor check_b are droppable from part_b
+ALTER TABLE part_b DROP CONSTRAINT check_a;
+ALTER TABLE part_b DROP CONSTRAINT check_b;
+
+-- And dropping it from parted should leave no trace of them on part_b, unlike
+-- traditional inheritance where they will be left behind, because they would
+-- be local constraints.
+ALTER TABLE parted DROP CONSTRAINT check_a, DROP CONSTRAINT check_b;
+SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass;
 
 -- specify PARTITION BY for a partition
 CREATE TABLE fail_part_col_not_found PARTITION OF parted FOR VALUES IN ('c') PARTITION BY RANGE (c);

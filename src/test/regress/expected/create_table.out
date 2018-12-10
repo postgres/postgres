@@ -703,16 +703,42 @@ CREATE TABLE part_b PARTITION OF parted (
 ) FOR VALUES IN ('b');
 ERROR:  column "b" specified more than once
 CREATE TABLE part_b PARTITION OF parted (
-	b NOT NULL DEFAULT 1 CHECK (b >= 0),
-	CONSTRAINT check_a CHECK (length(a) > 0)
+	b NOT NULL DEFAULT 1,
+	CONSTRAINT check_a CHECK (length(a) > 0),
+	CONSTRAINT check_b CHECK (b >= 0)
 ) FOR VALUES IN ('b');
 NOTICE:  merging constraint "check_a" with inherited definition
--- conislocal should be false for any merged constraints
-SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass AND conname = 'check_a';
+-- conislocal should be false for any merged constraints, true otherwise
+SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass ORDER BY conislocal, coninhcount;
  conislocal | coninhcount 
 ------------+-------------
  f          |           1
-(1 row)
+ t          |           0
+(2 rows)
+
+-- Once check_b is added to the parent, it should be made non-local for part_b
+ALTER TABLE parted ADD CONSTRAINT check_b CHECK (b >= 0);
+NOTICE:  merging constraint "check_b" with inherited definition
+SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass;
+ conislocal | coninhcount 
+------------+-------------
+ f          |           1
+ f          |           1
+(2 rows)
+
+-- Neither check_a nor check_b are droppable from part_b
+ALTER TABLE part_b DROP CONSTRAINT check_a;
+ERROR:  cannot drop inherited constraint "check_a" of relation "part_b"
+ALTER TABLE part_b DROP CONSTRAINT check_b;
+ERROR:  cannot drop inherited constraint "check_b" of relation "part_b"
+-- And dropping it from parted should leave no trace of them on part_b, unlike
+-- traditional inheritance where they will be left behind, because they would
+-- be local constraints.
+ALTER TABLE parted DROP CONSTRAINT check_a, DROP CONSTRAINT check_b;
+SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_b'::regclass;
+ conislocal | coninhcount 
+------------+-------------
+(0 rows)
 
 -- specify PARTITION BY for a partition
 CREATE TABLE fail_part_col_not_found PARTITION OF parted FOR VALUES IN ('c') PARTITION BY RANGE (c);
@@ -757,9 +783,6 @@ drop table parted_collate_must_match;
  b      | integer |           | not null | 1       | plain    |              | 
 Partition of: parted FOR VALUES IN ('b')
 Partition constraint: ((a IS NOT NULL) AND (a = 'b'::text))
-Check constraints:
-    "check_a" CHECK (length(a) > 0)
-    "part_b_b_check" CHECK (b >= 0)
 
 -- Both partition bound and partition key in describe output
 \d+ part_c
@@ -771,8 +794,6 @@ Check constraints:
 Partition of: parted FOR VALUES IN ('c')
 Partition constraint: ((a IS NOT NULL) AND (a = 'c'::text))
 Partition key: RANGE (b)
-Check constraints:
-    "check_a" CHECK (length(a) > 0)
 Partitions: part_c_1_10 FOR VALUES FROM (1) TO (10)
 
 -- a level-2 partition's constraint will include the parent's expressions
@@ -784,8 +805,6 @@ Partitions: part_c_1_10 FOR VALUES FROM (1) TO (10)
  b      | integer |           | not null | 0       | plain    |              | 
 Partition of: part_c FOR VALUES FROM (1) TO (10)
 Partition constraint: ((a IS NOT NULL) AND (a = 'c'::text) AND (b IS NOT NULL) AND (b >= 1) AND (b < 10))
-Check constraints:
-    "check_a" CHECK (length(a) > 0)
 
 -- Show partition count in the parent's describe output
 -- Tempted to include \d+ output listing partitions with bound info but
@@ -798,8 +817,6 @@ Check constraints:
  a      | text    |           |          | 
  b      | integer |           | not null | 0
 Partition key: LIST (a)
-Check constraints:
-    "check_a" CHECK (length(a) > 0)
 Number of partitions: 3 (Use \d+ to list them.)
 
 \d hash_parted
