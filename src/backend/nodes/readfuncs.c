@@ -28,6 +28,7 @@
 
 #include <math.h>
 
+#include "miscadmin.h"
 #include "nodes/parsenodes.h"
 #include "nodes/readfuncs.h"
 
@@ -1291,6 +1292,9 @@ parseNodeString(void)
 	void	   *return_value;
 
 	READ_TEMP_LOCALS();
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
 
 	token = pg_strtok(&length);
 
