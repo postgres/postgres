@@ -643,6 +643,9 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attstorage = 'p';
 			att->attcollation = InvalidOid;
 			break;
+
+		default:
+			elog(ERROR, "unsupported type %u", oidtypeid);
 	}
 }
 
