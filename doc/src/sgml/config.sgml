@@ -1675,12 +1675,11 @@ include_dir 'conf.d'
         enforced by the kernel (as set by <literal>ulimit -s</literal> or local
         equivalent), less a safety margin of a megabyte or so.  The safety
         margin is needed because the stack depth is not checked in every
-        routine in the server, but only in key potentially-recursive routines
-        such as expression evaluation.  The default setting is two
-        megabytes (<literal>2MB</literal>), which is conservatively small and
-        unlikely to risk crashes.  However, it might be too small to allow
-        execution of complex functions.  Only superusers can change this
-        setting.
+        routine in the server, but only in key potentially-recursive routines.
+        The default setting is two megabytes (<literal>2MB</literal>), which
+        is conservatively small and unlikely to risk crashes.  However,
+        it might be too small to allow execution of complex functions.
+        Only superusers can change this setting.
        </para>
 
        <para>
