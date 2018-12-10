@@ -3726,6 +3726,9 @@ planstate_tree_walker(PlanState *planstate,
 	Plan	   *plan = planstate->plan;
 	ListCell   *lc;
 
+	/* Guard against stack overflow due to overly complex plan trees */
+	check_stack_depth();
+
 	/* initPlan-s */
 	if (planstate_walk_subplans(planstate->initPlan, walker, context))
 		return true;

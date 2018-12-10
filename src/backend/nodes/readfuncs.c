@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include "fmgr.h"
+#include "miscadmin.h"
 #include "nodes/extensible.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
@@ -2548,6 +2549,9 @@ parseNodeString(void)
 	void	   *return_value;
 
 	READ_TEMP_LOCALS();
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
 
 	token = pg_strtok(&length);
 
