@@ -1521,6 +1521,21 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'CREATE OPERATOR CLASS dump_test.op_class_empty' => {
+		create_order => 89,
+		create_sql   => 'CREATE OPERATOR CLASS dump_test.op_class_empty
+		                 FOR TYPE bigint USING btree FAMILY dump_test.op_family
+						 AS STORAGE bigint;',
+		regexp => qr/^
+			\QCREATE OPERATOR CLASS dump_test.op_class_empty\E\n\s+
+			\QFOR TYPE bigint USING btree FAMILY dump_test.op_family AS\E\n\s+
+			\QSTORAGE bigint;\E
+			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE EVENT TRIGGER test_event_trigger' => {
 		create_order => 33,
 		create_sql   => 'CREATE EVENT TRIGGER test_event_trigger
