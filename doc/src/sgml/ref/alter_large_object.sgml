@@ -30,9 +30,15 @@ ALTER LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable>
 
   <para>
    <command>ALTER LARGE OBJECT</command> changes the definition of a
-   large object. The only functionality is to assign a new owner.
-   You must be superuser or owner of the large object to use
-   <command>ALTER LARGE OBJECT</command>.
+   large object.
+  </para>
+
+  <para>
+   You must own the large object to use <command>ALTER LARGE OBJECT</command>.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role.  (However, a superuser can alter any large object anyway.)
+   Currently, the only functionality is to assign a new owner, so both
+   restrictions always apply.
   </para>
  </refsect1>
 
