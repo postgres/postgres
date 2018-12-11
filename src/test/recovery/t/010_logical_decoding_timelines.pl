@@ -183,7 +183,7 @@ my $endpos = $node_replica->safe_psql('postgres',
 
 $stdout = $node_replica->pg_recvlogical_upto(
 	'postgres', 'before_basebackup',
-	$endpos,    30,
+	$endpos,    180,
 	'include-xids'     => '0',
 	'skip-empty-xacts' => '1');
 
