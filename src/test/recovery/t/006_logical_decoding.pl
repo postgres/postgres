@@ -72,7 +72,7 @@ my $endpos = $node_master->safe_psql('postgres',
 print "waiting to replay $endpos\n";
 
 my $stdout_recv = $node_master->pg_recvlogical_upto(
-	'postgres', 'test_slot', $endpos, 10,
+	'postgres', 'test_slot', $endpos, 180,
 	'include-xids'     => '0',
 	'skip-empty-xacts' => '1');
 chomp($stdout_recv);
@@ -84,7 +84,7 @@ $node_master->poll_query_until('postgres',
 ) or die "slot never became inactive";
 
 $stdout_recv = $node_master->pg_recvlogical_upto(
-	'postgres', 'test_slot', $endpos, 10,
+	'postgres', 'test_slot', $endpos, 180,
 	'include-xids'     => '0',
 	'skip-empty-xacts' => '1');
 chomp($stdout_recv);
