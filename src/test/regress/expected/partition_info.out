@@ -6,6 +6,12 @@ SELECT * FROM pg_partition_tree(NULL);
 -------+-------------+--------+-------
 (0 rows)
 
+SELECT * FROM pg_partition_tree(0);
+ relid | parentrelid | isleaf | level 
+-------+-------------+--------+-------
+       |             |        |      
+(1 row)
+
 -- Test table partition trees
 CREATE TABLE ptif_test (a int, b int) PARTITION BY range (a);
 CREATE TABLE ptif_test0 PARTITION OF ptif_test
@@ -107,8 +113,16 @@ DROP TABLE ptif_normal_table;
 CREATE VIEW ptif_test_view AS SELECT 1;
 CREATE MATERIALIZED VIEW ptif_test_matview AS SELECT 1;
 SELECT * FROM pg_partition_tree('ptif_test_view');
-ERROR:  "ptif_test_view" is not a table, a foreign table, or an index
+ relid | parentrelid | isleaf | level 
+-------+-------------+--------+-------
+       |             |        |      
+(1 row)
+
 SELECT * FROM pg_partition_tree('ptif_test_matview');
-ERROR:  "ptif_test_matview" is not a table, a foreign table, or an index
+ relid | parentrelid | isleaf | level 
+-------+-------------+--------+-------
+       |             |        |      
+(1 row)
+
 DROP VIEW ptif_test_view;
 DROP MATERIALIZED VIEW ptif_test_matview;

@@ -2,6 +2,7 @@
 -- Tests for pg_partition_tree
 --
 SELECT * FROM pg_partition_tree(NULL);
+SELECT * FROM pg_partition_tree(0);
 
 -- Test table partition trees
 CREATE TABLE ptif_test (a int, b int) PARTITION BY range (a);
