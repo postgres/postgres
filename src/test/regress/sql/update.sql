@@ -89,6 +89,16 @@ UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
 UPDATE update_test SET c = repeat('x', 10000) WHERE c = 'car';
 SELECT a, b, char_length(c) FROM update_test;
 
+-- Check multi-assignment with a Result node to handle a one-time filter.
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE update_test t
+  SET (a, b) = (SELECT b, a FROM update_test s WHERE s.a = t.a)
+  WHERE CURRENT_USER = SESSION_USER;
+UPDATE update_test t
+  SET (a, b) = (SELECT b, a FROM update_test s WHERE s.a = t.a)
+  WHERE CURRENT_USER = SESSION_USER;
+SELECT a, b, char_length(c) FROM update_test;
+
 -- Test ON CONFLICT DO UPDATE
 INSERT INTO upsert_test VALUES(1, 'Boo');
 -- uncorrelated  sub-select:
