@@ -693,6 +693,29 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		lbuffer;
 	Page		page;
 
+	/*
+	 * Lock left page first in order to prevent possible deadlock with
+	 * ginStepRight().
+	 */
+	if (record->xl_info & XLR_BKP_BLOCK(2))
+		(void) RestoreBackupBlock(lsn, record, 2, false, false);
+	else if (data->leftBlkno != InvalidBlockNumber)
+	{
+		lbuffer = XLogReadBuffer(data->node, data->leftBlkno, false);
+		if (BufferIsValid(lbuffer))
+		{
+			page = BufferGetPage(lbuffer);
+			if (lsn > PageGetLSN(page))
+			{
+				Assert(GinPageIsData(page));
+				GinPageGetOpaque(page)->rightlink = data->rightLink;
+				PageSetLSN(page, lsn);
+				MarkBufferDirty(lbuffer);
+			}
+			UnlockReleaseBuffer(lbuffer);
+		}
+	}
+
 	if (record->xl_info & XLR_BKP_BLOCK(0))
 		dbuffer = RestoreBackupBlock(lsn, record, 0, false, true);
 	else
@@ -730,25 +753,8 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 
-	if (record->xl_info & XLR_BKP_BLOCK(2))
-		(void) RestoreBackupBlock(lsn, record, 2, false, false);
-	else if (data->leftBlkno != InvalidBlockNumber)
-	{
-		lbuffer = XLogReadBuffer(data->node, data->leftBlkno, false);
-		if (BufferIsValid(lbuffer))
-		{
-			page = BufferGetPage(lbuffer);
-			if (lsn > PageGetLSN(page))
-			{
-				Assert(GinPageIsData(page));
-				GinPageGetOpaque(page)->rightlink = data->rightLink;
-				PageSetLSN(page, lsn);
-				MarkBufferDirty(lbuffer);
-			}
-			UnlockReleaseBuffer(lbuffer);
-		}
-	}
-
+	if (BufferIsValid(lbuffer))
+		UnlockReleaseBuffer(lbuffer);
 	if (BufferIsValid(pbuffer))
 		UnlockReleaseBuffer(pbuffer);
 	if (BufferIsValid(dbuffer))
