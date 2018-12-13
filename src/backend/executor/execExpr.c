@@ -3314,8 +3314,8 @@ ExprState *
 ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 					   const TupleTableSlotOps *lops, const TupleTableSlotOps *rops,
 					   int numCols,
-					   AttrNumber *keyColIdx,
-					   Oid *eqfunctions,
+					   const AttrNumber *keyColIdx,
+					   const Oid *eqfunctions,
 					   PlanState *parent)
 {
 	ExprState  *state = makeNode(ExprState);

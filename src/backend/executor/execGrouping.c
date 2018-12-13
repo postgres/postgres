@@ -59,8 +59,8 @@ static int	TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tup
 ExprState *
 execTuplesMatchPrepare(TupleDesc desc,
 					   int numCols,
-					   AttrNumber *keyColIdx,
-					   Oid *eqOperators,
+					   const AttrNumber *keyColIdx,
+					   const Oid *eqOperators,
 					   PlanState *parent)
 {
 	Oid		   *eqFunctions = (Oid *) palloc(numCols * sizeof(Oid));
@@ -94,7 +94,7 @@ execTuplesMatchPrepare(TupleDesc desc,
  */
 void
 execTuplesHashPrepare(int numCols,
-					  Oid *eqOperators,
+					  const Oid *eqOperators,
 					  Oid **eqFuncOids,
 					  FmgrInfo **hashFunctions)
 {
@@ -153,7 +153,7 @@ TupleHashTable
 BuildTupleHashTable(PlanState *parent,
 					TupleDesc inputDesc,
 					int numCols, AttrNumber *keyColIdx,
-					Oid *eqfuncoids,
+					const Oid *eqfuncoids,
 					FmgrInfo *hashfunctions,
 					long nbuckets, Size additionalsize,
 					MemoryContext tablecxt, MemoryContext tempcxt,
