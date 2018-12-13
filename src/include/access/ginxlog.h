@@ -158,6 +158,7 @@ typedef struct ginxlogDeletePage
 {
 	OffsetNumber parentOffset;
 	BlockNumber rightLink;
+	TransactionId deleteXid;	/* last Xid which could see this page in scan */
 } ginxlogDeletePage;
 
 #define XLOG_GIN_UPDATE_META_PAGE 0x60
