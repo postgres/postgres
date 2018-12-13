@@ -1408,6 +1408,23 @@ ReparameterizeForeignPathByChild(PlannerInfo *root, List *fdw_private,
     <para>
 <programlisting>
 ForeignDataWrapper *
+GetForeignDataWrapperExtended(Oid fdwid, bits16 flags);
+</programlisting>
+
+     This function returns a <structname>ForeignDataWrapper</structname>
+     object for the foreign-data wrapper with the given OID.  A
+     <structname>ForeignDataWrapper</structname> object contains properties
+     of the FDW (see <filename>foreign/foreign.h</filename> for details).
+     <structfield>flags</structfield> is a bitwise-or'd bit mask indicating
+     an extra set of options.  It can take the value
+     <literal>FDW_MISSING_OK</literal>, in which case a <literal>NULL</literal>
+     result is returned to the caller instead of an error for an undefined
+     object.
+    </para>
+
+    <para>
+<programlisting>
+ForeignDataWrapper *
 GetForeignDataWrapper(Oid fdwid);
 </programlisting>
 
@@ -1415,6 +1432,23 @@ GetForeignDataWrapper(Oid fdwid);
      object for the foreign-data wrapper with the given OID.  A
      <structname>ForeignDataWrapper</structname> object contains properties
      of the FDW (see <filename>foreign/foreign.h</filename> for details).
+    </para>
+
+    <para>
+<programlisting>
+ForeignServer *
+GetForeignServerExtended(Oid serverid, bits16 flags);
+</programlisting>
+
+     This function returns a <structname>ForeignServer</structname> object
+     for the foreign server with the given OID.  A
+     <structname>ForeignServer</structname> object contains properties
+     of the server (see <filename>foreign/foreign.h</filename> for details).
+     <structfield>flags</structfield> is a bitwise-or'd bit mask indicating
+     an extra set of options.  It can take the value
+     <literal>FSV_MISSING_OK</literal>, in which case a <literal>NULL</literal>
+     result is returned to the caller instead of an error for an undefined
+     object.
     </para>
 
     <para>
