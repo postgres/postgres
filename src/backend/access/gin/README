@@ -304,12 +304,10 @@ the lock on next page has been acquired.
 The downlink is more tricky. A search descending the tree must release the
 lock on the parent page before locking the child, or it could deadlock with
 a concurrent split of the child page; a page split locks the parent, while
-already holding a lock on the child page. However, posting trees are only
-fully searched from left to right, starting from the leftmost leaf. (The
-tree-structure is only needed by insertions, to quickly find the correct
-insert location). So as long as we don't delete the leftmost page on each
-level, a search can never follow a downlink to page that's about to be
-deleted.
+already holding a lock on the child page. So, deleted page cannot be reclaimed
+immediately. Instead, we have to wait for every transaction, which might wait
+to reference this page, to finish. Corresponding processes must observe that
+the page is marked deleted and recover accordingly.
 
 The previous paragraph's reasoning only applies to searches, and only to
 posting trees. To protect from inserters following a downlink to a deleted

@@ -529,6 +529,7 @@ ginRedoDeletePage(XLogReaderState *record)
 		page = BufferGetPage(dbuffer);
 		Assert(GinPageIsData(page));
 		GinPageGetOpaque(page)->flags = GIN_DELETED;
+		GinPageSetDeleteXid(page, data->deleteXid);
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(dbuffer);
 	}
