@@ -690,7 +690,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 	ginxlogDeletePage *data = (ginxlogDeletePage *) XLogRecGetData(record);
 	Buffer		dbuffer;
 	Buffer		pbuffer;
-	Buffer		lbuffer;
+	Buffer		lbuffer = InvalidBlockNumber;
 	Page		page;
 
 	/*
@@ -698,7 +698,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 	 * ginStepRight().
 	 */
 	if (record->xl_info & XLR_BKP_BLOCK(2))
-		(void) RestoreBackupBlock(lsn, record, 2, false, false);
+		lbuffer = RestoreBackupBlock(lsn, record, 2, false, true);
 	else if (data->leftBlkno != InvalidBlockNumber)
 	{
 		lbuffer = XLogReadBuffer(data->node, data->leftBlkno, false);
@@ -712,7 +712,6 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 				PageSetLSN(page, lsn);
 				MarkBufferDirty(lbuffer);
 			}
-			UnlockReleaseBuffer(lbuffer);
 		}
 	}
 
@@ -735,7 +734,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	if (record->xl_info & XLR_BKP_BLOCK(1))
-		pbuffer = RestoreBackupBlock(lsn, record, 1, false, true);
+		(void) RestoreBackupBlock(lsn, record, 1, false, false);
 	else
 	{
 		pbuffer = XLogReadBuffer(data->node, data->parentBlkno, false);
@@ -750,13 +749,12 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 				PageSetLSN(page, lsn);
 				MarkBufferDirty(pbuffer);
 			}
+			UnlockReleaseBuffer(pbuffer);
 		}
 	}
 
 	if (BufferIsValid(lbuffer))
 		UnlockReleaseBuffer(lbuffer);
-	if (BufferIsValid(pbuffer))
-		UnlockReleaseBuffer(pbuffer);
 	if (BufferIsValid(dbuffer))
 		UnlockReleaseBuffer(dbuffer);
 }
