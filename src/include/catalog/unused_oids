@@ -32,11 +32,11 @@ my @input_files = (glob("pg_*.h"), qw(indexing.h toasting.h));
 
 my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
 
-# Also push FirstBootstrapObjectId to serve as a terminator for the last gap.
-my $FirstBootstrapObjectId =
+# Also push FirstGenbkiObjectId to serve as a terminator for the last gap.
+my $FirstGenbkiObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', '..',
-	'FirstBootstrapObjectId');
-push @{$oids}, $FirstBootstrapObjectId;
+	'FirstGenbkiObjectId');
+push @{$oids}, $FirstGenbkiObjectId;
 
 my $prev_oid = 0;
 foreach my $oid (sort { $a <=> $b } @{$oids})

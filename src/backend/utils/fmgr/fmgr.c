@@ -75,7 +75,7 @@ fmgr_isbuiltin(Oid id)
 	uint16		index;
 
 	/* fast lookup only possible if original oid still assigned */
-	if (id >= FirstBootstrapObjectId)
+	if (id >= FirstGenbkiObjectId)
 		return NULL;
 
 	/*

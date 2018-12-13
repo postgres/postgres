@@ -79,9 +79,9 @@ foreach my $datfile (@input_files)
 }
 
 # Fetch some values for later.
-my $FirstBootstrapObjectId =
+my $FirstGenbkiObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', $include_path,
-	'FirstBootstrapObjectId');
+	'FirstGenbkiObjectId');
 my $INTERNALlanguageId =
   Catalog::FindDefinedSymbolFromData($catalog_data{pg_language},
 	'INTERNALlanguageId');
@@ -252,13 +252,13 @@ const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin));
 
 # Create fmgr_builtins_oid_index table.
 #
-# Note that the array has to be filled up to FirstBootstrapObjectId,
+# Note that the array has to be filled up to FirstGenbkiObjectId,
 # as we can't rely on zero initialization as 0 is a valid mapping.
 print $tfh qq|
-const uint16 fmgr_builtin_oid_index[FirstBootstrapObjectId] = {
+const uint16 fmgr_builtin_oid_index[FirstGenbkiObjectId] = {
 |;
 
-for (my $i = 0; $i < $FirstBootstrapObjectId; $i++)
+for (my $i = 0; $i < $FirstGenbkiObjectId; $i++)
 {
 	my $oid = $fmgr_builtin_oid_index[$i];
 
@@ -269,7 +269,7 @@ for (my $i = 0; $i < $FirstBootstrapObjectId; $i++)
 		$oid = 'InvalidOidBuiltinMapping';
 	}
 
-	if ($i + 1 == $FirstBootstrapObjectId)
+	if ($i + 1 == $FirstGenbkiObjectId)
 	{
 		print $tfh "  $oid\n";
 	}

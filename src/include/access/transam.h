@@ -71,18 +71,21 @@
 /* ----------
  *		Object ID (OID) zero is InvalidOid.
  *
- *		OIDs 1-9999 are reserved for manual assignment (see the files
- *		in src/include/catalog/).
+ *		OIDs 1-9999 are reserved for manual assignment (see .dat files in
+ *		src/include/catalog/), with 9000-9999 tentatively reserved for forks.
  *
- *		OIDS 10000-16383 are reserved for assignment during initdb
- *		using the OID generator.  (We start the generator at 10000.)
+ *		OIDs 10000-12000 are reserved for assignment by genbki.pl, when the
+ *		.dat files in src/include/catalog/ do not specify oids.
+ *
+ *		OIDS 12000-16383 are reserved for assignment during initdb
+ *		using the OID generator.  (We start the generator at 12000.)
  *
  *		OIDs beginning at 16384 are assigned from the OID generator
  *		during normal multiuser operation.  (We force the generator up to
  *		16384 as soon as we are in normal operation.)
  *
- * The choices of 10000 and 16384 are completely arbitrary, and can be moved
- * if we run low on OIDs in either category.  Changing the macros below
+ * The choices of 10000, 12000 and 16384 are completely arbitrary, and can be
+ * moved if we run low on OIDs in either category.  Changing the macros below
  * should be sufficient to do this.
  *
  * NOTE: if the OID generator wraps around, we skip over OIDs 0-16383
@@ -90,7 +93,8 @@
  * reassigning OIDs that might have been assigned during initdb.
  * ----------
  */
-#define FirstBootstrapObjectId	10000
+#define FirstGenbkiObjectId		10000
+#define FirstBootstrapObjectId	12000
 #define FirstNormalObjectId		16384
 
 /*

@@ -22,6 +22,7 @@ use warnings;
 my @input_files;
 my $output_path = '';
 my $major_version;
+my $include_path;
 
 # Process command line switches.
 while (@ARGV)
@@ -30,6 +31,10 @@ while (@ARGV)
 	if ($arg !~ /^-/)
 	{
 		push @input_files, $arg;
+	}
+	elsif ($arg =~ /^-I/)
+	{
+		$include_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
 	}
 	elsif ($arg =~ /^-o/)
 	{
@@ -50,6 +55,7 @@ while (@ARGV)
 # Sanity check arguments.
 die "No input files.\n" if !@input_files;
 die "--set-version must be specified.\n" if !defined $major_version;
+die "-I, the header include path, must be specified.\n" if !$include_path;
 
 # Make sure output_path ends in a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
@@ -133,23 +139,24 @@ foreach my $header (@input_files)
 # While duplicate OIDs would only cause a failure if they appear in
 # the same catalog, our project policy is that manually assigned OIDs
 # should be globally unique, to avoid confusion.
-#
-# Also use the loop to determine the maximum explicitly assigned oid
-# found in the data file, we'll use that for default oid assignments.
 my $found = 0;
-my $maxoid = 0;
 foreach my $oid (keys %oidcounts)
 {
-	if ($oid > $maxoid)
-	{
-		$maxoid = $oid;
-	}
 	next unless $oidcounts{$oid} > 1;
 	print STDERR "Duplicate OIDs detected:\n" if !$found;
 	print STDERR "$oid\n";
 	$found++;
 }
 die "found $found duplicate OID(s) in catalog data\n" if $found;
+
+
+# Oids not specified in the input files are automatically assigned,
+# starting at FirstGenbkiObjectId.
+my $FirstGenbkiObjectId =
+  Catalog::FindDefinedSymbol('access/transam.h', $include_path,
+	'FirstGenbkiObjectId');
+my $GenbkiNextOid = $FirstGenbkiObjectId;
+
 
 # Fetch some special data that we will substitute into the output file.
 # CAUTION: be wary about what symbols you substitute into the .bki file here!
@@ -418,8 +425,8 @@ EOM
 			# Assign oid if oid column exists and no explicit assignment in row
 			if ($attname eq "oid" and not defined $bki_values{$attname})
 			{
-				$bki_values{$attname} = $maxoid;
-				$maxoid++;
+				$bki_values{$attname} = $GenbkiNextOid;
+				$GenbkiNextOid++;
 			}
 
 			# Substitute constant values we acquired above.
@@ -858,6 +865,7 @@ sub usage
 Usage: genbki.pl [options] header...
 
 Options:
+    -I               include path
     -o               output path
     --set-version    PostgreSQL version number for initdb cross-check
 
