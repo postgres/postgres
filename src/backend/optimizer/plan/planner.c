@@ -5923,10 +5923,16 @@ adjust_paths_for_srfs(PlannerInfo *root, RelOptInfo *rel,
  * side-effect that is useful when the expression will get evaluated more than
  * once.  Also, we must fix operator function IDs.
  *
+ * This does not return any information about dependencies of the expression.
+ * Hence callers should use the results only for the duration of the current
+ * query.  Callers that would like to cache the results for longer should use
+ * expression_planner_with_deps, probably via the plancache.
+ *
  * Note: this must not make any damaging changes to the passed-in expression
  * tree.  (It would actually be okay to apply fix_opfuncids to it, but since
  * we first do an expression_tree_mutator-based walk, what is returned will
- * be a new node tree.)
+ * be a new node tree.)  The result is constructed in the current memory
+ * context; beware that this can leak a lot of additional stuff there, too.
  */
 Expr *
 expression_planner(Expr *expr)
@@ -5941,6 +5947,57 @@ expression_planner(Expr *expr)
 
 	/* Fill in opfuncid values if missing */
 	fix_opfuncids(result);
+
+	return (Expr *) result;
+}
+
+/*
+ * expression_planner_with_deps
+ *		Perform planner's transformations on a standalone expression,
+ *		returning expression dependency information along with the result.
+ *
+ * This is identical to expression_planner() except that it also returns
+ * information about possible dependencies of the expression, ie identities of
+ * objects whose definitions affect the result.  As in a PlannedStmt, these
+ * are expressed as a list of relation Oids and a list of PlanInvalItems.
+ */
+Expr *
+expression_planner_with_deps(Expr *expr,
+							 List **relationOids,
+							 List **invalItems)
+{
+	Node	   *result;
+	PlannerGlobal glob;
+	PlannerInfo root;
+
+	/* Make up dummy planner state so we can use setrefs machinery */
+	MemSet(&glob, 0, sizeof(glob));
+	glob.type = T_PlannerGlobal;
+	glob.relationOids = NIL;
+	glob.invalItems = NIL;
+
+	MemSet(&root, 0, sizeof(root));
+	root.type = T_PlannerInfo;
+	root.glob = &glob;
+
+	/*
+	 * Convert named-argument function calls, insert default arguments and
+	 * simplify constant subexprs.  Collect identities of inlined functions
+	 * and elided domains, too.
+	 */
+	result = eval_const_expressions(&root, (Node *) expr);
+
+	/* Fill in opfuncid values if missing */
+	fix_opfuncids(result);
+
+	/*
+	 * Now walk the finished expression to find anything else we ought to
+	 * record as an expression dependency.
+	 */
+	(void) extract_query_dependencies_walker(result, &root);
+
+	*relationOids = glob.relationOids;
+	*invalItems = glob.invalItems;
 
 	return (Expr *) result;
 }

@@ -1020,6 +1020,31 @@ create domain di as int;
 create function dom_check(int) returns di as $$
 declare d di;
 begin
+  d := $1::di;
+  return d;
+end
+$$ language plpgsql immutable;
+select dom_check(0);
+ dom_check 
+-----------
+         0
+(1 row)
+
+alter domain di add constraint pos check (value > 0);
+select dom_check(0); -- fail
+ERROR:  value for domain di violates check constraint "pos"
+CONTEXT:  PL/pgSQL function dom_check(integer) line 4 at assignment
+alter domain di drop constraint pos;
+select dom_check(0);
+ dom_check 
+-----------
+         0
+(1 row)
+
+-- implicit cast during assignment is a separate code path, test that too
+create or replace function dom_check(int) returns di as $$
+declare d di;
+begin
   d := $1;
   return d;
 end

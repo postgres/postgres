@@ -55,6 +55,9 @@ extern Path *get_cheapest_fractional_path(RelOptInfo *rel,
 							 double tuple_fraction);
 
 extern Expr *expression_planner(Expr *expr);
+extern Expr *expression_planner_with_deps(Expr *expr,
+							 List **relationOids,
+							 List **invalItems);
 
 extern Expr *preprocess_phv_expression(PlannerInfo *root, Expr *expr);
 

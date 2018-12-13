@@ -62,6 +62,7 @@
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -2297,7 +2298,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	ObjectAddressSet(address, TypeRelationId, domainoid);
 
 	/* Clean up */
-	heap_close(rel, NoLock);
+	heap_close(rel, RowExclusiveLock);
 	heap_freetuple(newtuple);
 
 	return address;
@@ -2494,8 +2495,6 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 	systable_endscan(conscan);
 	heap_close(conrel, RowExclusiveLock);
 
-	heap_close(rel, NoLock);
-
 	if (!found)
 	{
 		if (!missing_ok)
@@ -2509,7 +2508,17 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 							constrName, TypeNameToString(typename))));
 	}
 
+	/*
+	 * We must send out an sinval message for the domain, to ensure that any
+	 * dependent plans get rebuilt.  Since this command doesn't change the
+	 * domain's pg_type row, that won't happen automatically; do it manually.
+	 */
+	CacheInvalidateHeapTuple(rel, tup, NULL);
+
 	ObjectAddressSet(address, TypeRelationId, domainoid);
+
+	/* Clean up */
+	heap_close(rel, RowExclusiveLock);
 
 	return address;
 }
@@ -2614,6 +2623,13 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
 	 */
 	if (!constr->skip_validation)
 		validateDomainConstraint(domainoid, ccbin);
+
+	/*
+	 * We must send out an sinval message for the domain, to ensure that any
+	 * dependent plans get rebuilt.  Since this command doesn't change the
+	 * domain's pg_type row, that won't happen automatically; do it manually.
+	 */
+	CacheInvalidateHeapTuple(typrel, tup, NULL);
 
 	ObjectAddressSet(address, TypeRelationId, domainoid);
 

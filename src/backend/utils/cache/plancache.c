@@ -27,15 +27,21 @@
  * query to change output tupdesc on replan --- if so, it's up to the
  * caller to notice changes and cope with them.
  *
- * Currently, we track exactly the dependencies of plans on relations and
- * user-defined functions.  On relcache invalidation events or pg_proc
- * syscache invalidation events, we invalidate just those plans that depend
- * on the particular object being modified.  (Note: this scheme assumes
- * that any table modification that requires replanning will generate a
- * relcache inval event.)  We also watch for inval events on certain other
- * system catalogs, such as pg_namespace; but for them, our response is
- * just to invalidate all plans.  We expect updates on those catalogs to
- * be infrequent enough that more-detailed tracking is not worth the effort.
+ * Currently, we track exactly the dependencies of plans on relations,
+ * user-defined functions, and domains.  On relcache invalidation events or
+ * pg_proc or pg_type syscache invalidation events, we invalidate just those
+ * plans that depend on the particular object being modified.  (Note: this
+ * scheme assumes that any table modification that requires replanning will
+ * generate a relcache inval event.)  We also watch for inval events on
+ * certain other system catalogs, such as pg_namespace; but for them, our
+ * response is just to invalidate all plans.  We expect updates on those
+ * catalogs to be infrequent enough that more-detailed tracking is not worth
+ * the effort.
+ *
+ * In addition to full-fledged query plans, we provide a facility for
+ * detecting invalidations of simple scalar expressions.  This is fairly
+ * bare-bones; it's the caller's responsibility to build a new expression
+ * if the old one gets invalidated.
  *
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
@@ -57,6 +63,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/cost.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
@@ -82,10 +89,15 @@
 /*
  * This is the head of the backend's list of "saved" CachedPlanSources (i.e.,
  * those that are in long-lived storage and are examined for sinval events).
- * We thread the structs manually instead of using List cells so that we can
- * guarantee to save a CachedPlanSource without error.
+ * We use a dlist instead of separate List cells so that we can guarantee
+ * to save a CachedPlanSource without error.
  */
-static CachedPlanSource *first_saved_plan = NULL;
+static dlist_head saved_plan_list = DLIST_STATIC_INIT(saved_plan_list);
+
+/*
+ * This is the head of the backend's list of CachedExpressions.
+ */
+static dlist_head cached_expression_list = DLIST_STATIC_INIT(cached_expression_list);
 
 static void ReleaseGenericPlan(CachedPlanSource *plansource);
 static List *RevalidateCachedQuery(CachedPlanSource *plansource,
@@ -103,7 +115,7 @@ static void ScanQueryForLocks(Query *parsetree, bool acquire);
 static bool ScanQueryWalker(Node *node, bool *acquire);
 static TupleDesc PlanCacheComputeResultDesc(List *stmt_list);
 static void PlanCacheRelCallback(Datum arg, Oid relid);
-static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue);
+static void PlanCacheObjectCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
 
 /* GUC parameter */
@@ -118,7 +130,8 @@ void
 InitPlanCache(void)
 {
 	CacheRegisterRelcacheCallback(PlanCacheRelCallback, (Datum) 0);
-	CacheRegisterSyscacheCallback(PROCOID, PlanCacheFuncCallback, (Datum) 0);
+	CacheRegisterSyscacheCallback(PROCOID, PlanCacheObjectCallback, (Datum) 0);
+	CacheRegisterSyscacheCallback(TYPEOID, PlanCacheObjectCallback, (Datum) 0);
 	CacheRegisterSyscacheCallback(NAMESPACEOID, PlanCacheSysCallback, (Datum) 0);
 	CacheRegisterSyscacheCallback(OPEROID, PlanCacheSysCallback, (Datum) 0);
 	CacheRegisterSyscacheCallback(AMOPOPID, PlanCacheSysCallback, (Datum) 0);
@@ -206,7 +219,6 @@ CreateCachedPlan(RawStmt *raw_parse_tree,
 	plansource->is_saved = false;
 	plansource->is_valid = false;
 	plansource->generation = 0;
-	plansource->next_saved = NULL;
 	plansource->generic_cost = -1;
 	plansource->total_custom_cost = 0;
 	plansource->num_custom_plans = 0;
@@ -274,7 +286,6 @@ CreateOneShotCachedPlan(RawStmt *raw_parse_tree,
 	plansource->is_saved = false;
 	plansource->is_valid = false;
 	plansource->generation = 0;
-	plansource->next_saved = NULL;
 	plansource->generic_cost = -1;
 	plansource->total_custom_cost = 0;
 	plansource->num_custom_plans = 0;
@@ -471,8 +482,7 @@ SaveCachedPlan(CachedPlanSource *plansource)
 	/*
 	 * Add the entry to the global list of cached plans.
 	 */
-	plansource->next_saved = first_saved_plan;
-	first_saved_plan = plansource;
+	dlist_push_tail(&saved_plan_list, &plansource->node);
 
 	plansource->is_saved = true;
 }
@@ -493,21 +503,7 @@ DropCachedPlan(CachedPlanSource *plansource)
 	/* If it's been saved, remove it from the list */
 	if (plansource->is_saved)
 	{
-		if (first_saved_plan == plansource)
-			first_saved_plan = plansource->next_saved;
-		else
-		{
-			CachedPlanSource *psrc;
-
-			for (psrc = first_saved_plan; psrc; psrc = psrc->next_saved)
-			{
-				if (psrc->next_saved == plansource)
-				{
-					psrc->next_saved = plansource->next_saved;
-					break;
-				}
-			}
-		}
+		dlist_delete(&plansource->node);
 		plansource->is_saved = false;
 	}
 
@@ -1399,7 +1395,6 @@ CopyCachedPlan(CachedPlanSource *plansource)
 	newsource->is_saved = false;
 	newsource->is_valid = plansource->is_valid;
 	newsource->generation = plansource->generation;
-	newsource->next_saved = NULL;
 
 	/* We may as well copy any acquired cost knowledge */
 	newsource->generic_cost = plansource->generic_cost;
@@ -1456,6 +1451,85 @@ CachedPlanGetTargetList(CachedPlanSource *plansource,
 	pstmt = QueryListGetPrimaryStmt(plansource->query_list);
 
 	return FetchStatementTargetList((Node *) pstmt);
+}
+
+/*
+ * GetCachedExpression: construct a CachedExpression for an expression.
+ *
+ * This performs the same transformations on the expression as
+ * expression_planner(), ie, convert an expression as emitted by parse
+ * analysis to be ready to pass to the executor.
+ *
+ * The result is stashed in a private, long-lived memory context.
+ * (Note that this might leak a good deal of memory in the caller's
+ * context before that.)  The passed-in expr tree is not modified.
+ */
+CachedExpression *
+GetCachedExpression(Node *expr)
+{
+	CachedExpression *cexpr;
+	List	   *relationOids;
+	List	   *invalItems;
+	MemoryContext cexpr_context;
+	MemoryContext oldcxt;
+
+	/*
+	 * Pass the expression through the planner, and collect dependencies.
+	 * Everything built here is leaked in the caller's context; that's
+	 * intentional to minimize the size of the permanent data structure.
+	 */
+	expr = (Node *) expression_planner_with_deps((Expr *) expr,
+												 &relationOids,
+												 &invalItems);
+
+	/*
+	 * Make a private memory context, and copy what we need into that.  To
+	 * avoid leaking a long-lived context if we fail while copying data, we
+	 * initially make the context under the caller's context.
+	 */
+	cexpr_context = AllocSetContextCreate(CurrentMemoryContext,
+										  "CachedExpression",
+										  ALLOCSET_SMALL_SIZES);
+
+	oldcxt = MemoryContextSwitchTo(cexpr_context);
+
+	cexpr = (CachedExpression *) palloc(sizeof(CachedExpression));
+	cexpr->magic = CACHEDEXPR_MAGIC;
+	cexpr->expr = copyObject(expr);
+	cexpr->is_valid = true;
+	cexpr->relationOids = copyObject(relationOids);
+	cexpr->invalItems = copyObject(invalItems);
+	cexpr->context = cexpr_context;
+
+	MemoryContextSwitchTo(oldcxt);
+
+	/*
+	 * Reparent the expr's memory context under CacheMemoryContext so that it
+	 * will live indefinitely.
+	 */
+	MemoryContextSetParent(cexpr_context, CacheMemoryContext);
+
+	/*
+	 * Add the entry to the global list of cached expressions.
+	 */
+	dlist_push_tail(&cached_expression_list, &cexpr->node);
+
+	return cexpr;
+}
+
+/*
+ * FreeCachedExpression
+ *		Delete a CachedExpression.
+ */
+void
+FreeCachedExpression(CachedExpression *cexpr)
+{
+	/* Sanity check */
+	Assert(cexpr->magic == CACHEDEXPR_MAGIC);
+	/* Unlink from global list */
+	dlist_delete(&cexpr->node);
+	/* Free all storage associated with CachedExpression */
+	MemoryContextDelete(cexpr->context);
 }
 
 /*
@@ -1692,10 +1766,13 @@ PlanCacheComputeResultDesc(List *stmt_list)
 static void
 PlanCacheRelCallback(Datum arg, Oid relid)
 {
-	CachedPlanSource *plansource;
+	dlist_iter	iter;
 
-	for (plansource = first_saved_plan; plansource; plansource = plansource->next_saved)
+	dlist_foreach(iter, &saved_plan_list)
 	{
+		CachedPlanSource *plansource = dlist_container(CachedPlanSource,
+													   node, iter.cur);
+
 		Assert(plansource->magic == CACHEDPLANSOURCE_MAGIC);
 
 		/* No work if it's already invalidated */
@@ -1742,25 +1819,43 @@ PlanCacheRelCallback(Datum arg, Oid relid)
 			}
 		}
 	}
+
+	/* Likewise check cached expressions */
+	dlist_foreach(iter, &cached_expression_list)
+	{
+		CachedExpression *cexpr = dlist_container(CachedExpression,
+												  node, iter.cur);
+
+		Assert(cexpr->magic == CACHEDEXPR_MAGIC);
+
+		/* No work if it's already invalidated */
+		if (!cexpr->is_valid)
+			continue;
+
+		if ((relid == InvalidOid) ? cexpr->relationOids != NIL :
+			list_member_oid(cexpr->relationOids, relid))
+		{
+			cexpr->is_valid = false;
+		}
+	}
 }
 
 /*
- * PlanCacheFuncCallback
- *		Syscache inval callback function for PROCOID cache
+ * PlanCacheObjectCallback
+ *		Syscache inval callback function for PROCOID and TYPEOID caches
  *
  * Invalidate all plans mentioning the object with the specified hash value,
  * or all plans mentioning any member of this cache if hashvalue == 0.
- *
- * Note that the coding would support use for multiple caches, but right
- * now only user-defined functions are tracked this way.
  */
 static void
-PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue)
+PlanCacheObjectCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
-	CachedPlanSource *plansource;
+	dlist_iter	iter;
 
-	for (plansource = first_saved_plan; plansource; plansource = plansource->next_saved)
+	dlist_foreach(iter, &saved_plan_list)
 	{
+		CachedPlanSource *plansource = dlist_container(CachedPlanSource,
+													   node, iter.cur);
 		ListCell   *lc;
 
 		Assert(plansource->magic == CACHEDPLANSOURCE_MAGIC);
@@ -1825,6 +1920,34 @@ PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue)
 			}
 		}
 	}
+
+	/* Likewise check cached expressions */
+	dlist_foreach(iter, &cached_expression_list)
+	{
+		CachedExpression *cexpr = dlist_container(CachedExpression,
+												  node, iter.cur);
+		ListCell   *lc;
+
+		Assert(cexpr->magic == CACHEDEXPR_MAGIC);
+
+		/* No work if it's already invalidated */
+		if (!cexpr->is_valid)
+			continue;
+
+		foreach(lc, cexpr->invalItems)
+		{
+			PlanInvalItem *item = (PlanInvalItem *) lfirst(lc);
+
+			if (item->cacheId != cacheid)
+				continue;
+			if (hashvalue == 0 ||
+				item->hashValue == hashvalue)
+			{
+				cexpr->is_valid = false;
+				break;
+			}
+		}
+	}
 }
 
 /*
@@ -1845,10 +1968,12 @@ PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue)
 void
 ResetPlanCache(void)
 {
-	CachedPlanSource *plansource;
+	dlist_iter	iter;
 
-	for (plansource = first_saved_plan; plansource; plansource = plansource->next_saved)
+	dlist_foreach(iter, &saved_plan_list)
 	{
+		CachedPlanSource *plansource = dlist_container(CachedPlanSource,
+													   node, iter.cur);
 		ListCell   *lc;
 
 		Assert(plansource->magic == CACHEDPLANSOURCE_MAGIC);
@@ -1887,5 +2012,16 @@ ResetPlanCache(void)
 				break;
 			}
 		}
+	}
+
+	/* Likewise invalidate cached expressions */
+	dlist_foreach(iter, &cached_expression_list)
+	{
+		CachedExpression *cexpr = dlist_container(CachedExpression,
+												  node, iter.cur);
+
+		Assert(cexpr->magic == CACHEDEXPR_MAGIC);
+
+		cexpr->is_valid = false;
 	}
 }

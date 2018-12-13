@@ -152,6 +152,7 @@ typedef struct					/* cast_hash table entry */
 {
 	plpgsql_CastHashKey key;	/* hash key --- MUST BE FIRST */
 	Expr	   *cast_expr;		/* cast expression, or NULL if no-op cast */
+	CachedExpression *cast_cexpr;	/* cached expression backing the above */
 	/* ExprState is valid only when cast_lxid matches current LXID */
 	ExprState  *cast_exprstate; /* expression's eval tree */
 	bool		cast_in_use;	/* true while we're executing eval tree */
@@ -7610,18 +7611,34 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 	cast_key.dsttypmod = dsttypmod;
 	cast_entry = (plpgsql_CastHashEntry *) hash_search(estate->cast_hash,
 													   (void *) &cast_key,
-													   HASH_FIND, NULL);
+													   HASH_ENTER, &found);
+	if (!found)					/* initialize if new entry */
+		cast_entry->cast_cexpr = NULL;
 
-	if (cast_entry == NULL)
+	if (cast_entry->cast_cexpr == NULL ||
+		!cast_entry->cast_cexpr->is_valid)
 	{
-		/* We've not looked up this coercion before */
+		/*
+		 * We've not looked up this coercion before, or we have but the cached
+		 * expression has been invalidated.
+		 */
 		Node	   *cast_expr;
+		CachedExpression *cast_cexpr;
 		CaseTestExpr *placeholder;
+
+		/*
+		 * Drop old cached expression if there is one.
+		 */
+		if (cast_entry->cast_cexpr)
+		{
+			FreeCachedExpression(cast_entry->cast_cexpr);
+			cast_entry->cast_cexpr = NULL;
+		}
 
 		/*
 		 * Since we could easily fail (no such coercion), construct a
 		 * temporary coercion expression tree in the short-lived
-		 * eval_mcontext, then if successful copy it to cast_hash_context.
+		 * eval_mcontext, then if successful save it as a CachedExpression.
 		 */
 		oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 
@@ -7682,33 +7699,23 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 
 		/* Note: we don't bother labeling the expression tree with collation */
 
+		/* Plan the expression and build a CachedExpression */
+		cast_cexpr = GetCachedExpression(cast_expr);
+		cast_expr = cast_cexpr->expr;
+
 		/* Detect whether we have a no-op (RelabelType) coercion */
 		if (IsA(cast_expr, RelabelType) &&
 			((RelabelType *) cast_expr)->arg == (Expr *) placeholder)
 			cast_expr = NULL;
 
-		if (cast_expr)
-		{
-			/* ExecInitExpr assumes we've planned the expression */
-			cast_expr = (Node *) expression_planner((Expr *) cast_expr);
-
-			/* Now copy the tree into cast_hash_context */
-			MemoryContextSwitchTo(estate->cast_hash_context);
-
-			cast_expr = copyObject(cast_expr);
-		}
-
-		MemoryContextSwitchTo(oldcontext);
-
-		/* Now we can fill in a hashtable entry. */
-		cast_entry = (plpgsql_CastHashEntry *) hash_search(estate->cast_hash,
-														   (void *) &cast_key,
-														   HASH_ENTER, &found);
-		Assert(!found);			/* wasn't there a moment ago */
+		/* Now we can fill in the hashtable entry. */
+		cast_entry->cast_cexpr = cast_cexpr;
 		cast_entry->cast_expr = (Expr *) cast_expr;
 		cast_entry->cast_exprstate = NULL;
 		cast_entry->cast_in_use = false;
 		cast_entry->cast_lxid = InvalidLocalTransactionId;
+
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/* Done if we have determined that this is a no-op cast. */

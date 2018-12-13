@@ -3699,6 +3699,70 @@ eval_const_expressions_mutator(Node *node,
 				newbtest->location = btest->location;
 				return (Node *) newbtest;
 			}
+		case T_CoerceToDomain:
+			{
+				/*
+				 * If the domain currently has no constraints, we replace the
+				 * CoerceToDomain node with a simple RelabelType, which is
+				 * both far faster to execute and more amenable to later
+				 * optimization.  We must then mark the plan as needing to be
+				 * rebuilt if the domain's constraints change.
+				 *
+				 * Also, in estimation mode, always replace CoerceToDomain
+				 * nodes, effectively assuming that the coercion will succeed.
+				 */
+				CoerceToDomain *cdomain = (CoerceToDomain *) node;
+				CoerceToDomain *newcdomain;
+				Node	   *arg;
+
+				arg = eval_const_expressions_mutator((Node *) cdomain->arg,
+													 context);
+				if (context->estimate ||
+					!DomainHasConstraints(cdomain->resulttype))
+				{
+					/* Record dependency, if this isn't estimation mode */
+					if (context->root && !context->estimate)
+						record_plan_type_dependency(context->root,
+													cdomain->resulttype);
+
+					/* Generate RelabelType to substitute for CoerceToDomain */
+					/* This should match the RelabelType logic above */
+
+					while (arg && IsA(arg, RelabelType))
+						arg = (Node *) ((RelabelType *) arg)->arg;
+
+					if (arg && IsA(arg, Const))
+					{
+						Const	   *con = (Const *) arg;
+
+						con->consttype = cdomain->resulttype;
+						con->consttypmod = cdomain->resulttypmod;
+						con->constcollid = cdomain->resultcollid;
+						return (Node *) con;
+					}
+					else
+					{
+						RelabelType *newrelabel = makeNode(RelabelType);
+
+						newrelabel->arg = (Expr *) arg;
+						newrelabel->resulttype = cdomain->resulttype;
+						newrelabel->resulttypmod = cdomain->resulttypmod;
+						newrelabel->resultcollid = cdomain->resultcollid;
+						newrelabel->relabelformat = cdomain->coercionformat;
+						newrelabel->location = cdomain->location;
+						return (Node *) newrelabel;
+					}
+				}
+
+				newcdomain = makeNode(CoerceToDomain);
+				newcdomain->arg = (Expr *) arg;
+				newcdomain->resulttype = cdomain->resulttype;
+				newcdomain->resulttypmod = cdomain->resulttypmod;
+				newcdomain->resultcollid = cdomain->resultcollid;
+				newcdomain->coercionformat = cdomain->coercionformat;
+				newcdomain->location = cdomain->location;
+				return (Node *) newcdomain;
+			}
 		case T_PlaceHolderVar:
 
 			/*
@@ -3770,7 +3834,7 @@ eval_const_expressions_mutator(Node *node,
 	 * For any node type not handled above, copy the node unchanged but
 	 * const-simplify its subexpressions.  This is the correct thing for node
 	 * types whose behavior might change between planning and execution, such
-	 * as CoerceToDomain.  It's also a safe default for new node types not
+	 * as CurrentOfExpr.  It's also a safe default for new node types not
 	 * known to this routine.
 	 */
 	return ece_generic_processing(node);

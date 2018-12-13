@@ -138,8 +138,7 @@ static List *set_returning_clause_references(PlannerInfo *root,
 								Plan *topplan,
 								Index resultRelation,
 								int rtoffset);
-static bool extract_query_dependencies_walker(Node *node,
-								  PlannerInfo *context);
+
 
 /*****************************************************************************
  *
@@ -175,8 +174,8 @@ static bool extract_query_dependencies_walker(Node *node,
  * This will be used by plancache.c to drive invalidation of cached plans.
  * Relation dependencies are represented by OIDs, and everything else by
  * PlanInvalItems (this distinction is motivated by the shared-inval APIs).
- * Currently, relations and user-defined functions are the only types of
- * objects that are explicitly tracked this way.
+ * Currently, relations, user-defined functions, and domains are the only
+ * types of objects that are explicitly tracked this way.
  *
  * 8. We assign every plan node in the tree a unique ID.
  *
@@ -2578,6 +2577,42 @@ record_plan_function_dependency(PlannerInfo *root, Oid funcid)
 }
 
 /*
+ * record_plan_type_dependency
+ *		Mark the current plan as depending on a particular type.
+ *
+ * This is exported so that eval_const_expressions can record a
+ * dependency on a domain that it's removed a CoerceToDomain node for.
+ *
+ * We don't currently need to record dependencies on domains that the
+ * plan contains CoerceToDomain nodes for, though that might change in
+ * future.  Hence, this isn't actually called in this module, though
+ * someday fix_expr_common might call it.
+ */
+void
+record_plan_type_dependency(PlannerInfo *root, Oid typeid)
+{
+	/*
+	 * As in record_plan_function_dependency, ignore the possibility that
+	 * someone would change a built-in domain.
+	 */
+	if (typeid >= (Oid) FirstBootstrapObjectId)
+	{
+		PlanInvalItem *inval_item = makeNode(PlanInvalItem);
+
+		/*
+		 * It would work to use any syscache on pg_type, but the easiest is
+		 * TYPEOID since we already have the type's OID at hand.  Note that
+		 * plancache.c knows we use TYPEOID.
+		 */
+		inval_item->cacheId = TYPEOID;
+		inval_item->hashValue = GetSysCacheHashValue1(TYPEOID,
+													  ObjectIdGetDatum(typeid));
+
+		root->glob->invalItems = lappend(root->glob->invalItems, inval_item);
+	}
+}
+
+/*
  * extract_query_dependencies
  *		Given a rewritten, but not yet planned, query or queries
  *		(i.e. a Query node or list of Query nodes), extract dependencies
@@ -2586,6 +2621,13 @@ record_plan_function_dependency(PlannerInfo *root, Oid funcid)
  *
  * This is needed by plancache.c to handle invalidation of cached unplanned
  * queries.
+ *
+ * Note: this does not go through eval_const_expressions, and hence doesn't
+ * reflect its additions of inlined functions and elided CoerceToDomain nodes
+ * to the invalItems list.  This is obviously OK for functions, since we'll
+ * see them in the original query tree anyway.  For domains, it's OK because
+ * we don't care about domains unless they get elided.  That is, a plan might
+ * have domain dependencies that the query tree doesn't.
  */
 void
 extract_query_dependencies(Node *query,
@@ -2615,14 +2657,20 @@ extract_query_dependencies(Node *query,
 	*hasRowSecurity = glob.dependsOnRole;
 }
 
-static bool
+/*
+ * Tree walker for extract_query_dependencies.
+ *
+ * This is exported so that expression_planner_with_deps can call it on
+ * simple expressions (post-planning, not before planning, in that case).
+ * In that usage, glob.dependsOnRole isn't meaningful, but the relationOids
+ * and invalItems lists are added to as needed.
+ */
+bool
 extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 {
 	if (node == NULL)
 		return false;
 	Assert(!IsA(node, PlaceHolderVar));
-	/* Extract function dependencies and check for regclass Consts */
-	fix_expr_common(context, node);
 	if (IsA(node, Query))
 	{
 		Query	   *query = (Query *) node;
@@ -2662,6 +2710,8 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		return query_tree_walker(query, extract_query_dependencies_walker,
 								 (void *) context, 0);
 	}
+	/* Extract function dependencies and check for regclass Consts */
+	fix_expr_common(context, node);
 	return expression_tree_walker(node, extract_query_dependencies_walker,
 								  (void *) context);
 }
