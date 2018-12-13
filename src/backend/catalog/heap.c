@@ -3413,7 +3413,7 @@ StorePartitionKey(Relation rel,
 
 	/* Mark this relation as dependent on a few things as follows */
 	myself.classId = RelationRelationId;
-	myself.objectId = RelationGetRelid(rel);;
+	myself.objectId = RelationGetRelid(rel);
 	myself.objectSubId = 0;
 
 	/* Operator class and collation per key column */
@@ -3432,9 +3432,9 @@ StorePartitionKey(Relation rel,
 			referenced.classId = CollationRelationId;
 			referenced.objectId = partcollation[i];
 			referenced.objectSubId = 0;
-		}
 
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		}
 	}
 
 	/*
