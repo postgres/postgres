@@ -309,12 +309,7 @@ GinNewBuffer(Relation index)
 		 */
 		if (ConditionalLockBuffer(buffer))
 		{
-			Page		page = BufferGetPage(buffer);
-
-			if (PageIsNew(page))
-				return buffer;	/* OK to use, if never initialized */
-
-			if (GinPageIsDeleted(page))
+			if (GinPageIsRecyclable(BufferGetPage(buffer)))
 				return buffer;	/* OK to use */
 
 			LockBuffer(buffer, GIN_UNLOCK);

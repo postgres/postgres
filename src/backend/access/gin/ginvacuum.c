@@ -157,6 +157,9 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	page = BufferGetPage(dBuffer);
 	rightlink = GinPageGetOpaque(page)->rightlink;
 
+	/* For deleted page remember last xid which could knew its address */
+	GinPageSetDeleteXid(page, ReadNewTransactionId());
+
 	/*
 	 * Any insert which would have gone on the leaf block will now go to its
 	 * right sibling.
@@ -213,6 +216,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 
 		data.parentOffset = myoff;
 		data.rightLink = GinPageGetOpaque(page)->rightlink;
+		data.deleteXid = GinPageGetDeleteXid(page);
 
 		XLogRegisterData((char *) &data, sizeof(ginxlogDeletePage));
 
@@ -732,7 +736,7 @@ ginvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		LockBuffer(buffer, GIN_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
-		if (PageIsNew(page) || GinPageIsDeleted(page))
+		if (GinPageIsRecyclable(page))
 		{
 			Assert(blkno != GIN_ROOT_BLKNO);
 			RecordFreeIndexPage(index, blkno);
