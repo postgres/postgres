@@ -904,11 +904,22 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	{
 		stats->attrtypid = exprType(index_expr);
 		stats->attrtypmod = exprTypmod(index_expr);
+
+		/*
+		 * If a collation has been specified for the index column, use that in
+		 * preference to anything else; but if not, fall back to whatever we
+		 * can get from the expression.
+		 */
+		if (OidIsValid(onerel->rd_indcollation[attnum - 1]))
+			stats->attrcollid = onerel->rd_indcollation[attnum - 1];
+		else
+			stats->attrcollid = exprCollation(index_expr);
 	}
 	else
 	{
 		stats->attrtypid = attr->atttypid;
 		stats->attrtypmod = attr->atttypmod;
+		stats->attrcollid = attr->attcollation;
 	}
 
 	typtuple = SearchSysCacheCopy1(TYPEOID,
@@ -1553,6 +1564,11 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		{
 			values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
 		}
+		i = Anum_pg_statistic_stacoll1 - 1;
+		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+		{
+			values[i++] = ObjectIdGetDatum(stats->stacoll[k]);	/* stacollN */
+		}
 		i = Anum_pg_statistic_stanumbers1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
@@ -1993,9 +2009,8 @@ compute_distinct_stats(VacAttrStatsP stats,
 		firstcount1 = track_cnt;
 		for (j = 0; j < track_cnt; j++)
 		{
-			/* We always use the default collation for statistics */
 			if (DatumGetBool(FunctionCall2Coll(&f_cmpeq,
-											   DEFAULT_COLLATION_OID,
+											   stats->attrcollid,
 											   value, track[j].value)))
 			{
 				match = true;
@@ -2202,6 +2217,7 @@ compute_distinct_stats(VacAttrStatsP stats,
 
 			stats->stakind[0] = STATISTIC_KIND_MCV;
 			stats->staop[0] = mystats->eqopr;
+			stats->stacoll[0] = stats->attrcollid;
 			stats->stanumbers[0] = mcv_freqs;
 			stats->numnumbers[0] = num_mcv;
 			stats->stavalues[0] = mcv_values;
@@ -2273,8 +2289,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 	memset(&ssup, 0, sizeof(ssup));
 	ssup.ssup_cxt = CurrentMemoryContext;
-	/* We always use the default collation for statistics */
-	ssup.ssup_collation = DEFAULT_COLLATION_OID;
+	ssup.ssup_collation = stats->attrcollid;
 	ssup.ssup_nulls_first = false;
 
 	/*
@@ -2567,6 +2582,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 			stats->stakind[slot_idx] = STATISTIC_KIND_MCV;
 			stats->staop[slot_idx] = mystats->eqopr;
+			stats->stacoll[slot_idx] = stats->attrcollid;
 			stats->stanumbers[slot_idx] = mcv_freqs;
 			stats->numnumbers[slot_idx] = num_mcv;
 			stats->stavalues[slot_idx] = mcv_values;
@@ -2682,6 +2698,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 			stats->stakind[slot_idx] = STATISTIC_KIND_HISTOGRAM;
 			stats->staop[slot_idx] = mystats->ltopr;
+			stats->stacoll[slot_idx] = stats->attrcollid;
 			stats->stavalues[slot_idx] = hist_values;
 			stats->numvalues[slot_idx] = num_hist;
 
@@ -2725,6 +2742,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 			stats->stakind[slot_idx] = STATISTIC_KIND_CORRELATION;
 			stats->staop[slot_idx] = mystats->ltopr;
+			stats->stacoll[slot_idx] = stats->attrcollid;
 			stats->stanumbers[slot_idx] = corrs;
 			stats->numnumbers[slot_idx] = 1;
 			slot_idx++;

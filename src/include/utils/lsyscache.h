@@ -44,6 +44,7 @@ typedef struct AttStatsSlot
 {
 	/* Always filled: */
 	Oid			staop;			/* Actual staop for the found slot */
+	Oid			stacoll;		/* Actual collation for the found slot */
 	/* Filled if ATTSTATSSLOT_VALUES is specified: */
 	Oid			valuetype;		/* Actual datatype of the values */
 	Datum	   *values;			/* slot's "values" array, or NULL if none */

@@ -252,6 +252,9 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 	 * (b) split the data into groups by first (k-1) columns
 	 *
 	 * (c) for each group count different values in the last column
+	 *
+	 * We use the column data types' default sort operators and collations;
+	 * perhaps at some point it'd be worth using column-specific collations?
 	 */
 
 	/* prepare the sort function for the first dimension, and SortItem array */
@@ -266,7 +269,7 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 				 colstat->attrtypid);
 
 		/* prepare the sort function for this dimension */
-		multi_sort_add_dimension(mss, i, type->lt_opr);
+		multi_sort_add_dimension(mss, i, type->lt_opr, type->typcollation);
 
 		/* accumulate all the data for both columns into an array and sort it */
 		for (j = 0; j < numrows; j++)

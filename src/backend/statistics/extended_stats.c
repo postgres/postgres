@@ -363,18 +363,18 @@ multi_sort_init(int ndims)
 }
 
 /*
- * Prepare sort support info using the given sort operator
+ * Prepare sort support info using the given sort operator and collation
  * at the position 'sortdim'
  */
 void
-multi_sort_add_dimension(MultiSortSupport mss, int sortdim, Oid oper)
+multi_sort_add_dimension(MultiSortSupport mss, int sortdim,
+						 Oid oper, Oid collation)
 {
 	SortSupport ssup = &mss->ssup[sortdim];
 
 	ssup->ssup_cxt = CurrentMemoryContext;
-	ssup->ssup_collation = DEFAULT_COLLATION_OID;
+	ssup->ssup_collation = collation;
 	ssup->ssup_nulls_first = false;
-	ssup->ssup_cxt = CurrentMemoryContext;
 
 	PrepareSortSupportFromOrderingOp(oper, ssup);
 }

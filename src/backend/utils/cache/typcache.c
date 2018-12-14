@@ -388,6 +388,7 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->typtype = typtup->typtype;
 		typentry->typrelid = typtup->typrelid;
 		typentry->typelem = typtup->typelem;
+		typentry->typcollation = typtup->typcollation;
 
 		/* If it's a domain, immediately thread it into the domain cache list */
 		if (typentry->typtype == TYPTYPE_DOMAIN)

@@ -2881,6 +2881,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  *
  * If a matching slot is found, true is returned, and *sslot is filled thus:
  * staop: receives the actual STAOP value.
+ * stacoll: receives the actual STACOLL value.
  * valuetype: receives actual datatype of the elements of stavalues.
  * values: receives pointer to an array of the slot's stavalues.
  * nvalues: receives number of stavalues.
@@ -2892,6 +2893,10 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * ATTSTATSSLOT_NUMBERS wasn't specified.
  *
  * If no matching slot is found, false is returned, and *sslot is zeroed.
+ *
+ * Note that the current API doesn't allow for searching for a slot with
+ * a particular collation.  If we ever actually support recording more than
+ * one collation, we'll have to extend the API, but for now simple is good.
  *
  * The data referred to by the fields of sslot is locally palloc'd and
  * is independent of the original pg_statistic tuple.  When the caller
@@ -2927,6 +2932,20 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 		return false;			/* not there */
 
 	sslot->staop = (&stats->staop1)[i];
+	sslot->stacoll = (&stats->stacoll1)[i];
+
+	/*
+	 * XXX Hopefully-temporary hack: if stacoll isn't set, inject the default
+	 * collation.  This won't matter for non-collation-aware datatypes.  For
+	 * those that are, this covers cases where stacoll has not been set.  In
+	 * the short term we need this because some code paths involving type NAME
+	 * do not pass any collation to prefix_selectivity and related functions.
+	 * Even when that's been fixed, it's likely that some add-on typanalyze
+	 * functions won't get the word right away about filling stacoll during
+	 * ANALYZE, so we'll probably need this for awhile.
+	 */
+	if (sslot->stacoll == InvalidOid)
+		sslot->stacoll = DEFAULT_COLLATION_OID;
 
 	if (flags & ATTSTATSSLOT_VALUES)
 	{

@@ -454,6 +454,9 @@ ndistinct_for_combination(double totalrows, int numrows, HeapTuple *rows,
 	/*
 	 * For each dimension, set up sort-support and fill in the values from the
 	 * sample data.
+	 *
+	 * We use the column data types' default sort operators and collations;
+	 * perhaps at some point it'd be worth using column-specific collations?
 	 */
 	for (i = 0; i < k; i++)
 	{
@@ -466,7 +469,7 @@ ndistinct_for_combination(double totalrows, int numrows, HeapTuple *rows,
 				 colstat->attrtypid);
 
 		/* prepare the sort function for this dimension */
-		multi_sort_add_dimension(mss, i, type->lt_opr);
+		multi_sort_add_dimension(mss, i, type->lt_opr, type->typcollation);
 
 		/* accumulate all the data for this dimension into the arrays */
 		for (j = 0; j < numrows; j++)

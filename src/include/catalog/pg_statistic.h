@@ -74,12 +74,13 @@ CATALOG(pg_statistic,2619,StatisticRelationId)
 	 * statistical data can be placed.  Each slot includes:
 	 *		kind			integer code identifying kind of data (see below)
 	 *		op				OID of associated operator, if needed
+	 *		coll			OID of relevant collation, or 0 if none
 	 *		numbers			float4 array (for statistical values)
 	 *		values			anyarray (for representations of data values)
-	 * The ID and operator fields are never NULL; they are zeroes in an
-	 * unused slot.  The numbers and values fields are NULL in an unused
-	 * slot, and might also be NULL in a used slot if the slot kind has
-	 * no need for one or the other.
+	 * The ID, operator, and collation fields are never NULL; they are zeroes
+	 * in an unused slot.  The numbers and values fields are NULL in an
+	 * unused slot, and might also be NULL in a used slot if the slot kind
+	 * has no need for one or the other.
 	 * ----------------
 	 */
 
@@ -94,6 +95,12 @@ CATALOG(pg_statistic,2619,StatisticRelationId)
 	Oid			staop3;
 	Oid			staop4;
 	Oid			staop5;
+
+	Oid			stacoll1;
+	Oid			stacoll2;
+	Oid			stacoll3;
+	Oid			stacoll4;
+	Oid			stacoll5;
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	float4		stanumbers1[1];
@@ -159,7 +166,8 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 
 /*
  * In a "most common values" slot, staop is the OID of the "=" operator
- * used to decide whether values are the same or not.  stavalues contains
+ * used to decide whether values are the same or not, and stacoll is the
+ * collation used (same as column's collation).  stavalues contains
  * the K most common non-null values appearing in the column, and stanumbers
  * contains their frequencies (fractions of total row count).  The values
  * shall be ordered in decreasing frequency.  Note that since the arrays are
@@ -171,9 +179,11 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 
 /*
  * A "histogram" slot describes the distribution of scalar data.  staop is
- * the OID of the "<" operator that describes the sort ordering.  (In theory,
- * more than one histogram could appear, if a datatype has more than one
- * useful sort operator.)  stavalues contains M (>=2) non-null values that
+ * the OID of the "<" operator that describes the sort ordering, and stacoll
+ * is the relevant collation.  (In theory more than one histogram could appear,
+ * if a datatype has more than one useful sort operator or we care about more
+ * than one collation.  Currently the collation will always be that of the
+ * underlying column.)  stavalues contains M (>=2) non-null values that
  * divide the non-null column data values into M-1 bins of approximately equal
  * population.  The first stavalues item is the MIN and the last is the MAX.
  * stanumbers is not used and should be NULL.  IMPORTANT POINT: if an MCV
@@ -190,11 +200,12 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 /*
  * A "correlation" slot describes the correlation between the physical order
  * of table tuples and the ordering of data values of this column, as seen
- * by the "<" operator identified by staop.  (As with the histogram, more
- * than one entry could theoretically appear.)	stavalues is not used and
- * should be NULL.  stanumbers contains a single entry, the correlation
- * coefficient between the sequence of data values and the sequence of
- * their actual tuple positions.  The coefficient ranges from +1 to -1.
+ * by the "<" operator identified by staop with the collation identified by
+ * stacoll.  (As with the histogram, more than one entry could theoretically
+ * appear.)  stavalues is not used and should be NULL.  stanumbers contains
+ * a single entry, the correlation coefficient between the sequence of data
+ * values and the sequence of their actual tuple positions.  The coefficient
+ * ranges from +1 to -1.
  */
 #define STATISTIC_KIND_CORRELATION	3
 
@@ -203,7 +214,8 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * except that it stores the most common non-null *elements* of the column
  * values.  This is useful when the column datatype is an array or some other
  * type with identifiable elements (for instance, tsvector).  staop contains
- * the equality operator appropriate to the element type.  stavalues contains
+ * the equality operator appropriate to the element type, and stacoll
+ * contains the collation to use with it.  stavalues contains
  * the most common element values, and stanumbers their frequencies.  Unlike
  * MCV slots, frequencies are measured as the fraction of non-null rows the
  * element value appears in, not the frequency of all rows.  Also unlike
@@ -226,7 +238,8 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * A "distinct elements count histogram" slot describes the distribution of
  * the number of distinct element values present in each row of an array-type
  * column.  Only non-null rows are considered, and only non-null elements.
- * staop contains the equality operator appropriate to the element type.
+ * staop contains the equality operator appropriate to the element type,
+ * and stacoll contains the collation to use with it.
  * stavalues is not used and should be NULL.  The last member of stanumbers is
  * the average count of distinct element values over all non-null rows.  The
  * preceding M (>=2) members form a histogram that divides the population of

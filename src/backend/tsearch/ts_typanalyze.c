@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "commands/vacuum.h"
 #include "tsearch/ts_type.h"
@@ -415,6 +416,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 			stats->stakind[0] = STATISTIC_KIND_MCELEM;
 			stats->staop[0] = TextEqualOperator;
+			stats->stacoll[0] = DEFAULT_COLLATION_OID;
 			stats->stanumbers[0] = mcelem_freqs;
 			/* See above comment about two extra frequency fields */
 			stats->numnumbers[0] = num_mcelem + 2;
