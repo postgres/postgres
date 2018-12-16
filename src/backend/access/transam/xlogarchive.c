@@ -59,7 +59,6 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	char	   *endp;
 	const char *sp;
 	int			rc;
-	bool		signaled;
 	struct stat stat_buf;
 	XLogSegNo	restartSegNo;
 	XLogRecPtr	restartRedoPtr;
@@ -289,17 +288,12 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * will perform an immediate shutdown when it sees us exiting
 	 * unexpectedly.
 	 *
-	 * Per the Single Unix Spec, shells report exit status > 128 when a called
-	 * command died on a signal.  Also, 126 and 127 are used to report
-	 * problems such as an unfindable command; treat those as fatal errors
-	 * too.
+	 * We treat hard shell errors such as "command not found" as fatal, too.
 	 */
-	if (WIFSIGNALED(rc) && WTERMSIG(rc) == SIGTERM)
+	if (wait_result_is_signal(rc, SIGTERM))
 		proc_exit(1);
 
-	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
-
-	ereport(signaled ? FATAL : DEBUG2,
+	ereport(wait_result_is_any_signal(rc, true) ? FATAL : DEBUG2,
 			(errmsg("could not restore file \"%s\" from archive: %s",
 					xlogfname, wait_result_to_str(rc))));
 
@@ -335,7 +329,6 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 	char	   *endp;
 	const char *sp;
 	int			rc;
-	bool		signaled;
 	XLogSegNo	restartSegNo;
 	XLogRecPtr	restartRedoPtr;
 	TimeLineID	restartTli;
@@ -403,12 +396,9 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 	{
 		/*
 		 * If the failure was due to any sort of signal, it's best to punt and
-		 * abort recovery. See also detailed comments on signals in
-		 * RestoreArchivedFile().
+		 * abort recovery.  See comments in RestoreArchivedFile().
 		 */
-		signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
-
-		ereport((signaled && failOnSignal) ? FATAL : WARNING,
+		ereport((failOnSignal && wait_result_is_any_signal(rc, true)) ? FATAL : WARNING,
 		/*------
 		   translator: First %s represents a postgresql.conf parameter name like
 		  "recovery_end_command", the 2nd is the value of that parameter, the
