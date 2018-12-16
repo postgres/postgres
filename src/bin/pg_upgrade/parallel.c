@@ -294,7 +294,7 @@ reap_child(bool wait_for_child)
 {
 #ifndef WIN32
 	int			work_status;
-	int			ret;
+	pid_t		child;
 #else
 	int			thread_num;
 	DWORD		res;
@@ -304,14 +304,13 @@ reap_child(bool wait_for_child)
 		return false;
 
 #ifndef WIN32
-	ret = waitpid(-1, &work_status, wait_for_child ? 0 : WNOHANG);
-
-	/* no children or, for WNOHANG, no dead children */
-	if (ret <= 0 || !WIFEXITED(work_status))
-		return false;
-
-	if (WEXITSTATUS(work_status) != 0)
-		pg_fatal("child worker exited abnormally: %s\n", strerror(errno));
+	child = waitpid(-1, &work_status, wait_for_child ? 0 : WNOHANG);
+	if (child == (pid_t) -1)
+		pg_fatal("waitpid() failed: %s\n", strerror(errno));
+	if (child == 0)
+		return false;			/* no children, or no dead children */
+	if (work_status != 0)
+		pg_fatal("child process exited abnormally: status %d\n", work_status);
 #else
 	/* wait for one to finish */
 	thread_num = WaitForMultipleObjects(parallel_jobs, thread_handles,
