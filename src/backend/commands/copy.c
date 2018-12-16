@@ -17,7 +17,6 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -1713,7 +1712,7 @@ ClosePipeToProgram(CopyState cstate)
 		 * problem.
 		 */
 		if (cstate->is_copy_from && !cstate->reached_eof &&
-			WIFSIGNALED(pclose_rc) && WTERMSIG(pclose_rc) == SIGPIPE)
+			wait_result_is_signal(pclose_rc, SIGPIPE))
 			return;
 
 		ereport(ERROR,
