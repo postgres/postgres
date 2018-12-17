@@ -122,6 +122,19 @@ typedef FormData_pg_class *Form_pg_class;
  */
 #define		  REPLICA_IDENTITY_INDEX	'i'
 
+/*
+ * Relation kinds that have physical storage. These relations normally have
+ * relfilenode set to non-zero, but it can also be zero if the relation is
+ * mapped.
+ */
+#define RELKIND_CAN_HAVE_STORAGE(relkind) \
+	((relkind) == RELKIND_RELATION || \
+	 (relkind) == RELKIND_INDEX || \
+	 (relkind) == RELKIND_SEQUENCE || \
+	 (relkind) == RELKIND_TOASTVALUE || \
+	 (relkind) == RELKIND_MATVIEW)
+
+
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
 #endif							/* PG_CLASS_H */

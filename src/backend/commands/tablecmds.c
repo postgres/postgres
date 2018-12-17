@@ -305,7 +305,7 @@ static void truncate_check_activity(Relation rel);
 static void RangeVarCallbackForTruncate(const RangeVar *relation,
 							Oid relId, Oid oldRelId, void *arg);
 static List *MergeAttributes(List *schema, List *supers, char relpersistence,
-				bool is_partition, List **supOids, List **supconstr);
+				bool is_partition, List **supconstr);
 static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
@@ -446,7 +446,7 @@ static bool ATPrepChangePersistence(Relation rel, bool toLogged);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 					const char *tablespacename, LOCKMODE lockmode);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
-static void ATExecPartedIdxSetTableSpace(Relation rel, Oid newTableSpace);
+static void ATExecSetTableSpaceNoStorage(Relation rel, Oid newTableSpace);
 static void ATExecSetRelOptions(Relation rel, List *defList,
 					AlterTableType operation,
 					LOCKMODE lockmode);
@@ -536,6 +536,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	Oid			ofTypeId;
 	ObjectAddress address;
+	LOCKMODE	parentLockmode;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -581,12 +582,71 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				 errmsg("cannot create temporary table within security-restricted operation")));
 
 	/*
+	 * Determine the lockmode to use when scanning parents.  A self-exclusive
+	 * lock is needed here.
+	 *
+	 * For regular inheritance, if two backends attempt to add children to the
+	 * same parent simultaneously, and that parent has no pre-existing
+	 * children, then both will attempt to update the parent's relhassubclass
+	 * field, leading to a "tuple concurrently updated" error.  Also, this
+	 * interlocks against a concurrent ANALYZE on the parent table, which
+	 * might otherwise be attempting to clear the parent's relhassubclass
+	 * field, if its previous children were recently dropped.
+	 *
+	 * If the child table is a partition, then we instead grab an exclusive
+	 * lock on the parent because its partition descriptor will be changed by
+	 * addition of the new partition.
+	 */
+	parentLockmode = (stmt->partbound != NULL ? AccessExclusiveLock :
+					  ShareUpdateExclusiveLock);
+
+	/* Determine the list of OIDs of the parents. */
+	inheritOids = NIL;
+	foreach(listptr, stmt->inhRelations)
+	{
+		RangeVar   *rv = (RangeVar *) lfirst(listptr);
+		Oid			parentOid;
+
+		parentOid = RangeVarGetRelid(rv, parentLockmode, false);
+
+		/*
+		 * Reject duplications in the list of parents.
+		 */
+		if (list_member_oid(inheritOids, parentOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_TABLE),
+					 errmsg("relation \"%s\" would be inherited from more than once",
+							get_rel_name(parentOid))));
+
+		inheritOids = lappend_oid(inheritOids, parentOid);
+	}
+
+	/*
 	 * Select tablespace to use.  If not specified, use default tablespace
 	 * (which may in turn default to database's default).
 	 */
 	if (stmt->tablespacename)
 	{
 		tablespaceId = get_tablespace_oid(stmt->tablespacename, false);
+	}
+	else if (stmt->partbound)
+	{
+		HeapTuple	tup;
+
+		/*
+		 * For partitions, when no other tablespace is specified, we default
+		 * the tablespace to the parent partitioned table's.
+		 */
+		Assert(list_length(inheritOids) == 1);
+		tup = SearchSysCache1(RELOID,
+							  DatumGetObjectId(linitial_oid(inheritOids)));
+
+		tablespaceId = ((Form_pg_class) GETSTRUCT(tup))->reltablespace;
+
+		if (!OidIsValid(tablespaceId))
+			tablespaceId = GetDefaultTablespace(stmt->relation->relpersistence);
+
+		ReleaseSysCache(tup);
 	}
 	else
 	{
@@ -646,10 +706,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * modified by MergeAttributes.)
 	 */
 	stmt->tableElts =
-		MergeAttributes(stmt->tableElts, stmt->inhRelations,
+		MergeAttributes(stmt->tableElts, inheritOids,
 						stmt->relation->relpersistence,
 						stmt->partbound != NULL,
-						&inheritOids, &old_constraints);
+						&old_constraints);
 
 	/*
 	 * Create a tuple descriptor from the relation schema.  Note that this
@@ -1781,12 +1841,11 @@ storage_name(char c)
  * Input arguments:
  * 'schema' is the column/attribute definition for the table. (It's a list
  *		of ColumnDef's.) It is destructively changed.
- * 'supers' is a list of names (as RangeVar nodes) of parent relations.
+ * 'supers' is a list of OIDs of parent relations, already locked by caller.
  * 'relpersistence' is a persistence type of the table.
  * 'is_partition' tells if the table is a partition
  *
  * Output arguments:
- * 'supOids' receives a list of the OIDs of the parent relations.
  * 'supconstr' receives a list of constraints belonging to the parents,
  *		updated as necessary to be valid for the child.
  *
@@ -1834,11 +1893,10 @@ storage_name(char c)
  */
 static List *
 MergeAttributes(List *schema, List *supers, char relpersistence,
-				bool is_partition, List **supOids, List **supconstr)
+				bool is_partition, List **supconstr)
 {
 	ListCell   *entry;
 	List	   *inhSchema = NIL;
-	List	   *parentOids = NIL;
 	List	   *constraints = NIL;
 	bool		have_bogus_defaults = false;
 	int			child_attno;
@@ -1939,31 +1997,15 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	child_attno = 0;
 	foreach(entry, supers)
 	{
-		RangeVar   *parent = (RangeVar *) lfirst(entry);
+		Oid			parent = lfirst_oid(entry);
 		Relation	relation;
 		TupleDesc	tupleDesc;
 		TupleConstr *constr;
 		AttrNumber *newattno;
 		AttrNumber	parent_attno;
 
-		/*
-		 * A self-exclusive lock is needed here.  If two backends attempt to
-		 * add children to the same parent simultaneously, and that parent has
-		 * no pre-existing children, then both will attempt to update the
-		 * parent's relhassubclass field, leading to a "tuple concurrently
-		 * updated" error.  Also, this interlocks against a concurrent ANALYZE
-		 * on the parent table, which might otherwise be attempting to clear
-		 * the parent's relhassubclass field, if its previous children were
-		 * recently dropped.
-		 *
-		 * If the child table is a partition, then we instead grab an
-		 * exclusive lock on the parent because its partition descriptor will
-		 * be changed by addition of the new partition.
-		 */
-		if (!is_partition)
-			relation = heap_openrv(parent, ShareUpdateExclusiveLock);
-		else
-			relation = heap_openrv(parent, AccessExclusiveLock);
+		/* caller already got lock */
+		relation = heap_open(parent, NoLock);
 
 		/*
 		 * Check for active uses of the parent partitioned table in the
@@ -1982,12 +2024,12 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot inherit from partitioned table \"%s\"",
-							parent->relname)));
+							RelationGetRelationName(relation))));
 		if (relation->rd_rel->relispartition && !is_partition)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot inherit from partition \"%s\"",
-							parent->relname)));
+							RelationGetRelationName(relation))));
 
 		if (relation->rd_rel->relkind != RELKIND_RELATION &&
 			relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
@@ -1995,7 +2037,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("inherited relation \"%s\" is not a table or foreign table",
-							parent->relname)));
+							RelationGetRelationName(relation))));
 
 		/*
 		 * If the parent is permanent, so must be all of its partitions.  Note
@@ -2017,7 +2059,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					 errmsg(!is_partition
 							? "cannot inherit from temporary relation \"%s\""
 							: "cannot create a permanent relation as partition of temporary relation \"%s\"",
-							parent->relname)));
+							RelationGetRelationName(relation))));
 
 		/* If existing rel is temp, it must belong to this session */
 		if (relation->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
@@ -2035,17 +2077,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(relation->rd_rel->relkind),
 						   RelationGetRelationName(relation));
-
-		/*
-		 * Reject duplications in the list of parents.
-		 */
-		if (list_member_oid(parentOids, RelationGetRelid(relation)))
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_TABLE),
-					 errmsg("relation \"%s\" would be inherited from more than once",
-							parent->relname)));
-
-		parentOids = lappend_oid(parentOids, RelationGetRelid(relation));
 
 		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
@@ -2463,7 +2494,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 		}
 	}
 
-	*supOids = parentOids;
 	*supconstr = constraints;
 	return schema;
 }
@@ -4157,11 +4187,13 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
 			/*
-			 * Only do this for partitioned indexes, for which this is just
-			 * a catalog change.  Other relation types are handled by Phase 3.
+			 * Only do this for partitioned tables and indexes, for which this
+			 * is just a catalog change.  Other relation types which have
+			 * storage are handled by Phase 3.
 			 */
-			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
-				ATExecPartedIdxSetTableSpace(rel, tab->newTableSpace);
+			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
+				rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
+				ATExecSetTableSpaceNoStorage(rel, tab->newTableSpace);
 
 			break;
 		case AT_SetRelOptions:	/* SET (...) */
@@ -10935,19 +10967,26 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 }
 
 /*
- * Special handling of ALTER TABLE SET TABLESPACE for partitioned indexes,
- * which have no storage (so not handled in Phase 3 like other relation types)
+ * Special handling of ALTER TABLE SET TABLESPACE for relations with no
+ * storage that have an interest in preserving tablespace.
+ *
+ * Since these have no storage the tablespace can be updated with a simple
+ * metadata only operation to update the tablespace.
  */
 static void
-ATExecPartedIdxSetTableSpace(Relation rel, Oid newTableSpace)
+ATExecSetTableSpaceNoStorage(Relation rel, Oid newTableSpace)
 {
 	HeapTuple	tuple;
 	Oid			oldTableSpace;
 	Relation	pg_class;
 	Form_pg_class rd_rel;
-	Oid			indexOid = RelationGetRelid(rel);
+	Oid			reloid = RelationGetRelid(rel);
 
-	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX);
+	/*
+	 * Shouldn't be called on relations having storage; these are processed
+	 * in phase 3.
+	 */
+	Assert(!RELKIND_CAN_HAVE_STORAGE(rel->rd_rel->relkind));
 
 	/* Can't allow a non-shared relation in pg_global */
 	if (newTableSpace == GLOBALTABLESPACE_OID)
@@ -10962,24 +11001,23 @@ ATExecPartedIdxSetTableSpace(Relation rel, Oid newTableSpace)
 	if (newTableSpace == oldTableSpace ||
 		(newTableSpace == MyDatabaseTableSpace && oldTableSpace == 0))
 	{
-		InvokeObjectPostAlterHook(RelationRelationId,
-								  indexOid, 0);
+		InvokeObjectPostAlterHook(RelationRelationId, reloid, 0);
 		return;
 	}
 
 	/* Get a modifiable copy of the relation's pg_class row */
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(indexOid));
+	tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(reloid));
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", indexOid);
+		elog(ERROR, "cache lookup failed for relation %u", reloid);
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
 	/* update the pg_class row */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
 	CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
 
-	InvokeObjectPostAlterHook(RelationRelationId, indexOid, 0);
+	InvokeObjectPostAlterHook(RelationRelationId, reloid, 0);
 
 	heap_freetuple(tuple);
 

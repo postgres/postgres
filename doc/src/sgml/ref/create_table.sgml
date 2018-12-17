@@ -1216,7 +1216,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       of the tablespace in which the new table is to be created.
       If not specified,
       <xref linkend="guc-default-tablespace"/> is consulted, or
-      <xref linkend="guc-temp-tablespaces"/> if the table is temporary.
+      <xref linkend="guc-temp-tablespaces"/> if the table is temporary.  For
+      partitioned tables, since no storage is required for the table itself,
+      the tablespace specified here only serves to mark the default tablespace
+      for any newly created partitions when no other tablespace is explicitly
+      specified.
      </para>
     </listitem>
    </varlistentry>
