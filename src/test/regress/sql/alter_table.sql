@@ -258,7 +258,7 @@ CREATE TABLE constraint_rename_cache (a int,
 ALTER TABLE constraint_rename_cache
   RENAME CONSTRAINT chk_a TO chk_a_new;
 ALTER TABLE constraint_rename_cache
-  RENAME CONSTRAINT constraint_rename_cache_pkey TO chk_a_gt_zero;
+  RENAME CONSTRAINT constraint_rename_cache_pkey TO constraint_rename_pkey_new;
 CREATE TABLE like_constraint_rename_cache
   (LIKE constraint_rename_cache INCLUDING ALL);
 \d like_constraint_rename_cache
