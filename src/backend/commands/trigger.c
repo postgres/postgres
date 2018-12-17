@@ -5780,7 +5780,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		bool		delete_old_table = transition_capture->tcs_delete_old_table;
 		bool		update_old_table = transition_capture->tcs_update_old_table;
 		bool		update_new_table = transition_capture->tcs_update_new_table;
-		bool		insert_new_table = transition_capture->tcs_insert_new_table;;
+		bool		insert_new_table = transition_capture->tcs_insert_new_table;
 
 		/*
 		 * For INSERT events newtup should be non-NULL, for DELETE events

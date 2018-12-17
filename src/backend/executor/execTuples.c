@@ -738,7 +738,7 @@ tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 		dstslot->tts_flags |= TTS_FLAG_SHOULDFREE;
 		dstslot->tts_flags &= ~TTS_FLAG_EMPTY;
 		oldContext = MemoryContextSwitchTo(dstslot->tts_mcxt);
-		bdstslot->base.tuple = ExecCopySlotHeapTuple(srcslot);;
+		bdstslot->base.tuple = ExecCopySlotHeapTuple(srcslot);
 		MemoryContextSwitchTo(oldContext);
 	}
 	else
