@@ -2066,7 +2066,7 @@ BaseBackup(void)
 	{
 #ifndef WIN32
 		int			status;
-		int			r;
+		pid_t		r;
 #else
 		DWORD		status;
 
@@ -2094,7 +2094,7 @@ BaseBackup(void)
 
 		/* Just wait for the background process to exit */
 		r = waitpid(bgchild, &status, 0);
-		if (r == -1)
+		if (r == (pid_t) -1)
 		{
 			fprintf(stderr, _("%s: could not wait for child process: %s\n"),
 					progname, strerror(errno));
@@ -2103,19 +2103,13 @@ BaseBackup(void)
 		if (r != bgchild)
 		{
 			fprintf(stderr, _("%s: child %d died, expected %d\n"),
-					progname, r, (int) bgchild);
+					progname, (int) r, (int) bgchild);
 			disconnect_and_exit(1);
 		}
-		if (!WIFEXITED(status))
+		if (status != 0)
 		{
-			fprintf(stderr, _("%s: child process did not exit normally\n"),
-					progname);
-			disconnect_and_exit(1);
-		}
-		if (WEXITSTATUS(status) != 0)
-		{
-			fprintf(stderr, _("%s: child process exited with error %d\n"),
-					progname, WEXITSTATUS(status));
+			fprintf(stderr, "%s: %s\n",
+					progname, wait_result_to_str(status));
 			disconnect_and_exit(1);
 		}
 		/* Exited normally, we're happy! */

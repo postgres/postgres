@@ -56,25 +56,17 @@ wait_result_to_str(int exitstatus)
 		}
 	}
 	else if (WIFSIGNALED(exitstatus))
+	{
 #if defined(WIN32)
 		snprintf(str, sizeof(str),
 				 _("child process was terminated by exception 0x%X"),
 				 WTERMSIG(exitstatus));
-#elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
-	{
-		char		str2[256];
-
-		snprintf(str2, sizeof(str2), "%d: %s", WTERMSIG(exitstatus),
-				 WTERMSIG(exitstatus) < NSIG ?
-				 sys_siglist[WTERMSIG(exitstatus)] : "(unknown)");
-		snprintf(str, sizeof(str),
-				 _("child process was terminated by signal %s"), str2);
-	}
 #else
 		snprintf(str, sizeof(str),
-				 _("child process was terminated by signal %d"),
-				 WTERMSIG(exitstatus));
+				 _("child process was terminated by signal %d: %s"),
+				 WTERMSIG(exitstatus), pg_strsignal(WTERMSIG(exitstatus)));
 #endif
+	}
 	else
 		snprintf(str, sizeof(str),
 				 _("child process exited with unrecognized status %d"),

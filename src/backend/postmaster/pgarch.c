@@ -650,17 +650,10 @@ pgarch_archiveXlog(char *xlog)
 					 errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
 					 errdetail("The failed archive command was: %s",
 							   xlogarchcmd)));
-#elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
-			ereport(lev,
-					(errmsg("archive command was terminated by signal %d: %s",
-							WTERMSIG(rc),
-							WTERMSIG(rc) < NSIG ? sys_siglist[WTERMSIG(rc)] : "(unknown)"),
-					 errdetail("The failed archive command was: %s",
-							   xlogarchcmd)));
 #else
 			ereport(lev,
-					(errmsg("archive command was terminated by signal %d",
-							WTERMSIG(rc)),
+					(errmsg("archive command was terminated by signal %d: %s",
+							WTERMSIG(rc), pg_strsignal(WTERMSIG(rc))),
 					 errdetail("The failed archive command was: %s",
 							   xlogarchcmd)));
 #endif

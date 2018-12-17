@@ -1621,6 +1621,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	setsid
 	shm_open
 	strchrnul
+	strsignal
 	symlink
 	sync_file_range
 	utime
