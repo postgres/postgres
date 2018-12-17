@@ -31,7 +31,7 @@
  * the string will remain valid across later calls to strsignal().
  *
  * This version guarantees to return a non-NULL pointer, although
- * some platforms' versions of strsignal() do not.
+ * some platforms' versions of strsignal() reputedly do not.
  */
 const char *
 pg_strsignal(int signum)
@@ -40,21 +40,18 @@ pg_strsignal(int signum)
 
 	/*
 	 * If we have strsignal(3), use that --- but check its result for NULL.
-	 * Otherwise, if we have sys_siglist[], use that; just out of paranoia,
-	 * check for NULL there too.  (We assume there is no point in trying both
-	 * APIs.)
 	 */
-#if defined(HAVE_STRSIGNAL)
+#ifdef HAVE_STRSIGNAL
 	result = strsignal(signum);
 	if (result)
 		return result;
-#elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
-	if (signum > 0 && signum < NSIG)
-	{
-		result = sys_siglist[signum];
-		if (result)
-			return result;
-	}
+#else
+
+	/*
+	 * We used to have code here to try to use sys_siglist[] if available.
+	 * However, it seems that all platforms with sys_siglist[] have also had
+	 * strsignal() for many years now, so that was just a waste of code.
+	 */
 #endif
 
 	/*

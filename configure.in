@@ -1787,14 +1787,6 @@ if test "$PORTNAME" = "cygwin"; then
   AC_LIBOBJ(dirmod)
 fi
 
-AC_CHECK_DECLS([sys_siglist], [], [],
-[#include <signal.h>
-/* NetBSD declares sys_siglist in unistd.h.  */
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-])
-
 AC_CHECK_FUNC(syslog,
               [AC_CHECK_HEADER(syslog.h,
                                [AC_DEFINE(HAVE_SYSLOG, 1, [Define to 1 if you have the syslog interface.])])])
