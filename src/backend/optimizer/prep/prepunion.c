@@ -816,7 +816,7 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 	/* Build result relation. */
 	result_rel = fetch_upper_rel(root, UPPERREL_SETOP,
 								 bms_union(lrel->relids, rrel->relids));
-	result_rel->reltarget = create_pathtarget(root, tlist);;
+	result_rel->reltarget = create_pathtarget(root, tlist);
 
 	/*
 	 * Append the child results together.
