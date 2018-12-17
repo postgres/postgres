@@ -3921,8 +3921,12 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
        query, partition pruning is performed whenever one of the
        execution parameters being used by partition pruning changes.
        Determining if partitions were pruned during this phase requires
-       careful inspection of the <literal>nloops</literal> property in
-       the <command>EXPLAIN ANALYZE</command> output.
+       careful inspection of the <literal>loops</literal> property in
+       the <command>EXPLAIN ANALYZE</command> output.  Subplans
+       corresponding to different partitions may have different values
+       for it depending on how many times each of them was pruned during
+       execution.  Some may be shown as <literal>(never executed)</literal>
+       if they were pruned every time.
       </para>
      </listitem>
     </itemizedlist>
