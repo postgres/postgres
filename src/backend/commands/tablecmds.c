@@ -2487,12 +2487,12 @@ rename_constraint_internal(Oid myrelid,
 
 	if (targetrelation)
 	{
-		relation_close(targetrelation, NoLock); /* close rel but keep lock */
-
 		/*
 		 * Invalidate relcache so as others can see the new constraint name.
 		 */
 		CacheInvalidateRelcache(targetrelation);
+
+		relation_close(targetrelation, NoLock); /* close rel but keep lock */
 	}
 
 	return address;
