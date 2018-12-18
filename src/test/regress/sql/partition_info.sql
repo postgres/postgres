@@ -1,5 +1,5 @@
 --
--- Tests for pg_partition_tree
+-- Tests for functions providing information about partitions
 --
 SELECT * FROM pg_partition_tree(NULL);
 SELECT * FROM pg_partition_tree(0);
@@ -54,13 +54,15 @@ SELECT relid, parentrelid, level, isleaf
 
 DROP TABLE ptif_test;
 
--- A table not part of a partition tree works is the only member listed.
+-- Table that is not part of any partition tree is the only member listed.
 CREATE TABLE ptif_normal_table(a int);
 SELECT relid, parentrelid, level, isleaf
   FROM pg_partition_tree('ptif_normal_table');
 DROP TABLE ptif_normal_table;
 
--- Views and materialized viewS cannot be part of a partition tree.
+-- Various partitioning-related functions return NULL if passed relations
+-- of types that cannot be part of a partition tree; for example, views,
+-- materialized views, etc.
 CREATE VIEW ptif_test_view AS SELECT 1;
 CREATE MATERIALIZED VIEW ptif_test_matview AS SELECT 1;
 SELECT * FROM pg_partition_tree('ptif_test_view');
