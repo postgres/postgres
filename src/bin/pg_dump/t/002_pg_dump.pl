@@ -2343,6 +2343,28 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'CREATE TABLE table_with_stats' => {
+		create_order => 98,
+		create_sql   => 'CREATE TABLE dump_test.table_index_stats (
+						   col1 int,
+						   col2 int,
+						   col3 int);
+						 CREATE INDEX index_with_stats
+						  ON dump_test.table_index_stats
+						  ((col1 + 1), col1, (col2 + 1), (col3 + 1));
+						 ALTER INDEX dump_test.index_with_stats
+						   ALTER COLUMN 1 SET STATISTICS 400;
+						 ALTER INDEX dump_test.index_with_stats
+						   ALTER COLUMN 3 SET STATISTICS 500;',
+		regexp => qr/^
+			\QALTER INDEX dump_test.index_with_stats ALTER COLUMN 1 SET STATISTICS 400;\E\n
+			\QALTER INDEX dump_test.index_with_stats ALTER COLUMN 3 SET STATISTICS 500;\E\n
+			/xms,
+		like =>
+			{ %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE STATISTICS extended_stats_no_options' => {
 		create_order => 97,
 		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_no_options

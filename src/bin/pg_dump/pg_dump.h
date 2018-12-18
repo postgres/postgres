@@ -360,6 +360,8 @@ typedef struct _indxInfo
 	char	   *indexdef;
 	char	   *tablespace;		/* tablespace in which index is stored */
 	char	   *indreloptions;	/* options specified by WITH (...) */
+	char	   *indstatcols;	/* column numbers with statistics */
+	char	   *indstatvals;	/* statistic values for columns */
 	int			indnkeyattrs;	/* number of index key attributes */
 	int			indnattrs;		/* total number of index attributes */
 	Oid		   *indkeys;		/* In spite of the name 'indkeys' this field
