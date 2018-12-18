@@ -6,6 +6,9 @@ create table idxpart (a int, b int, c text) partition by range (a);
 -- It will be set after the first partition is created.
 create index idxpart_idx on idxpart (a);
 select relhassubclass from pg_class where relname = 'idxpart_idx';
+
+-- Check that partitioned indexes are present in pg_indexes.
+select indexdef from pg_indexes where indexname like 'idxpart_idx%';
 drop index idxpart_idx;
 
 create table idxpart1 partition of idxpart for values from (0) to (10);

@@ -1358,7 +1358,7 @@ pg_indexes| SELECT n.nspname AS schemaname,
      JOIN pg_class i ON ((i.oid = x.indexrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
      LEFT JOIN pg_tablespace t ON ((t.oid = i.reltablespace)))
-  WHERE ((c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND (i.relkind = 'i'::"char"));
+  WHERE ((c.relkind = ANY (ARRAY['r'::"char", 'm'::"char", 'p'::"char"])) AND (i.relkind = ANY (ARRAY['i'::"char", 'I'::"char"])));
 pg_locks| SELECT l.locktype,
     l.database,
     l.relation,

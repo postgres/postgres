@@ -10,6 +10,13 @@ select relhassubclass from pg_class where relname = 'idxpart_idx';
  f
 (1 row)
 
+-- Check that partitioned indexes are present in pg_indexes.
+select indexdef from pg_indexes where indexname like 'idxpart_idx%';
+                            indexdef                             
+-----------------------------------------------------------------
+ CREATE INDEX idxpart_idx ON ONLY public.idxpart USING btree (a)
+(1 row)
+
 drop index idxpart_idx;
 create table idxpart1 partition of idxpart for values from (0) to (10);
 create table idxpart2 partition of idxpart for values from (10) to (100)
