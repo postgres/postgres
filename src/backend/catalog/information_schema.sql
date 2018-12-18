@@ -208,7 +208,7 @@ CREATE DOMAIN cardinal_number AS integer
  * CHARACTER_DATA domain
  */
 
-CREATE DOMAIN character_data AS character varying;
+CREATE DOMAIN character_data AS character varying COLLATE "C";
 
 
 /*
@@ -216,7 +216,7 @@ CREATE DOMAIN character_data AS character varying;
  * SQL_IDENTIFIER domain
  */
 
-CREATE DOMAIN sql_identifier AS character varying;
+CREATE DOMAIN sql_identifier AS character varying COLLATE "C";
 
 
 /*
@@ -243,7 +243,7 @@ CREATE DOMAIN time_stamp AS timestamp(2) with time zone
  * YES_OR_NO domain
  */
 
-CREATE DOMAIN yes_or_no AS character varying(3)
+CREATE DOMAIN yes_or_no AS character varying(3) COLLATE "C"
     CONSTRAINT yes_or_no_check CHECK (value IN ('YES', 'NO'));
 
 

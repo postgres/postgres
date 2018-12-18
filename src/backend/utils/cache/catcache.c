@@ -22,6 +22,7 @@
 #include "access/tuptoaster.h"
 #include "access/valid.h"
 #include "access/xact.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -1014,8 +1015,8 @@ CatalogCacheInitializeCache(CatCache *cache)
 		/* Fill in sk_strategy as well --- always standard equality */
 		cache->cc_skey[i].sk_strategy = BTEqualStrategyNumber;
 		cache->cc_skey[i].sk_subtype = InvalidOid;
-		/* Currently, there are no catcaches on collation-aware data types */
-		cache->cc_skey[i].sk_collation = InvalidOid;
+		/* If a catcache key requires a collation, it must be C collation */
+		cache->cc_skey[i].sk_collation = C_COLLATION_OID;
 
 		CACHE4_elog(DEBUG2, "CatalogCacheInitializeCache %s %d %p",
 					cache->cc_relname,
@@ -1961,10 +1962,10 @@ CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, int *attnos,
 		NameData	srcname;
 
 		/*
-		 * Must be careful in case the caller passed a C string where a
-		 * NAME is wanted: convert the given argument to a correctly
-		 * padded NAME.  Otherwise the memcpy() done by datumCopy() could
-		 * fall off the end of memory.
+		 * Must be careful in case the caller passed a C string where a NAME
+		 * is wanted: convert the given argument to a correctly padded NAME.
+		 * Otherwise the memcpy() done by datumCopy() could fall off the end
+		 * of memory.
 		 */
 		if (att->atttypid == NAMEOID)
 		{

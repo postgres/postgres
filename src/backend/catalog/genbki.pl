@@ -167,6 +167,9 @@ my $GenbkiNextOid = $FirstGenbkiObjectId;
 my $BOOTSTRAP_SUPERUSERID =
   Catalog::FindDefinedSymbolFromData($catalog_data{pg_authid},
 	'BOOTSTRAP_SUPERUSERID');
+my $C_COLLATION_OID =
+  Catalog::FindDefinedSymbolFromData($catalog_data{pg_collation},
+	'C_COLLATION_OID');
 my $PG_CATALOG_NAMESPACE =
   Catalog::FindDefinedSymbolFromData($catalog_data{pg_namespace},
 	'PG_CATALOG_NAMESPACE');
@@ -693,7 +696,10 @@ sub morph_row_for_pgattr
 
 	# set attndims if it's an array type
 	$row->{attndims} = $type->{typcategory} eq 'A' ? '1' : '0';
-	$row->{attcollation} = $type->{typcollation};
+
+	# collation-aware catalog columns must use C collation
+	$row->{attcollation} = $type->{typcollation} != 0 ?
+	    $C_COLLATION_OID : 0;
 
 	if (defined $attr->{forcenotnull})
 	{

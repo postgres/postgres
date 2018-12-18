@@ -744,6 +744,15 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 			attrtypes[attnum]->attndims = 0;
 	}
 
+	/*
+	 * If a system catalog column is collation-aware, force it to use C
+	 * collation, so that its behavior is independent of the database's
+	 * collation.  This is essential to allow template0 to be cloned with a
+	 * different database collation.
+	 */
+	if (OidIsValid(attrtypes[attnum]->attcollation))
+		attrtypes[attnum]->attcollation = C_COLLATION_OID;
+
 	attrtypes[attnum]->attstattarget = -1;
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;

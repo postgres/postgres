@@ -2060,18 +2060,25 @@ ORDER BY 1;
 -- a representational error in pg_index, but simply wrong catalog design.
 -- It's bad because we expect to be able to clone template0 and assign the
 -- copy a different database collation.  It would especially not work for
--- shared catalogs.  Note that although text columns will show a collation
--- in indcollation, they're still okay to index with text_pattern_ops,
--- so allow that case.
+-- shared catalogs.
+SELECT relname, attname, attcollation
+FROM pg_class c, pg_attribute a
+WHERE c.oid = attrelid AND c.oid < 16384 AND
+    c.relkind != 'v' AND  -- we don't care about columns in views
+    attcollation != 0 AND
+    attcollation != (SELECT oid FROM pg_collation WHERE collname = 'C');
+ relname | attname | attcollation 
+---------+---------+--------------
+(0 rows)
+
+-- Double-check that collation-sensitive indexes have "C" collation, too.
 SELECT indexrelid::regclass, indrelid::regclass, iclass, icoll
 FROM (SELECT indexrelid, indrelid,
              unnest(indclass) as iclass, unnest(indcollation) as icoll
       FROM pg_index
       WHERE indrelid < 16384) ss
-WHERE icoll != 0 AND iclass !=
-    (SELECT oid FROM pg_opclass
-     WHERE opcname = 'text_pattern_ops' AND opcmethod =
-           (SELECT oid FROM pg_am WHERE amname = 'btree'));
+WHERE icoll != 0 AND
+    icoll != (SELECT oid FROM pg_collation WHERE collname = 'C');
  indexrelid | indrelid | iclass | icoll 
 ------------+----------+--------+-------
 (0 rows)
