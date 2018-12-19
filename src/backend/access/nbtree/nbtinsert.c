@@ -814,10 +814,7 @@ _bt_findinsertloc(Relation rel,
  *		INCOMPLETE_SPLIT flag on it, and release the buffer.
  *
  *		The locking interactions in this code are critical.  You should
- *		grok Lehman and Yao's paper before making any changes.  In addition,
- *		you need to understand how we disambiguate duplicate keys in this
- *		implementation, in order to be able to find our location using
- *		L&Y "move right" operations.
+ *		grok Lehman and Yao's paper before making any changes.
  *----------
  */
 static void
