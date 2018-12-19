@@ -4587,14 +4587,15 @@ execq(PG_FUNCTION_ARGS)
     uint64 proc;
 
     /* Convert given text object to a C string */
-    command = text_to_cstring(PG_GETARG_TEXT_PP(1));
-    cnt = PG_GETARG_INT32(2);
+    command = text_to_cstring(PG_GETARG_TEXT_PP(0));
+    cnt = PG_GETARG_INT32(1);
 
     SPI_connect();
 
     ret = SPI_exec(command, cnt);
 
     proc = SPI_processed;
+
     /*
      * If some rows were fetched, print them via elog(INFO).
      */
@@ -4611,7 +4612,7 @@ execq(PG_FUNCTION_ARGS)
             int i;
 
             for (i = 1, buf[0] = 0; i &lt;= tupdesc-&gt;natts; i++)
-                snprintf(buf + strlen (buf), sizeof(buf) - strlen(buf), " %s%s",
+                snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " %s%s",
                         SPI_getvalue(tuple, tupdesc, i),
                         (i == tupdesc-&gt;natts) ? " " : " |");
             elog(INFO, "EXECQ: %s", buf);
