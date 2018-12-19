@@ -2348,8 +2348,8 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 	if (!creating_extension)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("pg_extension_config_dump() can only be called "
-						"from an SQL script executed by CREATE EXTENSION")));
+				 errmsg("%s can only be called from an SQL script executed by CREATE EXTENSION",
+						"pg_extension_config_dump()")));
 
 	/*
 	 * Check that the table exists and is a member of the extension being
