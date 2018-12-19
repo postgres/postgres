@@ -3173,6 +3173,9 @@ ALTER TABLE test_add_column
 ALTER TABLE test_add_column
 	ADD COLUMN c2 integer; -- fail because c2 already exists
 ERROR:  column "c2" of relation "test_add_column" already exists
+ALTER TABLE ONLY test_add_column
+	ADD COLUMN c2 integer; -- fail because c2 already exists
+ERROR:  column "c2" of relation "test_add_column" already exists
 \d test_add_column
           Table "public.test_add_column"
  Column |  Type   | Collation | Nullable | Default 
@@ -3181,6 +3184,9 @@ ERROR:  column "c2" of relation "test_add_column" already exists
  c2     | integer |           |          | 
 
 ALTER TABLE test_add_column
+	ADD COLUMN IF NOT EXISTS c2 integer; -- skipping because c2 already exists
+NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
+ALTER TABLE ONLY test_add_column
 	ADD COLUMN IF NOT EXISTS c2 integer; -- skipping because c2 already exists
 NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
 \d test_add_column
