@@ -211,8 +211,9 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	int32		typndims BKI_DEFAULT(0);
 
 	/*
-	 * Collation: 0 if type cannot use collations, DEFAULT_COLLATION_OID for
-	 * collatable base types, possibly other OID for domains
+	 * Collation: 0 if type cannot use collations, nonzero (typically
+	 * DEFAULT_COLLATION_OID) for collatable base types, possibly some other
+	 * OID for domains over collatable types
 	 */
 	Oid			typcollation BKI_DEFAULT(0);
 

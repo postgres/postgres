@@ -333,30 +333,3 @@ btcharcmp(PG_FUNCTION_ARGS)
 	/* Be careful to compare chars as unsigned */
 	PG_RETURN_INT32((int32) ((uint8) a) - (int32) ((uint8) b));
 }
-
-Datum
-btnamecmp(PG_FUNCTION_ARGS)
-{
-	Name		a = PG_GETARG_NAME(0);
-	Name		b = PG_GETARG_NAME(1);
-
-	PG_RETURN_INT32(strncmp(NameStr(*a), NameStr(*b), NAMEDATALEN));
-}
-
-static int
-btnamefastcmp(Datum x, Datum y, SortSupport ssup)
-{
-	Name		a = DatumGetName(x);
-	Name		b = DatumGetName(y);
-
-	return strncmp(NameStr(*a), NameStr(*b), NAMEDATALEN);
-}
-
-Datum
-btnamesortsupport(PG_FUNCTION_ARGS)
-{
-	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
-
-	ssup->comparator = btnamefastcmp;
-	PG_RETURN_VOID();
-}

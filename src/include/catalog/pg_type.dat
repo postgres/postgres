@@ -54,7 +54,7 @@
   typname => 'name', typlen => 'NAMEDATALEN', typbyval => 'f',
   typcategory => 'S', typelem => 'char', typinput => 'namein',
   typoutput => 'nameout', typreceive => 'namerecv', typsend => 'namesend',
-  typalign => 'c' },
+  typalign => 'c', typcollation => '950' },
 { oid => '20', array_type_oid => '1016',
   descr => '~18 digit integer, 8-byte storage',
   typname => 'int8', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',

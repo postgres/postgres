@@ -14,7 +14,6 @@
 #include "postgres.h"
 
 #include "access/xact.h"
-#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "commands/createas.h"
 #include "commands/defrem.h"
@@ -2347,11 +2346,13 @@ show_sortorder_options(StringInfo buf, Node *sortexpr,
 								 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
 
 	/*
-	 * Print COLLATE if it's not default.  There are some cases where this is
-	 * redundant, eg if expression is a column whose declared collation is
-	 * that collation, but it's hard to distinguish that here.
+	 * Print COLLATE if it's not default for the column's type.  There are
+	 * some cases where this is redundant, eg if expression is a column whose
+	 * declared collation is that collation, but it's hard to distinguish that
+	 * here (and arguably, printing COLLATE explicitly is a good idea anyway
+	 * in such cases).
 	 */
-	if (OidIsValid(collation) && collation != DEFAULT_COLLATION_OID)
+	if (OidIsValid(collation) && collation != get_typcollation(sortcoltype))
 	{
 		char	   *collname = get_collation_name(collation);
 

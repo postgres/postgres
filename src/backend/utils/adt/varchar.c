@@ -18,6 +18,7 @@
 #include "access/hash.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/array.h"
@@ -876,7 +877,7 @@ bpchar_sortsupport(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport */
-	varstr_sortsupport(ssup, collid, true);
+	varstr_sortsupport(ssup, BPCHAROID, collid);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -1085,7 +1086,7 @@ btbpchar_pattern_sortsupport(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport, forcing "C" collation */
-	varstr_sortsupport(ssup, C_COLLATION_OID, true);
+	varstr_sortsupport(ssup, BPCHAROID, C_COLLATION_OID);
 
 	MemoryContextSwitchTo(oldcontext);
 

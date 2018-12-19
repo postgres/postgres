@@ -21,6 +21,7 @@
 #include "postgres.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
@@ -28,6 +29,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/varlena.h"
 
 
 /*****************************************************************************
@@ -113,22 +115,21 @@ namesend(PG_FUNCTION_ARGS)
 
 
 /*****************************************************************************
- *	 PUBLIC ROUTINES														 *
+ *	 COMPARISON/SORTING ROUTINES											 *
  *****************************************************************************/
 
 /*
  *		nameeq	- returns 1 iff arguments are equal
  *		namene	- returns 1 iff arguments are not equal
- *
- *		BUGS:
- *				Assumes that "xy\0\0a" should be equal to "xy\0b".
- *				If not, can do the comparison backwards for efficiency.
- *
  *		namelt	- returns 1 iff a < b
  *		namele	- returns 1 iff a <= b
  *		namegt	- returns 1 iff a > b
  *		namege	- returns 1 iff a >= b
  *
+ * Note that the use of strncmp with NAMEDATALEN limit is mostly historical;
+ * strcmp would do as well, because we do not allow NAME values that don't
+ * have a '\0' terminator.  Whatever might be past the terminator is not
+ * considered relevant to comparisons.
  */
 Datum
 nameeq(PG_FUNCTION_ARGS)
@@ -136,6 +137,7 @@ nameeq(PG_FUNCTION_ARGS)
 	Name		arg1 = PG_GETARG_NAME(0);
 	Name		arg2 = PG_GETARG_NAME(1);
 
+	/* Collation doesn't matter: equal only if bitwise-equal */
 	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) == 0);
 }
 
@@ -145,7 +147,21 @@ namene(PG_FUNCTION_ARGS)
 	Name		arg1 = PG_GETARG_NAME(0);
 	Name		arg2 = PG_GETARG_NAME(1);
 
+	/* Collation doesn't matter: equal only if bitwise-equal */
 	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) != 0);
+}
+
+static int
+namecmp(Name arg1, Name arg2, Oid collid)
+{
+	/* Fast path for common case used in system catalogs */
+	if (collid == C_COLLATION_OID)
+		return strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN);
+
+	/* Else rely on the varstr infrastructure */
+	return varstr_cmp(NameStr(*arg1), strlen(NameStr(*arg1)),
+					  NameStr(*arg2), strlen(NameStr(*arg2)),
+					  collid);
 }
 
 Datum
@@ -154,7 +170,7 @@ namelt(PG_FUNCTION_ARGS)
 	Name		arg1 = PG_GETARG_NAME(0);
 	Name		arg2 = PG_GETARG_NAME(1);
 
-	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) < 0);
+	PG_RETURN_BOOL(namecmp(arg1, arg2, PG_GET_COLLATION()) < 0);
 }
 
 Datum
@@ -163,7 +179,7 @@ namele(PG_FUNCTION_ARGS)
 	Name		arg1 = PG_GETARG_NAME(0);
 	Name		arg2 = PG_GETARG_NAME(1);
 
-	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) <= 0);
+	PG_RETURN_BOOL(namecmp(arg1, arg2, PG_GET_COLLATION()) <= 0);
 }
 
 Datum
@@ -172,7 +188,7 @@ namegt(PG_FUNCTION_ARGS)
 	Name		arg1 = PG_GETARG_NAME(0);
 	Name		arg2 = PG_GETARG_NAME(1);
 
-	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) > 0);
+	PG_RETURN_BOOL(namecmp(arg1, arg2, PG_GET_COLLATION()) > 0);
 }
 
 Datum
@@ -181,11 +197,39 @@ namege(PG_FUNCTION_ARGS)
 	Name		arg1 = PG_GETARG_NAME(0);
 	Name		arg2 = PG_GETARG_NAME(1);
 
-	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) >= 0);
+	PG_RETURN_BOOL(namecmp(arg1, arg2, PG_GET_COLLATION()) >= 0);
+}
+
+Datum
+btnamecmp(PG_FUNCTION_ARGS)
+{
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+
+	PG_RETURN_INT32(namecmp(arg1, arg2, PG_GET_COLLATION()));
+}
+
+Datum
+btnamesortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+	Oid			collid = ssup->ssup_collation;
+	MemoryContext oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+
+	/* Use generic string SortSupport */
+	varstr_sortsupport(ssup, NAMEOID, collid);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_RETURN_VOID();
 }
 
 
-/* (see char.c for comparison/operation routines) */
+/*****************************************************************************
+ *	 MISCELLANEOUS PUBLIC ROUTINES											 *
+ *****************************************************************************/
 
 int
 namecpy(Name n1, const NameData *n2)
@@ -201,14 +245,6 @@ int
 namecat(Name n1, Name n2)
 {
 	return namestrcat(n1, NameStr(*n2));	/* n2 can't be any longer than n1 */
-}
-#endif
-
-#ifdef NOT_USED
-int
-namecmp(Name n1, Name n2)
-{
-	return strncmp(NameStr(*n1), NameStr(*n2), NAMEDATALEN);
 }
 #endif
 
@@ -243,6 +279,12 @@ namestrcat(Name name, const char *str)
 }
 #endif
 
+/*
+ * Compare a NAME to a C string
+ *
+ * Assumes C collation always; be careful when using this for
+ * anything but equality checks!
+ */
 int
 namestrcmp(Name name, const char *str)
 {

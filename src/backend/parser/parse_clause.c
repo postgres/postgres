@@ -788,7 +788,7 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 		tf->coltypes = lappend_oid(tf->coltypes, typid);
 		tf->coltypmods = lappend_int(tf->coltypmods, typmod);
 		tf->colcollations = lappend_oid(tf->colcollations,
-										type_is_collatable(typid) ? DEFAULT_COLLATION_OID : InvalidOid);
+										get_typcollation(typid));
 
 		/* Transform the PATH and DEFAULT expressions */
 		if (rawc->colexpr)

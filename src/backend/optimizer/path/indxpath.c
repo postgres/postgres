@@ -4344,7 +4344,7 @@ string_to_const(const char *str, Oid datatype)
 			break;
 
 		case NAMEOID:
-			collation = InvalidOid;
+			collation = C_COLLATION_OID;
 			constlen = NAMEDATALEN;
 			break;
 
