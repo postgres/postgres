@@ -4042,7 +4042,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
 			address = ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
 									  false, false, false,
-									  false, lockmode);
+									  cmd->missing_ok, lockmode);
 			break;
 		case AT_AddColumnRecurse:
 			address = ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,

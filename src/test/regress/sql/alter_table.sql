@@ -2054,8 +2054,12 @@ ALTER TABLE test_add_column
 \d test_add_column
 ALTER TABLE test_add_column
 	ADD COLUMN c2 integer; -- fail because c2 already exists
+ALTER TABLE ONLY test_add_column
+	ADD COLUMN c2 integer; -- fail because c2 already exists
 \d test_add_column
 ALTER TABLE test_add_column
+	ADD COLUMN IF NOT EXISTS c2 integer; -- skipping because c2 already exists
+ALTER TABLE ONLY test_add_column
 	ADD COLUMN IF NOT EXISTS c2 integer; -- skipping because c2 already exists
 \d test_add_column
 ALTER TABLE test_add_column
