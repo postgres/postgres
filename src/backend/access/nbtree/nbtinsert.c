@@ -876,10 +876,10 @@ _bt_insertonpg(Relation rel,
 		 * all the required conditions, including the fact that this page has
 		 * enough freespace. Note that this routine can in theory deal with
 		 * the situation where a NULL stack pointer is passed (that's what
-		 * would happen if the fastpath is taken), like it does during crash
-		 * recovery. But that path is much slower, defeating the very purpose
-		 * of the optimization.  The following assertion should protect us
-		 * from any future code changes that invalidate those assumptions.
+		 * would happen if the fastpath is taken). But that path is much
+		 * slower, defeating the very purpose of the optimization.  The
+		 * following assertion should protect us from any future code changes
+		 * that invalidate those assumptions.
 		 *
 		 * Note that whenever we fail to take the fastpath, we clear the
 		 * cached block. Checking for a valid cached block at this point is
@@ -1807,8 +1807,8 @@ _bt_checksplitloc(FindSplitData *state,
  * and it'd be possible for some other process to try to split or delete
  * one of these pages, and get confused because it cannot find the downlink.)
  *
- * stack - stack showing how we got here.  May be NULL in cases that don't
- *			have to be efficient (concurrent ROOT split, WAL recovery)
+ * stack - stack showing how we got here.  Will be NULL when splitting true
+ *			root, or during concurrent root split, where we can be inefficient
  * is_root - we split the true root
  * is_only - we split a page alone on its level (might have been fast root)
  */
