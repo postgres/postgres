@@ -1292,13 +1292,11 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	switch (vartype)
 	{
 		case TEXTOID:
+		case NAMEOID:
 			opfamily = TEXT_BTREE_FAM_OID;
 			break;
 		case BPCHAROID:
 			opfamily = BPCHAR_BTREE_FAM_OID;
-			break;
-		case NAMEOID:
-			opfamily = NAME_BTREE_FAM_OID;
 			break;
 		case BYTEAOID:
 			opfamily = BYTEA_BTREE_FAM_OID;

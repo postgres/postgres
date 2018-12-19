@@ -93,10 +93,10 @@
 # but cstring and name are the same thing except for trailing padding,
 # and we can safely omit that within an index entry.  So we declare the
 # btree opclass for name as using cstring storage type.
-{ opcmethod => 'btree', opcname => 'name_ops', opcfamily => 'btree/name_ops',
+{ opcmethod => 'btree', opcname => 'name_ops', opcfamily => 'btree/text_ops',
   opcintype => 'name', opckeytype => 'cstring' },
 
-{ opcmethod => 'hash', opcname => 'name_ops', opcfamily => 'hash/name_ops',
+{ opcmethod => 'hash', opcname => 'name_ops', opcfamily => 'hash/text_ops',
   opcintype => 'name' },
 { oid => '3125', oid_symbol => 'NUMERIC_BTREE_OPS_OID',
   opcmethod => 'btree', opcname => 'numeric_ops',

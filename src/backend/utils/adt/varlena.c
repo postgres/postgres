@@ -2694,6 +2694,167 @@ text_smaller(PG_FUNCTION_ARGS)
 
 
 /*
+ * Cross-type comparison functions for types text and name.
+ */
+
+Datum
+nameeqtext(PG_FUNCTION_ARGS)
+{
+	Name		arg1 = PG_GETARG_NAME(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	size_t		len1 = strlen(NameStr(*arg1));
+	size_t		len2 = VARSIZE_ANY_EXHDR(arg2);
+	bool		result;
+
+	result = (len1 == len2 &&
+			  memcmp(NameStr(*arg1), VARDATA_ANY(arg2), len1) == 0);
+
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+texteqname(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+	size_t		len1 = VARSIZE_ANY_EXHDR(arg1);
+	size_t		len2 = strlen(NameStr(*arg2));
+	bool		result;
+
+	result = (len1 == len2 &&
+			  memcmp(VARDATA_ANY(arg1), NameStr(*arg2), len1) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+namenetext(PG_FUNCTION_ARGS)
+{
+	Name		arg1 = PG_GETARG_NAME(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	size_t		len1 = strlen(NameStr(*arg1));
+	size_t		len2 = VARSIZE_ANY_EXHDR(arg2);
+	bool		result;
+
+	result = !(len1 == len2 &&
+			   memcmp(NameStr(*arg1), VARDATA_ANY(arg2), len1) == 0);
+
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+textnename(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+	size_t		len1 = VARSIZE_ANY_EXHDR(arg1);
+	size_t		len2 = strlen(NameStr(*arg2));
+	bool		result;
+
+	result = !(len1 == len2 &&
+			   memcmp(VARDATA_ANY(arg1), NameStr(*arg2), len1) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+btnametextcmp(PG_FUNCTION_ARGS)
+{
+	Name		arg1 = PG_GETARG_NAME(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int32		result;
+
+	result = varstr_cmp(NameStr(*arg1), strlen(NameStr(*arg1)),
+						VARDATA_ANY(arg2), VARSIZE_ANY_EXHDR(arg2),
+						PG_GET_COLLATION());
+
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(result);
+}
+
+Datum
+bttextnamecmp(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+	int32		result;
+
+	result = varstr_cmp(VARDATA_ANY(arg1), VARSIZE_ANY_EXHDR(arg1),
+						NameStr(*arg2), strlen(NameStr(*arg2)),
+						PG_GET_COLLATION());
+
+	PG_FREE_IF_COPY(arg1, 0);
+
+	PG_RETURN_INT32(result);
+}
+
+#define CmpCall(cmpfunc) \
+	DatumGetInt32(DirectFunctionCall2Coll(cmpfunc, \
+										  PG_GET_COLLATION(), \
+										  PG_GETARG_DATUM(0), \
+										  PG_GETARG_DATUM(1)))
+
+Datum
+namelttext(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(btnametextcmp) < 0);
+}
+
+Datum
+nameletext(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(btnametextcmp) <= 0);
+}
+
+Datum
+namegttext(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(btnametextcmp) > 0);
+}
+
+Datum
+namegetext(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(btnametextcmp) >= 0);
+}
+
+Datum
+textltname(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(bttextnamecmp) < 0);
+}
+
+Datum
+textlename(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(bttextnamecmp) <= 0);
+}
+
+Datum
+textgtname(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(bttextnamecmp) > 0);
+}
+
+Datum
+textgename(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CmpCall(bttextnamecmp) >= 0);
+}
+
+#undef CmpCall
+
+
+/*
  * The following operators support character-by-character comparison
  * of text datums, to allow building indexes suitable for LIKE clauses.
  * Note that the regular texteq/textne comparison operators, and regular
