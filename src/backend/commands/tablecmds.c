@@ -13865,7 +13865,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 				new_repl[Natts_pg_class];
 	ObjectAddress address;
 
-	partRel = heap_openrv(name, AccessShareLock);
+	partRel = heap_openrv(name, ShareUpdateExclusiveLock);
 
 	/* All inheritance related checks are performed within the function */
 	RemoveInheritance(partRel, rel);
