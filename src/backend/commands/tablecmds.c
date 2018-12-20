@@ -14648,7 +14648,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		idx = index_open(idxid, AccessExclusiveLock);
 		IndexSetParentIndex(idx, InvalidOid);
 		update_relispartition(classRel, idxid, false);
-		relation_close(idx, AccessExclusiveLock);
+		index_close(idx, NoLock);
 	}
 	heap_close(classRel, RowExclusiveLock);
 
