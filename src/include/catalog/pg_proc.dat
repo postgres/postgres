@@ -716,6 +716,10 @@
   proname => 'bttextnamecmp', proleakproof => 't', prorettype => 'int4',
   proargtypes => 'text name', prosrc => 'bttextnamecmp' },
 
+{ oid => '266', descr => 'concatenate name and oid',
+  proname => 'nameconcatoid', prorettype => 'name', proargtypes => 'name oid',
+  prosrc => 'nameconcatoid' },
+
 { oid => '274',
   descr => 'current date and time - increments during transactions',
   proname => 'timeofday', provolatile => 'v', prorettype => 'text',

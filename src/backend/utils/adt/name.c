@@ -364,3 +364,38 @@ current_schemas(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(array);
 }
+
+/*
+ * SQL-function nameconcatoid(name, oid) returns name
+ *
+ * This is used in the information_schema to produce specific_name columns,
+ * which are supposed to be unique per schema.  We achieve that (in an ugly
+ * way) by appending the object's OID.  The result is the same as
+ *		($1::text || '_' || $2::text)::name
+ * except that, if it would not fit in NAMEDATALEN, we make it do so by
+ * truncating the name input (not the oid).
+ */
+Datum
+nameconcatoid(PG_FUNCTION_ARGS)
+{
+	Name		nam = PG_GETARG_NAME(0);
+	Oid			oid = PG_GETARG_OID(1);
+	Name		result;
+	char		suffix[20];
+	int			suflen;
+	int			namlen;
+
+	suflen = snprintf(suffix, sizeof(suffix), "_%u", oid);
+	namlen = strlen(NameStr(*nam));
+
+	/* Truncate oversize input by truncating name part, not suffix */
+	if (namlen + suflen >= NAMEDATALEN)
+		namlen = pg_mbcliplen(NameStr(*nam), namlen, NAMEDATALEN - 1 - suflen);
+
+	/* We use palloc0 here to ensure result is zero-padded */
+	result = (Name) palloc0(NAMEDATALEN);
+	memcpy(NameStr(*result), NameStr(*nam), namlen);
+	memcpy(NameStr(*result) + namlen, suffix, suflen);
+
+	PG_RETURN_NAME(result);
+}

@@ -416,7 +416,7 @@ CREATE VIEW check_constraint_routine_usage AS
            CAST(c.conname AS sql_identifier) AS constraint_name,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name
     FROM pg_namespace nc, pg_constraint c, pg_depend d, pg_proc p, pg_namespace np
     WHERE nc.oid = c.connamespace
       AND c.contype = 'c'
@@ -1115,7 +1115,7 @@ GRANT SELECT ON key_column_usage TO PUBLIC;
 CREATE VIEW parameters AS
     SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n_nspname AS sql_identifier) AS specific_schema,
-           CAST(proname || '_' || CAST(p_oid AS text) AS sql_identifier) AS specific_name,
+           CAST(nameconcatoid(proname, p_oid) AS sql_identifier) AS specific_name,
            CAST((ss.x).n AS cardinal_number) AS ordinal_position,
            CAST(
              CASE WHEN proargmodes IS NULL THEN 'IN'
@@ -1320,7 +1320,7 @@ CREATE VIEW routine_privileges AS
            CAST(grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(current_database() AS sql_identifier) AS routine_catalog,
            CAST(n.nspname AS sql_identifier) AS routine_schema,
            CAST(p.proname AS sql_identifier) AS routine_name,
@@ -1409,7 +1409,7 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
 CREATE VIEW routines AS
     SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(current_database() AS sql_identifier) AS routine_catalog,
            CAST(n.nspname AS sql_identifier) AS routine_schema,
            CAST(p.proname AS sql_identifier) AS routine_name,
@@ -1964,7 +1964,7 @@ CREATE VIEW transforms AS
            CAST(t.typname AS sql_identifier) AS udt_name,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(l.lanname AS sql_identifier) AS group_name,
            CAST('FROM SQL' AS character_data) AS transform_type
     FROM pg_type t JOIN pg_transform x ON t.oid = x.trftype
@@ -1980,7 +1980,7 @@ CREATE VIEW transforms AS
            CAST(t.typname AS sql_identifier) AS udt_name,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name,
            CAST(l.lanname AS sql_identifier) AS group_name,
            CAST('TO SQL' AS character_data) AS transform_type
     FROM pg_type t JOIN pg_transform x ON t.oid = x.trftype
@@ -2495,7 +2495,7 @@ CREATE VIEW view_routine_usage AS
            CAST(v.relname AS sql_identifier) AS table_name,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(np.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text)  AS sql_identifier) AS specific_name
+           CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier) AS specific_name
 
     FROM pg_namespace nv, pg_class v, pg_depend dv,
          pg_depend dp, pg_proc p, pg_namespace np
@@ -2712,7 +2712,8 @@ CREATE VIEW element_types AS
            UNION ALL
 
            /* parameters */
-           SELECT pronamespace, CAST(proname || '_' || CAST(oid AS text) AS sql_identifier),
+           SELECT pronamespace,
+                  CAST(nameconcatoid(proname, oid) AS sql_identifier),
                   'ROUTINE'::text, (ss.x).n, (ss.x).x, 0
            FROM (SELECT p.pronamespace, p.proname, p.oid,
                         _pg_expandarray(coalesce(p.proallargtypes, p.proargtypes::oid[])) AS x
@@ -2721,7 +2722,8 @@ CREATE VIEW element_types AS
            UNION ALL
 
            /* result types */
-           SELECT p.pronamespace, CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier),
+           SELECT p.pronamespace,
+                  CAST(nameconcatoid(p.proname, p.oid) AS sql_identifier),
                   'ROUTINE'::text, 0, p.prorettype, 0
            FROM pg_proc p
 
