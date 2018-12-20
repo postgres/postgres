@@ -24,6 +24,11 @@ out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
 }
 
 static void
+out_gistxlogDelete(StringInfo buf, gistxlogPageUpdate *xlrec)
+{
+}
+
+static void
 out_gistxlogPageSplit(StringInfo buf, gistxlogPageSplit *xlrec)
 {
 	appendStringInfo(buf, "page_split: splits to %d pages",
@@ -40,6 +45,9 @@ gist_desc(StringInfo buf, XLogReaderState *record)
 	{
 		case XLOG_GIST_PAGE_UPDATE:
 			out_gistxlogPageUpdate(buf, (gistxlogPageUpdate *) rec);
+			break;
+		case XLOG_GIST_DELETE:
+			out_gistxlogDelete(buf, (gistxlogPageUpdate *) rec);
 			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			out_gistxlogPageSplit(buf, (gistxlogPageSplit *) rec);
@@ -58,6 +66,9 @@ gist_identify(uint8 info)
 	{
 		case XLOG_GIST_PAGE_UPDATE:
 			id = "PAGE_UPDATE";
+			break;
+		case XLOG_GIST_DELETE:
+			id = "DELETE";
 			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			id = "PAGE_SPLIT";
