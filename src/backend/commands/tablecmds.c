@@ -14588,7 +14588,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	if (OidIsValid(defaultPartOid))
 		LockRelationOid(defaultPartOid, AccessExclusiveLock);
 
-	partRel = heap_openrv(name, AccessShareLock);
+	partRel = heap_openrv(name, ShareUpdateExclusiveLock);
 
 	/* All inheritance related checks are performed within the function */
 	RemoveInheritance(partRel, rel);
