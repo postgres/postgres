@@ -240,6 +240,7 @@ typedef struct GistSplitVector
 typedef struct
 {
 	Relation	r;
+	Relation	heapRel;
 	Size		freespace;		/* free space to be left */
 
 	GISTInsertStack *stack;
@@ -389,7 +390,8 @@ extern void freeGISTstate(GISTSTATE *giststate);
 extern void gistdoinsert(Relation r,
 			 IndexTuple itup,
 			 Size freespace,
-			 GISTSTATE *GISTstate);
+			 GISTSTATE *GISTstate,
+			 Relation heapRel);
 
 /* A List of these is returned from gistplacetopage() in *splitinfo */
 typedef struct
@@ -404,7 +406,8 @@ extern bool gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				OffsetNumber oldoffnum, BlockNumber *newblkno,
 				Buffer leftchildbuf,
 				List **splitinfo,
-				bool markleftchild);
+				bool markleftchild,
+				Relation heapRel);
 
 extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 		  int len, GISTSTATE *giststate);
@@ -412,7 +415,7 @@ extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 extern XLogRecPtr gistXLogUpdate(Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,
 			   IndexTuple *itup, int ntup,
-			   Buffer leftchild);
+			   Buffer leftchild, RelFileNode *hnode);
 
 extern XLogRecPtr gistXLogSplit(bool page_is_leaf,
 			  SplitedPageLayout *dist,
