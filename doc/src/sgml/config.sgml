@@ -7066,7 +7066,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         If one of the list items is the special name
         <literal>$user</literal>, then the schema having the name returned by
-        <function>SESSION_USER</function> is substituted, if there is such a schema
+        <function>CURRENT_USER</function> is substituted, if there is such a schema
         and the user has <literal>USAGE</literal> permission for it.
         (If not, <literal>$user</literal> is ignored.)
        </para>
