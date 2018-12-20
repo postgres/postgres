@@ -55,6 +55,7 @@ typedef enum
 typedef struct
 {
 	Relation	indexrel;
+	Relation	heaprel;
 	GISTSTATE  *giststate;
 
 	int64		indtuples;		/* number of tuples indexed */
@@ -121,6 +122,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	int			fillfactor;
 
 	buildstate.indexrel = index;
+	buildstate.heaprel = heap;
 	if (index->rd_options)
 	{
 		/* Get buffering mode from the options string */
@@ -483,7 +485,7 @@ gistBuildCallback(Relation index,
 		 * locked, we call gistdoinsert directly.
 		 */
 		gistdoinsert(index, itup, buildstate->freespace,
-					 buildstate->giststate);
+					 buildstate->giststate, buildstate->heaprel);
 	}
 
 	/* Update tuple count and total size. */
@@ -689,7 +691,8 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 							   itup, ntup, oldoffnum, &placed_to_blk,
 							   InvalidBuffer,
 							   &splitinfo,
-							   false);
+							   false,
+							   buildstate->heaprel);
 
 	/*
 	 * If this is a root split, update the root path item kept in memory. This
