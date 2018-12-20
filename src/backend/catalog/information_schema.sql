@@ -216,7 +216,7 @@ CREATE DOMAIN character_data AS character varying COLLATE "C";
  * SQL_IDENTIFIER domain
  */
 
-CREATE DOMAIN sql_identifier AS character varying COLLATE "C";
+CREATE DOMAIN sql_identifier AS name;
 
 
 /*
