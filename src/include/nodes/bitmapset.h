@@ -27,12 +27,24 @@ struct List;
 
 /*
  * Data representation
+ *
+ * Larger bitmap word sizes generally give better performance, so long as
+ * they're not wider than the processor can handle efficiently.  We use
+ * 64-bit words if pointers are that large, else 32-bit words.
  */
+#if SIZEOF_VOID_P >= 8
 
-/* The unit size can be adjusted by changing these three declarations: */
+#define BITS_PER_BITMAPWORD 64
+typedef uint64 bitmapword;		/* must be an unsigned type */
+typedef int64 signedbitmapword; /* must be the matching signed type */
+
+#else
+
 #define BITS_PER_BITMAPWORD 32
 typedef uint32 bitmapword;		/* must be an unsigned type */
 typedef int32 signedbitmapword; /* must be the matching signed type */
+
+#endif
 
 typedef struct Bitmapset
 {
