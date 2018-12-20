@@ -16,8 +16,12 @@
 #include "access/bufmask.h"
 #include "access/gist_private.h"
 #include "access/gistxlog.h"
+#include "access/heapam_xlog.h"
+#include "access/transam.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
+#include "miscadmin.h"
+#include "storage/procarray.h"
 #include "utils/memutils.h"
 
 static MemoryContext opCtx;		/* working memory for operations */
@@ -61,6 +65,155 @@ gistRedoClearFollowRight(XLogReaderState *record, uint8 block_id)
 }
 
 /*
+ * Get the latestRemovedXid from the heap pages pointed at by the index
+ * tuples being deleted. See also btree_xlog_delete_get_latestRemovedXid,
+ * on which this function is based.
+ */
+static TransactionId
+gistRedoPageUpdateRecordGetLatestRemovedXid(XLogReaderState *record)
+{
+	gistxlogPageUpdate *xlrec = (gistxlogPageUpdate *) XLogRecGetData(record);
+	OffsetNumber *todelete;
+	Buffer		ibuffer,
+				hbuffer;
+	Page		ipage,
+				hpage;
+	RelFileNode rnode,
+			   *hnode;
+	BlockNumber blkno;
+	ItemId		iitemid,
+				hitemid;
+	IndexTuple	itup;
+	HeapTupleHeader htuphdr;
+	BlockNumber hblkno;
+	OffsetNumber hoffnum;
+	TransactionId latestRemovedXid = InvalidTransactionId;
+	int			i;
+
+	/*
+	 * If there's nothing running on the standby we don't need to derive a
+	 * full latestRemovedXid value, so use a fast path out of here.  This
+	 * returns InvalidTransactionId, and so will conflict with all HS
+	 * transactions; but since we just worked out that that's zero people,
+	 * it's OK.
+	 *
+	 * XXX There is a race condition here, which is that a new backend might
+	 * start just after we look.  If so, it cannot need to conflict, but this
+	 * coding will result in throwing a conflict anyway.
+	 */
+	if (CountDBBackends(InvalidOid) == 0)
+		return latestRemovedXid;
+
+	/*
+	 * In what follows, we have to examine the previous state of the index
+	 * page, as well as the heap page(s) it points to.  This is only valid if
+	 * WAL replay has reached a consistent database state; which means that
+	 * the preceding check is not just an optimization, but is *necessary*. We
+	 * won't have let in any user sessions before we reach consistency.
+	 */
+	if (!reachedConsistency)
+		elog(PANIC, "gistRedoDeleteRecordGetLatestRemovedXid: cannot operate with inconsistent data");
+
+	/*
+	 * Get index page.  If the DB is consistent, this should not fail, nor
+	 * should any of the heap page fetches below.  If one does, we return
+	 * InvalidTransactionId to cancel all HS transactions.  That's probably
+	 * overkill, but it's safe, and certainly better than panicking here.
+	 */
+	XLogRecGetBlockTag(record, 0, &rnode, NULL, &blkno);
+	ibuffer = XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno, RBM_NORMAL);
+	if (!BufferIsValid(ibuffer))
+		return InvalidTransactionId;
+	LockBuffer(ibuffer, BUFFER_LOCK_EXCLUSIVE);
+	ipage = (Page) BufferGetPage(ibuffer);
+
+	/*
+	 * Loop through the deleted index items to obtain the TransactionId from
+	 * the heap items they point to.
+	 */
+	hnode = (RelFileNode *) ((char *) xlrec + sizeof(gistxlogPageUpdate));
+	todelete = (OffsetNumber *) ((char *) hnode + sizeof(RelFileNode));
+
+	for (i = 0; i < xlrec->ntodelete; i++)
+	{
+		/*
+		 * Identify the index tuple about to be deleted
+		 */
+		iitemid = PageGetItemId(ipage, todelete[i]);
+		itup = (IndexTuple) PageGetItem(ipage, iitemid);
+
+		/*
+		 * Locate the heap page that the index tuple points at
+		 */
+		hblkno = ItemPointerGetBlockNumber(&(itup->t_tid));
+		hbuffer = XLogReadBufferExtended(*hnode, MAIN_FORKNUM, hblkno, RBM_NORMAL);
+		if (!BufferIsValid(hbuffer))
+		{
+			UnlockReleaseBuffer(ibuffer);
+			return InvalidTransactionId;
+		}
+		LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
+		hpage = (Page) BufferGetPage(hbuffer);
+
+		/*
+		 * Look up the heap tuple header that the index tuple points at by
+		 * using the heap node supplied with the xlrec. We can't use
+		 * heap_fetch, since it uses ReadBuffer rather than XLogReadBuffer.
+		 * Note that we are not looking at tuple data here, just headers.
+		 */
+		hoffnum = ItemPointerGetOffsetNumber(&(itup->t_tid));
+		hitemid = PageGetItemId(hpage, hoffnum);
+
+		/*
+		 * Follow any redirections until we find something useful.
+		 */
+		while (ItemIdIsRedirected(hitemid))
+		{
+			hoffnum = ItemIdGetRedirect(hitemid);
+			hitemid = PageGetItemId(hpage, hoffnum);
+			CHECK_FOR_INTERRUPTS();
+		}
+
+		/*
+		 * If the heap item has storage, then read the header and use that to
+		 * set latestRemovedXid.
+		 *
+		 * Some LP_DEAD items may not be accessible, so we ignore them.
+		 */
+		if (ItemIdHasStorage(hitemid))
+		{
+			htuphdr = (HeapTupleHeader) PageGetItem(hpage, hitemid);
+
+			HeapTupleHeaderAdvanceLatestRemovedXid(htuphdr, &latestRemovedXid);
+		}
+		else if (ItemIdIsDead(hitemid))
+		{
+			/*
+			 * Conjecture: if hitemid is dead then it had xids before the xids
+			 * marked on LP_NORMAL items. So we just ignore this item and move
+			 * onto the next, for the purposes of calculating
+			 * latestRemovedxids.
+			 */
+		}
+		else
+			Assert(!ItemIdIsUsed(hitemid));
+
+		UnlockReleaseBuffer(hbuffer);
+	}
+
+	UnlockReleaseBuffer(ibuffer);
+
+	/*
+	 * If all heap tuples were LP_DEAD then we will be returning
+	 * InvalidTransactionId here, which avoids conflicts. This matches
+	 * existing logic which assumes that LP_DEAD tuples must already be older
+	 * than the latestRemovedXid on the cleanup record that set them as
+	 * LP_DEAD, hence must already have generated a conflict.
+	 */
+	return latestRemovedXid;
+}
+
+/*
  * redo any page update (except page split)
  */
 static void
@@ -70,6 +223,34 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 	gistxlogPageUpdate *xldata = (gistxlogPageUpdate *) XLogRecGetData(record);
 	Buffer		buffer;
 	Page		page;
+
+	/*
+	 * If we have any conflict processing to do, it must happen before we
+	 * update the page.
+	 *
+	 * Support for conflict processing in GiST has been backpatched.  This is
+	 * why we have to use tricky way of saving WAL-compatibility between minor
+	 * versions.  Information required for conflict processing is just
+	 * appended to data of XLOG_GIST_PAGE_UPDATE record.  So, PostgreSQL
+	 * version, which doesn't know about conflict processing, will just ignore
+	 * that.
+	 *
+	 * GiST delete records can conflict with standby queries.  You might think
+	 * that vacuum records would conflict as well, but we've handled that
+	 * already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
+	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
+	 * just once when that arrives.  After that we know that no conflicts
+	 * exist from individual gist vacuum records on that index.
+	 */
+	if (InHotStandby && XLogRecGetDataLen(record) > sizeof(gistxlogPageUpdate))
+	{
+		TransactionId latestRemovedXid = gistRedoPageUpdateRecordGetLatestRemovedXid(record);
+		RelFileNode rnode;
+
+		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
+
+		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, rnode);
+	}
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
@@ -457,7 +638,7 @@ XLogRecPtr
 gistXLogUpdate(Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,
 			   IndexTuple *itup, int ituplen,
-			   Buffer leftchildbuf)
+			   Buffer leftchildbuf, RelFileNode *hnode)
 {
 	gistxlogPageUpdate xlrec;
 	int			i;
@@ -468,6 +649,16 @@ gistXLogUpdate(Buffer buffer,
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, sizeof(gistxlogPageUpdate));
+
+	/*
+	 * Append the information required for standby conflict processing if it
+	 * is provided by caller.
+	 */
+	if (hnode)
+	{
+		XLogRegisterData((char *) hnode, sizeof(RelFileNode));
+		XLogRegisterData((char *) todelete, sizeof(OffsetNumber) * ntodelete);
+	}
 
 	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 	XLogRegisterBufData(0, (char *) todelete, sizeof(OffsetNumber) * ntodelete);

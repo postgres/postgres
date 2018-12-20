@@ -38,7 +38,8 @@ static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 				 bool unlockbuf, bool unlockleftchild);
 static void gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 				GISTSTATE *giststate, List *splitinfo, bool releasebuf);
-static void gistvacuumpage(Relation rel, Page page, Buffer buffer);
+static void gistvacuumpage(Relation rel, Page page, Buffer buffer,
+			   Relation heapRel);
 
 
 #define ROTATEDIST(d) do { \
@@ -172,7 +173,7 @@ gistinsert(Relation r, Datum *values, bool *isnull,
 						 values, isnull, true /* size is currently bogus */ );
 	itup->t_tid = *ht_ctid;
 
-	gistdoinsert(r, itup, 0, giststate);
+	gistdoinsert(r, itup, 0, giststate, heapRel);
 
 	/* cleanup */
 	MemoryContextSwitchTo(oldCxt);
@@ -218,7 +219,8 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				BlockNumber *newblkno,
 				Buffer leftchildbuf,
 				List **splitinfo,
-				bool markfollowright)
+				bool markfollowright,
+				Relation heapRel)
 {
 	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	Page		page = BufferGetPage(buffer);
@@ -259,7 +261,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	 */
 	if (is_split && GistPageIsLeaf(page) && GistPageHasGarbage(page))
 	{
-		gistvacuumpage(rel, page, buffer);
+		gistvacuumpage(rel, page, buffer, heapRel);
 		is_split = gistnospace(page, itup, ntup, oldoffnum, freespace);
 	}
 
@@ -556,7 +558,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 
 			recptr = gistXLogUpdate(buffer,
 									deloffs, ndeloffs, itup, ntup,
-									leftchildbuf);
+									leftchildbuf, NULL);
 
 			PageSetLSN(page, recptr);
 		}
@@ -604,7 +606,8 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
  * so it does not bother releasing palloc'd allocations.
  */
 void
-gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
+gistdoinsert(Relation r, IndexTuple itup, Size freespace,
+			 GISTSTATE *giststate, Relation heapRel)
 {
 	ItemId		iid;
 	IndexTuple	idxtuple;
@@ -616,6 +619,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 	memset(&state, 0, sizeof(GISTInsertState));
 	state.freespace = freespace;
 	state.r = r;
+	state.heapRel = heapRel;
 
 	/* Start from the root */
 	firststack.blkno = GIST_ROOT_BLKNO;
@@ -1232,7 +1236,8 @@ gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 							   oldoffnum, NULL,
 							   leftchild,
 							   &splitinfo,
-							   true);
+							   true,
+							   state->heapRel);
 
 	/*
 	 * Before recursing up in case the page was split, release locks on the
@@ -1543,7 +1548,7 @@ freeGISTstate(GISTSTATE *giststate)
  * Function assumes that buffer is exclusively locked.
  */
 static void
-gistvacuumpage(Relation rel, Page page, Buffer buffer)
+gistvacuumpage(Relation rel, Page page, Buffer buffer, Relation heapRel)
 {
 	OffsetNumber deletable[MaxIndexTuplesPerPage];
 	int			ndeletable = 0;
@@ -1591,7 +1596,8 @@ gistvacuumpage(Relation rel, Page page, Buffer buffer)
 
 			recptr = gistXLogUpdate(buffer,
 									deletable, ndeletable,
-									NULL, 0, InvalidBuffer);
+									NULL, 0, InvalidBuffer,
+									&heapRel->rd_node);
 
 			PageSetLSN(page, recptr);
 		}

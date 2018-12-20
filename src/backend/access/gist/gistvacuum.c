@@ -224,7 +224,8 @@ gistbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 					recptr = gistXLogUpdate(buffer,
 											todelete, ntodelete,
-											NULL, 0, InvalidBuffer);
+											NULL, 0, InvalidBuffer,
+											NULL);
 					PageSetLSN(page, recptr);
 				}
 				else
