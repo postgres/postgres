@@ -2588,7 +2588,7 @@ main(int argc, char **argv)
 			disconnect_and_exit(1);
 		}
 #else
-		fprintf(stderr, _("%s: symlinks are not supported on this platform\n"));
+		fprintf(stderr, _("%s: symlinks are not supported on this platform\n"), progname);
 		disconnect_and_exit(1);
 #endif
 		free(linkloc);
