@@ -2423,10 +2423,17 @@ CopyFrom(CopyState cstate)
 	 * possible to improve on this, but it does mean maintaining heap insert
 	 * option flags per partition and setting them when we first open the
 	 * partition.
+	 *
+	 * This optimization is not supported for relation types which do not
+	 * have any physical storage, with foreign tables and views using
+	 * INSTEAD OF triggers entering in this category.  Partitioned tables
+	 * are not supported as per the description above.
 	 *----------
 	 */
 	/* createSubid is creation check, newRelfilenodeSubid is truncation check */
-	if (cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
+	if (cstate->rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+		cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
+		cstate->rel->rd_rel->relkind != RELKIND_VIEW &&
 		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
 		 cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId))
 	{
