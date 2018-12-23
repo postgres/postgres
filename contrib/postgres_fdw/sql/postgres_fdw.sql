@@ -2124,6 +2124,20 @@ drop trigger loc2_trig_row_before_insert on loc2;
 
 delete from rem2;
 
+-- test COPY FROM with foreign table created in the same transaction
+create table loc3 (f1 int, f2 text);
+begin;
+create foreign table rem3 (f1 int, f2 text)
+	server loopback options(table_name 'loc3');
+copy rem3 from stdin;
+1	foo
+2	bar
+\.
+commit;
+select * from rem3;
+drop foreign table rem3;
+drop table loc3;
+
 -- ===================================================================
 -- test IMPORT FOREIGN SCHEMA
 -- ===================================================================

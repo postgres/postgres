@@ -545,6 +545,23 @@ SELECT * FROM instead_of_insert_tbl;
   1 | test1
 (1 row)
 
+-- Test of COPY optimization with view using INSTEAD OF INSERT
+-- trigger when relation is created in the same transaction as
+-- when COPY is executed.
+BEGIN;
+CREATE VIEW instead_of_insert_tbl_view_2 as select ''::text as str;
+CREATE TRIGGER trig_instead_of_insert_tbl_view_2
+  INSTEAD OF INSERT ON instead_of_insert_tbl_view_2
+  FOR EACH ROW EXECUTE PROCEDURE fun_instead_of_insert_tbl();
+COPY instead_of_insert_tbl_view_2 FROM stdin;
+SELECT * FROM instead_of_insert_tbl;
+ id | name  
+----+-------
+  1 | test1
+  2 | test1
+(2 rows)
+
+COMMIT;
 -- clean up
 DROP TABLE forcetest;
 DROP TABLE vistest;
@@ -557,4 +574,5 @@ DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
 DROP TABLE instead_of_insert_tbl;
 DROP VIEW instead_of_insert_tbl_view;
+DROP VIEW instead_of_insert_tbl_view_2;
 DROP FUNCTION fun_instead_of_insert_tbl();
