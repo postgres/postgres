@@ -1005,6 +1005,41 @@ static const pgsql_thing_t words_after_create[] = {
 	{NULL}						/* end of list */
 };
 
+/* Storage parameters for CREATE TABLE and ALTER TABLE */
+static const char *const table_storage_parameters[] = {
+	"autovacuum_analyze_scale_factor",
+	"autovacuum_analyze_threshold",
+	"autovacuum_enabled",
+	"autovacuum_freeze_max_age",
+	"autovacuum_freeze_min_age",
+	"autovacuum_freeze_table_age",
+	"autovacuum_multixact_freeze_max_age",
+	"autovacuum_multixact_freeze_min_age",
+	"autovacuum_multixact_freeze_table_age",
+	"autovacuum_vacuum_cost_delay",
+	"autovacuum_vacuum_cost_limit",
+	"autovacuum_vacuum_scale_factor",
+	"autovacuum_vacuum_threshold",
+	"fillfactor",
+	"log_autovacuum_min_duration",
+	"parallel_workers",
+	"toast.autovacuum_enabled",
+	"toast.autovacuum_freeze_max_age",
+	"toast.autovacuum_freeze_min_age",
+	"toast.autovacuum_freeze_table_age",
+	"toast.autovacuum_multixact_freeze_max_age",
+	"toast.autovacuum_multixact_freeze_min_age",
+	"toast.autovacuum_multixact_freeze_table_age",
+	"toast.autovacuum_vacuum_cost_delay",
+	"toast.autovacuum_vacuum_cost_limit",
+	"toast.autovacuum_vacuum_scale_factor",
+	"toast.autovacuum_vacuum_threshold",
+	"toast.log_autovacuum_min_duration",
+	"toast_tuple_target",
+	"user_catalog_table",
+	NULL
+};
+
 
 /* Forward declaration of functions */
 static char **psql_completion(const char *text, int start, int end);
@@ -1904,44 +1939,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("(");
 	/* ALTER TABLE <foo> SET|RESET ( */
 	else if (Matches("ALTER", "TABLE", MatchAny, "SET|RESET", "("))
-	{
-		static const char *const list_TABLEOPTIONS[] =
-		{
-			"autovacuum_analyze_scale_factor",
-			"autovacuum_analyze_threshold",
-			"autovacuum_enabled",
-			"autovacuum_freeze_max_age",
-			"autovacuum_freeze_min_age",
-			"autovacuum_freeze_table_age",
-			"autovacuum_multixact_freeze_max_age",
-			"autovacuum_multixact_freeze_min_age",
-			"autovacuum_multixact_freeze_table_age",
-			"autovacuum_vacuum_cost_delay",
-			"autovacuum_vacuum_cost_limit",
-			"autovacuum_vacuum_scale_factor",
-			"autovacuum_vacuum_threshold",
-			"fillfactor",
-			"parallel_workers",
-			"log_autovacuum_min_duration",
-			"toast_tuple_target",
-			"toast.autovacuum_enabled",
-			"toast.autovacuum_freeze_max_age",
-			"toast.autovacuum_freeze_min_age",
-			"toast.autovacuum_freeze_table_age",
-			"toast.autovacuum_multixact_freeze_max_age",
-			"toast.autovacuum_multixact_freeze_min_age",
-			"toast.autovacuum_multixact_freeze_table_age",
-			"toast.autovacuum_vacuum_cost_delay",
-			"toast.autovacuum_vacuum_cost_limit",
-			"toast.autovacuum_vacuum_scale_factor",
-			"toast.autovacuum_vacuum_threshold",
-			"toast.log_autovacuum_min_duration",
-			"user_catalog_table",
-			NULL
-		};
-
-		COMPLETE_WITH_LIST(list_TABLEOPTIONS);
-	}
+		COMPLETE_WITH_LIST(table_storage_parameters);
 	else if (Matches("ALTER", "TABLE", MatchAny, "REPLICA", "IDENTITY", "USING", "INDEX"))
 	{
 		completion_info_charp = prev5_wd;
@@ -2439,6 +2437,10 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches("CREATE", "TEMP|TEMPORARY", "TABLE", MatchAny, "(*)"))
 		COMPLETE_WITH("INHERITS (", "ON COMMIT", "PARTITION BY",
 					  "TABLESPACE", "WITH (");
+	/* Complete CREATE TABLE (...) WITH with storage parameters */
+	else if (TailMatches("CREATE", "TABLE", MatchAny, "(*)", "WITH", "(") ||
+			 TailMatches("CREATE", "TEMP|TEMPORARY|UNLOGGED", "TABLE", MatchAny, "(*)", "WITH", "("))
+		COMPLETE_WITH_LIST(table_storage_parameters);
 	/* Complete CREATE TABLE ON COMMIT with actions */
 	else if (TailMatches("CREATE", "TEMP|TEMPORARY", "TABLE", MatchAny, "(*)", "ON", "COMMIT"))
 		COMPLETE_WITH("DELETE ROWS", "DROP", "PRESERVE ROWS");
