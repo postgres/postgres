@@ -695,11 +695,12 @@ pgarch_archiveXlog(char *xlog)
  * 2) because the oldest ones will sooner become candidates for
  * recycling at time of checkpoint
  *
- * NOTE: the "oldest" comparison will presently consider all segments of
- * a timeline with a smaller ID to be older than all segments of a timeline
- * with a larger ID; the net result being that past timelines are given
- * higher priority for archiving.  This seems okay, or at least not
- * obviously worth changing.
+ * NOTE: the "oldest" comparison will consider any .history file to be older
+ * than any other file except another .history file.  Segments on a timeline
+ * with a smaller ID will be older than all segments on a timeline with a
+ * larger ID; the net result being that past timelines are given higher
+ * priority for archiving.  This seems okay, or at least not obviously worth
+ * changing.
  */
 static bool
 pgarch_readyXlog(char *xlog)
@@ -711,10 +712,10 @@ pgarch_readyXlog(char *xlog)
 	 * of calls, so....
 	 */
 	char		XLogArchiveStatusDir[MAXPGPATH];
-	char		newxlog[MAX_XFN_CHARS + 6 + 1];
 	DIR		   *rldir;
 	struct dirent *rlde;
 	bool		found = false;
+	bool		historyFound = false;
 
 	snprintf(XLogArchiveStatusDir, MAXPGPATH, XLOGDIR "/archive_status");
 	rldir = AllocateDir(XLogArchiveStatusDir);
@@ -722,32 +723,51 @@ pgarch_readyXlog(char *xlog)
 	while ((rlde = ReadDir(rldir, XLogArchiveStatusDir)) != NULL)
 	{
 		int			basenamelen = (int) strlen(rlde->d_name) - 6;
+		char		basename[MAX_XFN_CHARS + 1];
+		bool		ishistory;
 
-		if (basenamelen >= MIN_XFN_CHARS &&
-			basenamelen <= MAX_XFN_CHARS &&
-			strspn(rlde->d_name, VALID_XFN_CHARS) >= basenamelen &&
-			strcmp(rlde->d_name + basenamelen, ".ready") == 0)
+		/* Ignore entries with unexpected number of characters */
+		if (basenamelen < MIN_XFN_CHARS ||
+			basenamelen > MAX_XFN_CHARS)
+			continue;
+
+		/* Ignore entries with unexpected characters */
+		if (strspn(rlde->d_name, VALID_XFN_CHARS) < basenamelen)
+			continue;
+
+		/* Ignore anything not suffixed with .ready */
+		if (strcmp(rlde->d_name + basenamelen, ".ready") != 0)
+			continue;
+
+		/* Truncate off the .ready */
+		memcpy(basename, rlde->d_name, basenamelen);
+		basename[basenamelen] = '\0';
+
+		/* Is this a history file? */
+		ishistory = IsTLHistoryFileName(basename);
+
+		/*
+		 * Consume the file to archive.  History files have the highest
+		 * priority.  If this is the first file or the first history file
+		 * ever, copy it.  In the presence of a history file already chosen as
+		 * target, ignore all other files except history files which have been
+		 * generated for an older timeline than what is already chosen as
+		 * target to archive.
+		 */
+		if (!found || (ishistory && !historyFound))
 		{
-			if (!found)
-			{
-				strcpy(newxlog, rlde->d_name);
-				found = true;
-			}
-			else
-			{
-				if (strcmp(rlde->d_name, newxlog) < 0)
-					strcpy(newxlog, rlde->d_name);
-			}
+			strcpy(xlog, basename);
+			found = true;
+			historyFound = ishistory;
+		}
+		else if (ishistory || !historyFound)
+		{
+			if (strcmp(basename, xlog) < 0)
+				strcpy(xlog, basename);
 		}
 	}
 	FreeDir(rldir);
 
-	if (found)
-	{
-		/* truncate off the .ready */
-		newxlog[strlen(newxlog) - 6] = '\0';
-		strcpy(xlog, newxlog);
-	}
 	return found;
 }
 
