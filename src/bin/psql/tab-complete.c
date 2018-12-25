@@ -1601,9 +1601,20 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("PARTITION");
 	else if (Matches("ALTER", "INDEX", MatchAny, "ATTACH", "PARTITION"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
+	/* ALTER INDEX <name> ALTER */
+	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER"))
+		COMPLETE_WITH("COLUMN");
 	/* ALTER INDEX <name> ALTER COLUMN <colnum> */
 	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER", "COLUMN", MatchAny))
 		COMPLETE_WITH("SET STATISTICS");
+	/* ALTER INDEX <name> ALTER COLUMN <colnum> SET */
+	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER", "COLUMN", MatchAny, "SET"))
+		COMPLETE_WITH("STATISTICS");
+	/* ALTER INDEX <name> ALTER COLUMN <colnum> SET STATISTICS */
+	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "STATISTICS"))
+	{
+		/* Enforce no completion here, as an integer has to be specified */
+	}
 	/* ALTER INDEX <name> SET */
 	else if (Matches("ALTER", "INDEX", MatchAny, "SET"))
 		COMPLETE_WITH("(", "TABLESPACE");
@@ -1909,6 +1920,12 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "STORAGE") ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET", "STORAGE"))
 		COMPLETE_WITH("PLAIN", "EXTERNAL", "EXTENDED", "MAIN");
+	/* ALTER TABLE ALTER [COLUMN] <foo> SET STATISTICS */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "STATISTICS") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET", "STATISTICS"))
+	{
+		/* Enforce no completion here, as an integer has to be specified */
+	}
 	/* ALTER TABLE ALTER [COLUMN] <foo> DROP */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "DROP") ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "DROP"))
