@@ -5327,7 +5327,8 @@ readRecoverySignalFile(void)
 
 	/*
 	 * Check for recovery signal files and if found, fsync them since they
-	 * represent server state information.
+	 * represent server state information.  We don't sweat too much about the
+	 * possibility of fsync failure, however.
 	 *
 	 * If present, standby signal file takes precedence. If neither is present
 	 * then we won't enter archive recovery.
@@ -5338,8 +5339,11 @@ readRecoverySignalFile(void)
 
 		fd = BasicOpenFilePerm(STANDBY_SIGNAL_FILE, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 							   S_IRUSR | S_IWUSR);
-		pg_fsync(fd);
-		close(fd);
+		if (fd >= 0)
+		{
+			(void) pg_fsync(fd);
+			close(fd);
+		}
 		standby_signal_file_found = true;
 	}
 	else if (stat(RECOVERY_SIGNAL_FILE, &stat_buf) == 0)
@@ -5348,8 +5352,11 @@ readRecoverySignalFile(void)
 
 		fd = BasicOpenFilePerm(RECOVERY_SIGNAL_FILE, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 							   S_IRUSR | S_IWUSR);
-		pg_fsync(fd);
-		close(fd);
+		if (fd >= 0)
+		{
+			(void) pg_fsync(fd);
+			close(fd);
+		}
 		recovery_signal_file_found = true;
 	}
 
