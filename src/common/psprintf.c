@@ -131,7 +131,8 @@ pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
 #ifndef FRONTEND
 		elog(ERROR, "vsnprintf failed: %m with format string \"%s\"", fmt);
 #else
-		fprintf(stderr, "vsnprintf failed: %m with format string \"%s\"\n", fmt);
+		fprintf(stderr, "vsnprintf failed: %s with format string \"%s\"\n",
+				strerror(errno), fmt);
 		exit(EXIT_FAILURE);
 #endif
 	}
