@@ -2698,7 +2698,7 @@ ReadToc(ArchiveHandle *AH)
 		te->owner = ReadStr(AH);
 		if (AH->version < K_VERS_1_9 || strcmp(ReadStr(AH), "true") == 0)
 			write_msg(modulename,
-					  "WARNING: restoring tables WITH OIDS is not supported anymore");
+					  "WARNING: restoring tables WITH OIDS is not supported anymore\n");
 
 		/* Read TOC entry dependencies */
 		if (AH->version >= K_VERS_1_5)
