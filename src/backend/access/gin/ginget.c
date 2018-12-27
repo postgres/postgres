@@ -338,7 +338,7 @@ restartScanEntry:
 	ginPrepareEntryScan(&btreeEntry, entry->attnum,
 						entry->queryKey, entry->queryCategory,
 						ginstate);
-	stackEntry = ginFindLeafPage(&btreeEntry, true, snapshot);
+	stackEntry = ginFindLeafPage(&btreeEntry, true, false, snapshot);
 	page = BufferGetPage(stackEntry->buffer);
 
 	/* ginFindLeafPage() will have already checked snapshot age. */
@@ -679,7 +679,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
 						   OffsetNumberNext(GinItemPointerGetOffsetNumber(&advancePast)));
 		}
 		entry->btree.fullScan = false;
-		stack = ginFindLeafPage(&entry->btree, true, snapshot);
+		stack = ginFindLeafPage(&entry->btree, true, false, snapshot);
 
 		/* we don't need the stack, just the buffer. */
 		entry->buffer = stack->buffer;

@@ -72,9 +72,13 @@ ginTraverseLock(Buffer buffer, bool searchMode)
  * If 'searchmode' is false, on return stack->buffer is exclusively locked,
  * and the stack represents the full path to the root. Otherwise stack->buffer
  * is share-locked, and stack->parent is NULL.
+ *
+ * If 'rootConflictCheck' is true, tree root is checked for serialization
+ * conflict.
  */
 GinBtreeStack *
-ginFindLeafPage(GinBtree btree, bool searchMode, Snapshot snapshot)
+ginFindLeafPage(GinBtree btree, bool searchMode,
+				bool rootConflictCheck, Snapshot snapshot)
 {
 	GinBtreeStack *stack;
 
@@ -84,7 +88,7 @@ ginFindLeafPage(GinBtree btree, bool searchMode, Snapshot snapshot)
 	stack->parent = NULL;
 	stack->predictNumber = 1;
 
-	if (!searchMode)
+	if (rootConflictCheck)
 		CheckForSerializableConflictIn(btree->index, NULL, stack->buffer);
 
 	for (;;)

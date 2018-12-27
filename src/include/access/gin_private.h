@@ -195,7 +195,8 @@ typedef struct
  * PostingItem
  */
 
-extern GinBtreeStack *ginFindLeafPage(GinBtree btree, bool searchMode, Snapshot snapshot);
+extern GinBtreeStack *ginFindLeafPage(GinBtree btree, bool searchMode,
+				bool rootConflictCheck, Snapshot snapshot);
 extern Buffer ginStepRight(Buffer buffer, Relation index, int lockmode);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
