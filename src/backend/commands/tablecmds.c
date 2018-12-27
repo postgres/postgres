@@ -1213,13 +1213,14 @@ ExecuteTruncate(TruncateStmt *stmt)
 		Relation	rel;
 		bool		recurse = rv->inh;
 		Oid			myrelid;
+		LOCKMODE	lockmode = AccessExclusiveLock;
 
-		rel = heap_openrv(rv, AccessExclusiveLock);
+		rel = heap_openrv(rv, lockmode);
 		myrelid = RelationGetRelid(rel);
 		/* don't throw error for "TRUNCATE foo, foo" */
 		if (list_member_oid(relids, myrelid))
 		{
-			heap_close(rel, AccessExclusiveLock);
+			heap_close(rel, lockmode);
 			continue;
 		}
 		truncate_check_rel(rel);
@@ -1231,7 +1232,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 			ListCell   *child;
 			List	   *children;
 
-			children = find_all_inheritors(myrelid, AccessExclusiveLock, NULL);
+			children = find_all_inheritors(myrelid, lockmode, NULL);
 
 			foreach(child, children)
 			{
@@ -1242,6 +1243,22 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 				/* find_all_inheritors already got lock */
 				rel = heap_open(childrelid, NoLock);
+
+				/*
+				 * It is possible that the parent table has children that are
+				 * temp tables of other backends.  We cannot safely access
+				 * such tables (because of buffering issues), and the best
+				 * thing to do is to silently ignore them.  Note that this
+				 * check is the same as one of the checks done in
+				 * truncate_check_rel() called below, still it is kept
+				 * here for simplicity.
+				 */
+				if (RELATION_IS_OTHER_TEMP(rel))
+				{
+					heap_close(rel, lockmode);
+					continue;
+				}
+
 				truncate_check_rel(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
