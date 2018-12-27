@@ -1,0 +1,217 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s1_select_p s1_select_c s2_select_p s2_select_c
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s1_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+2              
+3              
+4              
+step s1_select_c: SELECT a FROM inh_temp_child_s1;
+a              
+
+3              
+4              
+step s2_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+2              
+5              
+6              
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+5              
+6              
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s1_update_p s1_update_c s1_select_p s1_select_c s2_select_p s2_select_c
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s1_update_p: UPDATE inh_parent SET a = 11 WHERE a = 1;
+step s1_update_c: UPDATE inh_parent SET a = 13 WHERE a IN (3, 5);
+step s1_select_p: SELECT a FROM inh_parent;
+a              
+
+2              
+11             
+4              
+13             
+step s1_select_c: SELECT a FROM inh_temp_child_s1;
+a              
+
+4              
+13             
+step s2_select_p: SELECT a FROM inh_parent;
+a              
+
+2              
+11             
+5              
+6              
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+5              
+6              
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s2_update_c s1_select_p s1_select_c s2_select_p s2_select_c
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s2_update_c: UPDATE inh_parent SET a = 15 WHERE a IN (3, 5);
+step s1_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+2              
+3              
+4              
+step s1_select_c: SELECT a FROM inh_temp_child_s1;
+a              
+
+3              
+4              
+step s2_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+2              
+6              
+15             
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+6              
+15             
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s1_delete_p s1_delete_c s1_select_p s1_select_c s2_select_p s2_select_c
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s1_delete_p: DELETE FROM inh_parent WHERE a = 2;
+step s1_delete_c: DELETE FROM inh_parent WHERE a IN (4, 6);
+step s1_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+3              
+step s1_select_c: SELECT a FROM inh_temp_child_s1;
+a              
+
+3              
+step s2_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+5              
+6              
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+5              
+6              
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s2_delete_c s1_select_p s1_select_c s2_select_p s2_select_c
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s2_delete_c: DELETE FROM inh_parent WHERE a IN (4, 6);
+step s1_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+2              
+3              
+4              
+step s1_select_c: SELECT a FROM inh_temp_child_s1;
+a              
+
+3              
+4              
+step s2_select_p: SELECT a FROM inh_parent;
+a              
+
+1              
+2              
+5              
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+5              
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s1_truncate_p s1_select_p s1_select_c s2_select_p s2_select_c
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s1_truncate_p: TRUNCATE inh_parent;
+step s1_select_p: SELECT a FROM inh_parent;
+a              
+
+step s1_select_c: SELECT a FROM inh_temp_child_s1;
+a              
+
+step s2_select_p: SELECT a FROM inh_parent;
+a              
+
+5              
+6              
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+5              
+6              
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s2_truncate_p s1_select_p s1_select_c s2_select_p s2_select_c
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s2_truncate_p: TRUNCATE inh_parent;
+step s1_select_p: SELECT a FROM inh_parent;
+a              
+
+3              
+4              
+step s1_select_c: SELECT a FROM inh_temp_child_s1;
+a              
+
+3              
+4              
+step s2_select_p: SELECT a FROM inh_parent;
+a              
+
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s1_begin s1_truncate_p s2_select_p s1_commit
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s1_begin: BEGIN;
+step s1_truncate_p: TRUNCATE inh_parent;
+step s2_select_p: SELECT a FROM inh_parent; <waiting ...>
+step s1_commit: COMMIT;
+step s2_select_p: <... completed>
+a              
+
+5              
+6              
+
+starting permutation: s1_insert_p s1_insert_c s2_insert_c s1_begin s1_truncate_p s2_select_c s1_commit
+step s1_insert_p: INSERT INTO inh_parent VALUES (1), (2);
+step s1_insert_c: INSERT INTO inh_temp_child_s1 VALUES (3), (4);
+step s2_insert_c: INSERT INTO inh_temp_child_s2 VALUES (5), (6);
+step s1_begin: BEGIN;
+step s1_truncate_p: TRUNCATE inh_parent;
+step s2_select_c: SELECT a FROM inh_temp_child_s2;
+a              
+
+5              
+6              
+step s1_commit: COMMIT;
