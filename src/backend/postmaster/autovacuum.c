@@ -2084,13 +2084,18 @@ do_autovacuum(void)
 		if (classForm->relpersistence == RELPERSISTENCE_TEMP)
 		{
 			int			backendID;
+			PGPROC	   *proc;
 
 			backendID = GetTempNamespaceBackendId(classForm->relnamespace);
 
-			/* We just ignore it if the owning backend is still active */
+			/*
+			 * We just ignore it if the owning backend is still active in the
+			 * same database.
+			 */
 			if (backendID != InvalidBackendId &&
 				(backendID == MyBackendId ||
-				 BackendIdGetProc(backendID) == NULL))
+				 (proc = BackendIdGetProc(backendID)) == NULL ||
+				 proc->databaseId != MyDatabaseId))
 			{
 				/*
 				 * The table seems to be orphaned -- although it might be that
