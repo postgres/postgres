@@ -136,7 +136,7 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 		/* we're only interested if it is the primary key and valid */
-		if (index->indisprimary && IndexIsValid(index))
+		if (index->indisprimary && index->indisvalid)
 		{
 			int			indnkeyatts = index->indnkeyatts;
 

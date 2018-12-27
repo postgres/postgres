@@ -153,7 +153,7 @@ static void ResetReindexPending(void);
  *
  * Caller must have suitable lock on the relation.
  *
- * Note: we intentionally do not check IndexIsValid here; that's because this
+ * Note: we intentionally do not check indisvalid here; that's because this
  * is used to enforce the rule that there can be only one indisprimary index,
  * and we want that to be true even if said index is invalid.
  */
@@ -1792,7 +1792,7 @@ BuildIndexInfo(Relation index)
 
 	/* other info */
 	ii->ii_Unique = indexStruct->indisunique;
-	ii->ii_ReadyForInserts = IndexIsReady(indexStruct);
+	ii->ii_ReadyForInserts = indexStruct->indisready;
 	/* assume not doing speculative insertion for now */
 	ii->ii_UniqueOps = NULL;
 	ii->ii_UniqueProcs = NULL;

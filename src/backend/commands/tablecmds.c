@@ -8107,7 +8107,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
-		if (indexStruct->indisprimary && IndexIsValid(indexStruct))
+		if (indexStruct->indisprimary && indexStruct->indisvalid)
 		{
 			/*
 			 * Refuse to use a deferrable primary key.  This is per SQL spec,
@@ -8228,7 +8228,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 		 */
 		if (indexStruct->indnkeyatts == numattrs &&
 			indexStruct->indisunique &&
-			IndexIsValid(indexStruct) &&
+			indexStruct->indisvalid &&
 			heap_attisnull(indexTuple, Anum_pg_index_indpred, NULL) &&
 			heap_attisnull(indexTuple, Anum_pg_index_indexprs, NULL))
 		{
@@ -12461,7 +12461,7 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 				 errmsg("cannot use partial index \"%s\" as replica identity",
 						RelationGetRelationName(indexRel))));
 	/* And neither are invalid indexes. */
-	if (!IndexIsValid(indexRel->rd_index))
+	if (!indexRel->rd_index->indisvalid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot use invalid index \"%s\" as replica identity",
@@ -14996,7 +14996,7 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 			elog(ERROR, "cache lookup failed for index %u",
 				 inhForm->inhrelid);
 		indexForm = (Form_pg_index) GETSTRUCT(indTup);
-		if (IndexIsValid(indexForm))
+		if (indexForm->indisvalid)
 			tuples += 1;
 		ReleaseSysCache(indTup);
 	}

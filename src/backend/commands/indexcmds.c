@@ -224,7 +224,7 @@ CheckIndexCompatible(Oid oldId,
 	 */
 	if (!(heap_attisnull(tuple, Anum_pg_index_indpred, NULL) &&
 		  heap_attisnull(tuple, Anum_pg_index_indexprs, NULL) &&
-		  IndexIsValid(indexForm)))
+		  indexForm->indisvalid))
 	{
 		ReleaseSysCache(tuple);
 		return false;
@@ -976,7 +976,7 @@ DefineIndex(Oid relationId,
 							ConstraintSetParentConstraint(cldConstrOid,
 														  createdConstraintId);
 
-						if (!IndexIsValid(cldidx->rd_index))
+						if (!cldidx->rd_index->indisvalid)
 							invalidate_parent = true;
 
 						found = true;

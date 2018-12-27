@@ -201,9 +201,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			 * queries.  Note that this is OK because the data structure we
 			 * are constructing is only used by the planner --- the executor
 			 * still needs to insert into "invalid" indexes, if they're marked
-			 * IndexIsReady.
+			 * indisready.
 			 */
-			if (!IndexIsValid(index))
+			if (!index->indisvalid)
 			{
 				index_close(indexRelation, NoLock);
 				continue;
@@ -696,7 +696,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 		idxRel = index_open(indexoid, RowExclusiveLock);
 		idxForm = idxRel->rd_index;
 
-		if (!IndexIsValid(idxForm))
+		if (!idxForm->indisvalid)
 			goto next;
 
 		/*

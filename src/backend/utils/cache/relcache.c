@@ -4221,7 +4221,7 @@ RelationGetFKeyList(Relation relation)
  * so that we must recompute the index list on next request.  This handles
  * creation or deletion of an index.
  *
- * Indexes that are marked not IndexIsLive are omitted from the returned list.
+ * Indexes that are marked not indislive are omitted from the returned list.
  * Such indexes are expected to be dropped momentarily, and should not be
  * touched at all by any caller of this function.
  *
@@ -4288,7 +4288,7 @@ RelationGetIndexList(Relation relation)
 		 * HOT-safety decisions.  It's unsafe to touch such an index at all
 		 * since its catalog entries could disappear at any instant.
 		 */
-		if (!IndexIsLive(index))
+		if (!index->indislive)
 			continue;
 
 		/* Add index's OID to result list in the proper order */
@@ -4299,7 +4299,7 @@ RelationGetIndexList(Relation relation)
 		 * interesting for either oid indexes or replication identity indexes,
 		 * so don't check them.
 		 */
-		if (!IndexIsValid(index) || !index->indisunique ||
+		if (!index->indisvalid || !index->indisunique ||
 			!index->indimmediate ||
 			!heap_attisnull(htup, Anum_pg_index_indpred, NULL))
 			continue;

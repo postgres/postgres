@@ -470,7 +470,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 	 * might put recently-dead tuples out-of-order in the new table, and there
 	 * is little harm in that.)
 	 */
-	if (!IndexIsValid(OldIndex->rd_index))
+	if (!OldIndex->rd_index->indisvalid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on invalid index \"%s\"",
@@ -545,7 +545,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 		else if (thisIndexOid == indexOid)
 		{
 			/* this was checked earlier, but let's be real sure */
-			if (!IndexIsValid(indexForm))
+			if (!indexForm->indisvalid)
 				elog(ERROR, "cannot cluster on invalid index %u", indexOid);
 			indexForm->indisclustered = true;
 			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);

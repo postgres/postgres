@@ -870,7 +870,7 @@ is_usable_unique_index(Relation indexRel)
 	if (indexStruct->indisunique &&
 		indexStruct->indimmediate &&
 		indexRel->rd_rel->relam == BTREE_AM_OID &&
-		IndexIsValid(indexStruct) &&
+		indexStruct->indisvalid &&
 		RelationGetIndexPredicate(indexRel) == NIL &&
 		indexStruct->indnatts > 0)
 	{

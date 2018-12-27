@@ -77,13 +77,4 @@ typedef FormData_pg_index *Form_pg_index;
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
-/*
- * Use of these macros is recommended over direct examination of the state
- * flag columns where possible; this allows source code compatibility with
- * the hacky representation used in 9.2.
- */
-#define IndexIsValid(indexForm) ((indexForm)->indisvalid)
-#define IndexIsReady(indexForm) ((indexForm)->indisready)
-#define IndexIsLive(indexForm)	((indexForm)->indislive)
-
 #endif							/* PG_INDEX_H */
