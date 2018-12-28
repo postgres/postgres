@@ -1875,8 +1875,8 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 		tupdesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
 	}
 
-	modifiedCols = bms_add_members(GetInsertedColumns(resultRelInfo, estate),
-								   GetUpdatedColumns(resultRelInfo, estate));
+	modifiedCols = bms_union(GetInsertedColumns(resultRelInfo, estate),
+							 GetUpdatedColumns(resultRelInfo, estate));
 
 	val_desc = ExecBuildSlotValueDescription(root_relid,
 											 slot,
