@@ -14,8 +14,8 @@
  */
 
 /*
- * This is default value for wal_segment_size to be used at initdb when run
- * without --walsegsize option. Must be a valid segment size.
+ * This is the default value for wal_segment_size to be used when initdb is run
+ * without the --wal-segsize option.  It must be a valid segment size.
  */
 #define DEFAULT_XLOG_SEG_SIZE	(16*1024*1024)
 
