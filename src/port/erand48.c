@@ -2,17 +2,21 @@
  *
  * erand48.c
  *
- * This file supplies pg_erand48(), pg_lrand48(), and pg_srand48(), which
- * are just like erand48(), lrand48(), and srand48() except that we use
- * our own implementation rather than the one provided by the operating
- * system.  We used to test for an operating system version rather than
+ * This file supplies pg_erand48() and related functions, which except
+ * for the names are just like the POSIX-standard erand48() family.
+ * (We don't supply the full set though, only the ones we have found use
+ * for in Postgres.  In particular, we do *not* implement lcong48(), so
+ * that there is no need for the multiplier and addend to be variable.)
+ *
+ * We used to test for an operating system version rather than
  * unconditionally using our own, but (1) some versions of Cygwin have a
  * buggy erand48() that always returns zero and (2) as of 2011, glibc's
  * erand48() is strangely coded to be almost-but-not-quite thread-safe,
  * which doesn't matter for the backend but is important for pgbench.
  *
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  *
- * Copyright (c) 1993 Martin Birgmeier
+ * Portions Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
  *
  * You may redistribute unmodified or modified versions of this source
@@ -54,6 +58,9 @@ static unsigned short _rand48_mult[3] = {
 static unsigned short _rand48_add = RAND48_ADD;
 
 
+/*
+ * Advance the 48-bit value stored in xseed[] to the next "random" number.
+ */
 static void
 _dorand48(unsigned short xseed[3])
 {
@@ -75,6 +82,10 @@ _dorand48(unsigned short xseed[3])
 }
 
 
+/*
+ * Generate a random floating-point value using caller-supplied state.
+ * Values are uniformly distributed over the interval [0.0, 1.0).
+ */
 double
 pg_erand48(unsigned short xseed[3])
 {
@@ -84,6 +95,10 @@ pg_erand48(unsigned short xseed[3])
 		ldexp((double) xseed[2], -16);
 }
 
+/*
+ * Generate a random non-negative integral value using internal state.
+ * Values are uniformly distributed over the interval [0, 2^31).
+ */
 long
 pg_lrand48(void)
 {
@@ -91,13 +106,28 @@ pg_lrand48(void)
 	return ((long) _rand48_seed[2] << 15) + ((long) _rand48_seed[1] >> 1);
 }
 
+/*
+ * Generate a random signed integral value using caller-supplied state.
+ * Values are uniformly distributed over the interval [-2^31, 2^31).
+ */
 long
 pg_jrand48(unsigned short xseed[3])
 {
 	_dorand48(xseed);
-	return ((long) xseed[2] << 16) + ((long) xseed[1]);
+	return (int32) (((uint32) xseed[2] << 16) + (uint32) xseed[1]);
 }
 
+/*
+ * Initialize the internal state using the given seed.
+ *
+ * Per POSIX, this uses only 32 bits from "seed" even if "long" is wider.
+ * Hence, the set of possible seed values is smaller than it could be.
+ * Better practice is to use caller-supplied state and initialize it with
+ * random bits obtained from a high-quality source of random bits.
+ *
+ * Note: POSIX specifies a function seed48() that allows all 48 bits
+ * of the internal state to be set, but we don't currently support that.
+ */
 void
 pg_srand48(long seed)
 {
