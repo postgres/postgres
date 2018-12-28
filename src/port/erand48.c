@@ -37,48 +37,46 @@
 
 #include <math.h>
 
+/* These values are specified by POSIX */
+#define RAND48_MULT		UINT64CONST(0x0005deece66d)
+#define RAND48_ADD		UINT64CONST(0x000b)
+
+/* POSIX specifies 0x330e's use in srand48, but the other bits are arbitrary */
 #define RAND48_SEED_0	(0x330e)
 #define RAND48_SEED_1	(0xabcd)
 #define RAND48_SEED_2	(0x1234)
-#define RAND48_MULT_0	(0xe66d)
-#define RAND48_MULT_1	(0xdeec)
-#define RAND48_MULT_2	(0x0005)
-#define RAND48_ADD		(0x000b)
 
 static unsigned short _rand48_seed[3] = {
 	RAND48_SEED_0,
 	RAND48_SEED_1,
 	RAND48_SEED_2
 };
-static unsigned short _rand48_mult[3] = {
-	RAND48_MULT_0,
-	RAND48_MULT_1,
-	RAND48_MULT_2
-};
-static unsigned short _rand48_add = RAND48_ADD;
 
 
 /*
  * Advance the 48-bit value stored in xseed[] to the next "random" number.
+ *
+ * Also returns the value of that number --- without masking it to 48 bits.
+ * If caller uses the result, it must mask off the bits it wants.
  */
-static void
+static uint64
 _dorand48(unsigned short xseed[3])
 {
-	unsigned long accu;
-	unsigned short temp[2];
+	/*
+	 * We do the arithmetic in uint64; any type wider than 48 bits would work.
+	 */
+	uint64		in;
+	uint64		out;
 
-	accu = (unsigned long) _rand48_mult[0] * (unsigned long) xseed[0] +
-		(unsigned long) _rand48_add;
-	temp[0] = (unsigned short) accu;	/* lower 16 bits */
-	accu >>= sizeof(unsigned short) * 8;
-	accu += (unsigned long) _rand48_mult[0] * (unsigned long) xseed[1] +
-		(unsigned long) _rand48_mult[1] * (unsigned long) xseed[0];
-	temp[1] = (unsigned short) accu;	/* middle 16 bits */
-	accu >>= sizeof(unsigned short) * 8;
-	accu += _rand48_mult[0] * xseed[2] + _rand48_mult[1] * xseed[1] + _rand48_mult[2] * xseed[0];
-	xseed[0] = temp[0];
-	xseed[1] = temp[1];
-	xseed[2] = (unsigned short) accu;
+	in = (uint64) xseed[2] << 32 | (uint64) xseed[1] << 16 | (uint64) xseed[0];
+
+	out = in * RAND48_MULT + RAND48_ADD;
+
+	xseed[0] = out & 0xFFFF;
+	xseed[1] = (out >> 16) & 0xFFFF;
+	xseed[2] = (out >> 32) & 0xFFFF;
+
+	return out;
 }
 
 
@@ -89,10 +87,9 @@ _dorand48(unsigned short xseed[3])
 double
 pg_erand48(unsigned short xseed[3])
 {
-	_dorand48(xseed);
-	return ldexp((double) xseed[0], -48) +
-		ldexp((double) xseed[1], -32) +
-		ldexp((double) xseed[2], -16);
+	uint64		x = _dorand48(xseed);
+
+	return ldexp((double) (x & UINT64CONST(0xFFFFFFFFFFFF)), -48);
 }
 
 /*
@@ -102,8 +99,9 @@ pg_erand48(unsigned short xseed[3])
 long
 pg_lrand48(void)
 {
-	_dorand48(_rand48_seed);
-	return ((long) _rand48_seed[2] << 15) + ((long) _rand48_seed[1] >> 1);
+	uint64		x = _dorand48(_rand48_seed);
+
+	return (x >> 17) & UINT64CONST(0x7FFFFFFF);
 }
 
 /*
@@ -113,8 +111,9 @@ pg_lrand48(void)
 long
 pg_jrand48(unsigned short xseed[3])
 {
-	_dorand48(xseed);
-	return (int32) (((uint32) xseed[2] << 16) + (uint32) xseed[1]);
+	uint64		x = _dorand48(xseed);
+
+	return (int32) ((x >> 16) & UINT64CONST(0xFFFFFFFF));
 }
 
 /*
@@ -134,8 +133,4 @@ pg_srand48(long seed)
 	_rand48_seed[0] = RAND48_SEED_0;
 	_rand48_seed[1] = (unsigned short) seed;
 	_rand48_seed[2] = (unsigned short) (seed >> 16);
-	_rand48_mult[0] = RAND48_MULT_0;
-	_rand48_mult[1] = RAND48_MULT_1;
-	_rand48_mult[2] = RAND48_MULT_2;
-	_rand48_add = RAND48_ADD;
 }
