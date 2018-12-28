@@ -11,15 +11,17 @@
 
 setup
 {
-  create table gin_tbl(id int4, p int4[]);
-  insert into gin_tbl select g, array[g, g*2,g*3] from generate_series(1, 10000) g;
-  insert into gin_tbl select g, array[4,5,6] from generate_series(10001, 20000) g;
+  create table gin_tbl(p int4[]);
+  insert into gin_tbl select array[1] from generate_series(1, 8192) g;
+  insert into gin_tbl select array[g] from generate_series(2, 800) g;
   create index ginidx on gin_tbl using gin(p) with (fastupdate = off);
+  create table other_tbl(v int4);
 }
 
 teardown
 {
   drop table gin_tbl;
+  drop table other_tbl;
 }
 
 session "s1"
@@ -29,19 +31,13 @@ setup
   set enable_seqscan=off;
 }
 
-# enable pending list for a small subset of tests
-step "fu1"	{ alter index ginidx set (fastupdate = on);
-			  commit;
-			  begin isolation level serializable;
-			  set enable_seqscan=off; }
+step "ra1"	{ select * from gin_tbl where p @> array[1] limit 1; }
+step "rb1"  { select count(*) from gin_tbl where p @> array[2]; }
+step "rc1"  { select count(*) from gin_tbl where p @> array[800]; }
+step "rd1"  { select count(*) from gin_tbl where p @> array[2000]; }
 
-step "rxy1"	{ select count(*) from gin_tbl where p @> array[4,5]; }
-step "wx1"	{ insert into gin_tbl select g, array[5,6] from generate_series
-              (20001, 20050) g; }
-step "rxy3"	{ select count(*) from gin_tbl where p @> array[1,2] or
-              p @> array[100,200] or p @> array[500,1000] or p @> array[1000,2000]; }
-step "wx3"	{ insert into gin_tbl select g, array[g,g*2] from generate_series
-              (1, 50) g; }
+step "wo1"	{ insert into other_tbl values (1); }
+
 step "c1"  { commit; }
 
 session "s2"
@@ -51,83 +47,69 @@ setup
   set enable_seqscan=off;
 }
 
-step "rxy2"	{ select count(*) from gin_tbl where p @> array[5,6]; }
-step "rxy2fu"	{ select count(*) from gin_tbl where p @> array[10000,10005]; }
-step "wy2"	{ insert into gin_tbl select g, array[4,5] from
-              generate_series(20051, 20100) g; }
-step "wy2fu"	{ insert into gin_tbl select g, array[10000,10005] from
-              generate_series(20051, 20100) g; }
-step "rxy4"	{ select count(*) from gin_tbl where p @> array[4000,8000] or
-              p @> array[5000,10000] or p @> array[6000,12000] or
-              p @> array[8000,16000]; }
-step "wy4"	{ insert into gin_tbl select g, array[g,g*2] from generate_series
-              (10000, 10050) g; }
-step "c2"	{ commit; }
+step "ro2"	{ select count(*) from other_tbl; }
 
+step "wa2"  { insert into gin_tbl values (array[1]); }
+step "wb2"  { insert into gin_tbl values (array[2]); }
+step "wc2"  { insert into gin_tbl values (array[800]); }
+step "wd2"  { insert into gin_tbl values (array[2000]); }
 
-# An index scan (from one transaction) and an index insert (from another transaction)
-# try to access the same part of the index but one transaction commits before other
-# transaction begins so no r-w conflict.
+step "c2"  { commit; }
 
-permutation "rxy1" "wx1" "c1" "rxy2" "wy2" "c2"
-permutation "rxy2" "wy2" "c2" "rxy1" "wx1" "c1"
+session "s3"
+step "fu" { alter index ginidx set (fastupdate = on); }
 
-# An index scan (from one transaction) and an index insert (from another transaction)
-# try to access different parts of the index and also one transaction commits before
-# other transaction begins, so no r-w conflict.
+# An index scan (from one transaction) and an index insert (from another
+# transaction) try to access the same part of the index. So, there is a
+# r-w conflict.
 
-permutation "rxy3" "wx3" "c1" "rxy4" "wy4" "c2"
-permutation "rxy4" "wy4" "c2" "rxy3" "wx3" "c1"
+permutation "ra1" "ro2" "wo1" "c1" "wa2" "c2"
+permutation "ro2" "ra1" "wo1" "c1" "wa2" "c2"
+permutation "ro2" "ra1" "wo1" "wa2" "c1" "c2"
+permutation "ra1" "ro2" "wa2" "wo1" "c1" "c2"
 
+permutation "rb1" "ro2" "wo1" "c1" "wb2" "c2"
+permutation "ro2" "rb1" "wo1" "c1" "wb2" "c2"
+permutation "ro2" "rb1" "wo1" "wb2" "c1" "c2"
+permutation "rb1" "ro2" "wb2" "wo1" "c1" "c2"
 
-# An index scan (from one transaction) and an index insert (from another transaction)
-# try to access the same part of the index and one transaction begins before other
-# transaction commits so there is a r-w conflict.
+permutation "rc1" "ro2" "wo1" "c1" "wc2" "c2"
+permutation "ro2" "rc1" "wo1" "c1" "wc2" "c2"
+permutation "ro2" "rc1" "wo1" "wc2" "c1" "c2"
+permutation "rc1" "ro2" "wc2" "wo1" "c1" "c2"
 
-permutation "rxy1" "wx1" "rxy2" "c1" "wy2" "c2"
-permutation "rxy1" "wx1" "rxy2" "wy2" "c1" "c2"
-permutation "rxy1" "wx1" "rxy2" "wy2" "c2" "c1"
-permutation "rxy1" "rxy2" "wx1" "c1" "wy2" "c2"
-permutation "rxy1" "rxy2" "wx1" "wy2" "c1" "c2"
-permutation "rxy1" "rxy2" "wx1" "wy2" "c2" "c1"
-permutation "rxy1" "rxy2" "wy2" "wx1" "c1" "c2"
-permutation "rxy1" "rxy2" "wy2" "wx1" "c2" "c1"
-permutation "rxy1" "rxy2" "wy2" "c2" "wx1" "c1"
-permutation "rxy2" "rxy1" "wx1" "c1" "wy2" "c2"
-permutation "rxy2" "rxy1" "wx1" "wy2" "c1" "c2"
-permutation "rxy2" "rxy1" "wx1" "wy2" "c2" "c1"
-permutation "rxy2" "rxy1" "wy2" "wx1" "c1" "c2"
-permutation "rxy2" "rxy1" "wy2" "wx1" "c2" "c1"
-permutation "rxy2" "rxy1" "wy2" "c2" "wx1" "c1"
-permutation "rxy2" "wy2" "rxy1" "wx1" "c1" "c2"
-permutation "rxy2" "wy2" "rxy1" "wx1" "c2" "c1"
-permutation "rxy2" "wy2" "rxy1" "c2" "wx1" "c1"
+# An index scan (from one transaction) and an index insert (from another
+# transaction) try to access different parts of the index.  So, there is no
+# r-w conflict.
 
-# An index scan (from one transaction) and an index insert (from another transaction)
-# try to access different parts of the index so no r-w conflict.
+permutation "ra1" "ro2" "wo1" "c1" "wb2" "c2"
+permutation "ro2" "ra1" "wo1" "c1" "wc2" "c2"
+permutation "ro2" "rb1" "wo1" "wa2" "c1" "c2"
+permutation "rc1" "ro2" "wa2" "wo1" "c1" "c2"
 
-permutation "rxy3" "wx3" "rxy4" "c1" "wy4" "c2"
-permutation "rxy3" "wx3" "rxy4" "wy4" "c1" "c2"
-permutation "rxy3" "wx3" "rxy4" "wy4" "c2" "c1"
-permutation "rxy3" "rxy4" "wx3" "c1" "wy4" "c2"
-permutation "rxy3" "rxy4" "wx3" "wy4" "c1" "c2"
-permutation "rxy3" "rxy4" "wx3" "wy4" "c2" "c1"
-permutation "rxy3" "rxy4" "wy4" "wx3" "c1" "c2"
-permutation "rxy3" "rxy4" "wy4" "wx3" "c2" "c1"
-permutation "rxy3" "rxy4" "wy4" "c2" "wx3" "c1"
-permutation "rxy4" "rxy3" "wx3" "c1" "wy4" "c2"
-permutation "rxy4" "rxy3" "wx3" "wy4" "c1" "c2"
-permutation "rxy4" "rxy3" "wx3" "wy4" "c2" "c1"
-permutation "rxy4" "rxy3" "wy4" "wx3" "c1" "c2"
-permutation "rxy4" "rxy3" "wy4" "wx3" "c2" "c1"
-permutation "rxy4" "rxy3" "wy4" "c2" "wx3" "c1"
-permutation "rxy4" "wy4" "rxy3" "wx3" "c1" "c2"
-permutation "rxy4" "wy4" "rxy3" "wx3" "c2" "c1"
-permutation "rxy4" "wy4" "rxy3" "c2" "wx3" "c1"
+permutation "rb1" "ro2" "wo1" "c1" "wa2" "c2"
+permutation "ro2" "rb1" "wo1" "c1" "wc2" "c2"
+permutation "ro2" "ra1" "wo1" "wb2" "c1" "c2"
+permutation "rc1" "ro2" "wb2" "wo1" "c1" "c2"
 
-# Test fastupdate = on. First test should pass because fastupdate is off and
-# sessions touches different parts of index, second should fail because
-# with fastupdate on, then whole index should be under predicate lock.
+permutation "rc1" "ro2" "wo1" "c1" "wa2" "c2"
+permutation "ro2" "rc1" "wo1" "c1" "wb2" "c2"
+permutation "ro2" "ra1" "wo1" "wc2" "c1" "c2"
+permutation "rb1" "ro2" "wc2" "wo1" "c1" "c2"
 
-permutation       "rxy1" "rxy2fu" "wx1" "c1" "wy2fu" "c2"
-permutation "fu1" "rxy1" "rxy2fu" "wx1" "c1" "wy2fu" "c2"
+# With fastupdate = on all index is under predicate lock.  So we can't
+# distinguish particular keys.
+
+permutation "fu" "ra1" "ro2" "wo1" "c1" "wa2" "c2"
+permutation "fu" "ra1" "ro2" "wo1" "c1" "wb2" "c2"
+
+# Check fastupdate turned on concurrently.
+
+permutation "ra1" "ro2" "wo1" "c1" "fu" "wa2" "c2"
+
+# Tests for conflicts with previously non-existing key
+
+permutation "rd1" "ro2" "wo1" "c1" "wd2" "c2"
+permutation "ro2" "rd1" "wo1" "c1" "wd2" "c2"
+permutation "ro2" "rd1" "wo1" "wd2" "c1" "c2"
+permutation "rd1" "ro2" "wd2" "wo1" "c1" "c2"
