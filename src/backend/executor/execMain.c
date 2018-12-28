@@ -1837,25 +1837,26 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 							TupleTableSlot *slot,
 							EState *estate)
 {
-	Relation	rel = resultRelInfo->ri_RelationDesc;
-	Relation	orig_rel = rel;
-	TupleDesc	tupdesc = RelationGetDescr(rel);
+	Oid			root_relid;
+	TupleDesc	tupdesc;
 	char	   *val_desc;
 	Bitmapset  *modifiedCols;
-	Bitmapset  *insertedCols;
-	Bitmapset  *updatedCols;
 
 	/*
-	 * Need to first convert the tuple to the root partitioned table's row
-	 * type. For details, check similar comments in ExecConstraints().
+	 * If the tuple has been routed, it's been converted to the partition's
+	 * rowtype, which might differ from the root table's.  We must convert it
+	 * back to the root table's rowtype so that val_desc in the error message
+	 * matches the input tuple.
 	 */
 	if (resultRelInfo->ri_PartitionRoot)
 	{
-		TupleDesc	old_tupdesc = RelationGetDescr(rel);
+		TupleDesc	old_tupdesc;
 		AttrNumber *map;
 
-		rel = resultRelInfo->ri_PartitionRoot;
-		tupdesc = RelationGetDescr(rel);
+		root_relid = RelationGetRelid(resultRelInfo->ri_PartitionRoot);
+		tupdesc = RelationGetDescr(resultRelInfo->ri_PartitionRoot);
+
+		old_tupdesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
 		/* a reverse map */
 		map = convert_tuples_by_name_map_if_req(old_tupdesc, tupdesc,
 												gettext_noop("could not convert row type"));
@@ -1868,11 +1869,16 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 			slot = execute_attr_map_slot(map, slot,
 										 MakeTupleTableSlot(tupdesc, &TTSOpsVirtual));
 	}
+	else
+	{
+		root_relid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+		tupdesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
+	}
 
-	insertedCols = GetInsertedColumns(resultRelInfo, estate);
-	updatedCols = GetUpdatedColumns(resultRelInfo, estate);
-	modifiedCols = bms_union(insertedCols, updatedCols);
-	val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
+	modifiedCols = bms_add_members(GetInsertedColumns(resultRelInfo, estate),
+								   GetUpdatedColumns(resultRelInfo, estate));
+
+	val_desc = ExecBuildSlotValueDescription(root_relid,
 											 slot,
 											 tupdesc,
 											 modifiedCols,
@@ -1880,7 +1886,7 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 	ereport(ERROR,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 			 errmsg("new row for relation \"%s\" violates partition constraint",
-					RelationGetRelationName(orig_rel)),
+					RelationGetRelationName(resultRelInfo->ri_RelationDesc)),
 			 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
 }
 
