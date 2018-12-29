@@ -159,6 +159,7 @@ static char *dictionary_file;
 static char *info_schema_file;
 static char *features_file;
 static char *system_views_file;
+static bool success = false;
 static bool made_new_pgdata = false;
 static bool found_existing_pgdata = false;
 static bool made_new_xlogdir = false;
@@ -237,7 +238,6 @@ static char **filter_lines_with_token(char **lines, const char *token);
 static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
-static void exit_nicely(void) pg_attribute_noreturn();
 static char *get_id(void);
 static int	get_encoding_id(const char *encoding_name);
 static void set_input(char **dest, const char *filename);
@@ -291,13 +291,13 @@ void		initialize_data_directory(void);
 do { \
 	cmdfd = popen_check(cmd, "w"); \
 	if (cmdfd == NULL) \
-		exit_nicely(); /* message already printed by popen_check */ \
+		exit(1); /* message already printed by popen_check */ \
 } while (0)
 
 #define PG_CMD_CLOSE \
 do { \
 	if (pclose_check(cmdfd)) \
-		exit_nicely(); /* message already printed by pclose_check */ \
+		exit(1); /* message already printed by pclose_check */ \
 } while (0)
 
 #define PG_CMD_PUTS(line) \
@@ -493,7 +493,7 @@ readfile(const char *path)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 
 	/* pass over the file twice - the first time to size the result */
@@ -549,7 +549,7 @@ writefile(char *path, char **lines)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 	for (line = lines; *line != NULL; line++)
 	{
@@ -557,7 +557,7 @@ writefile(char *path, char **lines)
 		{
 			fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
 					progname, path, strerror(errno));
-			exit_nicely();
+			exit(1);
 		}
 		free(*line);
 	}
@@ -565,7 +565,7 @@ writefile(char *path, char **lines)
 	{
 		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 }
 
@@ -592,8 +592,11 @@ popen_check(const char *command, const char *mode)
  * if we created the data directory remove it too
  */
 static void
-exit_nicely(void)
+cleanup_directories_atexit(void)
 {
+	if (success)
+		return;
+
 	if (!noclean)
 	{
 		if (made_new_pgdata)
@@ -645,8 +648,6 @@ exit_nicely(void)
 					_("%s: WAL directory \"%s\" not removed at user's request\n"),
 					progname, xlog_dir);
 	}
-
-	exit(1);
 }
 
 /*
@@ -877,14 +878,14 @@ write_version_file(const char *extrapath)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 	if (fprintf(version_file, "%s\n", PG_MAJORVERSION) < 0 ||
 		fclose(version_file))
 	{
 		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 	free(path);
 }
@@ -905,13 +906,13 @@ set_null_conf(void)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 	if (fclose(conf_file))
 	{
 		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 	free(path);
 }
@@ -1262,7 +1263,7 @@ setup_config(void)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 
 	/*
@@ -1282,7 +1283,7 @@ setup_config(void)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 
 	free(conflines);
@@ -1369,7 +1370,7 @@ setup_config(void)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 
 	free(conflines);
@@ -1385,7 +1386,7 @@ setup_config(void)
 	{
 		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
 				progname, path, strerror(errno));
-		exit_nicely();
+		exit(1);
 	}
 
 	free(conflines);
@@ -1423,7 +1424,7 @@ bootstrap_template1(void)
 				  "Check your installation or specify the correct path "
 				  "using the option -L.\n"),
 				progname, bki_file, PG_VERSION);
-		exit_nicely();
+		exit(1);
 	}
 
 	/* Substitute for various symbols used in the BKI file */
@@ -1541,7 +1542,7 @@ get_su_pwd(void)
 		if (strcmp(pwd1, pwd2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));
-			exit_nicely();
+			exit(1);
 		}
 	}
 	else
@@ -1561,7 +1562,7 @@ get_su_pwd(void)
 		{
 			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 					progname, pwfilename, strerror(errno));
-			exit_nicely();
+			exit(1);
 		}
 		if (!fgets(pwd1, sizeof(pwd1), pwf))
 		{
@@ -1571,7 +1572,7 @@ get_su_pwd(void)
 			else
 				fprintf(stderr, _("%s: password file \"%s\" is empty\n"),
 						progname, pwfilename);
-			exit_nicely();
+			exit(1);
 		}
 		fclose(pwf);
 
@@ -2104,7 +2105,7 @@ make_postgres(FILE *cmdfd)
  * if you are handling SIGFPE.
  *
  * I avoided doing the forbidden things by setting a flag instead of calling
- * exit_nicely() directly.
+ * exit() directly.
  *
  * Also note the behaviour of Windows with SIGINT, which says this:
  *	 Note	SIGINT is not supported for any Win32 application, including
@@ -2125,7 +2126,7 @@ trapsig(int signum)
 }
 
 /*
- * call exit_nicely() if we got a signal, or else output "ok".
+ * call exit() if we got a signal, or else output "ok".
  */
 static void
 check_ok(void)
@@ -2134,14 +2135,14 @@ check_ok(void)
 	{
 		printf(_("caught signal\n"));
 		fflush(stdout);
-		exit_nicely();
+		exit(1);
 	}
 	else if (output_failed)
 	{
 		printf(_("could not write to child process: %s\n"),
 			   strerror(output_errno));
 		fflush(stdout);
-		exit_nicely();
+		exit(1);
 	}
 	else
 	{
@@ -2775,7 +2776,7 @@ create_data_directory(void)
 			{
 				fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 						progname, pg_data, strerror(errno));
-				exit_nicely();
+				exit(1);
 			}
 			else
 				check_ok();
@@ -2793,7 +2794,7 @@ create_data_directory(void)
 			{
 				fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
 						progname, pg_data, strerror(errno));
-				exit_nicely();
+				exit(1);
 			}
 			else
 				check_ok();
@@ -2822,7 +2823,7 @@ create_data_directory(void)
 			/* Trouble accessing directory */
 			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
 					progname, pg_data, strerror(errno));
-			exit_nicely();
+			exit(1);
 	}
 }
 
@@ -2845,7 +2846,7 @@ create_xlog_or_symlink(void)
 		if (!is_absolute_path(xlog_dir))
 		{
 			fprintf(stderr, _("%s: WAL directory location must be an absolute path\n"), progname);
-			exit_nicely();
+			exit(1);
 		}
 
 		/* check if the specified xlog directory exists/is empty */
@@ -2861,7 +2862,7 @@ create_xlog_or_symlink(void)
 				{
 					fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 							progname, xlog_dir, strerror(errno));
-					exit_nicely();
+					exit(1);
 				}
 				else
 					check_ok();
@@ -2879,7 +2880,7 @@ create_xlog_or_symlink(void)
 				{
 					fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
 							progname, xlog_dir, strerror(errno));
-					exit_nicely();
+					exit(1);
 				}
 				else
 					check_ok();
@@ -2901,13 +2902,13 @@ create_xlog_or_symlink(void)
 							_("If you want to store the WAL there, either remove or empty the directory\n"
 							  "\"%s\".\n"),
 							xlog_dir);
-				exit_nicely();
+				exit(1);
 
 			default:
 				/* Trouble accessing directory */
 				fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
 						progname, xlog_dir, strerror(errno));
-				exit_nicely();
+				exit(1);
 		}
 
 #ifdef HAVE_SYMLINK
@@ -2915,11 +2916,11 @@ create_xlog_or_symlink(void)
 		{
 			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
 					progname, subdirloc, strerror(errno));
-			exit_nicely();
+			exit(1);
 		}
 #else
 		fprintf(stderr, _("%s: symlinks are not supported on this platform\n"), progname);
-		exit_nicely();
+		exit(1);
 #endif
 	}
 	else
@@ -2929,7 +2930,7 @@ create_xlog_or_symlink(void)
 		{
 			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 					progname, subdirloc, strerror(errno));
-			exit_nicely();
+			exit(1);
 		}
 	}
 
@@ -2991,7 +2992,7 @@ initialize_data_directory(void)
 		{
 			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 					progname, path, strerror(errno));
-			exit_nicely();
+			exit(1);
 		}
 
 		free(path);
@@ -3266,6 +3267,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	atexit(cleanup_directories_atexit);
+
 	/* If we only need to fsync, just do it and exit */
 	if (sync_only)
 	{
@@ -3276,7 +3279,7 @@ main(int argc, char *argv[])
 		{
 			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
 					progname, pg_data, strerror(errno));
-			exit_nicely();
+			exit(1);
 		}
 
 		fputs(_("syncing data to disk ... "), stdout);
@@ -3412,5 +3415,6 @@ main(int argc, char *argv[])
 
 	destroyPQExpBuffer(start_db_cmd);
 
+	success = true;
 	return 0;
 }
