@@ -4357,7 +4357,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 
 	if (!query_buf || query_buf->len <= 0)
 	{
-		psql_error(_("\\watch cannot be used with an empty query\n"));
+		psql_error("\\watch cannot be used with an empty query\n");
 		return false;
 	}
 

@@ -799,19 +799,19 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt)
 			break;
 
 		case PGRES_EMPTY_QUERY:
-			psql_error(_("\\watch cannot be used with an empty query\n"));
+			psql_error("\\watch cannot be used with an empty query\n");
 			PQclear(res);
 			return -1;
 
 		case PGRES_COPY_OUT:
 		case PGRES_COPY_IN:
 		case PGRES_COPY_BOTH:
-			psql_error(_("\\watch cannot be used with COPY\n"));
+			psql_error("\\watch cannot be used with COPY\n");
 			PQclear(res);
 			return -1;
 
 		default:
-			psql_error(_("unexpected result status for \\watch\n"));
+			psql_error("unexpected result status for \\watch\n");
 			PQclear(res);
 			return -1;
 	}
