@@ -2520,11 +2520,13 @@ ClosePostmasterPorts(bool am_syslogger)
 /*
  * InitProcessGlobals -- set MyProcPid, MyStartTime[stamp], random seeds
  *
- * Called early in every backend.
+ * Called early in the postmaster and every backend.
  */
 void
 InitProcessGlobals(void)
 {
+	unsigned int rseed;
+
 	MyProcPid = getpid();
 	MyStartTimestamp = GetCurrentTimestamp();
 	MyStartTime = timestamptz_to_time_t(MyStartTimestamp);
@@ -2539,15 +2541,30 @@ InitProcessGlobals(void)
 #endif
 
 	/*
-	 * Set a different seed for random() in every backend.  Since PIDs and
-	 * timestamps tend to change more frequently in their least significant
-	 * bits, shift the timestamp left to allow a larger total number of seeds
-	 * in a given time period.  Since that would leave only 20 bits of the
-	 * timestamp that cycle every ~1 second, also mix in some higher bits.
+	 * Set a different seed for random() in every process.  We want something
+	 * unpredictable, so if possible, use high-quality random bits for the
+	 * seed.  Otherwise, fall back to a seed based on timestamp and PID.
+	 *
+	 * Note we can't use pg_backend_random here, since this is used in the
+	 * postmaster, and even in a backend we might not be attached to shared
+	 * memory yet.
 	 */
-	srandom(((uint64) MyProcPid) ^
+#ifdef HAVE_STRONG_RANDOM
+	if (!pg_strong_random(&rseed, sizeof(rseed)))
+#endif
+	{
+		/*
+		 * Since PIDs and timestamps tend to change more frequently in their
+		 * least significant bits, shift the timestamp left to allow a larger
+		 * total number of seeds in a given time period.  Since that would
+		 * leave only 20 bits of the timestamp that cycle every ~1 second,
+		 * also mix in some higher bits.
+		 */
+		rseed = ((uint64) MyProcPid) ^
 			((uint64) MyStartTimestamp << 12) ^
-			((uint64) MyStartTimestamp >> 20));
+			((uint64) MyStartTimestamp >> 20);
+	}
+	srandom(rseed);
 }
 
 
