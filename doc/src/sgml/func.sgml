@@ -1136,11 +1136,15 @@
    </table>
 
   <para>
-   The characteristics of the values returned by
-   <literal><function>random()</function></literal> depend
-   on the system implementation. It is not suitable for cryptographic
-   applications; see <xref linkend="pgcrypto"/> module for an alternative.
-   </para>
+   The <function>random()</function> function uses a simple linear
+   congruential algorithm.  It is fast but not suitable for cryptographic
+   applications; see the <xref linkend="pgcrypto"/> module for a more
+   secure alternative.
+   If <function>setseed()</function> is called, the results of
+   subsequent <function>random()</function> calls in the current session are
+   repeatable by re-issuing <function>setseed()</function> with the same
+   argument.
+  </para>
 
   <para>
    Finally, <xref linkend="functions-math-trig-table"/> shows the
