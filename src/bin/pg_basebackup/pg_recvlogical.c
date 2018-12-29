@@ -65,7 +65,6 @@ static XLogRecPtr output_fsync_lsn = InvalidXLogRecPtr;
 
 static void usage(void);
 static void StreamLogicalLog(void);
-static void disconnect_and_exit(int code) pg_attribute_noreturn();
 static bool flushAndSendFeedback(PGconn *conn, TimestampTz *now);
 static void prepareToTerminate(PGconn *conn, XLogRecPtr endpos,
 				   bool keepalive, XLogRecPtr lsn);
@@ -167,12 +166,10 @@ sendFeedback(PGconn *conn, TimestampTz now, bool force, bool replyRequested)
 }
 
 static void
-disconnect_and_exit(int code)
+disconnect_atexit(void)
 {
 	if (conn != NULL)
 		PQfinish(conn);
-
-	exit(code);
 }
 
 static bool
@@ -944,20 +941,21 @@ main(int argc, char **argv)
 	if (!conn)
 		/* Error message already written in GetConnection() */
 		exit(1);
+	atexit(disconnect_atexit);
 
 	/*
 	 * Run IDENTIFY_SYSTEM to make sure we connected using a database specific
 	 * replication connection.
 	 */
 	if (!RunIdentifySystem(conn, NULL, NULL, NULL, &db_name))
-		disconnect_and_exit(1);
+		exit(1);
 
 	if (db_name == NULL)
 	{
 		fprintf(stderr,
 				_("%s: could not establish database-specific replication connection\n"),
 				progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	/*
@@ -979,7 +977,7 @@ main(int argc, char **argv)
 					progname, replication_slot);
 
 		if (!DropReplicationSlot(conn, replication_slot))
-			disconnect_and_exit(1);
+			exit(1);
 	}
 
 	/* Create a replication slot. */
@@ -992,12 +990,12 @@ main(int argc, char **argv)
 
 		if (!CreateReplicationSlot(conn, replication_slot, plugin, false,
 								   false, false, slot_exists_ok))
-			disconnect_and_exit(1);
+			exit(1);
 		startpos = InvalidXLogRecPtr;
 	}
 
 	if (!do_start_slot)
-		disconnect_and_exit(0);
+		exit(0);
 
 	/* Stream loop */
 	while (true)
@@ -1009,7 +1007,7 @@ main(int argc, char **argv)
 			 * We've been Ctrl-C'ed or reached an exit limit condition. That's
 			 * not an error, so exit without an errorcode.
 			 */
-			disconnect_and_exit(0);
+			exit(0);
 		}
 		else if (noloop)
 		{

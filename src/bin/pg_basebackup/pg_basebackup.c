@@ -136,7 +136,6 @@ static PQExpBuffer recoveryconfcontents = NULL;
 
 /* Function headers */
 static void usage(void);
-static void disconnect_and_exit(int code) pg_attribute_noreturn();
 static void verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found);
 static void progress_report(int tablespacenum, const char *filename, bool force);
 
@@ -217,25 +216,25 @@ cleanup_directories_atexit(void)
 }
 
 static void
-disconnect_and_exit(int code)
+disconnect_atexit(void)
 {
 	if (conn != NULL)
 		PQfinish(conn);
-
-#ifndef WIN32
-
-	/*
-	 * On windows, our background thread dies along with the process. But on
-	 * Unix, if we have started a subprocess, we want to kill it off so it
-	 * doesn't remain running trying to stream data.
-	 */
-	if (bgchild > 0)
-		kill(bgchild, SIGTERM);
-#endif
-
-	exit(code);
 }
 
+#ifndef WIN32
+/*
+ * On windows, our background thread dies along with the process. But on
+ * Unix, if we have started a subprocess, we want to kill it off so it
+ * doesn't remain running trying to stream data.
+ */
+static void
+kill_bgchild_atexit(void)
+{
+	if (bgchild > 0)
+		kill(bgchild, SIGTERM);
+}
+#endif
 
 /*
  * Split argument into old_dir and new_dir and append to tablespace mapping
@@ -562,7 +561,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 		fprintf(stderr,
 				_("%s: could not parse write-ahead log location \"%s\"\n"),
 				progname, startpos);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 	param->startptr = ((uint64) hi) << 32 | lo;
 	/* Round off to even segment position */
@@ -575,7 +574,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 		fprintf(stderr,
 				_("%s: could not create pipe for background process: %s\n"),
 				progname, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 #endif
 
@@ -604,7 +603,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	{
 		if (!CreateReplicationSlot(param->bgconn, replication_slot, NULL,
 								   temp_replication_slot, true, true, false))
-			disconnect_and_exit(1);
+			exit(1);
 
 		if (verbose)
 		{
@@ -635,7 +634,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 			fprintf(stderr,
 					_("%s: could not create directory \"%s\": %s\n"),
 					progname, statusdir, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 	}
 
@@ -654,19 +653,20 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	{
 		fprintf(stderr, _("%s: could not create background process: %s\n"),
 				progname, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	/*
 	 * Else we are in the parent process and all is well.
 	 */
+	atexit(kill_bgchild_atexit);
 #else							/* WIN32 */
 	bgchild = _beginthreadex(NULL, 0, (void *) LogStreamerMain, param, 0, NULL);
 	if (bgchild == 0)
 	{
 		fprintf(stderr, _("%s: could not create background thread: %s\n"),
 				progname, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 #endif
 }
@@ -691,7 +691,7 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
 				fprintf(stderr,
 						_("%s: could not create directory \"%s\": %s\n"),
 						progname, dirname, strerror(errno));
-				disconnect_and_exit(1);
+				exit(1);
 			}
 			if (created)
 				*created = true;
@@ -714,7 +714,7 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
 			fprintf(stderr,
 					_("%s: directory \"%s\" exists but is not empty\n"),
 					progname, dirname);
-			disconnect_and_exit(1);
+			exit(1);
 		case -1:
 
 			/*
@@ -722,7 +722,7 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
 			 */
 			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
 					progname, dirname, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 	}
 }
 
@@ -933,7 +933,7 @@ writeTarData(
 			fprintf(stderr,
 					_("%s: could not write to compressed file \"%s\": %s\n"),
 					progname, current_file, get_gz_error(ztarfile));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 	}
 	else
@@ -943,7 +943,7 @@ writeTarData(
 		{
 			fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
 					progname, current_file, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 	}
 }
@@ -1005,7 +1005,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 					fprintf(stderr,
 							_("%s: could not set compression level %d: %s\n"),
 							progname, compresslevel, get_gz_error(ztarfile));
-					disconnect_and_exit(1);
+					exit(1);
 				}
 			}
 			else
@@ -1026,7 +1026,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 					fprintf(stderr,
 							_("%s: could not set compression level %d: %s\n"),
 							progname, compresslevel, get_gz_error(ztarfile));
-					disconnect_and_exit(1);
+					exit(1);
 				}
 			}
 			else
@@ -1054,7 +1054,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				fprintf(stderr,
 						_("%s: could not set compression level %d: %s\n"),
 						progname, compresslevel, get_gz_error(ztarfile));
-				disconnect_and_exit(1);
+				exit(1);
 			}
 		}
 		else
@@ -1075,7 +1075,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			fprintf(stderr,
 					_("%s: could not create compressed file \"%s\": %s\n"),
 					progname, filename, get_gz_error(ztarfile));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 	}
 	else
@@ -1086,7 +1086,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		{
 			fprintf(stderr, _("%s: could not create file \"%s\": %s\n"),
 					progname, filename, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 	}
 
@@ -1098,7 +1098,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	{
 		fprintf(stderr, _("%s: could not get COPY data stream: %s"),
 				progname, PQerrorMessage(conn));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	while (1)
@@ -1167,7 +1167,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 					fprintf(stderr,
 							_("%s: could not close compressed file \"%s\": %s\n"),
 							progname, filename, get_gz_error(ztarfile));
-					disconnect_and_exit(1);
+					exit(1);
 				}
 			}
 			else
@@ -1180,7 +1180,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 						fprintf(stderr,
 								_("%s: could not close file \"%s\": %s\n"),
 								progname, filename, strerror(errno));
-						disconnect_and_exit(1);
+						exit(1);
 					}
 				}
 			}
@@ -1191,7 +1191,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		{
 			fprintf(stderr, _("%s: could not read COPY data: %s"),
 					progname, PQerrorMessage(conn));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 
 		if (!writerecoveryconf || !basetablespace)
@@ -1427,7 +1427,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	{
 		fprintf(stderr, _("%s: could not get COPY data stream: %s"),
 				progname, PQerrorMessage(conn));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	while (1)
@@ -1456,7 +1456,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 		{
 			fprintf(stderr, _("%s: could not read COPY data: %s"),
 					progname, PQerrorMessage(conn));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 
 		if (file == NULL)
@@ -1470,7 +1470,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			{
 				fprintf(stderr, _("%s: invalid tar block header size: %d\n"),
 						progname, r);
-				disconnect_and_exit(1);
+				exit(1);
 			}
 			totaldone += 512;
 
@@ -1520,7 +1520,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 							fprintf(stderr,
 									_("%s: could not create directory \"%s\": %s\n"),
 									progname, filename, strerror(errno));
-							disconnect_and_exit(1);
+							exit(1);
 						}
 					}
 #ifndef WIN32
@@ -1553,7 +1553,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 								_("%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"),
 								progname, filename, mapped_tblspc_path,
 								strerror(errno));
-						disconnect_and_exit(1);
+						exit(1);
 					}
 				}
 				else
@@ -1561,7 +1561,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					fprintf(stderr,
 							_("%s: unrecognized link indicator \"%c\"\n"),
 							progname, copybuf[156]);
-					disconnect_and_exit(1);
+					exit(1);
 				}
 				continue;		/* directory or link handled */
 			}
@@ -1574,7 +1574,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			{
 				fprintf(stderr, _("%s: could not create file \"%s\": %s\n"),
 						progname, filename, strerror(errno));
-				disconnect_and_exit(1);
+				exit(1);
 			}
 
 #ifndef WIN32
@@ -1614,7 +1614,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			{
 				fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
 						progname, filename, strerror(errno));
-				disconnect_and_exit(1);
+				exit(1);
 			}
 			totaldone += r;
 			progress_report(rownum, filename, false);
@@ -1640,7 +1640,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 		fprintf(stderr,
 				_("%s: COPY stream ended before last file was finished\n"),
 				progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	if (copybuf != NULL)
@@ -1687,14 +1687,14 @@ GenerateRecoveryConf(PGconn *conn)
 	if (!recoveryconfcontents)
 	{
 		fprintf(stderr, _("%s: out of memory\n"), progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	connOptions = PQconninfo(conn);
 	if (connOptions == NULL)
 	{
 		fprintf(stderr, _("%s: out of memory\n"), progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	initPQExpBuffer(&conninfo_buf);
@@ -1745,7 +1745,7 @@ GenerateRecoveryConf(PGconn *conn)
 		PQExpBufferDataBroken(conninfo_buf))
 	{
 		fprintf(stderr, _("%s: out of memory\n"), progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	termPQExpBuffer(&conninfo_buf);
@@ -1771,7 +1771,7 @@ WriteRecoveryConf(void)
 	if (cf == NULL)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"), progname, filename, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	if (fwrite(recoveryconfcontents->data, recoveryconfcontents->len, 1, cf) != 1)
@@ -1779,7 +1779,7 @@ WriteRecoveryConf(void)
 		fprintf(stderr,
 				_("%s: could not write to file \"%s\": %s\n"),
 				progname, filename, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	fclose(cf);
@@ -1789,7 +1789,7 @@ WriteRecoveryConf(void)
 	if (cf == NULL)
 	{
 		fprintf(stderr, _("%s: could not create file \"%s\": %s\n"), progname, filename, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	fclose(cf);
@@ -1830,7 +1830,7 @@ BaseBackup(void)
 
 		fprintf(stderr, _("%s: incompatible server version %s\n"),
 				progname, serverver ? serverver : "'unknown'");
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	/*
@@ -1844,7 +1844,7 @@ BaseBackup(void)
 		 * but add a hint about using -X none.
 		 */
 		fprintf(stderr, _("HINT: use -X none or -X fetch to disable log streaming\n"));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	/*
@@ -1857,7 +1857,7 @@ BaseBackup(void)
 	 * Run IDENTIFY_SYSTEM so we can get the timeline
 	 */
 	if (!RunIdentifySystem(conn, &sysidentifier, &latesttli, NULL, NULL))
-		disconnect_and_exit(1);
+		exit(1);
 
 	/*
 	 * Start the actual backup
@@ -1896,7 +1896,7 @@ BaseBackup(void)
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, "BASE_BACKUP", PQerrorMessage(conn));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	/*
@@ -1907,14 +1907,14 @@ BaseBackup(void)
 	{
 		fprintf(stderr, _("%s: could not initiate base backup: %s"),
 				progname, PQerrorMessage(conn));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 	if (PQntuples(res) != 1)
 	{
 		fprintf(stderr,
 				_("%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"),
 				progname, PQntuples(res), PQnfields(res), 1, 2);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
@@ -1946,12 +1946,12 @@ BaseBackup(void)
 	{
 		fprintf(stderr, _("%s: could not get backup header: %s"),
 				progname, PQerrorMessage(conn));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 	if (PQntuples(res) < 1)
 	{
 		fprintf(stderr, _("%s: no data returned from server\n"), progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	/*
@@ -1984,7 +1984,7 @@ BaseBackup(void)
 		fprintf(stderr,
 				_("%s: can only write single tablespace to stdout, database has %d\n"),
 				progname, PQntuples(res));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	/*
@@ -2028,14 +2028,14 @@ BaseBackup(void)
 		fprintf(stderr,
 				_("%s: could not get write-ahead log end position from server: %s"),
 				progname, PQerrorMessage(conn));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 	if (PQntuples(res) != 1)
 	{
 		fprintf(stderr,
 				_("%s: no write-ahead log end position returned from server\n"),
 				progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 	strlcpy(xlogend, PQgetvalue(res, 0, 0), sizeof(xlogend));
 	if (verbose && includewal != NO_WAL)
@@ -2059,7 +2059,7 @@ BaseBackup(void)
 			fprintf(stderr, _("%s: final receive failed: %s"),
 					progname, PQerrorMessage(conn));
 		}
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	if (bgchild > 0)
@@ -2089,7 +2089,7 @@ BaseBackup(void)
 			fprintf(stderr,
 					_("%s: could not send command to background pipe: %s\n"),
 					progname, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 
 		/* Just wait for the background process to exit */
@@ -2098,19 +2098,19 @@ BaseBackup(void)
 		{
 			fprintf(stderr, _("%s: could not wait for child process: %s\n"),
 					progname, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		if (r != bgchild)
 		{
 			fprintf(stderr, _("%s: child %d died, expected %d\n"),
 					progname, (int) r, (int) bgchild);
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		if (status != 0)
 		{
 			fprintf(stderr, "%s: %s\n",
 					progname, wait_result_to_str(status));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		/* Exited normally, we're happy! */
 #else							/* WIN32 */
@@ -2125,7 +2125,7 @@ BaseBackup(void)
 			fprintf(stderr,
 					_("%s: could not parse write-ahead log location \"%s\"\n"),
 					progname, xlogend);
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		xlogendptr = ((uint64) hi) << 32 | lo;
 		InterlockedIncrement(&has_xlogendptr);
@@ -2137,20 +2137,20 @@ BaseBackup(void)
 			_dosmaperr(GetLastError());
 			fprintf(stderr, _("%s: could not wait for child thread: %s\n"),
 					progname, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		if (GetExitCodeThread((HANDLE) bgchild_handle, &status) == 0)
 		{
 			_dosmaperr(GetLastError());
 			fprintf(stderr, _("%s: could not get child thread exit status: %s\n"),
 					progname, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		if (status != 0)
 		{
 			fprintf(stderr, _("%s: child thread exited with error %u\n"),
 					progname, (unsigned int) status);
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		/* Exited normally, we're happy */
 #endif
@@ -2164,6 +2164,7 @@ BaseBackup(void)
 	 */
 	PQclear(res);
 	PQfinish(conn);
+	conn = NULL;
 
 	/*
 	 * Make data persistent on disk once backup is completed. For tar format
@@ -2542,6 +2543,7 @@ main(int argc, char **argv)
 		/* Error message already written in GetConnection() */
 		exit(1);
 	}
+	atexit(disconnect_atexit);
 
 	/*
 	 * Set umask so that directories/files are created with the same
@@ -2563,7 +2565,7 @@ main(int argc, char **argv)
 
 	/* determine remote server's xlog segment size */
 	if (!RetrieveWalSegSize(conn))
-		disconnect_and_exit(1);
+		exit(1);
 
 	/* Create pg_wal symlink, if required */
 	if (xlog_dir)
@@ -2585,11 +2587,11 @@ main(int argc, char **argv)
 		{
 			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
 					progname, linkloc, strerror(errno));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 #else
 		fprintf(stderr, _("%s: symlinks are not supported on this platform\n"), progname);
-		disconnect_and_exit(1);
+		exit(1);
 #endif
 		free(linkloc);
 	}
