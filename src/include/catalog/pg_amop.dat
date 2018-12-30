@@ -1013,6 +1013,10 @@
 { amopfamily => 'hash/cid_ops', amoplefttype => 'cid', amoprighttype => 'cid',
   amopstrategy => '1', amopopr => '=(cid,cid)', amopmethod => 'hash' },
 
+# tid_ops
+{ amopfamily => 'hash/tid_ops', amoplefttype => 'tid', amoprighttype => 'tid',
+  amopstrategy => '1', amopopr => '=(tid,tid)', amopmethod => 'hash' },
+
 # text_pattern_ops
 { amopfamily => 'hash/text_pattern_ops', amoplefttype => 'text',
   amoprighttype => 'text', amopstrategy => '1', amopopr => '=(text,text)',

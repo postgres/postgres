@@ -2484,6 +2484,12 @@
 { oid => '2796', descr => 'smaller of two',
   proname => 'tidsmaller', prorettype => 'tid', proargtypes => 'tid tid',
   prosrc => 'tidsmaller' },
+{ oid => '2233', descr => 'hash',
+  proname => 'hashtid', prorettype => 'int4', proargtypes => 'tid',
+  prosrc => 'hashtid' },
+{ oid => '2234', descr => 'hash',
+  proname => 'hashtidextended', prorettype => 'int8', proargtypes => 'tid int8',
+  prosrc => 'hashtidextended' },
 
 { oid => '1296',
   proname => 'timedate_pl', prolang => '14', prorettype => 'timestamp',

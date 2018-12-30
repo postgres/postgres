@@ -167,6 +167,8 @@
   opcintype => 'xid' },
 { opcmethod => 'hash', opcname => 'cid_ops', opcfamily => 'hash/cid_ops',
   opcintype => 'cid' },
+{ opcmethod => 'hash', opcname => 'tid_ops', opcfamily => 'hash/tid_ops',
+  opcintype => 'tid' },
 { opcmethod => 'hash', opcname => 'text_pattern_ops',
   opcfamily => 'hash/text_pattern_ops', opcintype => 'text',
   opcdefault => 'f' },

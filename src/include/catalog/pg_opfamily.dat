@@ -112,6 +112,8 @@
   opfmethod => 'hash', opfname => 'xid_ops' },
 { oid => '2226',
   opfmethod => 'hash', opfname => 'cid_ops' },
+{ oid => '2227',
+  opfmethod => 'hash', opfname => 'tid_ops' },
 { oid => '2229',
   opfmethod => 'hash', opfname => 'text_pattern_ops' },
 { oid => '2231',

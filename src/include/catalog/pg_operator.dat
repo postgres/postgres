@@ -204,9 +204,10 @@
   oprrest => 'eqsel', oprjoin => 'eqjoinsel' },
 
 { oid => '387', oid_symbol => 'TIDEqualOperator', descr => 'equal',
-  oprname => '=', oprcanmerge => 't', oprleft => 'tid', oprright => 'tid',
-  oprresult => 'bool', oprcom => '=(tid,tid)', oprnegate => '<>(tid,tid)',
-  oprcode => 'tideq', oprrest => 'eqsel', oprjoin => 'eqjoinsel' },
+  oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'tid',
+  oprright => 'tid', oprresult => 'bool', oprcom => '=(tid,tid)',
+  oprnegate => '<>(tid,tid)', oprcode => 'tideq', oprrest => 'eqsel',
+  oprjoin => 'eqjoinsel' },
 { oid => '402', descr => 'not equal',
   oprname => '<>', oprleft => 'tid', oprright => 'tid', oprresult => 'bool',
   oprcom => '<>(tid,tid)', oprnegate => '=(tid,tid)', oprcode => 'tidne',

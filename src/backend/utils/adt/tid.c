@@ -20,6 +20,7 @@
 #include <math.h>
 #include <limits.h>
 
+#include "access/hash.h"
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/namespace.h"
@@ -237,6 +238,33 @@ tidsmaller(PG_FUNCTION_ARGS)
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
 	PG_RETURN_ITEMPOINTER(ItemPointerCompare(arg1, arg2) <= 0 ? arg1 : arg2);
+}
+
+Datum
+hashtid(PG_FUNCTION_ARGS)
+{
+	ItemPointer key = PG_GETARG_ITEMPOINTER(0);
+
+	/*
+	 * While you'll probably have a lot of trouble with a compiler that
+	 * insists on appending pad space to struct ItemPointerData, we can at
+	 * least make this code work, by not using sizeof(ItemPointerData).
+	 * Instead rely on knowing the sizes of the component fields.
+	 */
+	return hash_any((unsigned char *) key,
+					sizeof(BlockIdData) + sizeof(OffsetNumber));
+}
+
+Datum
+hashtidextended(PG_FUNCTION_ARGS)
+{
+	ItemPointer key = PG_GETARG_ITEMPOINTER(0);
+	uint64		seed = PG_GETARG_INT64(1);
+
+	/* As above */
+	return hash_any_extended((unsigned char *) key,
+							 sizeof(BlockIdData) + sizeof(OffsetNumber),
+							 seed);
 }
 
 
