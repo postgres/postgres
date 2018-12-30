@@ -3715,12 +3715,8 @@ do { \
 			{
 				TidPath    *tpath;
 
-				/*
-				 * TidPath contains tidquals, which do not contain any
-				 * external parameters per create_tidscan_path(). So don't
-				 * bother to translate those.
-				 */
 				FLAT_COPY_PATH(tpath, path, TidPath);
+				ADJUST_CHILD_ATTRS(tpath->tidquals);
 				new_path = (Path *) tpath;
 			}
 			break;

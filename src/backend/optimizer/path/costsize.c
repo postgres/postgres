@@ -1202,15 +1202,18 @@ cost_tidscan(Path *path, PlannerInfo *root,
 	ntuples = 0;
 	foreach(l, tidquals)
 	{
-		if (IsA(lfirst(l), ScalarArrayOpExpr))
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
+		Expr	   *qual = rinfo->clause;
+
+		if (IsA(qual, ScalarArrayOpExpr))
 		{
 			/* Each element of the array yields 1 tuple */
-			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) lfirst(l);
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) qual;
 			Node	   *arraynode = (Node *) lsecond(saop->args);
 
 			ntuples += estimate_array_length(arraynode);
 		}
-		else if (IsA(lfirst(l), CurrentOfExpr))
+		else if (IsA(qual, CurrentOfExpr))
 		{
 			/* CURRENT OF yields 1 tuple */
 			isCurrentOf = true;

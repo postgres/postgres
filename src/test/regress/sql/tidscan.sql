@@ -17,6 +17,11 @@ EXPLAIN (COSTS OFF)
 SELECT ctid, * FROM tidscan WHERE '(0,1)' = ctid;
 SELECT ctid, * FROM tidscan WHERE '(0,1)' = ctid;
 
+-- OR'd clauses
+EXPLAIN (COSTS OFF)
+SELECT ctid, * FROM tidscan WHERE ctid = '(0,2)' OR '(0,1)' = ctid;
+SELECT ctid, * FROM tidscan WHERE ctid = '(0,2)' OR '(0,1)' = ctid;
+
 -- ctid = ScalarArrayOp - implemented as tidscan
 EXPLAIN (COSTS OFF)
 SELECT ctid, * FROM tidscan WHERE ctid = ANY(ARRAY['(0,1)', '(0,2)']::tid[]);
@@ -33,6 +38,18 @@ SELECT ctid, * FROM tidscan
 WHERE (id = 3 AND ctid IN ('(0,2)', '(0,3)')) OR (ctid = '(0,1)' AND id = 1);
 SELECT ctid, * FROM tidscan
 WHERE (id = 3 AND ctid IN ('(0,2)', '(0,3)')) OR (ctid = '(0,1)' AND id = 1);
+
+-- nestloop-with-inner-tidscan joins on tid
+EXPLAIN (COSTS OFF)
+SELECT t1.ctid, t1.*, t2.ctid, t2.*
+FROM tidscan t1 JOIN tidscan t2 ON t1.ctid = t2.ctid WHERE t1.id = 1;
+SELECT t1.ctid, t1.*, t2.ctid, t2.*
+FROM tidscan t1 JOIN tidscan t2 ON t1.ctid = t2.ctid WHERE t1.id = 1;
+EXPLAIN (COSTS OFF)
+SELECT t1.ctid, t1.*, t2.ctid, t2.*
+FROM tidscan t1 LEFT JOIN tidscan t2 ON t1.ctid = t2.ctid WHERE t1.id = 1;
+SELECT t1.ctid, t1.*, t2.ctid, t2.*
+FROM tidscan t1 LEFT JOIN tidscan t2 ON t1.ctid = t2.ctid WHERE t1.id = 1;
 
 -- exercise backward scan and rewind
 BEGIN;

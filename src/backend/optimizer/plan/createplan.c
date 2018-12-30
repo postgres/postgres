@@ -3083,17 +3083,71 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	TidScan    *scan_plan;
 	Index		scan_relid = best_path->path.parent->relid;
 	List	   *tidquals = best_path->tidquals;
-	List	   *ortidquals;
 
 	/* it should be a base rel... */
 	Assert(scan_relid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
+	/*
+	 * The qpqual list must contain all restrictions not enforced by the
+	 * tidquals list.  Since tidquals has OR semantics, we have to be careful
+	 * about matching it up to scan_clauses.  It's convenient to handle the
+	 * single-tidqual case separately from the multiple-tidqual case.  In the
+	 * single-tidqual case, we look through the scan_clauses while they are
+	 * still in RestrictInfo form, and drop any that are redundant with the
+	 * tidqual.
+	 *
+	 * In normal cases simple pointer equality checks will be enough to spot
+	 * duplicate RestrictInfos, so we try that first.
+	 *
+	 * Another common case is that a scan_clauses entry is generated from the
+	 * same EquivalenceClass as some tidqual, and is therefore redundant with
+	 * it, though not equal.
+	 *
+	 * Unlike indexpaths, we don't bother with predicate_implied_by(); the
+	 * number of cases where it could win are pretty small.
+	 */
+	if (list_length(tidquals) == 1)
+	{
+		List	   *qpqual = NIL;
+		ListCell   *l;
+
+		foreach(l, scan_clauses)
+		{
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
+
+			if (rinfo->pseudoconstant)
+				continue;		/* we may drop pseudoconstants here */
+			if (list_member_ptr(tidquals, rinfo))
+				continue;		/* simple duplicate */
+			if (is_redundant_derived_clause(rinfo, tidquals))
+				continue;		/* derived from same EquivalenceClass */
+			qpqual = lappend(qpqual, rinfo);
+		}
+		scan_clauses = qpqual;
+	}
+
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
 
-	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	/* Reduce RestrictInfo lists to bare expressions; ignore pseudoconstants */
+	tidquals = extract_actual_clauses(tidquals, false);
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/*
+	 * If we have multiple tidquals, it's more convenient to remove duplicate
+	 * scan_clauses after stripping the RestrictInfos.  In this situation,
+	 * because the tidquals represent OR sub-clauses, they could not have come
+	 * from EquivalenceClasses so we don't have to worry about matching up
+	 * non-identical clauses.  On the other hand, because tidpath.c will have
+	 * extracted those sub-clauses from some OR clause and built its own list,
+	 * we will certainly not have pointer equality to any scan clause.  So
+	 * convert the tidquals list to an explicit OR clause and see if we can
+	 * match it via equal() to any scan clause.
+	 */
+	if (list_length(tidquals) > 1)
+		scan_clauses = list_difference(scan_clauses,
+									   list_make1(make_orclause(tidquals)));
 
 	/* Replace any outer-relation variables with nestloop params */
 	if (best_path->path.param_info)
@@ -3103,15 +3157,6 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 		scan_clauses = (List *)
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
-
-	/*
-	 * Remove any clauses that are TID quals.  This is a bit tricky since the
-	 * tidquals list has implicit OR semantics.
-	 */
-	ortidquals = tidquals;
-	if (list_length(ortidquals) > 1)
-		ortidquals = list_make1(make_orclause(ortidquals));
-	scan_clauses = list_difference(scan_clauses, ortidquals);
 
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
