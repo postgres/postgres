@@ -585,7 +585,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 	 */
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
-	rc = exec_stmt_block(&estate, func->action);
+	rc = exec_stmt(&estate, (PLpgSQL_stmt *) func->action);
 	if (rc != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
@@ -955,7 +955,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 */
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
-	rc = exec_stmt_block(&estate, func->action);
+	rc = exec_stmt(&estate, (PLpgSQL_stmt *) func->action);
 	if (rc != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
@@ -1116,7 +1116,7 @@ plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
 	 */
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
-	rc = exec_stmt_block(&estate, func->action);
+	rc = exec_stmt(&estate, (PLpgSQL_stmt *) func->action);
 	if (rc != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
