@@ -8383,7 +8383,7 @@ LogCheckpointStart(int flags, bool restartpoint)
 		 (flags & CHECKPOINT_IMMEDIATE) ? " immediate" : "",
 		 (flags & CHECKPOINT_FORCE) ? " force" : "",
 		 (flags & CHECKPOINT_WAIT) ? " wait" : "",
-		 (flags & CHECKPOINT_CAUSE_XLOG) ? " xlog" : "",
+		 (flags & CHECKPOINT_CAUSE_XLOG) ? " wal" : "",
 		 (flags & CHECKPOINT_CAUSE_TIME) ? " time" : "",
 		 (flags & CHECKPOINT_FLUSH_ALL) ? " flush-all" : "");
 }
