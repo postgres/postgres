@@ -285,7 +285,7 @@ else
 check: submake $(REGRESS_PREP)
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
-temp-install: EXTRA_INSTALL+=$(subdir)
+checkprep: EXTRA_INSTALL+=$(subdir)
 endif
 endif # REGRESS
 
