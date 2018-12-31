@@ -415,7 +415,6 @@ DefineIndex(Oid relationId,
 	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_open(relationId, lockmode);
 
-	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
 
 	/* Ensure that it makes sense to index this kind of relation */
@@ -1032,7 +1031,7 @@ DefineIndex(Oid relationId,
 						elog(ERROR, "cannot convert whole-row table reference");
 
 					childStmt->idxname = NULL;
-					childStmt->relationId = childRelid;
+					childStmt->relation = NULL;
 					DefineIndex(childRelid, childStmt,
 								InvalidOid, /* no predefined OID */
 								indexRelationId,	/* this is our child */
@@ -1154,7 +1153,7 @@ DefineIndex(Oid relationId,
 	 */
 
 	/* Open and lock the parent heap relation */
-	rel = heap_openrv(stmt->relation, ShareUpdateExclusiveLock);
+	rel = heap_open(relationId, ShareUpdateExclusiveLock);
 
 	/* And the target index relation */
 	indexRelation = index_open(indexRelationId, RowExclusiveLock);
