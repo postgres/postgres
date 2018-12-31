@@ -10170,9 +10170,10 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
 }
 
 /*
- * do_pg_start_backup is the workhorse of the user-visible pg_start_backup()
- * function. It creates the necessary starting checkpoint and constructs the
- * backup label file.
+ * do_pg_start_backup
+ *
+ * Utility function called at the start of an online backup. It creates the
+ * necessary starting checkpoint and constructs the backup label file.
  *
  * There are two kind of backups: exclusive and non-exclusive. An exclusive
  * backup is started with pg_start_backup(), and there can be only one active
@@ -10712,8 +10713,10 @@ get_backup_status(void)
 }
 
 /*
- * do_pg_stop_backup is the workhorse of the user-visible pg_stop_backup()
- * function.
+ * do_pg_stop_backup
+ *
+ * Utility function called at the end of an online backup. It cleans up the
+ * backup state and can optionally wait for WAL segments to be archived.
  *
  * If labelfile is NULL, this stops an exclusive backup. Otherwise this stops
  * the non-exclusive backup specified by 'labelfile'.
@@ -11084,7 +11087,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 			if (!reported_waiting && waits > 5)
 			{
 				ereport(NOTICE,
-						(errmsg("pg_stop_backup cleanup done, waiting for required WAL segments to be archived")));
+						(errmsg("base backup done, waiting for required WAL segments to be archived")));
 				reported_waiting = true;
 			}
 
@@ -11094,16 +11097,16 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 			{
 				seconds_before_warning *= 2;	/* This wraps in >10 years... */
 				ereport(WARNING,
-						(errmsg("pg_stop_backup still waiting for all required WAL segments to be archived (%d seconds elapsed)",
+						(errmsg("still waiting for all required WAL segments to be archived (%d seconds elapsed)",
 								waits),
 						 errhint("Check that your archive_command is executing properly.  "
-								 "pg_stop_backup can be canceled safely, "
+								 "You can safely cancel this backup, "
 								 "but the database backup will not be usable without all the WAL segments.")));
 			}
 		}
 
 		ereport(NOTICE,
-				(errmsg("pg_stop_backup complete, all required WAL segments have been archived")));
+				(errmsg("all required WAL segments have been archived")));
 	}
 	else if (waitforarchive)
 		ereport(NOTICE,
