@@ -63,10 +63,12 @@ distclean maintainer-clean:
 	@rm -rf autom4te.cache/
 	rm -f config.cache config.log config.status GNUmakefile
 
+check check-tests installcheck installcheck-parallel installcheck-tests: CHECKPREP_TOP=src/test/regress
 check check-tests installcheck installcheck-parallel installcheck-tests: submake-generated-headers
 	$(MAKE) -C src/test/regress $@
 
 $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,check)
+$(call recurse,checkprep,  src/test src/pl src/interfaces/ecpg contrib src/bin)
 
 $(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib src/bin,installcheck)
 
