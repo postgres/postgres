@@ -19,7 +19,7 @@
 #
 # Meta configuration
 
-standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check installcheck init-po update-po
+standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check checkprep installcheck init-po update-po
 # these targets should recurse even into subdirectories not being built:
 standard_always_targets = distprep clean distclean maintainer-clean
 
@@ -390,10 +390,16 @@ ifeq ($(MAKELEVEL),0)
 	rm -rf '$(abs_top_builddir)'/tmp_install
 	$(MKDIR_P) '$(abs_top_builddir)'/tmp_install/log
 	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install >'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
+	$(MAKE) -j1 $(if $(CHECKPREP_TOP),-C $(CHECKPREP_TOP),) checkprep >>'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1
 endif
-	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install >>'$(abs_top_builddir)'/tmp_install/log/install.log 2>&1 || exit; done)
 endif
 endif
+
+# Tasks to run serially at the end of temp-install.  Some EXTRA_INSTALL
+# entries appear more than once in the tree, and parallel installs of the same
+# file can fail with EEXIST.
+checkprep:
+	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install || exit; done)
 
 PROVE = @PROVE@
 # There are common routines in src/test/perl, and some test suites have

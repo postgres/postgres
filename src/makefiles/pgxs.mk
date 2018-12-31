@@ -435,7 +435,7 @@ endif
 endif # PGXS
 
 ifndef NO_TEMP_INSTALL
-temp-install: EXTRA_INSTALL+=$(subdir)
+checkprep: EXTRA_INSTALL+=$(subdir)
 endif
 
 
