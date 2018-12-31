@@ -329,9 +329,14 @@ BuildParameterizedTidPaths(PlannerInfo *root, RelOptInfo *rel, List *clauses)
 		 *
 		 * We currently consider only TidEqual join clauses.  In principle we
 		 * might find a suitable ScalarArrayOpExpr in the rel's joininfo list,
-		 * but it seems unlikely to be worth checking for.
+		 * but it seems unlikely to be worth expending the cycles to check.
+		 * And we definitely won't find a CurrentOfExpr here.  Hence, we don't
+		 * use TidQualFromRestrictInfo; but this must match that function
+		 * otherwise.
 		 */
-		if (!IsTidEqualClause(rinfo, rel))
+		if (rinfo->pseudoconstant ||
+			!restriction_is_securely_promotable(rinfo, rel) ||
+			!IsTidEqualClause(rinfo, rel))
 			continue;
 
 		/*
