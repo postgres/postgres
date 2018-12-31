@@ -2414,7 +2414,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			 * Fail immediately if postmaster has exited
 			 */
 #ifndef WIN32
-			if (kill(postmaster_pid, 0) != 0)
+			if (waitpid(postmaster_pid, NULL, WNOHANG) == postmaster_pid)
 #else
 			if (WaitForSingleObject(postmaster_pid, 0) == WAIT_OBJECT_0)
 #endif
