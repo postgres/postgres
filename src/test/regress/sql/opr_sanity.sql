@@ -789,6 +789,38 @@ SELECT p_oid, proname, prodesc FROM funcdescs
     AND oprdesc NOT LIKE 'deprecated%'
 ORDER BY 1;
 
+-- Operators that are commutator pairs should have identical volatility
+-- and leakproofness markings on their implementation functions.
+SELECT o1.oid, o1.oprcode, o2.oid, o2.oprcode
+FROM pg_operator AS o1, pg_operator AS o2, pg_proc AS p1, pg_proc AS p2
+WHERE o1.oprcom = o2.oid AND p1.oid = o1.oprcode AND p2.oid = o2.oprcode AND
+    (p1.provolatile != p2.provolatile OR
+     p1.proleakproof != p2.proleakproof);
+
+-- Likewise for negator pairs.
+SELECT o1.oid, o1.oprcode, o2.oid, o2.oprcode
+FROM pg_operator AS o1, pg_operator AS o2, pg_proc AS p1, pg_proc AS p2
+WHERE o1.oprnegate = o2.oid AND p1.oid = o1.oprcode AND p2.oid = o2.oprcode AND
+    (p1.provolatile != p2.provolatile OR
+     p1.proleakproof != p2.proleakproof);
+
+-- Btree comparison operators' functions should have the same volatility
+-- and leakproofness markings as the associated comparison support function.
+-- As of Postgres 12, the only exceptions are that textual equality functions
+-- are marked leakproof but textual comparison/inequality functions are not.
+SELECT pp.oid::regprocedure as proc, pp.provolatile as vp, pp.proleakproof as lp,
+       po.oid::regprocedure as opr, po.provolatile as vo, po.proleakproof as lo
+FROM pg_proc pp, pg_proc po, pg_operator o, pg_amproc ap, pg_amop ao
+WHERE pp.oid = ap.amproc AND po.oid = o.oprcode AND o.oid = ao.amopopr AND
+    ao.amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
+    ao.amopfamily = ap.amprocfamily AND
+    ao.amoplefttype = ap.amproclefttype AND
+    ao.amoprighttype = ap.amprocrighttype AND
+    ap.amprocnum = 1 AND
+    (pp.provolatile != po.provolatile OR
+     pp.proleakproof != po.proleakproof)
+ORDER BY 1;
+
 
 -- **************** pg_aggregate ****************
 
