@@ -4844,13 +4844,9 @@ set_random_seed(const char *seed)
 	else if (strcmp(seed, "rand") == 0)
 	{
 		/* use some "strong" random source */
-#ifdef HAVE_STRONG_RANDOM
 		if (!pg_strong_random(&iseed, sizeof(iseed)))
-#endif
 		{
-			fprintf(stderr,
-					"cannot seed random from a strong source, none available: "
-					"use \"time\" or an unsigned integer value.\n");
+			fprintf(stderr, "could not generate random seed.\n");
 			return false;
 		}
 	}

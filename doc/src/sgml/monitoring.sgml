@@ -849,7 +849,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="64"><literal>LWLock</literal></entry>
+        <entry morerows="63"><literal>LWLock</literal></entry>
         <entry><literal>ShmemIndexLock</literal></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -1033,10 +1033,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>OldSnapshotTimeMapLock</literal></entry>
          <entry>Waiting to read or update old snapshot control information.</entry>
-        </row>
-        <row>
-         <entry><literal>BackendRandomLock</literal></entry>
-         <entry>Waiting to generate a random number.</entry>
         </row>
         <row>
          <entry><literal>LogicalRepWorkerLock</literal></entry>

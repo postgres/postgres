@@ -56,7 +56,7 @@ static const struct error_desc px_err_list[] = {
 	{PXE_UNKNOWN_SALT_ALGO, "Unknown salt algorithm"},
 	{PXE_BAD_SALT_ROUNDS, "Incorrect number of rounds"},
 	{PXE_MCRYPT_INTERNAL, "mcrypt internal error"},
-	{PXE_NO_RANDOM, "No strong random source"},
+	{PXE_NO_RANDOM, "Failed to generate strong random bits"},
 	{PXE_DECRYPT_FAILED, "Decryption failed"},
 	{PXE_PGP_CORRUPT_DATA, "Wrong key or corrupt data"},
 	{PXE_PGP_CORRUPT_ARMOR, "Corrupt ascii-armor"},
@@ -97,17 +97,9 @@ px_THROW_ERROR(int err)
 {
 	if (err == PXE_NO_RANDOM)
 	{
-#ifdef HAVE_STRONG_RANDOM
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate a random number")));
-#else
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("generating random data is not supported by this build"),
-				 errdetail("This functionality requires a source of strong random numbers."),
-				 errhint("You need to rebuild PostgreSQL using --enable-strong-random.")));
-#endif
 	}
 	else
 	{

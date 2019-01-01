@@ -65,7 +65,6 @@
 #include "storage/reinit.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
-#include "utils/backend_random.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
@@ -5132,7 +5131,7 @@ BootStrapXLOG(void)
 	 * a genuine-looking password challenge for the non-existent user, in lieu
 	 * of an actual stored password.
 	 */
-	if (!pg_backend_random(mock_auth_nonce, MOCK_AUTH_NONCE_LEN))
+	if (!pg_strong_random(mock_auth_nonce, MOCK_AUTH_NONCE_LEN))
 		ereport(PANIC,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate secret authorization token")));

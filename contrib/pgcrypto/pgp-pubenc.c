@@ -39,7 +39,6 @@
 static int
 pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 {
-#ifdef HAVE_STRONG_RANDOM
 	uint8	   *buf,
 			   *p;
 	int			pad_len = res_len - 2 - data_len;
@@ -50,7 +49,7 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 	buf = px_alloc(res_len);
 	buf[0] = 0x02;
 
-	if (!pg_strong_random((char *) buf + 1, pad_len))
+	if (!pg_strong_random(buf + 1, pad_len))
 	{
 		px_free(buf);
 		return PXE_NO_RANDOM;
@@ -62,7 +61,7 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 	{
 		if (*p == 0)
 		{
-			if (!pg_strong_random((char *) p, 1))
+			if (!pg_strong_random(p, 1))
 			{
 				px_memset(buf, 0, res_len);
 				px_free(buf);
@@ -78,10 +77,6 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 	*res_p = buf;
 
 	return 0;
-
-#else
-	return PXE_NO_RANDOM;
-#endif
 }
 
 static int

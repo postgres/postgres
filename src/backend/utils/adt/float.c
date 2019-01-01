@@ -24,7 +24,6 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/array.h"
-#include "utils/backend_random.h"
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
 #include "utils/sortsupport.h"
@@ -2393,7 +2392,7 @@ drandom(PG_FUNCTION_ARGS)
 		 * Should that fail for some reason, we fall back on a lower-quality
 		 * seed based on current time and PID.
 		 */
-		if (!pg_backend_random((char *) drandom_seed, sizeof(drandom_seed)))
+		if (!pg_strong_random(drandom_seed, sizeof(drandom_seed)))
 		{
 			TimestampTz now = GetCurrentTimestamp();
 			uint64		iseed;

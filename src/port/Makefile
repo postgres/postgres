@@ -37,13 +37,9 @@ LIBS += $(PTHREAD_LIBS)
 
 OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o erand48.o inet_net_ntop.o \
 	noblock.o path.o pgcheckdir.o pgmkdirp.o pgsleep.o \
-	pgstrcasecmp.o pgstrsignal.o pqsignal.o \
+	pg_strong_random.o pgstrcasecmp.o pgstrsignal.o pqsignal.o \
 	qsort.o qsort_arg.o quotes.o snprintf.o sprompt.o strerror.o \
 	tar.o thread.o
-
-ifeq ($(enable_strong_random), yes)
-OBJS += pg_strong_random.o
-endif
 
 # libpgport.a, libpgport_shlib.a, and libpgport_srv.a contain the same files
 # foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c

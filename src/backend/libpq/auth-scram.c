@@ -102,7 +102,6 @@
 #include "libpq/crypt.h"
 #include "libpq/scram.h"
 #include "miscadmin.h"
-#include "utils/backend_random.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
 
@@ -468,7 +467,7 @@ pg_be_scram_build_verifier(const char *password)
 		password = (const char *) prep_password;
 
 	/* Generate random salt */
-	if (!pg_backend_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
+	if (!pg_strong_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate random salt")));
@@ -1123,7 +1122,7 @@ build_server_first_message(scram_state *state)
 	char		raw_nonce[SCRAM_RAW_NONCE_LEN];
 	int			encoded_len;
 
-	if (!pg_backend_random(raw_nonce, SCRAM_RAW_NONCE_LEN))
+	if (!pg_strong_random(raw_nonce, SCRAM_RAW_NONCE_LEN))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate random nonce")));

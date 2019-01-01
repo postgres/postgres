@@ -34,7 +34,6 @@
 #include "px.h"
 #include "pgp.h"
 
-#include "utils/backend_random.h"
 
 static int
 calc_s2k_simple(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
@@ -235,13 +234,13 @@ pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo, int count)
 		case PGP_S2K_SIMPLE:
 			break;
 		case PGP_S2K_SALTED:
-			if (!pg_backend_random((char *) s2k->salt, PGP_S2K_SALT))
+			if (!pg_strong_random(s2k->salt, PGP_S2K_SALT))
 				return PXE_NO_RANDOM;
 			break;
 		case PGP_S2K_ISALTED:
-			if (!pg_backend_random((char *) s2k->salt, PGP_S2K_SALT))
+			if (!pg_strong_random(s2k->salt, PGP_S2K_SALT))
 				return PXE_NO_RANDOM;
-			if (!pg_backend_random((char *) &tmp, 1))
+			if (!pg_strong_random(&tmp, 1))
 				return PXE_NO_RANDOM;
 			s2k->iter = decide_s2k_iter(tmp, count);
 			break;

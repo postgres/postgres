@@ -19,11 +19,6 @@
 #include "common/scram-common.h"
 #include "fe-auth.h"
 
-/* These are needed for getpid(), in the fallback implementation */
-#ifndef HAVE_STRONG_RANDOM
-#include <sys/types.h>
-#include <unistd.h>
-#endif
 
 /*
  * Status of exchange messages used for SCRAM authentication via the
@@ -72,7 +67,6 @@ static bool verify_server_signature(fe_scram_state *state);
 static void calculate_client_proof(fe_scram_state *state,
 					   const char *client_final_message_without_proof,
 					   uint8 *result);
-static bool pg_frontend_random(char *dst, int len);
 
 /*
  * Initialize SCRAM exchange status.
@@ -320,7 +314,7 @@ build_client_first_message(fe_scram_state *state)
 	 * Generate a "raw" nonce.  This is converted to ASCII-printable form by
 	 * base64-encoding it.
 	 */
-	if (!pg_frontend_random(raw_nonce, SCRAM_RAW_NONCE_LEN))
+	if (!pg_strong_random(raw_nonce, SCRAM_RAW_NONCE_LEN))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not generate nonce\n"));
@@ -764,7 +758,7 @@ pg_fe_scram_build_verifier(const char *password)
 		password = (const char *) prep_password;
 
 	/* Generate a random salt */
-	if (!pg_frontend_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
+	if (!pg_strong_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
 	{
 		if (prep_password)
 			free(prep_password);
@@ -778,56 +772,4 @@ pg_fe_scram_build_verifier(const char *password)
 		free(prep_password);
 
 	return result;
-}
-
-/*
- * Random number generator.
- */
-static bool
-pg_frontend_random(char *dst, int len)
-{
-#ifdef HAVE_STRONG_RANDOM
-	return pg_strong_random(dst, len);
-#else
-	int			i;
-	char	   *end = dst + len;
-
-	static unsigned short seed[3];
-	static int	mypid = 0;
-
-	pglock_thread();
-
-	if (mypid != getpid())
-	{
-		struct timeval now;
-
-		gettimeofday(&now, NULL);
-
-		seed[0] = now.tv_sec ^ getpid();
-		seed[1] = (unsigned short) (now.tv_usec);
-		seed[2] = (unsigned short) (now.tv_usec >> 16);
-	}
-
-	for (i = 0; dst < end; i++)
-	{
-		uint32		r;
-		int			j;
-
-		/*
-		 * pg_jrand48 returns a 32-bit integer.  Fill the next 4 bytes from
-		 * it.
-		 */
-		r = (uint32) pg_jrand48(seed);
-
-		for (j = 0; j < 4 && dst < end; j++)
-		{
-			*(dst++) = (char) (r & 0xFF);
-			r >>= 8;
-		}
-	}
-
-	pgunlock_thread();
-
-	return true;
-#endif
 }
