@@ -66,7 +66,7 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 			{
 				px_memset(buf, 0, res_len);
 				px_free(buf);
-				break;
+				return PXE_NO_RANDOM;
 			}
 		}
 		if (*p != 0)
