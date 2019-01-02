@@ -1426,7 +1426,6 @@ contain_leaky_functions_walker(Node *node, void *context)
 		case T_CaseExpr:
 		case T_CaseTestExpr:
 		case T_RowExpr:
-		case T_MinMaxExpr:
 		case T_NullTest:
 		case T_BooleanTest:
 		case T_List:
@@ -1515,6 +1514,35 @@ contain_leaky_functions_walker(Node *node, void *context)
 					if (!get_func_leakproof(funcid))
 						return true;
 				}
+			}
+			break;
+
+		case T_MinMaxExpr:
+			{
+				/*
+				 * MinMaxExpr is leakproof if the comparison function it calls
+				 * is leakproof.
+				 */
+				MinMaxExpr *minmaxexpr = (MinMaxExpr *) node;
+				TypeCacheEntry *typentry;
+				bool		leakproof;
+
+				/* Look up the btree comparison function for the datatype */
+				typentry = lookup_type_cache(minmaxexpr->minmaxtype,
+											 TYPECACHE_CMP_PROC);
+				if (OidIsValid(typentry->cmp_proc))
+					leakproof = get_func_leakproof(typentry->cmp_proc);
+				else
+				{
+					/*
+					 * The executor will throw an error, but here we just
+					 * treat the missing function as leaky.
+					 */
+					leakproof = false;
+				}
+
+				if (!leakproof)
+					return true;
 			}
 			break;
 
