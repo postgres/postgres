@@ -3,16 +3,16 @@ CREATE EXTENSION unaccent;
 -- must have a UTF8 database
 SELECT getdatabaseencoding();
 
-SET client_encoding TO 'KOI8';
+SET client_encoding TO 'UTF8';
 
 SELECT unaccent('foobar');
-SELECT unaccent('£ÌËÁ');
-SELECT unaccent('³öéë');
+SELECT unaccent('Ñ‘Ð»ÐºÐ°');
+SELECT unaccent('ÐÐ–Ð˜Ðš');
 
 SELECT unaccent('unaccent', 'foobar');
-SELECT unaccent('unaccent', '£ÌËÁ');
-SELECT unaccent('unaccent', '³öéë');
+SELECT unaccent('unaccent', 'Ñ‘Ð»ÐºÐ°');
+SELECT unaccent('unaccent', 'ÐÐ–Ð˜Ðš');
 
 SELECT ts_lexize('unaccent', 'foobar');
-SELECT ts_lexize('unaccent', '£ÌËÁ');
-SELECT ts_lexize('unaccent', '³öéë');
+SELECT ts_lexize('unaccent', 'Ñ‘Ð»ÐºÐ°');
+SELECT ts_lexize('unaccent', 'ÐÐ–Ð˜Ðš');

@@ -6,23 +6,23 @@ SELECT getdatabaseencoding();
  UTF8
 (1 row)
 
-SET client_encoding TO 'KOI8';
+SET client_encoding TO 'UTF8';
 SELECT unaccent('foobar');
  unaccent 
 ----------
  foobar
 (1 row)
 
-SELECT unaccent('£ÌËÁ');
+SELECT unaccent('Ñ‘Ð»ÐºÐ°');
  unaccent 
 ----------
- ÅÌËÁ
+ ÐµÐ»ÐºÐ°
 (1 row)
 
-SELECT unaccent('³öéë');
+SELECT unaccent('ÐÐ–Ð˜Ðš');
  unaccent 
 ----------
- åöéë
+ Ð•Ð–Ð˜Ðš
 (1 row)
 
 SELECT unaccent('unaccent', 'foobar');
@@ -31,16 +31,16 @@ SELECT unaccent('unaccent', 'foobar');
  foobar
 (1 row)
 
-SELECT unaccent('unaccent', '£ÌËÁ');
+SELECT unaccent('unaccent', 'Ñ‘Ð»ÐºÐ°');
  unaccent 
 ----------
- ÅÌËÁ
+ ÐµÐ»ÐºÐ°
 (1 row)
 
-SELECT unaccent('unaccent', '³öéë');
+SELECT unaccent('unaccent', 'ÐÐ–Ð˜Ðš');
  unaccent 
 ----------
- åöéë
+ Ð•Ð–Ð˜Ðš
 (1 row)
 
 SELECT ts_lexize('unaccent', 'foobar');
@@ -49,15 +49,15 @@ SELECT ts_lexize('unaccent', 'foobar');
  
 (1 row)
 
-SELECT ts_lexize('unaccent', '£ÌËÁ');
+SELECT ts_lexize('unaccent', 'Ñ‘Ð»ÐºÐ°');
  ts_lexize 
 -----------
- {ÅÌËÁ}
+ {ÐµÐ»ÐºÐ°}
 (1 row)
 
-SELECT ts_lexize('unaccent', '³öéë');
+SELECT ts_lexize('unaccent', 'ÐÐ–Ð˜Ðš');
  ts_lexize 
 -----------
- {åöéë}
+ {Ð•Ð–Ð˜Ðš}
 (1 row)
 
