@@ -62,10 +62,10 @@ static char *shellprog = SHELLPROG;
  */
 #ifndef WIN32
 const char *basic_diff_opts = "";
-const char *pretty_diff_opts = "-C3";
+const char *pretty_diff_opts = "-U3";
 #else
 const char *basic_diff_opts = "-w";
-const char *pretty_diff_opts = "-w -C3";
+const char *pretty_diff_opts = "-w -U3";
 #endif
 
 /* options settable from command line */
