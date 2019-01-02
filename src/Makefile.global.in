@@ -742,6 +742,13 @@ endif
 # tracking (see below) is used.
 %: %.c
 
+# Replace gmake's default rule for linking a single .o file to produce an
+# executable.  The main point here is to put LDFLAGS after the .o file,
+# since we put -l switches into LDFLAGS and those are order-sensitive.
+# In addition, include CFLAGS and LDFLAGS_EX per project conventions.
+%: %.o
+	$(CC) $(CFLAGS) $< $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
 ifndef PGXS
 
 # Remake Makefile.global from Makefile.global.in if the latter

@@ -37,7 +37,7 @@ endif
 all: ecpg
 
 ecpg: $(OBJS) | submake-libpgport
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
 
 # We symlink typename.c from ecpglib and recompile it here
 typename.c: % : $(top_srcdir)/src/interfaces/ecpg/ecpglib/%

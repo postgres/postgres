@@ -21,9 +21,6 @@ ECPG_TEST_DEPENDENCIES = ../../preproc/ecpg$(X) \
 	$(srcdir)/../../include/sqltypes.h \
 	$(srcdir)/../../include/sql3types.h
 
-%: %.o
-	$(CC) $(CFLAGS) $< $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
-
 # Caution: this build rule is overridden in some child Makefiles
 # where it's necessary to use nondefault switches to ecpg;
 # make sure those rules match except for the extra switches.
