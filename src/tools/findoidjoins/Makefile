@@ -2,7 +2,7 @@
 #
 # Makefile for src/tools/findoidjoins
 #
-# Copyright (c) 2003-2018, PostgreSQL Global Development Group
+# Copyright (c) 2003-2019, PostgreSQL Global Development Group
 #
 # src/tools/findoidjoins/Makefile
 #

@@ -6,7 +6,7 @@
  * backend, for implement the Salted Challenge Response Authentication
  * Mechanism (SCRAM), per IETF's RFC 5802.
  *
- * Portions Copyright (c) 2017-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2019, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/scram-common.c

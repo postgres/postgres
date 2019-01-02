@@ -3,7 +3,7 @@
  * amvalidate.h
  *	  Support routines for index access methods' amvalidate functions.
  *
- * Copyright (c) 2016-2018, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2019, PostgreSQL Global Development Group
  *
  * src/include/access/amvalidate.h
  *

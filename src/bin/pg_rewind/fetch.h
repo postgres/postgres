@@ -8,7 +8,7 @@
  * directory (copy method), or a remote PostgreSQL server (libpq fetch
  * method).
  *
- * Copyright (c) 2013-2018, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2019, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

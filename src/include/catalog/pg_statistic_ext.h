@@ -4,7 +4,7 @@
  *	  definition of the "extended statistics" system catalog (pg_statistic_ext)
  *
  *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_statistic_ext.h

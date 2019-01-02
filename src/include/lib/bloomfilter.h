@@ -3,7 +3,7 @@
  * bloomfilter.h
  *	  Space-efficient set membership testing
  *
- * Copyright (c) 2018, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2019, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *    src/include/lib/bloomfilter.h

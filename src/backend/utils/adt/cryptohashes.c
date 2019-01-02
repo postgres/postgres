@@ -3,7 +3,7 @@
  * cryptohashes.c
  *	  Cryptographic hash functions
  *
- * Portions Copyright (c) 2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2018-2019, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
