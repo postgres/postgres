@@ -59,6 +59,8 @@ die "No include path; you must specify -I.\n" if !$include_path;
 # Note: We pass data file names as arguments and then look for matching
 # headers to parse the schema from. This is backwards from genbki.pl,
 # but the Makefile dependencies look more sensible this way.
+# We currently only need pg_proc, but retain the possibility of reading
+# more than one data file.
 my %catalogs;
 my %catalog_data;
 foreach my $datfile (@input_files)
@@ -82,9 +84,6 @@ foreach my $datfile (@input_files)
 my $FirstGenbkiObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', $include_path,
 	'FirstGenbkiObjectId');
-my $INTERNALlanguageId =
-  Catalog::FindDefinedSymbolFromData($catalog_data{pg_language},
-	'INTERNALlanguageId');
 
 # Collect certain fields from pg_proc.dat.
 my @fmgr = ();
@@ -94,7 +93,7 @@ foreach my $row (@{ $catalog_data{pg_proc} })
 	my %bki_values = %$row;
 
 	# Select out just the rows for internal-language procedures.
-	next if $bki_values{prolang} ne $INTERNALlanguageId;
+	next if $bki_values{prolang} ne 'internal';
 
 	push @fmgr,
 	  {

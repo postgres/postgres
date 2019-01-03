@@ -42,7 +42,7 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	Oid			proowner BKI_DEFAULT(PGUID);
 
 	/* OID of pg_language entry */
-	Oid			prolang BKI_DEFAULT(12);
+	Oid			prolang BKI_DEFAULT(internal) BKI_LOOKUP(pg_language);
 
 	/* estimated execution cost */
 	float4		procost BKI_DEFAULT(1);

@@ -31,15 +31,11 @@ generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp $(top_
 
 $(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h
 
-FMGR_DATA := $(addprefix $(top_srcdir)/src/include/catalog/,\
-	pg_language.dat pg_proc.dat \
-	)
-
 # fmgr-stamp records the last time we ran Gen_fmgrtab.pl.  We don't rely on
 # the timestamps of the individual output files, because the Perl script
 # won't update them if they didn't change (to avoid unnecessary recompiles).
-fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(FMGR_DATA) $(top_srcdir)/src/include/access/transam.h
-	$(PERL) -I $(catalogdir) $< -I $(top_srcdir)/src/include/ $(FMGR_DATA)
+fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.dat $(top_srcdir)/src/include/access/transam.h
+	$(PERL) -I $(catalogdir) $< -I $(top_srcdir)/src/include/ $(top_srcdir)/src/include/catalog/pg_proc.dat
 	touch $@
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl

@@ -409,8 +409,9 @@
     that's error-prone and hard to understand, so for frequently-referenced
     catalogs, <filename>genbki.pl</filename> provides mechanisms to write
     symbolic references instead.  Currently this is possible for references
-    to access methods, functions, operators, opclasses, opfamilies, and
-    types.  The rules are as follows:
+    to access methods, functions, languages,
+    operators, opclasses, opfamilies, and types.
+    The rules are as follows:
    </para>
 
    <itemizedlist>
@@ -421,6 +422,7 @@
       by attaching <literal>BKI_LOOKUP(<replaceable>lookuprule</replaceable>)</literal>
       to the column's definition, where <replaceable>lookuprule</replaceable>
       is <literal>pg_am</literal>, <literal>pg_proc</literal>,
+      <literal>pg_language</literal>,
       <literal>pg_operator</literal>, <literal>pg_opclass</literal>,
       <literal>pg_opfamily</literal>, or <literal>pg_type</literal>.
       <literal>BKI_LOOKUP</literal> can be attached to columns of

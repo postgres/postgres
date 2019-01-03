@@ -178,11 +178,18 @@ my $PG_CATALOG_NAMESPACE =
 # Build lookup tables for OID macro substitutions and for pg_attribute
 # copies of pg_type values.
 
-# index access method OID lookup
+# access method OID lookup
 my %amoids;
 foreach my $row (@{ $catalog_data{pg_am} })
 {
 	$amoids{ $row->{amname} } = $row->{oid};
+}
+
+# language OID lookup
+my %langoids;
+foreach my $row (@{ $catalog_data{pg_language} })
+{
+	$langoids{ $row->{lanname} } = $row->{oid};
 }
 
 # opclass OID lookup
@@ -259,6 +266,7 @@ foreach my $row (@{ $catalog_data{pg_type} })
 # Map catalog name to OID lookup.
 my %lookup_kind = (
 	pg_am       => \%amoids,
+	pg_language => \%langoids,
 	pg_opclass  => \%opcoids,
 	pg_operator => \%operoids,
 	pg_opfamily => \%opfoids,
