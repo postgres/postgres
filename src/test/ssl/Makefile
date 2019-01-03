@@ -36,7 +36,7 @@ ssl/new_certs_dir:
 
 # Rule for creating private/public key pairs.
 ssl/%.key:
-	openssl genrsa -out $@ 1024
+	openssl genrsa -out $@ 2048
 	chmod 0600 $@
 
 # Root CA certificate
