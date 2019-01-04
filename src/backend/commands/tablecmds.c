@@ -11003,7 +11003,7 @@ ATExecSetTableSpaceNoStorage(Relation rel, Oid newTableSpace)
 	 * Shouldn't be called on relations having storage; these are processed
 	 * in phase 3.
 	 */
-	Assert(!RELKIND_CAN_HAVE_STORAGE(rel->rd_rel->relkind));
+	Assert(!RELKIND_HAS_STORAGE(rel->rd_rel->relkind));
 
 	/* Can't allow a non-shared relation in pg_global */
 	if (newTableSpace == GLOBALTABLESPACE_OID)

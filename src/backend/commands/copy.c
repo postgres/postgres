@@ -2405,7 +2405,7 @@ CopyFrom(CopyState cstate)
 	 *----------
 	 */
 	/* createSubid is creation check, newRelfilenodeSubid is truncation check */
-	if (RELKIND_CAN_HAVE_STORAGE(cstate->rel->rd_rel->relkind) &&
+	if (RELKIND_HAS_STORAGE(cstate->rel->rd_rel->relkind) &&
 		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
 		 cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId))
 	{

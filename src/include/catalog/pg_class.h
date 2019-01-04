@@ -127,7 +127,7 @@ typedef FormData_pg_class *Form_pg_class;
  * relfilenode set to non-zero, but it can also be zero if the relation is
  * mapped.
  */
-#define RELKIND_CAN_HAVE_STORAGE(relkind) \
+#define RELKIND_HAS_STORAGE(relkind) \
 	((relkind) == RELKIND_RELATION || \
 	 (relkind) == RELKIND_INDEX || \
 	 (relkind) == RELKIND_SEQUENCE || \
