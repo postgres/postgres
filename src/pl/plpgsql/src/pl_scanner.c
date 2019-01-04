@@ -328,6 +328,7 @@ plpgsql_yylex(void)
 				push_back_token(tok2, &aux2);
 				if (plpgsql_parse_word(aux1.lval.str,
 									   core_yy.scanbuf + aux1.lloc,
+									   true,
 									   &aux1.lval.wdatum,
 									   &aux1.lval.word))
 					tok1 = T_DATUM;
@@ -349,53 +350,40 @@ plpgsql_yylex(void)
 			push_back_token(tok2, &aux2);
 
 			/*
-			 * If we are at start of statement, prefer unreserved keywords
-			 * over variable names, unless the next token is assignment or
-			 * '[', in which case prefer variable names.  (Note we need not
-			 * consider '.' as the next token; that case was handled above,
-			 * and we always prefer variable names in that case.)  If we are
-			 * not at start of statement, always prefer variable names over
-			 * unreserved keywords.
+			 * See if it matches a variable name, except in the context where
+			 * we are at start of statement and the next token isn't
+			 * assignment or '['.  In that case, it couldn't validly be a
+			 * variable name, and skipping the lookup allows variable names to
+			 * be used that would conflict with plpgsql or core keywords that
+			 * introduce statements (e.g., "comment").  Without this special
+			 * logic, every statement-introducing keyword would effectively be
+			 * reserved in PL/pgSQL, which would be unpleasant.
+			 *
+			 * If it isn't a variable name, try to match against unreserved
+			 * plpgsql keywords.  If not one of those either, it's T_WORD.
+			 *
+			 * Note: we must call plpgsql_parse_word even if we don't want to
+			 * do variable lookup, because it sets up aux1.lval.word for the
+			 * non-variable cases.
 			 */
-			if (AT_STMT_START(plpgsql_yytoken) &&
-				!(tok2 == '=' || tok2 == COLON_EQUALS || tok2 == '['))
+			if (plpgsql_parse_word(aux1.lval.str,
+								   core_yy.scanbuf + aux1.lloc,
+								   (!AT_STMT_START(plpgsql_yytoken) ||
+									(tok2 == '=' || tok2 == COLON_EQUALS ||
+									 tok2 == '[')),
+								   &aux1.lval.wdatum,
+								   &aux1.lval.word))
+				tok1 = T_DATUM;
+			else if (!aux1.lval.word.quoted &&
+					 (kw = ScanKeywordLookup(aux1.lval.word.ident,
+											 unreserved_keywords,
+											 num_unreserved_keywords)))
 			{
-				/* try for unreserved keyword, then for variable name */
-				if (core_yy.scanbuf[aux1.lloc] != '"' &&
-					(kw = ScanKeywordLookup(aux1.lval.str,
-											unreserved_keywords,
-											num_unreserved_keywords)))
-				{
-					aux1.lval.keyword = kw->name;
-					tok1 = kw->value;
-				}
-				else if (plpgsql_parse_word(aux1.lval.str,
-											core_yy.scanbuf + aux1.lloc,
-											&aux1.lval.wdatum,
-											&aux1.lval.word))
-					tok1 = T_DATUM;
-				else
-					tok1 = T_WORD;
+				aux1.lval.keyword = kw->name;
+				tok1 = kw->value;
 			}
 			else
-			{
-				/* try for variable name, then for unreserved keyword */
-				if (plpgsql_parse_word(aux1.lval.str,
-									   core_yy.scanbuf + aux1.lloc,
-									   &aux1.lval.wdatum,
-									   &aux1.lval.word))
-					tok1 = T_DATUM;
-				else if (!aux1.lval.word.quoted &&
-						 (kw = ScanKeywordLookup(aux1.lval.word.ident,
-												 unreserved_keywords,
-												 num_unreserved_keywords)))
-				{
-					aux1.lval.keyword = kw->name;
-					tok1 = kw->value;
-				}
-				else
-					tok1 = T_WORD;
-			}
+				tok1 = T_WORD;
 		}
 	}
 	else
