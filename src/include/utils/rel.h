@@ -450,13 +450,12 @@ typedef struct ViewOptions
 
 /*
  * RelationIsMapped
- *		True if the relation uses the relfilenode map.
- *
- * NB: this is only meaningful for relkinds that have storage, else it
- * will misleadingly say "true".
+ *		True if the relation uses the relfilenode map.  Note multiple eval
+ *		of argument!
  */
 #define RelationIsMapped(relation) \
-	((relation)->rd_rel->relfilenode == InvalidOid)
+	(RELKIND_HAS_STORAGE((relation)->rd_rel->relkind) && \
+	 ((relation)->rd_rel->relfilenode == InvalidOid))
 
 /*
  * RelationOpenSmgr

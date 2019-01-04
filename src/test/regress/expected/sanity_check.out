@@ -224,3 +224,12 @@ SELECT relname, nspname
 ---------+---------
 (0 rows)
 
+-- check that relations without storage don't have relfilenode
+SELECT relname, relkind
+  FROM pg_class
+ WHERE relkind IN ('v', 'c', 'f', 'p', 'I')
+       AND relfilenode <> 0;
+ relname | relkind 
+---------+---------
+(0 rows)
+

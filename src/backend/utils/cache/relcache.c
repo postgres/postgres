@@ -1253,6 +1253,10 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 static void
 RelationInitPhysicalAddr(Relation relation)
 {
+	/* these relations kinds never have storage */
+	if (!RELKIND_HAS_STORAGE(relation->rd_rel->relkind))
+		return;
+
 	if (relation->rd_rel->reltablespace)
 		relation->rd_node.spcNode = relation->rd_rel->reltablespace;
 	else
