@@ -410,7 +410,7 @@
     catalogs, <filename>genbki.pl</filename> provides mechanisms to write
     symbolic references instead.  Currently this is possible for references
     to access methods, functions, languages,
-    operators, opclasses, opfamilies, and types.
+    operators, opclasses, opfamilies, types, and encodings.
     The rules are as follows:
    </para>
 
@@ -424,11 +424,16 @@
       is <literal>pg_am</literal>, <literal>pg_proc</literal>,
       <literal>pg_language</literal>,
       <literal>pg_operator</literal>, <literal>pg_opclass</literal>,
-      <literal>pg_opfamily</literal>, or <literal>pg_type</literal>.
+      <literal>pg_opfamily</literal>,
+      <literal>pg_type</literal>,
+      or <literal>encoding</literal>.
       <literal>BKI_LOOKUP</literal> can be attached to columns of
       type <type>Oid</type>, <type>regproc</type>, <type>oidvector</type>,
       or <type>Oid[]</type>; in the latter two cases it implies performing a
       lookup on each element of the array.
+      It's also permissible to attach <literal>BKI_LOOKUP</literal>
+      to integer columns; this should be done only for encodings,
+      which are not currently represented as catalog OIDs.
      </para>
     </listitem>
 

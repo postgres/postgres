@@ -57,10 +57,14 @@ die "No input files.\n" if !@input_files;
 die "--set-version must be specified.\n" if !defined $major_version;
 die "-I, the header include path, must be specified.\n" if !$include_path;
 
-# Make sure output_path ends in a slash.
+# Make sure paths end with a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
 {
 	$output_path .= '/';
+}
+if (substr($include_path, -1) ne '/')
+{
+	$include_path .= '/';
 }
 
 # Read all the files into internal data structures.
@@ -175,8 +179,7 @@ my $PG_CATALOG_NAMESPACE =
 	'PG_CATALOG_NAMESPACE');
 
 
-# Build lookup tables for OID macro substitutions and for pg_attribute
-# copies of pg_type values.
+# Build lookup tables.
 
 # access method OID lookup
 my %amoids;
@@ -259,11 +262,44 @@ my %typeoids;
 my %types;
 foreach my $row (@{ $catalog_data{pg_type} })
 {
+	# for OID macro substitutions
 	$typeoids{ $row->{typname} } = $row->{oid};
+
+	# for pg_attribute copies of pg_type values
 	$types{ $row->{typname} }    = $row;
 }
 
-# Map catalog name to OID lookup.
+# Encoding identifier lookup.  This uses the same replacement machinery
+# as for OIDs, but we have to dig the values out of pg_wchar.h.
+my %encids;
+
+my $encfile = $include_path . 'mb/pg_wchar.h';
+open(my $ef, '<', $encfile) || die "$encfile: $!";
+
+# We're parsing an enum, so start with 0 and increment
+# every time we find an enum member.
+my $encid = 0;
+my $collect_encodings = 0;
+while (<$ef>)
+{
+	if (/typedef\s+enum\s+pg_enc/)
+	{
+		$collect_encodings = 1;
+		next;
+	}
+
+	last if /_PG_LAST_ENCODING_/;
+
+	if ($collect_encodings and /^\s+(PG_\w+)/)
+	{
+		$encids{$1} = $encid;
+		$encid++;
+	}
+}
+
+close $ef;
+
+# Map lookup name to the corresponding hash table.
 my %lookup_kind = (
 	pg_am       => \%amoids,
 	pg_language => \%langoids,
@@ -271,7 +307,8 @@ my %lookup_kind = (
 	pg_operator => \%operoids,
 	pg_opfamily => \%opfoids,
 	pg_proc     => \%procoids,
-	pg_type     => \%typeoids);
+	pg_type     => \%typeoids,
+	encoding    => \%encids);
 
 
 # Open temp files

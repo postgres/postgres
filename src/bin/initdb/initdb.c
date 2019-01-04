@@ -155,7 +155,6 @@ static char *shdesc_file;
 static char *hba_file;
 static char *ident_file;
 static char *conf_file;
-static char *conversion_file;
 static char *dictionary_file;
 static char *info_schema_file;
 static char *features_file;
@@ -254,7 +253,6 @@ static void setup_depend(FILE *cmdfd);
 static void setup_sysviews(FILE *cmdfd);
 static void setup_description(FILE *cmdfd);
 static void setup_collation(FILE *cmdfd);
-static void setup_conversion(FILE *cmdfd);
 static void setup_dictionary(FILE *cmdfd);
 static void setup_privileges(FILE *cmdfd);
 static void set_info_version(void);
@@ -1775,26 +1773,6 @@ setup_collation(FILE *cmdfd)
 }
 
 /*
- * load conversion functions
- */
-static void
-setup_conversion(FILE *cmdfd)
-{
-	char	  **line;
-	char	  **conv_lines;
-
-	conv_lines = readfile(conversion_file);
-	for (line = conv_lines; *line != NULL; line++)
-	{
-		if (strstr(*line, "DROP CONVERSION") != *line)
-			PG_CMD_PUTS(*line);
-		free(*line);
-	}
-
-	free(conv_lines);
-}
-
-/*
  * load extra dictionaries (Snowball stemmers)
  */
 static void
@@ -2679,7 +2657,6 @@ setup_data_file_paths(void)
 	set_input(&hba_file, "pg_hba.conf.sample");
 	set_input(&ident_file, "pg_ident.conf.sample");
 	set_input(&conf_file, "postgresql.conf.sample");
-	set_input(&conversion_file, "conversion_create.sql");
 	set_input(&dictionary_file, "snowball_create.sql");
 	set_input(&info_schema_file, "information_schema.sql");
 	set_input(&features_file, "sql_features.txt");
@@ -2710,7 +2687,6 @@ setup_data_file_paths(void)
 	check_input(hba_file);
 	check_input(ident_file);
 	check_input(conf_file);
-	check_input(conversion_file);
 	check_input(dictionary_file);
 	check_input(info_schema_file);
 	check_input(features_file);
@@ -3069,8 +3045,6 @@ initialize_data_directory(void)
 	setup_description(cmdfd);
 
 	setup_collation(cmdfd);
-
-	setup_conversion(cmdfd);
 
 	setup_dictionary(cmdfd);
 

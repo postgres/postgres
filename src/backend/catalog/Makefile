@@ -60,7 +60,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 # The .dat files we need can just be listed alphabetically.
 POSTGRES_BKI_DATA = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_aggregate.dat pg_am.dat pg_amop.dat pg_amproc.dat pg_authid.dat \
-	pg_cast.dat pg_class.dat pg_collation.dat \
+	pg_cast.dat pg_class.dat pg_collation.dat pg_conversion.dat \
 	pg_database.dat pg_language.dat \
 	pg_namespace.dat pg_opclass.dat pg_operator.dat pg_opfamily.dat \
 	pg_pltemplate.dat pg_proc.dat pg_range.dat pg_tablespace.dat \
