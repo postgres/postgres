@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # This script builds unaccent.rules on standard output when given the
@@ -23,6 +23,24 @@
 # [1] http://unicode.org/Public/8.0.0/ucd/UnicodeData.txt
 # [2] http://unicode.org/cldr/trac/export/12304/tags/release-28/common/transforms/Latin-ASCII.xml
 
+# BEGIN: Python 2/3 compatibility - remove when Python 2 compatibility dropped
+# The approach is to be Python3 compatible with Python2 "backports".
+from __future__ import print_function
+from __future__ import unicode_literals
+import codecs
+import sys
+
+if sys.version_info[0] <= 2:
+    # Encode stdout as UTF-8, so we can just print to it
+    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+
+    # Map Python 2's chr to unichr
+    chr = unichr
+
+    # Python 2 and 3 compatible bytes call
+    def bytes(source, encoding='ascii', errors='strict'):
+        return source.encode(encoding=encoding, errors=errors)
+# END: Python 2/3 compatibility - remove when Python 2 compatibility dropped
 
 import re
 import argparse
@@ -39,7 +57,7 @@ PLAIN_LETTER_RANGES = ((ord('a'), ord('z')), # Latin lower case
                        (0x0391, 0x03a9))     # GREEK CAPITAL LETTER ALPHA, GREEK CAPITAL LETTER OMEGA
 
 def print_record(codepoint, letter):
-    print (unichr(codepoint) + "\t" + letter).encode("UTF-8")
+    print (chr(codepoint) + "\t" + letter)
 
 class Codepoint:
     def __init__(self, id, general_category, combining_ids):
@@ -116,7 +134,7 @@ def parse_cldr_latin_ascii_transliterator(latinAsciiFilePath):
     charactersSet = set()
 
     # RegEx to parse rules
-    rulePattern = re.compile(ur'^(?:(.)|(\\u[0-9a-fA-F]{4})) \u2192 (?:\'(.+)\'|(.+)) ;')
+    rulePattern = re.compile(r'^(?:(.)|(\\u[0-9a-fA-F]{4})) \u2192 (?:\'(.+)\'|(.+)) ;')
 
     # construct tree from XML
     transliterationTree = ET.parse(latinAsciiFilePath)
@@ -134,7 +152,7 @@ def parse_cldr_latin_ascii_transliterator(latinAsciiFilePath):
         # Group 3: plain "trg" char. Empty if group 4 is not.
         # Group 4: plain "trg" char between quotes. Empty if group 3 is not.
         if matches is not None:
-            src = matches.group(1) if matches.group(1) is not None else matches.group(2).decode('unicode-escape')
+            src = matches.group(1) if matches.group(1) is not None else bytes(matches.group(2), 'UTF-8').decode('unicode-escape')
             trg = matches.group(3) if matches.group(3) is not None else matches.group(4)
 
             # "'" and """ are escaped
@@ -195,10 +213,10 @@ def main(args):
            len(codepoint.combining_ids) > 1:
             if is_letter_with_marks(codepoint, table):
                 charactersSet.add((codepoint.id,
-                             unichr(get_plain_letter(codepoint, table).id)))
+                             chr(get_plain_letter(codepoint, table).id)))
             elif args.noLigaturesExpansion is False and is_ligature(codepoint, table):
                 charactersSet.add((codepoint.id,
-                             "".join(unichr(combining_codepoint.id)
+                             "".join(chr(combining_codepoint.id)
                                      for combining_codepoint \
                                      in get_plain_letters(codepoint, table))))
 
