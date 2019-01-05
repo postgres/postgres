@@ -772,7 +772,7 @@ PGPing PQping(const char *conninfo);
     Several <application>libpq</> functions parse a user-specified string to obtain
     connection parameters.  There are two accepted formats for these strings:
     plain <literal>keyword = value</literal> strings
-    and <ulink url="http://www.ietf.org/rfc/rfc3986.txt">RFC
+    and <ulink url="https://tools.ietf.org/html/rfc3986">RFC
     3986</ulink> URIs.
    </para>
 
