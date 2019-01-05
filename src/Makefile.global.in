@@ -747,7 +747,7 @@ endif
 # since we put -l switches into LDFLAGS and those are order-sensitive.
 # In addition, include CFLAGS and LDFLAGS_EX per project conventions.
 %: %.o
-	$(CC) $(CFLAGS) $< $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 ifndef PGXS
 
