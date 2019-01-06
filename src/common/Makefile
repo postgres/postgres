@@ -41,11 +41,11 @@ override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
 override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
 override CPPFLAGS += -DVAL_LIBS="\"$(LIBS)\""
 
-override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
+override CPPFLAGS := -DFRONTEND -I. -I$(top_srcdir)/src/common $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
 OBJS_COMMON = base64.o config_info.o controldata_utils.o exec.o file_perm.o \
-	ip.o keywords.o link-canary.o md5.o pg_lzcompress.o \
+	ip.o keywords.o kwlookup.o link-canary.o md5.o pg_lzcompress.o \
 	pgfnames.o psprintf.o relpath.o \
 	rmtree.o saslprep.o scram-common.o string.o unicode_norm.o \
 	username.o wait_error.o
@@ -64,6 +64,8 @@ OBJS_SHLIB = $(OBJS_FRONTEND:%.o=%_shlib.o)
 OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
 
 all: libpgcommon.a libpgcommon_shlib.a libpgcommon_srv.a
+
+distprep: kwlist_d.h
 
 # libpgcommon is needed by some contrib
 install: all installdirs
@@ -115,16 +117,18 @@ libpgcommon_srv.a: $(OBJS_SRV)
 %_srv.o: %.c %.o
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
-# Dependencies of keywords.o need to be managed explicitly to make sure
+# generate SQL keyword lookup table to be included into keywords*.o.
+kwlist_d.h: $(top_srcdir)/src/include/parser/kwlist.h $(top_srcdir)/src/tools/gen_keywordlist.pl
+	$(PERL) $(top_srcdir)/src/tools/gen_keywordlist.pl --extern $<
+
+# Dependencies of keywords*.o need to be managed explicitly to make sure
 # that you don't get broken parsing code, even in a non-enable-depend build.
-# Note that gram.h isn't required for the frontend versions of keywords.o.
-$(top_builddir)/src/include/parser/gram.h: $(top_srcdir)/src/backend/parser/gram.y
-	$(MAKE) -C $(top_builddir)/src/backend $(top_builddir)/src/include/parser/gram.h
+keywords.o keywords_shlib.o keywords_srv.o: kwlist_d.h
 
-keywords.o: $(top_srcdir)/src/include/parser/kwlist.h
-keywords_shlib.o: $(top_srcdir)/src/include/parser/kwlist.h
-keywords_srv.o: $(top_builddir)/src/include/parser/gram.h $(top_srcdir)/src/include/parser/kwlist.h
-
-clean distclean maintainer-clean:
+# kwlist_d.h is in the distribution tarball, so it is not cleaned here.
+clean distclean:
 	rm -f libpgcommon.a libpgcommon_shlib.a libpgcommon_srv.a
 	rm -f $(OBJS_FRONTEND) $(OBJS_SHLIB) $(OBJS_SRV)
+
+maintainer-clean: distclean
+	rm -f kwlist_d.h

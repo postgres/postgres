@@ -59,8 +59,7 @@ extern struct when when_error,
 extern struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH];
 
 /* Globals from keywords.c */
-extern const ScanKeyword SQLScanKeywords[];
-extern const int NumSQLScanKeywords;
+extern const uint16 SQLScanKeywordTokens[];
 
 /* functions */
 
@@ -102,8 +101,8 @@ extern void check_indicator(struct ECPGtype *);
 extern void remove_typedefs(int);
 extern void remove_variables(int);
 extern struct variable *new_variable(const char *, struct ECPGtype *, int);
-extern const ScanKeyword *ScanCKeywordLookup(const char *);
-extern const ScanKeyword *ScanECPGKeywordLookup(const char *text);
+extern int	ScanCKeywordLookup(const char *text);
+extern int	ScanECPGKeywordLookup(const char *text);
 extern void parser_init(void);
 extern int	filtered_base_yylex(void);
 

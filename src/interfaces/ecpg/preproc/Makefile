@@ -28,6 +28,8 @@ OBJS=	preproc.o pgc.o type.o ecpg.o output.o parser.o \
 	keywords.o c_keywords.o ecpg_keywords.o typename.o descriptor.o variable.o \
 	$(WIN32RES)
 
+GEN_KEYWORDLIST = $(top_srcdir)/src/tools/gen_keywordlist.pl
+
 # Suppress parallel build to avoid a bug in GNU make 3.82
 # (see comments in ../Makefile)
 ifeq ($(MAKE_VERSION),3.82)
@@ -53,9 +55,20 @@ preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.
 	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@
 	$(PERL) $(srcdir)/check_rules.pl $(srcdir) $<
 
-ecpg_keywords.o c_keywords.o keywords.o preproc.o pgc.o parser.o: preproc.h
+# generate keyword headers
+c_kwlist_d.h: c_kwlist.h $(GEN_KEYWORDLIST)
+	$(PERL) $(GEN_KEYWORDLIST) --varname ScanCKeywords $<
 
-distprep: preproc.y preproc.c preproc.h pgc.c
+ecpg_kwlist_d.h: ecpg_kwlist.h $(GEN_KEYWORDLIST)
+	$(PERL) $(GEN_KEYWORDLIST) --varname ScanECPGKeywords $<
+
+# Force these dependencies to be known even without dependency info built:
+ecpg_keywords.o c_keywords.o keywords.o preproc.o pgc.o parser.o: preproc.h
+ecpg_keywords.o: ecpg_kwlist_d.h
+c_keywords.o: c_kwlist_d.h
+keywords.o: $(top_srcdir)/src/include/parser/kwlist.h
+
+distprep: preproc.y preproc.c preproc.h pgc.c c_kwlist_d.h ecpg_kwlist_d.h
 
 install: all installdirs
 	$(INSTALL_PROGRAM) ecpg$(X) '$(DESTDIR)$(bindir)'
@@ -66,12 +79,11 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
+# preproc.y, preproc.c, preproc.h, pgc.c, c_kwlist_d.h, and ecpg_kwlist_d.h
+# are in the distribution tarball, so they are not cleaned here.
 clean distclean:
 	rm -f *.o ecpg$(X)
 	rm -f typename.c
 
-# `make distclean' must not remove preproc.y, preproc.c, preproc.h, or pgc.c
-# since we want to ship those files in the distribution for people with
-# inadequate tools.  Instead, `make maintainer-clean' will remove them.
 maintainer-clean: distclean
-	rm -f preproc.y preproc.c preproc.h pgc.c
+	rm -f preproc.y preproc.c preproc.h pgc.c c_kwlist_d.h ecpg_kwlist_d.h

@@ -2,7 +2,7 @@
  *
  * kwlist.h
  *
- * The keyword list is kept in its own source file for possible use by
+ * The keyword lists are kept in their own source files for use by
  * automatic tools.  The exact representation of a keyword is determined
  * by the PG_KEYWORD macro, which is not defined in this file; it can
  * be defined by the caller for special purposes.

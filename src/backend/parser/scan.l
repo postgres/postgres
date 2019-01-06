@@ -67,6 +67,21 @@ bool		escape_string_warning = true;
 bool		standard_conforming_strings = true;
 
 /*
+ * Constant data exported from this file.  This array maps from the
+ * zero-based keyword numbers returned by ScanKeywordLookup to the
+ * Bison token numbers needed by gram.y.  This is exported because
+ * callers need to pass it to scanner_init, if they are using the
+ * standard keyword list ScanKeywords.
+ */
+#define PG_KEYWORD(kwname, value, category) value,
+
+const uint16 ScanKeywordTokens[] = {
+#include "parser/kwlist.h"
+};
+
+#undef PG_KEYWORD
+
+/*
  * Set the type of YYSTYPE.
  */
 #define YYSTYPE core_YYSTYPE
@@ -504,18 +519,18 @@ other			.
 					 * We will pass this along as a normal character string,
 					 * but preceded with an internally-generated "NCHAR".
 					 */
-					const ScanKeyword *keyword;
+					int		kwnum;
 
 					SET_YYLLOC();
 					yyless(1);	/* eat only 'n' this time */
 
-					keyword = ScanKeywordLookup("nchar",
-												yyextra->keywords,
-												yyextra->num_keywords);
-					if (keyword != NULL)
+					kwnum = ScanKeywordLookup("nchar",
+											  yyextra->keywordlist);
+					if (kwnum >= 0)
 					{
-						yylval->keyword = keyword->name;
-						return keyword->value;
+						yylval->keyword = GetScanKeyword(kwnum,
+														 yyextra->keywordlist);
+						return yyextra->keyword_tokens[kwnum];
 					}
 					else
 					{
@@ -1021,19 +1036,19 @@ other			.
 
 
 {identifier}	{
-					const ScanKeyword *keyword;
+					int			kwnum;
 					char	   *ident;
 
 					SET_YYLLOC();
 
 					/* Is it a keyword? */
-					keyword = ScanKeywordLookup(yytext,
-												yyextra->keywords,
-												yyextra->num_keywords);
-					if (keyword != NULL)
+					kwnum = ScanKeywordLookup(yytext,
+											  yyextra->keywordlist);
+					if (kwnum >= 0)
 					{
-						yylval->keyword = keyword->name;
-						return keyword->value;
+						yylval->keyword = GetScanKeyword(kwnum,
+														 yyextra->keywordlist);
+						return yyextra->keyword_tokens[kwnum];
 					}
 
 					/*
@@ -1142,8 +1157,8 @@ scanner_yyerror(const char *message, core_yyscan_t yyscanner)
 core_yyscan_t
 scanner_init(const char *str,
 			 core_yy_extra_type *yyext,
-			 const ScanKeyword *keywords,
-			 int num_keywords)
+			 const ScanKeywordList *keywordlist,
+			 const uint16 *keyword_tokens)
 {
 	Size		slen = strlen(str);
 	yyscan_t	scanner;
@@ -1153,8 +1168,8 @@ scanner_init(const char *str,
 
 	core_yyset_extra(yyext, scanner);
 
-	yyext->keywords = keywords;
-	yyext->num_keywords = num_keywords;
+	yyext->keywordlist = keywordlist;
+	yyext->keyword_tokens = keyword_tokens;
 
 	yyext->backslash_quote = backslash_quote;
 	yyext->escape_string_warning = escape_string_warning;

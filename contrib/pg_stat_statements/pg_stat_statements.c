@@ -3075,8 +3075,8 @@ fill_in_constant_lengths(pgssJumbleState *jstate, const char *query,
 	/* initialize the flex scanner --- should match raw_parser() */
 	yyscanner = scanner_init(query,
 							 &yyextra,
-							 ScanKeywords,
-							 NumScanKeywords);
+							 &ScanKeywords,
+							 ScanKeywordTokens);
 
 	/* we don't want to re-emit any escape string warnings */
 	yyextra.escape_string_warning = false;

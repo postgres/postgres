@@ -41,7 +41,7 @@ raw_parser(const char *str)
 
 	/* initialize the flex scanner */
 	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
-							 ScanKeywords, NumScanKeywords);
+							 &ScanKeywords, ScanKeywordTokens);
 
 	/* base_yylex() only needs this much initialization */
 	yyextra.have_lookahead = false;

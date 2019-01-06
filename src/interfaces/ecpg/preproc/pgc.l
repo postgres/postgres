@@ -920,19 +920,19 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 
 {identifier}	{
-					const ScanKeyword  *keyword;
-
 					if (!isdefine())
 					{
+						int		kwvalue;
+
 						/* Is it an SQL/ECPG keyword? */
-						keyword = ScanECPGKeywordLookup(yytext);
-						if (keyword != NULL)
-							return keyword->value;
+						kwvalue = ScanECPGKeywordLookup(yytext);
+						if (kwvalue >= 0)
+							return kwvalue;
 
 						/* Is it a C keyword? */
-						keyword = ScanCKeywordLookup(yytext);
-						if (keyword != NULL)
-							return keyword->value;
+						kwvalue = ScanCKeywordLookup(yytext);
+						if (kwvalue >= 0)
+							return kwvalue;
 
 						/*
 						 * None of the above.  Return it as an identifier.
@@ -1010,12 +1010,11 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						return CPP_LINE;
 					}
 <C>{identifier}		{
-						const ScanKeyword		*keyword;
-
 						/*
 						 * Try to detect a function name:
 						 * look for identifiers at the global scope
-						 * keep the last identifier before the first '(' and '{' */
+						 * keep the last identifier before the first '(' and '{'
+						 */
 						if (braces_open == 0 && parenths_open == 0)
 						{
 							if (current_function)
@@ -1026,9 +1025,11 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						/* however, some defines have to be taken care of for compatibility */
 						if ((!INFORMIX_MODE || !isinformixdefine()) && !isdefine())
 						{
-							keyword = ScanCKeywordLookup(yytext);
-							if (keyword != NULL)
-								return keyword->value;
+							int		kwvalue;
+
+							kwvalue = ScanCKeywordLookup(yytext);
+							if (kwvalue >= 0)
+								return kwvalue;
 							else
 							{
 								base_yylval.str = mm_strdup(yytext);
