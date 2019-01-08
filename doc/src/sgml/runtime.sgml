@@ -733,7 +733,8 @@ psql: could not connect to server: No such file or directory
    <para>
     In some cases it might also be necessary to increase
     <varname>SEMMAP</> to be at least on the order of
-    <varname>SEMMNS</>. This parameter defines the size of the semaphore
+    <varname>SEMMNS</>.  If the system has this parameter
+    (many do not), it defines the size of the semaphore
     resource map, in which each contiguous block of available semaphores
     needs an entry. When a semaphore set is freed it is either added to
     an existing entry that is adjacent to the freed block or it is
@@ -786,7 +787,7 @@ psql: could not connect to server: No such file or directory
       </term>
       <listitem>
        <para>
-        The default settings can be changed using
+        The default IPC settings can be changed using
         the <command>sysctl</command> or
         <command>loader</command> interfaces.  The following
         parameters can be set using <command>sysctl</command>:
@@ -805,13 +806,9 @@ psql: could not connect to server: No such file or directory
 <programlisting>
 kern.ipc.semmni=256
 kern.ipc.semmns=512
-kern.ipc.semmnu=256
 </programlisting>
-        After modifying these values a reboot is required for the new
+        After modifying that file, a reboot is required for the new
         settings to take effect.
-        (Note: FreeBSD does not use <varname>SEMMAP</>.  Older versions
-        would accept but ignore a setting for <literal>kern.ipc.semmap</>;
-        newer versions reject it altogether.)
        </para>
 
        <para>
@@ -835,7 +832,7 @@ kern.ipc.semmnu=256
 
        <para>
         <systemitem class="osname">FreeBSD</> versions before 4.0 work like
-        <systemitem class="osname">OpenBSD</> (see below).
+        old <systemitem class="osname">OpenBSD</> (see below).
        </para>
       </listitem>
      </varlistentry>
@@ -850,10 +847,17 @@ kern.ipc.semmnu=256
         IPC parameters can be adjusted using <command>sysctl</command>,
         for example:
 <screen>
-<prompt>$</prompt> <userinput>sysctl -w kern.ipc.shmmax=16777216</userinput>
+<prompt>#</prompt> <userinput>sysctl -w kern.ipc.semmni=100</userinput>
 </screen>
-        To have these settings persist over reboots, modify
+        To make these settings persist over reboots, modify
         <filename>/etc/sysctl.conf</filename>.
+       </para>
+
+       <para>
+        You will usually want to increase <literal>kern.ipc.semmni</literal>
+        and <literal>kern.ipc.semmns</literal>,
+        as <systemitem class="osname">NetBSD</systemitem>'s default settings
+        for these are uncomfortably small.
        </para>
 
        <para>
@@ -864,10 +868,10 @@ kern.ipc.semmnu=256
        </para>
 
        <para>
-        <systemitem class="osname">NetBSD</> versions before 5.0 work like
-        <systemitem class="osname">OpenBSD</> (see below), except that
-        parameters should be set with the keyword <literal>options</> not
-        <literal>option</>.
+        <systemitem class="osname">NetBSD</systemitem> versions before 5.0
+        work like old <systemitem class="osname">OpenBSD</systemitem>
+        (see below), except that kernel parameters should be set with the
+        keyword <literal>options</literal> not <literal>option</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -878,11 +882,31 @@ kern.ipc.semmnu=256
       </term>
       <listitem>
        <para>
-        The options <varname>SYSVSHM</> and <varname>SYSVSEM</> need
-        to be enabled when the kernel is compiled. (They are by
-        default.) The maximum size of shared memory is determined by
-        the option <varname>SHMMAXPGS</> (in pages). The following
-        shows an example of how to set the various parameters:
+        In <systemitem class="osname">OpenBSD</systemitem> 3.3 and later,
+        IPC parameters can be adjusted using <command>sysctl</command>,
+        for example:
+<screen>
+<prompt>#</prompt> <userinput>sysctl kern.seminfo.semmni=100</userinput>
+</screen>
+        To make these settings persist over reboots, modify
+        <filename>/etc/sysctl.conf</filename>.
+       </para>
+
+       <para>
+        You will usually want to
+        increase <literal>kern.seminfo.semmni</literal>
+        and <literal>kern.seminfo.semmns</literal>,
+        as <systemitem class="osname">OpenBSD</systemitem>'s default settings
+        for these are uncomfortably small.
+       </para>
+
+       <para>
+        In older <systemitem class="osname">OpenBSD</systemitem> versions,
+        you will need to build a custom kernel to change the IPC parameters.
+        Make sure that the options <varname>SYSVSHM</varname>
+        and <varname>SYSVSEM</varname> are enabled, too.  (They are by
+        default.)  The following shows an example of how to set the various
+        parameters in the kernel configuration file:
 <programlisting>
 option        SYSVSHM
 option        SHMMAXPGS=4096
