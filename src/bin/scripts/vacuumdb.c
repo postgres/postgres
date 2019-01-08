@@ -40,6 +40,8 @@ typedef struct vacuumingOptions
 	bool		and_analyze;
 	bool		full;
 	bool		freeze;
+	bool		disable_page_skipping;
+	bool		skip_locked;
 } vacuumingOptions;
 
 
@@ -110,6 +112,8 @@ main(int argc, char *argv[])
 		{"jobs", required_argument, NULL, 'j'},
 		{"maintenance-db", required_argument, NULL, 2},
 		{"analyze-in-stages", no_argument, NULL, 3},
+		{"disable-page-skipping", no_argument, NULL, 4},
+		{"skip-locked", no_argument, NULL, 5},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -213,6 +217,12 @@ main(int argc, char *argv[])
 			case 3:
 				analyze_in_stages = vacopts.analyze_only = true;
 				break;
+			case 4:
+				vacopts.disable_page_skipping = true;
+				break;
+			case 5:
+				vacopts.skip_locked = true;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -249,6 +259,12 @@ main(int argc, char *argv[])
 		{
 			fprintf(stderr, _("%s: cannot use the \"%s\" option when performing only analyze\n"),
 					progname, "freeze");
+			exit(1);
+		}
+		if (vacopts.disable_page_skipping)
+		{
+			fprintf(stderr, _("%s: cannot use the \"%s\" option when performing only analyze\n"),
+					progname, "disable-page-skipping");
 			exit(1);
 		}
 		/* allow 'and_analyze' with 'analyze_only' */
@@ -366,6 +382,22 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
 						   progname, echo, false, true);
+
+	if (vacopts->disable_page_skipping && PQserverVersion(conn) < 90600)
+	{
+		PQfinish(conn);
+		fprintf(stderr, _("%s: cannot use the \"%s\" option on server versions older than PostgreSQL 9.6\n"),
+				progname, "disable-page-skipping");
+		exit(1);
+	}
+
+	if (vacopts->skip_locked && PQserverVersion(conn) < 120000)
+	{
+		PQfinish(conn);
+		fprintf(stderr, _("%s: cannot use the \"%s\" option on server versions older than PostgreSQL 12\n"),
+				progname, "skip-locked");
+		exit(1);
+	}
 
 	if (!quiet)
 	{
@@ -630,23 +662,61 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
 					   bool table_pre_qualified,
 					   const char *progname, bool echo)
 {
+	const char *paren = " (";
+	const char *comma = ", ";
+	const char *sep = paren;
+
 	resetPQExpBuffer(sql);
 
 	if (vacopts->analyze_only)
 	{
 		appendPQExpBufferStr(sql, "ANALYZE");
-		if (vacopts->verbose)
-			appendPQExpBufferStr(sql, " VERBOSE");
+
+		/* parenthesized grammar of ANALYZE is supported since v11 */
+		if (PQserverVersion(conn) >= 110000)
+		{
+			if (vacopts->skip_locked)
+			{
+				/* SKIP_LOCKED is supported since v12 */
+				Assert(PQserverVersion(conn) >= 120000);
+				appendPQExpBuffer(sql, "%sSKIP_LOCKED", sep);
+				sep = comma;
+			}
+			if (vacopts->verbose)
+			{
+				appendPQExpBuffer(sql, "%sVERBOSE", sep);
+				sep = comma;
+			}
+			if (sep != paren)
+				appendPQExpBufferChar(sql, ')');
+		}
+		else
+		{
+			if (vacopts->verbose)
+				appendPQExpBufferStr(sql, " VERBOSE");
+		}
 	}
 	else
 	{
 		appendPQExpBufferStr(sql, "VACUUM");
+
+		/* parenthesized grammar of VACUUM is supported since v9.0 */
 		if (PQserverVersion(conn) >= 90000)
 		{
-			const char *paren = " (";
-			const char *comma = ", ";
-			const char *sep = paren;
-
+			if (vacopts->disable_page_skipping)
+			{
+				/* DISABLE_PAGE_SKIPPING is supported since v9.6 */
+				Assert(PQserverVersion(conn) >= 90600);
+				appendPQExpBuffer(sql, "%sDISABLE_PAGE_SKIPPING", sep);
+				sep = comma;
+			}
+			if (vacopts->skip_locked)
+			{
+				/* SKIP_LOCKED is supported since v12 */
+				Assert(PQserverVersion(conn) >= 120000);
+				appendPQExpBuffer(sql, "%sSKIP_LOCKED", sep);
+				sep = comma;
+			}
 			if (vacopts->full)
 			{
 				appendPQExpBuffer(sql, "%sFULL", sep);
@@ -1000,11 +1070,13 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -a, --all                       vacuum all databases\n"));
 	printf(_("  -d, --dbname=DBNAME             database to vacuum\n"));
+	printf(_("      --disable-page-skipping     disable all page-skipping behavior\n"));
 	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
 	printf(_("  -f, --full                      do full vacuuming\n"));
 	printf(_("  -F, --freeze                    freeze row transaction information\n"));
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
+	printf(_("      --skip-locked               skip relations that cannot be immediately locked\n"));
 	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
 	printf(_("  -V, --version                   output version information, then exit\n"));

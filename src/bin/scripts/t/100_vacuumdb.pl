@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 23;
+use Test::More tests => 30;
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -33,6 +33,21 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
 	qr/statement: ANALYZE;/,
 	'vacuumdb -Z');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--disable-page-skipping', 'postgres' ],
+	qr/statement: VACUUM \(DISABLE_PAGE_SKIPPING\);/,
+	'vacuumdb --disable-page-skipping');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--skip-locked', 'postgres' ],
+	qr/statement: VACUUM \(SKIP_LOCKED\);/,
+	'vacuumdb --skip-locked');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--skip-locked', '--analyze-only', 'postgres' ],
+	qr/statement: ANALYZE \(SKIP_LOCKED\);/,
+	'vacuumdb --skip-locked --analyze-only');
+$node->command_fails(
+	[ 'vacuumdb', '--analyze-only', '--disable-page-skipping', 'postgres' ],
+	'--analyze-only and --disable-page-skipping specified together');
 $node->command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
 	'vacuumdb with connection string');
 

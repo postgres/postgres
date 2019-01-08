@@ -103,6 +103,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--disable-page-skipping</option></term>
+      <listitem>
+       <para>
+        Disable all page-skipping behavior during processing based on
+        the visibility map, similarly to the option
+        <literal>DISABLE_PAGE_SKIPPING</literal> for <command>VACUUM</command>.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 9.6 and later.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-e</option></term>
       <term><option>--echo</option></term>
       <listitem>
@@ -164,6 +181,21 @@ PostgreSQL documentation
        <para>
         Do not display progress messages.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--skip-locked</option></term>
+      <listitem>
+       <para>
+        Skip relations that cannot be immediately locked for processing.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 12 and later.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
