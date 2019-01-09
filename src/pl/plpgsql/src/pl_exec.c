@@ -891,11 +891,12 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	/*
 	 * Put the OLD and NEW tuples into record variables
 	 *
-	 * We make the tupdescs available in both records even though only one may
-	 * have a value.  This allows parsing of record references to succeed in
-	 * functions that are used for multiple trigger types.  For example, we
-	 * might have a test like "if (TG_OP = 'INSERT' and NEW.foo = 'xyz')",
-	 * which should parse regardless of the current trigger type.
+	 * We set up expanded records for both variables even though only one may
+	 * have a value.  This allows record references to succeed in functions
+	 * that are used for multiple trigger types.  For example, we might have a
+	 * test like "if (TG_OP = 'INSERT' and NEW.foo = 'xyz')", which should
+	 * work regardless of the current trigger type.  If a value is actually
+	 * fetched from an unsupplied tuple, it will read as NULL.
 	 */
 	tupdesc = RelationGetDescr(trigdata->tg_relation);
 

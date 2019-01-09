@@ -3849,7 +3849,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
       <para>
        Data type <type>RECORD</type>; variable holding the new
        database row for <command>INSERT</command>/<command>UPDATE</command> operations in row-level
-       triggers. This variable is unassigned in statement-level triggers
+       triggers. This variable is null in statement-level triggers
        and for <command>DELETE</command> operations.
       </para>
      </listitem>
@@ -3861,7 +3861,7 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
       <para>
        Data type <type>RECORD</type>; variable holding the old
        database row for <command>UPDATE</command>/<command>DELETE</command> operations in row-level
-       triggers. This variable is unassigned in statement-level triggers
+       triggers. This variable is null in statement-level triggers
        and for <command>INSERT</command> operations.
       </para>
      </listitem>
