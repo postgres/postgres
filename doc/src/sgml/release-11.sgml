@@ -1033,6 +1033,23 @@ Branch: REL9_3_STABLE [84261eb10] 2018-10-19 17:02:26 -0400
        </para>
       </listitem>
 
+      <listitem>
+<!--
+2018-02-13 [4b93f5799] Make plpgsql use its DTYPE_REC code paths for composite-
+-->
+
+       <para>
+        In PL/pgSQL trigger functions, the <varname>OLD</varname>
+        and <varname>NEW</varname> variables now read as NULL when not
+        assigned (Tom Lane)
+       </para>
+
+       <para>
+        Previously, references to these variables could be parsed but not
+        executed.
+       </para>
+      </listitem>
+
    </itemizedlist>
 
   </sect2>
@@ -2574,7 +2591,6 @@ same commits as above
       <listitem>
 <!--
 2018-02-13 [4b93f5799] Make plpgsql use its DTYPE_REC code paths for composite-
-
 -->
 
        <para>
