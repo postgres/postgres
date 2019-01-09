@@ -36,11 +36,13 @@ extern const FmgrBuiltin fmgr_builtins[];
 
 extern const int fmgr_nbuiltins;	/* number of entries in table */
 
+extern const Oid fmgr_last_builtin_oid; /* highest function OID in table */
+
 /*
- * Mapping from a builtin function's oid to the index in the fmgr_builtins
- * array.
+ * Mapping from a builtin function's OID to its index in the fmgr_builtins
+ * array.  This is indexed from 0 through fmgr_last_builtin_oid.
  */
 #define InvalidOidBuiltinMapping PG_UINT16_MAX
-extern const uint16 fmgr_builtin_oid_index[FirstGenbkiObjectId];
+extern const uint16 fmgr_builtin_oid_index[];
 
 #endif							/* FMGRTAB_H */

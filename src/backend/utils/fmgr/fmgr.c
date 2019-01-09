@@ -75,12 +75,12 @@ fmgr_isbuiltin(Oid id)
 	uint16		index;
 
 	/* fast lookup only possible if original oid still assigned */
-	if (id >= FirstGenbkiObjectId)
+	if (id > fmgr_last_builtin_oid)
 		return NULL;
 
 	/*
 	 * Lookup function data. If there's a miss in that range it's likely a
-	 * nonexistant function, returning NULL here will trigger an ERROR later.
+	 * nonexistent function, returning NULL here will trigger an ERROR later.
 	 */
 	index = fmgr_builtin_oid_index[id];
 	if (index == InvalidOidBuiltinMapping)
