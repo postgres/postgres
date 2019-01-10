@@ -15,11 +15,11 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/prep.h"
 #include "partitioning/partbounds.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"

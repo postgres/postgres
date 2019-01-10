@@ -17,6 +17,7 @@
 #include <limits.h>
 
 #include "miscadmin.h"
+#include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
