@@ -4267,9 +4267,8 @@ free_command(Command *command)
 	termPQExpBuffer(&command->lines);
 	if (command->first_line)
 		pg_free(command->first_line);
-	if (command->argv)
-		for (int i = 0; i < command->argc; i++)
-			pg_free(command->argv[i]);
+	for (int i = 0; i < command->argc; i++)
+		pg_free(command->argv[i]);
 	if (command->varprefix)
 	{
 		for (int i = 0; i < command->varprefix_max; i++)
