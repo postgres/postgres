@@ -9384,6 +9384,21 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	HeapTuple	depTup;
 	ObjectAddress address;
 
+	/*
+	 * Clear all the missing values if we're rewriting the table, since this
+	 * renders them pointless.
+	 */
+	if (tab->rewrite)
+	{
+		Relation    newrel;
+
+		newrel = heap_open(RelationGetRelid(rel), NoLock);
+		RelationClearMissing(newrel);
+		relation_close(newrel, NoLock);
+		/* make sure we don't conflict with later attribute modifications */
+		CommandCounterIncrement();
+	}
+
 	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	/* Look up the target column */
@@ -9700,7 +9715,69 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Here we go --- change the recorded column type and collation.  (Note
 	 * heapTup is a copy of the syscache entry, so okay to scribble on.)
+	 * First fix up the missing value if any.
 	 */
+	if (attTup->atthasmissing)
+	{
+		Datum       missingval;
+		bool        missingNull;
+
+		/* if rewrite is true the missing value should already be cleared */
+		Assert(tab->rewrite == 0);
+
+		/* Get the missing value datum */
+		missingval = heap_getattr(heapTup,
+								  Anum_pg_attribute_attmissingval,
+								  attrelation->rd_att,
+								  &missingNull);
+
+		/* if it's a null array there is nothing to do */
+
+		if (! missingNull)
+		{
+			/*
+			 * Get the datum out of the array and repack it in a new array
+			 * built with the new type data. We assume that since the table
+			 * doesn't need rewriting, the actual Datum doesn't need to be
+			 * changed, only the array metadata.
+			 */
+
+			int one = 1;
+			bool isNull;
+			Datum       valuesAtt[Natts_pg_attribute];
+			bool        nullsAtt[Natts_pg_attribute];
+			bool        replacesAtt[Natts_pg_attribute];
+
+			MemSet(valuesAtt, 0, sizeof(valuesAtt));
+			MemSet(nullsAtt, false, sizeof(nullsAtt));
+			MemSet(replacesAtt, false, sizeof(replacesAtt));
+
+			missingval = array_get_element(missingval,
+										   1,
+										   &one,
+										   0,
+										   attTup->attlen,
+										   attTup->attbyval,
+										   attTup->attalign,
+										   &isNull);
+			missingval = PointerGetDatum(
+				construct_array(&missingval,
+								1,
+								targettype,
+								tform->typlen,
+								tform->typbyval,
+								tform->typalign));
+
+			valuesAtt[Anum_pg_attribute_attmissingval - 1] = missingval;
+			replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
+			nullsAtt[Anum_pg_attribute_attmissingval - 1] = false;
+
+			heapTup = heap_modify_tuple(heapTup, RelationGetDescr(attrelation),
+										valuesAtt, nullsAtt, replacesAtt);
+			attTup = (Form_pg_attribute) GETSTRUCT(heapTup);
+		}
+	}
+
 	attTup->atttypid = targettype;
 	attTup->atttypmod = targettypmod;
 	attTup->attcollation = targetcollid;
