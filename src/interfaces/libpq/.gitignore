@@ -1,5 +1,6 @@
 /exports.list
 /libpq.rc
+/libpq-dist.rc
 # .c files that are symlinked in from elsewhere
 /encnames.c
 /wchar.c
