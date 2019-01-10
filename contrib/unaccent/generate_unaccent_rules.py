@@ -20,8 +20,13 @@
 # option is enabled, the XML file of this transliterator [2] -- given as a
 # command line argument -- will be parsed and used.
 #
+# Ideally you should use the latest release for each data set.  For
+# Latin-ASCII.xml, the latest data sets released can be browsed directly
+# via [3].  Note that this script is compatible with at least release 29.
+#
 # [1] http://unicode.org/Public/8.0.0/ucd/UnicodeData.txt
-# [2] http://unicode.org/cldr/trac/export/12304/tags/release-28/common/transforms/Latin-ASCII.xml
+# [2] http://unicode.org/cldr/trac/export/14746/tags/release-34/common/transforms/Latin-ASCII.xml
+# [3] https://unicode.org/cldr/trac/browser/tags
 
 # BEGIN: Python 2/3 compatibility - remove when Python 2 compatibility dropped
 # The approach is to be Python3 compatible with Python2 "backports".
@@ -140,8 +145,18 @@ def parse_cldr_latin_ascii_transliterator(latinAsciiFilePath):
     transliterationTree = ET.parse(latinAsciiFilePath)
     transliterationTreeRoot = transliterationTree.getroot()
 
-    for rule in transliterationTreeRoot.findall("./transforms/transform/tRule"):
-        matches = rulePattern.search(rule.text)
+    # Fetch all the transliteration rules.  Since release 29 of Latin-ASCII.xml
+    # all the transliteration rules are located in a single tRule block with
+    # all rules separated into separate lines.
+    blockRules = transliterationTreeRoot.findall("./transforms/transform/tRule")
+    assert(len(blockRules) == 1)
+
+    # Split the block of rules into one element per line.
+    rules = blockRules[0].text.splitlines()
+
+    # And finish the processing of each individual rule.
+    for rule in rules:
+        matches = rulePattern.search(rule)
 
         # The regular expression capture four groups corresponding
         # to the characters.

@@ -25,6 +25,12 @@ SELECT unaccent('ЁЖИК');
  ЕЖИК
 (1 row)
 
+SELECT unaccent('˃˖˗˜');
+ unaccent 
+----------
+ >+-~
+(1 row)
+
 SELECT unaccent('unaccent', 'foobar');
  unaccent 
 ----------
@@ -43,6 +49,12 @@ SELECT unaccent('unaccent', 'ЁЖИК');
  ЕЖИК
 (1 row)
 
+SELECT unaccent('unaccent', '˃˖˗˜');
+ unaccent 
+----------
+ >+-~
+(1 row)
+
 SELECT ts_lexize('unaccent', 'foobar');
  ts_lexize 
 -----------
@@ -59,5 +71,11 @@ SELECT ts_lexize('unaccent', 'ЁЖИК');
  ts_lexize 
 -----------
  {ЕЖИК}
+(1 row)
+
+SELECT ts_lexize('unaccent', '˃˖˗˜');
+ ts_lexize 
+-----------
+ {>+-~}
 (1 row)
 
