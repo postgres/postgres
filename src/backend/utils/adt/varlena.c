@@ -69,7 +69,7 @@ typedef struct
 	int			last_returned;	/* Last comparison result (cache) */
 	bool		cache_blob;		/* Does buf2 contain strxfrm() blob, etc? */
 	bool		collate_c;
-	Oid			typeid;			/* Actual datatype (text/bpchar/bytea/name) */
+	Oid			typid;			/* Actual datatype (text/bpchar/bytea/name) */
 	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
 	hyperLogLogState full_card; /* Full key cardinality state */
 	double		prop_card;		/* Required cardinality proportion */
@@ -1835,7 +1835,7 @@ bttextsortsupport(PG_FUNCTION_ARGS)
  * this will not work with any other collation, though.
  */
 void
-varstr_sortsupport(SortSupport ssup, Oid typeid, Oid collid)
+varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 {
 	bool		abbreviate = ssup->abbreviate;
 	bool		collate_c = false;
@@ -1857,9 +1857,9 @@ varstr_sortsupport(SortSupport ssup, Oid typeid, Oid collid)
 	 */
 	if (lc_collate_is_c(collid))
 	{
-		if (typeid == BPCHAROID)
+		if (typid == BPCHAROID)
 			ssup->comparator = bpcharfastcmp_c;
-		else if (typeid == NAMEOID)
+		else if (typid == NAMEOID)
 		{
 			ssup->comparator = namefastcmp_c;
 			/* Not supporting abbreviation with type NAME, for now */
@@ -1910,7 +1910,7 @@ varstr_sortsupport(SortSupport ssup, Oid typeid, Oid collid)
 		/*
 		 * We use varlenafastcmp_locale except for type NAME.
 		 */
-		if (typeid == NAMEOID)
+		if (typid == NAMEOID)
 		{
 			ssup->comparator = namefastcmp_locale;
 			/* Not supporting abbreviation with type NAME, for now */
@@ -1983,7 +1983,7 @@ varstr_sortsupport(SortSupport ssup, Oid typeid, Oid collid)
 		 */
 		sss->cache_blob = true;
 		sss->collate_c = collate_c;
-		sss->typeid = typeid;
+		sss->typid = typid;
 		ssup->ssup_extra = sss;
 
 		/*
@@ -2160,7 +2160,7 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 		return 0;
 	}
 
-	if (sss->typeid == BPCHAROID)
+	if (sss->typid == BPCHAROID)
 	{
 		/* Get true number of bytes, ignoring trailing spaces */
 		len1 = bpchartruelen(a1p, len1);
@@ -2333,7 +2333,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 	len = VARSIZE_ANY_EXHDR(authoritative);
 
 	/* Get number of bytes, ignoring trailing spaces */
-	if (sss->typeid == BPCHAROID)
+	if (sss->typid == BPCHAROID)
 		len = bpchartruelen(authoritative_data, len);
 
 	/*

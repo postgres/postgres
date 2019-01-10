@@ -2589,13 +2589,13 @@ record_plan_function_dependency(PlannerInfo *root, Oid funcid)
  * someday fix_expr_common might call it.
  */
 void
-record_plan_type_dependency(PlannerInfo *root, Oid typeid)
+record_plan_type_dependency(PlannerInfo *root, Oid typid)
 {
 	/*
 	 * As in record_plan_function_dependency, ignore the possibility that
 	 * someone would change a built-in domain.
 	 */
-	if (typeid >= (Oid) FirstBootstrapObjectId)
+	if (typid >= (Oid) FirstBootstrapObjectId)
 	{
 		PlanInvalItem *inval_item = makeNode(PlanInvalItem);
 
@@ -2606,7 +2606,7 @@ record_plan_type_dependency(PlannerInfo *root, Oid typeid)
 		 */
 		inval_item->cacheId = TYPEOID;
 		inval_item->hashValue = GetSysCacheHashValue1(TYPEOID,
-													  ObjectIdGetDatum(typeid));
+													  ObjectIdGetDatum(typid));
 
 		root->glob->invalItems = lappend(root->glob->invalItems, inval_item);
 	}
