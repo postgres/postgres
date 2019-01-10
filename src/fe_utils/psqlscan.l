@@ -693,8 +693,15 @@ other			.
 	 * substitution.  We want these before {self}, also.
 	 */
 
-"\\"[;:]		{
-					/* Force a semicolon or colon into the query buffer */
+"\\";			{
+					/* Count semicolons in compound commands */
+					cur_state->escaped_semicolons++;
+					/* Force a semicolon into the query buffer */
+					psqlscan_emit(cur_state, yytext + 1, 1);
+				}
+
+"\\":			{
+					/* Force a colon into the query buffer */
 					psqlscan_emit(cur_state, yytext + 1, 1);
 				}
 
@@ -1065,6 +1072,9 @@ psql_scan(PsqlScanState state,
 	/* Set current output target */
 	state->output_buf = query_buf;
 
+	/* Reset number of escaped semicolons seen */
+	state->escaped_semicolons = 0;
+
 	/* Set input source */
 	if (state->buffer_stack != NULL)
 		yy_switch_to_buffer(state->buffer_stack->buf, state->scanner);
@@ -1206,6 +1216,16 @@ psql_scan_reset(PsqlScanState state)
 	if (state->dolqstart)
 		free(state->dolqstart);
 	state->dolqstart = NULL;
+}
+
+/*
+ * Return the number of escaped semicolons in the lexed string seen by the
+ * previous psql_scan call.
+ */
+int
+psql_scan_get_escaped_semicolons(PsqlScanState state)
+{
+	return state->escaped_semicolons;
 }
 
 /*

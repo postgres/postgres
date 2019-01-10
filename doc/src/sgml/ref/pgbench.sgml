@@ -954,6 +954,91 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   </para>
 
   <variablelist>
+   <varlistentry id='pgbench-metacommand-cset'>
+    <term>
+     <literal>\cset [<replaceable>prefix</replaceable>]</literal>
+    </term>
+
+    <listitem>
+     <para>
+      This command may be used to end SQL queries, replacing an embedded
+      semicolon (<literal>\;</literal>) within a compound SQL command.
+     </para>
+
+     <para>
+      When this command is used, the preceding SQL query is expected to
+      return one row, the columns of which are stored into variables named after
+      column names, and prefixed with <replaceable>prefix</replaceable> if provided.
+     </para>
+
+     <para>
+      The following example sends four queries as one compound SQL command,
+      inducing one message sent at the protocol level.
+      The result of the first query is stored into variable <replaceable>one</replaceable>,
+      the results of the third query are stored into variables <replaceable>z_three</replaceable>
+      and <replaceable>z_four</replaceable>,
+      whereas the results of the other queries are discarded.
+<programlisting>
+-- compound of four queries
+SELECT 1 AS one \cset
+SELECT 2 AS two \;
+SELECT 3 AS three, 4 AS four \cset z_
+SELECT 5;
+</programlisting>
+     </para>
+
+     <note>
+      <para>
+        <literal>\cset</literal> does not work when empty SQL queries appear
+        within a compound SQL command.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id='pgbench-metacommand-gset'>
+    <term>
+     <literal>\gset [<replaceable>prefix</replaceable>]</literal>
+    </term>
+
+    <listitem>
+     <para>
+      This command may be used to end SQL queries, replacing a final semicolon
+      (<literal>;</literal>).
+     </para>
+
+     <para>
+      When this command is used, the preceding SQL query is expected to
+      return one row, the columns of which are stored into variables named after
+      column names, and prefixed with <replaceable>prefix</replaceable> if provided.
+     </para>
+
+     <para>
+      The following example puts the final account balance from the first query
+      into variable <replaceable>abalance</replaceable>, and fills variables
+      <replaceable>p_two</replaceable> and <replaceable>p_three</replaceable>
+      with integers from the last query.
+      The result of the second query is discarded.
+<programlisting>
+UPDATE pgbench_accounts
+  SET abalance = abalance + :delta
+  WHERE aid = :aid
+  RETURNING abalance \gset
+-- compound of two queries
+SELECT 1 \;
+SELECT 2 AS two, 3 AS three \gset p_
+</programlisting>
+     </para>
+
+     <note>
+      <para>
+        <literal>\gset</literal> does not work when empty SQL queries appear
+        within a compound SQL command.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><literal>\if</literal> <replaceable class="parameter">expression</replaceable></term>
     <term><literal>\elif</literal> <replaceable class="parameter">expression</replaceable></term>
