@@ -14,6 +14,12 @@
 # variable named according to the -v switch ("ScanKeywords" by default).
 # The variable is marked "static" unless the -e switch is given.
 #
+# ScanKeywordList uses hash-based lookup, so this script also selects
+# a minimal perfect hash function for the keyword set, and emits a
+# static hash function that is referenced in the ScanKeywordList struct.
+# The hash function is case-insensitive unless --no-case-fold is specified.
+# Note that case folding works correctly only for all-ASCII keywords!
+#
 #
 # Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
@@ -25,15 +31,18 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use PerfectHash;
 
 my $output_path = '';
 my $extern = 0;
+my $case_fold = 1;
 my $varname = 'ScanKeywords';
 
 GetOptions(
-	'output:s' => \$output_path,
-	'extern'   => \$extern,
-	'varname:s' => \$varname) || usage();
+	'output:s'   => \$output_path,
+	'extern'     => \$extern,
+	'case-fold!' => \$case_fold,
+	'varname:s'  => \$varname) || usage();
 
 my $kw_input_file = shift @ARGV || die "No input file.\n";
 
@@ -87,7 +96,22 @@ while (<$kif>)
 	}
 }
 
+# When being case-insensitive, insist that the input be all-lower-case.
+if ($case_fold)
+{
+	foreach my $kw (@keywords)
+	{
+		die qq|The keyword "$kw" is not lower-case in $kw_input_file\n|
+		  if ($kw ne lc $kw);
+	}
+}
+
 # Error out if the keyword names are not in ASCII order.
+#
+# While this isn't really necessary with hash-based lookup, it's still
+# helpful because it provides a cheap way to reject duplicate keywords.
+# Also, insisting on sorted order ensures that code that scans the keyword
+# table linearly will see the keywords in a canonical order.
 for my $i (0..$#keywords - 1)
 {
 	die qq|The keyword "$keywords[$i + 1]" is out of order in $kw_input_file\n|
@@ -128,15 +152,25 @@ print $kwdef "};\n\n";
 
 printf $kwdef "#define %s_NUM_KEYWORDS %d\n\n", uc $varname, scalar @keywords;
 
+# Emit the definition of the hash function.
+
+my $funcname = $varname . "_hash_func";
+
+my $f = PerfectHash::generate_hash_function(\@keywords, $funcname,
+	case_fold => $case_fold);
+
+printf $kwdef qq|static %s\n|, $f;
+
 # Emit the struct that wraps all this lookup info into one variable.
 
-print $kwdef "static " if !$extern;
+printf $kwdef "static " if !$extern;
 printf $kwdef "const ScanKeywordList %s = {\n", $varname;
 printf $kwdef qq|\t%s_kw_string,\n|, $varname;
 printf $kwdef qq|\t%s_kw_offsets,\n|, $varname;
+printf $kwdef qq|\t%s,\n|, $funcname;
 printf $kwdef qq|\t%s_NUM_KEYWORDS,\n|, uc $varname;
 printf $kwdef qq|\t%d\n|, $max_len;
-print $kwdef "};\n\n";
+printf $kwdef "};\n\n";
 
 printf $kwdef "#endif\t\t\t\t\t\t\t/* %s_H */\n", uc $base_filename;
 
@@ -144,10 +178,11 @@ printf $kwdef "#endif\t\t\t\t\t\t\t/* %s_H */\n", uc $base_filename;
 sub usage
 {
 	die <<EOM;
-Usage: gen_keywordlist.pl [--output/-o <path>] [--varname/-v <varname>] [--extern/-e] input_file
-    --output   Output directory (default '.')
-    --varname  Name for ScanKeywordList variable (default 'ScanKeywords')
-    --extern   Allow the ScanKeywordList variable to be globally visible
+Usage: gen_keywordlist.pl [--output/-o <path>] [--varname/-v <varname>] [--extern/-e] [--[no-]case-fold] input_file
+    --output        Output directory (default '.')
+    --varname       Name for ScanKeywordList variable (default 'ScanKeywords')
+    --extern        Allow the ScanKeywordList variable to be globally visible
+    --no-case-fold  Keyword matching is to be case-sensitive
 
 gen_keywordlist.pl transforms a list of keywords into a ScanKeywordList.
 The output filename is derived from the input file by inserting _d,

@@ -35,60 +35,51 @@
  * receive a different case-normalization mapping.
  */
 int
-ScanKeywordLookup(const char *text,
+ScanKeywordLookup(const char *str,
 				  const ScanKeywordList *keywords)
 {
-	int			len,
-				i;
-	char		word[NAMEDATALEN];
-	const char *kw_string;
-	const uint16 *kw_offsets;
-	const uint16 *low;
-	const uint16 *high;
-
-	len = strlen(text);
-
-	if (len > keywords->max_kw_len)
-		return -1;				/* too long to be any keyword */
-
-	/* We assume all keywords are shorter than NAMEDATALEN. */
-	Assert(len < NAMEDATALEN);
+	size_t		len;
+	int			h;
+	const char *kw;
 
 	/*
-	 * Apply an ASCII-only downcasing.  We must not use tolower() since it may
-	 * produce the wrong translation in some locales (eg, Turkish).
+	 * Reject immediately if too long to be any keyword.  This saves useless
+	 * hashing and downcasing work on long strings.
 	 */
-	for (i = 0; i < len; i++)
+	len = strlen(str);
+	if (len > keywords->max_kw_len)
+		return -1;
+
+	/*
+	 * Compute the hash function.  We assume it was generated to produce
+	 * case-insensitive results.  Since it's a perfect hash, we need only
+	 * match to the specific keyword it identifies.
+	 */
+	h = keywords->hash(str, len);
+
+	/* An out-of-range result implies no match */
+	if (h < 0 || h >= keywords->num_keywords)
+		return -1;
+
+	/*
+	 * Compare character-by-character to see if we have a match, applying an
+	 * ASCII-only downcasing to the input characters.  We must not use
+	 * tolower() since it may produce the wrong translation in some locales
+	 * (eg, Turkish).
+	 */
+	kw = GetScanKeyword(h, keywords);
+	while (*str != '\0')
 	{
-		char		ch = text[i];
+		char		ch = *str++;
 
 		if (ch >= 'A' && ch <= 'Z')
 			ch += 'a' - 'A';
-		word[i] = ch;
+		if (ch != *kw++)
+			return -1;
 	}
-	word[len] = '\0';
+	if (*kw != '\0')
+		return -1;
 
-	/*
-	 * Now do a binary search using plain strcmp() comparison.
-	 */
-	kw_string = keywords->kw_string;
-	kw_offsets = keywords->kw_offsets;
-	low = kw_offsets;
-	high = kw_offsets + (keywords->num_keywords - 1);
-	while (low <= high)
-	{
-		const uint16 *middle;
-		int			difference;
-
-		middle = low + (high - low) / 2;
-		difference = strcmp(kw_string + *middle, word);
-		if (difference == 0)
-			return middle - kw_offsets;
-		else if (difference < 0)
-			low = middle + 1;
-		else
-			high = middle - 1;
-	}
-
-	return -1;
+	/* Success! */
+	return h;
 }

@@ -9,8 +9,6 @@
  */
 #include "postgres_fe.h"
 
-#include <ctype.h>
-
 #include "preproc_extern.h"
 #include "preproc.h"
 
@@ -32,39 +30,38 @@ static const uint16 ScanCKeywordTokens[] = {
  *
  * Returns the token value of the keyword, or -1 if no match.
  *
- * Do a binary search using plain strcmp() comparison.  This is much like
+ * Do a hash search using plain strcmp() comparison.  This is much like
  * ScanKeywordLookup(), except we want case-sensitive matching.
  */
 int
-ScanCKeywordLookup(const char *text)
+ScanCKeywordLookup(const char *str)
 {
-	const char *kw_string;
-	const uint16 *kw_offsets;
-	const uint16 *low;
-	const uint16 *high;
+	size_t		len;
+	int			h;
+	const char *kw;
 
-	if (strlen(text) > ScanCKeywords.max_kw_len)
-		return -1;				/* too long to be any keyword */
+	/*
+	 * Reject immediately if too long to be any keyword.  This saves useless
+	 * hashing work on long strings.
+	 */
+	len = strlen(str);
+	if (len > ScanCKeywords.max_kw_len)
+		return -1;
 
-	kw_string = ScanCKeywords.kw_string;
-	kw_offsets = ScanCKeywords.kw_offsets;
-	low = kw_offsets;
-	high = kw_offsets + (ScanCKeywords.num_keywords - 1);
+	/*
+	 * Compute the hash function.  Since it's a perfect hash, we need only
+	 * match to the specific keyword it identifies.
+	 */
+	h = ScanCKeywords_hash_func(str, len);
 
-	while (low <= high)
-	{
-		const uint16 *middle;
-		int			difference;
+	/* An out-of-range result implies no match */
+	if (h < 0 || h >= ScanCKeywords.num_keywords)
+		return -1;
 
-		middle = low + (high - low) / 2;
-		difference = strcmp(kw_string + *middle, text);
-		if (difference == 0)
-			return ScanCKeywordTokens[middle - kw_offsets];
-		else if (difference < 0)
-			low = middle + 1;
-		else
-			high = middle - 1;
-	}
+	kw = GetScanKeyword(h, &ScanCKeywords);
+
+	if (strcmp(kw, str) == 0)
+		return ScanCKeywordTokens[h];
 
 	return -1;
 }

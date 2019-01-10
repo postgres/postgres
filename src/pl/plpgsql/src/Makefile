@@ -29,7 +29,10 @@ REGRESS_OPTS = --dbname=$(PL_TESTDB)
 REGRESS = plpgsql_call plpgsql_control plpgsql_domain plpgsql_record \
 	plpgsql_cache plpgsql_transaction plpgsql_trigger plpgsql_varprops
 
-GEN_KEYWORDLIST = $(top_srcdir)/src/tools/gen_keywordlist.pl
+# where to find gen_keywordlist.pl and subsidiary files
+TOOLSDIR = $(top_srcdir)/src/tools
+GEN_KEYWORDLIST = $(PERL) -I $(TOOLSDIR) $(TOOLSDIR)/gen_keywordlist.pl
+GEN_KEYWORDLIST_DEPS = $(TOOLSDIR)/gen_keywordlist.pl $(TOOLSDIR)/PerfectHash.pm
 
 all: all-lib
 
@@ -76,11 +79,11 @@ plerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-plerrcodes.p
 	$(PERL) $(srcdir)/generate-plerrcodes.pl $< > $@
 
 # generate keyword headers for the scanner
-pl_reserved_kwlist_d.h: pl_reserved_kwlist.h $(GEN_KEYWORDLIST)
-	$(PERL) $(GEN_KEYWORDLIST) --varname ReservedPLKeywords $<
+pl_reserved_kwlist_d.h: pl_reserved_kwlist.h $(GEN_KEYWORDLIST_DEPS)
+	$(GEN_KEYWORDLIST) --varname ReservedPLKeywords $<
 
-pl_unreserved_kwlist_d.h: pl_unreserved_kwlist.h $(GEN_KEYWORDLIST)
-	$(PERL) $(GEN_KEYWORDLIST) --varname UnreservedPLKeywords $<
+pl_unreserved_kwlist_d.h: pl_unreserved_kwlist.h $(GEN_KEYWORDLIST_DEPS)
+	$(GEN_KEYWORDLIST) --varname UnreservedPLKeywords $<
 
 
 check: submake

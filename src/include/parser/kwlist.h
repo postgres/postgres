@@ -21,8 +21,7 @@
 /*
  * List of keyword (name, token-value, category) entries.
  *
- * !!WARNING!!: This list must be sorted by ASCII name, because binary
- *		 search is used to locate entries.
+ * Note: gen_keywordlist.pl requires the entries to appear in ASCII order.
  */
 
 /* name, value, category */

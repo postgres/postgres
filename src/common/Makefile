@@ -63,6 +63,11 @@ OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o file_utils.o restricted_token.o
 OBJS_SHLIB = $(OBJS_FRONTEND:%.o=%_shlib.o)
 OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
 
+# where to find gen_keywordlist.pl and subsidiary files
+TOOLSDIR = $(top_srcdir)/src/tools
+GEN_KEYWORDLIST = $(PERL) -I $(TOOLSDIR) $(TOOLSDIR)/gen_keywordlist.pl
+GEN_KEYWORDLIST_DEPS = $(TOOLSDIR)/gen_keywordlist.pl $(TOOLSDIR)/PerfectHash.pm
+
 all: libpgcommon.a libpgcommon_shlib.a libpgcommon_srv.a
 
 distprep: kwlist_d.h
@@ -118,8 +123,8 @@ libpgcommon_srv.a: $(OBJS_SRV)
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
 # generate SQL keyword lookup table to be included into keywords*.o.
-kwlist_d.h: $(top_srcdir)/src/include/parser/kwlist.h $(top_srcdir)/src/tools/gen_keywordlist.pl
-	$(PERL) $(top_srcdir)/src/tools/gen_keywordlist.pl --extern $<
+kwlist_d.h: $(top_srcdir)/src/include/parser/kwlist.h $(GEN_KEYWORDLIST_DEPS)
+	$(GEN_KEYWORDLIST) --extern $<
 
 # Dependencies of keywords*.o need to be managed explicitly to make sure
 # that you don't get broken parsing code, even in a non-enable-depend build.

@@ -20,10 +20,9 @@
 /*
  * List of (keyword-name, keyword-token-value) pairs.
  *
- * Be careful not to put the same word in both lists.
+ * Be careful not to put the same word into pl_unreserved_kwlist.h.
  *
- * !!WARNING!!: This list must be sorted by ASCII name, because binary
- *		 search is used to locate entries.
+ * Note: gen_keywordlist.pl requires the entries to appear in ASCII order.
  */
 
 /* name, value */
