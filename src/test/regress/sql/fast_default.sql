@@ -481,7 +481,33 @@ ALTER TABLE leader ADD c int;
 ALTER TABLE leader DROP c;
 DELETE FROM leader;
 
+-- check that ALTER TABLE ... ALTER TYPE does the right thing
+
+CREATE TABLE vtype( a integer);
+INSERT INTO vtype VALUES (1);
+ALTER TABLE vtype ADD COLUMN b DOUBLE PRECISION DEFAULT 0.2;
+ALTER TABLE vtype ADD COLUMN c BOOLEAN DEFAULT true;
+SELECT * FROM vtype;
+ALTER TABLE vtype
+      ALTER b TYPE text USING b::text,
+      ALTER c TYPE text USING c::text;
+SELECT * FROM vtype;
+
+-- also check the case that doesn't rewrite the table
+
+CREATE TABLE vtype2 (a int);
+INSERT INTO vtype2 VALUES (1);
+ALTER TABLE vtype2 ADD COLUMN b varchar(10) DEFAULT 'xxx';
+ALTER TABLE vtype2 ALTER COLUMN b SET DEFAULT 'yyy';
+INSERT INTO vtype2 VALUES (2);
+
+ALTER TABLE vtype2 ALTER COLUMN b TYPE varchar(20) USING b::varchar(20);
+SELECT * FROM vtype2;
+
+
 -- cleanup
+DROP TABLE vtype;
+DROP TABLE vtype2;
 DROP TABLE follower;
 DROP TABLE leader;
 DROP FUNCTION test_trigger();
