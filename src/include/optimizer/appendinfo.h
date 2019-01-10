@@ -14,7 +14,6 @@
 #ifndef APPENDINFO_H
 #define APPENDINFO_H
 
-#include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/relcache.h"
 
