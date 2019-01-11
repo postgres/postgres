@@ -9747,6 +9747,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			Datum       valuesAtt[Natts_pg_attribute];
 			bool        nullsAtt[Natts_pg_attribute];
 			bool        replacesAtt[Natts_pg_attribute];
+			HeapTuple   newTup;
 
 			MemSet(valuesAtt, 0, sizeof(valuesAtt));
 			MemSet(nullsAtt, false, sizeof(nullsAtt));
@@ -9772,8 +9773,10 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
 			nullsAtt[Anum_pg_attribute_attmissingval - 1] = false;
 
-			heapTup = heap_modify_tuple(heapTup, RelationGetDescr(attrelation),
-										valuesAtt, nullsAtt, replacesAtt);
+			newTup = heap_modify_tuple(heapTup, RelationGetDescr(attrelation),
+									   valuesAtt, nullsAtt, replacesAtt);
+			heap_freetuple(heapTup);
+			heapTup = newTup;
 			attTup = (Form_pg_attribute) GETSTRUCT(heapTup);
 		}
 	}
