@@ -3387,7 +3387,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL
 		},
 		&recovery_target_timeline_string,
-		"",
+		"current",
 		check_recovery_target_timeline, assign_recovery_target_timeline, NULL
 	},
 
@@ -11031,7 +11031,7 @@ check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 	RecoveryTargetTimeLineGoal rttg = RECOVERY_TARGET_TIMELINE_CONTROLFILE;
 	RecoveryTargetTimeLineGoal *myextra;
 
-	if (strcmp(*newval, "") == 0)
+	if (strcmp(*newval, "current") == 0)
 		rttg = RECOVERY_TARGET_TIMELINE_CONTROLFILE;
 	else if (strcmp(*newval, "latest") == 0)
 		rttg = RECOVERY_TARGET_TIMELINE_LATEST;
