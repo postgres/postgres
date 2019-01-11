@@ -3353,10 +3353,14 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         Specifies recovering into a particular timeline.  The value can be a
         numeric timeline ID or a special value.  The value
         <literal>current</literal> recovers along the same timeline that was
-        current when the base backup was taken.  That is the default.  The
+        current when the base backup was taken.  The
         value <literal>latest</literal> recovers
         to the latest timeline found in the archive, which is useful in
-        a standby server. Other than that you only need to set this parameter
+        a standby server.  <literal>latest</literal> is the default.
+       </para>
+
+       <para>
+        You usually only need to set this parameter
         in complex re-recovery situations, where you need to return to
         a state that itself was reached after a point-in-time recovery.
         See <xref linkend="backup-timelines"/> for discussion.

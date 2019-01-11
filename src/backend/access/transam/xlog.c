@@ -324,7 +324,7 @@ static bool recoveryStopAfter;
  * file was created.)  During a sequential scan we do not allow this value
  * to decrease.
  */
-RecoveryTargetTimeLineGoal recoveryTargetTimeLineGoal = RECOVERY_TARGET_TIMELINE_CONTROLFILE;
+RecoveryTargetTimeLineGoal recoveryTargetTimeLineGoal = RECOVERY_TARGET_TIMELINE_LATEST;
 TimeLineID	recoveryTargetTLIRequested = 0;
 TimeLineID	recoveryTargetTLI = 0;
 static List *expectedTLEs;

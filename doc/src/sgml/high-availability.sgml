@@ -690,8 +690,8 @@ protocol to make nodes agree on a serializable transactional order.
     <filename>standby.signal</filename> in the standby's cluster data
     directory. Set <xref linkend="guc-restore-command"/> to a simple command to copy files from
     the WAL archive. If you plan to have multiple standby servers for high
-    availability purposes, set <varname>recovery_target_timeline</varname> to
-    <literal>latest</literal>, to make the standby server follow the timeline change
+    availability purposes, make sure that <varname>recovery_target_timeline</varname> is set to
+    <literal>latest</literal> (the default), to make the standby server follow the timeline change
     that occurs at failover to another standby.
    </para>
 
@@ -1024,7 +1024,7 @@ primary_slot_name = 'node_a_slot'
    <para>
     If an upstream standby server is promoted to become new master, downstream
     servers will continue to stream from the new master if
-    <varname>recovery_target_timeline</varname> is set to <literal>'latest'</literal>.
+    <varname>recovery_target_timeline</varname> is set to <literal>'latest'</literal> (the default).
    </para>
 
    <para>

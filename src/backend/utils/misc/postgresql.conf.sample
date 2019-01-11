@@ -261,7 +261,7 @@
 				# just after the specified recovery target (on)
 				# just before the recovery target (off)
 				# (change requires restart)
-#recovery_target_timeline = 'current'	# 'current', 'latest', or timeline ID
+#recovery_target_timeline = 'latest'	# 'current', 'latest', or timeline ID
 				# (change requires restart)
 #recovery_target_action = 'pause'	# 'pause', 'promote', 'shutdown'
 				# (change requires restart)

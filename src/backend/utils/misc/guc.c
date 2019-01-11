@@ -3387,7 +3387,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL
 		},
 		&recovery_target_timeline_string,
-		"current",
+		"latest",
 		check_recovery_target_timeline, assign_recovery_target_timeline, NULL
 	},
 
@@ -11028,7 +11028,7 @@ show_data_directory_mode(void)
 static bool
 check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 {
-	RecoveryTargetTimeLineGoal rttg = RECOVERY_TARGET_TIMELINE_CONTROLFILE;
+	RecoveryTargetTimeLineGoal rttg;
 	RecoveryTargetTimeLineGoal *myextra;
 
 	if (strcmp(*newval, "current") == 0)
@@ -11037,6 +11037,8 @@ check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 		rttg = RECOVERY_TARGET_TIMELINE_LATEST;
 	else
 	{
+		rttg = RECOVERY_TARGET_TIMELINE_NUMERIC;
+
 		errno = 0;
 		strtoul(*newval, NULL, 0);
 		if (errno == EINVAL || errno == ERANGE)
@@ -11044,7 +11046,6 @@ check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 			GUC_check_errdetail("recovery_target_timeline is not a valid number.");
 			return false;
 		}
-		rttg = RECOVERY_TARGET_TIMELINE_NUMERIC;
 	}
 
 	myextra = (RecoveryTargetTimeLineGoal *) guc_malloc(ERROR, sizeof(RecoveryTargetTimeLineGoal));

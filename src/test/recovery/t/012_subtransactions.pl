@@ -119,10 +119,6 @@ is($psql_out, '8128', "Visible");
 # restore state
 ($node_master, $node_standby) = ($node_standby, $node_master);
 $node_standby->enable_streaming($node_master);
-$node_standby->append_conf(
-	'postgresql.conf', qq(
-recovery_target_timeline='latest'
-));
 $node_standby->start;
 $node_standby->psql(
 	'postgres',
@@ -170,10 +166,6 @@ is($psql_out, '-1', "Not visible");
 # restore state
 ($node_master, $node_standby) = ($node_standby, $node_master);
 $node_standby->enable_streaming($node_master);
-$node_standby->append_conf(
-	'postgresql.conf', qq(
-recovery_target_timeline='latest'
-));
 $node_standby->start;
 $psql_rc = $node_master->psql('postgres', "COMMIT PREPARED 'xact_012_1'");
 is($psql_rc, '0',
@@ -211,10 +203,6 @@ is($psql_out, '-1', "Not visible");
 # restore state
 ($node_master, $node_standby) = ($node_standby, $node_master);
 $node_standby->enable_streaming($node_master);
-$node_standby->append_conf(
-	'postgresql.conf', qq(
-recovery_target_timeline='latest'
-));
 $node_standby->start;
 $psql_rc = $node_master->psql('postgres', "ROLLBACK PREPARED 'xact_012_1'");
 is($psql_rc, '0',

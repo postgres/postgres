@@ -161,7 +161,6 @@ sub create_standby
 	$node_standby->append_conf(
 		"postgresql.conf", qq(
 primary_conninfo='$connstr_master application_name=rewind_standby'
-recovery_target_timeline='latest'
 ));
 
 	$node_standby->set_standby_mode();
@@ -273,7 +272,6 @@ sub run_pg_rewind
 	$node_master->append_conf(
 		'postgresql.conf', qq(
 primary_conninfo='port=$port_standby'
-recovery_target_timeline='latest'
 ));
 
 	$node_master->set_standby_mode();
