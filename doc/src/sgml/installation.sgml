@@ -1517,7 +1517,8 @@ su - postgres
          implicitly chosen) determines which variant of the PL/Python
          language becomes available.  See
          <xref linkend="plpython-python23"/>
-         for more information.  The default is <command>python</command>.
+         for more information.  If this is not set, the following are probed
+         in this order: <literal>python python3 python2</literal>.
         </para>
        </listitem>
       </varlistentry>
