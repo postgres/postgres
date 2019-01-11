@@ -1,6 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * subselect.h
+ *	  Planning routines for subselects.
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -35,9 +36,5 @@ extern Param *SS_make_initplan_output_param(PlannerInfo *root,
 extern void SS_make_initplan_from_plan(PlannerInfo *root,
 						   PlannerInfo *subroot, Plan *plan,
 						   Param *prm);
-extern Param *assign_nestloop_param_var(PlannerInfo *root, Var *var);
-extern Param *assign_nestloop_param_placeholdervar(PlannerInfo *root,
-									 PlaceHolderVar *phv);
-extern int	SS_assign_special_param(PlannerInfo *root);
 
 #endif							/* SUBSELECT_H */
