@@ -358,7 +358,9 @@ ADDITIONAL_FLAGS='-Xmx1500m'
     corresponds to <xref linkend="installation"/>, with some minor
     changes to account for the different context.  To recreate the
     file, change to the directory <filename>doc/src/sgml</filename>
-    and enter <userinput>make INSTALL</userinput>.
+    and enter <userinput>make INSTALL</userinput>.  Building text output
+    requires <productname>Pandoc</productname> version 1.13 or newer as an
+    additional build tool.
    </para>
 
    <para>

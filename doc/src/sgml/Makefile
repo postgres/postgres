@@ -100,18 +100,10 @@ errcodes-table.sgml: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errco
 ##
 
 ICONV = iconv
-LYNX = lynx
+PANDOC = pandoc
 
-# The documentation may contain non-ASCII characters (mostly for
-# contributor names), which lynx converts to the encoding determined
-# by the current locale.  To get text output that is deterministic and
-# easily readable by everyone, we make lynx produce LATIN1 and then
-# convert that to ASCII with transliteration for the non-ASCII characters.
-# Official releases were historically built on FreeBSD, which has limited
-# locale support and is very picky about locale name spelling.  The
-# below has been finely tuned to run on FreeBSD and Linux/glibc.
 INSTALL: % : %.html
-	$(PERL) -p -e 's,<h(1|2) class="title",<h\1 align=center,g' $< | LC_ALL=en_US.ISO8859-1 $(LYNX) -force_html -dump -nolist -stdin | $(ICONV) -f latin1 -t us-ascii//TRANSLIT > $@
+	$(PANDOC) $< -t plain | $(ICONV) -f utf8 -t us-ascii//TRANSLIT > $@
 
 INSTALL.html: %.html : stylesheet-text.xsl %.xml
 	$(XMLLINT) --noout --valid $*.xml
