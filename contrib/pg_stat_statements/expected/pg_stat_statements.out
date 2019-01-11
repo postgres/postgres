@@ -395,4 +395,202 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
  SELECT pg_stat_statements_reset()         |     1 |    1
 (8 rows)
 
+--
+-- Track user activity and reset them
+--
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+CREATE ROLE regress_stats_user1;
+CREATE ROLE regress_stats_user2;
+SET ROLE regress_stats_user1;
+SELECT 1 AS "ONE";
+ ONE 
+-----
+   1
+(1 row)
+
+SELECT 1+1 AS "TWO";
+ TWO 
+-----
+   2
+(1 row)
+
+RESET ROLE;
+SET ROLE regress_stats_user2;
+SELECT 1 AS "ONE";
+ ONE 
+-----
+   1
+(1 row)
+
+SELECT 1+1 AS "TWO";
+ TWO 
+-----
+   2
+(1 row)
+
+RESET ROLE;
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+               query               | calls | rows 
+-----------------------------------+-------+------
+ CREATE ROLE regress_stats_user1   |     1 |    0
+ CREATE ROLE regress_stats_user2   |     1 |    0
+ RESET ROLE                        |     2 |    0
+ SELECT $1 AS "ONE"                |     1 |    1
+ SELECT $1 AS "ONE"                |     1 |    1
+ SELECT $1+$2 AS "TWO"             |     1 |    1
+ SELECT $1+$2 AS "TWO"             |     1 |    1
+ SELECT pg_stat_statements_reset() |     1 |    1
+ SET ROLE regress_stats_user1      |     1 |    0
+ SET ROLE regress_stats_user2      |     1 |    0
+(10 rows)
+
+--
+-- Don't reset anything if any of the parameter is NULL
+--
+SELECT pg_stat_statements_reset(NULL);
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ CREATE ROLE regress_stats_user1                                              |     1 |    0
+ CREATE ROLE regress_stats_user2                                              |     1 |    0
+ RESET ROLE                                                                   |     2 |    0
+ SELECT $1 AS "ONE"                                                           |     1 |    1
+ SELECT $1 AS "ONE"                                                           |     1 |    1
+ SELECT $1+$2 AS "TWO"                                                        |     1 |    1
+ SELECT $1+$2 AS "TWO"                                                        |     1 |    1
+ SELECT pg_stat_statements_reset($1)                                          |     1 |    1
+ SELECT pg_stat_statements_reset()                                            |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |   10
+ SET ROLE regress_stats_user1                                                 |     1 |    0
+ SET ROLE regress_stats_user2                                                 |     1 |    0
+(12 rows)
+
+--
+-- remove query ('SELECT $1+$2 AS "TWO"') executed by regress_stats_user2
+-- in the current_database
+--
+SELECT pg_stat_statements_reset(
+	(SELECT r.oid FROM pg_roles AS r WHERE r.rolname = 'regress_stats_user2'),
+	(SELECT d.oid FROM pg_database As d where datname = current_database()),
+	(SELECT s.queryid FROM pg_stat_statements AS s
+				WHERE s.query = 'SELECT $1+$2 AS "TWO"' LIMIT 1));
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                      query                                       | calls | rows 
+----------------------------------------------------------------------------------+-------+------
+ CREATE ROLE regress_stats_user1                                                  |     1 |    0
+ CREATE ROLE regress_stats_user2                                                  |     1 |    0
+ RESET ROLE                                                                       |     2 |    0
+ SELECT $1 AS "ONE"                                                               |     1 |    1
+ SELECT $1 AS "ONE"                                                               |     1 |    1
+ SELECT $1+$2 AS "TWO"                                                            |     1 |    1
+ SELECT pg_stat_statements_reset(                                                +|     1 |    1
+         (SELECT r.oid FROM pg_roles AS r WHERE r.rolname = $1),                 +|       | 
+         (SELECT d.oid FROM pg_database As d where datname = current_database()),+|       | 
+         (SELECT s.queryid FROM pg_stat_statements AS s                          +|       | 
+                                 WHERE s.query = $2 LIMIT $3))                    |       | 
+ SELECT pg_stat_statements_reset($1)                                              |     1 |    1
+ SELECT pg_stat_statements_reset()                                                |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     2 |   22
+ SET ROLE regress_stats_user1                                                     |     1 |    0
+ SET ROLE regress_stats_user2                                                     |     1 |    0
+(12 rows)
+
+--
+-- remove query ('SELECT $1 AS "ONE"') executed by two users
+--
+SELECT pg_stat_statements_reset(0,0,s.queryid)
+	FROM pg_stat_statements AS s WHERE s.query = 'SELECT $1 AS "ONE"';
+ pg_stat_statements_reset 
+--------------------------
+ 
+ 
+(2 rows)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                      query                                       | calls | rows 
+----------------------------------------------------------------------------------+-------+------
+ CREATE ROLE regress_stats_user1                                                  |     1 |    0
+ CREATE ROLE regress_stats_user2                                                  |     1 |    0
+ RESET ROLE                                                                       |     2 |    0
+ SELECT $1+$2 AS "TWO"                                                            |     1 |    1
+ SELECT pg_stat_statements_reset(                                                +|     1 |    1
+         (SELECT r.oid FROM pg_roles AS r WHERE r.rolname = $1),                 +|       | 
+         (SELECT d.oid FROM pg_database As d where datname = current_database()),+|       | 
+         (SELECT s.queryid FROM pg_stat_statements AS s                          +|       | 
+                                 WHERE s.query = $2 LIMIT $3))                    |       | 
+ SELECT pg_stat_statements_reset($1)                                              |     1 |    1
+ SELECT pg_stat_statements_reset($1,$2,s.queryid)                                +|     1 |    2
+         FROM pg_stat_statements AS s WHERE s.query = $3                          |       | 
+ SELECT pg_stat_statements_reset()                                                |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     3 |   34
+ SET ROLE regress_stats_user1                                                     |     1 |    0
+ SET ROLE regress_stats_user2                                                     |     1 |    0
+(11 rows)
+
+--
+-- remove query of a user (regress_stats_user1)
+--
+SELECT pg_stat_statements_reset(r.oid)
+		FROM pg_roles AS r WHERE r.rolname = 'regress_stats_user1';
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                      query                                       | calls | rows 
+----------------------------------------------------------------------------------+-------+------
+ CREATE ROLE regress_stats_user1                                                  |     1 |    0
+ CREATE ROLE regress_stats_user2                                                  |     1 |    0
+ RESET ROLE                                                                       |     2 |    0
+ SELECT pg_stat_statements_reset(                                                +|     1 |    1
+         (SELECT r.oid FROM pg_roles AS r WHERE r.rolname = $1),                 +|       | 
+         (SELECT d.oid FROM pg_database As d where datname = current_database()),+|       | 
+         (SELECT s.queryid FROM pg_stat_statements AS s                          +|       | 
+                                 WHERE s.query = $2 LIMIT $3))                    |       | 
+ SELECT pg_stat_statements_reset($1)                                              |     1 |    1
+ SELECT pg_stat_statements_reset($1,$2,s.queryid)                                +|     1 |    2
+         FROM pg_stat_statements AS s WHERE s.query = $3                          |       | 
+ SELECT pg_stat_statements_reset()                                                |     1 |    1
+ SELECT pg_stat_statements_reset(r.oid)                                          +|     1 |    1
+                 FROM pg_roles AS r WHERE r.rolname = $1                          |       | 
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     4 |   45
+ SET ROLE regress_stats_user2                                                     |     1 |    0
+(10 rows)
+
+--
+-- reset all
+--
+SELECT pg_stat_statements_reset(0,0,0);
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                 query                  | calls | rows 
+----------------------------------------+-------+------
+ SELECT pg_stat_statements_reset(0,0,0) |     1 |    1
+(1 row)
+
+--
+-- cleanup
+--
+DROP ROLE regress_stats_user1;
+DROP ROLE regress_stats_user2;
 DROP EXTENSION pg_stat_statements;

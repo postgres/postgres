@@ -336,7 +336,7 @@
   <variablelist>
    <varlistentry>
     <term>
-     <function>pg_stat_statements_reset() returns void</function>
+     <function>pg_stat_statements_reset(userid Oid, dbid Oid, queryid bigint) returns void</function>
      <indexterm>
       <primary>pg_stat_statements_reset</primary>
      </indexterm>
@@ -344,9 +344,16 @@
 
     <listitem>
      <para>
-      <function>pg_stat_statements_reset</function> discards all statistics
-      gathered so far by <filename>pg_stat_statements</filename>.
-      By default, this function can only be executed by superusers.
+      <function>pg_stat_statements_reset</function> discards statistics
+      gathered so far by <filename>pg_stat_statements</filename> corresponding
+      to the specified <structfield>userid</structfield>, <structfield>dbid</structfield>
+      and <structfield>queryid</structfield>.  If any of the parameters are not
+      specified, the default value <literal>0</literal>(invalid) is used for
+      each of them and the statistics that match with other parameters will be
+      reset.  If no parameter is specified or all the specified parameters are
+      <literal>0</literal>(invalid), it will discard all statistics.  By
+      default, this function can only be executed by superusers.  Access may be
+      granted to others using <command>GRANT</command>.
      </para>
     </listitem>
    </varlistentry>
@@ -494,36 +501,87 @@ bench=# \x
 bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
           FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
--[ RECORD 1 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2;
+-[ RECORD 1 ]--------------------------------------------------------------------
+query       | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2
 calls       | 3000
-total_time  | 9609.00100000002
-rows        | 2836
-hit_percent | 99.9778970000200936
--[ RECORD 2 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2;
+total_time  | 25565.855387
+rows        | 3000
+hit_percent | 100.0000000000000000
+-[ RECORD 2 ]--------------------------------------------------------------------
+query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
 calls       | 3000
-total_time  | 8015.156
-rows        | 2990
-hit_percent | 99.9731126579631345
--[ RECORD 3 ]---------------------------------------------------------------------
+total_time  | 20756.669379
+rows        | 3000
+hit_percent | 100.0000000000000000
+-[ RECORD 3 ]--------------------------------------------------------------------
 query       | copy pgbench_accounts from stdin
 calls       | 1
-total_time  | 310.624
+total_time  | 291.865911
 rows        | 100000
-hit_percent | 0.30395136778115501520
--[ RECORD 4 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2;
+hit_percent | 100.0000000000000000
+-[ RECORD 4 ]--------------------------------------------------------------------
+query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
 calls       | 3000
-total_time  | 271.741999999997
+total_time  | 271.232977
 rows        | 3000
-hit_percent | 93.7968855088209426
--[ RECORD 5 ]---------------------------------------------------------------------
+hit_percent | 98.5723926698852723
+-[ RECORD 5 ]--------------------------------------------------------------------
 query       | alter table pgbench_accounts add primary key (aid)
 calls       | 1
-total_time  | 81.42
+total_time  | 160.588563
 rows        | 0
-hit_percent | 34.4947735191637631
+hit_percent | 100.0000000000000000
+
+
+bench=# SELECT pg_stat_statements_reset(0,0,s.queryid) FROM pg_stat_statements AS s
+            WHERE s.query = 'UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2';
+
+bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
+               nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
+          FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
+-[ RECORD 1 ]--------------------------------------------------------------------
+query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
+calls       | 3000
+total_time  | 20756.669379
+rows        | 3000
+hit_percent | 100.0000000000000000
+-[ RECORD 2 ]--------------------------------------------------------------------
+query       | copy pgbench_accounts from stdin
+calls       | 1
+total_time  | 291.865911
+rows        | 100000
+hit_percent | 100.0000000000000000
+-[ RECORD 3 ]--------------------------------------------------------------------
+query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
+calls       | 3000
+total_time  | 271.232977
+rows        | 3000
+hit_percent | 98.5723926698852723
+-[ RECORD 4 ]--------------------------------------------------------------------
+query       | alter table pgbench_accounts add primary key (aid)
+calls       | 1
+total_time  | 160.588563
+rows        | 0
+hit_percent | 100.0000000000000000
+-[ RECORD 5 ]--------------------------------------------------------------------
+query       | vacuum analyze pgbench_accounts
+calls       | 1
+total_time  | 136.448116
+rows        | 0
+hit_percent | 99.9201915403032721
+
+bench=# SELECT pg_stat_statements_reset(0,0,0);
+
+bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
+               nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
+          FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
+-[ RECORD 1 ]---------------------------------------
+query       | SELECT pg_stat_statements_reset(0,0,0)
+calls       | 1
+total_time  | 0.189497
+rows        | 1
+hit_percent | 
+
 </screen>
  </sect2>
 
