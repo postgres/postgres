@@ -1454,8 +1454,9 @@ su - postgres
        <term><envar>PERL</envar></term>
        <listitem>
         <para>
-         Full path name of the Perl interpreter.  This will be used to
-         determine the dependencies for building PL/Perl.
+         Perl interpreter program.  This will be used to determine the
+         dependencies for building PL/Perl.  The default is
+         <command>perl</command>.
         </para>
        </listitem>
       </varlistentry>
@@ -1464,7 +1465,7 @@ su - postgres
        <term><envar>PYTHON</envar></term>
        <listitem>
         <para>
-         Full path name of the Python interpreter.  This will be used to
+         Python interpreter program.  This will be used to
          determine the dependencies for building PL/Python.  Also,
          whether Python 2 or 3 is specified here (or otherwise
          implicitly chosen) determines which variant of the PL/Python
@@ -1472,7 +1473,7 @@ su - postgres
          <![%standalone-include[the <application>PL/Python</>
          documentation]]>
          <![%standalone-ignore[<xref linkend="plpython-python23">]]>
-         for more information.
+         for more information.  The default is <command>python</command>.
         </para>
        </listitem>
       </varlistentry>
@@ -1481,7 +1482,7 @@ su - postgres
        <term><envar>TCLSH</envar></term>
        <listitem>
         <para>
-         Full path name of the Tcl interpreter.  This will be used to
+         Tcl interpreter program.  This will be used to
          determine the dependencies for building PL/Tcl, and it will
          be substituted into Tcl scripts.
         </para>
