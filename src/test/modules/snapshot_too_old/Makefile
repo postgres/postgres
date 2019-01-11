@@ -43,5 +43,3 @@ isolationcheck-install-force: all | submake-isolation submake-test_snapshot_too_
 	    $(ISOLATIONCHECKS)
 
 .PHONY: check submake-test_snapshot_too_old isolationcheck isolationcheck-install-force
-
-temp-install: EXTRA_INSTALL=src/test/modules/snapshot_too_old

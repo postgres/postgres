@@ -284,10 +284,12 @@ check:
 else
 check: submake $(REGRESS_PREP)
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
-
-checkprep: EXTRA_INSTALL+=$(subdir)
 endif
 endif # REGRESS
+
+ifndef NO_TEMP_INSTALL
+checkprep: EXTRA_INSTALL+=$(subdir)
+endif
 
 
 # STANDARD RULES
