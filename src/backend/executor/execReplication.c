@@ -622,7 +622,7 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 	else if (relkind == RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot use relation \"%s.%s\" as logical replication",
+				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
 						nspname, relname),
 				 errdetail("\"%s.%s\" is a foreign table.",
 						nspname, relname)));
