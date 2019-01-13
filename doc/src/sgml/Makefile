@@ -103,7 +103,9 @@ ICONV = iconv
 PANDOC = pandoc
 
 INSTALL: % : %.html
-	$(PANDOC) $< -t plain | $(ICONV) -f utf8 -t us-ascii//TRANSLIT > $@
+	$(PANDOC) -t plain -o $@.tmp $<
+	$(ICONV) -f utf8 -t us-ascii//TRANSLIT $@.tmp > $@
+	rm $@.tmp
 
 INSTALL.html: %.html : stylesheet-text.xsl %.xml
 	$(XMLLINT) --noout --valid $*.xml
