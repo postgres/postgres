@@ -609,11 +609,29 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 						 const char *relname)
 {
 	/*
-	 * We currently only support writing to regular tables.
+	 * We currently only support writing to regular tables.  However, give
+	 * a more specific error for partitioned and foreign tables.
 	 */
+	if (relkind == RELKIND_PARTITIONED_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
+						nspname, relname),
+				 errdetail("\"%s.%s\" is a partitioned table.",
+						nspname, relname)));
+	else if (relkind == RELKIND_FOREIGN_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot use relation \"%s.%s\" as logical replication",
+						nspname, relname),
+				 errdetail("\"%s.%s\" is a foreign table.",
+						nspname, relname)));
+
 	if (relkind != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("logical replication target relation \"%s.%s\" is not a table",
+				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
+						nspname, relname),
+				 errdetail("\"%s.%s\" is not a table.",
 						nspname, relname)));
 }
