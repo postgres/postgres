@@ -474,7 +474,7 @@ endif
 
 # Show the DLSUFFIX to build scripts (e.g. buildfarm)
 .PHONY: show_dl_suffix
-show_dl_suffix
+show_dl_suffix:
 	@echo $(DLSUFFIX)
 
 
