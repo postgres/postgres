@@ -9,7 +9,7 @@
                (indent-tabs-mode . nil)))
  (perl-mode . ((perl-indent-level . 4)
                (perl-continued-statement-offset . 2)
-               (perl-continued-brace-offset . 4)
+               (perl-continued-brace-offset . -2)
                (perl-brace-offset . 0)
                (perl-brace-imaginary-offset . 0)
                (perl-label-offset . -2)
