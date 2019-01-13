@@ -47,10 +47,13 @@
   (interactive)
   (setq perl-brace-imaginary-offset 0)
   (setq perl-brace-offset 0)
-  (setq perl-continued-brace-offset 4)
   (setq perl-continued-statement-offset 2)
+  (setq perl-continued-brace-offset (- perl-continued-statement-offset))
   (setq perl-indent-level 4)
   (setq perl-label-offset -2)
+  ;; Next two aren't marked safe-local-variable, so .dir-locals.el omits them.
+  (setq perl-indent-continued-arguments 4)
+  (setq perl-indent-parens-as-block t)
   (setq indent-tabs-mode t)
   (setq tab-width 4))
 
