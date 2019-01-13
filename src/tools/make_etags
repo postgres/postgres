@@ -2,6 +2,9 @@
 
 # src/tools/make_etags
 
+command -v etags >/dev/null || \
+	{ echo "'etags' program not found" 1>&2; exit 1; }
+
 rm -f ./TAGS
 
 find `pwd`/ -type f -name '*.[chyl]' -print |
