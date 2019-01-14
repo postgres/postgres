@@ -767,3 +767,7 @@ NOTICE:  text search configuration "no_such_config" does not exist
 select func_with_bad_set();
 ERROR:  invalid value for parameter "default_text_search_config": "no_such_config"
 reset check_function_bodies;
+set default_with_oids to f;
+-- Should not allow to set it to true.
+set default_with_oids to t;
+ERROR:  tables declared WITH OIDS are not supported

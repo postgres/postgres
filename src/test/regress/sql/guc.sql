@@ -288,3 +288,7 @@ set default_text_search_config = no_such_config;
 select func_with_bad_set();
 
 reset check_function_bodies;
+
+set default_with_oids to f;
+-- Should not allow to set it to true.
+set default_with_oids to t;
