@@ -594,7 +594,7 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     scans every page in the table that is not already all-frozen, it should
     set <literal>age(relfrozenxid)</> to a value just a little more than the
     <varname>vacuum_freeze_min_age</> setting
-    that was used (more by the number of transcations started since the
+    that was used (more by the number of transactions started since the
     <command>VACUUM</> started).  If no <structfield>relfrozenxid</>-advancing
     <command>VACUUM</> is issued on the table until
     <varname>autovacuum_freeze_max_age</> is reached, an autovacuum will soon
