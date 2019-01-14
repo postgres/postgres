@@ -14,7 +14,6 @@
 #ifndef HIO_H
 #define HIO_H
 
-#include "access/heapam.h"
 #include "access/htup.h"
 #include "utils/relcache.h"
 #include "storage/buf.h"
@@ -39,7 +38,7 @@ extern void RelationPutHeapTuple(Relation relation, Buffer buffer,
 					 HeapTuple tuple, bool token);
 extern Buffer RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
-						  BulkInsertState bistate,
+						  BulkInsertStateData *bistate,
 						  Buffer *vmbuffer, Buffer *vmbuffer_other);
 
 #endif							/* HIO_H */

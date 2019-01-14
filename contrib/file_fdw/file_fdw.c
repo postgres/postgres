@@ -18,6 +18,7 @@
 #include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
+#include "access/heapam.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_foreign_table.h"
 #include "commands/copy.h"

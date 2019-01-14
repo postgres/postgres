@@ -14,6 +14,7 @@
 
 #include "postgres_fdw.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"

@@ -27,6 +27,7 @@
 
 #include "pageinspect.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"

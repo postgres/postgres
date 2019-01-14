@@ -15,7 +15,6 @@
 #define RELSCAN_H
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/itup.h"
 #include "access/tupdesc.h"
@@ -71,7 +70,7 @@ typedef struct HeapScanDescData
 	BlockNumber rs_cblock;		/* current block # in scan, if any */
 	Buffer		rs_cbuf;		/* current buffer in scan, if any */
 	/* NB: if rs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
-	ParallelHeapScanDesc rs_parallel;	/* parallel scan information */
+	struct ParallelHeapScanDescData *rs_parallel;	/* parallel scan information */
 
 	/* these fields only used in page-at-a-time mode and for bitmap scans */
 	int			rs_cindex;		/* current tuple's index in vistuples */
@@ -155,7 +154,7 @@ typedef struct SysScanDescData
 {
 	Relation	heap_rel;		/* catalog being scanned */
 	Relation	irel;			/* NULL if doing heap scan */
-	HeapScanDesc scan;			/* only valid in heap-scan case */
+	struct HeapScanDescData *scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
 	Snapshot	snapshot;		/* snapshot to unregister at end of scan */
 }			SysScanDescData;

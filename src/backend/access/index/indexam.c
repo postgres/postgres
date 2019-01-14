@@ -70,6 +70,7 @@
 #include "postgres.h"
 
 #include "access/amapi.h"
+#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "access/xlog.h"

@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "catalog/index.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"

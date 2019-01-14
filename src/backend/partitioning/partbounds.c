@@ -13,6 +13,7 @@
 */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_type.h"

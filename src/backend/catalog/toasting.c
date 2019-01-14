@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"

@@ -27,6 +27,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSeqscan.h"

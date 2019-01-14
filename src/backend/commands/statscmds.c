@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/relscan.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"

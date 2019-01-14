@@ -24,6 +24,7 @@
 
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/xact.h"

@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"

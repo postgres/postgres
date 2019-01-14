@@ -19,6 +19,7 @@
 #include <math.h>
 #include <unistd.h>
 
+#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"

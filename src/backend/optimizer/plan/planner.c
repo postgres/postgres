@@ -18,6 +18,7 @@
 #include <limits.h>
 #include <math.h>
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/parallel.h"
 #include "access/sysattr.h"

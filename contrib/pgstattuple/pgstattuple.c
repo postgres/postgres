@@ -26,6 +26,7 @@
 
 #include "access/gist_private.h"
 #include "access/hash.h"
+#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "catalog/namespace.h"

@@ -57,6 +57,7 @@
 
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/parallel.h"
 #include "access/relscan.h"

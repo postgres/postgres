@@ -10,6 +10,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/visibilitymap.h"
 #include "catalog/pg_type.h"

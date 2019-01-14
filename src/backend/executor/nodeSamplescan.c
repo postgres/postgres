@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/tsmapi.h"
 #include "executor/executor.h"

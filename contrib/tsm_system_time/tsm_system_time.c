@@ -26,6 +26,7 @@
 
 #include <math.h>
 
+#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/tsmapi.h"
 #include "catalog/pg_type.h"

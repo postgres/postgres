@@ -15,7 +15,6 @@
 #define EXECNODES_H
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/tupconvert.h"
 #include "executor/instrument.h"
 #include "lib/pairingheap.h"
@@ -1268,7 +1267,7 @@ typedef struct ScanState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	Relation	ss_currentRelation;
-	HeapScanDesc ss_currentScanDesc;
+	struct HeapScanDescData *ss_currentScanDesc;
 	TupleTableSlot *ss_ScanTupleSlot;
 } ScanState;
 

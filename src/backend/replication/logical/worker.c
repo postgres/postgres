@@ -27,6 +27,7 @@
 #include "pgstat.h"
 #include "funcapi.h"
 
+#include "access/heapam.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 

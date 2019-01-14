@@ -37,6 +37,7 @@
 
 #include <math.h>
 
+#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "access/visibilitymap.h"

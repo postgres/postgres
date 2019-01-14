@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/xact.h"

@@ -15,6 +15,7 @@
 #define EXECUTOR_H
 
 #include "executor/execdesc.h"
+#include "nodes/lockoptions.h"
 #include "nodes/parsenodes.h"
 #include "utils/memutils.h"
 
@@ -184,11 +185,11 @@ extern LockTupleMode ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo);
 extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti, bool missing_ok);
 extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
-			 Relation relation, Index rti, int lockmode,
+			 Relation relation, Index rti, LockTupleMode lockmode,
 			 ItemPointer tid, TransactionId priorXmax);
 extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
-				  int lockmode, LockWaitPolicy wait_policy, ItemPointer tid,
-				  TransactionId priorXmax);
+				  LockTupleMode lockmode, LockWaitPolicy wait_policy,
+				  ItemPointer tid, TransactionId priorXmax);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
 				 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,

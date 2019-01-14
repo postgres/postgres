@@ -19,6 +19,7 @@
 #include "access/brin_page.h"
 #include "access/brin_pageops.h"
 #include "access/brin_xlog.h"
+#include "access/heapam.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
 #include "access/xloginsert.h"

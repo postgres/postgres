@@ -13,6 +13,7 @@
 #include "postgres.h"
 
 #include "access/visibilitymap.h"
+#include "access/heapam.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/multixact.h"
