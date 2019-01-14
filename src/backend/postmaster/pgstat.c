@@ -3745,7 +3745,7 @@ pgstat_get_wait_io(WaitEventIO w)
 			event_name = "LockFileCreateSync";
 			break;
 		case WAIT_EVENT_LOCK_FILE_CREATE_WRITE:
-			event_name = "LockFileCreateWRITE";
+			event_name = "LockFileCreateWrite";
 			break;
 		case WAIT_EVENT_LOCK_FILE_RECHECKDATADIR_READ:
 			event_name = "LockFileReCheckDataDirRead";

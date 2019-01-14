@@ -16153,7 +16153,7 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     optional parameter. The return value is <literal>NULL</literal> when the
     log format requested is not a configured
     <xref linkend="guc-log-destination">.  The
-    <function>pg_current_logfiles</function> reflects the contents of the
+    <function>pg_current_logfile</function> reflects the contents of the
     <filename>current_logfiles</> file.
    </para>
 

@@ -6106,7 +6106,7 @@ char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, 
 char *PQencryptPassword(const char *passwd, const char *user);
 </synopsis>
       <function>PQencryptPassword</> is an older, deprecated version of
-      <function>PQencryptPasswodConn</>. The difference is that
+      <function>PQencryptPasswordConn</>. The difference is that
       <function>PQencryptPassword</> does not
       require a connection object, and <literal>md5</> is always used as the
       encryption algorithm.

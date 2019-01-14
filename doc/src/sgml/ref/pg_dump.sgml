@@ -1246,7 +1246,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <para>
    When dumping logical replication subscriptions,
    <application>pg_dump</application> will generate <command>CREATE
-   SUBSCRIPTION</command> commands that use the <literal>NOCONNECT</literal>
+   SUBSCRIPTION</command> commands that use the <literal>connect = false</literal>
    option, so that restoring the subscription does not make remote connections
    for creating a replication slot or for initial table copy.  That way, the
    dump can be restored without requiring network access to the remote
