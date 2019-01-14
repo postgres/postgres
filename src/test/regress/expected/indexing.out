@@ -1384,3 +1384,6 @@ insert into covidxpart values (4, 1);
 insert into covidxpart values (4, 1);
 ERROR:  duplicate key value violates unique constraint "covidxpart4_a_b_idx"
 DETAIL:  Key (a)=(4) already exists.
+create unique index on covidxpart (b) include (a); -- should fail
+ERROR:  insufficient columns in UNIQUE constraint definition
+DETAIL:  UNIQUE constraint on table "covidxpart" lacks column "a" which is part of the partition key.

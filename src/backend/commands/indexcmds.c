@@ -722,7 +722,7 @@ DefineIndex(Oid relationId,
 						 errdetail("%s constraints cannot be used when partition keys include expressions.",
 								   constraint_type)));
 
-			for (j = 0; j < indexInfo->ii_NumIndexAttrs; j++)
+			for (j = 0; j < indexInfo->ii_NumIndexKeyAttrs; j++)
 			{
 				if (key->partattrs[i] == indexInfo->ii_IndexAttrNumbers[j])
 				{
