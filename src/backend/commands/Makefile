@@ -20,6 +20,6 @@ OBJS = amcmds.o aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o \
 	policy.o portalcmds.o prepare.o proclang.o publicationcmds.o \
 	schemacmds.o seclabel.o sequence.o statscmds.o subscriptioncmds.o \
 	tablecmds.o tablespace.o trigger.o tsearchcmds.o typecmds.o user.o \
-	vacuum.o vacuumlazy.o variable.o view.o
+	vacuum.o variable.o view.o
 
 include $(top_srcdir)/src/backend/common.mk

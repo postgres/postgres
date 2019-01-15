@@ -186,4 +186,8 @@ extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
 extern void SyncScanShmemInit(void);
 extern Size SyncScanShmemSize(void);
 
+/* in heap/vacuumlazy.c */
+struct VacuumParams;
+extern void heap_vacuum_rel(Relation onerel, int options,
+				struct VacuumParams *params, BufferAccessStrategy bstrategy);
 #endif							/* HEAPAM_H */
