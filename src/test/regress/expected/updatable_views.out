@@ -1782,31 +1782,31 @@ UPDATE rw_view1 SET a = a + 5; -- should fail
 ERROR:  new row violates check option for view "rw_view1"
 DETAIL:  Failing row contains (15).
 EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (5);
-                          QUERY PLAN                           
----------------------------------------------------------------
+                       QUERY PLAN                        
+---------------------------------------------------------
  Insert on base_tbl b
    ->  Result
-         SubPlan 1
-           ->  Index Only Scan using ref_tbl_pkey on ref_tbl r
-                 Index Cond: (a = b.a)
-         SubPlan 2
-           ->  Seq Scan on ref_tbl r_1
+   SubPlan 1
+     ->  Index Only Scan using ref_tbl_pkey on ref_tbl r
+           Index Cond: (a = b.a)
+   SubPlan 2
+     ->  Seq Scan on ref_tbl r_1
 (7 rows)
 
 EXPLAIN (costs off) UPDATE rw_view1 SET a = a + 5;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Update on base_tbl b
    ->  Hash Join
          Hash Cond: (b.a = r.a)
          ->  Seq Scan on base_tbl b
          ->  Hash
                ->  Seq Scan on ref_tbl r
-         SubPlan 1
-           ->  Index Only Scan using ref_tbl_pkey on ref_tbl r_1
-                 Index Cond: (a = b.a)
-         SubPlan 2
-           ->  Seq Scan on ref_tbl r_2
+   SubPlan 1
+     ->  Index Only Scan using ref_tbl_pkey on ref_tbl r_1
+           Index Cond: (a = b.a)
+   SubPlan 2
+     ->  Seq Scan on ref_tbl r_2
 (11 rows)
 
 DROP TABLE base_tbl, ref_tbl CASCADE;
