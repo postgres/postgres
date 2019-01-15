@@ -61,7 +61,7 @@ MemoryContextData StructMemoryContextData;
 TupleTableSlot StructTupleTableSlot;
 HeapTupleTableSlot StructHeapTupleTableSlot;
 MinimalTupleTableSlot StructMinimalTupleTableSlot;
-struct tupleDesc StructtupleDesc;
+TupleDescData StructTupleDescData;
 
 
 /*
