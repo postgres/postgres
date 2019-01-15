@@ -14,7 +14,6 @@
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-#include "access/genam.h"
 #include "access/tupconvert.h"
 #include "executor/instrument.h"
 #include "lib/pairingheap.h"
@@ -24,6 +23,7 @@
 #include "utils/queryenvironment.h"
 #include "utils/reltrigger.h"
 #include "utils/sharedtuplestore.h"
+#include "utils/snapshot.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
 #include "utils/tuplesort.h"
@@ -1306,14 +1306,14 @@ typedef struct SampleScanState
  */
 typedef struct
 {
-	ScanKey		scan_key;		/* scankey to put value into */
+	struct ScanKeyData *scan_key;		/* scankey to put value into */
 	ExprState  *key_expr;		/* expr to evaluate to get value */
 	bool		key_toastable;	/* is expr's result a toastable datatype? */
 } IndexRuntimeKeyInfo;
 
 typedef struct
 {
-	ScanKey		scan_key;		/* scankey to put value into */
+	struct ScanKeyData *scan_key;		/* scankey to put value into */
 	ExprState  *array_expr;		/* expr to evaluate to get array value */
 	int			next_elem;		/* next array element to use */
 	int			num_elems;		/* number of elems in current array value */
@@ -1352,16 +1352,16 @@ typedef struct IndexScanState
 	ScanState	ss;				/* its first field is NodeTag */
 	ExprState  *indexqualorig;
 	List	   *indexorderbyorig;
-	ScanKey		iss_ScanKeys;
+	struct ScanKeyData *iss_ScanKeys;
 	int			iss_NumScanKeys;
-	ScanKey		iss_OrderByKeys;
+	struct ScanKeyData *iss_OrderByKeys;
 	int			iss_NumOrderByKeys;
 	IndexRuntimeKeyInfo *iss_RuntimeKeys;
 	int			iss_NumRuntimeKeys;
 	bool		iss_RuntimeKeysReady;
 	ExprContext *iss_RuntimeContext;
 	Relation	iss_RelationDesc;
-	IndexScanDesc iss_ScanDesc;
+	struct IndexScanDescData *iss_ScanDesc;
 
 	/* These are needed for re-checking ORDER BY expr ordering */
 	pairingheap *iss_ReorderQueue;
@@ -1397,16 +1397,16 @@ typedef struct IndexOnlyScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	ExprState  *indexqual;
-	ScanKey		ioss_ScanKeys;
+	struct ScanKeyData *ioss_ScanKeys;
 	int			ioss_NumScanKeys;
-	ScanKey		ioss_OrderByKeys;
+	struct ScanKeyData *ioss_OrderByKeys;
 	int			ioss_NumOrderByKeys;
 	IndexRuntimeKeyInfo *ioss_RuntimeKeys;
 	int			ioss_NumRuntimeKeys;
 	bool		ioss_RuntimeKeysReady;
 	ExprContext *ioss_RuntimeContext;
 	Relation	ioss_RelationDesc;
-	IndexScanDesc ioss_ScanDesc;
+	struct IndexScanDescData *ioss_ScanDesc;
 	Buffer		ioss_VMBuffer;
 	Size		ioss_PscanLen;
 } IndexOnlyScanState;
@@ -1431,7 +1431,7 @@ typedef struct BitmapIndexScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	TIDBitmap  *biss_result;
-	ScanKey		biss_ScanKeys;
+	struct ScanKeyData *biss_ScanKeys;
 	int			biss_NumScanKeys;
 	IndexRuntimeKeyInfo *biss_RuntimeKeys;
 	int			biss_NumRuntimeKeys;
@@ -1440,7 +1440,7 @@ typedef struct BitmapIndexScanState
 	bool		biss_RuntimeKeysReady;
 	ExprContext *biss_RuntimeContext;
 	Relation	biss_RelationDesc;
-	IndexScanDesc biss_ScanDesc;
+	struct IndexScanDescData *biss_ScanDesc;
 } BitmapIndexScanState;
 
 /* ----------------

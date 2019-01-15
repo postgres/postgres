@@ -14,11 +14,12 @@
 #ifndef RELSCAN_H
 #define RELSCAN_H
 
-#include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/itup.h"
-#include "access/tupdesc.h"
+#include "port/atomics.h"
+#include "storage/buf.h"
 #include "storage/spin.h"
+#include "utils/relcache.h"
 
 /*
  * Shared state for parallel heap scan.
@@ -46,9 +47,9 @@ typedef struct HeapScanDescData
 {
 	/* scan parameters */
 	Relation	rs_rd;			/* heap relation descriptor */
-	Snapshot	rs_snapshot;	/* snapshot to see */
+	struct SnapshotData *rs_snapshot;	/* snapshot to see */
 	int			rs_nkeys;		/* number of scan keys */
-	ScanKey		rs_key;			/* array of scan key descriptors */
+	struct ScanKeyData *rs_key;			/* array of scan key descriptors */
 	bool		rs_bitmapscan;	/* true if this is really a bitmap scan */
 	bool		rs_samplescan;	/* true if this is really a sample scan */
 	bool		rs_pageatatime; /* verify visibility page-at-a-time? */
@@ -88,11 +89,11 @@ typedef struct IndexScanDescData
 	/* scan parameters */
 	Relation	heapRelation;	/* heap relation descriptor, or NULL */
 	Relation	indexRelation;	/* index relation descriptor */
-	Snapshot	xs_snapshot;	/* snapshot to see */
+	struct SnapshotData *xs_snapshot;	/* snapshot to see */
 	int			numberOfKeys;	/* number of index qualifier conditions */
 	int			numberOfOrderBys;	/* number of ordering operators */
-	ScanKey		keyData;		/* array of index qualifier descriptors */
-	ScanKey		orderByData;	/* array of ordering op descriptors */
+	struct ScanKeyData *keyData;		/* array of index qualifier descriptors */
+	struct ScanKeyData *orderByData;	/* array of ordering op descriptors */
 	bool		xs_want_itup;	/* caller requests index tuples */
 	bool		xs_temp_snap;	/* unregister snapshot at scan end? */
 
@@ -112,9 +113,9 @@ typedef struct IndexScanDescData
 	 * format will be used.
 	 */
 	IndexTuple	xs_itup;		/* index tuple returned by AM */
-	TupleDesc	xs_itupdesc;	/* rowtype descriptor of xs_itup */
+	struct TupleDescData *xs_itupdesc;	/* rowtype descriptor of xs_itup */
 	HeapTuple	xs_hitup;		/* index data returned by AM, as HeapTuple */
-	TupleDesc	xs_hitupdesc;	/* rowtype descriptor of xs_hitup */
+	struct TupleDescData *xs_hitupdesc;	/* rowtype descriptor of xs_hitup */
 
 	/* xs_ctup/xs_cbuf/xs_recheck are valid after a successful index_getnext */
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
@@ -137,7 +138,7 @@ typedef struct IndexScanDescData
 	bool		xs_continue_hot;	/* T if must keep walking HOT chain */
 
 	/* parallel index scan information, in shared memory */
-	ParallelIndexScanDesc parallel_scan;
+	struct ParallelIndexScanDescData *parallel_scan;
 }			IndexScanDescData;
 
 /* Generic structure for parallel scans */
@@ -155,8 +156,8 @@ typedef struct SysScanDescData
 	Relation	heap_rel;		/* catalog being scanned */
 	Relation	irel;			/* NULL if doing heap scan */
 	struct HeapScanDescData *scan;			/* only valid in heap-scan case */
-	IndexScanDesc iscan;		/* only valid in index-scan case */
-	Snapshot	snapshot;		/* snapshot to unregister at end of scan */
+	struct IndexScanDescData *iscan;		/* only valid in index-scan case */
+	struct SnapshotData *snapshot;		/* snapshot to unregister at end of scan */
 }			SysScanDescData;
 
 #endif							/* RELSCAN_H */

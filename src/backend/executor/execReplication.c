@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/transam.h"

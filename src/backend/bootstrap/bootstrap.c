@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"

@@ -16,6 +16,7 @@
 
 #include <math.h>
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/sysattr.h"

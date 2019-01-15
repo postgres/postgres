@@ -39,6 +39,7 @@
 #include "postgres.h"
 
 #include "access/bufmask.h"
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
 #include "access/hio.h"
