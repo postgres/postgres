@@ -158,7 +158,7 @@ typedef struct BTShared
 	/*
 	 * This variable-sized field must come last.
 	 *
-	 * See _bt_parallel_estimate_shared().
+	 * See _bt_parallel_estimate_shared() and heap_parallelscan_estimate().
 	 */
 	ParallelHeapScanDescData heapdesc;
 } BTShared;
@@ -1405,15 +1405,8 @@ _bt_end_parallel(BTLeader *btleader)
 static Size
 _bt_parallel_estimate_shared(Snapshot snapshot)
 {
-	if (!IsMVCCSnapshot(snapshot))
-	{
-		Assert(snapshot == SnapshotAny);
-		return sizeof(BTShared);
-	}
-
-	return add_size(offsetof(BTShared, heapdesc) +
-					offsetof(ParallelHeapScanDescData, phs_snapshot_data),
-					EstimateSnapshotSpace(snapshot));
+	return add_size(offsetof(BTShared, heapdesc),
+					heap_parallelscan_estimate(snapshot));
 }
 
 /*

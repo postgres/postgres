@@ -1615,8 +1615,14 @@ heap_endscan(HeapScanDesc scan)
 Size
 heap_parallelscan_estimate(Snapshot snapshot)
 {
-	return add_size(offsetof(ParallelHeapScanDescData, phs_snapshot_data),
-					EstimateSnapshotSpace(snapshot));
+	Size		sz = offsetof(ParallelHeapScanDescData, phs_snapshot_data);
+
+	if (IsMVCCSnapshot(snapshot))
+		sz = add_size(sz, EstimateSnapshotSpace(snapshot));
+	else
+		Assert(snapshot == SnapshotAny);
+
+	return sz;
 }
 
 /* ----------------
