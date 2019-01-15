@@ -131,15 +131,6 @@ static relopt_bool boolRelOpts[] =
 	},
 	{
 		{
-			"recheck_on_update",
-			"Recheck functional index expression for changed value after update",
-			RELOPT_KIND_INDEX,
-			ShareUpdateExclusiveLock	/* since only applies to later UPDATEs */
-		},
-		true
-	},
-	{
-		{
 			"security_barrier",
 			"View acts as a row security barrier",
 			RELOPT_KIND_VIEW,
@@ -1343,7 +1334,7 @@ fillRelOptions(void *rdopts, Size basesize,
 				break;
 			}
 		}
-		if (validate && !found && options[i].gen->kinds != RELOPT_KIND_INDEX)
+		if (validate && !found)
 			elog(ERROR, "reloption \"%s\" not found in parse table",
 				 options[i].gen->name);
 	}
@@ -1499,40 +1490,6 @@ index_reloptions(amoptions_function amoptions, Datum reloptions, bool validate)
 		return NULL;
 
 	return amoptions(reloptions, validate);
-}
-
-/*
- * Parse generic options for all indexes.
- *
- *	reloptions	options as text[] datum
- *	validate	error flag
- */
-bytea *
-index_generic_reloptions(Datum reloptions, bool validate)
-{
-	int			numoptions;
-	GenericIndexOpts *idxopts;
-	relopt_value *options;
-	static const relopt_parse_elt tab[] = {
-		{"recheck_on_update", RELOPT_TYPE_BOOL, offsetof(GenericIndexOpts, recheck_on_update)}
-	};
-
-	options = parseRelOptions(reloptions, validate,
-							  RELOPT_KIND_INDEX,
-							  &numoptions);
-
-	/* if none set, we're done */
-	if (numoptions == 0)
-		return NULL;
-
-	idxopts = allocateReloptStruct(sizeof(GenericIndexOpts), options, numoptions);
-
-	fillRelOptions((void *) idxopts, sizeof(GenericIndexOpts), options, numoptions,
-				   validate, tab, lengthof(tab));
-
-	pfree(options);
-
-	return (bytea *) idxopts;
 }
 
 /*

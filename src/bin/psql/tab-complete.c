@@ -1623,14 +1623,14 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("(");
 	/* ALTER INDEX <foo> SET|RESET ( */
 	else if (Matches("ALTER", "INDEX", MatchAny, "RESET", "("))
-		COMPLETE_WITH("fillfactor", "recheck_on_update",
+		COMPLETE_WITH("fillfactor",
 					  "vacuum_cleanup_index_scale_factor",	/* BTREE */
 					  "fastupdate", "gin_pending_list_limit",	/* GIN */
 					  "buffering",	/* GiST */
 					  "pages_per_range", "autosummarize"	/* BRIN */
 			);
 	else if (Matches("ALTER", "INDEX", MatchAny, "SET", "("))
-		COMPLETE_WITH("fillfactor =", "recheck_on_update =",
+		COMPLETE_WITH("fillfactor =",
 					  "vacuum_cleanup_index_scale_factor =",	/* BTREE */
 					  "fastupdate =", "gin_pending_list_limit =",	/* GIN */
 					  "buffering =",	/* GiST */
