@@ -219,6 +219,20 @@ SELECT * FROM PKTABLE;
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 
+--
+-- Check initial check upon ALTER TABLE
+--
+CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, PRIMARY KEY(ptest1, ptest2) );
+CREATE TABLE FKTABLE ( ftest1 int, ftest2 int );
+
+INSERT INTO PKTABLE VALUES (1, 2);
+INSERT INTO FKTABLE VALUES (1, NULL);
+
+ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) REFERENCES PKTABLE MATCH FULL;
+
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+
 
 -- MATCH SIMPLE
 
@@ -1214,6 +1228,9 @@ INSERT INTO fk_partitioned_fk (a,b) VALUES (NULL, NULL);
 INSERT INTO fk_notpartitioned_pk VALUES (1, 2);
 CREATE TABLE fk_partitioned_fk_full (x int, y int) PARTITION BY RANGE (x);
 CREATE TABLE fk_partitioned_fk_full_1 PARTITION OF fk_partitioned_fk_full DEFAULT;
+INSERT INTO fk_partitioned_fk_full VALUES (1, NULL);
+ALTER TABLE fk_partitioned_fk_full ADD FOREIGN KEY (x, y) REFERENCES fk_notpartitioned_pk MATCH FULL;  -- fails
+TRUNCATE fk_partitioned_fk_full;
 ALTER TABLE fk_partitioned_fk_full ADD FOREIGN KEY (x, y) REFERENCES fk_notpartitioned_pk MATCH FULL;
 INSERT INTO fk_partitioned_fk_full VALUES (1, NULL);  -- fails
 DROP TABLE fk_partitioned_fk_full;
