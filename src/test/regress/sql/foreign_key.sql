@@ -992,22 +992,24 @@ delete from defp where f1 = 1; -- fail
 -- Test the difference between NO ACTION and RESTRICT
 --
 create temp table pp (f1 int primary key);
-create temp table cc (f1 int references pp on update no action);
+create temp table cc (f1 int references pp on update no action on delete no action);
 insert into pp values(12);
 insert into pp values(11);
 update pp set f1=f1+1;
 insert into cc values(13);
 update pp set f1=f1+1;
 update pp set f1=f1+1; -- fail
+delete from pp where f1 = 13; -- fail
 drop table pp, cc;
 
 create temp table pp (f1 int primary key);
-create temp table cc (f1 int references pp on update restrict);
+create temp table cc (f1 int references pp on update restrict on delete restrict);
 insert into pp values(12);
 insert into pp values(11);
 update pp set f1=f1+1;
 insert into cc values(13);
 update pp set f1=f1+1; -- fail
+delete from pp where f1 = 13; -- fail
 drop table pp, cc;
 
 --
