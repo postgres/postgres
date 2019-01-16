@@ -97,6 +97,12 @@ UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
 -- Check FKTABLE for update of matched row
 SELECT * FROM FKTABLE;
 
+-- Check update with part of key null
+UPDATE FKTABLE SET ftest1 = NULL WHERE ftest1 = 1;
+
+-- Check update with old and new key values equal
+UPDATE FKTABLE SET ftest1 = 1 WHERE ftest1 = 1;
+
 -- Try altering the column type where foreign keys are involved
 ALTER TABLE PKTABLE ALTER COLUMN ptest1 TYPE bigint;
 ALTER TABLE FKTABLE ALTER COLUMN ftest1 TYPE bigint;
@@ -1203,6 +1209,14 @@ INSERT INTO fk_notpartitioned_pk VALUES (2502, 2503);
 INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, 2503);
 -- this always works
 INSERT INTO fk_partitioned_fk (a,b) VALUES (NULL, NULL);
+
+-- MATCH FULL
+INSERT INTO fk_notpartitioned_pk VALUES (1, 2);
+CREATE TABLE fk_partitioned_fk_full (x int, y int) PARTITION BY RANGE (x);
+CREATE TABLE fk_partitioned_fk_full_1 PARTITION OF fk_partitioned_fk_full DEFAULT;
+ALTER TABLE fk_partitioned_fk_full ADD FOREIGN KEY (x, y) REFERENCES fk_notpartitioned_pk MATCH FULL;
+INSERT INTO fk_partitioned_fk_full VALUES (1, NULL);  -- fails
+DROP TABLE fk_partitioned_fk_full;
 
 -- ON UPDATE SET NULL
 SELECT tableoid::regclass, a, b FROM fk_partitioned_fk WHERE b IS NULL ORDER BY a;
