@@ -20,22 +20,16 @@
 extern AppendRelInfo *make_append_rel_info(Relation parentrel,
 					 Relation childrel,
 					 Index parentRTindex, Index childRTindex);
-extern Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
-					List *translated_vars);
 extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node,
 					   int nappinfos, AppendRelInfo **appinfos);
-
 extern Node *adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
 								  Relids child_relids,
 								  Relids top_parent_relids);
-
-extern AppendRelInfo **find_appinfos_by_relids(PlannerInfo *root,
-						Relids relids, int *nappinfos);
-
-extern SpecialJoinInfo *build_child_join_sjinfo(PlannerInfo *root,
-						SpecialJoinInfo *parent_sjinfo,
-						Relids left_relids, Relids right_relids);
+extern Relids adjust_child_relids(Relids relids, int nappinfos,
+					AppendRelInfo **appinfos);
 extern Relids adjust_child_relids_multilevel(PlannerInfo *root, Relids relids,
 							   Relids child_relids, Relids top_parent_relids);
+extern AppendRelInfo **find_appinfos_by_relids(PlannerInfo *root,
+						Relids relids, int *nappinfos);
 
 #endif							/* APPENDINFO_H */

@@ -15,13 +15,12 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/sysattr.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/appendinfo.h"
 #include "parser/parsetree.h"
-#include "utils/rel.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 
@@ -38,8 +37,6 @@ static void make_inh_translation_list(Relation oldrelation,
 						  List **translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 							   adjust_appendrel_attrs_context *context);
-static Relids adjust_child_relids(Relids relids, int nappinfos,
-					AppendRelInfo **appinfos);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *context);
 
@@ -164,58 +161,6 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 	}
 
 	*translated_vars = vars;
-}
-
-/*
- * translate_col_privs
- *	  Translate a bitmapset representing per-column privileges from the
- *	  parent rel's attribute numbering to the child's.
- *
- * The only surprise here is that we don't translate a parent whole-row
- * reference into a child whole-row reference.  That would mean requiring
- * permissions on all child columns, which is overly strict, since the
- * query is really only going to reference the inherited columns.  Instead
- * we set the per-column bits for all inherited columns.
- */
-Bitmapset *
-translate_col_privs(const Bitmapset *parent_privs,
-					List *translated_vars)
-{
-	Bitmapset  *child_privs = NULL;
-	bool		whole_row;
-	int			attno;
-	ListCell   *lc;
-
-	/* System attributes have the same numbers in all tables */
-	for (attno = FirstLowInvalidHeapAttributeNumber + 1; attno < 0; attno++)
-	{
-		if (bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
-						  parent_privs))
-			child_privs = bms_add_member(child_privs,
-										 attno - FirstLowInvalidHeapAttributeNumber);
-	}
-
-	/* Check if parent has whole-row reference */
-	whole_row = bms_is_member(InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber,
-							  parent_privs);
-
-	/* And now translate the regular user attributes, using the vars list */
-	attno = InvalidAttrNumber;
-	foreach(lc, translated_vars)
-	{
-		Var		   *var = lfirst_node(Var, lc);
-
-		attno++;
-		if (var == NULL)		/* ignore dropped columns */
-			continue;
-		if (whole_row ||
-			bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
-						  parent_privs))
-			child_privs = bms_add_member(child_privs,
-										 var->varattno - FirstLowInvalidHeapAttributeNumber);
-	}
-
-	return child_privs;
 }
 
 /*
@@ -528,10 +473,52 @@ adjust_appendrel_attrs_mutator(Node *node,
 }
 
 /*
+ * adjust_appendrel_attrs_multilevel
+ *	  Apply Var translations from a toplevel appendrel parent down to a child.
+ *
+ * In some cases we need to translate expressions referencing a parent relation
+ * to reference an appendrel child that's multiple levels removed from it.
+ */
+Node *
+adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
+								  Relids child_relids,
+								  Relids top_parent_relids)
+{
+	AppendRelInfo **appinfos;
+	Bitmapset  *parent_relids = NULL;
+	int			nappinfos;
+	int			cnt;
+
+	Assert(bms_num_members(child_relids) == bms_num_members(top_parent_relids));
+
+	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
+
+	/* Construct relids set for the immediate parent of given child. */
+	for (cnt = 0; cnt < nappinfos; cnt++)
+	{
+		AppendRelInfo *appinfo = appinfos[cnt];
+
+		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
+	}
+
+	/* Recurse if immediate parent is not the top parent. */
+	if (!bms_equal(parent_relids, top_parent_relids))
+		node = adjust_appendrel_attrs_multilevel(root, node, parent_relids,
+												 top_parent_relids);
+
+	/* Now translate for this child */
+	node = adjust_appendrel_attrs(root, node, nappinfos, appinfos);
+
+	pfree(appinfos);
+
+	return node;
+}
+
+/*
  * Substitute child relids for parent relids in a Relid set.  The array of
  * appinfos specifies the substitutions to be performed.
  */
-static Relids
+Relids
 adjust_child_relids(Relids relids, int nappinfos, AppendRelInfo **appinfos)
 {
 	Bitmapset  *result = NULL;
@@ -709,90 +696,6 @@ adjust_inherited_tlist(List *tlist, AppendRelInfo *context)
 	}
 
 	return new_tlist;
-}
-
-/*
- * adjust_appendrel_attrs_multilevel
- *	  Apply Var translations from a toplevel appendrel parent down to a child.
- *
- * In some cases we need to translate expressions referencing a parent relation
- * to reference an appendrel child that's multiple levels removed from it.
- */
-Node *
-adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-								  Relids child_relids,
-								  Relids top_parent_relids)
-{
-	AppendRelInfo **appinfos;
-	Bitmapset  *parent_relids = NULL;
-	int			nappinfos;
-	int			cnt;
-
-	Assert(bms_num_members(child_relids) == bms_num_members(top_parent_relids));
-
-	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
-
-	/* Construct relids set for the immediate parent of given child. */
-	for (cnt = 0; cnt < nappinfos; cnt++)
-	{
-		AppendRelInfo *appinfo = appinfos[cnt];
-
-		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
-	}
-
-	/* Recurse if immediate parent is not the top parent. */
-	if (!bms_equal(parent_relids, top_parent_relids))
-		node = adjust_appendrel_attrs_multilevel(root, node, parent_relids,
-												 top_parent_relids);
-
-	/* Now translate for this child */
-	node = adjust_appendrel_attrs(root, node, nappinfos, appinfos);
-
-	pfree(appinfos);
-
-	return node;
-}
-
-/*
- * Construct the SpecialJoinInfo for a child-join by translating
- * SpecialJoinInfo for the join between parents. left_relids and right_relids
- * are the relids of left and right side of the join respectively.
- */
-SpecialJoinInfo *
-build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
-						Relids left_relids, Relids right_relids)
-{
-	SpecialJoinInfo *sjinfo = makeNode(SpecialJoinInfo);
-	AppendRelInfo **left_appinfos;
-	int			left_nappinfos;
-	AppendRelInfo **right_appinfos;
-	int			right_nappinfos;
-
-	memcpy(sjinfo, parent_sjinfo, sizeof(SpecialJoinInfo));
-	left_appinfos = find_appinfos_by_relids(root, left_relids,
-											&left_nappinfos);
-	right_appinfos = find_appinfos_by_relids(root, right_relids,
-											 &right_nappinfos);
-
-	sjinfo->min_lefthand = adjust_child_relids(sjinfo->min_lefthand,
-											   left_nappinfos, left_appinfos);
-	sjinfo->min_righthand = adjust_child_relids(sjinfo->min_righthand,
-												right_nappinfos,
-												right_appinfos);
-	sjinfo->syn_lefthand = adjust_child_relids(sjinfo->syn_lefthand,
-											   left_nappinfos, left_appinfos);
-	sjinfo->syn_righthand = adjust_child_relids(sjinfo->syn_righthand,
-												right_nappinfos,
-												right_appinfos);
-	sjinfo->semi_rhs_exprs = (List *) adjust_appendrel_attrs(root,
-															 (Node *) sjinfo->semi_rhs_exprs,
-															 right_nappinfos,
-															 right_appinfos);
-
-	pfree(left_appinfos);
-	pfree(right_appinfos);
-
-	return sjinfo;
 }
 
 /*

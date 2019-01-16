@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "miscadmin.h"
@@ -38,6 +39,8 @@ static void expand_single_inheritance_child(PlannerInfo *root,
 								PlanRowMark *top_parentrc, Relation childrel,
 								List **appinfos, RangeTblEntry **childrte_p,
 								Index *childRTindex_p);
+static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
+					List *translated_vars);
 
 
 /*
@@ -436,4 +439,56 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 
 		root->rowMarks = lappend(root->rowMarks, childrc);
 	}
+}
+
+/*
+ * translate_col_privs
+ *	  Translate a bitmapset representing per-column privileges from the
+ *	  parent rel's attribute numbering to the child's.
+ *
+ * The only surprise here is that we don't translate a parent whole-row
+ * reference into a child whole-row reference.  That would mean requiring
+ * permissions on all child columns, which is overly strict, since the
+ * query is really only going to reference the inherited columns.  Instead
+ * we set the per-column bits for all inherited columns.
+ */
+static Bitmapset *
+translate_col_privs(const Bitmapset *parent_privs,
+					List *translated_vars)
+{
+	Bitmapset  *child_privs = NULL;
+	bool		whole_row;
+	int			attno;
+	ListCell   *lc;
+
+	/* System attributes have the same numbers in all tables */
+	for (attno = FirstLowInvalidHeapAttributeNumber + 1; attno < 0; attno++)
+	{
+		if (bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
+						  parent_privs))
+			child_privs = bms_add_member(child_privs,
+										 attno - FirstLowInvalidHeapAttributeNumber);
+	}
+
+	/* Check if parent has whole-row reference */
+	whole_row = bms_is_member(InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber,
+							  parent_privs);
+
+	/* And now translate the regular user attributes, using the vars list */
+	attno = InvalidAttrNumber;
+	foreach(lc, translated_vars)
+	{
+		Var		   *var = lfirst_node(Var, lc);
+
+		attno++;
+		if (var == NULL)		/* ignore dropped columns */
+			continue;
+		if (whole_row ||
+			bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
+						  parent_privs))
+			child_privs = bms_add_member(child_privs,
+										 var->varattno - FirstLowInvalidHeapAttributeNumber);
+	}
+
+	return child_privs;
 }
