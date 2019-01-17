@@ -473,6 +473,13 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
             <para><literal>prepared</literal>: use extended query protocol with prepared statements.</para>
            </listitem>
           </itemizedlist>
+
+        Because in "prepared" mode <application>pgbench</application> reuses
+        the parse analysis result for the second and subsequent query
+        iteration, <application>pgbench</application> runs faster in the
+        prepared mode than in other modes.
+       </para>
+       <para>
         The default is simple query protocol.  (See <xref linkend="protocol"/>
         for more information.)
        </para>
