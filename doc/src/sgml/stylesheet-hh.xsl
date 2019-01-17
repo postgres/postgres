@@ -15,7 +15,7 @@
 <xsl:param name="make.valid.html" select="1"></xsl:param>
 <xsl:param name="generate.id.attributes" select="1"></xsl:param>
 <xsl:param name="generate.legalnotice.link" select="1"></xsl:param>
-<xsl:param name="link.mailto.url">pgsql-docs@postgresql.org</xsl:param>
+<xsl:param name="link.mailto.url">pgsql-docs@lists.postgresql.org</xsl:param>
 <xsl:param name="chunker.output.indent" select="'yes'"/>
 <xsl:param name="chunk.quietly" select="1"></xsl:param>
 
