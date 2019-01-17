@@ -2244,3 +2244,22 @@ SELECT min(x ORDER BY y) FROM (VALUES(1, 2)) AS d(x,y);
    1
 (1 row)
 
+-- check collation-sensitive matching between grouping expressions
+select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;
+ ?column? | case | count 
+----------+------+-------
+ aa       |    1 |     1
+ ba       |    0 |     1
+(2 rows)
+
+select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;
+ ?column? | case | count 
+----------+------+-------
+ aa       |    1 |     1
+ ba       |    0 |     1
+(2 rows)
+
