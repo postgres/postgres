@@ -442,10 +442,12 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry);
 
 	assign_query_collations(pstate, qry);
+
+	/* this must be done after collations, for reliable comparison of exprs */
+	if (pstate->p_hasAggs)
+		parseCheckAggregates(pstate, qry);
 
 	return qry;
 }
@@ -1317,8 +1319,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
 
 	foreach(l, stmt->lockingClause)
 	{
@@ -1327,6 +1327,10 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	assign_query_collations(pstate, qry);
+
+	/* this must be done after collations, for reliable comparison of exprs */
+	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)
+		parseCheckAggregates(pstate, qry);
 
 	return qry;
 }
@@ -1789,8 +1793,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
 
 	foreach(l, lockingClause)
 	{
@@ -1799,6 +1801,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	assign_query_collations(pstate, qry);
+
+	/* this must be done after collations, for reliable comparison of exprs */
+	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)
+		parseCheckAggregates(pstate, qry);
 
 	return qry;
 }
