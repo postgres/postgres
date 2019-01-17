@@ -352,14 +352,10 @@
   <note>
    <para>
     Due to the unfortunate amount of spam going around, all of the above
-    email addresses are closed mailing lists. That is, you need to be
-    subscribed to a list to be allowed to post on it.  (You need not be
-    subscribed to use the bug-report web form, however.)
-    If you would like to send mail but do not want to receive list traffic,
-    you can subscribe and set your subscription option to <literal>nomail</literal>.
-    For more information send mail to
-    <email>majordomo@postgresql.org</email>
-    with the single word <literal>help</literal> in the body of the message.
+    lists will be moderated unless you are subscribed. That means there
+    will be some delay before the email is delivered. If you wish to subscribe
+    to the lists, please visit
+    <ulink url="https://lists.postgresql.org/"></ulink> for instructions.
    </para>
   </note>
  </sect2>
