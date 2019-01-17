@@ -900,3 +900,11 @@ EXPLAIN (COSTS OFF) SELECT balk(hundred) FROM tenk1;
 SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
+
+-- check collation-sensitive matching between grouping expressions
+select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;
+select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;
