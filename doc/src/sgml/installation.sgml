@@ -1969,9 +1969,9 @@ export MANPATH
   <para>
    If you have installation problems on a platform that is known
    to be supported according to recent build farm results, please report
-   it to <email>pgsql-bugs@postgresql.org</email>.  If you are interested
+   it to <email>pgsql-bugs@lists.postgresql.org</email>.  If you are interested
    in porting <productname>PostgreSQL</productname> to a new platform,
-   <email>pgsql-hackers@postgresql.org</email> is the appropriate place
+   <email>pgsql-hackers@lists.postgresql.org</email> is the appropriate place
    to discuss that.
   </para>
  </sect1>
