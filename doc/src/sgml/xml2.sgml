@@ -25,7 +25,7 @@
    you are encouraged to try converting your applications.  If you
    find that some of the functionality of this module is not
    available in an adequate form with the newer API, please explain
-   your issue to <email>pgsql-hackers@postgresql.org</email> so that the deficiency
+   your issue to <email>pgsql-hackers@lists.postgresql.org</email> so that the deficiency
    can be addressed.
   </para>
  </sect2>
