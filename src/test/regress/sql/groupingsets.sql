@@ -248,4 +248,15 @@ select sum(ten) from onek group by rollup(four::text), two order by 1;
 select usort, grouping(usort), count(*) from (values ('1'::xid),('2'::xid),('1'::xid)) v(usort) group by rollup(usort);
 select id, usort, grouping(id,usort), count(*) from (values (1,'1'::xid),(1,'2'::xid),(2,'1'::xid)) v(id,usort) group by grouping sets ((id), (usort));
 
+-- check collation-sensitive matching between grouping expressions
+-- (similar to a check for aggregates, but there are additional code
+-- paths for GROUPING, so check again here)
+
+select v||'a', case grouping(v||'a') when 1 then 1 else 0 end, count(*)
+  from unnest(array[1,1], array['a','b']) u(i,v)
+ group by rollup(i, v||'a') order by 1,3;
+select v||'a', case when grouping(v||'a') = 1 then 1 else 0 end, count(*)
+  from unnest(array[1,1], array['a','b']) u(i,v)
+ group by rollup(i, v||'a') order by 1,3;
+
 -- end
