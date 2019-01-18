@@ -178,7 +178,7 @@ static bool heap_page_is_all_visible(Relation rel, Buffer buf,
 
 
 /*
- *	vacuum_heap_rel() -- perform VACUUM for one heap relation
+ *	heap_vacuum_rel() -- perform VACUUM for one heap relation
  *
  *		This routine vacuums a single heap, cleans out its indexes, and
  *		updates its relpages and reltuples statistics.
