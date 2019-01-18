@@ -5,6 +5,7 @@
 # --------------
 AC_DEFUN([PGAC_PATH_PERL],
 [PGAC_PATH_PROGS(PERL, perl)
+AC_ARG_VAR(PERL, [Perl program])dnl
 
 if test "$PERL"; then
   pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p']`

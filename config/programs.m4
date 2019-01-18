@@ -245,6 +245,7 @@ AC_DEFUN([PGAC_CHECK_GETTEXT],
   AC_CHECK_HEADER([libintl.h], [],
                   [AC_MSG_ERROR([header file <libintl.h> is required for NLS])])
   PGAC_PATH_PROGS(MSGFMT, msgfmt)
+  AC_ARG_VAR(MSGFMT, [msgfmt program for NLS])dnl
   if test -z "$MSGFMT"; then
     AC_MSG_ERROR([msgfmt is required for NLS])
   fi

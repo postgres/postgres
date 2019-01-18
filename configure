@@ -887,8 +887,13 @@ PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 ICU_CFLAGS
 ICU_LIBS
+XML2_CONFIG
 LDFLAGS_EX
-LDFLAGS_SL'
+LDFLAGS_SL
+PERL
+PYTHON
+MSGFMT
+TCLSH'
 
 
 # Initialize some variables set by options.
@@ -1586,8 +1591,13 @@ Some influential environment variables:
               path overriding pkg-config's built-in search path
   ICU_CFLAGS  C compiler flags for ICU, overriding pkg-config
   ICU_LIBS    linker flags for ICU, overriding pkg-config
+  XML2_CONFIG path to xml2-config utility
   LDFLAGS_EX  extra linker flags for linking executables only
   LDFLAGS_SL  extra linker flags for linking shared libraries only
+  PERL        Perl program
+  PYTHON      Python program
+  MSGFMT      msgfmt program for NLS
+  TCLSH       Tcl interpreter program (tclsh)
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -8185,7 +8195,7 @@ $as_echo_n "checking for XML2_CONFIG... " >&6; }
 $as_echo "$XML2_CONFIG" >&6; }
 fi
 
-  if test -n "$XML2_CONFIG"; then
+    if test -n "$XML2_CONFIG"; then
     for pgac_option in `$XML2_CONFIG --cflags`; do
       case $pgac_option in
         -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
@@ -18097,7 +18107,7 @@ $as_echo_n "checking for MSGFMT... " >&6; }
 $as_echo "$MSGFMT" >&6; }
 fi
 
-  if test -z "$MSGFMT"; then
+    if test -z "$MSGFMT"; then
     as_fn_error $? "msgfmt is required for NLS" "$LINENO" 5
   fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for msgfmt flags" >&5

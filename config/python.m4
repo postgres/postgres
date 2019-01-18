@@ -17,6 +17,7 @@
 # newer version.
 AC_DEFUN([PGAC_PATH_PYTHON],
 [PGAC_PATH_PROGS(PYTHON, [python python3 python2])
+AC_ARG_VAR(PYTHON, [Python program])dnl
 if test x"$PYTHON" = x""; then
   AC_MSG_ERROR([Python not found])
 fi

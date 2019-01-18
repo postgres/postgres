@@ -917,6 +917,7 @@ PGAC_ARG_BOOL(with, libxml, no, [build with XML support],
 
 if test "$with_libxml" = yes ; then
   PGAC_PATH_PROGS(XML2_CONFIG, xml2-config)
+  AC_ARG_VAR(XML2_CONFIG, [path to xml2-config utility])dnl
   if test -n "$XML2_CONFIG"; then
     for pgac_option in `$XML2_CONFIG --cflags`; do
       case $pgac_option in
