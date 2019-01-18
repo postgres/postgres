@@ -1652,9 +1652,9 @@ else
   AC_LIBOBJ(getopt_long)
 fi
 
-# Solaris' getopt() doesn't do what we want for long options, so always use
-# our version on that platform.
-if test "$PORTNAME" = "solaris"; then
+# On OpenBSD and Solaris, getopt() doesn't do what we want for long options
+# (i.e., allow '-' as a flag character), so use our version on those platforms.
+if test "$PORTNAME" = "openbsd" -o "$PORTNAME" = "solaris"; then
   AC_LIBOBJ(getopt)
 fi
 

@@ -13374,9 +13374,9 @@ esac
 
 fi
 
-# Solaris' getopt() doesn't do what we want for long options, so always use
-# our version on that platform.
-if test "$PORTNAME" = "solaris"; then
+# On OpenBSD and Solaris, getopt() doesn't do what we want for long options
+# (i.e., allow '-' as a flag character), so use our version on those platforms.
+if test "$PORTNAME" = "openbsd" -o "$PORTNAME" = "solaris"; then
   case " $LIBOBJS " in
   *" getopt.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS getopt.$ac_objext"
