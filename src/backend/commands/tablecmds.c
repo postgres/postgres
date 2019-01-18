@@ -7658,30 +7658,49 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	if (recurse && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		PartitionDesc partdesc;
+		Relation	pg_constraint;
+		List	   *cloned = NIL;
+		ListCell   *cell;
 
+		pg_constraint = heap_open(ConstraintRelationId, RowExclusiveLock);
 		partdesc = RelationGetPartitionDesc(rel);
 
 		for (i = 0; i < partdesc->nparts; i++)
 		{
 			Oid			partitionId = partdesc->oids[i];
 			Relation	partition = heap_open(partitionId, lockmode);
-			AlteredTableInfo *childtab;
-			ObjectAddress childAddr;
 
 			CheckTableNotInUse(partition, "ALTER TABLE");
 
-			/* Find or create work queue entry for this table */
-			childtab = ATGetQueueEntry(wqueue, partition);
-
-			childAddr =
-				ATAddForeignKeyConstraint(wqueue, childtab, partition,
-										  fkconstraint, constrOid,
-										  recurse, true, lockmode);
-
-			/* Record this constraint as dependent on the parent one */
-			recordDependencyOn(&childAddr, &address, DEPENDENCY_INTERNAL_AUTO);
+			CloneFkReferencing(pg_constraint, rel, partition,
+							   list_make1_oid(constrOid),
+							   &cloned);
 
 			heap_close(partition, NoLock);
+		}
+		heap_close(pg_constraint, RowExclusiveLock);
+
+		foreach(cell, cloned)
+		{
+			ClonedConstraint *cc = (ClonedConstraint *) lfirst(cell);
+			Relation    partition = heap_open(cc->relid, lockmode);
+			AlteredTableInfo *childtab;
+			NewConstraint *newcon;
+
+			/* Find or create work queue entry for this partition */
+			childtab = ATGetQueueEntry(wqueue, partition);
+
+			newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
+			newcon->name = cc->constraint->conname;
+			newcon->contype = CONSTR_FOREIGN;
+			newcon->refrelid = cc->refrelid;
+			newcon->refindid = cc->conindid;
+			newcon->conid = cc->conid;
+			newcon->qual = (Node *) fkconstraint;
+
+			childtab->constraints = lappend(childtab->constraints, newcon);
+
+			heap_close(partition, lockmode);
 		}
 	}
 

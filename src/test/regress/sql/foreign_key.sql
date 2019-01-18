@@ -1340,3 +1340,41 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
   FOR VALUES IN (1600);
 
 -- leave these tables around intentionally
+
+-- Test creating a constraint at the parent that already exists in partitions.
+-- There should be no duplicated constraints, and attempts to drop the
+-- constraint in partitions should raise appropriate errors.
+create schema fkpart0
+  create table pkey (a int primary key)
+  create table fk_part (a int) partition by list (a)
+  create table fk_part_1 partition of fk_part
+      (foreign key (a) references fkpart0.pkey) for values in (1)
+  create table fk_part_23 partition of fk_part
+      (foreign key (a) references fkpart0.pkey) for values in (2, 3)
+      partition by list (a)
+  create table fk_part_23_2 partition of fk_part_23 for values in (2);
+
+alter table fkpart0.fk_part add foreign key (a) references fkpart0.pkey;
+\d fkpart0.fk_part_1	\\ -- should have only one FK
+alter table fkpart0.fk_part_1 drop constraint fk_part_1_a_fkey;
+
+\d fkpart0.fk_part_23	\\ -- should have only one FK
+\d fkpart0.fk_part_23_2	\\ -- should have only one FK
+alter table fkpart0.fk_part_23 drop constraint fk_part_23_a_fkey;
+alter table fkpart0.fk_part_23_2 drop constraint fk_part_23_a_fkey;
+
+create table fkpart0.fk_part_4 partition of fkpart0.fk_part for values in (4);
+\d fkpart0.fk_part_4
+alter table fkpart0.fk_part_4 drop constraint fk_part_a_fkey;
+
+create table fkpart0.fk_part_56 partition of fkpart0.fk_part
+    for values in (5,6) partition by list (a);
+create table fkpart0.fk_part_56_5 partition of fkpart0.fk_part_56
+    for values in (5);
+\d fkpart0.fk_part_56
+alter table fkpart0.fk_part_56 drop constraint fk_part_a_fkey;
+alter table fkpart0.fk_part_56_5 drop constraint fk_part_a_fkey;
+
+\set VERBOSITY terse	\\ -- suppress cascade details
+drop schema fkpart0 cascade;
+\set VERBOSITY default

@@ -1842,3 +1842,86 @@ INSERT INTO fk_notpartitioned_pk VALUES (1600, 601), (1600, 1601);
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
   FOR VALUES IN (1600);
 -- leave these tables around intentionally
+-- Test creating a constraint at the parent that already exists in partitions.
+-- There should be no duplicated constraints, and attempts to drop the
+-- constraint in partitions should raise appropriate errors.
+create schema fkpart0
+  create table pkey (a int primary key)
+  create table fk_part (a int) partition by list (a)
+  create table fk_part_1 partition of fk_part
+      (foreign key (a) references fkpart0.pkey) for values in (1)
+  create table fk_part_23 partition of fk_part
+      (foreign key (a) references fkpart0.pkey) for values in (2, 3)
+      partition by list (a)
+  create table fk_part_23_2 partition of fk_part_23 for values in (2);
+alter table fkpart0.fk_part add foreign key (a) references fkpart0.pkey;
+\d fkpart0.fk_part_1	\\ -- should have only one FK
+             Table "fkpart0.fk_part_1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition of: fkpart0.fk_part FOR VALUES IN (1)
+Foreign-key constraints:
+    "fk_part_1_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+
+alter table fkpart0.fk_part_1 drop constraint fk_part_1_a_fkey;
+ERROR:  cannot drop inherited constraint "fk_part_1_a_fkey" of relation "fk_part_1"
+\d fkpart0.fk_part_23	\\ -- should have only one FK
+      Partitioned table "fkpart0.fk_part_23"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition of: fkpart0.fk_part FOR VALUES IN (2, 3)
+Partition key: LIST (a)
+Foreign-key constraints:
+    "fk_part_23_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+Number of partitions: 1 (Use \d+ to list them.)
+
+\d fkpart0.fk_part_23_2	\\ -- should have only one FK
+           Table "fkpart0.fk_part_23_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition of: fkpart0.fk_part_23 FOR VALUES IN (2)
+Foreign-key constraints:
+    "fk_part_23_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+
+alter table fkpart0.fk_part_23 drop constraint fk_part_23_a_fkey;
+ERROR:  cannot drop inherited constraint "fk_part_23_a_fkey" of relation "fk_part_23"
+alter table fkpart0.fk_part_23_2 drop constraint fk_part_23_a_fkey;
+ERROR:  cannot drop inherited constraint "fk_part_23_a_fkey" of relation "fk_part_23_2"
+create table fkpart0.fk_part_4 partition of fkpart0.fk_part for values in (4);
+\d fkpart0.fk_part_4
+             Table "fkpart0.fk_part_4"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition of: fkpart0.fk_part FOR VALUES IN (4)
+Foreign-key constraints:
+    "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+
+alter table fkpart0.fk_part_4 drop constraint fk_part_a_fkey;
+ERROR:  cannot drop inherited constraint "fk_part_a_fkey" of relation "fk_part_4"
+create table fkpart0.fk_part_56 partition of fkpart0.fk_part
+    for values in (5,6) partition by list (a);
+create table fkpart0.fk_part_56_5 partition of fkpart0.fk_part_56
+    for values in (5);
+\d fkpart0.fk_part_56
+      Partitioned table "fkpart0.fk_part_56"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+Partition of: fkpart0.fk_part FOR VALUES IN (5, 6)
+Partition key: LIST (a)
+Foreign-key constraints:
+    "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+Number of partitions: 1 (Use \d+ to list them.)
+
+alter table fkpart0.fk_part_56 drop constraint fk_part_a_fkey;
+ERROR:  cannot drop inherited constraint "fk_part_a_fkey" of relation "fk_part_56"
+alter table fkpart0.fk_part_56_5 drop constraint fk_part_a_fkey;
+ERROR:  cannot drop inherited constraint "fk_part_a_fkey" of relation "fk_part_56_5"
+\set VERBOSITY terse	\\ -- suppress cascade details
+drop schema fkpart0 cascade;
+NOTICE:  drop cascades to 2 other objects
+\set VERBOSITY default
