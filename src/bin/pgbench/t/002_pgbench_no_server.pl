@@ -66,7 +66,7 @@ my @options = (
 	[
 		'bad option',
 		'-h home -p 5432 -U calvin -d --bad-option',
-		[ qr{(unrecognized|illegal) option}, qr{--help.*more information} ]
+		[qr{--help.*more information}]
 	],
 	[
 		'no file',
