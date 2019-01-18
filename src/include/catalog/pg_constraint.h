@@ -230,9 +230,6 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  bool conNoInherit,
 					  bool is_internal);
 
-extern void CloneForeignKeyConstraints(Oid parentId, Oid relationId,
-						   List **cloned);
-
 extern void RemoveConstraintById(Oid conId);
 extern void RenameConstraintById(Oid conId, const char *newname);
 

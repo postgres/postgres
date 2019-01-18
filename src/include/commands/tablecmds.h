@@ -78,6 +78,8 @@ extern void check_of_type(HeapTuple typetuple);
 extern void createForeignKeyTriggers(Relation rel, Oid refRelOid,
 						 Constraint *fkconstraint, Oid constraintOid,
 						 Oid indexOid, bool create_action);
+extern void CloneForeignKeyConstraints(Oid parentId, Oid relationId,
+						   List **cloned);
 
 extern void register_on_commit_action(Oid relid, OnCommitAction action);
 extern void remove_on_commit_action(Oid relid);
