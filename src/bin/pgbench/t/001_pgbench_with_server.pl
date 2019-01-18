@@ -800,9 +800,10 @@ sub check_pgbench_logs
 {
 	my ($prefix, $nb, $min, $max, $re) = @_;
 
-	my @logs = glob "$prefix.*";
+	my $qprefix = quotemeta($prefix);
+	my @logs = glob "$qprefix.*";
 	ok(@logs == $nb, "number of log files");
-	ok(grep(/^$prefix\.\d+(\.\d+)?$/, @logs) == $nb, "file name format");
+	ok(grep(/^$qprefix\.\d+(\.\d+)?$/, @logs) == $nb, "file name format");
 
 	my $log_number = 0;
 	for my $log (sort @logs)
