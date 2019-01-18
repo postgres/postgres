@@ -654,7 +654,6 @@ drop table pktable_base;
 
 --
 -- Deferrable constraints
---		(right now, only FOREIGN KEY constraints can be deferred)
 --
 
 -- deferrable, explicitly deferred
