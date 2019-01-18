@@ -255,6 +255,9 @@ extern Oid	get_relation_idx_constraint_oid(Oid relationId, Oid indexId);
 
 extern Bitmapset *get_primary_key_attnos(Oid relid, bool deferrableOk,
 					   Oid *constraintOid);
+extern void DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
+						   AttrNumber *conkey, AttrNumber *confkey,
+						   Oid *pf_eq_oprs, Oid *pp_eq_oprs, Oid *ff_eq_oprs);
 
 extern bool check_functional_grouping(Oid relid,
 						  Index varno, Index varlevelsup,

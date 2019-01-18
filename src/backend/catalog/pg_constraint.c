@@ -450,13 +450,10 @@ static void
 clone_fk_constraints(Relation pg_constraint, Relation parentRel,
 					 Relation partRel, List *clone, List **cloned)
 {
-	TupleDesc	tupdesc;
 	AttrNumber *attmap;
 	List	   *partFKs;
 	List	   *subclone = NIL;
 	ListCell   *cell;
-
-	tupdesc = RelationGetDescr(pg_constraint);
 
 	/*
 	 * The constraint key may differ, if the columns in the partition are
@@ -487,9 +484,6 @@ clone_fk_constraints(Relation pg_constraint, Relation parentRel,
 		int			nelem;
 		ListCell   *cell;
 		int			i;
-		ArrayType  *arr;
-		Datum		datum;
-		bool		isnull;
 
 		tuple = SearchSysCache1(CONSTROID, parentConstrOid);
 		if (!tuple)
@@ -506,92 +500,10 @@ clone_fk_constraints(Relation pg_constraint, Relation parentRel,
 
 		ObjectAddressSet(parentAddr, ConstraintRelationId, parentConstrOid);
 
-		datum = fastgetattr(tuple, Anum_pg_constraint_conkey,
-							tupdesc, &isnull);
-		if (isnull)
-			elog(ERROR, "null conkey");
-		arr = DatumGetArrayTypeP(datum);
-		nelem = ARR_DIMS(arr)[0];
-		if (ARR_NDIM(arr) != 1 ||
-			nelem < 1 ||
-			nelem > INDEX_MAX_KEYS ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != INT2OID)
-			elog(ERROR, "conkey is not a 1-D smallint array");
-		memcpy(conkey, ARR_DATA_PTR(arr), nelem * sizeof(AttrNumber));
-
+		DeconstructFkConstraintRow(tuple, &nelem, conkey, confkey,
+								   conpfeqop, conppeqop, conffeqop);
 		for (i = 0; i < nelem; i++)
 			mapped_conkey[i] = attmap[conkey[i] - 1];
-
-		datum = fastgetattr(tuple, Anum_pg_constraint_confkey,
-							tupdesc, &isnull);
-		if (isnull)
-			elog(ERROR, "null confkey");
-		arr = DatumGetArrayTypeP(datum);
-		nelem = ARR_DIMS(arr)[0];
-		if (ARR_NDIM(arr) != 1 ||
-			nelem < 1 ||
-			nelem > INDEX_MAX_KEYS ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != INT2OID)
-			elog(ERROR, "confkey is not a 1-D smallint array");
-		memcpy(confkey, ARR_DATA_PTR(arr), nelem * sizeof(AttrNumber));
-
-		datum = fastgetattr(tuple, Anum_pg_constraint_conpfeqop,
-							tupdesc, &isnull);
-		if (isnull)
-			elog(ERROR, "null conpfeqop");
-		arr = DatumGetArrayTypeP(datum);
-		nelem = ARR_DIMS(arr)[0];
-		if (ARR_NDIM(arr) != 1 ||
-			nelem < 1 ||
-			nelem > INDEX_MAX_KEYS ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != OIDOID)
-			elog(ERROR, "conpfeqop is not a 1-D OID array");
-		memcpy(conpfeqop, ARR_DATA_PTR(arr), nelem * sizeof(Oid));
-
-		datum = fastgetattr(tuple, Anum_pg_constraint_conpfeqop,
-							tupdesc, &isnull);
-		if (isnull)
-			elog(ERROR, "null conpfeqop");
-		arr = DatumGetArrayTypeP(datum);
-		nelem = ARR_DIMS(arr)[0];
-		if (ARR_NDIM(arr) != 1 ||
-			nelem < 1 ||
-			nelem > INDEX_MAX_KEYS ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != OIDOID)
-			elog(ERROR, "conpfeqop is not a 1-D OID array");
-		memcpy(conpfeqop, ARR_DATA_PTR(arr), nelem * sizeof(Oid));
-
-		datum = fastgetattr(tuple, Anum_pg_constraint_conppeqop,
-							tupdesc, &isnull);
-		if (isnull)
-			elog(ERROR, "null conppeqop");
-		arr = DatumGetArrayTypeP(datum);
-		nelem = ARR_DIMS(arr)[0];
-		if (ARR_NDIM(arr) != 1 ||
-			nelem < 1 ||
-			nelem > INDEX_MAX_KEYS ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != OIDOID)
-			elog(ERROR, "conppeqop is not a 1-D OID array");
-		memcpy(conppeqop, ARR_DATA_PTR(arr), nelem * sizeof(Oid));
-
-		datum = fastgetattr(tuple, Anum_pg_constraint_conffeqop,
-							tupdesc, &isnull);
-		if (isnull)
-			elog(ERROR, "null conffeqop");
-		arr = DatumGetArrayTypeP(datum);
-		nelem = ARR_DIMS(arr)[0];
-		if (ARR_NDIM(arr) != 1 ||
-			nelem < 1 ||
-			nelem > INDEX_MAX_KEYS ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != OIDOID)
-			elog(ERROR, "conffeqop is not a 1-D OID array");
-		memcpy(conffeqop, ARR_DATA_PTR(arr), nelem * sizeof(Oid));
 
 		/*
 		 * Before creating a new constraint, see whether any existing FKs are
@@ -1534,6 +1446,113 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 	heap_close(pg_constraint, AccessShareLock);
 
 	return pkattnos;
+}
+
+/*
+ * Extract data from the pg_constraint tuple of a foreign-key constraint.
+ *
+ * All arguments save the first are output arguments; the last three of them
+ * can be passed as NULL if caller doesn't need them.
+ */
+void
+DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
+						   AttrNumber *conkey, AttrNumber *confkey,
+						   Oid *pf_eq_oprs, Oid *pp_eq_oprs, Oid *ff_eq_oprs)
+{
+	Oid			constrId = HeapTupleGetOid(tuple);
+	Datum		adatum;
+	bool		isNull;
+	ArrayType  *arr;
+	int			numkeys;
+
+	/*
+	 * We expect the arrays to be 1-D arrays of the right types; verify that.
+	 * We don't need to use deconstruct_array() since the array data is just
+	 * going to look like a C array of values.
+	 */
+	adatum = SysCacheGetAttr(CONSTROID, tuple,
+							 Anum_pg_constraint_conkey, &isNull);
+	if (isNull)
+		elog(ERROR, "null conkey for constraint %u", constrId);
+	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+	if (ARR_NDIM(arr) != 1 ||
+		ARR_HASNULL(arr) ||
+		ARR_ELEMTYPE(arr) != INT2OID)
+		elog(ERROR, "conkey is not a 1-D smallint array");
+	numkeys = ARR_DIMS(arr)[0];
+	if (numkeys <= 0 || numkeys > INDEX_MAX_KEYS)
+		elog(ERROR, "foreign key constraint cannot have %d columns", numkeys);
+	memcpy(conkey, ARR_DATA_PTR(arr), numkeys * sizeof(int16));
+	if ((Pointer) arr != DatumGetPointer(adatum))
+		pfree(arr);				/* free de-toasted copy, if any */
+
+	adatum = SysCacheGetAttr(CONSTROID, tuple,
+							 Anum_pg_constraint_confkey, &isNull);
+	if (isNull)
+		elog(ERROR, "null confkey for constraint %u", constrId);
+	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+	if (ARR_NDIM(arr) != 1 ||
+		ARR_DIMS(arr)[0] != numkeys ||
+		ARR_HASNULL(arr) ||
+		ARR_ELEMTYPE(arr) != INT2OID)
+		elog(ERROR, "confkey is not a 1-D smallint array");
+	memcpy(confkey, ARR_DATA_PTR(arr), numkeys * sizeof(int16));
+	if ((Pointer) arr != DatumGetPointer(adatum))
+		pfree(arr);				/* free de-toasted copy, if any */
+
+	if (pf_eq_oprs)
+	{
+		adatum = SysCacheGetAttr(CONSTROID, tuple,
+								 Anum_pg_constraint_conpfeqop, &isNull);
+		if (isNull)
+			elog(ERROR, "null conpfeqop for constraint %u", constrId);
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+		/* see TryReuseForeignKey if you change the test below */
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_DIMS(arr)[0] != numkeys ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != OIDOID)
+			elog(ERROR, "conpfeqop is not a 1-D Oid array");
+		memcpy(pf_eq_oprs, ARR_DATA_PTR(arr), numkeys * sizeof(Oid));
+		if ((Pointer) arr != DatumGetPointer(adatum))
+			pfree(arr);			/* free de-toasted copy, if any */
+	}
+
+	if (pp_eq_oprs)
+	{
+		adatum = SysCacheGetAttr(CONSTROID, tuple,
+								 Anum_pg_constraint_conppeqop, &isNull);
+		if (isNull)
+			elog(ERROR, "null conppeqop for constraint %u", constrId);
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_DIMS(arr)[0] != numkeys ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != OIDOID)
+			elog(ERROR, "conppeqop is not a 1-D Oid array");
+		memcpy(pp_eq_oprs, ARR_DATA_PTR(arr), numkeys * sizeof(Oid));
+		if ((Pointer) arr != DatumGetPointer(adatum))
+			pfree(arr);			/* free de-toasted copy, if any */
+	}
+
+	if (ff_eq_oprs)
+	{
+		adatum = SysCacheGetAttr(CONSTROID, tuple,
+								 Anum_pg_constraint_conffeqop, &isNull);
+		if (isNull)
+			elog(ERROR, "null conffeqop for constraint %u", constrId);
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_DIMS(arr)[0] != numkeys ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != OIDOID)
+			elog(ERROR, "conffeqop is not a 1-D Oid array");
+		memcpy(ff_eq_oprs, ARR_DATA_PTR(arr), numkeys * sizeof(Oid));
+		if ((Pointer) arr != DatumGetPointer(adatum))
+			pfree(arr);			/* free de-toasted copy, if any */
+	}
+
+	*numfks = numkeys;
 }
 
 /*
