@@ -98,8 +98,8 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <para>
    It is not currently allowed to <command>PREPARE</> a transaction that
-   has executed any operations involving temporary tables,
-   created any cursors <literal>WITH HOLD</>, or executed
+   has executed any operations involving temporary tables or the session's
+   temporary namespace, created any cursors <literal>WITH HOLD</>, or executed
    <command>LISTEN</>, <command>UNLISTEN</>, or
    <command>NOTIFY</>.
    Those features are too tightly
