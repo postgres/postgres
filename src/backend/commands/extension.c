@@ -1476,6 +1476,13 @@ CreateExtensionInternal(char *extensionName,
 	}
 
 	/*
+	 * Make note if a temporary namespace has been accessed in this
+	 * transaction.
+	 */
+	if (isTempNamespace(schemaOid))
+		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
+
+	/*
 	 * We don't check creation rights on the target namespace here.  If the
 	 * extension script actually creates any objects there, it will fail if
 	 * the user doesn't have such permissions.  But there are cases such as

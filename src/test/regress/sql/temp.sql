@@ -224,3 +224,59 @@ select * from temp_inh_oncommit_test;
 -- one relation remains
 select relname from pg_class where relname like 'temp_inh_oncommit_test%';
 drop table temp_inh_oncommit_test;
+
+-- Tests with two-phase commit
+-- Transactions creating objects in a temporary namespace cannot be used
+-- with two-phase commit.
+
+-- These cases generate errors about temporary namespace.
+-- Function creation
+begin;
+create function pg_temp.twophase_func() returns void as
+  $$ select '2pc_func'::text $$ language sql;
+prepare transaction 'twophase_func';
+-- Function drop
+create function pg_temp.twophase_func() returns void as
+  $$ select '2pc_func'::text $$ language sql;
+begin;
+drop function pg_temp.twophase_func();
+prepare transaction 'twophase_func';
+-- Operator creation
+begin;
+create operator pg_temp.@@ (leftarg = int4, rightarg = int4, procedure = int4mi);
+prepare transaction 'twophase_operator';
+
+-- These generate errors about temporary tables.
+begin;
+create type pg_temp.twophase_type as (a int);
+prepare transaction 'twophase_type';
+begin;
+create view pg_temp.twophase_view as select 1;
+prepare transaction 'twophase_view';
+begin;
+create sequence pg_temp.twophase_seq;
+prepare transaction 'twophase_sequence';
+
+-- Temporary tables cannot be used with two-phase commit.
+create temp table twophase_tab (a int);
+begin;
+select a from twophase_tab;
+prepare transaction 'twophase_tab';
+begin;
+insert into twophase_tab values (1);
+prepare transaction 'twophase_tab';
+begin;
+lock twophase_tab in access exclusive mode;
+prepare transaction 'twophase_tab';
+begin;
+drop table twophase_tab;
+prepare transaction 'twophase_tab';
+
+-- Corner case: current_schema may create a temporary schema if namespace
+-- creation is pending, so check after that.  First reset the connection
+-- to remove the temporary namespace.
+\c -
+SET search_path TO 'pg_temp';
+BEGIN;
+SELECT current_schema() ~ 'pg_temp' AS is_temp_schema;
+PREPARE TRANSACTION 'twophase_search';

@@ -64,3 +64,32 @@ end';
 
 -- dropping it should still work
 drop extension test_ext8;
+
+-- Test creation of extension in temporary schema with two-phase commit,
+-- which should not work.  This function wrapper is useful for portability.
+
+-- Avoid noise caused by CONTEXT and NOTICE messages including the temporary
+-- schema name.
+\set SHOW_CONTEXT never
+SET client_min_messages TO 'warning';
+-- First enforce presence of temporary schema.
+CREATE TEMP TABLE test_ext4_tab ();
+CREATE OR REPLACE FUNCTION create_extension_with_temp_schema()
+  RETURNS VOID AS $$
+  DECLARE
+    tmpschema text;
+    query text;
+  BEGIN
+    SELECT INTO tmpschema pg_my_temp_schema()::regnamespace;
+    query := 'CREATE EXTENSION test_ext4 SCHEMA ' || tmpschema || ' CASCADE;';
+    RAISE NOTICE 'query %', query;
+    EXECUTE query;
+  END; $$ LANGUAGE plpgsql;
+BEGIN;
+SELECT create_extension_with_temp_schema();
+PREPARE TRANSACTION 'twophase_extension';
+-- Clean up
+DROP TABLE test_ext4_tab;
+DROP FUNCTION create_extension_with_temp_schema();
+RESET client_min_messages;
+\unset SHOW_CONTEXT
