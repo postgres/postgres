@@ -219,11 +219,6 @@ retry:
 
 /*
  * Compare the tuple and slot and check if they have equal values.
- *
- * We use binary datum comparison which might return false negatives but
- * that's the best we can do here as there may be multiple notions of
- * equality for the data types and table columns don't specify which one
- * to use.
  */
 static bool
 tuple_equals_slot(TupleDesc desc, HeapTuple tup, TupleTableSlot *slot)
