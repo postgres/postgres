@@ -95,6 +95,32 @@ COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X' ENCODING 'sql_ascii';
 4008:8:Delimiter:\::\:
 \.
 
+COPY x TO stdout WHERE a = 1;
+COPY x from stdin WHERE a = 50004;
+50003	24	34	44	54
+50004	25	35	45	55
+50005	26	36	46	56
+\.
+
+COPY x from stdin WHERE a > 60003;
+60001	22	32	42	52
+60002	23	33	43	53
+60003	24	34	44	54
+60004	25	35	45	55
+60005	26	36	46	56
+\.
+
+COPY x from stdin WHERE f > 60003;
+
+COPY x from stdin WHERE a = max(x.b);
+
+COPY x from stdin WHERE a IN (SELECT 1 FROM x);
+
+COPY x from stdin WHERE a IN (generate_series(1,5));
+
+COPY x from stdin WHERE a = row_number() over(b);
+
+
 -- check results of copy in
 SELECT * FROM x;
 

@@ -1849,6 +1849,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_CALL_ARGUMENT:
 			err = _("cannot use subquery in CALL argument");
 			break;
+		case EXPR_KIND_COPY_WHERE:
+			err = _("cannot use subquery in COPY FROM WHERE condition");
+			break;
 
 			/*
 			 * There is intentionally no default: case here, so that the
@@ -3475,6 +3478,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "PARTITION BY";
 		case EXPR_KIND_CALL_ARGUMENT:
 			return "CALL";
+		case EXPR_KIND_COPY_WHERE:
+			return "WHERE";
 
 			/*
 			 * There is intentionally no default: case here, so that the

@@ -192,7 +192,7 @@ ECPG: where_or_current_clauseWHERECURRENT_POFcursor_name block
 		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		$$ = cat_str(2,mm_strdup("where current of"), cursor_marker);
 	}
-ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listcopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_options addon
+ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listcopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_optionswhere_clause addon
 			if (strcmp($6, "from") == 0 &&
 			   (strcmp($7, "stdin") == 0 || strcmp($7, "stdout") == 0))
 				mmerror(PARSE_ERROR, ET_WARNING, "COPY FROM STDIN is not implemented");

@@ -25,6 +25,7 @@ PostgreSQL documentation
 COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDIN }
     [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
+    [ WHERE <replaceable class="parameter">condition</replaceable> ]
 
 COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
     TO { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDOUT }
@@ -350,6 +351,32 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       omitted, the current client encoding is used. See the Notes below
       for more details.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WHERE</literal></term>
+    <listitem>
+   <para>
+    The optional <literal>WHERE</literal> clause has the general form
+<synopsis>
+WHERE <replaceable class="parameter">condition</replaceable>
+</synopsis>
+    where <replaceable class="parameter">condition</replaceable> is
+    any expression that evaluates to a result of type
+    <type>boolean</type>.  Any row that does not satisfy this
+    condition will not be inserted to the table.  A row satisfies the
+    condition if it returns true when the actual row values are
+    substituted for any variable references.
+   </para>
+
+   <para>
+    Currently, subqueries are not allowed in <literal>WHERE</literal>
+    expressions, and the evaluation does not see any changes made by the
+    <command>COPY</command> itself (this matters when the expression
+    contains calls to <literal>VOLATILE</literal> functions).
+   </para>
+
     </listitem>
    </varlistentry>
 

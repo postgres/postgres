@@ -39,7 +39,11 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
+#include "optimizer/prep.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "port/pg_bswap.h"
 #include "rewrite/rewriteHandler.h"
@@ -149,6 +153,7 @@ typedef struct CopyStateData
 	bool		convert_selectively;	/* do selective binary conversion? */
 	List	   *convert_select; /* list of column names (can be NIL) */
 	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
+	Node	   *whereClause;	/* WHERE condition (or NULL) */
 
 	/* these are just for error messages, see CopyFromErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
@@ -179,6 +184,7 @@ typedef struct CopyStateData
 	ExprState **defexprs;		/* array of default att expressions */
 	bool		volatile_defexprs;	/* is any of defexprs volatile? */
 	List	   *range_table;
+	ExprState  *qualexpr;
 
 	TransitionCaptureState *transition_capture;
 
@@ -800,6 +806,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	Relation	rel;
 	Oid			relid;
 	RawStmt    *query = NULL;
+	Node    *whereClause = NULL;
 
 	/*
 	 * Disallow COPY to/from file or program except to users with the
@@ -852,6 +859,26 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		rte = addRangeTableEntryForRelation(pstate, rel, lockmode,
 											NULL, false, false);
 		rte->requiredPerms = (is_from ? ACL_INSERT : ACL_SELECT);
+
+		if (stmt->whereClause)
+		{
+			/* add rte to column namespace  */
+			addRTEtoQuery(pstate, rte, false, true, true);
+
+			/* Transform the raw expression tree */
+			whereClause = transformExpr(pstate, stmt->whereClause, EXPR_KIND_COPY_WHERE);
+
+			/*  Make sure it yields a boolean result. */
+			whereClause = coerce_to_boolean(pstate, whereClause, "WHERE");
+
+			/* we have to fix its collations too */
+			assign_expr_collations(pstate, whereClause);
+
+			whereClause = eval_const_expressions(NULL, whereClause);
+
+			whereClause = (Node *) canonicalize_qual((Expr *) whereClause, false);
+			whereClause = (Node *) make_ands_implicit((Expr *) whereClause);
+		}
 
 		tupDesc = RelationGetDescr(rel);
 		attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
@@ -1001,6 +1028,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		cstate = BeginCopyFrom(pstate, rel, stmt->filename, stmt->is_program,
 							   NULL, stmt->attlist, stmt->options);
+		cstate->whereClause = whereClause;
 		*processed = CopyFrom(cstate);	/* copy from file to database */
 		EndCopyFrom(cstate);
 	}
@@ -2535,6 +2563,10 @@ CopyFrom(CopyState cstate)
 	if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		proute = ExecSetupPartitionTupleRouting(NULL, cstate->rel);
 
+	if (cstate->whereClause)
+		cstate->qualexpr = ExecInitQual(castNode(List, cstate->whereClause),
+												&mtstate->ps);
+
 	/*
 	 * It's more efficient to prepare a bunch of tuples for insertion, and
 	 * insert them in one heap_multi_insert() call, than call heap_insert()
@@ -2577,6 +2609,16 @@ CopyFrom(CopyState cstate)
 		 * Note: It does not matter if any partitions have any volatile
 		 * default expressions as we use the defaults from the target of the
 		 * COPY command.
+		 */
+		insertMethod = CIM_SINGLE;
+	}
+	else if (cstate->whereClause != NULL ||
+			 contain_volatile_functions(cstate->whereClause))
+	{
+		/*
+		 * Can't support multi-inserts if there are any volatile funcation
+		 * expressions in WHERE clause.  Similarly to the trigger case above,
+		 * such expressions may query the table we're inserting into.
 		 */
 		insertMethod = CIM_SINGLE;
 	}
@@ -2682,6 +2724,13 @@ CopyFrom(CopyState cstate)
 		/* Place tuple in tuple slot --- but slot shouldn't free it */
 		slot = myslot;
 		ExecStoreHeapTuple(tuple, slot, false);
+
+		if (cstate->whereClause)
+		{
+			econtext->ecxt_scantuple = myslot;
+			if (!ExecQual(cstate->qualexpr, econtext))
+				continue;
+		}
 
 		/* Determine the partition to heap_insert the tuple into */
 		if (proute)
