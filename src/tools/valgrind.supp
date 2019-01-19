@@ -212,39 +212,3 @@
    Memcheck:Cond
    fun:PyObject_Realloc
 }
-
-# wcsrtombs uses some clever optimizations internally, which to valgrind
-# may look like access to uninitialized data. For example AVX2 instructions
-# load data in 256-bit chunks, irrespectedly of wchar length. gconv does
-# somethink similar by loading data in 32bit chunks and then shifting the
-# data internally. Neither of those actually uses the uninitialized part
-# of the buffer, as far as we know.
-#
-# https://www.postgresql.org/message-id/90ac0452-e907-e7a4-b3c8-15bd33780e62@2ndquadrant.com
-
-{
-   wcsnlen_optimized
-   Memcheck:Cond
-   ...
-   fun:wcsrtombs
-   fun:wcstombs
-   fun:wchar2char
-}
-
-{
-   wcsnlen_optimized_addr32
-   Memcheck:Addr32
-   ...
-   fun:wcsrtombs
-   fun:wcstombs
-   fun:wchar2char
-}
-
-{
-   gconv_transform_internal
-   Memcheck:Cond
-   fun:__gconv_transform_internal_utf8
-   fun:wcsrtombs
-   fun:wcstombs
-   fun:wchar2char
-}
