@@ -377,7 +377,7 @@ help(const char *progname)
 	printf(_("\nPlease read the documentation for the complete list of run-time\n"
 			 "configuration settings and how to set them on the command line or in\n"
 			 "the configuration file.\n\n"
-			 "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+			 "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
 }
 
 

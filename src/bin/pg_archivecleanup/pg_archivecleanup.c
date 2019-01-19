@@ -43,7 +43,7 @@ char		exclusiveCleanupFileName[MAXFNAMELEN];	/* the oldest file we want
  *	accessible directory. If you want to make other assumptions,
  *	such as using a vendor-specific archive and access API, these
  *	routines are the ones you'll need to change. You're
- *	encouraged to submit any changes to pgsql-hackers@postgresql.org
+ *	encouraged to submit any changes to pgsql-hackers@lists.postgresql.org
  *	or personally to the current maintainer. Those changes may be
  *	folded in to later versions of this program.
  */
@@ -273,7 +273,7 @@ usage(void)
 			 "Or for use as a standalone archive cleaner:\n"
 			 "e.g.\n"
 			 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
 }
 
 /*------------ MAIN ----------------------------------------*/

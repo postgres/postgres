@@ -297,7 +297,7 @@ Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl -I [include path] [path 
 Gen_fmgrtab.pl generates fmgroids.h, fmgrprotos.h, and fmgrtab.c from
 pg_proc.dat
 
-Report bugs to <pgsql-bugs\@postgresql.org>.
+Report bugs to <pgsql-bugs\@lists.postgresql.org>.
 EOM
 }
 

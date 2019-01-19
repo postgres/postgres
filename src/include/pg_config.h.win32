@@ -618,7 +618,7 @@
 #define MEMSET_LOOP_LIMIT 1024
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "pgsql-bugs@postgresql.org"
+#define PACKAGE_BUGREPORT "pgsql-bugs@lists.postgresql.org"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "PostgreSQL"

@@ -61,6 +61,6 @@ Usage: fix-old-flex-code.pl c-file-name
 fix-old-flex-code.pl modifies a flex output file to suppress
 an unused-variable warning that occurs with older flex versions.
 
-Report bugs to <pgsql-bugs\@postgresql.org>.
+Report bugs to <pgsql-bugs\@lists.postgresql.org>.
 EOM
 }

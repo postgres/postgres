@@ -925,6 +925,6 @@ headers from specially formatted header files and .dat
 files.  The BKI files are used to initialize the
 postgres template database.
 
-Report bugs to <pgsql-bugs\@postgresql.org>.
+Report bugs to <pgsql-bugs\@lists.postgresql.org>.
 EOM
 }

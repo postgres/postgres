@@ -211,7 +211,7 @@ help(const char *progname)
 		   "  -p, --port=PORT            database server port number\n"
 		   "  -U, --username=USERNAME    connect as specified database user\n"
 		   "\nThe default action is to show all database OIDs.\n\n"
-		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
+		   "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n",
 		   progname, progname);
 }
 

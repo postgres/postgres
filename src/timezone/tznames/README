@@ -18,7 +18,7 @@ in any of the usual ways for setting a parameter, where xyz is the filename
 that contains the desired time zone abbreviations.
 
 If you do not find an appropriate set of abbreviations for your geographic
-location supplied here, please report this to <pgsql-hackers@postgresql.org>.
+location supplied here, please report this to <pgsql-hackers@lists.postgresql.org>.
 Your set of time zone abbreviations can then be included in future releases.
 For the time being you can always add your own set.
 

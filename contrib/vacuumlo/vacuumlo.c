@@ -447,7 +447,7 @@ usage(const char *progname)
 	printf("  -w, --no-password         never prompt for password\n");
 	printf("  -W, --password            force password prompt\n");
 	printf("\n");
-	printf("Report bugs to <pgsql-bugs@postgresql.org>.\n");
+	printf("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n");
 }
 
 
