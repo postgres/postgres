@@ -421,9 +421,9 @@ LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regte
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable.q"
 DROP TABLE regtest_table;
 LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
-LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema.regtest_table_x_seq"
-LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table"
+LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
+LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_seq_t:s0 tclass=db_sequence name="regtest_schema.regtest_table_x_seq"
 LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table"
 LOG:  SELinux: allowed { drop } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table.tableoid"
