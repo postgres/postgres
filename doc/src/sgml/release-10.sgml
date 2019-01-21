@@ -8990,7 +8990,7 @@ This was disabled in the PG 9.6 branch so there is no commit here.
 
   </sect2>
 
-  <sect2>
+  <sect2 id="release-10-acknowledgements">
    <title>Acknowledgments</title>
 
    <para>
