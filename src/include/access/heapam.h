@@ -14,8 +14,10 @@
 #ifndef HEAPAM_H
 #define HEAPAM_H
 
+#include "access/relation.h"	/* for backward compatibility */
 #include "access/sdir.h"
 #include "access/skey.h"
+#include "access/table.h"		/* for backward compatibility */
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "storage/bufpage.h"
@@ -67,20 +69,6 @@ typedef struct HeapUpdateFailureData
  * ----------------
  */
 
-/* in heap/heapam.c */
-extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
-extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);
-extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
-extern Relation relation_openrv_extended(const RangeVar *relation,
-						 LOCKMODE lockmode, bool missing_ok);
-extern void relation_close(Relation relation, LOCKMODE lockmode);
-
-extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
-extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
-extern Relation heap_openrv_extended(const RangeVar *relation,
-					 LOCKMODE lockmode, bool missing_ok);
-
-#define heap_close(r,l)  relation_close(r,l)
 
 /* struct definitions appear in relscan.h */
 typedef struct HeapScanDescData *HeapScanDesc;
