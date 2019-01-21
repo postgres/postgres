@@ -483,22 +483,45 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 	if (data_var.type != ECPGt_EORT)
 	{
 		struct statement stmt;
-		char	   *oldlocale;
-
-		/* Make sure we do NOT honor the locale for numeric input */
-		/* since the database gives the standard decimal point */
-		oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
-		setlocale(LC_NUMERIC, "C");
 
 		memset(&stmt, 0, sizeof stmt);
 		stmt.lineno = lineno;
+
+		/* Make sure we do NOT honor the locale for numeric input */
+		/* since the database gives the standard decimal point */
+		/* (see comments in execute.c) */
+#ifdef HAVE_USELOCALE
+		stmt.clocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
+		if (stmt.clocale != (locale_t) 0)
+			stmt.oldlocale = uselocale(stmt.clocale);
+#else
+#ifdef WIN32
+		stmt.oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+		stmt.oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
+		setlocale(LC_NUMERIC, "C");
+#endif
 
 		/* desperate try to guess something sensible */
 		stmt.connection = ecpg_get_connection(NULL);
 		ecpg_store_result(ECPGresult, index, &stmt, &data_var);
 
-		setlocale(LC_NUMERIC, oldlocale);
-		ecpg_free(oldlocale);
+#ifdef HAVE_USELOCALE
+		if (stmt.oldlocale != (locale_t) 0)
+			uselocale(stmt.oldlocale);
+		if (stmt.clocale)
+			freelocale(stmt.clocale);
+#else
+		if (stmt.oldlocale)
+		{
+			setlocale(LC_NUMERIC, stmt.oldlocale);
+			ecpg_free(stmt.oldlocale);
+		}
+#ifdef WIN32
+		if (stmt.oldthreadlocale != -1)
+			_configthreadlocale(stmt.oldthreadlocale);
+#endif
+#endif
 	}
 	else if (data_var.ind_type != ECPGt_NO_INDICATOR && data_var.ind_pointer != NULL)
 

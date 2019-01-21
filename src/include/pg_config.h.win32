@@ -545,6 +545,9 @@
 /* Define to 1 if you have the `unsetenv' function. */
 /* #undef HAVE_UNSETENV */
 
+/* Define to 1 if you have the `uselocale' function. */
+/* #undef HAVE_USELOCALE */
+
 /* Define to 1 if you have the `utime' function. */
 #define HAVE_UTIME 1
 
