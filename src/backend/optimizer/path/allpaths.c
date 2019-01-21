@@ -981,42 +981,11 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
 
 		/*
-		 * Copy/Modify targetlist. Even if this child is deemed empty, we need
-		 * its targetlist in case it falls on nullable side in a child-join
-		 * because of partitionwise join.
-		 *
-		 * NB: the resulting childrel->reltarget->exprs may contain arbitrary
-		 * expressions, which otherwise would not occur in a rel's targetlist.
-		 * Code that might be looking at an appendrel child must cope with
-		 * such.  (Normally, a rel's targetlist would only include Vars and
-		 * PlaceHolderVars.)  XXX we do not bother to update the cost or width
-		 * fields of childrel->reltarget; not clear if that would be useful.
-		 */
-		childrel->reltarget->exprs = (List *)
-			adjust_appendrel_attrs(root,
-								   (Node *) rel->reltarget->exprs,
-								   1, &appinfo);
-
-		/*
-		 * We have to make child entries in the EquivalenceClass data
-		 * structures as well.  This is needed either if the parent
-		 * participates in some eclass joins (because we will want to consider
-		 * inner-indexscan joins on the individual children) or if the parent
-		 * has useful pathkeys (because we should try to build MergeAppend
-		 * paths that produce those sort orderings). Even if this child is
-		 * deemed dummy, it may fall on nullable side in a child-join, which
-		 * in turn may participate in a MergeAppend, where we will need the
-		 * EquivalenceClass data structures.
-		 */
-		if (rel->has_eclass_joins || has_useful_pathkeys(root, rel))
-			add_child_rel_equivalences(root, appinfo, rel, childrel);
-		childrel->has_eclass_joins = rel->has_eclass_joins;
-
-		/*
-		 * We have to copy the parent's quals to the child, with appropriate
-		 * substitution of variables.  However, only the baserestrictinfo
-		 * quals are needed before we can check for constraint exclusion; so
-		 * do that first and then check to see if we can disregard this child.
+		 * We have to copy the parent's targetlist and quals to the child,
+		 * with appropriate substitution of variables.  However, only the
+		 * baserestrictinfo quals are needed before we can check for
+		 * constraint exclusion; so do that first and then check to see if we
+		 * can disregard this child.
 		 *
 		 * The child rel's targetlist might contain non-Var expressions, which
 		 * means that substitution into the quals could produce opportunities
@@ -1150,11 +1119,36 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			continue;
 		}
 
-		/* CE failed, so finish copying/modifying join quals. */
+		/*
+		 * CE failed, so finish copying/modifying targetlist and join quals.
+		 *
+		 * NB: the resulting childrel->reltarget->exprs may contain arbitrary
+		 * expressions, which otherwise would not occur in a rel's targetlist.
+		 * Code that might be looking at an appendrel child must cope with
+		 * such.  (Normally, a rel's targetlist would only include Vars and
+		 * PlaceHolderVars.)  XXX we do not bother to update the cost or width
+		 * fields of childrel->reltarget; not clear if that would be useful.
+		 */
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->joininfo,
 								   1, &appinfo);
+		childrel->reltarget->exprs = (List *)
+			adjust_appendrel_attrs(root,
+								   (Node *) rel->reltarget->exprs,
+								   1, &appinfo);
+
+		/*
+		 * We have to make child entries in the EquivalenceClass data
+		 * structures as well.  This is needed either if the parent
+		 * participates in some eclass joins (because we will want to consider
+		 * inner-indexscan joins on the individual children) or if the parent
+		 * has useful pathkeys (because we should try to build MergeAppend
+		 * paths that produce those sort orderings).
+		 */
+		if (rel->has_eclass_joins || has_useful_pathkeys(root, rel))
+			add_child_rel_equivalences(root, appinfo, rel, childrel);
+		childrel->has_eclass_joins = rel->has_eclass_joins;
 
 		/*
 		 * Note: we could compute appropriate attr_needed data for the child's
@@ -1167,9 +1161,15 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * If we consider partitionwise joins with the parent rel, do the same
 		 * for partitioned child rels.
+		 *
+		 * Note: here we abuse the consider_partitionwise_join flag by setting
+		 * it *even* for child rels that are not partitioned.  In that case,
+		 * we set it to tell try_partitionwise_join() that it doesn't need to
+		 * generate their targetlists and EC entries as they have already been
+		 * generated here, as opposed to the dummy child rels for which the
+		 * flag is left set to false so that it will generate them.
 		 */
-		if (rel->consider_partitionwise_join &&
-			childRTE->relkind == RELKIND_PARTITIONED_TABLE)
+		if (rel->consider_partitionwise_join)
 			childrel->consider_partitionwise_join = true;
 
 		/*

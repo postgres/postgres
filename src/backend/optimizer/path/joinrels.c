@@ -44,6 +44,8 @@ static void try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1,
 					   RelOptInfo *rel2, RelOptInfo *joinrel,
 					   SpecialJoinInfo *parent_sjinfo,
 					   List *parent_restrictlist);
+static void update_child_rel_info(PlannerInfo *root,
+					  RelOptInfo *rel, RelOptInfo *childrel);
 static int match_expr_to_partition_keys(Expr *expr, RelOptInfo *rel,
 							 bool strict_op);
 
@@ -1312,6 +1314,8 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 					   RelOptInfo *joinrel, SpecialJoinInfo *parent_sjinfo,
 					   List *parent_restrictlist)
 {
+	bool		rel1_is_simple = IS_SIMPLE_REL(rel1);
+	bool		rel2_is_simple = IS_SIMPLE_REL(rel2);
 	int			nparts;
 	int			cnt_parts;
 
@@ -1376,6 +1380,27 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		AppendRelInfo **appinfos;
 		int			nappinfos;
 
+		/*
+		 * If a child table has consider_partitionwise_join=false, it means
+		 * that it's a dummy relation for which we skipped setting up tlist
+		 * expressions and adding EC members in set_append_rel_size(), so do
+		 * that now for use later.
+		 */
+		if (rel1_is_simple && !child_rel1->consider_partitionwise_join)
+		{
+			Assert(child_rel1->reloptkind == RELOPT_OTHER_MEMBER_REL);
+			Assert(IS_DUMMY_REL(child_rel1));
+			update_child_rel_info(root, rel1, child_rel1);
+			child_rel1->consider_partitionwise_join = true;
+		}
+		if (rel2_is_simple && !child_rel2->consider_partitionwise_join)
+		{
+			Assert(child_rel2->reloptkind == RELOPT_OTHER_MEMBER_REL);
+			Assert(IS_DUMMY_REL(child_rel2));
+			update_child_rel_info(root, rel2, child_rel2);
+			child_rel2->consider_partitionwise_join = true;
+		}
+
 		/* We should never try to join two overlapping sets of rels. */
 		Assert(!bms_overlap(child_rel1->relids, child_rel2->relids));
 		child_joinrelids = bms_union(child_rel1->relids, child_rel2->relids);
@@ -1415,6 +1440,28 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 									child_joinrel, child_sjinfo,
 									child_restrictlist);
 	}
+}
+
+/*
+ * Set up tlist expressions for the childrel, and add EC members referencing
+ * the childrel.
+ */
+static void
+update_child_rel_info(PlannerInfo *root,
+					  RelOptInfo *rel, RelOptInfo *childrel)
+{
+	AppendRelInfo *appinfo = root->append_rel_array[childrel->relid];
+
+	/* Make child tlist expressions */
+	childrel->reltarget->exprs = (List *)
+		adjust_appendrel_attrs(root,
+							   (Node *) rel->reltarget->exprs,
+							   1, &appinfo);
+
+	/* Make child entries in the EquivalenceClass as well */
+	if (rel->has_eclass_joins || has_useful_pathkeys(root, rel))
+		add_child_rel_equivalences(root, appinfo, rel, childrel);
+	childrel->has_eclass_joins = rel->has_eclass_joins;
 }
 
 /*
