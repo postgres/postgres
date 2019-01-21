@@ -2451,11 +2451,10 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  * The BulkInsertState object (if any; bistate can be NULL for default
  * behavior) is also just passed through to RelationGetBufferForTuple.
  *
- * The return value is the OID assigned to the tuple (either here or by the
- * caller), or InvalidOid if no OID.  The header fields of *tup are updated
- * to match the stored tuple; in particular tup->t_self receives the actual
- * TID where the tuple was stored.  But note that any toasting of fields
- * within the tuple data is NOT reflected into *tup.
+ * On return the header fields of *tup are updated to match the stored tuple;
+ * in particular tup->t_self receives the actual TID where the tuple was
+ * stored.  But note that any toasting of fields within the tuple data is NOT
+ * reflected into *tup.
  */
 void
 heap_insert(Relation relation, HeapTuple tup, CommandId cid,
@@ -2468,8 +2467,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	bool		all_visible_cleared = false;
 
 	/*
-	 * Fill in tuple header fields, assign an OID, and toast the tuple if
-	 * necessary.
+	 * Fill in tuple header fields and toast the tuple if necessary.
 	 *
 	 * Note: below this point, heaptup is the data we actually intend to store
 	 * into the relation; tup is the caller's original untoasted data.
@@ -2635,10 +2633,9 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 
 /*
  * Subroutine for heap_insert(). Prepares a tuple for insertion. This sets the
- * tuple header fields, assigns an OID, and toasts the tuple if necessary.
- * Returns a toasted version of the tuple if it was toasted, or the original
- * tuple if not. Note that in any case, the header fields are also set in
- * the original tuple.
+ * tuple header fields and toasts the tuple if necessary.  Returns a toasted
+ * version of the tuple if it was toasted, or the original tuple if not. Note
+ * that in any case, the header fields are also set in the original tuple.
  */
 static HeapTuple
 heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
