@@ -66,7 +66,6 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 static Oid	AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid);

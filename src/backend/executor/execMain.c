@@ -65,7 +65,6 @@
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */

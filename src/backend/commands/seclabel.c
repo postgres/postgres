@@ -24,7 +24,6 @@
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 typedef struct
 {

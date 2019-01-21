@@ -31,7 +31,6 @@
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 /* Potentially set by pg_upgrade_support functions */

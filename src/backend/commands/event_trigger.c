@@ -45,7 +45,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 #include "utils/syscache.h"
 #include "tcop/utility.h"
 

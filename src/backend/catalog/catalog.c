@@ -48,7 +48,6 @@
 #include "utils/fmgrprotos.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 /*

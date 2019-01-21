@@ -30,7 +30,6 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 
 /* ----------------------------------------------------------------

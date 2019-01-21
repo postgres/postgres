@@ -87,7 +87,6 @@
 #include "utils/memutils.h"
 #include "utils/regproc.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 /*
  * ObjectProperty

@@ -48,7 +48,6 @@
 #include "utils/ps_status.h"
 #include "utils/rel.h"
 #include "utils/relmapper.h"
-#include "utils/tqual.h"
 
 uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
 

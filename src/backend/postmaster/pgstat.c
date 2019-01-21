@@ -67,7 +67,6 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
-#include "utils/tqual.h"
 
 
 /* ----------

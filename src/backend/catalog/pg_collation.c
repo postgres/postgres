@@ -30,7 +30,6 @@
 #include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 /*

@@ -90,7 +90,6 @@
 #include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 #define RELCACHE_INIT_FILEMAGIC		0x573266	/* version ID value */

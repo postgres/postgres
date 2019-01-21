@@ -61,7 +61,6 @@
 #include "utils/pg_locale.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 typedef struct

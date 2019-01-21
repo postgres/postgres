@@ -30,7 +30,6 @@
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 /*
  * Entry of a hash table used in find_all_inheritors. See below.

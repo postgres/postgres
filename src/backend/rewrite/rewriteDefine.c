@@ -41,7 +41,6 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,

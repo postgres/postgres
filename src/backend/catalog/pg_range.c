@@ -26,7 +26,6 @@
 #include "catalog/pg_type.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 
 /*

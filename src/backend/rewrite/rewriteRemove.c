@@ -29,7 +29,6 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 /*
  * Guts of rule deletion.

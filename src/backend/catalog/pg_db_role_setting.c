@@ -18,7 +18,6 @@
 #include "catalog/pg_db_role_setting.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 void
 AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)

@@ -88,7 +88,6 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/timeout.h"
-#include "utils/tqual.h"
 #include "utils/syscache.h"
 
 #define NAPTIME_PER_CYCLE 1000	/* max sleep time between cycles (1s) */

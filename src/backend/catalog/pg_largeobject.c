@@ -27,7 +27,6 @@
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 
 /*

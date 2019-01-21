@@ -22,7 +22,6 @@
 #include "storage/predicate.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 
 static bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,

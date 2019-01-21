@@ -71,7 +71,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
-#include "utils/tqual.h"
 
 /*
  *	 Examine the RETURNS clause of the CREATE FUNCTION statement

@@ -39,7 +39,6 @@
 #include "utils/rel.h"
 #include "utils/resowner_private.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
  /* #define CACHEDEBUG */	/* turns DEBUG elogs on */

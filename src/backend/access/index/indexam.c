@@ -81,7 +81,6 @@
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 /* ----------------------------------------------------------------

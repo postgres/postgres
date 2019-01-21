@@ -16,7 +16,6 @@
 #define TQUAL_H
 
 #include "utils/snapshot.h"
-#include "access/xlogdefs.h"
 
 
 /* Static variables representing various special snapshot semantics */

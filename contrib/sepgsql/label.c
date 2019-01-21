@@ -35,7 +35,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 #include "sepgsql.h"
 

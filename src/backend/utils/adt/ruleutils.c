@@ -70,7 +70,6 @@
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 #include "utils/typcache.h"
 #include "utils/varlena.h"
 #include "utils/xml.h"
