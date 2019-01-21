@@ -7851,6 +7851,10 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 			ForeignKeyCacheInfo *fk = lfirst_node(ForeignKeyCacheInfo, cell);
 			Form_pg_constraint partConstr;
 			HeapTuple	partcontup;
+			Relation	trigrel;
+			HeapTuple	trigtup;
+			SysScanDesc scan;
+			ScanKeyData key;
 
 			attach_it = true;
 
@@ -7902,7 +7906,39 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 
 			ReleaseSysCache(partcontup);
 
-			/* looks good!  Attach this constraint */
+			/*
+			 * Looks good!  Attach this constraint.  Note that the action
+			 * triggers are no longer needed, so remove them.  We identify
+			 * them because they have our constraint OID, as well as being
+			 * on the referenced rel.
+			 */
+			trigrel = heap_open(TriggerRelationId, RowExclusiveLock);
+			ScanKeyInit(&key,
+						Anum_pg_trigger_tgconstraint,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(fk->conoid));
+
+			scan = systable_beginscan(trigrel, TriggerConstraintIndexId, true,
+									  NULL, 1, &key);
+			while ((trigtup = systable_getnext(scan)) != NULL)
+			{
+				Form_pg_trigger	trgform = (Form_pg_trigger) GETSTRUCT(trigtup);
+
+				if (trgform->tgconstrrelid != fk->conrelid)
+					continue;
+				if (trgform->tgrelid != fk->confrelid)
+					continue;
+
+				deleteDependencyRecordsForClass(TriggerRelationId,
+												trgform->oid,
+												ConstraintRelationId,
+												DEPENDENCY_INTERNAL);
+				CatalogTupleDelete(trigrel, &trigtup->t_self);
+			}
+
+			systable_endscan(scan);
+			heap_close(trigrel, RowExclusiveLock);
+
 			ConstraintSetParentConstraint(fk->conoid, parentConstrOid);
 			CommandCounterIncrement();
 			attach_it = true;
@@ -15073,18 +15109,49 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	}
 	table_close(classRel, RowExclusiveLock);
 
-	/* Detach foreign keys */
+	/*
+	 * Detach any foreign keys that are inherited.  This includes creating
+	 * additional action triggers.
+	 */
 	fks = copyObject(RelationGetFKeyList(partRel));
 	foreach(cell, fks)
 	{
 		ForeignKeyCacheInfo *fk = lfirst(cell);
 		HeapTuple	contup;
+		Form_pg_constraint conform;
+		Constraint *fkconstraint;
 
 		contup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(fk->conoid));
 		if (!contup)
 			elog(ERROR, "cache lookup failed for constraint %u", fk->conoid);
+		conform = (Form_pg_constraint) GETSTRUCT(contup);
 
+		/* consider only the inherited foreign keys */
+		if (conform->contype != CONSTRAINT_FOREIGN ||
+			!OidIsValid(conform->conparentid))
+		{
+			ReleaseSysCache(contup);
+			continue;
+		}
+
+		/* unset conparentid and adjust conislocal, coninhcount, etc. */
 		ConstraintSetParentConstraint(fk->conoid, InvalidOid);
+
+		/*
+		 * Make the action triggers on the referenced relation.  When this was
+		 * a partition the action triggers pointed to the parent rel (they
+		 * still do), but now we need separate ones of our own.
+		 */
+		fkconstraint = makeNode(Constraint);
+		fkconstraint->conname = pstrdup(NameStr(conform->conname));
+		fkconstraint->fk_upd_action = conform->confupdtype;
+		fkconstraint->fk_del_action = conform->confdeltype;
+		fkconstraint->deferrable = conform->condeferrable;
+		fkconstraint->initdeferred = conform->condeferred;
+
+		createForeignKeyActionTriggers(partRel, conform->confrelid,
+									   fkconstraint, fk->conoid,
+									   conform->conindid);
 
 		ReleaseSysCache(contup);
 	}

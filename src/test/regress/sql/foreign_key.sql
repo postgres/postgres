@@ -1375,6 +1375,23 @@ create table fkpart0.fk_part_56_5 partition of fkpart0.fk_part_56
 alter table fkpart0.fk_part_56 drop constraint fk_part_a_fkey;
 alter table fkpart0.fk_part_56_5 drop constraint fk_part_a_fkey;
 
+-- verify that attaching and detaching partitions maintains the right set of
+-- triggers
+create schema fkpart1
+  create table pkey (a int primary key)
+  create table fk_part (a int) partition by list (a)
+  create table fk_part_1 partition of fk_part for values in (1) partition by list (a)
+  create table fk_part_1_1 partition of fk_part_1 for values in (1);
+alter table fkpart1.fk_part add foreign key (a) references fkpart1.pkey;
+insert into fkpart1.fk_part values (1);		-- should fail
+insert into fkpart1.pkey values (1);
+insert into fkpart1.fk_part values (1);
+delete from fkpart1.pkey where a = 1;		-- should fail
+alter table fkpart1.fk_part detach partition fkpart1.fk_part_1;
+create table fkpart1.fk_part_1_2 partition of fkpart1.fk_part_1 for values in (2);
+insert into fkpart1.fk_part_1 values (2);	-- should fail
+delete from fkpart1.pkey where a = 1;
+
 \set VERBOSITY terse	\\ -- suppress cascade details
-drop schema fkpart0 cascade;
+drop schema fkpart0, fkpart1 cascade;
 \set VERBOSITY default
