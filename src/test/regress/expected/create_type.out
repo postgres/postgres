@@ -161,13 +161,13 @@ DROP FUNCTION base_fn_out(opaque); -- error
 ERROR:  function base_fn_out(opaque) does not exist
 DROP TYPE base_type; -- error
 ERROR:  cannot drop type base_type because other objects depend on it
-DETAIL:  function base_fn_out(base_type) depends on type base_type
-function base_fn_in(cstring) depends on type base_type
+DETAIL:  function base_fn_in(cstring) depends on type base_type
+function base_fn_out(base_type) depends on type base_type
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP TYPE base_type CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to function base_fn_out(base_type)
-drop cascades to function base_fn_in(cstring)
+DETAIL:  drop cascades to function base_fn_in(cstring)
+drop cascades to function base_fn_out(base_type)
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 CREATE TEMP TABLE mytab (foo widget(42,13,7));     -- should fail

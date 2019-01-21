@@ -645,8 +645,8 @@ alter domain dnotnulltest drop not null;
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to column col1 of table domnotnull
-drop cascades to column col2 of table domnotnull
+DETAIL:  drop cascades to column col2 of table domnotnull
+drop cascades to column col1 of table domnotnull
 -- Test ALTER DOMAIN .. DEFAULT ..
 create table domdeftest (col1 ddef1);
 insert into domdeftest default values;

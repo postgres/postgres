@@ -311,12 +311,12 @@ SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM mvtest_tm m LEFT JOIN mvtes
 DROP TABLE mvtest_t;
 ERROR:  cannot drop table mvtest_t because other objects depend on it
 DETAIL:  view mvtest_tv depends on table mvtest_t
+materialized view mvtest_mvschema.mvtest_tvm depends on view mvtest_tv
+materialized view mvtest_tvmm depends on materialized view mvtest_mvschema.mvtest_tvm
 view mvtest_tvv depends on view mvtest_tv
 materialized view mvtest_tvvm depends on view mvtest_tvv
 view mvtest_tvvmv depends on materialized view mvtest_tvvm
 materialized view mvtest_bb depends on view mvtest_tvvmv
-materialized view mvtest_mvschema.mvtest_tvm depends on view mvtest_tv
-materialized view mvtest_tvmm depends on materialized view mvtest_mvschema.mvtest_tvm
 materialized view mvtest_tm depends on table mvtest_t
 materialized view mvtest_tmm depends on materialized view mvtest_tm
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
@@ -327,12 +327,12 @@ BEGIN;
 DROP TABLE mvtest_t CASCADE;
 NOTICE:  drop cascades to 9 other objects
 DETAIL:  drop cascades to view mvtest_tv
+drop cascades to materialized view mvtest_mvschema.mvtest_tvm
+drop cascades to materialized view mvtest_tvmm
 drop cascades to view mvtest_tvv
 drop cascades to materialized view mvtest_tvvm
 drop cascades to view mvtest_tvvmv
 drop cascades to materialized view mvtest_bb
-drop cascades to materialized view mvtest_mvschema.mvtest_tvm
-drop cascades to materialized view mvtest_tvmm
 drop cascades to materialized view mvtest_tm
 drop cascades to materialized view mvtest_tmm
 ROLLBACK;

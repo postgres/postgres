@@ -124,6 +124,13 @@ typedef struct ObjectAddressStack
 	struct ObjectAddressStack *next;	/* next outer stack level */
 } ObjectAddressStack;
 
+/* temporary storage in findDependentObjects */
+typedef struct
+{
+	ObjectAddress obj;			/* object to be deleted --- MUST BE FIRST */
+	int			subflags;		/* flags to pass down when recursing to obj */
+} ObjectAddressAndFlags;
+
 /* for find_expr_references_walker */
 typedef struct
 {
@@ -472,6 +479,9 @@ findDependentObjects(const ObjectAddress *object,
 	SysScanDesc scan;
 	HeapTuple	tup;
 	ObjectAddress otherObject;
+	ObjectAddressAndFlags *dependentObjects;
+	int			numDependentObjects;
+	int			maxDependentObjects;
 	ObjectAddressStack mystack;
 	ObjectAddressExtra extra;
 
@@ -704,12 +714,17 @@ findDependentObjects(const ObjectAddress *object,
 	systable_endscan(scan);
 
 	/*
-	 * Now recurse to any dependent objects.  We must visit them first since
-	 * they have to be deleted before the current object.
+	 * Next, identify all objects that directly depend on the current object.
+	 * To ensure predictable deletion order, we collect them up in
+	 * dependentObjects and sort the list before actually recursing.  (The
+	 * deletion order would be valid in any case, but doing this ensures
+	 * consistent output from DROP CASCADE commands, which is helpful for
+	 * regression testing.)
 	 */
-	mystack.object = object;	/* set up a new stack level */
-	mystack.flags = objflags;
-	mystack.next = stack;
+	maxDependentObjects = 128;	/* arbitrary initial allocation */
+	dependentObjects = (ObjectAddressAndFlags *)
+		palloc(maxDependentObjects * sizeof(ObjectAddressAndFlags));
+	numDependentObjects = 0;
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -762,7 +777,10 @@ findDependentObjects(const ObjectAddress *object,
 			continue;
 		}
 
-		/* Recurse, passing objflags indicating the dependency type */
+		/*
+		 * We do need to delete it, so identify objflags to be passed down,
+		 * which depend on the dependency type.
+		 */
 		switch (foundDep->deptype)
 		{
 			case DEPENDENCY_NORMAL:
@@ -798,8 +816,47 @@ findDependentObjects(const ObjectAddress *object,
 				break;
 		}
 
-		findDependentObjects(&otherObject,
-							 subflags,
+		/* And add it to the pending-objects list */
+		if (numDependentObjects >= maxDependentObjects)
+		{
+			/* enlarge array if needed */
+			maxDependentObjects *= 2;
+			dependentObjects = (ObjectAddressAndFlags *)
+				repalloc(dependentObjects,
+						 maxDependentObjects * sizeof(ObjectAddressAndFlags));
+		}
+
+		dependentObjects[numDependentObjects].obj = otherObject;
+		dependentObjects[numDependentObjects].subflags = subflags;
+		numDependentObjects++;
+	}
+
+	systable_endscan(scan);
+
+	/*
+	 * Now we can sort the dependent objects into a stable visitation order.
+	 * It's safe to use object_address_comparator here since the obj field is
+	 * first within ObjectAddressAndFlags.
+	 */
+	if (numDependentObjects > 1)
+		qsort((void *) dependentObjects, numDependentObjects,
+			  sizeof(ObjectAddressAndFlags),
+			  object_address_comparator);
+
+	/*
+	 * Now recurse to the dependent objects.  We must visit them first since
+	 * they have to be deleted before the current object.
+	 */
+	mystack.object = object;	/* set up a new stack level */
+	mystack.flags = objflags;
+	mystack.next = stack;
+
+	for (int i = 0; i < numDependentObjects; i++)
+	{
+		ObjectAddressAndFlags *depObj = dependentObjects + i;
+
+		findDependentObjects(&depObj->obj,
+							 depObj->subflags,
 							 flags,
 							 &mystack,
 							 targetObjects,
@@ -807,7 +864,7 @@ findDependentObjects(const ObjectAddress *object,
 							 depRel);
 	}
 
-	systable_endscan(scan);
+	pfree(dependentObjects);
 
 	/*
 	 * Finally, we can add the target object to targetObjects.  Be careful to
@@ -2109,18 +2166,31 @@ object_address_comparator(const void *a, const void *b)
 	const ObjectAddress *obja = (const ObjectAddress *) a;
 	const ObjectAddress *objb = (const ObjectAddress *) b;
 
+	/*
+	 * Primary sort key is OID descending.  Most of the time, this will result
+	 * in putting newer objects before older ones, which is likely to be the
+	 * right order to delete in.
+	 */
+	if (obja->objectId > objb->objectId)
+		return -1;
+	if (obja->objectId < objb->objectId)
+		return 1;
+
+	/*
+	 * Next sort on catalog ID, in case identical OIDs appear in different
+	 * catalogs.  Sort direction is pretty arbitrary here.
+	 */
 	if (obja->classId < objb->classId)
 		return -1;
 	if (obja->classId > objb->classId)
 		return 1;
-	if (obja->objectId < objb->objectId)
-		return -1;
-	if (obja->objectId > objb->objectId)
-		return 1;
 
 	/*
-	 * We sort the subId as an unsigned int so that 0 will come first. See
-	 * logic in eliminate_duplicate_dependencies.
+	 * Last, sort on object subId.
+	 *
+	 * We sort the subId as an unsigned int so that 0 (the whole object) will
+	 * come first.  This is essential for eliminate_duplicate_dependencies,
+	 * and is also the best order for findDependentObjects.
 	 */
 	if ((unsigned int) obja->objectSubId < (unsigned int) objb->objectSubId)
 		return -1;
