@@ -273,7 +273,7 @@ AlterCollation(AlterCollationStmt *stmt)
 	char	   *newversion;
 	ObjectAddress address;
 
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
+	rel = table_open(CollationRelationId, RowExclusiveLock);
 	collOid = get_collation_oid(stmt->collname, false);
 
 	if (!pg_collation_ownercheck(collOid, GetUserId()))
@@ -325,7 +325,7 @@ AlterCollation(AlterCollationStmt *stmt)
 	ObjectAddressSet(address, CollationRelationId, collOid);
 
 	heap_freetuple(tup);
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return address;
 }

@@ -221,7 +221,7 @@ RelationBuildRowSecurity(Relation relation)
 		rsdesc = MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc));
 		rsdesc->rscxt = rscxt;
 
-		catalog = heap_open(PolicyRelationId, AccessShareLock);
+		catalog = table_open(PolicyRelationId, AccessShareLock);
 
 		ScanKeyInit(&skey,
 					Anum_pg_policy_polrelid,
@@ -328,7 +328,7 @@ RelationBuildRowSecurity(Relation relation)
 		}
 
 		systable_endscan(sscan);
-		heap_close(catalog, AccessShareLock);
+		table_close(catalog, AccessShareLock);
 	}
 	PG_CATCH();
 	{
@@ -360,7 +360,7 @@ RemovePolicyById(Oid policy_id)
 	Oid			relid;
 	Relation	rel;
 
-	pg_policy_rel = heap_open(PolicyRelationId, RowExclusiveLock);
+	pg_policy_rel = table_open(PolicyRelationId, RowExclusiveLock);
 
 	/*
 	 * Find the policy to delete.
@@ -387,7 +387,7 @@ RemovePolicyById(Oid policy_id)
 	 */
 	relid = ((Form_pg_policy) GETSTRUCT(tuple))->polrelid;
 
-	rel = heap_open(relid, AccessExclusiveLock);
+	rel = table_open(relid, AccessExclusiveLock);
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
@@ -415,10 +415,10 @@ RemovePolicyById(Oid policy_id)
 	 */
 	CacheInvalidateRelcache(rel);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	/* Clean up */
-	heap_close(pg_policy_rel, RowExclusiveLock);
+	table_close(pg_policy_rel, RowExclusiveLock);
 }
 
 /*
@@ -452,7 +452,7 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 
 	Assert(classid == PolicyRelationId);
 
-	pg_policy_rel = heap_open(PolicyRelationId, RowExclusiveLock);
+	pg_policy_rel = table_open(PolicyRelationId, RowExclusiveLock);
 
 	/*
 	 * Find the policy to update.
@@ -675,7 +675,7 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 
 	relation_close(rel, NoLock);
 
-	heap_close(pg_policy_rel, RowExclusiveLock);
+	table_close(pg_policy_rel, RowExclusiveLock);
 
 	return (noperm || num_roles > 0);
 }
@@ -781,7 +781,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	assign_expr_collations(with_check_pstate, with_check_qual);
 
 	/* Open pg_policy catalog */
-	pg_policy_rel = heap_open(PolicyRelationId, RowExclusiveLock);
+	pg_policy_rel = table_open(PolicyRelationId, RowExclusiveLock);
 
 	/* Set key - policy's relation id. */
 	ScanKeyInit(&skey[0],
@@ -875,7 +875,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	free_parsestate(with_check_pstate);
 	systable_endscan(sscan);
 	relation_close(target_table, NoLock);
-	heap_close(pg_policy_rel, RowExclusiveLock);
+	table_close(pg_policy_rel, RowExclusiveLock);
 
 	return myself;
 }
@@ -983,7 +983,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	memset(isnull, 0, sizeof(isnull));
 
 	/* Find policy to update. */
-	pg_policy_rel = heap_open(PolicyRelationId, RowExclusiveLock);
+	pg_policy_rel = table_open(PolicyRelationId, RowExclusiveLock);
 
 	/* Set key - policy's relation id. */
 	ScanKeyInit(&skey[0],
@@ -1205,7 +1205,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	/* Clean up. */
 	systable_endscan(sscan);
 	relation_close(target_table, NoLock);
-	heap_close(pg_policy_rel, RowExclusiveLock);
+	table_close(pg_policy_rel, RowExclusiveLock);
 
 	return myself;
 }
@@ -1234,7 +1234,7 @@ rename_policy(RenameStmt *stmt)
 
 	target_table = relation_open(table_id, NoLock);
 
-	pg_policy_rel = heap_open(PolicyRelationId, RowExclusiveLock);
+	pg_policy_rel = table_open(PolicyRelationId, RowExclusiveLock);
 
 	/* First pass -- check for conflict */
 
@@ -1310,7 +1310,7 @@ rename_policy(RenameStmt *stmt)
 
 	/* Clean up. */
 	systable_endscan(sscan);
-	heap_close(pg_policy_rel, RowExclusiveLock);
+	table_close(pg_policy_rel, RowExclusiveLock);
 	relation_close(target_table, NoLock);
 
 	return address;
@@ -1331,7 +1331,7 @@ get_relation_policy_oid(Oid relid, const char *policy_name, bool missing_ok)
 	HeapTuple	policy_tuple;
 	Oid			policy_oid;
 
-	pg_policy_rel = heap_open(PolicyRelationId, AccessShareLock);
+	pg_policy_rel = table_open(PolicyRelationId, AccessShareLock);
 
 	/* Add key - policy's relation id. */
 	ScanKeyInit(&skey[0],
@@ -1366,7 +1366,7 @@ get_relation_policy_oid(Oid relid, const char *policy_name, bool missing_ok)
 
 	/* Clean up. */
 	systable_endscan(sscan);
-	heap_close(pg_policy_rel, AccessShareLock);
+	table_close(pg_policy_rel, AccessShareLock);
 
 	return policy_oid;
 }
@@ -1383,7 +1383,7 @@ relation_has_policies(Relation rel)
 	HeapTuple	policy_tuple;
 	bool		ret = false;
 
-	catalog = heap_open(PolicyRelationId, AccessShareLock);
+	catalog = table_open(PolicyRelationId, AccessShareLock);
 	ScanKeyInit(&skey,
 				Anum_pg_policy_polrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -1395,7 +1395,7 @@ relation_has_policies(Relation rel)
 		ret = true;
 
 	systable_endscan(sscan);
-	heap_close(catalog, AccessShareLock);
+	table_close(catalog, AccessShareLock);
 
 	return ret;
 }

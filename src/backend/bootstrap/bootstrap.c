@@ -604,7 +604,7 @@ boot_openrel(char *relname)
 	if (Typ == NULL)
 	{
 		/* We can now load the pg_type data */
-		rel = heap_open(TypeRelationId, NoLock);
+		rel = table_open(TypeRelationId, NoLock);
 		scan = heap_beginscan_catalog(rel, 0, NULL);
 		i = 0;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -625,7 +625,7 @@ boot_openrel(char *relname)
 			app++;
 		}
 		heap_endscan(scan);
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 	}
 
 	if (boot_reldesc != NULL)
@@ -634,7 +634,7 @@ boot_openrel(char *relname)
 	elog(DEBUG4, "open relation %s, attrsize %d",
 		 relname, (int) ATTRIBUTE_FIXED_PART_SIZE);
 
-	boot_reldesc = heap_openrv(makeRangeVar(NULL, relname, -1), NoLock);
+	boot_reldesc = table_openrv(makeRangeVar(NULL, relname, -1), NoLock);
 	numattr = RelationGetNumberOfAttributes(boot_reldesc);
 	for (i = 0; i < numattr; i++)
 	{
@@ -680,7 +680,7 @@ closerel(char *name)
 	{
 		elog(DEBUG4, "close relation %s",
 			 RelationGetRelationName(boot_reldesc));
-		heap_close(boot_reldesc, NoLock);
+		table_close(boot_reldesc, NoLock);
 		boot_reldesc = NULL;
 	}
 }
@@ -939,7 +939,7 @@ gettype(char *type)
 				return i;
 		}
 		elog(DEBUG4, "external type: %s", type);
-		rel = heap_open(TypeRelationId, NoLock);
+		rel = table_open(TypeRelationId, NoLock);
 		scan = heap_beginscan_catalog(rel, 0, NULL);
 		i = 0;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -959,7 +959,7 @@ gettype(char *type)
 					sizeof((*app)->am_typ));
 		}
 		heap_endscan(scan);
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 		return gettype(type);
 	}
 	elog(ERROR, "unrecognized type \"%s\"", type);
@@ -1128,12 +1128,12 @@ build_indices(void)
 		Relation	ind;
 
 		/* need not bother with locks during bootstrap */
-		heap = heap_open(ILHead->il_heap, NoLock);
+		heap = table_open(ILHead->il_heap, NoLock);
 		ind = index_open(ILHead->il_ind, NoLock);
 
 		index_build(heap, ind, ILHead->il_info, false, false, false);
 
 		index_close(ind, NoLock);
-		heap_close(heap, NoLock);
+		table_close(heap, NoLock);
 	}
 }

@@ -362,7 +362,7 @@ ProcedureCreate(const char *procedureName,
 		nulls[Anum_pg_proc_proconfig - 1] = true;
 	/* proacl will be determined later */
 
-	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
+	rel = table_open(ProcedureRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
 
 	/* Check for pre-existing definition */
@@ -673,7 +673,7 @@ ProcedureCreate(const char *procedureName,
 	/* Post creation hook for new function */
 	InvokeObjectPostCreateHook(ProcedureRelationId, retval, 0);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	/* Verify function body */
 	if (OidIsValid(languageValidator))

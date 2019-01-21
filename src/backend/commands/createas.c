@@ -504,7 +504,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	/*
 	 * Finally we can open the target table
 	 */
-	intoRelationDesc = heap_open(intoRelationAddr.objectId, AccessExclusiveLock);
+	intoRelationDesc = table_open(intoRelationAddr.objectId, AccessExclusiveLock);
 
 	/*
 	 * Check INSERT permission on the constructed table.
@@ -605,7 +605,7 @@ intorel_shutdown(DestReceiver *self)
 		heap_sync(myState->rel);
 
 	/* close rel, but keep lock until commit */
-	heap_close(myState->rel, NoLock);
+	table_close(myState->rel, NoLock);
 	myState->rel = NULL;
 }
 

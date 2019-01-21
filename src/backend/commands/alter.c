@@ -400,11 +400,11 @@ ExecRenameStmt(RenameStmt *stmt)
 											 AccessExclusiveLock, false);
 				Assert(relation == NULL);
 
-				catalog = heap_open(address.classId, RowExclusiveLock);
+				catalog = table_open(address.classId, RowExclusiveLock);
 				AlterObjectRename_internal(catalog,
 										   address.objectId,
 										   stmt->newname);
-				heap_close(catalog, RowExclusiveLock);
+				table_close(catalog, RowExclusiveLock);
 
 				return address;
 			}
@@ -439,7 +439,7 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 	 * don't need the relation here, but we'll retain the lock until commit.
 	 */
 	if (rel)
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 
 	refAddr = get_object_address(OBJECT_EXTENSION, (Node *) stmt->extname,
 								 &rel, AccessExclusiveLock, false);
@@ -519,12 +519,12 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 											 false);
 				Assert(relation == NULL);
 				classId = address.classId;
-				catalog = heap_open(classId, RowExclusiveLock);
+				catalog = table_open(classId, RowExclusiveLock);
 				nspOid = LookupCreationNamespace(stmt->newschema);
 
 				oldNspOid = AlterObjectNamespace_internal(catalog, address.objectId,
 														  nspOid);
-				heap_close(catalog, RowExclusiveLock);
+				table_close(catalog, RowExclusiveLock);
 			}
 			break;
 
@@ -599,12 +599,12 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 			{
 				Relation	catalog;
 
-				catalog = heap_open(classId, RowExclusiveLock);
+				catalog = table_open(classId, RowExclusiveLock);
 
 				oldNspOid = AlterObjectNamespace_internal(catalog, objid,
 														  nspOid);
 
-				heap_close(catalog, RowExclusiveLock);
+				table_close(catalog, RowExclusiveLock);
 			}
 			break;
 
@@ -876,10 +876,10 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 				if (classId == LargeObjectRelationId)
 					classId = LargeObjectMetadataRelationId;
 
-				catalog = heap_open(classId, RowExclusiveLock);
+				catalog = table_open(classId, RowExclusiveLock);
 
 				AlterObjectOwner_internal(catalog, address.objectId, newowner);
-				heap_close(catalog, RowExclusiveLock);
+				table_close(catalog, RowExclusiveLock);
 
 				return address;
 			}

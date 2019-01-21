@@ -6192,7 +6192,7 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	/* Build RelOptInfo */
 	rel = build_simple_rel(root, 1, NULL);
 
-	heap = heap_open(tableOid, NoLock);
+	heap = table_open(tableOid, NoLock);
 	index = index_open(indexOid, NoLock);
 
 	/*
@@ -6253,7 +6253,7 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 
 done:
 	index_close(index, NoLock);
-	heap_close(heap, NoLock);
+	table_close(heap, NoLock);
 
 	return parallel_workers;
 }

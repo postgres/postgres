@@ -2584,10 +2584,10 @@ table_to_xmlschema(PG_FUNCTION_ARGS)
 	const char *result;
 	Relation	rel;
 
-	rel = heap_open(relid, AccessShareLock);
+	rel = table_open(relid, AccessShareLock);
 	result = map_sql_table_to_xmlschema(rel->rd_att, relid, nulls,
 										tableforest, targetns);
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	PG_RETURN_XML_P(cstring_to_xmltype(result));
 }
@@ -2658,10 +2658,10 @@ table_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 	Relation	rel;
 	const char *xmlschema;
 
-	rel = heap_open(relid, AccessShareLock);
+	rel = table_open(relid, AccessShareLock);
 	xmlschema = map_sql_table_to_xmlschema(rel->rd_att, relid, nulls,
 										   tableforest, targetns);
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(table_to_xml_internal(relid,
 																xmlschema, nulls, tableforest,
@@ -2819,9 +2819,9 @@ schema_to_xmlschema_internal(const char *schemaname, bool nulls,
 	{
 		Relation	rel;
 
-		rel = heap_open(lfirst_oid(cell), AccessShareLock);
+		rel = table_open(lfirst_oid(cell), AccessShareLock);
 		tupdesc_list = lappend(tupdesc_list, CreateTupleDescCopy(rel->rd_att));
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 	}
 
 	appendStringInfoString(result,
@@ -2959,9 +2959,9 @@ database_to_xmlschema_internal(bool nulls, bool tableforest,
 	{
 		Relation	rel;
 
-		rel = heap_open(lfirst_oid(cell), AccessShareLock);
+		rel = table_open(lfirst_oid(cell), AccessShareLock);
 		tupdesc_list = lappend(tupdesc_list, CreateTupleDescCopy(rel->rd_att));
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 	}
 
 	appendStringInfoString(result,

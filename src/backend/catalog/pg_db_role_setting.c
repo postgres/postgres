@@ -33,7 +33,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 	/* Get the old tuple, if any. */
 
-	rel = heap_open(DbRoleSettingRelationId, RowExclusiveLock);
+	rel = table_open(DbRoleSettingRelationId, RowExclusiveLock);
 	ScanKeyInit(&scankey[0],
 				Anum_pg_db_role_setting_setdatabase,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -158,7 +158,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	systable_endscan(scan);
 
 	/* Close pg_db_role_setting, but keep lock till commit */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 /*
@@ -175,7 +175,7 @@ DropSetting(Oid databaseid, Oid roleid)
 	HeapTuple	tup;
 	int			numkeys = 0;
 
-	relsetting = heap_open(DbRoleSettingRelationId, RowExclusiveLock);
+	relsetting = table_open(DbRoleSettingRelationId, RowExclusiveLock);
 
 	if (OidIsValid(databaseid))
 	{
@@ -203,7 +203,7 @@ DropSetting(Oid databaseid, Oid roleid)
 	}
 	heap_endscan(scan);
 
-	heap_close(relsetting, RowExclusiveLock);
+	table_close(relsetting, RowExclusiveLock);
 }
 
 /*

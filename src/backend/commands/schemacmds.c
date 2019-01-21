@@ -220,7 +220,7 @@ RemoveSchemaById(Oid schemaOid)
 	Relation	relation;
 	HeapTuple	tup;
 
-	relation = heap_open(NamespaceRelationId, RowExclusiveLock);
+	relation = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(NAMESPACEOID,
 						  ObjectIdGetDatum(schemaOid));
@@ -231,7 +231,7 @@ RemoveSchemaById(Oid schemaOid)
 
 	ReleaseSysCache(tup);
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 
@@ -248,7 +248,7 @@ RenameSchema(const char *oldname, const char *newname)
 	ObjectAddress address;
 	Form_pg_namespace nspform;
 
-	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
+	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
 	if (!HeapTupleIsValid(tup))
@@ -290,7 +290,7 @@ RenameSchema(const char *oldname, const char *newname)
 
 	ObjectAddressSet(address, NamespaceRelationId, nspOid);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 	heap_freetuple(tup);
 
 	return address;
@@ -302,7 +302,7 @@ AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 
-	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
+	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(oid));
 	if (!HeapTupleIsValid(tup))
@@ -312,7 +312,7 @@ AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 
 	ReleaseSysCache(tup);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 
@@ -328,7 +328,7 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 	ObjectAddress address;
 	Form_pg_namespace nspform;
 
-	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
+	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
@@ -345,7 +345,7 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 
 	ReleaseSysCache(tup);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	return address;
 }

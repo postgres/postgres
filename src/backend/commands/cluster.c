@@ -118,7 +118,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 											AccessExclusiveLock,
 											0,
 											RangeVarCallbackOwnsTable, NULL);
-		rel = heap_open(tableOid, NoLock);
+		rel = table_open(tableOid, NoLock);
 
 		/*
 		 * Reject clustering a remote temp table ... their local buffer
@@ -184,7 +184,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		}
 
 		/* close relation, keep lock till commit */
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 
 		/* Do the job. */
 		cluster_rel(tableOid, indexOid, stmt->options);
@@ -415,7 +415,7 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 	/* rebuild_relation does all the dirty work */
 	rebuild_relation(OldHeap, indexOid, verbose);
 
-	/* NB: rebuild_relation does heap_close() on OldHeap */
+	/* NB: rebuild_relation does table_close() on OldHeap */
 }
 
 /*
@@ -522,7 +522,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 	/*
 	 * Check each index of the relation and set/clear the bit as needed.
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+	pg_index = table_open(IndexRelationId, RowExclusiveLock);
 
 	foreach(index, RelationGetIndexList(rel))
 	{
@@ -558,7 +558,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 		heap_freetuple(indexTuple);
 	}
 
-	heap_close(pg_index, RowExclusiveLock);
+	table_close(pg_index, RowExclusiveLock);
 }
 
 /*
@@ -590,7 +590,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	is_system_catalog = IsSystemRelation(OldHeap);
 
 	/* Close relcache entry, but keep lock until transaction commit */
-	heap_close(OldHeap, NoLock);
+	table_close(OldHeap, NoLock);
 
 	/* Create the transient table that will receive the re-ordered data */
 	OIDNewHeap = make_new_heap(tableOid, tableSpace,
@@ -636,7 +636,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	bool		isNull;
 	Oid			namespaceid;
 
-	OldHeap = heap_open(OIDOldHeap, lockmode);
+	OldHeap = table_open(OIDOldHeap, lockmode);
 	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	/*
@@ -702,7 +702,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 
 	/*
 	 * Advance command counter so that the newly-created relation's catalog
-	 * tuples will be visible to heap_open.
+	 * tuples will be visible to table_open.
 	 */
 	CommandCounterIncrement();
 
@@ -734,7 +734,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 		ReleaseSysCache(tuple);
 	}
 
-	heap_close(OldHeap, NoLock);
+	table_close(OldHeap, NoLock);
 
 	return OIDNewHeap;
 }
@@ -785,8 +785,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	/*
 	 * Open the relations we need.
 	 */
-	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
-	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
+	NewHeap = table_open(OIDNewHeap, AccessExclusiveLock);
+	OldHeap = table_open(OIDOldHeap, AccessExclusiveLock);
 	if (OidIsValid(OIDOldIndex))
 		OldIndex = index_open(OIDOldIndex, AccessExclusiveLock);
 	else
@@ -1120,11 +1120,11 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	if (OldIndex != NULL)
 		index_close(OldIndex, NoLock);
-	heap_close(OldHeap, NoLock);
-	heap_close(NewHeap, NoLock);
+	table_close(OldHeap, NoLock);
+	table_close(NewHeap, NoLock);
 
 	/* Update pg_class to reflect the correct values of pages and tuples. */
-	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
+	relRelation = table_open(RelationRelationId, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDNewHeap));
 	if (!HeapTupleIsValid(reltup))
@@ -1142,7 +1142,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/* Clean up. */
 	heap_freetuple(reltup);
-	heap_close(relRelation, RowExclusiveLock);
+	table_close(relRelation, RowExclusiveLock);
 
 	/* Make the update visible */
 	CommandCounterIncrement();
@@ -1193,7 +1193,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	char		swptmpchr;
 
 	/* We need writable copies of both pg_class tuples. */
-	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
+	relRelation = table_open(RelationRelationId, RowExclusiveLock);
 
 	reltup1 = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(r1));
 	if (!HeapTupleIsValid(reltup1))
@@ -1487,7 +1487,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	heap_freetuple(reltup1);
 	heap_freetuple(reltup2);
 
-	heap_close(relRelation, RowExclusiveLock);
+	table_close(relRelation, RowExclusiveLock);
 
 	/*
 	 * Close both relcache entries' smgr links.  We need this kluge because
@@ -1595,7 +1595,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		HeapTuple	reltup;
 		Form_pg_class relform;
 
-		relRelation = heap_open(RelationRelationId, RowExclusiveLock);
+		relRelation = table_open(RelationRelationId, RowExclusiveLock);
 
 		reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDOldHeap));
 		if (!HeapTupleIsValid(reltup))
@@ -1607,7 +1607,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 
 		CatalogTupleUpdate(relRelation, &reltup->t_self, reltup);
 
-		heap_close(relRelation, RowExclusiveLock);
+		table_close(relRelation, RowExclusiveLock);
 	}
 
 	/* Destroy new heap with old filenode */
@@ -1646,7 +1646,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	{
 		Relation	newrel;
 
-		newrel = heap_open(OIDOldHeap, NoLock);
+		newrel = table_open(OIDOldHeap, NoLock);
 		if (OidIsValid(newrel->rd_rel->reltoastrelid))
 		{
 			Oid			toastidx;
@@ -1677,7 +1677,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	{
 		Relation	newrel;
 
-		newrel = heap_open(OIDOldHeap, NoLock);
+		newrel = table_open(OIDOldHeap, NoLock);
 		RelationClearMissing(newrel);
 		relation_close(newrel, NoLock);
 	}
@@ -1708,7 +1708,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 	 * have indisclustered set, because CLUSTER will refuse to set it when
 	 * called with one of them as argument.
 	 */
-	indRelation = heap_open(IndexRelationId, AccessShareLock);
+	indRelation = table_open(IndexRelationId, AccessShareLock);
 	ScanKeyInit(&entry,
 				Anum_pg_index_indisclustered,
 				BTEqualStrategyNumber, F_BOOLEQ,

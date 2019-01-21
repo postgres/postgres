@@ -5547,7 +5547,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			 * already have at least AccessShareLock on the table, but not
 			 * necessarily on the index.
 			 */
-			heapRel = heap_open(rte->relid, NoLock);
+			heapRel = table_open(rte->relid, NoLock);
 			indexRel = index_open(index->indexoid, AccessShareLock);
 
 			/* extract index key information from the index's pg_index info */
@@ -5668,7 +5668,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			ExecDropSingleTupleTableSlot(slot);
 
 			index_close(indexRel, AccessShareLock);
-			heap_close(heapRel, NoLock);
+			table_close(heapRel, NoLock);
 
 			MemoryContextSwitchTo(oldcontext);
 			FreeExecutorState(estate);

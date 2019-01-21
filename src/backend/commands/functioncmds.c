@@ -1135,7 +1135,7 @@ RemoveFunctionById(Oid funcOid)
 	/*
 	 * Delete the pg_proc tuple.
 	 */
-	relation = heap_open(ProcedureRelationId, RowExclusiveLock);
+	relation = table_open(ProcedureRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1147,14 +1147,14 @@ RemoveFunctionById(Oid funcOid)
 
 	ReleaseSysCache(tup);
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 
 	/*
 	 * If there's a pg_aggregate tuple, delete that too.
 	 */
 	if (prokind == PROKIND_AGGREGATE)
 	{
-		relation = heap_open(AggregateRelationId, RowExclusiveLock);
+		relation = table_open(AggregateRelationId, RowExclusiveLock);
 
 		tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcOid));
 		if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1164,7 +1164,7 @@ RemoveFunctionById(Oid funcOid)
 
 		ReleaseSysCache(tup);
 
-		heap_close(relation, RowExclusiveLock);
+		table_close(relation, RowExclusiveLock);
 	}
 }
 
@@ -1192,7 +1192,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 	DefElem    *parallel_item = NULL;
 	ObjectAddress address;
 
-	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
+	rel = table_open(ProcedureRelationId, RowExclusiveLock);
 
 	funcOid = LookupFuncWithArgs(stmt->objtype, stmt->func, false);
 
@@ -1312,7 +1312,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 	ObjectAddressSet(address, ProcedureRelationId, funcOid);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 	heap_freetuple(tup);
 
 	return address;
@@ -1334,7 +1334,7 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 	ObjectAddress func_address;
 	ObjectAddress type_address;
 
-	pg_proc_rel = heap_open(ProcedureRelationId, RowExclusiveLock);
+	pg_proc_rel = table_open(ProcedureRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(funcOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1350,7 +1350,7 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 	/* update the catalog and its indexes */
 	CatalogTupleUpdate(pg_proc_rel, &tup->t_self, tup);
 
-	heap_close(pg_proc_rel, RowExclusiveLock);
+	table_close(pg_proc_rel, RowExclusiveLock);
 
 	/*
 	 * Also update the dependency to the new type. Opaque is a pinned type, so
@@ -1376,7 +1376,7 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 	ObjectAddress func_address;
 	ObjectAddress type_address;
 
-	pg_proc_rel = heap_open(ProcedureRelationId, RowExclusiveLock);
+	pg_proc_rel = table_open(ProcedureRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(funcOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1393,7 +1393,7 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 	/* update the catalog and its indexes */
 	CatalogTupleUpdate(pg_proc_rel, &tup->t_self, tup);
 
-	heap_close(pg_proc_rel, RowExclusiveLock);
+	table_close(pg_proc_rel, RowExclusiveLock);
 
 	/*
 	 * Also update the dependency to the new type. Opaque is a pinned type, so
@@ -1651,7 +1651,7 @@ CreateCast(CreateCastStmt *stmt)
 			break;
 	}
 
-	relation = heap_open(CastRelationId, RowExclusiveLock);
+	relation = table_open(CastRelationId, RowExclusiveLock);
 
 	/*
 	 * Check for duplicate.  This is just to give a friendly error message,
@@ -1717,7 +1717,7 @@ CreateCast(CreateCastStmt *stmt)
 
 	heap_freetuple(tuple);
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 
 	return myself;
 }
@@ -1753,7 +1753,7 @@ DropCastById(Oid castOid)
 	SysScanDesc scan;
 	HeapTuple	tuple;
 
-	relation = heap_open(CastRelationId, RowExclusiveLock);
+	relation = table_open(CastRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scankey,
 				Anum_pg_cast_oid,
@@ -1768,7 +1768,7 @@ DropCastById(Oid castOid)
 	CatalogTupleDelete(relation, &tuple->t_self);
 
 	systable_endscan(scan);
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 
@@ -1921,7 +1921,7 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	MemSet(nulls, false, sizeof(nulls));
 
-	relation = heap_open(TransformRelationId, RowExclusiveLock);
+	relation = table_open(TransformRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCache2(TRFTYPELANG,
 							ObjectIdGetDatum(typeid),
@@ -2002,7 +2002,7 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	heap_freetuple(newtuple);
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 
 	return myself;
 }
@@ -2040,7 +2040,7 @@ DropTransformById(Oid transformOid)
 	SysScanDesc scan;
 	HeapTuple	tuple;
 
-	relation = heap_open(TransformRelationId, RowExclusiveLock);
+	relation = table_open(TransformRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scankey,
 				Anum_pg_transform_oid,
@@ -2055,7 +2055,7 @@ DropTransformById(Oid transformOid)
 	CatalogTupleDelete(relation, &tuple->t_self);
 
 	systable_endscan(scan);
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 

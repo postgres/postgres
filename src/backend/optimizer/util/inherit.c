@@ -158,7 +158,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	 * Must open the parent relation to examine its tupdesc.  We need not lock
 	 * it; we assume the rewriter already did.
 	 */
-	oldrelation = heap_open(parentOID, NoLock);
+	oldrelation = table_open(parentOID, NoLock);
 
 	/* Scan the inheritance set and expand it */
 	if (RelationGetPartitionDesc(oldrelation) != NULL)
@@ -191,7 +191,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 			/* Open rel if needed; we already have required locks */
 			if (childOID != parentOID)
-				newrelation = heap_open(childOID, NoLock);
+				newrelation = table_open(childOID, NoLock);
 			else
 				newrelation = oldrelation;
 
@@ -203,7 +203,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			 */
 			if (childOID != parentOID && RELATION_IS_OTHER_TEMP(newrelation))
 			{
-				heap_close(newrelation, lockmode);
+				table_close(newrelation, lockmode);
 				continue;
 			}
 
@@ -214,7 +214,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 			/* Close child relations, but keep locks */
 			if (childOID != parentOID)
-				heap_close(newrelation, NoLock);
+				table_close(newrelation, NoLock);
 		}
 
 		/*
@@ -232,7 +232,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	}
 
-	heap_close(oldrelation, NoLock);
+	table_close(oldrelation, NoLock);
 }
 
 /*
@@ -289,7 +289,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 		Relation	childrel;
 
 		/* Open rel; we already have required locks */
-		childrel = heap_open(childOID, NoLock);
+		childrel = table_open(childOID, NoLock);
 
 		/*
 		 * Temporary partitions belonging to other sessions should have been
@@ -310,7 +310,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 									   appinfos);
 
 		/* Close child relation, but keep locks */
-		heap_close(childrel, NoLock);
+		table_close(childrel, NoLock);
 	}
 }
 

@@ -2050,7 +2050,7 @@ get_pkey_attnames(Relation rel, int16 *indnkeyatts)
 	tupdesc = rel->rd_att;
 
 	/* Prepare to scan pg_index for entries having indrelid = this rel. */
-	indexRelation = heap_open(IndexRelationId, AccessShareLock);
+	indexRelation = table_open(IndexRelationId, AccessShareLock);
 	ScanKeyInit(&skey,
 				Anum_pg_index_indrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -2079,7 +2079,7 @@ get_pkey_attnames(Relation rel, int16 *indnkeyatts)
 	}
 
 	systable_endscan(scan);
-	heap_close(indexRelation, AccessShareLock);
+	table_close(indexRelation, AccessShareLock);
 
 	return result;
 }
@@ -2503,7 +2503,7 @@ get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode)
 	AclResult	aclresult;
 
 	relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text));
-	rel = heap_openrv(relvar, lockmode);
+	rel = table_openrv(relvar, lockmode);
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  aclmode);

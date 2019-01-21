@@ -336,7 +336,7 @@ ScanPgRelation(Oid targetRelId, bool indexOK, bool force_non_historic)
 	 * without a pg_internal.init file).  The caller can also force a heap
 	 * scan by setting indexOK == false.
 	 */
-	pg_class_desc = heap_open(RelationRelationId, AccessShareLock);
+	pg_class_desc = table_open(RelationRelationId, AccessShareLock);
 
 	/*
 	 * The caller might need a tuple that's newer than the one the historic
@@ -363,7 +363,7 @@ ScanPgRelation(Oid targetRelId, bool indexOK, bool force_non_historic)
 
 	/* all done */
 	systable_endscan(pg_class_scan);
-	heap_close(pg_class_desc, AccessShareLock);
+	table_close(pg_class_desc, AccessShareLock);
 
 	return pg_class_tuple;
 }
@@ -526,7 +526,7 @@ RelationBuildTupleDesc(Relation relation)
 	 * built the critical relcache entries (this includes initdb and startup
 	 * without a pg_internal.init file).
 	 */
-	pg_attribute_desc = heap_open(AttributeRelationId, AccessShareLock);
+	pg_attribute_desc = table_open(AttributeRelationId, AccessShareLock);
 	pg_attribute_scan = systable_beginscan(pg_attribute_desc,
 										   AttributeRelidNumIndexId,
 										   criticalRelcachesBuilt,
@@ -633,7 +633,7 @@ RelationBuildTupleDesc(Relation relation)
 	 * end the scan and close the attribute relation
 	 */
 	systable_endscan(pg_attribute_scan);
-	heap_close(pg_attribute_desc, AccessShareLock);
+	table_close(pg_attribute_desc, AccessShareLock);
 
 	if (need != 0)
 		elog(ERROR, "catalog is missing %d attribute(s) for relid %u",
@@ -767,7 +767,7 @@ RelationBuildRuleLock(Relation relation)
 	 * emergency-recovery operations (ie, IgnoreSystemIndexes). This in turn
 	 * ensures that rules will be fired in name order.
 	 */
-	rewrite_desc = heap_open(RewriteRelationId, AccessShareLock);
+	rewrite_desc = table_open(RewriteRelationId, AccessShareLock);
 	rewrite_tupdesc = RelationGetDescr(rewrite_desc);
 	rewrite_scan = systable_beginscan(rewrite_desc,
 									  RewriteRelRulenameIndexId,
@@ -848,7 +848,7 @@ RelationBuildRuleLock(Relation relation)
 	 * end the scan and close the attribute relation
 	 */
 	systable_endscan(rewrite_scan);
-	heap_close(rewrite_desc, AccessShareLock);
+	table_close(rewrite_desc, AccessShareLock);
 
 	/*
 	 * there might not be any rules (if relhasrules is out-of-date)
@@ -1644,7 +1644,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 				Anum_pg_opclass_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(operatorClassOid));
-	rel = heap_open(OperatorClassRelationId, AccessShareLock);
+	rel = table_open(OperatorClassRelationId, AccessShareLock);
 	scan = systable_beginscan(rel, OpclassOidIndexId, indexOK,
 							  NULL, 1, skey);
 
@@ -1659,7 +1659,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 		elog(ERROR, "could not find tuple for opclass %u", operatorClassOid);
 
 	systable_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	/*
 	 * Scan pg_amproc to obtain support procs for the opclass.  We only fetch
@@ -1679,7 +1679,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 					Anum_pg_amproc_amprocrighttype,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(opcentry->opcintype));
-		rel = heap_open(AccessMethodProcedureRelationId, AccessShareLock);
+		rel = table_open(AccessMethodProcedureRelationId, AccessShareLock);
 		scan = systable_beginscan(rel, AccessMethodProcedureIndexId, indexOK,
 								  NULL, 3, skey);
 
@@ -1697,7 +1697,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 		}
 
 		systable_endscan(scan);
-		heap_close(rel, AccessShareLock);
+		table_close(rel, AccessShareLock);
 	}
 
 	opcentry->valid = true;
@@ -3348,7 +3348,7 @@ RelationSetNewRelfilenode(Relation relation, char persistence,
 	/*
 	 * Get a writable copy of the pg_class tuple for the given relation.
 	 */
-	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
+	pg_class = table_open(RelationRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopy1(RELOID,
 								ObjectIdGetDatum(RelationGetRelid(relation)));
@@ -3402,7 +3402,7 @@ RelationSetNewRelfilenode(Relation relation, char persistence,
 
 	heap_freetuple(tuple);
 
-	heap_close(pg_class, RowExclusiveLock);
+	table_close(pg_class, RowExclusiveLock);
 
 	/*
 	 * Make the pg_class row change visible, as well as the relation map
@@ -3938,7 +3938,7 @@ AttrDefaultFetch(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	adrel = heap_open(AttrDefaultRelationId, AccessShareLock);
+	adrel = table_open(AttrDefaultRelationId, AccessShareLock);
 	adscan = systable_beginscan(adrel, AttrDefaultIndexId, true,
 								NULL, 1, &skey);
 	found = 0;
@@ -3983,7 +3983,7 @@ AttrDefaultFetch(Relation relation)
 	}
 
 	systable_endscan(adscan);
-	heap_close(adrel, AccessShareLock);
+	table_close(adrel, AccessShareLock);
 }
 
 /*
@@ -4005,7 +4005,7 @@ CheckConstraintFetch(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	conrel = heap_open(ConstraintRelationId, AccessShareLock);
+	conrel = table_open(ConstraintRelationId, AccessShareLock);
 	conscan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId, true,
 								 NULL, 1, skey);
 
@@ -4046,7 +4046,7 @@ CheckConstraintFetch(Relation relation)
 	}
 
 	systable_endscan(conscan);
-	heap_close(conrel, AccessShareLock);
+	table_close(conrel, AccessShareLock);
 
 	if (found != ncheck)
 		elog(ERROR, "%d constraint record(s) missing for rel %s",
@@ -4117,7 +4117,7 @@ RelationGetFKeyList(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	conrel = heap_open(ConstraintRelationId, AccessShareLock);
+	conrel = table_open(ConstraintRelationId, AccessShareLock);
 	conscan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId, true,
 								 NULL, 1, &skey);
 
@@ -4146,7 +4146,7 @@ RelationGetFKeyList(Relation relation)
 	}
 
 	systable_endscan(conscan);
-	heap_close(conrel, AccessShareLock);
+	table_close(conrel, AccessShareLock);
 
 	/* Now save a copy of the completed list in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
@@ -4224,7 +4224,7 @@ RelationGetIndexList(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	indrel = heap_open(IndexRelationId, AccessShareLock);
+	indrel = table_open(IndexRelationId, AccessShareLock);
 	indscan = systable_beginscan(indrel, IndexIndrelidIndexId, true,
 								 NULL, 1, &skey);
 
@@ -4265,7 +4265,7 @@ RelationGetIndexList(Relation relation)
 
 	systable_endscan(indscan);
 
-	heap_close(indrel, AccessShareLock);
+	table_close(indrel, AccessShareLock);
 
 	/* Now save a copy of the completed list in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
@@ -4340,7 +4340,7 @@ RelationGetStatExtList(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	indrel = heap_open(StatisticExtRelationId, AccessShareLock);
+	indrel = table_open(StatisticExtRelationId, AccessShareLock);
 	indscan = systable_beginscan(indrel, StatisticExtRelidIndexId, true,
 								 NULL, 1, &skey);
 
@@ -4353,7 +4353,7 @@ RelationGetStatExtList(Relation relation)
 
 	systable_endscan(indscan);
 
-	heap_close(indrel, AccessShareLock);
+	table_close(indrel, AccessShareLock);
 
 	/* Now save a copy of the completed list in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
@@ -4907,7 +4907,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(indexRelation->rd_index->indrelid));
 
-	conrel = heap_open(ConstraintRelationId, AccessShareLock);
+	conrel = table_open(ConstraintRelationId, AccessShareLock);
 	conscan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId, true,
 								 NULL, 1, skey);
 	found = false;
@@ -4951,7 +4951,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 	}
 
 	systable_endscan(conscan);
-	heap_close(conrel, AccessShareLock);
+	table_close(conrel, AccessShareLock);
 
 	if (!found)
 		elog(ERROR, "exclusion constraint record missing for rel %s",

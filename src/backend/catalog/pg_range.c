@@ -45,7 +45,7 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 	ObjectAddress myself;
 	ObjectAddress referenced;
 
-	pg_range = heap_open(RangeRelationId, RowExclusiveLock);
+	pg_range = table_open(RangeRelationId, RowExclusiveLock);
 
 	memset(nulls, 0, sizeof(nulls));
 
@@ -101,7 +101,7 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
-	heap_close(pg_range, RowExclusiveLock);
+	table_close(pg_range, RowExclusiveLock);
 }
 
 
@@ -117,7 +117,7 @@ RangeDelete(Oid rangeTypeOid)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	pg_range = heap_open(RangeRelationId, RowExclusiveLock);
+	pg_range = table_open(RangeRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_range_rngtypid,
@@ -134,5 +134,5 @@ RangeDelete(Oid rangeTypeOid)
 
 	systable_endscan(scan);
 
-	heap_close(pg_range, RowExclusiveLock);
+	table_close(pg_range, RowExclusiveLock);
 }

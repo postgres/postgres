@@ -50,7 +50,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 	Datum		values[Natts_pg_am];
 	HeapTuple	tup;
 
-	rel = heap_open(AccessMethodRelationId, RowExclusiveLock);
+	rel = table_open(AccessMethodRelationId, RowExclusiveLock);
 
 	/* Must be super user */
 	if (!superuser())
@@ -107,7 +107,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	return myself;
 }
@@ -126,7 +126,7 @@ RemoveAccessMethodById(Oid amOid)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to drop access methods")));
 
-	relation = heap_open(AccessMethodRelationId, RowExclusiveLock);
+	relation = table_open(AccessMethodRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(AMOID, ObjectIdGetDatum(amOid));
 	if (!HeapTupleIsValid(tup))
@@ -136,7 +136,7 @@ RemoveAccessMethodById(Oid amOid)
 
 	ReleaseSysCache(tup);
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 /*

@@ -92,7 +92,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
 	 * (and this one too!) are sent SI message to make them rebuild relcache
 	 * entries.
 	 */
-	pgrel = heap_open(RelationRelationId, RowExclusiveLock);
+	pgrel = table_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy1(RELOID,
 								ObjectIdGetDatum(RelationGetRelid(relation)));
 	if (!HeapTupleIsValid(tuple))
@@ -104,7 +104,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
 	CatalogTupleUpdate(pgrel, &tuple->t_self, tuple);
 
 	heap_freetuple(tuple);
-	heap_close(pgrel, RowExclusiveLock);
+	table_close(pgrel, RowExclusiveLock);
 
 	/*
 	 * Advance command counter to make the updated pg_class row locally
@@ -165,7 +165,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	matviewOid = RangeVarGetRelidExtended(stmt->relation,
 										  lockmode, 0,
 										  RangeVarCallbackOwnsTable, NULL);
-	matviewRel = heap_open(matviewOid, NoLock);
+	matviewRel = table_open(matviewOid, NoLock);
 
 	/* Make sure it is a materialized view. */
 	if (matviewRel->rd_rel->relkind != RELKIND_MATVIEW)
@@ -345,7 +345,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 			pgstat_count_heap_insert(matviewRel, processed);
 	}
 
-	heap_close(matviewRel, NoLock);
+	table_close(matviewRel, NoLock);
 
 	/* Roll back any GUC changes */
 	AtEOXact_GUC(false, save_nestlevel);
@@ -449,7 +449,7 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	DR_transientrel *myState = (DR_transientrel *) self;
 	Relation	transientrel;
 
-	transientrel = heap_open(myState->transientoid, NoLock);
+	transientrel = table_open(myState->transientoid, NoLock);
 
 	/*
 	 * Fill private fields of myState for use by later routines
@@ -514,7 +514,7 @@ transientrel_shutdown(DestReceiver *self)
 		heap_sync(myState->transientrel);
 
 	/* close transientrel, but keep lock until commit */
-	heap_close(myState->transientrel, NoLock);
+	table_close(myState->transientrel, NoLock);
 	myState->transientrel = NULL;
 }
 
@@ -596,10 +596,10 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	Oid		   *opUsedForQual;
 
 	initStringInfo(&querybuf);
-	matviewRel = heap_open(matviewOid, NoLock);
+	matviewRel = table_open(matviewOid, NoLock);
 	matviewname = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(matviewRel)),
 											 RelationGetRelationName(matviewRel));
-	tempRel = heap_open(tempOid, NoLock);
+	tempRel = table_open(tempOid, NoLock);
 	tempname = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(tempRel)),
 										  RelationGetRelationName(tempRel));
 	diffname = make_temptable_name_n(tempname, 2);
@@ -827,8 +827,8 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 
 	/* We're done maintaining the materialized view. */
 	CloseMatViewIncrementalMaintenance();
-	heap_close(tempRel, NoLock);
-	heap_close(matviewRel, NoLock);
+	table_close(tempRel, NoLock);
+	table_close(matviewRel, NoLock);
 
 	/* Clean up temp tables. */
 	resetStringInfo(&querybuf);

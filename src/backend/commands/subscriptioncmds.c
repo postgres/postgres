@@ -347,7 +347,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to create subscriptions"))));
 
-	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 
 	/* Check if name is used */
 	subid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
@@ -491,7 +491,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 						"ALTER SUBSCRIPTION ... REFRESH PUBLICATION to "
 						"subscribe the tables")));
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	if (enabled)
 		ApplyLauncherWakeupAtCommit();
@@ -626,7 +626,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 	Subscription *sub;
 	Form_pg_subscription form;
 
-	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 
 	/* Fetch the existing tuple. */
 	tup = SearchSysCacheCopy2(SUBSCRIPTIONNAME, MyDatabaseId,
@@ -799,7 +799,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 		heap_freetuple(tup);
 	}
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	ObjectAddressSet(myself, SubscriptionRelationId, subid);
 
@@ -836,14 +836,14 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * Lock pg_subscription with AccessExclusiveLock to ensure that the
 	 * launcher doesn't restart new worker during dropping the subscription
 	 */
-	rel = heap_open(SubscriptionRelationId, AccessExclusiveLock);
+	rel = table_open(SubscriptionRelationId, AccessExclusiveLock);
 
 	tup = SearchSysCache2(SUBSCRIPTIONNAME, MyDatabaseId,
 						  CStringGetDatum(stmt->subname));
 
 	if (!HeapTupleIsValid(tup))
 	{
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 
 		if (!stmt->missing_ok)
 			ereport(ERROR,
@@ -962,7 +962,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 */
 	if (!slotname)
 	{
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 		return;
 	}
 
@@ -1014,7 +1014,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 
 	pfree(cmd.data);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 /*
@@ -1066,7 +1066,7 @@ AlterSubscriptionOwner(const char *name, Oid newOwnerId)
 	ObjectAddress address;
 	Form_pg_subscription form;
 
-	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy2(SUBSCRIPTIONNAME, MyDatabaseId,
 							  CStringGetDatum(name));
@@ -1085,7 +1085,7 @@ AlterSubscriptionOwner(const char *name, Oid newOwnerId)
 
 	heap_freetuple(tup);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	return address;
 }
@@ -1099,7 +1099,7 @@ AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 
-	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
 
@@ -1112,7 +1112,7 @@ AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId)
 
 	heap_freetuple(tup);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 /*

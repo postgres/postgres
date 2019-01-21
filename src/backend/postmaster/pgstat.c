@@ -1219,7 +1219,7 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 					   &hash_ctl,
 					   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
-	rel = heap_open(catalogid, AccessShareLock);
+	rel = table_open(catalogid, AccessShareLock);
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
 	scan = heap_beginscan(rel, snapshot, 0, NULL);
 	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -1236,7 +1236,7 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 	}
 	heap_endscan(scan);
 	UnregisterSnapshot(snapshot);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return htab;
 }

@@ -189,9 +189,9 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	bool		partition_recurse;
 
 	if (OidIsValid(relOid))
-		rel = heap_open(relOid, ShareRowExclusiveLock);
+		rel = table_open(relOid, ShareRowExclusiveLock);
 	else
-		rel = heap_openrv(stmt->relation, ShareRowExclusiveLock);
+		rel = table_openrv(stmt->relation, ShareRowExclusiveLock);
 
 	/*
 	 * Triggers must be on tables or views, and there are additional
@@ -712,7 +712,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		RI_FKey_trigger_type(funcoid) != RI_TRIGGER_NONE)
 	{
 		/* Keep lock on target rel until end of xact */
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 
 		ConvertTriggerToFK(stmt, funcoid);
 
@@ -762,7 +762,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * Generate the trigger's OID now, so that we can use it in the name if
 	 * needed.
 	 */
-	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
+	tgrel = table_open(TriggerRelationId, RowExclusiveLock);
 
 	trigoid = GetNewOidWithIndex(tgrel, TriggerOidIndexId,
 								 Anum_pg_trigger_oid);
@@ -948,7 +948,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	CatalogTupleInsert(tgrel, tuple);
 
 	heap_freetuple(tuple);
-	heap_close(tgrel, RowExclusiveLock);
+	table_close(tgrel, RowExclusiveLock);
 
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgname - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgargs - 1]));
@@ -962,7 +962,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * Update relation's pg_class entry; if necessary; and if not, send an SI
 	 * message to make other backends (and this one) rebuild relcache entries.
 	 */
-	pgrel = heap_open(RelationRelationId, RowExclusiveLock);
+	pgrel = table_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy1(RELOID,
 								ObjectIdGetDatum(RelationGetRelid(rel)));
 	if (!HeapTupleIsValid(tuple))
@@ -980,7 +980,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		CacheInvalidateRelcacheByTuple(tuple);
 
 	heap_freetuple(tuple);
-	heap_close(pgrel, RowExclusiveLock);
+	table_close(pgrel, RowExclusiveLock);
 
 	/*
 	 * Record dependencies for trigger.  Always place a normal dependency on
@@ -1128,7 +1128,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			Node	   *qual;
 			bool		found_whole_row;
 
-			childTbl = heap_open(partdesc->oids[i], ShareRowExclusiveLock);
+			childTbl = table_open(partdesc->oids[i], ShareRowExclusiveLock);
 
 			/* Find which of the child indexes is the one on this partition */
 			if (OidIsValid(indexOid))
@@ -1177,7 +1177,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 						  funcoid, trigoid, qual,
 						  isInternal, true);
 
-			heap_close(childTbl, NoLock);
+			table_close(childTbl, NoLock);
 
 			MemoryContextReset(perChildCxt);
 		}
@@ -1189,7 +1189,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	}
 
 	/* Keep lock on target rel until end of xact */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return myself;
 }
@@ -1487,7 +1487,7 @@ RemoveTriggerById(Oid trigOid)
 	Oid			relid;
 	Relation	rel;
 
-	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
+	tgrel = table_open(TriggerRelationId, RowExclusiveLock);
 
 	/*
 	 * Find the trigger to delete.
@@ -1509,7 +1509,7 @@ RemoveTriggerById(Oid trigOid)
 	 */
 	relid = ((Form_pg_trigger) GETSTRUCT(tup))->tgrelid;
 
-	rel = heap_open(relid, AccessExclusiveLock);
+	rel = table_open(relid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_VIEW &&
@@ -1532,7 +1532,7 @@ RemoveTriggerById(Oid trigOid)
 	CatalogTupleDelete(tgrel, &tup->t_self);
 
 	systable_endscan(tgscan);
-	heap_close(tgrel, RowExclusiveLock);
+	table_close(tgrel, RowExclusiveLock);
 
 	/*
 	 * We do not bother to try to determine whether any other triggers remain,
@@ -1546,7 +1546,7 @@ RemoveTriggerById(Oid trigOid)
 	CacheInvalidateRelcache(rel);
 
 	/* Keep lock on trigger's rel until end of xact */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 /*
@@ -1567,7 +1567,7 @@ get_trigger_oid(Oid relid, const char *trigname, bool missing_ok)
 	/*
 	 * Find the trigger, verify permissions, set up object address
 	 */
-	tgrel = heap_open(TriggerRelationId, AccessShareLock);
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_trigger_tgrelid,
@@ -1598,7 +1598,7 @@ get_trigger_oid(Oid relid, const char *trigname, bool missing_ok)
 	}
 
 	systable_endscan(tgscan);
-	heap_close(tgrel, AccessShareLock);
+	table_close(tgrel, AccessShareLock);
 	return oid;
 }
 
@@ -1684,7 +1684,7 @@ renametrig(RenameStmt *stmt)
 	 * NOTE that this is cool only because we have AccessExclusiveLock on the
 	 * relation, so the trigger set won't be changing underneath us.
 	 */
-	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
+	tgrel = table_open(TriggerRelationId, RowExclusiveLock);
 
 	/*
 	 * First pass -- look for name conflict
@@ -1757,7 +1757,7 @@ renametrig(RenameStmt *stmt)
 
 	systable_endscan(tgscan);
 
-	heap_close(tgrel, RowExclusiveLock);
+	table_close(tgrel, RowExclusiveLock);
 
 	/*
 	 * Close rel, but keep exclusive lock!
@@ -1798,7 +1798,7 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 	bool		changed;
 
 	/* Scan the relevant entries in pg_triggers */
-	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
+	tgrel = table_open(TriggerRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&keys[0],
 				Anum_pg_trigger_tgrelid,
@@ -1867,7 +1867,7 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 					part = relation_open(partdesc->oids[i], lockmode);
 					EnableDisableTrigger(part, NameStr(oldtrig->tgname),
 										 fires_when, skip_system, lockmode);
-					heap_close(part, NoLock);	/* keep lock till commit */
+					table_close(part, NoLock);	/* keep lock till commit */
 				}
 			}
 
@@ -1880,7 +1880,7 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 
 	systable_endscan(tgscan);
 
-	heap_close(tgrel, RowExclusiveLock);
+	table_close(tgrel, RowExclusiveLock);
 
 	if (tgname && !found)
 		ereport(ERROR,
@@ -1941,7 +1941,7 @@ RelationBuildTriggers(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	tgrel = heap_open(TriggerRelationId, AccessShareLock);
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
 								NULL, 1, &skey);
 
@@ -2031,7 +2031,7 @@ RelationBuildTriggers(Relation relation)
 	}
 
 	systable_endscan(tgscan);
-	heap_close(tgrel, AccessShareLock);
+	table_close(tgrel, AccessShareLock);
 
 	/* There might not be any triggers */
 	if (numtrigs == 0)
@@ -5403,7 +5403,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 		 * A constraint in a partitioned table may have corresponding
 		 * constraints in the partitions.  Grab those too.
 		 */
-		conrel = heap_open(ConstraintRelationId, AccessShareLock);
+		conrel = table_open(ConstraintRelationId, AccessShareLock);
 
 		foreach(lc, stmt->constraints)
 		{
@@ -5525,13 +5525,13 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 			systable_endscan(scan);
 		}
 
-		heap_close(conrel, AccessShareLock);
+		table_close(conrel, AccessShareLock);
 
 		/*
 		 * Now, locate the trigger(s) implementing each of these constraints,
 		 * and make a list of their OIDs.
 		 */
-		tgrel = heap_open(TriggerRelationId, AccessShareLock);
+		tgrel = table_open(TriggerRelationId, AccessShareLock);
 
 		foreach(lc, conoidlist)
 		{
@@ -5575,7 +5575,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 					 conoid);
 		}
 
-		heap_close(tgrel, AccessShareLock);
+		table_close(tgrel, AccessShareLock);
 
 		/*
 		 * Now we can set the trigger states of individual triggers for this

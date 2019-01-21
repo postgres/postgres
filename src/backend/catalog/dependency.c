@@ -317,7 +317,7 @@ performDeletion(const ObjectAddress *object,
 	 * We save some cycles by opening pg_depend just once and passing the
 	 * Relation pointer down to all the recursive deletion steps.
 	 */
-	depRel = heap_open(DependRelationId, RowExclusiveLock);
+	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * Acquire deletion lock on the target object.  (Ideally the caller has
@@ -353,7 +353,7 @@ performDeletion(const ObjectAddress *object,
 	/* And clean up */
 	free_object_addresses(targetObjects);
 
-	heap_close(depRel, RowExclusiveLock);
+	table_close(depRel, RowExclusiveLock);
 }
 
 /*
@@ -381,7 +381,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	 * We save some cycles by opening pg_depend just once and passing the
 	 * Relation pointer down to all the recursive deletion steps.
 	 */
-	depRel = heap_open(DependRelationId, RowExclusiveLock);
+	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * Construct a list of objects to delete (ie, the given objects plus
@@ -429,7 +429,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	/* And clean up */
 	free_object_addresses(targetObjects);
 
-	heap_close(depRel, RowExclusiveLock);
+	table_close(depRel, RowExclusiveLock);
 }
 
 /*
@@ -1086,7 +1086,7 @@ deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 	 * relation open across doDeletion().
 	 */
 	if (flags & PERFORM_DELETION_CONCURRENTLY)
-		heap_close(*depRel, RowExclusiveLock);
+		table_close(*depRel, RowExclusiveLock);
 
 	/*
 	 * Delete the object itself, in an object-type-dependent way.
@@ -1103,7 +1103,7 @@ deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 	 * Reopen depRel if we closed it above
 	 */
 	if (flags & PERFORM_DELETION_CONCURRENTLY)
-		*depRel = heap_open(DependRelationId, RowExclusiveLock);
+		*depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * Now remove any pg_depend records that link from this object to others.
@@ -2640,7 +2640,7 @@ DeleteInitPrivs(const ObjectAddress *object)
 	SysScanDesc scan;
 	HeapTuple	oldtuple;
 
-	relation = heap_open(InitPrivsRelationId, RowExclusiveLock);
+	relation = table_open(InitPrivsRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_init_privs_objoid,
@@ -2663,5 +2663,5 @@ DeleteInitPrivs(const ObjectAddress *object)
 
 	systable_endscan(scan);
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }

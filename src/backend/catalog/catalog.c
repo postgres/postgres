@@ -481,7 +481,7 @@ pg_nextoid(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to call pg_nextoid")));
 
-	rel = heap_open(reloid, RowExclusiveLock);
+	rel = table_open(reloid, RowExclusiveLock);
 	idx = index_open(idxoid, RowExclusiveLock);
 
 	if (!IsSystemRelation(rel))
@@ -523,7 +523,7 @@ pg_nextoid(PG_FUNCTION_ARGS)
 	newoid = GetNewOidWithIndex(rel, idxoid, attno);
 
 	ReleaseSysCache(atttuple);
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 	index_close(idx, RowExclusiveLock);
 
 	return newoid;

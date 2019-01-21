@@ -307,7 +307,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	}
 
 	heap_endscan(scan);
-	heap_close(mydata->rel, AccessShareLock);
+	table_close(mydata->rel, AccessShareLock);
 
 	SRF_RETURN_DONE(funcctx);
 }

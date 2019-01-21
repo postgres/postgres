@@ -1048,11 +1048,11 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 		 * Core code already has some lock on each rel being planned, so we
 		 * can use NoLock here.
 		 */
-		Relation	rel = heap_open(rte->relid, NoLock);
+		Relation	rel = table_open(rte->relid, NoLock);
 
 		deparseTargetList(buf, rte, foreignrel->relid, rel, false,
 						  fpinfo->attrs_used, false, retrieved_attrs);
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 	}
 }
 
@@ -1543,7 +1543,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		 * Core code already has some lock on each rel being planned, so we
 		 * can use NoLock here.
 		 */
-		Relation	rel = heap_open(rte->relid, NoLock);
+		Relation	rel = table_open(rte->relid, NoLock);
 
 		deparseRelation(buf, rel);
 
@@ -1555,7 +1555,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		if (use_alias)
 			appendStringInfo(buf, " %s%d", REL_ALIAS_PREFIX, foreignrel->relid);
 
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 	}
 }
 
@@ -2097,7 +2097,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 		 * The lock on the relation will be held by upper callers, so it's
 		 * fine to open it with no lock here.
 		 */
-		rel = heap_open(rte->relid, NoLock);
+		rel = table_open(rte->relid, NoLock);
 
 		/*
 		 * The local name of the foreign table can not be recognized by the
@@ -2132,7 +2132,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 		if (qualify_col)
 			appendStringInfoString(buf, " END");
 
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 		bms_free(attrs_used);
 	}
 	else

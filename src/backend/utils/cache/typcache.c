@@ -915,7 +915,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 	 * constraints for not just this domain, but any ancestor domains, so the
 	 * outer loop crawls up the domain stack.
 	 */
-	conRel = heap_open(ConstraintRelationId, AccessShareLock);
+	conRel = table_open(ConstraintRelationId, AccessShareLock);
 
 	for (;;)
 	{
@@ -1056,7 +1056,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 		ReleaseSysCache(tup);
 	}
 
-	heap_close(conRel, AccessShareLock);
+	table_close(conRel, AccessShareLock);
 
 	/*
 	 * Only need to add one NOT NULL check regardless of how many domains in
@@ -2347,7 +2347,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(tcache->type_id));
 
-	enum_rel = heap_open(EnumRelationId, AccessShareLock);
+	enum_rel = table_open(EnumRelationId, AccessShareLock);
 	enum_scan = systable_beginscan(enum_rel,
 								   EnumTypIdLabelIndexId,
 								   true, NULL,
@@ -2368,7 +2368,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 	}
 
 	systable_endscan(enum_scan);
-	heap_close(enum_rel, AccessShareLock);
+	table_close(enum_rel, AccessShareLock);
 
 	/* Sort the items into OID order */
 	qsort(items, numitems, sizeof(EnumItem), enum_oid_cmp);

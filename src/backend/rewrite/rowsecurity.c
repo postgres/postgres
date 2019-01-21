@@ -162,7 +162,7 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 * for example in UPDATE t1 ... FROM t2 we need to apply t1's UPDATE
 	 * policies and t2's SELECT policies.
 	 */
-	rel = heap_open(rte->relid, NoLock);
+	rel = table_open(rte->relid, NoLock);
 
 	commandType = rt_index == root->resultRelation ?
 		root->commandType : CMD_SELECT;
@@ -379,7 +379,7 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		}
 	}
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	/*
 	 * Mark this query as having row security, so plancache can invalidate it

@@ -308,7 +308,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	Assert(ntypes > 0 && ntypes <= lengthof(types));
 	stxkind = construct_array(types, ntypes, CHAROID, 1, true, 'c');
 
-	statrel = heap_open(StatisticExtRelationId, RowExclusiveLock);
+	statrel = table_open(StatisticExtRelationId, RowExclusiveLock);
 
 	/*
 	 * Everything seems fine, so let's build the pg_statistic_ext tuple.
@@ -396,7 +396,7 @@ RemoveStatisticsById(Oid statsOid)
 	 * Delete the pg_statistic_ext tuple.  Also send out a cache inval on the
 	 * associated table, so that dependent plans will be rebuilt.
 	 */
-	relation = heap_open(StatisticExtRelationId, RowExclusiveLock);
+	relation = table_open(StatisticExtRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statsOid));
 
@@ -412,7 +412,7 @@ RemoveStatisticsById(Oid statsOid)
 
 	ReleaseSysCache(tup);
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 /*

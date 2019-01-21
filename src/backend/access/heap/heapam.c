@@ -8990,10 +8990,10 @@ heap_sync(Relation rel)
 	{
 		Relation	toastrel;
 
-		toastrel = heap_open(rel->rd_rel->reltoastrelid, AccessShareLock);
+		toastrel = table_open(rel->rd_rel->reltoastrelid, AccessShareLock);
 		FlushRelationBuffers(toastrel);
 		smgrimmedsync(toastrel->rd_smgr, MAIN_FORKNUM);
-		heap_close(toastrel, AccessShareLock);
+		table_close(toastrel, AccessShareLock);
 	}
 }
 

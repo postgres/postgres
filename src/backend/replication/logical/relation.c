@@ -254,7 +254,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("logical replication target relation \"%s.%s\" does not exist",
 							remoterel->nspname, remoterel->relname)));
-		entry->localrel = heap_open(relid, NoLock);
+		entry->localrel = table_open(relid, NoLock);
 
 		/* Check for supported relkind. */
 		CheckSubscriptionRelkind(entry->localrel->rd_rel->relkind,
@@ -350,7 +350,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		entry->localreloid = relid;
 	}
 	else
-		entry->localrel = heap_open(entry->localreloid, lockmode);
+		entry->localrel = table_open(entry->localreloid, lockmode);
 
 	if (entry->state != SUBREL_STATE_READY)
 		entry->state = GetSubscriptionRelState(MySubscription->oid,
@@ -367,7 +367,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 void
 logicalrep_rel_close(LogicalRepRelMapEntry *rel, LOCKMODE lockmode)
 {
-	heap_close(rel->localrel, lockmode);
+	table_close(rel->localrel, lockmode);
 	rel->localrel = NULL;
 }
 

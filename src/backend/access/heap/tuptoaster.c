@@ -1422,7 +1422,7 @@ toast_get_valid_index(Oid toastoid, LOCKMODE lock)
 	Relation	toastrel;
 
 	/* Open the toast relation */
-	toastrel = heap_open(toastoid, lock);
+	toastrel = table_open(toastoid, lock);
 
 	/* Look for the valid index of the toast relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -1433,7 +1433,7 @@ toast_get_valid_index(Oid toastoid, LOCKMODE lock)
 
 	/* Close the toast relation and all its indexes */
 	toast_close_indexes(toastidxs, num_indexes, lock);
-	heap_close(toastrel, lock);
+	table_close(toastrel, lock);
 
 	return validIndexOid;
 }
@@ -1487,7 +1487,7 @@ toast_save_datum(Relation rel, Datum value,
 	 * uniqueness of the OID we assign to the toasted item, even though it has
 	 * additional columns besides OID.
 	 */
-	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
+	toastrel = table_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
 	toasttupDesc = toastrel->rd_att;
 
 	/* Open all the toast indexes and look for the valid one */
@@ -1692,7 +1692,7 @@ toast_save_datum(Relation rel, Datum value,
 	 * Done - close toast relation and its indexes
 	 */
 	toast_close_indexes(toastidxs, num_indexes, RowExclusiveLock);
-	heap_close(toastrel, RowExclusiveLock);
+	table_close(toastrel, RowExclusiveLock);
 
 	/*
 	 * Create the TOAST pointer value that we'll return
@@ -1734,7 +1734,7 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	/*
 	 * Open the toast relation and its indexes
 	 */
-	toastrel = heap_open(toast_pointer.va_toastrelid, RowExclusiveLock);
+	toastrel = table_open(toast_pointer.va_toastrelid, RowExclusiveLock);
 
 	/* Fetch valid relation used for process */
 	validIndex = toast_open_indexes(toastrel,
@@ -1774,7 +1774,7 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	 */
 	systable_endscan_ordered(toastscan);
 	toast_close_indexes(toastidxs, num_indexes, RowExclusiveLock);
-	heap_close(toastrel, RowExclusiveLock);
+	table_close(toastrel, RowExclusiveLock);
 }
 
 
@@ -1840,11 +1840,11 @@ toastid_valueid_exists(Oid toastrelid, Oid valueid)
 	bool		result;
 	Relation	toastrel;
 
-	toastrel = heap_open(toastrelid, AccessShareLock);
+	toastrel = table_open(toastrelid, AccessShareLock);
 
 	result = toastrel_valueid_exists(toastrel, valueid);
 
-	heap_close(toastrel, AccessShareLock);
+	table_close(toastrel, AccessShareLock);
 
 	return result;
 }
@@ -1899,7 +1899,7 @@ toast_fetch_datum(struct varlena *attr)
 	/*
 	 * Open the toast relation and its indexes
 	 */
-	toastrel = heap_open(toast_pointer.va_toastrelid, AccessShareLock);
+	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
 
 	/* Look for the valid index of the toast relation */
@@ -2016,7 +2016,7 @@ toast_fetch_datum(struct varlena *attr)
 	 */
 	systable_endscan_ordered(toastscan);
 	toast_close_indexes(toastidxs, num_indexes, AccessShareLock);
-	heap_close(toastrel, AccessShareLock);
+	table_close(toastrel, AccessShareLock);
 
 	return result;
 }
@@ -2102,7 +2102,7 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset, int32 length)
 	/*
 	 * Open the toast relation and its indexes
 	 */
-	toastrel = heap_open(toast_pointer.va_toastrelid, AccessShareLock);
+	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
 
 	/* Look for the valid index of toast relation */
@@ -2249,7 +2249,7 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset, int32 length)
 	 */
 	systable_endscan_ordered(toastscan);
 	toast_close_indexes(toastidxs, num_indexes, AccessShareLock);
-	heap_close(toastrel, AccessShareLock);
+	table_close(toastrel, AccessShareLock);
 
 	return result;
 }

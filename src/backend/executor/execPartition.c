@@ -514,7 +514,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * We locked all the partitions in ExecSetupPartitionTupleRouting
 	 * including the leaf partitions.
 	 */
-	partrel = heap_open(dispatch->partdesc->oids[partidx], NoLock);
+	partrel = table_open(dispatch->partdesc->oids[partidx], NoLock);
 
 	leaf_part_rri = makeNode(ResultRelInfo);
 	InitResultRelInfo(leaf_part_rri,
@@ -983,7 +983,7 @@ ExecInitPartitionDispatchInfo(PartitionTupleRouting *proute, Oid partoid,
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
 
 	if (partoid != RelationGetRelid(proute->partition_root))
-		rel = heap_open(partoid, NoLock);
+		rel = table_open(partoid, NoLock);
 	else
 		rel = proute->partition_root;
 	partdesc = RelationGetPartitionDesc(rel);
@@ -1087,7 +1087,7 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 	{
 		PartitionDispatch pd = proute->partition_dispatch_info[i];
 
-		heap_close(pd->reldesc, NoLock);
+		table_close(pd->reldesc, NoLock);
 
 		if (pd->tupslot)
 			ExecDropSingleTupleTableSlot(pd->tupslot);
@@ -1120,7 +1120,7 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 														   resultRelInfo);
 
 		ExecCloseIndices(resultRelInfo);
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+		table_close(resultRelInfo->ri_RelationDesc, NoLock);
 	}
 }
 

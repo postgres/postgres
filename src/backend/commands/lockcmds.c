@@ -273,7 +273,7 @@ LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, List *ancestor_views
 	Relation	view;
 	Query	   *viewquery;
 
-	view = heap_open(reloid, NoLock);
+	view = table_open(reloid, NoLock);
 	viewquery = get_view_query(view);
 
 	context.lockmode = lockmode;
@@ -286,7 +286,7 @@ LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, List *ancestor_views
 
 	ancestor_views = list_delete_oid(ancestor_views, reloid);
 
-	heap_close(view, NoLock);
+	table_close(view, NoLock);
 }
 
 /*

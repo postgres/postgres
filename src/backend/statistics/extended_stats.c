@@ -79,7 +79,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 								ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(cxt);
 
-	pg_stext = heap_open(StatisticExtRelationId, RowExclusiveLock);
+	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
 	stats = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
 
 	foreach(lc, stats)
@@ -130,7 +130,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		statext_store(pg_stext, stat->statOid, ndistinct, dependencies, stats);
 	}
 
-	heap_close(pg_stext, RowExclusiveLock);
+	table_close(pg_stext, RowExclusiveLock);
 
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(cxt);

@@ -822,9 +822,9 @@ pg_get_replica_identity_index(PG_FUNCTION_ARGS)
 	Oid			idxoid;
 	Relation	rel;
 
-	rel = heap_open(reloid, AccessShareLock);
+	rel = table_open(reloid, AccessShareLock);
 	idxoid = RelationGetReplicaIndex(rel);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	if (OidIsValid(idxoid))
 		PG_RETURN_OID(idxoid);

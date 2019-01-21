@@ -331,7 +331,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 * Check the pg_authid relation to be certain the role doesn't already
 	 * exist.
 	 */
-	pg_authid_rel = heap_open(AuthIdRelationId, RowExclusiveLock);
+	pg_authid_rel = table_open(AuthIdRelationId, RowExclusiveLock);
 	pg_authid_dsc = RelationGetDescr(pg_authid_rel);
 
 	if (OidIsValid(get_role_oid(stmt->role, true)))
@@ -495,7 +495,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	/*
 	 * Close pg_authid, but keep lock till commit.
 	 */
-	heap_close(pg_authid_rel, NoLock);
+	table_close(pg_authid_rel, NoLock);
 
 	return roleid;
 }
@@ -681,7 +681,7 @@ AlterRole(AlterRoleStmt *stmt)
 	/*
 	 * Scan the pg_authid relation to be certain the user exists.
 	 */
-	pg_authid_rel = heap_open(AuthIdRelationId, RowExclusiveLock);
+	pg_authid_rel = table_open(AuthIdRelationId, RowExclusiveLock);
 	pg_authid_dsc = RelationGetDescr(pg_authid_rel);
 
 	tuple = get_rolespec_tuple(stmt->role);
@@ -881,7 +881,7 @@ AlterRole(AlterRoleStmt *stmt)
 	/*
 	 * Close pg_authid, but keep lock till commit.
 	 */
-	heap_close(pg_authid_rel, NoLock);
+	table_close(pg_authid_rel, NoLock);
 
 	return roleid;
 }
@@ -987,8 +987,8 @@ DropRole(DropRoleStmt *stmt)
 	 * Scan the pg_authid relation to find the Oid of the role(s) to be
 	 * deleted.
 	 */
-	pg_authid_rel = heap_open(AuthIdRelationId, RowExclusiveLock);
-	pg_auth_members_rel = heap_open(AuthMemRelationId, RowExclusiveLock);
+	pg_authid_rel = table_open(AuthIdRelationId, RowExclusiveLock);
+	pg_auth_members_rel = table_open(AuthMemRelationId, RowExclusiveLock);
 
 	foreach(item, stmt->roles)
 	{
@@ -1142,8 +1142,8 @@ DropRole(DropRoleStmt *stmt)
 	/*
 	 * Now we can clean up; but keep locks until commit.
 	 */
-	heap_close(pg_auth_members_rel, NoLock);
-	heap_close(pg_authid_rel, NoLock);
+	table_close(pg_auth_members_rel, NoLock);
+	table_close(pg_authid_rel, NoLock);
 }
 
 /*
@@ -1166,7 +1166,7 @@ RenameRole(const char *oldname, const char *newname)
 	ObjectAddress address;
 	Form_pg_authid authform;
 
-	rel = heap_open(AuthIdRelationId, RowExclusiveLock);
+	rel = table_open(AuthIdRelationId, RowExclusiveLock);
 	dsc = RelationGetDescr(rel);
 
 	oldtuple = SearchSysCache1(AUTHNAME, CStringGetDatum(oldname));
@@ -1270,7 +1270,7 @@ RenameRole(const char *oldname, const char *newname)
 	/*
 	 * Close pg_authid, but keep lock till commit.
 	 */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return address;
 }
@@ -1296,7 +1296,7 @@ GrantRole(GrantRoleStmt *stmt)
 	grantee_ids = roleSpecsToIds(stmt->grantee_roles);
 
 	/* AccessShareLock is enough since we aren't modifying pg_authid */
-	pg_authid_rel = heap_open(AuthIdRelationId, AccessShareLock);
+	pg_authid_rel = table_open(AuthIdRelationId, AccessShareLock);
 
 	/*
 	 * Step through all of the granted roles and add/remove entries for the
@@ -1331,7 +1331,7 @@ GrantRole(GrantRoleStmt *stmt)
 	/*
 	 * Close pg_authid, but keep lock till commit.
 	 */
-	heap_close(pg_authid_rel, NoLock);
+	table_close(pg_authid_rel, NoLock);
 }
 
 /*
@@ -1483,7 +1483,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to set grantor")));
 
-	pg_authmem_rel = heap_open(AuthMemRelationId, RowExclusiveLock);
+	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
 	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
 	forboth(specitem, memberSpecs, iditem, memberIds)
@@ -1561,7 +1561,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	/*
 	 * Close pg_authmem, but keep lock till commit.
 	 */
-	heap_close(pg_authmem_rel, NoLock);
+	table_close(pg_authmem_rel, NoLock);
 }
 
 /*
@@ -1612,7 +1612,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 							rolename)));
 	}
 
-	pg_authmem_rel = heap_open(AuthMemRelationId, RowExclusiveLock);
+	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
 	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
 	forboth(specitem, memberSpecs, iditem, memberIds)
@@ -1671,5 +1671,5 @@ DelRoleMems(const char *rolename, Oid roleid,
 	/*
 	 * Close pg_authmem, but keep lock till commit.
 	 */
-	heap_close(pg_authmem_rel, NoLock);
+	table_close(pg_authmem_rel, NoLock);
 }

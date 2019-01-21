@@ -94,7 +94,7 @@ preprocess_targetlist(PlannerInfo *root)
 		if (target_rte->rtekind != RTE_RELATION)
 			elog(ERROR, "result relation must be a regular relation");
 
-		target_relation = heap_open(target_rte->relid, NoLock);
+		target_relation = table_open(target_rte->relid, NoLock);
 	}
 	else
 		Assert(command_type == CMD_SELECT);
@@ -233,7 +233,7 @@ preprocess_targetlist(PlannerInfo *root)
 							  target_relation);
 
 	if (target_relation)
-		heap_close(target_relation, NoLock);
+		table_close(target_relation, NoLock);
 
 	return tlist;
 }

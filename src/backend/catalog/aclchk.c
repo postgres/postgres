@@ -843,7 +843,7 @@ objectsInSchemaToOids(ObjectType objtype, List *nspnames)
 									BTEqualStrategyNumber, F_CHAREQ,
 									CharGetDatum(PROKIND_PROCEDURE));
 
-					rel = heap_open(ProcedureRelationId, AccessShareLock);
+					rel = table_open(ProcedureRelationId, AccessShareLock);
 					scan = heap_beginscan_catalog(rel, keycount, key);
 
 					while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -854,7 +854,7 @@ objectsInSchemaToOids(ObjectType objtype, List *nspnames)
 					}
 
 					heap_endscan(scan);
-					heap_close(rel, AccessShareLock);
+					table_close(rel, AccessShareLock);
 				}
 				break;
 			default:
@@ -890,7 +890,7 @@ getRelationsInNamespace(Oid namespaceId, char relkind)
 				BTEqualStrategyNumber, F_CHAREQ,
 				CharGetDatum(relkind));
 
-	rel = heap_open(RelationRelationId, AccessShareLock);
+	rel = table_open(RelationRelationId, AccessShareLock);
 	scan = heap_beginscan_catalog(rel, 2, key);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -901,7 +901,7 @@ getRelationsInNamespace(Oid namespaceId, char relkind)
 	}
 
 	heap_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return relations;
 }
@@ -1166,7 +1166,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	Oid		   *oldmembers;
 	Oid		   *newmembers;
 
-	rel = heap_open(DefaultAclRelationId, RowExclusiveLock);
+	rel = table_open(DefaultAclRelationId, RowExclusiveLock);
 
 	/*
 	 * The default for a global entry is the hard-wired default ACL for the
@@ -1390,7 +1390,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	if (HeapTupleIsValid(tuple))
 		ReleaseSysCache(tuple);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 
@@ -1412,7 +1412,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 		HeapTuple	tuple;
 
 		/* first fetch info needed by SetDefaultACL */
-		rel = heap_open(DefaultAclRelationId, AccessShareLock);
+		rel = table_open(DefaultAclRelationId, AccessShareLock);
 
 		ScanKeyInit(&skey[0],
 					Anum_pg_default_acl_oid,
@@ -1457,7 +1457,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 		}
 
 		systable_endscan(scan);
-		heap_close(rel, AccessShareLock);
+		table_close(rel, AccessShareLock);
 
 		iacls.is_grant = false;
 		iacls.all_privs = true;
@@ -1535,7 +1535,7 @@ RemoveDefaultACLById(Oid defaclOid)
 	SysScanDesc scan;
 	HeapTuple	tuple;
 
-	rel = heap_open(DefaultAclRelationId, RowExclusiveLock);
+	rel = table_open(DefaultAclRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_default_acl_oid,
@@ -1553,7 +1553,7 @@ RemoveDefaultACLById(Oid defaclOid)
 	CatalogTupleDelete(rel, &tuple->t_self);
 
 	systable_endscan(scan);
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 
@@ -1798,8 +1798,8 @@ ExecGrant_Relation(InternalGrant *istmt)
 	Relation	attRelation;
 	ListCell   *cell;
 
-	relation = heap_open(RelationRelationId, RowExclusiveLock);
-	attRelation = heap_open(AttributeRelationId, RowExclusiveLock);
+	relation = table_open(RelationRelationId, RowExclusiveLock);
+	attRelation = table_open(AttributeRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -2119,8 +2119,8 @@ ExecGrant_Relation(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(attRelation, RowExclusiveLock);
-	heap_close(relation, RowExclusiveLock);
+	table_close(attRelation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -2132,7 +2132,7 @@ ExecGrant_Database(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_DATABASE;
 
-	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
+	relation = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -2240,7 +2240,7 @@ ExecGrant_Database(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -2252,7 +2252,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_FDW;
 
-	relation = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
+	relation = table_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -2367,7 +2367,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -2379,7 +2379,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 
-	relation = heap_open(ForeignServerRelationId, RowExclusiveLock);
+	relation = table_open(ForeignServerRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -2492,7 +2492,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -2504,7 +2504,7 @@ ExecGrant_Function(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_FUNCTION;
 
-	relation = heap_open(ProcedureRelationId, RowExclusiveLock);
+	relation = table_open(ProcedureRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -2615,7 +2615,7 @@ ExecGrant_Function(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -2627,7 +2627,7 @@ ExecGrant_Language(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_LANGUAGE;
 
-	relation = heap_open(LanguageRelationId, RowExclusiveLock);
+	relation = table_open(LanguageRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -2746,7 +2746,7 @@ ExecGrant_Language(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -2758,8 +2758,8 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_LARGEOBJECT;
 
-	relation = heap_open(LargeObjectMetadataRelationId,
-						 RowExclusiveLock);
+	relation = table_open(LargeObjectMetadataRelationId,
+						  RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -2886,7 +2886,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -2898,7 +2898,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_SCHEMA;
 
-	relation = heap_open(NamespaceRelationId, RowExclusiveLock);
+	relation = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -3010,7 +3010,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -3022,7 +3022,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_TABLESPACE;
 
-	relation = heap_open(TableSpaceRelationId, RowExclusiveLock);
+	relation = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -3130,7 +3130,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 static void
@@ -3142,7 +3142,7 @@ ExecGrant_Type(InternalGrant *istmt)
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
 		istmt->privileges = ACL_ALL_RIGHTS_TYPE;
 
-	relation = heap_open(TypeRelationId, RowExclusiveLock);
+	relation = table_open(TypeRelationId, RowExclusiveLock);
 
 	foreach(cell, istmt->objects)
 	{
@@ -3267,7 +3267,7 @@ ExecGrant_Type(InternalGrant *istmt)
 		CommandCounterIncrement();
 	}
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }
 
 
@@ -4116,8 +4116,8 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 	/*
 	 * Get the largeobject's ACL from pg_language_metadata
 	 */
-	pg_lo_meta = heap_open(LargeObjectMetadataRelationId,
-						   AccessShareLock);
+	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
+							AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_largeobject_metadata_oid,
@@ -4159,7 +4159,7 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 
 	systable_endscan(scan);
 
-	heap_close(pg_lo_meta, AccessShareLock);
+	table_close(pg_lo_meta, AccessShareLock);
 
 	return result;
 }
@@ -4898,8 +4898,8 @@ pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
 		return true;
 
 	/* There's no syscache for pg_largeobject_metadata */
-	pg_lo_meta = heap_open(LargeObjectMetadataRelationId,
-						   AccessShareLock);
+	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
+							AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_largeobject_metadata_oid,
@@ -4919,7 +4919,7 @@ pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
 	ownerId = ((Form_pg_largeobject_metadata) GETSTRUCT(tuple))->lomowner;
 
 	systable_endscan(scan);
-	heap_close(pg_lo_meta, AccessShareLock);
+	table_close(pg_lo_meta, AccessShareLock);
 
 	return has_privs_of_role(roleid, ownerId);
 }
@@ -5261,7 +5261,7 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 		return true;
 
 	/* There's no syscache for pg_extension, so do it the hard way */
-	pg_extension = heap_open(ExtensionRelationId, AccessShareLock);
+	pg_extension = table_open(ExtensionRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_extension_oid,
@@ -5281,7 +5281,7 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 	ownerId = ((Form_pg_extension) GETSTRUCT(tuple))->extowner;
 
 	systable_endscan(scan);
-	heap_close(pg_extension, AccessShareLock);
+	table_close(pg_extension, AccessShareLock);
 
 	return has_privs_of_role(roleid, ownerId);
 }
@@ -5726,7 +5726,7 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		SysScanDesc scan;
 		Relation	relation;
 
-		relation = heap_open(LargeObjectMetadataRelationId, RowExclusiveLock);
+		relation = table_open(LargeObjectMetadataRelationId, RowExclusiveLock);
 
 		/* There's no syscache for pg_largeobject_metadata */
 		ScanKeyInit(&entry[0],
@@ -5968,7 +5968,7 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid, Acl *new_a
 	HeapTuple	tuple;
 	HeapTuple	oldtuple;
 
-	relation = heap_open(InitPrivsRelationId, RowExclusiveLock);
+	relation = table_open(InitPrivsRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_init_privs_objoid,
@@ -6054,5 +6054,5 @@ recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid, Acl *new_a
 	/* prevent error when processing objects multiple times */
 	CommandCounterIncrement();
 
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 }

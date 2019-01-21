@@ -1550,7 +1550,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	}
 
 	/* Open relations within worker */
-	heapRel = heap_open(btshared->heaprelid, heapLockmode);
+	heapRel = table_open(btshared->heaprelid, heapLockmode);
 	indexRel = index_open(btshared->indexrelid, indexLockmode);
 
 	/* Initialize worker's own spool */
@@ -1595,7 +1595,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 #endif							/* BTREE_BUILD_STATS */
 
 	index_close(indexRel, indexLockmode);
-	heap_close(heapRel, heapLockmode);
+	table_close(heapRel, heapLockmode);
 }
 
 /*

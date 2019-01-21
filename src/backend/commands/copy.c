@@ -852,7 +852,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		Assert(!stmt->query);
 
 		/* Open and lock the relation, using the appropriate lock type. */
-		rel = heap_openrv(stmt->relation, lockmode);
+		rel = table_openrv(stmt->relation, lockmode);
 
 		relid = RelationGetRelid(rel);
 
@@ -1000,7 +1000,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			 *
 			 * We'll reopen it later as part of the query-based COPY.
 			 */
-			heap_close(rel, NoLock);
+			table_close(rel, NoLock);
 			rel = NULL;
 		}
 	}
@@ -1047,7 +1047,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	 * ensure that updates will be committed before lock is released.
 	 */
 	if (rel != NULL)
-		heap_close(rel, (is_from ? NoLock : AccessShareLock));
+		table_close(rel, (is_from ? NoLock : AccessShareLock));
 }
 
 /*

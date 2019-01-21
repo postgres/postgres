@@ -1200,7 +1200,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	 * commit.  That will prevent someone else from deleting or ALTERing the
 	 * parent before the child is committed.
 	 */
-	heap_close(relation, NoLock);
+	table_close(relation, NoLock);
 }
 
 static void
@@ -2157,7 +2157,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					Relation	rel;
 					int			count;
 
-					rel = heap_openrv(inh, AccessShareLock);
+					rel = table_openrv(inh, AccessShareLock);
 					/* check user requested inheritance from valid relkind */
 					if (rel->rd_rel->relkind != RELKIND_RELATION &&
 						rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
@@ -2187,7 +2187,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 							break;
 						}
 					}
-					heap_close(rel, NoLock);
+					table_close(rel, NoLock);
 					if (found)
 						break;
 				}
@@ -2280,7 +2280,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					Relation	rel;
 					int			count;
 
-					rel = heap_openrv(inh, AccessShareLock);
+					rel = table_openrv(inh, AccessShareLock);
 					/* check user requested inheritance from valid relkind */
 					if (rel->rd_rel->relkind != RELKIND_RELATION &&
 						rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
@@ -2310,7 +2310,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 							break;
 						}
 					}
-					heap_close(rel, NoLock);
+					table_close(rel, NoLock);
 					if (found)
 						break;
 				}
@@ -2550,7 +2550,7 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	free_parsestate(pstate);
 
 	/* Close relation */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	/* Mark statement as successfully transformed */
 	stmt->transformed = true;
@@ -2586,7 +2586,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	 * DefineQueryRewrite(), and we don't want to grab a lesser lock
 	 * beforehand.
 	 */
-	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+	rel = table_openrv(stmt->relation, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind == RELKIND_MATVIEW)
 		ereport(ERROR,
@@ -2864,7 +2864,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	free_parsestate(pstate);
 
 	/* Close relation, but keep the exclusive lock */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 

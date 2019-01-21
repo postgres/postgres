@@ -70,7 +70,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	/*
 	 * open pg_type
 	 */
-	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
+	pg_type_desc = table_open(TypeRelationId, RowExclusiveLock);
 	tupDesc = pg_type_desc->rd_att;
 
 	/*
@@ -173,7 +173,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 * clean up and return the type-oid
 	 */
 	heap_freetuple(tup);
-	heap_close(pg_type_desc, RowExclusiveLock);
+	table_close(pg_type_desc, RowExclusiveLock);
 
 	return address;
 }
@@ -408,7 +408,7 @@ TypeCreate(Oid newTypeOid,
 	 * NOTE: updating will not work correctly in bootstrap mode; but we don't
 	 * expect to be overwriting any shell types in bootstrap mode.
 	 */
-	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
+	pg_type_desc = table_open(TypeRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy2(TYPENAMENSP,
 							  CStringGetDatum(typeName),
@@ -506,7 +506,7 @@ TypeCreate(Oid newTypeOid,
 	/*
 	 * finish up
 	 */
-	heap_close(pg_type_desc, RowExclusiveLock);
+	table_close(pg_type_desc, RowExclusiveLock);
 
 	return address;
 }
@@ -714,7 +714,7 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	Oid			arrayOid;
 	Oid			oldTypeOid;
 
-	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
+	pg_type_desc = table_open(TypeRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopy1(TYPEOID, ObjectIdGetDatum(typeOid));
 	if (!HeapTupleIsValid(tuple))
@@ -757,7 +757,7 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
 
 	heap_freetuple(tuple);
-	heap_close(pg_type_desc, RowExclusiveLock);
+	table_close(pg_type_desc, RowExclusiveLock);
 
 	/*
 	 * If the type has an array type, recurse to handle that.  But we don't
@@ -792,7 +792,7 @@ makeArrayTypeName(const char *typeName, Oid typeNamespace)
 	 * The idea is to prepend underscores as needed until we make a name that
 	 * doesn't collide with anything...
 	 */
-	pg_type_desc = heap_open(TypeRelationId, AccessShareLock);
+	pg_type_desc = table_open(TypeRelationId, AccessShareLock);
 
 	for (i = 1; i < NAMEDATALEN - 1; i++)
 	{
@@ -810,7 +810,7 @@ makeArrayTypeName(const char *typeName, Oid typeNamespace)
 			break;
 	}
 
-	heap_close(pg_type_desc, AccessShareLock);
+	table_close(pg_type_desc, AccessShareLock);
 
 	if (i >= NAMEDATALEN - 1)
 		ereport(ERROR,

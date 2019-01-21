@@ -219,7 +219,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed)
 	 */
 	heapid = IndexGetRelation(indrelid, true);
 	if (OidIsValid(heapid))
-		heaprel = heap_open(heapid, lockmode);
+		heaprel = table_open(heapid, lockmode);
 	else
 		heaprel = NULL;
 
@@ -261,7 +261,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed)
 	 */
 	index_close(indrel, lockmode);
 	if (heaprel)
-		heap_close(heaprel, lockmode);
+		table_close(heaprel, lockmode);
 }
 
 /*

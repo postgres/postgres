@@ -500,7 +500,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	 * filename conflict with anything already existing in the tablespace
 	 * directories.
 	 */
-	pg_database_rel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	pg_database_rel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	do
 	{
@@ -589,7 +589,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		 * Iterate through all tablespaces of the template database, and copy
 		 * each one to the new database.
 		 */
-		rel = heap_open(TableSpaceRelationId, AccessShareLock);
+		rel = table_open(TableSpaceRelationId, AccessShareLock);
 		scan = heap_beginscan_catalog(rel, 0, NULL);
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
@@ -645,7 +645,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 			}
 		}
 		heap_endscan(scan);
-		heap_close(rel, AccessShareLock);
+		table_close(rel, AccessShareLock);
 
 		/*
 		 * We force a checkpoint before committing.  This effectively means
@@ -681,7 +681,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		/*
 		 * Close pg_database, but keep lock till commit.
 		 */
-		heap_close(pg_database_rel, NoLock);
+		table_close(pg_database_rel, NoLock);
 
 		/*
 		 * Force synchronous commit, thus minimizing the window between
@@ -797,7 +797,7 @@ dropdb(const char *dbname, bool missing_ok)
 	 * using it as a CREATE DATABASE template or trying to delete it for
 	 * themselves.
 	 */
-	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	pgdbrel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
 					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
@@ -811,7 +811,7 @@ dropdb(const char *dbname, bool missing_ok)
 		else
 		{
 			/* Close pg_database, release the lock, since we changed nothing */
-			heap_close(pgdbrel, RowExclusiveLock);
+			table_close(pgdbrel, RowExclusiveLock);
 			ereport(NOTICE,
 					(errmsg("database \"%s\" does not exist, skipping",
 							dbname)));
@@ -959,7 +959,7 @@ dropdb(const char *dbname, bool missing_ok)
 	/*
 	 * Close pg_database, but keep lock till commit.
 	 */
-	heap_close(pgdbrel, NoLock);
+	table_close(pgdbrel, NoLock);
 
 	/*
 	 * Force synchronous commit, thus minimizing the window between removal of
@@ -988,7 +988,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	 * Look up the target database's OID, and get exclusive lock on it. We
 	 * need this for the same reasons as DROP DATABASE.
 	 */
-	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	rel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(oldname, AccessExclusiveLock, &db_id, NULL, NULL,
 					 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
@@ -1054,7 +1054,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	/*
 	 * Close pg_database, but keep lock till commit.
 	 */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return address;
 }
@@ -1092,7 +1092,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 * we are moving it, and that no one is using it as a CREATE DATABASE
 	 * template or trying to delete it.
 	 */
-	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	pgdbrel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
 					 NULL, NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL))
@@ -1151,7 +1151,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 */
 	if (src_tblspcoid == dst_tblspcoid)
 	{
-		heap_close(pgdbrel, NoLock);
+		table_close(pgdbrel, NoLock);
 		UnlockSharedObjectForSession(DatabaseRelationId, db_id, 0,
 									 AccessExclusiveLock);
 		return;
@@ -1325,7 +1325,7 @@ movedb(const char *dbname, const char *tblspcname)
 		/*
 		 * Close pg_database, but keep lock till commit.
 		 */
-		heap_close(pgdbrel, NoLock);
+		table_close(pgdbrel, NoLock);
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(movedb_failure_callback,
 								PointerGetDatum(&fparms));
@@ -1500,7 +1500,7 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 	 * because we're not going to do anything that would mess up incoming
 	 * connections.
 	 */
-	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	rel = table_open(DatabaseRelationId, RowExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -1563,7 +1563,7 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 	systable_endscan(scan);
 
 	/* Close pg_database, but keep lock till commit */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return dboid;
 }
@@ -1614,7 +1614,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 	 * because we're not going to do anything that would mess up incoming
 	 * connections.
 	 */
-	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	rel = table_open(DatabaseRelationId, RowExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -1705,7 +1705,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 	systable_endscan(scan);
 
 	/* Close pg_database, but keep lock till commit */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return address;
 }
@@ -1735,7 +1735,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 	AssertArg(name);
 
 	/* Caller may wish to grab a better lock on pg_database beforehand... */
-	relation = heap_open(DatabaseRelationId, AccessShareLock);
+	relation = table_open(DatabaseRelationId, AccessShareLock);
 
 	/*
 	 * Loop covers the rare case where the database is renamed before we can
@@ -1836,7 +1836,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			UnlockSharedObject(DatabaseRelationId, dbOid, 0, lockmode);
 	}
 
-	heap_close(relation, AccessShareLock);
+	table_close(relation, AccessShareLock);
 
 	return result;
 }
@@ -1874,7 +1874,7 @@ remove_dbtablespaces(Oid db_id)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 
-	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	rel = table_open(TableSpaceRelationId, AccessShareLock);
 	scan = heap_beginscan_catalog(rel, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -1919,7 +1919,7 @@ remove_dbtablespaces(Oid db_id)
 	}
 
 	heap_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 }
 
 /*
@@ -1942,7 +1942,7 @@ check_db_file_conflict(Oid db_id)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 
-	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	rel = table_open(TableSpaceRelationId, AccessShareLock);
 	scan = heap_beginscan_catalog(rel, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -1969,7 +1969,7 @@ check_db_file_conflict(Oid db_id)
 	}
 
 	heap_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -2020,7 +2020,7 @@ get_database_oid(const char *dbname, bool missing_ok)
 	 * There's no syscache for pg_database indexed by name, so we must look
 	 * the hard way.
 	 */
-	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
+	pg_database = table_open(DatabaseRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -2037,7 +2037,7 @@ get_database_oid(const char *dbname, bool missing_ok)
 		oid = InvalidOid;
 
 	systable_endscan(scan);
-	heap_close(pg_database, AccessShareLock);
+	table_close(pg_database, AccessShareLock);
 
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,

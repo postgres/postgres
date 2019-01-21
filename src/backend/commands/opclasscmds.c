@@ -255,7 +255,7 @@ CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid am
 	ObjectAddress myself,
 				referenced;
 
-	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
+	rel = table_open(OperatorFamilyRelationId, RowExclusiveLock);
 
 	/*
 	 * Make sure there is no existing opfamily of this name (this is just to
@@ -319,7 +319,7 @@ CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid am
 	/* Post creation hook for new operator family */
 	InvokeObjectPostCreateHook(OperatorFamilyRelationId, opfamilyoid, 0);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	return myself;
 }
@@ -587,7 +587,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							stmt->amname)));
 	}
 
-	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
+	rel = table_open(OperatorClassRelationId, RowExclusiveLock);
 
 	/*
 	 * Make sure there is no existing opclass of this name (this is just to
@@ -718,7 +718,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/* Post creation hook for new operator class */
 	InvokeObjectPostCreateHook(OperatorClassRelationId, opclassoid, 0);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 	return myself;
 }
@@ -1317,7 +1317,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 				referenced;
 	ListCell   *l;
 
-	rel = heap_open(AccessMethodOperatorRelationId, RowExclusiveLock);
+	rel = table_open(AccessMethodOperatorRelationId, RowExclusiveLock);
 
 	foreach(l, operators)
 	{
@@ -1411,7 +1411,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 								   entryoid, 0);
 	}
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 /*
@@ -1435,7 +1435,7 @@ storeProcedures(List *opfamilyname, Oid amoid,
 				referenced;
 	ListCell   *l;
 
-	rel = heap_open(AccessMethodProcedureRelationId, RowExclusiveLock);
+	rel = table_open(AccessMethodProcedureRelationId, RowExclusiveLock);
 
 	foreach(l, procedures)
 	{
@@ -1514,7 +1514,7 @@ storeProcedures(List *opfamilyname, Oid amoid,
 								   entryoid, 0);
 	}
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 
@@ -1607,7 +1607,7 @@ RemoveOpFamilyById(Oid opfamilyOid)
 	Relation	rel;
 	HeapTuple	tup;
 
-	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
+	rel = table_open(OperatorFamilyRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1617,7 +1617,7 @@ RemoveOpFamilyById(Oid opfamilyOid)
 
 	ReleaseSysCache(tup);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 void
@@ -1626,7 +1626,7 @@ RemoveOpClassById(Oid opclassOid)
 	Relation	rel;
 	HeapTuple	tup;
 
-	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
+	rel = table_open(OperatorClassRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -1636,7 +1636,7 @@ RemoveOpClassById(Oid opclassOid)
 
 	ReleaseSysCache(tup);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 void
@@ -1652,7 +1652,7 @@ RemoveAmOpEntryById(Oid entryOid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(entryOid));
 
-	rel = heap_open(AccessMethodOperatorRelationId, RowExclusiveLock);
+	rel = table_open(AccessMethodOperatorRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(rel, AccessMethodOperatorOidIndexId, true,
 							  NULL, 1, skey);
@@ -1665,7 +1665,7 @@ RemoveAmOpEntryById(Oid entryOid)
 	CatalogTupleDelete(rel, &tup->t_self);
 
 	systable_endscan(scan);
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 void
@@ -1681,7 +1681,7 @@ RemoveAmProcEntryById(Oid entryOid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(entryOid));
 
-	rel = heap_open(AccessMethodProcedureRelationId, RowExclusiveLock);
+	rel = table_open(AccessMethodProcedureRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(rel, AccessMethodProcedureOidIndexId, true,
 							  NULL, 1, skey);
@@ -1694,7 +1694,7 @@ RemoveAmProcEntryById(Oid entryOid)
 	CatalogTupleDelete(rel, &tup->t_self);
 
 	systable_endscan(scan);
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 /*

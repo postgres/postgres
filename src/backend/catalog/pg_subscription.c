@@ -123,7 +123,7 @@ CountDBSubscriptions(Oid dbid)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	rel = heap_open(SubscriptionRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scankey,
 				Anum_pg_subscription_subdbid,
@@ -138,7 +138,7 @@ CountDBSubscriptions(Oid dbid)
 
 	systable_endscan(scan);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return nsubs;
 }
@@ -247,7 +247,7 @@ AddSubscriptionRelState(Oid subid, Oid relid, char state,
 
 	LockSharedObject(SubscriptionRelationId, subid, 0, AccessShareLock);
 
-	rel = heap_open(SubscriptionRelRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelRelationId, RowExclusiveLock);
 
 	/* Try finding existing mapping. */
 	tup = SearchSysCacheCopy2(SUBSCRIPTIONRELMAP,
@@ -276,7 +276,7 @@ AddSubscriptionRelState(Oid subid, Oid relid, char state,
 	heap_freetuple(tup);
 
 	/* Cleanup. */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 /*
@@ -294,7 +294,7 @@ UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
 
 	LockSharedObject(SubscriptionRelationId, subid, 0, AccessShareLock);
 
-	rel = heap_open(SubscriptionRelRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelRelationId, RowExclusiveLock);
 
 	/* Try finding existing mapping. */
 	tup = SearchSysCacheCopy2(SUBSCRIPTIONRELMAP,
@@ -325,7 +325,7 @@ UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
 
 	/* Cleanup. */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 /*
@@ -343,7 +343,7 @@ GetSubscriptionRelState(Oid subid, Oid relid, XLogRecPtr *sublsn,
 	bool		isnull;
 	Datum		d;
 
-	rel = heap_open(SubscriptionRelRelationId, AccessShareLock);
+	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
 
 	/* Try finding the mapping. */
 	tup = SearchSysCache2(SUBSCRIPTIONRELMAP,
@@ -354,7 +354,7 @@ GetSubscriptionRelState(Oid subid, Oid relid, XLogRecPtr *sublsn,
 	{
 		if (missing_ok)
 		{
-			heap_close(rel, AccessShareLock);
+			table_close(rel, AccessShareLock);
 			*sublsn = InvalidXLogRecPtr;
 			return SUBREL_STATE_UNKNOWN;
 		}
@@ -377,7 +377,7 @@ GetSubscriptionRelState(Oid subid, Oid relid, XLogRecPtr *sublsn,
 
 	/* Cleanup */
 	ReleaseSysCache(tup);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return substate;
 }
@@ -395,7 +395,7 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 	HeapTuple	tup;
 	int			nkeys = 0;
 
-	rel = heap_open(SubscriptionRelRelationId, RowExclusiveLock);
+	rel = table_open(SubscriptionRelRelationId, RowExclusiveLock);
 
 	if (OidIsValid(subid))
 	{
@@ -423,7 +423,7 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 	}
 	heap_endscan(scan);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 
@@ -442,7 +442,7 @@ GetSubscriptionRelations(Oid subid)
 	ScanKeyData skey[2];
 	SysScanDesc scan;
 
-	rel = heap_open(SubscriptionRelRelationId, AccessShareLock);
+	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[nkeys++],
 				Anum_pg_subscription_rel_srsubid,
@@ -469,7 +469,7 @@ GetSubscriptionRelations(Oid subid)
 
 	/* Cleanup */
 	systable_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return res;
 }
@@ -489,7 +489,7 @@ GetSubscriptionNotReadyRelations(Oid subid)
 	ScanKeyData skey[2];
 	SysScanDesc scan;
 
-	rel = heap_open(SubscriptionRelRelationId, AccessShareLock);
+	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[nkeys++],
 				Anum_pg_subscription_rel_srsubid,
@@ -521,7 +521,7 @@ GetSubscriptionNotReadyRelations(Oid subid)
 
 	/* Cleanup */
 	systable_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return res;
 }

@@ -337,7 +337,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 					rte = rt_fetch(var->varno, query->rtable);
 					if (rte)
 					{
-						heap_close(viewrel, AccessShareLock);
+						table_close(viewrel, AccessShareLock);
 						return DirectFunctionCall2(currtid_byreloid, ObjectIdGetDatum(rte->relid), PointerGetDatum(tid));
 					}
 				}
@@ -366,7 +366,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 		PG_RETURN_ITEMPOINTER(result);
 	}
 
-	rel = heap_open(reloid, AccessShareLock);
+	rel = table_open(reloid, AccessShareLock);
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_SELECT);
@@ -383,7 +383,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	heap_get_latest_tid(rel, snapshot, result);
 	UnregisterSnapshot(snapshot);
 
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	PG_RETURN_ITEMPOINTER(result);
 }
@@ -400,7 +400,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	Snapshot	snapshot;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = heap_openrv(relrv, AccessShareLock);
+	rel = table_openrv(relrv, AccessShareLock);
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_SELECT);
@@ -418,7 +418,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	heap_get_latest_tid(rel, snapshot, result);
 	UnregisterSnapshot(snapshot);
 
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	PG_RETURN_ITEMPOINTER(result);
 }

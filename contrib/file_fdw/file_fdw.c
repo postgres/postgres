@@ -439,7 +439,7 @@ get_file_fdw_attribute_options(Oid relid)
 
 	List	   *options = NIL;
 
-	rel = heap_open(relid, AccessShareLock);
+	rel = table_open(relid, AccessShareLock);
 	tupleDesc = RelationGetDescr(rel);
 	natts = tupleDesc->natts;
 
@@ -481,7 +481,7 @@ get_file_fdw_attribute_options(Oid relid)
 		}
 	}
 
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	/*
 	 * Return DefElem only when some column(s) have force_not_null /
@@ -892,7 +892,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	}
 
 	/* Convert attribute numbers to column names. */
-	rel = heap_open(foreigntableid, AccessShareLock);
+	rel = table_open(foreigntableid, AccessShareLock);
 	tupleDesc = RelationGetDescr(rel);
 
 	while ((attnum = bms_first_member(attrs_used)) >= 0)
@@ -934,7 +934,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 		numattrs++;
 	}
 
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	/* If there's a whole-row reference, fail: we need all the columns. */
 	if (has_wholerow)

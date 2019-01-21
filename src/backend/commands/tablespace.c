@@ -323,7 +323,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * lock the proposed tablename against other would-be creators. The
 	 * insertion will roll back if we find problems below.
 	 */
-	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
+	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	MemSet(nulls, false, sizeof(nulls));
 
@@ -385,7 +385,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	pfree(location);
 
 	/* We keep the lock on pg_tablespace until commit */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return tablespaceoid;
 #else							/* !HAVE_SYMLINK */
@@ -416,7 +416,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	/*
 	 * Find the target tuple
 	 */
-	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
+	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
@@ -441,7 +441,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 							tablespacename)));
 			/* XXX I assume I need one or both of these next two calls */
 			heap_endscan(scandesc);
-			heap_close(rel, NoLock);
+			table_close(rel, NoLock);
 		}
 		return;
 	}
@@ -551,7 +551,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	LWLockRelease(TablespaceCreateLock);
 
 	/* We keep the lock on pg_tablespace until commit */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 #else							/* !HAVE_SYMLINK */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -926,7 +926,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 	ObjectAddress address;
 
 	/* Search pg_tablespace */
-	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
+	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
@@ -981,7 +981,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 
 	ObjectAddressSet(address, TableSpaceRelationId, tspId);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return address;
 }
@@ -1006,7 +1006,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 	HeapTuple	newtuple;
 
 	/* Search pg_tablespace */
-	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
+	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
@@ -1055,7 +1055,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 
 	/* Conclude heap scan. */
 	heap_endscan(scandesc);
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	return tablespaceoid;
 }
@@ -1397,7 +1397,7 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 	 * index on name, on the theory that pg_tablespace will usually have just
 	 * a few entries and so an indexed lookup is a waste of effort.
 	 */
-	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	rel = table_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
@@ -1413,7 +1413,7 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 		result = InvalidOid;
 
 	heap_endscan(scandesc);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	if (!OidIsValid(result) && !missing_ok)
 		ereport(ERROR,
@@ -1443,7 +1443,7 @@ get_tablespace_name(Oid spc_oid)
 	 * index on oid, on the theory that pg_tablespace will usually have just a
 	 * few entries and so an indexed lookup is a waste of effort.
 	 */
-	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	rel = table_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_oid,
@@ -1459,7 +1459,7 @@ get_tablespace_name(Oid spc_oid)
 		result = NULL;
 
 	heap_endscan(scandesc);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }

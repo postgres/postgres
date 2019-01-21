@@ -117,7 +117,7 @@ RemoveObjects(DropStmt *stmt)
 
 		/* Release any relcache reference count, but keep lock until commit. */
 		if (relation)
-			heap_close(relation, NoLock);
+			table_close(relation, NoLock);
 
 		add_exact_object_address(&address, objects);
 	}

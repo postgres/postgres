@@ -69,7 +69,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	else
 		nspacl = NULL;
 
-	nspdesc = heap_open(NamespaceRelationId, RowExclusiveLock);
+	nspdesc = table_open(NamespaceRelationId, RowExclusiveLock);
 	tupDesc = nspdesc->rd_att;
 
 	/* initialize nulls and values */
@@ -96,7 +96,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	CatalogTupleInsert(nspdesc, tup);
 	Assert(OidIsValid(nspoid));
 
-	heap_close(nspdesc, RowExclusiveLock);
+	table_close(nspdesc, RowExclusiveLock);
 
 	/* Record dependencies */
 	myself.classId = NamespaceRelationId;

@@ -414,7 +414,7 @@ DefineIndex(Oid relationId,
 	 * functions will need to be updated, too.
 	 */
 	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
-	rel = heap_open(relationId, lockmode);
+	rel = table_open(relationId, lockmode);
 
 	namespaceId = RelationGetNamespace(rel);
 
@@ -866,7 +866,7 @@ DefineIndex(Oid relationId,
 
 	if (!OidIsValid(indexRelationId))
 	{
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 		return address;
 	}
 
@@ -899,7 +899,7 @@ DefineIndex(Oid relationId,
 			for (i = 0; i < numberOfKeyAttributes; i++)
 				opfamOids[i] = get_opclass_family(classObjectId[i]);
 
-			heap_close(rel, NoLock);
+			table_close(rel, NoLock);
 
 			/*
 			 * For each partition, scan all existing indexes; if one matches
@@ -919,7 +919,7 @@ DefineIndex(Oid relationId,
 				bool		found = false;
 				int			maplen;
 
-				childrel = heap_open(childRelid, lockmode);
+				childrel = table_open(childRelid, lockmode);
 				childidxs = RelationGetIndexList(childrel);
 				attmap =
 					convert_tuples_by_name_map(RelationGetDescr(childrel),
@@ -989,7 +989,7 @@ DefineIndex(Oid relationId,
 				}
 
 				list_free(childidxs);
-				heap_close(childrel, NoLock);
+				table_close(childrel, NoLock);
 
 				/*
 				 * If no matching index was found, create our own.
@@ -1051,7 +1051,7 @@ DefineIndex(Oid relationId,
 			 */
 			if (invalidate_parent)
 			{
-				Relation	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+				Relation	pg_index = table_open(IndexRelationId, RowExclusiveLock);
 				HeapTuple	tup,
 							newtup;
 
@@ -1064,12 +1064,12 @@ DefineIndex(Oid relationId,
 				((Form_pg_index) GETSTRUCT(newtup))->indisvalid = false;
 				CatalogTupleUpdate(pg_index, &tup->t_self, newtup);
 				ReleaseSysCache(tup);
-				heap_close(pg_index, RowExclusiveLock);
+				table_close(pg_index, RowExclusiveLock);
 				heap_freetuple(newtup);
 			}
 		}
 		else
-			heap_close(rel, NoLock);
+			table_close(rel, NoLock);
 
 		/*
 		 * Indexes on partitioned tables are not themselves built, so we're
@@ -1081,14 +1081,14 @@ DefineIndex(Oid relationId,
 	if (!stmt->concurrent)
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 		return address;
 	}
 
 	/* save lockrelid and locktag for below, then close rel */
 	heaprelid = rel->rd_lockInfo.lockRelId;
 	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
@@ -1154,7 +1154,7 @@ DefineIndex(Oid relationId,
 	 */
 
 	/* Open and lock the parent heap relation */
-	rel = heap_open(relationId, ShareUpdateExclusiveLock);
+	rel = table_open(relationId, ShareUpdateExclusiveLock);
 
 	/* And the target index relation */
 	indexRelation = index_open(indexRelationId, RowExclusiveLock);
@@ -1172,7 +1172,7 @@ DefineIndex(Oid relationId,
 	index_build(rel, indexRelation, indexInfo, stmt->primary, false, true);
 
 	/* Close both the relations, but keep the locks */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 	index_close(indexRelation, NoLock);
 
 	/*
@@ -1857,7 +1857,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 	 * we need a tiebreaker.)  If we find more than one exact match, then
 	 * someone put bogus entries in pg_opclass.
 	 */
-	rel = heap_open(OperatorClassRelationId, AccessShareLock);
+	rel = table_open(OperatorClassRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_opclass_opcmethod,
@@ -1897,7 +1897,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 
 	systable_endscan(scan);
 
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	/* raise error if pg_opclass contains inconsistent data */
 	if (nexact > 1)
@@ -2411,7 +2411,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	 * We only consider plain relations and materialized views here (toast
 	 * rels will be processed indirectly by reindex_relation).
 	 */
-	relationRelation = heap_open(RelationRelationId, AccessShareLock);
+	relationRelation = table_open(RelationRelationId, AccessShareLock);
 	scan = heap_beginscan_catalog(relationRelation, num_keys, scan_keys);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -2472,7 +2472,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		MemoryContextSwitchTo(old);
 	}
 	heap_endscan(scan);
-	heap_close(relationRelation, AccessShareLock);
+	table_close(relationRelation, AccessShareLock);
 
 	/* Now reindex each rel in a separate transaction */
 	PopActiveSnapshot();

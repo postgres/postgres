@@ -527,7 +527,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	/*
 	 * open the attribute relation and its indexes
 	 */
-	pg_attribute = heap_open(AttributeRelationId, RowExclusiveLock);
+	pg_attribute = table_open(AttributeRelationId, RowExclusiveLock);
 
 	indstate = CatalogOpenIndexes(pg_attribute);
 
@@ -547,7 +547,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 
 	CatalogCloseIndexes(indstate);
 
-	heap_close(pg_attribute, RowExclusiveLock);
+	table_close(pg_attribute, RowExclusiveLock);
 }
 
 /* ----------------------------------------------------------------
@@ -625,7 +625,7 @@ UpdateIndexRelation(Oid indexoid,
 	/*
 	 * open the system catalog index relation
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+	pg_index = table_open(IndexRelationId, RowExclusiveLock);
 
 	/*
 	 * Build a pg_index tuple
@@ -667,7 +667,7 @@ UpdateIndexRelation(Oid indexoid,
 	/*
 	 * close the relation and free the tuple
 	 */
-	heap_close(pg_index, RowExclusiveLock);
+	table_close(pg_index, RowExclusiveLock);
 	heap_freetuple(tuple);
 }
 
@@ -765,7 +765,7 @@ index_create(Relation heapRelation,
 	relkind = partitioned ? RELKIND_PARTITIONED_INDEX : RELKIND_INDEX;
 	is_exclusion = (indexInfo->ii_ExclusionOps != NULL);
 
-	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
+	pg_class = table_open(RelationRelationId, RowExclusiveLock);
 
 	/*
 	 * The index will be in the same namespace as its parent table, and is
@@ -839,7 +839,7 @@ index_create(Relation heapRelation,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
 					 errmsg("relation \"%s\" already exists, skipping",
 							indexRelationName)));
-			heap_close(pg_class, RowExclusiveLock);
+			table_close(pg_class, RowExclusiveLock);
 			return InvalidOid;
 		}
 
@@ -944,7 +944,7 @@ index_create(Relation heapRelation,
 					   reloptions);
 
 	/* done with pg_class */
-	heap_close(pg_class, RowExclusiveLock);
+	table_close(pg_class, RowExclusiveLock);
 
 	/*
 	 * now update the object id's of all the attribute tuple forms in the
@@ -1403,7 +1403,7 @@ index_constraint_create(Relation heapRelation,
 		Form_pg_index indexForm;
 		bool		dirty = false;
 
-		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+		pg_index = table_open(IndexRelationId, RowExclusiveLock);
 
 		indexTuple = SearchSysCacheCopy1(INDEXRELID,
 										 ObjectIdGetDatum(indexRelationId));
@@ -1432,7 +1432,7 @@ index_constraint_create(Relation heapRelation,
 		}
 
 		heap_freetuple(indexTuple);
-		heap_close(pg_index, RowExclusiveLock);
+		table_close(pg_index, RowExclusiveLock);
 	}
 
 	return referenced;
@@ -1478,7 +1478,7 @@ index_drop(Oid indexId, bool concurrent)
 	 */
 	heapId = IndexGetRelation(indexId, false);
 	lockmode = concurrent ? ShareUpdateExclusiveLock : AccessExclusiveLock;
-	userHeapRelation = heap_open(heapId, lockmode);
+	userHeapRelation = table_open(heapId, lockmode);
 	userIndexRelation = index_open(indexId, lockmode);
 
 	/*
@@ -1555,7 +1555,7 @@ index_drop(Oid indexId, bool concurrent)
 		SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
 		indexrelid = userIndexRelation->rd_lockInfo.lockRelId;
 
-		heap_close(userHeapRelation, NoLock);
+		table_close(userHeapRelation, NoLock);
 		index_close(userIndexRelation, NoLock);
 
 		/*
@@ -1598,7 +1598,7 @@ index_drop(Oid indexId, bool concurrent)
 		 * conflicts with existing predicate locks, so now is the time to move
 		 * them to the heap relation.
 		 */
-		userHeapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
+		userHeapRelation = table_open(heapId, ShareUpdateExclusiveLock);
 		userIndexRelation = index_open(indexId, ShareUpdateExclusiveLock);
 		TransferPredicateLocksToHeapRelation(userIndexRelation);
 
@@ -1620,7 +1620,7 @@ index_drop(Oid indexId, bool concurrent)
 		/*
 		 * Close the relations again, though still holding session lock.
 		 */
-		heap_close(userHeapRelation, NoLock);
+		table_close(userHeapRelation, NoLock);
 		index_close(userIndexRelation, NoLock);
 
 		/*
@@ -1643,7 +1643,7 @@ index_drop(Oid indexId, bool concurrent)
 		 * leave nothing to chance and grab AccessExclusiveLock on the index
 		 * before the physical deletion.
 		 */
-		userHeapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
+		userHeapRelation = table_open(heapId, ShareUpdateExclusiveLock);
 		userIndexRelation = index_open(indexId, AccessExclusiveLock);
 	}
 	else
@@ -1670,7 +1670,7 @@ index_drop(Oid indexId, bool concurrent)
 	/*
 	 * fix INDEX relation, and check for expressional index
 	 */
-	indexRelation = heap_open(IndexRelationId, RowExclusiveLock);
+	indexRelation = table_open(IndexRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
 	if (!HeapTupleIsValid(tuple))
@@ -1682,7 +1682,7 @@ index_drop(Oid indexId, bool concurrent)
 	CatalogTupleDelete(indexRelation, &tuple->t_self);
 
 	ReleaseSysCache(tuple);
-	heap_close(indexRelation, RowExclusiveLock);
+	table_close(indexRelation, RowExclusiveLock);
 
 	/*
 	 * if it has any expression columns, we might have stored statistics about
@@ -1719,7 +1719,7 @@ index_drop(Oid indexId, bool concurrent)
 	/*
 	 * Close owning rel, but keep lock
 	 */
-	heap_close(userHeapRelation, NoLock);
+	table_close(userHeapRelation, NoLock);
 
 	/*
 	 * Release the session locks before we go.
@@ -2119,7 +2119,7 @@ index_update_stats(Relation rel,
 	 * what's really important.
 	 */
 
-	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
+	pg_class = table_open(RelationRelationId, RowExclusiveLock);
 
 	/*
 	 * Make a copy of the tuple to update.  Normally we use the syscache, but
@@ -2208,7 +2208,7 @@ index_update_stats(Relation rel,
 
 	heap_freetuple(tuple);
 
-	heap_close(pg_class, RowExclusiveLock);
+	table_close(pg_class, RowExclusiveLock);
 }
 
 
@@ -2349,7 +2349,7 @@ index_build(Relation heapRelation,
 		HeapTuple	indexTuple;
 		Form_pg_index indexForm;
 
-		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+		pg_index = table_open(IndexRelationId, RowExclusiveLock);
 
 		indexTuple = SearchSysCacheCopy1(INDEXRELID,
 										 ObjectIdGetDatum(indexId));
@@ -2364,7 +2364,7 @@ index_build(Relation heapRelation,
 		CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 
 		heap_freetuple(indexTuple);
-		heap_close(pg_index, RowExclusiveLock);
+		table_close(pg_index, RowExclusiveLock);
 	}
 
 	/*
@@ -3132,7 +3132,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	int			save_nestlevel;
 
 	/* Open and lock the parent heap relation */
-	heapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
+	heapRelation = table_open(heapId, ShareUpdateExclusiveLock);
 	/* And the target index relation */
 	indexRelation = index_open(indexId, RowExclusiveLock);
 
@@ -3208,7 +3208,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* Close rels, but keep locks */
 	index_close(indexRelation, NoLock);
-	heap_close(heapRelation, NoLock);
+	table_close(heapRelation, NoLock);
 }
 
 /*
@@ -3530,7 +3530,7 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
 	Assert(GetTopTransactionIdIfAny() == InvalidTransactionId);
 
 	/* Open pg_index and fetch a writable copy of the index's tuple */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+	pg_index = table_open(IndexRelationId, RowExclusiveLock);
 
 	indexTuple = SearchSysCacheCopy1(INDEXRELID,
 									 ObjectIdGetDatum(indexId));
@@ -3590,7 +3590,7 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
 	/* ... and write it back in-place */
 	heap_inplace_update(pg_index, indexTuple);
 
-	heap_close(pg_index, RowExclusiveLock);
+	table_close(pg_index, RowExclusiveLock);
 }
 
 
@@ -3641,7 +3641,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 * we only need to be sure no schema or data changes are going on.
 	 */
 	heapId = IndexGetRelation(indexId, false);
-	heapRelation = heap_open(heapId, ShareLock);
+	heapRelation = table_open(heapId, ShareLock);
 
 	/*
 	 * Open the target index relation and get an exclusive lock on it, to
@@ -3755,7 +3755,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		bool		index_bad;
 		bool		early_pruning_enabled = EarlyPruningEnabled(heapRelation);
 
-		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+		pg_index = table_open(IndexRelationId, RowExclusiveLock);
 
 		indexTuple = SearchSysCacheCopy1(INDEXRELID,
 										 ObjectIdGetDatum(indexId));
@@ -3789,7 +3789,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 			CacheInvalidateRelcache(heapRelation);
 		}
 
-		heap_close(pg_index, RowExclusiveLock);
+		table_close(pg_index, RowExclusiveLock);
 	}
 
 	/* Log what we did */
@@ -3802,7 +3802,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);
-	heap_close(heapRelation, NoLock);
+	table_close(heapRelation, NoLock);
 }
 
 /*
@@ -3854,7 +3854,7 @@ reindex_relation(Oid relid, int flags, int options)
 	 * to prevent schema and data changes in it.  The lock level used here
 	 * should match ReindexTable().
 	 */
-	rel = heap_open(relid, ShareLock);
+	rel = table_open(relid, ShareLock);
 
 	/*
 	 * This may be useful when implemented someday; but that day is not today.
@@ -3868,7 +3868,7 @@ reindex_relation(Oid relid, int flags, int options)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("REINDEX of partitioned tables is not yet implemented, skipping \"%s\"",
 						RelationGetRelationName(rel))));
-		heap_close(rel, ShareLock);
+		table_close(rel, ShareLock);
 		return false;
 	}
 
@@ -3969,7 +3969,7 @@ reindex_relation(Oid relid, int flags, int options)
 	/*
 	 * Close rel, but continue to hold the lock.
 	 */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	result = (indexIds != NIL);
 

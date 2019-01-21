@@ -390,9 +390,9 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 * iterate on the revmap.
 	 */
 	heapOid = IndexGetRelation(RelationGetRelid(idxRel), false);
-	heapRel = heap_open(heapOid, AccessShareLock);
+	heapRel = table_open(heapOid, AccessShareLock);
 	nblocks = RelationGetNumberOfBlocks(heapRel);
-	heap_close(heapRel, AccessShareLock);
+	table_close(heapRel, AccessShareLock);
 
 	/*
 	 * Make room for the consistent support procedures of indexed columns.  We
@@ -799,15 +799,15 @@ brinvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	stats->num_pages = RelationGetNumberOfBlocks(info->index);
 	/* rest of stats is initialized by zeroing */
 
-	heapRel = heap_open(IndexGetRelation(RelationGetRelid(info->index), false),
-						AccessShareLock);
+	heapRel = table_open(IndexGetRelation(RelationGetRelid(info->index), false),
+						 AccessShareLock);
 
 	brin_vacuum_scan(info->index, info->strategy);
 
 	brinsummarize(info->index, heapRel, BRIN_ALL_BLOCKRANGES, false,
 				  &stats->num_index_tuples, &stats->num_index_tuples);
 
-	heap_close(heapRel, AccessShareLock);
+	table_close(heapRel, AccessShareLock);
 
 	return stats;
 }
@@ -897,7 +897,7 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	 */
 	heapoid = IndexGetRelation(indexoid, true);
 	if (OidIsValid(heapoid))
-		heapRel = heap_open(heapoid, ShareUpdateExclusiveLock);
+		heapRel = table_open(heapoid, ShareUpdateExclusiveLock);
 	else
 		heapRel = NULL;
 
@@ -974,7 +974,7 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 	 */
 	heapoid = IndexGetRelation(indexoid, true);
 	if (OidIsValid(heapoid))
-		heapRel = heap_open(heapoid, ShareUpdateExclusiveLock);
+		heapRel = table_open(heapoid, ShareUpdateExclusiveLock);
 	else
 		heapRel = NULL;
 

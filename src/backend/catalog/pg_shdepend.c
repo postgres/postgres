@@ -131,7 +131,7 @@ recordSharedDependencyOn(ObjectAddress *depender,
 	if (IsBootstrapProcessingMode())
 		return;
 
-	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	/* If the referenced object is pinned, do nothing. */
 	if (!isSharedObjectPinned(referenced->classId, referenced->objectId,
@@ -143,7 +143,7 @@ recordSharedDependencyOn(ObjectAddress *depender,
 						   deptype);
 	}
 
-	heap_close(sdepRel, RowExclusiveLock);
+	table_close(sdepRel, RowExclusiveLock);
 }
 
 /*
@@ -305,7 +305,7 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 {
 	Relation	sdepRel;
 
-	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	/* Adjust the SHARED_DEPENDENCY_OWNER entry */
 	shdepChangeDep(sdepRel,
@@ -336,7 +336,7 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 						AuthIdRelationId, newOwnerId,
 						SHARED_DEPENDENCY_ACL);
 
-	heap_close(sdepRel, RowExclusiveLock);
+	table_close(sdepRel, RowExclusiveLock);
 }
 
 /*
@@ -436,7 +436,7 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 
 	if (noldmembers > 0 || nnewmembers > 0)
 	{
-		sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+		sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 		/* Add new dependencies that weren't already present */
 		for (i = 0; i < nnewmembers; i++)
@@ -479,7 +479,7 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 								SHARED_DEPENDENCY_ACL);
 		}
 
-		heap_close(sdepRel, RowExclusiveLock);
+		table_close(sdepRel, RowExclusiveLock);
 	}
 
 	if (oldmembers)
@@ -545,7 +545,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	initStringInfo(&descs);
 	initStringInfo(&alldescs);
 
-	sdepRel = heap_open(SharedDependRelationId, AccessShareLock);
+	sdepRel = table_open(SharedDependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_shdepend_refclassid,
@@ -646,7 +646,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 
 	systable_endscan(scan);
 
-	heap_close(sdepRel, AccessShareLock);
+	table_close(sdepRel, AccessShareLock);
 
 	/*
 	 * Summarize dependencies in remote databases.
@@ -720,7 +720,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	bool		nulls[Natts_pg_shdepend];
 	bool		replace[Natts_pg_shdepend];
 
-	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 	sdepDesc = RelationGetDescr(sdepRel);
 
 	indstate = CatalogOpenIndexes(sdepRel);
@@ -762,7 +762,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	systable_endscan(scan);
 
 	CatalogCloseIndexes(indstate);
-	heap_close(sdepRel, RowExclusiveLock);
+	table_close(sdepRel, RowExclusiveLock);
 }
 
 /*
@@ -779,7 +779,7 @@ dropDatabaseDependencies(Oid databaseId)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	/*
 	 * First, delete all the entries that have the database Oid in the dbid
@@ -806,7 +806,7 @@ dropDatabaseDependencies(Oid databaseId)
 						InvalidOid, InvalidOid,
 						SHARED_DEPENDENCY_INVALID);
 
-	heap_close(sdepRel, RowExclusiveLock);
+	table_close(sdepRel, RowExclusiveLock);
 }
 
 /*
@@ -824,14 +824,14 @@ deleteSharedDependencyRecordsFor(Oid classId, Oid objectId, int32 objectSubId)
 {
 	Relation	sdepRel;
 
-	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	shdepDropDependency(sdepRel, classId, objectId, objectSubId,
 						(objectSubId == 0),
 						InvalidOid, InvalidOid,
 						SHARED_DEPENDENCY_INVALID);
 
-	heap_close(sdepRel, RowExclusiveLock);
+	table_close(sdepRel, RowExclusiveLock);
 }
 
 /*
@@ -1173,7 +1173,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 	 * acquire RowExclusiveLock.  Better get that right now to avoid potential
 	 * deadlock failures.
 	 */
-	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	/*
 	 * For each role, find the dependent objects and drop them using the
@@ -1270,7 +1270,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 	/* the dependency mechanism does the actual work */
 	performMultipleDeletions(deleteobjs, behavior, 0);
 
-	heap_close(sdepRel, RowExclusiveLock);
+	table_close(sdepRel, RowExclusiveLock);
 
 	free_object_addresses(deleteobjs);
 }
@@ -1292,7 +1292,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 	 * acquire RowExclusiveLock.  Better get that right now to avoid potential
 	 * deadlock problems.
 	 */
-	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
+	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 
 	foreach(cell, roleids)
 	{
@@ -1428,12 +1428,12 @@ shdepReassignOwned(List *roleids, Oid newrole)
 						if (classId == LargeObjectRelationId)
 							classId = LargeObjectMetadataRelationId;
 
-						catalog = heap_open(classId, RowExclusiveLock);
+						catalog = table_open(classId, RowExclusiveLock);
 
 						AlterObjectOwner_internal(catalog, sdepForm->objid,
 												  newrole);
 
-						heap_close(catalog, NoLock);
+						table_close(catalog, NoLock);
 					}
 					break;
 
@@ -1448,5 +1448,5 @@ shdepReassignOwned(List *roleids, Oid newrole)
 		systable_endscan(scan);
 	}
 
-	heap_close(sdepRel, RowExclusiveLock);
+	table_close(sdepRel, RowExclusiveLock);
 }

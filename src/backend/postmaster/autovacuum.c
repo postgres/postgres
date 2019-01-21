@@ -1883,7 +1883,7 @@ get_database_list(void)
 	StartTransactionCommand();
 	(void) GetTransactionSnapshot();
 
-	rel = heap_open(DatabaseRelationId, AccessShareLock);
+	rel = table_open(DatabaseRelationId, AccessShareLock);
 	scan = heap_beginscan_catalog(rel, 0, NULL);
 
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
@@ -1914,7 +1914,7 @@ get_database_list(void)
 	}
 
 	heap_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	CommitTransactionCommand();
 
@@ -2015,7 +2015,7 @@ do_autovacuum(void)
 	/* The database hash where pgstat keeps shared relations */
 	shared = pgstat_fetch_stat_dbentry(InvalidOid);
 
-	classRel = heap_open(RelationRelationId, AccessShareLock);
+	classRel = table_open(RelationRelationId, AccessShareLock);
 
 	/* create a copy so we can use it after closing pg_class */
 	pg_class_desc = CreateTupleDescCopy(RelationGetDescr(classRel));
@@ -2189,7 +2189,7 @@ do_autovacuum(void)
 	}
 
 	heap_endscan(relScan);
-	heap_close(classRel, AccessShareLock);
+	table_close(classRel, AccessShareLock);
 
 	/*
 	 * Recheck orphan temporary tables, and if they still seem orphaned, drop

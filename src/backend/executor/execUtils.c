@@ -776,11 +776,11 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 			/*
 			 * In a normal query, we should already have the appropriate lock,
 			 * but verify that through an Assert.  Since there's already an
-			 * Assert inside heap_open that insists on holding some lock, it
+			 * Assert inside table_open that insists on holding some lock, it
 			 * seems sufficient to check this only when rellockmode is higher
 			 * than the minimum.
 			 */
-			rel = heap_open(rte->relid, NoLock);
+			rel = table_open(rte->relid, NoLock);
 			Assert(rte->rellockmode == AccessShareLock ||
 				   CheckRelationLockedByMe(rel, rte->rellockmode, false));
 		}
@@ -791,7 +791,7 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 			 * lock on the relation.  This ensures sane behavior in case the
 			 * parent process exits before we do.
 			 */
-			rel = heap_open(rte->relid, rte->rellockmode);
+			rel = table_open(rte->relid, rte->rellockmode);
 		}
 
 		estate->es_relations[rti - 1] = rel;

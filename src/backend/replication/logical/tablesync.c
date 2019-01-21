@@ -877,7 +877,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 				 * working and it has to open the relation in RowExclusiveLock
 				 * when remapping remote relation id to local one.
 				 */
-				rel = heap_open(MyLogicalRepWorker->relid, RowExclusiveLock);
+				rel = table_open(MyLogicalRepWorker->relid, RowExclusiveLock);
 
 				/*
 				 * Create a temporary slot for the sync process. We do this
@@ -915,7 +915,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 							 errdetail("The error was: %s", res->err)));
 				walrcv_clear_result(res);
 
-				heap_close(rel, NoLock);
+				table_close(rel, NoLock);
 
 				/* Make the copy visible. */
 				CommandCounterIncrement();

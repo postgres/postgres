@@ -1137,7 +1137,7 @@ chooseScalarFunctionAlias(Node *funcexpr, char *funcname,
 /*
  * Open a table during parse analysis
  *
- * This is essentially just the same as heap_openrv(), except that it caters
+ * This is essentially just the same as table_openrv(), except that it caters
  * to some parser-specific error reporting needs, notably that it arranges
  * to include the RangeVar's parse location in any resulting error.
  *
@@ -1152,7 +1152,7 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
 	ParseCallbackState pcbstate;
 
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
-	rel = heap_openrv_extended(relation, lockmode, true);
+	rel = table_openrv_extended(relation, lockmode, true);
 	if (rel == NULL)
 	{
 		if (relation->schemaname)
@@ -1240,7 +1240,7 @@ addRangeTableEntry(ParseState *pstate,
 	 * so that the table can't be deleted or have its schema modified
 	 * underneath us.
 	 */
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 
 	/*
 	 * Set flags and access permissions.
@@ -3096,7 +3096,7 @@ get_parse_rowmark(Query *qry, Index rtindex)
  *	Returns InvalidAttrNumber if the attr doesn't exist (or is dropped).
  *
  *	This should only be used if the relation is already
- *	heap_open()'ed.  Use the cache version get_attnum()
+ *	table_open()'ed.  Use the cache version get_attnum()
  *	for access to non-opened relations.
  */
 int
@@ -3146,7 +3146,7 @@ specialAttNum(const char *attname)
  * given attribute id, return name of that attribute
  *
  *	This should only be used if the relation is already
- *	heap_open()'ed.  Use the cache version get_atttype()
+ *	table_open()'ed.  Use the cache version get_atttype()
  *	for access to non-opened relations.
  */
 const NameData *
@@ -3168,7 +3168,7 @@ attnumAttName(Relation rd, int attid)
  * given attribute id, return type of that attribute
  *
  *	This should only be used if the relation is already
- *	heap_open()'ed.  Use the cache version get_atttype()
+ *	table_open()'ed.  Use the cache version get_atttype()
  *	for access to non-opened relations.
  */
 Oid
@@ -3189,7 +3189,7 @@ attnumTypeId(Relation rd, int attid)
 /*
  * given attribute id, return collation of that attribute
  *
- *	This should only be used if the relation is already heap_open()'ed.
+ *	This should only be used if the relation is already table_open()'ed.
  */
 Oid
 attnumCollationId(Relation rd, int attid)
@@ -3361,10 +3361,10 @@ isQueryUsingTempRelation_walker(Node *node, void *context)
 
 			if (rte->rtekind == RTE_RELATION)
 			{
-				Relation	rel = heap_open(rte->relid, AccessShareLock);
+				Relation	rel = table_open(rte->relid, AccessShareLock);
 				char		relpersistence = rel->rd_rel->relpersistence;
 
-				heap_close(rel, AccessShareLock);
+				table_close(rel, AccessShareLock);
 				if (relpersistence == RELPERSISTENCE_TEMP)
 					return true;
 			}

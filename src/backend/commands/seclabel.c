@@ -168,7 +168,7 @@ GetSharedSecurityLabel(const ObjectAddress *object, const char *provider)
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(provider));
 
-	pg_shseclabel = heap_open(SharedSecLabelRelationId, AccessShareLock);
+	pg_shseclabel = table_open(SharedSecLabelRelationId, AccessShareLock);
 
 	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId, true,
 							  NULL, 3, keys);
@@ -183,7 +183,7 @@ GetSharedSecurityLabel(const ObjectAddress *object, const char *provider)
 	}
 	systable_endscan(scan);
 
-	heap_close(pg_shseclabel, AccessShareLock);
+	table_close(pg_shseclabel, AccessShareLock);
 
 	return seclabel;
 }
@@ -225,7 +225,7 @@ GetSecurityLabel(const ObjectAddress *object, const char *provider)
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(provider));
 
-	pg_seclabel = heap_open(SecLabelRelationId, AccessShareLock);
+	pg_seclabel = table_open(SecLabelRelationId, AccessShareLock);
 
 	scan = systable_beginscan(pg_seclabel, SecLabelObjectIndexId, true,
 							  NULL, 4, keys);
@@ -240,7 +240,7 @@ GetSecurityLabel(const ObjectAddress *object, const char *provider)
 	}
 	systable_endscan(scan);
 
-	heap_close(pg_seclabel, AccessShareLock);
+	table_close(pg_seclabel, AccessShareLock);
 
 	return seclabel;
 }
@@ -285,7 +285,7 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(provider));
 
-	pg_shseclabel = heap_open(SharedSecLabelRelationId, RowExclusiveLock);
+	pg_shseclabel = table_open(SharedSecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId, true,
 							  NULL, 3, keys);
@@ -316,7 +316,7 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 	if (newtup != NULL)
 		heap_freetuple(newtup);
 
-	heap_close(pg_shseclabel, RowExclusiveLock);
+	table_close(pg_shseclabel, RowExclusiveLock);
 }
 
 /*
@@ -372,7 +372,7 @@ SetSecurityLabel(const ObjectAddress *object,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(provider));
 
-	pg_seclabel = heap_open(SecLabelRelationId, RowExclusiveLock);
+	pg_seclabel = table_open(SecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_seclabel, SecLabelObjectIndexId, true,
 							  NULL, 4, keys);
@@ -404,7 +404,7 @@ SetSecurityLabel(const ObjectAddress *object,
 	if (newtup != NULL)
 		heap_freetuple(newtup);
 
-	heap_close(pg_seclabel, RowExclusiveLock);
+	table_close(pg_seclabel, RowExclusiveLock);
 }
 
 /*
@@ -428,7 +428,7 @@ DeleteSharedSecurityLabel(Oid objectId, Oid classId)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classId));
 
-	pg_shseclabel = heap_open(SharedSecLabelRelationId, RowExclusiveLock);
+	pg_shseclabel = table_open(SharedSecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId, true,
 							  NULL, 2, skey);
@@ -436,7 +436,7 @@ DeleteSharedSecurityLabel(Oid objectId, Oid classId)
 		CatalogTupleDelete(pg_shseclabel, &oldtup->t_self);
 	systable_endscan(scan);
 
-	heap_close(pg_shseclabel, RowExclusiveLock);
+	table_close(pg_shseclabel, RowExclusiveLock);
 }
 
 /*
@@ -479,7 +479,7 @@ DeleteSecurityLabel(const ObjectAddress *object)
 	else
 		nkeys = 2;
 
-	pg_seclabel = heap_open(SecLabelRelationId, RowExclusiveLock);
+	pg_seclabel = table_open(SecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_seclabel, SecLabelObjectIndexId, true,
 							  NULL, nkeys, skey);
@@ -487,7 +487,7 @@ DeleteSecurityLabel(const ObjectAddress *object)
 		CatalogTupleDelete(pg_seclabel, &oldtup->t_self);
 	systable_endscan(scan);
 
-	heap_close(pg_seclabel, RowExclusiveLock);
+	table_close(pg_seclabel, RowExclusiveLock);
 }
 
 void

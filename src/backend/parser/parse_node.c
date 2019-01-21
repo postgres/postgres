@@ -88,7 +88,7 @@ free_parsestate(ParseState *pstate)
 						MaxTupleAttributeNumber)));
 
 	if (pstate->p_target_relation != NULL)
-		heap_close(pstate->p_target_relation, NoLock);
+		table_close(pstate->p_target_relation, NoLock);
 
 	pfree(pstate);
 }

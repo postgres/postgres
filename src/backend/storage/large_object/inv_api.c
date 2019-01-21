@@ -84,7 +84,7 @@ open_lo_relation(void)
 
 	/* Use RowExclusiveLock since we might either read or write */
 	if (lo_heap_r == NULL)
-		lo_heap_r = heap_open(LargeObjectRelationId, RowExclusiveLock);
+		lo_heap_r = table_open(LargeObjectRelationId, RowExclusiveLock);
 	if (lo_index_r == NULL)
 		lo_index_r = index_open(LargeObjectLOidPNIndexId, RowExclusiveLock);
 
@@ -113,7 +113,7 @@ close_lo_relation(bool isCommit)
 			if (lo_index_r)
 				index_close(lo_index_r, NoLock);
 			if (lo_heap_r)
-				heap_close(lo_heap_r, NoLock);
+				table_close(lo_heap_r, NoLock);
 
 			CurrentResourceOwner = currentOwner;
 		}
@@ -141,8 +141,8 @@ myLargeObjectExists(Oid loid, Snapshot snapshot)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 
-	pg_lo_meta = heap_open(LargeObjectMetadataRelationId,
-						   AccessShareLock);
+	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
+							AccessShareLock);
 
 	sd = systable_beginscan(pg_lo_meta,
 							LargeObjectMetadataOidIndexId, true,
@@ -154,7 +154,7 @@ myLargeObjectExists(Oid loid, Snapshot snapshot)
 
 	systable_endscan(sd);
 
-	heap_close(pg_lo_meta, AccessShareLock);
+	table_close(pg_lo_meta, AccessShareLock);
 
 	return retval;
 }

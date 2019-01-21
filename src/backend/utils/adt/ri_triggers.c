@@ -301,7 +301,7 @@ RI_FKey_check(TriggerData *trigdata)
 	 * SELECT FOR KEY SHARE will get on it.
 	 */
 	fk_rel = trigdata->tg_relation;
-	pk_rel = heap_open(riinfo->pk_relid, RowShareLock);
+	pk_rel = table_open(riinfo->pk_relid, RowShareLock);
 
 	if (riinfo->confmatchtype == FKCONSTR_MATCH_PARTIAL)
 		ereport(ERROR,
@@ -316,7 +316,7 @@ RI_FKey_check(TriggerData *trigdata)
 			 * No further check needed - an all-NULL key passes every type of
 			 * foreign key constraint.
 			 */
-			heap_close(pk_rel, RowShareLock);
+			table_close(pk_rel, RowShareLock);
 			return PointerGetDatum(NULL);
 
 		case RI_KEYS_SOME_NULL:
@@ -341,7 +341,7 @@ RI_FKey_check(TriggerData *trigdata)
 							 errdetail("MATCH FULL does not allow mixing of null and nonnull key values."),
 							 errtableconstraint(fk_rel,
 												NameStr(riinfo->conname))));
-					heap_close(pk_rel, RowShareLock);
+					table_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
 				case FKCONSTR_MATCH_SIMPLE:
@@ -350,7 +350,7 @@ RI_FKey_check(TriggerData *trigdata)
 					 * MATCH SIMPLE - if ANY column is null, the key passes
 					 * the constraint.
 					 */
-					heap_close(pk_rel, RowShareLock);
+					table_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
 				case FKCONSTR_MATCH_PARTIAL:
@@ -364,7 +364,7 @@ RI_FKey_check(TriggerData *trigdata)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("MATCH PARTIAL not yet implemented")));
-					heap_close(pk_rel, RowShareLock);
+					table_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
 				default:
@@ -445,7 +445,7 @@ RI_FKey_check(TriggerData *trigdata)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
 
-	heap_close(pk_rel, RowShareLock);
+	table_close(pk_rel, RowShareLock);
 
 	return PointerGetDatum(NULL);
 }
@@ -707,7 +707,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR KEY SHARE will get on it.
 	 */
-	fk_rel = heap_open(riinfo->fk_relid, RowShareLock);
+	fk_rel = table_open(riinfo->fk_relid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -735,7 +735,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 			if (is_no_action &&
 				ri_Check_Pk_Match(pk_rel, fk_rel, old_row, riinfo))
 			{
-				heap_close(fk_rel, RowShareLock);
+				table_close(fk_rel, RowShareLock);
 				return PointerGetDatum(NULL);
 			}
 
@@ -808,7 +808,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
 
-			heap_close(fk_rel, RowShareLock);
+			table_close(fk_rel, RowShareLock);
 
 			return PointerGetDatum(NULL);
 
@@ -867,7 +867,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual DELETE will get on it.
 	 */
-	fk_rel = heap_open(riinfo->fk_relid, RowExclusiveLock);
+	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -948,7 +948,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
 
-			heap_close(fk_rel, RowExclusiveLock);
+			table_close(fk_rel, RowExclusiveLock);
 
 			return PointerGetDatum(NULL);
 
@@ -1010,7 +1010,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	fk_rel = heap_open(riinfo->fk_relid, RowExclusiveLock);
+	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
@@ -1104,7 +1104,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
 
-			heap_close(fk_rel, RowExclusiveLock);
+			table_close(fk_rel, RowExclusiveLock);
 
 			return PointerGetDatum(NULL);
 
@@ -1197,7 +1197,7 @@ ri_setnull(TriggerData *trigdata)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	fk_rel = heap_open(riinfo->fk_relid, RowExclusiveLock);
+	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -1291,7 +1291,7 @@ ri_setnull(TriggerData *trigdata)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
 
-			heap_close(fk_rel, RowExclusiveLock);
+			table_close(fk_rel, RowExclusiveLock);
 
 			return PointerGetDatum(NULL);
 
@@ -1383,7 +1383,7 @@ ri_setdefault(TriggerData *trigdata)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	fk_rel = heap_open(riinfo->fk_relid, RowExclusiveLock);
+	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -1478,7 +1478,7 @@ ri_setdefault(TriggerData *trigdata)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
 
-			heap_close(fk_rel, RowExclusiveLock);
+			table_close(fk_rel, RowExclusiveLock);
 
 			/*
 			 * If we just deleted or updated the PK row whose key was equal to

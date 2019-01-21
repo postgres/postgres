@@ -938,7 +938,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 	CatalogCacheInitializeCache_DEBUG1;
 
-	relation = heap_open(cache->cc_reloid, AccessShareLock);
+	relation = table_open(cache->cc_reloid, AccessShareLock);
 
 	/*
 	 * switch to the cache context so our allocations do not vanish at the end
@@ -965,7 +965,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
-	heap_close(relation, AccessShareLock);
+	table_close(relation, AccessShareLock);
 
 	CACHE3_elog(DEBUG2, "CatalogCacheInitializeCache: %s, %d keys",
 				cache->cc_relname, cache->cc_nkeys);
@@ -1357,7 +1357,7 @@ SearchCatCacheMiss(CatCache *cache,
 	 *
 	 * NOTE: it is possible for recursive cache lookups to occur while reading
 	 * the relation --- for example, due to shared-cache-inval messages being
-	 * processed during heap_open().  This is OK.  It's even possible for one
+	 * processed during table_open().  This is OK.  It's even possible for one
 	 * of those lookups to find and enter the very same tuple we are trying to
 	 * fetch here.  If that happens, we will enter a second copy of the tuple
 	 * into the cache.  The first copy will never be referenced again, and
@@ -1365,7 +1365,7 @@ SearchCatCacheMiss(CatCache *cache,
 	 * This case is rare enough that it's not worth expending extra cycles to
 	 * detect.
 	 */
-	relation = heap_open(cache->cc_reloid, AccessShareLock);
+	relation = table_open(cache->cc_reloid, AccessShareLock);
 
 	scandesc = systable_beginscan(relation,
 								  cache->cc_indexoid,
@@ -1390,7 +1390,7 @@ SearchCatCacheMiss(CatCache *cache,
 
 	systable_endscan(scandesc);
 
-	heap_close(relation, AccessShareLock);
+	table_close(relation, AccessShareLock);
 
 	/*
 	 * If tuple was not found, we need to build a negative cache entry
@@ -1638,7 +1638,7 @@ SearchCatCacheList(CatCache *cache,
 		cur_skey[2].sk_argument = v3;
 		cur_skey[3].sk_argument = v4;
 
-		relation = heap_open(cache->cc_reloid, AccessShareLock);
+		relation = table_open(cache->cc_reloid, AccessShareLock);
 
 		scandesc = systable_beginscan(relation,
 									  cache->cc_indexoid,
@@ -1705,7 +1705,7 @@ SearchCatCacheList(CatCache *cache,
 
 		systable_endscan(scandesc);
 
-		heap_close(relation, AccessShareLock);
+		table_close(relation, AccessShareLock);
 
 		/* Now we can build the CatCList entry. */
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);

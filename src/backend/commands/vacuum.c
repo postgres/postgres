@@ -749,7 +749,7 @@ get_all_vacuum_rels(int options)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 
-	pgclass = heap_open(RelationRelationId, AccessShareLock);
+	pgclass = table_open(RelationRelationId, AccessShareLock);
 
 	scan = heap_beginscan_catalog(pgclass, 0, NULL);
 
@@ -786,7 +786,7 @@ get_all_vacuum_rels(int options)
 	}
 
 	heap_endscan(scan);
-	heap_close(pgclass, AccessShareLock);
+	table_close(pgclass, AccessShareLock);
 
 	return vacrels;
 }
@@ -1097,7 +1097,7 @@ vac_update_relstats(Relation relation,
 	Form_pg_class pgcform;
 	bool		dirty;
 
-	rd = heap_open(RelationRelationId, RowExclusiveLock);
+	rd = table_open(RelationRelationId, RowExclusiveLock);
 
 	/* Fetch a copy of the tuple to scribble on */
 	ctup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
@@ -1188,7 +1188,7 @@ vac_update_relstats(Relation relation,
 	if (dirty)
 		heap_inplace_update(rd, ctup);
 
-	heap_close(rd, RowExclusiveLock);
+	table_close(rd, RowExclusiveLock);
 }
 
 
@@ -1251,7 +1251,7 @@ vac_update_datfrozenxid(void)
 	 * We must seqscan pg_class to find the minimum Xid, because there is no
 	 * index that can help us here.
 	 */
-	relation = heap_open(RelationRelationId, AccessShareLock);
+	relation = table_open(RelationRelationId, AccessShareLock);
 
 	scan = systable_beginscan(relation, InvalidOid, false,
 							  NULL, 0, NULL);
@@ -1296,7 +1296,7 @@ vac_update_datfrozenxid(void)
 
 	/* we're done with pg_class */
 	systable_endscan(scan);
-	heap_close(relation, AccessShareLock);
+	table_close(relation, AccessShareLock);
 
 	/* chicken out if bogus data found */
 	if (bogus)
@@ -1306,7 +1306,7 @@ vac_update_datfrozenxid(void)
 	Assert(MultiXactIdIsValid(newMinMulti));
 
 	/* Now fetch the pg_database tuple we need to update. */
-	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
+	relation = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	/* Fetch a copy of the tuple to scribble on */
 	tuple = SearchSysCacheCopy1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
@@ -1344,7 +1344,7 @@ vac_update_datfrozenxid(void)
 		heap_inplace_update(relation, tuple);
 
 	heap_freetuple(tuple);
-	heap_close(relation, RowExclusiveLock);
+	table_close(relation, RowExclusiveLock);
 
 	/*
 	 * If we were able to advance datfrozenxid or datminmxid, see if we can
@@ -1411,7 +1411,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 * worst possible outcome is that pg_xact is not truncated as aggressively
 	 * as it could be.
 	 */
-	relation = heap_open(DatabaseRelationId, AccessShareLock);
+	relation = table_open(DatabaseRelationId, AccessShareLock);
 
 	scan = heap_beginscan_catalog(relation, 0, NULL);
 
@@ -1454,7 +1454,7 @@ vac_truncate_clog(TransactionId frozenXID,
 
 	heap_endscan(scan);
 
-	heap_close(relation, AccessShareLock);
+	table_close(relation, AccessShareLock);
 
 	/*
 	 * Do not truncate CLOG if we seem to have suffered wraparound already;
