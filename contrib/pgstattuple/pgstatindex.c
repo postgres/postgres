@@ -28,10 +28,11 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
-#include "access/heapam.h"
 #include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
+#include "access/relation.h"
+#include "access/table.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
 #include "funcapi.h"

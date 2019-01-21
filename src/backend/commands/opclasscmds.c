@@ -19,10 +19,10 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
-#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"

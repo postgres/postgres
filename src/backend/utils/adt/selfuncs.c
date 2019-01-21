@@ -103,9 +103,9 @@
 
 #include "access/brin.h"
 #include "access/gin.h"
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "catalog/index.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"

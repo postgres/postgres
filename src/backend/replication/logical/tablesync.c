@@ -88,7 +88,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 
-#include "access/heapam.h"
+#include "access/table.h"
 #include "access/xact.h"
 
 #include "catalog/pg_subscription_rel.h"

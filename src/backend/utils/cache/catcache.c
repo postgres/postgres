@@ -16,9 +16,9 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
-#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "access/tuptoaster.h"
 #include "access/valid.h"
 #include "access/xact.h"

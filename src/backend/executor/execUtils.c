@@ -45,9 +45,9 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/parallel.h"
 #include "access/relscan.h"
+#include "access/table.h"
 #include "access/transam.h"
 #include "executor/executor.h"
 #include "jit/jit.h"

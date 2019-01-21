@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "access/relation.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "commands/defrem.h"

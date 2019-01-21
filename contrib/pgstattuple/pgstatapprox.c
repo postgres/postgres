@@ -12,9 +12,9 @@
  */
 #include "postgres.h"
 
-#include "access/visibilitymap.h"
-#include "access/heapam.h"
+#include "access/relation.h"
 #include "access/transam.h"
+#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "access/multixact.h"
 #include "access/htup_details.h"

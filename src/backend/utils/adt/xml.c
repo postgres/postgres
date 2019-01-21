@@ -67,8 +67,8 @@
 #endif
 #endif							/* USE_LIBXML */
 
-#include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/table.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_type.h"

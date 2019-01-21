@@ -14,8 +14,8 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "miscadmin.h"

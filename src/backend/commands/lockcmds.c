@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/table.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
@@ -25,7 +26,6 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "rewrite/rewriteHandler.h"
-#include "access/heapam.h"
 #include "nodes/nodeFuncs.h"
 
 static void LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, Oid userid);

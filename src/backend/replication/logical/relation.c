@@ -16,8 +16,8 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_subscription_rel.h"
 #include "executor/executor.h"

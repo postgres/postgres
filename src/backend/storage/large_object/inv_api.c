@@ -33,8 +33,8 @@
 #include <limits.h>
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"

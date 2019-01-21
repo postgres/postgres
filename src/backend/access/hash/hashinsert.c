@@ -17,7 +17,6 @@
 
 #include "access/hash.h"
 #include "access/hash_xlog.h"
-#include "access/heapam.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
 #include "storage/lwlock.h"

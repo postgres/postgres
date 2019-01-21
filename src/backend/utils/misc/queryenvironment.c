@@ -22,7 +22,7 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "access/table.h"
 #include "utils/queryenvironment.h"
 #include "utils/rel.h"
 

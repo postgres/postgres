@@ -43,11 +43,12 @@
 #include <limits.h>
 
 #include "access/hash.h"
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "access/parallel.h"
+#include "access/relation.h"
 #include "access/session.h"
+#include "access/table.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_constraint.h"

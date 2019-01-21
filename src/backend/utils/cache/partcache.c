@@ -15,9 +15,9 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
+#include "access/relation.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_opclass.h"

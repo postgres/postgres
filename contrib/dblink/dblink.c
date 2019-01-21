@@ -37,8 +37,9 @@
 #include "libpq-fe.h"
 
 #include "access/htup_details.h"
+#include "access/relation.h"
 #include "access/reloptions.h"
-#include "access/heapam.h"
+#include "access/table.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_foreign_data_wrapper.h"

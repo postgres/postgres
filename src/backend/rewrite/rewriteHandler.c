@@ -20,8 +20,9 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "access/relation.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "catalog/dependency.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"

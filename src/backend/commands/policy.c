@@ -13,9 +13,10 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/htup.h"
 #include "access/htup_details.h"
+#include "access/relation.h"
+#include "access/table.h"
 #include "access/sysattr.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
