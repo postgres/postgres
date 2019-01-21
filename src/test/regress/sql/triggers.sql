@@ -284,7 +284,13 @@ SELECT * FROM main_table ORDER BY a, b;
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
 SELECT pg_get_triggerdef(oid, false) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_any';
-DROP TRIGGER modified_a ON main_table;
+
+-- Test RENAME TRIGGER
+ALTER TRIGGER modified_a ON main_table RENAME TO modified_modified_a;
+SELECT count(*) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
+SELECT count(*) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_modified_a';
+
+DROP TRIGGER modified_modified_a ON main_table;
 DROP TRIGGER modified_any ON main_table;
 DROP TRIGGER insert_a ON main_table;
 DROP TRIGGER delete_a ON main_table;

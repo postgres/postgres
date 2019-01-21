@@ -1721,14 +1721,14 @@ renametrig(RenameStmt *stmt)
 								NULL, 2, key);
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
-		Form_pg_trigger trigform = (Form_pg_trigger) GETSTRUCT(tuple);
-
-		tgoid = trigform->oid;
+		Form_pg_trigger trigform;
 
 		/*
 		 * Update pg_trigger tuple with new tgname.
 		 */
 		tuple = heap_copytuple(tuple);	/* need a modifiable copy */
+		trigform = (Form_pg_trigger) GETSTRUCT(tuple);
+		tgoid = trigform->oid;
 
 		namestrcpy(&trigform->tgname,
 				   stmt->newname);

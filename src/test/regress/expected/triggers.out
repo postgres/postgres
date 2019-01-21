@@ -434,7 +434,21 @@ SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'
  CREATE TRIGGER modified_any BEFORE UPDATE OF a ON main_table FOR EACH ROW WHEN (old.* IS DISTINCT FROM new.*) EXECUTE PROCEDURE trigger_func('modified_any')
 (1 row)
 
-DROP TRIGGER modified_a ON main_table;
+-- Test RENAME TRIGGER
+ALTER TRIGGER modified_a ON main_table RENAME TO modified_modified_a;
+SELECT count(*) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_modified_a';
+ count 
+-------
+     1
+(1 row)
+
+DROP TRIGGER modified_modified_a ON main_table;
 DROP TRIGGER modified_any ON main_table;
 DROP TRIGGER insert_a ON main_table;
 DROP TRIGGER delete_a ON main_table;
