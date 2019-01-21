@@ -4840,7 +4840,7 @@ restart:
 		case INDEX_ATTR_BITMAP_KEY:
 			return uindexattrs;
 		case INDEX_ATTR_BITMAP_PRIMARY_KEY:
-			return bms_copy(relation->rd_pkattr);
+			return pkindexattrs;
 		case INDEX_ATTR_BITMAP_IDENTITY_KEY:
 			return idindexattrs;
 		default:
