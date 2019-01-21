@@ -69,7 +69,7 @@ struct statement
 	locale_t	oldlocale;
 #else
 	char	   *oldlocale;
-#ifdef WIN32
+#ifdef HAVE__CONFIGTHREADLOCALE
 	int			oldthreadlocale;
 #endif
 #endif

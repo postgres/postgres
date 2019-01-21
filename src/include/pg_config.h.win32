@@ -596,6 +596,9 @@
 /* Define to 1 if your compiler understands __builtin_unreachable. */
 /* #undef HAVE__BUILTIN_UNREACHABLE */
 
+/* Define to 1 if you have the `_configthreadlocale' function. */
+#define HAVE__CONFIGTHREADLOCALE 1
+
 /* Define to 1 if you have __cpuid. */
 #define HAVE__CPUID 1
 

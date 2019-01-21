@@ -495,7 +495,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		if (stmt.clocale != (locale_t) 0)
 			stmt.oldlocale = uselocale(stmt.clocale);
 #else
-#ifdef WIN32
+#ifdef HAVE__CONFIGTHREADLOCALE
 		stmt.oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
 #endif
 		stmt.oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
@@ -517,7 +517,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 			setlocale(LC_NUMERIC, stmt.oldlocale);
 			ecpg_free(stmt.oldlocale);
 		}
-#ifdef WIN32
+#ifdef HAVE__CONFIGTHREADLOCALE
 		if (stmt.oldthreadlocale != -1)
 			_configthreadlocale(stmt.oldthreadlocale);
 #endif

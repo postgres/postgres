@@ -1778,7 +1778,7 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 	 * Make sure we do NOT honor the locale for numeric input/output since the
 	 * database wants the standard decimal point.  If available, use
 	 * uselocale() for this because it's thread-safe.  Windows doesn't have
-	 * that, but it does have _configthreadlocale().
+	 * that, but it usually does have _configthreadlocale().
 	 */
 #ifdef HAVE_USELOCALE
 	stmt->clocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
@@ -1794,7 +1794,7 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		return false;
 	}
 #else
-#ifdef WIN32
+#ifdef HAVE__CONFIGTHREADLOCALE
 	stmt->oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
 	if (stmt->oldthreadlocale == -1)
 	{
@@ -2019,7 +2019,7 @@ ecpg_do_epilogue(struct statement *stmt)
 	if (stmt->oldlocale)
 	{
 		setlocale(LC_NUMERIC, stmt->oldlocale);
-#ifdef WIN32
+#ifdef HAVE__CONFIGTHREADLOCALE
 		_configthreadlocale(stmt->oldthreadlocale);
 #endif
 	}
