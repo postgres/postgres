@@ -53,7 +53,6 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 
 static bool ExecOnConflictUpdate(ModifyTableState *mtstate,

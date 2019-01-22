@@ -42,7 +42,6 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/typcache.h"
-#include "utils/tqual.h"
 
 
 #undef TOAST_DEBUG

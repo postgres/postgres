@@ -75,7 +75,6 @@
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 /* Potentially set by pg_upgrade_support functions */

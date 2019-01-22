@@ -192,7 +192,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 			 * happened since VACUUM started.
 			 *
 			 * Note: we could make a tighter test by seeing if the xid is
-			 * "running" according to the active snapshot; but tqual.c doesn't
+			 * "running" according to the active snapshot; but snapmgr.c doesn't
 			 * currently export a suitable API, and it's not entirely clear
 			 * that a tighter test is worth the cycles anyway.
 			 */

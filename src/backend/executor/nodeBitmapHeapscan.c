@@ -51,7 +51,6 @@
 #include "utils/rel.h"
 #include "utils/spccache.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);

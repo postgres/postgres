@@ -25,7 +25,6 @@
 #include "storage/bufmgr.h"
 #include "utils/snapmgr.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 /* Working data for heap_page_prune and subroutines */
 typedef struct

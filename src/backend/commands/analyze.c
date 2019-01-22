@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/relation.h"
 #include "access/sysattr.h"
@@ -63,7 +64,6 @@
 #include "utils/sortsupport.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
-#include "utils/tqual.h"
 
 
 /* Per-index data for ANALYZE */

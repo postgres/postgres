@@ -130,7 +130,6 @@
 
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 #include "storage/procarray.h"
 

@@ -36,7 +36,6 @@
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
-#include "utils/tqual.h"
 #include "utils/varlena.h"
 
 PG_MODULE_MAGIC;

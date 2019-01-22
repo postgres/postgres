@@ -12,6 +12,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/relation.h"
 #include "access/transam.h"
 #include "access/visibilitymap.h"
@@ -26,7 +27,6 @@
 #include "storage/procarray.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
-#include "utils/tqual.h"
 #include "commands/vacuum.h"
 
 PG_FUNCTION_INFO_V1(pgstattuple_approx);

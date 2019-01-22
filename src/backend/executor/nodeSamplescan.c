@@ -25,7 +25,6 @@
 #include "storage/predicate.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
 
 static TupleTableSlot *SampleNext(SampleScanState *node);
 static void tablesample_init(SampleScanState *scanstate);

@@ -66,7 +66,6 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 /* GUC variable */
@@ -5284,8 +5283,8 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 
 	/*
 	 * Note: we *must* check TransactionIdIsInProgress before
-	 * TransactionIdDidAbort/Commit; see comment at top of tqual.c for an
-	 * explanation.
+	 * TransactionIdDidAbort/Commit; see comment at top of heapam_visibility.c
+	 * for an explanation.
 	 */
 	if (TransactionIdIsCurrentTransactionId(xid))
 	{
@@ -6254,7 +6253,8 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			 *
 			 * As with all tuple visibility routines, it's critical to test
 			 * TransactionIdIsInProgress before TransactionIdDidCommit,
-			 * because of race conditions explained in detail in tqual.c.
+			 * because of race conditions explained in detail in
+			 * heapam_visibility.c.
 			 */
 			if (TransactionIdIsCurrentTransactionId(xid) ||
 				TransactionIdIsInProgress(xid))

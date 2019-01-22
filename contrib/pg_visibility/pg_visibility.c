@@ -22,7 +22,6 @@
 #include "storage/smgr.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 PG_MODULE_MAGIC;
 

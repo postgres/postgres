@@ -185,8 +185,7 @@ typedef struct SnapshotData
 } SnapshotData;
 
 /*
- * Result codes for HeapTupleSatisfiesUpdate.  This should really be in
- * tqual.h, but we want to avoid including that file elsewhere.
+ * Result codes for HeapTupleSatisfiesUpdate.
  */
 typedef enum
 {

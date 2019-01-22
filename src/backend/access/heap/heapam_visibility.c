@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
- * tqual.c
- *	  POSTGRES "time qualification" code, ie, tuple visibility rules.
+ * heapam_visibility.c
+ *	  Tuple visibility rules for tuples stored in heap.
  *
  * NOTE: all the HeapTupleSatisfies routines will update the tuple's
  * "hint" status bits if we see that the inserting or deleting transaction
@@ -56,13 +56,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/utils/time/tqual.c
+ *	  src/backend/access/heap/heapam_visibility.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/subtrans.h"
@@ -74,7 +75,6 @@
 #include "utils/builtins.h"
 #include "utils/combocid.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 /*
