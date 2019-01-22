@@ -9,7 +9,7 @@
  * Copyright (c) 2016-2018, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/jit/llvm/llvmjit_error.c
+ *	  src/backend/jit/llvm/llvmjit_error.cpp
  *
  *-------------------------------------------------------------------------
  */
