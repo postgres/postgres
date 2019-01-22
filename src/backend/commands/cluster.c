@@ -444,7 +444,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 						RelationGetRelationName(OldHeap))));
 
 	/* Index AM must allow clustering */
-	if (!OldIndex->rd_amroutine->amclusterable)
+	if (!OldIndex->rd_indam->amclusterable)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on index \"%s\" because access method does not support clustering",

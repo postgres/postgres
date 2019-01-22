@@ -2248,9 +2248,9 @@ index_build(Relation heapRelation,
 	 * sanity checks
 	 */
 	Assert(RelationIsValid(indexRelation));
-	Assert(PointerIsValid(indexRelation->rd_amroutine));
-	Assert(PointerIsValid(indexRelation->rd_amroutine->ambuild));
-	Assert(PointerIsValid(indexRelation->rd_amroutine->ambuildempty));
+	Assert(PointerIsValid(indexRelation->rd_indam));
+	Assert(PointerIsValid(indexRelation->rd_indam->ambuild));
+	Assert(PointerIsValid(indexRelation->rd_indam->ambuildempty));
 
 	/*
 	 * Determine worker process details for parallel CREATE INDEX.  Currently,
@@ -2291,8 +2291,8 @@ index_build(Relation heapRelation,
 	/*
 	 * Call the access method's build procedure
 	 */
-	stats = indexRelation->rd_amroutine->ambuild(heapRelation, indexRelation,
-												 indexInfo);
+	stats = indexRelation->rd_indam->ambuild(heapRelation, indexRelation,
+											 indexInfo);
 	Assert(PointerIsValid(stats));
 
 	/*
@@ -2307,7 +2307,7 @@ index_build(Relation heapRelation,
 	{
 		RelationOpenSmgr(indexRelation);
 		smgrcreate(indexRelation->rd_smgr, INIT_FORKNUM, false);
-		indexRelation->rd_amroutine->ambuildempty(indexRelation);
+		indexRelation->rd_indam->ambuildempty(indexRelation);
 	}
 
 	/*

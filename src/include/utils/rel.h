@@ -147,7 +147,7 @@ typedef struct RelationData
 	Oid			rd_amhandler;	/* OID of index AM's handler function */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
 	/* use "struct" here to avoid needing to include amapi.h: */
-	struct IndexAmRoutine *rd_amroutine;	/* index AM's API struct */
+	struct IndexAmRoutine *rd_indam;	/* index AM's API struct */
 	Oid		   *rd_opfamily;	/* OIDs of op families for each index col */
 	Oid		   *rd_opcintype;	/* OIDs of opclass declared input data types */
 	RegProcedure *rd_support;	/* OIDs of support procedures */

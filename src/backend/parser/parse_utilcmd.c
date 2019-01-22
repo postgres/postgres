@@ -1504,7 +1504,7 @@ generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
 		iparam->nulls_ordering = SORTBY_NULLS_DEFAULT;
 
 		/* Adjust options if necessary */
-		if (source_idx->rd_amroutine->amcanorder)
+		if (source_idx->rd_indam->amcanorder)
 		{
 			/*
 			 * If it supports sort ordering, copy DESC and NULLS opts. Don't

@@ -11121,7 +11121,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 			break;
 		case RELKIND_INDEX:
 		case RELKIND_PARTITIONED_INDEX:
-			(void) index_reloptions(rel->rd_amroutine->amoptions, newOptions, true);
+			(void) index_reloptions(rel->rd_indam->amoptions, newOptions, true);
 			break;
 		default:
 			ereport(ERROR,
@@ -12876,7 +12876,7 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 						RelationGetRelationName(indexRel),
 						RelationGetRelationName(rel))));
 	/* The AM must support uniqueness, and the index must in fact be unique. */
-	if (!indexRel->rd_amroutine->amcanunique ||
+	if (!indexRel->rd_indam->amcanunique ||
 		!indexRel->rd_index->indisunique)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),

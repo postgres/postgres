@@ -426,7 +426,7 @@ AllocateRelationDesc(Form_pg_class relp)
  *
  * tuple is the real pg_class tuple (not rd_rel!) for relation
  *
- * Note: rd_rel and (if an index) rd_amroutine must be valid already
+ * Note: rd_rel and (if an index) rd_indam must be valid already
  */
 static void
 RelationParseRelOptions(Relation relation, HeapTuple tuple)
@@ -451,7 +451,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 			break;
 		case RELKIND_INDEX:
 		case RELKIND_PARTITIONED_INDEX:
-			amoptsfn = relation->rd_amroutine->amoptions;
+			amoptsfn = relation->rd_indam->amoptions;
 			break;
 		default:
 			return;
@@ -1331,7 +1331,7 @@ InitIndexAmRoutine(Relation relation)
 	cached = (IndexAmRoutine *) MemoryContextAlloc(relation->rd_indexcxt,
 												   sizeof(IndexAmRoutine));
 	memcpy(cached, tmp, sizeof(IndexAmRoutine));
-	relation->rd_amroutine = cached;
+	relation->rd_indam = cached;
 
 	pfree(tmp);
 }
@@ -1416,7 +1416,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	relation->rd_opcintype = (Oid *)
 		MemoryContextAllocZero(indexcxt, indnkeyatts * sizeof(Oid));
 
-	amsupport = relation->rd_amroutine->amsupport;
+	amsupport = relation->rd_indam->amsupport;
 	if (amsupport > 0)
 	{
 		int			nsupport = indnatts * amsupport;
@@ -5404,7 +5404,7 @@ load_relcache_init_file(bool shared)
 			rel->rd_indoption = indoption;
 
 			/* set up zeroed fmgr-info vector */
-			nsupport = relform->relnatts * rel->rd_amroutine->amsupport;
+			nsupport = relform->relnatts * rel->rd_indam->amsupport;
 			rel->rd_supportinfo = (FmgrInfo *)
 				MemoryContextAllocZero(indexcxt, nsupport * sizeof(FmgrInfo));
 		}
@@ -5417,7 +5417,7 @@ load_relcache_init_file(bool shared)
 			Assert(rel->rd_index == NULL);
 			Assert(rel->rd_indextuple == NULL);
 			Assert(rel->rd_indexcxt == NULL);
-			Assert(rel->rd_amroutine == NULL);
+			Assert(rel->rd_indam == NULL);
 			Assert(rel->rd_opfamily == NULL);
 			Assert(rel->rd_opcintype == NULL);
 			Assert(rel->rd_support == NULL);
@@ -5695,7 +5695,7 @@ write_relcache_init_file(bool shared)
 
 			/* next, write the vector of support procedure OIDs */
 			write_item(rel->rd_support,
-					   relform->relnatts * (rel->rd_amroutine->amsupport * sizeof(RegProcedure)),
+					   relform->relnatts * (rel->rd_indam->amsupport * sizeof(RegProcedure)),
 					   fp);
 
 			/* next, write the vector of collation OIDs */
