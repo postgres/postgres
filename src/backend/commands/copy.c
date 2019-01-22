@@ -2612,8 +2612,7 @@ CopyFrom(CopyState cstate)
 		 */
 		insertMethod = CIM_SINGLE;
 	}
-	else if (cstate->whereClause != NULL ||
-			 contain_volatile_functions(cstate->whereClause))
+	else if (contain_volatile_functions(cstate->whereClause))
 	{
 		/*
 		 * Can't support multi-inserts if there are any volatile funcation
