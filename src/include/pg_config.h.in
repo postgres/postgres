@@ -630,6 +630,9 @@
 /* Define to 1 if the system has the type `unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
+/* Define to 1 if you have the `uselocale' function. */
+#undef HAVE_USELOCALE
+
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME
 
@@ -680,6 +683,9 @@
 
 /* Define to 1 if your compiler understands __builtin_unreachable. */
 #undef HAVE__BUILTIN_UNREACHABLE
+
+/* Define to 1 if you have the `_configthreadlocale' function. */
+#undef HAVE__CONFIGTHREADLOCALE
 
 /* Define to 1 if your compiler understands _Static_assert. */
 #undef HAVE__STATIC_ASSERT
