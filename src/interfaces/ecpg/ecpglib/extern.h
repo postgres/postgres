@@ -12,6 +12,9 @@
 #ifndef CHAR_BIT
 #include <limits.h>
 #endif
+#ifdef LOCALE_T_IN_XLOCALE
+#include <xlocale.h>
+#endif
 
 enum COMPAT_MODE
 {
@@ -60,7 +63,15 @@ struct statement
 	bool		questionmarks;
 	struct variable *inlist;
 	struct variable *outlist;
+#ifdef HAVE_USELOCALE
+	locale_t	clocale;
+	locale_t	oldlocale;
+#else
 	char	   *oldlocale;
+#ifdef HAVE__CONFIGTHREADLOCALE
+	int			oldthreadlocale;
+#endif
+#endif
 	int			nparams;
 	char	  **paramvalues;
 	PGresult   *results;
