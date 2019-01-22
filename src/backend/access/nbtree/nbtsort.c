@@ -72,7 +72,6 @@
 #include "utils/rel.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplesort.h"
-#include "utils/tqual.h"
 
 
 /* Magic numbers for parallel state sharing */

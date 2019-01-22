@@ -20,7 +20,7 @@
 #include "executor/executor.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
+#include "utils/snapmgr.h"
 
 
 /*

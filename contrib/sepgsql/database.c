@@ -21,7 +21,7 @@
 #include "commands/seclabel.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/tqual.h"
+#include "utils/snapmgr.h"
 #include "sepgsql.h"
 
 /*

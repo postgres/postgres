@@ -113,7 +113,7 @@
 #include "executor/executor.h"
 #include "nodes/nodeFuncs.h"
 #include "storage/lmgr.h"
-#include "utils/tqual.h"
+#include "utils/snapmgr.h"
 
 /* waitMode argument to check_exclusion_or_unique_constraint() */
 typedef enum

@@ -36,7 +36,6 @@
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 PG_MODULE_MAGIC;
