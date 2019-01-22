@@ -1700,7 +1700,7 @@ heap_fetch(Relation relation,
 	tuple->t_tableOid = RelationGetRelid(relation);
 
 	/*
-	 * check time qualification of tuple, then release lock
+	 * check tuple visibility, then release lock
 	 */
 	valid = HeapTupleSatisfiesVisibility(tuple, snapshot, buffer);
 
@@ -2020,8 +2020,8 @@ heap_get_latest_tid(Relation relation,
 		}
 
 		/*
-		 * Check time qualification of tuple; if visible, set it as the new
-		 * result candidate.
+		 * Check tuple visibility; if visible, set it as the new result
+		 * candidate.
 		 */
 		valid = HeapTupleSatisfiesVisibility(&tp, snapshot, buffer);
 		CheckForSerializableConflictOut(valid, relation, &tp, buffer, snapshot);

@@ -1453,8 +1453,8 @@ HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
  * It's easy to check just infomask bits if the locker is not a multi; but
  * otherwise we need to verify that the updating transaction has not aborted.
  *
- * This function is here because it follows the same time qualification rules
- * laid out at the top of this file.
+ * This function is here because it follows the same visibility rules laid out
+ * at the top of this file.
  */
 bool
 HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple)

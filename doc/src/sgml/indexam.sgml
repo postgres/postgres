@@ -720,7 +720,7 @@ amparallelrescan (IndexScanDesc scan);
    the TIDs of all the tuples it has been told about that match the
    <firstterm>scan keys</firstterm>.  The access method is <emphasis>not</emphasis> involved in
    actually fetching those tuples from the index's parent table, nor in
-   determining whether they pass the scan's time qualification test or other
+   determining whether they pass the scan's visibility test or other
    conditions.
   </para>
 

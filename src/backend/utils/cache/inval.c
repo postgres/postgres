@@ -5,7 +5,7 @@
  *
  *	This is subtle stuff, so pay attention:
  *
- *	When a tuple is updated or deleted, our standard time qualification rules
+ *	When a tuple is updated or deleted, our standard visibility rules
  *	consider that it is *still valid* so long as we are in the same command,
  *	ie, until the next CommandCounterIncrement() or transaction commit.
  *	(See acces/heap/heapam_visibility.c, and note that system catalogs are
