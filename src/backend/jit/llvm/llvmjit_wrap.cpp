@@ -6,7 +6,7 @@
  * Copyright (c) 2016-2019, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/lib/llvm/llvmjit_wrap.c
+ *	  src/backend/lib/llvm/llvmjit_wrap.cpp
  *
  *-------------------------------------------------------------------------
  */
