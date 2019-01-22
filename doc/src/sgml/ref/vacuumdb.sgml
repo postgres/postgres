@@ -106,9 +106,7 @@ PostgreSQL documentation
       <term><option>--disable-page-skipping</option></term>
       <listitem>
        <para>
-        Disable all page-skipping behavior during processing based on
-        the visibility map, similarly to the option
-        <literal>DISABLE_PAGE_SKIPPING</literal> for <command>VACUUM</command>.
+        Disable skipping pages based on the contents of the visibility map.
        </para>
        <note>
         <para>
