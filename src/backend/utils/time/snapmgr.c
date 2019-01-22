@@ -141,9 +141,9 @@ static volatile OldSnapshotControlData *oldSnapshotControl;
  * These SnapshotData structs are static to simplify memory allocation
  * (see the hack in GetSnapshotData to avoid repeated malloc/free).
  */
-static SnapshotData CurrentSnapshotData = {HeapTupleSatisfiesMVCC};
-static SnapshotData SecondarySnapshotData = {HeapTupleSatisfiesMVCC};
-SnapshotData CatalogSnapshotData = {HeapTupleSatisfiesMVCC};
+static SnapshotData CurrentSnapshotData = {SNAPSHOT_MVCC};
+static SnapshotData SecondarySnapshotData = {SNAPSHOT_MVCC};
+SnapshotData CatalogSnapshotData = {SNAPSHOT_MVCC};
 
 /* Pointers to valid snapshots */
 static Snapshot CurrentSnapshot = NULL;
@@ -2046,7 +2046,7 @@ EstimateSnapshotSpace(Snapshot snap)
 	Size		size;
 
 	Assert(snap != InvalidSnapshot);
-	Assert(snap->satisfies == HeapTupleSatisfiesMVCC);
+	Assert(snap->snapshot_type == SNAPSHOT_MVCC);
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	size = add_size(sizeof(SerializedSnapshotData),
@@ -2143,7 +2143,7 @@ RestoreSnapshot(char *start_address)
 
 	/* Copy all required fields */
 	snapshot = (Snapshot) MemoryContextAlloc(TopTransactionContext, size);
-	snapshot->satisfies = HeapTupleSatisfiesMVCC;
+	snapshot->snapshot_type = SNAPSHOT_MVCC;
 	snapshot->xmin = serialized_snapshot.xmin;
 	snapshot->xmax = serialized_snapshot.xmax;
 	snapshot->xip = NULL;

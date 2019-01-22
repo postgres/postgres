@@ -28,21 +28,11 @@ extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 
 /* This macro encodes the knowledge of which snapshots are MVCC-safe */
 #define IsMVCCSnapshot(snapshot)  \
-	((snapshot)->satisfies == HeapTupleSatisfiesMVCC || \
-	 (snapshot)->satisfies == HeapTupleSatisfiesHistoricMVCC)
+	((snapshot)->snapshot_type == SNAPSHOT_MVCC || \
+	 (snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
 
-/*
- * HeapTupleSatisfiesVisibility
- *		True iff heap tuple satisfies a time qual.
- *
- * Notes:
- *	Assumes heap tuple is valid.
- *	Beware of multiple evaluations of snapshot argument.
- *	Hint bits in the HeapTuple's t_infomask may be updated as a side effect;
- *	if so, the indicated buffer is marked dirty.
- */
-#define HeapTupleSatisfiesVisibility(tuple, snapshot, buffer) \
-	((*(snapshot)->satisfies) (tuple, snapshot, buffer))
+extern bool HeapTupleSatisfiesVisibility(HeapTuple stup, Snapshot snapshot,
+							 Buffer buffer);
 
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum
@@ -53,22 +43,6 @@ typedef enum
 	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in progress */
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
-
-/* These are the "satisfies" test routines for the various snapshot types */
-extern bool HeapTupleSatisfiesMVCC(HeapTuple htup,
-					   Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesSelf(HeapTuple htup,
-					   Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesAny(HeapTuple htup,
-					  Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesToast(HeapTuple htup,
-						Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesDirty(HeapTuple htup,
-						Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesNonVacuumable(HeapTuple htup,
-								Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesHistoricMVCC(HeapTuple htup,
-							   Snapshot snapshot, Buffer buffer);
 
 /* Special "satisfies" routines with different APIs */
 extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTuple htup,
@@ -100,14 +74,14 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
  * local variable of type SnapshotData, and initialize it with this macro.
  */
 #define InitDirtySnapshot(snapshotdata)  \
-	((snapshotdata).satisfies = HeapTupleSatisfiesDirty)
+	((snapshotdata).snapshot_type = SNAPSHOT_DIRTY)
 
 /*
  * Similarly, some initialization is required for a NonVacuumable snapshot.
  * The caller must supply the xmin horizon to use (e.g., RecentGlobalXmin).
  */
 #define InitNonVacuumableSnapshot(snapshotdata, xmin_horizon)  \
-	((snapshotdata).satisfies = HeapTupleSatisfiesNonVacuumable, \
+	((snapshotdata).snapshot_type = SNAPSHOT_NON_VACUUMABLE, \
 	 (snapshotdata).xmin = (xmin_horizon))
 
 /*
@@ -115,7 +89,7 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
  * to set lsn and whenTaken correctly to support snapshot_too_old.
  */
 #define InitToastSnapshot(snapshotdata, l, w)  \
-	((snapshotdata).satisfies = HeapTupleSatisfiesToast, \
+	((snapshotdata).snapshot_type = SNAPSHOT_TOAST, \
 	 (snapshotdata).lsn = (l),					\
 	 (snapshotdata).whenTaken = (w))
 

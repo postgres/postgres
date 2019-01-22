@@ -78,8 +78,8 @@
 
 
 /* Static variables representing various special snapshot semantics */
-SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
-SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
+SnapshotData SnapshotSelfData = {SNAPSHOT_SELF};
+SnapshotData SnapshotAnyData = {SNAPSHOT_ANY};
 
 
 /*
@@ -152,10 +152,7 @@ HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
  * HeapTupleSatisfiesSelf
  *		True iff heap tuple is valid "for itself".
  *
- *	Here, we consider the effects of:
- *		all committed transactions (as of the current instant)
- *		previous commands of this transaction
- *		changes made by the current command
+ * See SNAPSHOT_MVCC's definition for the intended behaviour.
  *
  * Note:
  *		Assumes heap tuple is valid.
@@ -172,7 +169,7 @@ HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
  *			(Xmax != my-transaction &&			the row was deleted by another transaction
  *			 Xmax is not committed)))			that has not been committed
  */
-bool
+static bool
 HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
 	HeapTupleHeader tuple = htup->t_data;
@@ -342,7 +339,7 @@ HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
  * HeapTupleSatisfiesAny
  *		Dummy "satisfies" routine: any tuple satisfies SnapshotAny.
  */
-bool
+static bool
 HeapTupleSatisfiesAny(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
 	return true;
@@ -351,6 +348,8 @@ HeapTupleSatisfiesAny(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 /*
  * HeapTupleSatisfiesToast
  *		True iff heap tuple is valid as a TOAST row.
+ *
+ * See SNAPSHOT_TOAST's definition for the intended behaviour.
  *
  * This is a simplified version that only checks for VACUUM moving conditions.
  * It's appropriate for TOAST usage because TOAST really doesn't want to do
@@ -362,7 +361,7 @@ HeapTupleSatisfiesAny(HeapTuple htup, Snapshot snapshot, Buffer buffer)
  * Among other things, this means you can't do UPDATEs of rows in a TOAST
  * table.
  */
-bool
+static bool
 HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
 						Buffer buffer)
 {
@@ -716,10 +715,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
  * HeapTupleSatisfiesDirty
  *		True iff heap tuple is valid including effects of open transactions.
  *
- *	Here, we consider the effects of:
- *		all committed and in-progress transactions (as of the current instant)
- *		previous commands of this transaction
- *		changes made by the current command
+ * See SNAPSHOT_DIRTY's definition for the intended behaviour.
  *
  * This is essentially like HeapTupleSatisfiesSelf as far as effects of
  * the current transaction and committed/aborted xacts are concerned.
@@ -735,7 +731,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
  * on the insertion without aborting the whole transaction, the associated
  * token is also returned in snapshot->speculativeToken.
  */
-bool
+static bool
 HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
 						Buffer buffer)
 {
@@ -934,14 +930,7 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
  * HeapTupleSatisfiesMVCC
  *		True iff heap tuple is valid for the given MVCC snapshot.
  *
- *	Here, we consider the effects of:
- *		all transactions committed as of the time of the given snapshot
- *		previous commands of this transaction
- *
- *	Does _not_ include:
- *		transactions shown as in-progress by the snapshot
- *		transactions started after the snapshot was taken
- *		changes made by the current command
+ * See SNAPSHOT_MVCC's definition for the intended behaviour.
  *
  * Notice that here, we will not update the tuple status hint bits if the
  * inserting/deleting transaction is still running according to our snapshot,
@@ -959,7 +948,7 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
  * inserting/deleting transaction was still running --- which was more cycles
  * and more contention on the PGXACT array.
  */
-bool
+static bool
 HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 					   Buffer buffer)
 {
@@ -1390,11 +1379,13 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
  *	True if tuple might be visible to some transaction; false if it's
  *	surely dead to everyone, ie, vacuumable.
  *
- *	This is an interface to HeapTupleSatisfiesVacuum that meets the
- *	SnapshotSatisfiesFunc API, so it can be used through a Snapshot.
+ *	See SNAPSHOT_TOAST's definition for the intended behaviour.
+ *
+ *	This is an interface to HeapTupleSatisfiesVacuum that's callable via
+ *	HeapTupleSatisfiesSnapshot, so it can be used through a Snapshot.
  *	snapshot->xmin must have been set up with the xmin horizon to use.
  */
-bool
+static bool
 HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
 								Buffer buffer)
 {
@@ -1659,7 +1650,7 @@ TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)
  * dangerous to do so as the semantics of doing so during timetravel are more
  * complicated than when dealing "only" with the present.
  */
-bool
+static bool
 HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 							   Buffer buffer)
 {
@@ -1795,4 +1786,45 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 	/* xmax is between [xmin, xmax), but known not to have committed yet */
 	else
 		return true;
+}
+
+/*
+ * HeapTupleSatisfiesVisibility
+ *		True iff heap tuple satisfies a time qual.
+ *
+ * Notes:
+ *	Assumes heap tuple is valid, and buffer at least share locked.
+ *
+ *	Hint bits in the HeapTuple's t_infomask may be updated as a side effect;
+ *	if so, the indicated buffer is marked dirty.
+ */
+bool
+HeapTupleSatisfiesVisibility(HeapTuple tup, Snapshot snapshot, Buffer buffer)
+{
+	switch (snapshot->snapshot_type)
+	{
+		case SNAPSHOT_MVCC:
+			return HeapTupleSatisfiesMVCC(tup, snapshot, buffer);
+			break;
+		case SNAPSHOT_SELF:
+			return HeapTupleSatisfiesSelf(tup, snapshot, buffer);
+			break;
+		case SNAPSHOT_ANY:
+			return HeapTupleSatisfiesAny(tup, snapshot, buffer);
+			break;
+		case SNAPSHOT_TOAST:
+			return HeapTupleSatisfiesToast(tup, snapshot, buffer);
+			break;
+		case SNAPSHOT_DIRTY:
+			return HeapTupleSatisfiesDirty(tup, snapshot, buffer);
+			break;
+		case SNAPSHOT_HISTORIC_MVCC:
+			return HeapTupleSatisfiesHistoricMVCC(tup, snapshot, buffer);
+			break;
+		case SNAPSHOT_NON_VACUUMABLE:
+			return HeapTupleSatisfiesNonVacuumable(tup, snapshot, buffer);
+			break;
+	}
+
+	return false;				/* keep compiler quiet */
 }
