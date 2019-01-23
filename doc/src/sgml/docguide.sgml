@@ -80,7 +80,7 @@
 
    <variablelist>
     <varlistentry>
-     <term><ulink url="http://www.oasis-open.org/docbook/">DocBook DTD</ulink></term>
+     <term><ulink url="https://www.oasis-open.org/docbook/">DocBook DTD</ulink></term>
      <listitem>
       <para>
        This is the definition of DocBook itself.  We currently use version
