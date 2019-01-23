@@ -4754,8 +4754,8 @@ ParseScript(const char *script, const char *desc, int weight)
 
 		/*
 		 * Since we used a command slot, allocate more if needed.  Note we
-		 * always allocate one more in order to accomodate the NULL terminator
-		 * below.
+		 * always allocate one more in order to accommodate the NULL
+		 * terminator below.
 		 */
 		if (index >= alloc_num)
 		{
