@@ -15,35 +15,35 @@ $node->start;
 
 $node->issues_sql_like(
 	[ 'vacuumdb', 'postgres' ],
-	qr/statement: VACUUM;/,
+	qr/statement: VACUUM.*;/,
 	'SQL VACUUM run');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-f', 'postgres' ],
-	qr/statement: VACUUM \(FULL\);/,
+	qr/statement: VACUUM \(FULL\).*;/,
 	'vacuumdb -f');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-F', 'postgres' ],
-	qr/statement: VACUUM \(FREEZE\);/,
+	qr/statement: VACUUM \(FREEZE\).*;/,
 	'vacuumdb -F');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-zj2', 'postgres' ],
-	qr/statement: VACUUM \(ANALYZE\) pg_catalog\./,
+	qr/statement: VACUUM \(ANALYZE\).*;/,
 	'vacuumdb -zj2');
 $node->issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
-	qr/statement: ANALYZE;/,
+	qr/statement: ANALYZE.*;/,
 	'vacuumdb -Z');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--disable-page-skipping', 'postgres' ],
-	qr/statement: VACUUM \(DISABLE_PAGE_SKIPPING\);/,
+	qr/statement: VACUUM \(DISABLE_PAGE_SKIPPING\).*;/,
 	'vacuumdb --disable-page-skipping');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--skip-locked', 'postgres' ],
-	qr/statement: VACUUM \(SKIP_LOCKED\);/,
+	qr/statement: VACUUM \(SKIP_LOCKED\).*;/,
 	'vacuumdb --skip-locked');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--skip-locked', '--analyze-only', 'postgres' ],
-	qr/statement: ANALYZE \(SKIP_LOCKED\);/,
+	qr/statement: ANALYZE \(SKIP_LOCKED\).*;/,
 	'vacuumdb --skip-locked --analyze-only');
 $node->command_fails(
 	[ 'vacuumdb', '--analyze-only', '--disable-page-skipping', 'postgres' ],
