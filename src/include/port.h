@@ -477,7 +477,7 @@ extern pqsigfunc pqsignal(int signo, pqsigfunc func);
 /* port/quotes.c */
 extern char *escape_single_quotes_ascii(const char *src);
 
-/* port/wait_error.c */
+/* common/wait_error.c */
 extern char *wait_result_to_str(int exit_status);
 
 #endif   /* PG_PORT_H */
