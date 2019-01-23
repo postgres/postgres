@@ -1078,7 +1078,7 @@ typedef struct ModifyTableState
  *		nplans				how many plans are in the array
  *		whichplan			which plan is being executed (0 .. n-1), or a
  *							special negative value. See nodeAppend.c.
- *		pruningstate		details required to allow partitions to be
+ *		prune_state			details required to allow partitions to be
  *							eliminated from the scan, or NULL if not possible.
  *		valid_subplans		for runtime pruning, valid appendplans indexes to
  *							scan.

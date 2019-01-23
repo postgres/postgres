@@ -150,7 +150,7 @@ typedef struct RecordCacheEntry
 
 /*
  * To deal with non-anonymous record types that are exchanged by backends
- * involved in a parallel query, we also need a shared verion of the above.
+ * involved in a parallel query, we also need a shared version of the above.
  */
 struct SharedRecordTypmodRegistry
 {

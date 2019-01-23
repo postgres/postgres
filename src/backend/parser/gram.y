@@ -2685,7 +2685,7 @@ alter_identity_column_option:
 		;
 
 PartitionBoundSpec:
-			/* a HASH partition*/
+			/* a HASH partition */
 			FOR VALUES WITH '(' hash_partbound ')'
 				{
 					ListCell   *lc;

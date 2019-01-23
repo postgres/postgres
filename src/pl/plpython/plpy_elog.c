@@ -242,7 +242,7 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 
 	*tb_depth = 0;
 	initStringInfo(&tbstr);
-	/* Mimick Python traceback reporting as close as possible. */
+	/* Mimic Python traceback reporting as close as possible. */
 	appendStringInfoString(&tbstr, "Traceback (most recent call last):");
 	while (tb != NULL && tb != Py_None)
 	{
