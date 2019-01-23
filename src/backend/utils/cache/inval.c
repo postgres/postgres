@@ -8,7 +8,7 @@
  *	When a tuple is updated or deleted, our standard visibility rules
  *	consider that it is *still valid* so long as we are in the same command,
  *	ie, until the next CommandCounterIncrement() or transaction commit.
- *	(See acces/heap/heapam_visibility.c, and note that system catalogs are
+ *	(See access/heap/heapam_visibility.c, and note that system catalogs are
  *  generally scanned under the most current snapshot available, rather than
  *  the transaction snapshot.)	At the command boundary, the old tuple stops
  *	being valid and the new version, if any, becomes valid.  Therefore,

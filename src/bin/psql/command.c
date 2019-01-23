@@ -600,7 +600,7 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 
 			/*
 			 * If the host is an absolute path, the connection is via socket
-			 * unless overriden by hostaddr
+			 * unless overridden by hostaddr
 			 */
 			if (is_absolute_path(host))
 			{

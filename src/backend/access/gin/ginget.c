@@ -442,7 +442,7 @@ restartScanEntry:
 			/*
 			 * Lock the entry leaf page.  This is more coarse-grained than
 			 * necessary, because it will conflict with any insertions that
-			 * land on the same leaf page, not only the exacty key we searched
+			 * land on the same leaf page, not only the exact key we searched
 			 * for.  But locking an individual tuple would require updating
 			 * that lock whenever it moves because of insertions or vacuums,
 			 * which seems too complicated.

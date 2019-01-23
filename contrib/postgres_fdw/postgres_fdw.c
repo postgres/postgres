@@ -2771,7 +2771,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			run_cost += cpu_tuple_cost * numGroups;
 			run_cost += ptarget->cost.per_tuple * numGroups;
 
-			/* Accout for the eval cost of HAVING quals, if any */
+			/* Account for the eval cost of HAVING quals, if any */
 			if (root->parse->havingQual)
 			{
 				QualCost	remote_cost;

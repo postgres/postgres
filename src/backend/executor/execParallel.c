@@ -1049,7 +1049,7 @@ ExecParallelRetrieveJitInstrumentation(PlanState *planstate,
 			MemoryContextAllocZero(planstate->state->es_query_cxt, sizeof(JitInstrumentation));
 	combined = planstate->state->es_jit_worker_instr;
 
-	/* Accummulate all the workers' instrumentations. */
+	/* Accumulate all the workers' instrumentations. */
 	for (n = 0; n < shared_jit->num_workers; ++n)
 		InstrJitAgg(combined, &shared_jit->jit_instr[n]);
 

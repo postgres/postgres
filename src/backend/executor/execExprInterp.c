@@ -1873,7 +1873,7 @@ CheckOpSlotCompatibility(ExprEvalStep *op, TupleTableSlot *slot)
 
 	/*
 	 * Should probably fixed at some point, but for now it's easier to allow
-	 * buffer and heap tuples to be used interchangably.
+	 * buffer and heap tuples to be used interchangeably.
 	 */
 	if (slot->tts_ops == &TTSOpsBufferHeapTuple &&
 		op->d.fetch.kind == &TTSOpsHeapTuple)

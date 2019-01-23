@@ -407,12 +407,12 @@ typedef struct
 } CState;
 
 /*
- * Cache cell for zipfian_random call
+ * Cache cell for random_zipfian call
  */
 typedef struct
 {
 	/* cell keys */
-	double		s;				/* s - parameter of zipfan_random function */
+	double		s;				/* s - parameter of random_zipfian function */
 	int64		n;				/* number of elements in range (max - min + 1) */
 
 	double		harmonicn;		/* generalizedHarmonicNumber(n, s) */

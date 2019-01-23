@@ -1476,7 +1476,7 @@ ExecStoreAllNullTuple(TupleTableSlot *slot)
  * possible.
  *
  * If materialize is true, the contents of the slots will be made independent
- * from the underlying storage (i.e. all buffer pins are release, memory is
+ * from the underlying storage (i.e. all buffer pins are released, memory is
  * allocated in the slot's context).
  *
  * If shouldFree is not-NULL it'll be set to true if the returned tuple has
