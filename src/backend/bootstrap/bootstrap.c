@@ -1130,7 +1130,7 @@ build_indices(void)
 		heap = table_open(ILHead->il_heap, NoLock);
 		ind = index_open(ILHead->il_ind, NoLock);
 
-		index_build(heap, ind, ILHead->il_info, false, false, false);
+		index_build(heap, ind, ILHead->il_info, false, false);
 
 		index_close(ind, NoLock);
 		table_close(heap, NoLock);

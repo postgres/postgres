@@ -1168,7 +1168,7 @@ DefineIndex(Oid relationId,
 	indexInfo->ii_BrokenHotChain = false;
 
 	/* Now build the index */
-	index_build(rel, indexRelation, indexInfo, stmt->primary, false, true);
+	index_build(rel, indexRelation, indexInfo, false, true);
 
 	/* Close both the relations, but keep the locks */
 	table_close(rel, NoLock);

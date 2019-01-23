@@ -1189,8 +1189,7 @@ index_create(Relation heapRelation,
 	}
 	else
 	{
-		index_build(heapRelation, indexRelation, indexInfo, isprimary, false,
-					true);
+		index_build(heapRelation, indexRelation, indexInfo, false, true);
 	}
 
 	/*
@@ -2220,12 +2219,8 @@ index_update_stats(Relation rel,
  * entries of the index and heap relation as needed, using statistics
  * returned by ambuild as well as data passed by the caller.
  *
- * isprimary tells whether to mark the index as a primary-key index.
  * isreindex indicates we are recreating a previously-existing index.
  * parallel indicates if parallelism may be useful.
- *
- * Note: when reindexing an existing index, isprimary can be false even if
- * the index is a PK; it's already properly marked and need not be re-marked.
  *
  * Note: before Postgres 8.2, the passed-in heap and index Relations
  * were automatically closed by this routine.  This is no longer the case.
@@ -2235,7 +2230,6 @@ void
 index_build(Relation heapRelation,
 			Relation indexRelation,
 			IndexInfo *indexInfo,
-			bool isprimary,
 			bool isreindex,
 			bool parallel)
 {
@@ -3702,7 +3696,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
-		index_build(heapRelation, iRel, indexInfo, false, true, true);
+		index_build(heapRelation, iRel, indexInfo, true, true);
 	}
 	PG_CATCH();
 	{
