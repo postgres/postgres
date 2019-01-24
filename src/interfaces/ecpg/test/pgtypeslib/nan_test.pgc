@@ -16,7 +16,7 @@ int
 main(void)
 {
 	exec sql begin declare section;
-	int	id;
+	int	id, loopcount;
 	double	d;
 	numeric	*num;
 	char	val[16];
@@ -32,7 +32,7 @@ main(void)
 
 	exec sql declare cur cursor for select id, d, d from nantest1;
 	exec sql open cur;
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		exec sql fetch from cur into :id, :d, :val;
 		if (sqlca.sqlcode)
@@ -48,7 +48,7 @@ main(void)
 	exec sql close cur;
 
 	exec sql open cur;
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		exec sql fetch from cur into :id, :d, :val;
 		if (sqlca.sqlcode)
@@ -74,7 +74,7 @@ main(void)
 
 	exec sql declare cur1 cursor for select id, d, d from nantest2;
 	exec sql open cur1;
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		exec sql fetch from cur1 into :id, :num, :val;
 		if (sqlca.sqlcode)

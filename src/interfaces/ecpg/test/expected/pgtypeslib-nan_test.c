@@ -34,13 +34,13 @@ int
 main(void)
 {
 	/* exec sql begin declare section */
-		
+		 
 		
 		
 		
 	
 #line 19 "nan_test.pgc"
- int id ;
+ int id , loopcount ;
  
 #line 20 "nan_test.pgc"
  double d ;
@@ -88,7 +88,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 34 "nan_test.pgc"
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch from cur", ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
@@ -143,7 +143,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 50 "nan_test.pgc"
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch from cur", ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
@@ -227,7 +227,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 76 "nan_test.pgc"
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch from cur1", ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 

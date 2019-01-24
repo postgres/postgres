@@ -267,7 +267,7 @@ main (void)
 {
 	MYTYPE		*myvar;
 	MYNULLTYPE	*mynullvar;
-
+	int loopcount;
 	char msg[128];
 
 	ECPGdebug(1, stderr);
@@ -333,7 +333,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 96 "outofscope.pgc"
 
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		memset(myvar, 0, sizeof(MYTYPE));
 		get_record1();
