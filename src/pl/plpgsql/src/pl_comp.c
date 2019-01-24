@@ -368,6 +368,8 @@ do_compile(FunctionCallInfo fcinfo,
 
 	function->fn_prokind = procStruct->prokind;
 
+	function->nstatements = 0;
+
 	/*
 	 * Initialize the compiler, particularly the namespace stack.  The
 	 * outermost namespace contains function parameters and other special
@@ -880,6 +882,8 @@ plpgsql_compile_inline(char *proc_source)
 	function->extra_warnings = 0;
 	function->extra_errors = 0;
 
+	function->nstatements = 0;
+
 	plpgsql_ns_init();
 	plpgsql_ns_push(func_name, PLPGSQL_LABEL_BLOCK);
 	plpgsql_DumpExecTree = false;
@@ -1020,6 +1024,7 @@ add_dummy_return(PLpgSQL_function *function)
 
 		new = palloc0(sizeof(PLpgSQL_stmt_block));
 		new->cmd_type = PLPGSQL_STMT_BLOCK;
+		new->stmtid = ++function->nstatements;
 		new->body = list_make1(function->action);
 
 		function->action = new;
@@ -1031,6 +1036,7 @@ add_dummy_return(PLpgSQL_function *function)
 
 		new = palloc0(sizeof(PLpgSQL_stmt_return));
 		new->cmd_type = PLPGSQL_STMT_RETURN;
+		new->stmtid = ++function->nstatements;
 		new->expr = NULL;
 		new->retvarno = function->out_param_varno;
 
