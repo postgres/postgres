@@ -15106,24 +15106,14 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		idx = index_open(idxid, AccessExclusiveLock);
 		IndexSetParentIndex(idx, InvalidOid);
 		update_relispartition(classRel, idxid, false);
-		index_close(idx, NoLock);
 
-		/*
-		 * Detach any constraints associated with the index too.  Only UNIQUE
-		 * and PRIMARY KEY index constraints can be inherited, so no need
-		 * to check for others.
-		 */
-		if (!idx->rd_index->indisprimary && !idx->rd_index->indisunique)
-			continue;
-
+		/* If there's a constraint associated with the index, detach it too */
 		constrOid = get_relation_idx_constraint_oid(RelationGetRelid(partRel),
 													idxid);
-		if (!OidIsValid(constrOid))
-			elog(ERROR, "missing pg_constraint entry of index \"%s\" of partition \"%s\"",
-				 RelationGetRelationName(idx),
-				 RelationGetRelationName(partRel));
+		if (OidIsValid(constrOid))
+			ConstraintSetParentConstraint(constrOid, InvalidOid);
 
-		ConstraintSetParentConstraint(constrOid, InvalidOid);
+		index_close(idx, NoLock);
 	}
 	table_close(classRel, RowExclusiveLock);
 
