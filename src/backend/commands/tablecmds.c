@@ -15095,6 +15095,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	{
 		Oid			idxid = lfirst_oid(cell);
 		Relation	idx;
+		Oid			constrOid;
 
 		if (!has_superclass(idxid))
 			continue;
@@ -15106,6 +15107,23 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		IndexSetParentIndex(idx, InvalidOid);
 		update_relispartition(classRel, idxid, false);
 		index_close(idx, NoLock);
+
+		/*
+		 * Detach any constraints associated with the index too.  Only UNIQUE
+		 * and PRIMARY KEY index constraints can be inherited, so no need
+		 * to check for others.
+		 */
+		if (!idx->rd_index->indisprimary && !idx->rd_index->indisunique)
+			continue;
+
+		constrOid = get_relation_idx_constraint_oid(RelationGetRelid(partRel),
+													idxid);
+		if (!OidIsValid(constrOid))
+			elog(ERROR, "missing pg_constraint entry of index \"%s\" of partition \"%s\"",
+				 RelationGetRelationName(idx),
+				 RelationGetRelationName(partRel));
+
+		ConstraintSetParentConstraint(constrOid, InvalidOid);
 	}
 	table_close(classRel, RowExclusiveLock);
 
