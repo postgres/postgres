@@ -518,7 +518,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		}
 #ifdef HAVE__CONFIGTHREADLOCALE
 		if (stmt.oldthreadlocale != -1)
-			_configthreadlocale(stmt.oldthreadlocale);
+			(void) _configthreadlocale(stmt.oldthreadlocale);
 #endif
 #endif
 	}
