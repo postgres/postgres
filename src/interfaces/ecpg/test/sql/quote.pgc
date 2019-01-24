@@ -7,7 +7,7 @@ EXEC SQL INCLUDE ../regression;
 int main() {
   EXEC SQL BEGIN DECLARE SECTION;
     char var[25];
-    int i;
+    int i, loopcount;
   EXEC SQL END DECLARE SECTION;
 
   ECPGdebug(1, stderr);
@@ -46,7 +46,7 @@ int main() {
 
   EXEC SQL WHENEVER NOT FOUND DO BREAK;
 
-  while (true)
+  for (loopcount = 0; loopcount < 100; loopcount++)
   {
 	EXEC SQL FETCH C INTO :i, :var;
 	printf("value: %d %s\n", i, var);
