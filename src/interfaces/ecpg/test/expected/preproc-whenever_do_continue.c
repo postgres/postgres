@@ -33,7 +33,7 @@ int main(void)
 		 
 		 
 	 
-
+	 
 	 
 	
 #line 15 "whenever_do_continue.pgc"
@@ -47,6 +47,9 @@ int main(void)
 #line 14 "whenever_do_continue.pgc"
  float comm ;
  } emp ;
+ 
+#line 16 "whenever_do_continue.pgc"
+ int loopcount ;
  
 #line 17 "whenever_do_continue.pgc"
  char msg [ 128 ] ;
@@ -119,7 +122,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 42 "whenever_do_continue.pgc"
 
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch c", ECPGt_EOIT, 
 	ECPGt_char,&(emp.ename),(long)12,(long)1,(12)*sizeof(char), 

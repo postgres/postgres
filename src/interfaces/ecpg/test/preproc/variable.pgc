@@ -35,7 +35,7 @@ exec sql end declare section;
 	exec sql char *married = NULL;
 	exec sql long ind_married;
 	exec sql ind children;
-
+	int loopcount;
 	char msg[128];
 
         ECPGdebug(1, stderr);
@@ -67,7 +67,7 @@ exec sql end declare section;
 	p=&personal;
 	i=&ind_personal;
 	memset(i, 0, sizeof(ind_personal));
-	while (1) {
+	for (loopcount = 0; loopcount < 100; loopcount++) {
 		strcpy(msg, "fetch");
 		exec sql fetch cur into :p:i, :married:ind_married, :children.integer:ind_children.smallint;
 		printf("%8.8s", personal.name.arr);

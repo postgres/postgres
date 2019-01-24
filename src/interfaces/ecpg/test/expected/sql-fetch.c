@@ -25,13 +25,13 @@
 int main() {
   /* exec sql begin declare section */
      
-      
+       
   
 #line 9 "fetch.pgc"
  char str [ 25 ] ;
  
 #line 10 "fetch.pgc"
- int i , count = 1 ;
+ int i , count = 1 , loopcount ;
 /* exec sql end declare section */
 #line 11 "fetch.pgc"
 
@@ -112,7 +112,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   /* exec sql whenever not found  break ; */
 #line 30 "fetch.pgc"
 
-  while (1) {
+  for (loopcount = 0; loopcount < 100; loopcount++) {
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in C", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -191,7 +191,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   /* exec sql whenever not found  break ; */
 #line 48 "fetch.pgc"
 
-  while (1) {
+  for (loopcount = 0; loopcount < 100; loopcount++) {
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
