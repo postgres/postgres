@@ -2499,6 +2499,9 @@ estimate_path_cost_size(PlannerInfo *root,
 	Cost		total_cost;
 	Cost		cpu_per_tuple;
 
+	/* Make sure the core code has set up the relation's reltarget */
+	Assert(foreignrel->reltarget);
+
 	/*
 	 * If the table or the server is configured to use remote estimates,
 	 * connect to the foreign server and execute EXPLAIN to estimate the
@@ -2576,6 +2579,24 @@ estimate_path_cost_size(PlannerInfo *root,
 		cost_qual_eval(&local_cost, local_param_join_conds, root);
 		startup_cost += local_cost.startup;
 		total_cost += local_cost.per_tuple * retrieved_rows;
+
+		/*
+		 * Add in tlist eval cost for each output row.  In case of an
+		 * aggregate, some of the tlist expressions such as grouping
+		 * expressions will be evaluated remotely, so adjust the costs.
+		 */
+		startup_cost += foreignrel->reltarget->cost.startup;
+		total_cost += foreignrel->reltarget->cost.startup;
+		total_cost += foreignrel->reltarget->cost.per_tuple * rows;
+		if (IS_UPPER_REL(foreignrel))
+		{
+			QualCost	tlist_cost;
+
+			cost_qual_eval(&tlist_cost, fdw_scan_tlist, root);
+			startup_cost -= tlist_cost.startup;
+			total_cost -= tlist_cost.startup;
+			total_cost -= tlist_cost.per_tuple * rows;
+		}
 	}
 	else
 	{
@@ -2674,18 +2695,18 @@ estimate_path_cost_size(PlannerInfo *root,
 			nrows = clamp_row_est(nrows * fpinfo->joinclause_sel);
 			run_cost += nrows * remote_conds_cost.per_tuple;
 			run_cost += fpinfo->local_conds_cost.per_tuple * retrieved_rows;
+
+			/* Add in tlist eval cost for each output row */
+			startup_cost += foreignrel->reltarget->cost.startup;
+			run_cost += foreignrel->reltarget->cost.per_tuple * rows;
 		}
 		else if (IS_UPPER_REL(foreignrel))
 		{
 			PgFdwRelationInfo *ofpinfo;
-			PathTarget *ptarget = foreignrel->reltarget;
 			AggClauseCosts aggcosts;
 			double		input_rows;
 			int			numGroupCols;
 			double		numGroups = 1;
-
-			/* Make sure the core code set the pathtarget. */
-			Assert(ptarget != NULL);
 
 			/*
 			 * This cost model is mixture of costing done for sorted and
@@ -2750,26 +2771,22 @@ estimate_path_cost_size(PlannerInfo *root,
 			 * Startup cost includes:
 			 *	  1. Startup cost for underneath input relation
 			 *	  2. Cost of performing aggregation, per cost_agg()
-			 *	  3. Startup cost for PathTarget eval
 			 *-----
 			 */
 			startup_cost = ofpinfo->rel_startup_cost;
 			startup_cost += aggcosts.transCost.startup;
 			startup_cost += aggcosts.transCost.per_tuple * input_rows;
 			startup_cost += (cpu_operator_cost * numGroupCols) * input_rows;
-			startup_cost += ptarget->cost.startup;
 
 			/*-----
 			 * Run time cost includes:
 			 *	  1. Run time cost of underneath input relation
 			 *	  2. Run time cost of performing aggregation, per cost_agg()
-			 *	  3. PathTarget eval cost for each output row
 			 *-----
 			 */
 			run_cost = ofpinfo->rel_total_cost - ofpinfo->rel_startup_cost;
 			run_cost += aggcosts.finalCost * numGroups;
 			run_cost += cpu_tuple_cost * numGroups;
-			run_cost += ptarget->cost.per_tuple * numGroups;
 
 			/* Account for the eval cost of HAVING quals, if any */
 			if (root->parse->havingQual)
@@ -2784,6 +2801,10 @@ estimate_path_cost_size(PlannerInfo *root,
 				startup_cost += fpinfo->local_conds_cost.startup;
 				run_cost += fpinfo->local_conds_cost.per_tuple * retrieved_rows;
 			}
+
+			/* Add in tlist eval cost for each output row */
+			startup_cost += foreignrel->reltarget->cost.startup;
+			run_cost += foreignrel->reltarget->cost.per_tuple * rows;
 		}
 		else
 		{
@@ -2802,6 +2823,10 @@ estimate_path_cost_size(PlannerInfo *root,
 			startup_cost += foreignrel->baserestrictcost.startup;
 			cpu_per_tuple = cpu_tuple_cost + foreignrel->baserestrictcost.per_tuple;
 			run_cost += cpu_per_tuple * foreignrel->tuples;
+
+			/* Add in tlist eval cost for each output row */
+			startup_cost += foreignrel->reltarget->cost.startup;
+			run_cost += foreignrel->reltarget->cost.per_tuple * rows;
 		}
 
 		/*
