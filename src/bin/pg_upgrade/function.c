@@ -34,7 +34,7 @@ library_name_compare(const void *p1, const void *p2)
 	int			slen1 = strlen(str1);
 	int			slen2 = strlen(str2);
 	int			cmp = strcmp(str1, str2);
-	
+
 	if (slen1 != slen2)
 		return slen1 - slen2;
 	if (cmp != 0)
@@ -230,18 +230,18 @@ check_loadable_libraries(void)
 				lib = "$libdir/plpython2";
 				llen = strlen(lib);
 			}
-	
+
 			strcpy(cmd, "LOAD '");
 			PQescapeStringConn(conn, cmd + strlen(cmd), lib, llen, NULL);
 			strcat(cmd, "'");
-	
+
 			res = PQexec(conn, cmd);
-	
+
 			if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			{
 				found = true;
 				was_load_failure = true;
-	
+
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 					pg_fatal("could not open file \"%s\": %s\n",
 							 output_path, strerror(errno));
@@ -251,7 +251,7 @@ check_loadable_libraries(void)
 			}
 			else
 				was_load_failure = false;
-	
+
 			PQclear(res);
 		}
 
