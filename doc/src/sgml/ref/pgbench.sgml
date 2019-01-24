@@ -1604,15 +1604,24 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
       in (1, 1000), a rejection method is used, based on
       "Non-Uniform Random Variate Generation", Luc Devroye, p. 550-551,
       Springer 1986. The distribution is not defined when the parameter's
-      value is 1.0. The drawing performance is poor for parameter values
+      value is 1.0. The function's performance is poor for parameter values
       close and above 1.0 and on a small range.
      </para>
      <para>
-      <replaceable>parameter</replaceable>
-      defines how skewed the distribution is. The larger the <replaceable>parameter</replaceable>, the more
-      frequently values to the beginning of the interval are drawn.
+      <replaceable>parameter</replaceable> defines how skewed the distribution
+      is. The larger the <replaceable>parameter</replaceable>, the more
+      frequently values closer to the beginning of the interval are drawn.
       The closer to 0 <replaceable>parameter</replaceable> is,
-      the flatter (more uniform) the access distribution.
+      the flatter (more uniform) the output distribution.
+      The distribution is such that, assuming the range starts from 1,
+      the ratio of the probability of drawing <replaceable>k</replaceable>
+      versus drawing <replaceable>k+1</replaceable> is
+      <literal>((<replaceable>k</replaceable>+1)/<replaceable>k</replaceable>)**<replaceable>parameter</replaceable></literal>.
+      For example, <literal>random_zipfian(1, ..., 2.5)</literal> produces
+      the value <literal>1</literal> about <literal>(2/1)**2.5 =
+      5.66</literal> times more frequently than <literal>2</literal>, which
+      itself is produced <literal>(3/2)*2.5 = 2.76</literal> times more
+      frequently than <literal>3</literal>, and so on.
      </para>
     </listitem>
    </itemizedlist>

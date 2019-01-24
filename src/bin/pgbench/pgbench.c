@@ -185,7 +185,7 @@ int64		latency_limit = 0;
 char	   *tablespace = NULL;
 char	   *index_tablespace = NULL;
 
-/* random seed used when calling srandom() */
+/* random seed used to initialize base_random_sequence */
 int64		random_seed = -1;
 
 /*
@@ -286,6 +286,9 @@ typedef struct RandomState
 {
 	unsigned short xseed[3];
 } RandomState;
+
+/* Various random sequences are initialized from this one. */
+static RandomState base_random_sequence;
 
 /*
  * Connection state machine states.
@@ -833,16 +836,28 @@ strtodouble(const char *str, bool errorOK, double *dv)
 
 /*
  * Initialize a random state struct.
+ *
+ * We derive the seed from base_random_sequence, which must be set up already.
  */
 static void
 initRandomState(RandomState *random_state)
 {
-	random_state->xseed[0] = random();
-	random_state->xseed[1] = random();
-	random_state->xseed[2] = random();
+	random_state->xseed[0] = (unsigned short)
+		(pg_jrand48(base_random_sequence.xseed) & 0xFFFF);
+	random_state->xseed[1] = (unsigned short)
+		(pg_jrand48(base_random_sequence.xseed) & 0xFFFF);
+	random_state->xseed[2] = (unsigned short)
+		(pg_jrand48(base_random_sequence.xseed) & 0xFFFF);
 }
 
-/* random number generator: uniform distribution from min to max inclusive */
+/*
+ * Random number generator: uniform distribution from min to max inclusive.
+ *
+ * Although the limits are expressed as int64, you can't generate the full
+ * int64 range in one call, because the difference of the limits mustn't
+ * overflow int64.  In practice it's unwise to ask for more than an int32
+ * range, because of the limited precision of pg_erand48().
+ */
 static int64
 getrand(RandomState *random_state, int64 min, int64 max)
 {
@@ -5126,12 +5141,14 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	}
 }
 
-/* call srandom based on some seed. NULL triggers the default behavior. */
+/*
+ * Set up a random seed according to seed parameter (NULL means default),
+ * and initialize base_random_sequence for use in initializing other sequences.
+ */
 static bool
 set_random_seed(const char *seed)
 {
-	/* srandom expects an unsigned int */
-	unsigned int iseed;
+	uint64		iseed;
 
 	if (seed == NULL || strcmp(seed, "time") == 0)
 	{
@@ -5139,7 +5156,7 @@ set_random_seed(const char *seed)
 		instr_time	now;
 
 		INSTR_TIME_SET_CURRENT(now);
-		iseed = (unsigned int) INSTR_TIME_GET_MICROSEC(now);
+		iseed = (uint64) INSTR_TIME_GET_MICROSEC(now);
 	}
 	else if (strcmp(seed, "rand") == 0)
 	{
@@ -5155,7 +5172,7 @@ set_random_seed(const char *seed)
 		/* parse seed unsigned int value */
 		char		garbage;
 
-		if (sscanf(seed, "%u%c", &iseed, &garbage) != 1)
+		if (sscanf(seed, UINT64_FORMAT "%c", &iseed, &garbage) != 1)
 		{
 			fprintf(stderr,
 					"unrecognized random seed option \"%s\": expecting an unsigned integer, \"time\" or \"rand\"\n",
@@ -5165,10 +5182,14 @@ set_random_seed(const char *seed)
 	}
 
 	if (seed != NULL)
-		fprintf(stderr, "setting random seed to %u\n", iseed);
-	srandom(iseed);
-	/* no precision loss: 32 bit unsigned int cast to 64 bit int */
+		fprintf(stderr, "setting random seed to " UINT64_FORMAT "\n", iseed);
 	random_seed = iseed;
+
+	/* Fill base_random_sequence with low-order bits of seed */
+	base_random_sequence.xseed[0] = iseed & 0xFFFF;
+	base_random_sequence.xseed[1] = (iseed >> 16) & 0xFFFF;
+	base_random_sequence.xseed[2] = (iseed >> 32) & 0xFFFF;
+
 	return true;
 }
 
@@ -5862,10 +5883,9 @@ main(int argc, char **argv)
 	/* set default seed for hash functions */
 	if (lookupVariable(&state[0], "default_seed") == NULL)
 	{
-		uint64		seed = ((uint64) (random() & 0xFFFF) << 48) |
-		((uint64) (random() & 0xFFFF) << 32) |
-		((uint64) (random() & 0xFFFF) << 16) |
-		(uint64) (random() & 0xFFFF);
+		uint64		seed =
+		((uint64) pg_jrand48(base_random_sequence.xseed) & 0xFFFFFFFF) |
+		(((uint64) pg_jrand48(base_random_sequence.xseed) & 0xFFFFFFFF) << 32);
 
 		for (i = 0; i < nclients; i++)
 			if (!putVariableInt(&state[i], "startup", "default_seed", (int64) seed))
