@@ -792,6 +792,12 @@ ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
 	constrForm = (Form_pg_constraint) GETSTRUCT(newtup);
 	if (OidIsValid(parentConstrId))
 	{
+		/* don't allow setting parent for a constraint that already has one */
+		Assert(constrForm->coninhcount == 0);
+		if (constrForm->conparentid != InvalidOid)
+			elog(ERROR, "constraint %u already has a parent constraint",
+				 childConstrId);
+
 		constrForm->conislocal = false;
 		constrForm->coninhcount++;
 		constrForm->conparentid = parentConstrId;
@@ -806,9 +812,11 @@ ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
 	else
 	{
 		constrForm->coninhcount--;
-		if (constrForm->coninhcount <= 0)
-			constrForm->conislocal = true;
+		constrForm->conislocal = true;
 		constrForm->conparentid = InvalidOid;
+
+		/* Make sure there's no further inheritance. */
+		Assert(constrForm->coninhcount == 0);
 
 		deleteDependencyRecordsForClass(ConstraintRelationId, childConstrId,
 										ConstraintRelationId,
