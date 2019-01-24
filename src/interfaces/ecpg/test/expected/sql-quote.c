@@ -25,13 +25,13 @@
 int main() {
   /* exec sql begin declare section */
      
-     
+      
   
 #line 9 "quote.pgc"
  char var [ 25 ] ;
  
 #line 10 "quote.pgc"
- int i ;
+ int i , loopcount ;
 /* exec sql end declare section */
 #line 11 "quote.pgc"
 
@@ -176,7 +176,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 47 "quote.pgc"
 
 
-  while (true)
+  for (loopcount = 0; loopcount < 100; loopcount++)
   {
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch C", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 

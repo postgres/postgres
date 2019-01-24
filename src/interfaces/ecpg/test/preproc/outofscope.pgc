@@ -66,7 +66,7 @@ main (void)
 {
 	MYTYPE		*myvar;
 	MYNULLTYPE	*mynullvar;
-
+	int loopcount;
 	char msg[128];
 
 	ECPGdebug(1, stderr);
@@ -95,7 +95,7 @@ main (void)
 
 	exec sql whenever not found do break;
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		memset(myvar, 0, sizeof(MYTYPE));
 		get_record1();

@@ -120,7 +120,7 @@ main (void)
 
 #line 37 "variable.pgc"
 
-
+	int loopcount;
 	char msg[128];
 
         ECPGdebug(1, stderr);
@@ -204,7 +204,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	p=&personal;
 	i=&ind_personal;
 	memset(i, 0, sizeof(ind_personal));
-	while (1) {
+	for (loopcount = 0; loopcount < 100; loopcount++) {
 		strcpy(msg, "fetch");
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch cur", ECPGt_EOIT, 
 	ECPGt_varchar,&(p->name),(long)BUFFERSIZ,(long)-1,sizeof( struct birthinfo ), 
