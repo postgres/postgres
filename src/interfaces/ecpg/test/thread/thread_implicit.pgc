@@ -105,12 +105,6 @@ void *test_thread(void *arg)
   char l_connection[128];
   EXEC SQL END DECLARE SECTION;
 
-#ifdef WIN32
-#ifdef _MSC_VER                /* requires MSVC */
-	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-#endif
-
   /* build up connection name, and connect to database */
 #ifndef _MSC_VER
   snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);

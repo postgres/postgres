@@ -145,48 +145,42 @@ static void* fn(void* arg)
 #line 43 "alloc.pgc"
 
 
-#ifdef WIN32
-#ifdef _MSC_VER                /* requires MSVC */
-	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-#endif
-
 	value = (long)arg;
 	sprintf(name, "Connection: %d", value);
 
 	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , name, 0); 
-#line 54 "alloc.pgc"
+#line 48 "alloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 54 "alloc.pgc"
+#line 48 "alloc.pgc"
 
 	{ ECPGsetcommit(__LINE__, "on", NULL);
-#line 55 "alloc.pgc"
+#line 49 "alloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 55 "alloc.pgc"
+#line 49 "alloc.pgc"
 
 	for (i = 1; i <= REPEATS; ++i)
 	{
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select relname from pg_class where relname = 'pg_class'", ECPGt_EOIT, 
 	ECPGt_char,&(r),(long)0,(long)0,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 58 "alloc.pgc"
+#line 52 "alloc.pgc"
 
 if (sqlca.sqlcode == ECPG_NOT_FOUND) sqlprint();
-#line 58 "alloc.pgc"
+#line 52 "alloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 58 "alloc.pgc"
+#line 52 "alloc.pgc"
 
 		free(r);
 		r = NULL;
 	}
 	{ ECPGdisconnect(__LINE__, name);
-#line 62 "alloc.pgc"
+#line 56 "alloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 62 "alloc.pgc"
+#line 56 "alloc.pgc"
 
 
 	return 0;

@@ -25,12 +25,6 @@ static void* fn(void* arg)
 {
 	int i;
 
-#ifdef WIN32
-#ifdef _MSC_VER                /* requires MSVC */
-	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-#endif
-
 	for (i = 1; i <= REPEATS; ++i)
 	{
 		EXEC SQL ALLOCATE DESCRIPTOR mydesc;

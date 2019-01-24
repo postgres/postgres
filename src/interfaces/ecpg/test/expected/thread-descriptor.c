@@ -108,25 +108,19 @@ static void* fn(void* arg)
 {
 	int i;
 
-#ifdef WIN32
-#ifdef _MSC_VER                /* requires MSVC */
-	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-#endif
-
 	for (i = 1; i <= REPEATS; ++i)
 	{
 		ECPGallocate_desc(__LINE__, "mydesc");
-#line 36 "descriptor.pgc"
+#line 30 "descriptor.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();
-#line 36 "descriptor.pgc"
+#line 30 "descriptor.pgc"
 
 		ECPGdeallocate_desc(__LINE__, "mydesc");
-#line 37 "descriptor.pgc"
+#line 31 "descriptor.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();
-#line 37 "descriptor.pgc"
+#line 31 "descriptor.pgc"
 
 	}
 
