@@ -259,11 +259,11 @@ pgbench(
 	[
 		qr{setting random seed to 5432\b},
 
-		# After explicit seeding, the four * random checks (1-3,20) should be
-		# deterministic, but not necessarily portable.
-		qr{command=1.: int 1\d\b},        # uniform random: 12 on linux
-		qr{command=2.: int 1\d\d\b},      # exponential random: 106 on linux
-		qr{command=3.: int 1\d\d\d\b},    # gaussian random: 1462 on linux
+		# After explicit seeding, the four random checks (1-3,20) are
+		# deterministic
+		qr{command=1.: int 18\b},      # uniform random
+		qr{command=2.: int 101\b},     # exponential random
+		qr{command=3.: int 1415\b},    # gaussian random
 		qr{command=4.: int 4\b},
 		qr{command=5.: int 5\b},
 		qr{command=6.: int 6\b},
@@ -277,7 +277,7 @@ pgbench(
 		qr{command=16.: double 16\b},
 		qr{command=17.: double 17\b},
 		qr{command=18.: int 9223372036854775807\b},
-		qr{command=20.: int \d\b},    # zipfian random: 1 on linux
+		qr{command=20.: int 2\b},    # zipfian random
 		qr{command=21.: double -27\b},
 		qr{command=22.: double 1024\b},
 		qr{command=23.: double 1\b},
@@ -468,7 +468,7 @@ for my $i (1, 2)
 \set ur random(1000, 1999)
 \set er random_exponential(2000, 2999, 2.0)
 \set gr random_gaussian(3000, 3999, 3.0)
-\set zr random_zipfian(4000, 4999, 2.5)
+\set zr random_zipfian(4000, 4999, 1.5)
 INSERT INTO seeded_random(seed, rand, val) VALUES
   (:random_seed, 'uniform', :ur),
   (:random_seed, 'exponential', :er),
