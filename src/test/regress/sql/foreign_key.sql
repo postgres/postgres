@@ -1392,6 +1392,20 @@ create table fkpart1.fk_part_1_2 partition of fkpart1.fk_part_1 for values in (2
 insert into fkpart1.fk_part_1 values (2);	-- should fail
 delete from fkpart1.pkey where a = 1;
 
+-- verify that attaching and detaching partitions manipulates the inheritance
+-- properties of their FK constraints correctly
+create schema fkpart2
+  create table pkey (a int primary key)
+  create table fk_part (a int, constraint fkey foreign key (a) references fkpart2.pkey) partition by list (a)
+  create table fk_part_1 partition of fkpart2.fk_part for values in (1) partition by list (a)
+  create table fk_part_1_1 (a int, constraint my_fkey foreign key (a) references fkpart2.pkey);
+alter table fkpart2.fk_part_1 attach partition fkpart2.fk_part_1_1 for values in (1);
+alter table fkpart2.fk_part_1 drop constraint fkey;	-- should fail
+alter table fkpart2.fk_part_1_1 drop constraint my_fkey;	-- should fail
+alter table fkpart2.fk_part detach partition fkpart2.fk_part_1;
+alter table fkpart2.fk_part_1 drop constraint fkey;	-- ok
+alter table fkpart2.fk_part_1_1 drop constraint my_fkey;	-- doesn't exist
+
 \set VERBOSITY terse	\\ -- suppress cascade details
-drop schema fkpart0, fkpart1 cascade;
+drop schema fkpart0, fkpart1, fkpart2 cascade;
 \set VERBOSITY default

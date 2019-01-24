@@ -7243,6 +7243,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	Oid			pfeqoperators[INDEX_MAX_KEYS];
 	Oid			ppeqoperators[INDEX_MAX_KEYS];
 	Oid			ffeqoperators[INDEX_MAX_KEYS];
+	bool		connoinherit;
 	int			i;
 	int			numfks,
 				numpks;
@@ -7587,6 +7588,12 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	/*
+	 * FKs always inherit for partitioned tables, and never for legacy
+	 * inheritance.
+	 */
+	connoinherit = rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE;
+
+	/*
 	 * Record the FK constraint in pg_constraint.
 	 */
 	constrOid = CreateConstraintEntry(fkconstraint->conname,
@@ -7616,7 +7623,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 									  NULL,
 									  true, /* islocal */
 									  0,	/* inhcount */
-									  true, /* isnoinherit */
+									  connoinherit,	/* conNoInherit */
 									  false);	/* is_internal */
 	ObjectAddressSet(address, ConstraintRelationId, constrOid);
 
@@ -7937,7 +7944,7 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 			}
 
 			systable_endscan(scan);
-			heap_close(trigrel, RowExclusiveLock);
+			table_close(trigrel, RowExclusiveLock);
 
 			ConstraintSetParentConstraint(fk->conoid, parentConstrOid);
 			CommandCounterIncrement();
@@ -9131,6 +9138,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	HeapTuple	tuple;
 	bool		found = false;
 	bool		is_no_inherit_constraint = false;
+	char		contype;
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -9171,6 +9179,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 							constrName, RelationGetRelationName(rel))));
 
 		is_no_inherit_constraint = con->connoinherit;
+		contype = con->contype;
 
 		/*
 		 * If it's a foreign-key constraint, we'd better lock the referenced
@@ -9179,7 +9188,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		 * that has unfired events).  But we can/must skip that in the
 		 * self-referential case.
 		 */
-		if (con->contype == CONSTRAINT_FOREIGN &&
+		if (contype == CONSTRAINT_FOREIGN &&
 			con->confrelid != RelationGetRelid(rel))
 		{
 			Relation	frel;
@@ -9221,6 +9230,17 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 			table_close(conrel, RowExclusiveLock);
 			return;
 		}
+	}
+
+	/*
+	 * For partitioned tables, non-CHECK inherited constraints are dropped via
+	 * the dependency mechanism, so we're done here.
+	 */
+	if (contype != CONSTRAINT_CHECK &&
+		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		table_close(conrel, RowExclusiveLock);
+		return;
 	}
 
 	/*
