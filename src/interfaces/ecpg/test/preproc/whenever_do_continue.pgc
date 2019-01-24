@@ -13,7 +13,7 @@ int main(void)
 		float sal;
 		float comm;
 	} emp;
-
+	int loopcount;
 	char msg[128];
 	exec sql end declare section;
 
@@ -41,7 +41,7 @@ int main(void)
 	/* The DO CONTINUE makes the loop start at the next iteration when an error occurs.*/
 	exec sql whenever sqlerror do continue;
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		exec sql fetch c into :emp;
 		/* The employees with non-NULL commissions will be displayed. */

@@ -197,7 +197,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   i = 0;
-  while (1)
+  while (i < 100)
   {
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch cur1", ECPGt_EOIT, 
 	ECPGt_int,&(item1),(long)1,(long)1,sizeof(int), 

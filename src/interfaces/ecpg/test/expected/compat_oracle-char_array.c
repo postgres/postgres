@@ -41,7 +41,7 @@ int main() {
 
 
   const char *ppppp = "XXXXX";
-
+  int loopcount;
   /* exec sql begin declare section */
    
    
@@ -156,7 +156,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   printf("Full Str.  :  Short  Ind.\n");
-  while(1) {
+  for (loopcount = 0; loopcount < 100; loopcount++) {
     strncpy(shortstr, ppppp, sizeof shortstr);
     memset(bigstr, 0, sizeof bigstr);
     { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "fetch C", ECPGt_EOIT, 

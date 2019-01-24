@@ -19,7 +19,7 @@ int main() {
   EXEC SQL WHENEVER SQLERROR SQLPRINT;
 
   const char *ppppp = "XXXXX";
-
+  int loopcount;
   EXEC SQL BEGIN DECLARE SECTION;
   char shortstr[5];
   char bigstr[11];
@@ -44,7 +44,7 @@ int main() {
   EXEC SQL WHENEVER NOT FOUND DO BREAK;
 
   printf("Full Str.  :  Short  Ind.\n");
-  while(1) {
+  for (loopcount = 0; loopcount < 100; loopcount++) {
     strncpy(shortstr, ppppp, sizeof shortstr);
     memset(bigstr, 0, sizeof bigstr);
     EXEC SQL FETCH C into :bigstr :bigstr_ind, :shortstr :shstr_ind;
