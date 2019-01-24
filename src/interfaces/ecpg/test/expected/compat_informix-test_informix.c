@@ -33,7 +33,7 @@ int main(void)
 {
 	
 #line 14 "test_informix.pgc"
- int i = 14 ;
+ int i = 14 , loopcount ;
 
 #line 14 "test_informix.pgc"
 
@@ -156,7 +156,7 @@ if (sqlca.sqlcode < 0) dosqlprint ( );}
 
 	deccvint(0, &j);
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "fetch forward c", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 

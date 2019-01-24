@@ -11,7 +11,7 @@ static void dosqlprint(void) {
 
 int main(void)
 {
-	$int i = 14;
+	$int i = 14, loopcount;
 	$decimal j, m, n;
 	$string c[10];
 
@@ -52,7 +52,7 @@ int main(void)
 
 	deccvint(0, &j);
 
-	while (1)
+	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
 		$fetch forward c into :i, :j, :c;
 		if (sqlca.sqlcode == 100) break;
