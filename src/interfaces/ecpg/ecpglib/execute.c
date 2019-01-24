@@ -1785,7 +1785,9 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 	 * Make sure we do NOT honor the locale for numeric input/output since the
 	 * database wants the standard decimal point.  If available, use
 	 * uselocale() for this because it's thread-safe.  Windows doesn't have
-	 * that, but it usually does have _configthreadlocale().
+	 * that, but it usually does have _configthreadlocale().  In some versions
+	 * of MinGW, _configthreadlocale() exists but always returns -1 --- so
+	 * treat that situation as if the function doesn't exist.
 	 */
 #ifdef HAVE_USELOCALE
 	stmt->clocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
@@ -1803,11 +1805,6 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 #else
 #ifdef HAVE__CONFIGTHREADLOCALE
 	stmt->oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-	if (stmt->oldthreadlocale == -1)
-	{
-		ecpg_do_epilogue(stmt);
-		return false;
-	}
 #endif
 	stmt->oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
 	if (stmt->oldlocale == NULL)
@@ -2024,12 +2021,17 @@ ecpg_do_epilogue(struct statement *stmt)
 		uselocale(stmt->oldlocale);
 #else
 	if (stmt->oldlocale)
-	{
 		setlocale(LC_NUMERIC, stmt->oldlocale);
 #ifdef HAVE__CONFIGTHREADLOCALE
-		_configthreadlocale(stmt->oldthreadlocale);
+
+	/*
+	 * This is a bit trickier than it looks: if we failed partway through
+	 * statement initialization, oldthreadlocale could still be 0.  But that's
+	 * okay because a call with 0 is defined to be a no-op.
+	 */
+	if (stmt->oldthreadlocale != -1)
+		(void) _configthreadlocale(stmt->oldthreadlocale);
 #endif
-	}
 #endif
 
 	free_statement(stmt);
