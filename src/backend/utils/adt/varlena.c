@@ -4613,8 +4613,6 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 		 * to search for occurrences of fldsep.
 		 */
 		TextPositionState state;
-		int			fldnum;
-		int			chunk_len;
 
 		inputstring_len = VARSIZE_ANY_EXHDR(inputstring);
 		fldsep_len = VARSIZE_ANY_EXHDR(fldsep);
@@ -4651,10 +4649,11 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 
 		start_ptr = VARDATA_ANY(inputstring);
 
-		for (fldnum = 1;; fldnum++) /* field number is 1 based */
+		for (;;)
 		{
 			bool		found;
 			char	   *end_ptr;
+			int			chunk_len;
 
 			CHECK_FOR_INTERRUPTS();
 
@@ -4663,6 +4662,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 			{
 				/* fetch last field */
 				chunk_len = ((char *) inputstring + VARSIZE_ANY(inputstring)) - start_ptr;
+				end_ptr = NULL; /* not used, but some compilers complain */
 			}
 			else
 			{
