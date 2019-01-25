@@ -581,8 +581,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <partelem>	part_elem
 %type <list>		part_params
 %type <partboundspec> PartitionBoundSpec
-%type <node>		partbound_datum PartitionRangeDatum
-%type <list>		hash_partbound partbound_datum_list range_datum_list
+%type <list>		hash_partbound
 %type <defelt>		hash_partbound_elem
 
 /*
@@ -2731,7 +2730,7 @@ PartitionBoundSpec:
 				}
 
 			/* a LIST partition */
-			| FOR VALUES IN_P '(' partbound_datum_list ')'
+			| FOR VALUES IN_P '(' expr_list ')'
 				{
 					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
 
@@ -2744,7 +2743,7 @@ PartitionBoundSpec:
 				}
 
 			/* a RANGE partition */
-			| FOR VALUES FROM '(' range_datum_list ')' TO '(' range_datum_list ')'
+			| FOR VALUES FROM '(' expr_list ')' TO '(' expr_list ')'
 				{
 					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
 
@@ -2785,59 +2784,6 @@ hash_partbound:
 			{
 				$$ = lappend($1, $3);
 			}
-		;
-
-partbound_datum:
-			Sconst			{ $$ = makeStringConst($1, @1); }
-			| NumericOnly	{ $$ = makeAConst($1, @1); }
-			| TRUE_P		{ $$ = makeStringConst(pstrdup("true"), @1); }
-			| FALSE_P		{ $$ = makeStringConst(pstrdup("false"), @1); }
-			| NULL_P		{ $$ = makeNullAConst(@1); }
-		;
-
-partbound_datum_list:
-			partbound_datum						{ $$ = list_make1($1); }
-			| partbound_datum_list ',' partbound_datum
-												{ $$ = lappend($1, $3); }
-		;
-
-range_datum_list:
-			PartitionRangeDatum					{ $$ = list_make1($1); }
-			| range_datum_list ',' PartitionRangeDatum
-												{ $$ = lappend($1, $3); }
-		;
-
-PartitionRangeDatum:
-			MINVALUE
-				{
-					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
-
-					n->kind = PARTITION_RANGE_DATUM_MINVALUE;
-					n->value = NULL;
-					n->location = @1;
-
-					$$ = (Node *) n;
-				}
-			| MAXVALUE
-				{
-					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
-
-					n->kind = PARTITION_RANGE_DATUM_MAXVALUE;
-					n->value = NULL;
-					n->location = @1;
-
-					$$ = (Node *) n;
-				}
-			| partbound_datum
-				{
-					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
-
-					n->kind = PARTITION_RANGE_DATUM_VALUE;
-					n->value = $1;
-					n->location = @1;
-
-					$$ = (Node *) n;
-				}
 		;
 
 /*****************************************************************************

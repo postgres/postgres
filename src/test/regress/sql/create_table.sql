@@ -436,13 +436,18 @@ DROP TABLE partitioned, partitioned2;
 CREATE TABLE list_parted (
 	a int
 ) PARTITION BY LIST (a);
--- syntax allows only string literal, numeric literal and null to be
--- specified for a partition bound value
 CREATE TABLE part_1 PARTITION OF list_parted FOR VALUES IN ('1');
 CREATE TABLE part_2 PARTITION OF list_parted FOR VALUES IN (2);
+CREATE TABLE part_3 PARTITION OF list_parted FOR VALUES IN ((2+1));
 CREATE TABLE part_null PARTITION OF list_parted FOR VALUES IN (null);
-CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES IN (int '1');
-CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES IN ('1'::int);
+\d+ list_parted
+
+-- forbidden expressions for partition bound
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (somename);
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (a);
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (sum(a));
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN ((select 1));
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (generate_series(4, 6));
 
 -- syntax does not allow empty list of values for list partitions
 CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES IN ();
@@ -462,15 +467,16 @@ CREATE TABLE bools (
 CREATE TABLE bools_true PARTITION OF bools FOR VALUES IN (1);
 DROP TABLE bools;
 
--- specified literal can be cast, but cast isn't immutable
+-- specified literal can be cast, and the cast might not be immutable
 CREATE TABLE moneyp (
 	a money
 ) PARTITION BY LIST (a);
 CREATE TABLE moneyp_10 PARTITION OF moneyp FOR VALUES IN (10);
-CREATE TABLE moneyp_10 PARTITION OF moneyp FOR VALUES IN ('10');
+CREATE TABLE moneyp_11 PARTITION OF moneyp FOR VALUES IN ('11');
+CREATE TABLE moneyp_12 PARTITION OF moneyp FOR VALUES IN (to_char(12, '99')::int);
 DROP TABLE moneyp;
 
--- immutable cast should work, though
+-- cast is immutable
 CREATE TABLE bigintp (
 	a bigint
 ) PARTITION BY LIST (a);
@@ -686,6 +692,28 @@ create table parted_collate_must_match2 partition of parted_collate_must_match
   (b collate "POSIX") for values from ('m') to ('z');
 drop table parted_collate_must_match;
 
+-- check that specifying incompatible collations for partition bound
+-- expressions fails promptly
+
+create table test_part_coll_posix (a text) partition by range (a collate "POSIX");
+-- fail
+create table test_part_coll partition of test_part_coll_posix for values from ('a' collate "C") to ('g');
+-- ok
+create table test_part_coll partition of test_part_coll_posix for values from ('a' collate "POSIX") to ('g');
+-- ok
+create table test_part_coll2 partition of test_part_coll_posix for values from ('g') to ('m');
+
+-- using a cast expression uses the target type's default collation
+
+-- fail
+create table test_part_coll_cast partition of test_part_coll_posix for values from (name 'm' collate "C") to ('s');
+-- ok
+create table test_part_coll_cast partition of test_part_coll_posix for values from (name 'm' collate "POSIX") to ('s');
+-- ok; partition collation silently overrides the default collation of type 'name'
+create table test_part_coll_cast2 partition of test_part_coll_posix for values from (name 's') to ('z');
+
+drop table test_part_coll_posix;
+
 -- Partition bound in describe output
 \d+ part_b
 
@@ -776,3 +804,12 @@ create trigger trig_part_create before insert on tab_part_create
 insert into tab_part_create values (1);
 drop table tab_part_create;
 drop function func_part_create();
+
+-- test using a volatile expression as partition bound
+create table volatile_partbound_test (partkey timestamp) partition by range (partkey);
+create table volatile_partbound_test1 partition of volatile_partbound_test for values from (minvalue) to (current_timestamp);
+create table volatile_partbound_test2 partition of volatile_partbound_test for values from (current_timestamp) to (maxvalue);
+-- this should go into the partition volatile_partbound_test2
+insert into volatile_partbound_test values (current_timestamp);
+select tableoid::regclass from volatile_partbound_test;
+drop table volatile_partbound_test;

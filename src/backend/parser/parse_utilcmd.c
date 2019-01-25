@@ -50,7 +50,9 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/planner.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -139,9 +141,12 @@ static void transformConstraintAttrs(CreateStmtContext *cxt,
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void setSchemaName(char *context_schema, char **stmt_schema_name);
 static void transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd);
+static List *transformPartitionRangeBounds(ParseState *pstate, List *blist,
+							  Relation parent);
 static void validateInfiniteBounds(ParseState *pstate, List *blist);
-static Const *transformPartitionBoundValue(ParseState *pstate, A_Const *con,
-							 const char *colName, Oid colType, int32 colTypmod);
+static Const *transformPartitionBoundValue(ParseState *pstate, Node *con,
+							 const char *colName, Oid colType, int32 colTypmod,
+							 Oid partCollation);
 
 
 /*
@@ -3625,6 +3630,7 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 		char	   *colname;
 		Oid			coltype;
 		int32		coltypmod;
+		Oid			partcollation;
 
 		if (spec->strategy != PARTITION_STRATEGY_LIST)
 			ereport(ERROR,
@@ -3644,17 +3650,19 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 		/* Need its type data too */
 		coltype = get_partition_col_typid(key, 0);
 		coltypmod = get_partition_col_typmod(key, 0);
+		partcollation = get_partition_col_collation(key, 0);
 
 		result_spec->listdatums = NIL;
 		foreach(cell, spec->listdatums)
 		{
-			A_Const    *con = castNode(A_Const, lfirst(cell));
+			Node	   *expr = lfirst(cell);
 			Const	   *value;
 			ListCell   *cell2;
 			bool		duplicate;
 
-			value = transformPartitionBoundValue(pstate, con,
-												 colname, coltype, coltypmod);
+			value = transformPartitionBoundValue(pstate, expr,
+												 colname, coltype, coltypmod,
+												 partcollation);
 
 			/* Don't add to the result if the value is a duplicate */
 			duplicate = false;
@@ -3677,11 +3685,6 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 	}
 	else if (strategy == PARTITION_STRATEGY_RANGE)
 	{
-		ListCell   *cell1,
-				   *cell2;
-		int			i,
-					j;
-
 		if (spec->strategy != PARTITION_STRATEGY_RANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -3698,23 +3701,78 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 					 errmsg("TO must specify exactly one value per partitioning column")));
 
 		/*
-		 * Once we see MINVALUE or MAXVALUE for one column, the remaining
-		 * columns must be the same.
+		 * Convert raw parse nodes into PartitionRangeDatum nodes and perform
+		 * any necessary validation.
 		 */
-		validateInfiniteBounds(pstate, spec->lowerdatums);
-		validateInfiniteBounds(pstate, spec->upperdatums);
+		result_spec->lowerdatums =
+					transformPartitionRangeBounds(pstate, spec->lowerdatums,
+												  parent);
+		result_spec->upperdatums =
+					transformPartitionRangeBounds(pstate, spec->upperdatums,
+												  parent);
+	}
+	else
+		elog(ERROR, "unexpected partition strategy: %d", (int) strategy);
 
-		/* Transform all the constants */
-		i = j = 0;
-		result_spec->lowerdatums = result_spec->upperdatums = NIL;
-		forboth(cell1, spec->lowerdatums, cell2, spec->upperdatums)
+	return result_spec;
+}
+
+/*
+ * transformPartitionRangeBounds
+ *		This converts the expressions for range partition bounds from the raw
+ *		grammar representation to PartitionRangeDatum structs
+ */
+static List *
+transformPartitionRangeBounds(ParseState *pstate, List *blist,
+							  Relation parent)
+{
+	List	   *result = NIL;
+	PartitionKey key = RelationGetPartitionKey(parent);
+	List	   *partexprs = get_partition_exprs(key);
+	ListCell   *lc;
+	int			i,
+				j;
+
+	i = j = 0;
+	foreach(lc, blist)
+	{
+		Node *expr = lfirst(lc);
+		PartitionRangeDatum *prd = NULL;
+
+		/*
+		 * Infinite range bounds -- "minvalue" and "maxvalue" -- get passed
+		 * in as ColumnRefs.
+		 */
+		if (IsA(expr, ColumnRef))
 		{
-			PartitionRangeDatum *ldatum = (PartitionRangeDatum *) lfirst(cell1);
-			PartitionRangeDatum *rdatum = (PartitionRangeDatum *) lfirst(cell2);
+			ColumnRef *cref = (ColumnRef *) expr;
+			char *cname = NULL;
+
+			if (list_length(cref->fields) == 1 &&
+				IsA(linitial(cref->fields), String))
+				cname = strVal(linitial(cref->fields));
+
+			Assert(cname != NULL);
+			if (strcmp("minvalue", cname) == 0)
+			{
+				prd = makeNode(PartitionRangeDatum);
+				prd->kind = PARTITION_RANGE_DATUM_MINVALUE;
+				prd->value = NULL;
+			}
+			else if (strcmp("maxvalue", cname) == 0)
+			{
+				prd = makeNode(PartitionRangeDatum);
+				prd->kind = PARTITION_RANGE_DATUM_MAXVALUE;
+				prd->value = NULL;
+			}
+		}
+
+		if (prd == NULL)
+		{
 			char	   *colname;
 			Oid			coltype;
 			int32		coltypmod;
-			A_Const    *con;
+			Oid			partcollation;
 			Const	   *value;
 
 			/* Get the column's name in case we need to output an error */
@@ -3729,50 +3787,38 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 											 false, false);
 				++j;
 			}
+
 			/* Need its type data too */
 			coltype = get_partition_col_typid(key, i);
 			coltypmod = get_partition_col_typmod(key, i);
+			partcollation = get_partition_col_collation(key, i);
 
-			if (ldatum->value)
-			{
-				con = castNode(A_Const, ldatum->value);
-				value = transformPartitionBoundValue(pstate, con,
-													 colname,
-													 coltype, coltypmod);
-				if (value->constisnull)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("cannot specify NULL in range bound")));
-				ldatum = copyObject(ldatum);	/* don't scribble on input */
-				ldatum->value = (Node *) value;
-			}
-
-			if (rdatum->value)
-			{
-				con = castNode(A_Const, rdatum->value);
-				value = transformPartitionBoundValue(pstate, con,
-													 colname,
-													 coltype, coltypmod);
-				if (value->constisnull)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("cannot specify NULL in range bound")));
-				rdatum = copyObject(rdatum);	/* don't scribble on input */
-				rdatum->value = (Node *) value;
-			}
-
-			result_spec->lowerdatums = lappend(result_spec->lowerdatums,
-											   ldatum);
-			result_spec->upperdatums = lappend(result_spec->upperdatums,
-											   rdatum);
-
+			value = transformPartitionBoundValue(pstate, expr,
+												 colname,
+												 coltype, coltypmod,
+												 partcollation);
+			if (value->constisnull)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("cannot specify NULL in range bound")));
+			prd = makeNode(PartitionRangeDatum);
+			prd->kind = PARTITION_RANGE_DATUM_VALUE;
+			prd->value = (Node *) value;
 			++i;
 		}
-	}
-	else
-		elog(ERROR, "unexpected partition strategy: %d", (int) strategy);
 
-	return result_spec;
+		prd->location = exprLocation(expr);
+
+		result = lappend(result, prd);
+	}
+
+	/*
+	 * Once we see MINVALUE or MAXVALUE for one column, the remaining
+	 * columns must be the same.
+	 */
+	validateInfiniteBounds(pstate, result);
+
+	return result;
 }
 
 /*
@@ -3821,13 +3867,34 @@ validateInfiniteBounds(ParseState *pstate, List *blist)
  * Transform one constant in a partition bound spec
  */
 static Const *
-transformPartitionBoundValue(ParseState *pstate, A_Const *con,
-							 const char *colName, Oid colType, int32 colTypmod)
+transformPartitionBoundValue(ParseState *pstate, Node *val,
+							 const char *colName, Oid colType, int32 colTypmod,
+							 Oid partCollation)
 {
 	Node	   *value;
 
-	/* Make it into a Const */
-	value = (Node *) make_const(pstate, &con->val, con->location);
+	/* Transform raw parsetree */
+	value = transformExpr(pstate, val, EXPR_KIND_PARTITION_BOUND);
+
+	/*
+	 * Check that the input expression's collation is compatible with one
+	 * specified for the parent's partition key (partcollation).  Don't
+	 * throw an error if it's the default collation which we'll replace with
+	 * the parent's collation anyway.
+	 */
+	if (IsA(value, CollateExpr))
+	{
+		Oid		exprCollOid = exprCollation(value);
+
+		if (OidIsValid(exprCollOid) &&
+			exprCollOid != DEFAULT_COLLATION_OID &&
+			exprCollOid != partCollation)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("collation of partition bound value for column \"%s\" does not match partition key collation \"%s\"",
+							colName, get_collation_name(partCollation)),
+					 parser_errposition(pstate, exprLocation(value))));
+	}
 
 	/* Coerce to correct type */
 	value = coerce_to_target_type(pstate,
@@ -3843,21 +3910,27 @@ transformPartitionBoundValue(ParseState *pstate, A_Const *con,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("specified value cannot be cast to type %s for column \"%s\"",
 						format_type_be(colType), colName),
-				 parser_errposition(pstate, con->location)));
+				 parser_errposition(pstate, exprLocation(val))));
 
 	/* Simplify the expression, in case we had a coercion */
 	if (!IsA(value, Const))
 		value = (Node *) expression_planner((Expr *) value);
 
-	/* Fail if we don't have a constant (i.e., non-immutable coercion) */
-	if (!IsA(value, Const))
+	/* Make sure the expression does not refer to any vars. */
+	if (contain_var_clause(value))
 		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("specified value cannot be cast to type %s for column \"%s\"",
-						format_type_be(colType), colName),
-				 errdetail("The cast requires a non-immutable conversion."),
-				 errhint("Try putting the literal value in single quotes."),
-				 parser_errposition(pstate, con->location)));
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot use column references in partition bound expression"),
+				 parser_errposition(pstate, exprLocation(value))));
+
+	/*
+	 * Evaluate the expression, assigning the partition key's collation to the
+	 * resulting Const expression.
+	 */
+	value = (Node *) evaluate_expr((Expr *) value, colType, colTypmod,
+								   partCollation);
+	if (!IsA(value, Const))
+		elog(ERROR, "could not evaluate partition bound expression");
 
 	return (Const *) value;
 }

@@ -830,6 +830,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 					defaultPartOid;
 		Relation	parent,
 					defaultRel = NULL;
+		RangeTblEntry *rte;
 
 		/* Already have strong enough lock on the parent */
 		parent = table_open(parentId, NoLock);
@@ -872,6 +873,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		pstate = make_parsestate(NULL);
 		pstate->p_sourcetext = queryString;
 
+		/*
+		 * Add an RTE containing this relation, so that transformExpr called
+		 * on partition bound expressions is able to report errors using a
+		 * proper context.
+		 */
+		rte = addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
+											NULL, false, false);
+		addRTEtoQuery(pstate, rte, false, true, true);
 		bound = transformPartitionBound(pstate, parent, stmt->partbound);
 
 		/*

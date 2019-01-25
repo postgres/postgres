@@ -150,8 +150,6 @@ static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 static Node *substitute_actual_parameters_mutator(Node *node,
 									 substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
-static Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
-			  Oid result_collation);
 static Query *substitute_actual_srf_parameters(Query *expr,
 								 int nargs, List *args);
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
@@ -5045,7 +5043,7 @@ sql_inline_error_callback(void *arg)
  * We use the executor's routine ExecEvalExpr() to avoid duplication of
  * code and ensure we get the same result as the executor would get.
  */
-static Expr *
+Expr *
 evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
 			  Oid result_collation)
 {

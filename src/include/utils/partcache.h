@@ -93,4 +93,10 @@ get_partition_col_typmod(PartitionKey key, int col)
 	return key->parttypmod[col];
 }
 
+static inline Oid
+get_partition_col_collation(PartitionKey key, int col)
+{
+	return key->partcollation[col];
+}
+
 #endif							/* PARTCACHE_H */
