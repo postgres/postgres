@@ -1797,6 +1797,15 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype, Node *arg,
 				return (Selectivity) 0; /* keep compiler quiet */
 		}
 	}
+	else if (vardata.var && IsA(vardata.var, Var) &&
+			 ((Var *) vardata.var)->varattno < 0)
+	{
+		/*
+		 * There are no stats for system columns, but we know they are never
+		 * NULL.
+		 */
+		selec = (nulltesttype == IS_NULL) ? 0.0 : 1.0;
+	}
 	else
 	{
 		/*
