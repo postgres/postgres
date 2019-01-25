@@ -340,7 +340,7 @@ flatten_unplanned_rtes(PlannerGlobal *glob, RangeTblEntry *rte)
 	(void) query_tree_walker(rte->subquery,
 							 flatten_rtes_walker,
 							 (void *) glob,
-							 QTW_EXAMINE_RTES);
+							 QTW_EXAMINE_RTES_BEFORE);
 }
 
 static bool
@@ -363,7 +363,7 @@ flatten_rtes_walker(Node *node, PlannerGlobal *glob)
 		return query_tree_walker((Query *) node,
 								 flatten_rtes_walker,
 								 (void *) glob,
-								 QTW_EXAMINE_RTES);
+								 QTW_EXAMINE_RTES_BEFORE);
 	}
 	return expression_tree_walker(node, flatten_rtes_walker,
 								  (void *) glob);
