@@ -15,16 +15,23 @@
 
 
 /*
- * conversion to pg_wchar is done by "table driven."
- * to add an encoding support, define mb2wchar_with_len(), mblen(), dsplen()
- * for the particular encoding. Note that if the encoding is only
- * supported in the client, you don't need to define
- * mb2wchar_with_len() function (SJIS is the case).
+ * Operations on multi-byte encodings are driven by a table of helper
+ * functions.
+ *
+ * To add an encoding support, define mblen(), dsplen() and verifier() for
+ * the encoding.  For server-encodings, also define mb2wchar() and wchar2mb()
+ * conversion functions.
  *
  * These functions generally assume that their input is validly formed.
  * The "verifier" functions, further down in the file, have to be more
- * paranoid.  We expect that mblen() does not need to examine more than
- * the first byte of the character to discover the correct length.
+ * paranoid.
+ *
+ * We expect that mblen() does not need to examine more than the first byte
+ * of the character to discover the correct length.  GB18030 is an exception
+ * to that rule, though, as it also looks at second byte.  But even that
+ * behaves in a predictable way, if you only pass the first byte: it will
+ * treat 4-byte encoded characters as two 2-byte encoded characters, which is
+ * good enough for all current uses.
  *
  * Note: for the display output of psql to work properly, the return values
  * of the dsplen functions must conform to the Unicode standard. In particular
@@ -1072,6 +1079,17 @@ pg_uhc_dsplen(const unsigned char *s)
 /*
  * GB18030
  *	Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
+ */
+
+/*
+ * Unlike all other mblen() functions, this also looks at the second byte of
+ * the input.  However, if you only pass the first byte of a multi-byte
+ * string, and \0 as the second byte, this still works in a predictable way:
+ * a 4-byte character will be reported as two 2-byte characters.  That's
+ * enough for all current uses, as a client-only encoding.  It works that
+ * way, because in any valid 4-byte GB18030-encoded character, the third and
+ * fourth byte look like a 2-byte encoded character, when looked at
+ * separately.
  */
 static int
 pg_gb18030_mblen(const unsigned char *s)
