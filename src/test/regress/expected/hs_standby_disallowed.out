@@ -118,10 +118,6 @@ listen a;
 ERROR:  cannot execute LISTEN during recovery
 notify a;
 ERROR:  cannot execute NOTIFY during recovery
-unlisten a;
-ERROR:  cannot execute UNLISTEN during recovery
-unlisten *;
-ERROR:  cannot execute UNLISTEN during recovery
 -- disallowed commands
 ANALYZE hs1;
 ERROR:  cannot execute ANALYZE during recovery

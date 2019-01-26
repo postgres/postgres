@@ -1591,6 +1591,11 @@ if (!triggered)
        Plugins and extensions - <command>LOAD</>
       </para>
      </listitem>
+     <listitem>
+      <para>
+       <command>UNLISTEN</command>
+      </para>
+     </listitem>
     </itemizedlist>
    </para>
 
@@ -1680,7 +1685,7 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       <command>LISTEN</>, <command>UNLISTEN</>, <command>NOTIFY</>
+       <command>LISTEN</>, <command>NOTIFY</>
       </para>
      </listitem>
     </itemizedlist>
@@ -1688,8 +1693,8 @@ if (!triggered)
 
    <para>
     In normal operation, <quote>read-only</> transactions are allowed to
-    use <command>LISTEN</>, <command>UNLISTEN</>, and
-    <command>NOTIFY</>, so Hot Standby sessions operate under slightly tighter
+    use <command>LISTEN</command> and <command>NOTIFY</command>,
+    so Hot Standby sessions operate under slightly tighter
     restrictions than ordinary read-only sessions.  It is possible that some
     of these restrictions might be loosened in a future release.
    </para>
