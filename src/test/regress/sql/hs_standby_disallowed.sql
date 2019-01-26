@@ -88,8 +88,6 @@ COMMIT;
 -- Listen
 listen a;
 notify a;
-unlisten a;
-unlisten *;
 
 -- disallowed commands
 
