@@ -460,9 +460,9 @@ DROP TABLE partitioned, partitioned2;
 CREATE TABLE list_parted (
 	a int
 ) PARTITION BY LIST (a);
-CREATE TABLE part_1 PARTITION OF list_parted FOR VALUES IN ('1');
-CREATE TABLE part_2 PARTITION OF list_parted FOR VALUES IN (2);
-CREATE TABLE part_3 PARTITION OF list_parted FOR VALUES IN ((2+1));
+CREATE TABLE part_p1 PARTITION OF list_parted FOR VALUES IN ('1');
+CREATE TABLE part_p2 PARTITION OF list_parted FOR VALUES IN (2);
+CREATE TABLE part_p3 PARTITION OF list_parted FOR VALUES IN ((2+1));
 CREATE TABLE part_null PARTITION OF list_parted FOR VALUES IN (null);
 \d+ list_parted
                           Partitioned table "public.list_parted"
@@ -470,10 +470,10 @@ CREATE TABLE part_null PARTITION OF list_parted FOR VALUES IN (null);
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           |          |         | plain   |              | 
 Partition key: LIST (a)
-Partitions: part_1 FOR VALUES IN (1),
-            part_2 FOR VALUES IN (2),
-            part_3 FOR VALUES IN (3),
-            part_null FOR VALUES IN (NULL)
+Partitions: part_null FOR VALUES IN (NULL),
+            part_p1 FOR VALUES IN (1),
+            part_p2 FOR VALUES IN (2),
+            part_p3 FOR VALUES IN (3)
 
 -- forbidden expressions for partition bound
 CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (somename);

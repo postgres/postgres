@@ -436,9 +436,9 @@ DROP TABLE partitioned, partitioned2;
 CREATE TABLE list_parted (
 	a int
 ) PARTITION BY LIST (a);
-CREATE TABLE part_1 PARTITION OF list_parted FOR VALUES IN ('1');
-CREATE TABLE part_2 PARTITION OF list_parted FOR VALUES IN (2);
-CREATE TABLE part_3 PARTITION OF list_parted FOR VALUES IN ((2+1));
+CREATE TABLE part_p1 PARTITION OF list_parted FOR VALUES IN ('1');
+CREATE TABLE part_p2 PARTITION OF list_parted FOR VALUES IN (2);
+CREATE TABLE part_p3 PARTITION OF list_parted FOR VALUES IN ((2+1));
 CREATE TABLE part_null PARTITION OF list_parted FOR VALUES IN (null);
 \d+ list_parted
 
