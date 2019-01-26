@@ -1037,10 +1037,24 @@ testdb=&gt;
 
         <tip>
         <para>
-        This operation is not as efficient as the <acronym>SQL</acronym>
-        <command>COPY</command> command because all data must pass
-        through the client/server connection. For large
-        amounts of data the <acronym>SQL</acronym> command might be preferable.
+        Another way to obtain the same result as <literal>\copy
+        ... to</literal> is to use the <acronym>SQL</acronym> <literal>COPY
+        ... TO STDOUT</literal> command and terminate it
+        with <literal>\g <replaceable>filename</replaceable></literal>
+        or <literal>\g |<replaceable>program</replaceable></literal>.
+        Unlike <literal>\copy</literal>, this method allows the command to
+        span multiple lines; also, variable interpolation and backquote
+        expansion can be used.
+        </para>
+        </tip>
+
+        <tip>
+        <para>
+        These operations are not as efficient as the <acronym>SQL</acronym>
+        <command>COPY</command> command with a file or program data source or
+        destination, because all data must pass through the client/server
+        connection.  For large amounts of data the <acronym>SQL</acronym>
+        command might be preferable.
         </para>
         </tip>
 

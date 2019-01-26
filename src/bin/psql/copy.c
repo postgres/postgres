@@ -425,7 +425,10 @@ do_copy(const char *args)
  *
  * conn should be a database connection that you just issued COPY TO on
  * and got back a PGRES_COPY_OUT result.
+ *
  * copystream is the file stream for the data to go to.
+ * copystream can be NULL to eat the data without writing it anywhere.
+ *
  * The final status for the COPY is returned into *res (but note
  * we already reported the error, if it's not a success result).
  *
@@ -447,7 +450,7 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 
 		if (buf)
 		{
-			if (OK && fwrite(buf, 1, ret, copystream) != ret)
+			if (OK && copystream && fwrite(buf, 1, ret, copystream) != ret)
 			{
 				psql_error("could not write COPY data: %s\n",
 						   strerror(errno));
@@ -458,7 +461,7 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 		}
 	}
 
-	if (OK && fflush(copystream))
+	if (OK && copystream && fflush(copystream))
 	{
 		psql_error("could not write COPY data: %s\n",
 				   strerror(errno));
