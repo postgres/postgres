@@ -366,6 +366,21 @@ typedef struct
 
 typedef uintptr_t Datum;
 
+/*
+ * A NullableDatum is used in places where both a Datum and its nullness needs
+ * to be stored. This can be more efficient than storing datums and nullness
+ * in separate arrays, due to better spatial locality, even if more space may
+ * be wasted due to padding.
+ */
+typedef struct NullableDatum
+{
+#define FIELDNO_NULLABLE_DATUM_DATUM 0
+	Datum		value;
+#define FIELDNO_NULLABLE_DATUM_ISNULL 1
+	bool		isnull;
+	/* due to alignment padding this could be used for flags for free */
+} NullableDatum;
+
 #define SIZEOF_DATUM SIZEOF_VOID_P
 
 /*

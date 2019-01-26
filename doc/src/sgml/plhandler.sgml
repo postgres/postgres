@@ -34,15 +34,15 @@
    <para>
     The call handler is called in the same way as any other function:
     It receives a pointer to a
-    <structname>FunctionCallInfoData</structname> <type>struct</type> containing
+    <structname>FunctionCallInfoBaseData</structname> <type>struct</type> containing
     argument values and information about the called function, and it
     is expected to return a <type>Datum</type> result (and possibly
     set the <structfield>isnull</structfield> field of the
-    <structname>FunctionCallInfoData</structname> structure, if it wishes
+    <structname>FunctionCallInfoBaseData</structname> structure, if it wishes
     to return an SQL null result).  The difference between a call
     handler and an ordinary callee function is that the
     <structfield>flinfo-&gt;fn_oid</structfield> field of the
-    <structname>FunctionCallInfoData</structname> structure will contain
+    <structname>FunctionCallInfoBaseData</structname> structure will contain
     the OID of the actual function to be called, not of the call
     handler itself.  The call handler must use this field to determine
     which function to execute.  Also, the passed argument list has
@@ -87,7 +87,7 @@
    <para>
     When a procedural-language function is invoked as a trigger, no arguments
     are passed in the usual way, but the
-    <structname>FunctionCallInfoData</structname>'s
+    <structname>FunctionCallInfoBaseData</structname>'s
     <structfield>context</structfield> field points at a
     <structname>TriggerData</structname> structure, rather than being <symbol>NULL</symbol>
     as it is in a plain function call.  A language handler should

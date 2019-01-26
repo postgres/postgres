@@ -124,7 +124,7 @@ For example, "a + b" (one OpExpr, with two Var expressions) would be
 represented as two steps to fetch the Var values, and one step for the
 evaluation of the function underlying the + operator.  The steps for the
 Vars would have their resvalue/resnull pointing directly to the appropriate
-arg[] and argnull[] array elements in the FunctionCallInfoData struct that
+args[].value .isnull elements in the FunctionCallInfoBaseData struct that
 is used by the function evaluation step, thus avoiding extra work to copy
 the result values around.
 
@@ -145,7 +145,7 @@ sub-expressions.
 Each ExecInitExprRec() call has to specify where that subexpression's
 results are to be stored (via the resv/resnull parameters).  This allows
 the above scenario of evaluating a (sub-)expression directly into
-fcinfo->arg/argnull, but also requires some care: target Datum/isnull
+fcinfo->args[].value/isnull, but also requires some care: target Datum/isnull
 variables may not be shared with another ExecInitExprRec() unless the
 results are only needed by steps executing before further usages of those
 target Datum/isnull variables.  Due to the non-recursiveness of the
@@ -158,7 +158,7 @@ not enough space.  Because of that it is *not* allowed to point directly
 into any of the steps during expression initialization.  Therefore, the
 resv/resnull for a subexpression usually point to some storage that is
 palloc'd separately from the steps array.  For instance, the
-FunctionCallInfoData for a function call step is separately allocated
+FunctionCallInfoBaseData for a function call step is separately allocated
 rather than being part of the ExprEvalStep array.  The overall result
 of a complete expression is typically returned into the resvalue/resnull
 fields of the ExprState node itself.

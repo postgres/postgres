@@ -256,8 +256,8 @@ oidvectorout(PG_FUNCTION_ARGS)
 Datum
 oidvectorrecv(PG_FUNCTION_ARGS)
 {
+	LOCAL_FCINFO(locfcinfo, 3);
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	FunctionCallInfoData locfcinfo;
 	oidvector  *result;
 
 	/*
@@ -266,19 +266,19 @@ oidvectorrecv(PG_FUNCTION_ARGS)
 	 * fcinfo->flinfo->fn_extra.  So we need to pass it our own flinfo
 	 * parameter.
 	 */
-	InitFunctionCallInfoData(locfcinfo, fcinfo->flinfo, 3,
+	InitFunctionCallInfoData(*locfcinfo, fcinfo->flinfo, 3,
 							 InvalidOid, NULL, NULL);
 
-	locfcinfo.arg[0] = PointerGetDatum(buf);
-	locfcinfo.arg[1] = ObjectIdGetDatum(OIDOID);
-	locfcinfo.arg[2] = Int32GetDatum(-1);
-	locfcinfo.argnull[0] = false;
-	locfcinfo.argnull[1] = false;
-	locfcinfo.argnull[2] = false;
+	locfcinfo->args[0].value = PointerGetDatum(buf);
+	locfcinfo->args[0].isnull = false;
+	locfcinfo->args[1].value = ObjectIdGetDatum(OIDOID);
+	locfcinfo->args[1].isnull = false;
+	locfcinfo->args[2].value = Int32GetDatum(-1);
+	locfcinfo->args[2].isnull = false;
 
-	result = (oidvector *) DatumGetPointer(array_recv(&locfcinfo));
+	result = (oidvector *) DatumGetPointer(array_recv(locfcinfo));
 
-	Assert(!locfcinfo.isnull);
+	Assert(!locfcinfo->isnull);
 
 	/* sanity checks: oidvector must be 1-D, 0-based, no nulls */
 	if (ARR_NDIM(result) != 1 ||

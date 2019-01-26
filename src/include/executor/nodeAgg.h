@@ -158,12 +158,12 @@ typedef struct AggStatePerTransData
 	 * re-initializing the unchanging fields; which isn't much, but it seems
 	 * worth the extra space consumption.
 	 */
-	FunctionCallInfoData transfn_fcinfo;
+	FunctionCallInfo transfn_fcinfo;
 
 	/* Likewise for serialization and deserialization functions */
-	FunctionCallInfoData serialfn_fcinfo;
+	FunctionCallInfo serialfn_fcinfo;
 
-	FunctionCallInfoData deserialfn_fcinfo;
+	FunctionCallInfo deserialfn_fcinfo;
 }			AggStatePerTransData;
 
 /*

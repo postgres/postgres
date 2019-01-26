@@ -933,8 +933,8 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 		{
 			ParamExternData *prm = &paramLI->params[i];
 
-			prm->value = fcinfo->arg[i];
-			prm->isnull = fcinfo->argnull[i];
+			prm->value = fcinfo->args[i].value;
+			prm->isnull = fcinfo->args[i].isnull;
 			prm->pflags = 0;
 			prm->ptype = fcache->pinfo->argtypes[i];
 		}

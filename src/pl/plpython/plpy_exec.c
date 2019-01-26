@@ -436,10 +436,10 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		{
 			PLyDatumToOb *arginfo = &proc->args[i];
 
-			if (fcinfo->argnull[i])
+			if (fcinfo->args[i].isnull)
 				arg = NULL;
 			else
-				arg = PLy_input_convert(arginfo, fcinfo->arg[i]);
+				arg = PLy_input_convert(arginfo, fcinfo->args[i].value);
 
 			if (arg == NULL)
 			{

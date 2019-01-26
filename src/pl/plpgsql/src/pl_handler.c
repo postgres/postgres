@@ -299,9 +299,9 @@ PG_FUNCTION_INFO_V1(plpgsql_inline_handler);
 Datum
 plpgsql_inline_handler(PG_FUNCTION_ARGS)
 {
+	LOCAL_FCINFO(fake_fcinfo, 0);
 	InlineCodeBlock *codeblock = castNode(InlineCodeBlock, DatumGetPointer(PG_GETARG_DATUM(0)));
 	PLpgSQL_function *func;
-	FunctionCallInfoData fake_fcinfo;
 	FmgrInfo	flinfo;
 	EState	   *simple_eval_estate;
 	Datum		retval;
@@ -324,9 +324,9 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	 * plpgsql_exec_function().  In particular note that this sets things up
 	 * with no arguments passed.
 	 */
-	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
+	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
 	MemSet(&flinfo, 0, sizeof(flinfo));
-	fake_fcinfo.flinfo = &flinfo;
+	fake_fcinfo->flinfo = &flinfo;
 	flinfo.fn_oid = InvalidOid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
@@ -336,7 +336,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	/* And run the function */
 	PG_TRY();
 	{
-		retval = plpgsql_exec_function(func, &fake_fcinfo, simple_eval_estate, codeblock->atomic);
+		retval = plpgsql_exec_function(func, fake_fcinfo, simple_eval_estate, codeblock->atomic);
 	}
 	PG_CATCH();
 	{
@@ -466,7 +466,7 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	/* Postpone body checks if !check_function_bodies */
 	if (check_function_bodies)
 	{
-		FunctionCallInfoData fake_fcinfo;
+		LOCAL_FCINFO(fake_fcinfo, 0);
 		FmgrInfo	flinfo;
 		int			rc;
 		TriggerData trigdata;
@@ -482,26 +482,26 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		 * Set up a fake fcinfo with just enough info to satisfy
 		 * plpgsql_compile().
 		 */
-		MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
+		MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
 		MemSet(&flinfo, 0, sizeof(flinfo));
-		fake_fcinfo.flinfo = &flinfo;
+		fake_fcinfo->flinfo = &flinfo;
 		flinfo.fn_oid = funcoid;
 		flinfo.fn_mcxt = CurrentMemoryContext;
 		if (is_dml_trigger)
 		{
 			MemSet(&trigdata, 0, sizeof(trigdata));
 			trigdata.type = T_TriggerData;
-			fake_fcinfo.context = (Node *) &trigdata;
+			fake_fcinfo->context = (Node *) &trigdata;
 		}
 		else if (is_event_trigger)
 		{
 			MemSet(&etrigdata, 0, sizeof(etrigdata));
 			etrigdata.type = T_EventTriggerData;
-			fake_fcinfo.context = (Node *) &etrigdata;
+			fake_fcinfo->context = (Node *) &etrigdata;
 		}
 
 		/* Test-compile the function */
-		plpgsql_compile(&fake_fcinfo, true);
+		plpgsql_compile(fake_fcinfo, true);
 
 		/*
 		 * Disconnect from SPI manager

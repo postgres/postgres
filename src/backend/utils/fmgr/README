@@ -53,7 +53,7 @@ point to the expression parse tree for the function call; this can be used
 to extract parse-time knowledge about the actual arguments.  Note that this
 field really is information about the arguments rather than information
 about the function, but it's proven to be more convenient to keep it in
-FmgrInfo than in FunctionCallInfoData where it might more logically go.
+FmgrInfo than in FunctionCallInfoBaseData where it might more logically go.
 
 
 During a call of a function, the following data structure is created
@@ -67,10 +67,9 @@ typedef struct
     Oid         fncollation;    /* collation for function to use */
     bool        isnull;         /* function must set true if result is NULL */
     short       nargs;          /* # arguments actually passed */
-    Datum       arg[FUNC_MAX_ARGS];  /* Arguments passed to function */
-    bool        argnull[FUNC_MAX_ARGS];  /* T if arg[i] is actually NULL */
-} FunctionCallInfoData;
-typedef FunctionCallInfoData* FunctionCallInfo;
+    NullableDatum args[];       /* Arguments passed to function */
+} FunctionCallInfoBaseData;
+typedef FunctionCallInfoBaseData* FunctionCallInfo;
 
 flinfo points to the lookup info used to make the call.  Ordinary functions
 will probably ignore this field, but function class handlers will need it
@@ -97,24 +96,24 @@ when there are no inputs of collatable types or they don't share a common
 collation.  This is effectively a hidden additional argument, which
 collation-sensitive functions can use to determine their behavior.
 
-nargs, arg[], and argnull[] hold the arguments being passed to the function.
+nargs and args[] hold the arguments being passed to the function.
 Notice that all the arguments passed to a function (as well as its result
 value) will now uniformly be of type Datum.  As discussed below, callers
 and callees should apply the standard Datum-to-and-from-whatever macros
 to convert to the actual argument types of a particular function.  The
-value in arg[i] is unspecified when argnull[i] is true.
+value in args[i].value is unspecified when args[i].isnull is true.
 
 It is generally the responsibility of the caller to ensure that the
 number of arguments passed matches what the callee is expecting; except
 for callees that take a variable number of arguments, the callee will
-typically ignore the nargs field and just grab values from arg[].
+typically ignore the nargs field and just grab values from args[].
 
 The isnull field will be initialized to "false" before the call.  On
 return from the function, isnull is the null flag for the function result:
 if it is true the function's result is NULL, regardless of the actual
 function return value.  Note that simple "strict" functions can ignore
-both isnull and argnull[], since they won't even get called when there
-are any TRUE values in argnull[].
+both isnull and args[i].isnull, since they won't even get called when there
+are any TRUE values in args[].isnull.
 
 FunctionCallInfo replaces FmgrValues plus a bunch of ad-hoc parameter
 conventions, global variables (fmgr_pl_finfo and CurrentTriggerData at
@@ -157,7 +156,7 @@ again, it might come in handy to have this macro in place.
 
 A nonstrict function is responsible for checking whether each individual
 argument is null or not, which it can do with PG_ARGISNULL(n) (which is
-just "fcinfo->argnull[n]").  It should avoid trying to fetch the value
+just "fcinfo->args[n].isnull").  It should avoid trying to fetch the value
 of any argument that is null.
 
 Both strict and nonstrict functions can return NULL, if needed, with
@@ -171,7 +170,7 @@ Argument values are ordinarily fetched using code like
 For float4, float8, and int8, the PG_GETARG macros will hide whether the
 types are pass-by-value or pass-by-reference.  For example, if float8 is
 pass-by-reference then PG_GETARG_FLOAT8 expands to
-	(* (float8 *) DatumGetPointer(fcinfo->arg[number]))
+	(* (float8 *) DatumGetPointer(fcinfo->args[number].value))
 and would typically be called like this:
 	float8  arg = PG_GETARG_FLOAT8(0);
 For what are now historical reasons, the float-related typedefs and macros

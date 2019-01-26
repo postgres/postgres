@@ -299,8 +299,8 @@ plpython2_call_handler(PG_FUNCTION_ARGS)
 Datum
 plpython_inline_handler(PG_FUNCTION_ARGS)
 {
+	LOCAL_FCINFO(fake_fcinfo, 0);
 	InlineCodeBlock *codeblock = (InlineCodeBlock *) DatumGetPointer(PG_GETARG_DATUM(0));
-	FunctionCallInfoData fake_fcinfo;
 	FmgrInfo	flinfo;
 	PLyProcedure proc;
 	PLyExecutionContext *exec_ctx;
@@ -312,9 +312,9 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	if (SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
-	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
+	MemSet(fcinfo, 0, SizeForFunctionCallInfo(0));
 	MemSet(&flinfo, 0, sizeof(flinfo));
-	fake_fcinfo.flinfo = &flinfo;
+	fake_fcinfo->flinfo = &flinfo;
 	flinfo.fn_oid = InvalidOid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
@@ -352,7 +352,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 
 		PLy_procedure_compile(&proc, codeblock->source_text);
 		exec_ctx->curr_proc = &proc;
-		PLy_exec_function(&fake_fcinfo, &proc);
+		PLy_exec_function(fake_fcinfo, &proc);
 	}
 	PG_CATCH();
 	{

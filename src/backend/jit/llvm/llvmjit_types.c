@@ -49,13 +49,14 @@ PGFunction	TypePGFunction;
 size_t		TypeSizeT;
 bool		TypeStorageBool;
 
+NullableDatum StructNullableDatum;
 AggState	StructAggState;
 AggStatePerGroupData StructAggStatePerGroupData;
 AggStatePerTransData StructAggStatePerTransData;
 ExprContext StructExprContext;
 ExprEvalStep StructExprEvalStep;
 ExprState	StructExprState;
-FunctionCallInfoData StructFunctionCallInfoData;
+FunctionCallInfoBaseData StructFunctionCallInfoData;
 HeapTupleData StructHeapTupleData;
 MemoryContextData StructMemoryContextData;
 TupleTableSlot StructTupleTableSlot;

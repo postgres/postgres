@@ -53,6 +53,7 @@ LLVMTypeRef TypeSizeT;
 LLVMTypeRef TypeParamBool;
 LLVMTypeRef TypeStorageBool;
 LLVMTypeRef TypePGFunction;
+LLVMTypeRef StructNullableDatum;
 LLVMTypeRef StructHeapTupleFieldsField3;
 LLVMTypeRef StructHeapTupleFields;
 LLVMTypeRef StructHeapTupleHeaderData;
@@ -807,6 +808,7 @@ llvm_create_types(void)
 	TypeParamBool = load_return_type(mod, "FunctionReturningBool");
 	TypeStorageBool = load_type(mod, "TypeStorageBool");
 	TypePGFunction = load_type(mod, "TypePGFunction");
+	StructNullableDatum = load_type(mod, "StructNullableDatum");
 	StructExprContext = load_type(mod, "StructExprContext");
 	StructExprEvalStep = load_type(mod, "StructExprEvalStep");
 	StructExprState = load_type(mod, "StructExprState");

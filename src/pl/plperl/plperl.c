@@ -1876,8 +1876,8 @@ PG_FUNCTION_INFO_V1(plperl_inline_handler);
 Datum
 plperl_inline_handler(PG_FUNCTION_ARGS)
 {
+	LOCAL_FCINFO(fake_fcinfo, 0);
 	InlineCodeBlock *codeblock = (InlineCodeBlock *) PG_GETARG_POINTER(0);
-	FunctionCallInfoData fake_fcinfo;
 	FmgrInfo	flinfo;
 	plperl_proc_desc desc;
 	plperl_call_data *volatile save_call_data = current_call_data;
@@ -1899,10 +1899,10 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	 * plperl_call_perl_func().  In particular note that this sets things up
 	 * with no arguments passed, and a result type of VOID.
 	 */
-	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
+	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
 	MemSet(&flinfo, 0, sizeof(flinfo));
 	MemSet(&desc, 0, sizeof(desc));
-	fake_fcinfo.flinfo = &flinfo;
+	fake_fcinfo->flinfo = &flinfo;
 	flinfo.fn_oid = InvalidOid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
@@ -1920,7 +1920,7 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	desc.nargs = 0;
 	desc.reference = NULL;
 
-	this_call_data.fcinfo = &fake_fcinfo;
+	this_call_data.fcinfo = fake_fcinfo;
 	this_call_data.prodesc = &desc;
 	/* we do not bother with refcounting the fake prodesc */
 
@@ -1940,7 +1940,7 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 		if (!desc.reference)	/* can this happen? */
 			elog(ERROR, "could not create internal procedure for anonymous code block");
 
-		perlret = plperl_call_perl_func(&desc, &fake_fcinfo);
+		perlret = plperl_call_perl_func(&desc, fake_fcinfo);
 
 		SvREFCNT_dec_current(perlret);
 
@@ -2194,11 +2194,11 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 	for (i = 0; i < desc->nargs; i++)
 	{
-		if (fcinfo->argnull[i])
+		if (fcinfo->args[i].isnull)
 			PUSHs(&PL_sv_undef);
 		else if (desc->arg_is_rowtype[i])
 		{
-			SV		   *sv = plperl_hash_from_datum(fcinfo->arg[i]);
+			SV		   *sv = plperl_hash_from_datum(fcinfo->args[i].value);
 
 			PUSHs(sv_2mortal(sv));
 		}
@@ -2208,15 +2208,15 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 			Oid			funcid;
 
 			if (OidIsValid(desc->arg_arraytype[i]))
-				sv = plperl_ref_from_pg_array(fcinfo->arg[i], desc->arg_arraytype[i]);
+				sv = plperl_ref_from_pg_array(fcinfo->args[i].value, desc->arg_arraytype[i]);
 			else if ((funcid = get_transform_fromsql(argtypes[i], current_call_data->prodesc->lang_oid, current_call_data->prodesc->trftypes)))
-				sv = (SV *) DatumGetPointer(OidFunctionCall1(funcid, fcinfo->arg[i]));
+				sv = (SV *) DatumGetPointer(OidFunctionCall1(funcid, fcinfo->args[i].value));
 			else
 			{
 				char	   *tmp;
 
 				tmp = OutputFunctionCall(&(desc->arg_out_func[i]),
-										 fcinfo->arg[i]);
+										 fcinfo->args[i].value);
 				sv = cstr2sv(tmp);
 				pfree(tmp);
 			}

@@ -2357,7 +2357,7 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 					Instrumentation *instr,
 					MemoryContext per_tuple_context)
 {
-	FunctionCallInfoData fcinfo;
+	LOCAL_FCINFO(fcinfo, 0);
 	PgStat_FunctionCallUsage fcusage;
 	Datum		result;
 	MemoryContext oldContext;
@@ -2402,15 +2402,15 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	/*
 	 * Call the function, passing no arguments but setting a context.
 	 */
-	InitFunctionCallInfoData(fcinfo, finfo, 0,
+	InitFunctionCallInfoData(*fcinfo, finfo, 0,
 							 InvalidOid, (Node *) trigdata, NULL);
 
-	pgstat_init_function_usage(&fcinfo, &fcusage);
+	pgstat_init_function_usage(fcinfo, &fcusage);
 
 	MyTriggerDepth++;
 	PG_TRY();
 	{
-		result = FunctionCallInvoke(&fcinfo);
+		result = FunctionCallInvoke(fcinfo);
 	}
 	PG_CATCH();
 	{
@@ -2428,11 +2428,11 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	 * Trigger protocol allows function to return a null pointer, but NOT to
 	 * set the isnull result flag.
 	 */
-	if (fcinfo.isnull)
+	if (fcinfo->isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 				 errmsg("trigger function %u returned null value",
-						fcinfo.flinfo->fn_oid)));
+						fcinfo->flinfo->fn_oid)));
 
 	/*
 	 * If doing EXPLAIN ANALYZE, stop charging time to this trigger, and count
