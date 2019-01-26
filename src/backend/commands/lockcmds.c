@@ -108,7 +108,7 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 	 */
 	relpersistence = get_rel_persistence(relid);
 	if (relpersistence == RELPERSISTENCE_TEMP)
-		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPREL;
+		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
 
 	/* Check permissions. */
 	aclresult = LockTableAclCheck(relid, lockmode, GetUserId());

@@ -87,22 +87,16 @@ extern int	synchronous_commit;
 extern int	MyXactFlags;
 
 /*
- * XACT_FLAGS_ACCESSEDTEMPREL - set when a temporary relation is accessed. We
- * don't allow PREPARE TRANSACTION in that case.
+ * XACT_FLAGS_ACCESSEDTEMPNAMESPACE - set when a temporary object is accessed.
+ * We don't allow PREPARE TRANSACTION in that case.
  */
-#define XACT_FLAGS_ACCESSEDTEMPREL				(1U << 0)
+#define XACT_FLAGS_ACCESSEDTEMPNAMESPACE		(1U << 0)
 
 /*
  * XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK - records whether the top level xact
  * logged any Access Exclusive Locks.
  */
 #define XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK	(1U << 1)
-
-/*
- * XACT_FLAGS_ACCESSEDTEMPNAMESPACE - set when a temporary namespace is
- * accessed.  We don't allow PREPARE TRANSACTION in that case.
- */
-#define XACT_FLAGS_ACCESSEDTEMPNAMESPACE		(1U << 2)
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules

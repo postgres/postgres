@@ -310,32 +310,32 @@ begin;
 create function pg_temp.twophase_func() returns void as
   $$ select '2pc_func'::text $$ language sql;
 prepare transaction 'twophase_func';
-ERROR:  cannot PREPARE a transaction that has operated on temporary namespace
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 -- Function drop
 create function pg_temp.twophase_func() returns void as
   $$ select '2pc_func'::text $$ language sql;
 begin;
 drop function pg_temp.twophase_func();
 prepare transaction 'twophase_func';
-ERROR:  cannot PREPARE a transaction that has operated on temporary namespace
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 -- Operator creation
 begin;
 create operator pg_temp.@@ (leftarg = int4, rightarg = int4, procedure = int4mi);
 prepare transaction 'twophase_operator';
-ERROR:  cannot PREPARE a transaction that has operated on temporary namespace
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 -- These generate errors about temporary tables.
 begin;
 create type pg_temp.twophase_type as (a int);
 prepare transaction 'twophase_type';
-ERROR:  cannot PREPARE a transaction that has operated on temporary tables
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 begin;
 create view pg_temp.twophase_view as select 1;
 prepare transaction 'twophase_view';
-ERROR:  cannot PREPARE a transaction that has operated on temporary tables
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 begin;
 create sequence pg_temp.twophase_seq;
 prepare transaction 'twophase_sequence';
-ERROR:  cannot PREPARE a transaction that has operated on temporary tables
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 -- Temporary tables cannot be used with two-phase commit.
 create temp table twophase_tab (a int);
 begin;
@@ -345,19 +345,19 @@ select a from twophase_tab;
 (0 rows)
 
 prepare transaction 'twophase_tab';
-ERROR:  cannot PREPARE a transaction that has operated on temporary tables
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 begin;
 insert into twophase_tab values (1);
 prepare transaction 'twophase_tab';
-ERROR:  cannot PREPARE a transaction that has operated on temporary tables
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 begin;
 lock twophase_tab in access exclusive mode;
 prepare transaction 'twophase_tab';
-ERROR:  cannot PREPARE a transaction that has operated on temporary tables
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 begin;
 drop table twophase_tab;
 prepare transaction 'twophase_tab';
-ERROR:  cannot PREPARE a transaction that has operated on temporary tables
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 -- Corner case: current_schema may create a temporary schema if namespace
 -- creation is pending, so check after that.  First reset the connection
 -- to remove the temporary namespace, and make sure that non-parallel plans
@@ -374,4 +374,4 @@ SELECT current_schema() ~ 'pg_temp' AS is_temp_schema;
 (1 row)
 
 PREPARE TRANSACTION 'twophase_search';
-ERROR:  cannot PREPARE a transaction that has operated on temporary namespace
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects

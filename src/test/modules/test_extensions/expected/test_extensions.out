@@ -148,7 +148,7 @@ SELECT create_extension_with_temp_schema();
 (1 row)
 
 PREPARE TRANSACTION 'twophase_extension';
-ERROR:  cannot PREPARE a transaction that has operated on temporary namespace
+ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 -- Clean up
 DROP TABLE test_ext4_tab;
 DROP FUNCTION create_extension_with_temp_schema();
