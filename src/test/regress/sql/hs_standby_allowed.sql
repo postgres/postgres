@@ -110,6 +110,10 @@ LOCK hs1 IN ROW SHARE MODE;
 LOCK hs1 IN ROW EXCLUSIVE MODE;
 COMMIT;
 
+-- UNLISTEN
+UNLISTEN a;
+UNLISTEN *;
+
 -- LOAD
 -- should work, easier if there is no test for that...
 
