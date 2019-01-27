@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 30;
+use Test::More tests => 35;
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -63,6 +63,7 @@ $node->command_ok(
 $node->safe_psql(
 	'postgres', q|
   CREATE TABLE "need""q(uot" (")x" text);
+  CREATE TABLE vactable (a int, b int);
 
   CREATE FUNCTION f0(int) RETURNS int LANGUAGE SQL AS 'SELECT $1 * $1';
   CREATE FUNCTION f1(int) RETURNS int LANGUAGE SQL AS 'SELECT f0($1)';
@@ -75,3 +76,15 @@ $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 $node->command_fails(
 	[qw|vacuumdb -Zt funcidx postgres|],
 	'unqualifed name via functional index');
+
+$node->command_fails(
+	[ 'vacuumdb', '--analyze', '--table', 'vactable(c)', 'postgres' ],
+	'incorrect column name with ANALYZE');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--analyze', '--table', 'vactable(a, b)', 'postgres' ],
+	qr/statement: VACUUM \(ANALYZE\) public.vactable\(a, b\);/,
+	'vacuumdb --analyze with complete column list');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--analyze-only', '--table', 'vactable(b)', 'postgres' ],
+	qr/statement: ANALYZE public.vactable\(b\);/,
+	'vacuumdb --analyze-only with partial column list');
