@@ -860,6 +860,8 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 
 		if (PageIsNew(page))
 		{
+			bool		still_new;
+
 			/*
 			 * All-zeroes pages can be left over if either a backend extends
 			 * the relation by a single page, but crashes before the newly
@@ -877,21 +879,45 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 			 * promoted standby. The harm of repeated checking ought to
 			 * normally not be too bad - the space usually should be used at
 			 * some point, otherwise there wouldn't be any regular vacuums.
+			 *
+			 * We have to be careful here because we could be looking at a
+			 * page that someone has just added to the relation and the
+			 * extending backend might not yet have been able to lock the page
+			 * (see RelationGetBufferForTuple), which is problematic because
+			 * of cross-checks that new pages are actually new. If we add this
+			 * page to the FSM, this page could be reused, and such
+			 * crosschecks could fail. To protect against that, release the
+			 * buffer lock, grab the relation extension lock momentarily, and
+			 * re-lock the buffer. If the page is still empty and not in the
+			 * FSM by then, it must be left over from a from a crashed
+			 * backend, and we can record the free space.
+			 *
+			 * Note: the comparable code in vacuum.c need not worry because
+			 * it's got an exclusive lock on the whole relation.
 			 */
-			empty_pages++;
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+			LockRelationForExtension(onerel, ExclusiveLock);
+			UnlockRelationForExtension(onerel, ExclusiveLock);
+			LockBufferForCleanup(buf);
 
 			/*
 			 * Perform checking of FSM after releasing lock, the fsm is
 			 * approximate, after all.
 			 */
+			still_new = PageIsNew(page);
 			UnlockReleaseBuffer(buf);
 
-			if (GetRecordedFreeSpace(onerel, blkno) == 0)
+			if (still_new)
 			{
-				Size		freespace;
+				empty_pages++;
 
-				freespace = BufferGetPageSize(buf) - SizeOfPageHeaderData;
-				RecordPageWithFreeSpace(onerel, blkno, freespace);
+				if (GetRecordedFreeSpace(onerel, blkno) == 0)
+				{
+					Size		freespace;
+
+					freespace = BufferGetPageSize(buf) - SizeOfPageHeaderData;
+					RecordPageWithFreeSpace(onerel, blkno, freespace);
+				}
 			}
 			continue;
 		}
