@@ -37,7 +37,6 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
-#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
@@ -4510,28 +4509,51 @@ restart:
 	{
 		Oid			indexOid = lfirst_oid(l);
 		Relation	indexDesc;
-		IndexInfo  *indexInfo;
+		Datum		datum;
+		bool		isnull;
+		Node	   *indexExpressions;
+		Node	   *indexPredicate;
 		int			i;
 		bool		isKey;		/* candidate key */
 		bool		isIDKey;	/* replica identity index */
 
 		indexDesc = index_open(indexOid, AccessShareLock);
 
-		/* Extract index key information from the index's pg_index row */
-		indexInfo = BuildIndexInfo(indexDesc);
+		/*
+		 * Extract index expressions and index predicate.  Note: Don't use
+		 * RelationGetIndexExpressions()/RelationGetIndexPredicate(), because
+		 * those might run constant expressions evaluation, which needs a
+		 * snapshot, which we might not have here.  (Also, it's probably more
+		 * sound to collect the bitmaps before any transformations that might
+		 * eliminate columns, but the practical impact of this is limited.)
+		 */
+
+		datum = heap_getattr(indexDesc->rd_indextuple, Anum_pg_index_indexprs,
+							 GetPgIndexDescriptor(), &isnull);
+		if (!isnull)
+			indexExpressions = stringToNode(TextDatumGetCString(datum));
+		else
+			indexExpressions = NULL;
+
+		datum = heap_getattr(indexDesc->rd_indextuple, Anum_pg_index_indpred,
+							 GetPgIndexDescriptor(), &isnull);
+		if (!isnull)
+			indexPredicate = stringToNode(TextDatumGetCString(datum));
+		else
+			indexPredicate = NULL;
 
 		/* Can this index be referenced by a foreign key? */
-		isKey = indexInfo->ii_Unique &&
-			indexInfo->ii_Expressions == NIL &&
-			indexInfo->ii_Predicate == NIL;
+		isKey = indexDesc->rd_index->indisunique &&
+			indexExpressions == NULL &&
+			indexPredicate == NULL;
 
 		/* Is this index the configured (or default) replica identity? */
 		isIDKey = (indexOid == relreplindex);
 
 		/* Collect simple attribute references */
-		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		for (i = 0; i < indexDesc->rd_index->indnatts; i++)
 		{
-			int			attrnum = indexInfo->ii_KeyAttrNumbers[i];
+			int			attrnum = indexDesc->rd_index->indkey.values[i];
 
 			if (attrnum != 0)
 			{
@@ -4549,10 +4571,10 @@ restart:
 		}
 
 		/* Collect all attributes used in expressions, too */
-		pull_varattnos((Node *) indexInfo->ii_Expressions, 1, &indexattrs);
+		pull_varattnos(indexExpressions, 1, &indexattrs);
 
 		/* Collect all attributes in the index predicate, too */
-		pull_varattnos((Node *) indexInfo->ii_Predicate, 1, &indexattrs);
+		pull_varattnos(indexPredicate, 1, &indexattrs);
 
 		index_close(indexDesc, AccessShareLock);
 	}
