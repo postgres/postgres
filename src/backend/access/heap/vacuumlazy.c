@@ -861,42 +861,38 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 		if (PageIsNew(page))
 		{
 			/*
-			 * An all-zeroes page could be left over if a backend extends the
-			 * relation but crashes before initializing the page. Reclaim such
-			 * pages for use.
+			 * All-zeroes pages can be left over if either a backend extends
+			 * the relation by a single page, but crashes before the newly
+			 * initialized page has been written out, or when bulk-extending
+			 * the relation (which creates a number of empty pages at the tail
+			 * end of the relation, but enters them into the FSM).
 			 *
-			 * We have to be careful here because we could be looking at a
-			 * page that someone has just added to the relation and not yet
-			 * been able to initialize (see RelationGetBufferForTuple). To
-			 * protect against that, release the buffer lock, grab the
-			 * relation extension lock momentarily, and re-lock the buffer. If
-			 * the page is still uninitialized by then, it must be left over
-			 * from a crashed backend, and we can initialize it.
+			 * Make sure these pages are in the FSM, to ensure they can be
+			 * reused. Do that by testing if there's any space recorded for
+			 * the page. If not, enter it.
 			 *
-			 * We don't really need the relation lock when this is a new or
-			 * temp relation, but it's probably not worth the code space to
-			 * check that, since this surely isn't a critical path.
-			 *
-			 * Note: the comparable code in vacuum.c need not worry because
-			 * it's got exclusive lock on the whole relation.
+			 * Note we do not enter the page into the visibilitymap. That has
+			 * the downside that we repeatedly visit this page in subsequent
+			 * vacuums, but otherwise we'll never not discover the space on a
+			 * promoted standby. The harm of repeated checking ought to
+			 * normally not be too bad - the space usually should be used at
+			 * some point, otherwise there wouldn't be any regular vacuums.
 			 */
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			LockRelationForExtension(onerel, ExclusiveLock);
-			UnlockRelationForExtension(onerel, ExclusiveLock);
-			LockBufferForCleanup(buf);
-			if (PageIsNew(page))
-			{
-				ereport(WARNING,
-						(errmsg("relation \"%s\" page %u is uninitialized --- fixing",
-								relname, blkno)));
-				PageInit(page, BufferGetPageSize(buf), 0);
-				empty_pages++;
-			}
-			freespace = PageGetHeapFreeSpace(page);
-			MarkBufferDirty(buf);
+			empty_pages++;
+
+			/*
+			 * Perform checking of FSM after releasing lock, the fsm is
+			 * approximate, after all.
+			 */
 			UnlockReleaseBuffer(buf);
 
-			RecordPageWithFreeSpace(onerel, blkno, freespace);
+			if (GetRecordedFreeSpace(onerel, blkno) == 0)
+			{
+				Size		freespace;
+
+				freespace = BufferGetPageSize(buf) - SizeOfPageHeaderData;
+				RecordPageWithFreeSpace(onerel, blkno, freespace);
+			}
 			continue;
 		}
 
@@ -905,7 +901,10 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 			empty_pages++;
 			freespace = PageGetHeapFreeSpace(page);
 
-			/* empty pages are always all-visible and all-frozen */
+			/*
+			 * Empty pages are always all-visible and all-frozen (note that
+			 * the same is currently not true for new pages, see above).
+			 */
 			if (!PageIsAllVisible(page))
 			{
 				START_CRIT_SECTION();
@@ -1639,12 +1638,13 @@ lazy_check_needs_freeze(Buffer buf, bool *hastup)
 
 	*hastup = false;
 
-	/* If we hit an uninitialized page, we want to force vacuuming it. */
-	if (PageIsNew(page))
-		return true;
-
-	/* Quick out for ordinary empty page. */
-	if (PageIsEmpty(page))
+	/*
+	 * New and empty pages, obviously, don't contain tuples. We could make
+	 * sure that the page is registered in the FSM, but it doesn't seem worth
+	 * waiting for a cleanup lock just for that, especially because it's
+	 * likely that the pin holder will do so.
+	 */
+	if (PageIsNew(page) || PageIsEmpty(page))
 		return false;
 
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -2029,7 +2029,6 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 		if (PageIsNew(page) || PageIsEmpty(page))
 		{
-			/* PageIsNew probably shouldn't happen... */
 			UnlockReleaseBuffer(buf);
 			continue;
 		}
