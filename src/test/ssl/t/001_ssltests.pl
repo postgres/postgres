@@ -8,7 +8,7 @@ use File::Copy;
 
 if ($ENV{with_openssl} eq 'yes')
 {
-	plan tests => 65;
+	plan tests => 71;
 }
 else
 {
@@ -309,6 +309,16 @@ test_connect_fails(
 	qr/SSL error/,
 	"does not connect with client-side CRL");
 
+# pg_stat_ssl
+command_like([
+	'psql', '-X', '-A', '-F', ',', '-P', 'null=_null_',
+	'-d', "$common_connstr sslrootcert=invalid",
+	'-c', "SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
+			 ],
+			 qr{^pid,ssl,version,cipher,bits,compression,clientdn\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,$}mx,
+			 'pg_stat_ssl view without client certificate');
+
 ### Server-side tests.
 ###
 ### Test certificate authorization.
@@ -330,6 +340,16 @@ test_connect_ok(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
 	"certificate authorization succeeds with correct client cert");
+
+# pg_stat_ssl
+command_like([
+	'psql', '-X', '-A', '-F', ',', '-P', 'null=_null_',
+	'-d', "$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+	'-c', "SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
+			 ],
+			 qr{^pid,ssl,version,cipher,bits,compression,clientdn\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser$}mx,
+			 'pg_stat_ssl with client certificate');
 
 # client key with wrong permissions
 test_connect_fails(
