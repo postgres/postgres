@@ -40,7 +40,6 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
-#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/partition.h"
@@ -4700,12 +4699,12 @@ RelationGetIndexPredicate(Relation relation)
  * 2. "recheck_on_update" index option explicitly set by user, which overrides 1)
  */
 static bool
-IsProjectionFunctionalIndex(Relation index, IndexInfo *ii)
+IsProjectionFunctionalIndex(Relation index)
 {
 	bool		is_projection = false;
 
 #ifdef NOT_USED
-	if (ii->ii_Expressions)
+	if (RelationGetIndexExpressions(index))
 	{
 		HeapTuple	tuple;
 		Datum		reloptions;
@@ -4715,7 +4714,7 @@ IsProjectionFunctionalIndex(Relation index, IndexInfo *ii)
 		/* by default functional index is considered as non-injective */
 		is_projection = true;
 
-		cost_qual_eval(&index_expr_cost, ii->ii_Expressions, NULL);
+		cost_qual_eval(&index_expr_cost, RelationGetIndexExpressions(index), NULL);
 
 		/*
 		 * If index expression is too expensive, then disable projection
@@ -4861,7 +4860,10 @@ restart:
 	{
 		Oid			indexOid = lfirst_oid(l);
 		Relation	indexDesc;
-		IndexInfo  *indexInfo;
+		Datum		datum;
+		bool		isnull;
+		Node	   *indexExpressions;
+		Node	   *indexPredicate;
 		int			i;
 		bool		isKey;		/* candidate key */
 		bool		isPK;		/* primary key */
@@ -4869,13 +4871,33 @@ restart:
 
 		indexDesc = index_open(indexOid, AccessShareLock);
 
-		/* Extract index key information from the index's pg_index row */
-		indexInfo = BuildIndexInfo(indexDesc);
+		/*
+		 * Extract index expressions and index predicate.  Note: Don't use
+		 * RelationGetIndexExpressions()/RelationGetIndexPredicate(), because
+		 * those might run constant expressions evaluation, which needs a
+		 * snapshot, which we might not have here.  (Also, it's probably more
+		 * sound to collect the bitmaps before any transformations that might
+		 * eliminate columns, but the practical impact of this is limited.)
+		 */
+
+		datum = heap_getattr(indexDesc->rd_indextuple, Anum_pg_index_indexprs,
+							 GetPgIndexDescriptor(), &isnull);
+		if (!isnull)
+			indexExpressions = stringToNode(TextDatumGetCString(datum));
+		else
+			indexExpressions = NULL;
+
+		datum = heap_getattr(indexDesc->rd_indextuple, Anum_pg_index_indpred,
+							 GetPgIndexDescriptor(), &isnull);
+		if (!isnull)
+			indexPredicate = stringToNode(TextDatumGetCString(datum));
+		else
+			indexPredicate = NULL;
 
 		/* Can this index be referenced by a foreign key? */
-		isKey = indexInfo->ii_Unique &&
-			indexInfo->ii_Expressions == NIL &&
-			indexInfo->ii_Predicate == NIL;
+		isKey = indexDesc->rd_index->indisunique &&
+			indexExpressions == NULL &&
+			indexPredicate == NULL;
 
 		/* Is this a primary key? */
 		isPK = (indexOid == relpkindex);
@@ -4884,9 +4906,9 @@ restart:
 		isIDKey = (indexOid == relreplindex);
 
 		/* Collect simple attribute references */
-		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		for (i = 0; i < indexDesc->rd_index->indnatts; i++)
 		{
-			int			attrnum = indexInfo->ii_IndexAttrNumbers[i];
+			int			attrnum = indexDesc->rd_index->indkey.values[i];
 
 			/*
 			 * Since we have covering indexes with non-key columns, we must
@@ -4901,33 +4923,33 @@ restart:
 				indexattrs = bms_add_member(indexattrs,
 											attrnum - FirstLowInvalidHeapAttributeNumber);
 
-				if (isKey && i < indexInfo->ii_NumIndexKeyAttrs)
+				if (isKey && i < indexDesc->rd_index->indnkeyatts)
 					uindexattrs = bms_add_member(uindexattrs,
 												 attrnum - FirstLowInvalidHeapAttributeNumber);
 
-				if (isPK && i < indexInfo->ii_NumIndexKeyAttrs)
+				if (isPK && i < indexDesc->rd_index->indnkeyatts)
 					pkindexattrs = bms_add_member(pkindexattrs,
 												  attrnum - FirstLowInvalidHeapAttributeNumber);
 
-				if (isIDKey && i < indexInfo->ii_NumIndexKeyAttrs)
+				if (isIDKey && i < indexDesc->rd_index->indnkeyatts)
 					idindexattrs = bms_add_member(idindexattrs,
 												  attrnum - FirstLowInvalidHeapAttributeNumber);
 			}
 		}
 
 		/* Collect attributes used in expressions, too */
-		if (IsProjectionFunctionalIndex(indexDesc, indexInfo))
+		if (IsProjectionFunctionalIndex(indexDesc))
 		{
 			projindexes = bms_add_member(projindexes, indexno);
-			pull_varattnos((Node *) indexInfo->ii_Expressions, 1, &projindexattrs);
+			pull_varattnos(indexExpressions, 1, &projindexattrs);
 		}
 		else
 		{
 			/* Collect all attributes used in expressions, too */
-			pull_varattnos((Node *) indexInfo->ii_Expressions, 1, &indexattrs);
+			pull_varattnos(indexExpressions, 1, &indexattrs);
 		}
 		/* Collect all attributes in the index predicate, too */
-		pull_varattnos((Node *) indexInfo->ii_Predicate, 1, &indexattrs);
+		pull_varattnos(indexPredicate, 1, &indexattrs);
 
 		index_close(indexDesc, AccessShareLock);
 		indexno += 1;
