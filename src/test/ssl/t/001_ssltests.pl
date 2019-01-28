@@ -316,7 +316,7 @@ command_like([
 	'-c', "SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 			 ],
 			 qr{^pid,ssl,version,cipher,bits,compression,clientdn\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,$}mx,
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_$}mx,
 			 'pg_stat_ssl view without client certificate');
 
 ### Server-side tests.

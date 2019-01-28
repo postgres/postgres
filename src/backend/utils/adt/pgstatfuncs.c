@@ -652,7 +652,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			values[20] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
 			values[21] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
 			values[22] = BoolGetDatum(beentry->st_sslstatus->ssl_compression);
-			values[23] = CStringGetTextDatum(beentry->st_sslstatus->ssl_clientdn);
+			if (beentry->st_sslstatus->ssl_clientdn[0])
+				values[23] = CStringGetTextDatum(beentry->st_sslstatus->ssl_clientdn);
+			else
+				nulls[23] = true;
 		}
 		else
 		{
