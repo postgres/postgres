@@ -8,7 +8,41 @@ free space to hold a tuple to be stored; or to determine that no such page
 exists and the relation must be extended by one page.  As of PostgreSQL 8.4
 each relation has its own, extensible free space map stored in a separate
 "fork" of its relation.  This eliminates the disadvantages of the former
-fixed-size FSM.
+fixed-size FSM.  There are two exceptions:
+
+1. Hash indexes never have a FSM.
+2. For very small tables, a 3-page relation fork would be relatively large
+and wasteful, so to save space we refrain from creating the FSM if the
+heap has HEAP_FSM_CREATION_THRESHOLD pages or fewer.
+
+To locate free space in the latter case, we simply try pages directly without
+knowing ahead of time how much free space they have.  To maintain good
+performance, we create a local in-memory map of pages to try, and only mark
+every other page as available.  For example, in a 3-page heap, the local map
+would look like:
+
+ANAN
+0123
+
+Pages 0 and 2 are marked "available", and page 1 as "not available".
+Page 3 is beyond the end of the relation, so is likewise marked "not
+available".  First we try page 2, and if that doesn't have sufficient free
+space we try page 0 before giving up and extending the relation.  There may
+be some wasted free space on block 1, but if the relation extends to 4 pages:
+
+NANA
+0123
+
+We not only have the new page 3 at our disposal, we can now check page 1
+for free space as well.
+
+Once the FSM is created for a heap we don't remove it even if somebody deletes
+all the rows from the corresponding relation.  We don't think it is a useful
+optimization as it is quite likely that relation will again grow to the same
+size.
+
+FSM data structure
+------------------
 
 It is important to keep the map small so that it can be searched rapidly.
 Therefore, we don't attempt to record the exact free space on a page.
@@ -192,5 +226,3 @@ TODO
 ----
 
 - fastroot to avoid traversing upper nodes with just 1 child
-- use a different system for tables that fit into one FSM page, with a
-  mechanism to switch to the real thing as it grows.

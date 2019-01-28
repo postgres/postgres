@@ -80,6 +80,7 @@ test: roleattributes
 test: create_am
 test: hash_func
 test: sanity_check
+test: fsm
 test: errors
 test: select
 test: select_into

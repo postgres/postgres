@@ -48,6 +48,7 @@
 #include "replication/walsender.h"
 #include "storage/condition_variable.h"
 #include "storage/fd.h"
+#include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
@@ -2493,6 +2494,12 @@ AbortTransaction(void)
 	pgstat_report_wait_end();
 	pgstat_progress_end_command();
 
+	/*
+	 * In case we aborted during RelationGetBufferForTuple(), clear the local
+	 * map of heap pages.
+	 */
+	FSMClearLocalMap();
+
 	/* Clean up buffer I/O and buffer context locks, too */
 	AbortBufferIO();
 	UnlockBuffers();
@@ -4714,6 +4721,13 @@ AbortSubTransaction(void)
 
 	pgstat_report_wait_end();
 	pgstat_progress_end_command();
+
+	/*
+	 * In case we aborted during RelationGetBufferForTuple(), clear the local
+	 * map of heap pages.
+	 */
+	FSMClearLocalMap();
+
 	AbortBufferIO();
 	UnlockBuffers();
 
