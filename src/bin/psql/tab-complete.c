@@ -696,15 +696,6 @@ static const SchemaQuery Query_for_list_of_statistics = {
 " UNION ALL SELECT 'SESSION_USER'"
 
 /* the silly-looking length condition is just to eat up the current word */
-#define Query_for_table_owning_index \
-"SELECT pg_catalog.quote_ident(c1.relname) "\
-"  FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i"\
-" WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid"\
-"       and (%d = pg_catalog.length('%s'))"\
-"       and pg_catalog.quote_ident(c2.relname)='%s'"\
-"       and pg_catalog.pg_table_is_visible(c2.oid)"
-
-/* the silly-looking length condition is just to eat up the current word */
 #define Query_for_index_of_table \
 "SELECT pg_catalog.quote_ident(c2.relname) "\
 "  FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i"\
