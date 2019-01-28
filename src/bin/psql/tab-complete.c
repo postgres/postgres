@@ -583,6 +583,17 @@ static const SchemaQuery Query_for_list_of_statistics = {
 "        OR '\"' || relname || '\"'='%s') "\
 "   AND pg_catalog.pg_table_is_visible(c.oid)"
 
+#define Query_for_list_of_attribute_numbers \
+"SELECT attnum "\
+"  FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c "\
+" WHERE c.oid = a.attrelid "\
+"   AND a.attnum > 0 "\
+"   AND NOT a.attisdropped "\
+"   AND substring(attnum::pg_catalog.text,1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(relname)='%s' "\
+"        OR '\"' || relname || '\"'='%s') "\
+"   AND pg_catalog.pg_table_is_visible(c.oid)"
+
 #define Query_for_list_of_attributes_with_schema \
 "SELECT pg_catalog.quote_ident(attname) "\
 "  FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
@@ -1604,6 +1615,12 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER INDEX <name> ALTER */
 	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER"))
 		COMPLETE_WITH("COLUMN");
+	/* ALTER INDEX <name> ALTER COLUMN */
+	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER", "COLUMN"))
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_attribute_numbers);
+	}
 	/* ALTER INDEX <name> ALTER COLUMN <colnum> */
 	else if (Matches("ALTER", "INDEX", MatchAny, "ALTER", "COLUMN", MatchAny))
 		COMPLETE_WITH("SET STATISTICS");
