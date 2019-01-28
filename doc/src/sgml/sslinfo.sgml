@@ -15,6 +15,11 @@
  </para>
 
  <para>
+  Some of the information available through this module can also be obtained
+  using the built-in system view <xref linkend="pg-stat-ssl-view"/>.
+ </para>
+
+ <para>
   This extension won't build at all unless the installation was
   configured with <literal>--with-openssl</literal>.
  </para>
