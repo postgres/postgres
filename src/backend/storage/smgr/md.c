@@ -310,13 +310,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 	{
 		int			save_errno = errno;
 
-		/*
-		 * During bootstrap, there are cases where a system relation will be
-		 * accessed (by internal backend processes) before the bootstrap
-		 * script nominally creates it.  Therefore, allow the file to exist
-		 * already, even if isRedo is not set.  (See also mdopen)
-		 */
-		if (isRedo || IsBootstrapProcessingMode())
+		if (isRedo)
 			fd = PathNameOpenFile(path, O_RDWR | PG_BINARY);
 		if (fd < 0)
 		{
@@ -572,26 +566,15 @@ mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 
 	if (fd < 0)
 	{
-		/*
-		 * During bootstrap, there are cases where a system relation will be
-		 * accessed (by internal backend processes) before the bootstrap
-		 * script nominally creates it.  Therefore, accept mdopen() as a
-		 * substitute for mdcreate() in bootstrap mode only. (See mdcreate)
-		 */
-		if (IsBootstrapProcessingMode())
-			fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY);
-		if (fd < 0)
+		if ((behavior & EXTENSION_RETURN_NULL) &&
+			FILE_POSSIBLY_DELETED(errno))
 		{
-			if ((behavior & EXTENSION_RETURN_NULL) &&
-				FILE_POSSIBLY_DELETED(errno))
-			{
-				pfree(path);
-				return NULL;
-			}
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not open file \"%s\": %m", path)));
+			pfree(path);
+			return NULL;
 		}
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", path)));
 	}
 
 	pfree(path);
