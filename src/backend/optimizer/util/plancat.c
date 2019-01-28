@@ -1628,6 +1628,7 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 		case RTE_VALUES:
 		case RTE_CTE:
 		case RTE_NAMEDTUPLESTORE:
+		case RTE_RESULT:
 			/* Not all of these can have dropped cols, but share code anyway */
 			expandRTE(rte, varno, 0, -1, true /* include dropped */ ,
 					  NULL, &colvars);

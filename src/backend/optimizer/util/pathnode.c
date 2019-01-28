@@ -1430,17 +1430,17 @@ create_merge_append_path(PlannerInfo *root,
 }
 
 /*
- * create_result_path
+ * create_group_result_path
  *	  Creates a path representing a Result-and-nothing-else plan.
  *
- * This is only used for degenerate cases, such as a query with an empty
- * jointree.
+ * This is only used for degenerate grouping cases, in which we know we
+ * need to produce one result row, possibly filtered by a HAVING qual.
  */
-ResultPath *
-create_result_path(PlannerInfo *root, RelOptInfo *rel,
-				   PathTarget *target, List *resconstantqual)
+GroupResultPath *
+create_group_result_path(PlannerInfo *root, RelOptInfo *rel,
+						 PathTarget *target, List *havingqual)
 {
-	ResultPath *pathnode = makeNode(ResultPath);
+	GroupResultPath *pathnode = makeNode(GroupResultPath);
 
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = rel;
@@ -1450,9 +1450,13 @@ create_result_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = 0;
 	pathnode->path.pathkeys = NIL;
-	pathnode->quals = resconstantqual;
+	pathnode->quals = havingqual;
 
-	/* Hardly worth defining a cost_result() function ... just do it */
+	/*
+	 * We can't quite use cost_resultscan() because the quals we want to
+	 * account for are not baserestrict quals of the rel.  Might as well just
+	 * hack it here.
+	 */
 	pathnode->path.rows = 1;
 	pathnode->path.startup_cost = target->cost.startup;
 	pathnode->path.total_cost = target->cost.startup +
@@ -1462,12 +1466,12 @@ create_result_path(PlannerInfo *root, RelOptInfo *rel,
 	 * Add cost of qual, if any --- but we ignore its selectivity, since our
 	 * rowcount estimate should be 1 no matter what the qual is.
 	 */
-	if (resconstantqual)
+	if (havingqual)
 	{
 		QualCost	qual_cost;
 
-		cost_qual_eval(&qual_cost, resconstantqual, root);
-		/* resconstantqual is evaluated once at startup */
+		cost_qual_eval(&qual_cost, havingqual, root);
+		/* havingqual is evaluated once at startup */
 		pathnode->path.startup_cost += qual_cost.startup + qual_cost.per_tuple;
 		pathnode->path.total_cost += qual_cost.startup + qual_cost.per_tuple;
 	}
@@ -2016,6 +2020,32 @@ create_namedtuplestorescan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	cost_namedtuplestorescan(pathnode, root, rel, pathnode->param_info);
+
+	return pathnode;
+}
+
+/*
+ * create_resultscan_path
+ *	  Creates a path corresponding to a scan of an RTE_RESULT relation,
+ *	  returning the pathnode.
+ */
+Path *
+create_resultscan_path(PlannerInfo *root, RelOptInfo *rel,
+					   Relids required_outer)
+{
+	Path	   *pathnode = makeNode(Path);
+
+	pathnode->pathtype = T_Result;
+	pathnode->parent = rel;
+	pathnode->pathtarget = rel->reltarget;
+	pathnode->param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
+	pathnode->parallel_aware = false;
+	pathnode->parallel_safe = rel->consider_parallel;
+	pathnode->parallel_workers = 0;
+	pathnode->pathkeys = NIL;	/* result is always unordered */
+
+	cost_resultscan(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;
 }
@@ -3560,6 +3590,11 @@ reparameterize_path(PlannerInfo *root, Path *path,
 														 spath->path.pathkeys,
 														 required_outer);
 			}
+		case T_Result:
+			/* Supported only for RTE_RESULT scan paths */
+			if (IsA(path, Path))
+				return create_resultscan_path(root, rel, required_outer);
+			break;
 		case T_Append:
 			{
 				AppendPath *apath = (AppendPath *) path;

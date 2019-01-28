@@ -5361,7 +5361,7 @@ INSERT INTO ft2 (c1,c2,c3) VALUES (1200,999,'foo') RETURNING tableoid::regclass;
                                                                                            QUERY PLAN                                                                                            
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Insert on public.ft2
-   Output: (tableoid)::regclass
+   Output: (ft2.tableoid)::regclass
    Remote SQL: INSERT INTO "S 1"."T 1"("C 1", c2, c3, c4, c5, c6, c7, c8) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
    ->  Result
          Output: 1200, 999, NULL::integer, 'foo'::text, NULL::timestamp with time zone, NULL::timestamp without time zone, NULL::character varying, 'ft2       '::character(10), NULL::user_enum

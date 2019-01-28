@@ -2519,6 +2519,9 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				}
 			}
 			break;
+		case RTE_RESULT:
+			/* These expose no columns, so nothing to do */
+			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 	}
@@ -2911,6 +2914,14 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 									rte->eref->aliasname)));
 			}
 			break;
+		case RTE_RESULT:
+			/* this probably can't happen ... */
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column %d of relation \"%s\" does not exist",
+							attnum,
+							rte->eref->aliasname)));
+			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 	}
@@ -3038,6 +3049,15 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 								rte->eref->aliasname)));
 				result = false; /* keep compiler quiet */
 			}
+			break;
+		case RTE_RESULT:
+			/* this probably can't happen ... */
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column %d of relation \"%s\" does not exist",
+							attnum,
+							rte->eref->aliasname)));
+			result = false;		/* keep compiler quiet */
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);

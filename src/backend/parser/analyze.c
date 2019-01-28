@@ -2884,6 +2884,9 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 											LCS_asString(lc->strength)),
 									 parser_errposition(pstate, thisrel->location)));
 							break;
+
+							/* Shouldn't be possible to see RTE_RESULT here */
+
 						default:
 							elog(ERROR, "unrecognized RTE type: %d",
 								 (int) rte->rtekind);

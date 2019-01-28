@@ -827,7 +827,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 * all below it, so we should report inner_join_rels = qualscope. If
 		 * there was exactly one element, we should (and already did) report
 		 * whatever its inner_join_rels were.  If there were no elements (is
-		 * that possible?) the initialization before the loop fixed it.
+		 * that still possible?) the initialization before the loop fixed it.
 		 */
 		if (list_length(f->fromlist) > 1)
 			*inner_join_rels = *qualscope;

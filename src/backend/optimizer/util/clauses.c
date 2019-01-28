@@ -1707,7 +1707,7 @@ contain_leaked_vars_walker(Node *node, void *context)
  * find_nonnullable_vars() is that the tested conditions really are different:
  * a clause like "t1.v1 IS NOT NULL OR t1.v2 IS NOT NULL" does not prove
  * that either v1 or v2 can't be NULL, but it does prove that the t1 row
- * as a whole can't be all-NULL.
+ * as a whole can't be all-NULL.  Also, the behavior for PHVs is different.
  *
  * top_level is true while scanning top-level AND/OR structure; here, showing
  * the result is either FALSE or NULL is good enough.  top_level is false when
@@ -1893,7 +1893,24 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
+		/*
+		 * If the contained expression forces any rels non-nullable, so does
+		 * the PHV.
+		 */
 		result = find_nonnullable_rels_walker((Node *) phv->phexpr, top_level);
+
+		/*
+		 * If the PHV's syntactic scope is exactly one rel, it will be forced
+		 * to be evaluated at that rel, and so it will behave like a Var of
+		 * that rel: if the rel's entire output goes to null, so will the PHV.
+		 * (If the syntactic scope is a join, we know that the PHV will go to
+		 * null if the whole join does; but that is AND semantics while we
+		 * need OR semantics for find_nonnullable_rels' result, so we can't do
+		 * anything with the knowledge.)
+		 */
+		if (phv->phlevelsup == 0 &&
+			bms_membership(phv->phrels) == BMS_SINGLETON)
+			result = bms_add_members(result, phv->phrels);
 	}
 	return result;
 }

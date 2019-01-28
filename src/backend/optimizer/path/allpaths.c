@@ -117,6 +117,8 @@ static void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 RangeTblEntry *rte);
 static void set_namedtuplestore_pathlist(PlannerInfo *root, RelOptInfo *rel,
 							 RangeTblEntry *rte);
+static void set_result_pathlist(PlannerInfo *root, RelOptInfo *rel,
+					RangeTblEntry *rte);
 static void set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
@@ -437,7 +439,12 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 					set_cte_pathlist(root, rel, rte);
 				break;
 			case RTE_NAMEDTUPLESTORE:
+				/* Might as well just build the path immediately */
 				set_namedtuplestore_pathlist(root, rel, rte);
+				break;
+			case RTE_RESULT:
+				/* Might as well just build the path immediately */
+				set_result_pathlist(root, rel, rte);
 				break;
 			default:
 				elog(ERROR, "unexpected rtekind: %d", (int) rel->rtekind);
@@ -509,6 +516,9 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				break;
 			case RTE_NAMEDTUPLESTORE:
 				/* tuplestore reference --- fully handled during set_rel_size */
+				break;
+			case RTE_RESULT:
+				/* simple Result --- fully handled during set_rel_size */
 				break;
 			default:
 				elog(ERROR, "unexpected rtekind: %d", (int) rel->rtekind);
@@ -712,6 +722,10 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 			 * infrastructure to support that.
 			 */
 			return;
+
+		case RTE_RESULT:
+			/* RESULT RTEs, in themselves, are no problem. */
+			break;
 	}
 
 	/*
@@ -2510,6 +2524,36 @@ set_namedtuplestore_pathlist(PlannerInfo *root, RelOptInfo *rel,
 }
 
 /*
+ * set_result_pathlist
+ *		Build the (single) access path for an RTE_RESULT RTE
+ *
+ * There's no need for a separate set_result_size phase, since we
+ * don't support join-qual-parameterized paths for these RTEs.
+ */
+static void
+set_result_pathlist(PlannerInfo *root, RelOptInfo *rel,
+					RangeTblEntry *rte)
+{
+	Relids		required_outer;
+
+	/* Mark rel with estimated output rows, width, etc */
+	set_result_size_estimates(root, rel);
+
+	/*
+	 * We don't support pushing join clauses into the quals of a Result scan,
+	 * but it could still have required parameterization due to LATERAL refs
+	 * in its tlist.
+	 */
+	required_outer = rel->lateral_relids;
+
+	/* Generate appropriate path */
+	add_path(rel, create_resultscan_path(root, rel, required_outer));
+
+	/* Select cheapest path (pretty easy in this case...) */
+	set_cheapest(rel);
+}
+
+/*
  * set_worktable_pathlist
  *		Build the (single) access path for a self-reference CTE RTE
  *
@@ -3677,9 +3721,6 @@ print_path(PlannerInfo *root, Path *path, int indent)
 				case T_SampleScan:
 					ptype = "SampleScan";
 					break;
-				case T_SubqueryScan:
-					ptype = "SubqueryScan";
-					break;
 				case T_FunctionScan:
 					ptype = "FunctionScan";
 					break;
@@ -3691,6 +3732,12 @@ print_path(PlannerInfo *root, Path *path, int indent)
 					break;
 				case T_CteScan:
 					ptype = "CteScan";
+					break;
+				case T_NamedTuplestoreScan:
+					ptype = "NamedTuplestoreScan";
+					break;
+				case T_Result:
+					ptype = "Result";
 					break;
 				case T_WorkTableScan:
 					ptype = "WorkTableScan";
@@ -3716,7 +3763,7 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			ptype = "TidScan";
 			break;
 		case T_SubqueryScanPath:
-			ptype = "SubqueryScanScan";
+			ptype = "SubqueryScan";
 			break;
 		case T_ForeignPath:
 			ptype = "ForeignScan";
@@ -3742,8 +3789,8 @@ print_path(PlannerInfo *root, Path *path, int indent)
 		case T_MergeAppendPath:
 			ptype = "MergeAppend";
 			break;
-		case T_ResultPath:
-			ptype = "Result";
+		case T_GroupResultPath:
+			ptype = "GroupResult";
 			break;
 		case T_MaterialPath:
 			ptype = "Material";

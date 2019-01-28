@@ -61,44 +61,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	RelOptInfo *final_rel;
 
 	/*
-	 * If the query has an empty join tree, then it's something easy like
-	 * "SELECT 2+2;" or "INSERT ... VALUES()".  Fall through quickly.
-	 */
-	if (parse->jointree->fromlist == NIL)
-	{
-		/* We need a dummy joinrel to describe the empty set of baserels */
-		final_rel = build_empty_join_rel(root);
-
-		/*
-		 * If query allows parallelism in general, check whether the quals are
-		 * parallel-restricted.  (We need not check final_rel->reltarget
-		 * because it's empty at this point.  Anything parallel-restricted in
-		 * the query tlist will be dealt with later.)
-		 */
-		if (root->glob->parallelModeOK)
-			final_rel->consider_parallel =
-				is_parallel_safe(root, parse->jointree->quals);
-
-		/* The only path for it is a trivial Result path */
-		add_path(final_rel, (Path *)
-				 create_result_path(root, final_rel,
-									final_rel->reltarget,
-									(List *) parse->jointree->quals));
-
-		/* Select cheapest path (pretty easy in this case...) */
-		set_cheapest(final_rel);
-
-		/*
-		 * We still are required to call qp_callback, in case it's something
-		 * like "SELECT 2+2 ORDER BY 1".
-		 */
-		root->canon_pathkeys = NIL;
-		(*qp_callback) (root, qp_extra);
-
-		return final_rel;
-	}
-
-	/*
 	 * Init planner lists to empty.
 	 *
 	 * NOTE: append_rel_list was set up by subquery_planner, so do not touch
@@ -123,6 +85,71 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * array for indexing base relations.
 	 */
 	setup_simple_rel_arrays(root);
+
+	/*
+	 * In the trivial case where the jointree is a single RTE_RESULT relation,
+	 * bypass all the rest of this function and just make a RelOptInfo and its
+	 * one access path.  This is worth optimizing because it applies for
+	 * common cases like "SELECT expression" and "INSERT ... VALUES()".
+	 */
+	Assert(parse->jointree->fromlist != NIL);
+	if (list_length(parse->jointree->fromlist) == 1)
+	{
+		Node	   *jtnode = (Node *) linitial(parse->jointree->fromlist);
+
+		if (IsA(jtnode, RangeTblRef))
+		{
+			int			varno = ((RangeTblRef *) jtnode)->rtindex;
+			RangeTblEntry *rte = root->simple_rte_array[varno];
+
+			Assert(rte != NULL);
+			if (rte->rtekind == RTE_RESULT)
+			{
+				/* Make the RelOptInfo for it directly */
+				final_rel = build_simple_rel(root, varno, NULL);
+
+				/*
+				 * If query allows parallelism in general, check whether the
+				 * quals are parallel-restricted.  (We need not check
+				 * final_rel->reltarget because it's empty at this point.
+				 * Anything parallel-restricted in the query tlist will be
+				 * dealt with later.)  This is normally pretty silly, because
+				 * a Result-only plan would never be interesting to
+				 * parallelize.  However, if force_parallel_mode is on, then
+				 * we want to execute the Result in a parallel worker if
+				 * possible, so we must do this.
+				 */
+				if (root->glob->parallelModeOK &&
+					force_parallel_mode != FORCE_PARALLEL_OFF)
+					final_rel->consider_parallel =
+						is_parallel_safe(root, parse->jointree->quals);
+
+				/*
+				 * The only path for it is a trivial Result path.  We cheat a
+				 * bit here by using a GroupResultPath, because that way we
+				 * can just jam the quals into it without preprocessing them.
+				 * (But, if you hold your head at the right angle, a FROM-less
+				 * SELECT is a kind of degenerate-grouping case, so it's not
+				 * that much of a cheat.)
+				 */
+				add_path(final_rel, (Path *)
+						 create_group_result_path(root, final_rel,
+												  final_rel->reltarget,
+												  (List *) parse->jointree->quals));
+
+				/* Select cheapest path (pretty easy in this case...) */
+				set_cheapest(final_rel);
+
+				/*
+				 * We still are required to call qp_callback, in case it's
+				 * something like "SELECT 2+2 ORDER BY 1".
+				 */
+				(*qp_callback) (root, qp_extra);
+
+				return final_rel;
+			}
+		}
+	}
 
 	/*
 	 * Populate append_rel_array with each AppendRelInfo to allow direct

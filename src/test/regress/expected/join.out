@@ -31,6 +31,10 @@ INSERT INTO J2_TBL VALUES (5, -5);
 INSERT INTO J2_TBL VALUES (0, NULL);
 INSERT INTO J2_TBL VALUES (NULL, NULL);
 INSERT INTO J2_TBL VALUES (NULL, 0);
+-- useful in some tests below
+create temp table onerow();
+insert into onerow default values;
+analyze onerow;
 --
 -- CORRELATION NAMES
 -- Make sure that table/column aliases are supported
@@ -2227,20 +2231,17 @@ explain (costs off)
 select * from int8_tbl i1 left join (int8_tbl i2 join
   (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
 order by 1, 2;
-                   QUERY PLAN                    
--------------------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Sort
    Sort Key: i1.q1, i1.q2
    ->  Hash Left Join
          Hash Cond: (i1.q2 = i2.q2)
          ->  Seq Scan on int8_tbl i1
          ->  Hash
-               ->  Hash Join
-                     Hash Cond: (i2.q1 = (123))
-                     ->  Seq Scan on int8_tbl i2
-                     ->  Hash
-                           ->  Result
-(11 rows)
+               ->  Seq Scan on int8_tbl i2
+                     Filter: (q1 = 123)
+(8 rows)
 
 select * from int8_tbl i1 left join (int8_tbl i2 join
   (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
@@ -3133,8 +3134,8 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   tenk1 t1
   inner join int4_tbl i1
     left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
+               from (select 1,0 from onerow) v1(x1,x2)
+               left join (select 3,1 from onerow) v2(y1,y2)
                on v1.x1 = v2.y2) subq1
     on (i1.f1 = subq1.x2)
   on (t1.unique2 = subq1.d1)
@@ -3144,27 +3145,26 @@ where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
                               QUERY PLAN                               
 -----------------------------------------------------------------------
  Nested Loop
-   Join Filter: (t1.stringu1 > t2.stringu2)
    ->  Nested Loop
-         Join Filter: ((0) = i1.f1)
+         Join Filter: (t1.stringu1 > t2.stringu2)
          ->  Nested Loop
                ->  Nested Loop
-                     Join Filter: ((1) = (1))
-                     ->  Result
-                     ->  Result
+                     ->  Seq Scan on onerow
+                     ->  Seq Scan on onerow onerow_1
                ->  Index Scan using tenk1_unique2 on tenk1 t1
                      Index Cond: ((unique2 = (11)) AND (unique2 < 42))
-         ->  Seq Scan on int4_tbl i1
-   ->  Index Scan using tenk1_unique1 on tenk1 t2
-         Index Cond: (unique1 = (3))
-(14 rows)
+         ->  Index Scan using tenk1_unique1 on tenk1 t2
+               Index Cond: (unique1 = (3))
+   ->  Seq Scan on int4_tbl i1
+         Filter: (f1 = 0)
+(13 rows)
 
 select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   tenk1 t1
   inner join int4_tbl i1
     left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
+               from (select 1,0 from onerow) v1(x1,x2)
+               left join (select 3,1 from onerow) v2(y1,y2)
                on v1.x1 = v2.y2) subq1
     on (i1.f1 = subq1.x2)
   on (t1.unique2 = subq1.d1)
@@ -3195,6 +3195,50 @@ where t1.unique1 < i4.f1;
  d1 
 ----
 (0 rows)
+
+-- this variant is foldable by the remove-useless-RESULT-RTEs code
+explain (costs off)
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Nested Loop
+   Join Filter: (t1.stringu1 > t2.stringu2)
+   ->  Nested Loop
+         ->  Seq Scan on int4_tbl i1
+               Filter: (f1 = 0)
+         ->  Index Scan using tenk1_unique2 on tenk1 t1
+               Index Cond: ((unique2 = (11)) AND (unique2 < 42))
+   ->  Index Scan using tenk1_unique1 on tenk1 t2
+         Index Cond: (unique1 = (3))
+(9 rows)
+
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+ unique2 | stringu1 | unique1 | stringu2 
+---------+----------+---------+----------
+      11 | WFAAAA   |       3 | LKIAAA
+(1 row)
 
 --
 -- test extraction of restriction OR clauses from join OR clause
@@ -3596,7 +3640,7 @@ select t1.* from
                ->  Hash Right Join
                      Output: i8.q2
                      Hash Cond: ((NULL::integer) = i8b1.q2)
-                     ->  Hash Left Join
+                     ->  Hash Join
                            Output: i8.q2, (NULL::integer)
                            Hash Cond: (i8.q1 = i8b2.q1)
                            ->  Seq Scan on public.int8_tbl i8
@@ -4018,10 +4062,10 @@ select * from
               QUERY PLAN               
 ---------------------------------------
  Nested Loop Left Join
-   Join Filter: ((1) = COALESCE((1)))
    ->  Result
    ->  Hash Full Join
          Hash Cond: (a1.unique1 = (1))
+         Filter: (1 = COALESCE((1)))
          ->  Seq Scan on tenk1 a1
          ->  Hash
                ->  Result
@@ -4951,13 +4995,10 @@ select v.* from
  -4567890123456789 |                  
 (20 rows)
 
-create temp table dual();
-insert into dual default values;
-analyze dual;
 select v.* from
   (int8_tbl x left join (select q1,(select coalesce(q2,0)) q2 from int8_tbl) y on x.q2 = y.q1)
   left join int4_tbl z on z.f1 = x.q2,
-  lateral (select x.q1,y.q1 from dual union all select x.q2,y.q2 from dual) v(vx,vy);
+  lateral (select x.q1,y.q1 from onerow union all select x.q2,y.q2 from onerow) v(vx,vy);
         vx         |        vy         
 -------------------+-------------------
   4567890123456789 |               123

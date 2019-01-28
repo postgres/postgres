@@ -1855,9 +1855,9 @@ _outMergeAppendPath(StringInfo str, const MergeAppendPath *node)
 }
 
 static void
-_outResultPath(StringInfo str, const ResultPath *node)
+_outGroupResultPath(StringInfo str, const GroupResultPath *node)
 {
-	WRITE_NODE_TYPE("RESULTPATH");
+	WRITE_NODE_TYPE("GROUPRESULTPATH");
 
 	_outPathInfo(str, (const Path *) node);
 
@@ -2213,7 +2213,6 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_ENUM_FIELD(inhTargetKind, InheritanceKind);
 	WRITE_BOOL_FIELD(hasJoinRTEs);
 	WRITE_BOOL_FIELD(hasLateralRTEs);
-	WRITE_BOOL_FIELD(hasDeletedRTEs);
 	WRITE_BOOL_FIELD(hasHavingQual);
 	WRITE_BOOL_FIELD(hasPseudoConstantQuals);
 	WRITE_BOOL_FIELD(hasRecursion);
@@ -3059,6 +3058,9 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			WRITE_NODE_FIELD(coltypes);
 			WRITE_NODE_FIELD(coltypmods);
 			WRITE_NODE_FIELD(colcollations);
+			break;
+		case RTE_RESULT:
+			/* no extra fields */
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) node->rtekind);
@@ -3943,8 +3945,8 @@ outNode(StringInfo str, const void *obj)
 			case T_MergeAppendPath:
 				_outMergeAppendPath(str, obj);
 				break;
-			case T_ResultPath:
-				_outResultPath(str, obj);
+			case T_GroupResultPath:
+				_outGroupResultPath(str, obj);
 				break;
 			case T_MaterialPath:
 				_outMaterialPath(str, obj);

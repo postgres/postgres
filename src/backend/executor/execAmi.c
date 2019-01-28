@@ -437,9 +437,12 @@ ExecSupportsMarkRestore(Path *pathnode)
 				return ExecSupportsMarkRestore(((ProjectionPath *) pathnode)->subpath);
 			else if (IsA(pathnode, MinMaxAggPath))
 				return false;	/* childless Result */
+			else if (IsA(pathnode, GroupResultPath))
+				return false;	/* childless Result */
 			else
 			{
-				Assert(IsA(pathnode, ResultPath));
+				/* Simple RTE_RESULT base relation */
+				Assert(IsA(pathnode, Path));
 				return false;	/* childless Result */
 			}
 

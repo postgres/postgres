@@ -239,9 +239,9 @@ id             value
 starting permutation: wrjt selectjoinforupdate c2 c1
 step wrjt: UPDATE jointest SET data = 42 WHERE id = 7;
 step selectjoinforupdate: 
-	set enable_nestloop to 0;
-	set enable_hashjoin to 0;
-	set enable_seqscan to 0;
+	set local enable_nestloop to 0;
+	set local enable_hashjoin to 0;
+	set local enable_seqscan to 0;
 	explain (costs off)
 	select * from jointest a join jointest b on a.id=b.id for update;
 	select * from jointest a join jointest b on a.id=b.id for update;
@@ -267,6 +267,45 @@ id             data           id             data
 8              0              8              0              
 9              0              9              0              
 10             0              10             0              
+step c1: COMMIT;
+
+starting permutation: wrjt selectresultforupdate c2 c1
+step wrjt: UPDATE jointest SET data = 42 WHERE id = 7;
+step selectresultforupdate: 
+	select * from (select 1 as x) ss1 join (select 7 as y) ss2 on true
+	  left join table_a a on a.id = x, jointest jt
+	  where jt.id = y;
+	explain (verbose, costs off)
+	select * from (select 1 as x) ss1 join (select 7 as y) ss2 on true
+	  left join table_a a on a.id = x, jointest jt
+	  where jt.id = y for update of jt, ss1, ss2;
+	select * from (select 1 as x) ss1 join (select 7 as y) ss2 on true
+	  left join table_a a on a.id = x, jointest jt
+	  where jt.id = y for update of jt, ss1, ss2;
+ <waiting ...>
+step c2: COMMIT;
+step selectresultforupdate: <... completed>
+x              y              id             value          id             data           
+
+1              7              1              tableAValue    7              0              
+QUERY PLAN     
+
+LockRows       
+  Output: 1, 7, a.id, a.value, jt.id, jt.data, jt.ctid, a.ctid
+  ->  Nested Loop Left Join
+        Output: 1, 7, a.id, a.value, jt.id, jt.data, jt.ctid, a.ctid
+        ->  Nested Loop
+              Output: jt.id, jt.data, jt.ctid
+              ->  Seq Scan on public.jointest jt
+                    Output: jt.id, jt.data, jt.ctid
+                    Filter: (jt.id = 7)
+              ->  Result
+        ->  Seq Scan on public.table_a a
+              Output: a.id, a.value, a.ctid
+              Filter: (a.id = 1)
+x              y              id             value          id             data           
+
+1              7              1              tableAValue    7              42             
 step c1: COMMIT;
 
 starting permutation: wrtwcte multireadwcte c1 c2

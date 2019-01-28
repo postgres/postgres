@@ -324,7 +324,6 @@ typedef struct PlannerInfo
 									 * partitioned table */
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 	bool		hasLateralRTEs; /* true if any RTEs are marked LATERAL */
-	bool		hasDeletedRTEs; /* true if any RTE was deleted from jointree */
 	bool		hasHavingQual;	/* true if havingQual was non-null */
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
@@ -1345,17 +1344,17 @@ typedef struct MergeAppendPath
 } MergeAppendPath;
 
 /*
- * ResultPath represents use of a Result plan node to compute a variable-free
- * targetlist with no underlying tables (a "SELECT expressions" query).
- * The query could have a WHERE clause, too, represented by "quals".
+ * GroupResultPath represents use of a Result plan node to compute the
+ * output of a degenerate GROUP BY case, wherein we know we should produce
+ * exactly one row, which might then be filtered by a HAVING qual.
  *
  * Note that quals is a list of bare clauses, not RestrictInfos.
  */
-typedef struct ResultPath
+typedef struct GroupResultPath
 {
 	Path		path;
 	List	   *quals;
-} ResultPath;
+} GroupResultPath;
 
 /*
  * MaterialPath represents use of a Material plan node, i.e., caching of

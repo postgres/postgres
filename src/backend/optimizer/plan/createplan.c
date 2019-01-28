@@ -84,7 +84,8 @@ static Plan *create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 static Plan *create_join_plan(PlannerInfo *root, JoinPath *best_path);
 static Plan *create_append_plan(PlannerInfo *root, AppendPath *best_path);
 static Plan *create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path);
-static Result *create_result_plan(PlannerInfo *root, ResultPath *best_path);
+static Result *create_group_result_plan(PlannerInfo *root,
+						 GroupResultPath *best_path);
 static ProjectSet *create_project_set_plan(PlannerInfo *root, ProjectSetPath *best_path);
 static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path,
 					 int flags);
@@ -138,6 +139,8 @@ static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static NamedTuplestoreScan *create_namedtuplestorescan_plan(PlannerInfo *root,
 								Path *best_path, List *tlist, List *scan_clauses);
+static Result *create_resultscan_plan(PlannerInfo *root, Path *best_path,
+					   List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 						  List *tlist, List *scan_clauses);
 static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
@@ -403,11 +406,16 @@ create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 				plan = (Plan *) create_minmaxagg_plan(root,
 													  (MinMaxAggPath *) best_path);
 			}
+			else if (IsA(best_path, GroupResultPath))
+			{
+				plan = (Plan *) create_group_result_plan(root,
+														 (GroupResultPath *) best_path);
+			}
 			else
 			{
-				Assert(IsA(best_path, ResultPath));
-				plan = (Plan *) create_result_plan(root,
-												   (ResultPath *) best_path);
+				/* Simple RTE_RESULT base relation */
+				Assert(IsA(best_path, Path));
+				plan = create_scan_plan(root, best_path, flags);
 			}
 			break;
 		case T_ProjectSet:
@@ -691,6 +699,13 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 															scan_clauses);
 			break;
 
+		case T_Result:
+			plan = (Plan *) create_resultscan_plan(root,
+												   best_path,
+												   tlist,
+												   scan_clauses);
+			break;
+
 		case T_WorkTableScan:
 			plan = (Plan *) create_worktablescan_plan(root,
 													  best_path,
@@ -922,8 +937,25 @@ create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 				   List *gating_quals)
 {
 	Plan	   *gplan;
+	Plan	   *splan;
 
 	Assert(gating_quals);
+
+	/*
+	 * We might have a trivial Result plan already.  Stacking one Result atop
+	 * another is silly, so if that applies, just discard the input plan.
+	 * (We're assuming its targetlist is uninteresting; it should be either
+	 * the same as the result of build_path_tlist, or a simplified version.)
+	 */
+	splan = plan;
+	if (IsA(plan, Result))
+	{
+		Result	   *rplan = (Result *) plan;
+
+		if (rplan->plan.lefttree == NULL &&
+			rplan->resconstantqual == NULL)
+			splan = NULL;
+	}
 
 	/*
 	 * Since we need a Result node anyway, always return the path's requested
@@ -932,7 +964,7 @@ create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 	 */
 	gplan = (Plan *) make_result(build_path_tlist(root, path),
 								 (Node *) gating_quals,
-								 plan);
+								 splan);
 
 	/*
 	 * Notice that we don't change cost or size estimates when doing gating.
@@ -1254,15 +1286,14 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 }
 
 /*
- * create_result_plan
+ * create_group_result_plan
  *	  Create a Result plan for 'best_path'.
- *	  This is only used for degenerate cases, such as a query with an empty
- *	  jointree.
+ *	  This is only used for degenerate grouping cases.
  *
  *	  Returns a Plan node.
  */
 static Result *
-create_result_plan(PlannerInfo *root, ResultPath *best_path)
+create_group_result_plan(PlannerInfo *root, GroupResultPath *best_path)
 {
 	Result	   *plan;
 	List	   *tlist;
@@ -3473,6 +3504,44 @@ create_namedtuplestorescan_plan(PlannerInfo *root, Path *best_path,
 										 rte->enrname);
 
 	copy_generic_path_info(&scan_plan->scan.plan, best_path);
+
+	return scan_plan;
+}
+
+/*
+ * create_resultscan_plan
+ *	 Returns a Result plan for the RTE_RESULT base relation scanned by
+ *	'best_path' with restriction clauses 'scan_clauses' and targetlist
+ *	'tlist'.
+ */
+static Result *
+create_resultscan_plan(PlannerInfo *root, Path *best_path,
+					   List *tlist, List *scan_clauses)
+{
+	Result	   *scan_plan;
+	Index		scan_relid = best_path->parent->relid;
+	RangeTblEntry *rte PG_USED_FOR_ASSERTS_ONLY;
+
+	Assert(scan_relid > 0);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_RESULT);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
+
+	scan_plan = make_result(tlist, (Node *) scan_clauses, NULL);
+
+	copy_generic_path_info(&scan_plan->plan, best_path);
 
 	return scan_plan;
 }

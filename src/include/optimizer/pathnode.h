@@ -75,8 +75,10 @@ extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 						 List *pathkeys,
 						 Relids required_outer,
 						 List *partitioned_rels);
-extern ResultPath *create_result_path(PlannerInfo *root, RelOptInfo *rel,
-				   PathTarget *target, List *resconstantqual);
+extern GroupResultPath *create_group_result_path(PlannerInfo *root,
+						 RelOptInfo *rel,
+						 PathTarget *target,
+						 List *havingqual);
 extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath, SpecialJoinInfo *sjinfo);
@@ -105,6 +107,8 @@ extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
 					Relids required_outer);
 extern Path *create_namedtuplestorescan_path(PlannerInfo *root, RelOptInfo *rel,
 								Relids required_outer);
+extern Path *create_resultscan_path(PlannerInfo *root, RelOptInfo *rel,
+					   Relids required_outer);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 						  Relids required_outer);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
@@ -275,7 +279,6 @@ extern Relids min_join_parameterization(PlannerInfo *root,
 						  Relids joinrelids,
 						  RelOptInfo *outer_rel,
 						  RelOptInfo *inner_rel);
-extern RelOptInfo *build_empty_join_rel(PlannerInfo *root);
 extern RelOptInfo *fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind,
 				Relids relids);
 extern Relids find_childrel_parents(PlannerInfo *root, RelOptInfo *rel);

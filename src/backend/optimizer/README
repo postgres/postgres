@@ -361,7 +361,16 @@ RelOptInfo      - a relation or joined relations
                    join clauses)
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
-  SeqScan       - represents a sequential scan plan
+  A plain Path node can represent several simple plans, per its pathtype:
+    T_SeqScan   - sequential scan
+    T_SampleScan - tablesample scan
+    T_FunctionScan - function-in-FROM scan
+    T_TableFuncScan - table function scan
+    T_ValuesScan - VALUES scan
+    T_CteScan   - CTE (WITH) scan
+    T_NamedTuplestoreScan - ENR scan
+    T_WorkTableScan - scan worktable of a recursive CTE
+    T_Result    - childless Result plan node (used for FROM-less SELECT)
   IndexPath     - index scan
   BitmapHeapPath - top of a bitmapped index scan
   TidPath       - scan by CTID
@@ -370,7 +379,7 @@ RelOptInfo      - a relation or joined relations
   CustomPath    - for custom scan providers
   AppendPath    - append multiple subpaths together
   MergeAppendPath - merge multiple subpaths, preserving their common sort order
-  ResultPath    - a childless Result plan node (used for FROM-less SELECT)
+  GroupResultPath - childless Result plan node (used for degenerate grouping)
   MaterialPath  - a Material plan node
   UniquePath    - remove duplicate rows (either by hashing or sorting)
   GatherPath    - collect the results of parallel workers

@@ -237,7 +237,7 @@ typedef enum NodeTag
 	T_HashPath,
 	T_AppendPath,
 	T_MergeAppendPath,
-	T_ResultPath,
+	T_GroupResultPath,
 	T_MaterialPath,
 	T_UniquePath,
 	T_GatherPath,

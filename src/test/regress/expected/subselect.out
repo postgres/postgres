@@ -999,7 +999,7 @@ select * from
                         QUERY PLAN                        
 ----------------------------------------------------------
  Subquery Scan on ss
-   Output: x, u
+   Output: ss.x, ss.u
    Filter: tattle(ss.x, 8)
    ->  ProjectSet
          Output: 9, unnest('{1,2,3,11,12,13}'::integer[])
@@ -1061,7 +1061,7 @@ select * from
                         QUERY PLAN                        
 ----------------------------------------------------------
  Subquery Scan on ss
-   Output: x, u
+   Output: ss.x, ss.u
    Filter: tattle(ss.x, ss.u)
    ->  ProjectSet
          Output: 9, unnest('{1,2,3,11,12,13}'::integer[])

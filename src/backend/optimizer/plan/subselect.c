@@ -1115,12 +1115,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 		return NULL;
 
 	/*
-	 * The subquery must have a nonempty jointree, else we won't have a join.
-	 */
-	if (subselect->jointree->fromlist == NIL)
-		return NULL;
-
-	/*
 	 * Separate out the WHERE clause.  (We could theoretically also remove
 	 * top-level plain JOIN/ON clauses, but it's probably not worth the
 	 * trouble.)
@@ -1147,6 +1141,11 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	if (contain_volatile_functions(whereClause))
 		return NULL;
+
+	/*
+	 * The subquery must have a nonempty jointree, but we can make it so.
+	 */
+	replace_empty_jointree(subselect);
 
 	/*
 	 * Prepare to pull up the sub-select into top range table.

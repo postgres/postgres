@@ -950,7 +950,10 @@ typedef enum RTEKind
 	RTE_TABLEFUNC,				/* TableFunc(.., column list) */
 	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
 	RTE_CTE,					/* common table expr (WITH list element) */
-	RTE_NAMEDTUPLESTORE			/* tuplestore, e.g. for AFTER triggers */
+	RTE_NAMEDTUPLESTORE,		/* tuplestore, e.g. for AFTER triggers */
+	RTE_RESULT					/* RTE represents an empty FROM clause; such
+								 * RTEs are added by the planner, they're not
+								 * present during parsing or rewriting */
 } RTEKind;
 
 typedef struct RangeTblEntry

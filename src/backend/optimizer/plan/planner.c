@@ -611,6 +611,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	List	   *newWithCheckOptions;
 	List	   *newHaving;
 	bool		hasOuterJoins;
+	bool		hasResultRTEs;
 	RelOptInfo *final_rel;
 	ListCell   *l;
 
@@ -652,6 +653,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		SS_process_ctes(root);
 
 	/*
+	 * If the FROM clause is empty, replace it with a dummy RTE_RESULT RTE, so
+	 * that we don't need so many special cases to deal with that situation.
+	 */
+	replace_empty_jointree(parse);
+
+	/*
 	 * Look for ANY and EXISTS SubLinks in WHERE and JOIN/ON clauses, and try
 	 * to transform them into joins.  Note that this step does not descend
 	 * into subqueries; if we pull up any subqueries below, their SubLinks are
@@ -684,14 +691,16 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 	/*
 	 * Detect whether any rangetable entries are RTE_JOIN kind; if not, we can
-	 * avoid the expense of doing flatten_join_alias_vars().  Also check for
-	 * outer joins --- if none, we can skip reduce_outer_joins().  And check
-	 * for LATERAL RTEs, too.  This must be done after we have done
-	 * pull_up_subqueries(), of course.
+	 * avoid the expense of doing flatten_join_alias_vars().  Likewise check
+	 * whether any are RTE_RESULT kind; if not, we can skip
+	 * remove_useless_result_rtes().  Also check for outer joins --- if none,
+	 * we can skip reduce_outer_joins().  And check for LATERAL RTEs, too.
+	 * This must be done after we have done pull_up_subqueries(), of course.
 	 */
 	root->hasJoinRTEs = false;
 	root->hasLateralRTEs = false;
 	hasOuterJoins = false;
+	hasResultRTEs = false;
 	foreach(l, parse->rtable)
 	{
 		RangeTblEntry *rte = lfirst_node(RangeTblEntry, l);
@@ -701,6 +710,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			root->hasJoinRTEs = true;
 			if (IS_OUTER_JOIN(rte->jointype))
 				hasOuterJoins = true;
+		}
+		else if (rte->rtekind == RTE_RESULT)
+		{
+			hasResultRTEs = true;
 		}
 		if (rte->lateral)
 			root->hasLateralRTEs = true;
@@ -717,10 +730,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Expand any rangetable entries that are inheritance sets into "append
 	 * relations".  This can add entries to the rangetable, but they must be
-	 * plain base relations not joins, so it's OK (and marginally more
-	 * efficient) to do it after checking for join RTEs.  We must do it after
-	 * pulling up subqueries, else we'd fail to handle inherited tables in
-	 * subqueries.
+	 * plain RTE_RELATION entries, so it's OK (and marginally more efficient)
+	 * to do it after checking for joins and other special RTEs.  We must do
+	 * this after pulling up subqueries, else we'd fail to handle inherited
+	 * tables in subqueries.
 	 */
 	expand_inherited_tables(root);
 
@@ -966,6 +979,14 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 */
 	if (hasOuterJoins)
 		reduce_outer_joins(root);
+
+	/*
+	 * If we have any RTE_RESULT relations, see if they can be deleted from
+	 * the jointree.  This step is most effectively done after we've done
+	 * expression preprocessing and outer join reduction.
+	 */
+	if (hasResultRTEs)
+		remove_useless_result_rtes(root);
 
 	/*
 	 * Do the main planning.  If we have an inherited target relation, that
@@ -3894,9 +3915,9 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		while (--nrows >= 0)
 		{
 			path = (Path *)
-				create_result_path(root, grouped_rel,
-								   grouped_rel->reltarget,
-								   (List *) parse->havingQual);
+				create_group_result_path(root, grouped_rel,
+										 grouped_rel->reltarget,
+										 (List *) parse->havingQual);
 			paths = lappend(paths, path);
 		}
 		path = (Path *)
@@ -3914,9 +3935,9 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	{
 		/* No grouping sets, or just one, so one output row */
 		path = (Path *)
-			create_result_path(root, grouped_rel,
-							   grouped_rel->reltarget,
-							   (List *) parse->havingQual);
+			create_group_result_path(root, grouped_rel,
+									 grouped_rel->reltarget,
+									 (List *) parse->havingQual);
 	}
 
 	add_path(grouped_rel, path);

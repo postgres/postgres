@@ -37,6 +37,12 @@ INSERT INTO J2_TBL VALUES (0, NULL);
 INSERT INTO J2_TBL VALUES (NULL, NULL);
 INSERT INTO J2_TBL VALUES (NULL, 0);
 
+-- useful in some tests below
+create temp table onerow();
+insert into onerow default values;
+analyze onerow;
+
+
 --
 -- CORRELATION NAMES
 -- Make sure that table/column aliases are supported
@@ -940,8 +946,8 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   tenk1 t1
   inner join int4_tbl i1
     left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
+               from (select 1,0 from onerow) v1(x1,x2)
+               left join (select 3,1 from onerow) v2(y1,y2)
                on v1.x1 = v2.y2) subq1
     on (i1.f1 = subq1.x2)
   on (t1.unique2 = subq1.d1)
@@ -953,8 +959,8 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   tenk1 t1
   inner join int4_tbl i1
     left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
+               from (select 1,0 from onerow) v1(x1,x2)
+               left join (select 3,1 from onerow) v2(y1,y2)
                on v1.x1 = v2.y2) subq1
     on (i1.f1 = subq1.x2)
   on (t1.unique2 = subq1.d1)
@@ -979,6 +985,35 @@ select ss1.d1 from
     on i8.q1 = i4.f1
   on t1.tenthous = ss1.d1
 where t1.unique1 < i4.f1;
+
+-- this variant is foldable by the remove-useless-RESULT-RTEs code
+
+explain (costs off)
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
 
 --
 -- test extraction of restriction OR clauses from join OR clause
@@ -1661,13 +1696,10 @@ select v.* from
   (int8_tbl x left join (select q1,(select coalesce(q2,0)) q2 from int8_tbl) y on x.q2 = y.q1)
   left join int4_tbl z on z.f1 = x.q2,
   lateral (select x.q1,y.q1 union all select x.q2,y.q2) v(vx,vy);
-create temp table dual();
-insert into dual default values;
-analyze dual;
 select v.* from
   (int8_tbl x left join (select q1,(select coalesce(q2,0)) q2 from int8_tbl) y on x.q2 = y.q1)
   left join int4_tbl z on z.f1 = x.q2,
-  lateral (select x.q1,y.q1 from dual union all select x.q2,y.q2 from dual) v(vx,vy);
+  lateral (select x.q1,y.q1 from onerow union all select x.q2,y.q2 from onerow) v(vx,vy);
 
 explain (verbose, costs off)
 select * from
