@@ -79,6 +79,7 @@
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"

@@ -60,7 +60,7 @@ typedef struct
 
 typedef struct
 {
-	PlannerInfo *root;
+	Query	   *query;			/* outer Query */
 	int			sublevels_up;
 	bool		possible_sublink;	/* could aliases include a SubLink? */
 	bool		inserted_sublink;	/* have we inserted a SubLink? */
@@ -78,7 +78,7 @@ static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
 								flatten_join_alias_vars_context *context);
-static Relids alias_relid_set(PlannerInfo *root, Relids relids);
+static Relids alias_relid_set(Query *query, Relids relids);
 
 
 /*
@@ -667,16 +667,16 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * subqueries).
  */
 Node *
-flatten_join_alias_vars(PlannerInfo *root, Node *node)
+flatten_join_alias_vars(Query *query, Node *node)
 {
 	flatten_join_alias_vars_context context;
 
-	context.root = root;
+	context.query = query;
 	context.sublevels_up = 0;
 	/* flag whether join aliases could possibly contain SubLinks */
-	context.possible_sublink = root->parse->hasSubLinks;
+	context.possible_sublink = query->hasSubLinks;
 	/* if hasSubLinks is already true, no need to work hard */
-	context.inserted_sublink = root->parse->hasSubLinks;
+	context.inserted_sublink = query->hasSubLinks;
 
 	return flatten_join_alias_vars_mutator(node, &context);
 }
@@ -696,7 +696,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		/* No change unless Var belongs to a JOIN of the target level */
 		if (var->varlevelsup != context->sublevels_up)
 			return node;		/* no need to copy, really */
-		rte = rt_fetch(var->varno, context->root->parse->rtable);
+		rte = rt_fetch(var->varno, context->query->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
 		if (var->varattno == InvalidAttrNumber)
@@ -783,7 +783,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == context->sublevels_up)
 		{
-			phv->phrels = alias_relid_set(context->root,
+			phv->phrels = alias_relid_set(context->query,
 										  phv->phrels);
 		}
 		return (Node *) phv;
@@ -823,7 +823,7 @@ flatten_join_alias_vars_mutator(Node *node,
  * underlying base relids
  */
 static Relids
-alias_relid_set(PlannerInfo *root, Relids relids)
+alias_relid_set(Query *query, Relids relids)
 {
 	Relids		result = NULL;
 	int			rtindex;
@@ -831,10 +831,10 @@ alias_relid_set(PlannerInfo *root, Relids relids)
 	rtindex = -1;
 	while ((rtindex = bms_next_member(relids, rtindex)) >= 0)
 	{
-		RangeTblEntry *rte = rt_fetch(rtindex, root->parse->rtable);
+		RangeTblEntry *rte = rt_fetch(rtindex, query->rtable);
 
 		if (rte->rtekind == RTE_JOIN)
-			result = bms_join(result, get_relids_for_join(root, rtindex));
+			result = bms_join(result, get_relids_for_join(query, rtindex));
 		else
 			result = bms_add_member(result, rtindex);
 	}

@@ -250,7 +250,7 @@ TidQualFromRestrictInfoList(List *rlist, RelOptInfo *rel)
 				List	   *sublist;
 
 				/* OR arguments should be ANDs or sub-RestrictInfos */
-				if (and_clause(orarg))
+				if (is_andclause(orarg))
 				{
 					List	   *andargs = ((BoolExpr *) orarg)->args;
 

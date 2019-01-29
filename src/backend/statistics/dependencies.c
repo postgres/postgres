@@ -18,6 +18,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic_ext.h"
 #include "lib/stringinfo.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/var.h"
@@ -802,7 +803,7 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 
 		/* OK to proceed with checking "var" */
 	}
-	else if (not_clause((Node *) rinfo->clause))
+	else if (is_notclause(rinfo->clause))
 	{
 		/*
 		 * "NOT x" can be interpreted as "x = false", so get the argument and

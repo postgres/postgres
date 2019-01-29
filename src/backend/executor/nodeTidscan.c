@@ -28,7 +28,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeTidscan.h"
 #include "miscadmin.h"
-#include "optimizer/clauses.h"
+#include "nodes/nodeFuncs.h"
 #include "storage/bufmgr.h"
 #include "utils/array.h"
 #include "utils/rel.h"

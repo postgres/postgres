@@ -497,7 +497,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 		/* Else return it unmodified */
 		return node;
 	}
-	if (not_clause(node))
+	if (is_notclause(node))
 	{
 		/* If the immediate argument of NOT is EXISTS, try to convert */
 		SubLink    *sublink = (SubLink *) get_notclausearg((Expr *) node);
@@ -564,7 +564,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 		/* Else return it unmodified */
 		return node;
 	}
-	if (and_clause(node))
+	if (is_andclause(node))
 	{
 		/* Recurse into AND clause */
 		List	   *newclauses = NIL;
@@ -968,7 +968,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * maybe even in the rewriter; but for now let's just fix this case here.)
 	 */
 	subquery->targetList = (List *)
-		flatten_join_alias_vars(subroot, (Node *) subquery->targetList);
+		flatten_join_alias_vars(subroot->parse, (Node *) subquery->targetList);
 
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
@@ -3317,11 +3317,11 @@ get_relids_in_jointree(Node *jtnode, bool include_joins)
  * get_relids_for_join: get set of base RT indexes making up a join
  */
 Relids
-get_relids_for_join(PlannerInfo *root, int joinrelid)
+get_relids_for_join(Query *query, int joinrelid)
 {
 	Node	   *jtnode;
 
-	jtnode = find_jointree_node_for_rel((Node *) root->parse->jointree,
+	jtnode = find_jointree_node_for_rel((Node *) query->jointree,
 										joinrelid);
 	if (!jtnode)
 		elog(ERROR, "could not find join node %d", joinrelid);

@@ -775,7 +775,7 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 			 * independently, collect their step IDs to be stored in the
 			 * combine step we'll be creating.
 			 */
-			if (or_clause((Node *) clause))
+			if (is_orclause(clause))
 			{
 				List	   *arg_stepids = NIL;
 				bool		all_args_contradictory = true;
@@ -865,7 +865,7 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 				}
 				continue;
 			}
-			else if (and_clause((Node *) clause))
+			else if (is_andclause(clause))
 			{
 				List	   *args = ((BoolExpr *) clause)->args;
 				List	   *argsteps,
@@ -3262,7 +3262,7 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
 	}
 	else
 	{
-		bool		is_not_clause = not_clause((Node *) clause);
+		bool		is_not_clause = is_notclause(clause);
 
 		leftop = is_not_clause ? get_notclausearg(clause) : clause;
 

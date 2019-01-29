@@ -1297,7 +1297,7 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 			List	   *indlist;
 
 			/* OR arguments should be ANDs or sub-RestrictInfos */
-			if (and_clause(orarg))
+			if (is_andclause(orarg))
 			{
 				List	   *andargs = ((BoolExpr *) orarg)->args;
 
@@ -3368,7 +3368,7 @@ match_boolean_index_clause(Node *clause,
 	if (match_index_to_operand(clause, indexcol, index))
 		return true;
 	/* NOT clause? */
-	if (not_clause(clause))
+	if (is_notclause(clause))
 	{
 		if (match_index_to_operand((Node *) get_notclausearg((Expr *) clause),
 								   indexcol, index))
@@ -3680,7 +3680,7 @@ expand_boolean_index_clause(Node *clause,
 							 InvalidOid, InvalidOid);
 	}
 	/* NOT clause? */
-	if (not_clause(clause))
+	if (is_notclause(clause))
 	{
 		Node	   *arg = (Node *) get_notclausearg((Expr *) clause);
 

@@ -17,34 +17,12 @@
 #include "access/htup.h"
 #include "nodes/relation.h"
 
-#define is_opclause(clause)		((clause) != NULL && IsA(clause, OpExpr))
-#define is_funcclause(clause)	((clause) != NULL && IsA(clause, FuncExpr))
-
 typedef struct
 {
 	int			numWindowFuncs; /* total number of WindowFuncs found */
 	Index		maxWinRef;		/* windowFuncs[] is indexed 0 .. maxWinRef */
 	List	  **windowFuncs;	/* lists of WindowFuncs for each winref */
 } WindowFuncLists;
-
-extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
-			  Expr *leftop, Expr *rightop,
-			  Oid opcollid, Oid inputcollid);
-extern Node *get_leftop(const Expr *clause);
-extern Node *get_rightop(const Expr *clause);
-
-extern bool not_clause(Node *clause);
-extern Expr *make_notclause(Expr *notclause);
-extern Expr *get_notclausearg(Expr *notclause);
-
-extern bool or_clause(Node *clause);
-extern Expr *make_orclause(List *orclauses);
-
-extern bool and_clause(Node *clause);
-extern Expr *make_andclause(List *andclauses);
-extern Node *make_and_qual(Node *qual1, Node *qual2);
-extern Expr *make_ands_explicit(List *andclauses);
-extern List *make_ands_implicit(Expr *clause);
 
 extern bool contain_agg_clause(Node *clause);
 extern void get_agg_clause_costs(PlannerInfo *root, Node *clause,

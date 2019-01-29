@@ -14,6 +14,8 @@
  */
 #include "postgres.h"
 
+#include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
@@ -67,7 +69,7 @@ make_restrictinfo(Expr *clause,
 	 * If it's an OR clause, build a modified copy with RestrictInfos inserted
 	 * above each subclause of the top-level AND/OR structure.
 	 */
-	if (or_clause((Node *) clause))
+	if (is_orclause(clause))
 		return (RestrictInfo *) make_sub_restrictinfos(clause,
 													   is_pushed_down,
 													   outerjoin_delayed,
@@ -78,7 +80,7 @@ make_restrictinfo(Expr *clause,
 													   nullable_relids);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
-	Assert(!and_clause((Node *) clause));
+	Assert(!is_andclause(clause));
 
 	return make_restrictinfo_internal(clause,
 									  NULL,
@@ -232,7 +234,7 @@ make_sub_restrictinfos(Expr *clause,
 					   Relids outer_relids,
 					   Relids nullable_relids)
 {
-	if (or_clause((Node *) clause))
+	if (is_orclause(clause))
 	{
 		List	   *orlist = NIL;
 		ListCell   *temp;
@@ -257,7 +259,7 @@ make_sub_restrictinfos(Expr *clause,
 												   outer_relids,
 												   nullable_relids);
 	}
-	else if (and_clause((Node *) clause))
+	else if (is_andclause(clause))
 	{
 		List	   *andlist = NIL;
 		ListCell   *temp;

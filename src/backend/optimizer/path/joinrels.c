@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/joininfo.h"
@@ -1554,8 +1555,7 @@ have_partkey_equi_join(RelOptInfo *joinrel,
 		if (!rinfo->mergeopfamilies && !OidIsValid(rinfo->hashjoinoperator))
 			continue;
 
-		opexpr = (OpExpr *) rinfo->clause;
-		Assert(is_opclause(opexpr));
+		opexpr = castNode(OpExpr, rinfo->clause);
 
 		/*
 		 * The equi-join between partition keys is strict if equi-join between

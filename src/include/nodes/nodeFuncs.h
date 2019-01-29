@@ -50,6 +50,78 @@ extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 
+/* Is clause a FuncExpr clause? */
+static inline bool
+is_funcclause(const void *clause)
+{
+	return clause != NULL && IsA(clause, FuncExpr);
+}
+
+/* Is clause an OpExpr clause? */
+static inline bool
+is_opclause(const void *clause)
+{
+	return clause != NULL && IsA(clause, OpExpr);
+}
+
+/* Extract left arg of a binary opclause, or only arg of a unary opclause */
+static inline Node *
+get_leftop(const void *clause)
+{
+	const OpExpr *expr = (const OpExpr *) clause;
+
+	if (expr->args != NIL)
+		return (Node *) linitial(expr->args);
+	else
+		return NULL;
+}
+
+/* Extract right arg of a binary opclause (NULL if it's a unary opclause) */
+static inline Node *
+get_rightop(const void *clause)
+{
+	const OpExpr *expr = (const OpExpr *) clause;
+
+	if (list_length(expr->args) >= 2)
+		return (Node *) lsecond(expr->args);
+	else
+		return NULL;
+}
+
+/* Is clause an AND clause? */
+static inline bool
+is_andclause(const void *clause)
+{
+	return (clause != NULL &&
+			IsA(clause, BoolExpr) &&
+			((const BoolExpr *) clause)->boolop == AND_EXPR);
+}
+
+/* Is clause an OR clause? */
+static inline bool
+is_orclause(const void *clause)
+{
+	return (clause != NULL &&
+			IsA(clause, BoolExpr) &&
+			((const BoolExpr *) clause)->boolop == OR_EXPR);
+}
+
+/* Is clause a NOT clause? */
+static inline bool
+is_notclause(const void *clause)
+{
+	return (clause != NULL &&
+			IsA(clause, BoolExpr) &&
+			((const BoolExpr *) clause)->boolop == NOT_EXPR);
+}
+
+/* Extract argument from a clause known to be a NOT clause */
+static inline Expr *
+get_notclausearg(const void *notclause)
+{
+	return (Expr *) linitial(((const BoolExpr *) notclause)->args);
+}
+
 extern bool check_functions_in_node(Node *node, check_function_callback checker,
 						void *context);
 

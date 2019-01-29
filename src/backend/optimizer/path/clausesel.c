@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -688,7 +689,7 @@ clause_selectivity(PlannerInfo *root,
 			/* XXX any way to do better than default? */
 		}
 	}
-	else if (not_clause(clause))
+	else if (is_notclause(clause))
 	{
 		/* inverse of the selectivity of the underlying clause */
 		s1 = 1.0 - clause_selectivity(root,
@@ -697,7 +698,7 @@ clause_selectivity(PlannerInfo *root,
 									  jointype,
 									  sjinfo);
 	}
-	else if (and_clause(clause))
+	else if (is_andclause(clause))
 	{
 		/* share code with clauselist_selectivity() */
 		s1 = clauselist_selectivity(root,
@@ -706,7 +707,7 @@ clause_selectivity(PlannerInfo *root,
 									jointype,
 									sjinfo);
 	}
-	else if (or_clause(clause))
+	else if (is_orclause(clause))
 	{
 		/*
 		 * Selectivities for an OR clause are computed as s1+s2 - s1*s2 to

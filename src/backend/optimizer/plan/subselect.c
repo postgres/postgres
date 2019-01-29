@@ -739,7 +739,7 @@ testexpr_is_hashable(Node *testexpr)
 		if (hash_ok_operator((OpExpr *) testexpr))
 			return true;
 	}
-	else if (and_clause(testexpr))
+	else if (is_andclause(testexpr))
 	{
 		ListCell   *l;
 
@@ -1693,7 +1693,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	 * propagates down in both cases.  (Note that this is unlike the meaning
 	 * of "top level qual" used in most other places in Postgres.)
 	 */
-	if (and_clause(node))
+	if (is_andclause(node))
 	{
 		List	   *newargs = NIL;
 		ListCell   *l;
@@ -1706,7 +1706,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 			Node	   *newarg;
 
 			newarg = process_sublinks_mutator(lfirst(l), &locContext);
-			if (and_clause(newarg))
+			if (is_andclause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
 				newargs = lappend(newargs, newarg);
@@ -1714,7 +1714,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 		return (Node *) make_andclause(newargs);
 	}
 
-	if (or_clause(node))
+	if (is_orclause(node))
 	{
 		List	   *newargs = NIL;
 		ListCell   *l;
@@ -1727,7 +1727,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 			Node	   *newarg;
 
 			newarg = process_sublinks_mutator(lfirst(l), &locContext);
-			if (or_clause(newarg))
+			if (is_orclause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
 				newargs = lappend(newargs, newarg);

@@ -80,6 +80,18 @@ extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype, List *args,
 
 extern FuncCall *makeFuncCall(List *name, List *args, int location);
 
+extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
+			  Expr *leftop, Expr *rightop,
+			  Oid opcollid, Oid inputcollid);
+
+extern Expr *make_andclause(List *andclauses);
+extern Expr *make_orclause(List *orclauses);
+extern Expr *make_notclause(Expr *notclause);
+
+extern Node *make_and_qual(Node *qual1, Node *qual2);
+extern Expr *make_ands_explicit(List *andclauses);
+extern List *make_ands_implicit(Expr *clause);
+
 extern DefElem *makeDefElem(char *name, Node *arg, int location);
 extern DefElem *makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 					DefElemAction defaction, int location);

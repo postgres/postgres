@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/predtest.h"
@@ -839,14 +840,14 @@ predicate_classify(Node *clause, PredIterInfo info)
 	}
 
 	/* Handle normal AND and OR boolean clauses */
-	if (and_clause(clause))
+	if (is_andclause(clause))
 	{
 		info->startup_fn = boolexpr_startup_fn;
 		info->next_fn = list_next_fn;
 		info->cleanup_fn = list_cleanup_fn;
 		return CLASS_AND;
 	}
-	if (or_clause(clause))
+	if (is_orclause(clause))
 	{
 		info->startup_fn = boolexpr_startup_fn;
 		info->next_fn = list_next_fn;

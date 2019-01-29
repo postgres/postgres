@@ -29,7 +29,7 @@ extern void flatten_simple_union_all(PlannerInfo *root);
 extern void reduce_outer_joins(PlannerInfo *root);
 extern void remove_useless_result_rtes(PlannerInfo *root);
 extern Relids get_relids_in_jointree(Node *jtnode, bool include_joins);
-extern Relids get_relids_for_join(PlannerInfo *root, int joinrelid);
+extern Relids get_relids_for_join(Query *query, int joinrelid);
 
 /*
  * prototypes for prepqual.c

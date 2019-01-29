@@ -33,8 +33,8 @@
 #include "executor/executor.h"
 #include "executor/nodeSubplan.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "miscadmin.h"
-#include "optimizer/clauses.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -888,7 +888,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 			/* single combining operator */
 			oplist = list_make1(subplan->testexpr);
 		}
-		else if (and_clause((Node *) subplan->testexpr))
+		else if (is_andclause(subplan->testexpr))
 		{
 			/* multiple combining operators */
 			oplist = castNode(BoolExpr, subplan->testexpr)->args;

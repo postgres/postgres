@@ -69,6 +69,7 @@
 #include "commands/policy.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
