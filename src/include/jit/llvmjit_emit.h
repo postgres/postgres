@@ -9,8 +9,15 @@
 #ifndef LLVMJIT_EMIT_H
 #define LLVMJIT_EMIT_H
 
+/*
+ * To avoid breaking cpluspluscheck, allow including the file even when LLVM
+ * is not available.
+ */
+#ifdef USE_LLVM
 
 #include <llvm-c/Core.h>
+
+#include "jit/llvmjit.h"
 
 
 /*
@@ -208,4 +215,6 @@ l_mcxt_switch(LLVMModuleRef mod, LLVMBuilderRef b, LLVMValueRef nc)
 
 	return ret;
 }
+
+#endif							/* USE_LLVM */
 #endif
