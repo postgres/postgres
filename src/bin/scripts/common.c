@@ -265,9 +265,9 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
  * finish using them, pg_free(*table).  *columns is a pointer into "spec",
  * possibly to its NUL terminator.
  */
-static void
-split_table_columns_spec(const char *spec, int encoding,
-						 char **table, const char **columns)
+void
+splitTableColumnsSpec(const char *spec, int encoding,
+					  char **table, const char **columns)
 {
 	bool		inquotes = false;
 	const char *cp = spec;
@@ -318,7 +318,7 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 		return;
 	}
 
-	split_table_columns_spec(spec, PQclientEncoding(conn), &table, &columns);
+	splitTableColumnsSpec(spec, PQclientEncoding(conn), &table, &columns);
 
 	/*
 	 * Query must remain ABSOLUTELY devoid of unqualified names.  This would

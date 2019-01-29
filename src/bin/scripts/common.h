@@ -48,6 +48,9 @@ extern void executeCommand(PGconn *conn, const char *query,
 extern bool executeMaintenanceCommand(PGconn *conn, const char *query,
 						  bool echo);
 
+extern void splitTableColumnsSpec(const char *spec, int encoding,
+					  char **table, const char **columns);
+
 extern void appendQualifiedRelation(PQExpBuffer buf, const char *name,
 						PGconn *conn, const char *progname, bool echo);
 

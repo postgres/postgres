@@ -19,6 +19,7 @@
 #include "catalog/pg_class_d.h"
 
 #include "common.h"
+#include "fe_utils/connect.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
 
@@ -61,10 +62,8 @@ static void vacuum_all_databases(vacuumingOptions *vacopts,
 					 int concurrentCons,
 					 const char *progname, bool echo, bool quiet);
 
-static void prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
-					   vacuumingOptions *vacopts, const char *table,
-					   bool table_pre_qualified,
-					   const char *progname, bool echo);
+static void prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
+					   vacuumingOptions *vacopts, const char *table);
 
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 				   const char *table, const char *progname, bool async);
@@ -359,13 +358,18 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 					const char *progname, bool echo, bool quiet)
 {
 	PQExpBufferData sql;
+	PQExpBufferData buf;
+	PQExpBufferData catalog_query;
+	PGresult   *res;
 	PGconn	   *conn;
 	SimpleStringListCell *cell;
 	ParallelSlot *slots;
 	SimpleStringList dbtables = {NULL, NULL};
 	int			i;
+	int			ntups;
 	bool		failed = false;
 	bool		parallel = concurrentCons > 1;
+	bool		tables_listed = false;
 	const char *stage_commands[] = {
 		"SET default_statistics_target=1; SET vacuum_cost_delay=0;",
 		"SET default_statistics_target=10; RESET vacuum_cost_delay;",
@@ -410,53 +414,132 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		fflush(stdout);
 	}
 
-	initPQExpBuffer(&sql);
-
 	/*
-	 * If a table list is not provided and we're using multiple connections,
-	 * prepare the list of tables by querying the catalogs.
+	 * Prepare the list of tables to process by querying the catalogs.
+	 *
+	 * Since we execute the constructed query with the default search_path
+	 * (which could be unsafe), everything in this query MUST be fully
+	 * qualified.
+	 *
+	 * First, build a WITH clause for the catalog query if any tables were
+	 * specified, with a set of values made of relation names and their
+	 * optional set of columns.  This is used to match any provided column
+	 * lists with the generated qualified identifiers and to filter for the
+	 * tables provided via --table.  If a listed table does not exist, the
+	 * catalog query will fail.
 	 */
-	if (parallel && (!tables || !tables->head))
+	initPQExpBuffer(&catalog_query);
+	for (cell = tables ? tables->head : NULL; cell; cell = cell->next)
 	{
-		PQExpBufferData buf;
-		PGresult   *res;
-		int			ntups;
-
-		initPQExpBuffer(&buf);
-
-		res = executeQuery(conn,
-						   "SELECT c.relname, ns.nspname"
-						   " FROM pg_class c, pg_namespace ns\n"
-						   " WHERE relkind IN ("
-						   CppAsString2(RELKIND_RELATION) ", "
-						   CppAsString2(RELKIND_MATVIEW) ")"
-						   " AND c.relnamespace = ns.oid\n"
-						   " ORDER BY c.relpages DESC;",
-						   progname, echo);
-
-		ntups = PQntuples(res);
-		for (i = 0; i < ntups; i++)
-		{
-			appendPQExpBufferStr(&buf,
-								 fmtQualifiedId(PQgetvalue(res, i, 1),
-												PQgetvalue(res, i, 0)));
-
-			simple_string_list_append(&dbtables, buf.data);
-			resetPQExpBuffer(&buf);
-		}
-
-		termPQExpBuffer(&buf);
-		tables = &dbtables;
+		char	   *just_table;
+		const char *just_columns;
 
 		/*
-		 * If there are more connections than vacuumable relations, we don't
-		 * need to use them all.
+		 * Split relation and column names given by the user, this is used to
+		 * feed the CTE with values on which are performed pre-run validity
+		 * checks as well.  For now these happen only on the relation name.
 		 */
+		splitTableColumnsSpec(cell->val, PQclientEncoding(conn),
+							  &just_table, &just_columns);
+
+		if (!tables_listed)
+		{
+			appendPQExpBuffer(&catalog_query,
+							  "WITH listed_tables (table_oid, column_list) "
+							  "AS (\n  VALUES (");
+			tables_listed = true;
+		}
+		else
+			appendPQExpBuffer(&catalog_query, ",\n  (");
+
+		appendStringLiteralConn(&catalog_query, just_table, conn);
+		appendPQExpBuffer(&catalog_query, "::pg_catalog.regclass, ");
+
+		if (just_columns && just_columns[0] != '\0')
+			appendStringLiteralConn(&catalog_query, just_columns, conn);
+		else
+			appendPQExpBufferStr(&catalog_query, "NULL");
+
+		appendPQExpBufferStr(&catalog_query, "::pg_catalog.text)");
+
+		pg_free(just_table);
+	}
+
+	/* Finish formatting the CTE */
+	if (tables_listed)
+		appendPQExpBuffer(&catalog_query, "\n)\n");
+
+	appendPQExpBuffer(&catalog_query, "SELECT c.relname, ns.nspname");
+
+	if (tables_listed)
+		appendPQExpBuffer(&catalog_query, ", listed_tables.column_list");
+
+	appendPQExpBuffer(&catalog_query,
+					  " FROM pg_catalog.pg_class c\n"
+					  " JOIN pg_catalog.pg_namespace ns"
+					  " ON c.relnamespace OPERATOR(pg_catalog.=) ns.oid\n");
+
+	/* Used to match the tables listed by the user */
+	if (tables_listed)
+		appendPQExpBuffer(&catalog_query, " JOIN listed_tables"
+						  " ON listed_tables.table_oid OPERATOR(pg_catalog.=) c.oid\n");
+
+	appendPQExpBuffer(&catalog_query, " WHERE c.relkind OPERATOR(pg_catalog.=) ANY (array["
+					  CppAsString2(RELKIND_RELATION) ", "
+					  CppAsString2(RELKIND_MATVIEW) "])\n");
+
+	/*
+	 * Execute the catalog query.  We use the default search_path for this
+	 * query for consistency with table lookups done elsewhere by the user.
+	 */
+	appendPQExpBuffer(&catalog_query, " ORDER BY c.relpages DESC;");
+	executeCommand(conn, "RESET search_path;", progname, echo);
+	res = executeQuery(conn, catalog_query.data, progname, echo);
+	termPQExpBuffer(&catalog_query);
+	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
+						 progname, echo));
+
+	/*
+	 * If no rows are returned, there are no matching tables, so we are done.
+	 */
+	ntups = PQntuples(res);
+	if (ntups == 0)
+	{
+		PQclear(res);
+		PQfinish(conn);
+		return;
+	}
+
+	/*
+	 * Build qualified identifiers for each table, including the column list
+	 * if given.
+	 */
+	initPQExpBuffer(&buf);
+	for (i = 0; i < ntups; i++)
+	{
+		appendPQExpBufferStr(&buf,
+							 fmtQualifiedId(PQgetvalue(res, i, 1),
+											PQgetvalue(res, i, 0)));
+
+		if (tables_listed && !PQgetisnull(res, i, 2))
+			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 2));
+
+		simple_string_list_append(&dbtables, buf.data);
+		resetPQExpBuffer(&buf);
+	}
+	termPQExpBuffer(&buf);
+	PQclear(res);
+
+	/*
+	 * If there are more connections than vacuumable relations, we don't need
+	 * to use them all.
+	 */
+	if (parallel)
+	{
 		if (concurrentCons > ntups)
 			concurrentCons = ntups;
 		if (concurrentCons <= 1)
 			parallel = false;
-		PQclear(res);
 	}
 
 	/*
@@ -493,10 +576,12 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 						   stage_commands[stage], progname, echo);
 	}
 
-	cell = tables ? tables->head : NULL;
+	initPQExpBuffer(&sql);
+
+	cell = dbtables.head;
 	do
 	{
-		const char *tabname = cell ? cell->val : NULL;
+		const char *tabname = cell->val;
 		ParallelSlot *free_slot;
 
 		if (CancelRequested)
@@ -529,12 +614,8 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		else
 			free_slot = slots;
 
-		/*
-		 * Prepare the vacuum command.  Note that in some cases this requires
-		 * query execution, so be sure to use the free connection.
-		 */
-		prepare_vacuum_command(&sql, free_slot->connection, vacopts, tabname,
-							   tables == &dbtables, progname, echo);
+		prepare_vacuum_command(&sql, PQserverVersion(free_slot->connection),
+							   vacopts, tabname);
 
 		/*
 		 * Execute the vacuum.  If not in parallel mode, this terminates the
@@ -544,8 +625,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		run_vacuum_command(free_slot->connection, sql.data,
 						   echo, tabname, progname, parallel);
 
-		if (cell)
-			cell = cell->next;
+		cell = cell->next;
 	} while (cell != NULL);
 
 	if (parallel)
@@ -653,14 +733,12 @@ vacuum_all_databases(vacuumingOptions *vacopts,
  * Construct a vacuum/analyze command to run based on the given options, in the
  * given string buffer, which may contain previous garbage.
  *
- * An optional table name can be passed; this must be already be properly
- * quoted.  The command is semicolon-terminated.
+ * The table name used must be already properly quoted.  The command generated
+ * depends on the server version involved and it is semicolon-terminated.
  */
 static void
-prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
-					   vacuumingOptions *vacopts, const char *table,
-					   bool table_pre_qualified,
-					   const char *progname, bool echo)
+prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
+					   vacuumingOptions *vacopts, const char *table)
 {
 	const char *paren = " (";
 	const char *comma = ", ";
@@ -673,12 +751,12 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
 		appendPQExpBufferStr(sql, "ANALYZE");
 
 		/* parenthesized grammar of ANALYZE is supported since v11 */
-		if (PQserverVersion(conn) >= 110000)
+		if (serverVersion >= 110000)
 		{
 			if (vacopts->skip_locked)
 			{
 				/* SKIP_LOCKED is supported since v12 */
-				Assert(PQserverVersion(conn) >= 120000);
+				Assert(serverVersion >= 120000);
 				appendPQExpBuffer(sql, "%sSKIP_LOCKED", sep);
 				sep = comma;
 			}
@@ -701,19 +779,19 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
 		appendPQExpBufferStr(sql, "VACUUM");
 
 		/* parenthesized grammar of VACUUM is supported since v9.0 */
-		if (PQserverVersion(conn) >= 90000)
+		if (serverVersion >= 90000)
 		{
 			if (vacopts->disable_page_skipping)
 			{
 				/* DISABLE_PAGE_SKIPPING is supported since v9.6 */
-				Assert(PQserverVersion(conn) >= 90600);
+				Assert(serverVersion >= 90600);
 				appendPQExpBuffer(sql, "%sDISABLE_PAGE_SKIPPING", sep);
 				sep = comma;
 			}
 			if (vacopts->skip_locked)
 			{
 				/* SKIP_LOCKED is supported since v12 */
-				Assert(PQserverVersion(conn) >= 120000);
+				Assert(serverVersion >= 120000);
 				appendPQExpBuffer(sql, "%sSKIP_LOCKED", sep);
 				sep = comma;
 			}
@@ -753,15 +831,7 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
 		}
 	}
 
-	if (table)
-	{
-		appendPQExpBufferChar(sql, ' ');
-		if (table_pre_qualified)
-			appendPQExpBufferStr(sql, table);
-		else
-			appendQualifiedRelation(sql, table, conn, progname, echo);
-	}
-	appendPQExpBufferChar(sql, ';');
+	appendPQExpBuffer(sql, " %s;", table);
 }
 
 /*
