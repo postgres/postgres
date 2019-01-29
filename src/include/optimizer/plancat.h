@@ -14,7 +14,7 @@
 #ifndef PLANCAT_H
 #define PLANCAT_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 #include "utils/relcache.h"
 
 /* Hook for plugins to get control in get_relation_info() */

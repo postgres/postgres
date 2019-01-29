@@ -14,7 +14,7 @@
 #ifndef APPENDINFO_H
 #define APPENDINFO_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 #include "utils/relcache.h"
 
 extern AppendRelInfo *make_append_rel_info(Relation parentrel,

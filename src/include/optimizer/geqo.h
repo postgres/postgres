@@ -22,7 +22,7 @@
 #ifndef GEQO_H
 #define GEQO_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 #include "optimizer/geqo_gene.h"
 
 

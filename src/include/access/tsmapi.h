@@ -13,7 +13,7 @@
 #define TSMAPI_H
 
 #include "nodes/execnodes.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 /*

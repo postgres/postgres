@@ -22,7 +22,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "nodes/nodes.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
 #include "utils/bytea.h"

@@ -215,7 +215,7 @@ typedef enum NodeTag
 	T_DomainConstraintState,
 
 	/*
-	 * TAGS FOR PLANNER NODES (relation.h)
+	 * TAGS FOR PLANNER NODES (pathnodes.h)
 	 */
 	T_PlannerInfo,
 	T_PlannerGlobal,
@@ -741,7 +741,7 @@ typedef enum JoinType
  * AggStrategy -
  *	  overall execution strategies for Agg plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 typedef enum AggStrategy
 {
@@ -755,7 +755,7 @@ typedef enum AggStrategy
  * AggSplit -
  *	  splitting (partial aggregation) modes for Agg plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 
 /* Primitive options supported by nodeAgg.c: */
@@ -785,7 +785,7 @@ typedef enum AggSplit
  * SetOpCmd and SetOpStrategy -
  *	  overall semantics and execution strategies for SetOp plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 typedef enum SetOpCmd
 {

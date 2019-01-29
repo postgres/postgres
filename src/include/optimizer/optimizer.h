@@ -25,10 +25,10 @@
 #include "nodes/parsenodes.h"
 
 /*
- * We don't want to include nodes/relation.h here, because non-planner
+ * We don't want to include nodes/pathnodes.h here, because non-planner
  * code should generally treat PlannerInfo as an opaque typedef.
  * But we'd like such code to use that typedef name, so define the
- * typedef either here or in relation.h, whichever is read first.
+ * typedef either here or in pathnodes.h, whichever is read first.
  */
 #ifndef HAVE_PLANNERINFO_TYPEDEF
 typedef struct PlannerInfo PlannerInfo;

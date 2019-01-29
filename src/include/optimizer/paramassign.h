@@ -13,7 +13,7 @@
 #ifndef PARAMASSIGN_H
 #define PARAMASSIGN_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 extern Param *replace_outer_var(PlannerInfo *root, Var *var);
 extern Param *replace_outer_placeholdervar(PlannerInfo *root,

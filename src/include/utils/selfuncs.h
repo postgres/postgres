@@ -17,7 +17,7 @@
 
 #include "fmgr.h"
 #include "access/htup.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 /*

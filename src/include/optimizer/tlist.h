@@ -14,7 +14,7 @@
 #ifndef TLIST_H
 #define TLIST_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 extern TargetEntry *tlist_member(Expr *node, List *targetlist);

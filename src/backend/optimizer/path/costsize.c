@@ -540,7 +540,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 	 * for scanning the index, as well as the selectivity of the index (ie,
 	 * the fraction of main-table tuples we will have to retrieve) and its
 	 * correlation to the main-table tuple order.  We need a cast here because
-	 * relation.h uses a weak function type to avoid including amapi.h.
+	 * pathnodes.h uses a weak function type to avoid including amapi.h.
 	 */
 	amcostestimate = (amcostestimate_function) index->amcostestimate;
 	amcostestimate(root, path, loop_count,
@@ -4072,7 +4072,7 @@ get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
  *	sjinfo: SpecialJoinInfo relevant to this join
  *	restrictlist: join quals
  * Output parameters:
- *	*semifactors is filled in (see relation.h for field definitions)
+ *	*semifactors is filled in (see pathnodes.h for field definitions)
  */
 void
 compute_semi_anti_join_factors(PlannerInfo *root,

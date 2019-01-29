@@ -21,7 +21,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 #include "optimizer/optimizer.h"
 #include "utils/array.h"
 #include "utils/inval.h"

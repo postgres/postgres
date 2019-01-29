@@ -13,8 +13,8 @@
 #ifndef SUBSELECT_H
 #define SUBSELECT_H
 
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 
 extern void SS_process_ctes(PlannerInfo *root);
 extern JoinExpr *convert_ANY_sublink_to_join(PlannerInfo *root,

@@ -17,7 +17,7 @@
 #include "access/generic_xlog.h"
 #include "access/itup.h"
 #include "access/xlog.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 #include "fmgr.h"
 
 /* Support procedures numbers */

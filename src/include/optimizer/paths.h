@@ -14,7 +14,7 @@
 #ifndef PATHS_H
 #define PATHS_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 /*

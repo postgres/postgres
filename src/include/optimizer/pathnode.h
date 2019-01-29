@@ -15,7 +15,7 @@
 #define PATHNODE_H
 
 #include "nodes/bitmapset.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 /*

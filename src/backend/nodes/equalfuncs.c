@@ -31,7 +31,7 @@
 
 #include "miscadmin.h"
 #include "nodes/extensible.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 #include "utils/datum.h"
 
 
@@ -814,7 +814,7 @@ _equalOnConflictExpr(const OnConflictExpr *a, const OnConflictExpr *b)
 }
 
 /*
- * Stuff from relation.h
+ * Stuff from pathnodes.h
  */
 
 static bool

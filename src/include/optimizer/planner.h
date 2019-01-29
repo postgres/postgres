@@ -18,8 +18,8 @@
 #ifndef PLANNER_H
 #define PLANNER_H
 
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 
 
 /* Hook for plugins to get control in planner() */

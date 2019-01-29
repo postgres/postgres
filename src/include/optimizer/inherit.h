@@ -14,7 +14,7 @@
 #ifndef INHERIT_H
 #define INHERIT_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 extern void expand_inherited_tables(PlannerInfo *root);

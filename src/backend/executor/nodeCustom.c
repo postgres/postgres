@@ -14,6 +14,7 @@
 #include "executor/executor.h"
 #include "executor/nodeCustom.h"
 #include "nodes/execnodes.h"
+#include "nodes/extensible.h"
 #include "nodes/plannodes.h"
 #include "miscadmin.h"
 #include "parser/parsetree.h"

@@ -32,8 +32,8 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/extensible.h"
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 #include "utils/datum.h"
 #include "utils/rel.h"
 
@@ -1676,7 +1676,7 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 
 /*****************************************************************************
  *
- *	Stuff from relation.h.
+ *	Stuff from pathnodes.h.
  *
  *****************************************************************************/
 

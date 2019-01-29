@@ -14,7 +14,7 @@
 #ifndef JOININFO_H
 #define JOININFO_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 extern bool have_relevant_joinclause(PlannerInfo *root,

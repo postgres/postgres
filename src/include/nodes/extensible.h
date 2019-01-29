@@ -17,8 +17,8 @@
 #include "access/parallel.h"
 #include "commands/explain.h"
 #include "nodes/execnodes.h"
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 
 /* maximum length of an extensible node identifier */
 #define EXTNODENAME_MAX_LEN					64

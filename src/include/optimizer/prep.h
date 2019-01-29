@@ -14,8 +14,8 @@
 #ifndef PREP_H
 #define PREP_H
 
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 
 
 /*

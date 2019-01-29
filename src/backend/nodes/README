@@ -36,8 +36,8 @@ FILES IN src/include/nodes/
 	nodes.h		- define node tags (NodeTag)
 	primnodes.h	- primitive nodes
 	parsenodes.h	- parse tree nodes
+	pathnodes.h	- path tree nodes and planner internal structures
 	plannodes.h	- plan tree nodes
-	relation.h	- planner internal nodes
 	execnodes.h	- executor nodes
 	memnodes.h	- memory nodes
 	pg_list.h	- generic list

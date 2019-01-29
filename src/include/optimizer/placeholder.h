@@ -14,7 +14,7 @@
 #ifndef PLACEHOLDER_H
 #define PLACEHOLDER_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 extern PlaceHolderVar *make_placeholder_expr(PlannerInfo *root, Expr *expr,

@@ -14,8 +14,8 @@
 #ifndef COST_H
 #define COST_H
 
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 
 
 /* defaults for costsize.c's Cost parameters */

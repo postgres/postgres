@@ -14,7 +14,7 @@
 #define STATISTICS_H
 
 #include "commands/vacuum.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 #define STATS_MAX_DIMENSIONS	8	/* max number of attributes */
 

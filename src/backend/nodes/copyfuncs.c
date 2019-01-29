@@ -24,8 +24,8 @@
 
 #include "miscadmin.h"
 #include "nodes/extensible.h"
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 #include "utils/datum.h"
 #include "utils/rel.h"
 
@@ -2196,7 +2196,7 @@ _copyOnConflictExpr(const OnConflictExpr *from)
 }
 
 /* ****************************************************************
- *						relation.h copy functions
+ *						pathnodes.h copy functions
  *
  * We don't support copying RelOptInfo, IndexOptInfo, or Path nodes.
  * There are some subsidiary structs that are useful to copy, though.

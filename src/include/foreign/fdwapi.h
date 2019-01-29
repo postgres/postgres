@@ -14,7 +14,7 @@
 
 #include "access/parallel.h"
 #include "nodes/execnodes.h"
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 /* To avoid including explain.h here, reference ExplainState thus: */
 struct ExplainState;

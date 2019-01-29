@@ -22,8 +22,8 @@
 #include "access/printtup.h"
 #include "lib/stringinfo.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/pathnodes.h"
 #include "nodes/print.h"
-#include "nodes/relation.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 

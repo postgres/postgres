@@ -14,7 +14,7 @@
 #ifndef ORCLAUSES_H
 #define ORCLAUSES_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 extern void extract_restriction_or_clauses(PlannerInfo *root);
 

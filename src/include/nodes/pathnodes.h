@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
- * relation.h
- *	  Definitions for planner's internal data structures.
+ * pathnodes.h
+ *	  Definitions for planner's internal data structures, especially Paths.
  *
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/nodes/relation.h
+ * src/include/nodes/pathnodes.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef RELATION_H
-#define RELATION_H
+#ifndef PATHNODES_H
+#define PATHNODES_H
 
 #include "access/sdir.h"
 #include "fmgr.h"
@@ -2433,4 +2433,4 @@ typedef struct JoinCostWorkspace
 	double		inner_rows_total;
 } JoinCostWorkspace;
 
-#endif							/* RELATION_H */
+#endif							/* PATHNODES_H */

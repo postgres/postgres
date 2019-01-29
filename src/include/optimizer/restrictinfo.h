@@ -14,7 +14,7 @@
 #ifndef RESTRICTINFO_H
 #define RESTRICTINFO_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 
 /* Convenience macro for the common case of a valid-everywhere qual */
