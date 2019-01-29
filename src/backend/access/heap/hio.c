@@ -204,8 +204,7 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 		/*
 		 * Extend by one page.  This should generally match the main-line
 		 * extension code in RelationGetBufferForTuple, except that we hold
-		 * the relation extension lock throughout, and we don't immediately
-		 * initialize the page (see below).
+		 * the relation extension lock throughout.
 		 */
 		buffer = ReadBufferBI(relation, P_NEW, bistate);
 
@@ -217,16 +216,18 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 				 BufferGetBlockNumber(buffer),
 				 RelationGetRelationName(relation));
 
+		PageInit(page, BufferGetPageSize(buffer), 0);
+
 		/*
-		 * Add the page to the FSM without initializing. If we were to
-		 * initialize here the page would potentially get flushed out to disk
-		 * before we add any useful content. There's no guarantee that that'd
-		 * happen before a potential crash, so we need to deal with
-		 * uninitialized pages anyway, thus avoid the potential for
-		 * unnecessary writes.
+		 * We mark all the new buffers dirty, but do nothing to write them
+		 * out; they'll probably get used soon, and even if they are not, a
+		 * crash will leave an okay all-zeroes page on disk.
 		 */
+		MarkBufferDirty(buffer);
+
+		/* we'll need this info below */
 		blockNum = BufferGetBlockNumber(buffer);
-		freespace = BufferGetPageSize(buffer) - SizeOfPageHeaderData;
+		freespace = PageGetHeapFreeSpace(page);
 
 		UnlockReleaseBuffer(buffer);
 
@@ -478,18 +479,6 @@ loop:
 		 * we're done.
 		 */
 		page = BufferGetPage(buffer);
-
-		/*
-		 * Initialize page, it'll be used soon.  We could avoid dirtying the
-		 * buffer here, and rely on the caller to do so whenever it puts a
-		 * tuple onto the page, but there seems not much benefit in doing so.
-		 */
-		if (PageIsNew(page))
-		{
-			PageInit(page, BufferGetPageSize(buffer), 0);
-			MarkBufferDirty(buffer);
-		}
-
 		pageFreeSpace = PageGetHeapFreeSpace(page);
 		if (len + saveFreeSpace <= pageFreeSpace)
 		{
