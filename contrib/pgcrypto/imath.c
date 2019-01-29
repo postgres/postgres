@@ -2050,7 +2050,7 @@ mp_int_read_cstring(mp_int z, mp_size radix, const char *str, char **end)
 		MP_SIGN(z) = MP_ZPOS;
 
 	if (end != NULL)
-		*end = (char *) str;
+		*end = unconstify(char *, str);
 
 	/*
 	 * Return a truncation error if the string has unprocessed characters

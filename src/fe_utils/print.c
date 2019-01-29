@@ -3250,7 +3250,7 @@ printTableCleanup(printTableContent *const content)
 		for (i = 0; i < content->nrows * content->ncolumns; i++)
 		{
 			if (content->cellmustfree[i])
-				free((char *) content->cells[i]);
+				free(unconstify(char *, content->cells[i]));
 		}
 		free(content->cellmustfree);
 		content->cellmustfree = NULL;

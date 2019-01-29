@@ -117,7 +117,7 @@ compress_process(PushFilter *next, void *priv, const uint8 *data, int len)
 	 */
 	while (len > 0)
 	{
-		st->stream.next_in = (void *) data;
+		st->stream.next_in = unconstify(uint8 *, data);
 		st->stream.avail_in = len;
 		st->stream.next_out = st->buf;
 		st->stream.avail_out = st->buf_len;

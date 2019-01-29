@@ -4897,7 +4897,7 @@ add_placeholder_variable(const char *name, int elevel)
 
 	if (!add_guc_variable((struct config_generic *) var, elevel))
 	{
-		free((void *) gen->name);
+		free(unconstify(char *, gen->name));
 		free(var);
 		return NULL;
 	}

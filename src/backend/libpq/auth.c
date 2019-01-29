@@ -867,7 +867,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 	void	   *scram_opaq = NULL;
 	char	   *output = NULL;
 	int			outputlen = 0;
-	char	   *input;
+	const char *input;
 	int			inputlen;
 	int			result;
 	bool		initial;
@@ -964,14 +964,14 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 			if (inputlen == -1)
 				input = NULL;
 			else
-				input = (char *) pq_getmsgbytes(&buf, inputlen);
+				input = pq_getmsgbytes(&buf, inputlen);
 
 			initial = false;
 		}
 		else
 		{
 			inputlen = buf.len;
-			input = (char *) pq_getmsgbytes(&buf, buf.len);
+			input = pq_getmsgbytes(&buf, buf.len);
 		}
 		pq_getmsgend(&buf);
 
@@ -985,7 +985,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 		 * we pass 'logdetail' as NULL when doing a mock authentication,
 		 * because we should already have a better error message in that case
 		 */
-		result = pg_be_scram_exchange(scram_opaq, input, inputlen,
+		result = pg_be_scram_exchange(scram_opaq, unconstify(char *, input), inputlen,
 									  &output, &outputlen,
 									  logdetail);
 
@@ -2175,7 +2175,7 @@ CheckPAMAuth(Port *port, const char *user, const char *password)
 	 * later used inside the PAM conversation to pass the password to the
 	 * authentication module.
 	 */
-	pam_passw_conv.appdata_ptr = (char *) password; /* from password above,
+	pam_passw_conv.appdata_ptr = unconstify(char *, password); /* from password above,
 													 * not allocated */
 
 	/* Optionally, one can set the service name in pg_hba.conf */

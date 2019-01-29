@@ -1970,7 +1970,7 @@ BaseBackup(void)
 		 */
 		if (format == 'p' && !PQgetisnull(res, i, 1))
 		{
-			char	   *path = (char *) get_tablespace_mapping(PQgetvalue(res, i, 1));
+			char	   *path = unconstify(char *, get_tablespace_mapping(PQgetvalue(res, i, 1)));
 
 			verify_dir_is_empty_or_create(path, &made_tablespace_dirs, &found_tablespace_dirs);
 		}

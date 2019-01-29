@@ -185,10 +185,10 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 		c.upper = &cur[tinfo->size];
 		/* if out->lower > cur->lower, adopt cur as lower */
 		if (tinfo->f_gt(o.lower, c.lower, flinfo))
-			memcpy((void *) o.lower, c.lower, tinfo->size);
+			memcpy(unconstify(GBT_NUMKEY *, o.lower), c.lower, tinfo->size);
 		/* if out->upper < cur->upper, adopt cur as upper */
 		if (tinfo->f_lt(o.upper, c.upper, flinfo))
-			memcpy((void *) o.upper, c.upper, tinfo->size);
+			memcpy(unconstify(GBT_NUMKEY *, o.upper), c.upper, tinfo->size);
 	}
 
 	return out;
@@ -237,9 +237,9 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo, FmgrInfo *
 		ur.lower = &(((GBT_NUMKEY *) DatumGetPointer(*u))[0]);
 		ur.upper = &(((GBT_NUMKEY *) DatumGetPointer(*u))[tinfo->size]);
 		if (tinfo->f_gt(ur.lower, rd.lower, flinfo))
-			memcpy((void *) ur.lower, rd.lower, tinfo->size);
+			memcpy(unconstify(GBT_NUMKEY *, ur.lower), rd.lower, tinfo->size);
 		if (tinfo->f_lt(ur.upper, rd.upper, flinfo))
-			memcpy((void *) ur.upper, rd.upper, tinfo->size);
+			memcpy(unconstify(GBT_NUMKEY *, ur.upper), rd.upper, tinfo->size);
 	}
 }
 

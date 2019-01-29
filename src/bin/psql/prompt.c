@@ -181,7 +181,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 				case '5':
 				case '6':
 				case '7':
-					*buf = (char) strtol(p, (char **) &p, 8);
+					*buf = (char) strtol(p, unconstify(char **, &p), 8);
 					--p;
 					break;
 				case 'R':

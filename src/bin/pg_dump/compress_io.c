@@ -312,7 +312,7 @@ static void
 WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 					   const char *data, size_t dLen)
 {
-	cs->zp->next_in = (void *) data;
+	cs->zp->next_in = (void *) unconstify(char *, data);
 	cs->zp->avail_in = dLen;
 	DeflateCompressorZlib(AH, cs, false);
 

@@ -610,7 +610,7 @@ call_pltcl_start_proc(Oid prolang, bool pltrusted)
 
 	/* Set up errcontext callback to make errors more helpful */
 	errcallback.callback = start_proc_error_callback;
-	errcallback.arg = (void *) gucname;
+	errcallback.arg = unconstify(char *, gucname);
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 
@@ -3081,7 +3081,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 		else
 			Tcl_UnsetVar2(interp, *arrptr, *nameptr, 0);
 
-		pfree((char *) attname);
+		pfree(unconstify(char *, attname));
 	}
 }
 

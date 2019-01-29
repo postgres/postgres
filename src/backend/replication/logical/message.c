@@ -69,8 +69,8 @@ LogLogicalMessage(const char *prefix, const char *message, size_t size,
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, SizeOfLogicalMessage);
-	XLogRegisterData((char *) prefix, xlrec.prefix_size);
-	XLogRegisterData((char *) message, size);
+	XLogRegisterData(unconstify(char *, prefix), xlrec.prefix_size);
+	XLogRegisterData(unconstify(char *, message), size);
 
 	/* allow origin filtering */
 	XLogSetRecordFlags(XLOG_INCLUDE_ORIGIN);

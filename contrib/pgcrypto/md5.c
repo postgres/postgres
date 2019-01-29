@@ -161,7 +161,7 @@ md5_loop(md5_ctxt *ctxt, const uint8 *input, unsigned len)
 		md5_calc(ctxt->md5_buf, ctxt);
 
 		for (i = gap; i + MD5_BUFLEN <= len; i += MD5_BUFLEN)
-			md5_calc((uint8 *) (input + i), ctxt);
+			md5_calc(unconstify(uint8 *, (input + i)), ctxt);
 
 		ctxt->md5_i = len - i;
 		memmove(ctxt->md5_buf, input + i, ctxt->md5_i);

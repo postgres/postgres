@@ -496,7 +496,7 @@ tar_write(Walfile f, const void *buf, size_t count)
 #ifdef HAVE_LIBZ
 	else
 	{
-		if (!tar_write_compressed_data((void *) buf, count, false))
+		if (!tar_write_compressed_data(unconstify(void *, buf), count, false))
 			return -1;
 		((TarMethodFile *) f)->currpos += count;
 		return count;
