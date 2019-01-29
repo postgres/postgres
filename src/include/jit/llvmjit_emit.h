@@ -9,8 +9,16 @@
 #ifndef LLVMJIT_EMIT_H
 #define LLVMJIT_EMIT_H
 
+/*
+ * To avoid breaking cpluspluscheck, allow including the file even when LLVM
+ * is not available.
+ */
+#ifdef USE_LLVM
 
 #include <llvm-c/Core.h>
+
+#include "fmgr.h"
+#include "jit/llvmjit.h"
 
 
 /*
@@ -263,4 +271,5 @@ l_funcvalue(LLVMBuilderRef b, LLVMValueRef v_fcinfo, size_t argno)
 	return LLVMBuildLoad(b, l_funcvaluep(b, v_fcinfo, argno), "");
 }
 
+#endif							/* USE_LLVM */
 #endif
