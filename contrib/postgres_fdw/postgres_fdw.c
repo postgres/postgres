@@ -2625,7 +2625,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		 * bare scan each time. Instead, use the costs if we have cached them
 		 * already.
 		 */
-		if (fpinfo->rel_startup_cost > 0 && fpinfo->rel_total_cost > 0)
+		if (fpinfo->rel_startup_cost >= 0 && fpinfo->rel_total_cost >= 0)
 		{
 			startup_cost = fpinfo->rel_startup_cost;
 			run_cost = fpinfo->rel_total_cost - fpinfo->rel_startup_cost;
