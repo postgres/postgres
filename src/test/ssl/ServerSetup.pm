@@ -14,6 +14,16 @@
 # The server is configured to only accept connections from localhost. If you
 # want to run the client from another host, you'll have to configure that
 # manually.
+#
+# Note: Someone running these test could have key or certificate files
+# in their ~/.postgresql/, which would interfere with the tests.  The
+# way to override that is to specify sslcert=invalid and/or
+# sslrootcert=invalid if no actual certificate is used for a
+# particular test.  libpq will ignore specifications that name
+# nonexisting files.  (sslkey and sslcrl do not need to specified
+# explicitly because an invalid sslcert or sslrootcert, respectively,
+# causes those to be ignored.)
+
 package ServerSetup;
 
 use strict;
