@@ -306,8 +306,8 @@ PostgreSQL documentation
              backup will fail and be unusable.
            </para>
            <para>
-            The write-ahead log files will be written to
-            the <filename>base.tar</filename> file.
+            When tar format mode is used, the write-ahead log files will be
+            written to the <filename>base.tar</filename> file.
            </para>
           </listitem>
          </varlistentry>
@@ -326,9 +326,10 @@ PostgreSQL documentation
              requires no extra write-ahead logs to be saved on the master.
            </para>
            <para>
-            The write-ahead log files are written to a separate file
-            named <filename>pg_wal.tar</filename> (if the server is a version
-            earlier than 10, the file will be named <filename>pg_xlog.tar</filename>).
+            When tar format mode is used, the write-ahead log files will be
+            written to a separate file named <filename>pg_wal.tar</filename> 
+            (if the server is a version earlier than 10, the file will be named
+            <filename>pg_xlog.tar</filename>).
            </para>
            <para>
             This value is the default.
