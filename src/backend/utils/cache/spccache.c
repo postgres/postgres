@@ -22,7 +22,7 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
-#include "optimizer/cost.h"
+#include "optimizer/optimizer.h"
 #include "storage/bufmgr.h"
 #include "utils/catcache.h"
 #include "utils/hsearch.h"

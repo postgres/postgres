@@ -17,7 +17,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"
-#include "optimizer/clauses.h"
+#include "nodes/relation.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"

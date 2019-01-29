@@ -39,8 +39,6 @@
 #include "executor/tqueue.h"
 #include "jit/jit.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/planmain.h"
-#include "optimizer/planner.h"
 #include "storage/spin.h"
 #include "tcop/tcopprot.h"
 #include "utils/datum.h"

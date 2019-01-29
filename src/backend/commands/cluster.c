@@ -38,7 +38,7 @@
 #include "commands/tablecmds.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
-#include "optimizer/planner.h"
+#include "optimizer/optimizer.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"

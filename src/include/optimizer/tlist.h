@@ -24,28 +24,12 @@ extern List *add_to_flat_tlist(List *tlist, List *exprs);
 
 extern List *get_tlist_exprs(List *tlist, bool includeJunk);
 
-extern int	count_nonjunk_tlist_entries(List *tlist);
-
 extern bool tlist_same_exprs(List *tlist1, List *tlist2);
 
 extern bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 extern bool tlist_same_collations(List *tlist, List *colCollations, bool junkOK);
 
 extern void apply_tlist_labeling(List *dest_tlist, List *src_tlist);
-
-extern TargetEntry *get_sortgroupref_tle(Index sortref,
-					 List *targetList);
-extern TargetEntry *get_sortgroupclause_tle(SortGroupClause *sgClause,
-						List *targetList);
-extern Node *get_sortgroupclause_expr(SortGroupClause *sgClause,
-						 List *targetList);
-extern List *get_sortgrouplist_exprs(List *sgClauses,
-						List *targetList);
-
-extern SortGroupClause *get_sortgroupref_clause(Index sortref,
-						List *clauses);
-extern SortGroupClause *get_sortgroupref_clause_noerr(Index sortref,
-							  List *clauses);
 
 extern Oid *extract_grouping_ops(List *groupClause);
 extern AttrNumber *extract_grouping_cols(List *groupClause, List *tlist);

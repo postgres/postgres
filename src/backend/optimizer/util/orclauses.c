@@ -19,6 +19,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/orclauses.h"
 #include "optimizer/restrictinfo.h"
 

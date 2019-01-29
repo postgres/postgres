@@ -23,7 +23,7 @@
 #include "executor/tqueue.h"
 #include "lib/binaryheap.h"
 #include "miscadmin.h"
-#include "optimizer/planmain.h"
+#include "optimizer/optimizer.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 

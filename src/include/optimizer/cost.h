@@ -44,15 +44,7 @@ typedef enum
  *	  routines to compute costs and sizes
  */
 
-/* parameter variables and flags */
-extern PGDLLIMPORT double seq_page_cost;
-extern PGDLLIMPORT double random_page_cost;
-extern PGDLLIMPORT double cpu_tuple_cost;
-extern PGDLLIMPORT double cpu_index_tuple_cost;
-extern PGDLLIMPORT double cpu_operator_cost;
-extern PGDLLIMPORT double parallel_tuple_cost;
-extern PGDLLIMPORT double parallel_setup_cost;
-extern PGDLLIMPORT int effective_cache_size;
+/* parameter variables and flags (see also optimizer.h) */
 extern PGDLLIMPORT Cost disable_cost;
 extern PGDLLIMPORT int max_parallel_workers_per_gather;
 extern PGDLLIMPORT bool enable_seqscan;
@@ -74,7 +66,6 @@ extern PGDLLIMPORT bool enable_parallel_hash;
 extern PGDLLIMPORT bool enable_partition_pruning;
 extern PGDLLIMPORT int constraint_exclusion;
 
-extern double clamp_row_est(double nrows);
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
 					double index_pages, PlannerInfo *root);
 extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
@@ -165,6 +156,10 @@ extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 					JoinPathExtraData *extra);
 extern void cost_gather(GatherPath *path, PlannerInfo *root,
 			RelOptInfo *baserel, ParamPathInfo *param_info, double *rows);
+extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
+				  RelOptInfo *rel, ParamPathInfo *param_info,
+				  Cost input_startup_cost, Cost input_total_cost,
+				  double *rows);
 extern void cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan);
 extern void cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root);
 extern void cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root);
@@ -203,24 +198,5 @@ extern void set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern PathTarget *set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target);
 extern double compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
 					 Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
-
-/*
- * prototypes for clausesel.c
- *	  routines to compute clause selectivities
- */
-extern Selectivity clauselist_selectivity(PlannerInfo *root,
-					   List *clauses,
-					   int varRelid,
-					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo);
-extern Selectivity clause_selectivity(PlannerInfo *root,
-				   Node *clause,
-				   int varRelid,
-				   JoinType jointype,
-				   SpecialJoinInfo *sjinfo);
-extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
-				  RelOptInfo *rel, ParamPathInfo *param_info,
-				  Cost input_startup_cost, Cost input_total_cost,
-				  double *rows);
 
 #endif							/* COST_H */

@@ -35,9 +35,6 @@ extern double expression_returns_set_rows(Node *clause);
 
 extern bool contain_subplans(Node *clause);
 
-extern bool contain_mutable_functions(Node *clause);
-extern bool contain_volatile_functions(Node *clause);
-extern bool contain_volatile_functions_not_nextval(Node *clause);
 extern char max_parallel_hazard(Query *parse);
 extern bool is_parallel_safe(PlannerInfo *root, Node *node);
 extern bool contain_nonstrict_functions(Node *clause);
@@ -56,17 +53,7 @@ extern int	NumRelids(Node *clause);
 extern void CommuteOpExpr(OpExpr *clause);
 extern void CommuteRowCompareExpr(RowCompareExpr *clause);
 
-extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
-
-extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
-
-extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
-						   Oid result_collation);
-
 extern Query *inline_set_returning_function(PlannerInfo *root,
 							  RangeTblEntry *rte);
-
-extern List *expand_function_arguments(List *args, Oid result_type,
-						  HeapTuple func_tuple);
 
 #endif							/* CLAUSES_H */

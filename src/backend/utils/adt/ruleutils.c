@@ -49,7 +49,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/tlist.h"
+#include "optimizer/optimizer.h"
 #include "parser/parse_node.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"

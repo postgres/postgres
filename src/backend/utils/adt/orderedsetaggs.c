@@ -22,7 +22,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/tlist.h"
+#include "optimizer/optimizer.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

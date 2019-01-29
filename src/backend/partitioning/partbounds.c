@@ -22,7 +22,6 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
 #include "partitioning/partprune.h"
 #include "partitioning/partbounds.h"

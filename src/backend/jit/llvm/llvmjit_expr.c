@@ -33,7 +33,6 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/planner.h"
 #include "parser/parse_coerce.h"
 #include "parser/parsetree.h"
 #include "pgstat.h"

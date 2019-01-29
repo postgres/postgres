@@ -37,7 +37,6 @@
 #include "lib/pairingheap.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/clauses.h"
 #include "utils/array.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"

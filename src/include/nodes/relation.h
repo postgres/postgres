@@ -159,11 +159,17 @@ typedef struct PlannerGlobal
  * It holds links to all of the planner's working state, in addition to the
  * original Query.  Note that at present the planner extensively modifies
  * the passed-in Query data structure; someday that should stop.
+ *
+ * For reasons explained in optimizer/optimizer.h, we define the typedef
+ * either here or in that header, whichever is read first.
  *----------
  */
-struct AppendRelInfo;
+#ifndef HAVE_PLANNERINFO_TYPEDEF
+typedef struct PlannerInfo PlannerInfo;
+#define HAVE_PLANNERINFO_TYPEDEF 1
+#endif
 
-typedef struct PlannerInfo
+struct PlannerInfo
 {
 	NodeTag		type;
 
@@ -173,7 +179,7 @@ typedef struct PlannerInfo
 
 	Index		query_level;	/* 1 at the outermost Query */
 
-	struct PlannerInfo *parent_root;	/* NULL at outermost Query */
+	PlannerInfo *parent_root;	/* NULL at outermost Query */
 
 	/*
 	 * plan_params contains the expressions that this query level needs to
@@ -342,7 +348,7 @@ typedef struct PlannerInfo
 
 	/* Does this query modify any partition key columns? */
 	bool		partColsUpdated;
-} PlannerInfo;
+};
 
 
 /*
@@ -2065,8 +2071,12 @@ typedef struct PlaceHolderVar
  * plain innerjoin semantics.  Note that lhs_strict, delay_upper_joins, and
  * of course the semi_xxx fields are not set meaningfully within such structs.
  */
+#ifndef HAVE_SPECIALJOININFO_TYPEDEF
+typedef struct SpecialJoinInfo SpecialJoinInfo;
+#define HAVE_SPECIALJOININFO_TYPEDEF 1
+#endif
 
-typedef struct SpecialJoinInfo
+struct SpecialJoinInfo
 {
 	NodeTag		type;
 	Relids		min_lefthand;	/* base relids in minimum LHS for join */
@@ -2081,7 +2091,7 @@ typedef struct SpecialJoinInfo
 	bool		semi_can_hash;	/* true if semi_operators are all hash */
 	List	   *semi_operators; /* OIDs of equality join operators */
 	List	   *semi_rhs_exprs; /* righthand-side expressions of these ops */
-} SpecialJoinInfo;
+};
 
 /*
  * Append-relation info.

@@ -13,7 +13,6 @@
 #include "postgres.h"
 
 #include "fmgr.h"
-#include "optimizer/cost.h"
 #include "utils/selfuncs.h"
 
 #include "bloom.h"

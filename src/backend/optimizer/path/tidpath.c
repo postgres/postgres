@@ -40,10 +40,10 @@
 #include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
-#include "optimizer/var.h"
 
 
 /*

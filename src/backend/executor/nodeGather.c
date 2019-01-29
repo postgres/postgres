@@ -38,7 +38,7 @@
 #include "executor/nodeSubplan.h"
 #include "executor/tqueue.h"
 #include "miscadmin.h"
-#include "optimizer/planmain.h"
+#include "optimizer/optimizer.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"

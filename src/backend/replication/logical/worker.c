@@ -23,61 +23,46 @@
 
 #include "postgres.h"
 
-#include "miscadmin.h"
-#include "pgstat.h"
-#include "funcapi.h"
-
 #include "access/table.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
-
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
-
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
-
 #include "executor/executor.h"
 #include "executor/nodeModifyTable.h"
-
+#include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
-
 #include "mb/pg_wchar.h"
-
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
-
-#include "optimizer/planner.h"
-
+#include "optimizer/optimizer.h"
 #include "parser/parse_relation.h"
-
+#include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/walwriter.h"
-
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/logicalproto.h"
 #include "replication/logicalrelation.h"
 #include "replication/logicalworker.h"
-#include "replication/reorderbuffer.h"
 #include "replication/origin.h"
+#include "replication/reorderbuffer.h"
 #include "replication/snapbuild.h"
 #include "replication/walreceiver.h"
 #include "replication/worker_internal.h"
-
 #include "rewrite/rewriteHandler.h"
-
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
-
 #include "tcop/tcopprot.h"
-
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/datum.h"
@@ -87,8 +72,8 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/timeout.h"
 #include "utils/syscache.h"
+#include "utils/timeout.h"
 
 #define NAPTIME_PER_CYCLE 1000	/* max sleep time between cycles (1s) */
 

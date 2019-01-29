@@ -52,7 +52,6 @@
 #include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"

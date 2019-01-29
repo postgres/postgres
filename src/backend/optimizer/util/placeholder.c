@@ -17,10 +17,10 @@
 
 #include "nodes/nodeFuncs.h"
 #include "optimizer/cost.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
-#include "optimizer/var.h"
 #include "utils/lsyscache.h"
 
 /* Local functions */

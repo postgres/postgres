@@ -22,8 +22,8 @@
 
 #include "access/sysattr.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/prep.h"
-#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 

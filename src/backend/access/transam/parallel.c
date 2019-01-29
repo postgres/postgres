@@ -28,7 +28,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqmq.h"
 #include "miscadmin.h"
-#include "optimizer/planmain.h"
+#include "optimizer/optimizer.h"
 #include "pgstat.h"
 #include "storage/ipc.h"
 #include "storage/sinval.h"

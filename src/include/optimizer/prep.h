@@ -32,12 +32,6 @@ extern Relids get_relids_in_jointree(Node *jtnode, bool include_joins);
 extern Relids get_relids_for_join(Query *query, int joinrelid);
 
 /*
- * prototypes for prepqual.c
- */
-extern Node *negate_clause(Node *node);
-extern Expr *canonicalize_qual(Expr *qual, bool is_check);
-
-/*
  * prototypes for preptlist.c
  */
 extern List *preprocess_targetlist(PlannerInfo *root);

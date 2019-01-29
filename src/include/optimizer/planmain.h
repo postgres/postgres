@@ -17,19 +17,9 @@
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 
-/* possible values for force_parallel_mode */
-typedef enum
-{
-	FORCE_PARALLEL_OFF,
-	FORCE_PARALLEL_ON,
-	FORCE_PARALLEL_REGRESS
-}			ForceParallelMode;
-
 /* GUC parameters */
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
 extern double cursor_tuple_fraction;
-extern int	force_parallel_mode;
-extern bool parallel_leader_participation;
 
 /* query_planner callback to compute query_pathkeys */
 typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
@@ -119,10 +109,6 @@ extern bool innerrel_is_unique(PlannerInfo *root,
 extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
 extern void record_plan_function_dependency(PlannerInfo *root, Oid funcid);
 extern void record_plan_type_dependency(PlannerInfo *root, Oid typid);
-extern void extract_query_dependencies(Node *query,
-						   List **relationOids,
-						   List **invalItems,
-						   bool *hasRowSecurity);
 extern bool extract_query_dependencies_walker(Node *node, PlannerInfo *root);
 
 #endif							/* PLANMAIN_H */

@@ -22,7 +22,6 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/pg_amop.h"
-#include "optimizer/paths.h"
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
@@ -32,9 +31,6 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-extern Expr *spgcanorderbyop(IndexOptInfo *index,
-				PathKey *pathkey, int pathkeyno,
-				Expr *orderby_clause, int *indexcol_p);
 
 /*
  * SP-GiST handler function: return IndexAmRoutine with access method parameters

@@ -24,11 +24,11 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
-#include "optimizer/var.h"
 #include "utils/lsyscache.h"
 
 

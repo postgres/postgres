@@ -49,7 +49,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
-#include "optimizer/planner.h"
+#include "optimizer/optimizer.h"
 #include "pgstat.h"
 #include "pg_trace.h"
 #include "parser/analyze.h"

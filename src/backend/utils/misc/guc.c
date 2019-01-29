@@ -50,6 +50,7 @@
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"

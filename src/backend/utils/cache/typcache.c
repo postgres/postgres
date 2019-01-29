@@ -59,7 +59,7 @@
 #include "commands/defrem.h"
 #include "executor/executor.h"
 #include "lib/dshash.h"
-#include "optimizer/planner.h"
+#include "optimizer/optimizer.h"
 #include "storage/lwlock.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"

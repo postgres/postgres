@@ -25,11 +25,11 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/joininfo.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 #include "utils/lsyscache.h"
 
 /* local functions */

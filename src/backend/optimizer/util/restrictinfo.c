@@ -17,8 +17,8 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/restrictinfo.h"
-#include "optimizer/var.h"
 
 
 static RestrictInfo *make_restrictinfo_internal(Expr *clause,

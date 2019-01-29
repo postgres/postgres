@@ -31,8 +31,7 @@
 #include "access/relscan.h"
 #include "access/tsmapi.h"
 #include "catalog/pg_type.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
+#include "optimizer/optimizer.h"
 #include "utils/builtins.h"
 
 
