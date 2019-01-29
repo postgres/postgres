@@ -1755,7 +1755,7 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 				 enum ECPG_statement_type statement_type, const char *query,
 				 va_list args, struct statement **stmt_out)
 {
-	struct statement *stmt;
+	struct statement *stmt = NULL;
 	struct connection *con;
 	enum ECPGttype type;
 	struct variable **list;
