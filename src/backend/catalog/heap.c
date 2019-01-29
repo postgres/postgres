@@ -777,7 +777,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		{
 			FormData_pg_attribute attStruct;
 
-			memcpy(&attStruct, (char *) SysAtt[i], sizeof(FormData_pg_attribute));
+			memcpy(&attStruct, SysAtt[i], sizeof(FormData_pg_attribute));
 
 			/* Fill in the correct relation OID in the copied tuple */
 			attStruct.attrelid = new_rel_oid;

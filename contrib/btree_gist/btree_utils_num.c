@@ -185,10 +185,10 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 		c.upper = &cur[tinfo->size];
 		/* if out->lower > cur->lower, adopt cur as lower */
 		if (tinfo->f_gt(o.lower, c.lower, flinfo))
-			memcpy((void *) o.lower, (void *) c.lower, tinfo->size);
+			memcpy((void *) o.lower, c.lower, tinfo->size);
 		/* if out->upper < cur->upper, adopt cur as upper */
 		if (tinfo->f_lt(o.upper, c.upper, flinfo))
-			memcpy((void *) o.upper, (void *) c.upper, tinfo->size);
+			memcpy((void *) o.upper, c.upper, tinfo->size);
 	}
 
 	return out;
@@ -206,10 +206,10 @@ gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo
 	GBT_NUMKEY_R b1,
 				b2;
 
-	b1.lower = &(((GBT_NUMKEY *) a)[0]);
-	b1.upper = &(((GBT_NUMKEY *) a)[tinfo->size]);
-	b2.lower = &(((GBT_NUMKEY *) b)[0]);
-	b2.upper = &(((GBT_NUMKEY *) b)[tinfo->size]);
+	b1.lower = &(a[0]);
+	b1.upper = &(a[tinfo->size]);
+	b2.lower = &(b[0]);
+	b2.upper = &(b[tinfo->size]);
 
 	return (tinfo->f_eq(b1.lower, b2.lower, flinfo) &&
 			tinfo->f_eq(b1.upper, b2.upper, flinfo));
@@ -227,8 +227,8 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo, FmgrInfo *
 	if (!DatumGetPointer(*u))
 	{
 		*u = PointerGetDatum(palloc0(tinfo->indexsize));
-		memcpy((void *) &(((GBT_NUMKEY *) DatumGetPointer(*u))[0]), (void *) rd.lower, tinfo->size);
-		memcpy((void *) &(((GBT_NUMKEY *) DatumGetPointer(*u))[tinfo->size]), (void *) rd.upper, tinfo->size);
+		memcpy(&(((GBT_NUMKEY *) DatumGetPointer(*u))[0]), rd.lower, tinfo->size);
+		memcpy(&(((GBT_NUMKEY *) DatumGetPointer(*u))[tinfo->size]), rd.upper, tinfo->size);
 	}
 	else
 	{
@@ -236,10 +236,10 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo, FmgrInfo *
 
 		ur.lower = &(((GBT_NUMKEY *) DatumGetPointer(*u))[0]);
 		ur.upper = &(((GBT_NUMKEY *) DatumGetPointer(*u))[tinfo->size]);
-		if (tinfo->f_gt((void *) ur.lower, (void *) rd.lower, flinfo))
-			memcpy((void *) ur.lower, (void *) rd.lower, tinfo->size);
-		if (tinfo->f_lt((void *) ur.upper, (void *) rd.upper, flinfo))
-			memcpy((void *) ur.upper, (void *) rd.upper, tinfo->size);
+		if (tinfo->f_gt(ur.lower, rd.lower, flinfo))
+			memcpy((void *) ur.lower, rd.lower, tinfo->size);
+		if (tinfo->f_lt(ur.upper, rd.upper, flinfo))
+			memcpy((void *) ur.upper, rd.upper, tinfo->size);
 	}
 }
 

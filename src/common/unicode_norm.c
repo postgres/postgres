@@ -59,7 +59,7 @@ static pg_unicode_decomposition *
 get_code_entry(pg_wchar code)
 {
 	return bsearch(&(code),
-				   (void *) UnicodeDecompMain,
+				   UnicodeDecompMain,
 				   lengthof(UnicodeDecompMain),
 				   sizeof(pg_unicode_decomposition),
 				   conv_compare);
