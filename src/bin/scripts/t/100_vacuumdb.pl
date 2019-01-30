@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 35;
+use Test::More tests => 38;
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -64,6 +64,7 @@ $node->safe_psql(
 	'postgres', q|
   CREATE TABLE "need""q(uot" (")x" text);
   CREATE TABLE vactable (a int, b int);
+  CREATE VIEW vacview AS SELECT 1 as a;
 
   CREATE FUNCTION f0(int) RETURNS int LANGUAGE SQL AS 'SELECT $1 * $1';
   CREATE FUNCTION f1(int) RETURNS int LANGUAGE SQL AS 'SELECT f0($1)';
@@ -88,3 +89,9 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--analyze-only', '--table', 'vactable(b)', 'postgres' ],
 	qr/statement: ANALYZE public.vactable\(b\);/,
 	'vacuumdb --analyze-only with partial column list');
+$node->command_checks_all(
+	[ 'vacuumdb', '--analyze', '--table', 'vacview', 'postgres' ],
+	0,
+	[qr/^.*vacuuming database "postgres"/],
+	[qr/^WARNING.*cannot vacuum non-tables or special system tables/s],
+	'vacuumdb with view');

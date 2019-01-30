@@ -484,9 +484,16 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		appendPQExpBuffer(&catalog_query, " JOIN listed_tables"
 						  " ON listed_tables.table_oid OPERATOR(pg_catalog.=) c.oid\n");
 
-	appendPQExpBuffer(&catalog_query, " WHERE c.relkind OPERATOR(pg_catalog.=) ANY (array["
-					  CppAsString2(RELKIND_RELATION) ", "
-					  CppAsString2(RELKIND_MATVIEW) "])\n");
+	/*
+	 * If no tables were listed, filter for the relevant relation types.  If
+	 * tables were given via --table, don't bother filtering by relation type.
+	 * Instead, let the server decide whether a given relation can be
+	 * processed in which case the user will know about it.
+	 */
+	if (!tables_listed)
+		appendPQExpBuffer(&catalog_query, " WHERE c.relkind OPERATOR(pg_catalog.=) ANY (array["
+						  CppAsString2(RELKIND_RELATION) ", "
+						  CppAsString2(RELKIND_MATVIEW) "])\n");
 
 	/*
 	 * Execute the catalog query.  We use the default search_path for this
