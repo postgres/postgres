@@ -44,7 +44,7 @@ int main() {
   /* exec sql whenever sql_warning  sqlprint ; */
 #line 16 "fetch.pgc"
 
-  /* exec sql whenever sqlerror  sqlprint ; */
+  /* exec sql whenever sqlerror  stop ; */
 #line 17 "fetch.pgc"
 
 
@@ -54,7 +54,7 @@ int main() {
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 19 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 19 "fetch.pgc"
 
 
@@ -64,7 +64,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 21 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 21 "fetch.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 2 , 'text2' )", ECPGt_EOIT, ECPGt_EORT);
@@ -73,7 +73,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 22 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 22 "fetch.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 3 , 'text3' )", ECPGt_EOIT, ECPGt_EORT);
@@ -82,7 +82,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 23 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 23 "fetch.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into My_Table values ( 4 , 'text4' )", ECPGt_EOIT, ECPGt_EORT);
@@ -91,7 +91,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 24 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 24 "fetch.pgc"
 
 
@@ -105,7 +105,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 28 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 28 "fetch.pgc"
 
 
@@ -126,7 +126,7 @@ if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 32 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 32 "fetch.pgc"
 
 	printf("%d: %s\n", i, str);
@@ -141,7 +141,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 37 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 37 "fetch.pgc"
 
 
@@ -157,7 +157,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 39 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 39 "fetch.pgc"
 
   printf("%d: %s\n", i, str);
@@ -168,7 +168,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 42 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 42 "fetch.pgc"
 
 
@@ -184,60 +184,53 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
 #line 46 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 46 "fetch.pgc"
 
 
-  /* exec sql whenever not found  break ; */
-#line 48 "fetch.pgc"
-
-  for (loopcount = 0; loopcount < 100; loopcount++) {
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(str),(long)25,(long)1,(25)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 50 "fetch.pgc"
-
-if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
-#line 50 "fetch.pgc"
+#line 48 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 50 "fetch.pgc"
+#line 48 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 50 "fetch.pgc"
+if (sqlca.sqlcode < 0) exit (1);}
+#line 48 "fetch.pgc"
 
-	printf("%d: %s\n", i, str);
-  }
+  printf("%d: %s\n", i, str);
+
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close D", ECPGt_EOIT, ECPGt_EORT);
-#line 53 "fetch.pgc"
+#line 51 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 53 "fetch.pgc"
+#line 51 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 53 "fetch.pgc"
+if (sqlca.sqlcode < 0) exit (1);}
+#line 51 "fetch.pgc"
 
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table My_Table", ECPGt_EOIT, ECPGt_EORT);
-#line 55 "fetch.pgc"
+#line 53 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 55 "fetch.pgc"
+#line 53 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 55 "fetch.pgc"
+if (sqlca.sqlcode < 0) exit (1);}
+#line 53 "fetch.pgc"
 
 
   { ECPGdisconnect(__LINE__, "ALL");
-#line 57 "fetch.pgc"
+#line 55 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 57 "fetch.pgc"
+#line 55 "fetch.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
-#line 57 "fetch.pgc"
+if (sqlca.sqlcode < 0) exit (1);}
+#line 55 "fetch.pgc"
 
 
   return 0;

@@ -56,7 +56,6 @@ int main(void)
 	{
 		$fetch forward c into :i, :j, :c;
 		if (sqlca.sqlcode == 100) break;
-		else if (sqlca.sqlcode != 0) printf ("Error: %ld\n", sqlca.sqlcode);
 
 		if (risnull(CDECIMALTYPE, (char *)&j))
 			printf("%d NULL\n", i);

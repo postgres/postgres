@@ -20,7 +20,7 @@
 #line 3 "whenever_do_continue.pgc"
 
 
-/* exec sql whenever sqlerror  sqlprint ; */
+/* exec sql whenever sqlerror  stop ; */
 #line 5 "whenever_do_continue.pgc"
 
 
@@ -63,7 +63,7 @@ int main(void)
 	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); 
 #line 23 "whenever_do_continue.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 23 "whenever_do_continue.pgc"
 
 
@@ -71,7 +71,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table emp ( ename varchar , sal double precision , comm double precision )", ECPGt_EOIT, ECPGt_EORT);
 #line 26 "whenever_do_continue.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 26 "whenever_do_continue.pgc"
 
 
@@ -79,25 +79,25 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into emp values ( 'Ram' , 111100 , 21 )", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "whenever_do_continue.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 29 "whenever_do_continue.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into emp values ( 'aryan' , 11110 , null )", ECPGt_EOIT, ECPGt_EORT);
 #line 30 "whenever_do_continue.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 30 "whenever_do_continue.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into emp values ( 'josh' , 10000 , 10 )", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "whenever_do_continue.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 31 "whenever_do_continue.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into emp values ( 'tom' , 20000 , null )", ECPGt_EOIT, ECPGt_EORT);
 #line 32 "whenever_do_continue.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 32 "whenever_do_continue.pgc"
 
 
@@ -108,7 +108,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c cursor for select ename , sal , comm from emp order by ename collate \"C\" asc", ECPGt_EOIT, ECPGt_EORT);
 #line 36 "whenever_do_continue.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint();}
+if (sqlca.sqlcode < 0) exit (1);}
 #line 36 "whenever_do_continue.pgc"
 
 

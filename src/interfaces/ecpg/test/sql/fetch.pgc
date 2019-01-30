@@ -14,7 +14,7 @@ int main() {
   EXEC SQL CONNECT TO REGRESSDB1;
 
   EXEC SQL WHENEVER SQLWARNING SQLPRINT;
-  EXEC SQL WHENEVER SQLERROR SQLPRINT;
+  EXEC SQL WHENEVER SQLERROR STOP;
 
   EXEC SQL CREATE TABLE My_Table ( Item1 int, Item2 text );
 
@@ -45,11 +45,9 @@ int main() {
 
   EXEC SQL OPEN D using 1;
 
-  EXEC SQL WHENEVER NOT FOUND DO BREAK;
-  for (loopcount = 0; loopcount < 100; loopcount++) {
-	EXEC SQL FETCH 1 IN D INTO :i, :str;
-	printf("%d: %s\n", i, str);
-  }
+  EXEC SQL FETCH 1 IN D INTO :i, :str;
+  printf("%d: %s\n", i, str);
+
   EXEC SQL CLOSE D;
 
   EXEC SQL DROP TABLE My_Table;

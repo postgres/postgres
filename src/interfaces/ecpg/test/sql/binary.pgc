@@ -13,6 +13,8 @@ struct TBempl
 };
 EXEC SQL END DECLARE SECTION;
 
+EXEC SQL WHENEVER SQLERROR STOP;
+
 int
 main (void)
 {
@@ -27,43 +29,13 @@ main (void)
 
   empl.idnum = 1;
   EXEC SQL connect to REGRESSDB1;
-  if (sqlca.sqlcode)
-    {
-      printf ("connect error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-
   EXEC SQL set bytea_output = escape;
-  if (sqlca.sqlcode)
-    {
-      printf ("set bytea_output error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-
   EXEC SQL create table empl
     (idnum integer, name char (20), accs smallint, byte bytea);
-  if (sqlca.sqlcode)
-    {
-      printf ("create error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-
   EXEC SQL insert into empl values (1, 'first user', 320, :data);
-  if (sqlca.sqlcode)
-    {
-      printf ("insert error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-
   EXEC SQL DECLARE C CURSOR FOR select name, accs, byte from empl where idnum =:empl.idnum;
   EXEC SQL OPEN C;
   EXEC SQL FETCH C INTO:empl.name,:empl.accs,:empl.byte;
-  if (sqlca.sqlcode)
-    {
-      printf ("fetch error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-
   printf ("name=%s, accs=%d byte=%s\n", empl.name, empl.accs, empl.byte);
 
   EXEC SQL CLOSE C;
@@ -72,12 +44,6 @@ main (void)
   EXEC SQL DECLARE B BINARY CURSOR FOR select name, accs, byte from empl where idnum =:empl.idnum;
   EXEC SQL OPEN B;
   EXEC SQL FETCH B INTO :empl.name,:empl.accs,:empl.byte;
-  if (sqlca.sqlcode)
-    {
-      printf ("fetch error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-
   EXEC SQL CLOSE B;
 
   /* do not print a.accs because big/little endian will have different outputs here */
@@ -89,19 +55,15 @@ main (void)
   EXEC SQL DECLARE A BINARY CURSOR FOR select byte from empl where idnum =:empl.idnum;
   EXEC SQL OPEN A;
   EXEC SQL FETCH A INTO :pointer;
-  if (sqlca.sqlcode)
-    {
-      printf ("fetch error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-
   EXEC SQL CLOSE A;
 
-  printf ("pointer=");
-  for (i=0; i<4; i++)
-	printf("(%o)", (unsigned char)pointer[i]);
-  printf("\n");
-  free(pointer);
+  if (pointer) {
+	printf ("pointer=");
+	for (i=0; i<4; i++)
+		printf("(%o)", (unsigned char)pointer[i]);
+	printf("\n");
+	free(pointer);
+  }
 
   EXEC SQL disconnect;
   exit (0);

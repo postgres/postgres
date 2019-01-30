@@ -219,9 +219,6 @@ open_cur1(void)
 if (sqlca.sqlcode < 0) exit (1);}
 #line 40 "outofscope.pgc"
 
-
-	if (sqlca.sqlcode != 0)
-		exit(1);
 }
 
 static void
@@ -238,28 +235,22 @@ get_record1(void)
 	ECPGt_int,&((*( MYNULLTYPE  *)(ECPGget_var( 1)) ).d2),(long)1,(long)1,sizeof( struct mynulltype ), 
 	ECPGt_char,&((*( MYTYPE  *)(ECPGget_var( 0)) ).c),(long)30,(long)1,sizeof( struct mytype ), 
 	ECPGt_int,&((*( MYNULLTYPE  *)(ECPGget_var( 1)) ).c),(long)1,(long)1,sizeof( struct mynulltype ), ECPGt_EORT);
-#line 49 "outofscope.pgc"
+#line 46 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 49 "outofscope.pgc"
+#line 46 "outofscope.pgc"
 
-
-	if (sqlca.sqlcode != 0 && sqlca.sqlcode != ECPG_NOT_FOUND)
-		exit(1);
 }
 
 static void
 close_cur1(void)
 {
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close mycur", ECPGt_EOIT, ECPGt_EORT);
-#line 58 "outofscope.pgc"
+#line 52 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 58 "outofscope.pgc"
+#line 52 "outofscope.pgc"
 
-
-	if (sqlca.sqlcode != 0)
-		exit(1);
 }
 
 int
@@ -274,64 +265,60 @@ main (void)
 
 	strcpy(msg, "connect");
 	{ ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); 
-#line 75 "outofscope.pgc"
+#line 66 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 75 "outofscope.pgc"
+#line 66 "outofscope.pgc"
 
 
 	strcpy(msg, "set");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set datestyle to iso", ECPGt_EOIT, ECPGt_EORT);
-#line 78 "outofscope.pgc"
+#line 69 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 78 "outofscope.pgc"
+#line 69 "outofscope.pgc"
 
 
 	strcpy(msg, "create");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table a1 ( id serial primary key , t text , d1 numeric , d2 float8 , c character ( 10 ) )", ECPGt_EOIT, ECPGt_EORT);
-#line 81 "outofscope.pgc"
+#line 72 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 81 "outofscope.pgc"
+#line 72 "outofscope.pgc"
 
 
 	strcpy(msg, "insert");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into a1 ( id , t , d1 , d2 , c ) values ( default , 'a' , 1.0 , 2 , 'a' )", ECPGt_EOIT, ECPGt_EORT);
-#line 84 "outofscope.pgc"
+#line 75 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 84 "outofscope.pgc"
+#line 75 "outofscope.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into a1 ( id , t , d1 , d2 , c ) values ( default , null , null , null , null )", ECPGt_EOIT, ECPGt_EORT);
-#line 85 "outofscope.pgc"
+#line 76 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 85 "outofscope.pgc"
+#line 76 "outofscope.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into a1 ( id , t , d1 , d2 , c ) values ( default , 'b' , 2.0 , 3 , 'b' )", ECPGt_EOIT, ECPGt_EORT);
-#line 86 "outofscope.pgc"
+#line 77 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 86 "outofscope.pgc"
+#line 77 "outofscope.pgc"
 
 
 	strcpy(msg, "commit");
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 89 "outofscope.pgc"
+#line 80 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 89 "outofscope.pgc"
+#line 80 "outofscope.pgc"
 
 
 	/* Test out-of-scope DECLARE/OPEN/FETCH/CLOSE */
 
 	get_var1(&myvar, &mynullvar);
 	open_cur1();
-
-	/* exec sql whenever not found  break ; */
-#line 96 "outofscope.pgc"
-
 
 	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
@@ -354,26 +341,26 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "drop");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table a1", ECPGt_EOIT, ECPGt_EORT);
-#line 118 "outofscope.pgc"
+#line 107 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 118 "outofscope.pgc"
+#line 107 "outofscope.pgc"
 
 
 	strcpy(msg, "commit");
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 121 "outofscope.pgc"
+#line 110 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 121 "outofscope.pgc"
+#line 110 "outofscope.pgc"
 
 
 	strcpy(msg, "disconnect");
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 124 "outofscope.pgc"
+#line 113 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 124 "outofscope.pgc"
+#line 113 "outofscope.pgc"
 
 
 	return 0;

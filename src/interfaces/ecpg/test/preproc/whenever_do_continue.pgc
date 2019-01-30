@@ -2,7 +2,7 @@
 
 exec sql include ../regression;
 
-exec sql whenever sqlerror sqlprint;
+exec sql whenever sqlerror stop;
 
 int main(void)
 {

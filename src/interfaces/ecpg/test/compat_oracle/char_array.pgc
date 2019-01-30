@@ -16,7 +16,7 @@ static void warn(void)
 int main() {
 
   EXEC SQL WHENEVER SQLWARNING do warn();
-  EXEC SQL WHENEVER SQLERROR SQLPRINT;
+  EXEC SQL WHENEVER SQLERROR STOP;
 
   const char *ppppp = "XXXXX";
   int loopcount;

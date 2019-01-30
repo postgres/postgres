@@ -38,27 +38,18 @@ static void
 open_cur1(void)
 {
 	exec sql open mycur;
-
-	if (sqlca.sqlcode != 0)
-		exit(1);
 }
 
 static void
 get_record1(void)
 {
 	exec sql fetch mycur;
-
-	if (sqlca.sqlcode != 0 && sqlca.sqlcode != ECPG_NOT_FOUND)
-		exit(1);
 }
 
 static void
 close_cur1(void)
 {
 	exec sql close mycur;
-
-	if (sqlca.sqlcode != 0)
-		exit(1);
 }
 
 int
@@ -92,8 +83,6 @@ main (void)
 
 	get_var1(&myvar, &mynullvar);
 	open_cur1();
-
-	exec sql whenever not found do break;
 
 	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
