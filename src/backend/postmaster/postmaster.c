@@ -1052,6 +1052,10 @@ PostmasterMain(int argc, char *argv[])
 
 	whereToSendOutput = DestNone;
 
+	/* Report server startup in log */
+	ereport(LOG,
+			(errmsg("starting %s", PG_VERSION_STR)));
+
 	/*
 	 * Establish input sockets.
 	 *
