@@ -16,9 +16,11 @@ output_line_number(void)
 }
 
 void
-output_simple_statement(char *stmt)
+output_simple_statement(char *stmt, int whenever_mode)
 {
 	output_escaped_str(stmt, false);
+	if (whenever_mode)
+		whenever_action(whenever_mode);
 	output_line_number();
 	free(stmt);
 }

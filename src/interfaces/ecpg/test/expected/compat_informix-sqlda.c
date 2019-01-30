@@ -236,7 +236,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "declare");
-	ECPG_informix_reset_sqlca(); /* declare mycur1 cursor for $1 */
+	/* declare mycur1 cursor for $1 */
 #line 98 "sqlda.pgc"
 
 
@@ -311,7 +311,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "declare");
-	ECPG_informix_reset_sqlca(); /* declare mycur2 cursor for $1 */
+	/* declare mycur2 cursor for $1 */
 #line 135 "sqlda.pgc"
 
 

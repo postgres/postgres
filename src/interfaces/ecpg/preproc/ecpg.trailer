@@ -339,12 +339,8 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 
 			comment = cat_str(3, mm_strdup("/*"), mm_strdup(this->command), mm_strdup("*/"));
 
-			if ((braces_open > 0) && INFORMIX_MODE) /* we're in a function */
-				$$ = cat_str(3, adjust_outofscope_cursor_vars(this),
-					mm_strdup("ECPG_informix_reset_sqlca();"),
+			$$ = cat_str(2, adjust_outofscope_cursor_vars(this),
 					comment);
-			else
-				$$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
 		}
 		;
 

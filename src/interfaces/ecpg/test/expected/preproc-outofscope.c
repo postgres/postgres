@@ -192,6 +192,11 @@ get_var1(MYTYPE **myvar0, MYNULLTYPE **mynullvar0)
  /* declare mycur cursor for select * from a1 */
 #line 28 "outofscope.pgc"
 
+if (sqlca.sqlcode < 0) exit (1);
+#line 28 "outofscope.pgc"
+
+#line 28 "outofscope.pgc"
+
 
 	if (sqlca.sqlcode != 0)
 		exit(1);

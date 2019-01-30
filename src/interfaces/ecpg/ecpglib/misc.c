@@ -525,6 +525,17 @@ ECPGset_var(int number, void *pointer, int lineno)
 {
 	struct var_list *ptr;
 
+	struct sqlca_t *sqlca = ECPGget_sqlca();
+
+	if (sqlca == NULL)
+        {
+                ecpg_raise(lineno, ECPG_OUT_OF_MEMORY,
+			ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+                return;
+        }
+
+        ecpg_init_sqlca(sqlca);
+
 	for (ptr = ivlist; ptr != NULL; ptr = ptr->next)
 	{
 		if (ptr->number == number)

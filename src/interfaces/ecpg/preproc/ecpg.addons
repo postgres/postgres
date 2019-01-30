@@ -22,7 +22,7 @@ ECPG: stmtDeallocateStmt block
 		output_deallocate_prepare_statement($1);
 	}
 ECPG: stmtDeclareCursorStmt block
-	{ output_simple_statement($1); }
+	{ output_simple_statement($1, (strncmp($1, "ECPGset_var", strlen("ECPGset_var")) == 0) ? 4 : 0); }
 ECPG: stmtDiscardStmt block
 ECPG: stmtFetchStmt block
 	{ output_statement($1, 1, ECPGst_normal); }
@@ -65,7 +65,7 @@ ECPG: stmtViewStmt rule
 	}
 	| ECPGCursorStmt
 	{
-		output_simple_statement($1);
+		 output_simple_statement($1, (strncmp($1, "ECPGset_var", strlen("ECPGset_var")) == 0) ? 4 : 0);
 	}
 	| ECPGDeallocateDescr
 	{
@@ -75,7 +75,7 @@ ECPG: stmtViewStmt rule
 	}
 	| ECPGDeclare
 	{
-		output_simple_statement($1);
+		output_simple_statement($1, 0);
 	}
 	| ECPGDescribe
 	{
@@ -178,14 +178,14 @@ ECPG: stmtViewStmt rule
 		if (connection)
 			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in VAR statement");
 
-		output_simple_statement($1);
+		output_simple_statement($1, 0);
 	}
 	| ECPGWhenever
 	{
 		if (connection)
 			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in WHENEVER statement");
 
-		output_simple_statement($1);
+		output_simple_statement($1, 0);
 	}
 ECPG: where_or_current_clauseWHERECURRENT_POFcursor_name block
 	{
@@ -327,12 +327,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		}
 		comment = cat_str(3, mm_strdup("/*"), c1, mm_strdup("*/"));
 
-		if ((braces_open > 0) && INFORMIX_MODE) /* we're in a function */
-			$$ = cat_str(3, adjust_outofscope_cursor_vars(this),
-				mm_strdup("ECPG_informix_reset_sqlca();"),
-				comment);
-		else
-			$$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
+		$$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
 	}
 ECPG: ClosePortalStmtCLOSEcursor_name block
 	{

@@ -103,6 +103,11 @@ if (sqlca.sqlcode < 0) exit (1);}
  /* declare C cursor for select name , accs , byte from empl where idnum = $1  */
 #line 36 "binary.pgc"
 
+if (sqlca.sqlcode < 0) exit (1);
+#line 36 "binary.pgc"
+
+#line 36 "binary.pgc"
+
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
@@ -135,6 +140,11 @@ if (sqlca.sqlcode < 0) exit (1);}
   memset(empl.name, 0, 21L);
   ECPGset_var( 1, &( empl.idnum ), __LINE__);\
  /* declare B binary cursor for select name , accs , byte from empl where idnum = $1  */
+#line 44 "binary.pgc"
+
+if (sqlca.sqlcode < 0) exit (1);
+#line 44 "binary.pgc"
+
 #line 44 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare B binary cursor for select name , accs , byte from empl where idnum = $1 ", 
@@ -172,6 +182,11 @@ if (sqlca.sqlcode < 0) exit (1);}
 
   ECPGset_var( 2, &( empl.idnum ), __LINE__);\
  /* declare A binary cursor for select byte from empl where idnum = $1  */
+#line 55 "binary.pgc"
+
+if (sqlca.sqlcode < 0) exit (1);
+#line 55 "binary.pgc"
+
 #line 55 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare A binary cursor for select byte from empl where idnum = $1 ", 

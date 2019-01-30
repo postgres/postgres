@@ -185,6 +185,11 @@ if (sqlca.sqlcode < 0) exit (1);}
  /* declare $0 cursor for select id , t from t1 */
 #line 64 "cursor.pgc"
 
+if (sqlca.sqlcode < 0) exit (1);
+#line 64 "cursor.pgc"
+
+#line 64 "cursor.pgc"
+
 
 	strcpy(msg, "open");
 	{ ECPGdo(__LINE__, 0, 1, "test1", 0, ECPGst_normal, "declare $0 cursor for select id , t from t1", 
@@ -319,6 +324,11 @@ if (sqlca.sqlcode < 0) exit (1);}
  ECPGset_var( 2, ( t ), __LINE__);\
  ECPGset_var( 3, &( id ), __LINE__);\
  /* declare $0 cursor for select id , t from t1 */
+#line 105 "cursor.pgc"
+
+if (sqlca.sqlcode < 0) exit (1);
+#line 105 "cursor.pgc"
+
 #line 105 "cursor.pgc"
 
 
@@ -477,8 +487,18 @@ if (sqlca.sqlcode < 0) exit (1);}
  /* declare $0 cursor for $1 */
 #line 149 "cursor.pgc"
 
+if (sqlca.sqlcode < 0) exit (1);
+#line 149 "cursor.pgc"
+
+#line 149 "cursor.pgc"
+
 	ECPGset_var( 5, &( curname5 ), __LINE__);\
  /* declare $0 cursor for $1 */
+#line 150 "cursor.pgc"
+
+if (sqlca.sqlcode < 0) exit (1);
+#line 150 "cursor.pgc"
+
 #line 150 "cursor.pgc"
 
 
@@ -659,6 +679,11 @@ if (sqlca.sqlcode < 0) exit (1);}
 	strcpy(msg, "declare");
 	ECPGset_var( 6, &( curname4 ), __LINE__);\
  /* declare $0 cursor for $1 */
+#line 203 "cursor.pgc"
+
+if (sqlca.sqlcode < 0) exit (1);
+#line 203 "cursor.pgc"
+
 #line 203 "cursor.pgc"
 
 

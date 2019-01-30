@@ -148,7 +148,12 @@ if (sqlca.sqlcode < 0) dosqlprint ( );}
 
 	sqlca.sqlcode = 100;
 	ECPGset_var( 0, &( i ), __LINE__);\
- ECPG_informix_reset_sqlca(); /* declare c cursor for select * from test where i <= $1  */
+ /* declare c cursor for select * from test where i <= $1  */
+#line 49 "test_informix.pgc"
+
+if (sqlca.sqlcode < 0) dosqlprint ( );
+#line 49 "test_informix.pgc"
+
 #line 49 "test_informix.pgc"
 
 	printf ("%ld\n", sqlca.sqlcode);
