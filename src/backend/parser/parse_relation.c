@@ -1590,9 +1590,15 @@ addRangeTableEntryForFunction(ParseState *pstate,
 
 			/*
 			 * Ensure that the coldeflist defines a legal set of names (no
-			 * duplicates) and datatypes (no pseudo-types, for instance).
+			 * duplicates, but we needn't worry about system column names) and
+			 * datatypes.  Although we mostly can't allow pseudo-types, it
+			 * seems safe to allow RECORD and RECORD[], since values within
+			 * those type classes are self-identifying at runtime, and the
+			 * coldeflist doesn't represent anything that will be visible to
+			 * other sessions.
 			 */
-			CheckAttributeNamesTypes(tupdesc, RELKIND_COMPOSITE_TYPE, false);
+			CheckAttributeNamesTypes(tupdesc, RELKIND_COMPOSITE_TYPE,
+									 CHKATYPE_ANYRECORD);
 		}
 		else
 			ereport(ERROR,

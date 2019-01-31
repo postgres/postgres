@@ -5505,7 +5505,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colDef->colname, typeOid, collOid,
 					   list_make1_oid(rel->rd_rel->reltype),
-					   false);
+					   0);
 
 	/* construct new attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;
@@ -9445,7 +9445,7 @@ ATPrepAlterColumnType(List **wqueue,
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colName, targettype, targetcollid,
 					   list_make1_oid(rel->rd_rel->reltype),
-					   false);
+					   0);
 
 	if (tab->relkind == RELKIND_RELATION ||
 		tab->relkind == RELKIND_PARTITIONED_TABLE)
