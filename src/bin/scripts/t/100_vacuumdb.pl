@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 38;
+use Test::More tests => 44;
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -95,3 +95,20 @@ $node->command_checks_all(
 	[qr/^.*vacuuming database "postgres"/],
 	[qr/^WARNING.*cannot vacuum non-tables or special system tables/s],
 	'vacuumdb with view');
+$node->command_fails(
+	[ 'vacuumdb', '--table', 'vactable', '--min-mxid-age', '0',
+	  'postgres'],
+	'vacuumdb --min-mxid-age with incorrect value');
+$node->command_fails(
+	[ 'vacuumdb', '--table', 'vactable', '--min-xid-age', '0',
+	  'postgres'],
+	'vacuumdb --min-xid-age with incorrect value');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--table', 'vactable', '--min-mxid-age', '2147483000',
+	  'postgres'],
+	qr/GREATEST.*relminmxid.*2147483000/,
+	'vacuumdb --table --min-mxid-age');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--min-xid-age', '2147483001', 'postgres' ],
+	qr/GREATEST.*relfrozenxid.*2147483001/,
+	'vacuumdb --table --min-xid-age');

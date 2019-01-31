@@ -173,6 +173,60 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--min-mxid-age <replaceable class="parameter">mxid_age</replaceable></option></term>
+      <listitem>
+       <para>
+        Only execute the vacuum or analyze commands on tables with a multixact
+        ID age of at least <replaceable class="parameter">mxid_age</replaceable>.
+        This setting is useful for prioritizing tables to process to prevent
+        multixact ID wraparound (see
+        <xref linkend="vacuum-for-multixact-wraparound"/>).
+       </para>
+       <para>
+        For the purposes of this option, the multixact ID age of a relation is
+        the greatest of the ages of the main relation and its associated
+        <acronym>TOAST</acronym> table, if one exists.  Since the commands
+        issued by <application>vacuumdb</application> will also process the
+        <acronym>TOAST</acronym> table for the relation if necessary, it does
+        not need to be considered separately.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 9.6 and later.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--min-xid-age <replaceable class="parameter">xid_age</replaceable></option></term>
+      <listitem>
+       <para>
+        Only execute the vacuum or analyze commands on tables with a
+        transaction ID age of at least
+        <replaceable class="parameter">xid_age</replaceable>.  This setting
+        is useful for prioritizing tables to process to prevent transaction
+        ID wraparound (see <xref linkend="vacuum-for-wraparound"/>).
+       </para>
+       <para>
+        For the purposes of this option, the transaction ID age of a relation
+        is the greatest of the ages of the main relation and its associated
+        <acronym>TOAST</acronym> table, if one exists.  Since the commands
+        issued by <application>vacuumdb</application> will also process the
+        <acronym>TOAST</acronym> table for the relation if necessary, it does
+        not need to be considered separately.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 9.6 and later.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-q</option></term>
       <term><option>--quiet</option></term>
       <listitem>
