@@ -1109,10 +1109,39 @@ be_tls_get_cipher(Port *port)
 }
 
 void
-be_tls_get_peerdn_name(Port *port, char *ptr, size_t len)
+be_tls_get_peer_subject_name(Port *port, char *ptr, size_t len)
 {
 	if (port->peer)
 		strlcpy(ptr, X509_NAME_to_cstring(X509_get_subject_name(port->peer)), len);
+	else
+		ptr[0] = '\0';
+}
+
+void
+be_tls_get_peer_issuer_name(Port *port, char *ptr, size_t len)
+{
+	if (port->peer)
+		strlcpy(ptr, X509_NAME_to_cstring(X509_get_issuer_name(port->peer)), len);
+	else
+		ptr[0] = '\0';
+}
+
+void
+be_tls_get_peer_serial(Port *port, char *ptr, size_t len)
+{
+	if (port->peer)
+	{
+		ASN1_INTEGER *serial;
+		BIGNUM	   *b;
+		char	   *decimal;
+
+		serial = X509_get_serialNumber(port->peer);
+		b = ASN1_INTEGER_to_BN(serial, NULL);
+		decimal = BN_bn2dec(b);
+		BN_free(b);
+		strlcpy(ptr, decimal, len);
+		OPENSSL_free(decimal);
+	}
 	else
 		ptr[0] = '\0';
 }

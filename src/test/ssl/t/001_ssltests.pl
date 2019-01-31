@@ -315,8 +315,8 @@ command_like([
 	'-d', "$common_connstr sslrootcert=invalid",
 	'-c', "SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 			 ],
-			 qr{^pid,ssl,version,cipher,bits,compression,clientdn\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_$}mx,
+			 qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_,_null_,_null_$}mx,
 			 'pg_stat_ssl view without client certificate');
 
 ### Server-side tests.
@@ -347,8 +347,8 @@ command_like([
 	'-d', "$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
 	'-c', "SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 			 ],
-			 qr{^pid,ssl,version,cipher,bits,compression,clientdn\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser$}mx,
+			 qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser,1,\Q/CN=Test CA for PostgreSQL SSL regression test client certs\E$}mx,
 			 'pg_stat_ssl with client certificate');
 
 # client key with wrong permissions

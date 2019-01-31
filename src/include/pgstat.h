@@ -950,15 +950,25 @@ typedef enum ProgressCommandType
  *
  * For each backend, we keep the SSL status in a separate struct, that
  * is only filled in if SSL is enabled.
+ *
+ * All char arrays must be null-terminated.
  */
 typedef struct PgBackendSSLStatus
 {
 	/* Information about SSL connection */
 	int			ssl_bits;
 	bool		ssl_compression;
-	char		ssl_version[NAMEDATALEN];	/* MUST be null-terminated */
-	char		ssl_cipher[NAMEDATALEN];	/* MUST be null-terminated */
-	char		ssl_clientdn[NAMEDATALEN];	/* MUST be null-terminated */
+	char		ssl_version[NAMEDATALEN];
+	char		ssl_cipher[NAMEDATALEN];
+	char		ssl_client_dn[NAMEDATALEN];
+
+	/*
+	 * serial number is max "20 octets" per RFC 5280, so this size should be
+	 * fine
+	 */
+	char		ssl_client_serial[NAMEDATALEN];
+
+	char		ssl_issuer_dn[NAMEDATALEN];
 } PgBackendSSLStatus;
 
 
