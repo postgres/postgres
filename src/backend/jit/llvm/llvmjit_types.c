@@ -103,7 +103,7 @@ void	   *referenced_functions[] =
 	slot_getsomeattrs_int,
 	slot_getmissingattrs,
 	MakeExpandedObjectReadOnlyInternal,
-	ExecEvalArrayRefSubscript,
+	ExecEvalSubscriptingRef,
 	ExecEvalSysVar,
 	ExecAggTransReparent,
 	ExecAggInitGroup

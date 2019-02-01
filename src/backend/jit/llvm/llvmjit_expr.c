@@ -1144,20 +1144,20 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
-			case EEOP_ARRAYREF_OLD:
-				build_EvalXFunc(b, mod, "ExecEvalArrayRefOld",
+			case EEOP_SBSREF_OLD:
+				build_EvalXFunc(b, mod, "ExecEvalSubscriptingRefOld",
 								v_state, v_econtext, op);
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
 
-			case EEOP_ARRAYREF_ASSIGN:
-				build_EvalXFunc(b, mod, "ExecEvalArrayRefAssign",
+			case EEOP_SBSREF_ASSIGN:
+				build_EvalXFunc(b, mod, "ExecEvalSubscriptingRefAssign",
 								v_state, v_econtext, op);
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
 
-			case EEOP_ARRAYREF_FETCH:
-				build_EvalXFunc(b, mod, "ExecEvalArrayRefFetch",
+			case EEOP_SBSREF_FETCH:
+				build_EvalXFunc(b, mod, "ExecEvalSubscriptingRefFetch",
 								v_state, v_econtext, op);
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
@@ -1775,14 +1775,14 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[i + 1]);
 				break;
 
-			case EEOP_ARRAYREF_SUBSCRIPT:
+			case EEOP_SBSREF_SUBSCRIPT:
 				{
 					LLVMValueRef v_fn;
-					int			jumpdone = op->d.arrayref_subscript.jumpdone;
+					int			jumpdone = op->d.sbsref_subscript.jumpdone;
 					LLVMValueRef v_params[2];
 					LLVMValueRef v_ret;
 
-					v_fn = llvm_get_decl(mod, FuncExecEvalArrayRefSubscript);
+					v_fn = llvm_get_decl(mod, FuncExecEvalSubscriptingRef);
 
 					v_params[0] = v_state;
 					v_params[1] = l_ptr_const(op, l_ptr(StructExprEvalStep));

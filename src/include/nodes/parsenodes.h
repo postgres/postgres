@@ -224,7 +224,7 @@ typedef struct TypeName
  * Currently, A_Star must appear only as the last list element --- the grammar
  * is responsible for enforcing this!
  *
- * Note: any array subscripting or selection of fields from composite columns
+ * Note: any container subscripting or selection of fields from composite columns
  * is represented by an A_Indirection node above the ColumnRef.  However,
  * for simplicity in the normal case, initial field selection from a table
  * name is represented within ColumnRef and not by adding A_Indirection.

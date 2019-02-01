@@ -67,9 +67,10 @@ static bool get_last_attnums_walker(Node *node, LastAttnumInfo *info);
 static void ExecComputeSlotInfo(ExprState *state, ExprEvalStep *op);
 static void ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable,
 					ExprState *state);
-static void ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
-				 ExprState *state,
-				 Datum *resv, bool *resnull);
+static void ExecInitSubscriptingRef(ExprEvalStep *scratch,
+						SubscriptingRef *sbsref,
+						ExprState *state,
+						Datum *resv, bool *resnull);
 static bool isAssignmentIndirectionExpr(Expr *expr);
 static void ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 					   ExprState *state,
@@ -867,11 +868,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
-		case T_ArrayRef:
+		case T_SubscriptingRef:
 			{
-				ArrayRef   *aref = (ArrayRef *) node;
+				SubscriptingRef *sbsref = (SubscriptingRef *) node;
 
-				ExecInitArrayRef(&scratch, aref, state, resv, resnull);
+				ExecInitSubscriptingRef(&scratch, sbsref, state, resv, resnull);
 				break;
 			}
 
@@ -1186,13 +1187,14 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					/*
 					 * Use the CaseTestExpr mechanism to pass down the old
 					 * value of the field being replaced; this is needed in
-					 * case the newval is itself a FieldStore or ArrayRef that
-					 * has to obtain and modify the old value.  It's safe to
-					 * reuse the CASE mechanism because there cannot be a CASE
-					 * between here and where the value would be needed, and a
-					 * field assignment can't be within a CASE either.  (So
-					 * saving and restoring innermost_caseval is just
-					 * paranoia, but let's do it anyway.)
+					 * case the newval is itself a FieldStore or
+					 * SubscriptingRef that has to obtain and modify the old
+					 * value.  It's safe to reuse the CASE mechanism because
+					 * there cannot be a CASE between here and where the value
+					 * would be needed, and a field assignment can't be within
+					 * a CASE either.  (So saving and restoring
+					 * innermost_caseval is just paranoia, but let's do it
+					 * anyway.)
 					 *
 					 * Another non-obvious point is that it's safe to use the
 					 * field's values[]/nulls[] entries as both the caseval
@@ -2528,34 +2530,34 @@ ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable, ExprState *state)
 }
 
 /*
- * Prepare evaluation of an ArrayRef expression.
+ * Prepare evaluation of a SubscriptingRef expression.
  */
 static void
-ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
-				 ExprState *state, Datum *resv, bool *resnull)
+ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
+						ExprState *state, Datum *resv, bool *resnull)
 {
-	bool		isAssignment = (aref->refassgnexpr != NULL);
-	ArrayRefState *arefstate = palloc0(sizeof(ArrayRefState));
+	bool		isAssignment = (sbsref->refassgnexpr != NULL);
+	SubscriptingRefState *sbsrefstate = palloc0(sizeof(SubscriptingRefState));
 	List	   *adjust_jumps = NIL;
 	ListCell   *lc;
 	int			i;
 
-	/* Fill constant fields of ArrayRefState */
-	arefstate->isassignment = isAssignment;
-	arefstate->refelemtype = aref->refelemtype;
-	arefstate->refattrlength = get_typlen(aref->refarraytype);
-	get_typlenbyvalalign(aref->refelemtype,
-						 &arefstate->refelemlength,
-						 &arefstate->refelembyval,
-						 &arefstate->refelemalign);
+	/* Fill constant fields of SubscriptingRefState */
+	sbsrefstate->isassignment = isAssignment;
+	sbsrefstate->refelemtype = sbsref->refelemtype;
+	sbsrefstate->refattrlength = get_typlen(sbsref->refcontainertype);
+	get_typlenbyvalalign(sbsref->refelemtype,
+						 &sbsrefstate->refelemlength,
+						 &sbsrefstate->refelembyval,
+						 &sbsrefstate->refelemalign);
 
 	/*
 	 * Evaluate array input.  It's safe to do so into resv/resnull, because we
 	 * won't use that as target for any of the other subexpressions, and it'll
-	 * be overwritten by the final EEOP_ARRAYREF_FETCH/ASSIGN step, which is
+	 * be overwritten by the final EEOP_SBSREF_FETCH/ASSIGN step, which is
 	 * pushed last.
 	 */
-	ExecInitExprRec(aref->refexpr, state, resv, resnull);
+	ExecInitExprRec(sbsref->refexpr, state, resv, resnull);
 
 	/*
 	 * If refexpr yields NULL, and it's a fetch, then result is NULL.  We can
@@ -2572,87 +2574,87 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
 	}
 
 	/* Verify subscript list lengths are within limit */
-	if (list_length(aref->refupperindexpr) > MAXDIM)
+	if (list_length(sbsref->refupperindexpr) > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-						list_length(aref->refupperindexpr), MAXDIM)));
+						list_length(sbsref->refupperindexpr), MAXDIM)));
 
-	if (list_length(aref->reflowerindexpr) > MAXDIM)
+	if (list_length(sbsref->reflowerindexpr) > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
-						list_length(aref->reflowerindexpr), MAXDIM)));
+						list_length(sbsref->reflowerindexpr), MAXDIM)));
 
 	/* Evaluate upper subscripts */
 	i = 0;
-	foreach(lc, aref->refupperindexpr)
+	foreach(lc, sbsref->refupperindexpr)
 	{
 		Expr	   *e = (Expr *) lfirst(lc);
 
 		/* When slicing, individual subscript bounds can be omitted */
 		if (!e)
 		{
-			arefstate->upperprovided[i] = false;
+			sbsrefstate->upperprovided[i] = false;
 			i++;
 			continue;
 		}
 
-		arefstate->upperprovided[i] = true;
+		sbsrefstate->upperprovided[i] = true;
 
 		/* Each subscript is evaluated into subscriptvalue/subscriptnull */
 		ExecInitExprRec(e, state,
-						&arefstate->subscriptvalue, &arefstate->subscriptnull);
+						&sbsrefstate->subscriptvalue, &sbsrefstate->subscriptnull);
 
-		/* ... and then ARRAYREF_SUBSCRIPT saves it into step's workspace */
-		scratch->opcode = EEOP_ARRAYREF_SUBSCRIPT;
-		scratch->d.arrayref_subscript.state = arefstate;
-		scratch->d.arrayref_subscript.off = i;
-		scratch->d.arrayref_subscript.isupper = true;
-		scratch->d.arrayref_subscript.jumpdone = -1;	/* adjust later */
+		/* ... and then SBSREF_SUBSCRIPT saves it into step's workspace */
+		scratch->opcode = EEOP_SBSREF_SUBSCRIPT;
+		scratch->d.sbsref_subscript.state = sbsrefstate;
+		scratch->d.sbsref_subscript.off = i;
+		scratch->d.sbsref_subscript.isupper = true;
+		scratch->d.sbsref_subscript.jumpdone = -1;	/* adjust later */
 		ExprEvalPushStep(state, scratch);
 		adjust_jumps = lappend_int(adjust_jumps,
 								   state->steps_len - 1);
 		i++;
 	}
-	arefstate->numupper = i;
+	sbsrefstate->numupper = i;
 
 	/* Evaluate lower subscripts similarly */
 	i = 0;
-	foreach(lc, aref->reflowerindexpr)
+	foreach(lc, sbsref->reflowerindexpr)
 	{
 		Expr	   *e = (Expr *) lfirst(lc);
 
 		/* When slicing, individual subscript bounds can be omitted */
 		if (!e)
 		{
-			arefstate->lowerprovided[i] = false;
+			sbsrefstate->lowerprovided[i] = false;
 			i++;
 			continue;
 		}
 
-		arefstate->lowerprovided[i] = true;
+		sbsrefstate->lowerprovided[i] = true;
 
 		/* Each subscript is evaluated into subscriptvalue/subscriptnull */
 		ExecInitExprRec(e, state,
-						&arefstate->subscriptvalue, &arefstate->subscriptnull);
+						&sbsrefstate->subscriptvalue, &sbsrefstate->subscriptnull);
 
-		/* ... and then ARRAYREF_SUBSCRIPT saves it into step's workspace */
-		scratch->opcode = EEOP_ARRAYREF_SUBSCRIPT;
-		scratch->d.arrayref_subscript.state = arefstate;
-		scratch->d.arrayref_subscript.off = i;
-		scratch->d.arrayref_subscript.isupper = false;
-		scratch->d.arrayref_subscript.jumpdone = -1;	/* adjust later */
+		/* ... and then SBSREF_SUBSCRIPT saves it into step's workspace */
+		scratch->opcode = EEOP_SBSREF_SUBSCRIPT;
+		scratch->d.sbsref_subscript.state = sbsrefstate;
+		scratch->d.sbsref_subscript.off = i;
+		scratch->d.sbsref_subscript.isupper = false;
+		scratch->d.sbsref_subscript.jumpdone = -1;	/* adjust later */
 		ExprEvalPushStep(state, scratch);
 		adjust_jumps = lappend_int(adjust_jumps,
 								   state->steps_len - 1);
 		i++;
 	}
-	arefstate->numlower = i;
+	sbsrefstate->numlower = i;
 
 	/* Should be impossible if parser is sane, but check anyway: */
-	if (arefstate->numlower != 0 &&
-		arefstate->numupper != arefstate->numlower)
+	if (sbsrefstate->numlower != 0 &&
+		sbsrefstate->numupper != sbsrefstate->numlower)
 		elog(ERROR, "upper and lower index lists are not same length");
 
 	if (isAssignment)
@@ -2662,49 +2664,51 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
 
 		/*
 		 * We might have a nested-assignment situation, in which the
-		 * refassgnexpr is itself a FieldStore or ArrayRef that needs to
-		 * obtain and modify the previous value of the array element or slice
-		 * being replaced.  If so, we have to extract that value from the
-		 * array and pass it down via the CaseTestExpr mechanism.  It's safe
-		 * to reuse the CASE mechanism because there cannot be a CASE between
-		 * here and where the value would be needed, and an array assignment
-		 * can't be within a CASE either.  (So saving and restoring
+		 * refassgnexpr is itself a FieldStore or SubscriptingRef that needs
+		 * to obtain and modify the previous value of the array element or
+		 * slice being replaced.  If so, we have to extract that value from
+		 * the array and pass it down via the CaseTestExpr mechanism.  It's
+		 * safe to reuse the CASE mechanism because there cannot be a CASE
+		 * between here and where the value would be needed, and an array
+		 * assignment can't be within a CASE either.  (So saving and restoring
 		 * innermost_caseval is just paranoia, but let's do it anyway.)
 		 *
 		 * Since fetching the old element might be a nontrivial expense, do it
 		 * only if the argument actually needs it.
 		 */
-		if (isAssignmentIndirectionExpr(aref->refassgnexpr))
+		if (isAssignmentIndirectionExpr(sbsref->refassgnexpr))
 		{
-			scratch->opcode = EEOP_ARRAYREF_OLD;
-			scratch->d.arrayref.state = arefstate;
+			scratch->opcode = EEOP_SBSREF_OLD;
+			scratch->d.sbsref.state = sbsrefstate;
 			ExprEvalPushStep(state, scratch);
 		}
 
-		/* ARRAYREF_OLD puts extracted value into prevvalue/prevnull */
+		/* SBSREF_OLD puts extracted value into prevvalue/prevnull */
 		save_innermost_caseval = state->innermost_caseval;
 		save_innermost_casenull = state->innermost_casenull;
-		state->innermost_caseval = &arefstate->prevvalue;
-		state->innermost_casenull = &arefstate->prevnull;
+		state->innermost_caseval = &sbsrefstate->prevvalue;
+		state->innermost_casenull = &sbsrefstate->prevnull;
 
 		/* evaluate replacement value into replacevalue/replacenull */
-		ExecInitExprRec(aref->refassgnexpr, state,
-						&arefstate->replacevalue, &arefstate->replacenull);
+		ExecInitExprRec(sbsref->refassgnexpr, state,
+						&sbsrefstate->replacevalue, &sbsrefstate->replacenull);
 
 		state->innermost_caseval = save_innermost_caseval;
 		state->innermost_casenull = save_innermost_casenull;
 
 		/* and perform the assignment */
-		scratch->opcode = EEOP_ARRAYREF_ASSIGN;
-		scratch->d.arrayref.state = arefstate;
+		scratch->opcode = EEOP_SBSREF_ASSIGN;
+		scratch->d.sbsref.state = sbsrefstate;
 		ExprEvalPushStep(state, scratch);
+
 	}
 	else
 	{
 		/* array fetch is much simpler */
-		scratch->opcode = EEOP_ARRAYREF_FETCH;
-		scratch->d.arrayref.state = arefstate;
+		scratch->opcode = EEOP_SBSREF_FETCH;
+		scratch->d.sbsref.state = sbsrefstate;
 		ExprEvalPushStep(state, scratch);
+
 	}
 
 	/* adjust jump targets */
@@ -2712,10 +2716,10 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
 	{
 		ExprEvalStep *as = &state->steps[lfirst_int(lc)];
 
-		if (as->opcode == EEOP_ARRAYREF_SUBSCRIPT)
+		if (as->opcode == EEOP_SBSREF_SUBSCRIPT)
 		{
-			Assert(as->d.arrayref_subscript.jumpdone == -1);
-			as->d.arrayref_subscript.jumpdone = state->steps_len;
+			Assert(as->d.sbsref_subscript.jumpdone == -1);
+			as->d.sbsref_subscript.jumpdone = state->steps_len;
 		}
 		else
 		{
@@ -2727,8 +2731,9 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
 }
 
 /*
- * Helper for preparing ArrayRef expressions for evaluation: is expr a nested
- * FieldStore or ArrayRef that needs the old element value passed down?
+ * Helper for preparing SubscriptingRef expressions for evaluation: is expr
+ * a nested FieldStore or SubscriptingRef that needs the old element value
+ * passed down?
  *
  * (We could use this in FieldStore too, but in that case passing the old
  * value is so cheap there's no need.)
@@ -2751,11 +2756,11 @@ isAssignmentIndirectionExpr(Expr *expr)
 		if (fstore->arg && IsA(fstore->arg, CaseTestExpr))
 			return true;
 	}
-	else if (IsA(expr, ArrayRef))
+	else if (IsA(expr, SubscriptingRef))
 	{
-		ArrayRef   *arrayRef = (ArrayRef *) expr;
+		SubscriptingRef *sbsRef = (SubscriptingRef *) expr;
 
-		if (arrayRef->refexpr && IsA(arrayRef->refexpr, CaseTestExpr))
+		if (sbsRef->refexpr && IsA(sbsRef->refexpr, CaseTestExpr))
 			return true;
 	}
 	return false;

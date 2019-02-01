@@ -5207,8 +5207,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/*
 				 * Evaluate the subscripts, switch into left-to-right order.
-				 * Like the expression built by ExecInitArrayRef(), complain
-				 * if any subscript is null.
+				 * Like the expression built by ExecInitSubscriptingRef(),
+				 * complain if any subscript is null.
 				 */
 				for (i = 0; i < nsubscripts; i++)
 				{

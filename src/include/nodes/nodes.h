@@ -154,7 +154,7 @@ typedef enum NodeTag
 	T_Aggref,
 	T_GroupingFunc,
 	T_WindowFunc,
-	T_ArrayRef,
+	T_SubscriptingRef,
 	T_FuncExpr,
 	T_NamedArgExpr,
 	T_OpExpr,

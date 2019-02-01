@@ -655,7 +655,7 @@ updateTargetListEntry(ParseState *pstate,
  * needed.
  *
  * targetName is the name of the field or subfield we're assigning to, and
- * targetIsArray is true if we're subscripting it.  These are just for
+ * targetIsSubscripting is true if we're subscripting it.  These are just for
  * error reporting.
  *
  * targetTypeId, targetTypMod, targetCollation indicate the datatype and
@@ -677,7 +677,7 @@ static Node *
 transformAssignmentIndirection(ParseState *pstate,
 							   Node *basenode,
 							   const char *targetName,
-							   bool targetIsArray,
+							   bool targetIsSubscripting,
 							   Oid targetTypeId,
 							   int32 targetTypMod,
 							   Oid targetCollation,
@@ -855,7 +855,7 @@ transformAssignmentIndirection(ParseState *pstate,
 								   -1);
 	if (result == NULL)
 	{
-		if (targetIsArray)
+		if (targetIsSubscripting)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("array assignment to \"%s\" requires type %s"
@@ -881,7 +881,7 @@ transformAssignmentIndirection(ParseState *pstate,
 }
 
 /*
- * helper for transformAssignmentIndirection: process array assignment
+ * helper for transformAssignmentIndirection: process container assignment
  */
 static Node *
 transformAssignmentSubscripts(ParseState *pstate,
@@ -897,8 +897,8 @@ transformAssignmentSubscripts(ParseState *pstate,
 							  int location)
 {
 	Node	   *result;
-	Oid			arrayType;
-	int32		arrayTypMod;
+	Oid			containerType;
+	int32		containerTypMod;
 	Oid			elementTypeId;
 	Oid			typeNeeded;
 	Oid			collationNeeded;
@@ -906,46 +906,46 @@ transformAssignmentSubscripts(ParseState *pstate,
 	Assert(subscripts != NIL);
 
 	/* Identify the actual array type and element type involved */
-	arrayType = targetTypeId;
-	arrayTypMod = targetTypMod;
-	elementTypeId = transformArrayType(&arrayType, &arrayTypMod);
+	containerType = targetTypeId;
+	containerTypMod = targetTypMod;
+	elementTypeId = transformContainerType(&containerType, &containerTypMod);
 
 	/* Identify type that RHS must provide */
-	typeNeeded = isSlice ? arrayType : elementTypeId;
+	typeNeeded = isSlice ? containerType : elementTypeId;
 
 	/*
-	 * Array normally has same collation as elements, but there's an
-	 * exception: we might be subscripting a domain over an array type. In
+	 * container normally has same collation as elements, but there's an
+	 * exception: we might be subscripting a domain over a container type. In
 	 * that case use collation of the base type.
 	 */
-	if (arrayType == targetTypeId)
+	if (containerType == targetTypeId)
 		collationNeeded = targetCollation;
 	else
-		collationNeeded = get_typcollation(arrayType);
+		collationNeeded = get_typcollation(containerType);
 
-	/* recurse to create appropriate RHS for array assign */
+	/* recurse to create appropriate RHS for container assign */
 	rhs = transformAssignmentIndirection(pstate,
 										 NULL,
 										 targetName,
 										 true,
 										 typeNeeded,
-										 arrayTypMod,
+										 containerTypMod,
 										 collationNeeded,
 										 next_indirection,
 										 rhs,
 										 location);
 
 	/* process subscripts */
-	result = (Node *) transformArraySubscripts(pstate,
-											   basenode,
-											   arrayType,
-											   elementTypeId,
-											   arrayTypMod,
-											   subscripts,
-											   rhs);
+	result = (Node *) transformContainerSubscripts(pstate,
+												   basenode,
+												   containerType,
+												   elementTypeId,
+												   containerTypMod,
+												   subscripts,
+												   rhs);
 
-	/* If target was a domain over array, need to coerce up to the domain */
-	if (arrayType != targetTypeId)
+	/* If target was a domain over container, need to coerce up to the domain */
+	if (containerType != targetTypeId)
 	{
 		Oid			resulttype = exprType(result);
 

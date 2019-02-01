@@ -265,9 +265,9 @@ _equalWindowFunc(const WindowFunc *a, const WindowFunc *b)
 }
 
 static bool
-_equalArrayRef(const ArrayRef *a, const ArrayRef *b)
+_equalSubscriptingRef(const SubscriptingRef *a, const SubscriptingRef *b)
 {
-	COMPARE_SCALAR_FIELD(refarraytype);
+	COMPARE_SCALAR_FIELD(refcontainertype);
 	COMPARE_SCALAR_FIELD(refelemtype);
 	COMPARE_SCALAR_FIELD(reftypmod);
 	COMPARE_SCALAR_FIELD(refcollid);
@@ -3041,8 +3041,8 @@ equal(const void *a, const void *b)
 		case T_WindowFunc:
 			retval = _equalWindowFunc(a, b);
 			break;
-		case T_ArrayRef:
-			retval = _equalArrayRef(a, b);
+		case T_SubscriptingRef:
+			retval = _equalSubscriptingRef(a, b);
 			break;
 		case T_FuncExpr:
 			retval = _equalFuncExpr(a, b);
