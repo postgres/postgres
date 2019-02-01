@@ -12104,7 +12104,8 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 
 					/*
 					 * Wait for more WAL to arrive. Time out after 5 seconds
-					 * to react to a trigger file promptly.
+					 * to react to a trigger file promptly and to check if the
+					 * WAL receiver is still active.
 					 */
 					(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
 									 WL_LATCH_SET | WL_TIMEOUT |
