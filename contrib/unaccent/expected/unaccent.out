@@ -31,6 +31,12 @@ SELECT unaccent('˃˖˗˜');
  >+-~
 (1 row)
 
+SELECT unaccent('À');  -- Remove combining diacritical 0x0300
+ unaccent 
+----------
+ A
+(1 row)
+
 SELECT unaccent('unaccent', 'foobar');
  unaccent 
 ----------
@@ -55,6 +61,12 @@ SELECT unaccent('unaccent', '˃˖˗˜');
  >+-~
 (1 row)
 
+SELECT unaccent('unaccent', 'À');
+ unaccent 
+----------
+ A
+(1 row)
+
 SELECT ts_lexize('unaccent', 'foobar');
  ts_lexize 
 -----------
@@ -77,5 +89,11 @@ SELECT ts_lexize('unaccent', '˃˖˗˜');
  ts_lexize 
 -----------
  {>+-~}
+(1 row)
+
+SELECT ts_lexize('unaccent', 'À');
+ ts_lexize 
+-----------
+ {A}
 (1 row)
 
