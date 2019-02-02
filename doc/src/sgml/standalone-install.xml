@@ -77,25 +77,21 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</useri
      The previous <command>initdb</command> step should have told you how to
      start up the database server. Do so now. The command should look
      something like:
-<programlisting>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</programlisting>
-     This will start the server in the foreground. To put the server
-     in the background use something like:
-<programlisting>nohup /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data \
-    &lt;/dev/null &gt;&gt;server.log 2&gt;&amp;1 &lt;/dev/null &amp;</programlisting>
+<programlisting>/usr/local/pgsql/bin/pg_ctl -D /usr/local/pgsql/data start</programlisting>
     </para>
 
     <para>
      To stop a server running in the background you can type:
-<programlisting>kill `cat /usr/local/pgsql/data/postmaster.pid`</programlisting>
+<programlisting>/usr/local/pgsql/bin/pg_ctl -D /usr/local/pgsql/data stop</programlisting>
     </para>
    </step>
 
    <step>
     <para>
      Create a database:
-<screen><userinput>createdb testdb</userinput></screen>
+<screen><userinput>/usr/local/pgsql/bin/createdb testdb</userinput></screen>
      Then enter:
-<screen><userinput>psql testdb</userinput></screen>
+<screen><userinput>/usr/local/pgsql/bin/psql testdb</userinput></screen>
      to connect to that database. At the prompt you can enter SQL
      commands and start experimenting.
     </para>
