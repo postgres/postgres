@@ -102,8 +102,8 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  * visibility map page, if we haven't already got one.
  *
  * buffer2 may be InvalidBuffer, if only one buffer is involved.  buffer1
- * must not be InvalidBuffer.  If both buffers are specified, buffer1 must
- * be less than buffer2.
+ * must not be InvalidBuffer.  If both buffers are specified, block1 must
+ * be less than block2.
  */
 static void
 GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
@@ -114,7 +114,7 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 	bool		need_to_pin_buffer2;
 
 	Assert(BufferIsValid(buffer1));
-	Assert(buffer2 == InvalidBuffer || buffer1 <= buffer2);
+	Assert(buffer2 == InvalidBuffer || block1 <= block2);
 
 	while (1)
 	{
@@ -366,7 +366,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		 * done a bit of extra work for no gain, but there's no real harm
 		 * done.
 		 */
-		if (otherBuffer == InvalidBuffer || buffer <= otherBuffer)
+		if (otherBuffer == InvalidBuffer || targetBlock <= otherBlock)
 			GetVisibilityMapPins(relation, buffer, otherBuffer,
 								 targetBlock, otherBlock, vmbuffer,
 								 vmbuffer_other);
