@@ -1146,7 +1146,34 @@ include $(PGXS)
       <term><varname>PG_CPPFLAGS</varname></term>
       <listitem>
        <para>
-        will be added to <varname>CPPFLAGS</varname>
+        will be prepended to <varname>CPPFLAGS</varname>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_CFLAGS</varname></term>
+      <listitem>
+       <para>
+        will be appended to <varname>CFLAGS</varname>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_CXXFLAGS</varname></term>
+      <listitem>
+       <para>
+        will be appended to <varname>CXXFLAGS</varname>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_LDFLAGS</varname></term>
+      <listitem>
+       <para>
+        will be prepended to <varname>LDFLAGS</varname>
        </para>
       </listitem>
      </varlistentry>
