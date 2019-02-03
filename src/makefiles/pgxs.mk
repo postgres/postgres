@@ -41,7 +41,10 @@
 #   REGRESS -- list of regression test cases (without suffix)
 #   REGRESS_OPTS -- additional switches to pass to pg_regress
 #   EXTRA_CLEAN -- extra files to remove in 'make clean'
-#   PG_CPPFLAGS -- will be added to CPPFLAGS
+#   PG_CPPFLAGS -- will be prepended to CPPFLAGS
+#   PG_CFLAGS -- will be appended to CFLAGS
+#   PG_CXXFLAGS -- will be appended to CXXFLAGS
+#   PG_LDFLAGS -- will be prepended to LDFLAGS
 #   PG_LIBS -- will be added to PROGRAM link line
 #   PG_LIBS_INTERNAL -- same, for references to libraries within build tree
 #   SHLIB_LINK -- will be added to MODULE_big link line
@@ -97,6 +100,15 @@ endif
 
 ifdef PG_CPPFLAGS
 override CPPFLAGS := $(PG_CPPFLAGS) $(CPPFLAGS)
+endif
+ifdef PG_CFLAGS
+override CFLAGS := $(CFLAGS) $(PG_CFLAGS)
+endif
+ifdef PG_CXXFLAGS
+override CXXFLAGS := $(CXXFLAGS) $(PG_CXXFLAGS)
+endif
+ifdef PG_LDFLAGS
+override LDFLAGS := $(PG_LDFLAGS) $(LDFLAGS)
 endif
 
 all: $(PROGRAM) $(DATA_built) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULES)) $(addsuffix .control, $(EXTENSION))
