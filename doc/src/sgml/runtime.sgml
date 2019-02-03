@@ -638,9 +638,12 @@ psql: could not connect to server: No such file or directory
    </para>
 
    <para>
-    Upon starting the server, <productname>PostgreSQL</productname> normally allocates
+    By default, <productname>PostgreSQL</productname> allocates
     a very small amount of System V shared memory, as well as a much larger
-    amount of POSIX (<function>mmap</function>) shared memory.
+    amount of anonymous <function>mmap</function> shared memory.
+    Alternatively, a single large System V shared memory region can be used
+    (see <xref linkend="guc-shared-memory-type"/>).
+    
     In addition a significant number of semaphores, which can be either
     System V or POSIX style, are created at server startup.  Currently,
     POSIX semaphores are used on Linux and FreeBSD systems while other
@@ -752,8 +755,10 @@ psql: could not connect to server: No such file or directory
     <productname>PostgreSQL</productname> requires a few bytes of System V shared memory
     (typically 48 bytes, on 64-bit platforms) for each copy of the server.
     On most modern operating systems, this amount can easily be allocated.
-    However, if you are running many copies of the server, or if other
-    applications are also using System V shared memory, it may be necessary to
+    However, if you are running many copies of the server or you explicitly
+    configure the server to use large amounts of System V shared memory (see
+    <xref linkend="guc-shared-memory-type"/> and <xref
+    linkend="guc-dynamic-shared-memory-type"/>), it may be necessary to
     increase <varname>SHMALL</varname>, which is the total amount of System V shared
     memory system-wide.  Note that <varname>SHMALL</varname> is measured in pages
     rather than bytes on many systems.
@@ -879,7 +884,7 @@ kern.ipc.semmns=512
        </para>
 
        <para>
-        You might also want to configure your kernel to lock shared
+        You might also want to configure your kernel to lock System V shared
         memory into RAM and prevent it from being paged out to swap.
         This can be accomplished using the <command>sysctl</command>
         setting <literal>kern.ipc.shm_use_phys</literal>.
@@ -928,7 +933,7 @@ kern.ipc.semmns=512
        </para>
 
        <para>
-        You might also want to configure your kernel to lock shared
+        You might also want to configure your kernel to lock System V shared
         memory into RAM and prevent it from being paged out to swap.
         This can be accomplished using the <command>sysctl</command>
         setting <literal>kern.ipc.shm_use_phys</literal>.

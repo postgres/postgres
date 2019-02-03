@@ -62,10 +62,11 @@
  * to a process after exec().  Since EXEC_BACKEND is intended only for
  * developer use, this shouldn't be a big problem.  Because of this, we do
  * not worry about supporting anonymous shmem in the EXEC_BACKEND cases below.
+ *
+ * As of PostgreSQL 12, we regained the ability to use a large System V shared
+ * memory region even in non-EXEC_BACKEND builds, if shared_memory_type is set
+ * to sysv (though this is not the default).
  */
-#ifndef EXEC_BACKEND
-#define USE_ANONYMOUS_SHMEM
-#endif
 
 
 typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget(2) */
@@ -75,10 +76,8 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
 
-#ifdef USE_ANONYMOUS_SHMEM
 static Size AnonymousShmemSize;
 static void *AnonymousShmem = NULL;
-#endif
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -370,8 +369,6 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 	return true;
 }
 
-#ifdef USE_ANONYMOUS_SHMEM
-
 #ifdef MAP_HUGETLB
 
 /*
@@ -534,8 +531,6 @@ AnonymousShmemDetach(int status, Datum arg)
 	}
 }
 
-#endif							/* USE_ANONYMOUS_SHMEM */
-
 /*
  * PGSharedMemoryCreate
  *
@@ -566,7 +561,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	Size		sysvsize;
 
 	/* Complain if hugepages demanded but we can't possibly support them */
-#if !defined(USE_ANONYMOUS_SHMEM) || !defined(MAP_HUGETLB)
+#if !defined(MAP_HUGETLB)
 	if (huge_pages == HUGE_PAGES_ON)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -576,18 +571,19 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-#ifdef USE_ANONYMOUS_SHMEM
-	AnonymousShmem = CreateAnonymousSegment(&size);
-	AnonymousShmemSize = size;
+	if (shared_memory_type == SHMEM_TYPE_MMAP)
+	{
+		AnonymousShmem = CreateAnonymousSegment(&size);
+		AnonymousShmemSize = size;
 
-	/* Register on-exit routine to unmap the anonymous segment */
-	on_shmem_exit(AnonymousShmemDetach, (Datum) 0);
+		/* Register on-exit routine to unmap the anonymous segment */
+		on_shmem_exit(AnonymousShmemDetach, (Datum) 0);
 
-	/* Now we need only allocate a minimal-sized SysV shmem block. */
-	sysvsize = sizeof(PGShmemHeader);
-#else
-	sysvsize = size;
-#endif
+		/* Now we need only allocate a minimal-sized SysV shmem block. */
+		sysvsize = sizeof(PGShmemHeader);
+	}
+	else
+		sysvsize = size;
 
 	/* Make sure PGSharedMemoryAttach doesn't fail without need */
 	UsedShmemSegAddr = NULL;
@@ -687,14 +683,10 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	 * block. Otherwise, the System V shared memory block is only a shim, and
 	 * we must return a pointer to the real block.
 	 */
-#ifdef USE_ANONYMOUS_SHMEM
 	if (AnonymousShmem == NULL)
 		return hdr;
 	memcpy(AnonymousShmem, hdr, sizeof(PGShmemHeader));
 	return (PGShmemHeader *) AnonymousShmem;
-#else
-	return hdr;
-#endif
 }
 
 #ifdef EXEC_BACKEND
@@ -801,7 +793,6 @@ PGSharedMemoryDetach(void)
 		UsedShmemSegAddr = NULL;
 	}
 
-#ifdef USE_ANONYMOUS_SHMEM
 	if (AnonymousShmem != NULL)
 	{
 		if (munmap(AnonymousShmem, AnonymousShmemSize) < 0)
@@ -809,7 +800,6 @@ PGSharedMemoryDetach(void)
 				 AnonymousShmem, AnonymousShmemSize);
 		AnonymousShmem = NULL;
 	}
-#endif
 }
 
 

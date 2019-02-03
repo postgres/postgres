@@ -1694,6 +1694,31 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-shared-memory-type" xreflabel="shared_memory_type">
+      <term><varname>shared_memory_type</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>shared_memory_type</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the shared memory implementation that the server
+        should use for the main shared memory region that holds
+        <productname>PostgreSQL</productname>'s shared buffers and other
+        shared data.  Possible values are <literal>mmap</literal> (for
+        anonymous shared memory allocated using <function>mmap</function>),
+        <literal>sysv</literal> (for System V shared memory allocated via
+        <function>shmget</function>) and <literal>windows</literal> (for Windows
+        shared memory).  Not all values are supported on all platforms; the
+        first supported option is the default for that platform.  The use of
+        the <literal>sysv</literal> option, which is not the default on any
+        platform, is generally discouraged because it typically requires
+        non-default kernel settings to allow for large allocations (see <xref
+        linkend="sysvipc"/>).
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-dynamic-shared-memory-type" xreflabel="dynamic_shared_memory_type">
       <term><varname>dynamic_shared_memory_type</varname> (<type>enum</type>)
       <indexterm>

@@ -453,6 +453,19 @@ const struct config_enum_entry ssl_protocol_versions_info[] = {
 	{NULL, 0, false}
 };
 
+static struct config_enum_entry shared_memory_options[] = {
+#ifndef WIN32
+	{ "sysv", SHMEM_TYPE_SYSV, false},
+#endif
+#ifndef EXEC_BACKEND
+	{ "mmap", SHMEM_TYPE_MMAP, false},
+#endif
+#ifdef WIN32
+	{ "windows", SHMEM_TYPE_WINDOWS, false},
+#endif
+	{NULL, 0, false}
+};
+
 /*
  * Options for enum values stored in other modules
  */
@@ -4324,6 +4337,16 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&dynamic_shared_memory_type,
 		DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE, dynamic_shared_memory_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"shared_memory_type", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Selects the shared memory implementation used for the main shared memory region."),
+			NULL
+		},
+		&shared_memory_type,
+		DEFAULT_SHARED_MEMORY_TYPE, shared_memory_options,
 		NULL, NULL, NULL
 	},
 
