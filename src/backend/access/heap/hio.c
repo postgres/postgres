@@ -74,23 +74,31 @@ RelationPutHeapTuple(Relation relation,
 }
 
 /*
- * Read in a buffer, using bulk-insert strategy if bistate isn't NULL.
+ * Read in a buffer in mode, using bulk-insert strategy if bistate isn't NULL.
  */
 static Buffer
 ReadBufferBI(Relation relation, BlockNumber targetBlock,
-			 BulkInsertState bistate)
+			 ReadBufferMode mode, BulkInsertState bistate)
 {
 	Buffer		buffer;
 
 	/* If not bulk-insert, exactly like ReadBuffer */
 	if (!bistate)
-		return ReadBuffer(relation, targetBlock);
+		return ReadBufferExtended(relation, MAIN_FORKNUM, targetBlock,
+								  mode, NULL);
 
 	/* If we have the desired block already pinned, re-pin and return it */
 	if (bistate->current_buf != InvalidBuffer)
 	{
 		if (BufferGetBlockNumber(bistate->current_buf) == targetBlock)
 		{
+			/*
+			 * Currently the LOCK variants are only used for extending
+			 * relation, which should never reach this branch.
+			 */
+			Assert(mode != RBM_ZERO_AND_LOCK &&
+				   mode != RBM_ZERO_AND_CLEANUP_LOCK);
+
 			IncrBufferRefCount(bistate->current_buf);
 			return bistate->current_buf;
 		}
@@ -101,7 +109,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
 
 	/* Perform a read using the buffer strategy */
 	buffer = ReadBufferExtended(relation, MAIN_FORKNUM, targetBlock,
-								RBM_NORMAL, bistate->strategy);
+								mode, bistate->strategy);
 
 	/* Save the selected block as target for future inserts */
 	IncrBufferRefCount(buffer);
@@ -204,11 +212,10 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 		/*
 		 * Extend by one page.  This should generally match the main-line
 		 * extension code in RelationGetBufferForTuple, except that we hold
-		 * the relation extension lock throughout.
+		 * the relation extension lock throughout, and we don't immediately
+		 * initialize the page (see below).
 		 */
-		buffer = ReadBufferBI(relation, P_NEW, bistate);
-
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+		buffer = ReadBufferBI(relation, P_NEW, RBM_ZERO_AND_LOCK, bistate);
 		page = BufferGetPage(buffer);
 
 		if (!PageIsNew(page))
@@ -216,18 +223,18 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 				 BufferGetBlockNumber(buffer),
 				 RelationGetRelationName(relation));
 
-		PageInit(page, BufferGetPageSize(buffer), 0);
-
 		/*
-		 * We mark all the new buffers dirty, but do nothing to write them
-		 * out; they'll probably get used soon, and even if they are not, a
-		 * crash will leave an okay all-zeroes page on disk.
+		 * Add the page to the FSM without initializing. If we were to
+		 * initialize here, the page would potentially get flushed out to disk
+		 * before we add any useful content. There's no guarantee that that'd
+		 * happen before a potential crash, so we need to deal with
+		 * uninitialized pages anyway, thus avoid the potential for
+		 * unnecessary writes.
 		 */
-		MarkBufferDirty(buffer);
 
 		/* we'll need this info below */
 		blockNum = BufferGetBlockNumber(buffer);
-		freespace = PageGetHeapFreeSpace(page);
+		freespace = BufferGetPageSize(buffer) - SizeOfPageHeaderData;
 
 		UnlockReleaseBuffer(buffer);
 
@@ -412,7 +419,7 @@ loop:
 		if (otherBuffer == InvalidBuffer)
 		{
 			/* easy case */
-			buffer = ReadBufferBI(relation, targetBlock, bistate);
+			buffer = ReadBufferBI(relation, targetBlock, RBM_NORMAL, bistate);
 			if (PageIsAllVisible(BufferGetPage(buffer)))
 				visibilitymap_pin(relation, targetBlock, vmbuffer);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -479,6 +486,19 @@ loop:
 		 * we're done.
 		 */
 		page = BufferGetPage(buffer);
+
+		/*
+		 * If necessary initialize page, it'll be used soon.  We could avoid
+		 * dirtying the buffer here, and rely on the caller to do so whenever
+		 * it puts a tuple onto the page, but there seems not much benefit in
+		 * doing so.
+		 */
+		if (PageIsNew(page))
+		{
+			PageInit(page, BufferGetPageSize(buffer), 0);
+			MarkBufferDirty(buffer);
+		}
+
 		pageFreeSpace = PageGetHeapFreeSpace(page);
 		if (len + saveFreeSpace <= pageFreeSpace)
 		{
@@ -571,28 +591,7 @@ loop:
 	 * it worth keeping an accurate file length in shared memory someplace,
 	 * rather than relying on the kernel to do it for us?
 	 */
-	buffer = ReadBufferBI(relation, P_NEW, bistate);
-
-	/*
-	 * We can be certain that locking the otherBuffer first is OK, since it
-	 * must have a lower page number.
-	 */
-	if (otherBuffer != InvalidBuffer)
-		LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
-
-	/*
-	 * Now acquire lock on the new page.
-	 */
-	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-
-	/*
-	 * Release the file-extension lock; it's now OK for someone else to extend
-	 * the relation some more.  Note that we cannot release this lock before
-	 * we have buffer lock on the new page, or we risk a race condition
-	 * against vacuumlazy.c --- see comments therein.
-	 */
-	if (needLock)
-		UnlockRelationForExtension(relation, ExclusiveLock);
+	buffer = ReadBufferBI(relation, P_NEW, RBM_ZERO_AND_LOCK, bistate);
 
 	/*
 	 * We need to initialize the empty new page.  Double-check that it really
@@ -607,6 +606,52 @@ loop:
 			 RelationGetRelationName(relation));
 
 	PageInit(page, BufferGetPageSize(buffer), 0);
+	MarkBufferDirty(buffer);
+
+	/*
+	 * Release the file-extension lock; it's now OK for someone else to extend
+	 * the relation some more.
+	 */
+	if (needLock)
+		UnlockRelationForExtension(relation, ExclusiveLock);
+
+	/*
+	 * Lock the other buffer. It's guaranteed to be of a lower page number
+	 * than the new page. To conform with the deadlock prevent rules, we ought
+	 * to lock otherBuffer first, but that would give other backends a chance
+	 * to put tuples on our page. To reduce the likelihood of that, attempt to
+	 * lock the other buffer conditionally, that's very likely to work.
+	 * Otherwise we need to lock buffers in the correct order, and retry if
+	 * the space has been used in the mean time.
+	 *
+	 * Alternatively, we could acquire the lock on otherBuffer before
+	 * extending the relation, but that'd require holding the lock while
+	 * performing IO, which seems worse than an unlikely retry.
+	 */
+	if (otherBuffer != InvalidBuffer)
+	{
+		Assert(otherBuffer != buffer);
+
+		if (unlikely(!ConditionalLockBuffer(otherBuffer)))
+		{
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
+			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+
+			/*
+			 * Because the buffer was unlocked for a while, it's possible,
+			 * although unlikely, that the page was filled. If so, just retry
+			 * from start.
+			 */
+			if (len > PageGetHeapFreeSpace(page))
+			{
+				LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
+				UnlockReleaseBuffer(buffer);
+
+				goto loop;
+			}
+		}
+	}
 
 	if (len > PageGetHeapFreeSpace(page))
 	{
