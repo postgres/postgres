@@ -202,7 +202,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Allows users in the same group as the cluster owner to read all cluster
-        files created by <command>initdb</command>.
+        files created by <command>initdb</command>.  This option is ignored
+        on <productname>Windows</productname> as it does not support
+        <acronym>POSIX</acronym>-style group permissions.
        </para>
       </listitem>
      </varlistentry>
