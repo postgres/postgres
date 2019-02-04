@@ -1,48 +1,69 @@
 CREATE EXTENSION pageinspect;
-CREATE TABLE test1 (a int, b int);
-INSERT INTO test1 VALUES (16777217, 131584);
-VACUUM test1;  -- set up FSM
+CREATE TABLE test_rel_forks (a int);
+-- Make sure there are enough blocks in the heap for the FSM to be created.
+INSERT INTO test_rel_forks SELECT i from generate_series(1,2000) i;
+-- set up FSM and VM
+VACUUM test_rel_forks;
 -- The page contents can vary, so just test that it can be read
 -- successfully, but don't keep the output.
-SELECT octet_length(get_raw_page('test1', 'main', 0)) AS main_0;
+SELECT octet_length(get_raw_page('test_rel_forks', 'main', 0)) AS main_0;
  main_0 
 --------
    8192
 (1 row)
 
-SELECT octet_length(get_raw_page('test1', 'main', 1)) AS main_1;
-ERROR:  block number 1 is out of range for relation "test1"
-SELECT octet_length(get_raw_page('test1', 'fsm', 0)) AS fsm_0;
+SELECT octet_length(get_raw_page('test_rel_forks', 'main', 100)) AS main_100;
+ERROR:  block number 100 is out of range for relation "test_rel_forks"
+SELECT octet_length(get_raw_page('test_rel_forks', 'fsm', 0)) AS fsm_0;
  fsm_0 
 -------
   8192
 (1 row)
 
-SELECT octet_length(get_raw_page('test1', 'fsm', 1)) AS fsm_1;
- fsm_1 
--------
-  8192
-(1 row)
-
-SELECT octet_length(get_raw_page('test1', 'vm', 0)) AS vm_0;
+SELECT octet_length(get_raw_page('test_rel_forks', 'fsm', 20)) AS fsm_20;
+ERROR:  block number 20 is out of range for relation "test_rel_forks"
+SELECT octet_length(get_raw_page('test_rel_forks', 'vm', 0)) AS vm_0;
  vm_0 
 ------
  8192
 (1 row)
 
-SELECT octet_length(get_raw_page('test1', 'vm', 1)) AS vm_1;
-ERROR:  block number 1 is out of range for relation "test1"
+SELECT octet_length(get_raw_page('test_rel_forks', 'vm', 1)) AS vm_1;
+ERROR:  block number 1 is out of range for relation "test_rel_forks"
 SELECT octet_length(get_raw_page('xxx', 'main', 0));
 ERROR:  relation "xxx" does not exist
-SELECT octet_length(get_raw_page('test1', 'xxx', 0));
+SELECT octet_length(get_raw_page('test_rel_forks', 'xxx', 0));
 ERROR:  invalid fork name
 HINT:  Valid fork names are "main", "fsm", "vm", and "init".
-SELECT get_raw_page('test1', 0) = get_raw_page('test1', 'main', 0);
+SELECT * FROM fsm_page_contents(get_raw_page('test_rel_forks', 'fsm', 0));
+ fsm_page_contents 
+-------------------
+ 0: 39            +
+ 1: 39            +
+ 3: 39            +
+ 7: 39            +
+ 15: 39           +
+ 31: 39           +
+ 63: 39           +
+ 127: 39          +
+ 255: 39          +
+ 511: 39          +
+ 1023: 39         +
+ 2047: 39         +
+ 4095: 39         +
+ fp_next_slot: 0  +
+ 
+(1 row)
+
+SELECT get_raw_page('test_rel_forks', 0) = get_raw_page('test_rel_forks', 'main', 0);
  ?column? 
 ----------
  t
 (1 row)
 
+DROP TABLE test_rel_forks;
+CREATE TABLE test1 (a int, b int);
+INSERT INTO test1 VALUES (16777217, 131584);
 SELECT pagesize, version FROM page_header(get_raw_page('test1', 0));
  pagesize | version 
 ----------+---------
@@ -60,26 +81,6 @@ SELECT tuple_data_split('test1'::regclass, t_data, t_infomask, t_infomask2, t_bi
        tuple_data_split        
 -------------------------------
  {"\\x01000001","\\x00020200"}
-(1 row)
-
-SELECT * FROM fsm_page_contents(get_raw_page('test1', 'fsm', 0));
- fsm_page_contents 
--------------------
- 0: 254           +
- 1: 254           +
- 3: 254           +
- 7: 254           +
- 15: 254          +
- 31: 254          +
- 63: 254          +
- 127: 254         +
- 255: 254         +
- 511: 254         +
- 1023: 254        +
- 2047: 254        +
- 4095: 254        +
- fp_next_slot: 0  +
- 
 (1 row)
 
 DROP TABLE test1;

@@ -310,7 +310,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 
 		if (extended)
 		{
-			RecordPageWithFreeSpace(idxrel, newblk, freespace);
+			RecordPageWithFreeSpace(idxrel, newblk, freespace, InvalidBlockNumber);
 			FreeSpaceMapVacuumRange(idxrel, newblk, newblk + 1);
 		}
 
@@ -461,7 +461,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 
 	if (extended)
 	{
-		RecordPageWithFreeSpace(idxrel, blk, freespace);
+		RecordPageWithFreeSpace(idxrel, blk, freespace, InvalidBlockNumber);
 		FreeSpaceMapVacuumRange(idxrel, blk, blk + 1);
 	}
 
@@ -654,7 +654,7 @@ brin_page_cleanup(Relation idxrel, Buffer buf)
 
 	/* Measure free space and record it */
 	RecordPageWithFreeSpace(idxrel, BufferGetBlockNumber(buf),
-							br_page_get_freespace(page));
+							br_page_get_freespace(page), InvalidBlockNumber);
 }
 
 /*
@@ -703,7 +703,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 	/* Choose initial target page, re-using existing target if known */
 	newblk = RelationGetTargetBlock(irel);
 	if (newblk == InvalidBlockNumber)
-		newblk = GetPageWithFreeSpace(irel, itemsz);
+		newblk = GetPageWithFreeSpace(irel, itemsz, true);
 
 	/*
 	 * Loop until we find a page with sufficient free space.  By the time we
@@ -895,7 +895,7 @@ brin_initialize_empty_new_buffer(Relation idxrel, Buffer buffer)
 	 * pages whose FSM records were forgotten in a crash.
 	 */
 	RecordPageWithFreeSpace(idxrel, BufferGetBlockNumber(buffer),
-							br_page_get_freespace(page));
+							br_page_get_freespace(page), InvalidBlockNumber);
 }
 
 

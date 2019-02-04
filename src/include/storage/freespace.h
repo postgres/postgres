@@ -18,15 +18,20 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
+/* Only create the FSM if the heap has greater than this many blocks */
+#define HEAP_FSM_CREATION_THRESHOLD 4
+
 /* prototypes for public functions in freespace.c */
 extern Size GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk);
-extern BlockNumber GetPageWithFreeSpace(Relation rel, Size spaceNeeded);
+extern BlockNumber GetPageWithFreeSpace(Relation rel, Size spaceNeeded,
+					 bool check_fsm_only);
 extern BlockNumber RecordAndGetPageWithFreeSpace(Relation rel,
 							  BlockNumber oldPage,
 							  Size oldSpaceAvail,
 							  Size spaceNeeded);
 extern void RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk,
-						Size spaceAvail);
+						Size spaceAvail, BlockNumber nblocks);
+extern void FSMClearLocalMap(void);
 extern void XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 							Size spaceAvail);
 

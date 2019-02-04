@@ -1,26 +1,35 @@
 CREATE EXTENSION pageinspect;
 
-CREATE TABLE test1 (a int, b int);
-INSERT INTO test1 VALUES (16777217, 131584);
+CREATE TABLE test_rel_forks (a int);
+-- Make sure there are enough blocks in the heap for the FSM to be created.
+INSERT INTO test_rel_forks SELECT i from generate_series(1,2000) i;
 
-VACUUM test1;  -- set up FSM
+-- set up FSM and VM
+VACUUM test_rel_forks;
 
 -- The page contents can vary, so just test that it can be read
 -- successfully, but don't keep the output.
 
-SELECT octet_length(get_raw_page('test1', 'main', 0)) AS main_0;
-SELECT octet_length(get_raw_page('test1', 'main', 1)) AS main_1;
+SELECT octet_length(get_raw_page('test_rel_forks', 'main', 0)) AS main_0;
+SELECT octet_length(get_raw_page('test_rel_forks', 'main', 100)) AS main_100;
 
-SELECT octet_length(get_raw_page('test1', 'fsm', 0)) AS fsm_0;
-SELECT octet_length(get_raw_page('test1', 'fsm', 1)) AS fsm_1;
+SELECT octet_length(get_raw_page('test_rel_forks', 'fsm', 0)) AS fsm_0;
+SELECT octet_length(get_raw_page('test_rel_forks', 'fsm', 20)) AS fsm_20;
 
-SELECT octet_length(get_raw_page('test1', 'vm', 0)) AS vm_0;
-SELECT octet_length(get_raw_page('test1', 'vm', 1)) AS vm_1;
+SELECT octet_length(get_raw_page('test_rel_forks', 'vm', 0)) AS vm_0;
+SELECT octet_length(get_raw_page('test_rel_forks', 'vm', 1)) AS vm_1;
 
 SELECT octet_length(get_raw_page('xxx', 'main', 0));
-SELECT octet_length(get_raw_page('test1', 'xxx', 0));
+SELECT octet_length(get_raw_page('test_rel_forks', 'xxx', 0));
 
-SELECT get_raw_page('test1', 0) = get_raw_page('test1', 'main', 0);
+SELECT * FROM fsm_page_contents(get_raw_page('test_rel_forks', 'fsm', 0));
+
+SELECT get_raw_page('test_rel_forks', 0) = get_raw_page('test_rel_forks', 'main', 0);
+
+DROP TABLE test_rel_forks;
+
+CREATE TABLE test1 (a int, b int);
+INSERT INTO test1 VALUES (16777217, 131584);
 
 SELECT pagesize, version FROM page_header(get_raw_page('test1', 0));
 
@@ -28,8 +37,6 @@ SELECT page_checksum(get_raw_page('test1', 0), 0) IS NOT NULL AS silly_checksum_
 
 SELECT tuple_data_split('test1'::regclass, t_data, t_infomask, t_infomask2, t_bits)
     FROM heap_page_items(get_raw_page('test1', 0));
-
-SELECT * FROM fsm_page_contents(get_raw_page('test1', 'fsm', 0));
 
 DROP TABLE test1;
 

@@ -76,6 +76,14 @@
 #define FSM_ROOT_LEVEL	(FSM_TREE_DEPTH - 1)
 #define FSM_BOTTOM_LEVEL 0
 
+/* Status codes for the local map. */
+
+/* Either already tried, or beyond the end of the relation */
+#define FSM_LOCAL_NOT_AVAIL 0x00
+
+/* Available to try */
+#define FSM_LOCAL_AVAIL		0x01
+
 /*
  * The internal FSM routines work on a logical addressing scheme. Each
  * level of the tree can be thought of as a separately addressable file.
@@ -88,6 +96,23 @@ typedef struct
 
 /* Address of the root page. */
 static const FSMAddress FSM_ROOT_ADDRESS = {FSM_ROOT_LEVEL, 0};
+
+/* Local map of block numbers for small heaps with no FSM. */
+typedef struct
+{
+	BlockNumber nblocks;
+	uint8		map[HEAP_FSM_CREATION_THRESHOLD];
+}			FSMLocalMap;
+
+static FSMLocalMap fsm_local_map =
+{
+	0,
+	{
+		FSM_LOCAL_NOT_AVAIL
+	}
+};
+
+#define FSM_LOCAL_MAP_EXISTS (fsm_local_map.nblocks > 0)
 
 /* functions to navigate the tree */
 static FSMAddress fsm_get_child(FSMAddress parent, uint16 slot);
@@ -107,10 +132,14 @@ static Size fsm_space_cat_to_avail(uint8 cat);
 /* workhorse functions for various operations */
 static int fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 				   uint8 newValue, uint8 minValue);
+static void fsm_local_set(Relation rel, BlockNumber cur_nblocks);
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
+static BlockNumber fsm_local_search(void);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
 				BlockNumber start, BlockNumber end,
 				bool *eof);
+static bool fsm_allow_writes(Relation rel, BlockNumber heapblk,
+				 BlockNumber nblocks, BlockNumber *get_nblocks);
 
 
 /******** Public API ********/
@@ -127,13 +156,46 @@ static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
  * amount of free space available on that page and then try again (see
  * RecordAndGetPageWithFreeSpace).  If InvalidBlockNumber is returned,
  * extend the relation.
+ *
+ * For very small heap relations that don't have a FSM, we try every other
+ * page before extending the relation.  To keep track of which pages have
+ * been tried, initialize a local in-memory map of pages.
  */
 BlockNumber
-GetPageWithFreeSpace(Relation rel, Size spaceNeeded)
+GetPageWithFreeSpace(Relation rel, Size spaceNeeded, bool check_fsm_only)
 {
 	uint8		min_cat = fsm_space_needed_to_cat(spaceNeeded);
+	BlockNumber target_block,
+				nblocks;
 
-	return fsm_search(rel, min_cat);
+	/* First try the FSM, if it exists. */
+	target_block = fsm_search(rel, min_cat);
+
+	if (target_block == InvalidBlockNumber &&
+		(rel->rd_rel->relkind == RELKIND_RELATION ||
+		 rel->rd_rel->relkind == RELKIND_TOASTVALUE) &&
+		!check_fsm_only)
+	{
+		nblocks = RelationGetNumberOfBlocks(rel);
+
+		if (nblocks > HEAP_FSM_CREATION_THRESHOLD)
+		{
+			/*
+			 * If the FSM knows nothing of the rel, try the last page before
+			 * we give up and extend.  This avoids one-tuple-per-page syndrome
+			 * during bootstrapping or in a recently-started system.
+			 */
+			target_block = nblocks - 1;
+		}
+		else if (nblocks > 0)
+		{
+			/* Create or update local map and get first candidate block. */
+			fsm_local_set(rel, nblocks);
+			target_block = fsm_local_search();
+		}
+	}
+
+	return target_block;
 }
 
 /*
@@ -144,16 +206,47 @@ GetPageWithFreeSpace(Relation rel, Size spaceNeeded)
  * also some effort to return a page close to the old page; if there's a
  * page with enough free space on the same FSM page where the old one page
  * is located, it is preferred.
+ *
+ * For very small heap relations that don't have a FSM, we update the local
+ * map to indicate we have tried a page, and return the next page to try.
  */
 BlockNumber
 RecordAndGetPageWithFreeSpace(Relation rel, BlockNumber oldPage,
 							  Size oldSpaceAvail, Size spaceNeeded)
 {
-	int			old_cat = fsm_space_avail_to_cat(oldSpaceAvail);
-	int			search_cat = fsm_space_needed_to_cat(spaceNeeded);
+	int			old_cat;
+	int			search_cat;
 	FSMAddress	addr;
 	uint16		slot;
 	int			search_slot;
+	BlockNumber nblocks = InvalidBlockNumber;
+
+	/* First try the local map, if it exists. */
+	if (FSM_LOCAL_MAP_EXISTS)
+	{
+		Assert((rel->rd_rel->relkind == RELKIND_RELATION ||
+				rel->rd_rel->relkind == RELKIND_TOASTVALUE) &&
+			   fsm_local_map.map[oldPage] == FSM_LOCAL_AVAIL);
+
+		fsm_local_map.map[oldPage] = FSM_LOCAL_NOT_AVAIL;
+		return fsm_local_search();
+	}
+
+	if (!fsm_allow_writes(rel, oldPage, InvalidBlockNumber, &nblocks))
+	{
+		/*
+		 * If we have neither a local map nor a FSM, we probably just tried
+		 * the target block in the smgr relation entry and failed, so we'll
+		 * need to create the local map.
+		 */
+		fsm_local_set(rel, nblocks);
+		return fsm_local_search();
+	}
+
+	/* Normal FSM logic follows */
+
+	old_cat = fsm_space_avail_to_cat(oldSpaceAvail);
+	search_cat = fsm_space_needed_to_cat(spaceNeeded);
 
 	/* Get the location of the FSM byte representing the heap block */
 	addr = fsm_get_location(oldPage, &slot);
@@ -176,18 +269,42 @@ RecordAndGetPageWithFreeSpace(Relation rel, BlockNumber oldPage,
  * Note that if the new spaceAvail value is higher than the old value stored
  * in the FSM, the space might not become visible to searchers until the next
  * FreeSpaceMapVacuum call, which updates the upper level pages.
+ *
+ * Callers have no need for a local map.
  */
 void
-RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk, Size spaceAvail)
+RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk,
+						Size spaceAvail, BlockNumber nblocks)
 {
-	int			new_cat = fsm_space_avail_to_cat(spaceAvail);
+	int			new_cat;
 	FSMAddress	addr;
 	uint16		slot;
+	BlockNumber dummy;
+
+	if (!fsm_allow_writes(rel, heapBlk, nblocks, &dummy))
+		/* No FSM to update and no local map either */
+		return;
 
 	/* Get the location of the FSM byte representing the heap block */
 	addr = fsm_get_location(heapBlk, &slot);
 
+	new_cat = fsm_space_avail_to_cat(spaceAvail);
 	fsm_set_and_search(rel, addr, slot, new_cat, 0);
+}
+
+/*
+ * Clear the local map.  We must call this when we have found a block with
+ * enough free space, when we extend the relation, or on transaction abort.
+ */
+void
+FSMClearLocalMap(void)
+{
+	if (FSM_LOCAL_MAP_EXISTS)
+	{
+		fsm_local_map.nblocks = 0;
+		memset(&fsm_local_map.map, FSM_LOCAL_NOT_AVAIL,
+			   sizeof(fsm_local_map.map));
+	}
 }
 
 /*
@@ -204,6 +321,31 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 	BlockNumber blkno;
 	Buffer		buf;
 	Page		page;
+	bool		write_to_fsm;
+
+	/* This is meant to mirror the logic in fsm_allow_writes() */
+	if (heapBlk >= HEAP_FSM_CREATION_THRESHOLD)
+		write_to_fsm = true;
+	else
+	{
+		/* Open the relation at smgr level */
+		SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
+
+		if (smgrexists(smgr, FSM_FORKNUM))
+			write_to_fsm = true;
+		else
+		{
+			BlockNumber heap_nblocks = smgrnblocks(smgr, MAIN_FORKNUM);
+
+			if (heap_nblocks > HEAP_FSM_CREATION_THRESHOLD)
+				write_to_fsm = true;
+			else
+				write_to_fsm = false;
+		}
+	}
+
+	if (!write_to_fsm)
+		return;
 
 	/* Get the location of the FSM byte representing the heap block */
 	addr = fsm_get_location(heapBlk, &slot);
@@ -903,4 +1045,135 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 	ReleaseBuffer(buf);
 
 	return max_avail;
+}
+
+/*
+ * For heaps, we prevent creation of the FSM unless the number of pages
+ * exceeds HEAP_FSM_CREATION_THRESHOLD.  For tables that don't already have
+ * a FSM, this will save an inode and a few kB of space.
+ *
+ * XXX The API is a little awkward -- if the caller passes a valid nblocks
+ * value, it can avoid invoking a system call.  If the caller passes
+ * InvalidBlockNumber and receives a false return value, it can get an
+ * up-to-date relation size from get_nblocks.  This saves a few cycles in
+ * the caller, which would otherwise need to get the relation size by itself.
+ */
+static bool
+fsm_allow_writes(Relation rel, BlockNumber heapblk,
+				 BlockNumber nblocks, BlockNumber *get_nblocks)
+{
+	bool		skip_get_nblocks;
+
+	if (heapblk >= HEAP_FSM_CREATION_THRESHOLD)
+		return true;
+
+	/* Non-heap rels can always create a FSM. */
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		return true;
+
+	/*
+	 * If the caller knows nblocks, we can avoid a system call later. If it
+	 * doesn't, maybe we have relpages from a previous VACUUM. Since the table
+	 * may have extended since then, we still have to count the pages later if
+	 * we can't return now.
+	 */
+	if (nblocks != InvalidBlockNumber)
+	{
+		if (nblocks > HEAP_FSM_CREATION_THRESHOLD)
+			return true;
+		else
+			skip_get_nblocks = true;
+	}
+	else
+	{
+		if (rel->rd_rel->relpages != InvalidBlockNumber &&
+			rel->rd_rel->relpages > HEAP_FSM_CREATION_THRESHOLD)
+			return true;
+		else
+			skip_get_nblocks = false;
+	}
+
+	RelationOpenSmgr(rel);
+	if (smgrexists(rel->rd_smgr, FSM_FORKNUM))
+		return true;
+
+	if (skip_get_nblocks)
+		return false;
+
+	/* last resort */
+	*get_nblocks = RelationGetNumberOfBlocks(rel);
+	if (*get_nblocks > HEAP_FSM_CREATION_THRESHOLD)
+		return true;
+	else
+		return false;
+}
+
+/*
+ * Initialize or update the local map of blocks to try, for when there is
+ * no FSM.
+ *
+ * When we initialize the map, the whole heap is potentially available to
+ * try.  Testing revealed that trying every block can cause a small
+ * performance dip compared to when we use a FSM, so we try every other
+ * block instead.
+ */
+static void
+fsm_local_set(Relation rel, BlockNumber cur_nblocks)
+{
+	BlockNumber blkno,
+				cached_target_block;
+
+	/* The local map must not be set already. */
+	Assert(!FSM_LOCAL_MAP_EXISTS);
+
+	/*
+	 * Starting at the current last block in the relation and working
+	 * backwards, mark alternating blocks as available.
+	 */
+	blkno = cur_nblocks - 1;
+	while (true)
+	{
+		fsm_local_map.map[blkno] = FSM_LOCAL_AVAIL;
+		if (blkno >= 2)
+			blkno -= 2;
+		else
+			break;
+	}
+
+	/* Cache the number of blocks. */
+	fsm_local_map.nblocks = cur_nblocks;
+
+	/* Set the status of the cached target block to 'unavailable'. */
+	cached_target_block = RelationGetTargetBlock(rel);
+	if (cached_target_block != InvalidBlockNumber &&
+		cached_target_block < cur_nblocks)
+		fsm_local_map.map[cached_target_block] = FSM_LOCAL_NOT_AVAIL;
+}
+
+/*
+ * Search the local map for an available block to try, in descending order.
+ * As such, there is no heuristic available to decide which order will be
+ * better to try, but the probability of having space in the last block in the
+ * map is higher because that is the most recent block added to the heap.
+ *
+ * This function is used when there is no FSM.
+ */
+static BlockNumber
+fsm_local_search(void)
+{
+	BlockNumber target_block;
+
+	/* Local map must be set by now. */
+	Assert(FSM_LOCAL_MAP_EXISTS);
+
+	target_block = fsm_local_map.nblocks;
+	do
+	{
+		target_block--;
+		if (fsm_local_map.map[target_block] == FSM_LOCAL_AVAIL)
+			return target_block;
+	} while (target_block > 0);
+
+	return InvalidBlockNumber;
 }

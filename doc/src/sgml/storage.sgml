@@ -590,12 +590,13 @@ tuple would otherwise be too big.
 <indexterm><primary>FSM</primary><see>Free Space Map</see></indexterm>
 
 <para>
-Each heap and index relation, except for hash indexes, has a Free Space Map
-(FSM) to keep track of available space in the relation. It's stored
-alongside the main relation data in a separate relation fork, named after the
-filenode number of the relation, plus a <literal>_fsm</literal> suffix. For example,
-if the filenode of a relation is 12345, the FSM is stored in a file called
-<filename>12345_fsm</filename>, in the same directory as the main relation file.
+Each heap relation, unless it is very small, and each index relation, except
+for hash indexes, has a Free Space Map (FSM) to keep track of available
+space in the relation. It's stored alongside the main relation data in a
+separate relation fork, named after the filenode number of the relation, plus
+a <literal>_fsm</literal> suffix. For example, if the filenode of a relation
+is 12345, the FSM is stored in a file called <filename>12345_fsm</filename>,
+in the same directory as the main relation file.
 </para>
 
 <para>
