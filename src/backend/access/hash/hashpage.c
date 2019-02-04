@@ -49,16 +49,6 @@ static void log_split_page(Relation rel, Buffer buf);
 
 
 /*
- * We use high-concurrency locking on hash indexes (see README for an overview
- * of the locking rules).  However, we can skip taking lmgr locks when the
- * index is local to the current backend (ie, either temp or new in the
- * current transaction).  No one else can see it, so there's no reason to
- * take locks.  We still take buffer-level locks, but not lmgr locks.
- */
-#define USELOCKING(rel)		(!RELATION_IS_LOCAL(rel))
-
-
-/*
  *	_hash_getbuf() -- Get a buffer by block number for read or write.
  *
  *		'access' must be HASH_READ, HASH_WRITE, or HASH_NOLOCK.
