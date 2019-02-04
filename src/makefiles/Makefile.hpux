@@ -36,6 +36,9 @@ else
    CFLAGS_SL = +Z
 endif
 
+# env var name to use in place of LD_LIBRARY_PATH
+ld_library_path_var = SHLIB_PATH
+
 # Rule for building a shared library from a single .o file
 %$(DLSUFFIX): %.o
 ifeq ($(GCC), yes)

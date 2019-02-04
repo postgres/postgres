@@ -23,6 +23,9 @@ else
 	LDFLAGS_SL += -Wl,-bnoentry -Wl,-H512 -Wl,-bM:SRE
 endif
 
+# env var name to use in place of LD_LIBRARY_PATH
+ld_library_path_var = LIBPATH
+
 
 POSTGRES_IMP= postgres.imp
 

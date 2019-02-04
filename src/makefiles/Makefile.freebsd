@@ -9,6 +9,14 @@ DLSUFFIX = .so
 
 CFLAGS_SL = -fPIC -DPIC
 
+# extra stuff for $(with_temp_install)
+# we need this to get LD_LIBRARY_PATH searched ahead of the compiled-in
+# rpath, if no DT_RUNPATH is present in the executable. The conditions
+# under which DT_RUNPATH are added seem unpredictable, so be safe.
+
+define with_temp_install_extra
+LD_LIBRARY_PATH_RPATH=1
+endef
 
 # Rule for building a shared library from a single .o file
 %.so: %.o
