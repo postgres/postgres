@@ -755,19 +755,26 @@ repairViewRuleMultiLoop(DumpableObject *viewobj,
  *
  * Note that the "next object" is not necessarily the matview itself;
  * it could be the matview's rowtype, for example.  We may come through here
- * several times while removing all the pre-data linkages.
+ * several times while removing all the pre-data linkages.  In particular,
+ * if there are other matviews that depend on the one with the circularity
+ * problem, we'll come through here for each such matview and mark them all
+ * as postponed.  (This works because all MVs have pre-data dependencies
+ * to begin with, so each of them will get visited.)
  */
 static void
-repairMatViewBoundaryMultiLoop(DumpableObject *matviewobj,
-							   DumpableObject *boundaryobj,
+repairMatViewBoundaryMultiLoop(DumpableObject *boundaryobj,
 							   DumpableObject *nextobj)
 {
-	TableInfo  *matviewinfo = (TableInfo *) matviewobj;
-
 	/* remove boundary's dependency on object after it in loop */
 	removeObjectDependency(boundaryobj, nextobj->dumpId);
-	/* mark matview as postponed into post-data section */
-	matviewinfo->postponed_def = true;
+	/* if that object is a matview, mark it as postponed into post-data */
+	if (nextobj->objType == DO_TABLE)
+	{
+		TableInfo  *nextinfo = (TableInfo *) nextobj;
+
+		if (nextinfo->relkind == RELKIND_MATVIEW)
+			nextinfo->postponed_def = true;
+	}
 }
 
 /*
@@ -956,8 +963,7 @@ repairDependencyLoop(DumpableObject **loop,
 						DumpableObject *nextobj;
 
 						nextobj = (j < nLoop - 1) ? loop[j + 1] : loop[0];
-						repairMatViewBoundaryMultiLoop(loop[i], loop[j],
-													   nextobj);
+						repairMatViewBoundaryMultiLoop(loop[j], nextobj);
 						return;
 					}
 				}
