@@ -22,7 +22,8 @@ SELECT octet_length(get_raw_page('test_rel_forks', 'vm', 1)) AS vm_1;
 SELECT octet_length(get_raw_page('xxx', 'main', 0));
 SELECT octet_length(get_raw_page('test_rel_forks', 'xxx', 0));
 
-SELECT * FROM fsm_page_contents(get_raw_page('test_rel_forks', 'fsm', 0));
+EXPLAIN (costs off, analyze on, timing off, summary off) SELECT * FROM
+        fsm_page_contents(get_raw_page('test_rel_forks', 'fsm', 0));
 
 SELECT get_raw_page('test_rel_forks', 0) = get_raw_page('test_rel_forks', 'main', 0);
 
