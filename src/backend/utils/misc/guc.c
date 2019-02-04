@@ -2047,7 +2047,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"recovery_min_apply_delay", PGC_POSTMASTER, REPLICATION_STANDBY,
+		{"recovery_min_apply_delay", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the minimum delay for applying changes during recovery."),
 			NULL,
 			GUC_UNIT_MS
@@ -3398,7 +3398,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"archive_cleanup_command", PGC_POSTMASTER, WAL_ARCHIVE_RECOVERY,
+		{"archive_cleanup_command", PGC_SIGHUP, WAL_ARCHIVE_RECOVERY,
 			gettext_noop("Sets the shell command that will be executed at every restart point."),
 			NULL
 		},
@@ -3408,7 +3408,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"recovery_end_command", PGC_POSTMASTER, WAL_ARCHIVE_RECOVERY,
+		{"recovery_end_command", PGC_SIGHUP, WAL_ARCHIVE_RECOVERY,
 			gettext_noop("Sets the shell command that will be executed once at the end of recovery."),
 			NULL
 		},
@@ -3474,7 +3474,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"promote_trigger_file", PGC_POSTMASTER, REPLICATION_STANDBY,
+		{"promote_trigger_file", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Specifies a file name whose presence ends recovery in the standby."),
 			NULL
 		},

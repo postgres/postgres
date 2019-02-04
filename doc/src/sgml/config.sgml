@@ -3081,8 +3081,7 @@ include_dir 'conf.d'
     <para>
      This section describes the settings that apply only for the duration of
      the recovery.  They must be reset for any subsequent recovery you wish to
-     perform.  They can only be set at server start and cannot be changed once
-     recovery has begun.
+     perform.
     </para>
 
     <para>
@@ -3161,6 +3160,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         database server shutdown) or an error by the shell (such as command
         not found), then recovery will abort and the server will not start up.
        </para>
+
+       <para>
+        This parameter can only be set at server start.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -3202,6 +3205,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         terminated by a signal or an error by the shell (such as command not
         found), a fatal error will be raised.
        </para>
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -3226,6 +3233,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         anyway.  An exception is that if the command was terminated by a
         signal or an error by the shell (such as command not found), the
         database will not proceed with startup.
+       </para>
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3863,7 +3874,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           standby.  Even if this value is not set, you can still promote
           the standby using <command>pg_ctl promote</command> or calling
           <function>pg_promote</function>.
-          This parameter can only be set at server start.
+          This parameter can only be set in the <filename>postgresql.conf</filename>
+          file or on the server command line.
          </para>
         </listitem>
        </varlistentry>
@@ -4117,7 +4129,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         </warning>
        </para>
        <para>
-        This parameter can only be set at server start.
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>

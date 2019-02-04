@@ -244,9 +244,7 @@
 				# e.g. 'cp /mnt/server/archivedir/%f %p'
 				# (change requires restart)
 #archive_cleanup_command = ''	# command to execute at every restartpoint
-				# (change requires restart)
 #recovery_end_command = ''	# command to execute at completion of recovery
-				# (change requires restart)
 
 # - Recovery Target -
 
@@ -310,7 +308,6 @@
 #primary_slot_name = ''			# replication slot on sending server
 					# (change requires restart)
 #promote_trigger_file = ''		# file name whose presence ends recovery
-					# (change requires restart)
 #hot_standby = on			# "off" disallows queries during recovery
 					# (change requires restart)
 #max_standby_archive_delay = 30s	# max delay before canceling queries
@@ -329,7 +326,6 @@
 #wal_retrieve_retry_interval = 5s	# time to wait before retrying to
 					# retrieve WAL after a failed attempt
 #recovery_min_apply_delay = 0		# minimum delay for applying changes during recovery
-					# (change requires restart)
 
 # - Subscribers -
 
