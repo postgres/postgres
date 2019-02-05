@@ -14,6 +14,10 @@
 #
 #----------------------------------------------------------------------
 
+use File::Basename;
+use File::Spec;
+BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
+
 use Catalog;
 
 use strict;
