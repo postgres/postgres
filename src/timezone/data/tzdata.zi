@@ -1,4 +1,4 @@
-# version 2018g
+# version 2018i
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Sun>=1 23s 0 -
@@ -184,15 +184,55 @@ R M 2017 o - May 21 3 0 -
 R M 2017 o - Jul 2 2 1 -
 R M 2018 o - May 13 3 0 -
 R M 2018 o - Jun 17 2 1 -
+R M 2019 o - May 5 3 -1 -
+R M 2019 o - Jun 9 2 0 -
+R M 2020 o - Ap 19 3 -1 -
+R M 2020 o - May 24 2 0 -
+R M 2021 o - Ap 11 3 -1 -
+R M 2021 o - May 16 2 0 -
+R M 2022 o - Mar 27 3 -1 -
+R M 2022 o - May 8 2 0 -
+R M 2023 o - Mar 19 3 -1 -
+R M 2023 o - Ap 23 2 0 -
+R M 2024 o - Mar 10 3 -1 -
+R M 2024 o - Ap 14 2 0 -
+R M 2025 o - F 23 3 -1 -
+R M 2025 o - Ap 6 2 0 -
+R M 2026 o - F 15 3 -1 -
+R M 2026 o - Mar 22 2 0 -
+R M 2027 o - F 7 3 -1 -
+R M 2027 o - Mar 14 2 0 -
+R M 2028 o - Ja 23 3 -1 -
+R M 2028 o - F 27 2 0 -
+R M 2029 o - Ja 14 3 -1 -
+R M 2029 o - F 18 2 0 -
+R M 2029 o - D 30 3 -1 -
+R M 2030 o - F 10 2 0 -
+R M 2030 o - D 22 3 -1 -
+R M 2031 o - Ja 26 2 0 -
+R M 2031 o - D 14 3 -1 -
+R M 2032 o - Ja 18 2 0 -
+R M 2032 o - N 28 3 -1 -
+R M 2033 o - Ja 9 2 0 -
+R M 2033 o - N 20 3 -1 -
+R M 2033 o - D 25 2 0 -
+R M 2034 o - N 5 3 -1 -
+R M 2034 o - D 17 2 0 -
+R M 2035 o - O 28 3 -1 -
+R M 2035 o - D 2 2 0 -
+R M 2036 o - O 19 3 -1 -
+R M 2036 o - N 23 2 0 -
+R M 2037 o - O 4 3 -1 -
+R M 2037 o - N 15 2 0 -
 Z Africa/Casablanca -0:30:20 - LMT 1913 O 26
 0 M +00/+01 1984 Mar 16
 1 - +01 1986
-0 M +00/+01 2018 O 27
-1 - +01
+0 M +00/+01 2018 O 28 3
+1 M +01/+00
 Z Africa/El_Aaiun -0:52:48 - LMT 1934
 -1 - -01 1976 Ap 14
-0 M +00/+01 2018 O 27
-1 - +01
+0 M +00/+01 2018 O 28 3
+1 M +01/+00
 Z Africa/Maputo 2:10:20 - LMT 1903 Mar
 2 - CAT
 Li Africa/Maputo Africa/Blantyre
@@ -227,7 +267,8 @@ Z Indian/Reunion 3:41:52 - LMT 1911 Jun
 Z Africa/Sao_Tome 0:26:56 - LMT 1884
 -0:36:45 - LMT 1912 Ja 1 0u
 0 - GMT 2018 Ja 1 1
-1 - WAT
+1 - WAT 2019 Ja 1 2
+0 - GMT
 Z Indian/Mahe 3:41:48 - LMT 1906 Jun
 4 - +04
 R SA 1942 1943 - S Sun>=15 2 1 -
@@ -375,17 +416,14 @@ Z Asia/Shanghai 8:5:43 - LMT 1901
 8 CN C%sT
 Z Asia/Urumqi 5:50:20 - LMT 1928
 6 - +06
-R HK 1941 o - Ap 1 3:30 1 S
-R HK 1941 o - S 30 3:30 0 -
 R HK 1946 o - Ap 20 3:30 1 S
 R HK 1946 o - D 1 3:30 0 -
 R HK 1947 o - Ap 13 3:30 1 S
 R HK 1947 o - D 30 3:30 0 -
 R HK 1948 o - May 2 3:30 1 S
 R HK 1948 1951 - O lastSun 3:30 0 -
-R HK 1952 o - O 25 3:30 0 -
+R HK 1952 1953 - N Sun>=1 3:30 0 -
 R HK 1949 1953 - Ap Sun>=1 3:30 1 S
-R HK 1953 o - N 1 3:30 0 -
 R HK 1954 1964 - Mar Sun>=18 3:30 1 S
 R HK 1954 o - O 31 3:30 0 -
 R HK 1955 1964 - N Sun>=1 3:30 0 -
@@ -394,9 +432,11 @@ R HK 1965 1976 - O Sun>=16 3:30 0 -
 R HK 1973 o - D 30 3:30 1 S
 R HK 1979 o - May Sun>=8 3:30 1 S
 R HK 1979 o - O Sun>=16 3:30 0 -
-Z Asia/Hong_Kong 7:36:42 - LMT 1904 O 30
-8 HK HK%sT 1941 D 25
-9 - JST 1945 S 15
+Z Asia/Hong_Kong 7:36:42 - LMT 1904 O 30 0:36:42
+8 - HKT 1941 Jun 15 3:30
+8 1 HKST 1941 O 1 4
+8:30 - HKT 1941 D 25
+9 - JST 1945 S 16
 8 HK HK%sT
 R f 1946 o - May 15 0 1 D
 R f 1946 o - O 1 0 0 S
@@ -517,55 +557,107 @@ Z Asia/Jayapura 9:22:48 - LMT 1932 N
 9 - +09 1944 S
 9:30 - +0930 1964
 9 - WIT
-R i 1978 1980 - Mar 21 0 1 -
-R i 1978 o - O 21 0 0 -
-R i 1979 o - S 19 0 0 -
-R i 1980 o - S 23 0 0 -
-R i 1991 o - May 3 0 1 -
-R i 1992 1995 - Mar 22 0 1 -
-R i 1991 1995 - S 22 0 0 -
-R i 1996 o - Mar 21 0 1 -
-R i 1996 o - S 21 0 0 -
-R i 1997 1999 - Mar 22 0 1 -
-R i 1997 1999 - S 22 0 0 -
-R i 2000 o - Mar 21 0 1 -
-R i 2000 o - S 21 0 0 -
-R i 2001 2003 - Mar 22 0 1 -
-R i 2001 2003 - S 22 0 0 -
-R i 2004 o - Mar 21 0 1 -
-R i 2004 o - S 21 0 0 -
-R i 2005 o - Mar 22 0 1 -
-R i 2005 o - S 22 0 0 -
-R i 2008 o - Mar 21 0 1 -
-R i 2008 o - S 21 0 0 -
-R i 2009 2011 - Mar 22 0 1 -
-R i 2009 2011 - S 22 0 0 -
-R i 2012 o - Mar 21 0 1 -
-R i 2012 o - S 21 0 0 -
-R i 2013 2015 - Mar 22 0 1 -
-R i 2013 2015 - S 22 0 0 -
-R i 2016 o - Mar 21 0 1 -
-R i 2016 o - S 21 0 0 -
-R i 2017 2019 - Mar 22 0 1 -
-R i 2017 2019 - S 22 0 0 -
-R i 2020 o - Mar 21 0 1 -
-R i 2020 o - S 21 0 0 -
-R i 2021 2023 - Mar 22 0 1 -
-R i 2021 2023 - S 22 0 0 -
-R i 2024 o - Mar 21 0 1 -
-R i 2024 o - S 21 0 0 -
-R i 2025 2027 - Mar 22 0 1 -
-R i 2025 2027 - S 22 0 0 -
-R i 2028 2029 - Mar 21 0 1 -
-R i 2028 2029 - S 21 0 0 -
-R i 2030 2031 - Mar 22 0 1 -
-R i 2030 2031 - S 22 0 0 -
-R i 2032 2033 - Mar 21 0 1 -
-R i 2032 2033 - S 21 0 0 -
-R i 2034 2035 - Mar 22 0 1 -
-R i 2034 2035 - S 22 0 0 -
-R i 2036 ma - Mar 21 0 1 -
-R i 2036 ma - S 21 0 0 -
+R i 1978 1980 - Mar 20 24 1 -
+R i 1978 o - O 20 24 0 -
+R i 1979 o - S 18 24 0 -
+R i 1980 o - S 22 24 0 -
+R i 1991 o - May 2 24 1 -
+R i 1992 1995 - Mar 21 24 1 -
+R i 1991 1995 - S 21 24 0 -
+R i 1996 o - Mar 20 24 1 -
+R i 1996 o - S 20 24 0 -
+R i 1997 1999 - Mar 21 24 1 -
+R i 1997 1999 - S 21 24 0 -
+R i 2000 o - Mar 20 24 1 -
+R i 2000 o - S 20 24 0 -
+R i 2001 2003 - Mar 21 24 1 -
+R i 2001 2003 - S 21 24 0 -
+R i 2004 o - Mar 20 24 1 -
+R i 2004 o - S 20 24 0 -
+R i 2005 o - Mar 21 24 1 -
+R i 2005 o - S 21 24 0 -
+R i 2008 o - Mar 20 24 1 -
+R i 2008 o - S 20 24 0 -
+R i 2009 2011 - Mar 21 24 1 -
+R i 2009 2011 - S 21 24 0 -
+R i 2012 o - Mar 20 24 1 -
+R i 2012 o - S 20 24 0 -
+R i 2013 2015 - Mar 21 24 1 -
+R i 2013 2015 - S 21 24 0 -
+R i 2016 o - Mar 20 24 1 -
+R i 2016 o - S 20 24 0 -
+R i 2017 2019 - Mar 21 24 1 -
+R i 2017 2019 - S 21 24 0 -
+R i 2020 o - Mar 20 24 1 -
+R i 2020 o - S 20 24 0 -
+R i 2021 2023 - Mar 21 24 1 -
+R i 2021 2023 - S 21 24 0 -
+R i 2024 o - Mar 20 24 1 -
+R i 2024 o - S 20 24 0 -
+R i 2025 2027 - Mar 21 24 1 -
+R i 2025 2027 - S 21 24 0 -
+R i 2028 2029 - Mar 20 24 1 -
+R i 2028 2029 - S 20 24 0 -
+R i 2030 2031 - Mar 21 24 1 -
+R i 2030 2031 - S 21 24 0 -
+R i 2032 2033 - Mar 20 24 1 -
+R i 2032 2033 - S 20 24 0 -
+R i 2034 2035 - Mar 21 24 1 -
+R i 2034 2035 - S 21 24 0 -
+R i 2036 2037 - Mar 20 24 1 -
+R i 2036 2037 - S 20 24 0 -
+R i 2038 2039 - Mar 21 24 1 -
+R i 2038 2039 - S 21 24 0 -
+R i 2040 2041 - Mar 20 24 1 -
+R i 2040 2041 - S 20 24 0 -
+R i 2042 2043 - Mar 21 24 1 -
+R i 2042 2043 - S 21 24 0 -
+R i 2044 2045 - Mar 20 24 1 -
+R i 2044 2045 - S 20 24 0 -
+R i 2046 2047 - Mar 21 24 1 -
+R i 2046 2047 - S 21 24 0 -
+R i 2048 2049 - Mar 20 24 1 -
+R i 2048 2049 - S 20 24 0 -
+R i 2050 2051 - Mar 21 24 1 -
+R i 2050 2051 - S 21 24 0 -
+R i 2052 2053 - Mar 20 24 1 -
+R i 2052 2053 - S 20 24 0 -
+R i 2054 2055 - Mar 21 24 1 -
+R i 2054 2055 - S 21 24 0 -
+R i 2056 2057 - Mar 20 24 1 -
+R i 2056 2057 - S 20 24 0 -
+R i 2058 2059 - Mar 21 24 1 -
+R i 2058 2059 - S 21 24 0 -
+R i 2060 2062 - Mar 20 24 1 -
+R i 2060 2062 - S 20 24 0 -
+R i 2063 o - Mar 21 24 1 -
+R i 2063 o - S 21 24 0 -
+R i 2064 2066 - Mar 20 24 1 -
+R i 2064 2066 - S 20 24 0 -
+R i 2067 o - Mar 21 24 1 -
+R i 2067 o - S 21 24 0 -
+R i 2068 2070 - Mar 20 24 1 -
+R i 2068 2070 - S 20 24 0 -
+R i 2071 o - Mar 21 24 1 -
+R i 2071 o - S 21 24 0 -
+R i 2072 2074 - Mar 20 24 1 -
+R i 2072 2074 - S 20 24 0 -
+R i 2075 o - Mar 21 24 1 -
+R i 2075 o - S 21 24 0 -
+R i 2076 2078 - Mar 20 24 1 -
+R i 2076 2078 - S 20 24 0 -
+R i 2079 o - Mar 21 24 1 -
+R i 2079 o - S 21 24 0 -
+R i 2080 2082 - Mar 20 24 1 -
+R i 2080 2082 - S 20 24 0 -
+R i 2083 o - Mar 21 24 1 -
+R i 2083 o - S 21 24 0 -
+R i 2084 2086 - Mar 20 24 1 -
+R i 2084 2086 - S 20 24 0 -
+R i 2087 o - Mar 21 24 1 -
+R i 2087 o - S 21 24 0 -
+R i 2088 ma - Mar 20 24 1 -
+R i 2088 ma - S 20 24 0 -
 Z Asia/Tehran 3:25:44 - LMT 1916
 3:25:44 - TMT 1946
 3:30 - +0330 1977 N
@@ -727,6 +819,16 @@ Z Asia/Qyzylorda 4:21:52 - LMT 1924 May 2
 5 R +05/+06 1992 Ja 19 2s
 6 R +06/+07 1992 Mar 29 2s
 5 R +05/+06 2004 O 31 2s
+6 - +06 2018 D 21
+5 - +05
+Z Asia/Qostanay 4:14:28 - LMT 1924 May 2
+4 - +04 1930 Jun 21
+5 - +05 1981 Ap
+5 1 +06 1981 O
+6 - +06 1982 Ap
+5 R +05/+06 1991 Mar 31 2s
+4 R +04/+05 1992 Ja 19 2s
+5 R +05/+06 2004 O 31 2s
 6 - +06
 Z Asia/Aqtobe 3:48:40 - LMT 1924 May 2
 4 - +04 1930 Jun 21
@@ -776,17 +878,17 @@ Z Asia/Bishkek 4:58:24 - LMT 1924 May 2
 5 KG +05/+06 2005 Au 12
 6 - +06
 R KR 1948 o - Jun 1 0 1 D
-R KR 1948 o - S 13 0 0 S
+R KR 1948 o - S 12 24 0 S
 R KR 1949 o - Ap 3 0 1 D
-R KR 1949 1951 - S Sun>=8 0 0 S
+R KR 1949 1951 - S Sat>=7 24 0 S
 R KR 1950 o - Ap 1 0 1 D
 R KR 1951 o - May 6 0 1 D
 R KR 1955 o - May 5 0 1 D
-R KR 1955 o - S 9 0 0 S
+R KR 1955 o - S 8 24 0 S
 R KR 1956 o - May 20 0 1 D
-R KR 1956 o - S 30 0 0 S
+R KR 1956 o - S 29 24 0 S
 R KR 1957 1960 - May Sun>=1 0 1 D
-R KR 1957 1960 - S Sun>=18 0 0 S
+R KR 1957 1960 - S Sat>=17 24 0 S
 R KR 1987 1988 - May Sun>=8 2 1 D
 R KR 1987 1988 - O Sun>=8 3 0 S
 Z Asia/Seoul 8:27:52 - LMT 1908 Ap
@@ -1217,9 +1319,25 @@ Z Pacific/Marquesas -9:18 - LMT 1912 O
 -9:30 - -0930
 Z Pacific/Tahiti -9:58:16 - LMT 1912 O
 -10 - -10
+R Gu 1959 o - Jun 27 2 1 D
+R Gu 1961 o - Ja 29 2 0 S
+R Gu 1967 o - S 1 2 1 D
+R Gu 1969 o - Ja 26 0:1 0 S
+R Gu 1969 o - Jun 22 2 1 D
+R Gu 1969 o - Au 31 2 0 S
+R Gu 1970 1971 - Ap lastSun 2 1 D
+R Gu 1970 1971 - S Sun>=1 2 0 S
+R Gu 1973 o - D 16 2 1 D
+R Gu 1974 o - F 24 2 0 S
+R Gu 1976 o - May 26 2 1 D
+R Gu 1976 o - Au 22 2:1 0 S
+R Gu 1977 o - Ap 24 2 1 D
+R Gu 1977 o - Au 28 2 0 S
 Z Pacific/Guam -14:21 - LMT 1844 D 31
 9:39 - LMT 1901
-10 - GST 2000 D 23
+10 - GST 1941 D 10
+9 - +09 1944 Jul 31
+10 Gu G%sT 2000 D 23
 10 - ChST
 Li Pacific/Guam Pacific/Saipan
 Z Pacific/Tarawa 11:32:4 - LMT 1901
@@ -1233,24 +1351,49 @@ Z Pacific/Kiritimati -10:29:20 - LMT 1901
 -10 - -10 1994 D 31
 14 - +14
 Z Pacific/Majuro 11:24:48 - LMT 1901
+11 - +11 1914 O
+9 - +09 1919 F
+11 - +11 1937
+10 - +10 1941 Ap
+9 - +09 1944 Ja 30
 11 - +11 1969 O
 12 - +12
 Z Pacific/Kwajalein 11:9:20 - LMT 1901
+11 - +11 1937
+10 - +10 1941 Ap
+9 - +09 1944 F 6
 11 - +11 1969 O
--12 - -12 1993 Au 20
+-12 - -12 1993 Au 20 24
 12 - +12
-Z Pacific/Chuuk 10:7:8 - LMT 1901
+Z Pacific/Chuuk -13:52:52 - LMT 1844 D 31
+10:7:8 - LMT 1901
+10 - +10 1914 O
+9 - +09 1919 F
+10 - +10 1941 Ap
+9 - +09 1945 Au
 10 - +10
-Z Pacific/Pohnpei 10:32:52 - LMT 1901
+Z Pacific/Pohnpei -13:27:8 - LMT 1844 D 31
+10:32:52 - LMT 1901
+11 - +11 1914 O
+9 - +09 1919 F
+11 - +11 1937
+10 - +10 1941 Ap
+9 - +09 1945 Au
 11 - +11
-Z Pacific/Kosrae 10:51:56 - LMT 1901
+Z Pacific/Kosrae -13:8:4 - LMT 1844 D 31
+10:51:56 - LMT 1901
+11 - +11 1914 O
+9 - +09 1919 F
+11 - +11 1937
+10 - +10 1941 Ap
+9 - +09 1945 Au
 11 - +11 1969 O
 12 - +12 1999
 11 - +11
 Z Pacific/Nauru 11:7:40 - LMT 1921 Ja 15
-11:30 - +1130 1942 Mar 15
-9 - +09 1944 Au 15
-11:30 - +1130 1979 May
+11:30 - +1130 1942 Au 29
+9 - +09 1945 S 8
+11:30 - +1130 1979 F 10 2
 12 - +12
 R NC 1977 1978 - D Sun>=1 0 1 -
 R NC 1978 1979 - F 27 0 0 -
@@ -1306,7 +1449,8 @@ Z Pacific/Norfolk 11:11:52 - LMT 1901
 11:30 1 +1230 1975 Mar 2 2
 11:30 - +1130 2015 O 4 2
 11 - +11
-Z Pacific/Palau 8:57:56 - LMT 1901
+Z Pacific/Palau -15:2:4 - LMT 1844 D 31
+8:57:56 - LMT 1901
 9 - +09
 Z Pacific/Port_Moresby 9:48:40 - LMT 1880
 9:48:32 - PMMT 1895
@@ -2656,6 +2800,8 @@ Z America/Metlakatla 15:13:42 - LMT 1867 O 19 15:44:55
 -8 - PST 1969
 -8 u P%sT 1983 O 30 2
 -8 - PST 2015 N 1 2
+-9 u AK%sT 2018 N 4 2
+-8 - PST 2019 Mar Sun>=8 3
 -9 u AK%sT
 Z America/Yakutat 14:41:5 - LMT 1867 O 19 15:12:18
 -9:18:55 - LMT 1900 Au 20 12
