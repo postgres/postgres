@@ -2634,6 +2634,8 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 							 true,
 							 stmt->funccall->location);
 
+	assign_expr_collations(pstate, node);
+
 	stmt->funcexpr = castNode(FuncExpr, node);
 
 	result = makeNode(Query);
