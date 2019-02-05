@@ -7,7 +7,7 @@ use File::Basename;
 
 # assume we are in the postgres source root
 
-do 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
+do './src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
 
 my ($bisonver) = `bison -V`;    # grab first line
 $bisonver = (split(/\s+/, $bisonver))[3];    # grab version number

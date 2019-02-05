@@ -21,7 +21,7 @@ use Mkvcbuild;
 
 if (-e "src/tools/msvc/buildenv.pl")
 {
-	do "src/tools/msvc/buildenv.pl";
+	do "./src/tools/msvc/buildenv.pl";
 }
 elsif (-e "./buildenv.pl")
 {
@@ -30,8 +30,8 @@ elsif (-e "./buildenv.pl")
 
 # set up the project
 our $config;
-do "config_default.pl";
-do "config.pl" if (-f "src/tools/msvc/config.pl");
+do "./config_default.pl";
+do "./config.pl" if (-f "src/tools/msvc/config.pl");
 
 my $vcver = Mkvcbuild::mkvcbuild($config);
 
