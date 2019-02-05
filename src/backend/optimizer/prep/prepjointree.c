@@ -3026,7 +3026,7 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
  *		If jtnode is a RangeTblRef for an RTE_RESULT RTE, return its relid;
  *		otherwise return 0.
  */
-static inline int
+static int
 get_result_relid(PlannerInfo *root, Node *jtnode)
 {
 	int			varno;
