@@ -59,8 +59,8 @@ sub Install
 
 		# suppress warning about harmless redeclaration of $config
 		no warnings 'misc';
-		do "config_default.pl";
-		do "config.pl" if (-f "config.pl");
+		do "./config_default.pl";
+		do "./config.pl" if (-f "config.pl");
 	}
 
 	chdir("../../..")    if (-f "../../../configure");
