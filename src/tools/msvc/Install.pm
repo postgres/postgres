@@ -58,8 +58,8 @@ sub Install
 
 		# suppress warning about harmless redeclaration of $config
 		no warnings 'misc';
-		require "config_default.pl";
-		require "config.pl" if (-f "config.pl");
+		do "config_default.pl";
+		do "config.pl" if (-f "config.pl");
 	}
 
 	chdir("../../..")    if (-f "../../../configure");
