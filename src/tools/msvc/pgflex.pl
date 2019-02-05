@@ -10,7 +10,7 @@ use File::Basename;
 
 # assume we are in the postgres source root
 
-require 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
+do 'src/tools/msvc/buildenv.pl' if -e 'src/tools/msvc/buildenv.pl';
 
 my ($flexver) = `flex -V`;    # grab first line
 $flexver = (split(/\s+/, $flexver))[1];
