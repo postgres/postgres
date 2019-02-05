@@ -167,21 +167,6 @@
 
 <!ENTITY release    SYSTEM "release.sgml">
 <!ENTITY release-11     SYSTEM "release-11.sgml">
-<!ENTITY release-10     SYSTEM "release-10.sgml">
-<!ENTITY release-9.6    SYSTEM "release-9.6.sgml">
-<!ENTITY release-9.5    SYSTEM "release-9.5.sgml">
-<!ENTITY release-9.4    SYSTEM "release-9.4.sgml">
-<!ENTITY release-9.3    SYSTEM "release-9.3.sgml">
-<!ENTITY release-9.2    SYSTEM "release-9.2.sgml">
-<!ENTITY release-9.1    SYSTEM "release-9.1.sgml">
-<!ENTITY release-9.0    SYSTEM "release-9.0.sgml">
-<!ENTITY release-8.4    SYSTEM "release-8.4.sgml">
-<!ENTITY release-8.3    SYSTEM "release-8.3.sgml">
-<!ENTITY release-8.2    SYSTEM "release-8.2.sgml">
-<!ENTITY release-8.1    SYSTEM "release-8.1.sgml">
-<!ENTITY release-8.0    SYSTEM "release-8.0.sgml">
-<!ENTITY release-7.4    SYSTEM "release-7.4.sgml">
-<!ENTITY release-old    SYSTEM "release-old.sgml">
 
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">
 
