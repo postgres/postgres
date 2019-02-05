@@ -7,7 +7,7 @@ For All Releases (major, minor, beta, RC)
 
 * Release notes
 	o run git log and, if useful, src/tools/git_changelog
-	o update doc/src/sgml/release.sgml
+	o update doc/src/sgml/release-NN.sgml in relevant branches
 	o run spellchecker on result
 	o add SGML markup
 
@@ -30,6 +30,11 @@ For Major Releases
 ==================
 (in addition to the above)
 
+Note that once the release branch has been forked off in git,
+release-note editing happens in that branch, not in HEAD.
+Updates to the rest of the documentation usually need to happen
+in both HEAD and the branch.
+
 * Release notes
 	o use src/tools/git_changelog
 	o retain the relevant commits
@@ -51,10 +56,6 @@ For Major Releases
 	o document all new features
 	o update help output from inside the programs
 	o doc/src/sgml/ref manual pages
-	o update the sizes specified for installation requirements
-	  (doc/src/sgml/installation.sgml, section "install-requirements")
-	o update the shared memory size requirement table
-	  (doc/src/sgml/runtime.sgml, section "shared-memory-parameters")
 
 * Ports
 	o update config.guess and config.sub at the start of beta
@@ -85,8 +86,13 @@ Starting a New Development Cycle
 
 * Run "src/tools/version_stamp.pl devel", then run autoconf
 
+* Create a new doc/src/sgml/release-NN.sgml file (initially just a
+  placeholder), "git rm" the previous one, and update release.sgml and
+  filelist.sgml to match.
+
 * Get the buildfarm's 'branches_of_interest.txt' file updated with the new
   branch.
+
 
 Creating Back-Branch Release Notes
 ==================================
@@ -96,21 +102,32 @@ Creating Back-Branch Release Notes
   branch tag and not the release date, as commits could have been done
   between branch stamping and the release date.
 
-* On the git master branch, edit and create SGML markup for the most recent
-  branch in that branch's release-N.N.sgml file.  Minor release notes
-  should include more small change details because testing is limited.
-
-* Copy this into older branches' release-N.N.sgml files, then remove
-  items that do not apply based on commit logs for that branch.
-
-* Add any older branch commits not in the newest branch.  This can be
-  accomplished by diff'ing the newest and older branch commit logs and
-  looking for lines that only appear in the older branch, e.g.:
+* Remember to include any older branch commits not in the newest branch.
+  This can be accomplished by diff'ing the newest and older branch commit
+  logs and looking for lines that only appear in the older branch, e.g.:
 
        diff commit-N.N.log commit-O.O.log | grep '^>'
 
-* Copy the appropriate release-N.N.sgml files into each back branch SGML
-  directory.
+* On the most recent release branch (*not* in HEAD), edit and create SGML
+  markup for relevant changes in that branch's release-NN.sgml file.
+  Minor release notes should include more small change details because
+  testing is limited.
+
+* Copy this text into older branches' release-NN.sgml files, then remove
+  items that do not apply based on commit logs for that branch.
+
+* The minor release notes for the oldest active branch should always
+  include a warning about its impending EOL.  Use the same boilerplate
+  text used in previous branches.
+
+
+Retiring a Branch
+=================
+
+After support is dropped for an old branch, remove the link for it
+in HEAD's doc/src/sgml/release.sgml.  If the newest back branch hasn't
+yet reached GA release, do the same there.  (Given our current development
+calendar, the latter should seldom be necessary.)
 
 
 
