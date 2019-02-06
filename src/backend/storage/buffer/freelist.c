@@ -172,7 +172,7 @@ ClockSweepTick(void)
 }
 
 void
-RemoveBufferOnStart(BufferDesc* buf, bool print) {
+RemoveBufferOnStart(BufferDesc* buf) {
 	BufferDesc* buf_next;
 	BufferDesc* buf_prev;
 	BufferDesc* currentLeader;
@@ -180,12 +180,9 @@ RemoveBufferOnStart(BufferDesc* buf, bool print) {
 	uint32 local_bufprev_state;
 	uint32 local_curleader_state;
 	
-	//if (print) printf("!");fflush(stdout);
-	
 	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
 	
 	if (buf->id_of_prev <= 0 || buf->id_of_next == -1) {
-		//if (print) printf("?");
 		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
 		return;
 	}
@@ -195,9 +192,7 @@ RemoveBufferOnStart(BufferDesc* buf, bool print) {
 	buf_next = GetBufferDescriptor(buf->id_of_next);
 	buf_prev = GetBufferDescriptor(buf->id_of_prev);
 	
-	//if (print) printf(",");fflush(stdout);
 	//local_bufnext_state = LockBufHdr(buf_next);
-	//if (print) printf(".");fflush(stdout);
 	//local_bufprev_state = LockBufHdr(buf_prev);
 	
 	buf_prev->id_of_next = buf->id_of_next;
@@ -205,19 +200,16 @@ RemoveBufferOnStart(BufferDesc* buf, bool print) {
 	
 	buf->id_of_next = StrategyControl->firstBufferLogical;
 	
-	//local_curleader_state = LockBufHdr(currentLeader);
+	local_curleader_state = LockBufHdr(currentLeader);
 	currentLeader->id_of_prev = buf->buf_id;
-	//UnlockBufHdr(currentLeader, local_curleader_state);
+	UnlockBufHdr(currentLeader, local_curleader_state);
 	
 	StrategyControl->firstBufferLogical = buf->buf_id;
-	/*
-	if (print) printf("+");fflush(stdout);
-	UnlockBufHdr(buf_prev, local_bufprev_state);
-	if (print) printf("-");fflush(stdout);
-	UnlockBufHdr(buf_next, local_bufnext_state);
-	if (print) printf("=");fflush(stdout);*/
+	
+	//UnlockBufHdr(buf_prev, local_bufprev_state);
+	//UnlockBufHdr(buf_next, local_bufnext_state);
+	
 	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
-	//if (print) printf("_");fflush(stdout);
 }
 
 /*
@@ -266,7 +258,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	{
 		buf = GetBufferFromRing(strategy, buf_state);
 		if (buf != NULL) {
-			RemoveBufferOnStart(buf, false);
+			RemoveBufferOnStart(buf);
 			return buf;
 		}
 	}
@@ -406,7 +398,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 					AddBufferToRing(strategy, buf);
 				*buf_state = local_buf_state;
 
-				RemoveBufferOnStart(buf, false);
+				RemoveBufferOnStart(buf);
 
 				return buf;
 			}
