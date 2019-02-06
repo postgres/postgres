@@ -770,6 +770,33 @@ SELECT * FROM vtype2;
  2 | yyy
 (2 rows)
 
+-- Ensure that defaults are checked when evaluating whether HOT update
+-- is possible, this was broken for a while:
+-- https://postgr.es/m/20190202133521.ylauh3ckqa7colzj%40alap3.anarazel.de
+BEGIN;
+CREATE TABLE t();
+INSERT INTO t DEFAULT VALUES;
+ALTER TABLE t ADD COLUMN a int DEFAULT 1;
+CREATE INDEX ON t(a);
+-- set column with a default 1 to NULL, due to a bug that wasn't
+-- noticed has heap_getattr buggily returned NULL for default columns
+UPDATE t SET a = NULL;
+-- verify that index and non-index scans show the same result
+SET LOCAL enable_seqscan = true;
+SELECT * FROM t WHERE a IS NULL;
+ a 
+---
+  
+(1 row)
+
+SET LOCAL enable_seqscan = false;
+SELECT * FROM t WHERE a IS NULL;
+ a 
+---
+  
+(1 row)
+
+ROLLBACK;
 -- cleanup
 DROP TABLE vtype;
 DROP TABLE vtype2;

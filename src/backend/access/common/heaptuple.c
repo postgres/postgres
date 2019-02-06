@@ -71,8 +71,6 @@
 #define VARLENA_ATT_IS_PACKABLE(att) \
 	((att)->attstorage != 'p')
 
-static Datum getmissingattr(TupleDesc tupleDesc, int attnum, bool *isnull);
-
 
 /* ----------------------------------------------------------------
  *						misc support routines
@@ -82,7 +80,7 @@ static Datum getmissingattr(TupleDesc tupleDesc, int attnum, bool *isnull);
 /*
  * Return the missing value of an attribute, or NULL if there isn't one.
  */
-static Datum
+Datum
 getmissingattr(TupleDesc tupleDesc,
 			   int attnum, bool *isnull)
 {
