@@ -88,10 +88,26 @@ DELETE FROM delete_test_table WHERE a > 10;
 VACUUM delete_test_table;
 SELECT bt_index_parent_check('delete_test_table_pkey', true);
 
+--
+-- BUG #15597: must not assume consistent input toasting state when forming
+-- tuple.  Bloom filter must fingerprint normalized index tuple representation.
+--
+CREATE TABLE toast_bug(buggy text);
+ALTER TABLE toast_bug ALTER COLUMN buggy SET STORAGE plain;
+-- pg_attribute entry for toasty.buggy will have plain storage:
+CREATE INDEX toasty ON toast_bug(buggy);
+-- Whereas pg_attribute entry for toast_bug.buggy now has extended storage:
+ALTER TABLE toast_bug ALTER COLUMN buggy SET STORAGE extended;
+-- Insert compressible heap tuple (comfortably exceeds TOAST_TUPLE_THRESHOLD):
+INSERT INTO toast_bug SELECT repeat('a', 2200);
+-- Should not get false positive report of corruption:
+SELECT bt_index_check('toasty', true);
+
 -- cleanup
 DROP TABLE bttest_a;
 DROP TABLE bttest_b;
 DROP TABLE bttest_multi;
 DROP TABLE delete_test_table;
+DROP TABLE toast_bug;
 DROP OWNED BY bttest_role; -- permissions
 DROP ROLE bttest_role;

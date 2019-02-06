@@ -133,6 +133,8 @@ static void bt_downlink_missing_check(BtreeCheckState *state);
 static void bt_tuple_present_callback(Relation index, HeapTuple htup,
 						  Datum *values, bool *isnull,
 						  bool tupleIsAlive, void *checkstate);
+static IndexTuple bt_normalize_tuple(BtreeCheckState *state,
+						   IndexTuple itup);
 static inline bool offset_is_negative_infinity(BTPageOpaque opaque,
 							OffsetNumber offset);
 static inline bool invariant_leq_offset(BtreeCheckState *state,
@@ -908,7 +910,16 @@ bt_target_page_check(BtreeCheckState *state)
 
 		/* Fingerprint leaf page tuples (those that point to the heap) */
 		if (state->heapallindexed && P_ISLEAF(topaque) && !ItemIdIsDead(itemid))
-			bloom_add_element(state->filter, (unsigned char *) itup, tupsize);
+		{
+			IndexTuple		norm;
+
+			norm = bt_normalize_tuple(state, itup);
+			bloom_add_element(state->filter, (unsigned char *) norm,
+							  IndexTupleSize(norm));
+			/* Be tidy */
+			if (norm != itup)
+				pfree(norm);
+		}
 
 		/*
 		 * * High key check *
@@ -1672,35 +1683,18 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 						  bool *isnull, bool tupleIsAlive, void *checkstate)
 {
 	BtreeCheckState *state = (BtreeCheckState *) checkstate;
-	IndexTuple	itup;
+	IndexTuple	itup, norm;
 
 	Assert(state->heapallindexed);
 
-	/*
-	 * Generate an index tuple for fingerprinting.
-	 *
-	 * Index tuple formation is assumed to be deterministic, and IndexTuples
-	 * are assumed immutable.  While the LP_DEAD bit is mutable in leaf pages,
-	 * that's ItemId metadata, which was not fingerprinted.  (There will often
-	 * be some dead-to-everyone IndexTuples fingerprinted by the Bloom filter,
-	 * but we only try to detect the absence of needed tuples, so that's
-	 * okay.)
-	 *
-	 * Note that we rely on deterministic index_form_tuple() TOAST
-	 * compression. If index_form_tuple() was ever enhanced to compress datums
-	 * out-of-line, or otherwise varied when or how compression was applied,
-	 * our assumption would break, leading to false positive reports of
-	 * corruption.  It's also possible that non-pivot tuples could in the
-	 * future have alternative equivalent representations (e.g. by using the
-	 * INDEX_ALT_TID_MASK bit). For now, we don't decompress/normalize toasted
-	 * values as part of fingerprinting.
-	 */
+	/* Generate a normalized index tuple for fingerprinting */
 	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
 	itup->t_tid = htup->t_self;
+	norm = bt_normalize_tuple(state, itup);
 
 	/* Probe Bloom filter -- tuple should be present */
-	if (bloom_lacks_element(state->filter, (unsigned char *) itup,
-							IndexTupleSize(itup)))
+	if (bloom_lacks_element(state->filter, (unsigned char *) norm,
+							IndexTupleSize(norm)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("heap tuple (%u,%u) from table \"%s\" lacks matching index tuple within index \"%s\"",
@@ -1714,6 +1708,115 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 
 	state->heaptuplespresent++;
 	pfree(itup);
+	/* Cannot leak memory here */
+	if (norm != itup)
+		pfree(norm);
+}
+
+/*
+ * Normalize an index tuple for fingerprinting.
+ *
+ * In general, index tuple formation is assumed to be deterministic by
+ * heapallindexed verification, and IndexTuples are assumed immutable.  While
+ * the LP_DEAD bit is mutable in leaf pages, that's ItemId metadata, which is
+ * not fingerprinted.  Normalization is required to compensate for corner
+ * cases where the determinism assumption doesn't quite work.
+ *
+ * There is currently one such case: index_form_tuple() does not try to hide
+ * the source TOAST state of input datums.  The executor applies TOAST
+ * compression for heap tuples based on different criteria to the compression
+ * applied within btinsert()'s call to index_form_tuple(): it sometimes
+ * compresses more aggressively, resulting in compressed heap tuple datums but
+ * uncompressed corresponding index tuple datums.  A subsequent heapallindexed
+ * verification will get a logically equivalent though bitwise unequal tuple
+ * from index_form_tuple().  False positive heapallindexed corruption reports
+ * could occur without normalizing away the inconsistency.
+ *
+ * Returned tuple is often caller's own original tuple.  Otherwise, it is a
+ * new representation of caller's original index tuple, palloc()'d in caller's
+ * memory context.
+ *
+ * Note: This routine is not concerned with distinctions about the
+ * representation of tuples beyond those that might break heapallindexed
+ * verification.  In particular, it won't try to normalize opclass-equal
+ * datums with potentially distinct representations (e.g., btree/numeric_ops
+ * index datums will not get their display scale normalized-away here).
+ * Normalization may need to be expanded to handle more cases in the future,
+ * though.  For example, it's possible that non-pivot tuples could in the
+ * future have alternative logically equivalent representations due to using
+ * the INDEX_ALT_TID_MASK bit to implement intelligent deduplication.
+ */
+static IndexTuple
+bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
+{
+	TupleDesc	tupleDescriptor = RelationGetDescr(state->rel);
+	Datum		normalized[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
+	bool		toast_free[INDEX_MAX_KEYS];
+	bool		formnewtup = false;
+	IndexTuple	reformed;
+	int			i;
+
+	/* Easy case: It's immediately clear that tuple has no varlena datums */
+	if (!IndexTupleHasVarwidths(itup))
+		return itup;
+
+	for (i = 0; i < tupleDescriptor->natts; i++)
+	{
+		Form_pg_attribute	att;
+
+		att = TupleDescAttr(tupleDescriptor, i);
+
+		/* Assume untoasted/already normalized datum initially */
+		toast_free[i] = false;
+		normalized[i] = index_getattr(itup, att->attnum,
+									  tupleDescriptor,
+									  &isnull[i]);
+		if (att->attbyval || att->attlen != -1 || isnull[i])
+			continue;
+
+		/*
+		 * Callers always pass a tuple that could safely be inserted into the
+		 * index without further processing, so an external varlena header
+		 * should never be encountered here
+		 */
+		if (VARATT_IS_EXTERNAL(DatumGetPointer(normalized[i])))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("external varlena datum in tuple that references heap row (%u,%u) in index \"%s\"",
+							ItemPointerGetBlockNumber(&(itup->t_tid)),
+							ItemPointerGetOffsetNumber(&(itup->t_tid)),
+							RelationGetRelationName(state->rel))));
+		else if (VARATT_IS_COMPRESSED(DatumGetPointer(normalized[i])))
+		{
+			formnewtup = true;
+			normalized[i] = PointerGetDatum(PG_DETOAST_DATUM(normalized[i]));
+			toast_free[i] = true;
+		}
+	}
+
+	/* Easier case: Tuple has varlena datums, none of which are compressed */
+	if (!formnewtup)
+		return itup;
+
+	/*
+	 * Hard case: Tuple had compressed varlena datums that necessitate
+	 * creating normalized version of the tuple from uncompressed input datums
+	 * (normalized input datums).  This is rather naive, but shouldn't be
+	 * necessary too often.
+	 *
+	 * Note that we rely on deterministic index_form_tuple() TOAST compression
+	 * of normalized input.
+	 */
+	reformed = index_form_tuple(tupleDescriptor, normalized, isnull);
+	reformed->t_tid = itup->t_tid;
+
+	/* Cannot leak memory here */
+	for (i = 0; i < tupleDescriptor->natts; i++)
+		if (toast_free[i])
+			pfree(DatumGetPointer(normalized[i]));
+
+	return reformed;
 }
 
 /*
