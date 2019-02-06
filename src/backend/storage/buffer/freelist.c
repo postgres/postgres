@@ -46,6 +46,7 @@ typedef struct
 	 * when the list is empty)
 	 */
 
+	int separatingBufferLogical;
 	int firstBufferLogical;
 	int lastBufferLogical;
 
@@ -175,34 +176,130 @@ void
 RemoveBufferOnStart(BufferDesc* buf) {
 	BufferDesc* buf_next;
 	BufferDesc* buf_prev;
-	BufferDesc* currentLeader;
+	BufferDesc* currentMaster;
 	uint32 local_bufnext_state;
 	uint32 local_bufprev_state;
-	uint32 local_curleader_state;
+	uint32 local_curmaster_state;
 	
 	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
-	
+	//printf(" %i",buf->id_of_prev);
 	if (buf->id_of_prev <= 0 || buf->id_of_next == -1) {
 		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
 		return;
 	}
 	
-	currentLeader = GetBufferDescriptor(StrategyControl->firstBufferLogical);
+	currentMaster = GetBufferDescriptor(StrategyControl->firstBufferLogical);
 	
 	buf_next = GetBufferDescriptor(buf->id_of_next);
 	buf_prev = GetBufferDescriptor(buf->id_of_prev);
 	
-	//local_bufnext_state = LockBufHdr(buf_next);
-	//local_bufprev_state = LockBufHdr(buf_prev);
+	if (currentMaster == buf || currentMaster == buf_prev) {
+		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+		return;
+	}
+	
+	if (buf_next->buf_id < buf_prev->buf_id) {
+		local_bufnext_state = LockBufHdr(buf_next);
+		local_bufprev_state = LockBufHdr(buf_prev);
+	}
+	else
+	{	
+		local_bufprev_state = LockBufHdr(buf_prev);
+		local_bufnext_state = LockBufHdr(buf_next);
+	}
 	
 	buf_prev->id_of_next = buf->id_of_next;
 	buf_next->id_of_prev = buf->id_of_prev;
 	
+	if (buf_next->buf_id < buf_prev->buf_id) {
+		UnlockBufHdr(buf_next, local_bufnext_state);
+		UnlockBufHdr(buf_prev, local_bufprev_state);
+	}
+	else
+	{
+		UnlockBufHdr(buf_prev, local_bufprev_state);
+		UnlockBufHdr(buf_next, local_bufnext_state);
+	}
+	
 	buf->id_of_next = StrategyControl->firstBufferLogical;
 	
-	local_curleader_state = LockBufHdr(currentLeader);
-	currentLeader->id_of_prev = buf->buf_id;
-	UnlockBufHdr(currentLeader, local_curleader_state);
+	local_curmaster_state = LockBufHdr(currentMaster);
+	currentMaster->id_of_prev = buf->buf_id;
+	UnlockBufHdr(currentMaster, local_curmaster_state);
+	
+	StrategyControl->firstBufferLogical = buf->buf_id;
+	
+	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+}
+
+void
+RemoveBufferOnSeparatingPosition(BufferDesc* buf) {
+	BufferDesc* buf_next;
+	BufferDesc* buf_prev;
+	BufferDesc* currentMaster;
+	BufferDesc* master_next;
+	BufferDesc* master_prev;
+	uint32 local_bufnext_state;
+	uint32 local_bufprev_state;
+	uint32 local_curmaster_state;
+	uint32 local_curmasterprev_state;
+	
+	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
+	
+	if (buf->id_of_prev == -1 || buf->id_of_next == -1 || buf->buf_id == StrategyControl->separatingBufferLogical
+		|| buf->id_of_next == StrategyControl->separatingBufferLogical 
+		|| buf->id_of_prev == StrategyControl->separatingBufferLogical
+	) {
+		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+		return;
+	}
+	
+	currentMaster = GetBufferDescriptor(StrategyControl->separatingBufferLogical);
+	
+	buf_next = GetBufferDescriptor(buf->id_of_next);
+	buf_prev = GetBufferDescriptor(buf->id_of_prev);
+	master_next = GetBufferDescriptor(currentMaster->id_of_next);
+	master_prev = GetBufferDescriptor(currentMaster->id_of_prev);
+
+	if (currentMaster == buf || currentMaster == buf_prev || currentMaster == buf_next) {
+		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+		return;
+	}
+
+	local_bufnext_state = LockBufHdr(buf_next);
+	local_bufprev_state = LockBufHdr(buf_prev);
+	
+	buf_prev->id_of_next = buf->id_of_next;
+	buf_next->id_of_prev = buf->id_of_prev;
+	
+	buf->id_of_prev = currentMaster->id_of_prev;
+	buf->id_of_next = StrategyControl->separatingBufferLogical;
+	
+	
+	local_curmaster_state = LockBufHdr(currentMaster);
+	currentMaster->id_of_prev = buf->buf_id;
+	UnlockBufHdr(currentMaster, local_curmaster_state);
+	master_prev->id_of_next = buf->buf_id;
+	
+	StrategyControl->separatingBufferLogical = buf->buf_id;
+	
+	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+	return;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	buf->id_of_next = StrategyControl->firstBufferLogical;
+	
+	local_curmaster_state = LockBufHdr(currentMaster);
+	currentMaster->id_of_prev = buf->buf_id;
+	UnlockBufHdr(currentMaster, local_curmaster_state);
 	
 	StrategyControl->firstBufferLogical = buf->buf_id;
 	
@@ -211,6 +308,7 @@ RemoveBufferOnStart(BufferDesc* buf) {
 	
 	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
 }
+
 
 /*
  * have_free_buffer -- a lockless check to see if there is a free buffer in
@@ -353,15 +451,15 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 					AddBufferToRing(strategy, buf);
 				*buf_state = local_buf_state;
 
-				if (StrategyControl->firstFreeBuffer >= 0) {
-					//StrategyControl->separatingBufferLogical = StrategyControl->firstFreeBuffer / 8 * 5;
+				/*if (StrategyControl->firstFreeBuffer >= 0) {
+					StrategyControl->separatingBufferLogical = StrategyControl->firstFreeBuffer / 8 * 5;
 				}
 				else
 				{
-					//StrategyControl->separatingBufferLogical = NBuffers / 8 * 5;	
-				}
+					StrategyControl->separatingBufferLogical = NBuffers / 8 * 5;	
+				}*/
 
-				//RemoveBufferOnStart(buf, false);
+				//RemoveBufferOnStart(buf);
 				StrategyControl->lastBufferLogical = buf->buf_id;
 				return buf;
 			}
