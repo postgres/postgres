@@ -46,6 +46,9 @@ typedef struct
 	 * when the list is empty)
 	 */
 
+	int firstBufferLogical;
+	int lastBufferLogical;
+
 	/*
 	 * Statistics.  These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
@@ -168,6 +171,55 @@ ClockSweepTick(void)
 	return victim;
 }
 
+void
+RemoveBufferOnStart(BufferDesc* buf, bool print) {
+	BufferDesc* buf_next;
+	BufferDesc* buf_prev;
+	BufferDesc* currentLeader;
+	uint32 local_bufnext_state;
+	uint32 local_bufprev_state;
+	uint32 local_curleader_state;
+	
+	//if (print) printf("!");fflush(stdout);
+	
+	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
+	
+	if (buf->id_of_prev <= 0 || buf->id_of_next == -1) {
+		//if (print) printf("?");
+		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+		return;
+	}
+	
+	currentLeader = GetBufferDescriptor(StrategyControl->firstBufferLogical);
+	
+	buf_next = GetBufferDescriptor(buf->id_of_next);
+	buf_prev = GetBufferDescriptor(buf->id_of_prev);
+	
+	//if (print) printf(",");fflush(stdout);
+	//local_bufnext_state = LockBufHdr(buf_next);
+	//if (print) printf(".");fflush(stdout);
+	//local_bufprev_state = LockBufHdr(buf_prev);
+	
+	buf_prev->id_of_next = buf->id_of_next;
+	buf_next->id_of_prev = buf->id_of_prev;
+	
+	buf->id_of_next = StrategyControl->firstBufferLogical;
+	
+	//local_curleader_state = LockBufHdr(currentLeader);
+	currentLeader->id_of_prev = buf->buf_id;
+	//UnlockBufHdr(currentLeader, local_curleader_state);
+	
+	StrategyControl->firstBufferLogical = buf->buf_id;
+	/*
+	if (print) printf("+");fflush(stdout);
+	UnlockBufHdr(buf_prev, local_bufprev_state);
+	if (print) printf("-");fflush(stdout);
+	UnlockBufHdr(buf_next, local_bufnext_state);
+	if (print) printf("=");fflush(stdout);*/
+	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+	//if (print) printf("_");fflush(stdout);
+}s
+
 /*
  * have_free_buffer -- a lockless check to see if there is a free buffer in
  *					   buffer pool.
@@ -212,8 +264,10 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	if (strategy != NULL)
 	{
 		buf = GetBufferFromRing(strategy, buf_state);
-		if (buf != NULL)
+		if (buf != NULL) {
+			RemoveBufferOnStart(buf, false);
 			return buf;
+		}
 	}
 
 	/*
@@ -305,6 +359,17 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 				if (strategy != NULL)
 					AddBufferToRing(strategy, buf);
 				*buf_state = local_buf_state;
+
+				if (StrategyControl->firstFreeBuffer >= 0) {
+					StrategyControl->separatingBufferLogical = StrategyControl->firstFreeBuffer / 8 * 5;
+				}
+				else
+				{
+					StrategyControl->separatingBufferLogical = NBuffers / 8 * 5;	
+				}
+
+				//RemoveBufferOnStart(buf, false);
+				StrategyControl->lastBufferLogical = buf->buf_id;
 				return buf;
 			}
 			UnlockBufHdr(buf, local_buf_state);
@@ -316,7 +381,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	trycounter = NBuffers;
 	for (;;)
 	{
-		buf = GetBufferDescriptor(ClockSweepTick());
+		buf = GetBufferDescriptor(victimCandidate);
 
 		/*
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
@@ -338,20 +403,27 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 				if (strategy != NULL)
 					AddBufferToRing(strategy, buf);
 				*buf_state = local_buf_state;
+
+				RemoveBufferOnStart(buf, false);
+
 				return buf;
 			}
 		}
-		else if (--trycounter == 0)
+		else 
 		{
-			/*
-			 * We've scanned all the buffers without making any state changes,
-			 * so all the buffers are pinned (or were when we looked at them).
-			 * We could hope that someone will free one eventually, but it's
-			 * probably better to fail than to risk getting stuck in an
-			 * infinite loop.
-			 */
-			UnlockBufHdr(buf, local_buf_state);
-			elog(ERROR, "no unpinned buffers available");
+			if (--trycounter == 0)
+			{
+				/*
+				 * We've scanned all the buffers without making any state changes,
+				 * so all the buffers are pinned (or were when we looked at them).
+				 * We could hope that someone will free one eventually, but it's
+				 * probably better to fail than to risk getting stuck in an
+				 * infinite loop.
+				 */
+				UnlockBufHdr(buf, local_buf_state);
+				elog(ERROR, "no unpinned buffers available");
+			}
+			victimCandidate = buf->id_of_prev;
 		}
 		UnlockBufHdr(buf, local_buf_state);
 	}
