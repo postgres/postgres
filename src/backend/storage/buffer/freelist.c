@@ -180,56 +180,81 @@ RemoveBufferOnStart(BufferDesc* buf) {
 	uint32 local_bufnext_state;
 	uint32 local_bufprev_state;
 	uint32 local_curmaster_state;
+	bool success;
 	
-	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
-	//printf(" %i",buf->id_of_prev);
-	if (buf->id_of_prev <= 0 || buf->id_of_next == -1) {
+	while (true) {
+		SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
+		//printf(" %i",buf->id_of_prev);
+		if (buf->id_of_prev <= 0 || buf->id_of_next == -1) {
+			SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+			return;
+		}
+	
+		currentMaster = GetBufferDescriptor(StrategyControl->firstBufferLogical);
+	
+		buf_next = GetBufferDescriptor(buf->id_of_next);
+		buf_prev = GetBufferDescriptor(buf->id_of_prev);
+	
+		if (currentMaster == buf || currentMaster == buf_prev) {
+			SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+			return;
+		}
+	
+		if (buf_next->buf_id < buf_prev->buf_id) {
+			local_bufnext_state = LockBufHdr(buf_next);
+			local_bufprev_state = LockBufHdr(buf_prev);
+		}
+		else
+		{	
+			local_bufprev_state = LockBufHdr(buf_prev);
+			local_bufnext_state = LockBufHdr(buf_next);
+		}
+	
+		if (buf_prev->id_of_next == buf->buf_id && buf_next->id_of_prev == buf->buf_id) {
+			buf_prev->id_of_next = buf->id_of_next;
+			buf_next->id_of_prev = buf->id_of_prev;
+			
+			success = true;
+		}
+		else
+		{
+			success = false;
+			printf("________");fflush(stdout);
+		}
+		printf("!");fflush(stdout);
+		if (buf_next->buf_id < buf_prev->buf_id) {
+			UnlockBufHdr(buf_next, local_bufnext_state);
+			UnlockBufHdr(buf_prev, local_bufprev_state);
+		}
+		else
+		{
+			UnlockBufHdr(buf_prev, local_bufprev_state);
+			UnlockBufHdr(buf_next, local_bufnext_state);
+		}
+		
+		if (!success) {
+			SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+			continue;
+		}
+	
+		local_curmaster_state = LockBufHdr(currentMaster);printf("!");fflush(stdout);
+		if (StrategyControl->firstBufferLogical != currentMaster->buf_id) {
+			UnlockBufHdr(currentMaster, local_curmaster_state);
+			
+			SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+			printf("^^^^^^^^");fflush(stdout);
+			continue;
+		}
+		buf->id_of_next = StrategyControl->firstBufferLogical;
+		currentMaster->id_of_prev = buf->buf_id;
+		UnlockBufHdr(currentMaster, local_curmaster_state);
+	
+		StrategyControl->firstBufferLogical = buf->buf_id;
+	
 		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
+
 		return;
 	}
-	
-	currentMaster = GetBufferDescriptor(StrategyControl->firstBufferLogical);
-	
-	buf_next = GetBufferDescriptor(buf->id_of_next);
-	buf_prev = GetBufferDescriptor(buf->id_of_prev);
-	
-	if (currentMaster == buf || currentMaster == buf_prev) {
-		SpinLockRelease(&StrategyControl->buffer_strategy_lock);
-		return;
-	}
-	
-	if (buf_next->buf_id < buf_prev->buf_id) {
-		local_bufnext_state = LockBufHdr(buf_next);
-		local_bufprev_state = LockBufHdr(buf_prev);
-	}
-	else
-	{	
-		local_bufprev_state = LockBufHdr(buf_prev);
-		local_bufnext_state = LockBufHdr(buf_next);
-	}
-	
-	buf_prev->id_of_next = buf->id_of_next;
-	buf_next->id_of_prev = buf->id_of_prev;
-	
-	if (buf_next->buf_id < buf_prev->buf_id) {
-		UnlockBufHdr(buf_next, local_bufnext_state);
-		UnlockBufHdr(buf_prev, local_bufprev_state);
-	}
-	else
-	{
-		UnlockBufHdr(buf_prev, local_bufprev_state);
-		UnlockBufHdr(buf_next, local_bufnext_state);
-	}
-	
-	buf->id_of_next = StrategyControl->firstBufferLogical;
-	
-	local_curmaster_state = LockBufHdr(currentMaster);
-	currentMaster->id_of_prev = buf->buf_id;
-	UnlockBufHdr(currentMaster, local_curmaster_state);
-	
-	StrategyControl->firstBufferLogical = buf->buf_id;
-	
-	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
 }
 
 void
