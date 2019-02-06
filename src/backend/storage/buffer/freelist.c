@@ -218,7 +218,7 @@ RemoveBufferOnStart(BufferDesc* buf, bool print) {
 	if (print) printf("=");fflush(stdout);*/
 	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
 	//if (print) printf("_");fflush(stdout);
-}s
+}
 
 /*
  * have_free_buffer -- a lockless check to see if there is a free buffer in
@@ -256,7 +256,8 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	int			bgwprocno;
 	int			trycounter;
 	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
-
+	int victimCandidate;
+	
 	/*
 	 * If given a strategy object, see whether it can select a buffer. We
 	 * assume strategy objects don't need buffer_strategy_lock.
@@ -361,11 +362,11 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 				*buf_state = local_buf_state;
 
 				if (StrategyControl->firstFreeBuffer >= 0) {
-					StrategyControl->separatingBufferLogical = StrategyControl->firstFreeBuffer / 8 * 5;
+					//StrategyControl->separatingBufferLogical = StrategyControl->firstFreeBuffer / 8 * 5;
 				}
 				else
 				{
-					StrategyControl->separatingBufferLogical = NBuffers / 8 * 5;	
+					//StrategyControl->separatingBufferLogical = NBuffers / 8 * 5;	
 				}
 
 				//RemoveBufferOnStart(buf, false);
@@ -379,6 +380,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 
 	/* Nothing on the freelist, so run the "clock sweep" algorithm */
 	trycounter = NBuffers;
+	victimCandidate = GetBufferDescriptor(StrategyControl->lastBufferLogical)->id_of_prev;
 	for (;;)
 	{
 		buf = GetBufferDescriptor(victimCandidate);
