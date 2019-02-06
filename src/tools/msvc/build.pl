@@ -4,18 +4,17 @@
 
 use strict;
 
-BEGIN
-{
-
-	chdir("../../..") if (-d "../msvc" && -d "../../../src");
-
-}
-
-use lib "src/tools/msvc";
+use File::Basename;
+use File::Spec;
+BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
 
 use Cwd;
 
 use Mkvcbuild;
+
+chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
+die 'Must run from root or msvc directory'
+  unless (-d 'src\tools\msvc' && -d 'src');
 
 # buildenv.pl is for specifying the build environment settings
 # it should contain lines like:
@@ -32,8 +31,8 @@ elsif (-e "./buildenv.pl")
 
 # set up the project
 our $config;
-do "./config_default.pl";
-do "./config.pl" if (-f "src/tools/msvc/config.pl");
+do "./src/tools/msvc/config_default.pl";
+do "./src/tools/msvc/config.pl" if (-f "src/tools/msvc/config.pl");
 
 my $vcver = Mkvcbuild::mkvcbuild($config);
 
