@@ -419,6 +419,7 @@ void
 create_lateral_join_info(PlannerInfo *root)
 {
 	bool		found_laterals = false;
+	Relids		prev_parents PG_USED_FOR_ASSERTS_ONLY = NULL;
 	Index		rti;
 	ListCell   *lc;
 
@@ -627,53 +628,43 @@ create_lateral_join_info(PlannerInfo *root)
 	 * every child anyway, and there's no value in forcing extra
 	 * reparameterize_path() calls.  Similarly, a lateral reference to the
 	 * parent prevents use of otherwise-movable join rels for each child.
+	 *
+	 * It's possible for child rels to have their own children, in which case
+	 * the topmost parent's lateral info must be propagated all the way down.
+	 * This code handles that case correctly so long as append_rel_list has
+	 * entries for child relationships before grandchild relationships, which
+	 * is an okay assumption right now, but we'll need to be careful to
+	 * preserve it.  The assertions below check for incorrect ordering.
 	 */
-	for (rti = 1; rti < root->simple_rel_array_size; rti++)
+	foreach(lc, root->append_rel_list)
 	{
-		RelOptInfo *brel = root->simple_rel_array[rti];
-		RangeTblEntry *brte = root->simple_rte_array[rti];
+		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
+		RelOptInfo *parentrel = root->simple_rel_array[appinfo->parent_relid];
+		RelOptInfo *childrel = root->simple_rel_array[appinfo->child_relid];
 
 		/*
-		 * Skip empty slots. Also skip non-simple relations i.e. dead
-		 * relations.
+		 * If we're processing a subquery of a query with inherited target rel
+		 * (cf. inheritance_planner), append_rel_list may contain entries for
+		 * tables that are not part of the current subquery and hence have no
+		 * RelOptInfo.  Ignore them.  We can ignore dead rels, too.
 		 */
-		if (brel == NULL || !IS_SIMPLE_REL(brel))
+		if (parentrel == NULL || !IS_SIMPLE_REL(parentrel))
 			continue;
 
-		/*
-		 * In the case of table inheritance, the parent RTE is directly linked
-		 * to every child table via an AppendRelInfo.  In the case of table
-		 * partitioning, the inheritance hierarchy is expanded one level at a
-		 * time rather than flattened.  Therefore, an other member rel that is
-		 * a partitioned table may have children of its own, and must
-		 * therefore be marked with the appropriate lateral info so that those
-		 * children eventually get marked also.
-		 */
-		Assert(brte);
-		if (brel->reloptkind == RELOPT_OTHER_MEMBER_REL &&
-			(brte->rtekind != RTE_RELATION ||
-			 brte->relkind != RELKIND_PARTITIONED_TABLE))
-			continue;
+		/* Verify that children are processed before grandchildren */
+#ifdef USE_ASSERT_CHECKING
+		prev_parents = bms_add_member(prev_parents, appinfo->parent_relid);
+		Assert(!bms_is_member(appinfo->child_relid, prev_parents));
+#endif
 
-		if (brte->inh)
-		{
-			foreach(lc, root->append_rel_list)
-			{
-				AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
-				RelOptInfo *childrel;
-
-				if (appinfo->parent_relid != rti)
-					continue;
-				childrel = root->simple_rel_array[appinfo->child_relid];
-				Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
-				Assert(childrel->direct_lateral_relids == NULL);
-				childrel->direct_lateral_relids = brel->direct_lateral_relids;
-				Assert(childrel->lateral_relids == NULL);
-				childrel->lateral_relids = brel->lateral_relids;
-				Assert(childrel->lateral_referencers == NULL);
-				childrel->lateral_referencers = brel->lateral_referencers;
-			}
-		}
+		/* OK, propagate info down */
+		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+		Assert(childrel->direct_lateral_relids == NULL);
+		childrel->direct_lateral_relids = parentrel->direct_lateral_relids;
+		Assert(childrel->lateral_relids == NULL);
+		childrel->lateral_relids = parentrel->lateral_relids;
+		Assert(childrel->lateral_referencers == NULL);
+		childrel->lateral_referencers = parentrel->lateral_referencers;
 	}
 }
 
