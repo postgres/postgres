@@ -426,6 +426,7 @@ drop type textrange_en_us;
 
 
 -- cleanup
+SET client_min_messages TO warning;
 DROP SCHEMA collate_tests CASCADE;
 RESET search_path;
 

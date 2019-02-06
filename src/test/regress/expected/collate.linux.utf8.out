@@ -1118,23 +1118,5 @@ select textrange_en_us('A','Z') @> 'b'::text;
 drop type textrange_c;
 drop type textrange_en_us;
 -- cleanup
+SET client_min_messages TO warning;
 DROP SCHEMA collate_tests CASCADE;
-NOTICE:  drop cascades to 18 other objects
-DETAIL:  drop cascades to table collate_test1
-drop cascades to table collate_test_like
-drop cascades to table collate_test2
-drop cascades to table collate_test3
-drop cascades to type testdomain_sv
-drop cascades to table collate_test4
-drop cascades to table collate_test5
-drop cascades to table collate_test10
-drop cascades to table collate_test6
-drop cascades to view collview1
-drop cascades to view collview2
-drop cascades to view collview3
-drop cascades to type testdomain
-drop cascades to function mylt(text,text)
-drop cascades to function mylt_noninline(text,text)
-drop cascades to function mylt_plpgsql(text,text)
-drop cascades to function mylt2(text,text)
-drop cascades to function dup(anyelement)
