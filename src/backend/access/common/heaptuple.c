@@ -80,7 +80,7 @@
 /*
  * Return the missing value of an attribute, or NULL if there isn't one.
  */
-static Datum
+Datum
 getmissingattr(TupleDesc tupleDesc,
 			   int attnum, bool *isnull)
 {
