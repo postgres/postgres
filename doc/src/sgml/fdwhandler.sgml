@@ -309,7 +309,9 @@ GetForeignJoinPaths(PlannerInfo *root,
      function is called during query planning.  As
      with <function>GetForeignPaths</function>, this function should
      generate <structname>ForeignPath</structname> path(s) for the
-     supplied <literal>joinrel</literal>, and call <function>add_path</function> to add these
+     supplied <literal>joinrel</literal>
+     (use <function>create_foreign_join_path</function> to build them),
+     and call <function>add_path</function> to add these
      paths to the set of paths considered for the join.  But unlike
      <function>GetForeignPaths</function>, it is not necessary that this function
      succeed in creating at least one path, since paths involving local
@@ -369,7 +371,9 @@ GetForeignUpperPaths(PlannerInfo *root,
      called only if all base relation(s) involved in the query belong to the
      same FDW.  This function should generate <structname>ForeignPath</structname>
      path(s) for any post-scan/join processing that the FDW knows how to
-     perform remotely, and call <function>add_path</function> to add these paths to
+     perform remotely
+     (use <function>create_foreign_upper_path</function> to build them),
+     and call <function>add_path</function> to add these paths to
      the indicated upper relation.  As with <function>GetForeignJoinPaths</function>,
      it is not necessary that this function succeed in creating any paths,
      since paths involving local processing are always possible.

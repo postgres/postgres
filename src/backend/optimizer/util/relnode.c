@@ -1225,6 +1225,9 @@ get_baserel_parampathinfo(PlannerInfo *root, RelOptInfo *baserel,
 	double		rows;
 	ListCell   *lc;
 
+	/* If rel has LATERAL refs, every path for it should account for them */
+	Assert(bms_is_subset(baserel->lateral_relids, required_outer));
+
 	/* Unparameterized paths have no ParamPathInfo */
 	if (bms_is_empty(required_outer))
 		return NULL;
@@ -1319,6 +1322,9 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 	List	   *dropped_ecs;
 	double		rows;
 	ListCell   *lc;
+
+	/* If rel has LATERAL refs, every path for it should account for them */
+	Assert(bms_is_subset(joinrel->lateral_relids, required_outer));
 
 	/* Unparameterized paths have no ParamPathInfo or extra join clauses */
 	if (bms_is_empty(required_outer))
@@ -1510,6 +1516,9 @@ ParamPathInfo *
 get_appendrel_parampathinfo(RelOptInfo *appendrel, Relids required_outer)
 {
 	ParamPathInfo *ppi;
+
+	/* If rel has LATERAL refs, every path for it should account for them */
+	Assert(bms_is_subset(appendrel->lateral_relids, required_outer));
 
 	/* Unparameterized paths have no ParamPathInfo */
 	if (bms_is_empty(required_outer))
