@@ -25,6 +25,33 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+/*
+ * Checks if a given relation can be part of a partition tree.  Returns
+ * false if the relation cannot be processed, in which case it is up to
+ * the caller to decide what to do, by either raising an error or doing
+ * something else.
+ */
+static bool
+check_rel_can_be_partition(Oid relid)
+{
+	char		relkind;
+
+	/* Check if relation exists */
+	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(relid)))
+		return false;
+
+	relkind = get_rel_relkind(relid);
+
+	/* Only allow relation types that can appear in partition trees. */
+	if (relkind != RELKIND_RELATION &&
+		relkind != RELKIND_FOREIGN_TABLE &&
+		relkind != RELKIND_INDEX &&
+		relkind != RELKIND_PARTITIONED_TABLE &&
+		relkind != RELKIND_PARTITIONED_INDEX)
+		return false;
+
+	return true;
+}
 
 /*
  * pg_partition_tree
@@ -39,19 +66,10 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 {
 #define PG_PARTITION_TREE_COLS	4
 	Oid			rootrelid = PG_GETARG_OID(0);
-	char		relkind = get_rel_relkind(rootrelid);
 	FuncCallContext *funcctx;
 	ListCell  **next;
 
-	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(rootrelid)))
-		PG_RETURN_NULL();
-
-	/* Return NULL for relation types that cannot appear in partition trees */
-	if (relkind != RELKIND_RELATION &&
-		relkind != RELKIND_FOREIGN_TABLE &&
-		relkind != RELKIND_INDEX &&
-		relkind != RELKIND_PARTITIONED_TABLE &&
-		relkind != RELKIND_PARTITIONED_INDEX)
+	if (!check_rel_can_be_partition(rootrelid))
 		PG_RETURN_NULL();
 
 	/* stuff done only on the first call of the function */
@@ -152,4 +170,41 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 
 	/* done when there are no more elements left */
 	SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * pg_partition_root
+ *
+ * Returns the top-most parent of the partition tree to which a given
+ * relation belongs, or NULL if it's not (or cannot be) part of any
+ * partition tree.
+ */
+Datum
+pg_partition_root(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Oid			rootrelid;
+	List	   *ancestors;
+
+	if (!check_rel_can_be_partition(relid))
+		PG_RETURN_NULL();
+
+	/*
+	 * If the relation is not a partition (it may be the partition parent),
+	 * return itself as a result.
+	 */
+	if (!get_rel_relispartition(relid))
+		PG_RETURN_OID(relid);
+
+	/* Fetch the top-most parent */
+	ancestors = get_partition_ancestors(relid);
+	rootrelid = llast_oid(ancestors);
+	list_free(ancestors);
+
+	/*
+	 * "rootrelid" must contain a valid OID, given that the input relation is
+	 * a valid partition tree member as checked above.
+	 */
+	Assert(OidIsValid(rootrelid));
+	PG_RETURN_OID(rootrelid);
 }

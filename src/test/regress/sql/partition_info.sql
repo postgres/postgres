@@ -3,6 +3,8 @@
 --
 SELECT * FROM pg_partition_tree(NULL);
 SELECT * FROM pg_partition_tree(0);
+SELECT pg_partition_root(NULL);
+SELECT pg_partition_root(0);
 
 -- Test table partition trees
 CREATE TABLE ptif_test (a int, b int) PARTITION BY range (a);
@@ -39,6 +41,10 @@ SELECT relid, parentrelid, level, isleaf
 SELECT relid, parentrelid, level, isleaf
   FROM pg_partition_tree('ptif_test01') p
   JOIN pg_class c ON (p.relid = c.oid);
+-- List all members using pg_partition_root with leaf table reference
+SELECT relid, parentrelid, level, isleaf
+  FROM pg_partition_tree(pg_partition_root('ptif_test01')) p
+  JOIN pg_class c ON (p.relid = c.oid);
 
 -- List all indexes members of the tree
 SELECT relid, parentrelid, level, isleaf
@@ -51,6 +57,10 @@ SELECT relid, parentrelid, level, isleaf
 SELECT relid, parentrelid, level, isleaf
   FROM pg_partition_tree('ptif_test01_index') p
   JOIN pg_class c ON (p.relid = c.oid);
+-- List all members using pg_partition_root with leaf index reference
+SELECT relid, parentrelid, level, isleaf
+  FROM pg_partition_tree(pg_partition_root('ptif_test01_index')) p
+  JOIN pg_class c ON (p.relid = c.oid);
 
 DROP TABLE ptif_test;
 
@@ -58,6 +68,7 @@ DROP TABLE ptif_test;
 CREATE TABLE ptif_normal_table(a int);
 SELECT relid, parentrelid, level, isleaf
   FROM pg_partition_tree('ptif_normal_table');
+SELECT pg_partition_root('ptif_normal_table');
 DROP TABLE ptif_normal_table;
 
 -- Various partitioning-related functions return NULL if passed relations
@@ -67,5 +78,7 @@ CREATE VIEW ptif_test_view AS SELECT 1;
 CREATE MATERIALIZED VIEW ptif_test_matview AS SELECT 1;
 SELECT * FROM pg_partition_tree('ptif_test_view');
 SELECT * FROM pg_partition_tree('ptif_test_matview');
+SELECT pg_partition_root('ptif_test_view');
+SELECT pg_partition_root('ptif_test_matview');
 DROP VIEW ptif_test_view;
 DROP MATERIALIZED VIEW ptif_test_matview;

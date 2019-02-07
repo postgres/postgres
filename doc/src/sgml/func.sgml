@@ -20274,6 +20274,17 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         their partitions, and so on.
        </entry>
       </row>
+      <row>
+       <entry>
+        <indexterm><primary>pg_partition_root</primary></indexterm>
+        <literal><function>pg_partition_root(<type>regclass</type>)</function></literal>
+       </entry>
+       <entry><type>regclass</type></entry>
+       <entry>
+        Return the top-most parent of a partition tree to which the given
+        relation belongs.
+       </entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

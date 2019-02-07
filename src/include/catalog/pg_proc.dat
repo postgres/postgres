@@ -10509,4 +10509,9 @@
   proargnames => '{rootrelid,relid,parentrelid,isleaf,level}',
   prosrc => 'pg_partition_tree' },
 
+# function to get the top-most partition root parent
+{ oid => '3424', descr => 'get top-most partition root parent',
+  proname => 'pg_partition_root', prorettype => 'regclass',
+  proargtypes => 'regclass', prosrc => 'pg_partition_root' },
+
 ]
