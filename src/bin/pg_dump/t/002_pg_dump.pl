@@ -448,20 +448,20 @@ my %tests = (
 	},
 
 	'ALTER COLLATION test0 OWNER TO' => {
-		regexp    => qr/^\QALTER COLLATION public.test0 OWNER TO \E.*;/m,
+		regexp    => qr/^\QALTER COLLATION public.test0 OWNER TO \E.+;/m,
 		collation => 1,
 		like      => { %full_runs, section_pre_data => 1, },
 		unlike    => { %dump_test_schema_runs, no_owner => 1, },
 	},
 
 	'ALTER FOREIGN DATA WRAPPER dummy OWNER TO' => {
-		regexp => qr/^ALTER FOREIGN DATA WRAPPER dummy OWNER TO .*;/m,
+		regexp => qr/^ALTER FOREIGN DATA WRAPPER dummy OWNER TO .+;/m,
 		like   => { %full_runs, section_pre_data => 1, },
 		unlike => { no_owner => 1, },
 	},
 
 	'ALTER SERVER s1 OWNER TO' => {
-		regexp => qr/^ALTER SERVER s1 OWNER TO .*;/m,
+		regexp => qr/^ALTER SERVER s1 OWNER TO .+;/m,
 		like   => { %full_runs, section_pre_data => 1, },
 		unlike => { no_owner => 1, },
 	},
@@ -470,7 +470,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER FUNCTION dump_test.pltestlang_call_handler() \E
 			\QOWNER TO \E
-			.*;/xm,
+			.+;/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -483,7 +483,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER OPERATOR FAMILY dump_test.op_family USING btree \E
 			\QOWNER TO \E
-			.*;/xm,
+			.+;/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -522,7 +522,7 @@ my %tests = (
 		regexp => qr/^
 			\QALTER OPERATOR CLASS dump_test.op_class USING btree \E
 			\QOWNER TO \E
-			.*;/xm,
+			.+;/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -532,13 +532,13 @@ my %tests = (
 	},
 
 	'ALTER PUBLICATION pub1 OWNER TO' => {
-		regexp => qr/^ALTER PUBLICATION pub1 OWNER TO .*;/m,
+		regexp => qr/^ALTER PUBLICATION pub1 OWNER TO .+;/m,
 		like   => { %full_runs, section_post_data => 1, },
 		unlike => { no_owner => 1, },
 	},
 
 	'ALTER LARGE OBJECT ... OWNER TO' => {
-		regexp => qr/^ALTER LARGE OBJECT \d+ OWNER TO .*;/m,
+		regexp => qr/^ALTER LARGE OBJECT \d+ OWNER TO .+;/m,
 		like   => {
 			%full_runs,
 			column_inserts         => 1,
@@ -554,13 +554,13 @@ my %tests = (
 	},
 
 	'ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO' => {
-		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;/m,
+		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .+;/m,
 		like   => { %full_runs, section_pre_data => 1, },
 		unlike => { no_owner => 1, },
 	},
 
 	'ALTER SCHEMA dump_test OWNER TO' => {
-		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .*;/m,
+		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .+;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -570,7 +570,7 @@ my %tests = (
 	},
 
 	'ALTER SCHEMA dump_test_second_schema OWNER TO' => {
-		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;/m,
+		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .+;/m,
 		like   => {
 			%full_runs,
 			role             => 1,
@@ -757,7 +757,7 @@ my %tests = (
 	},
 
 	'ALTER TABLE test_table OWNER TO' => {
-		regexp => qr/^\QALTER TABLE dump_test.test_table OWNER TO \E.*;/m,
+		regexp => qr/^\QALTER TABLE dump_test.test_table OWNER TO \E.+;/m,
 		like   => {
 			%full_runs,
 			%dump_test_schema_runs,
@@ -790,7 +790,7 @@ my %tests = (
 	},
 
 	'ALTER TABLE test_second_table OWNER TO' => {
-		regexp => qr/^\QALTER TABLE dump_test.test_second_table OWNER TO \E.*;/m,
+		regexp => qr/^\QALTER TABLE dump_test.test_second_table OWNER TO \E.+;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -800,7 +800,7 @@ my %tests = (
 	},
 
 	'ALTER TABLE measurement OWNER TO' => {
-		regexp => qr/^\QALTER TABLE dump_test.measurement OWNER TO \E.*;/m,
+		regexp => qr/^\QALTER TABLE dump_test.measurement OWNER TO \E.+;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -811,7 +811,7 @@ my %tests = (
 
 	'ALTER TABLE measurement_y2006m2 OWNER TO' => {
 		regexp =>
-		  qr/^\QALTER TABLE dump_test_second_schema.measurement_y2006m2 OWNER TO \E.*;/m,
+		  qr/^\QALTER TABLE dump_test_second_schema.measurement_y2006m2 OWNER TO \E.+;/m,
 		like => {
 			%full_runs,
 			role             => 1,
@@ -822,7 +822,7 @@ my %tests = (
 
 	'ALTER FOREIGN TABLE foreign_table OWNER TO' => {
 		regexp =>
-		  qr/^\QALTER FOREIGN TABLE dump_test.foreign_table OWNER TO \E.*;/m,
+		  qr/^\QALTER FOREIGN TABLE dump_test.foreign_table OWNER TO \E.+;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -833,7 +833,7 @@ my %tests = (
 
 	'ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO' => {
 		regexp =>
-		  qr/^\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 OWNER TO \E.*;/m,
+		  qr/^\QALTER TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1 OWNER TO \E.+;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -844,7 +844,7 @@ my %tests = (
 
 	'ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO' => {
 		regexp =>
-		  qr/^\QALTER TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 OWNER TO \E.*;/m,
+		  qr/^\QALTER TEXT SEARCH DICTIONARY dump_test.alt_ts_dict1 OWNER TO \E.+;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -895,14 +895,14 @@ my %tests = (
 	},
 
 	'COMMENT ON DATABASE postgres' => {
-		regexp => qr/^COMMENT ON DATABASE postgres IS .*;/m,
+		regexp => qr/^COMMENT ON DATABASE postgres IS .+;/m,
 
 		# Should appear in the same tests as "CREATE DATABASE postgres"
 		like => { createdb => 1, },
 	},
 
 	'COMMENT ON EXTENSION plpgsql' => {
-		regexp => qr/^COMMENT ON EXTENSION plpgsql IS .*;/m,
+		regexp => qr/^COMMENT ON EXTENSION plpgsql IS .+;/m,
 
 		# this shouldn't ever get emitted anymore
 		like => {},
@@ -1353,7 +1353,7 @@ my %tests = (
 	'CREATE DATABASE postgres' => {
 		regexp => qr/^
 			\QCREATE DATABASE postgres WITH TEMPLATE = template0 \E
-			.*;/xm,
+			.+;/xm,
 		like => { createdb => 1, },
 	},
 
@@ -1362,7 +1362,7 @@ my %tests = (
 		create_sql   => 'CREATE DATABASE dump_test;',
 		regexp       => qr/^
 			\QCREATE DATABASE dump_test WITH TEMPLATE = template0 \E
-			.*;/xm,
+			.+;/xm,
 		like => { pg_dumpall_dbprivs => 1, },
 	},
 
@@ -2651,7 +2651,7 @@ my %tests = (
 
 	'DROP ROLE pg_' => {
 		regexp => qr/^
-			\QDROP ROLE pg_\E.*;
+			\QDROP ROLE pg_\E.+;
 			/xm,
 
 		# this shouldn't ever get emitted anywhere
