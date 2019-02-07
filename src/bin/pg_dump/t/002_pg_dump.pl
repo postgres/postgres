@@ -1540,11 +1540,11 @@ my %tests = (
 		create_order => 33,
 		create_sql   => 'CREATE EVENT TRIGGER test_event_trigger
 					   ON ddl_command_start
-					   EXECUTE PROCEDURE dump_test.event_trigger_func();',
+					   EXECUTE FUNCTION dump_test.event_trigger_func();',
 		regexp => qr/^
 			\QCREATE EVENT TRIGGER test_event_trigger \E
 			\QON ddl_command_start\E
-			\n\s+\QEXECUTE PROCEDURE dump_test.event_trigger_func();\E
+			\n\s+\QEXECUTE FUNCTION dump_test.event_trigger_func();\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 	},
@@ -1554,11 +1554,11 @@ my %tests = (
 		create_sql   => 'CREATE TRIGGER test_trigger
 					   BEFORE INSERT ON dump_test.test_table
 					   FOR EACH ROW WHEN (NEW.col1 > 10)
-					   EXECUTE PROCEDURE dump_test.trigger_func();',
+					   EXECUTE FUNCTION dump_test.trigger_func();',
 		regexp => qr/^
 			\QCREATE TRIGGER test_trigger BEFORE INSERT ON dump_test.test_table \E
 			\QFOR EACH ROW WHEN ((new.col1 > 10)) \E
-			\QEXECUTE PROCEDURE dump_test.trigger_func();\E
+			\QEXECUTE FUNCTION dump_test.trigger_func();\E
 			/xm,
 		like => {
 			%full_runs,

@@ -1044,7 +1044,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		appendStringInfoString(&buf, ") ");
 	}
 
-	appendStringInfo(&buf, "EXECUTE PROCEDURE %s(",
+	appendStringInfo(&buf, "EXECUTE FUNCTION %s(",
 					 generate_function_name(trigrec->tgfoid, 0,
 											NIL, argtypes,
 											false, NULL, EXPR_KIND_NONE));

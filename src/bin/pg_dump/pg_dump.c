@@ -17086,7 +17086,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			appendPQExpBufferStr(query, "    FOR EACH STATEMENT\n    ");
 
 		/* regproc output is already sufficiently quoted */
-		appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
+		appendPQExpBuffer(query, "EXECUTE FUNCTION %s(",
 						  tginfo->tgfname);
 
 		tgargs = (char *) PQunescapeBytea((unsigned char *) tginfo->tgargs,
@@ -17200,7 +17200,7 @@ dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo)
 		appendPQExpBufferChar(query, ')');
 	}
 
-	appendPQExpBufferStr(query, "\n   EXECUTE PROCEDURE ");
+	appendPQExpBufferStr(query, "\n   EXECUTE FUNCTION ");
 	appendPQExpBufferStr(query, evtinfo->evtfname);
 	appendPQExpBufferStr(query, "();\n");
 

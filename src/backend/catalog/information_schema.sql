@@ -2094,12 +2094,12 @@ CREATE VIEW triggers AS
              AS cardinal_number) AS action_order,
            CAST(
              CASE WHEN pg_has_role(c.relowner, 'USAGE')
-               THEN (regexp_match(pg_get_triggerdef(t.oid), E'.{35,} WHEN \\((.+)\\) EXECUTE PROCEDURE'))[1]
+               THEN (regexp_match(pg_get_triggerdef(t.oid), E'.{35,} WHEN \\((.+)\\) EXECUTE FUNCTION'))[1]
                ELSE null END
              AS character_data) AS action_condition,
            CAST(
              substring(pg_get_triggerdef(t.oid) from
-                       position('EXECUTE PROCEDURE' in substring(pg_get_triggerdef(t.oid) from 48)) + 47)
+                       position('EXECUTE FUNCTION' in substring(pg_get_triggerdef(t.oid) from 48)) + 47)
              AS character_data) AS action_statement,
            CAST(
              -- hard-wired reference to TRIGGER_TYPE_ROW

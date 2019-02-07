@@ -417,21 +417,21 @@ SELECT * FROM main_table ORDER BY a, b;
 (8 rows)
 
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
-                                                             pg_get_triggerdef                                                              
---------------------------------------------------------------------------------------------------------------------------------------------
- CREATE TRIGGER modified_a BEFORE UPDATE OF a ON main_table FOR EACH ROW WHEN (old.a <> new.a) EXECUTE PROCEDURE trigger_func('modified_a')
+                                                             pg_get_triggerdef                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE TRIGGER modified_a BEFORE UPDATE OF a ON main_table FOR EACH ROW WHEN (old.a <> new.a) EXECUTE FUNCTION trigger_func('modified_a')
 (1 row)
 
 SELECT pg_get_triggerdef(oid, false) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
-                                                                  pg_get_triggerdef                                                                  
------------------------------------------------------------------------------------------------------------------------------------------------------
- CREATE TRIGGER modified_a BEFORE UPDATE OF a ON public.main_table FOR EACH ROW WHEN ((old.a <> new.a)) EXECUTE PROCEDURE trigger_func('modified_a')
+                                                                 pg_get_triggerdef                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE TRIGGER modified_a BEFORE UPDATE OF a ON public.main_table FOR EACH ROW WHEN ((old.a <> new.a)) EXECUTE FUNCTION trigger_func('modified_a')
 (1 row)
 
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_any';
-                                                                      pg_get_triggerdef                                                                       
---------------------------------------------------------------------------------------------------------------------------------------------------------------
- CREATE TRIGGER modified_any BEFORE UPDATE OF a ON main_table FOR EACH ROW WHEN (old.* IS DISTINCT FROM new.*) EXECUTE PROCEDURE trigger_func('modified_any')
+                                                                      pg_get_triggerdef                                                                      
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE TRIGGER modified_any BEFORE UPDATE OF a ON main_table FOR EACH ROW WHEN (old.* IS DISTINCT FROM new.*) EXECUTE FUNCTION trigger_func('modified_any')
 (1 row)
 
 -- Test RENAME TRIGGER
@@ -477,9 +477,9 @@ FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('before_upd_a_stmt');
 CREATE TRIGGER after_upd_b_stmt_trig AFTER UPDATE OF b ON main_table
 FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('after_upd_b_stmt');
 SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'after_upd_a_b_row_trig';
-                                                                pg_get_triggerdef                                                                 
---------------------------------------------------------------------------------------------------------------------------------------------------
- CREATE TRIGGER after_upd_a_b_row_trig AFTER UPDATE OF a, b ON public.main_table FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_a_b_row')
+                                                                pg_get_triggerdef                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE TRIGGER after_upd_a_b_row_trig AFTER UPDATE OF a, b ON public.main_table FOR EACH ROW EXECUTE FUNCTION trigger_func('after_upd_a_b_row')
 (1 row)
 
 UPDATE main_table SET a = 50;
@@ -1107,15 +1107,15 @@ DELETE 1
  a      | integer |           |          | 
  b      | integer |           |          | 
 Triggers:
-    after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_del_stmt')
-    after_ins_stmt_trig AFTER INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_ins_stmt')
-    after_upd_stmt_trig AFTER UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_upd_stmt')
-    before_del_stmt_trig BEFORE DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_del_stmt')
-    before_ins_stmt_trig BEFORE INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_ins_stmt')
-    before_upd_stmt_trig BEFORE UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_upd_stmt')
-    instead_of_delete_trig INSTEAD OF DELETE ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_del')
-    instead_of_insert_trig INSTEAD OF INSERT ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_ins')
-    instead_of_update_trig INSTEAD OF UPDATE ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_upd')
+    after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('after_view_del_stmt')
+    after_ins_stmt_trig AFTER INSERT ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('after_view_ins_stmt')
+    after_upd_stmt_trig AFTER UPDATE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('after_view_upd_stmt')
+    before_del_stmt_trig BEFORE DELETE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('before_view_del_stmt')
+    before_ins_stmt_trig BEFORE INSERT ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('before_view_ins_stmt')
+    before_upd_stmt_trig BEFORE UPDATE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('before_view_upd_stmt')
+    instead_of_delete_trig INSTEAD OF DELETE ON main_view FOR EACH ROW EXECUTE FUNCTION view_trigger('instead_of_del')
+    instead_of_insert_trig INSTEAD OF INSERT ON main_view FOR EACH ROW EXECUTE FUNCTION view_trigger('instead_of_ins')
+    instead_of_update_trig INSTEAD OF UPDATE ON main_view FOR EACH ROW EXECUTE FUNCTION view_trigger('instead_of_upd')
 
 -- Test dropping view triggers
 DROP TRIGGER instead_of_insert_trig ON main_view;
@@ -1131,13 +1131,13 @@ View definition:
     main_table.b
    FROM main_table;
 Triggers:
-    after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_del_stmt')
-    after_ins_stmt_trig AFTER INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_ins_stmt')
-    after_upd_stmt_trig AFTER UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_upd_stmt')
-    before_del_stmt_trig BEFORE DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_del_stmt')
-    before_ins_stmt_trig BEFORE INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_ins_stmt')
-    before_upd_stmt_trig BEFORE UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_upd_stmt')
-    instead_of_update_trig INSTEAD OF UPDATE ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_upd')
+    after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('after_view_del_stmt')
+    after_ins_stmt_trig AFTER INSERT ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('after_view_ins_stmt')
+    after_upd_stmt_trig AFTER UPDATE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('after_view_upd_stmt')
+    before_del_stmt_trig BEFORE DELETE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('before_view_del_stmt')
+    before_ins_stmt_trig BEFORE INSERT ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('before_view_ins_stmt')
+    before_upd_stmt_trig BEFORE UPDATE ON main_view FOR EACH STATEMENT EXECUTE FUNCTION view_trigger('before_view_upd_stmt')
+    instead_of_update_trig INSTEAD OF UPDATE ON main_view FOR EACH ROW EXECUTE FUNCTION view_trigger('instead_of_upd')
 
 DROP VIEW main_view;
 --
