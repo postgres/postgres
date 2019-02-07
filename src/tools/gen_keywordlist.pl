@@ -31,6 +31,10 @@
 use strict;
 use warnings;
 use Getopt::Long;
+
+use FindBin;
+use lib $FindBin::RealBin;
+
 use PerfectHash;
 
 my $output_path = '';
