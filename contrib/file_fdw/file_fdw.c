@@ -521,6 +521,10 @@ fileGetForeignPaths(PlannerInfo *root,
 	 * Create a ForeignPath node and add it as only possible path.  We use the
 	 * fdw_private list of the path to carry the convert_selectively option;
 	 * it will be propagated into the fdw_private list of the Plan node.
+	 *
+	 * We don't support pushing join clauses into the quals of this path, but
+	 * it could still have required parameterization due to LATERAL refs in
+	 * its tlist.
 	 */
 	add_path(baserel, (Path *)
 			 create_foreignscan_path(root, baserel,
@@ -529,7 +533,7 @@ fileGetForeignPaths(PlannerInfo *root,
 									 startup_cost,
 									 total_cost,
 									 NIL,		/* no pathkeys */
-									 NULL,		/* no outer rel either */
+									 baserel->lateral_relids,
 									 NULL,		/* no extra plan */
 									 coptions));
 

@@ -893,6 +893,9 @@ postgresGetForeignPaths(PlannerInfo *root,
 	 * baserestrict conditions we were able to send to remote, there might
 	 * actually be an indexscan happening there).  We already did all the work
 	 * to estimate cost and size of this path.
+	 *
+	 * Although this path uses no join clauses, it could still have required
+	 * parameterization due to LATERAL refs in its tlist.
 	 */
 	path = create_foreignscan_path(root, baserel,
 								   NULL,		/* default pathtarget */
@@ -900,7 +903,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 								   fpinfo->startup_cost,
 								   fpinfo->total_cost,
 								   NIL, /* no pathkeys */
-								   NULL,		/* no outer rel either */
+								   baserel->lateral_relids,
 								   NULL,		/* no extra plan */
 								   NIL);		/* no fdw_private list */
 	add_path(baserel, (Path *) path);
@@ -4243,7 +4246,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 										 startup_cost,
 										 total_cost,
 										 useful_pathkeys,
-										 NULL,
+										 rel->lateral_relids,
 										 sorted_epq_path,
 										 NIL));
 	}
@@ -4274,6 +4277,13 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	 * Skip if this join combination has been considered already.
 	 */
 	if (joinrel->fdw_private)
+		return;
+
+	/*
+	 * This code does not work for joins with lateral references, since those
+	 * must have parameterized paths, which we don't generate yet.
+	 */
+	if (!bms_is_empty(joinrel->lateral_relids))
 		return;
 
 	/*
@@ -4367,7 +4377,7 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 									   startup_cost,
 									   total_cost,
 									   NIL,		/* no pathkeys */
-									   NULL,	/* no required_outer */
+									   joinrel->lateral_relids,
 									   epq_path,
 									   NULL);	/* no fdw_private */
 
