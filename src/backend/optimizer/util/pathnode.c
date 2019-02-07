@@ -2069,6 +2069,27 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 {
 	ForeignPath *pathnode = makeNode(ForeignPath);
 
+	/*
+	 * Since the path's required_outer should always include all the rel's
+	 * lateral_relids, forcibly add those if necessary.  This is a bit of a
+	 * hack, but up till early 2019 the contrib FDWs failed to ensure that,
+	 * and it's likely that the same error has propagated into many external
+	 * FDWs.  Don't risk modifying the passed-in relid set here.
+	 */
+	if (rel->lateral_relids && !bms_is_subset(rel->lateral_relids,
+											  required_outer))
+		required_outer = bms_union(required_outer, rel->lateral_relids);
+
+	/*
+	 * Although this function is only designed to be used for scans of
+	 * baserels, before v12 postgres_fdw abused it to make paths for join and
+	 * upper rels.  It will work for such cases as long as required_outer is
+	 * empty (otherwise get_baserel_parampathinfo does the wrong thing), which
+	 * fortunately is the expected case for now.
+	 */
+	if (!bms_is_empty(required_outer) && !IS_SIMPLE_REL(rel))
+		elog(ERROR, "parameterized foreign joins are not supported yet");
+
 	pathnode->path.pathtype = T_ForeignScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = target ? target : rel->reltarget;
