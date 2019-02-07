@@ -3,6 +3,9 @@ use warnings;
 use TestLib;
 use Test::More tests => 1;
 
+use FindBin;
+use lib $FindBin::RealBin;
+
 use RewindTest;
 
 # Test that running pg_rewind if the two clusters are on the same

@@ -17,6 +17,9 @@ else
 	plan tests => 4;
 }
 
+use FindBin;
+use lib $FindBin::RealBin;
+
 use RewindTest;
 
 sub run_test

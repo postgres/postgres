@@ -3,8 +3,13 @@ use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More tests => 40;
-use ServerSetup;
+
 use File::Copy;
+
+use FindBin;
+use lib $FindBin::RealBin;
+
+use SSLServer;
 
 #### Some configuration
 
