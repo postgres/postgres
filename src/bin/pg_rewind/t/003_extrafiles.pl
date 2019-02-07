@@ -7,6 +7,9 @@ use Test::More tests => 4;
 
 use File::Find;
 
+use FindBin;
+use lib $FindBin::RealBin;
+
 use RewindTest;
 
 

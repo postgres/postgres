@@ -24,7 +24,7 @@
 # explicitly because an invalid sslcert or sslrootcert, respectively,
 # causes those to be ignored.)
 
-package ServerSetup;
+package SSLServer;
 
 use strict;
 use warnings;

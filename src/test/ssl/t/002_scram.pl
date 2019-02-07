@@ -5,8 +5,13 @@ use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More;
-use ServerSetup;
+
 use File::Copy;
+
+use FindBin;
+use lib $FindBin::RealBin;
+
+use SSLServer;
 
 if ($ENV{with_openssl} ne 'yes')
 {

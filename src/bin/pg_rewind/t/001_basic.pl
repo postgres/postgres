@@ -3,6 +3,9 @@ use warnings;
 use TestLib;
 use Test::More tests => 10;
 
+use FindBin;
+use lib $FindBin::RealBin;
+
 use RewindTest;
 
 sub run_test
