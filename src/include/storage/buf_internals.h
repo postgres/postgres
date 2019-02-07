@@ -189,6 +189,8 @@ typedef struct BufferDesc
 	int id_of_next;
 	int id_of_prev;
 
+	bool beforeMid;
+
 	LWLock		content_lock;	/* to lock access to buffer contents */
 } BufferDesc;
 
@@ -238,6 +240,11 @@ extern PGDLLIMPORT LWLockMinimallyPadded *BufferIOLWLockArray;
  */
 #define FREENEXT_END_OF_LIST	(-1)
 #define FREENEXT_NOT_IN_LIST	(-2)
+
+/*
+ * The id_of_next/id_of_prev is either the index of the next freelist entry or:
+ */
+#define NO_LOGICAL_NEIGHBOUR (-1)
 
 /*
  * Functions for acquiring/releasing a shared buffer header's spinlock.  Do
