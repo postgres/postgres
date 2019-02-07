@@ -481,7 +481,9 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 			/* Unconditionally remove buffer from freelist */
 			StrategyControl->firstFreeBuffer = buf->freeNext;
 			buf->freeNext = FREENEXT_NOT_IN_LIST;
-
+		
+			StrategyControl->lastBufferLogical = buf->buf_id;
+		
 			/*
 			 * Release the lock so someone else can access the freelist while
 			 * we check out this buffer.
@@ -503,16 +505,8 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 					AddBufferToRing(strategy, buf);
 				*buf_state = local_buf_state;
 
-				/*if (StrategyControl->firstFreeBuffer >= 0) {
-					StrategyControl->separatingBufferLogical = StrategyControl->firstFreeBuffer / 8 * 5;
-				}
-				else
-				{
-					StrategyControl->separatingBufferLogical = NBuffers / 8 * 5;	
-				}*/
-
 				//RemoveBufferOnStart(buf);
-				StrategyControl->lastBufferLogical = buf->buf_id;
+				
 				return buf;
 			}
 			UnlockBufHdr(buf, local_buf_state);
@@ -522,9 +516,13 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 
 	/* Nothing on the freelist, so run the "clock sweep" algorithm */
 	trycounter = NBuffers;
-	victimCandidate = GetBufferDescriptor(StrategyControl->lastBufferLogical)->id_of_prev;
+	victimCandidate = StrategyControl->lastBufferLogical;
 	for (;;)
 	{
+		/*for (int i = victimCandidate; i >= 0; i = GetBufferDescriptor(i)->id_of_next) {
+			printf("%i\n", i);
+		}
+		printf("\n");*/
 		buf = GetBufferDescriptor(victimCandidate);
 
 		/*
