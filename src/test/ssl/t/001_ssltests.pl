@@ -3,7 +3,7 @@ use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More tests => 40;
-use ServerSetup;
+
 use File::Copy;
 
 # Like TestLib.pm, we use IPC::Run
@@ -19,6 +19,10 @@ BEGIN
 	  }
 }
 
+use FindBin;
+use lib $FindBin::RealBin;
+
+use SSLServer;
 #### Some configuration
 
 # This is the hostname used to connect to the server. This cannot be a
