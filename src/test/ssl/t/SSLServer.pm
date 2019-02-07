@@ -14,7 +14,7 @@
 # The server is configured to only accept connections from localhost. If you
 # want to run the client from another host, you'll have to configure that
 # manually.
-package ServerSetup;
+package SSLServer;
 
 use strict;
 use warnings;
