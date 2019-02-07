@@ -3859,19 +3859,19 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
       <para>
        When an <command>UPDATE</command> causes a row to move from one
        partition to another, there is a chance that another concurrent
-       <command>UPDATE</command> or <command>DELETE</command> misses this row.
-       Suppose session 1 is performing an <command>UPDATE</command> on a
-       partition key, and meanwhile a concurrent session 2 for which this row
-       is visible performs an <command>UPDATE</command> or
-       <command>DELETE</command> operation on this row. Session 2 can silently
-       miss the row if the row is deleted from the partition due to session
-       1's activity.  In such case, session 2's
-       <command>UPDATE</command> or <command>DELETE</command>, being unaware of
-       the row movement thinks that the row has just been deleted and concludes
-       that there is nothing to be done for this row. In the usual case where
-       the table is not partitioned, or where there is no row movement,
-       session 2 would have identified the newly updated row and carried out
-       the <command>UPDATE</command>/<command>DELETE</command> on this new row
+       <command>UPDATE</command> or <command>DELETE</command> will get a
+       serialization failure error.  Suppose session 1 is performing an
+       <command>UPDATE</command> on a partition key, and meanwhile a concurrent
+       session 2 for which this row is visible performs an
+       <command>UPDATE</command> or <command>DELETE</command> operation on this
+       row.  In such case, session 2's <command>UPDATE</command> or
+       <command>DELETE</command>, will detect the row movement and raise a
+       serialization failure error (which always returns with an SQLSTATE code
+       '40001').  Applications may wish to retry the transaction if this
+       occurs.  In the usual case where the table is not partitioned, or where
+       there is no row movement, session 2 would have identified the newly
+       updated row and carried out the
+       <command>UPDATE</command>/<command>DELETE</command> on this new row
        version.
       </para>
      </listitem>
