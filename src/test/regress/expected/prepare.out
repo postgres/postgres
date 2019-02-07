@@ -145,6 +145,13 @@ SELECT * FROM q5_prep_results;
     9961 |    2058 |   1 |    1 |   1 |      1 |      61 |      961 |        1961 |      4961 |     9961 | 122 |  123 | DTAAAA   | EBDAAA   | OOOOxx
 (16 rows)
 
+CREATE TEMPORARY TABLE q5_prep_nodata AS EXECUTE q5(200, 'DTAAAA')
+    WITH NO DATA;
+SELECT * FROM q5_prep_nodata;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+(0 rows)
+
 -- unknown or unspecified parameter types: should succeed
 PREPARE q6 AS
     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;
