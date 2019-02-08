@@ -1294,9 +1294,9 @@ SELECT b, char_length(b) FROM test2;
     per byte, most significant nibble first.  The entire string is
     preceded by the sequence <literal>\x</literal> (to distinguish it
     from the escape format).  In some contexts, the initial backslash may
-    need to be escaped by doubling it, in the same cases in which backslashes
-    have to be doubled in escape format; details appear below.
-    The hexadecimal digits can
+    need to be escaped by doubling it
+    (see <xref linkend="sql-syntax-strings">).
+    For input, the hexadecimal digits can
     be either upper or lower case, and whitespace is permitted between
     digit pairs (but not within a digit pair nor in the starting
     <literal>\x</literal> sequence).
@@ -1338,9 +1338,7 @@ SELECT '\xDEADBEEF';
     values <emphasis>must</emphasis> be escaped, while all octet
     values <emphasis>can</emphasis> be escaped.  In
     general, to escape an octet, convert it into its three-digit
-    octal value and precede it
-    by a backslash (or two backslashes, if writing the value as a
-    literal using escape string syntax).
+    octal value and precede it by a backslash.
     Backslash itself (octet decimal value 92) can alternatively be represented by
     double backslashes.
     <xref linkend="datatype-binary-sqlesc">
@@ -1357,7 +1355,7 @@ SELECT '\xDEADBEEF';
        <entry>Description</entry>
        <entry>Escaped Input Representation</entry>
        <entry>Example</entry>
-       <entry>Output Representation</entry>
+       <entry>Hex Representation</entry>
       </row>
      </thead>
 
@@ -1381,7 +1379,7 @@ SELECT '\xDEADBEEF';
       <row>
        <entry>92</entry>
        <entry>backslash</entry>
-       <entry><literal>'\'</literal> or <literal>'\\134'</literal></entry>
+       <entry><literal>'\\'</literal> or <literal>'\134'</literal></entry>
        <entry><literal>SELECT '\\'::bytea;</literal></entry>
        <entry><literal>\x5c</literal></entry>
       </row>
@@ -1401,39 +1399,35 @@ SELECT '\xDEADBEEF';
    <para>
     The requirement to escape <emphasis>non-printable</emphasis> octets
     varies depending on locale settings. In some instances you can get away
-    with leaving them unescaped. Note that the result in each of the examples
-    in <xref linkend="datatype-binary-sqlesc"> was exactly one octet in
-    length, even though the output representation is sometimes
-    more than one character.
+    with leaving them unescaped.
    </para>
 
    <para>
-    The reason multiple backslashes are required, as shown
-    in <xref linkend="datatype-binary-sqlesc">, is that an input
-    string written as a string literal must pass through two parse
-    phases in the <productname>PostgreSQL</productname> server.
-    The first backslash of each pair is interpreted as an escape
-    character by the string-literal parser (assuming escape string
-    syntax is used) and is therefore consumed, leaving the second backslash of the
-    pair.  (Dollar-quoted strings can be used to avoid this level
-    of escaping.)  The remaining backslash is then recognized by the
-    <type>bytea</type> input function as starting either a three
-    digit octal value or escaping another backslash.  For example,
-    a string literal passed to the server as <literal>'\001'</literal>
-    becomes <literal>\001</literal> after passing through the
-    escape string parser. The <literal>\001</literal> is then sent
-    to the <type>bytea</type> input function, where it is converted
-    to a single octet with a decimal value of 1.  Note that the
-    single-quote character is not treated specially by <type>bytea</type>,
-    so it follows the normal rules for string literals.  (See also
-    <xref linkend="sql-syntax-strings">.)
+    The reason that single quotes must be doubled, as shown
+    in <xref linkend="datatype-binary-sqlesc">, is that this
+    is true for any string literal in a SQL command.  The generic
+    string-literal parser consumes the outermost single quotes
+    and reduces any pair of single quotes to one data character.
+    What the <type>bytea</type> input function sees is just one
+    single quote, which it treats as a plain data character.
+    However, the <type>bytea</type> input function treats
+    backslashes as special, and the other behaviors shown in
+    <xref linkend="datatype-binary-sqlesc"> are implemented by
+    that function.
+   </para>
+
+   <para>
+    In some contexts, backslashes must be doubled compared to what is
+    shown above, because the generic string-literal parser will also
+    reduce pairs of backslashes to one data character;
+    see <xref linkend="sql-syntax-strings">.
    </para>
 
    <para>
     <type>Bytea</type> octets are output in <literal>hex</literal>
     format by default.  If you change <xref linkend="guc-bytea-output">
     to <literal>escape</literal>,
-    <quote>non-printable</quote> octet are converted to
+    <quote>non-printable</quote> octets are converted to their
     equivalent three-digit octal value and preceded by one backslash.
     Most <quote>printable</quote> octets are output by their standard
     representation in the client character set, e.g.:
