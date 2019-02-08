@@ -67,7 +67,8 @@ static bool SSL_initialized = false;
 static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
 
-static int ssl_protocol_version_to_openssl(int v, const char *guc_name);
+static int ssl_protocol_version_to_openssl(int v, const char *guc_name,
+										   int loglevel);
 #ifndef SSL_CTX_set_min_proto_version
 static int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
 static int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
@@ -190,13 +191,24 @@ be_tls_init(bool isServerStart)
 	}
 
 	if (ssl_min_protocol_version)
-		SSL_CTX_set_min_proto_version(context,
-									  ssl_protocol_version_to_openssl(ssl_min_protocol_version,
-																	  "ssl_min_protocol_version"));
+	{
+		int ssl_ver = ssl_protocol_version_to_openssl(ssl_min_protocol_version,
+													  "ssl_min_protocol_version",
+													  isServerStart ? FATAL : LOG);
+		if (ssl_ver == -1)
+			goto error;
+		SSL_CTX_set_min_proto_version(context, ssl_ver);
+	}
+
 	if (ssl_max_protocol_version)
-		SSL_CTX_set_max_proto_version(context,
-									  ssl_protocol_version_to_openssl(ssl_max_protocol_version,
-																	  "ssl_max_protocol_version"));
+	{
+		int ssl_ver = ssl_protocol_version_to_openssl(ssl_max_protocol_version,
+													  "ssl_max_protocol_version",
+													  isServerStart ? FATAL : LOG);
+		if (ssl_ver == -1)
+			goto error;
+		SSL_CTX_set_max_proto_version(context, ssl_ver);
+	}
 
 	/* disallow SSL session tickets */
 #ifdef SSL_OP_NO_TICKET			/* added in OpenSSL 0.9.8f */
@@ -1258,11 +1270,12 @@ X509_NAME_to_cstring(X509_NAME *name)
  * guc.c independent of OpenSSL availability and version.
  *
  * If a version is passed that is not supported by the current OpenSSL
- * version, then we throw an error, so that subsequent code can assume it's
- * working with a supported version.
+ * version, then we log with the given loglevel and return (if we return) -1.
+ * If a nonnegative value is returned, subsequent code can assume it's working
+ * with a supported version.
  */
 static int
-ssl_protocol_version_to_openssl(int v, const char *guc_name)
+ssl_protocol_version_to_openssl(int v, const char *guc_name, int loglevel)
 {
 	switch (v)
 	{
@@ -1292,7 +1305,7 @@ ssl_protocol_version_to_openssl(int v, const char *guc_name)
 
 error:
 	pg_attribute_unused();
-	ereport(ERROR,
+	ereport(loglevel,
 			(errmsg("%s setting %s not supported by this build",
 					guc_name,
 					GetConfigOption(guc_name, false, false))));
