@@ -700,8 +700,10 @@ sub start
 	my $name   = $self->name;
 	BAIL_OUT("node \"$name\" is already running") if defined $self->{_pid};
 	print("### Starting node \"$name\"\n");
+	# Note: We set the cluster_name here, not in postgresql.conf (in
+	# sub init) so that it does not get copied to standbys.
 	my $ret = TestLib::system_log('pg_ctl', '-D', $self->data_dir, '-l',
-		$self->logfile, 'start');
+		$self->logfile, '-o', "--cluster-name=$name", 'start');
 
 	if ($ret != 0)
 	{
