@@ -1636,7 +1636,10 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 		appendStringInfo(errorBuf, "line %d: ", error->line);
 	if (name != NULL)
 		appendStringInfo(errorBuf, "element %s: ", name);
-	appendStringInfoString(errorBuf, error->message);
+	if (error->message != NULL)
+		appendStringInfoString(errorBuf, error->message);
+	else
+		appendStringInfoString(errorBuf, "(no message provided)");
 
 	/*
 	 * Append context information to errorBuf.
