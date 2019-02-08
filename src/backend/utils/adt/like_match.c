@@ -76,7 +76,7 @@
 #endif
 
 static int
-MatchText(char *t, int tlen, char *p, int plen,
+MatchText(const char *t, int tlen, const char *p, int plen,
 		  pg_locale_t locale, bool locale_is_c)
 {
 	/* Fast path for match-everything pattern */

@@ -31,21 +31,21 @@
 #define LIKE_ABORT						(-1)
 
 
-static int SB_MatchText(char *t, int tlen, char *p, int plen,
+static int SB_MatchText(const char *t, int tlen, const char *p, int plen,
 			 pg_locale_t locale, bool locale_is_c);
 static text *SB_do_like_escape(text *, text *);
 
-static int MB_MatchText(char *t, int tlen, char *p, int plen,
+static int MB_MatchText(const char *t, int tlen, const char *p, int plen,
 			 pg_locale_t locale, bool locale_is_c);
 static text *MB_do_like_escape(text *, text *);
 
-static int UTF8_MatchText(char *t, int tlen, char *p, int plen,
+static int UTF8_MatchText(const char *t, int tlen, const char *p, int plen,
 			   pg_locale_t locale, bool locale_is_c);
 
-static int SB_IMatchText(char *t, int tlen, char *p, int plen,
+static int SB_IMatchText(const char *t, int tlen, const char *p, int plen,
 			  pg_locale_t locale, bool locale_is_c);
 
-static int	GenericMatchText(char *s, int slen, char *p, int plen);
+static int	GenericMatchText(const char *s, int slen, const char *p, int plen);
 static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
 
 /*--------------------
@@ -54,7 +54,7 @@ static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
  *--------------------
  */
 static inline int
-wchareq(char *p1, char *p2)
+wchareq(const char *p1, const char *p2)
 {
 	int			p1_len;
 
@@ -148,7 +148,7 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 
 /* Generic for all cases not requiring inline case-folding */
 static inline int
-GenericMatchText(char *s, int slen, char *p, int plen)
+GenericMatchText(const char *s, int slen, const char *p, int plen)
 {
 	if (pg_database_encoding_max_length() == 1)
 		return SB_MatchText(s, slen, p, plen, 0, true);
