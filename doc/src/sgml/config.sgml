@@ -3659,7 +3659,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <varname>application_name</varname> setting of the standby, as set in the
         standby's connection information.  In case of a physical replication
         standby, this should be set in the <varname>primary_conninfo</varname>
-        setting; the default is <literal>walreceiver</literal>.
+        setting; the default is the setting of <xref linkend="guc-cluster-name"/>
+        if set, else <literal>walreceiver</literal>.
         For logical replication, this can be set in the connection
         information of the subscription, and it defaults to the
         subscription name.  For other replication stream consumers,
@@ -6560,8 +6561,15 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Sets the cluster name that appears in the process title for all
-        server processes in this cluster. The name can be any string of less
+        Sets a name that identifies this database cluster (instance) for
+        various purposes.  The cluster name appears in the process title for
+        all server processes in this cluster.  Moreover, it is the default
+        application name for a standby connection (see <xref
+        linkend="guc-synchronous-standby-names"/>.)
+       </para>
+
+       <para>
+        The name can be any string of less
         than <symbol>NAMEDATALEN</symbol> characters (64 characters in a standard
         build). Only printable ASCII characters may be used in the
         <varname>cluster_name</varname> value. Other characters will be
