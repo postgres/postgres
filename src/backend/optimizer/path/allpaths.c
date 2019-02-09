@@ -480,8 +480,19 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
+	 * Allow a plugin to editorialize on the set of Paths for this base
+	 * relation.  It could add new paths (such as CustomPaths) by calling
+	 * add_path(), or add_partial_path() if parallel aware.  It could also
+	 * delete or modify paths added by the core code.
+	 */
+	if (set_rel_pathlist_hook)
+		(*set_rel_pathlist_hook) (root, rel, rti, rte);
+
+	/*
 	 * If this is a baserel, we should normally consider gathering any partial
-	 * paths we may have created for it.
+	 * paths we may have created for it.  We have to do this after calling the
+	 * set_rel_pathlist_hook, else it cannot add partial paths to be included
+	 * here.
 	 *
 	 * However, if this is an inheritance child, skip it.  Otherwise, we could
 	 * end up with a very large number of gather nodes, each trying to grab
@@ -489,20 +500,12 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * paths for the parent appendrel.
 	 *
 	 * Also, if this is the topmost scan/join rel (that is, the only baserel),
-	 * we postpone this until the final scan/join targelist is available (see
-	 * grouping_planner).
+	 * we postpone gathering until the final scan/join targetlist is available
+	 * (see grouping_planner).
 	 */
 	if (rel->reloptkind == RELOPT_BASEREL &&
 		bms_membership(root->all_baserels) != BMS_SINGLETON)
 		generate_gather_paths(root, rel, false);
-
-	/*
-	 * Allow a plugin to editorialize on the set of Paths for this base
-	 * relation.  It could add new paths (such as CustomPaths) by calling
-	 * add_path(), or delete or modify paths added by the core code.
-	 */
-	if (set_rel_pathlist_hook)
-		(*set_rel_pathlist_hook) (root, rel, rti, rte);
 
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(rel);
