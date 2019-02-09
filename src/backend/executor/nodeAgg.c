@@ -1245,7 +1245,7 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 }
 
 /*
- * Initialize the hash table(s) to empty.
+ * (Re-)initialize the hash table(s) to empty.
  *
  * To implement hashed aggregation, we need a hashtable that stores a
  * representative tuple and an array of AggStatePerGroup structs for each
@@ -1256,9 +1256,9 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
  * We have a separate hashtable and associated perhash data structure for each
  * grouping set for which we're doing hashing.
  *
- * The hash tables always live in the hashcontext's per-tuple memory context
- * (there is only one of these for all tables together, since they are all
- * reset at the same time).
+ * The contents of the hash tables always live in the hashcontext's per-tuple
+ * memory context (there is only one of these for all tables together, since
+ * they are all reset at the same time).
  */
 static void
 build_hash_table(AggState *aggstate)
@@ -1277,17 +1277,21 @@ build_hash_table(AggState *aggstate)
 
 		Assert(perhash->aggnode->numGroups > 0);
 
-		perhash->hashtable = BuildTupleHashTable(&aggstate->ss.ps,
-												 perhash->hashslot->tts_tupleDescriptor,
-												 perhash->numCols,
-												 perhash->hashGrpColIdxHash,
-												 perhash->eqfuncoids,
-												 perhash->hashfunctions,
-												 perhash->aggnode->numGroups,
-												 additionalsize,
-												 aggstate->hashcontext->ecxt_per_tuple_memory,
-												 tmpmem,
-												 DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
+		if (perhash->hashtable)
+			ResetTupleHashTable(perhash->hashtable);
+		else
+			perhash->hashtable = BuildTupleHashTableExt(&aggstate->ss.ps,
+														perhash->hashslot->tts_tupleDescriptor,
+														perhash->numCols,
+														perhash->hashGrpColIdxHash,
+														perhash->eqfuncoids,
+														perhash->hashfunctions,
+														perhash->aggnode->numGroups,
+														additionalsize,
+														aggstate->ss.ps.state->es_query_cxt,
+														aggstate->hashcontext->ecxt_per_tuple_memory,
+														tmpmem,
+														DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
 	}
 }
 

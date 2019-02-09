@@ -481,8 +481,8 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	Assert(subplan->subLinkType == ANY_SUBLINK);
 
 	/*
-	 * If we already had any hash tables, destroy 'em; then create empty hash
-	 * table(s).
+	 * If we already had any hash tables, reset 'em; otherwise create empty
+	 * hash table(s).
 	 *
 	 * If we need to distinguish accurately between FALSE and UNKNOWN (i.e.,
 	 * NULL) results of the IN operation, then we have to store subplan output
@@ -505,17 +505,21 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	if (nbuckets < 1)
 		nbuckets = 1;
 
-	node->hashtable = BuildTupleHashTable(node->parent,
-										  node->descRight,
-										  ncols,
-										  node->keyColIdx,
-										  node->tab_eq_funcoids,
-										  node->tab_hash_funcs,
-										  nbuckets,
-										  0,
-										  node->hashtablecxt,
-										  node->hashtempcxt,
-										  false);
+	if (node->hashtable)
+		ResetTupleHashTable(node->hashtable);
+	else
+		node->hashtable = BuildTupleHashTableExt(node->parent,
+												 node->descRight,
+												 ncols,
+												 node->keyColIdx,
+												 node->tab_eq_funcoids,
+												 node->tab_hash_funcs,
+												 nbuckets,
+												 0,
+												 node->planstate->state->es_query_cxt,
+												 node->hashtablecxt,
+												 node->hashtempcxt,
+												 false);
 
 	if (!subplan->unknownEqFalse)
 	{
@@ -527,17 +531,22 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 			if (nbuckets < 1)
 				nbuckets = 1;
 		}
-		node->hashnulls = BuildTupleHashTable(node->parent,
-											  node->descRight,
-											  ncols,
-											  node->keyColIdx,
-											  node->tab_eq_funcoids,
-											  node->tab_hash_funcs,
-											  nbuckets,
-											  0,
-											  node->hashtablecxt,
-											  node->hashtempcxt,
-											  false);
+
+		if (node->hashnulls)
+			ResetTupleHashTable(node->hashtable);
+		else
+			node->hashnulls = BuildTupleHashTableExt(node->parent,
+													 node->descRight,
+													 ncols,
+													 node->keyColIdx,
+													 node->tab_eq_funcoids,
+													 node->tab_hash_funcs,
+													 nbuckets,
+													 0,
+													 node->planstate->state->es_query_cxt,
+													 node->hashtablecxt,
+													 node->hashtempcxt,
+													 false);
 	}
 
 	/*

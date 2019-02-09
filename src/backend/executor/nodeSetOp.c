@@ -126,17 +126,18 @@ build_hash_table(SetOpState *setopstate)
 	Assert(node->strategy == SETOP_HASHED);
 	Assert(node->numGroups > 0);
 
-	setopstate->hashtable = BuildTupleHashTable(&setopstate->ps,
-												desc,
-												node->numCols,
-												node->dupColIdx,
-												setopstate->eqfuncoids,
-												setopstate->hashfunctions,
-												node->numGroups,
-												0,
-												setopstate->tableContext,
-												econtext->ecxt_per_tuple_memory,
-												false);
+	setopstate->hashtable = BuildTupleHashTableExt(&setopstate->ps,
+												   desc,
+												   node->numCols,
+												   node->dupColIdx,
+												   setopstate->eqfuncoids,
+												   setopstate->hashfunctions,
+												   node->numGroups,
+												   0,
+												   setopstate->ps.state->es_query_cxt,
+												   setopstate->tableContext,
+												   econtext->ecxt_per_tuple_memory,
+												   false);
 }
 
 /*
@@ -634,7 +635,7 @@ ExecReScanSetOp(SetOpState *node)
 	/* And rebuild empty hashtable if needed */
 	if (((SetOp *) node->ps.plan)->strategy == SETOP_HASHED)
 	{
-		build_hash_table(node);
+		ResetTupleHashTable(node->hashtable);
 		node->table_filled = false;
 	}
 
