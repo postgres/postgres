@@ -762,6 +762,21 @@ clause_selectivity(PlannerInfo *root,
 		if (IsA(clause, DistinctExpr))
 			s1 = 1.0 - s1;
 	}
+	else if (is_funcclause(clause))
+	{
+		FuncExpr   *funcclause = (FuncExpr *) clause;
+
+		/* Try to get an estimate from the support function, if any */
+		s1 = function_selectivity(root,
+								  funcclause->funcid,
+								  funcclause->args,
+								  funcclause->inputcollid,
+								  treat_as_join_clause(clause, rinfo,
+													   varRelid, sjinfo),
+								  varRelid,
+								  jointype,
+								  sjinfo);
+	}
 	else if (IsA(clause, ScalarArrayOpExpr))
 	{
 		/* Use node specific selectivity calculation function */

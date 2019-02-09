@@ -55,6 +55,20 @@ extern Selectivity join_selectivity(PlannerInfo *root,
 				 JoinType jointype,
 				 SpecialJoinInfo *sjinfo);
 
+extern Selectivity function_selectivity(PlannerInfo *root,
+					 Oid funcid,
+					 List *args,
+					 Oid inputcollid,
+					 bool is_join,
+					 int varRelid,
+					 JoinType jointype,
+					 SpecialJoinInfo *sjinfo);
+
+extern void add_function_cost(PlannerInfo *root, Oid funcid, Node *node,
+				  QualCost *cost);
+
+extern double get_function_rows(PlannerInfo *root, Oid funcid, Node *node);
+
 extern bool has_row_triggers(PlannerInfo *root, Index rti, CmdType event);
 
 #endif							/* PLANCAT_H */

@@ -20,6 +20,9 @@
 #include "common/int.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
+#include "nodes/nodeFuncs.h"
+#include "nodes/supportnodes.h"
+#include "optimizer/optimizer.h"
 #include "utils/int8.h"
 #include "utils/builtins.h"
 
@@ -1372,4 +1375,74 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 	else
 		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * Planner support function for generate_series(int8, int8 [, int8])
+ */
+Datum
+generate_series_int8_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestRows))
+	{
+		/* Try to estimate the number of rows returned */
+		SupportRequestRows *req = (SupportRequestRows *) rawreq;
+
+		if (is_funcclause(req->node))	/* be paranoid */
+		{
+			List	   *args = ((FuncExpr *) req->node)->args;
+			Node	   *arg1,
+					   *arg2,
+					   *arg3;
+
+			/* We can use estimated argument values here */
+			arg1 = estimate_expression_value(req->root, linitial(args));
+			arg2 = estimate_expression_value(req->root, lsecond(args));
+			if (list_length(args) >= 3)
+				arg3 = estimate_expression_value(req->root, lthird(args));
+			else
+				arg3 = NULL;
+
+			/*
+			 * If any argument is constant NULL, we can safely assume that
+			 * zero rows are returned.  Otherwise, if they're all non-NULL
+			 * constants, we can calculate the number of rows that will be
+			 * returned.  Use double arithmetic to avoid overflow hazards.
+			 */
+			if ((IsA(arg1, Const) &&
+				 ((Const *) arg1)->constisnull) ||
+				(IsA(arg2, Const) &&
+				 ((Const *) arg2)->constisnull) ||
+				(arg3 != NULL && IsA(arg3, Const) &&
+				 ((Const *) arg3)->constisnull))
+			{
+				req->rows = 0;
+				ret = (Node *) req;
+			}
+			else if (IsA(arg1, Const) &&
+					 IsA(arg2, Const) &&
+					 (arg3 == NULL || IsA(arg3, Const)))
+			{
+				double		start,
+							finish,
+							step;
+
+				start = DatumGetInt64(((Const *) arg1)->constvalue);
+				finish = DatumGetInt64(((Const *) arg2)->constvalue);
+				step = arg3 ? DatumGetInt64(((Const *) arg3)->constvalue) : 1;
+
+				/* This equation works for either sign of step */
+				if (step != 0)
+				{
+					req->rows = floor((finish - start + step) / step);
+					ret = (Node *) req;
+				}
+			}
+		}
+	}
+
+	PG_RETURN_POINTER(ret);
 }

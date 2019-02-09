@@ -3439,4 +3439,25 @@ supportfn(internal) returns internal
     simplify.  Ensure rigorous equivalence between the simplified
     expression and an actual execution of the target function.
    </para>
+
+   <para>
+    For target functions that return boolean, it is often useful to estimate
+    the fraction of rows that will be selected by a WHERE clause using that
+    function.  This can be done by a support function that implements
+    the <literal>SupportRequestSelectivity</literal> request type.
+   </para>
+
+   <para>
+    If the target function's runtime is highly dependent on its inputs,
+    it may be useful to provide a non-constant cost estimate for it.
+    This can be done by a support function that implements
+    the <literal>SupportRequestCost</literal> request type.
+   </para>
+
+   <para>
+    For target functions that return sets, it is often useful to provide
+    a non-constant estimate for the number of rows that will be returned.
+    This can be done by a support function that implements
+    the <literal>SupportRequestRows</literal> request type.
+   </para>
   </sect1>

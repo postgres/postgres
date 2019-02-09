@@ -36,8 +36,8 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
-#include "optimizer/prep.h"
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
@@ -343,19 +343,24 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 		if (DO_AGGSPLIT_COMBINE(context->aggsplit))
 		{
 			/* charge for combining previously aggregated states */
-			costs->transCost.per_tuple += get_func_cost(aggcombinefn) * cpu_operator_cost;
+			add_function_cost(context->root, aggcombinefn, NULL,
+							  &costs->transCost);
 		}
 		else
-			costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
+			add_function_cost(context->root, aggtransfn, NULL,
+							  &costs->transCost);
 		if (DO_AGGSPLIT_DESERIALIZE(context->aggsplit) &&
 			OidIsValid(aggdeserialfn))
-			costs->transCost.per_tuple += get_func_cost(aggdeserialfn) * cpu_operator_cost;
+			add_function_cost(context->root, aggdeserialfn, NULL,
+							  &costs->transCost);
 		if (DO_AGGSPLIT_SERIALIZE(context->aggsplit) &&
 			OidIsValid(aggserialfn))
-			costs->finalCost += get_func_cost(aggserialfn) * cpu_operator_cost;
+			add_function_cost(context->root, aggserialfn, NULL,
+							  &costs->finalCost);
 		if (!DO_AGGSPLIT_SKIPFINAL(context->aggsplit) &&
 			OidIsValid(aggfinalfn))
-			costs->finalCost += get_func_cost(aggfinalfn) * cpu_operator_cost;
+			add_function_cost(context->root, aggfinalfn, NULL,
+							  &costs->finalCost);
 
 		/*
 		 * These costs are incurred only by the initial aggregate node, so we
@@ -392,8 +397,8 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 		{
 			cost_qual_eval_node(&argcosts, (Node *) aggref->aggdirectargs,
 								context->root);
-			costs->transCost.startup += argcosts.startup;
-			costs->finalCost += argcosts.per_tuple;
+			costs->finalCost.startup += argcosts.startup;
+			costs->finalCost.per_tuple += argcosts.per_tuple;
 		}
 
 		/*
@@ -561,7 +566,7 @@ find_window_functions_walker(Node *node, WindowFuncLists *lists)
  * Note: keep this in sync with expression_returns_set() in nodes/nodeFuncs.c.
  */
 double
-expression_returns_set_rows(Node *clause)
+expression_returns_set_rows(PlannerInfo *root, Node *clause)
 {
 	if (clause == NULL)
 		return 1.0;
@@ -570,7 +575,7 @@ expression_returns_set_rows(Node *clause)
 		FuncExpr   *expr = (FuncExpr *) clause;
 
 		if (expr->funcretset)
-			return clamp_row_est(get_func_rows(expr->funcid));
+			return clamp_row_est(get_function_rows(root, expr->funcid, clause));
 	}
 	if (IsA(clause, OpExpr))
 	{
@@ -579,7 +584,7 @@ expression_returns_set_rows(Node *clause)
 		if (expr->opretset)
 		{
 			set_opfuncid(expr);
-			return clamp_row_est(get_func_rows(expr->opfuncid));
+			return clamp_row_est(get_function_rows(root, expr->opfuncid, clause));
 		}
 	}
 	return 1.0;

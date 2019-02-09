@@ -29,10 +29,12 @@
 #include "catalog/heap.h"
 #include "catalog/partition.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_statistic_ext.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/supportnodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
@@ -1772,6 +1774,8 @@ restriction_selectivity(PlannerInfo *root,
  * Returns the selectivity of a specified join operator clause.
  * This code executes registered procedures stored in the
  * operator relation, by calling the function manager.
+ *
+ * See clause_selectivity() for the meaning of the additional parameters.
  */
 Selectivity
 join_selectivity(PlannerInfo *root,
@@ -1803,6 +1807,184 @@ join_selectivity(PlannerInfo *root,
 		elog(ERROR, "invalid join selectivity: %f", result);
 
 	return (Selectivity) result;
+}
+
+/*
+ * function_selectivity
+ *
+ * Returns the selectivity of a specified boolean function clause.
+ * This code executes registered procedures stored in the
+ * pg_proc relation, by calling the function manager.
+ *
+ * See clause_selectivity() for the meaning of the additional parameters.
+ */
+Selectivity
+function_selectivity(PlannerInfo *root,
+					 Oid funcid,
+					 List *args,
+					 Oid inputcollid,
+					 bool is_join,
+					 int varRelid,
+					 JoinType jointype,
+					 SpecialJoinInfo *sjinfo)
+{
+	RegProcedure prosupport = get_func_support(funcid);
+	SupportRequestSelectivity req;
+	SupportRequestSelectivity *sresult;
+
+	/*
+	 * If no support function is provided, use our historical default
+	 * estimate, 0.3333333.  This seems a pretty unprincipled choice, but
+	 * Postgres has been using that estimate for function calls since 1992.
+	 * The hoariness of this behavior suggests that we should not be in too
+	 * much hurry to use another value.
+	 */
+	if (!prosupport)
+		return (Selectivity) 0.3333333;
+
+	req.type = T_SupportRequestSelectivity;
+	req.root = root;
+	req.funcid = funcid;
+	req.args = args;
+	req.inputcollid = inputcollid;
+	req.is_join = is_join;
+	req.varRelid = varRelid;
+	req.jointype = jointype;
+	req.sjinfo = sjinfo;
+	req.selectivity = -1;		/* to catch failure to set the value */
+
+	sresult = (SupportRequestSelectivity *)
+		DatumGetPointer(OidFunctionCall1(prosupport,
+										 PointerGetDatum(&req)));
+
+	/* If support function fails, use default */
+	if (sresult != &req)
+		return (Selectivity) 0.3333333;
+
+	if (req.selectivity < 0.0 || req.selectivity > 1.0)
+		elog(ERROR, "invalid function selectivity: %f", req.selectivity);
+
+	return (Selectivity) req.selectivity;
+}
+
+/*
+ * add_function_cost
+ *
+ * Get an estimate of the execution cost of a function, and *add* it to
+ * the contents of *cost.  The estimate may include both one-time and
+ * per-tuple components, since QualCost does.
+ *
+ * The funcid must always be supplied.  If it is being called as the
+ * implementation of a specific parsetree node (FuncExpr, OpExpr,
+ * WindowFunc, etc), pass that as "node", else pass NULL.
+ *
+ * In some usages root might be NULL, too.
+ */
+void
+add_function_cost(PlannerInfo *root, Oid funcid, Node *node,
+				  QualCost *cost)
+{
+	HeapTuple	proctup;
+	Form_pg_proc procform;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+
+	if (OidIsValid(procform->prosupport))
+	{
+		SupportRequestCost req;
+		SupportRequestCost *sresult;
+
+		req.type = T_SupportRequestCost;
+		req.root = root;
+		req.funcid = funcid;
+		req.node = node;
+
+		/* Initialize cost fields so that support function doesn't have to */
+		req.startup = 0;
+		req.per_tuple = 0;
+
+		sresult = (SupportRequestCost *)
+			DatumGetPointer(OidFunctionCall1(procform->prosupport,
+											 PointerGetDatum(&req)));
+
+		if (sresult == &req)
+		{
+			/* Success, so accumulate support function's estimate into *cost */
+			cost->startup += req.startup;
+			cost->per_tuple += req.per_tuple;
+			ReleaseSysCache(proctup);
+			return;
+		}
+	}
+
+	/* No support function, or it failed, so rely on procost */
+	cost->per_tuple += procform->procost * cpu_operator_cost;
+
+	ReleaseSysCache(proctup);
+}
+
+/*
+ * get_function_rows
+ *
+ * Get an estimate of the number of rows returned by a set-returning function.
+ *
+ * The funcid must always be supplied.  In current usage, the calling node
+ * will always be supplied, and will be either a FuncExpr or OpExpr.
+ * But it's a good idea to not fail if it's NULL.
+ *
+ * In some usages root might be NULL, too.
+ *
+ * Note: this returns the unfiltered result of the support function, if any.
+ * It's usually a good idea to apply clamp_row_est() to the result, but we
+ * leave it to the caller to do so.
+ */
+double
+get_function_rows(PlannerInfo *root, Oid funcid, Node *node)
+{
+	HeapTuple	proctup;
+	Form_pg_proc procform;
+	double		result;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+
+	Assert(procform->proretset);	/* else caller error */
+
+	if (OidIsValid(procform->prosupport))
+	{
+		SupportRequestRows req;
+		SupportRequestRows *sresult;
+
+		req.type = T_SupportRequestRows;
+		req.root = root;
+		req.funcid = funcid;
+		req.node = node;
+
+		req.rows = 0;			/* just for sanity */
+
+		sresult = (SupportRequestRows *)
+			DatumGetPointer(OidFunctionCall1(procform->prosupport,
+											 PointerGetDatum(&req)));
+
+		if (sresult == &req)
+		{
+			/* Success */
+			ReleaseSysCache(proctup);
+			return req.rows;
+		}
+	}
+
+	/* No support function, or it failed, so rely on prorows */
+	result = procform->prorows;
+
+	ReleaseSysCache(proctup);
+
+	return result;
 }
 
 /*

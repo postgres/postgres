@@ -36,6 +36,7 @@
 #include "nodes/primnodes.h"
 
 struct PlannerInfo;				/* avoid including relation.h here */
+struct SpecialJoinInfo;
 
 
 /*
@@ -66,5 +67,104 @@ typedef struct SupportRequestSimplify
 	struct PlannerInfo *root;	/* Planner's infrastructure */
 	FuncExpr   *fcall;			/* Function call to be simplified */
 } SupportRequestSimplify;
+
+/*
+ * The Selectivity request allows the support function to provide a
+ * selectivity estimate for a function appearing at top level of a WHERE
+ * clause (so it applies only to functions returning boolean).
+ *
+ * The input arguments are the same as are supplied to operator restriction
+ * and join estimators, except that we unify those two APIs into just one
+ * request type.  See clause_selectivity() for the details.
+ *
+ * If an estimate can be made, store it into the "selectivity" field and
+ * return the address of the SupportRequestSelectivity node; the estimate
+ * must be between 0 and 1 inclusive.  Return NULL if no estimate can be
+ * made (in which case the planner will fall back to a default estimate,
+ * traditionally 1/3).
+ *
+ * If the target function is being used as the implementation of an operator,
+ * the support function will not be used for this purpose; the operator's
+ * restriction or join estimator is consulted instead.
+ */
+typedef struct SupportRequestSelectivity
+{
+	NodeTag		type;
+
+	/* Input fields: */
+	struct PlannerInfo *root;	/* Planner's infrastructure */
+	Oid			funcid;			/* function we are inquiring about */
+	List	   *args;			/* pre-simplified arguments to function */
+	Oid			inputcollid;	/* function's input collation */
+	bool		is_join;		/* is this a join or restriction case? */
+	int			varRelid;		/* if restriction, RTI of target relation */
+	JoinType	jointype;		/* if join, outer join type */
+	struct SpecialJoinInfo *sjinfo; /* if outer join, info about join */
+
+	/* Output fields: */
+	Selectivity selectivity;	/* returned selectivity estimate */
+} SupportRequestSelectivity;
+
+/*
+ * The Cost request allows the support function to provide an execution
+ * cost estimate for its target function.  The cost estimate can include
+ * both a one-time (query startup) component and a per-execution component.
+ * The estimate should *not* include the costs of evaluating the target
+ * function's arguments, only the target function itself.
+ *
+ * The "node" argument is normally the parse node that is invoking the
+ * target function.  This is a FuncExpr in the simplest case, but it could
+ * also be an OpExpr, DistinctExpr, NullIfExpr, or WindowFunc, or possibly
+ * other cases in future.  NULL is passed if the function cannot presume
+ * its arguments to be equivalent to what the calling node presents as
+ * arguments; that happens for, e.g., aggregate support functions and
+ * per-column comparison operators used by RowExprs.
+ *
+ * If an estimate can be made, store it into the cost fields and return the
+ * address of the SupportRequestCost node.  Return NULL if no estimate can be
+ * made, in which case the planner will rely on the target function's procost
+ * field.  (Note: while procost is automatically scaled by cpu_operator_cost,
+ * this is not the case for the outputs of the Cost request; the support
+ * function must scale its results appropriately on its own.)
+ */
+typedef struct SupportRequestCost
+{
+	NodeTag		type;
+
+	/* Input fields: */
+	struct PlannerInfo *root;	/* Planner's infrastructure (could be NULL) */
+	Oid			funcid;			/* function we are inquiring about */
+	Node	   *node;			/* parse node invoking function, or NULL */
+
+	/* Output fields: */
+	Cost		startup;		/* one-time cost */
+	Cost		per_tuple;		/* per-evaluation cost */
+} SupportRequestCost;
+
+/*
+ * The Rows request allows the support function to provide an output rowcount
+ * estimate for its target function (so it applies only to set-returning
+ * functions).
+ *
+ * The "node" argument is the parse node that is invoking the target function;
+ * currently this will always be a FuncExpr or OpExpr.
+ *
+ * If an estimate can be made, store it into the rows field and return the
+ * address of the SupportRequestRows node.  Return NULL if no estimate can be
+ * made, in which case the planner will rely on the target function's prorows
+ * field.
+ */
+typedef struct SupportRequestRows
+{
+	NodeTag		type;
+
+	/* Input fields: */
+	struct PlannerInfo *root;	/* Planner's infrastructure (could be NULL) */
+	Oid			funcid;			/* function we are inquiring about */
+	Node	   *node;			/* parse node invoking function */
+
+	/* Output fields: */
+	double		rows;			/* number of rows expected to be returned */
+} SupportRequestRows;
 
 #endif							/* SUPPORTNODES_H */

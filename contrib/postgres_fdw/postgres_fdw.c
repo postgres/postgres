@@ -2779,6 +2779,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			startup_cost = ofpinfo->rel_startup_cost;
 			startup_cost += aggcosts.transCost.startup;
 			startup_cost += aggcosts.transCost.per_tuple * input_rows;
+			startup_cost += aggcosts.finalCost.startup;
 			startup_cost += (cpu_operator_cost * numGroupCols) * input_rows;
 
 			/*-----
@@ -2788,7 +2789,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			 *-----
 			 */
 			run_cost = ofpinfo->rel_total_cost - ofpinfo->rel_startup_cost;
-			run_cost += aggcosts.finalCost * numGroups;
+			run_cost += aggcosts.finalCost.per_tuple * numGroups;
 			run_cost += cpu_tuple_cost * numGroups;
 
 			/* Account for the eval cost of HAVING quals, if any */
