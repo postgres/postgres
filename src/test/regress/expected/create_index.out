@@ -1504,7 +1504,7 @@ SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
    ->  Bitmap Heap Scan on quad_point_tbl
          Recheck Cond: ('(1000,1000),(200,200)'::box @> p)
          ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: ('(1000,1000),(200,200)'::box @> p)
+               Index Cond: (p <@ '(1000,1000),(200,200)'::box)
 (5 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
@@ -1623,7 +1623,7 @@ SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
    ->  Bitmap Heap Scan on kd_point_tbl
          Recheck Cond: ('(1000,1000),(200,200)'::box @> p)
          ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: ('(1000,1000),(200,200)'::box @> p)
+               Index Cond: (p <@ '(1000,1000),(200,200)'::box)
 (5 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
@@ -3181,8 +3181,7 @@ explain (costs off)
  Limit
    ->  Index Scan using boolindex_b_i_key on boolindex
          Index Cond: (b = true)
-         Filter: b
-(4 rows)
+(3 rows)
 
 explain (costs off)
   select * from boolindex where b = true order by i desc limit 10;
@@ -3191,8 +3190,7 @@ explain (costs off)
  Limit
    ->  Index Scan Backward using boolindex_b_i_key on boolindex
          Index Cond: (b = true)
-         Filter: b
-(4 rows)
+(3 rows)
 
 explain (costs off)
   select * from boolindex where not b order by i limit 10;
@@ -3201,8 +3199,7 @@ explain (costs off)
  Limit
    ->  Index Scan using boolindex_b_i_key on boolindex
          Index Cond: (b = false)
-         Filter: (NOT b)
-(4 rows)
+(3 rows)
 
 --
 -- Test for multilevel page deletion

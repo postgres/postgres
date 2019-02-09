@@ -29,6 +29,7 @@ extern RestrictInfo *make_restrictinfo(Expr *clause,
 				  Relids required_relids,
 				  Relids outer_relids,
 				  Relids nullable_relids);
+extern RestrictInfo *commute_restrictinfo(RestrictInfo *rinfo, Oid comm_op);
 extern bool restriction_is_or_clause(RestrictInfo *restrictinfo);
 extern bool restriction_is_securely_promotable(RestrictInfo *restrictinfo,
 								   RelOptInfo *rel);

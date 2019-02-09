@@ -647,7 +647,7 @@ SELECT t1.a, t1.c, t2.b, t2.c, t3.a + t3.b, t3.c FROM (prt1 t1 LEFT JOIN prt2 t2
                            ->  Seq Scan on prt1_e_p1 t3
                                  Filter: (c = 0)
                ->  Index Scan using iprt2_p1_b on prt2_p1 t2
-                     Index Cond: (t1.a = b)
+                     Index Cond: (b = t1.a)
          ->  Nested Loop Left Join
                ->  Hash Right Join
                      Hash Cond: (t1_1.a = ((t3_1.a + t3_1.b) / 2))
@@ -656,7 +656,7 @@ SELECT t1.a, t1.c, t2.b, t2.c, t3.a + t3.b, t3.c FROM (prt1 t1 LEFT JOIN prt2 t2
                            ->  Seq Scan on prt1_e_p2 t3_1
                                  Filter: (c = 0)
                ->  Index Scan using iprt2_p2_b on prt2_p2 t2_1
-                     Index Cond: (t1_1.a = b)
+                     Index Cond: (b = t1_1.a)
          ->  Nested Loop Left Join
                ->  Hash Right Join
                      Hash Cond: (t1_2.a = ((t3_2.a + t3_2.b) / 2))
@@ -665,7 +665,7 @@ SELECT t1.a, t1.c, t2.b, t2.c, t3.a + t3.b, t3.c FROM (prt1 t1 LEFT JOIN prt2 t2
                            ->  Seq Scan on prt1_e_p3 t3_2
                                  Filter: (c = 0)
                ->  Index Scan using iprt2_p3_b on prt2_p3 t2_2
-                     Index Cond: (t1_2.a = b)
+                     Index Cond: (b = t1_2.a)
 (30 rows)
 
 SELECT t1.a, t1.c, t2.b, t2.c, t3.a + t3.b, t3.c FROM (prt1 t1 LEFT JOIN prt2 t2 ON t1.a = t2.b) RIGHT JOIN prt1_e t3 ON (t1.a = (t3.a + t3.b)/2) WHERE t3.c = 0 ORDER BY t1.a, t2.b, t3.a + t3.b;
@@ -1878,11 +1878,11 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1 LEFT JOIN prt2 t2 ON (t1.a < t2.b);
          ->  Seq Scan on prt1_p3 t1_2
    ->  Append
          ->  Index Scan using iprt2_p1_b on prt2_p1 t2
-               Index Cond: (t1.a < b)
+               Index Cond: (b > t1.a)
          ->  Index Scan using iprt2_p2_b on prt2_p2 t2_1
-               Index Cond: (t1.a < b)
+               Index Cond: (b > t1.a)
          ->  Index Scan using iprt2_p3_b on prt2_p3 t2_2
-               Index Cond: (t1.a < b)
+               Index Cond: (b > t1.a)
 (12 rows)
 
 -- equi-join with join condition on partial keys does not qualify for

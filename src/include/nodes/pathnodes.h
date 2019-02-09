@@ -1123,30 +1123,16 @@ typedef struct Path
  *
  * 'indexinfo' is the index to be scanned.
  *
- * 'indexclauses' is a list of index qualification clauses, with implicit
- * AND semantics across the list.  Each clause is a RestrictInfo node from
- * the query's WHERE or JOIN conditions.  An empty list implies a full
- * index scan.
- *
- * 'indexquals' has the same structure as 'indexclauses', but it contains
- * the actual index qual conditions that can be used with the index.
- * In simple cases this is identical to 'indexclauses', but when special
- * indexable operators appear in 'indexclauses', they are replaced by the
- * derived indexscannable conditions in 'indexquals'.
- *
- * 'indexqualcols' is an integer list of index column numbers (zero-based)
- * of the same length as 'indexquals', showing which index column each qual
- * is meant to be used with.  'indexquals' is required to be ordered by
- * index column, so 'indexqualcols' must form a nondecreasing sequence.
- * (The order of multiple quals for the same index column is unspecified.)
+ * 'indexclauses' is a list of IndexClause nodes, each representing one
+ * index-checkable restriction, with implicit AND semantics across the list.
+ * An empty list implies a full index scan.
  *
  * 'indexorderbys', if not NIL, is a list of ORDER BY expressions that have
  * been found to be usable as ordering operators for an amcanorderbyop index.
  * The list must match the path's pathkeys, ie, one expression per pathkey
  * in the same order.  These are not RestrictInfos, just bare expressions,
- * since they generally won't yield booleans.  Also, unlike the case for
- * quals, it's guaranteed that each expression has the index key on the left
- * side of the operator.
+ * since they generally won't yield booleans.  It's guaranteed that each
+ * expression has the index key on the left side of the operator.
  *
  * 'indexorderbycols' is an integer list of index column numbers (zero-based)
  * of the same length as 'indexorderbys', showing which index column each
@@ -1172,14 +1158,62 @@ typedef struct IndexPath
 	Path		path;
 	IndexOptInfo *indexinfo;
 	List	   *indexclauses;
-	List	   *indexquals;
-	List	   *indexqualcols;
 	List	   *indexorderbys;
 	List	   *indexorderbycols;
 	ScanDirection indexscandir;
 	Cost		indextotalcost;
 	Selectivity indexselectivity;
 } IndexPath;
+
+/*
+ * Each IndexClause references a RestrictInfo node from the query's WHERE
+ * or JOIN conditions, and shows how that restriction can be applied to
+ * the particular index.  We support both indexclauses that are directly
+ * usable by the index machinery, which are typically of the form
+ * "indexcol OP pseudoconstant", and those from which an indexable qual
+ * can be derived.  The simplest such transformation is that a clause
+ * of the form "pseudoconstant OP indexcol" can be commuted to produce an
+ * indexable qual (the index machinery expects the indexcol to be on the
+ * left always).  Another example is that we might be able to extract an
+ * indexable range condition from a LIKE condition, as in "x LIKE 'foo%bar'"
+ * giving rise to "x >= 'foo' AND x < 'fop'".  Derivation of such lossy
+ * conditions is done by a planner support function attached to the
+ * indexclause's top-level function or operator.
+ *
+ * If indexquals is NIL, it means that rinfo->clause is directly usable as
+ * an indexqual.  Otherwise indexquals contains one or more directly-usable
+ * indexqual conditions extracted from the given clause.  The 'lossy' flag
+ * indicates whether the indexquals are semantically equivalent to the
+ * original clause, or form a weaker condition.
+ *
+ * Currently, entries in indexquals are RestrictInfos, but they could perhaps
+ * be bare clauses instead; the only advantage of making them RestrictInfos
+ * is the possibility of caching cost and selectivity information across
+ * multiple uses, and it's not clear that that's really worth the price of
+ * constructing RestrictInfos for them.  Note however that the extended-stats
+ * machinery won't do anything with non-RestrictInfo clauses, so that would
+ * have to be fixed.
+ *
+ * Normally, indexcol is the index of the single index column the clause
+ * works on, and indexcols is NIL.  But if the clause is a RowCompareExpr,
+ * indexcol is the index of the leading column, and indexcols is a list of
+ * all the affected columns.  (Note that indexcols matches up with the
+ * columns of the actual indexable RowCompareExpr, which might be in
+ * indexquals rather than rinfo.)
+ *
+ * An IndexPath's IndexClause list is required to be ordered by index
+ * column, i.e. the indexcol values must form a nondecreasing sequence.
+ * (The order of multiple clauses for the same index column is unspecified.)
+ */
+typedef struct IndexClause
+{
+	NodeTag		type;
+	struct RestrictInfo *rinfo; /* original restriction or join clause */
+	List	   *indexquals;		/* indexqual(s) derived from it, or NIL */
+	bool		lossy;			/* are indexquals a lossy version of clause? */
+	AttrNumber	indexcol;		/* index column the clause uses (zero-based) */
+	List	   *indexcols;		/* multiple index columns, if RowCompare */
+} IndexClause;
 
 /*
  * BitmapHeapPath represents one or more indexscans that generate TID bitmaps

@@ -2192,6 +2192,17 @@ expression_tree_walker(Node *node,
 				/* groupClauses are deemed uninteresting */
 			}
 			break;
+		case T_IndexClause:
+			{
+				IndexClause *iclause = (IndexClause *) node;
+
+				if (walker(iclause->rinfo, context))
+					return true;
+				if (expression_tree_walker((Node *) iclause->indexquals,
+										   walker, context))
+					return true;
+			}
+			break;
 		case T_PlaceHolderVar:
 			return walker(((PlaceHolderVar *) node)->phexpr, context);
 		case T_InferenceElem:
@@ -2996,6 +3007,17 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->larg, setop->larg, Node *);
 				MUTATE(newnode->rarg, setop->rarg, Node *);
 				/* We do not mutate groupClauses by default */
+				return (Node *) newnode;
+			}
+			break;
+		case T_IndexClause:
+			{
+				IndexClause *iclause = (IndexClause *) node;
+				IndexClause *newnode;
+
+				FLATCOPY(newnode, iclause, IndexClause);
+				MUTATE(newnode->rinfo, iclause->rinfo, RestrictInfo *);
+				MUTATE(newnode->indexquals, iclause->indexquals, List *);
 				return (Node *) newnode;
 			}
 			break;

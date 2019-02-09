@@ -226,6 +226,8 @@ static Selectivity regex_selectivity(const char *patt, int pattlen,
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 static Const *string_to_bytea_const(const char *str, size_t str_len);
+static IndexQualInfo *deconstruct_indexqual(RestrictInfo *rinfo,
+					  IndexOptInfo *index, int indexcol);
 static List *add_predicate_to_quals(IndexOptInfo *index, List *indexQuals);
 
 
@@ -6574,21 +6576,72 @@ string_to_bytea_const(const char *str, size_t str_len)
  *-------------------------------------------------------------------------
  */
 
+/* Extract the actual indexquals (as RestrictInfos) from an IndexClause list */
+static List *
+get_index_quals(List *indexclauses)
+{
+	List	   *result = NIL;
+	ListCell   *lc;
+
+	foreach(lc, indexclauses)
+	{
+		IndexClause *iclause = lfirst_node(IndexClause, lc);
+
+		if (iclause->indexquals == NIL)
+		{
+			/* rinfo->clause is directly usable as an indexqual */
+			result = lappend(result, iclause->rinfo);
+		}
+		else
+		{
+			/* report the derived indexquals */
+			result = list_concat(result, list_copy(iclause->indexquals));
+		}
+	}
+	return result;
+}
+
 List *
 deconstruct_indexquals(IndexPath *path)
 {
 	List	   *result = NIL;
 	IndexOptInfo *index = path->indexinfo;
-	ListCell   *lcc,
-			   *lci;
+	ListCell   *lc;
 
-	forboth(lcc, path->indexquals, lci, path->indexqualcols)
+	foreach(lc, path->indexclauses)
 	{
-		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lcc);
-		int			indexcol = lfirst_int(lci);
+		IndexClause *iclause = lfirst_node(IndexClause, lc);
+		int			indexcol = iclause->indexcol;
+		IndexQualInfo *qinfo;
+
+		if (iclause->indexquals == NIL)
+		{
+			/* rinfo->clause is directly usable as an indexqual */
+			qinfo = deconstruct_indexqual(iclause->rinfo, index, indexcol);
+			result = lappend(result, qinfo);
+		}
+		else
+		{
+			/* Process the derived indexquals */
+			ListCell   *lc2;
+
+			foreach(lc2, iclause->indexquals)
+			{
+				RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
+
+				qinfo = deconstruct_indexqual(rinfo, index, indexcol);
+				result = lappend(result, qinfo);
+			}
+		}
+	}
+	return result;
+}
+
+static IndexQualInfo *
+deconstruct_indexqual(RestrictInfo *rinfo, IndexOptInfo *index, int indexcol)
+{
+	{
 		Expr	   *clause;
-		Node	   *leftop,
-				   *rightop;
 		IndexQualInfo *qinfo;
 
 		clause = rinfo->clause;
@@ -6600,57 +6653,25 @@ deconstruct_indexquals(IndexPath *path)
 		if (IsA(clause, OpExpr))
 		{
 			qinfo->clause_op = ((OpExpr *) clause)->opno;
-			leftop = get_leftop(clause);
-			rightop = get_rightop(clause);
-			if (match_index_to_operand(leftop, indexcol, index))
-			{
-				qinfo->varonleft = true;
-				qinfo->other_operand = rightop;
-			}
-			else
-			{
-				Assert(match_index_to_operand(rightop, indexcol, index));
-				qinfo->varonleft = false;
-				qinfo->other_operand = leftop;
-			}
+			qinfo->other_operand = get_rightop(clause);
 		}
 		else if (IsA(clause, RowCompareExpr))
 		{
 			RowCompareExpr *rc = (RowCompareExpr *) clause;
 
 			qinfo->clause_op = linitial_oid(rc->opnos);
-			/* Examine only first columns to determine left/right sides */
-			if (match_index_to_operand((Node *) linitial(rc->largs),
-									   indexcol, index))
-			{
-				qinfo->varonleft = true;
-				qinfo->other_operand = (Node *) rc->rargs;
-			}
-			else
-			{
-				Assert(match_index_to_operand((Node *) linitial(rc->rargs),
-											  indexcol, index));
-				qinfo->varonleft = false;
-				qinfo->other_operand = (Node *) rc->largs;
-			}
+			qinfo->other_operand = (Node *) rc->rargs;
 		}
 		else if (IsA(clause, ScalarArrayOpExpr))
 		{
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
 
 			qinfo->clause_op = saop->opno;
-			/* index column is always on the left in this case */
-			Assert(match_index_to_operand((Node *) linitial(saop->args),
-										  indexcol, index));
-			qinfo->varonleft = true;
 			qinfo->other_operand = (Node *) lsecond(saop->args);
 		}
 		else if (IsA(clause, NullTest))
 		{
 			qinfo->clause_op = InvalidOid;
-			Assert(match_index_to_operand((Node *) ((NullTest *) clause)->arg,
-										  indexcol, index));
-			qinfo->varonleft = true;
 			qinfo->other_operand = NULL;
 		}
 		else
@@ -6659,9 +6680,8 @@ deconstruct_indexquals(IndexPath *path)
 				 (int) nodeTag(clause));
 		}
 
-		result = lappend(result, qinfo);
+		return qinfo;
 	}
-	return result;
 }
 
 /*
@@ -6731,7 +6751,7 @@ genericcostestimate(PlannerInfo *root,
 					GenericCosts *costs)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *indexQuals = path->indexquals;
+	List	   *indexQuals = get_index_quals(path->indexclauses);
 	List	   *indexOrderBys = path->indexorderbys;
 	Cost		indexStartupCost;
 	Cost		indexTotalCost;
@@ -7052,14 +7072,8 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			}
 		}
 
-		/*
-		 * We would need to commute the clause_op if not varonleft, except
-		 * that we only care if it's equality or not, so that refinement is
-		 * unnecessary.
-		 */
-		clause_op = qinfo->clause_op;
-
 		/* check for equality operator */
+		clause_op = qinfo->clause_op;
 		if (OidIsValid(clause_op))
 		{
 			op_strategy = get_op_opfamily_strategy(clause_op,
@@ -7560,12 +7574,6 @@ gincost_opexpr(PlannerInfo *root,
 	Oid			clause_op = qinfo->clause_op;
 	Node	   *operand = qinfo->other_operand;
 
-	if (!qinfo->varonleft)
-	{
-		/* must commute the operator */
-		clause_op = get_commutator(clause_op);
-	}
-
 	/* aggressively reduce to a constant, and look through relabeling */
 	operand = estimate_expression_value(root, operand);
 
@@ -7728,7 +7736,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *indexQuals = path->indexquals;
+	List	   *indexQuals = get_index_quals(path->indexclauses);
 	List	   *indexOrderBys = path->indexorderbys;
 	List	   *qinfos;
 	ListCell   *l;
@@ -7831,26 +7839,11 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		numEntries = 1;
 
 	/*
-	 * Include predicate in selectivityQuals (should match
-	 * genericcostestimate)
+	 * If the index is partial, AND the index predicate with the index-bound
+	 * quals to produce a more accurate idea of the number of rows covered by
+	 * the bound conditions.
 	 */
-	if (index->indpred != NIL)
-	{
-		List	   *predExtraQuals = NIL;
-
-		foreach(l, index->indpred)
-		{
-			Node	   *predQual = (Node *) lfirst(l);
-			List	   *oneQual = list_make1(predQual);
-
-			if (!predicate_implied_by(oneQual, indexQuals, false))
-				predExtraQuals = list_concat(predExtraQuals, oneQual);
-		}
-		/* list_concat avoids modifying the passed-in indexQuals list */
-		selectivityQuals = list_concat(predExtraQuals, indexQuals);
-	}
-	else
-		selectivityQuals = indexQuals;
+	selectivityQuals = add_predicate_to_quals(index, indexQuals);
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
@@ -8053,7 +8046,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *indexQuals = path->indexquals;
+	List	   *indexQuals = get_index_quals(path->indexclauses);
 	double		numPages = index->pages;
 	RelOptInfo *baserel = index->rel;
 	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);

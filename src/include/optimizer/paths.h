@@ -78,15 +78,7 @@ extern bool indexcol_is_bool_constant_for_query(IndexOptInfo *index,
 									int indexcol);
 extern bool match_index_to_operand(Node *operand, int indexcol,
 					   IndexOptInfo *index);
-extern void expand_indexqual_conditions(IndexOptInfo *index,
-							List *indexclauses, List *indexclausecols,
-							List **indexquals_p, List **indexqualcols_p);
 extern void check_index_predicates(PlannerInfo *root, RelOptInfo *rel);
-extern Expr *adjust_rowcompare_for_index(RowCompareExpr *clause,
-							IndexOptInfo *index,
-							int indexcol,
-							List **indexcolnos,
-							bool *var_on_left_p);
 
 /*
  * tidpath.h
@@ -175,6 +167,8 @@ extern bool eclass_useful_for_merging(PlannerInfo *root,
 						  EquivalenceClass *eclass,
 						  RelOptInfo *rel);
 extern bool is_redundant_derived_clause(RestrictInfo *rinfo, List *clauselist);
+extern bool is_redundant_with_indexclauses(RestrictInfo *rinfo,
+							   List *indexclauses);
 
 /*
  * pathkeys.c

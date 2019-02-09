@@ -1744,8 +1744,6 @@ _outIndexPath(StringInfo str, const IndexPath *node)
 
 	WRITE_NODE_FIELD(indexinfo);
 	WRITE_NODE_FIELD(indexclauses);
-	WRITE_NODE_FIELD(indexquals);
-	WRITE_NODE_FIELD(indexqualcols);
 	WRITE_NODE_FIELD(indexorderbys);
 	WRITE_NODE_FIELD(indexorderbycols);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
@@ -2445,6 +2443,18 @@ _outRestrictInfo(StringInfo str, const RestrictInfo *node)
 	WRITE_NODE_FIELD(right_em);
 	WRITE_BOOL_FIELD(outer_is_left);
 	WRITE_OID_FIELD(hashjoinoperator);
+}
+
+static void
+_outIndexClause(StringInfo str, const IndexClause *node)
+{
+	WRITE_NODE_TYPE("INDEXCLAUSE");
+
+	WRITE_NODE_FIELD(rinfo);
+	WRITE_NODE_FIELD(indexquals);
+	WRITE_BOOL_FIELD(lossy);
+	WRITE_INT_FIELD(indexcol);
+	WRITE_NODE_FIELD(indexcols);
 }
 
 static void
@@ -4043,6 +4053,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);
+				break;
+			case T_IndexClause:
+				_outIndexClause(str, obj);
 				break;
 			case T_PlaceHolderVar:
 				_outPlaceHolderVar(str, obj);

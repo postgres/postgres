@@ -51,7 +51,6 @@ extern bool is_pseudo_constant_clause_relids(Node *clause, Relids relids);
 extern int	NumRelids(Node *clause);
 
 extern void CommuteOpExpr(OpExpr *clause);
-extern void CommuteRowCompareExpr(RowCompareExpr *clause);
 
 extern Query *inline_set_returning_function(PlannerInfo *root,
 							  RangeTblEntry *rte);

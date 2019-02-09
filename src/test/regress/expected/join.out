@@ -3078,9 +3078,9 @@ where q1 = thousand or q2 = thousand;
                Recheck Cond: ((q1.q1 = thousand) OR (q2.q2 = thousand))
                ->  BitmapOr
                      ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (q1.q1 = thousand)
+                           Index Cond: (thousand = q1.q1)
                      ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (q2.q2 = thousand)
+                           Index Cond: (thousand = q2.q2)
    ->  Hash
          ->  Seq Scan on int4_tbl
 (15 rows)
@@ -3332,7 +3332,7 @@ where t1.unique1 = 1;
          ->  Bitmap Heap Scan on tenk1 t2
                Recheck Cond: (t1.hundred = hundred)
                ->  Bitmap Index Scan on tenk1_hundred
-                     Index Cond: (t1.hundred = hundred)
+                     Index Cond: (hundred = t1.hundred)
          ->  Index Scan using tenk1_unique2 on tenk1 t3
                Index Cond: (unique2 = t2.thousand)
 (11 rows)
@@ -3352,7 +3352,7 @@ where t1.unique1 = 1;
          ->  Bitmap Heap Scan on tenk1 t2
                Recheck Cond: (t1.hundred = hundred)
                ->  Bitmap Index Scan on tenk1_hundred
-                     Index Cond: (t1.hundred = hundred)
+                     Index Cond: (hundred = t1.hundred)
          ->  Index Scan using tenk1_unique2 on tenk1 t3
                Index Cond: (unique2 = t2.thousand)
 (11 rows)
@@ -3408,7 +3408,7 @@ select b.unique1 from
                      ->  Nested Loop
                            ->  Seq Scan on int4_tbl i1
                            ->  Index Scan using tenk1_thous_tenthous on tenk1 b
-                                 Index Cond: ((thousand = i1.f1) AND (i2.f1 = tenthous))
+                                 Index Cond: ((thousand = i1.f1) AND (tenthous = i2.f1))
                      ->  Index Scan using tenk1_unique1 on tenk1 a
                            Index Cond: (unique1 = b.unique2)
                ->  Index Only Scan using tenk1_thous_tenthous on tenk1 c
@@ -3444,7 +3444,7 @@ order by fault;
    Filter: ((COALESCE(tenk1.unique1, '-1'::integer) + int8_tbl.q1) = 122)
    ->  Seq Scan on int8_tbl
    ->  Index Scan using tenk1_unique2 on tenk1
-         Index Cond: (int8_tbl.q2 = unique2)
+         Index Cond: (unique2 = int8_tbl.q2)
 (5 rows)
 
 select * from
@@ -3499,7 +3499,7 @@ select q1, unique2, thousand, hundred
    Filter: ((COALESCE(b.thousand, 123) = a.q1) AND (a.q1 = COALESCE(b.hundred, 123)))
    ->  Seq Scan on int8_tbl a
    ->  Index Scan using tenk1_unique2 on tenk1 b
-         Index Cond: (a.q1 = unique2)
+         Index Cond: (unique2 = a.q1)
 (5 rows)
 
 select q1, unique2, thousand, hundred
@@ -4586,7 +4586,7 @@ explain (costs off)
  Nested Loop Left Join
    ->  Seq Scan on int4_tbl x
    ->  Index Scan using tenk1_unique1 on tenk1
-         Index Cond: (x.f1 = unique1)
+         Index Cond: (unique1 = x.f1)
 (4 rows)
 
 -- check scoping of lateral versus parent references
