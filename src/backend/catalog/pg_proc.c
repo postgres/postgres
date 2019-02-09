@@ -88,6 +88,7 @@ ProcedureCreate(const char *procedureName,
 				List *parameterDefaults,
 				Datum trftypes,
 				Datum proconfig,
+				Oid prosupport,
 				float4 procost,
 				float4 prorows)
 {
@@ -319,7 +320,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_procost - 1] = Float4GetDatum(procost);
 	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
 	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
-	values[Anum_pg_proc_protransform - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_proc_prosupport - 1] = ObjectIdGetDatum(prosupport);
 	values[Anum_pg_proc_prokind - 1] = CharGetDatum(prokind);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
 	values[Anum_pg_proc_proleakproof - 1] = BoolGetDatum(isLeakProof);
@@ -655,6 +656,15 @@ ProcedureCreate(const char *procedureName,
 	if (parameterDefaults)
 		recordDependencyOnExpr(&myself, (Node *) parameterDefaults,
 							   NIL, DEPENDENCY_NORMAL);
+
+	/* dependency on support function, if any */
+	if (OidIsValid(prosupport))
+	{
+		referenced.classId = ProcedureRelationId;
+		referenced.objectId = prosupport;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	/* dependency on owner */
 	if (!is_update)

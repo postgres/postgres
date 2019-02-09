@@ -286,9 +286,12 @@ deleteDependencyRecordsForClass(Oid classId, Oid objectId,
  * newRefObjectId is the new referenced object (must be of class refClassId).
  *
  * Note the lack of objsubid parameters.  If there are subobject references
- * they will all be readjusted.
+ * they will all be readjusted.  Also, there is an expectation that we are
+ * dealing with NORMAL dependencies: if we have to replace an (implicit)
+ * dependency on a pinned object with an explicit dependency on an unpinned
+ * one, the new one will be NORMAL.
  *
- * Returns the number of records updated.
+ * Returns the number of records updated -- zero indicates a problem.
  */
 long
 changeDependencyFor(Oid classId, Oid objectId,
@@ -301,35 +304,52 @@ changeDependencyFor(Oid classId, Oid objectId,
 	SysScanDesc scan;
 	HeapTuple	tup;
 	ObjectAddress objAddr;
+	ObjectAddress depAddr;
+	bool		oldIsPinned;
 	bool		newIsPinned;
 
 	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	/*
-	 * If oldRefObjectId is pinned, there won't be any dependency entries on
-	 * it --- we can't cope in that case.  (This isn't really worth expending
-	 * code to fix, in current usage; it just means you can't rename stuff out
-	 * of pg_catalog, which would likely be a bad move anyway.)
+	 * Check to see if either oldRefObjectId or newRefObjectId is pinned.
+	 * Pinned objects should not have any dependency entries pointing to them,
+	 * so in these cases we should add or remove a pg_depend entry, or do
+	 * nothing at all, rather than update an entry as in the normal case.
 	 */
 	objAddr.classId = refClassId;
 	objAddr.objectId = oldRefObjectId;
 	objAddr.objectSubId = 0;
 
-	if (isObjectPinned(&objAddr, depRel))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot remove dependency on %s because it is a system object",
-						getObjectDescription(&objAddr))));
+	oldIsPinned = isObjectPinned(&objAddr, depRel);
 
-	/*
-	 * We can handle adding a dependency on something pinned, though, since
-	 * that just means deleting the dependency entry.
-	 */
 	objAddr.objectId = newRefObjectId;
 
 	newIsPinned = isObjectPinned(&objAddr, depRel);
 
-	/* Now search for dependency records */
+	if (oldIsPinned)
+	{
+		table_close(depRel, RowExclusiveLock);
+
+		/*
+		 * If both are pinned, we need do nothing.  However, return 1 not 0,
+		 * else callers will think this is an error case.
+		 */
+		if (newIsPinned)
+			return 1;
+
+		/*
+		 * There is no old dependency record, but we should insert a new one.
+		 * Assume a normal dependency is wanted.
+		 */
+		depAddr.classId = classId;
+		depAddr.objectId = objectId;
+		depAddr.objectSubId = 0;
+		recordDependencyOn(&depAddr, &objAddr, DEPENDENCY_NORMAL);
+
+		return 1;
+	}
+
+	/* There should be existing dependency record(s), so search. */
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
 				BTEqualStrategyNumber, F_OIDEQ,

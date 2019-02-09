@@ -632,6 +632,7 @@ AggregateCreate(const char *aggName,
 							 parameterDefaults, /* parameterDefaults */
 							 PointerGetDatum(NULL), /* trftypes */
 							 PointerGetDatum(NULL), /* proconfig */
+							 InvalidOid,	/* no prosupport */
 							 1, /* procost */
 							 0);	/* prorows */
 	procOid = myself.objectId;

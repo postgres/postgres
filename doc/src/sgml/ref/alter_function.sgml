@@ -40,6 +40,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
     PARALLEL { UNSAFE | RESTRICTED | SAFE }
     COST <replaceable class="parameter">execution_cost</replaceable>
     ROWS <replaceable class="parameter">result_rows</replaceable>
+    SUPPORT <replaceable class="parameter">support_function</replaceable>
     SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
     SET <replaceable class="parameter">configuration_parameter</replaceable> FROM CURRENT
     RESET <replaceable class="parameter">configuration_parameter</replaceable>
@@ -246,6 +247,24 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
        function.  See <xref linkend="sql-createfunction"/> for more information.
       </para>
      </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SUPPORT</literal> <replaceable class="parameter">support_function</replaceable></term>
+
+    <listitem>
+     <para>
+      Set or change the planner support function to use for this function.
+      See <xref linkend="xfunc-optimization"/> for details.  You must be
+      superuser to use this option.
+     </para>
+
+     <para>
+      This option cannot be used to remove the support function altogether,
+      since it must name a new support function.  Use <command>CREATE OR
+      REPLACE FUNCTION</command> if you need to do that.
+     </para>
+    </listitem>
    </varlistentry>
 
      <varlistentry>

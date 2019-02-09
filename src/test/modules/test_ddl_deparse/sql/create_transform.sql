@@ -8,7 +8,7 @@
 -- internal and as return argument the datatype of the transform done.
 -- pl/plpgsql does not authorize the use of internal as data type.
 CREATE TRANSFORM FOR int LANGUAGE SQL (
-    FROM SQL WITH FUNCTION varchar_transform(internal),
+    FROM SQL WITH FUNCTION varchar_support(internal),
     TO SQL WITH FUNCTION int4recv(internal));
 
 DROP TRANSFORM FOR int LANGUAGE SQL;

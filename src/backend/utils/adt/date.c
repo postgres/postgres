@@ -24,6 +24,7 @@
 #include "access/xact.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "nodes/supportnodes.h"
 #include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -1341,15 +1342,25 @@ make_time(PG_FUNCTION_ARGS)
 }
 
 
-/* time_transform()
- * Flatten calls to time_scale() and timetz_scale() that solely represent
- * increases in allowed precision.
+/* time_support()
+ *
+ * Planner support function for the time_scale() and timetz_scale()
+ * length coercion functions (we need not distinguish them here).
  */
 Datum
-time_transform(PG_FUNCTION_ARGS)
+time_support(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(TemporalTransform(MAX_TIME_PRECISION,
-										(Node *) PG_GETARG_POINTER(0)));
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestSimplify))
+	{
+		SupportRequestSimplify *req = (SupportRequestSimplify *) rawreq;
+
+		ret = TemporalSimplify(MAX_TIME_PRECISION, (Node *) req->fcall);
+	}
+
+	PG_RETURN_POINTER(ret);
 }
 
 /* time_scale()

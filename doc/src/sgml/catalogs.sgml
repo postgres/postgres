@@ -5146,11 +5146,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
-      <entry><structfield>protransform</structfield></entry>
+      <entry><structfield>prosupport</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Calls to this function can be simplified by this other function
-       (see <xref linkend="xfunc-transform-functions"/>)</entry>
+      <entry>Optional planner support function for this function
+       (see <xref linkend="xfunc-optimization"/>)</entry>
      </row>
 
      <row>

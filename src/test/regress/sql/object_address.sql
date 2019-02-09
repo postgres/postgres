@@ -41,7 +41,7 @@ CREATE USER MAPPING FOR regress_addr_user SERVER "integer";
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regress_addr_user;
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user REVOKE DELETE ON TABLES FROM regress_addr_user;
 CREATE TRANSFORM FOR int LANGUAGE SQL (
-	FROM SQL WITH FUNCTION varchar_transform(internal),
+	FROM SQL WITH FUNCTION varchar_support(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
 CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);

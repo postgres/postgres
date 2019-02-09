@@ -809,12 +809,12 @@ WHERE	provariadic != 0 AND
 ------+-------------
 (0 rows)
 
-SELECT	ctid, protransform
+SELECT	ctid, prosupport
 FROM	pg_catalog.pg_proc fk
-WHERE	protransform != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.protransform);
- ctid | protransform 
-------+--------------
+WHERE	prosupport != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.prosupport);
+ ctid | prosupport 
+------+------------
 (0 rows)
 
 SELECT	ctid, prorettype

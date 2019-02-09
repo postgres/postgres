@@ -53,8 +53,8 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	/* element type of variadic array, or 0 */
 	Oid			provariadic BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
 
-	/* transforms calls to it during planning */
-	regproc		protransform BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+	/* planner support function for this function, or 0 if none */
+	regproc		prosupport BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
 
 	/* see PROKIND_ categories below */
 	char		prokind BKI_DEFAULT(f);
@@ -201,6 +201,7 @@ extern ObjectAddress ProcedureCreate(const char *procedureName,
 				List *parameterDefaults,
 				Datum trftypes,
 				Datum proconfig,
+				Oid prosupport,
 				float4 procost,
 				float4 prorows);
 

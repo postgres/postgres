@@ -405,10 +405,10 @@ SELECT	ctid, provariadic
 FROM	pg_catalog.pg_proc fk
 WHERE	provariadic != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.provariadic);
-SELECT	ctid, protransform
+SELECT	ctid, prosupport
 FROM	pg_catalog.pg_proc fk
-WHERE	protransform != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.protransform);
+WHERE	prosupport != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.prosupport);
 SELECT	ctid, prorettype
 FROM	pg_catalog.pg_proc fk
 WHERE	prorettype != 0 AND

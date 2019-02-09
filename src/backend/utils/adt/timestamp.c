@@ -29,6 +29,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/supportnodes.h"
 #include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -297,15 +298,26 @@ timestamptypmodout(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamp_transform()
- * Flatten calls to timestamp_scale() and timestamptz_scale() that solely
- * represent increases in allowed precision.
+/*
+ * timestamp_support()
+ *
+ * Planner support function for the timestamp_scale() and timestamptz_scale()
+ * length coercion functions (we need not distinguish them here).
  */
 Datum
-timestamp_transform(PG_FUNCTION_ARGS)
+timestamp_support(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(TemporalTransform(MAX_TIMESTAMP_PRECISION,
-										(Node *) PG_GETARG_POINTER(0)));
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestSimplify))
+	{
+		SupportRequestSimplify *req = (SupportRequestSimplify *) rawreq;
+
+		ret = TemporalSimplify(MAX_TIMESTAMP_PRECISION, (Node *) req->fcall);
+	}
+
+	PG_RETURN_POINTER(ret);
 }
 
 /* timestamp_scale()
@@ -1235,59 +1247,69 @@ intervaltypmodleastfield(int32 typmod)
 }
 
 
-/* interval_transform()
+/*
+ * interval_support()
+ *
+ * Planner support function for interval_scale().
+ *
  * Flatten superfluous calls to interval_scale().  The interval typmod is
  * complex to permit accepting and regurgitating all SQL standard variations.
  * For truncation purposes, it boils down to a single, simple granularity.
  */
 Datum
-interval_transform(PG_FUNCTION_ARGS)
+interval_support(PG_FUNCTION_ARGS)
 {
-	FuncExpr   *expr = castNode(FuncExpr, PG_GETARG_POINTER(0));
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
 	Node	   *ret = NULL;
-	Node	   *typmod;
 
-	Assert(list_length(expr->args) >= 2);
-
-	typmod = (Node *) lsecond(expr->args);
-
-	if (IsA(typmod, Const) &&!((Const *) typmod)->constisnull)
+	if (IsA(rawreq, SupportRequestSimplify))
 	{
-		Node	   *source = (Node *) linitial(expr->args);
-		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
-		bool		noop;
+		SupportRequestSimplify *req = (SupportRequestSimplify *) rawreq;
+		FuncExpr   *expr = req->fcall;
+		Node	   *typmod;
 
-		if (new_typmod < 0)
-			noop = true;
-		else
+		Assert(list_length(expr->args) >= 2);
+
+		typmod = (Node *) lsecond(expr->args);
+
+		if (IsA(typmod, Const) &&!((Const *) typmod)->constisnull)
 		{
-			int32		old_typmod = exprTypmod(source);
-			int			old_least_field;
-			int			new_least_field;
-			int			old_precis;
-			int			new_precis;
+			Node	   *source = (Node *) linitial(expr->args);
+			int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
+			bool		noop;
 
-			old_least_field = intervaltypmodleastfield(old_typmod);
-			new_least_field = intervaltypmodleastfield(new_typmod);
-			if (old_typmod < 0)
-				old_precis = INTERVAL_FULL_PRECISION;
+			if (new_typmod < 0)
+				noop = true;
 			else
-				old_precis = INTERVAL_PRECISION(old_typmod);
-			new_precis = INTERVAL_PRECISION(new_typmod);
+			{
+				int32		old_typmod = exprTypmod(source);
+				int			old_least_field;
+				int			new_least_field;
+				int			old_precis;
+				int			new_precis;
 
-			/*
-			 * Cast is a no-op if least field stays the same or decreases
-			 * while precision stays the same or increases.  But precision,
-			 * which is to say, sub-second precision, only affects ranges that
-			 * include SECOND.
-			 */
-			noop = (new_least_field <= old_least_field) &&
-				(old_least_field > 0 /* SECOND */ ||
-				 new_precis >= MAX_INTERVAL_PRECISION ||
-				 new_precis >= old_precis);
+				old_least_field = intervaltypmodleastfield(old_typmod);
+				new_least_field = intervaltypmodleastfield(new_typmod);
+				if (old_typmod < 0)
+					old_precis = INTERVAL_FULL_PRECISION;
+				else
+					old_precis = INTERVAL_PRECISION(old_typmod);
+				new_precis = INTERVAL_PRECISION(new_typmod);
+
+				/*
+				 * Cast is a no-op if least field stays the same or decreases
+				 * while precision stays the same or increases.  But
+				 * precision, which is to say, sub-second precision, only
+				 * affects ranges that include SECOND.
+				 */
+				noop = (new_least_field <= old_least_field) &&
+					(old_least_field > 0 /* SECOND */ ||
+					 new_precis >= MAX_INTERVAL_PRECISION ||
+					 new_precis >= old_precis);
+			}
+			if (noop)
+				ret = relabel_to_typmod(source, new_typmod);
 		}
-		if (noop)
-			ret = relabel_to_typmod(source, new_typmod);
 	}
 
 	PG_RETURN_POINTER(ret);
@@ -1359,7 +1381,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		 * can't do it consistently.  (We cannot enforce a range limit on the
 		 * highest expected field, since we do not have any equivalent of
 		 * SQL's <interval leading field precision>.)  If we ever decide to
-		 * revisit this, interval_transform will likely require adjusting.
+		 * revisit this, interval_support will likely require adjusting.
 		 *
 		 * Note: before PG 8.4 we interpreted a limited set of fields as
 		 * actually causing a "modulo" operation on a given value, potentially
@@ -5020,18 +5042,6 @@ interval_part(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamp_zone_transform()
- * The original optimization here caused problems by relabeling Vars that
- * could be matched to index entries.  It might be possible to resurrect it
- * at some point by teaching the planner to be less cavalier with RelabelType
- * nodes, but that will take careful analysis.
- */
-Datum
-timestamp_zone_transform(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_POINTER(NULL);
-}
-
 /*	timestamp_zone()
  *	Encode timestamp type with specified time zone.
  *	This function is just timestamp2timestamptz() except instead of
@@ -5123,18 +5133,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 
 	PG_RETURN_TIMESTAMPTZ(result);
-}
-
-/* timestamp_izone_transform()
- * The original optimization here caused problems by relabeling Vars that
- * could be matched to index entries.  It might be possible to resurrect it
- * at some point by teaching the planner to be less cavalier with RelabelType
- * nodes, but that will take careful analysis.
- */
-Datum
-timestamp_izone_transform(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_POINTER(NULL);
 }
 
 /* timestamp_izone()

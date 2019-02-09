@@ -141,6 +141,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 									  NIL,
 									  PointerGetDatum(NULL),
 									  PointerGetDatum(NULL),
+									  InvalidOid,
 									  1,
 									  0);
 			handlerOid = tmpAddr.objectId;
@@ -180,6 +181,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  NIL,
 										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),
+										  InvalidOid,
 										  1,
 										  0);
 				inlineOid = tmpAddr.objectId;
@@ -222,6 +224,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										  NIL,
 										  PointerGetDatum(NULL),
 										  PointerGetDatum(NULL),
+										  InvalidOid,
 										  1,
 										  0);
 				valOid = tmpAddr.objectId;

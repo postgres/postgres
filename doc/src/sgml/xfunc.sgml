@@ -3241,40 +3241,6 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     </para>
    </sect2>
 
-   <sect2 id="xfunc-transform-functions">
-    <title>Transform Functions</title>
-
-    <para>
-     Some function calls can be simplified during planning based on
-     properties specific to the function.  For example,
-     <literal>int4mul(n, 1)</literal> could be simplified to just <literal>n</literal>.
-     To define such function-specific optimizations, write a
-     <firstterm>transform function</firstterm> and place its OID in the
-     <structfield>protransform</structfield> field of the primary function's
-     <structname>pg_proc</structname> entry.  The transform function must have the SQL
-     signature <literal>protransform(internal) RETURNS internal</literal>.  The
-     argument, actually <type>FuncExpr *</type>, is a dummy node representing a
-     call to the primary function.  If the transform function's study of the
-     expression tree proves that a simplified expression tree can substitute
-     for all possible concrete calls represented thereby, build and return
-     that simplified expression.  Otherwise, return a <literal>NULL</literal>
-     pointer (<emphasis>not</emphasis> a SQL null).
-    </para>
-
-    <para>
-     We make no guarantee that <productname>PostgreSQL</productname> will never call the
-     primary function in cases that the transform function could simplify.
-     Ensure rigorous equivalence between the simplified expression and an
-     actual call to the primary function.
-    </para>
-
-    <para>
-     Currently, this facility is not exposed to users at the SQL level
-     because of security concerns, so it is only practical to use for
-     optimizing built-in functions.
-    </para>
-   </sect2>
-
    <sect2>
     <title>Shared Memory and LWLocks</title>
 
@@ -3387,4 +3353,90 @@ if (!ptr)
     </para>
    </sect2>
 
+  </sect1>
+
+  <sect1 id="xfunc-optimization">
+   <title>Function Optimization Information</title>
+
+  <indexterm zone="xfunc-optimization">
+   <primary>optimization information</primary>
+   <secondary>for functions</secondary>
+  </indexterm>
+
+   <para>
+    By default, a function is just a <quote>black box</quote> that the
+    database system knows very little about the behavior of.  However,
+    that means that queries using the function may be executed much less
+    efficiently than they could be.  It is possible to supply additional
+    knowledge that helps the planner optimize function calls.
+   </para>
+
+   <para>
+    Some basic facts can be supplied by declarative annotations provided in
+    the <xref linkend="sql-createfunction"/> command.  Most important of
+    these is the function's <link linkend="xfunc-volatility">volatility
+    category</link> (<literal>IMMUTABLE</literal>, <literal>STABLE</literal>,
+    or <literal>VOLATILE</literal>); one should always be careful to
+    specify this correctly when defining a function.
+    The parallel safety property (<literal>PARALLEL
+    UNSAFE</literal>, <literal>PARALLEL RESTRICTED</literal>, or
+    <literal>PARALLEL SAFE</literal>) must also be specified if you hope
+    to use the function in parallelized queries.
+    It can also be useful to specify the function's estimated execution
+    cost, and/or the number of rows a set-returning function is estimated
+    to return.  However, the declarative way of specifying those two
+    facts only allows specifying a constant value, which is often
+    inadequate.
+   </para>
+
+   <para>
+    It is also possible to attach a <firstterm>planner support
+    function</firstterm> to a SQL-callable function (called
+    its <firstterm>target function</firstterm>), and thereby provide
+    knowledge about the target function that is too complex to be
+    represented declaratively.  Planner support functions have to be
+    written in C (although their target functions might not be), so this is
+    an advanced feature that relatively few people will use.
+   </para>
+
+   <para>
+    A planner support function must have the SQL signature
+<programlisting>
+supportfn(internal) returns internal
+</programlisting>
+    It is attached to its target function by specifying
+    the <literal>SUPPORT</literal> clause when creating the target function.
+   </para>
+
+   <para>
+    The details of the API for planner support functions can be found in
+    file <filename>src/include/nodes/supportnodes.h</filename> in the
+    <productname>PostgreSQL</productname> source code.  Here we provide
+    just an overview of what planner support functions can do.
+    The set of possible requests to a support function is extensible,
+    so more things might be possible in future versions.
+   </para>
+
+   <para>
+    Some function calls can be simplified during planning based on
+    properties specific to the function.  For example,
+    <literal>int4mul(n, 1)</literal> could be simplified to
+    just <literal>n</literal>.  This type of transformation can be
+    performed by a planner support function, by having it implement
+    the <literal>SupportRequestSimplify</literal> request type.
+    The support function will be called for each instance of its target
+    function found in a query parse tree.  If it finds that the particular
+    call can be simplified into some other form, it can build and return a
+    parse tree representing that expression.  This will automatically work
+    for operators based on the function, too &mdash; in the example just
+    given, <literal>n * 1</literal> would also be simplified to
+    <literal>n</literal>.
+    (But note that this is just an example; this particular
+    optimization is not actually performed by
+    standard <productname>PostgreSQL</productname>.)
+    We make no guarantee that <productname>PostgreSQL</productname> will
+    never call the target function in cases that the support function could
+    simplify.  Ensure rigorous equivalence between the simplified
+    expression and an actual execution of the target function.
+   </para>
   </sect1>

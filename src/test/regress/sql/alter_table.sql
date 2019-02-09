@@ -1896,10 +1896,9 @@ CREATE TABLE pg_catalog.new_system_table();
 -- instead create in public first, move to catalog
 CREATE TABLE new_system_table(id serial primary key, othercol text);
 ALTER TABLE new_system_table SET SCHEMA pg_catalog;
-
--- XXX: it's currently impossible to move relations out of pg_catalog
 ALTER TABLE new_system_table SET SCHEMA public;
--- move back, will be ignored -- already there
+ALTER TABLE new_system_table SET SCHEMA pg_catalog;
+-- will be ignored -- already there:
 ALTER TABLE new_system_table SET SCHEMA pg_catalog;
 ALTER TABLE new_system_table RENAME TO old_system_table;
 CREATE INDEX old_system_table__othercol ON old_system_table (othercol);

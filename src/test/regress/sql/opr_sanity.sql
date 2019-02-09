@@ -353,10 +353,10 @@ WHERE proallargtypes IS NOT NULL AND
         FROM generate_series(1, array_length(proallargtypes, 1)) g(i)
         WHERE proargmodes IS NULL OR proargmodes[i] IN ('i', 'b', 'v'));
 
--- Check for protransform functions with the wrong signature
+-- Check for prosupport functions with the wrong signature
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
-WHERE p2.oid = p1.protransform AND
+WHERE p2.oid = p1.prosupport AND
     (p2.prorettype != 'internal'::regtype OR p2.proretset OR p2.pronargs != 1
      OR p2.proargtypes[0] != 'internal'::regtype);
 

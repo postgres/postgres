@@ -78,6 +78,11 @@ SELECT (a + b) AS c FROM test_complex;
   <sect1 id="xoper-optimization">
    <title>Operator Optimization Information</title>
 
+  <indexterm zone="xoper-optimization">
+   <primary>optimization information</primary>
+   <secondary>for operators</secondary>
+  </indexterm>
+
    <para>
     A <productname>PostgreSQL</productname> operator definition can include
     several optional clauses that tell the system useful things about how
@@ -95,6 +100,13 @@ SELECT (a + b) AS c FROM test_complex;
     Additional optimization clauses might be added in future versions of
     <productname>PostgreSQL</productname>.  The ones described here are all
     the ones that release &version; understands.
+   </para>
+
+   <para>
+    It is also possible to attach a planner support function to the function
+    that underlies an operator, providing another way of telling the system
+    about the behavior of the operator.
+    See <xref linkend="xfunc-optimization"/> for more information.
    </para>
 
    <sect2>
