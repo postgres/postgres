@@ -5164,7 +5164,6 @@ fi
 
   LLVM_BINPATH=`$LLVM_CONFIG --bindir`
 
-  # LLVM_CONFIG, CLANG are already output via AC_ARG_VAR
 
 
 
@@ -9465,7 +9464,6 @@ $as_echo "$as_me: WARNING:
 *** PostgreSQL then you do not need to worry about this, because the Bison
 *** output is pre-generated.)" >&2;}
 fi
-# We don't need AC_SUBST(BISON) because PGAC_PATH_PROGS did it
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for flex" >&5
@@ -9979,11 +9977,7 @@ fi
 # other libraries can pull in the pthread functions as a side-effect.  We
 # want to use the -pthread or similar flags directly, and not rely on
 # the side-effects of linking with some other library.
-#
-# note: We have to use AS_IF here rather than plain if. The AC_CHECK_HEADER
-# invocation below is the first one in the script, and autoconf generates
-# additional code for that, which must not be inside the if-block. AS_IF
-# knows how to do that.
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for a sed that does not truncate output" >&5
 $as_echo_n "checking for a sed that does not truncate output... " >&6; }
 if ${ac_cv_path_SED+:} false; then :
@@ -14926,7 +14920,6 @@ fi
 
 fi
 
-# Check for largefile support (must be after AC_SYS_LARGEFILE)
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.

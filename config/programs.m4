@@ -56,7 +56,7 @@ if test -z "$BISON"; then
 *** PostgreSQL then you do not need to worry about this, because the Bison
 *** output is pre-generated.)])
 fi
-# We don't need AC_SUBST(BISON) because PGAC_PATH_PROGS did it
+dnl We don't need AC_SUBST(BISON) because PGAC_PATH_PROGS did it
 AC_SUBST(BISONFLAGS)
 ])# PGAC_PATH_BISON
 

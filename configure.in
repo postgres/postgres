@@ -1079,11 +1079,11 @@ fi
 # other libraries can pull in the pthread functions as a side-effect.  We
 # want to use the -pthread or similar flags directly, and not rely on
 # the side-effects of linking with some other library.
-#
-# note: We have to use AS_IF here rather than plain if. The AC_CHECK_HEADER
-# invocation below is the first one in the script, and autoconf generates
-# additional code for that, which must not be inside the if-block. AS_IF
-# knows how to do that.
+
+dnl note: We have to use AS_IF here rather than plain if. The AC_CHECK_HEADER
+dnl invocation below is the first one in the script, and autoconf generates
+dnl additional code for that, which must not be inside the if-block. AS_IF
+dnl knows how to do that.
 AS_IF([test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"],
 [ # then
 AX_PTHREAD	# set thread flags
@@ -1564,7 +1564,7 @@ if test "$PORTNAME" != "win32"; then
    AH_VERBATIM([_DARWIN_USE_64_BIT_INODE],[])
 fi
 
-# Check for largefile support (must be after AC_SYS_LARGEFILE)
+dnl Check for largefile support (must be after AC_SYS_LARGEFILE)
 AC_CHECK_SIZEOF([off_t])
 
 # If we don't have largefile support, can't handle segsize >= 2GB.
