@@ -139,7 +139,8 @@ execTuplesHashPrepare(int numCols,
  *	hashfunctions: datatype-specific hashing functions to use
  *	nbuckets: initial estimate of hashtable size
  *	additionalsize: size of data stored in ->additional
- *	tablecxt: memory context in which to store table and table entries
+ *	metacxt: memory context for long-lived allocation, but not per-entry data
+ *	tablecxt: memory context in which to store table entries
  *	tempcxt: short-lived context for evaluation hash and comparison functions
  *
  * The function arrays may be made with execTuplesHashPrepare().  Note they
@@ -150,14 +151,16 @@ execTuplesHashPrepare(int numCols,
  * storage that will live as long as the hashtable does.
  */
 TupleHashTable
-BuildTupleHashTable(PlanState *parent,
-					TupleDesc inputDesc,
-					int numCols, AttrNumber *keyColIdx,
-					const Oid *eqfuncoids,
-					FmgrInfo *hashfunctions,
-					long nbuckets, Size additionalsize,
-					MemoryContext tablecxt, MemoryContext tempcxt,
-					bool use_variable_hash_iv)
+BuildTupleHashTableExt(PlanState *parent,
+					   TupleDesc inputDesc,
+					   int numCols, AttrNumber *keyColIdx,
+					   const Oid *eqfuncoids,
+					   FmgrInfo *hashfunctions,
+					   long nbuckets, Size additionalsize,
+					   MemoryContext metacxt,
+					   MemoryContext tablecxt,
+					   MemoryContext tempcxt,
+					   bool use_variable_hash_iv)
 {
 	TupleHashTable hashtable;
 	Size		entrysize = sizeof(TupleHashEntryData) + additionalsize;
@@ -168,8 +171,9 @@ BuildTupleHashTable(PlanState *parent,
 	/* Limit initial table size request to not more than work_mem */
 	nbuckets = Min(nbuckets, (long) ((work_mem * 1024L) / entrysize));
 
-	hashtable = (TupleHashTable)
-		MemoryContextAlloc(tablecxt, sizeof(TupleHashTableData));
+	oldcontext = MemoryContextSwitchTo(metacxt);
+
+	hashtable = (TupleHashTable) palloc(sizeof(TupleHashTableData));
 
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;
@@ -195,9 +199,7 @@ BuildTupleHashTable(PlanState *parent,
 	else
 		hashtable->hash_iv = 0;
 
-	hashtable->hashtab = tuplehash_create(tablecxt, nbuckets, hashtable);
-
-	oldcontext = MemoryContextSwitchTo(hashtable->tablecxt);
+	hashtable->hashtab = tuplehash_create(metacxt, nbuckets, hashtable);
 
 	/*
 	 * We copy the input tuple descriptor just for safety --- we assume all
@@ -225,6 +227,46 @@ BuildTupleHashTable(PlanState *parent,
 	MemoryContextSwitchTo(oldcontext);
 
 	return hashtable;
+}
+
+/*
+ * BuildTupleHashTable is a backwards-compatibilty wrapper for
+ * BuildTupleHashTableExt(), that allocates the hashtable's metadata in
+ * tablecxt. Note that hashtables created this way cannot be reset leak-free
+ * with ResetTupleHashTable().
+ */
+TupleHashTable
+BuildTupleHashTable(PlanState *parent,
+					TupleDesc inputDesc,
+					int numCols, AttrNumber *keyColIdx,
+					const Oid *eqfuncoids,
+					FmgrInfo *hashfunctions,
+					long nbuckets, Size additionalsize,
+					MemoryContext tablecxt,
+					MemoryContext tempcxt,
+					bool use_variable_hash_iv)
+{
+	return BuildTupleHashTableExt(parent,
+								  inputDesc,
+								  numCols, keyColIdx,
+								  eqfuncoids,
+								  hashfunctions,
+								  nbuckets, additionalsize,
+								  tablecxt,
+								  tablecxt,
+								  tempcxt,
+								  use_variable_hash_iv);
+}
+
+/*
+ * Reset contents of the hashtable to be empty, preserving all the non-content
+ * state. Note that the tablecxt passed to BuildTupleHashTableExt() should
+ * also be reset, otherwise there will be leaks.
+ */
+void
+ResetTupleHashTable(TupleHashTable hashtable)
+{
+	tuplehash_reset(hashtable->hashtab);
 }
 
 /*
