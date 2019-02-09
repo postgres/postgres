@@ -208,11 +208,17 @@ BuildTupleHashTable(PlanState *parent,
 	hashtable->tab_eq_func = ExecBuildGroupingEqual(inputDesc, inputDesc,
 													numCols,
 													keyColIdx, eqfuncoids,
-													parent);
+													NULL);
+
+	/*
+	 * While not pretty, it's ok to not shut down this context, but instead
+	 * rely on the containing memory context being reset, as
+	 * ExecBuildGroupingEqual() only builds a very simple expression calling
+	 * functions (i.e. nothing that'd employ RegisterExprContextCallback()).
+	 */
+	hashtable->exprcontext = CreateStandaloneExprContext();
 
 	MemoryContextSwitchTo(oldcontext);
-
-	hashtable->exprcontext = CreateExprContext(parent->state);
 
 	return hashtable;
 }
