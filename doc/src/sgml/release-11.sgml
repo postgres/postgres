@@ -147,10 +147,12 @@ Branch: REL_11_STABLE [1ad521099] 2019-01-24 14:09:56 -0300
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [0464fdf07] 2019-01-21 20:08:52 -0300
 Branch: REL_11_STABLE [123cc697a] 2019-01-21 19:59:07 -0300
+Branch: master [cb90de1aa] 2019-02-10 10:00:11 -0300
+Branch: REL_11_STABLE [cc126b45e] 2019-02-10 10:00:11 -0300
 -->
      <para>
       Create or delete foreign key enforcement triggers correctly when
-      attaching or detaching a partition in a a partitioned table that
+      attaching or detaching a partition in a partitioned table that
       has a foreign-key constraint (Amit Langote, &Aacute;lvaro Herrera)
      </para>
     </listitem>
@@ -241,12 +243,13 @@ Branch: REL_10_STABLE [85efd1a04] 2018-11-19 11:16:28 -0300
 Author: Andres Freund <andres@anarazel.de>
 Branch: master [171e0418b] 2019-02-06 01:09:32 -0800
 Branch: REL_11_STABLE [297d627e0] 2019-02-06 01:09:42 -0800
+Branch: REL_11_STABLE [920311ab1] 2019-02-09 02:44:10 -0800
 -->
      <para>
       Fix possible index corruption when the indexed column has
       a <quote>fast default</quote> (that is, it was added
-      by <literal>ALTER TABLE ADD COLUMN</literal> with a constant
-      default value specified, after the table already contained rows)
+      by <literal>ALTER TABLE ADD COLUMN</literal> with a constant non-NULL
+      default value specified, after the table already contained some rows)
       (Andres Freund)
      </para>
     </listitem>
@@ -291,7 +294,15 @@ Branch: REL_10_STABLE [2e3bd064e] 2018-12-13 06:22:39 +0300
 -->
      <para>
       Avoid deadlock between GIN vacuuming and concurrent index insertions
-      (Alexander Korotkov, Andrey Borodin and Peter Geoghegan)
+      (Alexander Korotkov, Andrey Borodin, Peter Geoghegan)
+     </para>
+
+     <para>
+      This change partially reverts a performance improvement, introduced
+      in version 10.0, that attempted to reduce the number of index pages
+      locked during deletion of a GIN posting tree page.  That's now been
+      found to lead to deadlocks, so we've removed it pending closer
+      analysis.
      </para>
     </listitem>
 
@@ -371,8 +382,8 @@ Branch: REL9_5_STABLE [90f1ba7ec] 2019-02-01 10:35:58 +0900
 Branch: REL9_4_STABLE [05d24cf7c] 2019-02-01 10:36:02 +0900
 -->
      <para>
-      Avoid possibly including garbage in the replica identity field of a
-      tuple deletion WAL record (Stas Kelvish)
+      Avoid possibly writing an incorrect replica identity field in a
+      tuple deletion WAL record (Stas Kelvich)
      </para>
     </listitem>
 
@@ -459,6 +470,24 @@ Branch: REL_11_STABLE [aee085bc0] 2018-11-27 10:07:43 -0800
      <para>
       Fix incorrect JIT tuple deforming code for tables with
       many columns (more than approximately 800) (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [5567d12ce] 2019-02-09 01:05:49 -0800
+Branch: REL_11_STABLE [9cf37a527] 2019-02-09 01:05:50 -0800
+Branch: master [3b632a58e] 2019-02-09 01:05:49 -0800
+Branch: REL_11_STABLE [350b0a403] 2019-02-09 01:05:50 -0800
+Branch: master [317ffdfea] 2019-02-09 01:05:49 -0800
+Branch: REL_11_STABLE [6455c6588] 2019-02-09 01:05:50 -0800
+Branch: master [356687bd8] 2019-02-09 01:05:49 -0800
+Branch: REL_11_STABLE [35afccaba] 2019-02-09 01:05:50 -0800
+-->
+     <para>
+      Fix performance and memory leakage issues in hash-based grouping
+      (Andres Freund)
      </para>
     </listitem>
 
@@ -599,7 +628,7 @@ Branch: REL9_4_STABLE [2abc87953] 2018-11-12 11:19:04 -0500
 -->
      <para>
       Avoid O(N^2) planning time growth when a query contains many
-      thousands of indexable clauses (Tom Lane)
+      thousand indexable clauses (Tom Lane)
      </para>
     </listitem>
 
@@ -657,7 +686,7 @@ Branch: REL9_4_STABLE [1d7007671] 2018-12-27 10:17:42 +0900
 
      <para>
       This brings <command>TRUNCATE</command> into line with the behavior
-      of other commands.
+      of other commands.  Previously, such cases usually ended in failure.
      </para>
     </listitem>
 
@@ -893,9 +922,8 @@ Branch: REL_11_STABLE [6b6c64a96] 2018-11-13 17:47:00 +1300
 -->
      <para>
       Fix parsing of space-separated lists of host names in
-      the <varname>ldapserver</varname> parameter
-      of <filename>pg_hba.conf</filename> LDAP authentication entries
-      (Thomas Munro)
+      the <varname>ldapserver</varname> parameter of LDAP authentication
+      entries in <filename>pg_hba.conf</filename> (Thomas Munro)
      </para>
     </listitem>
 
@@ -909,7 +937,7 @@ Branch: REL9_6_STABLE [63d835066] 2018-11-28 14:20:07 +1300
 -->
      <para>
       When making a PAM authentication request, don't set
-      the <varname>PAM_RHOST</varname> variable if the connection is over
+      the <varname>PAM_RHOST</varname> variable if the connection is via
       a Unix socket (Thomas Munro)
      </para>
 
@@ -942,7 +970,7 @@ Branch: REL9_4_STABLE [2407d4807] 2018-11-08 17:33:26 -0500
       in the <productname>PostgreSQL</productname> wire protocol
       specification, and it caused some clients to become very confused.
       In released branches, fix this by silently treating such settings as
-      meaning <literal>ERROR</literal> instead.  Release 12 and later will
+      meaning <literal>ERROR</literal> instead.  Version 12 and later will
       reject those alternatives altogether.
      </para>
     </listitem>
@@ -1045,8 +1073,8 @@ Branch: REL9_4_STABLE [74bfb5388] 2018-11-26 17:32:51 -0500
 
      <para>
       Backslash and some other ASCII punctuation characters were not
-      rendered correctly, leading to document syntax errors or unexpected
-      output.
+      rendered correctly, leading to document syntax errors or wrong
+      characters in the output.
      </para>
     </listitem>
 
@@ -1146,6 +1174,24 @@ Branch: REL_11_STABLE [b72b4fafb] 2018-11-13 09:41:34 +0100
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4dbe19690] 2019-02-09 19:45:38 -0500
+Branch: REL_11_STABLE [ef9bf3593] 2019-02-09 19:45:38 -0500
+Branch: REL_10_STABLE [73668c590] 2019-02-09 19:45:38 -0500
+Branch: REL9_6_STABLE [2b6009e2a] 2019-02-09 19:45:38 -0500
+Branch: REL9_5_STABLE [2c8332177] 2019-02-09 19:45:38 -0500
+Branch: REL9_4_STABLE [ed46d0d32] 2019-02-09 19:45:38 -0500
+-->
+     <para>
+      Avoid null-pointer-dereference crash on some platforms
+      when <application>pg_dump</application>
+      or <application>pg_restore</application> tries to report an error
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Peter Geoghegan <pg@bowt.ie>
 Branch: master [eba775345] 2019-02-06 15:54:19 -0800
 Branch: REL_11_STABLE [2f5416666] 2019-02-06 15:54:17 -0800
@@ -1171,7 +1217,7 @@ Branch: REL_11_STABLE [b1894a607] 2018-12-16 14:32:14 -0500
 Branch: REL_10_STABLE [34010ac2f] 2018-12-16 14:32:14 -0500
 -->
      <para>
-      Properly disregard <literal>EPIPE</literal> errors if <command>COPY
+      Properly disregard <literal>SIGPIPE</literal> errors if <command>COPY
       FROM PROGRAM</command> stops reading the program's output early
       (Tom Lane)
      </para>
@@ -1203,8 +1249,10 @@ Branch: REL9_4_STABLE [e5a6ae97e] 2018-11-24 21:17:09 +0000
       The previous coding did not give the same result as for an
       empty <type>hstore</type> value created by a newer version, thus
       potentially causing wrong results in hash joins or hash
-      aggregation.  It might be advisable to reindex any hash indexes
-      built on <type>hstore</type> columns.
+      aggregation.  It is advisable to reindex any hash indexes
+      built on <type>hstore</type> columns, if the table might contain
+      data that was originally stored as far back as 8.4 and was never
+      dumped/reloaded since then.
      </para>
     </listitem>
 
@@ -1325,8 +1373,8 @@ Branch: REL9_4_STABLE [51884fa16] 2019-02-05 10:06:12 -0500
 -->
      <para>
       Fix Perl-coded build scripts to not
-      assume <quote><literal>.</literal></quote> is in the search path, as
-      recent Perl versions don't include that (Andrew Dunstan)
+      assume <quote><literal>.</literal></quote> is in the search path,
+      since recent Perl versions don't include that (Andrew Dunstan)
      </para>
     </listitem>
 
@@ -1342,6 +1390,25 @@ Branch: REL9_4_STABLE [b161ffe31] 2019-01-18 15:06:26 -0500
 -->
      <para>
       Fix server command-line option parsing problems on OpenBSD (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [640158386] 2019-02-09 11:41:09 -0500
+Branch: REL_11_STABLE [027b5a300] 2019-02-09 11:41:09 -0500
+Branch: REL_10_STABLE [dc0eb137f] 2019-02-09 11:41:09 -0500
+Branch: REL9_6_STABLE [6257f525a] 2019-02-09 11:41:09 -0500
+-->
+     <para>
+      Relocate call of <literal>set_rel_pathlist_hook</literal> so that
+      extensions can use it to supply partial paths for parallel queries
+      (KaiGai Kohei)
+     </para>
+
+     <para>
+      This is not expected to affect existing use-cases.
      </para>
     </listitem>
 
