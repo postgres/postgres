@@ -831,30 +831,6 @@ Branch: REL9_4_STABLE [696c68c2b] 2018-12-17 12:44:09 +0900
 
     <listitem>
 <!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: REL_10_STABLE [a6ca47cd2] 2018-12-27 16:00:39 -0300
-Branch: REL9_6_STABLE [7fc2363a6] 2018-12-27 16:00:39 -0300
-Branch: REL9_5_STABLE [a85045ccc] 2018-12-27 16:00:39 -0300
-Branch: REL9_4_STABLE [5199abaca] 2018-12-27 16:01:36 -0300
-Branch: REL_10_STABLE [3c4ca2109] 2018-12-27 16:17:40 -0300
-Branch: REL9_6_STABLE [aa2e84d2c] 2018-12-27 16:17:40 -0300
-Branch: REL9_5_STABLE [b7258a30a] 2018-12-27 16:17:40 -0300
-Branch: REL9_4_STABLE [2602838fa] 2018-12-27 16:17:40 -0300
--->
-     <para>
-      Make autovacuum more aggressive about removing leftover temporary
-      tables, and also remove leftover temporary tables
-      during <command>DISCARD TEMP</command> (&Aacute;lvaro Herrera)
-     </para>
-
-     <para>
-      This helps ensure that remnants from a crashed session are cleaned
-      up more promptly.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 Branch: master [c952eae52] 2018-12-21 02:37:37 +0300
 Branch: REL_11_STABLE [8193d6407] 2018-12-21 02:37:31 +0300
@@ -1295,25 +1271,6 @@ Branch: REL_10_STABLE [cd1873160] 2019-01-13 10:25:23 +0100
 
     <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_5_STABLE [100535bba] 2018-11-19 14:24:51 -0500
-Branch: REL9_4_STABLE [7c86b9431] 2018-11-19 14:24:52 -0500
--->
-     <para>
-      Adjust <application>configure</application>'s selection of
-      threading-related compiler flags and libraries to match what
-      later <productname>PostgreSQL</productname> releases do (Tom Lane)
-     </para>
-
-     <para>
-      The coding previously used in the 9.4 and 9.5 branches fails
-      outright on some newer platforms, so sync it with what 9.6 and later
-      have been doing.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Andres Freund <andres@anarazel.de>
 Branch: master [5c1186751] 2019-01-28 13:51:12 -0800
 Branch: REL_11_STABLE [453be7d4d] 2019-01-28 13:53:43 -0800
@@ -1409,26 +1366,6 @@ Branch: REL9_6_STABLE [6257f525a] 2019-02-09 11:41:09 -0500
 
      <para>
       This is not expected to affect existing use-cases.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-NOTE this is already in 11.1 notes, but not 10.x !!!!
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [003c68a3b] 2018-11-06 13:25:24 -0500
-Branch: REL_11_STABLE [1f28ec6be] 2018-11-06 13:25:24 -0500
-Branch: REL_10_STABLE [b2e754c14] 2018-11-06 13:25:24 -0500
-NOTE this is already in 11.1 notes, but not 10.x !!!!
--->
-     <para>
-      Rename red-black tree support functions to use <literal>rbt</literal>
-      prefix not <literal>rb</literal> prefix (Tom Lane)
-     </para>
-
-     <para>
-      This avoids name collisions with Ruby functions, which broke
-      PL/Ruby.  It's hoped that there are no other affected extensions.
      </para>
     </listitem>
 
