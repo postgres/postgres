@@ -8008,10 +8008,12 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 			ReleaseSysCache(partcontup);
 
 			/*
-			 * Looks good!  Attach this constraint.  Note that the action
-			 * triggers are no longer needed, so remove them.  We identify
-			 * them because they have our constraint OID, as well as being
-			 * on the referenced rel.
+			 * Looks good!  Attach this constraint.  The action triggers in
+			 * the new partition become redundant -- the parent table already
+			 * has equivalent ones, and those will be able to reach the
+			 * partition.  Remove the ones in the partition.  We identify them
+			 * because they have our constraint OID, as well as being on the
+			 * referenced rel.
 			 */
 			trigrel = heap_open(TriggerRelationId, RowExclusiveLock);
 			ScanKeyInit(&key,
@@ -8024,17 +8026,30 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 			while ((trigtup = systable_getnext(scan)) != NULL)
 			{
 				Form_pg_trigger	trgform = (Form_pg_trigger) GETSTRUCT(trigtup);
+				ObjectAddress	trigger;
 
 				if (trgform->tgconstrrelid != fk->conrelid)
 					continue;
 				if (trgform->tgrelid != fk->confrelid)
 					continue;
 
-				deleteDependencyRecordsForClass(TriggerRelationId,
-												HeapTupleGetOid(trigtup),
-												ConstraintRelationId,
-												DEPENDENCY_INTERNAL);
-				CatalogTupleDelete(trigrel, &trigtup->t_self);
+				/*
+				 * The constraint is originally set up to contain this trigger
+				 * as an implementation object, so there's a dependency record
+				 * that links the two; however, since the trigger is no longer
+				 * needed, we remove the dependency link in order to be able
+				 * to drop the trigger while keeping the constraint intact.
+				 */
+				deleteDependencyRecordsFor(TriggerRelationId,
+										   HeapTupleGetOid(trigtup),
+										   false);
+				/* make dependency deletion visible to performDeletion */
+				CommandCounterIncrement();
+				ObjectAddressSet(trigger, TriggerRelationId,
+								 HeapTupleGetOid(trigtup));
+				performDeletion(&trigger, DROP_RESTRICT, 0);
+				/* make trigger drop visible, in case the loop iterates */
+				CommandCounterIncrement();
 			}
 
 			systable_endscan(scan);
