@@ -1936,9 +1936,9 @@ my %tests = (
 	'CREATE TRANSFORM FOR int' => {
 		create_order => 34,
 		create_sql =>
-		  'CREATE TRANSFORM FOR int LANGUAGE SQL (FROM SQL WITH FUNCTION varchar_transform(internal), TO SQL WITH FUNCTION int4recv(internal));',
+		  'CREATE TRANSFORM FOR int LANGUAGE SQL (FROM SQL WITH FUNCTION prsd_lextype(internal), TO SQL WITH FUNCTION int4recv(internal));',
 		regexp =>
-		  qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog\.varchar_transform\(internal\), TO SQL WITH FUNCTION pg_catalog\.int4recv\(internal\)\);/m,
+		  qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog\.prsd_lextype\(internal\), TO SQL WITH FUNCTION pg_catalog\.int4recv\(internal\)\);/m,
 		like => { %full_runs, section_pre_data => 1, },
 	},
 
