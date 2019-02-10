@@ -36,6 +36,7 @@
 #include "getopt_long.h"
 #include "libpq/pqcomm.h"		/* needed for UNIXSOCK_PATH() */
 #include "pg_config_paths.h"
+#include "portability/instr_time.h"
 
 /* for resultmap we need a list of pairs of strings */
 typedef struct _resultmap
@@ -1473,14 +1474,15 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 
 /*
  * Wait for specified subprocesses to finish, and return their exit
- * statuses into statuses[]
+ * statuses into statuses[] and stop times into stoptimes[]
  *
  * If names isn't NULL, print each subprocess's name as it finishes
  *
  * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
-wait_for_tests(PID_TYPE * pids, int *statuses, char **names, int num_tests)
+wait_for_tests(PID_TYPE * pids, int *statuses, instr_time *stoptimes,
+			   char **names, int num_tests)
 {
 	int			tests_left;
 	int			i;
@@ -1533,6 +1535,7 @@ wait_for_tests(PID_TYPE * pids, int *statuses, char **names, int num_tests)
 #endif
 				pids[i] = INVALID_PID;
 				statuses[i] = (int) exit_status;
+				INSTR_TIME_SET_CURRENT(stoptimes[i]);
 				if (names)
 					status(" %s", names[i]);
 				tests_left--;
@@ -1582,6 +1585,8 @@ run_schedule(const char *schedule, test_function tfunc)
 	_stringlist *expectfiles[MAX_PARALLEL_TESTS];
 	_stringlist *tags[MAX_PARALLEL_TESTS];
 	PID_TYPE	pids[MAX_PARALLEL_TESTS];
+	instr_time	starttimes[MAX_PARALLEL_TESTS];
+	instr_time	stoptimes[MAX_PARALLEL_TESTS];
 	int			statuses[MAX_PARALLEL_TESTS];
 	_stringlist *ignorelist = NULL;
 	char		scbuf[1024];
@@ -1687,7 +1692,8 @@ run_schedule(const char *schedule, test_function tfunc)
 		{
 			status(_("test %-28s ... "), tests[0]);
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
-			wait_for_tests(pids, statuses, NULL, 1);
+			INSTR_TIME_SET_CURRENT(starttimes[0]);
+			wait_for_tests(pids, statuses, stoptimes, NULL, 1);
 			/* status line is finished below */
 		}
 		else if (max_concurrent_tests > 0 && max_concurrent_tests < num_tests)
@@ -1707,12 +1713,15 @@ run_schedule(const char *schedule, test_function tfunc)
 				if (i - oldest >= max_connections)
 				{
 					wait_for_tests(pids + oldest, statuses + oldest,
+								   stoptimes + oldest,
 								   tests + oldest, i - oldest);
 					oldest = i;
 				}
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
+				INSTR_TIME_SET_CURRENT(starttimes[i]);
 			}
 			wait_for_tests(pids + oldest, statuses + oldest,
+						   stoptimes + oldest,
 						   tests + oldest, i - oldest);
 			status_end();
 		}
@@ -1722,8 +1731,9 @@ run_schedule(const char *schedule, test_function tfunc)
 			for (i = 0; i < num_tests; i++)
 			{
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
+				INSTR_TIME_SET_CURRENT(starttimes[i]);
 			}
-			wait_for_tests(pids, statuses, tests, num_tests);
+			wait_for_tests(pids, statuses, stoptimes, tests, num_tests);
 			status_end();
 		}
 
@@ -1793,6 +1803,9 @@ run_schedule(const char *schedule, test_function tfunc)
 			if (statuses[i] != 0)
 				log_child_failure(statuses[i]);
 
+			INSTR_TIME_SUBTRACT(stoptimes[i], starttimes[i]);
+			status(_(" (%.0f ms)"), INSTR_TIME_GET_MILLISEC(stoptimes[i]));
+
 			status_end();
 		}
 
@@ -1818,6 +1831,8 @@ static void
 run_single_test(const char *test, test_function tfunc)
 {
 	PID_TYPE	pid;
+	instr_time	starttime;
+	instr_time	stoptime;
 	int			exit_status;
 	_stringlist *resultfiles = NULL;
 	_stringlist *expectfiles = NULL;
@@ -1829,7 +1844,8 @@ run_single_test(const char *test, test_function tfunc)
 
 	status(_("test %-28s ... "), test);
 	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
-	wait_for_tests(&pid, &exit_status, NULL, 1);
+	INSTR_TIME_SET_CURRENT(starttime);
+	wait_for_tests(&pid, &exit_status, &stoptime, NULL, 1);
 
 	/*
 	 * Advance over all three lists simultaneously.
@@ -1866,6 +1882,9 @@ run_single_test(const char *test, test_function tfunc)
 
 	if (exit_status != 0)
 		log_child_failure(exit_status);
+
+	INSTR_TIME_SUBTRACT(stoptime, starttime);
+	status(_(" (%.0f ms)"), INSTR_TIME_GET_MILLISEC(stoptime));
 
 	status_end();
 }
