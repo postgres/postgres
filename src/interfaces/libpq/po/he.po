@@ -116,12 +116,12 @@ msgstr "שיטת האימות %u אינה נתמכת\n"
 #: fe-auth.c:1045
 #, c-format
 msgid "user name lookup failure: error code %lu\n"
-msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה % lu\n"
+msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה %lu\n"
 
 #: fe-auth.c:1055 fe-connect.c:2258
 #, c-format
 msgid "could not look up local user ID %d: %s\n"
-msgstr "לא יכול לחפש משתמש מקומי עם מזהה % d: %s\n"
+msgstr "לא יכול לחפש משתמש מקומי עם מזהה %d: %s\n"
 
 #: fe-auth.c:1060 fe-connect.c:2263
 #, c-format
@@ -225,7 +225,7 @@ msgstr "נכשל setsockopt(TCP_KEEPCNT):  %s\n"
 #: fe-connect.c:1561
 #, c-format
 msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
-msgstr "נכשל WSAIoctl(SIO_KEEPALIVE_VALS): % ui\n"
+msgstr "נכשל WSAIoctl(SIO_KEEPALIVE_VALS): %ui\n"
 
 #: fe-connect.c:1619
 #, c-format
@@ -701,12 +701,12 @@ msgstr "אין אפשרות לקבוע את OID  של פונקציה lowrite\n"
 #: fe-misc.c:292
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
-msgstr "מספר שלם בגודל % lu אינו נתמך על ידי pqGetInt"
+msgstr "מספר שלם בגודל %lu אינו נתמך על ידי pqGetInt"
 
 #: fe-misc.c:328
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
-msgstr "מספר שלם בגודל % lu אינו נתמך על ידי pqPutInt"
+msgstr "מספר שלם בגודל %lu אינו נתמך על ידי pqPutInt"
 
 #: fe-misc.c:639 fe-misc.c:840
 msgid "connection not open\n"
@@ -760,7 +760,7 @@ msgstr "אין זיכרון פנוי"
 #: fe-protocol2.c:529
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
-msgstr "תו לא צפוי% c בעקבות תגובת שאילתה ריקה (הודעת \"I\")"
+msgstr "תו לא צפוי %c בעקבות תגובת שאילתה ריקה (הודעת \"I\")"
 
 #: fe-protocol2.c:595
 #, c-format
@@ -913,7 +913,7 @@ msgstr "%s:%s"
 #: fe-protocol3.c:1316
 #, c-format
 msgid "LINE %d: "
-msgstr "השורה % d: "
+msgstr "השורה %d: "
 
 #: fe-protocol3.c:1711
 msgid "PQgetline: not doing text COPY OUT\n"
@@ -1069,7 +1069,7 @@ msgstr "אין דיווח על שגיאת SSL"
 #: fe-secure-openssl.c:1465
 #, c-format
 msgid "SSL error code %lu"
-msgstr "קוד שגיאת SSL % lu"
+msgstr "קוד שגיאת SSL %lu"
 
 #: fe-secure.c:261
 #, c-format

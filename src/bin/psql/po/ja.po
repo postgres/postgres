@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-23 23:44+0000\n"
+"POT-Creation-Date: 2019-01-15 00:23+0000\n"
 "PO-Revision-Date: 2018-02-13 09:40+0900\n"
+"Last-Translator: Daisuke Higuchi <higuchi.daisuke@jp.fujitsu.com>\n"
+"Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
-"Language-Team: \n"
 "X-Generator: Poedit 2.0.6\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
@@ -54,8 +54,7 @@ msgid "pclose failed: %s"
 msgstr "pcloseが失敗しました: %s"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 command.c:608 input.c:227 mainloop.c:82
-#: mainloop.c:276
+#: ../../common/fe_memutils.c:98 input.c:227 mainloop.c:82 mainloop.c:276
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
@@ -120,27 +119,27 @@ msgid "(%lu row)"
 msgid_plural "(%lu rows)"
 msgstr[0] "(%lu 行)"
 
-#: ../../fe_utils/print.c:2913
+#: ../../fe_utils/print.c:2937
 #, c-format
 msgid "Interrupted\n"
 msgstr "割り込み\n"
 
-#: ../../fe_utils/print.c:2977
+#: ../../fe_utils/print.c:3001
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "テーブルの内容にヘッダーを追加できません: 列数 %d が制限値を超えています。\n"
 
-#: ../../fe_utils/print.c:3017
+#: ../../fe_utils/print.c:3041
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "テーブルの内容にセルを追加できません: セルの合計数 %d が制限値を超えています。\n"
 
-#: ../../fe_utils/print.c:3266
+#: ../../fe_utils/print.c:3290
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "出力フォーマットが無効（内部エラー）：%d"
 
-#: ../../fe_utils/psqlscan.l:713
+#: ../../fe_utils/psqlscan.l:722
 #, c-format
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "変数 \"%s\" の再帰展開をスキップしています\n"
@@ -175,214 +174,214 @@ msgstr "ユーザー ID %ld のホームディレクトリを取得できませ�
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: ディレクトリを \"%s\" に変更できませんでした: %s\n"
 
-#: command.c:596 common.c:648 common.c:706 common.c:1242
+#: command.c:596 common.c:648 common.c:706 common.c:1244
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "現在データベースに接続していません。\n"
 
-#: command.c:621
+#: command.c:603
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "データベース \"%s\" にユーザ \"%s\" として、ソケット \"%s\" のポート \"%s\" を介して接続しています。\n"
 
-#: command.c:624
+#: command.c:606
 #, c-format
 msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "データベース \"%s\" にユーザ \"%s\" として、ホスト \"%s\" 上のポート \"%s\" を介して接続しています。\n"
 
-#: command.c:915 command.c:1005 command.c:1114 command.c:2523
+#: command.c:895 command.c:985 command.c:1094 command.c:2503
 #, c-format
 msgid "no query buffer\n"
 msgstr "問い合わせバッファがありません\n"
 
-#: command.c:948 command.c:4784
+#: command.c:928 command.c:4764
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "無効な行番号です: %s\n"
 
-#: command.c:998
+#: command.c:978
 #, c-format
 msgid "The server (version %s) does not support editing function source.\n"
 msgstr "このサーバー (バージョン %s) は関数ソースコードの編集をサポートしていません。\n"
 
-#: command.c:1073 command.c:1154
+#: command.c:1053 command.c:1134
 msgid "No changes"
 msgstr "変更されていません"
 
-#: command.c:1107
+#: command.c:1087
 #, c-format
 msgid "The server (version %s) does not support editing view definitions.\n"
 msgstr "このサーバー (バージョン %s) はビュー定義の編集をサポートしていません。\n"
 
-#: command.c:1231
+#: command.c:1211
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: エンコーディング名が無効か、または変換プロシージャが見つかりません。\n"
 
-#: command.c:1266 command.c:1888 command.c:3169 command.c:4886 common.c:173
-#: common.c:244 common.c:541 common.c:1288 common.c:1316 common.c:1417
+#: command.c:1246 command.c:1868 command.c:3149 command.c:4866 common.c:173
+#: common.c:244 common.c:541 common.c:1290 common.c:1318 common.c:1419
 #: copy.c:489 copy.c:708 large_obj.c:156 large_obj.c:191 large_obj.c:253
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1270
+#: command.c:1250
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: command.c:1273
+#: command.c:1253
 msgid "There is no previous error."
 msgstr "直前のエラーはありません。"
 
-#: command.c:1444 command.c:1749 command.c:1763 command.c:1780 command.c:1940
-#: command.c:2177 command.c:2490 command.c:2530
+#: command.c:1424 command.c:1729 command.c:1743 command.c:1760 command.c:1920
+#: command.c:2157 command.c:2470 command.c:2510
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: 必要な引数がありません\n"
 
-#: command.c:1575
+#: command.c:1555
 #, c-format
 msgid "\\elif: cannot occur after \\else\n"
 msgstr "\\elif: \\else の後には置けません\n"
 
-#: command.c:1580
+#: command.c:1560
 #, c-format
 msgid "\\elif: no matching \\if\n"
 msgstr "\\elif: これに対応する \\if がありません\n"
 
-#: command.c:1644
+#: command.c:1624
 #, c-format
 msgid "\\else: cannot occur after \\else\n"
 msgstr "\\else: \\else の後には置けません\n"
 
-#: command.c:1649
+#: command.c:1629
 #, c-format
 msgid "\\else: no matching \\if\n"
 msgstr "\\else: これに対応する \\if がありません\n"
 
-#: command.c:1689
+#: command.c:1669
 #, c-format
 msgid "\\endif: no matching \\if\n"
 msgstr "\\endif: これに対応する \\if がありません\n"
 
-#: command.c:1844
+#: command.c:1824
 msgid "Query buffer is empty."
 msgstr "問い合わせバッファは空です。"
 
-#: command.c:1866
+#: command.c:1846
 msgid "Enter new password: "
 msgstr "新しいパスワードを入力してください: "
 
-#: command.c:1867
+#: command.c:1847
 msgid "Enter it again: "
 msgstr "もう一度入力してください: "
 
-#: command.c:1871
+#: command.c:1851
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "パスワードが一致しませんでした。\n"
 
-#: command.c:1970
+#: command.c:1950
 #, c-format
 msgid "\\%s: could not read value for variable\n"
 msgstr "\\%s: 変数の値を読み取ることができませんでした\n"
 
-#: command.c:2073
+#: command.c:2053
 msgid "Query buffer reset (cleared)."
 msgstr "問い合わせバッファがリセット（クリア）されました。"
 
-#: command.c:2095
+#: command.c:2075
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "ファイル \"%s\" にヒストリーを出力しました。\n"
 
-#: command.c:2182
+#: command.c:2162
 #, c-format
 msgid "\\%s: environment variable name must not contain \"=\"\n"
 msgstr "\\%s: 環境変数名に \"=\" を含めることはできません\n"
 
-#: command.c:2238
+#: command.c:2218
 #, c-format
 msgid "The server (version %s) does not support showing function source.\n"
 msgstr "このサーバー (バージョン %s) は関数ソースの表示をサポートしていません。\n"
 
-#: command.c:2245
+#: command.c:2225
 #, c-format
 msgid "function name is required\n"
 msgstr "関数名が必要です。\n"
 
-#: command.c:2332
+#: command.c:2312
 #, c-format
 msgid "The server (version %s) does not support showing view definitions.\n"
 msgstr "このサーバー (バージョン %s) はビュー定義の表示をサポートしていません。\n"
 
-#: command.c:2339
+#: command.c:2319
 #, c-format
 msgid "view name is required\n"
 msgstr "ビュー名が必要です\n"
 
-#: command.c:2462
+#: command.c:2442
 msgid "Timing is on."
 msgstr "タイミングは on です。"
 
-#: command.c:2464
+#: command.c:2444
 msgid "Timing is off."
 msgstr "タイミングは off です。"
 
-#: command.c:2549 command.c:2577 command.c:3537 command.c:3540 command.c:3543
-#: command.c:3549 command.c:3551 command.c:3559 command.c:3569 command.c:3578
-#: command.c:3592 command.c:3609 command.c:3667 common.c:69 copy.c:332
+#: command.c:2529 command.c:2557 command.c:3517 command.c:3520 command.c:3523
+#: command.c:3529 command.c:3531 command.c:3539 command.c:3549 command.c:3558
+#: command.c:3572 command.c:3589 command.c:3647 common.c:69 copy.c:332
 #: copy.c:392 copy.c:405 psqlscanslash.l:761 psqlscanslash.l:772
 #: psqlscanslash.l:782
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:2961 startup.c:205
+#: command.c:2941 startup.c:205
 msgid "Password: "
 msgstr "パスワード： "
 
-#: command.c:2966 startup.c:207
+#: command.c:2946 startup.c:207
 #, c-format
 msgid "Password for user %s: "
 msgstr "ユーザー %s のパスワード: "
 
-#: command.c:3016
+#: command.c:2996
 #, c-format
 msgid "All connection parameters must be supplied because no database connection exists\n"
 msgstr "データベース接続がないため、すべての接続パラメータを指定しなければなりません\n"
 
-#: command.c:3173
+#: command.c:3153
 #, c-format
 msgid "Previous connection kept\n"
 msgstr "以前の接続は保持されています。\n"
 
-#: command.c:3177
+#: command.c:3157
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:3213
+#: command.c:3193
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "データベース \"%s\" にユーザ \"%s\" として、ソケット \"%s\" のポート \"%s\" を介して接続しました。\n"
 
-#: command.c:3216
+#: command.c:3196
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "データベース \"%s\" にユーザ \"%s\" として、ホスト \"%s\" のポート \"%s\" を介して接続しました。\n"
 
-#: command.c:3220
+#: command.c:3200
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "データベース \"%s\" にユーザ \"%s\" として接続しました。\n"
 
-#: command.c:3253
+#: command.c:3233
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s、サーバー %s)\n"
 
-#: command.c:3261
+#: command.c:3241
 #, c-format
 msgid ""
 "WARNING: %s major version %s, server major version %s.\n"
@@ -391,24 +390,24 @@ msgstr ""
 "警告： %s のメジャーバージョンは %s ですが、サーバーのメジャーバージョンは %s です。\n"
 "         psql の機能の中で、動作しないものがあるかもしれません。\n"
 
-#: command.c:3298
+#: command.c:3278
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
 msgstr "SSL 接続 (プロトコル: %s、暗号化方式: %s、ビット長: %s、圧縮: %s)\n"
 
-#: command.c:3299 command.c:3300 command.c:3301
+#: command.c:3279 command.c:3280 command.c:3281
 msgid "unknown"
 msgstr "不明"
 
-#: command.c:3302 help.c:45
+#: command.c:3282 help.c:45
 msgid "off"
 msgstr "オフ"
 
-#: command.c:3302 help.c:45
+#: command.c:3282 help.c:45
 msgid "on"
 msgstr "オン"
 
-#: command.c:3322
+#: command.c:3302
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -419,238 +418,238 @@ msgstr ""
 "      8 ビット文字列が正しく動作しない可能性があります。詳細は psql リファレンスマニュアルの\n"
 "      \"Notes for Windows users\"（Windowsユーザ向けの注意）を参照してください。\n"
 
-#: command.c:3426
+#: command.c:3406
 #, c-format
 msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number\n"
 msgstr "環境変数 PSQL_EDITOR_LINENUMBER_ARG で行番号を指定する必要があります。\n"
 
-#: command.c:3455
+#: command.c:3435
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "エディタ \"%s\" を起動できませんでした。\n"
 
-#: command.c:3457
+#: command.c:3437
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "/bin/sh を起動できませんでした。\n"
 
-#: command.c:3495
+#: command.c:3475
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "一時ディレクトリが見つかりませんでした: %s\n"
 
-#: command.c:3522
+#: command.c:3502
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "一時ファイル \"%s\" を開けませんでした: %s\n"
 
-#: command.c:3796
+#: command.c:3776
 #, c-format
 msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n"
 msgstr "\\pset: 有効なフォーマットは unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms です。\n"
 
-#: command.c:3814
+#: command.c:3794
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: 有効な線のスタイルは ascii, old-ascii, unicode です。\n"
 
-#: command.c:3829
+#: command.c:3809
 #, c-format
 msgid "\\pset: allowed Unicode border line styles are single, double\n"
 msgstr "\\pset: 有効な Unicode 罫線のスタイルは single, double です。\n"
 
-#: command.c:3844
+#: command.c:3824
 #, c-format
 msgid "\\pset: allowed Unicode column line styles are single, double\n"
 msgstr "\\pset: 有効な Unicode 列罫線のスタイルは single, double です。\n"
 
-#: command.c:3859
+#: command.c:3839
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double\n"
 msgstr "\\pset: 有効な Unicode ヘッダー罫線のスタイルは single, double です。\n"
 
-#: command.c:4024 command.c:4203
+#: command.c:4004 command.c:4183
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: 未定義のオプション：%s\n"
 
-#: command.c:4042
+#: command.c:4022
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "罫線スタイルは %d です。\n"
 
-#: command.c:4048
+#: command.c:4028
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "ターゲットの幅が設定されていません。\n"
 
-#: command.c:4050
+#: command.c:4030
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "ターゲットの幅は %d です。\n"
 
-#: command.c:4057
+#: command.c:4037
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "拡張表示は on です。\n"
 
-#: command.c:4059
+#: command.c:4039
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "拡張表示が自動的に使われます。\n"
 
-#: command.c:4061
+#: command.c:4041
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "拡張表示は off です。\n"
 
-#: command.c:4068 command.c:4076
+#: command.c:4048 command.c:4056
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "フィールド区切り文字はゼロバイトです。\n"
 
-#: command.c:4070
+#: command.c:4050
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "フィールド区切り文字は \"%s\" です。\n"
 
-#: command.c:4083
+#: command.c:4063
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "デフォルトフッター（行数の表示）は on です。\n"
 
-#: command.c:4085
+#: command.c:4065
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "デフォルトフッター（行数の表示）は off です。\n"
 
-#: command.c:4091
+#: command.c:4071
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "出力形式は %s です。\n"
 
-#: command.c:4097
+#: command.c:4077
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "線のスタイルは %s です。\n"
 
-#: command.c:4104
+#: command.c:4084
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null 表示は \"%s\" です。\n"
 
-#: command.c:4112
+#: command.c:4092
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "『数値出力時のロケール調整』は on です。\n"
 
-#: command.c:4114
+#: command.c:4094
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "『数値出力時のロケール調整』は off です。\n"
 
-#: command.c:4121
+#: command.c:4101
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "表示が縦に長くなる場合はページャーを使います。\n"
 
-#: command.c:4123
+#: command.c:4103
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "常にページャーを使います。\n"
 
-#: command.c:4125
+#: command.c:4105
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "「ページャーを使う」は off です。\n"
 
-#: command.c:4131
+#: command.c:4111
 #, c-format
 msgid "Pager won't be used for less than %d line.\n"
 msgid_plural "Pager won't be used for less than %d lines.\n"
 msgstr[0] "%d 行未満の場合、ページャーは使われません。\n"
 
-#: command.c:4141 command.c:4151
+#: command.c:4121 command.c:4131
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "レコードの区切り文字はゼロバイトです\n"
 
-#: command.c:4143
+#: command.c:4123
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "レコード区切り文字は <newline> です。\n"
 
-#: command.c:4145
+#: command.c:4125
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "レコード区切り記号は \"%s\"です。\n"
 
-#: command.c:4158
+#: command.c:4138
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "テーブル属性は \"%s\"です。\n"
 
-#: command.c:4161
+#: command.c:4141
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "テーブル属性は設定されていません。\n"
 
-#: command.c:4168
+#: command.c:4148
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "タイトルは \"%s\" です。\n"
 
-#: command.c:4170
+#: command.c:4150
 #, c-format
 msgid "Title is unset.\n"
 msgstr "タイトルは設定されていません。\n"
 
-#: command.c:4177
+#: command.c:4157
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "「タプルのみ表示」は on です。\n"
 
-#: command.c:4179
+#: command.c:4159
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "「タプルのみ表示」は off です。\n"
 
-#: command.c:4185
+#: command.c:4165
 #, c-format
 msgid "Unicode border line style is \"%s\".\n"
 msgstr "Unicode の罫線スタイルは \"%s\" です。\n"
 
-#: command.c:4191
+#: command.c:4171
 #, c-format
 msgid "Unicode column line style is \"%s\".\n"
 msgstr "Unicode 行罫線のスタイルは \"%s\" です。\n"
 
-#: command.c:4197
+#: command.c:4177
 #, c-format
 msgid "Unicode header line style is \"%s\".\n"
 msgstr "Unicode ヘッダー行のスタイルは \"%s\" です。\n"
 
-#: command.c:4357
+#: command.c:4337
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: 失敗\n"
 
-#: command.c:4382 common.c:754
+#: command.c:4362 common.c:754
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch は空の問い合わせでは使えません\n"
 
-#: command.c:4423
+#: command.c:4403
 #, c-format
 msgid "%s\t%s (every %gs)\n"
 msgstr "%s\t%s (%g 秒毎)\n"
 
-#: command.c:4426
+#: command.c:4406
 #, c-format
 msgid "%s (every %gs)\n"
 msgstr "%s (%g 秒毎)\n"
 
-#: command.c:4480 command.c:4487 common.c:654 common.c:661 common.c:1271
+#: command.c:4460 command.c:4467 common.c:654 common.c:661 common.c:1273
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -663,12 +662,12 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: command.c:4679
+#: command.c:4659
 #, c-format
 msgid "\"%s.%s\" is not a view\n"
 msgstr "\"%s.%s\" はビューではありません\n"
 
-#: command.c:4695
+#: command.c:4675
 #, c-format
 msgid "could not parse reloptions array\n"
 msgstr "reloptions 配列を解析できませんでした。\n"
@@ -703,7 +702,7 @@ msgstr "失敗。\n"
 msgid "Succeeded.\n"
 msgstr "成功。\n"
 
-#: common.c:531 common.c:1034 common.c:1206
+#: common.c:531 common.c:1036 common.c:1208
 #, c-format
 msgid "unexpected PQresultStatus: %d\n"
 msgstr "予期しない PQresultStatus: %d\n"
@@ -738,27 +737,27 @@ msgstr "\\watch は COPY と一緒には使えません\n"
 msgid "unexpected result status for \\watch\n"
 msgstr "\\watch で予期しない結果のステータス\n"
 
-#: common.c:795
+#: common.c:796
 #, c-format
 msgid "Asynchronous notification \"%s\" with payload \"%s\" received from server process with PID %d.\n"
 msgstr "PID %3$d のサーバープロセスから、ペイロード \"%2$s\" を持つ非同期通知 \"%1$s\" を受信しました。\n"
 
-#: common.c:798
+#: common.c:799
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "PID %2$d のサーバープロセスから非同期通知 \"%1$s\" を受信しました。\n"
 
-#: common.c:860
+#: common.c:862
 #, c-format
 msgid "no rows returned for \\gset\n"
 msgstr "\\gset に対して返すべき行がありません\n"
 
-#: common.c:865
+#: common.c:867
 #, c-format
 msgid "more than one row returned for \\gset\n"
 msgstr "\\gset に対して複数の行が返されました\n"
 
-#: common.c:1251
+#: common.c:1253
 #, c-format
 msgid ""
 "***(Single step mode: verify command)*******************************************\n"
@@ -769,17 +768,17 @@ msgstr ""
 "%s\n"
 "***([Enter] を押して進むか、x [Enter] でキャンセル)**************\n"
 
-#: common.c:1306
+#: common.c:1308
 #, c-format
 msgid "The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n"
 msgstr "このサーバー (バージョン %s) は ON_ERROR_ROLLBACK 用のセーブポイントをサポートしていません。\n"
 
-#: common.c:1362
+#: common.c:1364
 #, c-format
 msgid "STATEMENT:  %s\n"
 msgstr "ステートメント:  %s\n"
 
-#: common.c:1405
+#: common.c:1407
 #, c-format
 msgid "unexpected transaction status (%d)\n"
 msgstr "予期しないトランザクションのステータス (%d)\n"
@@ -1512,12 +1511,12 @@ msgstr "継承元"
 #: describe.c:2896
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
-msgstr "子テーブル数: %d (\\+d で一覧を表示)"
+msgstr "子テーブル数: %d (\\d+ で一覧を表示)"
 
 #: describe.c:2898
 #, c-format
 msgid "Number of partitions: %d (Use \\d+ to list them.)"
-msgstr "パーティション数: %d (\\+d で一覧を表示)。"
+msgstr "パーティション数: %d (\\d+ で一覧を表示)。"
 
 #: describe.c:2906
 msgid "Child tables"
@@ -3178,8 +3177,7 @@ msgstr "  null               null 値の所に表示する文字列を設定\n"
 msgid ""
 "  numericlocale      enable or disable display of a locale-specific character to separate\n"
 "                     groups of digits [on, off]\n"
-msgstr ""
-"  numericlocale      つながった数字を区切るためにロケール固有文字を表示するかどうか [on, off]\n"
+msgstr "  numericlocale      つながった数字を区切るためにロケール固有文字を表示するかどうか [on, off]\n"
 
 #: help.c:397
 #, c-format
@@ -5651,7 +5649,7 @@ msgstr "%s: 警告: 余分なコマンドライン引数 \"%s\" は無視され�
 msgid "%s: could not find own program executable\n"
 msgstr "%s: 実行可能プログラムファイルが見つかりませんでした。\n"
 
-#: tab-complete.c:4186
+#: tab-complete.c:4201
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"

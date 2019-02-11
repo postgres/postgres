@@ -421,7 +421,7 @@ msgstr "%s: geçersiz locale adı \"%s\"\n"
 #: initdb.c:2171
 #, c-format
 msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
-msgstr "% s: geçersiz yerel ayarlar; LANG ve LC_ * ortam değişkenlerini denetleyin.\n"
+msgstr "%s: geçersiz yerel ayarlar; LANG ve LC_ * ortam değişkenlerini denetleyin.\n"
 
 #: initdb.c:2199
 #, c-format
@@ -917,7 +917,7 @@ msgstr "%s: şifre promptu ve şifre dosyası birlikte belirtilemez\n"
 #: initdb.c:3195
 #, c-format
 msgid "%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"
-msgstr "% s: superuser adı \"% s\" izin verilmiyor; rol adları \"pg_\" ile başlayamaz\n"
+msgstr "%s: superuser adı \"%s\" izin verilmiyor; rol adları \"pg_\" ile başlayamaz\n"
 
 #: initdb.c:3199
 #, c-format

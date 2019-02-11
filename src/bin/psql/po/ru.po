@@ -4,13 +4,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2005.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-01 13:03+0300\n"
-"PO-Revision-Date: 2017-11-21 15:42+0300\n"
+"POT-Creation-Date: 2019-02-10 17:44+0300\n"
+"PO-Revision-Date: 2018-10-05 21:27+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -123,24 +123,24 @@ msgstr[0] "(%lu строка)"
 msgstr[1] "(%lu строки)"
 msgstr[2] "(%lu строк)"
 
-#: ../../fe_utils/print.c:2913
+#: ../../fe_utils/print.c:2937
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прервано\n"
 
-#: ../../fe_utils/print.c:2977
+#: ../../fe_utils/print.c:3001
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления заголовка таблицы: превышен предел числа столбцов (%d).\n"
 
-#: ../../fe_utils/print.c:3017
+#: ../../fe_utils/print.c:3041
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления ячейки в таблицу: превышен предел числа ячеек (%d).\n"
 
-#: ../../fe_utils/print.c:3266
+#: ../../fe_utils/print.c:3290
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
@@ -183,7 +183,7 @@ msgstr "не удалось получить домашний каталог п�
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: не удалось перейти в каталог \"%s\": %s\n"
 
-#: command.c:596 common.c:648 common.c:706 common.c:1242
+#: command.c:596 common.c:648 common.c:706 common.c:1287
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "В данный момент вы не подключены к базе данных.\n"
@@ -241,8 +241,8 @@ msgstr ""
 "перекодировки\n"
 
 #: command.c:1246 command.c:1868 command.c:3149 command.c:4866 common.c:173
-#: common.c:244 common.c:541 common.c:1288 common.c:1316 common.c:1417
-#: copy.c:489 copy.c:708 large_obj.c:156 large_obj.c:191 large_obj.c:253
+#: common.c:244 common.c:541 common.c:1333 common.c:1361 common.c:1462
+#: copy.c:492 copy.c:711 large_obj.c:156 large_obj.c:191 large_obj.c:253
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -695,7 +695,7 @@ msgstr "%s\t%s (обновление: %g с)\n"
 msgid "%s (every %gs)\n"
 msgstr "%s (обновление: %g с)\n"
 
-#: command.c:4460 command.c:4467 common.c:654 common.c:661 common.c:1271
+#: command.c:4460 command.c:4467 common.c:654 common.c:661 common.c:1316
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -750,7 +750,7 @@ msgstr "неудачна.\n"
 msgid "Succeeded.\n"
 msgstr "удачна.\n"
 
-#: common.c:531 common.c:1034 common.c:1206
+#: common.c:531 common.c:1036 common.c:1251
 #, c-format
 msgid "unexpected PQresultStatus: %d\n"
 msgstr "неожиданное значение PQresultStatus: %d\n"
@@ -785,7 +785,7 @@ msgstr "\\watch нельзя использовать с COPY\n"
 msgid "unexpected result status for \\watch\n"
 msgstr "неожиданное состояние результата для \\watch\n"
 
-#: common.c:795
+#: common.c:796
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" with payload \"%s\" received from server "
@@ -794,24 +794,24 @@ msgstr ""
 "Получено асинхронное уведомление \"%s\" с сообщением-нагрузкой \"%s\" от "
 "серверного процесса с PID %d.\n"
 
-#: common.c:798
+#: common.c:799
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Получено асинхронное уведомление \"%s\" от серверного процесса с PID %d.\n"
 
-#: common.c:860
+#: common.c:862
 #, c-format
 msgid "no rows returned for \\gset\n"
 msgstr "сервер не возвратил строк для \\gset\n"
 
-#: common.c:865
+#: common.c:867
 #, c-format
 msgid "more than one row returned for \\gset\n"
 msgstr "сервер возвратил больше одной строки для \\gset\n"
 
-#: common.c:1251
+#: common.c:1296
 #, c-format
 msgid ""
 "***(Single step mode: verify "
@@ -825,19 +825,19 @@ msgstr ""
 "%s\n"
 "***(Enter - выполнение; x и Enter - отмена)**************\n"
 
-#: common.c:1306
+#: common.c:1351
 #, c-format
 msgid ""
 "The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n"
 msgstr ""
 "Сервер (версия %s) не поддерживает точки сохранения для ON_ERROR_ROLLBACK.\n"
 
-#: common.c:1362
+#: common.c:1407
 #, c-format
 msgid "STATEMENT:  %s\n"
 msgstr "ОПЕРАТОР:  %s\n"
 
-#: common.c:1405
+#: common.c:1450
 #, c-format
 msgid "unexpected transaction status (%d)\n"
 msgstr "неожиданное состояние транзакции (%d)\n"
@@ -877,21 +877,21 @@ msgstr "COPY FROM/TO не может работать с каталогом (%s)
 msgid "could not close pipe to external command: %s\n"
 msgstr "не удалось закрыть канал сообщений с внешней командой: %s\n"
 
-#: copy.c:452 copy.c:463
+#: copy.c:455 copy.c:466
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "не удалось записать данные COPY: %s\n"
 
-#: copy.c:470
+#: copy.c:473
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "ошибка передачи данных COPY: %s"
 
-#: copy.c:531
+#: copy.c:534
 msgid "canceled by user"
 msgstr "отменено пользователем"
 
-#: copy.c:542
+#: copy.c:545
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself, or an EOF signal."
@@ -899,11 +899,11 @@ msgstr ""
 "Вводите данные для копирования, разделяя строки переводом строки.\n"
 "Закончите ввод строкой '\\.' или сигналом EOF."
 
-#: copy.c:670
+#: copy.c:673
 msgid "aborted because of read failure"
 msgstr "прерывание из-за ошибки чтения"
 
-#: copy.c:704
+#: copy.c:707
 msgid "trying to exit copy mode"
 msgstr "попытка выйти из режима копирования"
 
@@ -3376,7 +3376,7 @@ msgid ""
 "  VERBOSITY          controls verbosity of error reports [default, verbose, "
 "terse]\n"
 msgstr ""
-"  VERBOSITY          управляет детализацией отчётов об ошибке [default (по "
+"  VERBOSITY          управляет детализацией отчётов об ошибках [default (по "
 "умолчанию), verbose (подробно), terse (кратко)]\n"
 
 #: help.c:378
@@ -3670,7 +3670,7 @@ msgstr ""
 #, c-format
 msgid "  PSQLRC             alternative location for the user's .psqlrc file\n"
 msgstr ""
-"  PSQLRC             альтернативное размещения пользовательского файла ."
+"  PSQLRC             альтернативное размещение пользовательского файла ."
 "psqlrc\n"
 
 #: help.c:433

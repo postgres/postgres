@@ -32,7 +32,7 @@ msgstr "לא ניתן לשכפל מצביע ריק (שגיאה פנימית)\n"
 #: ../../common/username.c:43
 #, c-format
 msgid "could not look up effective user ID %ld: %s"
-msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה % ld: %s"
+msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה %ld: %s"
 
 #: ../../common/username.c:45
 msgid "user does not exist"
@@ -41,14 +41,14 @@ msgstr "משתמש לא קיים"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה % lu"
+msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה %lu"
 
 #: ../../fe_utils/print.c:353
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
-msgstr[0] "(% lu שורה)"
-msgstr[1] "(% lu שורות)"
+msgstr[0] "(%lu שורה)"
+msgstr[1] "(%lu שורות)"
 
 #: ../../fe_utils/print.c:2913
 #, c-format

@@ -246,7 +246,7 @@ msgstr "search_pathを消去できませんでした: %s"
 #: libpq_fetch.c:75
 #, c-format
 msgid "source server must not be in recovery mode\n"
-msgstr "ソースサーバはリカバリモードでなければなりません\n"
+msgstr "ソースサーバはリカバリモードであってはなりません\n"
 
 #: libpq_fetch.c:85
 #, c-format

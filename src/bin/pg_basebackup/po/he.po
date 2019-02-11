@@ -538,7 +538,7 @@ msgstr "תכנית %s:  לא ניתן לכתוב לקובץ \"%s\": %s\n"
 #: pg_basebackup.c:965 pg_basebackup.c:986 pg_basebackup.c:1014
 #, c-format
 msgid "%s: could not set compression level %d: %s\n"
-msgstr "תכנתי %s: לא היתה אפשרות להגדיר את רמת הדחיסה % d: %s\n"
+msgstr "תכנתי %s: לא היתה אפשרות להגדיר את רמת הדחיסה %d: %s\n"
 
 #: pg_basebackup.c:1035
 #, c-format
@@ -1111,7 +1111,7 @@ msgstr ""
 #: pg_recvlogical.c:135
 #, c-format
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
-msgstr "תכנית %s: מאשר לכתוב עד % X/%X, סומק ל %X/%X (חריץ %s)\n"
+msgstr "תכנית %s: מאשר לכתוב עד %X/%X, סומק ל %X/%X (חריץ %s)\n"
 
 #: pg_recvlogical.c:160 receivelog.c:349
 #, c-format
@@ -1278,7 +1278,7 @@ msgstr "תכנית %s:  לא משנה שם \"%s%s\", קטע אינה שלמה\n"
 #: receivelog.c:278
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
-msgstr "תכנית %s: שרת דיווח שם קובץ היסטוריה לא צפוי עבור ציר הזמן % u: %s\n"
+msgstr "תכנית %s: שרת דיווח שם קובץ היסטוריה לא צפוי עבור ציר הזמן %u: %s\n"
 
 #: receivelog.c:286
 #, c-format

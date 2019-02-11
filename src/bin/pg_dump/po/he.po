@@ -590,12 +590,12 @@ msgstr "שחזור אובייקט גדול עם OID %u\n"
 #: pg_backup_archiver.c:1302
 #, c-format
 msgid "could not create large object %u: %s"
-msgstr "לא היתה אפשרות ליצור אובייקט גדול % u: %s"
+msgstr "לא היתה אפשרות ליצור אובייקט גדול %u: %s"
 
 #: pg_backup_archiver.c:1307 pg_dump.c:3085
 #, c-format
 msgid "could not open large object %u: %s"
-msgstr "לא היתה אפשרות לפתוח את אובייקט גדול % u: %s"
+msgstr "לא היתה אפשרות לפתוח את אובייקט גדול %u: %s"
 
 #: pg_backup_archiver.c:1365
 #, c-format
@@ -634,13 +634,13 @@ msgstr "לא היתה אפשרות לפתוח את קובץ הפלט: %s\n"
 #, c-format
 msgid "wrote %lu byte of large object data (result = %lu)\n"
 msgid_plural "wrote %lu bytes of large object data (result = %lu)\n"
-msgstr[0] "נכתב % lu בית של נתוני האובייקט הגדול (תוצאה = % lu)\n"
-msgstr[1] "נכתבו % lu בתים של נתוני האובייקט הגדול (תוצאה = % lu)\n"
+msgstr[0] "נכתב %lu בית של נתוני האובייקט הגדול (תוצאה = %lu)\n"
+msgstr[1] "נכתבו %lu בתים של נתוני האובייקט הגדול (תוצאה = %lu)\n"
 
 #: pg_backup_archiver.c:1658
 #, c-format
 msgid "could not write to large object (result: %lu, expected: %lu)\n"
-msgstr "לא מצליח לכתוב על אובייקט גדול (תוצאה: % lu, צפוי: % lu)\n"
+msgstr "לא מצליח לכתוב על אובייקט גדול (תוצאה: %lu, צפוי: %lu)\n"
 
 #: pg_backup_archiver.c:1751
 #, c-format
@@ -716,7 +716,7 @@ msgstr "לא היתה אפשרות לקרוא מתוך קובץ הקלט: %s\n"
 #: pg_backup_archiver.c:2147
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
-msgstr "קובץ הקלט קצר מדי (לקרוא % lu, מצופה 5)\n"
+msgstr "קובץ הקלט קצר מדי (לקרוא %lu, מצופה 5)\n"
 
 #: pg_backup_archiver.c:2232
 #, c-format
@@ -761,7 +761,7 @@ msgstr "תהליך עובד נכשל: יציאה קוד %d\n"
 #: pg_backup_archiver.c:2562
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
-msgstr "מזהה כניסה% d מחוץ לטווח - אולי TOC מושחת\n"
+msgstr "מזהה כניסה %d מחוץ לטווח - אולי TOC מושחת\n"
 
 #: pg_backup_archiver.c:2678
 #, c-format
@@ -841,12 +841,12 @@ msgstr "לא מצא מחרוזת הקסם בכותרת הקובץ\n"
 #: pg_backup_archiver.c:3659
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
-msgstr "גירסה לא נתמכת (% d.%d) בכותרת הקובץ\n"
+msgstr "גירסה לא נתמכת (%d.%d) בכותרת הקובץ\n"
 
 #: pg_backup_archiver.c:3664
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
-msgstr "בדיקת שפיות על גודל מספר שלם (% lu) נכשלה\n"
+msgstr "בדיקת שפיות על גודל מספר שלם (%lu) נכשלה\n"
 
 #: pg_backup_archiver.c:3668
 #, c-format
@@ -946,7 +946,7 @@ msgstr "מזהה האובייקט OID לא חוקי עבור אובייקט גד
 #: pg_backup_custom.c:451
 #, c-format
 msgid "unrecognized data block type (%d) while searching archive\n"
-msgstr "סוג בלוק נתונים לא מזוהה (% d) בעת חיפוש בארכיון\n"
+msgstr "סוג בלוק נתונים לא מזוהה (%d) בעת חיפוש בארכיון\n"
 
 #: pg_backup_custom.c:462
 #, c-format
@@ -956,17 +956,17 @@ msgstr "שגיאה בעת חיפוש קובץ: %s\n"
 #: pg_backup_custom.c:472
 #, c-format
 msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to lack of data offsets in archive\n"
-msgstr "לא יכול למצוא את מזהה הבלוק % d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב חוסר קיזוז נתונים בארכיון\n"
+msgstr "לא יכול למצוא את מזהה הבלוק %d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב חוסר קיזוז נתונים בארכיון\n"
 
 #: pg_backup_custom.c:477
 #, c-format
 msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to non-seekable input file\n"
-msgstr "לא יכול למצוא את מזהה הבלוק% d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב קובץ קלט שאינו ניתן לחיפוש בו\n"
+msgstr "לא יכול למצוא את מזהה הבלוק %d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב קובץ קלט שאינו ניתן לחיפוש בו\n"
 
 #: pg_backup_custom.c:482
 #, c-format
 msgid "could not find block ID %d in archive -- possibly corrupt archive\n"
-msgstr "לא יכול למצוא את מזהה הבלוק% d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב קובץ ארכיון מושחת\n"
+msgstr "לא יכול למצוא את מזהה הבלוק %d בארכיון - אולי בשל בקשת שחזור שאינה מסודרת, שלא ניתן לטפל בה עקב קובץ ארכיון מושחת\n"
 
 #: pg_backup_custom.c:489
 #, c-format
@@ -1309,8 +1309,8 @@ msgstr "שחזור נתונים אשר לא בסדר אינו נתמך בתבנ�
 #, c-format
 msgid "incomplete tar header found (%lu byte)\n"
 msgid_plural "incomplete tar header found (%lu bytes)\n"
-msgstr[0] "כותרת tar לא שלמה נמצאה (% lu בית)\n"
-msgstr[1] "כותרת tar לא שלמה נמצאה (% lu בתים)\n"
+msgstr[0] "כותרת tar לא שלמה נמצאה (%lu בית)\n"
+msgstr[1] "כותרת tar לא שלמה נמצאה (%lu בתים)\n"
 
 #: pg_backup_tar.c:1278
 #, c-format
@@ -1870,7 +1870,7 @@ msgstr "לדווח על באגים ל <pgsql-bugs@postgresql.org>\n"
 #: pg_dump.c:1000
 #, c-format
 msgid "invalid client encoding \"%s\" specified\n"
-msgstr "צוין קידוד לקוח לא חוקי \"% s\"\n"
+msgstr "צוין קידוד לקוח לא חוקי \"%s\"\n"
 
 #: pg_dump.c:1137
 #, c-format
@@ -1951,7 +1951,7 @@ msgstr "שמירת אובייקטים גדולים\n"
 #: pg_dump.c:3095
 #, c-format
 msgid "error reading large object %u: %s"
-msgstr "שגיאה בעת קריאת אובייקט גדול % u: %s"
+msgstr "שגיאה בעת קריאת אובייקט גדול %u: %s"
 
 #: pg_dump.c:3148
 #, c-format

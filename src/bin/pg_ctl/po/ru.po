@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009, 2012.
 # Andrey Sudnik <sudnikand@gmail.com>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-08-23 14:44+0000\n"
-"PO-Revision-Date: 2017-08-21 06:14+0300\n"
+"PO-Revision-Date: 2018-11-19 16:18+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -556,7 +556,7 @@ msgid ""
 "OPTIONS]\n"
 msgstr ""
 "  %s register [-D КАТАЛОГ-ДАННЫХ] [-N ИМЯ-СЛУЖБЫ] [-U ПОЛЬЗОВАТЕЛЬ]\n"
-"                  [-P ПОЛЬЗОВАТЕЛЬ] [-S ТИП-ЗАПУСКА] [-e ИСТОЧНИК]\n"
+"                  [-P ПАРОЛЬ] [-S ТИП-ЗАПУСКА] [-e ИСТОЧНИК]\n"
 "                  [-W] [-t СЕК] [-s] [-o ПАРАМЕТРЫ]\n"
 
 #: pg_ctl.c:1871

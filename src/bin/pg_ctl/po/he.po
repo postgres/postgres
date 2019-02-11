@@ -142,7 +142,7 @@ msgstr "תכנית %s:  לא היתה אפשרות להפעיל שרת: %s\n"
 #: pg_ctl.c:495
 #, c-format
 msgid "%s: could not start server: error code %lu\n"
-msgstr "תכנית %s:  לא היתה אפשרות להפעיל שרת: קוד שגיאה % lu\n"
+msgstr "תכנית %s:  לא היתה אפשרות להפעיל שרת: קוד שגיאה %lu\n"
 
 #: pg_ctl.c:572
 #, c-format
@@ -263,12 +263,12 @@ msgstr "האם השרת פועל?\n"
 #: pg_ctl.c:967
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
-msgstr "תכנית %s: לא יכול להפסיק את השרת; מופעל שרת למשתמש יחיד (PID: % ld)\n"
+msgstr "תכנית %s: לא יכול להפסיק את השרת; מופעל שרת למשתמש יחיד (PID: %ld)\n"
 
 #: pg_ctl.c:975 pg_ctl.c:1070
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
-msgstr "תכנית %s: לא היתה אפשרות לשלוח אות עצירה (PID: % ld): %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח אות עצירה (PID: %ld): %s\n"
 
 #: pg_ctl.c:982
 msgid "server shutting down\n"
@@ -312,7 +312,7 @@ msgstr "מאתחל לשרת בכל מקרה\n"
 #: pg_ctl.c:1058
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
-msgstr "תכנית %s: לא ניתן להפעיל מחדש את השרת; מופעל שרת למשתמש יחיד (PID: % ld)\n"
+msgstr "תכנית %s: לא ניתן להפעיל מחדש את השרת; מופעל שרת למשתמש יחיד (PID: %ld)\n"
 
 #: pg_ctl.c:1061 pg_ctl.c:1146
 msgid "Please terminate the single-user server and try again.\n"
@@ -321,17 +321,17 @@ msgstr "אנא כבה את שרת המשתמש היחיד ונסה שוב\n"
 #: pg_ctl.c:1120
 #, c-format
 msgid "%s: old server process (PID: %ld) seems to be gone\n"
-msgstr "תכנית %s: תהליך השרת הישן (PID: % ld) כנראה פועל\n"
+msgstr "תכנית %s: תהליך השרת הישן (PID: %ld) כנראה פועל\n"
 
 #: pg_ctl.c:1143
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
-msgstr "תכנית %s: לא ניתן להפעיל מחדש את השרת; מופעל שרת למשתמש יחיד (PID: % ld)\n"
+msgstr "תכנית %s: לא ניתן להפעיל מחדש את השרת; מופעל שרת למשתמש יחיד (PID: %ld)\n"
 
 #: pg_ctl.c:1152
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
-msgstr "תכנית %s: לא היתה אפשרות לשלוח אות להפעלה מחדש (PID: % ld): %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח אות להפעלה מחדש (PID: %ld): %s\n"
 
 #: pg_ctl.c:1157
 msgid "server signaled\n"
@@ -340,7 +340,7 @@ msgstr "שרת איתת\n"
 #: pg_ctl.c:1182
 #, c-format
 msgid "%s: cannot promote server; single-user server is running (PID: %ld)\n"
-msgstr "תכנית %s: לא ניתן לקדם שרת; מופעל שרת למשתמש יחיד (PID: % ld)\n"
+msgstr "תכנית %s: לא ניתן לקדם שרת; מופעל שרת למשתמש יחיד (PID: %ld)\n"
 
 #: pg_ctl.c:1190
 #, c-format
@@ -360,7 +360,7 @@ msgstr "תכנית %s: לא מצליח לכתוב לקובץ האות לקידו
 #: pg_ctl.c:1219
 #, c-format
 msgid "%s: could not send promote signal (PID: %ld): %s\n"
-msgstr "תכנית %s: לא היתה אפשרות לשלוח את האות  לקדם(PID: % ld): %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח את האות  לקדם(PID: %ld): %s\n"
 
 #: pg_ctl.c:1222
 #, c-format
@@ -386,12 +386,12 @@ msgstr "שרת בקידום\n"
 #: pg_ctl.c:1301
 #, c-format
 msgid "%s: single-user server is running (PID: %ld)\n"
-msgstr "תכנית %s: שרת משתמש יחיד  פועל (PID: % ld)\n"
+msgstr "תכנית %s: שרת משתמש יחיד  פועל (PID: %ld)\n"
 
 #: pg_ctl.c:1314
 #, c-format
 msgid "%s: server is running (PID: %ld)\n"
-msgstr "תכנית %s: שרת פועל (PID: % ld)\n"
+msgstr "תכנית %s: שרת פועל (PID: %ld)\n"
 
 #: pg_ctl.c:1330
 #, c-format
@@ -401,7 +401,7 @@ msgstr "תכנית %s: אין שרתים פעילים\n"
 #: pg_ctl.c:1348
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
-msgstr "תכנית %s: לא היתה אפשרות לשלוח אות %d (PID: % ld): %s\n"
+msgstr "תכנית %s: לא היתה אפשרות לשלוח אות %d (PID: %ld): %s\n"
 
 #: pg_ctl.c:1405
 #, c-format
@@ -426,7 +426,7 @@ msgstr "תכנית %s: שירות '%s' כבר רשום\n"
 #: pg_ctl.c:1502
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
-msgstr "תכנית %s: אין אפשרות לרשום את השירות \"%s\": קוד שגיאה % lu\n"
+msgstr "תכנית %s: אין אפשרות לרשום את השירות \"%s\": קוד שגיאה %lu\n"
 
 #: pg_ctl.c:1525
 #, c-format
@@ -436,12 +436,12 @@ msgstr "תכנית %s: שירות '%s' אינו רשום\n"
 #: pg_ctl.c:1532
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
-msgstr "תכנית %s: לא היתה אפשרות לפתוח שירות '%s': קוד שגיאה % lu\n"
+msgstr "תכנית %s: לא היתה אפשרות לפתוח שירות '%s': קוד שגיאה %lu\n"
 
 #: pg_ctl.c:1541
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
-msgstr "תכנית %s: לא יכול לבטל את השירות \"%s\": קוד שגיאה % lu\n"
+msgstr "תכנית %s: לא יכול לבטל את השירות \"%s\": קוד שגיאה %lu\n"
 
 #: pg_ctl.c:1628
 msgid "Waiting for server startup...\n"
@@ -458,7 +458,7 @@ msgstr "שרת עלה ומקבל חיבורים\n"
 #: pg_ctl.c:1690
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
-msgstr "תכנית %s: לא היתה אפשרות להפעיל שירות '%s': קוד שגיאה % lu\n"
+msgstr "תכנית %s: לא היתה אפשרות להפעיל שירות '%s': קוד שגיאה %lu\n"
 
 #: pg_ctl.c:1764
 #, c-format
@@ -468,12 +468,12 @@ msgstr "תכנית %s:  אזהרה: אין אפשרות ליצור אסימונ�
 #: pg_ctl.c:1777
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "תכנית %s: לא ניתן לפתוח את התהליך token: קוד שגיאה % lu\n"
+msgstr "תכנית %s: לא ניתן לפתוח את התהליך token: קוד שגיאה %lu\n"
 
 #: pg_ctl.c:1791
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "תכנית %s: לא ניתן להקצות SID: קוד שגיאה % lu\n"
+msgstr "תכנית %s: לא ניתן להקצות SID: קוד שגיאה %lu\n"
 
 #: pg_ctl.c:1811
 #, c-format

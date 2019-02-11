@@ -3,12 +3,12 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-04-27 15:35+0300\n"
+"POT-Creation-Date: 2019-02-10 17:44+0300\n"
 "PO-Revision-Date: 2018-04-27 16:44+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -52,26 +52,26 @@ msgstr[0] "(%lu строка)"
 msgstr[1] "(%lu строки)"
 msgstr[2] "(%lu строк)"
 
-#: ../../fe_utils/print.c:2913
+#: ../../fe_utils/print.c:2937
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прерывание\n"
 
-#: ../../fe_utils/print.c:2977
+#: ../../fe_utils/print.c:3001
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Добавить заголовок к содержимому таблицы нельзя: число столбцов превышает "
 "%d.\n"
 
-#: ../../fe_utils/print.c:3017
+#: ../../fe_utils/print.c:3041
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
 "Добавить ячейку к содержимому таблицы нельзя: общее число ячеек превышает "
 "%d.\n"
 
-#: ../../fe_utils/print.c:3266
+#: ../../fe_utils/print.c:3290
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
