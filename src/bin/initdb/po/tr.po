@@ -441,7 +441,7 @@ msgstr "%s: geçersiz yerel adı \"%s\"\n"
 #: initdb.c:2567
 #, c-format
 msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
-msgstr "% s: geçersiz yerel ayarlar; LANG ve LC_ * ortam değişkenlerini denetleyin.\n"
+msgstr "%s: geçersiz yerel ayarlar; LANG ve LC_ * ortam değişkenlerini denetleyin.\n"
 
 #: initdb.c:2595
 #, c-format

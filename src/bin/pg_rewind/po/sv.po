@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_rewind
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-06-18 02:33+0000\n"
-"PO-Revision-Date: 2018-06-18 22:14+0200\n"
+"POT-Creation-Date: 2019-01-02 22:03+0000\n"
+"PO-Revision-Date: 2019-01-03 06:01+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -628,8 +628,8 @@ msgstr "måldatakatalog måste stängas ner utan fel\n"
 
 #: pg_rewind.c:469
 #, c-format
-msgid "invalid control file"
-msgstr "ogiltig kontrollfil"
+msgid "invalid control file\n"
+msgstr "ogiltig kontrollfil\n"
 
 #: pg_rewind.c:480
 #, c-format
@@ -864,25 +864,25 @@ msgstr "post med ogiltig längd vid %X/%X"
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "ogiltig komprimerad image vid %X/%X, block %d"
 
-#~ msgid "entry \"%s\" excluded from %s file list\n"
-#~ msgstr "post \"%s\" utesluten från fillista (%s)\n"
+#~ msgid "%s: unable to read permissions from \"%s\"\n"
+#~ msgstr "%s: kunde inte läsa rättigheter från \"%s\"\n"
 
-#~ msgid "%s: could not read permissions of directory \"%s\": %s\n"
-#~ msgstr "%s: kunde inte läsa rättigheter på katalog \"%s\": %s\n"
+#~ msgid "WAL file is from different database system: incorrect segment size in page header"
+#~ msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvud"
 
-#~ msgid "servers diverged at WAL location %X/%X on timeline %u\n"
-#~ msgstr "servrarna divergerade vid WAL-position %X/%X på tidslinje %u\n"
+#~ msgid "Expected a write-ahead log switchpoint location.\n"
+#~ msgstr "Förväntade en write-ahead-log brytpunktposition.\n"
 
 #~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte\n"
 #~ msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes\n"
 #~ msgstr[0] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte\n"
 #~ msgstr[1] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte\n"
 
-#~ msgid "Expected a write-ahead log switchpoint location.\n"
-#~ msgstr "Förväntade en write-ahead-log brytpunktposition.\n"
+#~ msgid "servers diverged at WAL location %X/%X on timeline %u\n"
+#~ msgstr "servrarna divergerade vid WAL-position %X/%X på tidslinje %u\n"
 
-#~ msgid "WAL file is from different database system: incorrect segment size in page header"
-#~ msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvud"
+#~ msgid "%s: could not read permissions of directory \"%s\": %s\n"
+#~ msgstr "%s: kunde inte läsa rättigheter på katalog \"%s\": %s\n"
 
-#~ msgid "%s: unable to read permissions from \"%s\"\n"
-#~ msgstr "%s: kunde inte läsa rättigheter från \"%s\"\n"
+#~ msgid "entry \"%s\" excluded from %s file list\n"
+#~ msgstr "post \"%s\" utesluten från fillista (%s)\n"

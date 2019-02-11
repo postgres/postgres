@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-22 00:33+0000\n"
-"PO-Revision-Date: 2018-09-23 09:03+0200\n"
+"POT-Creation-Date: 2019-02-05 01:03+0000\n"
+"PO-Revision-Date: 2019-02-05 08:27+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.1.1\n"
+"X-Generator: Poedit 2.2.1\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
@@ -628,8 +628,8 @@ msgstr "le répertoire de données source doit être arrêté proprement\n"
 
 #: pg_rewind.c:469
 #, c-format
-msgid "invalid control file"
-msgstr "Fichier de contrôle invalide"
+msgid "invalid control file\n"
+msgstr "Fichier de contrôle invalide\n"
 
 #: pg_rewind.c:480
 #, c-format

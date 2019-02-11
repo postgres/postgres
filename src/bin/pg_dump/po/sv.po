@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-06-17 21:04+0000\n"
-"PO-Revision-Date: 2018-06-17 23:15+0200\n"
+"PO-Revision-Date: 2019-01-29 21:15+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -2076,7 +2076,7 @@ msgstr "fråga för att hämta definition av vy \"%s\" returnerade ingen data\n"
 #: pg_dump.c:15099
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
-msgstr "fråga för att hämta definition av vy \"%s\" returnerade mer än en definiton\n"
+msgstr "fråga för att hämta definition av vy \"%s\" returnerade mer än en definition\n"
 
 #: pg_dump.c:15106
 #, c-format

@@ -242,7 +242,7 @@ msgstr "サーバへ接続しました\n"
 #: libpq_fetch.c:69
 #, c-format
 msgid "source server must not be in recovery mode\n"
-msgstr "ソースサーバはリカバリモードでなければなりません\n"
+msgstr "ソースサーバはリカバリモードであってはなりません\n"
 
 #: libpq_fetch.c:79
 #, c-format
