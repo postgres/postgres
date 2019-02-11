@@ -26,8 +26,6 @@
 #include "utils/syscache.h"
 #include "mb/pg_wchar.h"
 
-#define MAX_INT32_LEN 11
-
 static char *printTypmod(const char *typname, int32 typmod, Oid typmodout);
 
 
