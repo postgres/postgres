@@ -73,6 +73,9 @@ SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conre
 INSERT INTO tbl SELECT 1, 2, 3*x, box('4,4,4,4') FROM generate_series(1,10) AS x;
 INSERT INTO tbl SELECT 1, NULL, 3*x, box('4,4,4,4') FROM generate_series(1,10) AS x;
 INSERT INTO tbl SELECT x, 2*x, NULL, NULL FROM generate_series(1,10) AS x;
+explain (costs off)
+select * from tbl where (c1,c2,c3) < (2,5,1);
+select * from tbl where (c1,c2,c3) < (2,5,1);
 DROP TABLE tbl;
 
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box,

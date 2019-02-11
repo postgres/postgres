@@ -127,6 +127,23 @@ INSERT INTO tbl SELECT 1, NULL, 3*x, box('4,4,4,4') FROM generate_series(1,10) A
 ERROR:  null value in column "c2" violates not-null constraint
 DETAIL:  Failing row contains (1, null, 3, (4,4),(4,4)).
 INSERT INTO tbl SELECT x, 2*x, NULL, NULL FROM generate_series(1,10) AS x;
+explain (costs off)
+select * from tbl where (c1,c2,c3) < (2,5,1);
+                   QUERY PLAN                   
+------------------------------------------------
+ Bitmap Heap Scan on tbl
+   Filter: (ROW(c1, c2, c3) < ROW(2, 5, 1))
+   ->  Bitmap Index Scan on covering
+         Index Cond: (ROW(c1, c2) <= ROW(2, 5))
+(4 rows)
+
+select * from tbl where (c1,c2,c3) < (2,5,1);
+ c1 | c2 | c3 | c4 
+----+----+----+----
+  1 |  2 |    | 
+  2 |  4 |    | 
+(2 rows)
+
 DROP TABLE tbl;
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box,
 				UNIQUE(c1,c2) INCLUDE(c3,c4));

@@ -3966,7 +3966,7 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 			break;				/* no good, volatile comparison value */
 
 		/*
-		 * The Var side can match any column of the index.
+		 * The Var side can match any key column of the index.
 		 */
 		for (i = 0; i < index->nkeycolumns; i++)
 		{
@@ -3978,7 +3978,7 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 
 				break;
 		}
-		if (i >= index->ncolumns)
+		if (i >= index->nkeycolumns)
 			break;				/* no match found */
 
 		/* Add column number to returned list */
