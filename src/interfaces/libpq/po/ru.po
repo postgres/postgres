@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-01 13:04+0300\n"
+"POT-Creation-Date: 2018-10-25 16:26+0300\n"
 "PO-Revision-Date: 2018-05-16 14:07+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -37,8 +37,8 @@ msgstr "повторный запрос аутентификации GSS\n"
 #: fe-connect.c:2257 fe-connect.c:3584 fe-connect.c:3836 fe-connect.c:3955
 #: fe-connect.c:4205 fe-connect.c:4285 fe-connect.c:4384 fe-connect.c:4640
 #: fe-connect.c:4669 fe-connect.c:4741 fe-connect.c:4765 fe-connect.c:4783
-#: fe-connect.c:4879 fe-connect.c:5213 fe-connect.c:5363 fe-exec.c:3406
-#: fe-exec.c:3571 fe-lobj.c:896 fe-protocol2.c:1214 fe-protocol3.c:1621
+#: fe-connect.c:4879 fe-connect.c:5213 fe-connect.c:5363 fe-exec.c:3409
+#: fe-exec.c:3574 fe-lobj.c:896 fe-protocol2.c:1214 fe-protocol3.c:1621
 #: fe-secure-openssl.c:514 fe-secure-openssl.c:1138
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -447,7 +447,7 @@ msgstr ""
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"
 
-#: fe-exec.c:436 fe-exec.c:2733
+#: fe-exec.c:436 fe-exec.c:2736
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "номер записи %d вне диапазона 0..%d"
@@ -487,7 +487,7 @@ msgstr "число параметров должно быть от 0 до 65535\
 msgid "statement name is a null pointer\n"
 msgstr "указатель на имя оператора нулевой\n"
 
-#: fe-exec.c:1308 fe-exec.c:1471 fe-exec.c:2186 fe-exec.c:2385
+#: fe-exec.c:1308 fe-exec.c:1471 fe-exec.c:2186 fe-exec.c:2388
 msgid "function requires at least protocol version 3.0\n"
 msgstr "функция требует протокол минимум версии 3.0\n"
 
@@ -529,35 +529,35 @@ msgstr "сначала должно завершиться состояние CO
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "вызов PQexec не допускается в процессе COPY BOTH\n"
 
-#: fe-exec.c:2275 fe-exec.c:2342 fe-exec.c:2432 fe-protocol2.c:1360
+#: fe-exec.c:2278 fe-exec.c:2345 fe-exec.c:2435 fe-protocol2.c:1360
 #: fe-protocol3.c:1760
 msgid "no COPY in progress\n"
 msgstr "операция COPY не выполняется\n"
 
-#: fe-exec.c:2622
+#: fe-exec.c:2625
 msgid "connection in wrong state\n"
 msgstr "соединение в неправильном состоянии\n"
 
-#: fe-exec.c:2653
+#: fe-exec.c:2656
 msgid "invalid ExecStatusType code"
 msgstr "неверный код ExecStatusType"
 
-#: fe-exec.c:2717 fe-exec.c:2740
+#: fe-exec.c:2720 fe-exec.c:2743
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "номер столбца %d вне диапазона 0..%d"
 
-#: fe-exec.c:2755
+#: fe-exec.c:2758
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "номер параметра %d вне диапазона 0..%d"
 
-#: fe-exec.c:3065
+#: fe-exec.c:3068
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:3304 fe-exec.c:3388
+#: fe-exec.c:3307 fe-exec.c:3391
 msgid "incomplete multibyte character\n"
 msgstr "неполный многобайтный символ\n"
 

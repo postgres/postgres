@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-01 13:04+0300\n"
-"PO-Revision-Date: 2017-10-12 10:13+0300\n"
+"POT-Creation-Date: 2019-02-08 11:47+0300\n"
+"PO-Revision-Date: 2019-02-08 12:19+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -973,8 +973,8 @@ msgstr "%s: не удалось создать символическую ссы
 
 #: initdb.c:3263
 #, c-format
-msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: символические ссылки не поддерживаются в этой ОС"
+msgid "%s: symlinks are not supported on this platform\n"
+msgstr "%s: символические ссылки не поддерживаются в этой ОС\n"
 
 #: initdb.c:3287
 #, c-format

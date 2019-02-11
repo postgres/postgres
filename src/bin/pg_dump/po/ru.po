@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-01 13:05+0300\n"
+"POT-Creation-Date: 2019-02-08 11:47+0300\n"
 "PO-Revision-Date: 2018-05-16 14:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -2271,26 +2271,26 @@ msgid "WARNING: could not parse reloptions array\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: не удалось разобрать массив reloptions\n"
 
 #. translator: this is a module name
-#: pg_dump_sort.c:23
+#: pg_dump_sort.c:25
 msgid "sorter"
 msgstr "sorter"
 
-#: pg_dump_sort.c:496
+#: pg_dump_sort.c:498
 #, c-format
 msgid "invalid dumpId %d\n"
 msgstr "неверный dumpId %d\n"
 
-#: pg_dump_sort.c:502
+#: pg_dump_sort.c:504
 #, c-format
 msgid "invalid dependency %d\n"
 msgstr "неверная зависимость %d\n"
 
-#: pg_dump_sort.c:735
+#: pg_dump_sort.c:737
 #, c-format
 msgid "could not identify dependency loop\n"
 msgstr "не удалось определить цикл зависимостей\n"
 
-#: pg_dump_sort.c:1261
+#: pg_dump_sort.c:1269
 #, c-format
 msgid "NOTICE: there are circular foreign-key constraints on this table:\n"
 msgid_plural ""
@@ -2302,12 +2302,12 @@ msgstr[1] ""
 msgstr[2] ""
 "ЗАМЕЧАНИЕ: в следующих таблицах зациклены ограничения внешних ключей:\n"
 
-#: pg_dump_sort.c:1265 pg_dump_sort.c:1285
+#: pg_dump_sort.c:1273 pg_dump_sort.c:1293
 #, c-format
 msgid "  %s\n"
 msgstr "  %s\n"
 
-#: pg_dump_sort.c:1266
+#: pg_dump_sort.c:1274
 #, c-format
 msgid ""
 "You might not be able to restore the dump without using --disable-triggers "
@@ -2316,7 +2316,7 @@ msgstr ""
 "Возможно для восстановления базы вам потребуется использовать --disable-"
 "triggers или временно удалить ограничения.\n"
 
-#: pg_dump_sort.c:1267
+#: pg_dump_sort.c:1275
 #, c-format
 msgid ""
 "Consider using a full dump instead of a --data-only dump to avoid this "
@@ -2325,7 +2325,7 @@ msgstr ""
 "Во избежание этой проблемы, вам вероятно стоит выгружать всю базу данных, а "
 "не только данные (--data-only).\n"
 
-#: pg_dump_sort.c:1279
+#: pg_dump_sort.c:1287
 #, c-format
 msgid "WARNING: could not resolve dependency loop among these items:\n"
 msgstr ""
