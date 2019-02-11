@@ -528,6 +528,30 @@ select relname, relkind from pg_class where relname like 'idxpart%' order by rel
 ---------+---------
 (0 rows)
 
+create table idxpart (a int, b int, c int) partition by range(a);
+create index on idxpart(c);
+create table idxpart1 partition of idxpart for values from (0) to (250);
+create table idxpart2 partition of idxpart for values from (250) to (500);
+alter table idxpart detach partition idxpart2;
+\d idxpart2
+              Table "public.idxpart2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+Indexes:
+    "idxpart2_c_idx" btree (c)
+
+alter table idxpart2 drop column c;
+\d idxpart2
+              Table "public.idxpart2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+
+drop table idxpart, idxpart2;
 -- Verify that expression indexes inherit correctly
 create table idxpart (a int, b int) partition by range (a);
 create table idxpart1 (like idxpart);

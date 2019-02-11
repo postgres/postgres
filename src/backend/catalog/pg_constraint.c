@@ -760,13 +760,17 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 
 /*
  * ConstraintSetParentConstraint
- *		Set a partition's constraint as child of its parent table's
+ *		Set a partition's constraint as child of its parent constraint,
+ *		or remove the linkage if parentConstrId is InvalidOid.
  *
  * This updates the constraint's pg_constraint row to show it as inherited, and
- * add a dependency to the parent so that it cannot be removed on its own.
+ * adds PARTITION dependencies to prevent the constraint from being deleted
+ * on its own.  Alternatively, reverse that.
  */
 void
-ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
+ConstraintSetParentConstraint(Oid childConstrId,
+							  Oid parentConstrId,
+							  Oid childTableId)
 {
 	Relation	constrRel;
 	Form_pg_constraint constrForm;
@@ -795,10 +799,13 @@ ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
 
 		CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
 
-		ObjectAddressSet(referenced, ConstraintRelationId, parentConstrId);
 		ObjectAddressSet(depender, ConstraintRelationId, childConstrId);
 
-		recordDependencyOn(&depender, &referenced, DEPENDENCY_INTERNAL_AUTO);
+		ObjectAddressSet(referenced, ConstraintRelationId, parentConstrId);
+		recordDependencyOn(&depender, &referenced, DEPENDENCY_PARTITION_PRI);
+
+		ObjectAddressSet(referenced, RelationRelationId, childTableId);
+		recordDependencyOn(&depender, &referenced, DEPENDENCY_PARTITION_SEC);
 	}
 	else
 	{
@@ -809,10 +816,14 @@ ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
 		/* Make sure there's no further inheritance. */
 		Assert(constrForm->coninhcount == 0);
 
+		CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
+
 		deleteDependencyRecordsForClass(ConstraintRelationId, childConstrId,
 										ConstraintRelationId,
-										DEPENDENCY_INTERNAL_AUTO);
-		CatalogTupleUpdate(constrRel, &tuple->t_self, newtup);
+										DEPENDENCY_PARTITION_PRI);
+		deleteDependencyRecordsForClass(ConstraintRelationId, childConstrId,
+										RelationRelationId,
+										DEPENDENCY_PARTITION_SEC);
 	}
 
 	ReleaseSysCache(tuple);

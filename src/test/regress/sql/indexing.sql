@@ -249,6 +249,16 @@ select relname, relkind from pg_class where relname like 'idxpart%' order by rel
 drop table idxpart, idxpart1, idxpart2, idxpart3;
 select relname, relkind from pg_class where relname like 'idxpart%' order by relname;
 
+create table idxpart (a int, b int, c int) partition by range(a);
+create index on idxpart(c);
+create table idxpart1 partition of idxpart for values from (0) to (250);
+create table idxpart2 partition of idxpart for values from (250) to (500);
+alter table idxpart detach partition idxpart2;
+\d idxpart2
+alter table idxpart2 drop column c;
+\d idxpart2
+drop table idxpart, idxpart2;
+
 -- Verify that expression indexes inherit correctly
 create table idxpart (a int, b int) partition by range (a);
 create table idxpart1 (like idxpart);

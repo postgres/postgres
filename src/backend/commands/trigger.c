@@ -1012,17 +1012,11 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		 * User CREATE TRIGGER, so place dependencies.  We make trigger be
 		 * auto-dropped if its relation is dropped or if the FK relation is
 		 * dropped.  (Auto drop is compatible with our pre-7.3 behavior.)
-		 *
-		 * Exception: if this trigger comes from a parent partitioned table,
-		 * then it's not separately drop-able, but goes away if the partition
-		 * does.
 		 */
 		referenced.classId = RelationRelationId;
 		referenced.objectId = RelationGetRelid(rel);
 		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, OidIsValid(parentTriggerOid) ?
-						   DEPENDENCY_INTERNAL_AUTO :
-						   DEPENDENCY_AUTO);
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 
 		if (OidIsValid(constrrelid))
 		{
@@ -1046,11 +1040,15 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			recordDependencyOn(&referenced, &myself, DEPENDENCY_INTERNAL);
 		}
 
-		/* Depends on the parent trigger, if there is one. */
+		/*
+		 * If it's a partition trigger, create the partition dependencies.
+		 */
 		if (OidIsValid(parentTriggerOid))
 		{
 			ObjectAddressSet(referenced, TriggerRelationId, parentTriggerOid);
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL_AUTO);
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_PRI);
+			ObjectAddressSet(referenced, RelationRelationId, RelationGetRelid(rel));
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_SEC);
 		}
 	}
 

@@ -24,64 +24,8 @@
  *
  * In all cases, a dependency relationship indicates that the referenced
  * object may not be dropped without also dropping the dependent object.
- * However, there are several subflavors:
- *
- * DEPENDENCY_NORMAL ('n'): normal relationship between separately-created
- * objects.  The dependent object may be dropped without affecting the
- * referenced object.  The referenced object may only be dropped by
- * specifying CASCADE, in which case the dependent object is dropped too.
- * Example: a table column has a normal dependency on its datatype.
- *
- * DEPENDENCY_AUTO ('a'): the dependent object can be dropped separately
- * from the referenced object, and should be automatically dropped
- * (regardless of RESTRICT or CASCADE mode) if the referenced object
- * is dropped.
- * Example: a named constraint on a table is made auto-dependent on
- * the table, so that it will go away if the table is dropped.
- *
- * DEPENDENCY_INTERNAL ('i'): the dependent object was created as part
- * of creation of the referenced object, and is really just a part of
- * its internal implementation.  A DROP of the dependent object will be
- * disallowed outright (we'll tell the user to issue a DROP against the
- * referenced object, instead).  A DROP of the referenced object will be
- * propagated through to drop the dependent object whether CASCADE is
- * specified or not.
- * Example: a trigger that's created to enforce a foreign-key constraint
- * is made internally dependent on the constraint's pg_constraint entry.
- *
- * DEPENDENCY_INTERNAL_AUTO ('I'): the dependent object was created as
- * part of creation of the referenced object, and is really just a part
- * of its internal implementation.  A DROP of the dependent object will
- * be disallowed outright (we'll tell the user to issue a DROP against the
- * referenced object, instead).  While a regular internal dependency will
- * prevent the dependent object from being dropped while any such
- * dependencies remain, DEPENDENCY_INTERNAL_AUTO will allow such a drop as
- * long as the object can be found by following any of such dependencies.
- * Example: an index on a partition is made internal-auto-dependent on
- * both the partition itself as well as on the index on the parent
- * partitioned table; so the partition index is dropped together with
- * either the partition it indexes, or with the parent index it is attached
- * to.
-
- * DEPENDENCY_EXTENSION ('e'): the dependent object is a member of the
- * extension that is the referenced object.  The dependent object can be
- * dropped only via DROP EXTENSION on the referenced object.  Functionally
- * this dependency type acts the same as an internal dependency, but it's
- * kept separate for clarity and to simplify pg_dump.
- *
- * DEPENDENCY_AUTO_EXTENSION ('x'): the dependent object is not a member
- * of the extension that is the referenced object (and so should not be
- * ignored by pg_dump), but cannot function without the extension and
- * should be dropped when the extension itself is.  The dependent object
- * may be dropped on its own as well.
- *
- * DEPENDENCY_PIN ('p'): there is no dependent object; this type of entry
- * is a signal that the system itself depends on the referenced object,
- * and so that object must never be deleted.  Entries of this type are
- * created only during initdb.  The fields for the dependent object
- * contain zeroes.
- *
- * Other dependency flavors may be needed in future.
+ * However, there are several subflavors; see the description of pg_depend
+ * in catalogs.sgml for details.
  */
 
 typedef enum DependencyType
@@ -89,7 +33,8 @@ typedef enum DependencyType
 	DEPENDENCY_NORMAL = 'n',
 	DEPENDENCY_AUTO = 'a',
 	DEPENDENCY_INTERNAL = 'i',
-	DEPENDENCY_INTERNAL_AUTO = 'I',
+	DEPENDENCY_PARTITION_PRI = 'P',
+	DEPENDENCY_PARTITION_SEC = 'S',
 	DEPENDENCY_EXTENSION = 'e',
 	DEPENDENCY_AUTO_EXTENSION = 'x',
 	DEPENDENCY_PIN = 'p'

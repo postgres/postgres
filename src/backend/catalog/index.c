@@ -1041,9 +1041,6 @@ index_create(Relation heapRelation,
 		else
 		{
 			bool		have_simple_col = false;
-			DependencyType deptype;
-
-			deptype = OidIsValid(parentIndexRelid) ? DEPENDENCY_INTERNAL_AUTO : DEPENDENCY_AUTO;
 
 			/* Create auto dependencies on simply-referenced columns */
 			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
@@ -1054,7 +1051,7 @@ index_create(Relation heapRelation,
 					referenced.objectId = heapRelationId;
 					referenced.objectSubId = indexInfo->ii_IndexAttrNumbers[i];
 
-					recordDependencyOn(&myself, &referenced, deptype);
+					recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 
 					have_simple_col = true;
 				}
@@ -1072,18 +1069,29 @@ index_create(Relation heapRelation,
 				referenced.objectId = heapRelationId;
 				referenced.objectSubId = 0;
 
-				recordDependencyOn(&myself, &referenced, deptype);
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 			}
 		}
 
-		/* Store dependency on parent index, if any */
+		/*
+		 * If this is an index partition, create partition dependencies on
+		 * both the parent index and the table.  (Note: these must be *in
+		 * addition to*, not instead of, all other dependencies.  Otherwise
+		 * we'll be short some dependencies after DETACH PARTITION.)
+		 */
 		if (OidIsValid(parentIndexRelid))
 		{
 			referenced.classId = RelationRelationId;
 			referenced.objectId = parentIndexRelid;
 			referenced.objectSubId = 0;
 
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL_AUTO);
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_PRI);
+
+			referenced.classId = RelationRelationId;
+			referenced.objectId = heapRelationId;
+			referenced.objectSubId = 0;
+
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_SEC);
 		}
 
 		/* Store dependency on collations */
@@ -1342,15 +1350,17 @@ index_constraint_create(Relation heapRelation,
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
 
 	/*
-	 * Also, if this is a constraint on a partition, mark it as depending on
-	 * the constraint in the parent.
+	 * Also, if this is a constraint on a partition, give it partition-type
+	 * dependencies on the parent constraint as well as the table.
 	 */
 	if (OidIsValid(parentConstraintId))
 	{
-		ObjectAddress parentConstr;
-
-		ObjectAddressSet(parentConstr, ConstraintRelationId, parentConstraintId);
-		recordDependencyOn(&referenced, &parentConstr, DEPENDENCY_INTERNAL_AUTO);
+		ObjectAddressSet(myself, ConstraintRelationId, conOid);
+		ObjectAddressSet(referenced, ConstraintRelationId, parentConstraintId);
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_PRI);
+		ObjectAddressSet(referenced, RelationRelationId,
+						 RelationGetRelid(heapRelation));
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_SEC);
 	}
 
 	/*

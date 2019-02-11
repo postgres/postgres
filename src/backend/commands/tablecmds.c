@@ -7825,7 +7825,8 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 		bool		attach_it;
 		Oid			constrOid;
 		ObjectAddress parentAddr,
-					childAddr;
+					childAddr,
+					childTableAddr;
 		ListCell   *cell;
 		int			i;
 
@@ -7966,7 +7967,8 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 			systable_endscan(scan);
 			table_close(trigrel, RowExclusiveLock);
 
-			ConstraintSetParentConstraint(fk->conoid, parentConstrOid);
+			ConstraintSetParentConstraint(fk->conoid, parentConstrOid,
+										  RelationGetRelid(partRel));
 			CommandCounterIncrement();
 			attach_it = true;
 			break;
@@ -8013,8 +8015,14 @@ CloneFkReferencing(Relation pg_constraint, Relation parentRel,
 								  1, false, true);
 		subclone = lappend_oid(subclone, constrOid);
 
+		/* Set up partition dependencies for the new constraint */
 		ObjectAddressSet(childAddr, ConstraintRelationId, constrOid);
-		recordDependencyOn(&childAddr, &parentAddr, DEPENDENCY_INTERNAL_AUTO);
+		recordDependencyOn(&childAddr, &parentAddr,
+						   DEPENDENCY_PARTITION_PRI);
+		ObjectAddressSet(childTableAddr, RelationRelationId,
+						 RelationGetRelid(partRel));
+		recordDependencyOn(&childAddr, &childTableAddr,
+						   DEPENDENCY_PARTITION_SEC);
 
 		fkconstraint = makeNode(Constraint);
 		/* for now this is all we need */
@@ -14893,7 +14901,8 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 				/* bingo. */
 				IndexSetParentIndex(attachrelIdxRels[i], idx);
 				if (OidIsValid(constraintOid))
-					ConstraintSetParentConstraint(cldConstrOid, constraintOid);
+					ConstraintSetParentConstraint(cldConstrOid, constraintOid,
+												  RelationGetRelid(attachrel));
 				update_relispartition(NULL, cldIdxId, true);
 				found = true;
 				break;
@@ -15151,7 +15160,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		constrOid = get_relation_idx_constraint_oid(RelationGetRelid(partRel),
 													idxid);
 		if (OidIsValid(constrOid))
-			ConstraintSetParentConstraint(constrOid, InvalidOid);
+			ConstraintSetParentConstraint(constrOid, InvalidOid, InvalidOid);
 
 		index_close(idx, NoLock);
 	}
@@ -15183,7 +15192,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		}
 
 		/* unset conparentid and adjust conislocal, coninhcount, etc. */
-		ConstraintSetParentConstraint(fk->conoid, InvalidOid);
+		ConstraintSetParentConstraint(fk->conoid, InvalidOid, InvalidOid);
 
 		/*
 		 * Make the action triggers on the referenced relation.  When this was
@@ -15419,7 +15428,8 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 		/* All good -- do it */
 		IndexSetParentIndex(partIdx, RelationGetRelid(parentIdx));
 		if (OidIsValid(constraintOid))
-			ConstraintSetParentConstraint(cldConstrId, constraintOid);
+			ConstraintSetParentConstraint(cldConstrId, constraintOid,
+										  RelationGetRelid(partTbl));
 		update_relispartition(NULL, partIdxId, true);
 
 		pfree(attmap);

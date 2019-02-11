@@ -971,7 +971,8 @@ DefineIndex(Oid relationId,
 						IndexSetParentIndex(cldidx, indexRelationId);
 						if (createdConstraintId != InvalidOid)
 							ConstraintSetParentConstraint(cldConstrOid,
-														  createdConstraintId);
+														  createdConstraintId,
+														  childRelid);
 
 						if (!cldidx->rd_index->indisvalid)
 							invalidate_parent = true;
@@ -2622,35 +2623,34 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 
 	if (fix_dependencies)
 	{
-		ObjectAddress partIdx;
-
 		/*
-		 * Insert/delete pg_depend rows.  If setting a parent, add an
-		 * INTERNAL_AUTO dependency to the parent index; if making standalone,
-		 * remove all existing rows and put back the regular dependency on the
-		 * table.
+		 * Insert/delete pg_depend rows.  If setting a parent, add PARTITION
+		 * dependencies on the parent index and the table; if removing a
+		 * parent, delete PARTITION dependencies.
 		 */
-		ObjectAddressSet(partIdx, RelationRelationId, partRelid);
-
 		if (OidIsValid(parentOid))
 		{
+			ObjectAddress partIdx;
 			ObjectAddress parentIdx;
+			ObjectAddress partitionTbl;
 
+			ObjectAddressSet(partIdx, RelationRelationId, partRelid);
 			ObjectAddressSet(parentIdx, RelationRelationId, parentOid);
-			recordDependencyOn(&partIdx, &parentIdx, DEPENDENCY_INTERNAL_AUTO);
+			ObjectAddressSet(partitionTbl, RelationRelationId,
+							 partitionIdx->rd_index->indrelid);
+			recordDependencyOn(&partIdx, &parentIdx,
+							   DEPENDENCY_PARTITION_PRI);
+			recordDependencyOn(&partIdx, &partitionTbl,
+							   DEPENDENCY_PARTITION_SEC);
 		}
 		else
 		{
-			ObjectAddress partitionTbl;
-
-			ObjectAddressSet(partitionTbl, RelationRelationId,
-							 partitionIdx->rd_index->indrelid);
-
 			deleteDependencyRecordsForClass(RelationRelationId, partRelid,
 											RelationRelationId,
-											DEPENDENCY_INTERNAL_AUTO);
-
-			recordDependencyOn(&partIdx, &partitionTbl, DEPENDENCY_AUTO);
+											DEPENDENCY_PARTITION_PRI);
+			deleteDependencyRecordsForClass(RelationRelationId, partRelid,
+											RelationRelationId,
+											DEPENDENCY_PARTITION_SEC);
 		}
 
 		/* make our updates visible */

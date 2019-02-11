@@ -239,7 +239,8 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType, ObjectAddresses *objsMoved);
 extern void ConstraintSetParentConstraint(Oid childConstrId,
-							  Oid parentConstrId);
+							  Oid parentConstrId,
+							  Oid childTableId);
 extern Oid	get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok);
 extern Bitmapset *get_relation_constraint_attnos(Oid relid, const char *conname,
 							   bool missing_ok, Oid *constraintOid);

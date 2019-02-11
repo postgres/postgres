@@ -99,9 +99,11 @@ typedef struct
 #define DEPFLAG_NORMAL		0x0002	/* reached via normal dependency */
 #define DEPFLAG_AUTO		0x0004	/* reached via auto dependency */
 #define DEPFLAG_INTERNAL	0x0008	/* reached via internal dependency */
-#define DEPFLAG_EXTENSION	0x0010	/* reached via extension dependency */
-#define DEPFLAG_REVERSE		0x0020	/* reverse internal/extension link */
-#define DEPFLAG_SUBOBJECT	0x0040	/* subobject of another deletable object */
+#define DEPFLAG_PARTITION	0x0010	/* reached via partition dependency */
+#define DEPFLAG_EXTENSION	0x0020	/* reached via extension dependency */
+#define DEPFLAG_REVERSE		0x0040	/* reverse internal/extension link */
+#define DEPFLAG_IS_PART		0x0080	/* has a partition dependency */
+#define DEPFLAG_SUBOBJECT	0x0100	/* subobject of another deletable object */
 
 
 /* expansible list of ObjectAddresses */
@@ -478,6 +480,8 @@ findDependentObjects(const ObjectAddress *object,
 	SysScanDesc scan;
 	HeapTuple	tup;
 	ObjectAddress otherObject;
+	ObjectAddress owningObject;
+	ObjectAddress partitionObject;
 	ObjectAddressAndFlags *dependentObjects;
 	int			numDependentObjects;
 	int			maxDependentObjects;
@@ -547,6 +551,10 @@ findDependentObjects(const ObjectAddress *object,
 	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
 							  NULL, nkeys, key);
 
+	/* initialize variables that loop may fill */
+	memset(&owningObject, 0, sizeof(owningObject));
+	memset(&partitionObject, 0, sizeof(partitionObject));
+
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
@@ -591,24 +599,26 @@ findDependentObjects(const ObjectAddress *object,
 				/* FALL THRU */
 
 			case DEPENDENCY_INTERNAL:
-			case DEPENDENCY_INTERNAL_AUTO:
 
 				/*
 				 * This object is part of the internal implementation of
 				 * another object, or is part of the extension that is the
 				 * other object.  We have three cases:
 				 *
-				 * 1. At the outermost recursion level, disallow the DROP. (We
-				 * just ereport here, rather than proceeding, since no other
-				 * dependencies are likely to be interesting.)	However, if
-				 * the owning object is listed in pendingObjects, just release
-				 * the caller's lock and return; we'll eventually complete the
-				 * DROP when we reach that entry in the pending list.
+				 * 1. At the outermost recursion level, we must disallow the
+				 * DROP.  However, if the owning object is listed in
+				 * pendingObjects, just release the caller's lock and return;
+				 * we'll eventually complete the DROP when we reach that entry
+				 * in the pending list.
+				 *
+				 * Note: the above statement is true only if this pg_depend
+				 * entry still exists by then; in principle, therefore, we
+				 * could miss deleting an item the user told us to delete.
+				 * However, no inconsistency can result: since we're at outer
+				 * level, there is no object depending on this one.
 				 */
 				if (stack == NULL)
 				{
-					char	   *otherObjDesc;
-
 					if (pendingObjects &&
 						object_address_present(&otherObject, pendingObjects))
 					{
@@ -617,14 +627,21 @@ findDependentObjects(const ObjectAddress *object,
 						ReleaseDeletionLock(object);
 						return;
 					}
-					otherObjDesc = getObjectDescription(&otherObject);
-					ereport(ERROR,
-							(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-							 errmsg("cannot drop %s because %s requires it",
-									getObjectDescription(object),
-									otherObjDesc),
-							 errhint("You can drop %s instead.",
-									 otherObjDesc)));
+
+					/*
+					 * We postpone actually issuing the error message until
+					 * after this loop, so that we can make the behavior
+					 * independent of the ordering of pg_depend entries, at
+					 * least if there's not more than one INTERNAL and one
+					 * EXTENSION dependency.  (If there's more, we'll complain
+					 * about a random one of them.)  Prefer to complain about
+					 * EXTENSION, since that's generally a more important
+					 * dependency.
+					 */
+					if (!OidIsValid(owningObject.classId) ||
+						foundDep->deptype == DEPENDENCY_EXTENSION)
+						owningObject = otherObject;
+					break;
 				}
 
 				/*
@@ -643,14 +660,6 @@ findDependentObjects(const ObjectAddress *object,
 				 * transform this deletion request into a delete of this
 				 * owning object.
 				 *
-				 * For INTERNAL_AUTO dependencies, we don't enforce this; in
-				 * other words, we don't follow the links back to the owning
-				 * object.
-				 */
-				if (foundDep->deptype == DEPENDENCY_INTERNAL_AUTO)
-					break;
-
-				/*
 				 * First, release caller's lock on this object and get
 				 * deletion lock on the owning object.  (We must release
 				 * caller's lock to avoid deadlock against a concurrent
@@ -673,6 +682,13 @@ findDependentObjects(const ObjectAddress *object,
 				}
 
 				/*
+				 * One way or the other, we're done with the scan; might as
+				 * well close it down before recursing, to reduce peak
+				 * resource consumption.
+				 */
+				systable_endscan(scan);
+
+				/*
 				 * Okay, recurse to the owning object instead of proceeding.
 				 *
 				 * We do not need to stack the current object; we want the
@@ -690,9 +706,65 @@ findDependentObjects(const ObjectAddress *object,
 									 targetObjects,
 									 pendingObjects,
 									 depRel);
+
+				/*
+				 * The current target object should have been added to
+				 * targetObjects while processing the owning object; but it
+				 * probably got only the flag bits associated with the
+				 * dependency we're looking at.  We need to add the objflags
+				 * that were passed to this recursion level, too, else we may
+				 * get a bogus failure in reportDependentObjects (if, for
+				 * example, we were called due to a partition dependency).
+				 *
+				 * If somehow the current object didn't get scheduled for
+				 * deletion, bleat.  (That would imply that somebody deleted
+				 * this dependency record before the recursion got to it.)
+				 * Another idea would be to reacquire lock on the current
+				 * object and resume trying to delete it, but it seems not
+				 * worth dealing with the race conditions inherent in that.
+				 */
+				if (!object_address_present_add_flags(object, objflags,
+													  targetObjects))
+					elog(ERROR, "deletion of owning object %s failed to delete %s",
+						 getObjectDescription(&otherObject),
+						 getObjectDescription(object));
+
 				/* And we're done here. */
-				systable_endscan(scan);
 				return;
+
+			case DEPENDENCY_PARTITION_PRI:
+
+				/*
+				 * Remember that this object has a partition-type dependency.
+				 * After the dependency scan, we'll complain if we didn't find
+				 * a reason to delete one of its partition dependencies.
+				 */
+				objflags |= DEPFLAG_IS_PART;
+
+				/*
+				 * Also remember the primary partition owner, for error
+				 * messages.  If there are multiple primary owners (which
+				 * there should not be), we'll report a random one of them.
+				 */
+				partitionObject = otherObject;
+				break;
+
+			case DEPENDENCY_PARTITION_SEC:
+
+				/*
+				 * Only use secondary partition owners in error messages if we
+				 * find no primary owner (which probably shouldn't happen).
+				 */
+				if (!(objflags & DEPFLAG_IS_PART))
+					partitionObject = otherObject;
+
+				/*
+				 * Remember that this object has a partition-type dependency.
+				 * After the dependency scan, we'll complain if we didn't find
+				 * a reason to delete one of its partition dependencies.
+				 */
+				objflags |= DEPFLAG_IS_PART;
+				break;
 
 			case DEPENDENCY_PIN:
 
@@ -711,6 +783,28 @@ findDependentObjects(const ObjectAddress *object,
 	}
 
 	systable_endscan(scan);
+
+	/*
+	 * If we found an INTERNAL or EXTENSION dependency when we're at outer
+	 * level, complain about it now.  If we also found a PARTITION dependency,
+	 * we prefer to report the PARTITION dependency.  This is arbitrary but
+	 * seems to be more useful in practice.
+	 */
+	if (OidIsValid(owningObject.classId))
+	{
+		char	   *otherObjDesc;
+
+		if (OidIsValid(partitionObject.classId))
+			otherObjDesc = getObjectDescription(&partitionObject);
+		else
+			otherObjDesc = getObjectDescription(&owningObject);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+				 errmsg("cannot drop %s because %s requires it",
+						getObjectDescription(object), otherObjDesc),
+				 errhint("You can drop %s instead.", otherObjDesc)));
+	}
 
 	/*
 	 * Next, identify all objects that directly depend on the current object.
@@ -789,9 +883,12 @@ findDependentObjects(const ObjectAddress *object,
 			case DEPENDENCY_AUTO_EXTENSION:
 				subflags = DEPFLAG_AUTO;
 				break;
-			case DEPENDENCY_INTERNAL_AUTO:
 			case DEPENDENCY_INTERNAL:
 				subflags = DEPFLAG_INTERNAL;
+				break;
+			case DEPENDENCY_PARTITION_PRI:
+			case DEPENDENCY_PARTITION_SEC:
+				subflags = DEPFLAG_PARTITION;
 				break;
 			case DEPENDENCY_EXTENSION:
 				subflags = DEPFLAG_EXTENSION;
@@ -868,10 +965,15 @@ findDependentObjects(const ObjectAddress *object,
 	/*
 	 * Finally, we can add the target object to targetObjects.  Be careful to
 	 * include any flags that were passed back down to us from inner recursion
-	 * levels.
+	 * levels.  Record the "dependee" as being either the most important
+	 * partition owner if there is one, else the object we recursed from, if
+	 * any.  (The logic in reportDependentObjects() is such that it can only
+	 * need one of those objects.)
 	 */
 	extra.flags = mystack.flags;
-	if (stack)
+	if (extra.flags & DEPFLAG_IS_PART)
+		extra.dependee = partitionObject;
+	else if (stack)
 		extra.dependee = *stack->object;
 	else
 		memset(&extra.dependee, 0, sizeof(extra.dependee));
@@ -906,8 +1008,37 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 	int			i;
 
 	/*
+	 * If we need to delete any partition-dependent objects, make sure that
+	 * we're deleting at least one of their partition dependencies, too. That
+	 * can be detected by checking that we reached them by a PARTITION
+	 * dependency at some point.
+	 *
+	 * We just report the first such object, as in most cases the only way to
+	 * trigger this complaint is to explicitly try to delete one partition of
+	 * a partitioned object.
+	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
+	{
+		const ObjectAddressExtra *extra = &targetObjects->extras[i];
+
+		if ((extra->flags & DEPFLAG_IS_PART) &&
+			!(extra->flags & DEPFLAG_PARTITION))
+		{
+			const ObjectAddress *object = &targetObjects->refs[i];
+			char	   *otherObjDesc = getObjectDescription(&extra->dependee);
+
+			ereport(ERROR,
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("cannot drop %s because %s requires it",
+							getObjectDescription(object), otherObjDesc),
+					 errhint("You can drop %s instead.", otherObjDesc)));
+		}
+	}
+
+	/*
 	 * If no error is to be thrown, and the msglevel is too low to be shown to
-	 * either client or server log, there's no need to do any of the work.
+	 * either client or server log, there's no need to do any of the rest of
+	 * the work.
 	 *
 	 * Note: this code doesn't know all there is to be known about elog
 	 * levels, but it works for NOTICE and DEBUG2, which are the only values
@@ -951,11 +1082,12 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 
 		/*
 		 * If, at any stage of the recursive search, we reached the object via
-		 * an AUTO, INTERNAL, or EXTENSION dependency, then it's okay to
-		 * delete it even in RESTRICT mode.
+		 * an AUTO, INTERNAL, PARTITION, or EXTENSION dependency, then it's
+		 * okay to delete it even in RESTRICT mode.
 		 */
 		if (extra->flags & (DEPFLAG_AUTO |
 							DEPFLAG_INTERNAL |
+							DEPFLAG_PARTITION |
 							DEPFLAG_EXTENSION))
 		{
 			/*
