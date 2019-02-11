@@ -2306,7 +2306,7 @@ PrepareTransaction(void)
 	if ((MyXactFlags & XACT_FLAGS_ACCESSEDTEMPNAMESPACE))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot PREPARE a transaction that has operated on temporary namespace")));
+				 errmsg("cannot PREPARE a transaction that has operated on temporary objects")));
 
 	/*
 	 * Likewise, don't allow PREPARE after pg_export_snapshot.  This could be
