@@ -598,6 +598,19 @@ Branch: REL9_4_STABLE [876fd37fc] 2019-02-07 13:10:46 -0500
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6bdc3005b] 2019-02-10 22:51:32 -0500
+Branch: REL_11_STABLE [eb68d71f9] 2019-02-10 22:51:33 -0500
+-->
+     <para>
+      Fix planner failure when the first column of a row comparison
+      matches an index column, but later column(s) do not, and the index
+      has included (non-key) columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [d364e8815] 2018-12-18 11:19:38 -0500
 Branch: REL_11_STABLE [ad425aaf0] 2018-12-18 11:19:38 -0500
 Branch: REL_10_STABLE [d16567093] 2018-12-18 11:19:39 -0500
