@@ -7596,8 +7596,8 @@ msgid ""
 "%u pages are entirely empty.\n"
 "%s."
 msgstr ""
-"% .0f mati versi baris tidak dapat dihapus belum.\n"
-"Ada % .0f item pointer yang tidak terpakai.\n"
+"%.0f mati versi baris tidak dapat dihapus belum.\n"
+"Ada %.0f item pointer yang tidak terpakai.\n"
 "halaman%u sepenuhnya kosong.\n"
 "%s."
 
@@ -8151,7 +8151,7 @@ msgstr "Kunci %s bermasalah dengan kunci yang sudah ada %s."
 #: executor/functions.c:225
 #, c-format
 msgid "could not determine actual type of argument declared %s"
-msgstr "tidak bisa menentukan pernyataan tipe argumen yang sebenarnya % s"
+msgstr "tidak bisa menentukan pernyataan tipe argumen yang sebenarnya %s"
 
 #. translator: %s is a SQL statement name
 #: executor/functions.c:506
@@ -8168,7 +8168,7 @@ msgstr "%s tidak diijinkan dalam fungsi non-volatile"
 #: executor/functions.c:638
 #, c-format
 msgid "could not determine actual result type for function declared to return type %s"
-msgstr "tidak bisa menentukan hasil yang sebenarnya untuk pernyataan kepada pengembalian tipe % s"
+msgstr "tidak bisa menentukan hasil yang sebenarnya untuk pernyataan kepada pengembalian tipe %s"
 
 #: executor/functions.c:1403
 #, c-format
@@ -9058,7 +9058,7 @@ msgstr "karakter dalam nama pengguna tidak valid untuk otentikasi LDAP"
 #: libpq/auth.c:2203
 #, c-format
 msgid "could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s"
-msgstr "tidak dapat melakukan pengumpulan inisialisasi LDAP untuk ldapbinddn « %s » pada server « %s »:% s"
+msgstr "tidak dapat melakukan pengumpulan inisialisasi LDAP untuk ldapbinddn « %s » pada server « %s »: %s"
 
 #: libpq/auth.c:2228
 #, c-format
@@ -9095,7 +9095,7 @@ msgstr "tidak bisa mendapatkan dn untuk pencocokan entri pertama « %s » pada s
 #: libpq/auth.c:2283
 #, c-format
 msgid "could not unbind after searching for user \"%s\" on server \"%s\": %s"
-msgstr "tidak dapat melepaskan setelah mencari pengguna « %s » di server « %s »:% s"
+msgstr "tidak dapat melepaskan setelah mencari pengguna « %s » di server « %s »: %s"
 
 #: libpq/auth.c:2320
 #, c-format

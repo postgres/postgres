@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-11-10 14:41+0300\n"
+"POT-Creation-Date: 2019-02-08 11:48+0300\n"
 "PO-Revision-Date: 2016-09-20 12:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -26,7 +26,7 @@ msgstr "пустое сообщение"
 msgid "<DEFAULT>"
 msgstr "<ПО_УМОЛЧАНИЮ>"
 
-#: descriptor.c:833 misc.c:120
+#: descriptor.c:856 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
@@ -197,6 +197,6 @@ msgstr "подключение к серверу потеряно"
 msgid "SQL error: %s\n"
 msgstr "ошибка SQL: %s\n"
 
-#: execute.c:1963
+#: execute.c:1990
 msgid "<empty>"
 msgstr "<>"
