@@ -3979,7 +3979,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			break;				/* no good, volatile comparison value */
 
 		/*
-		 * The Var side can match any column of the index.
+		 * The Var side can match any key column of the index.
 		 */
 		for (i = 0; i < index->nkeycolumns; i++)
 		{
@@ -3991,7 +3991,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 
 				break;
 		}
-		if (i >= index->ncolumns)
+		if (i >= index->nkeycolumns)
 			break;				/* no match found */
 
 		/* Add column number to returned list */
