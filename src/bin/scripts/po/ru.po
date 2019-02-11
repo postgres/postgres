@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-05 21:51+0300\n"
+"POT-Creation-Date: 2019-02-08 11:42+0300\n"
 "PO-Revision-Date: 2017-05-27 15:01+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -52,35 +52,34 @@ msgstr[0] "(%lu строка)"
 msgstr[1] "(%lu строки)"
 msgstr[2] "(%lu строк)"
 
-#: ../../fe_utils/print.c:2915
+#: ../../fe_utils/print.c:2939
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прерывание\n"
 
-#: ../../fe_utils/print.c:2979
+#: ../../fe_utils/print.c:3003
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
-"Добавить заголовок к содержимому таблицы нельзя: число столбцов превышает %d."
-"\n"
+"Добавить заголовок к содержимому таблицы нельзя: число столбцов превышает "
+"%d.\n"
 
-#: ../../fe_utils/print.c:3019
+#: ../../fe_utils/print.c:3043
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
-"Добавить ячейку к содержимому таблицы нельзя: общее число ячеек превышает %d."
-"\n"
+"Добавить ячейку к содержимому таблицы нельзя: общее число ячеек превышает "
+"%d.\n"
 
-#: ../../fe_utils/print.c:3268
+#: ../../fe_utils/print.c:3292
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
 
 #: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
 #: createuser.c:166 createuser.c:181 dropdb.c:94 dropdb.c:103 dropdb.c:111
-#: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93
-#: pg_isready.c:107 reindexdb.c:131 reindexdb.c:150 vacuumdb.c:217
-#: vacuumdb.c:236
+#: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93 pg_isready.c:107
+#: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:217 vacuumdb.c:236
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
@@ -198,15 +197,15 @@ msgstr ""
 "\n"
 "Параметры подключения:\n"
 
-#: clusterdb.c:286 createuser.c:368 dropdb.c:165 dropuser.c:171
-#: reindexdb.c:417 vacuumdb.c:1017
+#: clusterdb.c:286 createuser.c:368 dropdb.c:165 dropuser.c:171 reindexdb.c:417
+#: vacuumdb.c:1017
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ            имя сервера баз данных или каталог сокетов\n"
 
-#: clusterdb.c:287 createuser.c:369 dropdb.c:166 dropuser.c:172
-#: reindexdb.c:418 vacuumdb.c:1018
+#: clusterdb.c:287 createuser.c:369 dropdb.c:166 dropuser.c:172 reindexdb.c:418
+#: vacuumdb.c:1018
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
@@ -217,14 +216,14 @@ msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ        имя пользователя для подключения к серверу\n"
 
-#: clusterdb.c:289 createuser.c:371 dropdb.c:168 dropuser.c:174
-#: reindexdb.c:420 vacuumdb.c:1020
+#: clusterdb.c:289 createuser.c:371 dropdb.c:168 dropuser.c:174 reindexdb.c:420
+#: vacuumdb.c:1020
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         не запрашивать пароль\n"
 
-#: clusterdb.c:290 createuser.c:372 dropdb.c:169 dropuser.c:175
-#: reindexdb.c:421 vacuumdb.c:1021
+#: clusterdb.c:290 createuser.c:372 dropdb.c:169 dropuser.c:175 reindexdb.c:421
+#: vacuumdb.c:1021
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            запросить пароль\n"
@@ -525,8 +524,8 @@ msgstr "  -d, --createdb            роль с правом создания б
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
 msgstr ""
-"  -D, --no-createdb         роль без права создания баз данных (по умолчанию)"
-"\n"
+"  -D, --no-createdb         роль без права создания баз данных (по "
+"умолчанию)\n"
 
 #: createuser.c:350
 #, c-format

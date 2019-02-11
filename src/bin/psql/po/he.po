@@ -68,7 +68,7 @@ msgstr "לא ניתן לשכפל מצביע ריק (שגיאה פנימית)\n"
 #: ../../common/username.c:43
 #, c-format
 msgid "could not look up effective user ID %ld: %s"
-msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה % ld: %s"
+msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה %ld: %s"
 
 #: ../../common/username.c:45 command.c:555
 msgid "user does not exist"
@@ -77,7 +77,7 @@ msgstr "משתמש לא קיים"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה % lu"
+msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה %lu"
 
 #: ../../common/wait_error.c:45
 #, c-format
@@ -118,8 +118,8 @@ msgstr "תהליך צאצא יצא עם מצב לא מזוהה %d"
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
-msgstr[0] "(% lu שורה)"
-msgstr[1] "(% lu שורות)"
+msgstr[0] "(%lu שורה)"
+msgstr[1] "(%lu שורות)"
 
 #: ../../fe_utils/print.c:2913
 #, c-format
@@ -171,7 +171,7 @@ msgstr ""
 #: command.c:553
 #, c-format
 msgid "could not get home directory for user ID %ld: %s\n"
-msgstr "לא ניתן לקבל את ספריית הבית עבור משתמש עם מזהה % ld: %s\n"
+msgstr "לא ניתן לקבל את ספריית הבית עבור משתמש עם מזהה %ld: %s\n"
 
 #: command.c:571
 #, c-format
@@ -742,12 +742,12 @@ msgstr "זמן: %.3f ms\n"
 #: common.c:608
 #, c-format
 msgid "Time: %.3f ms (%02d:%06.3f)\n"
-msgstr "זמן: %.3f ms (% 02d:%06.3f)\n"
+msgstr "זמן: %.3f ms (%02d:%06.3f)\n"
 
 #: common.c:617
 #, c-format
 msgid "Time: %.3f ms (%02d:%02d:%06.3f)\n"
-msgstr "זמן: %.3f ms (% 02d:%02d:%06.3f)\n"
+msgstr "זמן: %.3f ms (%02d:%02d:%06.3f)\n"
 
 #: common.c:624
 #, c-format

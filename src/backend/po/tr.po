@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-08-06 08:44+0000\n"
-"PO-Revision-Date: 2018-10-16 17:18+0300\n"
+"PO-Revision-Date: 2018-12-06 16:19-0300\n"
 "Last-Translator: Abdullah Gülner <>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -3950,7 +3950,7 @@ msgstr "bilinmeyen nesne tipi \"%s\""
 #: catalog/objectaddress.c:2694
 #, c-format
 msgid "column %s of %s"
-msgstr "%2$s'nin %1$ sütunu"
+msgstr "%2$s'nin %1$s sütunu"
 
 #: catalog/objectaddress.c:2704
 #, c-format

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-14 05:17+0000\n"
-"PO-Revision-Date: 2018-09-14 08:21+0200\n"
+"POT-Creation-Date: 2019-02-05 16:46+0000\n"
+"PO-Revision-Date: 2019-02-05 21:04+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -645,8 +645,8 @@ msgstr "Quelldatenverzeichnis muss sauber heruntergefahren worden sein\n"
 
 #: pg_rewind.c:482
 #, c-format
-msgid "invalid control file"
-msgstr "ungültige Kontrolldatei"
+msgid "invalid control file\n"
+msgstr "ungültige Kontrolldatei\n"
 
 #: pg_rewind.c:493
 #, c-format

@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_rewind
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-23 22:46+0000\n"
-"PO-Revision-Date: 2018-09-24 06:45+0200\n"
+"POT-Creation-Date: 2019-01-02 21:46+0000\n"
+"PO-Revision-Date: 2019-01-03 05:58+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -643,8 +643,8 @@ msgstr "måldatakatalog måste stängas ner utan fel\n"
 
 #: pg_rewind.c:482
 #, c-format
-msgid "invalid control file"
-msgstr "ogiltig kontrollfil"
+msgid "invalid control file\n"
+msgstr "ogiltig kontrollfil\n"
 
 #: pg_rewind.c:493
 #, c-format
@@ -886,8 +886,8 @@ msgstr "post med ogiltig längd vid %X/%X"
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "ogiltig komprimerad image vid %X/%X, block %d"
 
-#~ msgid "%s: unable to read permissions from \"%s\"\n"
-#~ msgstr "%s: kunde inte läsa rättigheter från \"%s\"\n"
-
 #~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
 #~ msgstr "WAL-fil är från ett annat databassystem: felaktig XLOG_SEG_SIZE i sidhuvud"
+
+#~ msgid "%s: unable to read permissions from \"%s\"\n"
+#~ msgstr "%s: kunde inte läsa rättigheter från \"%s\"\n"

@@ -463,7 +463,7 @@ msgstr "độ dài của chuỗi được trả về không khớp với số c�
 #: plpy_typeio.c:1541
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
-msgstr "thuộc tính \"% s\" không tồn tại trong đối tượng Python"
+msgstr "thuộc tính \"%s\" không tồn tại trong đối tượng Python"
 
 #: plpy_typeio.c:1544
 #, c-format

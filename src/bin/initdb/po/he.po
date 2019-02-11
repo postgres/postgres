@@ -119,12 +119,12 @@ msgstr ""
 #: ../../common/restricted_token.c:77
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "תכנית %s: לא ניתן לפתוח את התהליך token: קוד שגיאה % lu\n"
+msgstr "תכנית %s: לא ניתן לפתוח את התהליך token: קוד שגיאה %lu\n"
 
 #: ../../common/restricted_token.c:90
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "תכנית %s: לא ניתן להקצות SID: קוד שגיאה % lu\n"
+msgstr "תכנית %s: לא ניתן להקצות SID: קוד שגיאה %lu\n"
 
 #: ../../common/restricted_token.c:110
 #, c-format
@@ -134,17 +134,17 @@ msgstr "תכנית %s:  אין אפשרות ליצור אסימוני גישה: 
 #: ../../common/restricted_token.c:132
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "תכנית %s:  לא ניתן להפעיל תהליך עבור הפקודה \"%s\": קוד שגיאה % lu\n"
+msgstr "תכנית %s:  לא ניתן להפעיל תהליך עבור הפקודה \"%s\": קוד שגיאה %lu\n"
 
 #: ../../common/restricted_token.c:170
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
-msgstr "תכנית %s:  לא ניתן לבצע מחדש עם אסימון גישה מוגבל: קוד שגיאה % lu\n"
+msgstr "תכנית %s:  לא ניתן לבצע מחדש עם אסימון גישה מוגבל: קוד שגיאה %lu\n"
 
 #: ../../common/restricted_token.c:186
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "תכנית %s:  לא ניתן לקבל קוד היציאה מן תהליך משנה: קוד שגיאה % lu\n"
+msgstr "תכנית %s:  לא ניתן לקבל קוד היציאה מן תהליך משנה: קוד שגיאה %lu\n"
 
 #: ../../common/rmtree.c:77
 #, c-format
@@ -159,7 +159,7 @@ msgstr "לא היתה אפשרות להסיר קובץ או ספריה \"%s\": %
 #: ../../common/username.c:43
 #, c-format
 msgid "could not look up effective user ID %ld: %s"
-msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה % ld: %s"
+msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה %ld: %s"
 
 #: ../../common/username.c:45
 msgid "user does not exist"
@@ -168,7 +168,7 @@ msgstr "משתמש לא קיים"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה % lu"
+msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה %lu"
 
 #: ../../common/wait_error.c:45
 #, c-format

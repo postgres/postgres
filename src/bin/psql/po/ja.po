@@ -2553,7 +2553,7 @@ msgstr ""
 #, c-format
 msgid ""
 "  \\gdesc                 describe result of query, without executing it\n"
-msgstr "  \\gexec                 問い合わせを実行せずに結果の説明を行います\n"
+msgstr "  \\gdesc                 問い合わせを実行せずに結果の説明を行います\n"
 
 #: help.c:178
 #, c-format
