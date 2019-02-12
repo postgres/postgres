@@ -217,6 +217,19 @@ COMMIT;
 
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
+-- check that DDL in aborted subtransactions handled correctly
+CREATE TABLE tr_sub_ddl(data int);
+BEGIN;
+SAVEPOINT a;
+ALTER TABLE tr_sub_ddl ALTER COLUMN data TYPE text;
+INSERT INTO tr_sub_ddl VALUES ('blah-blah');
+ROLLBACK TO SAVEPOINT a;
+ALTER TABLE tr_sub_ddl ALTER COLUMN data TYPE bigint;
+INSERT INTO tr_sub_ddl VALUES(43);
+COMMIT;
+
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
 
 /*
  * Check whether treating a table as a catalog table works somewhat
