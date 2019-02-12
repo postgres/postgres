@@ -16,6 +16,7 @@
 
 use strict;
 use warnings;
+use Getopt::Long;
 
 use File::Basename;
 use File::Spec;
@@ -23,43 +24,21 @@ BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
 
 use Catalog;
 
-my @input_files;
 my $output_path = '';
 my $major_version;
 my $include_path;
 
-# Process command line switches.
-while (@ARGV)
-{
-	my $arg = shift @ARGV;
-	if ($arg !~ /^-/)
-	{
-		push @input_files, $arg;
-	}
-	elsif ($arg =~ /^-I/)
-	{
-		$include_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
-	}
-	elsif ($arg =~ /^-o/)
-	{
-		$output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
-	}
-	elsif ($arg =~ /^--set-version=(.*)$/)
-	{
-		$major_version = $1;
-		die "Invalid version string.\n"
-		  if !($major_version =~ /^\d+$/);
-	}
-	else
-	{
-		usage();
-	}
-}
+GetOptions(
+	'output:s'       => \$output_path,
+	'set-version:s'  => \$major_version,
+	'include-path:s' => \$include_path) || usage();
 
 # Sanity check arguments.
-die "No input files.\n" if !@input_files;
-die "--set-version must be specified.\n" if !defined $major_version;
-die "-I, the header include path, must be specified.\n" if !$include_path;
+die "No input files.\n" unless @ARGV;
+die "--set-version must be specified.\n" unless $major_version;
+die "Invalid version string: $major_version\n"
+  unless $major_version =~ /^\d+$/;
+die "--include-path must be specified.\n" unless $include_path;
 
 # Make sure paths end with a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
@@ -79,7 +58,7 @@ my @toast_decls;
 my @index_decls;
 my %oidcounts;
 
-foreach my $header (@input_files)
+foreach my $header (@ARGV)
 {
 	$header =~ /(.+)\.h$/
 	  or die "Input files need to be header files.\n";
@@ -917,12 +896,12 @@ sub form_pg_type_symbol
 sub usage
 {
 	die <<EOM;
-Usage: genbki.pl [options] header...
+Usage: perl -I [directory of Catalog.pm] genbki.pl [--output/-o <path>] [--include-path/-i <path>] header...
 
 Options:
-    -I               include path
-    -o               output path
+    --output         Output directory (default '.')
     --set-version    PostgreSQL version number for initdb cross-check
+    --include-path   Include path in source tree
 
 genbki.pl generates BKI files and symbol definition
 headers from specially formatted header files and .dat

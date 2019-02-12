@@ -68,9 +68,6 @@ POSTGRES_BKI_DATA = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_ts_template.dat pg_type.dat \
 	)
 
-# location of Catalog.pm
-catalogdir = $(top_srcdir)/src/backend/catalog
-
 all: distprep generated-header-symlinks
 
 distprep: bki-stamp
@@ -88,9 +85,8 @@ generated-header-symlinks: $(top_builddir)/src/include/catalog/header-stamp
 # instead is cheating a bit, but it will achieve the goal of updating the
 # version number when it changes.
 bki-stamp: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(POSTGRES_BKI_DATA) $(top_srcdir)/configure.in
-	$(PERL) -I $(catalogdir) $< \
-		-I $(top_srcdir)/src/include/ --set-version=$(MAJORVERSION) \
-		$(POSTGRES_BKI_SRCS)
+	$(PERL) $< --include-path=$(top_srcdir)/src/include/ \
+		--set-version=$(MAJORVERSION) $(POSTGRES_BKI_SRCS)
 	touch $@
 
 # The generated headers must all be symlinked into builddir/src/include/,

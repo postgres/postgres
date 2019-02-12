@@ -18,32 +18,14 @@ use Catalog;
 
 use strict;
 use warnings;
+use Getopt::Long;
 
-# Collect arguments
-my @input_files;
 my $output_path = '';
 my $include_path;
 
-while (@ARGV)
-{
-	my $arg = shift @ARGV;
-	if ($arg !~ /^-/)
-	{
-		push @input_files, $arg;
-	}
-	elsif ($arg =~ /^-o/)
-	{
-		$output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
-	}
-	elsif ($arg =~ /^-I/)
-	{
-		$include_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
-	}
-	else
-	{
-		usage();
-	}
-}
+GetOptions(
+	'output:s'       => \$output_path,
+	'include-path:s' => \$include_path) || usage();
 
 # Make sure output_path ends in a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
@@ -52,8 +34,8 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 }
 
 # Sanity check arguments.
-die "No input files.\n"                       if !@input_files;
-die "No include path; you must specify -I.\n" if !$include_path;
+die "No input files.\n"                   unless @ARGV;
+die "--include-path must be specified.\n" unless $include_path;
 
 # Read all the input files into internal data structures.
 # Note: We pass data file names as arguments and then look for matching
@@ -63,7 +45,7 @@ die "No include path; you must specify -I.\n" if !$include_path;
 # more than one data file.
 my %catalogs;
 my %catalog_data;
-foreach my $datfile (@input_files)
+foreach my $datfile (@ARGV)
 {
 	$datfile =~ /(.+)\.dat$/
 	  or die "Input files need to be data (.dat) files.\n";
@@ -292,7 +274,11 @@ Catalog::RenameTempFile($tabfile,    $tmpext);
 sub usage
 {
 	die <<EOM;
-Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl -I [include path] [path to pg_proc.dat]
+Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl [--include-path/-i <path>] [path to pg_proc.dat]
+
+Options:
+    --output         Output directory (default '.')
+    --include-path   Include path in source tree
 
 Gen_fmgrtab.pl generates fmgroids.h, fmgrprotos.h, and fmgrtab.c from
 pg_proc.dat
