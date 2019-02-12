@@ -59,11 +59,29 @@ SELECT b.*
 set enable_seqscan to false;
 set enable_indexscan to true;
 set enable_bitmapscan to false;
+explain (costs off)
 select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+explain (costs off)
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+explain (costs off)
+select proname from pg_proc where proname ilike 'ri%foo' order by 1;
 
 set enable_indexscan to false;
 set enable_bitmapscan to true;
+explain (costs off)
 select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+explain (costs off)
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+explain (costs off)
+select proname from pg_proc where proname ilike 'ri%foo' order by 1;
+
+reset enable_seqscan;
+reset enable_indexscan;
+reset enable_bitmapscan;
 
 --
 -- Test B-tree page deletion. In particular, deleting a non-leaf page.

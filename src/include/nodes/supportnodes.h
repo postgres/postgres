@@ -35,7 +35,8 @@
 
 #include "nodes/primnodes.h"
 
-struct PlannerInfo;				/* avoid including relation.h here */
+struct PlannerInfo;				/* avoid including pathnodes.h here */
+struct IndexOptInfo;
 struct SpecialJoinInfo;
 
 
@@ -166,5 +167,76 @@ typedef struct SupportRequestRows
 	/* Output fields: */
 	double		rows;			/* number of rows expected to be returned */
 } SupportRequestRows;
+
+/*
+ * The IndexCondition request allows the support function to generate
+ * a directly-indexable condition based on a target function call that is
+ * not itself indexable.  The target function call must appear at the top
+ * level of WHERE or JOIN/ON, so this applies only to functions returning
+ * boolean.
+ *
+ * The "node" argument is the parse node that is invoking the target function;
+ * currently this will always be a FuncExpr or OpExpr.  The call is made
+ * only if at least one function argument matches an index column's variable
+ * or expression.  "indexarg" identifies the matching argument (it's the
+ * argument's zero-based index in the node's args list).
+ *
+ * If the transformation is possible, return a List of directly-indexable
+ * condition expressions, else return NULL.  (A List is used because it's
+ * sometimes useful to generate more than one indexable condition, such as
+ * when a LIKE with constant prefix gives rise to both >= and < conditions.)
+ *
+ * "Directly indexable" means that the condition must be directly executable
+ * by the index machinery.  Typically this means that it is a binary OpExpr
+ * with the index column value on the left, a pseudo-constant on the right,
+ * and an operator that is in the index column's operator family.  Other
+ * possibilities include RowCompareExpr, ScalarArrayOpExpr, and NullTest,
+ * depending on the index type; but those seem less likely to be useful for
+ * derived index conditions.  "Pseudo-constant" means that the right-hand
+ * expression must not contain any volatile functions, nor any Vars of the
+ * table the index is for; use is_pseudo_constant_for_index() to check this.
+ * (Note: if the passed "node" is an OpExpr, the core planner already verified
+ * that the non-indexkey operand is pseudo-constant; but when the "node"
+ * is a FuncExpr, it does not check, since it doesn't know which of the
+ * function's arguments you might need to use in an index comparison value.)
+ *
+ * In many cases, an index condition can be generated but it is weaker than
+ * the function condition itself; for example, a LIKE with a constant prefix
+ * can produce an index range check based on the prefix, but we still need
+ * to execute the LIKE operator to verify the rest of the pattern.  We say
+ * that such an index condition is "lossy".  When returning an index condition,
+ * you should set the "lossy" request field to true if the condition is lossy,
+ * or false if it is an exact equivalent of the function's result.  The core
+ * code will initialize that field to true, which is the common case.
+ *
+ * It is important to verify that the index operator family is the correct
+ * one for the condition you want to generate.  Core support functions tend
+ * to use the known OID of a built-in opfamily for this, but extensions need
+ * to work harder, since their OIDs aren't fixed.  A possibly workable
+ * answer for an index on an extension datatype is to verify the index AM's
+ * OID instead, and then assume that there's only one relevant opclass for
+ * your datatype so the opfamily must be the right one.  Generating OpExpr
+ * nodes may also require knowing extension datatype OIDs (often you can
+ * find these out by applying exprType() to a function argument) and
+ * operator OIDs (which you can look up using get_opfamily_member).
+ */
+typedef struct SupportRequestIndexCondition
+{
+	NodeTag		type;
+
+	/* Input fields: */
+	struct PlannerInfo *root;	/* Planner's infrastructure */
+	Oid			funcid;			/* function we are inquiring about */
+	Node	   *node;			/* parse node invoking function */
+	int			indexarg;		/* index of function arg matching indexcol */
+	struct IndexOptInfo *index; /* planner's info about target index */
+	int			indexcol;		/* index of target index column (0-based) */
+	Oid			opfamily;		/* index column's operator family */
+	Oid			indexcollation; /* index column's collation */
+
+	/* Output fields: */
+	bool		lossy;			/* set to false if index condition is an exact
+								 * equivalent of the function call */
+} SupportRequestIndexCondition;
 
 #endif							/* SUPPORTNODES_H */

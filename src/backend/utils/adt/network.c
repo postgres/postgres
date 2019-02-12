@@ -13,16 +13,31 @@
 #include <arpa/inet.h>
 
 #include "access/hash.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_type.h"
 #include "common/ip.h"
 #include "libpq/libpq-be.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
+#include "nodes/supportnodes.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/inet.h"
+#include "utils/lsyscache.h"
 
 
 static int32 network_cmp_internal(inet *a1, inet *a2);
+static List *match_network_function(Node *leftop,
+					   Node *rightop,
+					   int indexarg,
+					   Oid funcid,
+					   Oid opfamily);
+static List *match_network_subset(Node *leftop,
+					 Node *rightop,
+					 bool is_eq,
+					 Oid opfamily);
 static bool addressOK(unsigned char *a, int bits, int family);
 static inet *internal_inetpl(inet *ip, int64 addend);
 
@@ -573,6 +588,198 @@ network_overlap(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(false);
 }
+
+/*
+ * Planner support function for network subset/superset operators
+ */
+Datum
+network_subset_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestIndexCondition))
+	{
+		/* Try to convert operator/function call to index conditions */
+		SupportRequestIndexCondition *req = (SupportRequestIndexCondition *) rawreq;
+
+		if (is_opclause(req->node))
+		{
+			OpExpr	   *clause = (OpExpr *) req->node;
+
+			Assert(list_length(clause->args) == 2);
+			ret = (Node *)
+				match_network_function((Node *) linitial(clause->args),
+									   (Node *) lsecond(clause->args),
+									   req->indexarg,
+									   req->funcid,
+									   req->opfamily);
+		}
+		else if (is_funcclause(req->node))	/* be paranoid */
+		{
+			FuncExpr   *clause = (FuncExpr *) req->node;
+
+			Assert(list_length(clause->args) == 2);
+			ret = (Node *)
+				match_network_function((Node *) linitial(clause->args),
+									   (Node *) lsecond(clause->args),
+									   req->indexarg,
+									   req->funcid,
+									   req->opfamily);
+		}
+	}
+
+	PG_RETURN_POINTER(ret);
+}
+
+/*
+ * match_network_function
+ *	  Try to generate an indexqual for a network subset/superset function.
+ *
+ * This layer is just concerned with identifying the function and swapping
+ * the arguments if necessary.
+ */
+static List *
+match_network_function(Node *leftop,
+					   Node *rightop,
+					   int indexarg,
+					   Oid funcid,
+					   Oid opfamily)
+{
+	switch (funcid)
+	{
+		case F_NETWORK_SUB:
+			/* indexkey must be on the left */
+			if (indexarg != 0)
+				return NIL;
+			return match_network_subset(leftop, rightop, false, opfamily);
+
+		case F_NETWORK_SUBEQ:
+			/* indexkey must be on the left */
+			if (indexarg != 0)
+				return NIL;
+			return match_network_subset(leftop, rightop, true, opfamily);
+
+		case F_NETWORK_SUP:
+			/* indexkey must be on the right */
+			if (indexarg != 1)
+				return NIL;
+			return match_network_subset(rightop, leftop, false, opfamily);
+
+		case F_NETWORK_SUPEQ:
+			/* indexkey must be on the right */
+			if (indexarg != 1)
+				return NIL;
+			return match_network_subset(rightop, leftop, true, opfamily);
+
+		default:
+
+			/*
+			 * We'd only get here if somebody attached this support function
+			 * to an unexpected function.  Maybe we should complain, but for
+			 * now, do nothing.
+			 */
+			return NIL;
+	}
+}
+
+/*
+ * match_network_subset
+ *	  Try to generate an indexqual for a network subset function.
+ */
+static List *
+match_network_subset(Node *leftop,
+					 Node *rightop,
+					 bool is_eq,
+					 Oid opfamily)
+{
+	List	   *result;
+	Datum		rightopval;
+	Oid			datatype = INETOID;
+	Oid			opr1oid;
+	Oid			opr2oid;
+	Datum		opr1right;
+	Datum		opr2right;
+	Expr	   *expr;
+
+	/*
+	 * Can't do anything with a non-constant or NULL comparison value.
+	 *
+	 * Note that since we restrict ourselves to cases with a hard constant on
+	 * the RHS, it's a-fortiori a pseudoconstant, and we don't need to worry
+	 * about verifying that.
+	 */
+	if (!IsA(rightop, Const) ||
+		((Const *) rightop)->constisnull)
+		return NIL;
+	rightopval = ((Const *) rightop)->constvalue;
+
+	/*
+	 * Must check that index's opfamily supports the operators we will want to
+	 * apply.
+	 *
+	 * We insist on the opfamily being the specific one we expect, else we'd
+	 * do the wrong thing if someone were to make a reverse-sort opfamily with
+	 * the same operators.
+	 */
+	if (opfamily != NETWORK_BTREE_FAM_OID)
+		return NIL;
+
+	/*
+	 * create clause "key >= network_scan_first( rightopval )", or ">" if the
+	 * operator disallows equality.
+	 *
+	 * Note: seeing that this function supports only fixed values for opfamily
+	 * and datatype, we could just hard-wire the operator OIDs instead of
+	 * looking them up.  But for now it seems better to be general.
+	 */
+	if (is_eq)
+	{
+		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
+									  BTGreaterEqualStrategyNumber);
+		if (opr1oid == InvalidOid)
+			elog(ERROR, "no >= operator for opfamily %u", opfamily);
+	}
+	else
+	{
+		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
+									  BTGreaterStrategyNumber);
+		if (opr1oid == InvalidOid)
+			elog(ERROR, "no > operator for opfamily %u", opfamily);
+	}
+
+	opr1right = network_scan_first(rightopval);
+
+	expr = make_opclause(opr1oid, BOOLOID, false,
+						 (Expr *) leftop,
+						 (Expr *) makeConst(datatype, -1,
+											InvalidOid, /* not collatable */
+											-1, opr1right,
+											false, false),
+						 InvalidOid, InvalidOid);
+	result = list_make1(expr);
+
+	/* create clause "key <= network_scan_last( rightopval )" */
+
+	opr2oid = get_opfamily_member(opfamily, datatype, datatype,
+								  BTLessEqualStrategyNumber);
+	if (opr2oid == InvalidOid)
+		elog(ERROR, "no <= operator for opfamily %u", opfamily);
+
+	opr2right = network_scan_last(rightopval);
+
+	expr = make_opclause(opr2oid, BOOLOID, false,
+						 (Expr *) leftop,
+						 (Expr *) makeConst(datatype, -1,
+											InvalidOid, /* not collatable */
+											-1, opr2right,
+											false, false),
+						 InvalidOid, InvalidOid);
+	result = lappend(result, expr);
+
+	return result;
+}
+
 
 /*
  * Extract data from a network datatype.

@@ -35,7 +35,11 @@ typedef struct PlannerInfo PlannerInfo;
 #define HAVE_PLANNERINFO_TYPEDEF 1
 #endif
 
-/* Likewise for SpecialJoinInfo. */
+/* Likewise for IndexOptInfo and SpecialJoinInfo. */
+#ifndef HAVE_INDEXOPTINFO_TYPEDEF
+typedef struct IndexOptInfo IndexOptInfo;
+#define HAVE_INDEXOPTINFO_TYPEDEF 1
+#endif
 #ifndef HAVE_SPECIALJOININFO_TYPEDEF
 typedef struct SpecialJoinInfo SpecialJoinInfo;
 #define HAVE_SPECIALJOININFO_TYPEDEF 1
@@ -73,6 +77,10 @@ extern PGDLLIMPORT double parallel_setup_cost;
 extern PGDLLIMPORT int effective_cache_size;
 
 extern double clamp_row_est(double nrows);
+
+/* in path/indxpath.c: */
+
+extern bool is_pseudo_constant_for_index(Node *expr, IndexOptInfo *index);
 
 /* in plan/planner.c: */
 

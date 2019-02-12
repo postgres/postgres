@@ -242,12 +242,30 @@ SELECT '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;
 -- check that btree index works correctly
 CREATE INDEX inet_idx1 ON inet_tbl(i);
 SET enable_seqscan TO off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM inet_tbl WHERE i<<'192.168.1.0/24'::cidr;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Index Scan using inet_idx1 on inet_tbl
+   Index Cond: ((i > '192.168.1.0/24'::inet) AND (i <= '192.168.1.255'::inet))
+   Filter: (i << '192.168.1.0/24'::inet)
+(3 rows)
+
 SELECT * FROM inet_tbl WHERE i<<'192.168.1.0/24'::cidr;
        c        |        i         
 ----------------+------------------
  192.168.1.0/24 | 192.168.1.0/25
  192.168.1.0/24 | 192.168.1.255/25
  192.168.1.0/26 | 192.168.1.226
+(3 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM inet_tbl WHERE i<<='192.168.1.0/24'::cidr;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Index Scan using inet_idx1 on inet_tbl
+   Index Cond: ((i >= '192.168.1.0/24'::inet) AND (i <= '192.168.1.255'::inet))
+   Filter: (i <<= '192.168.1.0/24'::inet)
 (3 rows)
 
 SELECT * FROM inet_tbl WHERE i<<='192.168.1.0/24'::cidr;
@@ -260,6 +278,43 @@ SELECT * FROM inet_tbl WHERE i<<='192.168.1.0/24'::cidr;
  192.168.1.0/24 | 192.168.1.255/25
  192.168.1.0/26 | 192.168.1.226
 (6 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM inet_tbl WHERE '192.168.1.0/24'::cidr >>= i;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Index Scan using inet_idx1 on inet_tbl
+   Index Cond: ((i >= '192.168.1.0/24'::inet) AND (i <= '192.168.1.255'::inet))
+   Filter: ('192.168.1.0/24'::inet >>= i)
+(3 rows)
+
+SELECT * FROM inet_tbl WHERE '192.168.1.0/24'::cidr >>= i;
+       c        |        i         
+----------------+------------------
+ 192.168.1.0/24 | 192.168.1.0/24
+ 192.168.1.0/24 | 192.168.1.226/24
+ 192.168.1.0/24 | 192.168.1.255/24
+ 192.168.1.0/24 | 192.168.1.0/25
+ 192.168.1.0/24 | 192.168.1.255/25
+ 192.168.1.0/26 | 192.168.1.226
+(6 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM inet_tbl WHERE '192.168.1.0/24'::cidr >> i;
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
+ Index Scan using inet_idx1 on inet_tbl
+   Index Cond: ((i > '192.168.1.0/24'::inet) AND (i <= '192.168.1.255'::inet))
+   Filter: ('192.168.1.0/24'::inet >> i)
+(3 rows)
+
+SELECT * FROM inet_tbl WHERE '192.168.1.0/24'::cidr >> i;
+       c        |        i         
+----------------+------------------
+ 192.168.1.0/24 | 192.168.1.0/25
+ 192.168.1.0/24 | 192.168.1.255/25
+ 192.168.1.0/26 | 192.168.1.226
+(3 rows)
 
 SET enable_seqscan TO on;
 DROP INDEX inet_idx1;

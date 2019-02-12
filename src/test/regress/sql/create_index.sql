@@ -1135,6 +1135,10 @@ explain (costs off)
   select * from boolindex where b = true order by i desc limit 10;
 explain (costs off)
   select * from boolindex where not b order by i limit 10;
+explain (costs off)
+  select * from boolindex where b is true order by i desc limit 10;
+explain (costs off)
+  select * from boolindex where b is false order by i desc limit 10;
 
 --
 -- Test for multilevel page deletion

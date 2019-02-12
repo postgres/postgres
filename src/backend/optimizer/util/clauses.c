@@ -2067,7 +2067,8 @@ is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK)
  *	  Params and outer-level Vars, not to mention functions whose results
  *	  may vary from one statement to the next.  However, the expr's value
  *	  will be constant over any one scan of the current query, so it can be
- *	  used as, eg, an indexscan key.
+ *	  used as, eg, an indexscan key.  (Actually, the condition for indexscan
+ *	  keys is weaker than this; see is_pseudo_constant_for_index().)
  *
  * CAUTION: this function omits to test for one very important class of
  * not-constant expressions, namely aggregates (Aggrefs).  In current usage

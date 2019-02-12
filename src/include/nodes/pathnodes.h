@@ -764,7 +764,12 @@ typedef struct RelOptInfo
  *		(by plancat.c), indrestrictinfo and predOK are set later, in
  *		check_index_predicates().
  */
-typedef struct IndexOptInfo
+#ifndef HAVE_INDEXOPTINFO_TYPEDEF
+typedef struct IndexOptInfo IndexOptInfo;
+#define HAVE_INDEXOPTINFO_TYPEDEF 1
+#endif
+
+struct IndexOptInfo
 {
 	NodeTag		type;
 
@@ -818,7 +823,7 @@ typedef struct IndexOptInfo
 	bool		amcanparallel;	/* does AM support parallel scan? */
 	/* Rather than include amapi.h here, we declare amcostestimate like this */
 	void		(*amcostestimate) ();	/* AM's cost estimator */
-} IndexOptInfo;
+};
 
 /*
  * ForeignKeyOptInfo

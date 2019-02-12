@@ -3201,6 +3201,24 @@ explain (costs off)
          Index Cond: (b = false)
 (3 rows)
 
+explain (costs off)
+  select * from boolindex where b is true order by i desc limit 10;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Limit
+   ->  Index Scan Backward using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+(3 rows)
+
+explain (costs off)
+  select * from boolindex where b is false order by i desc limit 10;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Limit
+   ->  Index Scan Backward using boolindex_b_i_key on boolindex
+         Index Cond: (b = false)
+(3 rows)
+
 --
 -- Test for multilevel page deletion
 --

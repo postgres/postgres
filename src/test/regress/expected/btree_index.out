@@ -105,6 +105,15 @@ SELECT b.*
 set enable_seqscan to false;
 set enable_indexscan to true;
 set enable_bitmapscan to false;
+explain (costs off)
+select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'RI_FKey'::text) AND (proname < 'RI_FKez'::text))
+   Filter: (proname ~~ 'RI\_FKey%del'::text)
+(3 rows)
+
 select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
         proname         
 ------------------------
@@ -114,9 +123,43 @@ select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
  RI_FKey_setdefault_del
  RI_FKey_setnull_del
 (5 rows)
+
+explain (costs off)
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= '00'::text) AND (proname < '01'::text))
+   Filter: (proname ~~* '00%foo'::text)
+(3 rows)
+
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+ proname 
+---------
+(0 rows)
+
+explain (costs off)
+select proname from pg_proc where proname ilike 'ri%foo' order by 1;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Filter: (proname ~~* 'ri%foo'::text)
+(2 rows)
 
 set enable_indexscan to false;
 set enable_bitmapscan to true;
+explain (costs off)
+select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: proname
+   ->  Bitmap Heap Scan on pg_proc
+         Filter: (proname ~~ 'RI\_FKey%del'::text)
+         ->  Bitmap Index Scan on pg_proc_proname_args_nsp_index
+               Index Cond: ((proname >= 'RI_FKey'::text) AND (proname < 'RI_FKez'::text))
+(6 rows)
+
 select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
         proname         
 ------------------------
@@ -127,6 +170,34 @@ select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
  RI_FKey_setnull_del
 (5 rows)
 
+explain (costs off)
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Sort
+   Sort Key: proname
+   ->  Bitmap Heap Scan on pg_proc
+         Filter: (proname ~~* '00%foo'::text)
+         ->  Bitmap Index Scan on pg_proc_proname_args_nsp_index
+               Index Cond: ((proname >= '00'::text) AND (proname < '01'::text))
+(6 rows)
+
+select proname from pg_proc where proname ilike '00%foo' order by 1;
+ proname 
+---------
+(0 rows)
+
+explain (costs off)
+select proname from pg_proc where proname ilike 'ri%foo' order by 1;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Filter: (proname ~~* 'ri%foo'::text)
+(2 rows)
+
+reset enable_seqscan;
+reset enable_indexscan;
+reset enable_bitmapscan;
 --
 -- Test B-tree page deletion. In particular, deleting a non-leaf page.
 --

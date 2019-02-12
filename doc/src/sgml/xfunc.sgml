@@ -3460,4 +3460,18 @@ supportfn(internal) returns internal
     This can be done by a support function that implements
     the <literal>SupportRequestRows</literal> request type.
    </para>
+
+   <para>
+    For target functions that return boolean, it may be possible to
+    convert a function call appearing in WHERE into an indexable operator
+    clause or clauses.  The converted clauses might be exactly equivalent
+    to the function's condition, or they could be somewhat weaker (that is,
+    they might accept some values that the function condition does not).
+    In the latter case the index condition is said to
+    be <firstterm>lossy</firstterm>; it can still be used to scan an index,
+    but the function call will have to be executed for each row returned by
+    the index to see if it really passes the WHERE condition or not.
+    To create such conditions, the support function must implement
+    the <literal>SupportRequestIndexCondition</literal> request type.
+   </para>
   </sect1>
