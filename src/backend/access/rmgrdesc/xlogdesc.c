@@ -114,8 +114,8 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 "max_locks_per_xact=%d wal_level=%s "
 						 "wal_log_hints=%s track_commit_timestamp=%s",
 						 xlrec.MaxConnections,
-						 xlrec.max_wal_senders,
 						 xlrec.max_worker_processes,
+						 xlrec.max_wal_senders,
 						 xlrec.max_prepared_xacts,
 						 xlrec.max_locks_per_xact,
 						 wal_level_str,
