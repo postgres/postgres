@@ -15,6 +15,8 @@
 #define PARTPRUNE_H
 
 #include "nodes/execnodes.h"
+#include "partitioning/partdefs.h"
+
 struct PlannerInfo;				/* avoid including pathnodes.h here */
 struct RelOptInfo;
 
