@@ -2179,6 +2179,11 @@ LOG:  database system is ready to accept read only connections
        </listitem>
        <listitem>
         <para>
+         <varname>max_wal_senders</varname>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
          <varname>max_worker_processes</varname>
         </para>
        </listitem>

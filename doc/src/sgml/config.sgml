@@ -697,8 +697,7 @@ include_dir 'conf.d'
 
        <para>
         The default value is three connections. The value must be less
-        than <varname>max_connections</varname> minus
-        <xref linkend="guc-max-wal-senders"/>.
+        than <varname>max_connections</varname>.
         This parameter can only be set at server start.
        </para>
       </listitem>
@@ -3495,24 +3494,25 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </term>
        <listitem>
        <para>
-        Specifies the maximum number of concurrent connections from
-        standby servers or streaming base backup clients (i.e., the
-        maximum number of simultaneously running WAL sender
-        processes). The default is 10. The value 0 means replication is
-        disabled. WAL sender processes count towards the total number
-        of connections, so this parameter's value must be less than
-        <xref linkend="guc-max-connections"/> minus
-        <xref linkend="guc-superuser-reserved-connections"/>.
-        Abrupt streaming client disconnection might leave an orphaned
-        connection slot behind until
-        a timeout is reached, so this parameter should be set slightly
-        higher than the maximum number of expected clients so disconnected
-        clients can immediately reconnect.  This parameter can only
-        be set at server start.
-        Also, <varname>wal_level</varname> must be set to
+        Specifies the maximum number of concurrent connections from standby
+        servers or streaming base backup clients (i.e., the maximum number of
+        simultaneously running WAL sender processes). The default is
+        <literal>10</literal>.  The value <literal>0</literal> means
+        replication is disabled.  Abrupt streaming client disconnection might
+        leave an orphaned connection slot behind until a timeout is reached,
+        so this parameter should be set slightly higher than the maximum
+        number of expected clients so disconnected clients can immediately
+        reconnect.  This parameter can only be set at server start.  Also,
+        <varname>wal_level</varname> must be set to
         <literal>replica</literal> or higher to allow connections from standby
         servers.
        </para>
+
+       <para>
+         When running a standby server, you must set this parameter to the
+         same or higher value than on the master server. Otherwise, queries
+         will not be allowed in the standby server.
+        </para>
        </listitem>
       </varlistentry>
 

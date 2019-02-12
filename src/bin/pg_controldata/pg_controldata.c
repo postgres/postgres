@@ -304,6 +304,8 @@ main(int argc, char *argv[])
 		   ControlFile->MaxConnections);
 	printf(_("max_worker_processes setting:         %d\n"),
 		   ControlFile->max_worker_processes);
+	printf(_("max_wal_senders setting:              %d\n"),
+		   ControlFile->max_wal_senders);
 	printf(_("max_prepared_xacts setting:           %d\n"),
 		   ControlFile->max_prepared_xacts);
 	printf(_("max_locks_per_xact setting:           %d\n"),
