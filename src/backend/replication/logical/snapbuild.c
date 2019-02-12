@@ -1522,7 +1522,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	if (ret != 0 && errno != ENOENT)
 		ereport(ERROR,
-				(errmsg("could not stat file \"%s\": %m", path)));
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", path)));
 
 	else if (ret == 0)
 	{
@@ -1564,7 +1565,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	if (unlink(tmppath) != 0 && errno != ENOENT)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not remove file \"%s\": %m", path)));
+				 errmsg("could not remove file \"%s\": %m", tmppath)));
 
 	needed_length = sizeof(SnapBuildOnDisk) +
 		sizeof(TransactionId) * builder->committed.xcnt;
@@ -1608,7 +1609,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 						   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(ERROR,
-				(errmsg("could not open file \"%s\": %m", path)));
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", tmppath)));
 
 	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_SNAPBUILD_WRITE);
@@ -1740,12 +1742,14 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	if (ondisk.magic != SNAPBUILD_MAGIC)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has wrong magic number: %u instead of %u",
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("snapbuild state file \"%s\" has wrong magic number: %u instead of %u",
 						path, ondisk.magic, SNAPBUILD_MAGIC)));
 
 	if (ondisk.version != SNAPBUILD_VERSION)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has unsupported version: %u instead of %u",
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("snapbuild state file \"%s\" has unsupported version: %u instead of %u",
 						path, ondisk.version, SNAPBUILD_VERSION)));
 
 	INIT_CRC32C(checksum);
@@ -1816,7 +1820,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	/* verify checksum of what we've read */
 	if (!EQ_CRC32C(checksum, ondisk.checksum))
 		ereport(ERROR,
-				(errcode_for_file_access(),
+				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("checksum mismatch for snapbuild state file \"%s\": is %u, should be %u",
 						path, checksum, ondisk.checksum)));
 
