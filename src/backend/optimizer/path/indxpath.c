@@ -252,7 +252,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(lc);
 
 		/* Protect limited-size array in IndexClauseSets */
-		Assert(index->ncolumns <= INDEX_MAX_KEYS);
+		Assert(index->nkeycolumns <= INDEX_MAX_KEYS);
 
 		/*
 		 * Ignore partial indexes that do not match the query.
@@ -467,7 +467,7 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 	 * relation itself is also included in the relids set.  considered_relids
 	 * lists all relids sets we've already tried.
 	 */
-	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+	for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
 	{
 		/* Consider each applicable simple join clause */
 		considered_clauses += list_length(jclauseset->indexclauses[indexcol]);
@@ -621,7 +621,7 @@ get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	/* Identify indexclauses usable with this relids set */
 	MemSet(&clauseset, 0, sizeof(clauseset));
 
-	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+	for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
 	{
 		ListCell   *lc;
 
@@ -921,7 +921,7 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	clause_columns = NIL;
 	found_lower_saop_clause = false;
 	outer_relids = bms_copy(rel->lateral_relids);
-	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+	for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
 	{
 		ListCell   *lc;
 
@@ -2649,11 +2649,12 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 			/*
 			 * We allow any column of the index to match each pathkey; they
 			 * don't have to match left-to-right as you might expect.  This is
-			 * correct for GiST, which is the sole existing AM supporting
-			 * amcanorderbyop.  We might need different logic in future for
-			 * other implementations.
+			 * correct for GiST, and it doesn't matter for SP-GiST because
+			 * that doesn't handle multiple columns anyway, and no other
+			 * existing AMs support amcanorderbyop.  We might need different
+			 * logic in future for other implementations.
 			 */
-			for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
+			for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
 			{
 				Expr	   *expr;
 
@@ -3084,7 +3085,7 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 		 * Try to find each index column in the lists of conditions.  This is
 		 * O(N^2) or worse, but we expect all the lists to be short.
 		 */
-		for (c = 0; c < ind->ncolumns; c++)
+		for (c = 0; c < ind->nkeycolumns; c++)
 		{
 			bool		matched = false;
 			ListCell   *lc;
@@ -3159,8 +3160,8 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 				break;			/* no match; this index doesn't help us */
 		}
 
-		/* Matched all columns of this index? */
-		if (c == ind->ncolumns)
+		/* Matched all key columns of this index? */
+		if (c == ind->nkeycolumns)
 			return true;
 	}
 
