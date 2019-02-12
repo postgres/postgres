@@ -4869,6 +4869,10 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		 * it to expressional index columns, in hopes of finding some
 		 * statistics.
 		 *
+		 * Note that we consider all index columns including INCLUDE columns,
+		 * since there could be stats for such columns.  But the test for
+		 * uniqueness needs to be warier.
+		 *
 		 * XXX it's conceivable that there are multiple matches with different
 		 * index opfamilies; if so, we need to pick one that matches the
 		 * operator we are estimating for.  FIXME later.
@@ -4904,6 +4908,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						 */
 						if (index->unique &&
 							index->nkeycolumns == 1 &&
+							pos == 0 &&
 							(index->indpred == NIL || index->predOK))
 							vardata->isunique = true;
 
@@ -7242,7 +7247,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			if (index->reverse_sort[0])
 				varCorrelation = -varCorrelation;
 
-			if (index->ncolumns > 1)
+			if (index->nkeycolumns > 1)
 				costs.indexCorrelation = varCorrelation * 0.75;
 			else
 				costs.indexCorrelation = varCorrelation;
