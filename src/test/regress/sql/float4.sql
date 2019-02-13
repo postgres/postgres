@@ -301,7 +301,6 @@ with testdata(bits) as (values
   (x'4c000001'),
   (x'4c800b0d'),
   (x'00d24584'),
-  (x'800000b0'),
   (x'00d90b88'),
   (x'45803f34'),
   (x'4f9f24f7'),
