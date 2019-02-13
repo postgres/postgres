@@ -89,11 +89,11 @@
 #include "access/visibilitymap.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/inval.h"
-
 
 /*#define TRACE_VISIBILITYMAP */
 
@@ -115,43 +115,9 @@
 #define HEAPBLK_TO_MAPBYTE(x) (((x) % HEAPBLOCKS_PER_PAGE) / HEAPBLOCKS_PER_BYTE)
 #define HEAPBLK_TO_OFFSET(x) (((x) % HEAPBLOCKS_PER_BYTE) * BITS_PER_HEAPBLOCK)
 
-/* tables for fast counting of set bits for visible and frozen */
-static const uint8 number_of_ones_for_visible[256] = {
-	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4,
-	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	0, 1, 0, 1, 1, 2, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4,
-	1, 2, 1, 2, 2, 3, 2, 3, 1, 2, 1, 2, 2, 3, 2, 3,
-	2, 3, 2, 3, 3, 4, 3, 4, 2, 3, 2, 3, 3, 4, 3, 4
-};
-static const uint8 number_of_ones_for_frozen[256] = {
-	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
-	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
-	0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4,
-	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 3, 3,
-	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4,
-	2, 2, 3, 3, 2, 2, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4
-};
+/* Masks for bit counting bits in the visibility map. */
+#define VISIBLE_MASK64 0x5555555555555555 /* The lower bit of each bit pair */
+#define FROZEN_MASK64 0xaaaaaaaaaaaaaaaa /* The upper bit of each bit pair */
 
 /* prototypes for internal routines */
 static Buffer vm_readbuf(Relation rel, BlockNumber blkno, bool extend);
@@ -408,18 +374,16 @@ void
 visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_frozen)
 {
 	BlockNumber mapBlock;
+	BlockNumber nvisible = 0;
+	BlockNumber nfrozen = 0;
 
 	/* all_visible must be specified */
 	Assert(all_visible);
 
-	*all_visible = 0;
-	if (all_frozen)
-		*all_frozen = 0;
-
 	for (mapBlock = 0;; mapBlock++)
 	{
 		Buffer		mapBuffer;
-		unsigned char *map;
+		uint64	   *map;
 		int			i;
 
 		/*
@@ -436,17 +400,30 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 		 * immediately stale anyway if anyone is concurrently setting or
 		 * clearing bits, and we only really need an approximate value.
 		 */
-		map = (unsigned char *) PageGetContents(BufferGetPage(mapBuffer));
+		map = (uint64 *) PageGetContents(BufferGetPage(mapBuffer));
 
-		for (i = 0; i < MAPSIZE; i++)
+		StaticAssertStmt(MAPSIZE % sizeof(uint64) == 0,
+						 "unsupported MAPSIZE");
+		if (all_frozen == NULL)
 		{
-			*all_visible += number_of_ones_for_visible[map[i]];
-			if (all_frozen)
-				*all_frozen += number_of_ones_for_frozen[map[i]];
+			for (i = 0; i < MAPSIZE / sizeof(uint64); i++)
+				nvisible += pg_popcount64(map[i] & VISIBLE_MASK64);
+		}
+		else
+		{
+			for (i = 0; i < MAPSIZE / sizeof(uint64); i++)
+			{
+				nvisible += pg_popcount64(map[i] & VISIBLE_MASK64);
+				nfrozen += pg_popcount64(map[i] & FROZEN_MASK64);
+			}
 		}
 
 		ReleaseBuffer(mapBuffer);
 	}
+
+	*all_visible = nvisible;
+	if (all_frozen)
+		*all_frozen = nfrozen;
 }
 
 /*

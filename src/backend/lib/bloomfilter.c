@@ -37,6 +37,7 @@
 
 #include "access/hash.h"
 #include "lib/bloomfilter.h"
+#include "port/pg_bitutils.h"
 
 #define MAX_HASH_FUNCS		10
 
@@ -187,19 +188,7 @@ double
 bloom_prop_bits_set(bloom_filter *filter)
 {
 	int			bitset_bytes = filter->m / BITS_PER_BYTE;
-	uint64		bits_set = 0;
-	int			i;
-
-	for (i = 0; i < bitset_bytes; i++)
-	{
-		unsigned char byte = filter->bitset[i];
-
-		while (byte)
-		{
-			bits_set++;
-			byte &= (byte - 1);
-		}
-	}
+	uint64		bits_set = pg_popcount((char *) filter->bitset, bitset_bytes);
 
 	return bits_set / (double) filter->m;
 }
