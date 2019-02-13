@@ -815,7 +815,7 @@ extract_nonindex_conditions(List *qual_clauses, List *indexclauses)
  * product rather than calculating it here.  "pages" is the number of pages
  * in the object under consideration (either an index or a table).
  * "index_pages" is the amount to add to the total table space, which was
- * computed for us by query_planner.
+ * computed for us by make_one_rel.
  *
  * Caller is expected to have ensured that tuples_fetched is greater than zero
  * and rounded to integer (see clamp_row_est).  The result will likewise be
