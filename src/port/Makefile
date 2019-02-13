@@ -80,6 +80,8 @@ pg_crc32c_armv8_srv.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
 
 # pg_bitutils.c needs CFLAGS_POPCNT
 pg_bitutils.o: CFLAGS+=$(CFLAGS_POPCNT)
+pg_bitutils_shlib.o: CFLAGS+=$(CFLAGS_POPCNT)
+pg_bitutils_srv.o: CFLAGS+=$(CFLAGS_POPCNT)
 
 #
 # Shared library versions of object files
