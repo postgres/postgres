@@ -400,28 +400,6 @@ undefine([Ac_cachevar])dnl
 
 
 
-# PGAC_C_BUILTIN_POPCOUNTL
-# -------------------------
-AC_DEFUN([PGAC_C_BUILTIN_POPCOUNTL],
-[define([Ac_cachevar], [AS_TR_SH([pgac_cv_popcountl])])dnl
-AC_CACHE_CHECK([for __builtin_popcountl], [Ac_cachevar],
-[pgac_save_CFLAGS=$CFLAGS
-CFLAGS="$pgac_save_CFLAGS -mpopcnt"
-AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[static int x = __builtin_popcountl(255);])],
-[Ac_cachevar=yes],
-[Ac_cachevar=no])
-CFLAGS="$pgac_save_CFLAGS"])
-if test x"$Ac_cachevar" = x"yes"; then
-  CFLAGS_POPCNT="-mpopcnt"
-AC_DEFINE(HAVE__BUILTIN_POPCOUNTL, 1,
-          [Define to 1 if your compiler understands __builtin_popcountl.])
-fi
-undefine([Ac_cachevar])dnl
-])# PGAC_C_BUILTIN_POPCOUNTL
-
-
-
 # PGAC_C_BUILTIN_CTZ
 # -------------------------
 # Check if the C compiler understands __builtin_ctz(),
@@ -440,24 +418,6 @@ fi])# PGAC_C_BUILTIN_CTZ
 
 
 
-# PGAC_C_BUILTIN_CTZL
-# -------------------------
-# Check if the C compiler understands __builtin_ctzl(),
-# and define HAVE__BUILTIN_CTZL if so.
-AC_DEFUN([PGAC_C_BUILTIN_CTZL],
-[AC_CACHE_CHECK(for __builtin_ctzl, pgac_cv__builtin_ctzl,
-[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[static int x = __builtin_ctzl(256);]
-)],
-[pgac_cv__builtin_ctzl=yes],
-[pgac_cv__builtin_ctzl=no])])
-if test x"$pgac_cv__builtin_ctzl" = xyes ; then
-AC_DEFINE(HAVE__BUILTIN_CTZL, 1,
-          [Define to 1 if your compiler understands __builtin_ctzl.])
-fi])# PGAC_C_BUILTIN_CTZL
-
-
-
 # PGAC_C_BUILTIN_CLZ
 # -------------------------
 # Check if the C compiler understands __builtin_clz(),
@@ -473,24 +433,6 @@ if test x"$pgac_cv__builtin_clz" = xyes ; then
 AC_DEFINE(HAVE__BUILTIN_CLZ, 1,
           [Define to 1 if your compiler understands __builtin_clz.])
 fi])# PGAC_C_BUILTIN_CLZ
-
-
-
-# PGAC_C_BUILTIN_CLZL
-# -------------------------
-# Check if the C compiler understands __builtin_clzl(),
-# and define HAVE__BUILTIN_CLZL if so.
-AC_DEFUN([PGAC_C_BUILTIN_CLZL],
-[AC_CACHE_CHECK(for __builtin_clzl, pgac_cv__builtin_clzl,
-[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[static int x = __builtin_clzl(256);]
-)],
-[pgac_cv__builtin_clzl=yes],
-[pgac_cv__builtin_clzl=no])])
-if test x"$pgac_cv__builtin_clzl" = xyes ; then
-AC_DEFINE(HAVE__BUILTIN_CLZL, 1,
-          [Define to 1 if your compiler understands __builtin_clzl.])
-fi])# PGAC_C_BUILTIN_CLZL
 
 
 

@@ -23,86 +23,61 @@
 
 #include "port/pg_bitutils.h"
 
-#if defined(HAVE__GET_CPUID) && (defined(HAVE__BUILTIN_POPCOUNT) || defined(HAVE__BUILTIN_POPCOUNTL))
-static bool pg_popcount_available(void);
-#endif
-
 #if defined(HAVE__BUILTIN_POPCOUNT) && defined(HAVE__GET_CPUID)
+static bool pg_popcount_available(void);
 static int pg_popcount32_choose(uint32 word);
 static int pg_popcount32_sse42(uint32 word);
-#endif
-static int pg_popcount32_slow(uint32 word);
-
-#if defined(HAVE__BUILTIN_POPCOUNTL) && defined(HAVE__GET_CPUID)
 static int pg_popcount64_choose(uint64 word);
 static int pg_popcount64_sse42(uint64 word);
 #endif
+static int pg_popcount32_slow(uint32 word);
 static int pg_popcount64_slow(uint64 word);
 
-#if defined(HAVE__GET_CPUID) && (defined(HAVE__BUILTIN_CTZ) || defined(HAVE__BUILTIN_CTZL) || defined(HAVE__BUILTIN_CLZ) || defined(HAVE__BUILTIN_CLZL))
+#if defined(HAVE__GET_CPUID) && (defined(HAVE__BUILTIN_CTZ) || defined(HAVE__BUILTIN_CLZ))
 static bool pg_lzcnt_available(void);
 #endif
 
 #if defined(HAVE__BUILTIN_CTZ) && defined(HAVE__GET_CPUID)
 static int pg_rightmost_one32_choose(uint32 word);
 static int pg_rightmost_one32_abm(uint32 word);
-#endif
-static int pg_rightmost_one32_slow(uint32 word);
-
-#if defined(HAVE__BUILTIN_CTZL) && defined(HAVE__GET_CPUID)
 static int pg_rightmost_one64_choose(uint64 word);
 static int pg_rightmost_one64_abm(uint64 word);
 #endif
+static int pg_rightmost_one32_slow(uint32 word);
 static int pg_rightmost_one64_slow(uint64 word);
 
 #if defined(HAVE__BUILTIN_CLZ) && defined(HAVE__GET_CPUID)
 static int pg_leftmost_one32_choose(uint32 word);
 static int pg_leftmost_one32_abm(uint32 word);
-#endif
-static int pg_leftmost_one32_slow(uint32 word);
-
-#if defined(HAVE__BUILTIN_CLZL) && defined(HAVE__GET_CPUID)
 static int pg_leftmost_one64_choose(uint64 word);
 static int pg_leftmost_one64_abm(uint64 word);
 #endif
+static int pg_leftmost_one32_slow(uint32 word);
 static int pg_leftmost_one64_slow(uint64 word);
 
 #if defined(HAVE__BUILTIN_POPCOUNT) && defined(HAVE__GET_CPUID)
 int (*pg_popcount32) (uint32 word) = pg_popcount32_choose;
-#else
-int (*pg_popcount32) (uint32 word) = pg_popcount32_slow;
-#endif
-
-#if defined(HAVE__BUILTIN_POPCOUNTL) && defined(HAVE__GET_CPUID)
 int (*pg_popcount64) (uint64 word) = pg_popcount64_choose;
 #else
+int (*pg_popcount32) (uint32 word) = pg_popcount32_slow;
 int (*pg_popcount64) (uint64 word) = pg_popcount64_slow;
 #endif
 
 #if defined(HAVE__BUILTIN_CTZ) && defined(HAVE__GET_CPUID)
 int (*pg_rightmost_one32) (uint32 word) = pg_rightmost_one32_choose;
-#else
-int (*pg_rightmost_one32) (uint32 word) = pg_rightmost_one32_slow;
-#endif
-
-#if defined(HAVE__BUILTIN_CTZL) && defined(HAVE__GET_CPUID)
 int (*pg_rightmost_one64) (uint64 word) = pg_rightmost_one64_choose;
 #else
+int (*pg_rightmost_one32) (uint32 word) = pg_rightmost_one32_slow;
 int (*pg_rightmost_one64) (uint64 word) = pg_rightmost_one64_slow;
 #endif
 
 #if defined(HAVE__BUILTIN_CLZ) && defined(HAVE__GET_CPUID)
 int (*pg_leftmost_one32) (uint32 word) = pg_leftmost_one32_choose;
-#else
-int (*pg_leftmost_one32) (uint32 word) = pg_leftmost_one32_slow;
-#endif
-
-#if defined(HAVE__BUILTIN_CLZL) && defined(HAVE__GET_CPUID)
 int (*pg_leftmost_one64) (uint64 word) = pg_leftmost_one64_choose;
 #else
+int (*pg_leftmost_one32) (uint32 word) = pg_leftmost_one32_slow;
 int (*pg_leftmost_one64) (uint64 word) = pg_leftmost_one64_slow;
 #endif
-
 
 /* Array marking the number of 1-bits for each value of 0-255. */
 static const uint8 number_of_ones[256] = {
@@ -172,7 +147,7 @@ static const uint8 leftmost_one_pos[256] = {
 	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
 };
 
-#if defined(HAVE__GET_CPUID) && (defined(HAVE__BUILTIN_POPCOUNT) || defined(HAVE__BUILTIN_POPCOUNTL))
+#if defined(HAVE__GET_CPUID) && defined(HAVE__BUILTIN_POPCOUNT)
 
 static bool
 pg_popcount_available(void)
@@ -279,7 +254,7 @@ pg_popcount(const char *buf, int bytes)
 	return popcnt;
 }
 
-#if defined(HAVE__GET_CPUID) && defined(HAVE__BUILTIN_POPCOUNTL)
+#if defined(HAVE__GET_CPUID) && defined(HAVE__BUILTIN_POPCOUNT)
 
 /*
  * This gets called on the first call. It replaces the function pointer
@@ -299,7 +274,14 @@ pg_popcount64_choose(uint64 word)
 static int
 pg_popcount64_sse42(uint64 word)
 {
+#if defined(HAVE_LONG_INT_64)
 	return __builtin_popcountl(word);
+#elif defined(HAVE_LONG_LONG_INT_64)
+	return __builtin_popcountll(word);
+#else
+	/* shouldn't happen */
+#error must have a working 64-bit integer datatype
+#endif
 }
 
 #endif
@@ -322,7 +304,7 @@ pg_popcount64_slow(uint64 word)
 	return result;
 }
 
-#if defined(HAVE__GET_CPUID) && (defined(HAVE__BUILTIN_CTZ) || defined(HAVE__BUILTIN_CTZL) || defined(HAVE__BUILTIN_CLZ) || defined(HAVE__BUILTIN_CLZL))
+#if defined(HAVE__GET_CPUID) && (defined(HAVE__BUILTIN_CTZ) || defined(HAVE__BUILTIN_CLZ))
 
 static bool
 pg_lzcnt_available(void)
@@ -388,7 +370,7 @@ pg_rightmost_one32_slow(uint32 word)
 	return result;
 }
 
-#if defined(HAVE__GET_CPUID) && defined(HAVE__BUILTIN_CTZL)
+#if defined(HAVE__GET_CPUID) && defined(HAVE__BUILTIN_CTZ)
 /*
  * This gets called on the first call. It replaces the function pointer
  * so that subsequent calls are routed directly to the chosen implementation.
@@ -407,7 +389,14 @@ pg_rightmost_one64_choose(uint64 word)
 static int
 pg_rightmost_one64_abm(uint64 word)
 {
+#if defined(HAVE_LONG_INT_64)
 	return __builtin_ctzl(word);
+#elif defined(HAVE_LONG_LONG_INT_64)
+	return __builtin_ctzll(word);
+#else
+	/* shouldn't happen */
+#error must have a working 64-bit integer datatype
+#endif
 }
 #endif
 
@@ -474,7 +463,7 @@ pg_leftmost_one32_slow(uint32 word)
 	return shift + leftmost_one_pos[(word >> shift) & 255];
 }
 
-#if defined(HAVE__GET_CPUID) && defined(HAVE__BUILTIN_CLZL)
+#if defined(HAVE__GET_CPUID) && defined(HAVE__BUILTIN_CLZ)
 /*
  * This gets called on the first call. It replaces the function pointer
  * so that subsequent calls are routed directly to the chosen implementation.
@@ -493,7 +482,15 @@ pg_leftmost_one64_choose(uint64 word)
 static int
 pg_leftmost_one64_abm(uint64 word)
 {
+#if defined(HAVE_LONG_INT_64)
 	return 63 - __builtin_clzl(word);
+#elif defined(HAVE_LONG_LONG_INT_64)
+	return 63 - __builtin_clzll(word);
+#else
+	/* shouldn't happen */
+#error must have a working 64-bit integer datatype
+#endif
+
 }
 #endif
 
