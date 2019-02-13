@@ -33,11 +33,11 @@ SELECT count(*) FROM float4tmp WHERE a >  -179.0;
 (1 row)
 
 SELECT a, a <-> '-179.0' FROM float4tmp ORDER BY a <-> '-179.0' LIMIT 3;
-    a     | ?column? 
-----------+----------
-     -179 |        0
- -189.024 |  10.0239
- -158.177 |  20.8226
+     a      | ?column?  
+------------+-----------
+       -179 |         0
+ -189.02386 | 10.023865
+ -158.17741 | 20.822586
 (3 rows)
 
 CREATE INDEX float4idx ON float4tmp USING gist ( a );
@@ -82,10 +82,10 @@ SELECT a, a <-> '-179.0' FROM float4tmp ORDER BY a <-> '-179.0' LIMIT 3;
 (3 rows)
 
 SELECT a, a <-> '-179.0' FROM float4tmp ORDER BY a <-> '-179.0' LIMIT 3;
-    a     | ?column? 
-----------+----------
-     -179 |        0
- -189.024 |  10.0239
- -158.177 |  20.8226
+     a      | ?column?  
+------------+-----------
+       -179 |         0
+ -189.02386 | 10.023865
+ -158.17741 | 20.822586
 (3 rows)
 

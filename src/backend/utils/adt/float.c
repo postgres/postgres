@@ -21,6 +21,7 @@
 
 #include "catalog/pg_type.h"
 #include "common/int.h"
+#include "common/shortest_dec.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/array.h"
@@ -30,8 +31,15 @@
 #include "utils/timestamp.h"
 
 
-/* Configurable GUC parameter */
-int			extra_float_digits = 0; /* Added to DBL_DIG or FLT_DIG */
+/*
+ * Configurable GUC parameter
+ *
+ * If >0, use shortest-decimal format for output; this is both the default and
+ * allows for compatibility with clients that explicitly set a value here to
+ * get round-trip-accurate results. If 0 or less, then use the old, slow,
+ * decimal rounding method.
+ */
+int			extra_float_digits = 1;
 
 /* Cached constants for degree-based trig functions */
 static bool degree_consts_set = false;
@@ -282,6 +290,12 @@ float4out(PG_FUNCTION_ARGS)
 	char	   *ascii = (char *) palloc(32);
 	int			ndig = FLT_DIG + extra_float_digits;
 
+	if (extra_float_digits > 0)
+	{
+		float_to_shortest_decimal_buf(num, ascii);
+		PG_RETURN_CSTRING(ascii);
+	}
+
 	(void) pg_strfromd(ascii, 32, ndig, num);
 	PG_RETURN_CSTRING(ascii);
 }
@@ -497,6 +511,12 @@ float8out_internal(double num)
 {
 	char	   *ascii = (char *) palloc(32);
 	int			ndig = DBL_DIG + extra_float_digits;
+
+	if (extra_float_digits > 0)
+	{
+		double_to_shortest_decimal_buf(num, ascii);
+		return ascii;
+	}
 
 	(void) pg_strfromd(ascii, 32, ndig, num);
 	return ascii;

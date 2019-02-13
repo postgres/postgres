@@ -4376,9 +4376,9 @@ select '12345.05'::jsonb::numeric;
 (1 row)
 
 select '12345.05'::jsonb::float4;
- float4 
---------
-  12345
+  float4  
+----------
+ 12345.05
 (1 row)
 
 select '12345.05'::jsonb::float8;

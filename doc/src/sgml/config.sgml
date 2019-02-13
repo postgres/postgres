@@ -7871,16 +7871,37 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </term>
       <listitem>
        <para>
-        This parameter adjusts the number of digits displayed for
+        This parameter adjusts the number of digits used for textual output of
         floating-point values, including <type>float4</type>, <type>float8</type>,
-        and geometric data types.  The parameter value is added to the
-        standard number of digits (<literal>FLT_DIG</literal> or <literal>DBL_DIG</literal>
-        as appropriate).  The value can be set as high as 3, to include
-        partially-significant digits; this is especially useful for dumping
-        float data that needs to be restored exactly.  Or it can be set
-        negative to suppress unwanted digits.
-        See also <xref linkend="datatype-float"/>.
+        and geometric data types.
        </para>
+       <para>
+        If the value is 1 (the default) or above, float values are output in
+        shortest-precise format; see <xref linkend="datatype-float"/>. The
+        actual number of digits generated depends only on the value being
+        output, not on the value of this parameter. At most 17 digits are
+        required for <type>float8</type> values, and 9 for <type>float4</type>
+        values. This format is both fast and precise, preserving the original
+        binary float value exactly when correctly read. For historical
+        compatibility, values up to 3 are permitted.
+       </para>
+       <para>
+        If the value is zero or negative, then the output is rounded to a
+        given decimal precision. The precision used is the standard number of
+        digits for the type (<literal>FLT_DIG</literal>
+        or <literal>DBL_DIG</literal> as appropriate) reduced according to the
+        value of this parameter. (For example, specifying -1 will cause float4
+        values to be output rounded to 5 significant digits, and float8 values
+        rounded to 14 digits.) This format is slower and does not preserve all
+        the bits of the binary float value, but may be more human-readable.
+       </para>
+       <note>
+        <para>
+         The meaning of this parameter, and its default value, changed
+         in <productname>PostgreSQL</productname> 12;
+         see <xref linkend="datatype-float"/> for further discussion.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 

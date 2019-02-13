@@ -732,6 +732,7 @@ CPP
 BITCODE_CXXFLAGS
 BITCODE_CFLAGS
 CFLAGS_VECTOR
+PERMIT_DECLARATION_AFTER_STATEMENT
 LLVM_BINPATH
 LLVM_CXXFLAGS
 LLVM_CFLAGS
@@ -5261,6 +5262,7 @@ if test "$GCC" = yes -a "$ICC" = no; then
   CFLAGS="-Wall -Wmissing-prototypes -Wpointer-arith"
   CXXFLAGS="-Wall -Wpointer-arith"
   # These work in some but not all gcc versions
+  save_CFLAGS=$CFLAGS
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Wdeclaration-after-statement, for CFLAGS" >&5
 $as_echo_n "checking whether ${CC} supports -Wdeclaration-after-statement, for CFLAGS... " >&6; }
@@ -5301,7 +5303,13 @@ if test x"$pgac_cv_prog_CC_cflags__Wdeclaration_after_statement" = x"yes"; then
 fi
 
 
-  # -Wdeclaration-after-statement isn't applicable for C++
+  # -Wdeclaration-after-statement isn't applicable for C++.  Specific C files
+  # disable it, so AC_SUBST the negative form.
+  PERMIT_DECLARATION_AFTER_STATEMENT=
+  if test x"save_$CFLAGS" != x"$CFLAGS"; then
+    PERMIT_DECLARATION_AFTER_STATEMENT=-Wno-declaration-after-statement
+  fi
+
   # Really don't want VLAs to be used in our dialect of C
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Werror=vla, for CFLAGS" >&5

@@ -1127,7 +1127,7 @@ FROM test_seg WHERE s @> '11.2..11.3' OR s IS NULL ORDER BY s;
        2.1 |       6.95 |      11.8
        2.3 |   Infinity |  Infinity
        2.3 |   Infinity |  Infinity
-       2.4 |       6.85 |      11.3
+       2.4 |  6.8500004 |      11.3
        2.5 |          7 |      11.5
        2.5 |       7.15 |      11.8
        2.6 |   Infinity |  Infinity
@@ -1155,7 +1155,7 @@ FROM test_seg WHERE s @> '11.2..11.3' OR s IS NULL ORDER BY s;
        4.5 |      59.75 |       115
        4.7 |       8.25 |      11.8
        4.8 |       8.15 |      11.5
-       4.8 |        8.2 |      11.6
+       4.8 |   8.200001 |      11.6
        4.8 |       8.65 |      12.5
        4.8 |   Infinity |  Infinity
        4.9 |       8.45 |        12
@@ -1244,7 +1244,7 @@ FROM test_seg WHERE s @> '11.2..11.3' OR s IS NULL ORDER BY s;
          9 |       10.5 |        12
          9 |   Infinity |  Infinity
        9.2 |       10.6 |        12
-       9.4 |       10.8 |      12.2
+       9.4 |  10.799999 |      12.2
        9.5 |      10.75 |        12
        9.5 |      10.85 |      12.2
        9.5 |   Infinity |  Infinity

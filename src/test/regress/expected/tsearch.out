@@ -970,9 +970,9 @@ Water, water, every where,
   Nor any drop to drink.
 S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'breath&motion&water'));
- ts_rank_cd 
-------------
- 0.00833333
+ ts_rank_cd  
+-------------
+ 0.008333334
 (1 row)
 
 SELECT ts_rank_cd(to_tsvector('english', '

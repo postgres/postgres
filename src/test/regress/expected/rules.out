@@ -910,24 +910,24 @@ insert into rtest_comp values ('p4', 'cm', 15.0);
 insert into rtest_comp values ('p5', 'inch', 7.0);
 insert into rtest_comp values ('p6', 'inch', 4.4);
 select * from rtest_vcomp order by part;
- part | size_in_cm 
-------+------------
- p1   |        500
- p2   |        300
- p3   |          5
- p4   |         15
- p5   |      17.78
- p6   |     11.176
+ part |     size_in_cm     
+------+--------------------
+ p1   |                500
+ p2   |                300
+ p3   |                  5
+ p4   |                 15
+ p5   |              17.78
+ p6   | 11.176000000000002
 (6 rows)
 
 select * from rtest_vcomp where size_in_cm > 10.0 order by size_in_cm using >;
- part | size_in_cm 
-------+------------
- p1   |        500
- p2   |        300
- p5   |      17.78
- p4   |         15
- p6   |     11.176
+ part |     size_in_cm     
+------+--------------------
+ p1   |                500
+ p2   |                300
+ p5   |              17.78
+ p4   |                 15
+ p6   | 11.176000000000002
 (5 rows)
 
 --

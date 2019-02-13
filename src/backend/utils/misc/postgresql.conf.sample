@@ -651,7 +651,8 @@
 					#   India
 					# You can create your own file in
 					# share/timezonesets/.
-#extra_float_digits = 0			# min -15, max 3
+#extra_float_digits = 1			# min -15, max 3; any value >0 actually
+					# selects precise output mode
 #client_encoding = sql_ascii		# actually, defaults to database
 					# encoding
 

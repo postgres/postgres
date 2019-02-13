@@ -787,57 +787,57 @@ select to_tsvector('simple', '') @@ '!foo' AS "true";
 
 --ranking
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a | s');
-  ts_rank  
------------
- 0.0911891
+   ts_rank   
+-------------
+ 0.091189064
 (1 row)
 
 SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | s');
-  ts_rank  
------------
- 0.0303964
+   ts_rank   
+-------------
+ 0.030396355
 (1 row)
 
 SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | s:*');
-  ts_rank  
------------
- 0.0911891
+   ts_rank   
+-------------
+ 0.091189064
 (1 row)
 
 SELECT ts_rank(' a:1 sa:2C d g'::tsvector, 'a | sa:*');
-  ts_rank  
------------
- 0.0911891
+   ts_rank   
+-------------
+ 0.091189064
 (1 row)
 
 SELECT ts_rank(' a:1 s:2B d g'::tsvector, 'a | s');
- ts_rank  
-----------
- 0.151982
+  ts_rank   
+------------
+ 0.15198177
 (1 row)
 
 SELECT ts_rank(' a:1 s:2 d g'::tsvector, 'a | s');
-  ts_rank  
------------
- 0.0607927
+  ts_rank   
+------------
+ 0.06079271
 (1 row)
 
 SELECT ts_rank(' a:1 s:2C d g'::tsvector, 'a & s');
- ts_rank  
-----------
- 0.140153
+  ts_rank   
+------------
+ 0.14015312
 (1 row)
 
 SELECT ts_rank(' a:1 s:2B d g'::tsvector, 'a & s');
- ts_rank  
-----------
- 0.198206
+  ts_rank   
+------------
+ 0.19820644
 (1 row)
 
 SELECT ts_rank(' a:1 s:2 d g'::tsvector, 'a & s');
-  ts_rank  
------------
- 0.0991032
+  ts_rank   
+------------
+ 0.09910322
 (1 row)
 
 SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a | s');
@@ -885,7 +885,7 @@ SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a | s');
 SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a & s');
  ts_rank_cd 
 ------------
-   0.133333
+ 0.13333334
 (1 row)
 
 SELECT ts_rank_cd(' a:1 s:2B d g'::tsvector, 'a & s');
@@ -903,13 +903,13 @@ SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a & s');
 SELECT ts_rank_cd(' a:1 s:2A d g'::tsvector, 'a <-> s');
  ts_rank_cd 
 ------------
-   0.181818
+ 0.18181819
 (1 row)
 
 SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a <-> s');
  ts_rank_cd 
 ------------
-   0.133333
+ 0.13333334
 (1 row)
 
 SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a <-> s');
@@ -927,13 +927,13 @@ SELECT ts_rank_cd(' a:1 s:2 d:2A g'::tsvector, 'a <-> s');
 SELECT ts_rank_cd(' a:1 s:2,3A d:2A g'::tsvector, 'a <2> s:A');
  ts_rank_cd 
 ------------
-  0.0909091
+ 0.09090909
 (1 row)
 
 SELECT ts_rank_cd(' a:1 b:2 s:3A d:2A g'::tsvector, 'a <2> s:A');
  ts_rank_cd 
 ------------
-  0.0909091
+ 0.09090909
 (1 row)
 
 SELECT ts_rank_cd(' a:1 sa:2D sb:2A g'::tsvector, 'a <-> s:*');

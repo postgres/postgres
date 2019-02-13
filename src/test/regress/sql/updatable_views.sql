@@ -2,6 +2,9 @@
 -- UPDATABLE VIEWS
 --
 
+-- avoid bit-exact output here because operations may not be bit-exact.
+SET extra_float_digits = 0;
+
 -- check that non-updatable views and columns are rejected with useful error
 -- messages
 

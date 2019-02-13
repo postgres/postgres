@@ -9,6 +9,9 @@ WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
 --standard_conforming_string is off
 set standard_conforming_strings=on;
 
+-- reduce noise
+set extra_float_digits = 0;
+
 select show_trgm('');
 select show_trgm('(*&^$@%@');
 select show_trgm('a b c');

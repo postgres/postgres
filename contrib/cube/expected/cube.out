@@ -81,21 +81,21 @@ SELECT 'NaN'::cube AS cube;
 (1 row)
 
 SELECT '.1234567890123456'::cube AS cube;
-        cube         
----------------------
- (0.123456789012346)
+         cube         
+----------------------
+ (0.1234567890123456)
 (1 row)
 
 SELECT '+.1234567890123456'::cube AS cube;
-        cube         
----------------------
- (0.123456789012346)
+         cube         
+----------------------
+ (0.1234567890123456)
 (1 row)
 
 SELECT '-.1234567890123456'::cube AS cube;
-         cube         
-----------------------
- (-0.123456789012346)
+         cube          
+-----------------------
+ (-0.1234567890123456)
 (1 row)
 
 -- simple lists (points)
@@ -943,9 +943,9 @@ SELECT cube_distance('(42,42,42,42)'::cube,'(137,137,137,137)'::cube);
 (1 row)
 
 SELECT cube_distance('(42,42,42)'::cube,'(137,137)'::cube);
-  cube_distance   
-------------------
- 140.762210837994
+   cube_distance    
+--------------------
+ 140.76221083799445
 (1 row)
 
 -- Test of cube function (text to cube)
@@ -1356,8 +1356,9 @@ SELECT cube_size('(42,137)'::cube);
          0
 (1 row)
 
--- Test of distances
+-- Test of distances (euclidean distance may not be bit-exact)
 --
+SET extra_float_digits = 0;
 SELECT cube_distance('(1,1)'::cube, '(4,5)'::cube);
  cube_distance 
 ---------------
@@ -1370,6 +1371,7 @@ SELECT '(1,1)'::cube <-> '(4,5)'::cube as d_e;
    5
 (1 row)
 
+RESET extra_float_digits;
 SELECT distance_chebyshev('(1,1)'::cube, '(4,5)'::cube);
  distance_chebyshev 
 --------------------
@@ -1557,6 +1559,7 @@ RESET enable_bitmapscan;
 INSERT INTO test_cube VALUES ('(1,1)'), ('(100000)'), ('(0, 100000)'); -- Some corner cases
 SET enable_seqscan = false;
 -- Test different metrics
+SET extra_float_digits = 0;
 SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <-> '(100, 100),(500, 500)'::cube LIMIT 5;
             c            |       dist       
 -------------------------+------------------
@@ -1567,6 +1570,7 @@ SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c 
  (1444, 403),(1346, 344) |              846
 (5 rows)
 
+RESET extra_float_digits;
 SELECT *, c <=> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <=> '(100, 100),(500, 500)'::cube LIMIT 5;
             c            | dist 
 -------------------------+------
@@ -1751,6 +1755,7 @@ SELECT c~>(-4), c FROM test_cube ORDER BY c~>(-4) LIMIT 15; -- descending by upp
 -- Same queries with sequential scan (should give the same results as above)
 RESET enable_seqscan;
 SET enable_indexscan = OFF;
+SET extra_float_digits = 0;
 SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <-> '(100, 100),(500, 500)'::cube LIMIT 5;
             c            |       dist       
 -------------------------+------------------
@@ -1761,6 +1766,7 @@ SELECT *, c <-> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c 
  (1444, 403),(1346, 344) |              846
 (5 rows)
 
+RESET extra_float_digits;
 SELECT *, c <=> '(100, 100),(500, 500)'::cube as dist FROM test_cube ORDER BY c <=> '(100, 100),(500, 500)'::cube LIMIT 5;
             c            | dist 
 -------------------------+------

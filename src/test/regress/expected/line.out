@@ -64,14 +64,14 @@ LINE 1: INSERT INTO LINE_TBL VALUES ('[(1,2),(1,2)]');
 INSERT INTO LINE_TBL VALUES (line(point '(1,0)', point '(1,0)'));
 ERROR:  invalid line specification: must be two distinct points
 select * from LINE_TBL;
-                      s                      
----------------------------------------------
+                       s                        
+------------------------------------------------
  {0,-1,5}
  {1,0,5}
  {0,3,0}
  {1,-1,0}
  {-0.4,-1,-6}
- {-0.000184615384615385,-1,15.3846153846154}
+ {-0.0001846153846153846,-1,15.384615384615387}
  {3,NaN,5}
  {NaN,NaN,NaN}
  {0,-1,3}

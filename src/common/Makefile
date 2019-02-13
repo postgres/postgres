@@ -44,9 +44,11 @@ override CPPFLAGS += -DVAL_LIBS="\"$(LIBS)\""
 override CPPFLAGS := -DFRONTEND -I. -I$(top_srcdir)/src/common $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-OBJS_COMMON = base64.o config_info.o controldata_utils.o exec.o file_perm.o \
-	ip.o keywords.o kwlookup.o link-canary.o md5.o pg_lzcompress.o \
-	pgfnames.o psprintf.o relpath.o \
+# If you add objects here, see also src/tools/msvc/Mkvcbuild.pm
+
+OBJS_COMMON = base64.o config_info.o controldata_utils.o d2s.o exec.o f2s.o \
+	file_perm.o ip.o keywords.o kwlookup.o link-canary.o md5.o \
+	pg_lzcompress.o pgfnames.o psprintf.o relpath.o \
 	rmtree.o saslprep.o scram-common.o string.o unicode_norm.o \
 	username.o wait_error.o
 
@@ -129,6 +131,13 @@ kwlist_d.h: $(top_srcdir)/src/include/parser/kwlist.h $(GEN_KEYWORDLIST_DEPS)
 # Dependencies of keywords*.o need to be managed explicitly to make sure
 # that you don't get broken parsing code, even in a non-enable-depend build.
 keywords.o keywords_shlib.o keywords_srv.o: kwlist_d.h
+
+# The code imported from Ryu gets a pass on declaration-after-statement,
+# in order to keep it more closely aligned with its upstream.
+RYU_FILES = d2s.o f2s.o
+RYU_OBJS = $(RYU_FILES) $(RYU_FILES:%.o=%_shlib.o) $(RYU_FILES:%.o=%_srv.o)
+
+$(RYU_OBJS): CFLAGS += $(PERMIT_DECLARATION_AFTER_STATEMENT)
 
 # kwlist_d.h is in the distribution tarball, so it is not cleaned here.
 clean distclean:
