@@ -104,13 +104,39 @@ is_infinite(double val)
 
 /*
  *		float4in		- converts "num" to float4
+ *
+ * Note that this code now uses strtof(), where it used to use strtod().
+ *
+ * The motivation for using strtof() is to avoid a double-rounding problem:
+ * for certain decimal inputs, if you round the input correctly to a double,
+ * and then round the double to a float, the result is incorrect in that it
+ * does not match the result of rounding the decimal value to float directly.
+ *
+ * One of the best examples is 7.038531e-26:
+ *
+ * 0xAE43FDp-107 = 7.03853069185120912085...e-26
+ *      midpoint   7.03853100000000022281...e-26
+ * 0xAE43FEp-107 = 7.03853130814879132477...e-26
+ *
+ * making 0xAE43FDp-107 the correct float result, but if you do the conversion
+ * via a double, you get
+ *
+ * 0xAE43FD.7FFFFFF8p-107 = 7.03853099999999907487...e-26
+ *               midpoint   7.03853099999999964884...e-26
+ * 0xAE43FD.80000000p-107 = 7.03853100000000022281...e-26
+ * 0xAE43FD.80000008p-107 = 7.03853100000000137076...e-26
+ *
+ * so the value rounds to the double exactly on the midpoint between the two
+ * nearest floats, and then rounding again to a float gives the incorrect
+ * result of 0xAE43FEp-107.
+ *
  */
 Datum
 float4in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
 	char	   *orig_num;
-	double		val;
+	float		val;
 	char	   *endptr;
 
 	/*
@@ -135,7 +161,7 @@ float4in(PG_FUNCTION_ARGS)
 						"real", orig_num)));
 
 	errno = 0;
-	val = strtod(num, &endptr);
+	val = strtof(num, &endptr);
 
 	/* did we not see anything that looks like a double? */
 	if (endptr == num || errno != 0)
@@ -143,14 +169,14 @@ float4in(PG_FUNCTION_ARGS)
 		int			save_errno = errno;
 
 		/*
-		 * C99 requires that strtod() accept NaN, [+-]Infinity, and [+-]Inf,
+		 * C99 requires that strtof() accept NaN, [+-]Infinity, and [+-]Inf,
 		 * but not all platforms support all of these (and some accept them
 		 * but set ERANGE anyway...)  Therefore, we check for these inputs
-		 * ourselves if strtod() fails.
+		 * ourselves if strtof() fails.
 		 *
 		 * Note: C99 also requires hexadecimal input as well as some extended
 		 * forms of NaN, but we consider these forms unportable and don't try
-		 * to support them.  You can use 'em if your strtod() takes 'em.
+		 * to support them.  You can use 'em if your strtof() takes 'em.
 		 */
 		if (pg_strncasecmp(num, "NaN", 3) == 0)
 		{
@@ -195,8 +221,18 @@ float4in(PG_FUNCTION_ARGS)
 			 * precision).  We'd prefer not to throw error for that, so try to
 			 * detect whether it's a "real" out-of-range condition by checking
 			 * to see if the result is zero or huge.
+			 *
+			 * Use isinf() rather than HUGE_VALF on VS2013 because it generates
+			 * a spurious overflow warning for -HUGE_VALF. Also use isinf() if
+			 * HUGE_VALF is missing.
 			 */
-			if (val == 0.0 || val >= HUGE_VAL || val <= -HUGE_VAL)
+			if (val == 0.0 ||
+#if !defined(HUGE_VALF) || (defined(_MSC_VER) && (_MSC_VER < 1900))
+				isinf(val)
+#else
+				(val >= HUGE_VALF || val <= -HUGE_VALF)
+#endif
+				)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("\"%s\" is out of range for type real",
@@ -232,13 +268,7 @@ float4in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"real", orig_num)));
 
-	/*
-	 * if we get here, we have a legal double, still need to check to see if
-	 * it's a legal float4
-	 */
-	check_float4_val((float4) val, isinf(val), val == 0);
-
-	PG_RETURN_FLOAT4((float4) val);
+	PG_RETURN_FLOAT4(val);
 }
 
 /*

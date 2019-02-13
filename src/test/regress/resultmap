@@ -3,3 +3,4 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
 float8:out:i.86-.*-netbsd=float8-small-is-zero.out
 float8:out:m68k-.*-netbsd=float8-small-is-zero.out
 float8:out:i.86-pc-cygwin=float8-small-is-zero.out
+float4:out:hppa.*-hp-hpux10.*=float4-misrounded-input.out

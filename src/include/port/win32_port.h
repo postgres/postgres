@@ -510,6 +510,18 @@ typedef unsigned short mode_t;
 #define isnan(x) _isnan(x)
 #endif
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+/*
+ * VS2013 has a strtof() that seems to give correct answers for valid input,
+ * even on the rounding edge cases, but which doesn't handle out-of-range
+ * input correctly. Work around that.
+ */
+#define HAVE_BUGGY_WINDOWS_STRTOF 1
+extern float pg_strtof(const char *nptr, char **endptr);
+#define strtof(a,b) (pg_strtof((a),(b)))
+
+#endif
+
 /* Pulled from Makefile.port in MinGW */
 #define DLSUFFIX ".dll"
 

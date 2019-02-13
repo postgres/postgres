@@ -139,6 +139,9 @@
    don't. */
 #define HAVE_DECL_STRNLEN 1
 
+/* Define to 1 if you have the `strtof' function. */
+#define HAVE_STRTOF 1
+
 /* Define to 1 if you have the declaration of `strtoll', and to 0 if you
    don't. */
 #define HAVE_DECL_STRTOLL 1

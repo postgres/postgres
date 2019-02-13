@@ -105,6 +105,8 @@ sub mkvcbuild
 
 	push(@pgportfiles, 'rint.c') if ($vsVersion < '12.00');
 
+	push(@pgportfiles, 'strtof.c') if ($vsVersion < '14.00');
+
 	if ($vsVersion >= '9.00')
 	{
 		push(@pgportfiles, 'pg_crc32c_sse42_choose.c');

@@ -15805,6 +15805,19 @@ esac
 
 fi
 
+ac_fn_c_check_func "$LINENO" "strtof" "ac_cv_func_strtof"
+if test "x$ac_cv_func_strtof" = xyes; then :
+  $as_echo "#define HAVE_STRTOF 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" strtof.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS strtof.$ac_objext"
+ ;;
+esac
+
+fi
+
 
 
 case $host_os in

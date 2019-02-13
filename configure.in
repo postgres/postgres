@@ -1705,6 +1705,7 @@ AC_REPLACE_FUNCS(m4_normalize([
 	strlcat
 	strlcpy
 	strnlen
+	strtof
 ]))
 
 case $host_os in

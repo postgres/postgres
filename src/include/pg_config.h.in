@@ -555,6 +555,9 @@
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
 
+/* Define to 1 if you have the `strtof' function. */
+#undef HAVE_STRTOF
+
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
 

@@ -352,7 +352,7 @@ SELECT float4send('55895e-16'::float4);
 SELECT float4send('7038531e-32'::float4);
  float4send 
 ------------
- \x15ae43fd
+ \x15ae43fe
 (1 row)
 
 SELECT float4send('702990899e-20'::float4);
@@ -406,7 +406,7 @@ SELECT float4send('5382571e-37'::float4);
 SELECT float4send('82381273e-35'::float4);
  float4send 
 ------------
- \x128289d1
+ \x128289d0
 (1 row)
 
 SELECT float4send('750486563e-38'::float4);
