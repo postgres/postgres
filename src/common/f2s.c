@@ -153,7 +153,7 @@ mulShift(const uint32 m, const uint64 factor, const int32 shift)
 	const uint64 sum = (bits0 >> 32) + bits1;
 	const uint64 shiftedSum = sum >> (shift - 32);
 
-	Assert(shiftedSum <= UINT32_MAX);
+	Assert(shiftedSum <= PG_UINT32_MAX);
 	return (uint32) shiftedSum;
 
 #endif							/* RYU_32_BIT_PLATFORM */
