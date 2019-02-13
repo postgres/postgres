@@ -1470,9 +1470,7 @@ FreePageManagerGetInternal(FreePageManager *fpm, Size npages, Size *first_page)
  * pages; if false, do it always.  Returns 0 if the soft flag caused the
  * insertion to be skipped, or otherwise the size of the contiguous span
  * created by the insertion.  This may be larger than npages if we're able
- * to consolidate with an adjacent range.  *internal_pages_used is set to
- * true if the btree allocated pages for internal purposes, which might
- * invalidate the current largest run requiring it to be recomputed.
+ * to consolidate with an adjacent range.
  */
 static Size
 FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
@@ -1526,6 +1524,8 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 
 			if (!relptr_is_null(fpm->btree_recycle))
 				root = FreePageBtreeGetRecycled(fpm);
+			else if (soft)
+				return 0;		/* Should not allocate if soft. */
 			else if (FreePageManagerGetInternal(fpm, 1, &root_page))
 				root = (FreePageBtree *) fpm_page_to_pointer(base, root_page);
 			else
