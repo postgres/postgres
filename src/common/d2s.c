@@ -1028,7 +1028,7 @@ double_to_shortest_decimal_bufn(double f, char *result)
 	/* Case distinction; exit early for the easy cases. */
 	if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0))
 	{
-		return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
+		return copy_special_str(result, ieeeSign, (ieeeExponent != 0), (ieeeMantissa != 0));
 	}
 
 	floating_decimal_64 v;

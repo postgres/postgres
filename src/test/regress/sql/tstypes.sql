@@ -1,3 +1,6 @@
+-- deal with numeric instability of ts_rank
+SET extra_float_digits = 0;
+
 --Base tsvector test
 
 SELECT '1'::tsvector;
