@@ -132,7 +132,7 @@ static const uint8 md5_paddat[MD5_BUFLEN] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-static void md5_calc(uint8 *, md5_ctxt *);
+static void md5_calc(const uint8 *, md5_ctxt *);
 
 void
 md5_init(md5_ctxt *ctxt)
@@ -161,7 +161,7 @@ md5_loop(md5_ctxt *ctxt, const uint8 *input, unsigned len)
 		md5_calc(ctxt->md5_buf, ctxt);
 
 		for (i = gap; i + MD5_BUFLEN <= len; i += MD5_BUFLEN)
-			md5_calc(unconstify(uint8 *, (input + i)), ctxt);
+			md5_calc(input + i, ctxt);
 
 		ctxt->md5_i = len - i;
 		memmove(ctxt->md5_buf, input + i, ctxt->md5_i);
@@ -242,7 +242,7 @@ static uint32 X[16];
 #endif
 
 static void
-md5_calc(uint8 *b64, md5_ctxt *ctxt)
+md5_calc(const uint8 *b64, md5_ctxt *ctxt)
 {
 	uint32		A = ctxt->md5_sta;
 	uint32		B = ctxt->md5_stb;
@@ -250,7 +250,7 @@ md5_calc(uint8 *b64, md5_ctxt *ctxt)
 	uint32		D = ctxt->md5_std;
 
 #ifndef WORDS_BIGENDIAN
-	uint32	   *X = (uint32 *) b64;
+	const uint32 *X = (const uint32 *) b64;
 #else
 	/* 4 byte words */
 	/* what a brute force but fast! */
