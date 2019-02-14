@@ -155,8 +155,8 @@ typedef struct
 	char	   *logdetail;
 } scram_state;
 
-static void read_client_first_message(scram_state *state, char *input);
-static void read_client_final_message(scram_state *state, char *input);
+static void read_client_first_message(scram_state *state, const char *input);
+static void read_client_final_message(scram_state *state, const char *input);
 static char *build_server_first_message(scram_state *state);
 static char *build_server_final_message(scram_state *state);
 static bool verify_client_proof(scram_state *state);
@@ -327,7 +327,7 @@ pg_be_scram_init(Port *port,
  * the client).
  */
 int
-pg_be_scram_exchange(void *opaq, char *input, int inputlen,
+pg_be_scram_exchange(void *opaq, const char *input, int inputlen,
 					 char **output, int *outputlen, char **logdetail)
 {
 	scram_state *state = (scram_state *) opaq;
@@ -811,11 +811,11 @@ read_any_attr(char **input, char *attr_p)
  * At this stage, any errors will be reported directly with ereport(ERROR).
  */
 static void
-read_client_first_message(scram_state *state, char *input)
+read_client_first_message(scram_state *state, const char *input)
 {
+	char	   *p = pstrdup(input);
 	char	   *channel_binding_type;
 
-	input = pstrdup(input);
 
 	/*------
 	 * The syntax for the client-first-message is: (RFC 5802)
@@ -881,8 +881,8 @@ read_client_first_message(scram_state *state, char *input)
 	 * Read gs2-cbind-flag.  (For details see also RFC 5802 Section 6 "Channel
 	 * Binding".)
 	 */
-	state->cbind_flag = *input;
-	switch (*input)
+	state->cbind_flag = *p;
+	switch (*p)
 	{
 		case 'n':
 
@@ -896,14 +896,14 @@ read_client_first_message(scram_state *state, char *input)
 						 errmsg("malformed SCRAM message"),
 						 errdetail("The client selected SCRAM-SHA-256-PLUS, but the SCRAM message does not include channel binding data.")));
 
-			input++;
-			if (*input != ',')
+			p++;
+			if (*p != ',')
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("malformed SCRAM message"),
 						 errdetail("Comma expected, but found character \"%s\".",
-								   sanitize_char(*input))));
-			input++;
+								   sanitize_char(*p))));
+			p++;
 			break;
 		case 'y':
 
@@ -926,14 +926,14 @@ read_client_first_message(scram_state *state, char *input)
 						 errdetail("The client supports SCRAM channel binding but thinks the server does not.  "
 								   "However, this server does support channel binding.")));
 #endif
-			input++;
-			if (*input != ',')
+			p++;
+			if (*p != ',')
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("malformed SCRAM message"),
 						 errdetail("Comma expected, but found character \"%s\".",
-								   sanitize_char(*input))));
-			input++;
+								   sanitize_char(*p))));
+			p++;
 			break;
 		case 'p':
 
@@ -947,7 +947,7 @@ read_client_first_message(scram_state *state, char *input)
 						 errmsg("malformed SCRAM message"),
 						 errdetail("The client selected SCRAM-SHA-256 without channel binding, but the SCRAM message includes channel binding data.")));
 
-			channel_binding_type = read_attr_value(&input, 'p');
+			channel_binding_type = read_attr_value(&p, 'p');
 
 			/*
 			 * The only channel binding type we support is
@@ -964,25 +964,25 @@ read_client_first_message(scram_state *state, char *input)
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("malformed SCRAM message"),
 					 errdetail("Unexpected channel-binding flag \"%s\".",
-							   sanitize_char(*input))));
+							   sanitize_char(*p))));
 	}
 
 	/*
 	 * Forbid optional authzid (authorization identity).  We don't support it.
 	 */
-	if (*input == 'a')
+	if (*p == 'a')
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("client uses authorization identity, but it is not supported")));
-	if (*input != ',')
+	if (*p != ',')
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("malformed SCRAM message"),
 				 errdetail("Unexpected attribute \"%s\" in client-first-message.",
-						   sanitize_char(*input))));
-	input++;
+						   sanitize_char(*p))));
+	p++;
 
-	state->client_first_message_bare = pstrdup(input);
+	state->client_first_message_bare = pstrdup(p);
 
 	/*
 	 * Any mandatory extensions would go here.  We don't support any.
@@ -991,7 +991,7 @@ read_client_first_message(scram_state *state, char *input)
 	 * but it can only be sent in the server-final message.  We prefer to fail
 	 * immediately (which the RFC also allows).
 	 */
-	if (*input == 'm')
+	if (*p == 'm')
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("client requires an unsupported SCRAM extension")));
@@ -1001,10 +1001,10 @@ read_client_first_message(scram_state *state, char *input)
 	 * startup message instead, still it is kept around if provided as it
 	 * proves to be useful for debugging purposes.
 	 */
-	state->client_username = read_attr_value(&input, 'n');
+	state->client_username = read_attr_value(&p, 'n');
 
 	/* read nonce and check that it is made of only printable characters */
-	state->client_nonce = read_attr_value(&input, 'r');
+	state->client_nonce = read_attr_value(&p, 'r');
 	if (!is_scram_printable(state->client_nonce))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -1014,8 +1014,8 @@ read_client_first_message(scram_state *state, char *input)
 	 * There can be any number of optional extensions after this.  We don't
 	 * support any extensions, so ignore them.
 	 */
-	while (*input != '\0')
-		read_any_attr(&input, NULL);
+	while (*p != '\0')
+		read_any_attr(&p, NULL);
 
 	/* success! */
 }
@@ -1144,7 +1144,7 @@ build_server_first_message(scram_state *state)
  * Read and parse the final message received from client.
  */
 static void
-read_client_final_message(scram_state *state, char *input)
+read_client_final_message(scram_state *state, const char *input)
 {
 	char		attr;
 	char	   *channel_binding;

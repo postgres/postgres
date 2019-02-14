@@ -985,7 +985,7 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
 		 * we pass 'logdetail' as NULL when doing a mock authentication,
 		 * because we should already have a better error message in that case
 		 */
-		result = pg_be_scram_exchange(scram_opaq, unconstify(char *, input), inputlen,
+		result = pg_be_scram_exchange(scram_opaq, input, inputlen,
 									  &output, &outputlen,
 									  logdetail);
 
