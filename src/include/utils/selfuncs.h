@@ -15,7 +15,6 @@
 #ifndef SELFUNCS_H
 #define SELFUNCS_H
 
-#include "fmgr.h"
 #include "access/htup.h"
 #include "nodes/pathnodes.h"
 
@@ -84,20 +83,6 @@ typedef struct VariableStatData
 			(vardata).freefunc((vardata).statsTuple); \
 	} while(0)
 
-
-typedef enum
-{
-	Pattern_Type_Like,
-	Pattern_Type_Like_IC,
-	Pattern_Type_Regex,
-	Pattern_Type_Regex_IC,
-	Pattern_Type_Prefix
-} Pattern_Type;
-
-typedef enum
-{
-	Pattern_Prefix_None, Pattern_Prefix_Partial, Pattern_Prefix_Exact
-} Pattern_Prefix_Status;
 
 /*
  * deconstruct_indexquals is a simple function to examine the indexquals
@@ -175,14 +160,16 @@ extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 					  Datum constval, bool varonleft,
 					  int min_hist_size, int n_skip,
 					  int *hist_size);
-
-extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
-					 Pattern_Type ptype,
-					 Oid collation,
-					 Const **prefix,
-					 Selectivity *rest_selec);
-extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
-					Oid collation);
+extern double ineq_histogram_selectivity(PlannerInfo *root,
+						   VariableStatData *vardata,
+						   FmgrInfo *opproc, bool isgt, bool iseq,
+						   Datum constval, Oid consttype);
+extern double var_eq_const(VariableStatData *vardata, Oid oproid,
+			 Datum constval, bool constisnull,
+			 bool varonleft, bool negate);
+extern double var_eq_non_const(VariableStatData *vardata, Oid oproid,
+				 Node *other,
+				 bool varonleft, bool negate);
 
 extern Selectivity boolvarsel(PlannerInfo *root, Node *arg, int varRelid);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
