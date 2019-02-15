@@ -277,6 +277,14 @@ CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 DROP TABLE as_select1;
 
+PREPARE select1 AS SELECT 1 as a;
+CREATE TABLE as_select1 AS EXECUTE select1;
+CREATE TABLE as_select1 AS EXECUTE select1;
+SELECT * FROM as_select1;
+CREATE TABLE IF NOT EXISTS as_select1 AS EXECUTE select1;
+DROP TABLE as_select1;
+DEALLOCATE select1;
+
 -- create an extra wide table to test for issues related to that
 -- (temporarily hide query, to avoid the long CREATE TABLE stmt)
 \set ECHO none
