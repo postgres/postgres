@@ -250,6 +250,20 @@ ERROR:  relation "as_select1" already exists
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 NOTICE:  relation "as_select1" already exists, skipping
 DROP TABLE as_select1;
+PREPARE select1 AS SELECT 1 as a;
+CREATE TABLE as_select1 AS EXECUTE select1;
+CREATE TABLE as_select1 AS EXECUTE select1;
+ERROR:  relation "as_select1" already exists
+SELECT * FROM as_select1;
+ a 
+---
+ 1
+(1 row)
+
+CREATE TABLE IF NOT EXISTS as_select1 AS EXECUTE select1;
+NOTICE:  relation "as_select1" already exists, skipping
+DROP TABLE as_select1;
+DEALLOCATE select1;
 -- check that the oid column is added before the primary key is checked
 CREATE TABLE oid_pk (f1 INT, PRIMARY KEY(oid)) WITH OIDS;
 DROP TABLE oid_pk;
