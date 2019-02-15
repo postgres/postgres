@@ -547,6 +547,10 @@ elif test "$PORTNAME" = "hpux"; then
   PGAC_PROG_CXX_CFLAGS_OPT([+Olibmerrno])
 fi
 
+# Optimization flags and options for bit-twiddling
+PGAC_PROG_CC_VAR_OPT(CFLAGS_POPCNT, [-mpopcnt])
+AC_SUBST(CFLAGS_POPCNT)
+
 AC_SUBST(CFLAGS_VECTOR, $CFLAGS_VECTOR)
 
 # Determine flags used to emit bitcode for JIT inlining. Need to test
@@ -1506,7 +1510,7 @@ AC_TYPE_LONG_LONG_INT
 
 PGAC_TYPE_LOCALE_T
 
-AC_SUBST(CFLAGS_POPCNT)
+AC_SUBST(have__builtin_popcount, $pgac_cv__builtin_popcount)
 
 # MSVC doesn't cope well with defining restrict to __restrict, the
 # spelling it understands, because it conflicts with

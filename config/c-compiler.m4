@@ -381,22 +381,16 @@ fi])# PGAC_C_BUILTIN_OP_OVERFLOW
 # PGAC_C_BUILTIN_POPCOUNT
 # -------------------------
 AC_DEFUN([PGAC_C_BUILTIN_POPCOUNT],
-[define([Ac_cachevar], [AS_TR_SH([pgac_cv_popcount])])dnl
-AC_CACHE_CHECK([for __builtin_popcount], [Ac_cachevar],
-[pgac_save_CFLAGS=$CFLAGS
-CFLAGS="$pgac_save_CFLAGS -mpopcnt"
-AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[static int x = __builtin_popcount(255);])],
-[Ac_cachevar=yes],
-[Ac_cachevar=no])
-CFLAGS="$pgac_save_CFLAGS"])
-if test x"$Ac_cachevar" = x"yes"; then
-  CFLAGS_POPCNT="-mpopcnt"
+[AC_CACHE_CHECK([for __builtin_popcount], pgac_cv__builtin_popcount,
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[static int x = __builtin_popcount(255);]
+)],
+[pgac_cv__builtin_popcount=yes],
+[pgac_cv__builtin_popcount=no])])
+if test x"$pgac_cv__builtin_popcount" = x"yes"; then
 AC_DEFINE(HAVE__BUILTIN_POPCOUNT, 1,
           [Define to 1 if your compiler understands __builtin_popcount.])
-fi
-undefine([Ac_cachevar])dnl
-])# PGAC_C_BUILTIN_POPCOUNT
+fi])# PGAC_C_BUILTIN_POPCOUNT
 
 
 
