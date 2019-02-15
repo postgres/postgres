@@ -260,7 +260,6 @@ CXX = @CXX@
 CFLAGS = @CFLAGS@
 CFLAGS_VECTOR = @CFLAGS_VECTOR@
 CFLAGS_SSE42 = @CFLAGS_SSE42@
-CFLAGS_POPCNT = @CFLAGS_POPCNT@
 CFLAGS_ARMV8_CRC32C = @CFLAGS_ARMV8_CRC32C@
 PERMIT_DECLARATION_AFTER_STATEMENT = @PERMIT_DECLARATION_AFTER_STATEMENT@
 CXXFLAGS = @CXXFLAGS@
@@ -516,9 +515,6 @@ WIN32_STACK_RLIMIT=4194304
 
 # Set if we have a working win32 crashdump header
 have_win32_dbghelp = @have_win32_dbghelp@
-
-# Set if __builtin_popcount() is supported by $(CC)
-have__builtin_popcount = @have__builtin_popcount@
 
 # Pull in platform-specific magic
 include $(top_builddir)/src/Makefile.port

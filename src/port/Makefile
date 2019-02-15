@@ -36,18 +36,10 @@ override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
 OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o erand48.o inet_net_ntop.o \
-	noblock.o path.o pg_bitutils.o pgcheckdir.o pgmkdirp.o pgsleep.o \
+	noblock.o path.o pgcheckdir.o pgmkdirp.o pgsleep.o \
 	pg_strong_random.o pgstrcasecmp.o pgstrsignal.o pqsignal.o \
 	qsort.o qsort_arg.o quotes.o snprintf.o sprompt.o strerror.o \
 	tar.o thread.o
-
-# If the compiler supports a special flag for the POPCOUNT instruction and it
-# has __builtin_popcount, add pg_bitutils_hwpopcnt.o.
-ifneq ($(CFLAGS_POPCNT),)
-ifeq ($(have__builtin_popcount),yes)
-OBJS += pg_bitutils_hwpopcnt.o
-endif
-endif
 
 # libpgport.a, libpgport_shlib.a, and libpgport_srv.a contain the same files
 # foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c
@@ -85,11 +77,6 @@ pg_crc32c_sse42_srv.o: CFLAGS+=$(CFLAGS_SSE42)
 pg_crc32c_armv8.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
 pg_crc32c_armv8_shlib.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
 pg_crc32c_armv8_srv.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
-
-# all versions of pg_bitutils_hwpopcnt.c need CFLAGS_POPCNT
-pg_bitutils_hwpopcnt.o: CFLAGS+=$(CFLAGS_POPCNT)
-pg_bitutils_hwpopcnt_shlib.o: CFLAGS+=$(CFLAGS_POPCNT)
-pg_bitutils_hwpopcnt_srv.o: CFLAGS+=$(CFLAGS_POPCNT)
 
 #
 # Shared library versions of object files

@@ -748,20 +748,11 @@
 /* Define to 1 if your compiler understands __builtin_bswap64. */
 #undef HAVE__BUILTIN_BSWAP64
 
-/* Define to 1 if your compiler understands __builtin_clz. */
-#undef HAVE__BUILTIN_CLZ
-
 /* Define to 1 if your compiler understands __builtin_constant_p. */
 #undef HAVE__BUILTIN_CONSTANT_P
 
-/* Define to 1 if your compiler understands __builtin_ctz. */
-#undef HAVE__BUILTIN_CTZ
-
 /* Define to 1 if your compiler understands __builtin_$op_overflow. */
 #undef HAVE__BUILTIN_OP_OVERFLOW
-
-/* Define to 1 if your compiler understands __builtin_popcount. */
-#undef HAVE__BUILTIN_POPCOUNT
 
 /* Define to 1 if your compiler understands __builtin_types_compatible_p. */
 #undef HAVE__BUILTIN_TYPES_COMPATIBLE_P
