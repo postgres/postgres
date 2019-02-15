@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/README.links -->
 
-Linking within SGML documents can be confusing, so here is a summary:
+Linking within DocBook documents can be confusing, so here is a summary:
 
 
 Intra-document Linking
@@ -41,6 +41,5 @@ Guidelines
 ----------
 
 o  If you want to supply text, use <link>, else <xref>
-o  Do not use text with <ulink> so the URL appears in printed output
 o  Specific nouns like GUC variables, SQL commands, and contrib modules
    usually have xreflabels
