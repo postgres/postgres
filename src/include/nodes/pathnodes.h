@@ -1185,26 +1185,20 @@ typedef struct IndexPath
  * conditions is done by a planner support function attached to the
  * indexclause's top-level function or operator.
  *
- * If indexquals is NIL, it means that rinfo->clause is directly usable as
- * an indexqual.  Otherwise indexquals contains one or more directly-usable
- * indexqual conditions extracted from the given clause.  The 'lossy' flag
- * indicates whether the indexquals are semantically equivalent to the
- * original clause, or form a weaker condition.
- *
- * Currently, entries in indexquals are RestrictInfos, but they could perhaps
- * be bare clauses instead; the only advantage of making them RestrictInfos
- * is the possibility of caching cost and selectivity information across
- * multiple uses, and it's not clear that that's really worth the price of
- * constructing RestrictInfos for them.  Note however that the extended-stats
- * machinery won't do anything with non-RestrictInfo clauses, so that would
- * have to be fixed.
+ * indexquals is a list of RestrictInfos for the directly-usable index
+ * conditions associated with this IndexClause.  In the simplest case
+ * it's a one-element list whose member is iclause->rinfo.  Otherwise,
+ * it contains one or more directly-usable indexqual conditions extracted
+ * from the given clause.  The 'lossy' flag indicates whether the
+ * indexquals are semantically equivalent to the original clause, or
+ * represent a weaker condition.
  *
  * Normally, indexcol is the index of the single index column the clause
  * works on, and indexcols is NIL.  But if the clause is a RowCompareExpr,
  * indexcol is the index of the leading column, and indexcols is a list of
  * all the affected columns.  (Note that indexcols matches up with the
- * columns of the actual indexable RowCompareExpr, which might be in
- * indexquals rather than rinfo.)
+ * columns of the actual indexable RowCompareExpr in indexquals, which
+ * might be different from the original in rinfo.)
  *
  * An IndexPath's IndexClause list is required to be ordered by index
  * column, i.e. the indexcol values must form a nondecreasing sequence.
@@ -1214,7 +1208,7 @@ typedef struct IndexClause
 {
 	NodeTag		type;
 	struct RestrictInfo *rinfo; /* original restriction or join clause */
-	List	   *indexquals;		/* indexqual(s) derived from it, or NIL */
+	List	   *indexquals;		/* indexqual(s) derived from it */
 	bool		lossy;			/* are indexquals a lossy version of clause? */
 	AttrNumber	indexcol;		/* index column the clause uses (zero-based) */
 	List	   *indexcols;		/* multiple index columns, if RowCompare */

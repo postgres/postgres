@@ -2435,7 +2435,7 @@ match_clause_to_indexcol(PlannerInfo *root,
 		{
 			iclause = makeNode(IndexClause);
 			iclause->rinfo = rinfo;
-			iclause->indexquals = NIL;
+			iclause->indexquals = list_make1(rinfo);
 			iclause->lossy = false;
 			iclause->indexcol = indexcol;
 			iclause->indexcols = NIL;
@@ -2599,7 +2599,7 @@ match_opclause_to_indexcol(PlannerInfo *root,
 		{
 			iclause = makeNode(IndexClause);
 			iclause->rinfo = rinfo;
-			iclause->indexquals = NIL;
+			iclause->indexquals = list_make1(rinfo);
 			iclause->lossy = false;
 			iclause->indexcol = indexcol;
 			iclause->indexcols = NIL;
@@ -2819,7 +2819,7 @@ match_saopclause_to_indexcol(RestrictInfo *rinfo,
 			IndexClause *iclause = makeNode(IndexClause);
 
 			iclause->rinfo = rinfo;
-			iclause->indexquals = NIL;
+			iclause->indexquals = list_make1(rinfo);
 			iclause->lossy = false;
 			iclause->indexcol = indexcol;
 			iclause->indexcols = NIL;
@@ -3078,7 +3078,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	 * usable as index quals.
 	 */
 	if (var_on_left && !iclause->lossy)
-		iclause->indexquals = NIL;
+		iclause->indexquals = list_make1(rinfo);
 	else
 	{
 		/*

@@ -3075,11 +3075,8 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 
 			Assert(!rinfo->pseudoconstant);
 			subquals = lappend(subquals, rinfo->clause);
-			if (iclause->indexquals)
-				subindexquals = list_concat(subindexquals,
-											get_actual_clauses(iclause->indexquals));
-			else
-				subindexquals = lappend(subindexquals, rinfo->clause);
+			subindexquals = list_concat(subindexquals,
+										get_actual_clauses(iclause->indexquals));
 			if (rinfo->parent_ec)
 				subindexECs = lappend(subindexECs, rinfo->parent_ec);
 		}
@@ -4491,32 +4488,17 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
 	{
 		IndexClause *iclause = lfirst_node(IndexClause, lc);
 		int			indexcol = iclause->indexcol;
+		ListCell   *lc2;
 
-		if (iclause->indexquals == NIL)
+		foreach(lc2, iclause->indexquals)
 		{
-			/* rinfo->clause is directly usable as an indexqual */
-			Node	   *clause = (Node *) iclause->rinfo->clause;
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
+			Node	   *clause = (Node *) rinfo->clause;
 
 			stripped_indexquals = lappend(stripped_indexquals, clause);
 			clause = fix_indexqual_clause(root, index, indexcol,
 										  clause, iclause->indexcols);
 			fixed_indexquals = lappend(fixed_indexquals, clause);
-		}
-		else
-		{
-			/* Process the derived indexquals */
-			ListCell   *lc2;
-
-			foreach(lc2, iclause->indexquals)
-			{
-				RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
-				Node	   *clause = (Node *) rinfo->clause;
-
-				stripped_indexquals = lappend(stripped_indexquals, clause);
-				clause = fix_indexqual_clause(root, index, indexcol,
-											  clause, iclause->indexcols);
-				fixed_indexquals = lappend(fixed_indexquals, clause);
-			}
 		}
 	}
 

@@ -197,8 +197,6 @@ static bool get_actual_variable_range(PlannerInfo *root,
 						  Oid sortop,
 						  Datum *min, Datum *max);
 static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
-static IndexQualInfo *deconstruct_indexqual(RestrictInfo *rinfo,
-					  IndexOptInfo *index, int indexcol);
 static List *add_predicate_to_quals(IndexOptInfo *index, List *indexQuals);
 
 
@@ -5263,16 +5261,13 @@ get_index_quals(List *indexclauses)
 	foreach(lc, indexclauses)
 	{
 		IndexClause *iclause = lfirst_node(IndexClause, lc);
+		ListCell   *lc2;
 
-		if (iclause->indexquals == NIL)
+		foreach(lc2, iclause->indexquals)
 		{
-			/* rinfo->clause is directly usable as an indexqual */
-			result = lappend(result, iclause->rinfo);
-		}
-		else
-		{
-			/* report the derived indexquals */
-			result = list_concat(result, list_copy(iclause->indexquals));
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
+
+			result = lappend(result, rinfo);
 		}
 	}
 	return result;
@@ -5282,83 +5277,58 @@ List *
 deconstruct_indexquals(IndexPath *path)
 {
 	List	   *result = NIL;
-	IndexOptInfo *index = path->indexinfo;
 	ListCell   *lc;
 
 	foreach(lc, path->indexclauses)
 	{
 		IndexClause *iclause = lfirst_node(IndexClause, lc);
 		int			indexcol = iclause->indexcol;
-		IndexQualInfo *qinfo;
+		ListCell   *lc2;
 
-		if (iclause->indexquals == NIL)
+		foreach(lc2, iclause->indexquals)
 		{
-			/* rinfo->clause is directly usable as an indexqual */
-			qinfo = deconstruct_indexqual(iclause->rinfo, index, indexcol);
-			result = lappend(result, qinfo);
-		}
-		else
-		{
-			/* Process the derived indexquals */
-			ListCell   *lc2;
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
+			Expr	   *clause = rinfo->clause;
+			IndexQualInfo *qinfo;
 
-			foreach(lc2, iclause->indexquals)
+			qinfo = (IndexQualInfo *) palloc(sizeof(IndexQualInfo));
+			qinfo->rinfo = rinfo;
+			qinfo->indexcol = indexcol;
+
+			if (IsA(clause, OpExpr))
 			{
-				RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
-
-				qinfo = deconstruct_indexqual(rinfo, index, indexcol);
-				result = lappend(result, qinfo);
+				qinfo->clause_op = ((OpExpr *) clause)->opno;
+				qinfo->other_operand = get_rightop(clause);
 			}
+			else if (IsA(clause, RowCompareExpr))
+			{
+				RowCompareExpr *rc = (RowCompareExpr *) clause;
+
+				qinfo->clause_op = linitial_oid(rc->opnos);
+				qinfo->other_operand = (Node *) rc->rargs;
+			}
+			else if (IsA(clause, ScalarArrayOpExpr))
+			{
+				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+				qinfo->clause_op = saop->opno;
+				qinfo->other_operand = (Node *) lsecond(saop->args);
+			}
+			else if (IsA(clause, NullTest))
+			{
+				qinfo->clause_op = InvalidOid;
+				qinfo->other_operand = NULL;
+			}
+			else
+			{
+				elog(ERROR, "unsupported indexqual type: %d",
+					 (int) nodeTag(clause));
+			}
+
+			result = lappend(result, qinfo);
 		}
 	}
 	return result;
-}
-
-static IndexQualInfo *
-deconstruct_indexqual(RestrictInfo *rinfo, IndexOptInfo *index, int indexcol)
-{
-	{
-		Expr	   *clause;
-		IndexQualInfo *qinfo;
-
-		clause = rinfo->clause;
-
-		qinfo = (IndexQualInfo *) palloc(sizeof(IndexQualInfo));
-		qinfo->rinfo = rinfo;
-		qinfo->indexcol = indexcol;
-
-		if (IsA(clause, OpExpr))
-		{
-			qinfo->clause_op = ((OpExpr *) clause)->opno;
-			qinfo->other_operand = get_rightop(clause);
-		}
-		else if (IsA(clause, RowCompareExpr))
-		{
-			RowCompareExpr *rc = (RowCompareExpr *) clause;
-
-			qinfo->clause_op = linitial_oid(rc->opnos);
-			qinfo->other_operand = (Node *) rc->rargs;
-		}
-		else if (IsA(clause, ScalarArrayOpExpr))
-		{
-			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
-
-			qinfo->clause_op = saop->opno;
-			qinfo->other_operand = (Node *) lsecond(saop->args);
-		}
-		else if (IsA(clause, NullTest))
-		{
-			qinfo->clause_op = InvalidOid;
-			qinfo->other_operand = NULL;
-		}
-		else
-		{
-			elog(ERROR, "unsupported indexqual type: %d",
-				 (int) nodeTag(clause));
-		}
-
-		return qinfo;
-	}
 }
 
 /*
