@@ -197,7 +197,6 @@ static bool get_actual_variable_range(PlannerInfo *root,
 						  Oid sortop,
 						  Datum *min, Datum *max);
 static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
-static List *add_predicate_to_quals(IndexOptInfo *index, List *indexQuals);
 
 
 /*
@@ -5251,9 +5250,11 @@ find_join_input_rel(PlannerInfo *root, Relids relids)
  *-------------------------------------------------------------------------
  */
 
-/* Extract the actual indexquals (as RestrictInfos) from an IndexClause list */
-static List *
-get_index_quals(List *indexclauses)
+/*
+ * Extract the actual indexquals (as RestrictInfos) from an IndexClause list
+ */
+List *
+get_quals_from_indexclauses(List *indexclauses)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -5273,113 +5274,59 @@ get_index_quals(List *indexclauses)
 	return result;
 }
 
-List *
-deconstruct_indexquals(IndexPath *path)
-{
-	List	   *result = NIL;
-	ListCell   *lc;
-
-	foreach(lc, path->indexclauses)
-	{
-		IndexClause *iclause = lfirst_node(IndexClause, lc);
-		int			indexcol = iclause->indexcol;
-		ListCell   *lc2;
-
-		foreach(lc2, iclause->indexquals)
-		{
-			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
-			Expr	   *clause = rinfo->clause;
-			IndexQualInfo *qinfo;
-
-			qinfo = (IndexQualInfo *) palloc(sizeof(IndexQualInfo));
-			qinfo->rinfo = rinfo;
-			qinfo->indexcol = indexcol;
-
-			if (IsA(clause, OpExpr))
-			{
-				qinfo->clause_op = ((OpExpr *) clause)->opno;
-				qinfo->other_operand = get_rightop(clause);
-			}
-			else if (IsA(clause, RowCompareExpr))
-			{
-				RowCompareExpr *rc = (RowCompareExpr *) clause;
-
-				qinfo->clause_op = linitial_oid(rc->opnos);
-				qinfo->other_operand = (Node *) rc->rargs;
-			}
-			else if (IsA(clause, ScalarArrayOpExpr))
-			{
-				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
-
-				qinfo->clause_op = saop->opno;
-				qinfo->other_operand = (Node *) lsecond(saop->args);
-			}
-			else if (IsA(clause, NullTest))
-			{
-				qinfo->clause_op = InvalidOid;
-				qinfo->other_operand = NULL;
-			}
-			else
-			{
-				elog(ERROR, "unsupported indexqual type: %d",
-					 (int) nodeTag(clause));
-			}
-
-			result = lappend(result, qinfo);
-		}
-	}
-	return result;
-}
-
 /*
- * Simple function to compute the total eval cost of the "other operands"
- * in an IndexQualInfo list.  Since we know these will be evaluated just
+ * Compute the total evaluation cost of the comparison operands in a list
+ * of index qual expressions.  Since we know these will be evaluated just
  * once per scan, there's no need to distinguish startup from per-row cost.
- */
-static Cost
-other_operands_eval_cost(PlannerInfo *root, List *qinfos)
-{
-	Cost		qual_arg_cost = 0;
-	ListCell   *lc;
-
-	foreach(lc, qinfos)
-	{
-		IndexQualInfo *qinfo = (IndexQualInfo *) lfirst(lc);
-		QualCost	index_qual_cost;
-
-		cost_qual_eval_node(&index_qual_cost, qinfo->other_operand, root);
-		qual_arg_cost += index_qual_cost.startup + index_qual_cost.per_tuple;
-	}
-	return qual_arg_cost;
-}
-
-/*
- * Get other-operand eval cost for an index orderby list.
  *
- * Index orderby expressions aren't represented as RestrictInfos (since they
- * aren't boolean, usually).  So we can't apply deconstruct_indexquals to
- * them.  However, they are much simpler to deal with since they are always
- * OpExprs and the index column is always on the left.
+ * This can be used either on the result of get_quals_from_indexclauses(),
+ * or directly on an indexorderbys list.  In both cases, we expect that the
+ * index key expression is on the left side of binary clauses.
  */
-static Cost
-orderby_operands_eval_cost(PlannerInfo *root, IndexPath *path)
+Cost
+index_other_operands_eval_cost(PlannerInfo *root, List *indexquals)
 {
 	Cost		qual_arg_cost = 0;
 	ListCell   *lc;
 
-	foreach(lc, path->indexorderbys)
+	foreach(lc, indexquals)
 	{
 		Expr	   *clause = (Expr *) lfirst(lc);
 		Node	   *other_operand;
 		QualCost	index_qual_cost;
 
+		/*
+		 * Index quals will have RestrictInfos, indexorderbys won't.  Look
+		 * through RestrictInfo if present.
+		 */
+		if (IsA(clause, RestrictInfo))
+			clause = ((RestrictInfo *) clause)->clause;
+
 		if (IsA(clause, OpExpr))
 		{
-			other_operand = get_rightop(clause);
+			OpExpr	   *op = (OpExpr *) clause;
+
+			other_operand = (Node *) lsecond(op->args);
+		}
+		else if (IsA(clause, RowCompareExpr))
+		{
+			RowCompareExpr *rc = (RowCompareExpr *) clause;
+
+			other_operand = (Node *) rc->rargs;
+		}
+		else if (IsA(clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+			other_operand = (Node *) lsecond(saop->args);
+		}
+		else if (IsA(clause, NullTest))
+		{
+			other_operand = NULL;
 		}
 		else
 		{
-			elog(ERROR, "unsupported indexorderby type: %d",
+			elog(ERROR, "unsupported indexqual type: %d",
 				 (int) nodeTag(clause));
 			other_operand = NULL;	/* keep compiler quiet */
 		}
@@ -5394,11 +5341,10 @@ void
 genericcostestimate(PlannerInfo *root,
 					IndexPath *path,
 					double loop_count,
-					List *qinfos,
 					GenericCosts *costs)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *indexQuals = get_index_quals(path->indexclauses);
+	List	   *indexQuals = get_quals_from_indexclauses(path->indexclauses);
 	List	   *indexOrderBys = path->indexorderbys;
 	Cost		indexStartupCost;
 	Cost		indexTotalCost;
@@ -5420,7 +5366,7 @@ genericcostestimate(PlannerInfo *root,
 	 * given indexquals to produce a more accurate idea of the index
 	 * selectivity.
 	 */
-	selectivityQuals = add_predicate_to_quals(index, indexQuals);
+	selectivityQuals = add_predicate_to_index_quals(index, indexQuals);
 
 	/*
 	 * Check for ScalarArrayOpExpr index quals, and estimate the number of
@@ -5563,8 +5509,8 @@ genericcostestimate(PlannerInfo *root,
 	 * Detecting that that might be needed seems more expensive than it's
 	 * worth, though, considering all the other inaccuracies here ...
 	 */
-	qual_arg_cost = other_operands_eval_cost(root, qinfos) +
-		orderby_operands_eval_cost(root, path);
+	qual_arg_cost = index_other_operands_eval_cost(root, indexQuals) +
+		index_other_operands_eval_cost(root, indexOrderBys);
 	qual_op_cost = cpu_operator_cost *
 		(list_length(indexQuals) + list_length(indexOrderBys));
 
@@ -5609,8 +5555,8 @@ genericcostestimate(PlannerInfo *root,
  * predicate_implied_by() and clauselist_selectivity(), but might be
  * problematic if the result were passed to other things.
  */
-static List *
-add_predicate_to_quals(IndexOptInfo *index, List *indexQuals)
+List *
+add_predicate_to_index_quals(IndexOptInfo *index, List *indexQuals)
 {
 	List	   *predExtraQuals = NIL;
 	ListCell   *lc;
@@ -5638,7 +5584,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			   double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *qinfos;
 	GenericCosts costs;
 	Oid			relid;
 	AttrNumber	colnum;
@@ -5652,9 +5597,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	bool		found_is_null_op;
 	double		num_sa_scans;
 	ListCell   *lc;
-
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
 
 	/*
 	 * For a btree scan, only leading '=' quals plus inequality quals for the
@@ -5679,58 +5621,81 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	found_saop = false;
 	found_is_null_op = false;
 	num_sa_scans = 1;
-	foreach(lc, qinfos)
+	foreach(lc, path->indexclauses)
 	{
-		IndexQualInfo *qinfo = (IndexQualInfo *) lfirst(lc);
-		RestrictInfo *rinfo = qinfo->rinfo;
-		Expr	   *clause = rinfo->clause;
-		Oid			clause_op;
-		int			op_strategy;
+		IndexClause *iclause = lfirst_node(IndexClause, lc);
+		ListCell   *lc2;
 
-		if (indexcol != qinfo->indexcol)
+		if (indexcol != iclause->indexcol)
 		{
 			/* Beginning of a new column's quals */
 			if (!eqQualHere)
 				break;			/* done if no '=' qual for indexcol */
 			eqQualHere = false;
 			indexcol++;
-			if (indexcol != qinfo->indexcol)
+			if (indexcol != iclause->indexcol)
 				break;			/* no quals at all for indexcol */
 		}
 
-		if (IsA(clause, ScalarArrayOpExpr))
+		/* Examine each indexqual associated with this index clause */
+		foreach(lc2, iclause->indexquals)
 		{
-			int			alength = estimate_array_length(qinfo->other_operand);
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
+			Expr	   *clause = rinfo->clause;
+			Oid			clause_op = InvalidOid;
+			int			op_strategy;
 
-			found_saop = true;
-			/* count up number of SA scans induced by indexBoundQuals only */
-			if (alength > 1)
-				num_sa_scans *= alength;
-		}
-		else if (IsA(clause, NullTest))
-		{
-			NullTest   *nt = (NullTest *) clause;
-
-			if (nt->nulltesttype == IS_NULL)
+			if (IsA(clause, OpExpr))
 			{
-				found_is_null_op = true;
-				/* IS NULL is like = for selectivity determination purposes */
-				eqQualHere = true;
+				OpExpr	   *op = (OpExpr *) clause;
+
+				clause_op = op->opno;
 			}
-		}
+			else if (IsA(clause, RowCompareExpr))
+			{
+				RowCompareExpr *rc = (RowCompareExpr *) clause;
 
-		/* check for equality operator */
-		clause_op = qinfo->clause_op;
-		if (OidIsValid(clause_op))
-		{
-			op_strategy = get_op_opfamily_strategy(clause_op,
-												   index->opfamily[indexcol]);
-			Assert(op_strategy != 0);	/* not a member of opfamily?? */
-			if (op_strategy == BTEqualStrategyNumber)
-				eqQualHere = true;
-		}
+				clause_op = linitial_oid(rc->opnos);
+			}
+			else if (IsA(clause, ScalarArrayOpExpr))
+			{
+				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+				Node	   *other_operand = (Node *) lsecond(saop->args);
+				int			alength = estimate_array_length(other_operand);
 
-		indexBoundQuals = lappend(indexBoundQuals, rinfo);
+				clause_op = saop->opno;
+				found_saop = true;
+				/* count number of SA scans induced by indexBoundQuals only */
+				if (alength > 1)
+					num_sa_scans *= alength;
+			}
+			else if (IsA(clause, NullTest))
+			{
+				NullTest   *nt = (NullTest *) clause;
+
+				if (nt->nulltesttype == IS_NULL)
+				{
+					found_is_null_op = true;
+					/* IS NULL is like = for selectivity purposes */
+					eqQualHere = true;
+				}
+			}
+			else
+				elog(ERROR, "unsupported indexqual type: %d",
+					 (int) nodeTag(clause));
+
+			/* check for equality operator */
+			if (OidIsValid(clause_op))
+			{
+				op_strategy = get_op_opfamily_strategy(clause_op,
+													   index->opfamily[indexcol]);
+				Assert(op_strategy != 0);	/* not a member of opfamily?? */
+				if (op_strategy == BTEqualStrategyNumber)
+					eqQualHere = true;
+			}
+
+			indexBoundQuals = lappend(indexBoundQuals, rinfo);
+		}
 	}
 
 	/*
@@ -5755,7 +5720,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		 * index-bound quals to produce a more accurate idea of the number of
 		 * rows covered by the bound conditions.
 		 */
-		selectivityQuals = add_predicate_to_quals(index, indexBoundQuals);
+		selectivityQuals = add_predicate_to_index_quals(index, indexBoundQuals);
 
 		btreeSelectivity = clauselist_selectivity(root, selectivityQuals,
 												  index->rel->relid,
@@ -5777,7 +5742,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	MemSet(&costs, 0, sizeof(costs));
 	costs.numIndexTuples = numIndexTuples;
 
-	genericcostestimate(root, path, loop_count, qinfos, &costs);
+	genericcostestimate(root, path, loop_count, &costs);
 
 	/*
 	 * Add a CPU-cost component to represent the costs of initial btree
@@ -5924,15 +5889,11 @@ hashcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 Selectivity *indexSelectivity, double *indexCorrelation,
 				 double *indexPages)
 {
-	List	   *qinfos;
 	GenericCosts costs;
-
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
 
 	MemSet(&costs, 0, sizeof(costs));
 
-	genericcostestimate(root, path, loop_count, qinfos, &costs);
+	genericcostestimate(root, path, loop_count, &costs);
 
 	/*
 	 * A hash index has no descent costs as such, since the index AM can go
@@ -5973,16 +5934,12 @@ gistcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *qinfos;
 	GenericCosts costs;
 	Cost		descentCost;
 
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
-
 	MemSet(&costs, 0, sizeof(costs));
 
-	genericcostestimate(root, path, loop_count, qinfos, &costs);
+	genericcostestimate(root, path, loop_count, &costs);
 
 	/*
 	 * We model index descent costs similarly to those for btree, but to do
@@ -6034,16 +5991,12 @@ spgcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *qinfos;
 	GenericCosts costs;
 	Cost		descentCost;
 
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
-
 	MemSet(&costs, 0, sizeof(costs));
 
-	genericcostestimate(root, path, loop_count, qinfos, &costs);
+	genericcostestimate(root, path, loop_count, &costs);
 
 	/*
 	 * We model index descent costs similarly to those for btree, but to do
@@ -6214,12 +6167,12 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 static bool
 gincost_opexpr(PlannerInfo *root,
 			   IndexOptInfo *index,
-			   IndexQualInfo *qinfo,
+			   int indexcol,
+			   OpExpr *clause,
 			   GinQualCounts *counts)
 {
-	int			indexcol = qinfo->indexcol;
-	Oid			clause_op = qinfo->clause_op;
-	Node	   *operand = qinfo->other_operand;
+	Oid			clause_op = clause->opno;
+	Node	   *operand = (Node *) lsecond(clause->args);
 
 	/* aggressively reduce to a constant, and look through relabeling */
 	operand = estimate_expression_value(root, operand);
@@ -6264,13 +6217,13 @@ gincost_opexpr(PlannerInfo *root,
 static bool
 gincost_scalararrayopexpr(PlannerInfo *root,
 						  IndexOptInfo *index,
-						  IndexQualInfo *qinfo,
+						  int indexcol,
+						  ScalarArrayOpExpr *clause,
 						  double numIndexEntries,
 						  GinQualCounts *counts)
 {
-	int			indexcol = qinfo->indexcol;
-	Oid			clause_op = qinfo->clause_op;
-	Node	   *rightop = qinfo->other_operand;
+	Oid			clause_op = clause->opno;
+	Node	   *rightop = (Node *) lsecond(clause->args);
 	ArrayType  *arrayval;
 	int16		elmlen;
 	bool		elmbyval;
@@ -6282,7 +6235,7 @@ gincost_scalararrayopexpr(PlannerInfo *root,
 	int			numPossible = 0;
 	int			i;
 
-	Assert(((ScalarArrayOpExpr *) qinfo->rinfo->clause)->useOr);
+	Assert(clause->useOr);
 
 	/* aggressively reduce to a constant, and look through relabeling */
 	rightop = estimate_expression_value(root, rightop);
@@ -6383,10 +6336,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *indexQuals = get_index_quals(path->indexclauses);
-	List	   *indexOrderBys = path->indexorderbys;
-	List	   *qinfos;
-	ListCell   *l;
+	List	   *indexQuals = get_quals_from_indexclauses(path->indexclauses);
 	List	   *selectivityQuals;
 	double		numPages = index->pages,
 				numTuples = index->tuples;
@@ -6406,9 +6356,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				outer_scans;
 	Relation	indexRel;
 	GinStatsData ginStats;
-
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
+	ListCell   *lc;
 
 	/*
 	 * Obtain statistical information from the meta page, if possible.  Else
@@ -6490,7 +6438,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * quals to produce a more accurate idea of the number of rows covered by
 	 * the bound conditions.
 	 */
-	selectivityQuals = add_predicate_to_quals(index, indexQuals);
+	selectivityQuals = add_predicate_to_index_quals(index, indexQuals);
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
@@ -6515,35 +6463,43 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	counts.arrayScans = 1;
 	matchPossible = true;
 
-	foreach(l, qinfos)
+	foreach(lc, path->indexclauses)
 	{
-		IndexQualInfo *qinfo = (IndexQualInfo *) lfirst(l);
-		Expr	   *clause = qinfo->rinfo->clause;
+		IndexClause *iclause = lfirst_node(IndexClause, lc);
+		ListCell   *lc2;
 
-		if (IsA(clause, OpExpr))
+		foreach(lc2, iclause->indexquals)
 		{
-			matchPossible = gincost_opexpr(root,
-										   index,
-										   qinfo,
-										   &counts);
-			if (!matchPossible)
-				break;
-		}
-		else if (IsA(clause, ScalarArrayOpExpr))
-		{
-			matchPossible = gincost_scalararrayopexpr(root,
-													  index,
-													  qinfo,
-													  numEntries,
-													  &counts);
-			if (!matchPossible)
-				break;
-		}
-		else
-		{
-			/* shouldn't be anything else for a GIN index */
-			elog(ERROR, "unsupported GIN indexqual type: %d",
-				 (int) nodeTag(clause));
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc2);
+			Expr	   *clause = rinfo->clause;
+
+			if (IsA(clause, OpExpr))
+			{
+				matchPossible = gincost_opexpr(root,
+											   index,
+											   iclause->indexcol,
+											   (OpExpr *) clause,
+											   &counts);
+				if (!matchPossible)
+					break;
+			}
+			else if (IsA(clause, ScalarArrayOpExpr))
+			{
+				matchPossible = gincost_scalararrayopexpr(root,
+														  index,
+														  iclause->indexcol,
+														  (ScalarArrayOpExpr *) clause,
+														  numEntries,
+														  &counts);
+				if (!matchPossible)
+					break;
+			}
+			else
+			{
+				/* shouldn't be anything else for a GIN index */
+				elog(ERROR, "unsupported GIN indexqual type: %d",
+					 (int) nodeTag(clause));
+			}
 		}
 	}
 
@@ -6670,12 +6626,11 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		dataPagesFetched * spc_random_page_cost;
 
 	/*
-	 * Add on index qual eval costs, much as in genericcostestimate
+	 * Add on index qual eval costs, much as in genericcostestimate.  But we
+	 * can disregard indexorderbys, since GIN doesn't support those.
 	 */
-	qual_arg_cost = other_operands_eval_cost(root, qinfos) +
-		orderby_operands_eval_cost(root, path);
-	qual_op_cost = cpu_operator_cost *
-		(list_length(indexQuals) + list_length(indexOrderBys));
+	qual_arg_cost = index_other_operands_eval_cost(root, indexQuals);
+	qual_op_cost = cpu_operator_cost * list_length(indexQuals);
 
 	*indexStartupCost += qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
@@ -6693,11 +6648,10 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	List	   *indexQuals = get_index_quals(path->indexclauses);
+	List	   *indexQuals = get_quals_from_indexclauses(path->indexclauses);
 	double		numPages = index->pages;
 	RelOptInfo *baserel = index->rel;
 	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
-	List	   *qinfos;
 	Cost		spc_seq_page_cost;
 	Cost		spc_random_page_cost;
 	double		qual_arg_cost;
@@ -6735,11 +6689,10 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 */
 	*indexCorrelation = 0;
 
-	qinfos = deconstruct_indexquals(path);
-	foreach(l, qinfos)
+	foreach(l, path->indexclauses)
 	{
-		IndexQualInfo *qinfo = (IndexQualInfo *) lfirst(l);
-		AttrNumber	attnum = index->indexkeys[qinfo->indexcol];
+		IndexClause *iclause = lfirst_node(IndexClause, l);
+		AttrNumber	attnum = index->indexkeys[iclause->indexcol];
 
 		/* attempt to lookup stats in relation for this index column */
 		if (attnum != 0)
@@ -6774,7 +6727,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			 */
 
 			/* get the attnum from the 0-based index. */
-			attnum = qinfo->indexcol + 1;
+			attnum = iclause->indexcol + 1;
 
 			if (get_index_stats_hook &&
 				(*get_index_stats_hook) (root, index->indexoid, attnum, &vardata))
@@ -6853,10 +6806,10 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 
 	/*
 	 * Compute the index qual costs, much as in genericcostestimate, to add to
-	 * the index costs.
+	 * the index costs.  We can disregard indexorderbys, since BRIN doesn't
+	 * support those.
 	 */
-	qual_arg_cost = other_operands_eval_cost(root, qinfos) +
-		orderby_operands_eval_cost(root, path);
+	qual_arg_cost = index_other_operands_eval_cost(root, indexQuals);
 
 	/*
 	 * Compute the startup cost as the cost to read the whole revmap

@@ -85,19 +85,6 @@ typedef struct VariableStatData
 
 
 /*
- * deconstruct_indexquals is a simple function to examine the indexquals
- * attached to a proposed IndexPath.  It returns a list of IndexQualInfo
- * structs, one per qual expression.
- */
-typedef struct
-{
-	RestrictInfo *rinfo;		/* the indexqual itself */
-	int			indexcol;		/* zero-based index column number */
-	Oid			clause_op;		/* qual's operator OID, if relevant */
-	Node	   *other_operand;	/* non-index operand of qual's operator */
-} IndexQualInfo;
-
-/*
  * genericcostestimate is a general-purpose estimator that can be used for
  * most index types.  In some cases we use genericcostestimate as the base
  * code and then incorporate additional index-type-specific knowledge in
@@ -200,10 +187,13 @@ extern void estimate_hash_bucket_stats(PlannerInfo *root,
 						   Selectivity *mcv_freq,
 						   Selectivity *bucketsize_frac);
 
-extern List *deconstruct_indexquals(IndexPath *path);
+extern List *get_quals_from_indexclauses(List *indexclauses);
+extern Cost index_other_operands_eval_cost(PlannerInfo *root,
+							   List *indexquals);
+extern List *add_predicate_to_index_quals(IndexOptInfo *index,
+							 List *indexQuals);
 extern void genericcostestimate(PlannerInfo *root, IndexPath *path,
 					double loop_count,
-					List *qinfos,
 					GenericCosts *costs);
 
 /* Functions in array_selfuncs.c */
