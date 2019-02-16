@@ -16,6 +16,7 @@
  *    - #undef MIN, #undef MAX before defining them
  *    - remove includes covered by c.h
  *    - rename DEBUG to IMATH_DEBUG
+ *    - replace stdint.h usage with c.h equivalents
  *
  * 2. Download a newer imath.c and imath.h.  Transform them like in step 1.
  *    Apply to these files the diff you saved in step 1.  Look for new lines

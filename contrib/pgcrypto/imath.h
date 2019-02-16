@@ -36,17 +36,17 @@ typedef long mp_small;			/* must be a signed type */
 typedef unsigned long mp_usmall;	/* must be an unsigned type */
 
 
-/* Build with words as uint64_t by default. */
+/* Build with words as uint64 by default. */
 #ifdef USE_32BIT_WORDS
-typedef uint16_t mp_digit;
-typedef uint32_t mp_word;
-#define MP_DIGIT_MAX  (UINT16_MAX * 1UL)
-#define MP_WORD_MAX   (UINT32_MAX * 1UL)
+typedef uint16 mp_digit;
+typedef uint32 mp_word;
+#define MP_DIGIT_MAX  (PG_UINT16_MAX * 1UL)
+#define MP_WORD_MAX   (PG_UINT32_MAX * 1UL)
 #else
-typedef uint32_t mp_digit;
-typedef uint64_t mp_word;
-#define MP_DIGIT_MAX  (UINT32_MAX * UINT64_C(1))
-#define MP_WORD_MAX   (UINT64_MAX)
+typedef uint32 mp_digit;
+typedef uint64 mp_word;
+#define MP_DIGIT_MAX  (PG_UINT32_MAX * UINT64CONST(1))
+#define MP_WORD_MAX   (PG_UINT64_MAX)
 #endif
 
 typedef struct
