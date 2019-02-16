@@ -653,22 +653,21 @@ testname:output:platformpattern=comparisonfilename
    </para>
 
    <para>
-    For example: some systems interpret very small floating-point values
-    as zero, rather than reporting an underflow error.  This causes a
-    few differences in the <filename>float8</filename> regression test.
+    For example: some systems lack a working <literal>strtof</literal> function,
+    for which our workaround causes rounding errors in the
+    <filename>float4</filename> regression test.
     Therefore, we provide a variant comparison file,
-    <filename>float8-small-is-zero.out</filename>, which includes
+    <filename>float4-misrounded-input.out</filename>, which includes
     the results to be expected on these systems.  To silence the bogus
-    <quote>failure</quote> message on <systemitem>OpenBSD</systemitem>
+    <quote>failure</quote> message on <systemitem>HP-UX 10</systemitem>
     platforms, <filename>resultmap</filename> includes:
 <programlisting>
-float8:out:i.86-.*-openbsd=float8-small-is-zero.out
+float4:out:hppa.*-hp-hpux10.*=float4-misrounded-input.out
 </programlisting>
     which will trigger on any machine where the output of
-    <command>config.guess</command> matches <literal>i.86-.*-openbsd</literal>.
-    Other lines
-    in <filename>resultmap</filename> select the variant comparison file for other
-    platforms where it's appropriate.
+    <command>config.guess</command> matches <literal>hppa.*-hp-hpux10.*</literal>.
+    Other lines in <filename>resultmap</filename> select the variant comparison
+    file for other platforms where it's appropriate.
    </para>
 
    <para>
