@@ -52,7 +52,7 @@ strtof(const char *nptr, char **endptr)
 	return fresult;
 }
 
-#elif HAVE_BUGGY_WINDOWS_STRTOF
+#elif HAVE_BUGGY_STRTOF
 /*
  * On Windows, there's a slightly different problem: VS2013 has a strtof()
  * that returns the correct results for valid input, but may fail to report an
@@ -62,6 +62,14 @@ strtof(const char *nptr, char **endptr)
  * well, so prefer to round the strtod() result in such cases. (Normally we'd
  * just say "too bad" if strtof() doesn't support subnormals, but since we're
  * already in here fixing stuff, we might as well do the best fix we can.)
+ *
+ * Cygwin has a strtof() which is literally just (float)strtod(), which means
+ * we can't avoid the double-rounding problem; but using this wrapper does get
+ * us proper over/underflow checks. (Also, if they fix their strtof(), the
+ * wrapper doesn't break anything.)
+ *
+ * Test results on Mingw suggest that it has the same problem, though looking
+ * at the code I can't figure out why.
  */
 float
 pg_strtof(const char *nptr, char **endptr)
