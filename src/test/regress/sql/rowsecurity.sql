@@ -840,10 +840,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
 
-PREPARE plancache_test2 AS WITH q AS (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
+PREPARE plancache_test2 AS WITH q AS MATERIALIZED (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
 
-PREPARE plancache_test3 AS WITH q AS (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
+PREPARE plancache_test3 AS WITH q AS MATERIALIZED (SELECT * FROM z2) SELECT * FROM q,z1 WHERE f_leak(z1.b);
 EXPLAIN (COSTS OFF) EXECUTE plancache_test3;
 
 SET ROLE regress_rls_group1;
@@ -1071,8 +1071,9 @@ INSERT INTO t1 (SELECT x, md5(x::text) FROM generate_series(0,20) x);
 
 SET SESSION AUTHORIZATION regress_rls_bob;
 
-WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
-EXPLAIN (COSTS OFF) WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
+WITH cte1 AS MATERIALIZED (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
+EXPLAIN (COSTS OFF)
+WITH cte1 AS MATERIALIZED (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
 
 WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail
 WITH cte1 AS (UPDATE t1 SET a = a RETURNING *) SELECT * FROM cte1; --ok

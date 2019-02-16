@@ -479,7 +479,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	row explicit_row implicit_row type_list array_expr_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
-%type <ival>	sub_type
+%type <ival>	sub_type opt_materialized
 %type <value>	NumericOnly
 %type <list>	NumericOnly_list
 %type <alias>	alias_clause opt_alias_clause
@@ -11344,15 +11344,22 @@ cte_list:
 		| cte_list ',' common_table_expr		{ $$ = lappend($1, $3); }
 		;
 
-common_table_expr:  name opt_name_list AS '(' PreparableStmt ')'
+common_table_expr:  name opt_name_list AS opt_materialized '(' PreparableStmt ')'
 			{
 				CommonTableExpr *n = makeNode(CommonTableExpr);
 				n->ctename = $1;
 				n->aliascolnames = $2;
-				n->ctequery = $5;
+				n->ctematerialized = $4;
+				n->ctequery = $6;
 				n->location = @1;
 				$$ = (Node *) n;
 			}
+		;
+
+opt_materialized:
+		MATERIALIZED							{ $$ = CTEMaterializeAlways; }
+		| NOT MATERIALIZED						{ $$ = CTEMaterializeNever; }
+		| /*EMPTY*/								{ $$ = CTEMaterializeDefault; }
 		;
 
 opt_with_clause:
@@ -16237,6 +16244,7 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
 	/* create common table expression */
 	cte->ctename = relname;
 	cte->aliascolnames = aliases;
+	cte->ctematerialized = CTEMaterializeDefault;
 	cte->ctequery = query;
 	cte->location = -1;
 

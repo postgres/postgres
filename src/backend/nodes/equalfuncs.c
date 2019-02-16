@@ -2791,6 +2791,7 @@ _equalCommonTableExpr(const CommonTableExpr *a, const CommonTableExpr *b)
 {
 	COMPARE_STRING_FIELD(ctename);
 	COMPARE_NODE_FIELD(aliascolnames);
+	COMPARE_SCALAR_FIELD(ctematerialized);
 	COMPARE_NODE_FIELD(ctequery);
 	COMPARE_LOCATION_FIELD(location);
 	COMPARE_SCALAR_FIELD(cterecursive);

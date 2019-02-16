@@ -418,6 +418,7 @@ _readCommonTableExpr(void)
 
 	READ_STRING_FIELD(ctename);
 	READ_NODE_FIELD(aliascolnames);
+	READ_ENUM_FIELD(ctematerialized, CTEMaterialize);
 	READ_NODE_FIELD(ctequery);
 	READ_LOCATION_FIELD(location);
 	READ_BOOL_FIELD(cterecursive);

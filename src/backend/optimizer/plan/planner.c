@@ -646,8 +646,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->partColsUpdated = false;
 
 	/*
-	 * If there is a WITH list, process each WITH query and build an initplan
-	 * SubPlan structure for it.
+	 * If there is a WITH list, process each WITH query and either convert it
+	 * to RTE_SUBQUERY RTE(s) or build an initplan SubPlan structure for it.
 	 */
 	if (parse->cteList)
 		SS_process_ctes(root);

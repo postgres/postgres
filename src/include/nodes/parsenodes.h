@@ -1402,11 +1402,19 @@ typedef struct OnConflictClause
  *
  * We don't currently support the SEARCH or CYCLE clause.
  */
+typedef enum CTEMaterialize
+{
+	CTEMaterializeDefault,		/* no option specified */
+	CTEMaterializeAlways,		/* MATERIALIZED */
+	CTEMaterializeNever			/* NOT MATERIALIZED */
+} CTEMaterialize;
+
 typedef struct CommonTableExpr
 {
 	NodeTag		type;
 	char	   *ctename;		/* query name (never qualified) */
 	List	   *aliascolnames;	/* optional list of column names */
+	CTEMaterialize ctematerialized; /* is this an optimization fence? */
 	/* SelectStmt/InsertStmt/etc before parse analysis, Query afterwards: */
 	Node	   *ctequery;		/* the CTE's subquery */
 	int			location;		/* token location, or -1 if unknown */

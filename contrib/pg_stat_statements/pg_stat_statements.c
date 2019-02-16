@@ -2927,6 +2927,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 
 				/* we store the string name because RTE_CTE RTEs need it */
 				APP_JUMB_STRING(cte->ctename);
+				APP_JUMB(cte->ctematerialized);
 				JumbleQuery(jstate, castNode(Query, cte->ctequery));
 			}
 			break;
