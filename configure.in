@@ -1485,9 +1485,6 @@ PGAC_C_FUNCNAME_SUPPORT
 PGAC_C_STATIC_ASSERT
 PGAC_C_TYPEOF
 PGAC_C_TYPES_COMPATIBLE
-PGAC_C_BUILTIN_BSWAP16
-PGAC_C_BUILTIN_BSWAP32
-PGAC_C_BUILTIN_BSWAP64
 PGAC_C_BUILTIN_CONSTANT_P
 PGAC_C_BUILTIN_UNREACHABLE
 PGAC_C_COMPUTED_GOTO
@@ -1542,16 +1539,29 @@ Use --without-zlib to disable zlib support.])],
                 [#include <zlib.h>])
 fi
 
-# On PPC, check if assembler supports LWARX instruction's mutex hint bit
 case $host_cpu in
+  x86_64)
+    # On x86_64, check if we can compile a popcntq instruction
+    AC_CACHE_CHECK([whether assembler supports x86_64 popcntq],
+                   [pgac_cv_have_x86_64_popcntq],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+	[long long x = 1; long long r;
+	 __asm__ __volatile__ (" popcntq %1,%0\n" : "=q"(r) : "rm"(x));])],
+	[pgac_cv_have_x86_64_popcntq=yes],
+	[pgac_cv_have_x86_64_popcntq=no])])
+    if test x"$pgac_cv_have_x86_64_popcntq" = xyes ; then
+	AC_DEFINE(HAVE_X86_64_POPCNTQ, 1, [Define to 1 if the assembler supports X86_64's POPCNTQ instruction.])
+    fi
+  ;;
   ppc*|powerpc*)
-    AC_MSG_CHECKING([whether assembler supports lwarx hint bit])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+    # On PPC, check if assembler supports LWARX instruction's mutex hint bit
+    AC_CACHE_CHECK([whether assembler supports lwarx hint bit],
+                   [pgac_cv_have_ppc_mutex_hint],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
 	[int a = 0; int *p = &a; int r;
 	 __asm__ __volatile__ (" lwarx %0,0,%1,1\n" : "=&r"(r) : "r"(p));])],
 	[pgac_cv_have_ppc_mutex_hint=yes],
-	[pgac_cv_have_ppc_mutex_hint=no])
-    AC_MSG_RESULT([$pgac_cv_have_ppc_mutex_hint])
+	[pgac_cv_have_ppc_mutex_hint=no])])
     if test x"$pgac_cv_have_ppc_mutex_hint" = xyes ; then
 	AC_DEFINE(HAVE_PPC_LWARX_MUTEX_HINT, 1, [Define to 1 if the assembler supports PPC's LWARX mutex hint bit.])
     fi
@@ -1630,6 +1640,15 @@ AC_CHECK_FUNCS(m4_normalize([
 	utimes
 	wcstombs_l
 ]))
+
+# These typically are compiler builtins, for which AC_CHECK_FUNCS fails.
+PGAC_CHECK_BUILTIN_FUNC([__builtin_bswap16], [int x])
+PGAC_CHECK_BUILTIN_FUNC([__builtin_bswap32], [int x])
+PGAC_CHECK_BUILTIN_FUNC([__builtin_bswap64], [long int x])
+# We assume that we needn't test all widths of these explicitly:
+PGAC_CHECK_BUILTIN_FUNC([__builtin_clz], [unsigned int x])
+PGAC_CHECK_BUILTIN_FUNC([__builtin_ctz], [unsigned int x])
+PGAC_CHECK_BUILTIN_FUNC([__builtin_popcount], [unsigned int x])
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in

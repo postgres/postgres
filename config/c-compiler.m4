@@ -273,60 +273,6 @@ AC_DEFINE(HAVE__BUILTIN_TYPES_COMPATIBLE_P, 1,
 fi])# PGAC_C_TYPES_COMPATIBLE
 
 
-# PGAC_C_BUILTIN_BSWAP16
-# -------------------------
-# Check if the C compiler understands __builtin_bswap16(),
-# and define HAVE__BUILTIN_BSWAP16 if so.
-AC_DEFUN([PGAC_C_BUILTIN_BSWAP16],
-[AC_CACHE_CHECK(for __builtin_bswap16, pgac_cv__builtin_bswap16,
-[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[static unsigned long int x = __builtin_bswap16(0xaabb);]
-)],
-[pgac_cv__builtin_bswap16=yes],
-[pgac_cv__builtin_bswap16=no])])
-if test x"$pgac_cv__builtin_bswap16" = xyes ; then
-AC_DEFINE(HAVE__BUILTIN_BSWAP16, 1,
-          [Define to 1 if your compiler understands __builtin_bswap16.])
-fi])# PGAC_C_BUILTIN_BSWAP16
-
-
-
-# PGAC_C_BUILTIN_BSWAP32
-# -------------------------
-# Check if the C compiler understands __builtin_bswap32(),
-# and define HAVE__BUILTIN_BSWAP32 if so.
-AC_DEFUN([PGAC_C_BUILTIN_BSWAP32],
-[AC_CACHE_CHECK(for __builtin_bswap32, pgac_cv__builtin_bswap32,
-[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[static unsigned long int x = __builtin_bswap32(0xaabbccdd);]
-)],
-[pgac_cv__builtin_bswap32=yes],
-[pgac_cv__builtin_bswap32=no])])
-if test x"$pgac_cv__builtin_bswap32" = xyes ; then
-AC_DEFINE(HAVE__BUILTIN_BSWAP32, 1,
-          [Define to 1 if your compiler understands __builtin_bswap32.])
-fi])# PGAC_C_BUILTIN_BSWAP32
-
-
-
-# PGAC_C_BUILTIN_BSWAP64
-# -------------------------
-# Check if the C compiler understands __builtin_bswap64(),
-# and define HAVE__BUILTIN_BSWAP64 if so.
-AC_DEFUN([PGAC_C_BUILTIN_BSWAP64],
-[AC_CACHE_CHECK(for __builtin_bswap64, pgac_cv__builtin_bswap64,
-[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
-[static unsigned long int x = __builtin_bswap64(0xaabbccddeeff0011);]
-)],
-[pgac_cv__builtin_bswap64=yes],
-[pgac_cv__builtin_bswap64=no])])
-if test x"$pgac_cv__builtin_bswap64" = xyes ; then
-AC_DEFINE(HAVE__BUILTIN_BSWAP64, 1,
-          [Define to 1 if your compiler understands __builtin_bswap64.])
-fi])# PGAC_C_BUILTIN_BSWAP64
-
-
-
 # PGAC_C_BUILTIN_CONSTANT_P
 # -------------------------
 # Check if the C compiler understands __builtin_constant_p(),
@@ -420,6 +366,33 @@ if test x"$pgac_cv_computed_goto" = xyes ; then
 AC_DEFINE(HAVE_COMPUTED_GOTO, 1,
           [Define to 1 if your compiler handles computed gotos.])
 fi])# PGAC_C_COMPUTED_GOTO
+
+
+
+# PGAC_CHECK_BUILTIN_FUNC
+# -----------------------
+# This is similar to AC_CHECK_FUNCS(), except that it will work for compiler
+# builtin functions, as that usually fails to.
+# The first argument is the function name, eg [__builtin_clzl], and the
+# second is its argument list, eg [unsigned long x].  The current coding
+# works only for a single argument named x; we might generalize that later.
+# It's assumed that the function's result type is coercible to int.
+# On success, we define "HAVEfuncname" (there's usually more than enough
+# underscores already, so we don't add another one).
+AC_DEFUN([PGAC_CHECK_BUILTIN_FUNC],
+[AC_CACHE_CHECK(for $1, pgac_cv$1,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([
+int
+call$1($2)
+{
+    return $1(x);
+}], [])],
+[pgac_cv$1=yes],
+[pgac_cv$1=no])])
+if test x"${pgac_cv$1}" = xyes ; then
+AC_DEFINE_UNQUOTED(AS_TR_CPP([HAVE$1]), 1,
+                   [Define to 1 if your compiler understands $1.])
+fi])# PGAC_CHECK_BUILTIN_FUNC
 
 
 

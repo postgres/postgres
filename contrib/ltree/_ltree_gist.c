@@ -9,6 +9,8 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
+#include "port/pg_bitutils.h"
+
 #include "crc32.h"
 #include "ltree.h"
 
@@ -22,26 +24,6 @@ PG_FUNCTION_INFO_V1(_ltree_consistent);
 
 #define GETENTRY(vec,pos) ((ltree_gist *) DatumGetPointer((vec)->vector[(pos)].key))
 #define NEXTVAL(x) ( (ltree*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )
-
-/* Number of one-bits in an unsigned byte */
-static const uint8 number_of_ones[256] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
-};
 
 #define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )
 
@@ -209,12 +191,7 @@ _ltree_union(PG_FUNCTION_ARGS)
 static int32
 sizebitvec(BITVECP sign)
 {
-	int32		size = 0,
-				i;
-
-	ALOOPBYTE
-		size += number_of_ones[(unsigned char) sign[i]];
-	return size;
+	return pg_popcount((const char *) sign, ASIGLEN);
 }
 
 static int
@@ -227,7 +204,8 @@ hemdistsign(BITVECP a, BITVECP b)
 	ALOOPBYTE
 	{
 		diff = (unsigned char) (a[i] ^ b[i]);
-		dist += number_of_ones[diff];
+		/* Using the popcount functions here isn't likely to win */
+		dist += pg_number_of_ones[diff];
 	}
 	return dist;
 }

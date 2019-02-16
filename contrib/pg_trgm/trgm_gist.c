@@ -7,6 +7,7 @@
 
 #include "access/stratnum.h"
 #include "fmgr.h"
+#include "port/pg_bitutils.h"
 
 
 typedef struct
@@ -38,26 +39,6 @@ PG_FUNCTION_INFO_V1(gtrgm_union);
 PG_FUNCTION_INFO_V1(gtrgm_same);
 PG_FUNCTION_INFO_V1(gtrgm_penalty);
 PG_FUNCTION_INFO_V1(gtrgm_picksplit);
-
-/* Number of one-bits in an unsigned byte */
-static const uint8 number_of_ones[256] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
-};
 
 
 Datum
@@ -634,12 +615,7 @@ gtrgm_same(PG_FUNCTION_ARGS)
 static int32
 sizebitvec(BITVECP sign)
 {
-	int32		size = 0,
-				i;
-
-	LOOPBYTE
-		size += number_of_ones[(unsigned char) sign[i]];
-	return size;
+	return pg_popcount(sign, SIGLEN);
 }
 
 static int
@@ -652,7 +628,8 @@ hemdistsign(BITVECP a, BITVECP b)
 	LOOPBYTE
 	{
 		diff = (unsigned char) (a[i] ^ b[i]);
-		dist += number_of_ones[diff];
+		/* Using the popcount functions here isn't likely to win */
+		dist += pg_number_of_ones[diff];
 	}
 	return dist;
 }

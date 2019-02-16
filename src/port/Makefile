@@ -36,7 +36,7 @@ override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
 OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o erand48.o inet_net_ntop.o \
-	noblock.o path.o pgcheckdir.o pgmkdirp.o pgsleep.o \
+	noblock.o path.o pg_bitutils.o pgcheckdir.o pgmkdirp.o pgsleep.o \
 	pg_strong_random.o pgstrcasecmp.o pgstrsignal.o pqsignal.o \
 	qsort.o qsort_arg.o quotes.o snprintf.o sprompt.o strerror.o \
 	tar.o thread.o
