@@ -59,6 +59,9 @@ SHLIB_LINK += $(filter -leay32, $(LIBS))
 SHLIB_LINK += -lws2_32
 endif
 
+# Upstream uses a larger subset of C99.
+imath.o: CFLAGS+=$(PERMIT_DECLARATION_AFTER_STATEMENT)
+
 rijndael.o: rijndael.tbl
 
 rijndael.tbl:
