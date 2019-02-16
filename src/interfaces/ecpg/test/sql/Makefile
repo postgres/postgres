@@ -22,8 +22,9 @@ TESTS = array array.c \
         parser parser.c \
         quote quote.c \
         show show.c \
+        insupd insupd.c \
         twophase twophase.c \
-        insupd insupd.c
+        declare declare.c
 
 all: $(TESTS)
 

@@ -842,6 +842,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 	struct prepared_statement *prep;
 	PGresult   *res;
 	va_list		args;
+	const char *real_connection_name = NULL;
 
 	/* DESCRIBE INPUT is not yet supported */
 	if (input)
@@ -850,11 +851,21 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 		return ret;
 	}
 
-	con = ecpg_get_connection(connection_name);
+	real_connection_name = ecpg_get_con_name_by_declared_name(stmt_name);
+	if (real_connection_name == NULL)
+	{
+		/*
+		 * If can't get the connection name by declared name then using connection name
+		 * coming from the parameter connection_name
+		 */
+		real_connection_name = connection_name;
+	}
+
+	con = ecpg_get_connection(real_connection_name);
 	if (!con)
 	{
 		ecpg_raise(line, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
-				   connection_name ? connection_name : ecpg_gettext("NULL"));
+				   real_connection_name ? real_connection_name : ecpg_gettext("NULL"));
 		return ret;
 	}
 	prep = ecpg_find_prepared_statement(stmt_name, con, NULL);

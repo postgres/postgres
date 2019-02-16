@@ -340,6 +340,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		return false;
 	}
 
+	memset(this, 0, sizeof(struct connection));
+
 	if (dbname != NULL)
 	{
 		/* get the detail information from dbname */
@@ -690,6 +692,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 			struct connection *f = con;
 
 			con = con->next;
+			ecpg_release_declared_statement(f->name);
 			ecpg_finish(f);
 		}
 	}
@@ -705,7 +708,10 @@ ECPGdisconnect(int lineno, const char *connection_name)
 			return false;
 		}
 		else
+		{
+			ecpg_release_declared_statement(connection_name);
 			ecpg_finish(con);
+		}
 	}
 
 #ifdef ENABLE_THREAD_SAFETY

@@ -15,7 +15,7 @@ include $(top_builddir)/src/Makefile.global
 
 PGFILEDESC = "ECPG - embedded SQL in C"
 NAME= ecpg
-SO_MAJOR_VERSION= 6
+SO_MAJOR_VERSION= 7
 SO_MINOR_VERSION= $(MAJORVERSION)
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
@@ -23,7 +23,7 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o \
-	memory.o connect.o misc.o $(WIN32RES)
+	memory.o connect.o misc.o cursor.o $(WIN32RES)
 
 SHLIB_LINK_INTERNAL = -L../pgtypeslib -lpgtypes $(libpq_pgport_shlib)
 SHLIB_LINK = $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)

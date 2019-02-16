@@ -284,6 +284,38 @@ prepared_name: name
 		;
 
 /*
+ * Declare Statement
+ */
+ECPGDeclareStmt: DECLARE prepared_name STATEMENT
+		{
+			struct declared_name_st *ptr = NULL;
+
+			/* Check whether the declared name has been defined or not */
+			for (ptr = g_declared_list; ptr != NULL; ptr = ptr->next)
+			{
+				if (strcmp($2, ptr->name) == 0)
+				{
+					/* re-definition is a bug */
+					mmerror(PARSE_ERROR, ET_ERROR, "declared name %s is already defined", ptr->name);
+				}
+			}
+
+			/* Add a new declared name into the g_declared_list */
+			ptr = NULL;
+			ptr = (struct declared_name_st *) mm_alloc(sizeof(struct declared_name_st));
+			if (ptr)
+			{
+				/* initial definition */
+				ptr->name = $2;
+				ptr->next = g_declared_list;
+				g_declared_list = ptr;
+			}
+
+			$$ = mm_strdup($2);
+		}
+;
+
+/*
  * Declare a prepared cursor. The syntax is different from the standard
  * declare statement, so we create a new rule.
  */
@@ -309,6 +341,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			}
 
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
+			memset(this, 0 ,sizeof(struct cursor));
 
 			/* initial definition */
 			this->next = cur;
@@ -318,6 +351,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			this->command =  cat_str(6, mm_strdup("declare"), cursor_marker, $3, mm_strdup("cursor"), $5, mm_strdup("for $1"));
 			this->argsresult = NULL;
 			this->argsresult_oos = NULL;
+			this->prepared_name = $7;
 
 			thisquery->type = &ecpg_query;
 			thisquery->brace_level = 0;

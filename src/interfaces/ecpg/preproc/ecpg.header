@@ -38,6 +38,7 @@ char *current_function;
 int ecpg_internal_var = 0;
 char	*connection = NULL;
 char	*input_filename = NULL;
+char	*g_cursor_name = NULL;
 
 static int	FoundInto = 0;
 static int	initializer = 0;

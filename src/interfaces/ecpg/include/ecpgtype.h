@@ -99,6 +99,13 @@ enum ECPG_statement_type
 	ECPGst_prepnormal
 };
 
+enum ECPG_cursor_statement_type
+{
+	ECPGcst_declare,
+	ECPGcst_open,
+	ECPGcst_fetch,
+	ECPGcst_close
+};
 #ifdef __cplusplus
 }
 #endif

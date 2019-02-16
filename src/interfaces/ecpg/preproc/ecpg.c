@@ -28,6 +28,7 @@ struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
 struct _defines *defines = NULL;
+struct declared_name_st *g_declared_list = NULL;
 
 static void
 help(const char *progname)
@@ -109,6 +110,48 @@ add_preprocessor_define(char *define)
 	defines->pertinent = true;
 	defines->used = NULL;
 	defines->next = pd;
+}
+
+static void
+free_argument(struct arguments *arg)
+{
+	if (arg == NULL)
+		return;
+
+	free_argument(arg->next);
+
+	/*
+	 *  Don't free variables in it because the original codes don't free it either
+	 *  variables are static structures instead of allocating
+	 */
+	free(arg);
+}
+
+static void
+free_cursor(struct cursor *c)
+{
+	if (c == NULL)
+		return;
+
+	free_cursor(c->next);
+	free_argument(c->argsinsert);
+	free_argument(c->argsresult);
+
+	free(c->name);
+	free(c->function);
+	free(c->command);
+	free(c->prepared_name);
+	free(c);
+}
+
+static void
+free_declared_stmt(struct declared_name_st *st)
+{
+	if (st == NULL)
+		return;
+
+	free_declared_stmt(st->next);
+	free(st);
 }
 
 #define ECPG_GETOPT_LONG_REGRESSION		1
@@ -348,29 +391,18 @@ main(int argc, char *const argv[])
 				struct typedefs *typeptr;
 
 				/* remove old cursor definitions if any are still there */
-				for (ptr = cur; ptr != NULL;)
+				if (cur)
 				{
-					struct cursor *this = ptr;
-					struct arguments *l1,
-							   *l2;
-
-					free(ptr->command);
-					free(ptr->connection);
-					free(ptr->name);
-					for (l1 = ptr->argsinsert; l1; l1 = l2)
-					{
-						l2 = l1->next;
-						free(l1);
-					}
-					for (l1 = ptr->argsresult; l1; l1 = l2)
-					{
-						l2 = l1->next;
-						free(l1);
-					}
-					ptr = ptr->next;
-					free(this);
+					free_cursor(cur);
+					cur = NULL;
 				}
-				cur = NULL;
+
+				/* remove old declared statements if any are still there */
+				if (g_declared_list)
+				{
+					free_declared_stmt(g_declared_list);
+					g_declared_list = NULL;
+				}
 
 				/* remove non-pertinent old defines as well */
 				while (defines && !defines->pertinent)
@@ -486,6 +518,18 @@ main(int argc, char *const argv[])
 			}
 
 			free(input_filename);
+		}
+
+		if(g_declared_list)
+		{
+			free_declared_stmt(g_declared_list);
+			g_declared_list = NULL;
+		}
+
+		if(cur)
+		{
+			free_cursor(cur);
+			cur = NULL;
 		}
 	}
 	return ret_value;

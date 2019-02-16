@@ -36,10 +36,11 @@ typedef struct
 
 static int	nextStmtID = 1;
 static stmtCacheEntry *stmtCacheEntries = NULL;
+static struct declared_statement *g_declared_list; 
 
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
 			   struct prepared_statement *prev, struct prepared_statement *this);
-
+static struct declared_statement *ecpg_find_declared_statement(const char *); 
 static bool
 isvarchar(unsigned char c)
 {
@@ -128,6 +129,7 @@ prepare_common(int lineno, struct connection *con, const char *name, const char 
 		ecpg_free(this);
 		return false;
 	}
+	memset(stmt, 0, sizeof(struct statement));
 
 	/* create statement */
 	stmt->lineno = lineno;
@@ -175,12 +177,22 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks,
 	struct connection *con;
 	struct prepared_statement *this,
 			   *prev;
+	const char *real_connection_name = NULL; 
 
 	(void) questionmarks;		/* quiet the compiler */
 
-	con = ecpg_get_connection(connection_name);
+	real_connection_name = ecpg_get_con_name_by_declared_name(name);
+	if (real_connection_name == NULL)
+	{
+		/* 
+		 * If can't get the connection name by declared name then using connection name
+		 * coming from the parameter connection_name
+		 */
+		real_connection_name = connection_name;
+	}
 
-	if (!ecpg_init(con, connection_name, lineno))
+	con = ecpg_get_connection(real_connection_name);
+	if (!ecpg_init(con, real_connection_name, lineno))
 		return false;
 
 	/* check if we already have prepared this statement */
@@ -273,9 +285,19 @@ ECPGdeallocate(int lineno, int c, const char *connection_name, const char *name)
 	struct connection *con;
 	struct prepared_statement *this,
 			   *prev;
+	const char *real_connection_name = NULL;
 
-	con = ecpg_get_connection(connection_name);
+	real_connection_name = ecpg_get_con_name_by_declared_name(name);
+	if (real_connection_name == NULL)
+	{
+		/*
+		 * If can't get the connection name by declared name then using connection name
+		 * coming from the parameter connection_name
+		 */
+		real_connection_name = connection_name;
+	}
 
+	con = ecpg_get_connection(real_connection_name);
 	if (!ecpg_init(con, connection_name, lineno))
 		return false;
 
@@ -324,8 +346,21 @@ ecpg_prepared(const char *name, struct connection *con)
 char *
 ECPGprepared_statement(const char *connection_name, const char *name, int lineno)
 {
+	const char *real_connection_name = NULL;
+
 	(void) lineno;				/* keep the compiler quiet */
-	return ecpg_prepared(name, ecpg_get_connection(connection_name));
+
+	real_connection_name = ecpg_get_con_name_by_declared_name(name);
+	if (real_connection_name == NULL)
+	{
+		/*
+		 * If can't get the connection name by declared name then using connection name
+		 * coming from the parameter connection_name
+		 */
+		real_connection_name = connection_name;
+	}
+
+	return ecpg_prepared(name, ecpg_get_connection(real_connection_name));
 }
 
 /*
@@ -555,4 +590,201 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 	stmtCacheEntries[entNo].execs++;
 
 	return true;
+}
+
+/*
+ * handle the EXEC SQL DECLARE STATEMENT
+ * Input: connection_name -- connection name
+ *		  name -- declared name
+ */
+bool
+ECPGdeclare(int lineno, const char *connection_name, const char *name)
+{
+	struct connection *con = NULL;
+	struct declared_statement *p = NULL;
+
+	if (name == NULL)
+	{
+		/* Should never go to here because ECPG pre-compiler will check it */
+		return false;
+	}
+
+	if (connection_name == NULL)
+	{
+		/*
+		 * Going to here means not using AT clause in the DECLARE STATEMENT
+		 * ECPG pre-processor allows this case.
+		 * However, we don't allocate a node to store the declared name
+		 * because the DECLARE STATEMENT without using AT clause will be ignored.
+		 * The following statement such as PREPARE, EXECUTE are executed
+		 * as usual on the current connection.
+		 */
+		return true;
+	}
+
+	con = ecpg_get_connection(connection_name);
+	if (!ecpg_init(con, connection_name, lineno))
+		return false;
+
+	if (ecpg_find_declared_statement(name))
+	{
+		/* Should not go to here because the pre-compiler has check the duplicate name */
+		return false;
+	}
+
+	/* allocate a declared_statement as a new node */
+	p = (struct declared_statement *) ecpg_alloc(sizeof(struct declared_statement), lineno);
+	if (!p)
+		return false;
+
+	memset(p, 0, sizeof(struct declared_statement));
+
+	ecpg_log("ECPGdeclare on line %d: declared name %s on connection: \"%s\"\n", lineno, name, connection_name);
+
+	p->name = ecpg_strdup(name, lineno);
+	p->connection_name = ecpg_strdup(connection_name, lineno);
+
+	/* Add the new node into the g_declared_list */
+	if (g_declared_list != NULL)
+	{
+		p->next = g_declared_list;
+		g_declared_list = p;
+	}
+	else
+		g_declared_list = p;
+
+	return true;
+}
+
+/*
+ * Find a declared node by declared name
+ * Input: name -- declared name
+ * Return: Found -- The pointer points to the declared node
+ *		   Not found -- NULL
+ */
+static struct declared_statement *
+ecpg_find_declared_statement(const char *name)
+{
+	struct declared_statement *p;
+
+	if (name == NULL)
+		return NULL;
+
+	p = g_declared_list;
+	while (p)
+	{
+		if (strcmp(p->name, name) == 0)
+			return p;
+		p = p->next;
+	}
+
+	return NULL;
+}
+
+/*
+ * Build the relationship between the declared name and cursor name
+ * Input: declared_name -- the name declared in the DECLARE STATEMENT
+ *		  cursor_name -- cursor name declared in the DECLARE/OPEN CURSOR statement
+ */
+void
+ecpg_update_declare_statement(const char *declared_name, const char *cursor_name, const int lineno)
+{
+	struct declared_statement *p = NULL;
+
+	if (!declared_name || !cursor_name)
+		return;
+
+	/* Find the declared node by declared name */
+	p = ecpg_find_declared_statement(declared_name);
+	if (p)
+		p->cursor_name = ecpg_strdup(cursor_name,lineno);
+}
+
+/*
+ * Find and return the connection name referred by the declared name
+ * Input: declared_name -- the name declared in the DECLARE STATEMENT
+ * Return: Found -- The connection name
+ *		   Not found -- NULL
+ */
+char *
+ecpg_get_con_name_by_declared_name(const char *declared_name)
+{
+	struct declared_statement *p;
+
+	p = ecpg_find_declared_statement(declared_name);
+	if (p)
+		return p->connection_name;
+
+	return NULL;
+}
+
+/*
+ * Find the connection name by referring the declared statements
+ * cursors by using the provided cursor name
+ * Input: cursor_name -- the cursor name
+ * Return: Found -- The connection name
+ *		   Not found -- NULL
+ */
+const char *
+ecpg_get_con_name_by_cursor_name(const char *cursor_name)
+{
+	struct declared_statement *p;
+
+	if (cursor_name == NULL)
+		return NULL;
+
+	p = g_declared_list;
+	while (p)
+	{
+		/* Search the cursor name in the declared list */
+		if (p->cursor_name && (strcmp(p->cursor_name, cursor_name) == 0))
+			return p->connection_name;
+
+		p = p->next;
+	}
+
+	return NULL;
+}
+
+/*
+ * Release the declare node from the g_declared_list which refers the connection_name
+ * Input: connection_name -- connection name
+ */
+void
+ecpg_release_declared_statement(const char *connection_name)
+{
+	struct declared_statement *cur = NULL;
+	struct declared_statement *prev = NULL;
+
+	if (connection_name == NULL)
+		return;
+
+	cur = g_declared_list;
+	while (cur)
+	{
+		if (strcmp(cur->connection_name, connection_name) == 0)
+		{
+			/* If find then release the declared node from the list */
+			if (prev)
+				prev->next = cur->next;
+			else
+				g_declared_list = cur->next;
+
+			ecpg_log("ecpg_release_declared_statement: declared name %s is released\n", cur->name);
+
+			ecpg_free(cur->name);
+			ecpg_free(cur->connection_name);
+			ecpg_free(cur->cursor_name);
+			ecpg_free(cur);
+
+			/* One connection can be used by multiple declared name, so no break here */
+		}
+		else
+			prev = cur;
+
+		if (prev)
+			cur = prev->next;
+		else
+			cur = g_declared_list;
+	}
 }
