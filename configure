@@ -5306,7 +5306,7 @@ fi
   # -Wdeclaration-after-statement isn't applicable for C++.  Specific C files
   # disable it, so AC_SUBST the negative form.
   PERMIT_DECLARATION_AFTER_STATEMENT=
-  if test x"save_$CFLAGS" != x"$CFLAGS"; then
+  if test x"$save_CFLAGS" != x"$CFLAGS"; then
     PERMIT_DECLARATION_AFTER_STATEMENT=-Wno-declaration-after-statement
   fi
 
