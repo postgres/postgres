@@ -510,6 +510,11 @@ typedef unsigned short mode_t;
 #define isnan(x) _isnan(x)
 #endif
 
+/* Pulled from Makefile.port in MinGW */
+#define DLSUFFIX ".dll"
+
+#endif							/* _MSC_VER */
+
 #if (defined(_MSC_VER) && (_MSC_VER < 1900)) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 /*
@@ -528,10 +533,5 @@ typedef unsigned short mode_t;
  */
 #define HAVE_BUGGY_STRTOF 1
 #endif
-
-/* Pulled from Makefile.port in MinGW */
-#define DLSUFFIX ".dll"
-
-#endif							/* _MSC_VER */
 
 #endif							/* PG_WIN32_PORT_H */
