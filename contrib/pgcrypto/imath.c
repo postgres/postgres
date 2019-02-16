@@ -17,6 +17,7 @@
  *    - remove includes covered by c.h
  *    - rename DEBUG to IMATH_DEBUG
  *    - replace stdint.h usage with c.h equivalents
+ *    - suppress MSVC warning 4146
  *
  * 2. Download a newer imath.c and imath.h.  Transform them like in step 1.
  *    Apply to these files the diff you saved in step 1.  Look for new lines
@@ -2359,7 +2360,14 @@ s_ucmp(mp_int a, mp_int b)
 static int
 s_vcmp(mp_int a, mp_small v)
 {
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4146)
+#endif
 	mp_usmall	uv = (v < 0) ? -(mp_usmall) v : (mp_usmall) v;
+#if _MSC_VER
+#pragma warning(pop)
+#endif
 
 	return s_uvcmp(a, uv);
 }
