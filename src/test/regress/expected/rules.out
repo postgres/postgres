@@ -1289,6 +1289,14 @@ iexit| SELECT ih.name,
    FROM ihighway ih,
     ramp r
   WHERE (ih.thepath ## r.thepath);
+key_dependent_view| SELECT view_base_table.key,
+    view_base_table.data
+   FROM view_base_table
+  GROUP BY view_base_table.key;
+key_dependent_view_no_cols| SELECT
+   FROM view_base_table
+  GROUP BY view_base_table.key
+ HAVING (length((view_base_table.data)::text) > 0);
 pg_available_extension_versions| SELECT e.name,
     e.version,
     (x.extname IS NOT NULL) AS installed,
