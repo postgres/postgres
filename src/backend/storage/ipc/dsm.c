@@ -904,8 +904,8 @@ dsm_unpin_segment(dsm_handle handle)
 	LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
 	for (i = 0; i < dsm_control->nitems; ++i)
 	{
-		/* Skip unused slots. */
-		if (dsm_control->item[i].refcnt == 0)
+		/* Skip unused slots and segments that are concurrently going away. */
+		if (dsm_control->item[i].refcnt <= 1)
 			continue;
 
 		/* If we've found our handle, we can stop searching. */
