@@ -1040,7 +1040,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>CLogTruncationLock</></entry>
-         <entry>Waiting to truncate the write-ahead log or waiting for write-ahead log truncation to finish.</entry>
+         <entry>Waiting to execute <function>txid_status</function> or update
+         the oldest transaction id available to it.</entry>
         </row>
         <row>
          <entry><literal>clog</></entry>
