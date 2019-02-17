@@ -109,11 +109,6 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		}
 	}
 
-	if (attrList == NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("view must have at least one column")));
-
 	/*
 	 * Look up, check permissions on, and lock the creation namespace; also
 	 * check for a preexisting view with the same name.  This will also set
