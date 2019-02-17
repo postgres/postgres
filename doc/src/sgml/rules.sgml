@@ -2434,30 +2434,6 @@ Nestloop
     in a command.
 </para>
 
-<!-- What's happening with this?  If it doesn't come back, remove this section. -->
-<!--
-<para>
-    Another situation is cases on <command>UPDATE</command> where it depends on the
-    change of an attribute if an action should be performed or
-    not. The only way to
-    create a rule as in the shoelace_log example is to do it with
-    a rule qualification. That results in an extra query that is
-    performed always, even if the attribute of interest cannot
-    change at all because it does not appear in the target list
-    of the initial query. When this is enabled again, it will be
-    one more advantage of rules over triggers. Optimization of
-    a trigger must fail by definition in this case, because the
-    fact that its actions will only be done when a specific attribute
-    is updated is hidden in its functionality. The definition of
-    a trigger only allows to specify it on row level, so whenever a
-    row is touched, the trigger must be called to make its
-    decision. The rule system will know it by looking up the
-    target list and will suppress the additional query completely
-    if the attribute isn't touched. So the rule, qualified or not,
-    will only do its scans if there ever could be something to do.
-</para>
--->
-
 <para>
     The summary is, rules will only be significantly slower than
     triggers if their actions result in large and badly qualified
