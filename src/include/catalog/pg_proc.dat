@@ -10433,7 +10433,7 @@
 
 # pg_config
 { oid => '3400', descr => 'pg_config binary as a function',
-  proname => 'pg_config', prorows => '23', proretset => 't', proparallel => 'r',
+  proname => 'pg_config', provolatile => 's', prorows => '23', proretset => 't', proparallel => 'r',
   prorettype => 'record', proargtypes => '', proallargtypes => '{text,text}',
   proargmodes => '{o,o}', proargnames => '{name,setting}',
   prosrc => 'pg_config' },
