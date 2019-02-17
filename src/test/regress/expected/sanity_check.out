@@ -189,6 +189,7 @@ timestamp_tbl|f
 timestamptz_tbl|f
 timetz_tbl|f
 varchar_tbl|f
+view_base_table|t
 -- restore normal output mode
 \a\t
 --
