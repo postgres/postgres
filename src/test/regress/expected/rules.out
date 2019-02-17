@@ -1289,6 +1289,14 @@ iexit| SELECT ih.name,
    FROM ihighway ih,
     ramp r
   WHERE (ih.thepath ## r.thepath);
+key_dependent_view| SELECT view_base_table.key,
+    view_base_table.data
+   FROM view_base_table
+  GROUP BY view_base_table.key;
+key_dependent_view_no_cols| SELECT
+   FROM view_base_table
+  GROUP BY view_base_table.key
+ HAVING (length((view_base_table.data)::text) > 0);
 mvtest_tv| SELECT mvtest_t.type,
     sum(mvtest_t.amt) AS totamt
    FROM mvtest_t
