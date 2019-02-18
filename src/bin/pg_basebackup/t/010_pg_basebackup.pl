@@ -502,7 +502,7 @@ my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
 system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 open $file, '+<', "$pgdata/$file_corrupt1";
 seek($file, $pageheader_size, 0);
-syswrite($file, '\0\0\0\0\0\0\0\0\0');
+syswrite($file, "\0\0\0\0\0\0\0\0\0");
 close $file;
 system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
 
@@ -521,7 +521,7 @@ for my $i (1 .. 5)
 {
 	my $offset = $pageheader_size + $i * $block_size;
 	seek($file, $offset, 0);
-	syswrite($file, '\0\0\0\0\0\0\0\0\0');
+	syswrite($file, "\0\0\0\0\0\0\0\0\0");
 }
 close $file;
 system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
@@ -537,8 +537,8 @@ rmtree("$tempdir/backup_corrupt2");
 # induce corruption in a second file
 system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
 open $file, '+<', "$pgdata/$file_corrupt2";
-seek($file, 4000, 0);
-syswrite($file, '\0\0\0\0\0\0\0\0\0');
+seek($file, $pageheader_size, 0);
+syswrite($file, "\0\0\0\0\0\0\0\0\0");
 close $file;
 system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
 
