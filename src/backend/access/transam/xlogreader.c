@@ -536,7 +536,7 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 
 	/* check whether we have all the requested data already */
 	if (targetSegNo == state->readSegNo && targetPageOff == state->readOff &&
-		reqLen < state->readLen)
+		reqLen <= state->readLen)
 		return state->readLen;
 
 	/*
