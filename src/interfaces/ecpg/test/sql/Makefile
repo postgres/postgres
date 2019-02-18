@@ -7,6 +7,7 @@ TESTS = array array.c \
 	binary binary.c \
 	code100 code100.c \
         copystdout copystdout.c \
+	createtableas createtableas.c \
 	define define.c \
         desc desc.c \
         sqlda sqlda.c \
