@@ -134,6 +134,10 @@ char		g_comment_end[10];
 
 static const CatalogId nilCatalogId = {0, 0};
 
+/* override for standard extra_float_digits setting */
+static bool have_extra_float_digits = false;
+static int extra_float_digits;
+
 /*
  * Macro for producing quoted, schema-qualified name of a dumpable object.
  */
@@ -357,6 +361,7 @@ main(int argc, char **argv)
 		{"disable-triggers", no_argument, &dopt.disable_triggers, 1},
 		{"enable-row-security", no_argument, &dopt.enable_row_security, 1},
 		{"exclude-table-data", required_argument, NULL, 4},
+		{"extra-float-digits", required_argument, NULL, 8},
 		{"if-exists", no_argument, &dopt.if_exists, 1},
 		{"inserts", no_argument, &dopt.dump_inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
@@ -555,6 +560,16 @@ main(int argc, char **argv)
 
 			case 7:				/* no-sync */
 				dosync = false;
+				break;
+
+			case 8:
+				have_extra_float_digits = true;
+				extra_float_digits = atoi(optarg);
+				if (extra_float_digits < -15 || extra_float_digits > 3)
+				{
+					write_msg(NULL, "extra_float_digits must be in range -15..3\n");
+					exit_nicely(1);
+				}
 				break;
 
 			default:
@@ -965,6 +980,7 @@ help(const char *progname)
 	printf(_("  --enable-row-security        enable row security (dump only content user has\n"
 			 "                               access to)\n"));
 	printf(_("  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"));
+	printf(_("  --extra-float-digits=NUM     override default setting for extra_float_digits\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
@@ -1059,10 +1075,19 @@ setup_connection(Archive *AH, const char *dumpencoding,
 		ExecuteSqlStatement(AH, "SET INTERVALSTYLE = POSTGRES");
 
 	/*
-	 * Set extra_float_digits so that we can dump float data exactly (given
-	 * correctly implemented float I/O code, anyway)
+	 * Use an explicitly specified extra_float_digits if it has been
+	 * provided. Otherwise, set extra_float_digits so that we can dump float
+	 * data exactly (given correctly implemented float I/O code, anyway).
 	 */
-	if (AH->remoteVersion >= 90000)
+	if (have_extra_float_digits)
+	{
+		PQExpBuffer q = createPQExpBuffer();
+		appendPQExpBuffer(q, "SET extra_float_digits TO %d",
+						  extra_float_digits);
+		ExecuteSqlStatement(AH, q->data);
+		destroyPQExpBuffer(q);
+	}
+	else if (AH->remoteVersion >= 90000)
 		ExecuteSqlStatement(AH, "SET extra_float_digits TO 3");
 	else
 		ExecuteSqlStatement(AH, "SET extra_float_digits TO 2");
