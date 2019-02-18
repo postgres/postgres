@@ -1,0 +1,41 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+
+int
+main(void)
+{
+	EXEC SQL BEGIN DECLARE SECTION;
+		int id;
+	EXEC SQL END DECLARE SECTION;
+
+	ECPGdebug(1, stderr);
+	EXEC SQL connect to REGRESSDB1;
+
+	EXEC SQL SET AUTOCOMMIT TO ON;
+	EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+	EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+	EXEC SQL CREATE TABLE cta_test (id int);
+	EXEC SQL INSERT INTO cta_test values (100);
+
+	EXEC SQL CREATE TABLE IF NOT EXISTS cta_test1 AS SELECT * FROM cta_test;
+	EXEC SQL SELECT id INTO :id FROM cta_test1;
+	printf("ID = %d\n", id);
+
+	EXEC SQL CREATE TABLE cta_test2 AS SELECT * FROM cta_test WITH NO DATA;
+	EXEC SQL SELECT count(id) INTO :id FROM cta_test2;
+	printf("ID = %d\n", id);
+
+	EXEC SQL DROP TABLE cta_test;
+	EXEC SQL DROP TABLE cta_test1;
+	EXEC SQL DROP TABLE cta_test2;
+	EXEC SQL DISCONNECT all;
+
+	return 0;
+}
