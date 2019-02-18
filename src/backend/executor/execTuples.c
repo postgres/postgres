@@ -1604,7 +1604,6 @@ ExecInitResultTypeTL(PlanState *planstate)
 {
 	TupleDesc	tupDesc = ExecTypeFromTL(planstate->plan->targetlist);
 
-	tupDesc = ExecTypeFromTL(planstate->plan->targetlist);
 	planstate->ps_ResultTupleDesc = tupDesc;
 }
 
