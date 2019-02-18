@@ -35,6 +35,7 @@ test: sql/binary
 test: sql/bytea
 test: sql/code100
 test: sql/copystdout
+test: sql/createtableas
 test: sql/define
 test: sql/desc
 test: sql/sqlda
