@@ -40,6 +40,13 @@ struct ECPGgeneric_varchar
 	char		arr[FLEXIBLE_ARRAY_MEMBER];
 };
 
+/* A generic bytea type. */
+struct ECPGgeneric_bytea
+{
+	int			len;
+	char		arr[FLEXIBLE_ARRAY_MEMBER];
+};
+
 /*
  * type information cache
  */
@@ -75,6 +82,8 @@ struct statement
 #endif
 	int			nparams;
 	char	  **paramvalues;
+	int		   *paramlengths;
+	int		   *paramformats;
 	PGresult   *results;
 };
 
@@ -133,6 +142,8 @@ struct descriptor_item
 	int			precision;
 	int			scale;
 	int			type;
+	bool		is_binary;
+	int			data_len;
 	struct descriptor_item *next;
 };
 
@@ -226,6 +237,9 @@ struct sqlda_compat *ecpg_build_compat_sqlda(int, PGresult *, int, enum COMPAT_M
 void		ecpg_set_compat_sqlda(int, struct sqlda_compat **, const PGresult *, int, enum COMPAT_MODE);
 struct sqlda_struct *ecpg_build_native_sqlda(int, PGresult *, int, enum COMPAT_MODE);
 void		ecpg_set_native_sqlda(int, struct sqlda_struct **, const PGresult *, int, enum COMPAT_MODE);
+unsigned	ecpg_hex_dec_len(unsigned srclen);
+unsigned	ecpg_hex_enc_len(unsigned srclen);
+unsigned	ecpg_hex_encode(const char *src, unsigned len, char *dst);
 
 /* SQLSTATE values generated or processed by ecpglib (intentionally
  * not exported -- users should refer to the codes directly) */

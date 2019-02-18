@@ -47,6 +47,7 @@ static char	pacounter_buffer[sizeof(int) * CHAR_BIT * 10 / 3]; /* a rough guess 
 static struct this_type actual_type[STRUCT_DEPTH];
 static char *actual_startline[STRUCT_DEPTH];
 static int	varchar_counter = 1;
+static int	bytea_counter = 1;
 
 /* temporarily store struct members while creating the data structure */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
@@ -563,6 +564,7 @@ add_typedef(char *name, char *dimension, char *length, enum ECPGttype type_enum,
 		ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
 
 		if (type_enum != ECPGt_varchar &&
+			type_enum != ECPGt_bytea &&
 			type_enum != ECPGt_char &&
 			type_enum != ECPGt_unsigned_char &&
 			type_enum != ECPGt_string &&

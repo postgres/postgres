@@ -63,7 +63,8 @@ enum ECPGttype
 	ECPGt_EORT,					/* End of result types. */
 	ECPGt_NO_INDICATOR,			/* no indicator */
 	ECPGt_string,				/* trimmed (char *) type */
-	ECPGt_sqlda					/* C struct descriptor */
+	ECPGt_sqlda,				/* C struct descriptor */
+	ECPGt_bytea
 };
 
  /* descriptor items */
@@ -88,7 +89,7 @@ enum ECPGdtype
 	ECPGd_cardinality
 };
 
-#define IS_SIMPLE_TYPE(type) (((type) >= ECPGt_char && (type) <= ECPGt_interval) || ((type) == ECPGt_string))
+#define IS_SIMPLE_TYPE(type) (((type) >= ECPGt_char && (type) <= ECPGt_interval) || ((type) == ECPGt_string) || ((type) == ECPGt_bytea))
 
 /* we also have to handle different statement types */
 enum ECPG_statement_type

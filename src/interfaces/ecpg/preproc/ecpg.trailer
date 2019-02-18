@@ -580,6 +580,14 @@ var_type:	simple_type
 				$$.type_index = mm_strdup("-1");
 				$$.type_sizeof = NULL;
 			}
+			else if (strcmp($1, "bytea") == 0)
+			{
+				$$.type_enum = ECPGt_bytea;
+				$$.type_str = EMPTY;
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
+				$$.type_sizeof = NULL;
+			}
 			else if (strcmp($1, "float") == 0)
 			{
 				$$.type_enum = ECPGt_float;
@@ -657,7 +665,7 @@ var_type:	simple_type
 				/* this is for typedef'ed types */
 				struct typedefs *this = get_typedef($1);
 
-				$$.type_str = (this->type->type_enum == ECPGt_varchar) ? EMPTY : mm_strdup(this->name);
+				$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? EMPTY : mm_strdup(this->name);
 				$$.type_enum = this->type->type_enum;
 				$$.type_dimension = this->type->type_dimension;
 				$$.type_index = this->type->type_index;
@@ -868,7 +876,7 @@ variable_list: variable
 			{ $$ = $1; }
 		| variable_list ',' variable
 		{
-			if (actual_type[struct_level].type_enum == ECPGt_varchar)
+			if (actual_type[struct_level].type_enum == ECPGt_varchar || actual_type[struct_level].type_enum == ECPGt_bytea)
 				$$ = cat_str(3, $1, mm_strdup(";"), $3);
 			else
 				$$ = cat_str(3, $1, mm_strdup(","), $3);
@@ -882,9 +890,10 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 			char *length = $3.index2;		/* length of string */
 			char *dim_str;
 			char *vcn;
+			int *varlen_type_counter;
+			char *struct_name;
 
 			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1), false);
-
 			switch (actual_type[struct_level].type_enum)
 			{
 				case ECPGt_struct:
@@ -898,10 +907,21 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 					break;
 
 				case ECPGt_varchar:
-					if (atoi(dimension) < 0)
-						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter);
+				case ECPGt_bytea:
+					if (actual_type[struct_level].type_enum == ECPGt_varchar)
+					{
+						varlen_type_counter = &varchar_counter;
+						struct_name = " struct varchar_";
+					}
 					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter), dimension);
+					{
+						varlen_type_counter = &bytea_counter;
+						struct_name = " struct bytea_";
+					}
+					if (atoi(dimension) < 0)
+						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length, *varlen_type_counter);
+					else
+						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, *varlen_type_counter), dimension);
 
 					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
 							dim_str=mm_strdup("");
@@ -913,12 +933,12 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 
 					/* make sure varchar struct name is unique by adding a unique counter to its definition */
 					vcn = (char *) mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-					sprintf(vcn, "%d", varchar_counter);
+					sprintf(vcn, "%d", *varlen_type_counter);
 					if (strcmp(dimension, "0") == 0)
-						$$ = cat_str(7, make2_str(mm_strdup(" struct varchar_"), vcn), mm_strdup(" { int len; char arr["), mm_strdup(length), mm_strdup("]; } *"), mm_strdup($2), $4, $5);
+						$$ = cat_str(7, make2_str(mm_strdup(struct_name), vcn), mm_strdup(" { int len; char arr["), mm_strdup(length), mm_strdup("]; } *"), mm_strdup($2), $4, $5);
 					else
-						$$ = cat_str(8, make2_str(mm_strdup(" struct varchar_"), vcn), mm_strdup(" { int len; char arr["), mm_strdup(length), mm_strdup("]; } "), mm_strdup($2), dim_str, $4, $5);
-					varchar_counter++;
+						$$ = cat_str(8, make2_str(mm_strdup(struct_name), vcn), mm_strdup(" { int len; char arr["), mm_strdup(length), mm_strdup("]; } "), mm_strdup($2), dim_str, $4, $5);
+					(*varlen_type_counter)++;
 					break;
 
 				case ECPGt_char:
@@ -1384,6 +1404,7 @@ ECPGVar: SQL_VAR
 						break;
 
 					case ECPGt_varchar:
+					case ECPGt_bytea:
 						if (atoi(dimension) == -1)
 							type = ECPGmake_simple_type($5.type_enum, length, 0);
 						else

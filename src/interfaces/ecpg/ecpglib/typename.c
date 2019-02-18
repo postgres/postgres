@@ -48,6 +48,8 @@ ecpg_type_name(enum ECPGttype typ)
 			return "bool";
 		case ECPGt_varchar:
 			return "varchar";
+		case ECPGt_bytea:
+			return "bytea";
 		case ECPGt_char_variable:
 			return "char";
 		case ECPGt_decimal:

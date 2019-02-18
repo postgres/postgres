@@ -102,7 +102,7 @@ ECPGmake_simple_type(enum ECPGttype type, char *size, int counter)
 	ne->size = size;
 	ne->u.element = NULL;
 	ne->struct_sizeof = NULL;
-	ne->counter = counter;		/* only needed for varchar */
+	ne->counter = counter;		/* only needed for varchar and bytea */
 
 	return ne;
 }
@@ -175,6 +175,8 @@ get_type(enum ECPGttype type)
 			break;
 		case ECPGt_varchar:
 			return "ECPGt_varchar";
+		case ECPGt_bytea:
+			return "ECPGt_bytea";
 		case ECPGt_NO_INDICATOR:	/* no indicator */
 			return "ECPGt_NO_INDICATOR";
 			break;
@@ -424,6 +426,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 	{
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
+		char	   *struct_name;
 
 		switch (type)
 		{
@@ -433,6 +436,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 */
 
 			case ECPGt_varchar:
+			case ECPGt_bytea:
 
 				/*
 				 * we have to use the pointer except for arrays with given
@@ -449,10 +453,15 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * If we created a varchar structure automatically, counter is
 				 * greater than 0.
 				 */
-				if (counter)
-					sprintf(offset, "sizeof(struct varchar_%d)", counter);
+				if (type == ECPGt_varchar)
+					struct_name = "struct varchar";
 				else
-					sprintf(offset, "sizeof(struct varchar)");
+					struct_name = "struct bytea";
+
+				if (counter)
+					sprintf(offset, "sizeof(%s_%d)", struct_name, counter);
+				else
+					sprintf(offset, "sizeof(%s)", struct_name);
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:

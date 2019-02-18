@@ -587,6 +587,28 @@ ECPGset_desc_header(int lineno, const char *desc_name, int count)
 	return true;
 }
 
+static void
+set_desc_attr(struct descriptor_item *desc_item, struct variable *var,
+				char *tobeinserted)
+{
+	if (var->type != ECPGt_bytea)
+		desc_item->is_binary = false;
+
+	else
+	{
+		struct ECPGgeneric_varchar *variable =
+		(struct ECPGgeneric_varchar *) (var->value);
+
+		desc_item->is_binary = true;
+		desc_item->data_len = variable->len;
+	}
+
+	ecpg_free(desc_item->data); /* free() takes care of a
+								 * potential NULL value */
+	desc_item->data = (char *) tobeinserted;
+}
+
+
 bool
 ECPGset_desc(int lineno, const char *desc_name, int index,...)
 {
@@ -666,9 +688,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 						return false;
 					}
 
-					ecpg_free(desc_item->data); /* free() takes care of a
-												 * potential NULL value */
-					desc_item->data = (char *) tobeinserted;
+					set_desc_attr(desc_item, var, tobeinserted);
 					tobeinserted = NULL;
 					break;
 				}

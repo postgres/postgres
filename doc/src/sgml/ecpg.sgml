@@ -917,7 +917,7 @@ do
 
       <row>
        <entry><type>character(<replaceable>n</replaceable>)</type>, <type>varchar(<replaceable>n</replaceable>)</type>, <type>text</type></entry>
-       <entry><type>char[<replaceable>n</replaceable>+1]</type>, <type>VARCHAR[<replaceable>n</replaceable>+1]</type><footnote><para>declared in <filename>ecpglib.h</filename></para></footnote></entry>
+       <entry><type>char[<replaceable>n</replaceable>+1]</type>, <type>VARCHAR[<replaceable>n</replaceable>+1]</type></entry>
       </row>
 
       <row>
@@ -947,7 +947,7 @@ do
 
       <row>
        <entry><type>bytea</type></entry>
-       <entry><type>char *</type></entry>
+       <entry><type>char *</type>, <type>bytea[<replaceable>n</replaceable>]</type></entry>
       </row>
      </tbody>
     </tgroup>
@@ -1203,6 +1203,36 @@ EXEC SQL END DECLARE SECTION;
 }
 </programlisting>
      </para>
+    </sect4>
+
+    <sect4>
+     <title id="ecpg-type-bytea">bytea</title>
+
+     <para>
+      The handling of the <type>bytea</type> type is also similar to
+      the <type>VARCHAR</type>. The definition on an array of type
+      <type>bytea</type> is converted into a named struct for every
+      variable. A declaration like:
+<programlisting>
+bytea var[180];
+</programlisting>
+     is converted into:
+<programlisting>
+struct bytea_var { int len; char arr[180]; } var;
+</programlisting>
+      The member <structfield>arr</structfield> hosts binary format
+      data. It also can handle even <literal>'\0'</literal> as part of
+      data unlike <type>VARCHAR</type>.
+      The data is converted from/to hex format and sent/received by
+      ecpglib.
+     </para>
+
+     <note>
+      <para>
+       <type>bytea</type> variable can be used only when
+       <xref linkend="guc-bytea-output"/> is set to <literal>hex</literal>.
+      </para>
+     </note>
     </sect4>
    </sect3>
 

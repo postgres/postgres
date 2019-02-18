@@ -1,0 +1,109 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+
+exec sql include ../regression;
+exec sql whenever sqlerror sqlprint;
+
+static void
+dump_binary(char *buf, int len, int ind)
+{
+	int i;
+
+	printf("len=%d, ind=%d, data=0x", len, ind);
+	for (i = 0; i < len; ++i)
+		printf("%02x", 0xff & buf[i]);
+	printf("\n");
+}
+
+#define DATA_SIZE 0x200
+#define LACK_SIZE 13
+#
+int
+main(void)
+{
+exec sql begin declare section;
+	bytea send_buf[2][DATA_SIZE];
+	bytea recv_buf[2][DATA_SIZE];
+	bytea recv_vlen_buf[][DATA_SIZE];
+	bytea recv_short_buf[DATA_SIZE - LACK_SIZE];
+	int ind[2];
+exec sql end declare section;
+	int i, j, c;
+
+#define init() { \
+	for (i = 0; i < 2; ++i) \
+	{ \
+		memset(recv_buf[i].arr, 0x0, sizeof(recv_buf[i].arr)); \
+		recv_buf[i].len = 0; \
+		ind[i] = 0; \
+	} \
+	recv_vlen_buf = NULL, \
+	memset(recv_short_buf.arr, 0x0, sizeof(recv_short_buf.arr)); \
+} \
+while (0)
+	
+
+	ECPGdebug(1, stderr);
+
+	for (i = 0; i < 2; ++i)
+	{
+		for (j = 0, c = 0xff; (c == -1 ? c = 0xff : 1), j < DATA_SIZE; ++j, --c)
+			send_buf[i].arr[j] = c;
+
+		send_buf[i].len = DATA_SIZE;
+	}
+
+    exec sql connect to REGRESSDB1;
+
+	exec sql create table if not exists test (data1 bytea, data2 bytea);
+
+	exec sql prepare ins_stmt from "insert into test values(?,?)";
+	exec sql prepare sel_stmt from "select data1,data2 from test";
+	exec sql allocate descriptor idesc;
+	exec sql allocate descriptor odesc;
+
+	/* Test for static sql statement with normal host variable, indicator */
+	init();
+	exec sql truncate test;
+	exec sql insert into test values(:send_buf[0], :send_buf[1]);
+	exec sql select data1,data2 into :recv_buf[0]:ind[0], :recv_short_buf:ind[1] from test;
+	dump_binary(recv_buf[0].arr, recv_buf[0].len, ind[0]);
+	dump_binary(recv_short_buf.arr, recv_short_buf.len, ind[1]);
+
+	/* Test for variable length array */
+	init();
+	exec sql truncate test;
+	exec sql insert into test values(:send_buf[0], :send_buf[1]);
+	exec sql insert into test values(:send_buf[0], :send_buf[1]);
+	exec sql select data1 into :recv_vlen_buf from test;
+	dump_binary(recv_vlen_buf[0].arr, recv_vlen_buf[0].len, 0);
+	dump_binary(recv_vlen_buf[1].arr, recv_vlen_buf[1].len, 0);
+
+	/* Test for dynamic sql statement with normal host variable, indicator */
+	init();
+	exec sql truncate test;
+	exec sql execute ins_stmt using :send_buf[0], :send_buf[1];
+	exec sql execute sel_stmt into  :recv_buf[0]:ind[0], :recv_short_buf:ind[1];
+	dump_binary(recv_buf[0].arr, recv_buf[0].len, ind[0]);
+	dump_binary(recv_short_buf.arr, recv_short_buf.len, ind[1]);
+
+	/* Test for dynamic sql statement with sql descriptor */
+	init();
+	exec sql truncate test;
+	exec sql set descriptor idesc value 1 data = :send_buf[0];
+	exec sql set descriptor idesc value 2 data = :send_buf[1];
+	exec sql execute ins_stmt using sql descriptor idesc;
+	exec sql execute sel_stmt into  sql descriptor odesc;
+	exec sql get descriptor odesc value 1 :recv_buf[0] = data, :ind[0] = indicator;
+	exec sql get descriptor odesc value 2 :recv_short_buf = data, :ind[1] = indicator;
+	dump_binary(recv_buf[0].arr, recv_buf[0].len, ind[0]);
+	dump_binary(recv_short_buf.arr, recv_short_buf.len, ind[1]);
+
+	exec sql drop table test;
+	exec sql commit;
+	exec sql disconnect;
+
+	return 0;
+}

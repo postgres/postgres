@@ -355,6 +355,9 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 			*(((struct ECPGgeneric_varchar *) ptr)->arr) = 0x00;
 			((struct ECPGgeneric_varchar *) ptr)->len = 0;
 			break;
+		case ECPGt_bytea:
+			((struct ECPGgeneric_bytea *) ptr)->len = 0;
+			break;
 		case ECPGt_decimal:
 			memset((char *) ptr, 0, sizeof(decimal));
 			((decimal *) ptr)->sign = NUMERIC_NULL;
@@ -426,6 +429,10 @@ ECPGis_noind_null(enum ECPGttype type, const void *ptr)
 			break;
 		case ECPGt_varchar:
 			if (*(((const struct ECPGgeneric_varchar *) ptr)->arr) == 0x00)
+				return true;
+			break;
+		case ECPGt_bytea:
+			if (((struct ECPGgeneric_bytea *) ptr)->len == 0)
 				return true;
 			break;
 		case ECPGt_decimal:
