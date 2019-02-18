@@ -45,7 +45,7 @@ sub check_relation_corruption
 	# Time to create some corruption
 	open my $file, '+<', "$pgdata/$file_corrupted";
 	seek($file, $pageheader_size, 0);
-	syswrite($file, '\0\0\0\0\0\0\0\0\0');
+	syswrite($file, "\0\0\0\0\0\0\0\0\0");
 	close $file;
 
 	# Checksum checks on single relfilenode fail
