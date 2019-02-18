@@ -74,7 +74,7 @@
  *		OIDs 1-9999 are reserved for manual assignment (see .dat files in
  *		src/include/catalog/), with 9000-9999 tentatively reserved for forks.
  *
- *		OIDs 10000-12000 are reserved for assignment by genbki.pl, when the
+ *		OIDs 10000-11999 are reserved for assignment by genbki.pl, when the
  *		.dat files in src/include/catalog/ do not specify oids.
  *
  *		OIDS 12000-16383 are reserved for assignment during initdb
