@@ -1807,7 +1807,7 @@ run_schedule(const char *schedule, test_function tfunc)
 				log_child_failure(statuses[i]);
 
 			INSTR_TIME_SUBTRACT(stoptimes[i], starttimes[i]);
-			status(_(" (%.0f ms)"), INSTR_TIME_GET_MILLISEC(stoptimes[i]));
+			status(_(" %8.0f ms"), INSTR_TIME_GET_MILLISEC(stoptimes[i]));
 
 			status_end();
 		}
@@ -1887,7 +1887,7 @@ run_single_test(const char *test, test_function tfunc)
 		log_child_failure(exit_status);
 
 	INSTR_TIME_SUBTRACT(stoptime, starttime);
-	status(_(" (%.0f ms)"), INSTR_TIME_GET_MILLISEC(stoptime));
+	status(_(" %8.0f ms"), INSTR_TIME_GET_MILLISEC(stoptime));
 
 	status_end();
 }
