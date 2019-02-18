@@ -1072,8 +1072,9 @@ print_param_value(char *value, int len, int is_binary, int lineno, int nth)
 		value_s = value;
 	else
 	{
-		value_s = ecpg_alloc(ecpg_hex_enc_len(len), lineno);
+		value_s = ecpg_alloc(ecpg_hex_enc_len(len)+1, lineno);
 		ecpg_hex_encode(value, len, value_s);
+		value_s[ecpg_hex_enc_len(len)] = '\0';
 		malloced = true;
 	}
 
