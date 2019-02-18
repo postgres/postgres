@@ -56,19 +56,9 @@
  */
 
 #ifdef CACHEDEBUG
-#define CACHE1_elog(a,b)				elog(a,b)
-#define CACHE2_elog(a,b,c)				elog(a,b,c)
-#define CACHE3_elog(a,b,c,d)			elog(a,b,c,d)
-#define CACHE4_elog(a,b,c,d,e)			elog(a,b,c,d,e)
-#define CACHE5_elog(a,b,c,d,e,f)		elog(a,b,c,d,e,f)
-#define CACHE6_elog(a,b,c,d,e,f,g)		elog(a,b,c,d,e,f,g)
+#define CACHE_elog(...)				elog(__VA_ARGS__)
 #else
-#define CACHE1_elog(a,b)
-#define CACHE2_elog(a,b,c)
-#define CACHE3_elog(a,b,c,d)
-#define CACHE4_elog(a,b,c,d,e)
-#define CACHE5_elog(a,b,c,d,e,f)
-#define CACHE6_elog(a,b,c,d,e,f,g)
+#define CACHE_elog(...)
 #endif
 
 /* Cache management header --- pointer is NULL until created */
@@ -280,10 +270,8 @@ CatalogCacheComputeHashValue(CatCache *cache, int nkeys,
 	uint32		oneHash;
 	CCHashFN   *cc_hashfunc = cache->cc_hashfunc;
 
-	CACHE4_elog(DEBUG2, "CatalogCacheComputeHashValue %s %d %p",
-				cache->cc_relname,
-				nkeys,
-				cache);
+	CACHE_elog(DEBUG2, "CatalogCacheComputeHashValue %s %d %p",
+			   cache->cc_relname, nkeys, cache);
 
 	switch (nkeys)
 	{
@@ -562,7 +550,7 @@ CatCacheInvalidate(CatCache *cache, uint32 hashValue)
 	Index		hashIndex;
 	dlist_mutable_iter iter;
 
-	CACHE1_elog(DEBUG2, "CatCacheInvalidate: called");
+	CACHE_elog(DEBUG2, "CatCacheInvalidate: called");
 
 	/*
 	 * We don't bother to check whether the cache has finished initialization
@@ -602,7 +590,7 @@ CatCacheInvalidate(CatCache *cache, uint32 hashValue)
 			}
 			else
 				CatCacheRemoveCTup(cache, ct);
-			CACHE1_elog(DEBUG2, "CatCacheInvalidate: invalidated");
+			CACHE_elog(DEBUG2, "CatCacheInvalidate: invalidated");
 #ifdef CATCACHE_STATS
 			cache->cc_invals++;
 #endif
@@ -698,7 +686,7 @@ ResetCatalogCaches(void)
 {
 	slist_iter	iter;
 
-	CACHE1_elog(DEBUG2, "ResetCatalogCaches called");
+	CACHE_elog(DEBUG2, "ResetCatalogCaches called");
 
 	slist_foreach(iter, &CacheHdr->ch_caches)
 	{
@@ -707,7 +695,7 @@ ResetCatalogCaches(void)
 		ResetCatalogCache(cache);
 	}
 
-	CACHE1_elog(DEBUG2, "end of ResetCatalogCaches call");
+	CACHE_elog(DEBUG2, "end of ResetCatalogCaches call");
 }
 
 /*
@@ -728,7 +716,7 @@ CatalogCacheFlushCatalog(Oid catId)
 {
 	slist_iter	iter;
 
-	CACHE2_elog(DEBUG2, "CatalogCacheFlushCatalog called for %u", catId);
+	CACHE_elog(DEBUG2, "CatalogCacheFlushCatalog called for %u", catId);
 
 	slist_foreach(iter, &CacheHdr->ch_caches)
 	{
@@ -745,7 +733,7 @@ CatalogCacheFlushCatalog(Oid catId)
 		}
 	}
 
-	CACHE1_elog(DEBUG2, "end of CatalogCacheFlushCatalog call");
+	CACHE_elog(DEBUG2, "end of CatalogCacheFlushCatalog call");
 }
 
 /*
@@ -966,8 +954,8 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 	table_close(relation, AccessShareLock);
 
-	CACHE3_elog(DEBUG2, "CatalogCacheInitializeCache: %s, %d keys",
-				cache->cc_relname, cache->cc_nkeys);
+	CACHE_elog(DEBUG2, "CatalogCacheInitializeCache: %s, %d keys",
+			   cache->cc_relname, cache->cc_nkeys);
 
 	/*
 	 * initialize cache's key information
@@ -1017,10 +1005,8 @@ CatalogCacheInitializeCache(CatCache *cache)
 		/* If a catcache key requires a collation, it must be C collation */
 		cache->cc_skey[i].sk_collation = C_COLLATION_OID;
 
-		CACHE4_elog(DEBUG2, "CatalogCacheInitializeCache %s %d %p",
-					cache->cc_relname,
-					i,
-					cache);
+		CACHE_elog(DEBUG2, "CatalogCacheInitializeCache %s %d %p",
+				   cache->cc_relname, i, cache);
 	}
 
 	/*
@@ -1284,8 +1270,8 @@ SearchCatCacheInternal(CatCache *cache,
 			ct->refcount++;
 			ResourceOwnerRememberCatCacheRef(CurrentResourceOwner, &ct->tuple);
 
-			CACHE3_elog(DEBUG2, "SearchCatCache(%s): found in bucket %d",
-						cache->cc_relname, hashIndex);
+			CACHE_elog(DEBUG2, "SearchCatCache(%s): found in bucket %d",
+					   cache->cc_relname, hashIndex);
 
 #ifdef CATCACHE_STATS
 			cache->cc_hits++;
@@ -1295,8 +1281,8 @@ SearchCatCacheInternal(CatCache *cache,
 		}
 		else
 		{
-			CACHE3_elog(DEBUG2, "SearchCatCache(%s): found neg entry in bucket %d",
-						cache->cc_relname, hashIndex);
+			CACHE_elog(DEBUG2, "SearchCatCache(%s): found neg entry in bucket %d",
+					   cache->cc_relname, hashIndex);
 
 #ifdef CATCACHE_STATS
 			cache->cc_neg_hits++;
@@ -1410,10 +1396,10 @@ SearchCatCacheMiss(CatCache *cache,
 									 hashValue, hashIndex,
 									 true);
 
-		CACHE4_elog(DEBUG2, "SearchCatCache(%s): Contains %d/%d tuples",
-					cache->cc_relname, cache->cc_ntup, CacheHdr->ch_ntup);
-		CACHE3_elog(DEBUG2, "SearchCatCache(%s): put neg entry in bucket %d",
-					cache->cc_relname, hashIndex);
+		CACHE_elog(DEBUG2, "SearchCatCache(%s): Contains %d/%d tuples",
+				   cache->cc_relname, cache->cc_ntup, CacheHdr->ch_ntup);
+		CACHE_elog(DEBUG2, "SearchCatCache(%s): put neg entry in bucket %d",
+				   cache->cc_relname, hashIndex);
 
 		/*
 		 * We are not returning the negative entry to the caller, so leave its
@@ -1423,10 +1409,10 @@ SearchCatCacheMiss(CatCache *cache,
 		return NULL;
 	}
 
-	CACHE4_elog(DEBUG2, "SearchCatCache(%s): Contains %d/%d tuples",
-				cache->cc_relname, cache->cc_ntup, CacheHdr->ch_ntup);
-	CACHE3_elog(DEBUG2, "SearchCatCache(%s): put in bucket %d",
-				cache->cc_relname, hashIndex);
+	CACHE_elog(DEBUG2, "SearchCatCache(%s): Contains %d/%d tuples",
+			   cache->cc_relname, cache->cc_ntup, CacheHdr->ch_ntup);
+	CACHE_elog(DEBUG2, "SearchCatCache(%s): put in bucket %d",
+			   cache->cc_relname, hashIndex);
 
 #ifdef CATCACHE_STATS
 	cache->cc_newloads++;
@@ -1597,8 +1583,8 @@ SearchCatCacheList(CatCache *cache,
 		cl->refcount++;
 		ResourceOwnerRememberCatCacheListRef(CurrentResourceOwner, cl);
 
-		CACHE2_elog(DEBUG2, "SearchCatCacheList(%s): found list",
-					cache->cc_relname);
+		CACHE_elog(DEBUG2, "SearchCatCacheList(%s): found list",
+				   cache->cc_relname);
 
 #ifdef CATCACHE_STATS
 		cache->cc_lhits++;
@@ -1777,8 +1763,8 @@ SearchCatCacheList(CatCache *cache,
 	cl->refcount++;
 	ResourceOwnerRememberCatCacheListRef(CurrentResourceOwner, cl);
 
-	CACHE3_elog(DEBUG2, "SearchCatCacheList(%s): made list of %d members",
-				cache->cc_relname, nmembers);
+	CACHE_elog(DEBUG2, "SearchCatCacheList(%s): made list of %d members",
+			   cache->cc_relname, nmembers);
 
 	return cl;
 }
@@ -2022,7 +2008,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	slist_iter	iter;
 	Oid			reloid;
 
-	CACHE1_elog(DEBUG2, "PrepareToInvalidateCacheTuple: called");
+	CACHE_elog(DEBUG2, "PrepareToInvalidateCacheTuple: called");
 
 	/*
 	 * sanity checks
