@@ -2035,6 +2035,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * of the corresponding upperrels might not be needed for this query.
 		 */
 		root->upper_targets[UPPERREL_FINAL] = final_target;
+		root->upper_targets[UPPERREL_ORDERED] = final_target;
+		root->upper_targets[UPPERREL_DISTINCT] = sort_input_target;
 		root->upper_targets[UPPERREL_WINDOW] = sort_input_target;
 		root->upper_targets[UPPERREL_GROUP_AGG] = grouping_target;
 
