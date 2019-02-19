@@ -2,10 +2,14 @@
 /array.c
 /binary
 /binary.c
+/bytea
+/bytea.c
 /code100
 /code100.c
 /copystdout
 /copystdout.c
+/createtableas
+/createtableas.c
 /declare
 /declare.c
 /define
