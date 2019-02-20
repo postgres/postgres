@@ -3887,7 +3887,10 @@ pg_identify_object_as_address(PG_FUNCTION_ARGS)
 	pfree(identity);
 
 	/* object_names */
-	values[1] = PointerGetDatum(strlist_to_textarray(names));
+	if (names != NIL)
+		values[1] = PointerGetDatum(strlist_to_textarray(names));
+	else
+		values[1] = PointerGetDatum(construct_empty_array(TEXTOID));
 	nulls[1] = false;
 
 	/* object_args */
@@ -5209,10 +5212,12 @@ strlist_to_textarray(List *list)
 {
 	ArrayType  *arr;
 	Datum	   *datums;
+	bool	   *nulls;
 	int			j = 0;
 	ListCell   *cell;
 	MemoryContext memcxt;
 	MemoryContext oldcxt;
+	int			lb[1];
 
 	/* Work in a temp context; easier than individually pfree'ing the Datums */
 	memcxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -5221,18 +5226,26 @@ strlist_to_textarray(List *list)
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
 	datums = (Datum *) palloc(sizeof(Datum) * list_length(list));
+	nulls = palloc(sizeof(bool) * list_length(list));
 
 	foreach(cell, list)
 	{
 		char	   *name = lfirst(cell);
 
-		datums[j++] = CStringGetTextDatum(name);
+		if (name)
+		{
+			nulls[j] = false;
+			datums[j++] = CStringGetTextDatum(name);
+		}
+		else
+			nulls[j] = true;
 	}
 
 	MemoryContextSwitchTo(oldcxt);
 
-	arr = construct_array(datums, list_length(list),
-						  TEXTOID, -1, false, 'i');
+	lb[0] = 1;
+	arr = construct_md_array(datums, nulls, 1, &j,
+							 lb, TEXTOID, -1, false, 'i');
 
 	MemoryContextDelete(memcxt);
 
