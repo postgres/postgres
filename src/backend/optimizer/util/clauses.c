@@ -1409,9 +1409,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		 * the per-element expression is; so we should ignore elemexpr and
 		 * recurse only into the arg.
 		 */
-		return expression_tree_walker((Node *) ((ArrayCoerceExpr *) node)->arg,
-									  contain_nonstrict_functions_walker,
-									  context);
+		return contain_nonstrict_functions_walker((Node *) ((ArrayCoerceExpr *) node)->arg,
+												  context);
 	}
 	if (IsA(node, CaseExpr))
 		return true;
