@@ -633,6 +633,8 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 		TransactionIdAdvance(xid);
 	}
 
+	/* adjust remaining snapshot fields as needed */
+	snap->satisfies = HeapTupleSatisfiesMVCC;
 	snap->xcnt = newxcnt;
 	snap->xip = newxip;
 
