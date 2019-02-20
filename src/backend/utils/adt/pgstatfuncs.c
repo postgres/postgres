@@ -645,38 +645,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		else
 			nulls[16] = true;
 
-		if (beentry->st_ssl)
-		{
-			values[18] = BoolGetDatum(true);	/* ssl */
-			values[19] = CStringGetTextDatum(beentry->st_sslstatus->ssl_version);
-			values[20] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
-			values[21] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
-			values[22] = BoolGetDatum(beentry->st_sslstatus->ssl_compression);
-
-			if (beentry->st_sslstatus->ssl_client_dn[0])
-				values[23] = CStringGetTextDatum(beentry->st_sslstatus->ssl_client_dn);
-			else
-				nulls[23] = true;
-
-			if (beentry->st_sslstatus->ssl_client_serial[0])
-				values[24] = DirectFunctionCall3(numeric_in,
-												 CStringGetDatum(beentry->st_sslstatus->ssl_client_serial),
-												 ObjectIdGetDatum(InvalidOid),
-												 Int32GetDatum(-1));
-			else
-				nulls[24] = true;
-
-			if (beentry->st_sslstatus->ssl_issuer_dn[0])
-				values[25] = CStringGetTextDatum(beentry->st_sslstatus->ssl_issuer_dn);
-			else
-				nulls[25] = true;
-		}
-		else
-		{
-			values[18] = BoolGetDatum(false);	/* ssl */
-			nulls[19] = nulls[20] = nulls[21] = nulls[22] = nulls[23] = nulls[24] = nulls[25] = true;
-		}
-
 		/* Values only available to role member or pg_read_all_stats */
 		if (has_privs_of_role(GetUserId(), beentry->st_userid) ||
 			is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
@@ -854,6 +822,39 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			else
 				values[17] =
 					CStringGetTextDatum(pgstat_get_backend_desc(beentry->st_backendType));
+
+			/* SSL information */
+			if (beentry->st_ssl)
+			{
+				values[18] = BoolGetDatum(true);	/* ssl */
+				values[19] = CStringGetTextDatum(beentry->st_sslstatus->ssl_version);
+				values[20] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
+				values[21] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
+				values[22] = BoolGetDatum(beentry->st_sslstatus->ssl_compression);
+
+				if (beentry->st_sslstatus->ssl_client_dn[0])
+					values[23] = CStringGetTextDatum(beentry->st_sslstatus->ssl_client_dn);
+				else
+					nulls[23] = true;
+
+				if (beentry->st_sslstatus->ssl_client_serial[0])
+					values[24] = DirectFunctionCall3(numeric_in,
+													 CStringGetDatum(beentry->st_sslstatus->ssl_client_serial),
+													 ObjectIdGetDatum(InvalidOid),
+													 Int32GetDatum(-1));
+				else
+					nulls[24] = true;
+
+				if (beentry->st_sslstatus->ssl_issuer_dn[0])
+					values[25] = CStringGetTextDatum(beentry->st_sslstatus->ssl_issuer_dn);
+				else
+					nulls[25] = true;
+			}
+			else
+			{
+				values[18] = BoolGetDatum(false);	/* ssl */
+				nulls[19] = nulls[20] = nulls[21] = nulls[22] = nulls[23] = nulls[24] = nulls[25] = true;
+			}
 		}
 		else
 		{
@@ -870,6 +871,14 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[13] = true;
 			nulls[14] = true;
 			nulls[17] = true;
+			nulls[18] = true;
+			nulls[19] = true;
+			nulls[20] = true;
+			nulls[21] = true;
+			nulls[22] = true;
+			nulls[23] = true;
+			nulls[24] = true;
+			nulls[25] = true;
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
