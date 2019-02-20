@@ -616,6 +616,8 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 		TransactionIdAdvance(xid);
 	}
 
+	/* adjust remaining snapshot fields as needed */
+	snap->snapshot_type = SNAPSHOT_MVCC;
 	snap->xcnt = newxcnt;
 	snap->xip = newxip;
 

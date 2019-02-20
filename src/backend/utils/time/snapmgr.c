@@ -1509,6 +1509,8 @@ ImportSnapshot(const char *idstr)
 	src_isolevel = parseIntFromText("iso:", &filebuf, path);
 	src_readonly = parseIntFromText("ro:", &filebuf, path);
 
+	snapshot.snapshot_type = SNAPSHOT_MVCC;
+
 	snapshot.xmin = parseXidFromText("xmin:", &filebuf, path);
 	snapshot.xmax = parseXidFromText("xmax:", &filebuf, path);
 
