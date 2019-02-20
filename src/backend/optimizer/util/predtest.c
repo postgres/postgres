@@ -1352,6 +1352,27 @@ clause_is_strict_for(Node *clause, Node *subexpr)
 		return false;
 	}
 
+	/*
+	 * CoerceViaIO is strict (whether or not the I/O functions it calls are).
+	 * Likewise, ArrayCoerceExpr is strict for its array argument (regardless
+	 * of what the per-element expression is), ConvertRowtypeExpr is strict at
+	 * the row level, and CoerceToDomain is strict too.  These are worth
+	 * checking mainly because it saves us having to explain to users why some
+	 * type coercions are known strict and others aren't.
+	 */
+	if (IsA(clause, CoerceViaIO))
+		return clause_is_strict_for((Node *) ((CoerceViaIO *) clause)->arg,
+									subexpr);
+	if (IsA(clause, ArrayCoerceExpr))
+		return clause_is_strict_for((Node *) ((ArrayCoerceExpr *) clause)->arg,
+									subexpr);
+	if (IsA(clause, ConvertRowtypeExpr))
+		return clause_is_strict_for((Node *) ((ConvertRowtypeExpr *) clause)->arg,
+									subexpr);
+	if (IsA(clause, CoerceToDomain))
+		return clause_is_strict_for((Node *) ((CoerceToDomain *) clause)->arg,
+									subexpr);
+
 	return false;
 }
 
