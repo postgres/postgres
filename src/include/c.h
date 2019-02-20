@@ -305,7 +305,7 @@
 #else
 
 #ifndef bool
-typedef char bool;
+typedef unsigned char bool;
 #endif
 
 #ifndef true
