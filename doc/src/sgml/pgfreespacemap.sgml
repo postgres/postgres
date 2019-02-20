@@ -61,6 +61,8 @@
    The values stored in the free space map are not exact. They're rounded
    to precision of 1/256th of <symbol>BLCKSZ</symbol> (32 bytes with default <symbol>BLCKSZ</symbol>), and
    they're not kept fully up-to-date as tuples are inserted and updated.
+   In addition, small tables don't have a free space map, so these functions
+   will return zero even if free space is available.
   </para>
 
   <para>

@@ -527,7 +527,9 @@ approx_free_percent  | 2.09
       bit set, then it is assumed to contain no dead tuples). For such
       pages, it derives the free space value from the free space map, and
       assumes that the rest of the space on the page is taken up by live
-      tuples.
+      tuples. Small tables don't have a free space map, so in that case
+      this function will report zero free space, likewise inflating the
+      approximate tuple length.
      </para>
 
      <para>
