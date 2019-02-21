@@ -42,6 +42,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
+#include "partitioning/partdesc.h"
 #include "pgstat.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"

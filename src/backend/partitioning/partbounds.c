@@ -10,7 +10,8 @@
  *		  src/backend/partitioning/partbounds.c
  *
  *-------------------------------------------------------------------------
-*/
+ */
+
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -23,8 +24,9 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_coerce.h"
-#include "partitioning/partprune.h"
 #include "partitioning/partbounds.h"
+#include "partitioning/partdesc.h"
+#include "partitioning/partprune.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"

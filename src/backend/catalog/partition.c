@@ -254,22 +254,6 @@ has_partition_attrs(Relation rel, Bitmapset *attnums, bool *used_in_expr)
 }
 
 /*
- * get_default_oid_from_partdesc
- *
- * Given a partition descriptor, return the OID of the default partition, if
- * one exists; else, return InvalidOid.
- */
-Oid
-get_default_oid_from_partdesc(PartitionDesc partdesc)
-{
-	if (partdesc && partdesc->boundinfo &&
-		partition_bound_has_default(partdesc->boundinfo))
-		return partdesc->oids[partdesc->boundinfo->default_index];
-
-	return InvalidOid;
-}
-
-/*
  * get_default_partition_oid
  *
  * Given a relation OID, return the OID of the default partition, if one

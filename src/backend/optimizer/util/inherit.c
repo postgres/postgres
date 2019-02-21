@@ -23,6 +23,7 @@
 #include "optimizer/inherit.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
+#include "partitioning/partdesc.h"
 #include "utils/rel.h"
 
 

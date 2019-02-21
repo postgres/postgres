@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "partitioning/partbounds.h"
+#include "partitioning/partdesc.h"
 #include "partitioning/partprune.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
