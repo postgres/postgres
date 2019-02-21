@@ -177,7 +177,7 @@ postgres.pdf:
 epub: postgres.epub
 postgres.epub: postgres.sgml $(ALLSGML)
 	$(XMLLINT) --noout --valid $<
-	$(DBTOEPUB) $<
+	$(DBTOEPUB) -o $@ $<
 
 
 ##
