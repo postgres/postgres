@@ -191,9 +191,6 @@ static void find_matching_subplans_recurse(PartitionPruningData *prunedata,
  * tuple routing for partitioned tables, encapsulates it in
  * PartitionTupleRouting, and returns it.
  *
- * Note that all the relations in the partition tree are locked using the
- * RowExclusiveLock mode upon return from this function.
- *
  * Callers must use the returned PartitionTupleRouting during calls to
  * ExecFindPartition().  The actual ResultRelInfo for a partition is only
  * allocated when the partition is found for the first time.
@@ -207,9 +204,6 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, Relation rel)
 {
 	PartitionTupleRouting *proute;
 	ModifyTable *node = mtstate ? (ModifyTable *) mtstate->ps.plan : NULL;
-
-	/* Lock all the partitions. */
-	(void) find_all_inheritors(RelationGetRelid(rel), RowExclusiveLock, NULL);
 
 	/*
 	 * Here we attempt to expend as little effort as possible in setting up
@@ -487,8 +481,9 @@ ExecHashSubPlanResultRelsByOid(ModifyTableState *mtstate,
 
 /*
  * ExecInitPartitionInfo
- *		Initialize ResultRelInfo and other information for a partition
- *		and store it in the next empty slot in the proute->partitions array.
+ *		Lock the partition and initialize ResultRelInfo.  Also setup other
+ *		information for the partition and store it in the next empty slot in
+ *		the proute->partitions array.
  *
  * Returns the ResultRelInfo
  */
@@ -510,11 +505,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
 
-	/*
-	 * We locked all the partitions in ExecSetupPartitionTupleRouting
-	 * including the leaf partitions.
-	 */
-	partrel = table_open(dispatch->partdesc->oids[partidx], NoLock);
+	partrel = table_open(dispatch->partdesc->oids[partidx], RowExclusiveLock);
 
 	leaf_part_rri = makeNode(ResultRelInfo);
 	InitResultRelInfo(leaf_part_rri,
@@ -964,11 +955,12 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 
 /*
  * ExecInitPartitionDispatchInfo
- *		Initialize PartitionDispatch for a partitioned table and store it in
- *		the next available slot in the proute->partition_dispatch_info array.
- *		Also, record the index into this array in the parent_pd->indexes[]
- *		array in the partidx element so that we can properly retrieve the
- *		newly created PartitionDispatch later.
+ *		Lock the partitioned table (if not locked already) and initialize
+ *		PartitionDispatch for a partitioned table and store it in the next
+ *		available slot in the proute->partition_dispatch_info array.  Also,
+ *		record the index into this array in the parent_pd->indexes[] array in
+ *		the partidx element so that we can properly retrieve the newly created
+ *		PartitionDispatch later.
  */
 static PartitionDispatch
 ExecInitPartitionDispatchInfo(PartitionTupleRouting *proute, Oid partoid,
@@ -982,8 +974,13 @@ ExecInitPartitionDispatchInfo(PartitionTupleRouting *proute, Oid partoid,
 
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
 
+	/*
+	 * Only sub-partitioned tables need to be locked here.  The root
+	 * partitioned table will already have been locked as it's referenced in
+	 * the query's rtable.
+	 */
 	if (partoid != RelationGetRelid(proute->partition_root))
-		rel = table_open(partoid, NoLock);
+		rel = table_open(partoid, RowExclusiveLock);
 	else
 		rel = proute->partition_root;
 	partdesc = RelationGetPartitionDesc(rel);
