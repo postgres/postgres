@@ -489,7 +489,7 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 		/* Error logged in pgfnames */
 		exit(2);
 
-	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
+	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", make_absolute_path(outputdir));
 
 #ifdef WIN32
 
@@ -553,10 +553,10 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 		}
 		while (fgets(line, sizeof(line), infile))
 		{
-			replace_string(line, "@abs_srcdir@", inputdir);
-			replace_string(line, "@abs_builddir@", outputdir);
+			replace_string(line, "@abs_srcdir@", make_absolute_path(inputdir));
+			replace_string(line, "@abs_builddir@", make_absolute_path(outputdir));
 			replace_string(line, "@testtablespace@", testtablespace);
-			replace_string(line, "@libdir@", dlpath);
+			replace_string(line, "@libdir@", make_absolute_path(dlpath));
 			replace_string(line, "@DLSUFFIX@", DLSUFFIX);
 			fputs(line, outfile);
 		}
@@ -2239,10 +2239,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		 */
 		port = 0xC000 | (PG_VERSION_NUM & 0x3FFF);
 
-	inputdir = make_absolute_path(inputdir);
-	outputdir = make_absolute_path(outputdir);
-	dlpath = make_absolute_path(dlpath);
-
 	/*
 	 * Initialization
 	 */
@@ -2588,7 +2584,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		printf(_("The differences that caused some tests to fail can be viewed in the\n"
 				 "file \"%s\".  A copy of the test summary that you see\n"
 				 "above is saved in the file \"%s\".\n\n"),
-			   difffilename, logfilename);
+			   make_absolute_path(difffilename), make_absolute_path(logfilename));
 	}
 	else
 	{
