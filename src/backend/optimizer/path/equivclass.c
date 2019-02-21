@@ -1963,6 +1963,14 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
 			continue;
 		/* Note: it seems okay to match to "broken" eclasses here */
 
+		/*
+		 * If eclass visibly doesn't have members for both rels, there's no
+		 * need to grovel through the members.
+		 */
+		if (!bms_is_member(var1varno, ec->ec_relids) ||
+			!bms_is_member(var2varno, ec->ec_relids))
+			continue;
+
 		foreach(lc2, ec->ec_members)
 		{
 			EquivalenceMember *em = (EquivalenceMember *) lfirst(lc2);
