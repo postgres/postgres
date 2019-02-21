@@ -268,6 +268,18 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    stated above; instead they update continuously throughout the transaction.
   </para>
 
+  <para>
+   Some of the information in the dynamic statistics views shown in <xref
+   linkend="monitoring-stats-dynamic-views-table"/> is security restricted.
+   Ordinary users can only see all the information about their own sessions
+   (sessions belonging to a role that they are a member of).  In rows about
+   other sessions, many columns will be null.  Note, however, that the
+   existence of a session and its general properties such as its sessions user
+   and database are visible to all users.  Superusers and members of the
+   built-in role <literal>pg_read_all_stats</literal> (see also <xref
+   linkend="default-roles"/>) can see all the information about all sessions.
+  </para>
+
   <table id="monitoring-stats-dynamic-views-table">
    <title>Dynamic Statistics Views</title>
 
