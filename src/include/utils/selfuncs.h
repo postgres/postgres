@@ -186,6 +186,9 @@ extern void estimate_hash_bucket_stats(PlannerInfo *root,
 						   Node *hashkey, double nbuckets,
 						   Selectivity *mcv_freq,
 						   Selectivity *bucketsize_frac);
+extern double estimate_hashagg_tablesize(Path *path,
+						   const AggClauseCosts *agg_costs,
+						   double dNumGroups);
 
 extern List *get_quals_from_indexclauses(List *indexclauses);
 extern Cost index_other_operands_eval_cost(PlannerInfo *root,

@@ -113,6 +113,7 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_statistic_ext.h"
 #include "executor/executor.h"
+#include "executor/nodeAgg.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -3426,6 +3427,43 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 	*bucketsize_frac = (Selectivity) estfract;
 
 	ReleaseVariableStats(vardata);
+}
+
+/*
+ * estimate_hashagg_tablesize
+ *	  estimate the number of bytes that a hash aggregate hashtable will
+ *	  require based on the agg_costs, path width and number of groups.
+ *
+ * We return the result as "double" to forestall any possible overflow
+ * problem in the multiplication by dNumGroups.
+ *
+ * XXX this may be over-estimating the size now that hashagg knows to omit
+ * unneeded columns from the hashtable.  Also for mixed-mode grouping sets,
+ * grouping columns not in the hashed set are counted here even though hashagg
+ * won't store them.  Is this a problem?
+ */
+double
+estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
+						   double dNumGroups)
+{
+	Size		hashentrysize;
+
+	/* Estimate per-hash-entry space at tuple width... */
+	hashentrysize = MAXALIGN(path->pathtarget->width) +
+		MAXALIGN(SizeofMinimalTupleHeader);
+
+	/* plus space for pass-by-ref transition values... */
+	hashentrysize += agg_costs->transitionSpace;
+	/* plus the per-hash-entry overhead */
+	hashentrysize += hash_agg_entry_size(agg_costs->numAggs);
+
+	/*
+	 * Note that this disregards the effect of fill-factor and growth policy
+	 * of the hash table.  That's probably ok, given that the default
+	 * fill-factor is relatively high.  It'd be hard to meaningfully factor in
+	 * "double-in-size" growth policies here.
+	 */
+	return hashentrysize * dNumGroups;
 }
 
 

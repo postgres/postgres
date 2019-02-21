@@ -148,9 +148,6 @@ static double get_number_of_groups(PlannerInfo *root,
 					 double path_rows,
 					 grouping_sets_data *gd,
 					 List *target_list);
-static Size estimate_hashagg_tablesize(Path *path,
-						   const AggClauseCosts *agg_costs,
-						   double dNumGroups);
 static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
 					  PathTarget *target,
@@ -3660,40 +3657,6 @@ get_number_of_groups(PlannerInfo *root,
 }
 
 /*
- * estimate_hashagg_tablesize
- *	  estimate the number of bytes that a hash aggregate hashtable will
- *	  require based on the agg_costs, path width and dNumGroups.
- *
- * XXX this may be over-estimating the size now that hashagg knows to omit
- * unneeded columns from the hashtable. Also for mixed-mode grouping sets,
- * grouping columns not in the hashed set are counted here even though hashagg
- * won't store them. Is this a problem?
- */
-static Size
-estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
-						   double dNumGroups)
-{
-	Size		hashentrysize;
-
-	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = MAXALIGN(path->pathtarget->width) +
-		MAXALIGN(SizeofMinimalTupleHeader);
-
-	/* plus space for pass-by-ref transition values... */
-	hashentrysize += agg_costs->transitionSpace;
-	/* plus the per-hash-entry overhead */
-	hashentrysize += hash_agg_entry_size(agg_costs->numAggs);
-
-	/*
-	 * Note that this disregards the effect of fill-factor and growth policy
-	 * of the hash-table. That's probably ok, given default the default
-	 * fill-factor is relatively high. It'd be hard to meaningfully factor in
-	 * "double-in-size" growth policies here.
-	 */
-	return hashentrysize * dNumGroups;
-}
-
-/*
  * create_grouping_paths
  *
  * Build a new upperrel containing Paths for grouping and/or aggregation.
@@ -4130,7 +4093,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 		ListCell   *lc;
 		ListCell   *l_start = list_head(gd->rollups);
 		AggStrategy strat = AGG_HASHED;
-		Size		hashsize;
+		double		hashsize;
 		double		exclude_groups = 0.0;
 
 		Assert(can_hash);
@@ -4297,9 +4260,9 @@ consider_groupingsets_paths(PlannerInfo *root,
 		/*
 		 * Account first for space needed for groups we can't sort at all.
 		 */
-		availspace -= (double) estimate_hashagg_tablesize(path,
-														  agg_costs,
-														  gd->dNumHashGroups);
+		availspace -= estimate_hashagg_tablesize(path,
+												 agg_costs,
+												 gd->dNumHashGroups);
 
 		if (availspace > 0 && list_length(gd->rollups) > 1)
 		{
@@ -6424,7 +6387,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 
 	if (can_hash)
 	{
-		Size		hashaggtablesize;
+		double		hashaggtablesize;
 
 		if (parse->groupingSets)
 		{
@@ -6735,7 +6698,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 
 	if (can_hash && cheapest_total_path != NULL)
 	{
-		Size		hashaggtablesize;
+		double		hashaggtablesize;
 
 		/* Checked above */
 		Assert(parse->hasAggs || parse->groupClause);
@@ -6768,7 +6731,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 
 	if (can_hash && cheapest_partial_path != NULL)
 	{
-		Size		hashaggtablesize;
+		double		hashaggtablesize;
 
 		hashaggtablesize =
 			estimate_hashagg_tablesize(cheapest_partial_path,
