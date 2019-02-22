@@ -539,6 +539,47 @@ CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
 ERROR:  null value in column "aa" violates not-null constraint
 DETAIL:  Failing row contains (null, text).
+-- Check inherited UPDATE with all children excluded
+create table some_tab (a int, b int);
+create table some_tab_child () inherits (some_tab);
+insert into some_tab_child values(1,2);
+explain (verbose, costs off)
+update some_tab set a = a + 1 where false;
+            QUERY PLAN            
+----------------------------------
+ Update on public.some_tab
+   Update on public.some_tab
+   ->  Result
+         Output: (a + 1), b, ctid
+         One-Time Filter: false
+(5 rows)
+
+update some_tab set a = a + 1 where false;
+explain (verbose, costs off)
+update some_tab set a = a + 1 where false returning b, a;
+            QUERY PLAN            
+----------------------------------
+ Update on public.some_tab
+   Output: b, a
+   Update on public.some_tab
+   ->  Result
+         Output: (a + 1), b, ctid
+         One-Time Filter: false
+(6 rows)
+
+update some_tab set a = a + 1 where false returning b, a;
+ b | a 
+---+---
+(0 rows)
+
+table some_tab;
+ a | b 
+---+---
+ 1 | 2
+(1 row)
+
+drop table some_tab cascade;
+NOTICE:  drop cascades to table some_tab_child
 -- Check UPDATE with inherited target and an inherited source table
 create temp table foo(f1 int, f2 int);
 create temp table foo2(f3 int) inherits (foo);

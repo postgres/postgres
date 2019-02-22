@@ -1200,6 +1200,33 @@ drop function self_ref_trigger_ins_func();
 drop function self_ref_trigger_del_func();
 
 --
+-- Check that statement triggers work correctly even with all children excluded
+--
+
+create table stmt_trig_on_empty_upd (a int);
+create table stmt_trig_on_empty_upd1 () inherits (stmt_trig_on_empty_upd);
+create function update_stmt_notice() returns trigger as $$
+begin
+	raise notice 'updating %', TG_TABLE_NAME;
+	return null;
+end;
+$$ language plpgsql;
+create trigger before_stmt_trigger
+	before update on stmt_trig_on_empty_upd
+	execute procedure update_stmt_notice();
+create trigger before_stmt_trigger
+	before update on stmt_trig_on_empty_upd1
+	execute procedure update_stmt_notice();
+
+-- inherited no-op update
+update stmt_trig_on_empty_upd set a = a where false returning a+1 as aa;
+-- simple no-op update
+update stmt_trig_on_empty_upd1 set a = a where false returning a+1 as aa;
+
+drop table stmt_trig_on_empty_upd cascade;
+drop function update_stmt_notice();
+
+--
 -- Check that index creation (or DDL in general) is prohibited in a trigger
 --
 
