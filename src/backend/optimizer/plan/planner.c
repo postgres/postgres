@@ -1087,29 +1087,47 @@ inheritance_planner(PlannerInfo *root)
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
 
-	/*
-	 * If we managed to exclude every child rel, return a dummy plan; it
-	 * doesn't even need a ModifyTable node.
-	 */
 	if (subplans == NIL)
 	{
-		/* although dummy, it must have a valid tlist for executor */
+		/*
+		 * We managed to exclude every child rel, so generate a dummy path
+		 * representing the empty set.  Although it's clear that no data will
+		 * be updated or deleted, we will still need to have a ModifyTable
+		 * node so that any statement triggers are executed.  (This could be
+		 * cleaner if we fixed nodeModifyTable.c to support zero child nodes,
+		 * but that probably wouldn't be a net win.)
+		 */
 		List	   *tlist;
+		Plan	   *subplan;
 
+		/* tlist processing never got done, either */
 		tlist = preprocess_targetlist(root, parse->targetList);
-		return (Plan *) make_result(root,
-									tlist,
-									(Node *) list_make1(makeBoolConst(false,
-																	  false)),
-									NULL);
-	}
 
-	/*
-	 * Put back the final adjusted rtable into the master copy of the Query.
-	 */
-	parse->rtable = final_rtable;
-	root->simple_rel_array_size = save_rel_array_size;
-	root->simple_rel_array = save_rel_array;
+		subplan = (Plan *) make_result(root,
+									   tlist,
+									 (Node *) list_make1(makeBoolConst(false,
+																	 false)),
+									   NULL);
+
+		/* These lists must be nonempty to make a valid ModifyTable node */
+		subplans = list_make1(subplan);
+		resultRelations = list_make1_int(parse->resultRelation);
+		if (parse->withCheckOptions)
+			withCheckOptionLists = list_make1(parse->withCheckOptions);
+		if (parse->returningList)
+			returningLists = list_make1(parse->returningList);
+	}
+	else
+	{
+		/*
+		 * Put back the final adjusted rtable into the master copy of the
+		 * Query.  (We mustn't do this if we found no non-excluded children,
+		 * since we never saved an adjusted rtable at all.)
+		 */
+		parse->rtable = final_rtable;
+		root->simple_rel_array_size = save_rel_array_size;
+		root->simple_rel_array = save_rel_array;
+	}
 
 	/*
 	 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node will
