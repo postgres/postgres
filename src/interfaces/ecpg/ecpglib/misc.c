@@ -432,7 +432,7 @@ ECPGis_noind_null(enum ECPGttype type, const void *ptr)
 				return true;
 			break;
 		case ECPGt_bytea:
-			if (((struct ECPGgeneric_bytea *) ptr)->len == 0)
+			if (((const struct ECPGgeneric_bytea *) ptr)->len == 0)
 				return true;
 			break;
 		case ECPGt_decimal:
