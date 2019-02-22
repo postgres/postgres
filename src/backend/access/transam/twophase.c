@@ -844,7 +844,7 @@ TwoPhaseGetGXact(TransactionId xid)
 }
 
 /*
- * TwoPhaseGetDummyProc
+ * TwoPhaseGetDummyBackendId
  *		Get the dummy backend ID for prepared transaction specified by XID
  *
  * Dummy backend IDs are similar to real backend IDs of real backends.
