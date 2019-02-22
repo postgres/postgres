@@ -3349,9 +3349,6 @@ keep_going:						/* We will come back to here until there is
 					if (strncmp(val, "on", 2) == 0)
 					{
 						/* Not writable; fail this connection. */
-						const char *displayed_host;
-						const char *displayed_port;
-
 						PQclear(res);
 						restoreErrorMessage(conn, &savedMessage);
 
