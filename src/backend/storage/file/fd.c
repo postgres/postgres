@@ -423,6 +423,10 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 #if defined(HAVE_SYNC_FILE_RANGE)
 	{
 		int			rc;
+		static bool not_implemented_by_kernel = false;
+
+		if (not_implemented_by_kernel)
+			return;
 
 		/*
 		 * sync_file_range(SYNC_FILE_RANGE_WRITE), currently linux specific,
@@ -437,7 +441,22 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 							 SYNC_FILE_RANGE_WRITE);
 		if (rc != 0)
 		{
-			ereport(data_sync_elevel(WARNING),
+			int			elevel;
+
+			/*
+			 * For systems that don't have an implementation of
+			 * sync_file_range() such as Windows WSL, generate only one
+			 * warning and then suppress all further attempts by this process.
+			 */
+			if (errno == ENOSYS)
+			{
+				elevel = WARNING;
+				not_implemented_by_kernel = true;
+			}
+			else
+				elevel = data_sync_elevel(WARNING);
+
+			ereport(elevel,
 					(errcode_for_file_access(),
 					 errmsg("could not flush dirty data: %m")));
 		}
