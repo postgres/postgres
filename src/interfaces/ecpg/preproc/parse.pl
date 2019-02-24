@@ -22,6 +22,7 @@ $path = "." unless $path;
 my $copymode              = 0;
 my $brace_indent          = 0;
 my $yaccmode              = 0;
+my $in_rule               = 0;
 my $header_included       = 0;
 my $feature_not_supported = 0;
 my $tokenmode             = 0;
@@ -288,6 +289,7 @@ sub main
 				@fields  = ();
 				$infield = 0;
 				$line    = '';
+				$in_rule = 0;
 				next;
 			}
 
@@ -365,6 +367,9 @@ sub main
 				$line    = '';
 				@fields  = ();
 				$infield = 1;
+				die "unterminated rule at grammar line $.\n"
+				  if $in_rule;
+				$in_rule = 1;
 				next;
 			}
 			elsif ($copymode)
@@ -415,6 +420,9 @@ sub main
 			}
 		}
 	}
+	die "unterminated rule at end of grammar\n"
+	  if $in_rule;
+	return;
 }
 
 
