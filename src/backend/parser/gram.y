@@ -1417,6 +1417,7 @@ generic_set:
 					n->name = $1;
 					$$ = n;
 				}
+		;
 
 set_rest_more:	/* Generic SET syntaxes: */
 			generic_set 						{$$ = $1;}
@@ -5681,6 +5682,7 @@ attrs:		'.' attr_name
 type_name_list:
 			Typename								{ $$ = list_make1(list_make1($1)); }
 			| type_name_list ',' Typename			{ $$ = lappend($1, list_make1($3)); }
+		;
 
 /*****************************************************************************
  *
