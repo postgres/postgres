@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # src/interfaces/ecpg/preproc/check_rules.pl
-# test parser generater for ecpg
-# call with backend parser as stdin
+# test parser generator for ecpg
+# call with backend grammar as stdin
 #
 # Copyright (c) 2009-2014, PostgreSQL Global Development Group
 #
@@ -47,6 +47,7 @@ my %replace_line = (
 
 my $block        = '';
 my $yaccmode     = 0;
+my $in_rule      = 0;
 my $brace_indent = 0;
 my (@arr, %found);
 my $comment     = 0;
@@ -131,10 +132,14 @@ while (<GRAM>)
 			$found{$block} = 1;
 			$cc++;
 			$block = '';
+			$in_rule = 0 if $arr[$fieldIndexer] eq ';';
 		}
 		elsif (($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:')
 			|| $arr[ $fieldIndexer + 1 ] eq ':')
 		{
+			die "unterminated rule at grammar line $.\n"
+			  if $in_rule;
+			$in_rule     = 1;
 			$non_term_id = $arr[$fieldIndexer];
 			$non_term_id =~ tr/://d;
 		}
@@ -144,6 +149,9 @@ while (<GRAM>)
 		}
 	}
 }
+
+die "unterminated rule at end of grammar\n"
+  if $in_rule;
 
 close GRAM;
 if ($verbose)
