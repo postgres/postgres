@@ -6,6 +6,6 @@
  * knowledge into this script.
  */
 
-CREATE PROCEDURAL LANGUAGE pltcl;
+CREATE LANGUAGE pltcl;
 
-COMMENT ON PROCEDURAL LANGUAGE pltcl IS 'PL/Tcl procedural language';
+COMMENT ON LANGUAGE pltcl IS 'PL/Tcl procedural language';

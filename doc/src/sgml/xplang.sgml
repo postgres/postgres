@@ -137,7 +137,7 @@ CREATE FUNCTION <replaceable>validator_function_name</replaceable>(oid)
      <para>
       Finally, the PL must be declared with the command
 <synopsis>
-CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language-name</replaceable>
+CREATE <optional>TRUSTED</optional> LANGUAGE <replaceable>language-name</replaceable>
     HANDLER <replaceable>handler_function_name</replaceable>
     <optional>INLINE <replaceable>inline_function_name</replaceable></optional>
     <optional>VALIDATOR <replaceable>validator_function_name</replaceable></optional> ;
@@ -200,7 +200,7 @@ CREATE FUNCTION plperl_validator(oid) RETURNS void AS
      <para>
       The command:
 <programlisting>
-CREATE TRUSTED PROCEDURAL LANGUAGE plperl
+CREATE TRUSTED LANGUAGE plperl
     HANDLER plperl_call_handler
     INLINE plperl_inline_handler
     VALIDATOR plperl_validator;

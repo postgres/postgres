@@ -6,6 +6,6 @@
  * knowledge into this script.
  */
 
-CREATE PROCEDURAL LANGUAGE plpgsql;
+CREATE LANGUAGE plpgsql;
 
-COMMENT ON PROCEDURAL LANGUAGE plpgsql IS 'PL/pgSQL procedural language';
+COMMENT ON LANGUAGE plpgsql IS 'PL/pgSQL procedural language';

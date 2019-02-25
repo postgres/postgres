@@ -6,6 +6,6 @@
  * knowledge into this script.
  */
 
-CREATE PROCEDURAL LANGUAGE pltclu;
+CREATE LANGUAGE pltclu;
 
-COMMENT ON PROCEDURAL LANGUAGE pltclu IS 'PL/TclU untrusted procedural language';
+COMMENT ON LANGUAGE pltclu IS 'PL/TclU untrusted procedural language';

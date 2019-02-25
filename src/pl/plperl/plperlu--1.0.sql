@@ -6,6 +6,6 @@
  * knowledge into this script.
  */
 
-CREATE PROCEDURAL LANGUAGE plperlu;
+CREATE LANGUAGE plperlu;
 
-COMMENT ON PROCEDURAL LANGUAGE plperlu IS 'PL/PerlU untrusted procedural language';
+COMMENT ON LANGUAGE plperlu IS 'PL/PerlU untrusted procedural language';

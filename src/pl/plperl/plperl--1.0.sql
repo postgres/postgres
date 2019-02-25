@@ -6,6 +6,6 @@
  * knowledge into this script.
  */
 
-CREATE PROCEDURAL LANGUAGE plperl;
+CREATE LANGUAGE plperl;
 
-COMMENT ON PROCEDURAL LANGUAGE plperl IS 'PL/Perl procedural language';
+COMMENT ON LANGUAGE plperl IS 'PL/Perl procedural language';

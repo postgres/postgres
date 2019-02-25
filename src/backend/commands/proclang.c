@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * proclang.c
- *	  PostgreSQL PROCEDURAL LANGUAGE support code.
+ *	  PostgreSQL LANGUAGE support code.
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -55,9 +55,8 @@ static ObjectAddress create_proc_lang(const char *languageName, bool replace,
 				 Oid valOid, bool trusted);
 static PLTemplate *find_language_template(const char *languageName);
 
-/* ---------------------------------------------------------------------
- * CREATE PROCEDURAL LANGUAGE
- * ---------------------------------------------------------------------
+/*
+ * CREATE LANGUAGE
  */
 ObjectAddress
 CreateProceduralLanguage(CreatePLangStmt *stmt)

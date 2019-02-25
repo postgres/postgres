@@ -6,6 +6,6 @@
  * knowledge into this script.
  */
 
-CREATE PROCEDURAL LANGUAGE plpython2u;
+CREATE LANGUAGE plpython2u;
 
-COMMENT ON PROCEDURAL LANGUAGE plpython2u IS 'PL/Python2U untrusted procedural language';
+COMMENT ON LANGUAGE plpython2u IS 'PL/Python2U untrusted procedural language';

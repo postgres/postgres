@@ -2433,8 +2433,7 @@ typedef struct AlterEventTrigStmt
 } AlterEventTrigStmt;
 
 /* ----------------------
- *		Create/Drop PROCEDURAL LANGUAGE Statements
- *		Create PROCEDURAL LANGUAGE Statements
+ *		Create LANGUAGE Statements
  * ----------------------
  */
 typedef struct CreatePLangStmt
