@@ -801,15 +801,20 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
  * TwoPhaseGetGXact
  *		Get the GlobalTransaction struct for a prepared transaction
  *		specified by XID
+ *
+ * If lock_held is set to true, TwoPhaseStateLock will not be taken, so the
+ * caller had better hold it.
  */
 static GlobalTransaction
-TwoPhaseGetGXact(TransactionId xid)
+TwoPhaseGetGXact(TransactionId xid, bool lock_held)
 {
 	GlobalTransaction result = NULL;
 	int			i;
 
 	static TransactionId cached_xid = InvalidTransactionId;
 	static GlobalTransaction cached_gxact = NULL;
+
+	Assert(!lock_held || LWLockHeldByMe(TwoPhaseStateLock));
 
 	/*
 	 * During a recovery, COMMIT PREPARED, or ABORT PREPARED, we'll be called
@@ -818,7 +823,8 @@ TwoPhaseGetGXact(TransactionId xid)
 	if (xid == cached_xid)
 		return cached_gxact;
 
-	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
+	if (!lock_held)
+		LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
 
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
 	{
@@ -832,7 +838,8 @@ TwoPhaseGetGXact(TransactionId xid)
 		}
 	}
 
-	LWLockRelease(TwoPhaseStateLock);
+	if (!lock_held)
+		LWLockRelease(TwoPhaseStateLock);
 
 	if (result == NULL)			/* should not happen */
 		elog(ERROR, "failed to find GlobalTransaction for xid %u", xid);
@@ -849,12 +856,13 @@ TwoPhaseGetGXact(TransactionId xid)
  *
  * Dummy backend IDs are similar to real backend IDs of real backends.
  * They start at MaxBackends + 1, and are unique across all currently active
- * real backends and prepared transactions.
+ * real backends and prepared transactions.  If lock_held is set to true,
+ * TwoPhaseStateLock will not be taken, so the caller had better hold it.
  */
 BackendId
-TwoPhaseGetDummyBackendId(TransactionId xid)
+TwoPhaseGetDummyBackendId(TransactionId xid, bool lock_held)
 {
-	GlobalTransaction gxact = TwoPhaseGetGXact(xid);
+	GlobalTransaction gxact = TwoPhaseGetGXact(xid, lock_held);
 
 	return gxact->dummyBackendId;
 }
@@ -862,11 +870,14 @@ TwoPhaseGetDummyBackendId(TransactionId xid)
 /*
  * TwoPhaseGetDummyProc
  *		Get the PGPROC that represents a prepared transaction specified by XID
+ *
+ * If lock_held is set to true, TwoPhaseStateLock will not be taken, so the
+ * caller had better hold it.
  */
 PGPROC *
-TwoPhaseGetDummyProc(TransactionId xid)
+TwoPhaseGetDummyProc(TransactionId xid, bool lock_held)
 {
-	GlobalTransaction gxact = TwoPhaseGetGXact(xid);
+	GlobalTransaction gxact = TwoPhaseGetGXact(xid, lock_held);
 
 	return &ProcGlobal->allProcs[gxact->pgprocno];
 }
@@ -1560,6 +1571,14 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	if (hdr->initfileinval)
 		RelationCacheInitFilePostInvalidate();
 
+	/*
+	 * Acquire the two-phase lock.  We want to work on the two-phase callbacks
+	 * while holding it to avoid potential conflicts with other transactions
+	 * attempting to use the same GID, so the lock is released once the shared
+	 * memory state is cleared.
+	 */
+	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
+
 	/* And now do the callbacks */
 	if (isCommit)
 		ProcessRecords(bufptr, xid, twophase_postcommit_callbacks);
@@ -1567,6 +1586,15 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 		ProcessRecords(bufptr, xid, twophase_postabort_callbacks);
 
 	PredicateLockTwoPhaseFinish(xid, isCommit);
+
+	/* Clear shared memory state */
+	RemoveGXact(gxact);
+
+	/*
+	 * Release the lock as all callbacks are called and shared memory cleanup
+	 * is done.
+	 */
+	LWLockRelease(TwoPhaseStateLock);
 
 	/* Count the prepared xact as committed or aborted */
 	AtEOXact_PgStat(isCommit);
@@ -1577,9 +1605,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	if (gxact->ondisk)
 		RemoveTwoPhaseFile(xid, true);
 
-	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
-	RemoveGXact(gxact);
-	LWLockRelease(TwoPhaseStateLock);
 	MyLockedGxact = NULL;
 
 	RESUME_INTERRUPTS();
