@@ -128,8 +128,6 @@ foreach my $file (sort readdir DIR)
 
 		my $nl_count = () = $cmdsynopsis =~ /\n/g;
 
-		$cmdsynopsis =~ m!</>!
-		  and die "$0: $file: null end tag not supported in synopsis\n";
 		$cmdsynopsis =~ s/%/%%/g;
 
 		while ($cmdsynopsis =~ m!<(\w+)[^>]*>(.+?)</\1[^>]*>!)
