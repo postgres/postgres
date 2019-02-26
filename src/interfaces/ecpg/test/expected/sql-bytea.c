@@ -200,34 +200,35 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	dump_binary(recv_vlen_buf[0].arr, recv_vlen_buf[0].len, 0);
 	dump_binary(recv_vlen_buf[1].arr, recv_vlen_buf[1].len, 0);
+	free(recv_vlen_buf);
 
 	/* Test for dynamic sql statement with normal host variable, indicator */
 	init();
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "truncate test", ECPGt_EOIT, ECPGt_EORT);
-#line 86 "bytea.pgc"
+#line 87 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 86 "bytea.pgc"
+#line 87 "bytea.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "ins_stmt", 
 	ECPGt_bytea,&(send_buf[0]),(long)DATA_SIZE,(long)1,sizeof(struct bytea_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_bytea,&(send_buf[1]),(long)DATA_SIZE,(long)1,sizeof(struct bytea_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 87 "bytea.pgc"
+#line 88 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 87 "bytea.pgc"
+#line 88 "bytea.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "sel_stmt", ECPGt_EOIT, 
 	ECPGt_bytea,&(recv_buf[0]),(long)DATA_SIZE,(long)1,sizeof(struct bytea_2), 
 	ECPGt_int,&(ind[0]),(long)1,(long)1,sizeof(int), 
 	ECPGt_bytea,&(recv_short_buf),(long)DATA_SIZE - LACK_SIZE,(long)1,sizeof(struct bytea_4), 
 	ECPGt_int,&(ind[1]),(long)1,(long)1,sizeof(int), ECPGt_EORT);
-#line 88 "bytea.pgc"
+#line 89 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 88 "bytea.pgc"
+#line 89 "bytea.pgc"
 
 	dump_binary(recv_buf[0].arr, recv_buf[0].len, ind[0]);
 	dump_binary(recv_short_buf.arr, recv_short_buf.len, ind[1]);
@@ -235,81 +236,81 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	/* Test for dynamic sql statement with sql descriptor */
 	init();
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "truncate test", ECPGt_EOIT, ECPGt_EORT);
-#line 94 "bytea.pgc"
+#line 95 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 94 "bytea.pgc"
+#line 95 "bytea.pgc"
 
 	{ ECPGset_desc(__LINE__, "idesc", 1,ECPGd_data,
 	ECPGt_bytea,&(send_buf[0]),(long)DATA_SIZE,(long)1,sizeof(struct bytea_1), ECPGd_EODT);
 
-#line 95 "bytea.pgc"
+#line 96 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 95 "bytea.pgc"
+#line 96 "bytea.pgc"
 
 	{ ECPGset_desc(__LINE__, "idesc", 2,ECPGd_data,
 	ECPGt_bytea,&(send_buf[1]),(long)DATA_SIZE,(long)1,sizeof(struct bytea_1), ECPGd_EODT);
 
-#line 96 "bytea.pgc"
+#line 97 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 96 "bytea.pgc"
+#line 97 "bytea.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "ins_stmt", 
 	ECPGt_descriptor, "idesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 97 "bytea.pgc"
+#line 98 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 97 "bytea.pgc"
+#line 98 "bytea.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "sel_stmt", ECPGt_EOIT, 
 	ECPGt_descriptor, "odesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 98 "bytea.pgc"
+#line 99 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 98 "bytea.pgc"
+#line 99 "bytea.pgc"
 
 	{ ECPGget_desc(__LINE__, "odesc", 1,ECPGd_indicator,
 	ECPGt_int,&(ind[0]),(long)1,(long)1,sizeof(int), ECPGd_data,
 	ECPGt_bytea,&(recv_buf[0]),(long)DATA_SIZE,(long)1,sizeof(struct bytea_2), ECPGd_EODT);
 
-#line 99 "bytea.pgc"
+#line 100 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 99 "bytea.pgc"
+#line 100 "bytea.pgc"
 
 	{ ECPGget_desc(__LINE__, "odesc", 2,ECPGd_indicator,
 	ECPGt_int,&(ind[1]),(long)1,(long)1,sizeof(int), ECPGd_data,
 	ECPGt_bytea,&(recv_short_buf),(long)DATA_SIZE - LACK_SIZE,(long)1,sizeof(struct bytea_4), ECPGd_EODT);
 
-#line 100 "bytea.pgc"
+#line 101 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 100 "bytea.pgc"
+#line 101 "bytea.pgc"
 
 	dump_binary(recv_buf[0].arr, recv_buf[0].len, ind[0]);
 	dump_binary(recv_short_buf.arr, recv_short_buf.len, ind[1]);
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
-#line 104 "bytea.pgc"
+#line 105 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 104 "bytea.pgc"
+#line 105 "bytea.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 105 "bytea.pgc"
+#line 106 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 105 "bytea.pgc"
+#line 106 "bytea.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 106 "bytea.pgc"
+#line 107 "bytea.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 106 "bytea.pgc"
+#line 107 "bytea.pgc"
 
 
 	return 0;

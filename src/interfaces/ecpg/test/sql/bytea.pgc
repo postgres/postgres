@@ -80,6 +80,7 @@ while (0)
 	exec sql select data1 into :recv_vlen_buf from test;
 	dump_binary(recv_vlen_buf[0].arr, recv_vlen_buf[0].len, 0);
 	dump_binary(recv_vlen_buf[1].arr, recv_vlen_buf[1].len, 0);
+	free(recv_vlen_buf);
 
 	/* Test for dynamic sql statement with normal host variable, indicator */
 	init();
