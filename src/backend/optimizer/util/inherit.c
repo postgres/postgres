@@ -124,27 +124,14 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/*
 	 * The rewriter should already have obtained an appropriate lock on each
-	 * relation named in the query.  However, for each child relation we add
-	 * to the query, we must obtain an appropriate lock, because this will be
-	 * the first use of those relations in the parse/rewrite/plan pipeline.
-	 * Child rels should use the same lockmode as their parent.
+	 * relation named in the query, so we can open the parent relation without
+	 * locking it.  However, for each child relation we add to the query, we
+	 * must obtain an appropriate lock, because this will be the first use of
+	 * those relations in the parse/rewrite/plan pipeline.  Child rels should
+	 * use the same lockmode as their parent.
 	 */
+	oldrelation = table_open(parentOID, NoLock);
 	lockmode = rte->rellockmode;
-
-	/* Scan for all members of inheritance set, acquire needed locks */
-	inhOIDs = find_all_inheritors(parentOID, lockmode, NULL);
-
-	/*
-	 * Check that there's at least one descendant, else treat as no-child
-	 * case.  This could happen despite above has_subclass() check, if table
-	 * once had a child but no longer does.
-	 */
-	if (list_length(inhOIDs) < 2)
-	{
-		/* Clear flag before returning */
-		rte->inh = false;
-		return;
-	}
 
 	/*
 	 * If parent relation is selected FOR UPDATE/SHARE, we need to mark its
@@ -155,21 +142,15 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	if (oldrc)
 		oldrc->isParent = true;
 
-	/*
-	 * Must open the parent relation to examine its tupdesc.  We need not lock
-	 * it; we assume the rewriter already did.
-	 */
-	oldrelation = table_open(parentOID, NoLock);
-
 	/* Scan the inheritance set and expand it */
-	if (RelationGetPartitionDesc(oldrelation) != NULL)
+	if (oldrelation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		Assert(rte->relkind == RELKIND_PARTITIONED_TABLE);
 
 		/*
-		 * If this table has partitions, recursively expand them in the order
-		 * in which they appear in the PartitionDesc.  While at it, also
-		 * extract the partition key columns of all the partitioned tables.
+		 * If this table has partitions, recursively expand and lock them.
+		 * While at it, also extract the partition key columns of all the
+		 * partitioned tables.
 		 */
 		expand_partitioned_rtentry(root, rte, rti, oldrelation, oldrc,
 								   lockmode, &root->append_rel_list);
@@ -179,6 +160,22 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		List	   *appinfos = NIL;
 		RangeTblEntry *childrte;
 		Index		childRTindex;
+
+		/* Scan for all members of inheritance set, acquire needed locks */
+		inhOIDs = find_all_inheritors(parentOID, lockmode, NULL);
+
+		/*
+		 * Check that there's at least one descendant, else treat as no-child
+		 * case.  This could happen despite above has_subclass() check, if the
+		 * table once had a child but no longer does.
+		 */
+		if (list_length(inhOIDs) < 2)
+		{
+			/* Clear flag before returning */
+			rte->inh = false;
+			heap_close(oldrelation, NoLock);
+			return;
+		}
 
 		/*
 		 * This table has no partitions.  Expand any plain inheritance
@@ -289,8 +286,8 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 		Oid			childOID = partdesc->oids[i];
 		Relation	childrel;
 
-		/* Open rel; we already have required locks */
-		childrel = table_open(childOID, NoLock);
+		/* Open rel, acquiring required locks */
+		childrel = table_open(childOID, lockmode);
 
 		/*
 		 * Temporary partitions belonging to other sessions should have been
