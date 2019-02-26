@@ -38,7 +38,7 @@ static void createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli,
 static void digestControlFile(ControlFileData *ControlFile, char *source,
 				  size_t size);
 static void updateControlFile(ControlFileData *ControlFile);
-static void syncTargetDirectory(const char *argv0);
+static void syncTargetDirectory(void);
 static void sanityChecks(void);
 static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);
 
@@ -380,7 +380,7 @@ main(int argc, char **argv)
 	updateControlFile(&ControlFile_new);
 
 	pg_log(PG_PROGRESS, "syncing target data directory\n");
-	syncTargetDirectory(argv[0]);
+	syncTargetDirectory();
 
 	printf(_("Done!\n"));
 
@@ -715,7 +715,7 @@ updateControlFile(ControlFileData *ControlFile)
  * the overall amount of IO noticeably.
  */
 static void
-syncTargetDirectory(const char *argv0)
+syncTargetDirectory(void)
 {
 	if (!do_sync || dry_run)
 		return;
