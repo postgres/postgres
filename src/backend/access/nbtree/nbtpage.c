@@ -1124,9 +1124,10 @@ _bt_is_page_halfdead(Relation rel, BlockNumber blk)
  *
  * "child" is the leaf page we wish to delete, and "stack" is a search stack
  * leading to it (approximately).  Note that we will update the stack
- * entry(s) to reflect current downlink positions --- this is harmless and
- * indeed saves later search effort in _bt_pagedel.  The caller should
- * initialize *target and *rightsib to the leaf page and its right sibling.
+ * entry(s) to reflect current downlink positions --- this is essentially the
+ * same as the corresponding step of splitting, and is not expected to affect
+ * caller.  The caller should initialize *target and *rightsib to the leaf
+ * page and its right sibling.
  *
  * Note: it's OK to release page locks on any internal pages between the leaf
  * and *topparent, because a safe deletion can't become unsafe due to
