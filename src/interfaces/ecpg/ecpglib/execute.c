@@ -1073,9 +1073,14 @@ print_param_value(char *value, int len, int is_binary, int lineno, int nth)
 	else
 	{
 		value_s = ecpg_alloc(ecpg_hex_enc_len(len)+1, lineno);
-		ecpg_hex_encode(value, len, value_s);
-		value_s[ecpg_hex_enc_len(len)] = '\0';
-		malloced = true;
+		if (value_s != NULL)
+		{
+			ecpg_hex_encode(value, len, value_s);
+			value_s[ecpg_hex_enc_len(len)] = '\0';
+			malloced = true;
+		}
+		else
+			value_s = "no memory for logging of parameter";
 	}
 
 	ecpg_log("ecpg_free_params on line %d: parameter %d = %s\n",
@@ -1134,7 +1139,7 @@ insert_tobeinserted(int position, int ph_len, struct statement *stmt, char *tobe
 	ecpg_free(stmt->command);
 	stmt->command = newcopy;
 
-	ecpg_free((char *) tobeinserted);
+	ecpg_free(tobeinserted);
 	return true;
 }
 
@@ -1400,6 +1405,7 @@ ecpg_build_params(struct statement *stmt)
 					   ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
 					   NULL);
 			ecpg_free_params(stmt, false);
+			ecpg_free(tobeinserted);
 			return false;
 		}
 
@@ -1436,33 +1442,28 @@ ecpg_build_params(struct statement *stmt)
 		}
 		else
 		{
-			char	  **paramvalues;
-			int		   *paramlengths;
-			int		   *paramformats;
+			if (!(stmt->paramvalues = (char **) ecpg_realloc(stmt->paramvalues, sizeof(char *) * (stmt->nparams + 1), stmt->lineno)))
+			{
+				ecpg_free_params(stmt, false);
+				ecpg_free(tobeinserted);
+				return false;
+			}
+			stmt->paramvalues[stmt->nparams] = tobeinserted;
 
-			if (!(paramvalues = (char **) ecpg_realloc(stmt->paramvalues, sizeof(char *) * (stmt->nparams + 1), stmt->lineno)))
+			if (!(stmt->paramlengths = (int *) ecpg_realloc(stmt->paramlengths, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
 			{
 				ecpg_free_params(stmt, false);
 				return false;
 			}
-			if (!(paramlengths = (int *) ecpg_realloc(stmt->paramlengths, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
-			{
-				ecpg_free_params(stmt, false);
-				return false;
-			}
-			if (!(paramformats = (int *) ecpg_realloc(stmt->paramformats, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
-			{
-				ecpg_free_params(stmt, false);
-				return false;
-			}
+			stmt->paramlengths[stmt->nparams] = binary_length;
 
+			if (!(stmt->paramformats = (int *) ecpg_realloc(stmt->paramformats, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
+			{
+				ecpg_free_params(stmt, false);
+				return false;
+			}
+			stmt->paramformats[stmt->nparams] = (binary_format ? 1 : 0);
 			stmt->nparams++;
-			stmt->paramvalues = paramvalues;
-			stmt->paramlengths = paramlengths;
-			stmt->paramformats = paramformats;
-			stmt->paramvalues[stmt->nparams - 1] = tobeinserted;
-			stmt->paramlengths[stmt->nparams - 1] = binary_length;
-			stmt->paramformats[stmt->nparams - 1] = (binary_format ? 1 : 0);
 
 			/* let's see if this was an old style placeholder */
 			if (stmt->command[position] == '?')
