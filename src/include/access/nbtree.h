@@ -528,7 +528,7 @@ extern void _bt_parallel_advance_array_keys(IndexScanDesc scan);
  */
 extern bool _bt_doinsert(Relation rel, IndexTuple itup,
 			 IndexUniqueCheck checkUnique, Relation heapRel);
-extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
+extern Buffer _bt_getstackbuf(Relation rel, BTStack stack);
 extern void _bt_finish_split(Relation rel, Buffer bbuf, BTStack stack);
 
 /*
