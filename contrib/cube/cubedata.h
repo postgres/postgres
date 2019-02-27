@@ -4,7 +4,7 @@
  * This limit is pretty arbitrary, but don't make it so large that you
  * risk overflow in sizing calculations.
  */
-#define CUBE_MAX_DIM (100)
+#define CUBE_MAX_DIM (512)
 
 typedef struct NDBOX
 {
