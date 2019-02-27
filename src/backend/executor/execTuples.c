@@ -436,6 +436,7 @@ tts_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, bool shouldFree)
 	hslot->tuple = tuple;
 	hslot->off = 0;
 	slot->tts_flags &= ~TTS_FLAG_EMPTY;
+	slot->tts_tid = tuple->t_self;
 
 	if (shouldFree)
 		slot->tts_flags |= TTS_FLAG_SHOULDFREE;
@@ -817,6 +818,7 @@ tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
 	slot->tts_nvalid = 0;
 	bslot->base.tuple = tuple;
 	bslot->base.off = 0;
+	slot->tts_tid = tuple->t_self;
 
 	/*
 	 * If tuple is on a disk page, keep the page pinned as long as we hold a
@@ -1304,6 +1306,8 @@ ExecStoreHeapTuple(HeapTuple tuple,
 		elog(ERROR, "trying to store a heap tuple into wrong type of slot");
 	tts_heap_store_tuple(slot, tuple, shouldFree);
 
+	slot->tts_tableOid = tuple->t_tableOid;
+
 	return slot;
 }
 
@@ -1343,6 +1347,7 @@ ExecStoreBufferHeapTuple(HeapTuple tuple,
 		elog(ERROR, "trying to store an on-disk heap tuple into wrong type of slot");
 	tts_buffer_heap_store_tuple(slot, tuple, buffer, false);
 
+	slot->tts_tableOid = tuple->t_tableOid;
 
 	return slot;
 }
@@ -1367,6 +1372,8 @@ ExecStorePinnedBufferHeapTuple(HeapTuple tuple,
 	if (unlikely(!TTS_IS_BUFFERTUPLE(slot)))
 		elog(ERROR, "trying to store an on-disk heap tuple into wrong type of slot");
 	tts_buffer_heap_store_tuple(slot, tuple, buffer, true);
+
+	slot->tts_tableOid = tuple->t_tableOid;
 
 	return slot;
 }

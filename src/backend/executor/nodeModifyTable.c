@@ -166,19 +166,14 @@ ExecProcessReturning(ResultRelInfo *resultRelInfo,
 	/* Make tuple and any needed join variables available to ExecProject */
 	if (tupleSlot)
 		econtext->ecxt_scantuple = tupleSlot;
-	else
-	{
-		HeapTuple	tuple;
-
-		/*
-		 * RETURNING expressions might reference the tableoid column, so
-		 * initialize t_tableOid before evaluating them.
-		 */
-		Assert(!TupIsNull(econtext->ecxt_scantuple));
-		tuple = ExecFetchSlotHeapTuple(econtext->ecxt_scantuple, true, NULL);
-		tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-	}
 	econtext->ecxt_outertuple = planSlot;
+
+	/*
+	 * RETURNING expressions might reference the tableoid column, so
+	 * reinitialize tts_tableOid before evaluating them.
+	 */
+	econtext->ecxt_scantuple->tts_tableOid =
+		RelationGetRelid(resultRelInfo->ri_RelationDesc);
 
 	/* Compute the RETURNING expressions */
 	return ExecProject(projectReturning);
@@ -332,19 +327,21 @@ ExecInsert(ModifyTableState *mtstate,
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
-		 * tableoid column, so initialize t_tableOid before evaluating them.
+		 * tableoid column, so (re-)initialize tts_tableOid before evaluating
+		 * them.
 		 */
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+		slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+
 	}
 	else
 	{
 		WCOKind		wco_kind;
 
 		/*
-		 * Constraints might reference the tableoid column, so initialize
-		 * t_tableOid before evaluating them.
+		 * Constraints might reference the tableoid column, so (re-)initialize
+		 * tts_tableOid before evaluating them.
 		 */
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 
 		/*
 		 * Check any RLS WITH CHECK policies.
@@ -458,6 +455,8 @@ ExecInsert(ModifyTableState *mtstate,
 						estate->es_output_cid,
 						HEAP_INSERT_SPECULATIVE,
 						NULL);
+			slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
+			ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 			/* insert index entries for tuple */
 			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
@@ -503,6 +502,8 @@ ExecInsert(ModifyTableState *mtstate,
 			heap_insert(resultRelationDesc, tuple,
 						estate->es_output_cid,
 						0, NULL);
+			slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
+			ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 			/* insert index entries for tuple */
 			if (resultRelInfo->ri_NumIndices > 0)
@@ -515,7 +516,7 @@ ExecInsert(ModifyTableState *mtstate,
 	if (canSetTag)
 	{
 		(estate->es_processed)++;
-		setLastTid(&(tuple->t_self));
+		setLastTid(&slot->tts_tid);
 	}
 
 	/*
@@ -647,8 +648,6 @@ ExecDelete(ModifyTableState *mtstate,
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
-		HeapTuple	tuple;
-
 		/*
 		 * delete from foreign table: let the FDW do it
 		 *
@@ -670,12 +669,11 @@ ExecDelete(ModifyTableState *mtstate,
 
 		/*
 		 * RETURNING expressions might reference the tableoid column, so
-		 * initialize t_tableOid before evaluating them.
+		 * (re)initialize tts_tableOid before evaluating them.
 		 */
 		if (TTS_EMPTY(slot))
 			ExecStoreAllNullTuple(slot);
-		tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 	}
 	else
 	{
@@ -985,9 +983,10 @@ ExecUpdate(ModifyTableState *mtstate,
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
-		 * tableoid column, so initialize t_tableOid before evaluating them.
+		 * tableoid column, so (re-)initialize tts_tableOid before evaluating
+		 * them.
 		 */
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 	}
 	else
 	{
@@ -995,10 +994,10 @@ ExecUpdate(ModifyTableState *mtstate,
 		bool		partition_constraint_failed;
 
 		/*
-		 * Constraints might reference the tableoid column, so initialize
-		 * t_tableOid before evaluating them.
+		 * Constraints might reference the tableoid column, so (re-)initialize
+		 * tts_tableOid before evaluating them.
 		 */
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 
 		/*
 		 * Check any RLS UPDATE WITH CHECK policies
@@ -1184,6 +1183,8 @@ lreplace:;
 							 estate->es_crosscheck_snapshot,
 							 true /* wait for commit */ ,
 							 &hufd, &lockmode);
+		ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
+
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:

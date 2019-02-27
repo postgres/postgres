@@ -424,6 +424,7 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 
 		/* OK, store the tuple and create index entries for it */
 		simple_heap_insert(rel, tuple);
+		ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 		if (resultRelInfo->ri_NumIndices > 0)
 			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
@@ -496,6 +497,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 
 		/* OK, update the tuple and index entries for it */
 		simple_heap_update(rel, &hsearchslot->tuple->t_self, hslot->tuple);
+		ItemPointerCopy(&hslot->tuple->t_self, &slot->tts_tid);
 
 		if (resultRelInfo->ri_NumIndices > 0 &&
 			!HeapTupleIsHeapOnly(hslot->tuple))

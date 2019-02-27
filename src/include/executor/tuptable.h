@@ -15,6 +15,7 @@
 #define TUPTABLE_H
 
 #include "access/htup.h"
+#include "access/sysattr.h"
 #include "access/tupdesc.h"
 #include "access/htup_details.h"
 #include "storage/buf.h"
@@ -126,6 +127,8 @@ typedef struct TupleTableSlot
 #define FIELDNO_TUPLETABLESLOT_ISNULL 6
 	bool	   *tts_isnull;		/* current per-attribute isnull flags */
 	MemoryContext tts_mcxt;		/* slot itself is in this context */
+	ItemPointerData tts_tid;    /* stored tuple's tid */
+	Oid			tts_tableOid;   /* table oid of tuple */
 } TupleTableSlot;
 
 /* routines for a TupleTableSlot implementation */
@@ -397,6 +400,17 @@ static inline Datum
 slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
 	AssertArg(attnum < 0);		/* caller error */
+
+	if (attnum == TableOidAttributeNumber)
+	{
+		*isnull = false;
+		return ObjectIdGetDatum(slot->tts_tableOid);
+	}
+	else if (attnum == SelfItemPointerAttributeNumber)
+	{
+		*isnull = false;
+		return PointerGetDatum(&slot->tts_tid);
+	}
 
 	/* Fetch the system attribute from the underlying tuple. */
 	return slot->tts_ops->getsysattr(slot, attnum, isnull);

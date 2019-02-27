@@ -2710,10 +2710,10 @@ CopyFrom(CopyState cstate)
 		tuple = heap_form_tuple(tupDesc, values, nulls);
 
 		/*
-		 * Constraints might reference the tableoid column, so initialize
-		 * t_tableOid before evaluating them.
+		 * Constraints might reference the tableoid column, so (re-)initialize
+		 * tts_tableOid before evaluating them.
 		 */
-		tuple->t_tableOid = RelationGetRelid(target_resultRelInfo->ri_RelationDesc);
+		myslot->tts_tableOid = RelationGetRelid(target_resultRelInfo->ri_RelationDesc);
 
 		/* Triggers and stuff need to be invoked in query context. */
 		MemoryContextSwitchTo(oldcontext);
@@ -2899,7 +2899,7 @@ CopyFrom(CopyState cstate)
 				MemoryContextSwitchTo(oldcontext);
 			}
 
-			tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+			slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 		}
 
 		skip_tuple = false;
@@ -2995,14 +2995,18 @@ CopyFrom(CopyState cstate)
 
 						/*
 						 * AFTER ROW Triggers might reference the tableoid
-						 * column, so initialize t_tableOid before evaluating
-						 * them.
+						 * column, so (re-)initialize tts_tableOid before
+						 * evaluating them.
 						 */
-						tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+						slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 					}
 					else
+					{
 						heap_insert(resultRelInfo->ri_RelationDesc, tuple,
 									mycid, hi_options, bistate);
+						ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
+						slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+					}
 
 					/* And create index entries for it */
 					if (resultRelInfo->ri_NumIndices > 0)

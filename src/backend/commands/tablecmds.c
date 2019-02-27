@@ -4860,7 +4860,10 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 			/* Write the tuple out to the new relation */
 			if (newrel)
+			{
 				heap_insert(newrel, tuple, mycid, hi_options, bistate);
+				ItemPointerCopy(&tuple->t_self, &newslot->tts_tid);
+			}
 
 			ResetExprContext(econtext);
 
