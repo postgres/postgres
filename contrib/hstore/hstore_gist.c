@@ -19,9 +19,6 @@
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
 
-#define SIGPTR(x)  ( (BITVECP) ARR_DATA_PTR(x) )
-
-
 #define LOOPBYTE \
 			for(i=0;i<SIGLEN;i++)
 
