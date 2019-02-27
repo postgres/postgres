@@ -16,6 +16,7 @@
 
 #include "access/htup.h"
 #include "access/tupdesc.h"
+#include "access/htup_details.h"
 #include "storage/buf.h"
 
 /*----------
@@ -246,6 +247,7 @@ typedef struct HeapTupleTableSlot
 	HeapTuple	tuple;		/* physical tuple */
 #define FIELDNO_HEAPTUPLETABLESLOT_OFF 2
 	uint32		off;		/* saved state for slot_deform_heap_tuple */
+	HeapTupleData tupdata;	/* optional workspace for storing tuple */
 } HeapTupleTableSlot;
 
 /* heap tuple residing in a buffer */
