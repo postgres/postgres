@@ -587,6 +587,9 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 
 	/* We know this is a newly created relation, so there are no indexes */
 
+	/* Free the copied tuple. */
+	heap_freetuple(tuple);
+
 	return true;
 }
 
