@@ -74,7 +74,11 @@ static TupleDesc ExecTypeFromTLInternal(List *targetList,
 static pg_attribute_always_inline void
 slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 					   int natts);
-static void tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, Buffer buffer);
+static inline void tts_buffer_heap_store_tuple(TupleTableSlot *slot,
+											   HeapTuple tuple,
+											   Buffer buffer,
+											   bool transfer_pin);
+static void tts_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, bool shouldFree);
 
 
 const TupleTableSlotOps TTSOpsVirtual;
@@ -743,7 +747,9 @@ tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 	}
 	else
 	{
-		tts_buffer_heap_store_tuple(dstslot, bsrcslot->base.tuple, bsrcslot->buffer);
+		tts_buffer_heap_store_tuple(dstslot, bsrcslot->base.tuple,
+									bsrcslot->buffer, false);
+
 		/*
 		 * Need to materialize because the HeapTupleData portion of the tuple
 		 * might be in a foreign memory context. That's annoying, but until
@@ -792,8 +798,9 @@ tts_buffer_heap_copy_minimal_tuple(TupleTableSlot *slot)
 	return minimal_tuple_from_heap_tuple(bslot->base.tuple);
 }
 
-static void
-tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, Buffer buffer)
+static inline void
+tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
+							Buffer buffer, bool transfer_pin)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
@@ -813,7 +820,9 @@ tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, Buffer buffer
 
 	/*
 	 * If tuple is on a disk page, keep the page pinned as long as we hold a
-	 * pointer into it.  We assume the caller already has such a pin.
+	 * pointer into it.  We assume the caller already has such a pin.  If
+	 * transfer_pin is true, we'll transfer that pin to this slot, if not
+	 * we'll pin it again ourselves.
 	 *
 	 * This is coded to optimize the case where the slot previously held a
 	 * tuple on the same disk page: in that case releasing and re-acquiring
@@ -824,8 +833,19 @@ tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, Buffer buffer
 	{
 		if (BufferIsValid(bslot->buffer))
 			ReleaseBuffer(bslot->buffer);
+
 		bslot->buffer = buffer;
-		IncrBufferRefCount(buffer);
+
+		if (!transfer_pin && BufferIsValid(buffer))
+			IncrBufferRefCount(buffer);
+	}
+	else if (transfer_pin && BufferIsValid(buffer))
+	{
+		/*
+		 * In transfer_pin mode the caller won't know about the same-page
+		 * optimization, so we gotta release its pin.
+		 */
+		ReleaseBuffer(buffer);
 	}
 }
 
@@ -1321,7 +1341,32 @@ ExecStoreBufferHeapTuple(HeapTuple tuple,
 
 	if (unlikely(!TTS_IS_BUFFERTUPLE(slot)))
 		elog(ERROR, "trying to store an on-disk heap tuple into wrong type of slot");
-	tts_buffer_heap_store_tuple(slot, tuple, buffer);
+	tts_buffer_heap_store_tuple(slot, tuple, buffer, false);
+
+
+	return slot;
+}
+
+/*
+ * Like ExecStoreBufferHeapTuple, but transfer an existing pin from the caller
+ * to the slot, i.e. the caller doesn't need to, and may not, release the pin.
+ */
+TupleTableSlot *
+ExecStorePinnedBufferHeapTuple(HeapTuple tuple,
+							   TupleTableSlot *slot,
+							   Buffer buffer)
+{
+	/*
+	 * sanity checks
+	 */
+	Assert(tuple != NULL);
+	Assert(slot != NULL);
+	Assert(slot->tts_tupleDescriptor != NULL);
+	Assert(BufferIsValid(buffer));
+
+	if (unlikely(!TTS_IS_BUFFERTUPLE(slot)))
+		elog(ERROR, "trying to store an on-disk heap tuple into wrong type of slot");
+	tts_buffer_heap_store_tuple(slot, tuple, buffer, true);
 
 	return slot;
 }

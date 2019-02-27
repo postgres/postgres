@@ -379,19 +379,12 @@ TidNext(TidScanState *node)
 		{
 			/*
 			 * Store the scanned tuple in the scan tuple slot of the scan
-			 * state.  Eventually we will only do this and not return a tuple.
+			 * state, transferring the pin to the slot.
 			 */
-			ExecStoreBufferHeapTuple(tuple, /* tuple to store */
-									 slot,	/* slot to store in */
-									 buffer);	/* buffer associated with
-												 * tuple */
-
-			/*
-			 * At this point we have an extra pin on the buffer, because
-			 * ExecStoreHeapTuple incremented the pin count. Drop our local
-			 * pin.
-			 */
-			ReleaseBuffer(buffer);
+			ExecStorePinnedBufferHeapTuple(tuple, /* tuple to store */
+										   slot,	/* slot to store in */
+										   buffer);	/* buffer associated with
+													 * tuple */
 
 			return slot;
 		}

@@ -305,6 +305,9 @@ extern void ExecForceStoreHeapTuple(HeapTuple tuple, TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreBufferHeapTuple(HeapTuple tuple,
 						 TupleTableSlot *slot,
 						 Buffer buffer);
+extern TupleTableSlot *ExecStorePinnedBufferHeapTuple(HeapTuple tuple,
+						 TupleTableSlot *slot,
+						 Buffer buffer);
 extern TupleTableSlot *ExecStoreMinimalTuple(MinimalTuple mtup,
 					  TupleTableSlot *slot,
 					  bool shouldFree);
