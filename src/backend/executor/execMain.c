@@ -975,9 +975,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * Initialize the executor's tuple table to empty.
 	 */
 	estate->es_tupleTable = NIL;
-	estate->es_trig_tuple_slot = NULL;
-	estate->es_trig_oldtup_slot = NULL;
-	estate->es_trig_newtup_slot = NULL;
 
 	/* mark EvalPlanQual not active */
 	estate->es_epqTuple = NULL;
@@ -1324,6 +1321,9 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_projectReturning = NULL;
 	resultRelInfo->ri_onConflictArbiterIndexes = NIL;
 	resultRelInfo->ri_onConflict = NULL;
+	resultRelInfo->ri_ReturningSlot = NULL;
+	resultRelInfo->ri_TrigOldSlot = NULL;
+	resultRelInfo->ri_TrigNewSlot = NULL;
 
 	/*
 	 * Partition constraint, which also includes the partition constraint of

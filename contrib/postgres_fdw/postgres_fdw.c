@@ -3507,8 +3507,13 @@ store_returning_result(PgFdwModifyState *fmstate,
 											fmstate->retrieved_attrs,
 											NULL,
 											fmstate->temp_cxt);
-		/* tuple will be deleted when it is cleared from the slot */
-		ExecStoreHeapTuple(newtup, slot, true);
+		/*
+		 * The returning slot will not necessarily be suitable to store
+		 * heaptuples directly, so allow for conversion.
+		 */
+		ExecForceStoreHeapTuple(newtup, slot);
+		ExecMaterializeSlot(slot);
+		pfree(newtup);
 	}
 	PG_CATCH();
 	{
@@ -3886,6 +3891,7 @@ apply_returning_filter(PgFdwDirectModifyState *dmstate,
 					   TupleTableSlot *slot,
 					   EState *estate)
 {
+	ResultRelInfo *relInfo = estate->es_result_relation_info;
 	TupleDesc	resultTupType = RelationGetDescr(dmstate->resultRel);
 	TupleTableSlot *resultSlot;
 	Datum	   *values;
@@ -3895,11 +3901,9 @@ apply_returning_filter(PgFdwDirectModifyState *dmstate,
 	int			i;
 
 	/*
-	 * Use the trigger tuple slot as a place to store the result tuple.
+	 * Use the return tuple slot as a place to store the result tuple.
 	 */
-	resultSlot = estate->es_trig_tuple_slot;
-	if (resultSlot->tts_tupleDescriptor != resultTupType)
-		ExecSetSlotDescriptor(resultSlot, resultTupType);
+	resultSlot = ExecGetReturningSlot(estate, relInfo);
 
 	/*
 	 * Extract all the values of the scan tuple.

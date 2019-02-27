@@ -196,11 +196,6 @@ create_estate_for_relation(LogicalRepRelMapEntry *rel)
 
 	estate->es_output_cid = GetCurrentCommandId(true);
 
-	/* Triggers might need a slot */
-	if (resultRelInfo->ri_TrigDesc)
-		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate, NULL,
-															&TTSOpsVirtual);
-
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
 

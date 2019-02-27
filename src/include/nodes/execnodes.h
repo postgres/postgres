@@ -427,6 +427,11 @@ typedef struct ResultRelInfo
 	/* optional runtime measurements for triggers */
 	Instrumentation *ri_TrigInstrument;
 
+	/* On-demand created slots for triggers / returning processing */
+	TupleTableSlot *ri_ReturningSlot; /* for trigger output tuples */
+	TupleTableSlot *ri_TrigOldSlot; /* for a trigger's old tuple */
+	TupleTableSlot *ri_TrigNewSlot; /* for a trigger's new tuple */
+
 	/* FDW callback functions, if foreign table */
 	struct FdwRoutine *ri_FdwRoutine;
 
@@ -524,9 +529,6 @@ typedef struct EState
 
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;	/* trigger-only ResultRelInfos */
-	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
-	TupleTableSlot *es_trig_oldtup_slot;	/* for TriggerEnabled */
-	TupleTableSlot *es_trig_newtup_slot;	/* for TriggerEnabled */
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */

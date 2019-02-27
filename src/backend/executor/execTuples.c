@@ -119,6 +119,7 @@ tts_virtual_clear(TupleTableSlot *slot)
 
 	slot->tts_nvalid = 0;
 	slot->tts_flags |= TTS_FLAG_EMPTY;
+	ItemPointerSetInvalid(&slot->tts_tid);
 }
 
 /*
@@ -314,6 +315,7 @@ tts_heap_clear(TupleTableSlot *slot)
 
 	slot->tts_nvalid = 0;
 	slot->tts_flags |= TTS_FLAG_EMPTY;
+	ItemPointerSetInvalid(&slot->tts_tid);
 	hslot->off = 0;
 	hslot->tuple = NULL;
 }
@@ -477,6 +479,7 @@ tts_minimal_clear(TupleTableSlot *slot)
 
 	slot->tts_nvalid = 0;
 	slot->tts_flags |= TTS_FLAG_EMPTY;
+	ItemPointerSetInvalid(&slot->tts_tid);
 	mslot->off = 0;
 	mslot->mintuple = NULL;
 }
@@ -658,6 +661,7 @@ tts_buffer_heap_clear(TupleTableSlot *slot)
 
 	slot->tts_nvalid = 0;
 	slot->tts_flags |= TTS_FLAG_EMPTY;
+	ItemPointerSetInvalid(&slot->tts_tid);
 	bslot->base.tuple = NULL;
 	bslot->base.off = 0;
 	bslot->buffer = InvalidBuffer;

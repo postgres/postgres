@@ -131,9 +131,6 @@ CreateExecutorState(void)
 	estate->es_tuple_routing_result_relations = NIL;
 
 	estate->es_trig_target_relations = NIL;
-	estate->es_trig_tuple_slot = NULL;
-	estate->es_trig_oldtup_slot = NULL;
-	estate->es_trig_newtup_slot = NULL;
 
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;
@@ -1101,4 +1098,70 @@ ExecCleanTargetListLength(List *targetlist)
 			len++;
 	}
 	return len;
+}
+
+/*
+ * Return a relInfo's tuple slot for a trigger's OLD tuples.
+ */
+TupleTableSlot *
+ExecGetTriggerOldSlot(EState *estate, ResultRelInfo *relInfo)
+{
+	if (relInfo->ri_TrigOldSlot == NULL)
+	{
+		Relation	rel = relInfo->ri_RelationDesc;
+		MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+		relInfo->ri_TrigOldSlot =
+			ExecInitExtraTupleSlot(estate,
+								   RelationGetDescr(rel),
+								   &TTSOpsBufferHeapTuple);
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	return relInfo->ri_TrigOldSlot;
+}
+
+/*
+ * Return a relInfo's tuple slot for a trigger's NEW tuples.
+ */
+TupleTableSlot *
+ExecGetTriggerNewSlot(EState *estate, ResultRelInfo *relInfo)
+{
+	if (relInfo->ri_TrigNewSlot == NULL)
+	{
+		Relation	rel = relInfo->ri_RelationDesc;
+		MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+		relInfo->ri_TrigNewSlot =
+			ExecInitExtraTupleSlot(estate,
+								   RelationGetDescr(rel),
+								   &TTSOpsBufferHeapTuple);
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	return relInfo->ri_TrigNewSlot;
+}
+
+/*
+ * Return a relInfo's tuple slot for processing returning tuples.
+ */
+TupleTableSlot *
+ExecGetReturningSlot(EState *estate, ResultRelInfo *relInfo)
+{
+	if (relInfo->ri_ReturningSlot == NULL)
+	{
+		Relation	rel = relInfo->ri_RelationDesc;
+		MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+		relInfo->ri_ReturningSlot =
+			ExecInitExtraTupleSlot(estate,
+								   RelationGetDescr(rel),
+								   &TTSOpsBufferHeapTuple);
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	return relInfo->ri_ReturningSlot;
 }
