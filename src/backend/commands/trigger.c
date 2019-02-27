@@ -4490,7 +4490,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	AfterTriggerEventChunk *chunk;
 	MemoryContext per_tuple_context;
 	bool		local_estate = false;
-	ResultRelInfo *rInfo;
+	ResultRelInfo *rInfo = NULL;
 	Relation	rel = NULL;
 	TriggerDesc *trigdesc = NULL;
 	FmgrInfo   *finfo = NULL;
