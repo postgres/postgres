@@ -27,9 +27,12 @@
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
 #include "port/pg_crc32c.h"
+#ifndef FRONTEND
+#include "storage/fd.h"
+#endif
 
 /*
- * get_controlfile(char *DataDir, const char *progname, bool *crc_ok_p)
+ * get_controlfile()
  *
  * Get controlfile values.  The result is returned as a palloc'd copy of the
  * control file data.
@@ -51,13 +54,14 @@ get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
 	ControlFile = palloc(sizeof(ControlFileData));
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
-	if ((fd = open(ControlFilePath, O_RDONLY | PG_BINARY, 0)) == -1)
 #ifndef FRONTEND
+	if ((fd = OpenTransientFile(ControlFilePath, O_RDONLY | PG_BINARY)) == -1)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\" for reading: %m",
 						ControlFilePath)));
 #else
+	if ((fd = open(ControlFilePath, O_RDONLY | PG_BINARY, 0)) == -1)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 				progname, ControlFilePath, strerror(errno));
@@ -95,7 +99,11 @@ get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
 #endif
 	}
 
+#ifndef FRONTEND
+	CloseTransientFile(fd);
+#else
 	close(fd);
+#endif
 
 	/* Check the CRC. */
 	INIT_CRC32C(crc);
