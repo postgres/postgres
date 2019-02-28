@@ -1130,16 +1130,13 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 	TargetEntry *tle;
 	Node	   *expr;
 
-	/* there's no forfour() so we must chase one list manually */
-	rtlc = list_head(refnames_tlist);
-	forthree(ctlc, colTypes, cclc, colCollations, itlc, input_tlist)
+	forfour(ctlc, colTypes, cclc, colCollations,
+			itlc, input_tlist, rtlc, refnames_tlist)
 	{
 		Oid			colType = lfirst_oid(ctlc);
 		Oid			colColl = lfirst_oid(cclc);
 		TargetEntry *inputtle = (TargetEntry *) lfirst(itlc);
 		TargetEntry *reftle = (TargetEntry *) lfirst(rtlc);
-
-		rtlc = lnext(rtlc);
 
 		Assert(inputtle->resno == resno);
 		Assert(reftle->resno == resno);

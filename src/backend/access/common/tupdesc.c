@@ -902,23 +902,12 @@ BuildDescFromLists(List *names, List *types, List *typmods, List *collations)
 	desc = CreateTemplateTupleDesc(natts);
 
 	attnum = 0;
-
-	l2 = list_head(types);
-	l3 = list_head(typmods);
-	l4 = list_head(collations);
-	foreach(l1, names)
+	forfour(l1, names, l2, types, l3, typmods, l4, collations)
 	{
 		char	   *attname = strVal(lfirst(l1));
-		Oid			atttypid;
-		int32		atttypmod;
-		Oid			attcollation;
-
-		atttypid = lfirst_oid(l2);
-		l2 = lnext(l2);
-		atttypmod = lfirst_int(l3);
-		l3 = lnext(l3);
-		attcollation = lfirst_oid(l4);
-		l4 = lnext(l4);
+		Oid			atttypid = lfirst_oid(l2);
+		int32		atttypmod = lfirst_int(l3);
+		Oid			attcollation = lfirst_oid(l4);
 
 		attnum++;
 

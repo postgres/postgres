@@ -2124,13 +2124,12 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
 							   FUNC_MAX_ARGS,
 							   FUNC_MAX_ARGS)));
 
-	args_item = list_head(func->objargs);
-	for (i = 0; i < argcount; i++)
+	i = 0;
+	foreach(args_item, func->objargs)
 	{
 		TypeName   *t = (TypeName *) lfirst(args_item);
 
-		argoids[i] = LookupTypeNameOid(NULL, t, noError);
-		args_item = lnext(args_item);
+		argoids[i++] = LookupTypeNameOid(NULL, t, noError);
 	}
 
 	/*

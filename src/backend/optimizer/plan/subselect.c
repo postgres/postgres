@@ -1680,9 +1680,7 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	 */
 	tlist = testlist = paramids = NIL;
 	resno = 1;
-	/* there's no "forfour" so we have to chase one of the lists manually */
-	cc = list_head(opcollations);
-	forthree(lc, leftargs, rc, rightargs, oc, opids)
+	forfour(lc, leftargs, rc, rightargs, oc, opids, cc, opcollations)
 	{
 		Node	   *leftarg = (Node *) lfirst(lc);
 		Node	   *rightarg = (Node *) lfirst(rc);
@@ -1690,7 +1688,6 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 		Oid			opcollation = lfirst_oid(cc);
 		Param	   *param;
 
-		cc = lnext(cc);
 		param = generate_new_exec_param(root,
 										exprType(rightarg),
 										exprTypmod(rightarg),

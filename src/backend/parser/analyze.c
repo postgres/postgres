@@ -831,17 +831,13 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 */
 	rte = pstate->p_target_rangetblentry;
 	qry->targetList = NIL;
-	icols = list_head(icolumns);
-	attnos = list_head(attrnos);
-	foreach(lc, exprList)
+	Assert(list_length(exprList) <= list_length(icolumns));
+	forthree(lc, exprList, icols, icolumns, attnos, attrnos)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
-		ResTarget  *col;
-		AttrNumber	attr_num;
+		ResTarget  *col = lfirst_node(ResTarget, icols);
+		AttrNumber	attr_num = (AttrNumber) lfirst_int(attnos);
 		TargetEntry *tle;
-
-		col = lfirst_node(ResTarget, icols);
-		attr_num = (AttrNumber) lfirst_int(attnos);
 
 		tle = makeTargetEntry(expr,
 							  attr_num,
@@ -851,9 +847,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 		rte->insertedCols = bms_add_member(rte->insertedCols,
 										   attr_num - FirstLowInvalidHeapAttributeNumber);
-
-		icols = lnext(icols);
-		attnos = lnext(attnos);
 	}
 
 	/* Process ON CONFLICT, if any. */
@@ -950,19 +943,16 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 	 * Prepare columns for assignment to target table.
 	 */
 	result = NIL;
-	icols = list_head(icolumns);
-	attnos = list_head(attrnos);
-	foreach(lc, exprlist)
+	forthree(lc, exprlist, icols, icolumns, attnos, attrnos)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
-		ResTarget  *col;
-
-		col = lfirst_node(ResTarget, icols);
+		ResTarget  *col = lfirst_node(ResTarget, icols);
+		int			attno = lfirst_int(attnos);
 
 		expr = transformAssignedExpr(pstate, expr,
 									 EXPR_KIND_INSERT_TARGET,
 									 col->name,
-									 lfirst_int(attnos),
+									 attno,
 									 col->indirection,
 									 col->location);
 
@@ -991,9 +981,6 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 		}
 
 		result = lappend(result, expr);
-
-		icols = lnext(icols);
-		attnos = lnext(attnos);
 	}
 
 	return result;
@@ -1699,11 +1686,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->targetList = NIL;
 	targetvars = NIL;
 	targetnames = NIL;
-	left_tlist = list_head(leftmostQuery->targetList);
 
-	forthree(lct, sostmt->colTypes,
-			 lcm, sostmt->colTypmods,
-			 lcc, sostmt->colCollations)
+	forfour(lct, sostmt->colTypes,
+			lcm, sostmt->colTypmods,
+			lcc, sostmt->colCollations,
+			left_tlist, leftmostQuery->targetList)
 	{
 		Oid			colType = lfirst_oid(lct);
 		int32		colTypmod = lfirst_int(lcm);
@@ -1729,7 +1716,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		qry->targetList = lappend(qry->targetList, tle);
 		targetvars = lappend(targetvars, var);
 		targetnames = lappend(targetnames, makeString(colName));
-		left_tlist = lnext(left_tlist);
 	}
 
 	/*
@@ -2201,10 +2187,9 @@ determineRecursiveColTypes(ParseState *pstate, Node *larg, List *nrtargetlist)
 	 * dummy result expressions of the non-recursive term.
 	 */
 	targetList = NIL;
-	left_tlist = list_head(leftmostQuery->targetList);
 	next_resno = 1;
 
-	foreach(nrtl, nrtargetlist)
+	forboth(nrtl, nrtargetlist, left_tlist, leftmostQuery->targetList)
 	{
 		TargetEntry *nrtle = (TargetEntry *) lfirst(nrtl);
 		TargetEntry *lefttle = (TargetEntry *) lfirst(left_tlist);
@@ -2218,7 +2203,6 @@ determineRecursiveColTypes(ParseState *pstate, Node *larg, List *nrtargetlist)
 							  colName,
 							  false);
 		targetList = lappend(targetList, tle);
-		left_tlist = lnext(left_tlist);
 	}
 
 	/* Now build CTE's output column info using dummy targetlist */

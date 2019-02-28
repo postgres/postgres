@@ -1683,7 +1683,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 						   *l_opfamily,
 						   *l_inputcollid;
 				ListCell   *lc;
-				int			off;
 
 				/*
 				 * Iterate over each field, prepare comparisons.  To handle
@@ -1695,20 +1694,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				Assert(list_length(rcexpr->opfamilies) == nopers);
 				Assert(list_length(rcexpr->inputcollids) == nopers);
 
-				off = 0;
-				for (off = 0,
-					 l_left_expr = list_head(rcexpr->largs),
-					 l_right_expr = list_head(rcexpr->rargs),
-					 l_opno = list_head(rcexpr->opnos),
-					 l_opfamily = list_head(rcexpr->opfamilies),
-					 l_inputcollid = list_head(rcexpr->inputcollids);
-					 off < nopers;
-					 off++,
-					 l_left_expr = lnext(l_left_expr),
-					 l_right_expr = lnext(l_right_expr),
-					 l_opno = lnext(l_opno),
-					 l_opfamily = lnext(l_opfamily),
-					 l_inputcollid = lnext(l_inputcollid))
+				forfive(l_left_expr, rcexpr->largs,
+						l_right_expr, rcexpr->rargs,
+						l_opno, rcexpr->opnos,
+						l_opfamily, rcexpr->opfamilies,
+						l_inputcollid, rcexpr->inputcollids)
 				{
 					Expr	   *left_expr = (Expr *) lfirst(l_left_expr);
 					Expr	   *right_expr = (Expr *) lfirst(l_right_expr);
