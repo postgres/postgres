@@ -747,10 +747,12 @@ tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 
 	/*
 	 * If the source slot is of a different kind, or is a buffer slot that has
-	 * been materialized, make a new copy of the tuple.
+	 * been materialized / is virtual, make a new copy of the tuple. Otherwise
+	 * make a new reference to the in-buffer tuple.
 	 */
 	if (dstslot->tts_ops != srcslot->tts_ops ||
-		TTS_SHOULDFREE(srcslot))
+		TTS_SHOULDFREE(srcslot) ||
+		!bsrcslot->base.tuple)
 	{
 		MemoryContext oldContext;
 
@@ -763,18 +765,19 @@ tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 	}
 	else
 	{
-		if (!bsrcslot->base.tuple)
-			tts_buffer_heap_materialize(srcslot);
+		Assert(BufferIsValid(bsrcslot->buffer));
 
 		tts_buffer_heap_store_tuple(dstslot, bsrcslot->base.tuple,
 									bsrcslot->buffer, false);
 
 		/*
-		 * Need to materialize because the HeapTupleData portion of the tuple
-		 * might be in a foreign memory context. That's annoying, but until
-		 * that's moved into the slot, unavoidable.
+		 * The HeapTupleData portion of the source tuple might be shorter
+		 * lived than the destination slot. Therefore copy the HeapTuple into
+		 * our slot's tupdata, which is guaranteed to live long enough (but
+		 * will still point into the buffer).
 		 */
-		tts_buffer_heap_materialize(dstslot);
+		memcpy(&bdstslot->base.tupdata, bdstslot->base.tuple, sizeof(HeapTupleData));
+		bdstslot->base.tuple = &bdstslot->base.tupdata;
 	}
 }
 
