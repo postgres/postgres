@@ -630,6 +630,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       moves the data file(s) associated with the table to the new tablespace.
       Indexes on the table, if any, are not moved; but they can be moved
       separately with additional <literal>SET TABLESPACE</literal> commands.
+      When applied to a partitioned table, nothing is moved, but any
+      partitions created afterwards with
+      <command>CREATE TABLE PARTITION OF</command> will use that tablespace,
+      unless the <literal>TABLESPACE</literal> clause is used to override it.
+     </para>
+
+     <para>
       All tables in the current database in a tablespace can be moved by using
       the <literal>ALL IN TABLESPACE</literal> form, which will lock all tables
       to be moved first and then move each one.  This form also supports
@@ -637,7 +644,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       roles specified.  If the <literal>NOWAIT</literal> option is specified
       then the command will fail if it is unable to acquire all of the locks
       required immediately.  Note that system catalogs are not moved by this
-      command, use <command>ALTER DATABASE</command> or explicit
+      command; use <command>ALTER DATABASE</command> or explicit
       <command>ALTER TABLE</command> invocations instead if desired.  The
       <literal>information_schema</literal> relations are not considered part
       of the system catalogs and will be moved.
