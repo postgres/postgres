@@ -176,8 +176,7 @@ static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 				  TupleTableSlot *oldslot,
 				  const RI_ConstraintInfo *riinfo);
 static Datum ri_restrict(TriggerData *trigdata, bool is_no_action);
-static Datum ri_setnull(TriggerData *trigdata);
-static Datum ri_setdefault(TriggerData *trigdata);
+static Datum ri_set(TriggerData *trigdata, bool is_set_null);
 static void quoteOneName(char *buffer, const char *name);
 static void quoteRelationName(char *buffer, Relation rel);
 static void ri_GenerateQual(StringInfo buf,
@@ -960,7 +959,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_del", RI_TRIGTYPE_DELETE);
 
 	/* Share code with UPDATE case */
-	return ri_setnull((TriggerData *) fcinfo->context);
+	return ri_set((TriggerData *) fcinfo->context, true);
 }
 
 /*
@@ -975,118 +974,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_upd", RI_TRIGTYPE_UPDATE);
 
 	/* Share code with DELETE case */
-	return ri_setnull((TriggerData *) fcinfo->context);
+	return ri_set((TriggerData *) fcinfo->context, true);
 }
-
-/*
- * ri_setnull -
- *
- * Common code for ON DELETE SET NULL and ON UPDATE SET NULL
- */
-static Datum
-ri_setnull(TriggerData *trigdata)
-{
-	const RI_ConstraintInfo *riinfo;
-	Relation	fk_rel;
-	Relation	pk_rel;
-	TupleTableSlot *oldslot;
-	RI_QueryKey qkey;
-	SPIPlanPtr	qplan;
-
-	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
-									trigdata->tg_relation, true);
-
-	/*
-	 * Get the relation descriptors of the FK and PK tables and the old tuple.
-	 *
-	 * fk_rel is opened in RowExclusiveLock mode since that's what our
-	 * eventual UPDATE will get on it.
-	 */
-	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
-	pk_rel = trigdata->tg_relation;
-	oldslot = trigdata->tg_trigslot;
-
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
-
-	/*
-	 * Fetch or prepare a saved plan for the set null operation (it's
-	 * the same query for delete and update cases)
-	 */
-	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_SETNULL_DOUPDATE);
-
-	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-	{
-		StringInfoData querybuf;
-		StringInfoData qualbuf;
-		char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-		char		attname[MAX_QUOTED_NAME_LEN];
-		char		paramname[16];
-		const char *querysep;
-		const char *qualsep;
-		const char *fk_only;
-		Oid			queryoids[RI_MAX_NUMKEYS];
-
-		/* ----------
-		 * The query string built is
-		 *	UPDATE [ONLY] <fktable> SET fkatt1 = NULL [, ...]
-		 *			WHERE $1 = fkatt1 [AND ...]
-		 * The type id's for the $ parameters are those of the
-		 * corresponding PK attributes.
-		 * ----------
-		 */
-		initStringInfo(&querybuf);
-		initStringInfo(&qualbuf);
-		fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
-			"" : "ONLY ";
-		quoteRelationName(fkrelname, fk_rel);
-		appendStringInfo(&querybuf, "UPDATE %s%s SET",
-						 fk_only, fkrelname);
-		querysep = "";
-		qualsep = "WHERE";
-		for (int i = 0; i < riinfo->nkeys; i++)
-		{
-			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
-			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
-
-			quoteOneName(attname,
-						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
-			appendStringInfo(&querybuf,
-							 "%s %s = NULL",
-							 querysep, attname);
-			sprintf(paramname, "$%d", i + 1);
-			ri_GenerateQual(&qualbuf, qualsep,
-							paramname, pk_type,
-							riinfo->pf_eq_oprs[i],
-							attname, fk_type);
-			querysep = ",";
-			qualsep = "AND";
-			queryoids[i] = pk_type;
-		}
-		appendStringInfoString(&querybuf, qualbuf.data);
-
-		/* Prepare and save the plan */
-		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
-							 &qkey, fk_rel, pk_rel, true);
-	}
-
-	/*
-	 * We have a plan now. Run it to update the existing references.
-	 */
-	ri_PerformCheck(riinfo, &qkey, qplan,
-					fk_rel, pk_rel,
-					oldslot, NULL,
-					true,	/* must detect new rows */
-					SPI_OK_UPDATE);
-
-	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed");
-
-	table_close(fk_rel, RowExclusiveLock);
-
-	return PointerGetDatum(NULL);
-}
-
 
 /*
  * RI_FKey_setdefault_del -
@@ -1100,7 +989,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_del", RI_TRIGTYPE_DELETE);
 
 	/* Share code with UPDATE case */
-	return ri_setdefault((TriggerData *) fcinfo->context);
+	return ri_set((TriggerData *) fcinfo->context, false);
 }
 
 /*
@@ -1115,16 +1004,17 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_upd", RI_TRIGTYPE_UPDATE);
 
 	/* Share code with DELETE case */
-	return ri_setdefault((TriggerData *) fcinfo->context);
+	return ri_set((TriggerData *) fcinfo->context, false);
 }
 
 /*
- * ri_setdefault -
+ * ri_set -
  *
- * Common code for ON DELETE SET DEFAULT and ON UPDATE SET DEFAULT
+ * Common code for ON DELETE SET NULL, ON DELETE SET DEFAULT, ON UPDATE SET
+ * NULL, and ON UPDATE SET DEFAULT.
  */
 static Datum
-ri_setdefault(TriggerData *trigdata)
+ri_set(TriggerData *trigdata, bool is_set_null)
 {
 	const RI_ConstraintInfo *riinfo;
 	Relation	fk_rel;
@@ -1150,10 +1040,13 @@ ri_setdefault(TriggerData *trigdata)
 		elog(ERROR, "SPI_connect failed");
 
 	/*
-	 * Fetch or prepare a saved plan for the set default operation
-	 * (it's the same query for delete and update cases)
+	 * Fetch or prepare a saved plan for the set null/default operation (it's
+	 * the same query for delete and update cases)
 	 */
-	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_SETDEFAULT_DOUPDATE);
+	ri_BuildQueryKey(&qkey, riinfo,
+					 (is_set_null
+					  ? RI_PLAN_SETNULL_DOUPDATE
+					  : RI_PLAN_SETDEFAULT_DOUPDATE));
 
 	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
@@ -1169,7 +1062,7 @@ ri_setdefault(TriggerData *trigdata)
 
 		/* ----------
 		 * The query string built is
-		 *	UPDATE [ONLY] <fktable> SET fkatt1 = DEFAULT [, ...]
+		 *	UPDATE [ONLY] <fktable> SET fkatt1 = {NULL|DEFAULT} [, ...]
 		 *			WHERE $1 = fkatt1 [AND ...]
 		 * The type id's for the $ parameters are those of the
 		 * corresponding PK attributes.
@@ -1177,9 +1070,9 @@ ri_setdefault(TriggerData *trigdata)
 		 */
 		initStringInfo(&querybuf);
 		initStringInfo(&qualbuf);
-		quoteRelationName(fkrelname, fk_rel);
 		fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
 			"" : "ONLY ";
+		quoteRelationName(fkrelname, fk_rel);
 		appendStringInfo(&querybuf, "UPDATE %s%s SET",
 						 fk_only, fkrelname);
 		querysep = "";
@@ -1192,8 +1085,9 @@ ri_setdefault(TriggerData *trigdata)
 			quoteOneName(attname,
 						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
 			appendStringInfo(&querybuf,
-							 "%s %s = DEFAULT",
-							 querysep, attname);
+							 "%s %s = %s",
+							 querysep, attname,
+							 is_set_null ? "NULL" : "DEFAULT");
 			sprintf(paramname, "$%d", i + 1);
 			ri_GenerateQual(&qualbuf, qualsep,
 							paramname, pk_type,
@@ -1224,21 +1118,26 @@ ri_setdefault(TriggerData *trigdata)
 
 	table_close(fk_rel, RowExclusiveLock);
 
-	/*
-	 * If we just deleted or updated the PK row whose key was equal to
-	 * the FK columns' default values, and a referencing row exists in
-	 * the FK table, we would have updated that row to the same values
-	 * it already had --- and RI_FKey_fk_upd_check_required would
-	 * hence believe no check is necessary.  So we need to do another
-	 * lookup now and in case a reference still exists, abort the
-	 * operation.  That is already implemented in the NO ACTION
-	 * trigger, so just run it.  (This recheck is only needed in the
-	 * SET DEFAULT case, since CASCADE would remove such rows in case
-	 * of a DELETE operation or would change the FK key values in case
-	 * of an UPDATE, while SET NULL is certain to result in rows that
-	 * satisfy the FK constraint.)
-	 */
-	return ri_restrict(trigdata, true);
+	if (is_set_null)
+		return PointerGetDatum(NULL);
+	else
+	{
+		/*
+		 * If we just deleted or updated the PK row whose key was equal to
+		 * the FK columns' default values, and a referencing row exists in
+		 * the FK table, we would have updated that row to the same values
+		 * it already had --- and RI_FKey_fk_upd_check_required would
+		 * hence believe no check is necessary.  So we need to do another
+		 * lookup now and in case a reference still exists, abort the
+		 * operation.  That is already implemented in the NO ACTION
+		 * trigger, so just run it.  (This recheck is only needed in the
+		 * SET DEFAULT case, since CASCADE would remove such rows in case
+		 * of a DELETE operation or would change the FK key values in case
+		 * of an UPDATE, while SET NULL is certain to result in rows that
+		 * satisfy the FK constraint.)
+		 */
+		return ri_restrict(trigdata, true);
+	}
 }
 
 
