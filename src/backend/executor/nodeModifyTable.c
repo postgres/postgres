@@ -655,7 +655,6 @@ ExecDelete(ModifyTableState *mtstate,
 		 */
 		if (TTS_EMPTY(slot))
 			ExecStoreAllNullTuple(slot);
-		ExecMaterializeSlot(slot);
 
 		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 	}
