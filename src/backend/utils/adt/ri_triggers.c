@@ -1530,7 +1530,7 @@ ri_setdefault(TriggerData *trigdata)
  *	trigger must be fired, false if we can prove the constraint will still
  *	be satisfied.
  *
- *	new_row will be NULL if this is called for a delete.
+ *	new_slot will be NULL if this is called for a delete.
  * ----------
  */
 bool
