@@ -700,25 +700,36 @@ tts_buffer_heap_materialize(TupleTableSlot *slot)
 
 	slot->tts_flags |= TTS_FLAG_SHOULDFREE;
 
-	/*
-	 * A heap tuple stored in a BufferHeapTupleTableSlot should have a buffer
-	 * associated with it, unless it's materialized (which would've returned
-	 * above).
-	 */
-	Assert(bslot->base.tuple);
-
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-	bslot->base.tuple = heap_copytuple(bslot->base.tuple);
-	MemoryContextSwitchTo(oldContext);
 
-	/*
-	 * A heap tuple stored in a BufferHeapTupleTableSlot should have a buffer
-	 * associated with it, unless it's materialized.
-	 */
-	Assert(BufferIsValid(bslot->buffer));
-	if (likely(BufferIsValid(bslot->buffer)))
-		ReleaseBuffer(bslot->buffer);
-	bslot->buffer = InvalidBuffer;
+	if (!bslot->base.tuple)
+	{
+		/*
+		 * Normally BufferHeapTupleTableSlot should have a tuple + buffer
+		 * associated with it, unless it's materialized (which would've
+		 * returned above). But when it's useful to allow storing virtual
+		 * tuples in a buffer slot, which then also needs to be
+		 * materializable.
+		 */
+		bslot->base.tuple = heap_form_tuple(slot->tts_tupleDescriptor,
+											slot->tts_values,
+											slot->tts_isnull);
+
+	}
+	else
+	{
+		bslot->base.tuple = heap_copytuple(bslot->base.tuple);
+
+		/*
+		 * A heap tuple stored in a BufferHeapTupleTableSlot should have a
+		 * buffer associated with it, unless it's materialized or virtual.
+		 */
+		Assert(BufferIsValid(bslot->buffer));
+		if (likely(BufferIsValid(bslot->buffer)))
+			ReleaseBuffer(bslot->buffer);
+		bslot->buffer = InvalidBuffer;
+	}
+	MemoryContextSwitchTo(oldContext);
 
 	/*
 	 * Have to deform from scratch, otherwise tts_values[] entries could point
@@ -752,6 +763,9 @@ tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 	}
 	else
 	{
+		if (!bsrcslot->base.tuple)
+			tts_buffer_heap_materialize(srcslot);
+
 		tts_buffer_heap_store_tuple(dstslot, bsrcslot->base.tuple,
 									bsrcslot->buffer, false);
 
