@@ -2165,6 +2165,8 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 									   .owner = tbinfo->rolname,
 									   .description = "TABLE DATA",
 									   .section = SECTION_DATA,
+									   .createStmt = "",
+									   .dropStmt = "",
 									   .copyStmt = copyStmt,
 									   .deps = &(tbinfo->dobj.dumpId),
 									   .nDeps = 1,
@@ -2219,6 +2221,7 @@ refreshMatViewData(Archive *fout, TableDataInfo *tdinfo)
 								  .description = "MATERIALIZED VIEW DATA",
 								  .section = SECTION_POST_DATA,
 								  .createStmt = q->data,
+								  .dropStmt = "",
 								  .deps = tdinfo->dobj.dependencies,
 								  .nDeps = tdinfo->dobj.nDeps));
 
@@ -2784,6 +2787,7 @@ dumpDatabase(Archive *fout)
 									  .description = "COMMENT",
 									  .section = SECTION_NONE,
 									  .createStmt = dbQry->data,
+									  .dropStmt = "",
 									  .deps = &dbDumpId,
 									  .nDeps = 1));
 		}
@@ -2813,6 +2817,7 @@ dumpDatabase(Archive *fout)
 									  .description = "SECURITY LABEL",
 									  .section = SECTION_NONE,
 									  .createStmt = seclabelQry->data,
+									  .dropStmt = "",
 									  .deps = &dbDumpId,
 									  .nDeps = 1));
 		destroyPQExpBuffer(seclabelQry);
@@ -2929,8 +2934,10 @@ dumpDatabase(Archive *fout)
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
 					 ARCHIVE_OPTS(.tag = "pg_largeobject",
 								  .description = "pg_largeobject",
+								  .owner = "",
 								  .section = SECTION_PRE_DATA,
-								  .createStmt = loOutQry->data));
+								  .createStmt = loOutQry->data,
+								  .dropStmt = ""));
 
 		PQclear(lo_res);
 
@@ -3038,8 +3045,10 @@ dumpEncoding(Archive *AH)
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
 				 ARCHIVE_OPTS(.tag = "ENCODING",
 							  .description = "ENCODING",
+							  .owner = "",
 							  .section = SECTION_PRE_DATA,
-							  .createStmt = qry->data));
+							  .createStmt = qry->data,
+							  .dropStmt = ""));
 
 	destroyPQExpBuffer(qry);
 }
@@ -3064,8 +3073,10 @@ dumpStdStrings(Archive *AH)
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
 				 ARCHIVE_OPTS(.tag = "STDSTRINGS",
 							  .description = "STDSTRINGS",
+							  .owner = "",
 							  .section = SECTION_PRE_DATA,
-							  .createStmt = qry->data));
+							  .createStmt = qry->data,
+							  .dropStmt = ""));
 
 	destroyPQExpBuffer(qry);
 }
@@ -3119,8 +3130,10 @@ dumpSearchPath(Archive *AH)
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
 				 ARCHIVE_OPTS(.tag = "SEARCHPATH",
 							  .description = "SEARCHPATH",
+							  .owner = "",
 							  .section = SECTION_PRE_DATA,
-							  .createStmt = qry->data));
+							  .createStmt = qry->data,
+							  .dropStmt = ""));
 
 	/* Also save it in AH->searchpath, in case we're doing plain text dump */
 	AH->searchpath = pg_strdup(qry->data);
@@ -3601,6 +3614,7 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 									  .description = "ROW SECURITY",
 									  .section = SECTION_POST_DATA,
 									  .createStmt = query->data,
+									  .dropStmt = "",
 									  .deps = &(tbinfo->dobj.dumpId),
 									  .nDeps = 1));
 
@@ -3968,8 +3982,10 @@ dumpPublicationTable(Archive *fout, PublicationRelInfo *pubrinfo)
 				 ARCHIVE_OPTS(.tag = tag,
 							  .namespace = tbinfo->dobj.namespace->dobj.name,
 							  .description = "PUBLICATION TABLE",
+							  .owner = "",
 							  .section = SECTION_POST_DATA,
-							  .createStmt = query->data));
+							  .createStmt = query->data,
+							  .dropStmt = ""));
 
 	free(tag);
 	destroyPQExpBuffer(query);
@@ -9393,6 +9409,7 @@ dumpComment(Archive *fout, const char *type, const char *name,
 								  .description = "COMMENT",
 								  .section = SECTION_NONE,
 								  .createStmt = query->data,
+								  .dropStmt = "",
 								  .deps = &dumpId,
 								  .nDeps = 1));
 
@@ -9462,6 +9479,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 									  .description = "COMMENT",
 									  .section = SECTION_NONE,
 									  .createStmt = query->data,
+									  .dropStmt = "",
 									  .deps = &(tbinfo->dobj.dumpId),
 									  .nDeps = 1));
 		}
@@ -9487,6 +9505,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 									  .description = "COMMENT",
 									  .section = SECTION_NONE,
 									  .createStmt = query->data,
+									  .dropStmt = "",
 									  .deps = &(tbinfo->dobj.dumpId),
 									  .nDeps = 1));
 		}
@@ -9767,8 +9786,11 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 				te = ArchiveEntry(fout, dobj->catId, dobj->dumpId,
 								  ARCHIVE_OPTS(.tag = dobj->name,
 											   .description = "BLOBS",
+											   .owner = "",
 											   .section = SECTION_DATA,
-											   .dumpFn = dumpBlobs));
+											   .dumpFn = dumpBlobs,
+											   .createStmt = "",
+											   .dropStmt = ""));
 
 				/*
 				 * Set the TocEntry's dataLength in case we are doing a
@@ -9973,6 +9995,7 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 		ArchiveEntry(fout, extinfo->dobj.catId, extinfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = extinfo->dobj.name,
 								  .description = "EXTENSION",
+								  .owner = "",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delq->data));
@@ -11116,6 +11139,7 @@ dumpCompositeTypeColComments(Archive *fout, TypeInfo *tyinfo)
 									  .description = "COMMENT",
 									  .section = SECTION_NONE,
 									  .createStmt = query->data,
+									  .dropStmt = "",
 									  .deps = &(tyinfo->dobj.dumpId),
 									  .nDeps = 1));
 		}
@@ -11171,7 +11195,8 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 								  .owner = stinfo->baseType->rolname,
 								  .description = "SHELL TYPE",
 								  .section = SECTION_PRE_DATA,
-								  .createStmt = q->data));
+								  .createStmt = q->data,
+								  .dropStmt = ""));
 
 	destroyPQExpBuffer(q);
 }
@@ -12116,6 +12141,7 @@ dumpCast(Archive *fout, CastInfo *cast)
 		ArchiveEntry(fout, cast->dobj.catId, cast->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = labelq->data,
 								  .description = "CAST",
+								  .owner = "",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = defqry->data,
 								  .dropStmt = delqry->data));
@@ -12243,6 +12269,7 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 		ArchiveEntry(fout, transform->dobj.catId, transform->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = labelq->data,
 								  .description = "TRANSFORM",
+								  .owner = "",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = defqry->data,
 								  .dropStmt = delqry->data,
@@ -12626,6 +12653,7 @@ dumpAccessMethod(Archive *fout, AccessMethodInfo *aminfo)
 		ArchiveEntry(fout, aminfo->dobj.catId, aminfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = aminfo->dobj.name,
 								  .description = "ACCESS METHOD",
+								  .owner = "",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delq->data));
@@ -14077,6 +14105,7 @@ dumpTSParser(Archive *fout, TSParserInfo *prsinfo)
 					 ARCHIVE_OPTS(.tag = prsinfo->dobj.name,
 								  .namespace = prsinfo->dobj.namespace->dobj.name,
 								  .description = "TEXT SEARCH PARSER",
+								  .owner = "",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delq->data));
@@ -14215,6 +14244,7 @@ dumpTSTemplate(Archive *fout, TSTemplateInfo *tmplinfo)
 					 ARCHIVE_OPTS(.tag = tmplinfo->dobj.name,
 								  .namespace = tmplinfo->dobj.namespace->dobj.name,
 								  .description = "TEXT SEARCH TEMPLATE",
+								  .owner = "",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delq->data));
@@ -14684,7 +14714,8 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 								  .owner = daclinfo->defaclrole,
 								  .description = "DEFAULT ACL",
 								  .section = SECTION_POST_DATA,
-								  .createStmt = q->data));
+								  .createStmt = q->data,
+								  .dropStmt = ""));
 
 	destroyPQExpBuffer(tag);
 	destroyPQExpBuffer(q);
@@ -14782,6 +14813,7 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 								  .description = "ACL",
 								  .section = SECTION_NONE,
 								  .createStmt = sql->data,
+								  .dropStmt = "",
 								  .deps = &objDumpId,
 								  .nDeps = 1));
 		destroyPQExpBuffer(tag);
@@ -14871,6 +14903,7 @@ dumpSecLabel(Archive *fout, const char *type, const char *name,
 								  .description = "SECURITY LABEL",
 								  .section = SECTION_NONE,
 								  .createStmt = query->data,
+								  .dropStmt = "",
 								  .deps = &dumpId,
 								  .nDeps = 1));
 		destroyPQExpBuffer(tag);
@@ -14954,6 +14987,7 @@ dumpTableSecLabel(Archive *fout, TableInfo *tbinfo, const char *reltypename)
 								  .description = "SECURITY LABEL",
 								  .section = SECTION_NONE,
 								  .createStmt = query->data,
+								  .dropStmt = "",
 								  .deps = &(tbinfo->dobj.dumpId),
 								  .nDeps = 1));
 	}
@@ -16313,8 +16347,10 @@ dumpIndexAttach(Archive *fout, IndexAttachInfo *attachinfo)
 					 ARCHIVE_OPTS(.tag = attachinfo->dobj.name,
 								  .namespace = attachinfo->dobj.namespace->dobj.name,
 								  .description = "INDEX ATTACH",
+								  .owner = "",
 								  .section = SECTION_POST_DATA,
-								  .createStmt = q->data));
+								  .createStmt = q->data,
+								  .dropStmt = ""));
 
 		destroyPQExpBuffer(q);
 	}
@@ -16944,6 +16980,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 										  .description = "SEQUENCE OWNED BY",
 										  .section = SECTION_PRE_DATA,
 										  .createStmt = query->data,
+										  .dropStmt = "",
 										  .deps = &(tbinfo->dobj.dumpId),
 										  .nDeps = 1));
 		}
@@ -17012,6 +17049,7 @@ dumpSequenceData(Archive *fout, TableDataInfo *tdinfo)
 								  .description = "SEQUENCE SET",
 								  .section = SECTION_DATA,
 								  .createStmt = query->data,
+								  .dropStmt = "",
 								  .deps = &(tbinfo->dobj.dumpId),
 								  .nDeps = 1));
 

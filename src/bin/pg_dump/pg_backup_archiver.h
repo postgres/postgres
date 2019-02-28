@@ -95,7 +95,12 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_13 MAKE_ARCHIVE_VERSION(1, 13, 0)	/* change search_path
 													 * behavior */
 
-/* Current archive version number (the format we can output) */
+/*
+ * Current archive version number (the format we can output)
+ *
+ * Note: If you update the current archive version, consider
+ * https://postgr.es/m/20190227123217.GA27552@alvherre.pgsql
+ */
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 13
 #define K_VERS_REV 0
