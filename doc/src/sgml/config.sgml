@@ -7530,7 +7530,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         When set to false, which is the default, <productname>PostgreSQL</productname>
         will raise a PANIC-level error on failure to flush modified data files
-        to the filesystem.  This causes the database server to crash.
+        to the filesystem.  This causes the database server to crash.  This
+        parameter can only be set at server start.
        </para>
        <para>
         On some operating systems, the status of data in the kernel's page
