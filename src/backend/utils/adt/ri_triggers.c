@@ -20,14 +20,6 @@
  * ----------
  */
 
-
-/* ----------
- * Internal TODO:
- *
- *		Add MATCH PARTIAL logic.
- * ----------
- */
-
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -308,11 +300,6 @@ RI_FKey_check(TriggerData *trigdata)
 	fk_rel = trigdata->tg_relation;
 	pk_rel = table_open(riinfo->pk_relid, RowShareLock);
 
-	if (riinfo->confmatchtype == FKCONSTR_MATCH_PARTIAL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("MATCH PARTIAL not yet implemented")));
-
 	switch (ri_NullCheck(RelationGetDescr(fk_rel), newslot, riinfo, false))
 	{
 		case RI_KEYS_ALL_NULL:
@@ -358,6 +345,7 @@ RI_FKey_check(TriggerData *trigdata)
 					table_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
+#ifdef NOT_USED
 				case FKCONSTR_MATCH_PARTIAL:
 
 					/*
@@ -366,16 +354,8 @@ RI_FKey_check(TriggerData *trigdata)
 					 * to only include non-null columns, or by writing a
 					 * special version here)
 					 */
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("MATCH PARTIAL not yet implemented")));
-					table_close(pk_rel, RowShareLock);
-					return PointerGetDatum(NULL);
-
-				default:
-					elog(ERROR, "unrecognized confmatchtype: %d",
-						 riinfo->confmatchtype);
 					break;
+#endif
 			}
 
 		case RI_KEYS_NONE_NULL:
@@ -716,123 +696,90 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	pk_rel = trigdata->tg_relation;
 	old_slot = trigdata->tg_trigslot;
 
-	switch (riinfo->confmatchtype)
+	/*
+	 * If another PK row now exists providing the old key values, we
+	 * should not do anything.  However, this check should only be
+	 * made in the NO ACTION case; in RESTRICT cases we don't wish to
+	 * allow another row to be substituted.
+	 */
+	if (is_no_action &&
+		ri_Check_Pk_Match(pk_rel, fk_rel, old_slot, riinfo))
 	{
-			/* ----------
-			 * SQL:2008 15.17 <Execution of referential actions>
-			 *	General rules 9) a) iv):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE RESTRICT
-			 *	General rules 10) a) iv):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON UPDATE RESTRICT
-			 * ----------
-			 */
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-
-			/*
-			 * If another PK row now exists providing the old key values, we
-			 * should not do anything.  However, this check should only be
-			 * made in the NO ACTION case; in RESTRICT cases we don't wish to
-			 * allow another row to be substituted.
-			 */
-			if (is_no_action &&
-				ri_Check_Pk_Match(pk_rel, fk_rel, old_slot, riinfo))
-			{
-				table_close(fk_rel, RowShareLock);
-				return PointerGetDatum(NULL);
-			}
-
-			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed");
-
-			/*
-			 * Fetch or prepare a saved plan for the restrict lookup (it's the
-			 * same query for delete and update cases)
-			 */
-			ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_RESTRICT_CHECKREF);
-
-			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-			{
-				StringInfoData querybuf;
-				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-				char		attname[MAX_QUOTED_NAME_LEN];
-				char		paramname[16];
-				const char *querysep;
-				Oid			queryoids[RI_MAX_NUMKEYS];
-				const char *fk_only;
-				int			i;
-
-				/* ----------
-				 * The query string built is
-				 *	SELECT 1 FROM [ONLY] <fktable> x WHERE $1 = fkatt1 [AND ...]
-				 *		   FOR KEY SHARE OF x
-				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes.
-				 * ----------
-				 */
-				initStringInfo(&querybuf);
-				fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
-					"" : "ONLY ";
-				quoteRelationName(fkrelname, fk_rel);
-				appendStringInfo(&querybuf, "SELECT 1 FROM %s%s x",
-								 fk_only, fkrelname);
-				querysep = "WHERE";
-				for (i = 0; i < riinfo->nkeys; i++)
-				{
-					Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
-					Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
-
-					quoteOneName(attname,
-								 RIAttName(fk_rel, riinfo->fk_attnums[i]));
-					sprintf(paramname, "$%d", i + 1);
-					ri_GenerateQual(&querybuf, querysep,
-									paramname, pk_type,
-									riinfo->pf_eq_oprs[i],
-									attname, fk_type);
-					querysep = "AND";
-					queryoids[i] = pk_type;
-				}
-				appendStringInfoString(&querybuf, " FOR KEY SHARE OF x");
-
-				/* Prepare and save the plan */
-				qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, true);
-			}
-
-			/*
-			 * We have a plan now. Run it to check for existing references.
-			 */
-			ri_PerformCheck(riinfo, &qkey, qplan,
-							fk_rel, pk_rel,
-							old_slot, NULL,
-							true,	/* must detect new rows */
-							SPI_OK_SELECT);
-
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
-
-			table_close(fk_rel, RowShareLock);
-
-			return PointerGetDatum(NULL);
-
-			/*
-			 * Handle MATCH PARTIAL restrict delete or update.
-			 */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			return PointerGetDatum(NULL);
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo->confmatchtype);
-			break;
+		table_close(fk_rel, RowShareLock);
+		return PointerGetDatum(NULL);
 	}
 
-	/* Never reached */
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed");
+
+	/*
+	 * Fetch or prepare a saved plan for the restrict lookup (it's the
+	 * same query for delete and update cases)
+	 */
+	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_RESTRICT_CHECKREF);
+
+	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
+	{
+		StringInfoData querybuf;
+		char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
+		char		attname[MAX_QUOTED_NAME_LEN];
+		char		paramname[16];
+		const char *querysep;
+		Oid			queryoids[RI_MAX_NUMKEYS];
+		const char *fk_only;
+		int			i;
+
+		/* ----------
+		 * The query string built is
+		 *	SELECT 1 FROM [ONLY] <fktable> x WHERE $1 = fkatt1 [AND ...]
+		 *		   FOR KEY SHARE OF x
+		 * The type id's for the $ parameters are those of the
+		 * corresponding PK attributes.
+		 * ----------
+		 */
+		initStringInfo(&querybuf);
+		fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
+			"" : "ONLY ";
+		quoteRelationName(fkrelname, fk_rel);
+		appendStringInfo(&querybuf, "SELECT 1 FROM %s%s x",
+						 fk_only, fkrelname);
+		querysep = "WHERE";
+		for (i = 0; i < riinfo->nkeys; i++)
+		{
+			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
+
+			quoteOneName(attname,
+						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
+			sprintf(paramname, "$%d", i + 1);
+			ri_GenerateQual(&querybuf, querysep,
+							paramname, pk_type,
+							riinfo->pf_eq_oprs[i],
+							attname, fk_type);
+			querysep = "AND";
+			queryoids[i] = pk_type;
+		}
+		appendStringInfoString(&querybuf, " FOR KEY SHARE OF x");
+
+		/* Prepare and save the plan */
+		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
+							 &qkey, fk_rel, pk_rel, true);
+	}
+
+	/*
+	 * We have a plan now. Run it to check for existing references.
+	 */
+	ri_PerformCheck(riinfo, &qkey, qplan,
+					fk_rel, pk_rel,
+					old_slot, NULL,
+					true,	/* must detect new rows */
+					SPI_OK_SELECT);
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed");
+
+	table_close(fk_rel, RowShareLock);
+
 	return PointerGetDatum(NULL);
 }
 
@@ -876,103 +823,74 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	pk_rel = trigdata->tg_relation;
 	old_slot = trigdata->tg_trigslot;
 
-	switch (riinfo->confmatchtype)
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed");
+
+	/*
+	 * Fetch or prepare a saved plan for the cascaded delete
+	 */
+	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CASCADE_DEL_DODELETE);
+
+	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
-			/* ----------
-			 * SQL:2008 15.17 <Execution of referential actions>
-			 *	General rules 9) a) i):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE CASCADE
-			 * ----------
-			 */
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed");
+		StringInfoData querybuf;
+		char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
+		char		attname[MAX_QUOTED_NAME_LEN];
+		char		paramname[16];
+		const char *querysep;
+		Oid			queryoids[RI_MAX_NUMKEYS];
+		const char *fk_only;
 
-			/*
-			 * Fetch or prepare a saved plan for the cascaded delete
-			 */
-			ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CASCADE_DEL_DODELETE);
+		/* ----------
+		 * The query string built is
+		 *	DELETE FROM [ONLY] <fktable> WHERE $1 = fkatt1 [AND ...]
+		 * The type id's for the $ parameters are those of the
+		 * corresponding PK attributes.
+		 * ----------
+		 */
+		initStringInfo(&querybuf);
+		fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
+			"" : "ONLY ";
+		quoteRelationName(fkrelname, fk_rel);
+		appendStringInfo(&querybuf, "DELETE FROM %s%s",
+						 fk_only, fkrelname);
+		querysep = "WHERE";
+		for (i = 0; i < riinfo->nkeys; i++)
+		{
+			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
 
-			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-			{
-				StringInfoData querybuf;
-				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-				char		attname[MAX_QUOTED_NAME_LEN];
-				char		paramname[16];
-				const char *querysep;
-				Oid			queryoids[RI_MAX_NUMKEYS];
-				const char *fk_only;
+			quoteOneName(attname,
+						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
+			sprintf(paramname, "$%d", i + 1);
+			ri_GenerateQual(&querybuf, querysep,
+							paramname, pk_type,
+							riinfo->pf_eq_oprs[i],
+							attname, fk_type);
+			querysep = "AND";
+			queryoids[i] = pk_type;
+		}
 
-				/* ----------
-				 * The query string built is
-				 *	DELETE FROM [ONLY] <fktable> WHERE $1 = fkatt1 [AND ...]
-				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes.
-				 * ----------
-				 */
-				initStringInfo(&querybuf);
-				fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
-					"" : "ONLY ";
-				quoteRelationName(fkrelname, fk_rel);
-				appendStringInfo(&querybuf, "DELETE FROM %s%s",
-								 fk_only, fkrelname);
-				querysep = "WHERE";
-				for (i = 0; i < riinfo->nkeys; i++)
-				{
-					Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
-					Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
-
-					quoteOneName(attname,
-								 RIAttName(fk_rel, riinfo->fk_attnums[i]));
-					sprintf(paramname, "$%d", i + 1);
-					ri_GenerateQual(&querybuf, querysep,
-									paramname, pk_type,
-									riinfo->pf_eq_oprs[i],
-									attname, fk_type);
-					querysep = "AND";
-					queryoids[i] = pk_type;
-				}
-
-				/* Prepare and save the plan */
-				qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, true);
-			}
-
-			/*
-			 * We have a plan now. Build up the arguments from the key values
-			 * in the deleted PK tuple and delete the referencing rows
-			 */
-			ri_PerformCheck(riinfo, &qkey, qplan,
-							fk_rel, pk_rel,
-							old_slot, NULL,
-							true,	/* must detect new rows */
-							SPI_OK_DELETE);
-
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
-
-			table_close(fk_rel, RowExclusiveLock);
-
-			return PointerGetDatum(NULL);
-
-			/*
-			 * Handle MATCH PARTIAL cascaded delete.
-			 */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			return PointerGetDatum(NULL);
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo->confmatchtype);
-			break;
+		/* Prepare and save the plan */
+		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
+							 &qkey, fk_rel, pk_rel, true);
 	}
 
-	/* Never reached */
+	/*
+	 * We have a plan now. Build up the arguments from the key values
+	 * in the deleted PK tuple and delete the referencing rows
+	 */
+	ri_PerformCheck(riinfo, &qkey, qplan,
+					fk_rel, pk_rel,
+					old_slot, NULL,
+					true,	/* must detect new rows */
+					SPI_OK_DELETE);
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed");
+
+	table_close(fk_rel, RowExclusiveLock);
+
 	return PointerGetDatum(NULL);
 }
 
@@ -1020,115 +938,86 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	new_slot = trigdata->tg_newslot;
 	old_slot = trigdata->tg_trigslot;
 
-	switch (riinfo->confmatchtype)
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed");
+
+	/*
+	 * Fetch or prepare a saved plan for the cascaded update
+	 */
+	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CASCADE_UPD_DOUPDATE);
+
+	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
-			/* ----------
-			 * SQL:2008 15.17 <Execution of referential actions>
-			 *	General rules 10) a) i):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON UPDATE CASCADE
-			 * ----------
-			 */
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed");
+		StringInfoData querybuf;
+		StringInfoData qualbuf;
+		char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
+		char		attname[MAX_QUOTED_NAME_LEN];
+		char		paramname[16];
+		const char *querysep;
+		const char *qualsep;
+		Oid			queryoids[RI_MAX_NUMKEYS * 2];
+		const char *fk_only;
 
-			/*
-			 * Fetch or prepare a saved plan for the cascaded update
-			 */
-			ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CASCADE_UPD_DOUPDATE);
+		/* ----------
+		 * The query string built is
+		 *	UPDATE [ONLY] <fktable> SET fkatt1 = $1 [, ...]
+		 *			WHERE $n = fkatt1 [AND ...]
+		 * The type id's for the $ parameters are those of the
+		 * corresponding PK attributes.  Note that we are assuming
+		 * there is an assignment cast from the PK to the FK type;
+		 * else the parser will fail.
+		 * ----------
+		 */
+		initStringInfo(&querybuf);
+		initStringInfo(&qualbuf);
+		fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
+			"" : "ONLY ";
+		quoteRelationName(fkrelname, fk_rel);
+		appendStringInfo(&querybuf, "UPDATE %s%s SET",
+						 fk_only, fkrelname);
+		querysep = "";
+		qualsep = "WHERE";
+		for (i = 0, j = riinfo->nkeys; i < riinfo->nkeys; i++, j++)
+		{
+			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
 
-			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-			{
-				StringInfoData querybuf;
-				StringInfoData qualbuf;
-				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-				char		attname[MAX_QUOTED_NAME_LEN];
-				char		paramname[16];
-				const char *querysep;
-				const char *qualsep;
-				Oid			queryoids[RI_MAX_NUMKEYS * 2];
-				const char *fk_only;
+			quoteOneName(attname,
+						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
+			appendStringInfo(&querybuf,
+							 "%s %s = $%d",
+							 querysep, attname, i + 1);
+			sprintf(paramname, "$%d", j + 1);
+			ri_GenerateQual(&qualbuf, qualsep,
+							paramname, pk_type,
+							riinfo->pf_eq_oprs[i],
+							attname, fk_type);
+			querysep = ",";
+			qualsep = "AND";
+			queryoids[i] = pk_type;
+			queryoids[j] = pk_type;
+		}
+		appendStringInfoString(&querybuf, qualbuf.data);
 
-				/* ----------
-				 * The query string built is
-				 *	UPDATE [ONLY] <fktable> SET fkatt1 = $1 [, ...]
-				 *			WHERE $n = fkatt1 [AND ...]
-				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes.  Note that we are assuming
-				 * there is an assignment cast from the PK to the FK type;
-				 * else the parser will fail.
-				 * ----------
-				 */
-				initStringInfo(&querybuf);
-				initStringInfo(&qualbuf);
-				fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
-					"" : "ONLY ";
-				quoteRelationName(fkrelname, fk_rel);
-				appendStringInfo(&querybuf, "UPDATE %s%s SET",
-								 fk_only, fkrelname);
-				querysep = "";
-				qualsep = "WHERE";
-				for (i = 0, j = riinfo->nkeys; i < riinfo->nkeys; i++, j++)
-				{
-					Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
-					Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
-
-					quoteOneName(attname,
-								 RIAttName(fk_rel, riinfo->fk_attnums[i]));
-					appendStringInfo(&querybuf,
-									 "%s %s = $%d",
-									 querysep, attname, i + 1);
-					sprintf(paramname, "$%d", j + 1);
-					ri_GenerateQual(&qualbuf, qualsep,
-									paramname, pk_type,
-									riinfo->pf_eq_oprs[i],
-									attname, fk_type);
-					querysep = ",";
-					qualsep = "AND";
-					queryoids[i] = pk_type;
-					queryoids[j] = pk_type;
-				}
-				appendStringInfoString(&querybuf, qualbuf.data);
-
-				/* Prepare and save the plan */
-				qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys * 2, queryoids,
-									 &qkey, fk_rel, pk_rel, true);
-			}
-
-			/*
-			 * We have a plan now. Run it to update the existing references.
-			 */
-			ri_PerformCheck(riinfo, &qkey, qplan,
-							fk_rel, pk_rel,
-							old_slot, new_slot,
-							true,	/* must detect new rows */
-							SPI_OK_UPDATE);
-
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
-
-			table_close(fk_rel, RowExclusiveLock);
-
-			return PointerGetDatum(NULL);
-
-			/*
-			 * Handle MATCH PARTIAL cascade update.
-			 */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			return PointerGetDatum(NULL);
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo->confmatchtype);
-			break;
+		/* Prepare and save the plan */
+		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys * 2, queryoids,
+							 &qkey, fk_rel, pk_rel, true);
 	}
 
-	/* Never reached */
+	/*
+	 * We have a plan now. Run it to update the existing references.
+	 */
+	ri_PerformCheck(riinfo, &qkey, qplan,
+					fk_rel, pk_rel,
+					old_slot, new_slot,
+					true,	/* must detect new rows */
+					SPI_OK_UPDATE);
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed");
+
+	table_close(fk_rel, RowExclusiveLock);
+
 	return PointerGetDatum(NULL);
 }
 
@@ -1206,116 +1095,84 @@ ri_setnull(TriggerData *trigdata)
 	pk_rel = trigdata->tg_relation;
 	old_slot = trigdata->tg_trigslot;
 
-	switch (riinfo->confmatchtype)
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed");
+
+	/*
+	 * Fetch or prepare a saved plan for the set null operation (it's
+	 * the same query for delete and update cases)
+	 */
+	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_SETNULL_DOUPDATE);
+
+	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
-			/* ----------
-			 * SQL:2008 15.17 <Execution of referential actions>
-			 *	General rules 9) a) ii):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE SET NULL
-			 *	General rules 10) a) ii):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON UPDATE SET NULL
-			 * ----------
-			 */
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed");
+		StringInfoData querybuf;
+		StringInfoData qualbuf;
+		char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
+		char		attname[MAX_QUOTED_NAME_LEN];
+		char		paramname[16];
+		const char *querysep;
+		const char *qualsep;
+		const char *fk_only;
+		Oid			queryoids[RI_MAX_NUMKEYS];
 
-			/*
-			 * Fetch or prepare a saved plan for the set null operation (it's
-			 * the same query for delete and update cases)
-			 */
-			ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_SETNULL_DOUPDATE);
+		/* ----------
+		 * The query string built is
+		 *	UPDATE [ONLY] <fktable> SET fkatt1 = NULL [, ...]
+		 *			WHERE $1 = fkatt1 [AND ...]
+		 * The type id's for the $ parameters are those of the
+		 * corresponding PK attributes.
+		 * ----------
+		 */
+		initStringInfo(&querybuf);
+		initStringInfo(&qualbuf);
+		fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
+			"" : "ONLY ";
+		quoteRelationName(fkrelname, fk_rel);
+		appendStringInfo(&querybuf, "UPDATE %s%s SET",
+						 fk_only, fkrelname);
+		querysep = "";
+		qualsep = "WHERE";
+		for (i = 0; i < riinfo->nkeys; i++)
+		{
+			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
 
-			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-			{
-				StringInfoData querybuf;
-				StringInfoData qualbuf;
-				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-				char		attname[MAX_QUOTED_NAME_LEN];
-				char		paramname[16];
-				const char *querysep;
-				const char *qualsep;
-				const char *fk_only;
-				Oid			queryoids[RI_MAX_NUMKEYS];
+			quoteOneName(attname,
+						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
+			appendStringInfo(&querybuf,
+							 "%s %s = NULL",
+							 querysep, attname);
+			sprintf(paramname, "$%d", i + 1);
+			ri_GenerateQual(&qualbuf, qualsep,
+							paramname, pk_type,
+							riinfo->pf_eq_oprs[i],
+							attname, fk_type);
+			querysep = ",";
+			qualsep = "AND";
+			queryoids[i] = pk_type;
+		}
+		appendStringInfoString(&querybuf, qualbuf.data);
 
-				/* ----------
-				 * The query string built is
-				 *	UPDATE [ONLY] <fktable> SET fkatt1 = NULL [, ...]
-				 *			WHERE $1 = fkatt1 [AND ...]
-				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes.
-				 * ----------
-				 */
-				initStringInfo(&querybuf);
-				initStringInfo(&qualbuf);
-				fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
-					"" : "ONLY ";
-				quoteRelationName(fkrelname, fk_rel);
-				appendStringInfo(&querybuf, "UPDATE %s%s SET",
-								 fk_only, fkrelname);
-				querysep = "";
-				qualsep = "WHERE";
-				for (i = 0; i < riinfo->nkeys; i++)
-				{
-					Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
-					Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
-
-					quoteOneName(attname,
-								 RIAttName(fk_rel, riinfo->fk_attnums[i]));
-					appendStringInfo(&querybuf,
-									 "%s %s = NULL",
-									 querysep, attname);
-					sprintf(paramname, "$%d", i + 1);
-					ri_GenerateQual(&qualbuf, qualsep,
-									paramname, pk_type,
-									riinfo->pf_eq_oprs[i],
-									attname, fk_type);
-					querysep = ",";
-					qualsep = "AND";
-					queryoids[i] = pk_type;
-				}
-				appendStringInfoString(&querybuf, qualbuf.data);
-
-				/* Prepare and save the plan */
-				qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, true);
-			}
-
-			/*
-			 * We have a plan now. Run it to update the existing references.
-			 */
-			ri_PerformCheck(riinfo, &qkey, qplan,
-							fk_rel, pk_rel,
-							old_slot, NULL,
-							true,	/* must detect new rows */
-							SPI_OK_UPDATE);
-
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
-
-			table_close(fk_rel, RowExclusiveLock);
-
-			return PointerGetDatum(NULL);
-
-			/*
-			 * Handle MATCH PARTIAL set null delete or update.
-			 */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			return PointerGetDatum(NULL);
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo->confmatchtype);
-			break;
+		/* Prepare and save the plan */
+		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
+							 &qkey, fk_rel, pk_rel, true);
 	}
 
-	/* Never reached */
+	/*
+	 * We have a plan now. Run it to update the existing references.
+	 */
+	ri_PerformCheck(riinfo, &qkey, qplan,
+					fk_rel, pk_rel,
+					old_slot, NULL,
+					true,	/* must detect new rows */
+					SPI_OK_UPDATE);
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed");
+
+	table_close(fk_rel, RowExclusiveLock);
+
 	return PointerGetDatum(NULL);
 }
 
@@ -1392,132 +1249,100 @@ ri_setdefault(TriggerData *trigdata)
 	pk_rel = trigdata->tg_relation;
 	old_slot = trigdata->tg_trigslot;
 
-	switch (riinfo->confmatchtype)
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed");
+
+	/*
+	 * Fetch or prepare a saved plan for the set default operation
+	 * (it's the same query for delete and update cases)
+	 */
+	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_SETDEFAULT_DOUPDATE);
+
+	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
-			/* ----------
-			 * SQL:2008 15.17 <Execution of referential actions>
-			 *	General rules 9) a) iii):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE SET DEFAULT
-			 *	General rules 10) a) iii):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON UPDATE SET DEFAULT
-			 * ----------
-			 */
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed");
+		StringInfoData querybuf;
+		StringInfoData qualbuf;
+		char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
+		char		attname[MAX_QUOTED_NAME_LEN];
+		char		paramname[16];
+		const char *querysep;
+		const char *qualsep;
+		Oid			queryoids[RI_MAX_NUMKEYS];
+		const char *fk_only;
+		int			i;
 
-			/*
-			 * Fetch or prepare a saved plan for the set default operation
-			 * (it's the same query for delete and update cases)
-			 */
-			ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_SETDEFAULT_DOUPDATE);
+		/* ----------
+		 * The query string built is
+		 *	UPDATE [ONLY] <fktable> SET fkatt1 = DEFAULT [, ...]
+		 *			WHERE $1 = fkatt1 [AND ...]
+		 * The type id's for the $ parameters are those of the
+		 * corresponding PK attributes.
+		 * ----------
+		 */
+		initStringInfo(&querybuf);
+		initStringInfo(&qualbuf);
+		quoteRelationName(fkrelname, fk_rel);
+		fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
+			"" : "ONLY ";
+		appendStringInfo(&querybuf, "UPDATE %s%s SET",
+						 fk_only, fkrelname);
+		querysep = "";
+		qualsep = "WHERE";
+		for (i = 0; i < riinfo->nkeys; i++)
+		{
+			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
 
-			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-			{
-				StringInfoData querybuf;
-				StringInfoData qualbuf;
-				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-				char		attname[MAX_QUOTED_NAME_LEN];
-				char		paramname[16];
-				const char *querysep;
-				const char *qualsep;
-				Oid			queryoids[RI_MAX_NUMKEYS];
-				const char *fk_only;
-				int			i;
+			quoteOneName(attname,
+						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
+			appendStringInfo(&querybuf,
+							 "%s %s = DEFAULT",
+							 querysep, attname);
+			sprintf(paramname, "$%d", i + 1);
+			ri_GenerateQual(&qualbuf, qualsep,
+							paramname, pk_type,
+							riinfo->pf_eq_oprs[i],
+							attname, fk_type);
+			querysep = ",";
+			qualsep = "AND";
+			queryoids[i] = pk_type;
+		}
+		appendStringInfoString(&querybuf, qualbuf.data);
 
-				/* ----------
-				 * The query string built is
-				 *	UPDATE [ONLY] <fktable> SET fkatt1 = DEFAULT [, ...]
-				 *			WHERE $1 = fkatt1 [AND ...]
-				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes.
-				 * ----------
-				 */
-				initStringInfo(&querybuf);
-				initStringInfo(&qualbuf);
-				quoteRelationName(fkrelname, fk_rel);
-				fk_only = fk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ?
-					"" : "ONLY ";
-				appendStringInfo(&querybuf, "UPDATE %s%s SET",
-								 fk_only, fkrelname);
-				querysep = "";
-				qualsep = "WHERE";
-				for (i = 0; i < riinfo->nkeys; i++)
-				{
-					Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
-					Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
-
-					quoteOneName(attname,
-								 RIAttName(fk_rel, riinfo->fk_attnums[i]));
-					appendStringInfo(&querybuf,
-									 "%s %s = DEFAULT",
-									 querysep, attname);
-					sprintf(paramname, "$%d", i + 1);
-					ri_GenerateQual(&qualbuf, qualsep,
-									paramname, pk_type,
-									riinfo->pf_eq_oprs[i],
-									attname, fk_type);
-					querysep = ",";
-					qualsep = "AND";
-					queryoids[i] = pk_type;
-				}
-				appendStringInfoString(&querybuf, qualbuf.data);
-
-				/* Prepare and save the plan */
-				qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, true);
-			}
-
-			/*
-			 * We have a plan now. Run it to update the existing references.
-			 */
-			ri_PerformCheck(riinfo, &qkey, qplan,
-							fk_rel, pk_rel,
-							old_slot, NULL,
-							true,	/* must detect new rows */
-							SPI_OK_UPDATE);
-
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
-
-			table_close(fk_rel, RowExclusiveLock);
-
-			/*
-			 * If we just deleted or updated the PK row whose key was equal to
-			 * the FK columns' default values, and a referencing row exists in
-			 * the FK table, we would have updated that row to the same values
-			 * it already had --- and RI_FKey_fk_upd_check_required would
-			 * hence believe no check is necessary.  So we need to do another
-			 * lookup now and in case a reference still exists, abort the
-			 * operation.  That is already implemented in the NO ACTION
-			 * trigger, so just run it.  (This recheck is only needed in the
-			 * SET DEFAULT case, since CASCADE would remove such rows in case
-			 * of a DELETE operation or would change the FK key values in case
-			 * of an UPDATE, while SET NULL is certain to result in rows that
-			 * satisfy the FK constraint.)
-			 */
-			return ri_restrict(trigdata, true);
-
-			/*
-			 * Handle MATCH PARTIAL set default delete or update.
-			 */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			return PointerGetDatum(NULL);
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo->confmatchtype);
-			break;
+		/* Prepare and save the plan */
+		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
+							 &qkey, fk_rel, pk_rel, true);
 	}
 
-	/* Never reached */
-	return PointerGetDatum(NULL);
+	/*
+	 * We have a plan now. Run it to update the existing references.
+	 */
+	ri_PerformCheck(riinfo, &qkey, qplan,
+					fk_rel, pk_rel,
+					old_slot, NULL,
+					true,	/* must detect new rows */
+					SPI_OK_UPDATE);
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed");
+
+	table_close(fk_rel, RowExclusiveLock);
+
+	/*
+	 * If we just deleted or updated the PK row whose key was equal to
+	 * the FK columns' default values, and a referencing row exists in
+	 * the FK table, we would have updated that row to the same values
+	 * it already had --- and RI_FKey_fk_upd_check_required would
+	 * hence believe no check is necessary.  So we need to do another
+	 * lookup now and in case a reference still exists, abort the
+	 * operation.  That is already implemented in the NO ACTION
+	 * trigger, so just run it.  (This recheck is only needed in the
+	 * SET DEFAULT case, since CASCADE would remove such rows in case
+	 * of a DELETE operation or would change the FK key values in case
+	 * of an UPDATE, while SET NULL is certain to result in rows that
+	 * satisfy the FK constraint.)
+	 */
+	return ri_restrict(trigdata, true);
 }
 
 
@@ -1544,40 +1369,19 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 	 */
 	riinfo = ri_FetchConstraintInfo(trigger, pk_rel, true);
 
-	switch (riinfo->confmatchtype)
-	{
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
+	/*
+	 * If any old key value is NULL, the row could not have been
+	 * referenced by an FK row, so no check is needed.
+	 */
+	if (ri_NullCheck(RelationGetDescr(pk_rel), old_slot, riinfo, true) != RI_KEYS_NONE_NULL)
+		return false;
 
-			/*
-			 * If any old key value is NULL, the row could not have been
-			 * referenced by an FK row, so no check is needed.
-			 */
-			if (ri_NullCheck(RelationGetDescr(pk_rel), old_slot, riinfo, true) != RI_KEYS_NONE_NULL)
-				return false;
+	/* If all old and new key values are equal, no check is needed */
+	if (new_slot && ri_KeysEqual(pk_rel, old_slot, new_slot, riinfo, true))
+		return false;
 
-			/* If all old and new key values are equal, no check is needed */
-			if (new_slot && ri_KeysEqual(pk_rel, old_slot, new_slot, riinfo, true))
-				return false;
-
-			/* Else we need to fire the trigger. */
-			return true;
-
-			/* Handle MATCH PARTIAL check. */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			break;
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo->confmatchtype);
-			break;
-	}
-
-	/* Never reached */
-	return false;
+	/* Else we need to fire the trigger. */
+	return true;
 }
 
 /* ----------
@@ -1595,6 +1399,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 							  TupleTableSlot *old_slot, TupleTableSlot *new_slot)
 {
 	const RI_ConstraintInfo *riinfo;
+	int			ri_nullcheck;
 	Datum		xminDatum;
 	TransactionId xmin;
 	bool		isnull;
@@ -1604,94 +1409,71 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 	 */
 	riinfo = ri_FetchConstraintInfo(trigger, fk_rel, false);
 
-	switch (riinfo->confmatchtype)
+	ri_nullcheck = ri_NullCheck(RelationGetDescr(fk_rel), new_slot, riinfo, false);
+
+	/*
+	 * If all new key values are NULL, the row satisfies the constraint, so no
+	 * check is needed.
+	 */
+	if (ri_nullcheck == RI_KEYS_ALL_NULL)
+		return false;
+	/*
+	 * If some new key values are NULL, the behavior depends on the match type.
+	 */
+	else if (ri_nullcheck == RI_KEYS_SOME_NULL)
 	{
-		case FKCONSTR_MATCH_SIMPLE:
-
-			/*
-			 * If any new key value is NULL, the row must satisfy the
-			 * constraint, so no check is needed.
-			 */
-			if (ri_NullCheck(RelationGetDescr(fk_rel), new_slot, riinfo, false) != RI_KEYS_NONE_NULL)
+		switch (riinfo->confmatchtype)
+		{
+			case FKCONSTR_MATCH_SIMPLE:
+				/*
+				 * If any new key value is NULL, the row must satisfy the
+				 * constraint, so no check is needed.
+				 */
 				return false;
 
-			/*
-			 * If the original row was inserted by our own transaction, we
-			 * must fire the trigger whether or not the keys are equal.  This
-			 * is because our UPDATE will invalidate the INSERT so that the
-			 * INSERT RI trigger will not do anything; so we had better do the
-			 * UPDATE check.  (We could skip this if we knew the INSERT
-			 * trigger already fired, but there is no easy way to know that.)
-			 */
-			xminDatum = slot_getsysattr(old_slot, MinTransactionIdAttributeNumber, &isnull);
-			Assert(!isnull);
-			xmin = DatumGetTransactionId(xminDatum);
-			if (TransactionIdIsCurrentTransactionId(xmin))
+			case FKCONSTR_MATCH_PARTIAL:
+				/*
+				 * Don't know, must run full check.
+				 */
+				break;
+
+			case FKCONSTR_MATCH_FULL:
+				/*
+				 * If some new key values are NULL, the row fails the
+				 * constraint.  We must not throw error here, because the row
+				 * might get invalidated before the constraint is to be
+				 * checked, but we should queue the event to apply the check
+				 * later.
+				 */
 				return true;
-
-			/* If all old and new key values are equal, no check is needed */
-			if (ri_KeysEqual(fk_rel, old_slot, new_slot, riinfo, false))
-				return false;
-
-			/* Else we need to fire the trigger. */
-			return true;
-
-		case FKCONSTR_MATCH_FULL:
-
-			/*
-			 * If all new key values are NULL, the row must satisfy the
-			 * constraint, so no check is needed.  On the other hand, if only
-			 * some of them are NULL, the row must fail the constraint.  We
-			 * must not throw error here, because the row might get
-			 * invalidated before the constraint is to be checked, but we
-			 * should queue the event to apply the check later.
-			 */
-			switch (ri_NullCheck(RelationGetDescr(fk_rel), new_slot, riinfo, false))
-			{
-				case RI_KEYS_ALL_NULL:
-					return false;
-				case RI_KEYS_SOME_NULL:
-					return true;
-				case RI_KEYS_NONE_NULL:
-					break;		/* continue with the check */
-			}
-
-			/*
-			 * If the original row was inserted by our own transaction, we
-			 * must fire the trigger whether or not the keys are equal.  This
-			 * is because our UPDATE will invalidate the INSERT so that the
-			 * INSERT RI trigger will not do anything; so we had better do the
-			 * UPDATE check.  (We could skip this if we knew the INSERT
-			 * trigger already fired, but there is no easy way to know that.)
-			 */
-			xminDatum = slot_getsysattr(old_slot, MinTransactionIdAttributeNumber, &isnull);
-			Assert(!isnull);
-			xmin = DatumGetTransactionId(xminDatum);
-			if (TransactionIdIsCurrentTransactionId(xmin))
-				return true;
-
-			/* If all old and new key values are equal, no check is needed */
-			if (ri_KeysEqual(fk_rel, old_slot, new_slot, riinfo, false))
-				return false;
-
-			/* Else we need to fire the trigger. */
-			return true;
-
-			/* Handle MATCH PARTIAL check. */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			break;
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo->confmatchtype);
-			break;
+		}
 	}
 
-	/* Never reached */
-	return false;
+	/*
+	 * Continues here for no new key values are NULL, or we couldn't decide
+	 * yet.
+	 */
+
+	/*
+	 * If the original row was inserted by our own transaction, we
+	 * must fire the trigger whether or not the keys are equal.  This
+	 * is because our UPDATE will invalidate the INSERT so that the
+	 * INSERT RI trigger will not do anything; so we had better do the
+	 * UPDATE check.  (We could skip this if we knew the INSERT
+	 * trigger already fired, but there is no easy way to know that.)
+	 */
+	xminDatum = slot_getsysattr(old_slot, MinTransactionIdAttributeNumber, &isnull);
+	Assert(!isnull);
+	xmin = DatumGetTransactionId(xminDatum);
+	if (TransactionIdIsCurrentTransactionId(xmin))
+		return true;
+
+	/* If all old and new key values are equal, no check is needed */
+	if (ri_KeysEqual(fk_rel, old_slot, new_slot, riinfo, false))
+		return false;
+
+	/* Else we need to fire the trigger. */
+	return true;
 }
 
 /* ----------
@@ -1859,15 +1641,6 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 				break;
 			case FKCONSTR_MATCH_FULL:
 				sep = " OR ";
-				break;
-			case FKCONSTR_MATCH_PARTIAL:
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("MATCH PARTIAL not yet implemented")));
-				break;
-			default:
-				elog(ERROR, "unrecognized confmatchtype: %d",
-					 riinfo->confmatchtype);
 				break;
 		}
 	}
@@ -2198,6 +1971,17 @@ ri_FetchConstraintInfo(Trigger *trigger, Relation trig_rel, bool rel_is_pk)
 			elog(ERROR, "wrong pg_constraint entry for trigger \"%s\" on table \"%s\"",
 				 trigger->tgname, RelationGetRelationName(trig_rel));
 	}
+
+	if (riinfo->confmatchtype != FKCONSTR_MATCH_FULL &&
+		riinfo->confmatchtype != FKCONSTR_MATCH_PARTIAL &&
+		riinfo->confmatchtype != FKCONSTR_MATCH_SIMPLE)
+		elog(ERROR, "unrecognized confmatchtype: %d",
+			 riinfo->confmatchtype);
+
+	if (riinfo->confmatchtype == FKCONSTR_MATCH_PARTIAL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("MATCH PARTIAL not yet implemented")));
 
 	return riinfo;
 }
