@@ -1,4 +1,5 @@
-/* ----------
+/*-------------------------------------------------------------------------
+ *
  * ri_triggers.c
  *
  *	Generic trigger procedures for referential integrity constraint
@@ -17,7 +18,7 @@
  *
  * src/backend/utils/adt/ri_triggers.c
  *
- * ----------
+ *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
@@ -52,9 +53,8 @@
 #include "utils/syscache.h"
 
 
-/* ----------
+/*
  * Local definitions
- * ----------
  */
 
 #define RI_MAX_NUMKEYS					INDEX_MAX_KEYS
@@ -90,12 +90,11 @@
 #define RI_TRIGTYPE_DELETE 3
 
 
-/* ----------
+/*
  * RI_ConstraintInfo
  *
- *	Information extracted from an FK pg_constraint entry.  This is cached in
- *	ri_constraint_cache.
- * ----------
+ * Information extracted from an FK pg_constraint entry.  This is cached in
+ * ri_constraint_cache.
  */
 typedef struct RI_ConstraintInfo
 {
@@ -117,12 +116,10 @@ typedef struct RI_ConstraintInfo
 	dlist_node	valid_link;		/* Link in list of valid entries */
 } RI_ConstraintInfo;
 
-
-/* ----------
+/*
  * RI_QueryKey
  *
- *	The key identifying a prepared SPI plan in our query hashtable
- * ----------
+ * The key identifying a prepared SPI plan in our query hashtable
  */
 typedef struct RI_QueryKey
 {
@@ -130,10 +127,8 @@ typedef struct RI_QueryKey
 	int32		constr_queryno; /* query type ID, see RI_PLAN_XXX above */
 } RI_QueryKey;
 
-
-/* ----------
+/*
  * RI_QueryHashEntry
- * ----------
  */
 typedef struct RI_QueryHashEntry
 {
@@ -141,12 +136,10 @@ typedef struct RI_QueryHashEntry
 	SPIPlanPtr	plan;
 } RI_QueryHashEntry;
 
-
-/* ----------
+/*
  * RI_CompareKey
  *
- *	The key identifying an entry showing how to compare two values
- * ----------
+ * The key identifying an entry showing how to compare two values
  */
 typedef struct RI_CompareKey
 {
@@ -154,10 +147,8 @@ typedef struct RI_CompareKey
 	Oid			typeid;			/* the data type to apply it to */
 } RI_CompareKey;
 
-
-/* ----------
+/*
  * RI_CompareHashEntry
- * ----------
  */
 typedef struct RI_CompareHashEntry
 {
@@ -168,9 +159,8 @@ typedef struct RI_CompareHashEntry
 } RI_CompareHashEntry;
 
 
-/* ----------
+/*
  * Local data
- * ----------
  */
 static HTAB *ri_constraint_cache = NULL;
 static HTAB *ri_query_cache = NULL;
@@ -179,9 +169,8 @@ static dlist_head ri_constraint_cache_valid_list;
 static int	ri_constraint_cache_valid_count = 0;
 
 
-/* ----------
+/*
  * Local function prototypes
- * ----------
  */
 static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 				  TupleTableSlot *oldslot,
@@ -235,11 +224,10 @@ static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 				   int queryno) pg_attribute_noreturn();
 
 
-/* ----------
+/*
  * RI_FKey_check -
  *
- *	Check foreign key existence (combined for INSERT and UPDATE).
- * ----------
+ * Check foreign key existence (combined for INSERT and UPDATE).
  */
 static Datum
 RI_FKey_check(TriggerData *trigdata)
@@ -252,9 +240,6 @@ RI_FKey_check(TriggerData *trigdata)
 	SPIPlanPtr	qplan;
 	int			i;
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, false);
 
@@ -370,9 +355,7 @@ RI_FKey_check(TriggerData *trigdata)
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
-	/*
-	 * Fetch or prepare a saved plan for the real check
-	 */
+	/* Fetch or prepare a saved plan for the real check */
 	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CHECK_LOOKUPPK);
 
 	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
@@ -436,49 +419,39 @@ RI_FKey_check(TriggerData *trigdata)
 }
 
 
-/* ----------
+/*
  * RI_FKey_check_ins -
  *
- *	Check foreign key existence at insert event on FK table.
- * ----------
+ * Check foreign key existence at insert event on FK table.
  */
 Datum
 RI_FKey_check_ins(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_check_ins", RI_TRIGTYPE_INSERT);
 
-	/*
-	 * Share code with UPDATE case.
-	 */
+	/* Share code with UPDATE case. */
 	return RI_FKey_check((TriggerData *) fcinfo->context);
 }
 
 
-/* ----------
+/*
  * RI_FKey_check_upd -
  *
- *	Check foreign key existence at update event on FK table.
- * ----------
+ * Check foreign key existence at update event on FK table.
  */
 Datum
 RI_FKey_check_upd(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_check_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Share code with INSERT case.
-	 */
+	/* Share code with INSERT case. */
 	return RI_FKey_check((TriggerData *) fcinfo->context);
 }
 
 
-/* ----------
+/*
  * ri_Check_Pk_Match
  *
  * Check to see if another PK row has been created that provides the same
@@ -487,7 +460,6 @@ RI_FKey_check_upd(PG_FUNCTION_ARGS)
  *
  * We assume the caller checked that the old_row contains no NULL key values,
  * since otherwise a match is impossible.
- * ----------
  */
 static bool
 ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
@@ -569,106 +541,85 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 }
 
 
-/* ----------
+/*
  * RI_FKey_noaction_del -
  *
- *	Give an error and roll back the current transaction if the
- *	delete has resulted in a violation of the given referential
- *	integrity constraint.
- * ----------
+ * Give an error and roll back the current transaction if the
+ * delete has resulted in a violation of the given referential
+ * integrity constraint.
  */
 Datum
 RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Share code with RESTRICT/UPDATE cases.
-	 */
+	/* Share code with RESTRICT/UPDATE cases. */
 	return ri_restrict((TriggerData *) fcinfo->context, true);
 }
 
-/* ----------
+/*
  * RI_FKey_restrict_del -
  *
- *	Restrict delete from PK table to rows unreferenced by foreign key.
+ * Restrict delete from PK table to rows unreferenced by foreign key.
  *
- *	The SQL standard intends that this referential action occur exactly when
- *	the delete is performed, rather than after.  This appears to be
- *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
- *	we still implement this as an AFTER trigger, but it's non-deferrable.
- * ----------
+ * The SQL standard intends that this referential action occur exactly when
+ * the delete is performed, rather than after.  This appears to be
+ * the only difference between "NO ACTION" and "RESTRICT".  In Postgres
+ * we still implement this as an AFTER trigger, but it's non-deferrable.
  */
 Datum
 RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Share code with NO ACTION/UPDATE cases.
-	 */
+	/* Share code with NO ACTION/UPDATE cases. */
 	return ri_restrict((TriggerData *) fcinfo->context, false);
 }
 
-/* ----------
+/*
  * RI_FKey_noaction_upd -
  *
- *	Give an error and roll back the current transaction if the
- *	update has resulted in a violation of the given referential
- *	integrity constraint.
- * ----------
+ * Give an error and roll back the current transaction if the
+ * update has resulted in a violation of the given referential
+ * integrity constraint.
  */
 Datum
 RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Share code with RESTRICT/DELETE cases.
-	 */
+	/* Share code with RESTRICT/DELETE cases. */
 	return ri_restrict((TriggerData *) fcinfo->context, true);
 }
 
-/* ----------
+/*
  * RI_FKey_restrict_upd -
  *
- *	Restrict update of PK to rows unreferenced by foreign key.
+ * Restrict update of PK to rows unreferenced by foreign key.
  *
- *	The SQL standard intends that this referential action occur exactly when
- *	the update is performed, rather than after.  This appears to be
- *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
- *	we still implement this as an AFTER trigger, but it's non-deferrable.
- * ----------
+ * The SQL standard intends that this referential action occur exactly when
+ * the update is performed, rather than after.  This appears to be
+ * the only difference between "NO ACTION" and "RESTRICT".  In Postgres
+ * we still implement this as an AFTER trigger, but it's non-deferrable.
  */
 Datum
 RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Share code with NO ACTION/DELETE cases.
-	 */
+	/* Share code with NO ACTION/DELETE cases. */
 	return ri_restrict((TriggerData *) fcinfo->context, false);
 }
 
-/* ----------
+/*
  * ri_restrict -
  *
- *	Common code for ON DELETE RESTRICT, ON DELETE NO ACTION,
- *	ON UPDATE RESTRICT, and ON UPDATE NO ACTION.
- * ----------
+ * Common code for ON DELETE RESTRICT, ON DELETE NO ACTION,
+ * ON UPDATE RESTRICT, and ON UPDATE NO ACTION.
  */
 static Datum
 ri_restrict(TriggerData *trigdata, bool is_no_action)
@@ -680,9 +631,6 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
 
@@ -784,11 +732,10 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 }
 
 
-/* ----------
+/*
  * RI_FKey_cascade_del -
  *
- *	Cascaded delete foreign key references at delete event on PK table.
- * ----------
+ * Cascaded delete foreign key references at delete event on PK table.
  */
 Datum
 RI_FKey_cascade_del(PG_FUNCTION_ARGS)
@@ -802,14 +749,9 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	SPIPlanPtr	qplan;
 	int			i;
 
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
 
@@ -826,9 +768,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
-	/*
-	 * Fetch or prepare a saved plan for the cascaded delete
-	 */
+	/* Fetch or prepare a saved plan for the cascaded delete */
 	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CASCADE_DEL_DODELETE);
 
 	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
@@ -895,11 +835,10 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 }
 
 
-/* ----------
+/*
  * RI_FKey_cascade_upd -
  *
- *	Cascaded update foreign key references at update event on PK table.
- * ----------
+ * Cascaded update foreign key references at update event on PK table.
  */
 Datum
 RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
@@ -915,14 +854,9 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	int			i;
 	int			j;
 
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
 
@@ -941,9 +875,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
-	/*
-	 * Fetch or prepare a saved plan for the cascaded update
-	 */
+	/* Fetch or prepare a saved plan for the cascaded update */
 	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CASCADE_UPD_DOUPDATE);
 
 	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
@@ -1022,51 +954,40 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 }
 
 
-/* ----------
+/*
  * RI_FKey_setnull_del -
  *
- *	Set foreign key references to NULL values at delete event on PK table.
- * ----------
+ * Set foreign key references to NULL values at delete event on PK table.
  */
 Datum
 RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Share code with UPDATE case
-	 */
+	/* Share code with UPDATE case */
 	return ri_setnull((TriggerData *) fcinfo->context);
 }
 
-/* ----------
+/*
  * RI_FKey_setnull_upd -
  *
- *	Set foreign key references to NULL at update event on PK table.
- * ----------
+ * Set foreign key references to NULL at update event on PK table.
  */
 Datum
 RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Share code with DELETE case
-	 */
+	/* Share code with DELETE case */
 	return ri_setnull((TriggerData *) fcinfo->context);
 }
 
-/* ----------
+/*
  * ri_setnull -
  *
- *	Common code for ON DELETE SET NULL and ON UPDATE SET NULL
- * ----------
+ * Common code for ON DELETE SET NULL and ON UPDATE SET NULL
  */
 static Datum
 ri_setnull(TriggerData *trigdata)
@@ -1079,9 +1000,6 @@ ri_setnull(TriggerData *trigdata)
 	SPIPlanPtr	qplan;
 	int			i;
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
 
@@ -1177,51 +1095,40 @@ ri_setnull(TriggerData *trigdata)
 }
 
 
-/* ----------
+/*
  * RI_FKey_setdefault_del -
  *
- *	Set foreign key references to defaults at delete event on PK table.
- * ----------
+ * Set foreign key references to defaults at delete event on PK table.
  */
 Datum
 RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Share code with UPDATE case
-	 */
+	/* Share code with UPDATE case */
 	return ri_setdefault((TriggerData *) fcinfo->context);
 }
 
-/* ----------
+/*
  * RI_FKey_setdefault_upd -
  *
- *	Set foreign key references to defaults at update event on PK table.
- * ----------
+ * Set foreign key references to defaults at update event on PK table.
  */
 Datum
 RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
+	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Share code with DELETE case
-	 */
+	/* Share code with DELETE case */
 	return ri_setdefault((TriggerData *) fcinfo->context);
 }
 
-/* ----------
+/*
  * ri_setdefault -
  *
- *	Common code for ON DELETE SET DEFAULT and ON UPDATE SET DEFAULT
- * ----------
+ * Common code for ON DELETE SET DEFAULT and ON UPDATE SET DEFAULT
  */
 static Datum
 ri_setdefault(TriggerData *trigdata)
@@ -1233,9 +1140,6 @@ ri_setdefault(TriggerData *trigdata)
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
 
@@ -1346,17 +1250,16 @@ ri_setdefault(TriggerData *trigdata)
 }
 
 
-/* ----------
+/*
  * RI_FKey_pk_upd_check_required -
  *
- *	Check if we really need to fire the RI trigger for an update or delete to a PK
- *	relation.  This is called by the AFTER trigger queue manager to see if
- *	it can skip queuing an instance of an RI trigger.  Returns true if the
- *	trigger must be fired, false if we can prove the constraint will still
- *	be satisfied.
+ * Check if we really need to fire the RI trigger for an update or delete to a PK
+ * relation.  This is called by the AFTER trigger queue manager to see if
+ * it can skip queuing an instance of an RI trigger.  Returns true if the
+ * trigger must be fired, false if we can prove the constraint will still
+ * be satisfied.
  *
- *	new_slot will be NULL if this is called for a delete.
- * ----------
+ * new_slot will be NULL if this is called for a delete.
  */
 bool
 RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
@@ -1364,9 +1267,6 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 {
 	const RI_ConstraintInfo *riinfo;
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigger, pk_rel, true);
 
 	/*
@@ -1384,15 +1284,14 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 	return true;
 }
 
-/* ----------
+/*
  * RI_FKey_fk_upd_check_required -
  *
- *	Check if we really need to fire the RI trigger for an update to an FK
- *	relation.  This is called by the AFTER trigger queue manager to see if
- *	it can skip queuing an instance of an RI trigger.  Returns true if the
- *	trigger must be fired, false if we can prove the constraint will still
- *	be satisfied.
- * ----------
+ * Check if we really need to fire the RI trigger for an update to an FK
+ * relation.  This is called by the AFTER trigger queue manager to see if
+ * it can skip queuing an instance of an RI trigger.  Returns true if the
+ * trigger must be fired, false if we can prove the constraint will still
+ * be satisfied.
  */
 bool
 RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
@@ -1404,9 +1303,6 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 	TransactionId xmin;
 	bool		isnull;
 
-	/*
-	 * Get arguments.
-	 */
 	riinfo = ri_FetchConstraintInfo(trigger, fk_rel, false);
 
 	ri_nullcheck = ri_NullCheck(RelationGetDescr(fk_rel), new_slot, riinfo, false);
@@ -1476,23 +1372,22 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 	return true;
 }
 
-/* ----------
+/*
  * RI_Initial_Check -
  *
- *	Check an entire table for non-matching values using a single query.
- *	This is not a trigger procedure, but is called during ALTER TABLE
- *	ADD FOREIGN KEY to validate the initial table contents.
+ * Check an entire table for non-matching values using a single query.
+ * This is not a trigger procedure, but is called during ALTER TABLE
+ * ADD FOREIGN KEY to validate the initial table contents.
  *
- *	We expect that the caller has made provision to prevent any problems
- *	caused by concurrent actions. This could be either by locking rel and
- *	pkrel at ShareRowExclusiveLock or higher, or by otherwise ensuring
- *	that triggers implementing the checks are already active.
- *	Hence, we do not need to lock individual rows for the check.
+ * We expect that the caller has made provision to prevent any problems
+ * caused by concurrent actions. This could be either by locking rel and
+ * pkrel at ShareRowExclusiveLock or higher, or by otherwise ensuring
+ * that triggers implementing the checks are already active.
+ * Hence, we do not need to lock individual rows for the check.
  *
- *	If the check fails because the current user doesn't have permissions
- *	to read both tables, return false to let our caller know that they will
- *	need to do something else to check the constraint.
- * ----------
+ * If the check fails because the current user doesn't have permissions
+ * to read both tables, return false to let our caller know that they will
+ * need to do something else to check the constraint.
  */
 bool
 RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
@@ -1513,7 +1408,6 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	int			spi_result;
 	SPIPlanPtr	qplan;
 
-	/* Fetch constraint info. */
 	riinfo = ri_FetchConstraintInfo(trigger, fk_rel, false);
 
 	/*
@@ -2463,13 +2357,12 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 }
 
 
-/* ----------
+/*
  * ri_NullCheck -
  *
- *	Determine the NULL state of all key values in a tuple
+ * Determine the NULL state of all key values in a tuple
  *
- *	Returns one of RI_KEYS_ALL_NULL, RI_KEYS_NONE_NULL or RI_KEYS_SOME_NULL.
- * ----------
+ * Returns one of RI_KEYS_ALL_NULL, RI_KEYS_NONE_NULL or RI_KEYS_SOME_NULL.
  */
 static int
 ri_NullCheck(TupleDesc tupDesc,
@@ -2504,11 +2397,10 @@ ri_NullCheck(TupleDesc tupDesc,
 }
 
 
-/* ----------
+/*
  * ri_InitHashTables -
  *
- *	Initialize our internal hash tables.
- * ----------
+ * Initialize our internal hash tables.
  */
 static void
 ri_InitHashTables(void)
@@ -2543,12 +2435,11 @@ ri_InitHashTables(void)
 }
 
 
-/* ----------
+/*
  * ri_FetchPreparedPlan -
  *
- *	Lookup for a query key in our private hash table of prepared
- *	and saved SPI execution plans. Return the plan if found or NULL.
- * ----------
+ * Lookup for a query key in our private hash table of prepared
+ * and saved SPI execution plans. Return the plan if found or NULL.
  */
 static SPIPlanPtr
 ri_FetchPreparedPlan(RI_QueryKey *key)
@@ -2597,11 +2488,10 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 }
 
 
-/* ----------
+/*
  * ri_HashPreparedPlan -
  *
- *	Add another plan to our private SPI query plan hashtable.
- * ----------
+ * Add another plan to our private SPI query plan hashtable.
  */
 static void
 ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
@@ -2627,16 +2517,15 @@ ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
 }
 
 
-/* ----------
+/*
  * ri_KeysEqual -
  *
- *	Check if all key values in OLD and NEW are equal.
+ * Check if all key values in OLD and NEW are equal.
  *
- *	Note: at some point we might wish to redefine this as checking for
- *	"IS NOT DISTINCT" rather than "=", that is, allow two nulls to be
- *	considered equal.  Currently there is no need since all callers have
- *	previously found at least one of the rows to contain no nulls.
- * ----------
+ * Note: at some point we might wish to redefine this as checking for
+ * "IS NOT DISTINCT" rather than "=", that is, allow two nulls to be
+ * considered equal.  Currently there is no need since all callers have
+ * previously found at least one of the rows to contain no nulls.
  */
 static bool
 ri_KeysEqual(Relation rel, TupleTableSlot *oldslot, TupleTableSlot *newslot,
@@ -2690,13 +2579,12 @@ ri_KeysEqual(Relation rel, TupleTableSlot *oldslot, TupleTableSlot *newslot,
 }
 
 
-/* ----------
+/*
  * ri_AttributesEqual -
  *
- *	Call the appropriate equality comparison operator for two values.
+ * Call the appropriate equality comparison operator for two values.
  *
- *	NB: we have already checked that neither value is null.
- * ----------
+ * NB: we have already checked that neither value is null.
  */
 static bool
 ri_AttributesEqual(Oid eq_opr, Oid typeid,
@@ -2725,12 +2613,11 @@ ri_AttributesEqual(Oid eq_opr, Oid typeid,
 									  oldvalue, newvalue));
 }
 
-/* ----------
+/*
  * ri_HashCompareOp -
  *
- *	See if we know how to compare two values, and create a new hash entry
- *	if not.
- * ----------
+ * See if we know how to compare two values, and create a new hash entry
+ * if not.
  */
 static RI_CompareHashEntry *
 ri_HashCompareOp(Oid eq_opr, Oid typeid)
