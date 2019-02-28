@@ -238,7 +238,6 @@ RI_FKey_check(TriggerData *trigdata)
 	TupleTableSlot *newslot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
-	int			i;
 
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, false);
@@ -379,7 +378,7 @@ RI_FKey_check(TriggerData *trigdata)
 		quoteRelationName(pkrelname, pk_rel);
 		appendStringInfo(&querybuf, "SELECT 1 FROM ONLY %s x", pkrelname);
 		querysep = "WHERE";
-		for (i = 0; i < riinfo->nkeys; i++)
+		for (int i = 0; i < riinfo->nkeys; i++)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
@@ -468,7 +467,6 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 {
 	SPIPlanPtr	qplan;
 	RI_QueryKey qkey;
-	int			i;
 	bool		result;
 
 	/* Only called for non-null rows */
@@ -504,7 +502,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 		quoteRelationName(pkrelname, pk_rel);
 		appendStringInfo(&querybuf, "SELECT 1 FROM ONLY %s x", pkrelname);
 		querysep = "WHERE";
-		for (i = 0; i < riinfo->nkeys; i++)
+		for (int i = 0; i < riinfo->nkeys; i++)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 
@@ -675,7 +673,6 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 		const char *querysep;
 		Oid			queryoids[RI_MAX_NUMKEYS];
 		const char *fk_only;
-		int			i;
 
 		/* ----------
 		 * The query string built is
@@ -692,7 +689,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 		appendStringInfo(&querybuf, "SELECT 1 FROM %s%s x",
 						 fk_only, fkrelname);
 		querysep = "WHERE";
-		for (i = 0; i < riinfo->nkeys; i++)
+		for (int i = 0; i < riinfo->nkeys; i++)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
@@ -747,7 +744,6 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	TupleTableSlot *old_slot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
-	int			i;
 
 	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_del", RI_TRIGTYPE_DELETE);
@@ -795,7 +791,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 		appendStringInfo(&querybuf, "DELETE FROM %s%s",
 						 fk_only, fkrelname);
 		querysep = "WHERE";
-		for (i = 0; i < riinfo->nkeys; i++)
+		for (int i = 0; i < riinfo->nkeys; i++)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
@@ -851,8 +847,6 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	TupleTableSlot *old_slot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
-	int			i;
-	int			j;
 
 	/* Check that this is a valid trigger call on the right time and event. */
 	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_upd", RI_TRIGTYPE_UPDATE);
@@ -909,7 +903,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 						 fk_only, fkrelname);
 		querysep = "";
 		qualsep = "WHERE";
-		for (i = 0, j = riinfo->nkeys; i < riinfo->nkeys; i++, j++)
+		for (int i = 0, j = riinfo->nkeys; i < riinfo->nkeys; i++, j++)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
@@ -998,7 +992,6 @@ ri_setnull(TriggerData *trigdata)
 	TupleTableSlot *old_slot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
-	int			i;
 
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
@@ -1051,7 +1044,7 @@ ri_setnull(TriggerData *trigdata)
 						 fk_only, fkrelname);
 		querysep = "";
 		qualsep = "WHERE";
-		for (i = 0; i < riinfo->nkeys; i++)
+		for (int i = 0; i < riinfo->nkeys; i++)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
@@ -1173,7 +1166,6 @@ ri_setdefault(TriggerData *trigdata)
 		const char *qualsep;
 		Oid			queryoids[RI_MAX_NUMKEYS];
 		const char *fk_only;
-		int			i;
 
 		/* ----------
 		 * The query string built is
@@ -1192,7 +1184,7 @@ ri_setdefault(TriggerData *trigdata)
 						 fk_only, fkrelname);
 		querysep = "";
 		qualsep = "WHERE";
-		for (i = 0; i < riinfo->nkeys; i++)
+		for (int i = 0; i < riinfo->nkeys; i++)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
@@ -1402,7 +1394,6 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	RangeTblEntry *fkrte;
 	const char *sep;
 	const char *fk_only;
-	int			i;
 	int			save_nestlevel;
 	char		workmembuf[32];
 	int			spi_result;
@@ -1431,7 +1422,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	fkrte->rellockmode = AccessShareLock;
 	fkrte->requiredPerms = ACL_SELECT;
 
-	for (i = 0; i < riinfo->nkeys; i++)
+	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		int			attno;
 
@@ -1475,7 +1466,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	initStringInfo(&querybuf);
 	appendStringInfoString(&querybuf, "SELECT ");
 	sep = "";
-	for (i = 0; i < riinfo->nkeys; i++)
+	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		quoteOneName(fkattname,
 					 RIAttName(fk_rel, riinfo->fk_attnums[i]));
@@ -1494,7 +1485,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	strcpy(pkattname, "pk.");
 	strcpy(fkattname, "fk.");
 	sep = "(";
-	for (i = 0; i < riinfo->nkeys; i++)
+	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 		Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
@@ -1522,7 +1513,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	appendStringInfo(&querybuf, ") WHERE pk.%s IS NULL AND (", pkattname);
 
 	sep = "";
-	for (i = 0; i < riinfo->nkeys; i++)
+	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		quoteOneName(fkattname, RIAttName(fk_rel, riinfo->fk_attnums[i]));
 		appendStringInfo(&querybuf,
@@ -1613,7 +1604,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 		 * or fk_rel's tupdesc.
 		 */
 		memcpy(&fake_riinfo, riinfo, sizeof(RI_ConstraintInfo));
-		for (i = 0; i < fake_riinfo.nkeys; i++)
+		for (int i = 0; i < fake_riinfo.nkeys; i++)
 			fake_riinfo.fk_attnums[i] = i + 1;
 
 		/*
@@ -2195,7 +2186,6 @@ ri_ExtractValues(Relation rel, TupleTableSlot *slot,
 				 Datum *vals, char *nulls)
 {
 	const int16 *attnums;
-	int			i;
 	bool		isnull;
 
 	if (rel_is_pk)
@@ -2203,7 +2193,7 @@ ri_ExtractValues(Relation rel, TupleTableSlot *slot,
 	else
 		attnums = riinfo->fk_attnums;
 
-	for (i = 0; i < riinfo->nkeys; i++)
+	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		vals[i] = slot_getattr(slot, attnums[i], &isnull);
 		nulls[i] = isnull ? 'n' : ' ';
@@ -2229,7 +2219,6 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 	StringInfoData key_values;
 	bool		onfk;
 	const int16 *attnums;
-	int			idx;
 	Oid			rel_oid;
 	AclResult	aclresult;
 	bool		has_perm = true;
@@ -2271,7 +2260,7 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 		if (aclresult != ACLCHECK_OK)
 		{
 			/* Try for column-level permissions */
-			for (idx = 0; idx < riinfo->nkeys; idx++)
+			for (int idx = 0; idx < riinfo->nkeys; idx++)
 			{
 				aclresult = pg_attribute_aclcheck(rel_oid, attnums[idx],
 												  GetUserId(),
@@ -2294,7 +2283,7 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 		/* Get printable versions of the keys involved */
 		initStringInfo(&key_names);
 		initStringInfo(&key_values);
-		for (idx = 0; idx < riinfo->nkeys; idx++)
+		for (int idx = 0; idx < riinfo->nkeys; idx++)
 		{
 			int			fnum = attnums[idx];
 			Form_pg_attribute att = TupleDescAttr(tupdesc, fnum - 1);
@@ -2370,7 +2359,6 @@ ri_NullCheck(TupleDesc tupDesc,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk)
 {
 	const int16 *attnums;
-	int			i;
 	bool		allnull = true;
 	bool		nonenull = true;
 
@@ -2379,7 +2367,7 @@ ri_NullCheck(TupleDesc tupDesc,
 	else
 		attnums = riinfo->fk_attnums;
 
-	for (i = 0; i < riinfo->nkeys; i++)
+	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		if (slot_attisnull(slot, attnums[i]))
 			nonenull = false;
@@ -2533,7 +2521,6 @@ ri_KeysEqual(Relation rel, TupleTableSlot *oldslot, TupleTableSlot *newslot,
 {
 	const int16 *attnums;
 	const Oid  *eq_oprs;
-	int			i;
 
 	if (rel_is_pk)
 	{
@@ -2547,7 +2534,7 @@ ri_KeysEqual(Relation rel, TupleTableSlot *oldslot, TupleTableSlot *newslot,
 	}
 
 	/* XXX: could be worthwhile to fetch all necessary attrs at once */
-	for (i = 0; i < riinfo->nkeys; i++)
+	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		Datum		oldvalue;
 		Datum		newvalue;
