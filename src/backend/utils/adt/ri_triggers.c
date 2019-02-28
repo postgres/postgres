@@ -454,10 +454,10 @@ RI_FKey_check_upd(PG_FUNCTION_ARGS)
  * ri_Check_Pk_Match
  *
  * Check to see if another PK row has been created that provides the same
- * key values as the "old_row" that's been modified or deleted in our trigger
+ * key values as the "oldslot" that's been modified or deleted in our trigger
  * event.  Returns true if a match is found in the PK table.
  *
- * We assume the caller checked that the old_row contains no NULL key values,
+ * We assume the caller checked that the oldslot contains no NULL key values,
  * since otherwise a match is impossible.
  */
 static bool
@@ -625,7 +625,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	const RI_ConstraintInfo *riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
-	TupleTableSlot *old_slot;
+	TupleTableSlot *oldslot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 
@@ -640,7 +640,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	 */
 	fk_rel = table_open(riinfo->fk_relid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
-	old_slot = trigdata->tg_trigslot;
+	oldslot = trigdata->tg_trigslot;
 
 	/*
 	 * If another PK row now exists providing the old key values, we
@@ -649,7 +649,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	 * allow another row to be substituted.
 	 */
 	if (is_no_action &&
-		ri_Check_Pk_Match(pk_rel, fk_rel, old_slot, riinfo))
+		ri_Check_Pk_Match(pk_rel, fk_rel, oldslot, riinfo))
 	{
 		table_close(fk_rel, RowShareLock);
 		return PointerGetDatum(NULL);
@@ -716,7 +716,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	 */
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
-					old_slot, NULL,
+					oldslot, NULL,
 					true,	/* must detect new rows */
 					SPI_OK_SELECT);
 
@@ -741,7 +741,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	const RI_ConstraintInfo *riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
-	TupleTableSlot *old_slot;
+	TupleTableSlot *oldslot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 
@@ -759,7 +759,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 */
 	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
-	old_slot = trigdata->tg_trigslot;
+	oldslot = trigdata->tg_trigslot;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -818,7 +818,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 */
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
-					old_slot, NULL,
+					oldslot, NULL,
 					true,	/* must detect new rows */
 					SPI_OK_DELETE);
 
@@ -843,8 +843,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	const RI_ConstraintInfo *riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
-	TupleTableSlot *new_slot;
-	TupleTableSlot *old_slot;
+	TupleTableSlot *newslot;
+	TupleTableSlot *oldslot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 
@@ -863,8 +863,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 */
 	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
-	new_slot = trigdata->tg_newslot;
-	old_slot = trigdata->tg_trigslot;
+	newslot = trigdata->tg_newslot;
+	oldslot = trigdata->tg_trigslot;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -935,7 +935,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 */
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
-					old_slot, new_slot,
+					oldslot, newslot,
 					true,	/* must detect new rows */
 					SPI_OK_UPDATE);
 
@@ -989,7 +989,7 @@ ri_setnull(TriggerData *trigdata)
 	const RI_ConstraintInfo *riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
-	TupleTableSlot *old_slot;
+	TupleTableSlot *oldslot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 
@@ -1004,7 +1004,7 @@ ri_setnull(TriggerData *trigdata)
 	 */
 	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
-	old_slot = trigdata->tg_trigslot;
+	oldslot = trigdata->tg_trigslot;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -1075,7 +1075,7 @@ ri_setnull(TriggerData *trigdata)
 	 */
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
-					old_slot, NULL,
+					oldslot, NULL,
 					true,	/* must detect new rows */
 					SPI_OK_UPDATE);
 
@@ -1129,7 +1129,7 @@ ri_setdefault(TriggerData *trigdata)
 	const RI_ConstraintInfo *riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
-	TupleTableSlot *old_slot;
+	TupleTableSlot *oldslot;
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 
@@ -1144,7 +1144,7 @@ ri_setdefault(TriggerData *trigdata)
 	 */
 	fk_rel = table_open(riinfo->fk_relid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
-	old_slot = trigdata->tg_trigslot;
+	oldslot = trigdata->tg_trigslot;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -1215,7 +1215,7 @@ ri_setdefault(TriggerData *trigdata)
 	 */
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
-					old_slot, NULL,
+					oldslot, NULL,
 					true,	/* must detect new rows */
 					SPI_OK_UPDATE);
 
@@ -1251,11 +1251,11 @@ ri_setdefault(TriggerData *trigdata)
  * trigger must be fired, false if we can prove the constraint will still
  * be satisfied.
  *
- * new_slot will be NULL if this is called for a delete.
+ * newslot will be NULL if this is called for a delete.
  */
 bool
 RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
-							  TupleTableSlot *old_slot, TupleTableSlot *new_slot)
+							  TupleTableSlot *oldslot, TupleTableSlot *newslot)
 {
 	const RI_ConstraintInfo *riinfo;
 
@@ -1265,11 +1265,11 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 	 * If any old key value is NULL, the row could not have been
 	 * referenced by an FK row, so no check is needed.
 	 */
-	if (ri_NullCheck(RelationGetDescr(pk_rel), old_slot, riinfo, true) != RI_KEYS_NONE_NULL)
+	if (ri_NullCheck(RelationGetDescr(pk_rel), oldslot, riinfo, true) != RI_KEYS_NONE_NULL)
 		return false;
 
 	/* If all old and new key values are equal, no check is needed */
-	if (new_slot && ri_KeysEqual(pk_rel, old_slot, new_slot, riinfo, true))
+	if (newslot && ri_KeysEqual(pk_rel, oldslot, newslot, riinfo, true))
 		return false;
 
 	/* Else we need to fire the trigger. */
@@ -1287,7 +1287,7 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
  */
 bool
 RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
-							  TupleTableSlot *old_slot, TupleTableSlot *new_slot)
+							  TupleTableSlot *oldslot, TupleTableSlot *newslot)
 {
 	const RI_ConstraintInfo *riinfo;
 	int			ri_nullcheck;
@@ -1297,7 +1297,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 
 	riinfo = ri_FetchConstraintInfo(trigger, fk_rel, false);
 
-	ri_nullcheck = ri_NullCheck(RelationGetDescr(fk_rel), new_slot, riinfo, false);
+	ri_nullcheck = ri_NullCheck(RelationGetDescr(fk_rel), newslot, riinfo, false);
 
 	/*
 	 * If all new key values are NULL, the row satisfies the constraint, so no
@@ -1350,14 +1350,14 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 	 * UPDATE check.  (We could skip this if we knew the INSERT
 	 * trigger already fired, but there is no easy way to know that.)
 	 */
-	xminDatum = slot_getsysattr(old_slot, MinTransactionIdAttributeNumber, &isnull);
+	xminDatum = slot_getsysattr(oldslot, MinTransactionIdAttributeNumber, &isnull);
 	Assert(!isnull);
 	xmin = DatumGetTransactionId(xminDatum);
 	if (TransactionIdIsCurrentTransactionId(xmin))
 		return true;
 
 	/* If all old and new key values are equal, no check is needed */
-	if (ri_KeysEqual(fk_rel, old_slot, new_slot, riinfo, false))
+	if (ri_KeysEqual(fk_rel, oldslot, newslot, riinfo, false))
 		return false;
 
 	/* Else we need to fire the trigger. */
@@ -2047,7 +2047,7 @@ static bool
 ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 				RI_QueryKey *qkey, SPIPlanPtr qplan,
 				Relation fk_rel, Relation pk_rel,
-				TupleTableSlot *old_slot, TupleTableSlot *new_slot,
+				TupleTableSlot *oldslot, TupleTableSlot *newslot,
 				bool detectNewRows, int expect_OK)
 {
 	Relation	query_rel,
@@ -2090,17 +2090,17 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 	}
 
 	/* Extract the parameters to be passed into the query */
-	if (new_slot)
+	if (newslot)
 	{
-		ri_ExtractValues(source_rel, new_slot, riinfo, source_is_pk,
+		ri_ExtractValues(source_rel, newslot, riinfo, source_is_pk,
 						 vals, nulls);
-		if (old_slot)
-			ri_ExtractValues(source_rel, old_slot, riinfo, source_is_pk,
+		if (oldslot)
+			ri_ExtractValues(source_rel, oldslot, riinfo, source_is_pk,
 							 vals + riinfo->nkeys, nulls + riinfo->nkeys);
 	}
 	else
 	{
-		ri_ExtractValues(source_rel, old_slot, riinfo, source_is_pk,
+		ri_ExtractValues(source_rel, oldslot, riinfo, source_is_pk,
 						 vals, nulls);
 	}
 
@@ -2170,7 +2170,7 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 		(SPI_processed == 0) == (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK))
 		ri_ReportViolation(riinfo,
 						   pk_rel, fk_rel,
-						   new_slot ? new_slot : old_slot,
+						   newslot ? newslot : oldslot,
 						   NULL,
 						   qkey->constr_queryno);
 
