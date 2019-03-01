@@ -43,7 +43,6 @@ exec sql end declare section;
 	memset(recv_short_buf.arr, 0x0, sizeof(recv_short_buf.arr)); \
 } \
 while (0)
-	
 
 	ECPGdebug(1, stderr);
 

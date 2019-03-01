@@ -36,11 +36,11 @@ typedef struct
 
 static int	nextStmtID = 1;
 static stmtCacheEntry *stmtCacheEntries = NULL;
-static struct declared_statement *g_declared_list; 
+static struct declared_statement *g_declared_list;
 
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
 			   struct prepared_statement *prev, struct prepared_statement *this);
-static struct declared_statement *ecpg_find_declared_statement(const char *); 
+static struct declared_statement *ecpg_find_declared_statement(const char *);
 static bool
 isvarchar(unsigned char c)
 {
@@ -177,14 +177,14 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks,
 	struct connection *con;
 	struct prepared_statement *this,
 			   *prev;
-	const char *real_connection_name = NULL; 
+	const char *real_connection_name = NULL;
 
 	(void) questionmarks;		/* quiet the compiler */
 
 	real_connection_name = ecpg_get_con_name_by_declared_name(name);
 	if (real_connection_name == NULL)
 	{
-		/* 
+		/*
 		 * If can't get the connection name by declared name then using connection name
 		 * coming from the parameter connection_name
 		 */
