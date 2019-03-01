@@ -675,10 +675,7 @@ loop:
 	 */
 	RelationSetTargetBlock(relation, BufferGetBlockNumber(buffer));
 
-	/*
-	 * In case we used an in-memory map of available blocks, reset it for next
-	 * use.
-	 */
+	/* This should already be cleared by now, but make sure it is. */
 	FSMClearLocalMap();
 
 	return buffer;
