@@ -320,6 +320,7 @@ extern void ExecForceStoreMinimalTuple(MinimalTuple mtup, TupleTableSlot *slot,
 									   bool shouldFree);
 extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
+extern void ExecStoreHeapTupleDatum(Datum data, TupleTableSlot *slot);
 extern HeapTuple ExecFetchSlotHeapTuple(TupleTableSlot *slot, bool materialize, bool *shouldFree);
 extern MinimalTuple ExecFetchSlotMinimalTuple(TupleTableSlot *slot,
 						  bool *shouldFree);

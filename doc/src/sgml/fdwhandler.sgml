@@ -992,29 +992,31 @@ GetForeignRowMarkType(RangeTblEntry *rte,
 
     <para>
 <programlisting>
-HeapTuple
+void
 RefetchForeignRow(EState *estate,
                   ExecRowMark *erm,
                   Datum rowid,
+                  TupleTableSlot *slot,
                   bool *updated);
 </programlisting>
 
-     Re-fetch one tuple from the foreign table, after locking it if required.
+     Re-fetch one tuple slot from the foreign table, after locking it if required.
      <literal>estate</literal> is global execution state for the query.
      <literal>erm</literal> is the <structname>ExecRowMark</structname> struct describing
      the target foreign table and the row lock type (if any) to acquire.
      <literal>rowid</literal> identifies the tuple to be fetched.
-     <literal>updated</literal> is an output parameter.
+     <literal>slot</literal> contains nothing useful upon call, but can be used to
+     hold the returned tuple. <literal>updated</literal> is an output parameter.
     </para>
 
     <para>
-     This function should return a palloc'ed copy of the fetched tuple,
-     or <literal>NULL</literal> if the row lock couldn't be obtained.  The row lock
-     type to acquire is defined by <literal>erm-&gt;markType</literal>, which is the
-     value previously returned by <function>GetForeignRowMarkType</function>.
-     (<literal>ROW_MARK_REFERENCE</literal> means to just re-fetch the tuple without
-     acquiring any lock, and <literal>ROW_MARK_COPY</literal> will never be seen by
-     this routine.)
+     This function should store the tuple into the provided, or clear it if if
+     the row lock couldn't be obtained.  The row lock type to acquire is
+     defined by <literal>erm-&gt;markType</literal>, which is the value
+     previously returned by <function>GetForeignRowMarkType</function>.
+     (<literal>ROW_MARK_REFERENCE</literal> means to just re-fetch the tuple
+     without acquiring any lock, and <literal>ROW_MARK_COPY</literal> will
+     never be seen by this routine.)
     </para>
 
     <para>
@@ -1026,7 +1028,7 @@ RefetchForeignRow(EState *estate,
 
     <para>
      Note that by default, failure to acquire a row lock should result in
-     raising an error; a <literal>NULL</literal> return is only appropriate if
+     raising an error; returning with an empty slot is only appropriate if
      the <literal>SKIP LOCKED</literal> option is specified
      by <literal>erm-&gt;waitPolicy</literal>.
     </para>

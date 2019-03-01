@@ -562,15 +562,15 @@ typedef struct EState
 
 	/*
 	 * These fields are for re-evaluating plan quals when an updated tuple is
-	 * substituted in READ COMMITTED mode.  es_epqTuple[] contains tuples that
-	 * scan plan nodes should return instead of whatever they'd normally
-	 * return, or NULL if nothing to return; es_epqTupleSet[] is true if a
-	 * particular array entry is valid; and es_epqScanDone[] is state to
-	 * remember if the tuple has been returned already.  Arrays are of size
-	 * es_range_table_size and are indexed by scan node scanrelid - 1.
+	 * substituted in READ COMMITTED mode.  es_epqTupleSlot[] contains test
+	 * tuples that scan plan nodes should return instead of whatever they'd
+	 * normally return, or an empty slot if there is nothing to return; if
+	 * es_epqTupleSlot[] is not NULL if a particular array entry is valid; and
+	 * es_epqScanDone[] is state to remember if the tuple has been returned
+	 * already.  Arrays are of size es_range_table_size and are indexed by
+	 * scan node scanrelid - 1.
 	 */
-	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
-	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
+	TupleTableSlot **es_epqTupleSlot;	/* array of EPQ substitute tuples */
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
 
 	bool		es_use_parallel_mode;	/* can we use parallel workers? */
@@ -2257,8 +2257,6 @@ typedef struct LockRowsState
 	PlanState	ps;				/* its first field is NodeTag */
 	List	   *lr_arowMarks;	/* List of ExecAuxRowMarks */
 	EPQState	lr_epqstate;	/* for evaluating EvalPlanQual rechecks */
-	HeapTuple  *lr_curtuples;	/* locked tuples (one entry per RT entry) */
-	int			lr_ntables;		/* length of lr_curtuples[] array */
 } LockRowsState;
 
 /* ----------------

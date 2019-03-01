@@ -197,16 +197,16 @@ extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
 			 Relation relation, Index rti, LockTupleMode lockmode,
 			 ItemPointer tid, TransactionId priorXmax);
-extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
+extern bool EvalPlanQualFetch(EState *estate, Relation relation,
 				  LockTupleMode lockmode, LockWaitPolicy wait_policy,
-				  ItemPointer tid, TransactionId priorXmax);
+				  ItemPointer tid, TransactionId priorXmax,
+				  TupleTableSlot *slot);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
 				 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
 					Plan *subplan, List *auxrowmarks);
-extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
-					 HeapTuple tuple);
-extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);
+extern TupleTableSlot *EvalPlanQualSlot(EPQState *epqstate,
+			 Relation relation, Index rti);
 
 #define EvalPlanQualSetSlot(epqstate, slot)  ((epqstate)->origslot = (slot))
 extern void EvalPlanQualFetchRowMarks(EPQState *epqstate);

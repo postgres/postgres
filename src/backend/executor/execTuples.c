@@ -1543,6 +1543,32 @@ ExecStoreAllNullTuple(TupleTableSlot *slot)
 }
 
 /*
+ * Store a HeapTuple in datum form, into a slot. That always requires
+ * deforming it and storing it in virtual form.
+ *
+ * Until the slot is materialized, the contents of the slot depend on the
+ * datum.
+ */
+void
+ExecStoreHeapTupleDatum(Datum data, TupleTableSlot *slot)
+{
+	HeapTupleData tuple = {0};
+	HeapTupleHeader td;
+
+	td = DatumGetHeapTupleHeader(data);
+
+	tuple.t_len = HeapTupleHeaderGetDatumLength(td);
+	tuple.t_self = td->t_ctid;
+	tuple.t_data = td;
+
+	ExecClearTuple(slot);
+
+	heap_deform_tuple(&tuple, slot->tts_tupleDescriptor,
+					  slot->tts_values, slot->tts_isnull);
+	ExecStoreVirtualTuple(slot);
+}
+
+/*
  * ExecFetchSlotHeapTuple - fetch HeapTuple representing the slot's content
  *
  * The returned HeapTuple represents the slot's content as closely as

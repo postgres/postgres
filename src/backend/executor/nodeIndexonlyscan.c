@@ -426,7 +426,7 @@ ExecIndexOnlyMarkPos(IndexOnlyScanState *node)
 {
 	EState	   *estate = node->ss.ps.state;
 
-	if (estate->es_epqTuple != NULL)
+	if (estate->es_epqTupleSlot != NULL)
 	{
 		/*
 		 * We are inside an EvalPlanQual recheck.  If a test tuple exists for
@@ -440,7 +440,7 @@ ExecIndexOnlyMarkPos(IndexOnlyScanState *node)
 		Index		scanrelid = ((Scan *) node->ss.ps.plan)->scanrelid;
 
 		Assert(scanrelid > 0);
-		if (estate->es_epqTupleSet[scanrelid - 1])
+		if (estate->es_epqTupleSlot[scanrelid - 1] != NULL)
 		{
 			/* Verify the claim above */
 			if (!estate->es_epqScanDone[scanrelid - 1])
@@ -461,13 +461,13 @@ ExecIndexOnlyRestrPos(IndexOnlyScanState *node)
 {
 	EState	   *estate = node->ss.ps.state;
 
-	if (estate->es_epqTuple != NULL)
+	if (estate->es_epqTupleSlot != NULL)
 	{
 		/* See comments in ExecIndexOnlyMarkPos */
 		Index		scanrelid = ((Scan *) node->ss.ps.plan)->scanrelid;
 
 		Assert(scanrelid > 0);
-		if (estate->es_epqTupleSet[scanrelid - 1])
+		if (estate->es_epqTupleSlot[scanrelid - 1])
 		{
 			/* Verify the claim above */
 			if (!estate->es_epqScanDone[scanrelid - 1])
