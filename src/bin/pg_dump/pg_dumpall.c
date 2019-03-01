@@ -1346,6 +1346,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 {
 	PQExpBuffer buf = createPQExpBuffer();
 	int			count = 1;
+	bool		first = true;
 
 	for (;;)
 	{
@@ -1367,6 +1368,14 @@ dumpUserConfig(PGconn *conn, const char *username)
 		if (PQntuples(res) == 1 &&
 			!PQgetisnull(res, 0, 0))
 		{
+			/* comment at section start, only if needed */
+			if (first)
+			{
+				fprintf(OPF, "--\n-- User Configurations\n--\n\n");
+				first = false;
+			}
+
+			fprintf(OPF, "--\n-- User Config \"%s\"\n--\n\n", username);
 			resetPQExpBuffer(buf);
 			makeAlterConfigCommand(conn, PQgetvalue(res, 0, 0),
 								   "ROLE", username, NULL, NULL,
@@ -1454,6 +1463,9 @@ dumpDatabases(PGconn *conn)
 					   "WHERE datallowconn "
 					   "ORDER BY (datname <> 'template1'), datname");
 
+	if (PQntuples(res) > 0)
+		fprintf(OPF, "--\n-- Databases\n--\n\n");
+
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		char	   *dbname = PQgetvalue(res, i, 0);
@@ -1475,6 +1487,8 @@ dumpDatabases(PGconn *conn)
 
 		if (verbose)
 			fprintf(stderr, _("%s: dumping database \"%s\"...\n"), progname, dbname);
+
+		fprintf(OPF, "--\n-- Database \"%s\" dump\n--\n\n", dbname);
 
 		/*
 		 * We assume that "template1" and "postgres" already exist in the
