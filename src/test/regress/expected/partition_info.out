@@ -9,8 +9,7 @@ SELECT * FROM pg_partition_tree(NULL);
 SELECT * FROM pg_partition_tree(0);
  relid | parentrelid | isleaf | level 
 -------+-------------+--------+-------
-       |             |        |      
-(1 row)
+(0 rows)
 
 SELECT pg_partition_root(NULL);
  pg_partition_root 
@@ -163,14 +162,12 @@ CREATE MATERIALIZED VIEW ptif_test_matview AS SELECT 1;
 SELECT * FROM pg_partition_tree('ptif_test_view');
  relid | parentrelid | isleaf | level 
 -------+-------------+--------+-------
-       |             |        |      
-(1 row)
+(0 rows)
 
 SELECT * FROM pg_partition_tree('ptif_test_matview');
  relid | parentrelid | isleaf | level 
 -------+-------------+--------+-------
-       |             |        |      
-(1 row)
+(0 rows)
 
 SELECT pg_partition_root('ptif_test_view');
  pg_partition_root 

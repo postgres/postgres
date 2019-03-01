@@ -69,9 +69,6 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 	FuncCallContext *funcctx;
 	ListCell  **next;
 
-	if (!check_rel_can_be_partition(rootrelid))
-		PG_RETURN_NULL();
-
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -81,6 +78,9 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
+
+		if (!check_rel_can_be_partition(rootrelid))
+			SRF_RETURN_DONE(funcctx);
 
 		/* switch to memory context appropriate for multiple function calls */
 		oldcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
