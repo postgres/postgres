@@ -591,7 +591,7 @@ apply_handle_insert(StringInfo s)
 	estate = create_estate_for_relation(rel);
 	remoteslot = ExecInitExtraTupleSlot(estate,
 										RelationGetDescr(rel->localrel),
-										&TTSOpsHeapTuple);
+										&TTSOpsVirtual);
 
 	/* Input functions may need an active snapshot, so get one */
 	PushActiveSnapshot(GetTransactionSnapshot());

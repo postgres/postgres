@@ -1009,7 +1009,7 @@ ExecInitPartitionDispatchInfo(PartitionTupleRouting *proute, Oid partoid,
 													   tupdesc,
 													   gettext_noop("could not convert row type"));
 		pd->tupslot = pd->tupmap ?
-			MakeSingleTupleTableSlot(tupdesc, &TTSOpsHeapTuple) : NULL;
+			MakeSingleTupleTableSlot(tupdesc, &TTSOpsVirtual) : NULL;
 	}
 	else
 	{
