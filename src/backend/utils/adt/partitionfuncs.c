@@ -35,17 +35,17 @@ static bool
 check_rel_can_be_partition(Oid relid)
 {
 	char		relkind;
+	bool		relispartition;
 
 	/* Check if relation exists */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(relid)))
 		return false;
 
 	relkind = get_rel_relkind(relid);
+	relispartition = get_rel_relispartition(relid);
 
 	/* Only allow relation types that can appear in partition trees. */
-	if (relkind != RELKIND_RELATION &&
-		relkind != RELKIND_FOREIGN_TABLE &&
-		relkind != RELKIND_INDEX &&
+	if (!relispartition &&
 		relkind != RELKIND_PARTITIONED_TABLE &&
 		relkind != RELKIND_PARTITIONED_INDEX)
 		return false;
@@ -188,13 +188,6 @@ pg_partition_root(PG_FUNCTION_ARGS)
 
 	if (!check_rel_can_be_partition(relid))
 		PG_RETURN_NULL();
-
-	/*
-	 * If the relation is not a partition (it may be the partition parent),
-	 * return itself as a result.
-	 */
-	if (!get_rel_relispartition(relid))
-		PG_RETURN_OID(relid);
 
 	/* Fetch the top-most parent */
 	ancestors = get_partition_ancestors(relid);
