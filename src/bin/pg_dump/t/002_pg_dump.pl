@@ -227,7 +227,7 @@ my %pgdump_runs = (
 	pg_dumpall_exclude => {
 		dump_cmd => [
 			'pg_dumpall', '-v', "--file=$tempdir/pg_dumpall_exclude.sql",
-			'--exclude-database', '*dump*', '--no-sync',
+			'--exclude-database', '*dump_test*', '--no-sync',
 		],
 	},
 	no_blobs => {
