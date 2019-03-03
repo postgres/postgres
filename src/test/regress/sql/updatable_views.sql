@@ -1397,6 +1397,7 @@ insert into base_tab_def_view values (12), (13);
 insert into base_tab_def_view values (14, default, default, default, default);
 insert into base_tab_def_view values (15, default, default, default, default),
                                      (16, default, default, default, default);
+insert into base_tab_def_view values (17), (default);
 select * from base_tab_def order by a;
 
 -- Adding an INSTEAD OF trigger should cause NULLs to be inserted instead of
@@ -1423,6 +1424,7 @@ insert into base_tab_def_view values (12), (13);
 insert into base_tab_def_view values (14, default, default, default, default);
 insert into base_tab_def_view values (15, default, default, default, default),
                                      (16, default, default, default, default);
+insert into base_tab_def_view values (17), (default);
 select * from base_tab_def order by a;
 
 -- Using an unconditional DO INSTEAD rule should also cause NULLs to be
@@ -1442,6 +1444,7 @@ insert into base_tab_def_view values (12), (13);
 insert into base_tab_def_view values (14, default, default, default, default);
 insert into base_tab_def_view values (15, default, default, default, default),
                                      (16, default, default, default, default);
+insert into base_tab_def_view values (17), (default);
 select * from base_tab_def order by a;
 
 -- A DO ALSO rule should cause each row to be inserted twice. The first
@@ -1463,7 +1466,18 @@ insert into base_tab_def_view values (12), (13);
 insert into base_tab_def_view values (14, default, default, default, default);
 insert into base_tab_def_view values (15, default, default, default, default),
                                      (16, default, default, default, default);
+insert into base_tab_def_view values (17), (default);
 select * from base_tab_def order by a, c NULLS LAST;
 
 drop view base_tab_def_view;
 drop table base_tab_def;
+
+-- Test defaults with array assignments
+create table base_tab (a serial, b int[], c text, d text default 'Table default');
+create view base_tab_view as select c, a, b from base_tab;
+alter view base_tab_view alter column c set default 'View default';
+insert into base_tab_view (b[1], b[2], c, b[5], b[4], a, b[3])
+values (1, 2, default, 5, 4, default, 3), (10, 11, 'C value', 14, 13, 100, 12);
+select * from base_tab order by a;
+drop view base_tab_view;
+drop table base_tab;
