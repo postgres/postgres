@@ -6,6 +6,17 @@ use TestLib;
 use Test::More tests => 1;
 use Time::HiRes qw(usleep);
 
+if ($windows_os)
+{
+	plan skip_all => 'logrotate test not supported on Windows';
+	exit;
+}
+else
+{
+	plan tests => 1;
+}
+
+
 my $tempdir = TestLib::tempdir;
 
 my $node = get_new_node('primary');
