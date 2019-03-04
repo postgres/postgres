@@ -1491,9 +1491,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 
 		/*
 		 * Log the contents of the right page in the format understood by
-		 * _bt_restore_page(). We set lastrdata->buffer to InvalidBuffer,
-		 * because we're going to recreate the whole page anyway, so it should
-		 * never be stored by XLogInsert.
+		 * _bt_restore_page().  The whole right page will be recreated.
 		 *
 		 * Direct access to page is not good but faster - we should implement
 		 * some new func in page API.  Note we only store the tuples
