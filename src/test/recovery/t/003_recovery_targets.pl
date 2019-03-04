@@ -132,6 +132,11 @@ my $node_standby = get_new_node('standby_7');
 $node_standby->init_from_backup($node_master, 'my_backup', has_restoring => 1);
 $node_standby->append_conf('postgresql.conf', "recovery_target_name = '$recovery_name'
 recovery_target_time = '$recovery_time'");
-command_fails_like(['postgres', '-D', $node_standby->data_dir],
-				   qr/multiple recovery targets specified/,
-				   'multiple conflicting settings');
+
+my $res = run_log(['pg_ctl', '-D', $node_standby->data_dir,
+				   '-l', $node_standby->logfile, 'start']);
+ok(! $res, 'invalid recovery startup fails');
+
+my $logfile = slurp_file($node_standby->logfile());
+ok ($logfile =~  qr/multiple recovery targets specified/,
+	'multiple conflicting settings');
