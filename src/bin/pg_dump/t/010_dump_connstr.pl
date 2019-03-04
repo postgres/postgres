@@ -3,7 +3,16 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 14;
+use Test::More;
+
+if ($^O eq 'msys' && `uname -or` =~ /^2.*Msys/)
+{
+	plan skip_all => 'High bit name tests fail on Msys2';
+}
+else
+{
+	plan tests => 14;
+}
 
 # In a SQL_ASCII database, pgwin32_message_to_UTF16() needs to
 # interpret everything as UTF8.  We're going to use byte sequences
