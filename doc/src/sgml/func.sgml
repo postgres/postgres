@@ -20276,6 +20276,17 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
+        <indexterm><primary>pg_partition_ancestors</primary></indexterm>
+        <literal><function>pg_partition_ancestors(<type>regclass</type>)</function></literal>
+       </entry>
+       <entry><type>setof regclass</type></entry>
+       <entry>
+        List the ancestor relations of the given partition,
+        including the partition itself.
+       </entry>
+      </row>
+      <row>
+       <entry>
         <indexterm><primary>pg_partition_root</primary></indexterm>
         <literal><function>pg_partition_root(<type>regclass</type>)</function></literal>
        </entry>

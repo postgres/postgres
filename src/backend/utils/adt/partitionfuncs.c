@@ -201,3 +201,52 @@ pg_partition_root(PG_FUNCTION_ARGS)
 	Assert(OidIsValid(rootrelid));
 	PG_RETURN_OID(rootrelid);
 }
+
+/*
+ * pg_partition_ancestors
+ *
+ * Produces a view with one row per ancestor of the given partition,
+ * including the input relation itself.
+ */
+Datum
+pg_partition_ancestors(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	FuncCallContext *funcctx;
+	ListCell  **next;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcxt;
+		List	   *ancestors;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		if (!check_rel_can_be_partition(relid))
+			SRF_RETURN_DONE(funcctx);
+
+		oldcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		ancestors = get_partition_ancestors(relid);
+		ancestors = lcons_oid(relid, ancestors);
+
+		next = (ListCell **) palloc(sizeof(ListCell *));
+		*next = list_head(ancestors);
+		funcctx->user_fctx = (void *) next;
+
+		MemoryContextSwitchTo(oldcxt);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	next = (ListCell **) funcctx->user_fctx;
+
+	if (*next != NULL)
+	{
+		Oid			relid = lfirst_oid(*next);
+
+		*next = lnext(*next);
+		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(relid));
+	}
+
+	SRF_RETURN_DONE(funcctx);
+}

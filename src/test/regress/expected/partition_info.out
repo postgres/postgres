@@ -11,6 +11,16 @@ SELECT * FROM pg_partition_tree(0);
 -------+-------------+--------+-------
 (0 rows)
 
+SELECT * FROM pg_partition_ancestors(NULL);
+ relid 
+-------
+(0 rows)
+
+SELECT * FROM pg_partition_ancestors(0);
+ relid 
+-------
+(0 rows)
+
 SELECT pg_partition_root(NULL);
  pg_partition_root 
 -------------------
@@ -92,6 +102,21 @@ SELECT relid, parentrelid, level, isleaf
  ptif_test3 | ptif_test   |     0 | f
 (1 row)
 
+-- List all ancestors of root and leaf tables
+SELECT * FROM pg_partition_ancestors('ptif_test01');
+    relid    
+-------------
+ ptif_test01
+ ptif_test0
+ ptif_test
+(3 rows)
+
+SELECT * FROM pg_partition_ancestors('ptif_test');
+   relid   
+-----------
+ ptif_test
+(1 row)
+
 -- List all members using pg_partition_root with leaf table reference
 SELECT relid, parentrelid, level, isleaf
   FROM pg_partition_tree(pg_partition_root('ptif_test01')) p
@@ -164,6 +189,21 @@ SELECT relid, parentrelid, level, isleaf
  ptif_test11_index | ptif_test1_index |     2 | t
 (7 rows)
 
+-- List all ancestors of root and leaf indexes
+SELECT * FROM pg_partition_ancestors('ptif_test01_index');
+       relid       
+-------------------
+ ptif_test01_index
+ ptif_test0_index
+ ptif_test_index
+(3 rows)
+
+SELECT * FROM pg_partition_ancestors('ptif_test_index');
+      relid      
+-----------------
+ ptif_test_index
+(1 row)
+
 DROP TABLE ptif_test;
 -- Table that is not part of any partition tree is not listed.
 CREATE TABLE ptif_normal_table(a int);
@@ -171,6 +211,11 @@ SELECT relid, parentrelid, level, isleaf
   FROM pg_partition_tree('ptif_normal_table');
  relid | parentrelid | level | isleaf 
 -------+-------------+-------+--------
+(0 rows)
+
+SELECT * FROM pg_partition_ancestors('ptif_normal_table');
+ relid 
+-------
 (0 rows)
 
 SELECT pg_partition_root('ptif_normal_table');
@@ -205,6 +250,26 @@ SELECT * FROM pg_partition_tree('ptif_li_parent');
 SELECT * FROM pg_partition_tree('ptif_li_child');
  relid | parentrelid | isleaf | level 
 -------+-------------+--------+-------
+(0 rows)
+
+SELECT * FROM pg_partition_ancestors('ptif_test_view');
+ relid 
+-------
+(0 rows)
+
+SELECT * FROM pg_partition_ancestors('ptif_test_matview');
+ relid 
+-------
+(0 rows)
+
+SELECT * FROM pg_partition_ancestors('ptif_li_parent');
+ relid 
+-------
+(0 rows)
+
+SELECT * FROM pg_partition_ancestors('ptif_li_child');
+ relid 
+-------
 (0 rows)
 
 SELECT pg_partition_root('ptif_test_view');

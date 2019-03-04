@@ -10528,6 +10528,11 @@
   proargmodes => '{i,o,o,o,o}',
   proargnames => '{rootrelid,relid,parentrelid,isleaf,level}',
   prosrc => 'pg_partition_tree' },
+{ oid => '3425', descr => 'view ancestors of the partition',
+  proname => 'pg_partition_ancestors', prorows => '10', proretset => 't',
+  provolatile => 'v', prorettype => 'regclass', proargtypes => 'regclass',
+  proallargtypes => '{regclass,regclass}', proargmodes => '{i,o}',
+  proargnames => '{partitionid,relid}', prosrc => 'pg_partition_ancestors' },
 
 # function to get the top-most partition root parent
 { oid => '3424', descr => 'get top-most partition root parent',
