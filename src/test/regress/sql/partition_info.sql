@@ -84,14 +84,21 @@ SELECT relid, parentrelid, level, isleaf
 SELECT pg_partition_root('ptif_normal_table');
 DROP TABLE ptif_normal_table;
 
--- Various partitioning-related functions return NULL if passed relations
+-- Various partitioning-related functions return empty/NULL if passed relations
 -- of types that cannot be part of a partition tree; for example, views,
--- materialized views, etc.
+-- materialized views, legacy inheritance children or parents, etc.
 CREATE VIEW ptif_test_view AS SELECT 1;
 CREATE MATERIALIZED VIEW ptif_test_matview AS SELECT 1;
+CREATE TABLE ptif_li_parent ();
+CREATE TABLE ptif_li_child () INHERITS (ptif_li_parent);
 SELECT * FROM pg_partition_tree('ptif_test_view');
 SELECT * FROM pg_partition_tree('ptif_test_matview');
+SELECT * FROM pg_partition_tree('ptif_li_parent');
+SELECT * FROM pg_partition_tree('ptif_li_child');
 SELECT pg_partition_root('ptif_test_view');
 SELECT pg_partition_root('ptif_test_matview');
+SELECT pg_partition_root('ptif_li_parent');
+SELECT pg_partition_root('ptif_li_child');
 DROP VIEW ptif_test_view;
 DROP MATERIALIZED VIEW ptif_test_matview;
+DROP TABLE ptif_li_parent, ptif_li_child;
