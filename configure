@@ -15025,8 +15025,8 @@ else
      if ${ac_cv_func_accept_arg3+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-      for ac_cv_func_accept_return in 'int' 'unsigned int PASCAL' 'SOCKET WSAAPI'; do
-      for ac_cv_func_accept_arg1 in 'int' 'unsigned int' 'SOCKET'; do
+      for ac_cv_func_accept_return in 'int' 'SOCKET WSAAPI' 'unsigned int PASCAL'; do
+      for ac_cv_func_accept_arg1 in 'int' 'SOCKET' 'unsigned int'; do
        for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
         for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do
          cat confdefs.h - <<_ACEOF >conftest.$ac_ext
