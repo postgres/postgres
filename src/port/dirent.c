@@ -84,7 +84,11 @@ readdir(DIR *d)
 		d->handle = FindFirstFile(d->dirname, &fd);
 		if (d->handle == INVALID_HANDLE_VALUE)
 		{
-			errno = ENOENT;
+			/* If there are no files, force errno=0 (unlike mingw) */
+			if (GetLastError() == ERROR_FILE_NOT_FOUND)
+				errno = 0;
+			else
+				_dosmaperr(GetLastError());
 			return NULL;
 		}
 	}
@@ -92,13 +96,11 @@ readdir(DIR *d)
 	{
 		if (!FindNextFile(d->handle, &fd))
 		{
+			/* If there are no more files, force errno=0 (like mingw) */
 			if (GetLastError() == ERROR_NO_MORE_FILES)
-			{
-				/* No more files, force errno=0 (unlike mingw) */
 				errno = 0;
-				return NULL;
-			}
-			_dosmaperr(GetLastError());
+			else
+				_dosmaperr(GetLastError());
 			return NULL;
 		}
 	}
