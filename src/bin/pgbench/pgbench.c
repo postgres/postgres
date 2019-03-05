@@ -3729,16 +3729,6 @@ static void
 initCreateTables(PGconn *con)
 {
 	/*
-	 * The scale factor at/beyond which 32-bit integers are insufficient for
-	 * storing TPC-B account IDs.
-	 *
-	 * Although the actual threshold is 21474, we use 20000 because it is
-	 * easier to document and remember, and isn't that far away from the real
-	 * threshold.
-	 */
-#define SCALE_32BIT_THRESHOLD 20000
-
-	/*
 	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
 	 * fields in these table declarations were intended to comply with that.
 	 * The pgbench_accounts table complies with that because the "filler"
