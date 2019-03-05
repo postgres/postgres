@@ -38,8 +38,8 @@ static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 				 bool unlockbuf, bool unlockleftchild);
 static void gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 				GISTSTATE *giststate, List *splitinfo, bool releasebuf);
-static void gistvacuumpage(Relation rel, Page page, Buffer buffer,
-			   Relation heapRel);
+static void gistprunepage(Relation rel, Page page, Buffer buffer,
+			  Relation heapRel);
 
 
 #define ROTATEDIST(d) do { \
@@ -261,7 +261,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	 */
 	if (is_split && GistPageIsLeaf(page) && GistPageHasGarbage(page))
 	{
-		gistvacuumpage(rel, page, buffer, heapRel);
+		gistprunepage(rel, page, buffer, heapRel);
 		is_split = gistnospace(page, itup, ntup, oldoffnum, freespace);
 	}
 
@@ -1544,11 +1544,11 @@ freeGISTstate(GISTSTATE *giststate)
 }
 
 /*
- * gistvacuumpage() -- try to remove LP_DEAD items from the given page.
+ * gistprunepage() -- try to remove LP_DEAD items from the given page.
  * Function assumes that buffer is exclusively locked.
  */
 static void
-gistvacuumpage(Relation rel, Page page, Buffer buffer, Relation heapRel)
+gistprunepage(Relation rel, Page page, Buffer buffer, Relation heapRel)
 {
 	OffsetNumber deletable[MaxIndexTuplesPerPage];
 	int			ndeletable = 0;
