@@ -476,7 +476,10 @@ inserting a downlink might require splitting a page, it might fail if you
 run out of disk space.  That would be bad during VACUUM - the reason for
 running VACUUM in the first place might be that you run out of disk space,
 and now VACUUM won't finish because you're out of disk space.  In contrast,
-an insertion can require enlarging the physical file anyway.
+an insertion can require enlarging the physical file anyway.  There is one
+minor exception: VACUUM finishes interrupted splits of internal pages when
+deleting their children.  This allows the code for re-finding parent items
+to be used by both page splits and page deletion.
 
 To identify missing downlinks, when a page is split, the left page is
 flagged to indicate that the split is not yet complete (INCOMPLETE_SPLIT).
