@@ -114,7 +114,7 @@ tts_virtual_clear(TupleTableSlot *slot)
 		pfree(vslot->data);
 		vslot->data = NULL;
 
-		slot->tts_flags = ~TTS_FLAG_SHOULDFREE;
+		slot->tts_flags &= ~TTS_FLAG_SHOULDFREE;
 	}
 
 	slot->tts_nvalid = 0;
