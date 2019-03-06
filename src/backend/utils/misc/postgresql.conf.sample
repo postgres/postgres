@@ -159,7 +159,7 @@
 #vacuum_cost_page_hit = 1		# 0-10000 credits
 #vacuum_cost_page_miss = 10		# 0-10000 credits
 #vacuum_cost_page_dirty = 20		# 0-10000 credits
-#vacuum_cost_limit = 200		# 1-10000 credits
+#vacuum_cost_limit = 2000		# 1-10000 credits
 
 # - Background Writer -
 

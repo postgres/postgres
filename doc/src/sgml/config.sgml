@@ -1929,7 +1929,7 @@ include_dir 'conf.d'
        <listitem>
         <para>
          The accumulated cost that will cause the vacuuming process to sleep.
-         The default value is 200.
+         The default value is 2000.
         </para>
        </listitem>
       </varlistentry>
