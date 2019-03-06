@@ -1899,17 +1899,34 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	MemoryContext oldcontext;
 
 	pq_startmsgread();
-	if (pq_getbytes((char *) &len, 4) == EOF)
+
+	/*
+	 * Grab the first byte of the length word separately, so that we can tell
+	 * whether we have no data at all or an incomplete packet.  (This might
+	 * sound inefficient, but it's not really, because of buffering in
+	 * pqcomm.c.)
+	 */
+	if (pq_getbytes((char *) &len, 1) == EOF)
 	{
 		/*
-		 * EOF after SSLdone probably means the client didn't like our
-		 * response to NEGOTIATE_SSL_CODE.  That's not an error condition, so
-		 * don't clutter the log with a complaint.
+		 * If we get no data at all, don't clutter the log with a complaint;
+		 * such cases often occur for legitimate reasons.  An example is that
+		 * we might be here after responding to NEGOTIATE_SSL_CODE, and if the
+		 * client didn't like our response, it'll probably just drop the
+		 * connection.  Service-monitoring software also often just opens and
+		 * closes a connection without sending anything.  (So do port
+		 * scanners, which may be less benign, but it's not really our job to
+		 * notice those.)
 		 */
-		if (!SSLdone)
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("incomplete startup packet")));
+		return STATUS_ERROR;
+	}
+
+	if (pq_getbytes(((char *) &len) + 1, 3) == EOF)
+	{
+		/* Got a partial length word, so bleat about that */
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("incomplete startup packet")));
 		return STATUS_ERROR;
 	}
 
