@@ -867,6 +867,12 @@
   proname => 'int4', prorettype => 'int4', proargtypes => 'float4',
   prosrc => 'ftoi4' },
 
+# Table access method handlers
+{ oid => '3', oid_symbol => 'HEAP_TABLE_AM_HANDLER_OID',
+  descr => 'row-oriented heap table access method handler',
+  proname => 'heap_tableam_handler', provolatile => 'v', prorettype => 'table_am_handler',
+  proargtypes => 'internal', prosrc => 'heap_tableam_handler' },
+
 # Index access method handlers
 { oid => '330', descr => 'btree index access method handler',
   proname => 'bthandler', provolatile => 'v', prorettype => 'index_am_handler',
@@ -6981,6 +6987,13 @@
 { oid => '3312', descr => 'I/O',
   proname => 'tsm_handler_out', prorettype => 'cstring',
   proargtypes => 'tsm_handler', prosrc => 'tsm_handler_out' },
+{ oid => '267', descr => 'I/O',
+  proname => 'table_am_handler_in', proisstrict => 'f',
+  prorettype => 'table_am_handler', proargtypes => 'cstring',
+  prosrc => 'table_am_handler_in' },
+{ oid => '268', descr => 'I/O',
+  proname => 'table_am_handler_out', prorettype => 'cstring',
+  proargtypes => 'table_am_handler', prosrc => 'table_am_handler_out' },
 
 # tablesample method handlers
 { oid => '3313', descr => 'BERNOULLI tablesample method handler',

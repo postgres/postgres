@@ -1484,6 +1484,7 @@ describeOneTableDetails(const char *schemaname,
 		char	   *reloftype;
 		char		relpersistence;
 		char		relreplident;
+		char	   *relam;
 	}			tableinfo;
 	bool		show_column_details = false;
 
@@ -1503,9 +1504,10 @@ describeOneTableDetails(const char *schemaname,
 						  "c.relhastriggers, c.relrowsecurity, c.relforcerowsecurity, "
 						  "false AS relhasoids, %s, c.reltablespace, "
 						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END, "
-						  "c.relpersistence, c.relreplident\n"
+						  "c.relpersistence, c.relreplident, am.amname\n"
 						  "FROM pg_catalog.pg_class c\n "
 						  "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
+						  "LEFT JOIN pg_catalog.pg_am am ON (c.relam = am.oid)\n"
 						  "WHERE c.oid = '%s';",
 						  (verbose ?
 						   "pg_catalog.array_to_string(c.reloptions || "
@@ -1656,6 +1658,11 @@ describeOneTableDetails(const char *schemaname,
 		*(PQgetvalue(res, 0, 11)) : 0;
 	tableinfo.relreplident = (pset.sversion >= 90400) ?
 		*(PQgetvalue(res, 0, 12)) : 'd';
+	if (pset.sversion >= 120000)
+		tableinfo.relam = PQgetisnull(res, 0, 13) ?
+			(char *) NULL : pg_strdup(PQgetvalue(res, 0, 13));
+	else
+		tableinfo.relam = NULL;
 	PQclear(res);
 	res = NULL;
 
@@ -3141,6 +3148,13 @@ describeOneTableDetails(const char *schemaname,
 		/* Tablespace info */
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
 							  true);
+
+		/* Access method info */
+		if (verbose && tableinfo.relam != NULL && !pset.hide_tableam)
+		{
+			printfPQExpBuffer(&buf, _("Access method: %s"), tableinfo.relam);
+			printTableAddFooter(&cont, buf.data);
+		}
 	}
 
 	/* reloptions, if verbose */

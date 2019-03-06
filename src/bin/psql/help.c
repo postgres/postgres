@@ -366,6 +366,8 @@ helpVariables(unsigned short int pager)
 					  "    true if last query failed, else false\n"));
 	fprintf(output, _("  FETCH_COUNT\n"
 					  "    the number of result rows to fetch and display at a time (0 = unlimited)\n"));
+	fprintf(output, _("  HIDE_TABLEAM\n"
+					  "    if set, table access methods are not displayed\n"));
 	fprintf(output, _("  HISTCONTROL\n"
 					  "    controls command history [ignorespace, ignoredups, ignoreboth]\n"));
 	fprintf(output, _("  HISTFILE\n"

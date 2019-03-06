@@ -1201,15 +1201,25 @@ SELECT p1.oid, p1.amname
 FROM pg_am AS p1
 WHERE p1.amhandler = 0;
 
--- Check for amhandler functions with the wrong signature
+-- Check for index amhandler functions with the wrong signature
 
 SELECT p1.oid, p1.amname, p2.oid, p2.proname
 FROM pg_am AS p1, pg_proc AS p2
-WHERE p2.oid = p1.amhandler AND
-    (p2.prorettype != 'index_am_handler'::regtype OR p2.proretset
+WHERE p2.oid = p1.amhandler AND p1.amtype = 'i' AND
+    (p2.prorettype != 'index_am_handler'::regtype
+     OR p2.proretset
      OR p2.pronargs != 1
      OR p2.proargtypes[0] != 'internal'::regtype);
 
+-- Check for table amhandler functions with the wrong signature
+
+SELECT p1.oid, p1.amname, p2.oid, p2.proname
+FROM pg_am AS p1, pg_proc AS p2
+WHERE p2.oid = p1.amhandler AND p1.amtype = 's' AND
+    (p2.prorettype != 'table_am_handler'::regtype
+     OR p2.proretset
+     OR p2.pronargs != 1
+     OR p2.proargtypes[0] != 'internal'::regtype);
 
 -- **************** pg_amop ****************
 

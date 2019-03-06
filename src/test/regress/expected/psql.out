@@ -2773,6 +2773,45 @@ Argument data types | numeric
 Type                | func
 
 \pset tuples_only false
+-- check conditional tableam display
+-- Create a heap2 table am handler with heapam handler
+CREATE ACCESS METHOD heap_psql TYPE TABLE HANDLER heap_tableam_handler;
+CREATE TABLE tbl_heap_psql(f1 int, f2 char(100)) using heap_psql;
+CREATE TABLE tbl_heap(f1 int, f2 char(100)) using heap;
+\d+ tbl_heap_psql
+                                   Table "public.tbl_heap_psql"
+ Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+----------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer        |           |          |         | plain    |              | 
+ f2     | character(100) |           |          |         | extended |              | 
+
+\d+ tbl_heap
+                                     Table "public.tbl_heap"
+ Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+----------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer        |           |          |         | plain    |              | 
+ f2     | character(100) |           |          |         | extended |              | 
+
+\set HIDE_TABLEAM off
+\d+ tbl_heap_psql
+                                   Table "public.tbl_heap_psql"
+ Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+----------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer        |           |          |         | plain    |              | 
+ f2     | character(100) |           |          |         | extended |              | 
+Access method: heap_psql
+
+\d+ tbl_heap
+                                     Table "public.tbl_heap"
+ Column |      Type      | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+----------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer        |           |          |         | plain    |              | 
+ f2     | character(100) |           |          |         | extended |              | 
+Access method: heap
+
+\set HIDE_TABLEAM on
+DROP TABLE tbl_heap, tbl_heap_psql;
+DROP ACCESS METHOD heap_psql;
 -- test numericlocale (as best we can without control of psql's locale)
 \pset format aligned
 \pset expanded off

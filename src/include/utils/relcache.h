@@ -75,6 +75,8 @@ extern void RelationInitIndexAccessInfo(Relation relation);
 struct PublicationActions;
 extern struct PublicationActions *GetRelationPublicationActions(Relation relation);
 
+extern void RelationInitTableAccessMethod(Relation relation);
+
 /*
  * Routines to support ereport() reports of relation-related errors
  */
@@ -97,6 +99,7 @@ extern Relation RelationBuildLocalRelation(const char *relname,
 						   Oid relnamespace,
 						   TupleDesc tupDesc,
 						   Oid relid,
+						   Oid accessmtd,
 						   Oid relfilenode,
 						   Oid reltablespace,
 						   bool shared_relation,

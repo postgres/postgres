@@ -160,6 +160,9 @@ my $C_COLLATION_OID =
 my $PG_CATALOG_NAMESPACE =
   Catalog::FindDefinedSymbolFromData($catalog_data{pg_namespace},
 	'PG_CATALOG_NAMESPACE');
+my $PG_HEAP_AM =
+  Catalog::FindDefinedSymbolFromData($catalog_data{pg_am},
+	'HEAP_TABLE_AM_OID');
 
 
 # Build lookup tables.
@@ -464,6 +467,7 @@ EOM
 			# (It's intentional that this can apply to parts of a field).
 			$bki_values{$attname} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
 			$bki_values{$attname} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
+			$bki_values{$attname} =~ s/\bPGHEAPAM\b/$PG_HEAP_AM/g;
 
 			# Replace OID synonyms with OIDs per the appropriate lookup rule.
 			#

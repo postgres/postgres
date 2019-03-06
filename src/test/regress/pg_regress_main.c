@@ -73,11 +73,16 @@ psql_start_test(const char *testname,
 		}
 	}
 
+	/*
+	 * Use HIDE_TABLEAM to hide different AMs to allow to use regression tests
+	 * against different AMs without unnecessary differences.
+	 */
 	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-					   "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
+					   "\"%s%spsql\" -X -a -q -d \"%s\" -v %s < \"%s\" > \"%s\" 2>&1",
 					   bindir ? bindir : "",
 					   bindir ? "/" : "",
 					   dblist->str,
+					   "HIDE_TABLEAM=\"on\"",
 					   infile,
 					   outfile);
 	if (offset >= sizeof(psql_cmd))

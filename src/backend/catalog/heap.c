@@ -45,6 +45,7 @@
 #include "catalog/index.h"
 #include "catalog/objectaccess.h"
 #include "catalog/partition.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -293,6 +294,7 @@ heap_create(const char *relname,
 			Oid reltablespace,
 			Oid relid,
 			Oid relfilenode,
+			Oid accessmtd,
 			TupleDesc tupDesc,
 			char relkind,
 			char relpersistence,
@@ -387,6 +389,7 @@ heap_create(const char *relname,
 									 relnamespace,
 									 tupDesc,
 									 relid,
+									 accessmtd,
 									 relfilenode,
 									 reltablespace,
 									 shared_relation,
@@ -1063,6 +1066,7 @@ heap_create_with_catalog(const char *relname,
 						 Oid reltypeid,
 						 Oid reloftypeid,
 						 Oid ownerid,
+						 Oid accessmtd,
 						 TupleDesc tupdesc,
 						 List *cooked_constraints,
 						 char relkind,
@@ -1210,6 +1214,7 @@ heap_create_with_catalog(const char *relname,
 							   reltablespace,
 							   relid,
 							   InvalidOid,
+							   accessmtd,
 							   tupdesc,
 							   relkind,
 							   relpersistence,
@@ -1363,6 +1368,22 @@ heap_create_with_catalog(const char *relname,
 		{
 			referenced.classId = TypeRelationId;
 			referenced.objectId = reloftypeid;
+			referenced.objectSubId = 0;
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		}
+
+		/*
+		 * Make a dependency link to force the relation to be deleted if its
+		 * access method is. Do this only for relation and materialized views.
+		 *
+		 * No need to add an explicit dependency for the toast table, as the
+		 * main table depends on it.
+		 */
+		if (relkind == RELKIND_RELATION ||
+			relkind == RELKIND_MATVIEW)
+		{
+			referenced.classId = AccessMethodRelationId;
+			referenced.objectId = accessmtd;
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		}

@@ -502,11 +502,20 @@ WHERE relkind NOT IN ('r', 'i', 'S', 't', 'v', 'm', 'c', 'f', 'p') OR
 -----+---------
 (0 rows)
 
--- Indexes should have an access method, others not.
+-- All tables and indexes should have an access method.
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE (p1.relkind = 'i' AND p1.relam = 0) OR
-    (p1.relkind != 'i' AND p1.relam != 0);
+WHERE p1.relkind NOT IN ('S', 'v', 'f', 'c') and
+    p1.relam = 0;
+ oid | relname 
+-----+---------
+(0 rows)
+
+-- Conversely, sequences, views, types shouldn't have them
+SELECT p1.oid, p1.relname
+FROM pg_class as p1
+WHERE p1.relkind IN ('S', 'v', 'f', 'c') and
+    p1.relam != 0;
  oid | relname 
 -----+---------
 (0 rows)

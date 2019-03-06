@@ -186,6 +186,13 @@ sql_sizing|f
 sql_sizing_profiles|f
 stud_emp|f
 student|f
+tableam_parted_a_heap2|f
+tableam_parted_b_heap2|f
+tableam_parted_c_heap2|f
+tableam_parted_d_heap2|f
+tableam_parted_heap2|f
+tableam_tbl_heap2|f
+tableam_tblas_heap2|f
 tbl_include_box|t
 tbl_include_box_pk|f
 tbl_include_pk|t

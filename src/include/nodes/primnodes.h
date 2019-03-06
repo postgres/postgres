@@ -111,6 +111,7 @@ typedef struct IntoClause
 
 	RangeVar   *rel;			/* target relation name */
 	List	   *colNames;		/* column names to assign, or NIL */
+	char	   *accessMethod;	/* table access method */
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */

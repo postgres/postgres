@@ -614,6 +614,7 @@ DefineQueryRewrite(const char *rulename,
 			elog(ERROR, "cache lookup failed for relation %u", event_relid);
 		classForm = (Form_pg_class) GETSTRUCT(classTup);
 
+		classForm->relam = InvalidOid;
 		classForm->reltablespace = InvalidOid;
 		classForm->relpages = 0;
 		classForm->reltuples = 0;

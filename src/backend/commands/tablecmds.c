@@ -21,6 +21,7 @@
 #include "access/reloptions.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
+#include "access/tableam.h"
 #include "access/tupconvert.h"
 #include "access/xact.h"
 #include "access/xlog.h"
@@ -537,6 +538,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	Oid			ofTypeId;
 	ObjectAddress address;
 	LOCKMODE	parentLockmode;
+	const char *accessMethod = NULL;
+	Oid			accessMethodId = InvalidOid;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -778,6 +781,42 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	}
 
 	/*
+	 * If the statement hasn't specified an access method, but we're defining
+	 * a type of relation that needs one, use the default.
+	 */
+	if (stmt->accessMethod != NULL)
+	{
+		accessMethod = stmt->accessMethod;
+
+		if (relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("specifying a table access method is not supported on a partitioned table")));
+
+	}
+	else if (relkind == RELKIND_RELATION ||
+			 relkind == RELKIND_TOASTVALUE ||
+			 relkind == RELKIND_MATVIEW)
+		accessMethod = default_table_access_method;
+
+	/*
+	 * look up the access method, verify it can handle the requested features
+	 */
+	if (accessMethod != NULL)
+	{
+		HeapTuple	tuple;
+
+		tuple = SearchSysCache1(AMNAME, PointerGetDatum(accessMethod));
+		if (!HeapTupleIsValid(tuple))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("table access method \"%s\" does not exist",
+								 accessMethod)));
+		accessMethodId = ((Form_pg_am) GETSTRUCT(tuple))->oid;
+		ReleaseSysCache(tuple);
+	}
+
+	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in
 	 * for immediate handling --- since they don't need parsing, they can be
 	 * stored immediately.
@@ -789,6 +828,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  InvalidOid,
 										  ofTypeId,
 										  ownerId,
+										  accessMethodId,
 										  descriptor,
 										  list_concat(cookedDefaults,
 													  old_constraints),

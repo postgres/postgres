@@ -29,6 +29,7 @@
 #include "access/commit_ts.h"
 #include "access/gin.h"
 #include "access/rmgr.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xact.h"
@@ -3546,6 +3547,17 @@ static struct config_string ConfigureNamesString[] =
 		&datestyle_string,
 		"ISO, MDY",
 		check_datestyle, assign_datestyle, NULL
+	},
+
+	{
+		{"default_table_access_method", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the default table access method for new tables."),
+			NULL,
+			GUC_IS_NAME
+		},
+		&default_table_access_method,
+		DEFAULT_TABLE_ACCESS_METHOD,
+		check_default_table_access_method, NULL, NULL
 	},
 
 	{

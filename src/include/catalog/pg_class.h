@@ -36,7 +36,7 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	Oid			reloftype;		/* OID of entry in pg_type for underlying
 								 * composite type */
 	Oid			relowner;		/* class owner */
-	Oid			relam;			/* index access method; 0 if not an index */
+	Oid			relam;			/* access method; 0 if not a table / index */
 	Oid			relfilenode;	/* identifier of physical storage file */
 
 	/* relfilenode == 0 means it is a "mapped" relation, see relmapper.c */

@@ -2307,6 +2307,7 @@ T_Action
 T_WorkerStatus
 TabStatHashEntry
 TabStatusArray
+TableAmRoutine
 TableDataInfo
 TableFunc
 TableFuncRoutine

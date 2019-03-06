@@ -30,7 +30,7 @@
 #include "utils/syscache.h"
 
 
-static Oid	lookup_index_am_handler_func(List *handler_name, char amtype);
+static Oid	lookup_am_handler_func(List *handler_name, char amtype);
 static const char *get_am_type_string(char amtype);
 
 
@@ -74,7 +74,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 	/*
 	 * Get the handler function oid, verifying the AM type while at it.
 	 */
-	amhandler = lookup_index_am_handler_func(stmt->handler_name, stmt->amtype);
+	amhandler = lookup_am_handler_func(stmt->handler_name, stmt->amtype);
 
 	/*
 	 * Insert tuple into pg_am.
@@ -229,6 +229,8 @@ get_am_type_string(char amtype)
 	{
 		case AMTYPE_INDEX:
 			return "INDEX";
+		case AMTYPE_TABLE:
+			return "TABLE";
 		default:
 			/* shouldn't happen */
 			elog(ERROR, "invalid access method type '%c'", amtype);
@@ -243,10 +245,11 @@ get_am_type_string(char amtype)
  * This function either return valid function Oid or throw an error.
  */
 static Oid
-lookup_index_am_handler_func(List *handler_name, char amtype)
+lookup_am_handler_func(List *handler_name, char amtype)
 {
 	Oid			handlerOid;
-	static const Oid funcargtypes[1] = {INTERNALOID};
+	Oid			funcargtypes[1] = {INTERNALOID};
+	Oid			expectedType = InvalidOid;
 
 	if (handler_name == NIL)
 		ereport(ERROR,
@@ -260,16 +263,21 @@ lookup_index_am_handler_func(List *handler_name, char amtype)
 	switch (amtype)
 	{
 		case AMTYPE_INDEX:
-			if (get_func_rettype(handlerOid) != INDEX_AM_HANDLEROID)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function %s must return type %s",
-								NameListToString(handler_name),
-								"index_am_handler")));
+			expectedType = INDEX_AM_HANDLEROID;
+			break;
+		case AMTYPE_TABLE:
+			expectedType = TABLE_AM_HANDLEROID;
 			break;
 		default:
 			elog(ERROR, "unrecognized access method type \"%c\"", amtype);
 	}
+
+	if (get_func_rettype(handlerOid) != expectedType)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("function %s must return type %s",
+						get_func_name(handlerOid),
+						format_type_extended(expectedType, -1, 0))));
 
 	return handlerOid;
 }
