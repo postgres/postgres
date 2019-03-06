@@ -5856,6 +5856,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_partkeydef;
 	int			i_ispartition;
 	int			i_partbound;
+	int			i_amname;
 
 	/*
 	 * Find all the tables and table-like objects.
@@ -5941,7 +5942,7 @@ getTables(Archive *fout, int *numTables)
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "tc.relminmxid AS tminmxid, "
 						  "c.relpersistence, c.relispopulated, "
-						  "c.relreplident, c.relpages, "
+						  "c.relreplident, c.relpages, am.amname, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -5972,6 +5973,7 @@ getTables(Archive *fout, int *numTables)
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype IN ('a', 'i')) "
 						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "LEFT JOIN pg_am am ON (c.relam = am.oid) "
 						  "LEFT JOIN pg_init_privs pip ON "
 						  "(c.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_class'::regclass "
@@ -6439,6 +6441,7 @@ getTables(Archive *fout, int *numTables)
 	i_partkeydef = PQfnumber(res, "partkeydef");
 	i_ispartition = PQfnumber(res, "ispartition");
 	i_partbound = PQfnumber(res, "partbound");
+	i_amname = PQfnumber(res, "amname");
 
 	if (dopt->lockWaitTimeout)
 	{
@@ -6508,6 +6511,10 @@ getTables(Archive *fout, int *numTables)
 		else
 			tblinfo[i].checkoption = pg_strdup(PQgetvalue(res, i, i_checkoption));
 		tblinfo[i].toast_reloptions = pg_strdup(PQgetvalue(res, i, i_toastreloptions));
+		if (PQgetisnull(res, i, i_amname))
+			tblinfo[i].amname = NULL;
+		else
+			tblinfo[i].amname = pg_strdup(PQgetvalue(res, i, i_amname));
 
 		/* other fields were zeroed above */
 
@@ -12632,6 +12639,9 @@ dumpAccessMethod(Archive *fout, AccessMethodInfo *aminfo)
 		case AMTYPE_INDEX:
 			appendPQExpBuffer(q, "TYPE INDEX ");
 			break;
+		case AMTYPE_TABLE:
+			appendPQExpBuffer(q, "TYPE TABLE ");
+			break;
 		default:
 			write_msg(NULL, "WARNING: invalid type \"%c\" of access method \"%s\"\n",
 					  aminfo->amtype, qamname);
@@ -16067,18 +16077,26 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 										tbinfo->dobj.namespace->dobj.name);
 
 	if (tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
+	{
+		char *tableam = NULL;
+
+		if (tbinfo->relkind == RELKIND_RELATION ||
+			tbinfo->relkind == RELKIND_MATVIEW)
+			tableam = tbinfo->amname;
+
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = tbinfo->dobj.name,
 								  .namespace = tbinfo->dobj.namespace->dobj.name,
 								  .tablespace = (tbinfo->relkind == RELKIND_VIEW) ?
 								  NULL : tbinfo->reltablespace,
+								  .tableam = tableam,
 								  .owner = tbinfo->rolname,
 								  .description = reltypename,
 								  .section = tbinfo->postponed_def ?
 								  SECTION_POST_DATA : SECTION_PRE_DATA,
 								  .createStmt = q->data,
 								  .dropStmt = delq->data));
-
+	}
 
 	/* Dump Table Comments */
 	if (tbinfo->dobj.dump & DUMP_COMPONENT_COMMENT)

@@ -85,6 +85,7 @@ static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 static void _selectTablespace(ArchiveHandle *AH, const char *tablespace);
+static void _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam);
 static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
 static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
 static void processSearchPathEntry(ArchiveHandle *AH, TocEntry *te);
@@ -1090,6 +1091,7 @@ ArchiveEntry(Archive *AHX, CatalogId catalogId, DumpId dumpId,
 	newToc->tag = pg_strdup(opts->tag);
 	newToc->namespace = opts->namespace ? pg_strdup(opts->namespace) : NULL;
 	newToc->tablespace = opts->tablespace ? pg_strdup(opts->tablespace) : NULL;
+	newToc->tableam = opts->tableam ? pg_strdup(opts->tableam) : NULL;
 	newToc->owner = pg_strdup(opts->owner);
 	newToc->desc = pg_strdup(opts->description);
 	newToc->defn = pg_strdup(opts->createStmt);
@@ -2350,6 +2352,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->currUser = NULL;		/* unknown */
 	AH->currSchema = NULL;		/* ditto */
 	AH->currTablespace = NULL;	/* ditto */
+	AH->currTableAm = NULL;	/* ditto */
 
 	AH->toc = (TocEntry *) pg_malloc0(sizeof(TocEntry));
 
@@ -2576,6 +2579,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, te->copyStmt);
 		WriteStr(AH, te->namespace);
 		WriteStr(AH, te->tablespace);
+		WriteStr(AH, te->tableam);
 		WriteStr(AH, te->owner);
 		WriteStr(AH, "false");
 
@@ -2677,6 +2681,9 @@ ReadToc(ArchiveHandle *AH)
 
 		if (AH->version >= K_VERS_1_10)
 			te->tablespace = ReadStr(AH);
+
+		if (AH->version >= K_VERS_1_14)
+			te->tableam = ReadStr(AH);
 
 		te->owner = ReadStr(AH);
 		if (AH->version < K_VERS_1_9 || strcmp(ReadStr(AH), "true") == 0)
@@ -3432,6 +3439,48 @@ _selectTablespace(ArchiveHandle *AH, const char *tablespace)
 }
 
 /*
+ * Set the proper default_table_access_method value for the table.
+ */
+static void
+_selectTableAccessMethod(ArchiveHandle *AH, const char *tableam)
+{
+	PQExpBuffer cmd;
+	const char *want, *have;
+
+	have = AH->currTableAm;
+	want = tableam;
+
+	if (!want)
+		return;
+
+	if (have && strcmp(want, have) == 0)
+		return;
+
+	cmd = createPQExpBuffer();
+	appendPQExpBuffer(cmd, "SET default_table_access_method = %s;", fmtId(want));
+
+	if (RestoringToDB(AH))
+	{
+		PGresult   *res;
+
+		res = PQexec(AH->connection, cmd->data);
+
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			warn_or_exit_horribly(AH, modulename,
+								  "could not set default_table_access_method: %s",
+								  PQerrorMessage(AH->connection));
+
+		PQclear(res);
+	}
+	else
+		ahprintf(AH, "%s\n\n", cmd->data);
+
+	destroyPQExpBuffer(cmd);
+
+	AH->currTableAm = pg_strdup(want);
+}
+
+/*
  * Extract an object description for a TOC entry, and append it to buf.
  *
  * This is used for ALTER ... OWNER TO.
@@ -3526,10 +3575,11 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 {
 	RestoreOptions *ropt = AH->public.ropt;
 
-	/* Select owner, schema, and tablespace as necessary */
+	/* Select owner, schema, tablespace and default AM as necessary */
 	_becomeOwner(AH, te);
 	_selectOutputSchema(AH, te->namespace);
 	_selectTablespace(AH, te->tablespace);
+	_selectTableAccessMethod(AH, te->tableam);
 
 	/* Emit header comment for item */
 	if (!AH->noTocComments)
@@ -4006,6 +4056,9 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 	if (AH->currTablespace)
 		free(AH->currTablespace);
 	AH->currTablespace = NULL;
+	if (AH->currTableAm)
+		free(AH->currTableAm);
+	AH->currTableAm = NULL;
 }
 
 /*
@@ -4891,6 +4944,8 @@ DeCloneArchive(ArchiveHandle *AH)
 		free(AH->currSchema);
 	if (AH->currTablespace)
 		free(AH->currTablespace);
+	if (AH->currTableAm)
+		free(AH->currTableAm);
 	if (AH->savedPassword)
 		free(AH->savedPassword);
 

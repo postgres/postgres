@@ -94,6 +94,7 @@ typedef z_stream *z_streamp;
 													 * entries */
 #define K_VERS_1_13 MAKE_ARCHIVE_VERSION(1, 13, 0)	/* change search_path
 													 * behavior */
+#define K_VERS_1_14 MAKE_ARCHIVE_VERSION(1, 14, 0)	/* add tableam */
 
 /*
  * Current archive version number (the format we can output)
@@ -102,7 +103,7 @@ typedef z_stream *z_streamp;
  * https://postgr.es/m/20190227123217.GA27552@alvherre.pgsql
  */
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 13
+#define K_VERS_MINOR 14
 #define K_VERS_REV 0
 #define K_VERS_SELF MAKE_ARCHIVE_VERSION(K_VERS_MAJOR, K_VERS_MINOR, K_VERS_REV);
 
@@ -352,6 +353,7 @@ struct _archiveHandle
 	char	   *currUser;		/* current username, or NULL if unknown */
 	char	   *currSchema;		/* current schema, or NULL */
 	char	   *currTablespace; /* current tablespace, or NULL */
+	char	   *currTableAm;	/* current table access method, or NULL */
 
 	void	   *lo_buf;
 	size_t		lo_buf_used;
@@ -378,6 +380,7 @@ struct _tocEntry
 	char	   *namespace;		/* null or empty string if not in a schema */
 	char	   *tablespace;		/* null if not in a tablespace; empty string
 								 * means use database default */
+	char	   *tableam;		/* table access method, only for TABLE tags */
 	char	   *owner;
 	char	   *desc;
 	char	   *defn;
@@ -416,6 +419,7 @@ typedef struct _archiveOpts
 	const char *tag;
 	const char *namespace;
 	const char *tablespace;
+	const char *tableam;
 	const char *owner;
 	const char *description;
 	teSection	section;

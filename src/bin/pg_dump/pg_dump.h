@@ -324,6 +324,7 @@ typedef struct _tableInfo
 	char	   *partkeydef;		/* partition key definition */
 	char	   *partbound;		/* partition bound definition */
 	bool		needs_override; /* has GENERATED ALWAYS AS IDENTITY */
+	char	   *amname;			/* relation access method */
 
 	/*
 	 * Stuff computed only for dumpable tables.
