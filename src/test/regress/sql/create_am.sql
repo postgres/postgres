@@ -123,7 +123,7 @@ SELECT
         (SELECT 'toast for ' || relname::regclass FROM pg_class pcm WHERE pcm.reltoastrelid = pc.oid)
     ELSE
         relname::regclass::text
-    END AS relname
+    END COLLATE "C" AS relname
 FROM pg_class AS pc,
     pg_am AS pa
 WHERE pa.oid = pc.relam
