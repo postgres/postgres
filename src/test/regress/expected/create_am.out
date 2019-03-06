@@ -232,7 +232,7 @@ SELECT
         (SELECT 'toast for ' || relname::regclass FROM pg_class pcm WHERE pcm.reltoastrelid = pc.oid)
     ELSE
         relname::regclass::text
-    END AS relname
+    END COLLATE "C" AS relname
 FROM pg_class AS pc
     LEFT JOIN pg_am AS pa ON (pa.oid = pc.relam)
 WHERE pc.relname LIKE 'tableam_%_heapx'
@@ -244,8 +244,8 @@ ORDER BY 3, 1, 2;
  r       | heap   | tableam_parted_2_heapx
  p       |        | tableam_parted_heapx
  S       |        | tableam_seq_heapx
- r       | heap2  | tableam_tblas_heapx
  r       | heap2  | tableam_tbl_heapx
+ r       | heap2  | tableam_tblas_heapx
  m       | heap2  | tableam_tblmv_heapx
  r       | heap2  | tableam_tblselectinto_heapx
  v       |        | tableam_view_heapx
