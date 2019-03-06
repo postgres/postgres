@@ -723,27 +723,54 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		if (node->onConflictAction == ONCONFLICT_UPDATE)
 		{
 			TupleConversionMap *map;
+			TupleDesc	leaf_desc;
 
 			map = leaf_part_rri->ri_PartitionInfo->pi_RootToPartitionMap;
+			leaf_desc = RelationGetDescr(leaf_part_rri->ri_RelationDesc);
 
 			Assert(node->onConflictSet != NIL);
 			Assert(rootResultRelInfo->ri_onConflict != NULL);
 
+			leaf_part_rri->ri_onConflict = makeNode(OnConflictSetState);
+
+			/*
+			 * Need a separate existing slot for each partition, as the
+			 * partition could be of a different AM, even if the tuple
+			 * descriptors match.
+			 */
+			leaf_part_rri->ri_onConflict->oc_Existing =
+				ExecInitExtraTupleSlot(mtstate->ps.state,
+									   leaf_desc,
+									   &TTSOpsBufferHeapTuple);
+
 			/*
 			 * If the partition's tuple descriptor matches exactly the root
-			 * parent (the common case), we can simply re-use the parent's ON
+			 * parent (the common case), we can re-use most of the parent's ON
 			 * CONFLICT SET state, skipping a bunch of work.  Otherwise, we
 			 * need to create state specific to this partition.
 			 */
 			if (map == NULL)
-				leaf_part_rri->ri_onConflict = rootResultRelInfo->ri_onConflict;
+			{
+				/*
+				 * It's safe to reuse these from the partition root, as we
+				 * only process one tuple at a time (therefore we won't
+				 * overwrite needed data in slots), and the results of
+				 * projections are independent of the underlying
+				 * storage. Projections and where clauses themselves don't
+				 * store state / are independent of the underlying storage.
+				 */
+				leaf_part_rri->ri_onConflict->oc_ProjSlot =
+					rootResultRelInfo->ri_onConflict->oc_ProjSlot;
+				leaf_part_rri->ri_onConflict->oc_ProjInfo =
+					rootResultRelInfo->ri_onConflict->oc_ProjInfo;
+				leaf_part_rri->ri_onConflict->oc_WhereClause =
+					rootResultRelInfo->ri_onConflict->oc_WhereClause;
+			}
 			else
 			{
 				List	   *onconflset;
 				TupleDesc	tupDesc;
 				bool		found_whole_row;
-
-				leaf_part_rri->ri_onConflict = makeNode(OnConflictSetState);
 
 				/*
 				 * Translate expressions in onConflictSet to account for
@@ -778,20 +805,17 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				/* Finally, adjust this tlist to match the partition. */
 				onconflset = adjust_partition_tlist(onconflset, map);
 
-				/*
-				 * Build UPDATE SET's projection info.  The user of this
-				 * projection is responsible for setting the slot's tupdesc!
-				 * We set aside a tupdesc that's good for the common case of a
-				 * partition that's tupdesc-equal to the partitioned table;
-				 * partitions of different tupdescs must generate their own.
-				 */
+				/* create the tuple slot for the UPDATE SET projection */
 				tupDesc = ExecTypeFromTL(onconflset);
-				ExecSetSlotDescriptor(mtstate->mt_conflproj, tupDesc);
+				leaf_part_rri->ri_onConflict->oc_ProjSlot =
+					ExecInitExtraTupleSlot(mtstate->ps.state, tupDesc,
+										   &TTSOpsVirtual);
+
+				/* build UPDATE SET projection state */
 				leaf_part_rri->ri_onConflict->oc_ProjInfo =
 					ExecBuildProjectionInfo(onconflset, econtext,
-											mtstate->mt_conflproj,
+											leaf_part_rri->ri_onConflict->oc_ProjSlot,
 											&mtstate->ps, partrelDesc);
-				leaf_part_rri->ri_onConflict->oc_ProjTupdesc = tupDesc;
 
 				/*
 				 * If there is a WHERE clause, initialize state where it will

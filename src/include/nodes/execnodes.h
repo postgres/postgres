@@ -377,8 +377,9 @@ typedef struct OnConflictSetState
 {
 	NodeTag		type;
 
+	TupleTableSlot *oc_Existing;	/* slot to store existing target tuple in */
+	TupleTableSlot *oc_ProjSlot;	/* CONFLICT ... SET ... projection target */
 	ProjectionInfo *oc_ProjInfo;	/* for ON CONFLICT DO UPDATE SET */
-	TupleDesc	oc_ProjTupdesc; /* TupleDesc for the above projection */
 	ExprState  *oc_WhereClause; /* state for the WHERE clause */
 } OnConflictSetState;
 
@@ -1109,9 +1110,7 @@ typedef struct ModifyTableState
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */
-	TupleTableSlot *mt_existing;	/* slot to store existing target tuple in */
 	List	   *mt_excludedtlist;	/* the excluded pseudo relation's tlist  */
-	TupleTableSlot *mt_conflproj;	/* CONFLICT ... SET ... projection target */
 
 	/*
 	 * Slot for storing tuples in the root partitioned table's rowtype during
