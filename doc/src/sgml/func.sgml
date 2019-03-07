@@ -10607,7 +10607,7 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY VALUE '<towns><town>T
 
     <para>
      The <literal>BY REF</literal> or <literal>BY VALUE</literal> clauses
-     have no effect in <productname>PostgreSQL<productname>, but are allowed
+     have no effect in <productname>PostgreSQL</productname>, but are allowed
      for compatibility with other implementations.  Per the <acronym>SQL</acronym>
      standard, the one that precedes any argument is required, and indicates
      the default for arguments that follow, and one may follow any argument to
