@@ -31,12 +31,6 @@ The files in this directory, and their contents, are
     md.c	The "magnetic disk" storage manager, which is really just
 		an interface to the kernel's filesystem operations.
 
-    smgrtype.c	Storage manager type -- maps string names to storage manager
-		IDs and provides simple comparison operators.  This is the
-		regproc support for type "smgr" in the system catalogs.
-		(This is vestigial since no columns of type smgr exist
-		in the catalogs anymore.)
-
 Note that md.c in turn relies on src/backend/storage/file/fd.c.
 
 

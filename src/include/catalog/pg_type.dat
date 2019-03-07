@@ -172,13 +172,6 @@
   typoutput => 'pg_ddl_command_out', typreceive => 'pg_ddl_command_recv',
   typsend => 'pg_ddl_command_send', typalign => 'ALIGNOF_POINTER' },
 
-# OIDS 200 - 299
-
-{ oid => '210', descr => 'storage manager',
-  typname => 'smgr', typlen => '2', typbyval => 't', typcategory => 'U',
-  typinput => 'smgrin', typoutput => 'smgrout', typreceive => '-',
-  typsend => '-', typalign => 's' },
-
 # OIDS 600 - 699
 
 { oid => '600', array_type_oid => '1017',
