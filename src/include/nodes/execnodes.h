@@ -19,6 +19,7 @@
 #include "lib/pairingheap.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
+#include "partitioning/partdefs.h"
 #include "utils/hsearch.h"
 #include "utils/queryenvironment.h"
 #include "utils/reltrigger.h"
@@ -521,6 +522,7 @@ typedef struct EState
 	 */
 	ResultRelInfo *es_root_result_relations;	/* array of ResultRelInfos */
 	int			es_num_root_result_relations;	/* length of the array */
+	PartitionDirectory es_partition_directory;	/* for PartitionDesc lookup */
 
 	/*
 	 * The following list contains ResultRelInfos created by the tuple routing

@@ -1108,6 +1108,7 @@ typedef struct PartitionedRelPruneInfo
 	int			nexprs;			/* Length of hasexecparam[] */
 	int		   *subplan_map;	/* subplan index by partition index, or -1 */
 	int		   *subpart_map;	/* subpart index by partition index, or -1 */
+	Oid		   *relid_map;		/* relation OID by partition index, or -1 */
 	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
 								 * any PARAM_EXEC Params. */
 	bool		do_initial_prune;	/* true if pruning should be performed

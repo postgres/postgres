@@ -31,6 +31,10 @@ typedef struct PartitionDescData
 
 extern void RelationBuildPartitionDesc(Relation rel);
 
+extern PartitionDirectory CreatePartitionDirectory(MemoryContext mcxt);
+extern PartitionDesc PartitionDirectoryLookup(PartitionDirectory, Relation);
+extern void DestroyPartitionDirectory(PartitionDirectory pdir);
+
 extern Oid	get_default_oid_from_partdesc(PartitionDesc partdesc);
 
 extern bool equalPartitionDescs(PartitionKey key, PartitionDesc partdesc1,

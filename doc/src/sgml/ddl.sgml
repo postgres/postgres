@@ -3827,7 +3827,8 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      the system will be able to skip the scan to validate the implicit
      partition constraint. Without such a constraint, the table will be
      scanned to validate the partition constraint while holding an
-     <literal>ACCESS EXCLUSIVE</literal> lock on the parent table.
+     <literal>ACCESS EXCLUSIVE</literal> lock on that partition
+     and a <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the parent table.
      One may then drop the constraint after <command>ATTACH PARTITION</command>
      is finished, because it is no longer necessary.
     </para>

@@ -947,6 +947,7 @@ _outPartitionedRelPruneInfo(StringInfo str, const PartitionedRelPruneInfo *node)
 	WRITE_INT_FIELD(nexprs);
 	WRITE_INT_ARRAY(subplan_map, node->nparts);
 	WRITE_INT_ARRAY(subpart_map, node->nparts);
+	WRITE_OID_ARRAY(relid_map, node->nparts);
 	WRITE_BOOL_ARRAY(hasexecparam, node->nexprs);
 	WRITE_BOOL_FIELD(do_initial_prune);
 	WRITE_BOOL_FIELD(do_exec_prune);

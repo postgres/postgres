@@ -21,4 +21,6 @@ typedef struct PartitionBoundSpec PartitionBoundSpec;
 
 typedef struct PartitionDescData *PartitionDesc;
 
+typedef struct PartitionDirectoryData *PartitionDirectory;
+
 #endif							/* PARTDEFS_H */

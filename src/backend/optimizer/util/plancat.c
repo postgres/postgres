@@ -2086,7 +2086,8 @@ set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 
 	Assert(relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
-	partdesc = RelationGetPartitionDesc(relation);
+	partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
+										relation);
 	partkey = RelationGetPartitionKey(relation);
 	rel->part_scheme = find_partition_scheme(root, relation);
 	Assert(partdesc != NULL && rel->part_scheme != NULL);

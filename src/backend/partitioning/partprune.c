@@ -47,8 +47,9 @@
 #include "optimizer/appendinfo.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
-#include "partitioning/partprune.h"
+#include "parser/parsetree.h"
 #include "partitioning/partbounds.h"
+#include "partitioning/partprune.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -359,6 +360,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		int			partnatts = subpart->part_scheme->partnatts;
 		int		   *subplan_map;
 		int		   *subpart_map;
+		Oid		   *relid_map;
 		List	   *partprunequal;
 		List	   *pruning_steps;
 		bool		contradictory;
@@ -434,6 +436,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		 */
 		subplan_map = (int *) palloc(nparts * sizeof(int));
 		subpart_map = (int *) palloc(nparts * sizeof(int));
+		relid_map = (Oid *) palloc(nparts * sizeof(int));
 		present_parts = NULL;
 
 		for (i = 0; i < nparts; i++)
@@ -444,6 +447,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 
 			subplan_map[i] = subplanidx;
 			subpart_map[i] = subpartidx;
+			relid_map[i] = planner_rt_fetch(partrel->relid, root)->relid;
 			if (subplanidx >= 0)
 			{
 				present_parts = bms_add_member(present_parts, i);
@@ -462,6 +466,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		pinfo->nparts = nparts;
 		pinfo->subplan_map = subplan_map;
 		pinfo->subpart_map = subpart_map;
+		pinfo->relid_map = relid_map;
 
 		/* Determine which pruning types should be enabled at this level */
 		doruntimeprune |= analyze_partkey_exprs(pinfo, pruning_steps,

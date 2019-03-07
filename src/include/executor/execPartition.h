@@ -135,7 +135,8 @@ typedef struct PartitionPruneState
 	PartitionPruningData *partprunedata[FLEXIBLE_ARRAY_MEMBER];
 } PartitionPruneState;
 
-extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(ModifyTableState *mtstate,
+extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(EState *estate,
+							   ModifyTableState *mtstate,
 							   Relation rel);
 extern ResultRelInfo *ExecFindPartition(ModifyTableState *mtstate,
 				  ResultRelInfo *rootResultRelInfo,

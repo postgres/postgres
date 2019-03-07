@@ -2569,6 +2569,26 @@ RelationClearRelation(Relation relation, bool rebuild)
 			SWAPFIELD(PartitionDesc, rd_partdesc);
 			SWAPFIELD(MemoryContext, rd_pdcxt);
 		}
+		else if (rebuild && newrel->rd_pdcxt != NULL)
+		{
+			/*
+			 * We are rebuilding a partitioned relation with a non-zero
+			 * reference count, so keep the old partition descriptor around,
+			 * in case there's a PartitionDirectory with a pointer to it.
+			 * Attach it to the new rd_pdcxt so that it gets cleaned up
+			 * eventually.  In the case where the reference count is 0, this
+			 * code is not reached, which should be OK because in that case
+			 * there should be no PartitionDirectory with a pointer to the old
+			 * entry.
+			 *
+			 * Note that newrel and relation have already been swapped, so
+			 * the "old" partition descriptor is actually the one hanging off
+			 * of newrel.
+			 */
+			MemoryContextSetParent(newrel->rd_pdcxt, relation->rd_pdcxt);
+			newrel->rd_partdesc = NULL;
+			newrel->rd_pdcxt = NULL;
+		}
 
 #undef SWAPFIELD
 

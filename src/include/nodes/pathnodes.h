@@ -144,6 +144,8 @@ typedef struct PlannerGlobal
 	bool		parallelModeNeeded; /* parallel mode actually required? */
 
 	char		maxParallelHazard;	/* worst PROPARALLEL hazard level */
+
+	PartitionDirectory partition_directory; /* partition descriptors */
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */

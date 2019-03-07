@@ -56,6 +56,7 @@
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_agg.h"
+#include "partitioning/partdesc.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/dsm_impl.h"
 #include "utils/rel.h"
@@ -566,6 +567,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		if (jit_tuple_deforming)
 			result->jitFlags |= PGJIT_DEFORM;
 	}
+
+	if (glob->partition_directory != NULL)
+		DestroyPartitionDirectory(glob->partition_directory);
 
 	return result;
 }

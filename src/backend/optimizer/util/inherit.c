@@ -147,6 +147,10 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	{
 		Assert(rte->relkind == RELKIND_PARTITIONED_TABLE);
 
+		if (root->glob->partition_directory == NULL)
+			root->glob->partition_directory =
+				CreatePartitionDirectory(CurrentMemoryContext);
+
 		/*
 		 * If this table has partitions, recursively expand and lock them.
 		 * While at it, also extract the partition key columns of all the
@@ -246,7 +250,10 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 	int			i;
 	RangeTblEntry *childrte;
 	Index		childRTindex;
-	PartitionDesc partdesc = RelationGetPartitionDesc(parentrel);
+	PartitionDesc partdesc;
+
+	partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
+										parentrel);
 
 	check_stack_depth();
 

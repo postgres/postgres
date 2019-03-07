@@ -2186,7 +2186,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
 		(operation == CMD_INSERT || update_tuple_routing_needed))
 		mtstate->mt_partition_tuple_routing =
-			ExecSetupPartitionTupleRouting(mtstate, rel);
+			ExecSetupPartitionTupleRouting(estate, mtstate, rel);
 
 	/*
 	 * Build state for collecting transition tuples.  This requires having a

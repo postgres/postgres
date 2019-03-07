@@ -3692,6 +3692,9 @@ AlterTableGetLockLevel(List *cmds)
 				break;
 
 			case AT_AttachPartition:
+				cmd_lockmode = ShareUpdateExclusiveLock;
+				break;
+
 			case AT_DetachPartition:
 				cmd_lockmode = AccessExclusiveLock;
 				break;

@@ -54,6 +54,7 @@
 #include "mb/pg_wchar.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
+#include "partitioning/partdesc.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
@@ -212,6 +213,13 @@ FreeExecutorState(EState *estate)
 	{
 		jit_release_context(estate->es_jit);
 		estate->es_jit = NULL;
+	}
+
+	/* release partition directory, if allocated */
+	if (estate->es_partition_directory)
+	{
+		DestroyPartitionDirectory(estate->es_partition_directory);
+		estate->es_partition_directory = NULL;
 	}
 
 	/*
