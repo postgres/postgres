@@ -14,7 +14,6 @@
 #ifndef SMGR_H
 #define SMGR_H
 
-#include "fmgr.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 
