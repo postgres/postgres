@@ -140,10 +140,10 @@ typedef struct _dumpOptions
 	int			dumpSections;	/* bitmask of chosen sections */
 	bool		aclsSkip;
 	const char *lockWaitTimeout;
+	int			dump_inserts;	/* 0 = COPY, otherwise rows per INSERT */
 
 	/* flags for various command-line long options */
 	int			disable_dollar_quoting;
-	int			dump_inserts;
 	int			column_inserts;
 	int			if_exists;
 	int			no_comments;

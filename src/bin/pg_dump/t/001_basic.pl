@@ -118,8 +118,8 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_dump', '--on-conflict-do-nothing' ],
-	qr/\Qpg_dump: option --on-conflict-do-nothing requires option --inserts or --column-inserts\E/,
-	'pg_dump: option --on-conflict-do-nothing requires option --inserts or --column-inserts');
+	qr/pg_dump: option --on-conflict-do-nothing requires option --inserts, --rows-per-insert or --column-inserts/,
+	'pg_dump: --on-conflict-do-nothing requires --inserts, --rows-per-insert, --column-inserts');
 
 # pg_dumpall command-line argument checks
 command_fails_like(
