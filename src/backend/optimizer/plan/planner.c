@@ -1326,7 +1326,7 @@ inheritance_planner(PlannerInfo *root)
 		 * If this child rel was excluded by constraint exclusion, exclude it
 		 * from the result plan.
 		 */
-		if (IS_DUMMY_PATH(subpath))
+		if (IS_DUMMY_REL(sub_final_rel))
 			continue;
 
 		/*

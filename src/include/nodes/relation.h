@@ -1171,6 +1171,9 @@ typedef struct CustomPath
  * elements.  These cases are optimized during create_append_plan.
  * In particular, an AppendPath with no subpaths is a "dummy" path that
  * is created to represent the case that a relation is provably empty.
+ * (This is a convenient representation because it means that when we build
+ * an appendrel and find that all its children have been excluded, no extra
+ * action is needed to recognize the relation as dummy.)
  */
 typedef struct AppendPath
 {
@@ -1180,13 +1183,16 @@ typedef struct AppendPath
 	List	   *subpaths;		/* list of component Paths */
 } AppendPath;
 
-#define IS_DUMMY_PATH(p) \
+#define IS_DUMMY_APPEND(p) \
 	(IsA((p), AppendPath) && ((AppendPath *) (p))->subpaths == NIL)
 
-/* A relation that's been proven empty will have one path that is dummy */
-#define IS_DUMMY_REL(r) \
-	((r)->cheapest_total_path != NULL && \
-	 IS_DUMMY_PATH((r)->cheapest_total_path))
+/*
+ * A relation that's been proven empty will have one path that is dummy
+ * (but might have projection paths on top).  For historical reasons,
+ * this is provided as a macro that wraps is_dummy_rel().
+ */
+#define IS_DUMMY_REL(r) is_dummy_rel(r)
+extern bool is_dummy_rel(RelOptInfo *rel);
 
 /*
  * MergeAppendPath represents a MergeAppend plan, ie, the merging of sorted
