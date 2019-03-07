@@ -33,6 +33,7 @@
 
 #include <unistd.h>
 #include <ctype.h>
+#include <limits.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
