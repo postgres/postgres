@@ -28,6 +28,18 @@ SELECT generate_series(1, generate_series(1, 3)), generate_series(2, 4);
 CREATE TABLE few(id int, dataa text, datab text);
 INSERT INTO few VALUES(1, 'a', 'foo'),(2, 'a', 'bar'),(3, 'b', 'bar');
 
+-- SRF with a provably-dummy relation
+explain (verbose, costs off)
+SELECT unnest(ARRAY[1, 2]) FROM few WHERE false;
+SELECT unnest(ARRAY[1, 2]) FROM few WHERE false;
+
+-- SRF shouldn't prevent upper query from recognizing lower as dummy
+explain (verbose, costs off)
+SELECT * FROM few f1,
+  (SELECT unnest(ARRAY[1,2]) FROM few f2 WHERE false OFFSET 0) ss;
+SELECT * FROM few f1,
+  (SELECT unnest(ARRAY[1,2]) FROM few f2 WHERE false OFFSET 0) ss;
+
 -- SRF output order of sorting is maintained, if SRF is not referenced
 SELECT few.id, generate_series(1,3) g FROM few ORDER BY id DESC;
 

@@ -44,8 +44,6 @@ extern PlannerInfo *subquery_planner(PlannerGlobal *glob, Query *parse,
 				 PlannerInfo *parent_root,
 				 bool hasRecursion, double tuple_fraction);
 
-extern bool is_dummy_plan(Plan *plan);
-
 extern RowMarkType select_rowmark_type(RangeTblEntry *rte,
 					LockClauseStrength strength);
 
