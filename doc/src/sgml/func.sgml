@@ -10583,7 +10583,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     </indexterm>
 
 <synopsis>
-<function>XMLEXISTS</function>(<replaceable>text</replaceable> PASSING <optional>BY REF</optional> <replaceable>xml</replaceable> <optional>BY REF</optional>)
+<function>XMLEXISTS</function>(<replaceable>text</replaceable> PASSING <optional>BY { REF | VALUE }</optional> <replaceable>xml</replaceable> <optional>BY { REF | VALUE }</optional>)
 </synopsis>
 
     <para>
@@ -10596,7 +10596,7 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     <para>
      Example:
      <screen><![CDATA[
-SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Toronto</town><town>Ottawa</town></towns>');
+SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY VALUE '<towns><town>Toronto</town><town>Ottawa</town></towns>');
 
  xmlexists
 ------------
@@ -10606,14 +10606,25 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
     </para>
 
     <para>
-     The <literal>BY REF</literal> clauses have no effect in
-     PostgreSQL, but are allowed for SQL conformance and compatibility
-     with other implementations.  Per SQL standard, the
-     first <literal>BY REF</literal> is required, the second is
-     optional.  Also note that the SQL standard specifies
-     the <function>xmlexists</function> construct to take an XQuery
-     expression as first argument, but PostgreSQL currently only
-     supports XPath, which is a subset of XQuery.
+     The <literal>BY REF</literal> or <literal>BY VALUE</literal> clauses
+     have no effect in <productname>PostgreSQL<productname>, but are allowed
+     for compatibility with other implementations.  Per the <acronym>SQL</acronym>
+     standard, the one that precedes any argument is required, and indicates
+     the default for arguments that follow, and one may follow any argument to
+     override the default.
+     <productname>PostgreSQL</productname> ignores <literal>BY REF</literal>
+     and passes by value always.
+    </para>
+
+    <para>
+     In the <acronym>SQL</acronym> standard, an <function>xmlexists</function>
+     construct evaluates an expression in the XQuery language, allows passing
+     values for named parameters in the expression as well as for the context
+     item, and does not require the passed values to be documents, or even of
+     XML type.
+     In <productname>PostgreSQL</productname>, this construct currently only
+     evaluates an XPath 1.0 expression, and allows passing only one value,
+     which must be an XML document, to be the context item.
     </para>
    </sect3>
 
@@ -10820,7 +10831,7 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
 
 <synopsis>
 <function>xmltable</function>( <optional>XMLNAMESPACES(<replaceable>namespace uri</replaceable> AS <replaceable>namespace name</replaceable><optional>, ...</optional>), </optional>
-          <replaceable>row_expression</replaceable> PASSING <optional>BY REF</optional> <replaceable>document_expression</replaceable> <optional>BY REF</optional>
+          <replaceable>row_expression</replaceable> PASSING <optional>BY { REF | VALUE }</optional> <replaceable>document_expression</replaceable> <optional>BY { REF | VALUE }</optional>
           COLUMNS <replaceable>name</replaceable> { <replaceable>type</replaceable> <optional>PATH <replaceable>column_expression</replaceable></optional> <optional>DEFAULT <replaceable>default_expression</replaceable></optional> <optional>NOT NULL | NULL</optional>
                         | FOR ORDINALITY }
                    <optional>, ...</optional>
@@ -10850,11 +10861,11 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
     <para>
      <replaceable>document_expression</replaceable> provides the XML document to
      operate on.
-     The <literal>BY REF</literal> clauses have no effect in PostgreSQL,
-     but are allowed for SQL conformance and compatibility with other
-     implementations.
      The argument must be a well-formed XML document; fragments/forests
      are not accepted.
+     The <literal>BY REF</literal> or <literal>BY VALUE</literal> clauses are
+     accepted, as described for the <function>xmlexists</function> predicate,
+     but ignored; PostgreSQL currently passes XML by value always.
     </para>
 
     <para>

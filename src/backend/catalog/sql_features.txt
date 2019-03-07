@@ -635,8 +635,8 @@ X204	XMLQuery: initializing an XQuery variable			NO
 X205	XMLQuery: EMPTY ON EMPTY option			NO	
 X206	XMLQuery: NULL ON EMPTY option			NO	
 X211	XML 1.1 support			NO	
-X221	XML passing mechanism BY VALUE			NO	
-X222	XML passing mechanism BY REF			YES	
+X221	XML passing mechanism BY VALUE			YES	
+X222	XML passing mechanism BY REF			NO	parser accepts BY REF but ignores it; passing is always BY VALUE
 X231	XML(CONTENT(UNTYPED)) type			NO	
 X232	XML(CONTENT(ANY)) type			NO	
 X241	RETURNING CONTENT in XML publishing			NO	

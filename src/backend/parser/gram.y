@@ -13951,18 +13951,23 @@ xmlexists_argument:
 				{
 					$$ = $2;
 				}
-			| PASSING c_expr BY REF
+			| PASSING c_expr xml_passing_mech
 				{
 					$$ = $2;
 				}
-			| PASSING BY REF c_expr
+			| PASSING xml_passing_mech c_expr
 				{
-					$$ = $4;
+					$$ = $3;
 				}
-			| PASSING BY REF c_expr BY REF
+			| PASSING xml_passing_mech c_expr xml_passing_mech
 				{
-					$$ = $4;
+					$$ = $3;
 				}
+		;
+
+xml_passing_mech:
+			BY REF
+			| BY VALUE_P
 		;
 
 
