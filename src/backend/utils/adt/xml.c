@@ -3720,35 +3720,57 @@ xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 
 	if (cur->type != XML_ATTRIBUTE_NODE && cur->type != XML_TEXT_NODE)
 	{
-		xmlBufferPtr buf;
-		xmlNodePtr	cur_copy;
-
-		buf = xmlBufferCreate();
-
-		/*
-		 * The result of xmlNodeDump() won't contain namespace definitions
-		 * from parent nodes, but xmlCopyNode() duplicates a node along with
-		 * its required namespace definitions.
-		 */
-		cur_copy = xmlCopyNode(cur, 1);
-
-		if (cur_copy == NULL)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
-						"could not copy node");
+		void		(*nodefree) (xmlNodePtr) = NULL;
+		volatile xmlBufferPtr buf = NULL;
+		volatile xmlNodePtr cur_copy = NULL;
 
 		PG_TRY();
 		{
-			xmlNodeDump(buf, NULL, cur_copy, 0, 1);
+			int			bytes;
+
+			buf = xmlBufferCreate();
+			if (buf == NULL || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not allocate xmlBuffer");
+
+			/*
+			 * Produce a dump of the node that we can serialize.  xmlNodeDump
+			 * does that, but the result of that function won't contain
+			 * namespace definitions from ancestor nodes, so we first do a
+			 * xmlCopyNode() which duplicates the node along with its required
+			 * namespace definitions.
+			 *
+			 * Some old libxml2 versions such as 2.7.6 produce partially
+			 * broken XML_DOCUMENT_NODE nodes (unset content field) when
+			 * copying them.  xmlNodeDump of such a node works fine, but
+			 * xmlFreeNode crashes; set us up to call xmlFreeDoc instead.
+			 */
+			cur_copy = xmlCopyNode(cur, 1);
+			if (cur_copy == NULL || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not copy node");
+			nodefree = (cur_copy->type == XML_DOCUMENT_NODE) ?
+				(void (*) (xmlNodePtr)) xmlFreeDoc : xmlFreeNode;
+
+			bytes = xmlNodeDump(buf, NULL, cur_copy, 0, 1);
+			if (bytes == -1 || xmlerrcxt->err_occurred)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+							"could not dump node");
+
 			result = xmlBuffer_to_xmltype(buf);
 		}
 		PG_CATCH();
 		{
-			xmlFreeNode(cur_copy);
-			xmlBufferFree(buf);
+			if (nodefree)
+				nodefree(cur_copy);
+			if (buf)
+				xmlBufferFree(buf);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
-		xmlFreeNode(cur_copy);
+
+		if (nodefree)
+			nodefree(cur_copy);
 		xmlBufferFree(buf);
 	}
 	else
