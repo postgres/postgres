@@ -870,8 +870,9 @@
 # Table access method handlers
 { oid => '3', oid_symbol => 'HEAP_TABLE_AM_HANDLER_OID',
   descr => 'row-oriented heap table access method handler',
-  proname => 'heap_tableam_handler', provolatile => 'v', prorettype => 'table_am_handler',
-  proargtypes => 'internal', prosrc => 'heap_tableam_handler' },
+  proname => 'heap_tableam_handler', provolatile => 'v',
+  prorettype => 'table_am_handler', proargtypes => 'internal',
+  prosrc => 'heap_tableam_handler' },
 
 # Index access method handlers
 { oid => '330', descr => 'btree index access method handler',
@@ -10433,10 +10434,10 @@
 
 # pg_config
 { oid => '3400', descr => 'pg_config binary as a function',
-  proname => 'pg_config', provolatile => 's', prorows => '23', proretset => 't', proparallel => 'r',
-  prorettype => 'record', proargtypes => '', proallargtypes => '{text,text}',
-  proargmodes => '{o,o}', proargnames => '{name,setting}',
-  prosrc => 'pg_config' },
+  proname => 'pg_config', prorows => '23', proretset => 't', provolatile => 's',
+  proparallel => 'r', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{text,text}', proargmodes => '{o,o}',
+  proargnames => '{name,setting}', prosrc => 'pg_config' },
 
 # pg_controldata related functions
 { oid => '3441',
