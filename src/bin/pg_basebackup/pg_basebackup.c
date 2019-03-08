@@ -67,6 +67,11 @@ typedef struct TablespaceList
 #define MINIMUM_VERSION_FOR_TEMP_SLOTS 100000
 
 /*
+ * recovery.conf is integrated into postgresql.conf from version 12.
+ */
+#define MINIMUM_VERSION_FOR_RECOVERY_GUC 120000
+
+/*
  * Different ways to include WAL
  */
 typedef enum
@@ -974,6 +979,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	bool		basetablespace = PQgetisnull(res, rownum, 0);
 	bool		in_tarhdr = true;
 	bool		skip_file = false;
+	bool		is_recovery_guc_supported = true;
 	bool		is_postgresql_auto_conf = false;
 	bool		found_postgresql_auto_conf = false;
 	int			file_padding_len = 0;
@@ -983,6 +989,10 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 #ifdef HAVE_LIBZ
 	gzFile		ztarfile = NULL;
 #endif
+
+	/* recovery.conf is integrated into postgresql.conf in 12 and newer */
+	if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_RECOVERY_GUC)
+		is_recovery_guc_supported = false;
 
 	if (basetablespace)
 	{
@@ -1130,11 +1140,20 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			{
 				char		header[512];
 
-				if (!found_postgresql_auto_conf)
+				/*
+				 * If postgresql.auto.conf has not been found in the streamed
+				 * data, add recovery configuration to postgresql.auto.conf if
+				 * recovery parameters are GUCs.  If the instance connected to
+				 * is older than 12, create recovery.conf with this data
+				 * otherwise.
+				 */
+				if (!found_postgresql_auto_conf || !is_recovery_guc_supported)
 				{
 					int			padding;
 
-					tarCreateHeader(header, "postgresql.auto.conf", NULL,
+					tarCreateHeader(header,
+									is_recovery_guc_supported ? "postgresql.auto.conf" : "recovery.conf",
+									NULL,
 									recoveryconfcontents->len,
 									pg_file_create_mode, 04000, 02000,
 									time(NULL));
@@ -1142,18 +1161,26 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 					padding = ((recoveryconfcontents->len + 511) & ~511) - recoveryconfcontents->len;
 
 					WRITE_TAR_DATA(header, sizeof(header));
-					WRITE_TAR_DATA(recoveryconfcontents->data, recoveryconfcontents->len);
+					WRITE_TAR_DATA(recoveryconfcontents->data,
+								   recoveryconfcontents->len);
 					if (padding)
 						WRITE_TAR_DATA(zerobuf, padding);
 				}
 
-				tarCreateHeader(header, "standby.signal", NULL,
-								0,	/* zero-length file */
-								pg_file_create_mode, 04000, 02000,
-								time(NULL));
+				/*
+				 * standby.signal is supported only if recovery parameters are
+				 * GUCs.
+				 */
+				if (is_recovery_guc_supported)
+				{
+					tarCreateHeader(header, "standby.signal", NULL,
+									0,	/* zero-length file */
+									pg_file_create_mode, 04000, 02000,
+									time(NULL));
 
-				WRITE_TAR_DATA(header, sizeof(header));
-				WRITE_TAR_DATA(zerobuf, 511);
+					WRITE_TAR_DATA(header, sizeof(header));
+					WRITE_TAR_DATA(zerobuf, 511);
+				}
 			}
 
 			/* 2 * 512 bytes empty data at end of file */
@@ -1252,16 +1279,24 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 						 * We have the complete header structure in tarhdr,
 						 * look at the file metadata: we may want append
 						 * recovery info into postgresql.auto.conf and skip
-						 * standby.signal file.  In both cases we must
-						 * calculate tar padding
+						 * standby.signal file if recovery parameters are
+						 * integrated as GUCs, and recovery.conf otherwise. In
+						 * both cases we must calculate tar padding.
 						 */
-						skip_file = (strcmp(&tarhdr[0], "standby.signal") == 0);
-						is_postgresql_auto_conf = (strcmp(&tarhdr[0], "postgresql.auto.conf") == 0);
+						if (is_recovery_guc_supported)
+						{
+							skip_file = (strcmp(&tarhdr[0], "standby.signal") == 0);
+							is_postgresql_auto_conf = (strcmp(&tarhdr[0], "postgresql.auto.conf") == 0);
+						}
+						else
+							skip_file = (strcmp(&tarhdr[0], "recovery.conf") == 0);
 
 						filesz = read_tar_number(&tarhdr[124], 12);
 						file_padding_len = ((filesz + 511) & ~511) - filesz;
 
-						if (is_postgresql_auto_conf && writerecoveryconf)
+						if (is_recovery_guc_supported &&
+							is_postgresql_auto_conf &&
+							writerecoveryconf)
 						{
 							/* replace tar header */
 							char		header[512];
@@ -1313,7 +1348,9 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 						pos += bytes2write;
 						filesz -= bytes2write;
 					}
-					else if (is_postgresql_auto_conf && writerecoveryconf)
+					else if (is_recovery_guc_supported &&
+							 is_postgresql_auto_conf &&
+							 writerecoveryconf)
 					{
 						/* append recovery config to postgresql.auto.conf */
 						int			padding;
@@ -1690,6 +1727,13 @@ GenerateRecoveryConf(PGconn *conn)
 		exit(1);
 	}
 
+	/*
+	 * In PostgreSQL 12 and newer versions, standby_mode is gone, replaced by
+	 * standby.signal to trigger a standby state at recovery.
+	 */
+	if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_RECOVERY_GUC)
+		appendPQExpBufferStr(recoveryconfcontents, "standby_mode = 'on'\n");
+
 	connOptions = PQconninfo(conn);
 	if (connOptions == NULL)
 	{
@@ -1756,21 +1800,29 @@ GenerateRecoveryConf(PGconn *conn)
 
 /*
  * Write the configuration file into the directory specified in basedir,
- * with the contents already collected in memory.
- * Then write the signal file into the basedir also.
+ * with the contents already collected in memory appended.  Then write
+ * the signal file into the basedir.  If the server does not support
+ * recovery parameters as GUCs, the signal file is not necessary, and
+ * configuration is written to recovery.conf.
  */
 static void
 WriteRecoveryConf(void)
 {
 	char		filename[MAXPGPATH];
 	FILE	   *cf;
+	bool		is_recovery_guc_supported = true;
 
-	snprintf(filename, MAXPGPATH, "%s/%s", basedir, "postgresql.auto.conf");
+	if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_RECOVERY_GUC)
+		is_recovery_guc_supported = false;
 
-	cf = fopen(filename, "a");
+	snprintf(filename, MAXPGPATH, "%s/%s", basedir,
+			 is_recovery_guc_supported ? "postgresql.auto.conf" : "recovery.conf");
+
+	cf = fopen(filename, is_recovery_guc_supported ? "a" : "w");
 	if (cf == NULL)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"), progname, filename, strerror(errno));
+		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+				progname, filename, strerror(errno));
 		exit(1);
 	}
 
@@ -1784,15 +1836,18 @@ WriteRecoveryConf(void)
 
 	fclose(cf);
 
-	snprintf(filename, MAXPGPATH, "%s/%s", basedir, "standby.signal");
-	cf = fopen(filename, "w");
-	if (cf == NULL)
+	if (is_recovery_guc_supported)
 	{
-		fprintf(stderr, _("%s: could not create file \"%s\": %s\n"), progname, filename, strerror(errno));
-		exit(1);
-	}
+		snprintf(filename, MAXPGPATH, "%s/%s", basedir, "standby.signal");
+		cf = fopen(filename, "w");
+		if (cf == NULL)
+		{
+			fprintf(stderr, _("%s: could not create file \"%s\": %s\n"), progname, filename, strerror(errno));
+			exit(1);
+		}
 
-	fclose(cf);
+		fclose(cf);
+	}
 }
 
 
