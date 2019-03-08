@@ -156,7 +156,7 @@ test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
 
    <varlistentry>
     <term>
-     <function>tuple_data_split(rel_oid, t_data bytea, t_infomask integer, t_infomask2 integer, t_bits text [, do_detoast bool]) returns bytea[]</function>
+     <function>tuple_data_split(rel_oid oid, t_data bytea, t_infomask integer, t_infomask2 integer, t_bits text [, do_detoast bool]) returns bytea[]</function>
      <indexterm>
       <primary>tuple_data_split</primary>
      </indexterm>
@@ -181,7 +181,7 @@ test=# SELECT tuple_data_split('pg_class'::regclass, t_data, t_infomask, t_infom
 
    <varlistentry>
     <term>
-     <function>heap_page_item_attrs(rel_oid, t_data bytea, [, do_detoast bool]) returns bytea[]</function>
+     <function>heap_page_item_attrs(page bytea, rel_oid regclass, [, do_detoast bool]) returns setof record</function>
      <indexterm>
       <primary>heap_page_item_attrs</primary>
      </indexterm>
