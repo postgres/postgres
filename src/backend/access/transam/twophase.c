@@ -1297,7 +1297,11 @@ ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 	}
 
 	pgstat_report_wait_end();
-	CloseTransientFile(fd);
+
+	if (CloseTransientFile(fd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", path)));
 
 	hdr = (TwoPhaseFileHeader *) buf;
 	if (hdr->magic != TWOPHASE_MAGIC)

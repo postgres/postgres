@@ -747,7 +747,11 @@ load_relmap_file(bool shared)
 	}
 	pgstat_report_wait_end();
 
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m",
+						mapfilename)));
 
 	/* check for correct magic number, etc */
 	if (map->magic != RELMAPPER_FILEMAGIC ||

@@ -599,7 +599,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 
 	SlruFileName(ctl, path, segno);
 
-	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		/* expected: file doesn't exist */
@@ -621,7 +621,13 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 
 	result = endpos >= (off_t) (offset + BLCKSZ);
 
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+	{
+		slru_errcause = SLRU_CLOSE_FAILED;
+		slru_errno = errno;
+		return false;
+	}
+
 	return result;
 }
 
@@ -654,7 +660,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	 * SlruPhysicalWritePage).  Hence, if we are InRecovery, allow the case
 	 * where the file doesn't exist, and return zeroes instead.
 	 */
-	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		if (errno != ENOENT || !InRecovery)

@@ -3469,7 +3469,10 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
-	CloseTransientFile(srcfd);
+	if (CloseTransientFile(srcfd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", path)));
 
 	/*
 	 * Now move the segment into place with its final name.

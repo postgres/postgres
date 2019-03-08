@@ -1315,7 +1315,11 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	}
 	pgstat_report_wait_end();
 
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(elevel,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m",
+						tmppath)));
 
 	/* rename to permanent file, fsync file and directory */
 	if (rename(tmppath, path) != 0)
@@ -1377,7 +1381,7 @@ RestoreSlotFromDisk(const char *name)
 
 	elog(DEBUG1, "restoring replication slot from \"%s\"", path);
 
-	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 
 	/*
 	 * We do not need to handle this as we are rename()ing the directory into
@@ -1477,7 +1481,10 @@ RestoreSlotFromDisk(const char *name)
 							path, readBytes, (Size) cp.length)));
 	}
 
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", path)));
 
 	/* now verify the CRC */
 	INIT_CRC32C(checksum);

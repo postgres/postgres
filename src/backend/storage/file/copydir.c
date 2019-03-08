@@ -218,7 +218,10 @@ copy_file(char *fromfile, char *tofile)
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tofile)));
 
-	CloseTransientFile(srcfd);
+	if (CloseTransientFile(srcfd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", fromfile)));
 
 	pfree(buffer);
 }

@@ -1202,7 +1202,10 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 				 errmsg("could not fsync file \"%s\": %m", path)));
 	pgstat_report_wait_end();
 
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", path)));
 }
 
 /* ---
@@ -1300,7 +1303,11 @@ CheckPointLogicalRewriteHeap(void)
 						(errcode_for_file_access(),
 						 errmsg("could not fsync file \"%s\": %m", path)));
 			pgstat_report_wait_end();
-			CloseTransientFile(fd);
+
+			if (CloseTransientFile(fd))
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not close file \"%s\": %m", path)));
 		}
 	}
 	FreeDir(mappings_dir);

@@ -646,7 +646,14 @@ durable_rename(const char *oldfile, const char *newfile, int elevel)
 					 errmsg("could not fsync file \"%s\": %m", newfile)));
 			return -1;
 		}
-		CloseTransientFile(fd);
+
+		if (CloseTransientFile(fd))
+		{
+			ereport(elevel,
+					(errcode_for_file_access(),
+					 errmsg("could not close file \"%s\": %m", newfile)));
+			return -1;
+		}
 	}
 
 	/* Time to do the real deal... */
@@ -3295,7 +3302,10 @@ pre_sync_fname(const char *fname, bool isdir, int elevel)
 	 */
 	pg_flush_data(fd, 0, 0);
 
-	(void) CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(elevel,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", fname)));
 }
 
 #endif							/* PG_FLUSH_DATA_WORKS */
@@ -3394,7 +3404,13 @@ fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel)
 		return -1;
 	}
 
-	(void) CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+	{
+		ereport(elevel,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", fname)));
+		return -1;
+	}
 
 	return 0;
 }

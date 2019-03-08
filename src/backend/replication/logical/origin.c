@@ -658,7 +658,11 @@ CheckPointReplicationOrigin(void)
 						tmppath)));
 	}
 
-	CloseTransientFile(tmpfd);
+	if (CloseTransientFile(tmpfd))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m",
+						tmppath)));
 
 	/* fsync, rename to permanent file, fsync file and directory */
 	durable_rename(tmppath, path, PANIC);
@@ -793,7 +797,11 @@ StartupReplicationOrigin(void)
 				 errmsg("replication slot checkpoint has wrong checksum %u, expected %u",
 						crc, file_crc)));
 
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m",
+						path)));
 }
 
 void

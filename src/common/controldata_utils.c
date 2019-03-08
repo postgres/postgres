@@ -100,9 +100,18 @@ get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
 	}
 
 #ifndef FRONTEND
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m",
+						ControlFilePath)));
 #else
-	close(fd);
+	if (close(fd))
+	{
+		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
+				progname, ControlFilePath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 #endif
 
 	/* Check the CRC. */

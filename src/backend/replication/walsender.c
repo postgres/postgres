@@ -521,7 +521,11 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 		pq_sendbytes(&buf, rbuf.data, nread);
 		bytesleft -= nread;
 	}
-	CloseTransientFile(fd);
+
+	if (CloseTransientFile(fd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", path)));
 
 	pq_endmessage(&buf);
 }

@@ -1651,7 +1651,11 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 	}
 	pgstat_report_wait_end();
-	CloseTransientFile(fd);
+
+	if (CloseTransientFile(fd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", tmppath)));
 
 	fsync_fname("pg_logical/snapshots", true);
 
@@ -1846,7 +1850,10 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	}
 	COMP_CRC32C(checksum, ondisk.builder.committed.xip, sz);
 
-	CloseTransientFile(fd);
+	if (CloseTransientFile(fd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", path)));
 
 	FIN_CRC32C(checksum);
 

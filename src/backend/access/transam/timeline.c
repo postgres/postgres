@@ -370,7 +370,11 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 			}
 			pgstat_report_wait_end();
 		}
-		CloseTransientFile(srcfd);
+
+		if (CloseTransientFile(srcfd))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not close file \"%s\": %m", path)));
 	}
 
 	/*
@@ -415,7 +419,6 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
-
 
 	/*
 	 * Now move the completed history file into place with its final name.
@@ -494,7 +497,6 @@ writeTimeLineHistoryFile(TimeLineID tli, char *content, int size)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
-
 
 	/*
 	 * Now move the completed history file into place with its final name.
