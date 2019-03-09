@@ -2316,13 +2316,25 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    (<acronym>CA</acronym>s) you trust in a file in the data
    directory, set the parameter <xref linkend="guc-ssl-ca-file"/> in
    <filename>postgresql.conf</filename> to the new file name, and add the
-   authentication option <literal>clientcert=1</literal> to the appropriate
+   authentication option <literal>clientcert=verify-ca</literal> or
+   <literal>clientcert=verify-full</literal> to the appropriate
    <literal>hostssl</literal> line(s) in <filename>pg_hba.conf</filename>.
    A certificate will then be requested from the client during SSL
    connection startup.  (See <xref linkend="libpq-ssl"/> for a description
-   of how to set up certificates on the client.)  The server will
-   verify that the client's certificate is signed by one of the trusted
-   certificate authorities.
+   of how to set up certificates on the client.)
+  </para>
+
+  <para>
+   For a <literal>hostssl</literal> entry with
+   <literal>clientcert=verify-ca</literal>, the server will verify
+   that the client's certificate is signed by one of the trusted
+   certificate authorities. If <literal>clientcert=verify-full</literal>
+   is specified, the server will not only verify the certificate
+   chain, but it will also check whether the username or its mapping
+   matches the <literal>cn</literal> (Common Name) of the provided certificate.
+   Note that certificate chain validation is always ensured when the
+   <literal>cert</literal> authentication method is used
+   (see <xref linkend="auth-cert"/>).
   </para>
 
   <para>
@@ -2341,18 +2353,34 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    The <literal>clientcert</literal> authentication option is available for
    all authentication methods, but only in <filename>pg_hba.conf</filename> lines
    specified as <literal>hostssl</literal>.  When <literal>clientcert</literal> is
-   not specified or is set to 0, the server will still verify any presented
-   client certificates against its CA file, if one is configured &mdash; but
-   it will not insist that a client certificate be presented.
+   not specified or is set to <literal>no-verify</literal>, the server will still
+   verify any presented client certificates against its CA file, if one is
+   configured &mdash; but it will not insist that a client certificate be presented.
   </para>
 
   <para>
-   If you are setting up client certificates, you may wish to use
-   the <literal>cert</literal> authentication method, so that the certificates
-   control user authentication as well as providing connection security.
-   See <xref linkend="auth-cert"/> for details.  (It is not necessary to
-   specify <literal>clientcert=1</literal> explicitly when using
-   the <literal>cert</literal> authentication method.)
+   There are two approaches to enforce that users provide a certificate during login.
+  </para>
+
+  <para>
+   The first approach makes use of the <literal>cert</literal> authentication
+   method for <literal>hostssl</literal> entries in <filename>pg_hba.conf</filename>,
+   such that the certificate itself is used for authentication while also
+   providing ssl connection security. See <xref linkend="auth-cert"/> for details.
+   (It is not necessary to specify any <literal>clientcert</literal> options
+   explicitly when using the <literal>cert</literal> authentication method.)
+   In this case, the <literal>cn</literal> (Common Name) provided in
+   the certificate is checked against the user name or an applicable mapping.
+  </para>
+
+  <para>
+   The second approach combines any authentication method for <literal>hostssl</literal>
+   entries with the verification of client certificates by setting the
+   <literal>clientcert</literal> authentication option to <literal>verify-ca</literal>
+   or <literal>verify-full</literal>. The former option only enforces that
+   the certificate is valid, while the latter also ensures that the
+   <literal>cn</literal> (Common Name) in the certificate matches
+   the user name or an applicable mapping.
   </para>
   </sect2>
 

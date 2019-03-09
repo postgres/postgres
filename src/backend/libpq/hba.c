@@ -1609,7 +1609,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	 */
 	if (parsedline->auth_method == uaCert)
 	{
-		parsedline->clientcert = true;
+		parsedline->clientcert = clientCertCA;
 	}
 
 	return parsedline;
@@ -1675,23 +1675,38 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			*err_msg = "clientcert can only be configured for \"hostssl\" rows";
 			return false;
 		}
-		if (strcmp(val, "1") == 0)
+		if (strcmp(val, "1") == 0
+			|| strcmp(val, "verify-ca") == 0)
 		{
-			hbaline->clientcert = true;
+			hbaline->clientcert = clientCertCA;
 		}
-		else
+		else if (strcmp(val, "verify-full") == 0)
+		{
+			hbaline->clientcert = clientCertFull;
+		}
+		else if (strcmp(val, "0") == 0
+				 || strcmp(val, "no-verify") == 0)
 		{
 			if (hbaline->auth_method == uaCert)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("clientcert can not be set to 0 when using \"cert\" authentication"),
+						 errmsg("clientcert can not be set to \"no-verify\" when using \"cert\" authentication"),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
-				*err_msg = "clientcert can not be set to 0 when using \"cert\" authentication";
+				*err_msg = "clientcert can not be set to \"no-verify\" when using \"cert\" authentication";
 				return false;
 			}
-			hbaline->clientcert = false;
+			hbaline->clientcert = clientCertOff;
+		}
+		else
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("invalid value for clientcert: \"%s\"", val),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			return false;
 		}
 	}
 	else if (strcmp(name, "pamservice") == 0)
@@ -2252,9 +2267,9 @@ gethba_options(HbaLine *hba)
 		options[noptions++] =
 			CStringGetTextDatum(psprintf("map=%s", hba->usermap));
 
-	if (hba->clientcert)
+	if (hba->clientcert != clientCertOff)
 		options[noptions++] =
-			CStringGetTextDatum("clientcert=true");
+			CStringGetTextDatum(psprintf("clientcert=%s", (hba->clientcert == clientCertCA) ? "verify-ca" : "verify-full"));
 
 	if (hba->pamservice)
 		options[noptions++] =

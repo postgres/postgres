@@ -13,7 +13,7 @@ use SSLServer;
 
 if ($ENV{with_openssl} eq 'yes')
 {
-	plan tests => 71;
+	plan tests => 75;
 }
 else
 {
@@ -377,6 +377,27 @@ test_connect_fails(
 	"user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
 	qr/SSL error/,
 	"certificate authorization fails with revoked client cert");
+
+# Check that connecting with auth-option verify-full in pg_hba:
+# works, iff username matches Common Name
+# fails, iff username doesn't match Common Name.
+$common_connstr =
+"sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=verifydb hostaddr=$SERVERHOSTADDR";
+
+test_connect_ok($common_connstr,
+				"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+				"auth_option clientcert=verify-full succeeds with matching username and Common Name");
+
+test_connect_fails($common_connstr,
+				   "user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+				   qr/FATAL/,
+				   "auth_option clientcert=verify-full fails with mismatching username and Common Name");
+
+# Check that connecting with auth-optionverify-ca in pg_hba :
+# works, when username doesn't match Common Name
+test_connect_ok($common_connstr,
+				"user=yetanotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+				"auth_option clientcert=verify-ca succeeds with mismatching username and Common Name");
 
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');

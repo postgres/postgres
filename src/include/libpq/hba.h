@@ -58,6 +58,13 @@ typedef enum ConnType
 	ctHostNoSSL
 } ConnType;
 
+typedef enum ClientCertMode
+{
+	clientCertOff,
+	clientCertCA,
+	clientCertFull
+} ClientCertMode;
+
 typedef struct HbaLine
 {
 	int			linenumber;
@@ -86,7 +93,7 @@ typedef struct HbaLine
 	int			ldapscope;
 	char	   *ldapprefix;
 	char	   *ldapsuffix;
-	bool		clientcert;
+	ClientCertMode clientcert;
 	char	   *krb_realm;
 	bool		include_realm;
 	bool		compat_realm;

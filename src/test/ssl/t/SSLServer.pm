@@ -103,8 +103,10 @@ sub configure_test_server_for_ssl
 	# Create test users and databases
 	$node->psql('postgres', "CREATE USER ssltestuser");
 	$node->psql('postgres', "CREATE USER anotheruser");
+	$node->psql('postgres', "CREATE USER yetanotheruser");
 	$node->psql('postgres', "CREATE DATABASE trustdb");
 	$node->psql('postgres', "CREATE DATABASE certdb");
+	$node->psql('postgres', "CREATE DATABASE verifydb");
 
 	# Update password of each user as needed.
 	if (defined($password))
@@ -183,11 +185,17 @@ sub configure_hba_for_ssl
 	# When connecting to certdb, also check the client certificate.
 	open my $hba, '>', "$pgdata/pg_hba.conf";
 	print $hba
-	  "# TYPE  DATABASE        USER            ADDRESS                 METHOD\n";
+	  "# TYPE  DATABASE        USER            ADDRESS                 METHOD             OPTIONS\n";
 	print $hba
 	  "hostssl trustdb         all             $serverhost/32            $authmethod\n";
 	print $hba
 	  "hostssl trustdb         all             ::1/128                 $authmethod\n";
+	print $hba
+	  "hostssl verifydb        ssltestuser     $serverhost/32          $authmethod        clientcert=verify-full\n";
+	print $hba
+	  "hostssl verifydb        anotheruser     $serverhost/32          $authmethod        clientcert=verify-full\n";
+	print $hba
+	  "hostssl verifydb        yetanotheruser  $serverhost/32          $authmethod        clientcert=verify-ca\n";
 	print $hba
 	  "hostssl certdb          all             $serverhost/32            cert\n";
 	print $hba
