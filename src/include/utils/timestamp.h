@@ -104,4 +104,6 @@ extern int	date2isoweek(int year, int mon, int mday);
 extern int	date2isoyear(int year, int mon, int mday);
 extern int	date2isoyearday(int year, int mon, int mday);
 
+extern bool TimestampTimestampTzRequiresRewrite(void);
+
 #endif							/* TIMESTAMP_H */

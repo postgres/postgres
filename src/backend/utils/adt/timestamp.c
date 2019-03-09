@@ -5168,6 +5168,23 @@ timestamp_izone(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMPTZ(result);
 }								/* timestamp_izone() */
 
+/* TimestampTimestampTzRequiresRewrite()
+ *
+ * Returns false if the TimeZone GUC setting causes timestamp_timestamptz and
+ * timestamptz_timestamp to be no-ops, where the return value has the same
+ * bits as the argument.  Since project convention is to assume a GUC changes
+ * no more often than STABLE functions change, the answer is valid that long.
+ */
+bool
+TimestampTimestampTzRequiresRewrite(void)
+{
+	long		offset;
+
+	if (pg_get_timezone_offset(session_timezone, &offset) && offset == 0)
+		PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(true);
+}
+
 /* timestamp_timestamptz()
  * Convert local timestamp to timestamp at GMT
  */

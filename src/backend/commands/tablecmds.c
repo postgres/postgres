@@ -96,6 +96,7 @@
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
+#include "utils/timestamp.h"
 #include "utils/typcache.h"
 
 
@@ -9678,11 +9679,15 @@ ATPrepAlterColumnType(List **wqueue,
  * When the data type of a column is changed, a rewrite might not be required
  * if the new type is sufficiently identical to the old one, and the USING
  * clause isn't trying to insert some other value.  It's safe to skip the
- * rewrite if the old type is binary coercible to the new type, or if the
- * new type is an unconstrained domain over the old type.  In the case of a
- * constrained domain, we could get by with scanning the table and checking
- * the constraint rather than actually rewriting it, but we don't currently
- * try to do that.
+ * rewrite in these cases:
+ *
+ * - the old type is binary coercible to the new type
+ * - the new type is an unconstrained domain over the old type
+ * - {NEW,OLD} or {OLD,NEW} is {timestamptz,timestamp} and the timezone is UTC
+ *
+ * In the case of a constrained domain, we could get by with scanning the
+ * table and checking the constraint rather than actually rewriting it, but we
+ * don't currently try to do that.
  */
 static bool
 ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno)
@@ -9703,6 +9708,23 @@ ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno)
 			if (DomainHasConstraints(d->resulttype))
 				return true;
 			expr = (Node *) d->arg;
+		}
+		else if (IsA(expr, FuncExpr))
+		{
+			FuncExpr   *f = (FuncExpr *) expr;
+
+			switch (f->funcid)
+			{
+				case F_TIMESTAMPTZ_TIMESTAMP:
+				case F_TIMESTAMP_TIMESTAMPTZ:
+					if (TimestampTimestampTzRequiresRewrite())
+						return true;
+					else
+						expr = linitial(f->args);
+					break;
+				default:
+					return true;
+			}
 		}
 		else
 			return true;
