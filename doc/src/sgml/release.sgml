@@ -84,64 +84,8 @@ For new features, add links to the documentation sections.
   <title>Prior Releases</title>
 
   <para>
-   Release notes for prior release branches can be found on the
-   <ulink url="https://www.postgresql.org/"><productname>PostgreSQL</productname></ulink>
-   web site.  At the time of release of version 9.5,
-   these were the supported prior release branches:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      <productname>PostgreSQL</productname> 9.4:
-      <ulink url="https://www.postgresql.org/docs/9.4/release.html">
-       <literal>https://www.postgresql.org/docs/9.4/release.html</literal>
-      </ulink>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <productname>PostgreSQL</productname> 9.3:
-      <ulink url="https://www.postgresql.org/docs/9.3/release.html">
-       <literal>https://www.postgresql.org/docs/9.3/release.html</literal>
-      </ulink>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <productname>PostgreSQL</productname> 9.2:
-      <ulink url="https://www.postgresql.org/docs/9.2/release.html">
-       <literal>https://www.postgresql.org/docs/9.2/release.html</literal>
-      </ulink>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <productname>PostgreSQL</productname> 9.1:
-      <ulink url="https://www.postgresql.org/docs/9.1/release.html">
-       <literal>https://www.postgresql.org/docs/9.1/release.html</literal>
-      </ulink>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <productname>PostgreSQL</productname> 9.0:
-      <ulink url="https://www.postgresql.org/docs/9.0/release.html">
-       <literal>https://www.postgresql.org/docs/9.0/release.html</literal>
-      </ulink>
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   Release notes for older release branches can be found at
-   <ulink url="https://www.postgresql.org/docs/manuals/archive/">
-    <literal>https://www.postgresql.org/docs/manuals/archive/</literal>
-   </ulink>
+   Release notes for prior release branches can be found at
+   <ulink url="https://www.postgresql.org/docs/release/"><literal>https://www.postgresql.org/docs/release/</literal></ulink>
   </para>
  </sect1>
 
