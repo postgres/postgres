@@ -124,10 +124,8 @@ Creating Back-Branch Release Notes
 Retiring a Branch
 =================
 
-After support is dropped for an old branch, remove the link for it
-in HEAD's doc/src/sgml/release.sgml.  If the newest back branch hasn't
-yet reached GA release, do the same there.  (Given our current development
-calendar, the latter should seldom be necessary.)
+* Get the buildfarm's 'branches_of_interest.txt' file updated to remove
+  the retired branch.
 
 
 
