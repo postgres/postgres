@@ -2509,6 +2509,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry>Number of deadlocks detected in this database</entry>
     </row>
     <row>
+     <entry><structfield>checksum_failures</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of data page checksum failures detected in this database</entry>
+    </row>
+    <row>
      <entry><structfield>blk_read_time</structfield></entry>
      <entry><type>double precision</type></entry>
      <entry>Time spent reading data file blocks by backends in this database,

@@ -1498,6 +1498,21 @@ pg_stat_get_db_deadlocks(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_stat_get_db_checksum_failures(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_checksum_failures);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
 pg_stat_get_db_blk_read_time(PG_FUNCTION_ARGS)
 {
 	Oid			dbid = PG_GETARG_OID(0);

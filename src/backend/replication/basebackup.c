@@ -58,7 +58,7 @@ typedef struct
 static int64 sendDir(const char *path, int basepathlen, bool sizeonly,
 		List *tablespaces, bool sendtblspclinks);
 static bool sendFile(const char *readfilename, const char *tarfilename,
-		 struct stat *statbuf, bool missing_ok);
+		 struct stat *statbuf, bool missing_ok, Oid dboid);
 static void sendFileWithContent(const char *filename, const char *content);
 static int64 _tarWriteHeader(const char *filename, const char *linktarget,
 				struct stat *statbuf, bool sizeonly);
@@ -342,7 +342,7 @@ perform_base_backup(basebackup_options *opt)
 							(errcode_for_file_access(),
 							 errmsg("could not stat file \"%s\": %m",
 									XLOG_CONTROL_FILE)));
-				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
+				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false, InvalidOid);
 			}
 			else
 				sendTablespace(ti->path, false);
@@ -592,7 +592,7 @@ perform_base_backup(basebackup_options *opt)
 						(errcode_for_file_access(),
 						 errmsg("could not stat file \"%s\": %m", pathbuf)));
 
-			sendFile(pathbuf, pathbuf, &statbuf, false);
+			sendFile(pathbuf, pathbuf, &statbuf, false, InvalidOid);
 
 			/* unconditionally mark file as archived */
 			StatusFilePath(pathbuf, fname, ".done");
@@ -1302,7 +1302,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 
 			if (!sizeonly)
 				sent = sendFile(pathbuf, pathbuf + basepathlen + 1, &statbuf,
-								true);
+								true, isDbDir ? pg_atoi(lastDir + 1, sizeof(Oid), 0) : InvalidOid);
 
 			if (sent || sizeonly)
 			{
@@ -1358,12 +1358,15 @@ is_checksummed_file(const char *fullpath, const char *filename)
  *
  * If 'missing_ok' is true, will not throw an error if the file is not found.
  *
+ * If dboid is anything other than InvalidOid then any checksum failures detected
+ * will get reported to the stats collector.
+ *
  * Returns true if the file was successfully sent, false if 'missing_ok',
  * and the file did not exist.
  */
 static bool
 sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf,
-		 bool missing_ok)
+		 bool missing_ok, Oid dboid)
 {
 	FILE	   *fp;
 	BlockNumber blkno = 0;
@@ -1580,6 +1583,9 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 		ereport(WARNING,
 				(errmsg("file \"%s\" has a total of %d checksum verification "
 						"failures", readfilename, checksum_failures)));
+
+		if (dboid != InvalidOid)
+			pgstat_report_checksum_failures_in_db(dboid, checksum_failures);
 	}
 	total_checksum_failures += checksum_failures;
 

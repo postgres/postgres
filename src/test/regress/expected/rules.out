@@ -1817,6 +1817,7 @@ pg_stat_database| SELECT d.oid AS datid,
     pg_stat_get_db_temp_files(d.oid) AS temp_files,
     pg_stat_get_db_temp_bytes(d.oid) AS temp_bytes,
     pg_stat_get_db_deadlocks(d.oid) AS deadlocks,
+    pg_stat_get_db_checksum_failures(d.oid) AS checksum_failures,
     pg_stat_get_db_blk_read_time(d.oid) AS blk_read_time,
     pg_stat_get_db_blk_write_time(d.oid) AS blk_write_time,
     pg_stat_get_db_stat_reset_time(d.oid) AS stats_reset

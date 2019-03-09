@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "access/itup.h"
 #include "access/xlog.h"
+#include "pgstat.h"
 #include "storage/checksum.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -150,6 +151,8 @@ PageIsVerified(Page page, BlockNumber blkno)
 				(ERRCODE_DATA_CORRUPTED,
 				 errmsg("page verification failed, calculated checksum %u but expected %u",
 						checksum, p->pd_checksum)));
+
+		pgstat_report_checksum_failure();
 
 		if (header_sane && ignore_checksum_failure)
 			return true;

@@ -64,7 +64,8 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_FUNCPURGE,
 	PGSTAT_MTYPE_RECOVERYCONFLICT,
 	PGSTAT_MTYPE_TEMPFILE,
-	PGSTAT_MTYPE_DEADLOCK
+	PGSTAT_MTYPE_DEADLOCK,
+	PGSTAT_MTYPE_CHECKSUMFAILURE
 } StatMsgType;
 
 /* ----------
@@ -530,6 +531,18 @@ typedef struct PgStat_MsgDeadlock
 	Oid			m_databaseid;
 } PgStat_MsgDeadlock;
 
+/* ----------
+ * PgStat_MsgChecksumFailure	Sent by the backend to tell the collector
+ *								about checksum failures noticed.
+ * ----------
+ */
+typedef struct PgStat_MsgChecksumFailure
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	int			m_failurecount;
+} PgStat_MsgChecksumFailure;
+
 
 /* ----------
  * PgStat_Msg					Union over all possible messages.
@@ -593,6 +606,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_temp_files;
 	PgStat_Counter n_temp_bytes;
 	PgStat_Counter n_deadlocks;
+	PgStat_Counter n_checksum_failures;
 	PgStat_Counter n_block_read_time;	/* times in microseconds */
 	PgStat_Counter n_block_write_time;
 
@@ -1200,6 +1214,8 @@ extern void pgstat_report_analyze(Relation rel,
 
 extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_report_deadlock(void);
+extern void pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount);
+extern void pgstat_report_checksum_failure(void);
 
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
