@@ -506,6 +506,11 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
  Sun Aug 13 12:34:56 2006 PDT
 (1 row)
 
+-- Test some simple error cases
+SET seq_page_cost TO 'NaN';
+ERROR:  parameter "seq_page_cost" requires a numeric value
+SET vacuum_cost_delay TO '10s';
+ERROR:  10000 is outside the valid range for parameter "vacuum_cost_delay" (0 .. 100)
 --
 -- Test DISCARD TEMP
 --
