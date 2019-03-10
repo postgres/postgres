@@ -7033,7 +7033,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Specifies the cost delay value that will be used in automatic
         <command>VACUUM</command> operations.  If -1 is specified, the regular
         <xref linkend="guc-vacuum-cost-delay"/> value will be used.
-        The default value is 20 milliseconds.
+        The default value is 2 milliseconds.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line;
         but the setting can be overridden for individual tables by

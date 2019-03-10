@@ -3312,7 +3312,7 @@ static struct config_real ConfigureNamesReal[] =
 			GUC_UNIT_MS
 		},
 		&autovacuum_vac_cost_delay,
-		20, -1, 100,
+		2, -1, 100,
 		NULL, NULL, NULL
 	},
 
