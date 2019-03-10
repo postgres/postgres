@@ -2265,7 +2265,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&VacuumCostLimit,
-		2000, 1, 10000,
+		200, 1, 10000,
 		NULL, NULL, NULL
 	},
 
