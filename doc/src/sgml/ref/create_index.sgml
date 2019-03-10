@@ -181,10 +181,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        </para>
 
        <para>
-        Currently, only the B-tree index access method supports this feature.
-        In B-tree indexes, the values of columns listed in the
-        <literal>INCLUDE</literal> clause are included in leaf tuples which
-        correspond to heap tuples, but are not included in upper-level
+        Currently, the B-tree and the GiST index access methods supports this
+        feature.  In B-tree and the GiST indexes, the values of columns listed
+        in the <literal>INCLUDE</literal> clause are included in leaf tuples
+        which correspond to heap tuples, but are not included in upper-level
         index entries used for tree navigation.
        </para>
       </listitem>

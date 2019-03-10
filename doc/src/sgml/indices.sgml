@@ -1145,8 +1145,8 @@ CREATE UNIQUE INDEX tab_x_y ON tab(x) INCLUDE (y);
    likely to not need to access the heap.  If the heap tuple must be visited
    anyway, it costs nothing more to get the column's value from there.
    Other restrictions are that expressions are not currently supported as
-   included columns, and that only B-tree indexes currently support included
-   columns.
+   included columns, and that only B-tree and GiST indexes currently support
+   included columns.
   </para>
 
   <para>
@@ -1165,7 +1165,7 @@ CREATE INDEX tab_x_y ON tab(x, y);
    enforce uniqueness on the key column(s).  Also, explicitly marking
    non-searchable columns as <literal>INCLUDE</literal> columns makes the
    index slightly smaller, because such columns need not be stored in upper
-   B-tree levels.
+   tree levels.
   </para>
 
   <para>

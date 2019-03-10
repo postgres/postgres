@@ -63,6 +63,7 @@ test: create_operator
 test: create_procedure
 test: create_index
 test: index_including
+test: index_including_gist
 test: create_view
 test: create_aggregate
 test: create_function_3

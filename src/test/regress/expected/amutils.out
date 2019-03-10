@@ -75,7 +75,7 @@ select prop,
  can_unique         | f  |       | 
  can_multi_col      | t  |       | 
  can_exclude        | t  |       | 
- can_include        | f  |       | 
+ can_include        | t  |       | 
  bogus              |    |       | 
 (19 rows)
 
@@ -159,7 +159,7 @@ select amname, prop, pg_indexam_has_property(a.oid, prop) as p
  gist   | can_unique    | f
  gist   | can_multi_col | t
  gist   | can_exclude   | t
- gist   | can_include   | f
+ gist   | can_include   | t
  gist   | bogus         | 
  hash   | can_order     | f
  hash   | can_unique    | f

@@ -164,7 +164,7 @@ gistindex_keytest(IndexScanDesc scan,
 
 		datum = index_getattr(tuple,
 							  key->sk_attno,
-							  giststate->tupdesc,
+							  giststate->leafTupdesc,
 							  &isNull);
 
 		if (key->sk_flags & SK_ISNULL)
@@ -244,7 +244,7 @@ gistindex_keytest(IndexScanDesc scan,
 
 		datum = index_getattr(tuple,
 							  key->sk_attno,
-							  giststate->tupdesc,
+							  giststate->leafTupdesc,
 							  &isNull);
 
 		if ((key->sk_flags & SK_ISNULL) || isNull)
@@ -769,11 +769,13 @@ gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
  *
  * Opclasses that implement a fetch function support index-only scans.
  * Opclasses without compression functions also support index-only scans.
+ * Included attributes always can be fetched for index-only scans.
  */
 bool
 gistcanreturn(Relation index, int attno)
 {
-	if (OidIsValid(index_getprocid(index, attno, GIST_FETCH_PROC)) ||
+	if (attno > IndexRelationGetNumberOfKeyAttributes(index) ||
+		OidIsValid(index_getprocid(index, attno, GIST_FETCH_PROC)) ||
 		!OidIsValid(index_getprocid(index, attno, GIST_COMPRESS_PROC)))
 		return true;
 	else

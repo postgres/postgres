@@ -3675,6 +3675,12 @@ SELECT plainto_tsquery('supernovae stars');
   </para>
 
   <para>
+   A GiST index can be covering, i.e. use the <literal>INCLUDE</literal>
+   clause.  Included columns can have data types without any GiST operator
+   class.  Included attributes will be stored uncompressed.
+  </para>
+
+  <para>
    Lossiness causes performance degradation due to unnecessary fetches of table
    records that turn out to be false matches.  Since random access to table
    records is slow, this limits the usefulness of GiST indexes.  The

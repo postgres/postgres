@@ -207,7 +207,7 @@ placeOne(Relation r, GISTSTATE *giststate, GistSplitVector *v,
 	gistDeCompressAtt(giststate, r, itup, NULL, (OffsetNumber) 0,
 					  identry, isnull);
 
-	for (; attno < giststate->tupdesc->natts; attno++)
+	for (; attno < giststate->nonLeafTupdesc->natts; attno++)
 	{
 		float		lpenalty,
 					rpenalty;
@@ -485,7 +485,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 	 */
 	v->spl_dontcare = NULL;
 
-	if (attno + 1 < giststate->tupdesc->natts)
+	if (attno + 1 < giststate->nonLeafTupdesc->natts)
 	{
 		int			NumDontCare;
 
@@ -639,7 +639,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 		Datum		datum;
 		bool		IsNull;
 
-		datum = index_getattr(itup[i - 1], attno + 1, giststate->tupdesc,
+		datum = index_getattr(itup[i - 1], attno + 1, giststate->leafTupdesc,
 							  &IsNull);
 		gistdentryinit(giststate, attno, &(entryvec->vector[i]),
 					   datum, r, page, i,
@@ -657,7 +657,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 		 */
 		v->spl_risnull[attno] = v->spl_lisnull[attno] = true;
 
-		if (attno + 1 < giststate->tupdesc->natts)
+		if (attno + 1 < giststate->nonLeafTupdesc->natts)
 			gistSplitByKey(r, page, itup, len, giststate, v, attno + 1);
 		else
 			gistSplitHalf(&v->splitVector, len);
@@ -683,7 +683,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 				v->splitVector.spl_left[v->splitVector.spl_nleft++] = i;
 
 		/* Compute union keys, unless outer recursion level will handle it */
-		if (attno == 0 && giststate->tupdesc->natts == 1)
+		if (attno == 0 && giststate->nonLeafTupdesc->natts == 1)
 		{
 			v->spl_dontcare = NULL;
 			gistunionsubkey(giststate, itup, v);
@@ -700,7 +700,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 			 * Splitting on attno column is not optimal, so consider
 			 * redistributing don't-care tuples according to the next column
 			 */
-			Assert(attno + 1 < giststate->tupdesc->natts);
+			Assert(attno + 1 < giststate->nonLeafTupdesc->natts);
 
 			if (v->spl_dontcare == NULL)
 			{
@@ -771,7 +771,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 	 * that PickSplit (or the special cases above) produced correct union
 	 * datums.
 	 */
-	if (attno == 0 && giststate->tupdesc->natts > 1)
+	if (attno == 0 && giststate->nonLeafTupdesc->natts > 1)
 	{
 		v->spl_dontcare = NULL;
 		gistunionsubkey(giststate, itup, v);

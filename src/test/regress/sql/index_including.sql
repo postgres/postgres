@@ -176,15 +176,15 @@ SELECT indexdef FROM pg_indexes WHERE tablename = 'tbl' ORDER BY indexname;
 DROP TABLE tbl;
 
 /*
- * 7. Check various AMs. All but btree must fail.
+ * 7. Check various AMs. All but btree and gist must fail.
  */
 CREATE TABLE tbl (c1 int,c2 int, c3 box, c4 box);
 CREATE INDEX on tbl USING brin(c1, c2) INCLUDE (c3, c4);
-CREATE INDEX on tbl USING gist(c3) INCLUDE (c4);
+CREATE INDEX on tbl USING gist(c3) INCLUDE (c1, c4);
 CREATE INDEX on tbl USING spgist(c3) INCLUDE (c4);
 CREATE INDEX on tbl USING gin(c1, c2) INCLUDE (c3, c4);
 CREATE INDEX on tbl USING hash(c1, c2) INCLUDE (c3, c4);
-CREATE INDEX on tbl USING rtree(c1, c2) INCLUDE (c3, c4);
+CREATE INDEX on tbl USING rtree(c3) INCLUDE (c1, c4);
 CREATE INDEX on tbl USING btree(c1, c2) INCLUDE (c3, c4);
 DROP TABLE tbl;
 

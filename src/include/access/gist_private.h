@@ -78,7 +78,9 @@ typedef struct GISTSTATE
 	MemoryContext scanCxt;		/* context for scan-lifespan data */
 	MemoryContext tempCxt;		/* short-term context for calling functions */
 
-	TupleDesc	tupdesc;		/* index's tuple descriptor */
+	TupleDesc	leafTupdesc;	/* index's tuple descriptor */
+	TupleDesc	nonLeafTupdesc; /* truncated tuple descriptor for non-leaf
+								 * pages */
 	TupleDesc	fetchTupdesc;	/* tuple descriptor for tuples returned in an
 								 * index-only scan */
 
