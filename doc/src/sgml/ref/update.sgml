@@ -287,13 +287,30 @@ UPDATE <replaceable class="parameter">count</replaceable>
    row satisfies its partition constraint, then the row is moved to that
    partition. If there is no such partition, an error will occur.  Behind the
    scenes, the row movement is actually a <command>DELETE</command> and
-   <command>INSERT</command> operation. However, there is a possibility that a
-   concurrent <command>UPDATE</command> or <command>DELETE</command> on the
-   same row may miss this row. For details see the section
-   <xref linkend="ddl-partitioning-declarative-limitations"/>.
-   Currently, rows cannot be moved from a partition that is a
-   foreign table to some other partition, but they can be moved into a foreign
-   table if the foreign data wrapper supports it.
+   <command>INSERT</command> operation.
+  </para>
+
+  <para>
+   There is a possibility that a concurrent <command>UPDATE</command> or
+   <command>DELETE</command> on the row being moved will get a serialization
+   failure error.  Suppose session 1 is performing an <command>UPDATE</command>
+   on a partition key, and meanwhile a concurrent session 2 for which this
+   row is visible performs an <command>UPDATE</command> or
+   <command>DELETE</command> operation on this row.  In such case,
+   session 2's <command>UPDATE</command> or <command>DELETE</command> will
+   detect the row movement and raise a serialization failure error (which
+   always returns with an SQLSTATE code '40001').  Applications may wish to
+   retry the transaction if this occurs.  In the usual case where the table
+   is not partitioned, or where there is no row movement, session 2 would
+   have identified the newly updated row and carried out the
+   <command>UPDATE</command>/<command>DELETE</command> on this new row
+    version.
+  </para>
+
+  <para>
+   Note that while rows can be moved from local partitions to a foreign-table
+   partition (provided the foreign data wrapper supports tuple routing), they
+   cannot be moved from a foreign-table partition to another partition.
   </para>
  </refsect1>
 
