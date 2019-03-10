@@ -138,7 +138,7 @@ int			VacuumCostPageHit = 1;	/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;
 int			VacuumCostPageDirty = 20;
 int			VacuumCostLimit = 2000;
-int			VacuumCostDelay = 0;
+double		VacuumCostDelay = 0;
 
 int			VacuumPageHit = 0;
 int			VacuumPageMiss = 0;

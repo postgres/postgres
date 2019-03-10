@@ -243,7 +243,6 @@ typedef struct AutoVacOpts
 	bool		enabled;
 	int			vacuum_threshold;
 	int			analyze_threshold;
-	int			vacuum_cost_delay;
 	int			vacuum_cost_limit;
 	int			freeze_min_age;
 	int			freeze_max_age;
@@ -252,6 +251,7 @@ typedef struct AutoVacOpts
 	int			multixact_freeze_max_age;
 	int			multixact_freeze_table_age;
 	int			log_min_duration;
+	float8		vacuum_cost_delay;
 	float8		vacuum_scale_factor;
 	float8		analyze_scale_factor;
 } AutoVacOpts;

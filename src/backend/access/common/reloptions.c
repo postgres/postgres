@@ -1198,7 +1198,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 			{
 				relopt_real *optreal = (relopt_real *) option->gen;
 
-				parsed = parse_real(value, &option->values.real_val);
+				parsed = parse_real(value, &option->values.real_val, 0, NULL);
 				if (validate && !parsed)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1359,8 +1359,6 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_threshold)},
 		{"autovacuum_analyze_threshold", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_threshold)},
-		{"autovacuum_vacuum_cost_delay", RELOPT_TYPE_INT,
-		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_delay)},
 		{"autovacuum_vacuum_cost_limit", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_limit)},
 		{"autovacuum_freeze_min_age", RELOPT_TYPE_INT,
@@ -1379,6 +1377,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_min_duration)},
 		{"toast_tuple_target", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, toast_tuple_target)},
+		{"autovacuum_vacuum_cost_delay", RELOPT_TYPE_REAL,
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_delay)},
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,

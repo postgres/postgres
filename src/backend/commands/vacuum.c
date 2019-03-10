@@ -1834,13 +1834,13 @@ vacuum_delay_point(void)
 	if (VacuumCostActive && !InterruptPending &&
 		VacuumCostBalance >= VacuumCostLimit)
 	{
-		int			msec;
+		double		msec;
 
 		msec = VacuumCostDelay * VacuumCostBalance / VacuumCostLimit;
 		if (msec > VacuumCostDelay * 4)
 			msec = VacuumCostDelay * 4;
 
-		pg_usleep(msec * 1000L);
+		pg_usleep((long) (msec * 1000));
 
 		VacuumCostBalance = 0;
 

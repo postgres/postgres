@@ -149,11 +149,11 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 (1 row)
 
 SAVEPOINT first_sp;
-SET vacuum_cost_delay TO 80;
+SET vacuum_cost_delay TO 80.1;
 SHOW vacuum_cost_delay;
  vacuum_cost_delay 
 -------------------
- 80ms
+ 80100us
 (1 row)
 
 SET datestyle = 'German, DMY';
@@ -183,7 +183,7 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 (1 row)
 
 SAVEPOINT second_sp;
-SET vacuum_cost_delay TO 90;
+SET vacuum_cost_delay TO '900us';
 SET datestyle = 'SQL, YMD';
 SHOW datestyle;
  DateStyle 
@@ -222,7 +222,7 @@ ROLLBACK TO third_sp;
 SHOW vacuum_cost_delay;
  vacuum_cost_delay 
 -------------------
- 90ms
+ 900us
 (1 row)
 
 SHOW datestyle;
@@ -508,7 +508,7 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 
 -- Test some simple error cases
 SET seq_page_cost TO 'NaN';
-ERROR:  parameter "seq_page_cost" requires a numeric value
+ERROR:  invalid value for parameter "seq_page_cost": "NaN"
 SET vacuum_cost_delay TO '10s';
 ERROR:  10000 ms is outside the valid range for parameter "vacuum_cost_delay" (0 .. 100)
 SET geqo_selection_bias TO '-infinity';

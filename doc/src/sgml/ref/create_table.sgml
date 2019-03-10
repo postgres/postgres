@@ -1385,7 +1385,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_vacuum_cost_delay</literal>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>integer</type>)</term>
+    <term><literal>autovacuum_vacuum_cost_delay</literal>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>floating point</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-delay"/>

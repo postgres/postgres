@@ -91,7 +91,9 @@
 
         <listitem>
          <para>
-          Valid time units are <literal>ms</literal> (milliseconds),
+          Valid time units are
+          <literal>us</literal> (microseconds),
+          <literal>ms</literal> (milliseconds),
           <literal>s</literal> (seconds), <literal>min</literal> (minutes),
           <literal>h</literal> (hours), and <literal>d</literal> (days).
          </para>
@@ -1845,7 +1847,7 @@ include_dir 'conf.d'
 
      <variablelist>
       <varlistentry id="guc-vacuum-cost-delay" xreflabel="vacuum_cost_delay">
-       <term><varname>vacuum_cost_delay</varname> (<type>integer</type>)
+       <term><varname>vacuum_cost_delay</varname> (<type>floating point</type>)
        <indexterm>
         <primary><varname>vacuum_cost_delay</varname> configuration parameter</primary>
        </indexterm>
@@ -1856,18 +1858,19 @@ include_dir 'conf.d'
          when the cost limit has been exceeded.
          The default value is zero, which disables the cost-based vacuum
          delay feature.  Positive values enable cost-based vacuuming.
-         Note that on many systems, the effective resolution
-         of sleep delays is 10 milliseconds; setting
-         <varname>vacuum_cost_delay</varname> to a value that is
-         not a multiple of 10 might have the same results as setting it
-         to the next higher multiple of 10.
         </para>
 
         <para>
          When using cost-based vacuuming, appropriate values for
          <varname>vacuum_cost_delay</varname> are usually quite small, perhaps
-         10 or 20 milliseconds.  Adjusting vacuum's resource consumption
-         is best done by changing the other vacuum cost parameters.
+         less than 1 millisecond.  While <varname>vacuum_cost_delay</varname>
+         can be set to fractional-millisecond values, such delays may not be
+         measured accurately on older platforms.  On such platforms,
+         increasing <command>VACUUM</command>'s throttled resource consumption
+         above what you get at 1ms will require changing the other vacuum cost
+         parameters.  You should, nonetheless,
+         keep <varname>vacuum_cost_delay</varname> as small as your platform
+         will consistently measure; large delays are not helpful.
         </para>
        </listitem>
       </varlistentry>
@@ -7020,7 +7023,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
-      <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>integer</type>)
+      <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>autovacuum_vacuum_cost_delay</varname> configuration parameter</primary>
       </indexterm>
