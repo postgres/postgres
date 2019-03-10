@@ -6038,6 +6038,54 @@ convert_from_base_unit(int64 base_value, int base_unit,
 	Assert(*unit != NULL);
 }
 
+/*
+ * Return the name of a GUC's base unit (e.g. "ms") given its flags.
+ * Return NULL if the GUC is unitless.
+ */
+static const char *
+get_config_unit_name(int flags)
+{
+	switch (flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME))
+	{
+		case 0:
+			return NULL;		/* GUC has no units */
+		case GUC_UNIT_BYTE:
+			return "B";
+		case GUC_UNIT_KB:
+			return "kB";
+		case GUC_UNIT_MB:
+			return "MB";
+		case GUC_UNIT_BLOCKS:
+			{
+				static char bbuf[8];
+
+				/* initialize if first time through */
+				if (bbuf[0] == '\0')
+					snprintf(bbuf, sizeof(bbuf), "%dkB", BLCKSZ / 1024);
+				return bbuf;
+			}
+		case GUC_UNIT_XBLOCKS:
+			{
+				static char xbuf[8];
+
+				/* initialize if first time through */
+				if (xbuf[0] == '\0')
+					snprintf(xbuf, sizeof(xbuf), "%dkB", XLOG_BLCKSZ / 1024);
+				return xbuf;
+			}
+		case GUC_UNIT_MS:
+			return "ms";
+		case GUC_UNIT_S:
+			return "s";
+		case GUC_UNIT_MIN:
+			return "min";
+		default:
+			elog(ERROR, "unrecognized GUC units value: %d",
+				 flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME));
+			return NULL;
+	}
+}
+
 
 /*
  * Try to parse value as an integer.  The accepted formats are the
@@ -6324,10 +6372,15 @@ parse_and_validate_value(struct config_generic *record,
 
 				if (newval->intval < conf->min || newval->intval > conf->max)
 				{
+					const char *unit = get_config_unit_name(conf->gen.flags);
+
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-									newval->intval, name,
+							 errmsg("%d%s%s is outside the valid range for parameter \"%s\" (%d .. %d)",
+									newval->intval,
+									unit ? " " : "",
+									unit ? unit : "",
+									name,
 									conf->min, conf->max)));
 					return false;
 				}
@@ -6352,10 +6405,15 @@ parse_and_validate_value(struct config_generic *record,
 
 				if (newval->realval < conf->min || newval->realval > conf->max)
 				{
+					const char *unit = get_config_unit_name(conf->gen.flags);
+
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("%g is outside the valid range for parameter \"%s\" (%g .. %g)",
-									newval->realval, name,
+							 errmsg("%g%s%s is outside the valid range for parameter \"%s\" (%g .. %g)",
+									newval->realval,
+									unit ? " " : "",
+									unit ? unit : "",
+									name,
 									conf->min, conf->max)));
 					return false;
 				}
@@ -8687,52 +8745,11 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	/* name */
 	values[0] = conf->name;
 
-	/* setting : use _ShowOption in order to avoid duplicating the logic */
+	/* setting: use _ShowOption in order to avoid duplicating the logic */
 	values[1] = _ShowOption(conf, false);
 
-	/* unit */
-	if (conf->vartype == PGC_INT)
-	{
-		switch (conf->flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME))
-		{
-			case GUC_UNIT_BYTE:
-				values[2] = "B";
-				break;
-			case GUC_UNIT_KB:
-				values[2] = "kB";
-				break;
-			case GUC_UNIT_MB:
-				values[2] = "MB";
-				break;
-			case GUC_UNIT_BLOCKS:
-				snprintf(buffer, sizeof(buffer), "%dkB", BLCKSZ / 1024);
-				values[2] = pstrdup(buffer);
-				break;
-			case GUC_UNIT_XBLOCKS:
-				snprintf(buffer, sizeof(buffer), "%dkB", XLOG_BLCKSZ / 1024);
-				values[2] = pstrdup(buffer);
-				break;
-			case GUC_UNIT_MS:
-				values[2] = "ms";
-				break;
-			case GUC_UNIT_S:
-				values[2] = "s";
-				break;
-			case GUC_UNIT_MIN:
-				values[2] = "min";
-				break;
-			case 0:
-				values[2] = NULL;
-				break;
-			default:
-				elog(ERROR, "unrecognized GUC units value: %d",
-					 conf->flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME));
-				values[2] = NULL;
-				break;
-		}
-	}
-	else
-		values[2] = NULL;
+	/* unit, if any (NULL is fine) */
+	values[2] = get_config_unit_name(conf->flags);
 
 	/* group */
 	values[3] = _(config_group_names[conf->group]);
