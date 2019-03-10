@@ -5613,6 +5613,10 @@ parse_real(const char *value, double *result)
 	if (endptr == value || errno == ERANGE)
 		return false;
 
+	/* reject NaN (infinities will fail range checks later) */
+	if (isnan(val))
+		return false;
+
 	/* allow whitespace after number */
 	while (isspace((unsigned char) *endptr))
 		endptr++;
