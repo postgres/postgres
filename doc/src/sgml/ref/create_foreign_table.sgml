@@ -161,6 +161,18 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
+    <term><literal>PARTITION OF <replaceable>parent_table</replaceable> FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form can be used to create the foreign table as partition of
+      the given parent table with specified partition bound values.
+      See the similar form of
+      <xref linkend="sql-createtable"/> for more details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>CONSTRAINT <replaceable class="parameter">constraint_name</replaceable></literal></term>
     <listitem>
      <para>
@@ -307,6 +319,12 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     the table might produce incorrect answers.  It is the user's
     responsibility to ensure that the constraint definition matches
     reality.
+   </para>
+
+   <para>
+    While rows can be moved from local partitions to a foreign-table partition
+    (provided the foreign data wrapper supports tuple routing), they cannot be
+    moved from a foreign-table partition to another partition.
    </para>
  </refsect1>
 
