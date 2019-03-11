@@ -103,9 +103,9 @@ get_table_am_oid(const char *tableamname, bool missing_ok)
 	ScanKeyData entry[1];
 
 	/*
-	 * Search pg_tablespace.  We use a heapscan here even though there is an
-	 * index on name, on the theory that pg_tablespace will usually have just
-	 * a few entries and so an indexed lookup is a waste of effort.
+	 * Search pg_am.  We use a heapscan here even though there is an index on
+	 * name, on the theory that pg_am will usually have just a few entries and
+	 * so an indexed lookup is a waste of effort.
 	 */
 	rel = heap_open(AccessMethodRelationId, AccessShareLock);
 

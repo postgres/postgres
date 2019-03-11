@@ -1680,7 +1680,7 @@ InitTableAmRoutine(Relation relation)
 }
 
 /*
- * Initialize table access method support for a table like relation relation
+ * Initialize table access method support for a table like relation
  */
 void
 RelationInitTableAccessMethod(Relation relation)
