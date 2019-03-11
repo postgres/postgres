@@ -12481,6 +12481,15 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</func
    </para>
   </tip>
 
+   <note>
+    <para>
+     Although <token>COALESCE</token>, <token>GREATEST</token>, and
+     <token>LEAST</token> are syntactically similar to functions, they are
+     not strictly functions, and thus cannot be used with explicit
+     <token>VARIADIC</token> array arguments.
+    </para>
+   </note>
+
   <sect2 id="functions-case">
    <title><literal>CASE</literal></title>
 
