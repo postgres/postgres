@@ -12485,7 +12485,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</func
     <para>
      Although <token>COALESCE</token>, <token>GREATEST</token>, and
      <token>LEAST</token> are syntactically similar to functions, they are
-     not strictly functions, and thus cannot be used with explicit
+     not ordinary functions, and thus cannot be used with explicit
      <token>VARIADIC</token> array arguments.
     </para>
    </note>
