@@ -51,14 +51,21 @@
        In general, enclose the value in single quotes, doubling any single
        quotes within the value.  Quotes can usually be omitted if the value
        is a simple number or identifier, however.
+       (Values that match a SQL keyword require quoting in some contexts.)
       </para>
      </listitem>
 
      <listitem>
       <para>
        <emphasis>Numeric (integer and floating point):</emphasis>
-       A decimal point is permitted only for floating-point parameters.
-       Do not use thousands separators.  Quotes are not required.
+       Numeric parameters can be specified in the customary integer and
+       floating-point formats; fractional values are rounded to the nearest
+       integer if the parameter is of integer type.  Integer parameters
+       additionally accept hexadecimal input (beginning
+       with <literal>0x</literal>) and octal input (beginning
+       with <literal>0</literal>), but these formats cannot have a fraction.
+       Do not use thousands separators.
+       Quotes are not required, except for hexadecimal input.
       </para>
      </listitem>
 
@@ -99,6 +106,13 @@
          </para>
         </listitem>
        </itemizedlist>
+
+       If a fractional value is specified with a unit, it will be rounded
+       to a multiple of the next smaller unit if there is one.
+       For example, <literal>30.1 GB</literal> will be converted
+       to <literal>30822 MB</literal> not <literal>32319628902 B</literal>.
+       If the parameter is of integer type, a final rounding to integer
+       occurs after any units conversion.
       </para>
      </listitem>
 

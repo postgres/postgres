@@ -5995,7 +5995,19 @@ convert_to_base_unit(double value, const char *unit,
 		if (base_unit == table[i].base_unit &&
 			strcmp(unitstr, table[i].unit) == 0)
 		{
-			*base_value = value * table[i].multiplier;
+			double		cvalue = value * table[i].multiplier;
+
+			/*
+			 * If the user gave a fractional value such as "30.1GB", round it
+			 * off to the nearest multiple of the next smaller unit, if there
+			 * is one.
+			 */
+			if (*table[i + 1].unit &&
+				base_unit == table[i + 1].base_unit)
+				cvalue = rint(cvalue / table[i + 1].multiplier) *
+					table[i + 1].multiplier;
+
+			*base_value = cvalue;
 			return true;
 		}
 	}
@@ -6141,8 +6153,10 @@ get_config_unit_name(int flags)
 
 /*
  * Try to parse value as an integer.  The accepted formats are the
- * usual decimal, octal, or hexadecimal formats, optionally followed by
- * a unit name if "flags" indicates a unit is allowed.
+ * usual decimal, octal, or hexadecimal formats, as well as floating-point
+ * formats (which will be rounded to integer after any units conversion).
+ * Optionally, the value can be followed by a unit name if "flags" indicates
+ * a unit is allowed.
  *
  * If the string parses okay, return true, else false.
  * If okay and result is not NULL, return the value in *result.
@@ -6152,7 +6166,11 @@ get_config_unit_name(int flags)
 bool
 parse_int(const char *value, int *result, int flags, const char **hintmsg)
 {
-	int64		val;
+	/*
+	 * We assume here that double is wide enough to represent any integer
+	 * value with adequate precision.
+	 */
+	double		val;
 	char	   *endptr;
 
 	/* To suppress compiler warnings, always set output params */
@@ -6161,35 +6179,42 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 	if (hintmsg)
 		*hintmsg = NULL;
 
-	/* We assume here that int64 is at least as wide as long */
+	/*
+	 * Try to parse as an integer (allowing octal or hex input).  If the
+	 * conversion stops at a decimal point or 'e', or overflows, re-parse as
+	 * float.  This should work fine as long as we have no unit names starting
+	 * with 'e'.  If we ever do, the test could be extended to check for a
+	 * sign or digit after 'e', but for now that's unnecessary.
+	 */
 	errno = 0;
 	val = strtol(value, &endptr, 0);
-
-	if (endptr == value)
-		return false;			/* no HINT for integer syntax error */
-
-	if (errno == ERANGE || val != (int64) ((int32) val))
+	if (*endptr == '.' || *endptr == 'e' || *endptr == 'E' ||
+		errno == ERANGE)
 	{
-		if (hintmsg)
-			*hintmsg = gettext_noop("Value exceeds integer range.");
-		return false;
+		errno = 0;
+		val = strtod(value, &endptr);
 	}
 
-	/* allow whitespace between integer and unit */
+	if (endptr == value || errno == ERANGE)
+		return false;			/* no HINT for these cases */
+
+	/* reject NaN (infinities will fail range check below) */
+	if (isnan(val))
+		return false;			/* treat same as syntax error; no HINT */
+
+	/* allow whitespace between number and unit */
 	while (isspace((unsigned char) *endptr))
 		endptr++;
 
 	/* Handle possible unit */
 	if (*endptr != '\0')
 	{
-		double		cval;
-
 		if ((flags & GUC_UNIT) == 0)
 			return false;		/* this setting does not accept a unit */
 
-		if (!convert_to_base_unit((double) val,
+		if (!convert_to_base_unit(val,
 								  endptr, (flags & GUC_UNIT),
-								  &cval))
+								  &val))
 		{
 			/* invalid unit, or garbage after the unit; set hint and fail. */
 			if (hintmsg)
@@ -6201,16 +6226,16 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 			}
 			return false;
 		}
+	}
 
-		/* Round to int, then check for overflow due to units conversion */
-		cval = rint(cval);
-		if (cval > INT_MAX || cval < INT_MIN)
-		{
-			if (hintmsg)
-				*hintmsg = gettext_noop("Value exceeds integer range.");
-			return false;
-		}
-		val = (int64) cval;
+	/* Round to int, then check for overflow */
+	val = rint(val);
+
+	if (val > INT_MAX || val < INT_MIN)
+	{
+		if (hintmsg)
+			*hintmsg = gettext_noop("Value exceeds integer range.");
+		return false;
 	}
 
 	if (result)
@@ -6218,10 +6243,10 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 	return true;
 }
 
-
-
 /*
  * Try to parse value as a floating point number in the usual format.
+ * Optionally, the value can be followed by a unit name if "flags" indicates
+ * a unit is allowed.
  *
  * If the string parses okay, return true, else false.
  * If okay and result is not NULL, return the value in *result.

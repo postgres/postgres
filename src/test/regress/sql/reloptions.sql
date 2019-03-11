@@ -15,7 +15,7 @@ CREATE TABLE reloptions_test2(i INT) WITH (not_existing_option=2);
 CREATE TABLE reloptions_test2(i INT) WITH (not_existing_namespace.fillfactor=2);
 
 -- Fail while setting improper values
-CREATE TABLE reloptions_test2(i INT) WITH (fillfactor=30.5);
+CREATE TABLE reloptions_test2(i INT) WITH (fillfactor=-30.1);
 CREATE TABLE reloptions_test2(i INT) WITH (fillfactor='string');
 CREATE TABLE reloptions_test2(i INT) WITH (fillfactor=true);
 CREATE TABLE reloptions_test2(i INT) WITH (autovacuum_enabled=12);

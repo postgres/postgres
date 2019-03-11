@@ -26,8 +26,9 @@ ERROR:  unrecognized parameter "not_existing_option"
 CREATE TABLE reloptions_test2(i INT) WITH (not_existing_namespace.fillfactor=2);
 ERROR:  unrecognized parameter namespace "not_existing_namespace"
 -- Fail while setting improper values
-CREATE TABLE reloptions_test2(i INT) WITH (fillfactor=30.5);
-ERROR:  invalid value for integer option "fillfactor": 30.5
+CREATE TABLE reloptions_test2(i INT) WITH (fillfactor=-30.1);
+ERROR:  value -30.1 out of bounds for option "fillfactor"
+DETAIL:  Valid values are between "10" and "100".
 CREATE TABLE reloptions_test2(i INT) WITH (fillfactor='string');
 ERROR:  invalid value for integer option "fillfactor": string
 CREATE TABLE reloptions_test2(i INT) WITH (fillfactor=true);
