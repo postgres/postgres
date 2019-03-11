@@ -30,7 +30,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/nbtree.h"

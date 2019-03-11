@@ -26,7 +26,6 @@
 #include <limits.h>
 #include <math.h>
 
-#include "access/hash.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
 #include "funcapi.h"
@@ -39,6 +38,7 @@
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
+#include "utils/hashutils.h"
 #include "utils/int8.h"
 #include "utils/numeric.h"
 #include "utils/sortsupport.h"

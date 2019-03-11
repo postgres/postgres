@@ -13,7 +13,6 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"

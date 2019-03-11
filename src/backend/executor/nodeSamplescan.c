@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/tsmapi.h"
@@ -22,6 +21,7 @@
 #include "executor/nodeSamplescan.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"

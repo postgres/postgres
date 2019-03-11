@@ -20,7 +20,6 @@
 #include <limits.h>
 #include <sys/time.h>
 
-#include "access/hash.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "common/int128.h"

@@ -7,6 +7,25 @@
 #ifndef HASHUTILS_H
 #define HASHUTILS_H
 
+
+/*
+ * Rotate the high 32 bits and the low 32 bits separately.  The standard
+ * hash function sometimes rotates the low 32 bits by one bit when
+ * combining elements.  We want extended hash functions to be compatible with
+ * that algorithm when the seed is 0, so we can't just do a normal rotation.
+ * This works, though.
+ */
+#define ROTATE_HIGH_AND_LOW_32BITS(v) \
+	((((v) << 1) & UINT64CONST(0xfffffffefffffffe)) | \
+	(((v) >> 31) & UINT64CONST(0x100000001)))
+
+
+extern Datum hash_any(register const unsigned char *k, register int keylen);
+extern Datum hash_any_extended(register const unsigned char *k,
+				  register int keylen, uint64 seed);
+extern Datum hash_uint32(uint32 k);
+extern Datum hash_uint32_extended(uint32 k, uint64 seed);
+
 /*
  * Combine two 32-bit hash values, resulting in another hash value, with
  * decent bit mixing.

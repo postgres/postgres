@@ -3,10 +3,10 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "catalog/pg_collation.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
+#include "utils/hashutils.h"
 #include "utils/varlena.h"
 
 PG_MODULE_MAGIC;

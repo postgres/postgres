@@ -13,10 +13,10 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "catalog/pg_collation.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 #include "utils/jsonb.h"
 #include "utils/memutils.h"
 #include "utils/varlena.h"

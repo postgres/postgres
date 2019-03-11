@@ -61,7 +61,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "access/hash.h"
 #include "catalog/pg_authid.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
@@ -78,6 +77,7 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 #include "utils/memutils.h"
 
 PG_MODULE_MAGIC;

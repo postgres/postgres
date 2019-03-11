@@ -19,7 +19,6 @@
 
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/tupdesc_details.h"
 #include "catalog/pg_collation.h"

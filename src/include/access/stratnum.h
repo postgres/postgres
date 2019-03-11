@@ -34,6 +34,13 @@ typedef uint16 StrategyNumber;
 
 #define BTMaxStrategyNumber				5
 
+/*
+ *	Strategy numbers for hash indexes. There's only one valid strategy for
+ *	hashing: equality.
+ */
+#define HTEqualStrategyNumber			1
+
+#define HTMaxStrategyNumber				1
 
 /*
  * Strategy numbers common to (some) GiST, SP-GiST and BRIN opclasses.

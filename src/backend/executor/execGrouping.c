@@ -18,7 +18,6 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "access/parallel.h"
 #include "executor/executor.h"
 #include "miscadmin.h"

@@ -20,7 +20,6 @@
 #include <math.h>
 #include <limits.h>
 
-#include "access/hash.h"
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/namespace.h"
@@ -30,6 +29,7 @@
 #include "parser/parsetree.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/varlena.h"

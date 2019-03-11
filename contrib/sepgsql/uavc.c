@@ -12,11 +12,11 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "catalog/pg_proc.h"
 #include "commands/seclabel.h"
 #include "storage/ipc.h"
 #include "utils/guc.h"
+#include "utils/hashutils.h"
 #include "utils/memutils.h"
 
 #include "sepgsql.h"

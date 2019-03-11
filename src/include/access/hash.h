@@ -24,6 +24,7 @@
 #include "lib/stringinfo.h"
 #include "storage/bufmgr.h"
 #include "storage/lockdefs.h"
+#include "utils/hashutils.h"
 #include "utils/hsearch.h"
 #include "utils/relcache.h"
 
@@ -37,17 +38,6 @@ typedef uint32 Bucket;
 
 #define BUCKET_TO_BLKNO(metap,B) \
 		((BlockNumber) ((B) + ((B) ? (metap)->hashm_spares[_hash_spareindex((B)+1)-1] : 0)) + 1)
-
-/*
- * Rotate the high 32 bits and the low 32 bits separately.  The standard
- * hash function sometimes rotates the low 32 bits by one bit when
- * combining elements.  We want extended hash functions to be compatible with
- * that algorithm when the seed is 0, so we can't just do a normal rotation.
- * This works, though.
- */
-#define ROTATE_HIGH_AND_LOW_32BITS(v) \
-	((((v) << 1) & UINT64CONST(0xfffffffefffffffe)) | \
-	(((v) >> 31) & UINT64CONST(0x100000001)))
 
 /*
  * Special space for hash index pages.
@@ -334,12 +324,6 @@ typedef HashMetaPageData *HashMetaPage;
 #define HASH_NOLOCK		(-1)
 
 /*
- *	Strategy number. There's only one valid strategy for hashing: equality.
- */
-#define HTEqualStrategyNumber			1
-#define HTMaxStrategyNumber				1
-
-/*
  * When a new operator class is declared, we require that the user supply
  * us with an amproc function for hashing a key of the new type, returning
  * a 32-bit hash value.  We call this the "standard" hash function.  We
@@ -379,12 +363,6 @@ extern IndexBulkDeleteResult *hashvacuumcleanup(IndexVacuumInfo *info,
 				  IndexBulkDeleteResult *stats);
 extern bytea *hashoptions(Datum reloptions, bool validate);
 extern bool hashvalidate(Oid opclassoid);
-
-extern Datum hash_any(register const unsigned char *k, register int keylen);
-extern Datum hash_any_extended(register const unsigned char *k,
-				  register int keylen, uint64 seed);
-extern Datum hash_uint32(uint32 k);
-extern Datum hash_uint32_extended(uint32 k, uint64 seed);
 
 /* private routines */
 

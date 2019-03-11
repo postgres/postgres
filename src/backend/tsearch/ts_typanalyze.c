@@ -13,12 +13,12 @@
  */
 #include "postgres.h"
 
-#include "access/hash.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "commands/vacuum.h"
 #include "tsearch/ts_type.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 
 
 /* A hash key for lexemes */

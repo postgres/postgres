@@ -18,13 +18,15 @@
 
 #include "postgres.h"
 
-#include "access/hash.h"
+#include <limits.h>
+
 #include "catalog/pg_tablespace.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "storage/dsm.h"
 #include "storage/sharedfileset.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 
 static void SharedFileSetOnDetach(dsm_segment *segment, Datum datum);
 static void SharedFileSetPath(char *path, SharedFileSet *fileset, Oid tablespace);

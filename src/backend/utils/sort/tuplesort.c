@@ -96,9 +96,9 @@
 
 #include <limits.h>
 
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
-#include "access/hash.h"
 #include "catalog/index.h"
 #include "catalog/pg_am.h"
 #include "commands/tablespace.h"

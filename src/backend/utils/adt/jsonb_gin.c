@@ -14,11 +14,11 @@
 #include "postgres.h"
 
 #include "access/gin.h"
-#include "access/hash.h"
 #include "access/stratnum.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 #include "utils/jsonb.h"
 #include "utils/varlena.h"
 

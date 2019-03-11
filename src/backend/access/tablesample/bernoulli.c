@@ -26,11 +26,11 @@
 
 #include <math.h>
 
-#include "access/hash.h"
 #include "access/tsmapi.h"
 #include "catalog/pg_type.h"
 #include "optimizer/optimizer.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 
 
 /* Private state */

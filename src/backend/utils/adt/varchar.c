@@ -14,8 +14,6 @@
  */
 #include "postgres.h"
 
-
-#include "access/hash.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
@@ -24,6 +22,7 @@
 #include "nodes/supportnodes.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 #include "utils/varlena.h"
 #include "mb/pg_wchar.h"
 
