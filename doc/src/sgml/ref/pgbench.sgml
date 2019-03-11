@@ -916,6 +916,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
    value can be inserted into a SQL command by writing
    <literal>:</literal><replaceable>variablename</replaceable>.  When running more than
    one client session, each session has its own set of variables.
+   <application>pgbench</application> supports up to 255 variable uses in one
+   statement.
   </para>
 
    <table id="pgbench-automatic-variables">

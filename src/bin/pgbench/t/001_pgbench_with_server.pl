@@ -597,11 +597,10 @@ my @errors = (
 }
 	],
 	[
-		'sql too many args', 1, [qr{statement has too many arguments.*\b9\b}],
-		q{-- MAX_ARGS=10 for prepared
+		'sql too many args', 1, [qr{statement has too many arguments.*\b255\b}],
+		q{-- MAX_ARGS=256 for prepared
 \set i 0
-SELECT LEAST(:i, :i, :i, :i, :i, :i, :i, :i, :i, :i, :i);
-}
+SELECT LEAST(}.join(', ', (':i') x 256).q{)}
 	],
 
 	# SHELL
@@ -619,25 +618,8 @@ SELECT LEAST(:i, :i, :i, :i, :i, :i, :i, :i, :i, :i, :i);
 	[ 'shell missing command', 1, [qr{missing command }], q{\shell} ],
 	[
 		'shell too many args', 1, [qr{too many arguments in command "shell"}],
-		q{-- 257 arguments to \shell
-\shell echo \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F \
- 0 1 2 3 4 5 6 7 8 9 A B C D E F
-}
+		q{-- 256 arguments to \shell
+\shell echo }.join(' ', ('arg') x 255)
 	],
 
 	# SET

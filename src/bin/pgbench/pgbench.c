@@ -476,7 +476,12 @@ typedef struct
  */
 #define SQL_COMMAND		1
 #define META_COMMAND	2
-#define MAX_ARGS		10
+
+/*
+ * max number of backslash command arguments or SQL variables,
+ * including the command or SQL statement itself
+ */
+#define MAX_ARGS		256
 
 typedef enum MetaCommand
 {
@@ -4124,6 +4129,10 @@ parseQuery(Command *cmd)
 			continue;
 		}
 
+		/*
+		 * cmd->argv[0] is the SQL statement itself, so the max number of
+		 * arguments is one less than MAX_ARGS
+		 */
 		if (cmd->argc >= MAX_ARGS)
 		{
 			fprintf(stderr, "statement has too many arguments (maximum is %d): %s\n",
@@ -4461,6 +4470,10 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	/* For all other commands, collect remaining words. */
 	while (expr_lex_one_word(sstate, &word_buf, &word_offset))
 	{
+		/*
+		 * my_command->argv[0] is the command itself, so the max number of
+		 * arguments is one less than MAX_ARGS
+		 */
 		if (j >= MAX_ARGS)
 			syntax_error(source, lineno, my_command->first_line, my_command->argv[0],
 						 "too many arguments", NULL, -1);
