@@ -398,7 +398,7 @@ extern TableScanDesc table_beginscan_parallel(Relation rel, ParallelTableScanDes
 static inline void
 table_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
 {
-	return rel->rd_tableam->parallelscan_reinitialize(rel, pscan);
+	rel->rd_tableam->parallelscan_reinitialize(rel, pscan);
 }
 
 
