@@ -150,20 +150,23 @@ ECPGclose(const char *cursor_name,
 
 	con = ecpg_get_connection(real_connection_name);
 
-	/* check the existence of the cursor in the connection */
-	if (find_cursor(cursor_name, con) == false)
-	{
-		ecpg_raise(lineno, ECPG_INVALID_CURSOR, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, NULL);
-		return false;
-	}
-
+	/* send the query to backend */
 	va_start(args, query);
 
 	status = ecpg_do(lineno, compat, force_indicator, real_connection_name, questionmarks, st, query, args);
 
 	va_end(args);
 
-	remove_cursor(cursor_name, con);
+	/* if it fails, raise an error */
+	if (!status)
+	{
+		ecpg_raise(lineno, ECPG_INVALID_CURSOR, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, NULL);
+		return false;
+	}
+
+	/* check the existence of the cursor in the connection */
+	if (find_cursor(cursor_name, con) == true)
+		remove_cursor(cursor_name, con);
 
 	return status;
 }
