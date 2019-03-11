@@ -2504,7 +2504,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 							 errmsg("could not write to log file %s "
 									"at offset %u, length %zu: %m",
 									XLogFileNameP(ThisTimeLineID, openLogSegNo),
-									startoffset, nbytes)));
+									startoffset, nleft)));
 				}
 				nleft -= written;
 				from += written;
