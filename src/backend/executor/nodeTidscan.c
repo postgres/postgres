@@ -24,6 +24,7 @@
 
 #include "access/heapam.h"
 #include "access/sysattr.h"
+#include "access/tableam.h"
 #include "catalog/pg_type.h"
 #include "executor/execdebug.h"
 #include "executor/nodeTidscan.h"
@@ -538,7 +539,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 */
 	ExecInitScanTupleSlot(estate, &tidstate->ss,
 						  RelationGetDescr(currentRelation),
-						  &TTSOpsBufferHeapTuple);
+						  table_slot_callbacks(currentRelation));
 
 	/*
 	 * Initialize result type and projection.

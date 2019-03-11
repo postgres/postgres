@@ -15,6 +15,7 @@
 #define HEAPAM_H
 
 #include "access/relation.h"	/* for backward compatibility */
+#include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/skey.h"
 #include "access/table.h"		/* for backward compatibility */
@@ -60,6 +61,48 @@ typedef struct HeapUpdateFailureData
 	CommandId	cmax;
 } HeapUpdateFailureData;
 
+/*
+ * Descriptor for heap table scans.
+ */
+typedef struct HeapScanDescData
+{
+	TableScanDescData rs_base;	/* AM independent part of the descriptor */
+
+	/* state set up at initscan time */
+	BlockNumber rs_nblocks;		/* total number of blocks in rel */
+	BlockNumber rs_startblock;	/* block # to start at */
+	BlockNumber rs_numblocks;	/* max number of blocks to scan */
+	/* rs_numblocks is usually InvalidBlockNumber, meaning "scan whole rel" */
+
+	/* scan current state */
+	bool		rs_inited;		/* false = scan not init'd yet */
+	BlockNumber rs_cblock;		/* current block # in scan, if any */
+	Buffer		rs_cbuf;		/* current buffer in scan, if any */
+	/* NB: if rs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
+
+	/* rs_numblocks is usually InvalidBlockNumber, meaning "scan whole rel" */
+	BufferAccessStrategy rs_strategy;	/* access strategy for reads */
+
+	HeapTupleData rs_ctup;		/* current tuple in scan, if any */
+
+	/* these fields only used in page-at-a-time mode and for bitmap scans */
+	int			rs_cindex;		/* current tuple's index in vistuples */
+	int			rs_ntuples;		/* number of visible tuples on page */
+	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
+}			HeapScanDescData;
+typedef struct HeapScanDescData *HeapScanDesc;
+
+/*
+ * Descriptor for fetches from heap via an index.
+ */
+typedef struct IndexFetchHeapData
+{
+	IndexFetchTableData xs_base;	/* AM independent part of the descriptor */
+
+	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
+	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
+} IndexFetchHeapData;
+
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum
 {
@@ -79,42 +122,32 @@ typedef enum
  */
 
 
-/* struct definitions appear in relscan.h */
-typedef struct HeapScanDescData *HeapScanDesc;
-typedef struct ParallelHeapScanDescData *ParallelHeapScanDesc;
-
 /*
  * HeapScanIsValid
  *		True iff the heap scan is valid.
  */
 #define HeapScanIsValid(scan) PointerIsValid(scan)
 
-extern HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
-			   int nkeys, ScanKey key);
-extern HeapScanDesc heap_beginscan_catalog(Relation relation, int nkeys,
-					   ScanKey key);
-extern HeapScanDesc heap_beginscan_strat(Relation relation, Snapshot snapshot,
-					 int nkeys, ScanKey key,
-					 bool allow_strat, bool allow_sync);
-extern HeapScanDesc heap_beginscan_bm(Relation relation, Snapshot snapshot,
-				  int nkeys, ScanKey key);
-extern HeapScanDesc heap_beginscan_sampling(Relation relation,
-						Snapshot snapshot, int nkeys, ScanKey key,
-						bool allow_strat, bool allow_sync, bool allow_pagemode);
-extern void heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk,
+extern TableScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
+			   int nkeys, ScanKey key,
+			   ParallelTableScanDesc parallel_scan,
+			   bool allow_strat,
+			   bool allow_sync,
+			   bool allow_pagemode,
+			   bool is_bitmapscan,
+			   bool is_samplescan,
+			   bool temp_snap);
+extern void heap_setscanlimits(TableScanDesc scan, BlockNumber startBlk,
 				   BlockNumber endBlk);
-extern void heapgetpage(HeapScanDesc scan, BlockNumber page);
-extern void heap_rescan(HeapScanDesc scan, ScanKey key);
-extern void heap_rescan_set_params(HeapScanDesc scan, ScanKey key,
+extern void heapgetpage(TableScanDesc scan, BlockNumber page);
+extern void heap_rescan(TableScanDesc scan, ScanKey key, bool set_params,
+			bool allow_strat, bool allow_sync, bool allow_pagemode);
+extern void heap_rescan_set_params(TableScanDesc scan, ScanKey key,
 					   bool allow_strat, bool allow_sync, bool allow_pagemode);
-extern void heap_endscan(HeapScanDesc scan);
-extern HeapTuple heap_getnext(HeapScanDesc scan, ScanDirection direction);
-
-extern Size heap_parallelscan_estimate(Snapshot snapshot);
-extern void heap_parallelscan_initialize(ParallelHeapScanDesc target,
-							 Relation relation, Snapshot snapshot);
-extern void heap_parallelscan_reinitialize(ParallelHeapScanDesc parallel_scan);
-extern HeapScanDesc heap_beginscan_parallel(Relation, ParallelHeapScanDesc);
+extern void heap_endscan(TableScanDesc scan);
+extern HeapTuple heap_getnext(TableScanDesc scan, ScanDirection direction);
+extern bool heap_getnextslot(TableScanDesc sscan,
+				 ScanDirection direction, struct TupleTableSlot *slot);
 
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
@@ -164,7 +197,6 @@ extern void simple_heap_update(Relation relation, ItemPointer otid,
 				   HeapTuple tup);
 
 extern void heap_sync(Relation relation);
-extern void heap_update_snapshot(HeapScanDesc scan, Snapshot snapshot);
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer);
@@ -190,7 +222,7 @@ extern void heap_vacuum_rel(Relation onerel, int options,
 
 /* in heap/heapam_visibility.c */
 extern bool HeapTupleSatisfiesVisibility(HeapTuple stup, Snapshot snapshot,
-										 Buffer buffer);
+							 Buffer buffer);
 extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTuple stup, CommandId curcid,
 						 Buffer buffer);
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTuple stup, TransactionId OldestXmin,

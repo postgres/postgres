@@ -4736,12 +4736,9 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	if (newrel || needscan)
 	{
 		ExprContext *econtext;
-		Datum	   *values;
-		bool	   *isnull;
 		TupleTableSlot *oldslot;
 		TupleTableSlot *newslot;
-		HeapScanDesc scan;
-		HeapTuple	tuple;
+		TableScanDesc scan;
 		MemoryContext oldCxt;
 		List	   *dropped_attrs = NIL;
 		ListCell   *lc;
@@ -4769,19 +4766,27 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		econtext = GetPerTupleExprContext(estate);
 
 		/*
-		 * Make tuple slots for old and new tuples.  Note that even when the
-		 * tuples are the same, the tupDescs might not be (consider ADD COLUMN
-		 * without a default).
+		 * Create necessary tuple slots. When rewriting, two slots are needed,
+		 * otherwise one suffices. In the case where one slot suffices, we
+		 * need to use the new tuple descriptor, otherwise some constraints
+		 * can't be evaluated.  Note that even when the tuple layout is the
+		 * same and no rewrite is required, the tupDescs might not be
+		 * (consider ADD COLUMN without a default).
 		 */
-		oldslot = MakeSingleTupleTableSlot(oldTupDesc, &TTSOpsHeapTuple);
-		newslot = MakeSingleTupleTableSlot(newTupDesc, &TTSOpsHeapTuple);
-
-		/* Preallocate values/isnull arrays */
-		i = Max(newTupDesc->natts, oldTupDesc->natts);
-		values = (Datum *) palloc(i * sizeof(Datum));
-		isnull = (bool *) palloc(i * sizeof(bool));
-		memset(values, 0, i * sizeof(Datum));
-		memset(isnull, true, i * sizeof(bool));
+		if (tab->rewrite)
+		{
+			Assert(newrel != NULL);
+			oldslot = MakeSingleTupleTableSlot(oldTupDesc,
+											   table_slot_callbacks(oldrel));
+			newslot = MakeSingleTupleTableSlot(newTupDesc,
+											   table_slot_callbacks(newrel));
+		}
+		else
+		{
+			oldslot = MakeSingleTupleTableSlot(newTupDesc,
+											   table_slot_callbacks(oldrel));
+			newslot = NULL;
+		}
 
 		/*
 		 * Any attributes that are dropped according to the new tuple
@@ -4799,7 +4804,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		 * checking all the constraints.
 		 */
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
-		scan = heap_beginscan(oldrel, snapshot, 0, NULL);
+		scan = table_beginscan(oldrel, snapshot, 0, NULL);
 
 		/*
 		 * Switch to per-tuple memory context and reset it for each tuple
@@ -4807,55 +4812,69 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		 */
 		oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
-		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+		while (table_scan_getnextslot(scan, ForwardScanDirection, oldslot))
 		{
+			TupleTableSlot *insertslot;
+
 			if (tab->rewrite > 0)
 			{
 				/* Extract data from old tuple */
-				heap_deform_tuple(tuple, oldTupDesc, values, isnull);
+				slot_getallattrs(oldslot);
+				ExecClearTuple(newslot);
+
+				/* copy attributes */
+				memcpy(newslot->tts_values, oldslot->tts_values,
+					   sizeof(Datum) * oldslot->tts_nvalid);
+				memcpy(newslot->tts_isnull, oldslot->tts_isnull,
+					   sizeof(bool) * oldslot->tts_nvalid);
 
 				/* Set dropped attributes to null in new tuple */
 				foreach(lc, dropped_attrs)
-					isnull[lfirst_int(lc)] = true;
+					newslot->tts_isnull[lfirst_int(lc)] = true;
 
 				/*
 				 * Process supplied expressions to replace selected columns.
 				 * Expression inputs come from the old tuple.
 				 */
-				ExecStoreHeapTuple(tuple, oldslot, false);
 				econtext->ecxt_scantuple = oldslot;
 
 				foreach(l, tab->newvals)
 				{
 					NewColumnValue *ex = lfirst(l);
 
-					values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
-														  econtext,
-														  &isnull[ex->attnum - 1]);
+					newslot->tts_values[ex->attnum - 1]
+						= ExecEvalExpr(ex->exprstate,
+									   econtext,
+									   &newslot->tts_isnull[ex->attnum - 1]);
 				}
 
-				/*
-				 * Form the new tuple. Note that we don't explicitly pfree it,
-				 * since the per-tuple memory context will be reset shortly.
-				 */
-				tuple = heap_form_tuple(newTupDesc, values, isnull);
+				ExecStoreVirtualTuple(newslot);
 
 				/*
 				 * Constraints might reference the tableoid column, so
 				 * initialize t_tableOid before evaluating them.
 				 */
-				tuple->t_tableOid = RelationGetRelid(oldrel);
+				newslot->tts_tableOid = RelationGetRelid(oldrel);
+				insertslot = newslot;
+			}
+			else
+			{
+				/*
+				 * If there's no rewrite, old and new table are guaranteed to
+				 * have the same AM, so we can just use the old slot to
+				 * verify new constraints etc.
+				 */
+				insertslot = oldslot;
 			}
 
 			/* Now check any constraints on the possibly-changed tuple */
-			ExecStoreHeapTuple(tuple, newslot, false);
-			econtext->ecxt_scantuple = newslot;
+			econtext->ecxt_scantuple = insertslot;
 
 			foreach(l, notnull_attrs)
 			{
 				int			attn = lfirst_int(l);
 
-				if (heap_attisnull(tuple, attn + 1, newTupDesc))
+				if (slot_attisnull(insertslot, attn + 1))
 				{
 					Form_pg_attribute attr = TupleDescAttr(newTupDesc, attn);
 
@@ -4905,6 +4924,9 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 			/* Write the tuple out to the new relation */
 			if (newrel)
 			{
+				HeapTuple	tuple;
+
+				tuple = ExecFetchSlotHeapTuple(newslot, true, NULL);
 				heap_insert(newrel, tuple, mycid, hi_options, bistate);
 				ItemPointerCopy(&tuple->t_self, &newslot->tts_tid);
 			}
@@ -4915,11 +4937,12 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		}
 
 		MemoryContextSwitchTo(oldCxt);
-		heap_endscan(scan);
+		table_endscan(scan);
 		UnregisterSnapshot(snapshot);
 
 		ExecDropSingleTupleTableSlot(oldslot);
-		ExecDropSingleTupleTableSlot(newslot);
+		if (newslot)
+			ExecDropSingleTupleTableSlot(newslot);
 	}
 
 	FreeExecutorState(estate);
@@ -5310,7 +5333,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
 {
 	Relation	classRel;
 	ScanKeyData key[1];
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tuple;
 	List	   *result = NIL;
 
@@ -5321,7 +5344,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(typeOid));
 
-	scan = heap_beginscan_catalog(classRel, 1, key);
+	scan = table_beginscan_catalog(classRel, 1, key);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -5337,7 +5360,7 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
 			result = lappend_oid(result, classform->oid);
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	table_close(classRel, AccessShareLock);
 
 	return result;
@@ -8822,9 +8845,7 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 	char	   *conbin;
 	Expr	   *origexpr;
 	ExprState  *exprstate;
-	TupleDesc	tupdesc;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
+	TableScanDesc scan;
 	ExprContext *econtext;
 	MemoryContext oldcxt;
 	TupleTableSlot *slot;
@@ -8859,12 +8880,11 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 	exprstate = ExecPrepareExpr(origexpr, estate);
 
 	econtext = GetPerTupleExprContext(estate);
-	tupdesc = RelationGetDescr(rel);
-	slot = MakeSingleTupleTableSlot(tupdesc, &TTSOpsHeapTuple);
+	slot = table_slot_create(rel, NULL);
 	econtext->ecxt_scantuple = slot;
 
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
-	scan = heap_beginscan(rel, snapshot, 0, NULL);
+	scan = table_beginscan(rel, snapshot, 0, NULL);
 
 	/*
 	 * Switch to per-tuple memory context and reset it for each tuple
@@ -8872,10 +8892,8 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 	 */
 	oldcxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	while (table_scan_getnextslot(scan, ForwardScanDirection, slot))
 	{
-		ExecStoreHeapTuple(tuple, slot, false);
-
 		if (!ExecCheck(exprstate, econtext))
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
@@ -8887,7 +8905,7 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 	}
 
 	MemoryContextSwitchTo(oldcxt);
-	heap_endscan(scan);
+	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
 	ExecDropSingleTupleTableSlot(slot);
 	FreeExecutorState(estate);
@@ -8906,8 +8924,8 @@ validateForeignKeyConstraint(char *conname,
 							 Oid pkindOid,
 							 Oid constraintOid)
 {
-	HeapScanDesc scan;
-	HeapTuple	tuple;
+	TupleTableSlot *slot;
+	TableScanDesc scan;
 	Trigger		trig;
 	Snapshot	snapshot;
 
@@ -8942,9 +8960,10 @@ validateForeignKeyConstraint(char *conname,
 	 * ereport(ERROR) and that's that.
 	 */
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
-	scan = heap_beginscan(rel, snapshot, 0, NULL);
+	slot = table_slot_create(rel, NULL);
+	scan = table_beginscan(rel, snapshot, 0, NULL);
 
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	while (table_scan_getnextslot(scan, ForwardScanDirection, slot))
 	{
 		LOCAL_FCINFO(fcinfo, 0);
 		TriggerData trigdata;
@@ -8962,7 +8981,8 @@ validateForeignKeyConstraint(char *conname,
 		trigdata.type = T_TriggerData;
 		trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
 		trigdata.tg_relation = rel;
-		trigdata.tg_trigtuple = tuple;
+		trigdata.tg_trigtuple = ExecFetchSlotHeapTuple(slot, true, NULL);
+		trigdata.tg_trigslot = slot;
 		trigdata.tg_newtuple = NULL;
 		trigdata.tg_trigger = &trig;
 
@@ -8971,8 +8991,9 @@ validateForeignKeyConstraint(char *conname,
 		RI_FKey_check_ins(fcinfo);
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
+	ExecDropSingleTupleTableSlot(slot);
 }
 
 static void
@@ -11618,7 +11639,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 	ListCell   *l;
 	ScanKeyData key[1];
 	Relation	rel;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tuple;
 	Oid			orig_tablespaceoid;
 	Oid			new_tablespaceoid;
@@ -11683,7 +11704,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 				ObjectIdGetDatum(orig_tablespaceoid));
 
 	rel = table_open(RelationRelationId, AccessShareLock);
-	scan = heap_beginscan_catalog(rel, 1, key);
+	scan = table_beginscan_catalog(rel, 1, key);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class relForm = (Form_pg_class) GETSTRUCT(tuple);
@@ -11742,7 +11763,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 		relations = lappend_oid(relations, relOid);
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	table_close(rel, AccessShareLock);
 
 	if (relations == NIL)

@@ -39,6 +39,7 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "commands/trigger.h"
@@ -2147,7 +2148,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		mtstate->mt_plans[i] = ExecInitNode(subplan, estate, eflags);
 		mtstate->mt_scans[i] =
 			ExecInitExtraTupleSlot(mtstate->ps.state, ExecGetResultType(mtstate->mt_plans[i]),
-								   &TTSOpsHeapTuple);
+								   table_slot_callbacks(resultRelInfo->ri_RelationDesc));
 
 		/* Also let FDWs init themselves for foreign-table result rels */
 		if (!resultRelInfo->ri_usesFdwDirectModify &&
@@ -2207,8 +2208,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	if (update_tuple_routing_needed)
 	{
 		ExecSetupChildParentMapForSubplan(mtstate);
-		mtstate->mt_root_tuple_slot = MakeTupleTableSlot(RelationGetDescr(rel),
-														 &TTSOpsHeapTuple);
+		mtstate->mt_root_tuple_slot = table_slot_create(rel, NULL);
 	}
 
 	/*
@@ -2320,8 +2320,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		/* initialize slot for the existing tuple */
 		resultRelInfo->ri_onConflict->oc_Existing =
-			ExecInitExtraTupleSlot(mtstate->ps.state, relationDesc,
-								   &TTSOpsBufferHeapTuple);
+			table_slot_create(resultRelInfo->ri_RelationDesc,
+							  &mtstate->ps.state->es_tupleTable);
 
 		/* create the tuple slot for the UPDATE SET projection */
 		tupDesc = ExecTypeFromTL((List *) node->onConflictSet);
@@ -2430,15 +2430,18 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			for (i = 0; i < nplans; i++)
 			{
 				JunkFilter *j;
+				TupleTableSlot *junkresslot;
 
 				subplan = mtstate->mt_plans[i]->plan;
 				if (operation == CMD_INSERT || operation == CMD_UPDATE)
 					ExecCheckPlanOutput(resultRelInfo->ri_RelationDesc,
 										subplan->targetlist);
 
+				junkresslot =
+					ExecInitExtraTupleSlot(estate, NULL,
+										   table_slot_callbacks(resultRelInfo->ri_RelationDesc));
 				j = ExecInitJunkFilter(subplan->targetlist,
-									   ExecInitExtraTupleSlot(estate, NULL,
-															  &TTSOpsHeapTuple));
+									   junkresslot);
 
 				if (operation == CMD_UPDATE || operation == CMD_DELETE)
 				{

@@ -927,7 +927,7 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 		if (so->iPtr < so->nPtrs)
 		{
 			/* continuing to return reported tuples */
-			scan->xs_ctup.t_self = so->heapPtrs[so->iPtr];
+			scan->xs_heaptid = so->heapPtrs[so->iPtr];
 			scan->xs_recheck = so->recheck[so->iPtr];
 			scan->xs_hitup = so->reconTups[so->iPtr];
 

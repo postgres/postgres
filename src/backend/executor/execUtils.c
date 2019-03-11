@@ -48,6 +48,7 @@
 #include "access/parallel.h"
 #include "access/relscan.h"
 #include "access/table.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "executor/executor.h"
 #include "jit/jit.h"
@@ -1121,7 +1122,7 @@ ExecGetTriggerOldSlot(EState *estate, ResultRelInfo *relInfo)
 		relInfo->ri_TrigOldSlot =
 			ExecInitExtraTupleSlot(estate,
 								   RelationGetDescr(rel),
-								   &TTSOpsBufferHeapTuple);
+								   table_slot_callbacks(rel));
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -1143,7 +1144,7 @@ ExecGetTriggerNewSlot(EState *estate, ResultRelInfo *relInfo)
 		relInfo->ri_TrigNewSlot =
 			ExecInitExtraTupleSlot(estate,
 								   RelationGetDescr(rel),
-								   &TTSOpsBufferHeapTuple);
+								   table_slot_callbacks(rel));
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -1165,7 +1166,7 @@ ExecGetReturningSlot(EState *estate, ResultRelInfo *relInfo)
 		relInfo->ri_ReturningSlot =
 			ExecInitExtraTupleSlot(estate,
 								   RelationGetDescr(rel),
-								   &TTSOpsBufferHeapTuple);
+								   table_slot_callbacks(rel));
 
 		MemoryContextSwitchTo(oldcontext);
 	}

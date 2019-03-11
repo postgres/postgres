@@ -204,7 +204,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 			 */
 			IndexScanDesc scan = ((IndexOnlyScanState *) scanstate)->ioss_ScanDesc;
 
-			*current_tid = scan->xs_ctup.t_self;
+			*current_tid = scan->xs_heaptid;
 		}
 		else
 		{

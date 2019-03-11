@@ -209,7 +209,8 @@ static BlockNumber
 system_rows_nextsampleblock(SampleScanState *node)
 {
 	SystemRowsSamplerData *sampler = (SystemRowsSamplerData *) node->tsm_state;
-	HeapScanDesc scan = node->ss.ss_currentScanDesc;
+	TableScanDesc scan = node->ss.ss_currentScanDesc;
+	HeapScanDesc hscan = (HeapScanDesc) scan;
 
 	/* First call within scan? */
 	if (sampler->doneblocks == 0)
@@ -221,14 +222,14 @@ system_rows_nextsampleblock(SampleScanState *node)
 			SamplerRandomState randstate;
 
 			/* If relation is empty, there's nothing to scan */
-			if (scan->rs_nblocks == 0)
+			if (hscan->rs_nblocks == 0)
 				return InvalidBlockNumber;
 
 			/* We only need an RNG during this setup step */
 			sampler_random_init_state(sampler->seed, randstate);
 
 			/* Compute nblocks/firstblock/step only once per query */
-			sampler->nblocks = scan->rs_nblocks;
+			sampler->nblocks = hscan->rs_nblocks;
 
 			/* Choose random starting block within the relation */
 			/* (Actually this is the predecessor of the first block visited) */
@@ -258,7 +259,7 @@ system_rows_nextsampleblock(SampleScanState *node)
 	{
 		/* Advance lb, using uint64 arithmetic to forestall overflow */
 		sampler->lb = ((uint64) sampler->lb + sampler->step) % sampler->nblocks;
-	} while (sampler->lb >= scan->rs_nblocks);
+	} while (sampler->lb >= hscan->rs_nblocks);
 
 	return sampler->lb;
 }
@@ -278,7 +279,8 @@ system_rows_nextsampletuple(SampleScanState *node,
 							OffsetNumber maxoffset)
 {
 	SystemRowsSamplerData *sampler = (SystemRowsSamplerData *) node->tsm_state;
-	HeapScanDesc scan = node->ss.ss_currentScanDesc;
+	TableScanDesc scan = node->ss.ss_currentScanDesc;
+	HeapScanDesc hscan = (HeapScanDesc) scan;
 	OffsetNumber tupoffset = sampler->lt;
 
 	/* Quit if we've returned all needed tuples */
@@ -308,7 +310,7 @@ system_rows_nextsampletuple(SampleScanState *node,
 		}
 
 		/* Found a candidate? */
-		if (SampleOffsetVisible(tupoffset, scan))
+		if (SampleOffsetVisible(tupoffset, hscan))
 		{
 			sampler->donetuples++;
 			break;

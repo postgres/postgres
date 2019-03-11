@@ -31,6 +31,7 @@
 
 #include "access/nbtree.h"
 #include "access/relscan.h"
+#include "access/tableam.h"
 #include "catalog/pg_am.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
@@ -64,7 +65,7 @@ static int cmp_orderbyvals(const Datum *adist, const bool *anulls,
 				IndexScanState *node);
 static int reorderqueue_cmp(const pairingheap_node *a,
 				 const pairingheap_node *b, void *arg);
-static void reorderqueue_push(IndexScanState *node, HeapTuple tuple,
+static void reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 				  Datum *orderbyvals, bool *orderbynulls);
 static HeapTuple reorderqueue_pop(IndexScanState *node);
 
@@ -83,7 +84,6 @@ IndexNext(IndexScanState *node)
 	ExprContext *econtext;
 	ScanDirection direction;
 	IndexScanDesc scandesc;
-	HeapTuple	tuple;
 	TupleTableSlot *slot;
 
 	/*
@@ -130,19 +130,9 @@ IndexNext(IndexScanState *node)
 	/*
 	 * ok, now that we have what we need, fetch the next tuple.
 	 */
-	while ((tuple = index_getnext(scandesc, direction)) != NULL)
+	while (index_getnext_slot(scandesc, direction, slot))
 	{
 		CHECK_FOR_INTERRUPTS();
-
-		/*
-		 * Store the scanned tuple in the scan tuple slot of the scan state.
-		 * Note: we pass 'false' because tuples returned by amgetnext are
-		 * pointers onto disk pages and must not be pfree()'d.
-		 */
-		ExecStoreBufferHeapTuple(tuple, /* tuple to store */
-								 slot,	/* slot to store in */
-								 scandesc->xs_cbuf);	/* buffer containing
-														 * tuple */
 
 		/*
 		 * If the index was lossy, we have to recheck the index quals using
@@ -183,7 +173,6 @@ IndexNextWithReorder(IndexScanState *node)
 	EState	   *estate;
 	ExprContext *econtext;
 	IndexScanDesc scandesc;
-	HeapTuple	tuple;
 	TupleTableSlot *slot;
 	ReorderTuple *topmost = NULL;
 	bool		was_exact;
@@ -252,6 +241,8 @@ IndexNextWithReorder(IndexScanState *node)
 								scandesc->xs_orderbynulls,
 								node) <= 0)
 			{
+				HeapTuple tuple;
+
 				tuple = reorderqueue_pop(node);
 
 				/* Pass 'true', as the tuple in the queue is a palloc'd copy */
@@ -271,8 +262,7 @@ IndexNextWithReorder(IndexScanState *node)
 		 */
 next_indextuple:
 		slot = node->ss.ss_ScanTupleSlot;
-		tuple = index_getnext(scandesc, ForwardScanDirection);
-		if (!tuple)
+		if (!index_getnext_slot(scandesc, ForwardScanDirection, slot))
 		{
 			/*
 			 * No more tuples from the index.  But we still need to drain any
@@ -281,14 +271,6 @@ next_indextuple:
 			node->iss_ReachedEnd = true;
 			continue;
 		}
-
-		/*
-		 * Store the scanned tuple in the scan tuple slot of the scan state.
-		 */
-		ExecStoreBufferHeapTuple(tuple, /* tuple to store */
-								 slot,	/* slot to store in */
-								 scandesc->xs_cbuf);	/* buffer containing
-														 * tuple */
 
 		/*
 		 * If the index was lossy, we have to recheck the index quals and
@@ -358,7 +340,7 @@ next_indextuple:
 													  node) > 0))
 		{
 			/* Put this tuple to the queue */
-			reorderqueue_push(node, tuple, lastfetched_vals, lastfetched_nulls);
+			reorderqueue_push(node, slot, lastfetched_vals, lastfetched_nulls);
 			continue;
 		}
 		else
@@ -478,7 +460,7 @@ reorderqueue_cmp(const pairingheap_node *a, const pairingheap_node *b,
  * Helper function to push a tuple to the reorder queue.
  */
 static void
-reorderqueue_push(IndexScanState *node, HeapTuple tuple,
+reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 				  Datum *orderbyvals, bool *orderbynulls)
 {
 	IndexScanDesc scandesc = node->iss_ScanDesc;
@@ -488,7 +470,7 @@ reorderqueue_push(IndexScanState *node, HeapTuple tuple,
 	int			i;
 
 	rt = (ReorderTuple *) palloc(sizeof(ReorderTuple));
-	rt->htup = heap_copytuple(tuple);
+	rt->htup = ExecCopySlotHeapTuple(slot);
 	rt->orderbyvals =
 		(Datum *) palloc(sizeof(Datum) * scandesc->numberOfOrderBys);
 	rt->orderbynulls =
@@ -949,7 +931,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 */
 	ExecInitScanTupleSlot(estate, &indexstate->ss,
 						  RelationGetDescr(currentRelation),
-						  &TTSOpsBufferHeapTuple);
+						  table_slot_callbacks(currentRelation));
 
 	/*
 	 * Initialize result type and projection.

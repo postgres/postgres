@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
@@ -423,8 +424,9 @@ DefineQueryRewrite(const char *rulename,
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW &&
 			event_relation->rd_rel->relkind != RELKIND_MATVIEW)
 		{
-			HeapScanDesc scanDesc;
+			TableScanDesc scanDesc;
 			Snapshot	snapshot;
+			TupleTableSlot *slot;
 
 			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 				ereport(ERROR,
@@ -439,13 +441,15 @@ DefineQueryRewrite(const char *rulename,
 								RelationGetRelationName(event_relation))));
 
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
-			scanDesc = heap_beginscan(event_relation, snapshot, 0, NULL);
-			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)
+			scanDesc = table_beginscan(event_relation, snapshot, 0, NULL);
+			slot = table_slot_create(event_relation, NULL);
+			if (table_scan_getnextslot(scanDesc, ForwardScanDirection, slot))
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it is not empty",
 								RelationGetRelationName(event_relation))));
-			heap_endscan(scanDesc);
+			ExecDropSingleTupleTableSlot(slot);
+			table_endscan(scanDesc);
 			UnregisterSnapshot(snapshot);
 
 			if (event_relation->rd_rel->relhastriggers)

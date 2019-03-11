@@ -36,6 +36,7 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
@@ -1206,7 +1207,7 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 	HTAB	   *htab;
 	HASHCTL		hash_ctl;
 	Relation	rel;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tup;
 	Snapshot	snapshot;
 
@@ -1221,7 +1222,7 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 
 	rel = table_open(catalogid, AccessShareLock);
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
-	scan = heap_beginscan(rel, snapshot, 0, NULL);
+	scan = table_beginscan(rel, snapshot, 0, NULL);
 	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Oid			thisoid;
@@ -1234,7 +1235,7 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 
 		(void) hash_search(htab, (void *) &thisoid, HASH_ENTER, NULL);
 	}
-	heap_endscan(scan);
+	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
 	table_close(rel, AccessShareLock);
 

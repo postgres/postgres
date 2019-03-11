@@ -159,8 +159,10 @@ extern IndexScanDesc index_beginscan_parallel(Relation heaprel,
 						 ParallelIndexScanDesc pscan);
 extern ItemPointer index_getnext_tid(IndexScanDesc scan,
 				  ScanDirection direction);
-extern HeapTuple index_fetch_heap(IndexScanDesc scan);
-extern HeapTuple index_getnext(IndexScanDesc scan, ScanDirection direction);
+struct TupleTableSlot;
+extern bool index_fetch_heap(IndexScanDesc scan, struct TupleTableSlot *slot);
+extern bool index_getnext_slot(IndexScanDesc scan, ScanDirection direction,
+				   struct TupleTableSlot *slot);
 extern int64 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap);
 
 extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,

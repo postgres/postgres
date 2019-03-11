@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/table.h"
+#include "access/tableam.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_type.h"
@@ -727,10 +728,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		if (node->onConflictAction == ONCONFLICT_UPDATE)
 		{
 			TupleConversionMap *map;
-			TupleDesc	leaf_desc;
 
 			map = leaf_part_rri->ri_PartitionInfo->pi_RootToPartitionMap;
-			leaf_desc = RelationGetDescr(leaf_part_rri->ri_RelationDesc);
 
 			Assert(node->onConflictSet != NIL);
 			Assert(rootResultRelInfo->ri_onConflict != NULL);
@@ -743,9 +742,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 			 * descriptors match.
 			 */
 			leaf_part_rri->ri_onConflict->oc_Existing =
-				ExecInitExtraTupleSlot(mtstate->ps.state,
-									   leaf_desc,
-									   &TTSOpsBufferHeapTuple);
+				table_slot_create(leaf_part_rri->ri_RelationDesc,
+								  &mtstate->ps.state->es_tupleTable);
 
 			/*
 			 * If the partition's tuple descriptor matches exactly the root
@@ -920,8 +918,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		 * end of the command.
 		 */
 		partrouteinfo->pi_PartitionTupleSlot =
-			ExecInitExtraTupleSlot(estate, RelationGetDescr(partrel),
-								   &TTSOpsHeapTuple);
+			table_slot_create(partrel, &estate->es_tupleTable);
 	}
 	else
 		partrouteinfo->pi_PartitionTupleSlot = NULL;

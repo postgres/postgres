@@ -26,6 +26,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
@@ -97,7 +98,7 @@ static int	errdetail_busy_db(int notherbackends, int npreparedxacts);
 Oid
 createdb(ParseState *pstate, const CreatedbStmt *stmt)
 {
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	Relation	rel;
 	Oid			src_dboid;
 	Oid			src_owner;
@@ -589,7 +590,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		 * each one to the new database.
 		 */
 		rel = table_open(TableSpaceRelationId, AccessShareLock);
-		scan = heap_beginscan_catalog(rel, 0, NULL);
+		scan = table_beginscan_catalog(rel, 0, NULL);
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			Form_pg_tablespace spaceform = (Form_pg_tablespace) GETSTRUCT(tuple);
@@ -643,7 +644,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 								  XLOG_DBASE_CREATE | XLR_SPECIAL_REL_UPDATE);
 			}
 		}
-		heap_endscan(scan);
+		table_endscan(scan);
 		table_close(rel, AccessShareLock);
 
 		/*
@@ -1870,11 +1871,11 @@ static void
 remove_dbtablespaces(Oid db_id)
 {
 	Relation	rel;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tuple;
 
 	rel = table_open(TableSpaceRelationId, AccessShareLock);
-	scan = heap_beginscan_catalog(rel, 0, NULL);
+	scan = table_beginscan_catalog(rel, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_tablespace spcform = (Form_pg_tablespace) GETSTRUCT(tuple);
@@ -1917,7 +1918,7 @@ remove_dbtablespaces(Oid db_id)
 		pfree(dstpath);
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	table_close(rel, AccessShareLock);
 }
 
@@ -1938,11 +1939,11 @@ check_db_file_conflict(Oid db_id)
 {
 	bool		result = false;
 	Relation	rel;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tuple;
 
 	rel = table_open(TableSpaceRelationId, AccessShareLock);
-	scan = heap_beginscan_catalog(rel, 0, NULL);
+	scan = table_beginscan_catalog(rel, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_tablespace spcform = (Form_pg_tablespace) GETSTRUCT(tuple);
@@ -1967,7 +1968,7 @@ check_db_file_conflict(Oid db_id)
 		pfree(dstpath);
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	table_close(rel, AccessShareLock);
 
 	return result;

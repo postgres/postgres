@@ -72,6 +72,7 @@
 #include "access/amapi.h"
 #include "access/heapam.h"
 #include "access/relscan.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "catalog/index.h"
@@ -235,6 +236,9 @@ index_beginscan(Relation heapRelation,
 	scan->heapRelation = heapRelation;
 	scan->xs_snapshot = snapshot;
 
+	/* prepare to fetch index matches from table */
+	scan->xs_heapfetch = table_index_fetch_begin(heapRelation);
+
 	return scan;
 }
 
@@ -318,16 +322,12 @@ index_rescan(IndexScanDesc scan,
 	Assert(nkeys == scan->numberOfKeys);
 	Assert(norderbys == scan->numberOfOrderBys);
 
-	/* Release any held pin on a heap page */
-	if (BufferIsValid(scan->xs_cbuf))
-	{
-		ReleaseBuffer(scan->xs_cbuf);
-		scan->xs_cbuf = InvalidBuffer;
-	}
-
-	scan->xs_continue_hot = false;
+	/* Release resources (like buffer pins) from table accesses */
+	if (scan->xs_heapfetch)
+		table_index_fetch_reset(scan->xs_heapfetch);
 
 	scan->kill_prior_tuple = false; /* for safety */
+	scan->xs_heap_continue = false;
 
 	scan->indexRelation->rd_indam->amrescan(scan, keys, nkeys,
 											orderbys, norderbys);
@@ -343,11 +343,11 @@ index_endscan(IndexScanDesc scan)
 	SCAN_CHECKS;
 	CHECK_SCAN_PROCEDURE(amendscan);
 
-	/* Release any held pin on a heap page */
-	if (BufferIsValid(scan->xs_cbuf))
+	/* Release resources (like buffer pins) from table accesses */
+	if (scan->xs_heapfetch)
 	{
-		ReleaseBuffer(scan->xs_cbuf);
-		scan->xs_cbuf = InvalidBuffer;
+		table_index_fetch_end(scan->xs_heapfetch);
+		scan->xs_heapfetch = NULL;
 	}
 
 	/* End the AM's scan */
@@ -379,17 +379,16 @@ index_markpos(IndexScanDesc scan)
 /* ----------------
  *		index_restrpos	- restore a scan position
  *
- * NOTE: this only restores the internal scan state of the index AM.
- * The current result tuple (scan->xs_ctup) doesn't change.  See comments
- * for ExecRestrPos().
+ * NOTE: this only restores the internal scan state of the index AM.  See
+ * comments for ExecRestrPos().
  *
- * NOTE: in the presence of HOT chains, mark/restore only works correctly
- * if the scan's snapshot is MVCC-safe; that ensures that there's at most one
- * returnable tuple in each HOT chain, and so restoring the prior state at the
- * granularity of the index AM is sufficient.  Since the only current user
- * of mark/restore functionality is nodeMergejoin.c, this effectively means
- * that merge-join plans only work for MVCC snapshots.  This could be fixed
- * if necessary, but for now it seems unimportant.
+ * NOTE: For heap, in the presence of HOT chains, mark/restore only works
+ * correctly if the scan's snapshot is MVCC-safe; that ensures that there's at
+ * most one returnable tuple in each HOT chain, and so restoring the prior
+ * state at the granularity of the index AM is sufficient.  Since the only
+ * current user of mark/restore functionality is nodeMergejoin.c, this
+ * effectively means that merge-join plans only work for MVCC snapshots.  This
+ * could be fixed if necessary, but for now it seems unimportant.
  * ----------------
  */
 void
@@ -400,9 +399,12 @@ index_restrpos(IndexScanDesc scan)
 	SCAN_CHECKS;
 	CHECK_SCAN_PROCEDURE(amrestrpos);
 
-	scan->xs_continue_hot = false;
+	/* release resources (like buffer pins) from table accesses */
+	if (scan->xs_heapfetch)
+		table_index_fetch_reset(scan->xs_heapfetch);
 
 	scan->kill_prior_tuple = false; /* for safety */
+	scan->xs_heap_continue = false;
 
 	scan->indexRelation->rd_indam->amrestrpos(scan);
 }
@@ -483,6 +485,9 @@ index_parallelrescan(IndexScanDesc scan)
 {
 	SCAN_CHECKS;
 
+	if (scan->xs_heapfetch)
+		table_index_fetch_reset(scan->xs_heapfetch);
+
 	/* amparallelrescan is optional; assume no-op if not provided by AM */
 	if (scan->indexRelation->rd_indam->amparallelrescan != NULL)
 		scan->indexRelation->rd_indam->amparallelrescan(scan);
@@ -513,6 +518,9 @@ index_beginscan_parallel(Relation heaprel, Relation indexrel, int nkeys,
 	scan->heapRelation = heaprel;
 	scan->xs_snapshot = snapshot;
 
+	/* prepare to fetch index matches from table */
+	scan->xs_heapfetch = table_index_fetch_begin(heaprel);
+
 	return scan;
 }
 
@@ -535,7 +543,7 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 
 	/*
 	 * The AM's amgettuple proc finds the next index entry matching the scan
-	 * keys, and puts the TID into scan->xs_ctup.t_self.  It should also set
+	 * keys, and puts the TID into scan->xs_heaptid.  It should also set
 	 * scan->xs_recheck and possibly scan->xs_itup/scan->xs_hitup, though we
 	 * pay no attention to those fields here.
 	 */
@@ -543,23 +551,23 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 
 	/* Reset kill flag immediately for safety */
 	scan->kill_prior_tuple = false;
+	scan->xs_heap_continue = false;
 
 	/* If we're out of index entries, we're done */
 	if (!found)
 	{
-		/* ... but first, release any held pin on a heap page */
-		if (BufferIsValid(scan->xs_cbuf))
-		{
-			ReleaseBuffer(scan->xs_cbuf);
-			scan->xs_cbuf = InvalidBuffer;
-		}
+		/* release resources (like buffer pins) from table accesses */
+		if (scan->xs_heapfetch)
+			table_index_fetch_reset(scan->xs_heapfetch);
+
 		return NULL;
 	}
+	Assert(ItemPointerIsValid(&scan->xs_heaptid));
 
 	pgstat_count_index_tuples(scan->indexRelation, 1);
 
 	/* Return the TID of the tuple we found. */
-	return &scan->xs_ctup.t_self;
+	return &scan->xs_heaptid;
 }
 
 /* ----------------
@@ -580,53 +588,18 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
  * enough information to do it efficiently in the general case.
  * ----------------
  */
-HeapTuple
-index_fetch_heap(IndexScanDesc scan)
+bool
+index_fetch_heap(IndexScanDesc scan, TupleTableSlot *slot)
 {
-	ItemPointer tid = &scan->xs_ctup.t_self;
 	bool		all_dead = false;
-	bool		got_heap_tuple;
+	bool		found;
 
-	/* We can skip the buffer-switching logic if we're in mid-HOT chain. */
-	if (!scan->xs_continue_hot)
-	{
-		/* Switch to correct buffer if we don't have it already */
-		Buffer		prev_buf = scan->xs_cbuf;
+	found = table_index_fetch_tuple(scan->xs_heapfetch, &scan->xs_heaptid,
+									scan->xs_snapshot, slot,
+									&scan->xs_heap_continue, &all_dead);
 
-		scan->xs_cbuf = ReleaseAndReadBuffer(scan->xs_cbuf,
-											 scan->heapRelation,
-											 ItemPointerGetBlockNumber(tid));
-
-		/*
-		 * Prune page, but only if we weren't already on this page
-		 */
-		if (prev_buf != scan->xs_cbuf)
-			heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf);
-	}
-
-	/* Obtain share-lock on the buffer so we can examine visibility */
-	LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-	got_heap_tuple = heap_hot_search_buffer(tid, scan->heapRelation,
-											scan->xs_cbuf,
-											scan->xs_snapshot,
-											&scan->xs_ctup,
-											&all_dead,
-											!scan->xs_continue_hot);
-	LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
-
-	if (got_heap_tuple)
-	{
-		/*
-		 * Only in a non-MVCC snapshot can more than one member of the HOT
-		 * chain be visible.
-		 */
-		scan->xs_continue_hot = !IsMVCCSnapshot(scan->xs_snapshot);
+	if (found)
 		pgstat_count_heap_fetch(scan->indexRelation);
-		return &scan->xs_ctup;
-	}
-
-	/* We've reached the end of the HOT chain. */
-	scan->xs_continue_hot = false;
 
 	/*
 	 * If we scanned a whole HOT chain and found only dead tuples, tell index
@@ -638,17 +611,17 @@ index_fetch_heap(IndexScanDesc scan)
 	if (!scan->xactStartedInRecovery)
 		scan->kill_prior_tuple = all_dead;
 
-	return NULL;
+	return found;
 }
 
 /* ----------------
- *		index_getnext - get the next heap tuple from a scan
+ *		index_getnext_slot - get the next tuple from a scan
  *
- * The result is the next heap tuple satisfying the scan keys and the
- * snapshot, or NULL if no more matching tuples exist.
+ * The result is true if a tuple satisfying the scan keys and the snapshot was
+ * found, false otherwise.  The tuple is stored in the specified slot.
  *
- * On success, the buffer containing the heap tup is pinned (the pin will be
- * dropped in a future index_getnext_tid, index_fetch_heap or index_endscan
+ * On success, resources (like buffer pins) are likely to be held, and will be
+ * dropped by a future index_getnext_tid, index_fetch_heap or index_endscan
  * call).
  *
  * Note: caller must check scan->xs_recheck, and perform rechecking of the
@@ -656,32 +629,23 @@ index_fetch_heap(IndexScanDesc scan)
  * enough information to do it efficiently in the general case.
  * ----------------
  */
-HeapTuple
-index_getnext(IndexScanDesc scan, ScanDirection direction)
+bool
+index_getnext_slot(IndexScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
 {
-	HeapTuple	heapTuple;
-	ItemPointer tid;
-
 	for (;;)
 	{
-		if (scan->xs_continue_hot)
+		if (!scan->xs_heap_continue)
 		{
-			/*
-			 * We are resuming scan of a HOT chain after having returned an
-			 * earlier member.  Must still hold pin on current heap page.
-			 */
-			Assert(BufferIsValid(scan->xs_cbuf));
-			Assert(ItemPointerGetBlockNumber(&scan->xs_ctup.t_self) ==
-				   BufferGetBlockNumber(scan->xs_cbuf));
-		}
-		else
-		{
+			ItemPointer tid;
+
 			/* Time to fetch the next TID from the index */
 			tid = index_getnext_tid(scan, direction);
 
 			/* If we're out of index entries, we're done */
 			if (tid == NULL)
 				break;
+
+			Assert(ItemPointerEquals(tid, &scan->xs_heaptid));
 		}
 
 		/*
@@ -689,12 +653,12 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		 * If we don't find anything, loop around and grab the next TID from
 		 * the index.
 		 */
-		heapTuple = index_fetch_heap(scan);
-		if (heapTuple != NULL)
-			return heapTuple;
+		Assert(ItemPointerIsValid(&scan->xs_heaptid));
+		if (index_fetch_heap(scan, slot))
+			return true;
 	}
 
-	return NULL;				/* failure exit */
+	return false;
 }
 
 /* ----------------

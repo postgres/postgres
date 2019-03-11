@@ -110,13 +110,14 @@ extern void index_build(Relation heapRelation,
 			bool isreindex,
 			bool parallel);
 
+struct TableScanDescData;
 extern double IndexBuildHeapScan(Relation heapRelation,
 				   Relation indexRelation,
 				   IndexInfo *indexInfo,
 				   bool allow_sync,
 				   IndexBuildCallback callback,
 				   void *callback_state,
-				   struct HeapScanDescData *scan);
+				   struct TableScanDescData *scan);
 extern double IndexBuildHeapRangeScan(Relation heapRelation,
 						Relation indexRelation,
 						IndexInfo *indexInfo,
@@ -126,7 +127,7 @@ extern double IndexBuildHeapRangeScan(Relation heapRelation,
 						BlockNumber end_blockno,
 						IndexBuildCallback callback,
 						void *callback_state,
-						struct HeapScanDescData *scan);
+						struct TableScanDescData *scan);
 
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 

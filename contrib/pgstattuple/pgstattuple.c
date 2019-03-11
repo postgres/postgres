@@ -29,6 +29,7 @@
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/relscan.h"
+#include "access/tableam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
 #include "funcapi.h"
@@ -317,7 +318,8 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 static Datum
 pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 {
-	HeapScanDesc scan;
+	TableScanDesc scan;
+	HeapScanDesc hscan;
 	HeapTuple	tuple;
 	BlockNumber nblocks;
 	BlockNumber block = 0;		/* next block to count free space in */
@@ -327,10 +329,12 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	SnapshotData SnapshotDirty;
 
 	/* Disable syncscan because we assume we scan from block zero upwards */
-	scan = heap_beginscan_strat(rel, SnapshotAny, 0, NULL, true, false);
+	scan = table_beginscan_strat(rel, SnapshotAny, 0, NULL, true, false);
+	hscan = (HeapScanDesc) scan;
+
 	InitDirtySnapshot(SnapshotDirty);
 
-	nblocks = scan->rs_nblocks; /* # blocks to be scanned */
+	nblocks = hscan->rs_nblocks; /* # blocks to be scanned */
 
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -338,9 +342,9 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		CHECK_FOR_INTERRUPTS();
 
 		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+		LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		if (HeapTupleSatisfiesVisibility(tuple, &SnapshotDirty, scan->rs_cbuf))
+		if (HeapTupleSatisfiesVisibility(tuple, &SnapshotDirty, hscan->rs_cbuf))
 		{
 			stat.tuple_len += tuple->t_len;
 			stat.tuple_count++;
@@ -351,7 +355,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 			stat.dead_tuple_count++;
 		}
 
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 		/*
 		 * To avoid physically reading the table twice, try to do the
@@ -366,7 +370,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 			CHECK_FOR_INTERRUPTS();
 
 			buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
-										RBM_NORMAL, scan->rs_strategy);
+										RBM_NORMAL, hscan->rs_strategy);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
 			stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
 			UnlockReleaseBuffer(buffer);
@@ -379,14 +383,14 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		CHECK_FOR_INTERRUPTS();
 
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
-									RBM_NORMAL, scan->rs_strategy);
+									RBM_NORMAL, hscan->rs_strategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
 		UnlockReleaseBuffer(buffer);
 		block++;
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	relation_close(rel, AccessShareLock);
 
 	stat.table_len = (uint64) nblocks * BLCKSZ;

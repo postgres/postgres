@@ -23,10 +23,10 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -253,26 +253,9 @@ RI_FKey_check(TriggerData *trigdata)
 	 * checked).  Test its liveness according to SnapshotSelf.  We need pin
 	 * and lock on the buffer to call HeapTupleSatisfiesVisibility.  Caller
 	 * should be holding pin, but not lock.
-	 *
-	 * XXX: Note that the buffer-tuple specificity will be removed in the near
-	 * future.
 	 */
-	if (TTS_IS_BUFFERTUPLE(newslot))
-	{
-		BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) newslot;
-
-		Assert(BufferIsValid(bslot->buffer));
-
-		LockBuffer(bslot->buffer, BUFFER_LOCK_SHARE);
-		if (!HeapTupleSatisfiesVisibility(bslot->base.tuple, SnapshotSelf, bslot->buffer))
-		{
-			LockBuffer(bslot->buffer, BUFFER_LOCK_UNLOCK);
-			return PointerGetDatum(NULL);
-		}
-		LockBuffer(bslot->buffer, BUFFER_LOCK_UNLOCK);
-	}
-	else
-		elog(ERROR, "expected buffer tuple");
+	if (!table_tuple_satisfies_snapshot(trigdata->tg_relation, newslot, SnapshotSelf))
+		return PointerGetDatum(NULL);
 
 	/*
 	 * Get the relation descriptors of the FK and PK tables.

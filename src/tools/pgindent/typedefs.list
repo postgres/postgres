@@ -1018,6 +1018,8 @@ IndexBulkDeleteCallback
 IndexBulkDeleteResult
 IndexClauseSet
 IndexElem
+IndexFetchHeapData
+IndexFetchTableData
 IndexInfo
 IndexList
 IndexOnlyScan
@@ -1602,6 +1604,8 @@ PagetableEntry
 Pairs
 ParallelAppendState
 ParallelBitmapHeapState
+ParallelBlockTableScanDesc
+ParallelBlockTableScanDescData
 ParallelCompletionPtr
 ParallelContext
 ParallelExecutorInfo
@@ -1609,8 +1613,8 @@ ParallelHashGrowth
 ParallelHashJoinBatch
 ParallelHashJoinBatchAccessor
 ParallelHashJoinState
-ParallelHeapScanDesc
-ParallelHeapScanDescData
+ParallelTableScanDesc
+ParallelTableScanDescData
 ParallelIndexScanDesc
 ParallelSlot
 ParallelState
@@ -2316,6 +2320,8 @@ TableFuncScanState
 TableInfo
 TableLikeClause
 TableSampleClause
+TableScanDesc
+TableScanDescData
 TableSpaceCacheEntry
 TableSpaceOpts
 TablespaceList
@@ -2410,6 +2416,7 @@ TupleHashIterator
 TupleHashTable
 TupleQueueReader
 TupleTableSlot
+TupleTableSlotOps
 TuplesortInstrumentation
 TuplesortMethod
 TuplesortSpaceType

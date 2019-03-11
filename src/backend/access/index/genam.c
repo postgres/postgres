@@ -22,6 +22,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/relscan.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "catalog/index.h"
 #include "lib/stringinfo.h"
@@ -83,6 +84,7 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
 
 	scan->heapRelation = NULL;	/* may be set later */
+	scan->xs_heapfetch = NULL;
 	scan->indexRelation = indexRelation;
 	scan->xs_snapshot = InvalidSnapshot;	/* caller must initialize this */
 	scan->numberOfKeys = nkeys;
@@ -122,11 +124,6 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	scan->xs_itupdesc = NULL;
 	scan->xs_hitup = NULL;
 	scan->xs_hitupdesc = NULL;
-
-	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
-	scan->xs_ctup.t_data = NULL;
-	scan->xs_cbuf = InvalidBuffer;
-	scan->xs_continue_hot = false;
 
 	return scan;
 }
@@ -335,6 +332,7 @@ systable_beginscan(Relation heapRelation,
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = irel;
+	sysscan->slot = table_slot_create(heapRelation, NULL);
 
 	if (snapshot == NULL)
 	{
@@ -384,9 +382,9 @@ systable_beginscan(Relation heapRelation,
 		 * disadvantage; and there are no compensating advantages, because
 		 * it's unlikely that such scans will occur in parallel.
 		 */
-		sysscan->scan = heap_beginscan_strat(heapRelation, snapshot,
-											 nkeys, key,
-											 true, false);
+		sysscan->scan = table_beginscan_strat(heapRelation, snapshot,
+											  nkeys, key,
+											  true, false);
 		sysscan->iscan = NULL;
 	}
 
@@ -401,28 +399,46 @@ systable_beginscan(Relation heapRelation,
  * Note that returned tuple is a reference to data in a disk buffer;
  * it must not be modified, and should be presumed inaccessible after
  * next getnext() or endscan() call.
+ *
+ * XXX: It'd probably make sense to offer a slot based interface, at least
+ * optionally.
  */
 HeapTuple
 systable_getnext(SysScanDesc sysscan)
 {
-	HeapTuple	htup;
+	HeapTuple	htup = NULL;
 
 	if (sysscan->irel)
 	{
-		htup = index_getnext(sysscan->iscan, ForwardScanDirection);
+		if (index_getnext_slot(sysscan->iscan, ForwardScanDirection, sysscan->slot))
+		{
+			bool		shouldFree;
 
-		/*
-		 * We currently don't need to support lossy index operators for any
-		 * system catalog scan.  It could be done here, using the scan keys to
-		 * drive the operator calls, if we arranged to save the heap attnums
-		 * during systable_beginscan(); this is practical because we still
-		 * wouldn't need to support indexes on expressions.
-		 */
-		if (htup && sysscan->iscan->xs_recheck)
-			elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
+			htup = ExecFetchSlotHeapTuple(sysscan->slot, false, &shouldFree);
+			Assert(!shouldFree);
+
+			/*
+			 * We currently don't need to support lossy index operators for
+			 * any system catalog scan.  It could be done here, using the scan
+			 * keys to drive the operator calls, if we arranged to save the
+			 * heap attnums during systable_beginscan(); this is practical
+			 * because we still wouldn't need to support indexes on
+			 * expressions.
+			 */
+			if (sysscan->iscan->xs_recheck)
+				elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
+		}
 	}
 	else
-		htup = heap_getnext(sysscan->scan, ForwardScanDirection);
+	{
+		if (table_scan_getnextslot(sysscan->scan, ForwardScanDirection, sysscan->slot))
+		{
+			bool		shouldFree;
+
+			htup = ExecFetchSlotHeapTuple(sysscan->slot, false, &shouldFree);
+			Assert(!shouldFree);
+		}
+	}
 
 	return htup;
 }
@@ -446,37 +462,20 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 	Snapshot	freshsnap;
 	bool		result;
 
+	Assert(tup == ExecFetchSlotHeapTuple(sysscan->slot, false, NULL));
+
 	/*
-	 * Trust that LockBuffer() and HeapTupleSatisfiesMVCC() do not themselves
+	 * Trust that table_tuple_satisfies_snapshot() and its subsidiaries
+	 * (commonly LockBuffer() and HeapTupleSatisfiesMVCC()) do not themselves
 	 * acquire snapshots, so we need not register the snapshot.  Those
 	 * facilities are too low-level to have any business scanning tables.
 	 */
 	freshsnap = GetCatalogSnapshot(RelationGetRelid(sysscan->heap_rel));
 
-	if (sysscan->irel)
-	{
-		IndexScanDesc scan = sysscan->iscan;
+	result = table_tuple_satisfies_snapshot(sysscan->heap_rel,
+											sysscan->slot,
+											freshsnap);
 
-		Assert(IsMVCCSnapshot(scan->xs_snapshot));
-		Assert(tup == &scan->xs_ctup);
-		Assert(BufferIsValid(scan->xs_cbuf));
-		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-		result = HeapTupleSatisfiesVisibility(tup, freshsnap, scan->xs_cbuf);
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
-	}
-	else
-	{
-		HeapScanDesc scan = sysscan->scan;
-
-		Assert(IsMVCCSnapshot(scan->rs_snapshot));
-		Assert(tup == &scan->rs_ctup);
-		Assert(BufferIsValid(scan->rs_cbuf));
-		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-		result = HeapTupleSatisfiesVisibility(tup, freshsnap, scan->rs_cbuf);
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-	}
 	return result;
 }
 
@@ -488,13 +487,19 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 void
 systable_endscan(SysScanDesc sysscan)
 {
+	if (sysscan->slot)
+	{
+		ExecDropSingleTupleTableSlot(sysscan->slot);
+		sysscan->slot = NULL;
+	}
+
 	if (sysscan->irel)
 	{
 		index_endscan(sysscan->iscan);
 		index_close(sysscan->irel, AccessShareLock);
 	}
 	else
-		heap_endscan(sysscan->scan);
+		table_endscan(sysscan->scan);
 
 	if (sysscan->snapshot)
 		UnregisterSnapshot(sysscan->snapshot);
@@ -541,6 +546,7 @@ systable_beginscan_ordered(Relation heapRelation,
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = indexRelation;
+	sysscan->slot = table_slot_create(heapRelation, NULL);
 
 	if (snapshot == NULL)
 	{
@@ -586,10 +592,12 @@ systable_beginscan_ordered(Relation heapRelation,
 HeapTuple
 systable_getnext_ordered(SysScanDesc sysscan, ScanDirection direction)
 {
-	HeapTuple	htup;
+	HeapTuple	htup = NULL;
 
 	Assert(sysscan->irel);
-	htup = index_getnext(sysscan->iscan, direction);
+	if (index_getnext_slot(sysscan->iscan, direction, sysscan->slot))
+		htup = ExecFetchSlotHeapTuple(sysscan->slot, false, NULL);
+
 	/* See notes in systable_getnext */
 	if (htup && sysscan->iscan->xs_recheck)
 		elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
@@ -603,6 +611,12 @@ systable_getnext_ordered(SysScanDesc sysscan, ScanDirection direction)
 void
 systable_endscan_ordered(SysScanDesc sysscan)
 {
+	if (sysscan->slot)
+	{
+		ExecDropSingleTupleTableSlot(sysscan->slot);
+		sysscan->slot = NULL;
+	}
+
 	Assert(sysscan->irel);
 	index_endscan(sysscan->iscan);
 	if (sysscan->snapshot)

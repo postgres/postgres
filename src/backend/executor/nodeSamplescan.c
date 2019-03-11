@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "access/relscan.h"
+#include "access/tableam.h"
 #include "access/tsmapi.h"
 #include "executor/executor.h"
 #include "executor/nodeSamplescan.h"
@@ -48,6 +49,7 @@ SampleNext(SampleScanState *node)
 {
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
+	HeapScanDesc hscan;
 
 	/*
 	 * if this is first call within a scan, initialize
@@ -61,11 +63,12 @@ SampleNext(SampleScanState *node)
 	tuple = tablesample_getnext(node);
 
 	slot = node->ss.ss_ScanTupleSlot;
+	hscan = (HeapScanDesc) node->ss.ss_currentScanDesc;
 
 	if (tuple)
 		ExecStoreBufferHeapTuple(tuple, /* tuple to store */
 								 slot,	/* slot to store in */
-								 node->ss.ss_currentScanDesc->rs_cbuf); /* tuple's buffer */
+								 hscan->rs_cbuf); /* tuple's buffer */
 	else
 		ExecClearTuple(slot);
 
@@ -147,7 +150,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	/* and create slot with appropriate rowtype */
 	ExecInitScanTupleSlot(estate, &scanstate->ss,
 						  RelationGetDescr(scanstate->ss.ss_currentRelation),
-						  &TTSOpsBufferHeapTuple);
+						  table_slot_callbacks(scanstate->ss.ss_currentRelation));
 
 	/*
 	 * Initialize result type and projection.
@@ -219,7 +222,7 @@ ExecEndSampleScan(SampleScanState *node)
 	 * close heap scan
 	 */
 	if (node->ss.ss_currentScanDesc)
-		heap_endscan(node->ss.ss_currentScanDesc);
+		table_endscan(node->ss.ss_currentScanDesc);
 }
 
 /* ----------------------------------------------------------------
@@ -319,19 +322,19 @@ tablesample_init(SampleScanState *scanstate)
 	if (scanstate->ss.ss_currentScanDesc == NULL)
 	{
 		scanstate->ss.ss_currentScanDesc =
-			heap_beginscan_sampling(scanstate->ss.ss_currentRelation,
-									scanstate->ss.ps.state->es_snapshot,
-									0, NULL,
-									scanstate->use_bulkread,
-									allow_sync,
-									scanstate->use_pagemode);
+			table_beginscan_sampling(scanstate->ss.ss_currentRelation,
+									 scanstate->ss.ps.state->es_snapshot,
+									 0, NULL,
+									 scanstate->use_bulkread,
+									 allow_sync,
+									 scanstate->use_pagemode);
 	}
 	else
 	{
-		heap_rescan_set_params(scanstate->ss.ss_currentScanDesc, NULL,
-							   scanstate->use_bulkread,
-							   allow_sync,
-							   scanstate->use_pagemode);
+		table_rescan_set_params(scanstate->ss.ss_currentScanDesc, NULL,
+								scanstate->use_bulkread,
+								allow_sync,
+								scanstate->use_pagemode);
 	}
 
 	pfree(params);
@@ -350,8 +353,9 @@ static HeapTuple
 tablesample_getnext(SampleScanState *scanstate)
 {
 	TsmRoutine *tsm = scanstate->tsmroutine;
-	HeapScanDesc scan = scanstate->ss.ss_currentScanDesc;
-	HeapTuple	tuple = &(scan->rs_ctup);
+	TableScanDesc scan = scanstate->ss.ss_currentScanDesc;
+	HeapScanDesc hscan = (HeapScanDesc) scan;
+	HeapTuple	tuple = &(hscan->rs_ctup);
 	Snapshot	snapshot = scan->rs_snapshot;
 	bool		pagemode = scan->rs_pageatatime;
 	BlockNumber blockno;
@@ -359,14 +363,14 @@ tablesample_getnext(SampleScanState *scanstate)
 	bool		all_visible;
 	OffsetNumber maxoffset;
 
-	if (!scan->rs_inited)
+	if (!hscan->rs_inited)
 	{
 		/*
 		 * return null immediately if relation is empty
 		 */
-		if (scan->rs_nblocks == 0)
+		if (hscan->rs_nblocks == 0)
 		{
-			Assert(!BufferIsValid(scan->rs_cbuf));
+			Assert(!BufferIsValid(hscan->rs_cbuf));
 			tuple->t_data = NULL;
 			return NULL;
 		}
@@ -380,15 +384,15 @@ tablesample_getnext(SampleScanState *scanstate)
 			}
 		}
 		else
-			blockno = scan->rs_startblock;
-		Assert(blockno < scan->rs_nblocks);
+			blockno = hscan->rs_startblock;
+		Assert(blockno < hscan->rs_nblocks);
 		heapgetpage(scan, blockno);
-		scan->rs_inited = true;
+		hscan->rs_inited = true;
 	}
 	else
 	{
 		/* continue from previously returned page/tuple */
-		blockno = scan->rs_cblock;	/* current page */
+		blockno = hscan->rs_cblock;	/* current page */
 	}
 
 	/*
@@ -396,9 +400,9 @@ tablesample_getnext(SampleScanState *scanstate)
 	 * visibility checks.
 	 */
 	if (!pagemode)
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+		LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-	page = (Page) BufferGetPage(scan->rs_cbuf);
+	page = (Page) BufferGetPage(hscan->rs_cbuf);
 	all_visible = PageIsAllVisible(page) && !snapshot->takenDuringRecovery;
 	maxoffset = PageGetMaxOffsetNumber(page);
 
@@ -431,18 +435,18 @@ tablesample_getnext(SampleScanState *scanstate)
 			if (all_visible)
 				visible = true;
 			else
-				visible = SampleTupleVisible(tuple, tupoffset, scan);
+				visible = SampleTupleVisible(tuple, tupoffset, hscan);
 
 			/* in pagemode, heapgetpage did this for us */
 			if (!pagemode)
 				CheckForSerializableConflictOut(visible, scan->rs_rd, tuple,
-												scan->rs_cbuf, snapshot);
+												hscan->rs_cbuf, snapshot);
 
 			if (visible)
 			{
 				/* Found visible tuple, return it. */
 				if (!pagemode)
-					LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+					LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 				break;
 			}
 			else
@@ -457,7 +461,7 @@ tablesample_getnext(SampleScanState *scanstate)
 		 * it's time to move to the next.
 		 */
 		if (!pagemode)
-			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+			LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 		if (tsm->NextSampleBlock)
 		{
@@ -469,7 +473,7 @@ tablesample_getnext(SampleScanState *scanstate)
 		{
 			/* Without NextSampleBlock, just do a plain forward seqscan. */
 			blockno++;
-			if (blockno >= scan->rs_nblocks)
+			if (blockno >= hscan->rs_nblocks)
 				blockno = 0;
 
 			/*
@@ -485,7 +489,7 @@ tablesample_getnext(SampleScanState *scanstate)
 			if (scan->rs_syncscan)
 				ss_report_location(scan->rs_rd, blockno);
 
-			finished = (blockno == scan->rs_startblock);
+			finished = (blockno == hscan->rs_startblock);
 		}
 
 		/*
@@ -493,23 +497,23 @@ tablesample_getnext(SampleScanState *scanstate)
 		 */
 		if (finished)
 		{
-			if (BufferIsValid(scan->rs_cbuf))
-				ReleaseBuffer(scan->rs_cbuf);
-			scan->rs_cbuf = InvalidBuffer;
-			scan->rs_cblock = InvalidBlockNumber;
+			if (BufferIsValid(hscan->rs_cbuf))
+				ReleaseBuffer(hscan->rs_cbuf);
+			hscan->rs_cbuf = InvalidBuffer;
+			hscan->rs_cblock = InvalidBlockNumber;
 			tuple->t_data = NULL;
-			scan->rs_inited = false;
+			hscan->rs_inited = false;
 			return NULL;
 		}
 
-		Assert(blockno < scan->rs_nblocks);
+		Assert(blockno < hscan->rs_nblocks);
 		heapgetpage(scan, blockno);
 
 		/* Re-establish state for new page */
 		if (!pagemode)
-			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+			LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		page = (Page) BufferGetPage(scan->rs_cbuf);
+		page = (Page) BufferGetPage(hscan->rs_cbuf);
 		all_visible = PageIsAllVisible(page) && !snapshot->takenDuringRecovery;
 		maxoffset = PageGetMaxOffsetNumber(page);
 	}
@@ -517,7 +521,7 @@ tablesample_getnext(SampleScanState *scanstate)
 	/* Count successfully-fetched tuples as heap fetches */
 	pgstat_count_heap_getnext(scan->rs_rd);
 
-	return &(scan->rs_ctup);
+	return &(hscan->rs_ctup);
 }
 
 /*
@@ -526,7 +530,7 @@ tablesample_getnext(SampleScanState *scanstate)
 static bool
 SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
 {
-	if (scan->rs_pageatatime)
+	if (scan->rs_base.rs_pageatatime)
 	{
 		/*
 		 * In pageatatime mode, heapgetpage() already did visibility checks,
@@ -559,7 +563,7 @@ SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
 	{
 		/* Otherwise, we have to check the tuple individually. */
 		return HeapTupleSatisfiesVisibility(tuple,
-											scan->rs_snapshot,
+											scan->rs_base.rs_snapshot,
 											scan->rs_cbuf);
 	}
 }

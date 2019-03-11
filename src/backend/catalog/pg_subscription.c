@@ -19,6 +19,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 
 #include "catalog/indexing.h"
@@ -390,7 +391,7 @@ void
 RemoveSubscriptionRel(Oid subid, Oid relid)
 {
 	Relation	rel;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	ScanKeyData skey[2];
 	HeapTuple	tup;
 	int			nkeys = 0;
@@ -416,12 +417,12 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 	}
 
 	/* Do the search and delete what we found. */
-	scan = heap_beginscan_catalog(rel, nkeys, skey);
+	scan = table_beginscan_catalog(rel, nkeys, skey);
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
 	{
 		CatalogTupleDelete(rel, &tup->t_self);
 	}
-	heap_endscan(scan);
+	table_endscan(scan);
 
 	table_close(rel, RowExclusiveLock);
 }

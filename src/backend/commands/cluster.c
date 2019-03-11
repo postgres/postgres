@@ -22,6 +22,7 @@
 #include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/rewriteheap.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
@@ -764,6 +765,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	Datum	   *values;
 	bool	   *isnull;
 	IndexScanDesc indexScan;
+	TableScanDesc tableScan;
 	HeapScanDesc heapScan;
 	bool		use_wal;
 	bool		is_system_catalog;
@@ -779,6 +781,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	BlockNumber num_pages;
 	int			elevel = verbose ? INFO : DEBUG2;
 	PGRUsage	ru0;
+	TupleTableSlot *slot;
+	BufferHeapTupleTableSlot *hslot;
 
 	pg_rusage_init(&ru0);
 
@@ -924,15 +928,20 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 */
 	if (OldIndex != NULL && !use_sort)
 	{
+		tableScan = NULL;
 		heapScan = NULL;
 		indexScan = index_beginscan(OldHeap, OldIndex, SnapshotAny, 0, 0);
 		index_rescan(indexScan, NULL, 0, NULL, 0);
 	}
 	else
 	{
-		heapScan = heap_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL);
+		tableScan = table_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL);
+		heapScan = (HeapScanDesc) tableScan;
 		indexScan = NULL;
 	}
+
+	slot = table_slot_create(OldHeap, NULL);
+	hslot = (BufferHeapTupleTableSlot *) slot;
 
 	/* Log what we're doing */
 	if (indexScan != NULL)
@@ -968,19 +977,19 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 		if (indexScan != NULL)
 		{
-			tuple = index_getnext(indexScan, ForwardScanDirection);
-			if (tuple == NULL)
+			if (!index_getnext_slot(indexScan, ForwardScanDirection, slot))
 				break;
 
 			/* Since we used no scan keys, should never need to recheck */
 			if (indexScan->xs_recheck)
 				elog(ERROR, "CLUSTER does not support lossy index conditions");
 
-			buf = indexScan->xs_cbuf;
+			tuple = hslot->base.tuple;
+			buf = hslot->buffer;
 		}
 		else
 		{
-			tuple = heap_getnext(heapScan, ForwardScanDirection);
+			tuple = heap_getnext(tableScan, ForwardScanDirection);
 			if (tuple == NULL)
 				break;
 
@@ -1066,7 +1075,9 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	if (indexScan != NULL)
 		index_endscan(indexScan);
 	if (heapScan != NULL)
-		heap_endscan(heapScan);
+		table_endscan(tableScan);
+	if (slot)
+		ExecDropSingleTupleTableSlot(slot);
 
 	/*
 	 * In scan-and-sort mode, complete the sort, then read out all live tuples
@@ -1694,7 +1705,7 @@ static List *
 get_tables_to_cluster(MemoryContext cluster_context)
 {
 	Relation	indRelation;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	ScanKeyData entry;
 	HeapTuple	indexTuple;
 	Form_pg_index index;
@@ -1713,7 +1724,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 				Anum_pg_index_indisclustered,
 				BTEqualStrategyNumber, F_BOOLEQ,
 				BoolGetDatum(true));
-	scan = heap_beginscan_catalog(indRelation, 1, &entry);
+	scan = table_beginscan_catalog(indRelation, 1, &entry);
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -1734,7 +1745,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 
 		MemoryContextSwitchTo(old_context);
 	}
-	heap_endscan(scan);
+	table_endscan(scan);
 
 	relation_close(indRelation, AccessShareLock);
 

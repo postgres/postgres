@@ -119,7 +119,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 
 	/* OK, itemIndex says what to return */
 	currItem = &so->currPos.items[so->currPos.itemIndex];
-	scan->xs_ctup.t_self = currItem->heapTid;
+	scan->xs_heaptid = currItem->heapTid;
 
 	return true;
 }
@@ -432,7 +432,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* OK, itemIndex says what to return */
 	currItem = &so->currPos.items[so->currPos.itemIndex];
-	scan->xs_ctup.t_self = currItem->heapTid;
+	scan->xs_heaptid = currItem->heapTid;
 
 	/* if we're here, _hash_readpage found a valid tuples */
 	return true;

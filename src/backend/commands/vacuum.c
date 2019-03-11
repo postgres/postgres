@@ -28,6 +28,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
@@ -745,12 +746,12 @@ get_all_vacuum_rels(int options)
 {
 	List	   *vacrels = NIL;
 	Relation	pgclass;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tuple;
 
 	pgclass = table_open(RelationRelationId, AccessShareLock);
 
-	scan = heap_beginscan_catalog(pgclass, 0, NULL);
+	scan = table_beginscan_catalog(pgclass, 0, NULL);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -784,7 +785,7 @@ get_all_vacuum_rels(int options)
 		MemoryContextSwitchTo(oldcontext);
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	table_close(pgclass, AccessShareLock);
 
 	return vacrels;
@@ -1381,7 +1382,7 @@ vac_truncate_clog(TransactionId frozenXID,
 {
 	TransactionId nextXID = ReadNewTransactionId();
 	Relation	relation;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tuple;
 	Oid			oldestxid_datoid;
 	Oid			minmulti_datoid;
@@ -1412,7 +1413,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 */
 	relation = table_open(DatabaseRelationId, AccessShareLock);
 
-	scan = heap_beginscan_catalog(relation, 0, NULL);
+	scan = table_beginscan_catalog(relation, 0, NULL);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -1451,7 +1452,7 @@ vac_truncate_clog(TransactionId frozenXID,
 		}
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 
 	table_close(relation, AccessShareLock);
 

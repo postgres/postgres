@@ -40,6 +40,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
@@ -2802,9 +2803,8 @@ EvalPlanQualSlot(EPQState *epqstate,
 		oldcontext = MemoryContextSwitchTo(epqstate->estate->es_query_cxt);
 
 		if (relation)
-			*slot = ExecAllocTableSlot(&epqstate->estate->es_tupleTable,
-									   RelationGetDescr(relation),
-									   &TTSOpsBufferHeapTuple);
+			*slot = table_slot_create(relation,
+										 &epqstate->estate->es_tupleTable);
 		else
 			*slot = ExecAllocTableSlot(&epqstate->estate->es_tupleTable,
 									   epqstate->origslot->tts_tupleDescriptor,

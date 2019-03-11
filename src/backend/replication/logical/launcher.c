@@ -24,6 +24,7 @@
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/htup_details.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 
 #include "catalog/pg_subscription.h"
@@ -118,7 +119,7 @@ get_subscription_list(void)
 {
 	List	   *res = NIL;
 	Relation	rel;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple	tup;
 	MemoryContext resultcxt;
 
@@ -136,7 +137,7 @@ get_subscription_list(void)
 	(void) GetTransactionSnapshot();
 
 	rel = table_open(SubscriptionRelationId, AccessShareLock);
-	scan = heap_beginscan_catalog(rel, 0, NULL);
+	scan = table_beginscan_catalog(rel, 0, NULL);
 
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
 	{
@@ -164,7 +165,7 @@ get_subscription_list(void)
 		MemoryContextSwitchTo(oldcxt);
 	}
 
-	heap_endscan(scan);
+	table_endscan(scan);
 	table_close(rel, AccessShareLock);
 
 	CommitTransactionCommand();
