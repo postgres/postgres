@@ -147,7 +147,6 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 -- Test some simple error cases
 SET seq_page_cost TO 'NaN';
 SET vacuum_cost_delay TO '10s';
-SET geqo_selection_bias TO '-infinity';
 
 --
 -- Test DISCARD TEMP

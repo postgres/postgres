@@ -6240,15 +6240,13 @@ parse_real(const char *value, double *result, int flags, const char **hintmsg)
 	if (hintmsg)
 		*hintmsg = NULL;
 
+	errno = 0;
 	val = strtod(value, &endptr);
-	if (endptr == value)
-		return false;			/* no HINT for syntax error */
 
-	/*
-	 * We ignore strtod's errno, so that out-of-range inputs will just result
-	 * in zero or infinity values.  Subsequent range checks will reject those
-	 * if necessary.  We do need to reject NaN explicitly, however.
-	 */
+	if (endptr == value || errno == ERANGE)
+		return false;			/* no HINT for these cases */
+
+	/* reject NaN (infinities will fail range checks later) */
 	if (isnan(val))
 		return false;			/* treat same as syntax error; no HINT */
 
