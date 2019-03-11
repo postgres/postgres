@@ -157,12 +157,20 @@ typedef struct BTShared
 	bool		brokenhotchain;
 
 	/*
-	 * This variable-sized field must come last.
-	 *
-	 * See _bt_parallel_estimate_shared() and table_parallelscan_estimate().
+	 * ParallelTableScanDescData data follows. Can't directly embed here, as
+	 * implementations of the parallel table scan desc interface might need
+	 * stronger alignment.
 	 */
-	ParallelTableScanDescData heapdesc;
 } BTShared;
+
+/*
+ * Return pointer to a BTShared's parallel table scan.
+ *
+ * c.f. shm_toc_allocate as to why BUFFERALIGN is used, rather than just
+ * MAXALIGN.
+ */
+#define ParallelTableScanFromBTShared(shared) \
+	(ParallelTableScanDesc) ((char *) (shared) + BUFFERALIGN(sizeof(BTShared)))
 
 /*
  * Status for leader in parallel index build.
@@ -1317,7 +1325,8 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	btshared->havedead = false;
 	btshared->indtuples = 0.0;
 	btshared->brokenhotchain = false;
-	table_parallelscan_initialize(btspool->heap, &btshared->heapdesc,
+	table_parallelscan_initialize(btspool->heap,
+								  ParallelTableScanFromBTShared(btshared),
 								  snapshot);
 
 	/*
@@ -1407,7 +1416,8 @@ _bt_end_parallel(BTLeader *btleader)
 static Size
 _bt_parallel_estimate_shared(Relation heap, Snapshot snapshot)
 {
-	return add_size(offsetof(BTShared, heapdesc),
+	/* c.f. shm_toc_allocate as to why BUFFERALIGN is used */
+	return add_size(BUFFERALIGN(sizeof(BTShared)),
 					table_parallelscan_estimate(heap, snapshot));
 }
 
@@ -1672,7 +1682,8 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 	/* Join parallel scan */
 	indexInfo = BuildIndexInfo(btspool->index);
 	indexInfo->ii_Concurrent = btshared->isconcurrent;
-	scan = table_beginscan_parallel(btspool->heap, &btshared->heapdesc);
+	scan = table_beginscan_parallel(btspool->heap,
+									ParallelTableScanFromBTShared(btshared));
 	reltuples = IndexBuildHeapScan(btspool->heap, btspool->index, indexInfo,
 								   true, _bt_build_callback,
 								   (void *) &buildstate, scan);
