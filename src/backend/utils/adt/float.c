@@ -230,9 +230,9 @@ float4in(PG_FUNCTION_ARGS)
 			 * detect whether it's a "real" out-of-range condition by checking
 			 * to see if the result is zero or huge.
 			 *
-			 * Use isinf() rather than HUGE_VALF on VS2013 because it generates
-			 * a spurious overflow warning for -HUGE_VALF. Also use isinf() if
-			 * HUGE_VALF is missing.
+			 * Use isinf() rather than HUGE_VALF on VS2013 because it
+			 * generates a spurious overflow warning for -HUGE_VALF.  Also use
+			 * isinf() if HUGE_VALF is missing.
 			 */
 			if (val == 0.0 ||
 #if !defined(HUGE_VALF) || (defined(_MSC_VER) && (_MSC_VER < 1900))
@@ -2423,6 +2423,160 @@ radians(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 
 	PG_RETURN_FLOAT8(float8_mul(arg1, RADIANS_PER_DEGREE));
+}
+
+
+/* ========== HYPERBOLIC FUNCTIONS ========== */
+
+
+/*
+ *		dsinh			- returns the hyperbolic sine of arg1
+ */
+Datum
+dsinh(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	errno = 0;
+	result = sinh(arg1);
+
+	/*
+	 * if an ERANGE error occurs, it means there is an overflow.  For sinh,
+	 * the result should be either -infinity or infinity, depending on the
+	 * sign of arg1.
+	 */
+	if (errno == ERANGE)
+	{
+		if (arg1 < 0)
+			result = -get_float8_infinity();
+		else
+			result = get_float8_infinity();
+	}
+
+	check_float8_val(result, true, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		dcosh			- returns the hyperbolic cosine of arg1
+ */
+Datum
+dcosh(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	errno = 0;
+	result = cosh(arg1);
+
+	/*
+	 * if an ERANGE error occurs, it means there is an overflow.  As cosh is
+	 * always positive, it always means the result is positive infinity.
+	 */
+	if (errno == ERANGE)
+		result = get_float8_infinity();
+
+	check_float8_val(result, true, false);
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		dtanh			- returns the hyperbolic tangent of arg1
+ */
+Datum
+dtanh(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * For tanh, we don't need an errno check because it never overflows.
+	 */
+	result = tanh(arg1);
+
+	check_float8_val(result, false, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		dasinh			- returns the inverse hyperbolic sine of arg1
+ */
+Datum
+dasinh(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * For asinh, we don't need an errno check because it never overflows.
+	 */
+	result = asinh(arg1);
+
+	check_float8_val(result, true, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		dacosh			- returns the inverse hyperbolic cosine of arg1
+ */
+Datum
+dacosh(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * acosh is only defined for inputs >= 1.0.  By checking this ourselves,
+	 * we need not worry about checking for an EDOM error, which is a good
+	 * thing because some implementations will report that for NaN. Otherwise,
+	 * no error is possible.
+	 */
+	if (arg1 < 1.0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	result = acosh(arg1);
+
+	check_float8_val(result, true, true);
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		datanh			- returns the inverse hyperbolic tangent of arg1
+ */
+Datum
+datanh(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * atanh is only defined for inputs between -1 and 1.  By checking this
+	 * ourselves, we need not worry about checking for an EDOM error, which is
+	 * a good thing because some implementations will report that for NaN.
+	 */
+	if (arg1 < -1.0 || arg1 > 1.0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
+
+	/*
+	 * Also handle the infinity cases ourselves; this is helpful because old
+	 * glibc versions may produce the wrong errno for this.  All other inputs
+	 * cannot produce an error.
+	 */
+	if (arg1 == -1.0)
+		result = -get_float8_infinity();
+	else if (arg1 == 1.0)
+		result = get_float8_infinity();
+	else
+		result = atanh(arg1);
+
+	check_float8_val(result, true, true);
+	PG_RETURN_FLOAT8(result);
 }
 
 

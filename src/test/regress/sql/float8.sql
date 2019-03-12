@@ -154,6 +154,14 @@ SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
 SELECT '' AS five, * FROM FLOAT8_TBL;
 
+-- hyperbolic functions
+SELECT sinh(float8 '0');
+SELECT cosh(float8 '0');
+SELECT tanh(float8 '0');
+SELECT asinh(float8 '0');
+SELECT acosh(float8 '1');
+SELECT atanh(float8 '0');
+
 RESET extra_float_digits;
 
 -- test for over- and underflow

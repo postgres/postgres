@@ -897,6 +897,19 @@
       </row>
 
       <row>
+       <entry>
+        <indexterm>
+         <primary>log10</primary>
+        </indexterm>
+        <literal><function>log10(<type>dp</type> or <type>numeric</type>)</function></literal>
+       </entry>
+       <entry>(same as input)</entry>
+       <entry>base 10 logarithm</entry>
+       <entry><literal>log10(100.0)</literal></entry>
+       <entry><literal>2</literal></entry>
+      </row>
+
+      <row>
        <entry><literal><function>log(<parameter>b</parameter> <type>numeric</type>,
         <parameter>x</parameter> <type>numeric</type>)</function></literal></entry>
        <entry><type>numeric</type></entry>
@@ -1147,8 +1160,8 @@
   </para>
 
   <para>
-   Finally, <xref linkend="functions-math-trig-table"/> shows the
-   available trigonometric functions.  All trigonometric functions
+   <xref linkend="functions-math-trig-table"/> shows the
+   available trigonometric functions.  All these functions
    take arguments and return values of type <type>double
    precision</type>.  Each of the trigonometric functions comes in
    two variants, one that measures angles in radians and one that
@@ -1310,6 +1323,96 @@
     as <literal>sind(30)</literal>.
    </para>
   </note>
+
+  <para>
+   <xref linkend="functions-math-hyp-table"/> shows the
+   available hyperbolic functions.  All these functions
+   take arguments and return values of type <type>double
+   precision</type>.
+  </para>
+
+  <table id="functions-math-hyp-table">
+    <title>Hyperbolic Functions</title>
+
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+       <entry>Result</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>sinh</primary>
+        </indexterm>
+        <literal><function>sinh(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>hyperbolic sine</entry>
+       <entry><literal>sinh(0)</literal></entry>
+       <entry><literal>0</literal></entry>
+      </row>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>cosh</primary>
+        </indexterm>
+        <literal><function>cosh(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>hyperbolic cosine</entry>
+       <entry><literal>cosh(0)</literal></entry>
+       <entry><literal>1</literal></entry>
+      </row>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>tanh</primary>
+        </indexterm>
+        <literal><function>tanh(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>hyperbolic tangent</entry>
+       <entry><literal>tanh(0)</literal></entry>
+       <entry><literal>0</literal></entry>
+      </row>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>asinh</primary>
+        </indexterm>
+        <literal><function>asinh(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>inverse hyperbolic sine</entry>
+       <entry><literal>asinh(0)</literal></entry>
+       <entry><literal>0</literal></entry>
+      </row>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>acosh</primary>
+        </indexterm>
+        <literal><function>acosh(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>inverse hyperbolic cosine</entry>
+       <entry><literal>acosh(1)</literal></entry>
+       <entry><literal>0</literal></entry>
+      </row>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>atanh</primary>
+        </indexterm>
+        <literal><function>atanh(<replaceable>x</replaceable>)</function></literal>
+       </entry>
+       <entry>inverse hyperbolic tangent</entry>
+       <entry><literal>atanh(0)</literal></entry>
+       <entry><literal>0</literal></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   </sect1>
 

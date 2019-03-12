@@ -454,6 +454,43 @@ SELECT '' AS five, * FROM FLOAT8_TBL;
       | -1.2345678901234e-200
 (5 rows)
 
+-- hyperbolic functions
+SELECT sinh(float8 '0');
+ sinh 
+------
+    0
+(1 row)
+
+SELECT cosh(float8 '0');
+ cosh 
+------
+    1
+(1 row)
+
+SELECT tanh(float8 '0');
+ tanh 
+------
+    0
+(1 row)
+
+SELECT asinh(float8 '0');
+ asinh 
+-------
+     0
+(1 row)
+
+SELECT acosh(float8 '1');
+ acosh 
+-------
+     0
+(1 row)
+
+SELECT atanh(float8 '0');
+ atanh 
+-------
+     0
+(1 row)
+
 RESET extra_float_digits;
 -- test for over- and underflow
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
