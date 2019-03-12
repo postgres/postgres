@@ -24,8 +24,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
+#include "common/file_perm.h"
 #include "port/pg_crc32c.h"
 #ifndef FRONTEND
 #include "storage/fd.h"
@@ -136,4 +138,96 @@ get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
 #endif
 
 	return ControlFile;
+}
+
+/*
+ * update_controlfile()
+ *
+ * Update controlfile values with the contents given by caller.  The
+ * contents to write are included in "ControlFile".  Note that it is up
+ * to the caller to fsync the updated file, and to properly lock
+ * ControlFileLock when calling this routine in the backend.
+ */
+void
+update_controlfile(const char *DataDir, const char *progname,
+				   ControlFileData *ControlFile)
+{
+	int			fd;
+	char		buffer[PG_CONTROL_FILE_SIZE];
+	char		ControlFilePath[MAXPGPATH];
+
+	/*
+	 * Apply the same static assertions as in backend's WriteControlFile().
+	 */
+	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
+					 "pg_control is too large for atomic disk writes");
+	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
+					 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
+
+	/* Recalculate CRC of control file */
+	INIT_CRC32C(ControlFile->crc);
+	COMP_CRC32C(ControlFile->crc,
+				(char *) ControlFile,
+				offsetof(ControlFileData, crc));
+	FIN_CRC32C(ControlFile->crc);
+
+	/*
+	 * Write out PG_CONTROL_FILE_SIZE bytes into pg_control by zero-padding
+	 * the excess over sizeof(ControlFileData), to avoid premature EOF related
+	 * errors when reading it.
+	 */
+	memset(buffer, 0, PG_CONTROL_FILE_SIZE);
+	memcpy(buffer, ControlFile, sizeof(ControlFileData));
+
+	snprintf(ControlFilePath, sizeof(ControlFilePath), "%s/%s", DataDir, XLOG_CONTROL_FILE);
+
+#ifndef FRONTEND
+	if ((fd = OpenTransientFile(ControlFilePath, O_WRONLY | PG_BINARY)) == -1)
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m",
+						ControlFilePath)));
+#else
+	if ((fd = open(ControlFilePath, O_WRONLY | PG_BINARY,
+				   pg_file_create_mode)) == -1)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+				progname, ControlFilePath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+#endif
+
+	errno = 0;
+	if (write(fd, buffer, PG_CONTROL_FILE_SIZE) != PG_CONTROL_FILE_SIZE)
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
+
+#ifndef FRONTEND
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not write file \"%s\": %m",
+						ControlFilePath)));
+#else
+		fprintf(stderr, _("%s: could not write \"%s\": %s\n"),
+				progname, ControlFilePath, strerror(errno));
+		exit(EXIT_FAILURE);
+#endif
+	}
+
+#ifndef FRONTEND
+	if (CloseTransientFile(fd))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m",
+						ControlFilePath)));
+#else
+	if (close(fd) < 0)
+	{
+		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
+				progname, ControlFilePath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+#endif
 }
