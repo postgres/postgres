@@ -29,11 +29,20 @@
  */
 CATALOG(pg_ts_config,3602,TSConfigRelationId)
 {
-	Oid			oid;			/* oid */
-	NameData	cfgname;		/* name of configuration */
-	Oid			cfgnamespace;	/* name space */
-	Oid			cfgowner;		/* owner */
-	Oid			cfgparser;		/* OID of parser (in pg_ts_parser) */
+	/* oid */
+	Oid			oid;
+
+	/* name of configuration */
+	NameData	cfgname;
+
+	/* name space */
+	Oid			cfgnamespace BKI_DEFAULT(PGNSP);
+
+	/* owner */
+	Oid			cfgowner BKI_DEFAULT(PGUID);
+
+	/* OID of parser */
+	Oid			cfgparser BKI_LOOKUP(pg_ts_parser);
 } FormData_pg_ts_config;
 
 typedef FormData_pg_ts_config *Form_pg_ts_config;

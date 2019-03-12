@@ -99,7 +99,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	char		typdelim BKI_DEFAULT(',');
 
 	/* associated pg_class OID if a composite type, else 0 */
-	Oid			typrelid BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0);
+	Oid			typrelid BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP(pg_class);
 
 	/*
 	 * If typelem is not 0 then it identifies another row in pg_type. The
@@ -215,7 +215,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * DEFAULT_COLLATION_OID) for collatable base types, possibly some other
 	 * OID for domains over collatable types
 	 */
-	Oid			typcollation BKI_DEFAULT(0);
+	Oid			typcollation BKI_DEFAULT(0) BKI_LOOKUP(pg_collation);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 

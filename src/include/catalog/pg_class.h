@@ -28,56 +28,113 @@
  */
 CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,RelationRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
-	Oid			oid;			/* oid */
-	NameData	relname;		/* class name */
-	Oid			relnamespace;	/* OID of namespace containing this class */
-	Oid			reltype;		/* OID of entry in pg_type for table's
-								 * implicit row type */
-	Oid			reloftype;		/* OID of entry in pg_type for underlying
-								 * composite type */
-	Oid			relowner;		/* class owner */
-	Oid			relam;			/* access method; 0 if not a table / index */
-	Oid			relfilenode;	/* identifier of physical storage file */
+	/* oid */
+	Oid			oid;
 
+	/* class name */
+	NameData	relname;
+
+	/* OID of namespace containing this class */
+	Oid			relnamespace BKI_DEFAULT(PGNSP);
+
+	/* OID of entry in pg_type for table's implicit row type */
+	Oid			reltype BKI_LOOKUP(pg_type);
+
+	/* OID of entry in pg_type for underlying composite type */
+	Oid			reloftype BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
+
+	/* class owner */
+	Oid			relowner BKI_DEFAULT(PGUID);
+
+	/* access method; 0 if not a table / index */
+	Oid			relam BKI_LOOKUP(pg_am);
+
+	/* identifier of physical storage file */
 	/* relfilenode == 0 means it is a "mapped" relation, see relmapper.c */
-	Oid			reltablespace;	/* identifier of table space for relation */
-	int32		relpages;		/* # of blocks (not always up-to-date) */
-	float4		reltuples;		/* # of tuples (not always up-to-date) */
-	int32		relallvisible;	/* # of all-visible blocks (not always
-								 * up-to-date) */
-	Oid			reltoastrelid;	/* OID of toast table; 0 if none */
-	bool		relhasindex;	/* T if has (or has had) any indexes */
-	bool		relisshared;	/* T if shared across databases */
-	char		relpersistence; /* see RELPERSISTENCE_xxx constants below */
-	char		relkind;		/* see RELKIND_xxx constants below */
-	int16		relnatts;		/* number of user attributes */
+	Oid			relfilenode;
+
+	/* identifier of table space for relation (0 means default for database) */
+	Oid			reltablespace BKI_DEFAULT(0) BKI_LOOKUP(pg_tablespace);
+
+	/* # of blocks (not always up-to-date) */
+	int32		relpages;
+
+	/* # of tuples (not always up-to-date) */
+	float4		reltuples;
+
+	/* # of all-visible blocks (not always up-to-date) */
+	int32		relallvisible;
+
+	/* OID of toast table; 0 if none */
+	Oid			reltoastrelid;
+
+	/* T if has (or has had) any indexes */
+	bool		relhasindex;
+
+	/* T if shared across databases */
+	bool		relisshared;
+
+	/* see RELPERSISTENCE_xxx constants below */
+	char		relpersistence;
+
+	/* see RELKIND_xxx constants below */
+	char		relkind;
+
+	/* number of user attributes */
+	int16		relnatts;
 
 	/*
 	 * Class pg_attribute must contain exactly "relnatts" user attributes
 	 * (with attnums ranging from 1 to relnatts) for this class.  It may also
 	 * contain entries with negative attnums for system attributes.
 	 */
-	int16		relchecks;		/* # of CHECK constraints for class */
-	bool		relhasrules;	/* has (or has had) any rules */
-	bool		relhastriggers; /* has (or has had) any TRIGGERs */
-	bool		relhassubclass; /* has (or has had) child tables or indexes */
-	bool		relrowsecurity; /* row security is enabled or not */
-	bool		relforcerowsecurity;	/* row security forced for owners or
-										 * not */
-	bool		relispopulated; /* matview currently holds query results */
-	char		relreplident;	/* see REPLICA_IDENTITY_xxx constants  */
-	bool		relispartition; /* is relation a partition? */
-	Oid			relrewrite;		/* heap for rewrite during DDL, link to
-								 * original rel */
-	TransactionId relfrozenxid; /* all Xids < this are frozen in this rel */
-	TransactionId relminmxid;	/* all multixacts in this rel are >= this.
-								 * this is really a MultiXactId */
+
+	/* # of CHECK constraints for class */
+	int16		relchecks;
+
+	/* has (or has had) any rules */
+	bool		relhasrules;
+
+	/* has (or has had) any TRIGGERs */
+	bool		relhastriggers;
+
+	/* has (or has had) child tables or indexes */
+	bool		relhassubclass;
+
+	/* row security is enabled or not */
+	bool		relrowsecurity;
+
+	/* row security forced for owners or not */
+	bool		relforcerowsecurity;
+
+	/* matview currently holds query results */
+	bool		relispopulated;
+
+	/* see REPLICA_IDENTITY_xxx constants */
+	char		relreplident;
+
+	/* is relation a partition? */
+	bool		relispartition;
+
+	/* heap for rewrite during DDL, link to original rel */
+	Oid			relrewrite;
+
+	/* all Xids < this are frozen in this rel */
+	TransactionId relfrozenxid;
+
+	/* all multixacts in this rel are >= this; it is really a MultiXactId */
+	TransactionId relminmxid;
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* NOTE: These fields are not present in a relcache entry's rd_rel field. */
-	aclitem		relacl[1];		/* access permissions */
-	text		reloptions[1];	/* access-method-specific options */
-	pg_node_tree relpartbound;	/* partition bound node tree */
+	/* access permissions */
+	aclitem		relacl[1];
+
+	/* access-method-specific options */
+	text		reloptions[1];
+
+	/* partition bound node tree */
+	pg_node_tree relpartbound;
 #endif
 } FormData_pg_class;
 

@@ -13,7 +13,6 @@
 [
 
 { oid => '3748', descr => 'simple configuration',
-  cfgname => 'simple', cfgnamespace => 'PGNSP', cfgowner => 'PGUID',
-  cfgparser => '3722' },
+  cfgname => 'simple', cfgparser => 'default' },
 
 ]

@@ -14,7 +14,6 @@
 
 { oid => '3765',
   descr => 'simple dictionary: just lower case and check for stopword',
-  dictname => 'simple', dictnamespace => 'PGNSP', dictowner => 'PGUID',
-  dicttemplate => '3727', dictinitoption => '_null_' },
+  dictname => 'simple', dicttemplate => 'simple', dictinitoption => '_null_' },
 
 ]

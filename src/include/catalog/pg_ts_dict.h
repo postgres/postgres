@@ -28,14 +28,24 @@
  */
 CATALOG(pg_ts_dict,3600,TSDictionaryRelationId)
 {
-	Oid			oid;			/* oid */
-	NameData	dictname;		/* dictionary name */
-	Oid			dictnamespace;	/* name space */
-	Oid			dictowner;		/* owner */
-	Oid			dicttemplate;	/* dictionary's template */
+	/* oid */
+	Oid			oid;
+
+	/* dictionary name */
+	NameData	dictname;
+
+	/* name space */
+	Oid			dictnamespace BKI_DEFAULT(PGNSP);
+
+	/* owner */
+	Oid			dictowner BKI_DEFAULT(PGUID);
+
+	/* dictionary's template */
+	Oid			dicttemplate BKI_LOOKUP(pg_ts_template);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		dictinitoption; /* options passed to dict_init() */
+	/* options passed to dict_init() */
+	text		dictinitoption;
 #endif
 } FormData_pg_ts_dict;
 

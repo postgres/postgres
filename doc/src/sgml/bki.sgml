@@ -187,11 +187,10 @@
 # A comment could appear here.
 { oid =&gt; '1', oid_symbol =&gt; 'TemplateDbOid',
   descr =&gt; 'database\'s default template',
-  datname =&gt; 'template1', datdba =&gt; 'PGUID', encoding =&gt; 'ENCODING',
-  datcollate =&gt; 'LC_COLLATE', datctype =&gt; 'LC_CTYPE', datistemplate =&gt; 't',
-  datallowconn =&gt; 't', datconnlimit =&gt; '-1', datlastsysoid =&gt; '0',
-  datfrozenxid =&gt; '0', datminmxid =&gt; '1', dattablespace =&gt; '1663',
-  datacl =&gt; '_null_' },
+  datname =&gt; 'template1', encoding =&gt; 'ENCODING', datcollate =&gt; 'LC_COLLATE',
+  datctype =&gt; 'LC_CTYPE', datistemplate =&gt; 't', datallowconn =&gt; 't',
+  datconnlimit =&gt; '-1', datlastsysoid =&gt; '0', datfrozenxid =&gt; '0',
+  datminmxid =&gt; '1', dattablespace =&gt; 'pg_default', datacl =&gt; '_null_' },
 
 ]
 </programlisting>
@@ -229,6 +228,9 @@
       While the metadata keys are optional, the catalog's defined columns
       must all be provided, except when the catalog's <literal>.h</literal>
       file specifies a default value for the column.
+      (In the example above, the <structfield>datdba</structfield> field has
+      been omitted because <filename>pg_database.h</filename> supplies a
+      suitable default value for it.)
      </para>
     </listitem>
 
@@ -264,8 +266,10 @@
 
     <listitem>
      <para>
-      To aid readability, field values that are OIDs of other catalog
-      entries can be represented by names rather than numeric OIDs.
+      Field values that are OIDs of other catalog entries should be
+      represented by symbolic names rather than actual numeric OIDs.
+      (In the example above, <structfield>dattablespace</structfield>
+      contains such a reference.)
       This is described in <xref linkend="system-catalog-oid-references"/>
       below.
      </para>
@@ -438,13 +442,13 @@
    <title>OID Reference Lookup</title>
 
    <para>
-    Cross-references from one initial catalog row to another can be written
-    by just writing the preassigned OID of the referenced row.  But
-    that's error-prone and hard to understand, so for frequently-referenced
-    catalogs, <filename>genbki.pl</filename> provides mechanisms to write
-    symbolic references instead.  Currently this is possible for references
-    to access methods, functions, languages,
-    operators, opclasses, opfamilies, types, and encodings.
+    In principle, cross-references from one initial catalog row to another
+    could be written just by writing the preassigned OID of the referenced
+    row in the referencing field.  However, that is against project
+    policy, because it is error-prone, hard to read, and subject to
+    breakage if a newly-assigned OID is renumbered.  Therefore
+    <filename>genbki.pl</filename> provides mechanisms to write
+    symbolic references instead.
     The rules are as follows:
    </para>
 
@@ -455,19 +459,20 @@
       Use of symbolic references is enabled in a particular catalog column
       by attaching <literal>BKI_LOOKUP(<replaceable>lookuprule</replaceable>)</literal>
       to the column's definition, where <replaceable>lookuprule</replaceable>
-      is <literal>pg_am</literal>, <literal>pg_proc</literal>,
-      <literal>pg_language</literal>,
-      <literal>pg_operator</literal>, <literal>pg_opclass</literal>,
-      <literal>pg_opfamily</literal>,
-      <literal>pg_type</literal>,
-      or <literal>encoding</literal>.
+      is the name of the referenced catalog, e.g. <literal>pg_proc</literal>.
       <literal>BKI_LOOKUP</literal> can be attached to columns of
       type <type>Oid</type>, <type>regproc</type>, <type>oidvector</type>,
       or <type>Oid[]</type>; in the latter two cases it implies performing a
       lookup on each element of the array.
-      It's also permissible to attach <literal>BKI_LOOKUP</literal>
-      to integer columns; this should be done only for encodings,
-      which are not currently represented as catalog OIDs.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      It's also permissible to attach <literal>BKI_LOOKUP(encoding)</literal>
+      to integer columns to reference character set encodings, which are
+      not currently represented as catalog OIDs, but have a set of values
+      known to <filename>genbki.pl</filename>.
      </para>
     </listitem>
 
@@ -483,10 +488,11 @@
 
     <listitem>
      <para>
-      Access methods are just represented by their names, as are types.
-      Type names must match the referenced <structname>pg_type</structname>
-      entry's <structfield>typname</structfield>; you do not get to use any
-      aliases such as <literal>integer</literal>
+      Most kinds of catalog objects are simply referenced by their names.
+      Note that type names must exactly match the
+      referenced <structname>pg_type</structname>
+      entry's <structfield>typname</structfield>; you do not get to use
+      any aliases such as <literal>integer</literal>
       for <literal>int4</literal>.
      </para>
     </listitem>
@@ -530,7 +536,18 @@
      <para>
       In none of these cases is there any provision for
       schema-qualification; all objects created during bootstrap are
-      expected to be in the pg_catalog schema.
+      expected to be in the <literal>pg_catalog</literal> schema.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In addition to the generic lookup mechanisms, there is a special
+      convention that <literal>PGNSP</literal> is replaced by the OID of
+      the <literal>pg_catalog</literal> schema,
+      and <literal>PGUID</literal> is replaced by the OID of the bootstrap
+      superuser role.  These usages are somewhat historical but so far
+      there hasn't been a need to generalize them.
      </para>
     </listitem>
    </itemizedlist>
