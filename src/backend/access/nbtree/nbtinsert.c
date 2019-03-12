@@ -908,8 +908,10 @@ _bt_insertonpg(Relation rel,
 		 *
 		 * We're ready to do the parent insertion.  We need to hold onto the
 		 * locks for the child pages until we locate the parent, but we can
-		 * release them before doing the actual insertion (see Lehman and Yao
-		 * for the reasoning).
+		 * at least release the lock on the right child before doing the
+		 * actual insertion.  The lock on the left child will be released
+		 * last of all by parent insertion, where it is the 'cbuf' of parent
+		 * page.
 		 *----------
 		 */
 		_bt_insert_parent(rel, buf, rbuf, stack, is_root, is_only);
