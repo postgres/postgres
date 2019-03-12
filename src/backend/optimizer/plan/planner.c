@@ -1993,7 +1993,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		{
 			scanjoin_target = make_group_input_target(root, final_target);
 			scanjoin_target_parallel_safe =
-				is_parallel_safe(root, (Node *) grouping_target->exprs);
+				is_parallel_safe(root, (Node *) scanjoin_target->exprs);
 		}
 		else
 		{
