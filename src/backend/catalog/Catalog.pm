@@ -87,6 +87,8 @@ sub ParseHeader
 		}
 
 		# Push the data into the appropriate data structure.
+		# Caution: when adding new recognized OID-defining macros,
+		# also update src/include/catalog/renumber_oids.pl.
 		if (/^DECLARE_TOAST\(\s*(\w+),\s*(\d+),\s*(\d+)\)/)
 		{
 			push @{ $catalog{toasting} },

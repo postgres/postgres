@@ -388,15 +388,49 @@
     to see which ones do not appear.  You can also use
     the <filename>duplicate_oids</filename> script to check for mistakes.
     (<filename>genbki.pl</filename> will assign OIDs for any rows that
-    didn't get one hand-assigned to them and also detect duplicate OIDs
-    at compile time.)
+    didn't get one hand-assigned to them, and it will also detect duplicate
+    OIDs at compile time.)
+   </para>
+
+   <para>
+    When choosing OIDs for a patch that is not expected to be committed
+    immediately, best practice is to use a group of more-or-less
+    consecutive OIDs starting with some random choice in the range
+    8000&mdash;9999.  This minimizes the risk of OID collisions with other
+    patches being developed concurrently.  To keep the 8000&mdash;9999
+    range free for development purposes, after a patch has been committed
+    to the master git repository its OIDs should be renumbered into
+    available space below that range.  Typically, this will be done
+    near the end of each development cycle, moving all OIDs consumed by
+    patches committed in that cycle at the same time.  The script
+    <filename>renumber_oids.pl</filename> can be used for this purpose.
+    If an uncommitted patch is found to have OID conflicts with some
+    recently-committed patch, <filename>renumber_oids.pl</filename> may
+    also be useful for recovering from that situation.
+   </para>
+
+   <para>
+    Because of this convention of possibly renumbering OIDs assigned by
+    patches, the OIDs assigned by a patch should not be considered stable
+    until the patch has been included in an official release.  We do not
+    change manually-assigned object OIDs once released, however, as that
+    would create assorted compatibility problems.
    </para>
 
    <para>
     The OID counter starts at 10000 at the beginning of a bootstrap run.
     If a row from a source other than <filename>postgres.bki</filename>
     is inserted into a table that requires OIDs, then it will receive an
-    OID of 10000 or above.
+    OID of 10000 or above.  For example, objects created while running
+    the <filename>information_schema.sql</filename> script receive such
+    OIDs.
+   </para>
+
+   <para>
+    OIDs assigned during normal database operation are constrained to be
+    16384 or higher.  This leaves the range 10000&mdash;16383 available
+    for OIDs assigned automatically during bootstrap.  These OIDs are not
+    considered stable, and may change from one installation to another.
    </para>
   </sect2>
 

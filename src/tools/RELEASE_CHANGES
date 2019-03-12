@@ -58,10 +58,22 @@ in both HEAD and the branch.
 	o doc/src/sgml/ref manual pages
 
 * Ports
-	o update config.guess and config.sub at the start of beta
-	  (from http://savannah.gnu.org/projects/config)
 	o update ports list in doc/src/sgml/installation.sgml
 	o update platform-specific FAQ's, if needed
+
+
+Pre-Beta Tasks
+==============
+
+These things should be done at least once per development cycle.
+Typically we do them between feature freeze and start of beta test,
+but there may be reasons to do them at other times as well.
+
+* Renumber any manually-assigned OIDs between 8000 and 9999
+  to lower numbers, using renumber_oids.pl (see notes in bki.sgml)
+
+* Update config.guess and config.sub
+  (from http://savannah.gnu.org/projects/config)
 
 * Update inet/cidr data types with newest Bind patches
 
