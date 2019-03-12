@@ -1,15 +1,40 @@
 --
 -- Free Space Map test
 --
+SELECT current_setting('block_size')::integer AS blocksize,
+current_setting('block_size')::integer / 8 AS strsize
+\gset
 CREATE TABLE fsm_check_size (num int, str text);
--- With one block, there should be no FSM
-INSERT INTO fsm_check_size VALUES(1, 'a');
+-- Fill 3 blocks with one record each
+ALTER TABLE fsm_check_size SET (fillfactor=15);
+INSERT INTO fsm_check_size SELECT i, rpad('', :strsize, 'a')
+FROM generate_series(1,3) i;
+-- There should be no FSM
 VACUUM fsm_check_size;
-SELECT pg_relation_size('fsm_check_size', 'main') AS heap_size,
-pg_relation_size('fsm_check_size', 'fsm') AS fsm_size;
- heap_size | fsm_size 
------------+----------
-      8192 |        0
+SELECT pg_relation_size('fsm_check_size', 'main') / :blocksize AS heap_nblocks,
+pg_relation_size('fsm_check_size', 'fsm') / :blocksize AS fsm_nblocks;
+ heap_nblocks | fsm_nblocks 
+--------------+-------------
+            3 |           0
+(1 row)
+
+-- The following operations are for testing the functionality of the local
+-- in-memory map. In particular, we want to be able to insert into some
+-- other block than the one at the end of the heap, without using a FSM.
+-- Fill most of the last block
+ALTER TABLE fsm_check_size SET (fillfactor=100);
+INSERT INTO fsm_check_size SELECT i, rpad('', :strsize, 'a')
+FROM generate_series(101,105) i;
+-- Make sure records can go into any block but the last one
+ALTER TABLE fsm_check_size SET (fillfactor=30);
+-- Insert large record and make sure it does not cause the relation to extend
+INSERT INTO fsm_check_size VALUES (111, rpad('', :strsize, 'a'));
+VACUUM fsm_check_size;
+SELECT pg_relation_size('fsm_check_size', 'main') / :blocksize AS heap_nblocks,
+pg_relation_size('fsm_check_size', 'fsm') / :blocksize AS fsm_nblocks;
+ heap_nblocks | fsm_nblocks 
+--------------+-------------
+            3 |           0
 (1 row)
 
 -- Extend table with enough blocks to exceed the FSM threshold
@@ -26,23 +51,23 @@ num = 11;
 END;
 $$;
 VACUUM fsm_check_size;
-SELECT pg_relation_size('fsm_check_size', 'fsm') AS fsm_size;
- fsm_size 
-----------
-    24576
+SELECT pg_relation_size('fsm_check_size', 'fsm') / :blocksize AS fsm_nblocks;
+ fsm_nblocks 
+-------------
+           3
 (1 row)
 
 -- Add long random string to extend TOAST table to 1 block
 INSERT INTO fsm_check_size
 VALUES(0, (SELECT string_agg(md5(chr(i)), '')
-		   FROM generate_series(1,100) i));
+		   FROM generate_series(1, :blocksize / 100) i));
 VACUUM fsm_check_size;
-SELECT pg_relation_size(reltoastrelid, 'main') AS toast_size,
-pg_relation_size(reltoastrelid, 'fsm') AS toast_fsm_size
+SELECT pg_relation_size(reltoastrelid, 'main') / :blocksize AS toast_nblocks,
+pg_relation_size(reltoastrelid, 'fsm') / :blocksize AS toast_fsm_nblocks
 FROM pg_class WHERE relname = 'fsm_check_size';
- toast_size | toast_fsm_size 
-------------+----------------
-       8192 |              0
+ toast_nblocks | toast_fsm_nblocks 
+---------------+-------------------
+             1 |                 0
 (1 row)
 
 DROP TABLE fsm_check_size;

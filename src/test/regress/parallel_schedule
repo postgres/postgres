@@ -23,7 +23,7 @@ test: numerology
 # ----------
 # The second group of parallel tests
 # ----------
-test: point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes
+test: point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes fsm
 
 # ----------
 # Another group of parallel tests
@@ -67,12 +67,6 @@ test: create_aggregate create_function_3 create_cast constraints triggers inheri
 # results. So it should not run parallel to other tests.
 # ----------
 test: sanity_check
-
-# ----------
-# fsm does a delete followed by vacuum, and running it in parallel can prevent
-# removal of rows.
-# ----------
-test: fsm
 
 # ----------
 # Believe it or not, select creates a table, subsequent
