@@ -36,6 +36,7 @@ our @EXPORT = qw(
   system_or_bail
   system_log
   run_log
+  run_command
 
   command_ok
   command_fails
@@ -201,6 +202,16 @@ sub run_log
 {
 	print("# Running: " . join(" ", @{ $_[0] }) . "\n");
 	return IPC::Run::run(@_);
+}
+
+sub run_command
+{
+	my ($cmd) = @_;
+	my ($stdout, $stderr);
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	chomp($stdout);
+	chomp($stderr);
+	return ($stdout, $stderr);
 }
 
 # Generate a string made of the given range of ASCII characters
