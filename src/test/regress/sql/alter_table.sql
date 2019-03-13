@@ -776,9 +776,6 @@ insert into atacc1 (test2, test) values (2, 3);
 insert into atacc1 (test2, test) values (1, NULL);
 drop table atacc1;
 
--- we want check if not null was implied by constraint
-set client_min_messages to 'debug1';
-
 -- alter table / alter column [set/drop] not null tests
 -- try altering system catalogs, should fail
 alter table pg_class alter column relname drop not null;
@@ -846,8 +843,6 @@ alter table atacc1 alter test_a drop not null, alter test_b drop not null;
 alter table atacc1 add constraint atacc1_constr_b_valid check(test_b is not null);
 alter table atacc1 alter test_b set not null, alter test_a set not null;
 drop table atacc1;
-
-reset client_min_messages;
 
 -- test inheritance
 create table parent (a int);
