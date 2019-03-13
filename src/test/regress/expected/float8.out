@@ -454,44 +454,44 @@ SELECT '' AS five, * FROM FLOAT8_TBL;
       | -1.2345678901234e-200
 (5 rows)
 
--- hyperbolic functions
-SELECT sinh(float8 '0');
- sinh 
-------
-    0
-(1 row)
-
-SELECT cosh(float8 '0');
- cosh 
-------
-    1
-(1 row)
-
-SELECT tanh(float8 '0');
- tanh 
-------
-    0
-(1 row)
-
-SELECT asinh(float8 '0');
- asinh 
--------
-     0
-(1 row)
-
-SELECT acosh(float8 '1');
- acosh 
--------
-     0
-(1 row)
-
-SELECT atanh(float8 '0');
- atanh 
--------
-     0
-(1 row)
-
 RESET extra_float_digits;
+-- hyperbolic functions
+SELECT sinh(float8 '1');
+        sinh        
+--------------------
+ 1.1752011936438014
+(1 row)
+
+SELECT cosh(float8 '1');
+        cosh        
+--------------------
+ 1.5430806348152437
+(1 row)
+
+SELECT tanh(float8 '1');
+        tanh        
+--------------------
+ 0.7615941559557649
+(1 row)
+
+SELECT asinh(float8 '1');
+       asinh       
+-------------------
+ 0.881373587019543
+(1 row)
+
+SELECT acosh(float8 '2');
+       acosh        
+--------------------
+ 1.3169578969248166
+(1 row)
+
+SELECT atanh(float8 '0.5');
+       atanh        
+--------------------
+ 0.5493061443340548
+(1 row)
+
 -- test for over- and underflow
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
 ERROR:  "10e400" is out of range for type double precision
