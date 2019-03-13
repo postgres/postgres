@@ -17,6 +17,7 @@ SUBDIRS = \
 	initdb \
 	pg_archivecleanup \
 	pg_basebackup \
+	pg_checksums \
 	pg_config \
 	pg_controldata \
 	pg_ctl \
@@ -26,7 +27,6 @@ SUBDIRS = \
 	pg_test_fsync \
 	pg_test_timing \
 	pg_upgrade \
-	pg_verify_checksums \
 	pg_waldump \
 	pgbench \
 	psql \

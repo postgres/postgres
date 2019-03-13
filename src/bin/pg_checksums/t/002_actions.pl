@@ -1,4 +1,4 @@
-# Do basic sanity checks supported by pg_verify_checksums using
+# Do basic sanity checks supported by pg_checksums using
 # an initialized cluster.
 
 use strict;
@@ -38,7 +38,7 @@ sub check_relation_corruption
 
 	# Checksums are correct for single relfilenode as the table is not
 	# corrupted yet.
-	command_ok(['pg_verify_checksums',  '-D', $pgdata,
+	command_ok(['pg_checksums',  '-D', $pgdata,
 		'-r', $relfilenode_corrupted],
 		"succeeds for single relfilenode on tablespace $tablespace with offline cluster");
 
@@ -49,7 +49,7 @@ sub check_relation_corruption
 	close $file;
 
 	# Checksum checks on single relfilenode fail
-	$node->command_checks_all([ 'pg_verify_checksums', '-D', $pgdata, '-r',
+	$node->command_checks_all([ 'pg_checksums', '-D', $pgdata, '-r',
 								$relfilenode_corrupted],
 							  1,
 							  [qr/Bad checksums:.*1/],
@@ -57,7 +57,7 @@ sub check_relation_corruption
 							  "fails with corrupted data for single relfilenode on tablespace $tablespace");
 
 	# Global checksum checks fail as well
-	$node->command_checks_all([ 'pg_verify_checksums', '-D', $pgdata],
+	$node->command_checks_all([ 'pg_checksums', '-D', $pgdata],
 							  1,
 							  [qr/Bad checksums:.*1/],
 							  [qr/checksum verification failed/],
@@ -67,7 +67,7 @@ sub check_relation_corruption
 	$node->start;
 	$node->safe_psql('postgres', "DROP TABLE $table;");
 	$node->stop;
-	$node->command_ok(['pg_verify_checksums', '-D', $pgdata],
+	$node->command_ok(['pg_checksums', '-D', $pgdata],
 	        "succeeds again after table drop on tablespace $tablespace");
 
 	$node->start;
@@ -101,12 +101,12 @@ mkdir "$pgdata/global/pgsql_tmp";
 append_to_file "$pgdata/global/pgsql_tmp/1.1", "foo";
 
 # Checksums pass on a newly-created cluster
-command_ok(['pg_verify_checksums',  '-D', $pgdata],
+command_ok(['pg_checksums',  '-D', $pgdata],
 		   "succeeds with offline cluster");
 
 # Checks cannot happen with an online cluster
 $node->start;
-command_fails(['pg_verify_checksums',  '-D', $pgdata],
+command_fails(['pg_checksums',  '-D', $pgdata],
 			  "fails with online cluster");
 
 # Check corruption of table on default tablespace.
@@ -121,7 +121,7 @@ $node->safe_psql('postgres',
 	"CREATE TABLESPACE ts_corrupt LOCATION '$tablespace_dir';");
 check_relation_corruption($node, 'corrupt2', 'ts_corrupt');
 
-# Utility routine to check that pg_verify_checksums is able to detect
+# Utility routine to check that pg_checksums is able to detect
 # correctly-named relation files filled with some corrupted data.
 sub fail_corrupt
 {
@@ -133,7 +133,7 @@ sub fail_corrupt
 	my $file_name = "$pgdata/global/$file";
 	append_to_file $file_name, "foo";
 
-	$node->command_checks_all([ 'pg_verify_checksums', '-D', $pgdata],
+	$node->command_checks_all([ 'pg_checksums', '-D', $pgdata],
 						  1,
 						  [qr/^$/],
 						  [qr/could not read block 0 in file.*$file\":/],

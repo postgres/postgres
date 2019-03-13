@@ -1,38 +1,38 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for src/bin/pg_verify_checksums
+# Makefile for src/bin/pg_checksums
 #
 # Copyright (c) 1998-2019, PostgreSQL Global Development Group
 #
-# src/bin/pg_verify_checksums/Makefile
+# src/bin/pg_checksums/Makefile
 #
 #-------------------------------------------------------------------------
 
-PGFILEDESC = "pg_verify_checksums - verify data checksums in an offline cluster"
+PGFILEDESC = "pg_checksums - verify data checksums in an offline cluster"
 PGAPPICON=win32
 
-subdir = src/bin/pg_verify_checksums
+subdir = src/bin/pg_checksums
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS= pg_verify_checksums.o $(WIN32RES)
+OBJS= pg_checksums.o $(WIN32RES)
 
-all: pg_verify_checksums
+all: pg_checksums
 
-pg_verify_checksums: $(OBJS) | submake-libpgport
+pg_checksums: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pg_verify_checksums$(X) '$(DESTDIR)$(bindir)/pg_verify_checksums$(X)'
+	$(INSTALL_PROGRAM) pg_checksums$(X) '$(DESTDIR)$(bindir)/pg_checksums$(X)'
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
-	rm -f '$(DESTDIR)$(bindir)/pg_verify_checksums$(X)'
+	rm -f '$(DESTDIR)$(bindir)/pg_checksums$(X)'
 
 clean distclean maintainer-clean:
-	rm -f pg_verify_checksums$(X) $(OBJS)
+	rm -f pg_checksums$(X) $(OBJS)
 	rm -rf tmp_check
 
 check:

@@ -1,27 +1,27 @@
 <!--
-doc/src/sgml/ref/pg_verify_checksums.sgml
+doc/src/sgml/ref/pg_checksums.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="pgverifychecksums">
- <indexterm zone="pgverifychecksums">
-  <primary>pg_verify_checksums</primary>
+<refentry id="app-pgchecksums">
+ <indexterm zone="app-pgchecksums">
+  <primary>pg_checksums</primary>
  </indexterm>
 
  <refmeta>
-  <refentrytitle><application>pg_verify_checksums</application></refentrytitle>
+  <refentrytitle><application>pg_checksums</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>pg_verify_checksums</refname>
+  <refname>pg_checksums</refname>
   <refpurpose>verify data checksums in a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
   <cmdsynopsis>
-   <command>pg_verify_checksums</command>
+   <command>pg_checksums</command>
    <arg rep="repeat" choice="opt"><replaceable class="parameter">option</replaceable></arg>
    <group choice="opt">
     <group choice="opt">
@@ -33,12 +33,12 @@ PostgreSQL documentation
   </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="r1-app-pg_verify_checksums-1">
+ <refsect1 id="r1-app-pg_checksums-1">
   <title>Description</title>
   <para>
-   <command>pg_verify_checksums</command> verifies data checksums in a
+   <application>pg_checksums</application> verifies data checksums in a
    <productname>PostgreSQL</productname> cluster.  The server must be shut
-   down cleanly before running <application>pg_verify_checksums</application>.
+   down cleanly before running <application>pg_checksums</application>.
    The exit status is zero if there are no checksum errors, otherwise nonzero.
   </para>
  </refsect1>
@@ -84,7 +84,7 @@ PostgreSQL documentation
        <term><option>--version</option></term>
        <listitem>
        <para>
-        Print the <application>pg_verify_checksums</application> version and exit.
+        Print the <application>pg_checksums</application> version and exit.
        </para>
        </listitem>
      </varlistentry>
@@ -94,7 +94,7 @@ PostgreSQL documentation
       <term><option>--help</option></term>
        <listitem>
         <para>
-         Show help about <application>pg_verify_checksums</application> command line
+         Show help about <application>pg_checksums</application> command line
          arguments, and exit.
         </para>
        </listitem>

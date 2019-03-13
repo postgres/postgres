@@ -276,6 +276,7 @@
 
    &initdb;
    &pgarchivecleanup;
+   &pgChecksums;
    &pgControldata;
    &pgCtl;
    &pgResetwal;
@@ -283,7 +284,6 @@
    &pgtestfsync;
    &pgtesttiming;
    &pgupgrade;
-   &pgVerifyChecksums;
    &pgwaldump;
    &postgres;
    &postmaster;

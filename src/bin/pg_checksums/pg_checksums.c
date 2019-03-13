@@ -1,12 +1,16 @@
-/*
- * pg_verify_checksums
+/*-------------------------------------------------------------------------
  *
- * Verifies page level checksums in an offline cluster
+ * pg_checksums.c
+ *	  Verifies page level checksums in an offline cluster.
  *
- *	Copyright (c) 2010-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2019, PostgreSQL Global Development Group
  *
- *	src/bin/pg_verify_checksums/pg_verify_checksums.c
+ * IDENTIFICATION
+ *	  src/bin/pg_checksums/pg_checksums.c
+ *
+ *-------------------------------------------------------------------------
  */
+
 #include "postgres_fe.h"
 
 #include <dirent.h>
@@ -240,7 +244,7 @@ main(int argc, char *argv[])
 	int			option_index;
 	bool		crc_ok;
 
-	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_verify_checksums"));
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_checksums"));
 
 	progname = get_progname(argv[0]);
 
@@ -253,7 +257,7 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_verify_checksums (PostgreSQL) " PG_VERSION);
+			puts("pg_checksums (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
@@ -318,7 +322,7 @@ main(int argc, char *argv[])
 
 	if (ControlFile->pg_control_version != PG_CONTROL_VERSION)
 	{
-		fprintf(stderr, _("%s: cluster is not compatible with this version of pg_verify_checksums\n"),
+		fprintf(stderr, _("%s: cluster is not compatible with this version of pg_checksums\n"),
 				progname);
 		exit(1);
 	}
