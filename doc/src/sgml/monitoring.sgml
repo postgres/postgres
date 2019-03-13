@@ -1281,7 +1281,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="34"><literal>IPC</literal></entry>
+         <entry morerows="36"><literal>IPC</literal></entry>
          <entry><literal>BgWorkerShutdown</literal></entry>
          <entry>Waiting for background worker to shut down.</entry>
         </row>
@@ -1292,6 +1292,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>BtreePage</literal></entry>
          <entry>Waiting for the page number needed to continue a parallel B-tree scan to become available.</entry>
+        </row>
+        <row>
+         <entry><literal>CheckpointDone</literal></entry>
+         <entry>Waiting for a checkpoint to complete.</entry>
+        </row>
+        <row>
+         <entry><literal>CheckpointStart</literal></entry>
+         <entry>Waiting for a checkpoint to start.</entry>
         </row>
         <row>
          <entry><literal>ClogGroupUpdate</literal></entry>

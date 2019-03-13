@@ -126,6 +126,9 @@ typedef struct
 
 	int			ckpt_flags;		/* checkpoint flags, as defined in xlog.h */
 
+	ConditionVariable start_cv; /* signaled when ckpt_started advances */
+	ConditionVariable done_cv;	/* signaled when ckpt_done advances */
+
 	uint32		num_backend_writes; /* counts user backend buffer writes */
 	uint32		num_backend_fsync;	/* counts user backend fsync calls */
 
@@ -428,6 +431,8 @@ CheckpointerMain(void)
 			CheckpointerShmem->ckpt_started++;
 			SpinLockRelease(&CheckpointerShmem->ckpt_lck);
 
+			ConditionVariableBroadcast(&CheckpointerShmem->start_cv);
+
 			/*
 			 * The end-of-recovery checkpoint is a real checkpoint that's
 			 * performed while we're still in recovery.
@@ -487,6 +492,8 @@ CheckpointerMain(void)
 			SpinLockAcquire(&CheckpointerShmem->ckpt_lck);
 			CheckpointerShmem->ckpt_done = CheckpointerShmem->ckpt_started;
 			SpinLockRelease(&CheckpointerShmem->ckpt_lck);
+
+			ConditionVariableBroadcast(&CheckpointerShmem->done_cv);
 
 			if (ckpt_performed)
 			{
@@ -915,6 +922,8 @@ CheckpointerShmemInit(void)
 		MemSet(CheckpointerShmem, 0, size);
 		SpinLockInit(&CheckpointerShmem->ckpt_lck);
 		CheckpointerShmem->max_requests = NBuffers;
+		ConditionVariableInit(&CheckpointerShmem->start_cv);
+		ConditionVariableInit(&CheckpointerShmem->done_cv);
 	}
 }
 
@@ -1023,6 +1032,7 @@ RequestCheckpoint(int flags)
 					new_failed;
 
 		/* Wait for a new checkpoint to start. */
+		ConditionVariablePrepareToSleep(&CheckpointerShmem->start_cv);
 		for (;;)
 		{
 			SpinLockAcquire(&CheckpointerShmem->ckpt_lck);
@@ -1032,13 +1042,15 @@ RequestCheckpoint(int flags)
 			if (new_started != old_started)
 				break;
 
-			CHECK_FOR_INTERRUPTS();
-			pg_usleep(100000L);
+			ConditionVariableSleep(&CheckpointerShmem->start_cv,
+								   WAIT_EVENT_CHECKPOINT_START);
 		}
+		ConditionVariableCancelSleep();
 
 		/*
 		 * We are waiting for ckpt_done >= new_started, in a modulo sense.
 		 */
+		ConditionVariablePrepareToSleep(&CheckpointerShmem->done_cv);
 		for (;;)
 		{
 			int			new_done;
@@ -1051,9 +1063,10 @@ RequestCheckpoint(int flags)
 			if (new_done - new_started >= 0)
 				break;
 
-			CHECK_FOR_INTERRUPTS();
-			pg_usleep(100000L);
+			ConditionVariableSleep(&CheckpointerShmem->done_cv,
+								   WAIT_EVENT_CHECKPOINT_DONE);
 		}
+		ConditionVariableCancelSleep();
 
 		if (new_failed != old_failed)
 			ereport(ERROR,

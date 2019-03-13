@@ -3623,6 +3623,12 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_BTREE_PAGE:
 			event_name = "BtreePage";
 			break;
+		case WAIT_EVENT_CHECKPOINT_DONE:
+			event_name = "CheckpointDone";
+			break;
+		case WAIT_EVENT_CHECKPOINT_START:
+			event_name = "CheckpointStart";
+			break;
 		case WAIT_EVENT_CLOG_GROUP_UPDATE:
 			event_name = "ClogGroupUpdate";
 			break;
