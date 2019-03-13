@@ -349,7 +349,7 @@ CREATE TABLE FKTABLE ( ftest1 int, ftest2 int );
 INSERT INTO PKTABLE VALUES (1, 2);
 INSERT INTO FKTABLE VALUES (1, NULL);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) REFERENCES PKTABLE MATCH FULL;
-ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_ftest2_fkey"
 DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
@@ -829,23 +829,23 @@ DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
 -- This should fail, because we just chose really odd types
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
-ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 -- Again, so should this...
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
-ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 -- This fails because we mixed up the column ordering
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable);
-ERROR:  foreign key constraint "fktable_ftest2_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest2_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
 -- As does this...
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest1, ptest2));
-ERROR:  foreign key constraint "fktable_ftest2_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest2_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
 -- And again..
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest2, ptest1));
-ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest2" are of incompatible types: integer and inet.
 -- This works...
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest2, ptest1));
@@ -866,17 +866,17 @@ DROP TABLE PKTABLE;
 -- This shouldn't (mixed up columns)
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest2, ptest1));
-ERROR:  foreign key constraint "pktable_ptest3_fkey" cannot be implemented
+ERROR:  foreign key constraint "pktable_ptest3_ptest4_fkey" cannot be implemented
 DETAIL:  Key columns "ptest3" and "ptest2" are of incompatible types: integer and inet.
 -- Nor should this... (same reason, we have 4,3 referencing 1,2 which mismatches types
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable(ptest1, ptest2));
-ERROR:  foreign key constraint "pktable_ptest4_fkey" cannot be implemented
+ERROR:  foreign key constraint "pktable_ptest4_ptest3_fkey" cannot be implemented
 DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and integer.
 -- Not this one either... Same as the last one except we didn't defined the columns being referenced.
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable);
-ERROR:  foreign key constraint "pktable_ptest4_fkey" cannot be implemented
+ERROR:  foreign key constraint "pktable_ptest4_ptest3_fkey" cannot be implemented
 DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and integer.
 --
 -- Now some cases with inheritance
@@ -917,19 +917,19 @@ insert into pktable(base1, ptest1) values (1, 1);
 insert into pktable(base1, ptest1) values (2, 2);
 --  let's insert a non-existent fktable value
 insert into fktable(ftest1, ftest2) values (3, 1);
-ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_ftest2_fkey"
 DETAIL:  Key (ftest1, ftest2)=(3, 1) is not present in table "pktable".
 --  let's make a valid row for that
 insert into pktable(base1,ptest1) values (3, 1);
 insert into fktable(ftest1, ftest2) values (3, 1);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
-ERROR:  update or delete on table "pktable" violates foreign key constraint "fktable_ftest1_fkey" on table "fktable"
+ERROR:  update or delete on table "pktable" violates foreign key constraint "fktable_ftest1_ftest2_fkey" on table "fktable"
 DETAIL:  Key (base1, ptest1)=(3, 1) is still referenced from table "fktable".
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
-ERROR:  update or delete on table "pktable" violates foreign key constraint "fktable_ftest1_fkey" on table "fktable"
+ERROR:  update or delete on table "pktable" violates foreign key constraint "fktable_ftest1_ftest2_fkey" on table "fktable"
 DETAIL:  Key (base1, ptest1)=(3, 1) is still referenced from table "fktable".
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
@@ -949,15 +949,15 @@ insert into pktable (base1, ptest1, base2, ptest2) values (2, 2, 2, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (1, 3, 2, 2);
 -- fails (3,2) isn't in base1, ptest1
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 3, 3, 2);
-ERROR:  insert or update on table "pktable" violates foreign key constraint "pktable_base2_fkey"
+ERROR:  insert or update on table "pktable" violates foreign key constraint "pktable_base2_ptest2_fkey"
 DETAIL:  Key (base2, ptest2)=(3, 2) is not present in table "pktable".
 -- fails (2,2) is being referenced
 delete from pktable where base1=2;
-ERROR:  update or delete on table "pktable" violates foreign key constraint "pktable_base2_fkey" on table "pktable"
+ERROR:  update or delete on table "pktable" violates foreign key constraint "pktable_base2_ptest2_fkey" on table "pktable"
 DETAIL:  Key (base1, ptest1)=(2, 2) is still referenced from table "pktable".
 -- fails (1,1) is being referenced (twice)
 update pktable set base1=3 where base1=1;
-ERROR:  update or delete on table "pktable" violates foreign key constraint "pktable_base2_fkey" on table "pktable"
+ERROR:  update or delete on table "pktable" violates foreign key constraint "pktable_base2_ptest2_fkey" on table "pktable"
 DETAIL:  Key (base1, ptest1)=(1, 1) is still referenced from table "pktable".
 -- this sequence of two deletes will work, since after the first there will be no (2,*) references
 delete from pktable where base2=2;
@@ -969,20 +969,20 @@ create table pktable_base(base1 int not null);
 create table pktable(ptest1 inet, primary key(base1, ptest1)) inherits (pktable_base);
 -- just generally bad types (with and without column references on the referenced table)
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable);
-ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "base1" are of incompatible types: cidr and integer.
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable(base1, ptest1));
-ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "base1" are of incompatible types: cidr and integer.
 -- let's mix up which columns reference which
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable);
-ERROR:  foreign key constraint "fktable_ftest2_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest2_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest2" and "base1" are of incompatible types: inet and integer.
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable(base1, ptest1));
-ERROR:  foreign key constraint "fktable_ftest2_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest2_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest2" and "base1" are of incompatible types: inet and integer.
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest1, ftest2) references pktable(ptest1, base1));
-ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
+ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: integer and inet.
 drop table pktable;
 drop table pktable_base;
@@ -990,19 +990,19 @@ drop table pktable_base;
 create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 inet, ptest2 inet[], primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-ERROR:  foreign key constraint "pktable_base2_fkey" cannot be implemented
+ERROR:  foreign key constraint "pktable_base2_ptest2_fkey" cannot be implemented
 DETAIL:  Key columns "ptest2" and "ptest1" are of incompatible types: inet[] and inet.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(ptest1, base1)) inherits (pktable_base);
-ERROR:  foreign key constraint "pktable_base2_fkey" cannot be implemented
+ERROR:  foreign key constraint "pktable_base2_ptest2_fkey" cannot be implemented
 DETAIL:  Key columns "base2" and "ptest1" are of incompatible types: integer and inet.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-ERROR:  foreign key constraint "pktable_ptest2_fkey" cannot be implemented
+ERROR:  foreign key constraint "pktable_ptest2_base2_fkey" cannot be implemented
 DETAIL:  Key columns "ptest2" and "base1" are of incompatible types: inet and integer.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-ERROR:  foreign key constraint "pktable_ptest2_fkey" cannot be implemented
+ERROR:  foreign key constraint "pktable_ptest2_base2_fkey" cannot be implemented
 DETAIL:  Key columns "ptest2" and "base1" are of incompatible types: inet and integer.
 drop table pktable;
 ERROR:  table "pktable" does not exist
@@ -1435,12 +1435,32 @@ create table fktable2 (d int, e int, foreign key (d, e) references pktable2);
 insert into pktable2 values (1, 2, 3, 4, 5);
 insert into fktable2 values (4, 5);
 delete from pktable2;
-ERROR:  update or delete on table "pktable2" violates foreign key constraint "fktable2_d_fkey" on table "fktable2"
+ERROR:  update or delete on table "pktable2" violates foreign key constraint "fktable2_d_e_fkey" on table "fktable2"
 DETAIL:  Key (d, e)=(4, 5) is still referenced from table "fktable2".
 update pktable2 set d = 5;
-ERROR:  update or delete on table "pktable2" violates foreign key constraint "fktable2_d_fkey" on table "fktable2"
+ERROR:  update or delete on table "pktable2" violates foreign key constraint "fktable2_d_e_fkey" on table "fktable2"
 DETAIL:  Key (d, e)=(4, 5) is still referenced from table "fktable2".
 drop table pktable2, fktable2;
+-- Test truncation of long foreign key names
+create table pktable1 (a int primary key);
+create table pktable2 (a int, b int, primary key (a, b));
+create table fktable2 (
+  a int,
+  b int,
+  very_very_long_column_name_to_exceed_63_characters int,
+  foreign key (very_very_long_column_name_to_exceed_63_characters) references pktable1,
+  foreign key (a, very_very_long_column_name_to_exceed_63_characters) references pktable2,
+  foreign key (a, very_very_long_column_name_to_exceed_63_characters) references pktable2
+);
+select conname from pg_constraint where conrelid = 'fktable2'::regclass order by conname;
+                             conname                             
+-----------------------------------------------------------------
+ fktable2_a_very_very_long_column_name_to_exceed_63_charac_fkey1
+ fktable2_a_very_very_long_column_name_to_exceed_63_charact_fkey
+ fktable2_very_very_long_column_name_to_exceed_63_character_fkey
+(3 rows)
+
+drop table pktable1, pktable2, fktable2;
 --
 -- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
 --
@@ -1526,28 +1546,28 @@ DETAIL:  This feature is not yet supported on partitioned tables.
 -- these inserts, targeting both the partition directly as well as the
 -- partitioned table, should all fail
 INSERT INTO fk_partitioned_fk (a,b) VALUES (500, 501);
-ERROR:  insert or update on table "fk_partitioned_fk_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_1" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(500, 501) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk_1 (a,b) VALUES (500, 501);
-ERROR:  insert or update on table "fk_partitioned_fk_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_1" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(500, 501) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk (a,b) VALUES (1500, 1501);
-ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(1500, 1501) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk_2 (a,b) VALUES (1500, 1501);
-ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(1500, 1501) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk (a,b) VALUES (2500, 2502);
-ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2500, 2502) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk_3 (a,b) VALUES (2500, 2502);
-ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2500, 2502) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk (a,b) VALUES (2501, 2503);
-ERROR:  insert or update on table "fk_partitioned_fk_3_0" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3_0" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2501, 2503) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk_3 (a,b) VALUES (2501, 2503);
-ERROR:  insert or update on table "fk_partitioned_fk_3_0" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3_0" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2501, 2503) is not present in table "fk_notpartitioned_pk".
 -- but if we insert the values that make them valid, then they work
 INSERT INTO fk_notpartitioned_pk VALUES (500, 501), (1500, 1501),
@@ -1558,22 +1578,22 @@ INSERT INTO fk_partitioned_fk (a,b) VALUES (2500, 2502);
 INSERT INTO fk_partitioned_fk (a,b) VALUES (2501, 2503);
 -- this update fails because there is no referenced row
 UPDATE fk_partitioned_fk SET a = a + 1 WHERE a = 2501;
-ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3_1" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2502, 2503) is not present in table "fk_notpartitioned_pk".
 -- but we can fix it thusly:
 INSERT INTO fk_notpartitioned_pk (a,b) VALUES (2502, 2503);
 UPDATE fk_partitioned_fk SET a = a + 1 WHERE a = 2501;
 -- these updates would leave lingering rows in the referencing table; disallow
 UPDATE fk_notpartitioned_pk SET b = 502 WHERE a = 500;
-ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_fkey" on table "fk_partitioned_fk"
+ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_b_fkey" on table "fk_partitioned_fk"
 DETAIL:  Key (a, b)=(500, 501) is still referenced from table "fk_partitioned_fk".
 UPDATE fk_notpartitioned_pk SET b = 1502 WHERE a = 1500;
-ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_fkey" on table "fk_partitioned_fk"
+ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_b_fkey" on table "fk_partitioned_fk"
 DETAIL:  Key (a, b)=(1500, 1501) is still referenced from table "fk_partitioned_fk".
 UPDATE fk_notpartitioned_pk SET b = 2504 WHERE a = 2500;
-ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_fkey" on table "fk_partitioned_fk"
+ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_b_fkey" on table "fk_partitioned_fk"
 DETAIL:  Key (a, b)=(2500, 2502) is still referenced from table "fk_partitioned_fk".
-ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 -- done.
 DROP TABLE fk_notpartitioned_pk, fk_partitioned_fk;
 -- Altering a type referenced by a foreign key needs to drop/recreate the FK.
@@ -1601,10 +1621,10 @@ CREATE TABLE fk_partitioned_fk_3 (a int, b int);
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_3 FOR VALUES IN (2500,2501,2502,2503);
 -- this insert fails
 INSERT INTO fk_partitioned_fk (a, b) VALUES (2502, 2503);
-ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2502, 2503) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, 2503);
-ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2502, 2503) is not present in table "fk_notpartitioned_pk".
 -- but since the FK is MATCH SIMPLE, this one doesn't
 INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, NULL);
@@ -1620,12 +1640,12 @@ CREATE TABLE fk_partitioned_fk_full (x int, y int) PARTITION BY RANGE (x);
 CREATE TABLE fk_partitioned_fk_full_1 PARTITION OF fk_partitioned_fk_full DEFAULT;
 INSERT INTO fk_partitioned_fk_full VALUES (1, NULL);
 ALTER TABLE fk_partitioned_fk_full ADD FOREIGN KEY (x, y) REFERENCES fk_notpartitioned_pk MATCH FULL;  -- fails
-ERROR:  insert or update on table "fk_partitioned_fk_full" violates foreign key constraint "fk_partitioned_fk_full_x_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_full" violates foreign key constraint "fk_partitioned_fk_full_x_y_fkey"
 DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
 TRUNCATE fk_partitioned_fk_full;
 ALTER TABLE fk_partitioned_fk_full ADD FOREIGN KEY (x, y) REFERENCES fk_notpartitioned_pk MATCH FULL;
 INSERT INTO fk_partitioned_fk_full VALUES (1, NULL);  -- fails
-ERROR:  insert or update on table "fk_partitioned_fk_full_1" violates foreign key constraint "fk_partitioned_fk_full_x_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_full_1" violates foreign key constraint "fk_partitioned_fk_full_x_y_fkey"
 DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
 DROP TABLE fk_partitioned_fk_full;
 -- ON UPDATE SET NULL
@@ -1661,7 +1681,7 @@ SELECT count(*) FROM fk_partitioned_fk WHERE a IS NULL;
 (1 row)
 
 -- ON UPDATE/DELETE SET DEFAULT
-ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
   REFERENCES fk_notpartitioned_pk
   ON DELETE SET DEFAULT ON UPDATE SET DEFAULT;
@@ -1670,7 +1690,7 @@ INSERT INTO fk_partitioned_fk_3 (a, b) VALUES (2502, 2503);
 -- this fails, because the defaults for the referencing table are not present
 -- in the referenced table:
 UPDATE fk_notpartitioned_pk SET a = 1500 WHERE a = 2502;
-ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_3" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(2501, 142857) is not present in table "fk_notpartitioned_pk".
 -- but inserting the row we can make it work:
 INSERT INTO fk_notpartitioned_pk VALUES (2501, 142857);
@@ -1682,7 +1702,7 @@ SELECT * FROM fk_partitioned_fk WHERE b = 142857;
 (1 row)
 
 -- ON UPDATE/DELETE CASCADE
-ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
   REFERENCES fk_notpartitioned_pk
   ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1723,7 +1743,7 @@ DROP TABLE fk_partitioned_fk;
  a      | integer |           |          | 2501
  b      | integer |           |          | 142857
 Foreign-key constraints:
-    "fk_partitioned_fk_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 ROLLBACK;
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES IN (1500,1502);
@@ -1741,7 +1761,7 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES IN
  a      | integer |           |          | 
 Partition of: fk_partitioned_fk FOR VALUES IN (1500, 1502)
 Foreign-key constraints:
-    "fk_partitioned_fk_2_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_2_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 DROP TABLE fk_partitioned_fk_2;
 CREATE TABLE fk_partitioned_fk_4 (a int, b int, FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE) PARTITION BY RANGE (b, a);
@@ -1761,7 +1781,7 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_4 FOR VALUES IN
 Partition of: fk_partitioned_fk FOR VALUES IN (3500, 3502)
 Partition key: RANGE (b, a)
 Foreign-key constraints:
-    "fk_partitioned_fk_4_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_4_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 Number of partitions: 2 (Use \d+ to list them.)
 
 \d fk_partitioned_fk_4_1
@@ -1772,7 +1792,7 @@ Number of partitions: 2 (Use \d+ to list them.)
  b      | integer |           |          | 
 Partition of: fk_partitioned_fk_4 FOR VALUES FROM (1, 1) TO (100, 100)
 Foreign-key constraints:
-    "fk_partitioned_fk_4_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_4_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 -- this one has an FK with mismatched properties
 \d fk_partitioned_fk_4_2
@@ -1783,8 +1803,8 @@ Foreign-key constraints:
  b      | integer |           |          | 
 Partition of: fk_partitioned_fk_4 FOR VALUES FROM (100, 100) TO (1000, 1000)
 Foreign-key constraints:
-    "fk_partitioned_fk_4_2_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE SET NULL
-    "fk_partitioned_fk_4_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_4_2_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE SET NULL
+    "fk_partitioned_fk_4_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 CREATE TABLE fk_partitioned_fk_5 (a int, b int,
 	FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE,
@@ -1806,9 +1826,9 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_5 FOR VALUES IN
 Partition of: fk_partitioned_fk FOR VALUES IN (4500)
 Partition key: RANGE (a)
 Foreign-key constraints:
-    "fk_partitioned_fk_5_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE
-    "fk_partitioned_fk_5_a_fkey1" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE
-    "fk_partitioned_fk_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_5_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE
+    "fk_partitioned_fk_5_a_b_fkey1" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 Number of partitions: 1 (Use \d+ to list them.)
 
 -- verify that it works to reattaching a child with multiple candidate
@@ -1823,10 +1843,10 @@ ALTER TABLE fk_partitioned_fk_5 ATTACH PARTITION fk_partitioned_fk_5_1 FOR VALUE
  b      | integer |           |          | 
 Partition of: fk_partitioned_fk_5 FOR VALUES FROM (0) TO (10)
 Foreign-key constraints:
-    "fk_partitioned_fk_5_1_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b)
-    "fk_partitioned_fk_5_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE
-    "fk_partitioned_fk_5_a_fkey1" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE
-    "fk_partitioned_fk_a_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_5_1_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b)
+    "fk_partitioned_fk_5_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE
+    "fk_partitioned_fk_5_a_b_fkey1" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 -- verify that attaching a table checks that the existing data satisfies the
 -- constraint
@@ -1836,7 +1856,7 @@ CREATE TABLE fk_partitioned_fk_2_2 PARTITION OF fk_partitioned_fk_2 FOR VALUES F
 INSERT INTO fk_partitioned_fk_2 VALUES (1600, 601), (1600, 1601);
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
   FOR VALUES IN (1600);
-ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_fkey"
+ERROR:  insert or update on table "fk_partitioned_fk_2" violates foreign key constraint "fk_partitioned_fk_a_b_fkey"
 DETAIL:  Key (a, b)=(1600, 601) is not present in table "fk_notpartitioned_pk".
 INSERT INTO fk_notpartitioned_pk VALUES (1600, 601), (1600, 1601);
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2

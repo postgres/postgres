@@ -498,7 +498,8 @@ ChooseExtendedStatisticName(const char *name1, const char *name2,
  * We know that less than NAMEDATALEN characters will actually be used,
  * so we can truncate the result once we've generated that many.
  *
- * XXX see also ChooseIndexNameAddition.
+ * XXX see also ChooseForeignKeyConstraintNameAddition and
+ * ChooseIndexNameAddition.
  */
 static char *
 ChooseExtendedStatisticNameAddition(List *exprs)

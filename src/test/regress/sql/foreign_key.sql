@@ -1070,6 +1070,20 @@ delete from pktable2;
 update pktable2 set d = 5;
 drop table pktable2, fktable2;
 
+-- Test truncation of long foreign key names
+create table pktable1 (a int primary key);
+create table pktable2 (a int, b int, primary key (a, b));
+create table fktable2 (
+  a int,
+  b int,
+  very_very_long_column_name_to_exceed_63_characters int,
+  foreign key (very_very_long_column_name_to_exceed_63_characters) references pktable1,
+  foreign key (a, very_very_long_column_name_to_exceed_63_characters) references pktable2,
+  foreign key (a, very_very_long_column_name_to_exceed_63_characters) references pktable2
+);
+select conname from pg_constraint where conrelid = 'fktable2'::regclass order by conname;
+drop table pktable1, pktable2, fktable2;
+
 --
 -- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
 --
@@ -1184,7 +1198,7 @@ UPDATE fk_partitioned_fk SET a = a + 1 WHERE a = 2501;
 UPDATE fk_notpartitioned_pk SET b = 502 WHERE a = 500;
 UPDATE fk_notpartitioned_pk SET b = 1502 WHERE a = 1500;
 UPDATE fk_notpartitioned_pk SET b = 2504 WHERE a = 2500;
-ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 -- done.
 DROP TABLE fk_notpartitioned_pk, fk_partitioned_fk;
 
@@ -1246,7 +1260,7 @@ DELETE FROM fk_notpartitioned_pk;
 SELECT count(*) FROM fk_partitioned_fk WHERE a IS NULL;
 
 -- ON UPDATE/DELETE SET DEFAULT
-ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
   REFERENCES fk_notpartitioned_pk
   ON DELETE SET DEFAULT ON UPDATE SET DEFAULT;
@@ -1261,7 +1275,7 @@ UPDATE fk_notpartitioned_pk SET a = 1500 WHERE a = 2502;
 SELECT * FROM fk_partitioned_fk WHERE b = 142857;
 
 -- ON UPDATE/DELETE CASCADE
-ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_fkey;
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
   REFERENCES fk_notpartitioned_pk
   ON DELETE CASCADE ON UPDATE CASCADE;

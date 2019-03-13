@@ -402,6 +402,7 @@ static ObjectAddress ATExecAddConstraint(List **wqueue,
 					AlteredTableInfo *tab, Relation rel,
 					Constraint *newConstraint, bool recurse, bool is_readd,
 					LOCKMODE lockmode);
+static char *ChooseForeignKeyConstraintNameAddition(List *colnames);
 static ObjectAddress ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 						 IndexStmt *stmt, LOCKMODE lockmode);
 static ObjectAddress ATAddCheckConstraint(List **wqueue,
@@ -7191,7 +7192,7 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			else
 				newConstraint->conname =
 					ChooseConstraintName(RelationGetRelationName(rel),
-										 strVal(linitial(newConstraint->fk_attrs)),
+										 ChooseForeignKeyConstraintNameAddition(newConstraint->fk_attrs),
 										 "fkey",
 										 RelationGetNamespace(rel),
 										 NIL);
@@ -7208,6 +7209,45 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	return address;
+}
+
+/*
+ * Generate the column-name portion of the constraint name for a new foreign
+ * key given the list of column names that reference the referenced
+ * table.  This will be passed to ChooseConstraintName along with the parent
+ * table name and the "fkey" suffix.
+ *
+ * We know that less than NAMEDATALEN characters will actually be used, so we
+ * can truncate the result once we've generated that many.
+ *
+ * XXX see also ChooseExtendedStatisticNameAddition and
+ * ChooseIndexNameAddition.
+ */
+static char *
+ChooseForeignKeyConstraintNameAddition(List *colnames)
+{
+	char		buf[NAMEDATALEN * 2];
+	int			buflen = 0;
+	ListCell   *lc;
+
+	buf[0] = '\0';
+	foreach(lc, colnames)
+	{
+		const char *name = strVal(lfirst(lc));
+
+		if (buflen > 0)
+			buf[buflen++] = '_';	/* insert _ between names */
+
+		/*
+		 * At this point we have buflen <= NAMEDATALEN.  name should be less
+		 * than NAMEDATALEN already, but use strlcpy for paranoia.
+		 */
+		strlcpy(buf + buflen, name, NAMEDATALEN);
+		buflen += strlen(buf + buflen);
+		if (buflen >= NAMEDATALEN)
+			break;
+	}
+	return pstrdup(buf);
 }
 
 /*

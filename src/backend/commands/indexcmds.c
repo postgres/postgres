@@ -2109,7 +2109,8 @@ ChooseIndexName(const char *tabname, Oid namespaceId,
  * We know that less than NAMEDATALEN characters will actually be used,
  * so we can truncate the result once we've generated that many.
  *
- * XXX See also ChooseExtendedStatisticNameAddition.
+ * XXX See also ChooseForeignKeyConstraintNameAddition and
+ * ChooseExtendedStatisticNameAddition.
  */
 static char *
 ChooseIndexNameAddition(List *colnames)
