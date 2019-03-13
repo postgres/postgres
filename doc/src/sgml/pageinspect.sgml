@@ -138,7 +138,7 @@ test=# SELECT tuple_data_split('pg_class'::regclass, t_data, t_infomask, t_infom
 
    <varlistentry>
     <term>
-     <function>heap_page_item_attrs(page bytea, rel_oid regclass, [, do_detoast bool]) returns setof record</function>
+     <function>heap_page_item_attrs(page bytea, rel_oid regclass [, do_detoast bool]) returns setof record</function>
      <indexterm>
       <primary>heap_page_item_attrs</primary>
      </indexterm>
