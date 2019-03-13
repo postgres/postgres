@@ -1028,6 +1028,8 @@ insert into atacc1 (test2, test) values (1, NULL);
 ERROR:  null value in column "test" violates not-null constraint
 DETAIL:  Failing row contains (null, 1).
 drop table atacc1;
+-- we want check if not null was implied by constraint
+set client_min_messages to 'debug1';
 -- alter table / alter column [set/drop] not null tests
 -- try altering system catalogs, should fail
 alter table pg_class alter column relname drop not null;
@@ -1043,15 +1045,19 @@ ERROR:  relation "non_existent" does not exist
 -- test checking for null values and primary key
 create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
+DEBUG:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
+DEBUG:  building index "atacc1_pkey" on table "atacc1" serially
 alter table atacc1 alter column test drop not null;
 ERROR:  column "test" is in a primary key
 alter table atacc1 drop constraint "atacc1_pkey";
 alter table atacc1 alter column test drop not null;
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
+DEBUG:  verifying table "atacc1"
 ERROR:  column "test" contains null values
 delete from atacc1;
 alter table atacc1 alter test set not null;
+DEBUG:  verifying table "atacc1"
 -- try altering a non-existent column, should fail
 alter table atacc1 alter bar set not null;
 ERROR:  column "bar" of relation "atacc1" does not exist
@@ -1065,6 +1071,54 @@ alter table myview alter column test set not null;
 ERROR:  "myview" is not a table or foreign table
 drop view myview;
 drop table atacc1;
+-- set not null verified by constraints
+create table atacc1 (test_a int, test_b int);
+insert into atacc1 values (null, 1);
+-- constraint not cover all values, should fail
+alter table atacc1 add constraint atacc1_constr_or check(test_a is not null or test_b < 10);
+DEBUG:  verifying table "atacc1"
+alter table atacc1 alter test_a set not null;
+DEBUG:  verifying table "atacc1"
+ERROR:  column "test_a" contains null values
+alter table atacc1 drop constraint atacc1_constr_or;
+-- not valid constraint, should fail
+alter table atacc1 add constraint atacc1_constr_invalid check(test_a is not null) not valid;
+alter table atacc1 alter test_a set not null;
+DEBUG:  verifying table "atacc1"
+ERROR:  column "test_a" contains null values
+alter table atacc1 drop constraint atacc1_constr_invalid;
+-- with valid constraint
+update atacc1 set test_a = 1;
+alter table atacc1 add constraint atacc1_constr_a_valid check(test_a is not null);
+DEBUG:  verifying table "atacc1"
+alter table atacc1 alter test_a set not null;
+DEBUG:  existing constraints on column "atacc1"."test_a" are sufficient to prove that it does not contain nulls
+delete from atacc1;
+insert into atacc1 values (2, null);
+alter table atacc1 alter test_a drop not null;
+-- test multiple set not null at same time
+-- test_a checked by atacc1_constr_a_valid, test_b should fail by table scan
+alter table atacc1 alter test_a set not null, alter test_b set not null;
+DEBUG:  existing constraints on column "atacc1"."test_a" are sufficient to prove that it does not contain nulls
+DEBUG:  verifying table "atacc1"
+ERROR:  column "test_b" contains null values
+-- commands order has no importance
+alter table atacc1 alter test_b set not null, alter test_a set not null;
+DEBUG:  verifying table "atacc1"
+ERROR:  column "test_b" contains null values
+-- valid one by table scan, one by check constraints
+update atacc1 set test_b = 1;
+alter table atacc1 alter test_b set not null, alter test_a set not null;
+DEBUG:  verifying table "atacc1"
+alter table atacc1 alter test_a drop not null, alter test_b drop not null;
+-- both column has check constraints
+alter table atacc1 add constraint atacc1_constr_b_valid check(test_b is not null);
+DEBUG:  verifying table "atacc1"
+alter table atacc1 alter test_b set not null, alter test_a set not null;
+DEBUG:  existing constraints on column "atacc1"."test_b" are sufficient to prove that it does not contain nulls
+DEBUG:  existing constraints on column "atacc1"."test_a" are sufficient to prove that it does not contain nulls
+drop table atacc1;
+reset client_min_messages;
 -- test inheritance
 create table parent (a int);
 create table child (b varchar(255)) inherits (parent);

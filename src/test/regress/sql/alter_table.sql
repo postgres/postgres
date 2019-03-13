@@ -776,6 +776,9 @@ insert into atacc1 (test2, test) values (2, 3);
 insert into atacc1 (test2, test) values (1, NULL);
 drop table atacc1;
 
+-- we want check if not null was implied by constraint
+set client_min_messages to 'debug1';
+
 -- alter table / alter column [set/drop] not null tests
 -- try altering system catalogs, should fail
 alter table pg_class alter column relname drop not null;
@@ -808,6 +811,43 @@ alter table myview alter column test set not null;
 drop view myview;
 
 drop table atacc1;
+
+-- set not null verified by constraints
+create table atacc1 (test_a int, test_b int);
+insert into atacc1 values (null, 1);
+-- constraint not cover all values, should fail
+alter table atacc1 add constraint atacc1_constr_or check(test_a is not null or test_b < 10);
+alter table atacc1 alter test_a set not null;
+alter table atacc1 drop constraint atacc1_constr_or;
+-- not valid constraint, should fail
+alter table atacc1 add constraint atacc1_constr_invalid check(test_a is not null) not valid;
+alter table atacc1 alter test_a set not null;
+alter table atacc1 drop constraint atacc1_constr_invalid;
+-- with valid constraint
+update atacc1 set test_a = 1;
+alter table atacc1 add constraint atacc1_constr_a_valid check(test_a is not null);
+alter table atacc1 alter test_a set not null;
+delete from atacc1;
+
+insert into atacc1 values (2, null);
+alter table atacc1 alter test_a drop not null;
+-- test multiple set not null at same time
+-- test_a checked by atacc1_constr_a_valid, test_b should fail by table scan
+alter table atacc1 alter test_a set not null, alter test_b set not null;
+-- commands order has no importance
+alter table atacc1 alter test_b set not null, alter test_a set not null;
+
+-- valid one by table scan, one by check constraints
+update atacc1 set test_b = 1;
+alter table atacc1 alter test_b set not null, alter test_a set not null;
+
+alter table atacc1 alter test_a drop not null, alter test_b drop not null;
+-- both column has check constraints
+alter table atacc1 add constraint atacc1_constr_b_valid check(test_b is not null);
+alter table atacc1 alter test_b set not null, alter test_a set not null;
+drop table atacc1;
+
+reset client_min_messages;
 
 -- test inheritance
 create table parent (a int);
