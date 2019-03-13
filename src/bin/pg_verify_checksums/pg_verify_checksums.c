@@ -316,6 +316,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (ControlFile->pg_control_version != PG_CONTROL_VERSION)
+	{
+		fprintf(stderr, _("%s: cluster is not compatible with this version of pg_verify_checksums\n"),
+				progname);
+		exit(1);
+	}
+
 	if (ControlFile->state != DB_SHUTDOWNED &&
 		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
 	{
