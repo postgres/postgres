@@ -154,15 +154,36 @@ SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
 SELECT '' AS five, * FROM FLOAT8_TBL;
 
-RESET extra_float_digits;
-
 -- hyperbolic functions
+-- we run these with extra_float_digits = 0 too, since different platforms
+-- tend to produce results that vary in the last place.
 SELECT sinh(float8 '1');
 SELECT cosh(float8 '1');
 SELECT tanh(float8 '1');
 SELECT asinh(float8 '1');
 SELECT acosh(float8 '2');
 SELECT atanh(float8 '0.5');
+-- test Inf/NaN cases for hyperbolic functions
+SELECT sinh(float8 'infinity');
+SELECT sinh(float8 '-infinity');
+SELECT sinh(float8 'nan');
+SELECT cosh(float8 'infinity');
+SELECT cosh(float8 '-infinity');
+SELECT cosh(float8 'nan');
+SELECT tanh(float8 'infinity');
+SELECT tanh(float8 '-infinity');
+SELECT tanh(float8 'nan');
+SELECT asinh(float8 'infinity');
+SELECT asinh(float8 '-infinity');
+SELECT asinh(float8 'nan');
+SELECT acosh(float8 'infinity');
+SELECT acosh(float8 '-infinity');
+SELECT acosh(float8 'nan');
+SELECT atanh(float8 'infinity');
+SELECT atanh(float8 '-infinity');
+SELECT atanh(float8 'nan');
+
+RESET extra_float_digits;
 
 -- test for over- and underflow
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
