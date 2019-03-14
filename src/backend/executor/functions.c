@@ -906,21 +906,10 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 	if (nargs > 0)
 	{
 		ParamListInfo paramLI;
-		int			i;
 
 		if (fcache->paramLI == NULL)
 		{
-			paramLI = (ParamListInfo)
-				palloc(offsetof(ParamListInfoData, params) +
-					   nargs * sizeof(ParamExternData));
-			/* we have static list of params, so no hooks needed */
-			paramLI->paramFetch = NULL;
-			paramLI->paramFetchArg = NULL;
-			paramLI->paramCompile = NULL;
-			paramLI->paramCompileArg = NULL;
-			paramLI->parserSetup = NULL;
-			paramLI->parserSetupArg = NULL;
-			paramLI->numParams = nargs;
+			paramLI = makeParamList(nargs);
 			fcache->paramLI = paramLI;
 		}
 		else
@@ -929,7 +918,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 			Assert(paramLI->numParams == nargs);
 		}
 
-		for (i = 0; i < nargs; i++)
+		for (int i = 0; i < nargs; i++)
 		{
 			ParamExternData *prm = &paramLI->params[i];
 

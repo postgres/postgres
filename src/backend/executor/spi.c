@@ -2387,20 +2387,9 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 
 	if (nargs > 0)
 	{
-		int			i;
+		paramLI = makeParamList(nargs);
 
-		paramLI = (ParamListInfo) palloc(offsetof(ParamListInfoData, params) +
-										 nargs * sizeof(ParamExternData));
-		/* we have static list of params, so no hooks needed */
-		paramLI->paramFetch = NULL;
-		paramLI->paramFetchArg = NULL;
-		paramLI->paramCompile = NULL;
-		paramLI->paramCompileArg = NULL;
-		paramLI->parserSetup = NULL;
-		paramLI->parserSetupArg = NULL;
-		paramLI->numParams = nargs;
-
-		for (i = 0; i < nargs; i++)
+		for (int i = 0; i < nargs; i++)
 		{
 			ParamExternData *prm = &paramLI->params[i];
 

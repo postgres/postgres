@@ -393,17 +393,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	/* Prepare the expressions for execution */
 	exprstates = ExecPrepareExprList(params, estate);
 
-	paramLI = (ParamListInfo)
-		palloc(offsetof(ParamListInfoData, params) +
-			   num_params * sizeof(ParamExternData));
-	/* we have static list of params, so no hooks needed */
-	paramLI->paramFetch = NULL;
-	paramLI->paramFetchArg = NULL;
-	paramLI->paramCompile = NULL;
-	paramLI->paramCompileArg = NULL;
-	paramLI->parserSetup = NULL;
-	paramLI->parserSetupArg = NULL;
-	paramLI->numParams = num_params;
+	paramLI = makeParamList(num_params);
 
 	i = 0;
 	foreach(l, exprstates)

@@ -23,6 +23,33 @@
 
 
 /*
+ * Allocate and initialize a new ParamListInfo structure.
+ *
+ * To make a new structure for the "dynamic" way (with hooks), pass 0 for
+ * numParams and set numParams manually.
+ */
+ParamListInfo
+makeParamList(int numParams)
+{
+	ParamListInfo retval;
+	Size		size;
+
+	size = offsetof(ParamListInfoData, params) +
+		numParams * sizeof(ParamExternData);
+
+	retval = (ParamListInfo) palloc(size);
+	retval->paramFetch = NULL;
+	retval->paramFetchArg = NULL;
+	retval->paramCompile = NULL;
+	retval->paramCompileArg = NULL;
+	retval->parserSetup = NULL;
+	retval->parserSetupArg = NULL;
+	retval->numParams = numParams;
+
+	return retval;
+}
+
+/*
  * Copy a ParamListInfo structure.
  *
  * The result is allocated in CurrentMemoryContext.
@@ -36,25 +63,13 @@ ParamListInfo
 copyParamList(ParamListInfo from)
 {
 	ParamListInfo retval;
-	Size		size;
-	int			i;
 
 	if (from == NULL || from->numParams <= 0)
 		return NULL;
 
-	size = offsetof(ParamListInfoData, params) +
-		from->numParams * sizeof(ParamExternData);
+	retval = makeParamList(from->numParams);
 
-	retval = (ParamListInfo) palloc(size);
-	retval->paramFetch = NULL;
-	retval->paramFetchArg = NULL;
-	retval->paramCompile = NULL;
-	retval->paramCompileArg = NULL;
-	retval->parserSetup = NULL;
-	retval->parserSetupArg = NULL;
-	retval->numParams = from->numParams;
-
-	for (i = 0; i < from->numParams; i++)
+	for (int i = 0; i < from->numParams; i++)
 	{
 		ParamExternData *oprm;
 		ParamExternData *nprm = &retval->params[i];
@@ -211,26 +226,14 @@ ParamListInfo
 RestoreParamList(char **start_address)
 {
 	ParamListInfo paramLI;
-	Size		size;
-	int			i;
 	int			nparams;
 
 	memcpy(&nparams, *start_address, sizeof(int));
 	*start_address += sizeof(int);
 
-	size = offsetof(ParamListInfoData, params) +
-		nparams * sizeof(ParamExternData);
+	paramLI = makeParamList(nparams);
 
-	paramLI = (ParamListInfo) palloc(size);
-	paramLI->paramFetch = NULL;
-	paramLI->paramFetchArg = NULL;
-	paramLI->paramCompile = NULL;
-	paramLI->paramCompileArg = NULL;
-	paramLI->parserSetup = NULL;
-	paramLI->parserSetupArg = NULL;
-	paramLI->numParams = nparams;
-
-	for (i = 0; i < nparams; i++)
+	for (int i = 0; i < nparams; i++)
 	{
 		ParamExternData *prm = &paramLI->params[i];
 

@@ -3874,8 +3874,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->datum_context = CurrentMemoryContext;
 
 	/* initialize our ParamListInfo with appropriate hook functions */
-	estate->paramLI = (ParamListInfo)
-		palloc(offsetof(ParamListInfoData, params));
+	estate->paramLI = makeParamList(0);
 	estate->paramLI->paramFetch = plpgsql_param_fetch;
 	estate->paramLI->paramFetchArg = (void *) estate;
 	estate->paramLI->paramCompile = plpgsql_param_compile;
