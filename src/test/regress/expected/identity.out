@@ -250,6 +250,7 @@ SELECT * FROM itestv11;
  11 | xyz
 (3 rows)
 
+DROP VIEW itestv10, itestv11;
 -- ADD COLUMN
 CREATE TABLE itest13 (a int);
 -- add column to empty table

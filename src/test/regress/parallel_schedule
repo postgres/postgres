@@ -60,7 +60,7 @@ test: create_index create_view index_including index_including_gist
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am hash_func
+test: create_aggregate create_function_3 create_cast constraints triggers inherit typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am hash_func
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
@@ -84,12 +84,12 @@ test: select_into select_distinct select_distinct_on select_implicit select_havi
 # ----------
 # Another group of parallel tests
 # ----------
-test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator password
+test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator password identity
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: alter_generic alter_operator misc psql async dbsize misc_functions sysviews tsrf tidscan stats_ext
+test: create_table_like alter_generic alter_operator misc psql async dbsize misc_functions sysviews tsrf tidscan stats_ext
 
 # rules cannot run concurrently with any test that creates a view
 test: rules psql_crosstab amutils
@@ -116,7 +116,7 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion tr
 # ----------
 # Another group of parallel tests
 # ----------
-test: identity partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info
+test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info
 
 # event triggers cannot run concurrently with any test that runs DDL
 test: event_trigger

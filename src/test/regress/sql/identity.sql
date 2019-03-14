@@ -145,6 +145,8 @@ INSERT INTO itestv11 OVERRIDING SYSTEM VALUE VALUES (11, 'xyz');
 
 SELECT * FROM itestv11;
 
+DROP VIEW itestv10, itestv11;
+
 
 -- ADD COLUMN
 

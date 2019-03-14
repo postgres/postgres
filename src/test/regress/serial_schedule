@@ -72,7 +72,6 @@ test: create_cast
 test: constraints
 test: triggers
 test: inherit
-test: create_table_like
 test: typed_table
 test: vacuum
 test: drop_if_exists
@@ -122,6 +121,8 @@ test: tablesample
 test: groupingsets
 test: drop_operator
 test: password
+test: identity
+test: create_table_like
 test: alter_generic
 test: alter_operator
 test: misc
@@ -178,7 +179,6 @@ test: returning
 test: largeobject
 test: with
 test: xml
-test: identity
 test: partition_join
 test: partition_prune
 test: reloptions
