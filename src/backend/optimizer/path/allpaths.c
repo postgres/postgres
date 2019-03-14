@@ -2022,7 +2022,8 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 	rel->partial_pathlist = NIL;
 
 	/* Set up the dummy path */
-	add_path(rel, (Path *) create_append_path(NULL, rel, NIL, NIL, NULL,
+	add_path(rel, (Path *) create_append_path(NULL, rel, NIL, NIL,
+											  rel->lateral_relids,
 											  0, false, NIL, -1));
 
 	/*
