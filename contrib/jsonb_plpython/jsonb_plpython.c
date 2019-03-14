@@ -237,17 +237,14 @@ PLyMapping_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state)
 	JsonbValue *out = NULL;
 
 	/* We need it volatile, since we use it after longjmp */
-	volatile PyObject *items_v = NULL;
+	PyObject *volatile items = NULL;
 
 	pcount = PyMapping_Size(obj);
-	items_v = PyMapping_Items(obj);
+	items = PyMapping_Items(obj);
 
 	PG_TRY();
 	{
 		Py_ssize_t	i;
-		PyObject   *items;
-
-		items = (PyObject *) items_v;
 
 		pushJsonbValue(jsonb_state, WJB_BEGIN_OBJECT, NULL);
 
@@ -279,7 +276,7 @@ PLyMapping_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state)
 	}
 	PG_CATCH();
 	{
-		Py_DECREF(items_v);
+		Py_DECREF(items);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

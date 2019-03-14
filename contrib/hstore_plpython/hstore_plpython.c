@@ -128,7 +128,7 @@ Datum
 plpython_to_hstore(PG_FUNCTION_ARGS)
 {
 	PyObject   *dict;
-	volatile PyObject *items_v = NULL;
+	PyObject *volatile items = NULL;
 	int32		pcount;
 	HStore	   *out;
 
@@ -139,14 +139,13 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 				 errmsg("not a Python mapping")));
 
 	pcount = PyMapping_Size(dict);
-	items_v = PyMapping_Items(dict);
+	items = PyMapping_Items(dict);
 
 	PG_TRY();
 	{
 		int32		buflen;
 		int32		i;
 		Pairs	   *pairs;
-		PyObject   *items = (PyObject *) items_v;
 
 		pairs = palloc(pcount * sizeof(*pairs));
 
@@ -177,14 +176,14 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 				pairs[i].isnull = false;
 			}
 		}
-		Py_DECREF(items_v);
+		Py_DECREF(items);
 
 		pcount = hstoreUniquePairs(pairs, pcount, &buflen);
 		out = hstorePairs(pairs, pcount, buflen);
 	}
 	PG_CATCH();
 	{
-		Py_DECREF(items_v);
+		Py_DECREF(items);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
