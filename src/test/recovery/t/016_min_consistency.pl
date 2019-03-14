@@ -97,6 +97,10 @@ INSERT INTO test1 SELECT generate_series(1, 10000);");
 $primary->safe_psql('postgres', 'CHECKPOINT;');
 $primary->safe_psql('postgres', 'UPDATE test1 SET a = a + 1;');
 
+# Wait for last record to have been replayed on the standby.
+$primary->wait_for_catchup($standby, 'replay',
+			   $primary->lsn('insert'));
+
 # Fill in the standby's shared buffers with the data filled in
 # previously.
 $standby->safe_psql('postgres', 'SELECT count(*) FROM test1;');
