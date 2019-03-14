@@ -117,7 +117,7 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	bool		relispartition;
 
 	/* heap for rewrite during DDL, link to original rel */
-	Oid			relrewrite;
+	Oid			relrewrite BKI_DEFAULT(0);
 
 	/* all Xids < this are frozen in this rel */
 	TransactionId relfrozenxid;
