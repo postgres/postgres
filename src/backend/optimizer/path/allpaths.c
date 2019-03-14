@@ -1595,7 +1595,9 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 	rel->pathlist = NIL;
 	rel->partial_pathlist = NIL;
 
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0));
+	add_path(rel, (Path *) create_append_path(rel, NIL,
+											  rel->lateral_relids,
+											  0));
 
 	/*
 	 * We set the cheapest path immediately, to ensure that IS_DUMMY_REL()
