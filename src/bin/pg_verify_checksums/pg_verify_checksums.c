@@ -167,7 +167,7 @@ scan_directory(const char *basedir, const char *subdir)
 		if (strncmp(de->d_name,
 					PG_TEMP_FILES_DIR,
 					strlen(PG_TEMP_FILES_DIR)) == 0)
-			return;
+			continue;
 
 		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);
 		if (lstat(fn, &st) < 0)
