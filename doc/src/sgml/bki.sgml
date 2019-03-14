@@ -422,19 +422,21 @@
    </para>
 
    <para>
-    The OID counter starts at 10000 at the beginning of a bootstrap run.
-    If a row from a source other than <filename>postgres.bki</filename>
-    is inserted into a table that requires OIDs, then it will receive an
-    OID of 10000 or above.  For example, objects created while running
-    the <filename>information_schema.sql</filename> script receive such
-    OIDs.
+    If <filename>genbki.pl</filename> needs to assign an OID to a catalog
+    entry that does not have a manually-assigned OID, it will use a value in
+    the range 10000&mdash;11999.  The server's OID counter is set to 12000
+    at the start of a bootstrap run.  Thus objects created by regular SQL
+    commands during the later phases of bootstrap, such as objects created
+    while running the <filename>information_schema.sql</filename> script,
+    receive OIDs of 12000 or above.
    </para>
 
    <para>
     OIDs assigned during normal database operation are constrained to be
-    16384 or higher.  This leaves the range 10000&mdash;16383 available
-    for OIDs assigned automatically during bootstrap.  These OIDs are not
-    considered stable, and may change from one installation to another.
+    16384 or higher.  This ensures that the range 10000&mdash;16383 is free
+    for OIDs assigned automatically by <filename>genbki.pl</filename> or
+    during bootstrap.  These automatically-assigned OIDs are not considered
+    stable, and may change from one installation to another.
    </para>
   </sect2>
 

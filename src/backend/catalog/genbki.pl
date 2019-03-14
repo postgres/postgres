@@ -138,10 +138,13 @@ die "found $found duplicate OID(s) in catalog data\n" if $found;
 
 
 # Oids not specified in the input files are automatically assigned,
-# starting at FirstGenbkiObjectId.
+# starting at FirstGenbkiObjectId, extending up to FirstBootstrapObjectId.
 my $FirstGenbkiObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', $include_path,
 	'FirstGenbkiObjectId');
+my $FirstBootstrapObjectId =
+  Catalog::FindDefinedSymbol('access/transam.h', $include_path,
+	'FirstBootstrapObjectId');
 my $GenbkiNextOid = $FirstGenbkiObjectId;
 
 
@@ -624,6 +627,11 @@ foreach my $declaration (@index_decls)
 
 # last command in the BKI file: build the indexes declared above
 print $bki "build indices\n";
+
+# check that we didn't overrun available OIDs
+die
+  "genbki OID counter reached $GenbkiNextOid, overrunning FirstBootstrapObjectId\n"
+  if $GenbkiNextOid > $FirstBootstrapObjectId;
 
 
 # Now generate schemapg.h

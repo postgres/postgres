@@ -72,10 +72,13 @@
  *		Object ID (OID) zero is InvalidOid.
  *
  *		OIDs 1-9999 are reserved for manual assignment (see .dat files in
- *		src/include/catalog/), with 9000-9999 tentatively reserved for forks.
+ *		src/include/catalog/).  Of these, 8000-9999 are reserved for
+ *		development purposes (such as in-progress patches and forks);
+ *		they should not appear in released versions.
  *
- *		OIDs 10000-11999 are reserved for assignment by genbki.pl, when the
- *		.dat files in src/include/catalog/ do not specify oids.
+ *		OIDs 10000-11999 are reserved for assignment by genbki.pl, for use
+ *		when the .dat files in src/include/catalog/ do not specify an OID
+ *		for a catalog entry that requires one.
  *
  *		OIDS 12000-16383 are reserved for assignment during initdb
  *		using the OID generator.  (We start the generator at 12000.)
@@ -84,9 +87,13 @@
  *		during normal multiuser operation.  (We force the generator up to
  *		16384 as soon as we are in normal operation.)
  *
- * The choices of 10000, 12000 and 16384 are completely arbitrary, and can be
- * moved if we run low on OIDs in either category.  Changing the macros below
- * should be sufficient to do this.
+ * The choices of 8000, 10000 and 12000 are completely arbitrary, and can be
+ * moved if we run low on OIDs in any category.  Changing the macros below,
+ * and updating relevant documentation (see bki.sgml and RELEASE_CHANGES),
+ * should be sufficient to do this.  Moving the 16384 boundary between
+ * initdb-assigned OIDs and user-defined objects would be substantially
+ * more painful, however, since some user-defined OIDs will appear in
+ * on-disk data; such a change would probably break pg_upgrade.
  *
  * NOTE: if the OID generator wraps around, we skip over OIDs 0-16383
  * and resume with 16384.  This minimizes the odds of OID conflict, by not
