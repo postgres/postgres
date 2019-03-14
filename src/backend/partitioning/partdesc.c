@@ -68,6 +68,17 @@ RelationBuildPartitionDesc(Relation rel)
 	PartitionKey key = RelationGetPartitionKey(rel);
 	MemoryContext oldcxt;
 	int		   *mapping;
+	MemoryContext rbcontext = NULL;
+
+	/*
+	 * While building the partition descriptor, we create various temporary
+	 * data structures; in CLOBBER_CACHE_ALWAYS mode, at least, it's important
+	 * not to leak them, since this can get called a lot.
+	 */
+	rbcontext = AllocSetContextCreate(CurrentMemoryContext,
+									  "RelationBuildPartitionDesc",
+									  ALLOCSET_DEFAULT_SIZES);
+	oldcxt = MemoryContextSwitchTo(rbcontext);
 
 	/*
 	 * Get partition oids from pg_inherits.  This uses a single snapshot to
@@ -180,7 +191,7 @@ RelationBuildPartitionDesc(Relation rel)
 	MemoryContextCopyAndSetIdentifier(rel->rd_pdcxt,
 									  RelationGetRelationName(rel));
 
-	oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
+	MemoryContextSwitchTo(rel->rd_pdcxt);
 	partdesc = (PartitionDescData *) palloc0(sizeof(PartitionDescData));
 	partdesc->nparts = nparts;
 	/* oids and boundinfo are allocated below. */
@@ -189,7 +200,11 @@ RelationBuildPartitionDesc(Relation rel)
 
 	if (nparts == 0)
 	{
+		/* We can exit early in this case. */
 		rel->rd_partdesc = partdesc;
+
+		/* Blow away the temporary context. */
+		MemoryContextDelete(rbcontext);
 		return;
 	}
 
@@ -220,6 +235,9 @@ RelationBuildPartitionDesc(Relation rel)
 	MemoryContextSwitchTo(oldcxt);
 
 	rel->rd_partdesc = partdesc;
+
+	/* Blow away the temporary context. */
+	MemoryContextDelete(rbcontext);
 }
 
 /*
