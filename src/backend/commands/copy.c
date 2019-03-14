@@ -2911,9 +2911,13 @@ CopyFrom(CopyState cstate)
 
 		if (!skip_tuple)
 		{
+			/*
+			 * If there is an INSTEAD OF INSERT ROW trigger, let it handle the
+			 * tuple.  Otherwise, proceed with inserting the tuple into the
+			 * table or foreign table.
+			 */
 			if (has_instead_insert_row_trig)
 			{
-				/* Pass the data to the INSTEAD ROW INSERT trigger */
 				ExecIRInsertTriggers(estate, resultRelInfo, slot);
 			}
 			else
