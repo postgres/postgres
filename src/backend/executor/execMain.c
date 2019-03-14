@@ -54,7 +54,6 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/parsetree.h"
-#include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "tcop/utility.h"
