@@ -337,22 +337,13 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * parallel worker.  We might eventually be able to relax this
 	 * restriction, but for now it seems best not to have parallel workers
 	 * trying to create their own parallel workers.
-	 *
-	 * We can't use parallelism in serializable mode because the predicate
-	 * locking code is not parallel-aware.  It's not catastrophic if someone
-	 * tries to run a parallel plan in serializable mode; it just won't get
-	 * any workers and will run serially.  But it seems like a good heuristic
-	 * to assume that the same serialization level will be in effect at plan
-	 * time and execution time, so don't generate a parallel plan if we're in
-	 * serializable mode.
 	 */
 	if ((cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster &&
 		parse->commandType == CMD_SELECT &&
 		!parse->hasModifyingCTE &&
 		max_parallel_workers_per_gather > 0 &&
-		!IsParallelWorker() &&
-		!IsolationIsSerializable())
+		!IsParallelWorker())
 	{
 		/* all the cheap tests pass, so scan the query tree */
 		glob->maxParallelHazard = max_parallel_hazard(parse);

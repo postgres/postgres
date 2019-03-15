@@ -184,13 +184,6 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         using a very large number of processes.
       </para>
     </listitem>
-
-    <listitem>
-      <para>
-        The transaction isolation level is serializable.  This is
-        a limitation of the current implementation.
-      </para>
-    </listitem>
   </itemizedlist>
 
   <para>
@@ -231,16 +224,6 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         <xref linkend="guc-max-parallel-workers-per-gather"/> to zero in
         sessions where it is likely, so as to avoid generating query plans
         that may be suboptimal when run serially.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-        The transaction isolation level is serializable.  This situation
-        does not normally arise, because parallel query plans are not
-        generated when the transaction isolation level is serializable.
-        However, it can happen if the transaction isolation level is changed to
-        serializable after the plan is generated and before it is executed.
       </para>
     </listitem>
   </itemizedlist>

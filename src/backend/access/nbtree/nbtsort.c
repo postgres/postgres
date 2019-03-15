@@ -1265,7 +1265,7 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	EnterParallelMode();
 	Assert(request > 0);
 	pcxt = CreateParallelContext("postgres", "_bt_parallel_build_main",
-								 request, true);
+								 request);
 	scantuplesortstates = leaderparticipates ? request + 1 : request;
 
 	/*

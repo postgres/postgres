@@ -521,6 +521,7 @@ RegisterLWLockTranches(void)
 	LWLockRegisterTranche(LWTRANCHE_TBM, "tbm");
 	LWLockRegisterTranche(LWTRANCHE_PARALLEL_APPEND, "parallel_append");
 	LWLockRegisterTranche(LWTRANCHE_PARALLEL_HASH_JOIN, "parallel_hash_join");
+	LWLockRegisterTranche(LWTRANCHE_SXACT, "serializable_xact");
 
 	/* Register named tranches. */
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)

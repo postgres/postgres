@@ -861,7 +861,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="63"><literal>LWLock</literal></entry>
+        <entry morerows="64"><literal>LWLock</literal></entry>
         <entry><literal>ShmemIndexLock</literal></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -1120,6 +1120,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>predicate_lock_manager</literal></entry>
          <entry>Waiting to add or examine predicate lock information.</entry>
+        </row>
+        <row>
+         <entry><literal>serializable_xact</literal></entry>
+         <entry>Waiting to perform an operation on a serializable transaction
+         in a parallel query.</entry>
         </row>
         <row>
          <entry><literal>parallel_query_dsa</literal></entry>
