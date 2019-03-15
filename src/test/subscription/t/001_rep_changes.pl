@@ -63,12 +63,11 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_ins_only ADD TABLE tab_ins");
 
-my $appname = 'tap_sub';
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub, tap_pub_ins_only"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub, tap_pub_ins_only"
 );
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # Also wait for initial table sync to finish
 my $synced_query =
@@ -103,7 +102,7 @@ $node_publisher->safe_psql('postgres',
 	"DELETE FROM tab_include WHERE a > 20");
 $node_publisher->safe_psql('postgres', "UPDATE tab_include SET a = -a");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_ins");
@@ -146,7 +145,7 @@ $node_publisher->safe_psql('postgres', "UPDATE tab_full SET a = a * a");
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab_full2 SET x = 'bb' WHERE x = 'b'");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_full");
@@ -165,23 +164,23 @@ bb),
 # as we need to poll for a change but the test suite will fail none the less
 # when something goes wrong.
 my $oldpid = $node_publisher->safe_psql('postgres',
-	"SELECT pid FROM pg_stat_replication WHERE application_name = '$appname';"
+	"SELECT pid FROM pg_stat_replication WHERE application_name = 'tap_sub';"
 );
 $node_subscriber->safe_psql('postgres',
-	"ALTER SUBSCRIPTION tap_sub CONNECTION 'application_name=$appname $publisher_connstr'"
+	"ALTER SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr sslmode=disable'"
 );
 $node_publisher->poll_query_until('postgres',
-	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = '$appname';"
+	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = 'tap_sub';"
 ) or die "Timed out while waiting for apply to restart";
 
 $oldpid = $node_publisher->safe_psql('postgres',
-	"SELECT pid FROM pg_stat_replication WHERE application_name = '$appname';"
+	"SELECT pid FROM pg_stat_replication WHERE application_name = 'tap_sub';"
 );
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_ins_only WITH (copy_data = false)"
 );
 $node_publisher->poll_query_until('postgres',
-	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = '$appname';"
+	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = 'tap_sub';"
 ) or die "Timed out while waiting for apply to restart";
 
 $node_publisher->safe_psql('postgres',
@@ -193,7 +192,7 @@ $node_publisher->safe_psql('postgres', "DELETE FROM tab_rep");
 $node_publisher->stop('fast');
 $node_publisher->start;
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_ins");
@@ -216,7 +215,7 @@ $node_subscriber->safe_psql('postgres',
 );
 $node_publisher->safe_psql('postgres', "INSERT INTO tab_full VALUES(0)");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # note that data are different on provider and subscriber
 $result = $node_subscriber->safe_psql('postgres',
@@ -230,12 +229,12 @@ is($result, qq(21|0|100), 'check replicated insert after alter publication');
 
 # check restart on rename
 $oldpid = $node_publisher->safe_psql('postgres',
-	"SELECT pid FROM pg_stat_replication WHERE application_name = '$appname';"
+	"SELECT pid FROM pg_stat_replication WHERE application_name = 'tap_sub';"
 );
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub RENAME TO tap_sub_renamed");
 $node_publisher->poll_query_until('postgres',
-	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = '$appname';"
+	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = 'tap_sub_renamed';"
 ) or die "Timed out while waiting for apply to restart";
 
 # check all the cleanup

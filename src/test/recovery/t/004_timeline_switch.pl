@@ -50,7 +50,7 @@ is($psql_out, 't', "promotion of standby with pg_promote");
 my $connstr_1 = $node_standby_1->connstr;
 $node_standby_2->append_conf(
 	'postgresql.conf', qq(
-primary_conninfo='$connstr_1 application_name=@{[$node_standby_2->name]}'
+primary_conninfo='$connstr_1'
 ));
 $node_standby_2->restart;
 

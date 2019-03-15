@@ -107,12 +107,11 @@ my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub FOR ALL TABLES");
 
-my $appname = 'tap_sub';
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (slot_name = tap_sub_slot)"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub WITH (slot_name = tap_sub_slot)"
 );
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # Wait for initial sync to finish as well
 my $synced_query =
@@ -251,7 +250,7 @@ $node_publisher->safe_psql(
 	INSERT INTO tst_dom_constr VALUES (10);
 ));
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # Check the data on subscriber
 my $result = $node_subscriber->safe_psql(
@@ -372,7 +371,7 @@ $node_publisher->safe_psql(
 	UPDATE tst_hstore SET b = '"also"=>"updated"' WHERE a = 3;
 ));
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # Check the data on subscriber
 $result = $node_subscriber->safe_psql(
@@ -492,7 +491,7 @@ $node_publisher->safe_psql(
 	DELETE FROM tst_hstore WHERE a = 1;
 ));
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # Check the data on subscriber
 $result = $node_subscriber->safe_psql(
@@ -554,7 +553,7 @@ e|{e,d}
 # which needs an active snapshot in order to operate.
 $node_publisher->safe_psql('postgres', "INSERT INTO tst_dom_constr VALUES (11)");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT sum(a) FROM tst_dom_constr");

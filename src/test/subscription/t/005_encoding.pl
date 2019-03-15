@@ -22,15 +22,14 @@ $node_publisher->safe_psql('postgres', $ddl);
 $node_subscriber->safe_psql('postgres', $ddl);
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
-my $appname           = 'encoding_test';
 
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION mypub FOR ALL TABLES;");
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION mysub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION mypub;"
+	"CREATE SUBSCRIPTION mysub CONNECTION '$publisher_connstr' PUBLICATION mypub;"
 );
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('mysub');
 
 # Wait for initial sync to finish as well
 my $synced_query =
@@ -41,7 +40,7 @@ $node_subscriber->poll_query_until('postgres', $synced_query)
 $node_publisher->safe_psql('postgres',
 	q{INSERT INTO test1 VALUES (1, E'Mot\xc3\xb6rhead')}); # hand-rolled UTF-8
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('mysub');
 
 is( $node_subscriber->safe_psql(
 		'postgres', q{SELECT a FROM test1 WHERE b = E'Mot\xf6rhead'}

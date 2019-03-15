@@ -34,19 +34,18 @@ my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub FOR ALL TABLES;");
 
-my $appname = 'tap_sub';
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub WITH (copy_data = false)"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub WITH (copy_data = false)"
 );
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk (bid) VALUES (1);");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk_ref (id, bid) VALUES (1, 1);");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # Check data on subscriber
 my $result = $node_subscriber->safe_psql('postgres',
@@ -64,7 +63,7 @@ $node_publisher->safe_psql('postgres', "DROP TABLE tab_fk CASCADE;");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk_ref (id, bid) VALUES (2, 2);");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # FK is not enforced on subscriber
 $result = $node_subscriber->safe_psql('postgres',
@@ -98,7 +97,7 @@ ALTER TABLE tab_fk_ref ENABLE REPLICA TRIGGER filter_basic_dml_trg;
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk_ref (id, bid) VALUES (10, 10);");
 
-$node_publisher->wait_for_catchup($appname);
+$node_publisher->wait_for_catchup('tap_sub');
 
 # The row should be skipped on subscriber
 $result = $node_subscriber->safe_psql('postgres',
