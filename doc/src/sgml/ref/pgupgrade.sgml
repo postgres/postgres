@@ -792,6 +792,13 @@ psql --username=postgres --file=script.sql postgres
    is down.
   </para>
 
+  <para>
+   In <productname>PostgreSQL</productname> 12 and later small tables by
+   default don't have a free space map, as a space optimization.  If you are
+   upgrading a pre-12 cluster, the free space maps of small tables will
+   likewise not be transferred to the new cluster.  
+  </para>
+
  </refsect1>
 
  <refsect1>
