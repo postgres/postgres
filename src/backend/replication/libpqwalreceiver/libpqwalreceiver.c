@@ -56,8 +56,8 @@ static char *libpqrcv_get_conninfo(WalReceiverConn *conn);
 static void libpqrcv_get_senderinfo(WalReceiverConn *conn,
 						char **sender_host, int *sender_port);
 static char *libpqrcv_identify_system(WalReceiverConn *conn,
-						 TimeLineID *primary_tli,
-						 int *server_version);
+						 TimeLineID *primary_tli);
+static int libpqrcv_server_version(WalReceiverConn *conn);
 static void libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 								 TimeLineID tli, char **filename,
 								 char **content, int *len);
@@ -86,6 +86,7 @@ static WalReceiverFunctionsType PQWalReceiverFunctions = {
 	libpqrcv_get_conninfo,
 	libpqrcv_get_senderinfo,
 	libpqrcv_identify_system,
+	libpqrcv_server_version,
 	libpqrcv_readtimelinehistoryfile,
 	libpqrcv_startstreaming,
 	libpqrcv_endstreaming,
@@ -309,8 +310,7 @@ libpqrcv_get_senderinfo(WalReceiverConn *conn, char **sender_host,
  * timeline ID of the primary.
  */
 static char *
-libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli,
-						 int *server_version)
+libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli)
 {
 	PGresult   *res;
 	char	   *primary_sysid;
@@ -343,9 +343,16 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli,
 	*primary_tli = pg_strtoint32(PQgetvalue(res, 0, 1));
 	PQclear(res);
 
-	*server_version = PQserverVersion(conn->streamConn);
-
 	return primary_sysid;
+}
+
+/*
+ * Thin wrapper around libpq to obtain server version.
+ */
+static int
+libpqrcv_server_version(WalReceiverConn *conn)
+{
+	return PQserverVersion(conn->streamConn);
 }
 
 /*

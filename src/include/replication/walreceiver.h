@@ -209,8 +209,8 @@ typedef void (*walrcv_get_senderinfo_fn) (WalReceiverConn *conn,
 										  char **sender_host,
 										  int *sender_port);
 typedef char *(*walrcv_identify_system_fn) (WalReceiverConn *conn,
-											TimeLineID *primary_tli,
-											int *server_version);
+											TimeLineID *primary_tli);
+typedef int (*walrcv_server_version_fn) (WalReceiverConn *conn);
 typedef void (*walrcv_readtimelinehistoryfile_fn) (WalReceiverConn *conn,
 												   TimeLineID tli,
 												   char **filename,
@@ -240,6 +240,7 @@ typedef struct WalReceiverFunctionsType
 	walrcv_get_conninfo_fn walrcv_get_conninfo;
 	walrcv_get_senderinfo_fn walrcv_get_senderinfo;
 	walrcv_identify_system_fn walrcv_identify_system;
+	walrcv_server_version_fn walrcv_server_version;
 	walrcv_readtimelinehistoryfile_fn walrcv_readtimelinehistoryfile;
 	walrcv_startstreaming_fn walrcv_startstreaming;
 	walrcv_endstreaming_fn walrcv_endstreaming;
@@ -260,8 +261,10 @@ extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 	WalReceiverFunctions->walrcv_get_conninfo(conn)
 #define walrcv_get_senderinfo(conn, sender_host, sender_port) \
 	WalReceiverFunctions->walrcv_get_senderinfo(conn, sender_host, sender_port)
-#define walrcv_identify_system(conn, primary_tli, server_version) \
-	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli, server_version)
+#define walrcv_identify_system(conn, primary_tli) \
+	WalReceiverFunctions->walrcv_identify_system(conn, primary_tli)
+#define walrcv_server_version(conn) \
+	WalReceiverFunctions->walrcv_server_version(conn)
 #define walrcv_readtimelinehistoryfile(conn, tli, filename, content, size) \
 	WalReceiverFunctions->walrcv_readtimelinehistoryfile(conn, tli, filename, content, size)
 #define walrcv_startstreaming(conn, options) \
