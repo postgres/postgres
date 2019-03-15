@@ -298,7 +298,7 @@ ECPGdeallocate(int lineno, int c, const char *connection_name, const char *name)
 	}
 
 	con = ecpg_get_connection(real_connection_name);
-	if (!ecpg_init(con, connection_name, lineno))
+	if (!ecpg_init(con, real_connection_name, lineno))
 		return false;
 
 	this = ecpg_find_prepared_statement(name, con, &prev);
