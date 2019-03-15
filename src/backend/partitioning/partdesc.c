@@ -67,18 +67,7 @@ RelationBuildPartitionDesc(Relation rel)
 				nparts;
 	PartitionKey key = RelationGetPartitionKey(rel);
 	MemoryContext oldcxt;
-	MemoryContext rbcontext;
 	int		   *mapping;
-
-	/*
-	 * While building the partition descriptor, we create various temporary
-	 * data structures; in CLOBBER_CACHE_ALWAYS mode, at least, it's important
-	 * not to leak them, since this can get called a lot.
-	 */
-	rbcontext = AllocSetContextCreate(CurrentMemoryContext,
-									  "RelationBuildPartitionDesc",
-									  ALLOCSET_DEFAULT_SIZES);
-	oldcxt = MemoryContextSwitchTo(rbcontext);
 
 	/*
 	 * Get partition oids from pg_inherits.  This uses a single snapshot to
@@ -197,14 +186,15 @@ RelationBuildPartitionDesc(Relation rel)
 	/* If there are no partitions, the rest of the partdesc can stay zero */
 	if (nparts > 0)
 	{
-		/* Create PartitionBoundInfo, using the temporary context. */
+		/* Create PartitionBoundInfo, using the caller's context. */
 		boundinfo = partition_bounds_create(boundspecs, nparts, key, &mapping);
 
 		/* Now copy all info into relcache's partdesc. */
-		MemoryContextSwitchTo(rel->rd_pdcxt);
+		oldcxt = MemoryContextSwitchTo(rel->rd_pdcxt);
 		partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
 		partdesc->oids = (Oid *) palloc(nparts * sizeof(Oid));
 		partdesc->is_leaf = (bool *) palloc(nparts * sizeof(bool));
+		MemoryContextSwitchTo(oldcxt);
 
 		/*
 		 * Assign OIDs from the original array into mapped indexes of the
@@ -214,9 +204,8 @@ RelationBuildPartitionDesc(Relation rel)
 		 *
 		 * Also record leaf-ness of each partition.  For this we use
 		 * get_rel_relkind() which may leak memory, so be sure to run it in
-		 * the temporary context.
+		 * the caller's context.
 		 */
-		MemoryContextSwitchTo(rbcontext);
 		for (i = 0; i < nparts; i++)
 		{
 			int			index = mapping[i];
@@ -228,10 +217,6 @@ RelationBuildPartitionDesc(Relation rel)
 	}
 
 	rel->rd_partdesc = partdesc;
-
-	/* Return to caller's context, and blow away the temporary context. */
-	MemoryContextSwitchTo(oldcxt);
-	MemoryContextDelete(rbcontext);
 }
 
 /*
