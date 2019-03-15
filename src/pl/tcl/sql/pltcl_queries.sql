@@ -1,121 +1,34 @@
 -- suppress CONTEXT so that function OIDs aren't in output
 \set VERBOSITY terse
 
-insert into T_pkey1 values (1, 'key1-1', 'test key');
-insert into T_pkey1 values (1, 'key1-2', 'test key');
-insert into T_pkey1 values (1, 'key1-3', 'test key');
-insert into T_pkey1 values (2, 'key2-1', 'test key');
-insert into T_pkey1 values (2, 'key2-2', 'test key');
-insert into T_pkey1 values (2, 'key2-3', 'test key');
-
-insert into T_pkey2 values (1, 'key1-1', 'test key');
-insert into T_pkey2 values (1, 'key1-2', 'test key');
-insert into T_pkey2 values (1, 'key1-3', 'test key');
-insert into T_pkey2 values (2, 'key2-1', 'test key');
-insert into T_pkey2 values (2, 'key2-2', 'test key');
-insert into T_pkey2 values (2, 'key2-3', 'test key');
-
-select * from T_pkey1;
-
--- key2 in T_pkey2 should have upper case only
-select * from T_pkey2;
-
-insert into T_pkey1 values (1, 'KEY1-3', 'should work');
-
--- Due to the upper case translation in trigger this must fail
-insert into T_pkey2 values (1, 'KEY1-3', 'should fail');
-
-insert into T_dta1 values ('trec 1', 1, 'key1-1');
-insert into T_dta1 values ('trec 2', 1, 'key1-2');
-insert into T_dta1 values ('trec 3', 1, 'key1-3');
-
--- Must fail due to unknown key in T_pkey1
-insert into T_dta1 values ('trec 4', 1, 'key1-4');
-
-insert into T_dta2 values ('trec 1', 1, 'KEY1-1');
-insert into T_dta2 values ('trec 2', 1, 'KEY1-2');
-insert into T_dta2 values ('trec 3', 1, 'KEY1-3');
-
--- Must fail due to unknown key in T_pkey2
-insert into T_dta2 values ('trec 4', 1, 'KEY1-4');
-
-select * from T_dta1;
-
-select * from T_dta2;
-
-update T_pkey1 set key2 = 'key2-9' where key1 = 2 and key2 = 'key2-1';
-update T_pkey1 set key2 = 'key1-9' where key1 = 1 and key2 = 'key1-1';
-delete from T_pkey1 where key1 = 2 and key2 = 'key2-2';
-delete from T_pkey1 where key1 = 1 and key2 = 'key1-2';
-
-update T_pkey2 set key2 = 'KEY2-9' where key1 = 2 and key2 = 'KEY2-1';
-update T_pkey2 set key2 = 'KEY1-9' where key1 = 1 and key2 = 'KEY1-1';
-delete from T_pkey2 where key1 = 2 and key2 = 'KEY2-2';
-delete from T_pkey2 where key1 = 1 and key2 = 'KEY1-2';
-
-select * from T_pkey1;
-select * from T_pkey2;
-select * from T_dta1;
-select * from T_dta2;
-
-select tcl_avg(key1) from T_pkey1;
-select tcl_sum(key1) from T_pkey1;
-select tcl_avg(key1) from T_pkey2;
-select tcl_sum(key1) from T_pkey2;
-
--- The following should return NULL instead of 0
-select tcl_avg(key1) from T_pkey1 where key1 = 99;
-select tcl_sum(key1) from T_pkey1 where key1 = 99;
-
-select 1 @< 2;
-select 100 @< 4;
-
-select * from T_pkey1 order by key1 using @<, key2 collate "C";
-select * from T_pkey2 order by key1 using @<, key2 collate "C";
-
--- show dump of trigger data
-insert into trigger_test values(1,'insert');
-
-insert into trigger_test_view values(2,'insert');
-update trigger_test_view set v = 'update' where i=1;
-delete from trigger_test_view;
-
-update trigger_test set v = 'update', test_skip=true where i = 1;
-update trigger_test set v = 'update' where i = 1;
-delete from trigger_test;
-truncate trigger_test;
-
 -- Test composite-type arguments
 select tcl_composite_arg_ref1(row('tkey', 42, 'ref2'));
 select tcl_composite_arg_ref2(row('tkey', 42, 'ref2'));
 
 -- More tests for composite argument/result types
 
-create domain d_dta1 as T_dta1 check ((value).ref1 > 0);
+create domain d_comp1 as T_comp1 check ((value).ref1 > 0);
 
 create function tcl_record_arg(record, fldname text) returns int as '
     return $1($2)
 ' language pltcl;
 
-select tcl_record_arg(row('tkey', 42, 'ref2')::T_dta1, 'ref1');
-select tcl_record_arg(row('tkey', 42, 'ref2')::d_dta1, 'ref1');
+select tcl_record_arg(row('tkey', 42, 'ref2')::T_comp1, 'ref1');
+select tcl_record_arg(row('tkey', 42, 'ref2')::d_comp1, 'ref1');
 select tcl_record_arg(row(2,4), 'f2');
 
-create function tcl_cdomain_arg(d_dta1) returns int as '
+create function tcl_cdomain_arg(d_comp1) returns int as '
     return $1(ref1)
 ' language pltcl;
 
 select tcl_cdomain_arg(row('tkey', 42, 'ref2'));
-select tcl_cdomain_arg(row('tkey', 42, 'ref2')::T_dta1);
+select tcl_cdomain_arg(row('tkey', 42, 'ref2')::T_comp1);
 select tcl_cdomain_arg(row('tkey', -1, 'ref2'));  -- fail
 
 -- Test argisnull primitive
 select tcl_argisnull('foo');
 select tcl_argisnull('');
 select tcl_argisnull(null);
--- should error
-insert into trigger_test(test_argisnull) values(true);
-select trigger_data();
 
 -- test some error cases
 create function tcl_error(out a int, out b int) as $$return {$$ language pltcl;
@@ -151,13 +64,13 @@ $$ language pltcl;
 select bad_field_srf();
 
 -- test composite and domain-over-composite results
-create function tcl_composite_result(int) returns T_dta1 as $$
+create function tcl_composite_result(int) returns T_comp1 as $$
 return [list tkey tkey1 ref1 $1 ref2 ref22]
 $$ language pltcl;
 select tcl_composite_result(1001);
 select * from tcl_composite_result(1002);
 
-create function tcl_dcomposite_result(int) returns d_dta1 as $$
+create function tcl_dcomposite_result(int) returns d_comp1 as $$
 return [list tkey tkey2 ref1 $1 ref2 ref42]
 $$ language pltcl;
 select tcl_dcomposite_result(1001);
@@ -185,8 +98,6 @@ select tcl_eval('argisnull abc');
 
 -- Test return_null
 select tcl_eval('return_null 14');
--- should error
-insert into trigger_test(test_return_null) values(true);
 
 -- Test spi_exec
 select tcl_eval('spi_exec');
@@ -253,23 +164,3 @@ select tcl_eval($$
   after 100 {set ::tcl_vwait 1}
   vwait ::tcl_vwait
   unset -nocomplain ::tcl_vwait$$);
-
--- test transition table visibility
-create table transition_table_test (id int, name text);
-insert into transition_table_test values (1, 'a');
-create function transition_table_test_f() returns trigger language pltcl as
-$$
-  spi_exec -array C "SELECT id, name FROM old_table" {
-    elog INFO "old: $C(id) -> $C(name)"
-  }
-  spi_exec -array C "SELECT id, name FROM new_table" {
-    elog INFO "new: $C(id) -> $C(name)"
-  }
-  return OK
-$$;
-CREATE TRIGGER a_t AFTER UPDATE ON transition_table_test
-  REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
-  FOR EACH STATEMENT EXECUTE PROCEDURE transition_table_test_f();
-update transition_table_test set name = 'b';
-drop table transition_table_test;
-drop function transition_table_test_f();
