@@ -1114,7 +1114,7 @@ select jsonb_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d"
 select jsonb_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::jsonb, '"boolean"');
 select jsonb_to_tsvector('english', '{"a": "aaa in bbb", "b": 123, "c": 456, "d": true, "f": false, "g": null}'::jsonb, '["string", "numeric"]');
 
--- ts_vector corner cases
+-- to_tsvector corner cases
 select to_tsvector('""'::jsonb);
 select to_tsvector('{}'::jsonb);
 select to_tsvector('[]'::jsonb);
