@@ -179,6 +179,7 @@ typedef JsonPathBool (*JsonPathPredicateCallback) (JsonPathItem *jsp,
 												   JsonbValue *larg,
 												   JsonbValue *rarg,
 												   void *param);
+typedef Numeric (*BinaryArithmFunc) (Numeric num1, Numeric num2, bool *error);
 
 static JsonPathExecResult executeJsonPath(JsonPath *path, Jsonb *vars,
 				Jsonb *json, bool throwErrors, JsonValueList *result);
@@ -212,8 +213,8 @@ static JsonPathBool executePredicate(JsonPathExecContext *cxt,
 				 JsonbValue *jb, bool unwrapRightArg,
 				 JsonPathPredicateCallback exec, void *param);
 static JsonPathExecResult executeBinaryArithmExpr(JsonPathExecContext *cxt,
-						JsonPathItem *jsp, JsonbValue *jb, PGFunction func,
-						JsonValueList *found);
+						JsonPathItem *jsp, JsonbValue *jb,
+						BinaryArithmFunc func, JsonValueList *found);
 static JsonPathExecResult executeUnaryArithmExpr(JsonPathExecContext *cxt,
 					   JsonPathItem *jsp, JsonbValue *jb, PGFunction func,
 					   JsonValueList *found);
@@ -830,23 +831,23 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 		case jpiAdd:
 			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_add, found);
+										   numeric_add_opt_error, found);
 
 		case jpiSub:
 			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_sub, found);
+										   numeric_sub_opt_error, found);
 
 		case jpiMul:
 			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_mul, found);
+										   numeric_mul_opt_error, found);
 
 		case jpiDiv:
 			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_div, found);
+										   numeric_div_opt_error, found);
 
 		case jpiMod:
 			return executeBinaryArithmExpr(cxt, jsp, jb,
-										   numeric_mod, found);
+										   numeric_mod_opt_error, found);
 
 		case jpiPlus:
 			return executeUnaryArithmExpr(cxt, jsp, jb, NULL, found);
@@ -999,12 +1000,22 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				{
 					char	   *tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 																		  NumericGetDatum(jb->val.numeric)));
+					bool		have_error = false;
 
-					(void) float8in_internal(tmp,
-											 NULL,
-											 "double precision",
-											 tmp);
+					(void) float8in_internal_opt_error(tmp,
+													   NULL,
+													   "double precision",
+													   tmp,
+													   &have_error);
 
+					if (have_error)
+						RETURN_ERROR(ereport(ERROR,
+											 (errcode(ERRCODE_NON_NUMERIC_JSON_ITEM),
+											  errmsg(ERRMSG_NON_NUMERIC_JSON_ITEM),
+											  errdetail("jsonpath item method .%s() "
+														"can only be applied to "
+														"a numeric value",
+														jspOperationName(jsp->type)))));
 					res = jperOk;
 				}
 				else if (jb->type == jbvString)
@@ -1013,13 +1024,15 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					double		val;
 					char	   *tmp = pnstrdup(jb->val.string.val,
 											   jb->val.string.len);
+					bool		have_error = false;
 
-					val = float8in_internal(tmp,
-											NULL,
-											"double precision",
-											tmp);
+					val = float8in_internal_opt_error(tmp,
+													  NULL,
+													  "double precision",
+													  tmp,
+													  &have_error);
 
-					if (isinf(val))
+					if (have_error || isinf(val))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_JSON_ITEM),
 											  errmsg(ERRMSG_NON_NUMERIC_JSON_ITEM),
@@ -1497,7 +1510,7 @@ executePredicate(JsonPathExecContext *cxt, JsonPathItem *pred,
  */
 static JsonPathExecResult
 executeBinaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
-						JsonbValue *jb, PGFunction func,
+						JsonbValue *jb, BinaryArithmFunc func,
 						JsonValueList *found)
 {
 	JsonPathExecResult jper;
@@ -1506,7 +1519,7 @@ executeBinaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	JsonValueList rseq = {0};
 	JsonbValue *lval;
 	JsonbValue *rval;
-	Datum		res;
+	Numeric		res;
 
 	jspGetLeftArg(jsp, &elem);
 
@@ -1542,16 +1555,26 @@ executeBinaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 										"is not a singleton numeric value",
 										jspOperationName(jsp->type)))));
 
-	res = DirectFunctionCall2(func,
-							  NumericGetDatum(lval->val.numeric),
-							  NumericGetDatum(rval->val.numeric));
+	if (jspThrowErrors(cxt))
+	{
+		res = func(lval->val.numeric, rval->val.numeric, NULL);
+	}
+	else
+	{
+		bool		error = false;
+
+		res = func(lval->val.numeric, rval->val.numeric, &error);
+
+		if (error)
+			return jperError;
+	}
 
 	if (!jspGetNext(jsp, &elem) && !found)
 		return jperOk;
 
 	lval = palloc(sizeof(*lval));
 	lval->type = jbvNumeric;
-	lval->val.numeric = DatumGetNumeric(res);
+	lval->val.numeric = res;
 
 	return executeNextItem(cxt, jsp, &elem, lval, found, false);
 }
@@ -2108,6 +2131,7 @@ getArrayIndex(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
 	JsonValueList found = {0};
 	JsonPathExecResult res = executeItem(cxt, jsp, jb, &found);
 	Datum		numeric_index;
+	bool		have_error = false;
 
 	if (jperIsError(res))
 		return res;
@@ -2124,7 +2148,15 @@ getArrayIndex(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
 										NumericGetDatum(jbv->val.numeric),
 										Int32GetDatum(0));
 
-	*index = DatumGetInt32(DirectFunctionCall1(numeric_int4, numeric_index));
+	*index = numeric_int4_opt_error(DatumGetNumeric(numeric_index),
+									&have_error);
+
+	if (have_error)
+		RETURN_ERROR(ereport(ERROR,
+							 (errcode(ERRCODE_INVALID_JSON_SUBSCRIPT),
+							  errmsg(ERRMSG_INVALID_JSON_SUBSCRIPT),
+							  errdetail("jsonpath array subscript is "
+										"out of integer range"))));
 
 	return jperOk;
 }

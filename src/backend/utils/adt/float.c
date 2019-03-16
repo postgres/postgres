@@ -336,8 +336,19 @@ float8in(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
 }
 
+/* Convenience macro: set *have_error flag (if provided) or throw error */
+#define RETURN_ERROR(throw_error) \
+do { \
+	if (have_error) { \
+		*have_error = true; \
+		return 0.0; \
+	} else { \
+		throw_error; \
+	} \
+} while (0)
+
 /*
- * float8in_internal - guts of float8in()
+ * float8in_internal_opt_error - guts of float8in()
  *
  * This is exposed for use by functions that want a reasonably
  * platform-independent way of inputting doubles.  The behavior is
@@ -353,10 +364,14 @@ float8in(PG_FUNCTION_ARGS)
  *
  * "num" could validly be declared "const char *", but that results in an
  * unreasonable amount of extra casting both here and in callers, so we don't.
+ *
+ * When "*have_error" flag is provided, it's set instead of throwing an
+ * error.  This is helpful when caller need to handle errors by itself.
  */
 double
-float8in_internal(char *num, char **endptr_p,
-				  const char *type_name, const char *orig_string)
+float8in_internal_opt_error(char *num, char **endptr_p,
+							const char *type_name, const char *orig_string,
+							bool *have_error)
 {
 	double		val;
 	char	   *endptr;
@@ -370,10 +385,10 @@ float8in_internal(char *num, char **endptr_p,
 	 * strtod() on different platforms.
 	 */
 	if (*num == '\0')
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"",
-						type_name, orig_string)));
+		RETURN_ERROR(ereport(ERROR,
+							 (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							  errmsg("invalid input syntax for type %s: \"%s\"",
+									 type_name, orig_string))));
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -446,17 +461,19 @@ float8in_internal(char *num, char **endptr_p,
 				char	   *errnumber = pstrdup(num);
 
 				errnumber[endptr - num] = '\0';
-				ereport(ERROR,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("\"%s\" is out of range for type double precision",
-								errnumber)));
+				RETURN_ERROR(ereport(ERROR,
+									 (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+									  errmsg("\"%s\" is out of range for "
+											 "type double precision",
+											 errnumber))));
 			}
 		}
 		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type %s: \"%s\"",
-							type_name, orig_string)));
+			RETURN_ERROR(ereport(ERROR,
+								 (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								  errmsg("invalid input syntax for type "
+										 "%s: \"%s\"",
+										 type_name, orig_string))));
 	}
 #ifdef HAVE_BUGGY_SOLARIS_STRTOD
 	else
@@ -479,13 +496,26 @@ float8in_internal(char *num, char **endptr_p,
 	if (endptr_p)
 		*endptr_p = endptr;
 	else if (*endptr != '\0')
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"",
-						type_name, orig_string)));
+		RETURN_ERROR(ereport(ERROR,
+							 (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							  errmsg("invalid input syntax for type "
+									 "%s: \"%s\"",
+									 type_name, orig_string))));
 
 	return val;
 }
+
+/*
+ * Interfact to float8in_internal_opt_error() without "have_error" argument.
+ */
+double
+float8in_internal(char *num, char **endptr_p,
+				  const char *type_name, const char *orig_string)
+{
+	return float8in_internal_opt_error(num, endptr_p, type_name,
+									   orig_string, NULL);
+}
+
 
 /*
  *		float8out		- converts float8 number to a string

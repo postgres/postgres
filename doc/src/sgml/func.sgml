@@ -12209,7 +12209,7 @@ table2-mapping
    <para>
     The <literal>@?</literal> and <literal>@@</literal> operators suppress
     errors including: lacking object field or array element, unexpected JSON
-    item type.
+    item type and numeric errors.
     This behavior might be helpful while searching over JSON document
     collections of varying structure.
    </para>

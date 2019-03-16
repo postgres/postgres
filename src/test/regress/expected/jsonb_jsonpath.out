@@ -127,13 +127,23 @@ select jsonb_path_query('[1]', 'strict $[1]', silent => true);
 (0 rows)
 
 select jsonb '[1]' @? 'lax $[10000000000000000]';
-ERROR:  integer out of range
+ ?column? 
+----------
+ 
+(1 row)
+
 select jsonb '[1]' @? 'strict $[10000000000000000]';
-ERROR:  integer out of range
+ ?column? 
+----------
+ 
+(1 row)
+
 select jsonb_path_query('[1]', 'lax $[10000000000000000]');
-ERROR:  integer out of range
+ERROR:  invalid SQL/JSON subscript
+DETAIL:  jsonpath array subscript is out of integer range
 select jsonb_path_query('[1]', 'strict $[10000000000000000]');
-ERROR:  integer out of range
+ERROR:  invalid SQL/JSON subscript
+DETAIL:  jsonpath array subscript is out of integer range
 select jsonb '[1]' @? '$[0]';
  ?column? 
 ----------
@@ -1037,9 +1047,19 @@ select jsonb '1' @? '$ ? ($ > 0)';
 
 -- arithmetic errors
 select jsonb_path_query('[1,2,0,3]', '$[*] ? (2 / @ > 0)');
-ERROR:  division by zero
+ jsonb_path_query 
+------------------
+ 1
+ 2
+ 3
+(3 rows)
+
 select jsonb_path_query('[1,2,0,3]', '$[*] ? ((2 / @ > 0) is unknown)');
-ERROR:  division by zero
+ jsonb_path_query 
+------------------
+ 0
+(1 row)
+
 select jsonb_path_query('0', '1 / $');
 ERROR:  division by zero
 select jsonb_path_query('0', '1 / $ + 2');
@@ -1502,7 +1522,8 @@ select jsonb_path_query('"1.23"', '$.double()');
 (1 row)
 
 select jsonb_path_query('"1.23aaa"', '$.double()');
-ERROR:  invalid input syntax for type double precision: "1.23aaa"
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .double() can only be applied to a numeric value
 select jsonb_path_query('"nan"', '$.double()');
  jsonb_path_query 
 ------------------
