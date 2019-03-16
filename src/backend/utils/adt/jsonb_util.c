@@ -1728,6 +1728,14 @@ convertJsonbScalar(StringInfo buffer, JEntry *jentry, JsonbValue *scalarVal)
 			break;
 
 		case jbvNumeric:
+			/* replace numeric NaN with string "NaN" */
+			if (numeric_is_nan(scalarVal->val.numeric))
+			{
+				appendToBuffer(buffer, "NaN", 3);
+				*jentry = 3;
+				break;
+			}
+
 			numlen = VARSIZE_ANY(scalarVal->val.numeric);
 			padlen = padBufferToInt(buffer);
 

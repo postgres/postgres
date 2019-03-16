@@ -133,7 +133,7 @@ static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
  * Pattern is given in the database encoding.  We internally convert to
  * an array of pg_wchar, which is what Spencer's regex package wants.
  */
-static regex_t *
+regex_t *
 RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 {
 	int			text_re_len = VARSIZE_ANY_EXHDR(text_re);
@@ -339,7 +339,7 @@ RE_execute(regex_t *re, char *dat, int dat_len,
  * Both pattern and data are given in the database encoding.  We internally
  * convert to array of pg_wchar which is what Spencer's regex package wants.
  */
-static bool
+bool
 RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 					   int cflags, Oid collation,
 					   int nmatch, regmatch_t *pmatch)

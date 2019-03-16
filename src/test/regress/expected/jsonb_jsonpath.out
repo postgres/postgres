@@ -1,0 +1,1756 @@
+select jsonb '{"a": 12}' @? '$';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": 12}' @? '1';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": 12}' @? '$.a.b';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": 12}' @? '$.b';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": 12}' @? '$.a + 2';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": 12}' @? '$.b + 2';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '{"a": {"a": 12}}' @? '$.a.a';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"a": 12}}' @? '$.*.a';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"b": {"a": 12}}' @? '$.*.a';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"b": {"a": 12}}' @? '$.*.b';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"b": {"a": 12}}' @? 'strict $.*.b';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '{}' @? '$.*';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": 1}' @? '$.*';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? 'lax $.**{1}';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? 'lax $.**{2}';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? 'lax $.**{3}';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '[]' @? '$[*]';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '[1]' @? '$[*]';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1]' @? '$[1]';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '[1]' @? 'strict $[1]';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb_path_query('[1]', 'strict $[1]');
+ERROR:  invalid SQL/JSON subscript
+DETAIL:  jsonpath array subscript is out of bounds
+select jsonb_path_query('[1]', 'strict $[1]', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb '[1]' @? 'lax $[10000000000000000]';
+ERROR:  integer out of range
+select jsonb '[1]' @? 'strict $[10000000000000000]';
+ERROR:  integer out of range
+select jsonb_path_query('[1]', 'lax $[10000000000000000]');
+ERROR:  integer out of range
+select jsonb_path_query('[1]', 'strict $[10000000000000000]');
+ERROR:  integer out of range
+select jsonb '[1]' @? '$[0]';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1]' @? '$[0.3]';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1]' @? '$[0.5]';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1]' @? '$[0.9]';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1]' @? '$[1.2]';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '[1]' @? 'strict $[1.2]';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '{"a": [1,2,3], "b": [3,4,5]}' @? '$ ? (@.a[*] >  @.b[*])';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": [1,2,3], "b": [3,4,5]}' @? '$ ? (@.a[*] >= @.b[*])';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": [1,2,3], "b": [3,4,"5"]}' @? '$ ? (@.a[*] >= @.b[*])';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": [1,2,3], "b": [3,4,"5"]}' @? 'strict $ ? (@.a[*] >= @.b[*])';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": [1,2,3], "b": [3,4,null]}' @? '$ ? (@.a[*] >= @.b[*])';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '1' @? '$ ? ((@ == "1") is unknown)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '1' @? '$ ? ((@ == 1) is unknown)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '[{"a": 1}, {"a": 2}]' @? '$[0 to 1] ? (@.a > 1)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_exists('[{"a": 1}, {"a": 2}, 3]', 'lax $[*].a', silent => false);
+ jsonb_path_exists 
+-------------------
+ t
+(1 row)
+
+select jsonb_path_exists('[{"a": 1}, {"a": 2}, 3]', 'lax $[*].a', silent => true);
+ jsonb_path_exists 
+-------------------
+ t
+(1 row)
+
+select jsonb_path_exists('[{"a": 1}, {"a": 2}, 3]', 'strict $[*].a', silent => false);
+ERROR:  SQL/JSON member not found
+DETAIL:  jsonpath member accessor can only be applied to an object
+select jsonb_path_exists('[{"a": 1}, {"a": 2}, 3]', 'strict $[*].a', silent => true);
+ jsonb_path_exists 
+-------------------
+ 
+(1 row)
+
+select jsonb_path_query('1', 'lax $.a');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1', 'strict $.a');
+ERROR:  SQL/JSON member not found
+DETAIL:  jsonpath member accessor can only be applied to an object
+select jsonb_path_query('1', 'strict $.*');
+ERROR:  SQL/JSON object not found
+DETAIL:  jsonpath wildcard member accessor can only be applied to an object
+select jsonb_path_query('1', 'strict $.a', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1', 'strict $.*', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'lax $.a');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.a');
+ERROR:  SQL/JSON member not found
+DETAIL:  jsonpath member accessor can only be applied to an object
+select jsonb_path_query('[]', 'strict $.a', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', 'lax $.a');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', 'strict $.a');
+ERROR:  SQL/JSON member not found
+DETAIL:  JSON object does not contain key "a"
+select jsonb_path_query('{}', 'strict $.a', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1', 'strict $[1]');
+ERROR:  SQL/JSON array not found
+DETAIL:  jsonpath array accessor can only be applied to an array
+select jsonb_path_query('1', 'strict $[*]');
+ERROR:  SQL/JSON array not found
+DETAIL:  jsonpath wildcard array accessor can only be applied to an array
+select jsonb_path_query('[]', 'strict $[1]');
+ERROR:  invalid SQL/JSON subscript
+DETAIL:  jsonpath array subscript is out of bounds
+select jsonb_path_query('[]', 'strict $["a"]');
+ERROR:  invalid SQL/JSON subscript
+DETAIL:  jsonpath array subscript is not a singleton numeric value
+select jsonb_path_query('1', 'strict $[1]', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1', 'strict $[*]', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $[1]', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $["a"]', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"a": 12, "b": {"a": 13}}', '$.a');
+ jsonb_path_query 
+------------------
+ 12
+(1 row)
+
+select jsonb_path_query('{"a": 12, "b": {"a": 13}}', '$.b');
+ jsonb_path_query 
+------------------
+ {"a": 13}
+(1 row)
+
+select jsonb_path_query('{"a": 12, "b": {"a": 13}}', '$.*');
+ jsonb_path_query 
+------------------
+ 12
+ {"a": 13}
+(2 rows)
+
+select jsonb_path_query('{"a": 12, "b": {"a": 13}}', 'lax $.*.a');
+ jsonb_path_query 
+------------------
+ 13
+(1 row)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[*].a');
+ jsonb_path_query 
+------------------
+ 13
+(1 row)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[*].*');
+ jsonb_path_query 
+------------------
+ 13
+ 14
+(2 rows)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[0].a');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[1].a');
+ jsonb_path_query 
+------------------
+ 13
+(1 row)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[2].a');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[0,1].a');
+ jsonb_path_query 
+------------------
+ 13
+(1 row)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[0 to 10].a');
+ jsonb_path_query 
+------------------
+ 13
+(1 row)
+
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}]', 'lax $[0 to 10 / 0].a');
+ERROR:  division by zero
+select jsonb_path_query('[12, {"a": 13}, {"b": 14}, "ccc", true]', '$[2.5 - 1 to $.size() - 2]');
+ jsonb_path_query 
+------------------
+ {"a": 13}
+ {"b": 14}
+ "ccc"
+(3 rows)
+
+select jsonb_path_query('1', 'lax $[0]');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('1', 'lax $[*]');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('[1]', 'lax $[0]');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('[1]', 'lax $[*]');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('[1,2,3]', 'lax $[*]');
+ jsonb_path_query 
+------------------
+ 1
+ 2
+ 3
+(3 rows)
+
+select jsonb_path_query('[1,2,3]', 'strict $[*].a');
+ERROR:  SQL/JSON member not found
+DETAIL:  jsonpath member accessor can only be applied to an object
+select jsonb_path_query('[1,2,3]', 'strict $[*].a', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$[last]');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$[last ? (exists(last))]');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $[last]');
+ERROR:  invalid SQL/JSON subscript
+DETAIL:  jsonpath array subscript is out of bounds
+select jsonb_path_query('[]', 'strict $[last]', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[1]', '$[last]');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('[1,2,3]', '$[last]');
+ jsonb_path_query 
+------------------
+ 3
+(1 row)
+
+select jsonb_path_query('[1,2,3]', '$[last - 1]');
+ jsonb_path_query 
+------------------
+ 2
+(1 row)
+
+select jsonb_path_query('[1,2,3]', '$[last ? (@.type() == "number")]');
+ jsonb_path_query 
+------------------
+ 3
+(1 row)
+
+select jsonb_path_query('[1,2,3]', '$[last ? (@.type() == "string")]');
+ERROR:  invalid SQL/JSON subscript
+DETAIL:  jsonpath array subscript is not a singleton numeric value
+select jsonb_path_query('[1,2,3]', '$[last ? (@.type() == "string")]', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select * from jsonb_path_query('{"a": 10}', '$');
+ jsonb_path_query 
+------------------
+ {"a": 10}
+(1 row)
+
+select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)');
+ERROR:  cannot find jsonpath variable 'value'
+select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '1');
+ERROR:  jsonb containing jsonpath variables is not an object
+select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '[{"value" : 13}]');
+ERROR:  jsonb containing jsonpath variables is not an object
+select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '{"value" : 13}');
+ jsonb_path_query 
+------------------
+ {"a": 10}
+(1 row)
+
+select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '{"value" : 8}');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select * from jsonb_path_query('{"a": 10}', '$.a ? (@ < $value)', '{"value" : 13}');
+ jsonb_path_query 
+------------------
+ 10
+(1 row)
+
+select * from jsonb_path_query('[10,11,12,13,14,15]', '$[*] ? (@ < $value)', '{"value" : 13}');
+ jsonb_path_query 
+------------------
+ 10
+ 11
+ 12
+(3 rows)
+
+select * from jsonb_path_query('[10,11,12,13,14,15]', '$[0,1] ? (@ < $x.value)', '{"x": {"value" : 13}}');
+ jsonb_path_query 
+------------------
+ 10
+ 11
+(2 rows)
+
+select * from jsonb_path_query('[10,11,12,13,14,15]', '$[0 to 2] ? (@ < $value)', '{"value" : 15}');
+ jsonb_path_query 
+------------------
+ 10
+ 11
+ 12
+(3 rows)
+
+select * from jsonb_path_query('[1,"1",2,"2",null]', '$[*] ? (@ == "1")');
+ jsonb_path_query 
+------------------
+ "1"
+(1 row)
+
+select * from jsonb_path_query('[1,"1",2,"2",null]', '$[*] ? (@ == $value)', '{"value" : "1"}');
+ jsonb_path_query 
+------------------
+ "1"
+(1 row)
+
+select * from jsonb_path_query('[1,"1",2,"2",null]', '$[*] ? (@ == $value)', '{"value" : null}');
+ jsonb_path_query 
+------------------
+ null
+(1 row)
+
+select * from jsonb_path_query('[1, "2", null]', '$[*] ? (@ != null)');
+ jsonb_path_query 
+------------------
+ 1
+ "2"
+(2 rows)
+
+select * from jsonb_path_query('[1, "2", null]', '$[*] ? (@ == null)');
+ jsonb_path_query 
+------------------
+ null
+(1 row)
+
+select * from jsonb_path_query('{}', '$ ? (@ == @)');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select * from jsonb_path_query('[]', 'strict $ ? (@ == @)');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**');
+ jsonb_path_query 
+------------------
+ {"a": {"b": 1}}
+ {"b": 1}
+ 1
+(3 rows)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{0}');
+ jsonb_path_query 
+------------------
+ {"a": {"b": 1}}
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{0 to last}');
+ jsonb_path_query 
+------------------
+ {"a": {"b": 1}}
+ {"b": 1}
+ 1
+(3 rows)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{1}');
+ jsonb_path_query 
+------------------
+ {"b": 1}
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{1 to last}');
+ jsonb_path_query 
+------------------
+ {"b": 1}
+ 1
+(2 rows)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{2}');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{2 to last}');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{3 to last}');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{last}');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{0}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{1}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{0 to last}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{1 to last}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"b": 1}}', 'lax $.**{1 to 2}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"c": {"b": 1}}}', 'lax $.**.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"c": {"b": 1}}}', 'lax $.**{0}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"a": {"c": {"b": 1}}}', 'lax $.**{1}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"a": {"c": {"b": 1}}}', 'lax $.**{0 to last}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"c": {"b": 1}}}', 'lax $.**{1 to last}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"c": {"b": 1}}}', 'lax $.**{1 to 2}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb_path_query('{"a": {"c": {"b": 1}}}', 'lax $.**{2 to 3}.b ? (@ > 0)');
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? '$.**.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? '$.**{0}.b ? ( @ > 0)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? '$.**{1}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? '$.**{0 to last}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? '$.**{1 to last}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"b": 1}}' @? '$.**{1 to 2}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"c": {"b": 1}}}' @? '$.**.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"c": {"b": 1}}}' @? '$.**{0}.b ? ( @ > 0)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": {"c": {"b": 1}}}' @? '$.**{1}.b ? ( @ > 0)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"a": {"c": {"b": 1}}}' @? '$.**{0 to last}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"c": {"b": 1}}}' @? '$.**{1 to last}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"c": {"b": 1}}}' @? '$.**{1 to 2}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": {"c": {"b": 1}}}' @? '$.**{2 to 3}.b ? ( @ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('{"g": {"x": 2}}', '$.g ? (exists (@.x))');
+ jsonb_path_query 
+------------------
+ {"x": 2}
+(1 row)
+
+select jsonb_path_query('{"g": {"x": 2}}', '$.g ? (exists (@.y))');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"g": {"x": 2}}', '$.g ? (exists (@.x ? (@ >= 2) ))');
+ jsonb_path_query 
+------------------
+ {"x": 2}
+(1 row)
+
+select jsonb_path_query('{"g": [{"x": 2}, {"y": 3}]}', 'lax $.g ? (exists (@.x))');
+ jsonb_path_query 
+------------------
+ {"x": 2}
+(1 row)
+
+select jsonb_path_query('{"g": [{"x": 2}, {"y": 3}]}', 'lax $.g ? (exists (@.x + "3"))');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"g": [{"x": 2}, {"y": 3}]}', 'lax $.g ? ((exists (@.x + "3")) is unknown)');
+ jsonb_path_query 
+------------------
+ {"x": 2}
+ {"y": 3}
+(2 rows)
+
+select jsonb_path_query('{"g": [{"x": 2}, {"y": 3}]}', 'strict $.g[*] ? (exists (@.x))');
+ jsonb_path_query 
+------------------
+ {"x": 2}
+(1 row)
+
+select jsonb_path_query('{"g": [{"x": 2}, {"y": 3}]}', 'strict $.g[*] ? ((exists (@.x)) is unknown)');
+ jsonb_path_query 
+------------------
+ {"y": 3}
+(1 row)
+
+select jsonb_path_query('{"g": [{"x": 2}, {"y": 3}]}', 'strict $.g ? (exists (@[*].x))');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"g": [{"x": 2}, {"y": 3}]}', 'strict $.g ? ((exists (@[*].x)) is unknown)');
+   jsonb_path_query   
+----------------------
+ [{"x": 2}, {"y": 3}]
+(1 row)
+
+--test ternary logic
+select
+	x, y,
+	jsonb_path_query(
+		'[true, false, null]',
+		'$[*] ? (@ == true  &&  ($x == true && $y == true) ||
+				 @ == false && !($x == true && $y == true) ||
+				 @ == null  &&  ($x == true && $y == true) is unknown)',
+		jsonb_build_object('x', x, 'y', y)
+	) as "x && y"
+from
+	(values (jsonb 'true'), ('false'), ('"null"')) x(x),
+	(values (jsonb 'true'), ('false'), ('"null"')) y(y);
+   x    |   y    | x && y 
+--------+--------+--------
+ true   | true   | true
+ true   | false  | false
+ true   | "null" | null
+ false  | true   | false
+ false  | false  | false
+ false  | "null" | false
+ "null" | true   | null
+ "null" | false  | false
+ "null" | "null" | null
+(9 rows)
+
+select
+	x, y,
+	jsonb_path_query(
+		'[true, false, null]',
+		'$[*] ? (@ == true  &&  ($x == true || $y == true) ||
+				 @ == false && !($x == true || $y == true) ||
+				 @ == null  &&  ($x == true || $y == true) is unknown)',
+		jsonb_build_object('x', x, 'y', y)
+	) as "x || y"
+from
+	(values (jsonb 'true'), ('false'), ('"null"')) x(x),
+	(values (jsonb 'true'), ('false'), ('"null"')) y(y);
+   x    |   y    | x || y 
+--------+--------+--------
+ true   | true   | true
+ true   | false  | true
+ true   | "null" | true
+ false  | true   | true
+ false  | false  | false
+ false  | "null" | null
+ "null" | true   | true
+ "null" | false  | null
+ "null" | "null" | null
+(9 rows)
+
+select jsonb '{"a": 1, "b":1}' @? '$ ? (@.a == @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": 1, "b":1}}' @? '$ ? (@.a == @.b)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '{"c": {"a": 1, "b":1}}' @? '$.c ? (@.a == @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": 1, "b":1}}' @? '$.c ? ($.c.a == @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": 1, "b":1}}' @? '$.* ? (@.a == @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": 1, "b":1}' @? '$.** ? (@.a == @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": 1, "b":1}}' @? '$.** ? (@.a == @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('{"c": {"a": 2, "b":1}}', '$.** ? (@.a == 1 + 1)');
+ jsonb_path_query 
+------------------
+ {"a": 2, "b": 1}
+(1 row)
+
+select jsonb_path_query('{"c": {"a": 2, "b":1}}', '$.** ? (@.a == (1 + 1))');
+ jsonb_path_query 
+------------------
+ {"a": 2, "b": 1}
+(1 row)
+
+select jsonb_path_query('{"c": {"a": 2, "b":1}}', '$.** ? (@.a == @.b + 1)');
+ jsonb_path_query 
+------------------
+ {"a": 2, "b": 1}
+(1 row)
+
+select jsonb_path_query('{"c": {"a": 2, "b":1}}', '$.** ? (@.a == (@.b + 1))');
+ jsonb_path_query 
+------------------
+ {"a": 2, "b": 1}
+(1 row)
+
+select jsonb '{"c": {"a": -1, "b":1}}' @? '$.** ? (@.a == - 1)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": -1, "b":1}}' @? '$.** ? (@.a == -1)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": -1, "b":1}}' @? '$.** ? (@.a == -@.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": -1, "b":1}}' @? '$.** ? (@.a == - @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": 0, "b":1}}' @? '$.** ? (@.a == 1 - @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": 2, "b":1}}' @? '$.** ? (@.a == 1 - - @.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"c": {"a": 0, "b":1}}' @? '$.** ? (@.a == 1 - +@.b)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1,2,3]' @? '$ ? (+@[*] > +2)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1,2,3]' @? '$ ? (+@[*] > +3)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '[1,2,3]' @? '$ ? (-@[*] < -2)';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1,2,3]' @? '$ ? (-@[*] < -3)';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '1' @? '$ ? ($ > 0)';
+ ?column? 
+----------
+ t
+(1 row)
+
+-- arithmetic errors
+select jsonb_path_query('[1,2,0,3]', '$[*] ? (2 / @ > 0)');
+ERROR:  division by zero
+select jsonb_path_query('[1,2,0,3]', '$[*] ? ((2 / @ > 0) is unknown)');
+ERROR:  division by zero
+select jsonb_path_query('0', '1 / $');
+ERROR:  division by zero
+select jsonb_path_query('0', '1 / $ + 2');
+ERROR:  division by zero
+select jsonb_path_query('0', '-(3 + 1 % $)');
+ERROR:  division by zero
+select jsonb_path_query('1', '$ + "2"');
+ERROR:  singleton SQL/JSON item required
+DETAIL:  right operand of binary jsonpath operator + is not a singleton numeric value
+select jsonb_path_query('[1, 2]', '3 * $');
+ERROR:  singleton SQL/JSON item required
+DETAIL:  right operand of binary jsonpath operator * is not a singleton numeric value
+select jsonb_path_query('"a"', '-$');
+ERROR:  SQL/JSON number not found
+DETAIL:  operand of unary jsonpath operator - is not a numeric value
+select jsonb_path_query('[1,"2",3]', '+$');
+ERROR:  SQL/JSON number not found
+DETAIL:  operand of unary jsonpath operator + is not a numeric value
+select jsonb_path_query('1', '$ + "2"', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[1, 2]', '3 * $', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"a"', '-$', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[1,"2",3]', '+$', silent => true);
+ jsonb_path_query 
+------------------
+ 1
+(1 row)
+
+select jsonb '["1",2,0,3]' @? '-$[*]';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '[1,"2",0,3]' @? '-$[*]';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '["1",2,0,3]' @? 'strict -$[*]';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '[1,"2",0,3]' @? 'strict -$[*]';
+ ?column? 
+----------
+ 
+(1 row)
+
+-- unwrapping of operator arguments in lax mode
+select jsonb_path_query('{"a": [2]}', 'lax $.a * 3');
+ jsonb_path_query 
+------------------
+ 6
+(1 row)
+
+select jsonb_path_query('{"a": [2]}', 'lax $.a + 3');
+ jsonb_path_query 
+------------------
+ 5
+(1 row)
+
+select jsonb_path_query('{"a": [2, 3, 4]}', 'lax -$.a');
+ jsonb_path_query 
+------------------
+ -2
+ -3
+ -4
+(3 rows)
+
+-- should fail
+select jsonb_path_query('{"a": [1, 2]}', 'lax $.a * 3');
+ERROR:  singleton SQL/JSON item required
+DETAIL:  left operand of binary jsonpath operator * is not a singleton numeric value
+select jsonb_path_query('{"a": [1, 2]}', 'lax $.a * 3', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+-- extension: boolean expressions
+select jsonb_path_query('2', '$ > 1');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('2', '$ <= 1');
+ jsonb_path_query 
+------------------
+ false
+(1 row)
+
+select jsonb_path_query('2', '$ == "2"');
+ jsonb_path_query 
+------------------
+ null
+(1 row)
+
+select jsonb '2' @? '$ == "2"';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '2' @@ '$ > 1';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '2' @@ '$ <= 1';
+ ?column? 
+----------
+ f
+(1 row)
+
+select jsonb '2' @@ '$ == "2"';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '2' @@ '1';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '{}' @@ '$';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '[]' @@ '$';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '[1,2,3]' @@ '$[*]';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb '[]' @@ '$[*]';
+ ?column? 
+----------
+ 
+(1 row)
+
+select jsonb_path_match('[[1, true], [2, false]]', 'strict $[*] ? (@[0] > $x) [1]', '{"x": 1}');
+ jsonb_path_match 
+------------------
+ f
+(1 row)
+
+select jsonb_path_match('[[1, true], [2, false]]', 'strict $[*] ? (@[0] < $x) [1]', '{"x": 2}');
+ jsonb_path_match 
+------------------
+ t
+(1 row)
+
+select jsonb_path_match('[{"a": 1}, {"a": 2}, 3]', 'lax exists($[*].a)', silent => false);
+ jsonb_path_match 
+------------------
+ t
+(1 row)
+
+select jsonb_path_match('[{"a": 1}, {"a": 2}, 3]', 'lax exists($[*].a)', silent => true);
+ jsonb_path_match 
+------------------
+ t
+(1 row)
+
+select jsonb_path_match('[{"a": 1}, {"a": 2}, 3]', 'strict exists($[*].a)', silent => false);
+ jsonb_path_match 
+------------------
+ 
+(1 row)
+
+select jsonb_path_match('[{"a": 1}, {"a": 2}, 3]', 'strict exists($[*].a)', silent => true);
+ jsonb_path_match 
+------------------
+ 
+(1 row)
+
+select jsonb_path_query('[null,1,true,"a",[],{}]', '$.type()');
+ jsonb_path_query 
+------------------
+ "array"
+(1 row)
+
+select jsonb_path_query('[null,1,true,"a",[],{}]', 'lax $.type()');
+ jsonb_path_query 
+------------------
+ "array"
+(1 row)
+
+select jsonb_path_query('[null,1,true,"a",[],{}]', '$[*].type()');
+ jsonb_path_query 
+------------------
+ "null"
+ "number"
+ "boolean"
+ "string"
+ "array"
+ "object"
+(6 rows)
+
+select jsonb_path_query('null', 'null.type()');
+ jsonb_path_query 
+------------------
+ "null"
+(1 row)
+
+select jsonb_path_query('null', 'true.type()');
+ jsonb_path_query 
+------------------
+ "boolean"
+(1 row)
+
+select jsonb_path_query('null', '123.type()');
+ jsonb_path_query 
+------------------
+ "number"
+(1 row)
+
+select jsonb_path_query('null', '"123".type()');
+ jsonb_path_query 
+------------------
+ "string"
+(1 row)
+
+select jsonb_path_query('{"a": 2}', '($.a - 5).abs() + 10');
+ jsonb_path_query 
+------------------
+ 13
+(1 row)
+
+select jsonb_path_query('{"a": 2.5}', '-($.a * $.a).floor() % 4.3');
+ jsonb_path_query 
+------------------
+ -1.7
+(1 row)
+
+select jsonb_path_query('[1, 2, 3]', '($[*] > 2) ? (@ == true)');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('[1, 2, 3]', '($[*] > 3).type()');
+ jsonb_path_query 
+------------------
+ "boolean"
+(1 row)
+
+select jsonb_path_query('[1, 2, 3]', '($[*].a > 3).type()');
+ jsonb_path_query 
+------------------
+ "boolean"
+(1 row)
+
+select jsonb_path_query('[1, 2, 3]', 'strict ($[*].a > 3).type()');
+ jsonb_path_query 
+------------------
+ "null"
+(1 row)
+
+select jsonb_path_query('[1,null,true,"11",[],[1],[1,2,3],{},{"a":1,"b":2}]', 'strict $[*].size()');
+ERROR:  SQL/JSON array not found
+DETAIL:  jsonpath item method .size() can only be applied to an array
+select jsonb_path_query('[1,null,true,"11",[],[1],[1,2,3],{},{"a":1,"b":2}]', 'strict $[*].size()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[1,null,true,"11",[],[1],[1,2,3],{},{"a":1,"b":2}]', 'lax $[*].size()');
+ jsonb_path_query 
+------------------
+ 1
+ 1
+ 1
+ 1
+ 0
+ 1
+ 3
+ 1
+ 1
+(9 rows)
+
+select jsonb_path_query('[0, 1, -2, -3.4, 5.6]', '$[*].abs()');
+ jsonb_path_query 
+------------------
+ 0
+ 1
+ 2
+ 3.4
+ 5.6
+(5 rows)
+
+select jsonb_path_query('[0, 1, -2, -3.4, 5.6]', '$[*].floor()');
+ jsonb_path_query 
+------------------
+ 0
+ 1
+ -2
+ -4
+ 5
+(5 rows)
+
+select jsonb_path_query('[0, 1, -2, -3.4, 5.6]', '$[*].ceiling()');
+ jsonb_path_query 
+------------------
+ 0
+ 1
+ -2
+ -3
+ 6
+(5 rows)
+
+select jsonb_path_query('[0, 1, -2, -3.4, 5.6]', '$[*].ceiling().abs()');
+ jsonb_path_query 
+------------------
+ 0
+ 1
+ 2
+ 3
+ 6
+(5 rows)
+
+select jsonb_path_query('[0, 1, -2, -3.4, 5.6]', '$[*].ceiling().abs().type()');
+ jsonb_path_query 
+------------------
+ "number"
+ "number"
+ "number"
+ "number"
+ "number"
+(5 rows)
+
+select jsonb_path_query('[{},1]', '$[*].keyvalue()');
+ERROR:  SQL/JSON object not found
+DETAIL:  jsonpath item method .keyvalue() can only be applied to an object
+select jsonb_path_query('[{},1]', '$[*].keyvalue()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.keyvalue()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{"a": 1, "b": [1, 2], "c": {"a": "bbb"}}', '$.keyvalue()');
+               jsonb_path_query               
+----------------------------------------------
+ {"id": 0, "key": "a", "value": 1}
+ {"id": 0, "key": "b", "value": [1, 2]}
+ {"id": 0, "key": "c", "value": {"a": "bbb"}}
+(3 rows)
+
+select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', '$[*].keyvalue()');
+               jsonb_path_query                
+-----------------------------------------------
+ {"id": 12, "key": "a", "value": 1}
+ {"id": 12, "key": "b", "value": [1, 2]}
+ {"id": 72, "key": "c", "value": {"a": "bbb"}}
+(3 rows)
+
+select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', 'strict $.keyvalue()');
+ERROR:  SQL/JSON object not found
+DETAIL:  jsonpath item method .keyvalue() can only be applied to an object
+select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', 'lax $.keyvalue()');
+               jsonb_path_query                
+-----------------------------------------------
+ {"id": 12, "key": "a", "value": 1}
+ {"id": 12, "key": "b", "value": [1, 2]}
+ {"id": 72, "key": "c", "value": {"a": "bbb"}}
+(3 rows)
+
+select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', 'strict $.keyvalue().a');
+ERROR:  SQL/JSON object not found
+DETAIL:  jsonpath item method .keyvalue() can only be applied to an object
+select jsonb '{"a": 1, "b": [1, 2]}' @? 'lax $.keyvalue()';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb '{"a": 1, "b": [1, 2]}' @? 'lax $.keyvalue().key';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('null', '$.double()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+select jsonb_path_query('true', '$.double()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+select jsonb_path_query('null', '$.double()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('true', '$.double()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.double()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.double()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+select jsonb_path_query('{}', '$.double()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+select jsonb_path_query('[]', 'strict $.double()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.double()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.double()');
+ jsonb_path_query 
+------------------
+ 1.23
+(1 row)
+
+select jsonb_path_query('"1.23"', '$.double()');
+ jsonb_path_query 
+------------------
+ 1.23
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.double()');
+ERROR:  invalid input syntax for type double precision: "1.23aaa"
+select jsonb_path_query('"nan"', '$.double()');
+ jsonb_path_query 
+------------------
+ "NaN"
+(1 row)
+
+select jsonb_path_query('"NaN"', '$.double()');
+ jsonb_path_query 
+------------------
+ "NaN"
+(1 row)
+
+select jsonb_path_query('"inf"', '$.double()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .double() can only be applied to a numeric value
+select jsonb_path_query('"-inf"', '$.double()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .double() can only be applied to a numeric value
+select jsonb_path_query('"inf"', '$.double()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"-inf"', '$.double()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.abs()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .abs() can only be applied to a numeric value
+select jsonb_path_query('true', '$.floor()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .floor() can only be applied to a numeric value
+select jsonb_path_query('"1.2"', '$.ceiling()');
+ERROR:  non-numeric SQL/JSON item
+DETAIL:  jsonpath item method .ceiling() can only be applied to a numeric value
+select jsonb_path_query('{}', '$.abs()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('true', '$.floor()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('"1.2"', '$.ceiling()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('["", "a", "abc", "abcabc"]', '$[*] ? (@ starts with "abc")');
+ jsonb_path_query 
+------------------
+ "abc"
+ "abcabc"
+(2 rows)
+
+select jsonb_path_query('["", "a", "abc", "abcabc"]', 'strict $ ? (@[*] starts with "abc")');
+      jsonb_path_query      
+----------------------------
+ ["", "a", "abc", "abcabc"]
+(1 row)
+
+select jsonb_path_query('["", "a", "abd", "abdabc"]', 'strict $ ? (@[*] starts with "abc")');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('["abc", "abcabc", null, 1]', 'strict $ ? (@[*] starts with "abc")');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('["abc", "abcabc", null, 1]', 'strict $ ? ((@[*] starts with "abc") is unknown)');
+      jsonb_path_query      
+----------------------------
+ ["abc", "abcabc", null, 1]
+(1 row)
+
+select jsonb_path_query('[[null, 1, "abc", "abcabc"]]', 'lax $ ? (@[*] starts with "abc")');
+      jsonb_path_query      
+----------------------------
+ [null, 1, "abc", "abcabc"]
+(1 row)
+
+select jsonb_path_query('[[null, 1, "abd", "abdabc"]]', 'lax $ ? ((@[*] starts with "abc") is unknown)');
+      jsonb_path_query      
+----------------------------
+ [null, 1, "abd", "abdabc"]
+(1 row)
+
+select jsonb_path_query('[null, 1, "abd", "abdabc"]', 'lax $[*] ? ((@ starts with "abc") is unknown)');
+ jsonb_path_query 
+------------------
+ null
+ 1
+(2 rows)
+
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^ab.*c")');
+ jsonb_path_query 
+------------------
+ "abc"
+ "abdacb"
+(2 rows)
+
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^a  b.*  c " flag "ix")');
+ jsonb_path_query 
+------------------
+ "abc"
+ "aBdC"
+ "abdacb"
+(3 rows)
+
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^ab.*c" flag "m")');
+ jsonb_path_query 
+------------------
+ "abc"
+ "abdacb"
+ "adc\nabc"
+(3 rows)
+
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^ab.*c" flag "s")');
+ jsonb_path_query 
+------------------
+ "abc"
+ "abdacb"
+(2 rows)
+
+-- jsonpath operators
+SELECT jsonb_path_query('[{"a": 1}, {"a": 2}]', '$[*]');
+ jsonb_path_query 
+------------------
+ {"a": 1}
+ {"a": 2}
+(2 rows)
+
+SELECT jsonb_path_query('[{"a": 1}, {"a": 2}]', '$[*] ? (@.a > 10)');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}, {}]', 'strict $[*].a');
+ERROR:  SQL/JSON member not found
+DETAIL:  JSON object does not contain key "a"
+SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}]', '$[*].a');
+ jsonb_path_query_array 
+------------------------
+ [1, 2]
+(1 row)
+
+SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}]', '$[*].a ? (@ == 1)');
+ jsonb_path_query_array 
+------------------------
+ [1]
+(1 row)
+
+SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}]', '$[*].a ? (@ > 10)');
+ jsonb_path_query_array 
+------------------------
+ []
+(1 row)
+
+SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*].a ? (@ > $min && @ < $max)', vars => '{"min": 1, "max": 4}');
+ jsonb_path_query_array 
+------------------------
+ [2, 3]
+(1 row)
+
+SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*].a ? (@ > $min && @ < $max)', vars => '{"min": 3, "max": 4}');
+ jsonb_path_query_array 
+------------------------
+ []
+(1 row)
+
+SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}, {}]', 'strict $[*].a');
+ERROR:  SQL/JSON member not found
+DETAIL:  JSON object does not contain key "a"
+SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}, {}]', 'strict $[*].a', silent => true);
+ jsonb_path_query_first 
+------------------------
+ 1
+(1 row)
+
+SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}]', '$[*].a');
+ jsonb_path_query_first 
+------------------------
+ 1
+(1 row)
+
+SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}]', '$[*].a ? (@ == 1)');
+ jsonb_path_query_first 
+------------------------
+ 1
+(1 row)
+
+SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}]', '$[*].a ? (@ > 10)');
+ jsonb_path_query_first 
+------------------------
+ 
+(1 row)
+
+SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*].a ? (@ > $min && @ < $max)', vars => '{"min": 1, "max": 4}');
+ jsonb_path_query_first 
+------------------------
+ 2
+(1 row)
+
+SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*].a ? (@ > $min && @ < $max)', vars => '{"min": 3, "max": 4}');
+ jsonb_path_query_first 
+------------------------
+ 
+(1 row)
+
+SELECT jsonb '[{"a": 1}, {"a": 2}]' @? '$[*].a ? (@ > 1)';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT jsonb '[{"a": 1}, {"a": 2}]' @? '$[*] ? (@.a > 2)';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT jsonb_path_exists('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*] ? (@.a > $min && @.a < $max)', vars => '{"min": 1, "max": 4}');
+ jsonb_path_exists 
+-------------------
+ t
+(1 row)
+
+SELECT jsonb_path_exists('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*] ? (@.a > $min && @.a < $max)', vars => '{"min": 3, "max": 4}');
+ jsonb_path_exists 
+-------------------
+ f
+(1 row)
+
+SELECT jsonb '[{"a": 1}, {"a": 2}]' @@ '$[*].a > 1';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT jsonb '[{"a": 1}, {"a": 2}]' @@ '$[*].a > 2';
+ ?column? 
+----------
+ f
+(1 row)
+

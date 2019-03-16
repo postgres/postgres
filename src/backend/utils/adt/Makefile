@@ -17,8 +17,8 @@ OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	float.o format_type.o formatting.o genfile.o \
 	geo_ops.o geo_selfuncs.o geo_spgist.o inet_cidr_ntop.o inet_net_pton.o \
 	int.o int8.o json.o jsonb.o jsonb_gin.o jsonb_op.o jsonb_util.o \
-	jsonfuncs.o like.o like_support.o lockfuncs.o \
-	mac.o mac8.o misc.o name.o \
+	jsonfuncs.o jsonpath_gram.o jsonpath_scan.o jsonpath.o jsonpath_exec.o \
+	like.o like_support.o lockfuncs.o mac.o mac8.o misc.o name.o \
 	network.o network_gist.o network_selfuncs.o network_spgist.o \
 	numeric.o numutils.o oid.o oracle_compat.o \
 	orderedsetaggs.o partitionfuncs.o pg_locale.o pg_lsn.o \
@@ -32,6 +32,21 @@ OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	tsvector.o tsvector_op.o tsvector_parser.o \
 	txid.o uuid.o varbit.o varchar.o varlena.o version.o \
 	windowfuncs.o xid.o xml.o
+
+jsonpath_gram.c: BISONFLAGS += -d
+
+jsonpath_scan.c: FLEXFLAGS = -CF -p -p
+
+jsonpath_gram.h: jsonpath_gram.c ;
+
+# Force these dependencies to be known even without dependency info built:
+jsonpath_gram.o jsonpath_scan.o jsonpath_parser.o: jsonpath_gram.h
+
+# jsonpath_gram.c, jsonpath_gram.h, and jsonpath_scan.c are in the
+# distribution tarball, so they are not cleaned here.
+clean distclean maintainer-clean:
+	rm -f lex.backup
+
 
 like.o: like.c like_match.c
 

@@ -434,6 +434,11 @@
   typname => 'jsonb', typlen => '-1', typbyval => 'f', typcategory => 'U',
   typinput => 'jsonb_in', typoutput => 'jsonb_out', typreceive => 'jsonb_recv',
   typsend => 'jsonb_send', typalign => 'i', typstorage => 'x' },
+{ oid =>  '4072', array_type_oid => '4073', descr => 'JSON path',
+  typname => 'jsonpath', typlen => '-1', typbyval => 'f', typcategory => 'U',
+  typarray => '_jsonpath', typinput => 'jsonpath_in',
+  typoutput => 'jsonpath_out', typreceive => '-', typsend => '-',
+  typalign => 'i', typstorage => 'x' },
 
 { oid => '2970', array_type_oid => '2949', descr => 'txid snapshot',
   typname => 'txid_snapshot', typlen => '-1', typbyval => 'f',

@@ -327,6 +327,24 @@ sub GenerateFiles
 		);
 	}
 
+	if (IsNewer(
+			'src/backend/utils/adt/jsonpath_gram.h',
+			'src/backend/utils/adt/jsonpath_gram.y'))
+	{
+		print "Generating jsonpath_gram.h...\n";
+		chdir('src/backend/utils/adt');
+		system('perl ../../../tools/msvc/pgbison.pl jsonpath_gram.y');
+		chdir('../../../..');
+	}
+
+	if (IsNewer(
+			'src/include/utils/jsonpath_gram.h',
+			'src/backend/utils/adt/jsonpath_gram.h'))
+	{
+		copyFile('src/backend/utils/adt/jsonpath_gram.h',
+			'src/include/utils/jsonpath_gram.h');
+	}
+
 	if ($self->{options}->{python}
 		&& IsNewer(
 			'src/pl/plpython/spiexceptions.h',

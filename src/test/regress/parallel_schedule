@@ -104,7 +104,12 @@ test: publication subscription
 # ----------
 # Another group of parallel tests
 # ----------
-test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
+test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock indirect_toast equivclass
+
+# ----------
+# Another group of parallel tests (JSON related)
+# ----------
+test: json jsonb json_encoding jsonpath jsonb_jsonpath
 
 # ----------
 # Another group of parallel tests

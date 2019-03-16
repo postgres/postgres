@@ -136,6 +136,17 @@
     <pubdate>1988</pubdate>
    </biblioentry>
 
+   <biblioentry id="sqltr-19075-6">
+    <title>SQL Technical Report</title>
+    <subtitle>Part 6: SQL support for JavaScript Object
+      Notation (JSON)</subtitle>
+    <edition>First Edition.</edition>
+    <biblioid>
+    <ulink url="http://standards.iso.org/ittf/PubliclyAvailableStandards/c067367_ISO_IEC_TR_19075-6_2017.zip"></ulink>.
+    </biblioid>
+    <pubdate>2017.</pubdate>
+   </biblioentry>
+
   </bibliodiv>
 
   <bibliodiv>

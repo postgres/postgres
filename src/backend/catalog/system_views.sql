@@ -1128,6 +1128,46 @@ LANGUAGE INTERNAL
 STRICT IMMUTABLE PARALLEL SAFE
 AS 'jsonb_insert';
 
+CREATE OR REPLACE FUNCTION
+  jsonb_path_exists(target jsonb, path jsonpath, vars jsonb DEFAULT '{}',
+                    silent boolean DEFAULT false)
+RETURNS boolean
+LANGUAGE INTERNAL
+STRICT IMMUTABLE PARALLEL SAFE
+AS 'jsonb_path_exists';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_path_match(target jsonb, path jsonpath, vars jsonb DEFAULT '{}',
+                   silent boolean DEFAULT false)
+RETURNS boolean
+LANGUAGE INTERNAL
+STRICT IMMUTABLE PARALLEL SAFE
+AS 'jsonb_path_match';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_path_query(target jsonb, path jsonpath, vars jsonb DEFAULT '{}',
+                   silent boolean DEFAULT false)
+RETURNS SETOF jsonb
+LANGUAGE INTERNAL
+STRICT IMMUTABLE PARALLEL SAFE
+AS 'jsonb_path_query';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_path_query_array(target jsonb, path jsonpath, vars jsonb DEFAULT '{}',
+                         silent boolean DEFAULT false)
+RETURNS jsonb
+LANGUAGE INTERNAL
+STRICT IMMUTABLE PARALLEL SAFE
+AS 'jsonb_path_query_array';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_path_query_first(target jsonb, path jsonpath, vars jsonb DEFAULT '{}',
+                         silent boolean DEFAULT false)
+RETURNS jsonb
+LANGUAGE INTERNAL
+STRICT IMMUTABLE PARALLEL SAFE
+AS 'jsonb_path_query_first';
+
 --
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather

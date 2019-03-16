@@ -66,8 +66,10 @@ typedef enum
 
 /* Convenience macros */
 #define DatumGetJsonbP(d)	((Jsonb *) PG_DETOAST_DATUM(d))
+#define DatumGetJsonbPCopy(d)	((Jsonb *) PG_DETOAST_DATUM_COPY(d))
 #define JsonbPGetDatum(p)	PointerGetDatum(p)
 #define PG_GETARG_JSONB_P(x)	DatumGetJsonbP(PG_GETARG_DATUM(x))
+#define PG_GETARG_JSONB_P_COPY(x)	DatumGetJsonbPCopy(PG_GETARG_DATUM(x))
 #define PG_RETURN_JSONB_P(x)	PG_RETURN_POINTER(x)
 
 typedef struct JsonbPair JsonbPair;
@@ -378,6 +380,8 @@ extern char *JsonbToCString(StringInfo out, JsonbContainer *in,
 			   int estimated_len);
 extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
 					 int estimated_len);
+extern bool JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res);
+extern const char *JsonbTypeName(JsonbValue *jb);
 
 
 #endif							/* __JSONB_H__ */

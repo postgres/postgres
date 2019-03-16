@@ -164,6 +164,55 @@ jsonb_send(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Get the type name of a jsonb container.
+ */
+static const char *
+JsonbContainerTypeName(JsonbContainer *jbc)
+{
+	JsonbValue	scalar;
+
+	if (JsonbExtractScalar(jbc, &scalar))
+		return JsonbTypeName(&scalar);
+	else if (JsonContainerIsArray(jbc))
+		return "array";
+	else if (JsonContainerIsObject(jbc))
+		return "object";
+	else
+	{
+		elog(ERROR, "invalid jsonb container type: 0x%08x", jbc->header);
+		return "unknown";
+	}
+}
+
+/*
+ * Get the type name of a jsonb value.
+ */
+const char *
+JsonbTypeName(JsonbValue *jbv)
+{
+	switch (jbv->type)
+	{
+		case jbvBinary:
+			return JsonbContainerTypeName(jbv->val.binary.data);
+		case jbvObject:
+			return "object";
+		case jbvArray:
+			return "array";
+		case jbvNumeric:
+			return "number";
+		case jbvString:
+			return "string";
+		case jbvBool:
+			return "boolean";
+		case jbvNull:
+			return "null";
+		default:
+			elog(ERROR, "unrecognized jsonb value type: %d", jbv->type);
+			return "unknown";
+	}
+}
+
+/*
  * SQL function jsonb_typeof(jsonb) -> text
  *
  * This function is here because the analog json function is in json.c, since
@@ -173,45 +222,7 @@ Datum
 jsonb_typeof(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
-	JsonbIterator *it;
-	JsonbValue	v;
-	char	   *result;
-
-	if (JB_ROOT_IS_OBJECT(in))
-		result = "object";
-	else if (JB_ROOT_IS_ARRAY(in) && !JB_ROOT_IS_SCALAR(in))
-		result = "array";
-	else
-	{
-		Assert(JB_ROOT_IS_SCALAR(in));
-
-		it = JsonbIteratorInit(&in->root);
-
-		/*
-		 * A root scalar is stored as an array of one element, so we get the
-		 * array and then its first (and only) member.
-		 */
-		(void) JsonbIteratorNext(&it, &v, true);
-		Assert(v.type == jbvArray);
-		(void) JsonbIteratorNext(&it, &v, true);
-		switch (v.type)
-		{
-			case jbvNull:
-				result = "null";
-				break;
-			case jbvString:
-				result = "string";
-				break;
-			case jbvNumeric:
-				result = "number";
-				break;
-			case jbvBool:
-				result = "boolean";
-				break;
-			default:
-				elog(ERROR, "unknown jsonb scalar type");
-		}
-	}
+	const char *result = JsonbContainerTypeName(&in->root);
 
 	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
@@ -1857,7 +1868,7 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 /*
  * Extract scalar value from raw-scalar pseudo-array jsonb.
  */
-static bool
+bool
 JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 {
 	JsonbIterator *it;

@@ -167,10 +167,18 @@ typedef struct
 /*
  * the prototypes for exported functions
  */
+
+/* regcomp.c */
 extern int	pg_regcomp(regex_t *, const pg_wchar *, size_t, int, Oid);
 extern int	pg_regexec(regex_t *, const pg_wchar *, size_t, size_t, rm_detail_t *, size_t, regmatch_t[], int);
 extern int	pg_regprefix(regex_t *, pg_wchar **, size_t *);
 extern void pg_regfree(regex_t *);
 extern size_t pg_regerror(int, const regex_t *, char *, size_t);
+
+/* regexp.c */
+extern regex_t *RE_compile_and_cache(text *text_re, int cflags, Oid collation);
+extern bool RE_compile_and_execute(text *text_re, char *dat, int dat_len,
+					   int cflags, Oid collation,
+					   int nmatch, regmatch_t *pmatch);
 
 #endif							/* _REGEX_H_ */
