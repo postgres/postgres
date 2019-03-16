@@ -11434,7 +11434,7 @@ assign_recovery_target_name(const char *newval, void *extra)
 	if (newval && strcmp(newval, "") != 0)
 	{
 		recoveryTarget = RECOVERY_TARGET_NAME;
-		recoveryTargetName = (char *) newval;
+		recoveryTargetName = newval;
 	}
 	else
 		recoveryTarget = RECOVERY_TARGET_UNSET;

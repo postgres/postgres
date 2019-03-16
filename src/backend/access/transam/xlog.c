@@ -269,7 +269,7 @@ bool		recoveryTargetInclusive = true;
 int			recoveryTargetAction = RECOVERY_TARGET_ACTION_PAUSE;
 TransactionId recoveryTargetXid;
 TimestampTz recoveryTargetTime;
-char	   *recoveryTargetName;
+const char *recoveryTargetName;
 XLogRecPtr	recoveryTargetLSN;
 int			recovery_min_apply_delay = 0;
 TimestampTz recoveryDelayUntilTime;

@@ -131,7 +131,7 @@ extern char *PrimarySlotName;
 /* indirectly set via GUC system */
 extern TransactionId recoveryTargetXid;
 extern TimestampTz recoveryTargetTime;
-extern char *recoveryTargetName;
+extern const char *recoveryTargetName;
 extern XLogRecPtr recoveryTargetLSN;
 extern RecoveryTargetType recoveryTarget;
 extern char *PromoteTriggerFile;
