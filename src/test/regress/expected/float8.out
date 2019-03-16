@@ -566,12 +566,8 @@ SELECT asinh(float8 'nan');
    NaN
 (1 row)
 
-SELECT acosh(float8 'infinity');
-  acosh   
-----------
- Infinity
-(1 row)
-
+-- acosh(Inf) should be Inf, but some mingw versions produce NaN, so skip test
+-- SELECT acosh(float8 'infinity');
 SELECT acosh(float8 '-infinity');
 ERROR:  input is out of range
 SELECT acosh(float8 'nan');
