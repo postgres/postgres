@@ -198,7 +198,7 @@ GetPageWithFreeSpace(Relation rel, Size spaceNeeded, bool check_fsm_only)
 		}
 		else if (nblocks > 0)
 		{
-			/* Create or update local map and get first candidate block. */
+			/* Initialize local map and get first candidate block. */
 			fsm_local_set(rel, nblocks);
 			target_block = fsm_local_search();
 		}
@@ -1119,8 +1119,7 @@ fsm_allow_writes(Relation rel, BlockNumber heapblk,
 }
 
 /*
- * Initialize or update the local map of blocks to try, for when there is
- * no FSM.
+ * Initialize the local map of blocks to try, for when there is no FSM.
  *
  * When we initialize the map, the whole heap is potentially available to
  * try.  Testing revealed that trying every block can cause a small
