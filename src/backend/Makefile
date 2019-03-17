@@ -315,8 +315,10 @@ maintainer-clean: distclean
 	      replication/syncrep_scanner.c \
 	      storage/lmgr/lwlocknames.c \
 	      storage/lmgr/lwlocknames.h \
-	      utils/misc/guc-file.c \
+	      utils/adt/jsonpath_gram.c \
 	      utils/adt/jsonpath_gram.h \
+	      utils/adt/jsonpath_scan.c \
+	      utils/misc/guc-file.c \
 	      utils/sort/qsort_tuple.c
 
 

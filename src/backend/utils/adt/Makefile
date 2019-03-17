@@ -33,11 +33,19 @@ OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	txid.o uuid.o varbit.o varchar.o varlena.o version.o \
 	windowfuncs.o xid.o xml.o
 
+# There is no correct way to write a rule that generates two files.
+# See comment in src/backend/parser/Makefile for the explanation of
+# the trick used here.
+
+jsonpath_gram.h: jsonpath_gram.c
+	touch $@
+
 jsonpath_gram.c: BISONFLAGS += -d
 
 jsonpath_scan.c: FLEXFLAGS = -CF -p -p
+jsonpath_scan.c: FLEX_NO_BACKUP=yes
+jsonpath_scan.c: FLEX_FIX_WARNING=yes
 
-jsonpath_gram.h: jsonpath_gram.c ;
 
 # Force these dependencies to be known even without dependency info built:
 jsonpath_gram.o jsonpath_scan.o jsonpath_parser.o: jsonpath_gram.h
