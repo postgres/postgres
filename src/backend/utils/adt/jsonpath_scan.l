@@ -284,10 +284,10 @@ jsonpath_yyerror(JsonPathParseResult **result, const char *message)
 
 typedef struct keyword
 {
-	int16	len;
-	bool	lowercase;
-	int		val;
-	char	*keyword;
+	int16		len;
+	bool		lowercase;
+	int			val;
+	const char	*keyword;
 } keyword;
 
 /*
@@ -295,7 +295,7 @@ typedef struct keyword
  * alphabetical order
  */
 
-static keyword keywords[] = {
+static const keyword keywords[] = {
 	{ 2, false,	IS_P,		"is"},
 	{ 2, false,	TO_P,		"to"},
 	{ 3, false,	ABS_P,		"abs"},
@@ -322,11 +322,11 @@ static keyword keywords[] = {
 static int
 checkSpecialVal()
 {
-	int			res = IDENT_P;
-	int			diff;
-	keyword		*StopLow = keywords,
-				*StopHigh = keywords + lengthof(keywords),
-				*StopMiddle;
+	int				res = IDENT_P;
+	int				diff;
+	const keyword  *StopLow = keywords,
+				   *StopHigh = keywords + lengthof(keywords),
+				   *StopMiddle;
 
 	if (scanstring.len > keywords[lengthof(keywords) - 1].len)
 		return res;
