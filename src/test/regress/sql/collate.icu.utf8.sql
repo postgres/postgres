@@ -425,6 +425,27 @@ drop type textrange_c;
 drop type textrange_en_us;
 
 
+-- test ICU collation customization
+
+CREATE COLLATION testcoll_ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes');
+SELECT 'aaá' > 'AAA' COLLATE "und-x-icu", 'aaá' < 'AAA' COLLATE testcoll_ignore_accents;
+
+CREATE COLLATION testcoll_backwards (provider = icu, locale = '@colBackwards=yes');
+SELECT 'coté' < 'côte' COLLATE "und-x-icu", 'coté' > 'côte' COLLATE testcoll_backwards;
+
+CREATE COLLATION testcoll_lower_first (provider = icu, locale = '@colCaseFirst=lower');
+CREATE COLLATION testcoll_upper_first (provider = icu, locale = '@colCaseFirst=upper');
+SELECT 'aaa' < 'AAA' COLLATE testcoll_lower_first, 'aaa' > 'AAA' COLLATE testcoll_upper_first;
+
+CREATE COLLATION testcoll_shifted (provider = icu, locale = '@colAlternate=shifted');
+SELECT 'de-luge' < 'deanza' COLLATE "und-x-icu", 'de-luge' > 'deanza' COLLATE testcoll_shifted;
+
+CREATE COLLATION testcoll_numeric (provider = icu, locale = '@colNumeric=yes');
+SELECT 'A-21' > 'A-123' COLLATE "und-x-icu", 'A-21' < 'A-123' COLLATE testcoll_numeric;
+
+CREATE COLLATION testcoll_error1 (provider = icu, locale = '@colNumeric=lower');
+
+
 -- cleanup
 SET client_min_messages TO warning;
 DROP SCHEMA collate_tests CASCADE;
