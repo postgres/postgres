@@ -43,8 +43,6 @@ jsonpath_gram.h: jsonpath_gram.c
 jsonpath_gram.c: BISONFLAGS += -d
 
 jsonpath_scan.c: FLEXFLAGS = -CF -p -p
-jsonpath_scan.c: FLEX_NO_BACKUP=yes
-jsonpath_scan.c: FLEX_FIX_WARNING=yes
 
 
 # Force these dependencies to be known even without dependency info built:
