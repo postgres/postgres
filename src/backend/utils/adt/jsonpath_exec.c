@@ -1459,15 +1459,11 @@ executePredicate(JsonPathExecContext *cxt, JsonPathItem *pred,
 		JsonbValue *rval;
 		bool		first = true;
 
+		JsonValueListInitIterator(&rseq, &rseqit);
 		if (rarg)
-		{
-			JsonValueListInitIterator(&rseq, &rseqit);
 			rval = JsonValueListNext(&rseq, &rseqit);
-		}
 		else
-		{
 			rval = NULL;
-		}
 
 		/* Loop over right arg sequence or do single pass otherwise */
 		while (rarg ? (rval != NULL) : first)
