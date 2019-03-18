@@ -68,18 +68,20 @@ our $node_standby;
 sub master_psql
 {
 	my $cmd = shift;
+	my $dbname = shift || 'postgres';
 
 	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
-	  $node_master->connstr('postgres'), '-c', "$cmd";
+	  $node_master->connstr($dbname), '-c', "$cmd";
 	return;
 }
 
 sub standby_psql
 {
 	my $cmd = shift;
+	my $dbname = shift || 'postgres';
 
 	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
-	  $node_standby->connstr('postgres'), '-c', "$cmd";
+	  $node_standby->connstr($dbname), '-c', "$cmd";
 	return;
 }
 
