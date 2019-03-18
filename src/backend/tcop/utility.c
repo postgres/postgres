@@ -664,10 +664,10 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				VacuumStmt *stmt = (VacuumStmt *) parsetree;
 
 				/* we choose to allow this during "read only" transactions */
-				PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
+				PreventCommandDuringRecovery(stmt->is_vacuumcmd ?
 											 "VACUUM" : "ANALYZE");
 				/* forbidden in parallel mode due to CommandIsReadOnly */
-				ExecVacuum(stmt, isTopLevel);
+				ExecVacuum(pstate, stmt, isTopLevel);
 			}
 			break;
 
@@ -2570,7 +2570,7 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_VacuumStmt:
-			if (((VacuumStmt *) parsetree)->options & VACOPT_VACUUM)
+			if (((VacuumStmt *) parsetree)->is_vacuumcmd)
 				tag = "VACUUM";
 			else
 				tag = "ANALYZE";

@@ -136,8 +136,23 @@ typedef struct VacAttrStats
 	int			rowstride;
 } VacAttrStats;
 
+typedef enum VacuumOption
+{
+	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
+	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
+	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
+	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
+	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
+	VACOPT_SKIP_LOCKED = 1 << 5,	/* skip if cannot get lock */
+	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
+	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7	/* don't skip any pages */
+} VacuumOption;
+
 /*
  * Parameters customizing behavior of VACUUM and ANALYZE.
+ *
+ * Note that at least one of VACOPT_VACUUM and VACOPT_ANALYZE must be set
+ * in options.
  */
 typedef struct VacuumParams
 {
@@ -163,7 +178,7 @@ extern int	vacuum_multixact_freeze_table_age;
 
 
 /* in commands/vacuum.c */
-extern void ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel);
+extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);
 extern void vacuum(List *relations, VacuumParams *params,
 	   BufferAccessStrategy bstrategy, bool isTopLevel);
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,

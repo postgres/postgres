@@ -3151,21 +3151,16 @@ typedef struct ClusterStmt
  *		Vacuum and Analyze Statements
  *
  * Even though these are nominally two statements, it's convenient to use
- * just one node type for both.  Note that at least one of VACOPT_VACUUM
- * and VACOPT_ANALYZE must be set in options.
+ * just one node type for both.
  * ----------------------
  */
-typedef enum VacuumOption
+typedef struct VacuumStmt
 {
-	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
-	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
-	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
-	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
-	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
-	VACOPT_SKIP_LOCKED = 1 << 5,	/* skip if cannot get lock */
-	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
-	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7	/* don't skip any pages */
-} VacuumOption;
+	NodeTag		type;
+	List		*options;		/* list of DefElem nodes */
+	List	   *rels;			/* list of VacuumRelation, or NIL for all */
+	bool		is_vacuumcmd;	/* true for VACUUM, false for ANALYZE */
+} VacuumStmt;
 
 /*
  * Info about a single target table of VACUUM/ANALYZE.
@@ -3181,13 +3176,6 @@ typedef struct VacuumRelation
 	Oid			oid;			/* table's OID; InvalidOid if not looked up */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 } VacuumRelation;
-
-typedef struct VacuumStmt
-{
-	NodeTag		type;
-	int			options;		/* OR of VacuumOption flags */
-	List	   *rels;			/* list of VacuumRelation, or NIL for all */
-} VacuumStmt;
 
 /* ----------------------
  *		Explain Statement

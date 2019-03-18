@@ -83,20 +83,55 @@ static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params);
  * happen in vacuum().
  */
 void
-ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
+ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 {
 	VacuumParams params;
+	ListCell	*lc;
+
+	params.options = vacstmt->is_vacuumcmd ? VACOPT_VACUUM : VACOPT_ANALYZE;
+
+	/* Parse options list */
+	foreach(lc, vacstmt->options)
+	{
+		DefElem	*opt = (DefElem *) lfirst(lc);
+
+		/* Parse common options for VACUUM and ANALYZE */
+		if (strcmp(opt->defname, "verbose") == 0)
+			params.options |= VACOPT_VERBOSE;
+		else if (strcmp(opt->defname, "skip_locked") == 0)
+			params.options |= VACOPT_SKIP_LOCKED;
+		else if (!vacstmt->is_vacuumcmd)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized ANALYZE option \"%s\"", opt->defname),
+					 parser_errposition(pstate, opt->location)));
+
+		/* Parse options available on VACUUM */
+		else if (strcmp(opt->defname, "analyze") == 0)
+				params.options |= VACOPT_ANALYZE;
+		else if (strcmp(opt->defname, "freeze") == 0)
+				params.options |= VACOPT_FREEZE;
+		else if (strcmp(opt->defname, "full") == 0)
+			params.options |= VACOPT_FULL;
+		else if (strcmp(opt->defname, "disable_page_skipping") == 0)
+			params.options |= VACOPT_DISABLE_PAGE_SKIPPING;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized VACUUM option \"%s\"", opt->defname),
+					 parser_errposition(pstate, opt->location)));
+	}
 
 	/* sanity checks on options */
-	Assert(vacstmt->options & (VACOPT_VACUUM | VACOPT_ANALYZE));
-	Assert((vacstmt->options & VACOPT_VACUUM) ||
-		   !(vacstmt->options & (VACOPT_FULL | VACOPT_FREEZE)));
-	Assert(!(vacstmt->options & VACOPT_SKIPTOAST));
+	Assert(params.options & (VACOPT_VACUUM | VACOPT_ANALYZE));
+	Assert((params.options & VACOPT_VACUUM) ||
+		   !(params.options & (VACOPT_FULL | VACOPT_FREEZE)));
+	Assert(!(params.options & VACOPT_SKIPTOAST));
 
 	/*
 	 * Make sure VACOPT_ANALYZE is specified if any column lists are present.
 	 */
-	if (!(vacstmt->options & VACOPT_ANALYZE))
+	if (!(params.options & VACOPT_ANALYZE))
 	{
 		ListCell   *lc;
 
@@ -111,14 +146,11 @@ ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
 		}
 	}
 
-	/* copy options from parse tree */
-	params.options = vacstmt->options;
-
 	/*
 	 * All freeze ages are zero if the FREEZE option is given; otherwise pass
 	 * them as -1 which means to use the default values.
 	 */
-	if (vacstmt->options & VACOPT_FREEZE)
+	if (params.options & VACOPT_FREEZE)
 	{
 		params.freeze_min_age = 0;
 		params.freeze_table_age = 0;
