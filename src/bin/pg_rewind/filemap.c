@@ -147,7 +147,10 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 
 	Assert(map->array == NULL);
 
-	/* ignore any path matching the exclusion filters */
+	/*
+	 * Skip any files matching the exclusion filters. This has the effect to
+	 * remove all those files on the target.
+	 */
 	if (check_file_excluded(path, true))
 		return;
 
@@ -334,12 +337,10 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	file_entry_t *entry;
 
 	/*
-	 * Ignore any path matching the exclusion filters.  This is not actually
-	 * mandatory for target files, but this does not hurt and let's be
-	 * consistent with the source processing.
+	 * Do not apply any exclusion filters here.  This has advantage to remove
+	 * from the target data folder all paths which have been filtered out from
+	 * the source data folder when processing the source files.
 	 */
-	if (check_file_excluded(path, false))
-		return;
 
 	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
 	if (lstat(localpath, &statbuf) < 0)
