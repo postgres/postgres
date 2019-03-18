@@ -1120,6 +1120,26 @@ commit;
 
 drop table pktable2, fktable2;
 
+--
+-- Test keys that "look" different but compare as equal
+--
+create table pktable2 (a float8, b float8, primary key (a, b));
+create table fktable2 (x float8, y float8, foreign key (x, y) references pktable2 (a, b) on update cascade);
+
+insert into pktable2 values ('-0', '-0');
+insert into fktable2 values ('-0', '-0');
+
+select * from pktable2;
+select * from fktable2;
+
+update pktable2 set a = '0' where a = '-0';
+
+select * from pktable2;
+-- should have updated fktable2.x
+select * from fktable2;
+
+drop table pktable2, fktable2;
+
 
 --
 -- Foreign keys and partitioned tables

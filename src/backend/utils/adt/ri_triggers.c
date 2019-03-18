@@ -42,6 +42,7 @@
 #include "storage/bufmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
@@ -2402,18 +2403,11 @@ ri_KeysEqual(Relation rel, TupleTableSlot *oldslot, TupleTableSlot *newslot,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk)
 {
 	const int16 *attnums;
-	const Oid  *eq_oprs;
 
 	if (rel_is_pk)
-	{
 		attnums = riinfo->pk_attnums;
-		eq_oprs = riinfo->pp_eq_oprs;
-	}
 	else
-	{
 		attnums = riinfo->fk_attnums;
-		eq_oprs = riinfo->ff_eq_oprs;
-	}
 
 	/* XXX: could be worthwhile to fetch all necessary attrs at once */
 	for (int i = 0; i < riinfo->nkeys; i++)
@@ -2436,12 +2430,32 @@ ri_KeysEqual(Relation rel, TupleTableSlot *oldslot, TupleTableSlot *newslot,
 		if (isnull)
 			return false;
 
-		/*
-		 * Compare them with the appropriate equality operator.
-		 */
-		if (!ri_AttributesEqual(eq_oprs[i], RIAttType(rel, attnums[i]),
-								oldvalue, newvalue))
-			return false;
+		if (rel_is_pk)
+		{
+			/*
+			 * If we are looking at the PK table, then do a bytewise
+			 * comparison.  We must propagate PK changes if the value is
+			 * changed to one that "looks" different but would compare as
+			 * equal using the equality operator.  This only makes a
+			 * difference for ON UPDATE CASCADE, but for consistency we treat
+			 * all changes to the PK the same.
+			 */
+			Form_pg_attribute att = TupleDescAttr(oldslot->tts_tupleDescriptor, attnums[i] - 1);
+
+			if (!datum_image_eq(oldvalue, newvalue, att->attbyval, att->attlen))
+				return false;
+		}
+		else
+		{
+			/*
+			 * For the FK table, compare with the appropriate equality
+			 * operator.  Changes that compare equal will still satisfy the
+			 * constraint after the update.
+			 */
+			if (!ri_AttributesEqual(riinfo->ff_eq_oprs[i], RIAttType(rel, attnums[i]),
+									oldvalue, newvalue))
+				return false;
+		}
 	}
 
 	return true;

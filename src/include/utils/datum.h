@@ -47,6 +47,15 @@ extern bool datumIsEqual(Datum value1, Datum value2,
 			 bool typByVal, int typLen);
 
 /*
+ * datum_image_eq
+ *
+ * Compares two datums for identical contents, based on byte images.  Return
+ * true if the two datums are equal, false otherwise.
+ */
+extern bool datum_image_eq(Datum value1, Datum value2,
+						   bool typByVal, int typLen);
+
+/*
  * Serialize and restore datums so that we can transfer them to parallel
  * workers.
  */

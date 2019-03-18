@@ -1496,6 +1496,40 @@ ERROR:  cannot ALTER TABLE "pktable2" because it has pending trigger events
 commit;
 drop table pktable2, fktable2;
 --
+-- Test keys that "look" different but compare as equal
+--
+create table pktable2 (a float8, b float8, primary key (a, b));
+create table fktable2 (x float8, y float8, foreign key (x, y) references pktable2 (a, b) on update cascade);
+insert into pktable2 values ('-0', '-0');
+insert into fktable2 values ('-0', '-0');
+select * from pktable2;
+ a  | b  
+----+----
+ -0 | -0
+(1 row)
+
+select * from fktable2;
+ x  | y  
+----+----
+ -0 | -0
+(1 row)
+
+update pktable2 set a = '0' where a = '-0';
+select * from pktable2;
+ a | b  
+---+----
+ 0 | -0
+(1 row)
+
+-- should have updated fktable2.x
+select * from fktable2;
+ x | y  
+---+----
+ 0 | -0
+(1 row)
+
+drop table pktable2, fktable2;
+--
 -- Foreign keys and partitioned tables
 --
 -- partitioned table in the referenced side are not allowed

@@ -23,6 +23,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
@@ -1671,45 +1672,7 @@ record_image_eq(PG_FUNCTION_ARGS)
 			}
 
 			/* Compare the pair of elements */
-			if (att1->attlen == -1)
-			{
-				Size		len1,
-							len2;
-
-				len1 = toast_raw_datum_size(values1[i1]);
-				len2 = toast_raw_datum_size(values2[i2]);
-				/* No need to de-toast if lengths don't match. */
-				if (len1 != len2)
-					result = false;
-				else
-				{
-					struct varlena *arg1val;
-					struct varlena *arg2val;
-
-					arg1val = PG_DETOAST_DATUM_PACKED(values1[i1]);
-					arg2val = PG_DETOAST_DATUM_PACKED(values2[i2]);
-
-					result = (memcmp(VARDATA_ANY(arg1val),
-									 VARDATA_ANY(arg2val),
-									 len1 - VARHDRSZ) == 0);
-
-					/* Only free memory if it's a copy made here. */
-					if ((Pointer) arg1val != (Pointer) values1[i1])
-						pfree(arg1val);
-					if ((Pointer) arg2val != (Pointer) values2[i2])
-						pfree(arg2val);
-				}
-			}
-			else if (att1->attbyval)
-			{
-				result = (values1[i1] == values2[i2]);
-			}
-			else
-			{
-				result = (memcmp(DatumGetPointer(values1[i1]),
-								 DatumGetPointer(values2[i2]),
-								 att1->attlen) == 0);
-			}
+			result = datum_image_eq(values1[i1], values2[i2], att1->attbyval, att2->attlen);
 			if (!result)
 				break;
 		}

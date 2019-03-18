@@ -42,6 +42,8 @@
 
 #include "postgres.h"
 
+#include "access/tuptoaster.h"
+#include "fmgr.h"
 #include "utils/datum.h"
 #include "utils/expandeddatum.h"
 
@@ -249,6 +251,61 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 		res = (memcmp(s1, s2, size1) == 0);
 	}
 	return res;
+}
+
+/*-------------------------------------------------------------------------
+ * datum_image_eq
+ *
+ * Compares two datums for identical contents, based on byte images.  Return
+ * true if the two datums are equal, false otherwise.
+ *-------------------------------------------------------------------------
+ */
+bool
+datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
+{
+	bool		result = true;
+
+	if (typLen == -1)
+	{
+		Size		len1,
+					len2;
+
+		len1 = toast_raw_datum_size(value1);
+		len2 = toast_raw_datum_size(value2);
+		/* No need to de-toast if lengths don't match. */
+		if (len1 != len2)
+			result = false;
+		else
+		{
+			struct varlena *arg1val;
+			struct varlena *arg2val;
+
+			arg1val = PG_DETOAST_DATUM_PACKED(value1);
+			arg2val = PG_DETOAST_DATUM_PACKED(value2);
+
+			result = (memcmp(VARDATA_ANY(arg1val),
+							 VARDATA_ANY(arg2val),
+							 len1 - VARHDRSZ) == 0);
+
+			/* Only free memory if it's a copy made here. */
+			if ((Pointer) arg1val != (Pointer) value1)
+				pfree(arg1val);
+			if ((Pointer) arg2val != (Pointer) value2)
+				pfree(arg2val);
+		}
+	}
+	else if (typByVal)
+	{
+		result = (value1 == value2);
+	}
+	else
+	{
+		result = (memcmp(DatumGetPointer(value1),
+						 DatumGetPointer(value2),
+						 typLen) == 0);
+	}
+
+	return result;
 }
 
 /*-------------------------------------------------------------------------
