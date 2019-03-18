@@ -844,6 +844,7 @@ apw_start_database_worker(void)
 	worker.bgw_flags =
 		BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION;
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
+	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	strcpy(worker.bgw_library_name, "pg_prewarm");
 	strcpy(worker.bgw_function_name, "autoprewarm_database_main");
 	strcpy(worker.bgw_name, "autoprewarm worker");
