@@ -126,8 +126,6 @@ typedef struct JsonLikeRegexContext
 	int			cflags;
 } JsonLikeRegexContext;
 
-#define EmptyJsonLikeRegexContext	{NULL, 0}
-
 /* Result of jsonpath predicate evaluation */
 typedef enum JsonPathBool
 {
@@ -154,8 +152,6 @@ typedef struct JsonValueList
 	JsonbValue *singleton;
 	List	   *list;
 } JsonValueList;
-
-#define EmptyJsonValueList			{NULL, NIL}
 
 typedef struct JsonValueListIterator
 {
@@ -325,7 +321,7 @@ jsonb_path_match(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	JsonPath   *jp = PG_GETARG_JSONPATH_P(1);
 	JsonbValue *jbv;
-	JsonValueList found = EmptyJsonValueList;
+	JsonValueList found = {0};
 	Jsonb	   *vars = NULL;
 	bool		silent = true;
 
@@ -383,7 +379,7 @@ jsonb_path_query(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext;
 		Jsonb	   *vars;
 		bool		silent;
-		JsonValueList found = EmptyJsonValueList;
+		JsonValueList found = {0};
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -424,7 +420,7 @@ jsonb_path_query_array(FunctionCallInfo fcinfo)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	JsonPath   *jp = PG_GETARG_JSONPATH_P(1);
-	JsonValueList found = EmptyJsonValueList;
+	JsonValueList found = {0};
 	Jsonb	   *vars = PG_GETARG_JSONB_P(2);
 	bool		silent = PG_GETARG_BOOL(3);
 
@@ -443,7 +439,7 @@ jsonb_path_query_first(FunctionCallInfo fcinfo)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	JsonPath   *jp = PG_GETARG_JSONPATH_P(1);
-	JsonValueList found = EmptyJsonValueList;
+	JsonValueList found = {0};
 	Jsonb	   *vars = PG_GETARG_JSONB_P(2);
 	bool		silent = PG_GETARG_BOOL(3);
 
@@ -514,7 +510,7 @@ executeJsonPath(JsonPath *path, Jsonb *vars, Jsonb *json, bool throwErrors,
 		 * In strict mode we must get a complete list of values to check that
 		 * there are no errors at all.
 		 */
-		JsonValueList vals = EmptyJsonValueList;
+		JsonValueList vals = {0};
 
 		res = executeItem(&cxt, &jsp, &jbv, &vals);
 
@@ -1138,7 +1134,7 @@ executeItemOptUnwrapResult(JsonPathExecContext *cxt, JsonPathItem *jsp,
 {
 	if (unwrap && jspAutoUnwrap(cxt))
 	{
-		JsonValueList seq = EmptyJsonValueList;
+		JsonValueList seq = {0};
 		JsonValueListIterator it;
 		JsonPathExecResult res = executeItem(cxt, jsp, jb, &seq);
 		JsonbValue *item;
@@ -1266,7 +1262,7 @@ executeBoolItem(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				 * regexes, but we use Postgres regexes here.  'flags' is a
 				 * string literal converted to integer flags at compile-time.
 				 */
-				JsonLikeRegexContext lrcxt = EmptyJsonLikeRegexContext;
+				JsonLikeRegexContext lrcxt = {0};
 
 				jspInitByBuffer(&larg, jsp->base,
 								jsp->content.like_regex.expr);
@@ -1284,7 +1280,7 @@ executeBoolItem(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				 * In strict mode we must get a complete list of values to
 				 * check that there are no errors at all.
 				 */
-				JsonValueList vals = EmptyJsonValueList;
+				JsonValueList vals = {0};
 				JsonPathExecResult res =
 				executeItemOptUnwrapResultNoThrow(cxt, &larg, jb,
 												  false, &vals);
@@ -1436,8 +1432,8 @@ executePredicate(JsonPathExecContext *cxt, JsonPathItem *pred,
 {
 	JsonPathExecResult res;
 	JsonValueListIterator lseqit;
-	JsonValueList lseq = EmptyJsonValueList;
-	JsonValueList rseq = EmptyJsonValueList;
+	JsonValueList lseq = {0};
+	JsonValueList rseq = {0};
 	JsonbValue *lval;
 	bool		error = false;
 	bool		found = false;
@@ -1515,8 +1511,8 @@ executeBinaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 {
 	JsonPathExecResult jper;
 	JsonPathItem elem;
-	JsonValueList lseq = EmptyJsonValueList;
-	JsonValueList rseq = EmptyJsonValueList;
+	JsonValueList lseq = {0};
+	JsonValueList rseq = {0};
 	JsonbValue *lval;
 	JsonbValue *rval;
 	Numeric		res;
@@ -1590,7 +1586,7 @@ executeUnaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	JsonPathExecResult jper;
 	JsonPathExecResult jper2;
 	JsonPathItem elem;
-	JsonValueList seq = EmptyJsonValueList;
+	JsonValueList seq = {0};
 	JsonValueListIterator it;
 	JsonbValue *val;
 	bool		hasNext;
@@ -2128,7 +2124,7 @@ getArrayIndex(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
 			  int32 *index)
 {
 	JsonbValue *jbv;
-	JsonValueList found = EmptyJsonValueList;
+	JsonValueList found = {0};
 	JsonPathExecResult res = executeItem(cxt, jsp, jb, &found);
 	Datum		numeric_index;
 	bool		have_error = false;
