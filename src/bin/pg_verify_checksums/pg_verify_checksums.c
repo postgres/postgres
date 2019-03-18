@@ -323,6 +323,15 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (ControlFile->blcksz != BLCKSZ)
+	{
+		fprintf(stderr, _("%s: database cluster is not compatible.\n"),
+				progname);
+		fprintf(stderr, _("The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"),
+				ControlFile->blcksz, BLCKSZ);
+		exit(1);
+	}
+
 	if (ControlFile->state != DB_SHUTDOWNED &&
 		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
 	{
