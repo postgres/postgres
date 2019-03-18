@@ -61,12 +61,12 @@ typedef struct
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
-	StringInfoData buf;			/* output buffer */
 	Portal		portal;			/* the Portal we are printing from */
 	bool		sendDescrip;	/* send RowDescription at startup? */
 	TupleDesc	attrinfo;		/* The attr info we are set up for */
 	int			nattrs;
 	PrinttupAttrInfo *myinfo;	/* Cached info about each attr */
+	StringInfoData buf;			/* output buffer (*not* in tmpcontext) */
 	MemoryContext tmpcontext;	/* Memory context for per-row workspace */
 } DR_printtup;
 
@@ -94,6 +94,7 @@ printtup_create_DR(CommandDest dest)
 	self->attrinfo = NULL;
 	self->nattrs = 0;
 	self->myinfo = NULL;
+	self->buf.data = NULL;
 	self->tmpcontext = NULL;
 
 	return (DestReceiver *) self;
@@ -132,7 +133,10 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	DR_printtup *myState = (DR_printtup *) self;
 	Portal		portal = myState->portal;
 
-	/* create buffer to be used for all messages */
+	/*
+	 * Create I/O buffer to be used for all messages.  This cannot be inside
+	 * tmpcontext, since we want to re-use it across rows.
+	 */
 	initStringInfo(&myState->buf);
 
 	/*
@@ -543,6 +547,10 @@ printtup_shutdown(DestReceiver *self)
 	myState->myinfo = NULL;
 
 	myState->attrinfo = NULL;
+
+	if (myState->buf.data)
+		pfree(myState->buf.data);
+	myState->buf.data = NULL;
 
 	if (myState->tmpcontext)
 		MemoryContextDelete(myState->tmpcontext);
