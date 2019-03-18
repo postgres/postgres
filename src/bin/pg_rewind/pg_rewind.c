@@ -377,7 +377,7 @@ main(int argc, char **argv)
 	ControlFile_new.minRecoveryPoint = endrec;
 	ControlFile_new.minRecoveryPointTLI = endtli;
 	ControlFile_new.state = DB_IN_ARCHIVE_RECOVERY;
-	update_controlfile(datadir_target, progname, &ControlFile_new);
+	update_controlfile(datadir_target, progname, &ControlFile_new, do_sync);
 
 	pg_log(PG_PROGRESS, "syncing target data directory\n");
 	syncTargetDirectory();

@@ -29,7 +29,9 @@
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #include "port/pg_crc32c.h"
+
 #ifndef FRONTEND
+#include "pgstat.h"
 #include "storage/fd.h"
 #endif
 
@@ -144,13 +146,14 @@ get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p)
  * update_controlfile()
  *
  * Update controlfile values with the contents given by caller.  The
- * contents to write are included in "ControlFile".  Note that it is up
- * to the caller to fsync the updated file, and to properly lock
- * ControlFileLock when calling this routine in the backend.
+ * contents to write are included in "ControlFile". "do_sync" can be
+ * optionally used to flush the updated control file.  Note that it is up
+ * to the caller to properly lock ControlFileLock when calling this
+ * routine in the backend.
  */
 void
 update_controlfile(const char *DataDir, const char *progname,
-				   ControlFileData *ControlFile)
+				   ControlFileData *ControlFile, bool do_sync)
 {
 	int			fd;
 	char		buffer[PG_CONTROL_FILE_SIZE];
@@ -182,7 +185,12 @@ update_controlfile(const char *DataDir, const char *progname,
 	snprintf(ControlFilePath, sizeof(ControlFilePath), "%s/%s", DataDir, XLOG_CONTROL_FILE);
 
 #ifndef FRONTEND
-	if ((fd = OpenTransientFile(ControlFilePath, O_WRONLY | PG_BINARY)) == -1)
+
+	/*
+	 * All errors issue a PANIC, so no need to use OpenTransientFile() and to
+	 * worry about file descriptor leaks.
+	 */
+	if ((fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY)) < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m",
@@ -198,6 +206,9 @@ update_controlfile(const char *DataDir, const char *progname,
 #endif
 
 	errno = 0;
+#ifndef FRONTEND
+	pgstat_report_wait_start(WAIT_EVENT_CONTROL_FILE_WRITE_UPDATE);
+#endif
 	if (write(fd, buffer, PG_CONTROL_FILE_SIZE) != PG_CONTROL_FILE_SIZE)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
@@ -215,19 +226,41 @@ update_controlfile(const char *DataDir, const char *progname,
 		exit(EXIT_FAILURE);
 #endif
 	}
-
 #ifndef FRONTEND
-	if (CloseTransientFile(fd))
+	pgstat_report_wait_end();
+#endif
+
+	if (do_sync)
+	{
+#ifndef FRONTEND
+		pgstat_report_wait_start(WAIT_EVENT_CONTROL_FILE_SYNC_UPDATE);
+		if (pg_fsync(fd) != 0)
+			ereport(PANIC,
+					(errcode_for_file_access(),
+					 errmsg("could not fsync file \"%s\": %m",
+							ControlFilePath)));
+		pgstat_report_wait_end();
+#else
+		if (fsync(fd) != 0)
+		{
+			fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
+					progname, ControlFilePath, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+#endif
+	}
+
+	if (close(fd) < 0)
+	{
+#ifndef FRONTEND
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m",
 						ControlFilePath)));
 #else
-	if (close(fd) < 0)
-	{
 		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
 				progname, ControlFilePath, strerror(errno));
 		exit(EXIT_FAILURE);
-	}
 #endif
+	}
 }

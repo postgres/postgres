@@ -40,6 +40,7 @@
 #include "catalog/pg_control.h"
 #include "catalog/pg_database.h"
 #include "commands/tablespace.h"
+#include "common/controldata_utils.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/atomics.h"
@@ -4754,51 +4755,14 @@ ReadControlFile(void)
 					PGC_INTERNAL, PGC_S_OVERRIDE);
 }
 
+/*
+ * Utility wrapper to update the control file.  Note that the control
+ * file gets flushed.
+ */
 void
 UpdateControlFile(void)
 {
-	int			fd;
-
-	INIT_CRC32C(ControlFile->crc);
-	COMP_CRC32C(ControlFile->crc,
-				(char *) ControlFile,
-				offsetof(ControlFileData, crc));
-	FIN_CRC32C(ControlFile->crc);
-
-	fd = BasicOpenFile(XLOG_CONTROL_FILE,
-					   O_RDWR | PG_BINARY);
-	if (fd < 0)
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\": %m", XLOG_CONTROL_FILE)));
-
-	errno = 0;
-	pgstat_report_wait_start(WAIT_EVENT_CONTROL_FILE_WRITE_UPDATE);
-	if (write(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not write to file \"%s\": %m",
-						XLOG_CONTROL_FILE)));
-	}
-	pgstat_report_wait_end();
-
-	pgstat_report_wait_start(WAIT_EVENT_CONTROL_FILE_SYNC_UPDATE);
-	if (pg_fsync(fd) != 0)
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m",
-						XLOG_CONTROL_FILE)));
-	pgstat_report_wait_end();
-
-	if (close(fd))
-		ereport(PANIC,
-				(errcode_for_file_access(),
-				 errmsg("could not close file \"%s\": %m",
-						XLOG_CONTROL_FILE)));
+	update_controlfile(DataDir, NULL, ControlFile, true);
 }
 
 /*

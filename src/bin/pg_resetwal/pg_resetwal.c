@@ -49,8 +49,7 @@
 #include "access/multixact.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
-#include "catalog/catversion.h"
-#include "catalog/pg_control.h"
+#include "common/controldata_utils.h"
 #include "common/fe_memutils.h"
 #include "common/file_perm.h"
 #include "common/restricted_token.h"
@@ -918,18 +917,6 @@ PrintNewControlValues(void)
 static void
 RewriteControlFile(void)
 {
-	int			fd;
-	char		buffer[PG_CONTROL_FILE_SIZE];	/* need not be aligned */
-
-	/*
-	 * For good luck, apply the same static assertions as in backend's
-	 * WriteControlFile().
-	 */
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
-					 "pg_control is too large for atomic disk writes");
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
-					 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
-
 	/*
 	 * Adjust fields as needed to force an empty XLOG starting at
 	 * newXlogSegNo.
@@ -961,53 +948,8 @@ RewriteControlFile(void)
 	ControlFile.max_prepared_xacts = 0;
 	ControlFile.max_locks_per_xact = 64;
 
-	/* Contents are protected with a CRC */
-	INIT_CRC32C(ControlFile.crc);
-	COMP_CRC32C(ControlFile.crc,
-				(char *) &ControlFile,
-				offsetof(ControlFileData, crc));
-	FIN_CRC32C(ControlFile.crc);
-
-	/*
-	 * We write out PG_CONTROL_FILE_SIZE bytes into pg_control, zero-padding
-	 * the excess over sizeof(ControlFileData).  This reduces the odds of
-	 * premature-EOF errors when reading pg_control.  We'll still fail when we
-	 * check the contents of the file, but hopefully with a more specific
-	 * error than "couldn't read pg_control".
-	 */
-	memset(buffer, 0, PG_CONTROL_FILE_SIZE);
-	memcpy(buffer, &ControlFile, sizeof(ControlFileData));
-
-	unlink(XLOG_CONTROL_FILE);
-
-	fd = open(XLOG_CONTROL_FILE,
-			  O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-			  pg_file_create_mode);
-	if (fd < 0)
-	{
-		fprintf(stderr, _("%s: could not create pg_control file: %s\n"),
-				progname, strerror(errno));
-		exit(1);
-	}
-
-	errno = 0;
-	if (write(fd, buffer, PG_CONTROL_FILE_SIZE) != PG_CONTROL_FILE_SIZE)
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		fprintf(stderr, _("%s: could not write pg_control file: %s\n"),
-				progname, strerror(errno));
-		exit(1);
-	}
-
-	if (fsync(fd) != 0)
-	{
-		fprintf(stderr, _("%s: fsync error: %s\n"), progname, strerror(errno));
-		exit(1);
-	}
-
-	close(fd);
+	/* The control file gets flushed here. */
+	update_controlfile(".", progname, &ControlFile, true);
 }
 
 
