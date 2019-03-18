@@ -198,9 +198,6 @@ vacuumlo(const char *database, const struct _param *param)
 	 * table formed above is ignored, and pg_largeobject will be too. If
 	 * either of these were scanned, obviously we'd end up with nothing to
 	 * delete...
-	 *
-	 * NOTE: the system oid column is ignored, as it has attnum < 1. This
-	 * shouldn't matter for correctness, but it saves time.
 	 */
 	buf[0] = '\0';
 	strcat(buf, "SELECT s.nspname, c.relname, a.attname ");
