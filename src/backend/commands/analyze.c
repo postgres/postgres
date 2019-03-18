@@ -84,7 +84,7 @@ static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 
-static void do_analyze_rel(Relation onerel, int options,
+static void do_analyze_rel(Relation onerel,
 			   VacuumParams *params, List *va_cols,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel);
@@ -115,7 +115,7 @@ static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
  * use it once we've successfully opened the rel, since it might be stale.
  */
 void
-analyze_rel(Oid relid, RangeVar *relation, int options,
+analyze_rel(Oid relid, RangeVar *relation,
 			VacuumParams *params, List *va_cols, bool in_outer_xact,
 			BufferAccessStrategy bstrategy)
 {
@@ -125,7 +125,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	BlockNumber relpages = 0;
 
 	/* Select logging level */
-	if (options & VACOPT_VERBOSE)
+	if (params->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -147,8 +147,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	 *
 	 * Make sure to generate only logs for ANALYZE in this case.
 	 */
-	onerel = vacuum_open_relation(relid, relation, params,
-								  options & ~(VACOPT_VACUUM),
+	onerel = vacuum_open_relation(relid, relation, params->options & ~(VACOPT_VACUUM),
+								  params->log_min_duration >= 0,
 								  ShareUpdateExclusiveLock);
 
 	/* leave if relation could not be opened or locked */
@@ -165,7 +165,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	 */
 	if (!vacuum_is_relation_owner(RelationGetRelid(onerel),
 								  onerel->rd_rel,
-								  options & VACOPT_ANALYZE))
+								  params->options & VACOPT_ANALYZE))
 	{
 		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
@@ -237,7 +237,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	else
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(options & VACOPT_VACUUM))
+		if (!(params->options & VACOPT_VACUUM))
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
 							RelationGetRelationName(onerel))));
@@ -257,14 +257,14 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	 * tables, which don't contain any rows.
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		do_analyze_rel(onerel, options, params, va_cols, acquirefunc,
+		do_analyze_rel(onerel, params, va_cols, acquirefunc,
 					   relpages, false, in_outer_xact, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
+		do_analyze_rel(onerel, params, va_cols, acquirefunc, relpages,
 					   true, in_outer_xact, elevel);
 
 	/*
@@ -292,7 +292,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
  * appropriate acquirefunc for each child table.
  */
 static void
-do_analyze_rel(Relation onerel, int options, VacuumParams *params,
+do_analyze_rel(Relation onerel, VacuumParams *params,
 			   List *va_cols, AcquireSampleRowsFunc acquirefunc,
 			   BlockNumber relpages, bool inh, bool in_outer_xact,
 			   int elevel)
@@ -603,7 +603,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	 * VACUUM ANALYZE, don't overwrite the accurate count already inserted by
 	 * VACUUM.
 	 */
-	if (!inh && !(options & VACOPT_VACUUM))
+	if (!inh && !(params->options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
@@ -634,7 +634,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 							  (va_cols == NIL));
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
-	if (!(options & VACOPT_VACUUM))
+	if (!(params->options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{

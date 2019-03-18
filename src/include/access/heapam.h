@@ -217,7 +217,7 @@ extern Size SyncScanShmemSize(void);
 
 /* in heap/vacuumlazy.c */
 struct VacuumParams;
-extern void heap_vacuum_rel(Relation onerel, int options,
+extern void heap_vacuum_rel(Relation onerel,
 				struct VacuumParams *params, BufferAccessStrategy bstrategy);
 
 /* in heap/heapam_visibility.c */

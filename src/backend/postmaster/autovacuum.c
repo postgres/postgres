@@ -188,7 +188,6 @@ typedef struct av_relation
 typedef struct autovac_table
 {
 	Oid			at_relid;
-	int			at_vacoptions;	/* bitmask of VacuumOption */
 	VacuumParams at_params;
 	double		at_vacuum_cost_delay;
 	int			at_vacuum_cost_limit;
@@ -2482,7 +2481,7 @@ do_autovacuum(void)
 			 * next table in our list.
 			 */
 			HOLD_INTERRUPTS();
-			if (tab->at_vacoptions & VACOPT_VACUUM)
+			if (tab->at_params.options & VACOPT_VACUUM)
 				errcontext("automatic vacuum of table \"%s.%s.%s\"",
 						   tab->at_datname, tab->at_nspname, tab->at_relname);
 			else
@@ -2883,7 +2882,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab = palloc(sizeof(autovac_table));
 		tab->at_relid = relid;
 		tab->at_sharedrel = classForm->relisshared;
-		tab->at_vacoptions = VACOPT_SKIPTOAST |
+		tab->at_params.options = VACOPT_SKIPTOAST |
 			(dovacuum ? VACOPT_VACUUM : 0) |
 			(doanalyze ? VACOPT_ANALYZE : 0) |
 			(!wraparound ? VACOPT_SKIP_LOCKED : 0);
@@ -3110,7 +3109,7 @@ autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
 	rel = makeVacuumRelation(rangevar, tab->at_relid, NIL);
 	rel_list = list_make1(rel);
 
-	vacuum(tab->at_vacoptions, rel_list, &tab->at_params, bstrategy, true);
+	vacuum(rel_list, &tab->at_params, bstrategy, true);
 }
 
 /*
@@ -3132,10 +3131,10 @@ autovac_report_activity(autovac_table *tab)
 	int			len;
 
 	/* Report the command and possible options */
-	if (tab->at_vacoptions & VACOPT_VACUUM)
+	if (tab->at_params.options & VACOPT_VACUUM)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: VACUUM%s",
-				 tab->at_vacoptions & VACOPT_ANALYZE ? " ANALYZE" : "");
+				 tab->at_params.options & VACOPT_ANALYZE ? " ANALYZE" : "");
 	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: ANALYZE");

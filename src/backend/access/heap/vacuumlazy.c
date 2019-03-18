@@ -186,7 +186,7 @@ static bool heap_page_is_all_visible(Relation rel, Buffer buf,
  *		and locked the relation.
  */
 void
-heap_vacuum_rel(Relation onerel, int options, VacuumParams *params,
+heap_vacuum_rel(Relation onerel, VacuumParams *params,
 				BufferAccessStrategy bstrategy)
 {
 	LVRelStats *vacrelstats;
@@ -217,7 +217,7 @@ heap_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 		starttime = GetCurrentTimestamp();
 	}
 
-	if (options & VACOPT_VERBOSE)
+	if (params->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -245,7 +245,7 @@ heap_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 											   xidFullScanLimit);
 	aggressive |= MultiXactIdPrecedesOrEquals(onerel->rd_rel->relminmxid,
 											  mxactFullScanLimit);
-	if (options & VACOPT_DISABLE_PAGE_SKIPPING)
+	if (params->options & VACOPT_DISABLE_PAGE_SKIPPING)
 		aggressive = true;
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
@@ -261,7 +261,7 @@ heap_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	vacrelstats->hasindex = (nindexes > 0);
 
 	/* Do the vacuuming */
-	lazy_scan_heap(onerel, options, vacrelstats, Irel, nindexes, aggressive);
+	lazy_scan_heap(onerel, params->options, vacrelstats, Irel, nindexes, aggressive);
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
