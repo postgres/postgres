@@ -1010,7 +1010,7 @@ RefetchForeignRow(EState *estate,
     </para>
 
     <para>
-     This function should store the tuple into the provided, or clear it if if
+     This function should store the tuple into the provided slot, or clear it if
      the row lock couldn't be obtained.  The row lock type to acquire is
      defined by <literal>erm-&gt;markType</literal>, which is the value
      previously returned by <function>GetForeignRowMarkType</function>.
