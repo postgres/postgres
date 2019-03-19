@@ -24,6 +24,7 @@
 #include "utils/rel.h"
 
 
+static void _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp);
 static bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,
 			 OffsetNumber offnum);
 static void _bt_saveitem(BTScanOpaque so, int itemIndex,
@@ -34,7 +35,6 @@ static bool _bt_parallel_readpage(IndexScanDesc scan, BlockNumber blkno,
 					  ScanDirection dir);
 static Buffer _bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot);
 static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
-static void _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp);
 static inline void _bt_initialize_more_data(BTScanOpaque so, ScanDirection dir);
 
 
@@ -65,7 +65,6 @@ _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp)
 		sp->buf = InvalidBuffer;
 	}
 }
-
 
 /*
  *	_bt_search() -- Search the tree for a particular scankey,
