@@ -404,15 +404,15 @@ typedef struct LOCALLOCK
 	LOCALLOCKTAG tag;			/* unique identifier of locallock entry */
 
 	/* data */
+	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	LOCK	   *lock;			/* associated LOCK object, if any */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object, if any */
-	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	int64		nLocks;			/* total number of times lock is held */
-	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelationLocks */
-	bool		lockCleared;	/* we read all sinval msgs for lock */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
 	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
+	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelationLocks */
+	bool		lockCleared;	/* we read all sinval msgs for lock */
 } LOCALLOCK;
 
 #define LOCALLOCK_LOCKMETHOD(llock) ((llock).tag.lock.locktag_lockmethodid)
