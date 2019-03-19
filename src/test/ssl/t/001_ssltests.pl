@@ -350,7 +350,7 @@ test_connect_fails(
 test_connect_fails(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
-	qr/SSL error/,
+	qr/SSL error|server closed the connection unexpectedly/,
 	"certificate authorization fails with revoked client cert");
 
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
@@ -363,7 +363,8 @@ test_connect_ok(
 	"sslmode=require sslcert=ssl/client+client_ca.crt",
 	"intermediate client certificate is provided by client");
 test_connect_fails($common_connstr, "sslmode=require sslcert=ssl/client.crt",
-	qr/SSL error/, "intermediate client certificate is missing");
+	qr/SSL error|server closed the connection unexpectedly/,
+	"intermediate client certificate is missing");
 
 # clean up
 unlink("ssl/client_tmp.key", "ssl/client_wrongperms_tmp.key",
