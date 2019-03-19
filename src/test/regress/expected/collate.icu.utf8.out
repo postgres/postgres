@@ -1101,6 +1101,7 @@ select textrange_en_us('A','Z') @> 'b'::text;
 drop type textrange_c;
 drop type textrange_en_us;
 -- test ICU collation customization
+-- test the attributes handled by icu_set_collation_attributes()
 CREATE COLLATION testcoll_ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes');
 SELECT 'aaá' > 'AAA' COLLATE "und-x-icu", 'aaá' < 'AAA' COLLATE testcoll_ignore_accents;
  ?column? | ?column? 
@@ -1139,6 +1140,15 @@ SELECT 'A-21' > 'A-123' COLLATE "und-x-icu", 'A-21' < 'A-123' COLLATE testcoll_n
 
 CREATE COLLATION testcoll_error1 (provider = icu, locale = '@colNumeric=lower');
 ERROR:  could not open collator for locale "@colNumeric=lower": U_ILLEGAL_ARGUMENT_ERROR
+-- test that attributes not handled by icu_set_collation_attributes()
+-- (handled by ucol_open() directly) also work
+CREATE COLLATION testcoll_de_phonebook (provider = icu, locale = 'de@collation=phonebook');
+SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE testcoll_de_phonebook;
+ ?column? | ?column? 
+----------+----------
+ t        | t
+(1 row)
+
 -- cleanup
 SET client_min_messages TO warning;
 DROP SCHEMA collate_tests CASCADE;

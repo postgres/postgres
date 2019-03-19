@@ -427,6 +427,8 @@ drop type textrange_en_us;
 
 -- test ICU collation customization
 
+-- test the attributes handled by icu_set_collation_attributes()
+
 CREATE COLLATION testcoll_ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes');
 SELECT 'aaá' > 'AAA' COLLATE "und-x-icu", 'aaá' < 'AAA' COLLATE testcoll_ignore_accents;
 
@@ -444,6 +446,11 @@ CREATE COLLATION testcoll_numeric (provider = icu, locale = '@colNumeric=yes');
 SELECT 'A-21' > 'A-123' COLLATE "und-x-icu", 'A-21' < 'A-123' COLLATE testcoll_numeric;
 
 CREATE COLLATION testcoll_error1 (provider = icu, locale = '@colNumeric=lower');
+
+-- test that attributes not handled by icu_set_collation_attributes()
+-- (handled by ucol_open() directly) also work
+CREATE COLLATION testcoll_de_phonebook (provider = icu, locale = 'de@collation=phonebook');
+SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE testcoll_de_phonebook;
 
 
 -- cleanup

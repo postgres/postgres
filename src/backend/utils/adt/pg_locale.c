@@ -1623,8 +1623,8 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 		{
 			char	   *name;
 			char	   *value;
-			UColAttribute uattr = -1;
-			UColAttributeValue uvalue = -1;
+			UColAttribute uattr;
+			UColAttributeValue uvalue;
 			UErrorCode	status;
 
 			status = U_ZERO_ERROR;
@@ -1650,7 +1650,9 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 				uattr = UCOL_NORMALIZATION_MODE;
 			else if (strcmp(name, "colnumeric") == 0)
 				uattr = UCOL_NUMERIC_COLLATION;
-			/* ignore if unknown */
+			else
+				/* ignore if unknown */
+				continue;
 
 			if (strcmp(value, "primary") == 0)
 				uvalue = UCOL_PRIMARY;
@@ -1677,7 +1679,7 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 			else
 				status = U_ILLEGAL_ARGUMENT_ERROR;
 
-			if (uattr != -1 && uvalue != -1)
+			if (status == U_ZERO_ERROR)
 				ucol_setAttribute(collator, uattr, uvalue, &status);
 
 			/*
