@@ -404,7 +404,9 @@ ProcedureCreate(const char *procedureName,
 					  errdetail("\"%s\" is a window function.", procedureName) :
 					  0)));
 
-		dropcmd = (prokind == PROKIND_PROCEDURE ? "DROP PROCEDURE" : "DROP FUNCTION");
+		dropcmd = (prokind == PROKIND_PROCEDURE ? "DROP PROCEDURE" :
+				   prokind == PROKIND_AGGREGATE ? "DROP AGGREGATE" :
+				   "DROP FUNCTION");
 
 		/*
 		 * Not okay to change the return type of the existing proc, since
@@ -421,7 +423,7 @@ ProcedureCreate(const char *procedureName,
 					 prokind == PROKIND_PROCEDURE
 					 ? errmsg("cannot change whether a procedure has output parameters")
 					 : errmsg("cannot change return type of existing function"),
-					 /* translator: first %s is DROP FUNCTION or DROP PROCEDURE */
+					 /* translator: first %s is DROP FUNCTION, DROP PROCEDURE or DROP AGGREGATE */
 					 errhint("Use %s %s first.",
 							 dropcmd,
 							 format_procedure(oldproc->oid))));

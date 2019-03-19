@@ -5618,25 +5618,27 @@ CreateAssertionStmt:
  *****************************************************************************/
 
 DefineStmt:
-			CREATE AGGREGATE func_name aggr_args definition
+			CREATE opt_or_replace AGGREGATE func_name aggr_args definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
 					n->oldstyle = false;
-					n->defnames = $3;
-					n->args = $4;
-					n->definition = $5;
+					n->replace = $2;
+					n->defnames = $4;
+					n->args = $5;
+					n->definition = $6;
 					$$ = (Node *)n;
 				}
-			| CREATE AGGREGATE func_name old_aggr_definition
+			| CREATE opt_or_replace AGGREGATE func_name old_aggr_definition
 				{
 					/* old-style (pre-8.2) syntax for CREATE AGGREGATE */
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
 					n->oldstyle = true;
-					n->defnames = $3;
+					n->replace = $2;
+					n->defnames = $4;
 					n->args = NIL;
-					n->definition = $4;
+					n->definition = $5;
 					$$ = (Node *)n;
 				}
 			| CREATE OPERATOR any_operator definition

@@ -54,7 +54,12 @@ static char extractModify(DefElem *defel);
  * "parameters" is a list of DefElem representing the agg's definition clauses.
  */
 ObjectAddress
-DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List *parameters)
+DefineAggregate(ParseState *pstate,
+				List *name,
+				List *args,
+				bool oldstyle,
+				List *parameters,
+				bool replace)
 {
 	char	   *aggName;
 	Oid			aggNamespace;
@@ -436,6 +441,7 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 	 */
 	return AggregateCreate(aggName, /* aggregate name */
 						   aggNamespace,	/* namespace */
+						   replace,
 						   aggKind,
 						   numArgs,
 						   numDirectArgs,

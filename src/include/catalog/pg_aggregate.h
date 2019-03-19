@@ -142,6 +142,7 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
 
 extern ObjectAddress AggregateCreate(const char *aggName,
 				Oid aggNamespace,
+				bool replace,
 				char aggKind,
 				int numArgs,
 				int numDirectArgs,

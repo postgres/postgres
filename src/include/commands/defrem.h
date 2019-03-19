@@ -94,7 +94,7 @@ extern void UpdateStatisticsForTypeChange(Oid statsOid,
 
 /* commands/aggregatecmds.c */
 extern ObjectAddress DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle,
-				List *parameters);
+									 List *parameters, bool replace);
 
 /* commands/opclasscmds.c */
 extern ObjectAddress DefineOpClass(CreateOpClassStmt *stmt);

@@ -45,6 +45,7 @@ static Oid lookup_agg_function(List *fnName, int nargs, Oid *input_types,
 ObjectAddress
 AggregateCreate(const char *aggName,
 				Oid aggNamespace,
+				bool replace,
 				char aggKind,
 				int numArgs,
 				int numDirectArgs,
@@ -77,8 +78,10 @@ AggregateCreate(const char *aggName,
 {
 	Relation	aggdesc;
 	HeapTuple	tup;
+	HeapTuple	oldtup;
 	bool		nulls[Natts_pg_aggregate];
 	Datum		values[Natts_pg_aggregate];
+	bool		replaces[Natts_pg_aggregate];
 	Form_pg_proc proc;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
@@ -609,7 +612,7 @@ AggregateCreate(const char *aggName,
 
 	myself = ProcedureCreate(aggName,
 							 aggNamespace,
-							 false, /* no replacement */
+							 replace, /* maybe replacement */
 							 false, /* doesn't return a set */
 							 finaltype, /* returnType */
 							 GetUserId(),	/* proowner */
@@ -648,6 +651,7 @@ AggregateCreate(const char *aggName,
 	{
 		nulls[i] = false;
 		values[i] = (Datum) NULL;
+		replaces[i] = true;
 	}
 	values[Anum_pg_aggregate_aggfnoid - 1] = ObjectIdGetDatum(procOid);
 	values[Anum_pg_aggregate_aggkind - 1] = CharGetDatum(aggKind);
@@ -678,8 +682,51 @@ AggregateCreate(const char *aggName,
 	else
 		nulls[Anum_pg_aggregate_aggminitval - 1] = true;
 
-	tup = heap_form_tuple(tupDesc, values, nulls);
-	CatalogTupleInsert(aggdesc, tup);
+	if (replace)
+		oldtup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(procOid));
+	else
+		oldtup = NULL;
+
+	if (HeapTupleIsValid(oldtup))
+	{
+		Form_pg_aggregate oldagg = (Form_pg_aggregate) GETSTRUCT(oldtup);
+
+		/*
+		 * If we're replacing an existing entry, we need to validate that
+		 * we're not changing anything that would break callers.
+		 * Specifically we must not change aggkind or aggnumdirectargs,
+		 * which affect how an aggregate call is treated in parse
+		 * analysis.
+		 */
+		if (aggKind != oldagg->aggkind)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change routine kind"),
+					 (oldagg->aggkind == AGGKIND_NORMAL ?
+					  errdetail("\"%s\" is an ordinary aggregate function.", aggName) :
+					  oldagg->aggkind == AGGKIND_ORDERED_SET ?
+					  errdetail("\"%s\" is an ordered-set aggregate.", aggName) :
+					  oldagg->aggkind == AGGKIND_HYPOTHETICAL ?
+					  errdetail("\"%s\" is a hypothetical-set aggregate.", aggName) :
+					  0)));
+		if (numDirectArgs != oldagg->aggnumdirectargs)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("cannot change number of direct args of an aggregate function")));
+
+		replaces[Anum_pg_aggregate_aggfnoid - 1] = false;
+		replaces[Anum_pg_aggregate_aggkind - 1] = false;
+		replaces[Anum_pg_aggregate_aggnumdirectargs - 1] = false;
+
+		tup = heap_modify_tuple(oldtup, tupDesc, values, nulls, replaces);
+		CatalogTupleUpdate(aggdesc, &tup->t_self, tup);
+		ReleaseSysCache(oldtup);
+	}
+	else
+	{
+		tup = heap_form_tuple(tupDesc, values, nulls);
+		CatalogTupleInsert(aggdesc, tup);
+	}
 
 	table_close(aggdesc, RowExclusiveLock);
 
@@ -688,6 +735,10 @@ AggregateCreate(const char *aggName,
 	 * made by ProcedureCreate).  Note: we don't need an explicit dependency
 	 * on aggTransType since we depend on it indirectly through transfn.
 	 * Likewise for aggmTransType using the mtransfunc, if it exists.
+	 *
+	 * If we're replacing an existing definition, ProcedureCreate deleted all
+	 * our existing dependencies, so we have to do the same things here either
+	 * way.
 	 */
 
 	/* Depends on transition function */

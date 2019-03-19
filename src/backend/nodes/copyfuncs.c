@@ -3372,6 +3372,7 @@ _copyDefineStmt(const DefineStmt *from)
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(definition);
 	COPY_SCALAR_FIELD(if_not_exists);
+	COPY_SCALAR_FIELD(replace);
 
 	return newnode;
 }

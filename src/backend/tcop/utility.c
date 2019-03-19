@@ -1237,7 +1237,8 @@ ProcessUtilitySlow(ParseState *pstate,
 							address =
 								DefineAggregate(pstate, stmt->defnames, stmt->args,
 												stmt->oldstyle,
-												stmt->definition);
+												stmt->definition,
+												stmt->replace);
 							break;
 						case OBJECT_OPERATOR:
 							Assert(stmt->args == NIL);

@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
+CREATE [ OR REPLACE ] AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
     SFUNC = <replaceable class="parameter">sfunc</replaceable>,
     STYPE = <replaceable class="parameter">state_data_type</replaceable>
     [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
@@ -44,7 +44,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
 )
 
-CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ]
+CREATE [ OR REPLACE ] AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ]
                         ORDER BY [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
     SFUNC = <replaceable class="parameter">sfunc</replaceable>,
     STYPE = <replaceable class="parameter">state_data_type</replaceable>
@@ -59,7 +59,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
 
 <phrase>or the old syntax</phrase>
 
-CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
+CREATE [ OR REPLACE ] AGGREGATE <replaceable class="parameter">name</replaceable> (
     BASETYPE = <replaceable class="parameter">base_type</replaceable>,
     SFUNC = <replaceable class="parameter">sfunc</replaceable>,
     STYPE = <replaceable class="parameter">state_data_type</replaceable>
@@ -88,12 +88,21 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
   <title>Description</title>
 
   <para>
-   <command>CREATE AGGREGATE</command> defines a new aggregate
-   function. Some basic and commonly-used aggregate functions are
-   included with the distribution; they are documented in <xref
-   linkend="functions-aggregate"/>. If one defines new types or needs
-   an aggregate function not already provided, then <command>CREATE
-   AGGREGATE</command> can be used to provide the desired features.
+   <command>CREATE AGGREGATE</command> defines a new aggregate function.
+   <command>CREATE OR REPLACE AGGREGATE</command> will either define a new
+   aggregate function or replace an existing definition. Some basic and
+   commonly-used aggregate functions are included with the distribution; they
+   are documented in <xref linkend="functions-aggregate"/>. If one defines new
+   types or needs an aggregate function not already provided, then
+   <command>CREATE AGGREGATE</command> can be used to provide the desired
+   features.
+  </para>
+
+  <para>
+   When replacing an existing definition, the argument types, result type,
+   and number of direct arguments may not be changed. Also, the new definition
+   must be of the same kind (ordinary aggregate, ordered-set aggregate, or
+   hypothetical-set aggregate) as the old one.
   </para>
 
   <para>
