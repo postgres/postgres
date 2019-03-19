@@ -3852,8 +3852,9 @@ _copyVacuumStmt(const VacuumStmt *from)
 {
 	VacuumStmt *newnode = makeNode(VacuumStmt);
 
-	COPY_SCALAR_FIELD(options);
+	COPY_NODE_FIELD(options);
 	COPY_NODE_FIELD(rels);
+	COPY_SCALAR_FIELD(is_vacuumcmd);
 
 	return newnode;
 }
