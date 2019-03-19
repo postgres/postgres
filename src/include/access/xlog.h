@@ -184,6 +184,8 @@ extern bool XLOG_DEBUG;
 /* These indicate the cause of a checkpoint request */
 #define CHECKPOINT_CAUSE_XLOG	0x0040	/* XLOG consumption */
 #define CHECKPOINT_CAUSE_TIME	0x0080	/* Elapsed time */
+/* We set this to ensure that ckpt_flags is not 0 if a request has been made */
+#define CHECKPOINT_REQUESTED	0x0100	/* Checkpoint request has been made */
 
 /*
  * Flag bits for the record being inserted, set using XLogSetRecordFlags().
