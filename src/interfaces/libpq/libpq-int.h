@@ -410,6 +410,8 @@ struct pg_conn
 	bool		password_needed;	/* true if server demanded a password */
 	bool		sigpipe_so;		/* have we masked SIGPIPE via SO_NOSIGPIPE? */
 	bool		sigpipe_flag;	/* can we mask SIGPIPE via MSG_NOSIGNAL? */
+	bool		write_failed;	/* have we had a write failure on sock? */
+	char	   *write_err_msg;	/* write error message, or NULL if OOM */
 
 	/* Transient state needed while establishing connection */
 	bool		try_next_addr;	/* time to advance to next address/host? */
@@ -585,7 +587,6 @@ extern void pqSaveMessageField(PGresult *res, char code,
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
 					  const char *value);
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
-extern void pqHandleSendFailure(PGconn *conn);
 
 /* === in fe-protocol2.c === */
 
