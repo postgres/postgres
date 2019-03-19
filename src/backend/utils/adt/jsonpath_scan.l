@@ -635,4 +635,3 @@ jsonpath_yyfree(void *ptr)
 	if (ptr)
 		pfree(ptr);
 }
-
