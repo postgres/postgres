@@ -13,13 +13,13 @@
 #ifndef JSONPATH_SCANNER_H
 #define JSONPATH_SCANNER_H
 
-/* struct string is shared between scan and gram */
-typedef struct string
+/* struct JsonPathString is shared between scan and gram */
+typedef struct JsonPathString
 {
 	char	   *val;
 	int			len;
 	int			total;
-}			string;
+}			JsonPathString;
 
 #include "utils/jsonpath.h"
 #include "utils/jsonpath_gram.h"

@@ -18,7 +18,7 @@
 #include "nodes/pg_list.h"
 #include "utils/jsonpath_scanner.h"
 
-static string scanstring;
+static JsonPathString scanstring;
 
 /* No reason to constrain amount of data slurped */
 /* #define YY_READ_BUF_SIZE 16777216 */

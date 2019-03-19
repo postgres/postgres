@@ -48,7 +48,7 @@ makeItemType(int type)
 }
 
 static JsonPathParseItem*
-makeItemString(string *s)
+makeItemString(JsonPathString *s)
 {
 	JsonPathParseItem *v;
 
@@ -67,7 +67,7 @@ makeItemString(string *s)
 }
 
 static JsonPathParseItem*
-makeItemVariable(string *s)
+makeItemVariable(JsonPathString *s)
 {
 	JsonPathParseItem *v;
 
@@ -79,7 +79,7 @@ makeItemVariable(string *s)
 }
 
 static JsonPathParseItem*
-makeItemKey(string *s)
+makeItemKey(JsonPathString *s)
 {
 	JsonPathParseItem *v;
 
@@ -90,7 +90,7 @@ makeItemKey(string *s)
 }
 
 static JsonPathParseItem*
-makeItemNumeric(string *s)
+makeItemNumeric(JsonPathString *s)
 {
 	JsonPathParseItem		*v;
 
@@ -210,7 +210,8 @@ makeAny(int first, int last)
 }
 
 static JsonPathParseItem *
-makeItemLikeRegex(JsonPathParseItem *expr, string *pattern, string *flags)
+makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
+				  JsonPathString *flags)
 {
 	JsonPathParseItem *v = makeItemType(jpiLikeRegex);
 	int			i;
@@ -267,7 +268,7 @@ makeItemLikeRegex(JsonPathParseItem *expr, string *pattern, string *flags)
 %parse-param {JsonPathParseResult **result}
 
 %union {
-	string				str;
+	JsonPathString		str;
 	List				*elems;		/* list of JsonPathParseItem */
 	List				*indexs;	/* list of integers */
 	JsonPathParseItem	*value;
