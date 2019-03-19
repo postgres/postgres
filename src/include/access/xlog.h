@@ -253,6 +253,8 @@ extern bool XLOG_DEBUG;
 #define CHECKPOINT_CAUSE_TIME	0x0040	/* Elapsed time */
 #define CHECKPOINT_FLUSH_ALL	0x0080	/* Flush all pages, including those
 										 * belonging to unlogged tables */
+/* We set this to ensure that ckpt_flags is not 0 if a request has been made */
+#define CHECKPOINT_REQUESTED	0x0100	/* Checkpoint request has been made */
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData

@@ -149,7 +149,6 @@ double		CheckPointCompletionTarget = 0.5;
  * Flags set by interrupt handlers for later service in the main loop.
  */
 static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t checkpoint_requested = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
 /*
@@ -396,12 +395,6 @@ CheckpointerMain(void)
 			 */
 			UpdateSharedMemoryConfig();
 		}
-		if (checkpoint_requested)
-		{
-			checkpoint_requested = false;
-			do_checkpoint = true;
-			BgWriterStats.m_requested_checkpoints++;
-		}
 		if (shutdown_requested)
 		{
 			/*
@@ -413,6 +406,17 @@ CheckpointerMain(void)
 			ShutdownXLOG(0, 0);
 			/* Normal exit from the checkpointer is here */
 			proc_exit(0);		/* done */
+		}
+
+		/*
+		 * Detect a pending checkpoint request by checking whether the flags
+		 * word in shared memory is nonzero.  We shouldn't need to acquire the
+		 * ckpt_lck for this.
+		 */
+		if (((volatile CheckpointerShmemStruct *) CheckpointerShmem)->ckpt_flags)
+		{
+			do_checkpoint = true;
+			BgWriterStats.m_requested_checkpoints++;
 		}
 
 		/*
@@ -646,17 +650,14 @@ CheckArchiveTimeout(void)
 static bool
 ImmediateCheckpointRequested(void)
 {
-	if (checkpoint_requested)
-	{
-		volatile CheckpointerShmemStruct *cps = CheckpointerShmem;
+	volatile CheckpointerShmemStruct *cps = CheckpointerShmem;
 
-		/*
-		 * We don't need to acquire the ckpt_lck in this case because we're
-		 * only looking at a single flag bit.
-		 */
-		if (cps->ckpt_flags & CHECKPOINT_IMMEDIATE)
-			return true;
-	}
+	/*
+	 * We don't need to acquire the ckpt_lck in this case because we're only
+	 * looking at a single flag bit.
+	 */
+	if (cps->ckpt_flags & CHECKPOINT_IMMEDIATE)
+		return true;
 	return false;
 }
 
@@ -849,7 +850,10 @@ ReqCheckpointHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	checkpoint_requested = true;
+	/*
+	 * The signalling process should have set ckpt_flags nonzero, so all we
+	 * need do is ensure that our main loop gets kicked out of any wait.
+	 */
 	if (MyProc)
 		SetLatch(&MyProc->procLatch);
 
@@ -992,31 +996,35 @@ RequestCheckpoint(int flags)
 
 	old_failed = cps->ckpt_failed;
 	old_started = cps->ckpt_started;
-	cps->ckpt_flags |= flags;
+	cps->ckpt_flags |= (flags | CHECKPOINT_REQUESTED);
 
 	SpinLockRelease(&cps->ckpt_lck);
 
 	/*
 	 * Send signal to request checkpoint.  It's possible that the checkpointer
 	 * hasn't started yet, or is in process of restarting, so we will retry a
-	 * few times if needed.  Also, if not told to wait for the checkpoint to
-	 * occur, we consider failure to send the signal to be nonfatal and merely
-	 * LOG it.
+	 * few times if needed.  (Actually, more than a few times, since on slow
+	 * or overloaded buildfarm machines, it's been observed that the
+	 * checkpointer can take several seconds to start.)  However, if not told
+	 * to wait for the checkpoint to occur, we consider failure to send the
+	 * signal to be nonfatal and merely LOG it.  The checkpointer should see
+	 * the request when it does start, with or without getting a signal.
 	 */
+#define MAX_SIGNAL_TRIES 600	/* max wait 60.0 sec */
 	for (ntries = 0;; ntries++)
 	{
 		if (CheckpointerShmem->checkpointer_pid == 0)
 		{
-			if (ntries >= 20)	/* max wait 2.0 sec */
+			if (ntries >= MAX_SIGNAL_TRIES || !(flags & CHECKPOINT_WAIT))
 			{
 				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
-					 "could not request checkpoint because checkpointer not running");
+					 "could not signal for checkpoint: checkpointer is not running");
 				break;
 			}
 		}
 		else if (kill(CheckpointerShmem->checkpointer_pid, SIGINT) != 0)
 		{
-			if (ntries >= 20)	/* max wait 2.0 sec */
+			if (ntries >= MAX_SIGNAL_TRIES || !(flags & CHECKPOINT_WAIT))
 			{
 				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
 					 "could not signal for checkpoint: %m");
