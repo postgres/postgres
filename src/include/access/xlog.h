@@ -215,9 +215,10 @@ extern bool XLOG_DEBUG;
 										 * belonging to unlogged tables */
 /* These are important to RequestCheckpoint */
 #define CHECKPOINT_WAIT			0x0020	/* Wait for completion */
+#define CHECKPOINT_REQUESTED	0x0040	/* Checkpoint request has been made */
 /* These indicate the cause of a checkpoint request */
-#define CHECKPOINT_CAUSE_XLOG	0x0040	/* XLOG consumption */
-#define CHECKPOINT_CAUSE_TIME	0x0080	/* Elapsed time */
+#define CHECKPOINT_CAUSE_XLOG	0x0080	/* XLOG consumption */
+#define CHECKPOINT_CAUSE_TIME	0x0100	/* Elapsed time */
 
 /*
  * Flag bits for the record being inserted, set using XLogSetRecordFlags().
