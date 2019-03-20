@@ -2320,6 +2320,13 @@ ri_FetchConstraintInfo(Trigger *trigger, Relation trig_rel, bool rel_is_pk)
 			elog(ERROR, "wrong pg_constraint entry for trigger \"%s\" on table \"%s\"",
 				 trigger->tgname, RelationGetRelationName(trig_rel));
 	}
+	else
+	{
+		if (riinfo->fk_relid != RelationGetRelid(trig_rel) ||
+			riinfo->pk_relid != trigger->tgconstrrelid)
+			elog(ERROR, "wrong pg_constraint entry for trigger \"%s\" on table \"%s\"",
+				 trigger->tgname, RelationGetRelationName(trig_rel));
+	}
 
 	return riinfo;
 }
