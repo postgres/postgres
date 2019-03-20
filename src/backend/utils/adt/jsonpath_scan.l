@@ -1,3 +1,4 @@
+%{
 /*-------------------------------------------------------------------------
  *
  * jsonpath_scan.l
@@ -11,12 +12,10 @@
  *-------------------------------------------------------------------------
  */
 
-%{
 #include "postgres.h"
 
 #include "mb/pg_wchar.h"
 #include "nodes/pg_list.h"
-#include "utils/jsonpath_scanner.h"
 
 static JsonPathString scanstring;
 
@@ -46,7 +45,6 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
 
-#define yyerror jsonpath_yyerror
 %}
 
 %option 8bit

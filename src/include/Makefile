@@ -54,7 +54,7 @@ install: all installdirs
 	  cp $(srcdir)/$$dir/*.h '$(DESTDIR)$(includedir_server)'/$$dir/ || exit; \
 	done
 ifeq ($(vpath_build),yes)
-	for file in catalog/schemapg.h catalog/pg_*_d.h parser/gram.h storage/lwlocknames.h utils/probes.h utils/jsonpath_gram.h; do \
+	for file in catalog/schemapg.h catalog/pg_*_d.h parser/gram.h storage/lwlocknames.h utils/probes.h; do \
 	  cp $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	done
 endif
@@ -78,7 +78,7 @@ uninstall:
 
 clean:
 	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h utils/header-stamp
-	rm -f parser/gram.h storage/lwlocknames.h utils/probes.h utils/jsonpath_gram.h
+	rm -f parser/gram.h storage/lwlocknames.h utils/probes.h
 	rm -f catalog/schemapg.h catalog/pg_*_d.h catalog/header-stamp
 
 distclean maintainer-clean: clean

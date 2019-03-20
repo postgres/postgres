@@ -136,9 +136,6 @@ parser/gram.h: parser/gram.y
 storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl storage/lmgr/lwlocknames.txt
 	$(MAKE) -C storage/lmgr lwlocknames.h lwlocknames.c
 
-utils/adt/jsonpath_gram.h: utils/adt/jsonpath_gram.y
-	$(MAKE) -C utils/adt jsonpath_gram.h
-
 # run this unconditionally to avoid needing to know its dependencies here:
 submake-catalog-headers:
 	$(MAKE) -C catalog distprep generated-header-symlinks
@@ -162,7 +159,7 @@ submake-utils-headers:
 
 .PHONY: generated-headers
 
-generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/storage/lwlocknames.h $(top_builddir)/src/include/utils/jsonpath_gram.h submake-catalog-headers submake-utils-headers
+generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/storage/lwlocknames.h submake-catalog-headers submake-utils-headers
 
 $(top_builddir)/src/include/parser/gram.h: parser/gram.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
@@ -170,11 +167,6 @@ $(top_builddir)/src/include/parser/gram.h: parser/gram.h
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/storage/lwlocknames.h: storage/lmgr/lwlocknames.h
-	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
-	  cd '$(dir $@)' && rm -f $(notdir $@) && \
-	  $(LN_S) "$$prereqdir/$(notdir $<)" .
-
-$(top_builddir)/src/include/utils/jsonpath_gram.h: utils/adt/jsonpath_gram.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
 	  cd '$(dir $@)' && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
@@ -193,7 +185,7 @@ distprep:
 	$(MAKE) -C replication	repl_gram.c repl_scanner.c syncrep_gram.c syncrep_scanner.c
 	$(MAKE) -C storage/lmgr	lwlocknames.h lwlocknames.c
 	$(MAKE) -C utils	distprep
-	$(MAKE) -C utils/adt	jsonpath_gram.c jsonpath_gram.h jsonpath_scan.c
+	$(MAKE) -C utils/adt	jsonpath_gram.c jsonpath_scan.c
 	$(MAKE) -C utils/misc	guc-file.c
 	$(MAKE) -C utils/sort	qsort_tuple.c
 
@@ -316,7 +308,6 @@ maintainer-clean: distclean
 	      storage/lmgr/lwlocknames.c \
 	      storage/lmgr/lwlocknames.h \
 	      utils/adt/jsonpath_gram.c \
-	      utils/adt/jsonpath_gram.h \
 	      utils/adt/jsonpath_scan.c \
 	      utils/misc/guc-file.c \
 	      utils/sort/qsort_tuple.c
