@@ -263,6 +263,7 @@ typedef struct BTWriteState
 {
 	Relation	heap;
 	Relation	index;
+	BTScanInsert inskey;		/* generic insertion scankey */
 	bool		btws_use_wal;	/* dump pages to WAL? */
 	BlockNumber btws_pages_alloced; /* # pages allocated */
 	BlockNumber btws_pages_written; /* # pages written out */
@@ -540,6 +541,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 
 	wstate.heap = btspool->heap;
 	wstate.index = btspool->index;
+	wstate.inskey = _bt_mkscankey(wstate.index, NULL);
 
 	/*
 	 * We need to log index creation in WAL iff WAL archiving/streaming is
@@ -1085,7 +1087,6 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	TupleDesc	tupdes = RelationGetDescr(wstate->index);
 	int			i,
 				keysz = IndexRelationGetNumberOfKeyAttributes(wstate->index);
-	ScanKey		indexScanKey = NULL;
 	SortSupport sortKeys;
 
 	if (merge)
@@ -1098,7 +1099,6 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		/* the preparation of merge */
 		itup = tuplesort_getindextuple(btspool->sortstate, true);
 		itup2 = tuplesort_getindextuple(btspool2->sortstate, true);
-		indexScanKey = _bt_mkscankey_nodata(wstate->index);
 
 		/* Prepare SortSupport data for each column */
 		sortKeys = (SortSupport) palloc0(keysz * sizeof(SortSupportData));
@@ -1106,7 +1106,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		for (i = 0; i < keysz; i++)
 		{
 			SortSupport sortKey = sortKeys + i;
-			ScanKey		scanKey = indexScanKey + i;
+			ScanKey		scanKey = wstate->inskey->scankeys + i;
 			int16		strategy;
 
 			sortKey->ssup_cxt = CurrentMemoryContext;
@@ -1124,8 +1124,6 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 			PrepareSortSupportFromIndexRel(wstate->index, strategy, sortKey);
 		}
-
-		_bt_freeskey(indexScanKey);
 
 		for (;;)
 		{

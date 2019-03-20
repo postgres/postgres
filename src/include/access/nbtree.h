@@ -320,6 +320,64 @@ typedef struct BTStackData
 typedef BTStackData *BTStack;
 
 /*
+ * BTScanInsert is the btree-private state needed to find an initial position
+ * for an indexscan, or to insert new tuples -- an "insertion scankey" (not to
+ * be confused with a search scankey).  It's used to descend a B-Tree using
+ * _bt_search.
+ *
+ * When nextkey is false (the usual case), _bt_search and _bt_binsrch will
+ * locate the first item >= scankey.  When nextkey is true, they will locate
+ * the first item > scan key.
+ *
+ * scankeys is an array of scan key entries for attributes that are compared.
+ * keysz is the size of the array.  During insertion, there must be a scan key
+ * for every attribute, but when starting a regular index scan some can be
+ * omitted.  The array is used as a flexible array member, though it's sized
+ * in a way that makes it possible to use stack allocations.  See
+ * nbtree/README for full details.
+ */
+typedef struct BTScanInsertData
+{
+	bool		nextkey;
+	int			keysz;			/* Size of scankeys array */
+	ScanKeyData scankeys[INDEX_MAX_KEYS];	/* Must appear last */
+} BTScanInsertData;
+
+typedef BTScanInsertData *BTScanInsert;
+
+/*
+ * BTInsertStateData is a working area used during insertion.
+ *
+ * This is filled in after descending the tree to the first leaf page the new
+ * tuple might belong on.  Tracks the current position while performing
+ * uniqueness check, before we have determined which exact page to insert
+ * to.
+ *
+ * (This should be private to nbtinsert.c, but it's also used by
+ * _bt_binsrch_insert)
+ */
+typedef struct BTInsertStateData
+{
+	IndexTuple	itup;			/* Item we're inserting */
+	Size		itemsz;			/* Size of itup -- should be MAXALIGN()'d */
+	BTScanInsert itup_key;		/* Insertion scankey */
+
+	/* Buffer containing leaf page we're likely to insert itup on */
+	Buffer		buf;
+
+	/*
+	 * Cache of bounds within the current buffer.  Only used for insertions
+	 * where _bt_check_unique is called.  See _bt_binsrch_insert and
+	 * _bt_findinsertloc for details.
+	 */
+	bool		bounds_valid;
+	OffsetNumber low;
+	OffsetNumber stricthigh;
+} BTInsertStateData;
+
+typedef BTInsertStateData *BTInsertState;
+
+/*
  * BTScanOpaqueData is the btree-private state needed for an indexscan.
  * This consists of preprocessed scan keys (see _bt_preprocess_keys() for
  * details of the preprocessing), information about the current location
@@ -558,16 +616,12 @@ extern int	_bt_pagedel(Relation rel, Buffer buf);
 /*
  * prototypes for functions in nbtsearch.c
  */
-extern BTStack _bt_search(Relation rel,
-		   int keysz, ScanKey scankey, bool nextkey,
-		   Buffer *bufP, int access, Snapshot snapshot);
-extern Buffer _bt_moveright(Relation rel, Buffer buf, int keysz,
-			  ScanKey scankey, bool nextkey, bool forupdate, BTStack stack,
-			  int access, Snapshot snapshot);
-extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
-			ScanKey scankey, bool nextkey);
-extern int32 _bt_compare(Relation rel, int keysz, ScanKey scankey,
-			Page page, OffsetNumber offnum);
+extern BTStack _bt_search(Relation rel, BTScanInsert key, Buffer *bufP,
+		   int access, Snapshot snapshot);
+extern Buffer _bt_moveright(Relation rel, BTScanInsert key, Buffer buf,
+			  bool forupdate, BTStack stack, int access, Snapshot snapshot);
+extern OffsetNumber _bt_binsrch_insert(Relation rel, BTInsertState insertstate);
+extern int32 _bt_compare(Relation rel, BTScanInsert key, Page page, OffsetNumber offnum);
 extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
@@ -576,9 +630,7 @@ extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 /*
  * prototypes for functions in nbtutils.c
  */
-extern ScanKey _bt_mkscankey(Relation rel, IndexTuple itup);
-extern ScanKey _bt_mkscankey_nodata(Relation rel);
-extern void _bt_freeskey(ScanKey skey);
+extern BTScanInsert _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_preprocess_array_keys(IndexScanDesc scan);
 extern void _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir);

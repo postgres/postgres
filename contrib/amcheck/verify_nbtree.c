@@ -127,9 +127,9 @@ static void bt_check_every_level(Relation rel, Relation heaprel,
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
 							 BtreeLevel level);
 static void bt_target_page_check(BtreeCheckState *state);
-static ScanKey bt_right_page_check_scankey(BtreeCheckState *state);
-static void bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
-				  ScanKey targetkey);
+static BTScanInsert bt_right_page_check_scankey(BtreeCheckState *state);
+static void bt_downlink_check(BtreeCheckState *state, BTScanInsert targetkey,
+				  BlockNumber childblock);
 static void bt_downlink_missing_check(BtreeCheckState *state);
 static void bt_tuple_present_callback(Relation index, HeapTuple htup,
 						  Datum *values, bool *isnull,
@@ -139,14 +139,14 @@ static IndexTuple bt_normalize_tuple(BtreeCheckState *state,
 static inline bool offset_is_negative_infinity(BTPageOpaque opaque,
 							OffsetNumber offset);
 static inline bool invariant_leq_offset(BtreeCheckState *state,
-					 ScanKey key,
+					 BTScanInsert key,
 					 OffsetNumber upperbound);
 static inline bool invariant_geq_offset(BtreeCheckState *state,
-					 ScanKey key,
+					 BTScanInsert key,
 					 OffsetNumber lowerbound);
 static inline bool invariant_leq_nontarget_offset(BtreeCheckState *state,
-							   Page other,
-							   ScanKey key,
+							   BTScanInsert key,
+							   Page nontarget,
 							   OffsetNumber upperbound);
 static Page palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum);
 
@@ -838,8 +838,8 @@ bt_target_page_check(BtreeCheckState *state)
 	{
 		ItemId		itemid;
 		IndexTuple	itup;
-		ScanKey		skey;
 		size_t		tupsize;
+		BTScanInsert skey;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -1030,7 +1030,7 @@ bt_target_page_check(BtreeCheckState *state)
 		 */
 		else if (offset == max)
 		{
-			ScanKey		rightkey;
+			BTScanInsert	rightkey;
 
 			/* Get item in next/right page */
 			rightkey = bt_right_page_check_scankey(state);
@@ -1082,7 +1082,7 @@ bt_target_page_check(BtreeCheckState *state)
 		{
 			BlockNumber childblock = BTreeInnerTupleGetDownLink(itup);
 
-			bt_downlink_check(state, childblock, skey);
+			bt_downlink_check(state, skey, childblock);
 		}
 	}
 
@@ -1111,11 +1111,12 @@ bt_target_page_check(BtreeCheckState *state)
  * Note that !readonly callers must reverify that target page has not
  * been concurrently deleted.
  */
-static ScanKey
+static BTScanInsert
 bt_right_page_check_scankey(BtreeCheckState *state)
 {
 	BTPageOpaque opaque;
 	ItemId		rightitem;
+	IndexTuple	firstitup;
 	BlockNumber targetnext;
 	Page		rightpage;
 	OffsetNumber nline;
@@ -1303,8 +1304,8 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	 * Return first real item scankey.  Note that this relies on right page
 	 * memory remaining allocated.
 	 */
-	return _bt_mkscankey(state->rel,
-						 (IndexTuple) PageGetItem(rightpage, rightitem));
+	firstitup = (IndexTuple) PageGetItem(rightpage, rightitem);
+	return _bt_mkscankey(state->rel, firstitup);
 }
 
 /*
@@ -1317,8 +1318,8 @@ bt_right_page_check_scankey(BtreeCheckState *state)
  * verification this way around is much more practical.
  */
 static void
-bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
-				  ScanKey targetkey)
+bt_downlink_check(BtreeCheckState *state, BTScanInsert targetkey,
+				  BlockNumber childblock)
 {
 	OffsetNumber offset;
 	OffsetNumber maxoffset;
@@ -1423,8 +1424,7 @@ bt_downlink_check(BtreeCheckState *state, BlockNumber childblock,
 		if (offset_is_negative_infinity(copaque, offset))
 			continue;
 
-		if (!invariant_leq_nontarget_offset(state, child,
-											targetkey, offset))
+		if (!invariant_leq_nontarget_offset(state, targetkey, child, offset))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("down-link lower bound invariant violated for index \"%s\"",
@@ -1864,13 +1864,12 @@ offset_is_negative_infinity(BTPageOpaque opaque, OffsetNumber offset)
  * to corruption.
  */
 static inline bool
-invariant_leq_offset(BtreeCheckState *state, ScanKey key,
+invariant_leq_offset(BtreeCheckState *state, BTScanInsert key,
 					 OffsetNumber upperbound)
 {
-	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 	int32		cmp;
 
-	cmp = _bt_compare(state->rel, nkeyatts, key, state->target, upperbound);
+	cmp = _bt_compare(state->rel, key, state->target, upperbound);
 
 	return cmp <= 0;
 }
@@ -1883,13 +1882,12 @@ invariant_leq_offset(BtreeCheckState *state, ScanKey key,
  * to corruption.
  */
 static inline bool
-invariant_geq_offset(BtreeCheckState *state, ScanKey key,
+invariant_geq_offset(BtreeCheckState *state, BTScanInsert key,
 					 OffsetNumber lowerbound)
 {
-	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 	int32		cmp;
 
-	cmp = _bt_compare(state->rel, nkeyatts, key, state->target, lowerbound);
+	cmp = _bt_compare(state->rel, key, state->target, lowerbound);
 
 	return cmp >= 0;
 }
@@ -1905,14 +1903,12 @@ invariant_geq_offset(BtreeCheckState *state, ScanKey key,
  * to corruption.
  */
 static inline bool
-invariant_leq_nontarget_offset(BtreeCheckState *state,
-							   Page nontarget, ScanKey key,
-							   OffsetNumber upperbound)
+invariant_leq_nontarget_offset(BtreeCheckState *state, BTScanInsert key,
+							   Page nontarget, OffsetNumber upperbound)
 {
-	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 	int32		cmp;
 
-	cmp = _bt_compare(state->rel, nkeyatts, key, nontarget, upperbound);
+	cmp = _bt_compare(state->rel, key, nontarget, upperbound);
 
 	return cmp <= 0;
 }

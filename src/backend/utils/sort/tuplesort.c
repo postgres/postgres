@@ -884,7 +884,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
 												   randomAccess);
-	ScanKey		indexScanKey;
+	BTScanInsert indexScanKey;
 	MemoryContext oldcontext;
 	int			i;
 
@@ -919,7 +919,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
 
-	indexScanKey = _bt_mkscankey_nodata(indexRel);
+	indexScanKey = _bt_mkscankey(indexRel, NULL);
 
 	if (state->indexInfo->ii_Expressions != NULL)
 	{
@@ -945,7 +945,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 	for (i = 0; i < state->nKeys; i++)
 	{
 		SortSupport sortKey = state->sortKeys + i;
-		ScanKey		scanKey = indexScanKey + i;
+		ScanKey		scanKey = indexScanKey->scankeys + i;
 		int16		strategy;
 
 		sortKey->ssup_cxt = CurrentMemoryContext;
@@ -964,7 +964,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
 	}
 
-	_bt_freeskey(indexScanKey);
+	pfree(indexScanKey);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -981,7 +981,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
 												   randomAccess);
-	ScanKey		indexScanKey;
+	BTScanInsert indexScanKey;
 	MemoryContext oldcontext;
 	int			i;
 
@@ -1014,7 +1014,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	state->indexRel = indexRel;
 	state->enforceUnique = enforceUnique;
 
-	indexScanKey = _bt_mkscankey_nodata(indexRel);
+	indexScanKey = _bt_mkscankey(indexRel, NULL);
 
 	/* Prepare SortSupport data for each column */
 	state->sortKeys = (SortSupport) palloc0(state->nKeys *
@@ -1023,7 +1023,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	for (i = 0; i < state->nKeys; i++)
 	{
 		SortSupport sortKey = state->sortKeys + i;
-		ScanKey		scanKey = indexScanKey + i;
+		ScanKey		scanKey = indexScanKey->scankeys + i;
 		int16		strategy;
 
 		sortKey->ssup_cxt = CurrentMemoryContext;
@@ -1042,7 +1042,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
 	}
 
-	_bt_freeskey(indexScanKey);
+	pfree(indexScanKey);
 
 	MemoryContextSwitchTo(oldcontext);
 

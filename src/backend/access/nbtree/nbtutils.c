@@ -56,34 +56,37 @@ static bool _bt_check_rowcompare(ScanKey skey,
  *		Build an insertion scan key that contains comparison data from itup
  *		as well as comparator routines appropriate to the key datatypes.
  *
- *		The result is intended for use with _bt_compare().
+ *		Result is intended for use with _bt_compare().  Callers that don't
+ *		need to fill out the insertion scankey arguments (e.g. they use an
+ *		ad-hoc comparison routine) can pass a NULL index tuple.
  */
-ScanKey
+BTScanInsert
 _bt_mkscankey(Relation rel, IndexTuple itup)
 {
+	BTScanInsert key;
 	ScanKey		skey;
 	TupleDesc	itupdesc;
-	int			indnatts PG_USED_FOR_ASSERTS_ONLY;
 	int			indnkeyatts;
 	int16	   *indoption;
+	int			tupnatts;
 	int			i;
 
 	itupdesc = RelationGetDescr(rel);
-	indnatts = IndexRelationGetNumberOfAttributes(rel);
 	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	indoption = rel->rd_indoption;
+	tupnatts = itup ? BTreeTupleGetNAtts(itup, rel) : 0;
 
-	Assert(indnkeyatts > 0);
-	Assert(indnkeyatts <= indnatts);
-	Assert(BTreeTupleGetNAtts(itup, rel) == indnatts ||
-		   BTreeTupleGetNAtts(itup, rel) == indnkeyatts);
+	Assert(tupnatts <= IndexRelationGetNumberOfAttributes(rel));
 
 	/*
 	 * We'll execute search using scan key constructed on key columns. Non-key
 	 * (INCLUDE index) columns are always omitted from scan keys.
 	 */
-	skey = (ScanKey) palloc(indnkeyatts * sizeof(ScanKeyData));
-
+	key = palloc(offsetof(BTScanInsertData, scankeys) +
+				 sizeof(ScanKeyData) * indnkeyatts);
+	key->nextkey = false;
+	key->keysz = Min(indnkeyatts, tupnatts);
+	skey = key->scankeys;
 	for (i = 0; i < indnkeyatts; i++)
 	{
 		FmgrInfo   *procinfo;
@@ -96,7 +99,19 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		 * comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
-		arg = index_getattr(itup, i + 1, itupdesc, &null);
+
+		/*
+		 * Key arguments built when caller provides no tuple are
+		 * defensively represented as NULL values.  They should never be
+		 * used.
+		 */
+		if (i < tupnatts)
+			arg = index_getattr(itup, i + 1, itupdesc, &null);
+		else
+		{
+			arg = (Datum) 0;
+			null = true;
+		}
 		flags = (null ? SK_ISNULL : 0) | (indoption[i] << SK_BT_INDOPTION_SHIFT);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
 									   flags,
@@ -108,64 +123,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 									   arg);
 	}
 
-	return skey;
-}
-
-/*
- * _bt_mkscankey_nodata
- *		Build an insertion scan key that contains 3-way comparator routines
- *		appropriate to the key datatypes, but no comparison data.  The
- *		comparison data ultimately used must match the key datatypes.
- *
- *		The result cannot be used with _bt_compare(), unless comparison
- *		data is first stored into the key entries.  Currently this
- *		routine is only called by nbtsort.c and tuplesort.c, which have
- *		their own comparison routines.
- */
-ScanKey
-_bt_mkscankey_nodata(Relation rel)
-{
-	ScanKey		skey;
-	int			indnkeyatts;
-	int16	   *indoption;
-	int			i;
-
-	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
-	indoption = rel->rd_indoption;
-
-	skey = (ScanKey) palloc(indnkeyatts * sizeof(ScanKeyData));
-
-	for (i = 0; i < indnkeyatts; i++)
-	{
-		FmgrInfo   *procinfo;
-		int			flags;
-
-		/*
-		 * We can use the cached (default) support procs since no cross-type
-		 * comparison can be needed.
-		 */
-		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
-		flags = SK_ISNULL | (indoption[i] << SK_BT_INDOPTION_SHIFT);
-		ScanKeyEntryInitializeWithInfo(&skey[i],
-									   flags,
-									   (AttrNumber) (i + 1),
-									   InvalidStrategy,
-									   InvalidOid,
-									   rel->rd_indcollation[i],
-									   procinfo,
-									   (Datum) 0);
-	}
-
-	return skey;
-}
-
-/*
- * free a scan key made by either _bt_mkscankey or _bt_mkscankey_nodata.
- */
-void
-_bt_freeskey(ScanKey skey)
-{
-	pfree(skey);
+	return key;
 }
 
 /*

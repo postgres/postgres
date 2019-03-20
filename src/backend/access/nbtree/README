@@ -598,19 +598,22 @@ scankey point to comparison functions that return boolean, such as int4lt.
 There might be more than one scankey entry for a given index column, or
 none at all.  (We require the keys to appear in index column order, but
 the order of multiple keys for a given column is unspecified.)  An
-insertion scankey uses the same array-of-ScanKey data structure, but the
-sk_func pointers point to btree comparison support functions (ie, 3-way
-comparators that return int4 values interpreted as <0, =0, >0).  In an
-insertion scankey there is exactly one entry per index column.  Insertion
-scankeys are built within the btree code (eg, by _bt_mkscankey()) and are
-used to locate the starting point of a scan, as well as for locating the
-place to insert a new index tuple.  (Note: in the case of an insertion
-scankey built from a search scankey, there might be fewer keys than
-index columns, indicating that we have no constraints for the remaining
-index columns.)  After we have located the starting point of a scan, the
-original search scankey is consulted as each index entry is sequentially
-scanned to decide whether to return the entry and whether the scan can
-stop (see _bt_checkkeys()).
+insertion scankey ("BTScanInsert" data structure) uses a similar
+array-of-ScanKey data structure, but the sk_func pointers point to btree
+comparison support functions (ie, 3-way comparators that return int4 values
+interpreted as <0, =0, >0).  In an insertion scankey there is at most one
+entry per index column.  There is also other data about the rules used to
+locate where to begin the scan, such as whether or not the scan is a
+"nextkey" scan.  Insertion scankeys are built within the btree code (eg, by
+_bt_mkscankey()) and are used to locate the starting point of a scan, as
+well as for locating the place to insert a new index tuple.  (Note: in the
+case of an insertion scankey built from a search scankey or built from a
+truncated pivot tuple, there might be fewer keys than index columns,
+indicating that we have no constraints for the remaining index columns.)
+After we have located the starting point of a scan, the original search
+scankey is consulted as each index entry is sequentially scanned to decide
+whether to return the entry and whether the scan can stop (see
+_bt_checkkeys()).
 
 We use term "pivot" index tuples to distinguish tuples which don't point
 to heap tuples, but rather used for tree navigation.  Pivot tuples includes
