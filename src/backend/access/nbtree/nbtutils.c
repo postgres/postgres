@@ -22,6 +22,7 @@
 #include "access/relscan.h"
 #include "miscadmin.h"
 #include "utils/array.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -2287,6 +2288,60 @@ _bt_keep_natts(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 											scankey->sk_collation,
 											datum1,
 											datum2)) != 0)
+			break;
+
+		keepnatts++;
+	}
+
+	return keepnatts;
+}
+
+/*
+ * _bt_keep_natts_fast - fast bitwise variant of _bt_keep_natts.
+ *
+ * This is exported so that a candidate split point can have its effect on
+ * suffix truncation inexpensively evaluated ahead of time when finding a
+ * split location.  A naive bitwise approach to datum comparisons is used to
+ * save cycles.
+ *
+ * The approach taken here usually provides the same answer as _bt_keep_natts
+ * will (for the same pair of tuples from a heapkeyspace index), since the
+ * majority of btree opclasses can never indicate that two datums are equal
+ * unless they're bitwise equal (once detoasted).  Similarly, result may
+ * differ from the _bt_keep_natts result when either tuple has TOASTed datums,
+ * though this is barely possible in practice.
+ *
+ * These issues must be acceptable to callers, typically because they're only
+ * concerned about making suffix truncation as effective as possible without
+ * leaving excessive amounts of free space on either side of page split.
+ * Callers can rely on the fact that attributes considered equal here are
+ * definitely also equal according to _bt_keep_natts.
+ */
+int
+_bt_keep_natts_fast(Relation rel, IndexTuple lastleft, IndexTuple firstright)
+{
+	TupleDesc	itupdesc = RelationGetDescr(rel);
+	int			keysz = IndexRelationGetNumberOfKeyAttributes(rel);
+	int			keepnatts;
+
+	keepnatts = 1;
+	for (int attnum = 1; attnum <= keysz; attnum++)
+	{
+		Datum		datum1,
+					datum2;
+		bool		isNull1,
+					isNull2;
+		Form_pg_attribute att;
+
+		datum1 = index_getattr(lastleft, attnum, itupdesc, &isNull1);
+		datum2 = index_getattr(firstright, attnum, itupdesc, &isNull2);
+		att = TupleDescAttr(itupdesc, attnum - 1);
+
+		if (isNull1 != isNull2)
+			break;
+
+		if (!isNull1 &&
+			!datumIsEqual(datum1, datum2, att->attbyval, att->attlen))
 			break;
 
 		keepnatts++;

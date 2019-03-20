@@ -160,11 +160,15 @@ typedef struct BTMetaPageData
  * For pages above the leaf level, we use a fixed 70% fillfactor.
  * The fillfactor is applied during index build and when splitting
  * a rightmost page; when splitting non-rightmost pages we try to
- * divide the data equally.
+ * divide the data equally.  When splitting a page that's entirely
+ * filled with a single value (duplicates), the effective leaf-page
+ * fillfactor is 96%, regardless of whether the page is a rightmost
+ * page.
  */
 #define BTREE_MIN_FILLFACTOR		10
 #define BTREE_DEFAULT_FILLFACTOR	90
 #define BTREE_NONLEAF_FILLFACTOR	70
+#define BTREE_SINGLEVAL_FILLFACTOR	96
 
 /*
  *	In general, the btree code tries to localize its knowledge about
@@ -712,6 +716,13 @@ extern Buffer _bt_getstackbuf(Relation rel, BTStack stack);
 extern void _bt_finish_split(Relation rel, Buffer bbuf, BTStack stack);
 
 /*
+ * prototypes for functions in nbtsplitloc.c
+ */
+extern OffsetNumber _bt_findsplitloc(Relation rel, Page page,
+				 OffsetNumber newitemoff, Size newitemsz, IndexTuple newitem,
+				 bool *newitemonleft);
+
+/*
  * prototypes for functions in nbtpage.c
  */
 extern void _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level);
@@ -777,6 +788,8 @@ extern bool btproperty(Oid index_oid, int attno,
 		   bool *res, bool *isnull);
 extern IndexTuple _bt_truncate(Relation rel, IndexTuple lastleft,
 			 IndexTuple firstright, BTScanInsert itup_key);
+extern int _bt_keep_natts_fast(Relation rel, IndexTuple lastleft,
+					IndexTuple firstright);
 extern bool _bt_check_natts(Relation rel, bool heapkeyspace, Page page,
 				OffsetNumber offnum);
 extern void _bt_check_third_page(Relation rel, Relation heap,

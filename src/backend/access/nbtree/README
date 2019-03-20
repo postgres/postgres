@@ -143,9 +143,9 @@ Lehman and Yao assume fixed-size keys, but we must deal with
 variable-size keys.  Therefore there is not a fixed maximum number of
 keys per page; we just stuff in as many as will fit.  When we split a
 page, we try to equalize the number of bytes, not items, assigned to
-each of the resulting pages.  Note we must include the incoming item in
-this calculation, otherwise it is possible to find that the incoming
-item doesn't fit on the split page where it needs to go!
+pages (though suffix truncation is also considered).  Note we must include
+the incoming item in this calculation, otherwise it is possible to find
+that the incoming item doesn't fit on the split page where it needs to go!
 
 The Deletion Algorithm
 ----------------------
@@ -648,6 +648,47 @@ infrastructure that manufactures a smaller attribute value in the case of
 variable-length types, such as text.  An opclass support function could
 manufacture the shortest possible key value that still correctly separates
 each half of a leaf page split.
+
+There is sophisticated criteria for choosing a leaf page split point.  The
+general idea is to make suffix truncation effective without unduly
+influencing the balance of space for each half of the page split.  The
+choice of leaf split point can be thought of as a choice among points
+*between* items on the page to be split, at least if you pretend that the
+incoming tuple was placed on the page already (you have to pretend because
+there won't actually be enough space for it on the page).  Choosing the
+split point between two index tuples where the first non-equal attribute
+appears as early as possible results in truncating away as many suffix
+attributes as possible.  Evenly balancing space among each half of the
+split is usually the first concern, but even small adjustments in the
+precise split point can allow truncation to be far more effective.
+
+Suffix truncation is primarily valuable because it makes pivot tuples
+smaller, which delays splits of internal pages, but that isn't the only
+reason why it's effective.  Even truncation that doesn't make pivot tuples
+smaller due to alignment still prevents pivot tuples from being more
+restrictive than truly necessary in how they describe which values belong
+on which pages.
+
+While it's not possible to correctly perform suffix truncation during
+internal page splits, it's still useful to be discriminating when splitting
+an internal page.  The split point that implies a downlink be inserted in
+the parent that's the smallest one available within an acceptable range of
+the fillfactor-wise optimal split point is chosen.  This idea also comes
+from the Prefix B-Tree paper.  This process has much in common with what
+happens at the leaf level to make suffix truncation effective.  The overall
+effect is that suffix truncation tends to produce smaller, more
+discriminating pivot tuples, especially early in the lifetime of the index,
+while biasing internal page splits makes the earlier, smaller pivot tuples
+end up in the root page, delaying root page splits.
+
+Logical duplicates are given special consideration.  The logic for
+selecting a split point goes to great lengths to avoid having duplicates
+span more than one page, and almost always manages to pick a split point
+between two user-key-distinct tuples, accepting a completely lopsided split
+if it must.  When a page that's already full of duplicates must be split,
+the fallback strategy assumes that duplicates are mostly inserted in
+ascending heap TID order.  The page is split in a way that leaves the left
+half of the page mostly full, and the right half of the page mostly empty.
 
 Notes About Data Representation
 -------------------------------
