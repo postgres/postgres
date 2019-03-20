@@ -78,7 +78,8 @@ INSERT INTO bttest_multi SELECT i, i%2  FROM generate_series(1, 100000) as i;
 SELECT bt_index_parent_check('bttest_multi_idx', true);
 
 --
--- Test for multilevel page deletion/downlink present checks
+-- Test for multilevel page deletion/downlink present checks, and rootdescend
+-- checks
 --
 INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,80000) i;
 ALTER TABLE delete_test_table ADD PRIMARY KEY (a,b,c,d);
@@ -89,7 +90,7 @@ VACUUM delete_test_table;
 -- root"
 DELETE FROM delete_test_table WHERE a < 79990;
 VACUUM delete_test_table;
-SELECT bt_index_parent_check('delete_test_table_pkey', true);
+SELECT bt_index_parent_check('delete_test_table_pkey', true, true);
 
 --
 -- BUG #15597: must not assume consistent input toasting state when forming
