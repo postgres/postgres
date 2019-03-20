@@ -2611,6 +2611,23 @@ record_object_address_dependencies(const ObjectAddress *depender,
 }
 
 /*
+ * Sort the items in an ObjectAddresses array.
+ *
+ * The major sort key is OID-descending, so that newer objects will be listed
+ * first in most cases.  This is primarily useful for ensuring stable outputs
+ * from regression tests; it's not recommended if the order of the objects is
+ * determined by user input, such as the order of targets in a DROP command.
+ */
+void
+sort_object_addresses(ObjectAddresses *addrs)
+{
+	if (addrs->numrefs > 1)
+		qsort((void *) addrs->refs, addrs->numrefs,
+			  sizeof(ObjectAddress),
+			  object_address_comparator);
+}
+
+/*
  * Clean up when done with an ObjectAddresses array.
  */
 void

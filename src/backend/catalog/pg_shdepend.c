@@ -1266,6 +1266,14 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 		systable_endscan(scan);
 	}
 
+	/*
+	 * For stability of deletion-report ordering, sort the objects into
+	 * approximate reverse creation order before deletion.  (This might also
+	 * make the deletion go a bit faster, since there's less chance of having
+	 * to rearrange the objects due to dependencies.)
+	 */
+	sort_object_addresses(deleteobjs);
+
 	/* the dependency mechanism does the actual work */
 	performMultipleDeletions(deleteobjs, behavior, 0);
 
