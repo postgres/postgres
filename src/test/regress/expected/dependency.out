@@ -128,9 +128,9 @@ FROM pg_type JOIN pg_class c ON typrelid = c.oid WHERE typname = 'deptest_t';
 -- doesn't work: grant still exists
 DROP USER regress_dep_user1;
 ERROR:  role "regress_dep_user1" cannot be dropped because some objects depend on it
-DETAIL:  owner of default privileges on new relations belonging to role regress_dep_user1 in schema deptest
+DETAIL:  privileges for table deptest1
 privileges for database regression
-privileges for table deptest1
+owner of default privileges on new relations belonging to role regress_dep_user1 in schema deptest
 DROP OWNED BY regress_dep_user1;
 DROP USER regress_dep_user1;
 \set VERBOSITY terse

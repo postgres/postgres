@@ -49,6 +49,8 @@ static void _bt_mark_scankey_required(ScanKey skey);
 static bool _bt_check_rowcompare(ScanKey skey,
 					 IndexTuple tuple, TupleDesc tupdesc,
 					 ScanDirection dir, bool *continuescan);
+static int _bt_keep_natts(Relation rel, IndexTuple lastleft,
+			   IndexTuple firstright, BTScanInsert itup_key);
 
 
 /*
@@ -56,9 +58,26 @@ static bool _bt_check_rowcompare(ScanKey skey,
  *		Build an insertion scan key that contains comparison data from itup
  *		as well as comparator routines appropriate to the key datatypes.
  *
- *		Result is intended for use with _bt_compare().  Callers that don't
- *		need to fill out the insertion scankey arguments (e.g. they use an
- *		ad-hoc comparison routine) can pass a NULL index tuple.
+ *		When itup is a non-pivot tuple, the returned insertion scan key is
+ *		suitable for finding a place for it to go on the leaf level.  Pivot
+ *		tuples can be used to re-find leaf page with matching high key, but
+ *		then caller needs to set scan key's pivotsearch field to true.  This
+ *		allows caller to search for a leaf page with a matching high key,
+ *		which is usually to the left of the first leaf page a non-pivot match
+ *		might appear on.
+ *
+ *		The result is intended for use with _bt_compare() and _bt_truncate().
+ *		Callers that don't need to fill out the insertion scankey arguments
+ *		(e.g. they use an ad-hoc comparison routine, or only need a scankey
+ *		for _bt_truncate()) can pass a NULL index tuple.  The scankey will
+ *		be initialized as if an "all truncated" pivot tuple was passed
+ *		instead.
+ *
+ *		Note that we may occasionally have to share lock the metapage to
+ *		determine whether or not the keys in the index are expected to be
+ *		unique (i.e. if this is a "heapkeyspace" index).  We assume a
+ *		heapkeyspace index when caller passes a NULL tuple, allowing index
+ *		build callers to avoid accessing the non-existent metapage.
  */
 BTScanInsert
 _bt_mkscankey(Relation rel, IndexTuple itup)
@@ -79,13 +98,18 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	Assert(tupnatts <= IndexRelationGetNumberOfAttributes(rel));
 
 	/*
-	 * We'll execute search using scan key constructed on key columns. Non-key
-	 * (INCLUDE index) columns are always omitted from scan keys.
+	 * We'll execute search using scan key constructed on key columns.
+	 * Truncated attributes and non-key attributes are omitted from the final
+	 * scan key.
 	 */
 	key = palloc(offsetof(BTScanInsertData, scankeys) +
 				 sizeof(ScanKeyData) * indnkeyatts);
+	key->heapkeyspace = itup == NULL || _bt_heapkeyspace(rel);
 	key->nextkey = false;
+	key->pivotsearch = false;
 	key->keysz = Min(indnkeyatts, tupnatts);
+	key->scantid = key->heapkeyspace && itup ?
+		BTreeTupleGetHeapTID(itup) : NULL;
 	skey = key->scankeys;
 	for (i = 0; i < indnkeyatts; i++)
 	{
@@ -101,9 +125,9 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 
 		/*
-		 * Key arguments built when caller provides no tuple are
-		 * defensively represented as NULL values.  They should never be
-		 * used.
+		 * Key arguments built from truncated attributes (or when caller
+		 * provides no tuple) are defensively represented as NULL values. They
+		 * should never be used.
 		 */
 		if (i < tupnatts)
 			arg = index_getattr(itup, i + 1, itupdesc, &null);
@@ -2041,38 +2065,234 @@ btproperty(Oid index_oid, int attno,
 }
 
 /*
- *	_bt_nonkey_truncate() -- create tuple without non-key suffix attributes.
+ *	_bt_truncate() -- create tuple without unneeded suffix attributes.
  *
- * Returns truncated index tuple allocated in caller's memory context, with key
- * attributes copied from caller's itup argument.  Currently, suffix truncation
- * is only performed to create pivot tuples in INCLUDE indexes, but some day it
- * could be generalized to remove suffix attributes after the first
- * distinguishing key attribute.
+ * Returns truncated pivot index tuple allocated in caller's memory context,
+ * with key attributes copied from caller's firstright argument.  If rel is
+ * an INCLUDE index, non-key attributes will definitely be truncated away,
+ * since they're not part of the key space.  More aggressive suffix
+ * truncation can take place when it's clear that the returned tuple does not
+ * need one or more suffix key attributes.  We only need to keep firstright
+ * attributes up to and including the first non-lastleft-equal attribute.
+ * Caller's insertion scankey is used to compare the tuples; the scankey's
+ * argument values are not considered here.
  *
- * Truncated tuple is guaranteed to be no larger than the original, which is
- * important for staying under the 1/3 of a page restriction on tuple size.
+ * Sometimes this routine will return a new pivot tuple that takes up more
+ * space than firstright, because a new heap TID attribute had to be added to
+ * distinguish lastleft from firstright.  This should only happen when the
+ * caller is in the process of splitting a leaf page that has many logical
+ * duplicates, where it's unavoidable.
  *
  * Note that returned tuple's t_tid offset will hold the number of attributes
  * present, so the original item pointer offset is not represented.  Caller
- * should only change truncated tuple's downlink.
+ * should only change truncated tuple's downlink.  Note also that truncated
+ * key attributes are treated as containing "minus infinity" values by
+ * _bt_compare().
+ *
+ * In the worst case (when a heap TID is appended) the size of the returned
+ * tuple is the size of the first right tuple plus an additional MAXALIGN()'d
+ * item pointer.  This guarantee is important, since callers need to stay
+ * under the 1/3 of a page restriction on tuple size.  If this routine is ever
+ * taught to truncate within an attribute/datum, it will need to avoid
+ * returning an enlarged tuple to caller when truncation + TOAST compression
+ * ends up enlarging the final datum.
  */
 IndexTuple
-_bt_nonkey_truncate(Relation rel, IndexTuple itup)
+_bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
+			 BTScanInsert itup_key)
 {
-	int			nkeyattrs = IndexRelationGetNumberOfKeyAttributes(rel);
-	IndexTuple	truncated;
+	TupleDesc	itupdesc = RelationGetDescr(rel);
+	int16		natts = IndexRelationGetNumberOfAttributes(rel);
+	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
+	int			keepnatts;
+	IndexTuple	pivot;
+	ItemPointer pivotheaptid;
+	Size		newsize;
 
 	/*
-	 * We should only ever truncate leaf index tuples, which must have both
-	 * key and non-key attributes.  It's never okay to truncate a second time.
+	 * We should only ever truncate leaf index tuples.  It's never okay to
+	 * truncate a second time.
 	 */
-	Assert(BTreeTupleGetNAtts(itup, rel) ==
-		   IndexRelationGetNumberOfAttributes(rel));
+	Assert(BTreeTupleGetNAtts(lastleft, rel) == natts);
+	Assert(BTreeTupleGetNAtts(firstright, rel) == natts);
 
-	truncated = index_truncate_tuple(RelationGetDescr(rel), itup, nkeyattrs);
-	BTreeTupleSetNAtts(truncated, nkeyattrs);
+	/* Determine how many attributes must be kept in truncated tuple */
+	keepnatts = _bt_keep_natts(rel, lastleft, firstright, itup_key);
 
-	return truncated;
+#ifdef DEBUG_NO_TRUNCATE
+	/* Force truncation to be ineffective for testing purposes */
+	keepnatts = nkeyatts + 1;
+#endif
+
+	if (keepnatts <= natts)
+	{
+		IndexTuple	tidpivot;
+
+		pivot = index_truncate_tuple(itupdesc, firstright, keepnatts);
+
+		/*
+		 * If there is a distinguishing key attribute within new pivot tuple,
+		 * there is no need to add an explicit heap TID attribute
+		 */
+		if (keepnatts <= nkeyatts)
+		{
+			BTreeTupleSetNAtts(pivot, keepnatts);
+			return pivot;
+		}
+
+		/*
+		 * Only truncation of non-key attributes was possible, since key
+		 * attributes are all equal.  It's necessary to add a heap TID
+		 * attribute to the new pivot tuple.
+		 */
+		Assert(natts != nkeyatts);
+		newsize = IndexTupleSize(pivot) + MAXALIGN(sizeof(ItemPointerData));
+		tidpivot = palloc0(newsize);
+		memcpy(tidpivot, pivot, IndexTupleSize(pivot));
+		/* cannot leak memory here */
+		pfree(pivot);
+		pivot = tidpivot;
+	}
+	else
+	{
+		/*
+		 * No truncation was possible, since key attributes are all equal.
+		 * It's necessary to add a heap TID attribute to the new pivot tuple.
+		 */
+		Assert(natts == nkeyatts);
+		newsize = IndexTupleSize(firstright) + MAXALIGN(sizeof(ItemPointerData));
+		pivot = palloc0(newsize);
+		memcpy(pivot, firstright, IndexTupleSize(firstright));
+	}
+
+	/*
+	 * We have to use heap TID as a unique-ifier in the new pivot tuple, since
+	 * no non-TID key attribute in the right item readily distinguishes the
+	 * right side of the split from the left side.  Use enlarged space that
+	 * holds a copy of first right tuple; place a heap TID value within the
+	 * extra space that remains at the end.
+	 *
+	 * nbtree conceptualizes this case as an inability to truncate away any
+	 * key attribute.  We must use an alternative representation of heap TID
+	 * within pivots because heap TID is only treated as an attribute within
+	 * nbtree (e.g., there is no pg_attribute entry).
+	 */
+	Assert(itup_key->heapkeyspace);
+	pivot->t_info &= ~INDEX_SIZE_MASK;
+	pivot->t_info |= newsize;
+
+	/*
+	 * Lehman & Yao use lastleft as the leaf high key in all cases, but don't
+	 * consider suffix truncation.  It seems like a good idea to follow that
+	 * example in cases where no truncation takes place -- use lastleft's heap
+	 * TID.  (This is also the closest value to negative infinity that's
+	 * legally usable.)
+	 */
+	pivotheaptid = (ItemPointer) ((char *) pivot + newsize -
+								  sizeof(ItemPointerData));
+	ItemPointerCopy(&lastleft->t_tid, pivotheaptid);
+
+	/*
+	 * Lehman and Yao require that the downlink to the right page, which is to
+	 * be inserted into the parent page in the second phase of a page split be
+	 * a strict lower bound on items on the right page, and a non-strict upper
+	 * bound for items on the left page.  Assert that heap TIDs follow these
+	 * invariants, since a heap TID value is apparently needed as a
+	 * tiebreaker.
+	 */
+#ifndef DEBUG_NO_TRUNCATE
+	Assert(ItemPointerCompare(&lastleft->t_tid, &firstright->t_tid) < 0);
+	Assert(ItemPointerCompare(pivotheaptid, &lastleft->t_tid) >= 0);
+	Assert(ItemPointerCompare(pivotheaptid, &firstright->t_tid) < 0);
+#else
+
+	/*
+	 * Those invariants aren't guaranteed to hold for lastleft + firstright
+	 * heap TID attribute values when they're considered here only because
+	 * DEBUG_NO_TRUNCATE is defined (a heap TID is probably not actually
+	 * needed as a tiebreaker).  DEBUG_NO_TRUNCATE must therefore use a heap
+	 * TID value that always works as a strict lower bound for items to the
+	 * right.  In particular, it must avoid using firstright's leading key
+	 * attribute values along with lastleft's heap TID value when lastleft's
+	 * TID happens to be greater than firstright's TID.
+	 */
+	ItemPointerCopy(&firstright->t_tid, pivotheaptid);
+
+	/*
+	 * Pivot heap TID should never be fully equal to firstright.  Note that
+	 * the pivot heap TID will still end up equal to lastleft's heap TID when
+	 * that's the only usable value.
+	 */
+	ItemPointerSetOffsetNumber(pivotheaptid,
+							   OffsetNumberPrev(ItemPointerGetOffsetNumber(pivotheaptid)));
+	Assert(ItemPointerCompare(pivotheaptid, &firstright->t_tid) < 0);
+#endif
+
+	BTreeTupleSetNAtts(pivot, nkeyatts);
+	BTreeTupleSetAltHeapTID(pivot);
+
+	return pivot;
+}
+
+/*
+ * _bt_keep_natts - how many key attributes to keep when truncating.
+ *
+ * Caller provides two tuples that enclose a split point.  Caller's insertion
+ * scankey is used to compare the tuples; the scankey's argument values are
+ * not considered here.
+ *
+ * This can return a number of attributes that is one greater than the
+ * number of key attributes for the index relation.  This indicates that the
+ * caller must use a heap TID as a unique-ifier in new pivot tuple.
+ */
+static int
+_bt_keep_natts(Relation rel, IndexTuple lastleft, IndexTuple firstright,
+			   BTScanInsert itup_key)
+{
+	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
+	TupleDesc	itupdesc = RelationGetDescr(rel);
+	int			keepnatts;
+	ScanKey		scankey;
+
+	/*
+	 * Be consistent about the representation of BTREE_VERSION 2/3 tuples
+	 * across Postgres versions; don't allow new pivot tuples to have
+	 * truncated key attributes there.  _bt_compare() treats truncated key
+	 * attributes as having the value minus infinity, which would break
+	 * searches within !heapkeyspace indexes.
+	 */
+	if (!itup_key->heapkeyspace)
+	{
+		Assert(nkeyatts != IndexRelationGetNumberOfAttributes(rel));
+		return nkeyatts;
+	}
+
+	scankey = itup_key->scankeys;
+	keepnatts = 1;
+	for (int attnum = 1; attnum <= nkeyatts; attnum++, scankey++)
+	{
+		Datum		datum1,
+					datum2;
+		bool		isNull1,
+					isNull2;
+
+		datum1 = index_getattr(lastleft, attnum, itupdesc, &isNull1);
+		datum2 = index_getattr(firstright, attnum, itupdesc, &isNull2);
+
+		if (isNull1 != isNull2)
+			break;
+
+		if (!isNull1 &&
+			DatumGetInt32(FunctionCall2Coll(&scankey->sk_func,
+											scankey->sk_collation,
+											datum1,
+											datum2)) != 0)
+			break;
+
+		keepnatts++;
+	}
+
+	return keepnatts;
 }
 
 /*
@@ -2086,15 +2306,17 @@ _bt_nonkey_truncate(Relation rel, IndexTuple itup)
  * preferred to calling here.  That's usually more convenient, and is always
  * more explicit.  Call here instead when offnum's tuple may be a negative
  * infinity tuple that uses the pre-v11 on-disk representation, or when a low
- * context check is appropriate.
+ * context check is appropriate.  This routine is as strict as possible about
+ * what is expected on each version of btree.
  */
 bool
-_bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
+_bt_check_natts(Relation rel, bool heapkeyspace, Page page, OffsetNumber offnum)
 {
 	int16		natts = IndexRelationGetNumberOfAttributes(rel);
 	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	IndexTuple	itup;
+	int			tupnatts;
 
 	/*
 	 * We cannot reliably test a deleted or half-deleted page, since they have
@@ -2114,16 +2336,26 @@ _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 					 "BT_N_KEYS_OFFSET_MASK can't fit INDEX_MAX_KEYS");
 
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+	tupnatts = BTreeTupleGetNAtts(itup, rel);
 
 	if (P_ISLEAF(opaque))
 	{
 		if (offnum >= P_FIRSTDATAKEY(opaque))
 		{
 			/*
-			 * Leaf tuples that are not the page high key (non-pivot tuples)
-			 * should never be truncated
+			 * Non-pivot tuples currently never use alternative heap TID
+			 * representation -- even those within heapkeyspace indexes
 			 */
-			return BTreeTupleGetNAtts(itup, rel) == natts;
+			if ((itup->t_info & INDEX_ALT_TID_MASK) != 0)
+				return false;
+
+			/*
+			 * Leaf tuples that are not the page high key (non-pivot tuples)
+			 * should never be truncated.  (Note that tupnatts must have been
+			 * inferred, rather than coming from an explicit on-disk
+			 * representation.)
+			 */
+			return tupnatts == natts;
 		}
 		else
 		{
@@ -2133,8 +2365,15 @@ _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 			 */
 			Assert(!P_RIGHTMOST(opaque));
 
-			/* Page high key tuple contains only key attributes */
-			return BTreeTupleGetNAtts(itup, rel) == nkeyatts;
+			/*
+			 * !heapkeyspace high key tuple contains only key attributes. Note
+			 * that tupnatts will only have been explicitly represented in
+			 * !heapkeyspace indexes that happen to have non-key attributes.
+			 */
+			if (!heapkeyspace)
+				return tupnatts == nkeyatts;
+
+			/* Use generic heapkeyspace pivot tuple handling */
 		}
 	}
 	else						/* !P_ISLEAF(opaque) */
@@ -2146,7 +2385,11 @@ _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 			 * its high key) is its negative infinity tuple.  Negative
 			 * infinity tuples are always truncated to zero attributes.  They
 			 * are a particular kind of pivot tuple.
-			 *
+			 */
+			if (heapkeyspace)
+				return tupnatts == 0;
+
+			/*
 			 * The number of attributes won't be explicitly represented if the
 			 * negative infinity tuple was generated during a page split that
 			 * occurred with a version of Postgres before v11.  There must be
@@ -2157,18 +2400,109 @@ _bt_check_natts(Relation rel, Page page, OffsetNumber offnum)
 			 * Prior to v11, downlinks always had P_HIKEY as their offset. Use
 			 * that to decide if the tuple is a pre-v11 tuple.
 			 */
-			return BTreeTupleGetNAtts(itup, rel) == 0 ||
+			return tupnatts == 0 ||
 				((itup->t_info & INDEX_ALT_TID_MASK) == 0 &&
 				 ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
 		}
 		else
 		{
 			/*
-			 * Tuple contains only key attributes despite on is it page high
-			 * key or not
+			 * !heapkeyspace downlink tuple with separator key contains only
+			 * key attributes.  Note that tupnatts will only have been
+			 * explicitly represented in !heapkeyspace indexes that happen to
+			 * have non-key attributes.
 			 */
-			return BTreeTupleGetNAtts(itup, rel) == nkeyatts;
+			if (!heapkeyspace)
+				return tupnatts == nkeyatts;
+
+			/* Use generic heapkeyspace pivot tuple handling */
 		}
 
 	}
+
+	/* Handle heapkeyspace pivot tuples (excluding minus infinity items) */
+	Assert(heapkeyspace);
+
+	/*
+	 * Explicit representation of the number of attributes is mandatory with
+	 * heapkeyspace index pivot tuples, regardless of whether or not there are
+	 * non-key attributes.
+	 */
+	if ((itup->t_info & INDEX_ALT_TID_MASK) == 0)
+		return false;
+
+	/*
+	 * Heap TID is a tiebreaker key attribute, so it cannot be untruncated
+	 * when any other key attribute is truncated
+	 */
+	if (BTreeTupleGetHeapTID(itup) != NULL && tupnatts != nkeyatts)
+		return false;
+
+	/*
+	 * Pivot tuple must have at least one untruncated key attribute (minus
+	 * infinity pivot tuples are the only exception).  Pivot tuples can never
+	 * represent that there is a value present for a key attribute that
+	 * exceeds pg_index.indnkeyatts for the index.
+	 */
+	return tupnatts > 0 && tupnatts <= nkeyatts;
+}
+
+/*
+ *
+ *  _bt_check_third_page() -- check whether tuple fits on a btree page at all.
+ *
+ * We actually need to be able to fit three items on every page, so restrict
+ * any one item to 1/3 the per-page available space.  Note that itemsz should
+ * not include the ItemId overhead.
+ *
+ * It might be useful to apply TOAST methods rather than throw an error here.
+ * Using out of line storage would break assumptions made by suffix truncation
+ * and by contrib/amcheck, though.
+ */
+void
+_bt_check_third_page(Relation rel, Relation heap, bool needheaptidspace,
+					 Page page, IndexTuple newtup)
+{
+	Size		itemsz;
+	BTPageOpaque opaque;
+
+	itemsz = MAXALIGN(IndexTupleSize(newtup));
+
+	/* Double check item size against limit */
+	if (itemsz <= BTMaxItemSize(page))
+		return;
+
+	/*
+	 * Tuple is probably too large to fit on page, but it's possible that the
+	 * index uses version 2 or version 3, or that page is an internal page, in
+	 * which case a slightly higher limit applies.
+	 */
+	if (!needheaptidspace && itemsz <= BTMaxItemSizeNoHeapTid(page))
+		return;
+
+	/*
+	 * Internal page insertions cannot fail here, because that would mean that
+	 * an earlier leaf level insertion that should have failed didn't
+	 */
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	if (!P_ISLEAF(opaque))
+		elog(ERROR, "cannot insert oversized tuple of size %zu on internal page of index \"%s\"",
+			 itemsz, RelationGetRelationName(rel));
+
+	ereport(ERROR,
+			(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			 errmsg("index row size %zu exceeds btree version %u maximum %zu for index \"%s\"",
+					itemsz,
+					needheaptidspace ? BTREE_VERSION : BTREE_NOVAC_VERSION,
+					needheaptidspace ? BTMaxItemSize(page) :
+					BTMaxItemSizeNoHeapTid(page),
+					RelationGetRelationName(rel)),
+			 errdetail("Index row references tuple (%u,%u) in relation \"%s\".",
+					   ItemPointerGetBlockNumber(&newtup->t_tid),
+					   ItemPointerGetOffsetNumber(&newtup->t_tid),
+					   RelationGetRelationName(heap)),
+			 errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
+					 "Consider a function index of an MD5 hash of the value, "
+					 "or use full text indexing."),
+			 errtableconstraint(heap, RelationGetRelationName(rel))));
 }

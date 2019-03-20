@@ -28,8 +28,7 @@
 #define XLOG_BTREE_INSERT_META	0x20	/* same, plus update metapage */
 #define XLOG_BTREE_SPLIT_L		0x30	/* add index tuple with split */
 #define XLOG_BTREE_SPLIT_R		0x40	/* as above, new item on right */
-#define XLOG_BTREE_SPLIT_L_HIGHKEY 0x50 /* as above, include truncated highkey */
-#define XLOG_BTREE_SPLIT_R_HIGHKEY 0x60 /* as above, include truncated highkey */
+/* 0x50 and 0x60 are unused */
 #define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuples for a page */
 #define XLOG_BTREE_UNLINK_PAGE	0x80	/* delete a half-dead page */
 #define XLOG_BTREE_UNLINK_PAGE_META 0x90	/* same, and update metapage */
@@ -47,6 +46,7 @@
  */
 typedef struct xl_btree_metadata
 {
+	uint32		version;
 	BlockNumber root;
 	uint32		level;
 	BlockNumber fastroot;
@@ -80,27 +80,30 @@ typedef struct xl_btree_insert
  * whole page image.  The left page, however, is handled in the normal
  * incremental-update fashion.
  *
- * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
- * The _L and _R variants indicate whether the inserted tuple went into the
- * left or right split page (and thus, whether newitemoff and the new item
- * are stored or not).  The _HIGHKEY variants indicate that we've logged
- * explicitly left page high key value, otherwise redo should use right page
- * leftmost key as a left page high key.  _HIGHKEY is specified for internal
- * pages where right page leftmost key is suppressed, and for leaf pages
- * of covering indexes where high key have non-key attributes truncated.
+ * Note: XLOG_BTREE_SPLIT_L and XLOG_BTREE_SPLIT_R share this data record.
+ * There are two variants to indicate whether the inserted tuple went into the
+ * left or right split page (and thus, whether newitemoff and the new item are
+ * stored or not).  We always log the left page high key because suffix
+ * truncation can generate a new leaf high key using user-defined code.  This
+ * is also necessary on internal pages, since the first right item that the
+ * left page's high key was based on will have been truncated to zero
+ * attributes in the right page (the original is unavailable from the right
+ * page).
  *
  * Backup Blk 0: original page / new left page
  *
  * The left page's data portion contains the new item, if it's the _L variant.
- * (In the _R variants, the new item is one of the right page's tuples.)
- * If level > 0, an IndexTuple representing the HIKEY of the left page
- * follows.  We don't need this on leaf pages, because it's the same as the
- * leftmost key in the new right page.
+ * An IndexTuple representing the high key of the left page must follow with
+ * either variant.
  *
  * Backup Blk 1: new right page
  *
- * The right page's data portion contains the right page's tuples in the
- * form used by _bt_restore_page.
+ * The right page's data portion contains the right page's tuples in the form
+ * used by _bt_restore_page.  This includes the new item, if it's the _R
+ * variant.  The right page's tuples also include the right page's high key
+ * with either variant (moved from the left/original page during the split),
+ * unless the split happened to be of the rightmost page on its level, where
+ * there is no high key for new right page.
  *
  * Backup Blk 2: next block (orig page's rightlink), if any
  * Backup Blk 3: child's left sibling, if non-leaf split

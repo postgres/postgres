@@ -112,18 +112,45 @@ typedef struct BTMetaPageData
 #define BTPageGetMeta(p) \
 	((BTMetaPageData *) PageGetContents(p))
 
+/*
+ * The current Btree version is 4.  That's what you'll get when you create
+ * a new index.
+ *
+ * Btree version 3 was used in PostgreSQL v11.  It is mostly the same as
+ * version 4, but heap TIDs were not part of the keyspace.  Index tuples
+ * with duplicate keys could be stored in any order.  We continue to
+ * support reading and writing Btree versions 2 and 3, so that they don't
+ * need to be immediately re-indexed at pg_upgrade.  In order to get the
+ * new heapkeyspace semantics, however, a REINDEX is needed.
+ *
+ * Btree version 2 is mostly the same as version 3.  There are two new
+ * fields in the metapage that were introduced in version 3.  A version 2
+ * metapage will be automatically upgraded to version 3 on the first
+ * insert to it.  INCLUDE indexes cannot use version 2.
+ */
 #define BTREE_METAPAGE	0		/* first page is meta */
-#define BTREE_MAGIC		0x053162	/* magic number of btree pages */
-#define BTREE_VERSION	3		/* current version number */
+#define BTREE_MAGIC		0x053162	/* magic number in metapage */
+#define BTREE_VERSION	4		/* current version number */
 #define BTREE_MIN_VERSION	2	/* minimal supported version number */
+#define BTREE_NOVAC_VERSION	3	/* minimal version with all meta fields */
 
 /*
  * Maximum size of a btree index entry, including its tuple header.
  *
  * We actually need to be able to fit three items on every page,
  * so restrict any one item to 1/3 the per-page available space.
+ *
+ * There are rare cases where _bt_truncate() will need to enlarge
+ * a heap index tuple to make space for a tiebreaker heap TID
+ * attribute, which we account for here.
  */
 #define BTMaxItemSize(page) \
+	MAXALIGN_DOWN((PageGetPageSize(page) - \
+				   MAXALIGN(SizeOfPageHeaderData + \
+							3*sizeof(ItemIdData)  + \
+							3*sizeof(ItemPointerData)) - \
+				   MAXALIGN(sizeof(BTPageOpaqueData))) / 3)
+#define BTMaxItemSizeNoHeapTid(page) \
 	MAXALIGN_DOWN((PageGetPageSize(page) - \
 				   MAXALIGN(SizeOfPageHeaderData + 3*sizeof(ItemIdData)) - \
 				   MAXALIGN(sizeof(BTPageOpaqueData))) / 3)
@@ -166,12 +193,13 @@ typedef struct BTMetaPageData
 
 /*
  *	Lehman and Yao's algorithm requires a ``high key'' on every non-rightmost
- *	page.  The high key is not a data key, but gives info about what range of
- *	keys is supposed to be on this page.  The high key on a page is required
- *	to be greater than or equal to any data key that appears on the page.
- *	If we find ourselves trying to insert a key > high key, we know we need
- *	to move right (this should only happen if the page was split since we
- *	examined the parent page).
+ *	page.  The high key is not a tuple that is used to visit the heap.  It is
+ *	a pivot tuple (see "Notes on B-Tree tuple format" below for definition).
+ *	The high key on a page is required to be greater than or equal to any
+ *	other key that appears on the page.  If we find ourselves trying to
+ *	insert a key that is strictly > high key, we know we need to move right
+ *	(this should only happen if the page was split since we examined the
+ *	parent page).
  *
  *	Our insertion algorithm guarantees that we can use the initial least key
  *	on our right sibling as the high key.  Once a page is created, its high
@@ -187,38 +215,84 @@ typedef struct BTMetaPageData
 #define P_FIRSTDATAKEY(opaque)	(P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
 
 /*
+ *
+ * Notes on B-Tree tuple format, and key and non-key attributes:
+ *
  * INCLUDE B-Tree indexes have non-key attributes.  These are extra
  * attributes that may be returned by index-only scans, but do not influence
  * the order of items in the index (formally, non-key attributes are not
  * considered to be part of the key space).  Non-key attributes are only
  * present in leaf index tuples whose item pointers actually point to heap
- * tuples.  All other types of index tuples (collectively, "pivot" tuples)
- * only have key attributes, since pivot tuples only ever need to represent
- * how the key space is separated.  In general, any B-Tree index that has
- * more than one level (i.e. any index that does not just consist of a
- * metapage and a single leaf root page) must have some number of pivot
- * tuples, since pivot tuples are used for traversing the tree.
+ * tuples (non-pivot tuples).  _bt_check_natts() enforces the rules
+ * described here.
  *
- * We store the number of attributes present inside pivot tuples by abusing
- * their item pointer offset field, since pivot tuples never need to store a
- * real offset (downlinks only need to store a block number).  The offset
- * field only stores the number of attributes when the INDEX_ALT_TID_MASK
- * bit is set (we never assume that pivot tuples must explicitly store the
- * number of attributes, and currently do not bother storing the number of
- * attributes unless indnkeyatts actually differs from indnatts).
- * INDEX_ALT_TID_MASK is only used for pivot tuples at present, though it's
- * possible that it will be used within non-pivot tuples in the future.  Do
- * not assume that a tuple with INDEX_ALT_TID_MASK set must be a pivot
- * tuple.
+ * Non-pivot tuple format:
  *
- * The 12 least significant offset bits are used to represent the number of
- * attributes in INDEX_ALT_TID_MASK tuples, leaving 4 bits that are reserved
- * for future use (BT_RESERVED_OFFSET_MASK bits). BT_N_KEYS_OFFSET_MASK should
- * be large enough to store any number <= INDEX_MAX_KEYS.
+ *  t_tid | t_info | key values | INCLUDE columns, if any
+ *
+ * t_tid points to the heap TID, which is a tiebreaker key column as of
+ * BTREE_VERSION 4.  Currently, the INDEX_ALT_TID_MASK status bit is never
+ * set for non-pivot tuples.
+ *
+ * All other types of index tuples ("pivot" tuples) only have key columns,
+ * since pivot tuples only exist to represent how the key space is
+ * separated.  In general, any B-Tree index that has more than one level
+ * (i.e. any index that does not just consist of a metapage and a single
+ * leaf root page) must have some number of pivot tuples, since pivot
+ * tuples are used for traversing the tree.  Suffix truncation can omit
+ * trailing key columns when a new pivot is formed, which makes minus
+ * infinity their logical value.  Since BTREE_VERSION 4 indexes treat heap
+ * TID as a trailing key column that ensures that all index tuples are
+ * physically unique, it is necessary to represent heap TID as a trailing
+ * key column in pivot tuples, though very often this can be truncated
+ * away, just like any other key column. (Actually, the heap TID is
+ * omitted rather than truncated, since its representation is different to
+ * the non-pivot representation.)
+ *
+ * Pivot tuple format:
+ *
+ *  t_tid | t_info | key values | [heap TID]
+ *
+ * We store the number of columns present inside pivot tuples by abusing
+ * their t_tid offset field, since pivot tuples never need to store a real
+ * offset (downlinks only need to store a block number in t_tid).  The
+ * offset field only stores the number of columns/attributes when the
+ * INDEX_ALT_TID_MASK bit is set, which doesn't count the trailing heap
+ * TID column sometimes stored in pivot tuples -- that's represented by
+ * the presence of BT_HEAP_TID_ATTR.  The INDEX_ALT_TID_MASK bit in t_info
+ * is always set on BTREE_VERSION 4.  BT_HEAP_TID_ATTR can only be set on
+ * BTREE_VERSION 4.
+ *
+ * In version 3 indexes, the INDEX_ALT_TID_MASK flag might not be set in
+ * pivot tuples.  In that case, the number of key columns is implicitly
+ * the same as the number of key columns in the index.  It is not usually
+ * set on version 2 indexes, which predate the introduction of INCLUDE
+ * indexes.  (Only explicitly truncated pivot tuples explicitly represent
+ * the number of key columns on versions 2 and 3, whereas all pivot tuples
+ * are formed using truncation on version 4.  A version 2 index will have
+ * it set for an internal page negative infinity item iff internal page
+ * split occurred after upgrade to Postgres 11+.)
+ *
+ * The 12 least significant offset bits from t_tid are used to represent
+ * the number of columns in INDEX_ALT_TID_MASK tuples, leaving 4 status
+ * bits (BT_RESERVED_OFFSET_MASK bits), 3 of which that are reserved for
+ * future use.  BT_N_KEYS_OFFSET_MASK should be large enough to store any
+ * number of columns/attributes <= INDEX_MAX_KEYS.
+ *
+ * Note well: The macros that deal with the number of attributes in tuples
+ * assume that a tuple with INDEX_ALT_TID_MASK set must be a pivot tuple,
+ * and that a tuple without INDEX_ALT_TID_MASK set must be a non-pivot
+ * tuple (or must have the same number of attributes as the index has
+ * generally in the case of !heapkeyspace indexes).  They will need to be
+ * updated if non-pivot tuples ever get taught to use INDEX_ALT_TID_MASK
+ * for something else.
  */
 #define INDEX_ALT_TID_MASK			INDEX_AM_RESERVED_BIT
+
+/* Item pointer offset bits */
 #define BT_RESERVED_OFFSET_MASK		0xF000
 #define BT_N_KEYS_OFFSET_MASK		0x0FFF
+#define BT_HEAP_TID_ATTR			0x1000
 
 /* Get/set downlink block number */
 #define BTreeInnerTupleGetDownLink(itup) \
@@ -241,14 +315,16 @@ typedef struct BTMetaPageData
 	} while(0)
 
 /*
- * Get/set number of attributes within B-tree index tuple. Asserts should be
- * removed when BT_RESERVED_OFFSET_MASK bits will be used.
+ * Get/set number of attributes within B-tree index tuple.
+ *
+ * Note that this does not include an implicit tiebreaker heap-TID
+ * attribute, if any.  Note also that the number of key attributes must be
+ * explicitly represented in all heapkeyspace pivot tuples.
  */
 #define BTreeTupleGetNAtts(itup, rel)	\
 	( \
 		(itup)->t_info & INDEX_ALT_TID_MASK ? \
 		( \
-			AssertMacro((ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_RESERVED_OFFSET_MASK) == 0), \
 			ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_N_KEYS_OFFSET_MASK \
 		) \
 		: \
@@ -257,8 +333,32 @@ typedef struct BTMetaPageData
 #define BTreeTupleSetNAtts(itup, n) \
 	do { \
 		(itup)->t_info |= INDEX_ALT_TID_MASK; \
-		Assert(((n) & BT_RESERVED_OFFSET_MASK) == 0); \
 		ItemPointerSetOffsetNumber(&(itup)->t_tid, (n) & BT_N_KEYS_OFFSET_MASK); \
+	} while(0)
+
+/*
+ * Get tiebreaker heap TID attribute, if any.  Macro works with both pivot
+ * and non-pivot tuples, despite differences in how heap TID is represented.
+ */
+#define BTreeTupleGetHeapTID(itup) \
+	( \
+	  (itup)->t_info & INDEX_ALT_TID_MASK && \
+	  (ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_HEAP_TID_ATTR) != 0 ? \
+	  ( \
+		(ItemPointer) (((char *) (itup) + IndexTupleSize(itup)) - \
+					   sizeof(ItemPointerData)) \
+	  ) \
+	  : (itup)->t_info & INDEX_ALT_TID_MASK ? NULL : (ItemPointer) &((itup)->t_tid) \
+	)
+/*
+ * Set the heap TID attribute for a tuple that uses the INDEX_ALT_TID_MASK
+ * representation (currently limited to pivot tuples)
+ */
+#define BTreeTupleSetAltHeapTID(itup) \
+	do { \
+		Assert((itup)->t_info & INDEX_ALT_TID_MASK); \
+		ItemPointerSetOffsetNumber(&(itup)->t_tid, \
+								   ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) | BT_HEAP_TID_ATTR); \
 	} while(0)
 
 /*
@@ -325,20 +425,42 @@ typedef BTStackData *BTStack;
  * be confused with a search scankey).  It's used to descend a B-Tree using
  * _bt_search.
  *
+ * heapkeyspace indicates if we expect all keys in the index to be physically
+ * unique because heap TID is used as a tiebreaker attribute, and if index may
+ * have truncated key attributes in pivot tuples.  This is actually a property
+ * of the index relation itself (not an indexscan).  heapkeyspace indexes are
+ * indexes whose version is >= version 4.  It's convenient to keep this close
+ * by, rather than accessing the metapage repeatedly.
+ *
  * When nextkey is false (the usual case), _bt_search and _bt_binsrch will
  * locate the first item >= scankey.  When nextkey is true, they will locate
  * the first item > scan key.
  *
- * scankeys is an array of scan key entries for attributes that are compared.
- * keysz is the size of the array.  During insertion, there must be a scan key
- * for every attribute, but when starting a regular index scan some can be
- * omitted.  The array is used as a flexible array member, though it's sized
- * in a way that makes it possible to use stack allocations.  See
- * nbtree/README for full details.
+ * pivotsearch is set to true by callers that want to re-find a leaf page
+ * using a scankey built from a leaf page's high key.  Most callers set this
+ * to false.
+ *
+ * scantid is the heap TID that is used as a final tiebreaker attribute.  It
+ * is set to NULL when index scan doesn't need to find a position for a
+ * specific physical tuple.  Must be set when inserting new tuples into
+ * heapkeyspace indexes, since every tuple in the tree unambiguously belongs
+ * in one exact position (it's never set with !heapkeyspace indexes, though).
+ * Despite the representational difference, nbtree search code considers
+ * scantid to be just another insertion scankey attribute.
+ *
+ * scankeys is an array of scan key entries for attributes that are compared
+ * before scantid (user-visible attributes).  keysz is the size of the array.
+ * During insertion, there must be a scan key for every attribute, but when
+ * starting a regular index scan some can be omitted.  The array is used as a
+ * flexible array member, though it's sized in a way that makes it possible to
+ * use stack allocations.  See nbtree/README for full details.
  */
 typedef struct BTScanInsertData
 {
+	bool		heapkeyspace;
 	bool		nextkey;
+	bool		pivotsearch;
+	ItemPointer scantid;		/* tiebreaker for scankeys */
 	int			keysz;			/* Size of scankeys array */
 	ScanKeyData scankeys[INDEX_MAX_KEYS];	/* Must appear last */
 } BTScanInsertData;
@@ -599,6 +721,7 @@ extern void _bt_upgrademetapage(Page page);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);
 extern int	_bt_getrootheight(Relation rel);
+extern bool _bt_heapkeyspace(Relation rel);
 extern void _bt_checkpage(Relation rel, Buffer buf);
 extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
 extern Buffer _bt_relandgetbuf(Relation rel, Buffer obuf,
@@ -652,8 +775,12 @@ extern bytea *btoptions(Datum reloptions, bool validate);
 extern bool btproperty(Oid index_oid, int attno,
 		   IndexAMProperty prop, const char *propname,
 		   bool *res, bool *isnull);
-extern IndexTuple _bt_nonkey_truncate(Relation rel, IndexTuple itup);
-extern bool _bt_check_natts(Relation rel, Page page, OffsetNumber offnum);
+extern IndexTuple _bt_truncate(Relation rel, IndexTuple lastleft,
+			 IndexTuple firstright, BTScanInsert itup_key);
+extern bool _bt_check_natts(Relation rel, bool heapkeyspace, Page page,
+				OffsetNumber offnum);
+extern void _bt_check_third_page(Relation rel, Relation heap,
+					 bool needheaptidspace, Page page, IndexTuple newtup);
 
 /*
  * prototypes for functions in nbtvalidate.c

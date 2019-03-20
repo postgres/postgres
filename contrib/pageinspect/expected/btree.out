@@ -5,7 +5,7 @@ CREATE INDEX test1_a_idx ON test1 USING btree (a);
 SELECT * FROM bt_metap('test1_a_idx');
 -[ RECORD 1 ]-----------+-------
 magic                   | 340322
-version                 | 3
+version                 | 4
 root                    | 1
 level                   | 0
 fastroot                | 1

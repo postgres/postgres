@@ -103,7 +103,7 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 
 	md = BTPageGetMeta(metapg);
 	md->btm_magic = BTREE_MAGIC;
-	md->btm_version = BTREE_VERSION;
+	md->btm_version = xlrec->version;
 	md->btm_root = xlrec->root;
 	md->btm_level = xlrec->level;
 	md->btm_fastroot = xlrec->fastroot;
@@ -202,7 +202,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, XLogReaderState *record)
 }
 
 static void
-btree_xlog_split(bool onleft, bool lhighkey, XLogReaderState *record)
+btree_xlog_split(bool onleft, XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
@@ -213,8 +213,6 @@ btree_xlog_split(bool onleft, bool lhighkey, XLogReaderState *record)
 	BTPageOpaque ropaque;
 	char	   *datapos;
 	Size		datalen;
-	IndexTuple	left_hikey = NULL;
-	Size		left_hikeysz = 0;
 	BlockNumber leftsib;
 	BlockNumber rightsib;
 	BlockNumber rnext;
@@ -248,20 +246,6 @@ btree_xlog_split(bool onleft, bool lhighkey, XLogReaderState *record)
 
 	_bt_restore_page(rpage, datapos, datalen);
 
-	/*
-	 * When the high key isn't present is the wal record, then we assume it to
-	 * be equal to the first key on the right page.  It must be from the leaf
-	 * level.
-	 */
-	if (!lhighkey)
-	{
-		ItemId		hiItemId = PageGetItemId(rpage, P_FIRSTDATAKEY(ropaque));
-
-		Assert(isleaf);
-		left_hikey = (IndexTuple) PageGetItem(rpage, hiItemId);
-		left_hikeysz = ItemIdGetLength(hiItemId);
-	}
-
 	PageSetLSN(rpage, lsn);
 	MarkBufferDirty(rbuf);
 
@@ -282,8 +266,10 @@ btree_xlog_split(bool onleft, bool lhighkey, XLogReaderState *record)
 		Page		lpage = (Page) BufferGetPage(lbuf);
 		BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 		OffsetNumber off;
-		IndexTuple	newitem = NULL;
-		Size		newitemsz = 0;
+		IndexTuple	newitem,
+					left_hikey;
+		Size		newitemsz,
+					left_hikeysz;
 		Page		newlpage;
 		OffsetNumber leftoff;
 
@@ -298,13 +284,10 @@ btree_xlog_split(bool onleft, bool lhighkey, XLogReaderState *record)
 		}
 
 		/* Extract left hikey and its size (assuming 16-bit alignment) */
-		if (lhighkey)
-		{
-			left_hikey = (IndexTuple) datapos;
-			left_hikeysz = MAXALIGN(IndexTupleSize(left_hikey));
-			datapos += left_hikeysz;
-			datalen -= left_hikeysz;
-		}
+		left_hikey = (IndexTuple) datapos;
+		left_hikeysz = MAXALIGN(IndexTupleSize(left_hikey));
+		datapos += left_hikeysz;
+		datalen -= left_hikeysz;
 
 		Assert(datalen == 0);
 
@@ -1003,16 +986,10 @@ btree_redo(XLogReaderState *record)
 			btree_xlog_insert(false, true, record);
 			break;
 		case XLOG_BTREE_SPLIT_L:
-			btree_xlog_split(true, false, record);
-			break;
-		case XLOG_BTREE_SPLIT_L_HIGHKEY:
-			btree_xlog_split(true, true, record);
+			btree_xlog_split(true, record);
 			break;
 		case XLOG_BTREE_SPLIT_R:
-			btree_xlog_split(false, false, record);
-			break;
-		case XLOG_BTREE_SPLIT_R_HIGHKEY:
-			btree_xlog_split(false, true, record);
+			btree_xlog_split(false, record);
 			break;
 		case XLOG_BTREE_VACUUM:
 			btree_xlog_vacuum(record);

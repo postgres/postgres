@@ -536,7 +536,11 @@ index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 	bool		isnull[INDEX_MAX_KEYS];
 	IndexTuple	truncated;
 
-	Assert(leavenatts < sourceDescriptor->natts);
+	Assert(leavenatts <= sourceDescriptor->natts);
+
+	/* Easy case: no truncation actually required */
+	if (leavenatts == sourceDescriptor->natts)
+		return CopyIndexTuple(source);
 
 	/* Create temporary descriptor to scribble on */
 	truncdesc = palloc(TupleDescSize(sourceDescriptor));

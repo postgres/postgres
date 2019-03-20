@@ -3225,10 +3225,21 @@ explain (costs off)
 CREATE TABLE delete_test_table (a bigint, b bigint, c bigint, d bigint);
 INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,80000) i;
 ALTER TABLE delete_test_table ADD PRIMARY KEY (a,b,c,d);
+-- Delete many entries, and vacuum. This causes page deletions.
 DELETE FROM delete_test_table WHERE a > 40000;
 VACUUM delete_test_table;
-DELETE FROM delete_test_table WHERE a > 10;
+-- Delete most entries, and vacuum, deleting internal pages and creating "fast
+-- root"
+DELETE FROM delete_test_table WHERE a < 79990;
 VACUUM delete_test_table;
+--
+-- Test B-tree insertion with a metapage update (XLOG_BTREE_INSERT_META
+-- WAL record type). This happens when a "fast root" page is split.  This
+-- also creates coverage for nbtree FSM page recycling.
+--
+-- The vacuum above should've turned the leaf page into a fast root. We just
+-- need to insert some rows to cause the fast root page to split.
+INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;
 --
 -- REINDEX (VERBOSE)
 --

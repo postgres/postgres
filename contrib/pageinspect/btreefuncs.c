@@ -561,7 +561,7 @@ bt_metap(PG_FUNCTION_ARGS)
 	 * Get values of extended metadata if available, use default values
 	 * otherwise.
 	 */
-	if (metad->btm_version == BTREE_VERSION)
+	if (metad->btm_version >= BTREE_NOVAC_VERSION)
 	{
 		values[j++] = psprintf("%u", metad->btm_oldest_btpo_xact);
 		values[j++] = psprintf("%f", metad->btm_last_cleanup_num_heap_tuples);

@@ -755,6 +755,7 @@ _bt_sortaddtup(Page page,
 	{
 		trunctuple = *itup;
 		trunctuple.t_info = sizeof(IndexTupleData);
+		/* Deliberately zero INDEX_ALT_TID_MASK bits */
 		BTreeTupleSetNAtts(&trunctuple, 0);
 		itup = &trunctuple;
 		itemsize = sizeof(IndexTupleData);
@@ -808,8 +809,6 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	OffsetNumber last_off;
 	Size		pgspc;
 	Size		itupsz;
-	int			indnatts = IndexRelationGetNumberOfAttributes(wstate->index);
-	int			indnkeyatts = IndexRelationGetNumberOfKeyAttributes(wstate->index);
 
 	/*
 	 * This is a handy place to check for cancel interrupts during the btree
@@ -826,27 +825,21 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	itupsz = MAXALIGN(itupsz);
 
 	/*
-	 * Check whether the item can fit on a btree page at all. (Eventually, we
-	 * ought to try to apply TOAST methods if not.) We actually need to be
-	 * able to fit three items on every page, so restrict any one item to 1/3
-	 * the per-page available space. Note that at this point, itupsz doesn't
-	 * include the ItemId.
+	 * Check whether the item can fit on a btree page at all.
 	 *
-	 * NOTE: similar code appears in _bt_insertonpg() to defend against
-	 * oversize items being inserted into an already-existing index. But
-	 * during creation of an index, we don't go through there.
+	 * Every newly built index will treat heap TID as part of the keyspace,
+	 * which imposes the requirement that new high keys must occasionally have
+	 * a heap TID appended within _bt_truncate().  That may leave a new pivot
+	 * tuple one or two MAXALIGN() quantums larger than the original first
+	 * right tuple it's derived from.  v4 deals with the problem by decreasing
+	 * the limit on the size of tuples inserted on the leaf level by the same
+	 * small amount.  Enforce the new v4+ limit on the leaf level, and the old
+	 * limit on internal levels, since pivot tuples may need to make use of
+	 * the resered space.  This should never fail on internal pages.
 	 */
-	if (itupsz > BTMaxItemSize(npage))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-						itupsz, BTMaxItemSize(npage),
-						RelationGetRelationName(wstate->index)),
-				 errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
-						 "Consider a function index of an MD5 hash of the value, "
-						 "or use full text indexing."),
-				 errtableconstraint(wstate->heap,
-									RelationGetRelationName(wstate->index))));
+	if (unlikely(itupsz > BTMaxItemSize(npage)))
+		_bt_check_third_page(wstate->index, wstate->heap,
+							 state->btps_level == 0, npage, itup);
 
 	/*
 	 * Check to see if page is "full".  It's definitely full if the item won't
@@ -892,24 +885,35 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		ItemIdSetUnused(ii);	/* redundant */
 		((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
 
-		if (indnkeyatts != indnatts && P_ISLEAF(opageop))
+		if (P_ISLEAF(opageop))
 		{
+			IndexTuple	lastleft;
 			IndexTuple	truncated;
 			Size		truncsz;
 
 			/*
-			 * Truncate any non-key attributes from high key on leaf level
-			 * (i.e. truncate on leaf level if we're building an INCLUDE
-			 * index).  This is only done at the leaf level because downlinks
+			 * Truncate away any unneeded attributes from high key on leaf
+			 * level.  This is only done at the leaf level because downlinks
 			 * in internal pages are either negative infinity items, or get
 			 * their contents from copying from one level down.  See also:
 			 * _bt_split().
+			 *
+			 * We don't try to bias our choice of split point to make it more
+			 * likely that _bt_truncate() can truncate away more attributes,
+			 * whereas the split point passed to _bt_split() is chosen much
+			 * more delicately.  Suffix truncation is mostly useful because it
+			 * improves space utilization for workloads with random
+			 * insertions.  It doesn't seem worthwhile to add logic for
+			 * choosing a split point here for a benefit that is bound to be
+			 * much smaller.
 			 *
 			 * Since the truncated tuple is probably smaller than the
 			 * original, it cannot just be copied in place (besides, we want
 			 * to actually save space on the leaf page).  We delete the
 			 * original high key, and add our own truncated high key at the
-			 * same offset.
+			 * same offset.  It's okay if the truncated tuple is slightly
+			 * larger due to containing a heap TID value, since this case is
+			 * known to _bt_check_third_page(), which reserves space.
 			 *
 			 * Note that the page layout won't be changed very much.  oitup is
 			 * already located at the physical beginning of tuple space, so we
@@ -917,7 +921,11 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			 * the latter portion of the space occupied by the original tuple.
 			 * This is fairly cheap.
 			 */
-			truncated = _bt_nonkey_truncate(wstate->index, oitup);
+			ii = PageGetItemId(opage, OffsetNumberPrev(last_off));
+			lastleft = (IndexTuple) PageGetItem(opage, ii);
+
+			truncated = _bt_truncate(wstate->index, lastleft, oitup,
+									 wstate->inskey);
 			truncsz = IndexTupleSize(truncated);
 			PageIndexTupleDelete(opage, P_HIKEY);
 			_bt_sortaddtup(opage, truncsz, truncated, P_HIKEY);
@@ -936,8 +944,9 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		if (state->btps_next == NULL)
 			state->btps_next = _bt_pagestate(wstate, state->btps_level + 1);
 
-		Assert(BTreeTupleGetNAtts(state->btps_minkey, wstate->index) ==
-			   IndexRelationGetNumberOfKeyAttributes(wstate->index) ||
+		Assert((BTreeTupleGetNAtts(state->btps_minkey, wstate->index) <=
+				IndexRelationGetNumberOfKeyAttributes(wstate->index) &&
+				BTreeTupleGetNAtts(state->btps_minkey, wstate->index) > 0) ||
 			   P_LEFTMOST(opageop));
 		Assert(BTreeTupleGetNAtts(state->btps_minkey, wstate->index) == 0 ||
 			   !P_LEFTMOST(opageop));
@@ -982,7 +991,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	 * the first item for a page is copied from the prior page in the code
 	 * above.  Since the minimum key for an entire level is only used as a
 	 * minus infinity downlink, and never as a high key, there is no need to
-	 * truncate away non-key attributes at this point.
+	 * truncate away suffix attributes at this point.
 	 */
 	if (last_off == P_HIKEY)
 	{
@@ -1041,8 +1050,9 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 		}
 		else
 		{
-			Assert(BTreeTupleGetNAtts(s->btps_minkey, wstate->index) ==
-				   IndexRelationGetNumberOfKeyAttributes(wstate->index) ||
+			Assert((BTreeTupleGetNAtts(s->btps_minkey, wstate->index) <=
+					IndexRelationGetNumberOfKeyAttributes(wstate->index) &&
+					BTreeTupleGetNAtts(s->btps_minkey, wstate->index) > 0) ||
 				   P_LEFTMOST(opaque));
 			Assert(BTreeTupleGetNAtts(s->btps_minkey, wstate->index) == 0 ||
 				   !P_LEFTMOST(opaque));
@@ -1135,6 +1145,8 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			}
 			else if (itup != NULL)
 			{
+				int32		compare = 0;
+
 				for (i = 1; i <= keysz; i++)
 				{
 					SortSupport entry;
@@ -1142,7 +1154,6 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 								attrDatum2;
 					bool		isNull1,
 								isNull2;
-					int32		compare;
 
 					entry = sortKeys + i - 1;
 					attrDatum1 = index_getattr(itup, i, tupdes, &isNull1);
@@ -1158,6 +1169,20 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 					}
 					else if (compare < 0)
 						break;
+				}
+
+				/*
+				 * If key values are equal, we sort on ItemPointer.  This is
+				 * required for btree indexes, since heap TID is treated as an
+				 * implicit last key attribute in order to ensure that all
+				 * keys in the index are physically unique.
+				 */
+				if (compare == 0)
+				{
+					compare = ItemPointerCompare(&itup->t_tid, &itup2->t_tid);
+					Assert(compare != 0);
+					if (compare > 0)
+						load1 = false;
 				}
 			}
 			else

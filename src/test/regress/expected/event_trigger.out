@@ -187,9 +187,9 @@ ERROR:  event trigger "regress_event_trigger" does not exist
 -- should fail, regress_evt_user owns some objects
 drop role regress_evt_user;
 ERROR:  role "regress_evt_user" cannot be dropped because some objects depend on it
-DETAIL:  owner of event trigger regress_event_trigger3
+DETAIL:  owner of user mapping for regress_evt_user on server useless_server
 owner of default privileges on new relations belonging to role regress_evt_user
-owner of user mapping for regress_evt_user on server useless_server
+owner of event trigger regress_event_trigger3
 -- cleanup before next test
 -- these are all OK; the second one should emit a NOTICE
 drop event trigger if exists regress_event_trigger2;

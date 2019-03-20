@@ -794,7 +794,7 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
 
-	if (metad->btm_version < BTREE_VERSION)
+	if (metad->btm_version < BTREE_NOVAC_VERSION)
 	{
 		/*
 		 * Do cleanup if metapage needs upgrade, because we don't have

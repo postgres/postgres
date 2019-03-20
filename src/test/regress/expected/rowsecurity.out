@@ -3503,8 +3503,8 @@ SELECT refclassid::regclass, deptype
 SAVEPOINT q;
 DROP ROLE regress_rls_eve; --fails due to dependency on POLICY p
 ERROR:  role "regress_rls_eve" cannot be dropped because some objects depend on it
-DETAIL:  target of policy p on table tbl1
-privileges for table tbl1
+DETAIL:  privileges for table tbl1
+target of policy p on table tbl1
 ROLLBACK TO q;
 ALTER POLICY p ON tbl1 TO regress_rls_frank USING (true);
 SAVEPOINT q;

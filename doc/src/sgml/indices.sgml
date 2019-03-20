@@ -504,8 +504,9 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
   <para>
    By default, B-tree indexes store their entries in ascending order
-   with nulls last.  This means that a forward scan of an index on
-   column <literal>x</literal> produces output satisfying <literal>ORDER BY x</literal>
+   with nulls last (table TID is treated as a tiebreaker column among
+   otherwise equal entries).  This means that a forward scan of an
+   index on column <literal>x</literal> produces output satisfying <literal>ORDER BY x</literal>
    (or more verbosely, <literal>ORDER BY x ASC NULLS LAST</literal>).  The
    index can also be scanned backward, producing output satisfying
    <literal>ORDER BY x DESC</literal>
@@ -1162,10 +1163,21 @@ CREATE INDEX tab_x_y ON tab(x, y);
    the extra columns are trailing columns; making them be leading columns is
    unwise for the reasons explained in <xref linkend="indexes-multicolumn"/>.
    However, this method doesn't support the case where you want the index to
-   enforce uniqueness on the key column(s).  Also, explicitly marking
-   non-searchable columns as <literal>INCLUDE</literal> columns makes the
-   index slightly smaller, because such columns need not be stored in upper
-   tree levels.
+   enforce uniqueness on the key column(s).
+  </para>
+
+  <para>
+   <firstterm>Suffix truncation</firstterm> always removes non-key
+   columns from upper B-Tree levels.  As payload columns, they are
+   never used to guide index scans.  The truncation process also
+   removes one or more trailing key column(s) when the remaining
+   prefix of key column(s) happens to be sufficient to describe tuples
+   on the lowest B-Tree level.  In practice, covering indexes without
+   an <literal>INCLUDE</literal> clause often avoid storing columns
+   that are effectively payload in the upper levels.  However,
+   explicitly defining payload columns as non-key columns
+   <emphasis>reliably</emphasis> keeps the tuples in upper levels
+   small.
   </para>
 
   <para>

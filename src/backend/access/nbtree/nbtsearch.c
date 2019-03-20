@@ -152,8 +152,12 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 		 * downlink (block) to uniquely identify the index entry, in case it
 		 * moves right while we're working lower in the tree.  See the paper
 		 * by Lehman and Yao for how this is detected and handled. (We use the
-		 * child link to disambiguate duplicate keys in the index -- Lehman
-		 * and Yao disallow duplicate keys.)
+		 * child link during the second half of a page split -- if caller ends
+		 * up splitting the child it usually ends up inserting a new pivot
+		 * tuple for child's new right sibling immediately after the original
+		 * bts_offset offset recorded here.  The downlink block will be needed
+		 * to check if bts_offset remains the position of this same pivot
+		 * tuple.)
 		 */
 		new_stack = (BTStack) palloc(sizeof(BTStackData));
 		new_stack->bts_blkno = par_blkno;
@@ -251,11 +255,13 @@ _bt_moveright(Relation rel,
 	/*
 	 * When nextkey = false (normal case): if the scan key that brought us to
 	 * this page is > the high key stored on the page, then the page has split
-	 * and we need to move right.  (If the scan key is equal to the high key,
-	 * we might or might not need to move right; have to scan the page first
-	 * anyway.)
+	 * and we need to move right.  (pg_upgrade'd !heapkeyspace indexes could
+	 * have some duplicates to the right as well as the left, but that's
+	 * something that's only ever dealt with on the leaf level, after
+	 * _bt_search has found an initial leaf page.)
 	 *
 	 * When nextkey = true: move right if the scan key is >= page's high key.
+	 * (Note that key.scantid cannot be set in this case.)
 	 *
 	 * The page could even have split more than once, so scan as far as
 	 * needed.
@@ -346,6 +352,9 @@ _bt_binsrch(Relation rel,
 				high;
 	int32		result,
 				cmpval;
+
+	/* Requesting nextkey semantics while using scantid seems nonsensical */
+	Assert(!key->nextkey || key->scantid == NULL);
 
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -554,10 +563,14 @@ _bt_compare(Relation rel,
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	IndexTuple	itup;
+	ItemPointer heapTid;
 	ScanKey		scankey;
+	int			ncmpkey;
+	int			ntupatts;
 
-	Assert(_bt_check_natts(rel, page, offnum));
+	Assert(_bt_check_natts(rel, key->heapkeyspace, page, offnum));
 	Assert(key->keysz <= IndexRelationGetNumberOfKeyAttributes(rel));
+	Assert(key->heapkeyspace || key->scantid == NULL);
 
 	/*
 	 * Force result ">" if target item is first data item on an internal page
@@ -567,6 +580,7 @@ _bt_compare(Relation rel,
 		return 1;
 
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+	ntupatts = BTreeTupleGetNAtts(itup, rel);
 
 	/*
 	 * The scan key is set up with the attribute number associated with each
@@ -580,8 +594,10 @@ _bt_compare(Relation rel,
 	 * _bt_first).
 	 */
 
+	ncmpkey = Min(ntupatts, key->keysz);
+	Assert(key->heapkeyspace || ncmpkey == key->keysz);
 	scankey = key->scankeys;
-	for (int i = 1; i <= key->keysz; i++)
+	for (int i = 1; i <= ncmpkey; i++)
 	{
 		Datum		datum;
 		bool		isNull;
@@ -632,8 +648,77 @@ _bt_compare(Relation rel,
 		scankey++;
 	}
 
-	/* if we get here, the keys are equal */
-	return 0;
+	/*
+	 * All non-truncated attributes (other than heap TID) were found to be
+	 * equal.  Treat truncated attributes as minus infinity when scankey has a
+	 * key attribute value that would otherwise be compared directly.
+	 *
+	 * Note: it doesn't matter if ntupatts includes non-key attributes;
+	 * scankey won't, so explicitly excluding non-key attributes isn't
+	 * necessary.
+	 */
+	if (key->keysz > ntupatts)
+		return 1;
+
+	/*
+	 * Use the heap TID attribute and scantid to try to break the tie.  The
+	 * rules are the same as any other key attribute -- only the
+	 * representation differs.
+	 */
+	heapTid = BTreeTupleGetHeapTID(itup);
+	if (key->scantid == NULL)
+	{
+		/*
+		 * Most searches have a scankey that is considered greater than a
+		 * truncated pivot tuple if and when the scankey has equal values for
+		 * attributes up to and including the least significant untruncated
+		 * attribute in tuple.
+		 *
+		 * For example, if an index has the minimum two attributes (single
+		 * user key attribute, plus heap TID attribute), and a page's high key
+		 * is ('foo', -inf), and scankey is ('foo', <omitted>), the search
+		 * will not descend to the page to the left.  The search will descend
+		 * right instead.  The truncated attribute in pivot tuple means that
+		 * all non-pivot tuples on the page to the left are strictly < 'foo',
+		 * so it isn't necessary to descend left.  In other words, search
+		 * doesn't have to descend left because it isn't interested in a match
+		 * that has a heap TID value of -inf.
+		 *
+		 * However, some searches (pivotsearch searches) actually require that
+		 * we descend left when this happens.  -inf is treated as a possible
+		 * match for omitted scankey attribute(s).  This is needed by page
+		 * deletion, which must re-find leaf pages that are targets for
+		 * deletion using their high keys.
+		 *
+		 * Note: the heap TID part of the test ensures that scankey is being
+		 * compared to a pivot tuple with one or more truncated key
+		 * attributes.
+		 *
+		 * Note: pg_upgrade'd !heapkeyspace indexes must always descend to the
+		 * left here, since they have no heap TID attribute (and cannot have
+		 * any -inf key values in any case, since truncation can only remove
+		 * non-key attributes).  !heapkeyspace searches must always be
+		 * prepared to deal with matches on both sides of the pivot once the
+		 * leaf level is reached.
+		 */
+		if (key->heapkeyspace && !key->pivotsearch &&
+			key->keysz == ntupatts && heapTid == NULL)
+			return 1;
+
+		/* All provided scankey arguments found to be equal */
+		return 0;
+	}
+
+	/*
+	 * Treat truncated heap TID as minus infinity, since scankey has a key
+	 * attribute value (scantid) that would otherwise be compared directly
+	 */
+	Assert(key->keysz == IndexRelationGetNumberOfKeyAttributes(rel));
+	if (heapTid == NULL)
+		return 1;
+
+	Assert(ntupatts >= IndexRelationGetNumberOfKeyAttributes(rel));
+	return ItemPointerCompare(key->scantid, heapTid);
 }
 
 /*
@@ -1148,7 +1233,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/* Initialize remaining insertion scan key fields */
+	inskey.heapkeyspace = _bt_heapkeyspace(rel);
 	inskey.nextkey = nextkey;
+	inskey.pivotsearch = false;
+	inskey.scantid = NULL;
 	inskey.keysz = keysCount;
 
 	/*

@@ -46,6 +46,8 @@ PG_MODULE_MAGIC;
  * block per level, which is bound by the range of BlockNumber:
  */
 #define InvalidBtreeLevel	((uint32) InvalidBlockNumber)
+#define BTreeTupleGetNKeyAtts(itup, rel)   \
+	Min(IndexRelationGetNumberOfKeyAttributes(rel), BTreeTupleGetNAtts(itup, rel))
 
 /*
  * State associated with verifying a B-Tree index
@@ -67,6 +69,8 @@ typedef struct BtreeCheckState
 	/* B-Tree Index Relation and associated heap relation */
 	Relation	rel;
 	Relation	heaprel;
+	/* rel is heapkeyspace index? */
+	bool		heapkeyspace;
 	/* ShareLock held on heap/index, rather than AccessShareLock? */
 	bool		readonly;
 	/* Also verifying heap has no unindexed tuples? */
@@ -123,7 +127,7 @@ static void bt_index_check_internal(Oid indrelid, bool parentcheck,
 						bool heapallindexed);
 static inline void btree_index_checkable(Relation rel);
 static void bt_check_every_level(Relation rel, Relation heaprel,
-					 bool readonly, bool heapallindexed);
+					 bool heapkeyspace, bool readonly, bool heapallindexed);
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
 							 BtreeLevel level);
 static void bt_target_page_check(BtreeCheckState *state);
@@ -138,17 +142,22 @@ static IndexTuple bt_normalize_tuple(BtreeCheckState *state,
 						   IndexTuple itup);
 static inline bool offset_is_negative_infinity(BTPageOpaque opaque,
 							OffsetNumber offset);
+static inline bool invariant_l_offset(BtreeCheckState *state, BTScanInsert key,
+				   OffsetNumber upperbound);
 static inline bool invariant_leq_offset(BtreeCheckState *state,
 					 BTScanInsert key,
 					 OffsetNumber upperbound);
-static inline bool invariant_geq_offset(BtreeCheckState *state,
-					 BTScanInsert key,
-					 OffsetNumber lowerbound);
-static inline bool invariant_leq_nontarget_offset(BtreeCheckState *state,
-							   BTScanInsert key,
-							   Page nontarget,
-							   OffsetNumber upperbound);
+static inline bool invariant_g_offset(BtreeCheckState *state, BTScanInsert key,
+				   OffsetNumber lowerbound);
+static inline bool invariant_l_nontarget_offset(BtreeCheckState *state,
+							 BTScanInsert key,
+							 Page nontarget,
+							 OffsetNumber upperbound);
 static Page palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum);
+static inline BTScanInsert bt_mkscankey_pivotsearch(Relation rel,
+													IndexTuple itup);
+static inline ItemPointer BTreeTupleGetHeapTIDCareful(BtreeCheckState *state,
+							IndexTuple itup, bool nonpivot);
 
 /*
  * bt_index_check(index regclass, heapallindexed boolean)
@@ -205,6 +214,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed)
 	Oid			heapid;
 	Relation	indrel;
 	Relation	heaprel;
+	bool		heapkeyspace;
 	LOCKMODE	lockmode;
 
 	if (parentcheck)
@@ -255,7 +265,9 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed)
 	btree_index_checkable(indrel);
 
 	/* Check index, possibly against table it is an index on */
-	bt_check_every_level(indrel, heaprel, parentcheck, heapallindexed);
+	heapkeyspace = _bt_heapkeyspace(indrel);
+	bt_check_every_level(indrel, heaprel, heapkeyspace, parentcheck,
+						 heapallindexed);
 
 	/*
 	 * Release locks early. That's ok here because nothing in the called
@@ -325,8 +337,8 @@ btree_index_checkable(Relation rel)
  * parent/child check cannot be affected.)
  */
 static void
-bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
-					 bool heapallindexed)
+bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
+					 bool readonly, bool heapallindexed)
 {
 	BtreeCheckState *state;
 	Page		metapage;
@@ -347,6 +359,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool readonly,
 	state = palloc0(sizeof(BtreeCheckState));
 	state->rel = rel;
 	state->heaprel = heaprel;
+	state->heapkeyspace = heapkeyspace;
 	state->readonly = readonly;
 	state->heapallindexed = heapallindexed;
 
@@ -807,7 +820,8 @@ bt_target_page_check(BtreeCheckState *state)
 	 * doesn't contain a high key, so nothing to check
 	 */
 	if (!P_RIGHTMOST(topaque) &&
-		!_bt_check_natts(state->rel, state->target, P_HIKEY))
+		!_bt_check_natts(state->rel, state->heapkeyspace, state->target,
+						 P_HIKEY))
 	{
 		ItemId		itemid;
 		IndexTuple	itup;
@@ -840,6 +854,7 @@ bt_target_page_check(BtreeCheckState *state)
 		IndexTuple	itup;
 		size_t		tupsize;
 		BTScanInsert skey;
+		bool		lowersizelimit;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -866,7 +881,8 @@ bt_target_page_check(BtreeCheckState *state)
 					 errhint("This could be a torn page problem.")));
 
 		/* Check the number of index tuple attributes */
-		if (!_bt_check_natts(state->rel, state->target, offset))
+		if (!_bt_check_natts(state->rel, state->heapkeyspace, state->target,
+							 offset))
 		{
 			char	   *itid,
 					   *htid;
@@ -907,7 +923,56 @@ bt_target_page_check(BtreeCheckState *state)
 			continue;
 
 		/* Build insertion scankey for current page offset */
-		skey = _bt_mkscankey(state->rel, itup);
+		skey = bt_mkscankey_pivotsearch(state->rel, itup);
+
+		/*
+		 * Make sure tuple size does not exceed the relevant BTREE_VERSION
+		 * specific limit.
+		 *
+		 * BTREE_VERSION 4 (which introduced heapkeyspace rules) requisitioned
+		 * a small amount of space from BTMaxItemSize() in order to ensure
+		 * that suffix truncation always has enough space to add an explicit
+		 * heap TID back to a tuple -- we pessimistically assume that every
+		 * newly inserted tuple will eventually need to have a heap TID
+		 * appended during a future leaf page split, when the tuple becomes
+		 * the basis of the new high key (pivot tuple) for the leaf page.
+		 *
+		 * Since the reclaimed space is reserved for that purpose, we must not
+		 * enforce the slightly lower limit when the extra space has been used
+		 * as intended.  In other words, there is only a cross-version
+		 * difference in the limit on tuple size within leaf pages.
+		 *
+		 * Still, we're particular about the details within BTREE_VERSION 4
+		 * internal pages.  Pivot tuples may only use the extra space for its
+		 * designated purpose.  Enforce the lower limit for pivot tuples when
+		 * an explicit heap TID isn't actually present. (In all other cases
+		 * suffix truncation is guaranteed to generate a pivot tuple that's no
+		 * larger than the first right tuple provided to it by its caller.)
+		 */
+		lowersizelimit = skey->heapkeyspace &&
+			(P_ISLEAF(topaque) || BTreeTupleGetHeapTID(itup) == NULL);
+		if (tupsize > (lowersizelimit ? BTMaxItemSize(state->target) :
+					   BTMaxItemSizeNoHeapTid(state->target)))
+		{
+			char	   *itid,
+					   *htid;
+
+			itid = psprintf("(%u,%u)", state->targetblock, offset);
+			htid = psprintf("(%u,%u)",
+							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
+							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index row size %zu exceeds maximum for index \"%s\"",
+							tupsize, RelationGetRelationName(state->rel)),
+					 errdetail_internal("Index tid=%s points to %s tid=%s page lsn=%X/%X.",
+										itid,
+										P_ISLEAF(topaque) ? "heap" : "index",
+										htid,
+										(uint32) (state->targetlsn >> 32),
+										(uint32) state->targetlsn)));
+		}
 
 		/* Fingerprint leaf page tuples (those that point to the heap) */
 		if (state->heapallindexed && P_ISLEAF(topaque) && !ItemIdIsDead(itemid))
@@ -941,9 +1006,35 @@ bt_target_page_check(BtreeCheckState *state)
 		 * grandparents (as well as great-grandparents, and so on).  We don't
 		 * go to those lengths because that would be prohibitively expensive,
 		 * and probably not markedly more effective in practice.
+		 *
+		 * On the leaf level, we check that the key is <= the highkey.
+		 * However, on non-leaf levels we check that the key is < the highkey,
+		 * because the high key is "just another separator" rather than a copy
+		 * of some existing key item; we expect it to be unique among all keys
+		 * on the same level.  (Suffix truncation will sometimes produce a
+		 * leaf highkey that is an untruncated copy of the lastleft item, but
+		 * never any other item, which necessitates weakening the leaf level
+		 * check to <=.)
+		 *
+		 * Full explanation for why a highkey is never truly a copy of another
+		 * item from the same level on internal levels:
+		 *
+		 * While the new left page's high key is copied from the first offset
+		 * on the right page during an internal page split, that's not the
+		 * full story.  In effect, internal pages are split in the middle of
+		 * the firstright tuple, not between the would-be lastleft and
+		 * firstright tuples: the firstright key ends up on the left side as
+		 * left's new highkey, and the firstright downlink ends up on the
+		 * right side as right's new "negative infinity" item.  The negative
+		 * infinity tuple is truncated to zero attributes, so we're only left
+		 * with the downlink.  In other words, the copying is just an
+		 * implementation detail of splitting in the middle of a (pivot)
+		 * tuple. (See also: "Notes About Data Representation" in the nbtree
+		 * README.)
 		 */
 		if (!P_RIGHTMOST(topaque) &&
-			!invariant_leq_offset(state, skey, P_HIKEY))
+			!(P_ISLEAF(topaque) ? invariant_leq_offset(state, skey, P_HIKEY) :
+			  invariant_l_offset(state, skey, P_HIKEY)))
 		{
 			char	   *itid,
 					   *htid;
@@ -969,11 +1060,10 @@ bt_target_page_check(BtreeCheckState *state)
 		 * * Item order check *
 		 *
 		 * Check that items are stored on page in logical order, by checking
-		 * current item is less than or equal to next item (if any).
+		 * current item is strictly less than next item (if any).
 		 */
 		if (OffsetNumberNext(offset) <= max &&
-			!invariant_leq_offset(state, skey,
-								  OffsetNumberNext(offset)))
+			!invariant_l_offset(state, skey, OffsetNumberNext(offset)))
 		{
 			char	   *itid,
 					   *htid,
@@ -1036,7 +1126,7 @@ bt_target_page_check(BtreeCheckState *state)
 			rightkey = bt_right_page_check_scankey(state);
 
 			if (rightkey &&
-				!invariant_geq_offset(state, rightkey, max))
+				!invariant_g_offset(state, rightkey, max))
 			{
 				/*
 				 * As explained at length in bt_right_page_check_scankey(),
@@ -1214,9 +1304,9 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	 * continued existence of target block as non-ignorable (not half-dead or
 	 * deleted) implies that target page was not merged into from the right by
 	 * deletion; the key space at or after target never moved left.  Target's
-	 * parent either has the same downlink to target as before, or a <=
+	 * parent either has the same downlink to target as before, or a <
 	 * downlink due to deletion at the left of target.  Target either has the
-	 * same highkey as before, or a highkey <= before when there is a page
+	 * same highkey as before, or a highkey < before when there is a page
 	 * split. (The rightmost concurrently-split-from-target-page page will
 	 * still have the same highkey as target was originally found to have,
 	 * which for our purposes is equivalent to target's highkey itself never
@@ -1305,7 +1395,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	 * memory remaining allocated.
 	 */
 	firstitup = (IndexTuple) PageGetItem(rightpage, rightitem);
-	return _bt_mkscankey(state->rel, firstitup);
+	return bt_mkscankey_pivotsearch(state->rel, firstitup);
 }
 
 /*
@@ -1368,7 +1458,8 @@ bt_downlink_check(BtreeCheckState *state, BTScanInsert targetkey,
 
 	/*
 	 * Verify child page has the downlink key from target page (its parent) as
-	 * a lower bound.
+	 * a lower bound; downlink must be strictly less than all keys on the
+	 * page.
 	 *
 	 * Check all items, rather than checking just the first and trusting that
 	 * the operator class obeys the transitive law.
@@ -1417,14 +1508,29 @@ bt_downlink_check(BtreeCheckState *state, BTScanInsert targetkey,
 	{
 		/*
 		 * Skip comparison of target page key against "negative infinity"
-		 * item, if any.  Checking it would indicate that it's not an upper
-		 * bound, but that's only because of the hard-coding within
-		 * _bt_compare().
+		 * item, if any.  Checking it would indicate that it's not a strict
+		 * lower bound, but that's only because of the hard-coding for
+		 * negative infinity items within _bt_compare().
+		 *
+		 * If nbtree didn't truncate negative infinity tuples during internal
+		 * page splits then we'd expect child's negative infinity key to be
+		 * equal to the scankey/downlink from target/parent (it would be a
+		 * "low key" in this hypothetical scenario, and so it would still need
+		 * to be treated as a special case here).
+		 *
+		 * Negative infinity items can be thought of as a strict lower bound
+		 * that works transitively, with the last non-negative-infinity pivot
+		 * followed during a descent from the root as its "true" strict lower
+		 * bound.  Only a small number of negative infinity items are truly
+		 * negative infinity; those that are the first items of leftmost
+		 * internal pages.  In more general terms, a negative infinity item is
+		 * only negative infinity with respect to the subtree that the page is
+		 * at the root of.
 		 */
 		if (offset_is_negative_infinity(copaque, offset))
 			continue;
 
-		if (!invariant_leq_nontarget_offset(state, targetkey, child, offset))
+		if (!invariant_l_nontarget_offset(state, targetkey, child, offset))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("down-link lower bound invariant violated for index \"%s\"",
@@ -1857,6 +1963,64 @@ offset_is_negative_infinity(BTPageOpaque opaque, OffsetNumber offset)
 }
 
 /*
+ * Does the invariant hold that the key is strictly less than a given upper
+ * bound offset item?
+ *
+ * If this function returns false, convention is that caller throws error due
+ * to corruption.
+ */
+static inline bool
+invariant_l_offset(BtreeCheckState *state, BTScanInsert key,
+				   OffsetNumber upperbound)
+{
+	int32		cmp;
+
+	Assert(key->pivotsearch);
+
+	/* pg_upgrade'd indexes may legally have equal sibling tuples */
+	if (!key->heapkeyspace)
+		return invariant_leq_offset(state, key, upperbound);
+
+	cmp = _bt_compare(state->rel, key, state->target, upperbound);
+
+	/*
+	 * _bt_compare() is capable of determining that a scankey with a
+	 * filled-out attribute is greater than pivot tuples where the comparison
+	 * is resolved at a truncated attribute (value of attribute in pivot is
+	 * minus infinity).  However, it is not capable of determining that a
+	 * scankey is _less than_ a tuple on the basis of a comparison resolved at
+	 * _scankey_ minus infinity attribute.  Complete an extra step to simulate
+	 * having minus infinity values for omitted scankey attribute(s).
+	 */
+	if (cmp == 0)
+	{
+		BTPageOpaque topaque;
+		ItemId		itemid;
+		IndexTuple	ritup;
+		int			uppnkeyatts;
+		ItemPointer rheaptid;
+		bool		nonpivot;
+
+		itemid = PageGetItemId(state->target, upperbound);
+		ritup = (IndexTuple) PageGetItem(state->target, itemid);
+		topaque = (BTPageOpaque) PageGetSpecialPointer(state->target);
+		nonpivot = P_ISLEAF(topaque) && upperbound >= P_FIRSTDATAKEY(topaque);
+
+		/* Get number of keys + heap TID for item to the right */
+		uppnkeyatts = BTreeTupleGetNKeyAtts(ritup, state->rel);
+		rheaptid = BTreeTupleGetHeapTIDCareful(state, ritup, nonpivot);
+
+		/* Heap TID is tiebreaker key attribute */
+		if (key->keysz == uppnkeyatts)
+			return key->scantid == NULL && rheaptid != NULL;
+
+		return key->keysz < uppnkeyatts;
+	}
+
+	return cmp < 0;
+}
+
+/*
  * Does the invariant hold that the key is less than or equal to a given upper
  * bound offset item?
  *
@@ -1869,48 +2033,97 @@ invariant_leq_offset(BtreeCheckState *state, BTScanInsert key,
 {
 	int32		cmp;
 
+	Assert(key->pivotsearch);
+
 	cmp = _bt_compare(state->rel, key, state->target, upperbound);
 
 	return cmp <= 0;
 }
 
 /*
- * Does the invariant hold that the key is greater than or equal to a given
- * lower bound offset item?
+ * Does the invariant hold that the key is strictly greater than a given lower
+ * bound offset item?
  *
  * If this function returns false, convention is that caller throws error due
  * to corruption.
  */
 static inline bool
-invariant_geq_offset(BtreeCheckState *state, BTScanInsert key,
-					 OffsetNumber lowerbound)
+invariant_g_offset(BtreeCheckState *state, BTScanInsert key,
+				   OffsetNumber lowerbound)
 {
 	int32		cmp;
+
+	Assert(key->pivotsearch);
 
 	cmp = _bt_compare(state->rel, key, state->target, lowerbound);
 
-	return cmp >= 0;
+	/* pg_upgrade'd indexes may legally have equal sibling tuples */
+	if (!key->heapkeyspace)
+		return cmp >= 0;
+
+	/*
+	 * No need to consider the possibility that scankey has attributes that we
+	 * need to force to be interpreted as negative infinity.  _bt_compare() is
+	 * able to determine that scankey is greater than negative infinity.  The
+	 * distinction between "==" and "<" isn't interesting here, since
+	 * corruption is indicated either way.
+	 */
+	return cmp > 0;
 }
 
 /*
- * Does the invariant hold that the key is less than or equal to a given upper
+ * Does the invariant hold that the key is strictly less than a given upper
  * bound offset item, with the offset relating to a caller-supplied page that
- * is not the current target page? Caller's non-target page is typically a
- * child page of the target, checked as part of checking a property of the
- * target page (i.e. the key comes from the target).
+ * is not the current target page?
+ *
+ * Caller's non-target page is a child page of the target, checked as part of
+ * checking a property of the target page (i.e. the key comes from the
+ * target).
  *
  * If this function returns false, convention is that caller throws error due
  * to corruption.
  */
 static inline bool
-invariant_leq_nontarget_offset(BtreeCheckState *state, BTScanInsert key,
-							   Page nontarget, OffsetNumber upperbound)
+invariant_l_nontarget_offset(BtreeCheckState *state, BTScanInsert key,
+							 Page nontarget, OffsetNumber upperbound)
 {
 	int32		cmp;
 
+	Assert(key->pivotsearch);
+
 	cmp = _bt_compare(state->rel, key, nontarget, upperbound);
 
-	return cmp <= 0;
+	/* pg_upgrade'd indexes may legally have equal sibling tuples */
+	if (!key->heapkeyspace)
+		return cmp <= 0;
+
+	/* See invariant_l_offset() for an explanation of this extra step */
+	if (cmp == 0)
+	{
+		ItemId		itemid;
+		IndexTuple	child;
+		int			uppnkeyatts;
+		ItemPointer childheaptid;
+		BTPageOpaque copaque;
+		bool		nonpivot;
+
+		itemid = PageGetItemId(nontarget, upperbound);
+		child = (IndexTuple) PageGetItem(nontarget, itemid);
+		copaque = (BTPageOpaque) PageGetSpecialPointer(nontarget);
+		nonpivot = P_ISLEAF(copaque) && upperbound >= P_FIRSTDATAKEY(copaque);
+
+		/* Get number of keys + heap TID for child/non-target item */
+		uppnkeyatts = BTreeTupleGetNKeyAtts(child, state->rel);
+		childheaptid = BTreeTupleGetHeapTIDCareful(state, child, nonpivot);
+
+		/* Heap TID is tiebreaker key attribute */
+		if (key->keysz == uppnkeyatts)
+			return key->scantid == NULL && childheaptid != NULL;
+
+		return key->keysz < uppnkeyatts;
+	}
+
+	return cmp < 0;
 }
 
 /*
@@ -2065,4 +2278,54 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 						blocknum, RelationGetRelationName(state->rel))));
 
 	return page;
+}
+
+/*
+ * _bt_mkscankey() wrapper that automatically prevents insertion scankey from
+ * being considered greater than the pivot tuple that its values originated
+ * from (or some other identical pivot tuple) in the common case where there
+ * are truncated/minus infinity attributes.  Without this extra step, there
+ * are forms of corruption that amcheck could theoretically fail to report.
+ *
+ * For example, invariant_g_offset() might miss a cross-page invariant failure
+ * on an internal level if the scankey built from the first item on the
+ * target's right sibling page happened to be equal to (not greater than) the
+ * last item on target page.  The !pivotsearch tiebreaker in _bt_compare()
+ * might otherwise cause amcheck to assume (rather than actually verify) that
+ * the scankey is greater.
+ */
+static inline BTScanInsert
+bt_mkscankey_pivotsearch(Relation rel, IndexTuple itup)
+{
+	BTScanInsert skey;
+
+	skey = _bt_mkscankey(rel, itup);
+	skey->pivotsearch = true;
+
+	return skey;
+}
+
+/*
+ * BTreeTupleGetHeapTID() wrapper that lets caller enforce that a heap TID must
+ * be present in cases where that is mandatory.
+ *
+ * This doesn't add much as of BTREE_VERSION 4, since the INDEX_ALT_TID_MASK
+ * bit is effectively a proxy for whether or not the tuple is a pivot tuple.
+ * It may become more useful in the future, when non-pivot tuples support their
+ * own alternative INDEX_ALT_TID_MASK representation.
+ */
+static inline ItemPointer
+BTreeTupleGetHeapTIDCareful(BtreeCheckState *state, IndexTuple itup,
+							bool nonpivot)
+{
+	ItemPointer result = BTreeTupleGetHeapTID(itup);
+	BlockNumber targetblock = state->targetblock;
+
+	if (result == NULL && nonpivot)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("block %u or its right sibling block or child block in index \"%s\" contains non-pivot tuple that lacks a heap TID",
+						targetblock, RelationGetRelationName(state->rel))));
+
+	return result;
 }

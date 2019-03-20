@@ -61,14 +61,16 @@ static OffsetNumber _bt_findinsertloc(Relation rel,
 				  BTStack stack,
 				  Relation heapRel);
 static void _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack);
-static void _bt_insertonpg(Relation rel, Buffer buf, Buffer cbuf,
+static void _bt_insertonpg(Relation rel, BTScanInsert itup_key,
+			   Buffer buf,
+			   Buffer cbuf,
 			   BTStack stack,
 			   IndexTuple itup,
 			   OffsetNumber newitemoff,
 			   bool split_only_page);
-static Buffer _bt_split(Relation rel, Buffer buf, Buffer cbuf,
-		  OffsetNumber firstright, OffsetNumber newitemoff, Size newitemsz,
-		  IndexTuple newitem, bool newitemonleft);
+static Buffer _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf,
+		  Buffer cbuf, OffsetNumber firstright, OffsetNumber newitemoff,
+		  Size newitemsz, IndexTuple newitem, bool newitemonleft);
 static void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
 				  BTStack stack, bool is_root, bool is_only);
 static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
@@ -116,6 +118,9 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 
 	/* we need an insertion scan key to do our search, so build one */
 	itup_key = _bt_mkscankey(rel, itup);
+	/* No scantid until uniqueness established in checkingunique case */
+	if (checkingunique && itup_key->heapkeyspace)
+		itup_key->scantid = NULL;
 
 	/*
 	 * Fill in the BTInsertState working area, to track the current page and
@@ -231,12 +236,13 @@ top:
 	 * NOTE: obviously, _bt_check_unique can only detect keys that are already
 	 * in the index; so it cannot defend against concurrent insertions of the
 	 * same key.  We protect against that by means of holding a write lock on
-	 * the target page.  Any other would-be inserter of the same key must
-	 * acquire a write lock on the same target page, so only one would-be
-	 * inserter can be making the check at one time.  Furthermore, once we are
-	 * past the check we hold write locks continuously until we have performed
-	 * our insertion, so no later inserter can fail to see our insertion.
-	 * (This requires some care in _bt_findinsertloc.)
+	 * the first page the value could be on, regardless of the value of its
+	 * implicit heap TID tiebreaker attribute.  Any other would-be inserter of
+	 * the same key must acquire a write lock on the same page, so only one
+	 * would-be inserter can be making the check at one time.  Furthermore,
+	 * once we are past the check we hold write locks continuously until we
+	 * have performed our insertion, so no later inserter can fail to see our
+	 * insertion.  (This requires some care in _bt_findinsertloc.)
 	 *
 	 * If we must wait for another xact, we release the lock while waiting,
 	 * and then must start over completely.
@@ -274,6 +280,10 @@ top:
 				_bt_freestack(stack);
 			goto top;
 		}
+
+		/* Uniqueness is established -- restore heap tid as scantid */
+		if (itup_key->heapkeyspace)
+			itup_key->scantid = &itup->t_tid;
 	}
 
 	if (checkUnique != UNIQUE_CHECK_EXISTING)
@@ -282,12 +292,11 @@ top:
 
 		/*
 		 * The only conflict predicate locking cares about for indexes is when
-		 * an index tuple insert conflicts with an existing lock.  Since the
-		 * actual location of the insert is hard to predict because of the
-		 * random search used to prevent O(N^2) performance when there are
-		 * many duplicate entries, we can just use the "first valid" page.
-		 * This reasoning also applies to INCLUDE indexes, whose extra
-		 * attributes are not considered part of the key space.
+		 * an index tuple insert conflicts with an existing lock.  We don't
+		 * know the actual page we're going to insert to yet because scantid
+		 * was not filled in initially, but it's okay to use the "first valid"
+		 * page instead.  This reasoning also applies to INCLUDE indexes,
+		 * whose extra attributes are not considered part of the key space.
 		 */
 		CheckForSerializableConflictIn(rel, NULL, insertstate.buf);
 
@@ -298,8 +307,8 @@ top:
 		 */
 		newitemoff = _bt_findinsertloc(rel, &insertstate, checkingunique,
 									   stack, heapRel);
-		_bt_insertonpg(rel, insertstate.buf, InvalidBuffer, stack, itup,
-					   newitemoff, false);
+		_bt_insertonpg(rel, itup_key, insertstate.buf, InvalidBuffer, stack,
+					   itup, newitemoff, false);
 	}
 	else
 	{
@@ -371,6 +380,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 	 * Scan over all equal tuples, looking for live conflicts.
 	 */
 	Assert(!insertstate->bounds_valid || insertstate->low == offset);
+	Assert(itup_key->scantid == NULL);
 	for (;;)
 	{
 		ItemId		curitemid;
@@ -642,18 +652,21 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 /*
  *	_bt_findinsertloc() -- Finds an insert location for a tuple
  *
- *		On entry, insertstate buffer contains the first legal page the new
- *		tuple could be inserted to.  It is exclusive-locked and pinned by the
- *		caller.
+ *		On entry, insertstate buffer contains the page the new tuple belongs
+ *		on.  It is exclusive-locked and pinned by the caller.
  *
- *		If the new key is equal to one or more existing keys, we can
- *		legitimately place it anywhere in the series of equal keys --- in fact,
- *		if the new key is equal to the page's "high key" we can place it on
- *		the next page.  If it is equal to the high key, and there's not room
- *		to insert the new tuple on the current page without splitting, then
- *		we can move right hoping to find more free space and avoid a split.
- *		Furthermore, if there's not enough room on a page, we try to make
- *		room by removing any LP_DEAD tuples.
+ *		If 'checkingunique' is true, the buffer on entry is the first page
+ *		that contains duplicates of the new key.  If there are duplicates on
+ *		multiple pages, the correct insertion position might be some page to
+ *		the right, rather than the first page.  In that case, this function
+ *		moves right to the correct target page.
+ *
+ *		(In a !heapkeyspace index, there can be multiple pages with the same
+ *		high key, where the new tuple could legitimately be placed on.  In
+ *		that case, the caller passes the first page containing duplicates,
+ *		just like when checkinunique=true.  If that page doesn't have enough
+ *		room for the new tuple, this function moves right, trying to find a
+ *		legal page that does.)
  *
  *		On exit, insertstate buffer contains the chosen insertion page, and
  *		the offset within that page is returned.  If _bt_findinsertloc needed
@@ -663,6 +676,9 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
  *		If insertstate contains cached binary search bounds, we will take
  *		advantage of them.  This avoids repeating comparisons that we made in
  *		_bt_check_unique() already.
+ *
+ *		If there is not enough room on the page for the new tuple, we try to
+ *		make room by removing any LP_DEAD tuples.
  */
 static OffsetNumber
 _bt_findinsertloc(Relation rel,
@@ -677,87 +693,144 @@ _bt_findinsertloc(Relation rel,
 
 	lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	/*
-	 * Check whether the item can fit on a btree page at all. (Eventually, we
-	 * ought to try to apply TOAST methods if not.) We actually need to be
-	 * able to fit three items on every page, so restrict any one item to 1/3
-	 * the per-page available space. Note that at this point, itemsz doesn't
-	 * include the ItemId.
-	 *
-	 * NOTE: if you change this, see also the similar code in _bt_buildadd().
-	 */
-	if (insertstate->itemsz > BTMaxItemSize(page))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-						insertstate->itemsz, BTMaxItemSize(page),
-						RelationGetRelationName(rel)),
-				 errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
-						 "Consider a function index of an MD5 hash of the value, "
-						 "or use full text indexing."),
-				 errtableconstraint(heapRel,
-									RelationGetRelationName(rel))));
+	/* Check 1/3 of a page restriction */
+	if (unlikely(insertstate->itemsz > BTMaxItemSize(page)))
+		_bt_check_third_page(rel, heapRel, itup_key->heapkeyspace, page,
+							 insertstate->itup);
 
-	/*----------
-	 * If we will need to split the page to put the item on this page,
-	 * check whether we can put the tuple somewhere to the right,
-	 * instead.  Keep scanning right until we
-	 *		(a) find a page with enough free space,
-	 *		(b) reach the last page where the tuple can legally go, or
-	 *		(c) get tired of searching.
-	 * (c) is not flippant; it is important because if there are many
-	 * pages' worth of equal keys, it's better to split one of the early
-	 * pages than to scan all the way to the end of the run of equal keys
-	 * on every insert.  We implement "get tired" as a random choice,
-	 * since stopping after scanning a fixed number of pages wouldn't work
-	 * well (we'd never reach the right-hand side of previously split
-	 * pages).  Currently the probability of moving right is set at 0.99,
-	 * which may seem too high to change the behavior much, but it does an
-	 * excellent job of preventing O(N^2) behavior with many equal keys.
-	 *----------
-	 */
 	Assert(P_ISLEAF(lpageop) && !P_INCOMPLETE_SPLIT(lpageop));
 	Assert(!insertstate->bounds_valid || checkingunique);
+	Assert(!itup_key->heapkeyspace || itup_key->scantid != NULL);
+	Assert(itup_key->heapkeyspace || itup_key->scantid == NULL);
 
-	while (PageGetFreeSpace(page) < insertstate->itemsz)
+	if (itup_key->heapkeyspace)
 	{
 		/*
-		 * before considering moving right, see if we can obtain enough space
-		 * by erasing LP_DEAD items
+		 * If we're inserting into a unique index, we may have to walk right
+		 * through leaf pages to find the one leaf page that we must insert on
+		 * to.
+		 *
+		 * This is needed for checkingunique callers because a scantid was not
+		 * used when we called _bt_search().  scantid can only be set after
+		 * _bt_check_unique() has checked for duplicates.  The buffer
+		 * initially stored in insertstate->buf has the page where the first
+		 * duplicate key might be found, which isn't always the page that new
+		 * tuple belongs on.  The heap TID attribute for new tuple (scantid)
+		 * could force us to insert on a sibling page, though that should be
+		 * very rare in practice.
 		 */
-		if (P_HAS_GARBAGE(lpageop))
+		if (checkingunique)
 		{
-			_bt_vacuum_one_page(rel, insertstate->buf, heapRel);
-			insertstate->bounds_valid = false;
+			for (;;)
+			{
+				/*
+				 * Does the new tuple belong on this page?
+				 *
+				 * The earlier _bt_check_unique() call may well have
+				 * established a strict upper bound on the offset for the new
+				 * item.  If it's not the last item of the page (i.e. if there
+				 * is at least one tuple on the page that goes after the tuple
+				 * we're inserting) then we know that the tuple belongs on
+				 * this page.  We can skip the high key check.
+				 */
+				if (insertstate->bounds_valid &&
+					insertstate->low <= insertstate->stricthigh &&
+					insertstate->stricthigh <= PageGetMaxOffsetNumber(page))
+					break;
 
-			if (PageGetFreeSpace(page) >= insertstate->itemsz)
-				break;			/* OK, now we have enough space */
+				/* Test '<=', not '!=', since scantid is set now */
+				if (P_RIGHTMOST(lpageop) ||
+					_bt_compare(rel, itup_key, page, P_HIKEY) <= 0)
+					break;
+
+				_bt_stepright(rel, insertstate, stack);
+				/* Update local state after stepping right */
+				page = BufferGetPage(insertstate->buf);
+				lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+			}
 		}
 
 		/*
-		 * Nope, so check conditions (b) and (c) enumerated above
-		 *
-		 * The earlier _bt_check_unique() call may well have established a
-		 * strict upper bound on the offset for the new item.  If it's not the
-		 * last item of the page (i.e. if there is at least one tuple on the
-		 * page that's greater than the tuple we're inserting to) then we know
-		 * that the tuple belongs on this page.  We can skip the high key
-		 * check.
+		 * If the target page is full, see if we can obtain enough space by
+		 * erasing LP_DEAD items
 		 */
-		if (insertstate->bounds_valid &&
-			insertstate->low <= insertstate->stricthigh &&
-			insertstate->stricthigh <= PageGetMaxOffsetNumber(page))
-			break;
+		if (PageGetFreeSpace(page) < insertstate->itemsz &&
+			P_HAS_GARBAGE(lpageop))
+		{
+			_bt_vacuum_one_page(rel, insertstate->buf, heapRel);
+			insertstate->bounds_valid = false;
+		}
+	}
+	else
+	{
+		/*----------
+		 * This is a !heapkeyspace (version 2 or 3) index.  The current page
+		 * is the first page that we could insert the new tuple to, but there
+		 * may be other pages to the right that we could opt to use instead.
+		 *
+		 * If the new key is equal to one or more existing keys, we can
+		 * legitimately place it anywhere in the series of equal keys.  In
+		 * fact, if the new key is equal to the page's "high key" we can place
+		 * it on the next page.  If it is equal to the high key, and there's
+		 * not room to insert the new tuple on the current page without
+		 * splitting, then we move right hoping to find more free space and
+		 * avoid a split.
+		 *
+		 * Keep scanning right until we
+		 *		(a) find a page with enough free space,
+		 *		(b) reach the last page where the tuple can legally go, or
+		 *		(c) get tired of searching.
+		 * (c) is not flippant; it is important because if there are many
+		 * pages' worth of equal keys, it's better to split one of the early
+		 * pages than to scan all the way to the end of the run of equal keys
+		 * on every insert.  We implement "get tired" as a random choice,
+		 * since stopping after scanning a fixed number of pages wouldn't work
+		 * well (we'd never reach the right-hand side of previously split
+		 * pages).  The probability of moving right is set at 0.99, which may
+		 * seem too high to change the behavior much, but it does an excellent
+		 * job of preventing O(N^2) behavior with many equal keys.
+		 *----------
+		 */
+		while (PageGetFreeSpace(page) < insertstate->itemsz)
+		{
+			/*
+			 * Before considering moving right, see if we can obtain enough
+			 * space by erasing LP_DEAD items
+			 */
+			if (P_HAS_GARBAGE(lpageop))
+			{
+				_bt_vacuum_one_page(rel, insertstate->buf, heapRel);
+				insertstate->bounds_valid = false;
 
-		if (P_RIGHTMOST(lpageop) ||
-			_bt_compare(rel, itup_key, page, P_HIKEY) != 0 ||
-			random() <= (MAX_RANDOM_VALUE / 100))
-			break;
+				if (PageGetFreeSpace(page) >= insertstate->itemsz)
+					break;		/* OK, now we have enough space */
+			}
 
-		_bt_stepright(rel, insertstate, stack);
-		/* Update local state after stepping right */
-		page = BufferGetPage(insertstate->buf);
-		lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+			/*
+			 * Nope, so check conditions (b) and (c) enumerated above
+			 *
+			 * The earlier _bt_check_unique() call may well have established a
+			 * strict upper bound on the offset for the new item.  If it's not
+			 * the last item of the page (i.e. if there is at least one tuple
+			 * on the page that's greater than the tuple we're inserting to)
+			 * then we know that the tuple belongs on this page.  We can skip
+			 * the high key check.
+			 */
+			if (insertstate->bounds_valid &&
+				insertstate->low <= insertstate->stricthigh &&
+				insertstate->stricthigh <= PageGetMaxOffsetNumber(page))
+				break;
+
+			if (P_RIGHTMOST(lpageop) ||
+				_bt_compare(rel, itup_key, page, P_HIKEY) != 0 ||
+				random() <= (MAX_RANDOM_VALUE / 100))
+				break;
+
+			_bt_stepright(rel, insertstate, stack);
+			/* Update local state after stepping right */
+			page = BufferGetPage(insertstate->buf);
+			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+		}
 	}
 
 	/*
@@ -778,6 +851,9 @@ _bt_findinsertloc(Relation rel,
  * else someone else's _bt_check_unique scan could fail to see our insertion.
  * Write locks on intermediate dead pages won't do because we don't know when
  * they will get de-linked from the tree.
+ *
+ * This is more aggressive than it needs to be for non-unique !heapkeyspace
+ * indexes.
  */
 static void
 _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack)
@@ -830,8 +906,9 @@ _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack)
  *
  *		This recursive procedure does the following things:
  *
- *			+  if necessary, splits the target page (making sure that the
- *			   split is equitable as far as post-insert free space goes).
+ *			+  if necessary, splits the target page, using 'itup_key' for
+ *			   suffix truncation on leaf pages (caller passes NULL for
+ *			   non-leaf pages).
  *			+  inserts the tuple.
  *			+  if the page was split, pops the parent stack, and finds the
  *			   right place to insert the new child pointer (by walking
@@ -857,6 +934,7 @@ _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack)
  */
 static void
 _bt_insertonpg(Relation rel,
+			   BTScanInsert itup_key,
 			   Buffer buf,
 			   Buffer cbuf,
 			   BTStack stack,
@@ -879,7 +957,7 @@ _bt_insertonpg(Relation rel,
 		   BTreeTupleGetNAtts(itup, rel) ==
 		   IndexRelationGetNumberOfAttributes(rel));
 	Assert(P_ISLEAF(lpageop) ||
-		   BTreeTupleGetNAtts(itup, rel) ==
+		   BTreeTupleGetNAtts(itup, rel) <=
 		   IndexRelationGetNumberOfKeyAttributes(rel));
 
 	/* The caller should've finished any incomplete splits already. */
@@ -929,8 +1007,8 @@ _bt_insertonpg(Relation rel,
 									  &newitemonleft);
 
 		/* split the buffer into left and right halves */
-		rbuf = _bt_split(rel, buf, cbuf, firstright,
-						 newitemoff, itemsz, itup, newitemonleft);
+		rbuf = _bt_split(rel, itup_key, buf, cbuf, firstright, newitemoff,
+						 itemsz, itup, newitemonleft);
 		PredicateLockPageSplit(rel,
 							   BufferGetBlockNumber(buf),
 							   BufferGetBlockNumber(rbuf));
@@ -1014,7 +1092,7 @@ _bt_insertonpg(Relation rel,
 		if (BufferIsValid(metabuf))
 		{
 			/* upgrade meta-page if needed */
-			if (metad->btm_version < BTREE_VERSION)
+			if (metad->btm_version < BTREE_NOVAC_VERSION)
 				_bt_upgrademetapage(metapg);
 			metad->btm_fastroot = itup_blkno;
 			metad->btm_fastlevel = lpageop->btpo.level;
@@ -1069,6 +1147,8 @@ _bt_insertonpg(Relation rel,
 
 			if (BufferIsValid(metabuf))
 			{
+				Assert(metad->btm_version >= BTREE_NOVAC_VERSION);
+				xlmeta.version = metad->btm_version;
 				xlmeta.root = metad->btm_root;
 				xlmeta.level = metad->btm_level;
 				xlmeta.fastroot = metad->btm_fastroot;
@@ -1136,17 +1216,19 @@ _bt_insertonpg(Relation rel,
  *		new right page.  newitemoff etc. tell us about the new item that
  *		must be inserted along with the data from the old page.
  *
- *		When splitting a non-leaf page, 'cbuf' is the left-sibling of the
- *		page we're inserting the downlink for.  This function will clear the
- *		INCOMPLETE_SPLIT flag on it, and release the buffer.
+ *		itup_key is used for suffix truncation on leaf pages (internal
+ *		page callers pass NULL).  When splitting a non-leaf page, 'cbuf'
+ *		is the left-sibling of the page we're inserting the downlink for.
+ *		This function will clear the INCOMPLETE_SPLIT flag on it, and
+ *		release the buffer.
  *
  *		Returns the new right sibling of buf, pinned and write-locked.
  *		The pin and lock on buf are maintained.
  */
 static Buffer
-_bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
-		  OffsetNumber newitemoff, Size newitemsz, IndexTuple newitem,
-		  bool newitemonleft)
+_bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
+		  OffsetNumber firstright, OffsetNumber newitemoff, Size newitemsz,
+		  IndexTuple newitem, bool newitemonleft)
 {
 	Buffer		rbuf;
 	Page		origpage;
@@ -1240,7 +1322,8 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		itemid = PageGetItemId(origpage, P_HIKEY);
 		itemsz = ItemIdGetLength(itemid);
 		item = (IndexTuple) PageGetItem(origpage, itemid);
-		Assert(BTreeTupleGetNAtts(item, rel) == indnkeyatts);
+		Assert(BTreeTupleGetNAtts(item, rel) > 0);
+		Assert(BTreeTupleGetNAtts(item, rel) <= indnkeyatts);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
 						false, false) == InvalidOffsetNumber)
 		{
@@ -1254,8 +1337,29 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 
 	/*
 	 * The "high key" for the new left page will be the first key that's going
-	 * to go into the new right page.  This might be either the existing data
-	 * item at position firstright, or the incoming tuple.
+	 * to go into the new right page, or possibly a truncated version if this
+	 * is a leaf page split.  This might be either the existing data item at
+	 * position firstright, or the incoming tuple.
+	 *
+	 * The high key for the left page is formed using the first item on the
+	 * right page, which may seem to be contrary to Lehman & Yao's approach of
+	 * using the left page's last item as its new high key when splitting on
+	 * the leaf level.  It isn't, though: suffix truncation will leave the
+	 * left page's high key fully equal to the last item on the left page when
+	 * two tuples with equal key values (excluding heap TID) enclose the split
+	 * point.  It isn't actually necessary for a new leaf high key to be equal
+	 * to the last item on the left for the L&Y "subtree" invariant to hold.
+	 * It's sufficient to make sure that the new leaf high key is strictly
+	 * less than the first item on the right leaf page, and greater than or
+	 * equal to (not necessarily equal to) the last item on the left leaf
+	 * page.
+	 *
+	 * In other words, when suffix truncation isn't possible, L&Y's exact
+	 * approach to leaf splits is taken.  (Actually, even that is slightly
+	 * inaccurate.  A tuple with all the keys from firstright but the heap TID
+	 * from lastleft will be used as the new high key, since the last left
+	 * tuple could be physically larger despite being opclass-equal in respect
+	 * of all attributes prior to the heap TID attribute.)
 	 */
 	leftoff = P_HIKEY;
 	if (!newitemonleft && newitemoff == firstright)
@@ -1273,25 +1377,48 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	}
 
 	/*
-	 * Truncate non-key (INCLUDE) attributes of the high key item before
-	 * inserting it on the left page.  This only needs to happen at the leaf
+	 * Truncate unneeded key and non-key attributes of the high key item
+	 * before inserting it on the left page.  This can only happen at the leaf
 	 * level, since in general all pivot tuple values originate from leaf
-	 * level high keys.  This isn't just about avoiding unnecessary work,
-	 * though; truncating unneeded key attributes (more aggressive suffix
-	 * truncation) can only be performed at the leaf level anyway.  This is
-	 * because a pivot tuple in a grandparent page must guide a search not
-	 * only to the correct parent page, but also to the correct leaf page.
+	 * level high keys.  A pivot tuple in a grandparent page must guide a
+	 * search not only to the correct parent page, but also to the correct
+	 * leaf page.
 	 */
-	if (indnatts != indnkeyatts && isleaf)
+	if (isleaf && (itup_key->heapkeyspace || indnatts != indnkeyatts))
 	{
-		lefthikey = _bt_nonkey_truncate(rel, item);
+		IndexTuple	lastleft;
+
+		/*
+		 * Determine which tuple will become the last on the left page.  This
+		 * is needed to decide how many attributes from the first item on the
+		 * right page must remain in new high key for left page.
+		 */
+		if (newitemonleft && newitemoff == firstright)
+		{
+			/* incoming tuple will become last on left page */
+			lastleft = newitem;
+		}
+		else
+		{
+			OffsetNumber lastleftoff;
+
+			/* item just before firstright will become last on left page */
+			lastleftoff = OffsetNumberPrev(firstright);
+			Assert(lastleftoff >= P_FIRSTDATAKEY(oopaque));
+			itemid = PageGetItemId(origpage, lastleftoff);
+			lastleft = (IndexTuple) PageGetItem(origpage, itemid);
+		}
+
+		Assert(lastleft != item);
+		lefthikey = _bt_truncate(rel, lastleft, item, itup_key);
 		itemsz = IndexTupleSize(lefthikey);
 		itemsz = MAXALIGN(itemsz);
 	}
 	else
 		lefthikey = item;
 
-	Assert(BTreeTupleGetNAtts(lefthikey, rel) == indnkeyatts);
+	Assert(BTreeTupleGetNAtts(lefthikey, rel) > 0);
+	Assert(BTreeTupleGetNAtts(lefthikey, rel) <= indnkeyatts);
 	if (PageAddItem(leftpage, (Item) lefthikey, itemsz, leftoff,
 					false, false) == InvalidOffsetNumber)
 	{
@@ -1484,7 +1611,6 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		xl_btree_split xlrec;
 		uint8		xlinfo;
 		XLogRecPtr	recptr;
-		bool		loglhikey = false;
 
 		xlrec.level = ropaque->btpo.level;
 		xlrec.firstright = firstright;
@@ -1513,22 +1639,10 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		if (newitemonleft)
 			XLogRegisterBufData(0, (char *) newitem, MAXALIGN(newitemsz));
 
-		/* Log left page */
-		if (!isleaf || indnatts != indnkeyatts)
-		{
-			/*
-			 * We must also log the left page's high key.  There are two
-			 * reasons for that: right page's leftmost key is suppressed on
-			 * non-leaf levels and in covering indexes included columns are
-			 * truncated from high keys.  Show it as belonging to the left
-			 * page buffer, so that it is not stored if XLogInsert decides it
-			 * needs a full-page image of the left page.
-			 */
-			itemid = PageGetItemId(origpage, P_HIKEY);
-			item = (IndexTuple) PageGetItem(origpage, itemid);
-			XLogRegisterBufData(0, (char *) item, MAXALIGN(IndexTupleSize(item)));
-			loglhikey = true;
-		}
+		/* Log the left page's new high key */
+		itemid = PageGetItemId(origpage, P_HIKEY);
+		item = (IndexTuple) PageGetItem(origpage, itemid);
+		XLogRegisterBufData(0, (char *) item, MAXALIGN(IndexTupleSize(item)));
 
 		/*
 		 * Log the contents of the right page in the format understood by
@@ -1544,9 +1658,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 							(char *) rightpage + ((PageHeader) rightpage)->pd_upper,
 							((PageHeader) rightpage)->pd_special - ((PageHeader) rightpage)->pd_upper);
 
-		xlinfo = newitemonleft ?
-			(loglhikey ? XLOG_BTREE_SPLIT_L_HIGHKEY : XLOG_BTREE_SPLIT_L) :
-			(loglhikey ? XLOG_BTREE_SPLIT_R_HIGHKEY : XLOG_BTREE_SPLIT_R);
+		xlinfo = newitemonleft ? XLOG_BTREE_SPLIT_L : XLOG_BTREE_SPLIT_R;
 		recptr = XLogInsert(RM_BTREE_ID, xlinfo);
 
 		PageSetLSN(origpage, recptr);
@@ -1909,7 +2021,7 @@ _bt_insert_parent(Relation rel,
 			_bt_relbuf(rel, pbuf);
 		}
 
-		/* get high key from left page == lower bound for new right page */
+		/* get high key from left, a strict lower bound for new right page */
 		ritem = (IndexTuple) PageGetItem(page,
 										 PageGetItemId(page, P_HIKEY));
 
@@ -1939,7 +2051,7 @@ _bt_insert_parent(Relation rel,
 				 RelationGetRelationName(rel), bknum, rbknum);
 
 		/* Recursively update the parent */
-		_bt_insertonpg(rel, pbuf, buf, stack->bts_parent,
+		_bt_insertonpg(rel, NULL, pbuf, buf, stack->bts_parent,
 					   new_item, stack->bts_offset + 1,
 					   is_only);
 
@@ -2200,7 +2312,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	START_CRIT_SECTION();
 
 	/* upgrade metapage if needed */
-	if (metad->btm_version < BTREE_VERSION)
+	if (metad->btm_version < BTREE_NOVAC_VERSION)
 		_bt_upgrademetapage(metapg);
 
 	/* set btree special data */
@@ -2235,7 +2347,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	/*
 	 * insert the right page pointer into the new root page.
 	 */
-	Assert(BTreeTupleGetNAtts(right_item, rel) ==
+	Assert(BTreeTupleGetNAtts(right_item, rel) > 0);
+	Assert(BTreeTupleGetNAtts(right_item, rel) <=
 		   IndexRelationGetNumberOfKeyAttributes(rel));
 	if (PageAddItem(rootpage, (Item) right_item, right_item_sz, P_FIRSTKEY,
 					false, false) == InvalidOffsetNumber)
@@ -2268,6 +2381,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		XLogRegisterBuffer(1, lbuf, REGBUF_STANDARD);
 		XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
+		Assert(metad->btm_version >= BTREE_NOVAC_VERSION);
+		md.version = metad->btm_version;
 		md.root = rootblknum;
 		md.level = metad->btm_level;
 		md.fastroot = rootblknum;
@@ -2332,6 +2447,7 @@ _bt_pgaddtup(Page page,
 	{
 		trunctuple = *itup;
 		trunctuple.t_info = sizeof(IndexTupleData);
+		/* Deliberately zero INDEX_ALT_TID_MASK bits */
 		BTreeTupleSetNAtts(&trunctuple, 0);
 		itup = &trunctuple;
 		itemsize = sizeof(IndexTupleData);
@@ -2347,8 +2463,8 @@ _bt_pgaddtup(Page page,
 /*
  * _bt_isequal - used in _bt_doinsert in check for duplicates.
  *
- * This is very similar to _bt_compare, except for NULL handling.
- * Rule is simple: NOT_NULL not equal NULL, NULL not equal NULL too.
+ * This is very similar to _bt_compare, except for NULL and negative infinity
+ * handling.  Rule is simple: NOT_NULL not equal NULL, NULL not equal NULL too.
  */
 static bool
 _bt_isequal(TupleDesc itupdesc, BTScanInsert itup_key, Page page,
@@ -2361,6 +2477,7 @@ _bt_isequal(TupleDesc itupdesc, BTScanInsert itup_key, Page page,
 	/* Better be comparing to a non-pivot item */
 	Assert(P_ISLEAF((BTPageOpaque) PageGetSpecialPointer(page)));
 	Assert(offnum >= P_FIRSTDATAKEY((BTPageOpaque) PageGetSpecialPointer(page)));
+	Assert(itup_key->scantid == NULL);
 
 	scankey = itup_key->scankeys;
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));

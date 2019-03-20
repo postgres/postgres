@@ -805,11 +805,11 @@ DROP FOREIGN TABLE foreign_part;
 DROP TABLE temp_parted;
 
 -- Cleanup
+\set VERBOSITY terse
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
 DROP SERVER t1 CASCADE;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
-\set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 DROP SERVER s8 CASCADE;
 \set VERBOSITY default
