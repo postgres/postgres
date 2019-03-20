@@ -266,10 +266,10 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 		Page		lpage = (Page) BufferGetPage(lbuf);
 		BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 		OffsetNumber off;
-		IndexTuple	newitem,
-					left_hikey;
-		Size		newitemsz,
-					left_hikeysz;
+		IndexTuple	newitem = NULL,
+					left_hikey = NULL;
+		Size		newitemsz = 0,
+					left_hikeysz = 0;
 		Page		newlpage;
 		OffsetNumber leftoff;
 
