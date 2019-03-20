@@ -439,10 +439,11 @@ GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_indirect;
 SET ROLE regress_test_role;
 ALTER SERVER s1 OWNER TO regress_test_indirect;
 RESET ROLE;
+-- We use terse mode to avoid ordering issues in detail output.
+\set VERBOSITY terse
 DROP ROLE regress_test_indirect;                            -- ERROR
 ERROR:  role "regress_test_indirect" cannot be dropped because some objects depend on it
-DETAIL:  privileges for foreign-data wrapper foo
-owner of server s1
+\set VERBOSITY default
 \des+
                                                                                  List of foreign servers
  Name |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |             FDW options              | Description 
@@ -1203,7 +1204,6 @@ ERROR:  permission denied for foreign-data wrapper foo
 ALTER SERVER s9 VERSION '1.1';
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
--- We use terse mode to avoid ordering issues in cascade detail output.
 \set VERBOSITY terse
 DROP SERVER s9 CASCADE;
 NOTICE:  drop cascades to 2 other objects
