@@ -15649,36 +15649,18 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 static void
 refuseDupeIndexAttach(Relation parentIdx, Relation partIdx, Relation partitionTbl)
 {
-	Relation	pg_inherits;
-	ScanKeyData key;
-	HeapTuple	tuple;
-	SysScanDesc scan;
+	Oid			existingIdx;
 
-	pg_inherits = table_open(InheritsRelationId, AccessShareLock);
-	ScanKeyInit(&key, Anum_pg_inherits_inhparent,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelationGetRelid(parentIdx)));
-	scan = systable_beginscan(pg_inherits, InheritsParentIndexId, true,
-							  NULL, 1, &key);
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-	{
-		Form_pg_inherits inhForm;
-		Oid			tab;
-
-		inhForm = (Form_pg_inherits) GETSTRUCT(tuple);
-		tab = IndexGetRelation(inhForm->inhrelid, false);
-		if (tab == RelationGetRelid(partitionTbl))
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("cannot attach index \"%s\" as a partition of index \"%s\"",
-							RelationGetRelationName(partIdx),
-							RelationGetRelationName(parentIdx)),
-					 errdetail("Another index is already attached for partition \"%s\".",
-							   RelationGetRelationName(partitionTbl))));
-	}
-
-	systable_endscan(scan);
-	table_close(pg_inherits, AccessShareLock);
+	existingIdx = index_get_partition(partitionTbl,
+									  RelationGetRelid(parentIdx));
+	if (OidIsValid(existingIdx))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot attach index \"%s\" as a partition of index \"%s\"",
+						RelationGetRelationName(partIdx),
+						RelationGetRelationName(parentIdx)),
+				 errdetail("Another index is already attached for partition \"%s\".",
+						   RelationGetRelationName(partitionTbl))));
 }
 
 /*

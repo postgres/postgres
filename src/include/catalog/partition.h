@@ -21,6 +21,7 @@
 
 extern Oid	get_partition_parent(Oid relid);
 extern List *get_partition_ancestors(Oid relid);
+extern Oid	index_get_partition(Relation partition, Oid indexId);
 extern List *map_partition_varattnos(List *expr, int fromrel_varno,
 						Relation to_rel, Relation from_rel,
 						bool *found_whole_row);
