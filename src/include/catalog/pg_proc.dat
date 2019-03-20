@@ -9249,10 +9249,10 @@
   prosrc => 'jsonb_path_match' },
 
 { oid => '4010', descr => 'implementation of @? operator',
-  proname => 'jsonb_path_exists', prorettype => 'bool',
+  proname => 'jsonb_path_exists_opr', prorettype => 'bool',
   proargtypes => 'jsonb jsonpath', prosrc => 'jsonb_path_exists_opr' },
 { oid => '4011', descr => 'implementation of @@ operator',
-  proname => 'jsonb_path_match', prorettype => 'bool',
+  proname => 'jsonb_path_match_opr', prorettype => 'bool',
   proargtypes => 'jsonb jsonpath', prosrc => 'jsonb_path_match_opr' },
 
 # txid

@@ -3257,11 +3257,11 @@
   oprresult => 'jsonb', oprcode => 'jsonb_delete_path' },
 { oid => '4012', descr => 'jsonpath exists',
   oprname => '@?', oprleft => 'jsonb', oprright => 'jsonpath',
-  oprresult => 'bool', oprcode => 'jsonb_path_exists(jsonb,jsonpath)',
+  oprresult => 'bool', oprcode => 'jsonb_path_exists_opr(jsonb,jsonpath)',
   oprrest => 'contsel', oprjoin => 'contjoinsel' },
 { oid => '4013', descr => 'jsonpath match',
   oprname => '@@', oprleft => 'jsonb', oprright => 'jsonpath',
-  oprresult => 'bool', oprcode => 'jsonb_path_match(jsonb,jsonpath)',
+  oprresult => 'bool', oprcode => 'jsonb_path_match_opr(jsonb,jsonpath)',
   oprrest => 'contsel', oprjoin => 'contjoinsel' },
 
 ]

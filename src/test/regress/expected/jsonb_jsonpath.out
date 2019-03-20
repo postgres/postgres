@@ -1751,6 +1751,12 @@ SELECT jsonb '[{"a": 1}, {"a": 2}]' @? '$[*] ? (@.a > 2)';
  f
 (1 row)
 
+SELECT jsonb_path_exists('[{"a": 1}, {"a": 2}]', '$[*].a ? (@ > 1)');
+ jsonb_path_exists 
+-------------------
+ t
+(1 row)
+
 SELECT jsonb_path_exists('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*] ? (@.a > $min && @.a < $max)', vars => '{"min": 1, "max": 4}');
  jsonb_path_exists 
 -------------------
@@ -1773,5 +1779,11 @@ SELECT jsonb '[{"a": 1}, {"a": 2}]' @@ '$[*].a > 2';
  ?column? 
 ----------
  f
+(1 row)
+
+SELECT jsonb_path_match('[{"a": 1}, {"a": 2}]', '$[*].a > 1');
+ jsonb_path_match 
+------------------
+ t
 (1 row)
 
