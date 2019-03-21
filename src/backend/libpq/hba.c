@@ -1500,7 +1500,10 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	 */
 	if (parsedline->auth_method == uaLDAP)
 	{
+#ifndef HAVE_LDAP_INITIALIZE
+		/* Not mandatory for OpenLDAP, because it can use DNS SRV records */
 		MANDATORY_AUTH_ARG(parsedline->ldapserver, "ldapserver", "ldap");
+#endif
 
 		/*
 		 * LDAP can operate in two modes: either with a direct bind, using

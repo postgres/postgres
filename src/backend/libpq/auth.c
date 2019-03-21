@@ -2368,45 +2368,95 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	}
 #else
 #ifdef HAVE_LDAP_INITIALIZE
+
+	/*
+	 * OpenLDAP provides a non-standard extension ldap_initialize() that takes
+	 * a list of URIs, allowing us to request "ldaps" instead of "ldap".  It
+	 * also provides ldap_domain2hostlist() to find LDAP servers automatically
+	 * using DNS SRV.  They were introduced in the same version, so for now we
+	 * don't have an extra configure check for the latter.
+	 */
 	{
-		const char *hostnames = port->hba->ldapserver;
-		char	   *uris = NULL;
+		StringInfoData uris;
+		char	   *hostlist = NULL;
+		char	   *p;
+		bool		append_port;
+
+		/* We'll build a space-separated scheme://hostname:port list here */
+		initStringInfo(&uris);
 
 		/*
-		 * We have a space-separated list of hostnames.  Convert it
-		 * to a space-separated list of URIs.
+		 * If pg_hba.conf provided no hostnames, we can ask OpenLDAP to try to
+		 * find some by extracting a domain name from the base DN and looking
+		 * up DSN SRV records for _ldap._tcp.<domain>.
 		 */
+		if (!port->hba->ldapserver || port->hba->ldapserver[0] == '\0')
+		{
+			char	   *domain;
+
+			/* ou=blah,dc=foo,dc=bar -> foo.bar */
+			if (ldap_dn2domain(port->hba->ldapbasedn, &domain))
+			{
+				ereport(LOG,
+						(errmsg("could not extract domain name from ldapbasedn")));
+				return STATUS_ERROR;
+			}
+
+			/* Look up a list of LDAP server hosts and port numbers */
+			if (ldap_domain2hostlist(domain, &hostlist))
+			{
+				ereport(LOG,
+						(errmsg("LDAP authentication could not find DNS SRV records for \"%s\"",
+								domain),
+						 (errhint("Set an LDAP server name explicitly."))));
+				ldap_memfree(domain);
+				return STATUS_ERROR;
+			}
+			ldap_memfree(domain);
+
+			/* We have a space-separated list of host:port entries */
+			p = hostlist;
+			append_port = false;
+		}
+		else
+		{
+			/* We have a space-separated list of hosts from pg_hba.conf */
+			p = port->hba->ldapserver;
+			append_port = true;
+		}
+
+		/* Convert the list of host[:port] entries to full URIs */
 		do
 		{
-			char	   *hostname;
-			size_t		hostname_size;
-			char	   *new_uris;
+			size_t		size;
 
-			/* Find the leading hostname. */
-			hostname_size = strcspn(hostnames, " ");
-			hostname = pnstrdup(hostnames, hostname_size);
+			/* Find the span of the next entry */
+			size = strcspn(p, " ");
 
-			/* Append a URI for this hostname. */
-			new_uris = psprintf("%s%s%s://%s:%d",
-								uris ? uris : "",
-								uris ? " " : "",
-								scheme,
-								hostname,
-								port->hba->ldapport);
+			/* Append a space separator if this isn't the first URI */
+			if (uris.len > 0)
+				appendStringInfoChar(&uris, ' ');
 
-			pfree(hostname);
-			if (uris)
-				pfree(uris);
-			uris = new_uris;
+			/* Append scheme://host:port */
+			appendStringInfoString(&uris, scheme);
+			appendStringInfoString(&uris, "://");
+			appendBinaryStringInfo(&uris, p, size);
+			if (append_port)
+				appendStringInfo(&uris, ":%d", port->hba->ldapport);
 
-			/* Step over this hostname and any spaces. */
-			hostnames += hostname_size;
-			while (*hostnames == ' ')
-				++hostnames;
-		} while (*hostnames);
+			/* Step over this entry and any number of trailing spaces */
+			p += size;
+			while (*p == ' ')
+				++p;
+		} while (*p);
 
-		r = ldap_initialize(ldap, uris);
-		pfree(uris);
+		/* Free memory from OpenLDAP if we looked up SRV records */
+		if (hostlist)
+			ldap_memfree(hostlist);
+
+		/* Finally, try to connect using the URI list */
+		r = ldap_initialize(ldap, uris.data);
+		pfree(uris.data);
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
@@ -2552,13 +2602,35 @@ CheckLDAPAuth(Port *port)
 	LDAP	   *ldap;
 	int			r;
 	char	   *fulluser;
+	const char *server_name;
 
+#ifdef HAVE_LDAP_INITIALIZE
+
+	/*
+	 * For OpenLDAP, allow empty hostname if we have a basedn.  We'll look for
+	 * servers with DNS SRV records via OpenLDAP library facilities.
+	 */
+	if ((!port->hba->ldapserver || port->hba->ldapserver[0] == '\0') &&
+		(!port->hba->ldapbasedn || port->hba->ldapbasedn[0] == '\0'))
+	{
+		ereport(LOG,
+				(errmsg("LDAP server not specified, and no ldapbasedn")));
+		return STATUS_ERROR;
+	}
+#else
 	if (!port->hba->ldapserver || port->hba->ldapserver[0] == '\0')
 	{
 		ereport(LOG,
 				(errmsg("LDAP server not specified")));
 		return STATUS_ERROR;
 	}
+#endif
+
+	/*
+	 * If we're using SRV records, we don't have a server name so we'll just
+	 * show an empty string in error messages.
+	 */
+	server_name = port->hba->ldapserver ? port->hba->ldapserver : "";
 
 	if (port->hba->ldapport == 0)
 	{
@@ -2630,7 +2702,7 @@ CheckLDAPAuth(Port *port)
 			ereport(LOG,
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
 							port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
-							port->hba->ldapserver,
+							server_name,
 							ldap_err2string(r)),
 					 errdetail_for_ldap(ldap)));
 			ldap_unbind(ldap);
@@ -2658,7 +2730,7 @@ CheckLDAPAuth(Port *port)
 		{
 			ereport(LOG,
 					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": %s",
-							filter, port->hba->ldapserver, ldap_err2string(r)),
+							filter, server_name, ldap_err2string(r)),
 					 errdetail_for_ldap(ldap)));
 			ldap_unbind(ldap);
 			pfree(passwd);
@@ -2673,14 +2745,14 @@ CheckLDAPAuth(Port *port)
 				ereport(LOG,
 						(errmsg("LDAP user \"%s\" does not exist", port->user_name),
 						 errdetail("LDAP search for filter \"%s\" on server \"%s\" returned no entries.",
-								   filter, port->hba->ldapserver)));
+								   filter, server_name)));
 			else
 				ereport(LOG,
 						(errmsg("LDAP user \"%s\" is not unique", port->user_name),
 						 errdetail_plural("LDAP search for filter \"%s\" on server \"%s\" returned %d entry.",
 										  "LDAP search for filter \"%s\" on server \"%s\" returned %d entries.",
 										  count,
-										  filter, port->hba->ldapserver, count)));
+										  filter, server_name, count)));
 
 			ldap_unbind(ldap);
 			pfree(passwd);
@@ -2698,7 +2770,7 @@ CheckLDAPAuth(Port *port)
 			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
 			ereport(LOG,
 					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
-							filter, port->hba->ldapserver,
+							filter, server_name,
 							ldap_err2string(error)),
 					 errdetail_for_ldap(ldap)));
 			ldap_unbind(ldap);
@@ -2719,7 +2791,7 @@ CheckLDAPAuth(Port *port)
 		{
 			ereport(LOG,
 					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\"",
-							fulluser, port->hba->ldapserver)));
+							fulluser, server_name)));
 			pfree(passwd);
 			pfree(fulluser);
 			return STATUS_ERROR;
@@ -2750,7 +2822,7 @@ CheckLDAPAuth(Port *port)
 	{
 		ereport(LOG,
 				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
-						fulluser, port->hba->ldapserver, ldap_err2string(r)),
+						fulluser, server_name, ldap_err2string(r)),
 				 errdetail_for_ldap(ldap)));
 		ldap_unbind(ldap);
 		pfree(passwd);

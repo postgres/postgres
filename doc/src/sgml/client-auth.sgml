@@ -1655,7 +1655,8 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
         </para>
 
         <para>
-         LDAP URLs are currently only supported with OpenLDAP, not on Windows.
+         LDAP URLs are currently only supported with
+         <productname>OpenLDAP</productname>, not on Windows.
         </para>
        </listitem>
       </varlistentry>
@@ -1676,6 +1677,15 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
     specifying <literal>ldapsearchfilter="(foo=$username)"</literal>.  If neither
     option is specified the default is
     <literal>ldapsearchattribute=uid</literal>.
+   </para>
+
+   <para>
+     If <productname>PostgreSQL</productname> was compiled with
+     <productname>OpenLDAP</productname> as the LDAP client library, the
+     <literal>ldapserver</literal> setting may be omitted.  In that case, a
+     list of hostnames and ports is looked up via RFC 2782 DNS SRV records.
+     The name <literal>_ldap._tcp.DOMAIN</literal> is looked up, where
+     <literal>DOMAIN</literal> is extracted from <literal>ldapbasedn</literal>.
    </para>
 
    <para>
@@ -1720,6 +1730,15 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
     user ID or email address:
 <programlisting>
 host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapsearchfilter="(|(uid=$username)(mail=$username))"
+</programlisting>
+   </para>
+
+   <para>
+    Here is an example for a search+bind configuration that uses DNS SRV
+    discovery to find the hostname(s) and port(s) for the LDAP service for the
+    domain name <literal>example.net</literal>:
+<programlisting>
+host ... ldap ldapbasedn="dc=example,dc=net"
 </programlisting>
    </para>
 
