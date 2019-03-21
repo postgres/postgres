@@ -35,12 +35,22 @@
 #include "utils/syscache.h"
 
 
+/* Possible error codes from LookupFuncNameInternal */
+typedef enum
+{
+	FUNCLOOKUP_NOSUCHFUNC,
+	FUNCLOOKUP_AMBIGUOUS
+} FuncLookupError;
+
 static void unify_hypothetical_args(ParseState *pstate,
 						List *fargs, int numAggregatedArgs,
 						Oid *actual_arg_types, Oid *declared_arg_types);
 static Oid	FuncNameAsType(List *funcname);
 static Node *ParseComplexProjection(ParseState *pstate, const char *funcname,
 					   Node *first_arg, int location);
+static Oid LookupFuncNameInternal(List *funcname, int nargs,
+					   const Oid *argtypes,
+					   bool missing_ok, FuncLookupError *lookupError);
 
 
 /*
@@ -2022,57 +2032,55 @@ func_signature_string(List *funcname, int nargs,
 }
 
 /*
- * LookupFuncName
+ * LookupFuncNameInternal
+ *		Workhorse for LookupFuncName/LookupFuncWithArgs
  *
- * Given a possibly-qualified function name and optionally a set of argument
- * types, look up the function.  Pass nargs == -1 to indicate that no argument
- * types are specified.
+ * In an error situation, e.g. can't find the function, then we return
+ * InvalidOid and set *lookupError to indicate what went wrong.
  *
- * If the function name is not schema-qualified, it is sought in the current
- * namespace search path.
- *
- * If the function is not found, we return InvalidOid if noError is true,
- * else raise an error.
+ * Possible errors:
+ *	FUNCLOOKUP_NOSUCHFUNC: we can't find a function of this name.
+ *	FUNCLOOKUP_AMBIGUOUS: nargs == -1 and more than one function matches.
  */
-Oid
-LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
+static Oid
+LookupFuncNameInternal(List *funcname, int nargs, const Oid *argtypes,
+					   bool missing_ok, FuncLookupError *lookupError)
 {
 	FuncCandidateList clist;
 
 	/* Passing NULL for argtypes is no longer allowed */
 	Assert(argtypes);
 
-	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false, noError);
+	/* Always set *lookupError, to forestall uninitialized-variable warnings */
+	*lookupError = FUNCLOOKUP_NOSUCHFUNC;
+
+	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false,
+								  missing_ok);
 
 	/*
 	 * If no arguments were specified, the name must yield a unique candidate.
 	 */
-	if (nargs == -1)
+	if (nargs < 0)
 	{
 		if (clist)
 		{
+			/* If there is a second match then it's ambiguous */
 			if (clist->next)
 			{
-				if (!noError)
-					ereport(ERROR,
-							(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-							 errmsg("function name \"%s\" is not unique",
-									NameListToString(funcname)),
-							 errhint("Specify the argument list to select the function unambiguously.")));
+				*lookupError = FUNCLOOKUP_AMBIGUOUS;
+				return InvalidOid;
 			}
-			else
-				return clist->oid;
+			/* Otherwise return the match */
+			return clist->oid;
 		}
 		else
-		{
-			if (!noError)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("could not find a function named \"%s\"",
-								NameListToString(funcname))));
-		}
+			return InvalidOid;
 	}
 
+	/*
+	 * Otherwise, look for a match to the arg types.  FuncnameGetCandidates
+	 * has ensured that there's at most one match in the returned list.
+	 */
 	while (clist)
 	{
 		if (memcmp(argtypes, clist->args, nargs * sizeof(Oid)) == 0)
@@ -2080,35 +2088,97 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 		clist = clist->next;
 	}
 
-	if (!noError)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("function %s does not exist",
-						func_signature_string(funcname, nargs,
-											  NIL, argtypes))));
-
 	return InvalidOid;
+}
+
+/*
+ * LookupFuncName
+ *
+ * Given a possibly-qualified function name and optionally a set of argument
+ * types, look up the function.  Pass nargs == -1 to indicate that the number
+ * and types of the arguments are unspecified (this is NOT the same as
+ * specifying that there are no arguments).
+ *
+ * If the function name is not schema-qualified, it is sought in the current
+ * namespace search path.
+ *
+ * If the function is not found, we return InvalidOid if missing_ok is true,
+ * else raise an error.
+ *
+ * If nargs == -1 and multiple functions are found matching this function name
+ * we will raise an ambiguous-function error, regardless of what missing_ok is
+ * set to.
+ */
+Oid
+LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool missing_ok)
+{
+	Oid			funcoid;
+	FuncLookupError lookupError;
+
+	funcoid = LookupFuncNameInternal(funcname, nargs, argtypes, missing_ok,
+									 &lookupError);
+
+	if (OidIsValid(funcoid))
+		return funcoid;
+
+	switch (lookupError)
+	{
+		case FUNCLOOKUP_NOSUCHFUNC:
+			/* Let the caller deal with it when missing_ok is true */
+			if (missing_ok)
+				return InvalidOid;
+
+			if (nargs < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not find a function named \"%s\"",
+								NameListToString(funcname))));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("function %s does not exist",
+								func_signature_string(funcname, nargs,
+													  NIL, argtypes))));
+			break;
+
+		case FUNCLOOKUP_AMBIGUOUS:
+			/* Raise an error regardless of missing_ok */
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("function name \"%s\" is not unique",
+							NameListToString(funcname)),
+					 errhint("Specify the argument list to select the function unambiguously.")));
+			break;
+	}
+
+	return InvalidOid;			/* Keep compiler quiet */
 }
 
 /*
  * LookupFuncWithArgs
  *
- * Like LookupFuncName, but the argument types are specified by a
+ * Like LookupFuncName, but the argument types are specified by an
  * ObjectWithArgs node.  Also, this function can check whether the result is a
  * function, procedure, or aggregate, based on the objtype argument.  Pass
  * OBJECT_ROUTINE to accept any of them.
  *
  * For historical reasons, we also accept aggregates when looking for a
  * function.
+ *
+ * When missing_ok is true we don't generate any error for missing objects and
+ * return InvalidOid.  Other types of errors can still be raised, regardless
+ * of the value of missing_ok.
  */
 Oid
-LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
+LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 {
 	Oid			argoids[FUNC_MAX_ARGS];
 	int			argcount;
+	int			nargs;
 	int			i;
 	ListCell   *args_item;
 	Oid			oid;
+	FuncLookupError lookupError;
 
 	Assert(objtype == OBJECT_AGGREGATE ||
 		   objtype == OBJECT_FUNCTION ||
@@ -2117,113 +2187,193 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool noError)
 
 	argcount = list_length(func->objargs);
 	if (argcount > FUNC_MAX_ARGS)
-		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg_plural("functions cannot have more than %d argument",
-							   "functions cannot have more than %d arguments",
-							   FUNC_MAX_ARGS,
-							   FUNC_MAX_ARGS)));
+	{
+		if (objtype == OBJECT_PROCEDURE)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg_plural("procedures cannot have more than %d argument",
+								   "procedures cannot have more than %d arguments",
+								   FUNC_MAX_ARGS,
+								   FUNC_MAX_ARGS)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg_plural("functions cannot have more than %d argument",
+								   "functions cannot have more than %d arguments",
+								   FUNC_MAX_ARGS,
+								   FUNC_MAX_ARGS)));
+	}
 
 	i = 0;
 	foreach(args_item, func->objargs)
 	{
 		TypeName   *t = (TypeName *) lfirst(args_item);
 
-		argoids[i++] = LookupTypeNameOid(NULL, t, noError);
+		argoids[i] = LookupTypeNameOid(NULL, t, missing_ok);
+		if (!OidIsValid(argoids[i]))
+			return InvalidOid;	/* missing_ok must be true */
+		i++;
 	}
 
 	/*
-	 * When looking for a function or routine, we pass noError through to
-	 * LookupFuncName and let it make any error messages.  Otherwise, we make
-	 * our own errors for the aggregate and procedure cases.
+	 * Set nargs for LookupFuncNameInternal. It expects -1 to mean no args
+	 * were specified.
 	 */
-	oid = LookupFuncName(func->objname, func->args_unspecified ? -1 : argcount, argoids,
-						 (objtype == OBJECT_FUNCTION || objtype == OBJECT_ROUTINE) ? noError : true);
+	nargs = func->args_unspecified ? -1 : argcount;
 
-	if (objtype == OBJECT_FUNCTION)
+	oid = LookupFuncNameInternal(func->objname, nargs, argoids, missing_ok,
+								 &lookupError);
+
+	if (OidIsValid(oid))
 	{
-		/* Make sure it's a function, not a procedure */
-		if (oid && get_func_prokind(oid) == PROKIND_PROCEDURE)
+		/*
+		 * Even if we found the function, perform validation that the objtype
+		 * matches the prokind of the found function.  For historical reasons
+		 * we allow the objtype of FUNCTION to include aggregates and window
+		 * functions; but we draw the line if the object is a procedure.  That
+		 * is a new enough feature that this historical rule does not apply.
+		 */
+		switch (objtype)
 		{
-			if (noError)
-				return InvalidOid;
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("%s is not a function",
-							func_signature_string(func->objname, argcount,
-												  NIL, argoids))));
+			case OBJECT_FUNCTION:
+				/* Only complain if it's a procedure. */
+				if (get_func_prokind(oid) == PROKIND_PROCEDURE)
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("%s is not a function",
+									func_signature_string(func->objname, argcount,
+														  NIL, argoids))));
+				break;
+
+			case OBJECT_PROCEDURE:
+				/* Reject if found object is not a procedure. */
+				if (get_func_prokind(oid) != PROKIND_PROCEDURE)
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("%s is not a procedure",
+									func_signature_string(func->objname, argcount,
+														  NIL, argoids))));
+				break;
+
+			case OBJECT_AGGREGATE:
+				/* Reject if found object is not an aggregate. */
+				if (get_func_prokind(oid) != PROKIND_AGGREGATE)
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("function %s is not an aggregate",
+									func_signature_string(func->objname, argcount,
+														  NIL, argoids))));
+				break;
+
+			default:
+				/* OBJECT_ROUTINE accepts anything. */
+				break;
 		}
+
+		return oid;				/* All good */
 	}
-	else if (objtype == OBJECT_PROCEDURE)
+	else
 	{
-		if (!OidIsValid(oid))
+		/* Deal with cases where the lookup failed */
+		switch (lookupError)
 		{
-			if (noError)
-				return InvalidOid;
-			else if (func->args_unspecified)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("could not find a procedure named \"%s\"",
-								NameListToString(func->objname))));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("procedure %s does not exist",
-								func_signature_string(func->objname, argcount,
-													  NIL, argoids))));
+			case FUNCLOOKUP_NOSUCHFUNC:
+				/* Suppress no-such-func errors when missing_ok is true */
+				if (missing_ok)
+					break;
+
+				switch (objtype)
+				{
+					case OBJECT_PROCEDURE:
+						if (func->args_unspecified)
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("could not find a procedure named \"%s\"",
+											NameListToString(func->objname))));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("procedure %s does not exist",
+											func_signature_string(func->objname, argcount,
+																  NIL, argoids))));
+						break;
+
+					case OBJECT_AGGREGATE:
+						if (func->args_unspecified)
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("could not find an aggregate named \"%s\"",
+											NameListToString(func->objname))));
+						else if (argcount == 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("aggregate %s(*) does not exist",
+											NameListToString(func->objname))));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("aggregate %s does not exist",
+											func_signature_string(func->objname, argcount,
+																  NIL, argoids))));
+						break;
+
+					default:
+						/* FUNCTION and ROUTINE */
+						if (func->args_unspecified)
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("could not find a function named \"%s\"",
+											NameListToString(func->objname))));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("function %s does not exist",
+											func_signature_string(func->objname, argcount,
+																  NIL, argoids))));
+						break;
+				}
+
+			case FUNCLOOKUP_AMBIGUOUS:
+				switch (objtype)
+				{
+					case OBJECT_FUNCTION:
+						ereport(ERROR,
+								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+								 errmsg("function name \"%s\" is not unique",
+										NameListToString(func->objname)),
+								 errhint("Specify the argument list to select the function unambiguously.")));
+						break;
+					case OBJECT_PROCEDURE:
+						ereport(ERROR,
+								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+								 errmsg("procedure name \"%s\" is not unique",
+										NameListToString(func->objname)),
+								 errhint("Specify the argument list to select the procedure unambiguously.")));
+						break;
+					case OBJECT_AGGREGATE:
+						ereport(ERROR,
+								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+								 errmsg("aggregate name \"%s\" is not unique",
+										NameListToString(func->objname)),
+								 errhint("Specify the argument list to select the aggregate unambiguously.")));
+						break;
+					case OBJECT_ROUTINE:
+						ereport(ERROR,
+								(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+								 errmsg("routine name \"%s\" is not unique",
+										NameListToString(func->objname)),
+								 errhint("Specify the argument list to select the routine unambiguously.")));
+						break;
+
+					default:
+						Assert(false);	/* Disallowed by Assert above */
+						break;
+				}
+				break;
 		}
 
-		/* Make sure it's a procedure */
-		if (get_func_prokind(oid) != PROKIND_PROCEDURE)
-		{
-			if (noError)
-				return InvalidOid;
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("%s is not a procedure",
-							func_signature_string(func->objname, argcount,
-												  NIL, argoids))));
-		}
+		return InvalidOid;
 	}
-	else if (objtype == OBJECT_AGGREGATE)
-	{
-		if (!OidIsValid(oid))
-		{
-			if (noError)
-				return InvalidOid;
-			else if (func->args_unspecified)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("could not find an aggregate named \"%s\"",
-								NameListToString(func->objname))));
-			else if (argcount == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("aggregate %s(*) does not exist",
-								NameListToString(func->objname))));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("aggregate %s does not exist",
-								func_signature_string(func->objname, argcount,
-													  NIL, argoids))));
-		}
-
-		/* Make sure it's an aggregate */
-		if (get_func_prokind(oid) != PROKIND_AGGREGATE)
-		{
-			if (noError)
-				return InvalidOid;
-			/* we do not use the (*) notation for functions... */
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("function %s is not an aggregate",
-							func_signature_string(func->objname, argcount,
-												  NIL, argoids))));
-		}
-	}
-
-	return oid;
 }
 
 /*
