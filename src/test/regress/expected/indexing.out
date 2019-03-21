@@ -1411,6 +1411,24 @@ alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 create index on idxpart (a);
 create table idxpart_another (a int, b int, primary key (a, b)) partition by range (a);
 create table idxpart_another_1 partition of idxpart_another for values from (0) to (100);
+-- More objects intentionally left behind, to verify some pg_dump/pg_upgrade
+-- behavior; see https://postgr.es/m/20190321204928.GA17535@alvherre.pgsql
+create schema regress_indexing;
+set search_path to regress_indexing;
+create table pk (a int primary key) partition by range (a);
+create table pk1 partition of pk for values from (0) to (1000);
+create table pk2 (b int, a int);
+alter table pk2 drop column b;
+alter table pk2 alter a set not null;
+alter table pk attach partition pk2 for values from (1000) to (2000);
+create table pk3 partition of pk for values from (2000) to (3000);
+create table pk4 (like pk);
+alter table pk attach partition pk4 for values from (3000) to (4000);
+create table pk5 (like pk) partition by range (a);
+create table pk51 partition of pk5 for values from (4000) to (4500);
+create table pk52 partition of pk5 for values from (4500) to (5000);
+alter table pk attach partition pk5 for values from (4000) to (5000);
+reset search_path;
 -- Test that covering partitioned indexes work in various cases
 create table covidxpart (a int, b int) partition by list (a);
 create unique index on covidxpart (a) include (b);

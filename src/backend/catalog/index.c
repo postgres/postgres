@@ -1247,7 +1247,7 @@ index_constraint_create(Relation heapRelation,
 {
 	Oid			namespaceId = RelationGetNamespace(heapRelation);
 	ObjectAddress myself,
-				referenced;
+				idxaddr;
 	Oid			conOid;
 	bool		deferrable;
 	bool		initdeferred;
@@ -1341,15 +1341,9 @@ index_constraint_create(Relation heapRelation,
 	 * Note that the constraint has a dependency on the table, so we don't
 	 * need (or want) any direct dependency from the index to the table.
 	 */
-	myself.classId = RelationRelationId;
-	myself.objectId = indexRelationId;
-	myself.objectSubId = 0;
-
-	referenced.classId = ConstraintRelationId;
-	referenced.objectId = conOid;
-	referenced.objectSubId = 0;
-
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+	ObjectAddressSet(myself, ConstraintRelationId, conOid);
+	ObjectAddressSet(idxaddr, RelationRelationId, indexRelationId);
+	recordDependencyOn(&idxaddr, &myself, DEPENDENCY_INTERNAL);
 
 	/*
 	 * Also, if this is a constraint on a partition, give it partition-type
@@ -1357,7 +1351,8 @@ index_constraint_create(Relation heapRelation,
 	 */
 	if (OidIsValid(parentConstraintId))
 	{
-		ObjectAddressSet(myself, ConstraintRelationId, conOid);
+		ObjectAddress	referenced;
+
 		ObjectAddressSet(referenced, ConstraintRelationId, parentConstraintId);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_PRI);
 		ObjectAddressSet(referenced, RelationRelationId,
@@ -1444,7 +1439,7 @@ index_constraint_create(Relation heapRelation,
 		table_close(pg_index, RowExclusiveLock);
 	}
 
-	return referenced;
+	return myself;
 }
 
 /*
