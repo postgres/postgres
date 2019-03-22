@@ -1,5 +1,6 @@
 /fmgroids.h
 /fmgrprotos.h
+/jsonpath_gram.h
 /probes.h
 /errcodes.h
 /header-stamp
