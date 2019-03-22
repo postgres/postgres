@@ -1710,6 +1710,7 @@ PgBenchExprType
 PgBenchFunction
 PgBenchValue
 PgBenchValueType
+PgChecksumMode
 PgFdwAnalyzeState
 PgFdwDirectModifyState
 PgFdwModifyState

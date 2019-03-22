@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_checksums</refname>
-  <refpurpose>verify data checksums in a <productname>PostgreSQL</productname> database cluster</refpurpose>
+  <refpurpose>enable, disable or check data checksums in a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -36,10 +36,19 @@ PostgreSQL documentation
  <refsect1 id="r1-app-pg_checksums-1">
   <title>Description</title>
   <para>
-   <application>pg_checksums</application> verifies data checksums in a
-   <productname>PostgreSQL</productname> cluster.  The server must be shut
-   down cleanly before running <application>pg_checksums</application>.
-   The exit status is zero if there are no checksum errors, otherwise nonzero.
+   <application>pg_checksums</application> checks, enables or disables data
+   checksums in a <productname>PostgreSQL</productname> cluster.  The server
+   must be shut down cleanly before running
+   <application>pg_checksums</application>. The exit status is zero if there
+   are no checksum errors when checking them, and nonzero if at least one
+   checksum failure is detected. If enabling or disabling checksums, the
+   exit status is nonzero if the operation failed.
+  </para>
+
+  <para>
+   While checking or enabling checksums needs to scan or write every file in
+   the cluster, disabling checksums will only update the file
+   <filename>pg_control</filename>.
   </para>
  </refsect1>
 
@@ -56,6 +65,37 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the directory where the database cluster is stored.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-c</option></term>
+      <term><option>--check</option></term>
+      <listitem>
+       <para>
+        Checks checksums. This is the default mode if nothing else is
+        specified.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-d</option></term>
+      <term><option>--disable</option></term>
+      <listitem>
+       <para>
+        Disables checksums.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-e</option></term>
+      <term><option>--enable</option></term>
+      <listitem>
+       <para>
+        Enables checksums.
        </para>
       </listitem>
      </varlistentry>
@@ -118,5 +158,34 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+  <para>
+   When disabling or enabling checksums in a replication setup of multiple
+   clusters, it is recommended to stop all the clusters before doing
+   the switch to all the clusters consistently. When using a replication
+   setup with tools which perform direct copies of relation file blocks
+   (for example <xref linkend="app-pgrewind"/>), enabling or disabling
+   checksums can lead to page corruptions in the shape of incorrect
+   checksums if the operation is not done consistently across all nodes.
+   Destroying all the standbys in the setup first, enabling or disabling
+   checksums on the primary and finally recreating the standbys from
+   scratch is also safe.
+  </para>
+  <para>
+   If <application>pg_checksums</application> is aborted or killed in
+   its operation while enabling or disabling checksums, the cluster
+   will have the same state with respect of checksums as before the
+   operation and <application>pg_checksums</application> needs to be
+   restarted.
+  </para>
+  <para>
+   When enabling checksums in a cluster, the operation can potentially
+   take a long time if the data directory is large. During this operation,
+   the cluster or other programs that write to the data directory must not
+   be started or else data loss may occur.
+   </para>
  </refsect1>
 </refentry>
