@@ -845,7 +845,7 @@ static const struct
  * This value looks like a 0-mode codeword,  but we check for it
  * specifically.  (In a real 0-mode codeword, all the unused bits are zero.)
  */
-#define EMPTY_CODEWORD		(0xFFFFFFFFFFFFFFF0)
+#define EMPTY_CODEWORD		UINT64CONST(0xFFFFFFFFFFFFFFF0)
 
 /*
  * Encode a number of integers into a Simple-8b codeword.
@@ -885,7 +885,7 @@ simple8b_encode(uint64 *ints, int *num_encoded, uint64 base)
 	i = 0;
 	for (;;)
 	{
-		if (diff >= (1L << bits))
+		if (diff >= (UINT64CONST(1) << bits))
 		{
 			/* too large, step up to next mode */
 			selector++;
@@ -948,7 +948,7 @@ simple8b_decode(uint64 codeword, uint64 *decoded, uint64 base)
 	int			selector = codeword & 0x0f;
 	int			nints = simple8b_modes[selector].num_ints;
 	uint64		bits = simple8b_modes[selector].bits_per_int;
-	uint64		mask = (1L << bits) - 1;
+	uint64		mask = (UINT64CONST(1) << bits) - 1;
 	uint64		prev_value;
 
 	if (codeword == EMPTY_CODEWORD)
@@ -961,7 +961,7 @@ simple8b_decode(uint64 codeword, uint64 *decoded, uint64 base)
 	{
 		uint64		diff = codeword & mask;
 
-		decoded[i] = prev_value + 1L + diff;
+		decoded[i] = prev_value + 1 + diff;
 		prev_value = decoded[i];
 		codeword >>= bits;
 	}
@@ -992,7 +992,7 @@ simple8b_contains(uint64 codeword, uint64 key, uint64 base)
 	}
 	else
 	{
-		int			mask = (1L << bits) - 1;
+		uint64		mask = (UINT64CONST(1) << bits) - 1;
 		uint64		prev_value;
 
 		prev_value = base;
@@ -1001,7 +1001,7 @@ simple8b_contains(uint64 codeword, uint64 key, uint64 base)
 			uint64		diff = codeword & mask;
 			uint64		curr_value;
 
-			curr_value = prev_value + 1L + diff;
+			curr_value = prev_value + 1 + diff;
 
 			if (curr_value >= key)
 			{

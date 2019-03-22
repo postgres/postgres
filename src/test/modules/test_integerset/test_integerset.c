@@ -590,12 +590,14 @@ test_huge_distances(void)
 	for (int i = 0; i < num_values; i++)
 	{
 		uint64		x = values[i];
+		bool		expected;
 		bool		result;
 
 		if (x > 0)
 		{
+			expected = (values[i - 1] == x - 1);
 			result = intset_is_member(intset, x - 1);
-			if (result != false)
+			if (result != expected)
 				elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x - 1);
 		}
 
@@ -603,8 +605,9 @@ test_huge_distances(void)
 		if (result != true)
 			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x);
 
+		expected = (i != num_values - 1) ? (values[i + 1] == x + 1) : false;
 		result = intset_is_member(intset, x + 1);
-		if (result != false)
+		if (result != expected)
 			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x + 1);
 	}
 
