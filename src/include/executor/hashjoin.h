@@ -337,6 +337,7 @@ typedef struct HashJoinTableData
 	FmgrInfo   *outer_hashfunctions;	/* lookup data for hash functions */
 	FmgrInfo   *inner_hashfunctions;	/* lookup data for hash functions */
 	bool	   *hashStrict;		/* is each hash join operator strict? */
+	Oid		   *collations;
 
 	Size		spaceUsed;		/* memory space currently used by tuples */
 	Size		spaceAllowed;	/* upper limit for space used */

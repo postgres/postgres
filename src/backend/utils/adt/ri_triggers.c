@@ -676,6 +676,8 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
+			Oid			pk_coll = RIAttCollation(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_coll = RIAttCollation(fk_rel, riinfo->fk_attnums[i]);
 
 			quoteOneName(attname,
 						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
@@ -684,6 +686,8 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 							paramname, pk_type,
 							riinfo->pf_eq_oprs[i],
 							attname, fk_type);
+			if (pk_coll != fk_coll && !get_collation_isdeterministic(pk_coll))
+				ri_GenerateQualCollation(&querybuf, pk_coll);
 			querysep = "AND";
 			queryoids[i] = pk_type;
 		}
@@ -778,6 +782,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
+			Oid			pk_coll = RIAttCollation(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_coll = RIAttCollation(fk_rel, riinfo->fk_attnums[i]);
 
 			quoteOneName(attname,
 						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
@@ -786,6 +792,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 							paramname, pk_type,
 							riinfo->pf_eq_oprs[i],
 							attname, fk_type);
+			if (pk_coll != fk_coll && !get_collation_isdeterministic(pk_coll))
+				ri_GenerateQualCollation(&querybuf, pk_coll);
 			querysep = "AND";
 			queryoids[i] = pk_type;
 		}
@@ -890,6 +898,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
+			Oid			pk_coll = RIAttCollation(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_coll = RIAttCollation(fk_rel, riinfo->fk_attnums[i]);
 
 			quoteOneName(attname,
 						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
@@ -901,6 +911,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 							paramname, pk_type,
 							riinfo->pf_eq_oprs[i],
 							attname, fk_type);
+			if (pk_coll != fk_coll && !get_collation_isdeterministic(pk_coll))
+				ri_GenerateQualCollation(&querybuf, pk_coll);
 			querysep = ",";
 			qualsep = "AND";
 			queryoids[i] = pk_type;
@@ -1065,6 +1077,8 @@ ri_set(TriggerData *trigdata, bool is_set_null)
 		{
 			Oid			pk_type = RIAttType(pk_rel, riinfo->pk_attnums[i]);
 			Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
+			Oid			pk_coll = RIAttCollation(pk_rel, riinfo->pk_attnums[i]);
+			Oid			fk_coll = RIAttCollation(fk_rel, riinfo->fk_attnums[i]);
 
 			quoteOneName(attname,
 						 RIAttName(fk_rel, riinfo->fk_attnums[i]));
@@ -1077,6 +1091,8 @@ ri_set(TriggerData *trigdata, bool is_set_null)
 							paramname, pk_type,
 							riinfo->pf_eq_oprs[i],
 							attname, fk_type);
+			if (pk_coll != fk_coll && !get_collation_isdeterministic(pk_coll))
+				ri_GenerateQualCollation(&querybuf, pk_coll);
 			querysep = ",";
 			qualsep = "AND";
 			queryoids[i] = pk_type;
@@ -2496,11 +2512,20 @@ ri_AttributesEqual(Oid eq_opr, Oid typeid,
 	}
 
 	/*
-	 * Apply the comparison operator.  We assume it doesn't care about
-	 * collations.
+	 * Apply the comparison operator.
+	 *
+	 * Note: This function is part of a call stack that determines whether an
+	 * update to a row is significant enough that it needs checking or action
+	 * on the other side of a foreign-key constraint.  Therefore, the
+	 * comparison here would need to be done with the collation of the *other*
+	 * table.  For simplicity (e.g., we might not even have the other table
+	 * open), we'll just use the default collation here, which could lead to
+	 * some false negatives.  All this would break if we ever allow
+	 * database-wide collations to be nondeterministic.
 	 */
-	return DatumGetBool(FunctionCall2(&entry->eq_opr_finfo,
-									  oldvalue, newvalue));
+	return DatumGetBool(FunctionCall2Coll(&entry->eq_opr_finfo,
+										  DEFAULT_COLLATION_OID,
+										  oldvalue, newvalue));
 }
 
 /*

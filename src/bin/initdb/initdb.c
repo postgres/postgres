@@ -1765,8 +1765,8 @@ setup_collation(FILE *cmdfd)
 	 * in pg_collation.h.  But add it before reading system collations, so
 	 * that it wins if libc defines a locale named ucs_basic.
 	 */
-	PG_CMD_PRINTF3("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collencoding, collcollate, collctype)"
-				   "VALUES (pg_nextoid('pg_catalog.pg_collation', 'oid', 'pg_catalog.pg_collation_oid_index'), 'ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', %d, 'C', 'C');\n\n",
+	PG_CMD_PRINTF3("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collisdeterministic, collencoding, collcollate, collctype)"
+				   "VALUES (pg_nextoid('pg_catalog.pg_collation', 'oid', 'pg_catalog.pg_collation_oid_index'), 'ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', true, %d, 'C', 'C');\n\n",
 				   BOOTSTRAP_SUPERUSERID, COLLPROVIDER_LIBC, PG_UTF8);
 
 	/* Now import all collations we can find in the operating system */

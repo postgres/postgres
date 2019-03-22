@@ -131,26 +131,6 @@ namesend(PG_FUNCTION_ARGS)
  * have a '\0' terminator.  Whatever might be past the terminator is not
  * considered relevant to comparisons.
  */
-Datum
-nameeq(PG_FUNCTION_ARGS)
-{
-	Name		arg1 = PG_GETARG_NAME(0);
-	Name		arg2 = PG_GETARG_NAME(1);
-
-	/* Collation doesn't matter: equal only if bitwise-equal */
-	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) == 0);
-}
-
-Datum
-namene(PG_FUNCTION_ARGS)
-{
-	Name		arg1 = PG_GETARG_NAME(0);
-	Name		arg2 = PG_GETARG_NAME(1);
-
-	/* Collation doesn't matter: equal only if bitwise-equal */
-	PG_RETURN_BOOL(strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) != 0);
-}
-
 static int
 namecmp(Name arg1, Name arg2, Oid collid)
 {
@@ -162,6 +142,24 @@ namecmp(Name arg1, Name arg2, Oid collid)
 	return varstr_cmp(NameStr(*arg1), strlen(NameStr(*arg1)),
 					  NameStr(*arg2), strlen(NameStr(*arg2)),
 					  collid);
+}
+
+Datum
+nameeq(PG_FUNCTION_ARGS)
+{
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+
+	PG_RETURN_BOOL(namecmp(arg1, arg2, PG_GET_COLLATION()) == 0);
+}
+
+Datum
+namene(PG_FUNCTION_ARGS)
+{
+	Name		arg1 = PG_GETARG_NAME(0);
+	Name		arg2 = PG_GETARG_NAME(1);
+
+	PG_RETURN_BOOL(namecmp(arg1, arg2, PG_GET_COLLATION()) != 0);
 }
 
 Datum

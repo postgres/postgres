@@ -4065,6 +4065,12 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     </para>
    </caution>
 
+   <para>
+    The pattern matching operators of all three kinds do not support
+    nondeterministic collations.  If required, apply a different collation to
+    the expression to work around this limitation.
+   </para>
+
   <sect2 id="functions-like">
    <title><function>LIKE</function></title>
 

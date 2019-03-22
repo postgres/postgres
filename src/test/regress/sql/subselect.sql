@@ -436,6 +436,23 @@ insert into inner_7597 values(0, null);
 select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
 
 --
+-- Similar test case using text that verifies that collation
+-- information is passed through by execTuplesEqual() in nodeSubplan.c
+-- (otherwise it would error in texteq())
+--
+
+create temp table outer_text (f1 text, f2 text);
+insert into outer_text values ('a', 'a');
+insert into outer_text values ('b', 'a');
+insert into outer_text values ('a', null);
+insert into outer_text values ('b', null);
+
+create temp table inner_text (c1 text, c2 text);
+insert into inner_text values ('a', null);
+
+select * from outer_text where (f1, f2) not in (select * from inner_text);
+
+--
 -- Test case for premature memory release during hashing of subplan output
 --
 

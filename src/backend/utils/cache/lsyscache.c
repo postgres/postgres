@@ -908,6 +908,22 @@ get_collation_name(Oid colloid)
 		return NULL;
 }
 
+bool
+get_collation_isdeterministic(Oid colloid)
+{
+	HeapTuple	tp;
+	Form_pg_collation colltup;
+	bool		result;
+
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(colloid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for collation %u", colloid);
+	colltup = (Form_pg_collation) GETSTRUCT(tp);
+	result = colltup->collisdeterministic;
+	ReleaseSysCache(tp);
+	return result;
+}
+
 /*				---------- CONSTRAINT CACHE ----------					 */
 
 /*

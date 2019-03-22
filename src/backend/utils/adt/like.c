@@ -45,7 +45,7 @@ static int UTF8_MatchText(const char *t, int tlen, const char *p, int plen,
 static int SB_IMatchText(const char *t, int tlen, const char *p, int plen,
 			  pg_locale_t locale, bool locale_is_c);
 
-static int	GenericMatchText(const char *s, int slen, const char *p, int plen);
+static int	GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation);
 static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);
 
 /*--------------------
@@ -148,8 +148,18 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 
 /* Generic for all cases not requiring inline case-folding */
 static inline int
-GenericMatchText(const char *s, int slen, const char *p, int plen)
+GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation)
 {
+	if (collation && !lc_ctype_is_c(collation) && collation != DEFAULT_COLLATION_OID)
+	{
+		pg_locale_t		locale = pg_newlocale_from_collation(collation);
+
+		if (locale && !locale->deterministic)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("nondeterministic collations are not supported for LIKE")));
+	}
+
 	if (pg_database_encoding_max_length() == 1)
 		return SB_MatchText(s, slen, p, plen, 0, true);
 	else if (GetDatabaseEncoding() == PG_UTF8)
@@ -184,6 +194,11 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 					 errhint("Use the COLLATE clause to set the collation explicitly.")));
 		}
 		locale = pg_newlocale_from_collation(collation);
+
+		if (locale && !locale->deterministic)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("nondeterministic collations are not supported for ILIKE")));
 	}
 
 	/*
@@ -240,7 +255,7 @@ namelike(PG_FUNCTION_ARGS)
 	p = VARDATA_ANY(pat);
 	plen = VARSIZE_ANY_EXHDR(pat);
 
-	result = (GenericMatchText(s, slen, p, plen) == LIKE_TRUE);
+	result = (GenericMatchText(s, slen, p, plen, PG_GET_COLLATION()) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -261,7 +276,7 @@ namenlike(PG_FUNCTION_ARGS)
 	p = VARDATA_ANY(pat);
 	plen = VARSIZE_ANY_EXHDR(pat);
 
-	result = (GenericMatchText(s, slen, p, plen) != LIKE_TRUE);
+	result = (GenericMatchText(s, slen, p, plen, PG_GET_COLLATION()) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -282,7 +297,7 @@ textlike(PG_FUNCTION_ARGS)
 	p = VARDATA_ANY(pat);
 	plen = VARSIZE_ANY_EXHDR(pat);
 
-	result = (GenericMatchText(s, slen, p, plen) == LIKE_TRUE);
+	result = (GenericMatchText(s, slen, p, plen, PG_GET_COLLATION()) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -303,7 +318,7 @@ textnlike(PG_FUNCTION_ARGS)
 	p = VARDATA_ANY(pat);
 	plen = VARSIZE_ANY_EXHDR(pat);
 
-	result = (GenericMatchText(s, slen, p, plen) != LIKE_TRUE);
+	result = (GenericMatchText(s, slen, p, plen, PG_GET_COLLATION()) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }

@@ -2370,6 +2370,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 								   node->partNumCols,
 								   node->partColIdx,
 								   node->partOperators,
+								   node->partCollations,
 								   &winstate->ss.ps);
 
 	if (node->ordNumCols > 0)
@@ -2378,6 +2379,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 								   node->ordNumCols,
 								   node->ordColIdx,
 								   node->ordOperators,
+								   node->ordCollations,
 								   &winstate->ss.ps);
 
 	/*

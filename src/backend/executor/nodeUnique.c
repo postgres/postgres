@@ -152,6 +152,7 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 							   node->numCols,
 							   node->uniqColIdx,
 							   node->uniqOperators,
+							   node->uniqCollations,
 							   &uniquestate->ps);
 
 	return uniquestate;

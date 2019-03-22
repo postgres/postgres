@@ -60,6 +60,7 @@ execTuplesMatchPrepare(TupleDesc desc,
 					   int numCols,
 					   const AttrNumber *keyColIdx,
 					   const Oid *eqOperators,
+					   const Oid *collations,
 					   PlanState *parent)
 {
 	Oid		   *eqFunctions = (Oid *) palloc(numCols * sizeof(Oid));
@@ -75,7 +76,7 @@ execTuplesMatchPrepare(TupleDesc desc,
 
 	/* build actual expression */
 	expr = ExecBuildGroupingEqual(desc, desc, NULL, NULL,
-								  numCols, keyColIdx, eqFunctions,
+								  numCols, keyColIdx, eqFunctions, collations,
 								  parent);
 
 	return expr;
@@ -155,6 +156,7 @@ BuildTupleHashTableExt(PlanState *parent,
 					   int numCols, AttrNumber *keyColIdx,
 					   const Oid *eqfuncoids,
 					   FmgrInfo *hashfunctions,
+					   Oid *collations,
 					   long nbuckets, Size additionalsize,
 					   MemoryContext metacxt,
 					   MemoryContext tablecxt,
@@ -177,6 +179,7 @@ BuildTupleHashTableExt(PlanState *parent,
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;
 	hashtable->tab_hash_funcs = hashfunctions;
+	hashtable->tab_collations = collations;
 	hashtable->tablecxt = tablecxt;
 	hashtable->tempcxt = tempcxt;
 	hashtable->entrysize = entrysize;
@@ -212,7 +215,7 @@ BuildTupleHashTableExt(PlanState *parent,
 	hashtable->tab_eq_func = ExecBuildGroupingEqual(inputDesc, inputDesc,
 													&TTSOpsMinimalTuple, &TTSOpsMinimalTuple,
 													numCols,
-													keyColIdx, eqfuncoids,
+													keyColIdx, eqfuncoids, collations,
 													NULL);
 
 	/*
@@ -240,6 +243,7 @@ BuildTupleHashTable(PlanState *parent,
 					int numCols, AttrNumber *keyColIdx,
 					const Oid *eqfuncoids,
 					FmgrInfo *hashfunctions,
+					Oid *collations,
 					long nbuckets, Size additionalsize,
 					MemoryContext tablecxt,
 					MemoryContext tempcxt,
@@ -250,6 +254,7 @@ BuildTupleHashTable(PlanState *parent,
 								  numCols, keyColIdx,
 								  eqfuncoids,
 								  hashfunctions,
+								  collations,
 								  nbuckets, additionalsize,
 								  tablecxt,
 								  tablecxt,
@@ -421,8 +426,9 @@ TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
 		{
 			uint32		hkey;
 
-			hkey = DatumGetUInt32(FunctionCall1(&hashfunctions[i],
-												attr));
+			hkey = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[i],
+													hashtable->tab_collations[i],
+													attr));
 			hashkey ^= hkey;
 		}
 	}

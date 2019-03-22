@@ -278,6 +278,7 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				 */
 				hashtable = ExecHashTableCreate(hashNode,
 												node->hj_HashOperators,
+												node->hj_Collations,
 												HJ_FILL_INNER(node));
 				node->hj_HashTable = hashtable;
 
@@ -603,6 +604,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	List	   *rclauses;
 	List	   *rhclauses;
 	List	   *hoperators;
+	List	   *hcollations;
 	TupleDesc	outerDesc,
 				innerDesc;
 	ListCell   *l;
@@ -738,6 +740,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	rclauses = NIL;
 	rhclauses = NIL;
 	hoperators = NIL;
+	hcollations = NIL;
 	foreach(l, node->hashclauses)
 	{
 		OpExpr	   *hclause = lfirst_node(OpExpr, l);
@@ -749,10 +752,12 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 		rhclauses = lappend(rhclauses, ExecInitExpr(lsecond(hclause->args),
 												   innerPlanState(hjstate)));
 		hoperators = lappend_oid(hoperators, hclause->opno);
+		hcollations = lappend_oid(hcollations, hclause->inputcollid);
 	}
 	hjstate->hj_OuterHashKeys = lclauses;
 	hjstate->hj_InnerHashKeys = rclauses;
 	hjstate->hj_HashOperators = hoperators;
+	hjstate->hj_Collations = hcollations;
 	/* child Hash node needs to evaluate inner hash keys, too */
 	((HashState *) innerPlanState(hjstate))->hashkeys = rhclauses;
 

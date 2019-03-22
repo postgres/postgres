@@ -15,6 +15,8 @@ include $(top_builddir)/src/Makefile.global
 
 EXTRA_INSTALL = contrib/hstore
 
+export with_icu
+
 check:
 	$(prove_check)
 

@@ -498,6 +498,21 @@ SELECT a, b, a < b as lt FROM
  A | b | t
 (2 rows)
 
+-- collation mismatch in subselects
+SELECT * FROM collate_test10 WHERE (x, y) NOT IN (SELECT y, x FROM collate_test10);
+ERROR:  could not determine which collation to use for string hashing
+HINT:  Use the COLLATE clause to set the collation explicitly.
+-- now it works with overrides
+SELECT * FROM collate_test10 WHERE (x COLLATE "POSIX", y COLLATE "C") NOT IN (SELECT y, x FROM collate_test10);
+ a | x | y 
+---+---+---
+(0 rows)
+
+SELECT * FROM collate_test10 WHERE (x, y) NOT IN (SELECT y COLLATE "C", x COLLATE "POSIX" FROM collate_test10);
+ a | x | y 
+---+---+---
+(0 rows)
+
 -- casting
 SELECT CAST('42' AS text COLLATE "C");
 ERROR:  syntax error at or near "COLLATE"

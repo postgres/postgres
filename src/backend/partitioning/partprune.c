@@ -2159,6 +2159,7 @@ get_matching_hash_bounds(PartitionPruneContext *context,
 	int			i;
 	uint64		rowHash;
 	int			greatest_modulus;
+	Oid		   *partcollation = context->partcollation;
 
 	Assert(context->strategy == PARTITION_STRATEGY_HASH);
 
@@ -2179,7 +2180,7 @@ get_matching_hash_bounds(PartitionPruneContext *context,
 			isnull[i] = bms_is_member(i, nullkeys);
 
 		greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
-		rowHash = compute_partition_hash_value(partnatts, partsupfunc,
+		rowHash = compute_partition_hash_value(partnatts, partsupfunc, partcollation,
 											   values, isnull);
 
 		if (partindices[rowHash % greatest_modulus] >= 0)

@@ -59,10 +59,12 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	DefElem    *lccollateEl = NULL;
 	DefElem    *lcctypeEl = NULL;
 	DefElem    *providerEl = NULL;
+	DefElem    *deterministicEl = NULL;
 	DefElem    *versionEl = NULL;
 	char	   *collcollate = NULL;
 	char	   *collctype = NULL;
 	char	   *collproviderstr = NULL;
+	bool		collisdeterministic = true;
 	int			collencoding = 0;
 	char		collprovider = 0;
 	char	   *collversion = NULL;
@@ -91,6 +93,8 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 			defelp = &lcctypeEl;
 		else if (strcmp(defel->defname, "provider") == 0)
 			defelp = &providerEl;
+		else if (strcmp(defel->defname, "deterministic") == 0)
+			defelp = &deterministicEl;
 		else if (strcmp(defel->defname, "version") == 0)
 			defelp = &versionEl;
 		else
@@ -125,6 +129,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 		collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
 		collctype = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collctype));
 		collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
+		collisdeterministic = ((Form_pg_collation) GETSTRUCT(tp))->collisdeterministic;
 		collencoding = ((Form_pg_collation) GETSTRUCT(tp))->collencoding;
 
 		ReleaseSysCache(tp);
@@ -157,6 +162,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	if (providerEl)
 		collproviderstr = defGetString(providerEl);
 
+	if (deterministicEl)
+		collisdeterministic = defGetBoolean(deterministicEl);
+
 	if (versionEl)
 		collversion = defGetString(versionEl);
 
@@ -185,6 +193,16 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("parameter \"lc_ctype\" must be specified")));
 
+	/*
+	 * Nondeterministic collations are currently only supported with ICU
+	 * because that's the only case where it can actually make a difference.
+	 * So we can save writing the code for the other providers.
+	 */
+	if (!collisdeterministic && collprovider != COLLPROVIDER_ICU)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nondeterministic collations not supported with this provider")));
+
 	if (!fromEl)
 	{
 		if (collprovider == COLLPROVIDER_ICU)
@@ -203,6 +221,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 							 collNamespace,
 							 GetUserId(),
 							 collprovider,
+							 collisdeterministic,
 							 collencoding,
 							 collcollate,
 							 collctype,
@@ -586,7 +605,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			 * about existing ones.
 			 */
 			collid = CollationCreate(localebuf, nspid, GetUserId(),
-									 COLLPROVIDER_LIBC, enc,
+									 COLLPROVIDER_LIBC, true, enc,
 									 localebuf, localebuf,
 									 get_collation_actual_version(COLLPROVIDER_LIBC, localebuf),
 									 true, true);
@@ -647,7 +666,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			int			enc = aliases[i].enc;
 
 			collid = CollationCreate(alias, nspid, GetUserId(),
-									 COLLPROVIDER_LIBC, enc,
+									 COLLPROVIDER_LIBC, true, enc,
 									 locale, locale,
 									 get_collation_actual_version(COLLPROVIDER_LIBC, locale),
 									 true, true);
@@ -709,7 +728,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 			collid = CollationCreate(psprintf("%s-x-icu", langtag),
 									 nspid, GetUserId(),
-									 COLLPROVIDER_ICU, -1,
+									 COLLPROVIDER_ICU, true, -1,
 									 collcollate, collcollate,
 									 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
 									 true, true);

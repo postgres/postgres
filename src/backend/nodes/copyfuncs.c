@@ -297,6 +297,7 @@ _copyRecursiveUnion(const RecursiveUnion *from)
 	{
 		COPY_POINTER_FIELD(dupColIdx, from->numCols * sizeof(AttrNumber));
 		COPY_POINTER_FIELD(dupOperators, from->numCols * sizeof(Oid));
+		COPY_POINTER_FIELD(dupCollations, from->numCols * sizeof(Oid));
 	}
 	COPY_SCALAR_FIELD(numGroups);
 
@@ -956,6 +957,7 @@ _copyGroup(const Group *from)
 	COPY_SCALAR_FIELD(numCols);
 	COPY_POINTER_FIELD(grpColIdx, from->numCols * sizeof(AttrNumber));
 	COPY_POINTER_FIELD(grpOperators, from->numCols * sizeof(Oid));
+	COPY_POINTER_FIELD(grpCollations, from->numCols * sizeof(Oid));
 
 	return newnode;
 }
@@ -977,6 +979,7 @@ _copyAgg(const Agg *from)
 	{
 		COPY_POINTER_FIELD(grpColIdx, from->numCols * sizeof(AttrNumber));
 		COPY_POINTER_FIELD(grpOperators, from->numCols * sizeof(Oid));
+		COPY_POINTER_FIELD(grpCollations, from->numCols * sizeof(Oid));
 	}
 	COPY_SCALAR_FIELD(numGroups);
 	COPY_BITMAPSET_FIELD(aggParams);
@@ -1002,12 +1005,14 @@ _copyWindowAgg(const WindowAgg *from)
 	{
 		COPY_POINTER_FIELD(partColIdx, from->partNumCols * sizeof(AttrNumber));
 		COPY_POINTER_FIELD(partOperators, from->partNumCols * sizeof(Oid));
+		COPY_POINTER_FIELD(partCollations, from->partNumCols * sizeof(Oid));
 	}
 	COPY_SCALAR_FIELD(ordNumCols);
 	if (from->ordNumCols > 0)
 	{
 		COPY_POINTER_FIELD(ordColIdx, from->ordNumCols * sizeof(AttrNumber));
 		COPY_POINTER_FIELD(ordOperators, from->ordNumCols * sizeof(Oid));
+		COPY_POINTER_FIELD(ordCollations, from->ordNumCols * sizeof(Oid));
 	}
 	COPY_SCALAR_FIELD(frameOptions);
 	COPY_NODE_FIELD(startOffset);
@@ -1040,6 +1045,7 @@ _copyUnique(const Unique *from)
 	COPY_SCALAR_FIELD(numCols);
 	COPY_POINTER_FIELD(uniqColIdx, from->numCols * sizeof(AttrNumber));
 	COPY_POINTER_FIELD(uniqOperators, from->numCols * sizeof(Oid));
+	COPY_POINTER_FIELD(uniqCollations, from->numCols * sizeof(Oid));
 
 	return newnode;
 }
@@ -1089,6 +1095,7 @@ _copySetOp(const SetOp *from)
 	COPY_SCALAR_FIELD(numCols);
 	COPY_POINTER_FIELD(dupColIdx, from->numCols * sizeof(AttrNumber));
 	COPY_POINTER_FIELD(dupOperators, from->numCols * sizeof(Oid));
+	COPY_POINTER_FIELD(dupCollations, from->numCols * sizeof(Oid));
 	COPY_SCALAR_FIELD(flagColIdx);
 	COPY_SCALAR_FIELD(firstFlag);
 	COPY_SCALAR_FIELD(numGroups);

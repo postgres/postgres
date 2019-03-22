@@ -13417,6 +13417,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	char	   *qcollname;
 	PGresult   *res;
 	int			i_collprovider;
+	int			i_collisdeterministic;
 	int			i_collcollate;
 	int			i_collctype;
 	const char *collprovider;
@@ -13434,28 +13435,35 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	qcollname = pg_strdup(fmtId(collinfo->dobj.name));
 
 	/* Get collation-specific details */
+	appendPQExpBuffer(query, "SELECT ");
+
 	if (fout->remoteVersion >= 100000)
-		appendPQExpBuffer(query, "SELECT "
+		appendPQExpBuffer(query,
 						  "collprovider, "
-						  "collcollate, "
-						  "collctype, "
-						  "collversion "
-						  "FROM pg_catalog.pg_collation c "
-						  "WHERE c.oid = '%u'::pg_catalog.oid",
-						  collinfo->dobj.catId.oid);
+						  "collversion, ");
 	else
-		appendPQExpBuffer(query, "SELECT "
+		appendPQExpBuffer(query,
 						  "'c' AS collprovider, "
-						  "collcollate, "
-						  "collctype, "
-						  "NULL AS collversion "
-						  "FROM pg_catalog.pg_collation c "
-						  "WHERE c.oid = '%u'::pg_catalog.oid",
-						  collinfo->dobj.catId.oid);
+						  "NULL AS collversion, ");
+
+	if (fout->remoteVersion >= 120000)
+		appendPQExpBuffer(query,
+						  "collisdeterministic, ");
+	else
+		appendPQExpBuffer(query,
+						  "true AS collisdeterministic, ");
+
+	appendPQExpBuffer(query,
+					  "collcollate, "
+					  "collctype "
+					  "FROM pg_catalog.pg_collation c "
+					  "WHERE c.oid = '%u'::pg_catalog.oid",
+					  collinfo->dobj.catId.oid);
 
 	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	i_collprovider = PQfnumber(res, "collprovider");
+	i_collisdeterministic = PQfnumber(res, "collisdeterministic");
 	i_collcollate = PQfnumber(res, "collcollate");
 	i_collctype = PQfnumber(res, "collctype");
 
@@ -13481,6 +13489,9 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 		exit_horribly(NULL,
 					  "unrecognized collation provider: %s\n",
 					  collprovider);
+
+	if (strcmp(PQgetvalue(res, 0, i_collisdeterministic), "f") == 0)
+		appendPQExpBufferStr(q, ", deterministic = false");
 
 	if (strcmp(collcollate, collctype) == 0)
 	{

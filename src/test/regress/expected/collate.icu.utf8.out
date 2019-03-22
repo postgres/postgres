@@ -1149,6 +1149,716 @@ SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE tes
  t        | t
 (1 row)
 
+-- nondeterministic collations
+CREATE COLLATION ctest_det (provider = icu, locale = 'und', deterministic = true);
+CREATE COLLATION ctest_nondet (provider = icu, locale = 'und', deterministic = false);
+CREATE TABLE test6 (a int, b text);
+-- same string in different normal forms
+INSERT INTO test6 VALUES (1, U&'\00E4bc');
+INSERT INTO test6 VALUES (2, U&'\0061\0308bc');
+SELECT * FROM test6;
+ a |  b  
+---+-----
+ 1 | äbc
+ 2 | äbc
+(2 rows)
+
+SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_det;
+ a |  b  
+---+-----
+ 1 | äbc
+(1 row)
+
+SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_nondet;
+ a |  b  
+---+-----
+ 1 | äbc
+ 2 | äbc
+(2 rows)
+
+CREATE COLLATION case_sensitive (provider = icu, locale = 'und');
+CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
+SELECT 'abc' <= 'ABC' COLLATE case_sensitive, 'abc' >= 'ABC' COLLATE case_sensitive;
+ ?column? | ?column? 
+----------+----------
+ t        | f
+(1 row)
+
+SELECT 'abc' <= 'ABC' COLLATE case_insensitive, 'abc' >= 'ABC' COLLATE case_insensitive;
+ ?column? | ?column? 
+----------+----------
+ t        | t
+(1 row)
+
+CREATE TABLE test1cs (x text COLLATE case_sensitive);
+CREATE TABLE test2cs (x text COLLATE case_sensitive);
+CREATE TABLE test3cs (x text COLLATE case_sensitive);
+INSERT INTO test1cs VALUES ('abc'), ('def'), ('ghi');
+INSERT INTO test2cs VALUES ('ABC'), ('ghi');
+INSERT INTO test3cs VALUES ('abc'), ('ABC'), ('def'), ('ghi');
+SELECT x FROM test3cs WHERE x = 'abc';
+  x  
+-----
+ abc
+(1 row)
+
+SELECT x FROM test3cs WHERE x <> 'abc';
+  x  
+-----
+ ABC
+ def
+ ghi
+(3 rows)
+
+SELECT x FROM test3cs WHERE x LIKE 'a%';
+  x  
+-----
+ abc
+(1 row)
+
+SELECT x FROM test3cs WHERE x ILIKE 'a%';
+  x  
+-----
+ abc
+ ABC
+(2 rows)
+
+SELECT x FROM test3cs WHERE x SIMILAR TO 'a%';
+  x  
+-----
+ abc
+(1 row)
+
+SELECT x FROM test3cs WHERE x ~ 'a';
+  x  
+-----
+ abc
+(1 row)
+
+SELECT x FROM test1cs UNION SELECT x FROM test2cs ORDER BY x;
+  x  
+-----
+ abc
+ ABC
+ def
+ ghi
+(4 rows)
+
+SELECT x FROM test2cs UNION SELECT x FROM test1cs ORDER BY x;
+  x  
+-----
+ abc
+ ABC
+ def
+ ghi
+(4 rows)
+
+SELECT x FROM test1cs INTERSECT SELECT x FROM test2cs;
+  x  
+-----
+ ghi
+(1 row)
+
+SELECT x FROM test2cs INTERSECT SELECT x FROM test1cs;
+  x  
+-----
+ ghi
+(1 row)
+
+SELECT x FROM test1cs EXCEPT SELECT x FROM test2cs;
+  x  
+-----
+ abc
+ def
+(2 rows)
+
+SELECT x FROM test2cs EXCEPT SELECT x FROM test1cs;
+  x  
+-----
+ ABC
+(1 row)
+
+SELECT DISTINCT x FROM test3cs ORDER BY x;
+  x  
+-----
+ abc
+ ABC
+ def
+ ghi
+(4 rows)
+
+SELECT count(DISTINCT x) FROM test3cs;
+ count 
+-------
+     4
+(1 row)
+
+SELECT x, count(*) FROM test3cs GROUP BY x ORDER BY x;
+  x  | count 
+-----+-------
+ abc |     1
+ ABC |     1
+ def |     1
+ ghi |     1
+(4 rows)
+
+SELECT x, row_number() OVER (ORDER BY x), rank() OVER (ORDER BY x) FROM test3cs ORDER BY x;
+  x  | row_number | rank 
+-----+------------+------
+ abc |          1 |    1
+ ABC |          2 |    2
+ def |          3 |    3
+ ghi |          4 |    4
+(4 rows)
+
+CREATE UNIQUE INDEX ON test1cs (x);  -- ok
+INSERT INTO test1cs VALUES ('ABC');  -- ok
+CREATE UNIQUE INDEX ON test3cs (x);  -- ok
+SELECT string_to_array('ABC,DEF,GHI' COLLATE case_sensitive, ',', 'abc');
+ string_to_array 
+-----------------
+ {ABC,DEF,GHI}
+(1 row)
+
+SELECT string_to_array('ABCDEFGHI' COLLATE case_sensitive, NULL, 'b');
+   string_to_array   
+---------------------
+ {A,B,C,D,E,F,G,H,I}
+(1 row)
+
+CREATE TABLE test1ci (x text COLLATE case_insensitive);
+CREATE TABLE test2ci (x text COLLATE case_insensitive);
+CREATE TABLE test3ci (x text COLLATE case_insensitive);
+CREATE INDEX ON test3ci (x text_pattern_ops);  -- error
+ERROR:  nondeterministic collations are not supported for operator class "text_pattern_ops"
+INSERT INTO test1ci VALUES ('abc'), ('def'), ('ghi');
+INSERT INTO test2ci VALUES ('ABC'), ('ghi');
+INSERT INTO test3ci VALUES ('abc'), ('ABC'), ('def'), ('ghi');
+SELECT x FROM test3ci WHERE x = 'abc';
+  x  
+-----
+ abc
+ ABC
+(2 rows)
+
+SELECT x FROM test3ci WHERE x <> 'abc';
+  x  
+-----
+ def
+ ghi
+(2 rows)
+
+SELECT x FROM test3ci WHERE x LIKE 'a%';
+ERROR:  nondeterministic collations are not supported for LIKE
+SELECT x FROM test3ci WHERE x ILIKE 'a%';
+ERROR:  nondeterministic collations are not supported for ILIKE
+SELECT x FROM test3ci WHERE x SIMILAR TO 'a%';
+ERROR:  nondeterministic collations are not supported for regular expressions
+SELECT x FROM test3ci WHERE x ~ 'a';
+ERROR:  nondeterministic collations are not supported for regular expressions
+SELECT x FROM test1ci UNION SELECT x FROM test2ci ORDER BY x;
+  x  
+-----
+ abc
+ def
+ ghi
+(3 rows)
+
+SELECT x FROM test2ci UNION SELECT x FROM test1ci ORDER BY x;
+  x  
+-----
+ ABC
+ def
+ ghi
+(3 rows)
+
+SELECT x FROM test1ci INTERSECT SELECT x FROM test2ci;
+  x  
+-----
+ ghi
+ abc
+(2 rows)
+
+SELECT x FROM test2ci INTERSECT SELECT x FROM test1ci;
+  x  
+-----
+ ghi
+ ABC
+(2 rows)
+
+SELECT x FROM test1ci EXCEPT SELECT x FROM test2ci;
+  x  
+-----
+ def
+(1 row)
+
+SELECT x FROM test2ci EXCEPT SELECT x FROM test1ci;
+ x 
+---
+(0 rows)
+
+SELECT DISTINCT x FROM test3ci ORDER BY x;
+  x  
+-----
+ abc
+ def
+ ghi
+(3 rows)
+
+SELECT count(DISTINCT x) FROM test3ci;
+ count 
+-------
+     3
+(1 row)
+
+SELECT x, count(*) FROM test3ci GROUP BY x ORDER BY x;
+  x  | count 
+-----+-------
+ abc |     2
+ def |     1
+ ghi |     1
+(3 rows)
+
+SELECT x, row_number() OVER (ORDER BY x), rank() OVER (ORDER BY x) FROM test3ci ORDER BY x;
+  x  | row_number | rank 
+-----+------------+------
+ abc |          1 |    1
+ ABC |          2 |    1
+ def |          3 |    3
+ ghi |          4 |    4
+(4 rows)
+
+CREATE UNIQUE INDEX ON test1ci (x);  -- ok
+INSERT INTO test1ci VALUES ('ABC');  -- error
+ERROR:  duplicate key value violates unique constraint "test1ci_x_idx"
+DETAIL:  Key (x)=(ABC) already exists.
+CREATE UNIQUE INDEX ON test3ci (x);  -- error
+ERROR:  could not create unique index "test3ci_x_idx"
+DETAIL:  Key (x)=(abc) is duplicated.
+SELECT string_to_array('ABC,DEF,GHI' COLLATE case_insensitive, ',', 'abc');
+ERROR:  nondeterministic collations are not supported for substring searches
+SELECT string_to_array('ABCDEFGHI' COLLATE case_insensitive, NULL, 'b');
+    string_to_array     
+------------------------
+ {A,NULL,C,D,E,F,G,H,I}
+(1 row)
+
+-- bpchar
+CREATE TABLE test1bpci (x char(3) COLLATE case_insensitive);
+CREATE TABLE test2bpci (x char(3) COLLATE case_insensitive);
+CREATE TABLE test3bpci (x char(3) COLLATE case_insensitive);
+CREATE INDEX ON test3bpci (x bpchar_pattern_ops);  -- error
+ERROR:  nondeterministic collations are not supported for operator class "bpchar_pattern_ops"
+INSERT INTO test1bpci VALUES ('abc'), ('def'), ('ghi');
+INSERT INTO test2bpci VALUES ('ABC'), ('ghi');
+INSERT INTO test3bpci VALUES ('abc'), ('ABC'), ('def'), ('ghi');
+SELECT x FROM test3bpci WHERE x = 'abc';
+  x  
+-----
+ abc
+ ABC
+(2 rows)
+
+SELECT x FROM test3bpci WHERE x <> 'abc';
+  x  
+-----
+ def
+ ghi
+(2 rows)
+
+SELECT x FROM test3bpci WHERE x LIKE 'a%';
+ERROR:  nondeterministic collations are not supported for LIKE
+SELECT x FROM test3bpci WHERE x ILIKE 'a%';
+ERROR:  nondeterministic collations are not supported for ILIKE
+SELECT x FROM test3bpci WHERE x SIMILAR TO 'a%';
+ERROR:  nondeterministic collations are not supported for regular expressions
+SELECT x FROM test3bpci WHERE x ~ 'a';
+ERROR:  nondeterministic collations are not supported for regular expressions
+SELECT x FROM test1bpci UNION SELECT x FROM test2bpci ORDER BY x;
+  x  
+-----
+ abc
+ def
+ ghi
+(3 rows)
+
+SELECT x FROM test2bpci UNION SELECT x FROM test1bpci ORDER BY x;
+  x  
+-----
+ ABC
+ def
+ ghi
+(3 rows)
+
+SELECT x FROM test1bpci INTERSECT SELECT x FROM test2bpci;
+  x  
+-----
+ ghi
+ abc
+(2 rows)
+
+SELECT x FROM test2bpci INTERSECT SELECT x FROM test1bpci;
+  x  
+-----
+ ghi
+ ABC
+(2 rows)
+
+SELECT x FROM test1bpci EXCEPT SELECT x FROM test2bpci;
+  x  
+-----
+ def
+(1 row)
+
+SELECT x FROM test2bpci EXCEPT SELECT x FROM test1bpci;
+ x 
+---
+(0 rows)
+
+SELECT DISTINCT x FROM test3bpci ORDER BY x;
+  x  
+-----
+ abc
+ def
+ ghi
+(3 rows)
+
+SELECT count(DISTINCT x) FROM test3bpci;
+ count 
+-------
+     3
+(1 row)
+
+SELECT x, count(*) FROM test3bpci GROUP BY x ORDER BY x;
+  x  | count 
+-----+-------
+ abc |     2
+ def |     1
+ ghi |     1
+(3 rows)
+
+SELECT x, row_number() OVER (ORDER BY x), rank() OVER (ORDER BY x) FROM test3bpci ORDER BY x;
+  x  | row_number | rank 
+-----+------------+------
+ abc |          1 |    1
+ ABC |          2 |    1
+ def |          3 |    3
+ ghi |          4 |    4
+(4 rows)
+
+CREATE UNIQUE INDEX ON test1bpci (x);  -- ok
+INSERT INTO test1bpci VALUES ('ABC');  -- error
+ERROR:  duplicate key value violates unique constraint "test1bpci_x_idx"
+DETAIL:  Key (x)=(ABC) already exists.
+CREATE UNIQUE INDEX ON test3bpci (x);  -- error
+ERROR:  could not create unique index "test3bpci_x_idx"
+DETAIL:  Key (x)=(abc) is duplicated.
+SELECT string_to_array('ABC,DEF,GHI'::char(11) COLLATE case_insensitive, ',', 'abc');
+ERROR:  nondeterministic collations are not supported for substring searches
+SELECT string_to_array('ABCDEFGHI'::char(9) COLLATE case_insensitive, NULL, 'b');
+    string_to_array     
+------------------------
+ {A,NULL,C,D,E,F,G,H,I}
+(1 row)
+
+-- This tests the issue described in match_pattern_prefix().  In the
+-- absence of that check, the case_insensitive tests below would
+-- return no rows where they should logically return one.
+CREATE TABLE test4c (x text COLLATE "C");
+INSERT INTO test4c VALUES ('abc');
+CREATE INDEX ON test4c (x);
+SET enable_seqscan = off;
+SELECT x FROM test4c WHERE x LIKE 'ABC' COLLATE case_sensitive;  -- ok, no rows
+ x 
+---
+(0 rows)
+
+SELECT x FROM test4c WHERE x LIKE 'ABC%' COLLATE case_sensitive;  -- ok, no rows
+ x 
+---
+(0 rows)
+
+SELECT x FROM test4c WHERE x LIKE 'ABC' COLLATE case_insensitive;  -- error
+ERROR:  nondeterministic collations are not supported for LIKE
+SELECT x FROM test4c WHERE x LIKE 'ABC%' COLLATE case_insensitive;  -- error
+ERROR:  nondeterministic collations are not supported for LIKE
+RESET enable_seqscan;
+-- Unicode special case: different variants of Greek lower case sigma.
+-- A naive implementation like citext that just does lower(x) =
+-- lower(y) will do the wrong thing here, because lower('Σ') is 'σ'
+-- but upper('ς') is 'Σ'.
+SELECT 'ὀδυσσεύς' = 'ὈΔΥΣΣΕΎΣ' COLLATE case_sensitive;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT 'ὀδυσσεύς' = 'ὈΔΥΣΣΕΎΣ' COLLATE case_insensitive;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- name vs. text comparison operators
+SELECT relname FROM pg_class WHERE relname = 'PG_CLASS'::text COLLATE case_insensitive;
+ relname  
+----------
+ pg_class
+(1 row)
+
+SELECT relname FROM pg_class WHERE 'PG_CLASS'::text = relname COLLATE case_insensitive;
+ relname  
+----------
+ pg_class
+(1 row)
+
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND typname <> 'INT2'::text COLLATE case_insensitive;
+ typname 
+---------
+ int4
+ int8
+(2 rows)
+
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND 'INT2'::text <> typname COLLATE case_insensitive;;
+ typname 
+---------
+ int4
+ int8
+(2 rows)
+
+-- test case adapted from subselect.sql
+CREATE TEMP TABLE outer_text (f1 text COLLATE case_insensitive, f2 text);
+INSERT INTO outer_text VALUES ('a', 'a');
+INSERT INTO outer_text VALUES ('b', 'a');
+INSERT INTO outer_text VALUES ('A', NULL);
+INSERT INTO outer_text VALUES ('B', NULL);
+CREATE TEMP TABLE inner_text (c1 text COLLATE case_insensitive, c2 text);
+INSERT INTO inner_text VALUES ('a', NULL);
+SELECT * FROM outer_text WHERE (f1, f2) NOT IN (SELECT * FROM inner_text);
+ f1 | f2 
+----+----
+ b  | a
+ B  | 
+(2 rows)
+
+-- accents
+CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-true', deterministic = false);
+CREATE TABLE test4 (a int, b text);
+INSERT INTO test4 VALUES (1, 'cote'), (2, 'côte'), (3, 'coté'), (4, 'côté');
+SELECT * FROM test4 WHERE b = 'cote';
+ a |  b   
+---+------
+ 1 | cote
+(1 row)
+
+SELECT * FROM test4 WHERE b = 'cote' COLLATE ignore_accents;
+ a |  b   
+---+------
+ 1 | cote
+ 2 | côte
+ 3 | coté
+ 4 | côté
+(4 rows)
+
+SELECT * FROM test4 WHERE b = 'Cote' COLLATE ignore_accents;  -- still case-sensitive
+ a | b 
+---+---
+(0 rows)
+
+SELECT * FROM test4 WHERE b = 'Cote' COLLATE case_insensitive;
+ a |  b   
+---+------
+ 1 | cote
+(1 row)
+
+-- foreign keys (should use collation of primary key)
+-- PK is case-sensitive, FK is case-insensitive
+CREATE TABLE test10pk (x text COLLATE case_sensitive PRIMARY KEY);
+INSERT INTO test10pk VALUES ('abc'), ('def'), ('ghi');
+CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
+INSERT INTO test10fk VALUES ('abc');  -- ok
+INSERT INTO test10fk VALUES ('ABC');  -- error
+ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
+DETAIL:  Key (x)=(ABC) is not present in table "test10pk".
+INSERT INTO test10fk VALUES ('xyz');  -- error
+ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
+DETAIL:  Key (x)=(xyz) is not present in table "test10pk".
+SELECT * FROM test10pk;
+  x  
+-----
+ abc
+ def
+ ghi
+(3 rows)
+
+SELECT * FROM test10fk;
+  x  
+-----
+ abc
+(1 row)
+
+-- restrict update even though the values are "equal" in the FK table
+UPDATE test10fk SET x = 'ABC' WHERE x = 'abc';  -- error
+ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
+DETAIL:  Key (x)=(ABC) is not present in table "test10pk".
+SELECT * FROM test10fk;
+  x  
+-----
+ abc
+(1 row)
+
+DELETE FROM test10pk WHERE x = 'abc';
+SELECT * FROM test10pk;
+  x  
+-----
+ def
+ ghi
+(2 rows)
+
+SELECT * FROM test10fk;
+ x 
+---
+(0 rows)
+
+-- PK is case-insensitive, FK is case-sensitive
+CREATE TABLE test11pk (x text COLLATE case_insensitive PRIMARY KEY);
+INSERT INTO test11pk VALUES ('abc'), ('def'), ('ghi');
+CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
+INSERT INTO test11fk VALUES ('abc');  -- ok
+INSERT INTO test11fk VALUES ('ABC');  -- ok
+INSERT INTO test11fk VALUES ('xyz');  -- error
+ERROR:  insert or update on table "test11fk" violates foreign key constraint "test11fk_x_fkey"
+DETAIL:  Key (x)=(xyz) is not present in table "test11pk".
+SELECT * FROM test11pk;
+  x  
+-----
+ abc
+ def
+ ghi
+(3 rows)
+
+SELECT * FROM test11fk;
+  x  
+-----
+ abc
+ ABC
+(2 rows)
+
+-- cascade update even though the values are "equal" in the PK table
+UPDATE test11pk SET x = 'ABC' WHERE x = 'abc';
+SELECT * FROM test11fk;
+  x  
+-----
+ ABC
+ ABC
+(2 rows)
+
+DELETE FROM test11pk WHERE x = 'abc';
+SELECT * FROM test11pk;
+  x  
+-----
+ def
+ ghi
+(2 rows)
+
+SELECT * FROM test11fk;
+ x 
+---
+(0 rows)
+
+-- partitioning
+CREATE TABLE test20 (a int, b text COLLATE case_insensitive) PARTITION BY LIST (b);
+CREATE TABLE test20_1 PARTITION OF test20 FOR VALUES IN ('abc');
+INSERT INTO test20 VALUES (1, 'abc');
+INSERT INTO test20 VALUES (2, 'ABC');
+SELECT * FROM test20_1;
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | ABC
+(2 rows)
+
+CREATE TABLE test21 (a int, b text COLLATE case_insensitive) PARTITION BY RANGE (b);
+CREATE TABLE test21_1 PARTITION OF test21 FOR VALUES FROM ('ABC') TO ('DEF');
+INSERT INTO test21 VALUES (1, 'abc');
+INSERT INTO test21 VALUES (2, 'ABC');
+SELECT * FROM test21_1;
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | ABC
+(2 rows)
+
+CREATE TABLE test22 (a int, b text COLLATE case_sensitive) PARTITION BY HASH (b);
+CREATE TABLE test22_0 PARTITION OF test22 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test22_1 PARTITION OF test22 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test22 VALUES (1, 'def');
+INSERT INTO test22 VALUES (2, 'DEF');
+-- they end up in different partitions
+SELECT (SELECT count(*) FROM test22_0) = (SELECT count(*) FROM test22_1);
+ ?column? 
+----------
+ t
+(1 row)
+
+CREATE TABLE test23 (a int, b text COLLATE case_insensitive) PARTITION BY HASH (b);
+CREATE TABLE test23_0 PARTITION OF test23 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test23_1 PARTITION OF test23 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test23 VALUES (1, 'def');
+INSERT INTO test23 VALUES (2, 'DEF');
+-- they end up in the same partition (but it's platform-dependent which one)
+SELECT (SELECT count(*) FROM test23_0) <> (SELECT count(*) FROM test23_1);
+ ?column? 
+----------
+ t
+(1 row)
+
+CREATE TABLE test30 (a int, b char(3) COLLATE case_insensitive) PARTITION BY LIST (b);
+CREATE TABLE test30_1 PARTITION OF test30 FOR VALUES IN ('abc');
+INSERT INTO test30 VALUES (1, 'abc');
+INSERT INTO test30 VALUES (2, 'ABC');
+SELECT * FROM test30_1;
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | ABC
+(2 rows)
+
+CREATE TABLE test31 (a int, b char(3) COLLATE case_insensitive) PARTITION BY RANGE (b);
+CREATE TABLE test31_1 PARTITION OF test31 FOR VALUES FROM ('ABC') TO ('DEF');
+INSERT INTO test31 VALUES (1, 'abc');
+INSERT INTO test31 VALUES (2, 'ABC');
+SELECT * FROM test31_1;
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | ABC
+(2 rows)
+
+CREATE TABLE test32 (a int, b char(3) COLLATE case_sensitive) PARTITION BY HASH (b);
+CREATE TABLE test32_0 PARTITION OF test32 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test32_1 PARTITION OF test32 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test32 VALUES (1, 'def');
+INSERT INTO test32 VALUES (2, 'DEF');
+-- they end up in different partitions
+SELECT (SELECT count(*) FROM test32_0) = (SELECT count(*) FROM test32_1);
+ ?column? 
+----------
+ t
+(1 row)
+
+CREATE TABLE test33 (a int, b char(3) COLLATE case_insensitive) PARTITION BY HASH (b);
+CREATE TABLE test33_0 PARTITION OF test33 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test33_1 PARTITION OF test33 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test33 VALUES (1, 'def');
+INSERT INTO test33 VALUES (2, 'DEF');
+-- they end up in the same partition (but it's platform-dependent which one)
+SELECT (SELECT count(*) FROM test33_0) <> (SELECT count(*) FROM test33_1);
+ ?column? 
+----------
+ t
+(1 row)
+
 -- cleanup
 SET client_min_messages TO warning;
 DROP SCHEMA collate_tests CASCADE;

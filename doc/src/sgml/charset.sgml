@@ -847,11 +847,13 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
 
    <para>
     Note that while this system allows creating collations that <quote>ignore
-    case</quote> or <quote>ignore accents</quote> or similar (using
-    the <literal>ks</literal> key), PostgreSQL does not at the moment allow
-    such collations to act in a truly case- or accent-insensitive manner.  Any
-    strings that compare equal according to the collation but are not
-    byte-wise equal will be sorted according to their byte values.
+    case</quote> or <quote>ignore accents</quote> or similar (using the
+    <literal>ks</literal> key), in order for such collations to act in a
+    truly case- or accent-insensitive manner, they also need to be declared as not
+    <firstterm>deterministic</firstterm> in <command>CREATE COLLATION</command>;
+    see <xref linkend="collation-nondeterministic"/>.
+    Otherwise, any strings that compare equal according to the collation but
+    are not byte-wise equal will be sorted according to their byte values.
    </para>
 
    <note>
@@ -882,6 +884,55 @@ CREATE COLLATION french FROM "fr-x-icu";
 </programlisting>
    </para>
    </sect4>
+   </sect3>
+
+   <sect3 id="collation-nondeterministic">
+    <title>Nondeterminstic Collations</title>
+
+    <para>
+     A collation is either <firstterm>deterministic</firstterm> or
+     <firstterm>nondeterministic</firstterm>.  A deterministic collation uses
+     deterministic comparisons, which means that it considers strings to be
+     equal only if they consist of the same byte sequence.  Nondeterministic
+     comparison may determine strings to be equal even if they consist of
+     different bytes.  Typical situations include case-insensitive comparison,
+     accent-insensitive comparison, as well as comparion of strings in
+     different Unicode normal forms.  It is up to the collation provider to
+     actually implement such insensitive comparisons; the deterministic flag
+     only determines whether ties are to be broken using bytewise comparison.
+     See also <ulink url="https://unicode.org/reports/tr10">Unicode Technical
+     Standard 10</ulink> for more information on the terminology.
+    </para>
+
+    <para>
+     To create a nondeterministic collation, specify the property
+     <literal>deterministic = false</literal> to <command>CREATE
+     COLLATION</command>, for example:
+<programlisting>
+CREATE COLLATION ndcoll (provider = icu, locale = 'und', deterministic = false);
+</programlisting>
+     This example would use the standard Unicode collation in a
+     nondeterministic way.  In particular, this would allow strings in
+     different normal forms to be compared correctly.  More interesting
+     examples make use of the ICU customization facilities explained above.
+     For example:
+<programlisting>
+CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
+CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-true', deterministic = false);
+</programlisting>
+    </para>
+
+    <para>
+     All standard and predefined collations are deterministic, all
+     user-defined collations are deterministic by default.  While
+     nondeterministic collations give a more <quote>correct</quote> behavior,
+     especially when considering the full power of Unicode and its many
+     special cases, they also have some drawbacks.  Foremost, their use leads
+     to a performance penalty.  Also, certain operations are not possible with
+     nondeterministic collations, such as pattern matching operations.
+     Therefore, they should be used only in cases where they are specifically
+     wanted.
+    </para>
    </sect3>
   </sect2>
  </sect1>

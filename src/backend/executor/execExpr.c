@@ -3317,6 +3317,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 					   int numCols,
 					   const AttrNumber *keyColIdx,
 					   const Oid *eqfunctions,
+					   const Oid *collations,
 					   PlanState *parent)
 {
 	ExprState  *state = makeNode(ExprState);
@@ -3377,6 +3378,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 		Form_pg_attribute latt = TupleDescAttr(ldesc, attno - 1);
 		Form_pg_attribute ratt = TupleDescAttr(rdesc, attno - 1);
 		Oid			foid = eqfunctions[natt];
+		Oid			collid = collations[natt];
 		FmgrInfo   *finfo;
 		FunctionCallInfo fcinfo;
 		AclResult	aclresult;
@@ -3394,7 +3396,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 		fmgr_info(foid, finfo);
 		fmgr_info_set_expr(NULL, finfo);
 		InitFunctionCallInfoData(*fcinfo, finfo, 2,
-								 InvalidOid, NULL, NULL);
+								 collid, NULL, NULL);
 
 		/* left arg */
 		scratch.opcode = EEOP_INNER_VAR;

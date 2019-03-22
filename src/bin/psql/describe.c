@@ -4106,7 +4106,7 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, false, true, false};
 
 	if (pset.sversion < 90100)
 	{
@@ -4134,6 +4134,21 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 		appendPQExpBuffer(&buf,
 						  ",\n       CASE c.collprovider WHEN 'd' THEN 'default' WHEN 'c' THEN 'libc' WHEN 'i' THEN 'icu' END AS \"%s\"",
 						  gettext_noop("Provider"));
+	else
+		appendPQExpBuffer(&buf,
+						  ",\n       'libc' AS \"%s\"",
+						  gettext_noop("Provider"));
+
+	if (pset.sversion >= 120000)
+		appendPQExpBuffer(&buf,
+						  ",\n       CASE WHEN c.collisdeterministic THEN '%s' ELSE '%s' END AS \"%s\"",
+						  gettext_noop("yes"), gettext_noop("no"),
+						  gettext_noop("Deterministic?"));
+	else
+		appendPQExpBuffer(&buf,
+						  ",\n       '%s' AS \"%s\"",
+						  gettext_noop("yes"),
+						  gettext_noop("Deterministic?"));
 
 	if (verbose)
 		appendPQExpBuffer(&buf,

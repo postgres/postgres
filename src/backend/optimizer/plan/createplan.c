@@ -260,14 +260,14 @@ static Sort *make_sort_from_groupcols(List *groupcls,
 						 Plan *lefttree);
 static Material *make_material(Plan *lefttree);
 static WindowAgg *make_windowagg(List *tlist, Index winref,
-			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
-			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
+			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators, Oid *partCollations,
+			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators, Oid *ordCollations,
 			   int frameOptions, Node *startOffset, Node *endOffset,
 			   Oid startInRangeFunc, Oid endInRangeFunc,
 			   Oid inRangeColl, bool inRangeAsc, bool inRangeNullsFirst,
 			   Plan *lefttree);
 static Group *make_group(List *tlist, List *qual, int numGroupCols,
-		   AttrNumber *grpColIdx, Oid *grpOperators,
+		   AttrNumber *grpColIdx, Oid *grpOperators, Oid *grpCollations,
 		   Plan *lefttree);
 static Unique *make_unique_from_sortclauses(Plan *lefttree, List *distinctList);
 static Unique *make_unique_from_pathkeys(Plan *lefttree,
@@ -1387,6 +1387,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 	bool		newitems;
 	int			numGroupCols;
 	AttrNumber *groupColIdx;
+	Oid		   *groupCollations;
 	int			groupColPos;
 	ListCell   *l;
 
@@ -1453,6 +1454,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 	newtlist = subplan->targetlist;
 	numGroupCols = list_length(uniq_exprs);
 	groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
+	groupCollations = (Oid *) palloc(numGroupCols * sizeof(Oid));
 
 	groupColPos = 0;
 	foreach(l, uniq_exprs)
@@ -1463,7 +1465,9 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 		tle = tlist_member(uniqexpr, newtlist);
 		if (!tle)				/* shouldn't happen */
 			elog(ERROR, "failed to find unique expression in subplan tlist");
-		groupColIdx[groupColPos++] = tle->resno;
+		groupColIdx[groupColPos] = tle->resno;
+		groupCollations[groupColPos] = exprCollation((Node *) tle->expr);
+		groupColPos++;
 	}
 
 	if (best_path->umethod == UNIQUE_PATH_HASH)
@@ -1501,6 +1505,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 								 numGroupCols,
 								 groupColIdx,
 								 groupOperators,
+								 groupCollations,
 								 NIL,
 								 NIL,
 								 best_path->path.rows,
@@ -1883,6 +1888,8 @@ create_group_plan(PlannerInfo *root, GroupPath *best_path)
 					  extract_grouping_cols(best_path->groupClause,
 											subplan->targetlist),
 					  extract_grouping_ops(best_path->groupClause),
+					  extract_grouping_collations(best_path->groupClause,
+												  subplan->targetlist),
 					  subplan);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
@@ -1949,6 +1956,8 @@ create_agg_plan(PlannerInfo *root, AggPath *best_path)
 					extract_grouping_cols(best_path->groupClause,
 										  subplan->targetlist),
 					extract_grouping_ops(best_path->groupClause),
+					extract_grouping_collations(best_path->groupClause,
+												subplan->targetlist),
 					NIL,
 					NIL,
 					best_path->numGroups,
@@ -2110,6 +2119,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 										 list_length((List *) linitial(rollup->gsets)),
 										 new_grpColIdx,
 										 extract_grouping_ops(rollup->groupClause),
+										 extract_grouping_collations(rollup->groupClause, subplan->targetlist),
 										 rollup->gsets,
 										 NIL,
 										 rollup->numGroups,
@@ -2147,6 +2157,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 						numGroupCols,
 						top_grpColIdx,
 						extract_grouping_ops(rollup->groupClause),
+						extract_grouping_collations(rollup->groupClause, subplan->targetlist),
 						rollup->gsets,
 						chain,
 						rollup->numGroups,
@@ -2246,9 +2257,11 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	int			partNumCols;
 	AttrNumber *partColIdx;
 	Oid		   *partOperators;
+	Oid		   *partCollations;
 	int			ordNumCols;
 	AttrNumber *ordColIdx;
 	Oid		   *ordOperators;
+	Oid		   *ordCollations;
 	ListCell   *lc;
 
 	/*
@@ -2270,6 +2283,7 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	 */
 	partColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numPart);
 	partOperators = (Oid *) palloc(sizeof(Oid) * numPart);
+	partCollations = (Oid *) palloc(sizeof(Oid) * numPart);
 
 	partNumCols = 0;
 	foreach(lc, wc->partitionClause)
@@ -2280,11 +2294,13 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 		Assert(OidIsValid(sgc->eqop));
 		partColIdx[partNumCols] = tle->resno;
 		partOperators[partNumCols] = sgc->eqop;
+		partCollations[partNumCols] = exprCollation((Node *) tle->expr);
 		partNumCols++;
 	}
 
 	ordColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numOrder);
 	ordOperators = (Oid *) palloc(sizeof(Oid) * numOrder);
+	ordCollations = (Oid *) palloc(sizeof(Oid) * numOrder);
 
 	ordNumCols = 0;
 	foreach(lc, wc->orderClause)
@@ -2295,6 +2311,7 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 		Assert(OidIsValid(sgc->eqop));
 		ordColIdx[ordNumCols] = tle->resno;
 		ordOperators[ordNumCols] = sgc->eqop;
+		ordCollations[ordNumCols] = exprCollation((Node *) tle->expr);
 		ordNumCols++;
 	}
 
@@ -2304,9 +2321,11 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 						  partNumCols,
 						  partColIdx,
 						  partOperators,
+						  partCollations,
 						  ordNumCols,
 						  ordColIdx,
 						  ordOperators,
+						  ordCollations,
 						  wc->frameOptions,
 						  wc->startOffset,
 						  wc->endOffset,
@@ -5326,10 +5345,12 @@ make_recursive_union(List *tlist,
 		int			keyno = 0;
 		AttrNumber *dupColIdx;
 		Oid		   *dupOperators;
+		Oid		   *dupCollations;
 		ListCell   *slitem;
 
 		dupColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 		dupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+		dupCollations = (Oid *) palloc(sizeof(Oid) * numCols);
 
 		foreach(slitem, distinctList)
 		{
@@ -5339,11 +5360,13 @@ make_recursive_union(List *tlist,
 
 			dupColIdx[keyno] = tle->resno;
 			dupOperators[keyno] = sortcl->eqop;
+			dupCollations[keyno] = exprCollation((Node *) tle->expr);
 			Assert(OidIsValid(dupOperators[keyno]));
 			keyno++;
 		}
 		node->dupColIdx = dupColIdx;
 		node->dupOperators = dupOperators;
+		node->dupCollations = dupCollations;
 	}
 	node->numGroups = numGroups;
 
@@ -6015,7 +6038,7 @@ materialize_finished_plan(Plan *subplan)
 Agg *
 make_agg(List *tlist, List *qual,
 		 AggStrategy aggstrategy, AggSplit aggsplit,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators, Oid *grpCollations,
 		 List *groupingSets, List *chain,
 		 double dNumGroups, Plan *lefttree)
 {
@@ -6031,6 +6054,7 @@ make_agg(List *tlist, List *qual,
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
+	node->grpCollations = grpCollations;
 	node->numGroups = numGroups;
 	node->aggParams = NULL;		/* SS_finalize_plan() will fill this */
 	node->groupingSets = groupingSets;
@@ -6046,8 +6070,8 @@ make_agg(List *tlist, List *qual,
 
 static WindowAgg *
 make_windowagg(List *tlist, Index winref,
-			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
-			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
+			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators, Oid *partCollations,
+			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators, Oid *ordCollations,
 			   int frameOptions, Node *startOffset, Node *endOffset,
 			   Oid startInRangeFunc, Oid endInRangeFunc,
 			   Oid inRangeColl, bool inRangeAsc, bool inRangeNullsFirst,
@@ -6060,9 +6084,11 @@ make_windowagg(List *tlist, Index winref,
 	node->partNumCols = partNumCols;
 	node->partColIdx = partColIdx;
 	node->partOperators = partOperators;
+	node->partCollations = partCollations;
 	node->ordNumCols = ordNumCols;
 	node->ordColIdx = ordColIdx;
 	node->ordOperators = ordOperators;
+	node->ordCollations = ordCollations;
 	node->frameOptions = frameOptions;
 	node->startOffset = startOffset;
 	node->endOffset = endOffset;
@@ -6087,6 +6113,7 @@ make_group(List *tlist,
 		   int numGroupCols,
 		   AttrNumber *grpColIdx,
 		   Oid *grpOperators,
+		   Oid *grpCollations,
 		   Plan *lefttree)
 {
 	Group	   *node = makeNode(Group);
@@ -6095,6 +6122,7 @@ make_group(List *tlist,
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
+	node->grpCollations = grpCollations;
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
@@ -6118,6 +6146,7 @@ make_unique_from_sortclauses(Plan *lefttree, List *distinctList)
 	int			keyno = 0;
 	AttrNumber *uniqColIdx;
 	Oid		   *uniqOperators;
+	Oid		   *uniqCollations;
 	ListCell   *slitem;
 
 	plan->targetlist = lefttree->targetlist;
@@ -6132,6 +6161,7 @@ make_unique_from_sortclauses(Plan *lefttree, List *distinctList)
 	Assert(numCols > 0);
 	uniqColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 	uniqOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+	uniqCollations = (Oid *) palloc(sizeof(Oid) * numCols);
 
 	foreach(slitem, distinctList)
 	{
@@ -6140,6 +6170,7 @@ make_unique_from_sortclauses(Plan *lefttree, List *distinctList)
 
 		uniqColIdx[keyno] = tle->resno;
 		uniqOperators[keyno] = sortcl->eqop;
+		uniqCollations[keyno] = exprCollation((Node *) tle->expr);
 		Assert(OidIsValid(uniqOperators[keyno]));
 		keyno++;
 	}
@@ -6147,6 +6178,7 @@ make_unique_from_sortclauses(Plan *lefttree, List *distinctList)
 	node->numCols = numCols;
 	node->uniqColIdx = uniqColIdx;
 	node->uniqOperators = uniqOperators;
+	node->uniqCollations = uniqCollations;
 
 	return node;
 }
@@ -6162,6 +6194,7 @@ make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols)
 	int			keyno = 0;
 	AttrNumber *uniqColIdx;
 	Oid		   *uniqOperators;
+	Oid		   *uniqCollations;
 	ListCell   *lc;
 
 	plan->targetlist = lefttree->targetlist;
@@ -6177,6 +6210,7 @@ make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols)
 	Assert(numCols >= 0 && numCols <= list_length(pathkeys));
 	uniqColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 	uniqOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+	uniqCollations = (Oid *) palloc(sizeof(Oid) * numCols);
 
 	foreach(lc, pathkeys)
 	{
@@ -6245,6 +6279,7 @@ make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols)
 
 		uniqColIdx[keyno] = tle->resno;
 		uniqOperators[keyno] = eqop;
+		uniqCollations[keyno] = ec->ec_collation;
 
 		keyno++;
 	}
@@ -6252,6 +6287,7 @@ make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols)
 	node->numCols = numCols;
 	node->uniqColIdx = uniqColIdx;
 	node->uniqOperators = uniqOperators;
+	node->uniqCollations = uniqCollations;
 
 	return node;
 }
@@ -6296,6 +6332,7 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 	int			keyno = 0;
 	AttrNumber *dupColIdx;
 	Oid		   *dupOperators;
+	Oid		   *dupCollations;
 	ListCell   *slitem;
 
 	plan->targetlist = lefttree->targetlist;
@@ -6309,6 +6346,7 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 	 */
 	dupColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 	dupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+	dupCollations = (Oid *) palloc(sizeof(Oid) * numCols);
 
 	foreach(slitem, distinctList)
 	{
@@ -6317,6 +6355,7 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 
 		dupColIdx[keyno] = tle->resno;
 		dupOperators[keyno] = sortcl->eqop;
+		dupCollations[keyno] = exprCollation((Node *) tle->expr);
 		Assert(OidIsValid(dupOperators[keyno]));
 		keyno++;
 	}
@@ -6326,6 +6365,7 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 	node->numCols = numCols;
 	node->dupColIdx = dupColIdx;
 	node->dupOperators = dupOperators;
+	node->dupCollations = dupCollations;
 	node->flagColIdx = flagColIdx;
 	node->firstFlag = firstFlag;
 	node->numGroups = numGroups;

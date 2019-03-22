@@ -258,6 +258,20 @@ match_pattern_prefix(Node *leftop,
 	patt = (Const *) rightop;
 
 	/*
+	 * Not supported if the expression collation is nondeterministic.  The
+	 * optimized equality or prefix tests use bytewise comparisons, which is
+	 * not consistent with nondeterministic collations.  The actual
+	 * pattern-matching implementation functions will later error out that
+	 * pattern-matching is not supported with nondeterministic collations.
+	 * (We could also error out here, but by doing it later we get more
+	 * precise error messages.)  (It should be possible to support at least
+	 * Pattern_Prefix_Exact, but no point as along as the actual
+	 * pattern-matching implementations don't support it.)
+	 */
+	if (!get_collation_isdeterministic(expr_coll))
+		return NIL;
+
+	/*
 	 * Try to extract a fixed prefix from the pattern.
 	 */
 	pstatus = pattern_fixed_prefix(patt, ptype, expr_coll,

@@ -1312,6 +1312,7 @@ pg_newlocale_from_collation(Oid collid)
 		/* We'll fill in the result struct locally before allocating memory */
 		memset(&result, 0, sizeof(result));
 		result.provider = collform->collprovider;
+		result.deterministic = collform->collisdeterministic;
 
 		if (collform->collprovider == COLLPROVIDER_LIBC)
 		{

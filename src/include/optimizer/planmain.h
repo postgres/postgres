@@ -53,7 +53,7 @@ extern bool is_projection_capable_plan(Plan *plan);
 extern Sort *make_sort_from_sortclauses(List *sortcls, Plan *lefttree);
 extern Agg *make_agg(List *tlist, List *qual,
 		 AggStrategy aggstrategy, AggSplit aggsplit,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators, Oid *grpCollations,
 		 List *groupingSets, List *chain,
 		 double dNumGroups, Plan *lefttree);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);

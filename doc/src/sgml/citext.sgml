@@ -14,6 +14,16 @@
   exactly like <type>text</type>.
  </para>
 
+ <tip>
+  <para>
+   Consider using <firstterm>nondeterministic collations</firstterm> (see
+   <xref linkend="collation-nondeterministic"/>) instead of this module.  They
+   can be used for case-insensitive comparisons, accent-insensitive
+   comparisons, and other combinations, and they handle more Unicode special
+   cases correctly.
+  </para>
+ </tip>
+
  <sect2>
   <title>Rationale</title>
 
@@ -245,6 +255,17 @@ SELECT * FROM users WHERE nick = 'Larry';
       if it is not, the normal case-sensitive <type>text</type> operators
       will be invoked instead.
     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The approach of lower-casing strings for comparison does not handle some
+      Unicode special cases correctly, for example when one upper-case letter
+      has two lower-case letter equivalents.  Unicode distinguishes between
+      <firstterm>case mapping</firstterm> and <firstterm>case
+      folding</firstterm> for this reason.  Use nondeterministic collations
+      instead of <type>citext</type> to handle that correctly.
+     </para>
     </listitem>
    </itemizedlist>
  </sect2>

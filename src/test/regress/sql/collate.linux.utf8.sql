@@ -428,6 +428,13 @@ drop type textrange_c;
 drop type textrange_en_us;
 
 
+-- nondeterministic collations
+-- (not supported with libc provider)
+
+CREATE COLLATION ctest_det (locale = 'en_US.utf8', deterministic = true);
+CREATE COLLATION ctest_nondet (locale = 'en_US.utf8', deterministic = false);
+
+
 -- cleanup
 SET client_min_messages TO warning;
 DROP SCHEMA collate_tests CASCADE;

@@ -122,13 +122,14 @@ static text *text_substring(Datum str,
 			   int32 length,
 			   bool length_not_specified);
 static text *text_overlay(text *t1, text *t2, int sp, int sl);
-static int	text_position(text *t1, text *t2);
-static void text_position_setup(text *t1, text *t2, TextPositionState *state);
+static int	text_position(text *t1, text *t2, Oid collid);
+static void text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state);
 static bool text_position_next(TextPositionState *state);
 static char *text_position_next_internal(char *start_ptr, TextPositionState *state);
 static char *text_position_get_match_ptr(TextPositionState *state);
 static int	text_position_get_match_pos(TextPositionState *state);
 static void text_position_cleanup(TextPositionState *state);
+static void check_collation_set(Oid collid);
 static int	text_cmp(text *arg1, text *arg2, Oid collid);
 static bytea *bytea_catenate(bytea *t1, bytea *t2);
 static bytea *bytea_substring(Datum str,
@@ -1094,7 +1095,7 @@ textpos(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_PP(0);
 	text	   *search_str = PG_GETARG_TEXT_PP(1);
 
-	PG_RETURN_INT32((int32) text_position(str, search_str));
+	PG_RETURN_INT32((int32) text_position(str, search_str, PG_GET_COLLATION()));
 }
 
 /*
@@ -1112,7 +1113,7 @@ textpos(PG_FUNCTION_ARGS)
  *	functions.
  */
 static int
-text_position(text *t1, text *t2)
+text_position(text *t1, text *t2, Oid collid)
 {
 	TextPositionState state;
 	int			result;
@@ -1120,7 +1121,7 @@ text_position(text *t1, text *t2)
 	if (VARSIZE_ANY_EXHDR(t1) < 1 || VARSIZE_ANY_EXHDR(t2) < 1)
 		return 0;
 
-	text_position_setup(t1, t2, &state);
+	text_position_setup(t1, t2, collid, &state);
 	if (!text_position_next(&state))
 		result = 0;
 	else
@@ -1147,10 +1148,21 @@ text_position(text *t1, text *t2)
  */
 
 static void
-text_position_setup(text *t1, text *t2, TextPositionState *state)
+text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 {
 	int			len1 = VARSIZE_ANY_EXHDR(t1);
 	int			len2 = VARSIZE_ANY_EXHDR(t2);
+	pg_locale_t	mylocale = 0;
+
+	check_collation_set(collid);
+
+	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
+		mylocale = pg_newlocale_from_collation(collid);
+
+	if (mylocale && !mylocale->deterministic)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nondeterministic collations are not supported for substring searches")));
 
 	Assert(len1 > 0);
 	Assert(len2 > 0);
@@ -1429,6 +1441,22 @@ text_position_cleanup(TextPositionState *state)
 	/* no cleanup needed */
 }
 
+static void
+check_collation_set(Oid collid)
+{
+	if (!OidIsValid(collid))
+	{
+		/*
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for string comparison"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+}
+
 /* varstr_cmp()
  * Comparison function for text strings with given lengths.
  * Includes locale support, but must copy strings to temporary memory
@@ -1440,6 +1468,8 @@ int
 varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 {
 	int			result;
+
+	check_collation_set(collid);
 
 	/*
 	 * Unfortunately, there is no strncoll(), so in the non-C locale case we
@@ -1462,20 +1492,7 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 		pg_locale_t mylocale = 0;
 
 		if (collid != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collid))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for string comparison"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
 			mylocale = pg_newlocale_from_collation(collid);
-		}
 
 		/*
 		 * memcmp() can't tell us which of two unequal strings sorts first,
@@ -1558,13 +1575,9 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 				ereport(ERROR,
 						(errmsg("could not compare Unicode strings: %m")));
 
-			/*
-			 * In some locales wcscoll() can claim that nonidentical strings
-			 * are equal.  Believing that would be bad news for a number of
-			 * reasons, so we follow Perl's lead and sort "equal" strings
-			 * according to strcmp (on the UTF-8 representation).
-			 */
-			if (result == 0)
+			/* Break tie if necessary. */
+			if (result == 0 &&
+				(!mylocale || mylocale->deterministic))
 			{
 				result = memcmp(arg1, arg2, Min(len1, len2));
 				if ((result == 0) && (len1 != len2))
@@ -1649,13 +1662,9 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 		else
 			result = strcoll(a1p, a2p);
 
-		/*
-		 * In some locales strcoll() can claim that nonidentical strings are
-		 * equal.  Believing that would be bad news for a number of reasons,
-		 * so we follow Perl's lead and sort "equal" strings according to
-		 * strcmp().
-		 */
-		if (result == 0)
+		/* Break tie if necessary. */
+		if (result == 0 &&
+			(!mylocale || mylocale->deterministic))
 			result = strcmp(a1p, a2p);
 
 		if (a1p != a1buf)
@@ -1699,33 +1708,52 @@ text_cmp(text *arg1, text *arg2, Oid collid)
 Datum
 texteq(PG_FUNCTION_ARGS)
 {
-	Datum		arg1 = PG_GETARG_DATUM(0);
-	Datum		arg2 = PG_GETARG_DATUM(1);
+	Oid			collid = PG_GET_COLLATION();
 	bool		result;
-	Size		len1,
-				len2;
 
-	/*
-	 * Since we only care about equality or not-equality, we can avoid all the
-	 * expense of strcoll() here, and just do bitwise comparison.  In fact, we
-	 * don't even have to do a bitwise comparison if we can show the lengths
-	 * of the strings are unequal; which might save us from having to detoast
-	 * one or both values.
-	 */
-	len1 = toast_raw_datum_size(arg1);
-	len2 = toast_raw_datum_size(arg2);
-	if (len1 != len2)
-		result = false;
+	check_collation_set(collid);
+
+	if (lc_collate_is_c(collid) ||
+		collid == DEFAULT_COLLATION_OID ||
+		pg_newlocale_from_collation(collid)->deterministic)
+	{
+		Datum		arg1 = PG_GETARG_DATUM(0);
+		Datum		arg2 = PG_GETARG_DATUM(1);
+		Size		len1,
+					len2;
+
+		/*
+		 * Since we only care about equality or not-equality, we can avoid all the
+		 * expense of strcoll() here, and just do bitwise comparison.  In fact, we
+		 * don't even have to do a bitwise comparison if we can show the lengths
+		 * of the strings are unequal; which might save us from having to detoast
+		 * one or both values.
+		 */
+		len1 = toast_raw_datum_size(arg1);
+		len2 = toast_raw_datum_size(arg2);
+		if (len1 != len2)
+			result = false;
+		else
+		{
+			text	   *targ1 = DatumGetTextPP(arg1);
+			text	   *targ2 = DatumGetTextPP(arg2);
+
+			result = (memcmp(VARDATA_ANY(targ1), VARDATA_ANY(targ2),
+							 len1 - VARHDRSZ) == 0);
+
+			PG_FREE_IF_COPY(targ1, 0);
+			PG_FREE_IF_COPY(targ2, 1);
+		}
+	}
 	else
 	{
-		text	   *targ1 = DatumGetTextPP(arg1);
-		text	   *targ2 = DatumGetTextPP(arg2);
+		text	   *arg1 = PG_GETARG_TEXT_PP(0);
+		text	   *arg2 = PG_GETARG_TEXT_PP(1);
 
-		result = (memcmp(VARDATA_ANY(targ1), VARDATA_ANY(targ2),
-						 len1 - VARHDRSZ) == 0);
+		result = (text_cmp(arg1, arg2, collid) == 0);
 
-		PG_FREE_IF_COPY(targ1, 0);
-		PG_FREE_IF_COPY(targ2, 1);
+		PG_FREE_IF_COPY(arg1, 0);
+		PG_FREE_IF_COPY(arg2, 1);
 	}
 
 	PG_RETURN_BOOL(result);
@@ -1734,27 +1762,46 @@ texteq(PG_FUNCTION_ARGS)
 Datum
 textne(PG_FUNCTION_ARGS)
 {
-	Datum		arg1 = PG_GETARG_DATUM(0);
-	Datum		arg2 = PG_GETARG_DATUM(1);
+	Oid			collid = PG_GET_COLLATION();
 	bool		result;
-	Size		len1,
-				len2;
 
-	/* See comment in texteq() */
-	len1 = toast_raw_datum_size(arg1);
-	len2 = toast_raw_datum_size(arg2);
-	if (len1 != len2)
-		result = true;
+	check_collation_set(collid);
+
+	if (lc_collate_is_c(collid) ||
+		collid == DEFAULT_COLLATION_OID ||
+		pg_newlocale_from_collation(collid)->deterministic)
+	{
+		Datum		arg1 = PG_GETARG_DATUM(0);
+		Datum		arg2 = PG_GETARG_DATUM(1);
+		Size		len1,
+					len2;
+
+		/* See comment in texteq() */
+		len1 = toast_raw_datum_size(arg1);
+		len2 = toast_raw_datum_size(arg2);
+		if (len1 != len2)
+			result = true;
+		else
+		{
+			text	   *targ1 = DatumGetTextPP(arg1);
+			text	   *targ2 = DatumGetTextPP(arg2);
+
+			result = (memcmp(VARDATA_ANY(targ1), VARDATA_ANY(targ2),
+							 len1 - VARHDRSZ) != 0);
+
+			PG_FREE_IF_COPY(targ1, 0);
+			PG_FREE_IF_COPY(targ2, 1);
+		}
+	}
 	else
 	{
-		text	   *targ1 = DatumGetTextPP(arg1);
-		text	   *targ2 = DatumGetTextPP(arg2);
+		text	   *arg1 = PG_GETARG_TEXT_PP(0);
+		text	   *arg2 = PG_GETARG_TEXT_PP(1);
 
-		result = (memcmp(VARDATA_ANY(targ1), VARDATA_ANY(targ2),
-						 len1 - VARHDRSZ) != 0);
+		result = (text_cmp(arg1, arg2, collid) != 0);
 
-		PG_FREE_IF_COPY(targ1, 0);
-		PG_FREE_IF_COPY(targ2, 1);
+		PG_FREE_IF_COPY(arg1, 0);
+		PG_FREE_IF_COPY(arg2, 1);
 	}
 
 	PG_RETURN_BOOL(result);
@@ -1825,9 +1872,21 @@ text_starts_with(PG_FUNCTION_ARGS)
 {
 	Datum		arg1 = PG_GETARG_DATUM(0);
 	Datum		arg2 = PG_GETARG_DATUM(1);
+	Oid			collid = PG_GET_COLLATION();
+	pg_locale_t	mylocale = 0;
 	bool		result;
 	Size		len1,
 				len2;
+
+	check_collation_set(collid);
+
+	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
+		mylocale = pg_newlocale_from_collation(collid);
+
+	if (mylocale && !mylocale->deterministic)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nondeterministic collations are not supported for substring searches")));
 
 	len1 = toast_raw_datum_size(arg1);
 	len2 = toast_raw_datum_size(arg2);
@@ -1898,6 +1957,8 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 	VarStringSortSupport *sss;
 	pg_locale_t locale = 0;
 
+	check_collation_set(collid);
+
 	/*
 	 * If possible, set ssup->comparator to a function which can be used to
 	 * directly compare two datums.  If we can do this, we'll avoid the
@@ -1934,20 +1995,7 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 		 * result.
 		 */
 		if (collid != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collid))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for string comparison"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
 			locale = pg_newlocale_from_collation(collid);
-		}
 
 		/*
 		 * There is a further exception on Windows.  When the database
@@ -2328,12 +2376,9 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 	else
 		result = strcoll(sss->buf1, sss->buf2);
 
-	/*
-	 * In some locales strcoll() can claim that nonidentical strings are
-	 * equal. Believing that would be bad news for a number of reasons, so we
-	 * follow Perl's lead and sort "equal" strings according to strcmp().
-	 */
-	if (result == 0)
+	/* Break tie if necessary. */
+	if (result == 0 &&
+		(!sss->locale || sss->locale->deterministic))
 		result = strcmp(sss->buf1, sss->buf2);
 
 	/* Cache result, perhaps saving an expensive strcoll() call next time */
@@ -2760,10 +2805,18 @@ nameeqtext(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	size_t		len1 = strlen(NameStr(*arg1));
 	size_t		len2 = VARSIZE_ANY_EXHDR(arg2);
+	Oid			collid = PG_GET_COLLATION();
 	bool		result;
 
-	result = (len1 == len2 &&
-			  memcmp(NameStr(*arg1), VARDATA_ANY(arg2), len1) == 0);
+	check_collation_set(collid);
+
+	if (collid == C_COLLATION_OID)
+		result = (len1 == len2 &&
+				  memcmp(NameStr(*arg1), VARDATA_ANY(arg2), len1) == 0);
+	else
+		result = (varstr_cmp(NameStr(*arg1), len1,
+							 VARDATA_ANY(arg2), len2,
+							 collid) == 0);
 
 	PG_FREE_IF_COPY(arg2, 1);
 
@@ -2777,10 +2830,18 @@ texteqname(PG_FUNCTION_ARGS)
 	Name		arg2 = PG_GETARG_NAME(1);
 	size_t		len1 = VARSIZE_ANY_EXHDR(arg1);
 	size_t		len2 = strlen(NameStr(*arg2));
+	Oid			collid = PG_GET_COLLATION();
 	bool		result;
 
-	result = (len1 == len2 &&
-			  memcmp(VARDATA_ANY(arg1), NameStr(*arg2), len1) == 0);
+	check_collation_set(collid);
+
+	if (collid == C_COLLATION_OID)
+		result = (len1 == len2 &&
+				  memcmp(VARDATA_ANY(arg1), NameStr(*arg2), len1) == 0);
+	else
+		result = (varstr_cmp(VARDATA_ANY(arg1), len1,
+							 NameStr(*arg2), len2,
+							 collid) == 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 
@@ -2794,10 +2855,18 @@ namenetext(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	size_t		len1 = strlen(NameStr(*arg1));
 	size_t		len2 = VARSIZE_ANY_EXHDR(arg2);
+	Oid			collid = PG_GET_COLLATION();
 	bool		result;
 
-	result = !(len1 == len2 &&
-			   memcmp(NameStr(*arg1), VARDATA_ANY(arg2), len1) == 0);
+	check_collation_set(collid);
+
+	if (collid == C_COLLATION_OID)
+		result = !(len1 == len2 &&
+				   memcmp(NameStr(*arg1), VARDATA_ANY(arg2), len1) == 0);
+	else
+		result = !(varstr_cmp(NameStr(*arg1), len1,
+							  VARDATA_ANY(arg2), len2,
+							  collid) == 0);
 
 	PG_FREE_IF_COPY(arg2, 1);
 
@@ -2811,10 +2880,18 @@ textnename(PG_FUNCTION_ARGS)
 	Name		arg2 = PG_GETARG_NAME(1);
 	size_t		len1 = VARSIZE_ANY_EXHDR(arg1);
 	size_t		len2 = strlen(NameStr(*arg2));
+	Oid			collid = PG_GET_COLLATION();
 	bool		result;
 
-	result = !(len1 == len2 &&
-			   memcmp(VARDATA_ANY(arg1), NameStr(*arg2), len1) == 0);
+	check_collation_set(collid);
+
+	if (collid == C_COLLATION_OID)
+		result = !(len1 == len2 &&
+				   memcmp(VARDATA_ANY(arg1), NameStr(*arg2), len1) == 0);
+	else
+		result = !(varstr_cmp(VARDATA_ANY(arg1), len1,
+							  NameStr(*arg2), len2,
+							  collid) == 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 
@@ -2919,11 +2996,33 @@ textgename(PG_FUNCTION_ARGS)
  */
 
 static int
-internal_text_pattern_compare(text *arg1, text *arg2)
+internal_text_pattern_compare(text *arg1, text *arg2, Oid collid)
 {
 	int			result;
 	int			len1,
 				len2;
+
+	check_collation_set(collid);
+
+	/*
+	 * XXX We cannot use a text_pattern_ops index for nondeterministic
+	 * collations, because these operators intentionally ignore the collation.
+	 * However, the planner has no way to know that, so it might choose such
+	 * an index for an "=" clause, which would lead to wrong results.  This
+	 * check here doesn't prevent choosing the index, but it will at least
+	 * error out if the index is chosen.  A text_pattern_ops index on a column
+	 * with nondeterministic collation is pretty useless anyway, since LIKE
+	 * etc. won't work there either.  A future possibility would be to
+	 * annotate the operator class or its members in the catalog to avoid the
+	 * index.  Another alternative is to stay away from the *_pattern_ops
+	 * operator classes and prefer creating LIKE-supporting indexes with
+	 * COLLATE "C".
+	 */
+	if (!get_collation_isdeterministic(collid))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nondeterministic collations are not supported for operator class \"%s\"",
+						"text_pattern_ops")));
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
@@ -2947,7 +3046,7 @@ text_pattern_lt(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	result = internal_text_pattern_compare(arg1, arg2, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -2963,7 +3062,7 @@ text_pattern_le(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	result = internal_text_pattern_compare(arg1, arg2, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -2979,7 +3078,7 @@ text_pattern_ge(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	result = internal_text_pattern_compare(arg1, arg2, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -2995,7 +3094,7 @@ text_pattern_gt(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	result = internal_text_pattern_compare(arg1, arg2, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -3011,7 +3110,7 @@ bttext_pattern_cmp(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	result = internal_text_pattern_compare(arg1, arg2, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -3024,7 +3123,16 @@ Datum
 bttext_pattern_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+	Oid			collid = ssup->ssup_collation;
 	MemoryContext oldcontext;
+
+	check_collation_set(collid);
+
+	if (!get_collation_isdeterministic(collid))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nondeterministic collations are not supported for operator class \"%s\"",
+						"text_pattern_ops")));
 
 	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
@@ -4121,7 +4229,7 @@ replace_text(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(src_text);
 	}
 
-	text_position_setup(src_text, from_sub_text, &state);
+	text_position_setup(src_text, from_sub_text, PG_GET_COLLATION(), &state);
 
 	found = text_position_next(&state);
 
@@ -4482,7 +4590,7 @@ split_text(PG_FUNCTION_ARGS)
 			PG_RETURN_TEXT_P(cstring_to_text(""));
 	}
 
-	text_position_setup(inputstring, fldsep, &state);
+	text_position_setup(inputstring, fldsep, PG_GET_COLLATION(), &state);
 
 	/* identify bounds of first field */
 	start_ptr = VARDATA_ANY(inputstring);
@@ -4538,11 +4646,12 @@ split_text(PG_FUNCTION_ARGS)
  * Convenience function to return true when two text params are equal.
  */
 static bool
-text_isequal(text *txt1, text *txt2)
+text_isequal(text *txt1, text *txt2, Oid collid)
 {
-	return DatumGetBool(DirectFunctionCall2(texteq,
-											PointerGetDatum(txt1),
-											PointerGetDatum(txt2)));
+	return DatumGetBool(DirectFunctionCall2Coll(texteq,
+												collid,
+												PointerGetDatum(txt1),
+												PointerGetDatum(txt2)));
 }
 
 /*
@@ -4633,7 +4742,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 			int			lbs[1];
 
 			/* single element can be a NULL too */
-			is_null = null_string ? text_isequal(inputstring, null_string) : false;
+			is_null = null_string ? text_isequal(inputstring, null_string, PG_GET_COLLATION()) : false;
 
 			elems[0] = PointerGetDatum(inputstring);
 			nulls[0] = is_null;
@@ -4645,7 +4754,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 													 TEXTOID, -1, false, 'i'));
 		}
 
-		text_position_setup(inputstring, fldsep, &state);
+		text_position_setup(inputstring, fldsep, PG_GET_COLLATION(), &state);
 
 		start_ptr = VARDATA_ANY(inputstring);
 
@@ -4673,7 +4782,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 
 			/* must build a temp text datum to pass to accumArrayResult */
 			result_text = cstring_to_text_with_len(start_ptr, chunk_len);
-			is_null = null_string ? text_isequal(result_text, null_string) : false;
+			is_null = null_string ? text_isequal(result_text, null_string, PG_GET_COLLATION()) : false;
 
 			/* stash away this field */
 			astate = accumArrayResult(astate,
@@ -4715,7 +4824,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 
 			/* must build a temp text datum to pass to accumArrayResult */
 			result_text = cstring_to_text_with_len(start_ptr, chunk_len);
-			is_null = null_string ? text_isequal(result_text, null_string) : false;
+			is_null = null_string ? text_isequal(result_text, null_string, PG_GET_COLLATION()) : false;
 
 			/* stash away this field */
 			astate = accumArrayResult(astate,

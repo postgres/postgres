@@ -163,6 +163,7 @@ initBloomState(BloomState *state, Relation index)
 		fmgr_info_copy(&(state->hashFn[i]),
 					   index_getprocinfo(index, i + 1, BLOOM_HASH_PROC),
 					   CurrentMemoryContext);
+		state->collations[i] = index->rd_indcollation[i];
 	}
 
 	/* Initialize amcache if needed with options from metapage */
@@ -267,7 +268,7 @@ signValue(BloomState *state, BloomSignatureWord *sign, Datum value, int attno)
 	 * different columns will be mapped into different bits because of step
 	 * above
 	 */
-	hashVal = DatumGetInt32(FunctionCall1(&state->hashFn[attno], value));
+	hashVal = DatumGetInt32(FunctionCall1Coll(&state->hashFn[attno], state->collations[attno], value));
 	mySrand(hashVal ^ myRand());
 
 	for (j = 0; j < state->opts.bitSize[attno]; j++)

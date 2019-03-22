@@ -163,6 +163,11 @@ SELECT * FROM foo;
 SELECT a, b, a < b as lt FROM
   (VALUES ('a', 'B'), ('A', 'b' COLLATE "C")) v(a,b);
 
+-- collation mismatch in subselects
+SELECT * FROM collate_test10 WHERE (x, y) NOT IN (SELECT y, x FROM collate_test10);
+-- now it works with overrides
+SELECT * FROM collate_test10 WHERE (x COLLATE "POSIX", y COLLATE "C") NOT IN (SELECT y, x FROM collate_test10);
+SELECT * FROM collate_test10 WHERE (x, y) NOT IN (SELECT y COLLATE "C", x COLLATE "POSIX" FROM collate_test10);
 
 -- casting
 

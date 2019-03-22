@@ -425,7 +425,7 @@ ExecEndHash(HashState *node)
  * ----------------------------------------------------------------
  */
 HashJoinTable
-ExecHashTableCreate(HashState *state, List *hashOperators, bool keepNulls)
+ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations, bool keepNulls)
 {
 	Hash	   *node;
 	HashJoinTable hashtable;
@@ -439,6 +439,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, bool keepNulls)
 	int			nkeys;
 	int			i;
 	ListCell   *ho;
+	ListCell   *hc;
 	MemoryContext oldcxt;
 
 	/*
@@ -541,8 +542,9 @@ ExecHashTableCreate(HashState *state, List *hashOperators, bool keepNulls)
 	hashtable->inner_hashfunctions =
 		(FmgrInfo *) palloc(nkeys * sizeof(FmgrInfo));
 	hashtable->hashStrict = (bool *) palloc(nkeys * sizeof(bool));
+	hashtable->collations = (Oid *) palloc(nkeys * sizeof(Oid));
 	i = 0;
-	foreach(ho, hashOperators)
+	forboth(ho, hashOperators, hc, hashCollations)
 	{
 		Oid			hashop = lfirst_oid(ho);
 		Oid			left_hashfn;
@@ -554,6 +556,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, bool keepNulls)
 		fmgr_info(left_hashfn, &hashtable->outer_hashfunctions[i]);
 		fmgr_info(right_hashfn, &hashtable->inner_hashfunctions[i]);
 		hashtable->hashStrict[i] = op_strict(hashop);
+		hashtable->collations[i] = lfirst_oid(hc);
 		i++;
 	}
 
@@ -1847,7 +1850,7 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 			/* Compute the hash function */
 			uint32		hkey;
 
-			hkey = DatumGetUInt32(FunctionCall1(&hashfunctions[i], keyval));
+			hkey = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[i], hashtable->collations[i], keyval));
 			hashkey ^= hkey;
 		}
 
@@ -2303,8 +2306,9 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			uint32		hashvalue;
 			int			bucket;
 
-			hashvalue = DatumGetUInt32(FunctionCall1(&hashfunctions[0],
-													 sslot.values[i]));
+			hashvalue = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[0],
+														 hashtable->collations[0],
+														 sslot.values[i]));
 
 			/*
 			 * While we have not hit a hole in the hashtable and have not hit

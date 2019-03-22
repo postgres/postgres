@@ -137,6 +137,7 @@ typedef struct BloomMetaPageData
 typedef struct BloomState
 {
 	FmgrInfo	hashFn[INDEX_MAX_KEYS];
+	Oid			collations[INDEX_MAX_KEYS];
 	BloomOptions opts;			/* copy of options on index's metapage */
 	int32		nColumns;
 

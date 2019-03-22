@@ -27,8 +27,10 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "catalog/pg_collation.h"
 #include "utils/builtins.h"
 #include "utils/hashutils.h"
+#include "utils/pg_locale.h"
 
 /*
  * Datatype-specific hash functions.
@@ -243,15 +245,51 @@ Datum
 hashtext(PG_FUNCTION_ARGS)
 {
 	text	   *key = PG_GETARG_TEXT_PP(0);
+	Oid			collid = PG_GET_COLLATION();
+	pg_locale_t	mylocale = 0;
 	Datum		result;
 
-	/*
-	 * Note: this is currently identical in behavior to hashvarlena, but keep
-	 * it as a separate function in case we someday want to do something
-	 * different in non-C locales.  (See also hashbpchar, if so.)
-	 */
-	result = hash_any((unsigned char *) VARDATA_ANY(key),
-					  VARSIZE_ANY_EXHDR(key));
+	if (!collid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for string hashing"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+
+	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
+		mylocale = pg_newlocale_from_collation(collid);
+
+	if (!mylocale || mylocale->deterministic)
+	{
+		result = hash_any((unsigned char *) VARDATA_ANY(key),
+						  VARSIZE_ANY_EXHDR(key));
+	}
+	else
+	{
+#ifdef USE_ICU
+		if (mylocale->provider == COLLPROVIDER_ICU)
+		{
+			int32_t		ulen = -1;
+			UChar	   *uchar = NULL;
+			Size		bsize;
+			uint8_t	   *buf;
+
+			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+
+			bsize = ucol_getSortKey(mylocale->info.icu.ucol,
+									uchar, ulen, NULL, 0);
+			buf = palloc(bsize);
+			ucol_getSortKey(mylocale->info.icu.ucol,
+							uchar, ulen, buf, bsize);
+
+			result = hash_any(buf, bsize);
+
+			pfree(buf);
+		}
+		else
+#endif
+			/* shouldn't happen */
+			elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
+	}
 
 	/* Avoid leaking memory for toasted inputs */
 	PG_FREE_IF_COPY(key, 0);
@@ -263,12 +301,52 @@ Datum
 hashtextextended(PG_FUNCTION_ARGS)
 {
 	text	   *key = PG_GETARG_TEXT_PP(0);
+	Oid			collid = PG_GET_COLLATION();
+	pg_locale_t	mylocale = 0;
 	Datum		result;
 
-	/* Same approach as hashtext */
-	result = hash_any_extended((unsigned char *) VARDATA_ANY(key),
-							   VARSIZE_ANY_EXHDR(key),
-							   PG_GETARG_INT64(1));
+	if (!collid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for string hashing"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+
+	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
+		mylocale = pg_newlocale_from_collation(collid);
+
+	if (!mylocale || mylocale->deterministic)
+	{
+		result = hash_any_extended((unsigned char *) VARDATA_ANY(key),
+								   VARSIZE_ANY_EXHDR(key),
+								   PG_GETARG_INT64(1));
+	}
+	else
+	{
+#ifdef USE_ICU
+		if (mylocale->provider == COLLPROVIDER_ICU)
+		{
+			int32_t		ulen = -1;
+			UChar	   *uchar = NULL;
+			Size		bsize;
+			uint8_t	   *buf;
+
+			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+
+			bsize = ucol_getSortKey(mylocale->info.icu.ucol,
+									uchar, ulen, NULL, 0);
+			buf = palloc(bsize);
+			ucol_getSortKey(mylocale->info.icu.ucol,
+							uchar, ulen, buf, bsize);
+
+			result = hash_any_extended(buf, bsize, PG_GETARG_INT64(1));
+
+			pfree(buf);
+		}
+		else
+#endif
+			/* shouldn't happen */
+			elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
+	}
 
 	PG_FREE_IF_COPY(key, 0);
 

@@ -96,6 +96,8 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 					regop,
 					searchslot->tts_values[mainattno - 1]);
 
+		skey[attoff].sk_collation = idxrel->rd_indcollation[attoff];
+
 		/* Check for null value. */
 		if (searchslot->tts_isnull[mainattno - 1])
 		{
@@ -262,7 +264,8 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2)
 					 errmsg("could not identify an equality operator for type %s",
 							format_type_be(att->atttypid))));
 
-		if (!DatumGetBool(FunctionCall2(&typentry->eq_opr_finfo,
+		if (!DatumGetBool(FunctionCall2Coll(&typentry->eq_opr_finfo,
+											att->attcollation,
 										slot1->tts_values[attrnum],
 										slot2->tts_values[attrnum])))
 			return false;

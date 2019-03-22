@@ -3957,7 +3957,7 @@ hash_array(PG_FUNCTION_ARGS)
 	 * apply the hash function to each array element.
 	 */
 	InitFunctionCallInfoData(*locfcinfo, &typentry->hash_proc_finfo, 1,
-							 InvalidOid, NULL, NULL);
+							 PG_GET_COLLATION(), NULL, NULL);
 
 	/* Loop over source data */
 	nitems = ArrayGetNItems(ndims, dims);

@@ -453,6 +453,256 @@ CREATE COLLATION testcoll_de_phonebook (provider = icu, locale = 'de@collation=p
 SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE testcoll_de_phonebook;
 
 
+-- nondeterministic collations
+
+CREATE COLLATION ctest_det (provider = icu, locale = 'und', deterministic = true);
+CREATE COLLATION ctest_nondet (provider = icu, locale = 'und', deterministic = false);
+
+CREATE TABLE test6 (a int, b text);
+-- same string in different normal forms
+INSERT INTO test6 VALUES (1, U&'\00E4bc');
+INSERT INTO test6 VALUES (2, U&'\0061\0308bc');
+SELECT * FROM test6;
+SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_det;
+SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_nondet;
+
+CREATE COLLATION case_sensitive (provider = icu, locale = 'und');
+CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
+
+SELECT 'abc' <= 'ABC' COLLATE case_sensitive, 'abc' >= 'ABC' COLLATE case_sensitive;
+SELECT 'abc' <= 'ABC' COLLATE case_insensitive, 'abc' >= 'ABC' COLLATE case_insensitive;
+
+CREATE TABLE test1cs (x text COLLATE case_sensitive);
+CREATE TABLE test2cs (x text COLLATE case_sensitive);
+CREATE TABLE test3cs (x text COLLATE case_sensitive);
+INSERT INTO test1cs VALUES ('abc'), ('def'), ('ghi');
+INSERT INTO test2cs VALUES ('ABC'), ('ghi');
+INSERT INTO test3cs VALUES ('abc'), ('ABC'), ('def'), ('ghi');
+
+SELECT x FROM test3cs WHERE x = 'abc';
+SELECT x FROM test3cs WHERE x <> 'abc';
+SELECT x FROM test3cs WHERE x LIKE 'a%';
+SELECT x FROM test3cs WHERE x ILIKE 'a%';
+SELECT x FROM test3cs WHERE x SIMILAR TO 'a%';
+SELECT x FROM test3cs WHERE x ~ 'a';
+SELECT x FROM test1cs UNION SELECT x FROM test2cs ORDER BY x;
+SELECT x FROM test2cs UNION SELECT x FROM test1cs ORDER BY x;
+SELECT x FROM test1cs INTERSECT SELECT x FROM test2cs;
+SELECT x FROM test2cs INTERSECT SELECT x FROM test1cs;
+SELECT x FROM test1cs EXCEPT SELECT x FROM test2cs;
+SELECT x FROM test2cs EXCEPT SELECT x FROM test1cs;
+SELECT DISTINCT x FROM test3cs ORDER BY x;
+SELECT count(DISTINCT x) FROM test3cs;
+SELECT x, count(*) FROM test3cs GROUP BY x ORDER BY x;
+SELECT x, row_number() OVER (ORDER BY x), rank() OVER (ORDER BY x) FROM test3cs ORDER BY x;
+CREATE UNIQUE INDEX ON test1cs (x);  -- ok
+INSERT INTO test1cs VALUES ('ABC');  -- ok
+CREATE UNIQUE INDEX ON test3cs (x);  -- ok
+SELECT string_to_array('ABC,DEF,GHI' COLLATE case_sensitive, ',', 'abc');
+SELECT string_to_array('ABCDEFGHI' COLLATE case_sensitive, NULL, 'b');
+
+CREATE TABLE test1ci (x text COLLATE case_insensitive);
+CREATE TABLE test2ci (x text COLLATE case_insensitive);
+CREATE TABLE test3ci (x text COLLATE case_insensitive);
+CREATE INDEX ON test3ci (x text_pattern_ops);  -- error
+INSERT INTO test1ci VALUES ('abc'), ('def'), ('ghi');
+INSERT INTO test2ci VALUES ('ABC'), ('ghi');
+INSERT INTO test3ci VALUES ('abc'), ('ABC'), ('def'), ('ghi');
+
+SELECT x FROM test3ci WHERE x = 'abc';
+SELECT x FROM test3ci WHERE x <> 'abc';
+SELECT x FROM test3ci WHERE x LIKE 'a%';
+SELECT x FROM test3ci WHERE x ILIKE 'a%';
+SELECT x FROM test3ci WHERE x SIMILAR TO 'a%';
+SELECT x FROM test3ci WHERE x ~ 'a';
+SELECT x FROM test1ci UNION SELECT x FROM test2ci ORDER BY x;
+SELECT x FROM test2ci UNION SELECT x FROM test1ci ORDER BY x;
+SELECT x FROM test1ci INTERSECT SELECT x FROM test2ci;
+SELECT x FROM test2ci INTERSECT SELECT x FROM test1ci;
+SELECT x FROM test1ci EXCEPT SELECT x FROM test2ci;
+SELECT x FROM test2ci EXCEPT SELECT x FROM test1ci;
+SELECT DISTINCT x FROM test3ci ORDER BY x;
+SELECT count(DISTINCT x) FROM test3ci;
+SELECT x, count(*) FROM test3ci GROUP BY x ORDER BY x;
+SELECT x, row_number() OVER (ORDER BY x), rank() OVER (ORDER BY x) FROM test3ci ORDER BY x;
+CREATE UNIQUE INDEX ON test1ci (x);  -- ok
+INSERT INTO test1ci VALUES ('ABC');  -- error
+CREATE UNIQUE INDEX ON test3ci (x);  -- error
+SELECT string_to_array('ABC,DEF,GHI' COLLATE case_insensitive, ',', 'abc');
+SELECT string_to_array('ABCDEFGHI' COLLATE case_insensitive, NULL, 'b');
+
+-- bpchar
+CREATE TABLE test1bpci (x char(3) COLLATE case_insensitive);
+CREATE TABLE test2bpci (x char(3) COLLATE case_insensitive);
+CREATE TABLE test3bpci (x char(3) COLLATE case_insensitive);
+CREATE INDEX ON test3bpci (x bpchar_pattern_ops);  -- error
+INSERT INTO test1bpci VALUES ('abc'), ('def'), ('ghi');
+INSERT INTO test2bpci VALUES ('ABC'), ('ghi');
+INSERT INTO test3bpci VALUES ('abc'), ('ABC'), ('def'), ('ghi');
+
+SELECT x FROM test3bpci WHERE x = 'abc';
+SELECT x FROM test3bpci WHERE x <> 'abc';
+SELECT x FROM test3bpci WHERE x LIKE 'a%';
+SELECT x FROM test3bpci WHERE x ILIKE 'a%';
+SELECT x FROM test3bpci WHERE x SIMILAR TO 'a%';
+SELECT x FROM test3bpci WHERE x ~ 'a';
+SELECT x FROM test1bpci UNION SELECT x FROM test2bpci ORDER BY x;
+SELECT x FROM test2bpci UNION SELECT x FROM test1bpci ORDER BY x;
+SELECT x FROM test1bpci INTERSECT SELECT x FROM test2bpci;
+SELECT x FROM test2bpci INTERSECT SELECT x FROM test1bpci;
+SELECT x FROM test1bpci EXCEPT SELECT x FROM test2bpci;
+SELECT x FROM test2bpci EXCEPT SELECT x FROM test1bpci;
+SELECT DISTINCT x FROM test3bpci ORDER BY x;
+SELECT count(DISTINCT x) FROM test3bpci;
+SELECT x, count(*) FROM test3bpci GROUP BY x ORDER BY x;
+SELECT x, row_number() OVER (ORDER BY x), rank() OVER (ORDER BY x) FROM test3bpci ORDER BY x;
+CREATE UNIQUE INDEX ON test1bpci (x);  -- ok
+INSERT INTO test1bpci VALUES ('ABC');  -- error
+CREATE UNIQUE INDEX ON test3bpci (x);  -- error
+SELECT string_to_array('ABC,DEF,GHI'::char(11) COLLATE case_insensitive, ',', 'abc');
+SELECT string_to_array('ABCDEFGHI'::char(9) COLLATE case_insensitive, NULL, 'b');
+
+-- This tests the issue described in match_pattern_prefix().  In the
+-- absence of that check, the case_insensitive tests below would
+-- return no rows where they should logically return one.
+CREATE TABLE test4c (x text COLLATE "C");
+INSERT INTO test4c VALUES ('abc');
+CREATE INDEX ON test4c (x);
+SET enable_seqscan = off;
+SELECT x FROM test4c WHERE x LIKE 'ABC' COLLATE case_sensitive;  -- ok, no rows
+SELECT x FROM test4c WHERE x LIKE 'ABC%' COLLATE case_sensitive;  -- ok, no rows
+SELECT x FROM test4c WHERE x LIKE 'ABC' COLLATE case_insensitive;  -- error
+SELECT x FROM test4c WHERE x LIKE 'ABC%' COLLATE case_insensitive;  -- error
+RESET enable_seqscan;
+
+-- Unicode special case: different variants of Greek lower case sigma.
+-- A naive implementation like citext that just does lower(x) =
+-- lower(y) will do the wrong thing here, because lower('Σ') is 'σ'
+-- but upper('ς') is 'Σ'.
+SELECT 'ὀδυσσεύς' = 'ὈΔΥΣΣΕΎΣ' COLLATE case_sensitive;
+SELECT 'ὀδυσσεύς' = 'ὈΔΥΣΣΕΎΣ' COLLATE case_insensitive;
+
+-- name vs. text comparison operators
+SELECT relname FROM pg_class WHERE relname = 'PG_CLASS'::text COLLATE case_insensitive;
+SELECT relname FROM pg_class WHERE 'PG_CLASS'::text = relname COLLATE case_insensitive;
+
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND typname <> 'INT2'::text COLLATE case_insensitive;
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND 'INT2'::text <> typname COLLATE case_insensitive;;
+
+-- test case adapted from subselect.sql
+CREATE TEMP TABLE outer_text (f1 text COLLATE case_insensitive, f2 text);
+INSERT INTO outer_text VALUES ('a', 'a');
+INSERT INTO outer_text VALUES ('b', 'a');
+INSERT INTO outer_text VALUES ('A', NULL);
+INSERT INTO outer_text VALUES ('B', NULL);
+
+CREATE TEMP TABLE inner_text (c1 text COLLATE case_insensitive, c2 text);
+INSERT INTO inner_text VALUES ('a', NULL);
+
+SELECT * FROM outer_text WHERE (f1, f2) NOT IN (SELECT * FROM inner_text);
+
+-- accents
+CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-true', deterministic = false);
+
+CREATE TABLE test4 (a int, b text);
+INSERT INTO test4 VALUES (1, 'cote'), (2, 'côte'), (3, 'coté'), (4, 'côté');
+SELECT * FROM test4 WHERE b = 'cote';
+SELECT * FROM test4 WHERE b = 'cote' COLLATE ignore_accents;
+SELECT * FROM test4 WHERE b = 'Cote' COLLATE ignore_accents;  -- still case-sensitive
+SELECT * FROM test4 WHERE b = 'Cote' COLLATE case_insensitive;
+
+-- foreign keys (should use collation of primary key)
+
+-- PK is case-sensitive, FK is case-insensitive
+CREATE TABLE test10pk (x text COLLATE case_sensitive PRIMARY KEY);
+INSERT INTO test10pk VALUES ('abc'), ('def'), ('ghi');
+CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
+INSERT INTO test10fk VALUES ('abc');  -- ok
+INSERT INTO test10fk VALUES ('ABC');  -- error
+INSERT INTO test10fk VALUES ('xyz');  -- error
+SELECT * FROM test10pk;
+SELECT * FROM test10fk;
+-- restrict update even though the values are "equal" in the FK table
+UPDATE test10fk SET x = 'ABC' WHERE x = 'abc';  -- error
+SELECT * FROM test10fk;
+DELETE FROM test10pk WHERE x = 'abc';
+SELECT * FROM test10pk;
+SELECT * FROM test10fk;
+
+-- PK is case-insensitive, FK is case-sensitive
+CREATE TABLE test11pk (x text COLLATE case_insensitive PRIMARY KEY);
+INSERT INTO test11pk VALUES ('abc'), ('def'), ('ghi');
+CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
+INSERT INTO test11fk VALUES ('abc');  -- ok
+INSERT INTO test11fk VALUES ('ABC');  -- ok
+INSERT INTO test11fk VALUES ('xyz');  -- error
+SELECT * FROM test11pk;
+SELECT * FROM test11fk;
+-- cascade update even though the values are "equal" in the PK table
+UPDATE test11pk SET x = 'ABC' WHERE x = 'abc';
+SELECT * FROM test11fk;
+DELETE FROM test11pk WHERE x = 'abc';
+SELECT * FROM test11pk;
+SELECT * FROM test11fk;
+
+-- partitioning
+CREATE TABLE test20 (a int, b text COLLATE case_insensitive) PARTITION BY LIST (b);
+CREATE TABLE test20_1 PARTITION OF test20 FOR VALUES IN ('abc');
+INSERT INTO test20 VALUES (1, 'abc');
+INSERT INTO test20 VALUES (2, 'ABC');
+SELECT * FROM test20_1;
+
+CREATE TABLE test21 (a int, b text COLLATE case_insensitive) PARTITION BY RANGE (b);
+CREATE TABLE test21_1 PARTITION OF test21 FOR VALUES FROM ('ABC') TO ('DEF');
+INSERT INTO test21 VALUES (1, 'abc');
+INSERT INTO test21 VALUES (2, 'ABC');
+SELECT * FROM test21_1;
+
+CREATE TABLE test22 (a int, b text COLLATE case_sensitive) PARTITION BY HASH (b);
+CREATE TABLE test22_0 PARTITION OF test22 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test22_1 PARTITION OF test22 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test22 VALUES (1, 'def');
+INSERT INTO test22 VALUES (2, 'DEF');
+-- they end up in different partitions
+SELECT (SELECT count(*) FROM test22_0) = (SELECT count(*) FROM test22_1);
+
+CREATE TABLE test23 (a int, b text COLLATE case_insensitive) PARTITION BY HASH (b);
+CREATE TABLE test23_0 PARTITION OF test23 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test23_1 PARTITION OF test23 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test23 VALUES (1, 'def');
+INSERT INTO test23 VALUES (2, 'DEF');
+-- they end up in the same partition (but it's platform-dependent which one)
+SELECT (SELECT count(*) FROM test23_0) <> (SELECT count(*) FROM test23_1);
+
+CREATE TABLE test30 (a int, b char(3) COLLATE case_insensitive) PARTITION BY LIST (b);
+CREATE TABLE test30_1 PARTITION OF test30 FOR VALUES IN ('abc');
+INSERT INTO test30 VALUES (1, 'abc');
+INSERT INTO test30 VALUES (2, 'ABC');
+SELECT * FROM test30_1;
+
+CREATE TABLE test31 (a int, b char(3) COLLATE case_insensitive) PARTITION BY RANGE (b);
+CREATE TABLE test31_1 PARTITION OF test31 FOR VALUES FROM ('ABC') TO ('DEF');
+INSERT INTO test31 VALUES (1, 'abc');
+INSERT INTO test31 VALUES (2, 'ABC');
+SELECT * FROM test31_1;
+
+CREATE TABLE test32 (a int, b char(3) COLLATE case_sensitive) PARTITION BY HASH (b);
+CREATE TABLE test32_0 PARTITION OF test32 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test32_1 PARTITION OF test32 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test32 VALUES (1, 'def');
+INSERT INTO test32 VALUES (2, 'DEF');
+-- they end up in different partitions
+SELECT (SELECT count(*) FROM test32_0) = (SELECT count(*) FROM test32_1);
+
+CREATE TABLE test33 (a int, b char(3) COLLATE case_insensitive) PARTITION BY HASH (b);
+CREATE TABLE test33_0 PARTITION OF test33 FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+CREATE TABLE test33_1 PARTITION OF test33 FOR VALUES WITH (MODULUS 2, REMAINDER 1);
+INSERT INTO test33 VALUES (1, 'def');
+INSERT INTO test33 VALUES (2, 'DEF');
+-- they end up in the same partition (but it's platform-dependent which one)
+SELECT (SELECT count(*) FROM test33_0) <> (SELECT count(*) FROM test33_1);
+
+
 -- cleanup
 SET client_min_messages TO warning;
 DROP SCHEMA collate_tests CASCADE;

@@ -82,6 +82,7 @@ extern void cache_locale_time(void);
 struct pg_locale_struct
 {
 	char		provider;
+	bool		deterministic;
 	union
 	{
 #ifdef HAVE_LOCALE_T

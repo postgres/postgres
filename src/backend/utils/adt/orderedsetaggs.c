@@ -1084,7 +1084,7 @@ mode_final(PG_FUNCTION_ARGS)
 			last_abbrev_val = abbrev_val;
 		}
 		else if (abbrev_val == last_abbrev_val &&
-				 DatumGetBool(FunctionCall2(equalfn, val, last_val)))
+				 DatumGetBool(FunctionCall2Coll(equalfn, PG_GET_COLLATION(), val, last_val)))
 		{
 			/* value equal to previous value, count it */
 			if (last_val_is_mode)
@@ -1345,6 +1345,7 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 											  numDistinctCols,
 											  sortColIdx,
 											  osastate->qstate->eqOperators,
+											  osastate->qstate->sortCollations,
 											  NULL);
 		MemoryContextSwitchTo(oldContext);
 		osastate->qstate->compareTuple = compareTuple;

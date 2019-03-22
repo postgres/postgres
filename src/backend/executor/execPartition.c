@@ -1246,6 +1246,7 @@ get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
 				greatest_modulus = get_hash_partition_greatest_modulus(boundinfo);
 				rowHash = compute_partition_hash_value(key->partnatts,
 													   key->partsupfunc,
+													   key->partcollation,
 													   values, isnull);
 
 				part_index = boundinfo->indexes[rowHash % greatest_modulus];

@@ -693,6 +693,7 @@ typedef struct TupleHashTableData
 	AttrNumber *keyColIdx;		/* attr numbers of key columns */
 	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	ExprState  *tab_eq_func;	/* comparator for table datatype(s) */
+	Oid		   *tab_collations;	/* collations for hash and comparison */
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
 	Size		entrysize;		/* actual size to make each hash entry */
@@ -862,6 +863,7 @@ typedef struct SubPlanState
 	AttrNumber *keyColIdx;		/* control data for hash tables */
 	Oid		   *tab_eq_funcoids;	/* equality func oids for table
 									 * datatype(s) */
+	Oid		   *tab_collations;	/* collations for hash and comparison */
 	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
@@ -1872,6 +1874,7 @@ typedef struct HashJoinState
 	List	   *hj_OuterHashKeys;	/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;	/* list of ExprState nodes */
 	List	   *hj_HashOperators;	/* list of operator OIDs */
+	List	   *hj_Collations;
 	HashJoinTable hj_HashTable;
 	uint32		hj_CurHashValue;
 	int			hj_CurBucketNo;

@@ -263,6 +263,11 @@ pg_set_regex_collation(Oid collation)
 					 errhint("Use the COLLATE clause to set the collation explicitly.")));
 		}
 
+		if (pg_regex_locale && !pg_regex_locale->deterministic)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("nondeterministic collations are not supported for regular expressions")));
+
 #ifdef USE_ICU
 		if (pg_regex_locale && pg_regex_locale->provider == COLLPROVIDER_ICU)
 			pg_regex_strategy = PG_REGEX_LOCALE_ICU;

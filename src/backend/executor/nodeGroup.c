@@ -212,6 +212,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 							   node->numCols,
 							   node->grpColIdx,
 							   node->grpOperators,
+							   node->grpCollations,
 							   &grpstate->ss.ps);
 
 	return grpstate;
