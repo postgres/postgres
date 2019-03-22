@@ -1,12 +1,29 @@
 CREATE EXTENSION test_integerset;
 --
--- These tests don't produce any interesting output.  We're checking that
--- the operations complete without crashing or hanging and that none of their
--- internal sanity tests fail.  They print progress information as INFOs,
--- which are not interesting for automated tests, so suppress those.
+-- All the logic is in the test_integerset() function. It will throw
+-- an error if something fails.
 --
-SET client_min_messages = 'warning';
 SELECT test_integerset();
+NOTICE:  testing intset with empty set
+NOTICE:  testing intset with distances > 2^60 between values
+NOTICE:  testing intset with single value 0
+NOTICE:  testing intset with single value 1
+NOTICE:  testing intset with single value 18446744073709551614
+NOTICE:  testing intset with single value 18446744073709551615
+NOTICE:  testing intset with value 0, and all between 1000 and 2000
+NOTICE:  testing intset with value 1, and all between 1000 and 2000
+NOTICE:  testing intset with value 1, and all between 1000 and 2000000
+NOTICE:  testing intset with value 18446744073709551614, and all between 1000 and 2000
+NOTICE:  testing intset with value 18446744073709551615, and all between 1000 and 2000
+NOTICE:  testing intset with pattern "all ones"
+NOTICE:  testing intset with pattern "alternating bits"
+NOTICE:  testing intset with pattern "clusters of ten"
+NOTICE:  testing intset with pattern "clusters of hundred"
+NOTICE:  testing intset with pattern "one-every-64k"
+NOTICE:  testing intset with pattern "sparse"
+NOTICE:  testing intset with pattern "single values, distance > 2^32"
+NOTICE:  testing intset with pattern "clusters, distance > 2^32"
+NOTICE:  testing intset with pattern "clusters, distance > 2^60"
  test_integerset 
 -----------------
  
