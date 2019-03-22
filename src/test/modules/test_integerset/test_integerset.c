@@ -207,8 +207,8 @@ test_pattern(const test_spec *spec)
 	endtime = GetCurrentTimestamp();
 
 	if (intset_test_stats)
-		fprintf(stderr, "added %lu values in %lu ms\n",
-				spec->num_values, (endtime - starttime) / 1000);
+		fprintf(stderr, "added " UINT64_FORMAT " values in %d ms\n",
+				spec->num_values, (int) (endtime - starttime) / 1000);
 
 	/*
 	 * Print stats on the amount of memory used.
@@ -228,7 +228,7 @@ test_pattern(const test_spec *spec)
 		 * MemoryContextStats().
 		 */
 		mem_usage = intset_memory_usage(intset);
-		fprintf(stderr, "intset_memory_usage() reported %lu (%0.2f bytes / integer)\n",
+		fprintf(stderr, "intset_memory_usage() reported " UINT64_FORMAT " (%0.2f bytes / integer)\n",
 				mem_usage, (double) mem_usage / spec->num_values);
 
 		MemoryContextStats(intset_ctx);
@@ -237,7 +237,7 @@ test_pattern(const test_spec *spec)
 	/* Check that intset_get_num_entries works */
 	n = intset_num_entries(intset);
 	if (n != spec->num_values)
-		elog(ERROR, "intset_num_entries returned %lu, expected %lu", n, spec->num_values);
+		elog(ERROR, "intset_num_entries returned " UINT64_FORMAT ", expected " UINT64_FORMAT, n, spec->num_values);
 
 	/*
 	 * Test random-access probes with intset_is_member()
@@ -279,11 +279,12 @@ test_pattern(const test_spec *spec)
 		b = intset_is_member(intset, x);
 
 		if (b != expected)
-			elog(ERROR, "mismatch at %lu: %d vs %d", x, b, expected);
+			elog(ERROR, "mismatch at " UINT64_FORMAT ": %d vs %d", x, b, expected);
 	}
 	endtime = GetCurrentTimestamp();
 	if (intset_test_stats)
-		fprintf(stderr, "probed %lu values in %lu ms\n", n, (endtime - starttime) / 1000);
+		fprintf(stderr, "probed " UINT64_FORMAT " values in %d ms\n",
+				n, (int) (endtime - starttime) / 1000);
 
 	/*
 	 * Test iterator
@@ -304,19 +305,20 @@ test_pattern(const test_spec *spec)
 				break;
 
 			if (x != expected)
-				elog(ERROR, "iterate returned wrong value; got %lu, expected %lu", x, expected);
+				elog(ERROR, "iterate returned wrong value; got " UINT64_FORMAT ", expected " UINT64_FORMAT, x, expected);
 			n++;
 		}
 		last_int += spec->spacing;
 	}
 	endtime = GetCurrentTimestamp();
 	if (intset_test_stats)
-		fprintf(stderr, "iterated %lu values in %lu ms\n", n, (endtime - starttime) / 1000);
+		fprintf(stderr, "iterated " UINT64_FORMAT " values in %d ms\n",
+				n, (int) (endtime - starttime) / 1000);
 
 	if (n < spec->num_values)
-		elog(ERROR, "iterator stopped short after %lu entries, expected %lu", n, spec->num_values);
+		elog(ERROR, "iterator stopped short after " UINT64_FORMAT " entries, expected " UINT64_FORMAT, n, spec->num_values);
 	if (n > spec->num_values)
-		elog(ERROR, "iterator returned %lu entries, %lu was expected", n, spec->num_values);
+		elog(ERROR, "iterator returned " UINT64_FORMAT " entries, " UINT64_FORMAT " was expected", n, spec->num_values);
 
 	MemoryContextDelete(intset_ctx);
 }
@@ -332,7 +334,7 @@ test_single_value(uint64 value)
 	uint64		num_entries;
 	bool		found;
 
-	elog(NOTICE, "testing intset with single value %lu", value);
+	elog(NOTICE, "testing intset with single value " UINT64_FORMAT, value);
 
 	/* Create the set. */
 	intset = intset_create();
@@ -341,7 +343,7 @@ test_single_value(uint64 value)
 	/* Test intset_get_num_entries() */
 	num_entries = intset_num_entries(intset);
 	if (num_entries != 1)
-		elog(ERROR, "intset_num_entries returned %lu, expected %lu", num_entries, 1L);
+		elog(ERROR, "intset_num_entries returned " UINT64_FORMAT ", expected 1", num_entries);
 
 	/*
 	 * Test intset_is_member() at various special values, like 0 and and
@@ -362,11 +364,11 @@ test_single_value(uint64 value)
 	intset_begin_iterate(intset);
 	found = intset_iterate_next(intset, &x);
 	if (!found || x != value)
-		elog(ERROR, "intset_iterate_next failed for %lu", x);
+		elog(ERROR, "intset_iterate_next failed for " UINT64_FORMAT, x);
 
 	found = intset_iterate_next(intset, &x);
 	if (found)
-		elog(ERROR, "intset_iterate_next failed %lu", x);
+		elog(ERROR, "intset_iterate_next failed " UINT64_FORMAT, x);
 }
 
 /*
@@ -391,7 +393,7 @@ test_single_value_and_filler(uint64 value, uint64 filler_min, uint64 filler_max)
 	uint64		num_entries = 0;
 	uint64		mem_usage;
 
-	elog(NOTICE, "testing intset with value %lu, and all between %lu and %lu",
+	elog(NOTICE, "testing intset with value " UINT64_FORMAT ", and all between " UINT64_FORMAT " and " UINT64_FORMAT,
 		 value, filler_min, filler_max);
 
 	intset = intset_create();
@@ -418,7 +420,7 @@ test_single_value_and_filler(uint64 value, uint64 filler_min, uint64 filler_max)
 	/* Test intset_get_num_entries() */
 	num_entries = intset_num_entries(intset);
 	if (num_entries != n)
-		elog(ERROR, "intset_num_entries returned %lu, expected %lu", num_entries, n);
+		elog(ERROR, "intset_num_entries returned " UINT64_FORMAT ", expected " UINT64_FORMAT, num_entries, n);
 
 	/*
 	 * Test intset_is_member() at various spots, at and around the values that
@@ -456,15 +458,15 @@ test_single_value_and_filler(uint64 value, uint64 filler_min, uint64 filler_max)
 	{
 		found = intset_iterate_next(intset, &x);
 		if (!found || x != iter_expected[i])
-			elog(ERROR, "intset_iterate_next failed for %lu", x);
+			elog(ERROR, "intset_iterate_next failed for " UINT64_FORMAT, x);
 	}
 	found = intset_iterate_next(intset, &x);
 	if (found)
-		elog(ERROR, "intset_iterate_next failed %lu", x);
+		elog(ERROR, "intset_iterate_next failed " UINT64_FORMAT, x);
 
 	mem_usage = intset_memory_usage(intset);
 	if (mem_usage < 5000 || mem_usage > 500000000)
-		elog(ERROR, "intset_memory_usage() reported suspicous value: %lu", mem_usage);
+		elog(ERROR, "intset_memory_usage() reported suspicious value: " UINT64_FORMAT, mem_usage);
 }
 
 /*
@@ -485,7 +487,7 @@ check_with_filler(IntegerSet *intset, uint64 x,
 	actual = intset_is_member(intset, x);
 
 	if (actual != expected)
-		elog(ERROR, "intset_is_member failed for %lu", x);
+		elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x);
 }
 
 /*
@@ -512,7 +514,7 @@ test_empty(void)
 	/* Test iterator */
 	intset_begin_iterate(intset);
 	if (intset_iterate_next(intset, &x))
-		elog(ERROR, "intset_iterate_next on empty set returned a value (%lu)", x);
+		elog(ERROR, "intset_iterate_next on empty set returned a value (" UINT64_FORMAT ")", x);
 }
 
 /*
@@ -594,16 +596,16 @@ test_huge_distances(void)
 		{
 			result = intset_is_member(intset, x - 1);
 			if (result != false)
-				elog(ERROR, "intset_is_member failed for %lu", x - 1);
+				elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x - 1);
 		}
 
 		result = intset_is_member(intset, x);
 		if (result != true)
-			elog(ERROR, "intset_is_member failed for %lu", x);
+			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x);
 
 		result = intset_is_member(intset, x + 1);
 		if (result != false)
-			elog(ERROR, "intset_is_member failed for %lu", x + 1);
+			elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x + 1);
 	}
 
 	/*
@@ -614,9 +616,9 @@ test_huge_distances(void)
 	{
 		found = intset_iterate_next(intset, &x);
 		if (!found || x != values[i])
-			elog(ERROR, "intset_iterate_next failed for %lu", x);
+			elog(ERROR, "intset_iterate_next failed for " UINT64_FORMAT, x);
 	}
 	found = intset_iterate_next(intset, &x);
 	if (found)
-		elog(ERROR, "intset_iterate_next failed %lu", x);
+		elog(ERROR, "intset_iterate_next failed " UINT64_FORMAT, x);
 }
