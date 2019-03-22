@@ -12,6 +12,7 @@ SUBDIRS = \
 		  test_bloomfilter \
 		  test_ddl_deparse \
 		  test_extensions \
+		  test_integerset \
 		  test_parser \
 		  test_pg_dump \
 		  test_predtest \

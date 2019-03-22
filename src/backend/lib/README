@@ -13,6 +13,8 @@ hyperloglog.c - a streaming cardinality estimator
 
 ilist.c - single and double-linked lists
 
+integerset.c - a data structure for holding large set of integers
+
 knapsack.c - knapsack problem solver
 
 pairingheap.c - a pairing heap

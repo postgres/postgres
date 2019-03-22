@@ -1,0 +1,4 @@
+comment = 'Test code for integerset'
+default_version = '1.0'
+module_pathname = '$libdir/test_integerset'
+relocatable = true

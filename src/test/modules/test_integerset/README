@@ -1,0 +1,7 @@
+test_integerset contains unit tests for testing the integer set implementation,
+in src/backend/lib/integerset.c
+
+The tests verify the correctness of the implemention, but they can also be
+as a micro-benchmark:  If you set the 'intset_tests_stats' flag in
+test_integerset.c, the tests will print extra information about execution time
+and memory usage.
