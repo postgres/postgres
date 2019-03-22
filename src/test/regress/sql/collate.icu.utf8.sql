@@ -455,8 +455,8 @@ SELECT 'Goldmann' < 'Götz' COLLATE "de-x-icu", 'Goldmann' > 'Götz' COLLATE tes
 
 -- nondeterministic collations
 
-CREATE COLLATION ctest_det (provider = icu, locale = 'und', deterministic = true);
-CREATE COLLATION ctest_nondet (provider = icu, locale = 'und', deterministic = false);
+CREATE COLLATION ctest_det (provider = icu, locale = '', deterministic = true);
+CREATE COLLATION ctest_nondet (provider = icu, locale = '', deterministic = false);
 
 CREATE TABLE test6 (a int, b text);
 -- same string in different normal forms
@@ -466,8 +466,8 @@ SELECT * FROM test6;
 SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_det;
 SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_nondet;
 
-CREATE COLLATION case_sensitive (provider = icu, locale = 'und');
-CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
+CREATE COLLATION case_sensitive (provider = icu, locale = '');
+CREATE COLLATION case_insensitive (provider = icu, locale = '@colStrength=secondary', deterministic = false);
 
 SELECT 'abc' <= 'ABC' COLLATE case_sensitive, 'abc' >= 'ABC' COLLATE case_sensitive;
 SELECT 'abc' <= 'ABC' COLLATE case_insensitive, 'abc' >= 'ABC' COLLATE case_insensitive;
@@ -602,7 +602,7 @@ INSERT INTO inner_text VALUES ('a', NULL);
 SELECT * FROM outer_text WHERE (f1, f2) NOT IN (SELECT * FROM inner_text);
 
 -- accents
-CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-true', deterministic = false);
+CREATE COLLATION ignore_accents (provider = icu, locale = '@colStrength=primary;colCaseLevel=yes', deterministic = false);
 
 CREATE TABLE test4 (a int, b text);
 INSERT INTO test4 VALUES (1, 'cote'), (2, 'côte'), (3, 'coté'), (4, 'côté');
