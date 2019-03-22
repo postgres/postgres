@@ -31,8 +31,6 @@ typedef struct
 {
 	IndexBulkDeleteResult stats;	/* must be first */
 
-	IndexVacuumInfo *info;
-
 	/*
 	 * These are used to memorize all internal and empty leaf pages in the 1st
 	 * vacuum stage.  They are used in the 2nd stage, to delete all the empty
@@ -46,6 +44,7 @@ typedef struct
 /* Working state needed by gistbulkdelete */
 typedef struct
 {
+	IndexVacuumInfo *info;
 	GistBulkDeleteResult *stats;
 	IndexBulkDeleteCallback callback;
 	void	   *callback_state;
@@ -56,8 +55,9 @@ static void gistvacuumscan(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
 			   IndexBulkDeleteCallback callback, void *callback_state);
 static void gistvacuumpage(GistVacState *vstate, BlockNumber blkno,
 			   BlockNumber orig_blkno);
-static void gistvacuum_delete_empty_pages(GistBulkDeleteResult *stats);
-static bool gistdeletepage(GistBulkDeleteResult *stats,
+static void gistvacuum_delete_empty_pages(IndexVacuumInfo *info,
+							  GistBulkDeleteResult *stats);
+static bool gistdeletepage(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
 			   Buffer buffer, OffsetNumber downlink,
 			   Buffer leafBuffer);
 
@@ -121,7 +121,7 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 * If we saw any empty pages, try to unlink them from the tree so that
 	 * they can be reused.
 	 */
-	gistvacuum_delete_empty_pages(gist_stats);
+	gistvacuum_delete_empty_pages(info, gist_stats);
 
 	/* we don't need the internal and empty page sets anymore */
 	MemoryContextDelete(gist_stats->page_set_context);
@@ -183,7 +183,7 @@ gistvacuumscan(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
 	stats->empty_leaf_set = intset_create();
 
 	/* Set up info to pass down to gistvacuumpage */
-	stats->info = info;
+	vstate.info = info;
 	vstate.stats = stats;
 	vstate.callback = callback;
 	vstate.callback_state = callback_state;
@@ -269,7 +269,7 @@ static void
 gistvacuumpage(GistVacState *vstate, BlockNumber blkno, BlockNumber orig_blkno)
 {
 	GistBulkDeleteResult *stats = vstate->stats;
-	IndexVacuumInfo *info = stats->info;
+	IndexVacuumInfo *info = vstate->info;
 	IndexBulkDeleteCallback callback = vstate->callback;
 	void	   *callback_state = vstate->callback_state;
 	Relation	rel = info->index;
@@ -456,9 +456,8 @@ restart:
  * Scan all internal pages, and try to delete their empty child pages.
  */
 static void
-gistvacuum_delete_empty_pages(GistBulkDeleteResult *stats)
+gistvacuum_delete_empty_pages(IndexVacuumInfo *info, GistBulkDeleteResult *stats)
 {
-	IndexVacuumInfo *info = stats->info;
 	Relation	rel = info->index;
 	BlockNumber empty_pages_remaining;
 	uint64		blkno;
@@ -552,7 +551,9 @@ gistvacuum_delete_empty_pages(GistBulkDeleteResult *stats)
 			gistcheckpage(rel, leafbuf);
 
 			LockBuffer(buffer, GIST_EXCLUSIVE);
-			if (gistdeletepage(stats, buffer, todelete[i] - deleted, leafbuf))
+			if (gistdeletepage(info, stats,
+							   buffer, todelete[i] - deleted,
+							   leafbuf))
 				deleted++;
 			LockBuffer(buffer, GIST_UNLOCK);
 
@@ -585,7 +586,7 @@ gistvacuum_delete_empty_pages(GistBulkDeleteResult *stats)
  * prevented it.
  */
 static bool
-gistdeletepage(GistBulkDeleteResult *stats,
+gistdeletepage(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
 			   Buffer parentBuffer, OffsetNumber downlink,
 			   Buffer leafBuffer)
 {
@@ -661,10 +662,10 @@ gistdeletepage(GistBulkDeleteResult *stats,
 	MarkBufferDirty(parentBuffer);
 	PageIndexTupleDelete(parentPage, downlink);
 
-	if (RelationNeedsWAL(stats->info->index))
+	if (RelationNeedsWAL(info->index))
 		recptr = gistXLogPageDelete(leafBuffer, txid, parentBuffer, downlink);
 	else
-		recptr = gistGetFakeLSN(stats->info->index);
+		recptr = gistGetFakeLSN(info->index);
 	PageSetLSN(parentPage, recptr);
 	PageSetLSN(leafPage, recptr);
 
