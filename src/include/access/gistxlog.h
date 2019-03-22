@@ -19,11 +19,12 @@
 
 #define XLOG_GIST_PAGE_UPDATE		0x00
 #define XLOG_GIST_DELETE			0x10 /* delete leaf index tuples for a page */
- /* #define XLOG_GIST_NEW_ROOT			 0x20 */	/* not used anymore */
+#define XLOG_GIST_PAGE_REUSE		0x20 /* old page is about to be reused from
+										  * FSM */
 #define XLOG_GIST_PAGE_SPLIT		0x30
  /* #define XLOG_GIST_INSERT_COMPLETE	 0x40 */	/* not used anymore */
 #define XLOG_GIST_CREATE_INDEX		0x50
- /* #define XLOG_GIST_PAGE_DELETE		 0x60 */	/* not used anymore */
+#define XLOG_GIST_PAGE_DELETE		0x60
 
 /*
  * Backup Blk 0: updated page.
@@ -75,6 +76,31 @@ typedef struct gistxlogPageSplit
 	 * follow: 1. gistxlogPage and array of IndexTupleData per page
 	 */
 } gistxlogPageSplit;
+
+/*
+ * Backup Blk 0: page that was deleted.
+ * Backup Blk 1: parent page, containing the downlink to the deleted page.
+ */
+typedef struct gistxlogPageDelete
+{
+	TransactionId deleteXid;	/* last Xid which could see page in scan */
+	OffsetNumber downlinkOffset; /* Offset of downlink referencing this page */
+} gistxlogPageDelete;
+
+#define SizeOfGistxlogPageDelete	(offsetof(gistxlogPageDelete, downlinkOffset) + sizeof(OffsetNumber))
+
+
+/*
+ * This is what we need to know about page reuse, for hot standby.
+ */
+typedef struct gistxlogPageReuse
+{
+	RelFileNode node;
+	BlockNumber block;
+	TransactionId latestRemovedXid;
+} gistxlogPageReuse;
+
+#define SizeOfGistxlogPageReuse	(offsetof(gistxlogPageReuse, latestRemovedXid) + sizeof(TransactionId))
 
 extern void gist_redo(XLogReaderState *record);
 extern void gist_desc(StringInfo buf, XLogReaderState *record);

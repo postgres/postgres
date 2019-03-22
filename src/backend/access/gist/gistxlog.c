@@ -23,6 +23,7 @@
 #include "miscadmin.h"
 #include "storage/procarray.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 static MemoryContext opCtx;		/* working memory for operations */
 
@@ -508,6 +509,64 @@ gistRedoCreateIndex(XLogReaderState *record)
 	UnlockReleaseBuffer(buffer);
 }
 
+/* redo page deletion */
+static void
+gistRedoPageDelete(XLogReaderState *record)
+{
+	XLogRecPtr	lsn = record->EndRecPtr;
+	gistxlogPageDelete *xldata = (gistxlogPageDelete *) XLogRecGetData(record);
+	Buffer		parentBuffer;
+	Buffer		leafBuffer;
+
+	if (XLogReadBufferForRedo(record, 0, &leafBuffer) == BLK_NEEDS_REDO)
+	{
+		Page		page = (Page) BufferGetPage(leafBuffer);
+
+		GistPageSetDeleteXid(page, xldata->deleteXid);
+		GistPageSetDeleted(page);
+
+		PageSetLSN(page, lsn);
+		MarkBufferDirty(leafBuffer);
+	}
+
+	if (XLogReadBufferForRedo(record, 1, &parentBuffer) == BLK_NEEDS_REDO)
+	{
+		Page		page = (Page) BufferGetPage(parentBuffer);
+
+		PageIndexTupleDelete(page, xldata->downlinkOffset);
+
+		PageSetLSN(page, lsn);
+		MarkBufferDirty(parentBuffer);
+	}
+
+	if (BufferIsValid(parentBuffer))
+		UnlockReleaseBuffer(parentBuffer);
+	if (BufferIsValid(leafBuffer))
+		UnlockReleaseBuffer(leafBuffer);
+}
+
+static void
+gistRedoPageReuse(XLogReaderState *record)
+{
+	gistxlogPageReuse *xlrec = (gistxlogPageReuse *) XLogRecGetData(record);
+
+	/*
+	 * PAGE_REUSE records exist to provide a conflict point when we reuse
+	 * pages in the index via the FSM.  That's all they do though.
+	 *
+	 * latestRemovedXid was the page's deleteXid.  The deleteXid <
+	 * RecentGlobalXmin test in gistPageRecyclable() conceptually mirrors the
+	 * pgxact->xmin > limitXmin test in GetConflictingVirtualXIDs().
+	 * Consequently, one XID value achieves the same exclusion effect on
+	 * master and standby.
+	 */
+	if (InHotStandby)
+	{
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid,
+											xlrec->node);
+	}
+}
+
 void
 gist_redo(XLogReaderState *record)
 {
@@ -529,11 +588,17 @@ gist_redo(XLogReaderState *record)
 		case XLOG_GIST_DELETE:
 			gistRedoDeleteRecord(record);
 			break;
+		case XLOG_GIST_PAGE_REUSE:
+			gistRedoPageReuse(record);
+			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			gistRedoPageSplitRecord(record);
 			break;
 		case XLOG_GIST_CREATE_INDEX:
 			gistRedoCreateIndex(record);
+			break;
+		case XLOG_GIST_PAGE_DELETE:
+			gistRedoPageDelete(record);
 			break;
 		default:
 			elog(PANIC, "gist_redo: unknown op code %u", info);
@@ -651,6 +716,56 @@ gistXLogSplit(bool page_is_leaf,
 	recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT);
 
 	return recptr;
+}
+
+/*
+ * Write XLOG record describing a page deletion. This also includes removal of
+ * downlink from the parent page.
+ */
+XLogRecPtr
+gistXLogPageDelete(Buffer buffer, TransactionId xid,
+				   Buffer parentBuffer, OffsetNumber downlinkOffset)
+{
+	gistxlogPageDelete xlrec;
+	XLogRecPtr	recptr;
+
+	xlrec.deleteXid = xid;
+	xlrec.downlinkOffset = downlinkOffset;
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec, SizeOfGistxlogPageDelete);
+
+	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+	XLogRegisterBuffer(1, parentBuffer, REGBUF_STANDARD);
+
+	recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_DELETE);
+
+	return recptr;
+}
+
+/*
+ * Write XLOG record about reuse of a deleted page.
+ */
+void
+gistXLogPageReuse(Relation rel, BlockNumber blkno, TransactionId latestRemovedXid)
+{
+	gistxlogPageReuse xlrec_reuse;
+
+	/*
+	 * Note that we don't register the buffer with the record, because this
+	 * operation doesn't modify the page. This record only exists to provide a
+	 * conflict point for Hot Standby.
+	 */
+
+	/* XLOG stuff */
+	xlrec_reuse.node = rel->rd_node;
+	xlrec_reuse.block = blkno;
+	xlrec_reuse.latestRemovedXid = latestRemovedXid;
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec_reuse, SizeOfGistxlogPageReuse);
+
+	XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_REUSE);
 }
 
 /*

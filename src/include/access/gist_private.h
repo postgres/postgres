@@ -414,12 +414,20 @@ extern bool gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 		  int len, GISTSTATE *giststate);
 
+/* gistxlog.c */
+extern XLogRecPtr gistXLogPageDelete(Buffer buffer,
+				   TransactionId xid, Buffer parentBuffer,
+				   OffsetNumber downlinkOffset);
+
+extern void gistXLogPageReuse(Relation rel, BlockNumber blkno,
+				  TransactionId latestRemovedXid);
+
 extern XLogRecPtr gistXLogUpdate(Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,
 			   IndexTuple *itup, int ntup,
 			   Buffer leftchild);
 
-XLogRecPtr gistXLogDelete(Buffer buffer, OffsetNumber *todelete,
+extern XLogRecPtr gistXLogDelete(Buffer buffer, OffsetNumber *todelete,
 			   int ntodelete, RelFileNode hnode);
 
 extern XLogRecPtr gistXLogSplit(bool page_is_leaf,
@@ -451,6 +459,7 @@ extern bool gistfitpage(IndexTuple *itvec, int len);
 extern bool gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete, Size freespace);
 extern void gistcheckpage(Relation rel, Buffer buf);
 extern Buffer gistNewBuffer(Relation r);
+extern bool gistPageRecyclable(Page page);
 extern void gistfillbuffer(Page page, IndexTuple *itup, int len,
 			   OffsetNumber off);
 extern IndexTuple *gistextractpage(Page page, int *len /* out */ );

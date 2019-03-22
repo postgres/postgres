@@ -28,10 +28,8 @@ select g+100000, point(g*10+1, g*10+1) from generate_series(1, 10000) g;
 -- To test vacuum, delete some entries from all over the index.
 delete from gist_point_tbl where id % 2 = 1;
 
--- And also delete some concentration of values. (GiST doesn't currently
--- attempt to delete pages even when they become empty, but if it did, this
--- would exercise it)
-delete from gist_point_tbl where id < 10000;
+-- And also delete some concentration of values.
+delete from gist_point_tbl where id > 5000;
 
 vacuum analyze gist_point_tbl;
 

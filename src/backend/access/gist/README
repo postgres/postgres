@@ -413,6 +413,54 @@ emptied yet; tuples never move upwards in the tree. The final emptying loops
 through buffers at a given level until all buffers at that level have been
 emptied, and then moves down to the next level.
 
+Bulk delete algorithm (VACUUM)
+------------------------------
+
+VACUUM works in two stages:
+
+In the first stage, we scan the whole index in physical order. To make sure
+that we don't miss any dead tuples because a concurrent page split moved them,
+we check the F_FOLLOW_RIGHT flags and NSN on each page, to detect if the
+page has been concurrently split. If a concurrent page split is detected, and
+one half of the page was moved to a position that we already scanned, we
+"jump backwards" to scan the page again. This is the same mechanism that
+B-tree VACUUM uses, but because we already have NSNs on pages, to detect page
+splits during searches, we don't need a "vacuum cycle ID" concept for that
+like B-tree does.
+
+While we scan all the pages, we also make note of any completely empty leaf
+pages. We will try to unlink them from the tree in the second stage. We also
+record the block numbers of all internal pages; they are needed in the second
+stage, to locate parents of the empty pages.
+
+In the second stage, we try to unlink any empty leaf pages from the tree, so
+that their space can be reused. In order to delete an empty page, its
+downlink must be removed from the parent. We scan all the internal pages,
+whose block numbers we memorized in the first stage, and look for downlinks
+to pages that we have memorized as being empty. Whenever we find one, we
+acquire a lock on the parent and child page, re-check that the child page is
+still empty. Then, we remove the downlink and mark the child as deleted, and
+release the locks.
+
+The insertion algorithm would get confused, if an internal page was completely
+empty. So we never delete the last child of an internal page, even if it's
+empty. Currently, we only support deleting leaf pages.
+
+This page deletion algorithm works on a best-effort basis. It might fail to
+find a downlink, if a concurrent page split moved it after the first stage.
+In that case, we won't be able to remove all empty pages. That's OK, it's
+not expected to happen very often, and hopefully the next VACUUM will clean
+it up.
+
+When we have deleted a page, it's possible that an in-progress search will
+still descend on the page, if it saw the downlink before we removed it. The
+search will see that it is deleted, and ignore it, but as long as that can
+happen, we cannot reuse the page. To "wait out" any in-progress searches, when
+a page is deleted, it's labeled with the current next-transaction counter
+value. The page is not recycled, until that XID is no longer visible to
+anyone. That's much more conservative than necessary, but let's keep it
+simple.
+
 
 Authors:
 	Teodor Sigaev	<teodor@sigaev.ru>

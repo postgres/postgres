@@ -23,6 +23,7 @@
 #include "storage/lmgr.h"
 #include "utils/float.h"
 #include "utils/syscache.h"
+#include "utils/snapmgr.h"
 #include "utils/lsyscache.h"
 
 
@@ -829,13 +830,31 @@ gistNewBuffer(Relation r)
 		{
 			Page		page = BufferGetPage(buffer);
 
+			/*
+			 * If the page was never initialized, it's OK to use.
+			 */
 			if (PageIsNew(page))
-				return buffer;	/* OK to use, if never initialized */
+				return buffer;
 
 			gistcheckpage(r, buffer);
 
-			if (GistPageIsDeleted(page))
-				return buffer;	/* OK to use */
+			/*
+			 * Otherwise, recycle it if deleted, and too old to have any processes
+			 * interested in it.
+			 */
+			if (gistPageRecyclable(page))
+			{
+				/*
+				 * If we are generating WAL for Hot Standby then create a
+				 * WAL record that will allow us to conflict with queries
+				 * running on standby, in case they have snapshots older
+				 * than the page's deleteXid.
+				 */
+				if (XLogStandbyInfoActive() && RelationNeedsWAL(r))
+					gistXLogPageReuse(r, blkno, GistPageGetDeleteXid(page));
+
+				return buffer;
+			}
 
 			LockBuffer(buffer, GIST_UNLOCK);
 		}
@@ -857,6 +876,15 @@ gistNewBuffer(Relation r)
 		UnlockRelationForExtension(r, ExclusiveLock);
 
 	return buffer;
+}
+
+/* Can this page be recycled yet? */
+bool
+gistPageRecyclable(Page page)
+{
+	return PageIsNew(page) ||
+		(GistPageIsDeleted(page) &&
+		 TransactionIdPrecedes(GistPageGetDeleteXid(page), RecentGlobalXmin));
 }
 
 bytea *

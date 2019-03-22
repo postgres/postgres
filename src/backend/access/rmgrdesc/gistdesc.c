@@ -24,6 +24,15 @@ out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
 }
 
 static void
+out_gistxlogPageReuse(StringInfo buf, gistxlogPageReuse *xlrec)
+{
+	appendStringInfo(buf, "rel %u/%u/%u; blk %u; latestRemovedXid %u",
+					 xlrec->node.spcNode, xlrec->node.dbNode,
+					 xlrec->node.relNode, xlrec->block,
+					 xlrec->latestRemovedXid);
+}
+
+static void
 out_gistxlogDelete(StringInfo buf, gistxlogPageUpdate *xlrec)
 {
 }
@@ -33,6 +42,13 @@ out_gistxlogPageSplit(StringInfo buf, gistxlogPageSplit *xlrec)
 {
 	appendStringInfo(buf, "page_split: splits to %d pages",
 					 xlrec->npage);
+}
+
+static void
+out_gistxlogPageDelete(StringInfo buf, gistxlogPageDelete *xlrec)
+{
+	appendStringInfo(buf, "deleteXid %u; downlink %u",
+					 xlrec->deleteXid, xlrec->downlinkOffset);
 }
 
 void
@@ -46,6 +62,9 @@ gist_desc(StringInfo buf, XLogReaderState *record)
 		case XLOG_GIST_PAGE_UPDATE:
 			out_gistxlogPageUpdate(buf, (gistxlogPageUpdate *) rec);
 			break;
+		case XLOG_GIST_PAGE_REUSE:
+			out_gistxlogPageReuse(buf, (gistxlogPageReuse *) rec);
+			break;
 		case XLOG_GIST_DELETE:
 			out_gistxlogDelete(buf, (gistxlogPageUpdate *) rec);
 			break;
@@ -53,6 +72,9 @@ gist_desc(StringInfo buf, XLogReaderState *record)
 			out_gistxlogPageSplit(buf, (gistxlogPageSplit *) rec);
 			break;
 		case XLOG_GIST_CREATE_INDEX:
+			break;
+		case XLOG_GIST_PAGE_DELETE:
+			out_gistxlogPageDelete(buf, (gistxlogPageDelete *) rec);
 			break;
 	}
 }
@@ -70,11 +92,17 @@ gist_identify(uint8 info)
 		case XLOG_GIST_DELETE:
 			id = "DELETE";
 			break;
+		case XLOG_GIST_PAGE_REUSE:
+			id = "PAGE_REUSE";
+			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			id = "PAGE_SPLIT";
 			break;
 		case XLOG_GIST_CREATE_INDEX:
 			id = "CREATE_INDEX";
+			break;
+		case XLOG_GIST_PAGE_DELETE:
+			id = "PAGE_DELETE";
 			break;
 	}
 

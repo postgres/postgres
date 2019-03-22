@@ -704,6 +704,9 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			GISTInsertStack *item;
 			OffsetNumber downlinkoffnum;
 
+			/* currently, internal pages are never deleted */
+			Assert(!GistPageIsDeleted(stack->page));
+
 			downlinkoffnum = gistchoose(state.r, stack->page, itup, giststate);
 			iid = PageGetItemId(stack->page, downlinkoffnum);
 			idxtuple = (IndexTuple) PageGetItem(stack->page, iid);
@@ -836,6 +839,18 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 					state.stack = stack = stack->parent;
 					continue;
 				}
+			}
+
+			/*
+			 * The page might have been deleted after we scanned the parent
+			 * and saw the downlink.
+			 */
+			if (GistPageIsDeleted(stack->page))
+			{
+				UnlockReleaseBuffer(stack->buffer);
+				xlocked = false;
+				state.stack = stack = stack->parent;
+				continue;
 			}
 
 			/* now state.stack->(page, buffer and blkno) points to leaf page */
