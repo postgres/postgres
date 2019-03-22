@@ -189,8 +189,16 @@ pg_partition_root(PG_FUNCTION_ARGS)
 	if (!check_rel_can_be_partition(relid))
 		PG_RETURN_NULL();
 
-	/* Fetch the top-most parent */
+	/* fetch the list of ancestors */
 	ancestors = get_partition_ancestors(relid);
+
+	/*
+	 * If the input relation is already the top-most parent, just return
+	 * itself.
+	 */
+	if (ancestors == NIL)
+		PG_RETURN_OID(relid);
+
 	rootrelid = llast_oid(ancestors);
 	list_free(ancestors);
 

@@ -22,6 +22,12 @@ CREATE TABLE ptif_test2 PARTITION OF ptif_test
 CREATE TABLE ptif_test3 PARTITION OF ptif_test
   FOR VALUES FROM (200) TO (maxvalue) PARTITION BY list (b);
 
+-- Test pg_partition_root for tables
+SELECT pg_partition_root('ptif_test');
+SELECT pg_partition_root('ptif_test0');
+SELECT pg_partition_root('ptif_test01');
+SELECT pg_partition_root('ptif_test3');
+
 -- Test index partition tree
 CREATE INDEX ptif_test_index ON ONLY ptif_test (a);
 CREATE INDEX ptif_test0_index ON ONLY ptif_test0 (a);
@@ -36,6 +42,12 @@ CREATE INDEX ptif_test2_index ON ptif_test2 (a);
 ALTER INDEX ptif_test_index ATTACH PARTITION ptif_test2_index;
 CREATE INDEX ptif_test3_index ON ptif_test3 (a);
 ALTER INDEX ptif_test_index ATTACH PARTITION ptif_test3_index;
+
+-- Test pg_partition_root for indexes
+SELECT pg_partition_root('ptif_test_index');
+SELECT pg_partition_root('ptif_test0_index');
+SELECT pg_partition_root('ptif_test01_index');
+SELECT pg_partition_root('ptif_test3_index');
 
 -- List all tables members of the tree
 SELECT relid, parentrelid, level, isleaf
