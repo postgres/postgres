@@ -39,7 +39,6 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/plancat.h"
 #include "optimizer/prep.h"
-#include "partitioning/partbounds.h"
 #include "partitioning/partdesc.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
@@ -2082,16 +2081,14 @@ set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 							Relation relation)
 {
 	PartitionDesc partdesc;
-	PartitionKey partkey;
 
 	Assert(relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
 	partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
 										relation);
-	partkey = RelationGetPartitionKey(relation);
 	rel->part_scheme = find_partition_scheme(root, relation);
 	Assert(partdesc != NULL && rel->part_scheme != NULL);
-	rel->boundinfo = partition_bounds_copy(partdesc->boundinfo, partkey);
+	rel->boundinfo = partdesc->boundinfo;
 	rel->nparts = partdesc->nparts;
 	set_baserel_partition_key_exprs(relation, rel);
 	rel->partition_qual = RelationGetPartitionQual(relation);
