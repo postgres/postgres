@@ -35,6 +35,7 @@ static int64 badblocks = 0;
 static ControlFileData *ControlFile;
 
 static char *only_relfilenode = NULL;
+static bool do_sync = true;
 static bool verbose = false;
 
 typedef enum
@@ -69,6 +70,7 @@ usage(void)
 	printf(_("  -c, --check            check data checksums (default)\n"));
 	printf(_("  -d, --disable          disable data checksums\n"));
 	printf(_("  -e, --enable           enable data checksums\n"));
+	printf(_("  -N, --no-sync          do not wait for changes to be written safely to disk\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -r RELFILENODE         check only relation with specified relfilenode\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
@@ -297,6 +299,7 @@ main(int argc, char *argv[])
 		{"pgdata", required_argument, NULL, 'D'},
 		{"disable", no_argument, NULL, 'd'},
 		{"enable", no_argument, NULL, 'e'},
+		{"no-sync", no_argument, NULL, 'N'},
 		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
@@ -324,7 +327,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "cD:der:v", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "cD:deNr:v", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -336,6 +339,9 @@ main(int argc, char *argv[])
 				break;
 			case 'e':
 				mode = PG_MODE_ENABLE;
+				break;
+			case 'N':
+				do_sync = false;
 				break;
 			case 'v':
 				verbose = true;
@@ -472,11 +478,14 @@ main(int argc, char *argv[])
 		ControlFile->data_checksum_version =
 			(mode == PG_MODE_ENABLE) ? PG_DATA_CHECKSUM_VERSION : 0;
 
-		printf(_("Syncing data directory\n"));
-		fsync_pgdata(DataDir, progname, PG_VERSION_NUM);
+		if (do_sync)
+		{
+			printf(_("Syncing data directory\n"));
+			fsync_pgdata(DataDir, progname, PG_VERSION_NUM);
+		}
 
 		printf(_("Updating control file\n"));
-		update_controlfile(DataDir, progname, ControlFile, true);
+		update_controlfile(DataDir, progname, ControlFile, do_sync);
 
 		if (verbose)
 			printf(_("Data checksum version: %d\n"), ControlFile->data_checksum_version);

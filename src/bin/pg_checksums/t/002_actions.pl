@@ -101,11 +101,11 @@ mkdir "$pgdata/global/pgsql_tmp";
 append_to_file "$pgdata/global/pgsql_tmp/1.1", "foo";
 
 # Enable checksums.
-command_ok(['pg_checksums', '--enable', '-D', $pgdata],
+command_ok(['pg_checksums', '--enable', '--no-sync', '-D', $pgdata],
 	   "checksums successfully enabled in cluster");
 
 # Successive attempt to enable checksums fails.
-command_fails(['pg_checksums', '--enable', '-D', $pgdata],
+command_fails(['pg_checksums', '--enable', '--no-sync', '-D', $pgdata],
 	      "enabling checksums fails if already enabled");
 
 # Control file should know that checksums are enabled.
@@ -113,12 +113,12 @@ command_like(['pg_controldata', $pgdata],
 	     qr/Data page checksum version:.*1/,
 	     'checksums enabled in control file');
 
-# Disable checksums again.
+# Disable checksums again.  Flush result here as that should be cheap.
 command_ok(['pg_checksums', '--disable', '-D', $pgdata],
 	   "checksums successfully disabled in cluster");
 
 # Successive attempt to disable checksums fails.
-command_fails(['pg_checksums', '--disable', '-D', $pgdata],
+command_fails(['pg_checksums', '--disable', '--no-sync', '-D', $pgdata],
 	      "disabling checksums fails if already disabled");
 
 # Control file should know that checksums are disabled.
@@ -127,7 +127,7 @@ command_like(['pg_controldata', $pgdata],
 		 'checksums disabled in control file');
 
 # Enable checksums again for follow-up tests.
-command_ok(['pg_checksums', '--enable', '-D', $pgdata],
+command_ok(['pg_checksums', '--enable', '--no-sync', '-D', $pgdata],
 		   "checksums successfully enabled in cluster");
 
 # Control file should know that checksums are enabled.
