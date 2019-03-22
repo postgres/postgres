@@ -78,15 +78,15 @@ static const test_spec test_specs[] = {
 	},
 	{
 		"single values, distance > 2^32", "1",
-		10000000000L, 1000000
+		UINT64CONST(10000000000), 1000000
 	},
 	{
 		"clusters, distance > 2^32", "10101010",
-		10000000000L, 10000000
+		UINT64CONST(10000000000), 10000000
 	},
 	{
 		"clusters, distance > 2^60", "10101010",
-		2000000000000000000L,
+		UINT64CONST(2000000000000000000),
 		23						/* can't be much higher than this, or we
 								 * overflow uint64 */
 	}
@@ -539,31 +539,31 @@ test_huge_distances(void)
 	val = 0;
 	values[num_values++] = val;
 
-	val += 1152921504606846976L - 1;	/* 2^60 - 1 */
+	val += UINT64CONST(1152921504606846976) - 1;	/* 2^60 - 1 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L - 1;	/* 2^60 - 1 */
+	val += UINT64CONST(1152921504606846976) - 1;	/* 2^60 - 1 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L;	/* 2^60 */
+	val += UINT64CONST(1152921504606846976);	/* 2^60 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L;	/* 2^60 */
+	val += UINT64CONST(1152921504606846976);	/* 2^60 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L;	/* 2^60 */
+	val += UINT64CONST(1152921504606846976);	/* 2^60 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L + 1;	/* 2^60 + 1 */
+	val += UINT64CONST(1152921504606846976) + 1;	/* 2^60 + 1 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L + 1;	/* 2^60 + 1 */
+	val += UINT64CONST(1152921504606846976) + 1;	/* 2^60 + 1 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L + 1;	/* 2^60 + 1 */
+	val += UINT64CONST(1152921504606846976) + 1;	/* 2^60 + 1 */
 	values[num_values++] = val;
 
-	val += 1152921504606846976L;	/* 2^60 */
+	val += UINT64CONST(1152921504606846976);	/* 2^60 */
 	values[num_values++] = val;
 
 	/* we're now very close to 2^64, so can't add large values anymore */
