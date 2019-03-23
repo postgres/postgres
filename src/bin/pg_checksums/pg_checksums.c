@@ -435,16 +435,18 @@ main(int argc, char *argv[])
 		fprintf(stderr, _("%s: data checksums are not enabled in cluster\n"), progname);
 		exit(1);
 	}
+
 	if (ControlFile->data_checksum_version == 0 &&
 		mode == PG_MODE_DISABLE)
 	{
-		fprintf(stderr, _("%s: data checksums are already disabled in cluster.\n"), progname);
+		fprintf(stderr, _("%s: data checksums are already disabled in cluster\n"), progname);
 		exit(1);
 	}
+
 	if (ControlFile->data_checksum_version > 0 &&
 		mode == PG_MODE_ENABLE)
 	{
-		fprintf(stderr, _("%s: data checksums are already enabled in cluster.\n"), progname);
+		fprintf(stderr, _("%s: data checksums are already enabled in cluster\n"), progname);
 		exit(1);
 	}
 
