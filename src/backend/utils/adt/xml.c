@@ -1213,15 +1213,8 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	if (xmlStrncmp(p, (xmlChar *) "<?xml", 5) != 0)
 		goto finished;
 
-	/*
-	 * If next char is a name char, it's a PI like <?xml-stylesheet ...?>
-	 * rather than an XMLDecl, so we have done what we came to do and found no
-	 * XMLDecl.
-	 *
-	 * We need an input length value for xmlGetUTF8Char, but there's no need
-	 * to count the whole document size, so use strnlen not strlen.
-	 */
-	utf8len = strnlen((const char *) (p + 5), MAX_MULTIBYTE_CHAR_LEN);
+	/* if next char is name char, it's a PI like <?xml-stylesheet ...?> */
+	utf8len = strlen((const char *) (p + 5));
 	utf8char = xmlGetUTF8Char(p + 5, &utf8len);
 	if (PG_XMLISNAMECHAR(utf8char))
 		goto finished;
