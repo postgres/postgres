@@ -1465,10 +1465,6 @@ xml_doctype_in_content(const xmlChar *str)
 		if (!e)
 			return false;
 
-		/* we don't check PIs carefully, but do reject "xml" target */
-		if (e - p >= 3 && xmlStrncasecmp(p, (xmlChar *) "xml", 3) == 0)
-			return false;
-
 		/* advance over PI, keep scanning */
 		p = e + 2;
 	}
