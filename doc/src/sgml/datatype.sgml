@@ -4197,9 +4197,11 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
    <para>
     The <type>xml</type> type can store well-formed
     <quote>documents</quote>, as defined by the XML standard, as well
-    as <quote>content</quote> fragments, which are defined by the
-    production <literal>XMLDecl? content</literal> in the XML
-    standard.  Roughly, this means that content fragments can have
+    as <quote>content</quote> fragments, which are defined by reference
+    to the more permissive
+    <ulink url="https://www.w3.org/TR/2010/REC-xpath-datamodel-20101214/#DocumentNode"><quote>document node</quote></ulink>
+    of the XQuery and XPath data model.
+    Roughly, this means that content fragments can have
     more than one top-level element or character node.  The expression
     <literal><replaceable>xmlvalue</replaceable> IS DOCUMENT</literal>
     can be used to evaluate whether a particular <type>xml</type>
@@ -4273,16 +4275,6 @@ SET xmloption TO { DOCUMENT | CONTENT };
     The default is <literal>CONTENT</literal>, so all forms of XML
     data are allowed.
    </para>
-
-   <note>
-    <para>
-     With the default XML option setting, you cannot directly cast
-     character strings to type <type>xml</type> if they contain a
-     document type declaration, because the definition of XML content
-     fragment does not accept them.  If you need to do that, either
-     use <literal>XMLPARSE</literal> or change the XML option.
-    </para>
-   </note>
 
    </sect2>
 
