@@ -146,10 +146,17 @@ PREPARE foo (xml) AS SELECT xmlconcat('<foo/>', $1);
 SET XML OPTION DOCUMENT;
 EXECUTE foo ('<bar/>');
 EXECUTE foo ('bad');
+SELECT xml '<!DOCTYPE a><a/><b/>';
 
 SET XML OPTION CONTENT;
 EXECUTE foo ('<bar/>');
 EXECUTE foo ('good');
+SELECT xml '<!-- in SQL:2006+ a doc is content too--> <?y z?> <!DOCTYPE a><a/>';
+SELECT xml '<?xml version="1.0"?> <!-- hi--> <!DOCTYPE a><a/>';
+SELECT xml '<!DOCTYPE a><a/>';
+SELECT xml '<!-- hi--> oops <!DOCTYPE a><a/>';
+SELECT xml '<!-- hi--> <oops/> <!DOCTYPE a><a/>';
+SELECT xml '<!DOCTYPE a><a/><b/>';
 
 
 -- Test backwards parsing

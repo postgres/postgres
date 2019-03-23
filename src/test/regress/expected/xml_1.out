@@ -417,11 +417,53 @@ EXECUTE foo ('<bar/>');
 ERROR:  prepared statement "foo" does not exist
 EXECUTE foo ('bad');
 ERROR:  prepared statement "foo" does not exist
+SELECT xml '<!DOCTYPE a><a/><b/>';
+ERROR:  unsupported XML feature
+LINE 1: SELECT xml '<!DOCTYPE a><a/><b/>';
+                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET XML OPTION CONTENT;
 EXECUTE foo ('<bar/>');
 ERROR:  prepared statement "foo" does not exist
 EXECUTE foo ('good');
 ERROR:  prepared statement "foo" does not exist
+SELECT xml '<!-- in SQL:2006+ a doc is content too--> <?y z?> <!DOCTYPE a><a/>';
+ERROR:  unsupported XML feature
+LINE 1: SELECT xml '<!-- in SQL:2006+ a doc is content too--> <?y z?...
+                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml '<?xml version="1.0"?> <!-- hi--> <!DOCTYPE a><a/>';
+ERROR:  unsupported XML feature
+LINE 1: SELECT xml '<?xml version="1.0"?> <!-- hi--> <!DOCTYPE a><a/...
+                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml '<!DOCTYPE a><a/>';
+ERROR:  unsupported XML feature
+LINE 1: SELECT xml '<!DOCTYPE a><a/>';
+                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml '<!-- hi--> oops <!DOCTYPE a><a/>';
+ERROR:  unsupported XML feature
+LINE 1: SELECT xml '<!-- hi--> oops <!DOCTYPE a><a/>';
+                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml '<!-- hi--> <oops/> <!DOCTYPE a><a/>';
+ERROR:  unsupported XML feature
+LINE 1: SELECT xml '<!-- hi--> <oops/> <!DOCTYPE a><a/>';
+                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xml '<!DOCTYPE a><a/><b/>';
+ERROR:  unsupported XML feature
+LINE 1: SELECT xml '<!DOCTYPE a><a/><b/>';
+                   ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- Test backwards parsing
 CREATE VIEW xmlview1 AS SELECT xmlcomment('test');
 CREATE VIEW xmlview2 AS SELECT xmlconcat('hello', 'you');
