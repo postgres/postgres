@@ -2332,6 +2332,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 																  NIL, argoids))));
 						break;
 				}
+				break;
 
 			case FUNCLOOKUP_AMBIGUOUS:
 				switch (objtype)
