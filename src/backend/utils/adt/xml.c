@@ -139,6 +139,7 @@ static int parse_xml_decl(const xmlChar *str, size_t *lenp,
 			   xmlChar **version, xmlChar **encoding, int *standalone);
 static bool print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone);
+static bool xml_doctype_in_content(const xmlChar *str);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 		  bool preserve_whitespace, int encoding);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt);
@@ -1154,8 +1155,15 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	if (xmlStrncmp(p, (xmlChar *) "<?xml", 5) != 0)
 		goto finished;
 
-	/* if next char is name char, it's a PI like <?xml-stylesheet ...?> */
-	utf8len = strlen((const char *) (p + 5));
+	/*
+	 * If next char is a name char, it's a PI like <?xml-stylesheet ...?>
+	 * rather than an XMLDecl, so we have done what we came to do and found no
+	 * XMLDecl.
+	 *
+	 * We need an input length value for xmlGetUTF8Char, but there's no need
+	 * to count the whole document size, so use strnlen not strlen.
+	 */
+	utf8len = strnlen((const char *) (p + 5), MAX_MULTIBYTE_CHAR_LEN);
 	utf8char = xmlGetUTF8Char(p + 5, &utf8len);
 	if (PG_XMLISNAMECHAR(utf8char))
 		goto finished;
@@ -1326,6 +1334,88 @@ print_xml_decl(StringInfo buf, const xmlChar *version,
 		return false;
 }
 
+/*
+ * Test whether an input that is to be parsed as CONTENT contains a DTD.
+ *
+ * The SQL/XML:2003 definition of CONTENT ("XMLDecl? content") is not
+ * satisfied by a document with a DTD, which is a bit of a wart, as it means
+ * the CONTENT type is not a proper superset of DOCUMENT.  SQL/XML:2006 and
+ * later fix that, by redefining content with reference to the "more
+ * permissive" Document Node of the XQuery/XPath Data Model, such that any
+ * DOCUMENT value is indeed also a CONTENT value.  That definition is more
+ * useful, as CONTENT becomes usable for parsing input of unknown form (think
+ * pg_restore).
+ *
+ * As used below in parse_xml when parsing for CONTENT, libxml does not give
+ * us the 2006+ behavior, but only the 2003; it will choke if the input has
+ * a DTD.  But we can provide the 2006+ definition of CONTENT easily enough,
+ * by detecting this case first and simply doing the parse as DOCUMENT.
+ *
+ * A DTD can be found arbitrarily far in, but that would be a contrived case;
+ * it will ordinarily start within a few dozen characters.  The only things
+ * that can precede it are an XMLDecl (here, the caller will have called
+ * parse_xml_decl already), whitespace, comments, and processing instructions.
+ * This function need only return true if it sees a valid sequence of such
+ * things leading to <!DOCTYPE.  It can simply return false in any other
+ * cases, including malformed input; that will mean the input gets parsed as
+ * CONTENT as originally planned, with libxml reporting any errors.
+ *
+ * This is only to be called from xml_parse, when pg_xml_init has already
+ * been called.  The input is already in UTF8 encoding.
+ */
+static bool
+xml_doctype_in_content(const xmlChar *str)
+{
+	const xmlChar *p = str;
+
+	for (;;)
+	{
+		const xmlChar *e;
+
+		SKIP_XML_SPACE(p);
+		if (*p != '<')
+			return false;
+		p++;
+
+		if (*p == '!')
+		{
+			p++;
+
+			/* if we see <!DOCTYPE, we can return true */
+			if (xmlStrncmp(p, (xmlChar *) "DOCTYPE", 7) == 0)
+				return true;
+
+			/* otherwise, if it's not a comment, fail */
+			if (xmlStrncmp(p, (xmlChar *) "--", 2) != 0)
+				return false;
+			/* find end of comment: find -- and a > must follow */
+			p = xmlStrstr(p + 2, (xmlChar *) "--");
+			if (!p || p[2] != '>')
+				return false;
+			/* advance over comment, and keep scanning */
+			p += 3;
+			continue;
+		}
+
+		/* otherwise, if it's not a PI <?target something?>, fail */
+		if (*p != '?')
+			return false;
+		p++;
+
+		/* find end of PI (the string ?> is forbidden within a PI) */
+		e = xmlStrstr(p, (xmlChar *) "?>");
+		if (!e)
+			return false;
+
+		/* we don't check PIs carefully, but do reject "xml" target */
+		if (e - p >= 3 && xmlStrncasecmp(p, (xmlChar *) "xml", 3) == 0)
+			return false;
+
+		/* advance over PI, keep scanning */
+		p = e + 2;
+	}
+}
+
 
 /*
  * Convert a C string to XML internal representation
@@ -1361,6 +1451,12 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	/* Use a TRY block to ensure we clean up correctly */
 	PG_TRY();
 	{
+		bool		parse_as_document = false;
+		int			res_code;
+		size_t		count = 0;
+		xmlChar    *version = NULL;
+		int			standalone = 0;
+
 		xmlInitParser();
 
 		ctxt = xmlNewParserCtxt();
@@ -1368,7 +1464,25 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
 
+		/* Decide whether to parse as document or content */
 		if (xmloption_arg == XMLOPTION_DOCUMENT)
+			parse_as_document = true;
+		else
+		{
+			/* Parse and skip over the XML declaration, if any */
+			res_code = parse_xml_decl(utf8string,
+									  &count, &version, NULL, &standalone);
+			if (res_code != 0)
+				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
+									"invalid XML content: invalid XML declaration",
+									res_code);
+
+			/* Is there a DOCTYPE element? */
+			if (xml_doctype_in_content(utf8string + count))
+				parse_as_document = true;
+		}
+
+		if (parse_as_document)
 		{
 			/*
 			 * Note, that here we try to apply DTD defaults
@@ -1383,23 +1497,18 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 								 XML_PARSE_NOENT | XML_PARSE_DTDATTR
 						   | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
 			if (doc == NULL || xmlerrcxt->err_occurred)
-				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-							"invalid XML document");
+			{
+				/* Use original option to decide which error code to throw */
+				if (xmloption_arg == XMLOPTION_DOCUMENT)
+					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+								"invalid XML document");
+				else
+					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
+								"invalid XML content");
+			}
 		}
 		else
 		{
-			int			res_code;
-			size_t		count;
-			xmlChar    *version;
-			int			standalone;
-
-			res_code = parse_xml_decl(utf8string,
-									  &count, &version, NULL, &standalone);
-			if (res_code != 0)
-				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
-							  "invalid XML content: invalid XML declaration",
-									res_code);
-
 			doc = xmlNewDoc(version);
 			Assert(doc->encoding == NULL);
 			doc->encoding = xmlStrdup((const xmlChar *) "UTF-8");
