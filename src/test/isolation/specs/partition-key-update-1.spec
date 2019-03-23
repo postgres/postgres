@@ -66,6 +66,7 @@ step "s2c"	{ COMMIT; }
 # Concurrency error from ExecUpdate and ExecDelete.
 permutation "s1b" "s2b" "s1u" "s1c" "s2d" "s2c"
 permutation "s1b" "s2b" "s1u" "s2d" "s1c" "s2c"
+permutation "s1b" "s2b" "s1u" "s2u" "s1c" "s2c"
 permutation "s1b" "s2b" "s2d" "s1u" "s2c" "s1c"
 
 # Concurrency error from GetTupleForTrigger

@@ -42,9 +42,16 @@ teardown
 session "s1"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 # wx1 then wx2 checks the basic case of re-fetching up-to-date values
-step "wx1"	{ UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking'; }
+step "wx1"	{ UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance; }
 # wy1 then wy2 checks the case where quals pass then fail
-step "wy1"	{ UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking'; }
+step "wy1"	{ UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking' RETURNING balance; }
+
+# d1 then wx1 checks that update can deal with the updated row vanishing
+# wx2 then d1 checks that the delete affects the updated row
+# wx2, wx2 then d1 checks that the delete checks the quals correctly (balance too high)
+# wx2, d2, then d1 checks that delete handles a vanishing row correctly
+step "d1"	{ DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; }
+
 # upsert tests are to check writable-CTE cases
 step "upsert1"	{
 	WITH upsert AS
@@ -64,6 +71,7 @@ step "readp1"	{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND 
 step "writep1"	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
 step "writep2"	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
 step "c1"	{ COMMIT; }
+step "r1"	{ ROLLBACK; }
 
 # these tests are meant to exercise EvalPlanQualFetchRowMarks,
 # ie, handling non-locked tables in an EvalPlanQual recheck
@@ -128,8 +136,10 @@ step "selectresultforupdate"	{
 
 session "s2"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step "wx2"	{ UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking'; }
-step "wy2"	{ UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000; }
+step "wx2"	{ UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; }
+step "wy2"	{ UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000  RETURNING balance; }
+step "d2"	{ DELETE FROM accounts WHERE accountid = 'checking'; }
+
 step "upsert2"	{
 	WITH upsert AS
 	  (UPDATE accounts SET balance = balance + 1234
@@ -161,6 +171,7 @@ step "updateforcip3"	{
 step "wrtwcte"	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
 step "wrjt"	{ UPDATE jointest SET data = 42 WHERE id = 7; }
 step "c2"	{ COMMIT; }
+step "r2"	{ ROLLBACK; }
 
 session "s3"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
@@ -192,8 +203,24 @@ step "multireadwcte"	{
 
 teardown	{ COMMIT; }
 
+# test that normal update follows update chains, and reverifies quals
 permutation "wx1" "wx2" "c1" "c2" "read"
 permutation "wy1" "wy2" "c1" "c2" "read"
+permutation "wx1" "wx2" "r1" "c2" "read"
+permutation "wy1" "wy2" "r1" "c2" "read"
+
+# test that deletes follow chains, and if necessary reverifies quals
+permutation "wx1" "d1" "wx2" "c1" "c2" "read"
+permutation "wx2" "d1" "c2" "c1" "read"
+permutation "wx2" "wx2" "d1" "c2" "c1" "read"
+permutation "wx2" "d2" "d1" "c2" "c1" "read"
+permutation "wx1" "d1" "wx2" "r1" "c2" "read"
+permutation "wx2" "d1" "r2" "c1" "read"
+permutation "wx2" "wx2" "d1" "r2" "c1" "read"
+permutation "wx2" "d2" "d1" "r2" "c1" "read"
+permutation "d1" "wx2" "c1" "c2" "read"
+permutation "d1" "wx2" "r1" "c2" "read"
+
 permutation "upsert1" "upsert2" "c1" "c2" "read"
 permutation "readp1" "writep1" "readp2" "c1" "c2"
 permutation "writep2" "returningp1" "c1" "c2"

@@ -1,10 +1,16 @@
 Parsed test spec with 3 sessions
 
 starting permutation: wx1 wx2 c1 c2 read
-step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking';
-step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking'; <waiting ...>
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
 step c1: COMMIT;
 step wx2: <... completed>
+balance        
+
+850            
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
 accountid      balance        
@@ -13,15 +19,243 @@ checking       850
 savings        600            
 
 starting permutation: wy1 wy2 c1 c2 read
-step wy1: UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking';
-step wy2: UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000; <waiting ...>
+step wy1: UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1100           
+step wy2: UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000  RETURNING balance; <waiting ...>
 step c1: COMMIT;
 step wy2: <... completed>
+balance        
+
 step c2: COMMIT;
 step read: SELECT * FROM accounts ORDER BY accountid;
 accountid      balance        
 
 checking       1100           
+savings        600            
+
+starting permutation: wx1 wx2 r1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
+step r1: ROLLBACK;
+step wx2: <... completed>
+balance        
+
+1050           
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1050           
+savings        600            
+
+starting permutation: wy1 wy2 r1 c2 read
+step wy1: UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1100           
+step wy2: UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000  RETURNING balance; <waiting ...>
+step r1: ROLLBACK;
+step wy2: <... completed>
+balance        
+
+1600           
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1600           
+savings        600            
+
+starting permutation: wx1 d1 wx2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
+balance        
+
+400            
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
+step c1: COMMIT;
+step wx2: <... completed>
+balance        
+
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+savings        600            
+
+starting permutation: wx2 d1 c2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
+step c2: COMMIT;
+step d1: <... completed>
+balance        
+
+1050           
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+savings        600            
+
+starting permutation: wx2 wx2 d1 c2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1500           
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
+step c2: COMMIT;
+step d1: <... completed>
+balance        
+
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1500           
+savings        600            
+
+starting permutation: wx2 d2 d1 c2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
+step d2: DELETE FROM accounts WHERE accountid = 'checking';
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
+step c2: COMMIT;
+step d1: <... completed>
+balance        
+
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+savings        600            
+
+starting permutation: wx1 d1 wx2 r1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
+balance        
+
+400            
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
+step r1: ROLLBACK;
+step wx2: <... completed>
+balance        
+
+1050           
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1050           
+savings        600            
+
+starting permutation: wx2 d1 r2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
+step r2: ROLLBACK;
+step d1: <... completed>
+balance        
+
+600            
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+savings        600            
+
+starting permutation: wx2 wx2 d1 r2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1500           
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
+step r2: ROLLBACK;
+step d1: <... completed>
+balance        
+
+600            
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+savings        600            
+
+starting permutation: wx2 d2 d1 r2 c1 read
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
+step d2: DELETE FROM accounts WHERE accountid = 'checking';
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance; <waiting ...>
+step r2: ROLLBACK;
+step d1: <... completed>
+balance        
+
+600            
+step c1: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+savings        600            
+
+starting permutation: d1 wx2 c1 c2 read
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
+balance        
+
+600            
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
+step c1: COMMIT;
+step wx2: <... completed>
+balance        
+
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+savings        600            
+
+starting permutation: d1 wx2 r1 c2 read
+step d1: DELETE FROM accounts WHERE accountid = 'checking' AND balance < 1500 RETURNING balance;
+balance        
+
+600            
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance; <waiting ...>
+step r1: ROLLBACK;
+step wx2: <... completed>
+balance        
+
+1050           
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1050           
 savings        600            
 
 starting permutation: upsert1 upsert2 c1 c2 read
@@ -106,7 +340,10 @@ a              b              c
 step c2: COMMIT;
 
 starting permutation: wx2 partiallock c2 c1 read
-step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking';
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
 step partiallock: 
 	SELECT * FROM accounts a1, accounts a2
 	  WHERE a1.accountid = a2.accountid
@@ -126,7 +363,10 @@ checking       1050
 savings        600            
 
 starting permutation: wx2 lockwithvalues c2 c1 read
-step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking';
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+1050           
 step lockwithvalues: 
 	SELECT * FROM accounts a1, (values('checking'),('savings')) v(id)
 	  WHERE a1.accountid = v.id
