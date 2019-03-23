@@ -2958,6 +2958,9 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	/* Make sure function checking is disabled */
 	ahprintf(AH, "SET check_function_bodies = false;\n");
 
+	/* Ensure that all valid XML data will be accepted */
+	ahprintf(AH, "SET xmloption = content;\n");
+
 	/* Avoid annoying notices etc */
 	ahprintf(AH, "SET client_min_messages = warning;\n");
 	if (!AH->public.std_strings)
