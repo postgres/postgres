@@ -772,9 +772,8 @@ extern bool _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir);
 extern void _bt_mark_array_keys(IndexScanDesc scan);
 extern void _bt_restore_array_keys(IndexScanDesc scan);
 extern void _bt_preprocess_keys(IndexScanDesc scan);
-extern IndexTuple _bt_checkkeys(IndexScanDesc scan,
-			  Page page, OffsetNumber offnum,
-			  ScanDirection dir, bool *continuescan);
+extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
+			  int tupnatts, ScanDirection dir, bool *continuescan);
 extern void _bt_killitems(IndexScanDesc scan);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);

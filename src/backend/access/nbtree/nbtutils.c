@@ -48,7 +48,7 @@ static bool _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 static bool _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption);
 static void _bt_mark_scankey_required(ScanKey skey);
 static bool _bt_check_rowcompare(ScanKey skey,
-					 IndexTuple tuple, TupleDesc tupdesc,
+					 IndexTuple tuple, int tupnatts, TupleDesc tupdesc,
 					 ScanDirection dir, bool *continuescan);
 static int _bt_keep_natts(Relation rel, IndexTuple lastleft,
 			   IndexTuple firstright, BTScanInsert itup_key);
@@ -1333,72 +1333,34 @@ _bt_mark_scankey_required(ScanKey skey)
 /*
  * Test whether an indextuple satisfies all the scankey conditions.
  *
- * If so, return the address of the index tuple on the index page.
- * If not, return NULL.
+ * Return true if so, false if not.  If the tuple fails to pass the qual,
+ * we also determine whether there's any need to continue the scan beyond
+ * this tuple, and set *continuescan accordingly.  See comments for
+ * _bt_preprocess_keys(), above, about how this is done.
  *
- * If the tuple fails to pass the qual, we also determine whether there's
- * any need to continue the scan beyond this tuple, and set *continuescan
- * accordingly.  See comments for _bt_preprocess_keys(), above, about how
- * this is done.
+ * Forward scan callers can pass a high key tuple in the hopes of having
+ * us set *continuescanthat to false, and avoiding an unnecessary visit to
+ * the page to the right.
  *
  * scan: index scan descriptor (containing a search-type scankey)
- * page: buffer page containing index tuple
- * offnum: offset number of index tuple (must be a valid item!)
+ * tuple: index tuple to test
+ * tupnatts: number of attributes in tupnatts (high key may be truncated)
  * dir: direction we are scanning in
  * continuescan: output parameter (will be set correctly in all cases)
- *
- * Caller must hold pin and lock on the index page.
  */
-IndexTuple
-_bt_checkkeys(IndexScanDesc scan,
-			  Page page, OffsetNumber offnum,
+bool
+_bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			  ScanDirection dir, bool *continuescan)
 {
-	ItemId		iid = PageGetItemId(page, offnum);
-	bool		tuple_alive;
-	IndexTuple	tuple;
 	TupleDesc	tupdesc;
 	BTScanOpaque so;
 	int			keysz;
 	int			ikey;
 	ScanKey		key;
 
+	Assert(BTreeTupleGetNAtts(tuple, scan->indexRelation) == tupnatts);
+
 	*continuescan = true;		/* default assumption */
-
-	/*
-	 * If the scan specifies not to return killed tuples, then we treat a
-	 * killed tuple as not passing the qual.  Most of the time, it's a win to
-	 * not bother examining the tuple's index keys, but just return
-	 * immediately with continuescan = true to proceed to the next tuple.
-	 * However, if this is the last tuple on the page, we should check the
-	 * index keys to prevent uselessly advancing to the next page.
-	 */
-	if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
-	{
-		/* return immediately if there are more tuples on the page */
-		if (ScanDirectionIsForward(dir))
-		{
-			if (offnum < PageGetMaxOffsetNumber(page))
-				return NULL;
-		}
-		else
-		{
-			BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
-			if (offnum > P_FIRSTDATAKEY(opaque))
-				return NULL;
-		}
-
-		/*
-		 * OK, we want to check the keys so we can set continuescan correctly,
-		 * but we'll return NULL even if the tuple passes the key tests.
-		 */
-		tuple_alive = false;
-	}
-	else
-		tuple_alive = true;
-
-	tuple = (IndexTuple) PageGetItem(page, iid);
 
 	tupdesc = RelationGetDescr(scan->indexRelation);
 	so = (BTScanOpaque) scan->opaque;
@@ -1410,13 +1372,25 @@ _bt_checkkeys(IndexScanDesc scan,
 		bool		isNull;
 		Datum		test;
 
-		Assert(key->sk_attno <= BTreeTupleGetNAtts(tuple, scan->indexRelation));
+		if (key->sk_attno > tupnatts)
+		{
+			/*
+			 * This attribute is truncated (must be high key).  The value for
+			 * this attribute in the first non-pivot tuple on the page to the
+			 * right could be any possible value.  Assume that truncated
+			 * attribute passes the qual.
+			 */
+			Assert(ScanDirectionIsForward(dir));
+			continue;
+		}
+
 		/* row-comparison keys need special processing */
 		if (key->sk_flags & SK_ROW_HEADER)
 		{
-			if (_bt_check_rowcompare(key, tuple, tupdesc, dir, continuescan))
+			if (_bt_check_rowcompare(key, tuple, tupnatts, tupdesc, dir,
+									 continuescan))
 				continue;
-			return NULL;
+			return false;
 		}
 
 		datum = index_getattr(tuple,
@@ -1454,7 +1428,7 @@ _bt_checkkeys(IndexScanDesc scan,
 			/*
 			 * In any case, this indextuple doesn't match the qual.
 			 */
-			return NULL;
+			return false;
 		}
 
 		if (isNull)
@@ -1495,7 +1469,7 @@ _bt_checkkeys(IndexScanDesc scan,
 			/*
 			 * In any case, this indextuple doesn't match the qual.
 			 */
-			return NULL;
+			return false;
 		}
 
 		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
@@ -1523,16 +1497,12 @@ _bt_checkkeys(IndexScanDesc scan,
 			/*
 			 * In any case, this indextuple doesn't match the qual.
 			 */
-			return NULL;
+			return false;
 		}
 	}
 
-	/* Check for failure due to it being a killed tuple. */
-	if (!tuple_alive)
-		return NULL;
-
 	/* If we get here, the tuple passes all index quals. */
-	return tuple;
+	return true;
 }
 
 /*
@@ -1545,8 +1515,8 @@ _bt_checkkeys(IndexScanDesc scan,
  * This is a subroutine for _bt_checkkeys, which see for more info.
  */
 static bool
-_bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
-					 ScanDirection dir, bool *continuescan)
+_bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
+					 TupleDesc tupdesc, ScanDirection dir, bool *continuescan)
 {
 	ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
 	int32		cmpresult = 0;
@@ -1562,6 +1532,19 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 		bool		isNull;
 
 		Assert(subkey->sk_flags & SK_ROW_MEMBER);
+
+		if (subkey->sk_attno > tupnatts)
+		{
+			/*
+			 * This attribute is truncated (must be high key).  The value for
+			 * this attribute in the first non-pivot tuple on the page to the
+			 * right could be any possible value.  Assume that truncated
+			 * attribute passes the qual.
+			 */
+			Assert(ScanDirectionIsForward(dir));
+			cmpresult = 0;
+			continue;
+		}
 
 		datum = index_getattr(tuple,
 							  subkey->sk_attno,
