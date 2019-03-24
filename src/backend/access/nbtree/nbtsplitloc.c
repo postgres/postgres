@@ -520,13 +520,12 @@ _bt_splitcmp(const void *arg1, const void *arg2)
 }
 
 /*
- * Subroutine to find the "best" split point among an array of acceptable
- * candidate split points that split without there being an excessively high
- * delta between the space left free on the left and right halves.  The "best"
- * split point is the split point with the lowest penalty among split points
- * that fall within current/final split interval.  Penalty is an abstract
- * score, with a definition that varies depending on whether we're splitting a
- * leaf page or an internal page.  See _bt_split_penalty() for details.
+ * Subroutine to find the "best" split point among candidate split points.
+ * The best split point is the split point with the lowest penalty among split
+ * points that fall within current/final split interval.  Penalty is an
+ * abstract score, with a definition that varies depending on whether we're
+ * splitting a leaf page or an internal page.  See _bt_split_penalty() for
+ * details.
  *
  * "perfectpenalty" is assumed to be the lowest possible penalty among
  * candidate split points.  This allows us to return early without wasting
@@ -544,13 +543,6 @@ _bt_bestsplitloc(FindSplitData *state, int perfectpenalty, bool *newitemonleft)
 	int			bestpenalty,
 				lowsplit;
 	int			highsplit = Min(state->interval, state->nsplits);
-
-	/* No point in calculating penalty when there's only one choice */
-	if (state->nsplits == 1)
-	{
-		*newitemonleft = state->splits[0].newitemonleft;
-		return state->splits[0].firstoldonright;
-	}
 
 	bestpenalty = INT_MAX;
 	lowsplit = 0;
