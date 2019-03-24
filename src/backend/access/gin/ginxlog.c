@@ -529,7 +529,24 @@ ginRedoDeletePage(XLogReaderState *record)
 		page = BufferGetPage(dbuffer);
 		Assert(GinPageIsData(page));
 		GinPageGetOpaque(page)->flags = GIN_DELETED;
-		GinPageSetDeleteXid(page, data->deleteXid);
+
+		/*
+		 * deleteXid field of ginxlogDeletePage was added during backpatching.
+		 * But, non-backpatched instances will continue generate WAL without
+		 * this field.  We should be able to correctly apply that.  We can
+		 * distinguish new WAL records by size their data, because
+		 * ginxlogDeletePage changes its size on both 32-bit and 64-bit
+		 * platforms.
+		 */
+		StaticAssertStmt(sizeof(ginxlogDeletePage) !=
+						 sizeof(ginxlogDeletePageOld),
+						 "ginxlogDeletePage size should be changed "
+						 "with addition of deleteXid field");
+		Assert(XLogRecGetDataLen(record) == sizeof(ginxlogDeletePage) ||
+			   XLogRecGetDataLen(record) == sizeof(ginxlogDeletePageOld));
+		if (XLogRecGetDataLen(record) == sizeof(ginxlogDeletePage))
+			GinPageSetDeleteXid(page, data->deleteXid);
+
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(dbuffer);
 	}
