@@ -74,6 +74,13 @@ typedef enum
 	REMOTE_OBJECT
 } SharedDependencyObjectType;
 
+typedef struct
+{
+	ObjectAddress object;
+	char		deptype;
+	SharedDependencyObjectType objtype;
+} ShDependObjectInfo;
+
 static void getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2);
 static Oid	classIdGetDbId(Oid classId);
 static void shdepChangeDep(Relation sdepRel,
@@ -497,6 +504,56 @@ typedef struct
 } remoteDep;
 
 /*
+ * qsort comparator for ShDependObjectInfo items
+ */
+static int
+shared_dependency_comparator(const void *a, const void *b)
+{
+	const ShDependObjectInfo *obja = (const ShDependObjectInfo *) a;
+	const ShDependObjectInfo *objb = (const ShDependObjectInfo *) b;
+
+	/*
+	 * Primary sort key is OID ascending.
+	 */
+	if (obja->object.objectId < objb->object.objectId)
+		return -1;
+	if (obja->object.objectId > objb->object.objectId)
+		return 1;
+
+	/*
+	 * Next sort on catalog ID, in case identical OIDs appear in different
+	 * catalogs.  Sort direction is pretty arbitrary here.
+	 */
+	if (obja->object.classId < objb->object.classId)
+		return -1;
+	if (obja->object.classId > objb->object.classId)
+		return 1;
+
+	/*
+	 * Sort on object subId.
+	 *
+	 * We sort the subId as an unsigned int so that 0 (the whole object) will
+	 * come first.
+	 */
+	if ((unsigned int) obja->object.objectSubId < (unsigned int) objb->object.objectSubId)
+		return -1;
+	if ((unsigned int) obja->object.objectSubId > (unsigned int) objb->object.objectSubId)
+		return 1;
+
+	/*
+	 * Last, sort on deptype, in case the same object has multiple dependency
+	 * types.  (Note that there's no need to consider objtype, as that's
+	 * determined by the catalog OID.)
+	 */
+	if (obja->deptype < objb->deptype)
+		return -1;
+	if (obja->deptype > objb->deptype)
+		return 1;
+
+	return 0;
+}
+
+/*
  * checkSharedDependencies
  *
  * Check whether there are shared dependency entries for a given shared
@@ -531,6 +588,9 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	List	   *remDeps = NIL;
 	ListCell   *cell;
 	ObjectAddress object;
+	ShDependObjectInfo *objects;
+	int			numobjects;
+	int			allocedobjects;
 	StringInfoData descs;
 	StringInfoData alldescs;
 
@@ -538,9 +598,17 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	 * We limit the number of dependencies reported to the client to
 	 * MAX_REPORTED_DEPS, since client software may not deal well with
 	 * enormous error strings.  The server log always gets a full report.
+	 *
+	 * For stability of regression test results, we sort local and shared
+	 * objects by OID before reporting them.  We don't worry about the order
+	 * in which other databases are reported, though.
 	 */
 #define MAX_REPORTED_DEPS 100
 
+	allocedobjects = 128;		/* arbitrary initial array size */
+	objects = (ShDependObjectInfo *)
+		palloc(allocedobjects * sizeof(ShDependObjectInfo));
+	numobjects = 0;
 	initStringInfo(&descs);
 	initStringInfo(&alldescs);
 
@@ -580,36 +648,26 @@ checkSharedDependencies(Oid classId, Oid objectId,
 
 		/*
 		 * If it's a dependency local to this database or it's a shared
-		 * object, describe it.
+		 * object, add it to the objects array.
 		 *
 		 * If it's a remote dependency, keep track of it so we can report the
 		 * number of them later.
 		 */
-		if (sdepForm->dbid == MyDatabaseId)
+		if (sdepForm->dbid == MyDatabaseId ||
+			sdepForm->dbid == InvalidOid)
 		{
-			if (numReportedDeps < MAX_REPORTED_DEPS)
+			if (numobjects >= allocedobjects)
 			{
-				numReportedDeps++;
-				storeObjectDescription(&descs, LOCAL_OBJECT, &object,
-									   sdepForm->deptype, 0);
+				allocedobjects *= 2;
+				objects = (ShDependObjectInfo *)
+					repalloc(objects,
+							 allocedobjects * sizeof(ShDependObjectInfo));
 			}
-			else
-				numNotReportedDeps++;
-			storeObjectDescription(&alldescs, LOCAL_OBJECT, &object,
-								   sdepForm->deptype, 0);
-		}
-		else if (sdepForm->dbid == InvalidOid)
-		{
-			if (numReportedDeps < MAX_REPORTED_DEPS)
-			{
-				numReportedDeps++;
-				storeObjectDescription(&descs, SHARED_OBJECT, &object,
-									   sdepForm->deptype, 0);
-			}
-			else
-				numNotReportedDeps++;
-			storeObjectDescription(&alldescs, SHARED_OBJECT, &object,
-								   sdepForm->deptype, 0);
+			objects[numobjects].object = object;
+			objects[numobjects].deptype = sdepForm->deptype;
+			objects[numobjects].objtype = (sdepForm->dbid == MyDatabaseId) ?
+				LOCAL_OBJECT : SHARED_OBJECT;
+			numobjects++;
 		}
 		else
 		{
@@ -648,6 +706,33 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	table_close(sdepRel, AccessShareLock);
 
 	/*
+	 * Sort and report local and shared objects.
+	 */
+	if (numobjects > 1)
+		qsort((void *) objects, numobjects,
+			  sizeof(ShDependObjectInfo), shared_dependency_comparator);
+
+	for (int i = 0; i < numobjects; i++)
+	{
+		if (numReportedDeps < MAX_REPORTED_DEPS)
+		{
+			numReportedDeps++;
+			storeObjectDescription(&descs,
+								   objects[i].objtype,
+								   &objects[i].object,
+								   objects[i].deptype,
+								   0);
+		}
+		else
+			numNotReportedDeps++;
+		storeObjectDescription(&alldescs,
+							   objects[i].objtype,
+							   &objects[i].object,
+							   objects[i].deptype,
+							   0);
+	}
+
+	/*
 	 * Summarize dependencies in remote databases.
 	 */
 	foreach(cell, remDeps)
@@ -670,6 +755,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 							   SHARED_DEPENDENCY_INVALID, dep->count);
 	}
 
+	pfree(objects);
 	list_free_deep(remDeps);
 
 	if (descs.len == 0)
