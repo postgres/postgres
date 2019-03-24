@@ -586,6 +586,20 @@ typedef struct ginxlogDeletePage
 	TransactionId deleteXid;	/* last Xid which could see this page in scan */
 } ginxlogDeletePage;
 
+/*
+ * Previous version of ginxlogDeletePage struct, which didn't have deleteXid
+ * field.  Used for size comparison (see ginRedoDeletePage()).
+ */
+typedef struct ginxlogDeletePageOld
+{
+	RelFileNode node;
+	BlockNumber blkno;
+	BlockNumber parentBlkno;
+	OffsetNumber parentOffset;
+	BlockNumber leftBlkno;
+	BlockNumber rightLink;
+} ginxlogDeletePageOld;
+
 #define XLOG_GIN_UPDATE_META_PAGE 0x60
 
 typedef struct ginxlogUpdateMeta
