@@ -513,9 +513,12 @@ select tp_ins_data();
 (1 row)
 
 -- should truncate everything
-SET client_min_messages TO WARNING;	-- suppress cascading notices
 TRUNCATE TABLE truncprim CASCADE;
-RESET client_min_messages;
+NOTICE:  truncate cascades to table "truncpart"
+NOTICE:  truncate cascades to table "truncpart_1"
+NOTICE:  truncate cascades to table "truncpart_2"
+NOTICE:  truncate cascades to table "truncpart_2_1"
+NOTICE:  truncate cascades to table "truncpart_2_d"
 SELECT * FROM tp_chk_data();
  pktb | pkval | fktb | fkval 
 ------+-------+------+-------

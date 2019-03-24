@@ -122,12 +122,17 @@ EXCEPTION WHEN wrong_object_type THEN
 END;
 $$;
 NOTICE:  stats on toast table not created
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA tststats CASCADE;
 NOTICE:  drop cascades to 7 other objects
+DETAIL:  drop cascades to table tststats.t
+drop cascades to sequence tststats.s
+drop cascades to view tststats.v
+drop cascades to materialized view tststats.mv
+drop cascades to type tststats.ty
+drop cascades to foreign table tststats.f
+drop cascades to table tststats.pt
 DROP FOREIGN DATA WRAPPER extstats_dummy_fdw CASCADE;
 NOTICE:  drop cascades to server extstats_dummy_srv
-\set VERBOSITY default
 -- n-distinct tests
 CREATE TABLE ndistinct (
     filler1 TEXT,

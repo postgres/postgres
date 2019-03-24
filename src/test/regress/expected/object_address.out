@@ -492,12 +492,29 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 ---
 --- Cleanup resources
 ---
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
 NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to server addr_fserv
+drop cascades to foreign table genftable
+drop cascades to server integer
+drop cascades to user mapping for regress_addr_user on server integer
 DROP PUBLICATION addr_pub;
 DROP SUBSCRIPTION addr_sub;
 DROP SCHEMA addr_nsp CASCADE;
 NOTICE:  drop cascades to 14 other objects
+DETAIL:  drop cascades to text search dictionary addr_ts_dict
+drop cascades to text search configuration addr_ts_conf
+drop cascades to text search template addr_ts_temp
+drop cascades to text search parser addr_ts_prs
+drop cascades to table gentable
+drop cascades to table parttable
+drop cascades to view genview
+drop cascades to materialized view genmatview
+drop cascades to type gencomptype
+drop cascades to type genenum
+drop cascades to function genaggr(integer)
+drop cascades to type gendomain
+drop cascades to function trig()
+drop cascades to function proc(integer)
 DROP OWNED BY regress_addr_user;
 DROP USER regress_addr_user;

@@ -1167,8 +1167,9 @@ INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;
 -- REINDEX (VERBOSE)
 --
 CREATE TABLE reindex_verbose(id integer primary key);
-\set VERBOSITY terse
+\set VERBOSITY terse \\ -- suppress machine-dependent details
 REINDEX (VERBOSE) TABLE reindex_verbose;
+\set VERBOSITY default
 DROP TABLE reindex_verbose;
 
 --
@@ -1221,5 +1222,4 @@ REINDEX SCHEMA schema_to_reindex;
 -- Clean up
 RESET ROLE;
 DROP ROLE regress_reindexuser;
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA schema_to_reindex CASCADE;

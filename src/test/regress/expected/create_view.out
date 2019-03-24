@@ -1717,8 +1717,96 @@ select pg_get_ruledef(oid, true) from pg_rewrite
 (1 row)
 
 -- clean up all the random objects we made above
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA temp_view_test CASCADE;
 NOTICE:  drop cascades to 27 other objects
+DETAIL:  drop cascades to table temp_view_test.base_table
+drop cascades to view v2_temp
+drop cascades to view v4_temp
+drop cascades to view v6_temp
+drop cascades to view v7_temp
+drop cascades to view v10_temp
+drop cascades to view v8_temp
+drop cascades to view v9_temp
+drop cascades to view v11_temp
+drop cascades to view v12_temp
+drop cascades to table temp_view_test.base_table2
+drop cascades to view v5_temp
+drop cascades to view temp_view_test.v1
+drop cascades to view temp_view_test.v2
+drop cascades to view temp_view_test.v3
+drop cascades to view temp_view_test.v4
+drop cascades to view temp_view_test.v5
+drop cascades to view temp_view_test.v6
+drop cascades to view temp_view_test.v7
+drop cascades to view temp_view_test.v8
+drop cascades to sequence temp_view_test.seq1
+drop cascades to view temp_view_test.v9
+drop cascades to table temp_view_test.tx1
+drop cascades to view aliased_view_1
+drop cascades to view aliased_view_2
+drop cascades to view aliased_view_3
+drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
 NOTICE:  drop cascades to 62 other objects
+DETAIL:  drop cascades to table t1
+drop cascades to view temporal1
+drop cascades to view temporal2
+drop cascades to view temporal3
+drop cascades to view temporal4
+drop cascades to table t2
+drop cascades to view nontemp1
+drop cascades to view nontemp2
+drop cascades to view nontemp3
+drop cascades to view nontemp4
+drop cascades to table tbl1
+drop cascades to table tbl2
+drop cascades to table tbl3
+drop cascades to table tbl4
+drop cascades to view mytempview
+drop cascades to view pubview
+drop cascades to view mysecview1
+drop cascades to view mysecview2
+drop cascades to view mysecview3
+drop cascades to view mysecview4
+drop cascades to view unspecified_types
+drop cascades to table tt1
+drop cascades to table tx1
+drop cascades to table tt2
+drop cascades to table tt3
+drop cascades to table tt4
+drop cascades to view v1
+drop cascades to view v1a
+drop cascades to view v2
+drop cascades to view v2a
+drop cascades to view v3
+drop cascades to table tt5
+drop cascades to table tt6
+drop cascades to view vv1
+drop cascades to table tt7
+drop cascades to table tt8
+drop cascades to view vv2
+drop cascades to view vv3
+drop cascades to view vv4
+drop cascades to table tt7a
+drop cascades to table tt8a
+drop cascades to view vv2a
+drop cascades to table tt9
+drop cascades to table tt10
+drop cascades to view vv5
+drop cascades to table tt11
+drop cascades to table tt12
+drop cascades to table tt13
+drop cascades to view vv6
+drop cascades to table tt14t
+drop cascades to function tt14f()
+drop cascades to view tt14v
+drop cascades to type nestedcomposite
+drop cascades to view tt15v
+drop cascades to view tt16v
+drop cascades to view tt17v
+drop cascades to view tt18v
+drop cascades to view tt19v
+drop cascades to view tt20v
+drop cascades to view tt21v
+drop cascades to view tt22v
+drop cascades to view tt23v

@@ -177,7 +177,6 @@ ALTER USER NONE SET application_name to 'BOMB'; -- error
 ALTER USER nonexistent SET application_name to 'BOMB'; -- error
 
 -- CREATE SCHEMA
-set client_min_messages to error;
 CREATE SCHEMA newschema1 AUTHORIZATION CURRENT_USER;
 CREATE SCHEMA newschema2 AUTHORIZATION "current_user";
 CREATE SCHEMA newschema3 AUTHORIZATION SESSION_USER;
@@ -215,7 +214,6 @@ SELECT n.nspname, r.rolname FROM pg_namespace n
 -- ALTER TABLE OWNER TO
 \c -
 SET SESSION AUTHORIZATION regress_testrol0;
-set client_min_messages to error;
 CREATE TABLE testtab1 (a int);
 CREATE TABLE testtab2 (a int);
 CREATE TABLE testtab3 (a int);

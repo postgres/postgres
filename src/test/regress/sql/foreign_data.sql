@@ -199,10 +199,7 @@ GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_indirect;
 SET ROLE regress_test_role;
 ALTER SERVER s1 OWNER TO regress_test_indirect;
 RESET ROLE;
--- We use terse mode to avoid ordering issues in DROP ROLE detail output
-\set VERBOSITY terse
 DROP ROLE regress_test_indirect;                            -- ERROR
-\set VERBOSITY default
 \des+
 
 ALTER SERVER s8 RENAME to s8new;
@@ -504,9 +501,7 @@ CREATE SERVER s10 FOREIGN DATA WRAPPER foo;                     -- ERROR
 ALTER SERVER s9 VERSION '1.1';
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
-\set VERBOSITY terse
 DROP SERVER s9 CASCADE;
-\set VERBOSITY default
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_unprivileged_role;
@@ -530,9 +525,7 @@ RESET ROLE;
 SET ROLE regress_unprivileged_role;
 \deu+
 RESET ROLE;
-\set VERBOSITY terse
 DROP SERVER s10 CASCADE;
-\set VERBOSITY default
 
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
@@ -662,10 +655,8 @@ SELECT relname, conname, contype, conislocal, coninhcount, connoinherit
 -- child does not inherit NO INHERIT constraints
 \d+ fd_pt1
 \d+ ft2
-\set VERBOSITY terse
 DROP FOREIGN TABLE ft2; -- ERROR
 DROP FOREIGN TABLE ft2 CASCADE;
-\set VERBOSITY default
 CREATE FOREIGN TABLE ft2 (
 	c1 integer NOT NULL,
 	c2 text,
@@ -807,14 +798,12 @@ DROP FOREIGN TABLE foreign_part;
 DROP TABLE temp_parted;
 
 -- Cleanup
-\set VERBOSITY terse
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
 DROP SERVER t1 CASCADE;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 DROP SERVER s8 CASCADE;
-\set VERBOSITY default
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE regress_unprivileged_role;                        -- ERROR

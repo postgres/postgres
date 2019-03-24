@@ -38,8 +38,8 @@ DROP USER regress_dep_user2;
 \set VERBOSITY terse
 ALTER TABLE deptest OWNER TO regress_dep_user3;
 DROP USER regress_dep_user3;
-
 \set VERBOSITY default
+
 -- if we drop the object, we can drop the user too
 DROP TABLE deptest;
 DROP USER regress_dep_user3;
@@ -110,7 +110,6 @@ DROP USER regress_dep_user1;
 DROP OWNED BY regress_dep_user1;
 DROP USER regress_dep_user1;
 
-\set VERBOSITY terse
 DROP USER regress_dep_user2;
 DROP OWNED BY regress_dep_user2, regress_dep_user0;
 DROP USER regress_dep_user2;

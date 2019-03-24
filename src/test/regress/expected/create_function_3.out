@@ -341,9 +341,28 @@ SELECT * FROM voidtest5(3);
 (0 rows)
 
 -- Cleanup
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA temp_func_test CASCADE;
 NOTICE:  drop cascades to 21 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to function functest_a_1(text,date)
+drop cascades to function functest_a_2(text[])
+drop cascades to function functest_a_3()
+drop cascades to function functest_b_2(integer)
+drop cascades to function functest_b_3(integer)
+drop cascades to function functest_b_4(integer)
+drop cascades to function functest_c_1(integer)
+drop cascades to function functest_c_2(integer)
+drop cascades to function functest_c_3(integer)
+drop cascades to function functest_e_1(integer)
+drop cascades to function functest_e_2(integer)
+drop cascades to function functest_f_1(integer)
+drop cascades to function functest_f_2(integer)
+drop cascades to function functest_f_3(integer)
+drop cascades to function functest_f_4(integer)
+drop cascades to function functest_b_2(bigint)
+drop cascades to function voidtest1(integer)
+drop cascades to function voidtest2(integer,integer)
+drop cascades to function voidtest3(integer)
+drop cascades to function voidtest4(integer)
+drop cascades to function voidtest5(integer)
 DROP USER regress_unpriv_user;
 RESET search_path;

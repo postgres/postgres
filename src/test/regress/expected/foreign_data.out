@@ -439,11 +439,10 @@ GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_indirect;
 SET ROLE regress_test_role;
 ALTER SERVER s1 OWNER TO regress_test_indirect;
 RESET ROLE;
--- We use terse mode to avoid ordering issues in DROP ROLE detail output
-\set VERBOSITY terse
 DROP ROLE regress_test_indirect;                            -- ERROR
 ERROR:  role "regress_test_indirect" cannot be dropped because some objects depend on it
-\set VERBOSITY default
+DETAIL:  privileges for foreign-data wrapper foo
+owner of server s1
 \des+
                                                                                  List of foreign servers
  Name |           Owner           | Foreign-data wrapper |                   Access privileges                   |  Type  | Version |             FDW options              | Description 
@@ -1204,10 +1203,10 @@ ERROR:  permission denied for foreign-data wrapper foo
 ALTER SERVER s9 VERSION '1.1';
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
-\set VERBOSITY terse
 DROP SERVER s9 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to user mapping for public on server s9
+drop cascades to user mapping for regress_unprivileged_role on server s9
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_unprivileged_role;
@@ -1275,10 +1274,10 @@ SET ROLE regress_unprivileged_role;
 (9 rows)
 
 RESET ROLE;
-\set VERBOSITY terse
 DROP SERVER s10 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to user mapping for public on server s10
+drop cascades to user mapping for regress_unprivileged_role on server s10
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
   BEGIN
@@ -1620,12 +1619,15 @@ Inherits: fd_pt1
 Child tables: ct3,
               ft3
 
-\set VERBOSITY terse
 DROP FOREIGN TABLE ft2; -- ERROR
 ERROR:  cannot drop foreign table ft2 because other objects depend on it
+DETAIL:  table ct3 depends on foreign table ft2
+foreign table ft3 depends on foreign table ft2
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP FOREIGN TABLE ft2 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to table ct3
+drop cascades to foreign table ft3
 CREATE FOREIGN TABLE ft2 (
 	c1 integer NOT NULL,
 	c2 text,
@@ -1995,18 +1997,26 @@ ERROR:  cannot attach a permanent relation as partition of temporary relation "t
 DROP FOREIGN TABLE foreign_part;
 DROP TABLE temp_parted;
 -- Cleanup
-\set VERBOSITY terse
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
 ERROR:  role "regress_test_role" cannot be dropped because some objects depend on it
+DETAIL:  privileges for foreign-data wrapper foo
+privileges for server s4
+owner of user mapping for regress_test_role on server s6
 DROP SERVER t1 CASCADE;
 NOTICE:  drop cascades to user mapping for public on server t1
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to server s4
+drop cascades to user mapping for regress_foreign_data_user on server s4
+drop cascades to server s6
+drop cascades to server s9
+drop cascades to user mapping for regress_unprivileged_role on server s9
 DROP SERVER s8 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to user mapping for regress_foreign_data_user on server s8
+drop cascades to user mapping for public on server s8
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE regress_unprivileged_role;                        -- ERROR

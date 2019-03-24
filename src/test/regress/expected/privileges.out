@@ -1827,10 +1827,13 @@ SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)',
  t
 (1 row)
 
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
 NOTICE:  drop cascades to 5 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to table testns.t1
+drop cascades to table testns.t2
+drop cascades to function testns.priv_testfunc(integer)
+drop cascades to function testns.priv_testagg(integer)
+drop cascades to function testns.priv_testproc(integer)
 -- Change owner of the schema & and rename of new schema owner
 \c -
 CREATE ROLE regress_schemauser1 superuser login;
@@ -1852,9 +1855,7 @@ SELECT nspname, rolname FROM pg_namespace, pg_roles WHERE pg_namespace.nspname =
 (1 row)
 
 set session role regress_schemauser_renamed;
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-\set VERBOSITY default
 -- clean up
 \c -
 DROP ROLE regress_schemauser1;

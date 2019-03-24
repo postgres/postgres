@@ -280,9 +280,7 @@ select * from tp_chk_data();
 
 select tp_ins_data();
 -- should truncate everything
-SET client_min_messages TO WARNING;	-- suppress cascading notices
 TRUNCATE TABLE truncprim CASCADE;
-RESET client_min_messages;
 SELECT * FROM tp_chk_data();
 
 SELECT tp_ins_data();

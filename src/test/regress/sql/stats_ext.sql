@@ -89,10 +89,8 @@ EXCEPTION WHEN wrong_object_type THEN
 END;
 $$;
 
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA tststats CASCADE;
 DROP FOREIGN DATA WRAPPER extstats_dummy_fdw CASCADE;
-\set VERBOSITY default
 
 -- n-distinct tests
 CREATE TABLE ndistinct (

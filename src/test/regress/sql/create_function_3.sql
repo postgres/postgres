@@ -220,8 +220,6 @@ $$ SELECT generate_series(1, a) $$ STABLE;
 SELECT * FROM voidtest5(3);
 
 -- Cleanup
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA temp_func_test CASCADE;
-\set VERBOSITY default
 DROP USER regress_unpriv_user;
 RESET search_path;

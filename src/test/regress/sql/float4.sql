@@ -344,9 +344,4 @@ select float4send(flt) as ibits,
 	offset 0) s;
 
 -- clean up, lest opr_sanity complain
-
-\set VERBOSITY terse
 drop type xfloat4 cascade;
-\set VERBOSITY default
-
---

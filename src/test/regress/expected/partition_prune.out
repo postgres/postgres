@@ -3510,10 +3510,10 @@ explain (costs off) update inh_lp1 set value = 10 where a = 2;
          Filter: (a = 2)
 (3 rows)
 
-\set VERBOSITY terse	\\ -- suppress cascade details
 drop table inh_lp cascade;
 NOTICE:  drop cascades to 2 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to table inh_lp1
+drop cascades to table inh_lp2
 reset enable_partition_pruning;
 reset constraint_exclusion;
 -- Check pruning for a partition tree containing only temporary relations

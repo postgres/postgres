@@ -264,5 +264,4 @@ SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 -- trying to run any platform-specific collation tests later, so we
 -- must get rid of them.
 --
-\set VERBOSITY terse
 DROP SCHEMA collate_tests CASCADE;

@@ -2638,10 +2638,12 @@ select * from id_ordered;
   6 | Test 6
 (6 rows)
 
-\set VERBOSITY terse \\ -- suppress cascade details
 drop table id cascade;
 NOTICE:  drop cascades to 4 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to table test_1
+drop cascades to table test_2
+drop cascades to table test_3
+drop cascades to view id_ordered
 --
 -- check corner case where an entirely-dummy subplan is created by
 -- constraint exclusion

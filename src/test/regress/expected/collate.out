@@ -681,6 +681,22 @@ SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 -- trying to run any platform-specific collation tests later, so we
 -- must get rid of them.
 --
-\set VERBOSITY terse
 DROP SCHEMA collate_tests CASCADE;
 NOTICE:  drop cascades to 17 other objects
+DETAIL:  drop cascades to table collate_test1
+drop cascades to table collate_test_like
+drop cascades to table collate_test2
+drop cascades to type testdomain_p
+drop cascades to table collate_test4
+drop cascades to table collate_test5
+drop cascades to table collate_test10
+drop cascades to view collview1
+drop cascades to view collview2
+drop cascades to view collview3
+drop cascades to type testdomain
+drop cascades to function dup(anyelement)
+drop cascades to table collate_test20
+drop cascades to table collate_test21
+drop cascades to table collate_test22
+drop cascades to collation mycoll2
+drop cascades to table collate_test23

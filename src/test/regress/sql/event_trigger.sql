@@ -157,10 +157,7 @@ alter event trigger regress_event_trigger rename to regress_event_trigger3;
 drop event trigger regress_event_trigger;
 
 -- should fail, regress_evt_user owns some objects
--- use terse mode to avoid ordering issues in DROP ROLE detail output
-\set VERBOSITY terse
 drop role regress_evt_user;
-\set VERBOSITY default
 
 -- cleanup before next test
 -- these are all OK; the second one should emit a NOTICE

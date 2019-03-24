@@ -185,11 +185,11 @@ alter event trigger regress_event_trigger rename to regress_event_trigger3;
 drop event trigger regress_event_trigger;
 ERROR:  event trigger "regress_event_trigger" does not exist
 -- should fail, regress_evt_user owns some objects
--- use terse mode to avoid ordering issues in DROP ROLE detail output
-\set VERBOSITY terse
 drop role regress_evt_user;
 ERROR:  role "regress_evt_user" cannot be dropped because some objects depend on it
-\set VERBOSITY default
+DETAIL:  owner of event trigger regress_event_trigger3
+owner of user mapping for regress_evt_user on server useless_server
+owner of default privileges on new relations belonging to role regress_evt_user
 -- cleanup before next test
 -- these are all OK; the second one should emit a NOTICE
 drop event trigger if exists regress_event_trigger2;

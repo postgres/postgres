@@ -1440,6 +1440,4 @@ alter table fkpart2.fk_part detach partition fkpart2.fk_part_1;
 alter table fkpart2.fk_part_1 drop constraint fkey;	-- ok
 alter table fkpart2.fk_part_1_1 drop constraint my_fkey;	-- doesn't exist
 
-\set VERBOSITY terse	\\ -- suppress cascade details
 drop schema fkpart0, fkpart1, fkpart2 cascade;
-\set VERBOSITY default

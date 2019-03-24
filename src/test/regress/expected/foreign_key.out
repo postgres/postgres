@@ -2015,7 +2015,13 @@ alter table fkpart2.fk_part detach partition fkpart2.fk_part_1;
 alter table fkpart2.fk_part_1 drop constraint fkey;	-- ok
 alter table fkpart2.fk_part_1_1 drop constraint my_fkey;	-- doesn't exist
 ERROR:  constraint "my_fkey" of relation "fk_part_1_1" does not exist
-\set VERBOSITY terse	\\ -- suppress cascade details
 drop schema fkpart0, fkpart1, fkpart2 cascade;
 NOTICE:  drop cascades to 8 other objects
-\set VERBOSITY default
+DETAIL:  drop cascades to table fkpart2.pkey
+drop cascades to table fkpart2.fk_part
+drop cascades to table fkpart2.fk_part_1
+drop cascades to table fkpart1.pkey
+drop cascades to table fkpart1.fk_part
+drop cascades to table fkpart1.fk_part_1
+drop cascades to table fkpart0.pkey
+drop cascades to table fkpart0.fk_part

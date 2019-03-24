@@ -3244,9 +3244,10 @@ INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;
 -- REINDEX (VERBOSE)
 --
 CREATE TABLE reindex_verbose(id integer primary key);
-\set VERBOSITY terse
+\set VERBOSITY terse \\ -- suppress machine-dependent details
 REINDEX (VERBOSE) TABLE reindex_verbose;
 INFO:  index "reindex_verbose_pkey" was reindexed
+\set VERBOSITY default
 DROP TABLE reindex_verbose;
 --
 -- REINDEX SCHEMA
@@ -3315,6 +3316,11 @@ ERROR:  must be owner of schema schema_to_reindex
 -- Clean up
 RESET ROLE;
 DROP ROLE regress_reindexuser;
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA schema_to_reindex CASCADE;
 NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to table table1
+drop cascades to table table2
+drop cascades to materialized view matview
+drop cascades to view view
+drop cascades to table reindex_before
+drop cascades to table reindex_after

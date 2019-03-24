@@ -518,9 +518,7 @@ SELECT * FROM rec1;    -- fail, mutual recursion via views
 --
 SET SESSION AUTHORIZATION regress_rls_bob;
 
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP VIEW rec1v, rec2v CASCADE;
-\set VERBOSITY default
 
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
@@ -1026,9 +1024,7 @@ DROP TABLE test_qual_pushdown;
 --
 RESET SESSION AUTHORIZATION;
 
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP TABLE t1 CASCADE;
-\set VERBOSITY default
 
 CREATE TABLE t1 (a integer);
 
@@ -1773,9 +1769,7 @@ DROP USER regress_rls_dob_role2;
 --
 RESET SESSION AUTHORIZATION;
 
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA regress_rls_schema CASCADE;
-\set VERBOSITY default
 
 DROP USER regress_rls_alice;
 DROP USER regress_rls_bob;

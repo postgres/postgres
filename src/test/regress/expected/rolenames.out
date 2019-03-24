@@ -435,7 +435,6 @@ LINE 1: ALTER USER NONE SET application_name to 'BOMB';
 ALTER USER nonexistent SET application_name to 'BOMB'; -- error
 ERROR:  role "nonexistent" does not exist
 -- CREATE SCHEMA
-set client_min_messages to error;
 CREATE SCHEMA newschema1 AUTHORIZATION CURRENT_USER;
 CREATE SCHEMA newschema2 AUTHORIZATION "current_user";
 CREATE SCHEMA newschema3 AUTHORIZATION SESSION_USER;
@@ -472,10 +471,15 @@ SELECT n.nspname, r.rolname FROM pg_namespace n
 (5 rows)
 
 CREATE SCHEMA IF NOT EXISTS newschema1 AUTHORIZATION CURRENT_USER;
+NOTICE:  schema "newschema1" already exists, skipping
 CREATE SCHEMA IF NOT EXISTS newschema2 AUTHORIZATION "current_user";
+NOTICE:  schema "newschema2" already exists, skipping
 CREATE SCHEMA IF NOT EXISTS newschema3 AUTHORIZATION SESSION_USER;
+NOTICE:  schema "newschema3" already exists, skipping
 CREATE SCHEMA IF NOT EXISTS newschema4 AUTHORIZATION regress_testrolx;
+NOTICE:  schema "newschema4" already exists, skipping
 CREATE SCHEMA IF NOT EXISTS newschema5 AUTHORIZATION "Public";
+NOTICE:  schema "newschema5" already exists, skipping
 CREATE SCHEMA IF NOT EXISTS newschema6 AUTHORIZATION USER; -- error
 ERROR:  syntax error at or near "USER"
 LINE 1: CREATE SCHEMA IF NOT EXISTS newschema6 AUTHORIZATION USER;
@@ -509,7 +513,6 @@ SELECT n.nspname, r.rolname FROM pg_namespace n
 -- ALTER TABLE OWNER TO
 \c -
 SET SESSION AUTHORIZATION regress_testrol0;
-set client_min_messages to error;
 CREATE TABLE testtab1 (a int);
 CREATE TABLE testtab2 (a int);
 CREATE TABLE testtab3 (a int);

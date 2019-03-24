@@ -579,8 +579,6 @@ SELECT nspname, prsname
 ---
 --- Cleanup resources
 ---
-\set VERBOSITY terse \\ -- suppress cascade details
-
 DROP FOREIGN DATA WRAPPER alt_fdw2 CASCADE;
 DROP FOREIGN DATA WRAPPER alt_fdw3 CASCADE;
 

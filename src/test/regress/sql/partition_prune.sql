@@ -906,9 +906,7 @@ explain (costs off) delete from inh_lp where a = 1;
 -- inheritance children
 explain (costs off) update inh_lp1 set value = 10 where a = 2;
 
-\set VERBOSITY terse	\\ -- suppress cascade details
 drop table inh_lp cascade;
-\set VERBOSITY default
 
 reset enable_partition_pruning;
 reset constraint_exclusion;

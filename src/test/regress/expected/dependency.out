@@ -133,9 +133,17 @@ privileges for table deptest1
 owner of default privileges on new relations belonging to role regress_dep_user1 in schema deptest
 DROP OWNED BY regress_dep_user1;
 DROP USER regress_dep_user1;
-\set VERBOSITY terse
 DROP USER regress_dep_user2;
 ERROR:  role "regress_dep_user2" cannot be dropped because some objects depend on it
+DETAIL:  owner of schema deptest
+owner of sequence deptest_a_seq
+owner of table deptest
+owner of function deptest_func()
+owner of type deptest_enum
+owner of type deptest_range
+owner of table deptest2
+owner of sequence ss1
+owner of type deptest_t
 DROP OWNED BY regress_dep_user2, regress_dep_user0;
 DROP USER regress_dep_user2;
 DROP USER regress_dep_user0;

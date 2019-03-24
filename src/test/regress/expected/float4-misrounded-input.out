@@ -931,8 +931,11 @@ select float4send(flt) as ibits,
 (261 rows)
 
 -- clean up, lest opr_sanity complain
-\set VERBOSITY terse
 drop type xfloat4 cascade;
 NOTICE:  drop cascades to 6 other objects
-\set VERBOSITY default
---
+DETAIL:  drop cascades to function xfloat4in(cstring)
+drop cascades to function xfloat4out(xfloat4)
+drop cascades to cast from xfloat4 to real
+drop cascades to cast from real to xfloat4
+drop cascades to cast from xfloat4 to integer
+drop cascades to cast from integer to xfloat4

@@ -1074,9 +1074,7 @@ SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testfunc(int)',
 SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testagg(int)', 'EXECUTE'); -- true
 SELECT has_function_privilege('regress_priv_user1', 'testns.priv_testproc(int)', 'EXECUTE'); -- true
 
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-\set VERBOSITY default
 
 
 -- Change owner of the schema & and rename of new schema owner
@@ -1095,9 +1093,7 @@ ALTER ROLE regress_schemauser2 RENAME TO regress_schemauser_renamed;
 SELECT nspname, rolname FROM pg_namespace, pg_roles WHERE pg_namespace.nspname = 'testns' AND pg_namespace.nspowner = pg_roles.oid;
 
 set session role regress_schemauser_renamed;
-\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-\set VERBOSITY default
 
 -- clean up
 \c -
