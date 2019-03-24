@@ -86,7 +86,7 @@ static void compute_new_xmax_infomask(TransactionId xmax, uint16 old_infomask,
 						  LockTupleMode mode, bool is_update,
 						  TransactionId *result_xmax, uint16 *result_infomask,
 						  uint16 *result_infomask2);
-static HTSU_Result heap_lock_updated_tuple(Relation rel, HeapTuple tuple,
+static TM_Result heap_lock_updated_tuple(Relation rel, HeapTuple tuple,
 						ItemPointer ctid, TransactionId xid,
 						LockTupleMode mode);
 static void GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
@@ -1389,7 +1389,6 @@ heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   HeapTuple tuple,
 		   Buffer *userbuf,
-		   bool keep_buf,
 		   Relation stats_relation)
 {
 	ItemPointer tid = &(tuple->t_self);
@@ -1419,13 +1418,8 @@ heap_fetch(Relation relation,
 	if (offnum < FirstOffsetNumber || offnum > PageGetMaxOffsetNumber(page))
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		if (keep_buf)
-			*userbuf = buffer;
-		else
-		{
-			ReleaseBuffer(buffer);
-			*userbuf = InvalidBuffer;
-		}
+		ReleaseBuffer(buffer);
+		*userbuf = InvalidBuffer;
 		tuple->t_data = NULL;
 		return false;
 	}
@@ -1441,13 +1435,8 @@ heap_fetch(Relation relation,
 	if (!ItemIdIsNormal(lp))
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		if (keep_buf)
-			*userbuf = buffer;
-		else
-		{
-			ReleaseBuffer(buffer);
-			*userbuf = InvalidBuffer;
-		}
+		ReleaseBuffer(buffer);
+		*userbuf = InvalidBuffer;
 		tuple->t_data = NULL;
 		return false;
 	}
@@ -1486,14 +1475,9 @@ heap_fetch(Relation relation,
 		return true;
 	}
 
-	/* Tuple failed time qual, but maybe caller wants to see it anyway. */
-	if (keep_buf)
-		*userbuf = buffer;
-	else
-	{
-		ReleaseBuffer(buffer);
-		*userbuf = InvalidBuffer;
-	}
+	/* Tuple failed time qual */
+	ReleaseBuffer(buffer);
+	*userbuf = InvalidBuffer;
 
 	return false;
 }
@@ -1886,40 +1870,12 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  * The new tuple is stamped with current transaction ID and the specified
  * command ID.
  *
- * If the HEAP_INSERT_SKIP_WAL option is specified, the new tuple is not
- * logged in WAL, even for a non-temp relation.  Safe usage of this behavior
- * requires that we arrange that all new tuples go into new pages not
- * containing any tuples from other transactions, and that the relation gets
- * fsync'd before commit.  (See also heap_sync() comments)
+ * See table_insert for comments about most of the input flags, except that
+ * this routine directly takes a tuple rather than a slot.
  *
- * The HEAP_INSERT_SKIP_FSM option is passed directly to
- * RelationGetBufferForTuple, which see for more info.
- *
- * HEAP_INSERT_FROZEN should only be specified for inserts into
- * relfilenodes created during the current subtransaction and when
- * there are no prior snapshots or pre-existing portals open.
- * This causes rows to be frozen, which is an MVCC violation and
- * requires explicit options chosen by user.
- *
- * HEAP_INSERT_SPECULATIVE is used on so-called "speculative insertions",
- * which can be backed out afterwards without aborting the whole transaction.
- * Other sessions can wait for the speculative insertion to be confirmed,
- * turning it into a regular tuple, or aborted, as if it never existed.
- * Speculatively inserted tuples behave as "value locks" of short duration,
- * used to implement INSERT .. ON CONFLICT.
- *
- * HEAP_INSERT_NO_LOGICAL force-disables the emitting of logical decoding
- * information for the tuple. This should solely be used during table rewrites
- * where RelationIsLogicallyLogged(relation) is not yet accurate for the new
- * relation.
- *
- * Note that most of these options will be applied when inserting into the
- * heap's TOAST table, too, if the tuple requires any out-of-line data.  Only
- * HEAP_INSERT_SPECULATIVE is explicitly ignored, as the toast data does not
- * partake in speculative insertion.
- *
- * The BulkInsertState object (if any; bistate can be NULL for default
- * behavior) is also just passed through to RelationGetBufferForTuple.
+ * There's corresponding HEAP_INSERT_ options to all the TABLE_INSERT_
+ * options, and there additionally is HEAP_INSERT_SPECULATIVE which is used to
+ * implement table_insert_speculative().
  *
  * On return the header fields of *tup are updated to match the stored tuple;
  * in particular tup->t_self receives the actual TID where the tuple was
@@ -2489,36 +2445,20 @@ xmax_infomask_changed(uint16 new_infomask, uint16 old_infomask)
 /*
  *	heap_delete - delete a tuple
  *
- * NB: do not call this directly unless you are prepared to deal with
- * concurrent-update conditions.  Use simple_heap_delete instead.
+ * See table_delete() for an explanation of the parameters, except that this
+ * routine directly takes a tuple rather than a slot.
  *
- *	relation - table to be modified (caller must hold suitable lock)
- *	tid - TID of tuple to be deleted
- *	cid - delete command ID (used for visibility test, and stored into
- *		cmax if successful)
- *	crosscheck - if not InvalidSnapshot, also check tuple against this
- *	wait - true if should wait for any conflicting update to commit/abort
- *	hufd - output parameter, filled in failure cases (see below)
- *	changingPart - true iff the tuple is being moved to another partition
- *		table due to an update of the partition key. Otherwise, false.
- *
- * Normal, successful return value is HeapTupleMayBeUpdated, which
- * actually means we did delete it.  Failure return codes are
- * HeapTupleSelfUpdated, HeapTupleUpdated, or HeapTupleBeingUpdated
- * (the last only possible if wait == false).
- *
- * In the failure cases, the routine fills *hufd with the tuple's t_ctid,
- * t_xmax (resolving a possible MultiXact, if necessary), and t_cmax
- * (the last only for HeapTupleSelfUpdated, since we
- * cannot obtain cmax from a combocid generated by another transaction).
- * See comments for struct HeapUpdateFailureData for additional info.
+ * In the failure cases, the routine fills *tmfd with the tuple's t_ctid,
+ * t_xmax (resolving a possible MultiXact, if necessary), and t_cmax (the last
+ * only for TM_SelfModified, since we cannot obtain cmax from a combocid
+ * generated by another transaction).
  */
-HTSU_Result
+TM_Result
 heap_delete(Relation relation, ItemPointer tid,
 			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd, bool changingPart)
+			TM_FailureData *tmfd, bool changingPart)
 {
-	HTSU_Result result;
+	TM_Result	result;
 	TransactionId xid = GetCurrentTransactionId();
 	ItemId		lp;
 	HeapTupleData tp;
@@ -2586,14 +2526,14 @@ heap_delete(Relation relation, ItemPointer tid,
 l1:
 	result = HeapTupleSatisfiesUpdate(&tp, cid, buffer);
 
-	if (result == HeapTupleInvisible)
+	if (result == TM_Invisible)
 	{
 		UnlockReleaseBuffer(buffer);
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("attempted to delete invisible tuple")));
 	}
-	else if (result == HeapTupleBeingUpdated && wait)
+	else if (result == TM_BeingModified && wait)
 	{
 		TransactionId xwait;
 		uint16		infomask;
@@ -2687,30 +2627,36 @@ l1:
 		if ((tp.t_data->t_infomask & HEAP_XMAX_INVALID) ||
 			HEAP_XMAX_IS_LOCKED_ONLY(tp.t_data->t_infomask) ||
 			HeapTupleHeaderIsOnlyLocked(tp.t_data))
-			result = HeapTupleMayBeUpdated;
+			result = TM_Ok;
+		else if (!ItemPointerEquals(&tp.t_self, &tp.t_data->t_ctid) ||
+				 HeapTupleHeaderIndicatesMovedPartitions(tp.t_data))
+			result = TM_Updated;
 		else
-			result = HeapTupleUpdated;
+			result = TM_Deleted;
 	}
 
-	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
+	if (crosscheck != InvalidSnapshot && result == TM_Ok)
 	{
 		/* Perform additional check for transaction-snapshot mode RI updates */
 		if (!HeapTupleSatisfiesVisibility(&tp, crosscheck, buffer))
-			result = HeapTupleUpdated;
+			result = TM_Updated;
 	}
 
-	if (result != HeapTupleMayBeUpdated)
+	if (result != TM_Ok)
 	{
-		Assert(result == HeapTupleSelfUpdated ||
-			   result == HeapTupleUpdated ||
-			   result == HeapTupleBeingUpdated);
+		Assert(result == TM_SelfModified ||
+			   result == TM_Updated ||
+			   result == TM_Deleted ||
+			   result == TM_BeingModified);
 		Assert(!(tp.t_data->t_infomask & HEAP_XMAX_INVALID));
-		hufd->ctid = tp.t_data->t_ctid;
-		hufd->xmax = HeapTupleHeaderGetUpdateXid(tp.t_data);
-		if (result == HeapTupleSelfUpdated)
-			hufd->cmax = HeapTupleHeaderGetCmax(tp.t_data);
+		Assert(result != TM_Updated ||
+			   !ItemPointerEquals(&tp.t_self, &tp.t_data->t_ctid));
+		tmfd->ctid = tp.t_data->t_ctid;
+		tmfd->xmax = HeapTupleHeaderGetUpdateXid(tp.t_data);
+		if (result == TM_SelfModified)
+			tmfd->cmax = HeapTupleHeaderGetCmax(tp.t_data);
 		else
-			hufd->cmax = InvalidCommandId;
+			tmfd->cmax = InvalidCommandId;
 		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTupleTuplock(relation, &(tp.t_self), LockTupleExclusive);
@@ -2896,7 +2842,7 @@ l1:
 	if (old_key_tuple != NULL && old_key_copied)
 		heap_freetuple(old_key_tuple);
 
-	return HeapTupleMayBeUpdated;
+	return TM_Ok;
 }
 
 /*
@@ -2910,26 +2856,30 @@ l1:
 void
 simple_heap_delete(Relation relation, ItemPointer tid)
 {
-	HTSU_Result result;
-	HeapUpdateFailureData hufd;
+	TM_Result	result;
+	TM_FailureData tmfd;
 
 	result = heap_delete(relation, tid,
 						 GetCurrentCommandId(true), InvalidSnapshot,
 						 true /* wait for commit */ ,
-						 &hufd, false /* changingPart */ );
+						 &tmfd, false /* changingPart */ );
 	switch (result)
 	{
-		case HeapTupleSelfUpdated:
+		case TM_SelfModified:
 			/* Tuple was already updated in current command? */
 			elog(ERROR, "tuple already updated by self");
 			break;
 
-		case HeapTupleMayBeUpdated:
+		case TM_Ok:
 			/* done successfully */
 			break;
 
-		case HeapTupleUpdated:
+		case TM_Updated:
 			elog(ERROR, "tuple concurrently updated");
+			break;
+
+		case TM_Deleted:
+			elog(ERROR, "tuple concurrently deleted");
 			break;
 
 		default:
@@ -2941,42 +2891,20 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 /*
  *	heap_update - replace a tuple
  *
- * NB: do not call this directly unless you are prepared to deal with
- * concurrent-update conditions.  Use simple_heap_update instead.
+ * See table_update() for an explanation of the parameters, except that this
+ * routine directly takes a tuple rather than a slot.
  *
- *	relation - table to be modified (caller must hold suitable lock)
- *	otid - TID of old tuple to be replaced
- *	newtup - newly constructed tuple data to store
- *	cid - update command ID (used for visibility test, and stored into
- *		cmax/cmin if successful)
- *	crosscheck - if not InvalidSnapshot, also check old tuple against this
- *	wait - true if should wait for any conflicting update to commit/abort
- *	hufd - output parameter, filled in failure cases (see below)
- *	lockmode - output parameter, filled with lock mode acquired on tuple
- *
- * Normal, successful return value is HeapTupleMayBeUpdated, which
- * actually means we *did* update it.  Failure return codes are
- * HeapTupleSelfUpdated, HeapTupleUpdated, or HeapTupleBeingUpdated
- * (the last only possible if wait == false).
- *
- * On success, the header fields of *newtup are updated to match the new
- * stored tuple; in particular, newtup->t_self is set to the TID where the
- * new tuple was inserted, and its HEAP_ONLY_TUPLE flag is set iff a HOT
- * update was done.  However, any TOAST changes in the new tuple's
- * data are not reflected into *newtup.
- *
- * In the failure cases, the routine fills *hufd with the tuple's t_ctid,
- * t_xmax (resolving a possible MultiXact, if necessary), and t_cmax
- * (the last only for HeapTupleSelfUpdated, since we
- * cannot obtain cmax from a combocid generated by another transaction).
- * See comments for struct HeapUpdateFailureData for additional info.
+ * In the failure cases, the routine fills *tmfd with the tuple's t_ctid,
+ * t_xmax (resolving a possible MultiXact, if necessary), and t_cmax (the last
+ * only for TM_SelfModified, since we cannot obtain cmax from a combocid
+ * generated by another transaction).
  */
-HTSU_Result
+TM_Result
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd, LockTupleMode *lockmode)
+			TM_FailureData *tmfd, LockTupleMode *lockmode)
 {
-	HTSU_Result result;
+	TM_Result	result;
 	TransactionId xid = GetCurrentTransactionId();
 	Bitmapset  *hot_attrs;
 	Bitmapset  *key_attrs;
@@ -3150,16 +3078,16 @@ l2:
 	result = HeapTupleSatisfiesUpdate(&oldtup, cid, buffer);
 
 	/* see below about the "no wait" case */
-	Assert(result != HeapTupleBeingUpdated || wait);
+	Assert(result != TM_BeingModified || wait);
 
-	if (result == HeapTupleInvisible)
+	if (result == TM_Invisible)
 	{
 		UnlockReleaseBuffer(buffer);
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("attempted to update invisible tuple")));
 	}
-	else if (result == HeapTupleBeingUpdated && wait)
+	else if (result == TM_BeingModified && wait)
 	{
 		TransactionId xwait;
 		uint16		infomask;
@@ -3250,7 +3178,7 @@ l2:
 			 * MultiXact. In that case, we need to check whether it committed
 			 * or aborted. If it aborted we are safe to update it again;
 			 * otherwise there is an update conflict, and we have to return
-			 * HeapTupleUpdated below.
+			 * TableTuple{Deleted, Updated} below.
 			 *
 			 * In the LockTupleExclusive case, we still need to preserve the
 			 * surviving members: those would include the tuple locks we had
@@ -3322,28 +3250,40 @@ l2:
 				can_continue = true;
 		}
 
-		result = can_continue ? HeapTupleMayBeUpdated : HeapTupleUpdated;
+		if (can_continue)
+			result = TM_Ok;
+		else if (!ItemPointerEquals(&oldtup.t_self, &oldtup.t_data->t_ctid) ||
+				 HeapTupleHeaderIndicatesMovedPartitions(oldtup.t_data))
+			result = TM_Updated;
+		else
+			result = TM_Deleted;
 	}
 
-	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
+	if (crosscheck != InvalidSnapshot && result == TM_Ok)
 	{
 		/* Perform additional check for transaction-snapshot mode RI updates */
 		if (!HeapTupleSatisfiesVisibility(&oldtup, crosscheck, buffer))
-			result = HeapTupleUpdated;
+		{
+			result = TM_Updated;
+			Assert(!ItemPointerEquals(&oldtup.t_self, &oldtup.t_data->t_ctid));
+		}
 	}
 
-	if (result != HeapTupleMayBeUpdated)
+	if (result != TM_Ok)
 	{
-		Assert(result == HeapTupleSelfUpdated ||
-			   result == HeapTupleUpdated ||
-			   result == HeapTupleBeingUpdated);
+		Assert(result == TM_SelfModified ||
+			   result == TM_Updated ||
+			   result == TM_Deleted ||
+			   result == TM_BeingModified);
 		Assert(!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID));
-		hufd->ctid = oldtup.t_data->t_ctid;
-		hufd->xmax = HeapTupleHeaderGetUpdateXid(oldtup.t_data);
-		if (result == HeapTupleSelfUpdated)
-			hufd->cmax = HeapTupleHeaderGetCmax(oldtup.t_data);
+		Assert(result != TM_Updated ||
+			   !ItemPointerEquals(&oldtup.t_self, &oldtup.t_data->t_ctid));
+		tmfd->ctid = oldtup.t_data->t_ctid;
+		tmfd->xmax = HeapTupleHeaderGetUpdateXid(oldtup.t_data);
+		if (result == TM_SelfModified)
+			tmfd->cmax = HeapTupleHeaderGetCmax(oldtup.t_data);
 		else
-			hufd->cmax = InvalidCommandId;
+			tmfd->cmax = InvalidCommandId;
 		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
@@ -3828,7 +3768,7 @@ l2:
 	bms_free(modified_attrs);
 	bms_free(interesting_attrs);
 
-	return HeapTupleMayBeUpdated;
+	return TM_Ok;
 }
 
 /*
@@ -3948,27 +3888,31 @@ HeapDetermineModifiedColumns(Relation relation, Bitmapset *interesting_cols,
 void
 simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 {
-	HTSU_Result result;
-	HeapUpdateFailureData hufd;
+	TM_Result	result;
+	TM_FailureData tmfd;
 	LockTupleMode lockmode;
 
 	result = heap_update(relation, otid, tup,
 						 GetCurrentCommandId(true), InvalidSnapshot,
 						 true /* wait for commit */ ,
-						 &hufd, &lockmode);
+						 &tmfd, &lockmode);
 	switch (result)
 	{
-		case HeapTupleSelfUpdated:
+		case TM_SelfModified:
 			/* Tuple was already updated in current command? */
 			elog(ERROR, "tuple already updated by self");
 			break;
 
-		case HeapTupleMayBeUpdated:
+		case TM_Ok:
 			/* done successfully */
 			break;
 
-		case HeapTupleUpdated:
+		case TM_Updated:
 			elog(ERROR, "tuple concurrently updated");
+			break;
+
+		case TM_Deleted:
+			elog(ERROR, "tuple concurrently deleted");
 			break;
 
 		default:
@@ -4005,7 +3949,7 @@ get_mxact_status_for_lock(LockTupleMode mode, bool is_update)
  *
  * Input parameters:
  *	relation: relation containing tuple (caller must hold suitable lock)
- *	tuple->t_self: TID of tuple to lock (rest of struct need not be valid)
+ *	tid: TID of tuple to lock
  *	cid: current command ID (used for visibility test, and stored into
  *		tuple's cmax if lock is successful)
  *	mode: indicates if shared or exclusive tuple lock is desired
@@ -4016,31 +3960,26 @@ get_mxact_status_for_lock(LockTupleMode mode, bool is_update)
  * Output parameters:
  *	*tuple: all fields filled in
  *	*buffer: set to buffer holding tuple (pinned but not locked at exit)
- *	*hufd: filled in failure cases (see below)
+ *	*tmfd: filled in failure cases (see below)
  *
- * Function result may be:
- *	HeapTupleMayBeUpdated: lock was successfully acquired
- *	HeapTupleInvisible: lock failed because tuple was never visible to us
- *	HeapTupleSelfUpdated: lock failed because tuple updated by self
- *	HeapTupleUpdated: lock failed because tuple updated by other xact
- *	HeapTupleWouldBlock: lock couldn't be acquired and wait_policy is skip
+ * Function results are the same as the ones for table_lock_tuple().
  *
- * In the failure cases other than HeapTupleInvisible, the routine fills
- * *hufd with the tuple's t_ctid, t_xmax (resolving a possible MultiXact,
- * if necessary), and t_cmax (the last only for HeapTupleSelfUpdated,
+ * In the failure cases other than TM_Invisible, the routine fills
+ * *tmfd with the tuple's t_ctid, t_xmax (resolving a possible MultiXact,
+ * if necessary), and t_cmax (the last only for TM_SelfModified,
  * since we cannot obtain cmax from a combocid generated by another
  * transaction).
- * See comments for struct HeapUpdateFailureData for additional info.
+ * See comments for struct TM_FailureData for additional info.
  *
  * See README.tuplock for a thorough explanation of this mechanism.
  */
-HTSU_Result
+TM_Result
 heap_lock_tuple(Relation relation, HeapTuple tuple,
 				CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
 				bool follow_updates,
-				Buffer *buffer, HeapUpdateFailureData *hufd)
+				Buffer *buffer, TM_FailureData *tmfd)
 {
-	HTSU_Result result;
+	TM_Result	result;
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	Page		page;
@@ -4080,7 +4019,7 @@ heap_lock_tuple(Relation relation, HeapTuple tuple,
 l3:
 	result = HeapTupleSatisfiesUpdate(tuple, cid, *buffer);
 
-	if (result == HeapTupleInvisible)
+	if (result == TM_Invisible)
 	{
 		/*
 		 * This is possible, but only when locking a tuple for ON CONFLICT
@@ -4088,10 +4027,12 @@ l3:
 		 * order to give that case the opportunity to throw a more specific
 		 * error.
 		 */
-		result = HeapTupleInvisible;
+		result = TM_Invisible;
 		goto out_locked;
 	}
-	else if (result == HeapTupleBeingUpdated || result == HeapTupleUpdated)
+	else if (result == TM_BeingModified ||
+			 result == TM_Updated ||
+			 result == TM_Deleted)
 	{
 		TransactionId xwait;
 		uint16		infomask;
@@ -4147,7 +4088,7 @@ l3:
 					if (TUPLOCK_from_mxstatus(members[i].status) >= mode)
 					{
 						pfree(members);
-						result = HeapTupleMayBeUpdated;
+						result = TM_Ok;
 						goto out_unlocked;
 					}
 				}
@@ -4163,20 +4104,20 @@ l3:
 						Assert(HEAP_XMAX_IS_KEYSHR_LOCKED(infomask) ||
 							   HEAP_XMAX_IS_SHR_LOCKED(infomask) ||
 							   HEAP_XMAX_IS_EXCL_LOCKED(infomask));
-						result = HeapTupleMayBeUpdated;
+						result = TM_Ok;
 						goto out_unlocked;
 					case LockTupleShare:
 						if (HEAP_XMAX_IS_SHR_LOCKED(infomask) ||
 							HEAP_XMAX_IS_EXCL_LOCKED(infomask))
 						{
-							result = HeapTupleMayBeUpdated;
+							result = TM_Ok;
 							goto out_unlocked;
 						}
 						break;
 					case LockTupleNoKeyExclusive:
 						if (HEAP_XMAX_IS_EXCL_LOCKED(infomask))
 						{
-							result = HeapTupleMayBeUpdated;
+							result = TM_Ok;
 							goto out_unlocked;
 						}
 						break;
@@ -4184,7 +4125,7 @@ l3:
 						if (HEAP_XMAX_IS_EXCL_LOCKED(infomask) &&
 							infomask2 & HEAP_KEYS_UPDATED)
 						{
-							result = HeapTupleMayBeUpdated;
+							result = TM_Ok;
 							goto out_unlocked;
 						}
 						break;
@@ -4233,12 +4174,12 @@ l3:
 				 */
 				if (follow_updates && updated)
 				{
-					HTSU_Result res;
+					TM_Result	res;
 
 					res = heap_lock_updated_tuple(relation, tuple, &t_ctid,
 												  GetCurrentTransactionId(),
 												  mode);
-					if (res != HeapTupleMayBeUpdated)
+					if (res != TM_Ok)
 					{
 						result = res;
 						/* recovery code expects to have buffer lock held */
@@ -4363,15 +4304,15 @@ l3:
 		/*
 		 * Time to sleep on the other transaction/multixact, if necessary.
 		 *
-		 * If the other transaction is an update that's already committed,
-		 * then sleeping cannot possibly do any good: if we're required to
-		 * sleep, get out to raise an error instead.
+		 * If the other transaction is an update/delete that's already
+		 * committed, then sleeping cannot possibly do any good: if we're
+		 * required to sleep, get out to raise an error instead.
 		 *
 		 * By here, we either have already acquired the buffer exclusive lock,
 		 * or we must wait for the locking transaction or multixact; so below
 		 * we ensure that we grab buffer lock after the sleep.
 		 */
-		if (require_sleep && result == HeapTupleUpdated)
+		if (require_sleep && (result == TM_Updated || result == TM_Deleted))
 		{
 			LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 			goto failed;
@@ -4394,7 +4335,7 @@ l3:
 				 * This can only happen if wait_policy is Skip and the lock
 				 * couldn't be obtained.
 				 */
-				result = HeapTupleWouldBlock;
+				result = TM_WouldBlock;
 				/* recovery code expects to have buffer lock held */
 				LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 				goto failed;
@@ -4420,7 +4361,7 @@ l3:
 														status, infomask, relation,
 														NULL))
 						{
-							result = HeapTupleWouldBlock;
+							result = TM_WouldBlock;
 							/* recovery code expects to have buffer lock held */
 							LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 							goto failed;
@@ -4460,7 +4401,7 @@ l3:
 					case LockWaitSkip:
 						if (!ConditionalXactLockTableWait(xwait))
 						{
-							result = HeapTupleWouldBlock;
+							result = TM_WouldBlock;
 							/* recovery code expects to have buffer lock held */
 							LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 							goto failed;
@@ -4479,12 +4420,12 @@ l3:
 			/* if there are updates, follow the update chain */
 			if (follow_updates && !HEAP_XMAX_IS_LOCKED_ONLY(infomask))
 			{
-				HTSU_Result res;
+				TM_Result	res;
 
 				res = heap_lock_updated_tuple(relation, tuple, &t_ctid,
 											  GetCurrentTransactionId(),
 											  mode);
-				if (res != HeapTupleMayBeUpdated)
+				if (res != TM_Ok)
 				{
 					result = res;
 					/* recovery code expects to have buffer lock held */
@@ -4530,23 +4471,28 @@ l3:
 			(tuple->t_data->t_infomask & HEAP_XMAX_INVALID) ||
 			HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_data->t_infomask) ||
 			HeapTupleHeaderIsOnlyLocked(tuple->t_data))
-			result = HeapTupleMayBeUpdated;
+			result = TM_Ok;
+		else if (!ItemPointerEquals(&tuple->t_self, &tuple->t_data->t_ctid) ||
+				 HeapTupleHeaderIndicatesMovedPartitions(tuple->t_data))
+			result = TM_Updated;
 		else
-			result = HeapTupleUpdated;
+			result = TM_Deleted;
 	}
 
 failed:
-	if (result != HeapTupleMayBeUpdated)
+	if (result != TM_Ok)
 	{
-		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated ||
-			   result == HeapTupleWouldBlock);
+		Assert(result == TM_SelfModified || result == TM_Updated ||
+			   result == TM_Deleted || result == TM_WouldBlock);
 		Assert(!(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
-		hufd->ctid = tuple->t_data->t_ctid;
-		hufd->xmax = HeapTupleHeaderGetUpdateXid(tuple->t_data);
-		if (result == HeapTupleSelfUpdated)
-			hufd->cmax = HeapTupleHeaderGetCmax(tuple->t_data);
+		Assert(result != TM_Updated ||
+			   !ItemPointerEquals(&tuple->t_self, &tuple->t_data->t_ctid));
+		tmfd->ctid = tuple->t_data->t_ctid;
+		tmfd->xmax = HeapTupleHeaderGetUpdateXid(tuple->t_data);
+		if (result == TM_SelfModified)
+			tmfd->cmax = HeapTupleHeaderGetCmax(tuple->t_data);
 		else
-			hufd->cmax = InvalidCommandId;
+			tmfd->cmax = InvalidCommandId;
 		goto out_locked;
 	}
 
@@ -4664,7 +4610,7 @@ failed:
 
 	END_CRIT_SECTION();
 
-	result = HeapTupleMayBeUpdated;
+	result = TM_Ok;
 
 out_locked:
 	LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
@@ -5021,19 +4967,19 @@ l5:
  * Given a hypothetical multixact status held by the transaction identified
  * with the given xid, does the current transaction need to wait, fail, or can
  * it continue if it wanted to acquire a lock of the given mode?  "needwait"
- * is set to true if waiting is necessary; if it can continue, then
- * HeapTupleMayBeUpdated is returned.  If the lock is already held by the
- * current transaction, return HeapTupleSelfUpdated.  In case of a conflict
- * with another transaction, a different HeapTupleSatisfiesUpdate return code
- * is returned.
+ * is set to true if waiting is necessary; if it can continue, then TM_Ok is
+ * returned.  If the lock is already held by the current transaction, return
+ * TM_SelfModified.  In case of a conflict with another transaction, a
+ * different HeapTupleSatisfiesUpdate return code is returned.
  *
  * The held status is said to be hypothetical because it might correspond to a
  * lock held by a single Xid, i.e. not a real MultiXactId; we express it this
  * way for simplicity of API.
  */
-static HTSU_Result
+static TM_Result
 test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
-						   LockTupleMode mode, bool *needwait)
+						   LockTupleMode mode, HeapTuple tup,
+						   bool *needwait)
 {
 	MultiXactStatus wantedstatus;
 
@@ -5052,7 +4998,7 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 		 * very rare but can happen if multiple transactions are trying to
 		 * lock an ancient version of the same tuple.
 		 */
-		return HeapTupleSelfUpdated;
+		return TM_SelfModified;
 	}
 	else if (TransactionIdIsInProgress(xid))
 	{
@@ -5072,10 +5018,10 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 		 * If we set needwait above, then this value doesn't matter;
 		 * otherwise, this value signals to caller that it's okay to proceed.
 		 */
-		return HeapTupleMayBeUpdated;
+		return TM_Ok;
 	}
 	else if (TransactionIdDidAbort(xid))
-		return HeapTupleMayBeUpdated;
+		return TM_Ok;
 	else if (TransactionIdDidCommit(xid))
 	{
 		/*
@@ -5094,18 +5040,24 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 		 * always be checked.
 		 */
 		if (!ISUPDATE_from_mxstatus(status))
-			return HeapTupleMayBeUpdated;
+			return TM_Ok;
 
 		if (DoLockModesConflict(LOCKMODE_from_mxstatus(status),
 								LOCKMODE_from_mxstatus(wantedstatus)))
+		{
 			/* bummer */
-			return HeapTupleUpdated;
+			if (!ItemPointerEquals(&tup->t_self, &tup->t_data->t_ctid) ||
+				HeapTupleHeaderIndicatesMovedPartitions(tup->t_data))
+				return TM_Updated;
+			else
+				return TM_Deleted;
+		}
 
-		return HeapTupleMayBeUpdated;
+		return TM_Ok;
 	}
 
 	/* Not in progress, not aborted, not committed -- must have crashed */
-	return HeapTupleMayBeUpdated;
+	return TM_Ok;
 }
 
 
@@ -5116,11 +5068,11 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
  * xid with the given mode; if this tuple is updated, recurse to lock the new
  * version as well.
  */
-static HTSU_Result
+static TM_Result
 heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 							LockTupleMode mode)
 {
-	HTSU_Result result;
+	TM_Result	result;
 	ItemPointerData tupid;
 	HeapTupleData mytup;
 	Buffer		buf;
@@ -5145,7 +5097,7 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 		block = ItemPointerGetBlockNumber(&tupid);
 		ItemPointerCopy(&tupid, &(mytup.t_self));
 
-		if (!heap_fetch(rel, SnapshotAny, &mytup, &buf, false, NULL))
+		if (!heap_fetch(rel, SnapshotAny, &mytup, &buf, NULL))
 		{
 			/*
 			 * if we fail to find the updated version of the tuple, it's
@@ -5154,7 +5106,7 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 			 * chain, and there's no further tuple to lock: return success to
 			 * caller.
 			 */
-			result = HeapTupleMayBeUpdated;
+			result = TM_Ok;
 			goto out_unlocked;
 		}
 
@@ -5203,7 +5155,7 @@ l4:
 			!TransactionIdEquals(HeapTupleHeaderGetXmin(mytup.t_data),
 								 priorXmax))
 		{
-			result = HeapTupleMayBeUpdated;
+			result = TM_Ok;
 			goto out_locked;
 		}
 
@@ -5214,7 +5166,7 @@ l4:
 		 */
 		if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(mytup.t_data)))
 		{
-			result = HeapTupleMayBeUpdated;
+			result = TM_Ok;
 			goto out_locked;
 		}
 
@@ -5257,7 +5209,9 @@ l4:
 				{
 					result = test_lockmode_for_conflict(members[i].status,
 														members[i].xid,
-														mode, &needwait);
+														mode,
+														&mytup,
+														&needwait);
 
 					/*
 					 * If the tuple was already locked by ourselves in a
@@ -5269,7 +5223,7 @@ l4:
 					 * this tuple and continue locking the next version in the
 					 * update chain.
 					 */
-					if (result == HeapTupleSelfUpdated)
+					if (result == TM_SelfModified)
 					{
 						pfree(members);
 						goto next;
@@ -5284,7 +5238,7 @@ l4:
 						pfree(members);
 						goto l4;
 					}
-					if (result != HeapTupleMayBeUpdated)
+					if (result != TM_Ok)
 					{
 						pfree(members);
 						goto out_locked;
@@ -5334,7 +5288,7 @@ l4:
 				}
 
 				result = test_lockmode_for_conflict(status, rawxmax, mode,
-													&needwait);
+													&mytup, &needwait);
 
 				/*
 				 * If the tuple was already locked by ourselves in a previous
@@ -5345,7 +5299,7 @@ l4:
 				 * either.  We just need to skip this tuple and continue
 				 * locking the next version in the update chain.
 				 */
-				if (result == HeapTupleSelfUpdated)
+				if (result == TM_SelfModified)
 					goto next;
 
 				if (needwait)
@@ -5355,7 +5309,7 @@ l4:
 									  XLTW_LockUpdated);
 					goto l4;
 				}
-				if (result != HeapTupleMayBeUpdated)
+				if (result != TM_Ok)
 				{
 					goto out_locked;
 				}
@@ -5415,7 +5369,7 @@ next:
 			ItemPointerEquals(&mytup.t_self, &mytup.t_data->t_ctid) ||
 			HeapTupleHeaderIsOnlyLocked(mytup.t_data))
 		{
-			result = HeapTupleMayBeUpdated;
+			result = TM_Ok;
 			goto out_locked;
 		}
 
@@ -5425,7 +5379,7 @@ next:
 		UnlockReleaseBuffer(buf);
 	}
 
-	result = HeapTupleMayBeUpdated;
+	result = TM_Ok;
 
 out_locked:
 	UnlockReleaseBuffer(buf);
@@ -5459,7 +5413,7 @@ out_unlocked:
  * transaction cannot be using repeatable read or serializable isolation
  * levels, because that would lead to a serializability failure.
  */
-static HTSU_Result
+static TM_Result
 heap_lock_updated_tuple(Relation rel, HeapTuple tuple, ItemPointer ctid,
 						TransactionId xid, LockTupleMode mode)
 {
@@ -5485,7 +5439,7 @@ heap_lock_updated_tuple(Relation rel, HeapTuple tuple, ItemPointer ctid,
 	}
 
 	/* nothing to lock */
-	return HeapTupleMayBeUpdated;
+	return TM_Ok;
 }
 
 /*
@@ -5505,7 +5459,7 @@ heap_lock_updated_tuple(Relation rel, HeapTuple tuple, ItemPointer ctid,
  * An explicit confirmation WAL record also makes logical decoding simpler.
  */
 void
-heap_finish_speculative(Relation relation, HeapTuple tuple)
+heap_finish_speculative(Relation relation, ItemPointer tid)
 {
 	Buffer		buffer;
 	Page		page;
@@ -5513,11 +5467,11 @@ heap_finish_speculative(Relation relation, HeapTuple tuple)
 	ItemId		lp = NULL;
 	HeapTupleHeader htup;
 
-	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&(tuple->t_self)));
+	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
-	offnum = ItemPointerGetOffsetNumber(&(tuple->t_self));
+	offnum = ItemPointerGetOffsetNumber(tid);
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
@@ -5533,7 +5487,7 @@ heap_finish_speculative(Relation relation, HeapTuple tuple)
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
-	Assert(HeapTupleHeaderIsSpeculative(tuple->t_data));
+	Assert(HeapTupleHeaderIsSpeculative(htup));
 
 	MarkBufferDirty(buffer);
 
@@ -5541,7 +5495,7 @@ heap_finish_speculative(Relation relation, HeapTuple tuple)
 	 * Replace the speculative insertion token with a real t_ctid, pointing to
 	 * itself like it does on regular tuples.
 	 */
-	htup->t_ctid = tuple->t_self;
+	htup->t_ctid = *tid;
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(relation))
@@ -5549,7 +5503,7 @@ heap_finish_speculative(Relation relation, HeapTuple tuple)
 		xl_heap_confirm xlrec;
 		XLogRecPtr	recptr;
 
-		xlrec.offnum = ItemPointerGetOffsetNumber(&tuple->t_self);
+		xlrec.offnum = ItemPointerGetOffsetNumber(tid);
 
 		XLogBeginInsert();
 
@@ -5596,10 +5550,9 @@ heap_finish_speculative(Relation relation, HeapTuple tuple)
  * confirmation records.
  */
 void
-heap_abort_speculative(Relation relation, HeapTuple tuple)
+heap_abort_speculative(Relation relation, ItemPointer tid)
 {
 	TransactionId xid = GetCurrentTransactionId();
-	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	HeapTupleData tp;
 	Page		page;

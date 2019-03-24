@@ -21,14 +21,12 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/htup_details.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 #include "executor/executor.h"
 #include "executor/nodeLockRows.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 
@@ -82,11 +80,11 @@ lnext:
 		ExecRowMark *erm = aerm->rowmark;
 		Datum		datum;
 		bool		isNull;
-		HeapTupleData tuple;
-		Buffer		buffer;
-		HeapUpdateFailureData hufd;
+		ItemPointerData tid;
+		TM_FailureData tmfd;
 		LockTupleMode lockmode;
-		HTSU_Result test;
+		int			lockflags = 0;
+		TM_Result	test;
 		TupleTableSlot *markSlot;
 
 		/* clear any leftover test tuple for this rel */
@@ -112,6 +110,7 @@ lnext:
 				/* this child is inactive right now */
 				erm->ermActive = false;
 				ItemPointerSetInvalid(&(erm->curCtid));
+				ExecClearTuple(markSlot);
 				continue;
 			}
 		}
@@ -160,8 +159,8 @@ lnext:
 			continue;
 		}
 
-		/* okay, try to lock the tuple */
-		tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
+		/* okay, try to lock (and fetch) the tuple */
+		tid = *((ItemPointer) DatumGetPointer(datum));
 		switch (erm->markType)
 		{
 			case ROW_MARK_EXCLUSIVE:
@@ -182,18 +181,23 @@ lnext:
 				break;
 		}
 
-		test = heap_lock_tuple(erm->relation, &tuple,
-							   estate->es_output_cid,
-							   lockmode, erm->waitPolicy, true,
-							   &buffer, &hufd);
-		ReleaseBuffer(buffer);
+		lockflags = TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS;
+		if (!IsolationUsesXactSnapshot())
+			lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
+
+		test = table_lock_tuple(erm->relation, &tid, estate->es_snapshot,
+								markSlot, estate->es_output_cid,
+								lockmode, erm->waitPolicy,
+								lockflags,
+								&tmfd);
+
 		switch (test)
 		{
-			case HeapTupleWouldBlock:
+			case TM_WouldBlock:
 				/* couldn't lock tuple in SKIP LOCKED mode */
 				goto lnext;
 
-			case HeapTupleSelfUpdated:
+			case TM_SelfModified:
 
 				/*
 				 * The target tuple was already updated or deleted by the
@@ -204,65 +208,50 @@ lnext:
 				 * to fetch the updated tuple instead, but doing so would
 				 * require changing heap_update and heap_delete to not
 				 * complain about updating "invisible" tuples, which seems
-				 * pretty scary (heap_lock_tuple will not complain, but few
-				 * callers expect HeapTupleInvisible, and we're not one of
-				 * them).  So for now, treat the tuple as deleted and do not
-				 * process.
+				 * pretty scary (table_lock_tuple will not complain, but few
+				 * callers expect TM_Invisible, and we're not one of them). So
+				 * for now, treat the tuple as deleted and do not process.
 				 */
 				goto lnext;
 
-			case HeapTupleMayBeUpdated:
-				/* got the lock successfully */
+			case TM_Ok:
+
+				/*
+				 * Got the lock successfully, the locked tuple saved in
+				 * markSlot for, if needed, EvalPlanQual testing below.
+				 */
+				if (tmfd.traversed)
+					epq_needed = true;
 				break;
 
-			case HeapTupleUpdated:
+			case TM_Updated:
 				if (IsolationUsesXactSnapshot())
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				if (ItemPointerIndicatesMovedPartitions(&hufd.ctid))
-					ereport(ERROR,
-							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-							 errmsg("tuple to be locked was already moved to another partition due to concurrent update")));
-
-				if (ItemPointerEquals(&hufd.ctid, &tuple.t_self))
-				{
-					/* Tuple was deleted, so don't return it */
-					goto lnext;
-				}
-
-				/* updated, so fetch and lock the updated version */
-				if (!EvalPlanQualFetch(estate, erm->relation,
-									   lockmode, erm->waitPolicy,
-									   &hufd.ctid, hufd.xmax,
-									   markSlot))
-				{
-					/*
-					 * Tuple was deleted; or it's locked and we're under SKIP
-					 * LOCKED policy, so don't return it
-					 */
-					goto lnext;
-				}
-				/* remember the actually locked tuple's TID */
-				tuple.t_self = markSlot->tts_tid;
-
-				/* Remember we need to do EPQ testing */
-				epq_needed = true;
-
-				/* Continue loop until we have all target tuples */
+				elog(ERROR, "unexpected table_lock_tuple status: %u",
+					 test);
 				break;
 
-			case HeapTupleInvisible:
+			case TM_Deleted:
+				if (IsolationUsesXactSnapshot())
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("could not serialize access due to concurrent update")));
+				/* tuple was deleted so don't return it */
+				goto lnext;
+
+			case TM_Invisible:
 				elog(ERROR, "attempted to lock invisible tuple");
 				break;
 
 			default:
-				elog(ERROR, "unrecognized heap_lock_tuple status: %u",
+				elog(ERROR, "unrecognized table_lock_tuple status: %u",
 					 test);
 		}
 
 		/* Remember locked tuple's TID for EPQ testing and WHERE CURRENT OF */
-		erm->curCtid = tuple.t_self;
+		erm->curCtid = tid;
 	}
 
 	/*
@@ -270,49 +259,6 @@ lnext:
 	 */
 	if (epq_needed)
 	{
-		/*
-		 * Fetch a copy of any rows that were successfully locked without any
-		 * update having occurred.  (We do this in a separate pass so as to
-		 * avoid overhead in the common case where there are no concurrent
-		 * updates.)  Make sure any inactive child rels have NULL test tuples
-		 * in EPQ.
-		 */
-		foreach(lc, node->lr_arowMarks)
-		{
-			ExecAuxRowMark *aerm = (ExecAuxRowMark *) lfirst(lc);
-			ExecRowMark *erm = aerm->rowmark;
-			TupleTableSlot *markSlot;
-			HeapTupleData tuple;
-			Buffer buffer;
-
-			markSlot = EvalPlanQualSlot(&node->lr_epqstate, erm->relation, erm->rti);
-
-			/* skip non-active child tables, but clear their test tuples */
-			if (!erm->ermActive)
-			{
-				Assert(erm->rti != erm->prti);	/* check it's child table */
-				ExecClearTuple(markSlot);
-				continue;
-			}
-
-			/* was tuple updated and fetched above? */
-			if (!TupIsNull(markSlot))
-				continue;
-
-			/* foreign tables should have been fetched above */
-			Assert(erm->relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE);
-			Assert(ItemPointerIsValid(&(erm->curCtid)));
-
-			/* okay, fetch the tuple */
-			tuple.t_self = erm->curCtid;
-			if (!heap_fetch(erm->relation, SnapshotAny, &tuple, &buffer,
-							false, NULL))
-				elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
-			ExecStorePinnedBufferHeapTuple(&tuple, markSlot, buffer);
-			ExecMaterializeSlot(markSlot);
-			/* successful, use tuple in slot */
-		}
-
 		/*
 		 * Now fetch any non-locked source rows --- the EPQ logic knows how to
 		 * do that.

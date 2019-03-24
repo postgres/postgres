@@ -15,6 +15,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/tableam.h"
 #include "access/sysattr.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
@@ -3285,19 +3286,12 @@ GetTupleForTrigger(EState *estate,
 				   TupleTableSlot **newSlot)
 {
 	Relation	relation = relinfo->ri_RelationDesc;
-	HeapTuple	tuple;
-	Buffer		buffer;
-	BufferHeapTupleTableSlot *boldslot;
-
-	Assert(TTS_IS_BUFFERTUPLE(oldslot));
-	ExecClearTuple(oldslot);
-	boldslot = (BufferHeapTupleTableSlot *) oldslot;
-	tuple = &boldslot->base.tupdata;
 
 	if (newSlot != NULL)
 	{
-		HTSU_Result test;
-		HeapUpdateFailureData hufd;
+		TM_Result	test;
+		TM_FailureData tmfd;
+		int			lockflags = 0;
 
 		*newSlot = NULL;
 
@@ -3307,15 +3301,17 @@ GetTupleForTrigger(EState *estate,
 		/*
 		 * lock tuple for update
 		 */
-ltrmark:;
-		tuple->t_self = *tid;
-		test = heap_lock_tuple(relation, tuple,
-							   estate->es_output_cid,
-							   lockmode, LockWaitBlock,
-							   false, &buffer, &hufd);
+		if (!IsolationUsesXactSnapshot())
+			lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
+		test = table_lock_tuple(relation, tid, estate->es_snapshot, oldslot,
+								estate->es_output_cid,
+								lockmode, LockWaitBlock,
+								lockflags,
+								&tmfd);
+
 		switch (test)
 		{
-			case HeapTupleSelfUpdated:
+			case TM_SelfModified:
 
 				/*
 				 * The target tuple was already updated or deleted by the
@@ -3325,73 +3321,59 @@ ltrmark:;
 				 * enumerated in ExecUpdate and ExecDelete in
 				 * nodeModifyTable.c.
 				 */
-				if (hufd.cmax != estate->es_output_cid)
+				if (tmfd.cmax != estate->es_output_cid)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
 							 errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
 							 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
 
 				/* treat it as deleted; do not process */
-				ReleaseBuffer(buffer);
 				return false;
 
-			case HeapTupleMayBeUpdated:
-				ExecStorePinnedBufferHeapTuple(tuple, oldslot, buffer);
-
-				break;
-
-			case HeapTupleUpdated:
-				ReleaseBuffer(buffer);
-				if (IsolationUsesXactSnapshot())
-					ereport(ERROR,
-							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-							 errmsg("could not serialize access due to concurrent update")));
-				if (ItemPointerIndicatesMovedPartitions(&hufd.ctid))
-					ereport(ERROR,
-							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-							 errmsg("tuple to be locked was already moved to another partition due to concurrent update")));
-
-				if (!ItemPointerEquals(&hufd.ctid, &tuple->t_self))
+			case TM_Ok:
+				if (tmfd.traversed)
 				{
-					/* it was updated, so look at the updated version */
 					TupleTableSlot *epqslot;
 
 					epqslot = EvalPlanQual(estate,
 										   epqstate,
 										   relation,
 										   relinfo->ri_RangeTableIndex,
-										   lockmode,
-										   &hufd.ctid,
-										   hufd.xmax);
-					if (!TupIsNull(epqslot))
-					{
-						*tid = hufd.ctid;
+										   oldslot);
 
-						*newSlot = epqslot;
+					/*
+					 * If PlanQual failed for updated tuple - we must not
+					 * process this tuple!
+					 */
+					if (TupIsNull(epqslot))
+						return false;
 
-						/*
-						 * EvalPlanQual already locked the tuple, but we
-						 * re-call heap_lock_tuple anyway as an easy way of
-						 * re-fetching the correct tuple.  Speed is hardly a
-						 * criterion in this path anyhow.
-						 */
-						goto ltrmark;
-					}
+					*newSlot = epqslot;
 				}
+				break;
 
-				/*
-				 * if tuple was deleted or PlanQual failed for updated tuple -
-				 * we must not process this tuple!
-				 */
+			case TM_Updated:
+				if (IsolationUsesXactSnapshot())
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("could not serialize access due to concurrent update")));
+				elog(ERROR, "unexpected table_lock_tuple status: %u", test);
+				break;
+
+			case TM_Deleted:
+				if (IsolationUsesXactSnapshot())
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("could not serialize access due to concurrent delete")));
+				/* tuple was deleted */
 				return false;
 
-			case HeapTupleInvisible:
+			case TM_Invisible:
 				elog(ERROR, "attempted to lock invisible tuple");
 				break;
 
 			default:
-				ReleaseBuffer(buffer);
-				elog(ERROR, "unrecognized heap_lock_tuple status: %u", test);
+				elog(ERROR, "unrecognized table_lock_tuple status: %u", test);
 				return false;	/* keep compiler quiet */
 		}
 	}
@@ -3399,6 +3381,14 @@ ltrmark:;
 	{
 		Page		page;
 		ItemId		lp;
+		Buffer		buffer;
+		BufferHeapTupleTableSlot *boldslot;
+		HeapTuple	tuple;
+
+		Assert(TTS_IS_BUFFERTUPLE(oldslot));
+		ExecClearTuple(oldslot);
+		boldslot = (BufferHeapTupleTableSlot *) oldslot;
+		tuple = &boldslot->base.tupdata;
 
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
@@ -4286,7 +4276,7 @@ AfterTriggerExecute(EState *estate,
 				LocTriggerData.tg_trigslot = ExecGetTriggerOldSlot(estate, relInfo);
 
 				ItemPointerCopy(&(event->ate_ctid1), &(tuple1.t_self));
-				if (!heap_fetch(rel, SnapshotAny, &tuple1, &buffer, false, NULL))
+				if (!heap_fetch(rel, SnapshotAny, &tuple1, &buffer, NULL))
 					elog(ERROR, "failed to fetch tuple1 for AFTER trigger");
 				ExecStorePinnedBufferHeapTuple(&tuple1,
 											   LocTriggerData.tg_trigslot,
@@ -4310,7 +4300,7 @@ AfterTriggerExecute(EState *estate,
 				LocTriggerData.tg_newslot = ExecGetTriggerNewSlot(estate, relInfo);
 
 				ItemPointerCopy(&(event->ate_ctid2), &(tuple2.t_self));
-				if (!heap_fetch(rel, SnapshotAny, &tuple2, &buffer, false, NULL))
+				if (!heap_fetch(rel, SnapshotAny, &tuple2, &buffer, NULL))
 					elog(ERROR, "failed to fetch tuple2 for AFTER trigger");
 				ExecStorePinnedBufferHeapTuple(&tuple2,
 											   LocTriggerData.tg_newslot,

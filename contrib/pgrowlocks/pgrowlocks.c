@@ -146,7 +146,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		HTSU_Result htsu;
+		TM_Result	htsu;
 		TransactionId xmax;
 		uint16		infomask;
 
@@ -160,9 +160,9 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		infomask = tuple->t_data->t_infomask;
 
 		/*
-		 * A tuple is locked if HTSU returns BeingUpdated.
+		 * A tuple is locked if HTSU returns BeingModified.
 		 */
-		if (htsu == HeapTupleBeingUpdated)
+		if (htsu == TM_BeingModified)
 		{
 			char	  **values;
 

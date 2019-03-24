@@ -27,6 +27,85 @@ extern char *default_table_access_method;
 extern bool synchronize_seqscans;
 
 
+struct BulkInsertStateData;
+
+
+/*
+ * Result codes for table_{update,delete,lock}_tuple, and for visibility
+ * routines inside table AMs.
+ */
+typedef enum TM_Result
+{
+	/*
+	 * Signals that the action succeeded (i.e. update/delete performed, lock
+	 * was acquired)
+	 */
+	TM_Ok,
+
+	/* The affected tuple wasn't visible to the relevant snapshot */
+	TM_Invisible,
+
+	/* The affected tuple was already modified by the calling backend */
+	TM_SelfModified,
+
+	/*
+	 * The affected tuple was updated by another transaction. This includes
+	 * the case where tuple was moved to another partition.
+	 */
+	TM_Updated,
+
+	/* The affected tuple was deleted by another transaction */
+	TM_Deleted,
+
+	/*
+	 * The affected tuple is currently being modified by another session. This
+	 * will only be returned if (update/delete/lock)_tuple are instructed not
+	 * to wait.
+	 */
+	TM_BeingModified,
+
+	/* lock couldn't be acquired, action skipped. Only used by lock_tuple */
+	TM_WouldBlock
+} TM_Result;
+
+
+/*
+ * When table_update, table_delete, or table_lock_tuple fail because the target
+ * tuple is already outdated, they fill in this struct to provide information
+ * to the caller about what happened.
+ * ctid is the target's ctid link: it is the same as the target's TID if the
+ * target was deleted, or the location of the replacement tuple if the target
+ * was updated.
+ * xmax is the outdating transaction's XID.  If the caller wants to visit the
+ * replacement tuple, it must check that this matches before believing the
+ * replacement is really a match.
+ * cmax is the outdating command's CID, but only when the failure code is
+ * TM_SelfModified (i.e., something in the current transaction outdated the
+ * tuple); otherwise cmax is zero.  (We make this restriction because
+ * HeapTupleHeaderGetCmax doesn't work for tuples outdated in other
+ * transactions.)
+ */
+typedef struct TM_FailureData
+{
+	ItemPointerData ctid;
+	TransactionId xmax;
+	CommandId	cmax;
+	bool		traversed;
+} TM_FailureData;
+
+/* "options" flag bits for table_insert */
+#define TABLE_INSERT_SKIP_WAL		0x0001
+#define TABLE_INSERT_SKIP_FSM		0x0002
+#define TABLE_INSERT_FROZEN			0x0004
+#define TABLE_INSERT_NO_LOGICAL		0x0008
+
+/* flag bits fortable_lock_tuple */
+/* Follow tuples whose update is in progress if lock modes don't conflict  */
+#define TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS	(1 << 0)
+/* Follow update chain and lock lastest version of tuple */
+#define TUPLE_LOCK_FLAG_FIND_LAST_VERSION		(1 << 1)
+
+
 /*
  * API struct for a table AM.  Note this must be allocated in a
  * server-lifetime manner, typically as a static const struct, which then gets
@@ -199,6 +278,62 @@ typedef struct TableAmRoutine
 	bool		(*tuple_satisfies_snapshot) (Relation rel,
 											 TupleTableSlot *slot,
 											 Snapshot snapshot);
+
+	/* ------------------------------------------------------------------------
+	 * Manipulations of physical tuples.
+	 * ------------------------------------------------------------------------
+	 */
+
+	/* see table_insert() for reference about parameters */
+	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot, CommandId cid,
+								 int options, struct BulkInsertStateData *bistate);
+
+	/* see table_insert() for reference about parameters */
+	void		(*tuple_insert_speculative) (Relation rel,
+											 TupleTableSlot *slot,
+											 CommandId cid,
+											 int options,
+											 struct BulkInsertStateData *bistate,
+											 uint32 specToken);
+
+	/* see table_insert() for reference about parameters */
+	void		(*tuple_complete_speculative) (Relation rel,
+											   TupleTableSlot *slot,
+											   uint32 specToken,
+											   bool succeeded);
+
+	/* see table_insert() for reference about parameters */
+	TM_Result	(*tuple_delete) (Relation rel,
+								 ItemPointer tid,
+								 CommandId cid,
+								 Snapshot snapshot,
+								 Snapshot crosscheck,
+								 bool wait,
+								 TM_FailureData *tmfd,
+								 bool changingPart);
+
+	/* see table_insert() for reference about parameters */
+	TM_Result	(*tuple_update) (Relation rel,
+								 ItemPointer otid,
+								 TupleTableSlot *slot,
+								 CommandId cid,
+								 Snapshot snapshot,
+								 Snapshot crosscheck,
+								 bool wait,
+								 TM_FailureData *tmfd,
+								 LockTupleMode *lockmode,
+								 bool *update_indexes);
+
+	/* see table_insert() for reference about parameters */
+	TM_Result	(*tuple_lock) (Relation rel,
+							   ItemPointer tid,
+							   Snapshot snapshot,
+							   TupleTableSlot *slot,
+							   CommandId cid,
+							   LockTupleMode mode,
+							   LockWaitPolicy wait_policy,
+							   uint8 flags,
+							   TM_FailureData *tmfd);
 
 } TableAmRoutine;
 
@@ -485,6 +620,230 @@ table_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot, Snapshot snap
 {
 	return rel->rd_tableam->tuple_satisfies_snapshot(rel, slot, snapshot);
 }
+
+
+/* ----------------------------------------------------------------------------
+ *  Functions for manipulations of physical tuples.
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ * Insert a tuple from a slot into table AM routine.
+ *
+ * The options bitmask allows to specify options that allow to change the
+ * behaviour of the AM. Several options might be ignored by AMs not supporting
+ * them.
+ *
+ * If the TABLE_INSERT_SKIP_WAL option is specified, the new tuple will not
+ * necessarily logged to WAL, even for a non-temp relation. It is the AMs
+ * choice whether this optimization is supported.
+ *
+ * If the TABLE_INSERT_SKIP_FSM option is specified, AMs are free to not reuse
+ * free space in the relation. This can save some cycles when we know the
+ * relation is new and doesn't contain useful amounts of free space.  It's
+ * commonly passed directly to RelationGetBufferForTuple, see for more info.
+ *
+ * TABLE_INSERT_FROZEN should only be specified for inserts into
+ * relfilenodes created during the current subtransaction and when
+ * there are no prior snapshots or pre-existing portals open.
+ * This causes rows to be frozen, which is an MVCC violation and
+ * requires explicit options chosen by user.
+ *
+ * TABLE_INSERT_NO_LOGICAL force-disables the emitting of logical decoding
+ * information for the tuple. This should solely be used during table rewrites
+ * where RelationIsLogicallyLogged(relation) is not yet accurate for the new
+ * relation.
+ *
+ * Note that most of these options will be applied when inserting into the
+ * heap's TOAST table, too, if the tuple requires any out-of-line data
+ *
+ *
+ * The BulkInsertState object (if any; bistate can be NULL for default
+ * behavior) is also just passed through to RelationGetBufferForTuple.
+ *
+ * On return the slot's tts_tid and tts_tableOid are updated to reflect the
+ * insertion. But note that any toasting of fields within the slot is NOT
+ * reflected in the slots contents.
+ */
+static inline void
+table_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
+			 int options, struct BulkInsertStateData *bistate)
+{
+	rel->rd_tableam->tuple_insert(rel, slot, cid, options,
+								  bistate);
+}
+
+/*
+ * Perform a "speculative insertion". These can be backed out afterwards
+ * without aborting the whole transaction.  Other sessions can wait for the
+ * speculative insertion to be confirmed, turning it into a regular tuple, or
+ * aborted, as if it never existed.  Speculatively inserted tuples behave as
+ * "value locks" of short duration, used to implement INSERT .. ON CONFLICT.
+ *
+ * A transaction having performed a speculative insertion has to either abort,
+ * or finish the speculative insertion with
+ * table_complete_speculative(succeeded = ...).
+ */
+static inline void
+table_insert_speculative(Relation rel, TupleTableSlot *slot, CommandId cid,
+						 int options, struct BulkInsertStateData *bistate, uint32 specToken)
+{
+	rel->rd_tableam->tuple_insert_speculative(rel, slot, cid, options,
+											  bistate, specToken);
+}
+
+/*
+ * Complete "speculative insertion" started in the same transaction. If
+ * succeeded is true, the tuple is fully inserted, if false, it's removed.
+ */
+static inline void
+table_complete_speculative(Relation rel, TupleTableSlot *slot, uint32 specToken,
+						   bool succeeded)
+{
+	return rel->rd_tableam->tuple_complete_speculative(rel, slot, specToken,
+													   succeeded);
+}
+
+/*
+ * Delete a tuple.
+ *
+ * NB: do not call this directly unless prepared to deal with
+ * concurrent-update conditions.  Use simple_table_delete instead.
+ *
+ * Input parameters:
+ *	relation - table to be modified (caller must hold suitable lock)
+ *	tid - TID of tuple to be deleted
+ *	cid - delete command ID (used for visibility test, and stored into
+ *		cmax if successful)
+ *	crosscheck - if not InvalidSnapshot, also check tuple against this
+ *	wait - true if should wait for any conflicting update to commit/abort
+ * Output parameters:
+ *	tmfd - filled in failure cases (see below)
+ *	changingPart - true iff the tuple is being moved to another partition
+ *		table due to an update of the partition key. Otherwise, false.
+ *
+ * Normal, successful return value is TM_Ok, which
+ * actually means we did delete it.  Failure return codes are
+ * TM_SelfModified, TM_Updated, or TM_BeingModified
+ * (the last only possible if wait == false).
+ *
+ * In the failure cases, the routine fills *tmfd with the tuple's t_ctid,
+ * t_xmax, and, if possible, and, if possible, t_cmax.  See comments for
+ * struct TM_FailureData for additional info.
+ */
+static inline TM_Result
+table_delete(Relation rel, ItemPointer tid, CommandId cid,
+			 Snapshot snapshot, Snapshot crosscheck, bool wait,
+			 TM_FailureData *tmfd, bool changingPart)
+{
+	return rel->rd_tableam->tuple_delete(rel, tid, cid,
+										 snapshot, crosscheck,
+										 wait, tmfd, changingPart);
+}
+
+/*
+ * Update a tuple.
+ *
+ * NB: do not call this directly unless you are prepared to deal with
+ * concurrent-update conditions.  Use simple_table_update instead.
+ *
+ * Input parameters:
+ *	relation - table to be modified (caller must hold suitable lock)
+ *	otid - TID of old tuple to be replaced
+ *	newtup - newly constructed tuple data to store
+ *	cid - update command ID (used for visibility test, and stored into
+ *		cmax/cmin if successful)
+ *	crosscheck - if not InvalidSnapshot, also check old tuple against this
+ *	wait - true if should wait for any conflicting update to commit/abort
+ * Output parameters:
+ *	tmfd - filled in failure cases (see below)
+ *	lockmode - filled with lock mode acquired on tuple
+ *  update_indexes - in success cases this is set to true if new index entries
+ *		are required for this tuple
+ *
+ * Normal, successful return value is TM_Ok, which
+ * actually means we *did* update it.  Failure return codes are
+ * TM_SelfModified, TM_Updated, or TM_BeingModified
+ * (the last only possible if wait == false).
+ *
+ * On success, the header fields of *newtup are updated to match the new
+ * stored tuple; in particular, newtup->t_self is set to the TID where the
+ * new tuple was inserted, and its HEAP_ONLY_TUPLE flag is set iff a HOT
+ * update was done.  However, any TOAST changes in the new tuple's
+ * data are not reflected into *newtup.
+ *
+ * In the failure cases, the routine fills *tmfd with the tuple's t_ctid,
+ * t_xmax, and, if possible, t_cmax.  See comments for struct TM_FailureData
+ * for additional info.
+ */
+static inline TM_Result
+table_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
+			 CommandId cid, Snapshot snapshot, Snapshot crosscheck, bool wait,
+			 TM_FailureData *tmfd, LockTupleMode *lockmode,
+			 bool *update_indexes)
+{
+	return rel->rd_tableam->tuple_update(rel, otid, slot,
+										 cid, snapshot, crosscheck,
+										 wait, tmfd,
+										 lockmode, update_indexes);
+}
+
+/*
+ * Lock a tuple in the specified mode.
+ *
+ * Input parameters:
+ *	relation: relation containing tuple (caller must hold suitable lock)
+ *	tid: TID of tuple to lock
+ *	snapshot: snapshot to use for visibility determinations
+ *	cid: current command ID (used for visibility test, and stored into
+ *		tuple's cmax if lock is successful)
+ *	mode: lock mode desired
+ *	wait_policy: what to do if tuple lock is not available
+ *	flags:
+ *		If TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS, follow the update chain to
+ *		also lock descendant tuples if lock modes don't conflict.
+ *		If TUPLE_LOCK_FLAG_FIND_LAST_VERSION, update chain and lock lastest
+ *		version.
+ *
+ * Output parameters:
+ *	*slot: contains the target tuple
+ *	*tmfd: filled in failure cases (see below)
+ *
+ * Function result may be:
+ *	TM_Ok: lock was successfully acquired
+ *	TM_Invisible: lock failed because tuple was never visible to us
+ *	TM_SelfModified: lock failed because tuple updated by self
+ *	TM_Updated: lock failed because tuple updated by other xact
+ *	TM_Deleted: lock failed because tuple deleted by other xact
+ *	TM_WouldBlock: lock couldn't be acquired and wait_policy is skip
+ *
+ * In the failure cases other than TM_Invisible, the routine fills *tmfd with
+ * the tuple's t_ctid, t_xmax, and, if possible, t_cmax.  See comments for
+ * struct TM_FailureData for additional info.
+ */
+static inline TM_Result
+table_lock_tuple(Relation rel, ItemPointer tid, Snapshot snapshot,
+				 TupleTableSlot *slot, CommandId cid, LockTupleMode mode,
+				 LockWaitPolicy wait_policy, uint8 flags,
+				 TM_FailureData *tmfd)
+{
+	return rel->rd_tableam->tuple_lock(rel, tid, snapshot, slot,
+									   cid, mode, wait_policy,
+									   flags, tmfd);
+}
+
+
+/* ----------------------------------------------------------------------------
+ * Functions to make modifications a bit simpler.
+ * ----------------------------------------------------------------------------
+ */
+
+extern void simple_table_insert(Relation rel, TupleTableSlot *slot);
+extern void simple_table_delete(Relation rel, ItemPointer tid,
+					Snapshot snapshot);
+extern void simple_table_update(Relation rel, ItemPointer otid,
+					TupleTableSlot *slot, Snapshot snapshot,
+					bool *update_indexes);
 
 
 /* ----------------------------------------------------------------------------

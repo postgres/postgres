@@ -19,6 +19,7 @@
 #include "access/sdir.h"
 #include "access/skey.h"
 #include "access/table.h"		/* for backward compatibility */
+#include "access/tableam.h"
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "storage/bufpage.h"
@@ -28,38 +29,15 @@
 
 
 /* "options" flag bits for heap_insert */
-#define HEAP_INSERT_SKIP_WAL	0x0001
-#define HEAP_INSERT_SKIP_FSM	0x0002
-#define HEAP_INSERT_FROZEN		0x0004
-#define HEAP_INSERT_SPECULATIVE 0x0008
-#define HEAP_INSERT_NO_LOGICAL	0x0010
+#define HEAP_INSERT_SKIP_WAL	TABLE_INSERT_SKIP_WAL
+#define HEAP_INSERT_SKIP_FSM	TABLE_INSERT_SKIP_FSM
+#define HEAP_INSERT_FROZEN		TABLE_INSERT_FROZEN
+#define HEAP_INSERT_NO_LOGICAL	TABLE_INSERT_NO_LOGICAL
+#define HEAP_INSERT_SPECULATIVE 0x0010
 
 typedef struct BulkInsertStateData *BulkInsertState;
 
 #define MaxLockTupleMode	LockTupleExclusive
-
-/*
- * When heap_update, heap_delete, or heap_lock_tuple fail because the target
- * tuple is already outdated, they fill in this struct to provide information
- * to the caller about what happened.
- * ctid is the target's ctid link: it is the same as the target's TID if the
- * target was deleted, or the location of the replacement tuple if the target
- * was updated.
- * xmax is the outdating transaction's XID.  If the caller wants to visit the
- * replacement tuple, it must check that this matches before believing the
- * replacement is really a match.
- * cmax is the outdating command's CID, but only when the failure code is
- * HeapTupleSelfUpdated (i.e., something in the current transaction outdated
- * the tuple); otherwise cmax is zero.  (We make this restriction because
- * HeapTupleHeaderGetCmax doesn't work for tuples outdated in other
- * transactions.)
- */
-typedef struct HeapUpdateFailureData
-{
-	ItemPointerData ctid;
-	TransactionId xmax;
-	CommandId	cmax;
-} HeapUpdateFailureData;
 
 /*
  * Descriptor for heap table scans.
@@ -150,8 +128,7 @@ extern bool heap_getnextslot(TableScanDesc sscan,
 				 ScanDirection direction, struct TupleTableSlot *slot);
 
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
-		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
-		   Relation stats_relation);
+		   HeapTuple tuple, Buffer *userbuf, Relation stats_relation);
 extern bool heap_hot_search_buffer(ItemPointer tid, Relation relation,
 					   Buffer buffer, Snapshot snapshot, HeapTuple heapTuple,
 					   bool *all_dead, bool first_call);
@@ -170,19 +147,20 @@ extern void heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 			int options, BulkInsertState bistate);
 extern void heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 				  CommandId cid, int options, BulkInsertState bistate);
-extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
+extern TM_Result heap_delete(Relation relation, ItemPointer tid,
 			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd, bool changingPart);
-extern void heap_finish_speculative(Relation relation, HeapTuple tuple);
-extern void heap_abort_speculative(Relation relation, HeapTuple tuple);
-extern HTSU_Result heap_update(Relation relation, ItemPointer otid,
+			struct TM_FailureData *tmfd, bool changingPart);
+extern void heap_finish_speculative(Relation relation, ItemPointer tid);
+extern void heap_abort_speculative(Relation relation, ItemPointer tid);
+extern TM_Result heap_update(Relation relation, ItemPointer otid,
 			HeapTuple newtup,
 			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd, LockTupleMode *lockmode);
-extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
+			struct TM_FailureData *tmfd, LockTupleMode *lockmode);
+extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 				CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
 				bool follow_update,
-				Buffer *buffer, HeapUpdateFailureData *hufd);
+				Buffer *buffer, struct TM_FailureData *tmfd);
+
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple,
 				  TransactionId relfrozenxid, TransactionId relminmxid,
@@ -223,7 +201,7 @@ extern void heap_vacuum_rel(Relation onerel,
 /* in heap/heapam_visibility.c */
 extern bool HeapTupleSatisfiesVisibility(HeapTuple stup, Snapshot snapshot,
 							 Buffer buffer);
-extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTuple stup, CommandId curcid,
+extern TM_Result HeapTupleSatisfiesUpdate(HeapTuple stup, CommandId curcid,
 						 Buffer buffer);
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTuple stup, TransactionId OldestXmin,
 						 Buffer buffer);

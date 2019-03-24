@@ -15,7 +15,7 @@ step s1u: UPDATE foo SET a=2 WHERE a=1;
 step s2d: DELETE FROM foo WHERE a=1; <waiting ...>
 step s1c: COMMIT;
 step s2d: <... completed>
-error in steps s1c s2d: ERROR:  tuple to be deleted was already moved to another partition due to concurrent update
+error in steps s1c s2d: ERROR:  tuple to be locked was already moved to another partition due to concurrent update
 step s2c: COMMIT;
 
 starting permutation: s1b s2b s1u s2u s1c s2c
@@ -25,7 +25,7 @@ step s1u: UPDATE foo SET a=2 WHERE a=1;
 step s2u: UPDATE foo SET b='EFG' WHERE a=1; <waiting ...>
 step s1c: COMMIT;
 step s2u: <... completed>
-error in steps s1c s2u: ERROR:  tuple to be updated was already moved to another partition due to concurrent update
+error in steps s1c s2u: ERROR:  tuple to be locked was already moved to another partition due to concurrent update
 step s2c: COMMIT;
 
 starting permutation: s1b s2b s2d s1u s2c s1c

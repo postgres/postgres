@@ -376,7 +376,7 @@ TidNext(TidScanState *node)
 		if (node->tss_isCurrentOf)
 			heap_get_latest_tid(heapRelation, snapshot, &tuple->t_self);
 
-		if (heap_fetch(heapRelation, snapshot, tuple, &buffer, false, NULL))
+		if (heap_fetch(heapRelation, snapshot, tuple, &buffer, NULL))
 		{
 			/*
 			 * Store the scanned tuple in the scan tuple slot of the scan

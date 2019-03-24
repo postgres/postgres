@@ -177,6 +177,119 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc parallel_scan)
 
 
 /* ----------------------------------------------------------------------------
+ * Functions to make modifications a bit simpler.
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ * simple_table_insert - insert a tuple
+ *
+ * Currently, this routine differs from table_insert only in supplying a
+ * default command ID and not allowing access to the speedup options.
+ */
+void
+simple_table_insert(Relation rel, TupleTableSlot *slot)
+{
+	table_insert(rel, slot, GetCurrentCommandId(true), 0, NULL);
+}
+
+/*
+ * simple_table_delete - delete a tuple
+ *
+ * This routine may be used to delete a tuple when concurrent updates of
+ * the target tuple are not expected (for example, because we have a lock
+ * on the relation associated with the tuple).  Any failure is reported
+ * via ereport().
+ */
+void
+simple_table_delete(Relation rel, ItemPointer tid, Snapshot snapshot)
+{
+	TM_Result	result;
+	TM_FailureData tmfd;
+
+	result = table_delete(rel, tid,
+						  GetCurrentCommandId(true),
+						  snapshot, InvalidSnapshot,
+						  true /* wait for commit */ ,
+						  &tmfd, false /* changingPart */ );
+
+	switch (result)
+	{
+		case TM_SelfModified:
+			/* Tuple was already updated in current command? */
+			elog(ERROR, "tuple already updated by self");
+			break;
+
+		case TM_Ok:
+			/* done successfully */
+			break;
+
+		case TM_Updated:
+			elog(ERROR, "tuple concurrently updated");
+			break;
+
+		case TM_Deleted:
+			elog(ERROR, "tuple concurrently deleted");
+			break;
+
+		default:
+			elog(ERROR, "unrecognized table_delete status: %u", result);
+			break;
+	}
+}
+
+/*
+ * simple_table_update - replace a tuple
+ *
+ * This routine may be used to update a tuple when concurrent updates of
+ * the target tuple are not expected (for example, because we have a lock
+ * on the relation associated with the tuple).  Any failure is reported
+ * via ereport().
+ */
+void
+simple_table_update(Relation rel, ItemPointer otid,
+					TupleTableSlot *slot,
+					Snapshot snapshot,
+					bool *update_indexes)
+{
+	TM_Result	result;
+	TM_FailureData tmfd;
+	LockTupleMode lockmode;
+
+	result = table_update(rel, otid, slot,
+						  GetCurrentCommandId(true),
+						  snapshot, InvalidSnapshot,
+						  true /* wait for commit */ ,
+						  &tmfd, &lockmode, update_indexes);
+
+	switch (result)
+	{
+		case TM_SelfModified:
+			/* Tuple was already updated in current command? */
+			elog(ERROR, "tuple already updated by self");
+			break;
+
+		case TM_Ok:
+			/* done successfully */
+			break;
+
+		case TM_Updated:
+			elog(ERROR, "tuple concurrently updated");
+			break;
+
+		case TM_Deleted:
+			elog(ERROR, "tuple concurrently deleted");
+			break;
+
+		default:
+			elog(ERROR, "unrecognized table_update status: %u", result);
+			break;
+	}
+
+}
+
+
+/* ----------------------------------------------------------------------------
  * Helper functions to implement parallel scans for block oriented AMs.
  * ----------------------------------------------------------------------------
  */

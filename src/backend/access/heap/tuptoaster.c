@@ -1763,7 +1763,7 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 		 * Have a chunk, delete it
 		 */
 		if (is_speculative)
-			heap_abort_speculative(toastrel, toasttup);
+			heap_abort_speculative(toastrel, &toasttup->t_self);
 		else
 			simple_heap_delete(toastrel, &toasttup->t_self);
 	}

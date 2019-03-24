@@ -943,7 +943,6 @@ HSParser
 HSpool
 HStore
 HTAB
-HTSU_Result
 HTSV_Result
 HV
 Hash
@@ -982,7 +981,6 @@ HeapTupleData
 HeapTupleFields
 HeapTupleHeader
 HeapTupleHeaderData
-HeapUpdateFailureData
 HistControl
 HotStandbyState
 I32
@@ -2283,6 +2281,8 @@ TBMSharedIteratorState
 TBMStatus
 TBlockState
 TIDBitmap
+TM_FailureData
+TM_Result
 TOKEN_DEFAULT_DACL
 TOKEN_INFORMATION_CLASS
 TOKEN_PRIVILEGES

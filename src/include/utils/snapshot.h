@@ -184,17 +184,4 @@ typedef struct SnapshotData
 	XLogRecPtr	lsn;			/* position in the WAL stream when taken */
 } SnapshotData;
 
-/*
- * Result codes for HeapTupleSatisfiesUpdate.
- */
-typedef enum
-{
-	HeapTupleMayBeUpdated,
-	HeapTupleInvisible,
-	HeapTupleSelfUpdated,
-	HeapTupleUpdated,
-	HeapTupleBeingUpdated,
-	HeapTupleWouldBlock			/* can be returned by heap_tuple_lock */
-} HTSU_Result;
-
 #endif							/* SNAPSHOT_H */

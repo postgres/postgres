@@ -271,12 +271,12 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  */
 List *
 ExecInsertIndexTuples(TupleTableSlot *slot,
-					  ItemPointer tupleid,
 					  EState *estate,
 					  bool noDupErr,
 					  bool *specConflict,
 					  List *arbiterIndexes)
 {
+	ItemPointer tupleid = &slot->tts_tid;
 	List	   *result = NIL;
 	ResultRelInfo *resultRelInfo;
 	int			i;
@@ -287,6 +287,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	ExprContext *econtext;
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
+
+	Assert(ItemPointerIsValid(tupleid));
 
 	/*
 	 * Get information from the result relation info structure.

@@ -198,12 +198,7 @@ extern LockTupleMode ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo);
 extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti, bool missing_ok);
 extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
-			 Relation relation, Index rti, LockTupleMode lockmode,
-			 ItemPointer tid, TransactionId priorXmax);
-extern bool EvalPlanQualFetch(EState *estate, Relation relation,
-				  LockTupleMode lockmode, LockWaitPolicy wait_policy,
-				  ItemPointer tid, TransactionId priorXmax,
-				  TupleTableSlot *slot);
+			 Relation relation, Index rti, TupleTableSlot *testslot);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
 				 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
@@ -573,9 +568,8 @@ extern TupleTableSlot *ExecGetReturningSlot(EState *estate, ResultRelInfo *relIn
  */
 extern void ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
-extern List *ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
-					  EState *estate, bool noDupErr, bool *specConflict,
-					  List *arbiterIndexes);
+extern List *ExecInsertIndexTuples(TupleTableSlot *slot, EState *estate, bool noDupErr,
+					  bool *specConflict, List *arbiterIndexes);
 extern bool ExecCheckIndexConstraints(TupleTableSlot *slot, EState *estate,
 						  ItemPointer conflictTid, List *arbiterIndexes);
 extern void check_exclusion_constraint(Relation heap, Relation index,
