@@ -700,8 +700,8 @@ static inline void
 table_complete_speculative(Relation rel, TupleTableSlot *slot, uint32 specToken,
 						   bool succeeded)
 {
-	return rel->rd_tableam->tuple_complete_speculative(rel, slot, specToken,
-													   succeeded);
+	rel->rd_tableam->tuple_complete_speculative(rel, slot, specToken,
+												succeeded);
 }
 
 /*
