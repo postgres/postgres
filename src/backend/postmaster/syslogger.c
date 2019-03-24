@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include "common/file_perm.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -1447,12 +1448,14 @@ set_next_rotation_time(void)
  * log messages.  Useful for finding the name(s) of the current log file(s)
  * when there is time-based logfile rotation.  Filenames are stored in a
  * temporary file and which is renamed into the final destination for
- * atomicity.
+ * atomicity.  The file is opened with the same permissions as what gets
+ * created in the data directory and has proper buffering options.
  */
 static void
 update_metainfo_datafile(void)
 {
 	FILE	   *fh;
+	mode_t		oumask;
 
 	if (!(Log_destination & LOG_DESTINATION_STDERR) &&
 		!(Log_destination & LOG_DESTINATION_CSVLOG))
@@ -1465,7 +1468,21 @@ update_metainfo_datafile(void)
 		return;
 	}
 
-	if ((fh = logfile_open(LOG_METAINFO_DATAFILE_TMP, "w", true)) == NULL)
+	/* use the same permissions as the data directory for the new file */
+	oumask = umask(pg_mode_mask);
+	fh = fopen(LOG_METAINFO_DATAFILE_TMP, "w");
+	umask(oumask);
+
+	if (fh)
+	{
+		setvbuf(fh, NULL, PG_IOLBF, 0);
+
+#ifdef WIN32
+		/* use CRLF line endings on Windows */
+		_setmode(_fileno(fh), _O_TEXT);
+#endif
+	}
+	else
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
