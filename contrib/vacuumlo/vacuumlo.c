@@ -316,7 +316,7 @@ vacuumlo(const char *database, const struct _param *param)
 
 	deleted = 0;
 
-	while (1)
+	do
 	{
 		res = PQexec(conn, buf);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -354,8 +354,7 @@ vacuumlo(const char *database, const struct _param *param)
 					if (PQtransactionStatus(conn) == PQTRANS_INERROR)
 					{
 						success = false;
-						PQclear(res);
-						break;
+						break;	/* out of inner for-loop */
 					}
 				}
 				else
@@ -393,7 +392,7 @@ vacuumlo(const char *database, const struct _param *param)
 		}
 
 		PQclear(res);
-	}
+	} while (success);
 
 	/*
 	 * That's all folks!
