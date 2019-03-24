@@ -445,6 +445,29 @@ $$;
 CALL transaction_test11();
 
 
+-- transaction chain
+
+TRUNCATE test1;
+
+DO LANGUAGE plpgsql $$
+BEGIN
+    ROLLBACK;
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    FOR i IN 0..3 LOOP
+        RAISE INFO 'transaction_isolation = %', current_setting('transaction_isolation');
+        INSERT INTO test1 (a) VALUES (i);
+        IF i % 2 = 0 THEN
+            COMMIT AND CHAIN;
+        ELSE
+            ROLLBACK AND CHAIN;
+        END IF;
+    END LOOP;
+END
+$$;
+
+SELECT * FROM test1;
+
+
 DROP TABLE test1;
 DROP TABLE test2;
 DROP TABLE test3;

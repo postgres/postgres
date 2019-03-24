@@ -1510,6 +1510,7 @@ _equalTransactionStmt(const TransactionStmt *a, const TransactionStmt *b)
 	COMPARE_NODE_FIELD(options);
 	COMPARE_STRING_FIELD(savepoint_name);
 	COMPARE_STRING_FIELD(gid);
+	COMPARE_SCALAR_FIELD(chain);
 
 	return true;
 }

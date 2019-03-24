@@ -440,7 +440,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_COMMIT:
-						if (!EndTransactionBlock())
+						if (!EndTransactionBlock(stmt->chain))
 						{
 							/* report unsuccessful commit in completionTag */
 							if (completionTag)
@@ -471,7 +471,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_ROLLBACK:
-						UserAbortTransactionBlock();
+						UserAbortTransactionBlock(stmt->chain);
 						break;
 
 					case TRANS_STMT_SAVEPOINT:

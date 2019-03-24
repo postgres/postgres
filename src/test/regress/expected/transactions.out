@@ -659,6 +659,197 @@ ERROR:  portal "ctt" cannot be run
 COMMIT;
 DROP FUNCTION create_temp_tab();
 DROP FUNCTION invert(x float8);
+-- Tests for AND CHAIN
+CREATE TABLE abc (a int);
+-- set nondefault value so we have something to override below
+SET default_transaction_read_only = on;
+START TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE, DEFERRABLE;
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ repeatable read
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ on
+(1 row)
+
+INSERT INTO abc VALUES (1);
+INSERT INTO abc VALUES (2);
+COMMIT AND CHAIN;  -- TBLOCK_END
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ repeatable read
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ on
+(1 row)
+
+INSERT INTO abc VALUES ('error');
+ERROR:  invalid input syntax for type integer: "error"
+LINE 1: INSERT INTO abc VALUES ('error');
+                                ^
+INSERT INTO abc VALUES (3);  -- check it's really aborted
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+COMMIT AND CHAIN;  -- TBLOCK_ABORT_END
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ repeatable read
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ on
+(1 row)
+
+INSERT INTO abc VALUES (4);
+COMMIT;
+START TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE, DEFERRABLE;
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ repeatable read
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ on
+(1 row)
+
+SAVEPOINT x;
+INSERT INTO abc VALUES ('error');
+ERROR:  invalid input syntax for type integer: "error"
+LINE 1: INSERT INTO abc VALUES ('error');
+                                ^
+COMMIT AND CHAIN;  -- TBLOCK_ABORT_PENDING
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ repeatable read
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ on
+(1 row)
+
+INSERT INTO abc VALUES (5);
+COMMIT;
+-- different mix of options just for fun
+START TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ WRITE, NOT DEFERRABLE;
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ serializable
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ off
+(1 row)
+
+INSERT INTO abc VALUES (6);
+ROLLBACK AND CHAIN;  -- TBLOCK_ABORT_PENDING
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ serializable
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ off
+(1 row)
+
+INSERT INTO abc VALUES ('error');
+ERROR:  invalid input syntax for type integer: "error"
+LINE 1: INSERT INTO abc VALUES ('error');
+                                ^
+ROLLBACK AND CHAIN;  -- TBLOCK_ABORT_END
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ serializable
+(1 row)
+
+SHOW transaction_read_only;
+ transaction_read_only 
+-----------------------
+ off
+(1 row)
+
+SHOW transaction_deferrable;
+ transaction_deferrable 
+------------------------
+ off
+(1 row)
+
+ROLLBACK;
+SELECT * FROM abc ORDER BY 1;
+ a 
+---
+ 1
+ 2
+ 4
+ 5
+(4 rows)
+
+RESET default_transaction_read_only;
+DROP TABLE abc;
 -- Test assorted behaviors around the implicit transaction block created
 -- when multiple SQL commands are sent in a single Query message.  These
 -- tests rely on the fact that psql will not break SQL commands apart at a

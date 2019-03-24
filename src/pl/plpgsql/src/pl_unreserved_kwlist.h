@@ -29,10 +29,12 @@
 /* name, value */
 PG_KEYWORD("absolute", K_ABSOLUTE)
 PG_KEYWORD("alias", K_ALIAS)
+PG_KEYWORD("and", K_AND)
 PG_KEYWORD("array", K_ARRAY)
 PG_KEYWORD("assert", K_ASSERT)
 PG_KEYWORD("backward", K_BACKWARD)
 PG_KEYWORD("call", K_CALL)
+PG_KEYWORD("chain", K_CHAIN)
 PG_KEYWORD("close", K_CLOSE)
 PG_KEYWORD("collate", K_COLLATE)
 PG_KEYWORD("column", K_COLUMN)

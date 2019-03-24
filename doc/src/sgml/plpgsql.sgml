@@ -3490,6 +3490,20 @@ CALL transaction_test1();
 </programlisting>
    </para>
 
+   <indexterm zone="plpgsql-transaction-chain">
+    <primary>chained transactions</primary>
+    <secondary>in PL/pgSQL</secondary>
+   </indexterm>
+
+   <para id="plpgsql-transaction-chain">
+    A new transaction starts out with default transaction characteristics such
+    as transaction isolation level.  In cases where transactions are committed
+    in a loop, it might be desirable to start new transactions automatically
+    with the same characteristics as the previous one.  The commands
+    <command>COMMIT AND CHAIN</command> and <command>ROLLBACK AND
+    CHAIN</command> accomplish this.
+   </para>
+
    <para>
     Transaction control is only possible in <command>CALL</command> or
     <command>DO</command> invocations from the top level or nested

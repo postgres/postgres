@@ -443,7 +443,7 @@ T213	INSTEAD OF triggers			YES
 T231	Sensitive cursors			YES	
 T241	START TRANSACTION statement			YES	
 T251	SET TRANSACTION statement: LOCAL option			NO	
-T261	Chained transactions			NO	
+T261	Chained transactions			YES	
 T271	Savepoints			YES	
 T272	Enhanced savepoint management			NO	
 T281	SELECT privilege with column granularity			YES	

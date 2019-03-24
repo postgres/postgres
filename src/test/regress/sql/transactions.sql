@@ -419,6 +419,69 @@ DROP FUNCTION create_temp_tab();
 DROP FUNCTION invert(x float8);
 
 
+-- Tests for AND CHAIN
+
+CREATE TABLE abc (a int);
+
+-- set nondefault value so we have something to override below
+SET default_transaction_read_only = on;
+
+START TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE, DEFERRABLE;
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+INSERT INTO abc VALUES (1);
+INSERT INTO abc VALUES (2);
+COMMIT AND CHAIN;  -- TBLOCK_END
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+INSERT INTO abc VALUES ('error');
+INSERT INTO abc VALUES (3);  -- check it's really aborted
+COMMIT AND CHAIN;  -- TBLOCK_ABORT_END
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+INSERT INTO abc VALUES (4);
+COMMIT;
+
+START TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE, DEFERRABLE;
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+SAVEPOINT x;
+INSERT INTO abc VALUES ('error');
+COMMIT AND CHAIN;  -- TBLOCK_ABORT_PENDING
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+INSERT INTO abc VALUES (5);
+COMMIT;
+
+-- different mix of options just for fun
+START TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ WRITE, NOT DEFERRABLE;
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+INSERT INTO abc VALUES (6);
+ROLLBACK AND CHAIN;  -- TBLOCK_ABORT_PENDING
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+INSERT INTO abc VALUES ('error');
+ROLLBACK AND CHAIN;  -- TBLOCK_ABORT_END
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+ROLLBACK;
+
+SELECT * FROM abc ORDER BY 1;
+
+RESET default_transaction_read_only;
+
+DROP TABLE abc;
+
+
 -- Test assorted behaviors around the implicit transaction block created
 -- when multiple SQL commands are sent in a single Query message.  These
 -- tests rely on the fact that psql will not break SQL commands apart at a

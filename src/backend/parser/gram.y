@@ -312,6 +312,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <boolean>	opt_or_replace
 				opt_grant_grant_option opt_grant_admin_option
 				opt_nowait opt_if_exists opt_with_data
+				opt_transaction_chain
 %type <ival>	opt_nowait_or_skip
 
 %type <list>	OptRoleList AlterOptRoleList
@@ -9792,11 +9793,12 @@ UnlistenStmt:
  *****************************************************************************/
 
 TransactionStmt:
-			ABORT_P opt_transaction
+			ABORT_P opt_transaction opt_transaction_chain
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK;
 					n->options = NIL;
+					n->chain = $3;
 					$$ = (Node *)n;
 				}
 			| BEGIN_P opt_transaction transaction_mode_list_or_empty
@@ -9813,25 +9815,28 @@ TransactionStmt:
 					n->options = $3;
 					$$ = (Node *)n;
 				}
-			| COMMIT opt_transaction
+			| COMMIT opt_transaction opt_transaction_chain
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT;
 					n->options = NIL;
+					n->chain = $3;
 					$$ = (Node *)n;
 				}
-			| END_P opt_transaction
+			| END_P opt_transaction opt_transaction_chain
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT;
 					n->options = NIL;
+					n->chain = $3;
 					$$ = (Node *)n;
 				}
-			| ROLLBACK opt_transaction
+			| ROLLBACK opt_transaction opt_transaction_chain
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK;
 					n->options = NIL;
+					n->chain = $3;
 					$$ = (Node *)n;
 				}
 			| SAVEPOINT ColId
@@ -9929,6 +9934,12 @@ transaction_mode_list_or_empty:
 			transaction_mode_list
 			| /* EMPTY */
 					{ $$ = NIL; }
+		;
+
+opt_transaction_chain:
+			AND CHAIN		{ $$ = true; }
+			| AND NO CHAIN	{ $$ = false; }
+			| /* EMPTY */	{ $$ = false; }
 		;
 
 

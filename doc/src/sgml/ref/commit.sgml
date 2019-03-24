@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-COMMIT [ WORK | TRANSACTION ]
+COMMIT [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -38,6 +38,10 @@ COMMIT [ WORK | TRANSACTION ]
  <refsect1>
   <title>Parameters</title>
 
+  <indexterm zone="sql-commit-chain">
+   <primary>chained transactions</primary>
+  </indexterm>
+
   <variablelist>
    <varlistentry>
     <term><literal>WORK</literal></term>
@@ -45,6 +49,18 @@ COMMIT [ WORK | TRANSACTION ]
     <listitem>
      <para>
       Optional key words. They have no effect.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="sql-commit-chain">
+    <term><literal>AND CHAIN</literal></term>
+    <listitem>
+     <para>
+      If <literal>AND CHAIN</literal> is specified, a new transaction is
+      immediately started with the same transaction characteristics (see <xref
+      linkend="sql-set-transaction"/>) as the just finished one.  Otherwise,
+      no new transaction is started.
      </para>
     </listitem>
    </varlistentry>
@@ -79,9 +95,8 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   The SQL standard only specifies the two forms
-   <literal>COMMIT</literal> and <literal>COMMIT
-   WORK</literal>. Otherwise, this command is fully conforming.
+   The command <command>COMMIT</command> conforms to the SQL standard.  The
+   form <literal>COMMIT TRANSACTION</literal> is a PostgreSQL extension.
   </para>
  </refsect1>
 

@@ -4376,6 +4376,7 @@ int SPI_freeplan(SPIPlanPtr <parameter>plan</parameter>)
 
 <refentry id="spi-spi-commit">
  <indexterm><primary>SPI_commit</primary></indexterm>
+ <indexterm><primary>SPI_commit_and_chain</primary></indexterm>
 
  <refmeta>
   <refentrytitle>SPI_commit</refentrytitle>
@@ -4384,12 +4385,17 @@ int SPI_freeplan(SPIPlanPtr <parameter>plan</parameter>)
 
  <refnamediv>
   <refname>SPI_commit</refname>
+  <refname>SPI_commit_and_chain</refname>
   <refpurpose>commit the current transaction</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>
 void SPI_commit(void)
+</synopsis>
+
+<synopsis>
+void SPI_commit_and_chain(void)
 </synopsis>
  </refsynopsisdiv>
 
@@ -4406,7 +4412,14 @@ void SPI_commit(void)
   </para>
 
   <para>
-   This function can only be executed if the SPI connection has been set as
+   <function>SPI_commit_and_chain</function> is the same, but a new
+   transaction is immediately started with the same transaction
+   characteristics as the just finished one, like with the SQL command
+   <command>COMMIT AND CHAIN</command>.
+  </para>
+
+  <para>
+   These functions can only be executed if the SPI connection has been set as
    nonatomic in the call to <function>SPI_connect_ext</function>.
   </para>
  </refsect1>
@@ -4416,6 +4429,7 @@ void SPI_commit(void)
 
 <refentry id="spi-spi-rollback">
  <indexterm><primary>SPI_rollback</primary></indexterm>
+ <indexterm><primary>SPI_rollback_and_chain</primary></indexterm>
 
  <refmeta>
   <refentrytitle>SPI_rollback</refentrytitle>
@@ -4424,12 +4438,17 @@ void SPI_commit(void)
 
  <refnamediv>
   <refname>SPI_rollback</refname>
+  <refname>SPI_rollback_and_chain</refname>
   <refpurpose>abort the current transaction</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>
 void SPI_rollback(void)
+</synopsis>
+
+<synopsis>
+void SPI_rollback_and_chain(void)
 </synopsis>
  </refsynopsisdiv>
 
@@ -4444,9 +4463,15 @@ void SPI_rollback(void)
    using <function>SPI_start_transaction</function> before further database
    actions can be executed.
   </para>
+  <para>
+   <function>SPI_rollback_and_chain</function> is the same, but a new
+   transaction is immediately started with the same transaction
+   characteristics as the just finished one, like with the SQL command
+   <command>ROLLBACK AND CHAIN</command>.
+  </para>
 
   <para>
-   This function can only be executed if the SPI connection has been set as
+   These functions can only be executed if the SPI connection has been set as
    nonatomic in the call to <function>SPI_connect_ext</function>.
   </para>
  </refsect1>

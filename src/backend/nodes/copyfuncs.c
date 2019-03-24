@@ -3666,6 +3666,7 @@ _copyTransactionStmt(const TransactionStmt *from)
 	COPY_NODE_FIELD(options);
 	COPY_STRING_FIELD(savepoint_name);
 	COPY_STRING_FIELD(gid);
+	COPY_SCALAR_FIELD(chain);
 
 	return newnode;
 }
