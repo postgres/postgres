@@ -490,7 +490,6 @@ typedef enum MetaCommand
 	META_SETSHELL,				/* \setshell */
 	META_SHELL,					/* \shell */
 	META_SLEEP,					/* \sleep */
-	META_CSET,					/* \cset */
 	META_GSET,					/* \gset */
 	META_IF,					/* \if */
 	META_ELIF,					/* \elif */
@@ -521,11 +520,9 @@ static const char *QUERYMODE[] = {"simple", "extended", "prepared"};
  * argv			Command arguments, the first of which is the command or SQL
  *				string itself.  For SQL commands, after post-processing
  *				argv[0] is the same as 'lines' with variables substituted.
- * nqueries		In a multi-command SQL line, the number of queries.
- * varprefix 	SQL commands terminated with \gset or \cset have this set
+ * varprefix 	SQL commands terminated with \gset have this set
  *				to a non NULL value.  If nonempty, it's used to prefix the
  *				variable name that receives the value.
- * varprefix_max Allocated size of the varprefix array.
  * expr			Parsed expression, if needed.
  * stats		Time spent in this command.
  */
@@ -537,9 +534,7 @@ typedef struct Command
 	MetaCommand meta;
 	int			argc;
 	char	   *argv[MAX_ARGS];
-	int			nqueries;
-	char	  **varprefix;
-	int			varprefix_max;
+	char	   *varprefix;
 	PgBenchExpr *expr;
 	SimpleStats stats;
 } Command;
@@ -619,7 +614,6 @@ static void doLog(TState *thread, CState *st,
 static void processXactStats(TState *thread, CState *st, instr_time *now,
 				 bool skipped, StatsData *agg);
 static void pgbench_error(const char *fmt,...) pg_attribute_printf(1, 2);
-static void allocate_command_varprefix(Command *cmd, int totalqueries);
 static void addScript(ParsedScript script);
 static void *threadRun(void *arg);
 static void finishCon(CState *st);
@@ -2614,8 +2608,6 @@ getMetaCommand(const char *cmd)
 		mc = META_ELSE;
 	else if (pg_strcasecmp(cmd, "endif") == 0)
 		mc = META_ENDIF;
-	else if (pg_strcasecmp(cmd, "cset") == 0)
-		mc = META_CSET;
 	else if (pg_strcasecmp(cmd, "gset") == 0)
 		mc = META_GSET;
 	else
@@ -2848,24 +2840,30 @@ sendCommand(CState *st, Command *command)
 /*
  * Process query response from the backend.
  *
- * If varprefix is not NULL, it's the array of variable prefix names where to
- * store the results.
+ * If varprefix is not NULL, it's the variable name prefix where to store
+ * the results of the *last* command.
  *
  * Returns true if everything is A-OK, false if any error occurs.
  */
 static bool
-readCommandResponse(CState *st, char **varprefix)
+readCommandResponse(CState *st, char *varprefix)
 {
 	PGresult   *res;
 	int			qrynum = 0;
 
-	while ((res = PQgetResult(st->con)) != NULL)
+	res = PQgetResult(st->con);
+
+	while (res != NULL)
 	{
+		/* look now at the next result to know whether it is the last */
+		PGresult	*next_res = PQgetResult(st->con);
+		bool is_last = (next_res == NULL);
+
 		switch (PQresultStatus(res))
 		{
 			case PGRES_COMMAND_OK:	/* non-SELECT commands */
 			case PGRES_EMPTY_QUERY: /* may be used for testing no-op overhead */
-				if (varprefix && varprefix[qrynum] != NULL)
+				if (is_last && varprefix != NULL)
 				{
 					fprintf(stderr,
 							"client %d script %d command %d query %d: expected one row, got %d\n",
@@ -2876,7 +2874,7 @@ readCommandResponse(CState *st, char **varprefix)
 				break;
 
 			case PGRES_TUPLES_OK:
-				if (varprefix && varprefix[qrynum] != NULL)
+				if (is_last && varprefix != NULL)
 				{
 					if (PQntuples(res) != 1)
 					{
@@ -2895,9 +2893,8 @@ readCommandResponse(CState *st, char **varprefix)
 						char	   *varname = PQfname(res, fld);
 
 						/* allocate varname only if necessary, freed below */
-						if (*varprefix[qrynum] != '\0')
-							varname =
-								psprintf("%s%s", varprefix[qrynum], varname);
+						if (*varprefix != '\0')
+							varname = psprintf("%s%s", varprefix, varname);
 
 						/* store result as a string */
 						if (!putVariable(st, "gset", varname,
@@ -2914,7 +2911,7 @@ readCommandResponse(CState *st, char **varprefix)
 							return false;
 						}
 
-						if (*varprefix[qrynum] != '\0')
+						if (*varprefix != '\0')
 							pg_free(varname);
 					}
 				}
@@ -2935,6 +2932,7 @@ readCommandResponse(CState *st, char **varprefix)
 
 		PQclear(res);
 		qrynum++;
+		res = next_res;
 	}
 
 	if (qrynum == 0)
@@ -4248,7 +4246,7 @@ skip_sql_comments(char *sql_command)
  * struct.
  */
 static Command *
-create_sql_command(PQExpBuffer buf, const char *source, int numqueries)
+create_sql_command(PQExpBuffer buf, const char *source)
 {
 	Command    *my_command;
 	char	   *p = skip_sql_comments(buf->data);
@@ -4265,9 +4263,7 @@ create_sql_command(PQExpBuffer buf, const char *source, int numqueries)
 	my_command->meta = META_NONE;
 	my_command->argc = 0;
 	memset(my_command->argv, 0, sizeof(my_command->argv));
-	my_command->nqueries = numqueries;
 	my_command->varprefix = NULL;	/* allocated later, if needed */
-	my_command->varprefix_max = 0;
 	my_command->expr = NULL;
 	initSimpleStats(&my_command->stats);
 
@@ -4284,37 +4280,12 @@ free_command(Command *command)
 	for (int i = 0; i < command->argc; i++)
 		pg_free(command->argv[i]);
 	if (command->varprefix)
-	{
-		for (int i = 0; i < command->varprefix_max; i++)
-			if (command->varprefix[i] &&
-				command->varprefix[i][0] != '\0')	/* see ParseScript */
-				pg_free(command->varprefix[i]);
 		pg_free(command->varprefix);
-	}
 	/*
 	 * It should also free expr recursively, but this is currently not needed
-	 * as only \{g,c}set commands (which do not have an expression) are freed.
+	 * as only gset commands (which do not have an expression) are freed.
 	 */
 	pg_free(command);
-}
-
-/*
- * append "more" text to current compound command which had been interrupted
- * by \cset.
- */
-static void
-append_sql_command(Command *my_command, char *more, int numqueries)
-{
-	Assert(my_command->type == SQL_COMMAND && my_command->lines.len > 0);
-
-	more = skip_sql_comments(more);
-	if (more == NULL)
-		return;
-
-	/* append command text, embedding a ';' in place of the \cset */
-	appendPQExpBuffer(&my_command->lines, ";\n%s", more);
-
-	my_command->nqueries += numqueries;
 }
 
 /*
@@ -4348,35 +4319,6 @@ postprocess_sql_command(Command *my_command)
 		default:
 			exit(1);
 	}
-}
-
-/*
- * Determine the command's varprefix size needed and allocate memory for it
- */
-static void
-allocate_command_varprefix(Command *cmd, int totalqueries)
-{
-	int			new_max;
-
-	/* sufficient space already allocated? */
-	if (totalqueries <= cmd->varprefix_max)
-		return;
-
-	/* determine the new array size */
-	new_max = Max(cmd->varprefix_max, 2);
-	while (new_max < totalqueries)
-		new_max *= 2;
-
-	/* enlarge the array, zero-initializing the allocated space */
-	if (cmd->varprefix == NULL)
-		cmd->varprefix = pg_malloc0(sizeof(char *) * new_max);
-	else
-	{
-		cmd->varprefix = pg_realloc(cmd->varprefix, sizeof(char *) * new_max);
-		memset(cmd->varprefix + cmd->varprefix_max, 0,
-			   sizeof(char *) * (new_max - cmd->varprefix_max));
-	}
-	cmd->varprefix_max = new_max;
 }
 
 /*
@@ -4549,7 +4491,7 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 			syntax_error(source, lineno, my_command->first_line, my_command->argv[0],
 						 "unexpected argument", NULL, -1);
 	}
-	else if (my_command->meta == META_CSET || my_command->meta == META_GSET)
+	else if (my_command->meta == META_GSET)
 	{
 		if (my_command->argc > 2)
 			syntax_error(source, lineno, my_command->first_line, my_command->argv[0],
@@ -4637,7 +4579,6 @@ ParseScript(const char *script, const char *desc, int weight)
 	PQExpBufferData line_buf;
 	int			alloc_num;
 	int			index;
-	bool		saw_cset = false;
 	int			lineno;
 	int			start_offset;
 
@@ -4674,31 +4615,18 @@ ParseScript(const char *script, const char *desc, int weight)
 		PsqlScanResult sr;
 		promptStatus_t prompt;
 		Command    *command = NULL;
-		int			semicolons;
 
 		resetPQExpBuffer(&line_buf);
 		lineno = expr_scanner_get_lineno(sstate, start_offset);
 
 		sr = psql_scan(sstate, &line_buf, &prompt);
 
-		semicolons = psql_scan_get_escaped_semicolons(sstate);
+		/* If we collected a new SQL command, process that */
+		command = create_sql_command(&line_buf, desc);
 
-		if (saw_cset)
-		{
-			/* the previous multi-line command ended with \cset */
-			append_sql_command(ps.commands[index - 1], line_buf.data,
-							   semicolons + 1);
-			saw_cset = false;
-		}
-		else
-		{
-			/* If we collected a new SQL command, process that */
-			command = create_sql_command(&line_buf, desc, semicolons + 1);
-
-			/* store new command */
-			if (command)
-				ps.commands[index++] = command;
-		}
+		/* store new command */
+		if (command)
+			ps.commands[index++] = command;
 
 		/* If we reached a backslash, process that */
 		if (sr == PSCAN_BACKSLASH)
@@ -4708,56 +4636,31 @@ ParseScript(const char *script, const char *desc, int weight)
 			if (command)
 			{
 				/*
-				 * If this is gset/cset, merge into the preceding command. (We
+				 * If this is gset, merge into the preceding command. (We
 				 * don't use a command slot in this case).
 				 */
-				if (command->meta == META_CSET ||
-					command->meta == META_GSET)
+				if (command->meta == META_GSET)
 				{
-					int			cindex;
 					Command    *cmd;
-
-					/*
-					 * If \cset is seen, set flag to leave the command pending
-					 * for the next iteration to process.
-					 */
-					saw_cset = command->meta == META_CSET;
 
 					if (index == 0)
 						syntax_error(desc, lineno, NULL, NULL,
-									 "\\gset/cset cannot start a script",
+									 "\\gset must follow a SQL command",
 									 NULL, -1);
 
 					cmd = ps.commands[index - 1];
 
-					if (cmd->type != SQL_COMMAND)
+					if (cmd->type != SQL_COMMAND ||
+						cmd->varprefix != NULL)
 						syntax_error(desc, lineno, NULL, NULL,
-									 "\\gset/cset must follow a SQL command",
+									 "\\gset must follow a SQL command",
 									 cmd->first_line, -1);
-
-					/* this {g,c}set applies to the previous query */
-					cindex = cmd->nqueries - 1;
-
-					/*
-					 * now that we know there's a {g,c}set in this command,
-					 * allocate space for the variable name prefix array.
-					 */
-					allocate_command_varprefix(cmd, cmd->nqueries);
-
-					/*
-					 * Don't allow the previous command be a gset/cset; that
-					 * would make no sense.
-					 */
-					if (cmd->varprefix[cindex] != NULL)
-						syntax_error(desc, lineno, NULL, NULL,
-									 "\\gset/cset cannot follow one another",
-									 NULL, -1);
 
 					/* get variable prefix */
 					if (command->argc <= 1 || command->argv[1][0] == '\0')
-						cmd->varprefix[cindex] = "";	/* avoid strdup */
+						cmd->varprefix = pg_strdup("");
 					else
-						cmd->varprefix[cindex] = pg_strdup(command->argv[1]);
+						cmd->varprefix = pg_strdup(command->argv[1]);
 
 					/* cleanup unused command */
 					free_command(command);
