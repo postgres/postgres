@@ -6,7 +6,7 @@
  * IntegerSet provides an in-memory data structure to hold a set of
  * arbitrary 64-bit integers.  Internally, the values are stored in a
  * B-tree, with a special packed representation at the leaf level using
- * the Simple-8b algorithm, which can pack hold clusters of nearby values
+ * the Simple-8b algorithm, which can pack clusters of nearby values
  * very tightly.
  *
  * Memory consumption depends on the number of values stored, but also
@@ -21,15 +21,18 @@
  * Interface
  * ---------
  *
- *	intset_create			- Create a new empty set.
- *	intset_add_member		- Add an integer to the set.
+ *	intset_create			- Create a new, empty set
+ *	intset_add_member		- Add an integer to the set
  *	intset_is_member		- Test if an integer is in the set
  *	intset_begin_iterate	- Begin iterating through all integers in set
- *	intset_iterate_next		- Return next integer
+ *	intset_iterate_next		- Return next set member, if any
  *
- * intset_create() creates the set in the current memory context.  Note
- * that there is no function to free an integer set.  If you need to do that,
- * create a dedicated memory context to hold it, and destroy the memory
+ * intset_create() creates the set in the current memory context.  Subsequent
+ * operations that add to the data structure will continue to allocate from
+ * that same context, even if it's not current anymore.
+ *
+ * Note that there is no function to free an integer set.  If you need to do
+ * that, create a dedicated memory context to hold it, and destroy the memory
  * context instead.
  *
  *
@@ -43,7 +46,7 @@
  *
  * - No support for removing values.
  *
- * None of these limitations are fundamental to the data structure, and
+ * None of these limitations are fundamental to the data structure, so they
  * could be lifted if needed, by writing some new code.  But the current
  * users of this facility don't need them.
  *
@@ -53,7 +56,7 @@
  *
  * Simple-8b encoding is based on:
  *
- * Vo Ngoc Anh , Alistair Moffat, Index compression using 64-bit words,
+ * Vo Ngoc Anh, Alistair Moffat, Index compression using 64-bit words,
  *   Software - Practice & Experience, v.40 n.2, p.131-147, February 2010
  *   (https://doi.org/10.1002/spe.948)
  *
@@ -75,9 +78,9 @@
 
 
 /*
- * Maximum number of integers that can be encoded in a single Single-8b
+ * Maximum number of integers that can be encoded in a single Simple-8b
  * codeword. (Defined here before anything else, so that we can size arrays
- * using this).
+ * using this.)
  */
 #define SIMPLE8B_MAX_VALUES_PER_CODEWORD 240
 
@@ -111,14 +114,14 @@
  * Node structures, for the in-memory B-tree.
  *
  * An internal node holds a number of downlink pointers to leaf nodes, or
- * to internal nodes on lower level.  For each downlink, the key value
- * corresponding the lower level node is stored in a sorted array.  The
+ * to internal nodes on a lower level.  For each downlink, the key value
+ * corresponding to the lower level node is stored in a sorted array.  The
  * stored key values are low keys.  In other words, if the downlink has value
  * X, then all items stored on that child are >= X.
  *
  * Each leaf node holds a number of "items", with a varying number of
  * integers packed into each item.  Each item consists of two 64-bit words:
- * The first word holds first integer stored in the item, in plain format.
+ * The first word holds the first integer stored in the item, in plain format.
  * The second word contains between 0 and 240 more integers, packed using
  * Simple-8b encoding.  By storing the first integer in plain, unpacked,
  * format, we can use binary search to quickly find an item that holds (or
@@ -127,7 +130,7 @@
  * with similar values.
  *
  * Each leaf node also has a pointer to the next leaf node, so that the leaf
- * nodes can be easily walked from beginning to end, when iterating.
+ * nodes can be easily walked from beginning to end when iterating.
  */
 typedef struct intset_node intset_node;
 typedef struct intset_leaf_node intset_leaf_node;
@@ -136,8 +139,8 @@ typedef struct intset_internal_node intset_internal_node;
 /* Common structure of both leaf and internal nodes. */
 struct intset_node
 {
-	uint16		level;
-	uint16		num_items;
+	uint16		level;			/* tree level of this node */
+	uint16		num_items;		/* number of items in this node */
 };
 
 /* Internal node */
@@ -178,7 +181,7 @@ struct intset_leaf_node
 /*
  * We buffer insertions in a simple array, before packing and inserting them
  * into the B-tree.  MAX_BUFFERED_VALUES sets the size of the buffer.  The
- * encoder assumes that it is large enough, that we can always fill a leaf
+ * encoder assumes that it is large enough that we can always fill a leaf
  * item with buffered new items.  In other words, MAX_BUFFERED_VALUES must be
  * larger than MAX_VALUES_PER_LEAF_ITEM.  For efficiency, make it much larger.
  */
@@ -187,9 +190,9 @@ struct intset_leaf_node
 /*
  * IntegerSet is the top-level object representing the set.
  *
- * The integers are stored in an in-memory B-tree structure, and an array
+ * The integers are stored in an in-memory B-tree structure, plus an array
  * for newly-added integers.  IntegerSet also tracks information about memory
- * usage, as well as the current position, when iterating the set with
+ * usage, as well as the current position when iterating the set with
  * intset_begin_iterate / intset_iterate_next.
  */
 struct IntegerSet
@@ -232,25 +235,30 @@ struct IntegerSet
 	 * Iterator support.
 	 *
 	 * 'iter_values' is an array of integers ready to be returned to the
-	 * caller.  'item_node' and 'item_itemno' point to the leaf node, and item
-	 * within the leaf node, to get the next batch of values from.
+	 * caller; 'iter_num_values' is the length of that array, and
+	 * 'iter_valueno' is the next index.  'iter_node' and 'item_itemno' point
+	 * to the leaf node, and item within the leaf node, to get the next batch
+	 * of values from.
 	 *
-	 * Normally, 'iter_values' points 'iter_values_buf', which holds items
-	 * decoded from a leaf item. But after we have scanned the whole B-tree,
+	 * Normally, 'iter_values' points to 'iter_values_buf', which holds items
+	 * decoded from a leaf item.  But after we have scanned the whole B-tree,
 	 * we iterate through all the unbuffered values, too, by pointing
 	 * iter_values to 'buffered_values'.
 	 */
-	uint64	   *iter_values;
+	bool		iter_active;	/* is iteration in progress? */
+
+	const uint64 *iter_values;
 	int			iter_num_values;	/* number of elements in 'iter_values' */
-	int			iter_valueno;	/* index into 'iter_values' */
+	int			iter_valueno;	/* next index into 'iter_values' */
+
 	intset_leaf_node *iter_node;	/* current leaf node */
-	int			iter_itemno;	/* next item 'iter_node' to decode */
+	int			iter_itemno;	/* next item in 'iter_node' to decode */
 
 	uint64		iter_values_buf[MAX_VALUES_PER_LEAF_ITEM];
 };
 
 /*
- * prototypes for internal functions.
+ * Prototypes for internal functions.
  */
 static void intset_update_upper(IntegerSet *intset, int level,
 					intset_node *new_node, uint64 new_node_item);
@@ -261,7 +269,7 @@ static int intset_binsrch_uint64(uint64 value, uint64 *arr, int arr_elems,
 static int intset_binsrch_leaf(uint64 value, leaf_item *arr, int arr_elems,
 					bool nextkey);
 
-static uint64 simple8b_encode(uint64 *ints, int *num_encoded, uint64 base);
+static uint64 simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base);
 static int	simple8b_decode(uint64 codeword, uint64 *decoded, uint64 base);
 static bool simple8b_contains(uint64 codeword, uint64 key, uint64 base);
 
@@ -270,18 +278,14 @@ static bool simple8b_contains(uint64 codeword, uint64 key, uint64 base);
  * Create a new, initially empty, integer set.
  *
  * The integer set is created in the current memory context.
+ * We will do all subsequent allocations in the same context, too, regardless
+ * of which memory context is current when new integers are added to the set.
  */
 IntegerSet *
 intset_create(void)
 {
 	IntegerSet *intset;
 
-	/*
-	 * Allocate the IntegerSet object in the current memory context.  Remember
-	 * the context, so that we will do all subsequent allocations in the same
-	 * context, too, regardless of which memory context is current when new
-	 * integers are added to the set.
-	 */
 	intset = (IntegerSet *) palloc(sizeof(IntegerSet));
 	intset->context = CurrentMemoryContext;
 	intset->mem_used = GetMemoryChunkSpace(intset);
@@ -296,10 +300,12 @@ intset_create(void)
 
 	intset->num_buffered_values = 0;
 
+	intset->iter_active = false;
 	intset->iter_node = NULL;
 	intset->iter_itemno = 0;
 	intset->iter_valueno = 0;
 	intset->iter_num_values = 0;
+	intset->iter_values = NULL;
 
 	return intset;
 }
@@ -364,8 +370,8 @@ intset_memory_usage(IntegerSet *intset)
 void
 intset_add_member(IntegerSet *intset, uint64 x)
 {
-	if (intset->iter_node)
-		elog(ERROR, "cannot add new values to integer set when iteration is in progress");
+	if (intset->iter_active)
+		elog(ERROR, "cannot add new values to integer set while iteration is in progress");
 
 	if (x <= intset->highest_value && intset->num_entries > 0)
 		elog(ERROR, "cannot add value to integer set out of order");
@@ -568,7 +574,7 @@ intset_is_member(IntegerSet *intset, uint64 x)
 		if (itemno >= intset->num_buffered_values)
 			return false;
 		else
-			return intset->buffered_values[itemno] == x;
+			return (intset->buffered_values[itemno] == x);
 	}
 
 	/*
@@ -593,7 +599,7 @@ intset_is_member(IntegerSet *intset, uint64 x)
 	leaf = (intset_leaf_node *) node;
 
 	/*
-	 * Binary search the right item on the leaf page
+	 * Binary search to find the right item on the leaf page
 	 */
 	itemno = intset_binsrch_leaf(x, leaf->items, leaf->num_items, true);
 	if (itemno == 0)
@@ -620,6 +626,8 @@ intset_is_member(IntegerSet *intset, uint64 x)
 void
 intset_begin_iterate(IntegerSet *intset)
 {
+	/* Note that we allow an iteration to be abandoned midway */
+	intset->iter_active = true;
 	intset->iter_node = intset->leftmost_leaf;
 	intset->iter_itemno = 0;
 	intset->iter_valueno = 0;
@@ -637,27 +645,30 @@ intset_begin_iterate(IntegerSet *intset)
 bool
 intset_iterate_next(IntegerSet *intset, uint64 *next)
 {
+	Assert(intset->iter_active);
 	for (;;)
 	{
+		/* Return next iter_values[] entry if any */
 		if (intset->iter_valueno < intset->iter_num_values)
 		{
 			*next = intset->iter_values[intset->iter_valueno++];
 			return true;
 		}
 
-		/* Our queue is empty, decode next leaf item */
-		if (intset->iter_node && intset->iter_itemno < intset->iter_node->num_items)
+		/* Decode next item in current leaf node, if any */
+		if (intset->iter_node &&
+			intset->iter_itemno < intset->iter_node->num_items)
 		{
-			/* We have reached end of this packed item.  Step to the next one. */
 			leaf_item  *item;
 			int			num_decoded;
 
 			item = &intset->iter_node->items[intset->iter_itemno++];
 
-			intset->iter_values[0] = item->first;
-			num_decoded = simple8b_decode(item->codeword, &intset->iter_values[1], item->first);
+			intset->iter_values_buf[0] = item->first;
+			num_decoded = simple8b_decode(item->codeword,
+										  &intset->iter_values_buf[1],
+										  item->first);
 			intset->iter_num_values = num_decoded + 1;
-
 			intset->iter_valueno = 0;
 			continue;
 		}
@@ -665,11 +676,8 @@ intset_iterate_next(IntegerSet *intset, uint64 *next)
 		/* No more items on this leaf, step to next node */
 		if (intset->iter_node)
 		{
-			/* No more matches on this bucket. Step to the next node. */
 			intset->iter_node = intset->iter_node->next;
 			intset->iter_itemno = 0;
-			intset->iter_valueno = 0;
-			intset->iter_num_values = 0;
 			continue;
 		}
 
@@ -677,10 +685,11 @@ intset_iterate_next(IntegerSet *intset, uint64 *next)
 		 * We have reached the end of the B-tree.  But we might still have
 		 * some integers in the buffer of newly-added values.
 		 */
-		if (intset->iter_values == intset->iter_values_buf)
+		if (intset->iter_values == (const uint64 *) intset->iter_values_buf)
 		{
 			intset->iter_values = intset->buffered_values;
 			intset->iter_num_values = intset->num_buffered_values;
+			intset->iter_valueno = 0;
 			continue;
 		}
 
@@ -688,7 +697,8 @@ intset_iterate_next(IntegerSet *intset, uint64 *next)
 	}
 
 	/* No more results. */
-	*next = 0;
+	intset->iter_active = false;
+	*next = 0;					/* prevent uninitialized-variable warnings */
 	return false;
 }
 
@@ -771,7 +781,7 @@ intset_binsrch_leaf(uint64 item, leaf_item *arr, int arr_elems, bool nextkey)
 /*
  * Simple-8b encoding.
  *
- * Simple-8b algorithm packs between 1 and 240 integers into 64-bit words,
+ * The simple-8b algorithm packs between 1 and 240 integers into 64-bit words,
  * called "codewords".  The number of integers packed into a single codeword
  * depends on the integers being packed; small integers are encoded using
  * fewer bits than large integers.  A single codeword can store a single
@@ -780,7 +790,7 @@ intset_binsrch_leaf(uint64 item, leaf_item *arr, int arr_elems, bool nextkey)
  * Since we're storing a unique, sorted, set of integers, we actually encode
  * the *differences* between consecutive integers.  That way, clusters of
  * integers that are close to each other are packed efficiently, regardless
- * of the absolute values.
+ * of their absolute values.
  *
  * In Simple-8b, each codeword consists of a 4-bit selector, which indicates
  * how many integers are encoded in the codeword, and the encoded integers are
@@ -797,28 +807,29 @@ intset_binsrch_leaf(uint64 item, leaf_item *arr, int arr_elems, bool nextkey)
  * The selector 1101 is 13 in decimal.  From the modes table below, we see
  * that it means that the codeword encodes three 12-bit integers.  In decimal,
  * those integers are 18, 500000 and 20.  Because we encode deltas rather than
- * absolute values, the actual values that they represent are 18,  500018 and
+ * absolute values, the actual values that they represent are 18, 500018 and
  * 500038.
  *
- * Modes 0 and 1 are a bit special; they encode a run of 240 or 120 zeros
+ * Modes 0 and 1 are a bit special; they encode a run of 240 or 120 zeroes
  * (which means 240 or 120 consecutive integers, since we're encoding the
- * the deltas between integers), without using the rest of the codeword bits
+ * deltas between integers), without using the rest of the codeword bits
  * for anything.
  *
  * Simple-8b cannot encode integers larger than 60 bits.  Values larger than
  * that are always stored in the 'first' field of a leaf item, never in the
  * packed codeword.  If there is a sequence of integers that are more than
  * 2^60 apart, the codeword will go unused on those items.  To represent that,
- * we use a magic EMPTY_CODEWORD codeword.
+ * we use a magic EMPTY_CODEWORD codeword value.
  */
-static const struct
+static const struct simple8b_mode
 {
 	uint8		bits_per_int;
 	uint8		num_ints;
-} simple8b_modes[17] =
+}			simple8b_modes[17] =
+
 {
-	{0, 240},					/* mode  0: 240 zeros */
-	{0, 120},					/* mode  1: 120 zeros */
+	{0, 240},					/* mode  0: 240 zeroes */
+	{0, 120},					/* mode  1: 120 zeroes */
 	{1, 60},					/* mode  2: sixty 1-bit integers */
 	{2, 30},					/* mode  3: thirty 2-bit integers */
 	{3, 20},					/* mode  4: twenty 3-bit integers */
@@ -843,23 +854,26 @@ static const struct
  * EMPTY_CODEWORD is a special value, used to indicate "no values".
  * It is used if the next value is too large to be encoded with Simple-8b.
  *
- * This value looks like a 0-mode codeword, but we check for it
- * specifically.  (In a real 0-mode codeword, all the unused bits are zero.)
+ * This value looks like a mode-0 codeword, but we can distinguish it
+ * because a regular mode-0 codeword would have zeroes in the unused bits.
  */
 #define EMPTY_CODEWORD		UINT64CONST(0x0FFFFFFFFFFFFFFF)
 
 /*
  * Encode a number of integers into a Simple-8b codeword.
  *
- * The input array must contain at least SIMPLE8B_MAX_VALUES_PER_CODEWORD
- * elements.
+ * (What we actually encode are deltas between successive integers.
+ * "base" is the value before ints[0].)
  *
- * Returns the encoded codeword, and sets *num_encoded to the number
- * input integers that were encoded.  It can be zero, if the first input is
- * too large to be encoded.
+ * The input array must contain at least SIMPLE8B_MAX_VALUES_PER_CODEWORD
+ * elements, ensuring that we can produce a full codeword.
+ *
+ * Returns the encoded codeword, and sets *num_encoded to the number of
+ * input integers that were encoded.  That can be zero, if the first delta
+ * is too large to be encoded.
  */
 static uint64
-simple8b_encode(uint64 *ints, int *num_encoded, uint64 base)
+simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base)
 {
 	int			selector;
 	int			nints;
@@ -872,7 +886,7 @@ simple8b_encode(uint64 *ints, int *num_encoded, uint64 base)
 	Assert(ints[0] > base);
 
 	/*
-	 * Select the "mode" to use for the next codeword.
+	 * Select the "mode" to use for this codeword.
 	 *
 	 * In each iteration, check if the next value can be represented in the
 	 * current mode we're considering.  If it's too large, then step up the
@@ -880,14 +894,18 @@ simple8b_encode(uint64 *ints, int *num_encoded, uint64 base)
 	 * integer.  Repeat until the codeword is full, given the current mode.
 	 *
 	 * Note that we don't have any way to represent unused slots in the
-	 * codeword, so we require each codeword to be "full".
+	 * codeword, so we require each codeword to be "full".  It is always
+	 * possible to produce a full codeword unless the very first delta is too
+	 * large to be encoded.  For example, if the first delta is small but the
+	 * second is too large to be encoded, we'll end up using the last "mode",
+	 * which has nints == 1.
 	 */
 	selector = 0;
 	nints = simple8b_modes[0].num_ints;
 	bits = simple8b_modes[0].bits_per_int;
 	diff = ints[0] - base - 1;
 	last_val = ints[0];
-	i = 0;
+	i = 0;						/* number of deltas we have accepted */
 	for (;;)
 	{
 		if (diff >= (UINT64CONST(1) << bits))
@@ -896,16 +914,17 @@ simple8b_encode(uint64 *ints, int *num_encoded, uint64 base)
 			selector++;
 			nints = simple8b_modes[selector].num_ints;
 			bits = simple8b_modes[selector].bits_per_int;
-
+			/* we might already have accepted enough deltas for this mode */
 			if (i >= nints)
 				break;
 		}
 		else
 		{
+			/* accept this delta; then done if codeword is full */
 			i++;
 			if (i >= nints)
 				break;
-
+			/* examine next delta */
 			Assert(ints[i] > last_val);
 			diff = ints[i] - last_val - 1;
 			last_val = ints[i];
@@ -915,11 +934,11 @@ simple8b_encode(uint64 *ints, int *num_encoded, uint64 base)
 	if (nints == 0)
 	{
 		/*
-		 * The first value is too large to be encoded with Simple-8b.
+		 * The first delta is too large to be encoded with Simple-8b.
 		 *
 		 * If there is at least one not-too-large integer in the input, we
 		 * will encode it using mode 15 (or a more compact mode).  Hence, we
-		 * only get here, if the *first* input integer is >= 2^60.
+		 * can only get here if the *first* delta is >= 2^60.
 		 */
 		Assert(i == 0);
 		*num_encoded = 0;
@@ -953,26 +972,27 @@ simple8b_encode(uint64 *ints, int *num_encoded, uint64 base)
 
 /*
  * Decode a codeword into an array of integers.
+ * Returns the number of integers decoded.
  */
 static int
 simple8b_decode(uint64 codeword, uint64 *decoded, uint64 base)
 {
 	int			selector = (codeword >> 60);
 	int			nints = simple8b_modes[selector].num_ints;
-	uint64		bits = simple8b_modes[selector].bits_per_int;
+	int			bits = simple8b_modes[selector].bits_per_int;
 	uint64		mask = (UINT64CONST(1) << bits) - 1;
-	uint64		prev_value;
+	uint64		curr_value;
 
 	if (codeword == EMPTY_CODEWORD)
 		return 0;
 
-	prev_value = base;
+	curr_value = base;
 	for (int i = 0; i < nints; i++)
 	{
 		uint64		diff = codeword & mask;
 
-		decoded[i] = prev_value + 1 + diff;
-		prev_value = decoded[i];
+		curr_value += 1 + diff;
+		decoded[i] = curr_value;
 		codeword >>= bits;
 	}
 	return nints;
@@ -980,7 +1000,7 @@ simple8b_decode(uint64 codeword, uint64 *decoded, uint64 base)
 
 /*
  * This is very similar to simple8b_decode(), but instead of decoding all
- * the values to an array, it just checks if the given integer is part of
+ * the values to an array, it just checks if the given "key" is part of
  * the codeword.
  */
 static bool
@@ -996,20 +1016,19 @@ simple8b_contains(uint64 codeword, uint64 key, uint64 base)
 	if (bits == 0)
 	{
 		/* Special handling for 0-bit cases. */
-		return key - base <= nints;
+		return (key - base) <= nints;
 	}
 	else
 	{
 		uint64		mask = (UINT64CONST(1) << bits) - 1;
-		uint64		prev_value;
+		uint64		curr_value;
 
-		prev_value = base;
+		curr_value = base;
 		for (int i = 0; i < nints; i++)
 		{
 			uint64		diff = codeword & mask;
-			uint64		curr_value;
 
-			curr_value = prev_value + 1 + diff;
+			curr_value += 1 + diff;
 
 			if (curr_value >= key)
 			{
@@ -1020,7 +1039,6 @@ simple8b_contains(uint64 codeword, uint64 key, uint64 base)
 			}
 
 			codeword >>= bits;
-			prev_value = curr_value;
 		}
 	}
 	return false;

@@ -27,7 +27,7 @@
  * how much memory the test set consumed.  That can be used as
  * micro-benchmark of various operations and input patterns (you might
  * want to increase the number of values used in each of the test, if
- * you do that, to reduce noise)
+ * you do that, to reduce noise).
  *
  * The information is printed to the server's stderr, mostly because
  * that's where MemoryContextStats() output goes.
@@ -39,7 +39,7 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(test_integerset);
 
 /*
- * A struct to define a pattern of integers, for use with test_pattern()
+ * A struct to define a pattern of integers, for use with the test_pattern()
  * function.
  */
 typedef struct
@@ -105,12 +105,6 @@ static void test_huge_distances(void);
 Datum
 test_integerset(PG_FUNCTION_ARGS)
 {
-	MemoryContext test_ctx;
-
-	test_ctx = AllocSetContextCreate(CurrentMemoryContext,
-									 "test_integerset context",
-									 ALLOCSET_DEFAULT_SIZES);
-
 	/* Tests for various corner cases */
 	test_empty();
 	test_huge_distances();
@@ -127,11 +121,8 @@ test_integerset(PG_FUNCTION_ARGS)
 	/* Test different test patterns, with lots of entries */
 	for (int i = 0; i < lengthof(test_specs); i++)
 	{
-		MemoryContextReset(test_ctx);
 		test_pattern(&test_specs[i]);
 	}
-
-	MemoryContextDelete(test_ctx);
 
 	PG_RETURN_VOID();
 }
@@ -378,7 +369,7 @@ test_single_value(uint64 value)
  * - all integers between 'filler_min' and 'filler_max'.
  *
  * This exercises different codepaths than testing just with a single value,
- * because the implementation buffers newly-added values.  If we add just
+ * because the implementation buffers newly-added values.  If we add just a
  * single value to the set, we won't test the internal B-tree code at all,
  * just the code that deals with the buffer.
  */
