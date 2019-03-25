@@ -1372,18 +1372,18 @@ SELECT x FROM test2ci UNION SELECT x FROM test1ci ORDER BY x;
  ghi
 (3 rows)
 
-SELECT x FROM test1ci INTERSECT SELECT x FROM test2ci;
+SELECT x FROM test1ci INTERSECT SELECT x FROM test2ci ORDER BY x;
   x  
 -----
- ghi
  abc
+ ghi
 (2 rows)
 
-SELECT x FROM test2ci INTERSECT SELECT x FROM test1ci;
+SELECT x FROM test2ci INTERSECT SELECT x FROM test1ci ORDER BY x;
   x  
 -----
- ghi
  ABC
+ ghi
 (2 rows)
 
 SELECT x FROM test1ci EXCEPT SELECT x FROM test2ci;
