@@ -1122,7 +1122,7 @@ typedef union PGAlignedXLogBlock
 #endif
 
 /*
- * Macro that allows to cast constness away from an expression, but doesn't
+ * Macro that allows to cast constness and volatile away from an expression, but doesn't
  * allow changing the underlying type.  Enforcement of the latter
  * currently only works for gcc like compilers.
  *
@@ -1141,8 +1141,14 @@ typedef union PGAlignedXLogBlock
 	(StaticAssertExpr(__builtin_types_compatible_p(__typeof(expr), const underlying_type), \
 					  "wrong cast"), \
 	 (underlying_type) (expr))
+#define unvolatize(underlying_type, expr) \
+	(StaticAssertExpr(__builtin_types_compatible_p(__typeof(expr), volatile underlying_type), \
+					  "wrong cast"), \
+	 (underlying_type) (expr))
 #else
 #define unconstify(underlying_type, expr) \
+	((underlying_type) (expr))
+#define unvolatize(underlying_type, expr) \
 	((underlying_type) (expr))
 #endif
 

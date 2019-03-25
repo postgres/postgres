@@ -3311,7 +3311,7 @@ pgstat_read_current_status(void)
 			localentry->backendStatus.st_procpid = beentry->st_procpid;
 			if (localentry->backendStatus.st_procpid > 0)
 			{
-				memcpy(&localentry->backendStatus, (char *) beentry, sizeof(PgBackendStatus));
+				memcpy(&localentry->backendStatus, unvolatize(PgBackendStatus *, beentry), sizeof(PgBackendStatus));
 
 				/*
 				 * strcpy is safe even if the string is modified concurrently,
