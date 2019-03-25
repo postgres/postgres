@@ -269,7 +269,7 @@ select jsonb_path_query('[null,1,true,"a",[],{}]', 'lax $.type()');
 select jsonb_path_query('[null,1,true,"a",[],{}]', '$[*].type()');
 select jsonb_path_query('null', 'null.type()');
 select jsonb_path_query('null', 'true.type()');
-select jsonb_path_query('null', '123.type()');
+select jsonb_path_query('null', '(123).type()');
 select jsonb_path_query('null', '"123".type()');
 
 select jsonb_path_query('{"a": 2}', '($.a - 5).abs() + 10');

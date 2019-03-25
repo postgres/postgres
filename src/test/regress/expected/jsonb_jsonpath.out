@@ -1297,7 +1297,7 @@ select jsonb_path_query('null', 'true.type()');
  "boolean"
 (1 row)
 
-select jsonb_path_query('null', '123.type()');
+select jsonb_path_query('null', '(123).type()');
  jsonb_path_query 
 ------------------
  "number"

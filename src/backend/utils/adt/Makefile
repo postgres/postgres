@@ -34,6 +34,7 @@ OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 	windowfuncs.o xid.o xml.o
 
 jsonpath_scan.c: FLEXFLAGS = -CF -p -p
+jsonpath_scan.c: FLEX_NO_BACKUP=yes
 
 # Force these dependencies to be known even without dependency info built:
 jsonpath_gram.o: jsonpath_scan.c

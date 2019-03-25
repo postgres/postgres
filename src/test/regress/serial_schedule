@@ -160,6 +160,7 @@ test: json
 test: jsonb
 test: json_encoding
 test: jsonpath
+test: jsonpath_encoding
 test: jsonb_jsonpath
 test: indirect_toast
 test: equivclass

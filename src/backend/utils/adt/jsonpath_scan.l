@@ -31,7 +31,7 @@ static void addstring(bool init, char *s, int l);
 static void addchar(bool init, char s);
 static enum yytokentype checkKeyword(void);
 static void parseUnicode(char *s, int l);
-static void parseHexChars(char *s, int l);
+static void parseHexChar(char *s);
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
@@ -78,9 +78,20 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 special		 [\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/]
 any			[^\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/\\\"\' \t\n\r\f]
 blank		[ \t\n\r\f]
+
+digit		[0-9]
+integer		{digit}+
+decimal		{digit}*\.{digit}+
+decimalfail	{digit}+\.
+real		({integer}|{decimal})[Ee][-+]?{digit}+
+realfail1	({integer}|{decimal})[Ee]
+realfail2	({integer}|{decimal})[Ee][-+]
+
 hex_dig		[0-9A-Fa-f]
 unicode		\\u({hex_dig}{4}|\{{hex_dig}{1,6}\})
+unicodefail	\\u({hex_dig}{0,3}|\{{hex_dig}{0,6})
 hex_char	\\x{hex_dig}{2}
+hex_fail	\\x{hex_dig}{0,1}
 
 %%
 
@@ -129,11 +140,17 @@ hex_char	\\x{hex_dig}{2}
 
 <xnq,xq,xvq,xsq>{unicode}+		{ parseUnicode(yytext, yyleng); }
 
-<xnq,xq,xvq,xsq>{hex_char}+		{ parseHexChars(yytext, yyleng); }
+<xnq,xq,xvq,xsq>{hex_char}		{ parseHexChar(yytext); }
 
-<xnq,xq,xvq,xsq>\\x				{ yyerror(NULL, "Hex character sequence is invalid"); }
+<xnq,xq,xvq,xsq>{unicode}*{unicodefail}	{ yyerror(NULL, "Unicode sequence is invalid"); }
 
-<xnq,xq,xvq,xsq>\\u				{ yyerror(NULL, "Unicode sequence is invalid"); }
+<xnq,xq,xvq,xsq>{hex_fail}		{ yyerror(NULL, "Hex character sequence is invalid"); }
+
+<xnq,xq,xvq,xsq>{unicode}+\\	{
+									/* throw back the \\, and treat as unicode */
+									yyless(yyleng - 1);
+									parseUnicode(yytext, yyleng);
+								}
 
 <xnq,xq,xvq,xsq>\\.				{ yyerror(NULL, "Escape sequence is invalid"); }
 
@@ -214,33 +231,37 @@ hex_char	\\x{hex_dig}{2}
 									BEGIN xc;
 								}
 
-[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+ { /* float */
+{real}							{
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return NUMERIC_P;
 								}
 
-\.[0-9]+[eE][+-]?[0-9]+			{ /* float */
+{decimal}						{
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return NUMERIC_P;
 								}
 
-([0-9]+)?\.[0-9]+				{
-									addstring(true, yytext, yyleng);
-									addchar(false, '\0');
-									yylval->str = scanstring;
-									return NUMERIC_P;
-								}
-
-[0-9]+							{
+{integer}						{
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return INT_P;
 								}
+
+{decimalfail}					{
+									/* throw back the ., and treat as integer */
+									yyless(yyleng - 1);
+									addstring(true, yytext, yyleng);
+									addchar(false, '\0');
+									yylval->str = scanstring;
+									return INT_P;
+								}
+
+({realfail1}|{realfail2})		{ yyerror(NULL, "Floating point number is invalid"); }
 
 {any}+							{
 									addstring(true, yytext, yyleng);
@@ -571,7 +592,7 @@ addUnicode(int ch, int *hi_surrogate)
 static void
 parseUnicode(char *s, int l)
 {
-	int			i;
+	int			i = 2;
 	int			hi_surrogate = -1;
 
 	for (i = 2; i < l; i += 2)	/* skip '\u' */
@@ -606,19 +627,12 @@ parseUnicode(char *s, int l)
 
 /* Parse sequence of hex-encoded characters */
 static void
-parseHexChars(char *s, int l)
+parseHexChar(char *s)
 {
-	int i;
+	int			ch = (hexval(s[2]) << 4) |
+					  hexval(s[3]);
 
-	Assert(l % 4 /* \xXX */ == 0);
-
-	for (i = 0; i < l / 4; i++)
-	{
-		int			ch = (hexval(s[i * 4 + 2]) << 4) |
-						  hexval(s[i * 4 + 3]);
-
-		addUnicodeChar(ch);
-	}
+	addUnicodeChar(ch);
 }
 
 /*
