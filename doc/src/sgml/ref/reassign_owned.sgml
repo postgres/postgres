@@ -87,9 +87,11 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
 
   <para>
    The <command>REASSIGN OWNED</command> command does not affect any
-   privileges granted to the <replaceable class="PARAMETER">old_roles</> for
-   objects that are not owned by them.  Use <command>DROP OWNED</command> to
-   revoke such privileges.
+   privileges granted to
+   the <replaceable class="parameter">old_roles</replaceable> on objects
+   that are not owned by them.  Likewise, it does not affect default
+   privileges created with <command>ALTER DEFAULT PRIVILEGES</command>.
+   Use <command>DROP OWNED</command> to revoke such privileges.
   </para>
 
   <para>

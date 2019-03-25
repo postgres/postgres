@@ -32,7 +32,7 @@ DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
    <command>DROP OWNED</command> drops all the objects within the current
    database that are owned by one of the specified roles. Any
    privileges granted to the given roles on objects in the current
-   database and on shared objects (databases, tablespaces) will also be
+   database or on shared objects (databases, tablespaces) will also be
    revoked.
   </para>
  </refsect1>
