@@ -310,7 +310,6 @@ TidNext(TidScanState *node)
 	Relation	heapRelation;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
-	Buffer		buffer = InvalidBuffer;
 	ItemPointerData *tidList;
 	int			numTids;
 	bool		bBackward;
@@ -376,19 +375,10 @@ TidNext(TidScanState *node)
 		if (node->tss_isCurrentOf)
 			heap_get_latest_tid(heapRelation, snapshot, &tuple->t_self);
 
-		if (heap_fetch(heapRelation, snapshot, tuple, &buffer, NULL))
-		{
-			/*
-			 * Store the scanned tuple in the scan tuple slot of the scan
-			 * state, transferring the pin to the slot.
-			 */
-			ExecStorePinnedBufferHeapTuple(tuple, /* tuple to store */
-										   slot,	/* slot to store in */
-										   buffer);	/* buffer associated with
-													 * tuple */
-
+		if (table_fetch_row_version(heapRelation, &tuple->t_self, snapshot,
+									slot))
 			return slot;
-		}
+
 		/* Bad TID or failed snapshot qual; try next */
 		if (bBackward)
 			node->tss_TidPtr--;

@@ -229,17 +229,13 @@ ExecCheckTIDVisible(EState *estate,
 					TupleTableSlot *tempSlot)
 {
 	Relation	rel = relinfo->ri_RelationDesc;
-	Buffer		buffer;
-	HeapTupleData tuple;
 
 	/* Redundantly check isolation level */
 	if (!IsolationUsesXactSnapshot())
 		return;
 
-	tuple.t_self = *tid;
-	if (!heap_fetch(rel, SnapshotAny, &tuple, &buffer, NULL))
+	if (!table_fetch_row_version(rel, tid, SnapshotAny, tempSlot))
 		elog(ERROR, "failed to fetch conflicting tuple for ON CONFLICT");
-	ExecStorePinnedBufferHeapTuple(&tuple, tempSlot, buffer);
 	ExecCheckTupleVisible(estate, rel, tempSlot);
 	ExecClearTuple(tempSlot);
 }
@@ -874,21 +870,9 @@ ldelete:;
 			}
 			else
 			{
-				BufferHeapTupleTableSlot *bslot;
-				HeapTuple	deltuple;
-				Buffer		buffer;
-
-				Assert(TTS_IS_BUFFERTUPLE(slot));
-				ExecClearTuple(slot);
-				bslot = (BufferHeapTupleTableSlot *) slot;
-				deltuple = &bslot->base.tupdata;
-
-				deltuple->t_self = *tupleid;
-				if (!heap_fetch(resultRelationDesc, SnapshotAny,
-								deltuple, &buffer, NULL))
+				if (!table_fetch_row_version(resultRelationDesc, tupleid,
+											 SnapshotAny, slot))
 					elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
-
-				ExecStorePinnedBufferHeapTuple(deltuple, slot, buffer);
 			}
 		}
 

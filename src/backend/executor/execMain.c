@@ -2649,17 +2649,10 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			else
 			{
 				/* ordinary table, fetch the tuple */
-				HeapTupleData tuple;
-				Buffer		buffer;
-
-				tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
-				if (!heap_fetch(erm->relation, SnapshotAny, &tuple, &buffer,
-								NULL))
+				if (!table_fetch_row_version(erm->relation,
+											 (ItemPointer) DatumGetPointer(datum),
+											 SnapshotAny, slot))
 					elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
-
-				/* successful, store tuple */
-				ExecStorePinnedBufferHeapTuple(&tuple, slot, buffer);
-				ExecMaterializeSlot(slot);
 			}
 		}
 		else

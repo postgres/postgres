@@ -62,6 +62,7 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->index_fetch_end != NULL);
 	Assert(routine->index_fetch_tuple != NULL);
 
+	Assert(routine->tuple_fetch_row_version != NULL);
 	Assert(routine->tuple_satisfies_snapshot != NULL);
 
 	Assert(routine->tuple_insert != NULL);

@@ -271,6 +271,17 @@ typedef struct TableAmRoutine
 	 * ------------------------------------------------------------------------
 	 */
 
+
+	/*
+	 * Fetch tuple at `tid` into `slot, after doing a visibility test
+	 * according to `snapshot`. If a tuple was found and passed the visibility
+	 * test, returns true, false otherwise.
+	 */
+	bool		(*tuple_fetch_row_version) (Relation rel,
+											ItemPointer tid,
+											Snapshot snapshot,
+											TupleTableSlot *slot);
+
 	/*
 	 * Does the tuple in `slot` satisfy `snapshot`?  The slot needs to be of
 	 * the appropriate type for the AM.
@@ -574,9 +585,9 @@ table_index_fetch_end(struct IndexFetchTableData *scan)
 }
 
 /*
- * Fetches tuple at `tid` into `slot`, after doing a visibility test according
- * to `snapshot`. If a tuple was found and passed the visibility test, returns
- * true, false otherwise.
+ * Fetches, as part of an index scan, tuple at `tid` into `slot`, after doing
+ * a visibility test according to `snapshot`. If a tuple was found and passed
+ * the visibility test, returns true, false otherwise.
  *
  * *call_again needs to be false on the first call to table_index_fetch_tuple() for
  * a tid. If there potentially is another tuple matching the tid, *call_again
@@ -586,6 +597,13 @@ table_index_fetch_end(struct IndexFetchTableData *scan)
  * *all_dead will be set to true by table_index_fetch_tuple() iff it is guaranteed
  * that no backend needs to see that tuple. Index AMs can use that do avoid
  * returning that tid in future searches.
+ *
+ * The difference between this function and table_fetch_row_version is that
+ * this function returns the currently visible version of a row if the AM
+ * supports storing multiple row versions reachable via a single index entry
+ * (like heap's HOT). Whereas table_fetch_row_version only evaluates the the
+ * tuple exactly at `tid`. Outside of index entry ->table tuple lookups,
+ * table_fetch_row_version is what's usually needed.
  */
 static inline bool
 table_index_fetch_tuple(struct IndexFetchTableData *scan,
@@ -605,6 +623,25 @@ table_index_fetch_tuple(struct IndexFetchTableData *scan,
  * Functions for non-modifying operations on individual tuples
  * ------------------------------------------------------------------------
  */
+
+
+/*
+ * Fetch tuple at `tid` into `slot, after doing a visibility test according to
+ * `snapshot`. If a tuple was found and passed the visibility test, returns
+ * true, false otherwise.
+ *
+ * See table_index_fetch_tuple's comment about what the difference between
+ * these functions is. This function is the correct to use outside of
+ * index entry->table tuple lookups.
+ */
+static inline bool
+table_fetch_row_version(Relation rel,
+						ItemPointer tid,
+						Snapshot snapshot,
+						TupleTableSlot *slot)
+{
+	return rel->rd_tableam->tuple_fetch_row_version(rel, tid, snapshot, slot);
+}
 
 /*
  * Return true iff tuple in slot satisfies the snapshot.

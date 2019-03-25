@@ -14,10 +14,11 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/heapam.h"
-#include "access/tableam.h"
-#include "access/sysattr.h"
 #include "access/htup_details.h"
+#include "access/relation.h"
+#include "access/sysattr.h"
+#include "access/table.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -3379,42 +3380,12 @@ GetTupleForTrigger(EState *estate,
 	}
 	else
 	{
-		Page		page;
-		ItemId		lp;
-		Buffer		buffer;
-		BufferHeapTupleTableSlot *boldslot;
-		HeapTuple	tuple;
-
-		Assert(TTS_IS_BUFFERTUPLE(oldslot));
-		ExecClearTuple(oldslot);
-		boldslot = (BufferHeapTupleTableSlot *) oldslot;
-		tuple = &boldslot->base.tupdata;
-
-		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
-
 		/*
-		 * Although we already know this tuple is valid, we must lock the
-		 * buffer to ensure that no one has a buffer cleanup lock; otherwise
-		 * they might move the tuple while we try to copy it.  But we can
-		 * release the lock before actually doing the heap_copytuple call,
-		 * since holding pin is sufficient to prevent anyone from getting a
-		 * cleanup lock they don't already hold.
+		 * We expect the tuple to be present, thus very simple error handling
+		 * suffices.
 		 */
-		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-
-		page = BufferGetPage(buffer);
-		lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
-
-		Assert(ItemIdIsNormal(lp));
-
-		tuple->t_data = (HeapTupleHeader) PageGetItem(page, lp);
-		tuple->t_len = ItemIdGetLength(lp);
-		tuple->t_self = *tid;
-		tuple->t_tableOid = RelationGetRelid(relation);
-
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-
-		ExecStorePinnedBufferHeapTuple(tuple, oldslot, buffer);
+		if (!table_fetch_row_version(relation, tid, SnapshotAny, oldslot))
+			elog(ERROR, "failed to fetch tuple for trigger");
 	}
 
 	return true;
@@ -4193,8 +4164,6 @@ AfterTriggerExecute(EState *estate,
 	AfterTriggerShared evtshared = GetTriggerSharedData(event);
 	Oid			tgoid = evtshared->ats_tgoid;
 	TriggerData LocTriggerData;
-	HeapTupleData tuple1;
-	HeapTupleData tuple2;
 	HeapTuple	rettuple;
 	int			tgindx;
 	bool		should_free_trig = false;
@@ -4271,19 +4240,12 @@ AfterTriggerExecute(EState *estate,
 		default:
 			if (ItemPointerIsValid(&(event->ate_ctid1)))
 			{
-				Buffer buffer;
-
 				LocTriggerData.tg_trigslot = ExecGetTriggerOldSlot(estate, relInfo);
 
-				ItemPointerCopy(&(event->ate_ctid1), &(tuple1.t_self));
-				if (!heap_fetch(rel, SnapshotAny, &tuple1, &buffer, NULL))
+				if (!table_fetch_row_version(rel, &(event->ate_ctid1), SnapshotAny, LocTriggerData.tg_trigslot))
 					elog(ERROR, "failed to fetch tuple1 for AFTER trigger");
-				ExecStorePinnedBufferHeapTuple(&tuple1,
-											   LocTriggerData.tg_trigslot,
-											   buffer);
 				LocTriggerData.tg_trigtuple =
-					ExecFetchSlotHeapTuple(LocTriggerData.tg_trigslot, false,
-										   &should_free_trig);
+					ExecFetchSlotHeapTuple(LocTriggerData.tg_trigslot, false, &should_free_trig);
 			}
 			else
 			{
@@ -4295,19 +4257,12 @@ AfterTriggerExecute(EState *estate,
 				AFTER_TRIGGER_2CTID &&
 				ItemPointerIsValid(&(event->ate_ctid2)))
 			{
-				Buffer buffer;
-
 				LocTriggerData.tg_newslot = ExecGetTriggerNewSlot(estate, relInfo);
 
-				ItemPointerCopy(&(event->ate_ctid2), &(tuple2.t_self));
-				if (!heap_fetch(rel, SnapshotAny, &tuple2, &buffer, NULL))
+				if (!table_fetch_row_version(rel, &(event->ate_ctid2), SnapshotAny, LocTriggerData.tg_newslot))
 					elog(ERROR, "failed to fetch tuple2 for AFTER trigger");
-				ExecStorePinnedBufferHeapTuple(&tuple2,
-											   LocTriggerData.tg_newslot,
-											   buffer);
 				LocTriggerData.tg_newtuple =
-					ExecFetchSlotHeapTuple(LocTriggerData.tg_newslot, false,
-										   &should_free_new);
+					ExecFetchSlotHeapTuple(LocTriggerData.tg_newslot, false, &should_free_new);
 			}
 			else
 			{

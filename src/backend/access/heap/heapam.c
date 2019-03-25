@@ -1388,8 +1388,7 @@ bool
 heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   HeapTuple tuple,
-		   Buffer *userbuf,
-		   Relation stats_relation)
+		   Buffer *userbuf)
 {
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
@@ -1467,10 +1466,6 @@ heap_fetch(Relation relation,
 		 * responsible for releasing the buffer.
 		 */
 		*userbuf = buffer;
-
-		/* Count the successful fetch against appropriate rel, if any */
-		if (stats_relation != NULL)
-			pgstat_count_heap_fetch(stats_relation);
 
 		return true;
 	}
@@ -5097,7 +5092,7 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 		block = ItemPointerGetBlockNumber(&tupid);
 		ItemPointerCopy(&tupid, &(mytup.t_self));
 
-		if (!heap_fetch(rel, SnapshotAny, &mytup, &buf, NULL))
+		if (!heap_fetch(rel, SnapshotAny, &mytup, &buf))
 		{
 			/*
 			 * if we fail to find the updated version of the tuple, it's

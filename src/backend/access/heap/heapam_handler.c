@@ -149,6 +149,30 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
  */
 
 static bool
+heapam_fetch_row_version(Relation relation,
+						 ItemPointer tid,
+						 Snapshot snapshot,
+						 TupleTableSlot *slot)
+{
+	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
+	Buffer		buffer;
+
+	Assert(TTS_IS_BUFFERTUPLE(slot));
+
+	bslot->base.tupdata.t_self = *tid;
+	if (heap_fetch(relation, snapshot, &bslot->base.tupdata, &buffer))
+	{
+		/* store in slot, transferring existing pin */
+		ExecStorePinnedBufferHeapTuple(&bslot->base.tupdata, slot, buffer);
+		slot->tts_tableOid = RelationGetRelid(relation);
+
+		return true;
+	}
+
+	return false;
+}
+
+static bool
 heapam_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
 								Snapshot snapshot)
 {
@@ -338,7 +362,7 @@ tuple_lock_retry:
 							 errmsg("tuple to be locked was already moved to another partition due to concurrent update")));
 
 				tuple->t_self = *tid;
-				if (heap_fetch(relation, &SnapshotDirty, tuple, &buffer, NULL))
+				if (heap_fetch(relation, &SnapshotDirty, tuple, &buffer))
 				{
 					/*
 					 * If xmin isn't what we're expecting, the slot must have
@@ -517,6 +541,7 @@ static const TableAmRoutine heapam_methods = {
 	.tuple_update = heapam_tuple_update,
 	.tuple_lock = heapam_tuple_lock,
 
+	.tuple_fetch_row_version = heapam_fetch_row_version,
 	.tuple_satisfies_snapshot = heapam_tuple_satisfies_snapshot,
 };
 

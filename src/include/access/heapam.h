@@ -128,7 +128,7 @@ extern bool heap_getnextslot(TableScanDesc sscan,
 				 ScanDirection direction, struct TupleTableSlot *slot);
 
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
-		   HeapTuple tuple, Buffer *userbuf, Relation stats_relation);
+		   HeapTuple tuple, Buffer *userbuf);
 extern bool heap_hot_search_buffer(ItemPointer tid, Relation relation,
 					   Buffer buffer, Snapshot snapshot, HeapTuple heapTuple,
 					   bool *all_dead, bool first_call);
