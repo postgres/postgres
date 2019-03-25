@@ -70,6 +70,9 @@ static void _bt_recsplitloc(FindSplitData *state,
 static void _bt_deltasortsplits(FindSplitData *state, double fillfactormult,
 					bool usemult);
 static int	_bt_splitcmp(const void *arg1, const void *arg2);
+static bool _bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
+					int leaffillfactor, bool *usemult);
+static bool _bt_adjacenthtid(ItemPointer lowhtid, ItemPointer highhtid);
 static OffsetNumber _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 				 bool *newitemonleft);
 static int _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
@@ -249,9 +252,10 @@ _bt_findsplitloc(Relation rel,
 	 * Start search for a split point among list of legal split points.  Give
 	 * primary consideration to equalizing available free space in each half
 	 * of the split initially (start with default strategy), while applying
-	 * rightmost optimization where appropriate.  Either of the two other
-	 * fallback strategies may be required for cases with a large number of
-	 * duplicates around the original/space-optimal split point.
+	 * rightmost and split-after-new-item optimizations where appropriate.
+	 * Either of the two other fallback strategies may be required for cases
+	 * with a large number of duplicates around the original/space-optimal
+	 * split point.
 	 *
 	 * Default strategy gives some weight to suffix truncation in deciding a
 	 * split point on leaf pages.  It attempts to select a split point where a
@@ -272,6 +276,44 @@ _bt_findsplitloc(Relation rel,
 		/* Rightmost leaf page --  fillfactormult always used */
 		usemult = true;
 		fillfactormult = leaffillfactor / 100.0;
+	}
+	else if (_bt_afternewitemoff(&state, maxoff, leaffillfactor, &usemult))
+	{
+		/*
+		 * New item inserted at rightmost point among a localized grouping on
+		 * a leaf page -- apply "split after new item" optimization, either by
+		 * applying leaf fillfactor multiplier, or by choosing the exact split
+		 * point that leaves the new item as last on the left. (usemult is set
+		 * for us.)
+		 */
+		if (usemult)
+		{
+			/* fillfactormult should be set based on leaf fillfactor */
+			fillfactormult = leaffillfactor / 100.0;
+		}
+		else
+		{
+			/* find precise split point after newitemoff */
+			for (int i = 0; i < state.nsplits; i++)
+			{
+				SplitPoint *split = state.splits + i;
+
+				if (split->newitemonleft &&
+					newitemoff == split->firstoldonright)
+				{
+					pfree(state.splits);
+					*newitemonleft = true;
+					return newitemoff;
+				}
+			}
+
+			/*
+			 * Cannot legally split after newitemoff; proceed with split
+			 * without using fillfactor multiplier.  This is defensive, and
+			 * should never be needed in practice.
+			 */
+			fillfactormult = 0.50;
+		}
 	}
 	else
 	{
@@ -517,6 +559,172 @@ _bt_splitcmp(const void *arg1, const void *arg2)
 		return -1;
 
 	return 0;
+}
+
+/*
+ * Subroutine to determine whether or not a non-rightmost leaf page should be
+ * split immediately after the would-be original page offset for the
+ * new/incoming tuple (or should have leaf fillfactor applied when new item is
+ * to the right on original page).  This is appropriate when there is a
+ * pattern of localized monotonically increasing insertions into a composite
+ * index, where leading attribute values form local groupings, and we
+ * anticipate further insertions of the same/current grouping (new item's
+ * grouping) in the near future.  This can be thought of as a variation on
+ * applying leaf fillfactor during rightmost leaf page splits, since cases
+ * that benefit will converge on packing leaf pages leaffillfactor% full over
+ * time.
+ *
+ * We may leave extra free space remaining on the rightmost page of a "most
+ * significant column" grouping of tuples if that grouping never ends up
+ * having future insertions that use the free space.  That effect is
+ * self-limiting; a future grouping that becomes the "nearest on the right"
+ * grouping of the affected grouping usually puts the extra free space to good
+ * use.
+ *
+ * Caller uses optimization when routine returns true, though the exact action
+ * taken by caller varies.  Caller uses original leaf page fillfactor in
+ * standard way rather than using the new item offset directly when *usemult
+ * was also set to true here.  Otherwise, caller applies optimization by
+ * locating the legal split point that makes the new tuple the very last tuple
+ * on the left side of the split.
+ */
+static bool
+_bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
+					int leaffillfactor, bool *usemult)
+{
+	int16		nkeyatts;
+	ItemId		itemid;
+	IndexTuple	tup;
+	int			keepnatts;
+
+	Assert(state->is_leaf && !state->is_rightmost);
+
+	nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
+
+	/* Single key indexes not considered here */
+	if (nkeyatts == 1)
+		return false;
+
+	/* Ascending insertion pattern never inferred when new item is first */
+	if (state->newitemoff == P_FIRSTKEY)
+		return false;
+
+	/*
+	 * Only apply optimization on pages with equisized tuples, since ordinal
+	 * keys are likely to be fixed-width.  Testing if the new tuple is
+	 * variable width directly might also work, but that fails to apply the
+	 * optimization to indexes with a numeric_ops attribute.
+	 *
+	 * Conclude that page has equisized tuples when the new item is the same
+	 * width as the smallest item observed during pass over page, and other
+	 * non-pivot tuples must be the same width as well.  (Note that the
+	 * possibly-truncated existing high key isn't counted in
+	 * olddataitemstotal, and must be subtracted from maxoff.)
+	 */
+	if (state->newitemsz != state->minfirstrightsz)
+		return false;
+	if (state->newitemsz * (maxoff - 1) != state->olddataitemstotal)
+		return false;
+
+	/*
+	 * Avoid applying optimization when tuples are wider than a tuple
+	 * consisting of two non-NULL int8/int64 attributes (or four non-NULL
+	 * int4/int32 attributes)
+	 */
+	if (state->newitemsz >
+		MAXALIGN(sizeof(IndexTupleData) + sizeof(int64) * 2) +
+		sizeof(ItemIdData))
+		return false;
+
+	/*
+	 * At least the first attribute's value must be equal to the corresponding
+	 * value in previous tuple to apply optimization.  New item cannot be a
+	 * duplicate, either.
+	 *
+	 * Handle case where new item is to the right of all items on the existing
+	 * page.  This is suggestive of monotonically increasing insertions in
+	 * itself, so the "heap TID adjacency" test is not applied here.
+	 */
+	if (state->newitemoff > maxoff)
+	{
+		itemid = PageGetItemId(state->page, maxoff);
+		tup = (IndexTuple) PageGetItem(state->page, itemid);
+		keepnatts = _bt_keep_natts_fast(state->rel, tup, state->newitem);
+
+		if (keepnatts > 1 && keepnatts <= nkeyatts)
+		{
+			*usemult = true;
+			return true;
+		}
+
+		return false;
+	}
+
+	/*
+	 * "Low cardinality leading column, high cardinality suffix column"
+	 * indexes with a random insertion pattern (e.g., an index with a boolean
+	 * column, such as an index on '(book_is_in_print, book_isbn)') present us
+	 * with a risk of consistently misapplying the optimization.  We're
+	 * willing to accept very occasional misapplication of the optimization,
+	 * provided the cases where we get it wrong are rare and self-limiting.
+	 *
+	 * Heap TID adjacency strongly suggests that the item just to the left was
+	 * inserted very recently, which limits overapplication of the
+	 * optimization.  Besides, all inappropriate cases triggered here will
+	 * still split in the middle of the page on average.
+	 */
+	itemid = PageGetItemId(state->page, OffsetNumberPrev(state->newitemoff));
+	tup = (IndexTuple) PageGetItem(state->page, itemid);
+	/* Do cheaper test first */
+	if (!_bt_adjacenthtid(&tup->t_tid, &state->newitem->t_tid))
+		return false;
+	/* Check same conditions as rightmost item case, too */
+	keepnatts = _bt_keep_natts_fast(state->rel, tup, state->newitem);
+
+	if (keepnatts > 1 && keepnatts <= nkeyatts)
+	{
+		double		interp = (double) state->newitemoff / ((double) maxoff + 1);
+		double		leaffillfactormult = (double) leaffillfactor / 100.0;
+
+		/*
+		 * Don't allow caller to split after a new item when it will result in
+		 * a split point to the right of the point that a leaf fillfactor
+		 * split would use -- have caller apply leaf fillfactor instead
+		 */
+		*usemult = interp > leaffillfactormult;
+
+		return true;
+	}
+
+	return false;
+}
+
+/*
+ * Subroutine for determining if two heap TIDS are "adjacent".
+ *
+ * Adjacent means that the high TID is very likely to have been inserted into
+ * heap relation immediately after the low TID, probably during the current
+ * transaction.
+ */
+static bool
+_bt_adjacenthtid(ItemPointer lowhtid, ItemPointer highhtid)
+{
+	BlockNumber lowblk,
+				highblk;
+
+	lowblk = ItemPointerGetBlockNumber(lowhtid);
+	highblk = ItemPointerGetBlockNumber(highhtid);
+
+	/* Make optimistic assumption of adjacency when heap blocks match */
+	if (lowblk == highblk)
+		return true;
+
+	/* When heap block one up, second offset should be FirstOffsetNumber */
+	if (lowblk + 1 == highblk &&
+		ItemPointerGetOffsetNumber(highhtid) == FirstOffsetNumber)
+		return true;
+
+	return false;
 }
 
 /*
