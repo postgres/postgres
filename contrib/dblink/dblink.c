@@ -982,13 +982,11 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	PGresult   *volatile res = NULL;
-	volatile storeInfo sinfo;
+	volatile storeInfo sinfo = {0};
 
 	/* prepTuplestoreResult must have been called previously */
 	Assert(rsinfo->returnMode == SFRM_Materialize);
 
-	/* initialize storeInfo to empty */
-	memset((void *) &sinfo, 0, sizeof(sinfo));
 	sinfo.fcinfo = fcinfo;
 
 	PG_TRY();
