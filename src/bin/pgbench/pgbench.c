@@ -4893,6 +4893,99 @@ addScript(ParsedScript script)
 	num_scripts++;
 }
 
+/*
+ * Print progress report.
+ *
+ * On entry, *last and *last_report contain the statistics and time of last
+ * progress report.  On exit, they are updated with the new stats.
+ */
+static void
+printProgressReport(TState *thread, int64 test_start, int64 now,
+					StatsData *last, int64 *last_report)
+{
+	/* generate and show report */
+	int64		run = now - *last_report,
+				ntx;
+	double		tps,
+				total_run,
+				latency,
+				sqlat,
+				lag,
+				stdev;
+	char		tbuf[315];
+	StatsData	cur;
+
+	/*
+	 * Add up the statistics of all threads.
+	 *
+	 * XXX: No locking.  There is no guarantee that we get an atomic snapshot
+	 * of the transaction count and latencies, so these figures can well be
+	 * off by a small amount.  The progress report's purpose is to give a
+	 * quick overview of how the test is going, so that shouldn't matter too
+	 * much.  (If a read from a 64-bit integer is not atomic, you might get a
+	 * "torn" read and completely bogus latencies though!)
+	 */
+	initStats(&cur, 0);
+	for (int i = 0; i < nthreads; i++)
+	{
+		mergeSimpleStats(&cur.latency, &thread[i].stats.latency);
+		mergeSimpleStats(&cur.lag, &thread[i].stats.lag);
+		cur.cnt += thread[i].stats.cnt;
+		cur.skipped += thread[i].stats.skipped;
+	}
+
+	/* we count only actually executed transactions */
+	ntx = (cur.cnt - cur.skipped) - (last->cnt - last->skipped);
+	total_run = (now - test_start) / 1000000.0;
+	tps = 1000000.0 * ntx / run;
+	if (ntx > 0)
+	{
+		latency = 0.001 * (cur.latency.sum - last->latency.sum) / ntx;
+		sqlat = 1.0 * (cur.latency.sum2 - last->latency.sum2) / ntx;
+		stdev = 0.001 * sqrt(sqlat - 1000000.0 * latency * latency);
+		lag = 0.001 * (cur.lag.sum - last->lag.sum) / ntx;
+	}
+	else
+	{
+		latency = sqlat = stdev = lag = 0;
+	}
+
+	if (progress_timestamp)
+	{
+		/*
+		 * On some platforms the current system timestamp is available in
+		 * now_time, but rather than get entangled with that, we just eat the
+		 * cost of an extra syscall in all cases.
+		 */
+		struct timeval tv;
+
+		gettimeofday(&tv, NULL);
+		snprintf(tbuf, sizeof(tbuf), "%ld.%03ld s",
+				 (long) tv.tv_sec, (long) (tv.tv_usec / 1000));
+	}
+	else
+	{
+		/* round seconds are expected, but the thread may be late */
+		snprintf(tbuf, sizeof(tbuf), "%.1f s", total_run);
+	}
+
+	fprintf(stderr,
+			"progress: %s, %.1f tps, lat %.3f ms stddev %.3f",
+			tbuf, tps, latency, stdev);
+
+	if (throttle_delay)
+	{
+		fprintf(stderr, ", lag %.3f ms", lag);
+		if (latency_limit)
+			fprintf(stderr, ", " INT64_FORMAT " skipped",
+					cur.skipped - last->skipped);
+	}
+	fprintf(stderr, "\n");
+
+	*last = cur;
+	*last_report = now;
+}
+
 static void
 printSimpleStats(const char *prefix, SimpleStats *ss)
 {
@@ -6199,89 +6292,7 @@ threadRun(void *arg)
 			now = INSTR_TIME_GET_MICROSEC(now_time);
 			if (now >= next_report)
 			{
-				/* generate and show report */
-				StatsData	cur;
-				int64		run = now - last_report,
-							ntx;
-				double		tps,
-							total_run,
-							latency,
-							sqlat,
-							lag,
-							stdev;
-				char		tbuf[315];
-
-				/*
-				 * Add up the statistics of all threads.
-				 *
-				 * XXX: No locking. There is no guarantee that we get an
-				 * atomic snapshot of the transaction count and latencies, so
-				 * these figures can well be off by a small amount. The
-				 * progress report's purpose is to give a quick overview of
-				 * how the test is going, so that shouldn't matter too much.
-				 * (If a read from a 64-bit integer is not atomic, you might
-				 * get a "torn" read and completely bogus latencies though!)
-				 */
-				initStats(&cur, 0);
-				for (i = 0; i < nthreads; i++)
-				{
-					mergeSimpleStats(&cur.latency, &thread[i].stats.latency);
-					mergeSimpleStats(&cur.lag, &thread[i].stats.lag);
-					cur.cnt += thread[i].stats.cnt;
-					cur.skipped += thread[i].stats.skipped;
-				}
-
-				/* we count only actually executed transactions */
-				ntx = (cur.cnt - cur.skipped) - (last.cnt - last.skipped);
-				total_run = (now - thread_start) / 1000000.0;
-				tps = 1000000.0 * ntx / run;
-				if (ntx > 0)
-				{
-					latency = 0.001 * (cur.latency.sum - last.latency.sum) / ntx;
-					sqlat = 1.0 * (cur.latency.sum2 - last.latency.sum2) / ntx;
-					stdev = 0.001 * sqrt(sqlat - 1000000.0 * latency * latency);
-					lag = 0.001 * (cur.lag.sum - last.lag.sum) / ntx;
-				}
-				else
-				{
-					latency = sqlat = stdev = lag = 0;
-				}
-
-				if (progress_timestamp)
-				{
-					/*
-					 * On some platforms the current system timestamp is
-					 * available in now_time, but rather than get entangled
-					 * with that, we just eat the cost of an extra syscall in
-					 * all cases.
-					 */
-					struct timeval tv;
-
-					gettimeofday(&tv, NULL);
-					snprintf(tbuf, sizeof(tbuf), "%ld.%03ld s",
-							 (long) tv.tv_sec, (long) (tv.tv_usec / 1000));
-				}
-				else
-				{
-					/* round seconds are expected, but the thread may be late */
-					snprintf(tbuf, sizeof(tbuf), "%.1f s", total_run);
-				}
-
-				fprintf(stderr,
-						"progress: %s, %.1f tps, lat %.3f ms stddev %.3f",
-						tbuf, tps, latency, stdev);
-
-				if (throttle_delay)
-				{
-					fprintf(stderr, ", lag %.3f ms", lag);
-					if (latency_limit)
-						fprintf(stderr, ", " INT64_FORMAT " skipped",
-								cur.skipped - last.skipped);
-				}
-				fprintf(stderr, "\n");
-
-				last = cur;
-				last_report = now;
+				printProgressReport(thread, thread_start, now, &last, &last_report);
 
 				/*
 				 * Ensure that the next report is in the future, in case
