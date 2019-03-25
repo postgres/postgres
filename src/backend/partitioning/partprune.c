@@ -475,7 +475,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		 */
 		subplan_map = (int *) palloc(nparts * sizeof(int));
 		subpart_map = (int *) palloc(nparts * sizeof(int));
-		relid_map = (Oid *) palloc(nparts * sizeof(int));
+		relid_map = (Oid *) palloc(nparts * sizeof(Oid));
 		present_parts = NULL;
 
 		for (i = 0; i < nparts; i++)
