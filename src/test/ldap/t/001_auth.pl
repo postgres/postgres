@@ -17,10 +17,17 @@ my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
 
 $ldap_bin_dir = undef;    # usually in PATH
 
-if ($^O eq 'darwin')
+if ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
 {
+	# typical paths for Homebrew
 	$slapd           = '/usr/local/opt/openldap/libexec/slapd';
 	$ldap_schema_dir = '/usr/local/etc/openldap/schema';
+}
+elsif ($^O eq 'darwin' && -d '/opt/local/etc/openldap')
+{
+	# typical paths for MacPorts
+	$slapd           = '/opt/local/libexec/slapd';
+	$ldap_schema_dir = '/opt/local/etc/openldap/schema';
 }
 elsif ($^O eq 'linux')
 {
