@@ -15,9 +15,9 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/nbtxlog.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xloginsert.h"
 #include "miscadmin.h"
@@ -431,12 +431,14 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 				}
 
 				/*
-				 * We check the whole HOT-chain to see if there is any tuple
-				 * that satisfies SnapshotDirty.  This is necessary because we
-				 * have just a single index entry for the entire chain.
+				 * Check if there's any table tuples for this index entry
+				 * satisfying SnapshotDirty. This is necessary because for AMs
+				 * with optimizations like heap's HOT, we have just a single
+				 * index entry for the entire chain.
 				 */
-				else if (heap_hot_search(&htid, heapRel, &SnapshotDirty,
-										 &all_dead))
+				else if (table_index_fetch_tuple_check(heapRel, &htid,
+													   &SnapshotDirty,
+													   &all_dead))
 				{
 					TransactionId xwait;
 
@@ -489,7 +491,8 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 					 * entry.
 					 */
 					htid = itup->t_tid;
-					if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
+					if (table_index_fetch_tuple_check(heapRel, &htid,
+													  SnapshotSelf, NULL))
 					{
 						/* Normal case --- it's still live */
 					}

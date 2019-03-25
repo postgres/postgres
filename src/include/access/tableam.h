@@ -256,9 +256,10 @@ typedef struct TableAmRoutine
 	 * needs be set to true by index_fetch_tuple, signalling to the caller
 	 * that index_fetch_tuple should be called again for the same tid.
 	 *
-	 * *all_dead should be set to true by index_fetch_tuple iff it is
-	 * guaranteed that no backend needs to see that tuple. Index AMs can use
-	 * that do avoid returning that tid in future searches.
+	 * *all_dead, if all_dead is not NULL, should be set to true if by
+	 * index_fetch_tuple iff it is guaranteed that no backend needs to see
+	 * that tuple. Index AMs can use that do avoid returning that tid in
+	 * future searches.
 	 */
 	bool		(*index_fetch_tuple) (struct IndexFetchTableData *scan,
 									  ItemPointer tid,
@@ -594,9 +595,10 @@ table_index_fetch_end(struct IndexFetchTableData *scan)
  * will be set to true, signalling that table_index_fetch_tuple() should be called
  * again for the same tid.
  *
- * *all_dead will be set to true by table_index_fetch_tuple() iff it is guaranteed
- * that no backend needs to see that tuple. Index AMs can use that do avoid
- * returning that tid in future searches.
+ * *all_dead, if all_dead is not NULL, will be set to true by
+ * table_index_fetch_tuple() iff it is guaranteed that no backend needs to see
+ * that tuple. Index AMs can use that do avoid returning that tid in future
+ * searches.
  *
  * The difference between this function and table_fetch_row_version is that
  * this function returns the currently visible version of a row if the AM
@@ -617,6 +619,17 @@ table_index_fetch_tuple(struct IndexFetchTableData *scan,
 													slot, call_again,
 													all_dead);
 }
+
+/*
+ * This is a convenience wrapper around table_index_fetch_tuple() which
+ * returns whether there are table tuple items corresponding to an index
+ * entry.  This likely is only useful to verify if there's a conflict in a
+ * unique index.
+ */
+extern bool table_index_fetch_tuple_check(Relation rel,
+							  ItemPointer tid,
+							  Snapshot snapshot,
+							  bool *all_dead);
 
 
 /* ------------------------------------------------------------------------
