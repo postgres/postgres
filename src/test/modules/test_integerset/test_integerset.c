@@ -539,6 +539,7 @@ test_huge_distances(void)
 	val = 0;
 	values[num_values++] = val;
 
+	/* Test differences on both sides of the 2^60 boundary. */
 	val += UINT64CONST(1152921504606846976) - 1;	/* 2^60 - 1 */
 	values[num_values++] = val;
 
@@ -563,16 +564,19 @@ test_huge_distances(void)
 	val += UINT64CONST(1152921504606846976) + 1;	/* 2^60 + 1 */
 	values[num_values++] = val;
 
-	val += UINT64CONST(1152921504606846976);	/* 2^60 */
+	val += UINT64CONST(1152921504606846976) + 2;	/* 2^60 + 2 */
 	values[num_values++] = val;
 
-	/* we're now very close to 2^64, so can't add large values anymore */
+	val += UINT64CONST(1152921504606846976) + 2;	/* 2^60 + 2 */
+	values[num_values++] = val;
 
-	intset = intset_create();
+	val += UINT64CONST(1152921504606846976);	/* 2^60 */
+	values[num_values++] = val;
 
 	/*
-	 * Add many more values to the end, to make sure that all the above values
-	 * get flushed and packed into the tree structure.
+	 * We're now very close to 2^64, so can't add large values anymore.  But
+	 * add more smaller values to the end, to make sure that all the above
+	 * values get flushed and packed into the tree structure.
 	 */
 	while (num_values < 1000)
 	{
@@ -580,7 +584,8 @@ test_huge_distances(void)
 		values[num_values++] = val;
 	}
 
-	/* Add these numbers to the set */
+	/* Create an IntegerSet using these values */
+	intset = intset_create();
 	for (int i = 0; i < num_values; i++)
 		intset_add_member(intset, values[i]);
 
