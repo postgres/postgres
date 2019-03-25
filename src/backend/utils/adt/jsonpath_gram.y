@@ -4,6 +4,8 @@
  * jsonpath_gram.y
  *	 Grammar definitions for jsonpath datatype
  *
+ * Transforms tokenized jsonpath into tree of JsonPathParseItem structs.
+ *
  * Copyright (c) 2019, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
@@ -37,15 +39,17 @@ int	jsonpath_yylex(union YYSTYPE *yylval_param);
 int	jsonpath_yyparse(JsonPathParseResult **result);
 void jsonpath_yyerror(JsonPathParseResult **result, const char *message);
 
-static JsonPathParseItem *makeItemType(int type);
+static JsonPathParseItem *makeItemType(JsonPathItemType type);
 static JsonPathParseItem *makeItemString(JsonPathString *s);
 static JsonPathParseItem *makeItemVariable(JsonPathString *s);
 static JsonPathParseItem *makeItemKey(JsonPathString *s);
 static JsonPathParseItem *makeItemNumeric(JsonPathString *s);
 static JsonPathParseItem *makeItemBool(bool val);
-static JsonPathParseItem *makeItemBinary(int type, JsonPathParseItem *la,
+static JsonPathParseItem *makeItemBinary(JsonPathItemType type,
+										 JsonPathParseItem *la,
 										 JsonPathParseItem *ra);
-static JsonPathParseItem *makeItemUnary(int type, JsonPathParseItem *a);
+static JsonPathParseItem *makeItemUnary(JsonPathItemType type,
+										JsonPathParseItem *a);
 static JsonPathParseItem *makeItemList(List *list);
 static JsonPathParseItem *makeIndexArray(List *list);
 static JsonPathParseItem *makeAny(int first, int last);
@@ -75,9 +79,9 @@ static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
 
 %union {
 	JsonPathString		str;
-	List				*elems;		/* list of JsonPathParseItem */
-	List				*indexs;	/* list of integers */
-	JsonPathParseItem	*value;
+	List			   *elems;	/* list of JsonPathParseItem */
+	List			   *indexs;	/* list of integers */
+	JsonPathParseItem  *value;
 	JsonPathParseResult *result;
 	JsonPathItemType	optype;
 	bool				boolean;
@@ -160,7 +164,7 @@ comp_op:
 	;
 
 delimited_predicate:
-	'(' predicate ')'						{ $$ = $2; }
+	'(' predicate ')'				{ $$ = $2; }
 	| EXISTS_P '(' expr ')'			{ $$ = makeItemUnary(jpiExists, $3); }
 	;
 
@@ -170,9 +174,10 @@ predicate:
 	| predicate AND_P predicate		{ $$ = makeItemBinary(jpiAnd, $1, $3); }
 	| predicate OR_P predicate		{ $$ = makeItemBinary(jpiOr, $1, $3); }
 	| NOT_P delimited_predicate 	{ $$ = makeItemUnary(jpiNot, $2); }
-	| '(' predicate ')' IS_P UNKNOWN_P	{ $$ = makeItemUnary(jpiIsUnknown, $2); }
+	| '(' predicate ')' IS_P UNKNOWN_P
+									{ $$ = makeItemUnary(jpiIsUnknown, $2); }
 	| expr STARTS_P WITH_P starts_with_initial
-		{ $$ = makeItemBinary(jpiStartsWith, $1, $4); }
+									{ $$ = makeItemBinary(jpiStartsWith, $1, $4); }
 	| expr LIKE_REGEX_P STRING_P 	{ $$ = makeItemLikeRegex($1, &$3, NULL); }
 	| expr LIKE_REGEX_P STRING_P FLAG_P STRING_P
 									{ $$ = makeItemLikeRegex($1, &$3, &$5); }
@@ -232,7 +237,8 @@ any_level:
 any_path:
 	ANY_P							{ $$ = makeAny(0, -1); }
 	| ANY_P '{' any_level '}'		{ $$ = makeAny($3, $3); }
-	| ANY_P '{' any_level TO_P any_level '}'	{ $$ = makeAny($3, $5); }
+	| ANY_P '{' any_level TO_P any_level '}'
+									{ $$ = makeAny($3, $5); }
 	;
 
 accessor_op:
@@ -285,10 +291,15 @@ method:
 	;
 %%
 
-static JsonPathParseItem*
-makeItemType(int type)
+/*
+ * The helper functions below allocate and fill JsonPathParseItem's of various
+ * types.
+ */
+
+static JsonPathParseItem *
+makeItemType(JsonPathItemType type)
 {
-	JsonPathParseItem* v = palloc(sizeof(*v));
+	JsonPathParseItem  *v = palloc(sizeof(*v));
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -298,10 +309,10 @@ makeItemType(int type)
 	return v;
 }
 
-static JsonPathParseItem*
+static JsonPathParseItem *
 makeItemString(JsonPathString *s)
 {
-	JsonPathParseItem *v;
+	JsonPathParseItem  *v;
 
 	if (s == NULL)
 	{
@@ -320,7 +331,7 @@ makeItemString(JsonPathString *s)
 static JsonPathParseItem *
 makeItemVariable(JsonPathString *s)
 {
-	JsonPathParseItem *v;
+	JsonPathParseItem  *v;
 
 	v = makeItemType(jpiVariable);
 	v->value.string.val = s->val;
@@ -332,7 +343,7 @@ makeItemVariable(JsonPathString *s)
 static JsonPathParseItem *
 makeItemKey(JsonPathString *s)
 {
-	JsonPathParseItem *v;
+	JsonPathParseItem  *v;
 
 	v = makeItemString(s);
 	v->type = jpiKey;
@@ -343,7 +354,7 @@ makeItemKey(JsonPathString *s)
 static JsonPathParseItem *
 makeItemNumeric(JsonPathString *s)
 {
-	JsonPathParseItem		*v;
+	JsonPathParseItem  *v;
 
 	v = makeItemType(jpiNumeric);
 	v->value.numeric =
@@ -356,7 +367,7 @@ makeItemNumeric(JsonPathString *s)
 static JsonPathParseItem *
 makeItemBool(bool val)
 {
-	JsonPathParseItem *v = makeItemType(jpiBool);
+	JsonPathParseItem  *v = makeItemType(jpiBool);
 
 	v->value.boolean = val;
 
@@ -364,7 +375,7 @@ makeItemBool(bool val)
 }
 
 static JsonPathParseItem *
-makeItemBinary(int type, JsonPathParseItem* la, JsonPathParseItem *ra)
+makeItemBinary(JsonPathItemType type, JsonPathParseItem *la, JsonPathParseItem *ra)
 {
 	JsonPathParseItem  *v = makeItemType(type);
 
@@ -375,7 +386,7 @@ makeItemBinary(int type, JsonPathParseItem* la, JsonPathParseItem *ra)
 }
 
 static JsonPathParseItem *
-makeItemUnary(int type, JsonPathParseItem* a)
+makeItemUnary(JsonPathItemType type, JsonPathParseItem *a)
 {
 	JsonPathParseItem  *v;
 
@@ -401,8 +412,9 @@ makeItemUnary(int type, JsonPathParseItem* a)
 static JsonPathParseItem *
 makeItemList(List *list)
 {
-	JsonPathParseItem *head, *end;
-	ListCell   *cell = list_head(list);
+	JsonPathParseItem  *head,
+					   *end;
+	ListCell		   *cell = list_head(list);
 
 	head = end = (JsonPathParseItem *) lfirst(cell);
 
@@ -427,8 +439,8 @@ makeItemList(List *list)
 static JsonPathParseItem *
 makeIndexArray(List *list)
 {
-	JsonPathParseItem	*v = makeItemType(jpiIndexArray);
-	ListCell			*cell;
+	JsonPathParseItem  *v = makeItemType(jpiIndexArray);
+	ListCell		   *cell;
 	int					i = 0;
 
 	Assert(list_length(list) > 0);
@@ -439,7 +451,7 @@ makeIndexArray(List *list)
 
 	foreach(cell, list)
 	{
-		JsonPathParseItem *jpi = lfirst(cell);
+		JsonPathParseItem  *jpi = lfirst(cell);
 
 		Assert(jpi->type == jpiSubscript);
 
@@ -453,7 +465,7 @@ makeIndexArray(List *list)
 static JsonPathParseItem *
 makeAny(int first, int last)
 {
-	JsonPathParseItem *v = makeItemType(jpiAny);
+	JsonPathParseItem  *v = makeItemType(jpiAny);
 
 	v->value.anybounds.first = (first >= 0) ? first : PG_UINT32_MAX;
 	v->value.anybounds.last = (last >= 0) ? last : PG_UINT32_MAX;
@@ -465,9 +477,9 @@ static JsonPathParseItem *
 makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				  JsonPathString *flags)
 {
-	JsonPathParseItem *v = makeItemType(jpiLikeRegex);
-	int			i;
-	int			cflags = REG_ADVANCED;
+	JsonPathParseItem  *v = makeItemType(jpiLikeRegex);
+	int					i;
+	int					cflags = REG_ADVANCED;
 
 	v->value.like_regex.expr = expr;
 	v->value.like_regex.pattern = pattern->val;
@@ -509,5 +521,13 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 
 	return v;
 }
+
+/*
+ * jsonpath_scan.l is compiled as part of jsonpath_gram.y.  Currently, this is
+ * unavoidable because jsonpath_gram does not create a .h file to export its
+ * token symbols.  If these files ever grow large enough to be worth compiling
+ * separately, that could be fixed; but for now it seems like useless
+ * complication.
+ */
 
 #include "jsonpath_scan.c"

@@ -4,6 +4,9 @@
  * jsonpath_scan.l
  *	Lexical parser for jsonpath datatype
  *
+ * Splits jsonpath string into tokens represented as JsonPathString structs.
+ * Decodes unicode and hex escaped strings.
+ *
  * Copyright (c) 2019, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
@@ -19,9 +22,6 @@
 
 static JsonPathString scanstring;
 
-/* No reason to constrain amount of data slurped */
-/* #define YY_READ_BUF_SIZE 16777216 */
-
 /* Handles to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
@@ -29,9 +29,7 @@ static int	scanbuflen;
 
 static void addstring(bool init, char *s, int l);
 static void addchar(bool init, char s);
-static int checkSpecialVal(void); /* examine scanstring for the special
-								   * value */
-
+static enum yytokentype checkKeyword(void);
 static void parseUnicode(char *s, int l);
 static void parseHexChars(char *s, int l);
 
@@ -60,11 +58,22 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 %option noyyrealloc
 %option noyyfree
 
-%x xQUOTED
-%x xNONQUOTED
-%x xVARQUOTED
-%x xSINGLEQUOTED
-%x xCOMMENT
+/*
+ * We use exclusive states for quoted, signle-quoted and non-quoted strings,
+ * quoted variable names and C-tyle comments.
+ * Exclusive states:
+ *  <xq> - quoted strings
+ *  <xnq> - non-quoted strings
+ *  <xvq> - quoted variable names
+ *  <xsq> - single-quoted strings
+ *  <xc> - C-style comment
+ */
+
+%x xq
+%x xnq
+%x xvq
+%x xsq
+%x xc
 
 special		 [\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/]
 any			[^\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/\\\"\' \t\n\r\f]
@@ -73,189 +82,188 @@ hex_dig		[0-9A-Fa-f]
 unicode		\\u({hex_dig}{4}|\{{hex_dig}{1,6}\})
 hex_char	\\x{hex_dig}{2}
 
-
 %%
 
-<INITIAL>\&\&					{ return AND_P; }
+<xnq>{any}+						{
+									addstring(false, yytext, yyleng);
+								}
 
-<INITIAL>\|\|					{ return OR_P; }
+<xnq>{blank}+					{
+									yylval->str = scanstring;
+									BEGIN INITIAL;
+									return checkKeyword();
+								}
 
-<INITIAL>\!						{ return NOT_P; }
 
-<INITIAL>\*\*					{ return ANY_P; }
+<xnq>\/\*						{
+									yylval->str = scanstring;
+									BEGIN xc;
+								}
 
-<INITIAL>\<						{ return LESS_P; }
+<xnq>({special}|\"|\')			{
+									yylval->str = scanstring;
+									yyless(0);
+									BEGIN INITIAL;
+									return checkKeyword();
+								}
 
-<INITIAL>\<\=					{ return LESSEQUAL_P; }
+<xnq><<EOF>>					{
+									yylval->str = scanstring;
+									BEGIN INITIAL;
+									return checkKeyword();
+								}
 
-<INITIAL>\=\=					{ return EQUAL_P; }
+<xnq,xq,xvq,xsq>\\[\"\'\\]		{ addchar(false, yytext[1]); }
 
-<INITIAL>\<\>					{ return NOTEQUAL_P; }
+<xnq,xq,xvq,xsq>\\b				{ addchar(false, '\b'); }
 
-<INITIAL>\!\=					{ return NOTEQUAL_P; }
+<xnq,xq,xvq,xsq>\\f				{ addchar(false, '\f'); }
 
-<INITIAL>\>\=					{ return GREATEREQUAL_P; }
+<xnq,xq,xvq,xsq>\\n				{ addchar(false, '\n'); }
 
-<INITIAL>\>						{ return GREATER_P; }
+<xnq,xq,xvq,xsq>\\r				{ addchar(false, '\r'); }
 
-<INITIAL>\${any}+				{
+<xnq,xq,xvq,xsq>\\t				{ addchar(false, '\t'); }
+
+<xnq,xq,xvq,xsq>\\v				{ addchar(false, '\v'); }
+
+<xnq,xq,xvq,xsq>{unicode}+		{ parseUnicode(yytext, yyleng); }
+
+<xnq,xq,xvq,xsq>{hex_char}+		{ parseHexChars(yytext, yyleng); }
+
+<xnq,xq,xvq,xsq>\\x				{ yyerror(NULL, "Hex character sequence is invalid"); }
+
+<xnq,xq,xvq,xsq>\\u				{ yyerror(NULL, "Unicode sequence is invalid"); }
+
+<xnq,xq,xvq,xsq>\\.				{ yyerror(NULL, "Escape sequence is invalid"); }
+
+<xnq,xq,xvq,xsq>\\				{ yyerror(NULL, "Unexpected end after backslash"); }
+
+<xq,xvq,xsq><<EOF>>				{ yyerror(NULL, "Unexpected end of quoted string"); }
+
+<xq>\"							{
+									yylval->str = scanstring;
+									BEGIN INITIAL;
+									return STRING_P;
+								}
+
+<xvq>\"							{
+									yylval->str = scanstring;
+									BEGIN INITIAL;
+									return VARIABLE_P;
+								}
+
+<xsq>\'							{
+									yylval->str = scanstring;
+									BEGIN INITIAL;
+									return STRING_P;
+								}
+
+<xq,xvq>[^\\\"]+				{ addstring(false, yytext, yyleng); }
+
+<xsq>[^\\\']+					{ addstring(false, yytext, yyleng); }
+
+<xc>\*\/						{ BEGIN INITIAL; }
+
+<xc>[^\*]+						{ }
+
+<xc>\*							{ }
+
+<xc><<EOF>>						{ yyerror(NULL, "Unexpected end of comment"); }
+
+\&\&							{ return AND_P; }
+
+\|\|							{ return OR_P; }
+
+\!								{ return NOT_P; }
+
+\*\*							{ return ANY_P; }
+
+\<								{ return LESS_P; }
+
+\<\=							{ return LESSEQUAL_P; }
+
+\=\=							{ return EQUAL_P; }
+
+\<\>							{ return NOTEQUAL_P; }
+
+\!\=							{ return NOTEQUAL_P; }
+
+\>\=							{ return GREATEREQUAL_P; }
+
+\>								{ return GREATER_P; }
+
+\${any}+						{
 									addstring(true, yytext + 1, yyleng - 1);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return VARIABLE_P;
 								}
 
-<INITIAL>\$\"					{
+\$\"							{
 									addchar(true, '\0');
-									BEGIN xVARQUOTED;
+									BEGIN xvq;
 								}
 
-<INITIAL>{special}				{ return *yytext; }
+{special}						{ return *yytext; }
 
-<INITIAL>{blank}+				{ /* ignore */ }
+{blank}+						{ /* ignore */ }
 
-<INITIAL>\/\*					{
+\/\*							{
 									addchar(true, '\0');
-									BEGIN xCOMMENT;
+									BEGIN xc;
 								}
 
-<INITIAL>[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+  /* float */  {
+[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+ { /* float */
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return NUMERIC_P;
 								}
 
-<INITIAL>\.[0-9]+[eE][+-]?[0-9]+  /* float */  {
+\.[0-9]+[eE][+-]?[0-9]+			{ /* float */
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return NUMERIC_P;
 								}
 
-<INITIAL>([0-9]+)?\.[0-9]+		{
+([0-9]+)?\.[0-9]+				{
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return NUMERIC_P;
 								}
 
-<INITIAL>[0-9]+					{
+[0-9]+							{
 									addstring(true, yytext, yyleng);
 									addchar(false, '\0');
 									yylval->str = scanstring;
 									return INT_P;
 								}
 
-<INITIAL>{any}+					{
+{any}+							{
 									addstring(true, yytext, yyleng);
-									BEGIN xNONQUOTED;
+									BEGIN xnq;
 								}
 
-<INITIAL>\"						{
+\"								{
 									addchar(true, '\0');
-									BEGIN xQUOTED;
+									BEGIN xq;
 								}
 
-<INITIAL>\'						{
+\'								{
 									addchar(true, '\0');
-									BEGIN xSINGLEQUOTED;
+									BEGIN xsq;
 								}
 
-<INITIAL>\\						{
+\\								{
 									yyless(0);
 									addchar(true, '\0');
-									BEGIN xNONQUOTED;
+									BEGIN xnq;
 								}
 
-<xNONQUOTED>{any}+				{
-									addstring(false, yytext, yyleng);
-								}
-
-<xNONQUOTED>{blank}+			{
-									yylval->str = scanstring;
-									BEGIN INITIAL;
-									return checkSpecialVal();
-								}
-
-
-<xNONQUOTED>\/\*				{
-									yylval->str = scanstring;
-									BEGIN xCOMMENT;
-								}
-
-<xNONQUOTED>({special}|\"|\')	{
-									yylval->str = scanstring;
-									yyless(0);
-									BEGIN INITIAL;
-									return checkSpecialVal();
-								}
-
-<xNONQUOTED><<EOF>>				{
-									yylval->str = scanstring;
-									BEGIN INITIAL;
-									return checkSpecialVal();
-								}
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\[\"\'\\]	{ addchar(false, yytext[1]); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\b	{ addchar(false, '\b'); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\f	{ addchar(false, '\f'); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\n	{ addchar(false, '\n'); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\r	{ addchar(false, '\r'); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\t	{ addchar(false, '\t'); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\v	{ addchar(false, '\v'); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>{unicode}+		{ parseUnicode(yytext, yyleng); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>{hex_char}+	{ parseHexChars(yytext, yyleng); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\x	{ yyerror(NULL, "Hex character sequence is invalid"); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\u	{ yyerror(NULL, "Unicode sequence is invalid"); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\.	{ yyerror(NULL, "Escape sequence is invalid"); }
-
-<xNONQUOTED,xQUOTED,xVARQUOTED,xSINGLEQUOTED>\\		{ yyerror(NULL, "Unexpected end after backslash"); }
-
-<xQUOTED,xVARQUOTED,xSINGLEQUOTED><<EOF>>			{ yyerror(NULL, "Unexpected end of quoted string"); }
-
-<xQUOTED>\"						{
-									yylval->str = scanstring;
-									BEGIN INITIAL;
-									return STRING_P;
-								}
-
-<xVARQUOTED>\"					{
-									yylval->str = scanstring;
-									BEGIN INITIAL;
-									return VARIABLE_P;
-								}
-
-<xSINGLEQUOTED>\'				{
-									yylval->str = scanstring;
-									BEGIN INITIAL;
-									return STRING_P;
-								}
-
-<xQUOTED,xVARQUOTED>[^\\\"]+	{ addstring(false, yytext, yyleng); }
-
-<xSINGLEQUOTED>[^\\\']+			{ addstring(false, yytext, yyleng); }
-
-<INITIAL><<EOF>>				{ yyterminate(); }
-
-<xCOMMENT>\*\/					{ BEGIN INITIAL; }
-
-<xCOMMENT>[^\*]+				{ }
-
-<xCOMMENT>\*					{ }
-
-<xCOMMENT><<EOF>>				{ yyerror(NULL, "Unexpected end of comment"); }
+<<EOF>>							{ yyterminate(); }
 
 %%
 
@@ -292,7 +300,6 @@ typedef struct JsonPathKeyword
  * Array of key words should be sorted by length and then
  * alphabetical order
  */
-
 static const JsonPathKeyword keywords[] = {
 	{ 2, false,	IS_P,		"is"},
 	{ 2, false,	TO_P,		"to"},
@@ -317,8 +324,9 @@ static const JsonPathKeyword keywords[] = {
 	{ 10,false, LIKE_REGEX_P, "like_regex"},
 };
 
-static int
-checkSpecialVal()
+/* Check if current scanstring value is a keyword */
+static enum yytokentype
+checkKeyword()
 {
 	int						res = IDENT_P;
 	int						diff;
@@ -329,7 +337,7 @@ checkSpecialVal()
 	if (scanstring.len > keywords[lengthof(keywords) - 1].len)
 		return res;
 
-	while(StopLow < StopHigh)
+	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
 
@@ -397,49 +405,50 @@ jsonpath_scanner_finish(void)
 	pfree(scanbuf);
 }
 
+/*
+ * Resize scanstring so that it can append string of given length.
+ * Reinitialize if required.
+ */
+static void
+resizeString(bool init, int appendLen)
+{
+	if (init)
+	{
+		scanstring.total = Max(32, appendLen);
+		scanstring.val = (char *) palloc(scanstring.total);
+		scanstring.len = 0;
+	}
+	else
+	{
+		if (scanstring.len + appendLen >= scanstring.total)
+		{
+			while (scanstring.len + appendLen >= scanstring.total)
+				scanstring.total *= 2;
+			scanstring.val = repalloc(scanstring.val, scanstring.total);
+		}
+	}
+}
+
+/* Add set of bytes at "s" of length "l" to scanstring */
 static void
 addstring(bool init, char *s, int l)
 {
-	if (init)
-	{
-		scanstring.total = 32;
-		scanstring.val = palloc(scanstring.total);
-		scanstring.len = 0;
-	}
-
-	if (s && l)
-	{
-		while(scanstring.len + l + 1 >= scanstring.total)
-		{
-			scanstring.total *= 2;
-			scanstring.val = repalloc(scanstring.val, scanstring.total);
-		}
-
-		memcpy(scanstring.val + scanstring.len, s, l);
-		scanstring.len += l;
-	}
+	resizeString(init, l + 1);
+	memcpy(scanstring.val + scanstring.len, s, l);
+	scanstring.len += l;
 }
 
+/* Add single byte "c" to scanstring */
 static void
-addchar(bool init, char s)
+addchar(bool init, char c)
 {
-	if (init)
-	{
-		scanstring.total = 32;
-		scanstring.val = palloc(scanstring.total);
-		scanstring.len = 0;
-	}
-	else if(scanstring.len + 1 >= scanstring.total)
-	{
-		scanstring.total *= 2;
-		scanstring.val = repalloc(scanstring.val, scanstring.total);
-	}
-
-	scanstring.val[ scanstring.len ] = s;
-	if (s != '\0')
+	resizeString(init, 1);
+	scanstring.val[scanstring.len] = c;
+	if (c != '\0')
 		scanstring.len++;
 }
 
+/* Interface to jsonpath parser */
 JsonPathParseResult *
 parsejsonpath(const char *str, int len)
 {
@@ -447,7 +456,7 @@ parsejsonpath(const char *str, int len)
 
 	jsonpath_scanner_init(str, len);
 
-	if (jsonpath_yyparse((void*)&parseresult) != 0)
+	if (jsonpath_yyparse((void *) &parseresult) != 0)
 		jsonpath_yyerror(NULL, "bugus input");
 
 	jsonpath_scanner_finish();
@@ -455,6 +464,7 @@ parsejsonpath(const char *str, int len)
 	return parseresult;
 }
 
+/* Turn hex character into integer */
 static int
 hexval(char c)
 {
@@ -468,6 +478,7 @@ hexval(char c)
 	return 0; /* not reached */
 }
 
+/* Add given unicode character to scanstring */
 static void
 addUnicodeChar(int ch)
 {
@@ -515,6 +526,7 @@ addUnicodeChar(int ch)
 	}
 }
 
+/* Add unicode character and process its hi surrogate */
 static void
 addUnicode(int ch, int *hi_surrogate)
 {
@@ -592,6 +604,7 @@ parseUnicode(char *s, int l)
 	}
 }
 
+/* Parse sequence of hex-encoded characters */
 static void
 parseHexChars(char *s, int l)
 {
@@ -601,7 +614,8 @@ parseHexChars(char *s, int l)
 
 	for (i = 0; i < l / 4; i++)
 	{
-		int			ch = (hexval(s[i * 4 + 2]) << 4) | hexval(s[i * 4 + 3]);
+		int			ch = (hexval(s[i * 4 + 2]) << 4) |
+						  hexval(s[i * 4 + 3]);
 
 		addUnicodeChar(ch);
 	}
