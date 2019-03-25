@@ -1134,10 +1134,10 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	}
 
 	/*
-	 * XXX ideally, if there's just one child, we'd not bother to generate an
-	 * Append node but just return the single child.  At the moment this does
-	 * not work because the varno of the child scan plan won't match the
-	 * parent-rel Vars it'll be asked to emit.
+	 * And build the Append plan.  Note that if there's just one child, the
+	 * Append is pretty useless; but we wait till setrefs.c to get rid of it.
+	 * Doing so here doesn't work because the varno of the child scan plan
+	 * won't match the parent-rel Vars it'll be asked to emit.
 	 */
 
 	plan = make_append(subplans, best_path->first_partial_path,

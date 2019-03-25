@@ -1242,7 +1242,6 @@ create_append_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = parallel_aware;
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = parallel_workers;
-	pathnode->path.pathkeys = NIL;	/* result is always considered unsorted */
 	pathnode->partitioned_rels = list_copy(partitioned_rels);
 
 	/*
@@ -1276,7 +1275,26 @@ create_append_path(PlannerInfo *root,
 
 	Assert(!parallel_aware || pathnode->path.parallel_safe);
 
-	cost_append(pathnode);
+	/*
+	 * If there's exactly one child path, the Append is a no-op and will be
+	 * discarded later (in setrefs.c); therefore, we can inherit the child's
+	 * size, cost, and pathkeys if any.  Otherwise, it's unsorted, and we must
+	 * do the normal costsize calculation.
+	 */
+	if (list_length(pathnode->subpaths) == 1)
+	{
+		Path	   *child = (Path *) linitial(pathnode->subpaths);
+
+		pathnode->path.rows = child->rows;
+		pathnode->path.startup_cost = child->startup_cost;
+		pathnode->path.total_cost = child->total_cost;
+		pathnode->path.pathkeys = child->pathkeys;
+	}
+	else
+	{
+		pathnode->path.pathkeys = NIL;	/* unsorted if more than 1 subpath */
+		cost_append(pathnode);
+	}
 
 	/* If the caller provided a row estimate, override the computed value. */
 	if (rows >= 0)
@@ -1408,11 +1426,21 @@ create_merge_append_path(PlannerInfo *root,
 		Assert(bms_equal(PATH_REQ_OUTER(subpath), required_outer));
 	}
 
-	/* Now we can compute total costs of the MergeAppend */
-	cost_merge_append(&pathnode->path, root,
-					  pathkeys, list_length(subpaths),
-					  input_startup_cost, input_total_cost,
-					  pathnode->path.rows);
+	/*
+	 * Now we can compute total costs of the MergeAppend.  If there's exactly
+	 * one child path, the MergeAppend is a no-op and will be discarded later
+	 * (in setrefs.c); otherwise we do the normal cost calculation.
+	 */
+	if (list_length(subpaths) == 1)
+	{
+		pathnode->path.startup_cost = input_startup_cost;
+		pathnode->path.total_cost = input_total_cost;
+	}
+	else
+		cost_merge_append(&pathnode->path, root,
+						  pathkeys, list_length(subpaths),
+						  input_startup_cost, input_total_cost,
+						  pathnode->path.rows);
 
 	return pathnode;
 }

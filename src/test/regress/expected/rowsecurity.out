@@ -1057,15 +1057,14 @@ NOTICE:  f_leak => awesome science fiction
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Append
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Seq Scan on part_document_fiction
+   Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
    InitPlan 1 (returns $0)
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
-   ->  Seq Scan on part_document_fiction
-         Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
-(6 rows)
+(5 rows)
 
 -- pp1 ERROR
 INSERT INTO part_document VALUES (100, 11, 5, 'regress_rls_dave', 'testing pp1'); -- fail
@@ -1136,15 +1135,14 @@ NOTICE:  f_leak => awesome science fiction
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Append
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Seq Scan on part_document_fiction
+   Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
    InitPlan 1 (returns $0)
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
-   ->  Seq Scan on part_document_fiction
-         Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
-(6 rows)
+(5 rows)
 
 -- viewpoint from regress_rls_carol
 SET SESSION AUTHORIZATION regress_rls_carol;

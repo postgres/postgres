@@ -8427,17 +8427,16 @@ SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER J
  400 | 400 | 0008
 (4 rows)
 
--- left outer join + nullable clasue
-EXPLAIN (COSTS OFF)
+-- left outer join + nullable clause
+EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10) t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a < 10 ORDER BY 1,2,3;
-                                    QUERY PLAN                                     
------------------------------------------------------------------------------------
- Sort
-   Sort Key: t1.a, ftprt2_p1.b, ftprt2_p1.c
-   ->  Append
-         ->  Foreign Scan
-               Relations: (public.ftprt1_p1 t1) LEFT JOIN (public.ftprt2_p1 fprt2)
-(5 rows)
+                                                                                                                     QUERY PLAN                                                                                                                     
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: t1.a, ftprt2_p1.b, ftprt2_p1.c
+   Relations: (public.ftprt1_p1 t1) LEFT JOIN (public.ftprt2_p1 fprt2)
+   Remote SQL: SELECT r6.a, r9.b, r9.c FROM (public.fprt1_p1 r6 LEFT JOIN public.fprt2_p1 r9 ON (((r6.a = r9.b)) AND ((r6.b = r9.a)) AND ((r9.a < 10)))) WHERE ((r6.a < 10)) ORDER BY r6.a ASC NULLS LAST, r9.b ASC NULLS LAST, r9.c ASC NULLS LAST
+(4 rows)
 
 SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10) t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a < 10 ORDER BY 1,2,3;
  a | b |  c   

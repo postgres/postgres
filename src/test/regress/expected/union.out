@@ -812,11 +812,10 @@ explain (costs off)
    UNION ALL
    SELECT 2 AS t, * FROM tenk1 b) c
  WHERE t = 2;
-        QUERY PLAN         
----------------------------
- Append
-   ->  Seq Scan on tenk1 b
-(2 rows)
+     QUERY PLAN      
+---------------------
+ Seq Scan on tenk1 b
+(1 row)
 
 -- Test that we push quals into UNION sub-selects only when it's safe
 explain (costs off)

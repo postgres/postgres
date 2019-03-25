@@ -1770,12 +1770,11 @@ explain (costs off) select * from list_parted;
 (4 rows)
 
 explain (costs off) select * from list_parted where a is null;
-           QUERY PLAN           
---------------------------------
- Append
-   ->  Seq Scan on part_null_xy
-         Filter: (a IS NULL)
-(3 rows)
+        QUERY PLAN        
+--------------------------
+ Seq Scan on part_null_xy
+   Filter: (a IS NULL)
+(2 rows)
 
 explain (costs off) select * from list_parted where a is not null;
            QUERY PLAN            
@@ -1800,20 +1799,18 @@ explain (costs off) select * from list_parted where a in ('ab', 'cd', 'ef');
 (5 rows)
 
 explain (costs off) select * from list_parted where a = 'ab' or a in (null, 'cd');
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
- Append
-   ->  Seq Scan on part_ab_cd
-         Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
-(3 rows)
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Seq Scan on part_ab_cd
+   Filter: (((a)::text = 'ab'::text) OR ((a)::text = ANY ('{NULL,cd}'::text[])))
+(2 rows)
 
 explain (costs off) select * from list_parted where a = 'ab';
-                QUERY PLAN                
-------------------------------------------
- Append
-   ->  Seq Scan on part_ab_cd
-         Filter: ((a)::text = 'ab'::text)
-(3 rows)
+             QUERY PLAN             
+------------------------------------
+ Seq Scan on part_ab_cd
+   Filter: ((a)::text = 'ab'::text)
+(2 rows)
 
 create table range_list_parted (
 	a	int,
@@ -1893,12 +1890,11 @@ explain (costs off) select * from range_list_parted where a is null;
 
 /* Should only select rows from the null-accepting partition */
 explain (costs off) select * from range_list_parted where b is null;
-             QUERY PLAN             
-------------------------------------
- Append
-   ->  Seq Scan on part_40_inf_null
-         Filter: (b IS NULL)
-(3 rows)
+          QUERY PLAN          
+------------------------------
+ Seq Scan on part_40_inf_null
+   Filter: (b IS NULL)
+(2 rows)
 
 explain (costs off) select * from range_list_parted where a is not null and a < 67;
                    QUERY PLAN                   
@@ -2021,12 +2017,11 @@ explain (costs off) select * from mcrparted where a > -1;	-- scans all partition
 (15 rows)
 
 explain (costs off) select * from mcrparted where a = 20 and abs(b) = 10 and c > 10;	-- scans mcrparted4
-                        QUERY PLAN                         
------------------------------------------------------------
- Append
-   ->  Seq Scan on mcrparted4
-         Filter: ((c > 10) AND (a = 20) AND (abs(b) = 10))
-(3 rows)
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Seq Scan on mcrparted4
+   Filter: ((c > 10) AND (a = 20) AND (abs(b) = 10))
+(2 rows)
 
 explain (costs off) select * from mcrparted where a = 20 and c > 20; -- scans mcrparted3, mcrparte4, mcrparte5, mcrparted_def
                QUERY PLAN                
@@ -2050,22 +2045,18 @@ create table parted_minmax1 partition of parted_minmax for values from (1) to (1
 create index parted_minmax1i on parted_minmax1 (a, b);
 insert into parted_minmax values (1,'12345');
 explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
-                                              QUERY PLAN                                               
--------------------------------------------------------------------------------------------------------
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)
      ->  Limit
-           ->  Merge Append
-                 Sort Key: parted_minmax1.a
-                 ->  Index Only Scan using parted_minmax1i on parted_minmax1
-                       Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
+           ->  Index Only Scan using parted_minmax1i on parted_minmax1
+                 Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
    InitPlan 2 (returns $1)
      ->  Limit
-           ->  Merge Append
-                 Sort Key: parted_minmax1_1.a DESC
-                 ->  Index Only Scan Backward using parted_minmax1i on parted_minmax1 parted_minmax1_1
-                       Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
-(13 rows)
+           ->  Index Only Scan Backward using parted_minmax1i on parted_minmax1 parted_minmax1_1
+                 Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
+(9 rows)
 
 select min(a), max(a) from parted_minmax where b = '12345';
  min | max 

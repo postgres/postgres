@@ -43,20 +43,18 @@ explain (costs off) select * from lp where a > 'a' and a <= 'd';
 (7 rows)
 
 explain (costs off) select * from lp where a = 'a';
-            QUERY PLAN             
------------------------------------
- Append
-   ->  Seq Scan on lp_ad
-         Filter: (a = 'a'::bpchar)
-(3 rows)
+         QUERY PLAN          
+-----------------------------
+ Seq Scan on lp_ad
+   Filter: (a = 'a'::bpchar)
+(2 rows)
 
 explain (costs off) select * from lp where 'a' = a;	/* commuted */
-            QUERY PLAN             
------------------------------------
- Append
-   ->  Seq Scan on lp_ad
-         Filter: ('a'::bpchar = a)
-(3 rows)
+         QUERY PLAN          
+-----------------------------
+ Seq Scan on lp_ad
+   Filter: ('a'::bpchar = a)
+(2 rows)
 
 explain (costs off) select * from lp where a is not null;
            QUERY PLAN            
@@ -75,12 +73,11 @@ explain (costs off) select * from lp where a is not null;
 (11 rows)
 
 explain (costs off) select * from lp where a is null;
-         QUERY PLAN          
------------------------------
- Append
-   ->  Seq Scan on lp_null
-         Filter: (a IS NULL)
-(3 rows)
+      QUERY PLAN       
+-----------------------
+ Seq Scan on lp_null
+   Filter: (a IS NULL)
+(2 rows)
 
 explain (costs off) select * from lp where a = 'a' or a = 'c';
                         QUERY PLAN                        
@@ -150,12 +147,11 @@ create table coll_pruning_a partition of coll_pruning for values in ('a');
 create table coll_pruning_b partition of coll_pruning for values in ('b');
 create table coll_pruning_def partition of coll_pruning default;
 explain (costs off) select * from coll_pruning where a collate "C" = 'a' collate "C";
-                 QUERY PLAN                  
----------------------------------------------
- Append
-   ->  Seq Scan on coll_pruning_a
-         Filter: (a = 'a'::text COLLATE "C")
-(3 rows)
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on coll_pruning_a
+   Filter: (a = 'a'::text COLLATE "C")
+(2 rows)
 
 -- collation doesn't match the partitioning collation, no pruning occurs
 explain (costs off) select * from coll_pruning where a collate "POSIX" = 'a' collate "POSIX";
@@ -192,20 +188,18 @@ create table rlp5 partition of rlp for values from (31) to (maxvalue) partition 
 create table rlp5_default partition of rlp5 default;
 create table rlp5_1 partition of rlp5 for values from (31) to (40);
 explain (costs off) select * from rlp where a < 1;
-       QUERY PLAN        
--------------------------
- Append
-   ->  Seq Scan on rlp1
-         Filter: (a < 1)
-(3 rows)
+    QUERY PLAN     
+-------------------
+ Seq Scan on rlp1
+   Filter: (a < 1)
+(2 rows)
 
 explain (costs off) select * from rlp where 1 > a;	/* commuted */
-       QUERY PLAN        
--------------------------
- Append
-   ->  Seq Scan on rlp1
-         Filter: (1 > a)
-(3 rows)
+    QUERY PLAN     
+-------------------
+ Seq Scan on rlp1
+   Filter: (1 > a)
+(2 rows)
 
 explain (costs off) select * from rlp where a <= 1;
         QUERY PLAN        
@@ -218,20 +212,18 @@ explain (costs off) select * from rlp where a <= 1;
 (5 rows)
 
 explain (costs off) select * from rlp where a = 1;
-       QUERY PLAN        
--------------------------
- Append
-   ->  Seq Scan on rlp2
-         Filter: (a = 1)
-(3 rows)
+    QUERY PLAN     
+-------------------
+ Seq Scan on rlp2
+   Filter: (a = 1)
+(2 rows)
 
 explain (costs off) select * from rlp where a = 1::bigint;		/* same as above */
-            QUERY PLAN             
------------------------------------
- Append
-   ->  Seq Scan on rlp2
-         Filter: (a = '1'::bigint)
-(3 rows)
+         QUERY PLAN          
+-----------------------------
+ Seq Scan on rlp2
+   Filter: (a = '1'::bigint)
+(2 rows)
 
 explain (costs off) select * from rlp where a = 1::numeric;		/* no pruning */
                   QUERY PLAN                   
@@ -384,20 +376,18 @@ explain (costs off) select * from rlp where a = 16;
 (9 rows)
 
 explain (costs off) select * from rlp where a = 16 and b in ('not', 'in', 'here');
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Append
-   ->  Seq Scan on rlp3_default
-         Filter: ((a = 16) AND ((b)::text = ANY ('{not,in,here}'::text[])))
-(3 rows)
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Seq Scan on rlp3_default
+   Filter: ((a = 16) AND ((b)::text = ANY ('{not,in,here}'::text[])))
+(2 rows)
 
 explain (costs off) select * from rlp where a = 16 and b < 'ab';
-                       QUERY PLAN                        
----------------------------------------------------------
- Append
-   ->  Seq Scan on rlp3_default
-         Filter: (((b)::text < 'ab'::text) AND (a = 16))
-(3 rows)
+                    QUERY PLAN                     
+---------------------------------------------------
+ Seq Scan on rlp3_default
+   Filter: (((b)::text < 'ab'::text) AND (a = 16))
+(2 rows)
 
 explain (costs off) select * from rlp where a = 16 and b <= 'ab';
                         QUERY PLAN                        
@@ -410,12 +400,11 @@ explain (costs off) select * from rlp where a = 16 and b <= 'ab';
 (5 rows)
 
 explain (costs off) select * from rlp where a = 16 and b is null;
-                 QUERY PLAN                 
---------------------------------------------
- Append
-   ->  Seq Scan on rlp3nullxy
-         Filter: ((b IS NULL) AND (a = 16))
-(3 rows)
+              QUERY PLAN              
+--------------------------------------
+ Seq Scan on rlp3nullxy
+   Filter: ((b IS NULL) AND (a = 16))
+(2 rows)
 
 explain (costs off) select * from rlp where a = 16 and b is not null;
                    QUERY PLAN                   
@@ -432,12 +421,11 @@ explain (costs off) select * from rlp where a = 16 and b is not null;
 (9 rows)
 
 explain (costs off) select * from rlp where a is null;
-             QUERY PLAN             
-------------------------------------
- Append
-   ->  Seq Scan on rlp_default_null
-         Filter: (a IS NULL)
-(3 rows)
+          QUERY PLAN          
+------------------------------
+ Seq Scan on rlp_default_null
+   Filter: (a IS NULL)
+(2 rows)
 
 explain (costs off) select * from rlp where a is not null;
               QUERY PLAN               
@@ -486,12 +474,11 @@ explain (costs off) select * from rlp where a > 30;
 (7 rows)
 
 explain (costs off) select * from rlp where a = 30;	/* only default is scanned */
-            QUERY PLAN            
-----------------------------------
- Append
-   ->  Seq Scan on rlp_default_30
-         Filter: (a = 30)
-(3 rows)
+         QUERY PLAN         
+----------------------------
+ Seq Scan on rlp_default_30
+   Filter: (a = 30)
+(2 rows)
 
 explain (costs off) select * from rlp where a <= 31;
               QUERY PLAN               
@@ -528,12 +515,11 @@ explain (costs off) select * from rlp where a <= 31;
 (29 rows)
 
 explain (costs off) select * from rlp where a = 1 or a = 7;
-              QUERY PLAN              
---------------------------------------
- Append
-   ->  Seq Scan on rlp2
-         Filter: ((a = 1) OR (a = 7))
-(3 rows)
+           QUERY PLAN           
+--------------------------------
+ Seq Scan on rlp2
+   Filter: ((a = 1) OR (a = 7))
+(2 rows)
 
 explain (costs off) select * from rlp where a = 1 or b = 'ab';
                       QUERY PLAN                       
@@ -580,12 +566,11 @@ explain (costs off) select * from rlp where a > 20 and a < 27;
 (9 rows)
 
 explain (costs off) select * from rlp where a = 29;
-           QUERY PLAN           
---------------------------------
- Append
-   ->  Seq Scan on rlp4_default
-         Filter: (a = 29)
-(3 rows)
+        QUERY PLAN        
+--------------------------
+ Seq Scan on rlp4_default
+   Filter: (a = 29)
+(2 rows)
 
 explain (costs off) select * from rlp where a >= 29;
               QUERY PLAN               
@@ -605,12 +590,11 @@ explain (costs off) select * from rlp where a >= 29;
 
 -- redundant clauses are eliminated
 explain (costs off) select * from rlp where a > 1 and a = 10;	/* only default */
-               QUERY PLAN               
-----------------------------------------
- Append
-   ->  Seq Scan on rlp_default_10
-         Filter: ((a > 1) AND (a = 10))
-(3 rows)
+            QUERY PLAN            
+----------------------------------
+ Seq Scan on rlp_default_10
+   Filter: ((a > 1) AND (a = 10))
+(2 rows)
 
 explain (costs off) select * from rlp where a > 1 and a >=15;	/* rlp3 onwards, including default */
                QUERY PLAN                
@@ -797,20 +781,18 @@ explain (costs off) select * from mc3p where a <= 10 and abs(b) < 10;
 (9 rows)
 
 explain (costs off) select * from mc3p where a = 11 and abs(b) = 0;
-                 QUERY PLAN                  
----------------------------------------------
- Append
-   ->  Seq Scan on mc3p_default
-         Filter: ((a = 11) AND (abs(b) = 0))
-(3 rows)
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on mc3p_default
+   Filter: ((a = 11) AND (abs(b) = 0))
+(2 rows)
 
 explain (costs off) select * from mc3p where a = 20 and abs(b) = 10 and c = 100;
-                         QUERY PLAN                         
-------------------------------------------------------------
- Append
-   ->  Seq Scan on mc3p6
-         Filter: ((a = 20) AND (c = 100) AND (abs(b) = 10))
-(3 rows)
+                      QUERY PLAN                      
+------------------------------------------------------
+ Seq Scan on mc3p6
+   Filter: ((a = 20) AND (c = 100) AND (abs(b) = 10))
+(2 rows)
 
 explain (costs off) select * from mc3p where a > 20;
            QUERY PLAN           
@@ -962,12 +944,11 @@ explain (costs off) select * from mc2p where a < 2;
 (9 rows)
 
 explain (costs off) select * from mc2p where a = 2 and b < 1;
-              QUERY PLAN               
----------------------------------------
- Append
-   ->  Seq Scan on mc2p3
-         Filter: ((b < 1) AND (a = 2))
-(3 rows)
+           QUERY PLAN            
+---------------------------------
+ Seq Scan on mc2p3
+   Filter: ((b < 1) AND (a = 2))
+(2 rows)
 
 explain (costs off) select * from mc2p where a > 1;
            QUERY PLAN           
@@ -986,53 +967,47 @@ explain (costs off) select * from mc2p where a > 1;
 (11 rows)
 
 explain (costs off) select * from mc2p where a = 1 and b > 1;
-              QUERY PLAN               
----------------------------------------
- Append
-   ->  Seq Scan on mc2p2
-         Filter: ((b > 1) AND (a = 1))
-(3 rows)
+           QUERY PLAN            
+---------------------------------
+ Seq Scan on mc2p2
+   Filter: ((b > 1) AND (a = 1))
+(2 rows)
 
 -- all partitions but the default one should be pruned
 explain (costs off) select * from mc2p where a = 1 and b is null;
-                QUERY PLAN                 
--------------------------------------------
- Append
-   ->  Seq Scan on mc2p_default
-         Filter: ((b IS NULL) AND (a = 1))
-(3 rows)
+             QUERY PLAN              
+-------------------------------------
+ Seq Scan on mc2p_default
+   Filter: ((b IS NULL) AND (a = 1))
+(2 rows)
 
 explain (costs off) select * from mc2p where a is null and b is null;
-                  QUERY PLAN                   
------------------------------------------------
- Append
-   ->  Seq Scan on mc2p_default
-         Filter: ((a IS NULL) AND (b IS NULL))
-(3 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on mc2p_default
+   Filter: ((a IS NULL) AND (b IS NULL))
+(2 rows)
 
 explain (costs off) select * from mc2p where a is null and b = 1;
-                QUERY PLAN                 
--------------------------------------------
- Append
-   ->  Seq Scan on mc2p_default
-         Filter: ((a IS NULL) AND (b = 1))
-(3 rows)
+             QUERY PLAN              
+-------------------------------------
+ Seq Scan on mc2p_default
+   Filter: ((a IS NULL) AND (b = 1))
+(2 rows)
 
 explain (costs off) select * from mc2p where a is null;
-           QUERY PLAN           
---------------------------------
- Append
-   ->  Seq Scan on mc2p_default
-         Filter: (a IS NULL)
-(3 rows)
+        QUERY PLAN        
+--------------------------
+ Seq Scan on mc2p_default
+   Filter: (a IS NULL)
+(2 rows)
 
 explain (costs off) select * from mc2p where b is null;
-           QUERY PLAN           
---------------------------------
- Append
-   ->  Seq Scan on mc2p_default
-         Filter: (b IS NULL)
-(3 rows)
+        QUERY PLAN        
+--------------------------
+ Seq Scan on mc2p_default
+   Filter: (b IS NULL)
+(2 rows)
 
 -- boolean partitioning
 create table boolpart (a bool) partition by list (a);
@@ -1050,20 +1025,18 @@ explain (costs off) select * from boolpart where a in (true, false);
 (5 rows)
 
 explain (costs off) select * from boolpart where a = false;
-          QUERY PLAN          
-------------------------------
- Append
-   ->  Seq Scan on boolpart_f
-         Filter: (NOT a)
-(3 rows)
+       QUERY PLAN       
+------------------------
+ Seq Scan on boolpart_f
+   Filter: (NOT a)
+(2 rows)
 
 explain (costs off) select * from boolpart where not a = false;
-          QUERY PLAN          
-------------------------------
- Append
-   ->  Seq Scan on boolpart_t
-         Filter: a
-(3 rows)
+       QUERY PLAN       
+------------------------
+ Seq Scan on boolpart_t
+   Filter: a
+(2 rows)
 
 explain (costs off) select * from boolpart where a is true or a is not true;
                     QUERY PLAN                    
@@ -1076,12 +1049,11 @@ explain (costs off) select * from boolpart where a is true or a is not true;
 (5 rows)
 
 explain (costs off) select * from boolpart where a is not true;
-           QUERY PLAN            
----------------------------------
- Append
-   ->  Seq Scan on boolpart_f
-         Filter: (a IS NOT TRUE)
-(3 rows)
+        QUERY PLAN         
+---------------------------
+ Seq Scan on boolpart_f
+   Filter: (a IS NOT TRUE)
+(2 rows)
 
 explain (costs off) select * from boolpart where a is not true and a is not false;
         QUERY PLAN        
@@ -1190,10 +1162,9 @@ EXPLAIN (COSTS OFF) SELECT tableoid::regclass as part, a, b FROM part WHERE a IS
 ---------------------------------------------------------------------------
  Sort
    Sort Key: ((part_p2_p1.tableoid)::regclass), part_p2_p1.a, part_p2_p1.b
-   ->  Append
-         ->  Seq Scan on part_p2_p1
-               Filter: (a IS NULL)
-(5 rows)
+   ->  Seq Scan on part_p2_p1
+         Filter: (a IS NULL)
+(4 rows)
 
 --
 -- some more cases
@@ -1260,13 +1231,12 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
 
 -- also here, because values for all keys are provided
 explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2 where t2.a = 1 and abs(t2.b) = 1 and t2.c = 1) s where t1.a = 1;
-                             QUERY PLAN                             
---------------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Nested Loop
    ->  Aggregate
-         ->  Append
-               ->  Seq Scan on mc3p1 t2
-                     Filter: ((a = 1) AND (c = 1) AND (abs(b) = 1))
+         ->  Seq Scan on mc3p1 t2
+               Filter: ((a = 1) AND (c = 1) AND (abs(b) = 1))
    ->  Append
          ->  Seq Scan on mc2p1 t1
                Filter: (a = 1)
@@ -1274,7 +1244,7 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
                Filter: (a = 1)
          ->  Seq Scan on mc2p_default t1_2
                Filter: (a = 1)
-(12 rows)
+(11 rows)
 
 --
 -- pruning with clauses containing <> operator
@@ -1395,12 +1365,11 @@ explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'a' co
 
 -- pruning, with values provided for both keys
 explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'e' collate "C" and substr(a, 1) = 'a' collate "POSIX";
-                                               QUERY PLAN                                                
----------------------------------------------------------------------------------------------------------
- Append
-   ->  Seq Scan on coll_pruning_multi2
-         Filter: ((substr(a, 1) = 'e'::text COLLATE "C") AND (substr(a, 1) = 'a'::text COLLATE "POSIX"))
-(3 rows)
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Seq Scan on coll_pruning_multi2
+   Filter: ((substr(a, 1) = 'e'::text COLLATE "C") AND (substr(a, 1) = 'a'::text COLLATE "POSIX"))
+(2 rows)
 
 --
 -- LIKE operators don't prune
@@ -1445,12 +1414,11 @@ explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
 create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values from (16384) to (maxvalue);
 -- all partitions but rparted_by_int2_maxvalue pruned
 explain (costs off) select * from rparted_by_int2 where a > 100000000000000;
-                   QUERY PLAN                    
--------------------------------------------------
- Append
-   ->  Seq Scan on rparted_by_int2_maxvalue
-         Filter: (a > '100000000000000'::bigint)
-(3 rows)
+                QUERY PLAN                 
+-------------------------------------------
+ Seq Scan on rparted_by_int2_maxvalue
+   Filter: (a > '100000000000000'::bigint)
+(2 rows)
 
 drop table lp, coll_pruning, rlp, mc3p, mc2p, boolpart, rp, coll_pruning_multi, like_op_noprune, lparted_by_int2, rparted_by_int2;
 --
@@ -1584,52 +1552,46 @@ explain (costs off) select * from hp where a <> 1 and b <> 'xxx';
 -- pruning should work if either a value or a IS NULL clause is provided for
 -- each of the keys
 explain (costs off) select * from hp where a is null and b is null;
-                  QUERY PLAN                   
------------------------------------------------
- Append
-   ->  Seq Scan on hp0
-         Filter: ((a IS NULL) AND (b IS NULL))
-(3 rows)
+               QUERY PLAN                
+-----------------------------------------
+ Seq Scan on hp0
+   Filter: ((a IS NULL) AND (b IS NULL))
+(2 rows)
 
 explain (costs off) select * from hp where a = 1 and b is null;
-                QUERY PLAN                 
--------------------------------------------
- Append
-   ->  Seq Scan on hp1
-         Filter: ((b IS NULL) AND (a = 1))
-(3 rows)
+             QUERY PLAN              
+-------------------------------------
+ Seq Scan on hp1
+   Filter: ((b IS NULL) AND (a = 1))
+(2 rows)
 
 explain (costs off) select * from hp where a = 1 and b = 'xxx';
-                   QUERY PLAN                    
--------------------------------------------------
- Append
-   ->  Seq Scan on hp0
-         Filter: ((a = 1) AND (b = 'xxx'::text))
-(3 rows)
+                QUERY PLAN                 
+-------------------------------------------
+ Seq Scan on hp0
+   Filter: ((a = 1) AND (b = 'xxx'::text))
+(2 rows)
 
 explain (costs off) select * from hp where a is null and b = 'xxx';
-                     QUERY PLAN                      
------------------------------------------------------
- Append
-   ->  Seq Scan on hp2
-         Filter: ((a IS NULL) AND (b = 'xxx'::text))
-(3 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Seq Scan on hp2
+   Filter: ((a IS NULL) AND (b = 'xxx'::text))
+(2 rows)
 
 explain (costs off) select * from hp where a = 2 and b = 'xxx';
-                   QUERY PLAN                    
--------------------------------------------------
- Append
-   ->  Seq Scan on hp3
-         Filter: ((a = 2) AND (b = 'xxx'::text))
-(3 rows)
+                QUERY PLAN                 
+-------------------------------------------
+ Seq Scan on hp3
+   Filter: ((a = 2) AND (b = 'xxx'::text))
+(2 rows)
 
 explain (costs off) select * from hp where a = 1 and b = 'abcde';
-                    QUERY PLAN                     
----------------------------------------------------
- Append
-   ->  Seq Scan on hp2
-         Filter: ((a = 1) AND (b = 'abcde'::text))
-(3 rows)
+                 QUERY PLAN                  
+---------------------------------------------
+ Seq Scan on hp2
+   Filter: ((a = 1) AND (b = 'abcde'::text))
+(2 rows)
 
 explain (costs off) select * from hp where (a = 1 and b = 'abcde') or (a = 2 and b = 'xxx') or (a is null and b is null);
                                                        QUERY PLAN                                                        
@@ -2878,12 +2840,11 @@ execute part_abc_q1 (1, 2, 3);
 
 -- Single partition should be scanned.
 explain (analyze, costs off, summary off, timing off) execute part_abc_q1 (1, 2, 3);
-                      QUERY PLAN                       
--------------------------------------------------------
- Append (actual rows=0 loops=1)
-   ->  Seq Scan on part_abc_p1 (actual rows=0 loops=1)
-         Filter: ((a = $1) AND (b = $2) AND (c = $3))
-(3 rows)
+                   QUERY PLAN                    
+-------------------------------------------------
+ Seq Scan on part_abc_p1 (actual rows=0 loops=1)
+   Filter: ((a = $1) AND (b = $2) AND (c = $3))
+(2 rows)
 
 deallocate part_abc_q1;
 drop table part_abc;
@@ -3205,12 +3166,11 @@ create table pp_arrpart (a int[]) partition by list (a);
 create table pp_arrpart1 partition of pp_arrpart for values in ('{1}');
 create table pp_arrpart2 partition of pp_arrpart for values in ('{2, 3}', '{4, 5}');
 explain (costs off) select * from pp_arrpart where a = '{1}';
-               QUERY PLAN               
-----------------------------------------
- Append
-   ->  Seq Scan on pp_arrpart1
-         Filter: (a = '{1}'::integer[])
-(3 rows)
+            QUERY PLAN            
+----------------------------------
+ Seq Scan on pp_arrpart1
+   Filter: (a = '{1}'::integer[])
+(2 rows)
 
 explain (costs off) select * from pp_arrpart where a = '{1, 2}';
         QUERY PLAN        
@@ -3262,20 +3222,18 @@ select tableoid::regclass, * from pph_arrpart order by 1;
 (3 rows)
 
 explain (costs off) select * from pph_arrpart where a = '{1}';
-               QUERY PLAN               
-----------------------------------------
- Append
-   ->  Seq Scan on pph_arrpart2
-         Filter: (a = '{1}'::integer[])
-(3 rows)
+            QUERY PLAN            
+----------------------------------
+ Seq Scan on pph_arrpart2
+   Filter: (a = '{1}'::integer[])
+(2 rows)
 
 explain (costs off) select * from pph_arrpart where a = '{1, 2}';
-                QUERY PLAN                
-------------------------------------------
- Append
-   ->  Seq Scan on pph_arrpart1
-         Filter: (a = '{1,2}'::integer[])
-(3 rows)
+             QUERY PLAN             
+------------------------------------
+ Seq Scan on pph_arrpart1
+   Filter: (a = '{1,2}'::integer[])
+(2 rows)
 
 explain (costs off) select * from pph_arrpart where a in ('{4, 5}', '{1}');
                               QUERY PLAN                              
@@ -3294,12 +3252,11 @@ create table pp_enumpart (a pp_colors) partition by list (a);
 create table pp_enumpart_green partition of pp_enumpart for values in ('green');
 create table pp_enumpart_blue partition of pp_enumpart for values in ('blue');
 explain (costs off) select * from pp_enumpart where a = 'blue';
-               QUERY PLAN                
------------------------------------------
- Append
-   ->  Seq Scan on pp_enumpart_blue
-         Filter: (a = 'blue'::pp_colors)
-(3 rows)
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on pp_enumpart_blue
+   Filter: (a = 'blue'::pp_colors)
+(2 rows)
 
 explain (costs off) select * from pp_enumpart where a = 'black';
         QUERY PLAN        
@@ -3316,12 +3273,11 @@ create table pp_recpart (a pp_rectype) partition by list (a);
 create table pp_recpart_11 partition of pp_recpart for values in ('(1,1)');
 create table pp_recpart_23 partition of pp_recpart for values in ('(2,3)');
 explain (costs off) select * from pp_recpart where a = '(1,1)'::pp_rectype;
-                QUERY PLAN                 
--------------------------------------------
- Append
-   ->  Seq Scan on pp_recpart_11
-         Filter: (a = '(1,1)'::pp_rectype)
-(3 rows)
+             QUERY PLAN              
+-------------------------------------
+ Seq Scan on pp_recpart_11
+   Filter: (a = '(1,1)'::pp_rectype)
+(2 rows)
 
 explain (costs off) select * from pp_recpart where a = '(1,2)'::pp_rectype;
         QUERY PLAN        
@@ -3337,12 +3293,11 @@ create table pp_intrangepart (a int4range) partition by list (a);
 create table pp_intrangepart12 partition of pp_intrangepart for values in ('[1,2]');
 create table pp_intrangepart2inf partition of pp_intrangepart for values in ('[2,)');
 explain (costs off) select * from pp_intrangepart where a = '[1,2]'::int4range;
-                QUERY PLAN                
-------------------------------------------
- Append
-   ->  Seq Scan on pp_intrangepart12
-         Filter: (a = '[1,3)'::int4range)
-(3 rows)
+             QUERY PLAN             
+------------------------------------
+ Seq Scan on pp_intrangepart12
+   Filter: (a = '[1,3)'::int4range)
+(2 rows)
 
 explain (costs off) select * from pp_intrangepart where a = '(1,2)'::int4range;
         QUERY PLAN        
@@ -3359,12 +3314,11 @@ create table pp_lp (a int, value int) partition by list (a);
 create table pp_lp1 partition of pp_lp for values in(1);
 create table pp_lp2 partition of pp_lp for values in(2);
 explain (costs off) select * from pp_lp where a = 1;
-        QUERY PLAN        
---------------------------
- Append
-   ->  Seq Scan on pp_lp1
-         Filter: (a = 1)
-(3 rows)
+     QUERY PLAN     
+--------------------
+ Seq Scan on pp_lp1
+   Filter: (a = 1)
+(2 rows)
 
 explain (costs off) update pp_lp set value = 10 where a = 1;
         QUERY PLAN        
@@ -3529,12 +3483,11 @@ explain (costs off) select * from pp_temp_parent where true;
 (3 rows)
 
 explain (costs off) select * from pp_temp_parent where a = 2;
-             QUERY PLAN             
-------------------------------------
- Append
-   ->  Seq Scan on pp_temp_part_def
-         Filter: (a = 2)
-(3 rows)
+          QUERY PLAN          
+------------------------------
+ Seq Scan on pp_temp_part_def
+   Filter: (a = 2)
+(2 rows)
 
 drop table pp_temp_parent;
 -- Stress run-time partition pruning a bit more, per bug reports
@@ -3628,13 +3581,12 @@ create table listp2 partition of listp for values in(2) partition by list(b);
 create table listp2_10 partition of listp2 for values in (10);
 explain (analyze, costs off, summary off, timing off)
 select * from listp where a = (select 2) and b <> 10;
-                QUERY PLAN                 
--------------------------------------------
- Append (actual rows=0 loops=1)
+                 QUERY PLAN                 
+--------------------------------------------
+ Seq Scan on listp1 (actual rows=0 loops=1)
+   Filter: ((b <> 10) AND (a = $0))
    InitPlan 1 (returns $0)
-     ->  Result (actual rows=1 loops=1)
-   ->  Seq Scan on listp1 (never executed)
-         Filter: ((b <> 10) AND (a = $0))
-(5 rows)
+     ->  Result (never executed)
+(4 rows)
 
 drop table listp;

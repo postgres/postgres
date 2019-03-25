@@ -1044,8 +1044,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * We have to copy the parent's targetlist and quals to the child,
 		 * with appropriate substitution of variables.  If any constant false
-		 * or NULL clauses turn up, we can disregard the child right away.
-		 * If not, we can apply constraint exclusion with just the
+		 * or NULL clauses turn up, we can disregard the child right away. If
+		 * not, we can apply constraint exclusion with just the
 		 * baserestrictinfo quals.
 		 */
 		if (!apply_child_basequals(root, rel, childrel, childRTE, appinfo))
@@ -1707,6 +1707,38 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 					 create_append_path(root, rel, subpaths, NIL,
 										required_outer, 0, false,
 										partitioned_rels, -1));
+	}
+
+	/*
+	 * When there is only a single child relation, the Append path can inherit
+	 * any ordering available for the child rel's path, so that it's useful to
+	 * consider ordered partial paths.  Above we only considered the cheapest
+	 * partial path for each child, but let's also make paths using any
+	 * partial paths that have pathkeys.
+	 */
+	if (list_length(live_childrels) == 1)
+	{
+		RelOptInfo *childrel = (RelOptInfo *) linitial(live_childrels);
+
+		foreach(l, childrel->partial_pathlist)
+		{
+			Path	   *path = (Path *) lfirst(l);
+			AppendPath *appendpath;
+
+			/*
+			 * Skip paths with no pathkeys.  Also skip the cheapest partial
+			 * path, since we already used that above.
+			 */
+			if (path->pathkeys == NIL ||
+				path == linitial(childrel->partial_pathlist))
+				continue;
+
+			appendpath = create_append_path(root, rel, NIL, list_make1(path),
+											NULL, path->parallel_workers,
+											true,
+											partitioned_rels, partial_rows);
+			add_partial_path(rel, (Path *) appendpath);
+		}
 	}
 }
 
