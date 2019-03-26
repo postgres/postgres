@@ -1029,7 +1029,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * The child rel's RelOptInfo was already created during
-		 * add_base_rels_to_query.
+		 * add_other_rels_to_query.
 		 */
 		childrel = find_base_rel(root, childRTindex);
 		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);

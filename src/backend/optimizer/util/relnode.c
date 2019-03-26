@@ -166,13 +166,10 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
-	rel->direct_lateral_relids = NULL;
-	rel->lateral_relids = NULL;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
 	rel->lateral_vars = NIL;
-	rel->lateral_referencers = NULL;
 	rel->indexlist = NIL;
 	rel->statlist = NIL;
 	rel->pages = 0;
@@ -205,20 +202,44 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->partitioned_child_rels = NIL;
 
 	/*
-	 * Pass top parent's relids down the inheritance hierarchy. If the parent
-	 * has top_parent_relids set, it's a direct or an indirect child of the
-	 * top parent indicated by top_parent_relids. By extension this child is
-	 * also an indirect child of that parent.
+	 * Pass assorted information down the inheritance hierarchy.
 	 */
 	if (parent)
 	{
+		/*
+		 * Each direct or indirect child wants to know the relids of its
+		 * topmost parent.
+		 */
 		if (parent->top_parent_relids)
 			rel->top_parent_relids = parent->top_parent_relids;
 		else
 			rel->top_parent_relids = bms_copy(parent->relids);
+
+		/*
+		 * Also propagate lateral-reference information from appendrel parent
+		 * rels to their child rels.  We intentionally give each child rel the
+		 * same minimum parameterization, even though it's quite possible that
+		 * some don't reference all the lateral rels.  This is because any
+		 * append path for the parent will have to have the same
+		 * parameterization for every child anyway, and there's no value in
+		 * forcing extra reparameterize_path() calls.  Similarly, a lateral
+		 * reference to the parent prevents use of otherwise-movable join rels
+		 * for each child.
+		 *
+		 * It's possible for child rels to have their own children, in which
+		 * case the topmost parent's lateral info propagates all the way down.
+		 */
+		rel->direct_lateral_relids = parent->direct_lateral_relids;
+		rel->lateral_relids = parent->lateral_relids;
+		rel->lateral_referencers = parent->lateral_referencers;
 	}
 	else
+	{
 		rel->top_parent_relids = NULL;
+		rel->direct_lateral_relids = NULL;
+		rel->lateral_relids = NULL;
+		rel->lateral_referencers = NULL;
+	}
 
 	/* Check type of rtable entry */
 	switch (rte->rtekind)
@@ -273,53 +294,80 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 		root->qual_security_level = Max(root->qual_security_level,
 										list_length(rte->securityQuals));
 
+	return rel;
+}
+
+/*
+ * add_appendrel_other_rels
+ *		Add "other rel" RelOptInfos for the children of an appendrel baserel
+ *
+ * "rel" is a relation that (still) has the rte->inh flag set, meaning it
+ * has appendrel children listed in root->append_rel_list.  We need to build
+ * a RelOptInfo for each child relation so that we can plan scans on them.
+ * (The parent relation might be a partitioned table, a table with
+ * traditional inheritance children, or a flattened UNION ALL subquery.)
+ */
+void
+add_appendrel_other_rels(PlannerInfo *root, RelOptInfo *rel, Index rti)
+{
+	int			cnt_parts = 0;
+	ListCell   *l;
+
 	/*
-	 * If this rel is an appendrel parent, recurse to build "other rel"
-	 * RelOptInfos for its children.  They are "other rels" because they are
-	 * not in the main join tree, but we will need RelOptInfos to plan access
-	 * to them.
+	 * If rel is a partitioned table, then we also need to build a part_rels
+	 * array so that the child RelOptInfos can be conveniently accessed from
+	 * the parent.
 	 */
-	if (rte->inh)
+	if (rel->part_scheme != NULL)
 	{
-		ListCell   *l;
-		int			nparts = rel->nparts;
-		int			cnt_parts = 0;
-
-		if (nparts > 0)
-			rel->part_rels = (RelOptInfo **)
-				palloc(sizeof(RelOptInfo *) * nparts);
-
-		foreach(l, root->append_rel_list)
-		{
-			AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
-			RelOptInfo *childrel;
-
-			/* append_rel_list contains all append rels; ignore others */
-			if (appinfo->parent_relid != relid)
-				continue;
-
-			childrel = build_simple_rel(root, appinfo->child_relid,
-										rel);
-
-			/* Nothing more to do for an unpartitioned table. */
-			if (!rel->part_scheme)
-				continue;
-
-			/*
-			 * The order of partition OIDs in append_rel_list is the same as
-			 * the order in the PartitionDesc, so the order of part_rels will
-			 * also match the PartitionDesc.  See expand_partitioned_rtentry.
-			 */
-			Assert(cnt_parts < nparts);
-			rel->part_rels[cnt_parts] = childrel;
-			cnt_parts++;
-		}
-
-		/* We should have seen all the child partitions. */
-		Assert(cnt_parts == nparts);
+		Assert(rel->nparts > 0);
+		rel->part_rels = (RelOptInfo **)
+			palloc0(sizeof(RelOptInfo *) * rel->nparts);
 	}
 
-	return rel;
+	foreach(l, root->append_rel_list)
+	{
+		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
+		Index		childRTindex = appinfo->child_relid;
+		RangeTblEntry *childrte;
+		RelOptInfo *childrel;
+
+		/* append_rel_list contains all append rels; ignore others */
+		if (appinfo->parent_relid != rti)
+			continue;
+
+		/* find the child RTE, which should already exist */
+		Assert(childRTindex < root->simple_rel_array_size);
+		childrte = root->simple_rte_array[childRTindex];
+		Assert(childrte != NULL);
+
+		/* build child RelOptInfo, and add to main query data structures */
+		childrel = build_simple_rel(root, childRTindex, rel);
+
+		/*
+		 * If rel is a partitioned table, fill in the part_rels array.  The
+		 * order in which child tables appear in append_rel_list is the same
+		 * as the order in which they appear in the parent's PartitionDesc, so
+		 * assigning partitions like this works.
+		 */
+		if (rel->part_scheme != NULL)
+		{
+			Assert(cnt_parts < rel->nparts);
+			rel->part_rels[cnt_parts++] = childrel;
+		}
+
+		/* Child may itself be an inherited relation. */
+		if (childrte->inh)
+		{
+			/* Only relation and subquery RTEs can have children. */
+			Assert(childrte->rtekind == RTE_RELATION ||
+				   childrte->rtekind == RTE_SUBQUERY);
+			add_appendrel_other_rels(root, childrel, childRTindex);
+		}
+	}
+
+	/* We should have filled all of the part_rels array if it's partitioned */
+	Assert(cnt_parts == rel->nparts);
 }
 
 /*

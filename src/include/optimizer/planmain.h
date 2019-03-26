@@ -65,6 +65,7 @@ extern int	from_collapse_limit;
 extern int	join_collapse_limit;
 
 extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
+extern void add_other_rels_to_query(PlannerInfo *root);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
 extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
 					   Relids where_needed, bool create_new_ph);

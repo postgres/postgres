@@ -279,6 +279,8 @@ extern void setup_simple_rel_arrays(PlannerInfo *root);
 extern void setup_append_rel_array(PlannerInfo *root);
 extern RelOptInfo *build_simple_rel(PlannerInfo *root, int relid,
 				 RelOptInfo *parent);
+extern void add_appendrel_other_rels(PlannerInfo *root, RelOptInfo *rel,
+						 Index rti);
 extern RelOptInfo *find_base_rel(PlannerInfo *root, int relid);
 extern RelOptInfo *find_join_rel(PlannerInfo *root, Relids relids);
 extern RelOptInfo *build_join_rel(PlannerInfo *root,
