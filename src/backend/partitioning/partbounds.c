@@ -1684,8 +1684,8 @@ qsort_partition_hbound_cmp(const void *a, const void *b)
 static int32
 qsort_partition_list_value_cmp(const void *a, const void *b, void *arg)
 {
-	Datum		val1 = (*(const PartitionListValue **) a)->value,
-				val2 = (*(const PartitionListValue **) b)->value;
+	Datum		val1 = (*(PartitionListValue *const *) a)->value,
+				val2 = (*(PartitionListValue *const *) b)->value;
 	PartitionKey key = (PartitionKey) arg;
 
 	return DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[0],

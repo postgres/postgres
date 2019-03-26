@@ -296,8 +296,8 @@ collectTSQueryValues(TSQuery a, int *nvalues_p)
 static int
 cmp_string(const void *a, const void *b)
 {
-	const char *sa = *((const char **) a);
-	const char *sb = *((const char **) b);
+	const char *sa = *((char *const *) a);
+	const char *sb = *((char *const *) b);
 
 	return strcmp(sa, sb);
 }
