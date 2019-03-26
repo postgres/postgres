@@ -1490,18 +1490,18 @@ SELECT x FROM test2bpci UNION SELECT x FROM test1bpci ORDER BY x;
  ghi
 (3 rows)
 
-SELECT x FROM test1bpci INTERSECT SELECT x FROM test2bpci;
+SELECT x FROM test1bpci INTERSECT SELECT x FROM test2bpci ORDER BY x;
   x  
 -----
- ghi
  abc
+ ghi
 (2 rows)
 
-SELECT x FROM test2bpci INTERSECT SELECT x FROM test1bpci;
+SELECT x FROM test2bpci INTERSECT SELECT x FROM test1bpci ORDER BY x;
   x  
 -----
- ghi
  ABC
+ ghi
 (2 rows)
 
 SELECT x FROM test1bpci EXCEPT SELECT x FROM test2bpci;
