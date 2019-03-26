@@ -1637,30 +1637,6 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 }
 
 /*
- *	heap_hot_search		- search HOT chain for tuple satisfying snapshot
- *
- * This has the same API as heap_hot_search_buffer, except that the caller
- * does not provide the buffer containing the page, rather we access it
- * locally.
- */
-bool
-heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
-				bool *all_dead)
-{
-	bool		result;
-	Buffer		buffer;
-	HeapTupleData heapTuple;
-
-	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
-	LockBuffer(buffer, BUFFER_LOCK_SHARE);
-	result = heap_hot_search_buffer(tid, relation, buffer, snapshot,
-									&heapTuple, all_dead, true);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buffer);
-	return result;
-}
-
-/*
  *	heap_get_latest_tid -  get the latest tid of a specified tuple
  *
  * Actually, this gets the latest version that is visible according to
