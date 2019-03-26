@@ -90,9 +90,10 @@ expand_inherited_tables(PlannerInfo *root)
  * A childless table is never considered to be an inheritance set. For
  * regular inheritance, a parent RTE must always have at least two associated
  * AppendRelInfos: one corresponding to the parent table as a simple member of
- * inheritance set and one or more corresponding to the actual children.
- * Since a partitioned table is not scanned, it might have only one associated
- * AppendRelInfo.
+ * the inheritance set and one or more corresponding to the actual children.
+ * (But a partitioned table might have only one associated AppendRelInfo,
+ * since it's not itself scanned and hence doesn't need a second RTE to
+ * represent itself as a member of the set.)
  */
 static void
 expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
@@ -145,6 +146,9 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	/* Scan the inheritance set and expand it */
 	if (oldrelation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
+		/*
+		 * Partitioned table, so set up for partitioning.
+		 */
 		Assert(rte->relkind == RELKIND_PARTITIONED_TABLE);
 
 		if (root->glob->partition_directory == NULL)
@@ -161,6 +165,11 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	}
 	else
 	{
+		/*
+		 * Ordinary table, so process traditional-inheritance children.  (Note
+		 * that partitioned tables are not allowed to have inheritance
+		 * children, so it's not possible for both cases to apply.)
+		 */
 		List	   *appinfos = NIL;
 		RangeTblEntry *childrte;
 		Index		childRTindex;
@@ -182,8 +191,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		}
 
 		/*
-		 * This table has no partitions.  Expand any plain inheritance
-		 * children in the order the OIDs were returned by
+		 * Expand inheritance children in the order the OIDs were returned by
 		 * find_all_inheritors.
 		 */
 		foreach(l, inhOIDs)
@@ -273,11 +281,6 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 		root->partColsUpdated =
 			has_partition_attrs(parentrel, parentrte->updatedCols, NULL);
 
-	/* First expand the partitioned table itself. */
-	expand_single_inheritance_child(root, parentrte, parentRTindex, parentrel,
-									top_parentrc, parentrel,
-									appinfos, &childrte, &childRTindex);
-
 	/*
 	 * If the partitioned table has no partitions, treat this as the
 	 * non-inheritance case.
@@ -288,6 +291,11 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 		return;
 	}
 
+	/*
+	 * Create a child RTE for each partition.  Note that unlike traditional
+	 * inheritance, we don't need a child RTE for the partitioned table
+	 * itself, because it's not going to be scanned.
+	 */
 	for (i = 0; i < partdesc->nparts; i++)
 	{
 		Oid			childOID = partdesc->oids[i];
@@ -321,8 +329,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 
 /*
  * expand_single_inheritance_child
- *		Build a RangeTblEntry and an AppendRelInfo, if appropriate, plus
- *		maybe a PlanRowMark.
+ *		Build a RangeTblEntry and an AppendRelInfo, plus maybe a PlanRowMark.
  *
  * We now expand the partition hierarchy level by level, creating a
  * corresponding hierarchy of AppendRelInfos and RelOptInfos, where each
@@ -371,9 +378,11 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	childrte->relid = childOID;
 	childrte->relkind = childrel->rd_rel->relkind;
 	/* A partitioned child will need to be expanded further. */
-	if (childOID != parentOID &&
-		childrte->relkind == RELKIND_PARTITIONED_TABLE)
+	if (childrte->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		Assert(childOID != parentOID);
 		childrte->inh = true;
+	}
 	else
 		childrte->inh = false;
 	childrte->requiredPerms = 0;
@@ -383,36 +392,29 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	*childRTindex_p = childRTindex;
 
 	/*
-	 * We need an AppendRelInfo if paths will be built for the child RTE. If
-	 * childrte->inh is true, then we'll always need to generate append paths
-	 * for it.  If childrte->inh is false, we must scan it if it's not a
-	 * partitioned table; but if it is a partitioned table, then it never has
-	 * any data of its own and need not be scanned.
+	 * Build an AppendRelInfo struct for each parent/child pair.
 	 */
-	if (childrte->relkind != RELKIND_PARTITIONED_TABLE || childrte->inh)
-	{
-		appinfo = make_append_rel_info(parentrel, childrel,
-									   parentRTindex, childRTindex);
-		*appinfos = lappend(*appinfos, appinfo);
+	appinfo = make_append_rel_info(parentrel, childrel,
+								   parentRTindex, childRTindex);
+	*appinfos = lappend(*appinfos, appinfo);
 
-		/*
-		 * Translate the column permissions bitmaps to the child's attnums (we
-		 * have to build the translated_vars list before we can do this). But
-		 * if this is the parent table, leave copyObject's result alone.
-		 *
-		 * Note: we need to do this even though the executor won't run any
-		 * permissions checks on the child RTE.  The insertedCols/updatedCols
-		 * bitmaps may be examined for trigger-firing purposes.
-		 */
-		if (childOID != parentOID)
-		{
-			childrte->selectedCols = translate_col_privs(parentrte->selectedCols,
-														 appinfo->translated_vars);
-			childrte->insertedCols = translate_col_privs(parentrte->insertedCols,
-														 appinfo->translated_vars);
-			childrte->updatedCols = translate_col_privs(parentrte->updatedCols,
-														appinfo->translated_vars);
-		}
+	/*
+	 * Translate the column permissions bitmaps to the child's attnums (we
+	 * have to build the translated_vars list before we can do this).  But if
+	 * this is the parent table, we can leave copyObject's result alone.
+	 *
+	 * Note: we need to do this even though the executor won't run any
+	 * permissions checks on the child RTE.  The insertedCols/updatedCols
+	 * bitmaps may be examined for trigger-firing purposes.
+	 */
+	if (childOID != parentOID)
+	{
+		childrte->selectedCols = translate_col_privs(parentrte->selectedCols,
+													 appinfo->translated_vars);
+		childrte->insertedCols = translate_col_privs(parentrte->insertedCols,
+													 appinfo->translated_vars);
+		childrte->updatedCols = translate_col_privs(parentrte->updatedCols,
+													appinfo->translated_vars);
 	}
 
 	/*
