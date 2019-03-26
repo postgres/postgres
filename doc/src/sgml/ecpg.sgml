@@ -6828,7 +6828,7 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
     </para>
 
     <para>
-     <command>DELARE CURSOR</command> with a SQL statement identifier can be written before PREPARE.
+     <command>DECLARE CURSOR</command> with a SQL statement identifier can be written before PREPARE.
     </para>
    </refsect1>
 
