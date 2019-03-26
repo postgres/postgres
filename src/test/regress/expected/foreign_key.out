@@ -1627,6 +1627,18 @@ DETAIL:  Key (a, b)=(1500, 1501) is still referenced from table "fk_partitioned_
 UPDATE fk_notpartitioned_pk SET b = 2504 WHERE a = 2500;
 ERROR:  update or delete on table "fk_notpartitioned_pk" violates foreign key constraint "fk_partitioned_fk_a_b_fkey" on table "fk_partitioned_fk"
 DETAIL:  Key (a, b)=(2500, 2502) is still referenced from table "fk_partitioned_fk".
+-- check psql behavior
+\d fk_notpartitioned_pk
+        Table "public.fk_notpartitioned_pk"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+ b      | integer |           | not null | 
+Indexes:
+    "fk_notpartitioned_pk_pkey" PRIMARY KEY, btree (a, b)
+Referenced by:
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b)
+
 ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 -- done.
 DROP TABLE fk_notpartitioned_pk, fk_partitioned_fk;
@@ -1795,7 +1807,7 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES IN
  a      | integer |           |          | 
 Partition of: fk_partitioned_fk FOR VALUES IN (1500, 1502)
 Foreign-key constraints:
-    "fk_partitioned_fk_2_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 DROP TABLE fk_partitioned_fk_2;
 CREATE TABLE fk_partitioned_fk_4 (a int, b int, FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE) PARTITION BY RANGE (b, a);
@@ -1815,7 +1827,7 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_4 FOR VALUES IN
 Partition of: fk_partitioned_fk FOR VALUES IN (3500, 3502)
 Partition key: RANGE (b, a)
 Foreign-key constraints:
-    "fk_partitioned_fk_4_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 Number of partitions: 2 (Use \d+ to list them.)
 
 \d fk_partitioned_fk_4_1
@@ -1826,7 +1838,7 @@ Number of partitions: 2 (Use \d+ to list them.)
  b      | integer |           |          | 
 Partition of: fk_partitioned_fk_4 FOR VALUES FROM (1, 1) TO (100, 100)
 Foreign-key constraints:
-    "fk_partitioned_fk_4_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 -- this one has an FK with mismatched properties
 \d fk_partitioned_fk_4_2
@@ -1838,7 +1850,7 @@ Foreign-key constraints:
 Partition of: fk_partitioned_fk_4 FOR VALUES FROM (100, 100) TO (1000, 1000)
 Foreign-key constraints:
     "fk_partitioned_fk_4_2_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE SET NULL
-    "fk_partitioned_fk_4_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 CREATE TABLE fk_partitioned_fk_5 (a int, b int,
 	FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE,
@@ -1862,7 +1874,7 @@ Partition key: RANGE (a)
 Foreign-key constraints:
     "fk_partitioned_fk_5_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE
     "fk_partitioned_fk_5_a_b_fkey1" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE
-    "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 Number of partitions: 1 (Use \d+ to list them.)
 
 -- verify that it works to reattaching a child with multiple candidate
@@ -1878,9 +1890,9 @@ ALTER TABLE fk_partitioned_fk_5 ATTACH PARTITION fk_partitioned_fk_5_1 FOR VALUE
 Partition of: fk_partitioned_fk_5 FOR VALUES FROM (0) TO (10)
 Foreign-key constraints:
     "fk_partitioned_fk_5_1_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b)
-    "fk_partitioned_fk_5_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE
-    "fk_partitioned_fk_5_a_b_fkey1" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE
-    "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "fk_partitioned_fk_5" CONSTRAINT "fk_partitioned_fk_5_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE
+    TABLE "fk_partitioned_fk_5" CONSTRAINT "fk_partitioned_fk_5_a_b_fkey1" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
 -- verify that attaching a table checks that the existing data satisfies the
 -- constraint
@@ -1916,7 +1928,7 @@ alter table fkpart0.fk_part add foreign key (a) references fkpart0.pkey;
  a      | integer |           |          | 
 Partition of: fkpart0.fk_part FOR VALUES IN (1)
 Foreign-key constraints:
-    "fk_part_1_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+    TABLE "fkpart0.fk_part" CONSTRAINT "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
 
 alter table fkpart0.fk_part_1 drop constraint fk_part_1_a_fkey;
 ERROR:  cannot drop inherited constraint "fk_part_1_a_fkey" of relation "fk_part_1"
@@ -1928,7 +1940,7 @@ ERROR:  cannot drop inherited constraint "fk_part_1_a_fkey" of relation "fk_part
 Partition of: fkpart0.fk_part FOR VALUES IN (2, 3)
 Partition key: LIST (a)
 Foreign-key constraints:
-    "fk_part_23_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+    TABLE "fkpart0.fk_part" CONSTRAINT "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
 Number of partitions: 1 (Use \d+ to list them.)
 
 \d fkpart0.fk_part_23_2	\\ -- should have only one FK
@@ -1938,7 +1950,7 @@ Number of partitions: 1 (Use \d+ to list them.)
  a      | integer |           |          | 
 Partition of: fkpart0.fk_part_23 FOR VALUES IN (2)
 Foreign-key constraints:
-    "fk_part_23_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+    TABLE "fkpart0.fk_part" CONSTRAINT "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
 
 alter table fkpart0.fk_part_23 drop constraint fk_part_23_a_fkey;
 ERROR:  cannot drop inherited constraint "fk_part_23_a_fkey" of relation "fk_part_23"
@@ -1952,7 +1964,7 @@ create table fkpart0.fk_part_4 partition of fkpart0.fk_part for values in (4);
  a      | integer |           |          | 
 Partition of: fkpart0.fk_part FOR VALUES IN (4)
 Foreign-key constraints:
-    "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+    TABLE "fkpart0.fk_part" CONSTRAINT "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
 
 alter table fkpart0.fk_part_4 drop constraint fk_part_a_fkey;
 ERROR:  cannot drop inherited constraint "fk_part_a_fkey" of relation "fk_part_4"
@@ -1968,7 +1980,7 @@ create table fkpart0.fk_part_56_5 partition of fkpart0.fk_part_56
 Partition of: fkpart0.fk_part FOR VALUES IN (5, 6)
 Partition key: LIST (a)
 Foreign-key constraints:
-    "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
+    TABLE "fkpart0.fk_part" CONSTRAINT "fk_part_a_fkey" FOREIGN KEY (a) REFERENCES fkpart0.pkey(a)
 Number of partitions: 1 (Use \d+ to list them.)
 
 alter table fkpart0.fk_part_56 drop constraint fk_part_a_fkey;
