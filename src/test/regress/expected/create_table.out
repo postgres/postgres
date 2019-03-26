@@ -489,10 +489,14 @@ Partitions: part_null FOR VALUES IN (NULL),
             part_p2 FOR VALUES IN (2),
             part_p3 FOR VALUES IN (3)
 
--- forbidden expressions for partition bound
+-- forbidden expressions for partition bound with list partitioned table
 CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (somename);
 ERROR:  column "somename" does not exist
 LINE 1: ...expr_fail PARTITION OF list_parted FOR VALUES IN (somename);
+                                                             ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (somename.somename);
+ERROR:  missing FROM-clause entry for table "somename"
+LINE 1: ...expr_fail PARTITION OF list_parted FOR VALUES IN (somename.s...
                                                              ^
 CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (a);
 ERROR:  cannot use column references in partition bound expression
@@ -501,6 +505,14 @@ LINE 1: ..._bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (a);
 CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (sum(a));
 ERROR:  aggregate functions are not allowed in partition bound
 LINE 1: ...s_expr_fail PARTITION OF list_parted FOR VALUES IN (sum(a));
+                                                               ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (sum(somename));
+ERROR:  column "somename" does not exist
+LINE 1: ..._fail PARTITION OF list_parted FOR VALUES IN (sum(somename))...
+                                                             ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (sum(1));
+ERROR:  aggregate functions are not allowed in partition bound
+LINE 1: ...s_expr_fail PARTITION OF list_parted FOR VALUES IN (sum(1));
                                                                ^
 CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN ((select 1));
 ERROR:  cannot use subquery in partition bound
@@ -558,6 +570,47 @@ DROP TABLE bigintp;
 CREATE TABLE range_parted (
 	a date
 ) PARTITION BY RANGE (a);
+-- forbidden expressions for partition bounds with range partitioned table
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM (somename) TO ('2019-01-01');
+ERROR:  column "somename" does not exist
+LINE 2:   FOR VALUES FROM (somename) TO ('2019-01-01');
+                           ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM (somename.somename) TO ('2019-01-01');
+ERROR:  missing FROM-clause entry for table "somename"
+LINE 2:   FOR VALUES FROM (somename.somename) TO ('2019-01-01');
+                           ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM (a) TO ('2019-01-01');
+ERROR:  cannot use column references in partition bound expression
+LINE 2:   FOR VALUES FROM (a) TO ('2019-01-01');
+                           ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM (max(a)) TO ('2019-01-01');
+ERROR:  aggregate functions are not allowed in partition bound
+LINE 2:   FOR VALUES FROM (max(a)) TO ('2019-01-01');
+                           ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM (max(somename)) TO ('2019-01-01');
+ERROR:  column "somename" does not exist
+LINE 2:   FOR VALUES FROM (max(somename)) TO ('2019-01-01');
+                               ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM (max('2019-02-01'::date)) TO ('2019-01-01');
+ERROR:  aggregate functions are not allowed in partition bound
+LINE 2:   FOR VALUES FROM (max('2019-02-01'::date)) TO ('2019-01-01'...
+                           ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM ((select 1)) TO ('2019-01-01');
+ERROR:  cannot use subquery in partition bound
+LINE 2:   FOR VALUES FROM ((select 1)) TO ('2019-01-01');
+                           ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF range_parted
+  FOR VALUES FROM (generate_series(1, 3)) TO ('2019-01-01');
+ERROR:  set-returning functions are not allowed in partition bound
+LINE 2:   FOR VALUES FROM (generate_series(1, 3)) TO ('2019-01-01');
+                           ^
 -- trying to specify list for range partitioned table
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES IN ('a');
 ERROR:  invalid bound specification for a range partition

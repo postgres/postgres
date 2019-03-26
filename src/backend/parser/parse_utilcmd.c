@@ -3746,12 +3746,24 @@ transformPartitionRangeBounds(ParseState *pstate, List *blist,
 			ColumnRef *cref = (ColumnRef *) expr;
 			char *cname = NULL;
 
+			/*
+			 * There should be a single field named either "minvalue" or
+			 * "maxvalue".
+			 */
 			if (list_length(cref->fields) == 1 &&
 				IsA(linitial(cref->fields), String))
 				cname = strVal(linitial(cref->fields));
 
-			Assert(cname != NULL);
-			if (strcmp("minvalue", cname) == 0)
+			if (cname == NULL)
+			{
+				/*
+				 * ColumnRef is not in the desired single-field-name form.
+				 * For consistency between all partition strategies, let the
+				 * expression transformation report any errors rather than
+				 * doing it ourselves.
+				 */
+			}
+			else if (strcmp("minvalue", cname) == 0)
 			{
 				prd = makeNode(PartitionRangeDatum);
 				prd->kind = PARTITION_RANGE_DATUM_MINVALUE;
