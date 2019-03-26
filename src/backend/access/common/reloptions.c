@@ -214,15 +214,6 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
-			"autovacuum_vacuum_cost_delay",
-			"Vacuum cost delay in milliseconds, for autovacuum",
-			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
-			ShareUpdateExclusiveLock
-		},
-		-1, 0, 100
-	},
-	{
-		{
 			"autovacuum_vacuum_cost_limit",
 			"Vacuum cost amount available before napping, for autovacuum",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
@@ -346,6 +337,15 @@ static relopt_int intRelOpts[] =
 
 static relopt_real realRelOpts[] =
 {
+	{
+		{
+			"autovacuum_vacuum_cost_delay",
+			"Vacuum cost delay in milliseconds, for autovacuum",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		},
+		-1, 0.0, 100.0
+	},
 	{
 		{
 			"autovacuum_vacuum_scale_factor",
