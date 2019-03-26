@@ -2624,6 +2624,7 @@ XactCallback
 XactCallbackItem
 XactEvent
 XactLockTableWaitInfo
+XidHorizonPrefetchState
 XidStatus
 XmlExpr
 XmlExprOp

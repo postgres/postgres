@@ -23,8 +23,8 @@
 #include "storage/buf_internals.h"
 #include "storage/predicate.h"
 
-static void _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
-					  RelFileNode hnode);
+static void _hash_vacuum_one_page(Relation rel, Relation hrel,
+					  Buffer metabuf, Buffer buf);
 
 /*
  *	_hash_doinsert() -- Handle insertion of a single index tuple.
@@ -137,7 +137,7 @@ restart_insert:
 
 			if (IsBufferCleanupOK(buf))
 			{
-				_hash_vacuum_one_page(rel, metabuf, buf, heapRel->rd_node);
+				_hash_vacuum_one_page(rel, heapRel, metabuf, buf);
 
 				if (PageGetFreeSpace(page) >= itemsz)
 					break;		/* OK, now we have enough space */
@@ -335,8 +335,7 @@ _hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
  */
 
 static void
-_hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
-					  RelFileNode hnode)
+_hash_vacuum_one_page(Relation rel, Relation hrel, Buffer metabuf, Buffer buf)
 {
 	OffsetNumber deletable[MaxOffsetNumber];
 	int			ndeletable = 0;
@@ -360,6 +359,12 @@ _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 
 	if (ndeletable > 0)
 	{
+		TransactionId latestRemovedXid;
+
+		latestRemovedXid =
+			index_compute_xid_horizon_for_tuples(rel, hrel, buf,
+												 deletable, ndeletable);
+
 		/*
 		 * Write-lock the meta page so that we can decrement tuple count.
 		 */
@@ -393,7 +398,7 @@ _hash_vacuum_one_page(Relation rel, Buffer metabuf, Buffer buf,
 			xl_hash_vacuum_one_page xlrec;
 			XLogRecPtr	recptr;
 
-			xlrec.hnode = hnode;
+			xlrec.latestRemovedXid = latestRemovedXid;
 			xlrec.ntuples = ndeletable;
 
 			XLogBeginInsert();

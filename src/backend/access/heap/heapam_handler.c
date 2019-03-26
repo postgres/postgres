@@ -544,6 +544,7 @@ static const TableAmRoutine heapam_methods = {
 	.tuple_fetch_row_version = heapam_fetch_row_version,
 	.tuple_get_latest_tid = heap_get_latest_tid,
 	.tuple_satisfies_snapshot = heapam_tuple_satisfies_snapshot,
+	.compute_xid_horizon_for_tuples = heap_compute_xid_horizon_for_tuples,
 };
 
 

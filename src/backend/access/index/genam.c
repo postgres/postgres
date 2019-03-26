@@ -273,6 +273,43 @@ BuildIndexValueDescription(Relation indexRelation,
 	return buf.data;
 }
 
+/*
+ * Get the latestRemovedXid from the table entries pointed at by the index
+ * tuples being deleted.
+ */
+TransactionId
+index_compute_xid_horizon_for_tuples(Relation irel,
+									 Relation hrel,
+									 Buffer ibuf,
+									 OffsetNumber *itemnos,
+									 int nitems)
+{
+	ItemPointerData *ttids =
+	(ItemPointerData *) palloc(sizeof(ItemPointerData) * nitems);
+	TransactionId latestRemovedXid = InvalidTransactionId;
+	Page		ipage = BufferGetPage(ibuf);
+	IndexTuple	itup;
+
+	/* identify what the index tuples about to be deleted point to */
+	for (int i = 0; i < nitems; i++)
+	{
+		ItemId		iitemid;
+
+		iitemid = PageGetItemId(ipage, itemnos[i]);
+		itup = (IndexTuple) PageGetItem(ipage, iitemid);
+
+		ItemPointerCopy(&itup->t_tid, &ttids[i]);
+	}
+
+	/* determine the actual xid horizon */
+	latestRemovedXid =
+		table_compute_xid_horizon_for_tuples(hrel, ttids, nitems);
+
+	pfree(ttids);
+
+	return latestRemovedXid;
+}
+
 
 /* ----------------------------------------------------------------
  *		heap-or-index-scan access to system catalogs

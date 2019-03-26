@@ -67,6 +67,7 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
+#include "utils/spccache.h"
 
 
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
@@ -161,6 +162,20 @@ static const struct
 	UnlockTuple((rel), (tup), tupleLockExtraInfo[mode].hwlock)
 #define ConditionalLockTupleTuplock(rel, tup, mode) \
 	ConditionalLockTuple((rel), (tup), tupleLockExtraInfo[mode].hwlock)
+
+#ifdef USE_PREFETCH
+/*
+ * heap_compute_xid_horizon_for_tuples and xid_horizon_prefetch_buffer use
+ * this structure to coordinate prefetching activity.
+ */
+typedef struct
+{
+	BlockNumber cur_hblkno;
+	int			next_item;
+	int			nitems;
+	ItemPointerData *tids;
+} XidHorizonPrefetchState;
+#endif
 
 /*
  * This table maps tuple lock strength values for each particular
@@ -6859,6 +6874,212 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 	}
 
 	/* *latestRemovedXid may still be invalid at end */
+}
+
+#ifdef USE_PREFETCH
+/*
+ * Helper function for heap_compute_xid_horizon_for_tuples.  Issue prefetch
+ * requests for the number of buffers indicated by prefetch_count.  The
+ * prefetch_state keeps track of all the buffers that we can prefetch and
+ * which ones have already been prefetched; each call to this function picks
+ * up where the previous call left off.
+ */
+static void
+xid_horizon_prefetch_buffer(Relation rel,
+							XidHorizonPrefetchState *prefetch_state,
+							int prefetch_count)
+{
+	BlockNumber cur_hblkno = prefetch_state->cur_hblkno;
+	int			count = 0;
+	int			i;
+	int			nitems = prefetch_state->nitems;
+	ItemPointerData *tids = prefetch_state->tids;
+
+	for (i = prefetch_state->next_item;
+		 i < nitems && count < prefetch_count;
+		 i++)
+	{
+		ItemPointer htid = &tids[i];
+
+		if (cur_hblkno == InvalidBlockNumber ||
+			ItemPointerGetBlockNumber(htid) != cur_hblkno)
+		{
+			cur_hblkno = ItemPointerGetBlockNumber(htid);
+			PrefetchBuffer(rel, MAIN_FORKNUM, cur_hblkno);
+			count++;
+		}
+	}
+
+	/*
+	 * Save the prefetch position so that next time we can continue from that
+	 * position.
+	 */
+	prefetch_state->next_item = i;
+	prefetch_state->cur_hblkno = cur_hblkno;
+}
+#endif
+
+/*
+ * Get the latestRemovedXid from the heap pages pointed at by the index
+ * tuples being deleted.
+ *
+ * We used to do this during recovery rather than on the primary, but that
+ * approach now appears inferior.  It meant that the master could generate
+ * a lot of work for the standby without any back-pressure to slow down the
+ * master, and it required the standby to have reached consistency, whereas
+ * we want to have correct information available even before that point.
+ *
+ * It's possible for this to generate a fair amount of I/O, since we may be
+ * deleting hundreds of tuples from a single index block.  To amortize that
+ * cost to some degree, this uses prefetching and combines repeat accesses to
+ * the same block.
+ */
+TransactionId
+heap_compute_xid_horizon_for_tuples(Relation rel,
+									ItemPointerData *tids,
+									int nitems)
+{
+	TransactionId latestRemovedXid = InvalidTransactionId;
+	BlockNumber hblkno;
+	Buffer		buf = InvalidBuffer;
+	Page		hpage;
+#ifdef USE_PREFETCH
+	XidHorizonPrefetchState prefetch_state;
+	int			io_concurrency;
+	int			prefetch_distance;
+#endif
+
+	/*
+	 * Sort to avoid repeated lookups for the same page, and to make it more
+	 * likely to access items in an efficient order. In particular, this
+	 * ensures that if there are multiple pointers to the same page, they all
+	 * get processed looking up and locking the page just once.
+	 */
+	qsort((void *) tids, nitems, sizeof(ItemPointerData),
+		  (int (*) (const void *, const void *)) ItemPointerCompare);
+
+#ifdef USE_PREFETCH
+	/* Initialize prefetch state. */
+	prefetch_state.cur_hblkno = InvalidBlockNumber;
+	prefetch_state.next_item = 0;
+	prefetch_state.nitems = nitems;
+	prefetch_state.tids = tids;
+
+	/*
+	 * Compute the prefetch distance that we will attempt to maintain.
+	 *
+	 * We don't use the regular formula to determine how much to prefetch
+	 * here, but instead just add a constant to effective_io_concurrency.
+	 * That's because it seems best to do some prefetching here even when
+	 * effective_io_concurrency is set to 0, but if the DBA thinks it's OK to
+	 * do more prefetching for other operations, then it's probably OK to do
+	 * more prefetching in this case, too. It may be that this formula is too
+	 * simplistic, but at the moment there is no evidence of that or any idea
+	 * about what would work better.
+	 */
+	io_concurrency = get_tablespace_io_concurrency(rel->rd_rel->reltablespace);
+	prefetch_distance = Min((io_concurrency) + 10, MAX_IO_CONCURRENCY);
+
+	/* Start prefetching. */
+	xid_horizon_prefetch_buffer(rel, &prefetch_state, prefetch_distance);
+#endif
+
+	/* Iterate over all tids, and check their horizon */
+	hblkno = InvalidBlockNumber;
+	for (int i = 0; i < nitems; i++)
+	{
+		ItemPointer htid = &tids[i];
+		ItemId		hitemid;
+		OffsetNumber hoffnum;
+
+		/*
+		 * Read heap buffer, but avoid refetching if it's the same block as
+		 * required for the last tid.
+		 */
+		if (hblkno == InvalidBlockNumber ||
+			ItemPointerGetBlockNumber(htid) != hblkno)
+		{
+			/* release old buffer */
+			if (BufferIsValid(buf))
+			{
+				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+				ReleaseBuffer(buf);
+			}
+
+			hblkno = ItemPointerGetBlockNumber(htid);
+
+			buf = ReadBuffer(rel, hblkno);
+
+#ifdef USE_PREFETCH
+
+			/*
+			 * To maintain the prefetch distance, prefetch one more page for
+			 * each page we read.
+			 */
+			xid_horizon_prefetch_buffer(rel, &prefetch_state, 1);
+#endif
+
+			hpage = BufferGetPage(buf);
+
+			LockBuffer(buf, BUFFER_LOCK_SHARE);
+		}
+
+		hoffnum = ItemPointerGetOffsetNumber(htid);
+		hitemid = PageGetItemId(hpage, hoffnum);
+
+		/*
+		 * Follow any redirections until we find something useful.
+		 */
+		while (ItemIdIsRedirected(hitemid))
+		{
+			hoffnum = ItemIdGetRedirect(hitemid);
+			hitemid = PageGetItemId(hpage, hoffnum);
+			CHECK_FOR_INTERRUPTS();
+		}
+
+		/*
+		 * If the heap item has storage, then read the header and use that to
+		 * set latestRemovedXid.
+		 *
+		 * Some LP_DEAD items may not be accessible, so we ignore them.
+		 */
+		if (ItemIdHasStorage(hitemid))
+		{
+			HeapTupleHeader htuphdr;
+
+			htuphdr = (HeapTupleHeader) PageGetItem(hpage, hitemid);
+
+			HeapTupleHeaderAdvanceLatestRemovedXid(htuphdr, &latestRemovedXid);
+		}
+		else if (ItemIdIsDead(hitemid))
+		{
+			/*
+			 * Conjecture: if hitemid is dead then it had xids before the xids
+			 * marked on LP_NORMAL items. So we just ignore this item and move
+			 * onto the next, for the purposes of calculating
+			 * latestRemovedxids.
+			 */
+		}
+		else
+			Assert(!ItemIdIsUsed(hitemid));
+
+	}
+
+	if (BufferIsValid(buf))
+	{
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buf);
+	}
+
+	/*
+	 * If all heap tuples were LP_DEAD then we will be returning
+	 * InvalidTransactionId here, which avoids conflicts. This matches
+	 * existing logic which assumes that LP_DEAD tuples must already be older
+	 * than the latestRemovedXid on the cleanup record that set them as
+	 * LP_DEAD, hence must already have generated a conflict.
+	 */
+
+	return latestRemovedXid;
 }
 
 /*

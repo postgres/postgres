@@ -1101,9 +1101,15 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
+	TransactionId latestRemovedXid = InvalidTransactionId;
 
 	/* Shouldn't be called unless there's something to do */
 	Assert(nitems > 0);
+
+	if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
+		latestRemovedXid =
+			index_compute_xid_horizon_for_tuples(rel, heapRel, buf,
+												 itemnos, nitems);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
@@ -1134,7 +1140,7 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 		XLogRecPtr	recptr;
 		xl_btree_delete xlrec_delete;
 
-		xlrec_delete.hnode = heapRel->rd_node;
+		xlrec_delete.latestRemovedXid = latestRemovedXid;
 		xlrec_delete.nitems = nitems;
 
 		XLogBeginInsert();

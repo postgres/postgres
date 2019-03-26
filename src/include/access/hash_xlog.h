@@ -263,7 +263,7 @@ typedef struct xl_hash_init_bitmap_page
  */
 typedef struct xl_hash_vacuum_one_page
 {
-	RelFileNode hnode;
+	TransactionId latestRemovedXid;
 	int			ntuples;
 
 	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */

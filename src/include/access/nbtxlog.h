@@ -126,8 +126,7 @@ typedef struct xl_btree_split
  */
 typedef struct xl_btree_delete
 {
-	RelFileNode hnode;			/* RelFileNode of the heap the index currently
-								 * points at */
+	TransactionId latestRemovedXid;
 	int			nitems;
 
 	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */

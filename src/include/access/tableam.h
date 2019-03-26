@@ -299,6 +299,12 @@ typedef struct TableAmRoutine
 											 TupleTableSlot *slot,
 											 Snapshot snapshot);
 
+	/* see table_compute_xid_horizon_for_tuples() */
+	TransactionId (*compute_xid_horizon_for_tuples) (Relation rel,
+													 ItemPointerData *items,
+													 int nitems);
+
+
 	/* ------------------------------------------------------------------------
 	 * Manipulations of physical tuples.
 	 * ------------------------------------------------------------------------
@@ -687,6 +693,19 @@ static inline bool
 table_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot, Snapshot snapshot)
 {
 	return rel->rd_tableam->tuple_satisfies_snapshot(rel, slot, snapshot);
+}
+
+/*
+ * Compute the newest xid among the tuples pointed to by items. This is used
+ * to compute what snapshots to conflict with when replaying WAL records for
+ * page-level index vacuums.
+ */
+static inline TransactionId
+table_compute_xid_horizon_for_tuples(Relation rel,
+									 ItemPointerData *items,
+									 int nitems)
+{
+	return rel->rd_tableam->compute_xid_horizon_for_tuples(rel, items, nitems);
 }
 
 
