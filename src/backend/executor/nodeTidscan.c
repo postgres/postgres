@@ -22,7 +22,6 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "access/tableam.h"
 #include "catalog/pg_type.h"
@@ -308,7 +307,6 @@ TidNext(TidScanState *node)
 	ScanDirection direction;
 	Snapshot	snapshot;
 	Relation	heapRelation;
-	HeapTuple	tuple;
 	TupleTableSlot *slot;
 	ItemPointerData *tidList;
 	int			numTids;
@@ -331,12 +329,6 @@ TidNext(TidScanState *node)
 
 	tidList = node->tss_TidList;
 	numTids = node->tss_NumTids;
-
-	/*
-	 * We use node->tss_htup as the tuple pointer; note this can't just be a
-	 * local variable here, as the scan tuple slot will keep a pointer to it.
-	 */
-	tuple = &(node->tss_htup);
 
 	/*
 	 * Initialize or advance scan position, depending on direction.
@@ -365,7 +357,7 @@ TidNext(TidScanState *node)
 
 	while (node->tss_TidPtr >= 0 && node->tss_TidPtr < numTids)
 	{
-		tuple->t_self = tidList[node->tss_TidPtr];
+		ItemPointerData tid = tidList[node->tss_TidPtr];
 
 		/*
 		 * For WHERE CURRENT OF, the tuple retrieved from the cursor might
@@ -373,10 +365,9 @@ TidNext(TidScanState *node)
 		 * current according to our snapshot.
 		 */
 		if (node->tss_isCurrentOf)
-			heap_get_latest_tid(heapRelation, snapshot, &tuple->t_self);
+			table_get_latest_tid(heapRelation, snapshot, &tid);
 
-		if (table_fetch_row_version(heapRelation, &tuple->t_self, snapshot,
-									slot))
+		if (table_fetch_row_version(heapRelation, &tid, snapshot, slot))
 			return slot;
 
 		/* Bad TID or failed snapshot qual; try next */

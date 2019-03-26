@@ -284,6 +284,14 @@ typedef struct TableAmRoutine
 											TupleTableSlot *slot);
 
 	/*
+	 * Return the latest version of the tuple at `tid`, by updating `tid` to
+	 * point at the newest version.
+	 */
+	void		(*tuple_get_latest_tid) (Relation rel,
+										 Snapshot snapshot,
+										 ItemPointer tid);
+
+	/*
 	 * Does the tuple in `slot` satisfy `snapshot`?  The slot needs to be of
 	 * the appropriate type for the AM.
 	 */
@@ -654,6 +662,16 @@ table_fetch_row_version(Relation rel,
 						TupleTableSlot *slot)
 {
 	return rel->rd_tableam->tuple_fetch_row_version(rel, tid, snapshot, slot);
+}
+
+/*
+ * Return the latest version of the tuple at `tid`, by updating `tid` to
+ * point at the newest version.
+ */
+static inline void
+table_get_latest_tid(Relation rel, Snapshot snapshot, ItemPointer tid)
+{
+	rel->rd_tableam->tuple_get_latest_tid(rel, snapshot, tid);
 }
 
 /*
