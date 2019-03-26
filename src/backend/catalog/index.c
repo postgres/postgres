@@ -1871,7 +1871,6 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 	if (info1->ii_NumIndexKeyAttrs != info2->ii_NumIndexKeyAttrs)
 		return false;
 
-
 	/*
 	 * and columns match through the attribute map (actual attribute numbers
 	 * might differ!)  Note that this implies that index columns that are
