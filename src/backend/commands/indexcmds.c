@@ -925,7 +925,6 @@ DefineIndex(Oid relationId,
 											   gettext_noop("could not convert row type"));
 				maplen = parentDesc->natts;
 
-
 				foreach(cell, childidxs)
 				{
 					Oid			cldidxid = lfirst_oid(cell);

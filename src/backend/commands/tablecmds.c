@@ -15591,7 +15591,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 							  partIdx->rd_opfamily,
 							  parentIdx->rd_opfamily,
 							  attmap,
-							  RelationGetDescr(partTbl)->natts))
+							  RelationGetDescr(parentTbl)->natts))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("cannot attach index \"%s\" as a partition of index \"%s\"",

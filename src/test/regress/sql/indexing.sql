@@ -747,6 +747,11 @@ alter index idxpart2_a_idx attach partition idxpart22_a_idx;
 create index on idxpart (a);
 create table idxpart_another (a int, b int, primary key (a, b)) partition by range (a);
 create table idxpart_another_1 partition of idxpart_another for values from (0) to (100);
+create table idxpart3 (c int, b int, a int) partition by range (a);
+alter table idxpart3 drop column b, drop column c;
+create table idxpart31 partition of idxpart3 for values from (1000) to (1200);
+create table idxpart32 partition of idxpart3 for values from (1200) to (1400);
+alter table idxpart attach partition idxpart3 for values from (1000) to (2000);
 
 -- More objects intentionally left behind, to verify some pg_dump/pg_upgrade
 -- behavior; see https://postgr.es/m/20190321204928.GA17535@alvherre.pgsql
