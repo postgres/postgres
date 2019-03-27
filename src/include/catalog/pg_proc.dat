@@ -2787,11 +2787,11 @@
   prosrc => 'name_text' },
 
 { oid => '1402', descr => 'current schema name',
-  proname => 'current_schema', provolatile => 's', prorettype => 'name',
-  proargtypes => '', prosrc => 'current_schema' },
+  proname => 'current_schema', provolatile => 's', proparallel => 'u',
+  prorettype => 'name', proargtypes => '', prosrc => 'current_schema' },
 { oid => '1403', descr => 'current schema search list',
-  proname => 'current_schemas', provolatile => 's', prorettype => '_name',
-  proargtypes => 'bool', prosrc => 'current_schemas' },
+  proname => 'current_schemas', provolatile => 's', proparallel => 'u',
+  prorettype => '_name', proargtypes => 'bool', prosrc => 'current_schemas' },
 
 { oid => '1404', descr => 'substitute portion of string',
   proname => 'overlay', prorettype => 'text',

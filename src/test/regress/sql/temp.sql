@@ -274,11 +274,8 @@ prepare transaction 'twophase_tab';
 
 -- Corner case: current_schema may create a temporary schema if namespace
 -- creation is pending, so check after that.  First reset the connection
--- to remove the temporary namespace, and make sure that non-parallel plans
--- are used.
+-- to remove the temporary namespace.
 \c -
-SET max_parallel_workers = 0;
-SET max_parallel_workers_per_gather = 0;
 SET search_path TO 'pg_temp';
 BEGIN;
 SELECT current_schema() ~ 'pg_temp' AS is_temp_schema;
