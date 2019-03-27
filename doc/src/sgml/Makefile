@@ -131,9 +131,13 @@ html-stamp: stylesheet.xsl postgres.sgml $(ALLSGML)
 	cp $(srcdir)/stylesheet.css html/
 	touch $@
 
-htmlhelp: stylesheet-hh.xsl postgres.sgml $(ALLSGML)
+htmlhelp: htmlhelp-stamp
+
+htmlhelp-stamp: stylesheet-hh.xsl postgres.sgml $(ALLSGML)
 	$(XMLLINT) $(XMLINCLUDE) --noout --valid $(word 2,$^)
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(wordlist 1,2,$^)
+	cp $(srcdir)/stylesheet.css htmlhelp/
+	touch $@
 
 # single-page HTML
 postgres.html: stylesheet-html-nochunk.xsl postgres.sgml $(ALLSGML)
@@ -284,7 +288,7 @@ clean:
 # generated SGML files
 	rm -f $(GENERATED_SGML)
 # HTML Help
-	rm -f htmlhelp.hhp toc.hhc index.hhk
+	rm -rf htmlhelp/ htmlhelp-stamp
 # EPUB
 	rm -f postgres.epub
 # Texinfo
