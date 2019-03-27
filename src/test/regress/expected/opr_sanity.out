@@ -892,11 +892,12 @@ WHERE c.castmethod = 'b' AND
  pg_node_tree      | text              |        0 | i
  pg_ndistinct      | bytea             |        0 | i
  pg_dependencies   | bytea             |        0 | i
+ pg_mcv_list       | bytea             |        0 | i
  cidr              | inet              |        0 | i
  xml               | text              |        0 | a
  xml               | character varying |        0 | a
  xml               | character         |        0 | a
-(9 rows)
+(10 rows)
 
 -- **************** pg_conversion ****************
 -- Look for illegal values in pg_conversion fields.

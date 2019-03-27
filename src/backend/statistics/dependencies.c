@@ -202,13 +202,12 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 				  VacAttrStats **stats, Bitmapset *attrs)
 {
 	int			i,
-				j;
-	int			nvalues = numrows * k;
+				nitems;
 	MultiSortSupport mss;
 	SortItem   *items;
-	Datum	   *values;
-	bool	   *isnull;
-	int		   *attnums;
+	AttrNumber *attnums;
+	AttrNumber *attnums_dep;
+	int			numattrs;
 
 	/* counters valid within a group */
 	int			group_size = 0;
@@ -223,26 +222,16 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 	/* sort info for all attributes columns */
 	mss = multi_sort_init(k);
 
-	/* data for the sort */
-	items = (SortItem *) palloc(numrows * sizeof(SortItem));
-	values = (Datum *) palloc(sizeof(Datum) * nvalues);
-	isnull = (bool *) palloc(sizeof(bool) * nvalues);
-
-	/* fix the pointers to values/isnull */
-	for (i = 0; i < numrows; i++)
-	{
-		items[i].values = &values[i * k];
-		items[i].isnull = &isnull[i * k];
-	}
-
 	/*
-	 * Transform the bms into an array, to make accessing i-th member easier.
+	 * Transform the attrs from bitmap to an array to make accessing the i-th
+	 * member easier, and then construct a filtered version with only attnums
+	 * referenced by the dependency we validate.
 	 */
-	attnums = (int *) palloc(sizeof(int) * bms_num_members(attrs));
-	i = 0;
-	j = -1;
-	while ((j = bms_next_member(attrs, j)) >= 0)
-		attnums[i++] = j;
+	attnums = build_attnums_array(attrs, &numattrs);
+
+	attnums_dep = (AttrNumber *) palloc(k * sizeof(AttrNumber));
+	for (i = 0; i < k; i++)
+		attnums_dep[i] = attnums[dependency[i]];
 
 	/*
 	 * Verify the dependency (a,b,...)->z, using a rather simple algorithm:
@@ -257,7 +246,7 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 	 * perhaps at some point it'd be worth using column-specific collations?
 	 */
 
-	/* prepare the sort function for the first dimension, and SortItem array */
+	/* prepare the sort function for the dimensions */
 	for (i = 0; i < k; i++)
 	{
 		VacAttrStats *colstat = stats[dependency[i]];
@@ -270,19 +259,17 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 
 		/* prepare the sort function for this dimension */
 		multi_sort_add_dimension(mss, i, type->lt_opr, type->typcollation);
-
-		/* accumulate all the data for both columns into an array and sort it */
-		for (j = 0; j < numrows; j++)
-		{
-			items[j].values[i] =
-				heap_getattr(rows[j], attnums[dependency[i]],
-							 stats[i]->tupDesc, &items[j].isnull[i]);
-		}
 	}
 
-	/* sort the items so that we can detect the groups */
-	qsort_arg((void *) items, numrows, sizeof(SortItem),
-			  multi_sort_compare, mss);
+	/*
+	 * build an array of SortItem(s) sorted using the multi-sort support
+	 *
+	 * XXX This relies on all stats entries pointing to the same tuple
+	 * descriptor.  For now that assumption holds, but it might change in
+	 * the future for example if we support statistics on multiple tables.
+	 */
+	items = build_sorted_items(numrows, &nitems, rows, stats[0]->tupDesc,
+							   mss, k, attnums_dep);
 
 	/*
 	 * Walk through the sorted array, split it into rows according to the
@@ -295,14 +282,14 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 	group_size = 1;
 
 	/* loop 1 beyond the end of the array so that we count the final group */
-	for (i = 1; i <= numrows; i++)
+	for (i = 1; i <= nitems; i++)
 	{
 		/*
 		 * Check if the group ended, which may be either because we processed
-		 * all the items (i==numrows), or because the i-th item is not equal
+		 * all the items (i==nitems), or because the i-th item is not equal
 		 * to the preceding one.
 		 */
-		if (i == numrows ||
+		if (i == nitems ||
 			multi_sort_compare_dims(0, k - 2, &items[i - 1], &items[i], mss) != 0)
 		{
 			/*
@@ -324,10 +311,12 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 		group_size++;
 	}
 
-	pfree(items);
-	pfree(values);
-	pfree(isnull);
+	if (items)
+		pfree(items);
+
 	pfree(mss);
+	pfree(attnums);
+	pfree(attnums_dep);
 
 	/* Compute the 'degree of validity' as (supporting/total). */
 	return (n_supporting_rows * 1.0 / numrows);
@@ -354,24 +343,17 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 						   VacAttrStats **stats)
 {
 	int			i,
-				j,
 				k;
 	int			numattrs;
-	int		   *attnums;
+	AttrNumber *attnums;
 
 	/* result */
 	MVDependencies *dependencies = NULL;
 
-	numattrs = bms_num_members(attrs);
-
 	/*
 	 * Transform the bms into an array, to make accessing i-th member easier.
 	 */
-	attnums = palloc(sizeof(int) * bms_num_members(attrs));
-	i = 0;
-	j = -1;
-	while ((j = bms_next_member(attrs, j)) >= 0)
-		attnums[i++] = j;
+	attnums = build_attnums_array(attrs, &numattrs);
 
 	Assert(numattrs >= 2);
 
@@ -918,9 +900,9 @@ find_strongest_dependency(StatisticExtInfo *stats, MVDependencies *dependencies,
  *		using functional dependency statistics, or 1.0 if no useful functional
  *		dependency statistic exists.
  *
- * 'estimatedclauses' is an output argument that gets a bit set corresponding
- * to the (zero-based) list index of each clause that is included in the
- * estimated selectivity.
+ * 'estimatedclauses' is an input/output argument that gets a bit set
+ * corresponding to the (zero-based) list index of each clause that is included
+ * in the estimated selectivity.
  *
  * Given equality clauses on attributes (a,b) we find the strongest dependency
  * between them, i.e. either (a=>b) or (b=>a). Assuming (a=>b) is the selected
@@ -955,9 +937,6 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	AttrNumber *list_attnums;
 	int			listidx;
 
-	/* initialize output argument */
-	*estimatedclauses = NULL;
-
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_DEPENDENCIES))
 		return 1.0;
@@ -972,6 +951,9 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	 * the attnums for each clause in a list which we'll reference later so we
 	 * don't need to repeat the same work again. We'll also keep track of all
 	 * attnums seen.
+	 *
+	 * We also skip clauses that we already estimated using different types of
+	 * statistics (we treat them as incompatible).
 	 */
 	listidx = 0;
 	foreach(l, clauses)
@@ -979,7 +961,8 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 		Node	   *clause = (Node *) lfirst(l);
 		AttrNumber	attnum;
 
-		if (dependency_is_compatible_clause(clause, rel->relid, &attnum))
+		if (!bms_is_member(listidx, *estimatedclauses) &&
+			dependency_is_compatible_clause(clause, rel->relid, &attnum))
 		{
 			list_attnums[listidx] = attnum;
 			clauses_attnums = bms_add_member(clauses_attnums, attnum);
@@ -1049,8 +1032,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 			/*
 			 * Skip incompatible clauses, and ones we've already estimated on.
 			 */
-			if (list_attnums[listidx] == InvalidAttrNumber ||
-				bms_is_member(listidx, *estimatedclauses))
+			if (list_attnums[listidx] == InvalidAttrNumber)
 				continue;
 
 			/*

@@ -73,11 +73,12 @@ CreateStatistics(CreateStatsStmt *stmt)
 	Oid			relid;
 	ObjectAddress parentobject,
 				myself;
-	Datum		types[2];		/* one for each possible type of statistic */
+	Datum		types[3];		/* one for each possible type of statistic */
 	int			ntypes;
 	ArrayType  *stxkind;
 	bool		build_ndistinct;
 	bool		build_dependencies;
+	bool		build_mcv;
 	bool		requested_type = false;
 	int			i;
 	ListCell   *cell;
@@ -272,6 +273,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 */
 	build_ndistinct = false;
 	build_dependencies = false;
+	build_mcv = false;
 	foreach(cell, stmt->stat_types)
 	{
 		char	   *type = strVal((Value *) lfirst(cell));
@@ -286,6 +288,11 @@ CreateStatistics(CreateStatsStmt *stmt)
 			build_dependencies = true;
 			requested_type = true;
 		}
+		else if (strcmp(type, "mcv") == 0)
+		{
+			build_mcv = true;
+			requested_type = true;
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -297,6 +304,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	{
 		build_ndistinct = true;
 		build_dependencies = true;
+		build_mcv = true;
 	}
 
 	/* construct the char array of enabled statistic types */
@@ -305,6 +313,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 		types[ntypes++] = CharGetDatum(STATS_EXT_NDISTINCT);
 	if (build_dependencies)
 		types[ntypes++] = CharGetDatum(STATS_EXT_DEPENDENCIES);
+	if (build_mcv)
+		types[ntypes++] = CharGetDatum(STATS_EXT_MCV);
 	Assert(ntypes > 0 && ntypes <= lengthof(types));
 	stxkind = construct_array(types, ntypes, CHAROID, 1, true, 'c');
 
@@ -329,6 +339,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	/* no statistics built yet */
 	nulls[Anum_pg_statistic_ext_stxndistinct - 1] = true;
 	nulls[Anum_pg_statistic_ext_stxdependencies - 1] = true;
+	nulls[Anum_pg_statistic_ext_stxmcv - 1] = true;
 
 	/* insert it into pg_statistic_ext */
 	htup = heap_form_tuple(statrel->rd_att, values, nulls);
@@ -424,23 +435,72 @@ RemoveStatisticsById(Oid statsOid)
  * null until the next ANALYZE.  (Note that the type change hasn't actually
  * happened yet, so one option that's *not* on the table is to recompute
  * immediately.)
+ *
+ * For both ndistinct and functional-dependencies stats, the on-disk
+ * representation is independent of the source column data types, and it is
+ * plausible to assume that the old statistic values will still be good for
+ * the new column contents.  (Obviously, if the ALTER COLUMN TYPE has a USING
+ * expression that substantially alters the semantic meaning of the column
+ * values, this assumption could fail.  But that seems like a corner case
+ * that doesn't justify zapping the stats in common cases.)
+ *
+ * For MCV lists that's not the case, as those statistics store the datums
+ * internally. In this case we simply reset the statistics value to NULL.
  */
 void
 UpdateStatisticsForTypeChange(Oid statsOid, Oid relationOid, int attnum,
 							  Oid oldColumnType, Oid newColumnType)
 {
+	HeapTuple	stup,
+				oldtup;
+
+	Relation	rel;
+
+	Datum		values[Natts_pg_statistic_ext];
+	bool		nulls[Natts_pg_statistic_ext];
+	bool		replaces[Natts_pg_statistic_ext];
+
+	oldtup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statsOid));
+	if (!oldtup)
+		elog(ERROR, "cache lookup failed for statistics object %u", statsOid);
+
 	/*
-	 * Currently, we don't actually need to do anything here.  For both
-	 * ndistinct and functional-dependencies stats, the on-disk representation
-	 * is independent of the source column data types, and it is plausible to
-	 * assume that the old statistic values will still be good for the new
-	 * column contents.  (Obviously, if the ALTER COLUMN TYPE has a USING
-	 * expression that substantially alters the semantic meaning of the column
-	 * values, this assumption could fail.  But that seems like a corner case
-	 * that doesn't justify zapping the stats in common cases.)
-	 *
-	 * Future types of extended stats will likely require us to work harder.
+	 * When none of the defined statistics types contain datum values
+	 * from the table's columns then there's no need to reset the stats.
+	 * Functional dependencies and ndistinct stats should still hold true.
 	 */
+	if (!statext_is_kind_built(oldtup, STATS_EXT_MCV))
+	{
+		ReleaseSysCache(oldtup);
+		return;
+	}
+
+	/*
+	 * OK, we need to reset some statistics. So let's build the new tuple,
+	 * replacing the affected statistics types with NULL.
+	 */
+	memset(nulls, 0, Natts_pg_statistic_ext * sizeof(bool));
+	memset(replaces, 0, Natts_pg_statistic_ext * sizeof(bool));
+	memset(values, 0, Natts_pg_statistic_ext * sizeof(Datum));
+
+	replaces[Anum_pg_statistic_ext_stxmcv - 1] = true;
+	nulls[Anum_pg_statistic_ext_stxmcv - 1] = true;
+
+	rel = heap_open(StatisticExtRelationId, RowExclusiveLock);
+
+	/* replace the old tuple */
+	stup = heap_modify_tuple(oldtup,
+							 RelationGetDescr(rel),
+							 values,
+							 nulls,
+							 replaces);
+
+	ReleaseSysCache(oldtup);
+	CatalogTupleUpdate(rel, &stup->t_self, stup);
+
+	heap_freetuple(stup);
+
+	heap_close(rel, RowExclusiveLock);
 }
 
 /*

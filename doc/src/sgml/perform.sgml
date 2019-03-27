@@ -1285,6 +1285,72 @@ nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
      plans.  Otherwise, the <command>ANALYZE</command> cycles are just wasted.
     </para>
    </sect3>
+
+   <sect3>
+    <title>Multivariate MCV lists</title>
+
+    <para>
+     Another type of statistics stored for each column are most-common value
+     lists.  This allows very accurate estimates for individual columns, but
+     may result in significant misestimates for queries with conditions on
+     multiple columns.
+    </para>
+
+    <para>
+     To improve such estimates, <command>ANALYZE</command> can collect MCV
+     lists on combinations of columns.  Similarly to functional dependencies
+     and n-distinct coefficients, it's impractical to do this for every
+     possible column grouping.  Even more so in this case, as the MCV list
+     (unlike functional dependencies and n-distinct coefficients) does store
+     the common column values.  So data is collected only for those groups
+     of columns appearing together in a statistics object defined with the
+     <literal>mcv</literal> option.
+    </para>
+
+    <para>
+     Continuing the previous example, the MCV list for a table of ZIP codes
+     might look like the following (unlike for simpler types of statistics,
+     a function is required for inspection of MCV contents):
+
+<programlisting>
+CREATE STATISTICS stts3 (mcv) ON state, city FROM zipcodes;
+
+ANALYZE zipcodes;
+
+SELECT m.* FROM pg_statistic_ext,
+                pg_mcv_list_items(stxmcv) m WHERE stxname = 'stts3';
+
+ index |         values         | nulls | frequency | base_frequency 
+-------+------------------------+-------+-----------+----------------
+     0 | {Washington, DC}       | {f,f} |  0.003467 |        2.7e-05
+     1 | {Apo, AE}              | {f,f} |  0.003067 |        1.9e-05
+     2 | {Houston, TX}          | {f,f} |  0.002167 |       0.000133
+     3 | {El Paso, TX}          | {f,f} |     0.002 |       0.000113
+     4 | {New York, NY}         | {f,f} |  0.001967 |       0.000114
+     5 | {Atlanta, GA}          | {f,f} |  0.001633 |        3.3e-05
+     6 | {Sacramento, CA}       | {f,f} |  0.001433 |        7.8e-05
+     7 | {Miami, FL}            | {f,f} |    0.0014 |          6e-05
+     8 | {Dallas, TX}           | {f,f} |  0.001367 |        8.8e-05
+     9 | {Chicago, IL}          | {f,f} |  0.001333 |        5.1e-05
+   ...
+(99 rows)
+</programlisting>
+     This indicates that the most common combination of city and state is
+     Washington in DC, with actual frequency (in the sample) about 0.35%.
+     The base frequency of the combination (as computed from the simple
+     per-column frequencies) is only 0.0027%, resulting in two orders of
+     magnitude under-estimates.
+    </para>
+
+    <para>
+     It's advisable to create <acronym>MCV</acronym> statistics objects only
+     on combinations of columns that are actually used in conditions together,
+     and for which misestimation of the number of groups is resulting in bad
+     plans.  Otherwise, the <command>ANALYZE</command> and planning cycles
+     are just wasted.
+    </para>
+   </sect3>
+
   </sect2>
  </sect1>
 

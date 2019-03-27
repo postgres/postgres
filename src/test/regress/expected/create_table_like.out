@@ -243,7 +243,7 @@ Indexes:
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
 Statistics objects:
-    "public"."ctlt_all_a_b_stat" (ndistinct, dependencies) ON a, b FROM ctlt_all
+    "public"."ctlt_all_a_b_stat" (ndistinct, dependencies, mcv) ON a, b FROM ctlt_all
 
 SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 'ctlt_all'::regclass ORDER BY c.relname, objsubid;
     relname     | objsubid | description 

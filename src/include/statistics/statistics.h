@@ -78,8 +78,41 @@ typedef struct MVDependencies
 /* size of the struct excluding the deps array */
 #define SizeOfDependencies	(offsetof(MVDependencies, ndeps) + sizeof(uint32))
 
+/* used to flag stats serialized to bytea */
+#define STATS_MCV_MAGIC			0xE1A651C2	/* marks serialized bytea */
+#define STATS_MCV_TYPE_BASIC	1	/* basic MCV list type */
+
+/* max items in MCV list (mostly arbitrary number) */
+#define STATS_MCVLIST_MAX_ITEMS        8192
+
+/*
+ * Multivariate MCV (most-common value) lists
+ *
+ * A straightforward extension of MCV items - i.e. a list (array) of
+ * combinations of attribute values, together with a frequency and null flags.
+ */
+typedef struct MCVItem
+{
+	double		frequency;		/* frequency of this combination */
+	double		base_frequency;	/* frequency if independent */
+	bool	   *isnull;			/* NULL flags */
+	Datum	   *values;			/* item values */
+} MCVItem;
+
+/* multivariate MCV list - essentally an array of MCV items */
+typedef struct MCVList
+{
+	uint32		magic;			/* magic constant marker */
+	uint32		type;			/* type of MCV list (BASIC) */
+	uint32		nitems;			/* number of MCV items in the array */
+	AttrNumber	ndimensions;	/* number of dimensions */
+	Oid			types[STATS_MAX_DIMENSIONS];	/* OIDs of data types */
+	MCVItem   **items;			/* array of MCV items */
+} MCVList;
+
 extern MVNDistinct *statext_ndistinct_load(Oid mvoid);
 extern MVDependencies *statext_dependencies_load(Oid mvoid);
+extern MCVList *statext_mcv_load(Oid mvoid);
 
 extern void BuildRelationExtStatistics(Relation onerel, double totalrows,
 						   int numrows, HeapTuple *rows,
@@ -92,6 +125,13 @@ extern Selectivity dependencies_clauselist_selectivity(PlannerInfo *root,
 									SpecialJoinInfo *sjinfo,
 									RelOptInfo *rel,
 									Bitmapset **estimatedclauses);
+extern Selectivity statext_clauselist_selectivity(PlannerInfo *root,
+							   List *clauses,
+							   int varRelid,
+							   JoinType jointype,
+							   SpecialJoinInfo *sjinfo,
+							   RelOptInfo *rel,
+							   Bitmapset **estimatedclauses);
 extern bool has_stats_of_kind(List *stats, char requiredkind);
 extern StatisticExtInfo *choose_best_statistics(List *stats,
 					   Bitmapset *attnums, char requiredkind);

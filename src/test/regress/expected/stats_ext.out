@@ -58,7 +58,7 @@ ALTER TABLE ab1 DROP COLUMN a;
  b      | integer |           |          | 
  c      | integer |           |          | 
 Statistics objects:
-    "public"."ab1_b_c_stats" (ndistinct, dependencies) ON b, c FROM ab1
+    "public"."ab1_b_c_stats" (ndistinct, dependencies, mcv) ON b, c FROM ab1
 
 -- Ensure statistics are dropped when table is
 SELECT stxname FROM pg_statistic_ext WHERE stxname LIKE 'ab1%';
@@ -211,7 +211,7 @@ SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
  stxkind |                      stxndistinct                       
 ---------+---------------------------------------------------------
- {d,f}   | {"3, 4": 301, "3, 6": 301, "4, 6": 301, "3, 4, 6": 301}
+ {d,f,m} | {"3, 4": 301, "3, 6": 301, "4, 6": 301, "3, 4, 6": 301}
 (1 row)
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
@@ -277,7 +277,7 @@ SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
  stxkind |                        stxndistinct                         
 ---------+-------------------------------------------------------------
- {d,f}   | {"3, 4": 2550, "3, 6": 800, "4, 6": 1632, "3, 4, 6": 10000}
+ {d,f,m} | {"3, 4": 2550, "3, 6": 800, "4, 6": 1632, "3, 4, 6": 10000}
 (1 row)
 
 -- plans using Group Aggregate, thanks to using correct esimates
@@ -514,3 +514,284 @@ EXPLAIN (COSTS OFF)
 (5 rows)
 
 RESET random_page_cost;
+-- check the number of estimated/actual rows in the top node
+create function check_estimated_rows(text) returns table (estimated int, actual int)
+language plpgsql as
+$$
+declare
+    ln text;
+    tmp text[];
+    first_row bool := true;
+begin
+    for ln in
+        execute format('explain analyze %s', $1)
+    loop
+        if first_row then
+            first_row := false;
+            tmp := regexp_match(ln, 'rows=(\d*) .* rows=(\d*)');
+            return query select tmp[1]::int, tmp[2]::int;
+        end if;
+    end loop;
+end;
+$$;
+-- MCV lists
+CREATE TABLE mcv_lists (
+    filler1 TEXT,
+    filler2 NUMERIC,
+    a INT,
+    b VARCHAR,
+    filler3 DATE,
+    c INT,
+    d TEXT
+);
+-- random data (no MCV list)
+INSERT INTO mcv_lists (a, b, c, filler1)
+     SELECT mod(i,37), mod(i,41), mod(i,43), mod(i,47) FROM generate_series(1,5000) s(i);
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         3 |      4
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |      1
+(1 row)
+
+-- create statistics
+CREATE STATISTICS mcv_lists_stats (mcv) ON a, b, c FROM mcv_lists;
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         3 |      4
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |      1
+(1 row)
+
+-- 100 distinct combinations, all in the MCV list
+TRUNCATE mcv_lists;
+DROP STATISTICS mcv_lists_stats;
+INSERT INTO mcv_lists (a, b, c, filler1)
+     SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < 1 AND b < ''1''');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a <= 0 AND b <= ''0''');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < 5 AND b < ''1'' AND c < 5');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a <= 4 AND b <= ''0'' AND c <= 4');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+-- create statistics
+CREATE STATISTICS mcv_lists_stats (mcv) ON a, b, c FROM mcv_lists;
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < 1 AND b < ''1''');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a <= 0 AND b <= ''0''');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < 5 AND b < ''1'' AND c < 5');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a <= 4 AND b <= ''0'' AND c <= 4');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+-- check change of unrelated column type does not reset the MCV statistics
+ALTER TABLE mcv_lists ALTER COLUMN d TYPE VARCHAR(64);
+SELECT stxmcv IS NOT NULL FROM pg_statistic_ext WHERE stxname = 'mcv_lists_stats';
+ ?column? 
+----------
+ t
+(1 row)
+
+-- check change of column type resets the MCV statistics
+ALTER TABLE mcv_lists ALTER COLUMN c TYPE numeric;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+-- 100 distinct combinations with NULL values, all in the MCV list
+TRUNCATE mcv_lists;
+DROP STATISTICS mcv_lists_stats;
+INSERT INTO mcv_lists (a, b, c, filler1)
+     SELECT
+         (CASE WHEN mod(i,100) = 1 THEN NULL ELSE mod(i,100) END),
+         (CASE WHEN mod(i,50) = 1  THEN NULL ELSE mod(i,50) END),
+         (CASE WHEN mod(i,25) = 1  THEN NULL ELSE mod(i,25) END),
+         i
+     FROM generate_series(1,5000) s(i);
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND b IS NULL');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND b IS NULL AND c IS NULL');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
+
+-- create statistics
+CREATE STATISTICS mcv_lists_stats (mcv) ON a, b, c FROM mcv_lists;
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND b IS NULL');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND b IS NULL AND c IS NULL');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
+
+RESET random_page_cost;
+-- mcv with arrays
+CREATE TABLE mcv_lists_arrays (
+    a TEXT[],
+    b NUMERIC[],
+    c INT[]
+);
+INSERT INTO mcv_lists_arrays (a, b, c)
+     SELECT
+         ARRAY[md5((i/100)::text), md5((i/100-1)::text), md5((i/100+1)::text)],
+         ARRAY[(i/100-1)::numeric/1000, (i/100)::numeric/1000, (i/100+1)::numeric/1000],
+         ARRAY[(i/100-1), i/100, (i/100+1)]
+     FROM generate_series(1,5000) s(i);
+CREATE STATISTICS mcv_lists_arrays_stats (mcv) ON a, b, c
+  FROM mcv_lists_arrays;
+ANALYZE mcv_lists_arrays;
+-- mcv with bool
+CREATE TABLE mcv_lists_bool (
+    a BOOL,
+    b BOOL,
+    c BOOL
+);
+INSERT INTO mcv_lists_bool (a, b, c)
+     SELECT
+         (mod(i,2) = 0), (mod(i,4) = 0), (mod(i,8) = 0)
+     FROM generate_series(1,10000) s(i);
+ANALYZE mcv_lists_bool;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE a AND b AND c');
+ estimated | actual 
+-----------+--------
+       156 |   1250
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND b AND c');
+ estimated | actual 
+-----------+--------
+       156 |      0
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND NOT b AND c');
+ estimated | actual 
+-----------+--------
+       469 |      0
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND b AND NOT c');
+ estimated | actual 
+-----------+--------
+      1094 |      0
+(1 row)
+
+CREATE STATISTICS mcv_lists_bool_stats (mcv) ON a, b, c
+  FROM mcv_lists_bool;
+ANALYZE mcv_lists_bool;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE a AND b AND c');
+ estimated | actual 
+-----------+--------
+      1250 |   1250
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND b AND c');
+ estimated | actual 
+-----------+--------
+         1 |      0
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND NOT b AND c');
+ estimated | actual 
+-----------+--------
+         1 |      0
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND b AND NOT c');
+ estimated | actual 
+-----------+--------
+         1 |      0
+(1 row)
+

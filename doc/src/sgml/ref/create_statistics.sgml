@@ -81,9 +81,10 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
      <para>
       A statistics kind to be computed in this statistics object.
       Currently supported kinds are
-      <literal>ndistinct</literal>, which enables n-distinct statistics, and
+      <literal>ndistinct</literal>, which enables n-distinct statistics,
       <literal>dependencies</literal>, which enables functional
-      dependency statistics.
+      dependency statistics, and <literal>mcv</literal> which enables
+      most-common values lists.
       If this clause is omitted, all supported statistics kinds are
       included in the statistics object.
       For more information, see <xref linkend="planner-stats-extended"/>
@@ -162,6 +163,36 @@ EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
    row count estimate.
    With such statistics, the planner recognizes that the <literal>WHERE</literal>
    conditions are redundant and does not underestimate the row count.
+  </para>
+
+  <para>
+   Create table <structname>t2</structname> with two perfectly correlated columns
+   (containing identical data), and a MCV list on those columns:
+
+<programlisting>
+CREATE TABLE t2 (
+    a   int,
+    b   int
+);
+
+INSERT INTO t2 SELECT mod(i,100), mod(i,100)
+                 FROM generate_series(1,1000000) s(i);
+
+CREATE STATISTICS s2 (mcv) ON (a, b) FROM t2;
+
+ANALYZE t2;
+
+-- valid combination (found in MCV)
+EXPLAIN ANALYZE SELECT * FROM t2 WHERE (a = 1) AND (b = 1);
+
+-- invalid combination (not found in MCV)
+EXPLAIN ANALYZE SELECT * FROM t2 WHERE (a = 1) AND (b = 2);
+</programlisting>
+
+   The MCV list gives the planner more detailed information about the
+   specific values that commonly appear in the table, as well as an upper
+   bound on the selectivities of combinations of values that do not appear
+   in the table, allowing it to generate better estimates in both cases.
   </para>
 
  </refsect1>

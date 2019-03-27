@@ -58,6 +58,12 @@ extern Selectivity clause_selectivity(PlannerInfo *root,
 				   int varRelid,
 				   JoinType jointype,
 				   SpecialJoinInfo *sjinfo);
+extern Selectivity clauselist_selectivity_simple(PlannerInfo *root,
+							  List *clauses,
+							  int varRelid,
+							  JoinType jointype,
+							  SpecialJoinInfo *sjinfo,
+							  Bitmapset *estimatedclauses);
 extern Selectivity clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,

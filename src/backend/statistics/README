@@ -18,6 +18,8 @@ There are currently two kinds of extended statistics:
 
     (b) soft functional dependencies (README.dependencies)
 
+    (c) MCV lists (README.mcv)
+
 
 Compatible clause types
 -----------------------
@@ -25,6 +27,8 @@ Compatible clause types
 Each type of statistics may be used to estimate some subset of clause types.
 
     (a) functional dependencies - equality clauses (AND), possibly IS NULL
+
+    (b) MCV lists - equality and inequality clauses (AND, OR, NOT), IS [NOT] NULL
 
 Currently, only OpExprs in the form Var op Const, or Const op Var are
 supported, however it's feasible to expand the code later to also estimate the

@@ -444,6 +444,50 @@ bms_is_member(int x, const Bitmapset *a)
 }
 
 /*
+ * bms_member_index
+ *		determine 0-based index of member x in the bitmap
+ *
+ * Returns (-1) when x is not a member.
+ */
+int
+bms_member_index(Bitmapset *a, int x)
+{
+	int			i;
+	int			bitnum;
+	int			wordnum;
+	int			result = 0;
+	bitmapword	mask;
+
+	/* return -1 if not a member of the bitmap */
+	if (!bms_is_member(x, a))
+		return -1;
+
+	wordnum = WORDNUM(x);
+	bitnum = BITNUM(x);
+
+	/* count bits in preceding words */
+	for (i = 0; i < wordnum; i++)
+	{
+		bitmapword	w = a->words[i];
+
+		/* No need to count the bits in a zero word */
+		if (w != 0)
+			result += bmw_popcount(w);
+	}
+
+	/*
+	 * Now add bits of the last word, but only those before the item.
+	 * We can do that by applying a mask and then using popcount again.
+	 * To get 0-based index, we want to count only preceding bits, not
+	 * the item itself, so we subtract 1.
+	 */
+	mask = ((bitmapword) 1 << bitnum) - 1;
+	result += bmw_popcount(a->words[wordnum] & mask);
+
+	return result;
+}
+
+/*
  * bms_overlap - do sets overlap (ie, have a nonempty intersection)?
  */
 bool

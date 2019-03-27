@@ -1,0 +1,100 @@
+MCV lists
+=========
+
+Multivariate MCV (most-common values) lists are a straightforward extension of
+regular MCV list, tracking most frequent combinations of values for a group of
+attributes.
+
+This works particularly well for columns with a small number of distinct values,
+as the list may include all the combinations and approximate the distribution
+very accurately.
+
+For columns with a large number of distinct values (e.g. those with continuous
+domains), the list will only track the most frequent combinations. If the
+distribution is mostly uniform (all combinations about equally frequent), the
+MCV list will be empty.
+
+Estimates of some clauses (e.g. equality) based on MCV lists are more accurate
+than when using histograms.
+
+Also, MCV lists don't necessarily require sorting of the values (the fact that
+we use sorting when building them is implementation detail), but even more
+importantly the ordering is not built into the approximation (while histograms
+are built on ordering). So MCV lists work well even for attributes where the
+ordering of the data type is disconnected from the meaning of the data. For
+example we know how to sort strings, but it's unlikely to make much sense for
+city names (or other label-like attributes).
+
+
+Selectivity estimation
+----------------------
+
+The estimation, implemented in mcv_clauselist_selectivity(), is quite simple
+in principle - we need to identify MCV items matching all the clauses and sum
+frequencies of all those items.
+
+Currently MCV lists support estimation of the following clause types:
+
+    (a) equality clauses      WHERE (a = 1) AND (b = 2)
+    (b) inequality clauses    WHERE (a < 1) AND (b >= 2)
+    (c) NULL clauses          WHERE (a IS NULL) AND (b IS NOT NULL)
+    (d) OR clauses            WHERE (a < 1) OR (b >= 2)
+
+It's possible to add support for additional clauses, for example:
+
+    (e) multi-var clauses     WHERE (a > b)
+
+and possibly others. These are tasks for the future, not yet implemented.
+
+
+Hashed MCV (not yet implemented)
+--------------------------------
+
+Regular MCV lists have to include actual values for each item, so if those items
+are large the list may be quite large. This is especially true for multivariate
+MCV lists, although the current implementation partially mitigates this by
+performing de-duplicating the values before storing them on disk.
+
+It's possible to only store hashes (32-bit values) instead of the actual values,
+significantly reducing the space requirements. Obviously, this would only make
+the MCV lists useful for estimating equality conditions (assuming the 32-bit
+hashes make the collisions rare enough).
+
+This might also complicate matching the columns to available stats.
+
+
+TODO Consider implementing hashed MCV list, storing just 32-bit hashes instead
+     of the actual values. This type of MCV list will be useful only for
+     estimating equality clauses, and will reduce space requirements for large
+     varlena types (in such cases we usually only want equality anyway).
+
+
+Inspecting the MCV list
+-----------------------
+
+Inspecting the regular (per-attribute) MCV lists is trivial, as it's enough
+to select the columns from pg_stats. The data is encoded as anyarrays, and
+all the items have the same data type, so anyarray provides a simple way to
+get a text representation.
+
+With multivariate MCV lists the columns may use different data types, making
+it impossible to use anyarrays. It might be possible to produce a similar
+array-like representation, but that would complicate further processing and
+analysis of the MCV list.
+
+So instead the MCV lists are stored in a custom data type (pg_mcv_list),
+which however makes it more difficult to inspect the contents. To make that
+easier, there's a SRF returning detailed information about the MCV lists.
+
+    SELECT m.* FROM pg_statistic_ext,
+                    pg_mcv_list_items(stxmcv) m WHERE stxname = 'stts2';
+
+It accepts one parameter - a pg_mcv_list value (which can only be obtained
+from pg_statistic_ext catalog, to defend against malicious input), and
+returns these columns:
+
+    - item index (0, ..., (nitems-1))
+    - values (string array)
+    - nulls only (boolean array)
+    - frequency (double precision)
+    - base_frequency (double precision)

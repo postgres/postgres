@@ -31,6 +31,15 @@ typedef struct
 	int			tupno;			/* position index for tuple it came from */
 } ScalarItem;
 
+/* (de)serialization info */
+typedef struct DimensionInfo
+{
+	int			nvalues;		/* number of deduplicated values */
+	int			nbytes;			/* number of bytes (serialized) */
+	int			typlen;			/* pg_type.typlen */
+	bool		typbyval;		/* pg_type.typbyval */
+} DimensionInfo;
+
 /* multi-sort */
 typedef struct MultiSortSupportData
 {
@@ -44,6 +53,7 @@ typedef struct SortItem
 {
 	Datum	   *values;
 	bool	   *isnull;
+	int			count;
 } SortItem;
 
 extern MVNDistinct *statext_ndistinct_build(double totalrows,
@@ -57,6 +67,12 @@ extern MVDependencies *statext_dependencies_build(int numrows, HeapTuple *rows,
 extern bytea *statext_dependencies_serialize(MVDependencies *dependencies);
 extern MVDependencies *statext_dependencies_deserialize(bytea *data);
 
+extern MCVList *statext_mcv_build(int numrows, HeapTuple *rows,
+				  Bitmapset *attrs, VacAttrStats **stats,
+				  double totalrows);
+extern bytea *statext_mcv_serialize(MCVList * mcv, VacAttrStats **stats);
+extern MCVList * statext_mcv_deserialize(bytea *data);
+
 extern MultiSortSupport multi_sort_init(int ndims);
 extern void multi_sort_add_dimension(MultiSortSupport mss, int sortdim,
 						 Oid oper, Oid collation);
@@ -65,5 +81,29 @@ extern int multi_sort_compare_dim(int dim, const SortItem *a,
 					   const SortItem *b, MultiSortSupport mss);
 extern int multi_sort_compare_dims(int start, int end, const SortItem *a,
 						const SortItem *b, MultiSortSupport mss);
+extern int	compare_scalars_simple(const void *a, const void *b, void *arg);
+extern int	compare_datums_simple(Datum a, Datum b, SortSupport ssup);
+
+extern void *bsearch_arg(const void *key, const void *base,
+			size_t nmemb, size_t size,
+			int (*compar) (const void *, const void *, void *),
+			void *arg);
+
+extern AttrNumber *build_attnums_array(Bitmapset *attrs, int *numattrs);
+
+extern SortItem *build_sorted_items(int numrows, int *nitems, HeapTuple *rows,
+				   TupleDesc tdesc, MultiSortSupport mss,
+				   int numattrs, AttrNumber *attnums);
+
+
+extern Selectivity mcv_clauselist_selectivity(PlannerInfo *root,
+						   StatisticExtInfo *stat,
+						   List *clauses,
+						   int varRelid,
+						   JoinType jointype,
+						   SpecialJoinInfo *sjinfo,
+						   RelOptInfo *rel,
+						   Selectivity *basesel,
+						   Selectivity *totalsel);
 
 #endif							/* EXTENDED_STATS_INTERNAL_H */

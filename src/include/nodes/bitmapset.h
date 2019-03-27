@@ -87,6 +87,7 @@ extern Bitmapset *bms_difference(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_subset(const Bitmapset *a, const Bitmapset *b);
 extern BMS_Comparison bms_subset_compare(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_member(int x, const Bitmapset *a);
+extern int	bms_member_index(Bitmapset *a, int x);
 extern bool bms_overlap(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_overlap_list(const Bitmapset *a, const struct List *b);
 extern bool bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b);
