@@ -6986,6 +6986,7 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 
 	/* Iterate over all tids, and check their horizon */
 	hblkno = InvalidBlockNumber;
+	hpage = NULL;
 	for (int i = 0; i < nitems; i++)
 	{
 		ItemPointer htid = &tids[i];
