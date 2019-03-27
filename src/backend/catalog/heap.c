@@ -2939,19 +2939,11 @@ cookDefault(ParseState *pstate,
 	expr = transformExpr(pstate, raw_default, EXPR_KIND_COLUMN_DEFAULT);
 
 	/*
-	 * Make sure default expr does not refer to any vars (we need this check
-	 * since the pstate includes the target table).
+	 * transformExpr() should have already rejected column references,
+	 * subqueries, aggregates, window functions, and SRFs, based on the
+	 * EXPR_KIND_ for a default expression.
 	 */
-	if (contain_var_clause(expr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("cannot use column references in default expression")));
-
-	/*
-	 * transformExpr() should have already rejected subqueries, aggregates,
-	 * window functions, and SRFs, based on the EXPR_KIND_ for a default
-	 * expression.
-	 */
+	Assert(!contain_var_clause(expr));
 
 	/*
 	 * Coerce the expression to the correct type and typmod, if given. This

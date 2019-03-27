@@ -3926,12 +3926,12 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 	if (!IsA(value, Const))
 		value = (Node *) expression_planner((Expr *) value);
 
-	/* Make sure the expression does not refer to any vars. */
-	if (contain_var_clause(value))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("cannot use column references in partition bound expression"),
-				 parser_errposition(pstate, exprLocation(value))));
+	/*
+	 * transformExpr() should have already rejected column references,
+	 * subqueries, aggregates, window functions, and SRFs, based on the
+	 * EXPR_KIND_ for a default expression.
+	 */
+	Assert(!contain_var_clause(value));
 
 	/*
 	 * Evaluate the expression, assigning the partition key's collation to the

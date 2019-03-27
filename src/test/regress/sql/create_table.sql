@@ -304,6 +304,20 @@ CREATE TABLE withoid() WITH (oids = true);
 CREATE TEMP TABLE withoutoid() WITHOUT OIDS; DROP TABLE withoutoid;
 CREATE TEMP TABLE withoutoid() WITH (oids = false); DROP TABLE withoutoid;
 
+-- check restriction with default expressions
+-- invalid use of column reference in default expressions
+CREATE TABLE default_expr_column (id int DEFAULT (id));
+CREATE TABLE default_expr_column (id int DEFAULT (bar.id));
+CREATE TABLE default_expr_agg_column (id int DEFAULT (avg(id)));
+-- invalid column definition
+CREATE TABLE default_expr_non_column (a int DEFAULT (avg(non_existent)));
+-- invalid use of aggregate
+CREATE TABLE default_expr_agg (a int DEFAULT (avg(1)));
+-- invalid use of subquery
+CREATE TABLE default_expr_agg (a int DEFAULT (select 1));
+-- invalid use of set-returning function
+CREATE TABLE default_expr_agg (a int DEFAULT (generate_series(1,3)));
+
 --
 -- Partitioned tables
 --

@@ -783,10 +783,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       The <literal>DEFAULT</literal> clause assigns a default data value for
       the column whose column definition it appears within.  The value
-      is any variable-free expression (subqueries and cross-references
-      to other columns in the current table are not allowed).  The
-      data type of the default expression must match the data type of the
-      column.
+      is any variable-free expression (in particular, cross-references
+      to other columns in the current table are not allowed).  Subqueries
+      are not allowed either.  The data type of the default expression must
+      match the data type of the column.
      </para>
 
      <para>
