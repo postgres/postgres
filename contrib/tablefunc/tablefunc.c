@@ -867,11 +867,8 @@ get_crosstab_tuplestore(char *sql,
 							   "tuple has %d columns but crosstab " \
 							   "returns %d.", tupdesc->natts, result_ncols)));
 
-		/* allocate space */
-		values = (char **) palloc(result_ncols * sizeof(char *));
-
-		/* and make sure it's clear */
-		memset(values, '\0', result_ncols * sizeof(char *));
+		/* allocate space and make sure it's clear */
+		values = (char **) palloc0(result_ncols * sizeof(char *));
 
 		for (i = 0; i < proc; i++)
 		{

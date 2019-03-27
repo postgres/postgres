@@ -1382,8 +1382,7 @@ SortTocFromFile(Archive *AHX)
 	bool		incomplete_line;
 
 	/* Allocate space for the 'wanted' array, and init it */
-	ropt->idWanted = (bool *) pg_malloc(sizeof(bool) * AH->maxDumpId);
-	memset(ropt->idWanted, 0, sizeof(bool) * AH->maxDumpId);
+	ropt->idWanted = (bool *) pg_malloc0(sizeof(bool) * AH->maxDumpId);
 
 	/* Setup the file */
 	fh = fopen(ropt->tocFile, PG_BINARY_R);

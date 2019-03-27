@@ -320,8 +320,7 @@ TopoSort(DumpableObject **objs,
 	 * We also make a map showing the input-order index of the item with
 	 * dumpId j.
 	 */
-	beforeConstraints = (int *) pg_malloc((maxDumpId + 1) * sizeof(int));
-	memset(beforeConstraints, 0, (maxDumpId + 1) * sizeof(int));
+	beforeConstraints = (int *) pg_malloc0((maxDumpId + 1) * sizeof(int));
 	idMap = (int *) pg_malloc((maxDumpId + 1) * sizeof(int));
 	for (i = 0; i < numObjs; i++)
 	{
