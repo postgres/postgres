@@ -142,7 +142,7 @@ postgres.html: stylesheet-html-nochunk.xsl postgres.sgml $(ALLSGML)
 
 # single-page text
 postgres.txt: postgres.html
-	$(LYNX) -force_html -dump -nolist $< > $@
+	$(PANDOC) -t plain -o $@ $<
 
 
 ##
