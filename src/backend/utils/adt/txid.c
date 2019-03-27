@@ -113,9 +113,9 @@ TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
 	uint32		xid_epoch = (uint32) (xid_with_epoch >> 32);
 	TransactionId xid = (TransactionId) xid_with_epoch;
 	uint32		now_epoch;
-	TransactionId now_epoch_last_xid;
+	TransactionId now_epoch_next_xid;
 
-	GetNextXidAndEpoch(&now_epoch_last_xid, &now_epoch);
+	GetNextXidAndEpoch(&now_epoch_next_xid, &now_epoch);
 
 	if (extracted_xid != NULL)
 		*extracted_xid = xid;
@@ -129,7 +129,7 @@ TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
 
 	/* If the transaction ID is in the future, throw an error. */
 	if (xid_epoch > now_epoch
-		|| (xid_epoch == now_epoch && xid > now_epoch_last_xid))
+		|| (xid_epoch == now_epoch && xid >= now_epoch_next_xid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("transaction ID %s is in the future",
@@ -151,7 +151,7 @@ TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
 	 * CLOG entry is guaranteed to still exist.
 	 */
 	if (xid_epoch + 1 < now_epoch
-		|| (xid_epoch + 1 == now_epoch && xid < now_epoch_last_xid)
+		|| (xid_epoch + 1 == now_epoch && xid < now_epoch_next_xid)
 		|| TransactionIdPrecedes(xid, ShmemVariableCache->oldestClogXid))
 		return false;
 
