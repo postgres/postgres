@@ -35,7 +35,8 @@ VariableCache ShmemVariableCache = NULL;
 
 
 /*
- * Allocate the next XID for a new transaction or subtransaction.
+ * Allocate the next FullTransactionId for a new transaction or
+ * subtransaction.
  *
  * The new XID is also stored into MyPgXact before returning.
  *
@@ -44,9 +45,10 @@ VariableCache ShmemVariableCache = NULL;
  * does something.  So it is safe to do a database lookup if we want to
  * issue a warning about XID wrap.
  */
-TransactionId
+FullTransactionId
 GetNewTransactionId(bool isSubXact)
 {
+	FullTransactionId full_xid;
 	TransactionId xid;
 
 	/*
@@ -64,7 +66,7 @@ GetNewTransactionId(bool isSubXact)
 	{
 		Assert(!isSubXact);
 		MyPgXact->xid = BootstrapTransactionId;
-		return BootstrapTransactionId;
+		return FullTransactionIdFromEpochAndXid(0, BootstrapTransactionId);
 	}
 
 	/* safety check, we should never get this far in a HS standby */
@@ -73,7 +75,8 @@ GetNewTransactionId(bool isSubXact)
 
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
-	xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
+	full_xid = ShmemVariableCache->nextFullXid;
+	xid = XidFromFullTransactionId(full_xid);
 
 	/*----------
 	 * Check to see if it's safe to assign another XID.  This protects against
@@ -232,7 +235,7 @@ GetNewTransactionId(bool isSubXact)
 
 	LWLockRelease(XidGenLock);
 
-	return xid;
+	return full_xid;
 }
 
 /*
