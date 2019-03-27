@@ -607,8 +607,8 @@ static void setIntValue(PgBenchValue *pv, int64 ival);
 static void setDoubleValue(PgBenchValue *pv, double dval);
 static bool evaluateExpr(TState *thread, CState *st, PgBenchExpr *expr,
 			 PgBenchValue *retval);
-static instr_time doExecuteCommand(TState *thread, CState *st,
-				 instr_time now);
+static ConnectionStateEnum executeMetaCommand(TState *thread, CState *st,
+				   instr_time *now);
 static void doLog(TState *thread, CState *st,
 	  StatsData *agg, bool skipped, double latency, double lag);
 static void processXactStats(TState *thread, CState *st, instr_time *now,
@@ -802,7 +802,7 @@ out_of_range:
 invalid_syntax:
 	if (!errorOK)
 		fprintf(stderr,
-				"invalid input syntax for type bigint: \"%s\"\n",str);
+				"invalid input syntax for type bigint: \"%s\"\n", str);
 	return false;
 }
 
@@ -827,7 +827,7 @@ strtodouble(const char *str, bool errorOK, double *dv)
 	{
 		if (!errorOK)
 			fprintf(stderr,
-					"invalid input syntax for type double: \"%s\"\n",str);
+					"invalid input syntax for type double: \"%s\"\n", str);
 		return false;
 	}
 	return true;
@@ -3012,6 +3012,8 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 	 */
 	for (;;)
 	{
+		Command    *command;
+
 		switch (st->state)
 		{
 				/* Select transaction (script) to run.  */
@@ -3151,8 +3153,10 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 				 * Send a command to server (or execute a meta-command)
 				 */
 			case CSTATE_START_COMMAND:
+				command = sql_script[st->use_file].commands[st->command];
+
 				/* Transition to script end processing if done */
-				if (sql_script[st->use_file].commands[st->command] == NULL)
+				if (command == NULL)
 				{
 					st->state = CSTATE_END_TX;
 					break;
@@ -3164,7 +3168,28 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 					INSTR_TIME_SET_CURRENT_LAZY(now);
 					st->stmt_begin = now;
 				}
-				now = doExecuteCommand(thread, st, now);
+
+				/* Execute the command */
+				if (command->type == SQL_COMMAND)
+				{
+					if (!sendCommand(st, command))
+					{
+						commandFailed(st, "SQL", "SQL command send failed");
+						st->state = CSTATE_ABORTED;
+					}
+					else
+						st->state = CSTATE_WAIT_RESULT;
+				}
+				else if (command->type == META_COMMAND)
+				{
+					/*-----
+					 * Possible state changes when executing meta commands:
+					 * - on errors CSTATE_ABORTED
+					 * - on sleep CSTATE_SLEEP
+					 * - else CSTATE_END_COMMAND
+					 */
+					st->state = executeMetaCommand(thread, st, &now);
+				}
 
 				/*
 				 * We're now waiting for an SQL command to complete, or
@@ -3237,7 +3262,8 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 							case IFSTATE_IGNORED:
 							case IFSTATE_ELSE_FALSE:
 								if (command->meta == META_IF)
-									conditional_stack_push(st->cstack, IFSTATE_IGNORED);
+									conditional_stack_push(st->cstack,
+														   IFSTATE_IGNORED);
 								else if (command->meta == META_ENDIF)
 								{
 									Assert(!conditional_stack_empty(st->cstack));
@@ -3387,179 +3413,155 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 }
 
 /*
- * Subroutine for advanceConnectionState -- execute or initiate the current
- * command, and transition to next state appropriately.
+ * Subroutine for advanceConnectionState -- initiate or execute the current
+ * meta command, and return the next state to set.
  *
- * Returns an updated timestamp from 'now', used to update 'now' at callsite.
+ * *now is updated to the current time, unless the command is expected to
+ * take no time to execute.
  */
-static instr_time
-doExecuteCommand(TState *thread, CState *st, instr_time now)
+static ConnectionStateEnum
+executeMetaCommand(TState *thread, CState *st, instr_time *now)
 {
 	Command    *command = sql_script[st->use_file].commands[st->command];
+	int			argc;
+	char	  **argv;
 
-	/* execute the command */
-	if (command->type == SQL_COMMAND)
+	Assert(command != NULL && command->type == META_COMMAND);
+
+	argc = command->argc;
+	argv = command->argv;
+
+	if (debug)
 	{
-		if (!sendCommand(st, command))
-		{
-			commandFailed(st, "SQL", "SQL command send failed");
-			st->state = CSTATE_ABORTED;
-		}
-		else
-			st->state = CSTATE_WAIT_RESULT;
+		fprintf(stderr, "client %d executing \\%s", st->id, argv[0]);
+		for (int i = 1; i < argc; i++)
+			fprintf(stderr, " %s", argv[i]);
+		fprintf(stderr, "\n");
 	}
-	else if (command->type == META_COMMAND)
+
+	if (command->meta == META_SLEEP)
 	{
-		int			argc = command->argc;
-		char	  **argv = command->argv;
-
-		if (debug)
-		{
-			fprintf(stderr, "client %d executing \\%s",
-					st->id, argv[0]);
-			for (int i = 1; i < argc; i++)
-				fprintf(stderr, " %s", argv[i]);
-			fprintf(stderr, "\n");
-		}
-
-		if (command->meta == META_SLEEP)
-		{
-			int			usec;
-
-			/*
-			 * A \sleep doesn't execute anything, we just get the delay from
-			 * the argument, and enter the CSTATE_SLEEP state.  (The
-			 * per-command latency will be recorded in CSTATE_SLEEP state, not
-			 * here, after the delay has elapsed.)
-			 */
-			if (!evaluateSleep(st, argc, argv, &usec))
-			{
-				commandFailed(st, "sleep", "execution of meta-command failed");
-				st->state = CSTATE_ABORTED;
-				return now;
-			}
-
-			INSTR_TIME_SET_CURRENT_LAZY(now);
-
-			st->sleep_until = INSTR_TIME_GET_MICROSEC(now) + usec;
-			st->state = CSTATE_SLEEP;
-			return now;
-		}
-		else if (command->meta == META_SET)
-		{
-			PgBenchExpr *expr = command->expr;
-			PgBenchValue result;
-
-			if (!evaluateExpr(thread, st, expr, &result))
-			{
-				commandFailed(st, argv[0], "evaluation of meta-command failed");
-				st->state = CSTATE_ABORTED;
-				return now;
-			}
-
-			if (!putVariableValue(st, argv[0], argv[1], &result))
-			{
-				commandFailed(st, "set", "assignment of meta-command failed");
-				st->state = CSTATE_ABORTED;
-				return now;
-			}
-		}
-		else if (command->meta == META_IF)
-		{
-			/* backslash commands with an expression to evaluate */
-			PgBenchExpr *expr = command->expr;
-			PgBenchValue result;
-			bool		cond;
-
-			if (!evaluateExpr(thread, st, expr, &result))
-			{
-				commandFailed(st, argv[0], "evaluation of meta-command failed");
-				st->state = CSTATE_ABORTED;
-				return now;
-			}
-
-			cond = valueTruth(&result);
-			conditional_stack_push(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
-		}
-		else if (command->meta == META_ELIF)
-		{
-			/* backslash commands with an expression to evaluate */
-			PgBenchExpr *expr = command->expr;
-			PgBenchValue result;
-			bool		cond;
-
-			if (conditional_stack_peek(st->cstack) == IFSTATE_TRUE)
-			{
-				/*
-				 * elif after executed block, skip eval and wait for endif.
-				 */
-				conditional_stack_poke(st->cstack, IFSTATE_IGNORED);
-				st->state = CSTATE_END_COMMAND;
-				return now;
-			}
-
-			if (!evaluateExpr(thread, st, expr, &result))
-			{
-				commandFailed(st, argv[0], "evaluation of meta-command failed");
-				st->state = CSTATE_ABORTED;
-				return now;
-			}
-
-			cond = valueTruth(&result);
-			Assert(conditional_stack_peek(st->cstack) == IFSTATE_FALSE);
-			conditional_stack_poke(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
-		}
-		else if (command->meta == META_ELSE)
-		{
-			switch (conditional_stack_peek(st->cstack))
-			{
-				case IFSTATE_TRUE:
-					conditional_stack_poke(st->cstack, IFSTATE_ELSE_FALSE);
-					break;
-				case IFSTATE_FALSE: /* inconsistent if active */
-				case IFSTATE_IGNORED:	/* inconsistent if active */
-				case IFSTATE_NONE:	/* else without if */
-				case IFSTATE_ELSE_TRUE: /* else after else */
-				case IFSTATE_ELSE_FALSE:	/* else after else */
-				default:
-					/* dead code if conditional check is ok */
-					Assert(false);
-			}
-		}
-		else if (command->meta == META_ENDIF)
-		{
-			Assert(!conditional_stack_empty(st->cstack));
-			conditional_stack_pop(st->cstack);
-		}
-		else if (command->meta == META_SETSHELL)
-		{
-			if (!runShellCommand(st, argv[1], argv + 2, argc - 2))
-			{
-				commandFailed(st, "setshell", "execution of meta-command failed");
-				st->state = CSTATE_ABORTED;
-				return now;
-			}
-		}
-		else if (command->meta == META_SHELL)
-		{
-			if (!runShellCommand(st, NULL, argv + 1, argc - 1))
-			{
-				commandFailed(st, "shell", "execution of meta-command failed");
-				st->state = CSTATE_ABORTED;
-				return now;
-			}
-		}
+		int			usec;
 
 		/*
-		 * executing the expression or shell command might have taken a
-		 * non-negligible amount of time, so reset 'now'
+		 * A \sleep doesn't execute anything, we just get the delay from the
+		 * argument, and enter the CSTATE_SLEEP state.  (The per-command
+		 * latency will be recorded in CSTATE_SLEEP state, not here, after the
+		 * delay has elapsed.)
 		 */
-		INSTR_TIME_SET_ZERO(now);
+		if (!evaluateSleep(st, argc, argv, &usec))
+		{
+			commandFailed(st, "sleep", "execution of meta-command failed");
+			return CSTATE_ABORTED;
+		}
 
-		st->state = CSTATE_END_COMMAND;
+		INSTR_TIME_SET_CURRENT_LAZY(*now);
+		st->sleep_until = INSTR_TIME_GET_MICROSEC(*now) + usec;
+		return CSTATE_SLEEP;
+	}
+	else if (command->meta == META_SET)
+	{
+		PgBenchExpr *expr = command->expr;
+		PgBenchValue result;
+
+		if (!evaluateExpr(thread, st, expr, &result))
+		{
+			commandFailed(st, argv[0], "evaluation of meta-command failed");
+			return CSTATE_ABORTED;
+		}
+
+		if (!putVariableValue(st, argv[0], argv[1], &result))
+		{
+			commandFailed(st, "set", "assignment of meta-command failed");
+			return CSTATE_ABORTED;
+		}
+	}
+	else if (command->meta == META_IF)
+	{
+		/* backslash commands with an expression to evaluate */
+		PgBenchExpr *expr = command->expr;
+		PgBenchValue result;
+		bool		cond;
+
+		if (!evaluateExpr(thread, st, expr, &result))
+		{
+			commandFailed(st, argv[0], "evaluation of meta-command failed");
+			return CSTATE_ABORTED;
+		}
+
+		cond = valueTruth(&result);
+		conditional_stack_push(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
+	}
+	else if (command->meta == META_ELIF)
+	{
+		/* backslash commands with an expression to evaluate */
+		PgBenchExpr *expr = command->expr;
+		PgBenchValue result;
+		bool		cond;
+
+		if (conditional_stack_peek(st->cstack) == IFSTATE_TRUE)
+		{
+			/* elif after executed block, skip eval and wait for endif. */
+			conditional_stack_poke(st->cstack, IFSTATE_IGNORED);
+			return CSTATE_END_COMMAND;
+		}
+
+		if (!evaluateExpr(thread, st, expr, &result))
+		{
+			commandFailed(st, argv[0], "evaluation of meta-command failed");
+			return CSTATE_ABORTED;
+		}
+
+		cond = valueTruth(&result);
+		Assert(conditional_stack_peek(st->cstack) == IFSTATE_FALSE);
+		conditional_stack_poke(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
+	}
+	else if (command->meta == META_ELSE)
+	{
+		switch (conditional_stack_peek(st->cstack))
+		{
+			case IFSTATE_TRUE:
+				conditional_stack_poke(st->cstack, IFSTATE_ELSE_FALSE);
+				break;
+			case IFSTATE_FALSE: /* inconsistent if active */
+			case IFSTATE_IGNORED:	/* inconsistent if active */
+			case IFSTATE_NONE:	/* else without if */
+			case IFSTATE_ELSE_TRUE: /* else after else */
+			case IFSTATE_ELSE_FALSE:	/* else after else */
+			default:
+				/* dead code if conditional check is ok */
+				Assert(false);
+		}
+	}
+	else if (command->meta == META_ENDIF)
+	{
+		Assert(!conditional_stack_empty(st->cstack));
+		conditional_stack_pop(st->cstack);
+	}
+	else if (command->meta == META_SETSHELL)
+	{
+		if (!runShellCommand(st, argv[1], argv + 2, argc - 2))
+		{
+			commandFailed(st, "setshell", "execution of meta-command failed");
+			return CSTATE_ABORTED;
+		}
+	}
+	else if (command->meta == META_SHELL)
+	{
+		if (!runShellCommand(st, NULL, argv + 1, argc - 1))
+		{
+			commandFailed(st, "shell", "execution of meta-command failed");
+			return CSTATE_ABORTED;
+		}
 	}
 
-	return now;
+	/*
+	 * executing the expression or shell command might have taken a
+	 * non-negligible amount of time, so reset 'now'
+	 */
+	INSTR_TIME_SET_ZERO(*now);
+
+	return CSTATE_END_COMMAND;
 }
 
 /*
@@ -4281,6 +4283,7 @@ free_command(Command *command)
 		pg_free(command->argv[i]);
 	if (command->varprefix)
 		pg_free(command->varprefix);
+
 	/*
 	 * It should also free expr recursively, but this is currently not needed
 	 * as only gset commands (which do not have an expression) are freed.
