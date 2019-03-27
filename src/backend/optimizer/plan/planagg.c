@@ -68,12 +68,9 @@ static Oid	fetch_agg_sort_op(Oid aggfnoid);
  * planner's state and invoking query_planner() on a modified version of
  * the query parsetree.  Thus, all preprocessing needed before query_planner()
  * must already be done.
- *
- * Note: we are passed the preprocessed targetlist separately, because it's
- * not necessarily equal to root->parse->targetList.
  */
 void
-preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
+preprocess_minmax_aggregates(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
 	FromExpr   *jtnode;
@@ -144,7 +141,7 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 	 * all are MIN/MAX aggregates.  Stop as soon as we find one that isn't.
 	 */
 	aggs_list = NIL;
-	if (find_minmax_aggs_walker((Node *) tlist, &aggs_list))
+	if (find_minmax_aggs_walker((Node *) root->processed_tlist, &aggs_list))
 		return;
 	if (find_minmax_aggs_walker(parse->havingQual, &aggs_list))
 		return;
@@ -218,11 +215,14 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 	 * consider_parallel value in it, but MinMaxAggPath paths are currently
 	 * never parallel-safe anyway, so that doesn't matter.  Likewise, it
 	 * doesn't matter that we haven't filled FDW-related fields in the rel.
+	 * Also, because there are no rowmarks, we know that the processed_tlist
+	 * doesn't need to change anymore, so making the pathtarget now is safe.
 	 */
 	grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
 	add_path(grouped_rel, (Path *)
 			 create_minmaxagg_path(root, grouped_rel,
-								   create_pathtarget(root, tlist),
+								   create_pathtarget(root,
+													 root->processed_tlist),
 								   aggs_list,
 								   (List *) parse->havingQual));
 }
@@ -421,7 +421,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 
 	/* Build suitable ORDER BY clause */
 	sortcl = makeNode(SortGroupClause);
-	sortcl->tleSortGroupRef = assignSortGroupRef(tle, tlist);
+	sortcl->tleSortGroupRef = assignSortGroupRef(tle, subroot->processed_tlist);
 	sortcl->eqop = eqop;
 	sortcl->sortop = sortop;
 	sortcl->nulls_first = nulls_first;
@@ -442,7 +442,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	subroot->tuple_fraction = 1.0;
 	subroot->limit_tuples = 1.0;
 
-	final_rel = query_planner(subroot, tlist, minmax_qp_callback, NULL);
+	final_rel = query_planner(subroot, minmax_qp_callback, NULL);
 
 	/*
 	 * Since we didn't go through subquery_planner() to handle the subquery,
@@ -476,7 +476,8 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 * cheapest path.)
 	 */
 	sorted_path = apply_projection_to_path(subroot, final_rel, sorted_path,
-										   create_pathtarget(subroot, tlist));
+										   create_pathtarget(subroot,
+															 subroot->processed_tlist));
 
 	/*
 	 * Determine cost to get just the first row of the presorted path.

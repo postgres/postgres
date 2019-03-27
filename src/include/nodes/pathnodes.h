@@ -307,8 +307,13 @@ struct PlannerInfo
 	struct PathTarget *upper_targets[UPPERREL_FINAL + 1];
 
 	/*
-	 * grouping_planner passes back its final processed targetlist here, for
-	 * use in relabeling the topmost tlist of the finished Plan.
+	 * The fully-processed targetlist is kept here.  It differs from
+	 * parse->targetList in that (for INSERT and UPDATE) it's been reordered
+	 * to match the target table, and defaults have been filled in.  Also,
+	 * additional resjunk targets may be present.  preprocess_targetlist()
+	 * does most of this work, but note that more resjunk targets can get
+	 * added during appendrel expansion.  (Hence, upper_targets mustn't get
+	 * set up till after that.)
 	 */
 	List	   *processed_tlist;
 

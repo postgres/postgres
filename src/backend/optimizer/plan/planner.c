@@ -95,7 +95,6 @@ create_upper_paths_hook_type create_upper_paths_hook = NULL;
 /* Passthrough data for standard_qp_callback */
 typedef struct
 {
-	List	   *tlist;			/* preprocessed query targetlist */
 	List	   *activeWindows;	/* active windows, if any */
 	List	   *groupClause;	/* overrides parse->groupClause */
 } standard_qp_extra;
@@ -182,7 +181,6 @@ static RelOptInfo *create_window_paths(PlannerInfo *root,
 					PathTarget *input_target,
 					PathTarget *output_target,
 					bool output_target_parallel_safe,
-					List *tlist,
 					WindowFuncLists *wflists,
 					List *activeWindows);
 static void create_one_window_path(PlannerInfo *root,
@@ -190,7 +188,6 @@ static void create_one_window_path(PlannerInfo *root,
 					   Path *path,
 					   PathTarget *input_target,
 					   PathTarget *output_target,
-					   List *tlist,
 					   WindowFuncLists *wflists,
 					   List *activeWindows);
 static RelOptInfo *create_distinct_paths(PlannerInfo *root,
@@ -1588,12 +1585,11 @@ inheritance_planner(PlannerInfo *root)
 		 * cleaner if we fixed nodeModifyTable.c to support zero child nodes,
 		 * but that probably wouldn't be a net win.)
 		 */
-		List	   *tlist;
 		Path	   *dummy_path;
 
 		/* tlist processing never got done, either */
-		tlist = root->processed_tlist = preprocess_targetlist(root);
-		final_rel->reltarget = create_pathtarget(root, tlist);
+		root->processed_tlist = preprocess_targetlist(root);
+		final_rel->reltarget = create_pathtarget(root, root->processed_tlist);
 
 		/* Make a dummy path, cf set_dummy_rel_pathlist() */
 		dummy_path = (Path *) create_append_path(NULL, final_rel, NIL, NIL,
@@ -1693,7 +1689,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				 double tuple_fraction)
 {
 	Query	   *parse = root->parse;
-	List	   *tlist;
 	int64		offset_est = 0;
 	int64		count_est = 0;
 	double		limit_tuples = -1.0;
@@ -1746,20 +1741,17 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 
 		/*
 		 * We should not need to call preprocess_targetlist, since we must be
-		 * in a SELECT query node.  Instead, use the targetlist returned by
-		 * plan_set_operations (since this tells whether it returned any
+		 * in a SELECT query node.  Instead, use the processed_tlist returned
+		 * by plan_set_operations (since this tells whether it returned any
 		 * resjunk columns!), and transfer any sort key information from the
 		 * original tlist.
 		 */
 		Assert(parse->commandType == CMD_SELECT);
 
-		tlist = root->processed_tlist;	/* from plan_set_operations */
-
 		/* for safety, copy processed_tlist instead of modifying in-place */
-		tlist = postprocess_setop_tlist(copyObject(tlist), parse->targetList);
-
-		/* Save aside the final decorated tlist */
-		root->processed_tlist = tlist;
+		root->processed_tlist =
+			postprocess_setop_tlist(copyObject(root->processed_tlist),
+									parse->targetList);
 
 		/* Also extract the PathTarget form of the setop result tlist */
 		final_target = current_rel->cheapest_total_path->pathtarget;
@@ -1791,7 +1783,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		Assert(parse->distinctClause == NIL);
 		root->sort_pathkeys = make_pathkeys_for_sortclauses(root,
 															parse->sortClause,
-															tlist);
+															root->processed_tlist);
 	}
 	else
 	{
@@ -1831,17 +1823,14 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				parse->groupClause = preprocess_groupclause(root, NIL);
 		}
 
-		/* Preprocess targetlist */
-		tlist = preprocess_targetlist(root);
-
 		/*
-		 * We are now done hacking up the query's targetlist.  Most of the
-		 * remaining planning work will be done with the PathTarget
-		 * representation of tlists, but save aside the full representation so
+		 * Preprocess targetlist.  Note that much of the remaining planning
+		 * work will be done with the PathTarget representation of tlists, but
+		 * we must also maintain the full representation of the final tlist so
 		 * that we can transfer its decoration (resnames etc) to the topmost
-		 * tlist of the finished Plan.
+		 * tlist of the finished Plan.  This is kept in processed_tlist.
 		 */
-		root->processed_tlist = tlist;
+		root->processed_tlist = preprocess_targetlist(root);
 
 		/*
 		 * Collect statistics about aggregates for estimating costs, and mark
@@ -1859,8 +1848,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		MemSet(&agg_costs, 0, sizeof(AggClauseCosts));
 		if (parse->hasAggs)
 		{
-			get_agg_clause_costs(root, (Node *) tlist, AGGSPLIT_SIMPLE,
-								 &agg_costs);
+			get_agg_clause_costs(root, (Node *) root->processed_tlist,
+								 AGGSPLIT_SIMPLE, &agg_costs);
 			get_agg_clause_costs(root, parse->havingQual, AGGSPLIT_SIMPLE,
 								 &agg_costs);
 		}
@@ -1873,7 +1862,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 */
 		if (parse->hasWindowFuncs)
 		{
-			wflists = find_window_functions((Node *) tlist,
+			wflists = find_window_functions((Node *) root->processed_tlist,
 											list_length(parse->windowClause));
 			if (wflists->numWindowFuncs > 0)
 				activeWindows = select_active_windows(root, wflists);
@@ -1888,7 +1877,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * duplicated in planagg.c.
 		 */
 		if (parse->hasAggs)
-			preprocess_minmax_aggregates(root, tlist);
+			preprocess_minmax_aggregates(root);
 
 		/*
 		 * Figure out whether there's a hard limit on the number of rows that
@@ -1908,7 +1897,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			root->limit_tuples = limit_tuples;
 
 		/* Set up data needed by standard_qp_callback */
-		qp_extra.tlist = tlist;
 		qp_extra.activeWindows = activeWindows;
 		qp_extra.groupClause = (gset_data
 								? (gset_data->rollups ? linitial_node(RollupData, gset_data->rollups)->groupClause : NIL)
@@ -1921,17 +1909,18 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * We also generate (in standard_qp_callback) pathkey representations
 		 * of the query's sort clause, distinct clause, etc.
 		 */
-		current_rel = query_planner(root, tlist,
-									standard_qp_callback, &qp_extra);
+		current_rel = query_planner(root, standard_qp_callback, &qp_extra);
 
 		/*
 		 * Convert the query's result tlist into PathTarget format.
 		 *
-		 * Note: it's desirable to not do this till after query_planner(),
+		 * Note: this cannot be done before query_planner() has performed
+		 * appendrel expansion, because that might add resjunk entries to
+		 * root->processed_tlist.  Waiting till afterwards is also helpful
 		 * because the target width estimates can use per-Var width numbers
 		 * that were obtained within query_planner().
 		 */
-		final_target = create_pathtarget(root, tlist);
+		final_target = create_pathtarget(root, root->processed_tlist);
 		final_target_parallel_safe =
 			is_parallel_safe(root, (Node *) final_target->exprs);
 
@@ -2087,7 +2076,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 											  grouping_target,
 											  sort_input_target,
 											  sort_input_target_parallel_safe,
-											  tlist,
 											  wflists,
 											  activeWindows);
 			/* Fix things up if sort_input_target contains SRFs */
@@ -3455,7 +3443,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 {
 	Query	   *parse = root->parse;
 	standard_qp_extra *qp_extra = (standard_qp_extra *) extra;
-	List	   *tlist = qp_extra->tlist;
+	List	   *tlist = root->processed_tlist;
 	List	   *activeWindows = qp_extra->activeWindows;
 
 	/*
@@ -4401,7 +4389,6 @@ consider_groupingsets_paths(PlannerInfo *root,
  * input_rel: contains the source-data Paths
  * input_target: result of make_window_input_target
  * output_target: what the topmost WindowAggPath should return
- * tlist: query's target list (needed to look up pathkeys)
  * wflists: result of find_window_functions
  * activeWindows: result of select_active_windows
  *
@@ -4413,7 +4400,6 @@ create_window_paths(PlannerInfo *root,
 					PathTarget *input_target,
 					PathTarget *output_target,
 					bool output_target_parallel_safe,
-					List *tlist,
 					WindowFuncLists *wflists,
 					List *activeWindows)
 {
@@ -4456,7 +4442,6 @@ create_window_paths(PlannerInfo *root,
 								   path,
 								   input_target,
 								   output_target,
-								   tlist,
 								   wflists,
 								   activeWindows);
 	}
@@ -4490,7 +4475,6 @@ create_window_paths(PlannerInfo *root,
  * path: input Path to use (must return input_target)
  * input_target: result of make_window_input_target
  * output_target: what the topmost WindowAggPath should return
- * tlist: query's target list (needed to look up pathkeys)
  * wflists: result of find_window_functions
  * activeWindows: result of select_active_windows
  */
@@ -4500,7 +4484,6 @@ create_one_window_path(PlannerInfo *root,
 					   Path *path,
 					   PathTarget *input_target,
 					   PathTarget *output_target,
-					   List *tlist,
 					   WindowFuncLists *wflists,
 					   List *activeWindows)
 {
@@ -4531,7 +4514,7 @@ create_one_window_path(PlannerInfo *root,
 
 		window_pathkeys = make_pathkeys_for_window(root,
 												   wc,
-												   tlist);
+												   root->processed_tlist);
 
 		/* Sort if necessary */
 		if (!pathkeys_contained_in(window_pathkeys, path->pathkeys))

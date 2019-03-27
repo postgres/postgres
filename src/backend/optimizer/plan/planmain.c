@@ -42,8 +42,6 @@
  * (grouping_planner) can choose among the surviving paths for the rel.
  *
  * root describes the query to plan
- * tlist is the target list the query should produce
- *		(this is NOT necessarily root->parse->targetList!)
  * qp_callback is a function to compute query_pathkeys once it's safe to do so
  * qp_extra is optional extra data to pass to qp_callback
  *
@@ -54,7 +52,7 @@
  * (We cannot construct canonical pathkeys until that's done.)
  */
 RelOptInfo *
-query_planner(PlannerInfo *root, List *tlist,
+query_planner(PlannerInfo *root,
 			  query_pathkeys_callback qp_callback, void *qp_extra)
 {
 	Query	   *parse = root->parse;
@@ -179,7 +177,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * restrictions.  Finally, we form a target joinlist for make_one_rel() to
 	 * work from.
 	 */
-	build_base_rel_tlists(root, tlist);
+	build_base_rel_tlists(root, root->processed_tlist);
 
 	find_placeholders_in_jointree(root);
 

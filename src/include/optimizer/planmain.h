@@ -27,13 +27,13 @@ typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
 /*
  * prototypes for plan/planmain.c
  */
-extern RelOptInfo *query_planner(PlannerInfo *root, List *tlist,
+extern RelOptInfo *query_planner(PlannerInfo *root,
 			  query_pathkeys_callback qp_callback, void *qp_extra);
 
 /*
  * prototypes for plan/planagg.c
  */
-extern void preprocess_minmax_aggregates(PlannerInfo *root, List *tlist);
+extern void preprocess_minmax_aggregates(PlannerInfo *root);
 
 /*
  * prototypes for plan/createplan.c
