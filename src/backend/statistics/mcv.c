@@ -155,15 +155,17 @@ statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 				numattrs,
 				ngroups,
 				nitems;
-
-	AttrNumber   *attnums = build_attnums_array(attrs, &numattrs);
-
+	AttrNumber *attnums;
+	double		mincount;
 	SortItem   *items;
 	SortItem   *groups;
 	MCVList    *mcvlist = NULL;
+	MultiSortSupport mss;
+
+	attnums = build_attnums_array(attrs, &numattrs);
 
 	/* comparator for all the columns */
-	MultiSortSupport mss = build_mss(stats, numattrs);
+	mss = build_mss(stats, numattrs);
 
 	/* sort the rows */
 	items = build_sorted_items(numrows, &nitems, rows, stats[0]->tupDesc,
@@ -196,33 +198,28 @@ statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 	 * per-column frequencies, as if the columns were independent).
 	 *
 	 * Using the same algorithm might exclude items that are close to the
-	 * "average" frequency. But it does not say whether the frequency is
-	 * close to base frequency or not. We also need to consider unexpectedly
-	 * uncommon items (compared to base frequency), and the single-column
-	 * algorithm ignores that entirely.
+	 * "average" frequency of the sample. But that does not say whether the
+	 * observed frequency is close to the base frequency or not. We also
+	 * need to consider unexpectedly uncommon items (again, compared to the
+	 * base frequency), and the single-column algorithm does not have to.
 	 *
-	 * If we can fit all the items onto the MCV list, do that. Otherwise
-	 * use get_mincount_for_mcv_list to decide which items to keep in the
-	 * MCV list, based on the number of occurrences in the sample.
+	 * We simply decide how many items to keep by computing minimum count
+	 * using get_mincount_for_mcv_list() and then keep all items that seem
+	 * to be more common than that.
 	 */
-	if (ngroups > nitems)
+	mincount = get_mincount_for_mcv_list(numrows, totalrows);
+
+	/*
+	 * Walk the groups until we find the first group with a count below
+	 * the mincount threshold (the index of that group is the number of
+	 * groups we want to keep).
+	 */
+	for (i = 0; i < nitems; i++)
 	{
-		double mincount;
-
-		mincount = get_mincount_for_mcv_list(numrows, totalrows);
-
-		/*
-		 * Walk the groups until we find the first group with a count below
-		 * the mincount threshold (the index of that group is the number of
-		 * groups we want to keep).
-		 */
-		for (i = 0; i < nitems; i++)
+		if (groups[i].count < mincount)
 		{
-			if (groups[i].count < mincount)
-			{
-				nitems = i;
-				break;
-			}
+			nitems = i;
+			break;
 		}
 	}
 
@@ -469,11 +466,12 @@ statext_mcv_load(Oid mvoid)
  * Each attribute has to be processed separately, as we may be mixing different
  * datatypes, with different sort operators, etc.
  *
- * We use uint16 values for the indexes in step (3), as we currently don't allow
- * more than 8k MCV items anyway, although that's mostly arbitrary limit. We might
- * increase this to 65k and still fit into uint16. Furthermore, this limit is on
- * the number of distinct values per column, and we usually have few of those
- * (and various combinations of them for the those MCV list). So uint16 seems fine.
+ * We use uint16 values for the indexes in step (3), as the number of MCV items
+ * is limited by the statistics target (which is capped to 10k at the moment).
+ * We might increase this to 65k and still fit into uint16, so there's a bit of
+ * slack. Furthermore, this limit is on the number of distinct values per column,
+ * and we usually have few of those (and various combinations of them for the
+ * those MCV list). So uint16 seems fine for now.
  *
  * We don't really expect the serialization to save as much space as for
  * histograms, as we are not doing any bucket splits (which is the source
@@ -1322,7 +1320,7 @@ pg_mcv_list_send(PG_FUNCTION_ARGS)
  * somewhat wasteful as we could do with just a single bit, thus reducing
  * the size to ~1/8. It would also allow us to combine bitmaps simply using
  * & and |, which should be faster than min/max. The bitmaps are fairly
- * small, though (as we cap the MCV list size to 8k items).
+ * small, though (thanks to the cap on the MCV list size).
  */
 static bool *
 mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
