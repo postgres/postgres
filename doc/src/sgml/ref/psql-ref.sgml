@@ -4294,7 +4294,8 @@ set disable-completion on
 $endif
 </programlisting>
     (This is not a <application>psql</application> but a
-    <application>Readline</application> feature. Read its documentation
+    <application>Readline</application> feature. Read
+    <ulink url="https://tiswww.case.edu/php/chet/readline/rluserman.html">its documentation</ulink>
     for further details.)
     </para>
    </refsect3>
