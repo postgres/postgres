@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "access/xlog.h"
 #include "catalog/pg_control.h"
@@ -164,8 +165,8 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	nulls[5] = false;
 
 	values[6] = CStringGetTextDatum(psprintf("%u:%u",
-											 ControlFile->checkPointCopy.nextXidEpoch,
-											 ControlFile->checkPointCopy.nextXid));
+											 EpochFromFullTransactionId(ControlFile->checkPointCopy.nextFullXid),
+											 XidFromFullTransactionId(ControlFile->checkPointCopy.nextFullXid)));
 	nulls[6] = false;
 
 	values[7] = ObjectIdGetDatum(ControlFile->checkPointCopy.nextOid);

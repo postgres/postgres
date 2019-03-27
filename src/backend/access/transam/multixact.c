@@ -3267,9 +3267,9 @@ multixact_redo(XLogReaderState *record)
 								  xlrec->moff + xlrec->nmembers);
 
 		/*
-		 * Make sure nextXid is beyond any XID mentioned in the record. This
-		 * should be unnecessary, since any XID found here ought to have other
-		 * evidence in the XLOG, but let's be safe.
+		 * Make sure nextFullXid is beyond any XID mentioned in the record.
+		 * This should be unnecessary, since any XID found here ought to have
+		 * other evidence in the XLOG, but let's be safe.
 		 */
 		max_xid = XLogRecGetXid(record);
 		for (i = 0; i < xlrec->nmembers; i++)
@@ -3278,19 +3278,7 @@ multixact_redo(XLogReaderState *record)
 				max_xid = xlrec->members[i].xid;
 		}
 
-		/*
-		 * We don't expect anyone else to modify nextXid, hence startup
-		 * process doesn't need to hold a lock while checking this. We still
-		 * acquire the lock to modify it, though.
-		 */
-		if (TransactionIdFollowsOrEquals(max_xid,
-										 ShmemVariableCache->nextXid))
-		{
-			LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-			ShmemVariableCache->nextXid = max_xid;
-			TransactionIdAdvance(ShmemVariableCache->nextXid);
-			LWLockRelease(XidGenLock);
-		}
+		AdvanceNextFullTransactionIdPastXid(max_xid);
 	}
 	else if (info == XLOG_MULTIXACT_TRUNCATE_ID)
 	{

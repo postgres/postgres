@@ -15,13 +15,14 @@
 #ifndef PG_CONTROL_H
 #define PG_CONTROL_H
 
+#include "access/transam.h"
 #include "access/xlogdefs.h"
 #include "pgtime.h"				/* for pg_time_t */
 #include "port/pg_crc32c.h"
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1200
+#define PG_CONTROL_VERSION	1201
 
 /* Nonce key length, see below */
 #define MOCK_AUTH_NONCE_LEN		32
@@ -39,8 +40,7 @@ typedef struct CheckPoint
 	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a new
 								 * timeline (equals ThisTimeLineID otherwise) */
 	bool		fullPageWrites; /* current full_page_writes */
-	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
-	TransactionId nextXid;		/* next free XID */
+	FullTransactionId nextFullXid;	/* next free full transaction ID */
 	Oid			nextOid;		/* next free OID */
 	MultiXactId nextMulti;		/* next free MultiXactId */
 	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */

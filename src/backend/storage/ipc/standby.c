@@ -867,7 +867,7 @@ standby_redo(XLogReaderState *record)
  * up from a checkpoint and are immediately at our starting point, we
  * unconditionally move to STANDBY_INITIALIZED. After this point we
  * must do 4 things:
- *	* move shared nextXid forwards as we see new xids
+ *	* move shared nextFullXid forwards as we see new xids
  *	* extend the clog and subtrans with each new xid
  *	* keep track of uncommitted known assigned xids
  *	* keep track of uncommitted AccessExclusiveLocks

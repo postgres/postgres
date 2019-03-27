@@ -20,6 +20,7 @@
 
 #include <time.h>
 
+#include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
@@ -256,8 +257,8 @@ main(int argc, char *argv[])
 	printf(_("Latest checkpoint's full_page_writes: %s\n"),
 		   ControlFile->checkPointCopy.fullPageWrites ? _("on") : _("off"));
 	printf(_("Latest checkpoint's NextXID:          %u:%u\n"),
-		   ControlFile->checkPointCopy.nextXidEpoch,
-		   ControlFile->checkPointCopy.nextXid);
+		   EpochFromFullTransactionId(ControlFile->checkPointCopy.nextFullXid),
+		   XidFromFullTransactionId(ControlFile->checkPointCopy.nextFullXid));
 	printf(_("Latest checkpoint's NextOID:          %u\n"),
 		   ControlFile->checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),

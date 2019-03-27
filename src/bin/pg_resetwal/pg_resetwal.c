@@ -430,11 +430,15 @@ main(int argc, char *argv[])
 	 * if any, includes these values.)
 	 */
 	if (set_xid_epoch != -1)
-		ControlFile.checkPointCopy.nextXidEpoch = set_xid_epoch;
+		ControlFile.checkPointCopy.nextFullXid =
+			FullTransactionIdFromEpochAndXid(set_xid_epoch,
+											 XidFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid));
 
 	if (set_xid != 0)
 	{
-		ControlFile.checkPointCopy.nextXid = set_xid;
+		ControlFile.checkPointCopy.nextFullXid =
+			FullTransactionIdFromEpochAndXid(EpochFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid),
+											 set_xid);
 
 		/*
 		 * For the moment, just set oldestXid to a value that will force
@@ -704,8 +708,8 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.ThisTimeLineID = 1;
 	ControlFile.checkPointCopy.PrevTimeLineID = 1;
 	ControlFile.checkPointCopy.fullPageWrites = false;
-	ControlFile.checkPointCopy.nextXidEpoch = 0;
-	ControlFile.checkPointCopy.nextXid = FirstNormalTransactionId;
+	ControlFile.checkPointCopy.nextFullXid =
+		FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId);
 	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
 	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
 	ControlFile.checkPointCopy.nextMultiOffset = 0;
@@ -786,8 +790,8 @@ PrintControlValues(bool guessed)
 	printf(_("Latest checkpoint's full_page_writes: %s\n"),
 		   ControlFile.checkPointCopy.fullPageWrites ? _("on") : _("off"));
 	printf(_("Latest checkpoint's NextXID:          %u:%u\n"),
-		   ControlFile.checkPointCopy.nextXidEpoch,
-		   ControlFile.checkPointCopy.nextXid);
+		   EpochFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid),
+		   XidFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid));
 	printf(_("Latest checkpoint's NextOID:          %u\n"),
 		   ControlFile.checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
@@ -879,7 +883,7 @@ PrintNewControlValues(void)
 	if (set_xid != 0)
 	{
 		printf(_("NextXID:                              %u\n"),
-			   ControlFile.checkPointCopy.nextXid);
+			   XidFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid));
 		printf(_("OldestXID:                            %u\n"),
 			   ControlFile.checkPointCopy.oldestXid);
 		printf(_("OldestXID's DB:                       %u\n"),
@@ -889,7 +893,7 @@ PrintNewControlValues(void)
 	if (set_xid_epoch != -1)
 	{
 		printf(_("NextXID epoch:                        %u\n"),
-			   ControlFile.checkPointCopy.nextXidEpoch);
+			   EpochFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid));
 	}
 
 	if (set_oldest_commit_ts_xid != 0)

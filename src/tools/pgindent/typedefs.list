@@ -796,6 +796,7 @@ FreePageManager
 FreePageSpanLeader
 FromCharDateMode
 FromExpr
+FullTransactionId
 FuncCall
 FuncCallContext
 FuncCandidateList

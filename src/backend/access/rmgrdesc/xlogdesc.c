@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
@@ -52,7 +53,8 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 checkpoint->ThisTimeLineID,
 						 checkpoint->PrevTimeLineID,
 						 checkpoint->fullPageWrites ? "true" : "false",
-						 checkpoint->nextXidEpoch, checkpoint->nextXid,
+						 EpochFromFullTransactionId(checkpoint->nextFullXid),
+						 XidFromFullTransactionId(checkpoint->nextFullXid),
 						 checkpoint->nextOid,
 						 checkpoint->nextMulti,
 						 checkpoint->nextMultiOffset,

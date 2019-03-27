@@ -590,8 +590,7 @@ typedef struct XLogCtlData
 	/* Protected by info_lck: */
 	XLogwrtRqst LogwrtRqst;
 	XLogRecPtr	RedoRecPtr;		/* a recent copy of Insert->RedoRecPtr */
-	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
-	TransactionId ckptXid;
+	FullTransactionId ckptFullXid;	/* nextFullXid of latest checkpoint */
 	XLogRecPtr	asyncXactLSN;	/* LSN of newest async commit/abort */
 	XLogRecPtr	replicationSlotMinLSN;	/* oldest LSN needed by any slot */
 
@@ -5115,8 +5114,8 @@ BootStrapXLOG(void)
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	checkPoint.PrevTimeLineID = ThisTimeLineID;
 	checkPoint.fullPageWrites = fullPageWrites;
-	checkPoint.nextXidEpoch = 0;
-	checkPoint.nextXid = FirstNormalTransactionId;
+	checkPoint.nextFullXid =
+		FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId);
 	checkPoint.nextOid = FirstBootstrapObjectId;
 	checkPoint.nextMulti = FirstMultiXactId;
 	checkPoint.nextMultiOffset = 0;
@@ -5129,7 +5128,7 @@ BootStrapXLOG(void)
 	checkPoint.time = (pg_time_t) time(NULL);
 	checkPoint.oldestActiveXid = InvalidTransactionId;
 
-	ShmemVariableCache->nextXid = checkPoint.nextXid;
+	ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
@@ -6557,8 +6556,8 @@ StartupXLOG(void)
 							 (uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
 							 wasShutdown ? "true" : "false")));
 	ereport(DEBUG1,
-			(errmsg_internal("next transaction ID: %u:%u; next OID: %u",
-							 checkPoint.nextXidEpoch, checkPoint.nextXid,
+			(errmsg_internal("next transaction ID: " UINT64_FORMAT "; next OID: %u",
+							 U64FromFullTransactionId(checkPoint.nextFullXid),
 							 checkPoint.nextOid)));
 	ereport(DEBUG1,
 			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %u",
@@ -6573,12 +6572,12 @@ StartupXLOG(void)
 			(errmsg_internal("commit timestamp Xid oldest/newest: %u/%u",
 							 checkPoint.oldestCommitTsXid,
 							 checkPoint.newestCommitTsXid)));
-	if (!TransactionIdIsNormal(checkPoint.nextXid))
+	if (!TransactionIdIsNormal(XidFromFullTransactionId(checkPoint.nextFullXid)))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
 
 	/* initialize shared memory variables from the checkpoint record */
-	ShmemVariableCache->nextXid = checkPoint.nextXid;
+	ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
@@ -6587,8 +6586,7 @@ StartupXLOG(void)
 	SetMultiXactIdLimit(checkPoint.oldestMulti, checkPoint.oldestMultiDB, true);
 	SetCommitTsLimit(checkPoint.oldestCommitTsXid,
 					 checkPoint.newestCommitTsXid);
-	XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
-	XLogCtl->ckptXid = checkPoint.nextXid;
+	XLogCtl->ckptFullXid = checkPoint.nextFullXid;
 
 	/*
 	 * Initialize replication slots, before there's a chance to remove
@@ -6859,7 +6857,7 @@ StartupXLOG(void)
 			Assert(TransactionIdIsValid(oldestActiveXID));
 
 			/* Tell procarray about the range of xids it has to deal with */
-			ProcArrayInitRecovery(ShmemVariableCache->nextXid);
+			ProcArrayInitRecovery(XidFromFullTransactionId(ShmemVariableCache->nextFullXid));
 
 			/*
 			 * Startup commit log and subtrans only.  MultiXact and commit
@@ -6889,9 +6887,9 @@ StartupXLOG(void)
 				running.xcnt = nxids;
 				running.subxcnt = 0;
 				running.subxid_overflow = false;
-				running.nextXid = checkPoint.nextXid;
+				running.nextXid = XidFromFullTransactionId(checkPoint.nextFullXid);
 				running.oldestRunningXid = oldestActiveXID;
-				latestCompletedXid = checkPoint.nextXid;
+				latestCompletedXid = XidFromFullTransactionId(checkPoint.nextFullXid);
 				TransactionIdRetreat(latestCompletedXid);
 				Assert(TransactionIdIsNormal(latestCompletedXid));
 				running.latestCompletedXid = latestCompletedXid;
@@ -7061,20 +7059,10 @@ StartupXLOG(void)
 				error_context_stack = &errcallback;
 
 				/*
-				 * ShmemVariableCache->nextXid must be beyond record's xid.
-				 *
-				 * We don't expect anyone else to modify nextXid, hence we
-				 * don't need to hold a lock while examining it.  We still
-				 * acquire the lock to modify it, though.
+				 * ShmemVariableCache->nextFullXid must be beyond record's
+				 * xid.
 				 */
-				if (TransactionIdFollowsOrEquals(record->xl_xid,
-												 ShmemVariableCache->nextXid))
-				{
-					LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-					ShmemVariableCache->nextXid = record->xl_xid;
-					TransactionIdAdvance(ShmemVariableCache->nextXid);
-					LWLockRelease(XidGenLock);
-				}
+				AdvanceNextFullTransactionIdPastXid(record->xl_xid);
 
 				/*
 				 * Before replaying this record, check if this record causes
@@ -7654,7 +7642,7 @@ StartupXLOG(void)
 
 	/* also initialize latestCompletedXid, to nextXid - 1 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-	ShmemVariableCache->latestCompletedXid = ShmemVariableCache->nextXid;
+	ShmemVariableCache->latestCompletedXid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 	TransactionIdRetreat(ShmemVariableCache->latestCompletedXid);
 	LWLockRelease(ProcArrayLock);
 
@@ -8248,41 +8236,6 @@ GetLastSegSwitchData(XLogRecPtr *lastSwitchLSN)
 }
 
 /*
- * GetNextXidAndEpoch - get the current nextXid value and associated epoch
- *
- * This is exported for use by code that would like to have 64-bit XIDs.
- * We don't really support such things, but all XIDs within the system
- * can be presumed "close to" the result, and thus the epoch associated
- * with them can be determined.
- */
-void
-GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch)
-{
-	uint32		ckptXidEpoch;
-	TransactionId ckptXid;
-	TransactionId nextXid;
-
-	/* Must read checkpoint info first, else have race condition */
-	SpinLockAcquire(&XLogCtl->info_lck);
-	ckptXidEpoch = XLogCtl->ckptXidEpoch;
-	ckptXid = XLogCtl->ckptXid;
-	SpinLockRelease(&XLogCtl->info_lck);
-
-	/* Now fetch current nextXid */
-	nextXid = ReadNewTransactionId();
-
-	/*
-	 * nextXid is certainly logically later than ckptXid.  So if it's
-	 * numerically less, it must have wrapped into the next epoch.
-	 */
-	if (nextXid < ckptXid)
-		ckptXidEpoch++;
-
-	*xid = nextXid;
-	*epoch = ckptXidEpoch;
-}
-
-/*
  * This must be called ONCE during postmaster or standalone-backend shutdown
  */
 void
@@ -8701,7 +8654,7 @@ CreateCheckPoint(int flags)
 	 * there.
 	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	checkPoint.nextXid = ShmemVariableCache->nextXid;
+	checkPoint.nextFullXid = ShmemVariableCache->nextFullXid;
 	checkPoint.oldestXid = ShmemVariableCache->oldestXid;
 	checkPoint.oldestXidDB = ShmemVariableCache->oldestXidDB;
 	LWLockRelease(XidGenLock);
@@ -8710,11 +8663,6 @@ CreateCheckPoint(int flags)
 	checkPoint.oldestCommitTsXid = ShmemVariableCache->oldestCommitTsXid;
 	checkPoint.newestCommitTsXid = ShmemVariableCache->newestCommitTsXid;
 	LWLockRelease(CommitTsLock);
-
-	/* Increase XID epoch if we've wrapped around since last checkpoint */
-	checkPoint.nextXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
-	if (checkPoint.nextXid < ControlFile->checkPointCopy.nextXid)
-		checkPoint.nextXidEpoch++;
 
 	LWLockAcquire(OidGenLock, LW_SHARED);
 	checkPoint.nextOid = ShmemVariableCache->nextOid;
@@ -8859,8 +8807,7 @@ CreateCheckPoint(int flags)
 
 	/* Update shared-memory copy of checkpoint XID/epoch */
 	SpinLockAcquire(&XLogCtl->info_lck);
-	XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
-	XLogCtl->ckptXid = checkPoint.nextXid;
+	XLogCtl->ckptFullXid = checkPoint.nextFullXid;
 	SpinLockRelease(&XLogCtl->info_lck);
 
 	/*
@@ -9622,7 +9569,7 @@ xlog_redo(XLogReaderState *record)
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		/* In a SHUTDOWN checkpoint, believe the counters exactly */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		ShmemVariableCache->nextXid = checkPoint.nextXid;
+		ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
 		LWLockRelease(XidGenLock);
 		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 		ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -9676,9 +9623,9 @@ xlog_redo(XLogReaderState *record)
 			running.xcnt = nxids;
 			running.subxcnt = 0;
 			running.subxid_overflow = false;
-			running.nextXid = checkPoint.nextXid;
+			running.nextXid = XidFromFullTransactionId(checkPoint.nextFullXid);
 			running.oldestRunningXid = oldestActiveXID;
-			latestCompletedXid = checkPoint.nextXid;
+			latestCompletedXid = XidFromFullTransactionId(checkPoint.nextFullXid);
 			TransactionIdRetreat(latestCompletedXid);
 			Assert(TransactionIdIsNormal(latestCompletedXid));
 			running.latestCompletedXid = latestCompletedXid;
@@ -9690,13 +9637,11 @@ xlog_redo(XLogReaderState *record)
 		}
 
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
-		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
-		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
+		ControlFile->checkPointCopy.nextFullXid = checkPoint.nextFullXid;
 
 		/* Update shared-memory copy of checkpoint XID/epoch */
 		SpinLockAcquire(&XLogCtl->info_lck);
-		XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
-		XLogCtl->ckptXid = checkPoint.nextXid;
+		XLogCtl->ckptFullXid = checkPoint.nextFullXid;
 		SpinLockRelease(&XLogCtl->info_lck);
 
 		/*
@@ -9717,9 +9662,9 @@ xlog_redo(XLogReaderState *record)
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		/* In an ONLINE checkpoint, treat the XID counter as a minimum */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		if (TransactionIdPrecedes(ShmemVariableCache->nextXid,
-								  checkPoint.nextXid))
-			ShmemVariableCache->nextXid = checkPoint.nextXid;
+		if (FullTransactionIdPrecedes(ShmemVariableCache->nextFullXid,
+									  checkPoint.nextFullXid))
+			ShmemVariableCache->nextFullXid = checkPoint.nextFullXid;
 		LWLockRelease(XidGenLock);
 
 		/*
@@ -9749,13 +9694,11 @@ xlog_redo(XLogReaderState *record)
 			SetTransactionIdLimit(checkPoint.oldestXid,
 								  checkPoint.oldestXidDB);
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
-		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
-		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
+		ControlFile->checkPointCopy.nextFullXid = checkPoint.nextFullXid;
 
 		/* Update shared-memory copy of checkpoint XID/epoch */
 		SpinLockAcquire(&XLogCtl->info_lck);
-		XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
-		XLogCtl->ckptXid = checkPoint.nextXid;
+		XLogCtl->ckptFullXid = checkPoint.nextFullXid;
 		SpinLockRelease(&XLogCtl->info_lck);
 
 		/* TLI should not change in an on-line checkpoint */

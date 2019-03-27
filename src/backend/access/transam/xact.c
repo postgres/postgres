@@ -5636,21 +5636,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 
 	max_xid = TransactionIdLatest(xid, parsed->nsubxacts, parsed->subxacts);
 
-	/*
-	 * Make sure nextXid is beyond any XID mentioned in the record.
-	 *
-	 * We don't expect anyone else to modify nextXid, hence we don't need to
-	 * hold a lock while checking this. We still acquire the lock to modify
-	 * it, though.
-	 */
-	if (TransactionIdFollowsOrEquals(max_xid,
-									 ShmemVariableCache->nextXid))
-	{
-		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		ShmemVariableCache->nextXid = max_xid;
-		TransactionIdAdvance(ShmemVariableCache->nextXid);
-		LWLockRelease(XidGenLock);
-	}
+	/* Make sure nextFullXid is beyond any XID mentioned in the record. */
+	AdvanceNextFullTransactionIdPastXid(max_xid);
 
 	Assert(((parsed->xinfo & XACT_XINFO_HAS_ORIGIN) == 0) ==
 		   (origin_id == InvalidRepOriginId));
@@ -5792,25 +5779,11 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 
 	Assert(TransactionIdIsValid(xid));
 
-	/*
-	 * Make sure nextXid is beyond any XID mentioned in the record.
-	 *
-	 * We don't expect anyone else to modify nextXid, hence we don't need to
-	 * hold a lock while checking this. We still acquire the lock to modify
-	 * it, though.
-	 */
+	/* Make sure nextFullXid is beyond any XID mentioned in the record. */
 	max_xid = TransactionIdLatest(xid,
 								  parsed->nsubxacts,
 								  parsed->subxacts);
-
-	if (TransactionIdFollowsOrEquals(max_xid,
-									 ShmemVariableCache->nextXid))
-	{
-		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		ShmemVariableCache->nextXid = max_xid;
-		TransactionIdAdvance(ShmemVariableCache->nextXid);
-		LWLockRelease(XidGenLock);
-	}
+	AdvanceNextFullTransactionIdPastXid(max_xid);
 
 	if (standbyState == STANDBY_DISABLED)
 	{

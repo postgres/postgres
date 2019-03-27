@@ -1912,10 +1912,13 @@ PhysicalReplicationSlotNewXmin(TransactionId feedbackXmin, TransactionId feedbac
 static bool
 TransactionIdInRecentPast(TransactionId xid, uint32 epoch)
 {
+	FullTransactionId nextFullXid;
 	TransactionId nextXid;
 	uint32		nextEpoch;
 
-	GetNextXidAndEpoch(&nextXid, &nextEpoch);
+	nextFullXid = ReadNextFullTransactionId();
+	nextXid = XidFromFullTransactionId(nextFullXid);
+	nextEpoch = EpochFromFullTransactionId(nextFullXid);
 
 	if (xid <= nextXid)
 	{

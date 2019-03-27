@@ -91,7 +91,10 @@ typedef struct
 static void
 load_xid_epoch(TxidEpoch *state)
 {
-	GetNextXidAndEpoch(&state->last_xid, &state->epoch);
+	FullTransactionId fullXid = ReadNextFullTransactionId();
+
+	state->last_xid = XidFromFullTransactionId(fullXid);
+	state->epoch = EpochFromFullTransactionId(fullXid);
 }
 
 /*
@@ -114,8 +117,11 @@ TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
 	TransactionId xid = (TransactionId) xid_with_epoch;
 	uint32		now_epoch;
 	TransactionId now_epoch_next_xid;
+	FullTransactionId now_fullxid;
 
-	GetNextXidAndEpoch(&now_epoch_next_xid, &now_epoch);
+	now_fullxid = ReadNextFullTransactionId();
+	now_epoch_next_xid = XidFromFullTransactionId(now_fullxid);
+	now_epoch = EpochFromFullTransactionId(now_fullxid);
 
 	if (extracted_xid != NULL)
 		*extracted_xid = xid;
@@ -128,8 +134,7 @@ TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
 		return true;
 
 	/* If the transaction ID is in the future, throw an error. */
-	if (xid_epoch > now_epoch
-		|| (xid_epoch == now_epoch && xid >= now_epoch_next_xid))
+	if (xid_with_epoch >= U64FromFullTransactionId(now_fullxid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("transaction ID %s is in the future",

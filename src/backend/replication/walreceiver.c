@@ -1160,6 +1160,7 @@ static void
 XLogWalRcvSendHSFeedback(bool immed)
 {
 	TimestampTz now;
+	FullTransactionId nextFullXid;
 	TransactionId nextXid;
 	uint32		xmin_epoch,
 				catalog_xmin_epoch;
@@ -1238,7 +1239,9 @@ XLogWalRcvSendHSFeedback(bool immed)
 	 * Get epoch and adjust if nextXid and oldestXmin are different sides of
 	 * the epoch boundary.
 	 */
-	GetNextXidAndEpoch(&nextXid, &xmin_epoch);
+	nextFullXid = ReadNextFullTransactionId();
+	nextXid = XidFromFullTransactionId(nextFullXid);
+	xmin_epoch = EpochFromFullTransactionId(nextFullXid);
 	catalog_xmin_epoch = xmin_epoch;
 	if (nextXid < xmin)
 		xmin_epoch--;

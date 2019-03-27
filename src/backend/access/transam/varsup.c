@@ -73,7 +73,7 @@ GetNewTransactionId(bool isSubXact)
 
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
-	xid = ShmemVariableCache->nextXid;
+	xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 
 	/*----------
 	 * Check to see if it's safe to assign another XID.  This protects against
@@ -156,7 +156,7 @@ GetNewTransactionId(bool isSubXact)
 
 		/* Re-acquire lock and start over */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		xid = ShmemVariableCache->nextXid;
+		xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 	}
 
 	/*
@@ -173,12 +173,12 @@ GetNewTransactionId(bool isSubXact)
 	ExtendSUBTRANS(xid);
 
 	/*
-	 * Now advance the nextXid counter.  This must not happen until after we
-	 * have successfully completed ExtendCLOG() --- if that routine fails, we
-	 * want the next incoming transaction to try it again.  We cannot assign
-	 * more XIDs until there is CLOG space for them.
+	 * Now advance the nextFullXid counter.  This must not happen until after
+	 * we have successfully completed ExtendCLOG() --- if that routine fails,
+	 * we want the next incoming transaction to try it again.  We cannot
+	 * assign more XIDs until there is CLOG space for them.
 	 */
-	TransactionIdAdvance(ShmemVariableCache->nextXid);
+	FullTransactionIdAdvance(&ShmemVariableCache->nextFullXid);
 
 	/*
 	 * We must store the new XID into the shared ProcArray before releasing
@@ -236,18 +236,64 @@ GetNewTransactionId(bool isSubXact)
 }
 
 /*
- * Read nextXid but don't allocate it.
+ * Read nextFullXid but don't allocate it.
  */
-TransactionId
-ReadNewTransactionId(void)
+FullTransactionId
+ReadNextFullTransactionId(void)
 {
-	TransactionId xid;
+	FullTransactionId fullXid;
 
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	xid = ShmemVariableCache->nextXid;
+	fullXid = ShmemVariableCache->nextFullXid;
 	LWLockRelease(XidGenLock);
 
-	return xid;
+	return fullXid;
+}
+
+/*
+ * Advance nextFullXid to the value after a given xid.  The epoch is inferred.
+ * This must only be called during recovery or from two-phase start-up code.
+ */
+void
+AdvanceNextFullTransactionIdPastXid(TransactionId xid)
+{
+	FullTransactionId newNextFullXid;
+	TransactionId next_xid;
+	uint32		epoch;
+
+	/*
+	 * It is safe to read nextFullXid without a lock, because this is only
+	 * called from the startup process or single-process mode, meaning that no
+	 * other process can modify it.
+	 */
+	Assert(AmStartupProcess() || !IsUnderPostmaster);
+
+	/* Fast return if this isn't an xid high enough to move the needle. */
+	next_xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
+	if (!TransactionIdFollowsOrEquals(xid, next_xid))
+		return;
+
+	/*
+	 * Compute the FullTransactionId that comes after the given xid.  To do
+	 * this, we preserve the existing epoch, but detect when we've wrapped
+	 * into a new epoch.  This is necessary because WAL records and 2PC state
+	 * currently contain 32 bit xids.  The wrap logic is safe in those cases
+	 * because the span of active xids cannot exceed one epoch at any given
+	 * point in the WAL stream.
+	 */
+	TransactionIdAdvance(xid);
+	epoch = EpochFromFullTransactionId(ShmemVariableCache->nextFullXid);
+	if (unlikely(xid < next_xid))
+		++epoch;
+	newNextFullXid = FullTransactionIdFromEpochAndXid(epoch, xid);
+
+	/*
+	 * We still need to take a lock to modify the value when there are
+	 * concurrent readers.
+	 */
+	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
+	ShmemVariableCache->nextFullXid = newNextFullXid;
+	LWLockRelease(XidGenLock);
 }
 
 /*
@@ -351,7 +397,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	ShmemVariableCache->xidStopLimit = xidStopLimit;
 	ShmemVariableCache->xidWrapLimit = xidWrapLimit;
 	ShmemVariableCache->oldestXidDB = oldest_datoid;
-	curXid = ShmemVariableCache->nextXid;
+	curXid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 	LWLockRelease(XidGenLock);
 
 	/* Log the info */
@@ -427,7 +473,7 @@ ForceTransactionIdLimitUpdate(void)
 
 	/* Locking is probably not really necessary, but let's be careful */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	nextXid = ShmemVariableCache->nextXid;
+	nextXid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 	xidVacLimit = ShmemVariableCache->xidVacLimit;
 	oldestXid = ShmemVariableCache->oldestXid;
 	oldestXidDB = ShmemVariableCache->oldestXidDB;

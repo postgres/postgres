@@ -749,12 +749,12 @@ ZeroCLOGPage(int pageno, bool writeXlog)
 
 /*
  * This must be called ONCE during postmaster or standalone-backend startup,
- * after StartupXLOG has initialized ShmemVariableCache->nextXid.
+ * after StartupXLOG has initialized ShmemVariableCache->nextFullXid.
  */
 void
 StartupCLOG(void)
 {
-	TransactionId xid = ShmemVariableCache->nextXid;
+	TransactionId xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 	int			pageno = TransactionIdToPage(xid);
 
 	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
@@ -773,7 +773,7 @@ StartupCLOG(void)
 void
 TrimCLOG(void)
 {
-	TransactionId xid = ShmemVariableCache->nextXid;
+	TransactionId xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 	int			pageno = TransactionIdToPage(xid);
 
 	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
@@ -792,7 +792,7 @@ TrimCLOG(void)
 	 * but makes no WAL entry).  Let's just be safe. (We need not worry about
 	 * pages beyond the current one, since those will be zeroed when first
 	 * used.  For the same reason, there is no need to do anything when
-	 * nextXid is exactly at a page boundary; and it's likely that the
+	 * nextFullXid is exactly at a page boundary; and it's likely that the
 	 * "current" page doesn't exist yet in that case.)
 	 */
 	if (TransactionIdToPgIndex(xid) != 0)
