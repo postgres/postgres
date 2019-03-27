@@ -33,7 +33,7 @@ for item in `find "$sourcetree" -type d \( \( -name CVS -prune \) -o \( -name .g
     fi
 done
 
-for item in `find "$sourcetree" -name Makefile -print -o -name GNUmakefile -print`; do
+for item in `find "$sourcetree" -name Makefile -print -o -name GNUmakefile -print | grep -v "$sourcetree/doc/src/sgml/images/"`; do
     filename=`expr "$item" : "$sourcetree\(.*\)"`
     if test ! -f "${item}.in"; then
         if cmp "$item" "$buildtree/$filename" >/dev/null 2>&1; then : ; else
