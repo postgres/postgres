@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "commands/tablespace.h"
+#include "lib/ilist.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
@@ -82,12 +83,10 @@ static const int NSmgr = lengthof(smgrsw);
  */
 static HTAB *SMgrRelationHash = NULL;
 
-static SMgrRelation first_unowned_reln = NULL;
+static dlist_head	unowned_relns;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
-static void add_to_unowned_list(SMgrRelation reln);
-static void remove_from_unowned_list(SMgrRelation reln);
 
 
 /*
@@ -150,7 +149,7 @@ smgropen(RelFileNode rnode, BackendId backend)
 		ctl.entrysize = sizeof(SMgrRelationData);
 		SMgrRelationHash = hash_create("smgr relation table", 400,
 									   &ctl, HASH_ELEM | HASH_BLOBS);
-		first_unowned_reln = NULL;
+		dlist_init(&unowned_relns);
 	}
 
 	/* Look up or create an entry */
@@ -177,7 +176,7 @@ smgropen(RelFileNode rnode, BackendId backend)
 			reln->md_num_open_segs[forknum] = 0;
 
 		/* it has no owner yet */
-		add_to_unowned_list(reln);
+		dlist_push_tail(&unowned_relns, &reln->node);
 	}
 
 	return reln;
@@ -207,7 +206,7 @@ smgrsetowner(SMgrRelation *owner, SMgrRelation reln)
 	if (reln->smgr_owner)
 		*(reln->smgr_owner) = NULL;
 	else
-		remove_from_unowned_list(reln);
+		dlist_delete(&reln->node);
 
 	/* Now establish the ownership relationship. */
 	reln->smgr_owner = owner;
@@ -231,53 +230,8 @@ smgrclearowner(SMgrRelation *owner, SMgrRelation reln)
 	/* unset our reference to the owner */
 	reln->smgr_owner = NULL;
 
-	add_to_unowned_list(reln);
-}
-
-/*
- * add_to_unowned_list -- link an SMgrRelation onto the unowned list
- *
- * Check remove_from_unowned_list()'s comments for performance
- * considerations.
- */
-static void
-add_to_unowned_list(SMgrRelation reln)
-{
-	/* place it at head of the list (to make smgrsetowner cheap) */
-	reln->next_unowned_reln = first_unowned_reln;
-	first_unowned_reln = reln;
-}
-
-/*
- * remove_from_unowned_list -- unlink an SMgrRelation from the unowned list
- *
- * If the reln is not present in the list, nothing happens.  Typically this
- * would be caller error, but there seems no reason to throw an error.
- *
- * In the worst case this could be rather slow; but in all the cases that seem
- * likely to be performance-critical, the reln being sought will actually be
- * first in the list.  Furthermore, the number of unowned relns touched in any
- * one transaction shouldn't be all that high typically.  So it doesn't seem
- * worth expending the additional space and management logic needed for a
- * doubly-linked list.
- */
-static void
-remove_from_unowned_list(SMgrRelation reln)
-{
-	SMgrRelation *link;
-	SMgrRelation cur;
-
-	for (link = &first_unowned_reln, cur = *link;
-		 cur != NULL;
-		 link = &cur->next_unowned_reln, cur = *link)
-	{
-		if (cur == reln)
-		{
-			*link = cur->next_unowned_reln;
-			cur->next_unowned_reln = NULL;
-			break;
-		}
-	}
+	/* add to list of unowned relations */
+	dlist_push_tail(&unowned_relns, &reln->node);
 }
 
 /*
@@ -304,7 +258,7 @@ smgrclose(SMgrRelation reln)
 	owner = reln->smgr_owner;
 
 	if (!owner)
-		remove_from_unowned_list(reln);
+		dlist_delete(&reln->node);
 
 	if (hash_search(SMgrRelationHash,
 					(void *) &(reln->smgr_rnode),
@@ -797,13 +751,19 @@ smgrpostckpt(void)
 void
 AtEOXact_SMgr(void)
 {
+	dlist_mutable_iter	iter;
+
 	/*
 	 * Zap all unowned SMgrRelations.  We rely on smgrclose() to remove each
 	 * one from the list.
 	 */
-	while (first_unowned_reln != NULL)
+	dlist_foreach_modify(iter, &unowned_relns)
 	{
-		Assert(first_unowned_reln->smgr_owner == NULL);
-		smgrclose(first_unowned_reln);
+		SMgrRelation	rel = dlist_container(SMgrRelationData, node,
+											  iter.cur);
+
+		Assert(rel->smgr_owner == NULL);
+
+		smgrclose(rel);
 	}
 }
