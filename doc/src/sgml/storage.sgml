@@ -917,6 +917,20 @@ data. Empty in ordinary tables.</entry>
 
  </para>
 
+ <para>
+  <xref linkend="storage-page-layout-figure"/> illustrates how these parts are
+  layed out in a page.
+ </para>
+
+ <figure id="storage-page-layout-figure">
+  <title>Page Layout</title>
+  <mediaobject>
+   <imageobject>
+    <imagedata fileref="images/pagelayout.svg" format="SVG" width="100%"/>
+   </imageobject>
+  </mediaobject>
+ </figure>
+
  <sect2 id="storage-tuple-layout">
 
  <title>Table Row Layout</title>

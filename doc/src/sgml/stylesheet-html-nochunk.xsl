@@ -9,4 +9,15 @@
 <xsl:include href="stylesheet-html-common.xsl" />
 <xsl:include href="stylesheet-speedup-xhtml.xsl" />
 
+<!-- embed SVG images into output file -->
+<xsl:template match="imagedata[@format='SVG']">
+  <xsl:variable name="filename">
+    <xsl:call-template name="mediaobject.filename">
+      <xsl:with-param name="object" select=".."/>
+    </xsl:call-template>
+  </xsl:variable>
+
+  <xsl:copy-of select="document($filename)"/>
+</xsl:template>
+
 </xsl:stylesheet>

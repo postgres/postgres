@@ -436,7 +436,8 @@
   page contains either a pointer to a B-tree of heap pointers (a
   <quote>posting tree</quote>), or a simple list of heap pointers (a <quote>posting
   list</quote>) when the list is small enough to fit into a single index tuple along
-  with the key value.
+  with the key value.  <xref linkend="gin-internals-figure"/> illustrates
+  these components of a GIN index.
  </para>
 
  <para>
@@ -452,6 +453,15 @@
   a single B-tree over composite values (column number, key value).  The
   key values for different columns can be of different types.
  </para>
+
+ <figure id="gin-internals-figure">
+  <title>GIN Internals</title>
+  <mediaobject>
+   <imageobject>
+    <imagedata fileref="images/gin.svg" format="SVG" width="100%"/>
+   </imageobject>
+  </mediaobject>
+ </figure>
 
  <sect2 id="gin-fast-update">
   <title>GIN Fast Update Technique</title>

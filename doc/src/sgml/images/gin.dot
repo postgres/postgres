@@ -1,0 +1,93 @@
+digraph "gin" {
+        layout=dot;
+        node [label="", shape=box, style=filled, fillcolor=gray, width=1.4];
+
+        m1 [label="meta page"];
+
+        subgraph cluster01 {
+                label="entry tree";
+                subgraph egroup1 {
+                        rank=same;
+                        e1;
+                }
+                subgraph egroup2 {
+                        rank=same;
+                        e2 -> e3 -> e4;
+                }
+                subgraph egroup3 {
+                        rank=same;
+                        e5 -> e6 -> e7 -> e8 -> e9;
+                }
+                e1 -> e4;
+                e1 -> e3;
+                e1 -> e2;
+                e2 -> e5;
+                e2 -> e6;
+                e3 -> e7;
+                e4 -> e8;
+                e4 -> e9;
+
+                e6 [fillcolor=green, label="posting list"];
+                e8 [fillcolor=green, label="posting list"];
+                e9 [fillcolor=green, label="posting list"];
+        }
+
+        subgraph cluster02 {
+                label="posting tree";
+                subgraph pgroup1 {
+                        rank=same;
+                        p1;
+                }
+                subgraph pgroup2 {
+                        rank=same;
+                        p2 -> p3;
+                }
+                p1 -> p2;
+                p1 -> p3;
+
+                p2 [fillcolor=green, label="heap ptr"];
+                p3 [fillcolor=green, label="heap ptr"];
+        }
+
+        subgraph cluster03 {
+                label="posting tree";
+                subgraph pgroup3 {
+                        rank=same;
+                        p4;
+                }
+
+                p4 [fillcolor=green, label="heap ptr"];
+        }
+
+        subgraph cluster04 {
+                label="posting tree";
+                subgraph pgroup4 {
+                        rank=same;
+                        p5;
+                }
+                subgraph pgroup5 {
+                        rank=same;
+                        p6 -> p7;
+                }
+                p5 -> p6;
+                p5 -> p7;
+
+                p6 [fillcolor=green, label="heap ptr"];
+                p7 [fillcolor=green, label="heap ptr"];
+        }
+
+        subgraph cluster05 {
+                label="pending list";
+                node [style=filled, fillcolor=red];
+                n1 -> n2 -> n3 -> n4;
+        }
+
+        m1 -> e1;
+        e5 -> p1;
+        e7 -> p4;
+        e7 -> p5;
+        m1 -> n1;
+
+        e5 [style=filled, fillcolor=green4];
+        e7 [style=filled, fillcolor=green4];
+}

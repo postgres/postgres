@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg 
+    xmlns='http://www.w3.org/2000/svg'
+    width='610'
+    height='210'
+    shape-rendering='geometricPrecision'
+    version='1.0'>
+  <defs>
+    <filter id='f2' x='0' y='0' width='200%' height='200%'>
+      <feOffset result='offOut' in='SourceGraphic' dx='5' dy='5' />
+      <feGaussianBlur result='blurOut' in='offOut' stdDeviation='3' />
+      <feBlend in='SourceGraphic' in2='blurOut' mode='normal' />
+    </filter>
+  </defs>
+  <g stroke-width='1' stroke-linecap='square' stroke-linejoin='round'>
+    <rect x='0' y='0' width='610' height='210' style='fill: #ffffff'/>
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M25.0 35.0 L25.0 175.0 L585.0 175.0 L585.0 35.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M305.0 175.0 L485.0 175.0 L485.0 147.0 L305.0 147.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M25.0 35.0 L25.0 63.0 L195.0 63.0 L195.0 35.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M305.0 147.0 L305.0 175.0 L195.0 175.0 L195.0 147.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M325.0 63.0 L325.0 91.0 L265.0 91.0 L265.0 105.0 L235.0 105.0 L235.0 63.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M585.0 147.0 L585.0 175.0 L485.0 175.0 L485.0 147.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M195.0 35.0 L285.0 35.0 L285.0 63.0 L195.0 63.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='white' d='M375.0 35.0 L375.0 63.0 L285.0 63.0 L285.0 35.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='none' d='M335.0 133.0 L335.0 105.0 L265.0 105.0 ' />
+    <path stroke='none' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='#000000' d='M470.0 42.0 L480.0 49.0 L470.0 56.0 z' />
+    <path stroke='none' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='#000000' d='M260.0 126.0 L265.0 140.0 L270.0 126.0 z' />
+    <path stroke='none' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='#000000' d='M330.0 126.0 L335.0 140.0 L340.0 126.0 z' />
+    <path stroke='none' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='#000000' d='M140.0 154.0 L130.0 161.0 L140.0 168.0 z' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-linecap='round' stroke-linejoin='round' fill='none' d='M265.0 105.0 L265.0 133.0 ' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-dasharray='5.000000,5.000000' stroke-miterlimit='0' stroke-linecap='butt' stroke-linejoin='round' fill='white' d='M375.0 49.0 L475.0 49.0 ' />
+    <path stroke='#000000' stroke-width='1.000000' stroke-dasharray='5.000000,5.000000' stroke-miterlimit='0' stroke-linecap='butt' stroke-linejoin='round' fill='white' d='M135.0 161.0 L195.0 161.0 ' />
+    <text x='48' y='54' font-family='Courier' font-size='15' stroke='none' fill='#000000' ><![CDATA[PageHeaderData]]></text>
+    <text x='214' y='166' font-family='Courier' font-size='15' stroke='none' fill='#000000' ><![CDATA[Item]]></text>
+    <text x='216' y='54' font-family='Courier' font-size='15' stroke='none' fill='#000000' ><![CDATA[ItemId]]></text>
+    <text x='306' y='54' font-family='Courier' font-size='15' stroke='none' fill='#000000' ><![CDATA[ItemId]]></text>
+    <text x='324' y='166' font-family='Courier' font-size='15' stroke='none' fill='#000000' ><![CDATA[Item]]></text>
+    <text x='509' y='166' font-family='Courier' font-size='15' stroke='none' fill='#000000' ><![CDATA[Special]]></text>
+  </g>
+</svg>

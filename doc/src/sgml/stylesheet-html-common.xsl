@@ -14,6 +14,7 @@
 <!-- Parameters -->
 <xsl:param name="make.valid.html" select="1"></xsl:param>
 <xsl:param name="generate.id.attributes" select="1"></xsl:param>
+<xsl:param name="ignore.image.scaling" select="1"/>
 <xsl:param name="link.mailto.url">pgsql-docs@lists.postgresql.org</xsl:param>
 <xsl:param name="toc.max.depth">2</xsl:param>
 

@@ -40,4 +40,10 @@
   </span><br/>
 </xsl:template>
 
+
+<!-- strip directory name from image filerefs -->
+<xsl:template match="imagedata/@fileref">
+ <xsl:value-of select="substring-after(., '/')"/>
+</xsl:template>
+
 </xsl:stylesheet>
