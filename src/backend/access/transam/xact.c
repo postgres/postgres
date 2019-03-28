@@ -198,7 +198,7 @@ typedef TransactionStateData *TransactionState;
 
 /*
  * Serialized representation used to transmit transaction state to parallel
- * workers though shared memory.
+ * workers through shared memory.
  */
 typedef struct SerializedTransactionState
 {
