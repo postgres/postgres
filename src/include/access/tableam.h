@@ -325,7 +325,7 @@ typedef struct TableAmRoutine
 	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot, CommandId cid,
 								 int options, struct BulkInsertStateData *bistate);
 
-	/* see table_insert() for reference about parameters */
+	/* see table_insert_speculative() for reference about parameters */
 	void		(*tuple_insert_speculative) (Relation rel,
 											 TupleTableSlot *slot,
 											 CommandId cid,
@@ -333,13 +333,13 @@ typedef struct TableAmRoutine
 											 struct BulkInsertStateData *bistate,
 											 uint32 specToken);
 
-	/* see table_insert() for reference about parameters */
+	/* see table_complete_speculative() for reference about parameters */
 	void		(*tuple_complete_speculative) (Relation rel,
 											   TupleTableSlot *slot,
 											   uint32 specToken,
 											   bool succeeded);
 
-	/* see table_insert() for reference about parameters */
+	/* see table_delete() for reference about parameters */
 	TM_Result	(*tuple_delete) (Relation rel,
 								 ItemPointer tid,
 								 CommandId cid,
@@ -349,7 +349,7 @@ typedef struct TableAmRoutine
 								 TM_FailureData *tmfd,
 								 bool changingPart);
 
-	/* see table_insert() for reference about parameters */
+	/* see table_update() for reference about parameters */
 	TM_Result	(*tuple_update) (Relation rel,
 								 ItemPointer otid,
 								 TupleTableSlot *slot,
@@ -361,7 +361,7 @@ typedef struct TableAmRoutine
 								 LockTupleMode *lockmode,
 								 bool *update_indexes);
 
-	/* see table_insert() for reference about parameters */
+	/* see table_lock_tuple() for reference about parameters */
 	TM_Result	(*tuple_lock) (Relation rel,
 							   ItemPointer tid,
 							   Snapshot snapshot,
