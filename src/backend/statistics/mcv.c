@@ -235,7 +235,8 @@ statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 		/*
 		 * Allocate the MCV list structure, set the global parameters.
 		 */
-		mcvlist = (MCVList *) palloc0(sizeof(MCVList));
+		mcvlist = (MCVList *) palloc0(offsetof(MCVList, items) +
+									  sizeof(MCVItem) * nitems);
 
 		mcvlist->magic = STATS_MCV_MAGIC;
 		mcvlist->type = STATS_MCV_TYPE_BASIC;
@@ -246,28 +247,14 @@ statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 		for (i = 0; i < numattrs; i++)
 			mcvlist->types[i] = stats[i]->attrtypid;
 
-		/*
-		 * Preallocate Datum/isnull arrays for all items.
-		 *
-		 * XXX Perhaps we might allocate this in a single chunk, to reduce
-		 * the palloc overhead. We're the only ones dealing with the built
-		 * MCV lists anyway. Not sure it's worth it, though, as we're not
-		 * re-building stats very often.
-		 */
-		mcvlist->items = (MCVItem **) palloc(sizeof(MCVItem *) * nitems);
-
-		for (i = 0; i < nitems; i++)
-		{
-			mcvlist->items[i] = (MCVItem *) palloc(sizeof(MCVItem));
-			mcvlist->items[i]->values = (Datum *) palloc(sizeof(Datum) * numattrs);
-			mcvlist->items[i]->isnull = (bool *) palloc(sizeof(bool) * numattrs);
-		}
-
 		/* Copy the first chunk of groups into the result. */
 		for (i = 0; i < nitems; i++)
 		{
 			/* just pointer to the proper place in the list */
-			MCVItem    *item = mcvlist->items[i];
+			MCVItem    *item = &mcvlist->items[i];
+
+			item->values = (Datum *) palloc(sizeof(Datum) * numattrs);
+			item->isnull = (bool *) palloc(sizeof(bool) * numattrs);
 
 			/* copy values for the group */
 			memcpy(item->values, groups[i].values, sizeof(Datum) * numattrs);
@@ -429,6 +416,7 @@ build_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss,
 MCVList *
 statext_mcv_load(Oid mvoid)
 {
+	MCVList    *result;
 	bool		isnull;
 	Datum		mcvlist;
 	HeapTuple	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
@@ -439,34 +427,40 @@ statext_mcv_load(Oid mvoid)
 	mcvlist = SysCacheGetAttr(STATEXTOID, htup,
 							  Anum_pg_statistic_ext_stxmcv, &isnull);
 
+	if (isnull)
+		elog(ERROR,
+			 "requested statistic kind \"%c\" is not yet built for statistics object %u",
+			 STATS_EXT_DEPENDENCIES, mvoid);
+
+	result = statext_mcv_deserialize(DatumGetByteaP(mcvlist));
+
 	ReleaseSysCache(htup);
 
-	if (isnull)
-		return NULL;
-
-	return statext_mcv_deserialize(DatumGetByteaP(mcvlist));
+	return result;
 }
 
 
 /*
- * Serialize MCV list into a bytea value.
+ * statext_mcv_serialize
+ *		Serialize MCV list into a pg_mcv_list value.
  *
- * The basic algorithm is simple:
+ * The MCV items may include values of various data types, and it's reasonable
+ * to expect redundancy (values for a given attribute, repeated for multiple
+ * MCV list items). So we deduplicate the values into arrays, and then replace
+ * the values by indexes into those arrays.
  *
- * (1) perform deduplication (for each attribute separately)
- *	   (a) collect all (non-NULL) attribute values from all MCV items
- *	   (b) sort the data (using 'lt' from VacAttrStats)
- *	   (c) remove duplicate values from the array
+ * The overall structure of the serialized representation looks like this:
  *
- * (2) serialize the arrays into a bytea value
+ * +--------+----------------+---------------------+-------+
+ * | header | dimension info | deduplicated values | items |
+ * +--------+----------------+---------------------+-------+
  *
- * (3) process all MCV list items
- *	   (a) replace values with indexes into the arrays
+ * Where dimension info stores information about type of K-th attribute (e.g.
+ * typlen, typbyval and length of deduplicated values).  Deduplicated values
+ * store deduplicated values for each attribute.  And items store the actual
+ * MCV list items, with values replaced by indexes into the arrays.
  *
- * Each attribute has to be processed separately, as we may be mixing different
- * datatypes, with different sort operators, etc.
- *
- * We use uint16 values for the indexes in step (3), as the number of MCV items
+ * When serializing the items, we use uint16 indexes. The number of MCV items
  * is limited by the statistics target (which is capped to 10k at the moment).
  * We might increase this to 65k and still fit into uint16, so there's a bit of
  * slack. Furthermore, this limit is on the number of distinct values per column,
@@ -498,21 +492,19 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 
 	/* serialized items (indexes into arrays, etc.) */
 	bytea	   *output;
-	char	   *data = NULL;
+	char	   *ptr;
 
 	/* values per dimension (and number of non-NULL values) */
 	Datum	  **values = (Datum **) palloc0(sizeof(Datum *) * ndims);
 	int		   *counts = (int *) palloc0(sizeof(int) * ndims);
 
 	/*
-	 * We'll include some rudimentary information about the attributes (type
-	 * length, etc.), so that we don't have to look them up while
-	 * deserializing the MCV list.
-	 *
-	 * XXX Maybe this is not a great idea? Or maybe we should actually copy
-	 * more fields, e.g. typeid, which would allow us to display the MCV list
-	 * using only the serialized representation (currently we have to fetch
-	 * this info from the relation).
+	 * We'll include some rudimentary information about the attribute types
+	 * (length, by-val flag), so that we don't have to look them up while
+	 * deserializating the MCV list (we already have the type OID in the
+	 * header).  This is safe, because when changing type of the attribute the
+	 * statistics gets dropped automatically.  We need to store the info about
+	 * the arrays of deduplicated values anyway.
 	 */
 	info = (DimensionInfo *) palloc0(sizeof(DimensionInfo) * ndims);
 
@@ -541,11 +533,11 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 		for (i = 0; i < mcvlist->nitems; i++)
 		{
 			/* skip NULL values - we don't need to deduplicate those */
-			if (mcvlist->items[i]->isnull[dim])
+			if (mcvlist->items[i].isnull[dim])
 				continue;
 
 			/* append the value at the end */
-			values[dim][counts[dim]] = mcvlist->items[i]->values[dim];
+			values[dim][counts[dim]] = mcvlist->items[i].values[dim];
 			counts[dim] += 1;
 		}
 
@@ -622,93 +614,95 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 
 	/*
 	 * Now we can finally compute how much space we'll actually need for the
-	 * whole serialized MCV list, as it contains these fields:
-	 *
-	 * - length (4B) for varlena - magic (4B) - type (4B) - ndimensions (4B) -
-	 * nitems (4B) - info (ndim * sizeof(DimensionInfo) - arrays of values for
-	 * each dimension - serialized items (nitems * itemsize)
-	 *
-	 * So the 'header' size is 20B + ndim * sizeof(DimensionInfo) and then we
-	 * will place all the data (values + indexes). We'll however use offsetof
-	 * and sizeof to compute sizes of the structs.
+	 * whole serialized MCV list (varlena header, MCV header, dimension info
+	 * for each attribute, deduplicated values and items).
 	 */
-	total_length = (sizeof(int32) + offsetof(MCVList, items)
-					+ (ndims * sizeof(DimensionInfo))
-					+ mcvlist->nitems * itemsize);
+	total_length = VARHDRSZ + offsetof(MCVList, items)
+		+ (ndims * sizeof(DimensionInfo))
+		+ (mcvlist->nitems * itemsize);
 
 	/* add space for the arrays of deduplicated values */
 	for (i = 0; i < ndims; i++)
 		total_length += info[i].nbytes;
 
-	/* allocate space for the serialized MCV list, set header fields */
-	output = (bytea *) palloc0(total_length);
+	/* allocate space for the whole serialized MCV list */
+	output = (bytea *) palloc(total_length);
 	SET_VARSIZE(output, total_length);
 
-	/* 'data' points to the current position in the output buffer */
-	data = VARDATA(output);
+	/* 'ptr' points to the current position in the output buffer */
+	ptr = VARDATA(output);
 
-	/* MCV list header (number of items, ...) */
-	memcpy(data, mcvlist, offsetof(MCVList, items));
-	data += offsetof(MCVList, items);
+	/* copy the MCV list header */
+	memcpy(ptr, mcvlist, offsetof(MCVList, items));
+	ptr += offsetof(MCVList, items);
 
-	/* information about the attributes */
-	memcpy(data, info, sizeof(DimensionInfo) * ndims);
-	data += sizeof(DimensionInfo) * ndims;
+	/* store information about the attributes */
+	memcpy(ptr, info, sizeof(DimensionInfo) * ndims);
+	ptr += sizeof(DimensionInfo) * ndims;
 
 	/* Copy the deduplicated values for all attributes to the output. */
 	for (dim = 0; dim < ndims; dim++)
 	{
-#ifdef USE_ASSERT_CHECKING
 		/* remember the starting point for Asserts later */
-		char	   *tmp = data;
-#endif
+		char	   *start PG_USED_FOR_ASSERTS_ONLY = ptr;
+
 		for (i = 0; i < info[dim].nvalues; i++)
 		{
-			Datum		v = values[dim][i];
+			Datum		value = values[dim][i];
 
 			if (info[dim].typbyval) /* passed by value */
 			{
-				memcpy(data, &v, info[dim].typlen);
-				data += info[dim].typlen;
+				Datum		tmp;
+
+				/*
+				 * For values passed by value, we need to copy just the
+				 * significant bytes - we can't use memcpy directly, as that
+				 * assumes little endian behavior.  store_att_byval does
+				 * almost what we need, but it requires properly aligned
+				 * buffer - the output buffer does not guarantee that. So we
+				 * simply use a static Datum variable (which guarantees proper
+				 * alignment), and then copy the value from it.
+				 */
+				store_att_byval(&tmp, value, info[dim].typlen);
+
+				memcpy(ptr, &tmp, info[dim].typlen);
+				ptr += info[dim].typlen;
 			}
 			else if (info[dim].typlen > 0)	/* pased by reference */
 			{
-				memcpy(data, DatumGetPointer(v), info[dim].typlen);
-				data += info[dim].typlen;
+				memcpy(ptr, DatumGetPointer(value), info[dim].typlen);
+				ptr += info[dim].typlen;
 			}
 			else if (info[dim].typlen == -1)	/* varlena */
 			{
-				int	len = VARSIZE_ANY(v);
+				int			len = VARSIZE_ANY(value);
 
-				memcpy(data, DatumGetPointer(v), len);
-				data += len;
+				memcpy(ptr, DatumGetPointer(value), len);
+				ptr += len;
 			}
 			else if (info[dim].typlen == -2)	/* cstring */
 			{
-				Size	len = strlen(DatumGetCString(v)) + 1;  /* terminator */
+				Size		len = strlen(DatumGetCString(value)) + 1;	/* terminator */
 
-				memcpy(data, DatumGetCString(v), len );
-				data += len;
+				memcpy(ptr, DatumGetCString(value), len);
+				ptr += len;
 			}
 
 			/* no underflows or overflows */
-			Assert((data > tmp) && ((data - tmp) <= info[dim].nbytes));
+			Assert((ptr > start) && ((ptr - start) <= info[dim].nbytes));
 		}
 
-		/*
-		 * check we got exactly the amount of data we expected for this
-		 * dimension
-		 */
-		Assert((data - tmp) == info[dim].nbytes);
+		/* we should get exactly nbytes of data for this dimension */
+		Assert((ptr - start) == info[dim].nbytes);
 	}
 
 	/* Serialize the items, with uint16 indexes instead of the values. */
 	for (i = 0; i < mcvlist->nitems; i++)
 	{
-		MCVItem    *mcvitem = mcvlist->items[i];
+		MCVItem    *mcvitem = &mcvlist->items[i];
 
 		/* don't write beyond the allocated space */
-		Assert(data <= (char *) output + total_length - itemsize);
+		Assert(ptr <= (char *) output + total_length - itemsize);
 
 		/* reset the item (we only allocate it once and reuse it) */
 		memset(item, 0, itemsize);
@@ -718,12 +712,12 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 			Datum	   *value;
 
 			/* do the lookup only for non-NULL values */
-			if (mcvlist->items[i]->isnull[dim])
+			if (mcvitem->isnull[dim])
 				continue;
 
 			value = (Datum *) bsearch_arg(&mcvitem->values[dim], values[dim],
-									  info[dim].nvalues, sizeof(Datum),
-									  compare_scalars_simple, &ssup[dim]);
+										  info[dim].nvalues, sizeof(Datum),
+										  compare_scalars_simple, &ssup[dim]);
 
 			Assert(value != NULL);	/* serialization or deduplication error */
 
@@ -741,13 +735,13 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 		memcpy(ITEM_BASE_FREQUENCY(item, ndims), &mcvitem->base_frequency, sizeof(double));
 
 		/* copy the serialized item into the array */
-		memcpy(data, item, itemsize);
+		memcpy(ptr, item, itemsize);
 
-		data += itemsize;
+		ptr += itemsize;
 	}
 
 	/* at this point we expect to match the total_length exactly */
-	Assert((data - (char *) output) == total_length);
+	Assert((ptr - (char *) output) == total_length);
 
 	pfree(item);
 	pfree(values);
@@ -757,15 +751,11 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 }
 
 /*
- * Reads serialized MCV list into MCVList structure.
+ * statext_mcv_deserialize
+ *		Reads serialized MCV list into MCVList structure.
  *
- * Unlike with histograms, we deserialize the MCV list fully (i.e. we don't
- * keep the deduplicated arrays and pointers into them), as we don't expect
- * there to be a lot of duplicate values. But perhaps that's not true and we
- * should keep the MCV in serialized form too.
- *
- * XXX See how much memory we could save by keeping the deduplicated version
- * (both for typical and corner cases with few distinct values but many items).
+ * All the memory needed by the MCV list is allocated as a single chunk, so
+ * it's possible to simply pfree() it at once.
  */
 MCVList *
 statext_mcv_deserialize(bytea *data)
@@ -774,23 +764,23 @@ statext_mcv_deserialize(bytea *data)
 				i;
 	Size		expected_size;
 	MCVList    *mcvlist;
-	char	   *tmp;
+	char	   *ptr;
 
 	int			ndims,
 				nitems,
 				itemsize;
 	DimensionInfo *info = NULL;
-	Datum	  **values = NULL;
 
 	/* local allocation buffer (used only for deserialization) */
-	int			bufflen;
-	char	   *buff;
-	char	   *ptr;
+	Datum	  **map = NULL;
+
+	/* MCV list */
+	Size		mcvlen;
 
 	/* buffer used for the result */
-	int			rbufflen;
-	char	   *rbuff;
-	char	   *rptr;
+	Size		datalen;
+	char	   *dataptr;
+	char	   *valuesptr;
 
 	if (data == NULL)
 		return NULL;
@@ -804,14 +794,14 @@ statext_mcv_deserialize(bytea *data)
 			 VARSIZE_ANY_EXHDR(data), offsetof(MCVList, items));
 
 	/* read the MCV list header */
-	mcvlist = (MCVList *) palloc0(sizeof(MCVList));
+	mcvlist = (MCVList *) palloc0(offsetof(MCVList, items));
 
 	/* initialize pointer to the data part (skip the varlena header) */
-	tmp = VARDATA_ANY(data);
+	ptr = VARDATA_ANY(data);
 
 	/* get the header and perform further sanity checks */
-	memcpy(mcvlist, tmp, offsetof(MCVList, items));
-	tmp += offsetof(MCVList, items);
+	memcpy(mcvlist, ptr, offsetof(MCVList, items));
+	ptr += offsetof(MCVList, items);
 
 	if (mcvlist->magic != STATS_MCV_MAGIC)
 		elog(ERROR, "invalid MCV magic %u (expected %u)",
@@ -857,8 +847,8 @@ statext_mcv_deserialize(bytea *data)
 			 VARSIZE_ANY_EXHDR(data), expected_size);
 
 	/* Now it's safe to access the dimension info. */
-	info = (DimensionInfo *) (tmp);
-	tmp += ndims * sizeof(DimensionInfo);
+	info = (DimensionInfo *) ptr;
+	ptr += ndims * sizeof(DimensionInfo);
 
 	/* account for the value arrays */
 	for (dim = 0; dim < ndims; dim++)
@@ -883,98 +873,86 @@ statext_mcv_deserialize(bytea *data)
 			 VARSIZE_ANY_EXHDR(data), expected_size);
 
 	/*
-	 * Allocate one large chunk of memory for the intermediate data, needed
-	 * only for deserializing the MCV list (and allocate densely to minimize
-	 * the palloc overhead).
-	 *
-	 * Let's see how much space we'll actually need, and also include space
-	 * for the array with pointers.
-	 *
-	 * We need an array of Datum pointers values for each dimension, so that
-	 * we can easily translate the uint16 indexes. We also need a top-level
+	 * We need an array of Datum values for each dimension, so that we can
+	 * easily translate the uint16 indexes later. We also need a top-level
 	 * array of pointers to those per-dimension arrays.
 	 *
-	 * For byval types with size matching sizeof(Datum) we can reuse the
-	 * serialized array directly.
+	 * While allocating the arrays for dimensions, compute how much space we
+	 * need for a copy of the by-ref data, as we can't simply point to the
+	 * original values (it might go away).
 	 */
-	bufflen = sizeof(Datum **) * ndims; /* space for top-level pointers */
+	datalen = 0;				/* space for by-ref data */
+	map = (Datum **) palloc(ndims * sizeof(Datum **));
 
 	for (dim = 0; dim < ndims; dim++)
 	{
-		/* for full-size byval types, we reuse the serialized value */
-		if (!(info[dim].typbyval && info[dim].typlen == sizeof(Datum)))
-			bufflen += (sizeof(Datum) * info[dim].nvalues);
+		map[dim] = (Datum *) palloc(sizeof(Datum) * info[dim].nvalues);
+
+		/* space needed for a copy of data for by-ref types */
+		if (!info[dim].typbyval)
+			datalen += info[dim].nbytes;
 	}
 
-	buff = palloc0(bufflen);
-	ptr = buff;
+	/*
+	 * Now resize the MCV list so that the allocation includes all the data
+	 * Allocate space for a copy of the data, as we can't simply reference the
+	 * original data - it may disappear while we're still using the MCV list,
+	 * e.g. due to catcache release. Only needed for by-ref types.
+	 */
+	mcvlen = offsetof(MCVList, items) +
+		+(sizeof(MCVItem) * nitems) /* array of MCVItem */
+		+ ((sizeof(Datum) + sizeof(bool)) * ndims * nitems) +
+		+datalen;				/* by-ref data */
 
-	values = (Datum **) buff;
-	ptr += (sizeof(Datum *) * ndims);
+	mcvlist = repalloc(mcvlist, mcvlen);
+
+	/* pointer to the beginning of values/isnull space */
+	valuesptr = (char *) mcvlist + offsetof(MCVList, items)
+		+ (sizeof(MCVItem) * nitems);
+
+	/* get pointer where to store the data */
+	dataptr = (char *) mcvlist + (mcvlen - datalen);
 
 	/*
-	 * XXX This uses pointers to the original data array (the types not passed
-	 * by value), so when someone frees the memory, e.g. by doing something
-	 * like this:
-	 *
-	 *	  bytea * data = ... fetch the data from catalog ...
-	 *
-	 *	  MCVList mcvlist = deserialize_mcv_list(data);
-	 *
-	 *	  pfree(data);
-	 *
-	 * then 'mcvlist' references the freed memory. Should copy the pieces.
+	 * Build mapping (index => value) for translating the serialized data into
+	 * the in-memory representation.
 	 */
 	for (dim = 0; dim < ndims; dim++)
 	{
-#ifdef USE_ASSERT_CHECKING
-		/* remember where data for this dimension starts */
-		char	   *start = tmp;
-#endif
+		/* remember start position in the input array */
+		char	   *start PG_USED_FOR_ASSERTS_ONLY = ptr;
+
 		if (info[dim].typbyval)
 		{
-			/* passed by value / size matches Datum - just reuse the array */
-			if (info[dim].typlen == sizeof(Datum))
+			/* for by-val types we simply copy data into the mapping */
+			for (i = 0; i < info[dim].nvalues; i++)
 			{
-				values[dim] = (Datum *) tmp;
-				tmp += info[dim].nbytes;
+				Datum		v = 0;
 
-				/* no overflow of input array */
-				Assert(tmp <= start + info[dim].nbytes);
-			}
-			else
-			{
-				values[dim] = (Datum *) ptr;
-				ptr += (sizeof(Datum) * info[dim].nvalues);
+				memcpy(&v, ptr, info[dim].typlen);
+				ptr += info[dim].typlen;
 
-				for (i = 0; i < info[dim].nvalues; i++)
-				{
-					/* just point into the array */
-					memcpy(&values[dim][i], tmp, info[dim].typlen);
-					tmp += info[dim].typlen;
+				map[dim][i] = fetch_att(&v, true, info[dim].typlen);
 
-					/* no overflow of input array */
-					Assert(tmp <= start + info[dim].nbytes);
-				}
+				/* no under/overflow of input array */
+				Assert(ptr <= (start + info[dim].nbytes));
 			}
 		}
 		else
 		{
-			/* all the other types need a chunk of the buffer */
-			values[dim] = (Datum *) ptr;
-			ptr += (sizeof(Datum) * info[dim].nvalues);
+			/* for by-ref types we need to also make a copy of the data */
 
 			/* passed by reference, but fixed length (name, tid, ...) */
 			if (info[dim].typlen > 0)
 			{
 				for (i = 0; i < info[dim].nvalues; i++)
 				{
-					/* just point into the array */
-					values[dim][i] = PointerGetDatum(tmp);
-					tmp += info[dim].typlen;
+					memcpy(dataptr, ptr, info[dim].typlen);
+					ptr += info[dim].typlen;
 
-					/* no overflow of input array */
-					Assert(tmp <= start + info[dim].nbytes);
+					/* just point into the array */
+					map[dim][i] = PointerGetDatum(dataptr);
+					dataptr += info[dim].typlen;
 				}
 			}
 			else if (info[dim].typlen == -1)
@@ -982,12 +960,14 @@ statext_mcv_deserialize(bytea *data)
 				/* varlena */
 				for (i = 0; i < info[dim].nvalues; i++)
 				{
-					/* just point into the array */
-					values[dim][i] = PointerGetDatum(tmp);
-					tmp += VARSIZE_ANY(tmp);
+					Size		len = VARSIZE_ANY(ptr);
 
-					/* no overflow of input array */
-					Assert(tmp <= start + info[dim].nbytes);
+					memcpy(dataptr, ptr, len);
+					ptr += len;
+
+					/* just point into the array */
+					map[dim][i] = PointerGetDatum(dataptr);
+					dataptr += len;
 				}
 			}
 			else if (info[dim].typlen == -2)
@@ -995,72 +975,68 @@ statext_mcv_deserialize(bytea *data)
 				/* cstring */
 				for (i = 0; i < info[dim].nvalues; i++)
 				{
-					/* just point into the array */
-					values[dim][i] = PointerGetDatum(tmp);
-					tmp += (strlen(tmp) + 1);	/* don't forget the \0 */
+					Size		len = (strlen(ptr) + 1);	/* don't forget the \0 */
 
-					/* no overflow of input array */
-					Assert(tmp <= start + info[dim].nbytes);
+					memcpy(dataptr, ptr, len);
+					ptr += len;
+
+					/* just point into the array */
+					map[dim][i] = PointerGetDatum(dataptr);
+					dataptr += len;
 				}
 			}
+
+			/* no under/overflow of input array */
+			Assert(ptr <= (start + info[dim].nbytes));
+
+			/* no overflow of the output mcv value */
+			Assert(dataptr <= ((char *) mcvlist + mcvlen));
 		}
 
-		/* check we consumed the serialized data for this dimension exactly */
-		Assert((tmp - start) == info[dim].nbytes);
+		/* check we consumed input data for this dimension exactly */
+		Assert(ptr == (start + info[dim].nbytes));
 	}
 
-	/* we should have exhausted the buffer exactly */
-	Assert((ptr - buff) == bufflen);
-
-	/* allocate space for all the MCV items in a single piece */
-	rbufflen = (sizeof(MCVItem *) + sizeof(MCVItem) +
-				sizeof(Datum) * ndims + sizeof(bool) * ndims) * nitems;
-
-	rbuff = palloc0(rbufflen);
-	rptr = rbuff;
-
-	mcvlist->items = (MCVItem * *) rbuff;
-	rptr += (sizeof(MCVItem *) * nitems);
+	/* we should have also filled the MCV list exactly */
+	Assert(dataptr == ((char *) mcvlist + mcvlen));
 
 	/* deserialize the MCV items and translate the indexes to Datums */
 	for (i = 0; i < nitems; i++)
 	{
 		uint16	   *indexes = NULL;
-		MCVItem    *item = (MCVItem *) rptr;
+		MCVItem    *item = &mcvlist->items[i];
 
-		rptr += (sizeof(MCVItem));
+		item->values = (Datum *) valuesptr;
+		valuesptr += (sizeof(Datum) * ndims);
 
-		item->values = (Datum *) rptr;
-		rptr += (sizeof(Datum) * ndims);
-
-		item->isnull = (bool *) rptr;
-		rptr += (sizeof(bool) * ndims);
+		item->isnull = (bool *) valuesptr;
+		valuesptr += (sizeof(bool) * ndims);
 
 		/* just point to the right place */
-		indexes = ITEM_INDEXES(tmp);
+		indexes = ITEM_INDEXES(ptr);
 
-		memcpy(item->isnull, ITEM_NULLS(tmp, ndims), sizeof(bool) * ndims);
-		memcpy(&item->frequency, ITEM_FREQUENCY(tmp, ndims), sizeof(double));
-		memcpy(&item->base_frequency, ITEM_BASE_FREQUENCY(tmp, ndims), sizeof(double));
+		memcpy(item->isnull, ITEM_NULLS(ptr, ndims), sizeof(bool) * ndims);
+		memcpy(&item->frequency, ITEM_FREQUENCY(ptr, ndims), sizeof(double));
+		memcpy(&item->base_frequency, ITEM_BASE_FREQUENCY(ptr, ndims), sizeof(double));
 
 		/* translate the values */
 		for (dim = 0; dim < ndims; dim++)
 			if (!item->isnull[dim])
-				item->values[dim] = values[dim][indexes[dim]];
+				item->values[dim] = map[dim][indexes[dim]];
 
-		mcvlist->items[i] = item;
-
-		tmp += ITEM_SIZE(ndims);
+		ptr += ITEM_SIZE(ndims);
 
 		/* check we're not overflowing the input */
-		Assert(tmp <= (char *) data + VARSIZE_ANY(data));
+		Assert(ptr <= (char *) data + VARSIZE_ANY(data));
 	}
 
 	/* check that we processed all the data */
-	Assert(tmp == (char *) data + VARSIZE_ANY(data));
+	Assert(ptr == (char *) data + VARSIZE_ANY(data));
 
-	/* release the temporary buffer */
-	pfree(buff);
+	/* release the buffers used for mapping */
+	for (dim = 0; dim < ndims; dim++)
+		pfree(map[dim]);
+	pfree(map);
 
 	return mcvlist;
 }
@@ -1152,7 +1128,7 @@ pg_stats_ext_mcvlist_items(PG_FUNCTION_ARGS)
 
 		Assert(call_cntr < mcvlist->nitems);
 
-		item = mcvlist->items[call_cntr];
+		item = &mcvlist->items[call_cntr];
 
 		/*
 		 * Prepare a values array for building the returned tuple. This should
@@ -1408,7 +1384,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 				for (i = 0; i < mcvlist->nitems; i++)
 				{
 					bool		mismatch = false;
-					MCVItem    *item = mcvlist->items[i];
+					MCVItem    *item = &mcvlist->items[i];
 
 					/*
 					 * For AND-lists, we can also mark NULL items as 'no
@@ -1504,7 +1480,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			for (i = 0; i < mcvlist->nitems; i++)
 			{
 				bool		match = false;	/* assume mismatch */
-				MCVItem    *item = mcvlist->items[i];
+				MCVItem    *item = &mcvlist->items[i];
 
 				/* if the clause mismatches the MCV item, update the bitmap */
 				switch (expr->nulltesttype)
@@ -1619,7 +1595,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			 */
 			for (i = 0; i < mcvlist->nitems; i++)
 			{
-				MCVItem    *item = mcvlist->items[i];
+				MCVItem    *item = &mcvlist->items[i];
 				bool		match = false;
 
 				/* if the item is NULL, it's a mismatch */
@@ -1679,13 +1655,13 @@ mcv_clauselist_selectivity(PlannerInfo *root, StatisticExtInfo *stat,
 	*totalsel = 0.0;
 	for (i = 0; i < mcv->nitems; i++)
 	{
-		*totalsel += mcv->items[i]->frequency;
+		*totalsel += mcv->items[i].frequency;
 
 		if (matches[i] != false)
 		{
 			/* XXX Shouldn't the basesel be outside the if condition? */
-			*basesel += mcv->items[i]->base_frequency;
-			s += mcv->items[i]->frequency;
+			*basesel += mcv->items[i].base_frequency;
+			s += mcv->items[i].frequency;
 		}
 	}
 

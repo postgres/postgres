@@ -107,7 +107,7 @@ typedef struct MCVList
 	uint32		nitems;			/* number of MCV items in the array */
 	AttrNumber	ndimensions;	/* number of dimensions */
 	Oid			types[STATS_MAX_DIMENSIONS];	/* OIDs of data types */
-	MCVItem   **items;			/* array of MCV items */
+	MCVItem		items[FLEXIBLE_ARRAY_MEMBER];	/* array of MCV items */
 } MCVList;
 
 extern MVNDistinct *statext_ndistinct_load(Oid mvoid);
