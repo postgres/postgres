@@ -21,6 +21,7 @@
 #include "access/hash.h"
 #include "access/hash_xlog.h"
 #include "access/relscan.h"
+#include "access/tableam.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
@@ -159,8 +160,9 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	buildstate.heapRel = heap;
 
 	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   hashbuildCallback, (void *) &buildstate, NULL);
+	reltuples = table_index_build_scan(heap, index, indexInfo, true,
+									   hashbuildCallback,
+									   (void *) &buildstate, NULL);
 
 	if (buildstate.spool)
 	{
@@ -190,7 +192,7 @@ hashbuildempty(Relation index)
 }
 
 /*
- * Per-tuple callback from IndexBuildHeapScan
+ * Per-tuple callback for table_index_build_scan
  */
 static void
 hashbuildCallback(Relation index,

@@ -28,6 +28,9 @@ extern bool synchronize_seqscans;
 
 
 struct BulkInsertStateData;
+struct IndexInfo;
+struct IndexBuildCallback;
+struct ValidateIndexState;
 
 
 /*
@@ -105,6 +108,14 @@ typedef struct TM_FailureData
 /* Follow update chain and lock lastest version of tuple */
 #define TUPLE_LOCK_FLAG_FIND_LAST_VERSION		(1 << 1)
 
+
+/* Typedef for callback function for table_index_build_scan */
+typedef void (*IndexBuildCallback) (Relation index,
+									HeapTuple htup,
+									Datum *values,
+									bool *isnull,
+									bool tupleIsAlive,
+									void *state);
 
 /*
  * API struct for a table AM.  Note this must be allocated in a
@@ -360,6 +371,31 @@ typedef struct TableAmRoutine
 							   LockWaitPolicy wait_policy,
 							   uint8 flags,
 							   TM_FailureData *tmfd);
+
+
+	/* ------------------------------------------------------------------------
+	 * DDL related functionality.
+	 * ------------------------------------------------------------------------
+	 */
+
+	/* see table_index_build_range_scan for reference about parameters */
+	double		(*index_build_range_scan) (Relation heap_rel,
+										   Relation index_rel,
+										   struct IndexInfo *index_nfo,
+										   bool allow_sync,
+										   bool anyvisible,
+										   BlockNumber start_blockno,
+										   BlockNumber end_blockno,
+										   IndexBuildCallback callback,
+										   void *callback_state,
+										   TableScanDesc scan);
+
+	/* see table_index_validate_scan for reference about parameters */
+	void		(*index_validate_scan) (Relation heap_rel,
+										Relation index_rel,
+										struct IndexInfo *index_info,
+										Snapshot snapshot,
+										struct ValidateIndexState *state);
 
 } TableAmRoutine;
 
@@ -917,6 +953,111 @@ table_lock_tuple(Relation rel, ItemPointer tid, Snapshot snapshot,
 	return rel->rd_tableam->tuple_lock(rel, tid, snapshot, slot,
 									   cid, mode, wait_policy,
 									   flags, tmfd);
+}
+
+
+/* ------------------------------------------------------------------------
+ * DDL related functionality.
+ * ------------------------------------------------------------------------
+ */
+
+/*
+ * table_index_build_range_scan - scan the table to find tuples to be indexed
+ *
+ * This is called back from an access-method-specific index build procedure
+ * after the AM has done whatever setup it needs.  The parent heap relation
+ * is scanned to find tuples that should be entered into the index.  Each
+ * such tuple is passed to the AM's callback routine, which does the right
+ * things to add it to the new index.  After we return, the AM's index
+ * build procedure does whatever cleanup it needs.
+ *
+ * The total count of live tuples is returned.  This is for updating pg_class
+ * statistics.  (It's annoying not to be able to do that here, but we want to
+ * merge that update with others; see index_update_stats.)  Note that the
+ * index AM itself must keep track of the number of index tuples; we don't do
+ * so here because the AM might reject some of the tuples for its own reasons,
+ * such as being unable to store NULLs.
+ *
+ *
+ * A side effect is to set indexInfo->ii_BrokenHotChain to true if we detect
+ * any potentially broken HOT chains.  Currently, we set this if there are any
+ * RECENTLY_DEAD or DELETE_IN_PROGRESS entries in a HOT chain, without trying
+ * very hard to detect whether they're really incompatible with the chain tip.
+ * This only really makes sense for heap AM, it might need to be generalized
+ * for other AMs later.
+ */
+static inline double
+table_index_build_scan(Relation heap_rel,
+					   Relation index_rel,
+					   struct IndexInfo *index_nfo,
+					   bool allow_sync,
+					   IndexBuildCallback callback,
+					   void *callback_state,
+					   TableScanDesc scan)
+{
+	return heap_rel->rd_tableam->index_build_range_scan(heap_rel,
+														index_rel,
+														index_nfo,
+														allow_sync,
+														false,
+														0,
+														InvalidBlockNumber,
+														callback,
+														callback_state,
+														scan);
+}
+
+/*
+ * As table_index_build_scan(), except that instead of scanning the complete
+ * table, only the given number of blocks are scanned.  Scan to end-of-rel can
+ * be signalled by passing InvalidBlockNumber as numblocks.  Note that
+ * restricting the range to scan cannot be done when requesting syncscan.
+ *
+ * When "anyvisible" mode is requested, all tuples visible to any transaction
+ * are indexed and counted as live, including those inserted or deleted by
+ * transactions that are still in progress.
+ */
+static inline double
+table_index_build_range_scan(Relation heap_rel,
+							 Relation index_rel,
+							 struct IndexInfo *index_nfo,
+							 bool allow_sync,
+							 bool anyvisible,
+							 BlockNumber start_blockno,
+							 BlockNumber numblocks,
+							 IndexBuildCallback callback,
+							 void *callback_state,
+							 TableScanDesc scan)
+{
+	return heap_rel->rd_tableam->index_build_range_scan(heap_rel,
+														index_rel,
+														index_nfo,
+														allow_sync,
+														anyvisible,
+														start_blockno,
+														numblocks,
+														callback,
+														callback_state,
+														scan);
+}
+
+/*
+ * table_index_validate_scan - second table scan for concurrent index build
+ *
+ * See validate_index() for an explanation.
+ */
+static inline void
+table_index_validate_scan(Relation heap_rel,
+						  Relation index_rel,
+						  struct IndexInfo *index_info,
+						  Snapshot snapshot,
+						  struct ValidateIndexState *state)
+{
+	heap_rel->rd_tableam->index_validate_scan(heap_rel,
+											  index_rel,
+											  index_info,
+											  snapshot,
+											  state);
 }
 
 

@@ -20,14 +20,6 @@
 
 #define DEFAULT_INDEX_TYPE	"btree"
 
-/* Typedef for callback function for IndexBuildHeapScan */
-typedef void (*IndexBuildCallback) (Relation index,
-									HeapTuple htup,
-									Datum *values,
-									bool *isnull,
-									bool tupleIsAlive,
-									void *state);
-
 /* Action code for index_set_state_flags */
 typedef enum
 {
@@ -37,6 +29,15 @@ typedef enum
 	INDEX_DROP_SET_DEAD
 } IndexStateFlagsAction;
 
+/* state info for validate_index bulkdelete callback */
+typedef struct ValidateIndexState
+{
+	Tuplesortstate *tuplesort;	/* for sorting the index TIDs */
+	/* statistics (for debug purposes only): */
+	double		htups,
+				itups,
+				tups_inserted;
+} ValidateIndexState;
 
 extern void index_check_primary_key(Relation heapRel,
 						IndexInfo *indexInfo,
@@ -110,25 +111,6 @@ extern void index_build(Relation heapRelation,
 			bool isreindex,
 			bool parallel);
 
-struct TableScanDescData;
-extern double IndexBuildHeapScan(Relation heapRelation,
-				   Relation indexRelation,
-				   IndexInfo *indexInfo,
-				   bool allow_sync,
-				   IndexBuildCallback callback,
-				   void *callback_state,
-				   struct TableScanDescData *scan);
-extern double IndexBuildHeapRangeScan(Relation heapRelation,
-						Relation indexRelation,
-						IndexInfo *indexInfo,
-						bool allow_sync,
-						bool anyvisible,
-						BlockNumber start_blockno,
-						BlockNumber end_blockno,
-						IndexBuildCallback callback,
-						void *callback_state,
-						struct TableScanDescData *scan);
-
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 
 extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
@@ -154,5 +136,46 @@ extern void SerializeReindexState(Size maxsize, char *start_address);
 extern void RestoreReindexState(void *reindexstate);
 
 extern void IndexSetParentIndex(Relation idx, Oid parentOid);
+
+
+/*
+ * itemptr_encode - Encode ItemPointer as int64/int8
+ *
+ * This representation must produce values encoded as int64 that sort in the
+ * same order as their corresponding original TID values would (using the
+ * default int8 opclass to produce a result equivalent to the default TID
+ * opclass).
+ *
+ * As noted in validate_index(), this can be significantly faster.
+ */
+static inline int64
+itemptr_encode(ItemPointer itemptr)
+{
+	BlockNumber block = ItemPointerGetBlockNumber(itemptr);
+	OffsetNumber offset = ItemPointerGetOffsetNumber(itemptr);
+	int64		encoded;
+
+	/*
+	 * Use the 16 least significant bits for the offset.  32 adjacent bits are
+	 * used for the block number.  Since remaining bits are unused, there
+	 * cannot be negative encoded values (We assume a two's complement
+	 * representation).
+	 */
+	encoded = ((uint64) block << 16) | (uint16) offset;
+
+	return encoded;
+}
+
+/*
+ * itemptr_decode - Decode int64/int8 representation back to ItemPointer
+ */
+static inline void
+itemptr_decode(ItemPointer itemptr, int64 encoded)
+{
+	BlockNumber block = (BlockNumber) (encoded >> 16);
+	OffsetNumber offset = (OffsetNumber) (encoded & 0xFFFF);
+
+	ItemPointerSet(itemptr, block, offset);
+}
 
 #endif							/* INDEX_H */

@@ -19,6 +19,7 @@
 #include "access/genam.h"
 #include "access/spgist_private.h"
 #include "access/spgxlog.h"
+#include "access/tableam.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "catalog/index.h"
@@ -37,7 +38,7 @@ typedef struct
 } SpGistBuildState;
 
 
-/* Callback to process one heap tuple during IndexBuildHeapScan */
+/* Callback to process one heap tuple during table_index_build_scan */
 static void
 spgistBuildCallback(Relation index, HeapTuple htup, Datum *values,
 					bool *isnull, bool tupleIsAlive, void *state)
@@ -142,9 +143,9 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 											  "SP-GiST build temporary context",
 											  ALLOCSET_DEFAULT_SIZES);
 
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   spgistBuildCallback, (void *) &buildstate,
-								   NULL);
+	reltuples = table_index_build_scan(heap, index, indexInfo, true,
+									   spgistBuildCallback, (void *) &buildstate,
+									   NULL);
 
 	MemoryContextDelete(buildstate.tmpCtx);
 

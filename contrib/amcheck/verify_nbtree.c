@@ -23,9 +23,9 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
+#include "access/table.h"
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -142,7 +142,7 @@ static void bt_tuple_present_callback(Relation index, HeapTuple htup,
 						  Datum *values, bool *isnull,
 						  bool tupleIsAlive, void *checkstate);
 static IndexTuple bt_normalize_tuple(BtreeCheckState *state,
-						   IndexTuple itup);
+				   IndexTuple itup);
 static bool bt_rootdescend(BtreeCheckState *state, IndexTuple itup);
 static inline bool offset_is_negative_infinity(BTPageOpaque opaque,
 							OffsetNumber offset);
@@ -387,10 +387,10 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 
 		/*
 		 * Register our own snapshot in !readonly case, rather than asking
-		 * IndexBuildHeapScan() to do this for us later.  This needs to happen
-		 * before index fingerprinting begins, so we can later be certain that
-		 * index fingerprinting should have reached all tuples returned by
-		 * IndexBuildHeapScan().
+		 * table_index_build_scan() to do this for us later.  This needs to
+		 * happen before index fingerprinting begins, so we can later be
+		 * certain that index fingerprinting should have reached all tuples
+		 * returned by table_index_build_scan().
 		 *
 		 * In readonly case, we also check for problems with missing
 		 * downlinks. A second Bloom filter is used for this.
@@ -525,18 +525,19 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		}
 
 		/*
-		 * Create our own scan for IndexBuildHeapScan(), rather than getting
-		 * it to do so for us.  This is required so that we can actually use
-		 * the MVCC snapshot registered earlier in !readonly case.
+		 * Create our own scan for table_index_build_scan(), rather than
+		 * getting it to do so for us.  This is required so that we can
+		 * actually use the MVCC snapshot registered earlier in !readonly
+		 * case.
 		 *
-		 * Note that IndexBuildHeapScan() calls heap_endscan() for us.
+		 * Note that table_index_build_scan() calls heap_endscan() for us.
 		 */
-		scan = table_beginscan_strat(state->heaprel, /* relation */
+		scan = table_beginscan_strat(state->heaprel,	/* relation */
 									 snapshot,	/* snapshot */
-									 0,	/* number of keys */
+									 0, /* number of keys */
 									 NULL,	/* scan key */
 									 true,	/* buffer access strategy OK */
-									 true);	/* syncscan OK? */
+									 true); /* syncscan OK? */
 
 		/*
 		 * Scan will behave as the first scan of a CREATE INDEX CONCURRENTLY
@@ -565,8 +566,8 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 			 RelationGetRelationName(state->rel),
 			 RelationGetRelationName(state->heaprel));
 
-		IndexBuildHeapScan(state->heaprel, state->rel, indexinfo, true,
-						   bt_tuple_present_callback, (void *) state, scan);
+		table_index_build_scan(state->heaprel, state->rel, indexinfo, true,
+							   bt_tuple_present_callback, (void *) state, scan);
 
 		ereport(DEBUG1,
 				(errmsg_internal("finished verifying presence of " INT64_FORMAT " tuples from table \"%s\" with bitset %.2f%% set",
@@ -814,7 +815,7 @@ nextpage:
  *   (Limited to heapallindexed readonly callers.)
  *
  * This is also where heapallindexed callers use their Bloom filter to
- * fingerprint IndexTuples for later IndexBuildHeapScan() verification.
+ * fingerprint IndexTuples for later table_index_build_scan() verification.
  *
  * Note:  Memory allocated in this routine is expected to be released by caller
  * resetting state->targetcontext.
@@ -1776,7 +1777,7 @@ bt_downlink_missing_check(BtreeCheckState *state)
 }
 
 /*
- * Per-tuple callback from IndexBuildHeapScan, used to determine if index has
+ * Per-tuple callback from table_index_build_scan, used to determine if index has
  * all the entries that definitely should have been observed in leaf pages of
  * the target index (that is, all IndexTuples that were fingerprinted by our
  * Bloom filter).  All heapallindexed checks occur here.
@@ -1801,7 +1802,7 @@ bt_downlink_missing_check(BtreeCheckState *state)
  * verification, just in case it's a cross-page invariant issue, though that
  * isn't particularly likely.
  *
- * IndexBuildHeapScan() expects to be able to find the root tuple when a
+ * table_index_build_scan() expects to be able to find the root tuple when a
  * heap-only tuple (the live tuple at the end of some HOT chain) needs to be
  * indexed, in order to replace the actual tuple's TID with the root tuple's
  * TID (which is what we're actually passed back here).  The index build heap
@@ -1817,7 +1818,7 @@ bt_downlink_missing_check(BtreeCheckState *state)
  * setting will probably also leave the index in a corrupt state before too
  * long, the problem is nonetheless that there is heap corruption.)
  *
- * Heap-only tuple handling within IndexBuildHeapScan() works in a way that
+ * Heap-only tuple handling within table_index_build_scan() works in a way that
  * helps us to detect index tuples that contain the wrong values (values that
  * don't match the latest tuple in the HOT chain).  This can happen when there
  * is no superseding index tuple due to a faulty assessment of HOT safety,

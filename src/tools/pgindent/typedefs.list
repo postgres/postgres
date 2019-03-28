@@ -2489,6 +2489,7 @@ VacAttrStatsP
 VacuumParams
 VacuumRelation
 VacuumStmt
+ValidateIndexState
 Value
 ValuesScan
 ValuesScanState
@@ -3239,7 +3240,6 @@ uuidKEY
 uuid_rc_t
 uuid_sortsupport_state
 uuid_t
-v_i_state
 va_list
 vacuumingOptions
 validate_string_relopt

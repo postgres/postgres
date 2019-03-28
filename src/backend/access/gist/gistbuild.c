@@ -19,6 +19,7 @@
 #include "access/genam.h"
 #include "access/gist_private.h"
 #include "access/gistxlog.h"
+#include "access/tableam.h"
 #include "access/xloginsert.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
@@ -204,8 +205,9 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	/*
 	 * Do the heap scan.
 	 */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
-								   gistBuildCallback, (void *) &buildstate, NULL);
+	reltuples = table_index_build_scan(heap, index, indexInfo, true,
+									   gistBuildCallback,
+									   (void *) &buildstate, NULL);
 
 	/*
 	 * If buffering was used, flush out all the tuples that are still in the
@@ -454,7 +456,7 @@ calculatePagesPerBuffer(GISTBuildState *buildstate, int levelStep)
 }
 
 /*
- * Per-tuple callback from IndexBuildHeapScan.
+ * Per-tuple callback for table_index_build_scan.
  */
 static void
 gistBuildCallback(Relation index,
