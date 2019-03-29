@@ -2813,7 +2813,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		Relation	indexRel;
 		Relation	heapRel;
 		Relation	newIndexRel;
-		LockRelId	lockrelid;
+		LockRelId  *lockrelid;
 
 		indexRel = index_open(indexId, ShareUpdateExclusiveLock);
 		heapRel = table_open(indexRel->rd_index->indrelid,
@@ -2847,10 +2847,12 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		 * avoid multiple locks taken on the same relation, instead we rely on
 		 * parentRelationIds built earlier.
 		 */
-		lockrelid = indexRel->rd_lockInfo.lockRelId;
-		relationLocks = lappend(relationLocks, &lockrelid);
-		lockrelid = newIndexRel->rd_lockInfo.lockRelId;
-		relationLocks = lappend(relationLocks, &lockrelid);
+		lockrelid = palloc(sizeof(*lockrelid));
+		*lockrelid = indexRel->rd_lockInfo.lockRelId;
+		relationLocks = lappend(relationLocks, lockrelid);
+		lockrelid = palloc(sizeof(*lockrelid));
+		*lockrelid = newIndexRel->rd_lockInfo.lockRelId;
+		relationLocks = lappend(relationLocks, lockrelid);
 
 		MemoryContextSwitchTo(oldcontext);
 
@@ -2866,19 +2868,21 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	foreach(lc, heapRelationIds)
 	{
 		Relation	heapRelation = table_open(lfirst_oid(lc), ShareUpdateExclusiveLock);
-		LockRelId	lockrelid = heapRelation->rd_lockInfo.lockRelId;
+		LockRelId  *lockrelid;
 		LOCKTAG    *heaplocktag;
 
 		/* Save the list of locks in private context */
 		oldcontext = MemoryContextSwitchTo(private_context);
 
 		/* Add lockrelid of heap relation to the list of locked relations */
-		relationLocks = lappend(relationLocks, &lockrelid);
+		lockrelid = palloc(sizeof(*lockrelid));
+		*lockrelid = heapRelation->rd_lockInfo.lockRelId;
+		relationLocks = lappend(relationLocks, lockrelid);
 
 		heaplocktag = (LOCKTAG *) palloc(sizeof(LOCKTAG));
 
 		/* Save the LOCKTAG for this parent relation for the wait phase */
-		SET_LOCKTAG_RELATION(*heaplocktag, lockrelid.dbId, lockrelid.relId);
+		SET_LOCKTAG_RELATION(*heaplocktag, lockrelid->dbId, lockrelid->relId);
 		lockTags = lappend(lockTags, heaplocktag);
 
 		MemoryContextSwitchTo(oldcontext);
@@ -2890,9 +2894,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	/* Get a session-level lock on each table. */
 	foreach(lc, relationLocks)
 	{
-		LockRelId	lockRel = *((LockRelId *) lfirst(lc));
+		LockRelId   *lockrelid = (LockRelId *) lfirst(lc);
 
-		LockRelationIdForSession(&lockRel, ShareUpdateExclusiveLock);
+		LockRelationIdForSession(lockrelid, ShareUpdateExclusiveLock);
 	}
 
 	PopActiveSnapshot();
@@ -3127,9 +3131,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 */
 	foreach(lc, relationLocks)
 	{
-		LockRelId	lockRel = *((LockRelId *) lfirst(lc));
+		LockRelId   *lockrelid = (LockRelId *) lfirst(lc);
 
-		UnlockRelationIdForSession(&lockRel, ShareUpdateExclusiveLock);
+		UnlockRelationIdForSession(lockrelid, ShareUpdateExclusiveLock);
 	}
 
 	/* Start a new transaction to finish process properly */
