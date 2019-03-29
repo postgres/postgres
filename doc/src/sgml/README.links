@@ -40,6 +40,10 @@ url=
 Guidelines
 ----------
 
-o  If you want to supply text, use <link>, else <xref>
-o  Specific nouns like GUC variables, SQL commands, and contrib modules
-   usually have xreflabels
+- For an internal link, if you want to supply text, use <link>, else
+  <xref>.
+
+- Specific nouns like GUC variables, SQL commands, and contrib modules
+  usually have xreflabels.
+
+- For an external link, use <ulink>, with or without link text.
