@@ -739,6 +739,8 @@ index_create(Relation heapRelation,
 	bool		concurrent = (flags & INDEX_CREATE_CONCURRENT) != 0;
 	bool		partitioned = (flags & INDEX_CREATE_PARTITIONED) != 0;
 	char		relkind;
+	TransactionId relfrozenxid;
+	MultiXactId relminmxid;
 
 	/* constraint flags can only be set when a constraint is requested */
 	Assert((constr_flags == 0) ||
@@ -899,8 +901,12 @@ index_create(Relation heapRelation,
 								relpersistence,
 								shared_relation,
 								mapped_relation,
-								allow_system_table_mods);
+								allow_system_table_mods,
+								&relfrozenxid,
+								&relminmxid);
 
+	Assert(relfrozenxid == InvalidTransactionId);
+	Assert(relminmxid == InvalidMultiXactId);
 	Assert(indexRelationId == RelationGetRelid(indexRelation));
 
 	/*
@@ -2850,8 +2856,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		}
 
 		/* We'll build a new physical relation for the index */
-		RelationSetNewRelfilenode(iRel, persistence, InvalidTransactionId,
-								  InvalidMultiXactId);
+		RelationSetNewRelfilenode(iRel, persistence);
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */

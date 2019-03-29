@@ -312,12 +312,17 @@ ResetSequence(Oid seq_relid)
 	seq->log_cnt = 0;
 
 	/*
-	 * Create a new storage file for the sequence.  We want to keep the
-	 * sequence's relfrozenxid at 0, since it won't contain any unfrozen XIDs.
-	 * Same with relminmxid, since a sequence will never contain multixacts.
+	 * Create a new storage file for the sequence.
 	 */
-	RelationSetNewRelfilenode(seq_rel, seq_rel->rd_rel->relpersistence,
-							  InvalidTransactionId, InvalidMultiXactId);
+	RelationSetNewRelfilenode(seq_rel, seq_rel->rd_rel->relpersistence);
+
+	/*
+	 * Ensure sequence's relfrozenxid is at 0, since it won't contain any
+	 * unfrozen XIDs.  Same with relminmxid, since a sequence will never
+	 * contain multixacts.
+	 */
+	Assert(seq_rel->rd_rel->relfrozenxid == InvalidTransactionId);
+	Assert(seq_rel->rd_rel->relminmxid == InvalidMultiXactId);
 
 	/*
 	 * Insert the modified tuple into the new storage file.
@@ -482,12 +487,17 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 
 		/*
 		 * Create a new storage file for the sequence, making the state
-		 * changes transactional.  We want to keep the sequence's relfrozenxid
-		 * at 0, since it won't contain any unfrozen XIDs.  Same with
-		 * relminmxid, since a sequence will never contain multixacts.
+		 * changes transactional.
 		 */
-		RelationSetNewRelfilenode(seqrel, seqrel->rd_rel->relpersistence,
-								  InvalidTransactionId, InvalidMultiXactId);
+		RelationSetNewRelfilenode(seqrel, seqrel->rd_rel->relpersistence);
+
+		/*
+		 * Ensure sequence's relfrozenxid is at 0, since it won't contain any
+		 * unfrozen XIDs.  Same with relminmxid, since a sequence will never
+		 * contain multixacts.
+		 */
+		Assert(seqrel->rd_rel->relfrozenxid == InvalidTransactionId);
+		Assert(seqrel->rd_rel->relminmxid == InvalidMultiXactId);
 
 		/*
 		 * Insert the modified tuple into the new storage file.

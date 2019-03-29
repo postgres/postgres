@@ -35,6 +35,7 @@
 #include "access/relation.h"
 #include "access/sysattr.h"
 #include "access/table.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog.h"
@@ -98,6 +99,8 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Oid reloftype,
 					Oid relowner,
 					char relkind,
+					TransactionId relfrozenxid,
+					TransactionId relminmxid,
 					Datum relacl,
 					Datum reloptions);
 static ObjectAddress AddNewRelationType(const char *typeName,
@@ -300,7 +303,9 @@ heap_create(const char *relname,
 			char relpersistence,
 			bool shared_relation,
 			bool mapped_relation,
-			bool allow_system_table_mods)
+			bool allow_system_table_mods,
+			TransactionId *relfrozenxid,
+			MultiXactId *relminmxid)
 {
 	bool		create_storage;
 	Relation	rel;
@@ -326,6 +331,9 @@ heap_create(const char *relname,
 				 errmsg("permission denied to create \"%s.%s\"",
 						get_namespace_name(relnamespace), relname),
 				 errdetail("System catalog modifications are currently disallowed.")));
+
+	*relfrozenxid = InvalidTransactionId;
+	*relminmxid = InvalidMultiXactId;
 
 	/* Handle reltablespace for specific relkinds. */
 	switch (relkind)
@@ -400,13 +408,36 @@ heap_create(const char *relname,
 	/*
 	 * Have the storage manager create the relation's disk file, if needed.
 	 *
-	 * We only create the main fork here, other forks will be created on
-	 * demand.
+	 * For relations the callback creates both the main and the init fork, for
+	 * indexes only the main fork is created. The other forks will be created
+	 * on demand.
 	 */
 	if (create_storage)
 	{
 		RelationOpenSmgr(rel);
-		RelationCreateStorage(rel->rd_node, relpersistence);
+
+		switch (rel->rd_rel->relkind)
+		{
+			case RELKIND_VIEW:
+			case RELKIND_COMPOSITE_TYPE:
+			case RELKIND_FOREIGN_TABLE:
+			case RELKIND_PARTITIONED_TABLE:
+			case RELKIND_PARTITIONED_INDEX:
+				Assert(false);
+				break;
+
+			case RELKIND_INDEX:
+			case RELKIND_SEQUENCE:
+				RelationCreateStorage(rel->rd_node, relpersistence);
+				break;
+
+			case RELKIND_RELATION:
+			case RELKIND_TOASTVALUE:
+			case RELKIND_MATVIEW:
+				table_relation_set_new_filenode(rel, relpersistence,
+									   relfrozenxid, relminmxid);
+				break;
+		}
 	}
 
 	return rel;
@@ -892,6 +923,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid reloftype,
 					Oid relowner,
 					char relkind,
+					TransactionId relfrozenxid,
+					TransactionId relminmxid,
 					Datum relacl,
 					Datum reloptions)
 {
@@ -928,40 +961,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 			break;
 	}
 
-	/* Initialize relfrozenxid and relminmxid */
-	if (relkind == RELKIND_RELATION ||
-		relkind == RELKIND_MATVIEW ||
-		relkind == RELKIND_TOASTVALUE)
-	{
-		/*
-		 * Initialize to the minimum XID that could put tuples in the table.
-		 * We know that no xacts older than RecentXmin are still running, so
-		 * that will do.
-		 */
-		new_rel_reltup->relfrozenxid = RecentXmin;
-
-		/*
-		 * Similarly, initialize the minimum Multixact to the first value that
-		 * could possibly be stored in tuples in the table.  Running
-		 * transactions could reuse values from their local cache, so we are
-		 * careful to consider all currently running multis.
-		 *
-		 * XXX this could be refined further, but is it worth the hassle?
-		 */
-		new_rel_reltup->relminmxid = GetOldestMultiXactId();
-	}
-	else
-	{
-		/*
-		 * Other relation types will not contain XIDs, so set relfrozenxid to
-		 * InvalidTransactionId.  (Note: a sequence does contain a tuple, but
-		 * we force its xmin to be FrozenTransactionId always; see
-		 * commands/sequence.c.)
-		 */
-		new_rel_reltup->relfrozenxid = InvalidTransactionId;
-		new_rel_reltup->relminmxid = InvalidMultiXactId;
-	}
-
+	new_rel_reltup->relfrozenxid = relfrozenxid;
+	new_rel_reltup->relminmxid = relminmxid;
 	new_rel_reltup->relowner = relowner;
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->reloftype = reloftype;
@@ -1089,6 +1090,8 @@ heap_create_with_catalog(const char *relname,
 	Oid			new_type_oid;
 	ObjectAddress new_type_addr;
 	Oid			new_array_oid = InvalidOid;
+	TransactionId relfrozenxid;
+	MultiXactId relminmxid;
 
 	pg_class_desc = table_open(RelationRelationId, RowExclusiveLock);
 
@@ -1220,7 +1223,9 @@ heap_create_with_catalog(const char *relname,
 							   relpersistence,
 							   shared_relation,
 							   mapped_relation,
-							   allow_system_table_mods);
+							   allow_system_table_mods,
+							   &relfrozenxid,
+							   &relminmxid);
 
 	Assert(relid == RelationGetRelid(new_rel_desc));
 
@@ -1319,6 +1324,8 @@ heap_create_with_catalog(const char *relname,
 						reloftypeid,
 						ownerid,
 						relkind,
+						relfrozenxid,
+						relminmxid,
 						PointerGetDatum(relacl),
 						reloptions);
 
@@ -1408,14 +1415,6 @@ heap_create_with_catalog(const char *relname,
 		register_on_commit_action(relid, oncommit);
 
 	/*
-	 * Unlogged objects need an init fork, except for partitioned tables which
-	 * have no storage at all.
-	 */
-	if (relpersistence == RELPERSISTENCE_UNLOGGED &&
-		relkind != RELKIND_PARTITIONED_TABLE)
-		heap_create_init_fork(new_rel_desc);
-
-	/*
 	 * ok, the relation has been cataloged, so close our relations and return
 	 * the OID of the newly created relation.
 	 */
@@ -1423,27 +1422,6 @@ heap_create_with_catalog(const char *relname,
 	table_close(pg_class_desc, RowExclusiveLock);
 
 	return relid;
-}
-
-/*
- * Set up an init fork for an unlogged table so that it can be correctly
- * reinitialized on restart.  An immediate sync is required even if the
- * page has been logged, because the write did not go through
- * shared_buffers and therefore a concurrent checkpoint may have moved
- * the redo pointer past our xlog record.  Recovery may as well remove it
- * while replaying, for example, XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE
- * record. Therefore, logging is necessary even if wal_level=minimal.
- */
-void
-heap_create_init_fork(Relation rel)
-{
-	Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
-		   rel->rd_rel->relkind == RELKIND_MATVIEW ||
-		   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
-	RelationOpenSmgr(rel);
-	smgrcreate(rel->rd_smgr, INIT_FORKNUM, false);
-	log_smgrcreate(&rel->rd_smgr->smgr_rnode.node, INIT_FORKNUM);
-	smgrimmedsync(rel->rd_smgr, INIT_FORKNUM);
 }
 
 /*
@@ -3168,8 +3146,8 @@ heap_truncate_one_rel(Relation rel)
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		return;
 
-	/* Truncate the actual file (and discard buffers) */
-	RelationTruncate(rel, 0);
+	/* Truncate the underlying relation */
+	table_relation_nontransactional_truncate(rel);
 
 	/* If the relation has indexes, truncate the indexes too */
 	RelationTruncateIndexes(rel);
@@ -3180,7 +3158,7 @@ heap_truncate_one_rel(Relation rel)
 	{
 		Relation	toastrel = table_open(toastrelid, AccessExclusiveLock);
 
-		RelationTruncate(toastrel, 0);
+		table_relation_nontransactional_truncate(toastrel);
 		RelationTruncateIndexes(toastrel);
 		/* keep the lock... */
 		table_close(toastrel, NoLock);

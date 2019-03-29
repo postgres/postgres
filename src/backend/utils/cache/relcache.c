@@ -3422,31 +3422,16 @@ RelationBuildLocalRelation(const char *relname,
  * such as TRUNCATE or rebuilding an index from scratch.
  *
  * Caller must already hold exclusive lock on the relation.
- *
- * The relation is marked with relfrozenxid = freezeXid (InvalidTransactionId
- * must be passed for indexes and sequences).  This should be a lower bound on
- * the XIDs that will be put into the new relation contents.
- *
- * The new filenode's persistence is set to the given value.  This is useful
- * for the cases that are changing the relation's persistence; other callers
- * need to pass the original relpersistence value.
  */
 void
-RelationSetNewRelfilenode(Relation relation, char persistence,
-						  TransactionId freezeXid, MultiXactId minmulti)
+RelationSetNewRelfilenode(Relation relation, char persistence)
 {
 	Oid			newrelfilenode;
-	RelFileNodeBackend newrnode;
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class classform;
-
-	/* Indexes, sequences must have Invalid frozenxid; other rels must not */
-	Assert((relation->rd_rel->relkind == RELKIND_INDEX ||
-			relation->rd_rel->relkind == RELKIND_SEQUENCE) ?
-		   freezeXid == InvalidTransactionId :
-		   TransactionIdIsNormal(freezeXid));
-	Assert(TransactionIdIsNormal(freezeXid) == MultiXactIdIsValid(minmulti));
+	MultiXactId minmulti = InvalidMultiXactId;
+	TransactionId freezeXid = InvalidTransactionId;
 
 	/* Allocate a new relfilenode */
 	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL,
@@ -3465,18 +3450,6 @@ RelationSetNewRelfilenode(Relation relation, char persistence,
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
-	 * Create storage for the main fork of the new relfilenode.
-	 *
-	 * NOTE: any conflict in relfilenode value will be caught here, if
-	 * GetNewRelFileNode messes up for any reason.
-	 */
-	newrnode.node = relation->rd_node;
-	newrnode.node.relNode = newrelfilenode;
-	newrnode.backend = relation->rd_backend;
-	RelationCreateStorage(newrnode.node, persistence);
-	smgrclosenode(newrnode);
-
-	/*
 	 * Schedule unlinking of the old storage at transaction commit.
 	 */
 	RelationDropStorage(relation);
@@ -3490,9 +3463,51 @@ RelationSetNewRelfilenode(Relation relation, char persistence,
 		RelationMapUpdateMap(RelationGetRelid(relation),
 							 newrelfilenode,
 							 relation->rd_rel->relisshared,
-							 false);
+							 true);
 	else
+	{
+		relation->rd_rel->relfilenode = newrelfilenode;
 		classform->relfilenode = newrelfilenode;
+	}
+
+	RelationInitPhysicalAddr(relation);
+
+	/*
+	 * Create storage for the main fork of the new relfilenode. If it's
+	 * table-like object, call into table AM to do so, which'll also create
+	 * the table's init fork.
+	 *
+	 * NOTE: any conflict in relfilenode value will be caught here, if
+	 * GetNewRelFileNode messes up for any reason.
+	 */
+
+	/*
+	 * Create storage for relation.
+	 */
+	switch (relation->rd_rel->relkind)
+	{
+		/* shouldn't be called for these */
+		case RELKIND_VIEW:
+		case RELKIND_COMPOSITE_TYPE:
+		case RELKIND_FOREIGN_TABLE:
+		case RELKIND_PARTITIONED_TABLE:
+		case RELKIND_PARTITIONED_INDEX:
+			elog(ERROR, "should not have storage");
+			break;
+
+		case RELKIND_INDEX:
+		case RELKIND_SEQUENCE:
+			RelationCreateStorage(relation->rd_node, persistence);
+			RelationOpenSmgr(relation);
+			break;
+
+		case RELKIND_RELATION:
+		case RELKIND_TOASTVALUE:
+		case RELKIND_MATVIEW:
+			table_relation_set_new_filenode(relation, persistence,
+											&freezeXid, &minmulti);
+			break;
+	}
 
 	/* These changes are safe even for a mapped relation */
 	if (relation->rd_rel->relkind != RELKIND_SEQUENCE)

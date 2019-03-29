@@ -378,6 +378,46 @@ typedef struct TableAmRoutine
 	 * ------------------------------------------------------------------------
 	 */
 
+	/*
+	 * This callback needs to create a new relation filenode for `rel`, with
+	 * appropriate durability behaviour for `persistence`.
+	 *
+	 * On output *freezeXid, *minmulti should be set to the values appropriate
+	 * for pg_class.{relfrozenxid, relminmxid} have to be set to. For AMs that
+	 * don't need those fields to be filled they can be set to
+	 * InvalidTransactionId, InvalidMultiXactId respectively.
+	 *
+	 * See also table_relation_set_new_filenode().
+	 */
+	void		(*relation_set_new_filenode) (Relation rel,
+											  char persistence,
+											  TransactionId *freezeXid,
+											  MultiXactId *minmulti);
+
+	/*
+	 * This callback needs to remove all contents from `rel`'s current
+	 * relfilenode. No provisions for transactional behaviour need to be
+	 * made. Often this can be implemented by truncating the underlying
+	 * storage to its minimal size.
+	 *
+	 * See also table_relation_nontransactional_truncate().
+	 */
+	void		(*relation_nontransactional_truncate) (Relation rel);
+
+	/*
+	 * See table_relation_copy_data().
+	 *
+	 * This can typically be implemented by directly copying the underlying
+	 * storage, unless it contains references to the tablespace internally.
+	 */
+	void		(*relation_copy_data) (Relation rel, RelFileNode newrnode);
+
+	/* See table_relation_copy_for_cluster() */
+	void		(*relation_copy_for_cluster) (Relation NewHeap, Relation OldHeap, Relation OldIndex,
+											  bool use_sort,
+											  TransactionId OldestXmin, TransactionId FreezeXid, MultiXactId MultiXactCutoff,
+											  double *num_tuples, double *tups_vacuumed, double *tups_recently_dead);
+
 	/* see table_index_build_range_scan for reference about parameters */
 	double		(*index_build_range_scan) (Relation heap_rel,
 										   Relation index_rel,
@@ -960,6 +1000,83 @@ table_lock_tuple(Relation rel, ItemPointer tid, Snapshot snapshot,
  * DDL related functionality.
  * ------------------------------------------------------------------------
  */
+
+/*
+ * Create a new relation filenode for `rel`, with persistence set to
+ * `persistence`.
+ *
+ * This is used both during relation creation and various DDL operations to
+ * create a new relfilenode that can be filled from scratch.
+ *
+ * *freezeXid, *minmulti are set to the xid / multixact horizon for the table
+ * that pg_class.{relfrozenxid, relminmxid} have to be set to.
+ */
+static inline void
+table_relation_set_new_filenode(Relation rel, char persistence,
+								TransactionId *freezeXid,
+								MultiXactId *minmulti)
+{
+	rel->rd_tableam->relation_set_new_filenode(rel, persistence,
+											   freezeXid, minmulti);
+}
+
+/*
+ * Remove all table contents from `rel`, in a non-transactional manner.
+ * Non-transactional meaning that there's no need to support rollbacks. This
+ * commonly only is used to perform truncations for relfilenodes created in the
+ * current transaction.
+ */
+static inline void
+table_relation_nontransactional_truncate(Relation rel)
+{
+	rel->rd_tableam->relation_nontransactional_truncate(rel);
+}
+
+/*
+ * Copy data from `rel` into the new relfilenode `newrnode`. The new
+ * relfilenode may not have storage associated before this function is
+ * called. This is only supposed to be used for low level operations like
+ * changing a relation's tablespace.
+ */
+static inline void
+table_relation_copy_data(Relation rel, RelFileNode newrnode)
+{
+	rel->rd_tableam->relation_copy_data(rel, newrnode);
+}
+
+/*
+ * Copy data from `OldHeap` into `NewHeap`, as part of a CLUSTER or VACUUM
+ * FULL.
+ *
+ * If `use_sort` is true, the table contents are sorted appropriate for
+ * `OldIndex`; if use_sort is false and OldIndex is not InvalidOid, the data
+ * is copied in that index's order; if use_sort is false and OidIndex is
+ * InvalidOid, no sorting is performed.
+ *
+ * OldestXmin, FreezeXid, MultiXactCutoff need to currently valid values for
+ * the table.
+ *
+ * *num_tuples, *tups_vacuumed, *tups_recently_dead will contain statistics
+ * computed while copying for the relation. Not all might make sense for every
+ * AM.
+ */
+static inline void
+table_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
+								Relation OldIndex,
+								bool use_sort,
+								TransactionId OldestXmin,
+								TransactionId FreezeXid,
+								MultiXactId MultiXactCutoff,
+								double *num_tuples,
+								double *tups_vacuumed,
+								double *tups_recently_dead)
+{
+	OldHeap->rd_tableam->relation_copy_for_cluster(OldHeap, NewHeap, OldIndex,
+												   use_sort, OldestXmin,
+												   FreezeXid, MultiXactCutoff,
+												   num_tuples, tups_vacuumed,
+												   tups_recently_dead);
+}
 
 /*
  * table_index_build_range_scan - scan the table to find tuples to be indexed
