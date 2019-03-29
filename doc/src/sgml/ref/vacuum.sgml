@@ -26,12 +26,12 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
-    FULL
-    FREEZE
-    VERBOSE
-    ANALYZE
-    DISABLE_PAGE_SKIPPING
-    SKIP_LOCKED
+    FULL [ <replaceable class="parameter">boolean</replaceable> ]
+    FREEZE [ <replaceable class="parameter">boolean</replaceable> ]
+    VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
+    ANALYZE [ <replaceable class="parameter">boolean</replaceable> ]
+    DISABLE_PAGE_SKIPPING [ <replaceable class="parameter">boolean</replaceable> ]
+    SKIP_LOCKED [ <replaceable class="parameter">boolean</replaceable> ]
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -177,6 +177,20 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       specified partitioned tables, this option will cause
       <command>VACUUM</command> to skip all partitions if there is a
       conflicting lock on the partitioned table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">boolean</replaceable></term>
+    <listitem>
+     <para>
+      Specifies whether the selected option should be turned on or off.
+      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
+      <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
+      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
+      <replaceable class="parameter">boolean</replaceable> value can also
+      be omitted, in which case <literal>TRUE</literal> is assumed.
      </para>
     </listitem>
    </varlistentry>

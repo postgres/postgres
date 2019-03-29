@@ -309,6 +309,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		vac_analyze_option_name
 %type <defelt>	vac_analyze_option_elem
 %type <list>	vac_analyze_option_list
+%type <node>	vac_analyze_option_arg
 %type <boolean>	opt_or_replace
 				opt_grant_grant_option opt_grant_admin_option
 				opt_nowait opt_if_exists opt_with_data
@@ -10543,15 +10544,20 @@ analyze_keyword:
 		;
 
 vac_analyze_option_elem:
-			vac_analyze_option_name
+			vac_analyze_option_name vac_analyze_option_arg
 				{
-					$$ = makeDefElem($1, NULL, @1);
+					$$ = makeDefElem($1, $2, @1);
 				}
 		;
 
 vac_analyze_option_name:
 			NonReservedWord							{ $$ = $1; }
 			| analyze_keyword						{ $$ = "analyze"; }
+		;
+
+vac_analyze_option_arg:
+			opt_boolean_or_string					{ $$ = (Node *) makeString($1); }
+			| /* EMPTY */		 					{ $$ = NULL; }
 		;
 
 opt_analyze:

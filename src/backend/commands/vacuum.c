@@ -36,6 +36,7 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "commands/cluster.h"
+#include "commands/defrem.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -86,9 +87,13 @@ void
 ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 {
 	VacuumParams params;
+	bool verbose = false;
+	bool skip_locked = false;
+	bool analyze = false;
+	bool freeze = false;
+	bool full = false;
+	bool disable_page_skipping = false;
 	ListCell	*lc;
-
-	params.options = vacstmt->is_vacuumcmd ? VACOPT_VACUUM : VACOPT_ANALYZE;
 
 	/* Parse options list */
 	foreach(lc, vacstmt->options)
@@ -97,9 +102,9 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 
 		/* Parse common options for VACUUM and ANALYZE */
 		if (strcmp(opt->defname, "verbose") == 0)
-			params.options |= VACOPT_VERBOSE;
+			verbose = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "skip_locked") == 0)
-			params.options |= VACOPT_SKIP_LOCKED;
+			skip_locked = defGetBoolean(opt);
 		else if (!vacstmt->is_vacuumcmd)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -108,19 +113,29 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 
 		/* Parse options available on VACUUM */
 		else if (strcmp(opt->defname, "analyze") == 0)
-				params.options |= VACOPT_ANALYZE;
+			analyze = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "freeze") == 0)
-				params.options |= VACOPT_FREEZE;
+			freeze = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "full") == 0)
-			params.options |= VACOPT_FULL;
+			full = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "disable_page_skipping") == 0)
-			params.options |= VACOPT_DISABLE_PAGE_SKIPPING;
+			disable_page_skipping = defGetBoolean(opt);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("unrecognized VACUUM option \"%s\"", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
+
+	/* Set vacuum options */
+	params.options =
+		(vacstmt->is_vacuumcmd ? VACOPT_VACUUM : VACOPT_ANALYZE) |
+		(verbose ? VACOPT_VERBOSE : 0) |
+		(skip_locked ? VACOPT_SKIP_LOCKED : 0) |
+		(analyze ? VACOPT_ANALYZE : 0) |
+		(freeze ? VACOPT_FREEZE : 0) |
+		(full ? VACOPT_FULL : 0) |
+		(disable_page_skipping ? VACOPT_DISABLE_PAGE_SKIPPING : 0);
 
 	/* sanity checks on options */
 	Assert(params.options & (VACOPT_VACUUM | VACOPT_ANALYZE));
