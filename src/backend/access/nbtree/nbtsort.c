@@ -835,7 +835,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	 * the limit on the size of tuples inserted on the leaf level by the same
 	 * small amount.  Enforce the new v4+ limit on the leaf level, and the old
 	 * limit on internal levels, since pivot tuples may need to make use of
-	 * the resered space.  This should never fail on internal pages.
+	 * the reserved space.  This should never fail on internal pages.
 	 */
 	if (unlikely(itupsz > BTMaxItemSize(npage)))
 		_bt_check_third_page(wstate->index, wstate->heap,
@@ -907,8 +907,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			 * choosing a split point here for a benefit that is bound to be
 			 * much smaller.
 			 *
-			 * Since the truncated tuple is probably smaller than the
-			 * original, it cannot just be copied in place (besides, we want
+			 * Since the truncated tuple is often smaller than the original
+			 * tuple, it cannot just be copied in place (besides, we want
 			 * to actually save space on the leaf page).  We delete the
 			 * original high key, and add our own truncated high key at the
 			 * same offset.  It's okay if the truncated tuple is slightly

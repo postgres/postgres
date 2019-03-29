@@ -182,7 +182,8 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 
 	/*
 	 * If we're asked to lock leaf in write mode, but didn't manage to, then
-	 * relock.  That may happen when the root page appears to be leaf.
+	 * relock.  This should only happen when the root page is a leaf page (and
+	 * the only page in the index other than the metapage).
 	 */
 	if (access == BT_WRITE && page_access == BT_READ)
 	{

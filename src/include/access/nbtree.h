@@ -219,7 +219,6 @@ typedef struct BTMetaPageData
 #define P_FIRSTDATAKEY(opaque)	(P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
 
 /*
- *
  * Notes on B-Tree tuple format, and key and non-key attributes:
  *
  * INCLUDE B-Tree indexes have non-key attributes.  These are extra
@@ -321,7 +320,7 @@ typedef struct BTMetaPageData
 /*
  * Get/set number of attributes within B-tree index tuple.
  *
- * Note that this does not include an implicit tiebreaker heap-TID
+ * Note that this does not include an implicit tiebreaker heap TID
  * attribute, if any.  Note also that the number of key attributes must be
  * explicitly represented in all heapkeyspace pivot tuples.
  */
@@ -424,10 +423,10 @@ typedef struct BTStackData
 typedef BTStackData *BTStack;
 
 /*
- * BTScanInsert is the btree-private state needed to find an initial position
- * for an indexscan, or to insert new tuples -- an "insertion scankey" (not to
- * be confused with a search scankey).  It's used to descend a B-Tree using
- * _bt_search.
+ * BTScanInsertData is the btree-private state needed to find an initial
+ * position for an indexscan, or to insert new tuples -- an "insertion
+ * scankey" (not to be confused with a search scankey).  It's used to descend
+ * a B-Tree using _bt_search.
  *
  * heapkeyspace indicates if we expect all keys in the index to be physically
  * unique because heap TID is used as a tiebreaker attribute, and if index may

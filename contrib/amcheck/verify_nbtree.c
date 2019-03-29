@@ -1975,7 +1975,7 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 /*
  * Search for itup in index, starting from fast root page.  itup must be a
  * non-pivot tuple.  This is only supported with heapkeyspace indexes, since
- * we rely on having fully unique keys to find a match with only a signle
+ * we rely on having fully unique keys to find a match with only a single
  * visit to a leaf page, barring an interrupted page split, where we may have
  * to move right.  (A concurrent page split is impossible because caller must
  * be readonly caller.)
