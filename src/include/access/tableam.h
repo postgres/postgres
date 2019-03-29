@@ -164,7 +164,7 @@ typedef struct TableAmRoutine
 	 * synchronized scans, or page mode may be used (although not every AM
 	 * will support those).
 	 *
-	 * is_{bitmapscan, samplescan} specify whether the scan is inteded to
+	 * is_{bitmapscan, samplescan} specify whether the scan is intended to
 	 * support those types of scans.
 	 *
 	 * if temp_snap is true, the snapshot will need to be deallocated at
@@ -220,7 +220,7 @@ typedef struct TableAmRoutine
 	Size		(*parallelscan_initialize) (Relation rel, ParallelTableScanDesc pscan);
 
 	/*
-	 * Reinitilize `pscan` for a new scan. `rel` will be the same relation as
+	 * Reinitialize `pscan` for a new scan. `rel` will be the same relation as
 	 * when `pscan` was initialized by parallelscan_initialize.
 	 */
 	void		(*parallelscan_reinitialize) (Relation rel, ParallelTableScanDesc pscan);
@@ -913,7 +913,7 @@ table_delete(Relation rel, ItemPointer tid, CommandId cid,
  * Input parameters:
  *	relation - table to be modified (caller must hold suitable lock)
  *	otid - TID of old tuple to be replaced
- *	newtup - newly constructed tuple data to store
+ *	slot - newly constructed tuple data to store
  *	cid - update command ID (used for visibility test, and stored into
  *		cmax/cmin if successful)
  *	crosscheck - if not InvalidSnapshot, also check old tuple against this
@@ -929,8 +929,8 @@ table_delete(Relation rel, ItemPointer tid, CommandId cid,
  * TM_SelfModified, TM_Updated, or TM_BeingModified
  * (the last only possible if wait == false).
  *
- * On success, the header fields of *newtup are updated to match the new
- * stored tuple; in particular, newtup->t_self is set to the TID where the
+ * On success, the slot's tts_tid and tts_tableOid are updated to match the new
+ * stored tuple; in particular, slot->tts_tid is set to the TID where the
  * new tuple was inserted, and its HEAP_ONLY_TUPLE flag is set iff a HOT
  * update was done.  However, any TOAST changes in the new tuple's
  * data are not reflected into *newtup.
@@ -965,7 +965,7 @@ table_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
  *	flags:
  *		If TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS, follow the update chain to
  *		also lock descendant tuples if lock modes don't conflict.
- *		If TUPLE_LOCK_FLAG_FIND_LAST_VERSION, update chain and lock lastest
+ *		If TUPLE_LOCK_FLAG_FIND_LAST_VERSION, update chain and lock latest
  *		version.
  *
  * Output parameters:

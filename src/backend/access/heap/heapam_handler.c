@@ -12,7 +12,7 @@
  *
  *
  * NOTES
- *	  This files wires up the lower level heapam.c et routines with the
+ *	  This files wires up the lower level heapam.c et al routines with the
  *	  tableam abstraction.
  *
  *-------------------------------------------------------------------------
