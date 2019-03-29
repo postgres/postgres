@@ -179,29 +179,27 @@ PostgreSQL documentation
  <refsect1>
   <title>Notes</title>
   <para>
-   When disabling or enabling checksums in a replication setup of multiple
-   clusters, it is recommended to stop all the clusters before doing
-   the switch to all the clusters consistently. When using a replication
-   setup with tools which perform direct copies of relation file blocks
-   (for example <xref linkend="app-pgrewind"/>), enabling or disabling
-   checksums can lead to page corruptions in the shape of incorrect
-   checksums if the operation is not done consistently across all nodes.
-   Destroying all the standbys in the setup first, enabling or disabling
-   checksums on the primary and finally recreating the standbys from
-   scratch is also safe.
+   Enabling checksums in a large cluster can potentially take a long time.
+   During this operation, the cluster or other programs that write to the
+   data directory must not be started or else data loss may occur.
   </para>
   <para>
-   If <application>pg_checksums</application> is aborted or killed in
-   its operation while enabling or disabling checksums, the cluster
-   will have the same state with respect of checksums as before the
-   operation and <application>pg_checksums</application> needs to be
-   restarted.
+   When using a replication setup with tools which perform direct copies
+   of relation file blocks (for example <xref linkend="app-pgrewind"/>),
+   enabling or disabling checksums can lead to page corruptions in the
+   shape of incorrect checksums if the operation is not done consistently
+   across all nodes. When enabling or disabling checksums in a replication
+   setup, it is thus recommended to stop all the clusters before switching
+   them all consistently. Destroying all standbys, performing the operation
+   on the primary and finally recreating the standbys from scratch is also
+   safe.
   </para>
   <para>
-   When enabling checksums in a cluster, the operation can potentially
-   take a long time if the data directory is large. During this operation,
-   the cluster or other programs that write to the data directory must not
-   be started or else data loss may occur.
-   </para>
+   If <application>pg_checksums</application> is aborted or killed while
+   enabling or disabling checksums, the cluster will keep the same
+   configuration for data checksums as before the operation attempted.
+   <application>pg_checksums</application> can be restarted to
+   attempt again the same operation.
+  </para>
  </refsect1>
 </refentry>
