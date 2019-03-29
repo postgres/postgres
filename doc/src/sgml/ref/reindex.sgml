@@ -349,7 +349,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
      <listitem>
       <para>
        The old indexes are dropped.  The <literal>SHARE UPDATE
-       EXCLUSIVE</literal> session locks for the indexes and the table ar
+       EXCLUSIVE</literal> session locks for the indexes and the table are
        released.
       </para>
      </listitem>
