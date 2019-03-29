@@ -3213,12 +3213,24 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("REINDEX"))
 		COMPLETE_WITH("TABLE", "INDEX", "SYSTEM", "SCHEMA", "DATABASE");
 	else if (Matches("REINDEX", "TABLE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexables,
+								   " UNION SELECT 'CONCURRENTLY'");
 	else if (Matches("REINDEX", "INDEX"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes,
+								   " UNION SELECT 'CONCURRENTLY'");
 	else if (Matches("REINDEX", "SCHEMA"))
-		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+		COMPLETE_WITH_QUERY(Query_for_list_of_schemas
+							" UNION SELECT 'CONCURRENTLY'");
 	else if (Matches("REINDEX", "SYSTEM|DATABASE"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_databases
+							" UNION SELECT 'CONCURRENTLY'");
+	else if (Matches("REINDEX", "TABLE", "CONCURRENTLY"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexables, NULL);
+	else if (Matches("REINDEX", "INDEX", "CONCURRENTLY"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
+	else if (Matches("REINDEX", "SCHEMA", "CONCURRENTLY"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+	else if (Matches("REINDEX", "SYSTEM|DATABASE", "CONCURRENTLY"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 
 /* SECURITY LABEL */

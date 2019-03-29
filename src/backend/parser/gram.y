@@ -8300,42 +8300,46 @@ DropTransformStmt: DROP TRANSFORM opt_if_exists FOR Typename LANGUAGE name opt_d
  *
  *		QUERY:
  *
- *		REINDEX [ (options) ] type <name>
+ *		REINDEX [ (options) ] type [CONCURRENTLY] <name>
  *****************************************************************************/
 
 ReindexStmt:
-			REINDEX reindex_target_type qualified_name
+			REINDEX reindex_target_type opt_concurrently qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = $2;
-					n->relation = $3;
+					n->concurrent = $3;
+					n->relation = $4;
 					n->name = NULL;
 					n->options = 0;
 					$$ = (Node *)n;
 				}
-			| REINDEX reindex_target_multitable name
+			| REINDEX reindex_target_multitable opt_concurrently name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = $2;
-					n->name = $3;
+					n->concurrent = $3;
+					n->name = $4;
 					n->relation = NULL;
 					n->options = 0;
 					$$ = (Node *)n;
 				}
-			| REINDEX '(' reindex_option_list ')' reindex_target_type qualified_name
+			| REINDEX '(' reindex_option_list ')' reindex_target_type opt_concurrently qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = $5;
-					n->relation = $6;
+					n->concurrent = $6;
+					n->relation = $7;
 					n->name = NULL;
 					n->options = $3;
 					$$ = (Node *)n;
 				}
-			| REINDEX '(' reindex_option_list ')' reindex_target_multitable name
+			| REINDEX '(' reindex_option_list ')' reindex_target_multitable opt_concurrently name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = $5;
-					n->name = $6;
+					n->concurrent = $6;
+					n->name = $7;
 					n->relation = NULL;
 					n->options = $3;
 					$$ = (Node *)n;

@@ -42,6 +42,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_description.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_operator.h"
@@ -778,11 +779,11 @@ index_create(Relation heapRelation,
 				 errmsg("user-defined indexes on system catalog tables are not supported")));
 
 	/*
-	 * concurrent index build on a system catalog is unsafe because we tend to
-	 * release locks before committing in catalogs
+	 * Concurrent index build on a system catalog is unsafe because we tend to
+	 * release locks before committing in catalogs.
 	 */
 	if (concurrent &&
-		IsSystemRelation(heapRelation))
+		IsCatalogRelation(heapRelation))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("concurrent index creation on system catalog tables is not supported")));
@@ -1202,6 +1203,462 @@ index_create(Relation heapRelation,
 }
 
 /*
+ * index_concurrently_create_copy
+ *
+ * Create concurrently an index based on the definition of the one provided by
+ * caller.  The index is inserted into catalogs and needs to be built later
+ * on.  This is called during concurrent reindex processing.
+ */
+Oid
+index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId, const char *newName)
+{
+	Relation	indexRelation;
+	IndexInfo  *indexInfo;
+	Oid			newIndexId = InvalidOid;
+	HeapTuple	indexTuple,
+				classTuple;
+	Datum		indclassDatum,
+				colOptionDatum,
+				optionDatum;
+	oidvector  *indclass;
+	int2vector *indcoloptions;
+	bool		isnull;
+	List	   *indexColNames = NIL;
+
+	indexRelation = index_open(oldIndexId, RowExclusiveLock);
+
+	/* New index uses the same index information as old index */
+	indexInfo = BuildIndexInfo(indexRelation);
+
+	/* Get the array of class and column options IDs from index info */
+	indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(oldIndexId));
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "cache lookup failed for index %u", oldIndexId);
+	indclassDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
+									Anum_pg_index_indclass, &isnull);
+	Assert(!isnull);
+	indclass = (oidvector *) DatumGetPointer(indclassDatum);
+
+	colOptionDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
+									 Anum_pg_index_indoption, &isnull);
+	Assert(!isnull);
+	indcoloptions = (int2vector *) DatumGetPointer(colOptionDatum);
+
+	/* Fetch options of index if any */
+	classTuple = SearchSysCache1(RELOID, oldIndexId);
+	if (!HeapTupleIsValid(classTuple))
+		elog(ERROR, "cache lookup failed for relation %u", oldIndexId);
+	optionDatum = SysCacheGetAttr(RELOID, classTuple,
+								  Anum_pg_class_reloptions, &isnull);
+
+	/*
+	 * Extract the list of column names to be used for the index
+	 * creation.
+	 */
+	for (int i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+	{
+		TupleDesc	indexTupDesc = RelationGetDescr(indexRelation);
+		Form_pg_attribute att = TupleDescAttr(indexTupDesc, i);
+
+		indexColNames = lappend(indexColNames, NameStr(att->attname));
+	}
+
+	/* Now create the new index */
+	newIndexId = index_create(heapRelation,
+							  newName,
+							  InvalidOid,	/* indexRelationId */
+							  InvalidOid,	/* parentIndexRelid */
+							  InvalidOid,	/* parentConstraintId */
+							  InvalidOid,	/* relFileNode */
+							  indexInfo,
+							  indexColNames,
+							  indexRelation->rd_rel->relam,
+							  indexRelation->rd_rel->reltablespace,
+							  indexRelation->rd_indcollation,
+							  indclass->values,
+							  indcoloptions->values,
+							  optionDatum,
+							  INDEX_CREATE_SKIP_BUILD | INDEX_CREATE_CONCURRENT,
+							  0,
+							  true,	/* allow table to be a system catalog? */
+							  false, /* is_internal? */
+							  NULL);
+
+	/* Close the relations used and clean up */
+	index_close(indexRelation, NoLock);
+	ReleaseSysCache(indexTuple);
+	ReleaseSysCache(classTuple);
+
+	return newIndexId;
+}
+
+/*
+ * index_concurrently_build
+ *
+ * Build index for a concurrent operation.  Low-level locks are taken when
+ * this operation is performed to prevent only schema changes, but they need
+ * to be kept until the end of the transaction performing this operation.
+ * 'indexOid' refers to an index relation OID already created as part of
+ * previous processing, and 'heapOid' refers to its parent heap relation.
+ */
+void
+index_concurrently_build(Oid heapRelationId,
+						 Oid indexRelationId)
+{
+	Relation	heapRel;
+	Relation	indexRelation;
+	IndexInfo  *indexInfo;
+
+	/* This had better make sure that a snapshot is active */
+	Assert(ActiveSnapshotSet());
+
+	/* Open and lock the parent heap relation */
+	heapRel = table_open(heapRelationId, ShareUpdateExclusiveLock);
+
+	/* And the target index relation */
+	indexRelation = index_open(indexRelationId, RowExclusiveLock);
+
+	/*
+	 * We have to re-build the IndexInfo struct, since it was lost in the
+	 * commit of the transaction where this concurrent index was created at
+	 * the catalog level.
+	 */
+	indexInfo = BuildIndexInfo(indexRelation);
+	Assert(!indexInfo->ii_ReadyForInserts);
+	indexInfo->ii_Concurrent = true;
+	indexInfo->ii_BrokenHotChain = false;
+
+	/* Now build the index */
+	index_build(heapRel, indexRelation, indexInfo, false, true);
+
+	/* Close both the relations, but keep the locks */
+	table_close(heapRel, NoLock);
+	index_close(indexRelation, NoLock);
+
+	/*
+	 * Update the pg_index row to mark the index as ready for inserts. Once we
+	 * commit this transaction, any new transactions that open the table must
+	 * insert new entries into the index for insertions and non-HOT updates.
+	 */
+	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_READY);
+}
+
+/*
+ * index_concurrently_swap
+ *
+ * Swap name, dependencies, and constraints of the old index over to the new
+ * index, while marking the old index as invalid and the new as valid.
+ */
+void
+index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
+{
+	Relation	pg_class,
+				pg_index,
+				pg_constraint,
+				pg_trigger;
+	Relation	oldClassRel,
+				newClassRel;
+	HeapTuple	oldClassTuple,
+				newClassTuple;
+	Form_pg_class oldClassForm,
+				newClassForm;
+	HeapTuple	oldIndexTuple,
+				newIndexTuple;
+	Form_pg_index oldIndexForm,
+				newIndexForm;
+	Oid			indexConstraintOid;
+	List	   *constraintOids = NIL;
+	ListCell   *lc;
+
+	/*
+	 * Take a necessary lock on the old and new index before swapping them.
+	 */
+	oldClassRel = relation_open(oldIndexId, ShareUpdateExclusiveLock);
+	newClassRel = relation_open(newIndexId, ShareUpdateExclusiveLock);
+
+	/* Now swap names and dependencies of those indexes */
+	pg_class = table_open(RelationRelationId, RowExclusiveLock);
+
+	oldClassTuple = SearchSysCacheCopy1(RELOID,
+										ObjectIdGetDatum(oldIndexId));
+	if (!HeapTupleIsValid(oldClassTuple))
+		elog(ERROR, "could not find tuple for relation %u", oldIndexId);
+	newClassTuple = SearchSysCacheCopy1(RELOID,
+										ObjectIdGetDatum(newIndexId));
+	if (!HeapTupleIsValid(newClassTuple))
+		elog(ERROR, "could not find tuple for relation %u", newIndexId);
+
+	oldClassForm = (Form_pg_class) GETSTRUCT(oldClassTuple);
+	newClassForm = (Form_pg_class) GETSTRUCT(newClassTuple);
+
+	/* Swap the names */
+	namestrcpy(&newClassForm->relname, NameStr(oldClassForm->relname));
+	namestrcpy(&oldClassForm->relname, oldName);
+
+	CatalogTupleUpdate(pg_class, &oldClassTuple->t_self, oldClassTuple);
+	CatalogTupleUpdate(pg_class, &newClassTuple->t_self, newClassTuple);
+
+	heap_freetuple(oldClassTuple);
+	heap_freetuple(newClassTuple);
+
+	/* Now swap index info */
+	pg_index = table_open(IndexRelationId, RowExclusiveLock);
+
+	oldIndexTuple = SearchSysCacheCopy1(INDEXRELID,
+										ObjectIdGetDatum(oldIndexId));
+	if (!HeapTupleIsValid(oldIndexTuple))
+		elog(ERROR, "could not find tuple for relation %u", oldIndexId);
+	newIndexTuple = SearchSysCacheCopy1(INDEXRELID,
+										ObjectIdGetDatum(newIndexId));
+	if (!HeapTupleIsValid(newIndexTuple))
+		elog(ERROR, "could not find tuple for relation %u", newIndexId);
+
+	oldIndexForm = (Form_pg_index) GETSTRUCT(oldIndexTuple);
+	newIndexForm = (Form_pg_index) GETSTRUCT(newIndexTuple);
+
+	/*
+	 * Copy constraint flags from the old index. This is safe because the old
+	 * index guaranteed uniqueness.
+	 */
+	newIndexForm->indisprimary = oldIndexForm->indisprimary;
+	oldIndexForm->indisprimary = false;
+	newIndexForm->indisexclusion = oldIndexForm->indisexclusion;
+	oldIndexForm->indisexclusion = false;
+	newIndexForm->indimmediate = oldIndexForm->indimmediate;
+	oldIndexForm->indimmediate = true;
+
+	/* Mark old index as valid and new as invalid as index_set_state_flags */
+	newIndexForm->indisvalid = true;
+	oldIndexForm->indisvalid = false;
+	oldIndexForm->indisclustered = false;
+
+	CatalogTupleUpdate(pg_index, &oldIndexTuple->t_self, oldIndexTuple);
+	CatalogTupleUpdate(pg_index, &newIndexTuple->t_self, newIndexTuple);
+
+	heap_freetuple(oldIndexTuple);
+	heap_freetuple(newIndexTuple);
+
+	/*
+	 * Move constraints and triggers over to the new index
+	 */
+
+	constraintOids = get_index_ref_constraints(oldIndexId);
+
+	indexConstraintOid = get_index_constraint(oldIndexId);
+
+	if (OidIsValid(indexConstraintOid))
+		constraintOids = lappend_oid(constraintOids, indexConstraintOid);
+
+	pg_constraint = table_open(ConstraintRelationId, RowExclusiveLock);
+	pg_trigger = table_open(TriggerRelationId, RowExclusiveLock);
+
+	foreach(lc, constraintOids)
+	{
+		HeapTuple	constraintTuple,
+					triggerTuple;
+		Form_pg_constraint conForm;
+		ScanKeyData key[1];
+		SysScanDesc scan;
+		Oid			constraintOid = lfirst_oid(lc);
+
+		/* Move the constraint from the old to the new index */
+		constraintTuple = SearchSysCacheCopy1(CONSTROID,
+											  ObjectIdGetDatum(constraintOid));
+		if (!HeapTupleIsValid(constraintTuple))
+			elog(ERROR, "could not find tuple for constraint %u", constraintOid);
+
+		conForm = ((Form_pg_constraint) GETSTRUCT(constraintTuple));
+
+		if (conForm->conindid == oldIndexId)
+		{
+			conForm->conindid = newIndexId;
+
+			CatalogTupleUpdate(pg_constraint, &constraintTuple->t_self, constraintTuple);
+		}
+
+		heap_freetuple(constraintTuple);
+
+		/* Search for trigger records */
+		ScanKeyInit(&key[0],
+					Anum_pg_trigger_tgconstraint,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(constraintOid));
+
+		scan = systable_beginscan(pg_trigger, TriggerConstraintIndexId, true,
+								  NULL, 1, key);
+
+		while (HeapTupleIsValid((triggerTuple = systable_getnext(scan))))
+		{
+			Form_pg_trigger tgForm = (Form_pg_trigger) GETSTRUCT(triggerTuple);
+
+			if (tgForm->tgconstrindid != oldIndexId)
+				continue;
+
+			/* Make a modifiable copy */
+			triggerTuple = heap_copytuple(triggerTuple);
+			tgForm = (Form_pg_trigger) GETSTRUCT(triggerTuple);
+
+			tgForm->tgconstrindid = newIndexId;
+
+			CatalogTupleUpdate(pg_trigger, &triggerTuple->t_self, triggerTuple);
+
+			heap_freetuple(triggerTuple);
+		}
+
+		systable_endscan(scan);
+	}
+
+	/*
+	 * Move comment if any
+	 */
+	{
+		Relation	description;
+		ScanKeyData skey[3];
+		SysScanDesc sd;
+		HeapTuple	tuple;
+		Datum		values[Natts_pg_description] = {0};
+		bool		nulls[Natts_pg_description] = {0};
+		bool		replaces[Natts_pg_description] = {0};
+
+		values[Anum_pg_description_objoid - 1] = ObjectIdGetDatum(newIndexId);
+		replaces[Anum_pg_description_objoid - 1] = true;
+
+		ScanKeyInit(&skey[0],
+					Anum_pg_description_objoid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(oldIndexId));
+		ScanKeyInit(&skey[1],
+					Anum_pg_description_classoid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationRelationId));
+		ScanKeyInit(&skey[2],
+					Anum_pg_description_objsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(0));
+
+		description = table_open(DescriptionRelationId, RowExclusiveLock);
+
+		sd = systable_beginscan(description, DescriptionObjIndexId, true,
+								NULL, 3, skey);
+
+		while ((tuple = systable_getnext(sd)) != NULL)
+		{
+			tuple = heap_modify_tuple(tuple, RelationGetDescr(description),
+									  values, nulls, replaces);
+			CatalogTupleUpdate(description, &tuple->t_self, tuple);
+
+			break;					/* Assume there can be only one match */
+		}
+
+		systable_endscan(sd);
+		table_close(description, NoLock);
+	}
+
+	/*
+	 * Move all dependencies on the old index to the new one
+	 */
+
+	if (OidIsValid(indexConstraintOid))
+	{
+		ObjectAddress myself,
+					referenced;
+
+		/* Change to having the new index depend on the constraint */
+		deleteDependencyRecordsForClass(RelationRelationId, oldIndexId,
+										ConstraintRelationId, DEPENDENCY_INTERNAL);
+
+		myself.classId = RelationRelationId;
+		myself.objectId = newIndexId;
+		myself.objectSubId = 0;
+
+		referenced.classId = ConstraintRelationId;
+		referenced.objectId = indexConstraintOid;
+		referenced.objectSubId = 0;
+
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+	}
+
+	changeDependenciesOn(RelationRelationId, oldIndexId, newIndexId);
+
+	/*
+	 * Copy over statistics from old to new index
+	 */
+	{
+		PgStat_StatTabEntry *tabentry;
+
+		tabentry = pgstat_fetch_stat_tabentry(oldIndexId);
+		if (tabentry)
+		{
+			if (newClassRel->pgstat_info)
+			{
+				newClassRel->pgstat_info->t_counts.t_numscans = tabentry->numscans;
+				newClassRel->pgstat_info->t_counts.t_tuples_returned = tabentry->tuples_returned;
+				newClassRel->pgstat_info->t_counts.t_tuples_fetched = tabentry->tuples_fetched;
+				newClassRel->pgstat_info->t_counts.t_blocks_fetched = tabentry->blocks_fetched;
+				newClassRel->pgstat_info->t_counts.t_blocks_hit = tabentry->blocks_hit;
+				/* The data will be sent by the next pgstat_report_stat() call. */
+			}
+		}
+	}
+
+	/* Close relations */
+	table_close(pg_class, RowExclusiveLock);
+	table_close(pg_index, RowExclusiveLock);
+	table_close(pg_constraint, RowExclusiveLock);
+	table_close(pg_trigger, RowExclusiveLock);
+
+	/* The lock taken previously is not released until the end of transaction */
+	relation_close(oldClassRel, NoLock);
+	relation_close(newClassRel, NoLock);
+}
+
+/*
+ * index_concurrently_set_dead
+ *
+ * Perform the last invalidation stage of DROP INDEX CONCURRENTLY or REINDEX
+ * CONCURRENTLY before actually dropping the index.  After calling this
+ * function, the index is seen by all the backends as dead.  Low-level locks
+ * taken here are kept until the end of the transaction calling this function.
+ */
+void
+index_concurrently_set_dead(Oid heapId, Oid indexId)
+{
+	Relation	userHeapRelation;
+	Relation	userIndexRelation;
+
+	/*
+	 * No more predicate locks will be acquired on this index, and we're
+	 * about to stop doing inserts into the index which could show
+	 * conflicts with existing predicate locks, so now is the time to move
+	 * them to the heap relation.
+	 */
+	userHeapRelation = table_open(heapId, ShareUpdateExclusiveLock);
+	userIndexRelation = index_open(indexId, ShareUpdateExclusiveLock);
+	TransferPredicateLocksToHeapRelation(userIndexRelation);
+
+	/*
+	 * Now we are sure that nobody uses the index for queries; they just
+	 * might have it open for updating it.  So now we can unset indisready
+	 * and indislive, then wait till nobody could be using it at all
+	 * anymore.
+	 */
+	index_set_state_flags(indexId, INDEX_DROP_SET_DEAD);
+
+	/*
+	 * Invalidate the relcache for the table, so that after this commit
+	 * all sessions will refresh the table's index list.  Forgetting just
+	 * the index's relcache entry is not enough.
+	 */
+	CacheInvalidateRelcache(userHeapRelation);
+
+	/*
+	 * Close the relations again, though still holding session lock.
+	 */
+	table_close(userHeapRelation, NoLock);
+	index_close(userIndexRelation, NoLock);
+}
+
+/*
  * index_constraint_create
  *
  * Set up a constraint associated with an index.  Return the new constraint's
@@ -1438,9 +1895,14 @@ index_constraint_create(Relation heapRelation,
  *
  * NOTE: this routine should now only be called through performDeletion(),
  * else associated dependencies won't be cleaned up.
+ *
+ * If concurrent is true, do a DROP INDEX CONCURRENTLY.  If concurrent is
+ * false but concurrent_lock_mode is true, then do a normal DROP INDEX but
+ * take a lock for CONCURRENTLY processing.  That is used as part of REINDEX
+ * CONCURRENTLY.
  */
 void
-index_drop(Oid indexId, bool concurrent)
+index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 {
 	Oid			heapId;
 	Relation	userHeapRelation;
@@ -1472,7 +1934,7 @@ index_drop(Oid indexId, bool concurrent)
 	 * using it.)
 	 */
 	heapId = IndexGetRelation(indexId, false);
-	lockmode = concurrent ? ShareUpdateExclusiveLock : AccessExclusiveLock;
+	lockmode = (concurrent || concurrent_lock_mode) ? ShareUpdateExclusiveLock : AccessExclusiveLock;
 	userHeapRelation = table_open(heapId, lockmode);
 	userIndexRelation = index_open(indexId, lockmode);
 
@@ -1587,36 +2049,8 @@ index_drop(Oid indexId, bool concurrent)
 		 */
 		WaitForLockers(heaplocktag, AccessExclusiveLock);
 
-		/*
-		 * No more predicate locks will be acquired on this index, and we're
-		 * about to stop doing inserts into the index which could show
-		 * conflicts with existing predicate locks, so now is the time to move
-		 * them to the heap relation.
-		 */
-		userHeapRelation = table_open(heapId, ShareUpdateExclusiveLock);
-		userIndexRelation = index_open(indexId, ShareUpdateExclusiveLock);
-		TransferPredicateLocksToHeapRelation(userIndexRelation);
-
-		/*
-		 * Now we are sure that nobody uses the index for queries; they just
-		 * might have it open for updating it.  So now we can unset indisready
-		 * and indislive, then wait till nobody could be using it at all
-		 * anymore.
-		 */
-		index_set_state_flags(indexId, INDEX_DROP_SET_DEAD);
-
-		/*
-		 * Invalidate the relcache for the table, so that after this commit
-		 * all sessions will refresh the table's index list.  Forgetting just
-		 * the index's relcache entry is not enough.
-		 */
-		CacheInvalidateRelcache(userHeapRelation);
-
-		/*
-		 * Close the relations again, though still holding session lock.
-		 */
-		table_close(userHeapRelation, NoLock);
-		index_close(userIndexRelation, NoLock);
+		/* Finish invalidation of index and mark it as dead */
+		index_concurrently_set_dead(heapId, indexId);
 
 		/*
 		 * Again, commit the transaction to make the pg_index update visible

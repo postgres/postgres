@@ -3305,6 +3305,7 @@ typedef struct ReindexStmt
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	int			options;		/* Reindex options flags */
+	bool		concurrent;		/* reindex concurrently? */
 } ReindexStmt;
 
 /* ----------------------

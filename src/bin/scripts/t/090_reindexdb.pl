@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 23;
+use Test::More tests => 34;
 
 program_help_ok('reindexdb');
 program_version_ok('reindexdb');
@@ -43,6 +43,33 @@ $node->issues_sql_like(
 	qr/statement: REINDEX \(VERBOSE\) TABLE public\.test1;/,
 	'reindex with verbose output');
 
+# the same with --concurrently
+$node->issues_sql_like(
+	[ 'reindexdb', '--concurrently', 'postgres' ],
+	qr/statement: REINDEX DATABASE CONCURRENTLY postgres;/,
+	'SQL REINDEX CONCURRENTLY run');
+
+$node->issues_sql_like(
+	[ 'reindexdb', '--concurrently', '-t', 'test1', 'postgres' ],
+	qr/statement: REINDEX TABLE CONCURRENTLY public\.test1;/,
+	'reindex specific table concurrently');
+$node->issues_sql_like(
+	[ 'reindexdb', '--concurrently', '-i', 'test1x', 'postgres' ],
+	qr/statement: REINDEX INDEX CONCURRENTLY public\.test1x;/,
+	'reindex specific index concurrently');
+$node->issues_sql_like(
+	[ 'reindexdb', '--concurrently', '-S', 'public', 'postgres' ],
+	qr/statement: REINDEX SCHEMA CONCURRENTLY public;/,
+	'reindex specific schema concurrently');
+$node->command_fails(
+	[ 'reindexdb', '--concurrently', '-s', 'postgres' ],
+	'reindex system tables concurrently');
+$node->issues_sql_like(
+	[ 'reindexdb', '-v', '-t', 'test1', 'postgres' ],
+	qr/statement: REINDEX \(VERBOSE\) TABLE public\.test1;/,
+	'reindex with verbose output');
+
+# connection strings
 $node->command_ok([qw(reindexdb --echo --table=pg_am dbname=template1)],
 	'reindexdb table with connection string');
 $node->command_ok(

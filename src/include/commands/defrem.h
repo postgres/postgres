@@ -34,10 +34,10 @@ extern ObjectAddress DefineIndex(Oid relationId,
 			bool check_not_in_use,
 			bool skip_build,
 			bool quiet);
-extern void ReindexIndex(RangeVar *indexRelation, int options);
-extern Oid	ReindexTable(RangeVar *relation, int options);
+extern void ReindexIndex(RangeVar *indexRelation, int options, bool concurrent);
+extern Oid	ReindexTable(RangeVar *relation, int options, bool concurrent);
 extern void ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
-					  int options);
+					  int options, bool concurrent);
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,

@@ -306,6 +306,10 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
  * PERFORM_DELETION_SKIP_EXTENSIONS: do not delete extensions, even when
  * deleting objects that are part of an extension.  This should generally
  * be used only when dropping temporary objects.
+ *
+ * PERFORM_DELETION_CONCURRENT_LOCK: perform the drop normally but with a lock
+ * as if it were concurrent.  This is used by REINDEX CONCURRENTLY.
+ *
  */
 void
 performDeletion(const ObjectAddress *object,
@@ -1316,9 +1320,10 @@ doDeletion(const ObjectAddress *object, int flags)
 					relKind == RELKIND_PARTITIONED_INDEX)
 				{
 					bool		concurrent = ((flags & PERFORM_DELETION_CONCURRENTLY) != 0);
+					bool		concurrent_lock_mode = ((flags & PERFORM_DELETION_CONCURRENT_LOCK) != 0);
 
 					Assert(object->objectSubId == 0);
-					index_drop(object->objectId, concurrent);
+					index_drop(object->objectId, concurrent, concurrent_lock_mode);
 				}
 				else
 				{

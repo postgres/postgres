@@ -844,6 +844,7 @@ CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
   <simplelist type="inline">
    <member><xref linkend="sql-alterindex"/></member>
    <member><xref linkend="sql-dropindex"/></member>
+   <member><xref linkend="sql-reindex"/></member>
   </simplelist>
  </refsect1>
 </refentry>

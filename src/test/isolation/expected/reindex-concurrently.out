@@ -1,0 +1,78 @@
+Parsed test spec with 3 sessions
+
+starting permutation: reindex sel1 upd2 ins2 del2 end1 end2
+step reindex: REINDEX TABLE CONCURRENTLY reind_con_tab;
+step sel1: SELECT data FROM reind_con_tab WHERE id = 3;
+data           
+
+aaaa           
+step upd2: UPDATE reind_con_tab SET data = 'bbbb' WHERE id = 3;
+step ins2: INSERT INTO reind_con_tab(data) VALUES ('cccc');
+step del2: DELETE FROM reind_con_tab WHERE data = 'cccc';
+step end1: COMMIT;
+step end2: COMMIT;
+
+starting permutation: sel1 reindex upd2 ins2 del2 end1 end2
+step sel1: SELECT data FROM reind_con_tab WHERE id = 3;
+data           
+
+aaaa           
+step reindex: REINDEX TABLE CONCURRENTLY reind_con_tab; <waiting ...>
+step upd2: UPDATE reind_con_tab SET data = 'bbbb' WHERE id = 3;
+step ins2: INSERT INTO reind_con_tab(data) VALUES ('cccc');
+step del2: DELETE FROM reind_con_tab WHERE data = 'cccc';
+step end1: COMMIT;
+step end2: COMMIT;
+step reindex: <... completed>
+
+starting permutation: sel1 upd2 reindex ins2 del2 end1 end2
+step sel1: SELECT data FROM reind_con_tab WHERE id = 3;
+data           
+
+aaaa           
+step upd2: UPDATE reind_con_tab SET data = 'bbbb' WHERE id = 3;
+step reindex: REINDEX TABLE CONCURRENTLY reind_con_tab; <waiting ...>
+step ins2: INSERT INTO reind_con_tab(data) VALUES ('cccc');
+step del2: DELETE FROM reind_con_tab WHERE data = 'cccc';
+step end1: COMMIT;
+step end2: COMMIT;
+step reindex: <... completed>
+
+starting permutation: sel1 upd2 ins2 reindex del2 end1 end2
+step sel1: SELECT data FROM reind_con_tab WHERE id = 3;
+data           
+
+aaaa           
+step upd2: UPDATE reind_con_tab SET data = 'bbbb' WHERE id = 3;
+step ins2: INSERT INTO reind_con_tab(data) VALUES ('cccc');
+step reindex: REINDEX TABLE CONCURRENTLY reind_con_tab; <waiting ...>
+step del2: DELETE FROM reind_con_tab WHERE data = 'cccc';
+step end1: COMMIT;
+step end2: COMMIT;
+step reindex: <... completed>
+
+starting permutation: sel1 upd2 ins2 del2 reindex end1 end2
+step sel1: SELECT data FROM reind_con_tab WHERE id = 3;
+data           
+
+aaaa           
+step upd2: UPDATE reind_con_tab SET data = 'bbbb' WHERE id = 3;
+step ins2: INSERT INTO reind_con_tab(data) VALUES ('cccc');
+step del2: DELETE FROM reind_con_tab WHERE data = 'cccc';
+step reindex: REINDEX TABLE CONCURRENTLY reind_con_tab; <waiting ...>
+step end1: COMMIT;
+step end2: COMMIT;
+step reindex: <... completed>
+
+starting permutation: sel1 upd2 ins2 del2 end1 reindex end2
+step sel1: SELECT data FROM reind_con_tab WHERE id = 3;
+data           
+
+aaaa           
+step upd2: UPDATE reind_con_tab SET data = 'bbbb' WHERE id = 3;
+step ins2: INSERT INTO reind_con_tab(data) VALUES ('cccc');
+step del2: DELETE FROM reind_con_tab WHERE data = 'cccc';
+step end1: COMMIT;
+step reindex: REINDEX TABLE CONCURRENTLY reind_con_tab; <waiting ...>
+step end2: COMMIT;
+step reindex: <... completed>

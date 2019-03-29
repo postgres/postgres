@@ -926,6 +926,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
          <command>ANALYZE</command>, <command>CREATE INDEX CONCURRENTLY</command>,
+         <command>REINDEX CONCURRENTLY</command>,
          <command>CREATE STATISTICS</command>, and certain <command>ALTER
          INDEX</command> and <command>ALTER TABLE</command> variants (for full
          details see <xref linkend="sql-alterindex"/> and <xref

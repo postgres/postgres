@@ -1299,6 +1299,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	bool		is_partition;
 	Form_pg_class classform;
 	LOCKMODE	heap_lockmode;
+	bool		invalid_system_index = false;
 
 	state = (struct DropRelationCallbackState *) arg;
 	relkind = state->relkind;
@@ -1361,7 +1362,36 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relOid)),
 					   rel->relname);
 
-	if (!allowSystemTableMods && IsSystemClass(relOid, classform))
+	/*
+	 * Check the case of a system index that might have been invalidated by a
+	 * failed concurrent process and allow its drop. For the time being, this
+	 * only concerns indexes of toast relations that became invalid during a
+	 * REINDEX CONCURRENTLY process.
+	 */
+	if (IsSystemClass(relOid, classform) && relkind == RELKIND_INDEX)
+	{
+		HeapTuple		locTuple;
+		Form_pg_index	indexform;
+		bool			indisvalid;
+
+		locTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(relOid));
+		if (!HeapTupleIsValid(locTuple))
+		{
+			ReleaseSysCache(tuple);
+			return;
+		}
+
+		indexform = (Form_pg_index) GETSTRUCT(locTuple);
+		indisvalid = indexform->indisvalid;
+		ReleaseSysCache(locTuple);
+
+		/* Mark object as being an invalid index of system catalogs */
+		if (!indisvalid)
+			invalid_system_index = true;
+	}
+
+	/* In the case of an invalid index, it is fine to bypass this check */
+	if (!invalid_system_index && !allowSystemTableMods && IsSystemClass(relOid, classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",

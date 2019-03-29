@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replaceable class="parameter">name</replaceable>
+REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -68,7 +68,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
       An index build with the <literal>CONCURRENTLY</literal> option failed, leaving
       an <quote>invalid</quote> index. Such indexes are useless but it can be
       convenient to use <command>REINDEX</command> to rebuild them. Note that
-      <command>REINDEX</command> will not perform a concurrent build. To build the
+      <command>REINDEX</command> will not perform a concurrent build on an invalid index. To build the
       index without interfering with production you should drop the index and
       reissue the <command>CREATE INDEX CONCURRENTLY</command> command.
      </para>
@@ -147,6 +147,21 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
       Presently, <command>REINDEX DATABASE</command> and <command>REINDEX SYSTEM</command>
       can only reindex the current database, so their parameter must match
       the current database's name.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONCURRENTLY</literal></term>
+    <listitem>
+     <para>
+      When this option is used, <productname>PostgreSQL</productname> will rebuild the
+      index without taking any locks that prevent concurrent inserts,
+      updates, or deletes on the table; whereas a standard reindex build
+      locks out writes (but not reads) on the table until it's done.
+      There are several caveats to be aware of when using this option
+      &mdash; see <xref linkend="sql-reindex-concurrently"
+      endterm="sql-reindex-concurrently-title"/>.
      </para>
     </listitem>
    </varlistentry>
@@ -241,6 +256,159 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
    Each individual partition can be reindexed separately instead.
   </para>
 
+  <refsect2 id="sql-reindex-concurrently">
+   <title id="sql-reindex-concurrently-title">Rebuilding Indexes Concurrently</title>
+
+   <indexterm zone="sql-reindex-concurrently">
+    <primary>index</primary>
+    <secondary>rebuilding concurrently</secondary>
+   </indexterm>
+
+   <para>
+    Rebuilding an index can interfere with regular operation of a database.
+    Normally <productname>PostgreSQL</productname> locks the table whose index is rebuilt
+    against writes and performs the entire index build with a single scan of the
+    table. Other transactions can still read the table, but if they try to
+    insert, update, or delete rows in the table they will block until the
+    index rebuild is finished. This could have a severe effect if the system is
+    a live production database. Very large tables can take many hours to be
+    indexed, and even for smaller tables, an index rebuild can lock out writers
+    for periods that are unacceptably long for a production system.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> supports rebuilding indexes with minimum locking
+    of writes.  This method is invoked by specifying the
+    <literal>CONCURRENTLY</literal> option of <command>REINDEX</command>. When this option
+    is used, <productname>PostgreSQL</productname> must perform two scans of the table
+    for each index that needs to be rebuild and in addition it must wait for
+    all existing transactions that could potentially use the index to
+    terminate. This method requires more total work than a standard index
+    rebuild and takes significantly longer to complete as it needs to wait
+    for unfinished transactions that might modify the index. However, since
+    it allows normal operations to continue while the index is rebuilt, this
+    method is useful for rebuilding indexes in a production environment. Of
+    course, the extra CPU, memory and I/O load imposed by the index rebuild
+    may slow down other operations.
+   </para>
+
+   <para>
+    The following steps occur in a concurrent reindex.  Each step is run in a
+    separate transaction.  If there are multiple indexes to be rebuilt, then
+    each step loops through all the indexes before moving to the next step.
+
+    <orderedlist>
+     <listitem>
+      <para>
+       A new temporary index definition is added into the catalog
+       <literal>pg_index</literal>.  This definition will be used to replace
+       the old index.  A <literal>SHARE UPDATE EXCLUSIVE</literal> lock at
+       session level is taken on the indexes being reindexed as well as its
+       associated table to prevent any schema modification while processing.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       A first pass to build the index is done for each new index.  Once the
+       index is built, its flag <literal>pg_index.indisready</literal> is
+       switched to <quote>true</quote> to make ready for inserts, making it
+       visible to other sessions once the transaction that performed the build
+       is finished.  This step is done in a separate transaction for each
+       index.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Then a second pass is performed to add tuples that were added while the
+       first pass build was running.  This step is also done in a separate
+       transaction for each index.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       All the constraints that refer to the index are changed to refer to the
+       new index definition, and the names of the indexes are changed.  At
+       this point <literal>pg_index.indisvalid</literal> is switched to
+       <quote>true</quote> for the new index and to <quote>false</quote> for
+       the old, and a cache invalidation is done so as all the sessions that
+       referenced the old index are invalidated.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The old indexes have <literal>pg_index.indisready</literal> switched to
+       <quote>false</quote> to prevent any new tuple insertions, after waiting
+       for running queries that might reference the old index to complete.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The old indexes are dropped.  The <literal>SHARE UPDATE
+       EXCLUSIVE</literal> session locks for the indexes and the table ar
+       released.
+      </para>
+     </listitem>
+    </orderedlist>
+   </para>
+
+   <para>
+    If a problem arises while rebuilding the indexes, such as a
+    uniqueness violation in a unique index, the <command>REINDEX</command>
+    command will fail but leave behind an <quote>invalid</quote> new index on top
+    of the existing one. This index will be ignored for querying purposes
+    because it might be incomplete; however it will still consume update
+    overhead. The <application>psql</application> <command>\d</command> command will report
+    such an index as <literal>INVALID</literal>:
+
+<programlisting>
+postgres=# \d tab
+       Table "public.tab"
+ Column |  Type   | Modifiers
+--------+---------+-----------
+ col    | integer |
+Indexes:
+    "idx" btree (col)
+    "idx_ccnew" btree (col) INVALID
+</programlisting>
+
+    The recommended recovery method in such cases is to drop the invalid index
+    and try again to perform <command>REINDEX CONCURRENTLY</command>.  The
+    concurrent index created during the processing has a name ending in the
+    suffix <literal>ccnew</literal>, or <literal>ccold</literal> if it is an
+    old index definition which we failed to drop. Invalid indexes can be
+    dropped using <literal>DROP INDEX</literal>, including invalid toast
+    indexes.
+   </para>
+
+   <para>
+    Regular index builds permit other regular index builds on the same table
+    to occur in parallel, but only one concurrent index build can occur on a
+    table at a time. In both cases, no other types of schema modification on
+    the table are allowed meanwhile.  Another difference is that a regular
+    <command>REINDEX TABLE</command> or <command>REINDEX INDEX</command>
+    command can be performed within a transaction block, but <command>REINDEX
+    CONCURRENTLY</command> cannot.
+   </para>
+
+   <para>
+    <command>REINDEX SYSTEM</command> does not support
+    <command>CONCURRENTLY</command> since system catalogs cannot be reindexed
+    concurrently.
+   </para>
+
+   <para>
+    Furthermore, indexes for exclusion constraints cannot be reindexed
+    concurrently.  If such an index is named directly in this command, an
+    error is raised.  If a table or database with exclusion constraint indexes
+    is reindexed concurrently, those indexes will be skipped.  (It is possible
+    to reindex such indexes without the concurrently option.)
+   </para>
+  </refsect2>
  </refsect1>
 
  <refsect1>
@@ -273,6 +441,14 @@ $ <userinput>psql broken_db</userinput>
 broken_db=&gt; REINDEX DATABASE broken_db;
 broken_db=&gt; \q
 </programlisting></para>
+
+  <para>
+   Rebuild a table while authorizing read and write operations on involved
+   relations when performed:
+
+<programlisting>
+REINDEX TABLE CONCURRENTLY my_broken_table;
+</programlisting></para>
  </refsect1>
 
  <refsect1>
@@ -281,5 +457,15 @@ broken_db=&gt; \q
   <para>
    There is no <command>REINDEX</command> command in the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createindex"/></member>
+   <member><xref linkend="sql-dropindex"/></member>
+   <member><xref linkend="app-reindexdb"/></member>
+  </simplelist>
  </refsect1>
 </refentry>
