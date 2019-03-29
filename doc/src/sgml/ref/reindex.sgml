@@ -300,11 +300,11 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
     <orderedlist>
      <listitem>
       <para>
-       A new temporary index definition is added into the catalog
+       A new temporary index definition is added to the catalog
        <literal>pg_index</literal>.  This definition will be used to replace
        the old index.  A <literal>SHARE UPDATE EXCLUSIVE</literal> lock at
-       session level is taken on the indexes being reindexed as well as its
-       associated table to prevent any schema modification while processing.
+       session level is taken on the indexes being reindexed as well as their
+       associated tables to prevent any schema modification while processing.
       </para>
      </listitem>
 
@@ -312,7 +312,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
       <para>
        A first pass to build the index is done for each new index.  Once the
        index is built, its flag <literal>pg_index.indisready</literal> is
-       switched to <quote>true</quote> to make ready for inserts, making it
+       switched to <quote>true</quote> to make it ready for inserts, making it
        visible to other sessions once the transaction that performed the build
        is finished.  This step is done in a separate transaction for each
        index.
@@ -322,7 +322,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
      <listitem>
       <para>
        Then a second pass is performed to add tuples that were added while the
-       first pass build was running.  This step is also done in a separate
+       first pass was running.  This step is also done in a separate
        transaction for each index.
       </para>
      </listitem>
@@ -331,10 +331,10 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
       <para>
        All the constraints that refer to the index are changed to refer to the
        new index definition, and the names of the indexes are changed.  At
-       this point <literal>pg_index.indisvalid</literal> is switched to
+       this point, <literal>pg_index.indisvalid</literal> is switched to
        <quote>true</quote> for the new index and to <quote>false</quote> for
-       the old, and a cache invalidation is done so as all the sessions that
-       referenced the old index are invalidated.
+       the old, and a cache invalidation is done causing all sessions that
+       referenced the old index to be invalidated.
       </para>
      </listitem>
 
@@ -359,8 +359,8 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
    <para>
     If a problem arises while rebuilding the indexes, such as a
     uniqueness violation in a unique index, the <command>REINDEX</command>
-    command will fail but leave behind an <quote>invalid</quote> new index on top
-    of the existing one. This index will be ignored for querying purposes
+    command will fail but leave behind an <quote>invalid</quote> new index in addition to
+    the pre-existing one. This index will be ignored for querying purposes
     because it might be incomplete; however it will still consume update
     overhead. The <application>psql</application> <command>\d</command> command will report
     such an index as <literal>INVALID</literal>:
@@ -387,7 +387,7 @@ Indexes:
 
    <para>
     Regular index builds permit other regular index builds on the same table
-    to occur in parallel, but only one concurrent index build can occur on a
+    to occur simultaneously, but only one concurrent index build can occur on a
     table at a time. In both cases, no other types of schema modification on
     the table are allowed meanwhile.  Another difference is that a regular
     <command>REINDEX TABLE</command> or <command>REINDEX INDEX</command>
@@ -406,7 +406,7 @@ Indexes:
     concurrently.  If such an index is named directly in this command, an
     error is raised.  If a table or database with exclusion constraint indexes
     is reindexed concurrently, those indexes will be skipped.  (It is possible
-    to reindex such indexes without the concurrently option.)
+    to reindex such indexes without the <command>CONCURRENTLY</command> option.)
    </para>
   </refsect2>
  </refsect1>
