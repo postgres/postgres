@@ -948,13 +948,26 @@ SELECT * FROM pg_stop_backup(false, true);
    </sect3>
    <sect3 id="backup-lowlevel-base-backup-exclusive">
     <title>Making an exclusive low level backup</title>
+
+    <note>
+     <para>
+      The exclusive backup method is deprecated and should be avoided.
+      Prior to <productname>PostgreSQL</productname> 9.6, this was the only
+      low-level method available, but it is now recommended that all users
+      upgrade their scripts to use non-exclusive backups.
+     </para>
+    </note>
+
     <para>
      The process for an exclusive backup is mostly the same as for a
-     non-exclusive one, but it differs in a few key steps. This type of backup
-     can only be taken on a primary and does not allow concurrent backups.
-     Prior to <productname>PostgreSQL</productname> 9.6, this
-     was the only low-level method available, but it is now recommended that
-     all users upgrade their scripts to use non-exclusive backups if possible.
+     non-exclusive one, but it differs in a few key steps. This type of
+     backup can only be taken on a primary and does not allow concurrent
+     backups.  Moreover, because it writes a backup_label file on the
+     master, it can cause the master to fail to restart automatically after
+     a crash.  On the other hand, the erroneous removal of a backup_label
+     file from a backup or standby is a common mistake which can can result
+     in serious data corruption.  If it is necessary to use this method,
+     the following steps may be used.
     </para>
     <para>
   <orderedlist>
@@ -1011,9 +1024,17 @@ SELECT pg_start_backup('label', true);
      consider during this backup.
     </para>
     <para>
-      Note that if the server crashes during the backup it may not be
-      possible to restart until the <literal>backup_label</literal> file has been
-      manually deleted from the <envar>PGDATA</envar> directory.
+     As noted above, if the server crashes during the backup it may not be
+     possible to restart until the <literal>backup_label</literal> file has
+     been manually deleted from the <envar>PGDATA</envar> directory.  Note
+     that it is very important to never remove the
+     <literal>backup_label</literal> file when restoring a backup, because
+     this will result in corruption.  Confusion about when it is appropriate
+     to remove this file is a common cause of data corruption when using this
+     method; be very certain that you remove the file only on an existing
+     master and never when building a standby or restoring a backup, even if
+     you are building a standby that will subsequently be promoted to a new
+     master.
     </para>
    </listitem>
    <listitem>
@@ -1045,11 +1066,16 @@ SELECT pg_stop_backup();
      If the archive process has fallen behind
      because of failures of the archive command, it will keep retrying
      until the archive succeeds and the backup is complete.
-     If you wish to place a time limit on the execution of
-     <function>pg_stop_backup</function>, set an appropriate
-     <varname>statement_timeout</varname> value, but make note that if
-     <function>pg_stop_backup</function> terminates because of this your backup
-     may not be valid.
+    </para>
+
+    <para>
+     When using exclusive backup mode, it is absolutely imperative to ensure
+     that <function>pg_stop_backup</function> completes successfully at the
+     end of the backup.  Even if the backup itself fails, for example due to
+     lack of disk space, failure to call <function>pg_stop_backup</function>
+     will leave the server in backup mode indefinitely, causing future backups
+     to fail and increasing the risk of a restart failure during the time that
+     <literal>backup_label</literal> exists.
     </para>
    </listitem>
   </orderedlist>
