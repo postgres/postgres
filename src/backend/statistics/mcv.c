@@ -740,7 +740,6 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 			ITEM_INDEXES(item)[dim] = (uint16) (value - values[dim]);
 
 			/* check the index is within expected bounds */
-			Assert(ITEM_INDEXES(item)[dim] >= 0);
 			Assert(ITEM_INDEXES(item)[dim] < info[dim].nvalues);
 		}
 
@@ -814,7 +813,7 @@ statext_mcv_deserialize(bytea *data)
 	 * header.
 	 */
 	if (VARSIZE_ANY_EXHDR(data) < offsetof(MCVList, items))
-		elog(ERROR, "invalid MCV size %ld (expected at least %zu)",
+		elog(ERROR, "invalid MCV size %zd (expected at least %zu)",
 			 VARSIZE_ANY_EXHDR(data), offsetof(MCVList, items));
 
 	/* read the MCV list header */
@@ -870,7 +869,7 @@ statext_mcv_deserialize(bytea *data)
 	 * to do this check first, before accessing the dimension info.
 	 */
 	if (VARSIZE_ANY_EXHDR(data) < expected_size)
-		elog(ERROR, "invalid MCV size %ld (expected %zu)",
+		elog(ERROR, "invalid MCV size %zd (expected %zu)",
 			 VARSIZE_ANY_EXHDR(data), expected_size);
 
 	/* Now it's safe to access the dimension info. */
@@ -896,7 +895,7 @@ statext_mcv_deserialize(bytea *data)
 	 * check on size.
 	 */
 	if (VARSIZE_ANY_EXHDR(data) != expected_size)
-		elog(ERROR, "invalid MCV size %ld (expected %zu)",
+		elog(ERROR, "invalid MCV size %zd (expected %zu)",
 			 VARSIZE_ANY_EXHDR(data), expected_size);
 
 	/*
