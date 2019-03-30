@@ -17,11 +17,11 @@
 #include <math.h>
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/relation.h"
 #include "access/sysattr.h"
 #include "access/table.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
 #include "access/tuptoaster.h"
@@ -1014,6 +1014,8 @@ acquire_sample_rows(Relation onerel, int elevel,
 	TransactionId OldestXmin;
 	BlockSamplerData bs;
 	ReservoirStateData rstate;
+	TupleTableSlot *slot;
+	TableScanDesc scan;
 
 	Assert(targrows > 0);
 
@@ -1027,192 +1029,67 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/* Prepare for sampling rows */
 	reservoir_init_selection_state(&rstate, targrows);
 
+	scan = table_beginscan_analyze(onerel);
+	slot = table_slot_create(onerel, NULL);
+
 	/* Outer loop over blocks to sample */
 	while (BlockSampler_HasMore(&bs))
 	{
 		BlockNumber targblock = BlockSampler_Next(&bs);
-		Buffer		targbuffer;
-		Page		targpage;
-		OffsetNumber targoffset,
-					maxoffset;
 
 		vacuum_delay_point();
 
-		/*
-		 * We must maintain a pin on the target page's buffer to ensure that
-		 * the maxoffset value stays good (else concurrent VACUUM might delete
-		 * tuples out from under us).  Hence, pin the page until we are done
-		 * looking at it.  We also choose to hold sharelock on the buffer
-		 * throughout --- we could release and re-acquire sharelock for each
-		 * tuple, but since we aren't doing much work per tuple, the extra
-		 * lock traffic is probably better avoided.
-		 */
-		targbuffer = ReadBufferExtended(onerel, MAIN_FORKNUM, targblock,
-										RBM_NORMAL, vac_strategy);
-		LockBuffer(targbuffer, BUFFER_LOCK_SHARE);
-		targpage = BufferGetPage(targbuffer);
-		maxoffset = PageGetMaxOffsetNumber(targpage);
+		if (!table_scan_analyze_next_block(scan, targblock, vac_strategy))
+			continue;
 
-		/* Inner loop over all tuples on the selected page */
-		for (targoffset = FirstOffsetNumber; targoffset <= maxoffset; targoffset++)
+		while (table_scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
 		{
-			ItemId		itemid;
-			HeapTupleData targtuple;
-			bool		sample_it = false;
-
-			itemid = PageGetItemId(targpage, targoffset);
-
 			/*
-			 * We ignore unused and redirect line pointers.  DEAD line
-			 * pointers should be counted as dead, because we need vacuum to
-			 * run to get rid of them.  Note that this rule agrees with the
-			 * way that heap_page_prune() counts things.
+			 * The first targrows sample rows are simply copied into the
+			 * reservoir. Then we start replacing tuples in the sample until
+			 * we reach the end of the relation.  This algorithm is from Jeff
+			 * Vitter's paper (see full citation below). It works by
+			 * repeatedly computing the number of tuples to skip before
+			 * selecting a tuple, which replaces a randomly chosen element of
+			 * the reservoir (current set of tuples).  At all times the
+			 * reservoir is a true random sample of the tuples we've passed
+			 * over so far, so when we fall off the end of the relation we're
+			 * done.
 			 */
-			if (!ItemIdIsNormal(itemid))
-			{
-				if (ItemIdIsDead(itemid))
-					deadrows += 1;
-				continue;
-			}
-
-			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
-
-			targtuple.t_tableOid = RelationGetRelid(onerel);
-			targtuple.t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
-			targtuple.t_len = ItemIdGetLength(itemid);
-
-			switch (HeapTupleSatisfiesVacuum(&targtuple,
-											 OldestXmin,
-											 targbuffer))
-			{
-				case HEAPTUPLE_LIVE:
-					sample_it = true;
-					liverows += 1;
-					break;
-
-				case HEAPTUPLE_DEAD:
-				case HEAPTUPLE_RECENTLY_DEAD:
-					/* Count dead and recently-dead rows */
-					deadrows += 1;
-					break;
-
-				case HEAPTUPLE_INSERT_IN_PROGRESS:
-
-					/*
-					 * Insert-in-progress rows are not counted.  We assume
-					 * that when the inserting transaction commits or aborts,
-					 * it will send a stats message to increment the proper
-					 * count.  This works right only if that transaction ends
-					 * after we finish analyzing the table; if things happen
-					 * in the other order, its stats update will be
-					 * overwritten by ours.  However, the error will be large
-					 * only if the other transaction runs long enough to
-					 * insert many tuples, so assuming it will finish after us
-					 * is the safer option.
-					 *
-					 * A special case is that the inserting transaction might
-					 * be our own.  In this case we should count and sample
-					 * the row, to accommodate users who load a table and
-					 * analyze it in one transaction.  (pgstat_report_analyze
-					 * has to adjust the numbers we send to the stats
-					 * collector to make this come out right.)
-					 */
-					if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(targtuple.t_data)))
-					{
-						sample_it = true;
-						liverows += 1;
-					}
-					break;
-
-				case HEAPTUPLE_DELETE_IN_PROGRESS:
-
-					/*
-					 * We count and sample delete-in-progress rows the same as
-					 * live ones, so that the stats counters come out right if
-					 * the deleting transaction commits after us, per the same
-					 * reasoning given above.
-					 *
-					 * If the delete was done by our own transaction, however,
-					 * we must count the row as dead to make
-					 * pgstat_report_analyze's stats adjustments come out
-					 * right.  (Note: this works out properly when the row was
-					 * both inserted and deleted in our xact.)
-					 *
-					 * The net effect of these choices is that we act as
-					 * though an IN_PROGRESS transaction hasn't happened yet,
-					 * except if it is our own transaction, which we assume
-					 * has happened.
-					 *
-					 * This approach ensures that we behave sanely if we see
-					 * both the pre-image and post-image rows for a row being
-					 * updated by a concurrent transaction: we will sample the
-					 * pre-image but not the post-image.  We also get sane
-					 * results if the concurrent transaction never commits.
-					 */
-					if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(targtuple.t_data)))
-						deadrows += 1;
-					else
-					{
-						sample_it = true;
-						liverows += 1;
-					}
-					break;
-
-				default:
-					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
-					break;
-			}
-
-			if (sample_it)
+			if (numrows < targrows)
+				rows[numrows++] = ExecCopySlotHeapTuple(slot);
+			else
 			{
 				/*
-				 * The first targrows sample rows are simply copied into the
-				 * reservoir. Then we start replacing tuples in the sample
-				 * until we reach the end of the relation.  This algorithm is
-				 * from Jeff Vitter's paper (see full citation below). It
-				 * works by repeatedly computing the number of tuples to skip
-				 * before selecting a tuple, which replaces a randomly chosen
-				 * element of the reservoir (current set of tuples).  At all
-				 * times the reservoir is a true random sample of the tuples
-				 * we've passed over so far, so when we fall off the end of
-				 * the relation we're done.
+				 * t in Vitter's paper is the number of records already
+				 * processed.  If we need to compute a new S value, we must
+				 * use the not-yet-incremented value of samplerows as t.
 				 */
-				if (numrows < targrows)
-					rows[numrows++] = heap_copytuple(&targtuple);
-				else
+				if (rowstoskip < 0)
+					rowstoskip = reservoir_get_next_S(&rstate, samplerows, targrows);
+
+				if (rowstoskip <= 0)
 				{
 					/*
-					 * t in Vitter's paper is the number of records already
-					 * processed.  If we need to compute a new S value, we
-					 * must use the not-yet-incremented value of samplerows as
-					 * t.
+					 * Found a suitable tuple, so save it, replacing one old
+					 * tuple at random
 					 */
-					if (rowstoskip < 0)
-						rowstoskip = reservoir_get_next_S(&rstate, samplerows, targrows);
+					int			k = (int) (targrows * sampler_random_fract(rstate.randstate));
 
-					if (rowstoskip <= 0)
-					{
-						/*
-						 * Found a suitable tuple, so save it, replacing one
-						 * old tuple at random
-						 */
-						int			k = (int) (targrows * sampler_random_fract(rstate.randstate));
-
-						Assert(k >= 0 && k < targrows);
-						heap_freetuple(rows[k]);
-						rows[k] = heap_copytuple(&targtuple);
-					}
-
-					rowstoskip -= 1;
+					Assert(k >= 0 && k < targrows);
+					heap_freetuple(rows[k]);
+					rows[k] = ExecCopySlotHeapTuple(slot);
 				}
 
-				samplerows += 1;
+				rowstoskip -= 1;
 			}
-		}
 
-		/* Now release the lock and pin on the page */
-		UnlockReleaseBuffer(targbuffer);
+			samplerows += 1;
+		}
 	}
+
+	ExecDropSingleTupleTableSlot(slot);
+	table_endscan(scan);
 
 	/*
 	 * If we didn't find as many tuples as we wanted then we're done. No sort

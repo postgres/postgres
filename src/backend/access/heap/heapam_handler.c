@@ -921,6 +921,173 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	pfree(isnull);
 }
 
+static bool
+heapam_scan_analyze_next_block(TableScanDesc sscan, BlockNumber blockno,
+							   BufferAccessStrategy bstrategy)
+{
+	HeapScanDesc scan = (HeapScanDesc) sscan;
+
+	/*
+	 * We must maintain a pin on the target page's buffer to ensure that
+	 * concurrent activity - e.g. HOT pruning - doesn't delete tuples out from
+	 * under us.  Hence, pin the page until we are done looking at it.  We
+	 * also choose to hold sharelock on the buffer throughout --- we could
+	 * release and re-acquire sharelock for each tuple, but since we aren't
+	 * doing much work per tuple, the extra lock traffic is probably better
+	 * avoided.
+	 */
+	scan->rs_cblock = blockno;
+	scan->rs_cindex = FirstOffsetNumber;
+	scan->rs_cbuf = ReadBufferExtended(scan->rs_base.rs_rd, MAIN_FORKNUM,
+									   blockno, RBM_NORMAL, bstrategy);
+	LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+
+	/* in heap all blocks can contain tuples, so always return true */
+	return true;
+}
+
+static bool
+heapam_scan_analyze_next_tuple(TableScanDesc sscan, TransactionId OldestXmin,
+							   double *liverows, double *deadrows,
+							   TupleTableSlot *slot)
+{
+	HeapScanDesc scan = (HeapScanDesc) sscan;
+	Page		targpage;
+	OffsetNumber maxoffset;
+	BufferHeapTupleTableSlot *hslot;
+
+	Assert(TTS_IS_BUFFERTUPLE(slot));
+
+	hslot = (BufferHeapTupleTableSlot *) slot;
+	targpage = BufferGetPage(scan->rs_cbuf);
+	maxoffset = PageGetMaxOffsetNumber(targpage);
+
+	/* Inner loop over all tuples on the selected page */
+	for (; scan->rs_cindex <= maxoffset; scan->rs_cindex++)
+	{
+		ItemId		itemid;
+		HeapTuple	targtuple = &hslot->base.tupdata;
+		bool		sample_it = false;
+
+		itemid = PageGetItemId(targpage, scan->rs_cindex);
+
+		/*
+		 * We ignore unused and redirect line pointers.  DEAD line pointers
+		 * should be counted as dead, because we need vacuum to run to get rid
+		 * of them.  Note that this rule agrees with the way that
+		 * heap_page_prune() counts things.
+		 */
+		if (!ItemIdIsNormal(itemid))
+		{
+			if (ItemIdIsDead(itemid))
+				*deadrows += 1;
+			continue;
+		}
+
+		ItemPointerSet(&targtuple->t_self, scan->rs_cblock, scan->rs_cindex);
+
+		targtuple->t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
+		targtuple->t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
+		targtuple->t_len = ItemIdGetLength(itemid);
+
+		switch (HeapTupleSatisfiesVacuum(targtuple, OldestXmin, scan->rs_cbuf))
+		{
+			case HEAPTUPLE_LIVE:
+				sample_it = true;
+				*liverows += 1;
+				break;
+
+			case HEAPTUPLE_DEAD:
+			case HEAPTUPLE_RECENTLY_DEAD:
+				/* Count dead and recently-dead rows */
+				*deadrows += 1;
+				break;
+
+			case HEAPTUPLE_INSERT_IN_PROGRESS:
+
+				/*
+				 * Insert-in-progress rows are not counted.  We assume that
+				 * when the inserting transaction commits or aborts, it will
+				 * send a stats message to increment the proper count.  This
+				 * works right only if that transaction ends after we finish
+				 * analyzing the table; if things happen in the other order,
+				 * its stats update will be overwritten by ours.  However, the
+				 * error will be large only if the other transaction runs long
+				 * enough to insert many tuples, so assuming it will finish
+				 * after us is the safer option.
+				 *
+				 * A special case is that the inserting transaction might be
+				 * our own.  In this case we should count and sample the row,
+				 * to accommodate users who load a table and analyze it in one
+				 * transaction.  (pgstat_report_analyze has to adjust the
+				 * numbers we send to the stats collector to make this come
+				 * out right.)
+				 */
+				if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(targtuple->t_data)))
+				{
+					sample_it = true;
+					*liverows += 1;
+				}
+				break;
+
+			case HEAPTUPLE_DELETE_IN_PROGRESS:
+
+				/*
+				 * We count and sample delete-in-progress rows the same as
+				 * live ones, so that the stats counters come out right if the
+				 * deleting transaction commits after us, per the same
+				 * reasoning given above.
+				 *
+				 * If the delete was done by our own transaction, however, we
+				 * must count the row as dead to make pgstat_report_analyze's
+				 * stats adjustments come out right.  (Note: this works out
+				 * properly when the row was both inserted and deleted in our
+				 * xact.)
+				 *
+				 * The net effect of these choices is that we act as though an
+				 * IN_PROGRESS transaction hasn't happened yet, except if it
+				 * is our own transaction, which we assume has happened.
+				 *
+				 * This approach ensures that we behave sanely if we see both
+				 * the pre-image and post-image rows for a row being updated
+				 * by a concurrent transaction: we will sample the pre-image
+				 * but not the post-image.  We also get sane results if the
+				 * concurrent transaction never commits.
+				 */
+				if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(targtuple->t_data)))
+					deadrows += 1;
+				else
+				{
+					sample_it = true;
+					liverows += 1;
+				}
+				break;
+
+			default:
+				elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
+				break;
+		}
+
+		if (sample_it)
+		{
+			ExecStoreBufferHeapTuple(targtuple, slot, scan->rs_cbuf);
+			scan->rs_cindex++;
+
+			/* note that we leave the buffer locked here! */
+			return true;
+		}
+	}
+
+	/* Now release the lock and pin on the page */
+	UnlockReleaseBuffer(scan->rs_cbuf);
+	scan->rs_cbuf = InvalidBuffer;
+
+	/* also prevent old slot contents from having pin on page */
+	ExecClearTuple(slot);
+
+	return false;
+}
+
 static double
 heapam_index_build_range_scan(Relation heapRelation,
 							  Relation indexRelation,
@@ -1743,6 +1910,9 @@ static const TableAmRoutine heapam_methods = {
 	.relation_nontransactional_truncate = heapam_relation_nontransactional_truncate,
 	.relation_copy_data = heapam_relation_copy_data,
 	.relation_copy_for_cluster = heapam_relation_copy_for_cluster,
+	.relation_vacuum = heap_vacuum_rel,
+	.scan_analyze_next_block = heapam_scan_analyze_next_block,
+	.scan_analyze_next_tuple = heapam_scan_analyze_next_tuple,
 	.index_build_range_scan = heapam_index_build_range_scan,
 	.index_validate_scan = heapam_index_validate_scan,
 };

@@ -30,6 +30,7 @@ extern bool synchronize_seqscans;
 struct BulkInsertStateData;
 struct IndexInfo;
 struct IndexBuildCallback;
+struct VacuumParams;
 struct ValidateIndexState;
 
 
@@ -396,9 +397,9 @@ typedef struct TableAmRoutine
 
 	/*
 	 * This callback needs to remove all contents from `rel`'s current
-	 * relfilenode. No provisions for transactional behaviour need to be
-	 * made. Often this can be implemented by truncating the underlying
-	 * storage to its minimal size.
+	 * relfilenode. No provisions for transactional behaviour need to be made.
+	 * Often this can be implemented by truncating the underlying storage to
+	 * its minimal size.
 	 *
 	 * See also table_relation_nontransactional_truncate().
 	 */
@@ -417,6 +418,59 @@ typedef struct TableAmRoutine
 											  bool use_sort,
 											  TransactionId OldestXmin, TransactionId FreezeXid, MultiXactId MultiXactCutoff,
 											  double *num_tuples, double *tups_vacuumed, double *tups_recently_dead);
+
+	/*
+	 * React to VACUUM command on the relation. The VACUUM might be user
+	 * triggered or by autovacuum. The specific actions performed by the AM
+	 * will depend heavily on the individual AM.
+	 *
+	 * On entry a transaction is already established, and the relation is
+	 * locked with a ShareUpdateExclusive lock.
+	 *
+	 * Note that neither VACUUM FULL (and CLUSTER), nor ANALYZE go through
+	 * this routine, even if (in the latter case), part of the same VACUUM
+	 * command.
+	 *
+	 * There probably, in the future, needs to be a separate callback to
+	 * integrate with autovacuum's scheduling.
+	 */
+	void		(*relation_vacuum) (Relation onerel, struct VacuumParams *params,
+									BufferAccessStrategy bstrategy);
+
+	/*
+	 * Prepare to analyze block `blockno` of `scan`. The scan has been started
+	 * with table_beginscan_analyze().  See also
+	 * table_scan_analyze_next_block().
+	 *
+	 * The callback may acquire resources like locks that are held until
+	 * table_scan_analyze_next_tuple() returns false. It e.g. can make sense
+	 * to hold a lock until all tuples on a block have been analyzed by
+	 * scan_analyze_next_tuple.
+	 *
+	 * The callback can return false if the block is not suitable for
+	 * sampling, e.g. because it's a metapage that could never contain tuples.
+	 *
+	 * XXX: This obviously is primarily suited for block-based AMs. It's not
+	 * clear what a good interface for non block based AMs would be, so don't
+	 * try to invent one yet.
+	 */
+	bool		(*scan_analyze_next_block) (TableScanDesc scan,
+											BlockNumber blockno,
+											BufferAccessStrategy bstrategy);
+
+	/*
+	 * See table_scan_analyze_next_tuple().
+	 *
+	 * Not every AM might have a meaningful concept of dead rows, in which
+	 * case it's OK to not increment *deadrows - but note that that may
+	 * influence autovacuum scheduling (see comment for relation_vacuum
+	 * callback).
+	 */
+	bool		(*scan_analyze_next_tuple) (TableScanDesc scan,
+											TransactionId OldestXmin,
+											double *liverows,
+											double *deadrows,
+											TupleTableSlot *slot);
 
 	/* see table_index_build_range_scan for reference about parameters */
 	double		(*index_build_range_scan) (Relation heap_rel,
@@ -1076,6 +1130,60 @@ table_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 												   FreezeXid, MultiXactCutoff,
 												   num_tuples, tups_vacuumed,
 												   tups_recently_dead);
+}
+
+/*
+ * Perform VACUUM on the relation. The VACUUM can be user triggered or by
+ * autovacuum. The specific actions performed by the AM will depend heavily on
+ * the individual AM.
+
+ * On entry a transaction needs to already been established, and the
+ * transaction is locked with a ShareUpdateExclusive lock.
+ *
+ * Note that neither VACUUM FULL (and CLUSTER), nor ANALYZE go through this
+ * routine, even if (in the latter case), part of the same VACUUM command.
+ */
+static inline void
+table_relation_vacuum(Relation rel, struct VacuumParams *params,
+					  BufferAccessStrategy bstrategy)
+{
+	rel->rd_tableam->relation_vacuum(rel, params, bstrategy);
+}
+
+/*
+ * Prepare to analyze block `blockno` of `scan`. The scan needs to have been
+ * started with table_beginscan_analyze().  Note that this routine might
+ * acquire resources like locks that are held until
+ * table_scan_analyze_next_tuple() returns false.
+ *
+ * Returns false if block is unsuitable for sampling, true otherwise.
+ */
+static inline bool
+table_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
+							  BufferAccessStrategy bstrategy)
+{
+	return scan->rs_rd->rd_tableam->scan_analyze_next_block(scan, blockno,
+															bstrategy);
+}
+
+/*
+ * Iterate over tuples tuples in the block selected with
+ * table_scan_analyze_next_block() (which needs to have returned true, and
+ * this routine may not have returned false for the same block before). If a
+ * tuple that's suitable for sampling is found, true is returned and a tuple
+ * is stored in `slot`.
+ *
+ * *liverows and *deadrows are incremented according to the encountered
+ * tuples.
+ */
+static inline bool
+table_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
+							  double *liverows, double *deadrows,
+							  TupleTableSlot *slot)
+{
+	return scan->rs_rd->rd_tableam->scan_analyze_next_tuple(scan, OldestXmin,
+															liverows, deadrows,
+															slot);
 }
 
 /*
