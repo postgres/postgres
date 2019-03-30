@@ -6993,6 +6993,10 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 			List	   *child_scanjoin_targets = NIL;
 			ListCell   *lc;
 
+			/* Pruned or dummy children can be ignored. */
+			if (child_rel == NULL || IS_DUMMY_REL(child_rel))
+				continue;
+
 			/* Translate scan/join targets for this child. */
 			appinfos = find_appinfos_by_relids(root, child_rel->relids,
 											   &nappinfos);
@@ -7093,8 +7097,9 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 		RelOptInfo *child_grouped_rel;
 		RelOptInfo *child_partially_grouped_rel;
 
-		/* Input child rel must have a path */
-		Assert(child_input_rel->pathlist != NIL);
+		/* Pruned or dummy children can be ignored. */
+		if (child_input_rel == NULL || IS_DUMMY_REL(child_input_rel))
+			continue;
 
 		/*
 		 * Copy the given "extra" structure as is and then override the
@@ -7135,14 +7140,6 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 											  child_target,
 											  extra->target_parallel_safe,
 											  child_extra.havingQual);
-
-		/* Ignore empty children. They contribute nothing. */
-		if (IS_DUMMY_REL(child_input_rel))
-		{
-			mark_dummy_rel(child_grouped_rel);
-
-			continue;
-		}
 
 		/* Create grouping paths for this child relation. */
 		create_ordinary_grouping_paths(root, child_input_rel,

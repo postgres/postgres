@@ -205,28 +205,27 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.a <
  300 | 0300 | 300 | 0300
 (1 row)
 
+-- Currently we can't do partitioned join if nullable-side partitions are pruned
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
                         QUERY PLAN                         
 -----------------------------------------------------------
  Sort
-   Sort Key: prt1_p1.a, b
-   ->  Append
-         ->  Hash Left Join
-               Hash Cond: (prt1_p1.a = b)
-               ->  Seq Scan on prt1_p1
-                     Filter: ((a < 450) AND (b = 0))
-               ->  Hash
-                     ->  Result
-                           One-Time Filter: false
-         ->  Hash Right Join
-               Hash Cond: (prt2_p2.b = prt1_p2.a)
+   Sort Key: prt1_p1.a, prt2_p2.b
+   ->  Hash Right Join
+         Hash Cond: (prt2_p2.b = prt1_p1.a)
+         ->  Append
                ->  Seq Scan on prt2_p2
                      Filter: (b > 250)
-               ->  Hash
+               ->  Seq Scan on prt2_p3
+                     Filter: (b > 250)
+         ->  Hash
+               ->  Append
+                     ->  Seq Scan on prt1_p1
+                           Filter: ((a < 450) AND (b = 0))
                      ->  Seq Scan on prt1_p2
                            Filter: ((a < 450) AND (b = 0))
-(17 rows)
+(15 rows)
 
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
   a  |  c   |  b  |  c   
@@ -242,38 +241,28 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JO
  400 | 0400 |     | 
 (9 rows)
 
+-- Currently we can't do partitioned join if nullable-side partitions are pruned
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a < 450) t1 FULL JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 OR t2.a = 0 ORDER BY t1.a, t2.b;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  Sort
-   Sort Key: prt1_p1.a, b
-   ->  Append
-         ->  Hash Full Join
-               Hash Cond: (prt1_p1.a = b)
-               Filter: ((prt1_p1.b = 0) OR (a = 0))
+   Sort Key: prt1_p1.a, prt2_p2.b
+   ->  Hash Full Join
+         Hash Cond: (prt1_p1.a = prt2_p2.b)
+         Filter: ((prt1_p1.b = 0) OR (prt2_p2.a = 0))
+         ->  Append
                ->  Seq Scan on prt1_p1
                      Filter: (a < 450)
-               ->  Hash
-                     ->  Result
-                           One-Time Filter: false
-         ->  Hash Full Join
-               Hash Cond: (prt1_p2.a = prt2_p2.b)
-               Filter: ((prt1_p2.b = 0) OR (prt2_p2.a = 0))
                ->  Seq Scan on prt1_p2
                      Filter: (a < 450)
-               ->  Hash
+         ->  Hash
+               ->  Append
                      ->  Seq Scan on prt2_p2
                            Filter: (b > 250)
-         ->  Hash Full Join
-               Hash Cond: (prt2_p3.b = a)
-               Filter: ((b = 0) OR (prt2_p3.a = 0))
-               ->  Seq Scan on prt2_p3
-                     Filter: (b > 250)
-               ->  Hash
-                     ->  Result
-                           One-Time Filter: false
-(27 rows)
+                     ->  Seq Scan on prt2_p3
+                           Filter: (b > 250)
+(16 rows)
 
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a < 450) t1 FULL JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 OR t2.a = 0 ORDER BY t1.a, t2.b;
   a  |  c   |  b  |  c   
@@ -992,34 +981,30 @@ SELECT t1.a, t1.c, t2.b, t2.c, t3.a + t3.b, t3.c FROM (prt1 t1 LEFT JOIN prt2 t2
 (12 rows)
 
 -- MergeAppend on nullable column
+-- This should generate a partitionwise join, but currently fails to
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t2.b FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
                         QUERY PLAN                         
 -----------------------------------------------------------
  Sort
-   Sort Key: prt1_p1.a, b
-   ->  Append
-         ->  Merge Left Join
-               Merge Cond: (prt1_p1.a = b)
-               ->  Sort
-                     Sort Key: prt1_p1.a
+   Sort Key: prt1_p1.a, prt2_p2.b
+   ->  Merge Left Join
+         Merge Cond: (prt1_p1.a = prt2_p2.b)
+         ->  Sort
+               Sort Key: prt1_p1.a
+               ->  Append
                      ->  Seq Scan on prt1_p1
                            Filter: ((a < 450) AND (b = 0))
-               ->  Sort
-                     Sort Key: b
-                     ->  Result
-                           One-Time Filter: false
-         ->  Merge Left Join
-               Merge Cond: (prt1_p2.a = prt2_p2.b)
-               ->  Sort
-                     Sort Key: prt1_p2.a
                      ->  Seq Scan on prt1_p2
                            Filter: ((a < 450) AND (b = 0))
-               ->  Sort
-                     Sort Key: prt2_p2.b
+         ->  Sort
+               Sort Key: prt2_p2.b
+               ->  Append
                      ->  Seq Scan on prt2_p2
                            Filter: (b > 250)
-(23 rows)
+                     ->  Seq Scan on prt2_p3
+                           Filter: (b > 250)
+(18 rows)
 
 SELECT t1.a, t2.b FROM (SELECT * FROM prt1 WHERE a < 450) t1 LEFT JOIN (SELECT * FROM prt2 WHERE b > 250) t2 ON t1.a = t2.b WHERE t1.b = 0 ORDER BY t1.a, t2.b;
   a  |  b  

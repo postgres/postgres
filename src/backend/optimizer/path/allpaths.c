@@ -1112,11 +1112,11 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * for partitioned child rels.
 		 *
 		 * Note: here we abuse the consider_partitionwise_join flag by setting
-		 * it *even* for child rels that are not partitioned.  In that case,
-		 * we set it to tell try_partitionwise_join() that it doesn't need to
-		 * generate their targetlists and EC entries as they have already been
-		 * generated here, as opposed to the dummy child rels for which the
-		 * flag is left set to false so that it will generate them.
+		 * it for child rels that are not themselves partitioned.  We do so to
+		 * tell try_partitionwise_join() that the child rel is sufficiently
+		 * valid to be used as a per-partition input, even if it later gets
+		 * proven to be dummy.  (It's not usable until we've set up the
+		 * reltarget and EC entries, which we just did.)
 		 */
 		if (rel->consider_partitionwise_join)
 			childrel->consider_partitionwise_join = true;
@@ -3564,7 +3564,9 @@ generate_partitionwise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 	{
 		RelOptInfo *child_rel = part_rels[cnt_parts];
 
-		Assert(child_rel != NULL);
+		/* If it's been pruned entirely, it's certainly dummy. */
+		if (child_rel == NULL)
+			continue;
 
 		/* Add partitionwise join paths for partitioned child-joins. */
 		generate_partitionwise_join_paths(root, child_rel);
