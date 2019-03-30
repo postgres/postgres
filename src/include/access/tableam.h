@@ -491,6 +491,22 @@ typedef struct TableAmRoutine
 										Snapshot snapshot,
 										struct ValidateIndexState *state);
 
+
+	/* ------------------------------------------------------------------------
+	 * Planner related functions.
+	 * ------------------------------------------------------------------------
+	 */
+
+	/*
+	 * See table_relation_estimate_size().
+	 *
+	 * While block oriented, it shouldn't be too hard to for an AM that
+	 * doesn't internally use blocks to convert into a usable representation.
+	 */
+	void		(*relation_estimate_size) (Relation rel, int32 *attr_widths,
+										   BlockNumber *pages, double *tuples,
+										   double *allvisfrac);
+
 } TableAmRoutine;
 
 
@@ -1283,6 +1299,25 @@ table_index_validate_scan(Relation heap_rel,
 											  index_info,
 											  snapshot,
 											  state);
+}
+
+
+/* ----------------------------------------------------------------------------
+ * Planner related functionality
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ * Estimate the current size of the relation, as an AM specific workhorse for
+ * estimate_rel_size(). Look there for an explanation of the parameters.
+ */
+static inline void
+table_relation_estimate_size(Relation rel, int32 *attr_widths,
+							 BlockNumber *pages, double *tuples,
+							 double *allvisfrac)
+{
+	rel->rd_tableam->relation_estimate_size(rel, attr_widths, pages, tuples,
+											allvisfrac);
 }
 
 

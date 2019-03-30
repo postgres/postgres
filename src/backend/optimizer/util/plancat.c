@@ -20,6 +20,7 @@
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
+#include "access/tableam.h"
 #include "access/sysattr.h"
 #include "access/table.h"
 #include "access/transam.h"
@@ -64,7 +65,6 @@ static void get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 						  Relation relation, bool inhparent);
 static bool infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 							  List *idxExprs);
-static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 static List *get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
 						 bool include_notnull);
@@ -948,47 +948,26 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 	switch (rel->rd_rel->relkind)
 	{
 		case RELKIND_RELATION:
-		case RELKIND_INDEX:
 		case RELKIND_MATVIEW:
 		case RELKIND_TOASTVALUE:
+			table_relation_estimate_size(rel, attr_widths, pages, tuples,
+										 allvisfrac);
+			break;
+
+		case RELKIND_INDEX:
+
+			/*
+			 * XXX: It'd probably be good to move this into a callback,
+			 * individual index types e.g. know if they have a metapage.
+			 */
+
 			/* it has storage, ok to call the smgr */
 			curpages = RelationGetNumberOfBlocks(rel);
 
-			/*
-			 * HACK: if the relation has never yet been vacuumed, use a
-			 * minimum size estimate of 10 pages.  The idea here is to avoid
-			 * assuming a newly-created table is really small, even if it
-			 * currently is, because that may not be true once some data gets
-			 * loaded into it.  Once a vacuum or analyze cycle has been done
-			 * on it, it's more reasonable to believe the size is somewhat
-			 * stable.
-			 *
-			 * (Note that this is only an issue if the plan gets cached and
-			 * used again after the table has been filled.  What we're trying
-			 * to avoid is using a nestloop-type plan on a table that has
-			 * grown substantially since the plan was made.  Normally,
-			 * autovacuum/autoanalyze will occur once enough inserts have
-			 * happened and cause cached-plan invalidation; but that doesn't
-			 * happen instantaneously, and it won't happen at all for cases
-			 * such as temporary tables.)
-			 *
-			 * We approximate "never vacuumed" by "has relpages = 0", which
-			 * means this will also fire on genuinely empty relations.  Not
-			 * great, but fortunately that's a seldom-seen case in the real
-			 * world, and it shouldn't degrade the quality of the plan too
-			 * much anyway to err in this direction.
-			 *
-			 * There are two exceptions wherein we don't apply this heuristic.
-			 * One is if the table has inheritance children.  Totally empty
-			 * parent tables are quite common, so we should be willing to
-			 * believe that they are empty.  Also, we don't apply the 10-page
-			 * minimum to indexes.
-			 */
-			if (curpages < 10 &&
-				rel->rd_rel->relpages == 0 &&
-				!rel->rd_rel->relhassubclass &&
-				rel->rd_rel->relkind != RELKIND_INDEX)
-				curpages = 10;
+			/* coerce values in pg_class to more desirable types */
+			relpages = (BlockNumber) rel->rd_rel->relpages;
+			reltuples = (double) rel->rd_rel->reltuples;
+			relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
 
 			/* report estimated # pages */
 			*pages = curpages;
@@ -1005,13 +984,12 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
 
 			/*
-			 * If it's an index, discount the metapage while estimating the
-			 * number of tuples.  This is a kluge because it assumes more than
-			 * it ought to about index structure.  Currently it's OK for
-			 * btree, hash, and GIN indexes but suspect for GiST indexes.
+			 * Discount the metapage while estimating the number of tuples.
+			 * This is a kluge because it assumes more than it ought to about
+			 * index structure.  Currently it's OK for btree, hash, and GIN
+			 * indexes but suspect for GiST indexes.
 			 */
-			if (rel->rd_rel->relkind == RELKIND_INDEX &&
-				relpages > 0)
+			if (relpages > 0)
 			{
 				curpages--;
 				relpages--;
@@ -1036,6 +1014,8 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				 * considering how crude the estimate is, and (b) it creates
 				 * platform dependencies in the default plans which are kind
 				 * of a headache for regression testing.
+				 *
+				 * XXX: Should this logic be more index specific?
 				 */
 				int32		tuple_width;
 
@@ -1060,6 +1040,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			else
 				*allvisfrac = (double) relallvisible / curpages;
 			break;
+
 		case RELKIND_SEQUENCE:
 			/* Sequences always have a known size */
 			*pages = 1;
@@ -1095,7 +1076,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * since they might be mostly NULLs, treating them as zero-width is not
  * necessarily the wrong thing anyway.
  */
-static int32
+int32
 get_rel_data_width(Relation rel, int32 *attr_widths)
 {
 	int32		tuple_width = 0;
