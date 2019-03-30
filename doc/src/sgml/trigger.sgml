@@ -244,6 +244,24 @@
    </para>
 
    <para>
+    Some considerations apply for generated
+    columns.<indexterm><primary>generated column</primary><secondary>in
+    triggers</secondary></indexterm>  Stored generated columns are computed after
+    <literal>BEFORE</literal> triggers and before <literal>AFTER</literal>
+    triggers.  Therefore, the generated value can be inspected in
+    <literal>AFTER</literal> triggers.  In <literal>BEFORE</literal> triggers,
+    the <literal>OLD</literal> row contains the old generated value, as one
+    would expect, but the <literal>NEW</literal> row does not yet contain the
+    new generated value and should not be accessed.  In the C language
+    interface, the content of the column is undefined at this point; a
+    higher-level programming language should prevent access to a stored
+    generated column in the <literal>NEW</literal> row in a
+    <literal>BEFORE</literal> trigger.  Changes to the value of a generated
+    column in a <literal>BEFORE</literal> trigger are ignored and will be
+    overwritten.
+   </para>
+
+   <para>
     If more than one trigger is defined for the same event on the same
     relation, the triggers will be fired in alphabetical order by
     trigger name.  In the case of <literal>BEFORE</literal> and

@@ -21,6 +21,7 @@
 #include "access/xact.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
+#include "executor/nodeModifyTable.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
@@ -412,6 +413,11 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 	{
 		List	   *recheckIndexes = NIL;
 
+		/* Compute stored generated columns */
+		if (rel->rd_att->constr &&
+			rel->rd_att->constr->has_generated_stored)
+			ExecComputeStoredGenerated(estate, slot);
+
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
@@ -472,6 +478,11 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 	{
 		List	   *recheckIndexes = NIL;
 		bool		update_indexes;
+
+		/* Compute stored generated columns */
+		if (rel->rd_att->constr &&
+			rel->rd_att->constr->has_generated_stored)
+			ExecComputeStoredGenerated(estate, slot);
 
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)

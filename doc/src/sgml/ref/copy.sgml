@@ -103,7 +103,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      <listitem>
      <para>
       An optional list of columns to be copied.  If no column list is
-      specified, all columns of the table will be copied.
+      specified, all columns of the table except generated columns will be
+      copied.
      </para>
     </listitem>
    </varlistentry>

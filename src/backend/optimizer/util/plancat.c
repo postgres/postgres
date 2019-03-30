@@ -2083,6 +2083,25 @@ has_row_triggers(PlannerInfo *root, Index rti, CmdType event)
 	return result;
 }
 
+bool
+has_stored_generated_columns(PlannerInfo *root, Index rti)
+{
+	RangeTblEntry *rte = planner_rt_fetch(rti, root);
+	Relation    relation;
+	TupleDesc	tupdesc;
+	bool        result = false;
+
+	/* Assume we already have adequate lock */
+	relation = heap_open(rte->relid, NoLock);
+
+	tupdesc = RelationGetDescr(relation);
+	result = tupdesc->constr && tupdesc->constr->has_generated_stored;
+
+	heap_close(relation, NoLock);
+
+	return result;
+}
+
 /*
  * set_relation_partition_info
  *

@@ -509,7 +509,29 @@ GRANT SELECT ON collation_character_set_applicability TO PUBLIC;
  * COLUMN_COLUMN_USAGE view
  */
 
--- feature not supported
+CREATE VIEW column_column_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(n.nspname AS sql_identifier) AS table_schema,
+           CAST(c.relname AS sql_identifier) AS table_name,
+           CAST(ac.attname AS sql_identifier) AS column_name,
+           CAST(ad.attname AS sql_identifier) AS dependent_column
+
+    FROM pg_namespace n, pg_class c, pg_depend d,
+         pg_attribute ac, pg_attribute ad
+
+    WHERE n.oid = c.relnamespace
+          AND c.oid = ac.attrelid
+          AND c.oid = ad.attrelid
+          AND d.classid = 'pg_catalog.pg_class'::regclass
+          AND d.refclassid = 'pg_catalog.pg_class'::regclass
+          AND d.objid = d.refobjid
+          AND c.oid = d.objid
+          AND d.objsubid = ad.attnum
+          AND d.refobjsubid = ac.attnum
+          AND ad.attgenerated <> ''
+          AND pg_has_role(c.relowner, 'USAGE');
+
+GRANT SELECT ON column_column_usage TO PUBLIC;
 
 
 /*
@@ -656,7 +678,7 @@ CREATE VIEW columns AS
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST(a.attnum AS cardinal_number) AS ordinal_position,
-           CAST(pg_get_expr(ad.adbin, ad.adrelid) AS character_data) AS column_default,
+           CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS character_data) AS column_default,
            CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
              AS yes_or_no)
              AS is_nullable,
@@ -745,8 +767,8 @@ CREATE VIEW columns AS
            CAST(seq.seqmin AS character_data) AS identity_minimum,
            CAST(CASE WHEN seq.seqcycle THEN 'YES' ELSE 'NO' END AS yes_or_no) AS identity_cycle,
 
-           CAST('NEVER' AS character_data) AS is_generated,
-           CAST(null AS character_data) AS generation_expression,
+           CAST(CASE WHEN a.attgenerated <> '' THEN 'ALWAYS' ELSE 'NEVER' END AS character_data) AS is_generated,
+           CAST(CASE WHEN a.attgenerated <> '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS character_data) AS generation_expression,
 
            CAST(CASE WHEN c.relkind IN ('r', 'p') OR
                           (c.relkind IN ('v', 'f') AND

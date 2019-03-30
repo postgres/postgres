@@ -276,7 +276,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 			int			attnum;
 			Form_pg_attribute attr = TupleDescAttr(desc, i);
 
-			if (attr->attisdropped)
+			if (attr->attisdropped || attr->attgenerated)
 			{
 				entry->attrmap[i] = -1;
 				continue;

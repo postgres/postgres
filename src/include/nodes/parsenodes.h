@@ -655,6 +655,7 @@ typedef struct ColumnDef
 	char		identity;		/* attidentity setting */
 	RangeVar   *identitySequence;	/* to store identity sequence name for
 									 * ALTER TABLE ... ADD COLUMN */
+	char		generated;		/* attgenerated setting */
 	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
 	Oid			collOid;		/* collation OID (InvalidOid if not set) */
 	List	   *constraints;	/* other constraints on column */
@@ -677,10 +678,11 @@ typedef enum TableLikeOption
 	CREATE_TABLE_LIKE_COMMENTS = 1 << 0,
 	CREATE_TABLE_LIKE_CONSTRAINTS = 1 << 1,
 	CREATE_TABLE_LIKE_DEFAULTS = 1 << 2,
-	CREATE_TABLE_LIKE_IDENTITY = 1 << 3,
-	CREATE_TABLE_LIKE_INDEXES = 1 << 4,
-	CREATE_TABLE_LIKE_STATISTICS = 1 << 5,
-	CREATE_TABLE_LIKE_STORAGE = 1 << 6,
+	CREATE_TABLE_LIKE_GENERATED = 1 << 3,
+	CREATE_TABLE_LIKE_IDENTITY = 1 << 4,
+	CREATE_TABLE_LIKE_INDEXES = 1 << 5,
+	CREATE_TABLE_LIKE_STATISTICS = 1 << 6,
+	CREATE_TABLE_LIKE_STORAGE = 1 << 7,
 	CREATE_TABLE_LIKE_ALL = PG_INT32_MAX
 } TableLikeOption;
 
@@ -933,6 +935,15 @@ typedef struct PartitionCmd
  *	  them in these fields.  A whole-row Var reference is represented by
  *	  setting the bit for InvalidAttrNumber.
  *
+ *	  updatedCols is also used in some other places, for example, to determine
+ *	  which triggers to fire and in FDWs to know which changed columns they
+ *	  need to ship off.  Generated columns that are caused to be updated by an
+ *	  update to a base column are collected in extraUpdatedCols.  This is not
+ *	  considered for permission checking, but it is useful in those places
+ *	  that want to know the full set of columns being updated as opposed to
+ *	  only the ones the user explicitly mentioned in the query.  (There is
+ *	  currently no need for an extraInsertedCols, but it could exist.)
+ *
  *	  securityQuals is a list of security barrier quals (boolean expressions),
  *	  to be tested in the listed order before returning a row from the
  *	  relation.  It is always NIL in parser output.  Entries are added by the
@@ -1087,6 +1098,7 @@ typedef struct RangeTblEntry
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
+	Bitmapset  *extraUpdatedCols;	/* generated columns being updated */
 	List	   *securityQuals;	/* security barrier quals to apply, if any */
 } RangeTblEntry;
 
@@ -2086,6 +2098,7 @@ typedef enum ConstrType			/* types of constraints */
 	CONSTR_NOTNULL,
 	CONSTR_DEFAULT,
 	CONSTR_IDENTITY,
+	CONSTR_GENERATED,
 	CONSTR_CHECK,
 	CONSTR_PRIMARY,
 	CONSTR_UNIQUE,
@@ -2124,7 +2137,8 @@ typedef struct Constraint
 	bool		is_no_inherit;	/* is constraint non-inheritable? */
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
-	char		generated_when;
+	char		generated_when;	/* ALWAYS or BY DEFAULT */
+	char		generated_kind; /* currently always STORED */
 
 	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
 	List	   *keys;			/* String nodes naming referenced key

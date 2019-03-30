@@ -28,6 +28,7 @@ typedef struct RawColumnDefault
 	AttrNumber	attnum;			/* attribute to attach default to */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	bool		missingMode;	/* true if part of add column processing */
+	char		generated;		/* attgenerated setting */
 } RawColumnDefault;
 
 typedef struct CookedConstraint
@@ -120,7 +121,8 @@ extern Node *cookDefault(ParseState *pstate,
 			Node *raw_default,
 			Oid atttypid,
 			int32 atttypmod,
-			const char *attname);
+			const char *attname,
+			char attgenerated);
 
 extern void DeleteRelationTuple(Oid relid);
 extern void DeleteAttributeTuples(Oid relid);

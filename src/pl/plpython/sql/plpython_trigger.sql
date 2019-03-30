@@ -67,6 +67,11 @@ SELECT * FROM users;
 CREATE TABLE trigger_test
 	(i int, v text );
 
+CREATE TABLE trigger_test_generated (
+	i int,
+        j int GENERATED ALWAYS AS (i * 2) STORED
+);
+
 CREATE FUNCTION trigger_data() RETURNS trigger LANGUAGE plpythonu AS $$
 
 if 'relid' in TD:
@@ -108,6 +113,21 @@ truncate table trigger_test;
 DROP TRIGGER show_trigger_data_trig_stmt on trigger_test;
 DROP TRIGGER show_trigger_data_trig_before on trigger_test;
 DROP TRIGGER show_trigger_data_trig_after on trigger_test;
+
+CREATE TRIGGER show_trigger_data_trig_before
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
+
+CREATE TRIGGER show_trigger_data_trig_after
+AFTER INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
+
+insert into trigger_test_generated (i) values (1);
+update trigger_test_generated set i = 11 where i = 1;
+delete from trigger_test_generated;
+
+DROP TRIGGER show_trigger_data_trig_before ON trigger_test_generated;
+DROP TRIGGER show_trigger_data_trig_after ON trigger_test_generated;
 
 insert into trigger_test values(1,'insert');
 CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
@@ -430,3 +450,20 @@ UPDATE transition_table_test SET name = 'b';
 
 DROP TABLE transition_table_test;
 DROP FUNCTION transition_table_test_f();
+
+
+-- dealing with generated columns
+
+CREATE FUNCTION generated_test_func1() RETURNS trigger
+LANGUAGE plpythonu
+AS $$
+TD['new']['j'] = 5  # not allowed
+return 'MODIFY'
+$$;
+
+CREATE TRIGGER generated_test_trigger1 BEFORE INSERT ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE generated_test_func1();
+
+TRUNCATE trigger_test_generated;
+INSERT INTO trigger_test_generated (i) VALUES (1);
+SELECT * FROM trigger_test_generated;

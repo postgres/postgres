@@ -918,7 +918,8 @@ DefineDomain(CreateDomainStmt *stmt)
 					defaultExpr = cookDefault(pstate, constr->raw_expr,
 											  basetypeoid,
 											  basetypeMod,
-											  domainName);
+											  domainName,
+											  0);
 
 					/*
 					 * If the expression is just a NULL constant, we treat it
@@ -2228,7 +2229,8 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 		defaultExpr = cookDefault(pstate, defaultRaw,
 								  typTup->typbasetype,
 								  typTup->typtypmod,
-								  NameStr(typTup->typname));
+								  NameStr(typTup->typname),
+								  0);
 
 		/*
 		 * If the expression is just a NULL constant, we treat the command

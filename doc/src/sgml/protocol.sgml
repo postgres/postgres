@@ -6450,7 +6450,7 @@ Relation
 </listitem>
 </varlistentry>
 </variablelist>
-        Next, the following message part appears for each column:
+        Next, the following message part appears for each column (except generated columns):
 <variablelist>
 <varlistentry>
 <term>
@@ -6875,7 +6875,7 @@ TupleData
 </listitem>
 </varlistentry>
 </variablelist>
-        Next, one of the following submessages appears for each column:
+        Next, one of the following submessages appears for each column (except generated columns):
 <variablelist>
 <varlistentry>
 <term>

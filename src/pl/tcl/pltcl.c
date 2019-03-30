@@ -324,7 +324,7 @@ static void pltcl_subtrans_abort(Tcl_Interp *interp,
 
 static void pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 					   uint64 tupno, HeapTuple tuple, TupleDesc tupdesc);
-static Tcl_Obj *pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
+static Tcl_Obj *pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc, bool include_generated);
 static HeapTuple pltcl_build_tuple_result(Tcl_Interp *interp,
 						 Tcl_Obj **kvObjv, int kvObjc,
 						 pltcl_call_state *call_state);
@@ -889,7 +889,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 					tmptup.t_data = td;
 
-					list_tmp = pltcl_build_tuple_argument(&tmptup, tupdesc);
+					list_tmp = pltcl_build_tuple_argument(&tmptup, tupdesc, true);
 					Tcl_ListObjAppendElement(NULL, tcl_cmd, list_tmp);
 
 					ReleaseTupleDesc(tupdesc);
@@ -1060,7 +1060,6 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	volatile HeapTuple rettup;
 	Tcl_Obj    *tcl_cmd;
 	Tcl_Obj    *tcl_trigtup;
-	Tcl_Obj    *tcl_newtup;
 	int			tcl_rc;
 	int			i;
 	const char *result;
@@ -1162,20 +1161,22 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 			Tcl_ListObjAppendElement(NULL, tcl_cmd,
 									 Tcl_NewStringObj("ROW", -1));
 
-			/* Build the data list for the trigtuple */
-			tcl_trigtup = pltcl_build_tuple_argument(trigdata->tg_trigtuple,
-													 tupdesc);
-
 			/*
 			 * Now the command part of the event for TG_op and data for NEW
 			 * and OLD
+			 *
+			 * Note: In BEFORE trigger, stored generated columns are not computed yet,
+			 * so don't make them accessible in NEW row.
 			 */
 			if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 			{
 				Tcl_ListObjAppendElement(NULL, tcl_cmd,
 										 Tcl_NewStringObj("INSERT", -1));
 
-				Tcl_ListObjAppendElement(NULL, tcl_cmd, tcl_trigtup);
+				Tcl_ListObjAppendElement(NULL, tcl_cmd,
+										 pltcl_build_tuple_argument(trigdata->tg_trigtuple,
+																	tupdesc,
+																	!TRIGGER_FIRED_BEFORE(trigdata->tg_event)));
 				Tcl_ListObjAppendElement(NULL, tcl_cmd, Tcl_NewObj());
 
 				rettup = trigdata->tg_trigtuple;
@@ -1186,7 +1187,10 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 										 Tcl_NewStringObj("DELETE", -1));
 
 				Tcl_ListObjAppendElement(NULL, tcl_cmd, Tcl_NewObj());
-				Tcl_ListObjAppendElement(NULL, tcl_cmd, tcl_trigtup);
+				Tcl_ListObjAppendElement(NULL, tcl_cmd,
+										 pltcl_build_tuple_argument(trigdata->tg_trigtuple,
+																	tupdesc,
+																	true));
 
 				rettup = trigdata->tg_trigtuple;
 			}
@@ -1195,11 +1199,14 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 				Tcl_ListObjAppendElement(NULL, tcl_cmd,
 										 Tcl_NewStringObj("UPDATE", -1));
 
-				tcl_newtup = pltcl_build_tuple_argument(trigdata->tg_newtuple,
-														tupdesc);
-
-				Tcl_ListObjAppendElement(NULL, tcl_cmd, tcl_newtup);
-				Tcl_ListObjAppendElement(NULL, tcl_cmd, tcl_trigtup);
+				Tcl_ListObjAppendElement(NULL, tcl_cmd,
+										 pltcl_build_tuple_argument(trigdata->tg_newtuple,
+																	tupdesc,
+																	!TRIGGER_FIRED_BEFORE(trigdata->tg_event)));
+				Tcl_ListObjAppendElement(NULL, tcl_cmd,
+										 pltcl_build_tuple_argument(trigdata->tg_trigtuple,
+																	tupdesc,
+																	true));
 
 				rettup = trigdata->tg_newtuple;
 			}
@@ -3091,7 +3098,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
  *				  from all attributes of a given tuple
  **********************************************************************/
 static Tcl_Obj *
-pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
+pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc, bool include_generated)
 {
 	Tcl_Obj    *retobj = Tcl_NewObj();
 	int			i;
@@ -3109,6 +3116,13 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		/* ignore dropped attributes */
 		if (att->attisdropped)
 			continue;
+
+		if (att->attgenerated)
+		{
+			/* don't include unless requested */
+			if (!include_generated)
+				continue;
+		}
 
 		/************************************************************
 		 * Get the attribute name
@@ -3217,6 +3231,12 @@ pltcl_build_tuple_result(Tcl_Interp *interp, Tcl_Obj **kvObjv, int kvObjc,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot set system attribute \"%s\"",
+							fieldName)));
+
+		if (TupleDescAttr(tupdesc, attn - 1)->attgenerated)
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					 errmsg("cannot set generated column \"%s\"",
 							fieldName)));
 
 		values[attn - 1] = utf_u2e(Tcl_GetString(kvObjv[i + 1]));

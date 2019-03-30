@@ -71,6 +71,11 @@ CREATE TABLE trigger_test (
 -- Make certain dropped attributes are handled correctly
 ALTER TABLE trigger_test DROP dropme;
 
+CREATE TABLE trigger_test_generated (
+   i int,
+   j int GENERATED ALWAYS AS (i * 2) STORED
+);
+
 CREATE VIEW trigger_test_view AS SELECT i, v FROM trigger_test;
 
 CREATE FUNCTION trigger_data() returns trigger language pltcl as $_$
@@ -124,6 +129,13 @@ FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 CREATE TRIGGER statement_trigger
 BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON trigger_test
 FOR EACH STATEMENT EXECUTE PROCEDURE trigger_data(42,'statement trigger');
+
+CREATE TRIGGER show_trigger_data_trig_before
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
+CREATE TRIGGER show_trigger_data_trig_after
+AFTER INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
 
 CREATE TRIGGER show_trigger_data_view_trig
 INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
@@ -531,6 +543,10 @@ select * from T_pkey2 order by key1 using @<, key2 collate "C";
 -- show dump of trigger data
 insert into trigger_test values(1,'insert');
 
+insert into trigger_test_generated (i) values (1);
+update trigger_test_generated set i = 11 where i = 1;
+delete from trigger_test_generated;
+
 insert into trigger_test_view values(2,'insert');
 update trigger_test_view set v = 'update' where i=1;
 delete from trigger_test_view;
@@ -539,6 +555,9 @@ update trigger_test set v = 'update', test_skip=true where i = 1;
 update trigger_test set v = 'update' where i = 1;
 delete from trigger_test;
 truncate trigger_test;
+
+DROP TRIGGER show_trigger_data_trig_before ON trigger_test_generated;
+DROP TRIGGER show_trigger_data_trig_after ON trigger_test_generated;
 
 -- should error
 insert into trigger_test(test_argisnull) values(true);
@@ -565,3 +584,20 @@ CREATE TRIGGER a_t AFTER UPDATE ON transition_table_test
 update transition_table_test set name = 'b';
 drop table transition_table_test;
 drop function transition_table_test_f();
+
+-- dealing with generated columns
+
+CREATE FUNCTION generated_test_func1() RETURNS trigger
+LANGUAGE pltcl
+AS $$
+# not allowed
+set NEW(j) 5
+return [array get NEW]
+$$;
+
+CREATE TRIGGER generated_test_trigger1 BEFORE INSERT ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE generated_test_func1();
+
+TRUNCATE trigger_test_generated;
+INSERT INTO trigger_test_generated (i) VALUES (1);
+SELECT * FROM trigger_test_generated;

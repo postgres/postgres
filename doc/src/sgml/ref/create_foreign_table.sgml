@@ -42,7 +42,8 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name
 { NOT NULL |
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
-  DEFAULT <replaceable>default_expr</replaceable> }
+  DEFAULT <replaceable>default_expr</replaceable> |
+  GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED }
 
 <phrase>and <replaceable class="parameter">table_constraint</replaceable> is:</phrase>
 
@@ -254,6 +255,30 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
       The default expression will be used in any insert operation that
       does not specify a value for the column.  If there is no default
       for a column, then the default is null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED</literal><indexterm><primary>generated column</primary></indexterm></term>
+    <listitem>
+     <para>
+      This clause creates the column as a <firstterm>generated
+      column</firstterm>.  The column cannot be written to, and when read it
+      will be computed from the specified expression.
+     </para>
+
+     <para>
+      The keyword <literal>STORED</literal> is required to signify that the
+      column will be computed on write.  (The computed value will be presented
+      to the foreign-data wrapper for storage and must be returned on
+      reading.)
+     </para>
+
+     <para>
+      The generation expression can refer to other columns in the table, but
+      not other generated columns.  Any functions and operators used must be
+      immutable.  References to other tables are not allowed.
      </para>
     </listitem>
    </varlistentry>

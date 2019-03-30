@@ -75,8 +75,9 @@ static int	MyTriggerDepth = 0;
  * they use, so we let them be duplicated.  Be sure to update all if one needs
  * to be changed, however.
  */
-#define GetUpdatedColumns(relinfo, estate) \
-	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols)
+#define GetAllUpdatedColumns(relinfo, estate) \
+	(bms_union(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols, \
+			   exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->extraUpdatedCols))
 
 /* Local function prototypes */
 static void ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid);
@@ -639,6 +640,24 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("BEFORE trigger's WHEN condition cannot reference NEW system columns"),
+								 parser_errposition(pstate, var->location)));
+					if (TRIGGER_FOR_BEFORE(tgtype) &&
+						var->varattno == 0 &&
+						RelationGetDescr(rel)->constr &&
+						RelationGetDescr(rel)->constr->has_generated_stored)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("BEFORE trigger's WHEN condition cannot reference NEW generated columns"),
+								 errdetail("A whole-row reference is used and the table contains generated columns."),
+								 parser_errposition(pstate, var->location)));
+					if (TRIGGER_FOR_BEFORE(tgtype) &&
+						var->varattno > 0 &&
+						TupleDescAttr(RelationGetDescr(rel), var->varattno - 1)->attgenerated)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("BEFORE trigger's WHEN condition cannot reference NEW generated columns"),
+								 errdetail("Column \"%s\" is a generated column.",
+										   NameStr(TupleDescAttr(RelationGetDescr(rel), var->varattno - 1)->attname)),
 								 parser_errposition(pstate, var->location)));
 					break;
 				default:
@@ -2931,7 +2950,7 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 								   CMD_UPDATE))
 		return;
 
-	updatedCols = GetUpdatedColumns(relinfo, estate);
+	updatedCols = GetAllUpdatedColumns(relinfo, estate);
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
@@ -2980,7 +2999,7 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_update_after_statement)
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
 							  false, NULL, NULL, NIL,
-							  GetUpdatedColumns(relinfo, estate),
+							  GetAllUpdatedColumns(relinfo, estate),
 							  transition_capture);
 }
 
@@ -3049,7 +3068,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	LocTriggerData.tg_oldtable = NULL;
 	LocTriggerData.tg_newtable = NULL;
-	updatedCols = GetUpdatedColumns(relinfo, estate);
+	updatedCols = GetAllUpdatedColumns(relinfo, estate);
 	for (i = 0; i < trigdesc->numtriggers; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[i];
@@ -3140,7 +3159,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
 							  true, oldslot, newslot, recheckIndexes,
-							  GetUpdatedColumns(relinfo, estate),
+							  GetAllUpdatedColumns(relinfo, estate),
 							  transition_capture);
 	}
 }

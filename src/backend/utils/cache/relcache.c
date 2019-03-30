@@ -515,6 +515,7 @@ RelationBuildTupleDesc(Relation relation)
 	constr = (TupleConstr *) MemoryContextAlloc(CacheMemoryContext,
 												sizeof(TupleConstr));
 	constr->has_not_null = false;
+	constr->has_generated_stored = false;
 
 	/*
 	 * Form a scan key that selects only user attributes (attnum > 0).
@@ -567,6 +568,8 @@ RelationBuildTupleDesc(Relation relation)
 		/* Update constraint/default info */
 		if (attp->attnotnull)
 			constr->has_not_null = true;
+		if (attp->attgenerated == ATTRIBUTE_GENERATED_STORED)
+			constr->has_generated_stored = true;
 
 		/* If the column has a default, fill it into the attrdef array */
 		if (attp->atthasdef)
@@ -3281,6 +3284,7 @@ RelationBuildLocalRelation(const char *relname,
 		Form_pg_attribute datt = TupleDescAttr(rel->rd_att, i);
 
 		datt->attidentity = satt->attidentity;
+		datt->attgenerated = satt->attgenerated;
 		datt->attnotnull = satt->attnotnull;
 		has_not_null |= satt->attnotnull;
 	}

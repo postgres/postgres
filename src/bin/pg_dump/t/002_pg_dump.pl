@@ -2392,6 +2392,23 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'CREATE TABLE test_table_generated' => {
+		create_order => 3,
+		create_sql   => 'CREATE TABLE dump_test.test_table_generated (
+						   col1 int primary key,
+						   col2 int generated always as (col1 * 2) stored
+					   );',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_table_generated (\E\n
+			\s+\Qcol1 integer NOT NULL,\E\n
+			\s+\Qcol2 integer GENERATED ALWAYS AS ((col1 * 2)) STORED\E\n
+			\);
+			/xms,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE TABLE table_with_stats' => {
 		create_order => 98,
 		create_sql   => 'CREATE TABLE dump_test.table_index_stats (

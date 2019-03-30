@@ -502,6 +502,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	bool		saw_nullable;
 	bool		saw_default;
 	bool		saw_identity;
+	bool		saw_generated;
 	ListCell   *clist;
 
 	cxt->columns = lappend(cxt->columns, column);
@@ -609,6 +610,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	saw_nullable = false;
 	saw_default = false;
 	saw_identity = false;
+	saw_generated = false;
 
 	foreach(clist, column->constraints)
 	{
@@ -689,6 +691,29 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 					break;
 				}
 
+			case CONSTR_GENERATED:
+				if (cxt->ofType)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("generated columns are not supported on typed tables")));
+				if (cxt->partbound)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("generated columns are not supported on partitions")));
+
+				if (saw_generated)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("multiple generation clauses specified for column \"%s\" of table \"%s\"",
+									column->colname, cxt->relation->relname),
+							 parser_errposition(cxt->pstate,
+												constraint->location)));
+				column->generated = ATTRIBUTE_GENERATED_STORED;
+				column->raw_default = constraint->raw_expr;
+				Assert(constraint->cooked_expr == NULL);
+				saw_generated = true;
+				break;
+
 			case CONSTR_CHECK:
 				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
 				break;
@@ -752,6 +777,22 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("both default and identity specified for column \"%s\" of table \"%s\"",
+							column->colname, cxt->relation->relname),
+					 parser_errposition(cxt->pstate,
+										constraint->location)));
+
+		if (saw_default && saw_generated)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("both default and generation expression specified for column \"%s\" of table \"%s\"",
+							column->colname, cxt->relation->relname),
+					 parser_errposition(cxt->pstate,
+										constraint->location)));
+
+		if (saw_identity && saw_generated)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("both identity and generation expression specified for column \"%s\" of table \"%s\"",
 							column->colname, cxt->relation->relname),
 					 parser_errposition(cxt->pstate,
 										constraint->location)));
@@ -983,11 +1024,13 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 * Copy default, if present and the default has been requested
 		 */
 		if (attribute->atthasdef &&
-			(table_like_clause->options & CREATE_TABLE_LIKE_DEFAULTS))
+			(table_like_clause->options & CREATE_TABLE_LIKE_DEFAULTS ||
+			 table_like_clause->options & CREATE_TABLE_LIKE_GENERATED))
 		{
 			Node	   *this_default = NULL;
 			AttrDefault *attrdef;
 			int			i;
+			bool		found_whole_row;
 
 			/* Find default in constraint structure */
 			Assert(constr != NULL);
@@ -1002,12 +1045,27 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			}
 			Assert(this_default != NULL);
 
-			/*
-			 * If default expr could contain any vars, we'd need to fix 'em,
-			 * but it can't; so default is ready to apply to child.
-			 */
+			def->cooked_default = map_variable_attnos(this_default,
+													  1, 0,
+													  attmap, tupleDesc->natts,
+													  InvalidOid, &found_whole_row);
 
-			def->cooked_default = this_default;
+			/*
+			 * Prevent this for the same reason as for constraints below.
+			 * Note that defaults cannot contain any vars, so it's OK that the
+			 * error message refers to generated columns.
+			 */
+			if (found_whole_row)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot convert whole-row table reference"),
+						 errdetail("Generation expression for column \"%s\" contains a whole-row reference to table \"%s\".",
+								   attributeName,
+								   RelationGetRelationName(relation))));
+
+			if (attribute->attgenerated &&
+				(table_like_clause->options & CREATE_TABLE_LIKE_GENERATED))
+				def->generated = attribute->attgenerated;
 		}
 
 		/*

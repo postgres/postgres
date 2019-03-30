@@ -276,7 +276,7 @@ maybe_send_schema(LogicalDecodingContext *ctx,
 		{
 			Form_pg_attribute att = TupleDescAttr(desc, i);
 
-			if (att->attisdropped)
+			if (att->attisdropped || att->attgenerated)
 				continue;
 
 			if (att->atttypid < FirstNormalObjectId)

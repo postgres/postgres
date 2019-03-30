@@ -6,6 +6,10 @@ CREATE TABLE trigger_test (
         v varchar,
 		foo rowcompnest
 );
+CREATE TABLE trigger_test_generated (
+    i int,
+    j int GENERATED ALWAYS AS (i * 2) STORED
+);
 CREATE OR REPLACE FUNCTION trigger_data() RETURNS trigger LANGUAGE plperl AS $$
 
   # make sure keys are sorted for consistent results - perl no longer
@@ -98,6 +102,79 @@ NOTICE:  $_TD->{table_name} = 'trigger_test'
 NOTICE:  $_TD->{table_schema} = 'public'
 NOTICE:  $_TD->{when} = 'BEFORE'
 DROP TRIGGER show_trigger_data_trig on trigger_test;
+CREATE TRIGGER show_trigger_data_trig_before
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
+CREATE TRIGGER show_trigger_data_trig_after
+AFTER INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
+insert into trigger_test_generated (i) values (1);
+NOTICE:  $_TD->{argc} = '0'
+NOTICE:  $_TD->{event} = 'INSERT'
+NOTICE:  $_TD->{level} = 'ROW'
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig_before'
+NOTICE:  $_TD->{new} = {'i' => '1'}
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+NOTICE:  $_TD->{relname} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_name} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_schema} = 'public'
+NOTICE:  $_TD->{when} = 'BEFORE'
+NOTICE:  $_TD->{argc} = '0'
+NOTICE:  $_TD->{event} = 'INSERT'
+NOTICE:  $_TD->{level} = 'ROW'
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig_after'
+NOTICE:  $_TD->{new} = {'i' => '1', 'j' => '2'}
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+NOTICE:  $_TD->{relname} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_name} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_schema} = 'public'
+NOTICE:  $_TD->{when} = 'AFTER'
+update trigger_test_generated set i = 11 where i = 1;
+NOTICE:  $_TD->{argc} = '0'
+NOTICE:  $_TD->{event} = 'UPDATE'
+NOTICE:  $_TD->{level} = 'ROW'
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig_before'
+NOTICE:  $_TD->{new} = {'i' => '11'}
+NOTICE:  $_TD->{old} = {'i' => '1', 'j' => '2'}
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+NOTICE:  $_TD->{relname} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_name} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_schema} = 'public'
+NOTICE:  $_TD->{when} = 'BEFORE'
+NOTICE:  $_TD->{argc} = '0'
+NOTICE:  $_TD->{event} = 'UPDATE'
+NOTICE:  $_TD->{level} = 'ROW'
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig_after'
+NOTICE:  $_TD->{new} = {'i' => '11', 'j' => '22'}
+NOTICE:  $_TD->{old} = {'i' => '1', 'j' => '2'}
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+NOTICE:  $_TD->{relname} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_name} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_schema} = 'public'
+NOTICE:  $_TD->{when} = 'AFTER'
+delete from trigger_test_generated;
+NOTICE:  $_TD->{argc} = '0'
+NOTICE:  $_TD->{event} = 'DELETE'
+NOTICE:  $_TD->{level} = 'ROW'
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig_before'
+NOTICE:  $_TD->{old} = {'i' => '11', 'j' => '22'}
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+NOTICE:  $_TD->{relname} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_name} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_schema} = 'public'
+NOTICE:  $_TD->{when} = 'BEFORE'
+NOTICE:  $_TD->{argc} = '0'
+NOTICE:  $_TD->{event} = 'DELETE'
+NOTICE:  $_TD->{level} = 'ROW'
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig_after'
+NOTICE:  $_TD->{old} = {'i' => '11', 'j' => '22'}
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+NOTICE:  $_TD->{relname} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_name} = 'trigger_test_generated'
+NOTICE:  $_TD->{table_schema} = 'public'
+NOTICE:  $_TD->{when} = 'AFTER'
+DROP TRIGGER show_trigger_data_trig_before ON trigger_test_generated;
+DROP TRIGGER show_trigger_data_trig_after ON trigger_test_generated;
 insert into trigger_test values(1,'insert', '("(1)")');
 CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
 CREATE TRIGGER show_trigger_data_trig
@@ -295,3 +372,21 @@ NOTICE:  perlsnitch: ddl_command_start DROP TABLE
 NOTICE:  perlsnitch: ddl_command_end DROP TABLE 
 drop event trigger perl_a_snitch;
 drop event trigger perl_b_snitch;
+-- dealing with generated columns
+CREATE FUNCTION generated_test_func1() RETURNS trigger
+LANGUAGE plperl
+AS $$
+$_TD->{new}{j} = 5;  # not allowed
+return 'MODIFY';
+$$;
+CREATE TRIGGER generated_test_trigger1 BEFORE INSERT ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE generated_test_func1();
+TRUNCATE trigger_test_generated;
+INSERT INTO trigger_test_generated (i) VALUES (1);
+ERROR:  cannot set generated column "j"
+CONTEXT:  PL/Perl function "generated_test_func1"
+SELECT * FROM trigger_test_generated;
+ i | j 
+---+---
+(0 rows)
+

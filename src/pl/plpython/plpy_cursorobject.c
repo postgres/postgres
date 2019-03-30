@@ -357,7 +357,7 @@ PLy_cursor_iternext(PyObject *self)
 								  exec_ctx->curr_proc);
 
 			ret = PLy_input_from_tuple(&cursor->result, SPI_tuptable->vals[0],
-									   SPI_tuptable->tupdesc);
+									   SPI_tuptable->tupdesc, true);
 		}
 
 		SPI_freetuptable(SPI_tuptable);
@@ -453,7 +453,8 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 				{
 					PyObject   *row = PLy_input_from_tuple(&cursor->result,
 														   SPI_tuptable->vals[i],
-														   SPI_tuptable->tupdesc);
+														   SPI_tuptable->tupdesc,
+														   true);
 
 					PyList_SetItem(ret->rows, i, row);
 				}

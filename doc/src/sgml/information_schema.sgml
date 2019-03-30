@@ -952,6 +952,62 @@
   </table>
  </sect1>
 
+ <sect1 id="infoschema-column-column-usage">
+  <title><literal>column_column_usage</literal></title>
+
+  <para>
+   The view <literal>column_column_usage</literal> identifies all generated
+   columns that depend on another base column in the same table.  Only tables
+   owned by a currently enabled role are included.
+  </para>
+
+  <table>
+   <title><literal>column_column_usage</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>column_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the base column that a generated column depends on</entry>
+     </row>
+
+     <row>
+      <entry><literal>dependent_column</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the generated column</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-column-domain-usage">
   <title><literal>column_domain_usage</literal></title>
 
@@ -1648,13 +1704,19 @@
      <row>
       <entry><literal>is_generated</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
+      <entry>
+       If the column is a generated column, then <literal>ALWAYS</literal>,
+       else <literal>NEVER</literal>.
+      </entry>
      </row>
 
      <row>
       <entry><literal>generation_expression</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
+      <entry>
+       If the column is a generated column, then the generation expression,
+       else null.
+      </entry>
      </row>
 
      <row>

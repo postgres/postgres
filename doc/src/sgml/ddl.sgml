@@ -233,6 +233,124 @@ CREATE TABLE products (
   </para>
  </sect1>
 
+ <sect1 id="ddl-generated-columns">
+  <title>Generated Columns</title>
+
+  <indexterm zone="ddl-generated-columns">
+   <primary>generated column</primary>
+  </indexterm>
+
+  <para>
+   A generated column is a special column that is always computed from other
+   columns.  Thus, it is for columns what a view is for tables.  There are two
+   kinds of generated columns: stored and virtual.  A stored generated column
+   is computed when it is written (inserted or updated) and occupies storage
+   as if it were a normal column.  A virtual generated column occupies no
+   storage and is computed when it is read.  Thus, a virtual generated column
+   is similar to a view and a stored generated column is similar to a
+   materialized view (except that it is always updated automatically).
+   PostgreSQL currently implements only stored generated columns.
+  </para>
+
+  <para>
+   To create a generated column, use the <literal>GENERATED ALWAYS
+   AS</literal> clause in <command>CREATE TABLE</command>, for example:
+<programlisting>
+CREATE TABLE people (
+    ...,
+    height_cm numeric,
+    height_in numeric <emphasis>GENERATED ALWAYS AS (height_cm * 2.54) STORED</emphasis>
+);
+</programlisting>
+   The keyword <literal>STORED</literal> must be specified to choose the
+   stored kind of generated column.  See <xref linkend="sql-createtable"/> for
+   more details.
+  </para>
+
+  <para>
+   A generated column cannot be written to directly.  In
+   <command>INSERT</command> or <command>UPDATE</command> commands, a value
+   cannot be specified for a generated column, but the keyword
+   <literal>DEFAULT</literal> may be specified.
+  </para>
+
+  <para>
+   Consider the differences between a column with a default and a generated
+   column.  The column default is evaluated once when the row is first
+   inserted if no other value was provided; a generated column is updated
+   whenever the row changes and cannot be overridden.  A column default may
+   not refer to other columns of the table; a generation expression would
+   normally do so.  A column default can use volatile functions, for example
+   <literal>random()</literal> or functions referring to the current time;
+   this is not allowed for generated columns.
+  </para>
+
+  <para>
+   Several restrictions apply to the definition of generated columns and
+   tables involving generated columns:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The generation expression can only use immutable functions and cannot
+      use subqueries or reference anything other than the current row in any
+      way.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A generation expression cannot reference another generated column.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A generation expression cannot reference a system column, except
+      <varname>tableoid</varname>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A generated column cannot have a column default or an identity definition.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A generated column cannot be part of a partition key.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Foreign tables can have generated columns.  See <xref
+      linkend="sql-createforeigntable"/> for details.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   Additional considerations apply to the use of generated columns.
+   <itemizedlist>
+    <listitem>
+     <para>
+      Generated columns maintain access privileges separately from their
+      underlying base columns.  So, it is possible to arrange it so that a
+      particular role can read from a generated column but not from the
+      underlying base columns.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Generated columns are, conceptually, updated after
+      <literal>BEFORE</literal> triggers have run.  Therefore, changes made to
+      base columns in a <literal>BEFORE</literal> trigger will be reflected in
+      generated columns.  But conversely, it is not allowed to access
+      generated columns in <literal>BEFORE</literal> triggers.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </sect1>
+
  <sect1 id="ddl-constraints">
   <title>Constraints</title>
 

@@ -236,7 +236,7 @@ slot_fill_defaults(LogicalRepRelMapEntry *rel, EState *estate,
 	{
 		Expr	   *defexpr;
 
-		if (TupleDescAttr(desc, attnum)->attisdropped)
+		if (TupleDescAttr(desc, attnum)->attisdropped || TupleDescAttr(desc, attnum)->attgenerated)
 			continue;
 
 		if (rel->attrmap[attnum] >= 0)

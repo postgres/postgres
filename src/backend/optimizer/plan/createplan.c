@@ -6570,8 +6570,9 @@ make_modifytable(PlannerInfo *root,
 
 		/*
 		 * Try to modify the foreign table directly if (1) the FDW provides
-		 * callback functions needed for that, (2) there are no row-level
-		 * triggers on the foreign table, and (3) there are no WITH CHECK
+		 * callback functions needed for that and (2) there are no local
+		 * structures that need to be run for each modified row: row-level
+		 * triggers on the foreign table, stored generated columns, WITH CHECK
 		 * OPTIONs from parent views.
 		 */
 		direct_modify = false;
@@ -6581,7 +6582,8 @@ make_modifytable(PlannerInfo *root,
 			fdwroutine->IterateDirectModify != NULL &&
 			fdwroutine->EndDirectModify != NULL &&
 			withCheckOptionLists == NIL &&
-			!has_row_triggers(subroot, rti, operation))
+			!has_row_triggers(subroot, rti, operation) &&
+			!has_stored_generated_columns(subroot, rti))
 			direct_modify = fdwroutine->PlanDirectModify(subroot, node, rti, i);
 		if (direct_modify)
 			direct_modify_plans = bms_add_member(direct_modify_plans, i);

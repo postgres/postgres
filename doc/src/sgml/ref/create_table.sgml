@@ -62,6 +62,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
+  GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED |
   GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ] |
   UNIQUE <replaceable class="parameter">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="parameter">index_parameters</replaceable> |
@@ -83,7 +84,7 @@ class="parameter">referential_action</replaceable> ] [ ON UPDATE <replaceable cl
 
 <phrase>and <replaceable class="parameter">like_option</replaceable> is:</phrase>
 
-{ INCLUDING | EXCLUDING } { COMMENTS | CONSTRAINTS | DEFAULTS | IDENTITY | INDEXES | STATISTICS | STORAGE | ALL }
+{ INCLUDING | EXCLUDING } { COMMENTS | CONSTRAINTS | DEFAULTS | GENERATED | IDENTITY | INDEXES | STATISTICS | STORAGE | ALL }
 
 <phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>
 
@@ -628,6 +629,16 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        </varlistentry>
 
        <varlistentry>
+        <term><literal>INCLUDING GENERATED</literal></term>
+        <listitem>
+         <para>
+          Any generation expressions of copied column definitions will be
+          copied.  By default, new columns will be regular base columns.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>INCLUDING IDENTITY</literal></term>
         <listitem>
          <para>
@@ -793,6 +804,28 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The default expression will be used in any insert operation that
       does not specify a value for the column.  If there is no default
       for a column, then the default is null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED</literal><indexterm><primary>generated column</primary></indexterm></term>
+    <listitem>
+     <para>
+      This clause creates the column as a <firstterm>generated
+      column</firstterm>.  The column cannot be written to, and when read it
+      will be computed from the specified expression.
+     </para>
+
+     <para>
+      The keyword <literal>STORED</literal> is required to signify that the
+      column will be computed on write and will be stored on disk.  default.
+     </para>
+
+     <para>
+      The generation expression can refer to other columns in the table, but
+      not other generated columns.  Any functions and operators used must be
+      immutable.  References to other tables are not allowed.
      </para>
     </listitem>
    </varlistentry>
@@ -2025,6 +2058,16 @@ CREATE TABLE cities_partdef
     the <command>INSERT</command> command supports only one override clause
     that applies to the entire statement, so having multiple identity columns
     with different behaviors is not well supported.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Generated Columns</title>
+
+   <para>
+    The option <literal>STORED</literal> is not standard but is also used by
+    other SQL implementations.  The SQL standard does not specify the storage
+    of generated columns.
    </para>
   </refsect2>
 

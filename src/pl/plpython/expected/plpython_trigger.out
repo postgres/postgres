@@ -67,6 +67,10 @@ SELECT * FROM users;
 -- dump trigger data
 CREATE TABLE trigger_test
 	(i int, v text );
+CREATE TABLE trigger_test_generated (
+	i int,
+        j int GENERATED ALWAYS AS (i * 2) STORED
+);
 CREATE FUNCTION trigger_data() RETURNS trigger LANGUAGE plpythonu AS $$
 
 if 'relid' in TD:
@@ -203,6 +207,77 @@ NOTICE:  TD[when] => BEFORE
 DROP TRIGGER show_trigger_data_trig_stmt on trigger_test;
 DROP TRIGGER show_trigger_data_trig_before on trigger_test;
 DROP TRIGGER show_trigger_data_trig_after on trigger_test;
+CREATE TRIGGER show_trigger_data_trig_before
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
+CREATE TRIGGER show_trigger_data_trig_after
+AFTER INSERT OR UPDATE OR DELETE ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE trigger_data();
+insert into trigger_test_generated (i) values (1);
+NOTICE:  TD[args] => None
+NOTICE:  TD[event] => INSERT
+NOTICE:  TD[level] => ROW
+NOTICE:  TD[name] => show_trigger_data_trig_before
+NOTICE:  TD[new] => {'i': 1}
+NOTICE:  TD[old] => None
+NOTICE:  TD[relid] => bogus:12345
+NOTICE:  TD[table_name] => trigger_test_generated
+NOTICE:  TD[table_schema] => public
+NOTICE:  TD[when] => BEFORE
+NOTICE:  TD[args] => None
+NOTICE:  TD[event] => INSERT
+NOTICE:  TD[level] => ROW
+NOTICE:  TD[name] => show_trigger_data_trig_after
+NOTICE:  TD[new] => {'i': 1, 'j': 2}
+NOTICE:  TD[old] => None
+NOTICE:  TD[relid] => bogus:12345
+NOTICE:  TD[table_name] => trigger_test_generated
+NOTICE:  TD[table_schema] => public
+NOTICE:  TD[when] => AFTER
+update trigger_test_generated set i = 11 where i = 1;
+NOTICE:  TD[args] => None
+NOTICE:  TD[event] => UPDATE
+NOTICE:  TD[level] => ROW
+NOTICE:  TD[name] => show_trigger_data_trig_before
+NOTICE:  TD[new] => {'i': 11}
+NOTICE:  TD[old] => {'i': 1, 'j': 2}
+NOTICE:  TD[relid] => bogus:12345
+NOTICE:  TD[table_name] => trigger_test_generated
+NOTICE:  TD[table_schema] => public
+NOTICE:  TD[when] => BEFORE
+NOTICE:  TD[args] => None
+NOTICE:  TD[event] => UPDATE
+NOTICE:  TD[level] => ROW
+NOTICE:  TD[name] => show_trigger_data_trig_after
+NOTICE:  TD[new] => {'i': 11, 'j': 22}
+NOTICE:  TD[old] => {'i': 1, 'j': 2}
+NOTICE:  TD[relid] => bogus:12345
+NOTICE:  TD[table_name] => trigger_test_generated
+NOTICE:  TD[table_schema] => public
+NOTICE:  TD[when] => AFTER
+delete from trigger_test_generated;
+NOTICE:  TD[args] => None
+NOTICE:  TD[event] => DELETE
+NOTICE:  TD[level] => ROW
+NOTICE:  TD[name] => show_trigger_data_trig_before
+NOTICE:  TD[new] => None
+NOTICE:  TD[old] => {'i': 11, 'j': 22}
+NOTICE:  TD[relid] => bogus:12345
+NOTICE:  TD[table_name] => trigger_test_generated
+NOTICE:  TD[table_schema] => public
+NOTICE:  TD[when] => BEFORE
+NOTICE:  TD[args] => None
+NOTICE:  TD[event] => DELETE
+NOTICE:  TD[level] => ROW
+NOTICE:  TD[name] => show_trigger_data_trig_after
+NOTICE:  TD[new] => None
+NOTICE:  TD[old] => {'i': 11, 'j': 22}
+NOTICE:  TD[relid] => bogus:12345
+NOTICE:  TD[table_name] => trigger_test_generated
+NOTICE:  TD[table_schema] => public
+NOTICE:  TD[when] => AFTER
+DROP TRIGGER show_trigger_data_trig_before ON trigger_test_generated;
+DROP TRIGGER show_trigger_data_trig_after ON trigger_test_generated;
 insert into trigger_test values(1,'insert');
 CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
 CREATE TRIGGER show_trigger_data_trig
@@ -524,3 +599,22 @@ INFO:  old: 1 -> a
 INFO:  new: 1 -> b
 DROP TABLE transition_table_test;
 DROP FUNCTION transition_table_test_f();
+-- dealing with generated columns
+CREATE FUNCTION generated_test_func1() RETURNS trigger
+LANGUAGE plpythonu
+AS $$
+TD['new']['j'] = 5  # not allowed
+return 'MODIFY'
+$$;
+CREATE TRIGGER generated_test_trigger1 BEFORE INSERT ON trigger_test_generated
+FOR EACH ROW EXECUTE PROCEDURE generated_test_func1();
+TRUNCATE trigger_test_generated;
+INSERT INTO trigger_test_generated (i) VALUES (1);
+ERROR:  cannot set generated column "j"
+CONTEXT:  while modifying trigger row
+PL/Python function "generated_test_func1"
+SELECT * FROM trigger_test_generated;
+ i | j 
+---+---
+(0 rows)
+

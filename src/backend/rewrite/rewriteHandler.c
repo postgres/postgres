@@ -818,6 +818,13 @@ rewriteTargetListIU(List *targetList,
 
 			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_BY_DEFAULT && override == OVERRIDING_USER_VALUE)
 				apply_default = true;
+
+			if (att_tup->attgenerated && !apply_default)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot insert into column \"%s\"", NameStr(att_tup->attname)),
+						 errdetail("Column \"%s\" is a generated column.",
+								   NameStr(att_tup->attname))));
 		}
 
 		if (commandType == CMD_UPDATE)
@@ -828,9 +835,23 @@ rewriteTargetListIU(List *targetList,
 						 errmsg("column \"%s\" can only be updated to DEFAULT", NameStr(att_tup->attname)),
 						 errdetail("Column \"%s\" is an identity column defined as GENERATED ALWAYS.",
 								   NameStr(att_tup->attname))));
+
+			if (att_tup->attgenerated && new_tle && !apply_default)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("column \"%s\" can only be updated to DEFAULT", NameStr(att_tup->attname)),
+						 errdetail("Column \"%s\" is a generated column.",
+								   NameStr(att_tup->attname))));
 		}
 
-		if (apply_default)
+		if (att_tup->attgenerated)
+		{
+			/*
+			 * stored generated column will be fixed in executor
+			 */
+			new_tle = NULL;
+		}
+		else if (apply_default)
 		{
 			Node	   *new_expr;
 
@@ -1137,13 +1158,12 @@ build_column_default(Relation rel, int attrno)
 		}
 	}
 
-	if (expr == NULL)
-	{
-		/*
-		 * No per-column default, so look for a default for the type itself.
-		 */
+	/*
+	 * No per-column default, so look for a default for the type itself.  But
+	 * not for generated columns.
+	 */
+	if (expr == NULL && !att_tup->attgenerated)
 		expr = get_typdefault(atttype);
-	}
 
 	if (expr == NULL)
 		return NULL;			/* No default anywhere */
@@ -1720,12 +1740,14 @@ ApplyRetrieveRule(Query *parsetree,
 	subrte->selectedCols = rte->selectedCols;
 	subrte->insertedCols = rte->insertedCols;
 	subrte->updatedCols = rte->updatedCols;
+	subrte->extraUpdatedCols = rte->extraUpdatedCols;
 
 	rte->requiredPerms = 0;		/* no permission check on subquery itself */
 	rte->checkAsUser = InvalidOid;
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	return parsetree;
 }

@@ -261,7 +261,9 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
 UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</replaceable> ... ]
 </synopsis>
       The trigger will only fire if at least one of the listed columns
-      is mentioned as a target of the <command>UPDATE</command> command.
+      is mentioned as a target of the <command>UPDATE</command> command
+      or if one of the listed columns is a generated column that depends on a
+      column that is the target of the <command>UPDATE</command>.
      </para>
 
      <para>

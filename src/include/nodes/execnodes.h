@@ -452,6 +452,9 @@ typedef struct ResultRelInfo
 	/* array of constraint-checking expr states */
 	ExprState **ri_ConstraintExprs;
 
+	/* array of stored generated columns expr states */
+	ExprState **ri_GeneratedExprs;
+
 	/* for removing junk attributes from tuples */
 	JunkFilter *ri_junkFilter;
 

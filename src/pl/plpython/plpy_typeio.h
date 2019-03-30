@@ -151,7 +151,7 @@ extern Datum PLy_output_convert(PLyObToDatum *arg, PyObject *val,
 				   bool *isnull);
 
 extern PyObject *PLy_input_from_tuple(PLyDatumToOb *arg, HeapTuple tuple,
-					 TupleDesc desc);
+					 TupleDesc desc, bool include_generated);
 
 extern void PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 					 Oid typeOid, int32 typmod,

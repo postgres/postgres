@@ -49,6 +49,7 @@
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
+#include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
@@ -240,6 +241,89 @@ ExecCheckTIDVisible(EState *estate,
 	ExecClearTuple(tempSlot);
 }
 
+/*
+ * Compute stored generated columns for a tuple
+ */
+void
+ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
+{
+	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	int			natts = tupdesc->natts;
+	MemoryContext oldContext;
+	Datum	   *values;
+	bool	   *nulls;
+	bool	   *replaces;
+	HeapTuple	oldtuple, newtuple;
+	bool		should_free;
+
+	Assert(tupdesc->constr && tupdesc->constr->has_generated_stored);
+
+	/*
+	 * If first time through for this result relation, build expression
+	 * nodetrees for rel's stored generation expressions.  Keep them in the
+	 * per-query memory context so they'll survive throughout the query.
+	 */
+	if (resultRelInfo->ri_GeneratedExprs == NULL)
+	{
+		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+		resultRelInfo->ri_GeneratedExprs =
+			(ExprState **) palloc(natts * sizeof(ExprState *));
+
+		for (int i = 0; i < natts; i++)
+		{
+			if (TupleDescAttr(tupdesc, i)->attgenerated == ATTRIBUTE_GENERATED_STORED)
+			{
+				Expr	   *expr;
+
+				expr = (Expr *) build_column_default(rel, i + 1);
+				if (expr == NULL)
+					elog(ERROR, "no generation expression found for column number %d of table \"%s\"",
+						 i + 1, RelationGetRelationName(rel));
+
+				resultRelInfo->ri_GeneratedExprs[i] = ExecPrepareExpr(expr, estate);
+			}
+		}
+
+		MemoryContextSwitchTo(oldContext);
+	}
+
+	oldContext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
+	values = palloc(sizeof(*values) * natts);
+	nulls = palloc(sizeof(*nulls) * natts);
+	replaces = palloc0(sizeof(*replaces) * natts);
+
+	for (int i = 0; i < natts; i++)
+	{
+		if (TupleDescAttr(tupdesc, i)->attgenerated == ATTRIBUTE_GENERATED_STORED)
+		{
+			ExprContext *econtext;
+			Datum		val;
+			bool		isnull;
+
+			econtext = GetPerTupleExprContext(estate);
+			econtext->ecxt_scantuple = slot;
+
+			val = ExecEvalExpr(resultRelInfo->ri_GeneratedExprs[i], econtext, &isnull);
+
+			values[i] = val;
+			nulls[i] = isnull;
+			replaces[i] = true;
+		}
+	}
+
+	oldtuple = ExecFetchSlotHeapTuple(slot, true, &should_free);
+	newtuple = heap_modify_tuple(oldtuple, tupdesc, values, nulls, replaces);
+	ExecForceStoreHeapTuple(newtuple, slot);
+	if (should_free)
+		heap_freetuple(oldtuple);
+
+	MemoryContextSwitchTo(oldContext);
+}
+
 /* ----------------------------------------------------------------
  *		ExecInsert
  *
@@ -298,6 +382,13 @@ ExecInsert(ModifyTableState *mtstate,
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
 		/*
+		 * Compute stored generated columns
+		 */
+		if (resultRelationDesc->rd_att->constr &&
+			resultRelationDesc->rd_att->constr->has_generated_stored)
+			ExecComputeStoredGenerated(estate, slot);
+
+		/*
 		 * insert into foreign table: let the FDW do it
 		 */
 		slot = resultRelInfo->ri_FdwRoutine->ExecForeignInsert(estate,
@@ -325,6 +416,13 @@ ExecInsert(ModifyTableState *mtstate,
 		 * tts_tableOid before evaluating them.
 		 */
 		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
+
+		/*
+		 * Compute stored generated columns
+		 */
+		if (resultRelationDesc->rd_att->constr &&
+			resultRelationDesc->rd_att->constr->has_generated_stored)
+			ExecComputeStoredGenerated(estate, slot);
 
 		/*
 		 * Check any RLS WITH CHECK policies.
@@ -965,6 +1063,13 @@ ExecUpdate(ModifyTableState *mtstate,
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
 		/*
+		 * Compute stored generated columns
+		 */
+		if (resultRelationDesc->rd_att->constr &&
+			resultRelationDesc->rd_att->constr->has_generated_stored)
+			ExecComputeStoredGenerated(estate, slot);
+
+		/*
 		 * update in foreign table: let the FDW do it
 		 */
 		slot = resultRelInfo->ri_FdwRoutine->ExecForeignUpdate(estate,
@@ -993,6 +1098,13 @@ ExecUpdate(ModifyTableState *mtstate,
 		 * tts_tableOid before evaluating them.
 		 */
 		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
+
+		/*
+		 * Compute stored generated columns
+		 */
+		if (resultRelationDesc->rd_att->constr &&
+			resultRelationDesc->rd_att->constr->has_generated_stored)
+			ExecComputeStoredGenerated(estate, slot);
 
 		/*
 		 * Check any RLS UPDATE WITH CHECK policies

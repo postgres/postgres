@@ -51,6 +51,20 @@ INSERT INTO test_like_id_3 (b) VALUES ('b3');
 SELECT * FROM test_like_id_3;  -- identity was copied and applied
 DROP TABLE test_like_id_1, test_like_id_2, test_like_id_3;
 
+CREATE TABLE test_like_gen_1 (a int, b int GENERATED ALWAYS AS (a * 2) STORED);
+\d test_like_gen_1
+INSERT INTO test_like_gen_1 (a) VALUES (1);
+SELECT * FROM test_like_gen_1;
+CREATE TABLE test_like_gen_2 (LIKE test_like_gen_1);
+\d test_like_gen_2
+INSERT INTO test_like_gen_2 (a) VALUES (1);
+SELECT * FROM test_like_gen_2;
+CREATE TABLE test_like_gen_3 (LIKE test_like_gen_1 INCLUDING GENERATED);
+\d test_like_gen_3
+INSERT INTO test_like_gen_3 (a) VALUES (1);
+SELECT * FROM test_like_gen_3;
+DROP TABLE test_like_gen_1, test_like_gen_2, test_like_gen_3;
+
 CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, y text); /* copies indexes */
 INSERT INTO inhg VALUES (5, 10);
 INSERT INTO inhg VALUES (20, 10); -- should fail

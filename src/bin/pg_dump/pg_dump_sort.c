@@ -1107,6 +1107,16 @@ repairDependencyLoop(DumpableObject **loop,
 		}
 	}
 
+	/* Loop of table with itself, happens with generated columns */
+	if (nLoop == 1)
+	{
+		if (loop[0]->objType == DO_TABLE)
+		{
+			removeObjectDependency(loop[0], loop[0]->dumpId);
+			return;
+		}
+	}
+
 	/*
 	 * If all the objects are TABLE_DATA items, what we must have is a
 	 * circular set of foreign key constraints (or a single self-referential

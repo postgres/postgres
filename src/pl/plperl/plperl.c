@@ -266,7 +266,7 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid,
 						bool is_trigger,
 						bool is_event_trigger);
 
-static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
+static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc, bool include_generated);
 static SV  *plperl_hash_from_datum(Datum attr);
 static SV  *plperl_ref_from_pg_array(Datum arg, Oid typid);
 static SV  *split_array(plperl_array_info *info, int first, int last, int nest);
@@ -1644,13 +1644,19 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 	hv_store_string(hv, "name", cstr2sv(tdata->tg_trigger->tgname));
 	hv_store_string(hv, "relid", cstr2sv(relid));
 
+	/*
+	 * Note: In BEFORE trigger, stored generated columns are not computed yet,
+	 * so don't make them accessible in NEW row.
+	 */
+
 	if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
 	{
 		event = "INSERT";
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
 			hv_store_string(hv, "new",
 							plperl_hash_from_tuple(tdata->tg_trigtuple,
-												   tupdesc));
+												   tupdesc,
+												   !TRIGGER_FIRED_BEFORE(tdata->tg_event)));
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(tdata->tg_event))
 	{
@@ -1658,7 +1664,8 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
 			hv_store_string(hv, "old",
 							plperl_hash_from_tuple(tdata->tg_trigtuple,
-												   tupdesc));
+												   tupdesc,
+												   true));
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
 	{
@@ -1667,10 +1674,12 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		{
 			hv_store_string(hv, "old",
 							plperl_hash_from_tuple(tdata->tg_trigtuple,
-												   tupdesc));
+												   tupdesc,
+												   true));
 			hv_store_string(hv, "new",
 							plperl_hash_from_tuple(tdata->tg_newtuple,
-												   tupdesc));
+												   tupdesc,
+												   !TRIGGER_FIRED_BEFORE(tdata->tg_event)));
 		}
 	}
 	else if (TRIGGER_FIRED_BY_TRUNCATE(tdata->tg_event))
@@ -1790,6 +1799,11 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot set system attribute \"%s\"",
+							key)));
+		if (attr->attgenerated)
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					 errmsg("cannot set generated column \"%s\"",
 							key)));
 
 		modvalues[attn - 1] = plperl_sv_to_datum(val,
@@ -3012,7 +3026,7 @@ plperl_hash_from_datum(Datum attr)
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 	tmptup.t_data = td;
 
-	sv = plperl_hash_from_tuple(&tmptup, tupdesc);
+	sv = plperl_hash_from_tuple(&tmptup, tupdesc, true);
 	ReleaseTupleDesc(tupdesc);
 
 	return sv;
@@ -3020,7 +3034,7 @@ plperl_hash_from_datum(Datum attr)
 
 /* Build a hash from all attributes of a given tuple. */
 static SV  *
-plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
+plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc, bool include_generated)
 {
 	dTHX;
 	HV		   *hv;
@@ -3043,6 +3057,13 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 
 		if (att->attisdropped)
 			continue;
+
+		if (att->attgenerated)
+		{
+			/* don't include unless requested */
+			if (!include_generated)
+				continue;
+		}
 
 		attname = NameStr(att->attname);
 		attr = heap_getattr(tuple, i + 1, tupdesc, &isnull);
@@ -3198,7 +3219,7 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 processed,
 		av_extend(rows, processed);
 		for (i = 0; i < processed; i++)
 		{
-			row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
+			row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc, true);
 			av_push(rows, row);
 		}
 		hv_store_string(result, "rows",
@@ -3484,7 +3505,8 @@ plperl_spi_fetchrow(char *cursor)
 			else
 			{
 				row = plperl_hash_from_tuple(SPI_tuptable->vals[0],
-											 SPI_tuptable->tupdesc);
+											 SPI_tuptable->tupdesc,
+											 true);
 			}
 			SPI_freetuptable(SPI_tuptable);
 		}

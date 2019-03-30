@@ -731,6 +731,17 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
 							colname),
 					 parser_errposition(pstate, location)));
 
+		/*
+		 * In generated column, no system column is allowed except tableOid.
+		 */
+		if (pstate->p_expr_kind == EXPR_KIND_GENERATED_COLUMN &&
+			attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("cannot use system column \"%s\" in column generation expression",
+							colname),
+					 parser_errposition(pstate, location)));
+
 		if (attnum != InvalidAttrNumber)
 		{
 			/* now check to see if column actually is defined */
@@ -1257,6 +1268,7 @@ addRangeTableEntry(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1328,6 +1340,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1407,6 +1420,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1670,6 +1684,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1733,6 +1748,7 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1811,6 +1827,7 @@ addRangeTableEntryForValues(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1881,6 +1898,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
@@ -1983,6 +2001,7 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	rte->selectedCols = NULL;
 	rte->insertedCols = NULL;
 	rte->updatedCols = NULL;
+	rte->extraUpdatedCols = NULL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list

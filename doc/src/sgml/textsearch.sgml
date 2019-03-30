@@ -620,15 +620,17 @@ CREATE INDEX pgweb_idx ON pgweb USING GIN (to_tsvector('english', title || ' ' |
 
    <para>
     Another approach is to create a separate <type>tsvector</type> column
-    to hold the output of <function>to_tsvector</function>.  This example is a
+    to hold the output of <function>to_tsvector</function>.  To keep this
+    column automatically up to date with its source data, use a stored
+    generated column.  This example is a
     concatenation of <literal>title</literal> and <literal>body</literal>,
     using <function>coalesce</function> to ensure that one field will still be
     indexed when the other is <literal>NULL</literal>:
 
 <programlisting>
-ALTER TABLE pgweb ADD COLUMN textsearchable_index_col tsvector;
-UPDATE pgweb SET textsearchable_index_col =
-     to_tsvector('english', coalesce(title,'') || ' ' || coalesce(body,''));
+ALTER TABLE pgweb
+    ADD COLUMN textsearchable_index_col tsvector
+               GENERATED ALWAYS AS (to_tsvector('english', coalesce(title, '') || ' ' || coalesce(body, ''))) STORED;
 </programlisting>
 
     Then we create a <acronym>GIN</acronym> index to speed up the search:
@@ -646,14 +648,6 @@ WHERE textsearchable_index_col @@ to_tsquery('create &amp; table')
 ORDER BY last_mod_date DESC
 LIMIT 10;
 </programlisting>
-   </para>
-
-   <para>
-    When using a separate column to store the <type>tsvector</type>
-    representation,
-    it is necessary to create a trigger to keep the <type>tsvector</type>
-    column current anytime <literal>title</literal> or <literal>body</literal> changes.
-    <xref linkend="textsearch-update-triggers"/> explains how to do that.
    </para>
 
    <para>
@@ -1856,6 +1850,14 @@ SELECT ts_rewrite('a &amp; b'::tsquery,
     <primary>trigger</primary>
     <secondary>for updating a derived tsvector column</secondary>
    </indexterm>
+
+   <note>
+    <para>
+     The method described in this section has been obsoleted by the use of
+     stored generated columns, as described in <xref
+     linkend="textsearch-tables-index"/>.
+    </para>
+   </note>
 
    <para>
     When using a separate column to store the <type>tsvector</type> representation

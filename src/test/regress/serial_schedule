@@ -122,6 +122,7 @@ test: groupingsets
 test: drop_operator
 test: password
 test: identity
+test: generated
 test: create_table_like
 test: alter_generic
 test: alter_operator

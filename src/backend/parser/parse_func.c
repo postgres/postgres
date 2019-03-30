@@ -2526,6 +2526,9 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 		case EXPR_KIND_COPY_WHERE:
 			err = _("set-returning functions are not allowed in COPY FROM WHERE conditions");
 			break;
+		case EXPR_KIND_GENERATED_COLUMN:
+			err = _("set-returning functions are not allowed in column generation expressions");
+			break;
 
 			/*
 			 * There is intentionally no default: case here, so that the
