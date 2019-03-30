@@ -819,7 +819,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       The keyword <literal>STORED</literal> is required to signify that the
-      column will be computed on write and will be stored on disk.  default.
+      column will be computed on write and will be stored on disk.
      </para>
 
      <para>
