@@ -3106,13 +3106,13 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		foreach(lc, indexIds)
 		{
 			Oid			oldIndexId = lfirst_oid(lc);
-			ObjectAddress *object = palloc(sizeof(ObjectAddress));
+			ObjectAddress object;
 
-			object->classId = RelationRelationId;
-			object->objectId = oldIndexId;
-			object->objectSubId = 0;
+			object.classId = RelationRelationId;
+			object.objectId = oldIndexId;
+			object.objectSubId = 0;
 
-			add_exact_object_address(object, objects);
+			add_exact_object_address(&object, objects);
 		}
 
 		/*
