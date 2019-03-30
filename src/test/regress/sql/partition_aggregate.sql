@@ -149,16 +149,18 @@ EXPLAIN (COSTS OFF)
 SELECT a.x, sum(b.x) FROM pagg_tab1 a FULL OUTER JOIN pagg_tab2 b ON a.x = b.y GROUP BY a.x ORDER BY 1 NULLS LAST;
 SELECT a.x, sum(b.x) FROM pagg_tab1 a FULL OUTER JOIN pagg_tab2 b ON a.x = b.y GROUP BY a.x ORDER BY 1 NULLS LAST;
 
--- LEFT JOIN, with dummy relation on right side,
+-- LEFT JOIN, with dummy relation on right side, ideally
 -- should produce full partitionwise aggregation plan as GROUP BY is on
--- non-nullable columns
+-- non-nullable columns.
+-- But right now we are unable to do partitionwise join in this case.
 EXPLAIN (COSTS OFF)
 SELECT a.x, b.y, count(*) FROM (SELECT * FROM pagg_tab1 WHERE x < 20) a LEFT JOIN (SELECT * FROM pagg_tab2 WHERE y > 10) b ON a.x = b.y WHERE a.x > 5 or b.y < 20  GROUP BY a.x, b.y ORDER BY 1, 2;
 SELECT a.x, b.y, count(*) FROM (SELECT * FROM pagg_tab1 WHERE x < 20) a LEFT JOIN (SELECT * FROM pagg_tab2 WHERE y > 10) b ON a.x = b.y WHERE a.x > 5 or b.y < 20  GROUP BY a.x, b.y ORDER BY 1, 2;
 
--- FULL JOIN, with dummy relations on both sides,
+-- FULL JOIN, with dummy relations on both sides, ideally
 -- should produce partial partitionwise aggregation plan as GROUP BY is on
--- nullable columns
+-- nullable columns.
+-- But right now we are unable to do partitionwise join in this case.
 EXPLAIN (COSTS OFF)
 SELECT a.x, b.y, count(*) FROM (SELECT * FROM pagg_tab1 WHERE x < 20) a FULL JOIN (SELECT * FROM pagg_tab2 WHERE y > 10) b ON a.x = b.y WHERE a.x > 5 or b.y < 20  GROUP BY a.x, b.y ORDER BY 1, 2;
 SELECT a.x, b.y, count(*) FROM (SELECT * FROM pagg_tab1 WHERE x < 20) a FULL JOIN (SELECT * FROM pagg_tab2 WHERE y > 10) b ON a.x = b.y WHERE a.x > 5 or b.y < 20 GROUP BY a.x, b.y ORDER BY 1, 2;
