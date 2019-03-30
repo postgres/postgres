@@ -51,7 +51,7 @@
  *	 ndim * (sizeof(uint16) + sizeof(bool)) + 2 * sizeof(double)
  */
 #define ITEM_SIZE(ndims)	\
-	((ndims) * (sizeof(uint16) + sizeof(bool)) + 2 * sizeof(double))
+	MAXALIGN((ndims) * (sizeof(uint16) + sizeof(bool)) + 2 * sizeof(double))
 
 /*
  * Macros for convenient access to parts of a serialized MCV item.
@@ -929,8 +929,8 @@ statext_mcv_deserialize(bytea *data)
 	mcvlen = MAXALIGN(offsetof(MCVList, items) + (sizeof(MCVItem) * nitems));
 
 	/* arrays of values and isnull flags for all MCV items */
-	mcvlen += MAXALIGN(sizeof(Datum) * ndims * nitems);
-	mcvlen += MAXALIGN(sizeof(bool) * ndims * nitems);
+	mcvlen += nitems * MAXALIGN(sizeof(Datum) * ndims);
+	mcvlen += nitems * MAXALIGN(sizeof(bool) * ndims);
 
 	/* we don't quite need to align this, but it makes some assers easier */
 	mcvlen += MAXALIGN(datalen);
@@ -942,9 +942,9 @@ statext_mcv_deserialize(bytea *data)
 	valuesptr = (char *) mcvlist
 		+ MAXALIGN(offsetof(MCVList, items) + (sizeof(MCVItem) * nitems));
 
-	isnullptr = valuesptr + (MAXALIGN(sizeof(Datum) * ndims * nitems));
+	isnullptr = valuesptr + (nitems * MAXALIGN(sizeof(Datum) * ndims));
 
-	dataptr = isnullptr + (MAXALIGN(sizeof(bool) * ndims * nitems));
+	dataptr = isnullptr + (nitems * MAXALIGN(sizeof(bool) * ndims));
 
 	/*
 	 * Build mapping (index => value) for translating the serialized data into
@@ -1043,10 +1043,11 @@ statext_mcv_deserialize(bytea *data)
 		MCVItem    *item = &mcvlist->items[i];
 
 		item->values = (Datum *) valuesptr;
-		valuesptr += (sizeof(Datum) * ndims);
+		valuesptr += MAXALIGN(sizeof(Datum) * ndims);
 
-		item->isnull = (bool *) valuesptr;
-		valuesptr += (sizeof(bool) * ndims);
+		item->isnull = (bool *) isnullptr;
+		isnullptr += MAXALIGN(sizeof(bool) * ndims);
+
 
 		/* just point to the right place */
 		indexes = ITEM_INDEXES(ptr);
