@@ -2113,7 +2113,10 @@ set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 {
 	PartitionDesc partdesc;
 
-	Assert(relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+	/* Create the PartitionDirectory infrastructure if we didn't already */
+	if (root->glob->partition_directory == NULL)
+		root->glob->partition_directory =
+			CreatePartitionDirectory(CurrentMemoryContext);
 
 	partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
 										relation);

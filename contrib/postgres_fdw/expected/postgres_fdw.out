@@ -7141,9 +7141,9 @@ select * from bar where f1 in (select f1 from foo) for update;
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
  LockRows
-   Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
+   Output: bar.f1, bar.f2, bar.ctid, foo.ctid, bar.*, bar.tableoid, foo.*, foo.tableoid
    ->  Hash Join
-         Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
+         Output: bar.f1, bar.f2, bar.ctid, foo.ctid, bar.*, bar.tableoid, foo.*, foo.tableoid
          Inner Unique: true
          Hash Cond: (bar.f1 = foo.f1)
          ->  Append
@@ -7153,15 +7153,15 @@ select * from bar where f1 in (select f1 from foo) for update;
                      Output: bar2.f1, bar2.f2, bar2.ctid, bar2.*, bar2.tableoid
                      Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
          ->  Hash
-               Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+               Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                ->  HashAggregate
-                     Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                     Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
                            ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                            ->  Foreign Scan on public.foo2
-                                 Output: foo2.ctid, foo2.*, foo2.tableoid, foo2.f1
+                                 Output: foo2.ctid, foo2.f1, foo2.*, foo2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
 (23 rows)
 
@@ -7179,9 +7179,9 @@ select * from bar where f1 in (select f1 from foo) for share;
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
  LockRows
-   Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
+   Output: bar.f1, bar.f2, bar.ctid, foo.ctid, bar.*, bar.tableoid, foo.*, foo.tableoid
    ->  Hash Join
-         Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid, foo.ctid, foo.*, foo.tableoid
+         Output: bar.f1, bar.f2, bar.ctid, foo.ctid, bar.*, bar.tableoid, foo.*, foo.tableoid
          Inner Unique: true
          Hash Cond: (bar.f1 = foo.f1)
          ->  Append
@@ -7191,15 +7191,15 @@ select * from bar where f1 in (select f1 from foo) for share;
                      Output: bar2.f1, bar2.f2, bar2.ctid, bar2.*, bar2.tableoid
                      Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR SHARE
          ->  Hash
-               Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+               Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                ->  HashAggregate
-                     Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                     Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
                            ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                            ->  Foreign Scan on public.foo2
-                                 Output: foo2.ctid, foo2.*, foo2.tableoid, foo2.f1
+                                 Output: foo2.ctid, foo2.f1, foo2.*, foo2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
 (23 rows)
 
@@ -7228,15 +7228,15 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
          ->  Seq Scan on public.bar
                Output: bar.f1, bar.f2, bar.ctid
          ->  Hash
-               Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+               Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                ->  HashAggregate
-                     Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                     Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
                            ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                            ->  Foreign Scan on public.foo2
-                                 Output: foo2.ctid, foo2.*, foo2.tableoid, foo2.f1
+                                 Output: foo2.ctid, foo2.f1, foo2.*, foo2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
    ->  Hash Join
          Output: bar2.f1, (bar2.f2 + 100), bar2.f3, bar2.ctid, foo.ctid, foo.*, foo.tableoid
@@ -7246,15 +7246,15 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
                Output: bar2.f1, bar2.f2, bar2.f3, bar2.ctid
                Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
          ->  Hash
-               Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+               Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                ->  HashAggregate
-                     Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                     Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
                            ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.*, foo.tableoid, foo.f1
+                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                            ->  Foreign Scan on public.foo2
-                                 Output: foo2.ctid, foo2.*, foo2.tableoid, foo2.f1
+                                 Output: foo2.ctid, foo2.f1, foo2.*, foo2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
 (39 rows)
 
@@ -8460,7 +8460,7 @@ SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10)
  Foreign Scan
    Output: t1.a, ftprt2_p1.b, ftprt2_p1.c
    Relations: (public.ftprt1_p1 t1) LEFT JOIN (public.ftprt2_p1 fprt2)
-   Remote SQL: SELECT r5.a, r7.b, r7.c FROM (public.fprt1_p1 r5 LEFT JOIN public.fprt2_p1 r7 ON (((r5.a = r7.b)) AND ((r5.b = r7.a)) AND ((r7.a < 10)))) WHERE ((r5.a < 10)) ORDER BY r5.a ASC NULLS LAST, r7.b ASC NULLS LAST, r7.c ASC NULLS LAST
+   Remote SQL: SELECT r5.a, r6.b, r6.c FROM (public.fprt1_p1 r5 LEFT JOIN public.fprt2_p1 r6 ON (((r5.a = r6.b)) AND ((r5.b = r6.a)) AND ((r6.a < 10)))) WHERE ((r5.a < 10)) ORDER BY r5.a ASC NULLS LAST, r6.b ASC NULLS LAST, r6.c ASC NULLS LAST
 (4 rows)
 
 SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10) t2 ON (t1.a = t2.b and t1.b = t2.a) WHERE t1.a < 10 ORDER BY 1,2,3;

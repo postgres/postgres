@@ -1654,9 +1654,17 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 				memcpy(pprune->subplan_map, pinfo->subplan_map,
 					   sizeof(int) * pinfo->nparts);
 
-				/* Double-check that list of relations has not changed. */
-				Assert(memcmp(partdesc->oids, pinfo->relid_map,
-					   pinfo->nparts * sizeof(Oid)) == 0);
+				/*
+				 * Double-check that the list of unpruned relations has not
+				 * changed.  (Pruned partitions are not in relid_map[].)
+				 */
+#ifdef USE_ASSERT_CHECKING
+				for (int k = 0; k < pinfo->nparts; k++)
+				{
+					Assert(partdesc->oids[k] == pinfo->relid_map[k] ||
+						   pinfo->subplan_map[k] == -1);
+				}
+#endif
 			}
 			else
 			{

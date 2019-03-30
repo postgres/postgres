@@ -2568,6 +2568,60 @@ table ab;
  1 | 3
 (1 row)
 
+-- Test UPDATE where source relation has run-time pruning enabled
+truncate ab;
+insert into ab values (1, 1), (1, 2), (1, 3), (2, 1);
+explain (analyze, costs off, summary off, timing off)
+update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Update on ab_a1 (actual rows=0 loops=1)
+   Update on ab_a1_b1
+   Update on ab_a1_b2
+   Update on ab_a1_b3
+   InitPlan 1 (returns $0)
+     ->  Result (actual rows=1 loops=1)
+   ->  Nested Loop (actual rows=1 loops=1)
+         ->  Seq Scan on ab_a1_b1 (actual rows=1 loops=1)
+         ->  Materialize (actual rows=1 loops=1)
+               ->  Append (actual rows=1 loops=1)
+                     ->  Seq Scan on ab_a2_b1 (actual rows=1 loops=1)
+                           Filter: (b = $0)
+                     ->  Seq Scan on ab_a2_b2 (never executed)
+                           Filter: (b = $0)
+                     ->  Seq Scan on ab_a2_b3 (never executed)
+                           Filter: (b = $0)
+   ->  Nested Loop (actual rows=1 loops=1)
+         ->  Seq Scan on ab_a1_b2 (actual rows=1 loops=1)
+         ->  Materialize (actual rows=1 loops=1)
+               ->  Append (actual rows=1 loops=1)
+                     ->  Seq Scan on ab_a2_b1 (actual rows=1 loops=1)
+                           Filter: (b = $0)
+                     ->  Seq Scan on ab_a2_b2 (never executed)
+                           Filter: (b = $0)
+                     ->  Seq Scan on ab_a2_b3 (never executed)
+                           Filter: (b = $0)
+   ->  Nested Loop (actual rows=1 loops=1)
+         ->  Seq Scan on ab_a1_b3 (actual rows=1 loops=1)
+         ->  Materialize (actual rows=1 loops=1)
+               ->  Append (actual rows=1 loops=1)
+                     ->  Seq Scan on ab_a2_b1 (actual rows=1 loops=1)
+                           Filter: (b = $0)
+                     ->  Seq Scan on ab_a2_b2 (never executed)
+                           Filter: (b = $0)
+                     ->  Seq Scan on ab_a2_b3 (never executed)
+                           Filter: (b = $0)
+(36 rows)
+
+select tableoid::regclass, * from ab;
+ tableoid | a | b 
+----------+---+---
+ ab_a1_b3 | 1 | 3
+ ab_a1_b3 | 1 | 3
+ ab_a1_b3 | 1 | 3
+ ab_a2_b1 | 2 | 1
+(4 rows)
+
 drop table ab, lprt_a;
 -- Join
 create table tbl1(col1 int);

@@ -20,6 +20,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/inherit.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
@@ -159,12 +160,7 @@ add_other_rels_to_query(PlannerInfo *root)
 
 		/* If it's marked as inheritable, look for children. */
 		if (rte->inh)
-		{
-			/* Only relation and subquery RTEs can have children. */
-			Assert(rte->rtekind == RTE_RELATION ||
-				   rte->rtekind == RTE_SUBQUERY);
-			add_appendrel_other_rels(root, rel, rti);
-		}
+			expand_inherited_rtentry(root, rel, rte, rti);
 	}
 }
 

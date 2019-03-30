@@ -588,6 +588,13 @@ explain (analyze, costs off, summary off, timing off)
 update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
 table ab;
 
+-- Test UPDATE where source relation has run-time pruning enabled
+truncate ab;
+insert into ab values (1, 1), (1, 2), (1, 3), (2, 1);
+explain (analyze, costs off, summary off, timing off)
+update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
+select tableoid::regclass, * from ab;
+
 drop table ab, lprt_a;
 
 -- Join

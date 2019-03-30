@@ -1103,6 +1103,7 @@ typedef struct PartitionPruneInfo
  * it is -1 if the partition is a leaf or has been pruned.  Note that subplan
  * indexes, as stored in 'subplan_map', are global across the parent plan
  * node, but partition indexes are valid only within a particular hierarchy.
+ * relid_map[p] contains the partition's OID, or 0 if the partition was pruned.
  */
 typedef struct PartitionedRelPruneInfo
 {
@@ -1115,7 +1116,7 @@ typedef struct PartitionedRelPruneInfo
 	int			nexprs;			/* Length of hasexecparam[] */
 	int		   *subplan_map;	/* subplan index by partition index, or -1 */
 	int		   *subpart_map;	/* subpart index by partition index, or -1 */
-	Oid		   *relid_map;		/* relation OID by partition index, or -1 */
+	Oid		   *relid_map;		/* relation OID by partition index, or 0 */
 	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
 								 * any PARAM_EXEC Params. */
 	bool		do_initial_prune;	/* true if pruning should be performed

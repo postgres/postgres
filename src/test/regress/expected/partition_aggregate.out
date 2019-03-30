@@ -144,7 +144,7 @@ SELECT c, sum(a) FROM pagg_tab WHERE 1 = 2 GROUP BY c;
            QUERY PLAN           
 --------------------------------
  HashAggregate
-   Group Key: pagg_tab.c
+   Group Key: c
    ->  Result
          One-Time Filter: false
 (4 rows)
@@ -159,7 +159,7 @@ SELECT c, sum(a) FROM pagg_tab WHERE c = 'x' GROUP BY c;
            QUERY PLAN           
 --------------------------------
  GroupAggregate
-   Group Key: pagg_tab.c
+   Group Key: c
    ->  Result
          One-Time Filter: false
 (4 rows)

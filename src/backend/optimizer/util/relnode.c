@@ -20,11 +20,11 @@
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/inherit.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
-#include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "partitioning/partbounds.h"
@@ -129,6 +129,49 @@ setup_append_rel_array(PlannerInfo *root)
 
 		root->append_rel_array[child_relid] = appinfo;
 	}
+}
+
+/*
+ * expand_planner_arrays
+ *		Expand the PlannerInfo's per-RTE arrays by add_size members
+ *		and initialize the newly added entries to NULLs
+ */
+void
+expand_planner_arrays(PlannerInfo *root, int add_size)
+{
+	int			new_size;
+
+	Assert(add_size > 0);
+
+	new_size = root->simple_rel_array_size + add_size;
+
+	root->simple_rte_array = (RangeTblEntry **)
+		repalloc(root->simple_rte_array,
+				 sizeof(RangeTblEntry *) * new_size);
+	MemSet(root->simple_rte_array + root->simple_rel_array_size,
+		   0, sizeof(RangeTblEntry *) * add_size);
+
+	root->simple_rel_array = (RelOptInfo **)
+		repalloc(root->simple_rel_array,
+				 sizeof(RelOptInfo *) * new_size);
+	MemSet(root->simple_rel_array + root->simple_rel_array_size,
+		   0, sizeof(RelOptInfo *) * add_size);
+
+	if (root->append_rel_array)
+	{
+		root->append_rel_array = (AppendRelInfo **)
+			repalloc(root->append_rel_array,
+					 sizeof(AppendRelInfo *) * new_size);
+		MemSet(root->append_rel_array + root->simple_rel_array_size,
+			   0, sizeof(AppendRelInfo *) * add_size);
+	}
+	else
+	{
+		root->append_rel_array = (AppendRelInfo **)
+			palloc0(sizeof(AppendRelInfo *) * new_size);
+	}
+
+	root->simple_rel_array_size = new_size;
 }
 
 /*
@@ -281,93 +324,42 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 			break;
 	}
 
-	/* Save the finished struct in the query's simple_rel_array */
-	root->simple_rel_array[relid] = rel;
-
 	/*
 	 * This is a convenient spot at which to note whether rels participating
 	 * in the query have any securityQuals attached.  If so, increase
 	 * root->qual_security_level to ensure it's larger than the maximum
-	 * security level needed for securityQuals.
+	 * security level needed for securityQuals.  (Must do this before we call
+	 * apply_child_basequals, else we'll hit an Assert therein.)
 	 */
 	if (rte->securityQuals)
 		root->qual_security_level = Max(root->qual_security_level,
 										list_length(rte->securityQuals));
 
-	return rel;
-}
-
-/*
- * add_appendrel_other_rels
- *		Add "other rel" RelOptInfos for the children of an appendrel baserel
- *
- * "rel" is a relation that (still) has the rte->inh flag set, meaning it
- * has appendrel children listed in root->append_rel_list.  We need to build
- * a RelOptInfo for each child relation so that we can plan scans on them.
- * (The parent relation might be a partitioned table, a table with
- * traditional inheritance children, or a flattened UNION ALL subquery.)
- */
-void
-add_appendrel_other_rels(PlannerInfo *root, RelOptInfo *rel, Index rti)
-{
-	int			cnt_parts = 0;
-	ListCell   *l;
-
 	/*
-	 * If rel is a partitioned table, then we also need to build a part_rels
-	 * array so that the child RelOptInfos can be conveniently accessed from
-	 * the parent.
+	 * Copy the parent's quals to the child, with appropriate substitution of
+	 * variables.  If any constant false or NULL clauses turn up, we can mark
+	 * the child as dummy right away.  (We must do this immediately so that
+	 * pruning works correctly when recursing in expand_partitioned_rtentry.)
 	 */
-	if (rel->part_scheme != NULL)
+	if (parent)
 	{
-		Assert(rel->nparts > 0);
-		rel->part_rels = (RelOptInfo **)
-			palloc0(sizeof(RelOptInfo *) * rel->nparts);
-	}
+		AppendRelInfo *appinfo = root->append_rel_array[relid];
 
-	foreach(l, root->append_rel_list)
-	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
-		Index		childRTindex = appinfo->child_relid;
-		RangeTblEntry *childrte;
-		RelOptInfo *childrel;
-
-		/* append_rel_list contains all append rels; ignore others */
-		if (appinfo->parent_relid != rti)
-			continue;
-
-		/* find the child RTE, which should already exist */
-		Assert(childRTindex < root->simple_rel_array_size);
-		childrte = root->simple_rte_array[childRTindex];
-		Assert(childrte != NULL);
-
-		/* build child RelOptInfo, and add to main query data structures */
-		childrel = build_simple_rel(root, childRTindex, rel);
-
-		/*
-		 * If rel is a partitioned table, fill in the part_rels array.  The
-		 * order in which child tables appear in append_rel_list is the same
-		 * as the order in which they appear in the parent's PartitionDesc, so
-		 * assigning partitions like this works.
-		 */
-		if (rel->part_scheme != NULL)
+		Assert(appinfo != NULL);
+		if (!apply_child_basequals(root, parent, rel, rte, appinfo))
 		{
-			Assert(cnt_parts < rel->nparts);
-			rel->part_rels[cnt_parts++] = childrel;
-		}
-
-		/* Child may itself be an inherited relation. */
-		if (childrte->inh)
-		{
-			/* Only relation and subquery RTEs can have children. */
-			Assert(childrte->rtekind == RTE_RELATION ||
-				   childrte->rtekind == RTE_SUBQUERY);
-			add_appendrel_other_rels(root, childrel, childRTindex);
+			/*
+			 * Some restriction clause reduced to constant FALSE or NULL after
+			 * substitution, so this child need not be scanned.
+			 */
+			mark_dummy_rel(rel);
 		}
 	}
 
-	/* We should have filled all of the part_rels array if it's partitioned */
-	Assert(cnt_parts == rel->nparts);
+	/* Save the finished struct in the query's simple_rel_array */
+	root->simple_rel_array[relid] = rel;
+
+	return rel;
 }
 
 /*
