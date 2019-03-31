@@ -731,6 +731,16 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 		if (rte->lateral)
 			root->hasLateralRTEs = true;
+
+		/*
+		 * We can also determine the maximum security level required for any
+		 * securityQuals now.  Addition of inheritance-child RTEs won't affect
+		 * this, because child tables don't have their own securityQuals; see
+		 * expand_single_inheritance_child().
+		 */
+		if (rte->securityQuals)
+			root->qual_security_level = Max(root->qual_security_level,
+											list_length(rte->securityQuals));
 	}
 
 	/*

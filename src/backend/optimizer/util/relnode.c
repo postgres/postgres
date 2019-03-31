@@ -325,17 +325,6 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	}
 
 	/*
-	 * This is a convenient spot at which to note whether rels participating
-	 * in the query have any securityQuals attached.  If so, increase
-	 * root->qual_security_level to ensure it's larger than the maximum
-	 * security level needed for securityQuals.  (Must do this before we call
-	 * apply_child_basequals, else we'll hit an Assert therein.)
-	 */
-	if (rte->securityQuals)
-		root->qual_security_level = Max(root->qual_security_level,
-										list_length(rte->securityQuals));
-
-	/*
 	 * Copy the parent's quals to the child, with appropriate substitution of
 	 * variables.  If any constant false or NULL clauses turn up, we can mark
 	 * the child as dummy right away.  (We must do this immediately so that
