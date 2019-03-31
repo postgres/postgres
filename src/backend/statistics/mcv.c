@@ -931,7 +931,7 @@ statext_mcv_deserialize(bytea *data)
 	mcvlen += nitems * MAXALIGN(sizeof(Datum) * ndims);
 	mcvlen += nitems * MAXALIGN(sizeof(bool) * ndims);
 
-	/* we don't quite need to align this, but it makes some assers easier */
+	/* we don't quite need to align this, but it makes some asserts easier */
 	mcvlen += MAXALIGN(datalen);
 
 	/* now resize the deserialized MCV list, and compute pointers to parts */
