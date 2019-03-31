@@ -14,6 +14,15 @@ OBJS = check.o controldata.o dump.o exec.o file.o function.o info.o \
 override CPPFLAGS := -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
+ifdef NO_TEMP_INSTALL
+	tbindir=$(abs_top_builddir)/tmp_install/$(bindir)
+	tlibdir=$(abs_top_builddir)/tmp_install/$(libdir)
+	DOINST =
+else
+	tbindir=$(bindir)
+	tlibdir=$(libdir)
+	DOINST = --install
+endif
 
 all: pg_upgrade
 
@@ -37,7 +46,7 @@ clean distclean maintainer-clean:
 	       pg_upgrade_dump_*.custom pg_upgrade_*.log
 
 check: test.sh all
-	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $< --install
+	MAKE=$(MAKE) bindir="$(tbindir)" libdir="$(tlibdir)" EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $< $(DOINST)
 
 # installcheck is not supported because there's no meaningful way to test
 # pg_upgrade against a single already-running server
