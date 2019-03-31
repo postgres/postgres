@@ -248,6 +248,23 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	if (params->options & VACOPT_DISABLE_PAGE_SKIPPING)
 		aggressive = true;
 
+	/*
+	 * Normally the relfrozenxid for an anti-wraparound vacuum will be old
+	 * enough to force an aggressive vacuum.  However, a concurrent vacuum
+	 * might have already done this work that the relfrozenxid in relcache has
+	 * been updated.  If that happens this vacuum is redundant, so skip it.
+	 */
+	if (params->is_wraparound && !aggressive)
+	{
+		ereport(DEBUG1,
+				(errmsg("skipping redundant vacuum to prevent wraparound of table \"%s.%s.%s\"",
+						get_database_name(MyDatabaseId),
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
+		pgstat_progress_end_command();
+		return;
+	}
+
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
 	vacrelstats->old_rel_pages = onerel->rd_rel->relpages;
@@ -375,10 +392,9 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 			initStringInfo(&buf);
 			if (params->is_wraparound)
 			{
-				if (aggressive)
-					msgfmt = _("automatic aggressive vacuum to prevent wraparound of table \"%s.%s.%s\": index scans: %d\n");
-				else
-					msgfmt = _("automatic vacuum to prevent wraparound of table \"%s.%s.%s\": index scans: %d\n");
+				/* an anti-wraparound vacuum has to be aggressive */
+				Assert(aggressive);
+				msgfmt = _("automatic aggressive vacuum to prevent wraparound of table \"%s.%s.%s\": index scans: %d\n");
 			}
 			else
 			{
