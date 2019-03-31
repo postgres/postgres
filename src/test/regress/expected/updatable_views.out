@@ -1542,10 +1542,67 @@ SELECT * FROM base_tbl_child ORDER BY a;
  20
 (6 rows)
 
+CREATE TABLE other_tbl_parent (id int);
+CREATE TABLE other_tbl_child () INHERITS (other_tbl_parent);
+INSERT INTO other_tbl_parent VALUES (7),(200);
+INSERT INTO other_tbl_child VALUES (8),(100);
+EXPLAIN (costs off)
+UPDATE rw_view1 SET a = a + 1000 FROM other_tbl_parent WHERE a = id;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Update on base_tbl_parent
+   Update on base_tbl_parent
+   Update on base_tbl_child
+   ->  Hash Join
+         Hash Cond: (other_tbl_parent.id = base_tbl_parent.a)
+         ->  Append
+               ->  Seq Scan on other_tbl_parent
+               ->  Seq Scan on other_tbl_child
+         ->  Hash
+               ->  Seq Scan on base_tbl_parent
+   ->  Merge Join
+         Merge Cond: (base_tbl_child.a = other_tbl_parent.id)
+         ->  Sort
+               Sort Key: base_tbl_child.a
+               ->  Seq Scan on base_tbl_child
+         ->  Sort
+               Sort Key: other_tbl_parent.id
+               ->  Append
+                     ->  Seq Scan on other_tbl_parent
+                     ->  Seq Scan on other_tbl_child
+(20 rows)
+
+UPDATE rw_view1 SET a = a + 1000 FROM other_tbl_parent WHERE a = id;
+SELECT * FROM ONLY base_tbl_parent ORDER BY a;
+  a   
+------
+ -200
+ -100
+  -40
+  -30
+  -20
+  -10
+ 1100
+ 1200
+(8 rows)
+
+SELECT * FROM base_tbl_child ORDER BY a;
+  a   
+------
+    3
+    4
+   10
+   20
+ 1007
+ 1008
+(6 rows)
+
 DROP TABLE base_tbl_parent, base_tbl_child CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to view rw_view1
 drop cascades to view rw_view2
+DROP TABLE other_tbl_parent CASCADE;
+NOTICE:  drop cascades to table other_tbl_child
 -- simple WITH CHECK OPTION
 CREATE TABLE base_tbl (a int, b int DEFAULT 10);
 INSERT INTO base_tbl VALUES (1,2), (2,3), (1,-1);

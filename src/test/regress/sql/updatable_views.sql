@@ -713,7 +713,20 @@ DELETE FROM ONLY rw_view2 WHERE a IN (-8, 8); -- Should delete -8 only
 SELECT * FROM ONLY base_tbl_parent ORDER BY a;
 SELECT * FROM base_tbl_child ORDER BY a;
 
+CREATE TABLE other_tbl_parent (id int);
+CREATE TABLE other_tbl_child () INHERITS (other_tbl_parent);
+INSERT INTO other_tbl_parent VALUES (7),(200);
+INSERT INTO other_tbl_child VALUES (8),(100);
+
+EXPLAIN (costs off)
+UPDATE rw_view1 SET a = a + 1000 FROM other_tbl_parent WHERE a = id;
+UPDATE rw_view1 SET a = a + 1000 FROM other_tbl_parent WHERE a = id;
+
+SELECT * FROM ONLY base_tbl_parent ORDER BY a;
+SELECT * FROM base_tbl_child ORDER BY a;
+
 DROP TABLE base_tbl_parent, base_tbl_child CASCADE;
+DROP TABLE other_tbl_parent CASCADE;
 
 -- simple WITH CHECK OPTION
 
