@@ -192,14 +192,16 @@ typedef struct TableAmRoutine
 	 * Restart relation scan.  If set_params is set to true, allow{strat,
 	 * sync, pagemode} (see scan_begin) changes should be taken into account.
 	 */
-	void		(*scan_rescan) (TableScanDesc scan, struct ScanKeyData *key, bool set_params,
-								bool allow_strat, bool allow_sync, bool allow_pagemode);
+	void		(*scan_rescan) (TableScanDesc scan, struct ScanKeyData *key,
+								bool set_params, bool allow_strat,
+								bool allow_sync, bool allow_pagemode);
 
 	/*
 	 * Return next tuple from `scan`, store in slot.
 	 */
 	bool		(*scan_getnextslot) (TableScanDesc scan,
-									 ScanDirection direction, TupleTableSlot *slot);
+									 ScanDirection direction,
+									 TupleTableSlot *slot);
 
 
 	/* ------------------------------------------------------------------------
@@ -218,13 +220,15 @@ typedef struct TableAmRoutine
 	 * pscan will be sized according to parallelscan_estimate() for the same
 	 * relation.
 	 */
-	Size		(*parallelscan_initialize) (Relation rel, ParallelTableScanDesc pscan);
+	Size		(*parallelscan_initialize) (Relation rel,
+											ParallelTableScanDesc pscan);
 
 	/*
 	 * Reinitialize `pscan` for a new scan. `rel` will be the same relation as
 	 * when `pscan` was initialized by parallelscan_initialize.
 	 */
-	void		(*parallelscan_reinitialize) (Relation rel, ParallelTableScanDesc pscan);
+	void		(*parallelscan_reinitialize) (Relation rel,
+											  ParallelTableScanDesc pscan);
 
 
 	/* ------------------------------------------------------------------------
@@ -323,8 +327,9 @@ typedef struct TableAmRoutine
 	 */
 
 	/* see table_insert() for reference about parameters */
-	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot, CommandId cid,
-								 int options, struct BulkInsertStateData *bistate);
+	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot,
+								 CommandId cid, int options,
+								 struct BulkInsertStateData *bistate);
 
 	/* see table_insert_speculative() for reference about parameters */
 	void		(*tuple_insert_speculative) (Relation rel,
@@ -414,10 +419,16 @@ typedef struct TableAmRoutine
 	void		(*relation_copy_data) (Relation rel, RelFileNode newrnode);
 
 	/* See table_relation_copy_for_cluster() */
-	void		(*relation_copy_for_cluster) (Relation NewHeap, Relation OldHeap, Relation OldIndex,
+	void		(*relation_copy_for_cluster) (Relation NewHeap,
+											  Relation OldHeap,
+											  Relation OldIndex,
 											  bool use_sort,
-											  TransactionId OldestXmin, TransactionId FreezeXid, MultiXactId MultiXactCutoff,
-											  double *num_tuples, double *tups_vacuumed, double *tups_recently_dead);
+											  TransactionId OldestXmin,
+											  TransactionId FreezeXid,
+											  MultiXactId MultiXactCutoff,
+											  double *num_tuples,
+											  double *tups_vacuumed,
+											  double *tups_recently_dead);
 
 	/*
 	 * React to VACUUM command on the relation. The VACUUM might be user
@@ -434,7 +445,8 @@ typedef struct TableAmRoutine
 	 * There probably, in the future, needs to be a separate callback to
 	 * integrate with autovacuum's scheduling.
 	 */
-	void		(*relation_vacuum) (Relation onerel, struct VacuumParams *params,
+	void		(*relation_vacuum) (Relation onerel,
+									struct VacuumParams *params,
 									BufferAccessStrategy bstrategy);
 
 	/*
@@ -595,7 +607,8 @@ table_beginscan_bm(Relation rel, Snapshot snapshot,
 static inline TableScanDesc
 table_beginscan_sampling(Relation rel, Snapshot snapshot,
 						 int nkeys, struct ScanKeyData *key,
-						 bool allow_strat, bool allow_sync, bool allow_pagemode)
+						 bool allow_strat, bool allow_sync,
+						 bool allow_pagemode)
 {
 	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL,
 									   allow_strat, allow_sync, allow_pagemode,
@@ -686,7 +699,9 @@ extern Size table_parallelscan_estimate(Relation rel, Snapshot snapshot);
  * for the same relation.  Call this just once in the leader process; then,
  * individual workers attach via table_beginscan_parallel.
  */
-extern void table_parallelscan_initialize(Relation rel, ParallelTableScanDesc pscan, Snapshot snapshot);
+extern void table_parallelscan_initialize(Relation rel,
+							  ParallelTableScanDesc pscan,
+							  Snapshot snapshot);
 
 /*
  * Begin a parallel scan. `pscan` needs to have been initialized with
@@ -695,7 +710,8 @@ extern void table_parallelscan_initialize(Relation rel, ParallelTableScanDesc ps
  *
  * Caller must hold a suitable lock on the correct relation.
  */
-extern TableScanDesc table_beginscan_parallel(Relation rel, ParallelTableScanDesc pscan);
+extern TableScanDesc table_beginscan_parallel(Relation rel,
+						 ParallelTableScanDesc pscan);
 
 /*
  * Restart a parallel scan.  Call this in the leader process.  Caller is
@@ -836,7 +852,8 @@ table_get_latest_tid(Relation rel, Snapshot snapshot, ItemPointer tid)
  * they ought to mark the relevant buffer dirty.
  */
 static inline bool
-table_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot, Snapshot snapshot)
+table_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
+							   Snapshot snapshot)
 {
 	return rel->rd_tableam->tuple_satisfies_snapshot(rel, slot, snapshot);
 }
@@ -919,7 +936,8 @@ table_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
  */
 static inline void
 table_insert_speculative(Relation rel, TupleTableSlot *slot, CommandId cid,
-						 int options, struct BulkInsertStateData *bistate, uint32 specToken)
+						 int options, struct BulkInsertStateData *bistate,
+						 uint32 specToken)
 {
 	rel->rd_tableam->tuple_insert_speculative(rel, slot, cid, options,
 											  bistate, specToken);
@@ -930,8 +948,8 @@ table_insert_speculative(Relation rel, TupleTableSlot *slot, CommandId cid,
  * succeeded is true, the tuple is fully inserted, if false, it's removed.
  */
 static inline void
-table_complete_speculative(Relation rel, TupleTableSlot *slot, uint32 specToken,
-						   bool succeeded)
+table_complete_speculative(Relation rel, TupleTableSlot *slot,
+						   uint32 specToken, bool succeeded)
 {
 	rel->rd_tableam->tuple_complete_speculative(rel, slot, specToken,
 												succeeded);
@@ -1342,9 +1360,12 @@ extern void simple_table_update(Relation rel, ItemPointer otid,
 extern Size table_block_parallelscan_estimate(Relation rel);
 extern Size table_block_parallelscan_initialize(Relation rel,
 									ParallelTableScanDesc pscan);
-extern void table_block_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan);
-extern BlockNumber table_block_parallelscan_nextpage(Relation rel, ParallelBlockTableScanDesc pbscan);
-extern void table_block_parallelscan_startblock_init(Relation rel, ParallelBlockTableScanDesc pbscan);
+extern void table_block_parallelscan_reinitialize(Relation rel,
+									  ParallelTableScanDesc pscan);
+extern BlockNumber table_block_parallelscan_nextpage(Relation rel,
+								  ParallelBlockTableScanDesc pbscan);
+extern void table_block_parallelscan_startblock_init(Relation rel,
+										 ParallelBlockTableScanDesc pbscan);
 
 
 /* ----------------------------------------------------------------------------

@@ -2068,9 +2068,9 @@ bool
 has_stored_generated_columns(PlannerInfo *root, Index rti)
 {
 	RangeTblEntry *rte = planner_rt_fetch(rti, root);
-	Relation    relation;
+	Relation	relation;
 	TupleDesc	tupdesc;
-	bool        result = false;
+	bool		result = false;
 
 	/* Assume we already have adequate lock */
 	relation = heap_open(rte->relid, NoLock);

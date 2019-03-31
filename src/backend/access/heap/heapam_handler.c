@@ -48,8 +48,7 @@
 #include "utils/rel.h"
 
 
-static void
-reform_and_rewrite_tuple(HeapTuple tuple,
+static void reform_and_rewrite_tuple(HeapTuple tuple,
 						 Relation OldHeap, Relation NewHeap,
 						 Datum *values, bool *isnull, RewriteState rwstate);
 
@@ -247,8 +246,9 @@ heapam_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 }
 
 static void
-heapam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot, CommandId cid,
-								int options, BulkInsertState bistate, uint32 specToken)
+heapam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot,
+								CommandId cid, int options,
+								BulkInsertState bistate, uint32 specToken)
 {
 	bool		shouldFree = true;
 	HeapTuple	tuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);
@@ -269,8 +269,8 @@ heapam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot, Command
 }
 
 static void
-heapam_tuple_complete_speculative(Relation relation, TupleTableSlot *slot, uint32 spekToken,
-								  bool succeeded)
+heapam_tuple_complete_speculative(Relation relation, TupleTableSlot *slot,
+								  uint32 spekToken, bool succeeded)
 {
 	bool		shouldFree = true;
 	HeapTuple	tuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);
@@ -703,11 +703,11 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	 */
 	if (OldIndex != NULL && !use_sort)
 	{
-		const int   ci_index[] = {
+		const int	ci_index[] = {
 			PROGRESS_CLUSTER_PHASE,
 			PROGRESS_CLUSTER_INDEX_RELID
 		};
-		int64       ci_val[2];
+		int64		ci_val[2];
 
 		/* Set phase and OIDOldIndex to columns */
 		ci_val[0] = PROGRESS_CLUSTER_PHASE_INDEX_SCAN_HEAP;
@@ -765,7 +765,10 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 			if (!table_scan_getnextslot(tableScan, ForwardScanDirection, slot))
 				break;
 
-			/* In scan-and-sort mode and also VACUUM FULL, set heap blocks scanned */
+			/*
+			 * In scan-and-sort mode and also VACUUM FULL, set heap blocks
+			 * scanned
+			 */
 			pgstat_progress_update_param(PROGRESS_CLUSTER_HEAP_BLKS_SCANNED,
 										 heapScan->rs_cblock + 1);
 		}
@@ -844,17 +847,20 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 		{
 			tuplesort_putheaptuple(tuplesort, tuple);
 
-			/* In scan-and-sort mode, report increase in number of tuples scanned */
+			/*
+			 * In scan-and-sort mode, report increase in number of tuples
+			 * scanned
+			 */
 			pgstat_progress_update_param(PROGRESS_CLUSTER_HEAP_TUPLES_SCANNED,
 										 *num_tuples);
 		}
 		else
 		{
-			const int   ct_index[] = {
+			const int	ct_index[] = {
 				PROGRESS_CLUSTER_HEAP_TUPLES_SCANNED,
 				PROGRESS_CLUSTER_HEAP_TUPLES_WRITTEN
 			};
-			int64       ct_val[2];
+			int64		ct_val[2];
 
 			reform_and_rewrite_tuple(tuple, OldHeap, NewHeap,
 									 values, isnull, rwstate);
@@ -882,7 +888,8 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	 */
 	if (tuplesort != NULL)
 	{
-		double n_tuples = 0;
+		double		n_tuples = 0;
+
 		/* Report that we are now sorting tuples */
 		pgstat_progress_update_param(PROGRESS_CLUSTER_PHASE,
 									 PROGRESS_CLUSTER_PHASE_SORT_TUPLES);
@@ -925,10 +932,10 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 }
 
 static bool
-heapam_scan_analyze_next_block(TableScanDesc sscan, BlockNumber blockno,
+heapam_scan_analyze_next_block(TableScanDesc scan, BlockNumber blockno,
 							   BufferAccessStrategy bstrategy)
 {
-	HeapScanDesc scan = (HeapScanDesc) sscan;
+	HeapScanDesc hscan = (HeapScanDesc) scan;
 
 	/*
 	 * We must maintain a pin on the target page's buffer to ensure that
@@ -939,22 +946,22 @@ heapam_scan_analyze_next_block(TableScanDesc sscan, BlockNumber blockno,
 	 * doing much work per tuple, the extra lock traffic is probably better
 	 * avoided.
 	 */
-	scan->rs_cblock = blockno;
-	scan->rs_cindex = FirstOffsetNumber;
-	scan->rs_cbuf = ReadBufferExtended(scan->rs_base.rs_rd, MAIN_FORKNUM,
-									   blockno, RBM_NORMAL, bstrategy);
-	LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+	hscan->rs_cblock = blockno;
+	hscan->rs_cindex = FirstOffsetNumber;
+	hscan->rs_cbuf = ReadBufferExtended(scan->rs_rd, MAIN_FORKNUM,
+										blockno, RBM_NORMAL, bstrategy);
+	LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
 	/* in heap all blocks can contain tuples, so always return true */
 	return true;
 }
 
 static bool
-heapam_scan_analyze_next_tuple(TableScanDesc sscan, TransactionId OldestXmin,
+heapam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 							   double *liverows, double *deadrows,
 							   TupleTableSlot *slot)
 {
-	HeapScanDesc scan = (HeapScanDesc) sscan;
+	HeapScanDesc hscan = (HeapScanDesc) scan;
 	Page		targpage;
 	OffsetNumber maxoffset;
 	BufferHeapTupleTableSlot *hslot;
@@ -962,17 +969,17 @@ heapam_scan_analyze_next_tuple(TableScanDesc sscan, TransactionId OldestXmin,
 	Assert(TTS_IS_BUFFERTUPLE(slot));
 
 	hslot = (BufferHeapTupleTableSlot *) slot;
-	targpage = BufferGetPage(scan->rs_cbuf);
+	targpage = BufferGetPage(hscan->rs_cbuf);
 	maxoffset = PageGetMaxOffsetNumber(targpage);
 
 	/* Inner loop over all tuples on the selected page */
-	for (; scan->rs_cindex <= maxoffset; scan->rs_cindex++)
+	for (; hscan->rs_cindex <= maxoffset; hscan->rs_cindex++)
 	{
 		ItemId		itemid;
 		HeapTuple	targtuple = &hslot->base.tupdata;
 		bool		sample_it = false;
 
-		itemid = PageGetItemId(targpage, scan->rs_cindex);
+		itemid = PageGetItemId(targpage, hscan->rs_cindex);
 
 		/*
 		 * We ignore unused and redirect line pointers.  DEAD line pointers
@@ -987,13 +994,14 @@ heapam_scan_analyze_next_tuple(TableScanDesc sscan, TransactionId OldestXmin,
 			continue;
 		}
 
-		ItemPointerSet(&targtuple->t_self, scan->rs_cblock, scan->rs_cindex);
+		ItemPointerSet(&targtuple->t_self, hscan->rs_cblock, hscan->rs_cindex);
 
-		targtuple->t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
+		targtuple->t_tableOid = RelationGetRelid(scan->rs_rd);
 		targtuple->t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 		targtuple->t_len = ItemIdGetLength(itemid);
 
-		switch (HeapTupleSatisfiesVacuum(targtuple, OldestXmin, scan->rs_cbuf))
+		switch (HeapTupleSatisfiesVacuum(targtuple, OldestXmin,
+										 hscan->rs_cbuf))
 		{
 			case HEAPTUPLE_LIVE:
 				sample_it = true;
@@ -1073,8 +1081,8 @@ heapam_scan_analyze_next_tuple(TableScanDesc sscan, TransactionId OldestXmin,
 
 		if (sample_it)
 		{
-			ExecStoreBufferHeapTuple(targtuple, slot, scan->rs_cbuf);
-			scan->rs_cindex++;
+			ExecStoreBufferHeapTuple(targtuple, slot, hscan->rs_cbuf);
+			hscan->rs_cindex++;
 
 			/* note that we leave the buffer locked here! */
 			return true;
@@ -1082,8 +1090,8 @@ heapam_scan_analyze_next_tuple(TableScanDesc sscan, TransactionId OldestXmin,
 	}
 
 	/* Now release the lock and pin on the page */
-	UnlockReleaseBuffer(scan->rs_cbuf);
-	scan->rs_cbuf = InvalidBuffer;
+	UnlockReleaseBuffer(hscan->rs_cbuf);
+	hscan->rs_cbuf = InvalidBuffer;
 
 	/* also prevent old slot contents from having pin on page */
 	ExecClearTuple(slot);
@@ -1290,9 +1298,10 @@ heapam_index_build_range_scan(Relation heapRelation,
 
 			/*
 			 * The criteria for counting a tuple as live in this block need to
-			 * match what analyze.c's acquire_sample_rows() does, otherwise
-			 * CREATE INDEX and ANALYZE may produce wildly different reltuples
-			 * values, e.g. when there are many recently-dead tuples.
+			 * match what analyze.c's heapam_scan_analyze_next_tuple() does,
+			 * otherwise CREATE INDEX and ANALYZE may produce wildly different
+			 * reltuples values, e.g. when there are many recently-dead
+			 * tuples.
 			 */
 			switch (HeapTupleSatisfiesVacuum(heapTuple, OldestXmin,
 											 hscan->rs_cbuf))
@@ -1323,7 +1332,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 					 * index as unusable for them.
 					 *
 					 * We don't count recently-dead tuples in reltuples, even
-					 * if we index them; see acquire_sample_rows().
+					 * if we index them; see heapam_scan_analyze_next_tuple().
 					 */
 					if (HeapTupleIsHotUpdated(heapTuple))
 					{
@@ -1387,7 +1396,8 @@ heapam_index_build_range_scan(Relation heapRelation,
 					else
 					{
 						/*
-						 * For consistency with acquire_sample_rows(), count
+						 * For consistency with
+						 * heapam_scan_analyze_next_tuple(), count
 						 * HEAPTUPLE_INSERT_IN_PROGRESS tuples as live only
 						 * when inserted by our own transaction.
 						 */
@@ -1460,8 +1470,9 @@ heapam_index_build_range_scan(Relation heapRelation,
 						/*
 						 * Count HEAPTUPLE_DELETE_IN_PROGRESS tuples as live,
 						 * if they were not deleted by the current
-						 * transaction.  That's what acquire_sample_rows()
-						 * does, and we want the behavior to be consistent.
+						 * transaction.  That's what
+						 * heapam_scan_analyze_next_tuple() does, and we want
+						 * the behavior to be consistent.
 						 */
 						reltuples += 1;
 					}
@@ -1596,7 +1607,7 @@ heapam_index_validate_scan(Relation heapRelation,
 						   Relation indexRelation,
 						   IndexInfo *indexInfo,
 						   Snapshot snapshot,
-						   ValidateIndexState * state)
+						   ValidateIndexState *state)
 {
 	TableScanDesc scan;
 	HeapScanDesc hscan;
@@ -1824,55 +1835,6 @@ heapam_index_validate_scan(Relation heapRelation,
 }
 
 
-/* ----------------------------------------------------------------------------
- *  Helper functions for the above.
- * ----------------------------------------------------------------------------
- */
-
-/*
- * Reconstruct and rewrite the given tuple
- *
- * We cannot simply copy the tuple as-is, for several reasons:
- *
- * 1. We'd like to squeeze out the values of any dropped columns, both
- * to save space and to ensure we have no corner-case failures. (It's
- * possible for example that the new table hasn't got a TOAST table
- * and so is unable to store any large values of dropped cols.)
- *
- * 2. The tuple might not even be legal for the new table; this is
- * currently only known to happen as an after-effect of ALTER TABLE
- * SET WITHOUT OIDS.
- *
- * So, we must reconstruct the tuple from component Datums.
- */
-static void
-reform_and_rewrite_tuple(HeapTuple tuple,
-						 Relation OldHeap, Relation NewHeap,
-						 Datum *values, bool *isnull, RewriteState rwstate)
-{
-	TupleDesc	oldTupDesc = RelationGetDescr(OldHeap);
-	TupleDesc	newTupDesc = RelationGetDescr(NewHeap);
-	HeapTuple	copiedTuple;
-	int			i;
-
-	heap_deform_tuple(tuple, oldTupDesc, values, isnull);
-
-	/* Be sure to null out any dropped columns */
-	for (i = 0; i < newTupDesc->natts; i++)
-	{
-		if (TupleDescAttr(newTupDesc, i)->attisdropped)
-			isnull[i] = true;
-	}
-
-	copiedTuple = heap_form_tuple(newTupDesc, values, isnull);
-
-	/* The heap rewrite module does the rest */
-	rewrite_heap_tuple(rwstate, tuple, copiedTuple);
-
-	heap_freetuple(copiedTuple);
-}
-
-
 /* ------------------------------------------------------------------------
  * Planner related callbacks for the heap AM
  * ------------------------------------------------------------------------
@@ -1978,6 +1940,55 @@ heapam_estimate_rel_size(Relation rel, int32 *attr_widths,
 		*allvisfrac = 1;
 	else
 		*allvisfrac = (double) relallvisible / curpages;
+}
+
+
+/* ----------------------------------------------------------------------------
+ *  Helper functions for the above.
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ * Reconstruct and rewrite the given tuple
+ *
+ * We cannot simply copy the tuple as-is, for several reasons:
+ *
+ * 1. We'd like to squeeze out the values of any dropped columns, both
+ * to save space and to ensure we have no corner-case failures. (It's
+ * possible for example that the new table hasn't got a TOAST table
+ * and so is unable to store any large values of dropped cols.)
+ *
+ * 2. The tuple might not even be legal for the new table; this is
+ * currently only known to happen as an after-effect of ALTER TABLE
+ * SET WITHOUT OIDS.
+ *
+ * So, we must reconstruct the tuple from component Datums.
+ */
+static void
+reform_and_rewrite_tuple(HeapTuple tuple,
+						 Relation OldHeap, Relation NewHeap,
+						 Datum *values, bool *isnull, RewriteState rwstate)
+{
+	TupleDesc	oldTupDesc = RelationGetDescr(OldHeap);
+	TupleDesc	newTupDesc = RelationGetDescr(NewHeap);
+	HeapTuple	copiedTuple;
+	int			i;
+
+	heap_deform_tuple(tuple, oldTupDesc, values, isnull);
+
+	/* Be sure to null out any dropped columns */
+	for (i = 0; i < newTupDesc->natts; i++)
+	{
+		if (TupleDescAttr(newTupDesc, i)->attisdropped)
+			isnull[i] = true;
+	}
+
+	copiedTuple = heap_form_tuple(newTupDesc, values, isnull);
+
+	/* The heap rewrite module does the rest */
+	rewrite_heap_tuple(rwstate, tuple, copiedTuple);
+
+	heap_freetuple(copiedTuple);
 }
 
 

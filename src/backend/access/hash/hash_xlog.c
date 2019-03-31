@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "access/heapam_xlog.h"
 #include "access/bufmask.h"
 #include "access/hash.h"
 #include "access/hash_xlog.h"

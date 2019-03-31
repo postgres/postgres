@@ -78,6 +78,17 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->tuple_update != NULL);
 	Assert(routine->tuple_lock != NULL);
 
+	Assert(routine->relation_set_new_filenode != NULL);
+	Assert(routine->relation_nontransactional_truncate != NULL);
+	Assert(routine->relation_copy_data != NULL);
+	Assert(routine->relation_copy_for_cluster != NULL);
+	Assert(routine->relation_vacuum != NULL);
+	Assert(routine->scan_analyze_next_block != NULL);
+	Assert(routine->scan_analyze_next_tuple != NULL);
+	Assert(routine->index_build_range_scan != NULL);
+	Assert(routine->index_validate_scan != NULL);
+	Assert(routine->relation_estimate_size != NULL);
+
 	return routine;
 }
 
