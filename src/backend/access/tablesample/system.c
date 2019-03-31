@@ -26,7 +26,6 @@
 
 #include <math.h>
 
-#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/tsmapi.h"
 #include "catalog/pg_type.h"
@@ -56,7 +55,7 @@ static void system_beginsamplescan(SampleScanState *node,
 					   Datum *params,
 					   int nparams,
 					   uint32 seed);
-static BlockNumber system_nextsampleblock(SampleScanState *node);
+static BlockNumber system_nextsampleblock(SampleScanState *node, BlockNumber nblocks);
 static OffsetNumber system_nextsampletuple(SampleScanState *node,
 					   BlockNumber blockno,
 					   OffsetNumber maxoffset);
@@ -177,11 +176,9 @@ system_beginsamplescan(SampleScanState *node,
  * Select next block to sample.
  */
 static BlockNumber
-system_nextsampleblock(SampleScanState *node)
+system_nextsampleblock(SampleScanState *node, BlockNumber nblocks)
 {
 	SystemSamplerData *sampler = (SystemSamplerData *) node->tsm_state;
-	TableScanDesc scan = node->ss.ss_currentScanDesc;
-	HeapScanDesc hscan = (HeapScanDesc) scan;
 	BlockNumber nextblock = sampler->nextblock;
 	uint32		hashinput[2];
 
@@ -200,7 +197,7 @@ system_nextsampleblock(SampleScanState *node)
 	 * Loop over block numbers until finding suitable block or reaching end of
 	 * relation.
 	 */
-	for (; nextblock < hscan->rs_nblocks; nextblock++)
+	for (; nextblock < nblocks; nextblock++)
 	{
 		uint32		hash;
 
@@ -212,7 +209,7 @@ system_nextsampleblock(SampleScanState *node)
 			break;
 	}
 
-	if (nextblock < hscan->rs_nblocks)
+	if (nextblock < nblocks)
 	{
 		/* Found a suitable block; remember where we should start next time */
 		sampler->nextblock = nextblock + 1;

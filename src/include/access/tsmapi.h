@@ -34,7 +34,8 @@ typedef void (*BeginSampleScan_function) (SampleScanState *node,
 										  int nparams,
 										  uint32 seed);
 
-typedef BlockNumber (*NextSampleBlock_function) (SampleScanState *node);
+typedef BlockNumber (*NextSampleBlock_function) (SampleScanState *node,
+												 BlockNumber nblocks);
 
 typedef OffsetNumber (*NextSampleTuple_function) (SampleScanState *node,
 												  BlockNumber blockno,

@@ -30,6 +30,7 @@ extern bool synchronize_seqscans;
 struct BulkInsertStateData;
 struct IndexInfo;
 struct IndexBuildCallback;
+struct SampleScanState;
 struct VacuumParams;
 struct ValidateIndexState;
 
@@ -518,6 +519,56 @@ typedef struct TableAmRoutine
 	void		(*relation_estimate_size) (Relation rel, int32 *attr_widths,
 										   BlockNumber *pages, double *tuples,
 										   double *allvisfrac);
+
+
+	/* ------------------------------------------------------------------------
+	 * Executor related functions.
+	 * ------------------------------------------------------------------------
+	 */
+
+	/*
+	 * Acquire the next block in a sample scan. Return false if the sample
+	 * scan is finished, true otherwise.
+	 *
+	 * Typically this will first determine the target block by call the
+	 * TsmRoutine's NextSampleBlock() callback if not NULL, or alternatively
+	 * perform a sequential scan over all blocks.  The determined block is
+	 * then typically read and pinned.
+	 *
+	 * As the TsmRoutine interface is block based, a block needs to be passed
+	 * to NextSampleBlock(). If that's not appropriate for an AM, it
+	 * internally needs to perform mapping between the internal and a block
+	 * based representation.
+	 *
+	 * Note that it's not acceptable to hold deadlock prone resources such as
+	 * lwlocks until scan_sample_next_tuple() has exhausted the tuples on the
+	 * block - the tuple is likely to be returned to an upper query node, and
+	 * the next call could be off a long while. Holding buffer pins etc is
+	 * obviously OK.
+	 *
+	 * Currently it is required to implement this interface, as there's no
+	 * alternative way (contrary e.g. to bitmap scans) to implement sample
+	 * scans. If infeasible to implement the AM may raise an error.
+	 */
+	bool		(*scan_sample_next_block) (TableScanDesc scan,
+										   struct SampleScanState *scanstate);
+
+	/*
+	 * This callback, only called after scan_sample_next_block has returned
+	 * true, should determine the next tuple to be returned from the selected
+	 * block using the TsmRoutine's NextSampleTuple() callback.
+	 *
+	 * The callback needs to perform visibility checks, and only return
+	 * visible tuples. That obviously can mean calling NextSampletuple()
+	 * multiple times.
+	 *
+	 * The TsmRoutine interface assumes that there's a maximum offset on a
+	 * given page, so if that doesn't apply to an AM, it needs to emulate that
+	 * assumption somehow.
+	 */
+	bool		(*scan_sample_next_tuple) (TableScanDesc scan,
+										   struct SampleScanState *scanstate,
+										   TupleTableSlot *slot);
 
 } TableAmRoutine;
 
@@ -1336,6 +1387,43 @@ table_relation_estimate_size(Relation rel, int32 *attr_widths,
 {
 	rel->rd_tableam->relation_estimate_size(rel, attr_widths, pages, tuples,
 											allvisfrac);
+}
+
+
+/* ----------------------------------------------------------------------------
+ * Executor related functionality
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ * Acquire the next block in a sample scan. Returns false if the sample scan
+ * is finished, true otherwise.
+ *
+ * This will call the TsmRoutine's NextSampleBlock() callback if necessary
+ * (i.e. NextSampleBlock is not NULL), or perform a sequential scan over the
+ * underlying relation.
+ */
+static inline bool
+table_scan_sample_next_block(TableScanDesc scan,
+							 struct SampleScanState *scanstate)
+{
+	return scan->rs_rd->rd_tableam->scan_sample_next_block(scan, scanstate);
+}
+
+/*
+ * Fetch the next sample tuple into `slot` and return true if a visible tuple
+ * was found, false otherwise. table_scan_sample_next_block() needs to
+ * previously have selected a block (i.e. returned true).
+ *
+ * This will call the TsmRoutine's NextSampleTuple() callback.
+ */
+static inline bool
+table_scan_sample_next_tuple(TableScanDesc scan,
+							 struct SampleScanState *scanstate,
+							 TupleTableSlot *slot)
+{
+	return scan->rs_rd->rd_tableam->scan_sample_next_tuple(scan, scanstate,
+														   slot);
 }
 
 

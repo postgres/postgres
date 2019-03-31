@@ -1305,6 +1305,9 @@ typedef struct SampleScanState
 	bool		use_pagemode;	/* use page-at-a-time visibility checking? */
 	bool		begun;			/* false means need to call BeginSampleScan */
 	uint32		seed;			/* random seed */
+	int64		donetuples;		/* number of tuples already returned */
+	bool		haveblock;		/* has a block for sampling been determined */
+	bool		done;			/* exhausted all tuples? */
 } SampleScanState;
 
 /*
