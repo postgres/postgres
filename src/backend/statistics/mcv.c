@@ -908,7 +908,7 @@ statext_mcv_deserialize(bytea *data)
 	 * original values (it might go away).
 	 */
 	datalen = 0;				/* space for by-ref data */
-	map = (Datum **) palloc(ndims * sizeof(Datum **));
+	map = (Datum **) palloc(ndims * sizeof(Datum *));
 
 	for (dim = 0; dim < ndims; dim++)
 	{
