@@ -31,7 +31,7 @@
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_am.h"
+#include "catalog/pg_am_d.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -327,6 +327,11 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	Buffer		buffer;
 	pgstattuple_type stat = {0};
 	SnapshotData SnapshotDirty;
+
+	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("only heap AM is supported")));
 
 	/* Disable syncscan because we assume we scan from block zero upwards */
 	scan = table_beginscan_strat(rel, SnapshotAny, 0, NULL, true, false);

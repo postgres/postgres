@@ -30,6 +30,7 @@
 #include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_authid.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -100,6 +101,10 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		relname = PG_GETARG_TEXT_PP(0);
 		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 		rel = relation_openrv(relrv, AccessShareLock);
+
+		if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("only heap AM is supported")));
 
 		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 			ereport(ERROR,
