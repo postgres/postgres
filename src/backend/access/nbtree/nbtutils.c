@@ -1543,6 +1543,9 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 			 */
 			Assert(ScanDirectionIsForward(dir));
 			cmpresult = 0;
+			if (subkey->sk_flags & SK_ROW_END)
+				break;
+			subkey++;
 			continue;
 		}
 

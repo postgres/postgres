@@ -126,7 +126,7 @@ DETAIL:  Key (c1, c2)=(1, 2) already exists.
 INSERT INTO tbl SELECT 1, NULL, 3*x, box('4,4,4,4') FROM generate_series(1,10) AS x;
 ERROR:  null value in column "c2" violates not-null constraint
 DETAIL:  Failing row contains (1, null, 3, (4,4),(4,4)).
-INSERT INTO tbl SELECT x, 2*x, NULL, NULL FROM generate_series(1,10) AS x;
+INSERT INTO tbl SELECT x, 2*x, NULL, NULL FROM generate_series(1,300) AS x;
 explain (costs off)
 select * from tbl where (c1,c2,c3) < (2,5,1);
                    QUERY PLAN                   
@@ -144,7 +144,26 @@ select * from tbl where (c1,c2,c3) < (2,5,1);
   2 |  4 |    | 
 (2 rows)
 
+-- row comparison that compares high key at page boundary
+SET enable_seqscan = off;
+explain (costs off)
+select * from tbl where (c1,c2,c3) < (262,1,1) limit 1;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Limit
+   ->  Index Only Scan using covering on tbl
+         Index Cond: (ROW(c1, c2) <= ROW(262, 1))
+         Filter: (ROW(c1, c2, c3) < ROW(262, 1, 1))
+(4 rows)
+
+select * from tbl where (c1,c2,c3) < (262,1,1) limit 1;
+ c1 | c2 | c3 | c4 
+----+----+----+----
+  1 |  2 |    | 
+(1 row)
+
 DROP TABLE tbl;
+RESET enable_seqscan;
 CREATE TABLE tbl (c1 int,c2 int, c3 int, c4 box,
 				UNIQUE(c1,c2) INCLUDE(c3,c4));
 SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, indkey, indclass FROM pg_index WHERE indrelid = 'tbl'::regclass::oid;
