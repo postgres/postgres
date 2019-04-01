@@ -666,13 +666,13 @@ SELECT LEAST(}.join(', ', (':i') x 256).q{)}
 	[
 		'set zipfian param to 1',
 		2,
-		[qr{zipfian parameter must be in range \(0, 1\) U \(1, \d+\]}],
+		[qr{zipfian parameter must be in range \[1\.001, 1000\]}],
 		q{\set i random_zipfian(0, 10, 1)}
 	],
 	[
 		'set zipfian param too large',
 		2,
-		[qr{zipfian parameter must be in range \(0, 1\) U \(1, \d+\]}],
+		[qr{zipfian parameter must be in range \[1\.001, 1000\]}],
 		q{\set i random_zipfian(0, 10, 1000000)}
 	],
 	[
@@ -801,33 +801,6 @@ for my $e (@errors)
 		'pgbench script error: ' . $name,
 		{ $n => $script });
 }
-
-# zipfian cache array overflow
-pgbench(
-	'-t 1', 0,
-	[ qr{processed: 1/1}, qr{zipfian cache array overflowed 1 time\(s\)} ],
-	[qr{^}],
-	'pgbench zipfian array overflow on random_zipfian',
-	{
-		'001_pgbench_random_zipfian' => q{
-\set i random_zipfian(1, 100, 0.5)
-\set i random_zipfian(2, 100, 0.5)
-\set i random_zipfian(3, 100, 0.5)
-\set i random_zipfian(4, 100, 0.5)
-\set i random_zipfian(5, 100, 0.5)
-\set i random_zipfian(6, 100, 0.5)
-\set i random_zipfian(7, 100, 0.5)
-\set i random_zipfian(8, 100, 0.5)
-\set i random_zipfian(9, 100, 0.5)
-\set i random_zipfian(10, 100, 0.5)
-\set i random_zipfian(11, 100, 0.5)
-\set i random_zipfian(12, 100, 0.5)
-\set i random_zipfian(13, 100, 0.5)
-\set i random_zipfian(14, 100, 0.5)
-\set i random_zipfian(15, 100, 0.5)
-\set i random_zipfian(16, 100, 0.5)
-}
-	});
 
 # throttling
 pgbench(
