@@ -3505,6 +3505,19 @@ ColConstraintElem:
 					n->raw_expr = $5;
 					n->cooked_expr = NULL;
 					n->location = @1;
+
+					/*
+					 * Can't do this in the grammar because of shift/reduce
+					 * conflicts.  (IDENTITY allows both ALWAYS and BY
+					 * DEFAULT, but generated columns only allow ALWAYS.)  We
+					 * can also give a more useful error message and location.
+					 */
+					if ($2 != ATTRIBUTE_IDENTITY_ALWAYS)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("for a generated column, GENERATED ALWAYS must be specified"),
+								 parser_errposition(@2)));
+
 					$$ = (Node *)n;
 				}
 			| REFERENCES qualified_name opt_column_list key_match key_actions
