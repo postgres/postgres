@@ -17,18 +17,18 @@
 
 #include "pg_getopt.h"
 
+#include "fe_utils/logging.h"
+
 #include "access/xlog_internal.h"
 
 const char *progname;
 
 /* Options and defaults */
-bool		debug = false;		/* are we debugging? */
 bool		dryrun = false;		/* are we performing a dry-run operation? */
 char	   *additional_ext = NULL;	/* Extension to remove from filenames */
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
-char		WALFilePath[MAXPGPATH * 2]; /* the file path including archive */
 char		exclusiveCleanupFileName[MAXFNAMELEN];	/* the oldest file we want
 													 * to remain in archive */
 
@@ -65,8 +65,8 @@ Initialize(void)
 	if (stat(archiveLocation, &stat_buf) != 0 ||
 		!S_ISDIR(stat_buf.st_mode))
 	{
-		fprintf(stderr, _("%s: archive location \"%s\" does not exist\n"),
-				progname, archiveLocation);
+		pg_log_error("archive location \"%s\" does not exist",
+					 archiveLocation);
 		exit(2);
 	}
 }
@@ -123,6 +123,8 @@ CleanupPriorWALFiles(void)
 			if ((IsXLogFileName(walfile) || IsPartialXLogFileName(walfile)) &&
 				strcmp(walfile + 8, exclusiveCleanupFileName + 8) < 0)
 			{
+				char		WALFilePath[MAXPGPATH * 2]; /* the file path including archive */
+
 				/*
 				 * Use the original file name again now, including any
 				 * extension that might have been chopped off before testing
@@ -139,37 +141,32 @@ CleanupPriorWALFiles(void)
 					 * user can pipe the output into some other program.
 					 */
 					printf("%s\n", WALFilePath);
-					if (debug)
-						fprintf(stderr,
-								_("%s: file \"%s\" would be removed\n"),
-								progname, WALFilePath);
+					pg_log_debug("file \"%s\" would be removed", WALFilePath);
 					continue;
 				}
 
-				if (debug)
-					fprintf(stderr, _("%s: removing file \"%s\"\n"),
-							progname, WALFilePath);
+				pg_log_debug("removing file \"%s\"", WALFilePath);
 
 				rc = unlink(WALFilePath);
 				if (rc != 0)
 				{
-					fprintf(stderr, _("%s: ERROR: could not remove file \"%s\": %s\n"),
-							progname, WALFilePath, strerror(errno));
+					pg_log_error("could not remove file \"%s\": %m",
+								 WALFilePath);
 					break;
 				}
 			}
 		}
 
 		if (errno)
-			fprintf(stderr, _("%s: could not read archive location \"%s\": %s\n"),
-					progname, archiveLocation, strerror(errno));
+			pg_log_error("could not read archive location \"%s\": %m",
+						 archiveLocation);
 		if (closedir(xldir))
-			fprintf(stderr, _("%s: could not close archive location \"%s\": %s\n"),
-					progname, archiveLocation, strerror(errno));
+			pg_log_error("could not close archive location \"%s\": %m",
+						 archiveLocation);
 	}
 	else
-		fprintf(stderr, _("%s: could not open archive location \"%s\": %s\n"),
-				progname, archiveLocation, strerror(errno));
+		pg_log_error("could not open archive location \"%s\": %m",
+					 archiveLocation);
 }
 
 /*
@@ -241,7 +238,7 @@ SetWALFileNameForCleanup(void)
 
 	if (!fnameOK)
 	{
-		fprintf(stderr, _("%s: invalid file name argument\n"), progname);
+		pg_log_error("invalid file name argument");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
@@ -282,6 +279,7 @@ main(int argc, char **argv)
 {
 	int			c;
 
+	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_archivecleanup"));
 	progname = get_progname(argv[0]);
 
@@ -304,7 +302,7 @@ main(int argc, char **argv)
 		switch (c)
 		{
 			case 'd':			/* Debug mode */
-				debug = true;
+				pg_logging_set_level(PG_LOG_DEBUG);
 				break;
 			case 'n':			/* Dry-Run mode */
 				dryrun = true;
@@ -334,7 +332,7 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, _("%s: must specify archive location\n"), progname);
+		pg_log_error("must specify archive location");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
@@ -346,14 +344,14 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, _("%s: must specify oldest kept WAL file\n"), progname);
+		pg_log_error("must specify oldest kept WAL file");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments\n"), progname);
+		pg_log_error("too many command-line arguments");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
@@ -368,13 +366,8 @@ main(int argc, char **argv)
 	 */
 	SetWALFileNameForCleanup();
 
-	if (debug)
-	{
-		snprintf(WALFilePath, MAXPGPATH, "%s/%s",
+	pg_log_debug("keeping WAL file \"%s/%s\" and later",
 				 archiveLocation, exclusiveCleanupFileName);
-		fprintf(stderr, _("%s: keeping WAL file \"%s\" and later\n"),
-				progname, WALFilePath);
-	}
 
 	/*
 	 * Remove WAL files older than cut-off

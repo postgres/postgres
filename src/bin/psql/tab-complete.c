@@ -4329,7 +4329,7 @@ exec_query(const char *query)
 	if (PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
 #ifdef NOT_USED
-		psql_error("tab completion query failed: %s\nQuery was:\n%s\n",
+		pg_log_error("tab completion query failed: %s\nQuery was:\n%s",
 				   PQerrorMessage(pset.db), query);
 #endif
 		PQclear(result);

@@ -15,11 +15,13 @@ subdir = src/bin/pg_controldata
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
+
 OBJS= pg_controldata.o $(WIN32RES)
 
 all: pg_controldata
 
-pg_controldata: $(OBJS) | submake-libpgport
+pg_controldata: $(OBJS) | submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

@@ -22,6 +22,7 @@
 #include <ctype.h>
 
 #include "catalog/pg_class_d.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 
@@ -120,17 +121,14 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	 * extension membership needs to be consultable during decisions about
 	 * whether other objects are to be dumped.
 	 */
-	if (g_verbose)
-		write_msg(NULL, "reading extensions\n");
+	pg_log_info("reading extensions");
 	extinfo = getExtensions(fout, &numExtensions);
 	extinfoindex = buildIndexArray(extinfo, numExtensions, sizeof(ExtensionInfo));
 
-	if (g_verbose)
-		write_msg(NULL, "identifying extension members\n");
+	pg_log_info("identifying extension members");
 	getExtensionMembership(fout, extinfo, numExtensions);
 
-	if (g_verbose)
-		write_msg(NULL, "reading schemas\n");
+	pg_log_info("reading schemas");
 	nspinfo = getNamespaces(fout, &numNamespaces);
 	nspinfoindex = buildIndexArray(nspinfo, numNamespaces, sizeof(NamespaceInfo));
 
@@ -140,160 +138,124 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	 * However, we have to do getNamespaces first because the tables get
 	 * linked to their containing namespaces during getTables.
 	 */
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined tables\n");
+	pg_log_info("reading user-defined tables");
 	tblinfo = getTables(fout, &numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
 	/* Do this after we've built tblinfoindex */
 	getOwnedSeqs(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined functions\n");
+	pg_log_info("reading user-defined functions");
 	funinfo = getFuncs(fout, &numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
 	/* this must be after getTables and getFuncs */
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined types\n");
+	pg_log_info("reading user-defined types");
 	typinfo = getTypes(fout, &numTypes);
 	typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
 
 	/* this must be after getFuncs, too */
-	if (g_verbose)
-		write_msg(NULL, "reading procedural languages\n");
+	pg_log_info("reading procedural languages");
 	getProcLangs(fout, &numProcLangs);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined aggregate functions\n");
+	pg_log_info("reading user-defined aggregate functions");
 	getAggregates(fout, &numAggregates);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined operators\n");
+	pg_log_info("reading user-defined operators");
 	oprinfo = getOperators(fout, &numOperators);
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined access methods\n");
+	pg_log_info("reading user-defined access methods");
 	getAccessMethods(fout, &numAccessMethods);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined operator classes\n");
+	pg_log_info("reading user-defined operator classes");
 	getOpclasses(fout, &numOpclasses);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined operator families\n");
+	pg_log_info("reading user-defined operator families");
 	getOpfamilies(fout, &numOpfamilies);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search parsers\n");
+	pg_log_info("reading user-defined text search parsers");
 	getTSParsers(fout, &numTSParsers);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search templates\n");
+	pg_log_info("reading user-defined text search templates");
 	getTSTemplates(fout, &numTSTemplates);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search dictionaries\n");
+	pg_log_info("reading user-defined text search dictionaries");
 	getTSDictionaries(fout, &numTSDicts);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined text search configurations\n");
+	pg_log_info("reading user-defined text search configurations");
 	getTSConfigurations(fout, &numTSConfigs);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined foreign-data wrappers\n");
+	pg_log_info("reading user-defined foreign-data wrappers");
 	getForeignDataWrappers(fout, &numForeignDataWrappers);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined foreign servers\n");
+	pg_log_info("reading user-defined foreign servers");
 	getForeignServers(fout, &numForeignServers);
 
-	if (g_verbose)
-		write_msg(NULL, "reading default privileges\n");
+	pg_log_info("reading default privileges");
 	getDefaultACLs(fout, &numDefaultACLs);
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined collations\n");
+	pg_log_info("reading user-defined collations");
 	collinfo = getCollations(fout, &numCollations);
 	collinfoindex = buildIndexArray(collinfo, numCollations, sizeof(CollInfo));
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined conversions\n");
+	pg_log_info("reading user-defined conversions");
 	getConversions(fout, &numConversions);
 
-	if (g_verbose)
-		write_msg(NULL, "reading type casts\n");
+	pg_log_info("reading type casts");
 	getCasts(fout, &numCasts);
 
-	if (g_verbose)
-		write_msg(NULL, "reading transforms\n");
+	pg_log_info("reading transforms");
 	getTransforms(fout, &numTransforms);
 
-	if (g_verbose)
-		write_msg(NULL, "reading table inheritance information\n");
+	pg_log_info("reading table inheritance information");
 	inhinfo = getInherits(fout, &numInherits);
 
-	if (g_verbose)
-		write_msg(NULL, "reading event triggers\n");
+	pg_log_info("reading event triggers");
 	getEventTriggers(fout, &numEventTriggers);
 
 	/* Identify extension configuration tables that should be dumped */
-	if (g_verbose)
-		write_msg(NULL, "finding extension tables\n");
+	pg_log_info("finding extension tables");
 	processExtensionTables(fout, extinfo, numExtensions);
 
 	/* Link tables to parents, mark parents of target tables interesting */
-	if (g_verbose)
-		write_msg(NULL, "finding inheritance relationships\n");
+	pg_log_info("finding inheritance relationships");
 	flagInhTables(fout, tblinfo, numTables, inhinfo, numInherits);
 
-	if (g_verbose)
-		write_msg(NULL, "reading column info for interesting tables\n");
+	pg_log_info("reading column info for interesting tables");
 	getTableAttrs(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "flagging inherited columns in subtables\n");
+	pg_log_info("flagging inherited columns in subtables");
 	flagInhAttrs(fout->dopt, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "reading indexes\n");
+	pg_log_info("reading indexes");
 	getIndexes(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "flagging indexes in partitioned tables\n");
+	pg_log_info("flagging indexes in partitioned tables");
 	flagInhIndexes(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "reading extended statistics\n");
+	pg_log_info("reading extended statistics");
 	getExtendedStatistics(fout);
 
-	if (g_verbose)
-		write_msg(NULL, "reading constraints\n");
+	pg_log_info("reading constraints");
 	getConstraints(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "reading triggers\n");
+	pg_log_info("reading triggers");
 	getTriggers(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "reading rewrite rules\n");
+	pg_log_info("reading rewrite rules");
 	getRules(fout, &numRules);
 
-	if (g_verbose)
-		write_msg(NULL, "reading policies\n");
+	pg_log_info("reading policies");
 	getPolicies(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "reading publications\n");
+	pg_log_info("reading publications");
 	getPublications(fout);
 
-	if (g_verbose)
-		write_msg(NULL, "reading publication membership\n");
+	pg_log_info("reading publication membership");
 	getPublicationTables(fout, tblinfo, numTables);
 
-	if (g_verbose)
-		write_msg(NULL, "reading subscriptions\n");
+	pg_log_info("reading subscriptions");
 	getSubscriptions(fout);
 
 	*numTablesPtr = numTables;
@@ -1059,7 +1021,7 @@ findParentsByOid(TableInfo *self,
 				parent = findTableByOid(inhinfo[i].inhparent);
 				if (parent == NULL)
 				{
-					write_msg(NULL, "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n",
+					pg_log_error("failed sanity check, parent OID %u of table \"%s\" (OID %u) not found",
 							  inhinfo[i].inhparent,
 							  self->dobj.name,
 							  oid);
@@ -1101,7 +1063,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 			{
 				if (argNum >= arraysize)
 				{
-					write_msg(NULL, "could not parse numeric array \"%s\": too many numbers\n", str);
+					pg_log_error("could not parse numeric array \"%s\": too many numbers", str);
 					exit_nicely(1);
 				}
 				temp[j] = '\0';
@@ -1116,7 +1078,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 			if (!(isdigit((unsigned char) s) || s == '-') ||
 				j >= sizeof(temp) - 1)
 			{
-				write_msg(NULL, "could not parse numeric array \"%s\": invalid character in number\n", str);
+				pg_log_error("could not parse numeric array \"%s\": invalid character in number", str);
 				exit_nicely(1);
 			}
 			temp[j++] = s;

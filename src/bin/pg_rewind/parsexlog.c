@@ -72,7 +72,7 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 	xlogreader = XLogReaderAllocate(WalSegSz, &SimpleXLogPageRead,
 									&private);
 	if (xlogreader == NULL)
-		pg_fatal("out of memory\n");
+		pg_fatal("out of memory");
 
 	do
 	{
@@ -85,11 +85,11 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 			errptr = startpoint ? startpoint : xlogreader->EndRecPtr;
 
 			if (errormsg)
-				pg_fatal("could not read WAL record at %X/%X: %s\n",
+				pg_fatal("could not read WAL record at %X/%X: %s",
 						 (uint32) (errptr >> 32), (uint32) (errptr),
 						 errormsg);
 			else
-				pg_fatal("could not read WAL record at %X/%X\n",
+				pg_fatal("could not read WAL record at %X/%X",
 						 (uint32) (startpoint >> 32),
 						 (uint32) (startpoint));
 		}
@@ -126,16 +126,16 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex)
 	xlogreader = XLogReaderAllocate(WalSegSz, &SimpleXLogPageRead,
 									&private);
 	if (xlogreader == NULL)
-		pg_fatal("out of memory\n");
+		pg_fatal("out of memory");
 
 	record = XLogReadRecord(xlogreader, ptr, &errormsg);
 	if (record == NULL)
 	{
 		if (errormsg)
-			pg_fatal("could not read WAL record at %X/%X: %s\n",
+			pg_fatal("could not read WAL record at %X/%X: %s",
 					 (uint32) (ptr >> 32), (uint32) (ptr), errormsg);
 		else
-			pg_fatal("could not read WAL record at %X/%X\n",
+			pg_fatal("could not read WAL record at %X/%X",
 					 (uint32) (ptr >> 32), (uint32) (ptr));
 	}
 	endptr = xlogreader->EndRecPtr;
@@ -184,7 +184,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 	xlogreader = XLogReaderAllocate(WalSegSz, &SimpleXLogPageRead,
 									&private);
 	if (xlogreader == NULL)
-		pg_fatal("out of memory\n");
+		pg_fatal("out of memory");
 
 	searchptr = forkptr;
 	for (;;)
@@ -196,11 +196,11 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 		if (record == NULL)
 		{
 			if (errormsg)
-				pg_fatal("could not find previous WAL record at %X/%X: %s\n",
+				pg_fatal("could not find previous WAL record at %X/%X: %s",
 						 (uint32) (searchptr >> 32), (uint32) (searchptr),
 						 errormsg);
 			else
-				pg_fatal("could not find previous WAL record at %X/%X\n",
+				pg_fatal("could not find previous WAL record at %X/%X",
 						 (uint32) (searchptr >> 32), (uint32) (searchptr));
 		}
 
@@ -291,8 +291,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 
 		if (xlogreadfd < 0)
 		{
-			printf(_("could not open file \"%s\": %s\n"), xlogfpath,
-				   strerror(errno));
+			pg_log_error("could not open file \"%s\": %m", xlogfpath);
 			return -1;
 		}
 	}
@@ -305,8 +304,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 	/* Read the requested page */
 	if (lseek(xlogreadfd, (off_t) targetPageOff, SEEK_SET) < 0)
 	{
-		printf(_("could not seek in file \"%s\": %s\n"), xlogfpath,
-			   strerror(errno));
+		pg_log_error("could not seek in file \"%s\": %m", xlogfpath);
 		return -1;
 	}
 
@@ -315,10 +313,9 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 	if (r != XLOG_BLCKSZ)
 	{
 		if (r < 0)
-			printf(_("could not read file \"%s\": %s\n"), xlogfpath,
-				   strerror(errno));
+			pg_log_error("could not read file \"%s\": %m", xlogfpath);
 		else
-			printf(_("could not read file \"%s\": read %d of %zu\n"),
+			pg_log_error("could not read file \"%s\": read %d of %zu",
 				   xlogfpath, r, (Size) XLOG_BLCKSZ);
 
 		return -1;
@@ -387,8 +384,8 @@ extractPageInfo(XLogReaderState *record)
 		 * we don't recognize the type. That's bad - we don't know how to
 		 * track that change.
 		 */
-		pg_fatal("WAL record modifies a relation, but record type is not recognized\n"
-				 "lsn: %X/%X, rmgr: %s, info: %02X\n",
+		pg_fatal("WAL record modifies a relation, but record type is not recognized: "
+				 "lsn: %X/%X, rmgr: %s, info: %02X",
 				 (uint32) (record->ReadRecPtr >> 32), (uint32) (record->ReadRecPtr),
 				 RmgrNames[rmid], info);
 	}

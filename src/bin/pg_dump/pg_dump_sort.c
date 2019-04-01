@@ -20,9 +20,7 @@
 #include "pg_dump.h"
 
 #include "catalog/pg_class_d.h"
-
-/* translator: this is a module name */
-static const char *modulename = gettext_noop("sorter");
+#include "fe_utils/logging.h"
 
 /*
  * Sort priority for database object types.
@@ -327,13 +325,13 @@ TopoSort(DumpableObject **objs,
 		obj = objs[i];
 		j = obj->dumpId;
 		if (j <= 0 || j > maxDumpId)
-			exit_horribly(modulename, "invalid dumpId %d\n", j);
+			fatal("invalid dumpId %d", j);
 		idMap[j] = i;
 		for (j = 0; j < obj->nDeps; j++)
 		{
 			k = obj->dependencies[j];
 			if (k <= 0 || k > maxDumpId)
-				exit_horribly(modulename, "invalid dependency %d\n", k);
+				fatal("invalid dependency %d", k);
 			beforeConstraints[k]++;
 		}
 	}
@@ -566,7 +564,7 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 
 	/* We'd better have fixed at least one loop */
 	if (!fixedloop)
-		exit_horribly(modulename, "could not identify dependency loop\n");
+		fatal("could not identify dependency loop");
 
 	free(workspace);
 	free(searchFailed);
@@ -1129,13 +1127,13 @@ repairDependencyLoop(DumpableObject **loop,
 	}
 	if (i >= nLoop)
 	{
-		write_msg(NULL, ngettext("NOTICE: there are circular foreign-key constraints on this table:\n",
-								 "NOTICE: there are circular foreign-key constraints among these tables:\n",
-								 nLoop));
+		pg_log_warning(ngettext("there are circular foreign-key constraints on this table:",
+								"there are circular foreign-key constraints among these tables:",
+								nLoop));
 		for (i = 0; i < nLoop; i++)
-			write_msg(NULL, "  %s\n", loop[i]->name);
-		write_msg(NULL, "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n");
-		write_msg(NULL, "Consider using a full dump instead of a --data-only dump to avoid this problem.\n");
+			pg_log_generic(PG_LOG_INFO, "  %s", loop[i]->name);
+		pg_log_generic(PG_LOG_INFO, "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.");
+		pg_log_generic(PG_LOG_INFO, "Consider using a full dump instead of a --data-only dump to avoid this problem.");
 		if (nLoop > 1)
 			removeObjectDependency(loop[0], loop[1]->dumpId);
 		else					/* must be a self-dependency */
@@ -1147,13 +1145,13 @@ repairDependencyLoop(DumpableObject **loop,
 	 * If we can't find a principled way to break the loop, complain and break
 	 * it in an arbitrary fashion.
 	 */
-	write_msg(modulename, "WARNING: could not resolve dependency loop among these items:\n");
+	pg_log_warning("could not resolve dependency loop among these items:");
 	for (i = 0; i < nLoop; i++)
 	{
 		char		buf[1024];
 
 		describeDumpableObject(loop[i], buf, sizeof(buf));
-		write_msg(modulename, "  %s\n", buf);
+		pg_log_generic(PG_LOG_INFO, "  %s", buf);
 	}
 
 	if (nLoop > 1)

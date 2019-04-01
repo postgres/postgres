@@ -234,6 +234,13 @@ PostgreSQL documentation
    <application>pg_rewind</application> also uses the environment variables
    supported by <application>libpq</application> (see <xref linkend="libpq-envars"/>).
   </para>
+
+  <para>
+   The environment variable <envar>PG_COLOR</envar> specifies whether to use
+   color in diagnostics messages.  Possible values are
+   <literal>always</literal>, <literal>auto</literal>,
+   <literal>never</literal>.
+  </para>
  </refsect1>
 
  <refsect1>

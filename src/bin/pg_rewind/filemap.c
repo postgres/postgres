@@ -20,6 +20,7 @@
 
 #include "common/string.h"
 #include "catalog/pg_tablespace_d.h"
+#include "fe_utils/logging.h"
 #include "storage/fd.h"
 
 filemap_t  *filemap = NULL;
@@ -177,7 +178,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	 * regular file
 	 */
 	if (type != FILE_TYPE_REGULAR && isRelDataFile(path))
-		pg_fatal("data file \"%s\" in source is not a regular file\n", path);
+		pg_fatal("data file \"%s\" in source is not a regular file", path);
 
 	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
 
@@ -185,8 +186,8 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	if (lstat(localpath, &statbuf) < 0)
 	{
 		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %s\n",
-					 localpath, strerror(errno));
+			pg_fatal("could not stat file \"%s\": %m",
+					 localpath);
 
 		exists = false;
 	}
@@ -199,7 +200,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 			if (exists && !S_ISDIR(statbuf.st_mode) && strcmp(path, "pg_wal") != 0)
 			{
 				/* it's a directory in source, but not in target. Strange.. */
-				pg_fatal("\"%s\" is not a directory\n", localpath);
+				pg_fatal("\"%s\" is not a directory", localpath);
 			}
 
 			if (!exists)
@@ -222,7 +223,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 				 * It's a symbolic link in source, but not in target.
 				 * Strange..
 				 */
-				pg_fatal("\"%s\" is not a symbolic link\n", localpath);
+				pg_fatal("\"%s\" is not a symbolic link", localpath);
 			}
 
 			if (!exists)
@@ -234,7 +235,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 
 		case FILE_TYPE_REGULAR:
 			if (exists && !S_ISREG(statbuf.st_mode))
-				pg_fatal("\"%s\" is not a regular file\n", localpath);
+				pg_fatal("\"%s\" is not a regular file", localpath);
 
 			if (!exists || !isRelDataFile(path))
 			{
@@ -346,8 +347,8 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	if (lstat(localpath, &statbuf) < 0)
 	{
 		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %s\n",
-					 localpath, strerror(errno));
+			pg_fatal("could not stat file \"%s\": %m",
+					 localpath);
 
 		exists = false;
 	}
@@ -358,7 +359,7 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 		if (map->nlist == 0)
 		{
 			/* should not happen */
-			pg_fatal("source file list is empty\n");
+			pg_fatal("source file list is empty");
 		}
 
 		filemap_list_to_array(map);
@@ -473,7 +474,7 @@ process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
 				break;
 
 			case FILE_ACTION_CREATE:
-				pg_fatal("unexpected page modification for directory or symbolic link \"%s\"\n", entry->path);
+				pg_fatal("unexpected page modification for directory or symbolic link \"%s\"", entry->path);
 		}
 	}
 	else
@@ -508,10 +509,10 @@ check_file_excluded(const char *path, bool is_source)
 		if (strcmp(filename, excludeFiles[excludeIdx]) == 0)
 		{
 			if (is_source)
-				pg_log(PG_DEBUG, "entry \"%s\" excluded from source file list\n",
+				pg_log_debug("entry \"%s\" excluded from source file list",
 					   path);
 			else
-				pg_log(PG_DEBUG, "entry \"%s\" excluded from target file list\n",
+				pg_log_debug("entry \"%s\" excluded from target file list",
 					   path);
 			return true;
 		}
@@ -528,10 +529,10 @@ check_file_excluded(const char *path, bool is_source)
 		if (strstr(path, localpath) == path)
 		{
 			if (is_source)
-				pg_log(PG_DEBUG, "entry \"%s\" excluded from source file list\n",
+				pg_log_debug("entry \"%s\" excluded from source file list",
 					   path);
 			else
-				pg_log(PG_DEBUG, "entry \"%s\" excluded from target file list\n",
+				pg_log_debug("entry \"%s\" excluded from target file list",
 					   path);
 			return true;
 		}
@@ -659,10 +660,7 @@ print_filemap(void)
 		if (entry->action != FILE_ACTION_NONE ||
 			entry->pagemap.bitmapsize > 0)
 		{
-			pg_log(PG_DEBUG,
-			/*------
-			   translator: first %s is a file path, second is a keyword such as COPY */
-				   "%s (%s)\n", entry->path,
+			pg_log_debug("%s (%s)", entry->path,
 				   action_to_str(entry->action));
 
 			if (entry->pagemap.bitmapsize > 0)

@@ -10,6 +10,8 @@
 #include "common.h"
 #include "variables.h"
 
+#include "fe_utils/logging.h"
+
 
 /*
  * Check whether a variable's name is allowed.
@@ -136,7 +138,7 @@ ParseVariableBool(const char *value, const char *name, bool *result)
 	{
 		/* string is not recognized; don't clobber *result */
 		if (name)
-			psql_error("unrecognized value \"%s\" for \"%s\": Boolean expected\n",
+			pg_log_error("unrecognized value \"%s\" for \"%s\": Boolean expected",
 					   value, name);
 		valid = false;
 	}
@@ -173,7 +175,7 @@ ParseVariableNum(const char *value, const char *name, int *result)
 	{
 		/* string is not recognized; don't clobber *result */
 		if (name)
-			psql_error("invalid value \"%s\" for \"%s\": integer expected\n",
+			pg_log_error("invalid value \"%s\" for \"%s\": integer expected",
 					   value, name);
 		return false;
 	}
@@ -221,7 +223,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 		/* Deletion of non-existent variable is not an error */
 		if (!value)
 			return true;
-		psql_error("invalid variable name: \"%s\"\n", name);
+		pg_log_error("invalid variable name: \"%s\"", name);
 		return false;
 	}
 
@@ -390,6 +392,7 @@ DeleteVariable(VariableSpace space, const char *name)
 void
 PsqlVarEnumError(const char *name, const char *value, const char *suggestions)
 {
-	psql_error("unrecognized value \"%s\" for \"%s\"\nAvailable values are: %s.\n",
+	pg_log_error("unrecognized value \"%s\" for \"%s\"\n"
+				 "Available values are: %s.",
 			   value, name, suggestions);
 }

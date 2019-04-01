@@ -34,6 +34,7 @@
  */
 #include "postgres_fe.h"
 
+#include "fe_utils/logging.h"
 #include "fe_utils/psqlscan.h"
 
 #include "libpq-fe.h"
@@ -725,7 +726,7 @@ other			.
 						if (psqlscan_var_is_current_source(cur_state, varname))
 						{
 							/* Recursive expansion --- don't go there */
-							cur_state->callbacks->write_error("skipping recursive expansion of variable \"%s\"\n",
+							pg_log_warning("skipping recursive expansion of variable \"%s\"",
 															  varname);
 							/* Instead copy the string as is */
 							ECHO;

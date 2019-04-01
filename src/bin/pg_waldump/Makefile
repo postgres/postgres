@@ -11,6 +11,7 @@ OBJS = pg_waldump.o compat.o xlogreader.o rmgrdesc.o \
 	$(RMGRDESCOBJS) $(WIN32RES)
 
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
 
 RMGRDESCSOURCES = $(sort $(notdir $(wildcard $(top_srcdir)/src/backend/access/rmgrdesc/*desc.c)))
 RMGRDESCOBJS = $(patsubst %.c,%.o,$(RMGRDESCSOURCES))
@@ -18,7 +19,7 @@ RMGRDESCOBJS = $(patsubst %.c,%.o,$(RMGRDESCSOURCES))
 
 all: pg_waldump
 
-pg_waldump: $(OBJS) | submake-libpgport
+pg_waldump: $(OBJS) | submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%

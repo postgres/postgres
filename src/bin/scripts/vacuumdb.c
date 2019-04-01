@@ -20,6 +20,7 @@
 
 #include "common.h"
 #include "fe_utils/connect.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
 
@@ -141,8 +142,8 @@ main(int argc, char *argv[])
 	/* initialize options to all false */
 	memset(&vacopts, 0, sizeof(vacopts));
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
-
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
@@ -203,14 +204,13 @@ main(int argc, char *argv[])
 				concurrentCons = atoi(optarg);
 				if (concurrentCons <= 0)
 				{
-					fprintf(stderr, _("%s: number of parallel jobs must be at least 1\n"),
-							progname);
+					pg_log_error("number of parallel jobs must be at least 1");
 					exit(1);
 				}
 				if (concurrentCons > FD_SETSIZE - 1)
 				{
-					fprintf(stderr, _("%s: too many parallel jobs requested (maximum: %d)\n"),
-							progname, FD_SETSIZE - 1);
+					pg_log_error("too many parallel jobs requested (maximum: %d)",
+								 FD_SETSIZE - 1);
 					exit(1);
 				}
 				break;
@@ -230,8 +230,7 @@ main(int argc, char *argv[])
 				vacopts.min_xid_age = atoi(optarg);
 				if (vacopts.min_xid_age <= 0)
 				{
-					fprintf(stderr, _("%s: minimum transaction ID age must be at least 1\n"),
-							progname);
+					pg_log_error("minimum transaction ID age must be at least 1");
 					exit(1);
 				}
 				break;
@@ -239,8 +238,7 @@ main(int argc, char *argv[])
 				vacopts.min_mxid_age = atoi(optarg);
 				if (vacopts.min_mxid_age <= 0)
 				{
-					fprintf(stderr, _("%s: minimum multixact ID age must be at least 1\n"),
-							progname);
+					pg_log_error("minimum multixact ID age must be at least 1");
 					exit(1);
 				}
 				break;
@@ -262,8 +260,8 @@ main(int argc, char *argv[])
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
@@ -272,20 +270,20 @@ main(int argc, char *argv[])
 	{
 		if (vacopts.full)
 		{
-			fprintf(stderr, _("%s: cannot use the \"%s\" option when performing only analyze\n"),
-					progname, "full");
+			pg_log_error("cannot use the \"%s\" option when performing only analyze",
+						 "full");
 			exit(1);
 		}
 		if (vacopts.freeze)
 		{
-			fprintf(stderr, _("%s: cannot use the \"%s\" option when performing only analyze\n"),
-					progname, "freeze");
+			pg_log_error("cannot use the \"%s\" option when performing only analyze",
+						 "freeze");
 			exit(1);
 		}
 		if (vacopts.disable_page_skipping)
 		{
-			fprintf(stderr, _("%s: cannot use the \"%s\" option when performing only analyze\n"),
-					progname, "disable-page-skipping");
+			pg_log_error("cannot use the \"%s\" option when performing only analyze",
+						 "disable-page-skipping");
 			exit(1);
 		}
 		/* allow 'and_analyze' with 'analyze_only' */
@@ -301,14 +299,12 @@ main(int argc, char *argv[])
 	{
 		if (dbname)
 		{
-			fprintf(stderr, _("%s: cannot vacuum all databases and a specific one at the same time\n"),
-					progname);
+			pg_log_error("cannot vacuum all databases and a specific one at the same time");
 			exit(1);
 		}
 		if (tables.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot vacuum specific table(s) in all databases\n"),
-					progname);
+			pg_log_error("cannot vacuum specific table(s) in all databases");
 			exit(1);
 		}
 
@@ -413,30 +409,30 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	if (vacopts->disable_page_skipping && PQserverVersion(conn) < 90600)
 	{
 		PQfinish(conn);
-		fprintf(stderr, _("%s: cannot use the \"%s\" option on server versions older than PostgreSQL 9.6\n"),
-				progname, "disable-page-skipping");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 9.6",
+					 "disable-page-skipping");
 		exit(1);
 	}
 
 	if (vacopts->skip_locked && PQserverVersion(conn) < 120000)
 	{
 		PQfinish(conn);
-		fprintf(stderr, _("%s: cannot use the \"%s\" option on server versions older than PostgreSQL 12\n"),
-				progname, "skip-locked");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 12",
+					 "skip-locked");
 		exit(1);
 	}
 
 	if (vacopts->min_xid_age != 0 && PQserverVersion(conn) < 90600)
 	{
-		fprintf(stderr, _("%s: cannot use the \"%s\" option on server versions older than PostgreSQL 9.6\n"),
-				progname, "--min-xid-age");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 9.6",
+					 "--min-xid-age");
 		exit(1);
 	}
 
 	if (vacopts->min_mxid_age != 0 && PQserverVersion(conn) < 90600)
 	{
-		fprintf(stderr, _("%s: cannot use the \"%s\" option on server versions older than PostgreSQL 9.6\n"),
-				progname, "--min-mxid-age");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 9.6",
+					 "--min-mxid-age");
 		exit(1);
 	}
 
@@ -940,12 +936,11 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 	if (!status)
 	{
 		if (table)
-			fprintf(stderr,
-					_("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
-					progname, table, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("vacuuming of table \"%s\" in database \"%s\" failed: %s",
+						 table, PQdb(conn), PQerrorMessage(conn));
 		else
-			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-					progname, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("vacuuming of database \"%s\" failed: %s",
+						 PQdb(conn), PQerrorMessage(conn));
 
 		if (!async)
 		{
@@ -1079,8 +1074,8 @@ ProcessQueryResult(PGconn *conn, PGresult *result, const char *progname)
 	{
 		char	   *sqlState = PQresultErrorField(result, PG_DIAG_SQLSTATE);
 
-		fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-				progname, PQdb(conn), PQerrorMessage(conn));
+		pg_log_error("vacuuming of database \"%s\" failed: %s",
+					 PQdb(conn), PQerrorMessage(conn));
 
 		if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) != 0)
 		{

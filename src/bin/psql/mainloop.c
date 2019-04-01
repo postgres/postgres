@@ -14,13 +14,13 @@
 #include "prompt.h"
 #include "settings.h"
 
+#include "fe_utils/logging.h"
 #include "mb/pg_wchar.h"
 
 
 /* callback functions for our flex lexer */
 const PsqlScanCallbacks psqlscan_callbacks = {
 	psql_get_variable,
-	psql_error
 };
 
 
@@ -79,7 +79,7 @@ MainLoop(FILE *source)
 		PQExpBufferBroken(previous_buf) ||
 		PQExpBufferBroken(history_buf))
 	{
-		psql_error("out of memory\n");
+		pg_log_error("out of memory");
 		exit(EXIT_FAILURE);
 	}
 
@@ -133,7 +133,7 @@ MainLoop(FILE *source)
 				 */
 				if (!conditional_stack_empty(cond_stack))
 				{
-					psql_error("\\if: escaped\n");
+					pg_log_error("\\if: escaped");
 					conditional_stack_pop(cond_stack);
 				}
 			}
@@ -383,7 +383,7 @@ MainLoop(FILE *source)
 
 			if (PQExpBufferBroken(query_buf))
 			{
-				psql_error("out of memory\n");
+				pg_log_error("out of memory");
 				exit(EXIT_FAILURE);
 			}
 
@@ -446,7 +446,7 @@ MainLoop(FILE *source)
 				{
 					/* if interactive, warn about non-executed query */
 					if (pset.cur_cmd_interactive)
-						psql_error("query ignored; use \\endif or Ctrl-C to exit current \\if block\n");
+						pg_log_error("query ignored; use \\endif or Ctrl-C to exit current \\if block");
 					/* fake an OK result for purposes of loop checks */
 					success = true;
 					slashCmdStatus = PSQL_CMD_SEND;
@@ -588,7 +588,7 @@ MainLoop(FILE *source)
 		else
 		{
 			if (pset.cur_cmd_interactive)
-				psql_error("query ignored; use \\endif or Ctrl-C to exit current \\if block\n");
+				pg_log_error("query ignored; use \\endif or Ctrl-C to exit current \\if block");
 			success = true;
 		}
 
@@ -606,7 +606,7 @@ MainLoop(FILE *source)
 		successResult != EXIT_USER &&
 		!conditional_stack_empty(cond_stack))
 	{
-		psql_error("reached EOF without finding closing \\endif(s)\n");
+		pg_log_error("reached EOF without finding closing \\endif(s)");
 		if (die_on_error && !pset.cur_cmd_interactive)
 			successResult = EXIT_USER;
 	}

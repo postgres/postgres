@@ -7,11 +7,13 @@ subdir = src/bin/pg_test_fsync
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
+
 OBJS = pg_test_fsync.o $(WIN32RES)
 
 all: pg_test_fsync
 
-pg_test_fsync: $(OBJS) | submake-libpgport
+pg_test_fsync: $(OBJS) | submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

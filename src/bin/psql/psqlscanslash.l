@@ -20,6 +20,7 @@
 
 #include "psqlscanslash.h"
 #include "fe_utils/conditional.h"
+#include "fe_utils/logging.h"
 
 #include "libpq-fe.h"
 }
@@ -633,7 +634,7 @@ psql_scan_slash_option(PsqlScanState state,
 		case xslashbackquote:
 		case xslashdquote:
 			/* must have hit EOL inside quotes */
-			state->callbacks->write_error("unterminated quoted string\n");
+			pg_log_error("unterminated quoted string");
 			termPQExpBuffer(&mybuf);
 			return NULL;
 		case xslashwholeline:
@@ -779,7 +780,7 @@ evaluate_backtick(PsqlScanState state)
 	fd = popen(cmd, PG_BINARY_R);
 	if (!fd)
 	{
-		state->callbacks->write_error("%s: %s\n", cmd, strerror(errno));
+		pg_log_error("%s: %m", cmd);
 		error = true;
 	}
 
@@ -790,7 +791,7 @@ evaluate_backtick(PsqlScanState state)
 			result = fread(buf, 1, sizeof(buf), fd);
 			if (ferror(fd))
 			{
-				state->callbacks->write_error("%s: %s\n", cmd, strerror(errno));
+				pg_log_error("%s: %m", cmd);
 				error = true;
 				break;
 			}
@@ -800,13 +801,13 @@ evaluate_backtick(PsqlScanState state)
 
 	if (fd && pclose(fd) == -1)
 	{
-		state->callbacks->write_error("%s: %s\n", cmd, strerror(errno));
+		pg_log_error("%s: %m", cmd);
 		error = true;
 	}
 
 	if (PQExpBufferDataBroken(cmd_output))
 	{
-		state->callbacks->write_error("%s: out of memory\n", cmd);
+		pg_log_error("%s: out of memory", cmd);
 		error = true;
 	}
 

@@ -12,6 +12,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
 
@@ -81,6 +82,7 @@ main(int argc, char *argv[])
 	PGconn	   *conn;
 	PGresult   *result;
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
@@ -176,8 +178,8 @@ main(int argc, char *argv[])
 			newuser = argv[optind];
 			break;
 		default:
-			fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-					progname, argv[optind + 1]);
+			pg_log_error("too many command-line arguments (first is \"%s\")",
+						 argv[optind + 1]);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 	}
@@ -269,8 +271,8 @@ main(int argc, char *argv[])
 												   NULL);
 		if (!encrypted_password)
 		{
-			fprintf(stderr, _("%s: password encryption failed: %s"),
-					progname, PQerrorMessage(conn));
+			pg_log_error("password encryption failed: %s",
+						 PQerrorMessage(conn));
 			exit(1);
 		}
 		appendStringLiteralConn(&sql, encrypted_password, conn);
@@ -324,8 +326,7 @@ main(int argc, char *argv[])
 
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: creation of new role failed: %s"),
-				progname, PQerrorMessage(conn));
+		pg_log_error("creation of new role failed: %s", PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}

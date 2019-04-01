@@ -21,7 +21,6 @@
 extern char *datadir_target;
 extern char *datadir_source;
 extern char *connstr_source;
-extern bool debug;
 extern bool showprogress;
 extern bool dry_run;
 extern int	WalSegSz;

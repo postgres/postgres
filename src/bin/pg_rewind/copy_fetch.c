@@ -57,8 +57,8 @@ recurse_dir(const char *datadir, const char *parentpath,
 
 	xldir = opendir(fullparentpath);
 	if (xldir == NULL)
-		pg_fatal("could not open directory \"%s\": %s\n",
-				 fullparentpath, strerror(errno));
+		pg_fatal("could not open directory \"%s\": %m",
+				 fullparentpath);
 
 	while (errno = 0, (xlde = readdir(xldir)) != NULL)
 	{
@@ -86,8 +86,8 @@ recurse_dir(const char *datadir, const char *parentpath,
 				 */
 			}
 			else
-				pg_fatal("could not stat file \"%s\": %s\n",
-						 fullpath, strerror(errno));
+				pg_fatal("could not stat file \"%s\": %m",
+						 fullpath);
 		}
 
 		if (parentpath)
@@ -115,10 +115,10 @@ recurse_dir(const char *datadir, const char *parentpath,
 
 			len = readlink(fullpath, link_target, sizeof(link_target));
 			if (len < 0)
-				pg_fatal("could not read symbolic link \"%s\": %s\n",
-						 fullpath, strerror(errno));
+				pg_fatal("could not read symbolic link \"%s\": %m",
+						 fullpath);
 			if (len >= sizeof(link_target))
-				pg_fatal("symbolic link \"%s\" target is too long\n",
+				pg_fatal("symbolic link \"%s\" target is too long",
 						 fullpath);
 			link_target[len] = '\0';
 
@@ -133,19 +133,19 @@ recurse_dir(const char *datadir, const char *parentpath,
 				strcmp(path, "pg_wal") == 0)
 				recurse_dir(datadir, path, callback);
 #else
-			pg_fatal("\"%s\" is a symbolic link, but symbolic links are not supported on this platform\n",
+			pg_fatal("\"%s\" is a symbolic link, but symbolic links are not supported on this platform",
 					 fullpath);
 #endif							/* HAVE_READLINK */
 		}
 	}
 
 	if (errno)
-		pg_fatal("could not read directory \"%s\": %s\n",
-				 fullparentpath, strerror(errno));
+		pg_fatal("could not read directory \"%s\": %m",
+				 fullparentpath);
 
 	if (closedir(xldir))
-		pg_fatal("could not close directory \"%s\": %s\n",
-				 fullparentpath, strerror(errno));
+		pg_fatal("could not close directory \"%s\": %m",
+				 fullparentpath);
 }
 
 /*
@@ -164,11 +164,11 @@ rewind_copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
 
 	srcfd = open(srcpath, O_RDONLY | PG_BINARY, 0);
 	if (srcfd < 0)
-		pg_fatal("could not open source file \"%s\": %s\n",
-				 srcpath, strerror(errno));
+		pg_fatal("could not open source file \"%s\": %m",
+				 srcpath);
 
 	if (lseek(srcfd, begin, SEEK_SET) == -1)
-		pg_fatal("could not seek in source file: %s\n", strerror(errno));
+		pg_fatal("could not seek in source file: %m");
 
 	open_target_file(path, trunc);
 
@@ -185,17 +185,17 @@ rewind_copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
 		readlen = read(srcfd, buf.data, len);
 
 		if (readlen < 0)
-			pg_fatal("could not read file \"%s\": %s\n",
-					 srcpath, strerror(errno));
+			pg_fatal("could not read file \"%s\": %m",
+					 srcpath);
 		else if (readlen == 0)
-			pg_fatal("unexpected EOF while reading file \"%s\"\n", srcpath);
+			pg_fatal("unexpected EOF while reading file \"%s\"", srcpath);
 
 		write_target_range(buf.data, begin, readlen);
 		begin += readlen;
 	}
 
 	if (close(srcfd) != 0)
-		pg_fatal("could not close file \"%s\": %s\n", srcpath, strerror(errno));
+		pg_fatal("could not close file \"%s\": %m", srcpath);
 }
 
 /*

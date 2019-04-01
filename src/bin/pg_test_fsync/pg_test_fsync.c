@@ -14,6 +14,7 @@
 
 #include "getopt_long.h"
 #include "access/xlogdefs.h"
+#include "fe_utils/logging.h"
 
 
 /*
@@ -46,7 +47,7 @@ do { \
 	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == \
 		INVALID_HANDLE_VALUE) \
 	{ \
-		fprintf(stderr, _("Could not create thread for alarm\n")); \
+		pg_log_error("could not create thread for alarm"); \
 		exit(1); \
 	} \
 	gettimeofday(&start_t, NULL); \
@@ -92,12 +93,14 @@ static void signal_cleanup(int sig);
 static int	pg_fsync_writethrough(int fd);
 #endif
 static void print_elapse(struct timeval start_t, struct timeval stop_t, int ops);
-static void die(const char *str);
+
+#define die(msg) do { pg_log_error("%s: %m", _(msg)); exit(1); } while(0)
 
 
 int
 main(int argc, char *argv[])
 {
+	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_test_fsync"));
 	progname = get_progname(argv[0]);
 
@@ -184,9 +187,8 @@ handle_args(int argc, char *argv[])
 
 	if (argc > optind)
 	{
-		fprintf(stderr,
-				_("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -601,10 +603,3 @@ process_alarm(LPVOID param)
 	ExitThread(0);
 }
 #endif
-
-static void
-die(const char *str)
-{
-	fprintf(stderr, _("%s: %s\n"), _(str), strerror(errno));
-	exit(1);
-}

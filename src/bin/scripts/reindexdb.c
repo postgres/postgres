@@ -11,6 +11,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
 
@@ -75,6 +76,7 @@ main(int argc, char *argv[])
 	SimpleStringList tables = {NULL, NULL};
 	SimpleStringList schemas = {NULL, NULL};
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
@@ -151,8 +153,8 @@ main(int argc, char *argv[])
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
@@ -163,27 +165,27 @@ main(int argc, char *argv[])
 	{
 		if (dbname)
 		{
-			fprintf(stderr, _("%s: cannot reindex all databases and a specific one at the same time\n"), progname);
+			pg_log_error("cannot reindex all databases and a specific one at the same time");
 			exit(1);
 		}
 		if (syscatalog)
 		{
-			fprintf(stderr, _("%s: cannot reindex all databases and system catalogs at the same time\n"), progname);
+			pg_log_error("cannot reindex all databases and system catalogs at the same time");
 			exit(1);
 		}
 		if (schemas.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex specific schema(s) in all databases\n"), progname);
+			pg_log_error("cannot reindex specific schema(s) in all databases");
 			exit(1);
 		}
 		if (tables.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex specific table(s) in all databases\n"), progname);
+			pg_log_error("cannot reindex specific table(s) in all databases");
 			exit(1);
 		}
 		if (indexes.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex specific index(es) in all databases\n"), progname);
+			pg_log_error("cannot reindex specific index(es) in all databases");
 			exit(1);
 		}
 
@@ -194,17 +196,17 @@ main(int argc, char *argv[])
 	{
 		if (schemas.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex specific schema(s) and system catalogs at the same time\n"), progname);
+			pg_log_error("cannot reindex specific schema(s) and system catalogs at the same time");
 			exit(1);
 		}
 		if (tables.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex specific table(s) and system catalogs at the same time\n"), progname);
+			pg_log_error("cannot reindex specific table(s) and system catalogs at the same time");
 			exit(1);
 		}
 		if (indexes.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex specific index(es) and system catalogs at the same time\n"), progname);
+			pg_log_error("cannot reindex specific index(es) and system catalogs at the same time");
 			exit(1);
 		}
 
@@ -293,8 +295,8 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	if (concurrently && PQserverVersion(conn) < 120000)
 	{
 		PQfinish(conn);
-		fprintf(stderr, _("%s: cannot use the \"%s\" option on server versions older than PostgreSQL %s\n"),
-				progname, "concurrently", "12");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "concurrently", "12");
 		exit(1);
 	}
 
@@ -321,17 +323,17 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		if (strcmp(type, "TABLE") == 0)
-			fprintf(stderr, _("%s: reindexing of table \"%s\" in database \"%s\" failed: %s"),
-					progname, name, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("reindexing of table \"%s\" in database \"%s\" failed: %s",
+						 name, PQdb(conn), PQerrorMessage(conn));
 		if (strcmp(type, "INDEX") == 0)
-			fprintf(stderr, _("%s: reindexing of index \"%s\" in database \"%s\" failed: %s"),
-					progname, name, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("reindexing of index \"%s\" in database \"%s\" failed: %s",
+						 name, PQdb(conn), PQerrorMessage(conn));
 		if (strcmp(type, "SCHEMA") == 0)
-			fprintf(stderr, _("%s: reindexing of schema \"%s\" in database \"%s\" failed: %s"),
-					progname, name, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("reindexing of schema \"%s\" in database \"%s\" failed: %s",
+						 name, PQdb(conn), PQerrorMessage(conn));
 		else
-			fprintf(stderr, _("%s: reindexing of database \"%s\" failed: %s"),
-					progname, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("reindexing of database \"%s\" failed: %s",
+						 PQdb(conn), PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}
@@ -407,8 +409,8 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
-		fprintf(stderr, _("%s: reindexing of system catalogs failed: %s"),
-				progname, PQerrorMessage(conn));
+		pg_log_error("reindexing of system catalogs failed: %s",
+					 PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}

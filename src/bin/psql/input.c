@@ -18,6 +18,8 @@
 #include "tab-complete.h"
 #include "common.h"
 
+#include "fe_utils/logging.h"
+
 #ifndef WIN32
 #define PSQLHISTORY ".psql_history"
 #else
@@ -213,8 +215,7 @@ gets_fromFile(FILE *source)
 		{
 			if (ferror(source))
 			{
-				psql_error("could not read from input file: %s\n",
-						   strerror(errno));
+				pg_log_error("could not read from input file: %m");
 				return NULL;
 			}
 			break;
@@ -224,7 +225,7 @@ gets_fromFile(FILE *source)
 
 		if (PQExpBufferBroken(buffer))
 		{
-			psql_error("out of memory\n");
+			pg_log_error("out of memory");
 			return NULL;
 		}
 
@@ -468,8 +469,7 @@ saveHistory(char *fname, int max_lines)
 		}
 #endif
 
-		psql_error("could not save history to file \"%s\": %s\n",
-				   fname, strerror(errnum));
+		pg_log_error("could not save history to file \"%s\": %m", fname);
 	}
 	return false;
 }
@@ -507,8 +507,7 @@ printHistory(const char *fname, unsigned short int pager)
 		output = fopen(fname, "w");
 		if (output == NULL)
 		{
-			psql_error("could not save history to file \"%s\": %s\n",
-					   fname, strerror(errno));
+			pg_log_error("could not save history to file \"%s\": %m", fname);
 			return false;
 		}
 		is_pager = false;
@@ -527,7 +526,7 @@ printHistory(const char *fname, unsigned short int pager)
 
 	return true;
 #else
-	psql_error("history is not supported by this installation\n");
+	pg_log_error("history is not supported by this installation");
 	return false;
 #endif
 }

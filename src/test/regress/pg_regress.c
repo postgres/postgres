@@ -33,6 +33,7 @@
 
 #include "common/restricted_token.h"
 #include "common/username.h"
+#include "fe_utils/logging.h"
 #include "getopt_long.h"
 #include "libpq/pqcomm.h"		/* needed for UNIXSOCK_PATH() */
 #include "pg_config_paths.h"
@@ -1174,7 +1175,7 @@ spawn_process(const char *cmdline)
 	cmdline2 = psprintf("cmd /c \"%s\"", cmdline);
 
 	if ((restrictedToken =
-		 CreateRestrictedProcess(cmdline2, &pi, progname)) == 0)
+		 CreateRestrictedProcess(cmdline2, &pi)) == 0)
 		exit(2);
 
 	CloseHandle(pi.hThread);
@@ -2095,10 +2096,11 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	char		buf[MAXPGPATH * 4];
 	char		buf2[MAXPGPATH * 4];
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_regress"));
 
-	get_restricted_token(progname);
+	get_restricted_token();
 
 	atexit(stop_postmaster);
 

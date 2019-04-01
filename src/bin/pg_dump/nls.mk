@@ -1,7 +1,8 @@
 # src/bin/pg_dump/nls.mk
 CATALOG_NAME     = pg_dump
 AVAIL_LANGUAGES  = cs de es fr he it ja ko pl pt_BR ru sv tr zh_CN
-GETTEXT_FILES    = pg_backup_archiver.c pg_backup_db.c pg_backup_custom.c \
+GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
+                   pg_backup_archiver.c pg_backup_db.c pg_backup_custom.c \
                    pg_backup_null.c pg_backup_tar.c \
                    pg_backup_directory.c dumputils.c compress_io.c \
                    pg_dump.c common.c pg_dump_sort.c \
@@ -9,10 +10,9 @@ GETTEXT_FILES    = pg_backup_archiver.c pg_backup_db.c pg_backup_custom.c \
                    parallel.c parallel.h pg_backup_utils.c pg_backup_utils.h \
                    ../../common/exec.c ../../common/fe_memutils.c \
                    ../../common/wait_error.c
-GETTEXT_TRIGGERS = write_msg:2 exit_horribly:2 simple_prompt \
-                   ExecuteSqlCommand:3 ahlog:3 warn_or_exit_horribly:3
-GETTEXT_FLAGS  = \
-    write_msg:2:c-format \
-    exit_horribly:2:c-format \
-    ahlog:3:c-format \
-    warn_or_exit_horribly:3:c-format
+GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
+                   fatal simple_prompt \
+                   ExecuteSqlCommand:3 warn_or_exit_horribly:3
+GETTEXT_FLAGS    = $(FRONTEND_COMMON_GETTEXT_FLAGS) \
+    fatal:1:c-format \
+    warn_or_exit_horribly:2:c-format

@@ -20,8 +20,6 @@ extern bool setQFout(const char *fname);
 extern char *psql_get_variable(const char *varname, PsqlScanQuoteType quote,
 				  void *passthrough);
 
-extern void psql_error(const char *fmt,...) pg_attribute_printf(1, 2);
-
 extern void NoticeProcessor(void *arg, const char *message);
 
 extern volatile bool sigint_interrupt_enabled;

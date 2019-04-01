@@ -67,6 +67,7 @@
 #include "common/file_utils.h"
 #include "common/restricted_token.h"
 #include "common/username.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 #include "getaddrinfo.h"
 #include "getopt_long.h"
@@ -184,7 +185,7 @@ static const char *default_timezone = NULL;
 "# allows any local user to connect as any PostgreSQL user, including\n" \
 "# the database superuser.  If you do not trust all your local users,\n" \
 "# use another authentication method.\n"
-static char *authwarning = NULL;
+static bool	authwarning = false;
 
 /*
  * Centralized knowledge of switches to pass to backend
@@ -335,7 +336,7 @@ escape_quotes(const char *src)
 
 	if (!result)
 	{
-		fprintf(stderr, _("%s: out of memory\n"), progname);
+		pg_log_error("out of memory");
 		exit(1);
 	}
 	return result;
@@ -491,8 +492,7 @@ readfile(const char *path)
 
 	if ((infile = fopen(path, "r")) == NULL)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not open file \"%s\" for reading: %m", path);
 		exit(1);
 	}
 
@@ -547,24 +547,21 @@ writefile(char *path, char **lines)
 
 	if ((out_file = fopen(path, "w")) == NULL)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not open file \"%s\" for writing: %m", path);
 		exit(1);
 	}
 	for (line = lines; *line != NULL; line++)
 	{
 		if (fputs(*line, out_file) < 0)
 		{
-			fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
-					progname, path, strerror(errno));
+			pg_log_error("could not write file \"%s\": %m", path);
 			exit(1);
 		}
 		free(*line);
 	}
 	if (fclose(out_file))
 	{
-		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not write file \"%s\": %m", path);
 		exit(1);
 	}
 }
@@ -582,8 +579,7 @@ popen_check(const char *command, const char *mode)
 	errno = 0;
 	cmdfd = popen(command, mode);
 	if (cmdfd == NULL)
-		fprintf(stderr, _("%s: could not execute command \"%s\": %s\n"),
-				progname, command, strerror(errno));
+		pg_log_error("could not execute command \"%s\": %m", command);
 	return cmdfd;
 }
 
@@ -601,52 +597,41 @@ cleanup_directories_atexit(void)
 	{
 		if (made_new_pgdata)
 		{
-			fprintf(stderr, _("%s: removing data directory \"%s\"\n"),
-					progname, pg_data);
+			pg_log_info("removing data directory \"%s\"", pg_data);
 			if (!rmtree(pg_data, true))
-				fprintf(stderr, _("%s: failed to remove data directory\n"),
-						progname);
+				pg_log_error("failed to remove data directory");
 		}
 		else if (found_existing_pgdata)
 		{
-			fprintf(stderr,
-					_("%s: removing contents of data directory \"%s\"\n"),
-					progname, pg_data);
+			pg_log_info("removing contents of data directory \"%s\"",
+						pg_data);
 			if (!rmtree(pg_data, false))
-				fprintf(stderr, _("%s: failed to remove contents of data directory\n"),
-						progname);
+				pg_log_error("failed to remove contents of data directory");
 		}
 
 		if (made_new_xlogdir)
 		{
-			fprintf(stderr, _("%s: removing WAL directory \"%s\"\n"),
-					progname, xlog_dir);
+			pg_log_info("removing WAL directory \"%s\"", xlog_dir);
 			if (!rmtree(xlog_dir, true))
-				fprintf(stderr, _("%s: failed to remove WAL directory\n"),
-						progname);
+				pg_log_error("failed to remove WAL directory");
 		}
 		else if (found_existing_xlogdir)
 		{
-			fprintf(stderr,
-					_("%s: removing contents of WAL directory \"%s\"\n"),
-					progname, xlog_dir);
+			pg_log_info("removing contents of WAL directory \"%s\"", xlog_dir);
 			if (!rmtree(xlog_dir, false))
-				fprintf(stderr, _("%s: failed to remove contents of WAL directory\n"),
-						progname);
+				pg_log_error("failed to remove contents of WAL directory");
 		}
 		/* otherwise died during startup, do nothing! */
 	}
 	else
 	{
 		if (made_new_pgdata || found_existing_pgdata)
-			fprintf(stderr,
-					_("%s: data directory \"%s\" not removed at user's request\n"),
-					progname, pg_data);
+			pg_log_info("data directory \"%s\" not removed at user's request",
+						pg_data);
 
 		if (made_new_xlogdir || found_existing_xlogdir)
-			fprintf(stderr,
-					_("%s: WAL directory \"%s\" not removed at user's request\n"),
-					progname, xlog_dir);
+			pg_log_info("WAL directory \"%s\" not removed at user's request",
+						xlog_dir);
 	}
 }
 
@@ -663,12 +648,10 @@ get_id(void)
 #ifndef WIN32
 	if (geteuid() == 0)			/* 0 is root's uid */
 	{
+		pg_log_error("cannot be run as root");
 		fprintf(stderr,
-				_("%s: cannot be run as root\n"
-				  "Please log in (using, e.g., \"su\") as the "
-				  "(unprivileged) user that will\n"
-				  "own the server process.\n"),
-				progname);
+				_("Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+				  "own the server process.\n"));
 		exit(1);
 	}
 #endif
@@ -700,8 +683,8 @@ get_encoding_id(const char *encoding_name)
 		if ((enc = pg_valid_server_encoding(encoding_name)) >= 0)
 			return enc;
 	}
-	fprintf(stderr, _("%s: \"%s\" is not a valid server encoding name\n"),
-			progname, encoding_name ? encoding_name : "(null)");
+	pg_log_error("\"%s\" is not a valid server encoding name",
+				 encoding_name ? encoding_name : "(null)");
 	exit(1);
 }
 
@@ -831,17 +814,14 @@ check_input(char *path)
 	{
 		if (errno == ENOENT)
 		{
-			fprintf(stderr,
-					_("%s: file \"%s\" does not exist\n"), progname, path);
+			pg_log_error("file \"%s\" does not exist", path);
 			fprintf(stderr,
 					_("This might mean you have a corrupted installation or identified\n"
 					  "the wrong directory with the invocation option -L.\n"));
 		}
 		else
 		{
-			fprintf(stderr,
-					_("%s: could not access file \"%s\": %s\n"), progname, path,
-					strerror(errno));
+			pg_log_error("could not access file \"%s\": %m", path);
 			fprintf(stderr,
 					_("This might mean you have a corrupted installation or identified\n"
 					  "the wrong directory with the invocation option -L.\n"));
@@ -850,8 +830,7 @@ check_input(char *path)
 	}
 	if (!S_ISREG(statbuf.st_mode))
 	{
-		fprintf(stderr,
-				_("%s: file \"%s\" is not a regular file\n"), progname, path);
+		pg_log_error("file \"%s\" is not a regular file", path);
 		fprintf(stderr,
 				_("This might mean you have a corrupted installation or identified\n"
 				  "the wrong directory with the invocation option -L.\n"));
@@ -876,15 +855,13 @@ write_version_file(const char *extrapath)
 
 	if ((version_file = fopen(path, PG_BINARY_W)) == NULL)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not open file \"%s\" for writing: %m", path);
 		exit(1);
 	}
 	if (fprintf(version_file, "%s\n", PG_MAJORVERSION) < 0 ||
 		fclose(version_file))
 	{
-		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not write file \"%s\": %m", path);
 		exit(1);
 	}
 	free(path);
@@ -904,14 +881,12 @@ set_null_conf(void)
 	conf_file = fopen(path, PG_BINARY_W);
 	if (conf_file == NULL)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not open file \"%s\" for writing: %m", path);
 		exit(1);
 	}
 	if (fclose(conf_file))
 	{
-		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not write file \"%s\": %m", path);
 		exit(1);
 	}
 	free(path);
@@ -1261,8 +1236,7 @@ setup_config(void)
 	writefile(path, conflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 	{
-		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not change permissions of \"%s\": %m", path);
 		exit(1);
 	}
 
@@ -1281,8 +1255,7 @@ setup_config(void)
 	writefile(path, autoconflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 	{
-		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not change permissions of \"%s\": %m", path);
 		exit(1);
 	}
 
@@ -1368,8 +1341,7 @@ setup_config(void)
 	writefile(path, conflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 	{
-		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not change permissions of \"%s\": %m", path);
 		exit(1);
 	}
 
@@ -1384,8 +1356,7 @@ setup_config(void)
 	writefile(path, conflines);
 	if (chmod(path, pg_file_create_mode) != 0)
 	{
-		fprintf(stderr, _("%s: could not change permissions of \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not change permissions of \"%s\": %m", path);
 		exit(1);
 	}
 
@@ -1419,11 +1390,11 @@ bootstrap_template1(void)
 
 	if (strcmp(headerline, *bki_lines) != 0)
 	{
+		pg_log_error("input file \"%s\" does not belong to PostgreSQL %s",
+					 bki_file, PG_VERSION);
 		fprintf(stderr,
-				_("%s: input file \"%s\" does not belong to PostgreSQL %s\n"
-				  "Check your installation or specify the correct path "
-				  "using the option -L.\n"),
-				progname, bki_file, PG_VERSION);
+				_("Check your installation or specify the correct path "
+				  "using the option -L.\n"));
 		exit(1);
 	}
 
@@ -1560,18 +1531,18 @@ get_su_pwd(void)
 
 		if (!pwf)
 		{
-			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
-					progname, pwfilename, strerror(errno));
+			pg_log_error("could not open file \"%s\" for reading: %m",
+						 pwfilename);
 			exit(1);
 		}
 		if (!fgets(pwd1, sizeof(pwd1), pwf))
 		{
 			if (ferror(pwf))
-				fprintf(stderr, _("%s: could not read password from file \"%s\": %s\n"),
-						progname, pwfilename, strerror(errno));
+				pg_log_error("could not read password from file \"%s\": %m",
+							 pwfilename);
 			else
-				fprintf(stderr, _("%s: password file \"%s\" is empty\n"),
-						progname, pwfilename);
+				pg_log_error("password file \"%s\" is empty",
+							 pwfilename);
 			exit(1);
 		}
 		fclose(pwf);
@@ -2237,8 +2208,7 @@ check_locale_name(int category, const char *locale, char **canonname)
 	save = setlocale(category, NULL);
 	if (!save)
 	{
-		fprintf(stderr, _("%s: setlocale() failed\n"),
-				progname);
+		pg_log_error("setlocale() failed");
 		exit(1);
 	}
 
@@ -2259,8 +2229,7 @@ check_locale_name(int category, const char *locale, char **canonname)
 	/* restore old value. */
 	if (!setlocale(category, save))
 	{
-		fprintf(stderr, _("%s: failed to restore old locale \"%s\"\n"),
-				progname, save);
+		pg_log_error("failed to restore old locale \"%s\"", save);
 		exit(1);
 	}
 	free(save);
@@ -2269,8 +2238,7 @@ check_locale_name(int category, const char *locale, char **canonname)
 	if (res == NULL)
 	{
 		if (*locale)
-			fprintf(stderr, _("%s: invalid locale name \"%s\"\n"),
-					progname, locale);
+			pg_log_error("invalid locale name \"%s\"", locale);
 		else
 		{
 			/*
@@ -2281,8 +2249,7 @@ check_locale_name(int category, const char *locale, char **canonname)
 			 * setlocale's behavior is implementation-specific, it's hard to
 			 * be sure what it didn't like.  Print a safe generic message.
 			 */
-			fprintf(stderr, _("%s: invalid locale settings; check LANG and LC_* environment variables\n"),
-					progname);
+			pg_log_error("invalid locale settings; check LANG and LC_* environment variables");
 		}
 		exit(1);
 	}
@@ -2309,7 +2276,7 @@ check_locale_encoding(const char *locale, int user_enc)
 #endif
 		  user_enc == PG_SQL_ASCII))
 	{
-		fprintf(stderr, _("%s: encoding mismatch\n"), progname);
+		pg_log_error("encoding mismatch");
 		fprintf(stderr,
 				_("The encoding you selected (%s) and the encoding that the\n"
 				  "selected locale uses (%s) do not match.  This would lead to\n"
@@ -2427,9 +2394,7 @@ check_authmethod_unspecified(const char **authmethod)
 {
 	if (*authmethod == NULL)
 	{
-		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections\n"
-						"You can change this by editing pg_hba.conf or using the option -A, or\n"
-						"--auth-local and --auth-host, the next time you run initdb.\n");
+		authwarning = true;
 		*authmethod = "trust";
 	}
 }
@@ -2449,8 +2414,8 @@ check_authmethod_valid(const char *authmethod, const char *const *valid_methods,
 				return;
 	}
 
-	fprintf(stderr, _("%s: invalid authentication method \"%s\" for \"%s\" connections\n"),
-			progname, authmethod, conntype);
+	pg_log_error("invalid authentication method \"%s\" for \"%s\" connections",
+				 authmethod, conntype);
 	exit(1);
 }
 
@@ -2465,7 +2430,7 @@ check_need_password(const char *authmethodlocal, const char *authmethodhost)
 		 strcmp(authmethodhost, "scram-sha-256") == 0) &&
 		!(pwprompt || pwfilename))
 	{
-		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname,
+		pg_log_error("must specify a password for the superuser to enable %s authentication",
 				(strcmp(authmethodlocal, "md5") == 0 ||
 				 strcmp(authmethodlocal, "password") == 0 ||
 				 strcmp(authmethodlocal, "scram-sha-256") == 0)
@@ -2492,12 +2457,11 @@ setup_pgdata(void)
 		}
 		else
 		{
+			pg_log_error("no data directory specified");
 			fprintf(stderr,
-					_("%s: no data directory specified\n"
-					  "You must identify the directory where the data for this database system\n"
+					_("You must identify the directory where the data for this database system\n"
 					  "will reside.  Do this with either the invocation option -D or the\n"
-					  "environment variable PGDATA.\n"),
-					progname);
+					  "environment variable PGDATA.\n"));
 			exit(1);
 		}
 	}
@@ -2530,18 +2494,15 @@ setup_bin_paths(const char *argv0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-			fprintf(stderr,
-					_("The program \"postgres\" is needed by %s "
-					  "but was not found in the\n"
-					  "same directory as \"%s\".\n"
-					  "Check your installation.\n"),
-					progname, full_path);
+			pg_log_error("The program \"postgres\" is needed by %s but was not found in the\n"
+						 "same directory as \"%s\".\n"
+						 "Check your installation.",
+						 full_path, progname);
 		else
-			fprintf(stderr,
-					_("The program \"postgres\" was found by \"%s\"\n"
-					  "but was not the same version as %s.\n"
-					  "Check your installation.\n"),
-					full_path, progname);
+			pg_log_error("The program \"postgres\" was found by \"%s\"\n"
+						 "but was not the same version as %s.\n"
+						 "Check your installation.",
+						 full_path, progname);
 		exit(1);
 	}
 
@@ -2557,7 +2518,7 @@ setup_bin_paths(const char *argv0)
 	}
 	else if (!is_absolute_path(share_path))
 	{
-		fprintf(stderr, _("%s: input file location must be an absolute path\n"), progname);
+		pg_log_error("input file location must be an absolute path");
 		exit(1);
 	}
 
@@ -2601,8 +2562,8 @@ setup_locale_encoding(void)
 		if (ctype_enc == -1)
 		{
 			/* Couldn't recognize the locale's codeset */
-			fprintf(stderr, _("%s: could not find suitable encoding for locale \"%s\"\n"),
-					progname, lc_ctype);
+			pg_log_error("could not find suitable encoding for locale \"%s\"",
+						 lc_ctype);
 			fprintf(stderr, _("Rerun %s with the -E option.\n"), progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 					progname);
@@ -2622,9 +2583,8 @@ setup_locale_encoding(void)
 				   pg_encoding_to_char(ctype_enc),
 				   pg_encoding_to_char(encodingid));
 #else
-			fprintf(stderr,
-					_("%s: locale \"%s\" requires unsupported encoding \"%s\"\n"),
-					progname, lc_ctype, pg_encoding_to_char(ctype_enc));
+			pg_log_error("locale \"%s\" requires unsupported encoding \"%s\"",
+						 lc_ctype, pg_encoding_to_char(ctype_enc));
 			fprintf(stderr,
 					_("Encoding \"%s\" is not allowed as a server-side encoding.\n"
 					  "Rerun %s with a different locale selection.\n"),
@@ -2774,8 +2734,7 @@ create_data_directory(void)
 
 			if (pg_mkdir_p(pg_data, pg_dir_create_mode) != 0)
 			{
-				fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
-						progname, pg_data, strerror(errno));
+				pg_log_error("could not create directory \"%s\": %m", pg_data);
 				exit(1);
 			}
 			else
@@ -2792,8 +2751,8 @@ create_data_directory(void)
 
 			if (chmod(pg_data, pg_dir_create_mode) != 0)
 			{
-				fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
-						progname, pg_data, strerror(errno));
+				pg_log_error("could not change permissions of directory \"%s\": %m",
+							 pg_data);
 				exit(1);
 			}
 			else
@@ -2806,9 +2765,7 @@ create_data_directory(void)
 		case 3:
 		case 4:
 			/* Present and not empty */
-			fprintf(stderr,
-					_("%s: directory \"%s\" exists but is not empty\n"),
-					progname, pg_data);
+			pg_log_error("directory \"%s\" exists but is not empty", pg_data);
 			if (ret != 4)
 				warn_on_mount_point(ret);
 			else
@@ -2821,8 +2778,7 @@ create_data_directory(void)
 
 		default:
 			/* Trouble accessing directory */
-			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
-					progname, pg_data, strerror(errno));
+			pg_log_error("could not access directory \"%s\": %m", pg_data);
 			exit(1);
 	}
 }
@@ -2845,7 +2801,7 @@ create_xlog_or_symlink(void)
 		canonicalize_path(xlog_dir);
 		if (!is_absolute_path(xlog_dir))
 		{
-			fprintf(stderr, _("%s: WAL directory location must be an absolute path\n"), progname);
+			pg_log_error("WAL directory location must be an absolute path");
 			exit(1);
 		}
 
@@ -2860,8 +2816,8 @@ create_xlog_or_symlink(void)
 
 				if (pg_mkdir_p(xlog_dir, pg_dir_create_mode) != 0)
 				{
-					fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
-							progname, xlog_dir, strerror(errno));
+					pg_log_error("could not create directory \"%s\": %m",
+								 xlog_dir);
 					exit(1);
 				}
 				else
@@ -2878,8 +2834,8 @@ create_xlog_or_symlink(void)
 
 				if (chmod(xlog_dir, pg_dir_create_mode) != 0)
 				{
-					fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
-							progname, xlog_dir, strerror(errno));
+					pg_log_error("could not change permissions of directory \"%s\": %m",
+								 xlog_dir);
 					exit(1);
 				}
 				else
@@ -2892,9 +2848,7 @@ create_xlog_or_symlink(void)
 			case 3:
 			case 4:
 				/* Present and not empty */
-				fprintf(stderr,
-						_("%s: directory \"%s\" exists but is not empty\n"),
-						progname, xlog_dir);
+				pg_log_error("directory \"%s\" exists but is not empty", xlog_dir);
 				if (ret != 4)
 					warn_on_mount_point(ret);
 				else
@@ -2906,20 +2860,19 @@ create_xlog_or_symlink(void)
 
 			default:
 				/* Trouble accessing directory */
-				fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
-						progname, xlog_dir, strerror(errno));
+				pg_log_error("could not access directory \"%s\": %m", xlog_dir);
 				exit(1);
 		}
 
 #ifdef HAVE_SYMLINK
 		if (symlink(xlog_dir, subdirloc) != 0)
 		{
-			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
-					progname, subdirloc, strerror(errno));
+			pg_log_error("could not create symbolic link \"%s\": %m",
+						 subdirloc);
 			exit(1);
 		}
 #else
-		fprintf(stderr, _("%s: symlinks are not supported on this platform\n"), progname);
+		pg_log_error("symlinks are not supported on this platform");
 		exit(1);
 #endif
 	}
@@ -2928,8 +2881,8 @@ create_xlog_or_symlink(void)
 		/* Without -X option, just make the subdirectory normally */
 		if (mkdir(subdirloc, pg_dir_create_mode) < 0)
 		{
-			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
-					progname, subdirloc, strerror(errno));
+			pg_log_error("could not create directory \"%s\": %m",
+						 subdirloc);
 			exit(1);
 		}
 	}
@@ -2990,8 +2943,7 @@ initialize_data_directory(void)
 		 */
 		if (mkdir(path, pg_dir_create_mode) < 0)
 		{
-			fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
-					progname, path, strerror(errno));
+			pg_log_error("could not create directory \"%s\": %m", path);
 			exit(1);
 		}
 
@@ -3115,14 +3067,14 @@ main(int argc, char *argv[])
 	char		pg_ctl_path[MAXPGPATH];
 
 	/*
-	 * Ensure that buffering behavior of stdout and stderr matches what it is
+	 * Ensure that buffering behavior of stdout matches what it is
 	 * in interactive usage (at least on most platforms).  This prevents
 	 * unexpected output ordering when, eg, output is redirected to a file.
 	 * POSIX says we must do this before any other usage of these files.
 	 */
 	setvbuf(stdout, NULL, PG_IOLBF, 0);
-	setvbuf(stderr, NULL, _IONBF, 0);
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("initdb"));
 
@@ -3260,8 +3212,8 @@ main(int argc, char *argv[])
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -3277,21 +3229,20 @@ main(int argc, char *argv[])
 		/* must check that directory is readable */
 		if (pg_check_dir(pg_data) <= 0)
 		{
-			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
-					progname, pg_data, strerror(errno));
+			pg_log_error("could not access directory \"%s\": %m", pg_data);
 			exit(1);
 		}
 
 		fputs(_("syncing data to disk ... "), stdout);
 		fflush(stdout);
-		fsync_pgdata(pg_data, progname, PG_VERSION_NUM);
+		fsync_pgdata(pg_data, PG_VERSION_NUM);
 		check_ok();
 		return 0;
 	}
 
 	if (pwprompt && pwfilename)
 	{
-		fprintf(stderr, _("%s: password prompt and password file cannot be specified together\n"), progname);
+		pg_log_error("password prompt and password file cannot be specified together");
 		exit(1);
 	}
 
@@ -3316,21 +3267,17 @@ main(int argc, char *argv[])
 		/* verify that wal segment size is valid */
 		if (endptr == str_wal_segment_size_mb || *endptr != '\0')
 		{
-			fprintf(stderr,
-					_("%s: argument of --wal-segsize must be a number\n"),
-					progname);
+			pg_log_error("argument of --wal-segsize must be a number");
 			exit(1);
 		}
 		if (!IsValidWalSegSize(wal_segment_size_mb * 1024 * 1024))
 		{
-			fprintf(stderr,
-					_("%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"),
-					progname);
+			pg_log_error("argument of --wal-segsize must be a power of 2 between 1 and 1024");
 			exit(1);
 		}
 	}
 
-	get_restricted_token(progname);
+	get_restricted_token();
 
 	setup_pgdata();
 
@@ -3342,7 +3289,7 @@ main(int argc, char *argv[])
 
 	if (strncmp(username, "pg_", 3) == 0)
 	{
-		fprintf(stderr, _("%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"), progname, username);
+		pg_log_error("superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"", username);
 		exit(1);
 	}
 
@@ -3377,14 +3324,19 @@ main(int argc, char *argv[])
 	{
 		fputs(_("syncing data to disk ... "), stdout);
 		fflush(stdout);
-		fsync_pgdata(pg_data, progname, PG_VERSION_NUM);
+		fsync_pgdata(pg_data, PG_VERSION_NUM);
 		check_ok();
 	}
 	else
 		printf(_("\nSync to disk skipped.\nThe data directory might become corrupt if the operating system crashes.\n"));
 
-	if (authwarning != NULL)
-		fprintf(stderr, "%s", authwarning);
+	if (authwarning)
+	{
+		printf("\n");
+		pg_log_warning("enabling \"trust\" authentication for local connections");
+		fprintf(stderr, _("You can change this by editing pg_hba.conf or using the option -A, or\n"
+						  "--auth-local and --auth-host, the next time you run initdb.\n"));
+	}
 
 	/*
 	 * Build up a shell command to tell the user how to start the server

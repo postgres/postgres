@@ -4761,7 +4761,7 @@ ReadControlFile(void)
 void
 UpdateControlFile(void)
 {
-	update_controlfile(DataDir, NULL, ControlFile, true);
+	update_controlfile(DataDir, ControlFile, true);
 }
 
 /*

@@ -34,6 +34,7 @@
 #include "postgres_fe.h"
 #include "common/int.h"
 #include "fe_utils/conditional.h"
+#include "fe_utils/logging.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "portability/instr_time.h"
@@ -613,7 +614,6 @@ static void doLog(TState *thread, CState *st,
 	  StatsData *agg, bool skipped, double latency, double lag);
 static void processXactStats(TState *thread, CState *st, instr_time *now,
 				 bool skipped, StatsData *agg);
-static void pgbench_error(const char *fmt,...) pg_attribute_printf(1, 2);
 static void addScript(ParsedScript script);
 static void *threadRun(void *arg);
 static void finishCon(CState *st);
@@ -629,7 +629,6 @@ static bool socket_has_input(socket_set *sa, int fd, int idx);
 /* callback functions for our flex lexer */
 static const PsqlScanCallbacks pgbench_callbacks = {
 	NULL,						/* don't need get_variable functionality */
-	pgbench_error
 };
 
 
@@ -4154,20 +4153,6 @@ parseQuery(Command *cmd)
 }
 
 /*
- * Simple error-printing function, might be needed by lexer
- */
-static void
-pgbench_error(const char *fmt,...)
-{
-	va_list		ap;
-
-	fflush(stdout);
-	va_start(ap, fmt);
-	vfprintf(stderr, _(fmt), ap);
-	va_end(ap);
-}
-
-/*
  * syntax error while parsing a script (in practice, while parsing a
  * backslash command, because we don't detect syntax errors in SQL)
  *
@@ -5276,6 +5261,7 @@ main(int argc, char **argv)
 
 	int			exit_code = 0;
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
@@ -5291,11 +5277,6 @@ main(int argc, char **argv)
 			exit(0);
 		}
 	}
-
-#ifdef WIN32
-	/* stderr is buffered on Win32. */
-	setvbuf(stderr, NULL, _IONBF, 0);
-#endif
 
 	if ((env = getenv("PGHOST")) != NULL && *env != '\0')
 		pghost = env;

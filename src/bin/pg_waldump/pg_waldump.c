@@ -21,6 +21,7 @@
 #include "access/xlog_internal.h"
 #include "access/transam.h"
 #include "common/fe_memutils.h"
+#include "fe_utils/logging.h"
 #include "getopt_long.h"
 #include "rmgrdesc.h"
 
@@ -70,26 +71,7 @@ typedef struct XLogDumpStats
 	Stats		record_stats[RM_NEXT_ID][MAX_XLINFO_TYPES];
 } XLogDumpStats;
 
-static void fatal_error(const char *fmt,...) pg_attribute_printf(1, 2);
-
-/*
- * Big red button to push when things go horribly wrong.
- */
-static void
-fatal_error(const char *fmt,...)
-{
-	va_list		args;
-
-	fflush(stdout);
-
-	fprintf(stderr, _("%s: FATAL:  "), progname);
-	va_start(args, fmt);
-	vfprintf(stderr, _(fmt), args);
-	va_end(args);
-	fputc('\n', stderr);
-
-	exit(EXIT_FAILURE);
-}
+#define fatal_error(...) do { pg_log_fatal(__VA_ARGS__); exit(EXIT_FAILURE); } while(0)
 
 static void
 print_rmgr_list(void)
@@ -858,6 +840,7 @@ main(int argc, char **argv)
 	int			option;
 	int			optindex = 0;
 
+	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_waldump"));
 	progname = get_progname(argv[0]);
 
@@ -882,7 +865,7 @@ main(int argc, char **argv)
 
 	if (argc <= 1)
 	{
-		fprintf(stderr, _("%s: no arguments specified\n"), progname);
+		pg_log_error("no arguments specified");
 		goto bad_argument;
 	}
 
@@ -897,8 +880,8 @@ main(int argc, char **argv)
 			case 'e':
 				if (sscanf(optarg, "%X/%X", &xlogid, &xrecoff) != 2)
 				{
-					fprintf(stderr, _("%s: could not parse end WAL location \"%s\"\n"),
-							progname, optarg);
+					pg_log_error("could not parse end WAL location \"%s\"",
+								 optarg);
 					goto bad_argument;
 				}
 				private.endptr = (uint64) xlogid << 32 | xrecoff;
@@ -913,8 +896,7 @@ main(int argc, char **argv)
 			case 'n':
 				if (sscanf(optarg, "%d", &config.stop_after_records) != 1)
 				{
-					fprintf(stderr, _("%s: could not parse limit \"%s\"\n"),
-							progname, optarg);
+					pg_log_error("could not parse limit \"%s\"", optarg);
 					goto bad_argument;
 				}
 				break;
@@ -942,8 +924,8 @@ main(int argc, char **argv)
 
 					if (config.filter_by_rmgr == -1)
 					{
-						fprintf(stderr, _("%s: resource manager \"%s\" does not exist\n"),
-								progname, optarg);
+						pg_log_error("resource manager \"%s\" does not exist",
+									 optarg);
 						goto bad_argument;
 					}
 				}
@@ -951,8 +933,8 @@ main(int argc, char **argv)
 			case 's':
 				if (sscanf(optarg, "%X/%X", &xlogid, &xrecoff) != 2)
 				{
-					fprintf(stderr, _("%s: could not parse start WAL location \"%s\"\n"),
-							progname, optarg);
+					pg_log_error("could not parse start WAL location \"%s\"",
+								 optarg);
 					goto bad_argument;
 				}
 				else
@@ -961,8 +943,7 @@ main(int argc, char **argv)
 			case 't':
 				if (sscanf(optarg, "%d", &private.timeline) != 1)
 				{
-					fprintf(stderr, _("%s: could not parse timeline \"%s\"\n"),
-							progname, optarg);
+					pg_log_error("could not parse timeline \"%s\"", optarg);
 					goto bad_argument;
 				}
 				break;
@@ -973,8 +954,8 @@ main(int argc, char **argv)
 			case 'x':
 				if (sscanf(optarg, "%u", &config.filter_by_xid) != 1)
 				{
-					fprintf(stderr, _("%s: could not parse \"%s\" as a transaction ID\n"),
-							progname, optarg);
+					pg_log_error("could not parse \"%s\" as a transaction ID",
+								 optarg);
 					goto bad_argument;
 				}
 				config.filter_by_xid_enabled = true;
@@ -988,8 +969,8 @@ main(int argc, char **argv)
 						config.stats_per_record = true;
 					else if (strcmp(optarg, "rmgr") != 0)
 					{
-						fprintf(stderr, _("%s: unrecognized argument to --stats: %s\n"),
-								progname, optarg);
+						pg_log_error("unrecognized argument to --stats: %s",
+									 optarg);
 						goto bad_argument;
 					}
 				}
@@ -1001,9 +982,8 @@ main(int argc, char **argv)
 
 	if ((optind + 2) < argc)
 	{
-		fprintf(stderr,
-				_("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind + 2]);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind + 2]);
 		goto bad_argument;
 	}
 
@@ -1012,9 +992,8 @@ main(int argc, char **argv)
 		/* validate path points to directory */
 		if (!verify_directory(private.inpath))
 		{
-			fprintf(stderr,
-					_("%s: path \"%s\" could not be opened: %s\n"),
-					progname, private.inpath, strerror(errno));
+			pg_log_error("path \"%s\" could not be opened: %s",
+						 private.inpath, strerror(errno));
 			goto bad_argument;
 		}
 	}
@@ -1051,9 +1030,7 @@ main(int argc, char **argv)
 			XLogSegNoOffsetToRecPtr(segno, 0, WalSegSz, private.startptr);
 		else if (!XLByteInSeg(private.startptr, segno, WalSegSz))
 		{
-			fprintf(stderr,
-					_("%s: start WAL location %X/%X is not inside file \"%s\"\n"),
-					progname,
+			pg_log_error("start WAL location %X/%X is not inside file \"%s\"",
 					(uint32) (private.startptr >> 32),
 					(uint32) private.startptr,
 					fname);
@@ -1096,9 +1073,7 @@ main(int argc, char **argv)
 		if (!XLByteInSeg(private.endptr, segno, WalSegSz) &&
 			private.endptr != (segno + 1) * WalSegSz)
 		{
-			fprintf(stderr,
-					_("%s: end WAL location %X/%X is not inside file \"%s\"\n"),
-					progname,
+			pg_log_error("end WAL location %X/%X is not inside file \"%s\"",
 					(uint32) (private.endptr >> 32),
 					(uint32) private.endptr,
 					argv[argc - 1]);
@@ -1111,7 +1086,7 @@ main(int argc, char **argv)
 	/* we don't know what to print */
 	if (XLogRecPtrIsInvalid(private.startptr))
 	{
-		fprintf(stderr, _("%s: no start WAL location given\n"), progname);
+		pg_log_error("no start WAL location given");
 		goto bad_argument;
 	}
 

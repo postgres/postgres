@@ -11,6 +11,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
 
@@ -62,6 +63,7 @@ main(int argc, char *argv[])
 	bool		verbose = false;
 	SimpleStringList tables = {NULL, NULL};
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
@@ -125,8 +127,8 @@ main(int argc, char *argv[])
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
@@ -137,15 +139,13 @@ main(int argc, char *argv[])
 	{
 		if (dbname)
 		{
-			fprintf(stderr, _("%s: cannot cluster all databases and a specific one at the same time\n"),
-					progname);
+			pg_log_error("cannot cluster all databases and a specific one at the same time");
 			exit(1);
 		}
 
 		if (tables.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot cluster specific table(s) in all databases\n"),
-					progname);
+			pg_log_error("cannot cluster specific table(s) in all databases");
 			exit(1);
 		}
 
@@ -213,11 +213,11 @@ cluster_one_database(const char *dbname, bool verbose, const char *table,
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		if (table)
-			fprintf(stderr, _("%s: clustering of table \"%s\" in database \"%s\" failed: %s"),
-					progname, table, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("clustering of table \"%s\" in database \"%s\" failed: %s",
+						 table, PQdb(conn), PQerrorMessage(conn));
 		else
-			fprintf(stderr, _("%s: clustering of database \"%s\" failed: %s"),
-					progname, PQdb(conn), PQerrorMessage(conn));
+			pg_log_error("clustering of database \"%s\" failed: %s",
+						 PQdb(conn), PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}

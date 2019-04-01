@@ -51,8 +51,7 @@ set_dump_section(const char *arg, int *dumpSections)
 		*dumpSections |= DUMP_POST_DATA;
 	else
 	{
-		fprintf(stderr, _("%s: unrecognized section name: \"%s\"\n"),
-				progname, arg);
+		pg_log_error("unrecognized section name: \"%s\"", arg);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit_nicely(1);
@@ -60,62 +59,15 @@ set_dump_section(const char *arg, int *dumpSections)
 }
 
 
-/*
- * Write a printf-style message to stderr.
- *
- * The program name is prepended, if "progname" has been set.
- * Also, if modulename isn't NULL, that's included too.
- * Note that we'll try to translate the modulename and the fmt string.
- */
-void
-write_msg(const char *modulename, const char *fmt,...)
-{
-	va_list		ap;
-
-	va_start(ap, fmt);
-	vwrite_msg(modulename, fmt, ap);
-	va_end(ap);
-}
-
-/*
- * As write_msg, but pass a va_list not variable arguments.
- */
-void
-vwrite_msg(const char *modulename, const char *fmt, va_list ap)
-{
-	if (progname)
-	{
-		if (modulename)
-			fprintf(stderr, "%s: [%s] ", progname, _(modulename));
-		else
-			fprintf(stderr, "%s: ", progname);
-	}
-	vfprintf(stderr, _(fmt), ap);
-}
-
-/*
- * Fail and die, with a message to stderr.  Parameters as for write_msg.
- *
- * Note that on_exit_nicely callbacks will get run.
- */
-void
-exit_horribly(const char *modulename, const char *fmt,...)
-{
-	va_list		ap;
-
-	va_start(ap, fmt);
-	vwrite_msg(modulename, fmt, ap);
-	va_end(ap);
-
-	exit_nicely(1);
-}
-
 /* Register a callback to be run when exit_nicely is invoked. */
 void
 on_exit_nicely(on_exit_nicely_callback function, void *arg)
 {
 	if (on_exit_nicely_index >= MAX_ON_EXIT_NICELY)
-		exit_horribly(NULL, "out of on_exit_nicely slots\n");
+	{
+		pg_log_fatal("out of on_exit_nicely slots");
+		exit_nicely(1);
+	}
 	on_exit_nicely_list[on_exit_nicely_index].function = function;
 	on_exit_nicely_list[on_exit_nicely_index].arg = arg;
 	on_exit_nicely_index++;

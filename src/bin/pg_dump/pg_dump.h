@@ -639,7 +639,6 @@ typedef struct _extensionMemberId
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
-extern bool g_verbose;			/* verbose flag */
 
 /* placeholders for comment starting and ending delimiters */
 extern char g_comment_start[10];

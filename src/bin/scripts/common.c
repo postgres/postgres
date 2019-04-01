@@ -19,6 +19,7 @@
 
 #include "common.h"
 #include "fe_utils/connect.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 
@@ -113,8 +114,8 @@ connectDatabase(const char *dbname, const char *pghost,
 
 		if (!conn)
 		{
-			fprintf(stderr, _("%s: could not connect to database %s: out of memory\n"),
-					progname, dbname);
+			pg_log_error("could not connect to database %s: out of memory",
+						 dbname);
 			exit(1);
 		}
 
@@ -140,8 +141,8 @@ connectDatabase(const char *dbname, const char *pghost,
 			PQfinish(conn);
 			return NULL;
 		}
-		fprintf(stderr, _("%s: could not connect to database %s: %s"),
-				progname, dbname, PQerrorMessage(conn));
+		pg_log_error("could not connect to database %s: %s",
+					 dbname, PQerrorMessage(conn));
 		exit(1);
 	}
 
@@ -193,10 +194,8 @@ executeQuery(PGconn *conn, const char *query, const char *progname, bool echo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: query failed: %s"),
-				progname, PQerrorMessage(conn));
-		fprintf(stderr, _("%s: query was: %s\n"),
-				progname, query);
+		pg_log_error("query failed: %s", PQerrorMessage(conn));
+		pg_log_info("query was: %s", query);
 		PQfinish(conn);
 		exit(1);
 	}
@@ -221,10 +220,8 @@ executeCommand(PGconn *conn, const char *query,
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: query failed: %s"),
-				progname, PQerrorMessage(conn));
-		fprintf(stderr, _("%s: query was: %s\n"),
-				progname, query);
+		pg_log_error("query failed: %s", PQerrorMessage(conn));
+		pg_log_info("query was: %s", query);
 		PQfinish(conn);
 		exit(1);
 	}
@@ -347,11 +344,10 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		fprintf(stderr,
-				ngettext("%s: query returned %d row instead of one: %s\n",
-						 "%s: query returned %d rows instead of one: %s\n",
-						 ntups),
-				progname, ntups, sql.data);
+		pg_log_error(ngettext("query returned %d row instead of one: %s",
+							  "query returned %d rows instead of one: %s",
+							  ntups),
+					 ntups, sql.data);
 		PQfinish(conn);
 		exit(1);
 	}

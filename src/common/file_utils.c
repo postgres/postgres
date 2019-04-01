@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include "common/file_utils.h"
+#include "fe_utils/logging.h"
 
 
 /* Define PG_FLUSH_DATA_WORKS if we have an implementation for pg_flush_data */
@@ -35,12 +36,11 @@
 #define MINIMUM_VERSION_FOR_PG_WAL	100000
 
 #ifdef PG_FLUSH_DATA_WORKS
-static int pre_sync_fname(const char *fname, bool isdir,
-			   const char *progname);
+static int pre_sync_fname(const char *fname, bool isdir);
 #endif
 static void walkdir(const char *path,
-		int (*action) (const char *fname, bool isdir, const char *progname),
-		bool process_symlinks, const char *progname);
+		int (*action) (const char *fname, bool isdir),
+		bool process_symlinks);
 
 /*
  * Issue fsync recursively on PGDATA and all its contents.
@@ -56,7 +56,6 @@ static void walkdir(const char *path,
  */
 void
 fsync_pgdata(const char *pg_data,
-			 const char *progname,
 			 int serverVersion)
 {
 	bool		xlog_is_symlink;
@@ -79,8 +78,7 @@ fsync_pgdata(const char *pg_data,
 		struct stat st;
 
 		if (lstat(pg_wal, &st) < 0)
-			fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
-					progname, pg_wal, strerror(errno));
+			pg_log_error("could not stat file \"%s\": %m", pg_wal);
 		else if (S_ISLNK(st.st_mode))
 			xlog_is_symlink = true;
 	}
@@ -94,10 +92,10 @@ fsync_pgdata(const char *pg_data,
 	 * directory and its contents.
 	 */
 #ifdef PG_FLUSH_DATA_WORKS
-	walkdir(pg_data, pre_sync_fname, false, progname);
+	walkdir(pg_data, pre_sync_fname, false);
 	if (xlog_is_symlink)
-		walkdir(pg_wal, pre_sync_fname, false, progname);
-	walkdir(pg_tblspc, pre_sync_fname, true, progname);
+		walkdir(pg_wal, pre_sync_fname, false);
+	walkdir(pg_tblspc, pre_sync_fname, true);
 #endif
 
 	/*
@@ -109,10 +107,10 @@ fsync_pgdata(const char *pg_data,
 	 * in pg_tblspc, they'll get fsync'd twice.  That's not an expected case
 	 * so we don't worry about optimizing it.
 	 */
-	walkdir(pg_data, fsync_fname, false, progname);
+	walkdir(pg_data, fsync_fname, false);
 	if (xlog_is_symlink)
-		walkdir(pg_wal, fsync_fname, false, progname);
-	walkdir(pg_tblspc, fsync_fname, true, progname);
+		walkdir(pg_wal, fsync_fname, false);
+	walkdir(pg_tblspc, fsync_fname, true);
 }
 
 /*
@@ -121,17 +119,17 @@ fsync_pgdata(const char *pg_data,
  * This is a convenient wrapper on top of walkdir().
  */
 void
-fsync_dir_recurse(const char *dir, const char *progname)
+fsync_dir_recurse(const char *dir)
 {
 	/*
 	 * If possible, hint to the kernel that we're soon going to fsync the data
 	 * directory and its contents.
 	 */
 #ifdef PG_FLUSH_DATA_WORKS
-	walkdir(dir, pre_sync_fname, false, progname);
+	walkdir(dir, pre_sync_fname, false);
 #endif
 
-	walkdir(dir, fsync_fname, false, progname);
+	walkdir(dir, fsync_fname, false);
 }
 
 /*
@@ -150,8 +148,8 @@ fsync_dir_recurse(const char *dir, const char *progname)
  */
 static void
 walkdir(const char *path,
-		int (*action) (const char *fname, bool isdir, const char *progname),
-		bool process_symlinks, const char *progname)
+		int (*action) (const char *fname, bool isdir),
+		bool process_symlinks)
 {
 	DIR		   *dir;
 	struct dirent *de;
@@ -159,8 +157,7 @@ walkdir(const char *path,
 	dir = opendir(path);
 	if (dir == NULL)
 	{
-		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not open directory \"%s\": %m", path);
 		return;
 	}
 
@@ -183,20 +180,18 @@ walkdir(const char *path,
 
 		if (sret < 0)
 		{
-			fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
-					progname, subpath, strerror(errno));
+			pg_log_error("could not stat file \"%s\": %m", subpath);
 			continue;
 		}
 
 		if (S_ISREG(fst.st_mode))
-			(*action) (subpath, false, progname);
+			(*action) (subpath, false);
 		else if (S_ISDIR(fst.st_mode))
-			walkdir(subpath, action, false, progname);
+			walkdir(subpath, action, false);
 	}
 
 	if (errno)
-		fprintf(stderr, _("%s: could not read directory \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not read directory \"%s\": %m", path);
 
 	(void) closedir(dir);
 
@@ -206,7 +201,7 @@ walkdir(const char *path,
 	 * synced.  Recent versions of ext4 have made the window much wider but
 	 * it's been an issue for ext3 and other filesystems in the past.
 	 */
-	(*action) (path, true, progname);
+	(*action) (path, true);
 }
 
 /*
@@ -218,7 +213,7 @@ walkdir(const char *path,
 #ifdef PG_FLUSH_DATA_WORKS
 
 static int
-pre_sync_fname(const char *fname, bool isdir, const char *progname)
+pre_sync_fname(const char *fname, bool isdir)
 {
 	int			fd;
 
@@ -228,8 +223,7 @@ pre_sync_fname(const char *fname, bool isdir, const char *progname)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return 0;
-		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
-				progname, fname, strerror(errno));
+		pg_log_error("could not open file \"%s\": %m", fname);
 		return -1;
 	}
 
@@ -260,7 +254,7 @@ pre_sync_fname(const char *fname, bool isdir, const char *progname)
  * other errors non-fatally.
  */
 int
-fsync_fname(const char *fname, bool isdir, const char *progname)
+fsync_fname(const char *fname, bool isdir)
 {
 	int			fd;
 	int			flags;
@@ -288,8 +282,7 @@ fsync_fname(const char *fname, bool isdir, const char *progname)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return 0;
-		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
-				progname, fname, strerror(errno));
+		pg_log_error("could not open file \"%s\": %m", fname);
 		return -1;
 	}
 
@@ -301,8 +294,7 @@ fsync_fname(const char *fname, bool isdir, const char *progname)
 	 */
 	if (returncode != 0 && !(isdir && (errno == EBADF || errno == EINVAL)))
 	{
-		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
-				progname, fname, strerror(errno));
+		pg_log_error("could not fsync file \"%s\": %m", fname);
 		(void) close(fd);
 		return -1;
 	}
@@ -318,7 +310,7 @@ fsync_fname(const char *fname, bool isdir, const char *progname)
  * an OS crash or power failure.
  */
 int
-fsync_parent_path(const char *fname, const char *progname)
+fsync_parent_path(const char *fname)
 {
 	char		parentpath[MAXPGPATH];
 
@@ -333,7 +325,7 @@ fsync_parent_path(const char *fname, const char *progname)
 	if (strlen(parentpath) == 0)
 		strlcpy(parentpath, ".", MAXPGPATH);
 
-	if (fsync_fname(parentpath, true, progname) != 0)
+	if (fsync_fname(parentpath, true) != 0)
 		return -1;
 
 	return 0;
@@ -345,7 +337,7 @@ fsync_parent_path(const char *fname, const char *progname)
  * Wrapper around rename, similar to the backend version.
  */
 int
-durable_rename(const char *oldfile, const char *newfile, const char *progname)
+durable_rename(const char *oldfile, const char *newfile)
 {
 	int			fd;
 
@@ -356,7 +348,7 @@ durable_rename(const char *oldfile, const char *newfile, const char *progname)
 	 * because it's then guaranteed that either source or target file exists
 	 * after a crash.
 	 */
-	if (fsync_fname(oldfile, false, progname) != 0)
+	if (fsync_fname(oldfile, false) != 0)
 		return -1;
 
 	fd = open(newfile, PG_BINARY | O_RDWR, 0);
@@ -364,8 +356,7 @@ durable_rename(const char *oldfile, const char *newfile, const char *progname)
 	{
 		if (errno != ENOENT)
 		{
-			fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
-					progname, newfile, strerror(errno));
+			pg_log_error("could not open file \"%s\": %m", newfile);
 			return -1;
 		}
 	}
@@ -373,8 +364,7 @@ durable_rename(const char *oldfile, const char *newfile, const char *progname)
 	{
 		if (fsync(fd) != 0)
 		{
-			fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
-					progname, newfile, strerror(errno));
+			pg_log_error("could not fsync file \"%s\": %m", newfile);
 			close(fd);
 			return -1;
 		}
@@ -384,8 +374,8 @@ durable_rename(const char *oldfile, const char *newfile, const char *progname)
 	/* Time to do the real deal... */
 	if (rename(oldfile, newfile) != 0)
 	{
-		fprintf(stderr, _("%s: could not rename file \"%s\" to \"%s\": %s\n"),
-				progname, oldfile, newfile, strerror(errno));
+		pg_log_error("could not rename file \"%s\" to \"%s\": %m",
+					 oldfile, newfile);
 		return -1;
 	}
 
@@ -393,10 +383,10 @@ durable_rename(const char *oldfile, const char *newfile, const char *progname)
 	 * To guarantee renaming the file is persistent, fsync the file with its
 	 * new name, and its containing directory.
 	 */
-	if (fsync_fname(newfile, false, progname) != 0)
+	if (fsync_fname(newfile, false) != 0)
 		return -1;
 
-	if (fsync_parent_path(newfile, progname) != 0)
+	if (fsync_parent_path(newfile) != 0)
 		return -1;
 
 	return 0;

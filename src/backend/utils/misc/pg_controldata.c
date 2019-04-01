@@ -54,7 +54,7 @@ pg_control_system(PG_FUNCTION_ARGS)
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	/* read the control file */
-	ControlFile = get_controlfile(DataDir, NULL, &crc_ok);
+	ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));
@@ -132,7 +132,7 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	/* Read the control file. */
-	ControlFile = get_controlfile(DataDir, NULL, &crc_ok);
+	ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));
@@ -236,7 +236,7 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	/* read the control file */
-	ControlFile = get_controlfile(DataDir, NULL, &crc_ok);
+	ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));
@@ -303,7 +303,7 @@ pg_control_init(PG_FUNCTION_ARGS)
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	/* read the control file */
-	ControlFile = get_controlfile(DataDir, NULL, &crc_ok);
+	ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));

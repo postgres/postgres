@@ -21,7 +21,7 @@
  * An assign hook function is called before any attempted assignment, with the
  * proposed new value of the variable (or with NULL, if an \unset is being
  * attempted).  If it returns false, the assignment doesn't occur --- it
- * should print an error message with psql_error() to tell the user why.
+ * should print an error message with pg_log_error() to tell the user why.
  *
  * When an assign hook function is installed with SetVariableHooks(), it is
  * called with the variable's current value (or with NULL, if it wasn't set

@@ -10,6 +10,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPFLAGS)
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
 
 OBJS =  specparse.o isolationtester.o $(WIN32RES)
 
@@ -31,7 +32,7 @@ pg_regress.o: | submake-regress
 pg_isolation_regress$(X): isolation_main.o pg_regress.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
-isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport
+isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 distprep: specparse.c specscanner.c

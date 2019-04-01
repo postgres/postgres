@@ -32,7 +32,7 @@ command_checks_all(
 	0,
 	[qr/pg_control version number/],
 	[
-		qr/pg_resetwal: pg_control exists but is broken or wrong version; ignoring it/
+		qr/pg_resetwal: warning: pg_control exists but is broken or wrong version; ignoring it/
 	],
 	'processes corrupted pg_control all zeroes');
 
@@ -48,6 +48,6 @@ command_checks_all(
 	0,
 	[qr/pg_control version number/],
 	[
-		qr/\Qpg_resetwal: pg_control specifies invalid WAL segment size (0 bytes); proceed with caution\E/
+		qr/\Qpg_resetwal: warning: pg_control specifies invalid WAL segment size (0 bytes); proceed with caution\E/
 	],
 	'processes zero WAL segment size');

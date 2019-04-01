@@ -23,72 +23,6 @@ uint64		fetch_done;
 
 static pg_time_t last_progress_report = 0;
 
-#define QUERY_ALLOC			8192
-
-static
-pg_attribute_printf(2, 0)
-void
-pg_log_v(eLogType type, const char *fmt, va_list ap)
-{
-	char		message[QUERY_ALLOC];
-
-	vsnprintf(message, sizeof(message), _(fmt), ap);
-
-	switch (type)
-	{
-		case PG_DEBUG:
-			if (debug)
-				printf("%s", message);
-			break;
-
-		case PG_PROGRESS:
-			if (showprogress)
-				printf("%s", message);
-			break;
-
-		case PG_WARNING:
-			printf("%s", message);
-			break;
-
-		case PG_FATAL:
-			printf("\n%s", message);
-			printf("%s", _("Failure, exiting\n"));
-			exit(1);
-			break;
-
-		default:
-			break;
-	}
-	fflush(stdout);
-}
-
-
-void
-pg_log(eLogType type, const char *fmt,...)
-{
-	va_list		args;
-
-	va_start(args, fmt);
-	pg_log_v(type, fmt, args);
-	va_end(args);
-}
-
-
-/*
- * Print an error message, and exit.
- */
-void
-pg_fatal(const char *fmt,...)
-{
-	va_list		args;
-
-	va_start(args, fmt);
-	pg_log_v(PG_FATAL, fmt, args);
-	va_end(args);
-	/* should not get here, pg_log_v() exited already */
-	exit(1);
-}
-
 
 /*
  * Print a progress report based on the global variables.
@@ -135,8 +69,11 @@ progress_report(bool force)
 	snprintf(fetch_size_str, sizeof(fetch_size_str), INT64_FORMAT,
 			 fetch_size / 1024);
 
-	pg_log(PG_PROGRESS, "%*s/%s kB (%d%%) copied",
+	fprintf(stderr, _("%*s/%s kB (%d%%) copied"),
 		   (int) strlen(fetch_size_str), fetch_done_str, fetch_size_str,
 		   percent);
-	printf("\r");
+	if (isatty(fileno(stderr)))
+		fprintf(stderr, "\r");
+	else
+		fprintf(stderr, "\n");
 }

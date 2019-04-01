@@ -28,6 +28,7 @@
 #include "settings.h"
 #include "sql_help.h"
 
+#include "fe_utils/logging.h"
 
 /*
  * PLEASE:
@@ -59,7 +60,7 @@ usage(unsigned short int pager)
 		user = get_user_name(&errstr);
 		if (!user)
 		{
-			psql_error("%s\n", errstr);
+			pg_log_fatal("%s", errstr);
 			exit(EXIT_FAILURE);
 		}
 	}

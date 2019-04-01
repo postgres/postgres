@@ -13,7 +13,8 @@
 #include "postgres_fe.h"
 
 #include "datapagemap.h"
-#include "logging.h"
+
+#include "fe_utils/logging.h"
 
 struct datapagemap_iterator
 {
@@ -121,7 +122,7 @@ datapagemap_print(datapagemap_t *map)
 
 	iter = datapagemap_iterate(map);
 	while (datapagemap_next(iter, &blocknum))
-		pg_log(PG_DEBUG, "  block %u\n", blocknum);
+		pg_log_debug("block %u", blocknum);
 
 	pg_free(iter);
 }

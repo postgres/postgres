@@ -15,6 +15,8 @@ override CPPFLAGS := \
 	'-DDLSUFFIX="$(DLSUFFIX)"' \
 	$(CPPFLAGS)
 
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
+
 # default encoding for regression tests
 ENCODING = SQL_ASCII
 

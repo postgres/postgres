@@ -20,6 +20,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#ifndef FRONTEND
+#define pg_log_warning(...) elog(WARNING, __VA_ARGS__)
+#else
+#include "fe_utils/logging.h"
+#endif
+
 
 /*
  *	rmtree
@@ -70,13 +76,8 @@ rmtree(const char *path, bool rmtopdir)
 		{
 			if (errno != ENOENT)
 			{
-#ifndef FRONTEND
-				elog(WARNING, "could not stat file or directory \"%s\": %m",
+				pg_log_warning("could not stat file or directory \"%s\": %m",
 					 pathbuf);
-#else
-				fprintf(stderr, _("could not stat file or directory \"%s\": %s\n"),
-						pathbuf, strerror(errno));
-#endif
 				result = false;
 			}
 			continue;
@@ -97,13 +98,8 @@ rmtree(const char *path, bool rmtopdir)
 			{
 				if (errno != ENOENT)
 				{
-#ifndef FRONTEND
-					elog(WARNING, "could not remove file or directory \"%s\": %m",
+					pg_log_warning("could not remove file or directory \"%s\": %m",
 						 pathbuf);
-#else
-					fprintf(stderr, _("could not remove file or directory \"%s\": %s\n"),
-							pathbuf, strerror(errno));
-#endif
 					result = false;
 				}
 			}
@@ -114,13 +110,8 @@ rmtree(const char *path, bool rmtopdir)
 	{
 		if (rmdir(path) != 0)
 		{
-#ifndef FRONTEND
-			elog(WARNING, "could not remove file or directory \"%s\": %m",
+			pg_log_warning("could not remove file or directory \"%s\": %m",
 				 path);
-#else
-			fprintf(stderr, _("could not remove file or directory \"%s\": %s\n"),
-					path, strerror(errno));
-#endif
 			result = false;
 		}
 	}

@@ -13,6 +13,7 @@
 
 #include "access/timeline.h"
 #include "access/xlog_internal.h"
+#include "fe_utils/logging.h"
 
 /*
  * This is copy-pasted from the backend readTimeLineHistory, modified to
@@ -73,20 +74,20 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 		if (nfields < 1)
 		{
 			/* expect a numeric timeline ID as first field of line */
-			fprintf(stderr, _("syntax error in history file: %s\n"), fline);
-			fprintf(stderr, _("Expected a numeric timeline ID.\n"));
+			pg_log_error("syntax error in history file: %s", fline);
+			pg_log_error("Expected a numeric timeline ID.");
 			exit(1);
 		}
 		if (nfields != 3)
 		{
-			fprintf(stderr, _("syntax error in history file: %s\n"), fline);
-			fprintf(stderr, _("Expected a write-ahead log switchpoint location.\n"));
+			pg_log_error("syntax error in history file: %s", fline);
+			pg_log_error("Expected a write-ahead log switchpoint location.");
 			exit(1);
 		}
 		if (entries && tli <= lasttli)
 		{
-			fprintf(stderr, _("invalid data in history file: %s\n"), fline);
-			fprintf(stderr, _("Timeline IDs must be in increasing sequence.\n"));
+			pg_log_error("invalid data in history file: %s", fline);
+			pg_log_error("Timeline IDs must be in increasing sequence.");
 			exit(1);
 		}
 
@@ -106,8 +107,8 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 
 	if (entries && targetTLI <= lasttli)
 	{
-		fprintf(stderr, _("invalid data in history file\n"));
-		fprintf(stderr, _("Timeline IDs must be less than child timeline's ID.\n"));
+		pg_log_error("invalid data in history file");
+		pg_log_error("Timeline IDs must be less than child timeline's ID.");
 		exit(1);
 	}
 

@@ -73,6 +73,7 @@ BEGIN
 	delete $ENV{PGUSER};
 	delete $ENV{PGPORT};
 	delete $ENV{PGHOST};
+	delete $ENV{PG_COLOR};
 
 	$ENV{PGAPPNAME} = basename($0);
 

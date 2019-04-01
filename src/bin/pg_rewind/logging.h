@@ -12,24 +12,14 @@
 #ifndef PG_REWIND_LOGGING_H
 #define PG_REWIND_LOGGING_H
 
+#include "fe_utils/logging.h"
+
 /* progress counters */
 extern uint64 fetch_size;
 extern uint64 fetch_done;
 
-/*
- * Enumeration to denote pg_log modes
- */
-typedef enum
-{
-	PG_DEBUG,
-	PG_PROGRESS,
-	PG_WARNING,
-	PG_FATAL
-} eLogType;
-
-extern void pg_log(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3);
-extern void pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2) pg_attribute_noreturn();
-
 extern void progress_report(bool force);
+
+#define pg_fatal(...) do { pg_log_fatal(__VA_ARGS__); exit(1); } while(0)
 
 #endif							/* PG_REWIND_LOGGING_H */

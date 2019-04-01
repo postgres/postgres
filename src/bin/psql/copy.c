@@ -24,6 +24,7 @@
 #include "prompt.h"
 #include "stringutils.h"
 
+#include "fe_utils/logging.h"
 
 /*
  * parse_slash_copy
@@ -96,7 +97,7 @@ parse_slash_copy(const char *args)
 
 	if (!args)
 	{
-		psql_error("\\copy: arguments required\n");
+		pg_log_error("\\copy: arguments required");
 		return NULL;
 	}
 
@@ -251,9 +252,9 @@ parse_slash_copy(const char *args)
 
 error:
 	if (token)
-		psql_error("\\copy: parse error at \"%s\"\n", token);
+		pg_log_error("\\copy: parse error at \"%s\"", token);
 	else
-		psql_error("\\copy: parse error at end of line\n");
+		pg_log_error("\\copy: parse error at end of line");
 	free_copy_options(result);
 
 	return NULL;
@@ -326,11 +327,11 @@ do_copy(const char *args)
 	if (!copystream)
 	{
 		if (options->program)
-			psql_error("could not execute command \"%s\": %s\n",
-					   options->file, strerror(errno));
+			pg_log_error("could not execute command \"%s\": %m",
+						 options->file);
 		else
-			psql_error("%s: %s\n",
-					   options->file, strerror(errno));
+			pg_log_error("%s: %m",
+						 options->file);
 		free_copy_options(options);
 		return false;
 	}
@@ -342,12 +343,12 @@ do_copy(const char *args)
 
 		/* make sure the specified file is not a directory */
 		if ((result = fstat(fileno(copystream), &st)) < 0)
-			psql_error("could not stat file \"%s\": %s\n",
-					   options->file, strerror(errno));
+			pg_log_error("could not stat file \"%s\": %m",
+						 options->file);
 
 		if (result == 0 && S_ISDIR(st.st_mode))
-			psql_error("%s: cannot copy from/to a directory\n",
-					   options->file);
+			pg_log_error("%s: cannot copy from/to a directory",
+						 options->file);
 
 		if (result < 0 || S_ISDIR(st.st_mode))
 		{
@@ -383,13 +384,12 @@ do_copy(const char *args)
 			if (pclose_rc != 0)
 			{
 				if (pclose_rc < 0)
-					psql_error("could not close pipe to external command: %s\n",
-							   strerror(errno));
+					pg_log_error("could not close pipe to external command: %m");
 				else
 				{
 					char	   *reason = wait_result_to_str(pclose_rc);
 
-					psql_error("%s: %s\n", options->file,
+					pg_log_error("%s: %s", options->file,
 							   reason ? reason : "");
 					if (reason)
 						free(reason);
@@ -402,7 +402,7 @@ do_copy(const char *args)
 		{
 			if (fclose(copystream) != 0)
 			{
-				psql_error("%s: %s\n", options->file, strerror(errno));
+				pg_log_error("%s: %m", options->file);
 				success = false;
 			}
 		}
@@ -452,8 +452,7 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 		{
 			if (OK && copystream && fwrite(buf, 1, ret, copystream) != ret)
 			{
-				psql_error("could not write COPY data: %s\n",
-						   strerror(errno));
+				pg_log_error("could not write COPY data: %m");
 				/* complain only once, keep reading data from server */
 				OK = false;
 			}
@@ -463,14 +462,13 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 
 	if (OK && copystream && fflush(copystream))
 	{
-		psql_error("could not write COPY data: %s\n",
-				   strerror(errno));
+		pg_log_error("could not write COPY data: %m");
 		OK = false;
 	}
 
 	if (ret == -2)
 	{
-		psql_error("COPY data transfer failed: %s", PQerrorMessage(conn));
+		pg_log_error("COPY data transfer failed: %s", PQerrorMessage(conn));
 		OK = false;
 	}
 
@@ -489,7 +487,7 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 	*res = PQgetResult(conn);
 	if (PQresultStatus(*res) != PGRES_COMMAND_OK)
 	{
-		psql_error("%s", PQerrorMessage(conn));
+		pg_log_info("%s", PQerrorMessage(conn));
 		OK = false;
 	}
 
@@ -708,7 +706,7 @@ copyin_cleanup:
 	}
 	if (PQresultStatus(*res) != PGRES_COMMAND_OK)
 	{
-		psql_error("%s", PQerrorMessage(conn));
+		pg_log_info("%s", PQerrorMessage(conn));
 		OK = false;
 	}
 

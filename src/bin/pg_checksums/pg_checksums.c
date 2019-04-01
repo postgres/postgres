@@ -22,6 +22,7 @@
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
+#include "fe_utils/logging.h"
 #include "getopt_long.h"
 #include "pg_getopt.h"
 #include "storage/bufpage.h"
@@ -126,8 +127,7 @@ scan_file(const char *fn, BlockNumber segmentno)
 
 	if (f < 0)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
-				progname, fn, strerror(errno));
+		pg_log_error("could not open file \"%s\": %m", fn);
 		exit(1);
 	}
 
@@ -142,8 +142,8 @@ scan_file(const char *fn, BlockNumber segmentno)
 			break;
 		if (r != BLCKSZ)
 		{
-			fprintf(stderr, _("%s: could not read block %u in file \"%s\": read %d of %d\n"),
-					progname, blockno, fn, r, BLCKSZ);
+			pg_log_error("could not read block %u in file \"%s\": read %d of %d",
+						 blockno, fn, r, BLCKSZ);
 			exit(1);
 		}
 		blocks++;
@@ -158,8 +158,8 @@ scan_file(const char *fn, BlockNumber segmentno)
 			if (csum != header->pd_checksum)
 			{
 				if (ControlFile->data_checksum_version == PG_DATA_CHECKSUM_VERSION)
-					fprintf(stderr, _("%s: checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X\n"),
-							progname, fn, blockno, csum, header->pd_checksum);
+					pg_log_error("checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X",
+								 fn, blockno, csum, header->pd_checksum);
 				badblocks++;
 			}
 		}
@@ -171,15 +171,15 @@ scan_file(const char *fn, BlockNumber segmentno)
 			/* Seek back to beginning of block */
 			if (lseek(f, -BLCKSZ, SEEK_CUR) < 0)
 			{
-				fprintf(stderr, _("%s: seek failed for block %d in file \"%s\": %s\n"), progname, blockno, fn, strerror(errno));
+				pg_log_error("seek failed for block %d in file \"%s\": %m", blockno, fn);
 				exit(1);
 			}
 
 			/* Write block with checksum */
 			if (write(f, buf.data, BLCKSZ) != BLCKSZ)
 			{
-				fprintf(stderr, _("%s: could not update checksum of block %d in file \"%s\": %s\n"),
-						progname, blockno, fn, strerror(errno));
+				pg_log_error("could not update checksum of block %d in file \"%s\": %m",
+							 blockno, fn);
 				exit(1);
 			}
 		}
@@ -188,11 +188,9 @@ scan_file(const char *fn, BlockNumber segmentno)
 	if (verbose)
 	{
 		if (mode == PG_MODE_CHECK)
-			fprintf(stderr,
-					_("%s: checksums verified in file \"%s\"\n"), progname, fn);
+			pg_log_info("checksums verified in file \"%s\"", fn);
 		if (mode == PG_MODE_ENABLE)
-			fprintf(stderr,
-					_("%s: checksums enabled in file \"%s\"\n"), progname, fn);
+			pg_log_info("checksums enabled in file \"%s\"", fn);
 	}
 
 	close(f);
@@ -209,8 +207,7 @@ scan_directory(const char *basedir, const char *subdir)
 	dir = opendir(path);
 	if (!dir)
 	{
-		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
-				progname, path, strerror(errno));
+		pg_log_error("could not open directory \"%s\": %m", path);
 		exit(1);
 	}
 	while ((de = readdir(dir)) != NULL)
@@ -237,8 +234,7 @@ scan_directory(const char *basedir, const char *subdir)
 		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);
 		if (lstat(fn, &st) < 0)
 		{
-			fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
-					progname, fn, strerror(errno));
+			pg_log_error("could not stat file \"%s\": %m", fn);
 			exit(1);
 		}
 		if (S_ISREG(st.st_mode))
@@ -265,8 +261,8 @@ scan_directory(const char *basedir, const char *subdir)
 				segmentno = atoi(segmentpath);
 				if (segmentno == 0)
 				{
-					fprintf(stderr, _("%s: invalid segment number %d in file name \"%s\"\n"),
-							progname, segmentno, fn);
+					pg_log_error("invalid segment number %d in file name \"%s\"",
+								 segmentno, fn);
 					exit(1);
 				}
 			}
@@ -309,8 +305,8 @@ main(int argc, char *argv[])
 	int			option_index;
 	bool		crc_ok;
 
+	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_checksums"));
-
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
@@ -352,7 +348,7 @@ main(int argc, char *argv[])
 			case 'r':
 				if (atoi(optarg) == 0)
 				{
-					fprintf(stderr, _("%s: invalid relfilenode specification, must be numeric: %s\n"), progname, optarg);
+					pg_log_error("invalid relfilenode specification, must be numeric: %s", optarg);
 					exit(1);
 				}
 				only_relfilenode = pstrdup(optarg);
@@ -373,7 +369,7 @@ main(int argc, char *argv[])
 		/* If no DataDir was specified, and none could be found, error out */
 		if (DataDir == NULL)
 		{
-			fprintf(stderr, _("%s: no data directory specified\n"), progname);
+			pg_log_error("no data directory specified");
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 		}
@@ -382,8 +378,8 @@ main(int argc, char *argv[])
 	/* Complain if any arguments remain */
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -392,31 +388,29 @@ main(int argc, char *argv[])
 	/* Relfilenode checking only works in --check mode */
 	if (mode != PG_MODE_CHECK && only_relfilenode)
 	{
-		fprintf(stderr, _("%s: relfilenode option only possible with --check\n"), progname);
+		pg_log_error("relfilenode option only possible with --check");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
 	}
 
 	/* Check if cluster is running */
-	ControlFile = get_controlfile(DataDir, progname, &crc_ok);
+	ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
 	{
-		fprintf(stderr, _("%s: pg_control CRC value is incorrect\n"), progname);
+		pg_log_error("pg_control CRC value is incorrect");
 		exit(1);
 	}
 
 	if (ControlFile->pg_control_version != PG_CONTROL_VERSION)
 	{
-		fprintf(stderr, _("%s: cluster is not compatible with this version of pg_checksums\n"),
-				progname);
+		pg_log_error("cluster is not compatible with this version of pg_checksums");
 		exit(1);
 	}
 
 	if (ControlFile->blcksz != BLCKSZ)
 	{
-		fprintf(stderr, _("%s: database cluster is not compatible.\n"),
-				progname);
+		pg_log_error("database cluster is not compatible");
 		fprintf(stderr, _("The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"),
 				ControlFile->blcksz, BLCKSZ);
 		exit(1);
@@ -425,28 +419,28 @@ main(int argc, char *argv[])
 	if (ControlFile->state != DB_SHUTDOWNED &&
 		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
 	{
-		fprintf(stderr, _("%s: cluster must be shut down\n"), progname);
+		pg_log_error("cluster must be shut down");
 		exit(1);
 	}
 
 	if (ControlFile->data_checksum_version == 0 &&
 		mode == PG_MODE_CHECK)
 	{
-		fprintf(stderr, _("%s: data checksums are not enabled in cluster\n"), progname);
+		pg_log_error("data checksums are not enabled in cluster");
 		exit(1);
 	}
 
 	if (ControlFile->data_checksum_version == 0 &&
 		mode == PG_MODE_DISABLE)
 	{
-		fprintf(stderr, _("%s: data checksums are already disabled in cluster\n"), progname);
+		pg_log_error("data checksums are already disabled in cluster");
 		exit(1);
 	}
 
 	if (ControlFile->data_checksum_version > 0 &&
 		mode == PG_MODE_ENABLE)
 	{
-		fprintf(stderr, _("%s: data checksums are already enabled in cluster\n"), progname);
+		pg_log_error("data checksums are already enabled in cluster");
 		exit(1);
 	}
 
@@ -482,12 +476,12 @@ main(int argc, char *argv[])
 
 		if (do_sync)
 		{
-			printf(_("Syncing data directory\n"));
-			fsync_pgdata(DataDir, progname, PG_VERSION_NUM);
+			pg_log_info("syncing data directory");
+			fsync_pgdata(DataDir, PG_VERSION_NUM);
 		}
 
-		printf(_("Updating control file\n"));
-		update_controlfile(DataDir, progname, ControlFile, do_sync);
+		pg_log_info("updating control file");
+		update_controlfile(DataDir, ControlFile, do_sync);
 
 		if (verbose)
 			printf(_("Data checksum version: %d\n"), ControlFile->data_checksum_version);

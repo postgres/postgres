@@ -12,6 +12,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
+#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 
@@ -54,6 +55,7 @@ main(int argc, char *argv[])
 	PGconn	   *conn;
 	PGresult   *result;
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
@@ -99,15 +101,15 @@ main(int argc, char *argv[])
 	switch (argc - optind)
 	{
 		case 0:
-			fprintf(stderr, _("%s: missing required argument database name\n"), progname);
+			pg_log_error("missing required argument database name");
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 		case 1:
 			dbname = argv[optind];
 			break;
 		default:
-			fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-					progname, argv[optind + 1]);
+			pg_log_error("too many command-line arguments (first is \"%s\")",
+						 argv[optind + 1]);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 	}
@@ -137,8 +139,7 @@ main(int argc, char *argv[])
 	result = PQexec(conn, sql.data);
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: database removal failed: %s"),
-				progname, PQerrorMessage(conn));
+		pg_log_error("database removal failed: %s", PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}
