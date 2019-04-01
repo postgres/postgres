@@ -320,7 +320,6 @@ jsonb_path_match(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	JsonPath   *jp = PG_GETARG_JSONPATH_P(1);
-	JsonbValue *jbv;
 	JsonValueList found = {0};
 	Jsonb	   *vars = NULL;
 	bool		silent = true;
@@ -333,18 +332,27 @@ jsonb_path_match(PG_FUNCTION_ARGS)
 
 	(void) executeJsonPath(jp, vars, jb, !silent, &found);
 
-	if (JsonValueListLength(&found) < 1)
-		PG_RETURN_NULL();
-
-	jbv = JsonValueListHead(&found);
-
 	PG_FREE_IF_COPY(jb, 0);
 	PG_FREE_IF_COPY(jp, 1);
 
-	if (jbv->type != jbvBool)
-		PG_RETURN_NULL();
+	if (JsonValueListLength(&found) == 1)
+	{
+		JsonbValue *jbv = JsonValueListHead(&found);
 
-	PG_RETURN_BOOL(jbv->val.boolean);
+		if (jbv->type == jbvBool)
+			PG_RETURN_BOOL(jbv->val.boolean);
+
+		if (jbv->type == jbvNull)
+			PG_RETURN_NULL();
+	}
+
+	if (!silent)
+		ereport(ERROR,
+				(errcode(ERRCODE_SINGLETON_JSON_ITEM_REQUIRED),
+				 errmsg(ERRMSG_SINGLETON_JSON_ITEM_REQUIRED),
+				 errdetail("expression should return a singleton boolean")));
+
+	PG_RETURN_NULL();
 }
 
 /*

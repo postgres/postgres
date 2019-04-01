@@ -1769,6 +1769,57 @@ SELECT jsonb_path_exists('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*] ? (@.
  f
 (1 row)
 
+SELECT jsonb_path_match('true', '$', silent => false);
+ jsonb_path_match 
+------------------
+ t
+(1 row)
+
+SELECT jsonb_path_match('false', '$', silent => false);
+ jsonb_path_match 
+------------------
+ f
+(1 row)
+
+SELECT jsonb_path_match('null', '$', silent => false);
+ jsonb_path_match 
+------------------
+ 
+(1 row)
+
+SELECT jsonb_path_match('1', '$', silent => true);
+ jsonb_path_match 
+------------------
+ 
+(1 row)
+
+SELECT jsonb_path_match('1', '$', silent => false);
+ERROR:  singleton SQL/JSON item required
+DETAIL:  expression should return a singleton boolean
+SELECT jsonb_path_match('"a"', '$', silent => false);
+ERROR:  singleton SQL/JSON item required
+DETAIL:  expression should return a singleton boolean
+SELECT jsonb_path_match('{}', '$', silent => false);
+ERROR:  singleton SQL/JSON item required
+DETAIL:  expression should return a singleton boolean
+SELECT jsonb_path_match('[true]', '$', silent => false);
+ERROR:  singleton SQL/JSON item required
+DETAIL:  expression should return a singleton boolean
+SELECT jsonb_path_match('{}', 'lax $.a', silent => false);
+ERROR:  singleton SQL/JSON item required
+DETAIL:  expression should return a singleton boolean
+SELECT jsonb_path_match('{}', 'strict $.a', silent => false);
+ERROR:  SQL/JSON member not found
+DETAIL:  JSON object does not contain key "a"
+SELECT jsonb_path_match('{}', 'strict $.a', silent => true);
+ jsonb_path_match 
+------------------
+ 
+(1 row)
+
+SELECT jsonb_path_match('[true, true]', '$[*]', silent => false);
+ERROR:  singleton SQL/JSON item required
+DETAIL:  expression should return a singleton boolean
 SELECT jsonb '[{"a": 1}, {"a": 2}]' @@ '$[*].a > 1';
  ?column? 
 ----------
