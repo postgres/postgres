@@ -31,6 +31,7 @@ struct BulkInsertStateData;
 struct IndexInfo;
 struct IndexBuildCallback;
 struct SampleScanState;
+struct TBMIterateResult;
 struct VacuumParams;
 struct ValidateIndexState;
 
@@ -527,8 +528,58 @@ typedef struct TableAmRoutine
 	 */
 
 	/*
-	 * Acquire the next block in a sample scan. Return false if the sample
-	 * scan is finished, true otherwise.
+	 * Prepare to fetch / check / return tuples from `tbmres->blockno` as part
+	 * of a bitmap table scan. `scan` was started via table_beginscan_bm().
+	 * Return false if there's no tuples to be found on the page, true
+	 * otherwise.
+	 *
+	 * This will typically read and pin the target block, and do the necessary
+	 * work to allow scan_bitmap_next_tuple() to return tuples (e.g. it might
+	 * make sense to perform tuple visibility checks at this time). For some
+	 * AMs it will make more sense to do all the work referencing `tbmres`
+	 * contents here, for others it might be better to defer more work to
+	 * scan_bitmap_next_tuple.
+	 *
+	 * If `tbmres->blockno` is -1, this is a lossy scan and all visible tuples
+	 * on the page have to be returned, otherwise the tuples at offsets in
+	 * `tbmres->offsets` need to be returned.
+	 *
+	 * XXX: Currently this may only be implemented if the AM uses md.c as its
+	 * storage manager, and uses ItemPointer->ip_blkid in a manner that maps
+	 * blockids directly to the underlying storage. nodeBitmapHeapscan.c
+	 * performs prefetching directly using that interface.  This probably
+	 * needs to be rectified at a later point.
+	 *
+	 * XXX: Currently this may only be implemented if the AM uses the
+	 * visibilitymap, as nodeBitmapHeapscan.c unconditionally accesses it to
+	 * perform prefetching.  This probably needs to be rectified at a later
+	 * point.
+	 *
+	 * Optional callback, but either both scan_bitmap_next_block and
+	 * scan_bitmap_next_tuple need to exist, or neither.
+	 */
+	bool		(*scan_bitmap_next_block) (TableScanDesc scan,
+										   struct TBMIterateResult *tbmres);
+
+	/*
+	 * Fetch the next tuple of a bitmap table scan into `slot` and return true
+	 * if a visible tuple was found, false otherwise.
+	 *
+	 * For some AMs it will make more sense to do all the work referencing
+	 * `tbmres` contents in scan_bitmap_next_block, for others it might be
+	 * better to defer more work to this callback.
+	 *
+	 * Optional callback, but either both scan_bitmap_next_block and
+	 * scan_bitmap_next_tuple need to exist, or neither.
+	 */
+	bool		(*scan_bitmap_next_tuple) (TableScanDesc scan,
+										   struct TBMIterateResult *tbmres,
+										   TupleTableSlot *slot);
+
+	/*
+	 * Prepare to fetch tuples from the next block in a sample scan. Return
+	 * false if the sample scan is finished, true otherwise. `scan` was
+	 * started via table_beginscan_sampling().
 	 *
 	 * Typically this will first determine the target block by call the
 	 * TsmRoutine's NextSampleBlock() callback if not NULL, or alternatively
@@ -1396,8 +1447,44 @@ table_relation_estimate_size(Relation rel, int32 *attr_widths,
  */
 
 /*
- * Acquire the next block in a sample scan. Returns false if the sample scan
- * is finished, true otherwise.
+ * Prepare to fetch / check / return tuples from `tbmres->blockno` as part of
+ * a bitmap table scan. `scan` needs to have been started via
+ * table_beginscan_bm(). Returns false if there's no tuples to be found on the
+ * page, true otherwise.
+ *
+ * Note, this is an optionally implemented function, therefore should only be
+ * used after verifying the presence (at plan time or such).
+ */
+static inline bool
+table_scan_bitmap_next_block(TableScanDesc scan,
+							 struct TBMIterateResult *tbmres)
+{
+	return scan->rs_rd->rd_tableam->scan_bitmap_next_block(scan,
+														   tbmres);
+}
+
+/*
+ * Fetch the next tuple of a bitmap table scan into `slot` and return true if
+ * a visible tuple was found, false otherwise.
+ * table_scan_bitmap_next_block() needs to previously have selected a
+ * block (i.e. returned true), and no previous
+ * table_scan_bitmap_next_tuple() for the same block may have
+ * returned false.
+ */
+static inline bool
+table_scan_bitmap_next_tuple(TableScanDesc scan,
+							 struct TBMIterateResult *tbmres,
+							 TupleTableSlot *slot)
+{
+	return scan->rs_rd->rd_tableam->scan_bitmap_next_tuple(scan,
+														   tbmres,
+														   slot);
+}
+
+/*
+ * Prepare to fetch tuples from the next block in a sample scan. Returns false
+ * if the sample scan is finished, true otherwise. `scan` needs to have been
+ * started via table_beginscan_sampling().
  *
  * This will call the TsmRoutine's NextSampleBlock() callback if necessary
  * (i.e. NextSampleBlock is not NULL), or perform a sequential scan over the
@@ -1413,7 +1500,8 @@ table_scan_sample_next_block(TableScanDesc scan,
 /*
  * Fetch the next sample tuple into `slot` and return true if a visible tuple
  * was found, false otherwise. table_scan_sample_next_block() needs to
- * previously have selected a block (i.e. returned true).
+ * previously have selected a block (i.e. returned true), and no previous
+ * table_scan_sample_next_tuple() for the same block may have returned false.
  *
  * This will call the TsmRoutine's NextSampleTuple() callback.
  */

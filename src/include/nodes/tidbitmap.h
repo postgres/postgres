@@ -37,7 +37,7 @@ typedef struct TBMIterator TBMIterator;
 typedef struct TBMSharedIterator TBMSharedIterator;
 
 /* Result structure for tbm_iterate */
-typedef struct
+typedef struct TBMIterateResult
 {
 	BlockNumber blockno;		/* page number containing tuples */
 	int			ntuples;		/* -1 indicates lossy result */

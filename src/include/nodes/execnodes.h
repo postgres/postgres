@@ -1507,7 +1507,7 @@ typedef struct ParallelBitmapHeapState
  *		tbmiterator		   iterator for scanning current pages
  *		tbmres			   current-page data
  *		can_skip_fetch	   can we potentially skip tuple fetches in this scan?
- *		skip_fetch		   are we skipping tuple fetches on this page?
+ *		return_empty_tuples number of empty tuples to return
  *		vmbuffer		   buffer for visibility-map lookups
  *		pvmbuffer		   ditto, for prefetched pages
  *		exact_pages		   total number of exact pages retrieved
@@ -1531,7 +1531,7 @@ typedef struct BitmapHeapScanState
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
 	bool		can_skip_fetch;
-	bool		skip_fetch;
+	int			return_empty_tuples;
 	Buffer		vmbuffer;
 	Buffer		pvmbuffer;
 	long		exact_pages;

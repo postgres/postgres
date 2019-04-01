@@ -89,6 +89,9 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->index_validate_scan != NULL);
 	Assert(routine->relation_estimate_size != NULL);
 
+	/* optional, but one callback implies presence of hte other */
+	Assert((routine->scan_bitmap_next_block == NULL) ==
+		   (routine->scan_bitmap_next_tuple == NULL));
 	Assert(routine->scan_sample_next_block != NULL);
 	Assert(routine->scan_sample_next_tuple != NULL);
 
