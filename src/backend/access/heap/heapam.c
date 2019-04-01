@@ -6976,8 +6976,15 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 	 * more prefetching in this case, too. It may be that this formula is too
 	 * simplistic, but at the moment there is no evidence of that or any idea
 	 * about what would work better.
+	 *
+	 * Since the caller holds a buffer lock somewhere in rel, we'd better make
+	 * sure that isn't a catalog relation before we call code that does
+	 * syscache lookups, to avoid risk of deadlock.
 	 */
-	io_concurrency = get_tablespace_io_concurrency(rel->rd_rel->reltablespace);
+	if (IsCatalogRelation(rel))
+		io_concurrency = effective_io_concurrency;
+	else
+		io_concurrency = get_tablespace_io_concurrency(rel->rd_rel->reltablespace);
 	prefetch_distance = Min((io_concurrency) + 10, MAX_IO_CONCURRENCY);
 
 	/* Start prefetching. */
