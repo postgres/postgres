@@ -540,6 +540,17 @@ tuple_lock_retry:
 	return result;
 }
 
+static void
+heapam_finish_bulk_insert(Relation relation, int options)
+{
+	/*
+	 * If we skipped writing WAL, then we need to sync the heap (but not
+	 * indexes since those use WAL anyway / don't go through tableam)
+	 */
+	if (options & HEAP_INSERT_SKIP_WAL)
+		heap_sync(relation);
+}
+
 
 /* ------------------------------------------------------------------------
  * DDL related callbacks for heap AM.
@@ -2401,6 +2412,7 @@ static const TableAmRoutine heapam_methods = {
 	.tuple_delete = heapam_tuple_delete,
 	.tuple_update = heapam_tuple_update,
 	.tuple_lock = heapam_tuple_lock,
+	.finish_bulk_insert = heapam_finish_bulk_insert,
 
 	.tuple_fetch_row_version = heapam_fetch_row_version,
 	.tuple_get_latest_tid = heap_get_latest_tid,

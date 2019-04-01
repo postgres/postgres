@@ -4687,7 +4687,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	EState	   *estate;
 	CommandId	mycid;
 	BulkInsertState bistate;
-	int			hi_options;
+	int			ti_options;
 	ExprState  *partqualstate = NULL;
 
 	/*
@@ -4704,7 +4704,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		newrel = NULL;
 
 	/*
-	 * Prepare a BulkInsertState and options for heap_insert. Because we're
+	 * Prepare a BulkInsertState and options for table_insert. Because we're
 	 * building a new heap, we can skip WAL-logging and fsync it to disk at
 	 * the end instead (unless WAL-logging is required for archiving or
 	 * streaming replication). The FSM is empty too, so don't bother using it.
@@ -4714,16 +4714,16 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		mycid = GetCurrentCommandId(true);
 		bistate = GetBulkInsertState();
 
-		hi_options = HEAP_INSERT_SKIP_FSM;
+		ti_options = TABLE_INSERT_SKIP_FSM;
 		if (!XLogIsNeeded())
-			hi_options |= HEAP_INSERT_SKIP_WAL;
+			ti_options |= TABLE_INSERT_SKIP_WAL;
 	}
 	else
 	{
 		/* keep compiler quiet about using these uninitialized */
 		mycid = 0;
 		bistate = NULL;
-		hi_options = 0;
+		ti_options = 0;
 	}
 
 	/*
@@ -4977,7 +4977,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 			/* Write the tuple out to the new relation */
 			if (newrel)
-				table_insert(newrel, insertslot, mycid, hi_options, bistate);
+				table_insert(newrel, insertslot, mycid, ti_options, bistate);
 
 			ResetExprContext(econtext);
 
@@ -5000,9 +5000,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	{
 		FreeBulkInsertState(bistate);
 
-		/* If we skipped writing WAL, then we need to sync the heap. */
-		if (hi_options & HEAP_INSERT_SKIP_WAL)
-			heap_sync(newrel);
+		table_finish_bulk_insert(newrel, ti_options);
 
 		table_close(newrel, NoLock);
 	}

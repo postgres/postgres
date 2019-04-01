@@ -319,7 +319,7 @@ static uint64 CopyTo(CopyState cstate);
 static void CopyOneRowTo(CopyState cstate,
 			 Datum *values, bool *nulls);
 static void CopyFromInsertBatch(CopyState cstate, EState *estate,
-					CommandId mycid, int hi_options,
+					CommandId mycid, int ti_options,
 					ResultRelInfo *resultRelInfo, TupleTableSlot *myslot,
 					BulkInsertState bistate,
 					int nBufferedTuples, HeapTuple *bufferedTuples,
@@ -2328,7 +2328,7 @@ CopyFrom(CopyState cstate)
 	PartitionTupleRouting *proute = NULL;
 	ErrorContextCallback errcallback;
 	CommandId	mycid = GetCurrentCommandId(true);
-	int			hi_options = 0; /* start with default heap_insert options */
+	int			ti_options = 0; /* start with default table_insert options */
 	BulkInsertState bistate;
 	CopyInsertMethod insertMethod;
 	uint64		processed = 0;
@@ -2392,8 +2392,8 @@ CopyFrom(CopyState cstate)
 	 *	- data is being written to relfilenode created in this transaction
 	 * then we can skip writing WAL.  It's safe because if the transaction
 	 * doesn't commit, we'll discard the table (or the new relfilenode file).
-	 * If it does commit, we'll have done the heap_sync at the bottom of this
-	 * routine first.
+	 * If it does commit, we'll have done the table_finish_bulk_insert() at
+	 * the bottom of this routine first.
 	 *
 	 * As mentioned in comments in utils/rel.h, the in-same-transaction test
 	 * is not always set correctly, since in rare cases rd_newRelfilenodeSubid
@@ -2437,9 +2437,9 @@ CopyFrom(CopyState cstate)
 		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
 		 cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId))
 	{
-		hi_options |= HEAP_INSERT_SKIP_FSM;
+		ti_options |= TABLE_INSERT_SKIP_FSM;
 		if (!XLogIsNeeded())
-			hi_options |= HEAP_INSERT_SKIP_WAL;
+			ti_options |= TABLE_INSERT_SKIP_WAL;
 	}
 
 	/*
@@ -2491,7 +2491,7 @@ CopyFrom(CopyState cstate)
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("cannot perform FREEZE because the table was not created or truncated in the current subtransaction")));
 
-		hi_options |= HEAP_INSERT_FROZEN;
+		ti_options |= TABLE_INSERT_FROZEN;
 	}
 
 	/*
@@ -2755,7 +2755,7 @@ CopyFrom(CopyState cstate)
 					{
 						MemoryContext	oldcontext;
 
-						CopyFromInsertBatch(cstate, estate, mycid, hi_options,
+						CopyFromInsertBatch(cstate, estate, mycid, ti_options,
 											prevResultRelInfo, myslot, bistate,
 											nBufferedTuples, bufferedTuples,
 											firstBufferedLineNo);
@@ -2978,7 +2978,7 @@ CopyFrom(CopyState cstate)
 					if (nBufferedTuples == MAX_BUFFERED_TUPLES ||
 						bufferedTuplesSize > 65535)
 					{
-						CopyFromInsertBatch(cstate, estate, mycid, hi_options,
+						CopyFromInsertBatch(cstate, estate, mycid, ti_options,
 											resultRelInfo, myslot, bistate,
 											nBufferedTuples, bufferedTuples,
 											firstBufferedLineNo);
@@ -3015,7 +3015,7 @@ CopyFrom(CopyState cstate)
 					{
 						tuple = ExecFetchSlotHeapTuple(slot, true, NULL);
 						heap_insert(resultRelInfo->ri_RelationDesc, tuple,
-									mycid, hi_options, bistate);
+									mycid, ti_options, bistate);
 						ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 						slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 					}
@@ -3050,13 +3050,13 @@ CopyFrom(CopyState cstate)
 	{
 		if (insertMethod == CIM_MULTI_CONDITIONAL)
 		{
-			CopyFromInsertBatch(cstate, estate, mycid, hi_options,
+			CopyFromInsertBatch(cstate, estate, mycid, ti_options,
 								prevResultRelInfo, myslot, bistate,
 								nBufferedTuples, bufferedTuples,
 								firstBufferedLineNo);
 		}
 		else
-			CopyFromInsertBatch(cstate, estate, mycid, hi_options,
+			CopyFromInsertBatch(cstate, estate, mycid, ti_options,
 								resultRelInfo, myslot, bistate,
 								nBufferedTuples, bufferedTuples,
 								firstBufferedLineNo);
@@ -3106,12 +3106,7 @@ CopyFrom(CopyState cstate)
 
 	FreeExecutorState(estate);
 
-	/*
-	 * If we skipped writing WAL, then we need to sync the heap (but not
-	 * indexes since those use WAL anyway)
-	 */
-	if (hi_options & HEAP_INSERT_SKIP_WAL)
-		heap_sync(cstate->rel);
+	table_finish_bulk_insert(cstate->rel, ti_options);
 
 	return processed;
 }
@@ -3123,7 +3118,7 @@ CopyFrom(CopyState cstate)
  */
 static void
 CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
-					int hi_options, ResultRelInfo *resultRelInfo,
+					int ti_options, ResultRelInfo *resultRelInfo,
 					TupleTableSlot *myslot, BulkInsertState bistate,
 					int nBufferedTuples, HeapTuple *bufferedTuples,
 					uint64 firstBufferedLineNo)
@@ -3149,7 +3144,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 					  bufferedTuples,
 					  nBufferedTuples,
 					  mycid,
-					  hi_options,
+					  ti_options,
 					  bistate);
 	MemoryContextSwitchTo(oldcontext);
 

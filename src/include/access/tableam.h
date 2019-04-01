@@ -380,6 +380,21 @@ typedef struct TableAmRoutine
 							   uint8 flags,
 							   TM_FailureData *tmfd);
 
+	/*
+	 * Perform operations necessary to complete insertions made via
+	 * tuple_insert and multi_insert with a BulkInsertState specified. This
+	 * e.g. may e.g. used to flush the relation when inserting with
+	 * TABLE_INSERT_SKIP_WAL specified.
+	 *
+	 * Typically callers of tuple_insert and multi_insert will just pass all
+	 * the flags the apply to them, and each AM has to decide which of them
+	 * make sense for it, and then only take actions in finish_bulk_insert
+	 * that make sense for a specific AM.
+	 *
+	 * Optional callback.
+	 */
+	void		(*finish_bulk_insert) (Relation rel, int options);
+
 
 	/* ------------------------------------------------------------------------
 	 * DDL related functionality.
@@ -1011,7 +1026,8 @@ table_compute_xid_horizon_for_tuples(Relation rel,
  *
  *
  * The BulkInsertState object (if any; bistate can be NULL for default
- * behavior) is also just passed through to RelationGetBufferForTuple.
+ * behavior) is also just passed through to RelationGetBufferForTuple. If
+ * `bistate` is provided, table_finish_bulk_insert() needs to be called.
  *
  * On return the slot's tts_tid and tts_tableOid are updated to reflect the
  * insertion. But note that any toasting of fields within the slot is NOT
@@ -1183,6 +1199,20 @@ table_lock_tuple(Relation rel, ItemPointer tid, Snapshot snapshot,
 	return rel->rd_tableam->tuple_lock(rel, tid, snapshot, slot,
 									   cid, mode, wait_policy,
 									   flags, tmfd);
+}
+
+/*
+ * Perform operations necessary to complete insertions made via
+ * tuple_insert and multi_insert with a BulkInsertState specified. This
+ * e.g. may e.g. used to flush the relation when inserting with
+ * TABLE_INSERT_SKIP_WAL specified.
+ */
+static inline void
+table_finish_bulk_insert(Relation rel, int options)
+{
+	/* optional callback */
+	if (rel->rd_tableam && rel->rd_tableam->finish_bulk_insert)
+		rel->rd_tableam->finish_bulk_insert(rel, options);
 }
 
 
