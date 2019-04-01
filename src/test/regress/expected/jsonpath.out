@@ -547,23 +547,20 @@ select '$ ? (@.a < +1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1)'::jsonpath;
-    jsonpath     
------------------
- $?(@."a" < 0.1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < .1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1)'::jsonpath;
-     jsonpath     
-------------------
- $?(@."a" < -0.1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < -.1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1)'::jsonpath;
-    jsonpath     
------------------
- $?(@."a" < 0.1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < +.1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1)'::jsonpath;
     jsonpath     
 -----------------
@@ -619,23 +616,20 @@ select '$ ? (@.a < +1e1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e1)'::jsonpath;
-   jsonpath    
----------------
- $?(@."a" < 1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < .1e1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1e1)'::jsonpath;
-    jsonpath    
-----------------
- $?(@."a" < -1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < -.1e1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1e1)'::jsonpath;
-   jsonpath    
----------------
- $?(@."a" < 1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < +.1e1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1e1)'::jsonpath;
    jsonpath    
 ---------------
@@ -691,23 +685,20 @@ select '$ ? (@.a < +1e-1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e-1)'::jsonpath;
-     jsonpath     
-------------------
- $?(@."a" < 0.01)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < .1e-1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1e-1)'::jsonpath;
-     jsonpath      
--------------------
- $?(@."a" < -0.01)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < -.1e-1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1e-1)'::jsonpath;
-     jsonpath     
-------------------
- $?(@."a" < 0.01)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < +.1e-1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1e-1)'::jsonpath;
      jsonpath     
 ------------------
@@ -763,23 +754,20 @@ select '$ ? (@.a < +1e+1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e+1)'::jsonpath;
-   jsonpath    
----------------
- $?(@."a" < 1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < .1e+1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1e+1)'::jsonpath;
-    jsonpath    
-----------------
- $?(@."a" < -1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < -.1e+1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1e+1)'::jsonpath;
-   jsonpath    
----------------
- $?(@."a" < 1)
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '$ ? (@.a < +.1e+1)'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1e+1)'::jsonpath;
    jsonpath    
 ---------------
@@ -823,11 +811,10 @@ select '0'::jsonpath;
 (1 row)
 
 select '00'::jsonpath;
- jsonpath 
-----------
- 0
-(1 row)
-
+ERROR:  bad jsonpath representation
+LINE 1: select '00'::jsonpath;
+               ^
+DETAIL:  syntax error, unexpected IDENT_P at end of input
 select '0.0'::jsonpath;
  jsonpath 
 ----------

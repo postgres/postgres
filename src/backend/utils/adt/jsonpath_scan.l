@@ -80,9 +80,9 @@ any			[^\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/\\\"\' \t\n\r\f]
 blank		[ \t\n\r\f]
 
 digit		[0-9]
-integer		{digit}+
-decimal		{digit}*\.{digit}+
-decimalfail	{digit}+\.
+integer		(0|[1-9]{digit}*)
+decimal		{integer}\.{digit}+
+decimalfail	{integer}\.
 real		({integer}|{decimal})[Ee][-+]?{digit}+
 realfail1	({integer}|{decimal})[Ee]
 realfail2	({integer}|{decimal})[Ee][-+]
