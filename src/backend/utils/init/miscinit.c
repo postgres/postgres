@@ -795,14 +795,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 				if (PGSharedMemoryIsInUse(id1, id2))
 					ereport(FATAL,
 							(errcode(ERRCODE_LOCK_FILE_EXISTS),
-							 errmsg("pre-existing shared memory block "
-									"(key %lu, ID %lu) is still in use",
+							 errmsg("pre-existing shared memory block (key %lu, ID %lu) is still in use",
 									id1, id2),
-							 errhint("If you're sure there are no old "
-									 "server processes still running, remove "
-									 "the shared memory block "
-									 "or just delete the file \"%s\".",
-									 filename)));
+							 errhint("Terminate any old server processes associated with data directory \"%s\".",
+									 refName)));
 			}
 		}
 
