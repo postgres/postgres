@@ -867,6 +867,7 @@ GinBtreeEntryInsertData
 GinBtreeStack
 GinBuildState
 GinChkVal
+GinEntries
 GinEntryAccumulator
 GinIndexStat
 GinMetaPageData
@@ -1106,6 +1107,13 @@ JsonPath
 JsonPathBool
 JsonPathExecContext
 JsonPathExecResult
+JsonPathGinAddPathItemFunc
+JsonPathGinContext
+JsonPathGinExtractNodesFunc
+JsonPathGinNode
+JsonPathGinNodeType
+JsonPathGinPath
+JsonPathGinPathItem
 JsonPathItem
 JsonPathItemType
 JsonPathParseItem

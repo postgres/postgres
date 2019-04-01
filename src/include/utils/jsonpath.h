@@ -35,6 +35,8 @@ typedef struct
 #define PG_GETARG_JSONPATH_P_COPY(x)	DatumGetJsonPathPCopy(PG_GETARG_DATUM(x))
 #define PG_RETURN_JSONPATH_P(p)			PG_RETURN_POINTER(p)
 
+#define jspIsScalar(type) ((type) >= jpiNull && (type) <= jpiBool)
+
 /*
  * All node's type of jsonpath expression
  */

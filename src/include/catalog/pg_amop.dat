@@ -1468,11 +1468,23 @@
 { amopfamily => 'gin/jsonb_ops', amoplefttype => 'jsonb',
   amoprighttype => '_text', amopstrategy => '11', amopopr => '?&(jsonb,_text)',
   amopmethod => 'gin' },
+{ amopfamily => 'gin/jsonb_ops', amoplefttype => 'jsonb',
+  amoprighttype => 'jsonpath', amopstrategy => '15',
+  amopopr => '@?(jsonb,jsonpath)', amopmethod => 'gin' },
+{ amopfamily => 'gin/jsonb_ops', amoplefttype => 'jsonb',
+  amoprighttype => 'jsonpath', amopstrategy => '16',
+  amopopr => '@@(jsonb,jsonpath)', amopmethod => 'gin' },
 
 # GIN jsonb_path_ops
 { amopfamily => 'gin/jsonb_path_ops', amoplefttype => 'jsonb',
   amoprighttype => 'jsonb', amopstrategy => '7', amopopr => '@>(jsonb,jsonb)',
   amopmethod => 'gin' },
+{ amopfamily => 'gin/jsonb_path_ops', amoplefttype => 'jsonb',
+  amoprighttype => 'jsonpath', amopstrategy => '15',
+  amopopr => '@?(jsonb,jsonpath)', amopmethod => 'gin' },
+{ amopfamily => 'gin/jsonb_path_ops', amoplefttype => 'jsonb',
+  amoprighttype => 'jsonpath', amopstrategy => '16',
+  amopopr => '@@(jsonb,jsonpath)', amopmethod => 'gin' },
 
 # SP-GiST range_ops
 { amopfamily => 'spgist/range_ops', amoplefttype => 'anyrange',

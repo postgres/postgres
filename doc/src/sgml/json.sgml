@@ -481,6 +481,22 @@ CREATE INDEX idxgintags ON api USING GIN ((jdoc -&gt; 'tags'));
     linkend="indexes-expressional"/>.)
   </para>
   <para>
+    Also, GIN index supports <literal>@@</literal> and <literal>@?</literal>
+    operators, which perform <literal>jsonpath</literal> matching.
+<programlisting>
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] == "qui"';
+</programlisting>
+<programlisting>
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] ? (@ == "qui")';
+</programlisting>
+    GIN index extracts statements of following form out of
+    <literal>jsonpath</literal>: <literal>accessors_chain = const</literal>.
+    Accessors chain may consist of <literal>.key</literal>,
+    <literal>[*]</literal> and <literal>[index]</literal> accessors.
+    <literal>jsonb_ops</literal> additionally supports <literal>.*</literal>
+    and <literal>.**</literal> statements.
+  </para>
+  <para>
     Another approach to querying is to exploit containment, for example:
 <programlisting>
 -- Find documents in which the key "tags" contains array element "qui"
@@ -498,7 +514,8 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
 
   <para>
     Although the <literal>jsonb_path_ops</literal> operator class supports
-    only queries with the <literal>@&gt;</literal> operator, it has notable
+    only queries with the <literal>@&gt;</literal>, <literal>@@</literal>
+    and <literal>@?</literal> operators, it has notable
     performance advantages over the default operator
     class <literal>jsonb_ops</literal>.  A <literal>jsonb_path_ops</literal>
     index is usually much smaller than a <literal>jsonb_ops</literal>
