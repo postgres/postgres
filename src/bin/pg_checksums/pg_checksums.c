@@ -15,6 +15,7 @@
 #include "postgres_fe.h"
 
 #include <dirent.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -38,6 +39,7 @@ static ControlFileData *ControlFile;
 static char *only_relfilenode = NULL;
 static bool do_sync = true;
 static bool verbose = false;
+static bool showprogress = false;
 
 typedef enum
 {
@@ -60,6 +62,13 @@ static PgChecksumMode mode = PG_MODE_CHECK;
 
 static const char *progname;
 
+/*
+ * Progress status information.
+ */
+int64		total_size = 0;
+int64		current_size = 0;
+static pg_time_t last_progress_report = 0;
+
 static void
 usage(void)
 {
@@ -72,6 +81,7 @@ usage(void)
 	printf(_("  -d, --disable          disable data checksums\n"));
 	printf(_("  -e, --enable           enable data checksums\n"));
 	printf(_("  -N, --no-sync          do not wait for changes to be written safely to disk\n"));
+	printf(_("  -P, --progress         show progress information\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -r RELFILENODE         check only relation with specified relfilenode\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
@@ -97,6 +107,52 @@ static const char *const skip[] = {
 #endif
 	NULL,
 };
+
+/*
+ * Report current progress status.  Parts borrowed from
+ * src/bin/pg_basebackup.c.
+ */
+static void
+progress_report(bool force)
+{
+	int			percent;
+	char		total_size_str[32];
+	char		current_size_str[32];
+	pg_time_t	now;
+
+	Assert(showprogress);
+
+	now = time(NULL);
+	if (now == last_progress_report && !force)
+		return;					/* Max once per second */
+
+	/* Save current time */
+	last_progress_report = now;
+
+	/* Adjust total size if current_size is larger */
+	if (current_size > total_size)
+		total_size = current_size;
+
+	/* Calculate current percentage of size done */
+	percent = total_size ? (int) ((current_size) * 100 / total_size) : 0;
+
+	snprintf(total_size_str, sizeof(total_size_str), INT64_FORMAT,
+			 total_size / (1024 * 1024));
+	snprintf(current_size_str, sizeof(current_size_str), INT64_FORMAT,
+			 current_size / (1024 * 1024));
+
+	/*
+	 * Separate step to keep platform-dependent format code out of
+	 * translatable strings.  And we only test for INT64_FORMAT availability
+	 * in snprintf, not fprintf.
+	 */
+	fprintf(stderr, "%*s/%s MB (%d%%) computed",
+			(int) strlen(current_size_str), current_size_str, total_size_str,
+			percent);
+
+	/* Stay on the same line if reporting to a terminal */
+	fprintf(stderr, isatty(fileno(stderr)) ? "\r" : "\n");
+}
 
 static bool
 skipfile(const char *fn)
@@ -153,6 +209,7 @@ scan_file(const char *fn, BlockNumber segmentno)
 			continue;
 
 		csum = pg_checksum_page(buf.data, blockno + segmentno * RELSEG_SIZE);
+		current_size += r;
 		if (mode == PG_MODE_CHECK)
 		{
 			if (csum != header->pd_checksum)
@@ -183,6 +240,9 @@ scan_file(const char *fn, BlockNumber segmentno)
 				exit(1);
 			}
 		}
+
+		if (showprogress)
+			progress_report(false);
 	}
 
 	if (verbose)
@@ -196,9 +256,17 @@ scan_file(const char *fn, BlockNumber segmentno)
 	close(f);
 }
 
-static void
-scan_directory(const char *basedir, const char *subdir)
+/*
+ * Scan the given directory for items which can be checksummed and
+ * operate on each one of them.  If "sizeonly" is true, the size of
+ * all the items which have checksums is computed and returned back
+ * to the caller without operating on the files.  This is used to compile
+ * the total size of the data directory for progress reports.
+ */
+static int64
+scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 {
+	int64		dirsize = 0;
 	char		path[MAXPGPATH];
 	DIR		   *dir;
 	struct dirent *de;
@@ -275,16 +343,24 @@ scan_directory(const char *basedir, const char *subdir)
 				/* Relfilenode not to be included */
 				continue;
 
-			scan_file(fn, segmentno);
+			dirsize += st.st_size;
+
+			/*
+			 * No need to work on the file when calculating only the size of
+			 * the items in the data folder.
+			 */
+			if (!sizeonly)
+				scan_file(fn, segmentno);
 		}
 #ifndef WIN32
 		else if (S_ISDIR(st.st_mode) || S_ISLNK(st.st_mode))
 #else
 		else if (S_ISDIR(st.st_mode) || pgwin32_is_junction(fn))
 #endif
-			scan_directory(path, de->d_name);
+			dirsize += scan_directory(path, de->d_name, sizeonly);
 	}
 	closedir(dir);
+	return dirsize;
 }
 
 int
@@ -296,6 +372,7 @@ main(int argc, char *argv[])
 		{"disable", no_argument, NULL, 'd'},
 		{"enable", no_argument, NULL, 'e'},
 		{"no-sync", no_argument, NULL, 'N'},
+		{"progress", no_argument, NULL, 'P'},
 		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
@@ -323,7 +400,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "cD:deNr:v", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "cD:deNPr:v", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -352,6 +429,9 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 				only_relfilenode = pstrdup(optarg);
+				break;
+			case 'P':
+				showprogress = true;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -447,9 +527,27 @@ main(int argc, char *argv[])
 	/* Operate on all files if checking or enabling checksums */
 	if (mode == PG_MODE_CHECK || mode == PG_MODE_ENABLE)
 	{
-		scan_directory(DataDir, "global");
-		scan_directory(DataDir, "base");
-		scan_directory(DataDir, "pg_tblspc");
+		/*
+		 * If progress status information is requested, we need to scan the
+		 * directory tree twice: once to know how much total data needs to be
+		 * processed and once to do the real work.
+		 */
+		if (showprogress)
+		{
+			total_size = scan_directory(DataDir, "global", true);
+			total_size += scan_directory(DataDir, "base", true);
+			total_size += scan_directory(DataDir, "pg_tblspc", true);
+		}
+
+		(void) scan_directory(DataDir, "global", false);
+		(void) scan_directory(DataDir, "base", false);
+		(void) scan_directory(DataDir, "pg_tblspc", false);
+
+		if (showprogress)
+		{
+			progress_report(true);
+			fprintf(stderr, "\n");	/* Need to move to next line */
+		}
 
 		printf(_("Checksum operation completed\n"));
 		printf(_("Files scanned:  %s\n"), psprintf(INT64_FORMAT, files));
