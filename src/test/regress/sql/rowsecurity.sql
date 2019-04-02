@@ -1575,6 +1575,37 @@ DROP POLICY p1 ON dob_t1; -- should succeed
 DROP USER dob_role1;
 DROP USER dob_role2;
 
+-- Bug #15708: view + table with RLS should check policies as view owner
+CREATE USER regress_rls_alice NOLOGIN;
+CREATE USER regress_rls_bob NOLOGIN;
+
+CREATE TABLE ref_tbl (a int);
+INSERT INTO ref_tbl VALUES (1);
+
+CREATE TABLE rls_tbl (a int);
+INSERT INTO rls_tbl VALUES (10);
+ALTER TABLE rls_tbl ENABLE ROW LEVEL SECURITY;
+CREATE POLICY p1 ON rls_tbl USING (EXISTS (SELECT 1 FROM ref_tbl));
+
+GRANT SELECT ON ref_tbl TO regress_rls_bob;
+GRANT SELECT ON rls_tbl TO regress_rls_bob;
+
+CREATE VIEW rls_view AS SELECT * FROM rls_tbl;
+ALTER VIEW rls_view OWNER TO regress_rls_bob;
+GRANT SELECT ON rls_view TO regress_rls_alice;
+
+SET SESSION AUTHORIZATION regress_rls_alice;
+SELECT * FROM ref_tbl; -- Permission denied
+SELECT * FROM rls_tbl; -- Permission denied
+SELECT * FROM rls_view; -- OK
+RESET SESSION AUTHORIZATION;
+
+DROP VIEW rls_view;
+DROP TABLE rls_tbl;
+DROP TABLE ref_tbl;
+DROP USER regress_rls_alice;
+DROP USER regress_rls_bob;
+
 --
 -- Clean up objects
 --
