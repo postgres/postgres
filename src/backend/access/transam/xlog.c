@@ -95,6 +95,8 @@ bool		wal_log_hints = false;
 bool		wal_compression = false;
 char	   *wal_consistency_checking_string = NULL;
 bool	   *wal_consistency_checking = NULL;
+bool		wal_init_zero = true;
+bool		wal_recycle = true;
 bool		log_checkpoints = false;
 int			sync_method = DEFAULT_SYNC_METHOD;
 int			wal_level = WAL_LEVEL_MINIMAL;
@@ -3209,6 +3211,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	XLogSegNo	max_segno;
 	int			fd;
 	int			nbytes;
+	int			save_errno;
 
 	XLogFilePath(path, ThisTimeLineID, logsegno, wal_segment_size);
 
@@ -3248,39 +3251,61 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
-	/*
-	 * Zero-fill the file.  We have to do this the hard way to ensure that all
-	 * the file space has really been allocated --- on platforms that allow
-	 * "holes" in files, just seeking to the end doesn't allocate intermediate
-	 * space.  This way, we know that we have all the space and (after the
-	 * fsync below) that all the indirect blocks are down on disk.  Therefore,
-	 * fdatasync(2) or O_DSYNC will be sufficient to sync future writes to the
-	 * log file.
-	 */
 	memset(zbuffer.data, 0, XLOG_BLCKSZ);
-	for (nbytes = 0; nbytes < wal_segment_size; nbytes += XLOG_BLCKSZ)
+
+	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_WRITE);
+	save_errno = 0;
+	if (wal_init_zero)
 	{
-		errno = 0;
-		pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_WRITE);
-		if ((int) write(fd, zbuffer.data, XLOG_BLCKSZ) != (int) XLOG_BLCKSZ)
+		/*
+		 * Zero-fill the file.  With this setting, we do this the hard way to
+		 * ensure that all the file space has really been allocated.  On
+		 * platforms that allow "holes" in files, just seeking to the end
+		 * doesn't allocate intermediate space.  This way, we know that we
+		 * have all the space and (after the fsync below) that all the
+		 * indirect blocks are down on disk.  Therefore, fdatasync(2) or
+		 * O_DSYNC will be sufficient to sync future writes to the log file.
+		 */
+		for (nbytes = 0; nbytes < wal_segment_size; nbytes += XLOG_BLCKSZ)
 		{
-			int			save_errno = errno;
-
-			/*
-			 * If we fail to make the file, delete it to release disk space
-			 */
-			unlink(tmppath);
-
-			close(fd);
-
-			/* if write didn't set errno, assume problem is no disk space */
-			errno = save_errno ? save_errno : ENOSPC;
-
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not write to file \"%s\": %m", tmppath)));
+			errno = 0;
+			if (write(fd, zbuffer.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+			{
+				/* if write didn't set errno, assume no disk space */
+				save_errno = errno ? errno : ENOSPC;
+				break;
+			}
 		}
-		pgstat_report_wait_end();
+	}
+	else
+	{
+		/*
+		 * Otherwise, seeking to the end and writing a solitary byte is
+		 * enough.
+		 */
+		errno = 0;
+		if (pg_pwrite(fd, zbuffer.data, 1, wal_segment_size - 1) != 1)
+		{
+			/* if write didn't set errno, assume no disk space */
+			save_errno = errno ? errno : ENOSPC;
+		}
+	}
+	pgstat_report_wait_end();
+
+	if (save_errno)
+	{
+		/*
+		 * If we fail to make the file, delete it to release disk space
+		 */
+		unlink(tmppath);
+
+		close(fd);
+
+		errno = save_errno;
+
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write to file \"%s\": %m", tmppath)));
 	}
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_SYNC);
@@ -4049,14 +4074,19 @@ RemoveXlogFile(const char *segname, XLogRecPtr RedoRecPtr, XLogRecPtr endptr)
 	XLogSegNo	endlogSegNo;
 	XLogSegNo	recycleSegNo;
 
-	/*
-	 * Initialize info about where to try to recycle to.
-	 */
-	XLByteToSeg(endptr, endlogSegNo, wal_segment_size);
-	if (RedoRecPtr == InvalidXLogRecPtr)
-		recycleSegNo = endlogSegNo + 10;
+	if (wal_recycle)
+	{
+		/*
+		 * Initialize info about where to try to recycle to.
+		 */
+		XLByteToSeg(endptr, endlogSegNo, wal_segment_size);
+		if (RedoRecPtr == InvalidXLogRecPtr)
+			recycleSegNo = endlogSegNo + 10;
+		else
+			recycleSegNo = XLOGfileslop(RedoRecPtr);
+	}
 	else
-		recycleSegNo = XLOGfileslop(RedoRecPtr);
+		recycleSegNo = 0;		/* keep compiler quiet */
 
 	snprintf(path, MAXPGPATH, XLOGDIR "/%s", segname);
 
@@ -4065,7 +4095,8 @@ RemoveXlogFile(const char *segname, XLogRecPtr RedoRecPtr, XLogRecPtr endptr)
 	 * segment. Only recycle normal files, pg_standby for example can create
 	 * symbolic links pointing to a separate archive directory.
 	 */
-	if (endlogSegNo <= recycleSegNo &&
+	if (wal_recycle &&
+		endlogSegNo <= recycleSegNo &&
 		lstat(path, &statbuf) == 0 && S_ISREG(statbuf.st_mode) &&
 		InstallXLogFileSegment(&endlogSegNo, path,
 							   true, recycleSegNo, true))

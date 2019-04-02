@@ -1175,6 +1175,26 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"wal_init_zero", PGC_SUSET, WAL_SETTINGS,
+			gettext_noop("Writes zeroes to new WAL files before first use."),
+			NULL
+		},
+		&wal_init_zero,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"wal_recycle", PGC_SUSET, WAL_SETTINGS,
+			gettext_noop("Recycles WAL files by renaming them."),
+			NULL
+		},
+		&wal_recycle,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"log_checkpoints", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Logs each checkpoint."),
 			NULL
