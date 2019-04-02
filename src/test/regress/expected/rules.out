@@ -1867,9 +1867,9 @@ pg_stat_progress_create_index| SELECT s.pid,
             WHEN 1 THEN 'waiting for old snapshots'::text
             WHEN 2 THEN ('building index'::text || COALESCE((': '::text || pg_indexam_progress_phasename((s.param9)::oid, s.param11)), ''::text))
             WHEN 3 THEN 'waiting for writer snapshots'::text
-            WHEN 4 THEN 'index validation: scan index'::text
-            WHEN 5 THEN 'index validation: sort index scan results'::text
-            WHEN 6 THEN 'index validation: scan heap'::text
+            WHEN 4 THEN 'index validation: scanning index'::text
+            WHEN 5 THEN 'index validation: sorting tuples'::text
+            WHEN 6 THEN 'index validation: scanning table'::text
             WHEN 7 THEN 'waiting for reader snapshots'::text
             ELSE NULL::text
         END AS phase,
