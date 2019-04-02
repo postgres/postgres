@@ -112,6 +112,7 @@ brinhandler(PG_FUNCTION_ARGS)
 	amroutine->amcostestimate = brincostestimate;
 	amroutine->amoptions = brinoptions;
 	amroutine->amproperty = NULL;
+	amroutine->ambuildphasename = NULL;
 	amroutine->amvalidate = brinvalidate;
 	amroutine->ambeginscan = brinbeginscan;
 	amroutine->amrescan = brinrescan;
@@ -719,7 +720,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * Now scan the relation.  No syncscan allowed here because we want the
 	 * heap blocks in physical order.
 	 */
-	reltuples = table_index_build_scan(heap, index, indexInfo, false,
+	reltuples = table_index_build_scan(heap, index, indexInfo, false, true,
 									   brinbuildCallback, (void *) state, NULL);
 
 	/* process the final batch */
@@ -1236,7 +1237,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	 * cases.
 	 */
 	state->bs_currRangeStart = heapBlk;
-	table_index_build_range_scan(heapRel, state->bs_irel, indexInfo, false, true,
+	table_index_build_range_scan(heapRel, state->bs_irel, indexInfo, false, true, false,
 								 heapBlk, scanNumBlks,
 								 brinbuildCallback, (void *) state, NULL);
 

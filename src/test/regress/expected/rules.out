@@ -1856,7 +1856,33 @@ pg_stat_progress_cluster| SELECT s.pid,
     s.param6 AS heap_blks_total,
     s.param7 AS heap_blks_scanned,
     s.param8 AS index_rebuild_count
-   FROM (pg_stat_get_progress_info('CLUSTER'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10)
+   FROM (pg_stat_get_progress_info('CLUSTER'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
+     LEFT JOIN pg_database d ON ((s.datid = d.oid)));
+pg_stat_progress_create_index| SELECT s.pid,
+    s.datid,
+    d.datname,
+    s.relid,
+        CASE s.param10
+            WHEN 0 THEN 'initializing'::text
+            WHEN 1 THEN 'waiting for old snapshots'::text
+            WHEN 2 THEN ('building index'::text || COALESCE((': '::text || pg_indexam_progress_phasename((s.param9)::oid, s.param11)), ''::text))
+            WHEN 3 THEN 'waiting for writer snapshots'::text
+            WHEN 4 THEN 'index validation: scan index'::text
+            WHEN 5 THEN 'index validation: sort index scan results'::text
+            WHEN 6 THEN 'index validation: scan heap'::text
+            WHEN 7 THEN 'waiting for reader snapshots'::text
+            ELSE NULL::text
+        END AS phase,
+    s.param4 AS lockers_total,
+    s.param5 AS lockers_done,
+    s.param6 AS current_locker_pid,
+    s.param16 AS blocks_total,
+    s.param17 AS blocks_done,
+    s.param12 AS tuples_total,
+    s.param13 AS tuples_done,
+    s.param14 AS partitions_total,
+    s.param15 AS partitions_done
+   FROM (pg_stat_get_progress_info('CREATE INDEX'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
 pg_stat_progress_vacuum| SELECT s.pid,
     s.datid,
@@ -1878,7 +1904,7 @@ pg_stat_progress_vacuum| SELECT s.pid,
     s.param5 AS index_vacuum_count,
     s.param6 AS max_dead_tuples,
     s.param7 AS num_dead_tuples
-   FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10)
+   FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
 pg_stat_replication| SELECT s.pid,
     s.usesysid,

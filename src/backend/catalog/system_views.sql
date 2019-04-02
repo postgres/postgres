@@ -934,6 +934,33 @@ CREATE VIEW pg_stat_progress_cluster AS
     FROM pg_stat_get_progress_info('CLUSTER') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
+CREATE VIEW pg_stat_progress_create_index AS
+	SELECT
+		S.pid AS pid, S.datid AS datid, D.datname AS datname,
+		S.relid AS relid,
+		CASE S.param10 WHEN 0 THEN 'initializing'
+					  WHEN 1 THEN 'waiting for old snapshots'
+					  WHEN 2 THEN 'building index' ||
+						COALESCE((': ' || pg_indexam_progress_phasename(S.param9::oid, S.param11)),
+							'')
+					  WHEN 3 THEN 'waiting for writer snapshots'
+					  WHEN 4 THEN 'index validation: scanning index'
+					  WHEN 5 THEN 'index validation: sorting tuples'
+					  WHEN 6 THEN 'index validation: scanning table'
+					  WHEN 7 THEN 'waiting for reader snapshots'
+					  END as phase,
+		S.param4 AS lockers_total,
+		S.param5 AS lockers_done,
+		S.param6 AS current_locker_pid,
+		S.param16 AS blocks_total,
+		S.param17 AS blocks_done,
+		S.param12 AS tuples_total,
+		S.param13 AS tuples_done,
+		S.param14 AS partitions_total,
+		S.param15 AS partitions_done
+	FROM pg_stat_get_progress_info('CREATE INDEX') AS S
+		LEFT JOIN pg_database D ON S.datid = D.oid;
+
 CREATE VIEW pg_user_mappings AS
     SELECT
         U.oid       AS umid,

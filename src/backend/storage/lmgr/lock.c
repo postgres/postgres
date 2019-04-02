@@ -2807,6 +2807,7 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
  *		xacts merely awaiting such a lock are NOT reported.
  *
  * The result array is palloc'd and is terminated with an invalid VXID.
+ * *countp, if not null, is updated to the number of items set.
  *
  * Of course, the result could be out of date by the time it's returned,
  * so use of this function has to be thought about carefully.
@@ -2817,7 +2818,7 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
  * uses of the result.
  */
 VirtualTransactionId *
-GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
+GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 {
 	static VirtualTransactionId *vxids;
 	LOCKMETHODID lockmethodid = locktag->locktag_lockmethodid;
@@ -2964,6 +2965,8 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 		LWLockRelease(partitionLock);
 		vxids[count].backendId = InvalidBackendId;
 		vxids[count].localTransactionId = InvalidLocalTransactionId;
+		if (countp)
+			*countp = count;
 		return vxids;
 	}
 
@@ -3019,6 +3022,8 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 
 	vxids[count].backendId = InvalidBackendId;
 	vxids[count].localTransactionId = InvalidLocalTransactionId;
+	if (countp)
+		*countp = count;
 	return vxids;
 }
 

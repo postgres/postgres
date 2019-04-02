@@ -66,6 +66,7 @@
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "catalog/index.h"
+#include "commands/progress.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/smgr.h"
@@ -298,7 +299,8 @@ static double _bt_parallel_heapscan(BTBuildState *buildstate,
 static void _bt_leader_participate_as_worker(BTBuildState *buildstate);
 static void _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 						   BTShared *btshared, Sharedsort *sharedsort,
-						   Sharedsort *sharedsort2, int sortmem);
+						   Sharedsort *sharedsort2, int sortmem,
+						   bool progress);
 
 
 /*
@@ -394,6 +396,10 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 	/* Save as primary spool */
 	buildstate->spool = btspool;
 
+	/* Report table scan phase started */
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_SUBPHASE,
+								 PROGRESS_BTREE_PHASE_INDEXBUILD_TABLESCAN);
+
 	/* Attempt to launch parallel worker scan when required */
 	if (indexInfo->ii_ParallelWorkers > 0)
 		_bt_begin_parallel(buildstate, indexInfo->ii_Concurrent,
@@ -480,12 +486,30 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 
 	/* Fill spool using either serial or parallel heap scan */
 	if (!buildstate->btleader)
-		reltuples = table_index_build_scan(heap, index, indexInfo, true,
+		reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 										   _bt_build_callback, (void *) buildstate,
 										   NULL);
 	else
 		reltuples = _bt_parallel_heapscan(buildstate,
 										  &indexInfo->ii_BrokenHotChain);
+
+	/*
+	 * Set the progress target for the next phase.  Reset the block number
+	 * values set by table_index_build_scan
+	 */
+	{
+		const int	index[] = {
+			PROGRESS_CREATEIDX_TUPLES_TOTAL,
+			PROGRESS_SCAN_BLOCKS_TOTAL,
+			PROGRESS_SCAN_BLOCKS_DONE
+		};
+		const int64 val[] = {
+			buildstate->indtuples,
+			0, 0
+		};
+
+		pgstat_progress_update_multi_param(3, index, val);
+	}
 
 	/* okay, all heap tuples are spooled */
 	if (buildstate->spool2 && !buildstate->havedead)
@@ -535,9 +559,15 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	}
 #endif							/* BTREE_BUILD_STATS */
 
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_SUBPHASE,
+								 PROGRESS_BTREE_PHASE_PERFORMSORT_1);
 	tuplesort_performsort(btspool->sortstate);
 	if (btspool2)
+	{
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_SUBPHASE,
+									 PROGRESS_BTREE_PHASE_PERFORMSORT_2);
 		tuplesort_performsort(btspool2->sortstate);
+	}
 
 	wstate.heap = btspool->heap;
 	wstate.index = btspool->index;
@@ -554,6 +584,8 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	wstate.btws_pages_written = 0;
 	wstate.btws_zeropage = NULL;	/* until needed */
 
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_SUBPHASE,
+								 PROGRESS_BTREE_PHASE_LEAF_LOAD);
 	_bt_load(&wstate, btspool, btspool2);
 }
 
@@ -1098,6 +1130,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	int			i,
 				keysz = IndexRelationGetNumberOfKeyAttributes(wstate->index);
 	SortSupport sortKeys;
+	long		tuples_done = 0;
 
 	if (merge)
 	{
@@ -1202,6 +1235,10 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				_bt_buildadd(wstate, state, itup2);
 				itup2 = tuplesort_getindextuple(btspool2->sortstate, true);
 			}
+
+			/* Report progress */
+			pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,
+										 ++tuples_done);
 		}
 		pfree(sortKeys);
 	}
@@ -1216,6 +1253,10 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				state = _bt_pagestate(wstate, 0);
 
 			_bt_buildadd(wstate, state, itup);
+
+			/* Report progress */
+			pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,
+										 ++tuples_done);
 		}
 	}
 
@@ -1528,7 +1569,7 @@ _bt_leader_participate_as_worker(BTBuildState *buildstate)
 	/* Perform work common to all participants */
 	_bt_parallel_scan_and_sort(leaderworker, leaderworker2, btleader->btshared,
 							   btleader->sharedsort, btleader->sharedsort2,
-							   sortmem);
+							   sortmem, true);
 
 #ifdef BTREE_BUILD_STATS
 	if (log_btree_build_stats)
@@ -1619,7 +1660,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	/* Perform sorting of spool, and possibly a spool2 */
 	sortmem = maintenance_work_mem / btshared->scantuplesortstates;
 	_bt_parallel_scan_and_sort(btspool, btspool2, btshared, sharedsort,
-							   sharedsort2, sortmem);
+							   sharedsort2, sortmem, false);
 
 #ifdef BTREE_BUILD_STATS
 	if (log_btree_build_stats)
@@ -1648,7 +1689,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 static void
 _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 						   BTShared *btshared, Sharedsort *sharedsort,
-						   Sharedsort *sharedsort2, int sortmem)
+						   Sharedsort *sharedsort2, int sortmem, bool progress)
 {
 	SortCoordinate coordinate;
 	BTBuildState buildstate;
@@ -1705,9 +1746,10 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 	/* Join parallel scan */
 	indexInfo = BuildIndexInfo(btspool->index);
 	indexInfo->ii_Concurrent = btshared->isconcurrent;
-	scan = table_beginscan_parallel(btspool->heap, ParallelTableScanFromBTShared(btshared));
+	scan = table_beginscan_parallel(btspool->heap,
+									ParallelTableScanFromBTShared(btshared));
 	reltuples = table_index_build_scan(btspool->heap, btspool->index, indexInfo,
-									   true, _bt_build_callback,
+									   true, progress, _bt_build_callback,
 									   (void *) &buildstate, scan);
 
 	/*

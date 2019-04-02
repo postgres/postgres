@@ -143,7 +143,7 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 											  "SP-GiST build temporary context",
 											  ALLOCSET_DEFAULT_SIZES);
 
-	reltuples = table_index_build_scan(heap, index, indexInfo, true,
+	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   spgistBuildCallback, (void *) &buildstate,
 									   NULL);
 

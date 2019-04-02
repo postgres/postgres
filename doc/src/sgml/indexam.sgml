@@ -127,6 +127,7 @@ typedef struct IndexAmRoutine
     amcostestimate_function amcostestimate;
     amoptions_function amoptions;
     amproperty_function amproperty;     /* can be NULL */
+    ambuildphasename_function ambuildphasename;   /* can be NULL */
     amvalidate_function amvalidate;
     ambeginscan_function ambeginscan;
     amrescan_function amrescan;
@@ -464,6 +465,18 @@ amproperty (Oid index_oid, int attno,
    <structfield>amcanreturn</structfield>, which is the core code's default behavior.
    The default behavior should be satisfactory for all other standard
    properties.
+  </para>
+
+  <para>
+<programlisting>
+char *
+ambuildphasename (int64 phasenum);
+</programlisting>
+   Return the textual name of the given build phase number.
+   The phase numbers are those reported during an index build via the
+   <function>pgstat_progress_update_param</function> interface.
+   The phase names are then exposed in the
+   <structname>pg_stat_progress_create_index</structname> view.
   </para>
 
   <para>

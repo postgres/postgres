@@ -395,7 +395,7 @@ ginbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * Do the heap scan.  We disallow sync scan here because dataPlaceToPage
 	 * prefers to receive tuples in TID order.
 	 */
-	reltuples = table_index_build_scan(heap, index, indexInfo, false,
+	reltuples = table_index_build_scan(heap, index, indexInfo, false, true,
 									   ginBuildCallback, (void *) &buildstate,
 									   NULL);
 

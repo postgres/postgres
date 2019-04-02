@@ -142,7 +142,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	initCachedPage(&buildstate);
 
 	/* Do the heap scan */
-	reltuples = table_index_build_scan(heap, index, indexInfo, true,
+	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   bloomBuildCallback, (void *) &buildstate,
 									   NULL);
 

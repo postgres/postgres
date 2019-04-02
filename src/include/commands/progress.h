@@ -44,7 +44,7 @@
 #define PROGRESS_CLUSTER_HEAP_BLKS_SCANNED		6
 #define PROGRESS_CLUSTER_INDEX_REBUILD_COUNT	7
 
-/* Phases of cluster (as dvertised via PROGRESS_CLUSTER_PHASE) */
+/* Phases of cluster (as advertised via PROGRESS_CLUSTER_PHASE) */
 #define PROGRESS_CLUSTER_PHASE_SEQ_SCAN_HEAP	1
 #define PROGRESS_CLUSTER_PHASE_INDEX_SCAN_HEAP	2
 #define PROGRESS_CLUSTER_PHASE_SORT_TUPLES		3
@@ -56,5 +56,40 @@
 /* Commands of PROGRESS_CLUSTER */
 #define PROGRESS_CLUSTER_COMMAND_CLUSTER		1
 #define PROGRESS_CLUSTER_COMMAND_VACUUM_FULL	2
+
+/* Progress parameters for CREATE INDEX */
+/* 3, 4 and 5 reserved for "waitfor" metrics */
+#define PROGRESS_CREATEIDX_ACCESS_METHOD_OID	8
+#define PROGRESS_CREATEIDX_PHASE				9	/* AM-agnostic phase # */
+#define PROGRESS_CREATEIDX_SUBPHASE				10	/* phase # filled by AM */
+#define PROGRESS_CREATEIDX_TUPLES_TOTAL			11
+#define PROGRESS_CREATEIDX_TUPLES_DONE			12
+#define PROGRESS_CREATEIDX_PARTITIONS_TOTAL		13
+#define PROGRESS_CREATEIDX_PARTITIONS_DONE		14
+/* 15 and 16 reserved for "block number" metrics */
+
+/* Phases of CREATE INDEX (as advertised via PROGRESS_CREATEIDX_PHASE) */
+#define PROGRESS_CREATEIDX_PHASE_WAIT_1			1
+#define PROGRESS_CREATEIDX_PHASE_BUILD			2
+#define PROGRESS_CREATEIDX_PHASE_WAIT_2			3
+#define PROGRESS_CREATEIDX_PHASE_VALIDATE_IDXSCAN	4
+#define PROGRESS_CREATEIDX_PHASE_VALIDATE_SORT		5
+#define PROGRESS_CREATEIDX_PHASE_VALIDATE_TABLESCAN	6
+#define PROGRESS_CREATEIDX_PHASE_WAIT_3			7
+
+/*
+ * Subphases of CREATE INDEX, for index_build.
+ */
+#define PROGRESS_CREATEIDX_SUBPHASE_INITIALIZE	1
+/* Additional phases are defined by each AM */
+
+/* Lock holder wait counts */
+#define PROGRESS_WAITFOR_TOTAL					3
+#define PROGRESS_WAITFOR_DONE					4
+#define PROGRESS_WAITFOR_CURRENT_PID			5
+
+/* Block numbers in a generic relation scan */
+#define PROGRESS_SCAN_BLOCKS_TOTAL				15
+#define PROGRESS_SCAN_BLOCKS_DONE				16
 
 #endif

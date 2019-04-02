@@ -36,6 +36,7 @@
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
+#include "commands/progress.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
 #include "mb/pg_wchar.h"
@@ -47,10 +48,12 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "partitioning/partdesc.h"
+#include "pgstat.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/sinvaladt.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -334,7 +337,7 @@ CheckIndexCompatible(Oid oldId,
  * doesn't show up in the output, we know we can forget about it.
  */
 static void
-WaitForOlderSnapshots(TransactionId limitXmin)
+WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
 {
 	int			n_old_snapshots;
 	int			i;
@@ -343,6 +346,8 @@ WaitForOlderSnapshots(TransactionId limitXmin)
 	old_snapshots = GetCurrentVirtualXIDs(limitXmin, true, false,
 										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM,
 										  &n_old_snapshots);
+	if (progress)
+		pgstat_progress_update_param(PROGRESS_WAITFOR_TOTAL, n_old_snapshots);
 
 	for (i = 0; i < n_old_snapshots; i++)
 	{
@@ -378,7 +383,19 @@ WaitForOlderSnapshots(TransactionId limitXmin)
 		}
 
 		if (VirtualTransactionIdIsValid(old_snapshots[i]))
+		{
+			if (progress)
+			{
+				PGPROC *holder = BackendIdGetProc(old_snapshots[i].backendId);
+
+				pgstat_progress_update_param(PROGRESS_WAITFOR_CURRENT_PID,
+											 holder->pid);
+			}
 			VirtualXactLock(old_snapshots[i], true);
+		}
+
+		if (progress)
+			pgstat_progress_update_param(PROGRESS_WAITFOR_DONE, i + 1);
 	}
 }
 
@@ -451,6 +468,15 @@ DefineIndex(Oid relationId,
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
 	int			i;
+
+
+	/*
+	 * Start progress report.  If we're building a partition, this was already
+	 * done.
+	 */
+	if (!OidIsValid(parentIndexId))
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
+									  relationId);
 
 	/*
 	 * count key attributes in index
@@ -667,6 +693,9 @@ DefineIndex(Oid relationId,
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 	accessMethodId = accessMethodForm->oid;
 	amRoutine = GetIndexAmRoutine(accessMethodForm->amhandler);
+
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,
+								 accessMethodId);
 
 	if (stmt->unique && !amRoutine->amcanunique)
 		ereport(ERROR,
@@ -948,6 +977,11 @@ DefineIndex(Oid relationId,
 	if (!OidIsValid(indexRelationId))
 	{
 		table_close(rel, NoLock);
+
+		/* If this is the top-level index, we're done */
+		if (!OidIsValid(parentIndexId))
+			pgstat_progress_end_command();
+
 		return address;
 	}
 
@@ -972,6 +1006,9 @@ DefineIndex(Oid relationId,
 			bool		invalidate_parent = false;
 			TupleDesc	parentDesc;
 			Oid		   *opfamOids;
+
+			pgstat_progress_update_param(PROGRESS_CREATEIDX_PARTITIONS_TOTAL,
+										 nparts);
 
 			memcpy(part_oids, partdesc->oids, sizeof(Oid) * nparts);
 
@@ -1122,6 +1159,8 @@ DefineIndex(Oid relationId,
 								skip_build, quiet);
 				}
 
+				pgstat_progress_update_param(PROGRESS_CREATEIDX_PARTITIONS_DONE,
+											 i + 1);
 				pfree(attmap);
 			}
 
@@ -1156,6 +1195,8 @@ DefineIndex(Oid relationId,
 		 * Indexes on partitioned tables are not themselves built, so we're
 		 * done here.
 		 */
+		if (!OidIsValid(parentIndexId))
+			pgstat_progress_end_command();
 		return address;
 	}
 
@@ -1163,6 +1204,11 @@ DefineIndex(Oid relationId,
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
 		table_close(rel, NoLock);
+
+		/* If this is the top-level index, we're done. */
+		if (!OidIsValid(parentIndexId))
+			pgstat_progress_end_command();
+
 		return address;
 	}
 
@@ -1214,7 +1260,9 @@ DefineIndex(Oid relationId,
 	 * exclusive lock on our table.  The lock code will detect deadlock and
 	 * error out properly.
 	 */
-	WaitForLockers(heaplocktag, ShareLock);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+								 PROGRESS_CREATEIDX_PHASE_WAIT_1);
+	WaitForLockers(heaplocktag, ShareLock, true);
 
 	/*
 	 * At this moment we are sure that there are no transactions with the
@@ -1255,7 +1303,9 @@ DefineIndex(Oid relationId,
 	 * We once again wait until no transaction can have the table open with
 	 * the index marked as read-only for updates.
 	 */
-	WaitForLockers(heaplocktag, ShareLock);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+								 PROGRESS_CREATEIDX_PHASE_WAIT_2);
+	WaitForLockers(heaplocktag, ShareLock, true);
 
 	/*
 	 * Now take the "reference snapshot" that will be used by validate_index()
@@ -1312,7 +1362,9 @@ DefineIndex(Oid relationId,
 	 * before the reference snap was taken, we have to wait out any
 	 * transactions that might have older snapshots.
 	 */
-	WaitForOlderSnapshots(limitXmin);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+								 PROGRESS_CREATEIDX_PHASE_WAIT_3);
+	WaitForOlderSnapshots(limitXmin, true);
 
 	/*
 	 * Index can now be marked valid -- update its pg_index entry
@@ -1333,6 +1385,8 @@ DefineIndex(Oid relationId,
 	 * Last thing to do is release the session-level lock on the parent table.
 	 */
 	UnlockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
+
+	pgstat_progress_end_command();
 
 	return address;
 }
@@ -2913,7 +2967,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * DefineIndex() for more details.
 	 */
 
-	WaitForLockersMultiple(lockTags, ShareLock);
+	WaitForLockersMultiple(lockTags, ShareLock, false);
 	CommitTransactionCommand();
 
 	forboth(lc, indexIds, lc2, newIndexIds)
@@ -2955,7 +3009,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * for more details.
 	 */
 
-	WaitForLockersMultiple(lockTags, ShareLock);
+	WaitForLockersMultiple(lockTags, ShareLock, false);
 	CommitTransactionCommand();
 
 	foreach(lc, newIndexIds)
@@ -3003,7 +3057,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		 * before the reference snap was taken, we have to wait out any
 		 * transactions that might have older snapshots.
 		 */
-		WaitForOlderSnapshots(limitXmin);
+		WaitForOlderSnapshots(limitXmin, false);
 
 		CommitTransactionCommand();
 	}
@@ -3074,7 +3128,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * index_drop() for more details.
 	 */
 
-	WaitForLockersMultiple(lockTags, AccessExclusiveLock);
+	WaitForLockersMultiple(lockTags, AccessExclusiveLock, false);
 
 	foreach(lc, indexIds)
 	{
@@ -3096,7 +3150,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * Drop the old indexes.
 	 */
 
-	WaitForLockersMultiple(lockTags, AccessExclusiveLock);
+	WaitForLockersMultiple(lockTags, AccessExclusiveLock, false);
 
 	PushActiveSnapshot(GetTransactionSnapshot());
 

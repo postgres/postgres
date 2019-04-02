@@ -22,6 +22,7 @@
 #include "access/nbtxlog.h"
 #include "access/relscan.h"
 #include "access/xlog.h"
+#include "commands/progress.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
@@ -133,6 +134,7 @@ bthandler(PG_FUNCTION_ARGS)
 	amroutine->amcostestimate = btcostestimate;
 	amroutine->amoptions = btoptions;
 	amroutine->amproperty = btproperty;
+	amroutine->ambuildphasename = btbuildphasename;
 	amroutine->amvalidate = btvalidate;
 	amroutine->ambeginscan = btbeginscan;
 	amroutine->amrescan = btrescan;
@@ -1021,6 +1023,10 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		if (needLock)
 			UnlockRelationForExtension(rel, ExclusiveLock);
 
+		if (info->report_progress)
+			pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_TOTAL,
+										 num_pages);
+
 		/* Quit if we've scanned the whole relation */
 		if (blkno >= num_pages)
 			break;
@@ -1028,6 +1034,9 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		for (; blkno < num_pages; blkno++)
 		{
 			btvacuumpage(&vstate, blkno, blkno);
+			if (info->report_progress)
+				pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_DONE,
+											 blkno);
 		}
 	}
 

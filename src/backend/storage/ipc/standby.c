@@ -401,7 +401,7 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 		 */
 		VirtualTransactionId *backends;
 
-		backends = GetLockConflicts(&locktag, AccessExclusiveLock);
+		backends = GetLockConflicts(&locktag, AccessExclusiveLock, NULL);
 		ResolveRecoveryConflictWithVirtualXIDs(backends,
 											   PROCSIG_RECOVERY_CONFLICT_LOCK);
 	}

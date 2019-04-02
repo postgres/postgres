@@ -57,6 +57,8 @@ static bool SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 					   HeapTuple tuple,
 					   OffsetNumber tupoffset);
 
+static BlockNumber heapam_scan_get_blocks_done(HeapScanDesc hscan);
+
 static const TableAmRoutine heapam_methods;
 
 
@@ -1120,6 +1122,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 							  IndexInfo *indexInfo,
 							  bool allow_sync,
 							  bool anyvisible,
+							  bool progress,
 							  BlockNumber start_blockno,
 							  BlockNumber numblocks,
 							  IndexBuildCallback callback,
@@ -1140,6 +1143,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 	Snapshot	snapshot;
 	bool		need_unregister_snapshot = false;
 	TransactionId OldestXmin;
+	BlockNumber	previous_blkno = InvalidBlockNumber;
 	BlockNumber root_blkno = InvalidBlockNumber;
 	OffsetNumber root_offsets[MaxHeapTuplesPerPage];
 
@@ -1227,6 +1231,25 @@ heapam_index_build_range_scan(Relation heapRelation,
 
 	hscan = (HeapScanDesc) scan;
 
+	/* Publish number of blocks to scan */
+	if (progress)
+	{
+		BlockNumber		nblocks;
+
+		if (hscan->rs_base.rs_parallel != NULL)
+		{
+			ParallelBlockTableScanDesc pbscan;
+
+			pbscan = (ParallelBlockTableScanDesc) hscan->rs_base.rs_parallel;
+			nblocks = pbscan->phs_nblocks;
+		}
+		else
+			nblocks = hscan->rs_nblocks;
+
+		pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_TOTAL,
+									 nblocks);
+	}
+
 	/*
 	 * Must call GetOldestXmin() with SnapshotAny.  Should never call
 	 * GetOldestXmin() with MVCC snapshot. (It's especially worth checking
@@ -1258,6 +1281,19 @@ heapam_index_build_range_scan(Relation heapRelation,
 		bool		tupleIsAlive;
 
 		CHECK_FOR_INTERRUPTS();
+
+		/* Report scan progress, if asked to. */
+		if (progress)
+		{
+			BlockNumber     blocks_done = heapam_scan_get_blocks_done(hscan);
+
+			if (blocks_done != previous_blkno)
+			{
+				pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_DONE,
+											 blocks_done);
+				previous_blkno = blocks_done;
+			}
+		}
 
 		/*
 		 * When dealing with a HOT-chain of updated tuples, we want to index
@@ -1600,6 +1636,25 @@ heapam_index_build_range_scan(Relation heapRelation,
 		}
 	}
 
+	/* Report scan progress one last time. */
+	if (progress)
+	{
+		BlockNumber		blks_done;
+
+		if (hscan->rs_base.rs_parallel != NULL)
+		{
+			ParallelBlockTableScanDesc pbscan;
+
+			pbscan = (ParallelBlockTableScanDesc) hscan->rs_base.rs_parallel;
+			blks_done = pbscan->phs_nblocks;
+		}
+		else
+			blks_done = hscan->rs_nblocks;
+
+		pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_DONE,
+									 blks_done);
+	}
+
 	table_endscan(scan);
 
 	/* we can now forget our snapshot, if set and registered by us */
@@ -1636,6 +1691,7 @@ heapam_index_validate_scan(Relation heapRelation,
 	BlockNumber root_blkno = InvalidBlockNumber;
 	OffsetNumber root_offsets[MaxHeapTuplesPerPage];
 	bool		in_index[MaxHeapTuplesPerPage];
+	BlockNumber	previous_blkno = InvalidBlockNumber;
 
 	/* state variables for the merge */
 	ItemPointer indexcursor = NULL;
@@ -1676,6 +1732,9 @@ heapam_index_validate_scan(Relation heapRelation,
 								 false);	/* syncscan not OK */
 	hscan = (HeapScanDesc) scan;
 
+	pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_TOTAL,
+								 hscan->rs_nblocks);
+
 	/*
 	 * Scan all tuples matching the snapshot.
 	 */
@@ -1688,6 +1747,14 @@ heapam_index_validate_scan(Relation heapRelation,
 		CHECK_FOR_INTERRUPTS();
 
 		state->htups += 1;
+
+		if ((previous_blkno == InvalidBlockNumber) ||
+			(hscan->rs_cblock != previous_blkno))
+		{
+			pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_DONE,
+										 hscan->rs_cblock);
+			previous_blkno = hscan->rs_cblock;
+		}
 
 		/*
 		 * As commented in table_index_build_scan, we should index heap-only
@@ -1848,6 +1915,46 @@ heapam_index_validate_scan(Relation heapRelation,
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_PredicateState = NULL;
 }
+
+/*
+ * Return the number of blocks that have been read by this scan since
+ * starting.  This is meant for progress reporting rather than be fully
+ * accurate: in a parallel scan, workers can be concurrently reading blocks
+ * further ahead than what we report.
+ */
+static BlockNumber
+heapam_scan_get_blocks_done(HeapScanDesc hscan)
+{
+	ParallelBlockTableScanDesc bpscan = NULL;
+	BlockNumber		startblock;
+	BlockNumber		blocks_done;
+
+	if (hscan->rs_base.rs_parallel != NULL)
+	{
+		bpscan = (ParallelBlockTableScanDesc) hscan->rs_base.rs_parallel;
+		startblock = bpscan->phs_startblock;
+	}
+	else
+		startblock = hscan->rs_startblock;
+
+	/*
+	 * Might have wrapped around the end of the relation, if startblock was
+	 * not zero.
+	 */
+	if (hscan->rs_cblock > startblock)
+		blocks_done = hscan->rs_cblock - startblock;
+	else
+	{
+		BlockNumber     nblocks;
+
+		nblocks = bpscan != NULL ? bpscan->phs_nblocks : hscan->rs_nblocks;
+		blocks_done = nblocks - startblock +
+			hscan->rs_cblock;
+	}
+
+	return blocks_done;
+}
+
 
 
 /* ------------------------------------------------------------------------

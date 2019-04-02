@@ -26,7 +26,9 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "commands/progress.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "utils/tuplesort.h"
 
 
@@ -116,6 +118,7 @@ void
 _h_indexbuild(HSpool *hspool, Relation heapRel)
 {
 	IndexTuple	itup;
+	long		tups_done = 0;
 #ifdef USE_ASSERT_CHECKING
 	uint32		hashkey = 0;
 #endif
@@ -141,5 +144,8 @@ _h_indexbuild(HSpool *hspool, Relation heapRel)
 #endif
 
 		_hash_doinsert(hspool->index, itup, heapRel);
+
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,
+									 ++tups_done);
 	}
 }
