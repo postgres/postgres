@@ -880,7 +880,8 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode, bool progress)
 		holders = lappend(holders,
 						  GetLockConflicts(locktag, lockmode,
 										   progress ? &count : NULL));
-		total += count;
+		if (progress)
+			total += count;
 	}
 
 	if (progress)
