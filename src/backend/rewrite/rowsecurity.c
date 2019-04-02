@@ -47,6 +47,7 @@
 #include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rowsecurity.h"
@@ -380,6 +381,13 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	}
 
 	heap_close(rel, NoLock);
+
+	/*
+	 * Copy checkAsUser to the row security quals and WithCheckOption checks,
+	 * in case they contain any subqueries referring to other relations.
+	 */
+	setRuleCheckAsUser((Node *) *securityQuals, rte->checkAsUser);
+	setRuleCheckAsUser((Node *) *withCheckOptions, rte->checkAsUser);
 
 	/*
 	 * Mark this query as having row security, so plancache can invalidate it
