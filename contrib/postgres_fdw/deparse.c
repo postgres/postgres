@@ -167,7 +167,8 @@ static void printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
 static void deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 				 deparse_expr_cxt *context);
 static void deparseLockingClause(deparse_expr_cxt *context);
-static void appendOrderByClause(List *pathkeys, deparse_expr_cxt *context);
+static void appendOrderByClause(List *pathkeys, bool has_final_sort,
+					deparse_expr_cxt *context);
 static void appendConditions(List *exprs, deparse_expr_cxt *context);
 static void deparseFromExprForRel(StringInfo buf, PlannerInfo *root,
 					  RelOptInfo *foreignrel, bool use_alias,
@@ -929,8 +930,8 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 void
 deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 						List *tlist, List *remote_conds, List *pathkeys,
-						bool is_subquery, List **retrieved_attrs,
-						List **params_list)
+						bool has_final_sort, bool is_subquery,
+						List **retrieved_attrs, List **params_list)
 {
 	deparse_expr_cxt context;
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
@@ -985,7 +986,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 
 	/* Add ORDER BY clause if we found any useful pathkeys */
 	if (pathkeys)
-		appendOrderByClause(pathkeys, &context);
+		appendOrderByClause(pathkeys, has_final_sort, &context);
 
 	/* Add any necessary FOR UPDATE/SHARE. */
 	deparseLockingClause(&context);
@@ -1590,7 +1591,7 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		/* Deparse the subquery representing the relation. */
 		appendStringInfoChar(buf, '(');
 		deparseSelectStmtForRel(buf, root, foreignrel, NIL,
-								fpinfo->remote_conds, NIL, true,
+								fpinfo->remote_conds, NIL, false, true,
 								&retrieved_attrs, params_list);
 		appendStringInfoChar(buf, ')');
 
@@ -3109,7 +3110,8 @@ appendGroupByClause(List *tlist, deparse_expr_cxt *context)
  * base relation are obtained and deparsed.
  */
 static void
-appendOrderByClause(List *pathkeys, deparse_expr_cxt *context)
+appendOrderByClause(List *pathkeys, bool has_final_sort,
+					deparse_expr_cxt *context)
 {
 	ListCell   *lcell;
 	int			nestlevel;
@@ -3126,7 +3128,19 @@ appendOrderByClause(List *pathkeys, deparse_expr_cxt *context)
 		PathKey    *pathkey = lfirst(lcell);
 		Expr	   *em_expr;
 
-		em_expr = find_em_expr_for_rel(pathkey->pk_eclass, baserel);
+		if (has_final_sort)
+		{
+			/*
+			 * By construction, context->foreignrel is the input relation to
+			 * the final sort.
+			 */
+			em_expr = find_em_expr_for_input_target(context->root,
+													pathkey->pk_eclass,
+													context->foreignrel->reltarget);
+		}
+		else
+			em_expr = find_em_expr_for_rel(pathkey->pk_eclass, baserel);
+
 		Assert(em_expr != NULL);
 
 		appendStringInfoString(buf, delim);

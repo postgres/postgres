@@ -49,6 +49,9 @@ typedef struct PgFdwRelationInfo
 	/* Bitmap of attr numbers we need to fetch from the remote server. */
 	Bitmapset  *attrs_used;
 
+	/* True means that the query_pathkeys is safe to push down */
+	bool		qp_is_pushdown_safe;
+
 	/* Cost and selectivity of local_conds. */
 	QualCost	local_conds_cost;
 	Selectivity local_conds_sel;
@@ -91,6 +94,9 @@ typedef struct PgFdwRelationInfo
 	JoinType	jointype;
 	/* joinclauses contains only JOIN/ON conditions for an outer join */
 	List	   *joinclauses;	/* List of RestrictInfo */
+
+	/* Upper relation information */
+	UpperRelationKind stage;
 
 	/* Grouping information */
 	List	   *grouped_tlist;
@@ -175,10 +181,14 @@ extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
+extern Expr *find_em_expr_for_input_target(PlannerInfo *root,
+							  EquivalenceClass *ec,
+							  PathTarget *target);
 extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
 						RelOptInfo *foreignrel, List *tlist,
-						List *remote_conds, List *pathkeys, bool is_subquery,
+						List *remote_conds, List *pathkeys,
+						bool has_final_sort, bool is_subquery,
 						List **retrieved_attrs, List **params_list);
 extern const char *get_jointype_name(JoinType jointype);
 

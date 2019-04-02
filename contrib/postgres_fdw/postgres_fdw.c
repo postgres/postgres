@@ -247,6 +247,25 @@ typedef struct PgFdwAnalyzeState
 } PgFdwAnalyzeState;
 
 /*
+ * This enum describes what's kept in the fdw_private list for a ForeignPath.
+ * We store:
+ *
+ * 1) Boolean flag showing if the remote query has the final sort
+ */
+enum FdwPathPrivateIndex
+{
+	/* has-final-sort flag (as an integer Value node) */
+	FdwPathPrivateHasFinalSort
+};
+
+/* Struct for extra information passed to estimate_path_cost_size() */
+typedef struct
+{
+	PathTarget *target;
+	bool		has_final_sort;
+} PgFdwPathExtraData;
+
+/*
  * Identify the attribute where data conversion fails.
  */
 typedef struct ConversionLocation
@@ -368,6 +387,7 @@ static void estimate_path_cost_size(PlannerInfo *root,
 						RelOptInfo *foreignrel,
 						List *param_join_conds,
 						List *pathkeys,
+						PgFdwPathExtraData *fpextra,
 						double *p_rows, int *p_width,
 						Cost *p_startup_cost, Cost *p_total_cost);
 static void get_remote_estimate(const char *sql,
@@ -376,6 +396,12 @@ static void get_remote_estimate(const char *sql,
 					int *width,
 					Cost *startup_cost,
 					Cost *total_cost);
+static void adjust_foreign_grouping_path_cost(PlannerInfo *root,
+								  List *pathkeys,
+								  double retrieved_rows,
+								  double width,
+								  Cost *p_startup_cost,
+								  Cost *p_run_cost);
 static bool ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
 						  EquivalenceClass *ec, EquivalenceMember *em,
 						  void *arg);
@@ -452,6 +478,9 @@ static void add_foreign_grouping_paths(PlannerInfo *root,
 						   RelOptInfo *input_rel,
 						   RelOptInfo *grouped_rel,
 						   GroupPathExtraData *extra);
+static void add_foreign_ordered_paths(PlannerInfo *root,
+						  RelOptInfo *input_rel,
+						  RelOptInfo *ordered_rel);
 static void apply_server_options(PgFdwRelationInfo *fpinfo);
 static void apply_table_options(PgFdwRelationInfo *fpinfo);
 static void merge_fdw_options(PgFdwRelationInfo *fpinfo,
@@ -637,7 +666,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		 * values in fpinfo so we don't need to do it again to generate the
 		 * basic foreign path.
 		 */
-		estimate_path_cost_size(root, baserel, NIL, NIL,
+		estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
 								&fpinfo->rows, &fpinfo->width,
 								&fpinfo->startup_cost, &fpinfo->total_cost);
 
@@ -668,7 +697,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		set_baserel_size_estimates(root, baserel);
 
 		/* Fill in basically-bogus cost estimates for use later. */
-		estimate_path_cost_size(root, baserel, NIL, NIL,
+		estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
 								&fpinfo->rows, &fpinfo->width,
 								&fpinfo->startup_cost, &fpinfo->total_cost);
 	}
@@ -827,6 +856,7 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	 * Pushing the query_pathkeys to the remote server is always worth
 	 * considering, because it might let us avoid a local sort.
 	 */
+	fpinfo->qp_is_pushdown_safe = false;
 	if (root->query_pathkeys)
 	{
 		bool		query_pathkeys_ok = true;
@@ -857,7 +887,10 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 		}
 
 		if (query_pathkeys_ok)
+		{
 			useful_pathkeys_list = list_make1(list_copy(root->query_pathkeys));
+			fpinfo->qp_is_pushdown_safe = true;
+		}
 	}
 
 	/*
@@ -1102,7 +1135,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 
 		/* Get a cost estimate from the remote */
 		estimate_path_cost_size(root, baserel,
-								param_info->ppi_clauses, NIL,
+								param_info->ppi_clauses, NIL, NULL,
 								&rows, &width,
 								&startup_cost, &total_cost);
 
@@ -1149,7 +1182,15 @@ postgresGetForeignPlan(PlannerInfo *root,
 	List	   *fdw_recheck_quals = NIL;
 	List	   *retrieved_attrs;
 	StringInfoData sql;
+	bool		has_final_sort = false;
 	ListCell   *lc;
+
+	/*
+	 * Get FDW private data created by postgresGetForeignUpperPaths(), if any.
+	 */
+	if (best_path->fdw_private)
+		has_final_sort = intVal(list_nth(best_path->fdw_private,
+										 FdwPathPrivateHasFinalSort));
 
 	if (IS_SIMPLE_REL(foreignrel))
 	{
@@ -1299,7 +1340,8 @@ postgresGetForeignPlan(PlannerInfo *root,
 	initStringInfo(&sql);
 	deparseSelectStmtForRel(&sql, root, foreignrel, fdw_scan_tlist,
 							remote_exprs, best_path->path.pathkeys,
-							false, &retrieved_attrs, &params_list);
+							has_final_sort, false,
+							&retrieved_attrs, &params_list);
 
 	/* Remember remote_exprs for possible use by postgresPlanDirectModify */
 	fpinfo->final_remote_exprs = remote_exprs;
@@ -2483,6 +2525,8 @@ postgresExplainDirectModify(ForeignScanState *node, ExplainState *es)
  *
  * param_join_conds are the parameterization clauses with outer relations.
  * pathkeys specify the expected sort order if any for given path being costed.
+ * fpextra specifies additional post-scan/join-processing steps such as the
+ * final sort.
  *
  * The function returns the cost and size estimates in p_row, p_width,
  * p_startup_cost and p_total_cost variables.
@@ -2492,6 +2536,7 @@ estimate_path_cost_size(PlannerInfo *root,
 						RelOptInfo *foreignrel,
 						List *param_join_conds,
 						List *pathkeys,
+						PgFdwPathExtraData *fpextra,
 						double *p_rows, int *p_width,
 						Cost *p_startup_cost, Cost *p_total_cost)
 {
@@ -2556,8 +2601,9 @@ estimate_path_cost_size(PlannerInfo *root,
 		initStringInfo(&sql);
 		appendStringInfoString(&sql, "EXPLAIN ");
 		deparseSelectStmtForRel(&sql, root, foreignrel, fdw_scan_tlist,
-								remote_conds, pathkeys, false,
-								&retrieved_attrs, NULL);
+								remote_conds, pathkeys,
+								fpextra ? fpextra->has_final_sort : false,
+								false, &retrieved_attrs, NULL);
 
 		/* Get the remote estimate */
 		conn = GetConnection(fpinfo->user, false);
@@ -2625,9 +2671,9 @@ estimate_path_cost_size(PlannerInfo *root,
 
 		/*
 		 * We will come here again and again with different set of pathkeys
-		 * that caller wants to cost. We don't need to calculate the cost of
-		 * bare scan each time. Instead, use the costs if we have cached them
-		 * already.
+		 * that caller wants to cost.  We don't need to calculate the costs of
+		 * the underlying scan, join, or grouping each time.  Instead, use the
+		 * costs if we have cached them already.
 		 */
 		if (fpinfo->rel_startup_cost >= 0 && fpinfo->rel_total_cost >= 0)
 		{
@@ -2845,23 +2891,52 @@ estimate_path_cost_size(PlannerInfo *root,
 		 */
 		if (pathkeys != NIL)
 		{
-			startup_cost *= DEFAULT_FDW_SORT_MULTIPLIER;
-			run_cost *= DEFAULT_FDW_SORT_MULTIPLIER;
+			if (IS_UPPER_REL(foreignrel))
+			{
+				Assert(foreignrel->reloptkind == RELOPT_UPPER_REL &&
+					   fpinfo->stage == UPPERREL_GROUP_AGG);
+				adjust_foreign_grouping_path_cost(root, pathkeys,
+												  retrieved_rows, width,
+												  &startup_cost, &run_cost);
+			}
+			else
+			{
+				startup_cost *= DEFAULT_FDW_SORT_MULTIPLIER;
+				run_cost *= DEFAULT_FDW_SORT_MULTIPLIER;
+			}
 		}
 
 		total_cost = startup_cost + run_cost;
 	}
 
 	/*
-	 * Cache the costs for scans without any pathkeys or parameterization
-	 * before adding the costs for transferring data from the foreign server.
-	 * These costs are useful for costing the join between this relation and
-	 * another foreign relation or to calculate the costs of paths with
-	 * pathkeys for this relation, when the costs can not be obtained from the
-	 * foreign server. This function will be called at least once for every
-	 * foreign relation without pathkeys and parameterization.
+	 * If this includes the final sort step, the given target, which will be
+	 * applied to the resulting path, might have different expressions from
+	 * the foreignrel's reltarget (see make_sort_input_target()); adjust tlist
+	 * eval costs.
 	 */
-	if (pathkeys == NIL && param_join_conds == NIL)
+	if (fpextra && fpextra->target != foreignrel->reltarget)
+	{
+		QualCost	oldcost = foreignrel->reltarget->cost;
+		QualCost	newcost = fpextra->target->cost;
+
+		startup_cost += newcost.startup - oldcost.startup;
+		total_cost += newcost.startup - oldcost.startup;
+		total_cost += (newcost.per_tuple - oldcost.per_tuple) * rows;
+	}
+
+	/*
+	 * Cache the costs for scans, joins, or groupings without any
+	 * parameterization, pathkeys, or additional post-scan/join-processing
+	 * steps, before adding the costs for transferring data from the foreign
+	 * server.  These costs are useful for costing remote joins involving this
+	 * relation or costing other remote operations for this relation such as
+	 * remote sorts, when the costs can not be obtained from the foreign
+	 * server.  This function will be called at least once for every foreign
+	 * relation without any parameterization, pathkeys, or additional
+	 * post-scan/join-processing steps.
+	 */
+	if (pathkeys == NIL && param_join_conds == NIL && fpextra == NULL)
 	{
 		fpinfo->rel_startup_cost = startup_cost;
 		fpinfo->rel_total_cost = total_cost;
@@ -2934,6 +3009,58 @@ get_remote_estimate(const char *sql, PGconn *conn,
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+}
+
+/*
+ * Adjust the cost estimates of a foreign grouping path to include the cost of
+ * generating properly-sorted output.
+ */
+static void
+adjust_foreign_grouping_path_cost(PlannerInfo *root,
+								  List *pathkeys,
+								  double retrieved_rows,
+								  double width,
+								  Cost *p_startup_cost,
+								  Cost *p_run_cost)
+{
+	/*
+	 * If the GROUP BY clause isn't sort-able, the plan chosen by the remote
+	 * side is unlikely to generate properly-sorted output, so it would need
+	 * an explicit sort; adjust the given costs with cost_sort().  Likewise,
+	 * if the GROUP BY clause is sort-able but isn't a superset of the given
+	 * pathkeys, adjust the costs with that function.  Otherwise, adjust the
+	 * costs by applying the same heuristic as for the scan or join case.
+	 */
+	if (!grouping_is_sortable(root->parse->groupClause) ||
+		!pathkeys_contained_in(pathkeys, root->group_pathkeys))
+	{
+		Path		sort_path;		/* dummy for result of cost_sort */
+
+		cost_sort(&sort_path,
+				  root,
+				  pathkeys,
+				  *p_startup_cost + *p_run_cost,
+				  retrieved_rows,
+				  width,
+				  0.0,
+				  work_mem,
+				  -1.0);
+
+		*p_startup_cost = sort_path.startup_cost;
+		*p_run_cost = sort_path.total_cost - sort_path.startup_cost;
+	}
+	else
+	{
+		/*
+		 * The default extra cost seems too large for foreign-grouping cases;
+		 * add 1/4th of that default.
+		 */
+		double		sort_multiplier = 1.0 + (DEFAULT_FDW_SORT_MULTIPLIER
+ - 1.0) * 0.25;
+
+		*p_startup_cost *= sort_multiplier;
+		*p_run_cost *= sort_multiplier;
+	}
 }
 
 /*
@@ -4935,7 +5062,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 		List	   *useful_pathkeys = lfirst(lc);
 		Path	   *sorted_epq_path;
 
-		estimate_path_cost_size(root, rel, NIL, useful_pathkeys,
+		estimate_path_cost_size(root, rel, NIL, useful_pathkeys, NULL,
 								&rows, &width, &startup_cost, &total_cost);
 
 		/*
@@ -5186,8 +5313,8 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 														extra->sjinfo);
 
 	/* Estimate costs for bare join relation */
-	estimate_path_cost_size(root, joinrel, NIL, NIL, &rows,
-							&width, &startup_cost, &total_cost);
+	estimate_path_cost_size(root, joinrel, NIL, NIL, NULL,
+							&rows, &width, &startup_cost, &total_cost);
 	/* Now update this information in the joinrel */
 	joinrel->rows = rows;
 	joinrel->reltarget->width = width;
@@ -5437,8 +5564,6 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
  * postgresGetForeignUpperPaths
  *		Add paths for post-join operations like aggregation, grouping etc. if
  *		corresponding operations are safe to push down.
- *
- * Right now, we only support aggregate, grouping and having clause pushdown.
  */
 static void
 postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
@@ -5456,15 +5581,29 @@ postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 		return;
 
 	/* Ignore stages we don't support; and skip any duplicate calls. */
-	if (stage != UPPERREL_GROUP_AGG || output_rel->fdw_private)
+	if ((stage != UPPERREL_GROUP_AGG &&
+		 stage != UPPERREL_ORDERED) ||
+		output_rel->fdw_private)
 		return;
 
 	fpinfo = (PgFdwRelationInfo *) palloc0(sizeof(PgFdwRelationInfo));
 	fpinfo->pushdown_safe = false;
+	fpinfo->stage = stage;
 	output_rel->fdw_private = fpinfo;
 
-	add_foreign_grouping_paths(root, input_rel, output_rel,
-							   (GroupPathExtraData *) extra);
+	switch (stage)
+	{
+		case UPPERREL_GROUP_AGG:
+			add_foreign_grouping_paths(root, input_rel, output_rel,
+									   (GroupPathExtraData *) extra);
+			break;
+		case UPPERREL_ORDERED:
+			add_foreign_ordered_paths(root, input_rel, output_rel);
+			break;
+		default:
+			elog(ERROR, "unexpected upper relation: %d", (int) stage);
+			break;
+	}
 }
 
 /*
@@ -5534,14 +5673,16 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
 
 	/* Estimate the cost of push down */
-	estimate_path_cost_size(root, grouped_rel, NIL, NIL, &rows,
-							&width, &startup_cost, &total_cost);
+	estimate_path_cost_size(root, grouped_rel, NIL, NIL, NULL,
+							&rows, &width, &startup_cost, &total_cost);
 
 	/* Now update this information in the fpinfo */
 	fpinfo->rows = rows;
 	fpinfo->width = width;
 	fpinfo->startup_cost = startup_cost;
 	fpinfo->total_cost = total_cost;
+
+	grouped_rel->rows = fpinfo->rows;
 
 	/* Create and add foreign path to the grouping relation. */
 	grouppath = create_foreign_upper_path(root,
@@ -5556,6 +5697,133 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/* Add generated path into grouped_rel by add_path(). */
 	add_path(grouped_rel, (Path *) grouppath);
+}
+
+/*
+ * add_foreign_ordered_paths
+ *		Add foreign paths for performing the final sort remotely.
+ *
+ * Given input_rel contains the source-data Paths.  The paths are added to the
+ * given ordered_rel.
+ */
+static void
+add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
+						  RelOptInfo *ordered_rel)
+{
+	Query	   *parse = root->parse;
+	PgFdwRelationInfo *ifpinfo = input_rel->fdw_private;
+	PgFdwRelationInfo *fpinfo = ordered_rel->fdw_private;
+	PgFdwPathExtraData *fpextra;
+	double		rows;
+	int			width;
+	Cost		startup_cost;
+	Cost		total_cost;
+	List	   *fdw_private;
+	ForeignPath *ordered_path;
+	ListCell   *lc;
+
+	/* Shouldn't get here unless the query has ORDER BY */
+	Assert(parse->sortClause);
+
+	/* We don't support cases where there are any SRFs in the targetlist */
+	if (parse->hasTargetSRFs)
+		return;
+
+	/* Save the input_rel as outerrel in fpinfo */
+	fpinfo->outerrel = input_rel;
+
+	/*
+	 * Copy foreign table, foreign server, user mapping, FDW options etc.
+	 * details from the input relation's fpinfo.
+	 */
+	fpinfo->table = ifpinfo->table;
+	fpinfo->server = ifpinfo->server;
+	fpinfo->user = ifpinfo->user;
+	merge_fdw_options(fpinfo, ifpinfo, NULL);
+
+	/*
+	 * If the input_rel is a base or join relation, we would already have
+	 * considered pushing down the final sort to the remote server when
+	 * creating pre-sorted foreign paths for that relation, because the
+	 * query_pathkeys is set to the root->sort_pathkeys in that case (see
+	 * standard_qp_callback()).
+	 */
+	if (input_rel->reloptkind == RELOPT_BASEREL ||
+		input_rel->reloptkind == RELOPT_JOINREL)
+	{
+		Assert(root->query_pathkeys == root->sort_pathkeys);
+
+		/* Safe to push down if the query_pathkeys is safe to push down */
+		fpinfo->pushdown_safe = ifpinfo->qp_is_pushdown_safe;
+
+		return;
+	}
+
+	/* The input_rel should be a grouping relation */
+	Assert(input_rel->reloptkind == RELOPT_UPPER_REL &&
+		   ifpinfo->stage == UPPERREL_GROUP_AGG);
+
+	/*
+	 * We try to create a path below by extending a simple foreign path for
+	 * the underlying grouping relation to perform the final sort remotely,
+	 * which is stored into the fdw_private list of the resulting path.
+	 */
+
+	/* Assess if it is safe to push down the final sort */
+	foreach(lc, root->sort_pathkeys)
+	{
+		PathKey    *pathkey = (PathKey *) lfirst(lc);
+		EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
+		Expr	   *sort_expr;
+
+		/*
+		 * is_foreign_expr would detect volatile expressions as well, but
+		 * checking ec_has_volatile here saves some cycles.
+		 */
+		if (pathkey_ec->ec_has_volatile)
+			return;
+
+		/* Get the sort expression for the pathkey_ec */
+		sort_expr = find_em_expr_for_input_target(root,
+												  pathkey_ec,
+												  input_rel->reltarget);
+
+		/* If it's unsafe to remote, we cannot push down the final sort */
+		if (!is_foreign_expr(root, input_rel, sort_expr))
+			return;
+	}
+
+	/* Safe to push down */
+	fpinfo->pushdown_safe = true;
+
+	/* Construct PgFdwPathExtraData */
+	fpextra = (PgFdwPathExtraData *) palloc0(sizeof(PgFdwPathExtraData));
+	fpextra->target = root->upper_targets[UPPERREL_ORDERED];
+	fpextra->has_final_sort = true;
+
+	/* Estimate the costs of performing the final sort remotely */
+	estimate_path_cost_size(root, input_rel, NIL, root->sort_pathkeys, fpextra,
+							&rows, &width, &startup_cost, &total_cost);
+
+	/*
+	 * Build the fdw_private list that will be used by postgresGetForeignPlan.
+	 * Items in the list must match order in enum FdwPathPrivateIndex.
+	 */
+	fdw_private = list_make1(makeInteger(true));
+
+	/* Create foreign ordering path */
+	ordered_path = create_foreign_upper_path(root,
+											 input_rel,
+											 root->upper_targets[UPPERREL_ORDERED],
+											 rows,
+											 startup_cost,
+											 total_cost,
+											 root->sort_pathkeys,
+											 NULL,	/* no extra plan */
+											 fdw_private);
+
+	/* and add it to the ordered_rel */
+	add_path(ordered_rel, (Path *) ordered_path);
 }
 
 /*
@@ -5807,4 +6075,66 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 
 	/* We didn't find any suitable equivalence class expression */
 	return NULL;
+}
+
+/*
+ * Find an equivalence class member expression to be computed as a sort column
+ * in the given target.
+ */
+Expr *
+find_em_expr_for_input_target(PlannerInfo *root,
+							  EquivalenceClass *ec,
+							  PathTarget *target)
+{
+	ListCell   *lc1;
+	int			i;
+
+	i = 0;
+	foreach(lc1, target->exprs)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc1);
+		Index		sgref = get_pathtarget_sortgroupref(target, i);
+		ListCell   *lc2;
+
+		/* Ignore non-sort expressions */
+		if (sgref == 0 ||
+			get_sortgroupref_clause_noerr(sgref,
+										  root->parse->sortClause) == NULL)
+		{
+			i++;
+			continue;
+		}
+
+		/* We ignore binary-compatible relabeling on both ends */
+		while (expr && IsA(expr, RelabelType))
+			expr = ((RelabelType *) expr)->arg;
+
+		/* Locate an EquivalenceClass member matching this expr, if any */
+		foreach(lc2, ec->ec_members)
+		{
+			EquivalenceMember *em = (EquivalenceMember *) lfirst(lc2);
+			Expr	   *em_expr;
+
+			/* Don't match constants */
+			if (em->em_is_const)
+				continue;
+
+			/* Ignore child members */
+			if (em->em_is_child)
+				continue;
+
+			/* Match if same expression (after stripping relabel) */
+			em_expr = em->em_expr;
+			while (em_expr && IsA(em_expr, RelabelType))
+				em_expr = ((RelabelType *) em_expr)->arg;
+
+			if (equal(em_expr, expr))
+				return em->em_expr;
+		}
+
+		i++;
+	}
+
+	elog(ERROR, "could not find pathkey item to sort");
+	return NULL;				/* keep compiler quiet */
 }
