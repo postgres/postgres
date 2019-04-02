@@ -2440,6 +2440,24 @@ typedef struct
 } GroupPathExtraData;
 
 /*
+ * Struct for extra information passed to subroutines of grouping_planner
+ *
+ * limit_needed is true if we actually need a Limit plan node
+ * limit_tuples is an estimated bound on the number of output tuples,
+ *		or -1 if no LIMIT or couldn't estimate
+ * count_est and offset_est are the estimated values of the LIMIT and OFFSET
+ * 		expressions computed by preprocess_limit() (see comments for
+ * 		preprocess_limit() for more information).
+ */
+typedef struct
+{
+	bool		limit_needed;
+	double		limit_tuples;
+	int64		count_est;
+	int64		offset_est;
+} FinalPathExtraData;
+
+/*
  * For speed reasons, cost estimation for join paths is performed in two
  * phases: the first phase tries to quickly derive a lower bound for the
  * join cost, and then we check if that's sufficient to reject the path.

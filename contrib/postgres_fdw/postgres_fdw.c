@@ -251,11 +251,14 @@ typedef struct PgFdwAnalyzeState
  * We store:
  *
  * 1) Boolean flag showing if the remote query has the final sort
+ * 2) Boolean flag showing if the remote query has the LIMIT clause
  */
 enum FdwPathPrivateIndex
 {
 	/* has-final-sort flag (as an integer Value node) */
-	FdwPathPrivateHasFinalSort
+	FdwPathPrivateHasFinalSort,
+	/* has-limit flag (as an integer Value node) */
+	FdwPathPrivateHasLimit
 };
 
 /* Struct for extra information passed to estimate_path_cost_size() */
@@ -263,6 +266,10 @@ typedef struct
 {
 	PathTarget *target;
 	bool		has_final_sort;
+	bool		has_limit;
+	double		limit_tuples;
+	int64		count_est;
+	int64		offset_est;
 } PgFdwPathExtraData;
 
 /*
@@ -400,6 +407,7 @@ static void adjust_foreign_grouping_path_cost(PlannerInfo *root,
 								  List *pathkeys,
 								  double retrieved_rows,
 								  double width,
+								  double limit_tuples,
 								  Cost *p_startup_cost,
 								  Cost *p_run_cost);
 static bool ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
@@ -481,6 +489,10 @@ static void add_foreign_grouping_paths(PlannerInfo *root,
 static void add_foreign_ordered_paths(PlannerInfo *root,
 						  RelOptInfo *input_rel,
 						  RelOptInfo *ordered_rel);
+static void add_foreign_final_paths(PlannerInfo *root,
+						RelOptInfo *input_rel,
+						RelOptInfo *final_rel,
+						FinalPathExtraData *extra);
 static void apply_server_options(PgFdwRelationInfo *fpinfo);
 static void apply_table_options(PgFdwRelationInfo *fpinfo);
 static void merge_fdw_options(PgFdwRelationInfo *fpinfo,
@@ -1183,14 +1195,19 @@ postgresGetForeignPlan(PlannerInfo *root,
 	List	   *retrieved_attrs;
 	StringInfoData sql;
 	bool		has_final_sort = false;
+	bool		has_limit = false;
 	ListCell   *lc;
 
 	/*
 	 * Get FDW private data created by postgresGetForeignUpperPaths(), if any.
 	 */
 	if (best_path->fdw_private)
+	{
 		has_final_sort = intVal(list_nth(best_path->fdw_private,
 										 FdwPathPrivateHasFinalSort));
+		has_limit = intVal(list_nth(best_path->fdw_private,
+									FdwPathPrivateHasLimit));
+	}
 
 	if (IS_SIMPLE_REL(foreignrel))
 	{
@@ -1340,7 +1357,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	initStringInfo(&sql);
 	deparseSelectStmtForRel(&sql, root, foreignrel, fdw_scan_tlist,
 							remote_exprs, best_path->path.pathkeys,
-							has_final_sort, false,
+							has_final_sort, has_limit, false,
 							&retrieved_attrs, &params_list);
 
 	/* Remember remote_exprs for possible use by postgresPlanDirectModify */
@@ -2526,7 +2543,7 @@ postgresExplainDirectModify(ForeignScanState *node, ExplainState *es)
  * param_join_conds are the parameterization clauses with outer relations.
  * pathkeys specify the expected sort order if any for given path being costed.
  * fpextra specifies additional post-scan/join-processing steps such as the
- * final sort.
+ * final sort and the LIMIT restriction.
  *
  * The function returns the cost and size estimates in p_row, p_width,
  * p_startup_cost and p_total_cost variables.
@@ -2603,6 +2620,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		deparseSelectStmtForRel(&sql, root, foreignrel, fdw_scan_tlist,
 								remote_conds, pathkeys,
 								fpextra ? fpextra->has_final_sort : false,
+								fpextra ? fpextra->has_limit : false,
 								false, &retrieved_attrs, NULL);
 
 		/* Get the remote estimate */
@@ -2670,15 +2688,34 @@ estimate_path_cost_size(PlannerInfo *root,
 		retrieved_rows = clamp_row_est(rows / fpinfo->local_conds_sel);
 
 		/*
-		 * We will come here again and again with different set of pathkeys
-		 * that caller wants to cost.  We don't need to calculate the costs of
-		 * the underlying scan, join, or grouping each time.  Instead, use the
-		 * costs if we have cached them already.
+		 * We will come here again and again with different set of pathkeys or
+		 * additional post-scan/join-processing steps that caller wants to
+		 * cost.  We don't need to calculate the costs of the underlying scan,
+		 * join, or grouping each time.  Instead, use the costs if we have
+		 * cached them already.
 		 */
 		if (fpinfo->rel_startup_cost >= 0 && fpinfo->rel_total_cost >= 0)
 		{
 			startup_cost = fpinfo->rel_startup_cost;
 			run_cost = fpinfo->rel_total_cost - fpinfo->rel_startup_cost;
+
+			/*
+			 * If we estimate the costs of a foreign scan or a foreign join
+			 * with additional post-scan/join-processing steps, the scan or
+			 * join costs obtained from the cache wouldn't yet contain the
+			 * eval costs for the final scan/join target, which would've been
+			 * updated by apply_scanjoin_target_to_paths(); add the eval costs
+			 * now.
+			 */
+			if (fpextra && !IS_UPPER_REL(foreignrel))
+			{
+				/* Shouldn't get here unless we have LIMIT */
+				Assert(fpextra->has_limit);
+				Assert(foreignrel->reloptkind == RELOPT_BASEREL ||
+					   foreignrel->reloptkind == RELOPT_JOINREL);
+				startup_cost += foreignrel->reltarget->cost.startup;
+				run_cost += foreignrel->reltarget->cost.per_tuple * rows;
+			}
 		}
 		else if (IS_JOIN_REL(foreignrel))
 		{
@@ -2897,6 +2934,7 @@ estimate_path_cost_size(PlannerInfo *root,
 					   fpinfo->stage == UPPERREL_GROUP_AGG);
 				adjust_foreign_grouping_path_cost(root, pathkeys,
 												  retrieved_rows, width,
+												  fpextra->limit_tuples,
 												  &startup_cost, &run_cost);
 			}
 			else
@@ -2907,6 +2945,14 @@ estimate_path_cost_size(PlannerInfo *root,
 		}
 
 		total_cost = startup_cost + run_cost;
+
+		/* Adjust the cost estimates if we have LIMIT */
+		if (fpextra && fpextra->has_limit)
+		{
+			adjust_limit_rows_costs(&rows, &startup_cost, &total_cost,
+									fpextra->offset_est, fpextra->count_est);
+			retrieved_rows = rows;
+		}
 	}
 
 	/*
@@ -2915,7 +2961,8 @@ estimate_path_cost_size(PlannerInfo *root,
 	 * the foreignrel's reltarget (see make_sort_input_target()); adjust tlist
 	 * eval costs.
 	 */
-	if (fpextra && fpextra->target != foreignrel->reltarget)
+	if (fpextra && fpextra->has_final_sort &&
+		fpextra->target != foreignrel->reltarget)
 	{
 		QualCost	oldcost = foreignrel->reltarget->cost;
 		QualCost	newcost = fpextra->target->cost;
@@ -2931,10 +2978,10 @@ estimate_path_cost_size(PlannerInfo *root,
 	 * steps, before adding the costs for transferring data from the foreign
 	 * server.  These costs are useful for costing remote joins involving this
 	 * relation or costing other remote operations for this relation such as
-	 * remote sorts, when the costs can not be obtained from the foreign
-	 * server.  This function will be called at least once for every foreign
-	 * relation without any parameterization, pathkeys, or additional
-	 * post-scan/join-processing steps.
+	 * remote sorts and remote LIMIT restrictions, when the costs can not be
+	 * obtained from the foreign server.  This function will be called at
+	 * least once for every foreign relation without any parameterization,
+	 * pathkeys, or additional post-scan/join-processing steps.
 	 */
 	if (pathkeys == NIL && param_join_conds == NIL && fpextra == NULL)
 	{
@@ -2952,6 +2999,30 @@ estimate_path_cost_size(PlannerInfo *root,
 	total_cost += fpinfo->fdw_startup_cost;
 	total_cost += fpinfo->fdw_tuple_cost * retrieved_rows;
 	total_cost += cpu_tuple_cost * retrieved_rows;
+
+	/*
+	 * If we have LIMIT, we should perfer performing the restriction remotely
+	 * rather than locally, as the former avoids extra row fetches from the
+	 * remote that the latter might cause.  But since the core code doesn't
+	 * account for such fetches when estimating the costs of the local
+	 * restriction (see create_limit_path()), there would be no difference
+	 * between the costs of the local restriction and the costs of the remote
+	 * restriction estimated above if we don't use remote estimates (except
+	 * for the case where the foreignrel is a grouping relation, the given
+	 * pathkeys is not NIL, and the effects of a bounded sort for that rel is
+	 * accounted for in costing the remote restriction).  Tweak the costs of
+	 * the remote restriction to ensure we'll prefer it if LIMIT is a useful
+	 * one.
+	 */
+	if (!fpinfo->use_remote_estimate &&
+		fpextra && fpextra->has_limit &&
+		fpextra->limit_tuples > 0 &&
+		fpextra->limit_tuples < fpinfo->rows)
+	{
+		Assert(fpinfo->rows > 0);
+		total_cost -= (total_cost - startup_cost) * 0.05 *
+			(fpinfo->rows - fpextra->limit_tuples) / fpinfo->rows;
+	}
 
 	/* Return results. */
 	*p_rows = rows;
@@ -3020,6 +3091,7 @@ adjust_foreign_grouping_path_cost(PlannerInfo *root,
 								  List *pathkeys,
 								  double retrieved_rows,
 								  double width,
+								  double limit_tuples,
 								  Cost *p_startup_cost,
 								  Cost *p_run_cost)
 {
@@ -3044,7 +3116,7 @@ adjust_foreign_grouping_path_cost(PlannerInfo *root,
 				  width,
 				  0.0,
 				  work_mem,
-				  -1.0);
+				  limit_tuples);
 
 		*p_startup_cost = sort_path.startup_cost;
 		*p_run_cost = sort_path.total_cost - sort_path.startup_cost;
@@ -5582,7 +5654,8 @@ postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 
 	/* Ignore stages we don't support; and skip any duplicate calls. */
 	if ((stage != UPPERREL_GROUP_AGG &&
-		 stage != UPPERREL_ORDERED) ||
+		 stage != UPPERREL_ORDERED &&
+		 stage != UPPERREL_FINAL) ||
 		output_rel->fdw_private)
 		return;
 
@@ -5599,6 +5672,10 @@ postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 			break;
 		case UPPERREL_ORDERED:
 			add_foreign_ordered_paths(root, input_rel, output_rel);
+			break;
+		case UPPERREL_FINAL:
+			add_foreign_final_paths(root, input_rel, output_rel,
+									(FinalPathExtraData *) extra);
 			break;
 		default:
 			elog(ERROR, "unexpected upper relation: %d", (int) stage);
@@ -5809,7 +5886,7 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	 * Build the fdw_private list that will be used by postgresGetForeignPlan.
 	 * Items in the list must match order in enum FdwPathPrivateIndex.
 	 */
-	fdw_private = list_make1(makeInteger(true));
+	fdw_private = list_make2(makeInteger(true), makeInteger(false));
 
 	/* Create foreign ordering path */
 	ordered_path = create_foreign_upper_path(root,
@@ -5824,6 +5901,241 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/* and add it to the ordered_rel */
 	add_path(ordered_rel, (Path *) ordered_path);
+}
+
+/*
+ * add_foreign_final_paths
+ *		Add foreign paths for performing the final processing remotely.
+ *
+ * Given input_rel contains the source-data Paths.  The paths are added to the
+ * given final_rel.
+ */
+static void
+add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
+						RelOptInfo *final_rel,
+						FinalPathExtraData *extra)
+{
+	Query	   *parse = root->parse;
+	PgFdwRelationInfo *ifpinfo = (PgFdwRelationInfo *) input_rel->fdw_private;
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) final_rel->fdw_private;
+	bool		has_final_sort = false;
+	List	   *pathkeys = NIL;
+	PgFdwPathExtraData *fpextra;
+	bool		save_use_remote_estimate = false;
+	double		rows;
+	int			width;
+	Cost		startup_cost;
+	Cost		total_cost;
+	List	   *fdw_private;
+	ForeignPath *final_path;
+
+	/*
+	 * Currently, we only support this for SELECT commands
+	 */
+	if (parse->commandType != CMD_SELECT)
+		return;
+
+	/*
+	 * No work if there is no FOR UPDATE/SHARE clause and if there is no need
+	 * to add a LIMIT node
+	 */
+	if (!parse->rowMarks && !extra->limit_needed)
+		return;
+
+	/* We don't support cases where there are any SRFs in the targetlist */
+	if (parse->hasTargetSRFs)
+		return;
+
+	/* Save the input_rel as outerrel in fpinfo */
+	fpinfo->outerrel = input_rel;
+
+	/*
+	 * Copy foreign table, foreign server, user mapping, FDW options etc.
+	 * details from the input relation's fpinfo.
+	 */
+	fpinfo->table = ifpinfo->table;
+	fpinfo->server = ifpinfo->server;
+	fpinfo->user = ifpinfo->user;
+	merge_fdw_options(fpinfo, ifpinfo, NULL);
+
+	/*
+	 * If there is no need to add a LIMIT node, there might be a ForeignPath
+	 * in the input_rel's pathlist that implements all behavior of the query.
+	 * Note: we would already have accounted for the query's FOR UPDATE/SHARE
+	 * (if any) before we get here.
+	 */
+	if (!extra->limit_needed)
+	{
+		ListCell   *lc;
+
+		Assert(parse->rowMarks);
+
+		/*
+		 * Grouping and aggregation are not supported with FOR UPDATE/SHARE,
+		 * so the input_rel should be a base, join, or ordered relation; and
+		 * if it's an ordered relation, its input relation should be a base
+		 * or join relation.
+		 */
+		Assert(input_rel->reloptkind == RELOPT_BASEREL ||
+			   input_rel->reloptkind == RELOPT_JOINREL ||
+			   (input_rel->reloptkind == RELOPT_UPPER_REL &&
+				ifpinfo->stage == UPPERREL_ORDERED &&
+				(ifpinfo->outerrel->reloptkind == RELOPT_BASEREL ||
+				 ifpinfo->outerrel->reloptkind == RELOPT_JOINREL)));
+
+		foreach(lc, input_rel->pathlist)
+		{
+			Path	   *path = (Path *) lfirst(lc);
+
+			/*
+			 * apply_scanjoin_target_to_paths() uses create_projection_path()
+			 * to adjust each of its input paths if needed, whereas
+			 * create_ordered_paths() uses apply_projection_to_path() to do
+			 * that.  So the former might have put a ProjectionPath on top of
+			 * the ForeignPath; look through ProjectionPath and see if the
+			 * path underneath it is ForeignPath.
+			 */
+			if (IsA(path, ForeignPath) ||
+				(IsA(path, ProjectionPath) &&
+				 IsA(((ProjectionPath *) path)->subpath, ForeignPath)))
+			{
+				/*
+				 * Create foreign final path; this gets rid of a
+				 * no-longer-needed outer plan (if any), which makes the
+				 * EXPLAIN output look cleaner
+				 */
+				final_path = create_foreign_upper_path(root,
+													   path->parent,
+													   path->pathtarget,
+													   path->rows,
+													   path->startup_cost,
+													   path->total_cost,
+													   path->pathkeys,
+													   NULL,	/* no extra plan */
+													   NULL);	/* no fdw_private */
+
+				/* and add it to the final_rel */
+				add_path(final_rel, (Path *) final_path);
+
+				/* Safe to push down */
+				fpinfo->pushdown_safe = true;
+
+				return;
+			}
+		}
+
+		/*
+		 * If we get here it means no ForeignPaths; since we would already
+		 * have considered pushing down all operations for the query to the
+		 * remote server, give up on it.
+		 */
+		return;
+	}
+
+	Assert(extra->limit_needed);
+
+	/*
+	 * If the input_rel is an ordered relation, replace the input_rel with its
+	 * input relation
+	 */
+	if (input_rel->reloptkind == RELOPT_UPPER_REL &&
+		ifpinfo->stage == UPPERREL_ORDERED)
+	{
+		input_rel = ifpinfo->outerrel;
+		ifpinfo = (PgFdwRelationInfo *) input_rel->fdw_private;
+		has_final_sort = true;
+		pathkeys = root->sort_pathkeys;
+	}
+
+	/* The input_rel should be a base, join, or grouping relation */
+	Assert(input_rel->reloptkind == RELOPT_BASEREL ||
+		   input_rel->reloptkind == RELOPT_JOINREL ||
+		   (input_rel->reloptkind == RELOPT_UPPER_REL &&
+			ifpinfo->stage == UPPERREL_GROUP_AGG));
+
+	/*
+	 * We try to create a path below by extending a simple foreign path for
+	 * the underlying base, join, or grouping relation to perform the final
+	 * sort (if has_final_sort) and the LIMIT restriction remotely, which is
+	 * stored into the fdw_private list of the resulting path.  (We
+	 * re-estimate the costs of sorting the underlying relation, if
+	 * has_final_sort.)
+	 */
+
+	/*
+	 * Assess if it is safe to push down the LIMIT and OFFSET to the remote
+	 * server
+	 */
+
+	/*
+	 * If the underlying relation has any local conditions, the LIMIT/OFFSET
+	 * cannot be pushed down.
+	 */
+	if (ifpinfo->local_conds)
+		return;
+
+	/*
+	 * Also, the LIMIT/OFFSET cannot be pushed down, if their expressions are
+	 * not safe to remote.
+	 */
+	if (!is_foreign_expr(root, input_rel, (Expr *) parse->limitOffset) ||
+		!is_foreign_expr(root, input_rel, (Expr *) parse->limitCount))
+		return;
+
+	/* Safe to push down */
+	fpinfo->pushdown_safe = true;
+
+	/* Construct PgFdwPathExtraData */
+	fpextra = (PgFdwPathExtraData *) palloc0(sizeof(PgFdwPathExtraData));
+	fpextra->target = root->upper_targets[UPPERREL_FINAL];
+	fpextra->has_final_sort = has_final_sort;
+	fpextra->has_limit = extra->limit_needed;
+	fpextra->limit_tuples = extra->limit_tuples;
+	fpextra->count_est = extra->count_est;
+	fpextra->offset_est = extra->offset_est;
+
+	/*
+	 * Estimate the costs of performing the final sort and the LIMIT
+	 * restriction remotely.  If has_final_sort is false, we wouldn't need to
+	 * execute EXPLAIN anymore if use_remote_estimate, since the costs can be
+	 * roughly estimated using the costs we already have for the underlying
+	 * relation, in the same way as when use_remote_estimate is false.  Since
+	 * it's pretty expensive to execute EXPLAIN, force use_remote_estimate to
+	 * false in that case.
+	 */
+	if (!fpextra->has_final_sort)
+	{
+		save_use_remote_estimate = ifpinfo->use_remote_estimate;
+		ifpinfo->use_remote_estimate = false;
+	}
+	estimate_path_cost_size(root, input_rel, NIL, pathkeys, fpextra,
+							&rows, &width, &startup_cost, &total_cost);
+	if (!fpextra->has_final_sort)
+		ifpinfo->use_remote_estimate = save_use_remote_estimate;
+
+	/*
+	 * Build the fdw_private list that will be used by postgresGetForeignPlan.
+	 * Items in the list must match order in enum FdwPathPrivateIndex.
+	 */
+	fdw_private = list_make2(makeInteger(has_final_sort),
+							 makeInteger(extra->limit_needed));
+
+	/*
+	 * Create foreign final path; this gets rid of a no-longer-needed outer
+	 * plan (if any), which makes the EXPLAIN output look cleaner
+	 */
+	final_path = create_foreign_upper_path(root,
+										   input_rel,
+										   root->upper_targets[UPPERREL_FINAL],
+										   rows,
+										   startup_cost,
+										   total_cost,
+										   pathkeys,
+										   NULL,	/* no extra plan */
+										   fdw_private);
+
+	/* and add it to the final_rel */
+	add_path(final_rel, (Path *) final_path);
 }
 
 /*

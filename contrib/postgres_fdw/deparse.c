@@ -169,6 +169,7 @@ static void deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_att
 static void deparseLockingClause(deparse_expr_cxt *context);
 static void appendOrderByClause(List *pathkeys, bool has_final_sort,
 					deparse_expr_cxt *context);
+static void appendLimitClause(deparse_expr_cxt *context);
 static void appendConditions(List *exprs, deparse_expr_cxt *context);
 static void deparseFromExprForRel(StringInfo buf, PlannerInfo *root,
 					  RelOptInfo *foreignrel, bool use_alias,
@@ -930,7 +931,7 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 void
 deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 						List *tlist, List *remote_conds, List *pathkeys,
-						bool has_final_sort, bool is_subquery,
+						bool has_final_sort, bool has_limit, bool is_subquery,
 						List **retrieved_attrs, List **params_list)
 {
 	deparse_expr_cxt context;
@@ -987,6 +988,10 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	/* Add ORDER BY clause if we found any useful pathkeys */
 	if (pathkeys)
 		appendOrderByClause(pathkeys, has_final_sort, &context);
+
+	/* Add LIMIT clause if necessary */
+	if (has_limit)
+		appendLimitClause(&context);
 
 	/* Add any necessary FOR UPDATE/SHARE. */
 	deparseLockingClause(&context);
@@ -1591,7 +1596,8 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		/* Deparse the subquery representing the relation. */
 		appendStringInfoChar(buf, '(');
 		deparseSelectStmtForRel(buf, root, foreignrel, NIL,
-								fpinfo->remote_conds, NIL, false, true,
+								fpinfo->remote_conds, NIL,
+								false, false, true,
 								&retrieved_attrs, params_list);
 		appendStringInfoChar(buf, ')');
 
@@ -3157,6 +3163,33 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 
 		delim = ", ";
 	}
+	reset_transmission_modes(nestlevel);
+}
+
+/*
+ * Deparse LIMIT/OFFSET clause.
+ */
+static void
+appendLimitClause(deparse_expr_cxt *context)
+{
+	PlannerInfo *root = context->root;
+	StringInfo	buf = context->buf;
+	int			nestlevel;
+
+	/* Make sure any constants in the exprs are printed portably */
+	nestlevel = set_transmission_modes();
+
+	if (root->parse->limitCount)
+	{
+		appendStringInfoString(buf, " LIMIT ");
+		deparseExpr((Expr *) root->parse->limitCount, context);
+	}
+	if (root->parse->limitOffset)
+	{
+		appendStringInfoString(buf, " OFFSET ");
+		deparseExpr((Expr *) root->parse->limitOffset, context);
+	}
+
 	reset_transmission_modes(nestlevel);
 }
 
