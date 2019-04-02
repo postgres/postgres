@@ -1425,7 +1425,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 	{
 		/* If a backup block image is compressed, decompress it */
 		if (pglz_decompress(ptr, bkpb->bimg_len, tmp.data,
-							BLCKSZ - bkpb->hole_length) < 0)
+							BLCKSZ - bkpb->hole_length, true) < 0)
 		{
 			report_invalid_record(record, "invalid compressed image at %X/%X, block %d",
 								  (uint32) (record->ReadRecPtr >> 32),

@@ -75,6 +75,7 @@ static struct varlena *toast_fetch_datum(struct varlena *attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena *attr,
 						int32 sliceoffset, int32 length);
 static struct varlena *toast_decompress_datum(struct varlena *attr);
+static struct varlena *toast_decompress_datum_slice(struct varlena *attr, int32 slicelength);
 static int toast_open_indexes(Relation toastrel,
 				   LOCKMODE lock,
 				   Relation **toastidxs,
@@ -301,7 +302,11 @@ heap_tuple_untoast_attr_slice(struct varlena *attr,
 	{
 		struct varlena *tmp = preslice;
 
-		preslice = toast_decompress_datum(tmp);
+		/* Decompress enough to encompass the slice and the offset */
+		if (slicelength > 0 && sliceoffset >= 0)
+			preslice = toast_decompress_datum_slice(tmp, slicelength + sliceoffset);
+		else
+			preslice = toast_decompress_datum(tmp);
 
 		if (tmp != attr)
 			pfree(tmp);
@@ -2272,9 +2277,38 @@ toast_decompress_datum(struct varlena *attr)
 	if (pglz_decompress(TOAST_COMPRESS_RAWDATA(attr),
 						VARSIZE(attr) - TOAST_COMPRESS_HDRSZ,
 						VARDATA(result),
-						TOAST_COMPRESS_RAWSIZE(attr)) < 0)
+						TOAST_COMPRESS_RAWSIZE(attr), true) < 0)
 		elog(ERROR, "compressed data is corrupted");
 
+	return result;
+}
+
+
+/* ----------
+ * toast_decompress_datum_slice -
+ *
+ * Decompress the front of a compressed version of a varlena datum.
+ * offset handling happens in heap_tuple_untoast_attr_slice.
+ * Here we just decompress a slice from the front.
+ */
+static struct varlena *
+toast_decompress_datum_slice(struct varlena *attr, int32 slicelength)
+{
+	struct varlena *result;
+	int32 rawsize;
+
+	Assert(VARATT_IS_COMPRESSED(attr));
+
+	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
+
+	rawsize = pglz_decompress(TOAST_COMPRESS_RAWDATA(attr),
+						VARSIZE(attr) - TOAST_COMPRESS_HDRSZ,
+						VARDATA(result),
+						slicelength, false);
+	if (rawsize < 0)
+		elog(ERROR, "compressed data is corrupted");
+
+	SET_VARSIZE(result, rawsize + VARHDRSZ);
 	return result;
 }
 

@@ -29,7 +29,7 @@
  *
  *			int32
  *			pglz_decompress(const char *source, int32 slen, char *dest,
- *							int32 rawsize)
+ *							int32 rawsize, bool check_complete)
  *
  *				source is the compressed input.
  *
@@ -43,6 +43,12 @@
  *					to pglz_compress(). No terminating zero byte is added.
  *
  *				rawsize is the length of the uncompressed data.
+ *
+ *				check_complete is a flag to let us know if -1 should be
+ *					returned in cases where we don't reach the end of the
+ *					source or dest buffers, or not.  This should be false
+ *					if the caller is asking for only a partial result and
+ *					true otherwise.
  *
  *				The return value is the number of bytes written in the
  *				buffer dest, or -1 if decompression fails.
@@ -674,13 +680,14 @@ pglz_compress(const char *source, int32 slen, char *dest,
  * pglz_decompress -
  *
  *		Decompresses source into dest. Returns the number of bytes
- *		decompressed in the destination buffer, or -1 if decompression
- *		fails.
+ *		decompressed in the destination buffer, and *optionally*
+ *		checks that both the source and dest buffers have been
+ *		fully read and written to, respectively.
  * ----------
  */
 int32
 pglz_decompress(const char *source, int32 slen, char *dest,
-				int32 rawsize)
+						 int32 rawsize, bool check_complete)
 {
 	const unsigned char *sp;
 	const unsigned char *srcend;
@@ -701,8 +708,9 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 		unsigned char ctrl = *sp++;
 		int			ctrlc;
 
-		for (ctrlc = 0; ctrlc < 8 && sp < srcend; ctrlc++)
+		for (ctrlc = 0; ctrlc < 8 && sp < srcend && dp < destend; ctrlc++)
 		{
+
 			if (ctrl & 1)
 			{
 				/*
@@ -722,24 +730,12 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 					len += *sp++;
 
 				/*
-				 * Check for output buffer overrun, to ensure we don't clobber
-				 * memory in case of corrupt input.  Note: we must advance dp
-				 * here to ensure the error is detected below the loop.  We
-				 * don't simply put the elog inside the loop since that will
-				 * probably interfere with optimization.
-				 */
-				if (dp + len > destend)
-				{
-					dp += len;
-					break;
-				}
-
-				/*
 				 * Now we copy the bytes specified by the tag from OUTPUT to
 				 * OUTPUT. It is dangerous and platform dependent to use
 				 * memcpy() here, because the copied areas could overlap
 				 * extremely!
 				 */
+				len = Min(len, destend - dp);
 				while (len--)
 				{
 					*dp = dp[-off];
@@ -752,9 +748,6 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 				 * An unset control bit means LITERAL BYTE. So we just copy
 				 * one from INPUT to OUTPUT.
 				 */
-				if (dp >= destend)	/* check for buffer overrun */
-					break;		/* do not clobber memory */
-
 				*dp++ = *sp++;
 			}
 
@@ -767,12 +760,15 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 
 	/*
 	 * Check we decompressed the right amount.
+	 * If we are slicing, then we won't necessarily
+	 * be at the end of the source or dest buffers
+	 * when we hit a stop, so we don't test them.
 	 */
-	if (dp != destend || sp != srcend)
+	if (check_complete && (dp != destend || sp != srcend))
 		return -1;
 
 	/*
 	 * That's it.
 	 */
-	return rawsize;
+	return (char*)dp - dest;
 }
