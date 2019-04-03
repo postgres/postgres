@@ -194,6 +194,11 @@ sub mkvcbuild
 		$postgres->RemoveFile('src/backend/libpq/be-secure-common.c');
 		$postgres->RemoveFile('src/backend/libpq/be-secure-openssl.c');
 	}
+	if (!$solution->{options}->{gss})
+	{
+		$postgres->RemoveFile('src/backend/libpq/be-gssapi-common.c');
+		$postgres->RemoveFile('src/backend/libpq/be-secure-gssapi.c');
+	}
 
 	my $snowball = $solution->AddProject('dict_snowball', 'dll', '',
 		'src/backend/snowball');
@@ -253,6 +258,11 @@ sub mkvcbuild
 	{
 		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-common.c');
 		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-openssl.c');
+	}
+	if (!$solution->{options}->{gss})
+	{
+		$libpq->RemoveFile('src/interfaces/libpq/fe-gssapi-common.c');
+		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-gssapi.c');
 	}
 
 	my $libpqwalreceiver =

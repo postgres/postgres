@@ -108,6 +108,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostgssenc <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnogssenc <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -128,9 +130,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <listitem>
       <para>
        This record matches connection attempts made using TCP/IP.
-       <literal>host</literal> records match either
+       <literal>host</literal> records match
        <acronym>SSL</acronym> or non-<acronym>SSL</acronym> connection
-       attempts.
+       attempts as well as <acronym>GSSAPI</acronym> encrypted or
+       non-<acronym>GSSAPI</acronym> encrypted connection attempts.
       </para>
      <note>
       <para>
@@ -172,6 +175,42 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        This record type has the opposite behavior of <literal>hostssl</literal>;
        it only matches connection attempts made over
        TCP/IP that do not use <acronym>SSL</acronym>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>hostgssenc</literal></term>
+     <listitem>
+      <para>
+       This record matches connection attempts made using TCP/IP,
+       but only when the connection is made with <acronym>GSSAPI</acronym>
+       encryption.
+      </para>
+
+      <para>
+       To make use of this option the server must be built with
+       <acronym>GSSAPI</acronym> support.  Otherwise,
+       the <literal>hostgssenc</literal> record is ignored except for logging
+       a warning that it cannot match any connections.
+      </para>
+
+      <para>
+        Note that the only supported <xref linkend="auth-methods"/> for use
+        with <acronym>GSSAPI</acronym> encryption
+        are <literal>gss</literal>, <literal>reject</literal>,
+        and <literal>trust</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>hostnogssenc</literal></term>
+     <listitem>
+      <para>
+       This record type has the opposite behavior of <literal>hostgssenc</literal>;
+       it only matches connection attempts made over
+       TCP/IP that do not use <acronym>GSSAPI</acronym> encryption.
       </para>
      </listitem>
     </varlistentry>
@@ -450,8 +489,9 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Use GSSAPI to authenticate the user. This is only
-          available for TCP/IP connections. See <xref
-          linkend="gssapi-auth"/> for details.
+          available for TCP/IP connections . See <xref
+          linkend="gssapi-auth"/> for details.  It can be used in conjunction
+          with GSSAPI encryption.
          </para>
         </listitem>
        </varlistentry>
@@ -703,15 +743,18 @@ host    postgres        all             192.168.12.10/32        scram-sha-256
 host    all             mike            .example.com            md5
 host    all             all             .example.com            scram-sha-256
 
-# In the absence of preceding "host" lines, these two lines will
+# In the absence of preceding "host" lines, these three lines will
 # reject all connections from 192.168.54.1 (since that entry will be
-# matched first), but allow GSSAPI connections from anywhere else
-# on the Internet.  The zero mask causes no bits of the host IP
-# address to be considered, so it matches any host.
+# matched first), but allow GSSAPI-encrypted connections from anywhere else
+# on the Internet.  The zero mask causes no bits of the host IP address to
+# be considered, so it matches any host.  Unencrypted GSSAPI connections 
+# (which "fall through" to the third line since "hostgssenc" only matches
+# encrypted GSSAPI connections) are allowed, but only from 192.168.12.10.  
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             192.168.54.1/32         reject
-host    all             all             0.0.0.0/0               gss
+hostgssenc all          all             0.0.0.0/0               gss
+host    all             all             192.168.12.10/32        gss
 
 # Allow users from 192.168.x.x hosts to connect to any database, if
 # they pass the ident check.  If, for example, ident says the user is
@@ -1058,13 +1101,16 @@ omicron         bryanh                  guest1
    <para>
     <productname>GSSAPI</productname> is an industry-standard protocol
     for secure authentication defined in RFC 2743.
-    <productname>PostgreSQL</productname> supports
-    <productname>GSSAPI</productname> with <productname>Kerberos</productname>
-    authentication according to RFC 1964. <productname>GSSAPI</productname>
-    provides automatic authentication (single sign-on) for systems
-    that support it. The authentication itself is secure, but the
-    data sent over the database connection will be sent unencrypted unless
-    <acronym>SSL</acronym> is used.
+
+    <productname>PostgreSQL</productname>
+    supports <productname>GSSAPI</productname> for use as either an encrypted,
+    authenticated layer, or for authentication only.
+    <productname>GSSAPI</productname> provides automatic authentication
+    (single sign-on) for systems that support it. The authentication itself is
+    secure.  If <productname>GSSAPI</productname> encryption
+    (see <literal>hostgssenc</literal>) or <acronym>SSL</acronym> encryption are
+    used, the data sent along the database connection will be encrypted;
+    otherwise, it will not.
    </para>
 
    <para>

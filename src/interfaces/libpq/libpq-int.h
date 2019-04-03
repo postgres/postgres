@@ -480,9 +480,15 @@ struct pg_conn
 #endif							/* USE_OPENSSL */
 #endif							/* USE_SSL */
 
+	char	   *gssencmode;		/* GSS mode (require,prefer,disable) */
 #ifdef ENABLE_GSS
 	gss_ctx_id_t gctx;			/* GSS context */
 	gss_name_t	gtarg_nam;		/* GSS target name */
+
+	/* The following are encryption-only */
+	bool		try_gss;		/* GSS attempting permitted */
+	bool		gssenc;			/* GSS encryption is usable */
+	gss_cred_id_t gcred;		/* GSS credential temp storage. */
 #endif
 
 #ifdef ENABLE_SSPI
@@ -748,6 +754,23 @@ extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
 extern int pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 												int *names_examined,
 												char **first_name);
+
+/* === GSSAPI === */
+
+#ifdef ENABLE_GSS
+
+/*
+ * Establish a GSSAPI-encrypted connection.
+ */
+extern PostgresPollingStatusType pqsecure_open_gss(PGconn *conn);
+
+/*
+ * Read and write functions for GSSAPI-encrypted connections, with internal
+ * buffering to handle nonblocking sockets.
+ */
+extern ssize_t pg_GSS_write(PGconn *conn, const void *ptr, size_t len);
+extern ssize_t pg_GSS_read(PGconn *conn, void *ptr, size_t len);
+#endif
 
 /* === miscellaneous macros === */
 

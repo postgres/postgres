@@ -160,6 +160,7 @@ static void print_with_linenumbers(FILE *output, char *lines,
 static void minimal_error_message(PGresult *res);
 
 static void printSSLInfo(void);
+static void printGSSInfo(void);
 static bool printPsetInfo(const char *param, struct printQueryOpt *popt);
 static char *pset_value_string(const char *param, struct printQueryOpt *popt);
 
@@ -621,6 +622,7 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 						   db, PQuser(pset.db), host, PQport(pset.db));
 			}
 			printSSLInfo();
+			printGSSInfo();
 		}
 	}
 
@@ -3184,6 +3186,7 @@ connection_warnings(bool in_startup)
 		checkWin32Codepage();
 #endif
 		printSSLInfo();
+		printGSSInfo();
 	}
 }
 
@@ -3214,6 +3217,20 @@ printSSLInfo(void)
 		   cipher ? cipher : _("unknown"),
 		   bits ? bits : _("unknown"),
 		   (compression && strcmp(compression, "off") != 0) ? _("on") : _("off"));
+}
+
+/*
+ * printGSSInfo
+ *
+ * Prints information about the current GSSAPI connection, if GSSAPI encryption is in use
+ */
+static void
+printGSSInfo(void)
+{
+	if (!PQgssEncInUse(pset.db))
+		return;					/* no GSSAPI encryption in use */
+
+	printf(_("GSSAPI Encrypted connection\n"));
 }
 
 

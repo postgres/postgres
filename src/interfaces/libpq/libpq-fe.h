@@ -65,8 +65,9 @@ typedef enum
 	CONNECTION_NEEDED,			/* Internal state: connect() needed */
 	CONNECTION_CHECK_WRITABLE,	/* Check if we could make a writable
 								 * connection. */
-	CONNECTION_CONSUME			/* Wait for any pending message and consume
+	CONNECTION_CONSUME,			/* Wait for any pending message and consume
 								 * them. */
+	CONNECTION_GSS_STARTUP		/* Negotiating GSSAPI. */
 } ConnStatusType;
 
 typedef enum
@@ -345,6 +346,12 @@ extern void PQinitSSL(int do_init);
 
 /* More detailed way to tell libpq whether it needs to initialize OpenSSL */
 extern void PQinitOpenSSL(int do_ssl, int do_crypto);
+
+/* Return true if GSSAPI encryption is in use */
+extern int PQgssEncInUse(PGconn *conn);
+
+/* Returns GSSAPI context if GSSAPI is in use */
+extern void *PQgetgssctx(PGconn *conn);
 
 /* Set verbosity for PQerrorMessage and PQresultErrorMessage */
 extern PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);

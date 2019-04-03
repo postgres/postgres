@@ -1889,9 +1889,12 @@ initMasks(fd_set *rmask)
  * if that's what you want.  Return STATUS_ERROR if you don't want to
  * send anything to the client, which would typically be appropriate
  * if we detect a communications failure.)
+ *
+ * Set secure_done when negotiation of an encrypted layer (currently, TLS or
+ * GSSAPI) is already completed.
  */
 static int
-ProcessStartupPacket(Port *port, bool SSLdone)
+ProcessStartupPacket(Port *port, bool secure_done)
 {
 	int32		len;
 	void	   *buf;
@@ -1924,9 +1927,10 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	if (pq_getbytes(((char *) &len) + 1, 3) == EOF)
 	{
 		/* Got a partial length word, so bleat about that */
-		ereport(COMMERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("incomplete startup packet")));
+		if (!secure_done)
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("incomplete startup packet")));
 		return STATUS_ERROR;
 	}
 
@@ -1975,7 +1979,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		return STATUS_ERROR;
 	}
 
-	if (proto == NEGOTIATE_SSL_CODE && !SSLdone)
+	if (proto == NEGOTIATE_SSL_CODE && !secure_done)
 	{
 		char		SSLok;
 
@@ -2006,6 +2010,32 @@ retry1:
 #endif
 		/* regular startup packet, cancel, etc packet should follow... */
 		/* but not another SSL negotiation request */
+		return ProcessStartupPacket(port, true);
+	}
+	else if (proto == NEGOTIATE_GSS_CODE && !secure_done)
+	{
+		char		GSSok = 'N';
+#ifdef ENABLE_GSS
+		/* No GSSAPI encryption when on Unix socket */
+		if (!IS_AF_UNIX(port->laddr.addr.ss_family))
+			GSSok = 'G';
+#endif
+
+		while (send(port->sock, &GSSok, 1, 0) != 1)
+		{
+			if (errno == EINTR)
+				continue;
+			ereport(COMMERROR,
+					(errcode_for_socket_access(),
+					 errmsg("failed to send GSSAPI negotiation response: %m)")));
+			return STATUS_ERROR;	/* close the connection */
+		}
+
+#ifdef ENABLE_GSS
+		if (GSSok == 'G' && secure_open_gssapi(port) == -1)
+			return STATUS_ERROR;
+#endif
+		/* Won't ever see more than one negotiation request */
 		return ProcessStartupPacket(port, true);
 	}
 

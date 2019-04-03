@@ -2634,6 +2634,9 @@ static Size BackendActivityBufferSize = 0;
 #ifdef USE_SSL
 static PgBackendSSLStatus *BackendSslStatusBuffer = NULL;
 #endif
+#ifdef ENABLE_GSS
+static PgBackendGSSStatus *BackendGssStatusBuffer = NULL;
+#endif
 
 
 /*
@@ -2762,6 +2765,28 @@ CreateSharedBackendStatus(void)
 		for (i = 0; i < NumBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_sslstatus = ptr;
+			ptr++;
+		}
+	}
+#endif
+
+#ifdef ENABLE_GSS
+	/* Create or attach to the shared GSSAPI status buffer */
+	size = mul_size(sizeof(PgBackendGSSStatus), NumBackendStatSlots);
+	BackendGssStatusBuffer = (PgBackendGSSStatus *)
+		ShmemInitStruct("Backend GSS Status Buffer", size, &found);
+
+	if (!found)
+	{
+		PgBackendGSSStatus *ptr;
+
+		MemSet(BackendGssStatusBuffer, 0, size);
+
+		/* Initialize st_gssstatus pointers. */
+		ptr = BackendGssStatusBuffer;
+		for (i = 0; i < NumBackendStatSlots; i++)
+		{
+			BackendStatusArray[i].st_gssstatus = ptr;
 			ptr++;
 		}
 	}
@@ -2952,6 +2977,24 @@ pgstat_bestart(void)
 	}
 #else
 	beentry->st_ssl = false;
+#endif
+
+#ifdef ENABLE_GSS
+	if (MyProcPort && MyProcPort->gss != NULL)
+	{
+		beentry->st_gss = true;
+		beentry->st_gssstatus->gss_auth = be_gssapi_get_auth(MyProcPort);
+		beentry->st_gssstatus->gss_enc = be_gssapi_get_enc(MyProcPort);
+
+		if (beentry->st_gssstatus->gss_auth)
+			strlcpy(beentry->st_gssstatus->gss_princ, be_gssapi_get_princ(MyProcPort), NAMEDATALEN);
+	}
+	else
+	{
+		beentry->st_gss = false;
+	}
+#else
+	beentry->st_gss = false;
 #endif
 	beentry->st_state = STATE_UNDEFINED;
 	beentry->st_appname[0] = '\0';
@@ -3594,6 +3637,9 @@ pgstat_get_wait_client(WaitEventClient w)
 			break;
 		case WAIT_EVENT_WAL_SENDER_WRITE_DATA:
 			event_name = "WalSenderWriteData";
+			break;
+		case WAIT_EVENT_GSS_OPEN_SERVER:
+			event_name = "GSSOpenServer";
 			break;
 			/* no default case, so that compiler will warn */
 	}

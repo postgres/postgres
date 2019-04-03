@@ -36,6 +36,7 @@
 #include "port/pg_bswap.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
+#include "utils/memutils.h"
 #include "utils/timestamp.h"
 
 
@@ -172,12 +173,9 @@ bool		pg_krb_caseins_users;
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_GSS
-#if defined(HAVE_GSSAPI_H)
-#include <gssapi.h>
-#else
-#include <gssapi/gssapi.h>
-#endif
+#include "be-gssapi-common.h"
 
+static int	pg_GSS_checkauth(Port *port);
 static int	pg_GSS_recvauth(Port *port);
 #endif							/* ENABLE_GSS */
 
@@ -383,6 +381,17 @@ ClientAuthentication(Port *port)
 					 errmsg("connection requires a valid client certificate")));
 	}
 
+#ifdef ENABLE_GSS
+	if (port->gss->enc && port->hba->auth_method != uaReject &&
+		port->hba->auth_method != uaImplicitReject &&
+		port->hba->auth_method != uaTrust &&
+		port->hba->auth_method != uaGSS)
+	{
+		ereport(FATAL, (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("GSSAPI encryption can only be used with gss, trust, or reject authentication methods")));
+	}
+#endif
+
 	/*
 	 * Now proceed to do the actual authentication check
 	 */
@@ -523,8 +532,14 @@ ClientAuthentication(Port *port)
 
 		case uaGSS:
 #ifdef ENABLE_GSS
-			sendAuthRequest(port, AUTH_REQ_GSS, NULL, 0);
-			status = pg_GSS_recvauth(port);
+			port->gss->auth = true;
+			if (port->gss->enc)
+				status = pg_GSS_checkauth(port);
+			else
+			{
+				sendAuthRequest(port, AUTH_REQ_GSS, NULL, 0);
+				status = pg_GSS_recvauth(port);
+			}
 #else
 			Assert(false);
 #endif
@@ -1031,68 +1046,6 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_GSS
-
-#if defined(WIN32) && !defined(_MSC_VER)
-/*
- * MIT Kerberos GSSAPI DLL doesn't properly export the symbols for MingW
- * that contain the OIDs required. Redefine here, values copied
- * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
- */
-static const gss_OID_desc GSS_C_NT_USER_NAME_desc =
-{10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x02"};
-static GSS_DLLIMP gss_OID GSS_C_NT_USER_NAME = &GSS_C_NT_USER_NAME_desc;
-#endif
-
-
-/*
- * Generate an error for GSSAPI authentication.  The caller should apply
- * _() to errmsg to make it translatable.
- */
-static void
-pg_GSS_error(int severity, const char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-	gss_buffer_desc gmsg;
-	OM_uint32	lmin_s,
-				msg_ctx;
-	char		msg_major[128],
-				msg_minor[128];
-
-	/* Fetch major status message */
-	msg_ctx = 0;
-	gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
-					   GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_major, gmsg.value, sizeof(msg_major));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-
-		/*
-		 * More than one message available. XXX: Should we loop and read all
-		 * messages? (same below)
-		 */
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS error report")));
-
-	/* Fetch mechanism minor status message */
-	msg_ctx = 0;
-	gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
-					   GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_minor, gmsg.value, sizeof(msg_minor));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS minor error report")));
-
-	/*
-	 * errmsg_internal, since translation of the first part must be done
-	 * before calling this function anyway.
-	 */
-	ereport(severity,
-			(errmsg_internal("%s", errmsg),
-			 errdetail_internal("%s: %s", msg_major, msg_minor)));
-}
-
 static int
 pg_GSS_recvauth(Port *port)
 {
@@ -1101,7 +1054,6 @@ pg_GSS_recvauth(Port *port)
 				lmin_s,
 				gflags;
 	int			mtype;
-	int			ret;
 	StringInfoData buf;
 	gss_buffer_desc gbuf;
 
@@ -1254,10 +1206,23 @@ pg_GSS_recvauth(Port *port)
 		 */
 		gss_release_cred(&min_stat, &port->gss->cred);
 	}
+	return pg_GSS_checkauth(port);
+}
+
+/*
+ * Check whether the GSSAPI-authenticated user is allowed to connect as the
+ * claimed username.
+ */
+static int
+pg_GSS_checkauth(Port *port)
+{
+	int			ret;
+	OM_uint32	maj_stat,
+				min_stat,
+				lmin_s;
+	gss_buffer_desc gbuf;
 
 	/*
-	 * GSS_S_COMPLETE indicates that authentication is now complete.
-	 *
 	 * Get the name of the user that authenticated, and compare it to the pg
 	 * username that was specified for the connection.
 	 */
@@ -1266,6 +1231,12 @@ pg_GSS_recvauth(Port *port)
 		pg_GSS_error(ERROR,
 					 _("retrieving GSS user name failed"),
 					 maj_stat, min_stat);
+
+	/*
+	 * Copy the original name of the authenticated principal into our backend
+	 * memory for display later.
+	 */
+	port->gss->princ = MemoryContextStrdup(TopMemoryContext, gbuf.value);
 
 	/*
 	 * Split the username at the realm separator

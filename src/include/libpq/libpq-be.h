@@ -86,6 +86,10 @@ typedef struct
 	gss_cred_id_t cred;			/* GSSAPI connection cred's */
 	gss_ctx_id_t ctx;			/* GSSAPI connection context */
 	gss_name_t	name;			/* GSSAPI client name */
+	char	   *princ;			/* GSSAPI Principal used for auth, NULL if
+								 * GSSAPI auth was not used */
+	bool		auth;			/* GSSAPI Authentication used */
+	bool		enc;			/* GSSAPI encryption in use */
 #endif
 } pg_gssinfo;
 #endif
@@ -164,6 +168,9 @@ typedef struct Port
 	int			keepalives_interval;
 	int			keepalives_count;
 
+	/*
+	 * GSSAPI structures.
+	 */
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 
 	/*
@@ -263,6 +270,13 @@ extern void be_tls_get_peer_issuer_name(Port *port, char *ptr, size_t len);
 extern void be_tls_get_peer_serial(Port *port, char *ptr, size_t len);
 
 /*
+ * Return information about the GSSAPI authenticated connection
+ */
+extern bool be_gssapi_get_auth(Port *port);
+extern bool be_gssapi_get_enc(Port *port);
+extern const char *be_gssapi_get_princ(Port *port);
+
+/*
  * Get the server certificate hash for SCRAM channel binding type
  * tls-server-end-point.
  *
@@ -278,6 +292,12 @@ extern char *be_tls_get_certificate_hash(Port *port, size_t *len);
 #endif
 
 #endif	/* USE_SSL */
+
+#ifdef ENABLE_GSS
+/* Read and write to a GSSAPI-encrypted connection. */
+extern ssize_t be_gssapi_read(Port *port, void *ptr, size_t len);
+extern ssize_t be_gssapi_write(Port *port, void *ptr, size_t len);
+#endif							/* ENABLE_GSS */
 
 extern ProtocolVersion FrontendProtocol;
 

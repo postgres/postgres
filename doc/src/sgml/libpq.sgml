@@ -1316,6 +1316,63 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-gssencmode" xreflabel="gssencmode">
+      <term><literal>gssencmode</literal></term>
+      <listitem>
+       <para>
+        This option determines whether or with what priority a secure
+        <acronym>GSS</acronym> TCP/IP connection will be negotiated with the
+        server. There are three modes:
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>disable</literal></term>
+          <listitem>
+           <para>
+            only try a non-<acronym>GSSAPI</acronym>-encrypted connection
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>prefer</literal> (default)</term>
+          <listitem>
+           <para>
+            if there are <acronym>GSSAPI</acronym> credentials present (i.e.,
+            in a credentials cache), first try
+            a <acronym>GSSAPI</acronym>-encrypted connection; if that fails or
+            there are no credentials, try a
+            non-<acronym>GSSAPI</acronym>-encrypted connection.  This is the
+            default when <productname>PostgreSQL</productname> has been
+            compiled with <acronym>GSSAPI</acronym> support.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>require</literal></term>
+          <listitem>
+           <para>
+            only try a <acronym>GSSAPI</acronym>-encrypted connection
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+
+       <para>
+        <literal>gssencmode</literal> is ignored for Unix domain socket
+        communication.  If <productname>PostgreSQL</productname> is compiled
+        without GSSAPI support, using the <literal>require</literal> option
+        will cause an error, while <literal>prefer</literal> will be accepted
+        but <application>libpq</application> will not actually attempt
+        a <acronym>GSSAPI</acronym>-encrypted
+        connection.<indexterm><primary>GSSAPI</primary><secondary sortas="libpq">with
+        libpq</secondary></indexterm>
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-sslmode" xreflabel="sslmode">
       <term><literal>sslmode</literal></term>
       <listitem>
@@ -7948,7 +8005,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
   <para>
-   For a connection to be known secure, SSL usage must be configured
+   For a connection to be known SSL-secured, SSL usage must be configured
    on <emphasis>both the client and the server</emphasis> before the connection
    is made. If it is only configured on the server, the client may end up
    sending sensitive information (e.g. passwords) before

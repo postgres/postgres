@@ -93,6 +93,9 @@ extern ssize_t secure_read(Port *port, void *ptr, size_t len);
 extern ssize_t secure_write(Port *port, void *ptr, size_t len);
 extern ssize_t secure_raw_read(Port *port, void *ptr, size_t len);
 extern ssize_t secure_raw_write(Port *port, const void *ptr, size_t len);
+#ifdef ENABLE_GSS
+extern ssize_t secure_open_gssapi(Port *port);
+#endif
 
 extern bool ssl_loaded_verify_locations;
 

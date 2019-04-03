@@ -221,6 +221,13 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 	}
 	else
 #endif
+#ifdef ENABLE_GSS
+	if (conn->gssenc)
+	{
+		n = pg_GSS_read(conn, ptr, len);
+	}
+	else
+#endif
 	{
 		n = pqsecure_raw_read(conn, ptr, len);
 	}
@@ -295,6 +302,13 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	if (conn->ssl_in_use)
 	{
 		n = pgtls_write(conn, ptr, len);
+	}
+	else
+#endif
+#ifdef ENABLE_GSS
+	if (conn->gssenc)
+	{
+		n = pg_GSS_write(conn, ptr, len);
 	}
 	else
 #endif
@@ -419,6 +433,23 @@ PQsslAttributeNames(PGconn *conn)
 	return result;
 }
 #endif							/* USE_SSL */
+
+/* Dummy version of GSSAPI information functions, when built without GSS support */
+#ifndef ENABLE_GSS
+
+void *
+PQgetgssctx(PGconn *conn)
+{
+	return NULL;
+}
+
+int
+PQgssEncInUse(PGconn *conn)
+{
+	return 0;
+}
+
+#endif							/* ENABLE_GSS */
 
 
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)

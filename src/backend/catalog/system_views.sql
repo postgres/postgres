@@ -787,6 +787,14 @@ CREATE VIEW pg_stat_ssl AS
             S.ssl_issuer_dn AS issuer_dn
     FROM pg_stat_get_activity(NULL) AS S;
 
+CREATE VIEW pg_stat_gssapi AS
+    SELECT
+            S.pid,
+            S.gss_auth AS gss_authenticated,
+            S.gss_princ AS principal,
+            S.gss_enc AS encrypted
+    FROM pg_stat_get_activity(NULL) AS S;
+
 CREATE VIEW pg_replication_slots AS
     SELECT
             L.slot_name,

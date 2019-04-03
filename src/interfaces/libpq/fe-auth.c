@@ -49,52 +49,7 @@
  * GSSAPI authentication system.
  */
 
-#if defined(WIN32) && !defined(_MSC_VER)
-/*
- * MIT Kerberos GSSAPI DLL doesn't properly export the symbols for MingW
- * that contain the OIDs required. Redefine here, values copied
- * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
- */
-static const gss_OID_desc GSS_C_NT_HOSTBASED_SERVICE_desc =
-{10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"};
-static GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVICE_desc;
-#endif
-
-/*
- * Fetch all errors of a specific type and append to "str".
- */
-static void
-pg_GSS_error_int(PQExpBuffer str, const char *mprefix,
-				 OM_uint32 stat, int type)
-{
-	OM_uint32	lmin_s;
-	gss_buffer_desc lmsg;
-	OM_uint32	msg_ctx = 0;
-
-	do
-	{
-		gss_display_status(&lmin_s, stat, type,
-						   GSS_C_NO_OID, &msg_ctx, &lmsg);
-		appendPQExpBuffer(str, "%s: %s\n", mprefix, (char *) lmsg.value);
-		gss_release_buffer(&lmin_s, &lmsg);
-	} while (msg_ctx);
-}
-
-/*
- * GSSAPI errors contain two parts; put both into conn->errorMessage.
- */
-static void
-pg_GSS_error(const char *mprefix, PGconn *conn,
-			 OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-	resetPQExpBuffer(&conn->errorMessage);
-
-	/* Fetch major error codes */
-	pg_GSS_error_int(&conn->errorMessage, mprefix, maj_stat, GSS_C_GSS_CODE);
-
-	/* Add the minor codes as well */
-	pg_GSS_error_int(&conn->errorMessage, mprefix, min_stat, GSS_C_MECH_CODE);
-}
+#include "fe-gssapi-common.h"
 
 /*
  * Continue GSS authentication with next token as needed.
@@ -195,10 +150,7 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 static int
 pg_GSS_startup(PGconn *conn, int payloadlen)
 {
-	OM_uint32	maj_stat,
-				min_stat;
-	int			maxlen;
-	gss_buffer_desc temp_gbuf;
+	int			ret;
 	char	   *host = conn->connhost[conn->whichhost].host;
 
 	if (!(host && host[0] != '\0'))
@@ -215,33 +167,9 @@ pg_GSS_startup(PGconn *conn, int payloadlen)
 		return STATUS_ERROR;
 	}
 
-	/*
-	 * Import service principal name so the proper ticket can be acquired by
-	 * the GSSAPI system.
-	 */
-	maxlen = NI_MAXHOST + strlen(conn->krbsrvname) + 2;
-	temp_gbuf.value = (char *) malloc(maxlen);
-	if (!temp_gbuf.value)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
-		return STATUS_ERROR;
-	}
-	snprintf(temp_gbuf.value, maxlen, "%s@%s",
-			 conn->krbsrvname, host);
-	temp_gbuf.length = strlen(temp_gbuf.value);
-
-	maj_stat = gss_import_name(&min_stat, &temp_gbuf,
-							   GSS_C_NT_HOSTBASED_SERVICE, &conn->gtarg_nam);
-	free(temp_gbuf.value);
-
-	if (maj_stat != GSS_S_COMPLETE)
-	{
-		pg_GSS_error(libpq_gettext("GSSAPI name import error"),
-					 conn,
-					 maj_stat, min_stat);
-		return STATUS_ERROR;
-	}
+	ret = pg_GSS_load_servicename(conn);
+	if (ret != STATUS_OK)
+		return ret;
 
 	/*
 	 * Initial packet is the same as a continuation packet with no initial
@@ -977,7 +905,7 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("SSPI authentication not supported\n"));
 			return STATUS_ERROR;
-#endif							/* !define(ENABLE_GSSAPI) */
+#endif							/* !define(ENABLE_GSS) */
 #endif							/* ENABLE_SSPI */
 
 

@@ -199,9 +199,10 @@ typedef struct CancelRequestPacket
 
 
 /*
- * A client can also start by sending a SSL negotiation request, to get a
- * secure channel.
+ * A client can also start by sending a SSL or GSSAPI negotiation request to
+ * get a secure channel.
  */
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
+#define NEGOTIATE_GSS_CODE PG_PROTOCOL(1234,5680)
 
 #endif							/* PQCOMM_H */

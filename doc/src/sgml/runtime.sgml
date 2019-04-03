@@ -2037,15 +2037,27 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </para>
 
   <para>
-   To prevent spoofing on TCP connections, the best solution is to use
-   SSL certificates and make sure that clients check the server's certificate.
-   To do that, the server
+   To prevent spoofing on TCP connections, either use
+   SSL certificates and make sure that clients check the server's certificate,
+   or use GSSAPI encryption (or both, if they're on separate connections).
+  </para>
+
+  <para>
+   To prevent spoofing with SSL, the server
    must be configured to accept only <literal>hostssl</literal> connections (<xref
    linkend="auth-pg-hba-conf"/>) and have SSL key and certificate files
    (<xref linkend="ssl-tcp"/>). The TCP client must connect using
    <literal>sslmode=verify-ca</literal> or
    <literal>verify-full</literal> and have the appropriate root certificate
    file installed (<xref linkend="libq-ssl-certificates"/>).
+  </para>
+
+  <para>
+    To prevent spoofing with GSSAPI, the server must be configured to accept
+    only <literal>hostgssenc</literal> connections
+    (<xref linkend="auth-pg-hba-conf"/>) and use <literal>gss</literal>
+    authentication with them.  The TCP client must connect
+    using <literal>gssencmode=require</literal>.
   </para>
  </sect1>
 
@@ -2143,8 +2155,24 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
       which hosts can use non-encrypted connections (<literal>host</literal>)
       and which require SSL-encrypted connections
       (<literal>hostssl</literal>). Also, clients can specify that they
-      connect to servers only via SSL. <application>Stunnel</application> or
-      <application>SSH</application> can also be used to encrypt transmissions.
+      connect to servers only via SSL.
+     </para>
+
+     <para>
+      GSSAPI-encrypted connections encrypt all data sent across the network,
+      including queries and data returned.  (No password is sent across the
+      network.)  The <filename>pg_hba.conf</filename> file allows
+      administrators to specify which hosts can use non-encrypted connections
+      (<literal>host</literal>) and which require GSSAPI-encrypted connections
+      (<literal>hostgssenc</literal>).  Also, clients can specify that they
+      connect to servers only on GSSAPI-encrypted connections
+      (<literal>gssencmode=require</literal>).
+     </para>
+
+     <para>
+      <application>Stunnel</application> or
+      <application>SSH</application> can also be used to encrypt
+      transmissions.
      </para>
     </listitem>
   </varlistentry>
@@ -2559,6 +2587,45 @@ openssl x509 -req -in server.csr -text -days 365 \
    </para>
   </sect2>
 
+ </sect1>
+
+ <sect1 id="gssapi-enc">
+  <title>Secure TCP/IP Connections with GSSAPI encryption</title>
+
+  <indexterm zone="gssapi-enc">
+   <primary>gssapi</primary>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> also has native support for
+   using <acronym>GSSAPI</acronym> to encrypt client/server communications for
+   increased security.  Support requires that a <acronym>GSSAPI</acronym>
+   implementation (such as MIT krb5) is installed on both client and server
+   systems, and that support in <productname>PostgreSQL</productname> is
+   enabled at build time (see <xref linkend="installation"/>).
+  </para>
+
+  <sect2 id="gssapi-setup">
+   <title>Basic Setup</title>
+
+   <para>
+    The <productname>PostgreSQL</productname> server will listen for both
+    normal and <acronym>GSSAPI</acronym>-encrypted connections on the same TCP
+    port, and will negotiate with any connecting client on whether to
+    use <acronym>GSSAPI</acronym> for encryption (and for authentication).  By
+    default, this decision is up to the client (which means it can be
+    downgraded by an attacker); see <xref linkend="auth-pg-hba-conf"/> about
+    setting up the server to require the use of <acronym>GSSAPI</acronym> for
+    some or all conections.
+   </para>
+
+   <para>
+    Other than configuration of the negotiation
+    behavior, <acronym>GSSAPI</acronym> encryption requires no setup beyond
+    that which is necessary for GSSAPI authentication.  (For more information
+    on configuring that, see <xref linkend="gssapi-auth"/>.)
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="ssh-tunnels">

@@ -38,6 +38,10 @@ ifeq ($(with_openssl),yes)
 OBJS += fe-secure-openssl.o fe-secure-common.o
 endif
 
+ifeq ($(with_gssapi),yes)
+OBJS += fe-gssapi-common.o fe-secure-gssapi.o
+endif
+
 ifeq ($(PORTNAME), cygwin)
 override shlib = cyg$(NAME)$(DLSUFFIX)
 endif

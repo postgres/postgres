@@ -129,6 +129,12 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #else
 #define DefaultSSLMode	"disable"
 #endif
+#ifdef ENABLE_GSS
+#include "fe-gssapi-common.h"
+#define DefaultGSSMode "prefer"
+#else
+#define DefaultGSSMode "disable"
+#endif
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
@@ -297,6 +303,14 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"requirepeer", "PGREQUIREPEER", NULL, NULL,
 		"Require-Peer", "", 10,
 	offsetof(struct pg_conn, requirepeer)},
+
+	/*
+	 * Expose gssencmode similarly to sslmode - we can still handle "disable"
+	 * and "prefer".
+	 */
+	{"gssencmode", "PGGSSMODE", DefaultGSSMode, NULL,
+		"GSS-Mode", "", 7,		/* sizeof("disable") == 7 */
+	offsetof(struct pg_conn, gssencmode)},
 
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
@@ -1227,6 +1241,39 @@ connectOptions2(PGconn *conn)
 	}
 
 	/*
+	 * validate gssencmode option
+	 */
+	if (conn->gssencmode)
+	{
+		if (strcmp(conn->gssencmode, "disable") != 0 &&
+			strcmp(conn->gssencmode, "prefer") != 0 &&
+			strcmp(conn->gssencmode, "require") != 0)
+		{
+			conn->status = CONNECTION_BAD;
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("invalid gssencmode value: \"%s\"\n"),
+							  conn->gssencmode);
+			return false;
+		}
+#ifndef ENABLE_GSS
+		if (strcmp(conn->gssencmode, "require") == 0)
+		{
+			conn->status = CONNECTION_BAD;
+			printfPQExpBuffer(
+							  &conn->errorMessage,
+							  libpq_gettext("no GSSAPI support; cannot require GSSAPI\n"));
+			return false;
+		}
+#endif
+	}
+	else
+	{
+		conn->gssencmode = strdup(DefaultGSSMode);
+		if (!conn->gssencmode)
+			goto oom_error;
+	}
+
+	/*
 	 * Resolve special "auto" client_encoding from the locale
 	 */
 	if (conn->client_encoding_initial &&
@@ -1827,6 +1874,11 @@ connectDBStart(PGconn *conn)
 	 */
 	resetPQExpBuffer(&conn->errorMessage);
 
+#ifdef ENABLE_GSS
+	if (conn->gssencmode[0] == 'd')	/* "disable" */
+		conn->try_gss = false;
+#endif
+
 	/*
 	 * Set up to try to connect to the first host.  (Setting whichhost = -1 is
 	 * a bit of a cheat, but PQconnectPoll will advance it to 0 before
@@ -2099,6 +2151,7 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_NEEDED:
 		case CONNECTION_CHECK_WRITABLE:
 		case CONNECTION_CONSUME:
+		case CONNECTION_GSS_STARTUP:
 			break;
 
 		default:
@@ -2640,17 +2693,57 @@ keep_going:						/* We will come back to here until there is
 				}
 #endif							/* HAVE_UNIX_SOCKETS */
 
+				if (IS_AF_UNIX(conn->raddr.addr.ss_family))
+				{
+					/* Don't request SSL or GSSAPI over Unix sockets */
+#ifdef USE_SSL
+					conn->allow_ssl_try = false;
+#endif
+#ifdef ENABLE_GSS
+					conn->try_gss = false;
+#endif
+				}
+
+#ifdef ENABLE_GSS
+
+				/*
+				 * If GSSAPI is enabled and we have a ccache, try to set it up
+				 * before sending startup messages.  If it's already
+				 * operating, don't try SSL and instead just build the startup
+				 * packet.
+				 */
+				if (conn->try_gss && !conn->gctx)
+					conn->try_gss = pg_GSS_have_ccache(&conn->gcred);
+				if (conn->try_gss && !conn->gctx)
+				{
+					ProtocolVersion pv = pg_hton32(NEGOTIATE_GSS_CODE);
+
+					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not send GSSAPI negotiation packet: %s\n"),
+										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						goto error_return;
+					}
+
+					/* Ok, wait for response */
+					conn->status = CONNECTION_GSS_STARTUP;
+					return PGRES_POLLING_READING;
+				}
+				else if (!conn->gctx && conn->gssencmode[0] == 'r')
+				{
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("GSSAPI encryption required, but was impossible (possibly no ccache, no server support, or using a local socket)\n"));
+					goto error_return;
+				}
+#endif
+
 #ifdef USE_SSL
 
 				/*
 				 * If SSL is enabled and we haven't already got it running,
 				 * request it instead of sending the startup message.
 				 */
-				if (IS_AF_UNIX(conn->raddr.addr.ss_family))
-				{
-					/* Don't bother requesting SSL over a Unix socket */
-					conn->allow_ssl_try = false;
-				}
 				if (conn->allow_ssl_try && !conn->wait_ssl_try &&
 					!conn->ssl_in_use)
 				{
@@ -2844,6 +2937,98 @@ keep_going:						/* We will come back to here until there is
 #endif							/* USE_SSL */
 			}
 
+		case CONNECTION_GSS_STARTUP:
+			{
+#ifdef ENABLE_GSS
+				PostgresPollingStatusType pollres;
+
+				/*
+				 * If we haven't yet, get the postmaster's response to our
+				 * negotiation packet
+				 */
+				if (conn->try_gss && !conn->gctx)
+				{
+					char		gss_ok;
+					int			rdresult = pqReadData(conn);
+
+					if (rdresult < 0)
+						/* pqReadData fills in error message */
+						goto error_return;
+					else if (rdresult == 0)
+						/* caller failed to wait for data */
+						return PGRES_POLLING_READING;
+					if (pqGetc(&gss_ok, conn) < 0)
+						/* shouldn't happen... */
+						return PGRES_POLLING_READING;
+
+					if (gss_ok == 'E')
+					{
+						/*
+						 * Server failure of some sort.  Assume it's a
+						 * protocol version support failure, and let's see if
+						 * we can't recover (if it's not, we'll get a better
+						 * error message on retry).  Server gets fussy if we
+						 * don't hang up the socket, though.
+						 */
+						conn->try_gss = false;
+						pqDropConnection(conn, true);
+						conn->status = CONNECTION_NEEDED;
+						goto keep_going;
+					}
+
+					/* mark byte consumed */
+					conn->inStart = conn->inCursor;
+
+					if (gss_ok == 'N')
+					{
+						/* Server doesn't want GSSAPI; fall back if we can */
+						if (conn->gssencmode[0] == 'r')
+						{
+							appendPQExpBufferStr(&conn->errorMessage,
+												 libpq_gettext("server doesn't support GSSAPI encryption, but it was required\n"));
+							goto error_return;
+						}
+
+						conn->try_gss = false;
+						conn->status = CONNECTION_MADE;
+						return PGRES_POLLING_WRITING;
+					}
+					else if (gss_ok != 'G')
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("received invalid response to GSSAPI negotiation: %c\n"),
+										  gss_ok);
+						goto error_return;
+					}
+				}
+
+				/* Begin or continue GSSAPI negotiation */
+				pollres = pqsecure_open_gss(conn);
+				if (pollres == PGRES_POLLING_OK)
+				{
+					/* All set for startup packet */
+					conn->status = CONNECTION_MADE;
+					return PGRES_POLLING_WRITING;
+				}
+				else if (pollres == PGRES_POLLING_FAILED &&
+						 conn->gssencmode[0] == 'p')
+				{
+					/*
+					 * We failed, but we can retry on "prefer".  Have to drop
+					 * the current connection to do so, though.
+					 */
+					conn->try_gss = false;
+					pqDropConnection(conn, true);
+					conn->status = CONNECTION_NEEDED;
+					goto keep_going;
+				}
+				return pollres;
+#else							/* !ENABLE_GSS */
+				/* unreachable */
+				goto error_return;
+#endif							/* ENABLE_GSS */
+			}
+
 			/*
 			 * Handle authentication exchange: wait for postmaster messages
 			 * and respond as necessary.
@@ -2996,6 +3181,26 @@ keep_going:						/* We will come back to here until there is
 
 					/* Check to see if we should mention pgpassfile */
 					pgpassfileWarning(conn);
+
+#ifdef ENABLE_GSS
+
+					/*
+					 * If gssencmode is "prefer" and we're using GSSAPI, retry
+					 * without it.
+					 */
+					if (conn->gssenc && conn->gssencmode[0] == 'p')
+					{
+						OM_uint32	minor;
+
+						/* postmaster expects us to drop the connection */
+						conn->try_gss = false;
+						conn->gssenc = false;
+						gss_delete_sec_context(&minor, &conn->gctx, NULL);
+						pqDropConnection(conn, true);
+						conn->status = CONNECTION_NEEDED;
+						goto keep_going;
+					}
+#endif
 
 #ifdef USE_SSL
 
@@ -3564,6 +3769,9 @@ makeEmptyPGconn(void)
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->show_context = PQSHOW_CONTEXT_ERRORS;
 	conn->sock = PGINVALID_SOCKET;
+#ifdef ENABLE_GSS
+	conn->try_gss = true;
+#endif
 
 	/*
 	 * We try to send at least 8K at a time, which is the usual size of pipe
@@ -3695,9 +3903,27 @@ freePGconn(PGconn *conn)
 		free(conn->requirepeer);
 	if (conn->connip)
 		free(conn->connip);
+	if (conn->gssencmode)
+		free(conn->gssencmode);
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
+#endif
+#ifdef ENABLE_GSS
+	if (conn->gcred != GSS_C_NO_CREDENTIAL)
+	{
+		OM_uint32	minor;
+
+		gss_release_cred(&minor, &conn->gcred);
+		conn->gcred = GSS_C_NO_CREDENTIAL;
+	}
+	if (conn->gctx)
+	{
+		OM_uint32	minor;
+
+		gss_delete_sec_context(&minor, &conn->gctx, GSS_C_NO_BUFFER);
+		conn->gctx = NULL;
+	}
 #endif
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
 	if (conn->gsslib)
