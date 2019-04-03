@@ -73,38 +73,6 @@ addOrReplaceTuple(Page page, Item tuple, int size, OffsetNumber offset)
 }
 
 static void
-spgRedoCreateIndex(XLogReaderState *record)
-{
-	XLogRecPtr	lsn = record->EndRecPtr;
-	Buffer		buffer;
-	Page		page;
-
-	buffer = XLogInitBufferForRedo(record, 0);
-	Assert(BufferGetBlockNumber(buffer) == SPGIST_METAPAGE_BLKNO);
-	page = (Page) BufferGetPage(buffer);
-	SpGistInitMetapage(page);
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-
-	buffer = XLogInitBufferForRedo(record, 1);
-	Assert(BufferGetBlockNumber(buffer) == SPGIST_ROOT_BLKNO);
-	SpGistInitBuffer(buffer, SPGIST_LEAF);
-	page = (Page) BufferGetPage(buffer);
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-
-	buffer = XLogInitBufferForRedo(record, 2);
-	Assert(BufferGetBlockNumber(buffer) == SPGIST_NULL_BLKNO);
-	SpGistInitBuffer(buffer, SPGIST_LEAF | SPGIST_NULLS);
-	page = (Page) BufferGetPage(buffer);
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-}
-
-static void
 spgRedoAddLeaf(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
@@ -976,9 +944,6 @@ spg_redo(XLogReaderState *record)
 	oldCxt = MemoryContextSwitchTo(opCtx);
 	switch (info)
 	{
-		case XLOG_SPGIST_CREATE_INDEX:
-			spgRedoCreateIndex(record);
-			break;
 		case XLOG_SPGIST_ADD_LEAF:
 			spgRedoAddLeaf(record);
 			break;

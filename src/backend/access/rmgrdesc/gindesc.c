@@ -78,9 +78,6 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 
 	switch (info)
 	{
-		case XLOG_GIN_CREATE_INDEX:
-			/* no further information */
-			break;
 		case XLOG_GIN_CREATE_PTREE:
 			/* no further information */
 			break;
@@ -188,9 +185,6 @@ gin_identify(uint8 info)
 
 	switch (info & ~XLR_INFO_MASK)
 	{
-		case XLOG_GIN_CREATE_INDEX:
-			id = "CREATE_INDEX";
-			break;
 		case XLOG_GIN_CREATE_PTREE:
 			id = "CREATE_PTREE";
 			break;

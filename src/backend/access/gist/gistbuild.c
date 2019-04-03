@@ -180,19 +180,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	GISTInitBuffer(buffer, F_LEAF);
 
 	MarkBufferDirty(buffer);
-
-	if (RelationNeedsWAL(index))
-	{
-		XLogRecPtr	recptr;
-
-		XLogBeginInsert();
-		XLogRegisterBuffer(0, buffer, REGBUF_WILL_INIT);
-
-		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_CREATE_INDEX);
-		PageSetLSN(page, recptr);
-	}
-	else
-		PageSetLSN(page, gistGetFakeLSN(heap));
+	PageSetLSN(page, GistBuildLSN);
 
 	UnlockReleaseBuffer(buffer);
 
@@ -225,6 +213,17 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	MemoryContextDelete(buildstate.giststate->tempCxt);
 
 	freeGISTstate(buildstate.giststate);
+
+	/*
+	 * We didn't write WAL records as we built the index, so if WAL-logging is
+	 * required, write all pages to the WAL now.
+	 */
+	if (RelationNeedsWAL(index))
+	{
+		log_newpage_range(index, MAIN_FORKNUM,
+						  0, RelationGetNumberOfBlocks(index),
+						  true);
+	}
 
 	/*
 	 * Return statistics
@@ -488,7 +487,7 @@ gistBuildCallback(Relation index,
 		 * locked, we call gistdoinsert directly.
 		 */
 		gistdoinsert(index, itup, buildstate->freespace,
-					 buildstate->giststate, buildstate->heaprel);
+					 buildstate->giststate, buildstate->heaprel, true);
 	}
 
 	/* Update tuple count and total size. */
@@ -695,7 +694,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 							   InvalidBuffer,
 							   &splitinfo,
 							   false,
-							   buildstate->heaprel);
+							   buildstate->heaprel, true);
 
 	/*
 	 * If this is a root split, update the root path item kept in memory. This

@@ -41,36 +41,6 @@ ginRedoClearIncompleteSplit(XLogReaderState *record, uint8 block_id)
 }
 
 static void
-ginRedoCreateIndex(XLogReaderState *record)
-{
-	XLogRecPtr	lsn = record->EndRecPtr;
-	Buffer		RootBuffer,
-				MetaBuffer;
-	Page		page;
-
-	MetaBuffer = XLogInitBufferForRedo(record, 0);
-	Assert(BufferGetBlockNumber(MetaBuffer) == GIN_METAPAGE_BLKNO);
-	page = (Page) BufferGetPage(MetaBuffer);
-
-	GinInitMetabuffer(MetaBuffer);
-
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(MetaBuffer);
-
-	RootBuffer = XLogInitBufferForRedo(record, 1);
-	Assert(BufferGetBlockNumber(RootBuffer) == GIN_ROOT_BLKNO);
-	page = (Page) BufferGetPage(RootBuffer);
-
-	GinInitBuffer(RootBuffer, GIN_LEAF);
-
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(RootBuffer);
-
-	UnlockReleaseBuffer(RootBuffer);
-	UnlockReleaseBuffer(MetaBuffer);
-}
-
-static void
 ginRedoCreatePTree(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
@@ -767,9 +737,6 @@ gin_redo(XLogReaderState *record)
 	oldCtx = MemoryContextSwitchTo(opCtx);
 	switch (info)
 	{
-		case XLOG_GIN_CREATE_INDEX:
-			ginRedoCreateIndex(record);
-			break;
 		case XLOG_GIN_CREATE_PTREE:
 			ginRedoCreatePTree(record);
 			break;

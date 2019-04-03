@@ -16,8 +16,6 @@
 #include "lib/stringinfo.h"
 #include "storage/off.h"
 
-#define XLOG_GIN_CREATE_INDEX  0x00
-
 #define XLOG_GIN_CREATE_PTREE  0x10
 
 typedef struct ginxlogCreatePostingTree

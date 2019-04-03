@@ -50,6 +50,13 @@
 typedef XLogRecPtr GistNSN;
 
 /*
+ * A bogus LSN / NSN value used during index build. Must be smaller than any
+ * real or fake unlogged LSN, so that after an index build finishes, all the
+ * splits are considered completed.
+ */
+#define GistBuildLSN	((XLogRecPtr) 1)
+
+/*
  * For on-disk compatibility with pre-9.3 servers, NSN is stored as two
  * 32-bit fields on disk, same as LSNs.
  */

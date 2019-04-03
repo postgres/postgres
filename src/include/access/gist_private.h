@@ -244,6 +244,7 @@ typedef struct
 	Relation	r;
 	Relation	heapRel;
 	Size		freespace;		/* free space to be left */
+	bool		is_build;
 
 	GISTInsertStack *stack;
 } GISTInsertState;
@@ -393,7 +394,8 @@ extern void gistdoinsert(Relation r,
 			 IndexTuple itup,
 			 Size freespace,
 			 GISTSTATE *GISTstate,
-			 Relation heapRel);
+			 Relation heapRel,
+			 bool is_build);
 
 /* A List of these is returned from gistplacetopage() in *splitinfo */
 typedef struct
@@ -409,7 +411,8 @@ extern bool gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				Buffer leftchildbuf,
 				List **splitinfo,
 				bool markleftchild,
-				Relation heapRel);
+				Relation heapRel,
+				bool is_build);
 
 extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 		  int len, GISTSTATE *giststate);

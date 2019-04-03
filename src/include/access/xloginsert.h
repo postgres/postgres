@@ -16,6 +16,7 @@
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/relfilenode.h"
+#include "utils/relcache.h"
 
 /*
  * The minimum size of the WAL construction working area. If you need to
@@ -54,6 +55,8 @@ extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 			BlockNumber blk, char *page, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
+extern void log_newpage_range(Relation rel, ForkNumber forkNum,
+				  BlockNumber startblk, BlockNumber endblk, bool page_std);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
 
 extern void InitXLogInsert(void);

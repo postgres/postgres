@@ -490,25 +490,6 @@ gistRedoPageSplitRecord(XLogReaderState *record)
 	UnlockReleaseBuffer(firstbuffer);
 }
 
-static void
-gistRedoCreateIndex(XLogReaderState *record)
-{
-	XLogRecPtr	lsn = record->EndRecPtr;
-	Buffer		buffer;
-	Page		page;
-
-	buffer = XLogInitBufferForRedo(record, 0);
-	Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
-	page = (Page) BufferGetPage(buffer);
-
-	GISTInitBuffer(buffer, F_LEAF);
-
-	PageSetLSN(page, lsn);
-
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-}
-
 /* redo page deletion */
 static void
 gistRedoPageDelete(XLogReaderState *record)
@@ -593,9 +574,6 @@ gist_redo(XLogReaderState *record)
 			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			gistRedoPageSplitRecord(record);
-			break;
-		case XLOG_GIST_CREATE_INDEX:
-			gistRedoCreateIndex(record);
 			break;
 		case XLOG_GIST_PAGE_DELETE:
 			gistRedoPageDelete(record);

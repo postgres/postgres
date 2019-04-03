@@ -173,7 +173,7 @@ gistinsert(Relation r, Datum *values, bool *isnull,
 						 values, isnull, true /* size is currently bogus */ );
 	itup->t_tid = *ht_ctid;
 
-	gistdoinsert(r, itup, 0, giststate, heapRel);
+	gistdoinsert(r, itup, 0, giststate, heapRel, false);
 
 	/* cleanup */
 	MemoryContextSwitchTo(oldCxt);
@@ -220,7 +220,8 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				Buffer leftchildbuf,
 				List **splitinfo,
 				bool markfollowright,
-				Relation heapRel)
+				Relation heapRel,
+				bool is_build)
 {
 	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	Page		page = BufferGetPage(buffer);
@@ -459,7 +460,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		 * insertion for that. NB: The number of pages and data segments
 		 * specified here must match the calculations in gistXLogSplit()!
 		 */
-		if (RelationNeedsWAL(rel))
+		if (!is_build && RelationNeedsWAL(rel))
 			XLogEnsureRecordSpace(npage, 1 + npage * 2);
 
 		START_CRIT_SECTION();
@@ -480,18 +481,30 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		PageRestoreTempPage(dist->page, BufferGetPage(dist->buffer));
 		dist->page = BufferGetPage(dist->buffer);
 
-		/* Write the WAL record */
-		if (RelationNeedsWAL(rel))
-			recptr = gistXLogSplit(is_leaf,
-								   dist, oldrlink, oldnsn, leftchildbuf,
-								   markfollowright);
+		/*
+		 * Write the WAL record.
+		 *
+		 * If we're building a new index, however, we don't WAL-log changes
+		 * yet. The LSN-NSN interlock between parent and child requires that
+		 * LSNs never move backwards, so set the LSNs to a value that's
+		 * smaller than any real or fake unlogged LSN that might be generated
+		 * later. (There can't be any concurrent scans during index build, so
+		 * we don't need to be able to detect concurrent splits yet.)
+		 */
+		if (is_build)
+			recptr = GistBuildLSN;
 		else
-			recptr = gistGetFakeLSN(rel);
+		{
+			if (RelationNeedsWAL(rel))
+				recptr = gistXLogSplit(is_leaf,
+									   dist, oldrlink, oldnsn, leftchildbuf,
+									   markfollowright);
+			else
+				recptr = gistGetFakeLSN(rel);
+		}
 
 		for (ptr = dist; ptr; ptr = ptr->next)
-		{
 			PageSetLSN(ptr->page, recptr);
-		}
 
 		/*
 		 * Return the new child buffers to the caller.
@@ -545,28 +558,29 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		if (BufferIsValid(leftchildbuf))
 			MarkBufferDirty(leftchildbuf);
 
-		if (RelationNeedsWAL(rel))
-		{
-			OffsetNumber ndeloffs = 0,
-						deloffs[1];
-
-			if (OffsetNumberIsValid(oldoffnum))
-			{
-				deloffs[0] = oldoffnum;
-				ndeloffs = 1;
-			}
-
-			recptr = gistXLogUpdate(buffer,
-									deloffs, ndeloffs, itup, ntup,
-									leftchildbuf);
-
-			PageSetLSN(page, recptr);
-		}
+		if (is_build)
+			recptr = GistBuildLSN;
 		else
 		{
-			recptr = gistGetFakeLSN(rel);
-			PageSetLSN(page, recptr);
+			if (RelationNeedsWAL(rel))
+			{
+				OffsetNumber ndeloffs = 0,
+							deloffs[1];
+
+				if (OffsetNumberIsValid(oldoffnum))
+				{
+					deloffs[0] = oldoffnum;
+					ndeloffs = 1;
+				}
+
+				recptr = gistXLogUpdate(buffer,
+										deloffs, ndeloffs, itup, ntup,
+										leftchildbuf);
+			}
+			else
+				recptr = gistGetFakeLSN(rel);
 		}
+		PageSetLSN(page, recptr);
 
 		if (newblkno)
 			*newblkno = blkno;
@@ -607,7 +621,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
  */
 void
 gistdoinsert(Relation r, IndexTuple itup, Size freespace,
-			 GISTSTATE *giststate, Relation heapRel)
+			 GISTSTATE *giststate, Relation heapRel, bool is_build)
 {
 	ItemId		iid;
 	IndexTuple	idxtuple;
@@ -620,6 +634,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 	state.freespace = freespace;
 	state.r = r;
 	state.heapRel = heapRel;
+	state.is_build = is_build;
 
 	/* Start from the root */
 	firststack.blkno = GIST_ROOT_BLKNO;
@@ -1252,7 +1267,8 @@ gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 							   leftchild,
 							   &splitinfo,
 							   true,
-							   state->heapRel);
+							   state->heapRel,
+							   state->is_build);
 
 	/*
 	 * Before recursing up in case the page was split, release locks on the

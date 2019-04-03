@@ -29,6 +29,13 @@ typedef uint64 XLogRecPtr;
 #define XLogRecPtrIsInvalid(r)	((r) == InvalidXLogRecPtr)
 
 /*
+ * First LSN to use for "fake" LSNs.
+ *
+ * Values smaller than this can be used for special per-AM purposes.
+ */
+#define FirstNormalUnloggedLSN	((XLogRecPtr) 1000)
+
+/*
  * XLogSegNo - physical log file sequence number.
  */
 typedef uint64 XLogSegNo;

@@ -289,7 +289,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 
 	MarkBufferDirty(current->buffer);
 
-	if (RelationNeedsWAL(index))
+	if (RelationNeedsWAL(index) && !state->isBuild)
 	{
 		XLogRecPtr	recptr;
 		int			flags;
@@ -516,7 +516,7 @@ moveLeafs(Relation index, SpGistState *state,
 	MarkBufferDirty(current->buffer);
 	MarkBufferDirty(nbuf);
 
-	if (RelationNeedsWAL(index))
+	if (RelationNeedsWAL(index) && !state->isBuild)
 	{
 		XLogRecPtr	recptr;
 
@@ -1334,7 +1334,7 @@ doPickSplit(Relation index, SpGistState *state,
 		saveCurrent.buffer = InvalidBuffer;
 	}
 
-	if (RelationNeedsWAL(index))
+	if (RelationNeedsWAL(index) && !state->isBuild)
 	{
 		XLogRecPtr	recptr;
 		int			flags;
@@ -1531,7 +1531,7 @@ spgAddNodeAction(Relation index, SpGistState *state,
 
 		MarkBufferDirty(current->buffer);
 
-		if (RelationNeedsWAL(index))
+		if (RelationNeedsWAL(index) && !state->isBuild)
 		{
 			XLogRecPtr	recptr;
 
@@ -1644,7 +1644,7 @@ spgAddNodeAction(Relation index, SpGistState *state,
 
 		MarkBufferDirty(saveCurrent.buffer);
 
-		if (RelationNeedsWAL(index))
+		if (RelationNeedsWAL(index) && !state->isBuild)
 		{
 			XLogRecPtr	recptr;
 			int			flags;
@@ -1840,7 +1840,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 
 	MarkBufferDirty(current->buffer);
 
-	if (RelationNeedsWAL(index))
+	if (RelationNeedsWAL(index) && !state->isBuild)
 	{
 		XLogRecPtr	recptr;
 

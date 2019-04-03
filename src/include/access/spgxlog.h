@@ -18,7 +18,7 @@
 #include "storage/off.h"
 
 /* XLOG record types for SPGiST */
-#define XLOG_SPGIST_CREATE_INDEX	0x00
+/* #define XLOG_SPGIST_CREATE_INDEX       0x00 */	/* not used anymore */
 #define XLOG_SPGIST_ADD_LEAF		0x10
 #define XLOG_SPGIST_MOVE_LEAFS		0x20
 #define XLOG_SPGIST_ADD_NODE		0x30

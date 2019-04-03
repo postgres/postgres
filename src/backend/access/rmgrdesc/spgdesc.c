@@ -24,8 +24,6 @@ spg_desc(StringInfo buf, XLogReaderState *record)
 
 	switch (info)
 	{
-		case XLOG_SPGIST_CREATE_INDEX:
-			break;
 		case XLOG_SPGIST_ADD_LEAF:
 			{
 				spgxlogAddLeaf *xlrec = (spgxlogAddLeaf *) rec;
@@ -88,9 +86,6 @@ spg_identify(uint8 info)
 
 	switch (info & ~XLR_INFO_MASK)
 	{
-		case XLOG_SPGIST_CREATE_INDEX:
-			id = "CREATE_INDEX";
-			break;
 		case XLOG_SPGIST_ADD_LEAF:
 			id = "ADD_LEAF";
 			break;
