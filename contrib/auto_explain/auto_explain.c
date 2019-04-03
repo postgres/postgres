@@ -28,6 +28,7 @@ static bool auto_explain_log_verbose = false;
 static bool auto_explain_log_buffers = false;
 static bool auto_explain_log_triggers = false;
 static bool auto_explain_log_timing = true;
+static bool auto_explain_log_settings = false;
 static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static int	auto_explain_log_level = LOG;
 static bool auto_explain_log_nested_statements = false;
@@ -105,6 +106,17 @@ _PG_init(void)
 							 "Use EXPLAIN ANALYZE for plan logging.",
 							 NULL,
 							 &auto_explain_log_analyze,
+							 false,
+							 PGC_SUSET,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+
+	DefineCustomBoolVariable("auto_explain.log_settings",
+							 "Log modified configuration parameters affecting query planning.",
+							 NULL,
+							 &auto_explain_log_settings,
 							 false,
 							 PGC_SUSET,
 							 0,
@@ -356,6 +368,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es->timing = (es->analyze && auto_explain_log_timing);
 			es->summary = es->analyze;
 			es->format = auto_explain_log_format;
+			es->settings = auto_explain_log_settings;
 
 			ExplainBeginOutput(es);
 			ExplainQueryText(es, queryDesc);

@@ -29,6 +29,7 @@
 #include "storage/bufmgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/guc_tables.h"
 #include "utils/json.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -162,6 +163,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 			es->costs = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "buffers") == 0)
 			es->buffers = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "settings") == 0)
+			es->settings = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "timing") == 0)
 		{
 			timing_set = true;
@@ -597,6 +600,73 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 }
 
 /*
+ * ExplainPrintSettings -
+ *    Print summary of modified settings affecting query planning.
+ */
+static void
+ExplainPrintSettings(ExplainState *es)
+{
+	int		num;
+	struct config_generic **gucs;
+
+	/* bail out if information about settings not requested */
+	if (!es->settings)
+		return;
+
+	/* request an array of relevant settings */
+	gucs = get_explain_guc_options(&num);
+
+	/* also bail out of there are no options */
+	if (!num)
+		return;
+
+	if (es->format != EXPLAIN_FORMAT_TEXT)
+	{
+		int		i;
+
+		ExplainOpenGroup("Settings", "Settings", true, es);
+
+		for (i = 0; i < num; i++)
+		{
+			char *setting;
+			struct config_generic *conf = gucs[i];
+
+			setting = GetConfigOptionByName(conf->name, NULL, true);
+
+			ExplainPropertyText(conf->name, setting, es);
+		}
+
+		ExplainCloseGroup("Settings", "Settings", true, es);
+	}
+	else
+	{
+		int		i;
+		StringInfoData	str;
+
+		initStringInfo(&str);
+
+		for (i = 0; i < num; i++)
+		{
+			char *setting;
+			struct config_generic *conf = gucs[i];
+
+			if (i > 0)
+				appendStringInfoString(&str, ", ");
+
+			setting = GetConfigOptionByName(conf->name, NULL, true);
+
+			if (setting)
+				appendStringInfo(&str, "%s = '%s'", conf->name, setting);
+			else
+				appendStringInfo(&str, "%s = NULL", conf->name);
+		}
+
+		if (num > 0)
+			ExplainPropertyText("Settings", str.data, es);
+	}
+}
+
+/*
  * ExplainPrintPlan -
  *	  convert a QueryDesc's plan tree to text and append it to es->str
  *
@@ -633,6 +703,12 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	if (IsA(ps, GatherState) &&((Gather *) ps->plan)->invisible)
 		ps = outerPlanState(ps);
 	ExplainNode(ps, NIL, NULL, NULL, es);
+
+	/*
+	 * If requested, include information about GUC parameters with values
+	 * that don't match the built-in defaults.
+	 */
+	ExplainPrintSettings(es);
 }
 
 /*

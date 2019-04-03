@@ -39,6 +39,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
     ANALYZE [ <replaceable class="parameter">boolean</replaceable> ]
     VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
     COSTS [ <replaceable class="parameter">boolean</replaceable> ]
+    SETTINGS [ <replaceable class="parameter">boolean</replaceable> ]
     BUFFERS [ <replaceable class="parameter">boolean</replaceable> ]
     TIMING [ <replaceable class="parameter">boolean</replaceable> ]
     SUMMARY [ <replaceable class="parameter">boolean</replaceable> ]
@@ -148,6 +149,17 @@ ROLLBACK;
       plan node, as well as the estimated number of rows and the estimated
       width of each row.
       This parameter defaults to <literal>TRUE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SETTINGS</literal></term>
+    <listitem>
+     <para>
+      Include information on configuration parameters.  Specifically, include
+      options affecting query planning with value different from the built-in
+      default value.  This parameter defaults to <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>
