@@ -61,6 +61,16 @@
 #define ITEM_FREQUENCY(item,ndims)	((double *) (ITEM_NULLS(item, ndims) + (ndims)))
 #define ITEM_BASE_FREQUENCY(item,ndims)	((double *) (ITEM_FREQUENCY(item, ndims) + 1))
 
+/*
+ * Used to compute size of serialized MCV list representation.
+ */
+#define MinSizeOfMCVList		\
+	(VARHDRSZ + sizeof(uint32) * 3 + sizeof(AttrNumber))
+
+#define SizeOfMCVList(ndims,nitems)	\
+	(MAXALIGN(MinSizeOfMCVList + sizeof(Oid) * (ndims)) + \
+	 MAXALIGN((ndims) * sizeof(DimensionInfo)) + \
+	 MAXALIGN((nitems) * ITEM_SIZE(ndims)))
 
 static MultiSortSupport build_mss(VacAttrStats **stats, int numattrs);
 
@@ -491,7 +501,6 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 	char	   *item = palloc0(itemsize);
 
 	/* serialized items (indexes into arrays, etc.) */
-	bytea	   *output;
 	char	   *raw;
 	char	   *ptr;
 
@@ -625,15 +634,25 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 	 * Now we can finally compute how much space we'll actually need for the
 	 * whole serialized MCV list (varlena header, MCV header, dimension info
 	 * for each attribute, deduplicated values and items).
+	 *
+	 * The header fields are copied one by one, so that we don't need any
+	 * explicit alignment (we copy them while deserializing). All fields
+	 * after this need to be properly aligned, for direct access.
 	 */
-	total_length = offsetof(MCVList, items)
-		+ MAXALIGN(ndims * sizeof(DimensionInfo));
+	total_length = MAXALIGN(VARHDRSZ + (3 * sizeof(uint32))
+			+ sizeof(AttrNumber) + (ndims * sizeof(Oid)));
+
+	/* dimension info */
+	total_length += MAXALIGN(ndims * sizeof(DimensionInfo));
 
 	/* add space for the arrays of deduplicated values */
 	for (i = 0; i < ndims; i++)
 		total_length += MAXALIGN(info[i].nbytes);
 
-	/* and finally the items (no additional alignment needed) */
+	/*
+	 * And finally the items (no additional alignment needed, we start
+	 * at proper alignment and the itemsize formula uses MAXALIGN)
+	 */
 	total_length += mcvlist->nitems * itemsize;
 
 	/*
@@ -641,11 +660,27 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 	 * so we set them to zero to make the result more compressible).
 	 */
 	raw = palloc0(total_length);
-	ptr = raw;
+	SET_VARSIZE(raw, total_length);
+	ptr = VARDATA(raw);
 
-	/* copy the MCV list header */
-	memcpy(ptr, mcvlist, offsetof(MCVList, items));
-	ptr += offsetof(MCVList, items);
+	/* copy the MCV list header fields, one by one */
+	memcpy(ptr, &mcvlist->magic, sizeof(uint32));
+	ptr += sizeof(uint32);
+
+	memcpy(ptr, &mcvlist->type, sizeof(uint32));
+	ptr += sizeof(uint32);
+
+	memcpy(ptr, &mcvlist->nitems, sizeof(uint32));
+	ptr += sizeof(uint32);
+
+	memcpy(ptr, &mcvlist->ndimensions, sizeof(AttrNumber));
+	ptr += sizeof(AttrNumber);
+
+	memcpy(ptr, mcvlist->types, sizeof(Oid) * ndims);
+	ptr += (sizeof(Oid) * ndims);
+
+	/* the header may not be exactly aligned, so make sure it is */
+	ptr = raw + MAXALIGN(ptr - raw);
 
 	/* store information about the attributes */
 	memcpy(ptr, info, sizeof(DimensionInfo) * ndims);
@@ -761,14 +796,7 @@ statext_mcv_serialize(MCVList * mcvlist, VacAttrStats **stats)
 	pfree(values);
 	pfree(counts);
 
-	output = (bytea *) palloc(VARHDRSZ + total_length);
-	SET_VARSIZE(output, VARHDRSZ + total_length);
-
-	memcpy(VARDATA_ANY(output), raw, total_length);
-
-	pfree(raw);
-
-	return output;
+	return (bytea *) raw;
 }
 
 /*
@@ -789,8 +817,7 @@ statext_mcv_deserialize(bytea *data)
 	char	   *ptr;
 
 	int			ndims,
-				nitems,
-				itemsize;
+				nitems;
 	DimensionInfo *info = NULL;
 
 	/* local allocation buffer (used only for deserialization) */
@@ -810,24 +837,32 @@ statext_mcv_deserialize(bytea *data)
 
 	/*
 	 * We can't possibly deserialize a MCV list if there's not even a complete
-	 * header.
+	 * header. We need an explicit formula here, because we serialize the
+	 * header fields one by one, so we need to ignore struct alignment.
 	 */
-	if (VARSIZE_ANY_EXHDR(data) < offsetof(MCVList, items))
+	if (VARSIZE_ANY(data) < MinSizeOfMCVList)
 		elog(ERROR, "invalid MCV size %zd (expected at least %zu)",
-			 VARSIZE_ANY_EXHDR(data), offsetof(MCVList, items));
+			 VARSIZE_ANY(data), MinSizeOfMCVList);
 
 	/* read the MCV list header */
 	mcvlist = (MCVList *) palloc0(offsetof(MCVList, items));
 
-	/* initialize pointer to the data part (skip the varlena header) */
-	raw = palloc(VARSIZE_ANY_EXHDR(data));
-	ptr = raw;
-
-	memcpy(raw, VARDATA_ANY(data), VARSIZE_ANY_EXHDR(data));
+	/* pointer to the data part (skip the varlena header) */
+	ptr = VARDATA_ANY(data);
+	raw = (char *) data;
 
 	/* get the header and perform further sanity checks */
-	memcpy(mcvlist, ptr, offsetof(MCVList, items));
-	ptr += offsetof(MCVList, items);
+	memcpy(&mcvlist->magic, ptr, sizeof(uint32));
+	ptr += sizeof(uint32);
+
+	memcpy(&mcvlist->type, ptr, sizeof(uint32));
+	ptr += sizeof(uint32);
+
+	memcpy(&mcvlist->nitems, ptr, sizeof(uint32));
+	ptr += sizeof(uint32);
+
+	memcpy(&mcvlist->ndimensions, ptr, sizeof(AttrNumber));
+	ptr += sizeof(AttrNumber);
 
 	if (mcvlist->magic != STATS_MCV_MAGIC)
 		elog(ERROR, "invalid MCV magic %u (expected %u)",
@@ -852,25 +887,29 @@ statext_mcv_deserialize(bytea *data)
 
 	nitems = mcvlist->nitems;
 	ndims = mcvlist->ndimensions;
-	itemsize = ITEM_SIZE(ndims);
 
 	/*
 	 * Check amount of data including DimensionInfo for all dimensions and
 	 * also the serialized items (including uint16 indexes). Also, walk
 	 * through the dimension information and add it to the sum.
 	 */
-	expected_size = offsetof(MCVList, items) +
-		ndims * sizeof(DimensionInfo) +
-		(nitems * itemsize);
+	expected_size = SizeOfMCVList(ndims, nitems);
 
 	/*
 	 * Check that we have at least the dimension and info records, along with
 	 * the items. We don't know the size of the serialized values yet. We need
 	 * to do this check first, before accessing the dimension info.
 	 */
-	if (VARSIZE_ANY_EXHDR(data) < expected_size)
+	if (VARSIZE_ANY(data) < expected_size)
 		elog(ERROR, "invalid MCV size %zd (expected %zu)",
-			 VARSIZE_ANY_EXHDR(data), expected_size);
+			 VARSIZE_ANY(data), expected_size);
+
+	/* Now copy the array of type Oids. */
+	memcpy(ptr, mcvlist->types, sizeof(Oid) * ndims);
+	ptr += (sizeof(Oid) * ndims);
+
+	/* ensure alignment of the pointer (after the header fields) */
+	ptr = raw + MAXALIGN(ptr - raw);
 
 	/* Now it's safe to access the dimension info. */
 	info = (DimensionInfo *) ptr;
@@ -894,9 +933,9 @@ statext_mcv_deserialize(bytea *data)
 	 * (header, dimension info. items and deduplicated data). So do the final
 	 * check on size.
 	 */
-	if (VARSIZE_ANY_EXHDR(data) != expected_size)
+	if (VARSIZE_ANY(data) != expected_size)
 		elog(ERROR, "invalid MCV size %zd (expected %zu)",
-			 VARSIZE_ANY_EXHDR(data), expected_size);
+			 VARSIZE_ANY(data), expected_size);
 
 	/*
 	 * We need an array of Datum values for each dimension, so that we can
@@ -1063,18 +1102,17 @@ statext_mcv_deserialize(bytea *data)
 		ptr += ITEM_SIZE(ndims);
 
 		/* check we're not overflowing the input */
-		Assert(ptr <= (char *) raw + VARSIZE_ANY_EXHDR(data));
+		Assert(ptr <= (char *) raw + VARSIZE_ANY(data));
 	}
 
 	/* check that we processed all the data */
-	Assert(ptr == raw + VARSIZE_ANY_EXHDR(data));
+	Assert(ptr == raw + VARSIZE_ANY(data));
 
 	/* release the buffers used for mapping */
 	for (dim = 0; dim < ndims; dim++)
 		pfree(map[dim]);
 
 	pfree(map);
-	pfree(raw);
 
 	return mcvlist;
 }
