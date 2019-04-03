@@ -263,6 +263,8 @@ extern bool RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 							  TupleTableSlot *old_slot, TupleTableSlot  *new_slot);
 extern bool RI_Initial_Check(Trigger *trigger,
 				 Relation fk_rel, Relation pk_rel);
+extern void RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel,
+						 Relation pk_rel);
 
 /* result values for RI_FKey_trigger_type: */
 #define RI_TRIGGER_PK	1		/* is a trigger on the PK relation */

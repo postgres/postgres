@@ -379,9 +379,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Partitioned tables do not support <literal>EXCLUDE</literal> constraints;
       however, you can define these constraints on individual partitions.
-      Also, while it's possible to define <literal>PRIMARY KEY</literal>
-      constraints on partitioned tables, creating foreign keys that
-      reference a partitioned table is not yet supported.
      </para>
 
      <para>
@@ -1028,9 +1025,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       addition of a foreign key constraint requires a
       <literal>SHARE ROW EXCLUSIVE</literal> lock on the referenced table.
       Note that foreign key constraints cannot be defined between temporary
-      tables and permanent tables.  Also note that while it is possible to
-      define a foreign key on a partitioned table, it is not possible to
-      declare a foreign key that references a partitioned table.
+      tables and permanent tables.
      </para>
 
      <para>

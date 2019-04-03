@@ -1,0 +1,70 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s1d s2b s2i s1c s2c
+step s1b: begin;
+step s1d: delete from ppk where a = 1;
+step s2b: begin;
+step s2i: insert into pfk values (1); <waiting ...>
+step s1c: commit;
+step s2i: <... completed>
+error in steps s1c s2i: ERROR:  insert or update on table "pfk1" violates foreign key constraint "pfk_a_fkey"
+step s2c: commit;
+
+starting permutation: s1b s1d s2bs s2i s1c s2c
+step s1b: begin;
+step s1d: delete from ppk where a = 1;
+step s2bs: begin isolation level serializable; select 1;
+?column?       
+
+1              
+step s2i: insert into pfk values (1); <waiting ...>
+step s1c: commit;
+step s2i: <... completed>
+error in steps s1c s2i: ERROR:  could not serialize access due to concurrent update
+step s2c: commit;
+
+starting permutation: s1b s2b s1d s2i s1c s2c
+step s1b: begin;
+step s2b: begin;
+step s1d: delete from ppk where a = 1;
+step s2i: insert into pfk values (1); <waiting ...>
+step s1c: commit;
+step s2i: <... completed>
+error in steps s1c s2i: ERROR:  insert or update on table "pfk1" violates foreign key constraint "pfk_a_fkey"
+step s2c: commit;
+
+starting permutation: s1b s2bs s1d s2i s1c s2c
+step s1b: begin;
+step s2bs: begin isolation level serializable; select 1;
+?column?       
+
+1              
+step s1d: delete from ppk where a = 1;
+step s2i: insert into pfk values (1); <waiting ...>
+step s1c: commit;
+step s2i: <... completed>
+error in steps s1c s2i: ERROR:  could not serialize access due to concurrent update
+step s2c: commit;
+
+starting permutation: s1b s2b s2i s1d s2c s1c
+step s1b: begin;
+step s2b: begin;
+step s2i: insert into pfk values (1);
+step s1d: delete from ppk where a = 1; <waiting ...>
+step s2c: commit;
+step s1d: <... completed>
+error in steps s2c s1d: ERROR:  update or delete on table "ppk1" violates foreign key constraint "pfk_a_fkey1" on table "pfk"
+step s1c: commit;
+
+starting permutation: s1b s2bs s2i s1d s2c s1c
+step s1b: begin;
+step s2bs: begin isolation level serializable; select 1;
+?column?       
+
+1              
+step s2i: insert into pfk values (1);
+step s1d: delete from ppk where a = 1; <waiting ...>
+step s2c: commit;
+step s1d: <... completed>
+error in steps s2c s1d: ERROR:  update or delete on table "ppk1" violates foreign key constraint "pfk_a_fkey1" on table "pfk"
+step s1c: commit;

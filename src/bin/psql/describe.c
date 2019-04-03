@@ -2452,9 +2452,12 @@ describeOneTableDetails(const char *schemaname,
 								  "  pg_catalog.pg_get_constraintdef(r.oid, true) as condef,\n"
 								  "  conrelid::pg_catalog.regclass AS ontable\n"
 								  "FROM pg_catalog.pg_constraint r\n"
-								  "WHERE r.conrelid = '%s' AND r.contype = 'f'\n"
-								  "ORDER BY conname;",
+								  "WHERE r.conrelid = '%s' AND r.contype = 'f'\n",
 								  oid);
+
+				if (pset.sversion >= 120000)
+					appendPQExpBuffer(&buf, "     AND conparentid = 0\n");
+				appendPQExpBuffer(&buf, "ORDER BY conname");
 			}
 
 			result = PSQLexec(buf.data);

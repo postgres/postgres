@@ -1837,6 +1837,24 @@ pg_get_partition_constraintdef(PG_FUNCTION_ARGS)
 }
 
 /*
+ * pg_get_partconstrdef_string
+ *
+ * Returns the partition constraint as a C-string for the input relation, with
+ * the given alias.  No pretty-printing.
+ */
+char *
+pg_get_partconstrdef_string(Oid partitionId, char *aliasname)
+{
+	Expr	   *constr_expr;
+	List	   *context;
+
+	constr_expr = get_partition_qual_relid(partitionId);
+	context = deparse_context_for(aliasname, partitionId);
+
+	return deparse_expression((Node *) constr_expr, context, true, false);
+}
+
+/*
  * pg_get_constraintdef
  *
  * Returns the definition for the constraint, ie, everything that needs to

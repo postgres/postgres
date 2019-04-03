@@ -1145,18 +1145,6 @@ drop table pktable2, fktable2;
 -- Foreign keys and partitioned tables
 --
 
--- partitioned table in the referenced side are not allowed
-CREATE TABLE fk_partitioned_pk (a int, b int, primary key (a, b))
-  PARTITION BY RANGE (a, b);
--- verify with create table first ...
-CREATE TABLE fk_notpartitioned_fk (a int, b int,
-  FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk);
--- and then with alter table.
-CREATE TABLE fk_notpartitioned_fk_2 (a int, b int);
-ALTER TABLE fk_notpartitioned_fk_2 ADD FOREIGN KEY (a, b)
-  REFERENCES fk_partitioned_pk;
-DROP TABLE fk_partitioned_pk, fk_notpartitioned_fk_2;
-
 -- Creation of a partitioned hierarchy with irregular definitions
 CREATE TABLE fk_notpartitioned_pk (fdrop1 int, a int, fdrop2 int, b int,
   PRIMARY KEY (a, b));
@@ -1443,3 +1431,204 @@ alter table fkpart2.fk_part_1 drop constraint fkey;	-- ok
 alter table fkpart2.fk_part_1_1 drop constraint my_fkey;	-- doesn't exist
 
 drop schema fkpart0, fkpart1, fkpart2 cascade;
+
+-- Test a partitioned table as referenced table.
+
+-- Verify basic functionality with a regular partition creation and a partition
+-- with a different column layout, as well as partitions added (created and
+-- attached) after creating the foreign key.
+CREATE SCHEMA fkpart3;
+SET search_path TO fkpart3;
+
+CREATE TABLE pk (a int PRIMARY KEY) PARTITION BY RANGE (a);
+CREATE TABLE pk1 PARTITION OF pk FOR VALUES FROM (0) TO (1000);
+CREATE TABLE pk2 (b int, a int);
+ALTER TABLE pk2 DROP COLUMN b;
+ALTER TABLE pk2 ALTER a SET NOT NULL;
+ALTER TABLE pk ATTACH PARTITION pk2 FOR VALUES FROM (1000) TO (2000);
+
+CREATE TABLE fk (a int) PARTITION BY RANGE (a);
+CREATE TABLE fk1 PARTITION OF fk FOR VALUES FROM (0) TO (750);
+ALTER TABLE fk ADD FOREIGN KEY (a) REFERENCES pk;
+CREATE TABLE fk2 (b int, a int) ;
+ALTER TABLE fk2 DROP COLUMN b;
+ALTER TABLE fk ATTACH PARTITION fk2 FOR VALUES FROM (750) TO (3500);
+
+CREATE TABLE pk3 PARTITION OF pk FOR VALUES FROM (2000) TO (3000);
+CREATE TABLE pk4 (LIKE pk);
+ALTER TABLE pk ATTACH PARTITION pk4 FOR VALUES FROM (3000) TO (4000);
+
+CREATE TABLE pk5 (c int, b int, a int NOT NULL) PARTITION BY RANGE (a);
+ALTER TABLE pk5 DROP COLUMN b, DROP COLUMN c;
+CREATE TABLE pk51 PARTITION OF pk5 FOR VALUES FROM (4000) TO (4500);
+CREATE TABLE pk52 PARTITION OF pk5 FOR VALUES FROM (4500) TO (5000);
+ALTER TABLE pk ATTACH PARTITION pk5 FOR VALUES FROM (4000) TO (5000);
+
+CREATE TABLE fk3 PARTITION OF fk FOR VALUES FROM (3500) TO (5000);
+
+-- these should fail: referenced value not present
+INSERT into fk VALUES (1);
+INSERT into fk VALUES (1000);
+INSERT into fk VALUES (2000);
+INSERT into fk VALUES (3000);
+INSERT into fk VALUES (4000);
+INSERT into fk VALUES (4500);
+-- insert into the referenced table, now they should work
+INSERT into pk VALUES (1), (1000), (2000), (3000), (4000), (4500);
+INSERT into fk VALUES (1), (1000), (2000), (3000), (4000), (4500);
+
+-- should fail: referencing value present
+DELETE FROM pk WHERE a = 1;
+DELETE FROM pk WHERE a = 1000;
+DELETE FROM pk WHERE a = 2000;
+DELETE FROM pk WHERE a = 3000;
+DELETE FROM pk WHERE a = 4000;
+DELETE FROM pk WHERE a = 4500;
+UPDATE pk SET a = 2 WHERE a = 1;
+UPDATE pk SET a = 1002 WHERE a = 1000;
+UPDATE pk SET a = 2002 WHERE a = 2000;
+UPDATE pk SET a = 3002 WHERE a = 3000;
+UPDATE pk SET a = 4002 WHERE a = 4000;
+UPDATE pk SET a = 4502 WHERE a = 4500;
+-- now they should work
+DELETE FROM fk;
+UPDATE pk SET a = 2 WHERE a = 1;
+DELETE FROM pk WHERE a = 2;
+UPDATE pk SET a = 1002 WHERE a = 1000;
+DELETE FROM pk WHERE a = 1002;
+UPDATE pk SET a = 2002 WHERE a = 2000;
+DELETE FROM pk WHERE a = 2002;
+UPDATE pk SET a = 3002 WHERE a = 3000;
+DELETE FROM pk WHERE a = 3002;
+UPDATE pk SET a = 4002 WHERE a = 4000;
+DELETE FROM pk WHERE a = 4002;
+UPDATE pk SET a = 4502 WHERE a = 4500;
+DELETE FROM pk WHERE a = 4502;
+
+CREATE SCHEMA fkpart4;
+SET search_path TO fkpart4;
+-- dropping/detaching PARTITIONs is prevented if that would break
+-- a foreign key's existing data
+CREATE TABLE droppk (a int PRIMARY KEY) PARTITION BY RANGE (a);
+CREATE TABLE droppk1 PARTITION OF droppk FOR VALUES FROM (0) TO (1000);
+CREATE TABLE droppk_d PARTITION OF droppk DEFAULT;
+CREATE TABLE droppk2 PARTITION OF droppk FOR VALUES FROM (1000) TO (2000)
+  PARTITION BY RANGE (a);
+CREATE TABLE droppk21 PARTITION OF droppk2 FOR VALUES FROM (1000) TO (1400);
+CREATE TABLE droppk2_d PARTITION OF droppk2 DEFAULT;
+INSERT into droppk VALUES (1), (1000), (1500), (2000);
+CREATE TABLE dropfk (a int REFERENCES droppk);
+INSERT into dropfk VALUES (1), (1000), (1500), (2000);
+-- these should all fail
+ALTER TABLE droppk DETACH PARTITION droppk_d;
+ALTER TABLE droppk2 DETACH PARTITION droppk2_d;
+ALTER TABLE droppk DETACH PARTITION droppk1;
+ALTER TABLE droppk DETACH PARTITION droppk2;
+ALTER TABLE droppk2 DETACH PARTITION droppk21;
+-- dropping partitions is disallowed
+DROP TABLE droppk_d;
+DROP TABLE droppk2_d;
+DROP TABLE droppk1;
+DROP TABLE droppk2;
+DROP TABLE droppk21;
+DELETE FROM dropfk;
+-- dropping partitions is disallowed, even when no referencing values
+DROP TABLE droppk_d;
+DROP TABLE droppk2_d;
+DROP TABLE droppk1;
+-- but DETACH is allowed, and DROP afterwards works
+ALTER TABLE droppk2 DETACH PARTITION droppk21;
+DROP TABLE droppk2;
+
+-- Verify that initial constraint creation and cloning behave correctly
+CREATE SCHEMA fkpart5;
+SET search_path TO fkpart5;
+CREATE TABLE pk (a int PRIMARY KEY) PARTITION BY LIST (a);
+CREATE TABLE pk1 PARTITION OF pk FOR VALUES IN (1) PARTITION BY LIST (a);
+CREATE TABLE pk11 PARTITION OF pk1 FOR VALUES IN (1);
+CREATE TABLE fk (a int) PARTITION BY LIST (a);
+CREATE TABLE fk1 PARTITION OF fk FOR VALUES IN (1) PARTITION BY LIST (a);
+CREATE TABLE fk11 PARTITION OF fk1 FOR VALUES IN (1);
+ALTER TABLE fk ADD FOREIGN KEY (a) REFERENCES pk;
+CREATE TABLE pk2 PARTITION OF pk FOR VALUES IN (2);
+CREATE TABLE pk3 (a int NOT NULL) PARTITION BY LIST (a);
+CREATE TABLE pk31 PARTITION OF pk3 FOR VALUES IN (31);
+CREATE TABLE pk32 (b int, a int NOT NULL);
+ALTER TABLE pk32 DROP COLUMN b;
+ALTER TABLE pk3 ATTACH PARTITION pk32 FOR VALUES IN (32);
+ALTER TABLE pk ATTACH PARTITION pk3 FOR VALUES IN (31, 32);
+CREATE TABLE fk2 PARTITION OF fk FOR VALUES IN (2);
+CREATE TABLE fk3 (b int, a int);
+ALTER TABLE fk3 DROP COLUMN b;
+ALTER TABLE fk ATTACH PARTITION fk3 FOR VALUES IN (3);
+SELECT pg_describe_object('pg_constraint'::regclass, oid, 0), confrelid::regclass,
+       CASE WHEN conparentid <> 0 THEN pg_describe_object('pg_constraint'::regclass, conparentid, 0) ELSE 'TOP' END
+FROM pg_catalog.pg_constraint
+WHERE conrelid IN (SELECT relid FROM pg_partition_tree('fk'))
+ORDER BY conrelid::regclass::text, conname;
+CREATE TABLE fk4 (LIKE fk);
+INSERT INTO fk4 VALUES (50);
+ALTER TABLE fk ATTACH PARTITION fk4 FOR VALUES IN (50);
+
+-- Verify ON UPDATE/DELETE behavior
+CREATE SCHEMA fkpart6;
+SET search_path TO fkpart6;
+CREATE TABLE pk (a int PRIMARY KEY) PARTITION BY RANGE (a);
+CREATE TABLE pk1 PARTITION OF pk FOR VALUES FROM (1) TO (100) PARTITION BY RANGE (a);
+CREATE TABLE pk11 PARTITION OF pk1 FOR VALUES FROM (1) TO (50);
+CREATE TABLE pk12 PARTITION OF pk1 FOR VALUES FROM (50) TO (100);
+CREATE TABLE fk (a int) PARTITION BY RANGE (a);
+CREATE TABLE fk1 PARTITION OF fk FOR VALUES FROM (1) TO (100) PARTITION BY RANGE (a);
+CREATE TABLE fk11 PARTITION OF fk1 FOR VALUES FROM (1) TO (10);
+CREATE TABLE fk12 PARTITION OF fk1 FOR VALUES FROM (10) TO (100);
+ALTER TABLE fk ADD FOREIGN KEY (a) REFERENCES pk ON UPDATE CASCADE ON DELETE CASCADE;
+CREATE TABLE fk_d PARTITION OF fk DEFAULT;
+INSERT INTO pk VALUES (1);
+INSERT INTO fk VALUES (1);
+UPDATE pk SET a = 20;
+SELECT tableoid::regclass, * FROM fk;
+DELETE FROM pk WHERE a = 20;
+SELECT tableoid::regclass, * FROM fk;
+DROP TABLE fk;
+
+TRUNCATE TABLE pk;
+INSERT INTO pk VALUES (20), (50);
+CREATE TABLE fk (a int) PARTITION BY RANGE (a);
+CREATE TABLE fk1 PARTITION OF fk FOR VALUES FROM (1) TO (100) PARTITION BY RANGE (a);
+CREATE TABLE fk11 PARTITION OF fk1 FOR VALUES FROM (1) TO (10);
+CREATE TABLE fk12 PARTITION OF fk1 FOR VALUES FROM (10) TO (100);
+ALTER TABLE fk ADD FOREIGN KEY (a) REFERENCES pk ON UPDATE SET NULL ON DELETE SET NULL;
+CREATE TABLE fk_d PARTITION OF fk DEFAULT;
+INSERT INTO fk VALUES (20), (50);
+UPDATE pk SET a = 21 WHERE a = 20;
+DELETE FROM pk WHERE a = 50;
+SELECT tableoid::regclass, * FROM fk;
+DROP TABLE fk;
+
+TRUNCATE TABLE pk;
+INSERT INTO pk VALUES (20), (30), (50);
+CREATE TABLE fk (id int, a int DEFAULT 50) PARTITION BY RANGE (a);
+CREATE TABLE fk1 PARTITION OF fk FOR VALUES FROM (1) TO (100) PARTITION BY RANGE (a);
+CREATE TABLE fk11 PARTITION OF fk1 FOR VALUES FROM (1) TO (10);
+CREATE TABLE fk12 PARTITION OF fk1 FOR VALUES FROM (10) TO (100);
+ALTER TABLE fk ADD FOREIGN KEY (a) REFERENCES pk ON UPDATE SET DEFAULT ON DELETE SET DEFAULT;
+CREATE TABLE fk_d PARTITION OF fk DEFAULT;
+INSERT INTO fk VALUES (1, 20), (2, 30);
+DELETE FROM pk WHERE a = 20 RETURNING *;
+UPDATE pk SET a = 90 WHERE a = 30 RETURNING *;
+SELECT tableoid::regclass, * FROM fk;
+DROP TABLE fk;
+
+TRUNCATE TABLE pk;
+INSERT INTO pk VALUES (20), (30);
+CREATE TABLE fk (a int DEFAULT 50) PARTITION BY RANGE (a);
+CREATE TABLE fk1 PARTITION OF fk FOR VALUES FROM (1) TO (100) PARTITION BY RANGE (a);
+CREATE TABLE fk11 PARTITION OF fk1 FOR VALUES FROM (1) TO (10);
+CREATE TABLE fk12 PARTITION OF fk1 FOR VALUES FROM (10) TO (100);
+ALTER TABLE fk ADD FOREIGN KEY (a) REFERENCES pk ON UPDATE RESTRICT ON DELETE RESTRICT;
+CREATE TABLE fk_d PARTITION OF fk DEFAULT;
+INSERT INTO fk VALUES (20), (30);
+DELETE FROM pk WHERE a = 20;
+UPDATE pk SET a = 90 WHERE a = 30;
+SELECT tableoid::regclass, * FROM fk;
+DROP TABLE fk;
