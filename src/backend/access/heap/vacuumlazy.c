@@ -1717,6 +1717,7 @@ lazy_vacuum_index(Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.analyze_only = false;
+	ivinfo.report_progress = false;
 	ivinfo.estimated_count = true;
 	ivinfo.message_level = elevel;
 	/* We can only provide an approximate value of num_heap_tuples here */
@@ -1749,6 +1750,7 @@ lazy_cleanup_index(Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.analyze_only = false;
+	ivinfo.report_progress = false;
 	ivinfo.estimated_count = (vacrelstats->tupcount_pages < vacrelstats->rel_pages);
 	ivinfo.message_level = elevel;
 
