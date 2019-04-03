@@ -814,18 +814,20 @@ SELECT *
 FROM access_log
 WHERE url = '/index.html' AND client_ip = inet '212.78.10.32';
 </programlisting>
-    A query that cannot use this index is:
+    Here the query's IP address is covered by the partial index.  The
+    following query cannot use the partial index, as it uses an IP address
+    that is excluded from the index:
 <programlisting>
 SELECT *
 FROM access_log
-WHERE client_ip = inet '192.168.100.23';
+WHERE url = '/index.html' AND client_ip = inet '192.168.100.23';
 </programlisting>
    </para>
 
    <para>
     Observe that this kind of partial index requires that the common
     values be predetermined, so such partial indexes are best used for
-    data distributions that do not change.  The indexes can be recreated
+    data distributions that do not change.  Such indexes can be recreated
     occasionally to adjust for new data distributions, but this adds
     maintenance effort.
    </para>
