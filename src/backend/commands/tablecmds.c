@@ -8619,7 +8619,7 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 									 "fkey",
 									 RelationGetNamespace(partRel), NIL);
 		else
-			fkconstraint->conname = NameStr(constrForm->conname);
+			fkconstraint->conname = pstrdup(NameStr(constrForm->conname));
 		fkconstraint->fk_upd_action = constrForm->confupdtype;
 		fkconstraint->fk_del_action = constrForm->confdeltype;
 		fkconstraint->deferrable = constrForm->condeferrable;
