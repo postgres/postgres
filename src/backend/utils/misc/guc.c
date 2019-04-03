@@ -3378,8 +3378,8 @@ static struct config_real ConfigureNamesReal[] =
 
 	{
 		{"log_statement_sample_rate", PGC_SUSET, LOGGING_WHEN,
-			gettext_noop("Fraction of statements over log_min_duration_statement to log."),
-			gettext_noop("If you only want a sample, use a value between 0 (never "
+			gettext_noop("Fraction of statements exceeding log_min_duration_statement to be logged."),
+			gettext_noop("If you only want a sample, use a value between 0.0 (never "
 						 "log) and 1.0 (always log).")
 		},
 		&log_statement_sample_rate,

@@ -5821,11 +5821,12 @@ local0.*    /var/log/postgresql
          Causes the duration of each completed statement to be logged
          if the statement ran for at least the specified number of
          milliseconds, modulated by <varname>log_statement_sample_rate</varname>.
-         Setting this to zero prints all statement durations. Minus-one (the default)
-         disables logging statement durations. For example, if you set it to
-         <literal>250ms</literal> then all SQL statements that run 250ms or longer
-         will be logged. Enabling this parameter can be helpful in tracking down
-         unoptimized queries in your applications.
+         Setting this to zero prints all statement durations.
+         <literal>-1</literal> (the default) disables logging statements due to
+         exceeding duration threshold; for example, if you set it to
+         <literal>250ms</literal>, then all SQL statements that run 250ms or
+         longer will be logged. Enabling this parameter can be helpful in
+         tracking down unoptimized queries in your applications.
          Only superusers can change this setting.
         </para>
 
@@ -5859,14 +5860,15 @@ local0.*    /var/log/postgresql
       </term>
        <listitem>
         <para>
-         Determines the fraction of the statements that exceed
-         <xref linkend="guc-log-min-duration-statement"/> which to log.
-         The default is <literal>1</literal>, meaning log to all such
+         Determines the fraction of statements that exceed
+         <xref linkend="guc-log-min-duration-statement"/> to be logged.
+         The default is <literal>1</literal>, meaning log all such
          statements.
-         Setting this to zero disables logging, same as setting
-         <varname>log_min_duration_statement</varname>
-         to minus-one. <varname>log_statement_sample_rate</varname>
-         is helpful when the traffic is too high to log all queries.
+         Setting this to zero disables logging by duration, same as setting
+         <varname>log_min_duration_statement</varname> to
+         <literal>-1</literal>.
+         <varname>log_statement_sample_rate</varname> is helpful when the
+         traffic is too high to log all queries.
         </para>
        </listitem>
       </varlistentry>
@@ -6144,7 +6146,7 @@ local0.*    /var/log/postgresql
 
        <note>
         <para>
-         The difference between setting this option and setting
+         The difference between enabling <varname>log_duration</varname> and setting
          <xref linkend="guc-log-min-duration-statement"/> to zero is that
          exceeding <varname>log_min_duration_statement</varname> forces the text of
          the query to be logged, but this option doesn't.  Thus, if
