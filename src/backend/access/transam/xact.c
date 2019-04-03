@@ -264,6 +264,9 @@ static char *prepareGID;
  */
 static bool forceSyncCommit = false;
 
+/* Flag for logging statements in a transaction. */
+bool		xact_is_sampled = false;
+
 /*
  * Private context for transaction-abort work --- we reserve space for this
  * at startup to ensure that AbortTransaction and AbortSubTransaction can work
@@ -1902,6 +1905,11 @@ StartTransaction(void)
 	 */
 	s->state = TRANS_START;
 	s->fullTransactionId = InvalidFullTransactionId;	/* until assigned */
+
+	/* Determine if statements are logged in this transaction */
+	xact_is_sampled = log_xact_sample_rate != 0 &&
+		(log_xact_sample_rate == 1 ||
+		 random() <= log_xact_sample_rate * MAX_RANDOM_VALUE);
 
 	/*
 	 * initialize current transaction state fields

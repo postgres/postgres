@@ -55,6 +55,9 @@ extern PGDLLIMPORT int XactIsoLevel;
 extern bool DefaultXactReadOnly;
 extern bool XactReadOnly;
 
+/* flag for logging statements in this transaction */
+extern bool xact_is_sampled;
+
 /*
  * Xact is deferrable -- only meaningful (currently) for read only
  * SERIALIZABLE transactions

@@ -2194,6 +2194,8 @@ check_log_statement(List *stmt_list)
  * check_log_duration
  *		Determine whether current command's duration should be logged.
  *		If log_statement_sample_rate < 1.0, log only a sample.
+ *		We also check if this statement in this transaction must be logged
+ *		(regardless of its duration).
  *
  * Returns:
  *		0 if no logging is needed
@@ -2209,7 +2211,7 @@ check_log_statement(List *stmt_list)
 int
 check_log_duration(char *msec_str, bool was_logged)
 {
-	if (log_duration || log_min_duration_statement >= 0)
+	if (log_duration || log_min_duration_statement >= 0 || xact_is_sampled)
 	{
 		long		secs;
 		int			usecs;
@@ -2243,11 +2245,11 @@ check_log_duration(char *msec_str, bool was_logged)
 			(log_statement_sample_rate == 1 ||
 			 random() <= log_statement_sample_rate * MAX_RANDOM_VALUE);
 
-		if ((exceeded && in_sample) || log_duration)
+		if ((exceeded && in_sample) || log_duration || xact_is_sampled)
 		{
 			snprintf(msec_str, 32, "%ld.%03d",
 					 secs * 1000 + msecs, usecs % 1000);
-			if (exceeded && !was_logged)
+			if ((exceeded || xact_is_sampled) && !was_logged)
 				return 2;
 			else
 				return 1;

@@ -495,6 +495,10 @@
 					# log_min_duration_statement. 1.0 logs all statements,
 					# 0 never logs.
 
+#log_transaction_sample_rate = 0.0	# Fraction of transactions whose statements
+					# are logged regardless of their duration. 1.0 logs all
+					# statements from all transactions, 0.0 never logs.
+
 # - What to Log -
 
 #debug_print_parse = off
