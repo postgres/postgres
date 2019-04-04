@@ -552,16 +552,21 @@ submake-generated-headers:
 #
 # Testing support
 
-PL_TESTDB = pl_regression
-CONTRIB_TESTDB = contrib_regression
-ifneq ($(MODULE_big),)
-  CONTRIB_TESTDB_MODULE = contrib_regression_$(MODULE_big)
-else
-  ifneq ($(MODULES),)
-    CONTRIB_TESTDB_MODULE = contrib_regression_$(MODULES)
+ifneq ($(USE_MODULE_DB),)
+  PL_TESTDB = pl_regression_$(NAME)
+  # Replace this with $(or ...) if we ever require GNU make 3.81.
+  ifneq ($(MODULE_big),)
+    CONTRIB_TESTDB=contrib_regression_$(MODULE_big)
   else
-    CONTRIB_TESTDB_MODULE = contrib_regression
+    ifneq ($(MODULES),)
+      CONTRIB_TESTDB=contrib_regression_$(word 1,$(MODULES))
+    else
+      CONTRIB_TESTDB=contrib_regression_$(word 1,$(REGRESS))
+    endif
   endif
+else
+  PL_TESTDB = pl_regression
+  CONTRIB_TESTDB = contrib_regression
 endif
 
 ifdef NO_LOCALE

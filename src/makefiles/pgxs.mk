@@ -252,12 +252,7 @@ distclean maintainer-clean: clean
 
 ifdef REGRESS
 
-# Select database to use for running the tests
-ifneq ($(USE_MODULE_DB),)
-  REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB_MODULE)
-else
-  REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB)
-endif
+REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB)
 
 # When doing a VPATH build, must copy over the data files so that the
 # driver script can find them.  We have to use an absolute path for
