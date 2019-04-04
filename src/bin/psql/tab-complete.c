@@ -1039,6 +1039,7 @@ static const char *const table_storage_parameters[] = {
 	"toast.log_autovacuum_min_duration",
 	"toast_tuple_target",
 	"user_catalog_table",
+	"vacuum_index_cleanup",
 	NULL
 };
 
@@ -3443,8 +3444,9 @@ psql_completion(const char *text, int start, int end)
 		 */
 		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
 			COMPLETE_WITH("FULL", "FREEZE", "ANALYZE", "VERBOSE",
-						  "DISABLE_PAGE_SKIPPING", "SKIP_LOCKED");
-		else if (TailMatches("FULL|FREEZE|ANALYZE|VERBOSE|DISABLE_PAGE_SKIPPING|SKIP_LOCKED"))
+						  "DISABLE_PAGE_SKIPPING", "SKIP_LOCKED",
+						  "INDEX_CLEANUP");
+		else if (TailMatches("FULL|FREEZE|ANALYZE|VERBOSE|DISABLE_PAGE_SKIPPING|SKIP_LOCKED|INDEX_CLEANUP"))
 			COMPLETE_WITH("ON", "OFF");
 	}
 	else if (HeadMatches("VACUUM") && TailMatches("("))

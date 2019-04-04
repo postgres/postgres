@@ -76,6 +76,7 @@ static void vac_truncate_clog(TransactionId frozenXID,
 				  TransactionId lastSaneFrozenXid,
 				  MultiXactId lastSaneMinMulti);
 static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params);
+static VacOptTernaryValue get_vacopt_ternary_value(DefElem *def);
 
 /*
  * Primary entry point for manual VACUUM and ANALYZE commands
@@ -94,6 +95,9 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	bool full = false;
 	bool disable_page_skipping = false;
 	ListCell	*lc;
+
+	/* Set default value */
+	params.index_cleanup = VACOPT_TERNARY_DEFAULT;
 
 	/* Parse options list */
 	foreach(lc, vacstmt->options)
@@ -120,6 +124,8 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 			full = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "disable_page_skipping") == 0)
 			disable_page_skipping = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "index_cleanup") == 0)
+			params.index_cleanup = get_vacopt_ternary_value(opt);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1719,6 +1725,16 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	onerelid = onerel->rd_lockInfo.lockRelId;
 	LockRelationIdForSession(&onerelid, lmode);
 
+	/* Set index cleanup option based on reloptions if not yet */
+	if (params->index_cleanup == VACOPT_TERNARY_DEFAULT)
+	{
+		if (onerel->rd_options == NULL ||
+			((StdRdOptions *) onerel->rd_options)->vacuum_index_cleanup)
+			params->index_cleanup = VACOPT_TERNARY_ENABLED;
+		else
+			params->index_cleanup = VACOPT_TERNARY_DISABLED;
+	}
+
 	/*
 	 * Remember the relation's TOAST relation for later, if the caller asked
 	 * us to process it.  In VACUUM FULL, though, the toast table is
@@ -1898,4 +1914,16 @@ vacuum_delay_point(void)
 		/* Might have gotten an interrupt while sleeping */
 		CHECK_FOR_INTERRUPTS();
 	}
+}
+
+/*
+ * A wrapper function of defGetBoolean().
+ *
+ * This function returns VACOPT_TERNARY_ENABLED and VACOPT_TERNARY_DISABLED
+ * instead of true and false.
+ */
+static VacOptTernaryValue
+get_vacopt_ternary_value(DefElem *def)
+{
+	return defGetBoolean(def) ? VACOPT_TERNARY_ENABLED : VACOPT_TERNARY_DISABLED;
 }

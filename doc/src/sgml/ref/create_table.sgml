@@ -1390,6 +1390,21 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
+    <term><literal>vacuum_index_cleanup</literal> (<type>boolean</type>)</term>
+    <listitem>
+     <para>
+      Enables or disables index cleanup when <command>VACUUM</command> is
+      run on this table.  The default value is <literal>true</literal>.
+      Disabling index cleanup can speed up <command>VACUUM</command> very
+      significantly, but may also lead to severely bloated indexes if table
+      modifications are frequent.  The <literal>INDEX_CLEANUP</literal>
+      parameter to <xref linkend="sql-vacuum"/>, if specified, overrides
+      the value of this option.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>autovacuum_vacuum_threshold</literal>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</type>)</term>
     <listitem>
      <para>

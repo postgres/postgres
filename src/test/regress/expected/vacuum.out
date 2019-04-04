@@ -80,6 +80,14 @@ CONTEXT:  SQL function "do_analyze" statement 1
 SQL function "wrap_do_analyze" statement 1
 VACUUM FULL vactst;
 VACUUM (DISABLE_PAGE_SKIPPING) vaccluster;
+-- INDEX_CLEANUP option
+CREATE TABLE no_index_cleanup (i INT PRIMARY KEY) WITH (vacuum_index_cleanup = false);
+VACUUM (INDEX_CLEANUP FALSE) vaccluster;
+VACUUM (INDEX_CLEANUP FALSE) vactst; -- index cleanup option is ignored if no indexes
+VACUUM (INDEX_CLEANUP FALSE, FREEZE TRUE) vaccluster;
+-- index cleanup option is ignored if VACUUM FULL
+VACUUM (INDEX_CLEANUP TRUE, FULL TRUE) no_index_cleanup;
+VACUUM (FULL TRUE) no_index_cleanup;
 -- partitioned table
 CREATE TABLE vacparted (a int, b char) PARTITION BY LIST (a);
 CREATE TABLE vacparted1 PARTITION OF vacparted FOR VALUES IN (1);
@@ -136,6 +144,7 @@ ANALYZE (SKIP_LOCKED) vactst;
 DROP TABLE vaccluster;
 DROP TABLE vactst;
 DROP TABLE vacparted;
+DROP TABLE no_index_cleanup;
 -- relation ownership, WARNING logs generated as all are skipped.
 CREATE TABLE vacowned (a int);
 CREATE TABLE vacowned_parted (a int) PARTITION BY LIST (a);
