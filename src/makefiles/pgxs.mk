@@ -256,12 +256,7 @@ distclean maintainer-clean: clean
 
 ifdef REGRESS
 
-# Select database to use for running the tests
-ifneq ($(USE_MODULE_DB),)
-  REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB_MODULE)
-else
-  REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB)
-endif
+REGRESS_OPTS += --dbname=$(CONTRIB_TESTDB)
 
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
