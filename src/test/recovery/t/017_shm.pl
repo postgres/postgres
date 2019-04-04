@@ -38,7 +38,7 @@ if (!$PostgresNode::use_tcp)
 			"port${port}_holder",
 			port     => $port,
 			own_host => 1);
-		$port_holder->init;
+		$port_holder->init(hba_permit_replication => 0);
 		$port_holder->start;
 		# Match the AddToDataDirLockFile() call in sysv_shmem.c.  Assume all
 		# systems not using sysv_shmem.c do use TCP.
