@@ -270,13 +270,6 @@ extern void be_tls_get_peer_issuer_name(Port *port, char *ptr, size_t len);
 extern void be_tls_get_peer_serial(Port *port, char *ptr, size_t len);
 
 /*
- * Return information about the GSSAPI authenticated connection
- */
-extern bool be_gssapi_get_auth(Port *port);
-extern bool be_gssapi_get_enc(Port *port);
-extern const char *be_gssapi_get_princ(Port *port);
-
-/*
  * Get the server certificate hash for SCRAM channel binding type
  * tls-server-end-point.
  *
@@ -294,6 +287,13 @@ extern char *be_tls_get_certificate_hash(Port *port, size_t *len);
 #endif	/* USE_SSL */
 
 #ifdef ENABLE_GSS
+/*
+ * Return information about the GSSAPI authenticated connection
+ */
+extern bool be_gssapi_get_auth(Port *port);
+extern bool be_gssapi_get_enc(Port *port);
+extern const char *be_gssapi_get_princ(Port *port);
+
 /* Read and write to a GSSAPI-encrypted connection. */
 extern ssize_t be_gssapi_read(Port *port, void *ptr, size_t len);
 extern ssize_t be_gssapi_write(Port *port, void *ptr, size_t len);
