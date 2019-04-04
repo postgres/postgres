@@ -6285,6 +6285,7 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	/* Build RelOptInfo */
 	rel = build_simple_rel(root, 1, NULL);
 
+	/* Rels are assumed already locked by the caller */
 	heap = table_open(tableOid, NoLock);
 	index = index_open(indexOid, NoLock);
 

@@ -1031,7 +1031,7 @@ Datum
 gin_clean_pending_list(PG_FUNCTION_ARGS)
 {
 	Oid			indexoid = PG_GETARG_OID(0);
-	Relation	indexRel = index_open(indexoid, AccessShareLock);
+	Relation	indexRel = index_open(indexoid, RowExclusiveLock);
 	IndexBulkDeleteResult stats;
 	GinState	ginstate;
 
@@ -1068,7 +1068,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 	initGinState(&ginstate, indexRel);
 	ginInsertCleanup(&ginstate, true, true, true, &stats);
 
-	index_close(indexRel, AccessShareLock);
+	index_close(indexRel, RowExclusiveLock);
 
 	PG_RETURN_INT64((int64) stats.pages_deleted);
 }

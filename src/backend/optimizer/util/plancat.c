@@ -162,8 +162,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	if (hasindex)
 	{
 		List	   *indexoidlist;
-		ListCell   *l;
 		LOCKMODE	lmode;
+		ListCell   *l;
 
 		indexoidlist = RelationGetIndexList(relation);
 
@@ -172,13 +172,10 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 		 * need, and do not release it.  This saves a couple of trips to the
 		 * shared lock manager while not creating any real loss of
 		 * concurrency, because no schema changes could be happening on the
-		 * index while we hold lock on the parent rel, and neither lock type
-		 * blocks any other kind of index operation.
+		 * index while we hold lock on the parent rel, and no lock type used
+		 * for queries blocks any other kind of index operation.
 		 */
-		if (rel->relid == root->parse->resultRelation)
-			lmode = RowExclusiveLock;
-		else
-			lmode = AccessShareLock;
+		lmode = root->simple_rte_array[varno]->rellockmode;
 
 		foreach(l, indexoidlist)
 		{
@@ -592,8 +589,8 @@ infer_arbiter_indexes(PlannerInfo *root)
 	OnConflictExpr *onconflict = root->parse->onConflict;
 
 	/* Iteration state */
+	RangeTblEntry *rte;
 	Relation	relation;
-	Oid			relationObjectId;
 	Oid			indexOidFromConstraint = InvalidOid;
 	List	   *indexList;
 	ListCell   *l;
@@ -620,10 +617,9 @@ infer_arbiter_indexes(PlannerInfo *root)
 	 * the rewriter or when expand_inherited_rtentry() added it to the query's
 	 * rangetable.
 	 */
-	relationObjectId = rt_fetch(root->parse->resultRelation,
-								root->parse->rtable)->relid;
+	rte = rt_fetch(root->parse->resultRelation, root->parse->rtable);
 
-	relation = table_open(relationObjectId, NoLock);
+	relation = table_open(rte->relid, NoLock);
 
 	/*
 	 * Build normalized/BMS representation of plain indexed attributes, as
@@ -687,15 +683,14 @@ infer_arbiter_indexes(PlannerInfo *root)
 		ListCell   *el;
 
 		/*
-		 * Extract info from the relation descriptor for the index.  We know
-		 * that this is a target, so get lock type it is known will ultimately
-		 * be required by the executor.
+		 * Extract info from the relation descriptor for the index.  Obtain
+		 * the same lock type that the executor will ultimately use.
 		 *
 		 * Let executor complain about !indimmediate case directly, because
 		 * enforcement needs to occur there anyway when an inference clause is
 		 * omitted.
 		 */
-		idxRel = index_open(indexoid, RowExclusiveLock);
+		idxRel = index_open(indexoid, rte->rellockmode);
 		idxForm = idxRel->rd_index;
 
 		if (!idxForm->indisvalid)

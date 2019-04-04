@@ -5187,11 +5187,10 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 
 			/*
 			 * Open the table and index so we can read from them.  We should
-			 * already have at least AccessShareLock on the table, but not
-			 * necessarily on the index.
+			 * already have some type of lock on each.
 			 */
 			heapRel = table_open(rte->relid, NoLock);
-			indexRel = index_open(index->indexoid, AccessShareLock);
+			indexRel = index_open(index->indexoid, NoLock);
 
 			/* extract index key information from the index's pg_index info */
 			indexInfo = BuildIndexInfo(indexRel);
@@ -5305,7 +5304,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			/* Clean everything up */
 			ExecDropSingleTupleTableSlot(slot);
 
-			index_close(indexRel, AccessShareLock);
+			index_close(indexRel, NoLock);
 			table_close(heapRel, NoLock);
 
 			MemoryContextSwitchTo(oldcontext);
@@ -6472,9 +6471,10 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 */
 	if (!index->hypothetical)
 	{
-		indexRel = index_open(index->indexoid, AccessShareLock);
+		/* Lock should have already been obtained in plancat.c */
+		indexRel = index_open(index->indexoid, NoLock);
 		ginGetStats(indexRel, &ginStats);
-		index_close(indexRel, AccessShareLock);
+		index_close(indexRel, NoLock);
 	}
 	else
 	{
@@ -6781,11 +6781,12 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 							  &spc_seq_page_cost);
 
 	/*
-	 * Obtain some data from the index itself.
+	 * Obtain some data from the index itself.  A lock should have already
+	 * been obtained on the index in plancat.c.
 	 */
-	indexRel = index_open(index->indexoid, AccessShareLock);
+	indexRel = index_open(index->indexoid, NoLock);
 	brinGetStats(indexRel, &statsData);
-	index_close(indexRel, AccessShareLock);
+	index_close(indexRel, NoLock);
 
 	/*
 	 * Compute index correlation
