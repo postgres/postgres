@@ -375,6 +375,17 @@ SELECT tableoid::regclass, * FROM p2;
 (3 rows)
 
 DROP TABLE pt;
+-- generated column tests
+CREATE FOREIGN TABLE gft1 (a int, b text, c text GENERATED ALWAYS AS ('foo') STORED) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/list1.csv', delimiter ',');
+SELECT a, c FROM gft1;
+ a |   c    
+---+--------
+ 1 | _null_
+ 1 | _null_
+(2 rows)
+
+DROP FOREIGN TABLE gft1;
 -- privilege tests
 SET ROLE regress_file_fdw_superuser;
 SELECT * FROM agg_text ORDER BY a;

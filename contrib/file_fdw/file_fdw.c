@@ -922,6 +922,10 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 			/* Skip dropped attributes (probably shouldn't see any here). */
 			if (attr->attisdropped)
 				continue;
+			/* Skip generated columns (COPY won't accept them in the column
+			 * list) */
+			if (attr->attgenerated)
+				continue;
 			*columns = lappend(*columns, makeString(pstrdup(attname)));
 		}
 	}
