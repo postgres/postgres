@@ -70,6 +70,9 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 						 (O_RANDOM | O_SEQUENTIAL | O_TEMPORARY) |
 						 _O_SHORT_LIVED | O_DSYNC | O_DIRECT |
 						 (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
+#ifndef FRONTEND
+	Assert(pgwin32_signal_event != NULL);	/* small chance of pg_usleep() */
+#endif
 
 #ifdef FRONTEND
 

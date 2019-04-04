@@ -52,6 +52,7 @@ static BOOL WINAPI pg_console_handler(DWORD dwCtrlType);
 void
 pg_usleep(long microsec)
 {
+	Assert(pgwin32_signal_event != NULL);
 	if (WaitForSingleObject(pgwin32_signal_event,
 							(microsec < 500 ? 1 : (microsec + 500) / 1000))
 		== WAIT_OBJECT_0)
@@ -108,6 +109,7 @@ pgwin32_dispatch_queued_signals(void)
 {
 	int			exec_mask;
 
+	Assert(pgwin32_signal_event != NULL);
 	EnterCriticalSection(&pg_signal_crit_sec);
 	while ((exec_mask = UNBLOCKED_SIGNAL_QUEUE()) != 0)
 	{
@@ -209,6 +211,7 @@ pgwin32_create_signal_listener(pid_t pid)
 void
 pg_queue_signal(int signum)
 {
+	Assert(pgwin32_signal_event != NULL);
 	if (signum >= PG_SIGNAL_COUNT || signum <= 0)
 		return;
 
