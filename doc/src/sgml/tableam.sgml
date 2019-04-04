@@ -1,0 +1,110 @@
+<!-- doc/src/sgml/tableam.sgml -->
+
+<chapter id="tableam">
+ <title>Table Access Method Interface Definition</title>
+
+ <indexterm>
+  <primary>Table Access Method</primary>
+ </indexterm>
+ <indexterm>
+  <primary>tableam</primary>
+  <secondary>Table Access Method</secondary>
+ </indexterm>
+
+ <para>
+  This chapter explains the interface between the core
+  <productname>PostgreSQL</productname> system and <firstterm>table access
+  methods</firstterm>, which manage the storage for tables. The core system
+  knows little about these access methods beyond what is specified here, so
+  it is possible to develop entirely new access method types by writing
+  add-on code.
+ </para>
+
+ <para>
+  Each table access method is described by a row in the <link
+  linkend="catalog-pg-am"><structname>pg_am</structname></link> system
+  catalog. The <structname>pg_am</structname> entry specifies a name and a
+  <firstterm>handler function</firstterm> for the table access method.  These
+  entries can be created and deleted using the <xref
+  linkend="sql-create-access-method"/> and <xref
+  linkend="sql-drop-access-method"/> SQL commands.
+ </para>
+
+ <para>
+  A table access method handler function must be declared to accept a single
+  argument of type <type>internal</type> and to return the pseudo-type
+  <type>table_am_handler</type>.  The argument is a dummy value that simply
+  serves to prevent handler functions from being called directly from SQL commands.
+
+  The result of the function must be a pointer to a struct of type
+  <structname>TableAmRoutine</structname>, which contains everything that the
+  core code needs to know to make use of the table access method. The return
+  value needs to be of server lifetime, which is typically achieved by
+  defining it as a <literal>static const</literal> variable in global
+  scope. The <structname>TableAmRoutine</structname> struct, also called the
+  access method's <firstterm>API struct</firstterm>, defines the behavior of
+  the access method using callbacks. These callbacks are pointers to plain C
+  functions and are not visible or callable at the SQL level. All the
+  callbacks and their behavior is defined in the
+  <structname>TableAmRoutine</structname> structure (with comments inside the
+  struct defining the requirements for callbacks). Most callbacks have
+  wrapper functions, which are documented for the point of view of a user,
+  rather than an implementor, of the table access method.  For details,
+  please refer to the <ulink url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/include/access/tableam.h;hb=HEAD">
+  <filename>src/include/access/tableam.h</filename></ulink> file.
+ </para>
+
+ <para>
+  To implement a access method, an implementor will typically need to
+  implement a AM specific type of tuple table slot (see
+  <ulink url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/include/executor/tuptable.h;hb=HEAD">
+   <filename>src/include/executor/tuptable.h</filename></ulink>) which allows
+   code outside the access method to hold references to tuples of the AM, and
+   to access the columns of the tuple.
+ </para>
+
+ <para>
+  Currently the the way an AM actually stores data is fairly
+  unconstrained. It is e.g. possible to use postgres' shared buffer cache,
+  but not required. In case shared buffers are used, it likely makes to
+  postgres' standard page layout described in <xref
+  linkend="storage-page-layout"/>.
+ </para>
+
+ <para>
+  One fairly large constraint of the table access method API is that,
+  currently, if the AM wants to support modifications and/or indexes, it is
+  necessary that each tuple has a tuple identifier (<acronym>TID</acronym>)
+  consisting of a block number and an item number (see also <xref
+  linkend="storage-page-layout"/>).  It is not strictly necessary that the
+  sub-parts of <acronym>TIDs</acronym> have the same meaning they e.g. have
+  for <literal>heap</literal>, but if bitmap scan support is desired (it is
+  optional), the block number needs to provide locality.
+ </para>
+
+ <para>
+  For crash safety an AM can use postgres' <link
+  linkend="wal"><acronym>WAL</acronym></link>, or a custom approach can be
+  implemented.  If <acronym>WAL</acronym> is chosen, either <link
+  linkend="generic-wal">Generic WAL Records</link> can be used &mdash; which
+  implies higher WAL volume but is easy, or a new type of
+  <acronym>WAL</acronym> records can be implemented &mdash; but that
+  currently requires modifications of core code (namely modifying
+  <filename>src/include/access/rmgrlist.h</filename>).
+ </para>
+
+ <para>
+  To implement transactional support in a manner that allows different table
+  access methods be accessed within a single transaction, it likely is
+  necessary to closely integrate with the machinery in
+  <filename>src/backend/access/transam/xlog.c</filename>.
+ </para>
+
+ <para>
+  Any developer of a new <literal>table access method</literal> can refer to
+  the existing <literal>heap</literal> implementation present in
+  <filename>src/backend/heap/heapam_handler.c</filename> for more details of
+  how it is implemented.
+ </para>
+
+</chapter>

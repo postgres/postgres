@@ -7294,6 +7294,23 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-default-table-access-method" xreflabel="default_table_access_method">
+      <term><varname>default_table_access_method</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>default_table_access_method</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter specifies the default table access method to use when
+        creating tables or materialized views if the <command>CREATE</command>
+        command does not explicitly specify an access method, or when
+        <command>SELECT ... INTO</command> is used, which does not allow to
+        specify a table access method. The default is <literal>heap</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-default-tablespace" xreflabel="default_tablespace">
       <term><varname>default_tablespace</varname> (<type>string</type>)
       <indexterm>

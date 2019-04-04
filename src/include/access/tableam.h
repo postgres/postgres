@@ -9,6 +9,9 @@
  *
  * src/include/access/tableam.h
  *
+ * NOTES
+ *		See tableam.sgml for higher level documentation.
+ *
  *-------------------------------------------------------------------------
  */
 #ifndef TABLEAM_H

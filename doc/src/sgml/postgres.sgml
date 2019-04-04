@@ -250,6 +250,7 @@
   &tablesample-method;
   &custom-scan;
   &geqo;
+  &tableam;
   &indexam;
   &generic-wal;
   &btree;

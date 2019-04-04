@@ -3,6 +3,14 @@
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
 
+ <indexterm>
+  <primary>Index Access Method</primary>
+ </indexterm>
+ <indexterm>
+  <primary>indexam</primary>
+  <secondary>Index Access Method</secondary>
+ </indexterm>
+
   <para>
    This chapter defines the interface between the core
    <productname>PostgreSQL</productname> system and <firstterm>index access
@@ -50,8 +58,8 @@
    Each index access method is described by a row in the
    <link linkend="catalog-pg-am"><structname>pg_am</structname></link>
    system catalog.  The <structname>pg_am</structname> entry
-   specifies a name and a <firstterm>handler function</firstterm> for the access
-   method.  These entries can be created and deleted using the
+   specifies a name and a <firstterm>handler function</firstterm> for the index
+   access method.  These entries can be created and deleted using the
    <xref linkend="sql-create-access-method"/> and
    <xref linkend="sql-drop-access-method"/> SQL commands.
   </para>

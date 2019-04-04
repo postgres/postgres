@@ -587,8 +587,9 @@
    The catalog <structname>pg_am</structname> stores information about
    relation access methods.  There is one row for each access method supported
    by the system.
-   Currently, only indexes have access methods.  The requirements for index
-   access methods are discussed in detail in <xref linkend="indexam"/>.
+   Currently, only table and indexes have access methods. The requirements for table
+   and index access methods are discussed in detail in <xref linkend="tableam"/> and
+   <xref linkend="indexam"/> respectively.
   </para>
 
   <table>
@@ -634,8 +635,8 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Currently always <literal>i</literal> to indicate an index access
-       method; other values may be allowed in future
+       <literal>t</literal> = table (including materialized views),
+       <literal>i</literal> = index.
       </entry>
      </row>
     </tbody>

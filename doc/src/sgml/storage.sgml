@@ -189,6 +189,14 @@ there.
 </para>
 
 <para>
+ Note that the following sections describe the way the builtin
+ <literal>heap</literal> <link linkend="tableam">table access method</link>,
+ and the builtin <link linkend="indexam">index access methods</link> work. Due
+ to the extensible nature of <productname>PostgreSQL</productname> other types
+ of access method might work similar or not.
+</para>
+
+<para>
 Each table and index is stored in a separate file.  For ordinary relations,
 these files are named after the table or index's <firstterm>filenode</firstterm> number,
 which can be found in <structname>pg_class</structname>.<structfield>relfilenode</structfield>. But
@@ -695,10 +703,11 @@ erased (they will be recreated automatically as needed).
 This section provides an overview of the page format used within
 <productname>PostgreSQL</productname> tables and indexes.<footnote>
   <para>
-    Actually, index access methods need not use this page format.
-    All the existing index methods do use this basic format,
-    but the data kept on index metapages usually doesn't follow
-    the item layout rules.
+    Actually, neither table nor index access methods need not use this page
+    format.  All the existing index methods do use this basic format, but the
+    data kept on index metapages usually doesn't follow the item layout
+    rules. The <literal>heap</literal> table access method also always uses
+    this format.
   </para>
 </footnote>
 Sequences and <acronym>TOAST</acronym> tables are formatted just like a regular table.
