@@ -1001,6 +1001,21 @@ DROP TABLE this_table_does_not_exist;
 \echo 'last error message:' :LAST_ERROR_MESSAGE
 \echo 'last error code:' :LAST_ERROR_SQLSTATE
 
+-- nondefault verbosity error settings (except verbose, which is too unstable)
+\set VERBOSITY terse
+SELECT 1 UNION;
+\echo 'error:' :ERROR
+\echo 'error code:' :SQLSTATE
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+
+\set VERBOSITY sqlstate
+SELECT 1/0;
+\echo 'error:' :ERROR
+\echo 'error code:' :SQLSTATE
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+
+\set VERBOSITY default
+
 -- working \gdesc
 SELECT 3 AS three, 4 AS four \gdesc
 \echo 'error:' :ERROR

@@ -3652,7 +3652,7 @@ psql_completion(const char *text, int start, int end)
 		else if (TailMatchesCS("SHOW_CONTEXT"))
 			COMPLETE_WITH_CS("never", "errors", "always");
 		else if (TailMatchesCS("VERBOSITY"))
-			COMPLETE_WITH_CS("default", "verbose", "terse");
+			COMPLETE_WITH_CS("default", "verbose", "terse", "sqlstate");
 	}
 	else if (TailMatchesCS("\\sf*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_routines, NULL);

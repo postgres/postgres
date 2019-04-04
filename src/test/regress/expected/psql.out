@@ -4491,6 +4491,26 @@ number of rows: 0
 last error message: table "this_table_does_not_exist" does not exist
 \echo 'last error code:' :LAST_ERROR_SQLSTATE
 last error code: 42P01
+-- nondefault verbosity error settings (except verbose, which is too unstable)
+\set VERBOSITY terse
+SELECT 1 UNION;
+ERROR:  syntax error at or near ";" at character 15
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 42601
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: syntax error at or near ";"
+\set VERBOSITY sqlstate
+SELECT 1/0;
+ERROR:  22012
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 22012
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: division by zero
+\set VERBOSITY default
 -- working \gdesc
 SELECT 3 AS three, 4 AS four \gdesc
  Column |  Type   

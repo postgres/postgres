@@ -1017,6 +1017,24 @@ pqBuildErrorMessage3(PQExpBuffer msg, const PGresult *res,
 	val = PQresultErrorField(res, PG_DIAG_SEVERITY);
 	if (val)
 		appendPQExpBuffer(msg, "%s:  ", val);
+
+	if (verbosity == PQERRORS_SQLSTATE)
+	{
+		/*
+		 * If we have a SQLSTATE, print that and nothing else.  If not (which
+		 * shouldn't happen for server-generated errors, but might possibly
+		 * happen for libpq-generated ones), fall back to TERSE format, as
+		 * that seems better than printing nothing at all.
+		 */
+		val = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+		if (val)
+		{
+			appendPQExpBuffer(msg, "%s\n", val);
+			return;
+		}
+		verbosity = PQERRORS_TERSE;
+	}
+
 	if (verbosity == PQERRORS_VERBOSE)
 	{
 		val = PQresultErrorField(res, PG_DIAG_SQLSTATE);
