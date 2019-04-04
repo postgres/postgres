@@ -21,6 +21,7 @@
 #include "lib/ilist.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
+#include "storage/md.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
@@ -60,11 +61,7 @@ typedef struct f_smgr
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
 								  BlockNumber nblocks);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
-	void		(*smgr_pre_ckpt) (void);	/* may be NULL */
-	void		(*smgr_sync) (void);	/* may be NULL */
-	void		(*smgr_post_ckpt) (void);	/* may be NULL */
 } f_smgr;
-
 
 static const f_smgr smgrsw[] = {
 	/* magnetic disk */
@@ -83,14 +80,10 @@ static const f_smgr smgrsw[] = {
 		.smgr_nblocks = mdnblocks,
 		.smgr_truncate = mdtruncate,
 		.smgr_immedsync = mdimmedsync,
-		.smgr_pre_ckpt = mdpreckpt,
-		.smgr_sync = mdsync,
-		.smgr_post_ckpt = mdpostckpt
 	}
 };
 
 static const int NSmgr = lengthof(smgrsw);
-
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
@@ -703,52 +696,6 @@ void
 smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
 	smgrsw[reln->smgr_which].smgr_immedsync(reln, forknum);
-}
-
-
-/*
- *	smgrpreckpt() -- Prepare for checkpoint.
- */
-void
-smgrpreckpt(void)
-{
-	int			i;
-
-	for (i = 0; i < NSmgr; i++)
-	{
-		if (smgrsw[i].smgr_pre_ckpt)
-			smgrsw[i].smgr_pre_ckpt();
-	}
-}
-
-/*
- *	smgrsync() -- Sync files to disk during checkpoint.
- */
-void
-smgrsync(void)
-{
-	int			i;
-
-	for (i = 0; i < NSmgr; i++)
-	{
-		if (smgrsw[i].smgr_sync)
-			smgrsw[i].smgr_sync();
-	}
-}
-
-/*
- *	smgrpostckpt() -- Post-checkpoint cleanup.
- */
-void
-smgrpostckpt(void)
-{
-	int			i;
-
-	for (i = 0; i < NSmgr; i++)
-	{
-		if (smgrsw[i].smgr_post_ckpt)
-			smgrsw[i].smgr_post_ckpt();
-	}
 }
 
 /*

@@ -54,6 +54,18 @@ extern PGDLLIMPORT bool data_sync_retry;
  */
 extern int	max_safe_fds;
 
+/*
+ * On Windows, we have to interpret EACCES as possibly meaning the same as
+ * ENOENT, because if a file is unlinked-but-not-yet-gone on that platform,
+ * that's what you get.  Ugh.  This code is designed so that we don't
+ * actually believe these cases are okay without further evidence (namely,
+ * a pending fsync request getting canceled ... see ProcessSyncRequests).
+ */
+#ifndef WIN32
+#define FILE_POSSIBLY_DELETED(err)	((err) == ENOENT)
+#else
+#define FILE_POSSIBLY_DELETED(err)	((err) == ENOENT || (err) == EACCES)
+#endif
 
 /*
  * prototypes for functions in fd.c

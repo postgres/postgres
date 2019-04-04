@@ -54,6 +54,7 @@
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/ipc.h"
+#include "storage/md.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -941,11 +942,11 @@ dropdb(const char *dbname, bool missing_ok)
 	 * worse, it will delete files that belong to a newly created database
 	 * with the same OID.
 	 */
-	ForgetDatabaseFsyncRequests(db_id);
+	ForgetDatabaseSyncRequests(db_id);
 
 	/*
 	 * Force a checkpoint to make sure the checkpointer has received the
-	 * message sent by ForgetDatabaseFsyncRequests. On Windows, this also
+	 * message sent by ForgetDatabaseSyncRequests. On Windows, this also
 	 * ensures that background procs don't hold any open files, which would
 	 * cause rmdir() to fail.
 	 */
@@ -2150,7 +2151,7 @@ dbase_redo(XLogReaderState *record)
 		DropDatabaseBuffers(xlrec->db_id);
 
 		/* Also, clean out any fsync requests that might be pending in md.c */
-		ForgetDatabaseFsyncRequests(xlrec->db_id);
+		ForgetDatabaseSyncRequests(xlrec->db_id);
 
 		/* Clean out the xlog relcache too */
 		XLogDropDatabase(xlrec->db_id);
