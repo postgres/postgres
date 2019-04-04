@@ -347,6 +347,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 	 * This also saves the binary search bounds in insertstate.  We use them
 	 * in the fastpath below, but also in the _bt_findinsertloc() call later.
 	 */
+	Assert(!insertstate->bounds_valid);
 	offset = _bt_binsrch_insert(rel, insertstate);
 
 	/*
@@ -447,7 +448,8 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 					 * check, then don't bother checking if the tuple is being
 					 * updated in another transaction. Just return the fact
 					 * that it is a potential conflict and leave the full
-					 * check till later.
+					 * check till later. Don't invalidate binary search
+					 * bounds.
 					 */
 					if (checkUnique == UNIQUE_CHECK_PARTIAL)
 					{
@@ -470,6 +472,8 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 							_bt_relbuf(rel, nbuf);
 						/* Tell _bt_doinsert to wait... */
 						*speculativeToken = SnapshotDirty.speculativeToken;
+						/* Caller releases lock on buf immediately */
+						insertstate->bounds_valid = false;
 						return xwait;
 					}
 
@@ -526,6 +530,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 						_bt_relbuf(rel, nbuf);
 					_bt_relbuf(rel, insertstate->buf);
 					insertstate->buf = InvalidBuffer;
+					insertstate->bounds_valid = false;
 
 					{
 						Datum		values[INDEX_MAX_KEYS];
@@ -601,6 +606,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 			}
 			maxoff = PageGetMaxOffsetNumber(page);
 			offset = P_FIRSTDATAKEY(opaque);
+			/* Don't invalidate binary search bounds */
 		}
 	}
 
