@@ -306,6 +306,13 @@ main(int argc, char **argv)
 		exit_nicely(1);
 	}
 
+	/* Complain if neither -f nor -d was specified (except if dumping TOC) */
+	if (!opts->dbname && !opts->filename && !opts->tocSummary)
+	{
+		pg_log_error("one of -d/--dbname and -f/--file must be specified");
+		exit_nicely(1);
+	}
+
 	/* Should get at most one of -d and -f, else user is confused */
 	if (opts->dbname)
 	{
@@ -461,7 +468,7 @@ usage(const char *progname)
 
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -d, --dbname=NAME        connect to database name\n"));
-	printf(_("  -f, --file=FILENAME      output file name\n"));
+	printf(_("  -f, --file=FILENAME      output file name (- for stdout)\n"));
 	printf(_("  -F, --format=c|d|t       backup file format (should be automatic)\n"));
 	printf(_("  -l, --list               print summarized TOC of the archive\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
