@@ -675,6 +675,7 @@ PGSharedMemoryCreate(Size size, int port,
 								(unsigned long) shmid),
 						 errhint("Terminate any old server processes associated with data directory \"%s\".",
 								 DataDir)));
+				break;
 			case SHMSTATE_ENOENT:
 
 				/*
@@ -706,6 +707,7 @@ PGSharedMemoryCreate(Size size, int port,
 					dsm_cleanup_using_control_segment(oldhdr->dsm_control);
 				if (shmctl(shmid, IPC_RMID, NULL) < 0)
 					NextShmemSegID++;
+				break;
 		}
 
 		if (oldhdr && shmdt(oldhdr) < 0)
