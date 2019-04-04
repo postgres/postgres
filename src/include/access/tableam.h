@@ -350,6 +350,10 @@ typedef struct TableAmRoutine
 											   uint32 specToken,
 											   bool succeeded);
 
+	/* see table_multi_insert() for reference about parameters */
+	void		(*multi_insert) (Relation rel, TupleTableSlot **slots, int nslots,
+								 CommandId cid, int options, struct BulkInsertStateData *bistate);
+
 	/* see table_delete() for reference about parameters */
 	TM_Result	(*tuple_delete) (Relation rel,
 								 ItemPointer tid,
@@ -1075,6 +1079,28 @@ table_complete_speculative(Relation rel, TupleTableSlot *slot,
 {
 	rel->rd_tableam->tuple_complete_speculative(rel, slot, specToken,
 												succeeded);
+}
+
+/*
+ * Insert multiple tuple into a table.
+ *
+ * This is like table_insert(), but inserts multiple tuples in one
+ * operation. That's often faster than calling table_insert() in a loop,
+ * because e.g. the AM can reduce WAL logging and page locking overhead.
+ *
+ * Except for taking `nslots` tuples as input, as an array of TupleTableSlots
+ * in `slots`, the parameters for table_multi_insert() are the same as for
+ * table_insert().
+ *
+ * Note: this leaks memory into the current memory context. You can create a
+ * temporary context before calling this, if that's a problem.
+ */
+static inline void
+table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
+				   CommandId cid, int options, struct BulkInsertStateData *bistate)
+{
+	rel->rd_tableam->multi_insert(rel, slots, nslots,
+								  cid, options, bistate);
 }
 
 /*

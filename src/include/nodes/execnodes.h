@@ -40,6 +40,7 @@ struct ExprState;
 struct ExprContext;
 struct RangeTblEntry;			/* avoid including parsenodes.h here */
 struct ExprEvalStep;			/* avoid including execExpr.h everywhere */
+struct CopyMultiInsertBuffer;
 
 
 /* ----------------
@@ -481,6 +482,9 @@ typedef struct ResultRelInfo
 
 	/* Additional information specific to partition tuple routing */
 	struct PartitionRoutingInfo *ri_PartitionInfo;
+
+	/* For use by copy.c when performing multi-inserts */
+	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
 } ResultRelInfo;
 
 /* ----------------

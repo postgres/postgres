@@ -402,6 +402,9 @@ ConversionLocation
 ConvertRowtypeExpr
 CookedConstraint
 CopyDest
+CopyInsertMethod
+CopyMultiInsertBuffer
+CopyMultiInsertInfo
 CopyState
 CopyStateData
 CopyStmt

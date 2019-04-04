@@ -947,6 +947,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		partRelInfo->ri_FdwRoutine->BeginForeignInsert(mtstate, partRelInfo);
 
 	partRelInfo->ri_PartitionInfo = partrouteinfo;
+	partRelInfo->ri_CopyMultiInsertBuffer = NULL;
 
 	/*
 	 * Keep track of it in the PartitionTupleRouting->partitions array.
