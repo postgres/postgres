@@ -109,14 +109,9 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  *
  * Create a shared memory segment of the given size and initialize its
  * standard header.
- *
- * makePrivate means to always create a new segment, rather than attach to
- * or recycle any existing segment. On win32, we always create a new segment,
- * since there is no need for recycling (segments go away automatically
- * when the last backend exits)
  */
 PGShmemHeader *
-PGSharedMemoryCreate(Size size, bool makePrivate, int port,
+PGSharedMemoryCreate(Size size, int port,
 					 PGShmemHeader **shim)
 {
 	void	   *memAddress;
