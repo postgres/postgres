@@ -13,11 +13,6 @@ plan tests => 6;
 my $tempdir = TestLib::tempdir;
 my $port;
 
-# When using Unix sockets, we can dictate the port number.  In the absence of
-# collisions from other shmget() activity, gnat starts with key 0x7d001
-# (512001), and flea starts with key 0x7d002 (512002).
-$port = 512 unless $PostgresNode::use_tcp;
-
 # Log "ipcs" diffs on a best-effort basis, swallowing any error.
 my $ipcs_before = "$tempdir/ipcs_before";
 eval { run_log [ 'ipcs', '-am' ], '>', $ipcs_before; };
@@ -26,6 +21,33 @@ sub log_ipcs
 {
 	eval { run_log [ 'ipcs', '-am' ], '|', [ 'diff', $ipcs_before, '-' ] };
 	return;
+}
+
+# With Unix sockets, choose a port number such that the port number's first
+# IpcMemoryKey candidate is available.  If multiple copies of this test run
+# concurrently, they will pick different ports.  In the absence of collisions
+# from other shmget() activity, gnat starts with key 0x7d001 (512001), and
+# flea starts with key 0x7d002 (512002).  With TCP, the first get_new_node
+# picks a port number.
+my $port_holder;
+if (!$PostgresNode::use_tcp)
+{
+	for ($port = 512; $port < 612; ++$port)
+	{
+		$port_holder = PostgresNode->get_new_node(
+			"port${port}_holder",
+			port     => $port,
+			own_host => 1);
+		$port_holder->init;
+		$port_holder->start;
+		# Match the AddToDataDirLockFile() call in sysv_shmem.c.  Assume all
+		# systems not using sysv_shmem.c do use TCP.
+		my $shmem_key_line_prefix = sprintf("%9lu ", 1 + $port * 1000);
+		last
+		  if slurp_file($port_holder->data_dir . '/postmaster.pid') =~
+		  /^$shmem_key_line_prefix/m;
+		$port_holder->stop;
+	}
 }
 
 # Node setup.
@@ -125,6 +147,7 @@ poll_start($gnat);       # recycle second key
 
 $gnat->stop;
 $flea->stop;
+$port_holder->stop if $port_holder;
 log_ipcs();
 
 
