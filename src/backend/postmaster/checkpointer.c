@@ -279,6 +279,8 @@ CheckpointerMain(void)
 			CheckpointerShmem->ckpt_done = CheckpointerShmem->ckpt_started;
 			SpinLockRelease(&CheckpointerShmem->ckpt_lck);
 
+			ConditionVariableBroadcast(&CheckpointerShmem->done_cv);
+
 			ckpt_active = false;
 		}
 
