@@ -277,7 +277,6 @@ typedef struct CopyMultiInsertInfo
 	List	   *multiInsertBuffers; /* List of tracked CopyMultiInsertBuffers */
 	int			bufferedTuples; /* number of tuples buffered over all buffers */
 	int			bufferedBytes;	/* number of bytes from all buffered tuples */
-	int			nbuffers;		/* number of buffers we're tracking */
 	CopyState	cstate;			/* Copy state for this CopyMultiInsertInfo */
 	EState	   *estate;			/* Executor state used for COPY */
 	CommandId	mycid;			/* Command Id used for COPY */
@@ -2393,7 +2392,6 @@ CopyMultiInsertInfoInit(CopyMultiInsertInfo *miinfo, ResultRelInfo *rri,
 	miinfo->multiInsertBuffers = NIL;
 	miinfo->bufferedTuples = 0;
 	miinfo->bufferedBytes = 0;
-	miinfo->nbuffers = 0;
 	miinfo->cstate = cstate;
 	miinfo->estate = estate;
 	miinfo->mycid = mycid;
