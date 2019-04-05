@@ -956,6 +956,12 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	 * Now decide what we need to emit.  We may run under a hostile
 	 * search_path, so qualify EVERY name.  Note there will be a leading "^("
 	 * in the patterns in any case.
+	 *
+	 * We want the regex matches to use the database's default collation where
+	 * collation-sensitive behavior is required (for example, which characters
+	 * match '\w').  That happened by default before PG v12, but if the server
+	 * is >= v12 then we need to force it through explicit COLLATE clauses,
+	 * otherwise the "C" collation attached to "name" catalog columns wins.
 	 */
 	if (namebuf.len > 2)
 	{
@@ -971,16 +977,22 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 				appendPQExpBuffer(buf,
 								  "(%s OPERATOR(pg_catalog.~) ", namevar);
 				appendStringLiteralConn(buf, namebuf.data, conn);
+				if (PQserverVersion(conn) >= 120000)
+					appendPQExpBufferStr(buf, " COLLATE pg_catalog.default");
 				appendPQExpBuffer(buf,
 								  "\n        OR %s OPERATOR(pg_catalog.~) ",
 								  altnamevar);
 				appendStringLiteralConn(buf, namebuf.data, conn);
+				if (PQserverVersion(conn) >= 120000)
+					appendPQExpBufferStr(buf, " COLLATE pg_catalog.default");
 				appendPQExpBufferStr(buf, ")\n");
 			}
 			else
 			{
 				appendPQExpBuffer(buf, "%s OPERATOR(pg_catalog.~) ", namevar);
 				appendStringLiteralConn(buf, namebuf.data, conn);
+				if (PQserverVersion(conn) >= 120000)
+					appendPQExpBufferStr(buf, " COLLATE pg_catalog.default");
 				appendPQExpBufferChar(buf, '\n');
 			}
 		}
@@ -997,6 +1009,8 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 			WHEREAND();
 			appendPQExpBuffer(buf, "%s OPERATOR(pg_catalog.~) ", schemavar);
 			appendStringLiteralConn(buf, schemabuf.data, conn);
+			if (PQserverVersion(conn) >= 120000)
+				appendPQExpBufferStr(buf, " COLLATE pg_catalog.default");
 			appendPQExpBufferChar(buf, '\n');
 		}
 	}
