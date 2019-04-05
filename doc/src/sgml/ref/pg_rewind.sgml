@@ -155,10 +155,12 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies a libpq connection string to connect to the source
-        <productname>PostgreSQL</productname> server to synchronize the target with.
-        The connection must be a normal (non-replication) connection
-        with superuser access. This option requires the source
-        server to be running and not in recovery mode.
+        <productname>PostgreSQL</productname> server to synchronize the target
+        with. The connection must be a normal (non-replication) connection
+        with a role having sufficient permissions to execute the functions
+        used by <application>pg_rewind</application> on the source server
+        (see Notes section for details) or a superuser role.  This option
+        requires the source server to be running and not in recovery mode.
        </para>
       </listitem>
      </varlistentry>
@@ -245,6 +247,30 @@ PostgreSQL documentation
 
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   When executing <application>pg_rewind</application> using an online
+   cluster as source, a role having sufficient permissions to execute the
+   functions used by <application>pg_rewind</application> on the source
+   cluster can be used instead of a superuser.  Here is how to create such
+   a role, named <literal>rewind_user</literal> here:
+<programlisting>
+CREATE USER rewind_user LOGIN;
+GRANT EXECUTE ON function pg_catalog.pg_ls_dir(text, boolean, boolean) TO rewind_user;
+GRANT EXECUTE ON function pg_catalog.pg_stat_file(text, boolean) TO rewind_user;
+GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text) TO rewind_user;
+GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, boolean) TO rewind_user;
+</programlisting>  
+  </para>
+
+  <para>
+   When executing <application>pg_rewind</application> using an online
+   cluster as source which has been recently promoted, it is necessary
+   to execute a <command>CHECKPOINT</command> after promotion so as its
+   control file reflects up-to-date timeline information, which is used by
+   <application>pg_rewind</application> to check if the target cluster
+   can be rewound using the designated source cluster.
+  </para>
 
   <refsect2>
    <title>How it works</title>
