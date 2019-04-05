@@ -1616,7 +1616,6 @@ extern void table_block_parallelscan_startblock_init(Relation rel,
  */
 
 extern const TableAmRoutine *GetTableAmRoutine(Oid amhandler);
-extern const TableAmRoutine *GetTableAmRoutineByAmId(Oid amoid);
 extern const TableAmRoutine *GetHeapamTableAmRoutine(void);
 extern bool check_default_table_access_method(char **newval, void **extra,
 								  GucSource source);

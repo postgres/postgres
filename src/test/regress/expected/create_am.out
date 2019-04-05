@@ -3,6 +3,11 @@
 --
 -- Make gist2 over gisthandler. In fact, it would be a synonym to gist.
 CREATE ACCESS METHOD gist2 TYPE INDEX HANDLER gisthandler;
+-- Verify return type checks for handlers
+CREATE ACCESS METHOD bogus TYPE INDEX HANDLER int4in;
+ERROR:  function int4in(internal) does not exist
+CREATE ACCESS METHOD bogus TYPE INDEX HANDLER heap_tableam_handler;
+ERROR:  function heap_tableam_handler must return type index_am_handler
 -- Try to create gist2 index on fast_emp4000: fail because opclass doesn't exist
 CREATE INDEX grect2ind2 ON fast_emp4000 USING gist2 (home_base);
 ERROR:  data type box has no default operator class for access method "gist2"
@@ -102,8 +107,24 @@ NOTICE:  drop cascades to index grect2ind2
 --
 -- Test table access methods
 --
+-- prevent empty values
+SET default_table_access_method = '';
+ERROR:  invalid value for parameter "default_table_access_method": ""
+DETAIL:  default_table_access_method may not be empty.
+-- prevent nonexistant values
+SET default_table_access_method = 'I do not exist AM';
+ERROR:  invalid value for parameter "default_table_access_method": "I do not exist AM"
+DETAIL:  Table access method "I do not exist AM" does not exist.
+-- prevent setting it to an index AM
+SET default_table_access_method = 'btree';
+ERROR:  access method "btree" is not of type TABLE
 -- Create a heap2 table am handler with heapam handler
 CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler;
+-- Verify return type checks for handlers
+CREATE ACCESS METHOD bogus TYPE TABLE HANDLER int4in;
+ERROR:  function int4in(internal) does not exist
+CREATE ACCESS METHOD bogus TYPE TABLE HANDLER bthandler;
+ERROR:  function bthandler must return type table_am_handler
 SELECT amname, amhandler, amtype FROM pg_am where amtype = 't' ORDER BY 1, 2;
  amname |      amhandler       | amtype 
 --------+----------------------+--------
@@ -253,6 +274,18 @@ ORDER BY 3, 1, 2;
 
 -- don't want to keep those tables, nor the default
 ROLLBACK;
+-- Third, check that we can neither create a table using a nonexistant
+-- AM, nor using an index AM
+CREATE TABLE i_am_a_failure() USING "";
+ERROR:  zero-length delimited identifier at or near """"
+LINE 1: CREATE TABLE i_am_a_failure() USING "";
+                                            ^
+CREATE TABLE i_am_a_failure() USING i_do_not_exist_am;
+ERROR:  access method "i_do_not_exist_am" does not exist
+CREATE TABLE i_am_a_failure() USING "I do not exist AM";
+ERROR:  access method "I do not exist AM" does not exist
+CREATE TABLE i_am_a_failure() USING "btree";
+ERROR:  access method "btree" is not of type TABLE
 -- Drop table access method, which fails as objects depends on it
 DROP ACCESS METHOD heap2;
 ERROR:  cannot drop access method heap2 because other objects depend on it

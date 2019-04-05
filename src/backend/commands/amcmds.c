@@ -190,6 +190,16 @@ get_index_am_oid(const char *amname, bool missing_ok)
 }
 
 /*
+ * get_table_am_oid - given an access method name, look up its OID
+ *		and verify it corresponds to an table AM.
+ */
+Oid
+get_table_am_oid(const char *amname, bool missing_ok)
+{
+	return get_am_type_oid(amname, AMTYPE_TABLE, missing_ok);
+}
+
+/*
  * get_am_oid - given an access method name, look up its OID.
  *		The type is not checked.
  */

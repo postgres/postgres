@@ -156,6 +156,7 @@ extern Datum transformGenericOptions(Oid catalogId,
 extern ObjectAddress CreateAccessMethod(CreateAmStmt *stmt);
 extern void RemoveAccessMethodById(Oid amOid);
 extern Oid	get_index_am_oid(const char *amname, bool missing_ok);
+extern Oid	get_table_am_oid(const char *amname, bool missing_ok);
 extern Oid	get_am_oid(const char *amname, bool missing_ok);
 extern char *get_am_name(Oid amOid);
 

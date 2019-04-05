@@ -5,6 +5,11 @@
 -- Make gist2 over gisthandler. In fact, it would be a synonym to gist.
 CREATE ACCESS METHOD gist2 TYPE INDEX HANDLER gisthandler;
 
+-- Verify return type checks for handlers
+CREATE ACCESS METHOD bogus TYPE INDEX HANDLER int4in;
+CREATE ACCESS METHOD bogus TYPE INDEX HANDLER heap_tableam_handler;
+
+
 -- Try to create gist2 index on fast_emp4000: fail because opclass doesn't exist
 CREATE INDEX grect2ind2 ON fast_emp4000 USING gist2 (home_base);
 
@@ -72,10 +77,25 @@ DROP ACCESS METHOD gist2 CASCADE;
 -- Test table access methods
 --
 
+-- prevent empty values
+SET default_table_access_method = '';
+
+-- prevent nonexistant values
+SET default_table_access_method = 'I do not exist AM';
+
+-- prevent setting it to an index AM
+SET default_table_access_method = 'btree';
+
+
 -- Create a heap2 table am handler with heapam handler
 CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler;
 
+-- Verify return type checks for handlers
+CREATE ACCESS METHOD bogus TYPE TABLE HANDLER int4in;
+CREATE ACCESS METHOD bogus TYPE TABLE HANDLER bthandler;
+
 SELECT amname, amhandler, amtype FROM pg_am where amtype = 't' ORDER BY 1, 2;
+
 
 -- First create tables employing the new AM using USING
 
@@ -177,6 +197,13 @@ ORDER BY 3, 1, 2;
 
 -- don't want to keep those tables, nor the default
 ROLLBACK;
+
+-- Third, check that we can neither create a table using a nonexistant
+-- AM, nor using an index AM
+CREATE TABLE i_am_a_failure() USING "";
+CREATE TABLE i_am_a_failure() USING i_do_not_exist_am;
+CREATE TABLE i_am_a_failure() USING "I do not exist AM";
+CREATE TABLE i_am_a_failure() USING "btree";
 
 -- Drop table access method, which fails as objects depends on it
 DROP ACCESS METHOD heap2;

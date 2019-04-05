@@ -832,22 +832,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			 relkind == RELKIND_MATVIEW)
 		accessMethod = default_table_access_method;
 
-	/*
-	 * look up the access method, verify it can handle the requested features
-	 */
+	/* look up the access method, verify it is for a table */
 	if (accessMethod != NULL)
-	{
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(AMNAME, PointerGetDatum(accessMethod));
-		if (!HeapTupleIsValid(tuple))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("table access method \"%s\" does not exist",
-								 accessMethod)));
-		accessMethodId = ((Form_pg_am) GETSTRUCT(tuple))->oid;
-		ReleaseSysCache(tuple);
-	}
+		accessMethodId = get_table_am_oid(accessMethod, false);
 
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in
