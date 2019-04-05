@@ -88,9 +88,12 @@ RequestAddinShmemSpace(Size size)
  * through the same code as before.  (Note that the called routines mostly
  * check IsUnderPostmaster, rather than EXEC_BACKEND, to detect this case.
  * This is a bit code-wasteful and could be cleaned up.)
+ *
+ * If "makePrivate" is true then we only need private memory, not shared
+ * memory.  This is true for a standalone backend, false for a postmaster.
  */
 void
-CreateSharedMemoryAndSemaphores(int port)
+CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 {
 	PGShmemHeader *shim = NULL;
 
@@ -163,7 +166,7 @@ CreateSharedMemoryAndSemaphores(int port)
 		/*
 		 * Create the shmem segment
 		 */
-		seghdr = PGSharedMemoryCreate(size, port, &shim);
+		seghdr = PGSharedMemoryCreate(size, makePrivate, port, &shim);
 
 		InitShmemAccess(seghdr);
 
@@ -184,9 +187,12 @@ CreateSharedMemoryAndSemaphores(int port)
 	{
 		/*
 		 * We are reattaching to an existing shared memory segment. This
-		 * should only be reached in the EXEC_BACKEND case.
+		 * should only be reached in the EXEC_BACKEND case, and even then only
+		 * with makePrivate == false.
 		 */
-#ifndef EXEC_BACKEND
+#ifdef EXEC_BACKEND
+		Assert(!makePrivate);
+#else
 		elog(PANIC, "should be attached to shared memory already");
 #endif
 	}
