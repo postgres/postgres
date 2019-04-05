@@ -840,6 +840,19 @@ ExecSetTupleBound(int64 tuples_needed, PlanState *child_node)
 			sortState->bound = tuples_needed;
 		}
 	}
+	else if (IsA(child_node, AppendState))
+	{
+		/*
+		 * If it is an Append, we can apply the bound to any nodes that are
+		 * children of the Append, since the Append surely need read no more
+		 * than that many tuples from any one input.
+		 */
+		AppendState *aState = (AppendState *) child_node;
+		int			i;
+
+		for (i = 0; i < aState->as_nplans; i++)
+			ExecSetTupleBound(tuples_needed, aState->appendplans[i]);
+	}
 	else if (IsA(child_node, MergeAppendState))
 	{
 		/*

@@ -775,15 +775,15 @@ drop table boolp;
 --
 set enable_seqscan = off;
 set enable_sort = off;
-create table ma_test (a int) partition by range (a);
+create table ma_test (a int, b int) partition by range (a);
 create table ma_test_p1 partition of ma_test for values from (0) to (10);
 create table ma_test_p2 partition of ma_test for values from (10) to (20);
 create table ma_test_p3 partition of ma_test for values from (20) to (30);
-insert into ma_test select x from generate_series(0,29) t(x);
-create index on ma_test (a);
+insert into ma_test select x,x from generate_series(0,29) t(x);
+create index on ma_test (b);
 
 analyze ma_test;
-prepare mt_q1 (int) as select * from ma_test where a >= $1 and a % 10 = 5 order by a;
+prepare mt_q1 (int) as select a from ma_test where a >= $1 and a % 10 = 5 order by b;
 
 -- Execute query 5 times to allow choose_custom_plan
 -- to start considering a generic plan.
@@ -804,7 +804,7 @@ execute mt_q1(35);
 deallocate mt_q1;
 
 -- ensure initplan params properly prune partitions
-explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(a) from ma_test_p2) order by a;
+explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(b) from ma_test_p2) order by b;
 
 reset enable_seqscan;
 reset enable_sort;

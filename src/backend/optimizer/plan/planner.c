@@ -1721,7 +1721,8 @@ inheritance_planner(PlannerInfo *root)
 
 		/* Make a dummy path, cf set_dummy_rel_pathlist() */
 		dummy_path = (Path *) create_append_path(NULL, final_rel, NIL, NIL,
-												 NULL, 0, false, NIL, -1);
+												 NIL, NULL, 0, false,
+												 NIL, -1);
 
 		/* These lists must be nonempty to make a valid ModifyTable node */
 		subpaths = list_make1(dummy_path);
@@ -4002,6 +4003,7 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 			create_append_path(root,
 							   grouped_rel,
 							   paths,
+							   NIL,
 							   NIL,
 							   NULL,
 							   0,

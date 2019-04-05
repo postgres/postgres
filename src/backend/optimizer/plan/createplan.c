@@ -205,8 +205,6 @@ static NamedTuplestoreScan *make_namedtuplestorescan(List *qptlist, List *qpqual
 						 Index scanrelid, char *enrname);
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
-static Append *make_append(List *appendplans, int first_partial_plan,
-			List *tlist, PartitionPruneInfo *partpruneinfo);
 static RecursiveUnion *make_recursive_union(List *tlist,
 					 Plan *lefttree,
 					 Plan *righttree,
@@ -1060,10 +1058,16 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 {
 	Append	   *plan;
 	List	   *tlist = build_path_tlist(root, &best_path->path);
+	List	   *pathkeys = best_path->path.pathkeys;
 	List	   *subplans = NIL;
 	ListCell   *subpaths;
 	RelOptInfo *rel = best_path->path.parent;
 	PartitionPruneInfo *partpruneinfo = NULL;
+	int			nodenumsortkeys = 0;
+	AttrNumber *nodeSortColIdx = NULL;
+	Oid		   *nodeSortOperators = NULL;
+	Oid		   *nodeCollations = NULL;
+	bool	   *nodeNullsFirst = NULL;
 
 	/*
 	 * The subpaths list could be empty, if every child was proven empty by
@@ -1089,6 +1093,37 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 		return plan;
 	}
 
+	/*
+	 * Otherwise build an Append plan.  Note that if there's just one child,
+	 * the Append is pretty useless; but we wait till setrefs.c to get rid of
+	 * it.  Doing so here doesn't work because the varno of the child scan
+	 * plan won't match the parent-rel Vars it'll be asked to emit.
+	 *
+	 * We don't have the actual creation of the Append node split out into a
+	 * separate make_xxx function.  This is because we want to run
+	 * prepare_sort_from_pathkeys on it before we do so on the individual
+	 * child plans, to make cross-checking the sort info easier.
+	 */
+	plan = makeNode(Append);
+	plan->plan.targetlist = tlist;
+	plan->plan.qual = NIL;
+	plan->plan.lefttree = NULL;
+	plan->plan.righttree = NULL;
+
+	if (pathkeys != NIL)
+	{
+		/* Compute sort column info, and adjust the Append's tlist as needed */
+		(void) prepare_sort_from_pathkeys((Plan *) plan, pathkeys,
+										  best_path->path.parent->relids,
+										  NULL,
+										  true,
+										  &nodenumsortkeys,
+										  &nodeSortColIdx,
+										  &nodeSortOperators,
+										  &nodeCollations,
+										  &nodeNullsFirst);
+	}
+
 	/* Build the plan for each child */
 	foreach(subpaths, best_path->subpaths)
 	{
@@ -1097,6 +1132,63 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 
 		/* Must insist that all children return the same tlist */
 		subplan = create_plan_recurse(root, subpath, CP_EXACT_TLIST);
+
+		/*
+		 * For ordered Appends, we must insert a Sort node if subplan isn't
+		 * sufficiently ordered.
+		 */
+		if (pathkeys != NIL)
+		{
+			int			numsortkeys;
+			AttrNumber *sortColIdx;
+			Oid		   *sortOperators;
+			Oid		   *collations;
+			bool	   *nullsFirst;
+
+			/*
+			 * Compute sort column info, and adjust subplan's tlist as needed.
+			 * We must apply prepare_sort_from_pathkeys even to subplans that
+			 * don't need an explicit sort, to make sure they are returning
+			 * the same sort key columns the Append expects.
+			 */
+			subplan = prepare_sort_from_pathkeys(subplan, pathkeys,
+												 subpath->parent->relids,
+												 nodeSortColIdx,
+												 false,
+												 &numsortkeys,
+												 &sortColIdx,
+												 &sortOperators,
+												 &collations,
+												 &nullsFirst);
+
+			/*
+			 * Check that we got the same sort key information.  We just
+			 * Assert that the sortops match, since those depend only on the
+			 * pathkeys; but it seems like a good idea to check the sort
+			 * column numbers explicitly, to ensure the tlists match up.
+			 */
+			Assert(numsortkeys == nodenumsortkeys);
+			if (memcmp(sortColIdx, nodeSortColIdx,
+					   numsortkeys * sizeof(AttrNumber)) != 0)
+				elog(ERROR, "Append child's targetlist doesn't match Append");
+			Assert(memcmp(sortOperators, nodeSortOperators,
+						  numsortkeys * sizeof(Oid)) == 0);
+			Assert(memcmp(collations, nodeCollations,
+						  numsortkeys * sizeof(Oid)) == 0);
+			Assert(memcmp(nullsFirst, nodeNullsFirst,
+						  numsortkeys * sizeof(bool)) == 0);
+
+			/* Now, insert a Sort node if subplan isn't sufficiently ordered */
+			if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
+			{
+				Sort	   *sort = make_sort(subplan, numsortkeys,
+											 sortColIdx, sortOperators,
+											 collations, nullsFirst);
+
+				label_sort_with_costsize(root, sort, best_path->limit_tuples);
+				subplan = (Plan *) sort;
+			}
+		}
 
 		subplans = lappend(subplans, subplan);
 	}
@@ -1133,15 +1225,9 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 										 prunequal);
 	}
 
-	/*
-	 * And build the Append plan.  Note that if there's just one child, the
-	 * Append is pretty useless; but we wait till setrefs.c to get rid of it.
-	 * Doing so here doesn't work because the varno of the child scan plan
-	 * won't match the parent-rel Vars it'll be asked to emit.
-	 */
-
-	plan = make_append(subplans, best_path->first_partial_path,
-					   tlist, partpruneinfo);
+	plan->appendplans = subplans;
+	plan->first_partial_plan = best_path->first_partial_path;
+	plan->part_prune_info = partpruneinfo;
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -1266,7 +1352,6 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 
 		if (best_path->path.param_info)
 		{
-
 			List	   *prmquals = best_path->path.param_info->ppi_clauses;
 
 			prmquals = extract_actual_clauses(prmquals, false);
@@ -5297,23 +5382,6 @@ make_foreignscan(List *qptlist,
 	/* fsSystemCol will be filled in by create_foreignscan_plan */
 	node->fsSystemCol = false;
 
-	return node;
-}
-
-static Append *
-make_append(List *appendplans, int first_partial_plan,
-			List *tlist, PartitionPruneInfo *partpruneinfo)
-{
-	Append	   *node = makeNode(Append);
-	Plan	   *plan = &node->plan;
-
-	plan->targetlist = tlist;
-	plan->qual = NIL;
-	plan->lefttree = NULL;
-	plan->righttree = NULL;
-	node->appendplans = appendplans;
-	node->first_partial_plan = first_partial_plan;
-	node->part_prune_info = partpruneinfo;
 	return node;
 }
 

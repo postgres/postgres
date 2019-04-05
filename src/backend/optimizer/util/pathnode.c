@@ -1203,12 +1203,13 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
  *	  pathnode.
  *
  * Note that we must handle subpaths = NIL, representing a dummy access path.
+ * Also, there are callers that pass root = NULL.
  */
 AppendPath *
 create_append_path(PlannerInfo *root,
 				   RelOptInfo *rel,
 				   List *subpaths, List *partial_subpaths,
-				   Relids required_outer,
+				   List *pathkeys, Relids required_outer,
 				   int parallel_workers, bool parallel_aware,
 				   List *partitioned_rels, double rows)
 {
@@ -1242,6 +1243,7 @@ create_append_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = parallel_aware;
 	pathnode->path.parallel_safe = rel->consider_parallel;
 	pathnode->path.parallel_workers = parallel_workers;
+	pathnode->path.pathkeys = pathkeys;
 	pathnode->partitioned_rels = list_copy(partitioned_rels);
 
 	/*
@@ -1255,12 +1257,28 @@ create_append_path(PlannerInfo *root,
 	 */
 	if (pathnode->path.parallel_aware)
 	{
+		/*
+		 * We mustn't fiddle with the order of subpaths when the Append has
+		 * pathkeys.  The order they're listed in is critical to keeping the
+		 * pathkeys valid.
+		 */
+		Assert(pathkeys == NIL);
+
 		subpaths = list_qsort(subpaths, append_total_cost_compare);
 		partial_subpaths = list_qsort(partial_subpaths,
 									  append_startup_cost_compare);
 	}
 	pathnode->first_partial_path = list_length(subpaths);
 	pathnode->subpaths = list_concat(subpaths, partial_subpaths);
+
+	/*
+	 * Apply query-wide LIMIT if known and path is for sole base relation.
+	 * (Handling this at this low level is a bit klugy.)
+	 */
+	if (root != NULL && bms_equal(rel->relids, root->all_baserels))
+		pathnode->limit_tuples = root->limit_tuples;
+	else
+		pathnode->limit_tuples = -1.0;
 
 	foreach(l, pathnode->subpaths)
 	{
@@ -1278,8 +1296,9 @@ create_append_path(PlannerInfo *root,
 	/*
 	 * If there's exactly one child path, the Append is a no-op and will be
 	 * discarded later (in setrefs.c); therefore, we can inherit the child's
-	 * size, cost, and pathkeys if any.  Otherwise, it's unsorted, and we must
-	 * do the normal costsize calculation.
+	 * size and cost, as well as its pathkeys if any (overriding whatever the
+	 * caller might've said).  Otherwise, we must do the normal costsize
+	 * calculation.
 	 */
 	if (list_length(pathnode->subpaths) == 1)
 	{
@@ -1291,10 +1310,7 @@ create_append_path(PlannerInfo *root,
 		pathnode->path.pathkeys = child->pathkeys;
 	}
 	else
-	{
-		pathnode->path.pathkeys = NIL;	/* unsorted if more than 1 subpath */
 		cost_append(pathnode);
-	}
 
 	/* If the caller provided a row estimate, override the computed value. */
 	if (rows >= 0)
@@ -3759,7 +3775,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 				}
 				return (Path *)
 					create_append_path(root, rel, childpaths, partialpaths,
-									   required_outer,
+									   apath->path.pathkeys, required_outer,
 									   apath->path.parallel_workers,
 									   apath->path.parallel_aware,
 									   apath->partitioned_rels,

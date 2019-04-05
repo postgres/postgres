@@ -862,6 +862,70 @@ partition_bounds_copy(PartitionBoundInfo src,
 }
 
 /*
+ * partitions_are_ordered
+ *		Determine whether the partitions described by 'boundinfo' are ordered,
+ *		that is partitions appearing earlier in the PartitionDesc sequence
+ *		contain partition keys strictly less than those appearing later.
+ *		Also, if NULL values are possible, they must come in the last
+ *		partition defined in the PartitionDesc.
+ *
+ * If out of order, or there is insufficient info to know the order,
+ * then we return false.
+ */
+bool
+partitions_are_ordered(PartitionBoundInfo boundinfo, int nparts)
+{
+	Assert(boundinfo != NULL);
+
+	switch (boundinfo->strategy)
+	{
+		case PARTITION_STRATEGY_RANGE:
+
+			/*
+			 * RANGE-type partitioning guarantees that the partitions can be
+			 * scanned in the order that they're defined in the PartitionDesc
+			 * to provide sequential, non-overlapping ranges of tuples.
+			 * However, if a DEFAULT partition exists then it doesn't work, as
+			 * that could contain tuples from either below or above the
+			 * defined range, or tuples belonging to gaps between partitions.
+			 */
+			if (!partition_bound_has_default(boundinfo))
+				return true;
+			break;
+
+		case PARTITION_STRATEGY_LIST:
+
+			/*
+			 * LIST partitioning can also guarantee ordering, but only if the
+			 * partitions don't accept interleaved values.  We could likely
+			 * check for this by looping over the PartitionBound's indexes
+			 * array to check that the indexes are in order.  For now, let's
+			 * just keep it simple and just accept LIST partitioning when
+			 * there's no DEFAULT partition, exactly one value per partition,
+			 * and optionally a NULL partition that does not accept any other
+			 * values.  Such a NULL partition will come last in the
+			 * PartitionDesc, and the other partitions will be properly
+			 * ordered.  This is a cheap test to make as it does not require
+			 * any per-partition processing.  Maybe we'd like to handle more
+			 * complex cases in the future.
+			 */
+			if (partition_bound_has_default(boundinfo))
+				return false;
+
+			if (boundinfo->ndatums + partition_bound_accepts_nulls(boundinfo)
+				== nparts)
+				return true;
+			break;
+
+		default:
+			/* HASH, or some other strategy */
+			break;
+	}
+
+	return false;
+}
+
+/*
  * check_new_partition_bound
  *
  * Checks if the new partition's bound overlaps any of the existing partitions

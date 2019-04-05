@@ -715,7 +715,6 @@ explain (costs off) select * from mcrparted where abs(b) = 5;	-- scans all parti
 explain (costs off) select * from mcrparted where a > -1;	-- scans all partitions
 explain (costs off) select * from mcrparted where a = 20 and abs(b) = 10 and c > 10;	-- scans mcrparted4
 explain (costs off) select * from mcrparted where a = 20 and c > 20; -- scans mcrparted3, mcrparte4, mcrparte5, mcrparted_def
-drop table mcrparted;
 
 -- check that partitioned table Appends cope with being referenced in
 -- subplans
@@ -726,3 +725,111 @@ insert into parted_minmax values (1,'12345');
 explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
 select min(a), max(a) from parted_minmax where b = '12345';
 drop table parted_minmax;
+
+-- Test code that uses Append nodes in place of MergeAppend when the
+-- partition ordering matches the desired ordering.
+
+create index mcrparted_a_abs_c_idx on mcrparted (a, abs(b), c);
+
+-- MergeAppend must be used when a default partition exists
+explain (costs off) select * from mcrparted order by a, abs(b), c;
+
+drop table mcrparted_def;
+
+-- Append is used for a RANGE partitioned table with no default
+-- and no subpartitions
+explain (costs off) select * from mcrparted order by a, abs(b), c;
+
+-- Append is used with subpaths in reverse order with backwards index scans
+explain (costs off) select * from mcrparted order by a desc, abs(b) desc, c desc;
+
+-- check that Append plan is used containing a MergeAppend for sub-partitions
+-- that are unordered.
+drop table mcrparted5;
+create table mcrparted5 partition of mcrparted for values from (20, 20, 20) to (maxvalue, maxvalue, maxvalue) partition by list (a);
+create table mcrparted5a partition of mcrparted5 for values in(20);
+create table mcrparted5_def partition of mcrparted5 default;
+
+explain (costs off) select * from mcrparted order by a, abs(b), c;
+
+drop table mcrparted5_def;
+
+-- check that an Append plan is used and the sub-partitions are flattened
+-- into the main Append when the sub-partition is unordered but contains
+-- just a single sub-partition.
+explain (costs off) select a, abs(b) from mcrparted order by a, abs(b), c;
+
+-- check that Append is used when the sub-partitioned tables are pruned
+-- during planning.
+explain (costs off) select * from mcrparted where a < 20 order by a, abs(b), c;
+
+create table mclparted (a int) partition by list(a);
+create table mclparted1 partition of mclparted for values in(1);
+create table mclparted2 partition of mclparted for values in(2);
+create index on mclparted (a);
+
+-- Ensure an Append is used for a list partition with an order by.
+explain (costs off) select * from mclparted order by a;
+
+-- Ensure a MergeAppend is used when a partition exists with interleaved
+-- datums in the partition bound.
+create table mclparted3_5 partition of mclparted for values in(3,5);
+create table mclparted4 partition of mclparted for values in(4);
+
+explain (costs off) select * from mclparted order by a;
+
+drop table mclparted;
+
+-- Ensure subplans which don't have a path with the correct pathkeys get
+-- sorted correctly.
+drop index mcrparted_a_abs_c_idx;
+create index on mcrparted1 (a, abs(b), c);
+create index on mcrparted2 (a, abs(b), c);
+create index on mcrparted3 (a, abs(b), c);
+create index on mcrparted4 (a, abs(b), c);
+
+explain (costs off) select * from mcrparted where a < 20 order by a, abs(b), c limit 1;
+
+set enable_bitmapscan = 0;
+-- Ensure Append node can be used when the partition is ordered by some
+-- pathkeys which were deemed redundant.
+explain (costs off) select * from mcrparted where a = 10 order by a, abs(b), c;
+reset enable_bitmapscan;
+
+drop table mcrparted;
+
+-- Ensure LIST partitions allow an Append to be used instead of a MergeAppend
+create table bool_lp (b bool) partition by list(b);
+create table bool_lp_true partition of bool_lp for values in(true);
+create table bool_lp_false partition of bool_lp for values in(false);
+create index on bool_lp (b);
+
+explain (costs off) select * from bool_lp order by b;
+
+drop table bool_lp;
+
+-- Ensure const bool quals can be properly detected as redundant
+create table bool_rp (b bool, a int) partition by range(b,a);
+create table bool_rp_false_1k partition of bool_rp for values from (false,0) to (false,1000);
+create table bool_rp_true_1k partition of bool_rp for values from (true,0) to (true,1000);
+create table bool_rp_false_2k partition of bool_rp for values from (false,1000) to (false,2000);
+create table bool_rp_true_2k partition of bool_rp for values from (true,1000) to (true,2000);
+create index on bool_rp (b,a);
+explain (costs off) select * from bool_rp where b = true order by b,a;
+explain (costs off) select * from bool_rp where b = false order by b,a;
+explain (costs off) select * from bool_rp where b = true order by a;
+explain (costs off) select * from bool_rp where b = false order by a;
+
+drop table bool_rp;
+
+-- Ensure an Append scan is chosen when the partition order is a subset of
+-- the required order.
+create table range_parted (a int, b int, c int) partition by range(a, b);
+create table range_parted1 partition of range_parted for values from (0,0) to (10,10);
+create table range_parted2 partition of range_parted for values from (10,10) to (20,20);
+create index on range_parted (a,b,c);
+
+explain (costs off) select * from range_parted order by a,b,c;
+explain (costs off) select * from range_parted order by a desc,b desc,c desc;
+
+drop table range_parted;

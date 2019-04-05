@@ -18,16 +18,21 @@
 #include "postgres.h"
 
 #include "access/stratnum.h"
+#include "catalog/pg_opfamily.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "partitioning/partbounds.h"
 #include "utils/lsyscache.h"
 
 
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
+static bool matches_boolean_partition_clause(RestrictInfo *rinfo,
+								 RelOptInfo *partrel,
+								 int partkeycol);
 static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 
 
@@ -543,6 +548,165 @@ build_index_pathkeys(PlannerInfo *root,
 		i++;
 	}
 
+	return retval;
+}
+
+/*
+ * partkey_is_bool_constant_for_query
+ *
+ * If a partition key column is constrained to have a constant value by the
+ * query's WHERE conditions, then it's irrelevant for sort-order
+ * considerations.  Usually that means we have a restriction clause
+ * WHERE partkeycol = constant, which gets turned into an EquivalenceClass
+ * containing a constant, which is recognized as redundant by
+ * build_partition_pathkeys().  But if the partition key column is a
+ * boolean variable (or expression), then we are not going to see such a
+ * WHERE clause, because expression preprocessing will have simplified it
+ * to "WHERE partkeycol" or "WHERE NOT partkeycol".  So we are not going
+ * to have a matching EquivalenceClass (unless the query also contains
+ * "ORDER BY partkeycol").  To allow such cases to work the same as they would
+ * for non-boolean values, this function is provided to detect whether the
+ * specified partition key column matches a boolean restriction clause.
+ */
+static bool
+partkey_is_bool_constant_for_query(RelOptInfo *partrel, int partkeycol)
+{
+	PartitionScheme partscheme = partrel->part_scheme;
+	ListCell   *lc;
+
+	/* If the partkey isn't boolean, we can't possibly get a match */
+	if (!IsBooleanOpfamily(partscheme->partopfamily[partkeycol]))
+		return false;
+
+	/* Check each restriction clause for the partitioned rel */
+	foreach(lc, partrel->baserestrictinfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		/* Ignore pseudoconstant quals, they won't match */
+		if (rinfo->pseudoconstant)
+			continue;
+
+		/* See if we can match the clause's expression to the partkey column */
+		if (matches_boolean_partition_clause(rinfo, partrel, partkeycol))
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * matches_boolean_partition_clause
+ *		Determine if the boolean clause described by rinfo matches
+ *		partrel's partkeycol-th partition key column.
+ *
+ * "Matches" can be either an exact match (equivalent to partkey = true),
+ * or a NOT above an exact match (equivalent to partkey = false).
+ */
+static bool
+matches_boolean_partition_clause(RestrictInfo *rinfo,
+								 RelOptInfo *partrel, int partkeycol)
+{
+	Node	   *clause = (Node *) rinfo->clause;
+	Node	   *partexpr = (Node *) linitial(partrel->partexprs[partkeycol]);
+
+	/* Direct match? */
+	if (equal(partexpr, clause))
+		return true;
+	/* NOT clause? */
+	else if (is_notclause(clause))
+	{
+		Node	   *arg = (Node *) get_notclausearg((Expr *) clause);
+
+		if (equal(partexpr, arg))
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * build_partition_pathkeys
+ *	  Build a pathkeys list that describes the ordering induced by the
+ *	  partitions of partrel, under either forward or backward scan
+ *	  as per scandir.
+ *
+ * Caller must have checked that the partitions are properly ordered,
+ * as detected by partitions_are_ordered().
+ *
+ * Sets *partialkeys to true if pathkeys were only built for a prefix of the
+ * partition key, or false if the pathkeys include all columns of the
+ * partition key.
+ */
+List *
+build_partition_pathkeys(PlannerInfo *root, RelOptInfo *partrel,
+						 ScanDirection scandir, bool *partialkeys)
+{
+	List	   *retval = NIL;
+	PartitionScheme partscheme = partrel->part_scheme;
+	int			i;
+
+	Assert(partscheme != NULL);
+	Assert(partitions_are_ordered(partrel->boundinfo, partrel->nparts));
+	/* For now, we can only cope with baserels */
+	Assert(IS_SIMPLE_REL(partrel));
+
+	for (i = 0; i < partscheme->partnatts; i++)
+	{
+		PathKey    *cpathkey;
+		Expr	   *keyCol = (Expr *) linitial(partrel->partexprs[i]);
+
+		/*
+		 * Try to make a canonical pathkey for this partkey.
+		 *
+		 * We're considering a baserel scan, so nullable_relids should be
+		 * NULL.  Also, we assume the PartitionDesc lists any NULL partition
+		 * last, so we treat the scan like a NULLS LAST index: we have
+		 * nulls_first for backwards scan only.
+		 */
+		cpathkey = make_pathkey_from_sortinfo(root,
+											  keyCol,
+											  NULL,
+											  partscheme->partopfamily[i],
+											  partscheme->partopcintype[i],
+											  partscheme->partcollation[i],
+											  ScanDirectionIsBackward(scandir),
+											  ScanDirectionIsBackward(scandir),
+											  0,
+											  partrel->relids,
+											  false);
+
+
+		if (cpathkey)
+		{
+			/*
+			 * We found the sort key in an EquivalenceClass, so it's relevant
+			 * for this query.  Add it to list, unless it's redundant.
+			 */
+			if (!pathkey_is_redundant(cpathkey, retval))
+				retval = lappend(retval, cpathkey);
+		}
+		else
+		{
+			/*
+			 * Boolean partition keys might be redundant even if they do not
+			 * appear in an EquivalenceClass, because of our special treatment
+			 * of boolean equality conditions --- see the comment for
+			 * partkey_is_bool_constant_for_query().  If that applies, we can
+			 * continue to examine lower-order partition keys.  Otherwise, the
+			 * sort key is not an interesting sort order for this query, so we
+			 * should stop considering partition columns; any lower-order sort
+			 * keys won't be useful either.
+			 */
+			if (!partkey_is_bool_constant_for_query(partrel, i))
+			{
+				*partialkeys = true;
+				return retval;
+			}
+		}
+	}
+
+	*partialkeys = false;
 	return retval;
 }
 

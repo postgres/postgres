@@ -280,6 +280,11 @@ struct PlannerInfo
 
 	List	   *join_info_list; /* list of SpecialJoinInfos */
 
+	/*
+	 * Note: for AppendRelInfos describing partitions of a partitioned table,
+	 * we guarantee that partitions that come earlier in the partitioned
+	 * table's PartitionDesc will appear earlier in append_rel_list.
+	 */
 	List	   *append_rel_list;	/* list of AppendRelInfos */
 
 	List	   *rowMarks;		/* list of PlanRowMarks */
@@ -1363,9 +1368,9 @@ typedef struct AppendPath
 	/* RT indexes of non-leaf tables in a partition tree */
 	List	   *partitioned_rels;
 	List	   *subpaths;		/* list of component Paths */
-
-	/* Index of first partial path in subpaths */
+	/* Index of first partial path in subpaths; list_length(subpaths) if none */
 	int			first_partial_path;
+	double		limit_tuples;	/* hard limit on output tuples, or -1 */
 } AppendPath;
 
 #define IS_DUMMY_APPEND(p) \

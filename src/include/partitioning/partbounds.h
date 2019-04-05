@@ -88,6 +88,7 @@ extern bool partition_bounds_equal(int partnatts, int16 *parttyplen,
 					   PartitionBoundInfo b2);
 extern PartitionBoundInfo partition_bounds_copy(PartitionBoundInfo src,
 					  PartitionKey key);
+extern bool partitions_are_ordered(PartitionBoundInfo boundinfo, int nparts);
 extern void check_new_partition_bound(char *relname, Relation parent,
 						  PartitionBoundSpec *spec);
 extern void check_default_partition_contents(Relation parent,
