@@ -20434,6 +20434,47 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       <row>
        <entry>
         <indexterm>
+         <primary>pg_copy_physical_replication_slot</primary>
+        </indexterm>
+        <literal><function>pg_copy_physical_replication_slot(<parameter>src_slot_name</parameter> <type>name</type>, <parameter>dst_slot_name</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type></optional>)</function></literal>
+       </entry>
+       <entry>
+        (<parameter>slot_name</parameter> <type>name</type>, <parameter>lsn</parameter> <type>pg_lsn</type>)
+       </entry>
+       <entry>
+        Copies an existing physical replication slot name <parameter>src_slot_name</parameter>
+        to a physical replication slot named <parameter>dst_slot_name</parameter>.
+        The copied physical slot starts to reserve WAL from the same <acronym>LSN</acronym> as the
+        source slot.
+        <parameter>temporary</parameter> is optional. If <parameter>temporary</parameter>
+        is omitted, the same value as the source slot is used.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>pg_copy_logical_replication_slot</primary>
+        </indexterm>
+        <literal><function>pg_copy_logical_replication_slot(<parameter>src_slot_name</parameter> <type>name</type>, <parameter>dst_slot_name</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type> <optional>, <parameter>plugin</parameter> <type>name</type></optional></optional>)</function></literal>
+       </entry>
+       <entry>
+        (<parameter>slot_name</parameter> <type>name</type>, <parameter>lsn</parameter> <type>pg_lsn</type>)
+       </entry>
+       <entry>
+        Copies an existing logical replication slot name <parameter>src_slot_name</parameter>
+        to a logical replication slot named <parameter>dst_slot_name</parameter>
+        while changing the output plugin and persistence. The copied logical slot starts
+        from the same <acronym>LSN</acronym> as the source logical slot. Both
+        <parameter>temporary</parameter> and <parameter>plugin</parameter> are optional.
+        If <parameter>temporary</parameter> or <parameter>plugin</parameter> are omitted,
+        the same values as the source logical slot are used.
+       </entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>pg_logical_slot_get_changes</primary>
         </indexterm>
         <literal><function>pg_logical_slot_get_changes(<parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>int</type>, VARIADIC <parameter>options</parameter> <type>text[]</type>)</function></literal>
