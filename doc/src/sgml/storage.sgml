@@ -189,11 +189,11 @@ there.
 </para>
 
 <para>
- Note that the following sections describe the way the builtin
+ Note that the following sections describe the behavior of the builtin
  <literal>heap</literal> <link linkend="tableam">table access method</link>,
- and the builtin <link linkend="indexam">index access methods</link> work. Due
- to the extensible nature of <productname>PostgreSQL</productname> other types
- of access method might work similar or not.
+ and the builtin <link linkend="indexam">index access methods</link>. Due
+ to the extensible nature of <productname>PostgreSQL</productname>, other
+ access methods might work differently.
 </para>
 
 <para>
@@ -703,11 +703,11 @@ erased (they will be recreated automatically as needed).
 This section provides an overview of the page format used within
 <productname>PostgreSQL</productname> tables and indexes.<footnote>
   <para>
-    Actually, neither table nor index access methods need not use this page
-    format.  All the existing index methods do use this basic format, but the
-    data kept on index metapages usually doesn't follow the item layout
-    rules. The <literal>heap</literal> table access method also always uses
-    this format.
+    Actually, use of this page format is not required for either table or
+    index access methods. The <literal>heap</literal> table access method
+    always uses this format.  All the existing index methods also use the
+    basic format, but the data kept on index metapages usually doesn't follow
+    the item layout rules.
   </para>
 </footnote>
 Sequences and <acronym>TOAST</acronym> tables are formatted just like a regular table.

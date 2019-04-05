@@ -106,11 +106,11 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
   </para>
 
   <para>
-   In contrast to <command>CREATE TABLE AS</command> <command>SELECT
+   In contrast to <command>CREATE TABLE AS</command>, <command>SELECT
    INTO</command> does not allow to specify properties like a table's access
    method with <xref linkend="sql-createtable-method" /> or the table's
    tablespace with <xref linkend="sql-createtable-tablespace" />. Use <xref
-   linkend="sql-createtableas"/> if necessary.  Therefore the default table
+   linkend="sql-createtableas"/> if necessary.  Therefore, the default table
    access method is chosen for the new table. See <xref
    linkend="guc-default-table-access-method"/> for more information.
   </para>

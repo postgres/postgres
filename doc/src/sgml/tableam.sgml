@@ -48,33 +48,33 @@
   callbacks and their behavior is defined in the
   <structname>TableAmRoutine</structname> structure (with comments inside the
   struct defining the requirements for callbacks). Most callbacks have
-  wrapper functions, which are documented for the point of view of a user,
-  rather than an implementor, of the table access method.  For details,
+  wrapper functions, which are documented from the point of view of a user
+  (rather than an implementor) of the table access method.  For details,
   please refer to the <ulink url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/include/access/tableam.h;hb=HEAD">
   <filename>src/include/access/tableam.h</filename></ulink> file.
  </para>
 
  <para>
-  To implement a access method, an implementor will typically need to
-  implement a AM specific type of tuple table slot (see
+  To implement an access method, an implementor will typically need to
+  implement an AM-specific type of tuple table slot (see
   <ulink url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/include/executor/tuptable.h;hb=HEAD">
-   <filename>src/include/executor/tuptable.h</filename></ulink>) which allows
+   <filename>src/include/executor/tuptable.h</filename></ulink>), which allows
    code outside the access method to hold references to tuples of the AM, and
    to access the columns of the tuple.
  </para>
 
  <para>
-  Currently the the way an AM actually stores data is fairly
-  unconstrained. It is e.g. possible to use postgres' shared buffer cache,
-  but not required. In case shared buffers are used, it likely makes to
-  postgres' standard page layout described in <xref
-  linkend="storage-page-layout"/>.
+  Currently, the way an AM actually stores data is fairly unconstrained. For
+  example, it's possible, but not required, to use postgres' shared buffer
+  cache.  In case it is used, it likely makes sense to use
+  <productname>PostgreSQL</productname>'s standard page layout as described in
+  <xref linkend="storage-page-layout"/>.
  </para>
 
  <para>
   One fairly large constraint of the table access method API is that,
   currently, if the AM wants to support modifications and/or indexes, it is
-  necessary that each tuple has a tuple identifier (<acronym>TID</acronym>)
+  necessary for each tuple to have a tuple identifier (<acronym>TID</acronym>)
   consisting of a block number and an item number (see also <xref
   linkend="storage-page-layout"/>).  It is not strictly necessary that the
   sub-parts of <acronym>TIDs</acronym> have the same meaning they e.g. have
@@ -83,13 +83,14 @@
  </para>
 
  <para>
-  For crash safety an AM can use postgres' <link
-  linkend="wal"><acronym>WAL</acronym></link>, or a custom approach can be
-  implemented.  If <acronym>WAL</acronym> is chosen, either <link
-  linkend="generic-wal">Generic WAL Records</link> can be used &mdash; which
-  implies higher WAL volume but is easy, or a new type of
-  <acronym>WAL</acronym> records can be implemented &mdash; but that
-  currently requires modifications of core code (namely modifying
+  For crash safety, an AM can use postgres' <link
+  linkend="wal"><acronym>WAL</acronym></link>, or a custom implementation.
+  If <acronym>WAL</acronym> is chosen, either <link
+  linkend="generic-wal">Generic WAL Records</link> can be used,
+  or a new type of <acronym>WAL</acronym> records can be implemented.
+  Generic WAL Records are easy, but imply higher WAL volume.
+  Implementation of a new type of WAL record
+  currently requires modifications to core code (specifically,
   <filename>src/include/access/rmgrlist.h</filename>).
  </para>
 
@@ -103,8 +104,8 @@
  <para>
   Any developer of a new <literal>table access method</literal> can refer to
   the existing <literal>heap</literal> implementation present in
-  <filename>src/backend/heap/heapam_handler.c</filename> for more details of
-  how it is implemented.
+  <filename>src/backend/heap/heapam_handler.c</filename> for details of
+  its implementation.
  </para>
 
 </chapter>
