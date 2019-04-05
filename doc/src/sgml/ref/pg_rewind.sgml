@@ -221,6 +221,15 @@ PostgreSQL documentation
  <refsect1>
   <title>Notes</title>
 
+  <para>
+   When executing <application>pg_rewind</application> using an online
+   cluster as source which has been recently promoted, it is necessary
+   to execute a <command>CHECKPOINT</command> after promotion so as its
+   control file reflects up-to-date timeline information, which is used by
+   <application>pg_rewind</application> to check if the target cluster
+   can be rewound using the designated source cluster.
+  </para>
+
   <refsect2>
    <title>How it works</title>
 
