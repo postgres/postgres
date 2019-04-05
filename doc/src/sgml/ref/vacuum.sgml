@@ -199,7 +199,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       and the table itself will accumulate dead line pointers that cannot be
       removed until index cleanup is completed.  This option has no effect
       for tables that do not have an index and is ignored if the
-      <literal>FULL</literal> is used.
+      <literal>FULL</literal> option is used.
      </para>
     </listitem>
    </varlistentry>
