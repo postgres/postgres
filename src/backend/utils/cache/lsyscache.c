@@ -836,22 +836,19 @@ char
 get_attgenerated(Oid relid, AttrNumber attnum)
 {
 	HeapTuple	tp;
+	Form_pg_attribute att_tup;
+	char		result;
 
 	tp = SearchSysCache2(ATTNUM,
 						 ObjectIdGetDatum(relid),
 						 Int16GetDatum(attnum));
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		char		result;
-
-		result = att_tup->attgenerated;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
+	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, relid);
+	att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+	result = att_tup->attgenerated;
+	ReleaseSysCache(tp);
+	return result;
 }
 
 /*
