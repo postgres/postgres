@@ -459,42 +459,24 @@ pqsecure_open_gss(PGconn *conn)
 		 *
 		 * This is safe to do because we shouldn't ever get a packet over 8192
 		 * and therefore the actual length bytes, being that they are in
-		 * network byte order, for any real packet will be two zero bytes.
+		 * network byte order, for any real packet will start with two zero
+		 * bytes.
 		 */
 		if (PqGSSRecvBuffer[0] == 'E')
 		{
 			/*
-			 * For an error message, the length is after the E, so read one
-			 * more byte to get the full length
+			 * For an error packet during startup, we don't get a length, so
+			 * simply read as much as we can fit into our buffer (as a string,
+			 * so leave a spot at the end for a NULL byte too) and report that
+			 * back to the caller.
 			 */
-			result = gss_read(conn, PqGSSRecvBuffer + PqGSSRecvLength, 1, &ret);
+			result = gss_read(conn, PqGSSRecvBuffer + PqGSSRecvLength, PQ_GSS_RECV_BUFFER_SIZE - PqGSSRecvLength - 1, &ret);
 			if (result != PGRES_POLLING_OK)
 				return result;
 
 			PqGSSRecvLength += ret;
 
-			if (PqGSSRecvLength < 1 + sizeof(uint32))
-				return PGRES_POLLING_READING;
-
-			input.length = ntohl(*(uint32 *) PqGSSRecvBuffer + 1);
-			if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32) - 1)
-			{
-				printfPQExpBuffer(&conn->errorMessage, libpq_gettext("Over-size error packet sent by the server."));
-				return PGRES_POLLING_FAILED;
-			}
-
-			result = gss_read(conn, PqGSSRecvBuffer + PqGSSRecvLength, input.length - PqGSSRecvLength - 1 - sizeof(uint32), &ret);
-			if (result != PGRES_POLLING_OK)
-				return result;
-
-			PqGSSRecvLength += ret;
-
-			if (PqGSSRecvLength < 1 + sizeof(uint32) + input.length)
-				return PGRES_POLLING_READING;
-
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("Server error: %s"),
-							  PqGSSRecvBuffer + 1 + sizeof(int32));
+			printfPQExpBuffer(&conn->errorMessage, "%s", PqGSSRecvBuffer + 1);
 
 			return PGRES_POLLING_FAILED;
 		}

@@ -308,7 +308,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	 * Expose gssencmode similarly to sslmode - we can still handle "disable"
 	 * and "prefer".
 	 */
-	{"gssencmode", "PGGSSMODE", DefaultGSSMode, NULL,
+	{"gssencmode", "PGGSSENCMODE", DefaultGSSMode, NULL,
 		"GSS-Mode", "", 7,		/* sizeof("disable") == 7 */
 	offsetof(struct pg_conn, gssencmode)},
 
@@ -1875,7 +1875,7 @@ connectDBStart(PGconn *conn)
 	resetPQExpBuffer(&conn->errorMessage);
 
 #ifdef ENABLE_GSS
-	if (conn->gssencmode[0] == 'd')	/* "disable" */
+	if (conn->gssencmode[0] == 'd') /* "disable" */
 		conn->try_gss = false;
 #endif
 

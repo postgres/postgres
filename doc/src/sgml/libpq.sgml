@@ -7498,6 +7498,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     <listitem>
      <para>
       <indexterm>
+       <primary><envar>PGGSSENCMODE</envar></primary>
+      </indexterm>
+      <envar>PGGSSENCMODE</envar> behaves the same as the <xref
+      linkend="libpq-connect-gssencmode"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
        <primary><envar>PGKRBSRVNAME</envar></primary>
       </indexterm>
       <envar>PGKRBSRVNAME</envar>  behaves the same as the <xref
