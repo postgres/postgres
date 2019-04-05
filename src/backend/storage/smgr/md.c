@@ -1266,14 +1266,14 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 	strlcpy(path, p, MAXPGPATH);
 	pfree(p);
 
-	/* Try to find open the requested segment. */
-	v = _mdfd_getseg(reln, ftag->forknum, ftag->segno, false,
-					 EXTENSION_RETURN_NULL);
+	/* Try to open the requested segment. */
+	v = _mdfd_getseg(reln,
+					 ftag->forknum,
+					 ftag->segno * (BlockNumber) RELSEG_SIZE,
+					 false,
+					 EXTENSION_RETURN_NULL | EXTENSION_DONT_CHECK_SIZE);
 	if (v == NULL)
-	{
-		errno = ENOENT;
 		return -1;
-	}
 
 	/* Try to fsync the file. */
 	return FileSync(v->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC);
@@ -1288,11 +1288,10 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 int
 mdunlinkfiletag(const FileTag *ftag, char *path)
 {
-	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId);
 	char	   *p;
 
 	/* Compute the path. */
-	p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
+	p = relpathperm(ftag->rnode, MAIN_FORKNUM);
 	strlcpy(path, p, MAXPGPATH);
 	pfree(p);
 
