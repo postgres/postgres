@@ -164,6 +164,7 @@ ALTER SERVER testserver1 OPTIONS (
 	keepalives 'value',
 	keepalives_idle 'value',
 	keepalives_interval 'value',
+	tcp_user_timeout 'value',
 	-- requiressl 'value',
 	sslcompression 'value',
 	sslmode 'value',

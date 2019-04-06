@@ -939,6 +939,31 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-tcp-user-timeout" xreflabel="tcp_user_timeout">
+      <term><varname>tcp_user_timeout</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>tcp_user_timeout</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the number of milliseconds that transmitted data may
+        remain unacknowledged before a connection is forcibly closed.
+        A value of 0 uses the system default.
+        This parameter is supported only on systems that support
+        <symbol>TCP_USER_TIMEOUT</symbol>; on other systems, it must be zero.
+        In sessions connected via a Unix-domain socket, this parameter is
+        ignored and always reads as zero. 
+       </para>
+       <note>
+        <para>
+         This parameter is not supported on Windows and on Linux version
+         2.6.36 or older.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
      </sect2>
 

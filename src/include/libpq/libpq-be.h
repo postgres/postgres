@@ -155,7 +155,7 @@ typedef struct Port
 	HbaLine    *hba;
 
 	/*
-	 * TCP keepalive settings.
+	 * TCP keepalive and user timeout settings.
 	 *
 	 * default values are 0 if AF_UNIX or not yet known; current values are 0
 	 * if AF_UNIX or using the default. Also, -1 in a default value means we
@@ -164,9 +164,11 @@ typedef struct Port
 	int			default_keepalives_idle;
 	int			default_keepalives_interval;
 	int			default_keepalives_count;
+	int			default_tcp_user_timeout;
 	int			keepalives_idle;
 	int			keepalives_interval;
 	int			keepalives_count;
+	int			tcp_user_timeout;
 
 	/*
 	 * GSSAPI structures.
@@ -306,9 +308,11 @@ extern ProtocolVersion FrontendProtocol;
 extern int	pq_getkeepalivesidle(Port *port);
 extern int	pq_getkeepalivesinterval(Port *port);
 extern int	pq_getkeepalivescount(Port *port);
+extern int	pq_gettcpusertimeout(Port *port);
 
 extern int	pq_setkeepalivesidle(int idle, Port *port);
 extern int	pq_setkeepalivesinterval(int interval, Port *port);
 extern int	pq_setkeepalivescount(int count, Port *port);
+extern int	pq_settcpusertimeout(int timeout, Port *port);
 
 #endif							/* LIBPQ_BE_H */

@@ -73,7 +73,7 @@
 #bonjour_name = ''			# defaults to the computer name
 					# (change requires restart)
 
-# - TCP Keepalives -
+# - TCP settings -
 # see "man 7 tcp" for details
 
 #tcp_keepalives_idle = 0		# TCP_KEEPIDLE, in seconds;
@@ -81,6 +81,8 @@
 #tcp_keepalives_interval = 0		# TCP_KEEPINTVL, in seconds;
 					# 0 selects the system default
 #tcp_keepalives_count = 0		# TCP_KEEPCNT;
+					# 0 selects the system default
+#tcp_user_timeout = 0			# TCP_USER_TIMEOUT, in milliseconds;
 					# 0 selects the system default
 
 # - Authentication -

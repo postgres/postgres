@@ -1249,6 +1249,20 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-tcp-user-timeout" xreflabel="libpq_tcp_user_timeout">
+      <term><literal>tcp_user_timeout</literal></term>
+      <listitem>
+       <para>
+        Controls the number of milliseconds that transmitted data may
+        remain unacknowledged before a connection is forcibly closed.
+        A value of zero uses the system default. This parameter is
+        ignored for connections made via a Unix-domain socket.
+        It is only supported on systems where <symbol>TCP_USER_TIMEOUT</symbol>
+        is available; on other systems, it has no effect.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-tty" xreflabel="tty">
       <term><literal>tty</literal></term>
       <listitem>

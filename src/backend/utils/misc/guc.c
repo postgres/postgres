@@ -182,9 +182,11 @@ static const char *show_archive_command(void);
 static void assign_tcp_keepalives_idle(int newval, void *extra);
 static void assign_tcp_keepalives_interval(int newval, void *extra);
 static void assign_tcp_keepalives_count(int newval, void *extra);
+static void assign_tcp_user_timeout(int newval, void *extra);
 static const char *show_tcp_keepalives_idle(void);
 static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
+static const char *show_tcp_user_timeout(void);
 static bool check_maxconnections(int *newval, void **extra, GucSource source);
 static bool check_max_worker_processes(int *newval, void **extra, GucSource source);
 static bool check_autovacuum_max_workers(int *newval, void **extra, GucSource source);
@@ -530,6 +532,7 @@ char	   *application_name;
 int			tcp_keepalives_idle;
 int			tcp_keepalives_interval;
 int			tcp_keepalives_count;
+int			tcp_user_timeout;
 
 /*
  * SSL renegotiation was been removed in PostgreSQL 9.5, but we tolerate it
@@ -3180,6 +3183,17 @@ static struct config_int ConfigureNamesInt[] =
 		&gin_pending_list_limit,
 		4096, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"tcp_user_timeout", PGC_USERSET, CLIENT_CONN_OTHER,
+			gettext_noop("TCP user timeout."),
+			gettext_noop("A value of 0 uses the system default."),
+			GUC_UNIT_MS
+		},
+		&tcp_user_timeout,
+		0, 0, INT_MAX,
+		NULL, assign_tcp_user_timeout, show_tcp_user_timeout
 	},
 
 	/* End-of-list marker */
@@ -11235,6 +11249,23 @@ show_tcp_keepalives_count(void)
 	static char nbuf[16];
 
 	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivescount(MyProcPort));
+	return nbuf;
+}
+
+static void
+assign_tcp_user_timeout(int newval, void *extra)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	(void) pq_settcpusertimeout(newval, MyProcPort);
+}
+
+static const char *
+show_tcp_user_timeout(void)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_gettcpusertimeout(MyProcPort));
 	return nbuf;
 }
 
