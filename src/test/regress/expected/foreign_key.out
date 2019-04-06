@@ -1895,6 +1895,32 @@ INSERT INTO fk_notpartitioned_pk VALUES (1600, 601), (1600, 1601);
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
   FOR VALUES IN (1600);
 -- leave these tables around intentionally
+-- test the case when the referenced table is owned by a different user
+create role regress_other_partitioned_fk_owner;
+grant references on fk_notpartitioned_pk to regress_other_partitioned_fk_owner;
+set role regress_other_partitioned_fk_owner;
+create table other_partitioned_fk(a int, b int) partition by list (a);
+create table other_partitioned_fk_1 partition of other_partitioned_fk
+  for values in (2048);
+insert into other_partitioned_fk
+  select 2048, x from generate_series(1,10) x;
+-- this should fail
+alter table other_partitioned_fk add foreign key (a, b)
+  references fk_notpartitioned_pk(a, b);
+ERROR:  insert or update on table "other_partitioned_fk_1" violates foreign key constraint "other_partitioned_fk_a_b_fkey"
+DETAIL:  Key (a, b)=(2048, 1) is not present in table "fk_notpartitioned_pk".
+-- add the missing keys and retry
+reset role;
+insert into fk_notpartitioned_pk (a, b)
+  select 2048, x from generate_series(1,10) x;
+set role regress_other_partitioned_fk_owner;
+alter table other_partitioned_fk add foreign key (a, b)
+  references fk_notpartitioned_pk(a, b);
+-- clean up
+drop table other_partitioned_fk;
+reset role;
+revoke all on fk_notpartitioned_pk from regress_other_partitioned_fk_owner;
+drop role regress_other_partitioned_fk_owner;
 -- Test creating a constraint at the parent that already exists in partitions.
 -- There should be no duplicated constraints, and attempts to drop the
 -- constraint in partitions should raise appropriate errors.
