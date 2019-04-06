@@ -4534,6 +4534,15 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 		Relation	rel = NULL;
 		ListCell   *lcon;
 
+		/*
+		 * Foreign tables have no storage, nor do partitioned tables and
+		 * indexes.
+		 */
+		if (tab->relkind == RELKIND_FOREIGN_TABLE ||
+			tab->relkind == RELKIND_PARTITIONED_TABLE ||
+			tab->relkind == RELKIND_PARTITIONED_INDEX)
+			continue;
+
 		foreach(lcon, tab->constraints)
 		{
 			NewConstraint *con = lfirst(lcon);
