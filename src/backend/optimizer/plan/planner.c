@@ -1599,6 +1599,15 @@ inheritance_planner(PlannerInfo *root)
 			withCheckOptionLists = list_make1(parse->withCheckOptions);
 		if (parse->returningList)
 			returningLists = list_make1(parse->returningList);
+
+		/*
+		 * Since no tuples will be updated, don't require ModifyTable to
+		 * create tuple-routing info that will be left unused.  In fact it's
+		 * necessary to do so, because we're cheating here by putting the root
+		 * table into resultRelations list, which the tuple-routing code is
+		 * not expecting to be there.
+		 */
+		root->partColsUpdated = false;
 	}
 	else
 	{
