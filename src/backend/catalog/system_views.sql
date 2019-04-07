@@ -933,7 +933,7 @@ CREATE VIEW pg_stat_progress_cluster AS
                       WHEN 6 THEN 'rebuilding index'
                       WHEN 7 THEN 'performing final cleanup'
                       END AS phase,
-        S.param3 AS cluster_index_relid,
+        CAST(S.param3 AS oid) AS cluster_index_relid,
         S.param4 AS heap_tuples_scanned,
         S.param5 AS heap_tuples_written,
         S.param6 AS heap_blks_total,

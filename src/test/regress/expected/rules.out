@@ -1855,7 +1855,7 @@ pg_stat_progress_cluster| SELECT s.pid,
             WHEN 7 THEN 'performing final cleanup'::text
             ELSE NULL::text
         END AS phase,
-    s.param3 AS cluster_index_relid,
+    (s.param3)::oid AS cluster_index_relid,
     s.param4 AS heap_tuples_scanned,
     s.param5 AS heap_tuples_written,
     s.param6 AS heap_blks_total,

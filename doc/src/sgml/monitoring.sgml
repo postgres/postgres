@@ -3937,7 +3937,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     </row>
     <row>
      <entry><structfield>cluster_index_relid</structfield></entry>
-     <entry><type>bigint</type></entry>
+     <entry><type>oid</type></entry>
      <entry>
        If the table is being scanned using an index, this is the OID of the
        index being used; otherwise, it is zero.
