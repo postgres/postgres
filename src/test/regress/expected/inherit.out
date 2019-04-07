@@ -665,6 +665,15 @@ select tableoid::regclass::text as relname, parted_tab.* from parted_tab order b
  parted_tab_part3 | 3 | a
 (3 rows)
 
+-- modifies partition key, but no rows will actually be updated
+explain update parted_tab set a = 2 where false;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Update on parted_tab  (cost=0.00..0.00 rows=0 width=0)
+   ->  Result  (cost=0.00..0.00 rows=0 width=0)
+         One-Time Filter: false
+(3 rows)
+
 drop table parted_tab;
 drop table some_tab cascade;
 NOTICE:  drop cascades to table some_tab_child
