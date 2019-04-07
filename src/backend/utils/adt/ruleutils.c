@@ -1305,7 +1305,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	for (keyno = 0; keyno < idxrec->indnatts; keyno++)
 	{
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
-		int16		opt = indoption->values[keyno];
 		Oid			keycoltype;
 		Oid			keycolcollation;
 
@@ -1367,10 +1366,10 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		if (!attrsOnly && keyno < idxrec->indnkeyatts &&
 			(!colno || colno == keyno + 1))
 		{
-			Oid			indcoll;
+			int16		opt = indoption->values[keyno];
+			Oid			indcoll = indcollation->values[keyno];
 
 			/* Add collation, if not default for column */
-			indcoll = indcollation->values[keyno];
 			if (OidIsValid(indcoll) && indcoll != keycolcollation)
 				appendStringInfo(&buf, " COLLATE %s",
 								 generate_collation_name((indcoll)));
