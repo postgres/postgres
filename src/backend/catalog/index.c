@@ -3286,11 +3286,19 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	heapId = IndexGetRelation(indexId, false);
 	heapRelation = table_open(heapId, ShareLock);
 
+	pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
+								  heapId);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
+								 indexId);
+
 	/*
 	 * Open the target index relation and get an exclusive lock on it, to
 	 * ensure that no one else is touching this particular index.
 	 */
 	iRel = index_open(indexId, AccessExclusiveLock);
+
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,
+								 iRel->rd_rel->relam);
 
 	/*
 	 * The case of reindexing partitioned tables and indexes is handled
@@ -3441,6 +3449,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 						get_rel_name(indexId)),
 				 errdetail_internal("%s",
 									pg_rusage_show(&ru0))));
+
+	pgstat_progress_end_command();
 
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);

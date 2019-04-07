@@ -346,7 +346,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
      <row>
       <entry><structname>pg_stat_progress_create_index</structname><indexterm><primary>pg_stat_progress_create_index</primary></indexterm></entry>
-      <entry>One row for each backend running <command>CREATE INDEX</command>, showing
+      <entry>One row for each backend running <command>CREATE INDEX</command> or <command>REINDEX</command>, showing
       current progress.
       See <xref linkend='create-index-progress-reporting'/>.
      </entry>
@@ -3477,7 +3477,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <title>CREATE INDEX Progress Reporting</title>
 
   <para>
-   Whenever <command>CREATE INDEX</command> is running, the
+   Whenever <command>CREATE INDEX</command> or <command>REINDEX</command> is running, the
    <structname>pg_stat_progress_create_index</structname> view will contain
    one row for each backend that is currently creating indexes.  The tables
    below describe the information that will be reported and provide information
@@ -3515,6 +3515,12 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry><structfield>relid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry>OID of the table on which the index is being created.</entry>
+     </row>
+     <row>
+      <entry><structfield>index_relid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>OID of the index being created or reindexed.  During a
+      non-concurrent <command>CREATE INDEX</command>, this is 0.</entry>
      </row>
      <row>
       <entry><structfield>phase</structfield></entry>
@@ -3605,15 +3611,15 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <row>
       <entry><literal>initializing</literal></entry>
       <entry>
-       <command>CREATE INDEX</command> is preparing to create the index.  This
+       <command>CREATE INDEX</command> or <command>REINDEX</command> is preparing to create the index.  This
        phase is expected to be very brief.
       </entry>
      </row>
      <row>
-      <entry><literal>waiting for old snapshots</literal></entry>
+      <entry><literal>waiting for writers before build</literal></entry>
       <entry>
-       <command>CREATE INDEX CONCURRENTLY</command> is waiting for transactions
-       that can potentially see the table to release their snapshots.
+       <command>CREATE INDEX CONCURRENTLY</command> or <command>REINDEX CONCURRENTLY</command> is waiting for transactions
+       with write locks that can potentially see the table to finish.
        This phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
        and <structname>current_locker_pid</structname> contain the progress 
@@ -3632,10 +3638,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       </entry>
      </row>
      <row>
-      <entry><literal>waiting for writer snapshots</literal></entry>
+      <entry><literal>waiting for writers before validation</literal></entry>
       <entry>
-       <command>CREATE INDEX CONCURRENTLY</command> is waiting for transactions
-       that can potentially write into the table to release their snapshots.
+       <command>CREATE INDEX CONCURRENTLY</command> or <command>REINDEX CONCURRENTLY</command> is waiting for transactions
+       with write locks that can potentially write into the table to finish.
        This phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
        and <structname>current_locker_pid</structname> contain the progress 
@@ -3670,11 +3676,33 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       </entry>
      </row>
      <row>
-      <entry><literal>waiting for reader snapshots</literal></entry>
+      <entry><literal>waiting for old snapshots</literal></entry>
       <entry>
-       <command>CREATE INDEX CONCURRENTLY</command> is waiting for transactions
+       <command>CREATE INDEX CONCURRENTLY</command> or <command>REINDEX CONCURRENTLY</command> is waiting for transactions
        that can potentially see the table to release their snapshots.  This
        phase is skipped when not in concurrent mode.
+       Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
+       and <structname>current_locker_pid</structname> contain the progress 
+       information for this phase.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>waiting for readers before marking dead</literal></entry>
+      <entry>
+       <command>REINDEX CONCURRENTLY</command> is waiting for transactions
+       with read locks on the table to finish, before marking the old index dead.
+       This phase is skipped when not in concurrent mode.
+       Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
+       and <structname>current_locker_pid</structname> contain the progress 
+       information for this phase.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>waiting for readers before dropping</literal></entry>
+      <entry>
+       <command>REINDEX CONCURRENTLY</command> is waiting for transactions
+       with read locks on the table to finish, before dropping the old index.
+       This phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
        and <structname>current_locker_pid</structname> contain the progress 
        information for this phase.

@@ -59,6 +59,7 @@
 
 /* Progress parameters for CREATE INDEX */
 /* 3, 4 and 5 reserved for "waitfor" metrics */
+#define PROGRESS_CREATEIDX_INDEX_OID			6
 #define PROGRESS_CREATEIDX_ACCESS_METHOD_OID	8
 #define PROGRESS_CREATEIDX_PHASE				9	/* AM-agnostic phase # */
 #define PROGRESS_CREATEIDX_SUBPHASE				10	/* phase # filled by AM */
@@ -76,6 +77,8 @@
 #define PROGRESS_CREATEIDX_PHASE_VALIDATE_SORT		5
 #define PROGRESS_CREATEIDX_PHASE_VALIDATE_TABLESCAN	6
 #define PROGRESS_CREATEIDX_PHASE_WAIT_3			7
+#define PROGRESS_CREATEIDX_PHASE_WAIT_4			8
+#define PROGRESS_CREATEIDX_PHASE_WAIT_5			9
 
 /*
  * Subphases of CREATE INDEX, for index_build.

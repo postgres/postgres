@@ -479,6 +479,12 @@ DefineIndex(Oid relationId,
 									  relationId);
 
 	/*
+	 * No index OID to report yet
+	 */
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
+								 InvalidOid);
+
+	/*
 	 * count key attributes in index
 	 */
 	numberOfKeyAttributes = list_length(stmt->indexParams);
@@ -1243,6 +1249,12 @@ DefineIndex(Oid relationId,
 	PopActiveSnapshot();
 	CommitTransactionCommand();
 	StartTransactionCommand();
+
+	/*
+	 * The index is now visible, so we can report the OID.
+	 */
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
+								 indexRelationId);
 
 	/*
 	 * Phase 2 of concurrent index build (see comments for validate_index()
@@ -2873,6 +2885,13 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		heapRel = table_open(indexRel->rd_index->indrelid,
 							 ShareUpdateExclusiveLock);
 
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
+									  RelationGetRelid(heapRel));
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
+									 indexId);
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,
+									 indexRel->rd_rel->relam);
+
 		/* Choose a temporary relation name for the new index */
 		concurrentName = ChooseRelationName(get_rel_name(indexId),
 											NULL,
@@ -2967,7 +2986,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * DefineIndex() for more details.
 	 */
 
-	WaitForLockersMultiple(lockTags, ShareLock, false);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+								 PROGRESS_CREATEIDX_PHASE_WAIT_1);
+	WaitForLockersMultiple(lockTags, ShareLock, true);
 	CommitTransactionCommand();
 
 	forboth(lc, indexIds, lc2, newIndexIds)
@@ -3009,7 +3030,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * for more details.
 	 */
 
-	WaitForLockersMultiple(lockTags, ShareLock, false);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+								 PROGRESS_CREATEIDX_PHASE_WAIT_2);
+	WaitForLockersMultiple(lockTags, ShareLock, true);
 	CommitTransactionCommand();
 
 	foreach(lc, newIndexIds)
@@ -3057,7 +3080,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 		 * before the reference snap was taken, we have to wait out any
 		 * transactions that might have older snapshots.
 		 */
-		WaitForOlderSnapshots(limitXmin, false);
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+									 PROGRESS_CREATEIDX_PHASE_WAIT_3);
+		WaitForOlderSnapshots(limitXmin, true);
 
 		CommitTransactionCommand();
 	}
@@ -3128,7 +3153,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * index_drop() for more details.
 	 */
 
-	WaitForLockersMultiple(lockTags, AccessExclusiveLock, false);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+								 PROGRESS_CREATEIDX_PHASE_WAIT_4);
+	WaitForLockersMultiple(lockTags, AccessExclusiveLock, true);
 
 	foreach(lc, indexIds)
 	{
@@ -3150,7 +3177,9 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 * Drop the old indexes.
 	 */
 
-	WaitForLockersMultiple(lockTags, AccessExclusiveLock, false);
+	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
+								 PROGRESS_CREATEIDX_PHASE_WAIT_4);
+	WaitForLockersMultiple(lockTags, AccessExclusiveLock, true);
 
 	PushActiveSnapshot(GetTransactionSnapshot());
 
@@ -3224,6 +3253,8 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	}
 
 	MemoryContextDelete(private_context);
+
+	pgstat_progress_end_command();
 
 	return true;
 }
