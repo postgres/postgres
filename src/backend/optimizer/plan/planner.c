@@ -1732,6 +1732,8 @@ inheritance_planner(PlannerInfo *root)
 			withCheckOptionLists = list_make1(parse->withCheckOptions);
 		if (parse->returningList)
 			returningLists = list_make1(parse->returningList);
+		/* Disable tuple routing, too, just to be safe */
+		root->partColsUpdated = false;
 	}
 	else
 	{
