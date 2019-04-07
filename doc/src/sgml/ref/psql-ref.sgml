@@ -1659,6 +1659,39 @@ testdb=&gt;
         </listitem>
       </varlistentry>
 
+
+      <varlistentry>
+        <term><literal>\dP[itn+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists partitioned relations.
+        If <replaceable class="parameter">pattern</replaceable>
+        is specified, only entries whose name matches the pattern are listed.
+        The modifiers <literal>t</literal> (tables) and <literal>i</literal>
+        (indexes) can be appended to the command, filtering the kind of
+        relations to list.  By default, partitioned tables and indexes are
+        listed.
+        </para>
+
+        <para>
+        If the modifier <literal>n</literal> (<quote>nested</quote>) is used,
+        or a pattern is specified, then non-root partitioned tables are
+        included, and a column is shown displaying the parent of each
+        partitioned relation.
+        </para>
+
+        <para>
+        If <literal>+</literal> is appended to the command, the sum of sizes of
+        table's partitions (including that of their indexes) is also displayed,
+        along with the associated description.
+        If <literal>n</literal> is combined with <literal>+</literal>, two
+        sizes are shown: one including the total size of directly-attached
+        leaf partitions, and another showing the total size of all partitions,
+        including indirectly attached sub-partitions.
+        </para>
+        </listitem>
+      </varlistentry>
+
       <varlistentry>
         <term><literal>\drds [ <link linkend="app-psql-patterns"><replaceable class="parameter">role-pattern</replaceable></link> [ <link linkend="app-psql-patterns"><replaceable class="parameter">database-pattern</replaceable></link> ] ]</literal></term>
         <listitem>

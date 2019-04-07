@@ -784,6 +784,23 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			case 'p':
 				success = permissionsList(pattern);
 				break;
+			case 'P':
+				{
+					switch (cmd[2])
+					{
+						case '\0':
+						case '+':
+						case 't':
+						case 'i':
+						case 'n':
+							success = listPartitionedTables(&cmd[2], pattern, show_verbose);
+							break;
+						default:
+							status = PSQL_CMD_UNKNOWN;
+							break;
+					}
+				}
+				break;
 			case 'T':
 				success = describeTypes(pattern, show_verbose, show_system);
 				break;

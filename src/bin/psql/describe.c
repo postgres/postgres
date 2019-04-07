@@ -3777,6 +3777,220 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	return true;
 }
 
+/*
+ * \dP
+ * Takes an optional regexp to select particular relations
+ *
+ * As with \d, you can specify the kinds of relations you want:
+ *
+ * t for tables
+ * i for indexes
+ *
+ * And there's additional flags:
+ *
+ * n to list non-leaf partitioned tables
+ *
+ * and you can mix and match these in any order.
+ */
+bool
+listPartitionedTables(const char *reltypes, const char *pattern, bool verbose)
+{
+	bool		showTables = strchr(reltypes, 't') != NULL;
+	bool		showIndexes = strchr(reltypes, 'i') != NULL;
+	bool		showNested = strchr(reltypes, 'n') != NULL;
+	PQExpBufferData buf;
+	PQExpBufferData title;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+	bool translate_columns[] = {false, false, false, false, false, false, false, false, false};
+	const char *tabletitle;
+	bool		mixed_output = false;
+
+	/*
+	 * Note: Declarative table partitioning is only supported as of Pg 10.0.
+	 */
+	if (pset.sversion < 100000)
+	{
+		char		sverbuf[32];
+
+		pg_log_error("The server (version %s) does not support declarative table partitioning.",
+					 formatPGVersionNumber(pset.sversion, false,
+										   sverbuf, sizeof(sverbuf)));
+		return true;
+	}
+
+	/* If no relation kind was selected, show them all */
+	if (!showTables && !showIndexes)
+		showTables = showIndexes = true;
+
+	if (showIndexes && !showTables)
+		tabletitle = _("List of partitioned indexes");	/* \dPi */
+	else if (showTables && !showIndexes)
+		tabletitle = _("List of partitioned tables");	/* \dPt */
+	else
+	{
+		/* show all kinds */
+		tabletitle = _("List of partitioned relations");
+		mixed_output = true;
+	}
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT n.nspname as \"%s\",\n"
+					  "  c.relname as \"%s\",\n"
+					  "  pg_catalog.pg_get_userbyid(c.relowner) as \"%s\"",
+					  gettext_noop("Schema"),
+					  gettext_noop("Name"),
+					  gettext_noop("Owner"));
+
+	if (mixed_output)
+	{
+		appendPQExpBuffer(&buf,
+						  ",\n  CASE c.relkind"
+						  " WHEN " CppAsString2(RELKIND_PARTITIONED_TABLE) " THEN '%s'"
+						  " WHEN " CppAsString2(RELKIND_PARTITIONED_INDEX) " THEN '%s'"
+						  " END as \"%s\"",
+						  gettext_noop("partitioned table"),
+						  gettext_noop("partitioned index"),
+						  gettext_noop("Type"));
+
+		translate_columns[3] = true;
+	}
+
+	if (showNested || pattern)
+		appendPQExpBuffer(&buf,
+						  ",\n  c3.oid::regclass as \"%s\"",
+						  gettext_noop("Parent name"));
+
+	if (showIndexes)
+		appendPQExpBuffer(&buf,
+						  ",\n c2.oid::regclass as \"%s\"",
+						  gettext_noop("On table"));
+
+	if (verbose)
+	{
+		if (showNested)
+		{
+			appendPQExpBuffer(&buf,
+							  ",\n  s.dps as \"%s\"",
+							  gettext_noop("Leaf partition size"));
+			appendPQExpBuffer(&buf,
+							  ",\n  s.tps as \"%s\"",
+							  gettext_noop("Total size"));
+		}
+		else
+			/* Sizes of all partitions are considered in this case. */
+			appendPQExpBuffer(&buf,
+							  ",\n  s.tps as \"%s\"",
+							  gettext_noop("Total size"));
+
+		appendPQExpBuffer(&buf,
+						  ",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"%s\"",
+						  gettext_noop("Description"));
+	}
+
+	appendPQExpBufferStr(&buf,
+						 "\nFROM pg_catalog.pg_class c"
+						 "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace");
+
+	if (showIndexes)
+		appendPQExpBufferStr(&buf,
+							 "\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid"
+							 "\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid");
+
+	if (showNested || pattern)
+		appendPQExpBufferStr(&buf,
+							 "\n     LEFT JOIN pg_catalog.pg_inherits inh ON c.oid = inh.inhrelid"
+							 "\n     LEFT JOIN pg_catalog.pg_class c3 ON c3.oid = inh.inhparent");
+
+	if (verbose)
+	{
+		if (pset.sversion < 120000)
+		{
+			appendPQExpBuffer(&buf,
+							  ",\n     LATERAL (WITH RECURSIVE d\n"
+							  "                AS (SELECT inhrelid AS oid, 1 AS level\n"
+							  "                      FROM pg_catalog.pg_inherits\n"
+							  "                     WHERE inhparent = c.oid\n"
+							  "                    UNION ALL\n"
+							  "                    SELECT inhrelid, level + 1\n"
+							  "                      FROM pg_catalog.pg_inherits i\n"
+							  "                           JOIN d ON i.inhparent = d.oid)\n"
+							  "                SELECT pg_catalog.pg_size_pretty(sum(pg_catalog.pg_table_size("
+							  "d.oid))) AS tps,\n"
+							  "                       pg_catalog.pg_size_pretty(sum("
+							  "\n             CASE WHEN d.level = 1"
+							  " THEN pg_catalog.pg_table_size(d.oid) ELSE 0 END)) AS dps\n"
+							  "               FROM d) s");
+		}
+		else
+		{
+			/* PostgreSQL 12 has pg_partition_tree function */
+			appendPQExpBuffer(&buf,
+							  ",\n     LATERAL (SELECT pg_catalog.pg_size_pretty(sum("
+							  "\n                 CASE WHEN ppt.isleaf AND ppt.level = 1"
+							  "\n                      THEN pg_catalog.pg_table_size(ppt.relid)"
+							  " ELSE 0 END)) AS dps"
+							  ",\n                     pg_catalog.pg_size_pretty(sum("
+							  "pg_catalog.pg_table_size(ppt.relid))) AS tps"
+							  "\n              FROM pg_catalog.pg_partition_tree(c.oid) ppt) s");
+		}
+	}
+
+	appendPQExpBufferStr(&buf, "\nWHERE c.relkind IN (");
+	if (showTables)
+		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_PARTITIONED_TABLE) ",");
+	if (showIndexes)
+		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_PARTITIONED_INDEX) ",");
+	appendPQExpBufferStr(&buf, "''");	/* dummy */
+	appendPQExpBufferStr(&buf, ")\n");
+
+	appendPQExpBufferStr(&buf, !showNested && !pattern ?
+						 " AND NOT c.relispartition\n" : "");
+
+	if (!pattern)
+		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+							 "      AND n.nspname <> 'information_schema'\n");
+
+	/*
+	 * TOAST objects are suppressed unconditionally.  Since we don't provide
+	 * any way to select RELKIND_TOASTVALUE above, we would never show toast
+	 * tables in any case; it seems a bit confusing to allow their indexes to
+	 * be shown.  Use plain \d if you really need to look at a TOAST
+	 * table/index.
+	 */
+	appendPQExpBufferStr(&buf, "      AND n.nspname !~ '^pg_toast'\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "c.relname", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
+
+	appendPQExpBuffer(&buf, "ORDER BY \"Schema\", %s%s\"Name\";",
+					  mixed_output ? "\"Type\" DESC, " : "",
+					  showNested || pattern ? "\"Parent name\" NULLS FIRST, " : "");
+
+	res = PSQLexec(buf.data);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	initPQExpBuffer(&title);
+	appendPQExpBuffer(&title, "%s", tabletitle);
+
+	myopt.nullPrint = NULL;
+	myopt.title = title.data;
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
+	myopt.n_translate_columns = lengthof(translate_columns);
+
+	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+
+	termPQExpBuffer(&title);
+
+	PQclear(res);
+	return true;
+}
 
 /*
  * \dL

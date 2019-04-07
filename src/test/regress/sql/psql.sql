@@ -1046,3 +1046,72 @@ select 1/(15-unique2) from tenk1 order by unique2 limit 19;
 \echo 'last error code:' :LAST_ERROR_SQLSTATE
 
 \unset FETCH_COUNT
+
+create schema testpart;
+create role testrole_partitioning;
+
+alter schema testpart owner to testrole_partitioning;
+
+set role to testrole_partitioning;
+
+-- run test inside own schema and hide other partitions
+set search_path to testpart;
+
+create table testtable_apple(logdate date);
+create table testtable_orange(logdate date);
+create index testtable_apple_index on testtable_apple(logdate);
+create index testtable_orange_index on testtable_orange(logdate);
+
+create table testpart_apple(logdate date) partition by range(logdate);
+create table testpart_orange(logdate date) partition by range(logdate);
+
+create index testpart_apple_index on testpart_apple(logdate);
+create index testpart_orange_index on testpart_orange(logdate);
+
+-- only partition related object should be displayed
+\dP test*apple*
+\dPt test*apple*
+\dPi test*apple*
+
+drop table testtable_apple;
+drop table testtable_orange;
+drop table testpart_apple;
+drop table testpart_orange;
+
+create table parent_tab (id int) partition by range (id);
+create index parent_index on parent_tab (id);
+create table child_0_10 partition of parent_tab
+  for values from (0) to (10);
+create table child_10_20 partition of parent_tab
+  for values from (10) to (20);
+create table child_20_30 partition of parent_tab
+  for values from (20) to (30);
+insert into parent_tab values (generate_series(0,29));
+create table child_30_40 partition of parent_tab
+for values from (30) to (40)
+  partition by range(id);
+create table child_30_35 partition of child_30_40
+  for values from (30) to (35);
+create table child_35_40 partition of child_30_40
+   for values from (35) to (40);
+insert into parent_tab values (generate_series(30,39));
+
+\dPt
+\dPi
+
+\dP testpart.*
+\dP
+
+\dPtn
+\dPin
+\dPn
+\dPn testpart.*
+
+drop table parent_tab cascade;
+
+drop schema testpart;
+
+set search_path to default;
+
+set role to default;
+drop role testrole_partitioning;
