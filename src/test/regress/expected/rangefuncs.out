@@ -1391,6 +1391,31 @@ SELECT * FROM (VALUES (1),(2),(3)) v1(r1),
   3 |  3 | 30 | 8
 (45 rows)
 
+-- check handling of FULL JOIN with multiple lateral references (bug #15741)
+SELECT *
+FROM (VALUES (1),(2)) v1(r1)
+    LEFT JOIN LATERAL (
+        SELECT *
+        FROM generate_series(1, v1.r1) AS gs1
+        LEFT JOIN LATERAL (
+            SELECT *
+            FROM generate_series(1, gs1) AS gs2
+            LEFT JOIN generate_series(1, gs2) AS gs3 ON TRUE
+        ) AS ss1 ON TRUE
+        FULL JOIN generate_series(1, v1.r1) AS gs4 ON FALSE
+    ) AS ss0 ON TRUE;
+ r1 | gs1 | gs2 | gs3 | gs4 
+----+-----+-----+-----+-----
+  1 |     |     |     |   1
+  1 |   1 |   1 |   1 |    
+  2 |     |     |     |   1
+  2 |     |     |     |   2
+  2 |   1 |   1 |   1 |    
+  2 |   2 |   1 |   1 |    
+  2 |   2 |   2 |   1 |    
+  2 |   2 |   2 |   2 |    
+(8 rows)
+
 DROP FUNCTION foo_sql(int,int);
 DROP FUNCTION foo_mat(int,int);
 DROP SEQUENCE foo_rescan_seq1;
