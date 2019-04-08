@@ -880,7 +880,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      is equivalent to specifying:
 
 <programlisting>
-CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
+CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq AS integer;
 CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     <replaceable class="parameter">colname</replaceable> integer NOT NULL DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq')
 );
