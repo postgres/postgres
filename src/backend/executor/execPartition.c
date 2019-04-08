@@ -253,16 +253,25 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		partdesc = RelationGetPartitionDesc(rel);
 
 		/*
-		 * Convert the tuple to this parent's layout, if different from the
-		 * current relation.
+		 * Use the slot dedicated to this level's parent.  All parents except
+		 * the root have a dedicated slot.  For the root parent, we just use
+		 * the original input slot.
 		 */
-		myslot = dispatch->tupslot;
-		if (myslot != NULL && map != NULL)
+		myslot = dispatch->tupslot == NULL ? slot : dispatch->tupslot;
+
+		/*
+		 * If the tuple layout of this level's parent is different from the
+		 * previous level's parent, convert the tuple and store it into its
+		 * dedicated slot.
+		 */
+		if (myslot != slot)
 		{
-			tuple = do_convert_tuple(tuple, map);
+			if (map != NULL)
+				tuple = do_convert_tuple(tuple, map);
 			ExecStoreTuple(tuple, myslot, InvalidBuffer, true);
-			slot = myslot;
 		}
+		else
+			Assert(map == NULL);
 
 		/*
 		 * Extract partition key from tuple. Expression evaluation machinery
@@ -272,8 +281,8 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		 * partitioning level has different tuple descriptor from the parent.
 		 * So update ecxt_scantuple accordingly.
 		 */
-		ecxt->ecxt_scantuple = slot;
-		FormPartitionKeyDatum(dispatch, slot, estate, values, isnull);
+		ecxt->ecxt_scantuple = myslot;
+		FormPartitionKeyDatum(dispatch, myslot, estate, values, isnull);
 
 		/*
 		 * Nothing for get_partition_for_tuple() to do if there are no
@@ -309,19 +318,19 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 			dispatch = pd[-dispatch->indexes[cur_index]];
 
 			/*
-			 * Release the dedicated slot, if it was used.  Create a copy of
-			 * the tuple first, for the next iteration.
+			 * Make a copy of the tuple for the next level of routing.  If
+			 * this level's parent had a dedicated slot, we must clear its
+			 * tuple too, which would be the copy we made in the last
+			 * iteration.
 			 */
-			if (slot == myslot)
-			{
-				tuple = ExecCopySlotTuple(myslot);
+			tuple = ExecCopySlotTuple(myslot);
+			if (myslot != slot)
 				ExecClearTuple(myslot);
-			}
 		}
 	}
 
 	/* Release the tuple in the lowest parent's dedicated slot. */
-	if (slot == myslot)
+	if (myslot != slot)
 		ExecClearTuple(myslot);
 
 	/* A partition was not found. */
