@@ -351,6 +351,16 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    </para>
 
    <para>
+    Similar considerations apply to generated columns.  Stored generated
+    columns are computed on insert or update on the local
+    <productname>PostgreSQL</productname> server and handed to the
+    foreign-data wrapper for writing out to the foreign data store, but it is
+    not enforced that a query of the foreign table returns values for stored
+    generated columns that are consistent with the generation expression.
+    Again, this might result in incorrect query results.
+   </para>
+
+   <para>
     While rows can be moved from local partitions to a foreign-table partition
     (provided the foreign data wrapper supports tuple routing), they cannot be
     moved from a foreign-table partition to another partition.
