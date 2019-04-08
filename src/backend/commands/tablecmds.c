@@ -9593,6 +9593,8 @@ validateForeignKeyConstraint(char *conname,
 	TableScanDesc scan;
 	Trigger		trig;
 	Snapshot	snapshot;
+	MemoryContext oldcxt;
+	MemoryContext perTupCxt;
 
 	ereport(DEBUG1,
 			(errmsg("validating foreign key constraint \"%s\"", conname)));
@@ -9628,10 +9630,17 @@ validateForeignKeyConstraint(char *conname,
 	slot = table_slot_create(rel, NULL);
 	scan = table_beginscan(rel, snapshot, 0, NULL);
 
+	perTupCxt = AllocSetContextCreate(CurrentMemoryContext,
+									  "validateForeignKeyConstraint",
+									  ALLOCSET_SMALL_SIZES);
+	oldcxt = MemoryContextSwitchTo(perTupCxt);
+
 	while (table_scan_getnextslot(scan, ForwardScanDirection, slot))
 	{
 		LOCAL_FCINFO(fcinfo, 0);
 		TriggerData trigdata;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * Make a call to the trigger function
@@ -9649,13 +9658,18 @@ validateForeignKeyConstraint(char *conname,
 		trigdata.tg_trigtuple = ExecFetchSlotHeapTuple(slot, false, NULL);
 		trigdata.tg_trigslot = slot;
 		trigdata.tg_newtuple = NULL;
+		trigdata.tg_newslot = NULL;
 		trigdata.tg_trigger = &trig;
 
 		fcinfo->context = (Node *) &trigdata;
 
 		RI_FKey_check_ins(fcinfo);
+
+		MemoryContextReset(perTupCxt);
 	}
 
+	MemoryContextSwitchTo(oldcxt);
+	MemoryContextDelete(perTupCxt);
 	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
 	ExecDropSingleTupleTableSlot(slot);
