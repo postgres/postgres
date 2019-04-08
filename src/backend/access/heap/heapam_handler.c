@@ -463,8 +463,14 @@ tuple_lock_retry:
 					if (TransactionIdIsCurrentTransactionId(priorXmax) &&
 						HeapTupleHeaderGetCmin(tuple->t_data) >= cid)
 					{
+						tmfd->xmax = priorXmax;
+						/*
+						 * Cmin is the problematic value, so store that. See
+						 * above.
+						 */
+						tmfd->cmax = HeapTupleHeaderGetCmin(tuple->t_data);
 						ReleaseBuffer(buffer);
-						return TM_Invisible;
+						return TM_SelfModified;
 					}
 
 					/*

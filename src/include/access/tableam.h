@@ -1216,9 +1216,9 @@ table_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
  *	TM_Deleted: lock failed because tuple deleted by other xact
  *	TM_WouldBlock: lock couldn't be acquired and wait_policy is skip
  *
- * In the failure cases other than TM_Invisible, the routine fills *tmfd with
- * the tuple's t_ctid, t_xmax, and, if possible, t_cmax.  See comments for
- * struct TM_FailureData for additional info.
+ * In the failure cases other than TM_Invisible and TM_Deleted, the routine
+ * fills *tmfd with the tuple's t_ctid, t_xmax, and, if possible, t_cmax.  See
+ * comments for struct TM_FailureData for additional info.
  */
 static inline TM_Result
 table_lock_tuple(Relation rel, ItemPointer tid, Snapshot snapshot,

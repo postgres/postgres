@@ -258,6 +258,73 @@ accountid      balance
 checking       1050           
 savings        600            
 
+starting permutation: wx1 updwcte c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step updwcte: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *) UPDATE accounts a SET balance = doup.balance + 100 FROM doup RETURNING *; <waiting ...>
+step c1: COMMIT;
+step updwcte: <... completed>
+accountid      balance        accountid      balance        
+
+savings        1600           checking       1500           
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1500           
+savings        1600           
+
+starting permutation: wx1 updwctefail c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step updwctefail: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *, update_checking(999)) UPDATE accounts a SET balance = doup.balance + 100 FROM doup RETURNING *; <waiting ...>
+step c1: COMMIT;
+step updwctefail: <... completed>
+error in steps c1 updwctefail: ERROR:  tuple to be updated was already modified by an operation triggered by the current command
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       400            
+savings        600            
+
+starting permutation: wx1 delwcte c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step delwcte: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *) DELETE FROM accounts a USING doup RETURNING *; <waiting ...>
+step c1: COMMIT;
+step delwcte: <... completed>
+accountid      balance        accountid      balance        
+
+savings        600            checking       1500           
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1500           
+
+starting permutation: wx1 delwctefail c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step delwctefail: WITH doup AS (UPDATE accounts SET balance = balance + 1100 WHERE accountid = 'checking' RETURNING *, update_checking(999)) DELETE FROM accounts a USING doup RETURNING *; <waiting ...>
+step c1: COMMIT;
+step delwctefail: <... completed>
+error in steps c1 delwctefail: ERROR:  tuple to be deleted was already modified by an operation triggered by the current command
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       400            
+savings        600            
+
 starting permutation: upsert1 upsert2 c1 c2 read
 step upsert1: 
 	WITH upsert AS

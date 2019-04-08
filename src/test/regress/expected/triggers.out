@@ -1607,7 +1607,7 @@ select * from parent; select * from child;
 (1 row)
 
 delete from parent where aid = 1; -- should fail
-ERROR:  tuple to be updated was already modified by an operation triggered by the current command
+ERROR:  tuple to be deleted was already modified by an operation triggered by the current command
 HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
