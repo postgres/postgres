@@ -2779,7 +2779,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * es_param_exec_vals, etc.
 	 *
 	 * The ResultRelInfo array management is trickier than it looks.  We
-	 * create a fresh array for the child but copy all the content from the
+	 * create fresh arrays for the child but copy all the content from the
 	 * parent.  This is because it's okay for the child to share any
 	 * per-relation state the parent has already created --- but if the child
 	 * sets up any ResultRelInfo fields, such as its own junkfilter, that
@@ -2800,6 +2800,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	if (parentestate->es_num_result_relations > 0)
 	{
 		int			numResultRelations = parentestate->es_num_result_relations;
+		int			numRootResultRels = parentestate->es_num_root_result_relations;
 		ResultRelInfo *resultRelInfos;
 
 		resultRelInfos = (ResultRelInfo *)
@@ -2808,6 +2809,17 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 			   numResultRelations * sizeof(ResultRelInfo));
 		estate->es_result_relations = resultRelInfos;
 		estate->es_num_result_relations = numResultRelations;
+
+		/* Also transfer partitioned root result relations. */
+		if (numRootResultRels > 0)
+		{
+			resultRelInfos = (ResultRelInfo *)
+				palloc(numRootResultRels * sizeof(ResultRelInfo));
+			memcpy(resultRelInfos, parentestate->es_root_result_relations,
+				   numRootResultRels * sizeof(ResultRelInfo));
+			estate->es_root_result_relations = resultRelInfos;
+			estate->es_num_root_result_relations = numRootResultRels;
+		}
 	}
 	/* es_result_relation_info must NOT be copied */
 	/* es_trig_target_relations must NOT be copied */

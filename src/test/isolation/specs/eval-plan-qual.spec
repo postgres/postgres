@@ -32,6 +32,10 @@ setup
 
  CREATE TABLE jointest AS SELECT generate_series(1,10) AS id, 0 AS data;
  CREATE INDEX ON jointest(id);
+
+ CREATE TABLE parttbl (a int) PARTITION BY LIST (a);
+ CREATE TABLE parttbl1 PARTITION OF parttbl FOR VALUES IN (1);
+ INSERT INTO parttbl VALUES (1);
 }
 
 teardown
@@ -41,6 +45,7 @@ teardown
  DROP TABLE accounts_ext;
  DROP TABLE p CASCADE;
  DROP TABLE table_a, table_b, jointest;
+ DROP TABLE parttbl;
 }
 
 session "s1"
@@ -137,6 +142,12 @@ step "selectresultforupdate"	{
 	  where jt.id = y for update of jt, ss1, ss2;
 }
 
+# test for EPQ on a partitioned result table
+
+step "simplepartupdate"	{
+	update parttbl set a = a;
+}
+
 
 session "s2"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
@@ -174,6 +185,10 @@ step "updateforcip3"	{
 }
 step "wrtwcte"	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
 step "wrjt"	{ UPDATE jointest SET data = 42 WHERE id = 7; }
+step "complexpartupdate"	{
+	with u as (update parttbl set a = a returning parttbl.*)
+	update parttbl set a = u.a from u;
+}
 
 # Use writable CTEs to create self-updated rows, that then are
 # (updated|deleted). The *fail versions of the tests additionally
@@ -261,3 +276,5 @@ permutation "wrtwcte" "readwcte" "c1" "c2"
 permutation "wrjt" "selectjoinforupdate" "c2" "c1"
 permutation "wrjt" "selectresultforupdate" "c2" "c1"
 permutation "wrtwcte" "multireadwcte" "c1" "c2"
+
+permutation "simplepartupdate" "complexpartupdate" "c1" "c2"
