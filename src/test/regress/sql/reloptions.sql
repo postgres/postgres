@@ -52,6 +52,28 @@ SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass AND
 -- RESET fails if a value is specified
 ALTER TABLE reloptions_test RESET (fillfactor=12);
 
+-- Test vacuum_truncate option
+DROP TABLE reloptions_test;
+
+CREATE TABLE reloptions_test(i INT NOT NULL, j text)
+	WITH (vacuum_truncate=false,
+	toast.vacuum_truncate=false,
+	autovacuum_enabled=false);
+SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
+INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
+VACUUM reloptions_test;
+SELECT pg_relation_size('reloptions_test') > 0;
+
+SELECT reloptions FROM pg_class WHERE oid =
+	(SELECT reltoastrelid FROM pg_class
+	WHERE oid = 'reloptions_test'::regclass);
+
+ALTER TABLE reloptions_test RESET (vacuum_truncate);
+SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
+INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
+VACUUM reloptions_test;
+SELECT pg_relation_size('reloptions_test') = 0;
+
 -- Test toast.* options
 DROP TABLE reloptions_test;
 

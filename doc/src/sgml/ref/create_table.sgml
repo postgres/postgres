@@ -1405,6 +1405,21 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
+    <term><literal>vacuum_truncate</literal>, <literal>toast.vacuum_truncate</literal> (<type>boolean</type>)</term>
+    <listitem>
+     <para>
+      Enables or disables vacuum to try to truncate off any empty pages
+      at the end of this table. The default value is <literal>true</literal>.
+      If <literal>true</literal>, <command>VACUUM</command> and
+      autovacuum do the truncation and the disk space for
+      the truncated pages is returned to the operating system.
+      Note that the truncation requires <literal>ACCESS EXCLUSIVE</literal>
+      lock on the table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>autovacuum_vacuum_threshold</literal>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
