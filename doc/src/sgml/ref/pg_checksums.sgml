@@ -39,16 +39,16 @@ PostgreSQL documentation
    <application>pg_checksums</application> checks, enables or disables data
    checksums in a <productname>PostgreSQL</productname> cluster.  The server
    must be shut down cleanly before running
-   <application>pg_checksums</application>. The exit status is zero if there
-   are no checksum errors when checking them, and nonzero if at least one
-   checksum failure is detected. If enabling or disabling checksums, the
+   <application>pg_checksums</application>. When verifying checksums, the exit
+   status is zero if there are no checksum errors, and nonzero if at least one
+   checksum failure is detected. When enabling or disabling checksums, the
    exit status is nonzero if the operation failed.
   </para>
 
   <para>
-   While checking or enabling checksums needs to scan or write every file in
-   the cluster, disabling checksums will only update the file
-   <filename>pg_control</filename>.
+   When verifying checksums, every file in the cluster is scanned. When
+   enabling checksums, every file in the cluster is rewritten. Disabling
+   checksums only updates the file <filename>pg_control</filename>.
   </para>
  </refsect1>
 
@@ -218,10 +218,9 @@ PostgreSQL documentation
   </para>
   <para>
    If <application>pg_checksums</application> is aborted or killed while
-   enabling or disabling checksums, the cluster will keep the same
-   configuration for data checksums as before the operation attempted.
-   <application>pg_checksums</application> can be restarted to
-   attempt again the same operation.
+   enabling or disabling checksums, the cluster's data checksum configuration
+   remains unchanged, and <application>pg_checksums</application> can be
+   re-run to perform the same operation.
   </para>
  </refsect1>
 </refentry>
