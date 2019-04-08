@@ -3622,7 +3622,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        with write locks that can potentially see the table to finish.
        This phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
-       and <structname>current_locker_pid</structname> contain the progress 
+       and <structname>current_locker_pid</structname> contain the progress
        information for this phase.
       </entry>
      </row>
@@ -3644,7 +3644,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        with write locks that can potentially write into the table to finish.
        This phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
-       and <structname>current_locker_pid</structname> contain the progress 
+       and <structname>current_locker_pid</structname> contain the progress
        information for this phase.
       </entry>
      </row>
@@ -3682,7 +3682,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        that can potentially see the table to release their snapshots.  This
        phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
-       and <structname>current_locker_pid</structname> contain the progress 
+       and <structname>current_locker_pid</structname> contain the progress
        information for this phase.
       </entry>
      </row>
@@ -3693,7 +3693,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        with read locks on the table to finish, before marking the old index dead.
        This phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
-       and <structname>current_locker_pid</structname> contain the progress 
+       and <structname>current_locker_pid</structname> contain the progress
        information for this phase.
       </entry>
      </row>
@@ -3704,7 +3704,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        with read locks on the table to finish, before dropping the old index.
        This phase is skipped when not in concurrent mode.
        Columns <structname>lockers_total</structname>, <structname>lockers_done</structname>
-       and <structname>current_locker_pid</structname> contain the progress 
+       and <structname>current_locker_pid</structname> contain the progress
        information for this phase.
       </entry>
      </row>
@@ -3725,8 +3725,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    that will be reported and provide information about how to interpret it.
    Progress for <command>VACUUM FULL</command> commands is reported via
    <structname>pg_stat_progress_cluster</structname>
-   because both <command>VACUUM FULL</command> and <command>CLUSTER</command> 
-   rewrite the table, while regular <command>VACUUM</command> only modifies it 
+   because both <command>VACUUM FULL</command> and <command>CLUSTER</command>
+   rewrite the table, while regular <command>VACUUM</command> only modifies it
    in place. See <xref linkend='cluster-progress-reporting'/>.
   </para>
 
@@ -3912,7 +3912,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <para>
    Whenever <command>CLUSTER</command> or <command>VACUUM FULL</command> is
    running, the <structname>pg_stat_progress_cluster</structname> view will
-   contain a row for each backend that is currently running either command. 
+   contain a row for each backend that is currently running either command.
    The tables below describe the information that will be reported and
    provide information about how to interpret it.
   </para>
@@ -4054,7 +4054,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry><literal>sorting tuples</literal></entry>
      <entry>
-       <command>CLUSTER</command> is currently sorting tuples. 
+       <command>CLUSTER</command> is currently sorting tuples.
      </entry>
     </row>
     <row>
@@ -4072,7 +4072,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry><literal>performing final cleanup</literal></entry>
      <entry>
-       The command is performing final cleanup.  When this phase is 
+       The command is performing final cleanup.  When this phase is
        completed, <command>CLUSTER</command>
        or <command>VACUUM FULL</command> will end.
      </entry>

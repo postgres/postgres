@@ -544,7 +544,7 @@
 
   <para>
    <filename>postgres_fdw</filename> likewise establishes remote session settings
-   for various parameters: 
+   for various parameters:
    <itemizedlist spacing="compact">
     <listitem>
      <para>

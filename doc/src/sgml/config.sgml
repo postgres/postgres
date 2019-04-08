@@ -953,7 +953,7 @@ include_dir 'conf.d'
         This parameter is supported only on systems that support
         <symbol>TCP_USER_TIMEOUT</symbol>; on other systems, it must be zero.
         In sessions connected via a Unix-domain socket, this parameter is
-        ignored and always reads as zero. 
+        ignored and always reads as zero.
        </para>
        <note>
         <para>

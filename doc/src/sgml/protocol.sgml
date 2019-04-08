@@ -1586,7 +1586,7 @@ PostgreSQL is <literal>tls-server-end-point</literal>.
    user-supplied password in the transmitted password hash.  While this
    prevents the password hash from being successfully retransmitted in
    a later session, it does not prevent a fake server between the real
-   server and client from passing through the server's random value 
+   server and client from passing through the server's random value
    and successfully authenticating.
   </para>
 

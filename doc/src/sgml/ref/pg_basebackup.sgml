@@ -327,7 +327,7 @@ PostgreSQL documentation
            </para>
            <para>
             When tar format mode is used, the write-ahead log files will be
-            written to a separate file named <filename>pg_wal.tar</filename> 
+            written to a separate file named <filename>pg_wal.tar</filename>
             (if the server is a version earlier than 10, the file will be named
             <filename>pg_xlog.tar</filename>).
            </para>

@@ -643,7 +643,7 @@ psql: could not connect to server: No such file or directory
     amount of anonymous <function>mmap</function> shared memory.
     Alternatively, a single large System V shared memory region can be used
     (see <xref linkend="guc-shared-memory-type"/>).
-    
+
     In addition a significant number of semaphores, which can be either
     System V or POSIX style, are created at server startup.  Currently,
     POSIX semaphores are used on Linux and FreeBSD systems while other

@@ -625,7 +625,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
  </sect2>
 
  <sect2 id="datatype-jsonpath">
-  <title>jsonpath Type</title> 
+  <title>jsonpath Type</title>
 
   <indexterm zone="datatype-jsonpath">
    <primary>jsonpath</primary>

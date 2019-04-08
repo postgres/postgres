@@ -17397,7 +17397,7 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
     because it needs access to the predicate lock manager's shared
     state for a short time.
    </para>
-   
+
    <indexterm>
     <primary>version</primary>
    </indexterm>
@@ -21225,7 +21225,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
      </thead>
 
-     <tbody> 
+     <tbody>
       <row>
        <entry>
         <indexterm><primary>pg_partition_tree</primary></indexterm>

@@ -102,7 +102,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     order-preserving merge.  In contrast, <literal>Gather</literal> reads tuples
     from the workers in whatever order is convenient, destroying any sort
     order that may have existed.
-   </para>   
+   </para>
  </sect1>
 
  <sect1 id="when-can-parallel-query-be-used">
@@ -347,7 +347,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     workers in order to produce the final result.  This is reflected in the
     plan as a <literal>Finalize Aggregate</literal> node.
   </para>
-  
+
   <para>
     Because the <literal>Finalize Aggregate</literal> node runs on the leader
     process, queries which produce a relatively large number of groups in

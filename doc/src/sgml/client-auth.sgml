@@ -671,7 +671,7 @@ hostnogssenc <replaceable>database</replaceable>  <replaceable>user</replaceable
    non-null <structfield>error</structfield> fields indicate problems in the
    corresponding lines of the file.
   </para>
- 
+
   <tip>
    <para>
     To connect to a particular database, a user must not only pass the
@@ -747,9 +747,9 @@ host    all             all             .example.com            scram-sha-256
 # reject all connections from 192.168.54.1 (since that entry will be
 # matched first), but allow GSSAPI-encrypted connections from anywhere else
 # on the Internet.  The zero mask causes no bits of the host IP address to
-# be considered, so it matches any host.  Unencrypted GSSAPI connections 
+# be considered, so it matches any host.  Unencrypted GSSAPI connections
 # (which "fall through" to the third line since "hostgssenc" only matches
-# encrypted GSSAPI connections) are allowed, but only from 192.168.12.10.  
+# encrypted GSSAPI connections) are allowed, but only from 192.168.12.10.
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             192.168.54.1/32         reject
