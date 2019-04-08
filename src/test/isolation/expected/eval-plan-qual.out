@@ -283,3 +283,15 @@ step multireadwcte: <... completed>
 subid          id             
 
 1              1              
+
+starting permutation: simplepartupdate complexpartupdate c1 c2
+step simplepartupdate: 
+	update parttbl set a = a;
+
+step complexpartupdate: 
+	with u as (update parttbl set a = a returning parttbl.*)
+	update parttbl set a = u.a from u;
+ <waiting ...>
+step c1: COMMIT;
+step complexpartupdate: <... completed>
+step c2: COMMIT;
