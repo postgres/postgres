@@ -293,180 +293,180 @@ CREATE VIEW pg_prepared_statements AS
 
 CREATE VIEW pg_seclabels AS
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	CASE WHEN rel.relkind IN ('r', 'p') THEN 'table'::text
-		 WHEN rel.relkind = 'v' THEN 'view'::text
-		 WHEN rel.relkind = 'm' THEN 'materialized view'::text
-		 WHEN rel.relkind = 'S' THEN 'sequence'::text
-		 WHEN rel.relkind = 'f' THEN 'foreign table'::text END AS objtype,
-	rel.relnamespace AS objnamespace,
-	CASE WHEN pg_table_is_visible(rel.oid)
-	     THEN quote_ident(rel.relname)
-	     ELSE quote_ident(nsp.nspname) || '.' || quote_ident(rel.relname)
-	     END AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    CASE WHEN rel.relkind IN ('r', 'p') THEN 'table'::text
+         WHEN rel.relkind = 'v' THEN 'view'::text
+         WHEN rel.relkind = 'm' THEN 'materialized view'::text
+         WHEN rel.relkind = 'S' THEN 'sequence'::text
+         WHEN rel.relkind = 'f' THEN 'foreign table'::text END AS objtype,
+    rel.relnamespace AS objnamespace,
+    CASE WHEN pg_table_is_visible(rel.oid)
+         THEN quote_ident(rel.relname)
+         ELSE quote_ident(nsp.nspname) || '.' || quote_ident(rel.relname)
+         END AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_class rel ON l.classoid = rel.tableoid AND l.objoid = rel.oid
-	JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+    pg_seclabel l
+    JOIN pg_class rel ON l.classoid = rel.tableoid AND l.objoid = rel.oid
+    JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
 WHERE
-	l.objsubid = 0
+    l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	'column'::text AS objtype,
-	rel.relnamespace AS objnamespace,
-	CASE WHEN pg_table_is_visible(rel.oid)
-	     THEN quote_ident(rel.relname)
-	     ELSE quote_ident(nsp.nspname) || '.' || quote_ident(rel.relname)
-	     END || '.' || att.attname AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    'column'::text AS objtype,
+    rel.relnamespace AS objnamespace,
+    CASE WHEN pg_table_is_visible(rel.oid)
+         THEN quote_ident(rel.relname)
+         ELSE quote_ident(nsp.nspname) || '.' || quote_ident(rel.relname)
+         END || '.' || att.attname AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_class rel ON l.classoid = rel.tableoid AND l.objoid = rel.oid
-	JOIN pg_attribute att
-	     ON rel.oid = att.attrelid AND l.objsubid = att.attnum
-	JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+    pg_seclabel l
+    JOIN pg_class rel ON l.classoid = rel.tableoid AND l.objoid = rel.oid
+    JOIN pg_attribute att
+         ON rel.oid = att.attrelid AND l.objsubid = att.attnum
+    JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
 WHERE
-	l.objsubid != 0
+    l.objsubid != 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	CASE pro.prokind
+    l.objoid, l.classoid, l.objsubid,
+    CASE pro.prokind
             WHEN 'a' THEN 'aggregate'::text
             WHEN 'f' THEN 'function'::text
             WHEN 'p' THEN 'procedure'::text
             WHEN 'w' THEN 'window'::text END AS objtype,
-	pro.pronamespace AS objnamespace,
-	CASE WHEN pg_function_is_visible(pro.oid)
-	     THEN quote_ident(pro.proname)
-	     ELSE quote_ident(nsp.nspname) || '.' || quote_ident(pro.proname)
-	END || '(' || pg_catalog.pg_get_function_arguments(pro.oid) || ')' AS objname,
-	l.provider, l.label
+    pro.pronamespace AS objnamespace,
+    CASE WHEN pg_function_is_visible(pro.oid)
+         THEN quote_ident(pro.proname)
+         ELSE quote_ident(nsp.nspname) || '.' || quote_ident(pro.proname)
+    END || '(' || pg_catalog.pg_get_function_arguments(pro.oid) || ')' AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_proc pro ON l.classoid = pro.tableoid AND l.objoid = pro.oid
-	JOIN pg_namespace nsp ON pro.pronamespace = nsp.oid
+    pg_seclabel l
+    JOIN pg_proc pro ON l.classoid = pro.tableoid AND l.objoid = pro.oid
+    JOIN pg_namespace nsp ON pro.pronamespace = nsp.oid
 WHERE
-	l.objsubid = 0
+    l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	CASE WHEN typ.typtype = 'd' THEN 'domain'::text
-	ELSE 'type'::text END AS objtype,
-	typ.typnamespace AS objnamespace,
-	CASE WHEN pg_type_is_visible(typ.oid)
-	THEN quote_ident(typ.typname)
-	ELSE quote_ident(nsp.nspname) || '.' || quote_ident(typ.typname)
-	END AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    CASE WHEN typ.typtype = 'd' THEN 'domain'::text
+    ELSE 'type'::text END AS objtype,
+    typ.typnamespace AS objnamespace,
+    CASE WHEN pg_type_is_visible(typ.oid)
+    THEN quote_ident(typ.typname)
+    ELSE quote_ident(nsp.nspname) || '.' || quote_ident(typ.typname)
+    END AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_type typ ON l.classoid = typ.tableoid AND l.objoid = typ.oid
-	JOIN pg_namespace nsp ON typ.typnamespace = nsp.oid
+    pg_seclabel l
+    JOIN pg_type typ ON l.classoid = typ.tableoid AND l.objoid = typ.oid
+    JOIN pg_namespace nsp ON typ.typnamespace = nsp.oid
 WHERE
-	l.objsubid = 0
+    l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	'large object'::text AS objtype,
-	NULL::oid AS objnamespace,
-	l.objoid::text AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    'large object'::text AS objtype,
+    NULL::oid AS objnamespace,
+    l.objoid::text AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_largeobject_metadata lom ON l.objoid = lom.oid
+    pg_seclabel l
+    JOIN pg_largeobject_metadata lom ON l.objoid = lom.oid
 WHERE
-	l.classoid = 'pg_catalog.pg_largeobject'::regclass AND l.objsubid = 0
+    l.classoid = 'pg_catalog.pg_largeobject'::regclass AND l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	'language'::text AS objtype,
-	NULL::oid AS objnamespace,
-	quote_ident(lan.lanname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    'language'::text AS objtype,
+    NULL::oid AS objnamespace,
+    quote_ident(lan.lanname) AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_language lan ON l.classoid = lan.tableoid AND l.objoid = lan.oid
+    pg_seclabel l
+    JOIN pg_language lan ON l.classoid = lan.tableoid AND l.objoid = lan.oid
 WHERE
-	l.objsubid = 0
+    l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	'schema'::text AS objtype,
-	nsp.oid AS objnamespace,
-	quote_ident(nsp.nspname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    'schema'::text AS objtype,
+    nsp.oid AS objnamespace,
+    quote_ident(nsp.nspname) AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_namespace nsp ON l.classoid = nsp.tableoid AND l.objoid = nsp.oid
+    pg_seclabel l
+    JOIN pg_namespace nsp ON l.classoid = nsp.tableoid AND l.objoid = nsp.oid
 WHERE
-	l.objsubid = 0
+    l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	'event trigger'::text AS objtype,
-	NULL::oid AS objnamespace,
-	quote_ident(evt.evtname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    'event trigger'::text AS objtype,
+    NULL::oid AS objnamespace,
+    quote_ident(evt.evtname) AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_event_trigger evt ON l.classoid = evt.tableoid
-		AND l.objoid = evt.oid
+    pg_seclabel l
+    JOIN pg_event_trigger evt ON l.classoid = evt.tableoid
+        AND l.objoid = evt.oid
 WHERE
-	l.objsubid = 0
+    l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, l.objsubid,
-	'publication'::text AS objtype,
-	NULL::oid AS objnamespace,
-	quote_ident(p.pubname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, l.objsubid,
+    'publication'::text AS objtype,
+    NULL::oid AS objnamespace,
+    quote_ident(p.pubname) AS objname,
+    l.provider, l.label
 FROM
-	pg_seclabel l
-	JOIN pg_publication p ON l.classoid = p.tableoid AND l.objoid = p.oid
+    pg_seclabel l
+    JOIN pg_publication p ON l.classoid = p.tableoid AND l.objoid = p.oid
 WHERE
-	l.objsubid = 0
+    l.objsubid = 0
 UNION ALL
 SELECT
-	l.objoid, l.classoid, 0::int4 AS objsubid,
-	'subscription'::text AS objtype,
-	NULL::oid AS objnamespace,
-	quote_ident(s.subname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, 0::int4 AS objsubid,
+    'subscription'::text AS objtype,
+    NULL::oid AS objnamespace,
+    quote_ident(s.subname) AS objname,
+    l.provider, l.label
 FROM
-	pg_shseclabel l
-	JOIN pg_subscription s ON l.classoid = s.tableoid AND l.objoid = s.oid
+    pg_shseclabel l
+    JOIN pg_subscription s ON l.classoid = s.tableoid AND l.objoid = s.oid
 UNION ALL
 SELECT
-	l.objoid, l.classoid, 0::int4 AS objsubid,
-	'database'::text AS objtype,
-	NULL::oid AS objnamespace,
-	quote_ident(dat.datname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, 0::int4 AS objsubid,
+    'database'::text AS objtype,
+    NULL::oid AS objnamespace,
+    quote_ident(dat.datname) AS objname,
+    l.provider, l.label
 FROM
-	pg_shseclabel l
-	JOIN pg_database dat ON l.classoid = dat.tableoid AND l.objoid = dat.oid
+    pg_shseclabel l
+    JOIN pg_database dat ON l.classoid = dat.tableoid AND l.objoid = dat.oid
 UNION ALL
 SELECT
-	l.objoid, l.classoid, 0::int4 AS objsubid,
-	'tablespace'::text AS objtype,
-	NULL::oid AS objnamespace,
-	quote_ident(spc.spcname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, 0::int4 AS objsubid,
+    'tablespace'::text AS objtype,
+    NULL::oid AS objnamespace,
+    quote_ident(spc.spcname) AS objname,
+    l.provider, l.label
 FROM
-	pg_shseclabel l
-	JOIN pg_tablespace spc ON l.classoid = spc.tableoid AND l.objoid = spc.oid
+    pg_shseclabel l
+    JOIN pg_tablespace spc ON l.classoid = spc.tableoid AND l.objoid = spc.oid
 UNION ALL
 SELECT
-	l.objoid, l.classoid, 0::int4 AS objsubid,
-	'role'::text AS objtype,
-	NULL::oid AS objnamespace,
-	quote_ident(rol.rolname) AS objname,
-	l.provider, l.label
+    l.objoid, l.classoid, 0::int4 AS objsubid,
+    'role'::text AS objtype,
+    NULL::oid AS objnamespace,
+    quote_ident(rol.rolname) AS objname,
+    l.provider, l.label
 FROM
-	pg_shseclabel l
-	JOIN pg_authid rol ON l.classoid = rol.tableoid AND l.objoid = rol.oid;
+    pg_shseclabel l
+    JOIN pg_authid rol ON l.classoid = rol.tableoid AND l.objoid = rol.oid;
 
 CREATE VIEW pg_settings AS
     SELECT * FROM pg_show_all_settings() AS A;
@@ -898,22 +898,22 @@ CREATE VIEW pg_stat_bgwriter AS
         pg_stat_get_bgwriter_stat_reset_time() AS stats_reset;
 
 CREATE VIEW pg_stat_progress_vacuum AS
-	SELECT
-		S.pid AS pid, S.datid AS datid, D.datname AS datname,
-		S.relid AS relid,
-		CASE S.param1 WHEN 0 THEN 'initializing'
-					  WHEN 1 THEN 'scanning heap'
-					  WHEN 2 THEN 'vacuuming indexes'
-					  WHEN 3 THEN 'vacuuming heap'
-					  WHEN 4 THEN 'cleaning up indexes'
-					  WHEN 5 THEN 'truncating heap'
-					  WHEN 6 THEN 'performing final cleanup'
-					  END AS phase,
-		S.param2 AS heap_blks_total, S.param3 AS heap_blks_scanned,
-		S.param4 AS heap_blks_vacuumed, S.param5 AS index_vacuum_count,
-		S.param6 AS max_dead_tuples, S.param7 AS num_dead_tuples
+    SELECT
+        S.pid AS pid, S.datid AS datid, D.datname AS datname,
+        S.relid AS relid,
+        CASE S.param1 WHEN 0 THEN 'initializing'
+                      WHEN 1 THEN 'scanning heap'
+                      WHEN 2 THEN 'vacuuming indexes'
+                      WHEN 3 THEN 'vacuuming heap'
+                      WHEN 4 THEN 'cleaning up indexes'
+                      WHEN 5 THEN 'truncating heap'
+                      WHEN 6 THEN 'performing final cleanup'
+                      END AS phase,
+        S.param2 AS heap_blks_total, S.param3 AS heap_blks_scanned,
+        S.param4 AS heap_blks_vacuumed, S.param5 AS index_vacuum_count,
+        S.param6 AS max_dead_tuples, S.param7 AS num_dead_tuples
     FROM pg_stat_get_progress_info('VACUUM') AS S
-		LEFT JOIN pg_database D ON S.datid = D.oid;
+        LEFT JOIN pg_database D ON S.datid = D.oid;
 
 CREATE VIEW pg_stat_progress_cluster AS
     SELECT
@@ -943,34 +943,34 @@ CREATE VIEW pg_stat_progress_cluster AS
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
 CREATE VIEW pg_stat_progress_create_index AS
-	SELECT
-		S.pid AS pid, S.datid AS datid, D.datname AS datname,
-		S.relid AS relid,
-		CAST(S.param7 AS oid) AS index_relid,
-		CASE S.param10 WHEN 0 THEN 'initializing'
-					  WHEN 1 THEN 'waiting for writers before build'
-					  WHEN 2 THEN 'building index' ||
-						COALESCE((': ' || pg_indexam_progress_phasename(S.param9::oid, S.param11)),
-							'')
-					  WHEN 3 THEN 'waiting for writers before validation'
-					  WHEN 4 THEN 'index validation: scanning index'
-					  WHEN 5 THEN 'index validation: sorting tuples'
-					  WHEN 6 THEN 'index validation: scanning table'
-					  WHEN 7 THEN 'waiting for old snapshots'
-					  WHEN 8 THEN 'waiting for readers before marking dead'
-					  WHEN 9 THEN 'waiting for readers before dropping'
-					  END as phase,
-		S.param4 AS lockers_total,
-		S.param5 AS lockers_done,
-		S.param6 AS current_locker_pid,
-		S.param16 AS blocks_total,
-		S.param17 AS blocks_done,
-		S.param12 AS tuples_total,
-		S.param13 AS tuples_done,
-		S.param14 AS partitions_total,
-		S.param15 AS partitions_done
-	FROM pg_stat_get_progress_info('CREATE INDEX') AS S
-		LEFT JOIN pg_database D ON S.datid = D.oid;
+    SELECT
+        S.pid AS pid, S.datid AS datid, D.datname AS datname,
+        S.relid AS relid,
+        CAST(S.param7 AS oid) AS index_relid,
+        CASE S.param10 WHEN 0 THEN 'initializing'
+                       WHEN 1 THEN 'waiting for writers before build'
+                       WHEN 2 THEN 'building index' ||
+                           COALESCE((': ' || pg_indexam_progress_phasename(S.param9::oid, S.param11)),
+                                    '')
+                       WHEN 3 THEN 'waiting for writers before validation'
+                       WHEN 4 THEN 'index validation: scanning index'
+                       WHEN 5 THEN 'index validation: sorting tuples'
+                       WHEN 6 THEN 'index validation: scanning table'
+                       WHEN 7 THEN 'waiting for old snapshots'
+                       WHEN 8 THEN 'waiting for readers before marking dead'
+                       WHEN 9 THEN 'waiting for readers before dropping'
+                       END as phase,
+        S.param4 AS lockers_total,
+        S.param5 AS lockers_done,
+        S.param6 AS current_locker_pid,
+        S.param16 AS blocks_total,
+        S.param17 AS blocks_done,
+        S.param12 AS tuples_total,
+        S.param13 AS tuples_done,
+        S.param14 AS partitions_total,
+        S.param15 AS partitions_done
+    FROM pg_stat_get_progress_info('CREATE INDEX') AS S
+        LEFT JOIN pg_database D ON S.datid = D.oid;
 
 CREATE VIEW pg_user_mappings AS
     SELECT
