@@ -1299,6 +1299,106 @@ select * from x, x x2 where x.n = x2.n;
                      Output: subselect_tbl_1.f1
 (11 rows)
 
+-- Multiply-referenced CTEs can't be inlined if they contain outer self-refs
+explain (verbose, costs off)
+with recursive x(a) as
+  ((values ('a'), ('b'))
+   union all
+   (with z as not materialized (select * from x)
+    select z.a || z1.a as a from z cross join z as z1
+    where length(z.a || z1.a) < 5))
+select * from x;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ CTE Scan on x
+   Output: x.a
+   CTE x
+     ->  Recursive Union
+           ->  Values Scan on "*VALUES*"
+                 Output: "*VALUES*".column1
+           ->  Nested Loop
+                 Output: (z.a || z1.a)
+                 Join Filter: (length((z.a || z1.a)) < 5)
+                 CTE z
+                   ->  WorkTable Scan on x x_1
+                         Output: x_1.a
+                 ->  CTE Scan on z
+                       Output: z.a
+                 ->  CTE Scan on z z1
+                       Output: z1.a
+(16 rows)
+
+with recursive x(a) as
+  ((values ('a'), ('b'))
+   union all
+   (with z as not materialized (select * from x)
+    select z.a || z1.a as a from z cross join z as z1
+    where length(z.a || z1.a) < 5))
+select * from x;
+  a   
+------
+ a
+ b
+ aa
+ ab
+ ba
+ bb
+ aaaa
+ aaab
+ aaba
+ aabb
+ abaa
+ abab
+ abba
+ abbb
+ baaa
+ baab
+ baba
+ babb
+ bbaa
+ bbab
+ bbba
+ bbbb
+(22 rows)
+
+explain (verbose, costs off)
+with recursive x(a) as
+  ((values ('a'), ('b'))
+   union all
+   (with z as not materialized (select * from x)
+    select z.a || z.a as a from z
+    where length(z.a || z.a) < 5))
+select * from x;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ CTE Scan on x
+   Output: x.a
+   CTE x
+     ->  Recursive Union
+           ->  Values Scan on "*VALUES*"
+                 Output: "*VALUES*".column1
+           ->  WorkTable Scan on x x_1
+                 Output: (x_1.a || x_1.a)
+                 Filter: (length((x_1.a || x_1.a)) < 5)
+(9 rows)
+
+with recursive x(a) as
+  ((values ('a'), ('b'))
+   union all
+   (with z as not materialized (select * from x)
+    select z.a || z.a as a from z
+    where length(z.a || z.a) < 5))
+select * from x;
+  a   
+------
+ a
+ b
+ aa
+ bb
+ aaaa
+ bbbb
+(6 rows)
+
 -- Check handling of outer references
 explain (verbose, costs off)
 with x as (select * from int4_tbl)

@@ -85,6 +85,8 @@ static bool testexpr_is_hashable(Node *testexpr);
 static bool hash_ok_operator(OpExpr *expr);
 static bool contain_dml(Node *node);
 static bool contain_dml_walker(Node *node, void *context);
+static bool contain_outer_selfref(Node *node);
+static bool contain_outer_selfref_walker(Node *node, Index *depth);
 static void inline_cte(PlannerInfo *root, CommonTableExpr *cte);
 static bool inline_cte_walker(Node *node, inline_cte_walker_context *context);
 static bool simplify_EXISTS_query(PlannerInfo *root, Query *query);
@@ -867,6 +869,10 @@ SS_process_ctes(PlannerInfo *root)
 		 * SELECT, or containing volatile functions.  Inlining might change
 		 * the side-effects, which would be bad.
 		 *
+		 * 4. The CTE is multiply-referenced and contains a self-reference to
+		 * a recursive CTE outside itself.  Inlining would result in multiple
+		 * recursive self-references, which we don't support.
+		 *
 		 * Otherwise, we have an option whether to inline or not.  That should
 		 * always be a win if there's just a single reference, but if the CTE
 		 * is multiply-referenced then it's unclear: inlining adds duplicate
@@ -876,6 +882,9 @@ SS_process_ctes(PlannerInfo *root)
 		 * the user express a preference.  Our default behavior is to inline
 		 * only singly-referenced CTEs, but a CTE marked CTEMaterializeNever
 		 * will be inlined even if multiply referenced.
+		 *
+		 * Note: we check for volatile functions last, because that's more
+		 * expensive than the other tests needed.
 		 */
 		if ((cte->ctematerialized == CTEMaterializeNever ||
 			 (cte->ctematerialized == CTEMaterializeDefault &&
@@ -883,6 +892,8 @@ SS_process_ctes(PlannerInfo *root)
 			!cte->cterecursive &&
 			cmdType == CMD_SELECT &&
 			!contain_dml(cte->ctequery) &&
+			(cte->cterefcount <= 1 ||
+			 !contain_outer_selfref(cte->ctequery)) &&
 			!contain_volatile_functions(cte->ctequery))
 		{
 			inline_cte(root, cte);
@@ -1014,6 +1025,61 @@ contain_dml_walker(Node *node, void *context)
 		return query_tree_walker(query, contain_dml_walker, context, 0);
 	}
 	return expression_tree_walker(node, contain_dml_walker, context);
+}
+
+/*
+ * contain_outer_selfref: is there an external recursive self-reference?
+ */
+static bool
+contain_outer_selfref(Node *node)
+{
+	Index		depth = 0;
+
+	/*
+	 * We should be starting with a Query, so that depth will be 1 while
+	 * examining its immediate contents.
+	 */
+	Assert(IsA(node, Query));
+
+	return contain_outer_selfref_walker(node, &depth);
+}
+
+static bool
+contain_outer_selfref_walker(Node *node, Index *depth)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, RangeTblEntry))
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) node;
+
+		/*
+		 * Check for a self-reference to a CTE that's above the Query that our
+		 * search started at.
+		 */
+		if (rte->rtekind == RTE_CTE &&
+			rte->self_reference &&
+			rte->ctelevelsup >= *depth)
+			return true;
+		return false;			/* allow range_table_walker to continue */
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subquery, tracking nesting depth properly */
+		Query	   *query = (Query *) node;
+		bool		result;
+
+		(*depth)++;
+
+		result = query_tree_walker(query, contain_outer_selfref_walker,
+								   (void *) depth, QTW_EXAMINE_RTES_BEFORE);
+
+		(*depth)--;
+
+		return result;
+	}
+	return expression_tree_walker(node, contain_outer_selfref_walker,
+								  (void *) depth);
 }
 
 /*
