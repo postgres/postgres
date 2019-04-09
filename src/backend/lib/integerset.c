@@ -805,7 +805,7 @@ intset_binsrch_leaf(uint64 item, leaf_item *arr, int arr_elems, bool nextkey)
  * selector
  *
  * The selector 1101 is 13 in decimal.  From the modes table below, we see
- * that it means that the codeword encodes three 12-bit integers.  In decimal,
+ * that it means that the codeword encodes three 20-bit integers.  In decimal,
  * those integers are 18, 500000 and 20.  Because we encode deltas rather than
  * absolute values, the actual values that they represent are 18, 500018 and
  * 500038.
