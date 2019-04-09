@@ -17,6 +17,28 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 
+/*
+ * Early in a process's life, Windows asynchronously creates threads for the
+ * process's "default thread pool"
+ * (https://docs.microsoft.com/en-us/windows/desktop/ProcThread/thread-pools).
+ * Occasionally, thread creation allocates a stack after
+ * PGSharedMemoryReAttach() has released UsedShmemSegAddr and before it has
+ * mapped shared memory at UsedShmemSegAddr.  This would cause mapping to fail
+ * if the allocator preferred the just-released region for allocating the new
+ * thread stack.  We observed such failures in some Windows Server 2016
+ * configurations.  To give the system another region to prefer, reserve and
+ * release an additional, protective region immediately before reserving or
+ * releasing shared memory.  The idea is that, if the allocator handed out
+ * REGION1 pages before REGION2 pages at one occasion, it will do so whenever
+ * both regions are free.  Windows Server 2016 exhibits that behavior, and a
+ * system behaving differently would have less need to protect
+ * UsedShmemSegAddr.  The protective region must be at least large enough for
+ * one thread stack.  However, ten times as much is less than 2% of the 32-bit
+ * address space and is negligible relative to the 64-bit address space.
+ */
+#define PROTECTIVE_REGION_SIZE (10 * WIN32_STACK_RLIMIT)
+void	   *ShmemProtectiveRegion = NULL;
+
 HANDLE		UsedShmemSegID = INVALID_HANDLE_VALUE;
 void	   *UsedShmemSegAddr = NULL;
 static Size UsedShmemSegSize = 0;
@@ -132,6 +154,12 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("huge pages not supported on this platform")));
+
+	ShmemProtectiveRegion = VirtualAlloc(NULL, PROTECTIVE_REGION_SIZE,
+										 MEM_RESERVE, PAGE_NOACCESS);
+	if (ShmemProtectiveRegion == NULL)
+		elog(FATAL, "could not reserve memory region: error code %lu",
+			 GetLastError());
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
@@ -263,9 +291,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
  * an already existing shared memory segment, using the handle inherited from
  * the postmaster.
  *
- * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
- * routine.  The caller must have already restored them to the postmaster's
- * values.
+ * ShmemProtectiveRegion, UsedShmemSegID and UsedShmemSegAddr are implicit
+ * parameters to this routine.  The caller must have already restored them to
+ * the postmaster's values.
  */
 void
 PGSharedMemoryReAttach(void)
@@ -273,12 +301,16 @@ PGSharedMemoryReAttach(void)
 	PGShmemHeader *hdr;
 	void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
 
+	Assert(ShmemProtectiveRegion != NULL);
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(IsUnderPostmaster);
 
 	/*
-	 * Release memory region reservation that was made by the postmaster
+	 * Release memory region reservations made by the postmaster
 	 */
+	if (VirtualFree(ShmemProtectiveRegion, 0, MEM_RELEASE) == 0)
+		elog(FATAL, "failed to release reserved memory region (addr=%p): error code %lu",
+			 ShmemProtectiveRegion, GetLastError());
 	if (VirtualFree(UsedShmemSegAddr, 0, MEM_RELEASE) == 0)
 		elog(FATAL, "failed to release reserved memory region (addr=%p): error code %lu",
 			 UsedShmemSegAddr, GetLastError());
@@ -307,13 +339,14 @@ PGSharedMemoryReAttach(void)
  * The child process startup logic might or might not call PGSharedMemoryDetach
  * after this; make sure that it will be a no-op if called.
  *
- * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
- * routine.  The caller must have already restored them to the postmaster's
- * values.
+ * ShmemProtectiveRegion, UsedShmemSegID and UsedShmemSegAddr are implicit
+ * parameters to this routine.  The caller must have already restored them to
+ * the postmaster's values.
  */
 void
 PGSharedMemoryNoReAttach(void)
 {
+	Assert(ShmemProtectiveRegion != NULL);
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(IsUnderPostmaster);
 
@@ -340,12 +373,25 @@ PGSharedMemoryNoReAttach(void)
  * Rather, this is for subprocesses that have inherited an attachment and want
  * to get rid of it.
  *
- * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
- * routine.
+ * ShmemProtectiveRegion, UsedShmemSegID and UsedShmemSegAddr are implicit
+ * parameters to this routine.
  */
 void
 PGSharedMemoryDetach(void)
 {
+	/*
+	 * Releasing the protective region liberates an unimportant quantity of
+	 * address space, but be tidy.
+	 */
+	if (ShmemProtectiveRegion != NULL)
+	{
+		if (VirtualFree(ShmemProtectiveRegion, 0, MEM_RELEASE) == 0)
+			elog(LOG, "failed to release reserved memory region (addr=%p): error code %lu",
+				 ShmemProtectiveRegion, GetLastError());
+
+		ShmemProtectiveRegion = NULL;
+	}
+
 	/* Unmap the view, if it's mapped */
 	if (UsedShmemSegAddr != NULL)
 	{
@@ -403,19 +449,22 @@ pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 {
 	void	   *address;
 
+	Assert(ShmemProtectiveRegion != NULL);
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(UsedShmemSegSize != 0);
 
-	address = VirtualAllocEx(hChild, UsedShmemSegAddr, UsedShmemSegSize,
-							 MEM_RESERVE, PAGE_READWRITE);
+	/* ShmemProtectiveRegion */
+	address = VirtualAllocEx(hChild, ShmemProtectiveRegion,
+							 PROTECTIVE_REGION_SIZE,
+							 MEM_RESERVE, PAGE_NOACCESS);
 	if (address == NULL)
 	{
 		/* Don't use FATAL since we're running in the postmaster */
 		elog(LOG, "could not reserve shared memory region (addr=%p) for child %p: error code %lu",
-			 UsedShmemSegAddr, hChild, GetLastError());
+			 ShmemProtectiveRegion, hChild, GetLastError());
 		return false;
 	}
-	if (address != UsedShmemSegAddr)
+	if (address != ShmemProtectiveRegion)
 	{
 		/*
 		 * Should never happen - in theory if allocation granularity causes
@@ -424,8 +473,23 @@ pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 		 * Don't use FATAL since we're running in the postmaster.
 		 */
 		elog(LOG, "reserved shared memory region got incorrect address %p, expected %p",
+			 address, ShmemProtectiveRegion);
+		return false;
+	}
+
+	/* UsedShmemSegAddr */
+	address = VirtualAllocEx(hChild, UsedShmemSegAddr, UsedShmemSegSize,
+							 MEM_RESERVE, PAGE_READWRITE);
+	if (address == NULL)
+	{
+		elog(LOG, "could not reserve shared memory region (addr=%p) for child %p: error code %lu",
+			 UsedShmemSegAddr, hChild, GetLastError());
+		return false;
+	}
+	if (address != UsedShmemSegAddr)
+	{
+		elog(LOG, "reserved shared memory region got incorrect address %p, expected %p",
 			 address, UsedShmemSegAddr);
-		VirtualFreeEx(hChild, address, 0, MEM_RELEASE);
 		return false;
 	}
 
