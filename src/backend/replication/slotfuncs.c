@@ -730,7 +730,7 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 		SpinLockRelease(&src->mutex);
 
 		/*
-		 * Check if the source slot still exists and is valid. We regards it
+		 * Check if the source slot still exists and is valid. We regard it
 		 * as invalid if the type of replication slot or name has been
 		 * changed, or the restart_lsn either is invalid or has gone backward.
 		 * (The restart_lsn could go backwards if the source slot is dropped
