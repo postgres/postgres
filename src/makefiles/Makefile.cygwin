@@ -14,6 +14,8 @@ AROPT = crs
 DLSUFFIX = .dll
 CFLAGS_SL =
 
+override CPPFLAGS += -DWIN32_STACK_RLIMIT=$(WIN32_STACK_RLIMIT)
+
 ifneq (,$(findstring backend,$(subdir)))
 ifeq (,$(findstring conversion_procs,$(subdir)))
 ifeq (,$(findstring snowball,$(subdir)))

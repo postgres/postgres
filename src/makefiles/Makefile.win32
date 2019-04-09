@@ -9,6 +9,8 @@ else
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
 endif
 
+override CPPFLAGS += -DWIN32_STACK_RLIMIT=$(WIN32_STACK_RLIMIT)
+
 AROPT = crs
 DLSUFFIX = .dll
 CFLAGS_SL =
