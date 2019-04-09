@@ -65,6 +65,7 @@ typedef enum
 extern unsigned long UsedShmemSegID;
 #else
 extern HANDLE UsedShmemSegID;
+extern void *ShmemProtectiveRegion;
 #endif
 extern void *UsedShmemSegAddr;
 
