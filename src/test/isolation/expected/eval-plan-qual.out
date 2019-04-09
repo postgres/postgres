@@ -641,3 +641,55 @@ step complexpartupdate:
 step c1: COMMIT;
 step complexpartupdate: <... completed>
 step c2: COMMIT;
+
+starting permutation: simplepartupdate_route1to2 complexpartupdate_route_err1 c1 c2
+step simplepartupdate_route1to2: 
+	update parttbl set a = 2 where c = 1 returning *;
+
+a              b              c              
+
+2              1              1              
+step complexpartupdate_route_err1: 
+	with u as (update another_parttbl set a = 1 returning another_parttbl.*)
+	update parttbl p set a = u.a from u where p.a = u.a and p.c = 1 returning p.*;
+ <waiting ...>
+step c1: COMMIT;
+step complexpartupdate_route_err1: <... completed>
+error in steps c1 complexpartupdate_route_err1: ERROR:  tuple to be locked was already moved to another partition due to concurrent update
+step c2: COMMIT;
+
+starting permutation: simplepartupdate_noroute complexpartupdate_route c1 c2
+step simplepartupdate_noroute: 
+	update parttbl set b = 2 where c = 1 returning *;
+
+a              b              c              
+
+1              2              1              
+step complexpartupdate_route: 
+	with u as (update another_parttbl set a = 1 returning another_parttbl.*)
+	update parttbl p set a = p.b from u where p.a = u.a and p.c = 1 returning p.*;
+ <waiting ...>
+step c1: COMMIT;
+step complexpartupdate_route: <... completed>
+a              b              c              
+
+2              2              1              
+step c2: COMMIT;
+
+starting permutation: simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2
+step simplepartupdate_noroute: 
+	update parttbl set b = 2 where c = 1 returning *;
+
+a              b              c              
+
+1              2              1              
+step complexpartupdate_doesnt_route: 
+	with u as (update another_parttbl set a = 1 returning another_parttbl.*)
+	update parttbl p set a = 3 - p.b from u where p.a = u.a and p.c = 1 returning p.*;
+ <waiting ...>
+step c1: COMMIT;
+step complexpartupdate_doesnt_route: <... completed>
+a              b              c              
+
+1              2              1              
+step c2: COMMIT;
