@@ -1506,7 +1506,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	PredicateLockTwoPhaseFinish(xid, isCommit);
 
 	/* Count the prepared xact as committed or aborted */
-	AtEOXact_PgStat(isCommit);
+	AtEOXact_PgStat(isCommit, false);
 
 	/*
 	 * And now we can clean up any files we may have left.
