@@ -2983,7 +2983,7 @@ operator_precedence_group(Node *node, const char **nodename)
 				*nodename = strVal(linitial(aexpr->name));
 				/* Ignore if op was always higher priority than IS-tests */
 				if (strcmp(*nodename, "+") == 0 ||
-					strcmp(*nodename, "-"))
+					strcmp(*nodename, "-") == 0)
 					group = 0;
 				else
 					group = PREC_GROUP_PREFIX_OP;
