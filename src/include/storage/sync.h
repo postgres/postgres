@@ -29,8 +29,8 @@ typedef enum SyncRequestType
 } SyncRequestType;
 
 /*
- * Which set of functions to use to handle a given request.  See the function
- * table in sync.c.
+ * Which set of functions to use to handle a given request.  The values of
+ * the enumerators must match the indexes of the function table in sync.c.
  */
 typedef enum SyncRequestHandler
 {
