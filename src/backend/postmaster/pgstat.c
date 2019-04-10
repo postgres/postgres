@@ -2050,18 +2050,22 @@ pgstat_update_heap_dead_tuples(Relation rel, int delta)
  * ----------
  */
 void
-AtEOXact_PgStat(bool isCommit)
+AtEOXact_PgStat(bool isCommit, bool parallel)
 {
 	PgStat_SubXactStatus *xact_state;
 
-	/*
-	 * Count transaction commit or abort.  (We use counters, not just bools,
-	 * in case the reporting message isn't sent right away.)
-	 */
-	if (isCommit)
-		pgStatXactCommit++;
-	else
-		pgStatXactRollback++;
+	/* Don't count parallel worker transaction stats */
+	if (!parallel)
+	{
+		/*
+		 * Count transaction commit or abort.  (We use counters, not just
+		 * bools, in case the reporting message isn't sent right away.)
+		 */
+		if (isCommit)
+			pgStatXactCommit++;
+		else
+			pgStatXactRollback++;
+	}
 
 	/*
 	 * Transfer transactional insert/update counts into the base tabstat
