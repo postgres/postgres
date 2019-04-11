@@ -1282,7 +1282,9 @@ drop table cchild;
 --
 -- temporarily disable fancy output, so view changes create less diff noise
 \a\t
-SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
+SELECT viewname, definition FROM pg_views
+WHERE schemaname IN ('pg_catalog', 'public')
+ORDER BY viewname;
 iexit| SELECT ih.name,
     ih.thepath,
     interpt_pp(ih.thepath, r.thepath) AS exit
@@ -2418,7 +2420,8 @@ toyemp| SELECT emp.name,
     (12 * emp.salary) AS annualsal
    FROM emp;
 SELECT tablename, rulename, definition FROM pg_rules
-	ORDER BY tablename, rulename;
+WHERE schemaname IN ('pg_catalog', 'public')
+ORDER BY tablename, rulename;
 pg_settings|pg_settings_n|CREATE RULE pg_settings_n AS
     ON UPDATE TO pg_catalog.pg_settings DO INSTEAD NOTHING;
 pg_settings|pg_settings_u|CREATE RULE pg_settings_u AS

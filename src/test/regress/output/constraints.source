@@ -291,7 +291,7 @@ NOTICE:  drop cascades to table atacc2
 --
 DELETE FROM INSERT_TBL;
 ALTER SEQUENCE INSERT_SEQ RESTART WITH 4;
-CREATE TABLE tmp (xd INT, yd TEXT, zd INT);
+CREATE TEMP TABLE tmp (xd INT, yd TEXT, zd INT);
 INSERT INTO tmp VALUES (null, 'Y', null);
 INSERT INTO tmp VALUES (5, '!check failed', null);
 INSERT INTO tmp VALUES (null, 'try again', null);

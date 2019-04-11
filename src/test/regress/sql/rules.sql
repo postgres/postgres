@@ -775,10 +775,13 @@ drop table cchild;
 -- temporarily disable fancy output, so view changes create less diff noise
 \a\t
 
-SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
+SELECT viewname, definition FROM pg_views
+WHERE schemaname IN ('pg_catalog', 'public')
+ORDER BY viewname;
 
 SELECT tablename, rulename, definition FROM pg_rules
-	ORDER BY tablename, rulename;
+WHERE schemaname IN ('pg_catalog', 'public')
+ORDER BY tablename, rulename;
 
 -- restore normal output mode
 \a\t

@@ -15,15 +15,12 @@ test: tablespace
 # ----------
 test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric txid uuid enum money rangetypes pg_lsn regproc
 
-# Depends on things setup during char, varchar and text
-test: strings
-# Depends on int2, int4, int8, float4, float8
-test: numerology
-
 # ----------
 # The second group of parallel tests
+# strings depends on char, varchar and text
+# numerology depends on int2, int4, int8, float4, float8
 # ----------
-test: point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes fsm
+test: strings numerology point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes fsm
 
 # ----------
 # Another group of parallel tests
@@ -35,8 +32,6 @@ test: geometry horology regex oidjoins type_sanity opr_sanity misc_sanity commen
 # ----------
 # These four each depend on the previous one
 # ----------
-test: insert
-test: insert_conflict
 test: create_function_1
 test: create_type
 test: create_table
@@ -48,19 +43,19 @@ test: create_function_2
 # execute two copy tests parallel, to check that copy itself
 # is concurrent safe.
 # ----------
-test: copy copyselect copydml
+test: copy copyselect copydml insert insert_conflict
 
 # ----------
 # More groups of parallel tests
 # ----------
 test: create_misc create_operator create_procedure
-# These depend on the above two
+# These depend on create_misc and create_operator
 test: create_index create_index_spgist create_view index_including index_including_gist
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_function_3 create_cast constraints triggers inherit typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am hash_func
+test: create_aggregate create_function_3 create_cast constraints triggers select inherit typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am hash_func errors
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
@@ -69,17 +64,11 @@ test: create_aggregate create_function_3 create_cast constraints triggers inheri
 test: sanity_check
 
 # ----------
-# Believe it or not, select creates a table, subsequent
-# tests need.
-# ----------
-test: errors
-test: select
-ignore: random
-
-# ----------
 # Another group of parallel tests
+# Note: the ignore: line does not run random, just mark it as ignorable
 # ----------
-test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update namespace prepared_xacts delete
+ignore: random
+test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update delete namespace prepared_xacts
 
 # ----------
 # Another group of parallel tests
@@ -89,10 +78,11 @@ test: brin gin gist spgist privileges init_privs security_label collate matview 
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_table_like alter_generic alter_operator misc psql async dbsize misc_functions sysviews tsrf tidscan stats_ext
+test: create_table_like alter_generic alter_operator misc async dbsize misc_functions sysviews tsrf tidscan
 
-# rules cannot run concurrently with any test that creates a view
-test: rules psql_crosstab amutils
+# rules cannot run concurrently with any test that creates
+# a view or rule in the public schema
+test: rules psql psql_crosstab amutils stats_ext
 
 # run by itself so it can run parallel workers
 test: select_parallel
