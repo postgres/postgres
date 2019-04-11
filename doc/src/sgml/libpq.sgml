@@ -3578,7 +3578,7 @@ char *PQescapeLiteral(PGconn *conn, const char *str, size_t length);
      </tip>
 
      <para>
-      Note that it is not necessary nor correct to do escaping when a data
+      Note that it is neither necessary nor correct to do escaping when a data
       value is passed as a separate parameter in <function>PQexecParams</> or
       its sibling routines.
      </para>
