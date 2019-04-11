@@ -2725,9 +2725,11 @@ readCommandResponse(CState *st, char *varprefix)
 
 	while (res != NULL)
 	{
-		/* look now at the next result to know whether it is the last */
+		bool	is_last;
+
+		/* peek at the next result to know whether the current is last */
 		next_res = PQgetResult(st->con);
-		bool is_last = (next_res == NULL);
+		is_last = (next_res == NULL);
 
 		switch (PQresultStatus(res))
 		{
