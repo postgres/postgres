@@ -120,3 +120,23 @@ create index btree_idx_err on btree_test(a) with (vacuum_cleanup_index_scale_fac
 -- Simple ALTER INDEX
 alter index btree_idx1 set (vacuum_cleanup_index_scale_factor = 70.0);
 select reloptions from pg_class WHERE oid = 'btree_idx1'::regclass;
+
+--
+-- Test for multilevel page deletion
+--
+CREATE TABLE delete_test_table (a bigint, b bigint, c bigint, d bigint);
+INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,80000) i;
+ALTER TABLE delete_test_table ADD PRIMARY KEY (a,b,c,d);
+-- Delete most entries, and vacuum, deleting internal pages and creating "fast
+-- root"
+DELETE FROM delete_test_table WHERE a < 79990;
+VACUUM delete_test_table;
+
+--
+-- Test B-tree insertion with a metapage update (XLOG_BTREE_INSERT_META
+-- WAL record type). This happens when a "fast root" page is split.  This
+-- also creates coverage for nbtree FSM page recycling.
+--
+-- The vacuum above should've turned the leaf page into a fast root. We just
+-- need to insert some rows to cause the fast root page to split.
+INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;

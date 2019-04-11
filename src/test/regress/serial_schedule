@@ -63,6 +63,7 @@ test: create_misc
 test: create_operator
 test: create_procedure
 test: create_index
+test: create_index_spgist
 test: index_including
 test: index_including_gist
 test: create_view
@@ -123,6 +124,7 @@ test: drop_operator
 test: password
 test: identity
 test: generated
+test: join_hash
 test: create_table_like
 test: alter_generic
 test: alter_operator
