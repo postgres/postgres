@@ -1584,9 +1584,9 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 				(errmsg("file \"%s\" has a total of %d checksum verification "
 						"failures", readfilename, checksum_failures)));
 
-		if (dboid != InvalidOid)
-			pgstat_report_checksum_failures_in_db(dboid, checksum_failures);
+		pgstat_report_checksum_failures_in_db(dboid, checksum_failures);
 	}
+
 	total_checksum_failures += checksum_failures;
 
 	return true;

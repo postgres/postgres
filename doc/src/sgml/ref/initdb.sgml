@@ -218,7 +218,9 @@ PostgreSQL documentation
         I/O system that would otherwise be silent. Enabling checksums
         may incur a noticeable performance penalty. This option can only
         be set during initialization, and cannot be changed later. If
-        set, checksums are calculated for all objects, in all databases.
+        set, checksums are calculated for all objects, in all databases. All
+        checksum failures will be reported in the <xref
+        linkend="pg-stat-database-view"/> view.
        </para>
       </listitem>
      </varlistentry>

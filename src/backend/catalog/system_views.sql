@@ -816,7 +816,10 @@ CREATE VIEW pg_stat_database AS
     SELECT
             D.oid AS datid,
             D.datname AS datname,
-            pg_stat_get_db_numbackends(D.oid) AS numbackends,
+                CASE
+                    WHEN (D.oid = (0)::oid) THEN NULL::integer
+                    ELSE pg_stat_get_db_numbackends(D.oid)
+                END AS numbackends,
             pg_stat_get_db_xact_commit(D.oid) AS xact_commit,
             pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback,
             pg_stat_get_db_blocks_fetched(D.oid) -
@@ -832,10 +835,15 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_temp_bytes(D.oid) AS temp_bytes,
             pg_stat_get_db_deadlocks(D.oid) AS deadlocks,
             pg_stat_get_db_checksum_failures(D.oid) AS checksum_failures,
+            pg_stat_get_db_checksum_last_failure(D.oid) AS checksum_last_failure,
             pg_stat_get_db_blk_read_time(D.oid) AS blk_read_time,
             pg_stat_get_db_blk_write_time(D.oid) AS blk_write_time,
             pg_stat_get_db_stat_reset_time(D.oid) AS stats_reset
-    FROM pg_database D;
+    FROM (
+        SELECT 0 AS oid, NULL::name AS datname
+        UNION ALL
+        SELECT oid, datname FROM pg_database
+    ) D;
 
 CREATE VIEW pg_stat_database_conflicts AS
     SELECT

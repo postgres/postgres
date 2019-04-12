@@ -2498,20 +2498,22 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>datid</structfield></entry>
      <entry><type>oid</type></entry>
-     <entry>OID of a database</entry>
+     <entry>OID of this database, or 0 for objects belonging to a shared
+     relation</entry>
     </row>
     <row>
      <entry><structfield>datname</structfield></entry>
      <entry><type>name</type></entry>
-     <entry>Name of this database</entry>
+     <entry>Name of this database, or <literal>NULL</literal> for the shared
+     objects.</entry>
     </row>
     <row>
      <entry><structfield>numbackends</structfield></entry>
      <entry><type>integer</type></entry>
-     <entry>Number of backends currently connected to this database.
-     This is the only column in this view that returns a value reflecting
-     current state; all other columns return the accumulated values since
-     the last reset.</entry>
+     <entry>Number of backends currently connected to this database, or
+     <literal>NULL</literal> for the shared objects.  This is the only column
+     in this view that returns a value reflecting current state; all other
+     columns return the accumulated values since the last reset.</entry>
     </row>
     <row>
      <entry><structfield>xact_commit</structfield></entry>
@@ -2597,7 +2599,14 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>checksum_failures</structfield></entry>
      <entry><type>bigint</type></entry>
-     <entry>Number of data page checksum failures detected in this database</entry>
+     <entry>Number of data page checksum failures detected in this
+     database</entry>
+    </row>
+    <row>
+     <entry><structfield>checksum_last_failure</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
+     <entry>Time at which the last data page checksum failure was detected in
+     this database, or on a shared object.</entry>
     </row>
     <row>
      <entry><structfield>blk_read_time</structfield></entry>
@@ -2622,7 +2631,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <para>
    The <structname>pg_stat_database</structname> view will contain one row
-   for each database in the cluster, showing database-wide statistics.
+   for each database in the cluster, plus one for the shared objects, showing
+   database-wide statistics.
   </para>
 
   <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">

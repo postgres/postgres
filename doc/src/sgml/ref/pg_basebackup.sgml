@@ -531,7 +531,8 @@ PostgreSQL documentation
         By default, checksums are verified and checksum failures will result
         in a non-zero exit status. However, the base backup will not be
         removed in such a case, as if the <option>--no-clean</option> option
-        had been used.
+        had been used.  Checksum verifications failures will also be reported
+        in the <xref linkend="pg-stat-database-view"/> view.
        </para>
       </listitem>
      </varlistentry>

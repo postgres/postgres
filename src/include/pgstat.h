@@ -541,6 +541,7 @@ typedef struct PgStat_MsgChecksumFailure
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	int			m_failurecount;
+	TimestampTz	m_failure_time;
 } PgStat_MsgChecksumFailure;
 
 
@@ -607,6 +608,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_temp_bytes;
 	PgStat_Counter n_deadlocks;
 	PgStat_Counter n_checksum_failures;
+	TimestampTz last_checksum_failure;
 	PgStat_Counter n_block_read_time;	/* times in microseconds */
 	PgStat_Counter n_block_write_time;
 
