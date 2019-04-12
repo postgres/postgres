@@ -789,6 +789,49 @@ SELECT obj_description('testcomment_idx1'::regclass, 'pg_class');
 REINDEX TABLE CONCURRENTLY testcomment ;
 SELECT obj_description('testcomment_idx1'::regclass, 'pg_class');
 DROP TABLE testcomment;
+-- Partitions
+-- Create some partitioned tables
+CREATE TABLE concur_reindex_part (c1 int, c2 int) PARTITION BY RANGE (c1);
+CREATE TABLE concur_reindex_part_0 PARTITION OF concur_reindex_part
+  FOR VALUES FROM (0) TO (10) PARTITION BY list (c2);
+CREATE TABLE concur_reindex_part_0_1 PARTITION OF concur_reindex_part_0
+  FOR VALUES IN (1);
+CREATE TABLE concur_reindex_part_0_2 PARTITION OF concur_reindex_part_0
+  FOR VALUES IN (2);
+-- This partitioned table will have no partitions.
+CREATE TABLE concur_reindex_part_10 PARTITION OF concur_reindex_part
+  FOR VALUES FROM (10) TO (20) PARTITION BY list (c2);
+-- Create some partitioned indexes
+CREATE INDEX concur_reindex_part_index ON ONLY concur_reindex_part (c1);
+CREATE INDEX concur_reindex_part_index_0 ON ONLY concur_reindex_part_0 (c1);
+ALTER INDEX concur_reindex_part_index ATTACH PARTITION concur_reindex_part_index_0;
+-- This partitioned index will have no partitions.
+CREATE INDEX concur_reindex_part_index_10 ON ONLY concur_reindex_part_10 (c1);
+ALTER INDEX concur_reindex_part_index ATTACH PARTITION concur_reindex_part_index_10;
+CREATE INDEX concur_reindex_part_index_0_1 ON ONLY concur_reindex_part_0_1 (c1);
+ALTER INDEX concur_reindex_part_index_0 ATTACH PARTITION concur_reindex_part_index_0_1;
+CREATE INDEX concur_reindex_part_index_0_2 ON ONLY concur_reindex_part_0_2 (c1);
+ALTER INDEX concur_reindex_part_index_0 ATTACH PARTITION concur_reindex_part_index_0_2;
+SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
+  ORDER BY relid, level;
+-- REINDEX fails for partitioned indexes
+REINDEX INDEX concur_reindex_part_index_10;
+REINDEX INDEX CONCURRENTLY concur_reindex_part_index_10;
+-- REINDEX is a no-op for partitioned tables
+REINDEX TABLE concur_reindex_part_10;
+REINDEX TABLE CONCURRENTLY concur_reindex_part_10;
+SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
+  ORDER BY relid, level;
+-- REINDEX should preserve dependencies of partition tree.
+REINDEX INDEX CONCURRENTLY concur_reindex_part_index_0_1;
+REINDEX INDEX CONCURRENTLY concur_reindex_part_index_0_2;
+SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
+  ORDER BY relid, level;
+REINDEX TABLE CONCURRENTLY concur_reindex_part_0_1;
+REINDEX TABLE CONCURRENTLY concur_reindex_part_0_2;
+SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
+  ORDER BY relid, level;
+DROP TABLE concur_reindex_part;
 
 -- Check errors
 -- Cannot run inside a transaction block

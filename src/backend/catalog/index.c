@@ -39,6 +39,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/objectaccess.h"
+#include "catalog/partition.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -1263,7 +1264,13 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId, const char
 		indexColNames = lappend(indexColNames, NameStr(att->attname));
 	}
 
-	/* Now create the new index */
+	/*
+	 * Now create the new index.
+	 *
+	 * For a partition index, we adjust the partition dependency later, to
+	 * ensure a consistent state at all times.  That is why parentIndexRelid
+	 * is not set here.
+	 */
 	newIndexId = index_create(heapRelation,
 							  newName,
 							  InvalidOid,	/* indexRelationId */
@@ -1394,6 +1401,9 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 	/* Swap the names */
 	namestrcpy(&newClassForm->relname, NameStr(oldClassForm->relname));
 	namestrcpy(&oldClassForm->relname, oldName);
+
+	/* Copy partition flag to track inheritance properly */
+	newClassForm->relispartition = oldClassForm->relispartition;
 
 	CatalogTupleUpdate(pg_class, &oldClassTuple->t_self, oldClassTuple);
 	CatalogTupleUpdate(pg_class, &newClassTuple->t_self, newClassTuple);
@@ -1555,29 +1565,23 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 	}
 
 	/*
-	 * Move all dependencies on the old index to the new one
+	 * Swap inheritance relationship with parent index
 	 */
-
-	if (OidIsValid(indexConstraintOid))
+	if (get_rel_relispartition(oldIndexId))
 	{
-		ObjectAddress myself,
-					referenced;
+		List   *ancestors = get_partition_ancestors(oldIndexId);
+		Oid		parentIndexRelid = linitial_oid(ancestors);
 
-		/* Change to having the new index depend on the constraint */
-		deleteDependencyRecordsForClass(RelationRelationId, oldIndexId,
-										ConstraintRelationId, DEPENDENCY_INTERNAL);
+		DeleteInheritsTuple(oldIndexId, parentIndexRelid);
+		StoreSingleInheritance(newIndexId, parentIndexRelid, 1);
 
-		myself.classId = RelationRelationId;
-		myself.objectId = newIndexId;
-		myself.objectSubId = 0;
-
-		referenced.classId = ConstraintRelationId;
-		referenced.objectId = indexConstraintOid;
-		referenced.objectSubId = 0;
-
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+		list_free(ancestors);
 	}
 
+	/*
+	 * Move all dependencies of and on the old index to the new one
+	 */
+	changeDependenciesOf(RelationRelationId, oldIndexId, newIndexId);
 	changeDependenciesOn(RelationRelationId, oldIndexId, newIndexId);
 
 	/*

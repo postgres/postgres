@@ -396,6 +396,62 @@ changeDependencyFor(Oid classId, Oid objectId,
 }
 
 /*
+ * Adjust all dependency records to come from a different object of the same type
+ *
+ * classId/oldObjectId specify the old referencing object.
+ * newObjectId is the new referencing object (must be of class classId).
+ *
+ * Returns the number of records updated.
+ */
+long
+changeDependenciesOf(Oid classId, Oid oldObjectId,
+					 Oid newObjectId)
+{
+	long		count = 0;
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	depRel = table_open(DependRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(oldObjectId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  NULL, 2, key);
+
+	while (HeapTupleIsValid((tup = systable_getnext(scan))))
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		/* make a modifiable copy */
+		tup = heap_copytuple(tup);
+		depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		depform->objid = newObjectId;
+
+		CatalogTupleUpdate(depRel, &tup->t_self, tup);
+
+		heap_freetuple(tup);
+
+		count++;
+	}
+
+	systable_endscan(scan);
+
+	table_close(depRel, RowExclusiveLock);
+
+	return count;
+}
+
+/*
  * Adjust all dependency records to point to a different object of the same type
  *
  * refClassId/oldRefObjectId specify the old referenced object.
