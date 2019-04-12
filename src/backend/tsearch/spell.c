@@ -1749,8 +1749,8 @@ NISortDictionary(IspellDict *Conf)
 		naffix = 0;
 		for (i = 0; i < Conf->nspell; i++)
 		{
-			if (i == 0
-				|| strcmp(Conf->Spell[i]->p.flag, Conf->Spell[i - 1]->p.flag))
+			if (i == 0 ||
+				strcmp(Conf->Spell[i]->p.flag, Conf->Spell[i - 1]->p.flag) != 0)
 				naffix++;
 		}
 
@@ -1764,8 +1764,8 @@ NISortDictionary(IspellDict *Conf)
 		curaffix = -1;
 		for (i = 0; i < Conf->nspell; i++)
 		{
-			if (i == 0
-				|| strcmp(Conf->Spell[i]->p.flag, Conf->AffixData[curaffix]))
+			if (i == 0 ||
+				strcmp(Conf->Spell[i]->p.flag, Conf->AffixData[curaffix]) != 0)
 			{
 				curaffix++;
 				Assert(curaffix < naffix);

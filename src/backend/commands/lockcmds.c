@@ -219,7 +219,8 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 			 * skipped.
 			 */
 			if (relid == context->viewoid &&
-				(!strcmp(rte->eref->aliasname, "old") || !strcmp(rte->eref->aliasname, "new")))
+				(strcmp(rte->eref->aliasname, "old") == 0 ||
+				 strcmp(rte->eref->aliasname, "new") == 0))
 				continue;
 
 			/* Currently, we only allow plain tables or views to be locked. */

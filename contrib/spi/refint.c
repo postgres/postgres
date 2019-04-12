@@ -473,9 +473,12 @@ check_foreign_key(PG_FUNCTION_ARGS)
 						nv = SPI_getvalue(newtuple, tupdesc, fn);
 						type = SPI_gettype(tupdesc, fn);
 
-						if ((strcmp(type, "text") && strcmp(type, "varchar") &&
-							 strcmp(type, "char") && strcmp(type, "bpchar") &&
-							 strcmp(type, "date") && strcmp(type, "timestamp")) == 0)
+						if (strcmp(type, "text") == 0 ||
+							strcmp(type, "varchar") == 0 ||
+							strcmp(type, "char") == 0 ||
+							strcmp(type, "bpchar") == 0 ||
+							strcmp(type, "date") == 0 ||
+							strcmp(type, "timestamp") == 0)
 							is_char_type = 1;
 #ifdef	DEBUG_QUERY
 						elog(DEBUG4, "check_foreign_key Debug value %s type %s %d",

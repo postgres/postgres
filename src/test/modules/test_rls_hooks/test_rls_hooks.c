@@ -75,8 +75,8 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 	ParseState *qual_pstate;
 	RangeTblEntry *rte;
 
-	if (strcmp(RelationGetRelationName(relation), "rls_test_permissive")
-		&& strcmp(RelationGetRelationName(relation), "rls_test_both"))
+	if (strcmp(RelationGetRelationName(relation), "rls_test_permissive") != 0 &&
+		strcmp(RelationGetRelationName(relation), "rls_test_both") != 0)
 		return NIL;
 
 	qual_pstate = make_parsestate(NULL);
@@ -140,8 +140,8 @@ test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 	RangeTblEntry *rte;
 
 
-	if (strcmp(RelationGetRelationName(relation), "rls_test_restrictive")
-		&& strcmp(RelationGetRelationName(relation), "rls_test_both"))
+	if (strcmp(RelationGetRelationName(relation), "rls_test_restrictive") != 0 &&
+		strcmp(RelationGetRelationName(relation), "rls_test_both") != 0)
 		return NIL;
 
 	qual_pstate = make_parsestate(NULL);
