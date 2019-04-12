@@ -77,7 +77,7 @@
  * n_distinct options can be set at ShareUpdateExclusiveLock because they
  * are only used during ANALYZE, which uses a ShareUpdateExclusiveLock,
  * so the ANALYZE will not be affected by in-flight changes. Changing those
- * values has no affect until the next ANALYZE, so no need for stronger lock.
+ * values has no effect until the next ANALYZE, so no need for stronger lock.
  *
  * Planner-related parameters can be set with ShareUpdateExclusiveLock because
  * they only affect planning and not the correctness of the execution. Plans
@@ -93,7 +93,7 @@
  * vacuum_truncate can be set at ShareUpdateExclusiveLock because it
  * is only used during VACUUM, which uses a ShareUpdateExclusiveLock,
  * so the VACUUM will not be affected by in-flight changes. Changing its
- * value has no affect until the next VACUUM, so no need for stronger lock.
+ * value has no effect until the next VACUUM, so no need for stronger lock.
  */
 
 static relopt_bool boolRelOpts[] =
