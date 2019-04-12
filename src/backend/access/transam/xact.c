@@ -5151,7 +5151,7 @@ EstimateTransactionStateSpace(void)
 		nxids = add_size(nxids, s->nChildXids);
 	}
 
-	return add_size(size, sizeof(SerializedTransactionState) * nxids);
+	return add_size(size, mul_size(sizeof(TransactionId), nxids));
 }
 
 /*

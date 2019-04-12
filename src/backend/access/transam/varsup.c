@@ -159,7 +159,8 @@ GetNewTransactionId(bool isSubXact)
 
 		/* Re-acquire lock and start over */
 		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		xid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
+		full_xid = ShmemVariableCache->nextFullXid;
+		xid = XidFromFullTransactionId(full_xid);
 	}
 
 	/*
