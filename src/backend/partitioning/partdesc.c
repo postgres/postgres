@@ -49,10 +49,13 @@ typedef struct PartitionDirectoryEntry
 
 /*
  * RelationBuildPartitionDesc
- *		Form rel's partition descriptor
+ *		Form rel's partition descriptor, and store in relcache entry
  *
- * Not flushed from the cache by RelationClearRelation() unless changed because
- * of addition or removal of partition.
+ * Note: the descriptor won't be flushed from the cache by
+ * RelationClearRelation() unless it's changed because of
+ * addition or removal of a partition.  Hence, code holding a lock
+ * that's sufficient to prevent that can assume that rd_partdesc
+ * won't change underneath it.
  */
 void
 RelationBuildPartitionDesc(Relation rel)
@@ -173,7 +176,19 @@ RelationBuildPartitionDesc(Relation rel)
 		++i;
 	}
 
-	/* Now build the actual relcache partition descriptor */
+	/* Assert we aren't about to leak any old data structure */
+	Assert(rel->rd_pdcxt == NULL);
+	Assert(rel->rd_partdesc == NULL);
+
+	/*
+	 * Now build the actual relcache partition descriptor.  Note that the
+	 * order of operations here is fairly critical.  If we fail partway
+	 * through this code, we won't have leaked memory because the rd_pdcxt is
+	 * attached to the relcache entry immediately, so it'll be freed whenever
+	 * the entry is rebuilt or destroyed.  However, we don't assign to
+	 * rd_partdesc until the cached data structure is fully complete and
+	 * valid, so that no other code might try to use it.
+	 */
 	rel->rd_pdcxt = AllocSetContextCreate(CacheMemoryContext,
 										  "partition descriptor",
 										  ALLOCSET_SMALL_SIZES);

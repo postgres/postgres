@@ -1175,11 +1175,15 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	}
 	else
 	{
-		relation->rd_partkeycxt = NULL;
 		relation->rd_partkey = NULL;
+		relation->rd_partkeycxt = NULL;
 		relation->rd_partdesc = NULL;
 		relation->rd_pdcxt = NULL;
 	}
+	/* ... but partcheck is not loaded till asked for */
+	relation->rd_partcheck = NIL;
+	relation->rd_partcheckvalid = false;
+	relation->rd_partcheckcxt = NULL;
 
 	/*
 	 * initialize access method information
@@ -2364,8 +2368,8 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		MemoryContextDelete(relation->rd_partkeycxt);
 	if (relation->rd_pdcxt)
 		MemoryContextDelete(relation->rd_pdcxt);
-	if (relation->rd_partcheck)
-		pfree(relation->rd_partcheck);
+	if (relation->rd_partcheckcxt)
+		MemoryContextDelete(relation->rd_partcheckcxt);
 	if (relation->rd_fdwroutine)
 		pfree(relation->rd_fdwroutine);
 	pfree(relation);
@@ -5600,18 +5604,20 @@ load_relcache_init_file(bool shared)
 		 * format is complex and subject to change).  They must be rebuilt if
 		 * needed by RelationCacheInitializePhase3.  This is not expected to
 		 * be a big performance hit since few system catalogs have such. Ditto
-		 * for RLS policy data, index expressions, predicates, exclusion info,
-		 * and FDW info.
+		 * for RLS policy data, partition info, index expressions, predicates,
+		 * exclusion info, and FDW info.
 		 */
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
 		rel->trigdesc = NULL;
 		rel->rd_rsdesc = NULL;
-		rel->rd_partkeycxt = NULL;
 		rel->rd_partkey = NULL;
-		rel->rd_pdcxt = NULL;
+		rel->rd_partkeycxt = NULL;
 		rel->rd_partdesc = NULL;
+		rel->rd_pdcxt = NULL;
 		rel->rd_partcheck = NIL;
+		rel->rd_partcheckvalid = false;
+		rel->rd_partcheckcxt = NULL;
 		rel->rd_indexprs = NIL;
 		rel->rd_indpred = NIL;
 		rel->rd_exclops = NULL;
