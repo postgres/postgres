@@ -808,11 +808,11 @@ RelationBuildRuleLock(Relation relation)
 
 /*
  * RelationBuildPartitionKey
- *		Build and attach to relcache partition key data of relation
+ *		Build partition key data of relation, and attach to relcache
  *
  * Partitioning key data is a complex structure; to avoid complicated logic to
  * free individual elements whenever the relcache entry is flushed, we give it
- * its own memory context, child of CacheMemoryContext, which can easily be
+ * its own memory context, a child of CacheMemoryContext, which can easily be
  * deleted on its own.  To avoid leaking memory in that context in case of an
  * error partway through this function, the context is initially created as a
  * child of CurTransactionContext and only re-parented to CacheMemoryContext
@@ -907,6 +907,7 @@ RelationBuildPartitionKey(Relation relation)
 		MemoryContextSwitchTo(oldcxt);
 	}
 
+	/* Allocate assorted arrays in the partkeycxt, which we'll fill below */
 	oldcxt = MemoryContextSwitchTo(partkeycxt);
 	key->partattrs = (AttrNumber *) palloc0(key->partnatts * sizeof(AttrNumber));
 	key->partopfamily = (Oid *) palloc0(key->partnatts * sizeof(Oid));
@@ -914,8 +915,6 @@ RelationBuildPartitionKey(Relation relation)
 	key->partsupfunc = (FmgrInfo *) palloc0(key->partnatts * sizeof(FmgrInfo));
 
 	key->partcollation = (Oid *) palloc0(key->partnatts * sizeof(Oid));
-
-	/* Gather type and collation info as well */
 	key->parttypid = (Oid *) palloc0(key->partnatts * sizeof(Oid));
 	key->parttypmod = (int32 *) palloc0(key->partnatts * sizeof(int32));
 	key->parttyplen = (int16 *) palloc0(key->partnatts * sizeof(int16));
@@ -989,6 +988,10 @@ RelationBuildPartitionKey(Relation relation)
 	}
 
 	ReleaseSysCache(tuple);
+
+	/* Assert that we're not leaking any old data during assignments below */
+	Assert(relation->rd_partkeycxt == NULL);
+	Assert(relation->rd_partkey == NULL);
 
 	/*
 	 * Success --- reparent our context and make the relcache point to the
@@ -1314,11 +1317,15 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	}
 	else
 	{
-		relation->rd_partkeycxt = NULL;
 		relation->rd_partkey = NULL;
+		relation->rd_partkeycxt = NULL;
 		relation->rd_partdesc = NULL;
 		relation->rd_pdcxt = NULL;
 	}
+	/* ... but partcheck is not loaded till asked for */
+	relation->rd_partcheck = NIL;
+	relation->rd_partcheckvalid = false;
+	relation->rd_partcheckcxt = NULL;
 
 	/*
 	 * if it's an index, initialize index-related information
@@ -2403,8 +2410,8 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		MemoryContextDelete(relation->rd_partkeycxt);
 	if (relation->rd_pdcxt)
 		MemoryContextDelete(relation->rd_pdcxt);
-	if (relation->rd_partcheck)
-		pfree(relation->rd_partcheck);
+	if (relation->rd_partcheckcxt)
+		MemoryContextDelete(relation->rd_partcheckcxt);
 	if (relation->rd_fdwroutine)
 		pfree(relation->rd_fdwroutine);
 	pfree(relation);
@@ -5663,18 +5670,20 @@ load_relcache_init_file(bool shared)
 		 * format is complex and subject to change).  They must be rebuilt if
 		 * needed by RelationCacheInitializePhase3.  This is not expected to
 		 * be a big performance hit since few system catalogs have such. Ditto
-		 * for RLS policy data, index expressions, predicates, exclusion info,
-		 * and FDW info.
+		 * for RLS policy data, partition info, index expressions, predicates,
+		 * exclusion info, and FDW info.
 		 */
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
 		rel->trigdesc = NULL;
 		rel->rd_rsdesc = NULL;
-		rel->rd_partkeycxt = NULL;
 		rel->rd_partkey = NULL;
-		rel->rd_pdcxt = NULL;
+		rel->rd_partkeycxt = NULL;
 		rel->rd_partdesc = NULL;
+		rel->rd_pdcxt = NULL;
 		rel->rd_partcheck = NIL;
+		rel->rd_partcheckvalid = false;
+		rel->rd_partcheckcxt = NULL;
 		rel->rd_indexprs = NIL;
 		rel->rd_indpred = NIL;
 		rel->rd_exclops = NULL;

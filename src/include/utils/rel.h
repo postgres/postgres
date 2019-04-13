@@ -125,9 +125,9 @@ typedef struct RelationData
 	List	   *rd_fkeylist;	/* list of ForeignKeyCacheInfo (see below) */
 	bool		rd_fkeyvalid;	/* true if list has been computed */
 
-	MemoryContext rd_partkeycxt;	/* private memory cxt for the below */
+	MemoryContext rd_partkeycxt;	/* private context for rd_partkey, if any */
 	struct PartitionKeyData *rd_partkey;	/* partition key, or NULL */
-	MemoryContext rd_pdcxt;		/* private context for partdesc */
+	MemoryContext rd_pdcxt;		/* private context for rd_partdesc, if any */
 	struct PartitionDescData *rd_partdesc;	/* partitions, or NULL */
 	List	   *rd_partcheck;	/* partition CHECK quals */
 
@@ -216,6 +216,10 @@ typedef struct RelationData
 
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info; /* statistics collection area */
+
+	/* placed here to avoid ABI break before v12: */
+	bool		rd_partcheckvalid;	/* true if list has been computed */
+	MemoryContext rd_partcheckcxt;	/* private cxt for rd_partcheck, if any */
 } RelationData;
 
 
