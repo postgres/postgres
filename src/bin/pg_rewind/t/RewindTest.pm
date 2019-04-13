@@ -144,20 +144,6 @@ sub start_master
 {
 	$node_master->start;
 
-	# Create a custom role which will be used to run pg_rewind.  This
-	# role is used for all the tests, and has minimal permissions enough
-	# to rewind from an online source.
-	$node_master->psql('postgres', "
-		CREATE ROLE rewind_user LOGIN;
-		GRANT EXECUTE ON function pg_catalog.pg_ls_dir(text, boolean, boolean)
-		  TO rewind_user;
-		GRANT EXECUTE ON function pg_catalog.pg_stat_file(text, boolean)
-		  TO rewind_user;
-		GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text)
-		  TO rewind_user;
-		GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, boolean)
-		  TO rewind_user;");
-
 	#### Now run the test-specific parts to initialize the master before setting
 	# up standby
 
@@ -220,9 +206,6 @@ sub run_pg_rewind
 	my $standby_pgdata  = $node_standby->data_dir;
 	my $standby_connstr = $node_standby->connstr('postgres');
 	my $tmp_folder      = TestLib::tempdir;
-
-	# Append the rewind-specific role to the connection string.
-	$standby_connstr = "$standby_connstr user=rewind_user";
 
 	# Stop the master and be ready to perform the rewind
 	$node_master->stop;
