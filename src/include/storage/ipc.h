@@ -76,6 +76,6 @@ extern void on_exit_reset(void);
 /* ipci.c */
 extern PGDLLIMPORT shmem_startup_hook_type shmem_startup_hook;
 
-extern void CreateSharedMemoryAndSemaphores(bool makePrivate, int port);
+extern void CreateSharedMemoryAndSemaphores(int port);
 
 #endif							/* IPC_H */

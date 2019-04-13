@@ -205,6 +205,7 @@ sub tap_check
 	local %ENV = %ENV;
 	$ENV{PERL5LIB}   = "$topdir/src/test/perl;$ENV{PERL5LIB}";
 	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
+	$ENV{REGRESS_SHLIB} = "$topdir/src/test/regress/regress.dll";
 
 	$ENV{TESTDIR} = "$dir";
 
