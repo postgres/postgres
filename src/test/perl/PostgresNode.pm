@@ -734,9 +734,7 @@ sub kill9
 	my $name = $self->name;
 	return unless defined $self->{_pid};
 	print "### Killing node \"$name\" using signal 9\n";
-	# kill(9, ...) fails under msys Perl 5.8.8, so fall back on pg_ctl.
-	kill(9, $self->{_pid})
-	  or TestLib::system_or_bail('pg_ctl', 'kill', 'KILL', $self->{_pid});
+	kill(9, $self->{_pid}) or BAIL_OUT("kill(9, $self->{_pid}) failed");
 	$self->{_pid} = undef;
 	return;
 }
