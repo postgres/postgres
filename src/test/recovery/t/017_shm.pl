@@ -3,6 +3,7 @@
 #
 use strict;
 use warnings;
+use Config;
 use IPC::Run 'run';
 use PostgresNode;
 use Test::More;
@@ -10,6 +11,14 @@ use TestLib;
 use Time::HiRes qw(usleep);
 
 plan tests => 5;
+
+# See PostgresNode
+my $vfs_path = '';
+if ($Config{osname} eq 'msys')
+{
+	$vfs_path = `cd / && pwd -W`;
+	chomp $vfs_path;
+}
 
 my $tempdir = TestLib::tempdir;
 my $port;
@@ -97,7 +106,7 @@ log_ipcs();
 $gnat->safe_psql('postgres', <<EOSQL);
 CREATE FUNCTION wait_pid(int)
    RETURNS void
-   AS '$ENV{REGRESS_SHLIB}'
+   AS '$vfs_path$ENV{REGRESS_SHLIB}'
    LANGUAGE C STRICT;
 EOSQL
 my $slow_query = 'SELECT wait_pid(pg_backend_pid())';
