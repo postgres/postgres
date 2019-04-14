@@ -9,7 +9,14 @@ use Test::More;
 use TestLib;
 use Time::HiRes qw(usleep);
 
-plan tests => 5;
+if ($^O eq 'msys')
+{
+	plan skip_all => 'missing SIGKILL implementation';
+}
+else
+{
+	plan tests => 5;
+}
 
 my $tempdir = TestLib::tempdir;
 my $port;
