@@ -1126,6 +1126,12 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 	{
 		ResultRelInfo *resultRelInfo = proute->partitions[i];
 
+		/* Allow any FDWs to shut down */
+		if (resultRelInfo->ri_FdwRoutine != NULL &&
+			resultRelInfo->ri_FdwRoutine->EndForeignInsert != NULL)
+			resultRelInfo->ri_FdwRoutine->EndForeignInsert(mtstate->ps.state,
+														   resultRelInfo);
+
 		/*
 		 * Check if this result rel is one belonging to the node's subplans,
 		 * if so, let ExecEndPlan() clean it up.
@@ -1141,12 +1147,6 @@ ExecCleanupTupleRouting(ModifyTableState *mtstate,
 			if (found)
 				continue;
 		}
-
-		/* Allow any FDWs to shut down if they've been exercised */
-		if (resultRelInfo->ri_FdwRoutine != NULL &&
-			resultRelInfo->ri_FdwRoutine->EndForeignInsert != NULL)
-			resultRelInfo->ri_FdwRoutine->EndForeignInsert(mtstate->ps.state,
-														   resultRelInfo);
 
 		ExecCloseIndices(resultRelInfo);
 		table_close(resultRelInfo->ri_RelationDesc, NoLock);
