@@ -43,8 +43,9 @@ typedef struct DimensionInfo
 /* multi-sort */
 typedef struct MultiSortSupportData
 {
-	int			ndims;			/* number of dimensions supported by the */
-	SortSupportData ssup[1];	/* sort support data for each dimension */
+	int			ndims;			/* number of dimensions */
+	/* sort support data for each dimension: */
+	SortSupportData ssup[FLEXIBLE_ARRAY_MEMBER];
 } MultiSortSupportData;
 
 typedef MultiSortSupportData *MultiSortSupport;
