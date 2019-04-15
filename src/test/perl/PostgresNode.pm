@@ -441,7 +441,8 @@ sub init
 
 	TestLib::system_or_bail('initdb', '-D', $pgdata, '-A', 'trust', '-N',
 		@{ $params{extra} });
-	TestLib::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata);
+	TestLib::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata,
+		@{ $params{auth_extra} });
 
 	open my $conf, '>>', "$pgdata/postgresql.conf";
 	print $conf "\n# Added by PostgresNode.pm\n";
