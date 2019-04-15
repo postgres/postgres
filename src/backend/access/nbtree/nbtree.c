@@ -833,7 +833,7 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 		prev_num_heap_tuples = metad->btm_last_cleanup_num_heap_tuples;
 
 		if (cleanup_scale_factor <= 0 ||
-			prev_num_heap_tuples < 0 ||
+			prev_num_heap_tuples <= 0 ||
 			(info->num_heap_tuples - prev_num_heap_tuples) /
 			prev_num_heap_tuples >= cleanup_scale_factor)
 			result = true;
