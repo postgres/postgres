@@ -267,8 +267,10 @@ match_pattern_prefix(Node *leftop,
 	 * precise error messages.)  (It should be possible to support at least
 	 * Pattern_Prefix_Exact, but no point as along as the actual
 	 * pattern-matching implementations don't support it.)
+	 *
+	 * expr_coll is not set for a non-collation-aware data type such as bytea.
 	 */
-	if (!get_collation_isdeterministic(expr_coll))
+	if (expr_coll && !get_collation_isdeterministic(expr_coll))
 		return NIL;
 
 	/*

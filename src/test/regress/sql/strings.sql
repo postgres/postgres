@@ -324,6 +324,19 @@ SELECT 'jack' LIKE '%____%' AS t;
 
 
 --
+-- basic tests of LIKE with indexes
+--
+
+CREATE TABLE texttest (a text PRIMARY KEY, b int);
+SELECT * FROM texttest WHERE a LIKE '%1%';
+
+CREATE TABLE byteatest (a bytea PRIMARY KEY, b int);
+SELECT * FROM byteatest WHERE a LIKE '%1%';
+
+DROP TABLE texttest, byteatest;
+
+
+--
 -- test implicit type conversion
 --
 
