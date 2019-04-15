@@ -905,7 +905,7 @@ statext_mcv_deserialize(bytea *data)
 			 VARSIZE_ANY(data), expected_size);
 
 	/* Now copy the array of type Oids. */
-	memcpy(ptr, mcvlist->types, sizeof(Oid) * ndims);
+	memcpy(mcvlist->types, ptr, sizeof(Oid) * ndims);
 	ptr += (sizeof(Oid) * ndims);
 
 	/* ensure alignment of the pointer (after the header fields) */

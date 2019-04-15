@@ -717,6 +717,17 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND 
         50 |     50
 (1 row)
 
+-- test pg_mcv_list_items with a very simple (single item) MCV list
+TRUNCATE mcv_lists;
+INSERT INTO mcv_lists (a, b, c) SELECT 1, 2, 3 FROM generate_series(1,1000) s(i);
+ANALYZE mcv_lists;
+SELECT m.* FROM pg_statistic_ext,
+              pg_mcv_list_items(stxmcv) m WHERE stxname = 'mcv_lists_stats';
+ index |  values   |  nulls  | frequency | base_frequency 
+-------+-----------+---------+-----------+----------------
+     0 | {1, 2, 3} | {f,f,f} |         1 |              1
+(1 row)
+
 RESET random_page_cost;
 -- mcv with arrays
 CREATE TABLE mcv_lists_arrays (

@@ -411,6 +411,14 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND 
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND b IS NULL AND c IS NULL');
 
+-- test pg_mcv_list_items with a very simple (single item) MCV list
+TRUNCATE mcv_lists;
+INSERT INTO mcv_lists (a, b, c) SELECT 1, 2, 3 FROM generate_series(1,1000) s(i);
+ANALYZE mcv_lists;
+
+SELECT m.* FROM pg_statistic_ext,
+              pg_mcv_list_items(stxmcv) m WHERE stxname = 'mcv_lists_stats';
+
 RESET random_page_cost;
 
 -- mcv with arrays
