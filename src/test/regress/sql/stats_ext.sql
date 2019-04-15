@@ -3,9 +3,27 @@
 -- We will be checking execution plans without/with statistics, so
 -- let's make sure we get simple non-parallel plans. Also set the
 -- work_mem low so that we can use small amounts of data.
-SET max_parallel_workers = 0;
-SET max_parallel_workers_per_gather = 0;
-SET work_mem = '128kB';
+
+-- check the number of estimated/actual rows in the top node
+create function check_estimated_rows(text) returns table (estimated int, actual int)
+language plpgsql as
+$$
+declare
+    ln text;
+    tmp text[];
+    first_row bool := true;
+begin
+    for ln in
+        execute format('explain analyze %s', $1)
+    loop
+        if first_row then
+            first_row := false;
+            tmp := regexp_match(ln, 'rows=(\d*) .* rows=(\d*)');
+            return query select tmp[1]::int, tmp[2]::int;
+        end if;
+    end loop;
+end;
+$$;
 
 -- Verify failures
 CREATE STATISTICS tst;
@@ -106,25 +124,20 @@ CREATE TABLE ndistinct (
 -- over-estimates when using only per-column statistics
 INSERT INTO ndistinct (a, b, c, filler1)
      SELECT i/100, i/100, i/100, cash_words((i/100)::money)
-       FROM generate_series(1,30000) s(i);
+       FROM generate_series(1,1000) s(i);
 
 ANALYZE ndistinct;
 
 -- Group Aggregate, due to over-estimate of the number of groups
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
 
 -- correct command
 CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
@@ -135,22 +148,17 @@ SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
 
 -- last two plans keep using Group Aggregate, because 'd' is not covered
 -- by the statistic and while it's NULL-only we assume 200 values for it
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
 
 TRUNCATE TABLE ndistinct;
 
@@ -158,50 +166,39 @@ TRUNCATE TABLE ndistinct;
 INSERT INTO ndistinct (a, b, c, filler1)
      SELECT mod(i,50), mod(i,51), mod(i,32),
             cash_words(mod(i,33)::int::money)
-       FROM generate_series(1,10000) s(i);
+       FROM generate_series(1,5000) s(i);
 
 ANALYZE ndistinct;
 
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
 
--- plans using Group Aggregate, thanks to using correct esimates
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+-- correct esimates
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, d');
 
 DROP STATISTICS s10;
 
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
 
--- dropping the statistics switches the plans to Hash Aggregate,
--- due to under-estimates
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
+-- dropping the statistics results in under-estimates
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, d');
 
 -- functional dependencies tests
 CREATE TABLE functional_dependencies (
@@ -214,8 +211,6 @@ CREATE TABLE functional_dependencies (
     d TEXT
 );
 
-SET random_page_cost = 1.2;
-
 CREATE INDEX fdeps_ab_idx ON functional_dependencies (a, b);
 CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
 
@@ -225,22 +220,18 @@ INSERT INTO functional_dependencies (a, b, c, filler1)
 
 ANALYZE functional_dependencies;
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
 -- create statistics
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 
 ANALYZE functional_dependencies;
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
 -- a => b, a => c, b => c
 TRUNCATE functional_dependencies;
@@ -251,56 +242,27 @@ INSERT INTO functional_dependencies (a, b, c, filler1)
 
 ANALYZE functional_dependencies;
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
 -- create statistics
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 
 ANALYZE functional_dependencies;
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
 -- check change of column type doesn't break it
 ALTER TABLE functional_dependencies ALTER COLUMN c TYPE numeric;
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
 ANALYZE functional_dependencies;
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
-
-RESET random_page_cost;
-
--- check the number of estimated/actual rows in the top node
-create function check_estimated_rows(text) returns table (estimated int, actual int)
-language plpgsql as
-$$
-declare
-    ln text;
-    tmp text[];
-    first_row bool := true;
-begin
-    for ln in
-        execute format('explain analyze %s', $1)
-    loop
-        if first_row then
-            first_row := false;
-            tmp := regexp_match(ln, 'rows=(\d*) .* rows=(\d*)');
-            return query select tmp[1]::int, tmp[2]::int;
-        end if;
-    end loop;
-end;
-$$;
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
 -- MCV lists
 CREATE TABLE mcv_lists (
@@ -418,8 +380,6 @@ ANALYZE mcv_lists;
 
 SELECT m.* FROM pg_statistic_ext,
               pg_mcv_list_items(stxmcv) m WHERE stxname = 'mcv_lists_stats';
-
-RESET random_page_cost;
 
 -- mcv with arrays
 CREATE TABLE mcv_lists_arrays (

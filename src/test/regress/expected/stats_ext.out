@@ -2,9 +2,26 @@
 -- We will be checking execution plans without/with statistics, so
 -- let's make sure we get simple non-parallel plans. Also set the
 -- work_mem low so that we can use small amounts of data.
-SET max_parallel_workers = 0;
-SET max_parallel_workers_per_gather = 0;
-SET work_mem = '128kB';
+-- check the number of estimated/actual rows in the top node
+create function check_estimated_rows(text) returns table (estimated int, actual int)
+language plpgsql as
+$$
+declare
+    ln text;
+    tmp text[];
+    first_row bool := true;
+begin
+    for ln in
+        execute format('explain analyze %s', $1)
+    loop
+        if first_row then
+            first_row := false;
+            tmp := regexp_match(ln, 'rows=(\d*) .* rows=(\d*)');
+            return query select tmp[1]::int, tmp[2]::int;
+        end if;
+    end loop;
+end;
+$$;
 -- Verify failures
 CREATE STATISTICS tst;
 ERROR:  syntax error at or near ";"
@@ -146,191 +163,126 @@ CREATE TABLE ndistinct (
 -- over-estimates when using only per-column statistics
 INSERT INTO ndistinct (a, b, c, filler1)
      SELECT i/100, i/100, i/100, cash_words((i/100)::money)
-       FROM generate_series(1,30000) s(i);
+       FROM generate_series(1,1000) s(i);
 ANALYZE ndistinct;
 -- Group Aggregate, due to over-estimate of the number of groups
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: a, b
-   ->  Sort
-         Sort Key: a, b
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
+ estimated | actual 
+-----------+--------
+       100 |     11
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: b, c
-   ->  Sort
-         Sort Key: b, c
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c');
+ estimated | actual 
+-----------+--------
+       100 |     11
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: a, b, c
-   ->  Sort
-         Sort Key: a, b, c
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
+ estimated | actual 
+-----------+--------
+       100 |     11
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: a, b, c, d
-   ->  Sort
-         Sort Key: a, b, c, d
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
+ estimated | actual 
+-----------+--------
+       200 |     11
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: b, c, d
-   ->  Sort
-         Sort Key: b, c, d
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
+ estimated | actual 
+-----------+--------
+       200 |     11
+(1 row)
 
 -- correct command
 CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 ANALYZE ndistinct;
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
- stxkind |                      stxndistinct                       
----------+---------------------------------------------------------
- {d,f,m} | {"3, 4": 301, "3, 6": 301, "4, 6": 301, "3, 4, 6": 301}
+ stxkind |                    stxndistinct                     
+---------+-----------------------------------------------------
+ {d,f,m} | {"3, 4": 11, "3, 6": 11, "4, 6": 11, "3, 4, 6": 11}
 (1 row)
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: a, b
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
+ estimated | actual 
+-----------+--------
+        11 |     11
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: b, c
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c');
+ estimated | actual 
+-----------+--------
+        11 |     11
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: a, b, c
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
+ estimated | actual 
+-----------+--------
+        11 |     11
+(1 row)
 
 -- last two plans keep using Group Aggregate, because 'd' is not covered
 -- by the statistic and while it's NULL-only we assume 200 values for it
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: a, b, c, d
-   ->  Sort
-         Sort Key: a, b, c, d
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
+ estimated | actual 
+-----------+--------
+       200 |     11
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: b, c, d
-   ->  Sort
-         Sort Key: b, c, d
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
+ estimated | actual 
+-----------+--------
+       200 |     11
+(1 row)
 
 TRUNCATE TABLE ndistinct;
 -- under-estimates when using only per-column statistics
 INSERT INTO ndistinct (a, b, c, filler1)
      SELECT mod(i,50), mod(i,51), mod(i,32),
             cash_words(mod(i,33)::int::money)
-       FROM generate_series(1,10000) s(i);
+       FROM generate_series(1,5000) s(i);
 ANALYZE ndistinct;
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
- stxkind |                        stxndistinct                         
----------+-------------------------------------------------------------
- {d,f,m} | {"3, 4": 2550, "3, 6": 800, "4, 6": 1632, "3, 4, 6": 10000}
+ stxkind |                        stxndistinct                        
+---------+------------------------------------------------------------
+ {d,f,m} | {"3, 4": 2550, "3, 6": 800, "4, 6": 1632, "3, 4, 6": 5000}
 (1 row)
 
--- plans using Group Aggregate, thanks to using correct esimates
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: a, b
-   ->  Sort
-         Sort Key: a, b
-         ->  Seq Scan on ndistinct
-(5 rows)
+-- correct esimates
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
+ estimated | actual 
+-----------+--------
+      2550 |   2550
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: a, b, c
-   ->  Sort
-         Sort Key: a, b, c
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
+ estimated | actual 
+-----------+--------
+      5000 |   5000
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
-            QUERY PLAN             
------------------------------------
- GroupAggregate
-   Group Key: a, b, c, d
-   ->  Sort
-         Sort Key: a, b, c, d
-         ->  Seq Scan on ndistinct
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
+ estimated | actual 
+-----------+--------
+      5000 |   5000
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: b, c, d
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
+ estimated | actual 
+-----------+--------
+      1632 |   1632
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: a, d
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, d');
+ estimated | actual 
+-----------+--------
+       500 |     50
+(1 row)
 
 DROP STATISTICS s10;
 SELECT stxkind, stxndistinct
@@ -339,52 +291,36 @@ SELECT stxkind, stxndistinct
 ---------+--------------
 (0 rows)
 
--- dropping the statistics switches the plans to Hash Aggregate,
--- due to under-estimates
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: a, b
-   ->  Seq Scan on ndistinct
-(3 rows)
+-- dropping the statistics results in under-estimates
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
+ estimated | actual 
+-----------+--------
+       500 |   2550
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: a, b, c
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c');
+ estimated | actual 
+-----------+--------
+       500 |   5000
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: a, b, c, d
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b, c, d');
+ estimated | actual 
+-----------+--------
+       500 |   5000
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: b, c, d
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY b, c, d');
+ estimated | actual 
+-----------+--------
+       500 |   1632
+(1 row)
 
-EXPLAIN (COSTS off)
- SELECT COUNT(*) FROM ndistinct GROUP BY a, d;
-         QUERY PLAN          
------------------------------
- HashAggregate
-   Group Key: a, d
-   ->  Seq Scan on ndistinct
-(3 rows)
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, d');
+ estimated | actual 
+-----------+--------
+       500 |     50
+(1 row)
 
 -- functional dependencies tests
 CREATE TABLE functional_dependencies (
@@ -396,51 +332,38 @@ CREATE TABLE functional_dependencies (
     c INT,
     d TEXT
 );
-SET random_page_cost = 1.2;
 CREATE INDEX fdeps_ab_idx ON functional_dependencies (a, b);
 CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
 -- random data (no functional dependencies)
 INSERT INTO functional_dependencies (a, b, c, filler1)
      SELECT mod(i, 23), mod(i, 29), mod(i, 31), i FROM generate_series(1,5000) s(i);
 ANALYZE functional_dependencies;
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
-                    QUERY PLAN                     
----------------------------------------------------
- Bitmap Heap Scan on functional_dependencies
-   Recheck Cond: ((a = 1) AND (b = '1'::text))
-   ->  Bitmap Index Scan on fdeps_abc_idx
-         Index Cond: ((a = 1) AND (b = '1'::text))
-(4 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         8 |      8
+(1 row)
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
-                        QUERY PLAN                         
------------------------------------------------------------
- Index Scan using fdeps_abc_idx on functional_dependencies
-   Index Cond: ((a = 1) AND (b = '1'::text) AND (c = 1))
-(2 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |      1
+(1 row)
 
 -- create statistics
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
-                    QUERY PLAN                     
----------------------------------------------------
- Bitmap Heap Scan on functional_dependencies
-   Recheck Cond: ((a = 1) AND (b = '1'::text))
-   ->  Bitmap Index Scan on fdeps_abc_idx
-         Index Cond: ((a = 1) AND (b = '1'::text))
-(4 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         8 |      8
+(1 row)
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
-                        QUERY PLAN                         
------------------------------------------------------------
- Index Scan using fdeps_abc_idx on functional_dependencies
-   Index Cond: ((a = 1) AND (b = '1'::text) AND (c = 1))
-(2 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |      1
+(1 row)
 
 -- a => b, a => c, b => c
 TRUNCATE functional_dependencies;
@@ -448,92 +371,48 @@ DROP STATISTICS func_deps_stat;
 INSERT INTO functional_dependencies (a, b, c, filler1)
      SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
 ANALYZE functional_dependencies;
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
-                        QUERY PLAN                         
------------------------------------------------------------
- Index Scan using fdeps_abc_idx on functional_dependencies
-   Index Cond: ((a = 1) AND (b = '1'::text))
-(2 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
-                        QUERY PLAN                         
------------------------------------------------------------
- Index Scan using fdeps_abc_idx on functional_dependencies
-   Index Cond: ((a = 1) AND (b = '1'::text) AND (c = 1))
-(2 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |     50
+(1 row)
 
 -- create statistics
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1';
-                    QUERY PLAN                     
----------------------------------------------------
- Bitmap Heap Scan on functional_dependencies
-   Recheck Cond: ((a = 1) AND (b = '1'::text))
-   ->  Bitmap Index Scan on fdeps_abc_idx
-         Index Cond: ((a = 1) AND (b = '1'::text))
-(4 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
 
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
-                    QUERY PLAN                     
----------------------------------------------------
- Bitmap Heap Scan on functional_dependencies
-   Recheck Cond: ((a = 1) AND (b = '1'::text))
-   Filter: (c = 1)
-   ->  Bitmap Index Scan on fdeps_ab_idx
-         Index Cond: ((a = 1) AND (b = '1'::text))
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
 
 -- check change of column type doesn't break it
 ALTER TABLE functional_dependencies ALTER COLUMN c TYPE numeric;
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
-                    QUERY PLAN                     
----------------------------------------------------
- Bitmap Heap Scan on functional_dependencies
-   Recheck Cond: ((a = 1) AND (b = '1'::text))
-   Filter: (c = '1'::numeric)
-   ->  Bitmap Index Scan on fdeps_ab_idx
-         Index Cond: ((a = 1) AND (b = '1'::text))
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
 
 ANALYZE functional_dependencies;
-EXPLAIN (COSTS OFF)
- SELECT * FROM functional_dependencies WHERE a = 1 AND b = '1' AND c = 1;
-                    QUERY PLAN                     
----------------------------------------------------
- Bitmap Heap Scan on functional_dependencies
-   Recheck Cond: ((a = 1) AND (b = '1'::text))
-   Filter: (c = '1'::numeric)
-   ->  Bitmap Index Scan on fdeps_ab_idx
-         Index Cond: ((a = 1) AND (b = '1'::text))
-(5 rows)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
+ estimated | actual 
+-----------+--------
+        50 |     50
+(1 row)
 
-RESET random_page_cost;
--- check the number of estimated/actual rows in the top node
-create function check_estimated_rows(text) returns table (estimated int, actual int)
-language plpgsql as
-$$
-declare
-    ln text;
-    tmp text[];
-    first_row bool := true;
-begin
-    for ln in
-        execute format('explain analyze %s', $1)
-    loop
-        if first_row then
-            first_row := false;
-            tmp := regexp_match(ln, 'rows=(\d*) .* rows=(\d*)');
-            return query select tmp[1]::int, tmp[2]::int;
-        end if;
-    end loop;
-end;
-$$;
 -- MCV lists
 CREATE TABLE mcv_lists (
     filler1 TEXT,
@@ -728,7 +607,6 @@ SELECT m.* FROM pg_statistic_ext,
      0 | {1, 2, 3} | {f,f,f} |         1 |              1
 (1 row)
 
-RESET random_page_cost;
 -- mcv with arrays
 CREATE TABLE mcv_lists_arrays (
     a TEXT[],
