@@ -1548,7 +1548,10 @@ exec_replication_command(const char *cmd_string)
 				DestReceiver *dest = CreateDestReceiver(DestRemoteSimple);
 				VariableShowStmt *n = (VariableShowStmt *) cmd_node;
 
+				/* syscache access needs a transaction environment */
+				StartTransactionCommand();
 				GetPGVariable(n->name, dest);
+				CommitTransactionCommand();
 			}
 			break;
 
