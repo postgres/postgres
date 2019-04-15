@@ -2742,7 +2742,8 @@ compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc, Oid *partcoll
 			 * datatype-specific hash functions of each partition key
 			 * attribute.
 			 */
-			hash = FunctionCall2Coll(&partsupfunc[i], partcollation[i], values[i], seed);
+			hash = FunctionCall2Coll(&partsupfunc[i], partcollation[i],
+									 values[i], seed);
 
 			/* Form a single 64-bit hash value */
 			rowHash = hash_combine64(rowHash, DatumGetUInt64(hash));
@@ -2777,7 +2778,8 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 		int16		variadic_typlen;
 		bool		variadic_typbyval;
 		char		variadic_typalign;
-		FmgrInfo	partsupfunc[PARTITION_MAX_KEYS];
+		Oid			partcollid[PARTITION_MAX_KEYS];
+		FmgrInfo	partsupfunc[FLEXIBLE_ARRAY_MEMBER];
 	} ColumnsHashData;
 	Oid			parentId;
 	int			modulus;
@@ -2850,6 +2852,8 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 			my_extra = (ColumnsHashData *) fcinfo->flinfo->fn_extra;
 			my_extra->relid = parentId;
 			my_extra->nkeys = key->partnatts;
+			memcpy(my_extra->partcollid, key->partcollation,
+				   key->partnatts * sizeof(Oid));
 
 			/* check argument types and save fmgr_infos */
 			for (j = 0; j < key->partnatts; ++j)
@@ -2866,7 +2870,6 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 							   &key->partsupfunc[j],
 							   fcinfo->flinfo->fn_mcxt);
 			}
-
 		}
 		else
 		{
@@ -2885,6 +2888,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 								 &my_extra->variadic_typlen,
 								 &my_extra->variadic_typbyval,
 								 &my_extra->variadic_typalign);
+			my_extra->partcollid[0] = key->partcollation[0];
 
 			/* check argument types */
 			for (j = 0; j < key->partnatts; ++j)
@@ -2926,11 +2930,10 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 			if (PG_ARGISNULL(argno))
 				continue;
 
-			Assert(OidIsValid(my_extra->partsupfunc[i].fn_oid));
-
-			hash = FunctionCall2(&my_extra->partsupfunc[i],
-								 PG_GETARG_DATUM(argno),
-								 seed);
+			hash = FunctionCall2Coll(&my_extra->partsupfunc[i],
+									 my_extra->partcollid[i],
+									 PG_GETARG_DATUM(argno),
+									 seed);
 
 			/* Form a single 64-bit hash value */
 			rowHash = hash_combine64(rowHash, DatumGetUInt64(hash));
@@ -2965,11 +2968,10 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 			if (isnull[i])
 				continue;
 
-			Assert(OidIsValid(my_extra->partsupfunc[0].fn_oid));
-
-			hash = FunctionCall2(&my_extra->partsupfunc[0],
-								 datum[i],
-								 seed);
+			hash = FunctionCall2Coll(&my_extra->partsupfunc[0],
+									 my_extra->partcollid[0],
+									 datum[i],
+									 seed);
 
 			/* Form a single 64-bit hash value */
 			rowHash = hash_combine64(rowHash, DatumGetUInt64(hash));

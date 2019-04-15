@@ -75,6 +75,16 @@ SELECT satisfies_hash_partition('mcinthash'::regclass, 4, 0,
 SELECT satisfies_hash_partition('mcinthash'::regclass, 4, 0,
 								variadic array[now(), now()]);
 
+-- check satisfies_hash_partition passes correct collation
+create table text_hashp (a text) partition by hash (a);
+create table text_hashp0 partition of text_hashp for values with (modulus 2, remainder 0);
+create table text_hashp1 partition of text_hashp for values with (modulus 2, remainder 1);
+-- The result here should always be true, because 'xxx' must belong to
+-- one of the two defined partitions
+select satisfies_hash_partition('text_hashp'::regclass, 2, 0, 'xxx'::text) OR
+	   satisfies_hash_partition('text_hashp'::regclass, 2, 1, 'xxx'::text) AS satisfies;
+
 -- cleanup
 DROP TABLE mchash;
 DROP TABLE mcinthash;
+DROP TABLE text_hashp;
