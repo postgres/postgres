@@ -44,7 +44,7 @@ SELECT pg_sleep(0.1);
 SELECT count(*) AS two FROM TIMESTAMP_TBL WHERE d1 = timestamp(2) without time zone 'now';
 COMMIT;
 
-DELETE FROM TIMESTAMP_TBL;
+TRUNCATE TIMESTAMP_TBL;
 
 -- Special values
 INSERT INTO TIMESTAMP_TBL VALUES ('-infinity');

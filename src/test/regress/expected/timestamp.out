@@ -74,7 +74,7 @@ SELECT count(*) AS two FROM TIMESTAMP_TBL WHERE d1 = timestamp(2) without time z
 (1 row)
 
 COMMIT;
-DELETE FROM TIMESTAMP_TBL;
+TRUNCATE TIMESTAMP_TBL;
 -- Special values
 INSERT INTO TIMESTAMP_TBL VALUES ('-infinity');
 INSERT INTO TIMESTAMP_TBL VALUES ('infinity');
