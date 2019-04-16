@@ -102,3 +102,10 @@ var		{ font-family: monospace; font-style: italic; }
 acronym		{ font-style: inherit; }
 
 .option		{ white-space: nowrap; }
+
+/* make images not too wide on larger screens */
+@media (min-width: 800px) {
+  .mediaobject {
+    width: 75%;
+  }
+}
