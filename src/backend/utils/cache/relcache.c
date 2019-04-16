@@ -5156,6 +5156,13 @@ GetRelationPublicationActions(Relation relation)
 	MemoryContext oldcxt;
 	PublicationActions *pubactions = palloc0(sizeof(PublicationActions));
 
+	/*
+	 * If not publishable, it publishes no actions.  (pgoutput_change() will
+	 * ignore it.)
+	 */
+	if (!is_publishable_relation(relation))
+		return pubactions;
+
 	if (relation->rd_pubactions)
 		return memcpy(pubactions, relation->rd_pubactions,
 					  sizeof(PublicationActions));
