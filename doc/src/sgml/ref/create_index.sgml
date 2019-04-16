@@ -361,8 +361,12 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <variablelist>
-   <varlistentry>
-    <term><literal>fillfactor</literal></term>
+   <varlistentry id="index-reloption-fillfactor" xreflabel="fillfactor">
+    <term><literal>fillfactor</literal>
+     <indexterm>
+      <primary><varname>fillfactor</varname> storage parameter</primary>
+     </indexterm>
+    </term>
     <listitem>
      <para>
       The fillfactor for an index is a percentage that determines how full
@@ -388,8 +392,13 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <variablelist>
-   <varlistentry>
-    <term><literal>vacuum_cleanup_index_scale_factor</literal></term>
+   <varlistentry id="index-reloption-vacuum-cleanup-index-scale-factor" xreflabel="vacuum_cleanup_index_scale_factor">
+    <term><literal>vacuum_cleanup_index_scale_factor</literal>
+     <indexterm>
+      <primary><varname>vacuum_cleanup_index_scale_factor</varname></primary>
+      <secondary>storage parameter</secondary>
+     </indexterm>
+    </term>
     <listitem>
     <para>
       Per-index value for <xref linkend="guc-vacuum-cleanup-index-scale-factor"/>.
@@ -403,8 +412,12 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <variablelist>
-   <varlistentry>
-    <term><literal>buffering</literal></term>
+   <varlistentry id="index-reloption-buffering" xreflabel="buffering">
+    <term><literal>buffering</literal>
+     <indexterm>
+      <primary><varname>buffering</varname> storage parameter</primary>
+     </indexterm>
+    </term>
     <listitem>
     <para>
      Determines whether the buffering build technique described in
@@ -422,8 +435,12 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <variablelist>
-   <varlistentry>
-    <term><literal>fastupdate</literal></term>
+   <varlistentry id="index-reloption-fastupdate" xreflabel="fastupdate">
+    <term><literal>fastupdate</literal>
+     <indexterm>
+      <primary><varname>fastupdate</varname> storage parameter</primary>
+     </indexterm>
+    </term>
     <listitem>
     <para>
      This setting controls usage of the fast update technique described in
@@ -446,9 +463,15 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </listitem>
    </varlistentry>
    </variablelist>
+
    <variablelist>
-   <varlistentry>
-    <term><literal>gin_pending_list_limit</literal></term>
+   <varlistentry id="index-reloption-gin-pending-list-limit" xreflabel="gin_pending_list_limit">
+    <term><literal>gin_pending_list_limit</literal>
+     <indexterm>
+      <primary><varname>gin_pending_list_limit</varname></primary>
+      <secondary>storage parameter</secondary>
+     </indexterm>
+    </term>
     <listitem>
     <para>
      Custom <xref linkend="guc-gin-pending-list-limit"/> parameter.
@@ -463,8 +486,12 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <variablelist>
-   <varlistentry>
-    <term><literal>pages_per_range</literal></term>
+   <varlistentry id="index-reloption-pages-per-range" xreflabel="pages_per_range">
+    <term><literal>pages_per_range</literal>
+     <indexterm>
+      <primary><varname>pages_per_range</varname> storage parameter</primary>
+     </indexterm>
+    </term>
     <listitem>
     <para>
      Defines the number of table blocks that make up one block range for
@@ -474,8 +501,12 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autosummarize</literal></term>
+   <varlistentry id="index-reloption-autosummarize" xreflabel="autosummarize">
+    <term><literal>autosummarize</literal>
+     <indexterm>
+      <primary><varname>autosummarize</varname> storage parameter</primary>
+     </indexterm>
+    </term>
     <listitem>
     <para>
      Defines whether a summarization run is invoked for the previous page

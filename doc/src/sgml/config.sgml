@@ -6934,7 +6934,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-log-autovacuum-min-duration" xreflabel="log_autovacuum_min_duration">
       <term><varname>log_autovacuum_min_duration</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>log_autovacuum_min_duration</varname> configuration parameter</primary>
+       <primary><varname>log_autovacuum_min_duration</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -6993,7 +6994,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-vacuum-threshold" xreflabel="autovacuum_vacuum_threshold">
       <term><varname>autovacuum_vacuum_threshold</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>autovacuum_vacuum_threshold</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_vacuum_threshold</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7012,7 +7014,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
       <term><varname>autovacuum_analyze_threshold</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>autovacuum_analyze_threshold</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_analyze_threshold</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7031,7 +7034,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-vacuum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
       <term><varname>autovacuum_vacuum_scale_factor</varname> (<type>floating point</type>)
       <indexterm>
-       <primary><varname>autovacuum_vacuum_scale_factor</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_vacuum_scale_factor</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7051,7 +7055,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-analyze-scale-factor" xreflabel="autovacuum_analyze_scale_factor">
       <term><varname>autovacuum_analyze_scale_factor</varname> (<type>floating point</type>)
       <indexterm>
-       <primary><varname>autovacuum_analyze_scale_factor</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_analyze_scale_factor</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7071,7 +7076,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-freeze-max-age" xreflabel="autovacuum_freeze_max_age">
       <term><varname>autovacuum_freeze_max_age</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>autovacuum_freeze_max_age</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_freeze_max_age</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7099,7 +7105,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-multixact-freeze-max-age" xreflabel="autovacuum_multixact_freeze_max_age">
       <term><varname>autovacuum_multixact_freeze_max_age</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>autovacuum_multixact_freeze_max_age</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_multixact_freeze_max_age</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7127,7 +7134,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
       <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>floating point</type>)
       <indexterm>
-       <primary><varname>autovacuum_vacuum_cost_delay</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_vacuum_cost_delay</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7147,7 +7155,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-autovacuum-vacuum-cost-limit" xreflabel="autovacuum_vacuum_cost_limit">
       <term><varname>autovacuum_vacuum_cost_limit</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>autovacuum_vacuum_cost_limit</varname> configuration parameter</primary>
+       <primary><varname>autovacuum_vacuum_cost_limit</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7746,7 +7755,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-vacuum-cleanup-index-scale-factor" xreflabel="vacuum_cleanup_index_scale_factor">
       <term><varname>vacuum_cleanup_index_scale_factor</varname> (<type>floating point</type>)
       <indexterm>
-       <primary><varname>vacuum_cleanup_index_scale_factor</varname> configuration parameter</primary>
+       <primary><varname>vacuum_cleanup_index_scale_factor</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>
@@ -7865,7 +7875,8 @@ SET XML OPTION { DOCUMENT | CONTENT };
      <varlistentry id="guc-gin-pending-list-limit" xreflabel="gin_pending_list_limit">
       <term><varname>gin_pending_list_limit</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>gin_pending_list_limit</varname> configuration parameter</primary>
+       <primary><varname>gin_pending_list_limit</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>

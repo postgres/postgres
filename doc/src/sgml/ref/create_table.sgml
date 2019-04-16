@@ -1316,8 +1316,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
    <variablelist>
 
-   <varlistentry>
-    <term><literal>fillfactor</literal> (<type>integer</type>)</term>
+    <varlistentry id="reloption-fillfactor" xreflabel="fillfactor">
+    <term><varname>fillfactor</varname> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>fillfactor</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       The fillfactor for a table is a percentage between 10 and 100.
@@ -1334,8 +1338,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>toast_tuple_target</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-toast-tuple-target" xreflabel="toast_tuple_target">
+    <term><literal>toast_tuple_target</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>toast_tuple_target</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       The toast_tuple_target specifies the minimum tuple length required before
@@ -1355,8 +1363,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>parallel_workers</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-parallel-workers" xreflabel="parallel_workers">
+    <term><literal>parallel_workers</literal> (<type>integer</type>)
+     <indexterm>
+     <primary><varname>parallel_workers</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       This sets the number of workers that should be used to assist a parallel
@@ -1368,8 +1380,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_enabled</literal>, <literal>toast.autovacuum_enabled</literal> (<type>boolean</type>)</term>
+   <varlistentry id="reloption-autovacuum-enabled" xreflabel="autovacuum_enabled">
+    <term><literal>autovacuum_enabled</literal>, <literal>toast.autovacuum_enabled</literal> (<type>boolean</type>)
+    <indexterm>
+     <primary><varname>autovacuum_enabled</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
      Enables or disables the autovacuum daemon for a particular table.
@@ -1389,8 +1405,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>vacuum_index_cleanup</literal> (<type>boolean</type>)</term>
+   <varlistentry id="reloption-vacuum-index-cleanup" xreflabel="vacuum_index_cleanup">
+    <term><literal>vacuum_index_cleanup</literal> (<type>boolean</type>)
+    <indexterm>
+     <primary><varname>vacuum_index_cleanup</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Enables or disables index cleanup when <command>VACUUM</command> is
@@ -1404,8 +1424,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>vacuum_truncate</literal>, <literal>toast.vacuum_truncate</literal> (<type>boolean</type>)</term>
+   <varlistentry id="reloption-vacuum-truncate" xreflabel="vacuum_truncate">
+    <term><literal>vacuum_truncate</literal>, <literal>toast.vacuum_truncate</literal> (<type>boolean</type>)
+    <indexterm>
+     <primary><varname>vacuum_truncate</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Enables or disables vacuum to try to truncate off any empty pages
@@ -1419,8 +1443,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_vacuum_threshold</literal>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-vacuum-threshold" xreflabel="autovacuum_vacuum_threshold">
+    <term><literal>autovacuum_vacuum_threshold</literal>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_vacuum_threshold</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-threshold"/>
@@ -1429,8 +1458,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</type>)</term>
+   <varlistentry id="reloption-autovacuum-vauum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
+    <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</type>)
+    <indexterm>
+     <primary><varname>autovacuum_vacuum_scale_factor</varname> </primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-scale-factor"/>
@@ -1439,8 +1473,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_analyze_threshold</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
+    <term><literal>autovacuum_analyze_threshold</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_analyze_threshold</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-threshold"/>
@@ -1449,8 +1488,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_analyze_scale_factor</literal> (<type>float4</type>)</term>
+   <varlistentry id="reloption-autovacuum-analyze-scale-factor" xreflabel="autovacuum_analyze_scale_factor">
+    <term><literal>autovacuum_analyze_scale_factor</literal> (<type>float4</type>)
+    <indexterm>
+     <primary><varname>autovacuum_analyze_scale_factor</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-scale-factor"/>
@@ -1459,8 +1503,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_vacuum_cost_delay</literal>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>floating point</type>)</term>
+   <varlistentry id="reloption-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
+    <term><literal>autovacuum_vacuum_cost_delay</literal>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>floating point</type>)
+    <indexterm>
+     <primary><varname>autovacuum_vacuum_cost_delay</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-delay"/>
@@ -1469,8 +1518,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_vacuum_cost_limit</literal>, <literal>toast.autovacuum_vacuum_cost_limit</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-vauum-cost-limit" xreflabel="autovacuum_vacuum_cost_limit">
+    <term><literal>autovacuum_vacuum_cost_limit</literal>, <literal>toast.autovacuum_vacuum_cost_limit</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_vacuum_cost_limit</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-limit"/>
@@ -1479,8 +1533,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_freeze_min_age</literal>, <literal>toast.autovacuum_freeze_min_age</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-freeze-min-age" xreflabel="autovacuum_freeze_min_age">
+    <term><literal>autovacuum_freeze_min_age</literal>, <literal>toast.autovacuum_freeze_min_age</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_freeze_min_age</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-vacuum-freeze-min-age"/>
@@ -1492,8 +1550,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_freeze_max_age</literal>, <literal>toast.autovacuum_freeze_max_age</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-freeze-max-age" xreflabel="autovacuum_freeze_max_age">
+    <term><literal>autovacuum_freeze_max_age</literal>, <literal>toast.autovacuum_freeze_max_age</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_freeze_max_age</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-freeze-max-age"/>
@@ -1504,8 +1567,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_freeze_table_age</literal>, <literal>toast.autovacuum_freeze_table_age</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-freeze-table-age" xreflabel="autovacuum_freeze_table_age">
+    <term><literal>autovacuum_freeze_table_age</literal>, <literal>toast.autovacuum_freeze_table_age</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_freeze_table_age</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-vacuum-freeze-table-age"/>
@@ -1514,8 +1581,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_multixact_freeze_min_age</literal>, <literal>toast.autovacuum_multixact_freeze_min_age</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-multixact-freeze-min-age" xreflabel="autovacuum_multixact_freeze_min_age">
+    <term><literal>autovacuum_multixact_freeze_min_age</literal>, <literal>toast.autovacuum_multixact_freeze_min_age</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_multixact_freeze_min_age</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-vacuum-multixact-freeze-min-age"/>
@@ -1528,8 +1599,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_multixact_freeze_max_age</literal>, <literal>toast.autovacuum_multixact_freeze_max_age</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-multixact-freeze-max-age" xreflabel="autovacuum_multixact_freeze_max_age">
+    <term><literal>autovacuum_multixact_freeze_max_age</literal>, <literal>toast.autovacuum_multixact_freeze_max_age</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_multixact_freeze_max_age</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value
@@ -1542,8 +1618,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>autovacuum_multixact_freeze_table_age</literal>, <literal>toast.autovacuum_multixact_freeze_table_age</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-autovacuum-multixact-freeze-table-age" xreflabel="autovacuum_multixact_freeze_table_age">
+    <term><literal>autovacuum_multixact_freeze_table_age</literal>, <literal>toast.autovacuum_multixact_freeze_table_age</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_multixact_freeze_table_age</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value
@@ -1552,8 +1632,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>log_autovacuum_min_duration</literal>, <literal>toast.log_autovacuum_min_duration</literal> (<type>integer</type>)</term>
+   <varlistentry id="reloption-log-autovacuum-min-duration" xreflabel="log_autovacuum_min_duration">
+    <term><literal>log_autovacuum_min_duration</literal>, <literal>toast.log_autovacuum_min_duration</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>log_autovacuum_min_duration</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-log-autovacuum-min-duration"/>
@@ -1562,8 +1647,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>user_catalog_table</literal> (<type>boolean</type>)</term>
+   <varlistentry id="reloption-user-catalog-table" xreflabel="user_catalog_table">
+    <term><literal>user_catalog_table</literal> (<type>boolean</type>)
+    <indexterm>
+     <primary><varname>user_catalog_table</varname> storage parameter</primary>
+    </indexterm>
+    </term>
     <listitem>
      <para>
       Declare the table as an additional catalog table for purposes of
