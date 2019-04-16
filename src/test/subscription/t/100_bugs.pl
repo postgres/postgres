@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 1;
+use Test::More tests => 3;
 
 sub wait_for_caught_up
 {
@@ -72,3 +72,38 @@ $node_publisher->safe_psql('postgres',
 wait_for_caught_up($node_publisher, 'sub1');
 
 pass('index predicates do not cause crash');
+
+$node_publisher->stop('fast');
+$node_subscriber->stop('fast');
+
+
+# Handling of temporary and unlogged tables with FOR ALL TABLES publications
+
+# If a FOR ALL TABLES publication exists, temporary and unlogged
+# tables are ignored for publishing changes.  The bug was that we
+# would still check in that case that such a table has a replica
+# identity set before accepting updates.  If it did not it would cause
+# an error when an update was attempted.
+
+$node_publisher = get_new_node('publisher2');
+$node_publisher->init(allows_streaming => 'logical');
+$node_publisher->start;
+
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION pub FOR ALL TABLES");
+
+is( $node_publisher->psql(
+		'postgres',
+		"CREATE TEMPORARY TABLE tt1 AS SELECT 1 AS a; UPDATE tt1 SET a = 2;"),
+	0,
+	'update to temporary table without replica identity with FOR ALL TABLES publication'
+);
+
+is( $node_publisher->psql(
+		'postgres',
+		"CREATE UNLOGGED TABLE tu1 AS SELECT 1 AS a; UPDATE tu1 SET a = 2;"),
+	0,
+	'update to unlogged table without replica identity with FOR ALL TABLES publication'
+);
+
+$node_publisher->stop('fast');
