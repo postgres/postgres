@@ -153,7 +153,7 @@ like(slurp_file($gnat->logfile),
 my $single_stderr;
 ok( !run_log(
 		[ 'postgres', '--single', '-D', $gnat->data_dir, 'template1' ],
-		'<', \('SELECT 1 + 1'), '2>', \$single_stderr),
+		'<', \undef, '2>', \$single_stderr),
 	'live query blocks --single');
 print STDERR $single_stderr;
 like($single_stderr, $pre_existing_msg,
