@@ -14,16 +14,15 @@
 
 #include "postgres.h"
 
-#include "be-gssapi-common.h"
+#include <unistd.h>
 
+#include "be-gssapi-common.h"
 #include "libpq/auth.h"
 #include "libpq/libpq.h"
 #include "libpq/libpq-be.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-
-#include <unistd.h>
 
 
 /*
@@ -179,10 +178,13 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 			pg_GSS_error(FATAL, gettext_noop("GSSAPI wrap error"), major, minor);
 
 		if (conf == 0)
-			ereport(FATAL, (errmsg("GSSAPI did not provide confidentiality")));
+			ereport(FATAL,
+					(errmsg("GSSAPI did not provide confidentiality")));
 
 		if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
-			ereport(FATAL, (errmsg("GSSAPI tried to send packet of size: %ld", output.length)));
+			ereport(FATAL,
+					(errmsg("server tried to send oversize GSSAPI packet: %zu bytes",
+							(size_t) output.length)));
 
 		bytes_encrypted += input.length;
 		bytes_to_encrypt -= input.length;
@@ -297,7 +299,9 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 
 		/* Check for over-length packet */
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
-			ereport(FATAL, (errmsg("Over-size GSSAPI packet sent by the client.")));
+			ereport(FATAL,
+					(errmsg("oversize GSSAPI packet sent by the client: %zu bytes",
+							(size_t) input.length)));
 
 		/*
 		 * Read as much of the packet as we are able to on this call into
@@ -341,7 +345,8 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 						 major, minor);
 
 		if (conf == 0)
-			ereport(FATAL, (errmsg("GSSAPI did not provide confidentiality")));
+			ereport(FATAL,
+					(errmsg("GSSAPI did not provide confidentiality")));
 
 		memcpy(PqGSSResultBuffer, output.value, output.length);
 
@@ -492,7 +497,9 @@ secure_open_gssapi(Port *port)
 		 * Verify on our side that the client doesn't do something funny.
 		 */
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE)
-			ereport(FATAL, (errmsg("Over-size GSSAPI packet sent by the client: %ld", input.length)));
+			ereport(FATAL,
+					(errmsg("oversize GSSAPI packet sent by the client: %zu bytes",
+							(size_t) input.length)));
 
 		/*
 		 * Get the rest of the packet so we can pass it to GSSAPI to accept
@@ -538,7 +545,9 @@ secure_open_gssapi(Port *port)
 			uint32		netlen = htonl(output.length);
 
 			if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
-				ereport(FATAL, (errmsg("GSSAPI tried to send oversize packet")));
+				ereport(FATAL,
+						(errmsg("server tried to send oversize GSSAPI packet: %zu bytes",
+								(size_t) output.length)));
 
 			memcpy(PqGSSSendBuffer, (char *) &netlen, sizeof(uint32));
 			PqGSSSendPointer += sizeof(uint32);

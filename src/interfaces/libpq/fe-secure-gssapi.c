@@ -16,7 +16,6 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-gssapi-common.h"
-
 #include "port/pg_bswap.h"
 
 /*
@@ -163,15 +162,16 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 		}
 		else if (conf == 0)
 		{
-			printfPQExpBuffer(&conn->errorMessage, libpq_gettext(
-																 "GSSAPI did not provide confidentiality\n"));
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("GSSAPI did not provide confidentiality\n"));
 			goto cleanup;
 		}
 
 		if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
 		{
-			printfPQExpBuffer(&conn->errorMessage, libpq_gettext(
-																 "GSSAPI attempt to send oversize packet\n"));
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("client tried to send oversize GSSAPI packet: %zu bytes\n"),
+							  (size_t) output.length);
 			goto cleanup;
 		}
 
@@ -286,8 +286,8 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 		/* Check for over-length packet */
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
 		{
-			printfPQExpBuffer(&conn->errorMessage, libpq_gettext(
-																 "GSSAPI did not provide confidentiality\n"));
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("GSSAPI did not provide confidentiality\n"));
 			ret = -1;
 			goto cleanup;
 		}
@@ -328,8 +328,8 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 		}
 		else if (conf == 0)
 		{
-			printfPQExpBuffer(&conn->errorMessage, libpq_gettext(
-																 "GSSAPI did not provide confidentiality\n"));
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("GSSAPI did not provide confidentiality\n"));
 			ret = -1;
 			goto cleanup;
 		}
@@ -476,7 +476,7 @@ pqsecure_open_gss(PGconn *conn)
 
 			PqGSSRecvLength += ret;
 
-			printfPQExpBuffer(&conn->errorMessage, "%s", PqGSSRecvBuffer + 1);
+			printfPQExpBuffer(&conn->errorMessage, "%s\n", PqGSSRecvBuffer + 1);
 
 			return PGRES_POLLING_FAILED;
 		}
@@ -490,7 +490,9 @@ pqsecure_open_gss(PGconn *conn)
 		input.length = ntohl(*(uint32 *) PqGSSRecvBuffer);
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
 		{
-			printfPQExpBuffer(&conn->errorMessage, libpq_gettext("Over-size GSSAPI packet sent by the server: %ld"), input.length);
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("oversize GSSAPI packet sent by the server: %zu bytes\n"),
+							  (size_t) input.length);
 			return PGRES_POLLING_FAILED;
 		}
 
