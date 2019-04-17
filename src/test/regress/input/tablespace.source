@@ -63,6 +63,7 @@ CREATE INDEX part_a_idx ON testschema.part (a) TABLESPACE regress_tblspace;
 CREATE TABLE testschema.part2 PARTITION OF testschema.part FOR VALUES IN (2);
 SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
     where c.reltablespace = t.oid AND c.relname LIKE 'part%_idx';
+\d testschema.part_a_idx
 
 -- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
 CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;

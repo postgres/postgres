@@ -94,6 +94,14 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
  part_a_idx  | regress_tblspace
 (3 rows)
 
+\d testschema.part_a_idx
+Partitioned index "testschema.part_a_idx"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ a      | integer | yes  | a
+btree, for table "testschema.part"
+Tablespace: "regress_tblspace"
+
 -- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
 CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
 INSERT INTO testschema.test_default_tab VALUES (1);

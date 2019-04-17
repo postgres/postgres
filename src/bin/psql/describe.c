@@ -3306,7 +3306,8 @@ add_tablespace_footer(printTableContent *const cont, char relkind,
 	if (relkind == RELKIND_RELATION ||
 		relkind == RELKIND_MATVIEW ||
 		relkind == RELKIND_INDEX ||
-		relkind == RELKIND_PARTITIONED_TABLE)
+		relkind == RELKIND_PARTITIONED_TABLE ||
+		relkind == RELKIND_PARTITIONED_INDEX)
 	{
 		/*
 		 * We ignore the database default tablespace so that users not using
