@@ -586,10 +586,8 @@ Indexes:
 
     The recommended recovery
     method in such cases is to drop the index and try again to perform
-    <command>CREATE INDEX CONCURRENTLY</command>.  (Another possibility is to rebuild
-    the index with <command>REINDEX</command>.  However, since <command>REINDEX</command>
-    does not support concurrent builds, this option is unlikely to seem
-    attractive.)
+    <command>CREATE INDEX CONCURRENTLY</command>.  (Another possibility is
+    to rebuild the index with <command>REINDEX INDEX CONCURRENTLY</command>).
    </para>
 
    <para>

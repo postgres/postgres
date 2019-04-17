@@ -65,12 +65,11 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
 
     <listitem>
      <para>
-      An index build with the <literal>CONCURRENTLY</literal> option failed, leaving
-      an <quote>invalid</quote> index. Such indexes are useless but it can be
-      convenient to use <command>REINDEX</command> to rebuild them. Note that
-      <command>REINDEX</command> will not perform a concurrent build on an invalid index. To build the
-      index without interfering with production you should drop the index and
-      reissue the <command>CREATE INDEX CONCURRENTLY</command> command.
+      If an index build fails with the <literal>CONCURRENTLY</literal> option,
+      this index is left as <quote>invalid</quote>. Such indexes are useless
+      but it can be convenient to use <command>REINDEX</command> to rebuild
+      them. Note that only <command>REINDEX INDEX</command> is able
+      to perform a concurrent build on an invalid index.
      </para>
     </listitem>
 

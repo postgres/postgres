@@ -2776,11 +2776,6 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 			}
 		case RELKIND_INDEX:
 			{
-				/*
-				 * For an index simply add its Oid to list. Invalid indexes
-				 * cannot be included in list.
-				 */
-				Relation	indexRelation = index_open(relationOid, ShareUpdateExclusiveLock);
 				Oid			heapId = IndexGetRelation(relationOid, false);
 
 				/* A shared relation cannot be reindexed concurrently */
@@ -2801,25 +2796,13 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 				/* Track the heap relation of this index for session locks */
 				heapRelationIds = list_make1_oid(heapId);
 
+				/*
+				 * Save the list of relation OIDs in private context.  Note
+				 * that invalid indexes are allowed here.
+				 */
+				indexIds = lappend_oid(indexIds, relationOid);
+
 				MemoryContextSwitchTo(oldcontext);
-
-				if (!indexRelation->rd_index->indisvalid)
-					ereport(WARNING,
-							(errcode(ERRCODE_INDEX_CORRUPTED),
-							 errmsg("cannot reindex concurrently invalid index \"%s.%s\", skipping",
-									get_namespace_name(get_rel_namespace(relationOid)),
-									get_rel_name(relationOid))));
-				else
-				{
-					/* Save the list of relation OIDs in private context */
-					oldcontext = MemoryContextSwitchTo(private_context);
-
-					indexIds = lappend_oid(indexIds, relationOid);
-
-					MemoryContextSwitchTo(oldcontext);
-				}
-
-				index_close(indexRelation, NoLock);
 				break;
 			}
 		case RELKIND_PARTITIONED_TABLE:

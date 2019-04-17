@@ -849,6 +849,26 @@ REINDEX SCHEMA CONCURRENTLY pg_catalog;
 DROP MATERIALIZED VIEW concur_reindex_matview;
 DROP TABLE concur_reindex_tab, concur_reindex_tab2, concur_reindex_tab3;
 
+-- Check handling of invalid indexes
+CREATE TABLE concur_reindex_tab4 (c1 int);
+INSERT INTO concur_reindex_tab4 VALUES (1), (1), (2);
+-- This trick creates an invalid index.
+CREATE UNIQUE INDEX CONCURRENTLY concur_reindex_ind5 ON concur_reindex_tab4 (c1);
+-- Reindexing concurrently this index fails with the same failure.
+-- The extra index created is itself invalid, and can be dropped.
+REINDEX INDEX CONCURRENTLY concur_reindex_ind5;
+\d concur_reindex_tab4
+DROP INDEX concur_reindex_ind5_ccnew;
+-- This makes the previous failure go away, so the index can become valid.
+DELETE FROM concur_reindex_tab4 WHERE c1 = 1;
+-- The invalid index is not processed when running REINDEX TABLE.
+REINDEX TABLE CONCURRENTLY concur_reindex_tab4;
+\d concur_reindex_tab4
+-- But it is fixed with REINDEX INDEX.
+REINDEX INDEX CONCURRENTLY concur_reindex_ind5;
+\d concur_reindex_tab4
+DROP TABLE concur_reindex_tab4;
+
 --
 -- REINDEX SCHEMA
 --
