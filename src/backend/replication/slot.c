@@ -1398,16 +1398,10 @@ RestoreSlotFromDisk(const char *name)
 	 */
 	pgstat_report_wait_start(WAIT_EVENT_REPLICATION_SLOT_RESTORE_SYNC);
 	if (pg_fsync(fd) != 0)
-	{
-		int			save_errno = errno;
-
-		CloseTransientFile(fd);
-		errno = save_errno;
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m",
 						path)));
-	}
 	pgstat_report_wait_end();
 
 	/* Also sync the parent directory */
@@ -1421,10 +1415,6 @@ RestoreSlotFromDisk(const char *name)
 	pgstat_report_wait_end();
 	if (readBytes != ReplicationSlotOnDiskConstantSize)
 	{
-		int			saved_errno = errno;
-
-		CloseTransientFile(fd);
-		errno = saved_errno;
 		if (readBytes < 0)
 			ereport(PANIC,
 					(errcode_for_file_access(),
@@ -1466,10 +1456,6 @@ RestoreSlotFromDisk(const char *name)
 	pgstat_report_wait_end();
 	if (readBytes != cp.length)
 	{
-		int			saved_errno = errno;
-
-		CloseTransientFile(fd);
-		errno = saved_errno;
 		if (readBytes < 0)
 			ereport(PANIC,
 					(errcode_for_file_access(),
