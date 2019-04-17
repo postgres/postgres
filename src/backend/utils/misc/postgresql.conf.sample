@@ -632,10 +632,10 @@
 # These options allow settings to be loaded from files other than the
 # default postgresql.conf.
 
-#include_dir = 'conf.d'			# include files ending in '.conf' from
-					# directory 'conf.d'
-#include_if_exists = 'exists.conf'	# include file only if it exists
-#include = 'special.conf'		# include file
+#include_dir = ''			# include files ending in '.conf' from
+					# a directory, e.g., 'conf.d'
+#include_if_exists = ''			# include file only if it exists
+#include = ''				# include file
 
 
 #------------------------------------------------------------------------------
