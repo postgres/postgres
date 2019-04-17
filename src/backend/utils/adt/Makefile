@@ -36,11 +36,13 @@ OBJS = acl.o amutils.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 jsonpath_scan.c: FLEXFLAGS = -CF -p -p
 jsonpath_scan.c: FLEX_NO_BACKUP=yes
 
-# Force these dependencies to be known even without dependency info built:
+# jsonpath_scan is compiled as part of jsonpath_gram
 jsonpath_gram.o: jsonpath_scan.c
 
 # jsonpath_gram.c and jsonpath_scan.c are in the distribution tarball,
 # so they are not cleaned here.
+clean distclean maintainer-clean:
+	rm -f lex.backup
 
 like.o: like.c like_match.c
 

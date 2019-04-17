@@ -478,7 +478,7 @@ parsejsonpath(const char *str, int len)
 	jsonpath_scanner_init(str, len);
 
 	if (jsonpath_yyparse((void *) &parseresult) != 0)
-		jsonpath_yyerror(NULL, "bugus input");
+		jsonpath_yyerror(NULL, "bogus input"); /* shouldn't happen */
 
 	jsonpath_scanner_finish();
 
