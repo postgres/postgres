@@ -817,7 +817,7 @@ CREATE VIEW pg_stat_database AS
             D.oid AS datid,
             D.datname AS datname,
                 CASE
-                    WHEN (D.oid = (0)::oid) THEN NULL::integer
+                    WHEN (D.oid = (0)::oid) THEN 0
                     ELSE pg_stat_get_db_numbackends(D.oid)
                 END AS numbackends,
             pg_stat_get_db_xact_commit(D.oid) AS xact_commit,

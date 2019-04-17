@@ -1806,7 +1806,7 @@ pg_stat_bgwriter| SELECT pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints
 pg_stat_database| SELECT d.oid AS datid,
     d.datname,
         CASE
-            WHEN (d.oid = (0)::oid) THEN NULL::integer
+            WHEN (d.oid = (0)::oid) THEN 0
             ELSE pg_stat_get_db_numbackends(d.oid)
         END AS numbackends,
     pg_stat_get_db_xact_commit(d.oid) AS xact_commit,
