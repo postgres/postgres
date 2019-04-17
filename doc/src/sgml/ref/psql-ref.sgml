@@ -1675,15 +1675,15 @@ testdb=&gt;
 
         <para>
         If the modifier <literal>n</literal> (<quote>nested</quote>) is used,
-        or a pattern is specified, then non-root partitioned tables are
+        or a pattern is specified, then non-root partitioned relations are
         included, and a column is shown displaying the parent of each
         partitioned relation.
         </para>
 
         <para>
-        If <literal>+</literal> is appended to the command, the sum of sizes of
-        table's partitions (including that of their indexes) is also displayed,
-        along with the associated description.
+        If <literal>+</literal> is appended to the command name, the sum of the
+        sizes of each relation's partitions is also displayed, along with the
+        relation's description.
         If <literal>n</literal> is combined with <literal>+</literal>, two
         sizes are shown: one including the total size of directly-attached
         leaf partitions, and another showing the total size of all partitions,

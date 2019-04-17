@@ -3861,13 +3861,13 @@ listPartitionedTables(const char *reltypes, const char *pattern, bool verbose)
 
 	if (showNested || pattern)
 		appendPQExpBuffer(&buf,
-						  ",\n  c3.oid::regclass as \"%s\"",
+						  ",\n  inh.inhparent::regclass as \"%s\"",
 						  gettext_noop("Parent name"));
 
 	if (showIndexes)
 		appendPQExpBuffer(&buf,
 						  ",\n c2.oid::regclass as \"%s\"",
-						  gettext_noop("On table"));
+						  gettext_noop("Table"));
 
 	if (verbose)
 	{
@@ -3902,8 +3902,7 @@ listPartitionedTables(const char *reltypes, const char *pattern, bool verbose)
 
 	if (showNested || pattern)
 		appendPQExpBufferStr(&buf,
-							 "\n     LEFT JOIN pg_catalog.pg_inherits inh ON c.oid = inh.inhrelid"
-							 "\n     LEFT JOIN pg_catalog.pg_class c3 ON c3.oid = inh.inhparent");
+							 "\n     LEFT JOIN pg_catalog.pg_inherits inh ON c.oid = inh.inhrelid");
 
 	if (verbose)
 	{
