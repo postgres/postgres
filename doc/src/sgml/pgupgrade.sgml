@@ -476,32 +476,52 @@ psql --username postgres --file script.sql postgres
      <itemizedlist>
       <listitem>
        <para>
-        If you ran <command>pg_upgrade</command>
-        with <option>--check</>, no modifications were made to the old
-        cluster and you can re-use it anytime.
+        If the <option>--check</option> option was used, the old cluster
+        was unmodified;  it can be restarted.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        If you ran <command>pg_upgrade</command>
-        with <option>--link</>, the data files are shared between the
-        old and new cluster. If you started the new cluster, the new
-        server has written to those shared files and it is unsafe to
-        use the old cluster.
+        If the <option>--link</option> option was <emphasis>not</emphasis>
+        used, the old cluster was unmodified;  it can be restarted.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        If you ran <command>pg_upgrade</command> <emphasis>without</>
-        <option>--link</> or did not start the new server, the
-        old cluster was not modified except that, if linking
-        started, a <literal>.old</> suffix was appended to
-        <filename>$PGDATA/global/pg_control</>.  To reuse the old
-        cluster, possibly remove the <filename>.old</> suffix from
-        <filename>$PGDATA/global/pg_control</>; you can then restart the
-        old cluster.
+        If the <option>--link</option> option was used, the data
+        files might be shared between the old and new cluster:
+
+        <itemizedlist>
+         <listitem>
+          <para>
+           If <command>pg_upgrade</command> aborted before linking started,
+           the old cluster was unmodified;  it can be restarted.
+          </para>
+         </listitem>
+
+         <listitem>
+          <para>
+           If you did <emphasis>not</emphasis> start the new cluster, the old
+           cluster was unmodified except that, when linking started, a
+           <literal>.old</literal> suffix was appended to
+           <filename>$PGDATA/global/pg_control</filename>.  To reuse the old
+           cluster, remove the <filename>.old</filename> suffix from
+           <filename>$PGDATA/global/pg_control</filename>; you can then restart
+           the old cluster.
+          </para>
+         </listitem>
+
+         <listitem>
+          <para>
+           If you did start the new cluster, it has written to shared files
+           and it is unsafe to use the old cluster.  The old cluster will
+           need to be restored from backup in this case.
+          </para>
+         </listitem>
+
+        </itemizedlist>
        </para>
       </listitem>
      </itemizedlist>
