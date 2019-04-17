@@ -1316,10 +1316,13 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	pgstat_report_wait_end();
 
 	if (CloseTransientFile(fd))
+	{
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m",
 						tmppath)));
+		return;
+	}
 
 	/* rename to permanent file, fsync file and directory */
 	if (rename(tmppath, path) != 0)
