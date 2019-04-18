@@ -104,7 +104,7 @@
  <para>
   Any developer of a new <literal>table access method</literal> can refer to
   the existing <literal>heap</literal> implementation present in
-  <filename>src/backend/heap/heapam_handler.c</filename> for details of
+  <filename>src/backend/access/heap/heapam_handler.c</filename> for details of
   its implementation.
  </para>
 
