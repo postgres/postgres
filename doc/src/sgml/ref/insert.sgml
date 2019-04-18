@@ -551,14 +551,12 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
 <screen>
 INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
 </screen>
-   The <replaceable class="parameter">count</replaceable> is the
-   number of rows inserted or updated.  If <replaceable
-   class="parameter">count</replaceable> is exactly one, and the
-   target table has OIDs, then <replaceable
-   class="parameter">oid</replaceable> is the <acronym>OID</acronym>
-   assigned to the inserted row.  The single row must have been
-   inserted rather than updated.  Otherwise <replaceable
-   class="parameter">oid</replaceable> is zero.
+   The <replaceable class="parameter">count</replaceable> is the number of
+   rows inserted or updated.  <replaceable>oid</replaceable> is always 0 (it
+   used to be the <acronym>OID</acronym> assigned to the inserted row if
+   <replaceable>rows</replaceable> was exactly one and the target table was
+   declared <literal>WITH OIDS</literal> and 0 otherwise, but creating a table
+   <literal>WITH OIDS</literal> is not supported anymore).
   </para>
 
   <para>

@@ -3794,6 +3794,9 @@ bar
         command. This variable is only guaranteed to be valid until
         after the result of the next <acronym>SQL</acronym> command has
         been displayed.
+        <productname>PostgreSQL</productname> servers since version 12 do not
+        support OID system columns anymore, thus LASTOID will always be 0
+        following <command>INSERT</command> when targeting such servers.
         </para>
         </listitem>
       </varlistentry>

@@ -465,7 +465,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    that the <literal>NEW</literal> row seen by the condition is the current value,
    as possibly modified by earlier triggers.  Also, a <literal>BEFORE</literal>
    trigger's <literal>WHEN</literal> condition is not allowed to examine the
-   system columns of the <literal>NEW</literal> row (such as <literal>oid</literal>),
+   system columns of the <literal>NEW</literal> row (such as <literal>ctid</literal>),
    because those won't have been set yet.
   </para>
 

@@ -3105,7 +3105,7 @@ int SPI_fnumber(TupleDesc <parameter>rowdesc</parameter>, const char * <paramete
 
   <para>
    If <parameter>colname</parameter> refers to a system column (e.g.,
-   <literal>oid</literal>) then the appropriate negative column number will
+   <literal>ctid</literal>) then the appropriate negative column number will
    be returned.  The caller should be careful to test the return value
    for exact equality to <symbol>SPI_ERROR_NOATTRIBUTE</symbol> to
    detect an error; testing the result for less than or equal to 0 is

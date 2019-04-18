@@ -1202,8 +1202,7 @@ CREATE TABLE circles (
       <structfield>ctid</structfield> will change if it is
       updated or moved by <command>VACUUM FULL</command>.  Therefore
       <structfield>ctid</structfield> is useless as a long-term row
-      identifier.  The OID, or even better a user-defined serial
-      number, should be used to identify logical rows.
+      identifier.  A primary key should be used to identify logical rows.
      </para>
     </listitem>
    </varlistentry>
@@ -3675,8 +3674,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
        <command>CREATE TABLE</command>, nor is it possible to add columns to
        partitions after-the-fact using <command>ALTER TABLE</command>.  Tables may be
        added as a partition with <command>ALTER TABLE ... ATTACH PARTITION</command>
-       only if their columns exactly match the parent, including any
-       <literal>oid</literal> column.
+       only if their columns exactly match the parent.
       </para>
      </listitem>
 

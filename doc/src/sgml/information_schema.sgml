@@ -1312,7 +1312,7 @@
   <para>
    The view <literal>columns</literal> contains information about all
    table columns (or view columns) in the database.  System columns
-   (<literal>oid</literal>, etc.) are not included.  Only those columns are
+   (<literal>ctid</literal>, etc.) are not included.  Only those columns are
    shown that the current user has access to (by way of being the
    owner or having some privilege).
   </para>

@@ -1047,7 +1047,7 @@
       <entry></entry>
       <entry>
        The number of the column.  Ordinary columns are numbered from 1
-       up.  System columns, such as <structfield>oid</structfield>,
+       up.  System columns, such as <structfield>ctid</structfield>,
        have (arbitrary) negative numbers.
       </entry>
      </row>
