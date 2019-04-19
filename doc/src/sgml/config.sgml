@@ -5887,7 +5887,7 @@ local0.*    /var/log/postgresql
         <para>
          Determines the fraction of statements that exceed
          <xref linkend="guc-log-min-duration-statement"/> to be logged.
-         The default is <literal>1</literal>, meaning log all such
+         The default is <literal>1.0</literal>, meaning log all such
          statements.
          Setting this to zero disables logging by duration, same as setting
          <varname>log_min_duration_statement</varname> to
