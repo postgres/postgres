@@ -9,7 +9,7 @@
  * for an external function is found - not guaranteed! - the index will then
  * be used to judge their instruction count / inline worthiness. After doing
  * so for all external functions, all the referenced functions (and
- * prerequisites) will be imorted.
+ * prerequisites) will be imported.
  *
  * Copyright (c) 2016-2019, PostgreSQL Global Development Group
  *

@@ -662,7 +662,7 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
    not really useful in real applications.  This section explains in
    detail how you can pass data between your C program and the
    embedded SQL statements using a simple mechanism called
-   <firstterm>host variables</firstterm>. In an embedded SQL program  we
+   <firstterm>host variables</firstterm>. In an embedded SQL program we
    consider the SQL statements to be <firstterm>guests</firstterm> in the C
    program code which is the <firstterm>host language</firstterm>. Therefore
    the variables of the C program are called <firstterm>host

@@ -879,7 +879,7 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 		case AUTH_REQ_SSPI:
 
 			/*
-			 * SSPI has it's own startup message so libpq can decide which
+			 * SSPI has its own startup message so libpq can decide which
 			 * method to use. Indicate to pg_SSPI_startup that we want SSPI
 			 * negotiation instead of Kerberos.
 			 */

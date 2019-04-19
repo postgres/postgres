@@ -118,7 +118,7 @@ typedef struct
 
 /*
  * Temporary structure for use during WindowClause reordering in order to be
- * be able to sort WindowClauses on partitioning/ordering prefix.
+ * able to sort WindowClauses on partitioning/ordering prefix.
  */
 typedef struct
 {
