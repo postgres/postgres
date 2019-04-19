@@ -9,7 +9,7 @@
 #
 #-------------------------------------------------------------------------
 
-EXTRA_INSTALL=contrib/test_decoding contrib/pageinspect
+EXTRA_INSTALL=contrib/test_decoding
 
 subdir = src/test/recovery
 top_builddir = ../../..

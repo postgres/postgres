@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 2;
+use Test::More tests => 1;
 
 # Find the largest LSN in the set of pages part of the given relation
 # file.  This is used for offline checks of page consistency.  The LSN
@@ -62,32 +62,8 @@ my $standby = get_new_node('standby');
 $standby->init_from_backup($primary, 'bkp', has_streaming => 1);
 $standby->start;
 
-# Object creations for the upcoming tests:
-# - Base table whose data consistency is checked.
-# - pageinspect to look at the page-level contents.
-# - Function wrapper on top of pageinspect to scan a range of pages and
-#   get the maximum LSN present.
+# Create base table whose data consistency is checked.
 $primary->safe_psql('postgres', "
-CREATE EXTENSION pageinspect;
--- Function wrapper on top of pageinspect which fetches the largest LSN
--- present in the given page range.
-CREATE OR REPLACE FUNCTION max_lsn_range(relname text,
-  start_blk int,
-  end_blk int)
-RETURNS pg_lsn as \$\$
-DECLARE
-  max_lsn pg_lsn = '0/0'::pg_lsn;
-  cur_lsn pg_lsn;
-BEGIN
-  FOR i IN start_blk..end_blk LOOP
-    EXECUTE 'SELECT lsn FROM page_header(get_raw_page(''' || relname || ''',' || i || '));' INTO cur_lsn;
-    IF max_lsn < cur_lsn THEN
-      max_lsn = cur_lsn;
-    END IF;
-  END LOOP;
-  RETURN max_lsn;
-END;
-\$\$ LANGUAGE plpgsql;
 CREATE TABLE test1 (a int) WITH (fillfactor = 10);
 INSERT INTO test1 SELECT generate_series(1, 10000);");
 
@@ -161,19 +137,3 @@ die "No minRecoveryPoint in control file found\n"
 # the pages on disk.
 ok($offline_recovery_lsn ge $offline_max_lsn,
    "Check offline that table data is consistent with minRecoveryPoint");
-
-# Now restart the standby and check the state of the instance while
-# online.  Again, all the pages of the relation previously created
-# should not have a LSN newer than what minRecoveryPoint has.
-$standby->start;
-
-# Check that the last page of the table, which is the last one which
-# has been flushed by the previous checkpoint on the standby, does not
-# have a LSN newer than minRecoveryPoint.
-my $psql_out;
-$standby->psql(
-	'postgres',
-	"SELECT max_lsn_range('test1', 0, $last_block) <= min_recovery_end_lsn FROM pg_control_recovery()",
-	stdout => \$psql_out);
-is($psql_out, 't',
-   "Check online that table data is consistent with minRecoveryPoint");
