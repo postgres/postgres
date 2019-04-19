@@ -3109,6 +3109,15 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		{
 			ExecForceStoreHeapTuple(newtuple, newslot);
 
+			/*
+			 * If the tuple returned by the trigger / being stored, is the old
+			 * row version, and the heap tuple passed to the trigger was
+			 * allocated locally, materialize the slot. Otherwise we might
+			 * free it while still referenced by the slot.
+			 */
+			if (should_free_trig && newtuple == trigtuple)
+				ExecMaterializeSlot(newslot);
+
 			if (should_free_new)
 				heap_freetuple(oldtuple);
 
