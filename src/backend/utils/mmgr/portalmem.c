@@ -1226,13 +1226,19 @@ ThereAreNoReadyPortals(void)
 /*
  * Hold all pinned portals.
  *
- * A procedural language implementation that uses pinned portals for its
- * internally generated cursors can call this in its COMMIT command to convert
- * those cursors to held cursors, so that they survive the transaction end.
- * We mark those portals as "auto-held" so that exception exit knows to clean
- * them up.  (In normal, non-exception code paths, the PL needs to clean those
- * portals itself, since transaction end won't do it anymore, but that should
- * be normal practice anyway.)
+ * When initiating a COMMIT or ROLLBACK inside a procedure, this must be
+ * called to protect internally-generated cursors from being dropped during
+ * the transaction shutdown.  Currently, SPI calls this automatically; PLs
+ * that initiate COMMIT or ROLLBACK some other way are on the hook to do it
+ * themselves.  (Note that we couldn't do this in, say, AtAbort_Portals
+ * because we need to run user-defined code while persisting a portal.
+ * It's too late to do that once transaction abort has started.)
+ *
+ * We protect such portals by converting them to held cursors.  We mark them
+ * as "auto-held" so that exception exit knows to clean them up.  (In normal,
+ * non-exception code paths, the PL needs to clean such portals itself, since
+ * transaction end won't do it anymore; but that should be normal practice
+ * anyway.)
  */
 void
 HoldPinnedPortals(void)
@@ -1262,8 +1268,12 @@ HoldPinnedPortals(void)
 						(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
 						 errmsg("cannot perform transaction commands inside a cursor loop that is not read-only")));
 
-			portal->autoHeld = true;
+			/* Verify it's in a suitable state to be held */
+			if (portal->status != PORTAL_READY)
+				elog(ERROR, "pinned portal is not ready to be auto-held");
+
 			HoldPortal(portal);
+			portal->autoHeld = true;
 		}
 	}
 }

@@ -3966,8 +3966,6 @@ plperl_spi_commit(void)
 
 	PG_TRY();
 	{
-		HoldPinnedPortals();
-
 		SPI_commit();
 		SPI_start_transaction();
 	}
@@ -3993,8 +3991,6 @@ plperl_spi_rollback(void)
 
 	PG_TRY();
 	{
-		HoldPinnedPortals();
-
 		SPI_rollback();
 		SPI_start_transaction();
 	}

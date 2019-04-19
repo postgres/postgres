@@ -594,8 +594,6 @@ PLy_commit(PyObject *self, PyObject *args)
 {
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 
-	HoldPinnedPortals();
-
 	SPI_commit();
 	SPI_start_transaction();
 
@@ -609,8 +607,6 @@ static PyObject *
 PLy_rollback(PyObject *self, PyObject *args)
 {
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-
-	HoldPinnedPortals();
 
 	SPI_rollback();
 	SPI_start_transaction();

@@ -4770,8 +4770,6 @@ exec_stmt_close(PLpgSQL_execstate *estate, PLpgSQL_stmt_close *stmt)
 static int
 exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
 {
-	HoldPinnedPortals();
-
 	SPI_commit();
 	SPI_start_transaction();
 
@@ -4789,8 +4787,6 @@ exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
 static int
 exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
 {
-	HoldPinnedPortals();
-
 	SPI_rollback();
 	SPI_start_transaction();
 
