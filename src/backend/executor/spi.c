@@ -241,6 +241,14 @@ _SPI_commit(bool chain)
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
 				 errmsg("cannot commit while a subtransaction is active")));
 
+	/*
+	 * Hold any pinned portals that any PLs might be using.  We have to do
+	 * this before changing transaction state, since this will run
+	 * user-defined code that might throw an error.
+	 */
+	HoldPinnedPortals();
+
+	/* Start the actual commit */
 	_SPI_current->internal_xact = true;
 
 	/*
@@ -294,6 +302,15 @@ _SPI_rollback(bool chain)
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
 				 errmsg("cannot roll back while a subtransaction is active")));
 
+	/*
+	 * Hold any pinned portals that any PLs might be using.  We have to do
+	 * this before changing transaction state, since this will run
+	 * user-defined code that might throw an error, and in any case couldn't
+	 * be run in an already-aborted transaction.
+	 */
+	HoldPinnedPortals();
+
+	/* Start the actual rollback */
 	_SPI_current->internal_xact = true;
 
 	if (chain)
