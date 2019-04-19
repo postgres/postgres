@@ -317,7 +317,12 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 
 	oldtuple = ExecFetchSlotHeapTuple(slot, true, &should_free);
 	newtuple = heap_modify_tuple(oldtuple, tupdesc, values, nulls, replaces);
-	ExecForceStoreHeapTuple(newtuple, slot);
+	/*
+	 * The tuple will be freed by way of the memory context - the slot might
+	 * only be cleared after the context is reset, and we'd thus potentially
+	 * double free.
+	 */
+	ExecForceStoreHeapTuple(newtuple, slot, false);
 	if (should_free)
 		heap_freetuple(oldtuple);
 
@@ -979,7 +984,7 @@ ldelete:;
 			slot = ExecGetReturningSlot(estate, resultRelInfo);
 			if (oldtuple != NULL)
 			{
-				ExecForceStoreHeapTuple(oldtuple, slot);
+				ExecForceStoreHeapTuple(oldtuple, slot, false);
 			}
 			else
 			{

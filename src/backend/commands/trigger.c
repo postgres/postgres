@@ -2586,7 +2586,7 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 		}
 		else if (newtuple != oldtuple)
 		{
-			ExecForceStoreHeapTuple(newtuple, slot);
+			ExecForceStoreHeapTuple(newtuple, slot, false);
 
 			if (should_free)
 				heap_freetuple(oldtuple);
@@ -2668,7 +2668,7 @@ ExecIRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 		}
 		else if (newtuple != oldtuple)
 		{
-			ExecForceStoreHeapTuple(newtuple, slot);
+			ExecForceStoreHeapTuple(newtuple, slot, false);
 
 			if (should_free)
 				heap_freetuple(oldtuple);
@@ -2797,7 +2797,7 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 	else
 	{
 		trigtuple = fdw_trigtuple;
-		ExecForceStoreHeapTuple(trigtuple, slot);
+		ExecForceStoreHeapTuple(trigtuple, slot, false);
 	}
 
 	LocTriggerData.type = T_TriggerData;
@@ -2869,7 +2869,7 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 							   slot,
 							   NULL);
 		else
-			ExecForceStoreHeapTuple(fdw_trigtuple, slot);
+			ExecForceStoreHeapTuple(fdw_trigtuple, slot, false);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_DELETE,
 							  true, slot, NULL, NIL, NULL,
@@ -2898,7 +2898,7 @@ ExecIRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	LocTriggerData.tg_oldtable = NULL;
 	LocTriggerData.tg_newtable = NULL;
 
-	ExecForceStoreHeapTuple(trigtuple, slot);
+	ExecForceStoreHeapTuple(trigtuple, slot, false);
 
 	for (i = 0; i < trigdesc->numtriggers; i++)
 	{
@@ -3057,7 +3057,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	}
 	else
 	{
-		ExecForceStoreHeapTuple(fdw_trigtuple, oldslot);
+		ExecForceStoreHeapTuple(fdw_trigtuple, oldslot, false);
 		trigtuple = fdw_trigtuple;
 	}
 
@@ -3107,7 +3107,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		}
 		else if (newtuple != oldtuple)
 		{
-			ExecForceStoreHeapTuple(newtuple, newslot);
+			ExecForceStoreHeapTuple(newtuple, newslot, false);
 
 			/*
 			 * If the tuple returned by the trigger / being stored, is the old
@@ -3164,7 +3164,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 							   oldslot,
 							   NULL);
 		else if (fdw_trigtuple != NULL)
-			ExecForceStoreHeapTuple(fdw_trigtuple, oldslot);
+			ExecForceStoreHeapTuple(fdw_trigtuple, oldslot, false);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
 							  true, oldslot, newslot, recheckIndexes,
@@ -3192,7 +3192,7 @@ ExecIRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	LocTriggerData.tg_oldtable = NULL;
 	LocTriggerData.tg_newtable = NULL;
 
-	ExecForceStoreHeapTuple(trigtuple, oldslot);
+	ExecForceStoreHeapTuple(trigtuple, oldslot, false);
 
 	for (i = 0; i < trigdesc->numtriggers; i++)
 	{
@@ -3228,7 +3228,7 @@ ExecIRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 		}
 		else if (newtuple != oldtuple)
 		{
-			ExecForceStoreHeapTuple(newtuple, newslot);
+			ExecForceStoreHeapTuple(newtuple, newslot, false);
 
 			if (should_free)
 				heap_freetuple(oldtuple);

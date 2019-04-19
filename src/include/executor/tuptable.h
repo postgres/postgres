@@ -306,7 +306,9 @@ extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
 extern TupleTableSlot *ExecStoreHeapTuple(HeapTuple tuple,
 				   TupleTableSlot *slot,
 				   bool shouldFree);
-extern void ExecForceStoreHeapTuple(HeapTuple tuple, TupleTableSlot *slot);
+extern void ExecForceStoreHeapTuple(HeapTuple tuple,
+						TupleTableSlot *slot,
+						bool shouldFree);
 extern TupleTableSlot *ExecStoreBufferHeapTuple(HeapTuple tuple,
 						 TupleTableSlot *slot,
 						 Buffer buffer);

@@ -3711,9 +3711,7 @@ store_returning_result(PgFdwModifyState *fmstate,
 		 * The returning slot will not necessarily be suitable to store
 		 * heaptuples directly, so allow for conversion.
 		 */
-		ExecForceStoreHeapTuple(newtup, slot);
-		ExecMaterializeSlot(slot);
-		pfree(newtup);
+		ExecForceStoreHeapTuple(newtup, slot, true);
 	}
 	PG_CATCH();
 	{
