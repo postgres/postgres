@@ -196,6 +196,8 @@ IndexNextWithReorder(IndexScanState *node)
 
 	scandesc = node->iss_ScanDesc;
 	econtext = node->ss.ps.ps_ExprContext;
+	slot = node->ss.ss_ScanTupleSlot;
+
 	if (scandesc == NULL)
 	{
 		/*
@@ -231,7 +233,6 @@ IndexNextWithReorder(IndexScanState *node)
 		 */
 		if (!pairingheap_is_empty(node->iss_ReorderQueue))
 		{
-			slot = node->iss_ReorderQueueSlot;
 			topmost = (ReorderTuple *) pairingheap_first(node->iss_ReorderQueue);
 
 			if (node->iss_ReachedEnd ||
@@ -246,22 +247,20 @@ IndexNextWithReorder(IndexScanState *node)
 				tuple = reorderqueue_pop(node);
 
 				/* Pass 'true', as the tuple in the queue is a palloc'd copy */
-				ExecStoreHeapTuple(tuple, slot, true);
+				ExecForceStoreHeapTuple(tuple, slot, true);
 				return slot;
 			}
 		}
 		else if (node->iss_ReachedEnd)
 		{
 			/* Queue is empty, and no more tuples from index.  We're done. */
-			ExecClearTuple(node->iss_ReorderQueueSlot);
-			return ExecClearTuple(node->ss.ss_ScanTupleSlot);
+			return ExecClearTuple(slot);
 		}
 
 		/*
 		 * Fetch next tuple from the index.
 		 */
 next_indextuple:
-		slot = node->ss.ss_ScanTupleSlot;
 		if (!index_getnext_slot(scandesc, ForwardScanDirection, slot))
 		{
 			/*
@@ -354,8 +353,7 @@ next_indextuple:
 	 * if we get here it means the index scan failed so we are at the end of
 	 * the scan..
 	 */
-	ExecClearTuple(node->iss_ReorderQueueSlot);
-	return ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	return ExecClearTuple(slot);
 }
 
 /*
@@ -807,8 +805,6 @@ ExecEndIndexScan(IndexScanState *node)
 	 */
 	if (node->ss.ps.ps_ResultTupleSlot)
 		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	if (node->iss_ReorderQueueSlot)
-		ExecClearTuple(node->iss_ReorderQueueSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
@@ -1055,13 +1051,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 		indexstate->iss_OrderByNulls = (bool *)
 			palloc(numOrderByKeys * sizeof(bool));
 
-		/* and initialize the reorder queue and the corresponding slot */
+		/* and initialize the reorder queue */
 		indexstate->iss_ReorderQueue = pairingheap_allocate(reorderqueue_cmp,
 															indexstate);
-		indexstate->iss_ReorderQueueSlot =
-			ExecAllocTableSlot(&estate->es_tupleTable,
-							   RelationGetDescr(currentRelation),
-							   &TTSOpsHeapTuple);
 	}
 
 	/*

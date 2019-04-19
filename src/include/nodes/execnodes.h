@@ -1387,7 +1387,6 @@ typedef struct IndexScanState
 	bool	   *iss_OrderByTypByVals;
 	int16	   *iss_OrderByTypLens;
 	Size		iss_PscanLen;
-	TupleTableSlot *iss_ReorderQueueSlot;
 } IndexScanState;
 
 /* ----------------
