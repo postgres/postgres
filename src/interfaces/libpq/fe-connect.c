@@ -313,7 +313,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	 * and "prefer".
 	 */
 	{"gssencmode", "PGGSSENCMODE", DefaultGSSMode, NULL,
-		"GSS-Mode", "", 7,		/* sizeof("disable") == 7 */
+		"GSSENC-Mode", "", 7,		/* sizeof("disable") == 7 */
 	offsetof(struct pg_conn, gssencmode)},
 
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)

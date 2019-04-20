@@ -1479,6 +1479,75 @@ SELCT 1/0;
     of authentication checking.
    </para>
   </sect2>
+
+  <sect2>
+   <title><acronym>GSSAPI</acronym> Session Encryption</title>
+
+   <para>
+    If <productname>PostgreSQL</productname> was built with
+    <acronym>GSSAPI</acronym> support, frontend/backend communications
+    can be encrypted using <acronym>GSSAPI</acronym>.  This provides
+    communication security in environments where attackers might be
+    able to capture the session traffic. For more information on
+    encrypting <productname>PostgreSQL</productname> sessions with
+    <acronym>GSSAPI</acronym>, see <xref linkend="gssapi-enc"/>.
+   </para>
+
+   <para>
+    To initiate a <acronym>GSSAPI</acronym>-encrypted connection, the
+    frontend initially sends a GSSENCRequest message rather than a
+    StartupMessage.  The server then responds with a single byte
+    containing <literal>G</literal> or <literal>N</literal>, indicating that it
+    is willing or unwilling to perform <acronym>GSSAPI</acronym> encryption,
+    respectively.  The frontend might close the connection at this point
+    if it is dissatisfied with the response.  To continue after
+    <literal>G</literal>, using the GSSAPI C bindings as discussed in RFC2744
+    or equivilant, perform a <acronym>GSSAPI</acronym> initialization by
+    calling <function>gss_init_sec_context()</function> in a loop and sending
+    the result to the server, starting with an empty input and then with each
+    result from the server, until it returns no output.  When sending the
+    results of <function>gss_init_sec_context()</function> to the server,
+    prepend the length of the message as a four byte integer in network byte
+    order.  If this is successful, then use <function>gss_wrap()</function> to
+    encrypt the usual StartupMessage and all subsequent data, prepending the
+    length of the result from <function>gss_wrap()</function> as a four byte
+    integer in network byte order to the actual encrypted payload.  Note that
+    the server will only accept encrypted packets from the client which are less
+    than 16KB; <function>gss_wrap_size_limit()</function> should be used by the
+    client to determine the size of the unencrypted message which will fit
+    within this limit and larger messages should be broken up into multiple
+    <function>gss_wrap()</function> calls.  Typical segments are 8KB of
+    unencrypted data, resulting in encrypted packets of slightly larger than 8KB
+    but well within the 16KB maximum.  The server can be expected to not send
+    encrypted packets of larger than 16KB to the client.  To continue after
+    <literal>N</literal>, send the usual StartupMessage and proceed without
+    encryption.
+   </para>
+
+   <para>
+    The frontend should also be prepared to handle an ErrorMessage
+    response to GSSENCRequest from the server.  This would only occur if
+    the server predates the addition of <acronym>GSSAPI</acronym> encryption
+    support to <productname>PostgreSQL</productname>.  In this case the
+    connection must be closed, but the frontend might choose to open a fresh
+    connection and proceed without requesting <acronym>GSSAPI</acronym>
+    encryption.  Given the length limits specified above, the ErrorMessage can
+    not be confused with a proper response from the server with an appropriate
+    length.
+   </para>
+
+   <para>
+    An initial GSSENCRequest can also be used in a connection that is being
+    opened to send a CancelRequest message.
+   </para>
+
+   <para>
+    While the protocol itself does not provide a way for the server to
+    force <acronym>GSSAPI</acronym> encryption, the administrator can
+    configure the server to reject unencrypted sessions as a byproduct
+    of authentication checking.
+   </para>
+  </sect2>
  </sect1>
 
 <sect1 id="sasl-authentication">
@@ -5703,6 +5772,43 @@ SSLRequest (F)
 <para>
                 The <acronym>SSL</acronym> request code.  The value is chosen to contain
                 <literal>1234</literal> in the most significant 16 bits, and <literal>5679</literal> in the
+                least significant 16 bits.  (To avoid confusion, this code
+                must not be the same as any protocol version number.)
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+GSSENCRequest (F)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Int32(8)
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32(80877104)
+</term>
+<listitem>
+<para>
+                The <acronym>GSSAPI</acronym> Encryption request code.  The value is chosen to contain
+                <literal>1234</literal> in the most significant 16 bits, and <literal>5680</literal> in the
                 least significant 16 bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
 </para>

@@ -1,3 +1,16 @@
+# Sets up a KDC and then runs a variety of tests to make sure that the
+# GSSAPI/Kerberos authentication and encryption are working properly,
+# that the options in pg_hba.conf and pg_ident.conf are handled correctly,
+# and that the server-side pg_stat_gssapi view reports what we expect to
+# see for each test.
+#
+# Since this requires setting up a full KDC, it doesn't make much sense
+# to have multiple test scripts (since they'd have to also create their
+# own KDC and that could cause race conditions or other problems)- so
+# just add whatever other tests are needed to here.
+#
+# See the README for additional information.
+
 use strict;
 use warnings;
 use TestLib;
@@ -6,7 +19,7 @@ use Test::More;
 
 if ($ENV{with_gssapi} eq 'yes')
 {
-	plan tests => 4;
+	plan tests => 12;
 }
 else
 {
@@ -50,7 +63,7 @@ if ($krb5_sbin_dir && -d $krb5_sbin_dir)
 
 my $host     = 'auth-test-localhost.postgresql.example.com';
 my $hostaddr = '127.0.0.1';
-my $realm = 'EXAMPLE.COM';
+my $realm    = 'EXAMPLE.COM';
 
 my $krb5_conf   = "${TestLib::tmp_check}/krb5.conf";
 my $kdc_conf    = "${TestLib::tmp_check}/kdc.conf";
@@ -155,18 +168,30 @@ note "running tests";
 
 sub test_access
 {
-	my ($node, $role, $expected_res, $test_name) = @_;
+	my ($node, $role, $server_check, $expected_res, $gssencmode, $test_name)
+	  = @_;
 
 	# need to connect over TCP/IP for Kerberos
-	my $res = $node->psql(
+	my ($res, $stdoutres, $stderrres) = $node->psql(
 		'postgres',
-		'SELECT 1',
+		"$server_check",
 		extra_params => [
-			'-d',
-			$node->connstr('postgres') . " host=$host hostaddr=$hostaddr",
-			'-U', $role
+			'-XAtd',
+			$node->connstr('postgres')
+			  . " host=$host hostaddr=$hostaddr $gssencmode",
+			'-U',
+			$role
 		]);
-	is($res, $expected_res, $test_name);
+
+	# If we get a query result back, it should be true.
+	if ($res == $expected_res and $res eq 0)
+	{
+		is($stdoutres, "t", $test_name);
+	}
+	else
+	{
+		is($res, $expected_res, $test_name);
+	}
 	return;
 }
 
@@ -175,16 +200,81 @@ $node->append_conf('pg_hba.conf',
 	qq{host all all $hostaddr/32 gss map=mymap});
 $node->restart;
 
-test_access($node, 'test1', 2, 'fails without ticket');
+test_access($node, 'test1', 'SELECT true', 2, '', 'fails without ticket');
 
 run_log [ $kinit, 'test1' ], \$test1_password or BAIL_OUT($?);
 
-test_access($node, 'test1', 2, 'fails without mapping');
+test_access($node, 'test1', 'SELECT true', 2, '', 'fails without mapping');
 
 $node->append_conf('pg_ident.conf', qq{mymap  /^(.*)\@$realm\$  \\1});
 $node->restart;
 
-test_access($node, 'test1', 0, 'succeeds with mapping');
+test_access(
+	$node,
+	'test1',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	'',
+	'succeeds with mapping with default gssencmode and host hba');
+test_access(
+	$node,
+	"test1",
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	"gssencmode=prefer",
+	"succeeds with GSS-encrypted access preferred with host hba");
+test_access(
+	$node,
+	"test1",
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	"gssencmode=require",
+	"succeeds with GSS-encrypted access required with host hba");
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf',
+	qq{hostgssenc all all $hostaddr/32 gss map=mymap});
+$node->restart;
+
+test_access(
+	$node,
+	"test1",
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	"gssencmode=prefer",
+	"succeeds with GSS-encrypted access preferred and hostgssenc hba");
+test_access(
+	$node,
+	"test1",
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	"gssencmode=require",
+	"succeeds with GSS-encrypted access required and hostgssenc hba");
+test_access($node, "test1", 'SELECT true', 2, "gssencmode=disable",
+	"fails with GSS encryption disabled and hostgssenc hba");
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf',
+	qq{hostnogssenc all all $hostaddr/32 gss map=mymap});
+$node->restart;
+
+test_access(
+	$node,
+	"test1",
+	'SELECT gss_authenticated and not encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	"gssencmode=prefer",
+	"succeeds with GSS-encrypted access preferred and hostnogssenc hba, but no encryption"
+);
+test_access($node, "test1", 'SELECT true', 2, "gssencmode=require",
+	"fails with GSS-encrypted access required and hostnogssenc hba");
+test_access(
+	$node,
+	"test1",
+	'SELECT gss_authenticated and not encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	"gssencmode=disable",
+	"succeeds with GSS encryption disabled and hostnogssenc hba");
 
 truncate($node->data_dir . '/pg_ident.conf', 0);
 unlink($node->data_dir . '/pg_hba.conf');
@@ -192,4 +282,10 @@ $node->append_conf('pg_hba.conf',
 	qq{host all all $hostaddr/32 gss include_realm=0});
 $node->restart;
 
-test_access($node, 'test1', 0, 'succeeds with include_realm=0');
+test_access(
+	$node,
+	'test1',
+	'SELECT gss_authenticated AND encrypted from pg_stat_gssapi where pid = pg_backend_pid();',
+	0,
+	'',
+	'succeeds with include_realm=0 and defaults');
