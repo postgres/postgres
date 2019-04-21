@@ -43,6 +43,20 @@ static double estimate_ndistinct(double totalrows, int numrows, int d, int f1);
 static int	n_choose_k(int n, int k);
 static int	num_combinations(int n);
 
+/* size of the struct header fields (magic, type, nitems) */
+#define SizeOfHeader		(3 * sizeof(uint32))
+
+/* size of a serialized ndistinct item (coefficient, natts, atts) */
+#define SizeOfItem(natts) \
+	(sizeof(double) + sizeof(int) + (natts) * sizeof(AttrNumber))
+
+/* minimal size of a ndistinct item (with two attributes) */
+#define MinSizeOfItem	SizeOfItem(2)
+
+/* minimal size of mvndistinct, when all items are minimal */
+#define MinSizeOfItems(nitems)	\
+	(SizeOfHeader + (nitems) * MinSizeOfItem)
+
 /* Combination generator API */
 
 /* internal state for generator of k-combinations of n elements */
@@ -168,8 +182,7 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	 * Base size is size of scalar fields in the struct, plus one base struct
 	 * for each item, including number of items for each.
 	 */
-	len = VARHDRSZ + SizeOfMVNDistinct +
-		ndistinct->nitems * (offsetof(MVNDistinctItem, attrs) + sizeof(int));
+	len = VARHDRSZ + SizeOfHeader;
 
 	/* and also include space for the actual attribute numbers */
 	for (i = 0; i < ndistinct->nitems; i++)
@@ -178,7 +191,8 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 
 		nmembers = bms_num_members(ndistinct->items[i].attrs);
 		Assert(nmembers >= 2);
-		len += sizeof(AttrNumber) * nmembers;
+
+		len += SizeOfItem(nmembers);
 	}
 
 	output = (bytea *) palloc(len);
@@ -195,8 +209,7 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	tmp += sizeof(uint32);
 
 	/*
-	 * store number of attributes and attribute numbers for each ndistinct
-	 * entry
+	 * store number of attributes and attribute numbers for each entry
 	 */
 	for (i = 0; i < ndistinct->nitems; i++)
 	{
@@ -218,8 +231,12 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 			tmp += sizeof(AttrNumber);
 		}
 
+		/* protect against overflows */
 		Assert(tmp <= ((char *) output + len));
 	}
+
+	/* check we used exactly the expected space */
+	Assert(tmp == ((char *) output + len));
 
 	return output;
 }
@@ -241,9 +258,9 @@ statext_ndistinct_deserialize(bytea *data)
 		return NULL;
 
 	/* we expect at least the basic fields of MVNDistinct struct */
-	if (VARSIZE_ANY_EXHDR(data) < SizeOfMVNDistinct)
+	if (VARSIZE_ANY_EXHDR(data) < SizeOfHeader)
 		elog(ERROR, "invalid MVNDistinct size %zd (expected at least %zd)",
-			 VARSIZE_ANY_EXHDR(data), SizeOfMVNDistinct);
+			 VARSIZE_ANY_EXHDR(data), SizeOfHeader);
 
 	/* initialize pointer to the data part (skip the varlena header) */
 	tmp = VARDATA_ANY(data);
@@ -272,9 +289,7 @@ statext_ndistinct_deserialize(bytea *data)
 				 errmsg("invalid zero-length item array in MVNDistinct")));
 
 	/* what minimum bytea size do we expect for those parameters */
-	minimum_size = (SizeOfMVNDistinct +
-					ndist.nitems * (SizeOfMVNDistinctItem +
-									sizeof(AttrNumber) * 2));
+	minimum_size = MinSizeOfItems(ndist.nitems);
 	if (VARSIZE_ANY_EXHDR(data) < minimum_size)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -285,7 +300,7 @@ statext_ndistinct_deserialize(bytea *data)
 	 * Allocate space for the ndistinct items (no space for each item's
 	 * attnos: those live in bitmapsets allocated separately)
 	 */
-	ndistinct = palloc0(MAXALIGN(SizeOfMVNDistinct) +
+	ndistinct = palloc0(MAXALIGN(offsetof(MVNDistinct, items)) +
 						(ndist.nitems * sizeof(MVNDistinctItem)));
 	ndistinct->magic = ndist.magic;
 	ndistinct->type = ndist.type;

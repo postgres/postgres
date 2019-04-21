@@ -29,10 +29,6 @@ typedef struct MVNDistinctItem
 	Bitmapset  *attrs;			/* attr numbers of items */
 } MVNDistinctItem;
 
-/* size of the struct, excluding attribute list */
-#define SizeOfMVNDistinctItem \
-	(offsetof(MVNDistinctItem, ndistinct) + sizeof(double))
-
 /* A MVNDistinct object, comprising all possible combinations of columns */
 typedef struct MVNDistinct
 {
@@ -42,13 +38,7 @@ typedef struct MVNDistinct
 	MVNDistinctItem items[FLEXIBLE_ARRAY_MEMBER];
 } MVNDistinct;
 
-/* size of the struct excluding the items array */
-#define SizeOfMVNDistinct	(offsetof(MVNDistinct, nitems) + sizeof(uint32))
-
-
-/* size of the struct excluding the items array */
-#define SizeOfMVNDistinct	(offsetof(MVNDistinct, nitems) + sizeof(uint32))
-
+/* Multivariate functional dependencies */
 #define STATS_DEPS_MAGIC		0xB4549A2C	/* marks serialized bytea */
 #define STATS_DEPS_TYPE_BASIC	1	/* basic dependencies type */
 
@@ -63,10 +53,6 @@ typedef struct MVDependency
 	AttrNumber	attributes[FLEXIBLE_ARRAY_MEMBER];	/* attribute numbers */
 } MVDependency;
 
-/* size of the struct excluding the deps array */
-#define SizeOfDependency \
-	(offsetof(MVDependency, nattributes) + sizeof(AttrNumber))
-
 typedef struct MVDependencies
 {
 	uint32		magic;			/* magic constant marker */
@@ -74,9 +60,6 @@ typedef struct MVDependencies
 	uint32		ndeps;			/* number of dependencies */
 	MVDependency *deps[FLEXIBLE_ARRAY_MEMBER];	/* dependencies */
 } MVDependencies;
-
-/* size of the struct excluding the deps array */
-#define SizeOfDependencies	(offsetof(MVDependencies, ndeps) + sizeof(uint32))
 
 /* used to flag stats serialized to bytea */
 #define STATS_MCV_MAGIC			0xE1A651C2	/* marks serialized bytea */

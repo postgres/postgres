@@ -32,6 +32,20 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
+/* size of the struct header fields (magic, type, ndeps) */
+#define SizeOfHeader		(3 * sizeof(uint32))
+
+/* size of a serialized dependency (degree, natts, atts) */
+#define SizeOfItem(natts) \
+	(sizeof(double) + sizeof(AttrNumber) * (1 + (natts)))
+
+/* minimal size of a dependency (with two attributes) */
+#define MinSizeOfItem	SizeOfItem(2)
+
+/* minimal size of dependencies, when all deps are minimal */
+#define MinSizeOfItems(ndeps) \
+	(SizeOfHeader + (ndeps) * MinSizeOfItem)
+
 /*
  * Internal state for DependencyGenerator of dependencies. Dependencies are similar to
  * k-permutations of n elements, except that the order does not matter for the
@@ -408,7 +422,7 @@ statext_dependencies_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 			dependencies->ndeps++;
 			dependencies = (MVDependencies *) repalloc(dependencies,
 													   offsetof(MVDependencies, deps)
-													   + dependencies->ndeps * sizeof(MVDependency));
+													   + dependencies->ndeps * sizeof(MVDependency *));
 
 			dependencies->deps[dependencies->ndeps - 1] = d;
 		}
@@ -436,12 +450,11 @@ statext_dependencies_serialize(MVDependencies *dependencies)
 	Size		len;
 
 	/* we need to store ndeps, with a number of attributes for each one */
-	len = VARHDRSZ + SizeOfDependencies
-		+ dependencies->ndeps * SizeOfDependency;
+	len = VARHDRSZ + SizeOfHeader;
 
 	/* and also include space for the actual attribute numbers and degrees */
 	for (i = 0; i < dependencies->ndeps; i++)
-		len += (sizeof(AttrNumber) * dependencies->deps[i]->nattributes);
+		len += SizeOfItem(dependencies->deps[i]->nattributes);
 
 	output = (bytea *) palloc0(len);
 	SET_VARSIZE(output, len);
@@ -461,14 +474,21 @@ statext_dependencies_serialize(MVDependencies *dependencies)
 	{
 		MVDependency *d = dependencies->deps[i];
 
-		memcpy(tmp, d, SizeOfDependency);
-		tmp += SizeOfDependency;
+		memcpy(tmp, &d->degree, sizeof(double));
+		tmp += sizeof(double);
+
+		memcpy(tmp, &d->nattributes, sizeof(AttrNumber));
+		tmp += sizeof(AttrNumber);
 
 		memcpy(tmp, d->attributes, sizeof(AttrNumber) * d->nattributes);
 		tmp += sizeof(AttrNumber) * d->nattributes;
 
+		/* protect against overflow */
 		Assert(tmp <= ((char *) output + len));
 	}
+
+	/* make sure we've produced exactly the right amount of data */
+	Assert(tmp == ((char *) output + len));
 
 	return output;
 }
@@ -487,9 +507,9 @@ statext_dependencies_deserialize(bytea *data)
 	if (data == NULL)
 		return NULL;
 
-	if (VARSIZE_ANY_EXHDR(data) < SizeOfDependencies)
+	if (VARSIZE_ANY_EXHDR(data) < SizeOfHeader)
 		elog(ERROR, "invalid MVDependencies size %zd (expected at least %zd)",
-			 VARSIZE_ANY_EXHDR(data), SizeOfDependencies);
+			 VARSIZE_ANY_EXHDR(data), SizeOfHeader);
 
 	/* read the MVDependencies header */
 	dependencies = (MVDependencies *) palloc0(sizeof(MVDependencies));
@@ -519,9 +539,7 @@ statext_dependencies_deserialize(bytea *data)
 				 errmsg("invalid zero-length item array in MVDependencies")));
 
 	/* what minimum bytea size do we expect for those parameters */
-	min_expected_size = SizeOfDependencies +
-		dependencies->ndeps * (SizeOfDependency +
-							   sizeof(AttrNumber) * 2);
+	min_expected_size = SizeOfItem(dependencies->ndeps);
 
 	if (VARSIZE_ANY_EXHDR(data) < min_expected_size)
 		elog(ERROR, "invalid dependencies size %zd (expected at least %zd)",
