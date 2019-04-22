@@ -47,8 +47,7 @@ typedef struct gistxlogPageUpdate
  */
 typedef struct gistxlogDelete
 {
-	RelFileNode hnode;			/* RelFileNode of the heap the index currently
-								 * points at */
+	TransactionId latestRemovedXid;
 	uint16		ntodelete;		/* number of deleted offsets */
 
 	/*

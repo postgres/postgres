@@ -431,7 +431,7 @@ extern XLogRecPtr gistXLogUpdate(Buffer buffer,
 			   Buffer leftchild);
 
 extern XLogRecPtr gistXLogDelete(Buffer buffer, OffsetNumber *todelete,
-			   int ntodelete, RelFileNode hnode);
+			   int ntodelete, TransactionId latestRemovedXid);
 
 extern XLogRecPtr gistXLogSplit(bool page_is_leaf,
 			  SplitedPageLayout *dist,

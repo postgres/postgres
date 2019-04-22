@@ -33,8 +33,11 @@ out_gistxlogPageReuse(StringInfo buf, gistxlogPageReuse *xlrec)
 }
 
 static void
-out_gistxlogDelete(StringInfo buf, gistxlogPageUpdate *xlrec)
+out_gistxlogDelete(StringInfo buf, gistxlogDelete *xlrec)
 {
+	appendStringInfo(buf, "delete: latestRemovedXid %u, nitems: %u",
+					 xlrec->latestRemovedXid, xlrec->ntodelete);
+
 }
 
 static void
@@ -66,7 +69,7 @@ gist_desc(StringInfo buf, XLogReaderState *record)
 			out_gistxlogPageReuse(buf, (gistxlogPageReuse *) rec);
 			break;
 		case XLOG_GIST_DELETE:
-			out_gistxlogDelete(buf, (gistxlogPageUpdate *) rec);
+			out_gistxlogDelete(buf, (gistxlogDelete *) rec);
 			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			out_gistxlogPageSplit(buf, (gistxlogPageSplit *) rec);
