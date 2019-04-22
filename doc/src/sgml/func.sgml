@@ -18533,6 +18533,8 @@ SELECT set_config('log_statement_stats', 'off', false);
     The functions shown in <xref
     linkend="functions-admin-backup-table"> assist in making on-line backups.
     These functions cannot be executed during recovery (except
+    non-exclusive <function>pg_start_backup</function>,
+    non-exclusive <function>pg_stop_backup</function>,
     <function>pg_is_in_backup</function>, <function>pg_backup_start_time</function>
     and <function>pg_wal_lsn_diff</function>).
    </para>
