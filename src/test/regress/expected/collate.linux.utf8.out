@@ -396,6 +396,18 @@ SELECT relname FROM pg_class WHERE relname ~* '^abc';
 
 -- to_char
 SET lc_time TO 'tr_TR';
+SELECT to_char(date '2010-02-01', 'DD TMMON YYYY');
+   to_char   
+-------------
+ 01 ŞUB 2010
+(1 row)
+
+SELECT to_char(date '2010-02-01', 'DD TMMON YYYY' COLLATE "tr_TR");
+   to_char   
+-------------
+ 01 ŞUB 2010
+(1 row)
+
 SELECT to_char(date '2010-04-01', 'DD TMMON YYYY');
    to_char   
 -------------
