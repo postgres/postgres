@@ -2743,10 +2743,6 @@ typedef struct FetchStmt
  * index, just a UNIQUE/PKEY constraint using an existing index.  isconstraint
  * must always be true in this case, and the fields describing the index
  * properties are empty.
- *
- * The relation to build the index on can be represented either by name
- * (in which case the RangeVar indicates whether to recurse or not) or by OID
- * (in which case the command is always recursive).
  * ----------------------
  */
 typedef struct IndexStmt
