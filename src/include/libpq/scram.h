@@ -29,6 +29,8 @@ extern int pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 
 /* Routines to handle and check SCRAM-SHA-256 verifier */
 extern char *pg_be_scram_build_verifier(const char *password);
+extern bool parse_scram_verifier(const char *verifier, int *iterations, char **salt,
+					 uint8 *stored_key, uint8 *server_key);
 extern bool scram_verify_plain_password(const char *username,
 							const char *password, const char *verifier);
 

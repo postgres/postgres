@@ -20,6 +20,7 @@
 
 #include "catalog/pg_authid.h"
 #include "common/md5.h"
+#include "common/scram-common.h"
 #include "libpq/crypt.h"
 #include "libpq/scram.h"
 #include "miscadmin.h"
@@ -90,9 +91,17 @@ get_role_password(const char *role, char **logdetail)
 PasswordType
 get_password_type(const char *shadow_pass)
 {
-	if (strncmp(shadow_pass, "md5", 3) == 0 && strlen(shadow_pass) == MD5_PASSWD_LEN)
+	char	   *encoded_salt;
+	int			iterations;
+	uint8		stored_key[SCRAM_KEY_LEN];
+	uint8		server_key[SCRAM_KEY_LEN];
+
+	if (strncmp(shadow_pass, "md5", 3) == 0 &&
+		strlen(shadow_pass) == MD5_PASSWD_LEN &&
+		strspn(shadow_pass + 3, MD5_PASSWD_CHARSET) == MD5_PASSWD_LEN - 3)
 		return PASSWORD_TYPE_MD5;
-	if (strncmp(shadow_pass, "SCRAM-SHA-256$", strlen("SCRAM-SHA-256$")) == 0)
+	if (parse_scram_verifier(shadow_pass, &iterations, &encoded_salt,
+							 stored_key, server_key))
 		return PASSWORD_TYPE_SCRAM_SHA_256;
 	return PASSWORD_TYPE_PLAINTEXT;
 }
