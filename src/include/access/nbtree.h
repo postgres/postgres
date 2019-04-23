@@ -435,6 +435,15 @@ typedef BTStackData *BTStack;
  * indexes whose version is >= version 4.  It's convenient to keep this close
  * by, rather than accessing the metapage repeatedly.
  *
+ * anynullkeys indicates if any of the keys had NULL value when scankey was
+ * built from index tuple (note that already-truncated tuple key attributes
+ * set NULL as a placeholder key value, which also affects value of
+ * anynullkeys).  This is a convenience for unique index non-pivot tuple
+ * insertion, which usually temporarily unsets scantid, but shouldn't iff
+ * anynullkeys is true.  Value generally matches non-pivot tuple's HasNulls
+ * bit, but may not when inserting into an INCLUDE index (tuple header value
+ * is affected by the NULL-ness of both key and non-key attributes).
+ *
  * When nextkey is false (the usual case), _bt_search and _bt_binsrch will
  * locate the first item >= scankey.  When nextkey is true, they will locate
  * the first item > scan key.
@@ -461,6 +470,7 @@ typedef BTStackData *BTStack;
 typedef struct BTScanInsertData
 {
 	bool		heapkeyspace;
+	bool		anynullkeys;
 	bool		nextkey;
 	bool		pivotsearch;
 	ItemPointer scantid;		/* tiebreaker for scankeys */

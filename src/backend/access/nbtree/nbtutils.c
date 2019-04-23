@@ -107,6 +107,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	key = palloc(offsetof(BTScanInsertData, scankeys) +
 				 sizeof(ScanKeyData) * indnkeyatts);
 	key->heapkeyspace = itup == NULL || _bt_heapkeyspace(rel);
+	key->anynullkeys = false;		/* initial assumption */
 	key->nextkey = false;
 	key->pivotsearch = false;
 	key->keysz = Min(indnkeyatts, tupnatts);
@@ -147,6 +148,9 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 									   rel->rd_indcollation[i],
 									   procinfo,
 									   arg);
+		/* Record if any key attribute is NULL (or truncated) */
+		if (null)
+			key->anynullkeys = true;
 	}
 
 	return key;

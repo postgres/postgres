@@ -1235,6 +1235,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* Initialize remaining insertion scan key fields */
 	inskey.heapkeyspace = _bt_heapkeyspace(rel);
+	inskey.anynullkeys = false;		/* unusued */
 	inskey.nextkey = nextkey;
 	inskey.pivotsearch = false;
 	inskey.scantid = NULL;

@@ -55,8 +55,6 @@ static void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
 				  BTStack stack, bool is_root, bool is_only);
 static bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
 			 OffsetNumber itup_off);
-static bool _bt_isequal(TupleDesc itupdesc, BTScanInsert itup_key,
-			Page page, OffsetNumber offnum);
 static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
 
 /*
@@ -91,9 +89,31 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 
 	/* we need an insertion scan key to do our search, so build one */
 	itup_key = _bt_mkscankey(rel, itup);
-	/* No scantid until uniqueness established in checkingunique case */
-	if (checkingunique && itup_key->heapkeyspace)
-		itup_key->scantid = NULL;
+
+	if (checkingunique)
+	{
+		if (!itup_key->anynullkeys)
+		{
+			/* No (heapkeyspace) scantid until uniqueness established */
+			itup_key->scantid = NULL;
+		}
+		else
+		{
+			/*
+			 * Scan key for new tuple contains NULL key values.  Bypass
+			 * checkingunique steps.  They are unnecessary because core code
+			 * considers NULL unequal to every value, including NULL.
+			 *
+			 * This optimization avoids O(N^2) behavior within the
+			 * _bt_findinsertloc() heapkeyspace path when a unique index has a
+			 * large number of "duplicates" with NULL key values.
+			 */
+			checkingunique = false;
+			/* Tuple is unique in the sense that core code cares about */
+			Assert(checkUnique != UNIQUE_CHECK_EXISTING);
+			is_unique = true;
+		}
+	}
 
 	/*
 	 * Fill in the BTInsertState working area, to track the current page and
@@ -209,7 +229,7 @@ top:
 	 * NOTE: obviously, _bt_check_unique can only detect keys that are already
 	 * in the index; so it cannot defend against concurrent insertions of the
 	 * same key.  We protect against that by means of holding a write lock on
-	 * the first page the value could be on, regardless of the value of its
+	 * the first page the value could be on, with omitted/-inf value for the
 	 * implicit heap TID tiebreaker attribute.  Any other would-be inserter of
 	 * the same key must acquire a write lock on the same page, so only one
 	 * would-be inserter can be making the check at one time.  Furthermore,
@@ -266,10 +286,9 @@ top:
 		/*
 		 * The only conflict predicate locking cares about for indexes is when
 		 * an index tuple insert conflicts with an existing lock.  We don't
-		 * know the actual page we're going to insert to yet because scantid
-		 * was not filled in initially, but it's okay to use the "first valid"
-		 * page instead.  This reasoning also applies to INCLUDE indexes,
-		 * whose extra attributes are not considered part of the key space.
+		 * know the actual page we're going to insert on for sure just yet in
+		 * checkingunique and !heapkeyspace cases, but it's okay to use the
+		 * first page the value could be on (with scantid omitted) instead.
 		 */
 		CheckForSerializableConflictIn(rel, NULL, insertstate.buf);
 
@@ -315,13 +334,16 @@ top:
  * As a side-effect, sets state in insertstate that can later be used by
  * _bt_findinsertloc() to reuse most of the binary search work we do
  * here.
+ *
+ * Do not call here when there are NULL values in scan key.  NULL should be
+ * considered unequal to NULL when checking for duplicates, but we are not
+ * prepared to handle that correctly.
  */
 static TransactionId
 _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 				 IndexUniqueCheck checkUnique, bool *is_unique,
 				 uint32 *speculativeToken)
 {
-	TupleDesc	itupdesc = RelationGetDescr(rel);
 	IndexTuple	itup = insertstate->itup;
 	BTScanInsert itup_key = insertstate->itup_key;
 	SnapshotData SnapshotDirty;
@@ -354,6 +376,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 	 * Scan over all equal tuples, looking for live conflicts.
 	 */
 	Assert(!insertstate->bounds_valid || insertstate->low == offset);
+	Assert(!itup_key->anynullkeys);
 	Assert(itup_key->scantid == NULL);
 	for (;;)
 	{
@@ -375,16 +398,16 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 			 * original page, which may indicate that we need to examine a
 			 * second or subsequent page.
 			 *
-			 * Note that this optimization avoids calling _bt_isequal()
-			 * entirely when there are no duplicates, as long as the offset
-			 * where the key will go is not at the end of the page.
+			 * Note that this optimization allows us to avoid calling
+			 * _bt_compare() directly when there are no duplicates, as long as
+			 * the offset where the key will go is not at the end of the page.
 			 */
 			if (nbuf == InvalidBuffer && offset == insertstate->stricthigh)
 			{
 				Assert(insertstate->bounds_valid);
 				Assert(insertstate->low >= P_FIRSTDATAKEY(opaque));
 				Assert(insertstate->low <= insertstate->stricthigh);
-				Assert(!_bt_isequal(itupdesc, itup_key, page, offset));
+				Assert(_bt_compare(rel, itup_key, page, offset) < 0);
 				break;
 			}
 
@@ -394,9 +417,9 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 			 * We can skip items that are marked killed.
 			 *
 			 * In the presence of heavy update activity an index may contain
-			 * many killed items with the same key; running _bt_isequal() on
+			 * many killed items with the same key; running _bt_compare() on
 			 * each killed item gets expensive.  Just advance over killed
-			 * items as quickly as we can.  We only apply _bt_isequal() when
+			 * items as quickly as we can.  We only apply _bt_compare() when
 			 * we get to a non-killed item.  Even those comparisons could be
 			 * avoided (in the common case where there is only one page to
 			 * visit) by reusing bounds, but just skipping dead items is fast
@@ -407,13 +430,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 				ItemPointerData htid;
 				bool		all_dead;
 
-				/*
-				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
-				 * how we handling NULLs - and so we must not use _bt_compare
-				 * in real comparison, but only for ordering/finding items on
-				 * pages. - vadim 03/24/97
-				 */
-				if (!_bt_isequal(itupdesc, itup_key, page, offset))
+				if (_bt_compare(rel, itup_key, page, offset) != 0)
 					break;		/* we're past all the equal tuples */
 
 				/* okay, we gotta fetch the heap tuple ... */
@@ -2181,58 +2198,6 @@ _bt_pgaddtup(Page page,
 					false, false) == InvalidOffsetNumber)
 		return false;
 
-	return true;
-}
-
-/*
- * _bt_isequal - used in _bt_doinsert in check for duplicates.
- *
- * This is very similar to _bt_compare, except for NULL and negative infinity
- * handling.  Rule is simple: NOT_NULL not equal NULL, NULL not equal NULL too.
- */
-static bool
-_bt_isequal(TupleDesc itupdesc, BTScanInsert itup_key, Page page,
-			OffsetNumber offnum)
-{
-	IndexTuple	itup;
-	ScanKey		scankey;
-	int			i;
-
-	/* Better be comparing to a non-pivot item */
-	Assert(P_ISLEAF((BTPageOpaque) PageGetSpecialPointer(page)));
-	Assert(offnum >= P_FIRSTDATAKEY((BTPageOpaque) PageGetSpecialPointer(page)));
-	Assert(itup_key->scantid == NULL);
-
-	scankey = itup_key->scankeys;
-	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-
-	for (i = 1; i <= itup_key->keysz; i++)
-	{
-		AttrNumber	attno;
-		Datum		datum;
-		bool		isNull;
-		int32		result;
-
-		attno = scankey->sk_attno;
-		Assert(attno == i);
-		datum = index_getattr(itup, attno, itupdesc, &isNull);
-
-		/* NULLs are never equal to anything */
-		if (isNull || (scankey->sk_flags & SK_ISNULL))
-			return false;
-
-		result = DatumGetInt32(FunctionCall2Coll(&scankey->sk_func,
-												 scankey->sk_collation,
-												 datum,
-												 scankey->sk_argument));
-
-		if (result != 0)
-			return false;
-
-		scankey++;
-	}
-
-	/* if we get here, the keys are equal */
 	return true;
 }
 
