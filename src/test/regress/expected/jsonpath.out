@@ -454,10 +454,10 @@ select '$ ? (@ like_regex "pattern" flag "xsms")'::jsonpath;
 (1 row)
 
 select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  invalid input syntax for type jsonpath
 LINE 1: select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;
                ^
-DETAIL:  unrecognized flag of LIKE_REGEX predicate at or near """
+DETAIL:  unrecognized flag character "a" in LIKE_REGEX predicate
 select '$ < 1'::jsonpath;
  jsonpath 
 ----------
@@ -547,20 +547,17 @@ select '$ ? (@.a < +1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < .1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < -.1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < +.1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1)'::jsonpath;
     jsonpath     
 -----------------
@@ -616,20 +613,17 @@ select '$ ? (@.a < +1e1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < .1e1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1e1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < -.1e1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1e1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < +.1e1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1e1)'::jsonpath;
    jsonpath    
 ---------------
@@ -685,20 +679,17 @@ select '$ ? (@.a < +1e-1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e-1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < .1e-1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1e-1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < -.1e-1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1e-1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < +.1e-1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1e-1)'::jsonpath;
      jsonpath     
 ------------------
@@ -754,20 +745,17 @@ select '$ ? (@.a < +1e+1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e+1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < .1e+1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < -.1e+1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < -.1e+1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < +.1e+1)'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '$ ? (@.a < +.1e+1)'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '$ ? (@.a < 0.1e+1)'::jsonpath;
    jsonpath    
 ---------------
@@ -811,10 +799,9 @@ select '0'::jsonpath;
 (1 row)
 
 select '00'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected IDENT_P at end of jsonpath input
 LINE 1: select '00'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected IDENT_P at end of input
 select '0.0'::jsonpath;
  jsonpath 
 ----------
@@ -870,10 +857,9 @@ select '0.0010e+2'::jsonpath;
 (1 row)
 
 select '1e'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  invalid floating point number at or near "1e" of jsonpath input
 LINE 1: select '1e'::jsonpath;
                ^
-DETAIL:  Floating point number is invalid at or near "1e"
 select '1.e'::jsonpath;
  jsonpath 
 ----------
@@ -881,10 +867,9 @@ select '1.e'::jsonpath;
 (1 row)
 
 select '1.2e'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  invalid floating point number at or near "1.2e" of jsonpath input
 LINE 1: select '1.2e'::jsonpath;
                ^
-DETAIL:  Floating point number is invalid at or near "1.2e"
 select '1.2.e'::jsonpath;
  jsonpath 
 ----------
@@ -940,22 +925,18 @@ select '(1.2).e3'::jsonpath;
 (1 row)
 
 select '1..e'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '1..e'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '1..e3'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
 LINE 1: select '1..e3'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected '.' at or near "."
 select '(1.).e'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected ')' at or near ")" of jsonpath input
 LINE 1: select '(1.).e'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected ')' at or near ")"
 select '(1.).e3'::jsonpath;
-ERROR:  bad jsonpath representation
+ERROR:  syntax error, unexpected ')' at or near ")" of jsonpath input
 LINE 1: select '(1.).e3'::jsonpath;
                ^
-DETAIL:  syntax error, unexpected ')' at or near ")"

@@ -511,7 +511,11 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				cflags |= REG_EXPANDED;
 				break;
 			default:
-				yyerror(NULL, "unrecognized flag of LIKE_REGEX predicate");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid input syntax for type %s", "jsonpath"),
+						 errdetail("unrecognized flag character \"%c\" in LIKE_REGEX predicate",
+								   flags->val[i])));
 				break;
 		}
 	}

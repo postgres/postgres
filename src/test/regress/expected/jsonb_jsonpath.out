@@ -119,8 +119,7 @@ select jsonb '[1]' @? 'strict $[1]';
 (1 row)
 
 select jsonb_path_query('[1]', 'strict $[1]');
-ERROR:  invalid SQL/JSON subscript
-DETAIL:  jsonpath array subscript is out of bounds
+ERROR:  jsonpath array subscript is out of bounds
 select jsonb_path_query('[1]', 'strict $[1]', silent => true);
  jsonb_path_query 
 ------------------
@@ -139,11 +138,9 @@ select jsonb '[1]' @? 'strict $[10000000000000000]';
 (1 row)
 
 select jsonb_path_query('[1]', 'lax $[10000000000000000]');
-ERROR:  invalid SQL/JSON subscript
-DETAIL:  jsonpath array subscript is out of integer range
+ERROR:  jsonpath array subscript is out of integer range
 select jsonb_path_query('[1]', 'strict $[10000000000000000]');
-ERROR:  invalid SQL/JSON subscript
-DETAIL:  jsonpath array subscript is out of integer range
+ERROR:  jsonpath array subscript is out of integer range
 select jsonb '[1]' @? '$[0]';
  ?column? 
 ----------
@@ -241,8 +238,7 @@ select jsonb_path_exists('[{"a": 1}, {"a": 2}, 3]', 'lax $[*].a', silent => true
 (1 row)
 
 select jsonb_path_exists('[{"a": 1}, {"a": 2}, 3]', 'strict $[*].a', silent => false);
-ERROR:  SQL/JSON member not found
-DETAIL:  jsonpath member accessor can only be applied to an object
+ERROR:  jsonpath member accessor can only be applied to an object
 select jsonb_path_exists('[{"a": 1}, {"a": 2}, 3]', 'strict $[*].a', silent => true);
  jsonb_path_exists 
 -------------------
@@ -255,11 +251,9 @@ select jsonb_path_query('1', 'lax $.a');
 (0 rows)
 
 select jsonb_path_query('1', 'strict $.a');
-ERROR:  SQL/JSON member not found
-DETAIL:  jsonpath member accessor can only be applied to an object
+ERROR:  jsonpath member accessor can only be applied to an object
 select jsonb_path_query('1', 'strict $.*');
-ERROR:  SQL/JSON object not found
-DETAIL:  jsonpath wildcard member accessor can only be applied to an object
+ERROR:  jsonpath wildcard member accessor can only be applied to an object
 select jsonb_path_query('1', 'strict $.a', silent => true);
  jsonb_path_query 
 ------------------
@@ -276,8 +270,7 @@ select jsonb_path_query('[]', 'lax $.a');
 (0 rows)
 
 select jsonb_path_query('[]', 'strict $.a');
-ERROR:  SQL/JSON member not found
-DETAIL:  jsonpath member accessor can only be applied to an object
+ERROR:  jsonpath member accessor can only be applied to an object
 select jsonb_path_query('[]', 'strict $.a', silent => true);
  jsonb_path_query 
 ------------------
@@ -289,25 +282,20 @@ select jsonb_path_query('{}', 'lax $.a');
 (0 rows)
 
 select jsonb_path_query('{}', 'strict $.a');
-ERROR:  SQL/JSON member not found
-DETAIL:  JSON object does not contain key "a"
+ERROR:  JSON object does not contain key "a"
 select jsonb_path_query('{}', 'strict $.a', silent => true);
  jsonb_path_query 
 ------------------
 (0 rows)
 
 select jsonb_path_query('1', 'strict $[1]');
-ERROR:  SQL/JSON array not found
-DETAIL:  jsonpath array accessor can only be applied to an array
+ERROR:  jsonpath array accessor can only be applied to an array
 select jsonb_path_query('1', 'strict $[*]');
-ERROR:  SQL/JSON array not found
-DETAIL:  jsonpath wildcard array accessor can only be applied to an array
+ERROR:  jsonpath wildcard array accessor can only be applied to an array
 select jsonb_path_query('[]', 'strict $[1]');
-ERROR:  invalid SQL/JSON subscript
-DETAIL:  jsonpath array subscript is out of bounds
+ERROR:  jsonpath array subscript is out of bounds
 select jsonb_path_query('[]', 'strict $["a"]');
-ERROR:  invalid SQL/JSON subscript
-DETAIL:  jsonpath array subscript is not a singleton numeric value
+ERROR:  jsonpath array subscript is not a single numeric value
 select jsonb_path_query('1', 'strict $[1]', silent => true);
  jsonb_path_query 
 ------------------
@@ -437,8 +425,7 @@ select jsonb_path_query('[1,2,3]', 'lax $[*]');
 (3 rows)
 
 select jsonb_path_query('[1,2,3]', 'strict $[*].a');
-ERROR:  SQL/JSON member not found
-DETAIL:  jsonpath member accessor can only be applied to an object
+ERROR:  jsonpath member accessor can only be applied to an object
 select jsonb_path_query('[1,2,3]', 'strict $[*].a', silent => true);
  jsonb_path_query 
 ------------------
@@ -455,8 +442,7 @@ select jsonb_path_query('[]', '$[last ? (exists(last))]');
 (0 rows)
 
 select jsonb_path_query('[]', 'strict $[last]');
-ERROR:  invalid SQL/JSON subscript
-DETAIL:  jsonpath array subscript is out of bounds
+ERROR:  jsonpath array subscript is out of bounds
 select jsonb_path_query('[]', 'strict $[last]', silent => true);
  jsonb_path_query 
 ------------------
@@ -487,8 +473,7 @@ select jsonb_path_query('[1,2,3]', '$[last ? (@.type() == "number")]');
 (1 row)
 
 select jsonb_path_query('[1,2,3]', '$[last ? (@.type() == "string")]');
-ERROR:  invalid SQL/JSON subscript
-DETAIL:  jsonpath array subscript is not a singleton numeric value
+ERROR:  jsonpath array subscript is not a single numeric value
 select jsonb_path_query('[1,2,3]', '$[last ? (@.type() == "string")]', silent => true);
  jsonb_path_query 
 ------------------
@@ -501,11 +486,13 @@ select * from jsonb_path_query('{"a": 10}', '$');
 (1 row)
 
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)');
-ERROR:  cannot find jsonpath variable 'value'
+ERROR:  cannot find jsonpath variable "value"
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '1');
-ERROR:  jsonb containing jsonpath variables is not an object
+ERROR:  "vars" argument is not an object
+DETAIL:  Jsonpath parameters should be encoded as key-value pairs of "vars" object.
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '[{"value" : 13}]');
-ERROR:  jsonb containing jsonpath variables is not an object
+ERROR:  "vars" argument is not an object
+DETAIL:  Jsonpath parameters should be encoded as key-value pairs of "vars" object.
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '{"value" : 13}');
  jsonb_path_query 
 ------------------
@@ -1067,17 +1054,13 @@ ERROR:  division by zero
 select jsonb_path_query('0', '-(3 + 1 % $)');
 ERROR:  division by zero
 select jsonb_path_query('1', '$ + "2"');
-ERROR:  singleton SQL/JSON item required
-DETAIL:  right operand of binary jsonpath operator + is not a singleton numeric value
+ERROR:  right operand of jsonpath operator + is not a single numeric value
 select jsonb_path_query('[1, 2]', '3 * $');
-ERROR:  singleton SQL/JSON item required
-DETAIL:  right operand of binary jsonpath operator * is not a singleton numeric value
+ERROR:  right operand of jsonpath operator * is not a single numeric value
 select jsonb_path_query('"a"', '-$');
-ERROR:  SQL/JSON number not found
-DETAIL:  operand of unary jsonpath operator - is not a numeric value
+ERROR:  operand of unary jsonpath operator - is not a numeric value
 select jsonb_path_query('[1,"2",3]', '+$');
-ERROR:  SQL/JSON number not found
-DETAIL:  operand of unary jsonpath operator + is not a numeric value
+ERROR:  operand of unary jsonpath operator + is not a numeric value
 select jsonb_path_query('1', '$ + "2"', silent => true);
  jsonb_path_query 
 ------------------
@@ -1146,8 +1129,7 @@ select jsonb_path_query('{"a": [2, 3, 4]}', 'lax -$.a');
 
 -- should fail
 select jsonb_path_query('{"a": [1, 2]}', 'lax $.a * 3');
-ERROR:  singleton SQL/JSON item required
-DETAIL:  left operand of binary jsonpath operator * is not a singleton numeric value
+ERROR:  left operand of jsonpath operator * is not a single numeric value
 select jsonb_path_query('{"a": [1, 2]}', 'lax $.a * 3', silent => true);
  jsonb_path_query 
 ------------------
@@ -1346,8 +1328,7 @@ select jsonb_path_query('[1, 2, 3]', 'strict ($[*].a > 3).type()');
 (1 row)
 
 select jsonb_path_query('[1,null,true,"11",[],[1],[1,2,3],{},{"a":1,"b":2}]', 'strict $[*].size()');
-ERROR:  SQL/JSON array not found
-DETAIL:  jsonpath item method .size() can only be applied to an array
+ERROR:  jsonpath item method .size() can only be applied to an array
 select jsonb_path_query('[1,null,true,"11",[],[1],[1,2,3],{},{"a":1,"b":2}]', 'strict $[*].size()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1418,8 +1399,7 @@ select jsonb_path_query('[0, 1, -2, -3.4, 5.6]', '$[*].ceiling().abs().type()');
 (5 rows)
 
 select jsonb_path_query('[{},1]', '$[*].keyvalue()');
-ERROR:  SQL/JSON object not found
-DETAIL:  jsonpath item method .keyvalue() can only be applied to an object
+ERROR:  jsonpath item method .keyvalue() can only be applied to an object
 select jsonb_path_query('[{},1]', '$[*].keyvalue()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1447,8 +1427,7 @@ select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', '$[*].ke
 (3 rows)
 
 select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', 'strict $.keyvalue()');
-ERROR:  SQL/JSON object not found
-DETAIL:  jsonpath item method .keyvalue() can only be applied to an object
+ERROR:  jsonpath item method .keyvalue() can only be applied to an object
 select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', 'lax $.keyvalue()');
                jsonb_path_query                
 -----------------------------------------------
@@ -1458,8 +1437,7 @@ select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', 'lax $.k
 (3 rows)
 
 select jsonb_path_query('[{"a": 1, "b": [1, 2]}, {"c": {"a": "bbb"}}]', 'strict $.keyvalue().a');
-ERROR:  SQL/JSON object not found
-DETAIL:  jsonpath item method .keyvalue() can only be applied to an object
+ERROR:  jsonpath item method .keyvalue() can only be applied to an object
 select jsonb '{"a": 1, "b": [1, 2]}' @? 'lax $.keyvalue()';
  ?column? 
 ----------
@@ -1473,11 +1451,9 @@ select jsonb '{"a": 1, "b": [1, 2]}' @? 'lax $.keyvalue().key';
 (1 row)
 
 select jsonb_path_query('null', '$.double()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+ERROR:  jsonpath item method .double() can only be applied to a string or numeric value
 select jsonb_path_query('true', '$.double()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+ERROR:  jsonpath item method .double() can only be applied to a string or numeric value
 select jsonb_path_query('null', '$.double()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1494,11 +1470,9 @@ select jsonb_path_query('[]', '$.double()');
 (0 rows)
 
 select jsonb_path_query('[]', 'strict $.double()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+ERROR:  jsonpath item method .double() can only be applied to a string or numeric value
 select jsonb_path_query('{}', '$.double()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .double() can only be applied to a string or numeric value
+ERROR:  jsonpath item method .double() can only be applied to a string or numeric value
 select jsonb_path_query('[]', 'strict $.double()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1522,8 +1496,7 @@ select jsonb_path_query('"1.23"', '$.double()');
 (1 row)
 
 select jsonb_path_query('"1.23aaa"', '$.double()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .double() can only be applied to a numeric value
+ERROR:  jsonpath item method .double() can only be applied to a numeric value
 select jsonb_path_query('"nan"', '$.double()');
  jsonb_path_query 
 ------------------
@@ -1537,11 +1510,9 @@ select jsonb_path_query('"NaN"', '$.double()');
 (1 row)
 
 select jsonb_path_query('"inf"', '$.double()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .double() can only be applied to a numeric value
+ERROR:  jsonpath item method .double() can only be applied to a numeric value
 select jsonb_path_query('"-inf"', '$.double()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .double() can only be applied to a numeric value
+ERROR:  jsonpath item method .double() can only be applied to a numeric value
 select jsonb_path_query('"inf"', '$.double()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1553,14 +1524,11 @@ select jsonb_path_query('"-inf"', '$.double()', silent => true);
 (0 rows)
 
 select jsonb_path_query('{}', '$.abs()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .abs() can only be applied to a numeric value
+ERROR:  jsonpath item method .abs() can only be applied to a numeric value
 select jsonb_path_query('true', '$.floor()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .floor() can only be applied to a numeric value
+ERROR:  jsonpath item method .floor() can only be applied to a numeric value
 select jsonb_path_query('"1.2"', '$.ceiling()');
-ERROR:  non-numeric SQL/JSON item
-DETAIL:  jsonpath item method .ceiling() can only be applied to a numeric value
+ERROR:  jsonpath item method .ceiling() can only be applied to a numeric value
 select jsonb_path_query('{}', '$.abs()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1668,8 +1636,7 @@ SELECT jsonb_path_query('[{"a": 1}, {"a": 2}]', '$[*] ? (@.a > 10)');
 (0 rows)
 
 SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}, {}]', 'strict $[*].a');
-ERROR:  SQL/JSON member not found
-DETAIL:  JSON object does not contain key "a"
+ERROR:  JSON object does not contain key "a"
 SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}]', '$[*].a');
  jsonb_path_query_array 
 ------------------------
@@ -1701,8 +1668,7 @@ SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}, {"a": 3}, {"a": 5}]', '$[*].
 (1 row)
 
 SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}, {}]', 'strict $[*].a');
-ERROR:  SQL/JSON member not found
-DETAIL:  JSON object does not contain key "a"
+ERROR:  JSON object does not contain key "a"
 SELECT jsonb_path_query_first('[{"a": 1}, {"a": 2}, {}]', 'strict $[*].a', silent => true);
  jsonb_path_query_first 
 ------------------------
@@ -1794,23 +1760,17 @@ SELECT jsonb_path_match('1', '$', silent => true);
 (1 row)
 
 SELECT jsonb_path_match('1', '$', silent => false);
-ERROR:  singleton SQL/JSON item required
-DETAIL:  expression should return a singleton boolean
+ERROR:  single boolean result is expected
 SELECT jsonb_path_match('"a"', '$', silent => false);
-ERROR:  singleton SQL/JSON item required
-DETAIL:  expression should return a singleton boolean
+ERROR:  single boolean result is expected
 SELECT jsonb_path_match('{}', '$', silent => false);
-ERROR:  singleton SQL/JSON item required
-DETAIL:  expression should return a singleton boolean
+ERROR:  single boolean result is expected
 SELECT jsonb_path_match('[true]', '$', silent => false);
-ERROR:  singleton SQL/JSON item required
-DETAIL:  expression should return a singleton boolean
+ERROR:  single boolean result is expected
 SELECT jsonb_path_match('{}', 'lax $.a', silent => false);
-ERROR:  singleton SQL/JSON item required
-DETAIL:  expression should return a singleton boolean
+ERROR:  single boolean result is expected
 SELECT jsonb_path_match('{}', 'strict $.a', silent => false);
-ERROR:  SQL/JSON member not found
-DETAIL:  JSON object does not contain key "a"
+ERROR:  JSON object does not contain key "a"
 SELECT jsonb_path_match('{}', 'strict $.a', silent => true);
  jsonb_path_match 
 ------------------
@@ -1818,8 +1778,7 @@ SELECT jsonb_path_match('{}', 'strict $.a', silent => true);
 (1 row)
 
 SELECT jsonb_path_match('[true, true]', '$[*]', silent => false);
-ERROR:  singleton SQL/JSON item required
-DETAIL:  expression should return a singleton boolean
+ERROR:  single boolean result is expected
 SELECT jsonb '[{"a": 1}, {"a": 2}]' @@ '$[*].a > 1';
  ?column? 
 ----------

@@ -2,20 +2,17 @@
 -- checks for double-quoted values
 -- basic unicode input
 SELECT '"\u"'::jsonpath;		-- ERROR, incomplete escape
-ERROR:  bad jsonpath representation
+ERROR:  invalid unicode sequence at or near "\u" of jsonpath input
 LINE 1: SELECT '"\u"'::jsonpath;
                ^
-DETAIL:  Unicode sequence is invalid at or near "\u"
 SELECT '"\u00"'::jsonpath;		-- ERROR, incomplete escape
-ERROR:  bad jsonpath representation
+ERROR:  invalid unicode sequence at or near "\u00" of jsonpath input
 LINE 1: SELECT '"\u00"'::jsonpath;
                ^
-DETAIL:  Unicode sequence is invalid at or near "\u00"
 SELECT '"\u000g"'::jsonpath;	-- ERROR, g is not a hex digit
-ERROR:  bad jsonpath representation
+ERROR:  invalid unicode sequence at or near "\u000" of jsonpath input
 LINE 1: SELECT '"\u000g"'::jsonpath;
                ^
-DETAIL:  Unicode sequence is invalid at or near "\u000"
 SELECT '"\u0000"'::jsonpath;	-- OK, legal escape
 ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT '"\u0000"'::jsonpath;
@@ -165,20 +162,17 @@ DETAIL:  \u0000 cannot be converted to text.
 -- checks for quoted key names
 -- basic unicode input
 SELECT '$."\u"'::jsonpath;		-- ERROR, incomplete escape
-ERROR:  bad jsonpath representation
+ERROR:  invalid unicode sequence at or near "\u" of jsonpath input
 LINE 1: SELECT '$."\u"'::jsonpath;
                ^
-DETAIL:  Unicode sequence is invalid at or near "\u"
 SELECT '$."\u00"'::jsonpath;	-- ERROR, incomplete escape
-ERROR:  bad jsonpath representation
+ERROR:  invalid unicode sequence at or near "\u00" of jsonpath input
 LINE 1: SELECT '$."\u00"'::jsonpath;
                ^
-DETAIL:  Unicode sequence is invalid at or near "\u00"
 SELECT '$."\u000g"'::jsonpath;	-- ERROR, g is not a hex digit
-ERROR:  bad jsonpath representation
+ERROR:  invalid unicode sequence at or near "\u000" of jsonpath input
 LINE 1: SELECT '$."\u000g"'::jsonpath;
                ^
-DETAIL:  Unicode sequence is invalid at or near "\u000"
 SELECT '$."\u0000"'::jsonpath;	-- OK, legal escape
 ERROR:  unsupported Unicode escape sequence
 LINE 1: SELECT '$."\u0000"'::jsonpath;

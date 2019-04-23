@@ -77,16 +77,6 @@
 #include "utils/varlena.h"
 
 
-/* Standard error message for SQL/JSON errors */
-#define ERRMSG_JSON_ARRAY_NOT_FOUND			"SQL/JSON array not found"
-#define ERRMSG_JSON_OBJECT_NOT_FOUND		"SQL/JSON object not found"
-#define ERRMSG_JSON_MEMBER_NOT_FOUND		"SQL/JSON member not found"
-#define ERRMSG_JSON_NUMBER_NOT_FOUND		"SQL/JSON number not found"
-#define ERRMSG_JSON_SCALAR_REQUIRED			"SQL/JSON scalar required"
-#define ERRMSG_SINGLETON_JSON_ITEM_REQUIRED	"singleton SQL/JSON item required"
-#define ERRMSG_NON_NUMERIC_JSON_ITEM		"non-numeric SQL/JSON item"
-#define ERRMSG_INVALID_JSON_SUBSCRIPT		"invalid SQL/JSON subscript"
-
 /*
  * Represents "base object" and it's "id" for .keyvalue() evaluation.
  */
@@ -349,8 +339,7 @@ jsonb_path_match(PG_FUNCTION_ARGS)
 	if (!silent)
 		ereport(ERROR,
 				(errcode(ERRCODE_SINGLETON_JSON_ITEM_REQUIRED),
-				 errmsg(ERRMSG_SINGLETON_JSON_ITEM_REQUIRED),
-				 errdetail("expression should return a singleton boolean")));
+				 errmsg("single boolean result is expected")));
 
 	PG_RETURN_NULL();
 }
@@ -498,8 +487,8 @@ executeJsonPath(JsonPath *path, Jsonb *vars, Jsonb *json, bool throwErrors,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("jsonb containing jsonpath variables "
-						"is not an object")));
+				 errmsg("\"vars\" argument is not an object"),
+				 errdetail("Jsonpath parameters should be encoded as key-value pairs of \"vars\" object.")));
 	}
 
 	cxt.vars = vars;
@@ -608,24 +597,16 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				}
 				else if (!jspIgnoreStructuralErrors(cxt))
 				{
-					StringInfoData keybuf;
-					char	   *keystr;
-
 					Assert(found);
 
 					if (!jspThrowErrors(cxt))
 						return jperError;
 
-					initStringInfo(&keybuf);
-
-					keystr = pnstrdup(key.val.string.val, key.val.string.len);
-					escape_json(&keybuf, keystr);
-
 					ereport(ERROR,
 							(errcode(ERRCODE_JSON_MEMBER_NOT_FOUND), \
-							 errmsg(ERRMSG_JSON_MEMBER_NOT_FOUND),
-							 errdetail("JSON object does not contain key %s",
-									   keybuf.data)));
+							 errmsg("JSON object does not contain key \"%s\"",
+									pnstrdup(key.val.string.val,
+											 key.val.string.len))));
 				}
 			}
 			else if (unwrap && JsonbType(jb) == jbvArray)
@@ -635,9 +616,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				Assert(found);
 				RETURN_ERROR(ereport(ERROR,
 									 (errcode(ERRCODE_JSON_MEMBER_NOT_FOUND),
-									  errmsg(ERRMSG_JSON_MEMBER_NOT_FOUND),
-									  errdetail("jsonpath member accessor can "
-												"only be applied to an object"))));
+									  errmsg("jsonpath member accessor can only be applied to an object"))));
 			}
 			break;
 
@@ -666,9 +645,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 			else if (!jspIgnoreStructuralErrors(cxt))
 				RETURN_ERROR(ereport(ERROR,
 									 (errcode(ERRCODE_JSON_ARRAY_NOT_FOUND),
-									  errmsg(ERRMSG_JSON_ARRAY_NOT_FOUND),
-									  errdetail("jsonpath wildcard array accessor "
-												"can only be applied to an array"))));
+									  errmsg("jsonpath wildcard array accessor can only be applied to an array"))));
 			break;
 
 		case jpiIndexArray:
@@ -716,9 +693,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 						 index_to >= size))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_INVALID_JSON_SUBSCRIPT),
-											  errmsg(ERRMSG_INVALID_JSON_SUBSCRIPT),
-											  errdetail("jsonpath array subscript is "
-														"out of bounds"))));
+											  errmsg("jsonpath array subscript is out of bounds"))));
 
 					if (index_from < 0)
 						index_from = 0;
@@ -775,9 +750,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 			{
 				RETURN_ERROR(ereport(ERROR,
 									 (errcode(ERRCODE_JSON_ARRAY_NOT_FOUND),
-									  errmsg(ERRMSG_JSON_ARRAY_NOT_FOUND),
-									  errdetail("jsonpath array accessor can "
-												"only be applied to an array"))));
+									  errmsg("jsonpath array accessor can only be applied to an array"))));
 			}
 			break;
 
@@ -789,8 +762,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				bool		hasNext = jspGetNext(jsp, &elem);
 
 				if (cxt->innermostArraySize < 0)
-					elog(ERROR, "evaluating jsonpath LAST outside of "
-						 "array subscript");
+					elog(ERROR, "evaluating jsonpath LAST outside of array subscript");
 
 				if (!hasNext && !found)
 				{
@@ -832,9 +804,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				Assert(found);
 				RETURN_ERROR(ereport(ERROR,
 									 (errcode(ERRCODE_JSON_OBJECT_NOT_FOUND),
-									  errmsg(ERRMSG_JSON_OBJECT_NOT_FOUND),
-									  errdetail("jsonpath wildcard member accessor "
-												"can only be applied to an object"))));
+									  errmsg("jsonpath wildcard member accessor can only be applied to an object"))));
 			}
 			break;
 
@@ -964,10 +934,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 						if (!jspIgnoreStructuralErrors(cxt))
 							RETURN_ERROR(ereport(ERROR,
 												 (errcode(ERRCODE_JSON_ARRAY_NOT_FOUND),
-												  errmsg(ERRMSG_JSON_ARRAY_NOT_FOUND),
-												  errdetail("jsonpath item method .%s() "
-															"can only be applied to an array",
-															jspOperationName(jsp->type)))));
+												  errmsg("jsonpath item method .%s() can only be applied to an array",
+														 jspOperationName(jsp->type)))));
 						break;
 					}
 
@@ -1020,11 +988,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (have_error)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_JSON_ITEM),
-											  errmsg(ERRMSG_NON_NUMERIC_JSON_ITEM),
-											  errdetail("jsonpath item method .%s() "
-														"can only be applied to "
-														"a numeric value",
-														jspOperationName(jsp->type)))));
+											  errmsg("jsonpath item method .%s() can only be applied to a numeric value",
+													 jspOperationName(jsp->type)))));
 					res = jperOk;
 				}
 				else if (jb->type == jbvString)
@@ -1044,10 +1009,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (have_error || isinf(val))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_JSON_ITEM),
-											  errmsg(ERRMSG_NON_NUMERIC_JSON_ITEM),
-											  errdetail("jsonpath item method .%s() can "
-														"only be applied to a numeric value",
-														jspOperationName(jsp->type)))));
+											  errmsg("jsonpath item method .%s() can only be applied to a numeric value",
+													 jspOperationName(jsp->type)))));
 
 					jb = &jbv;
 					jb->type = jbvNumeric;
@@ -1059,11 +1022,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				if (res == jperNotFound)
 					RETURN_ERROR(ereport(ERROR,
 										 (errcode(ERRCODE_NON_NUMERIC_JSON_ITEM),
-										  errmsg(ERRMSG_NON_NUMERIC_JSON_ITEM),
-										  errdetail("jsonpath item method .%s() "
-													"can only be applied to a "
-													"string or numeric value",
-													jspOperationName(jsp->type)))));
+										  errmsg("jsonpath item method .%s() can only be applied to a string or numeric value",
+												 jspOperationName(jsp->type)))));
 
 				res = executeNextItem(cxt, jsp, NULL, jb, found, true);
 			}
@@ -1546,19 +1506,15 @@ executeBinaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		!(lval = getScalar(JsonValueListHead(&lseq), jbvNumeric)))
 		RETURN_ERROR(ereport(ERROR,
 							 (errcode(ERRCODE_SINGLETON_JSON_ITEM_REQUIRED),
-							  errmsg(ERRMSG_SINGLETON_JSON_ITEM_REQUIRED),
-							  errdetail("left operand of binary jsonpath operator %s "
-										"is not a singleton numeric value",
-										jspOperationName(jsp->type)))));
+							  errmsg("left operand of jsonpath operator %s is not a single numeric value",
+									 jspOperationName(jsp->type)))));
 
 	if (JsonValueListLength(&rseq) != 1 ||
 		!(rval = getScalar(JsonValueListHead(&rseq), jbvNumeric)))
 		RETURN_ERROR(ereport(ERROR,
 							 (errcode(ERRCODE_SINGLETON_JSON_ITEM_REQUIRED),
-							  errmsg(ERRMSG_SINGLETON_JSON_ITEM_REQUIRED),
-							  errdetail("right operand of binary jsonpath operator %s "
-										"is not a singleton numeric value",
-										jspOperationName(jsp->type)))));
+							  errmsg("right operand of jsonpath operator %s is not a single numeric value",
+									 jspOperationName(jsp->type)))));
 
 	if (jspThrowErrors(cxt))
 	{
@@ -1625,10 +1581,8 @@ executeUnaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 			RETURN_ERROR(ereport(ERROR,
 								 (errcode(ERRCODE_JSON_NUMBER_NOT_FOUND),
-								  errmsg(ERRMSG_JSON_NUMBER_NOT_FOUND),
-								  errdetail("operand of unary jsonpath operator %s "
-											"is not a numeric value",
-											jspOperationName(jsp->type)))));
+								  errmsg("operand of unary jsonpath operator %s is not a numeric value",
+										 jspOperationName(jsp->type)))));
 		}
 
 		if (func)
@@ -1738,10 +1692,8 @@ executeNumericItemMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	if (!(jb = getScalar(jb, jbvNumeric)))
 		RETURN_ERROR(ereport(ERROR,
 							 (errcode(ERRCODE_NON_NUMERIC_JSON_ITEM),
-							  errmsg(ERRMSG_NON_NUMERIC_JSON_ITEM),
-							  errdetail("jsonpath item method .%s() can only "
-										"be applied to a numeric value",
-										jspOperationName(jsp->type)))));
+							  errmsg("jsonpath item method .%s() can only be applied to a numeric value",
+									 jspOperationName(jsp->type)))));
 
 	datum = DirectFunctionCall1(func, NumericGetDatum(jb->val.numeric));
 
@@ -1799,10 +1751,8 @@ executeKeyValueMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	if (JsonbType(jb) != jbvObject || jb->type != jbvBinary)
 		RETURN_ERROR(ereport(ERROR,
 							 (errcode(ERRCODE_JSON_OBJECT_NOT_FOUND),
-							  errmsg(ERRMSG_JSON_OBJECT_NOT_FOUND),
-							  errdetail("jsonpath item method .%s() "
-										"can only be applied to an object",
-										jspOperationName(jsp->type)))));
+							  errmsg("jsonpath item method .%s() can only be applied to an object",
+									 jspOperationName(jsp->type)))));
 
 	jbc = jb->val.binary.data;
 
@@ -1984,7 +1934,7 @@ getJsonPathVariable(JsonPathExecContext *cxt, JsonPathItem *variable,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("cannot find jsonpath variable '%s'",
+				 errmsg("cannot find jsonpath variable \"%s\"",
 						pnstrdup(varName, varNameLength))));
 	}
 
@@ -2144,9 +2094,7 @@ getArrayIndex(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
 		!(jbv = getScalar(JsonValueListHead(&found), jbvNumeric)))
 		RETURN_ERROR(ereport(ERROR,
 							 (errcode(ERRCODE_INVALID_JSON_SUBSCRIPT),
-							  errmsg(ERRMSG_INVALID_JSON_SUBSCRIPT),
-							  errdetail("jsonpath array subscript is not a "
-										"singleton numeric value"))));
+							  errmsg("jsonpath array subscript is not a single numeric value"))));
 
 	numeric_index = DirectFunctionCall2(numeric_trunc,
 										NumericGetDatum(jbv->val.numeric),
@@ -2158,9 +2106,7 @@ getArrayIndex(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
 	if (have_error)
 		RETURN_ERROR(ereport(ERROR,
 							 (errcode(ERRCODE_INVALID_JSON_SUBSCRIPT),
-							  errmsg(ERRMSG_INVALID_JSON_SUBSCRIPT),
-							  errdetail("jsonpath array subscript is "
-										"out of integer range"))));
+							  errmsg("jsonpath array subscript is out of integer range"))));
 
 	return jperOk;
 }

@@ -142,9 +142,9 @@ hex_fail	\\x{hex_dig}{0,1}
 
 <xnq,xq,xvq,xsq>{hex_char}		{ parseHexChar(yytext); }
 
-<xnq,xq,xvq,xsq>{unicode}*{unicodefail}	{ yyerror(NULL, "Unicode sequence is invalid"); }
+<xnq,xq,xvq,xsq>{unicode}*{unicodefail}	{ yyerror(NULL, "invalid unicode sequence"); }
 
-<xnq,xq,xvq,xsq>{hex_fail}		{ yyerror(NULL, "Hex character sequence is invalid"); }
+<xnq,xq,xvq,xsq>{hex_fail}		{ yyerror(NULL, "invalid hex character sequence"); }
 
 <xnq,xq,xvq,xsq>{unicode}+\\	{
 									/* throw back the \\, and treat as unicode */
@@ -152,11 +152,11 @@ hex_fail	\\x{hex_dig}{0,1}
 									parseUnicode(yytext, yyleng);
 								}
 
-<xnq,xq,xvq,xsq>\\.				{ yyerror(NULL, "Escape sequence is invalid"); }
+<xnq,xq,xvq,xsq>\\.				{ yyerror(NULL, "escape sequence is invalid"); }
 
-<xnq,xq,xvq,xsq>\\				{ yyerror(NULL, "Unexpected end after backslash"); }
+<xnq,xq,xvq,xsq>\\				{ yyerror(NULL, "unexpected end after backslash"); }
 
-<xq,xvq,xsq><<EOF>>				{ yyerror(NULL, "Unexpected end of quoted string"); }
+<xq,xvq,xsq><<EOF>>				{ yyerror(NULL, "unexpected end of quoted string"); }
 
 <xq>\"							{
 									yylval->str = scanstring;
@@ -186,7 +186,7 @@ hex_fail	\\x{hex_dig}{0,1}
 
 <xc>\*							{ }
 
-<xc><<EOF>>						{ yyerror(NULL, "Unexpected end of comment"); }
+<xc><<EOF>>						{ yyerror(NULL, "unexpected end of comment"); }
 
 \&\&							{ return AND_P; }
 
@@ -261,7 +261,7 @@ hex_fail	\\x{hex_dig}{0,1}
 									return INT_P;
 								}
 
-({realfail1}|{realfail2})		{ yyerror(NULL, "Floating point number is invalid"); }
+({realfail1}|{realfail2})		{ yyerror(NULL, "invalid floating point number"); }
 
 {any}+							{
 									addstring(true, yytext, yyleng);
@@ -295,17 +295,16 @@ jsonpath_yyerror(JsonPathParseResult **result, const char *message)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("bad jsonpath representation"),
 				 /* translator: %s is typically "syntax error" */
-				 errdetail("%s at end of input", message)));
+				 errmsg("%s at end of jsonpath input", _(message))));
 	}
 	else
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("bad jsonpath representation"),
 				 /* translator: first %s is typically "syntax error" */
-				 errdetail("%s at or near \"%s\"", message, yytext)));
+				 errmsg("%s at or near \"%s\" of jsonpath input",
+						_(message), yytext)));
 	}
 }
 
@@ -495,7 +494,7 @@ hexval(char c)
 		return c - 'a' + 0xA;
 	if (c >= 'A' && c <= 'F')
 		return c - 'A' + 0xA;
-	elog(ERROR, "invalid hexadecimal digit");
+	jsonpath_yyerror(NULL, "invalid hexadecimal digit");
 	return 0; /* not reached */
 }
 
