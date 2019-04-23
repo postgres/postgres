@@ -578,6 +578,18 @@ select indrelid::regclass, indexrelid::regclass, inhparent::regclass, indisvalid
   order by indexrelid::regclass::text collate "C";
 drop table idxpart;
 
+-- Related to the above scenario: ADD PRIMARY KEY on the parent mustn't
+-- automatically propagate NOT NULL to child columns.
+create table idxpart (a int) partition by range (a);
+create table idxpart0 (like idxpart);
+alter table idxpart0 add unique (a);
+alter table idxpart attach partition idxpart0 default;
+alter table only idxpart add primary key (a);  -- fail, no NOT NULL constraint
+alter table idxpart0 alter column a set not null;
+alter table only idxpart add primary key (a);  -- now it works
+alter table idxpart0 alter column a drop not null;  -- fail, pkey needs it
+drop table idxpart;
+
 -- if a partition has a unique index without a constraint, does not attach
 -- automatically; creates a new index instead.
 create table idxpart (a int, b int) partition by range (a);

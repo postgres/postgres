@@ -749,6 +749,14 @@ alter table atacc1 add column test2 int primary key;
 alter table atacc1 add column test2 int default 0 primary key;
 drop table atacc1;
 
+-- this combination used to have order-of-execution problems (bug #15580)
+create table atacc1 (a int);
+insert into atacc1 values(1);
+alter table atacc1
+  add column b float8 not null default random(),
+  add primary key(a);
+drop table atacc1;
+
 -- something a little more complicated
 create table atacc1 ( test int, test2 int);
 -- add a primary key constraint

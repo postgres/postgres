@@ -185,13 +185,14 @@ relationHasPrimaryKey(Relation rel)
  *
  * We check for a pre-existing primary key, and that all columns of the index
  * are simple column references (not expressions), and that all those
- * columns are marked NOT NULL.  If they aren't (which can only happen during
- * ALTER TABLE ADD CONSTRAINT, since the parser forces such columns to be
- * created NOT NULL during CREATE TABLE), do an ALTER SET NOT NULL to mark
- * them so --- or fail if they are not in fact nonnull.
+ * columns are marked NOT NULL.  If not, fail.
  *
- * As of PG v10, the SET NOT NULL is applied to child tables as well, so
- * that the behavior is like a manual SET NOT NULL.
+ * We used to automatically change unmarked columns to NOT NULL here by doing
+ * our own local ALTER TABLE command.  But that doesn't work well if we're
+ * executing one subcommand of an ALTER TABLE: the operations may not get
+ * performed in the right order overall.  Now we expect that the parser
+ * inserted any required ALTER TABLE SET NOT NULL operations before trying
+ * to create a primary-key index.
  *
  * Caller had better have at least ShareLock on the table, else the not-null
  * checking isn't trustworthy.
@@ -202,12 +203,11 @@ index_check_primary_key(Relation heapRel,
 						bool is_alter_table,
 						IndexStmt *stmt)
 {
-	List	   *cmds;
 	int			i;
 
 	/*
-	 * If ALTER TABLE and CREATE TABLE .. PARTITION OF, check that there isn't
-	 * already a PRIMARY KEY.  In CREATE TABLE for an ordinary relations, we
+	 * If ALTER TABLE or CREATE TABLE .. PARTITION OF, check that there isn't
+	 * already a PRIMARY KEY.  In CREATE TABLE for an ordinary relation, we
 	 * have faith that the parser rejected multiple pkey clauses; and CREATE
 	 * INDEX doesn't have a way to say PRIMARY KEY, so it's no problem either.
 	 */
@@ -222,9 +222,9 @@ index_check_primary_key(Relation heapRel,
 
 	/*
 	 * Check that all of the attributes in a primary key are marked as not
-	 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
+	 * null.  (We don't really expect to see that; it'd mean the parser messed
+	 * up.  But it seems wise to check anyway.)
 	 */
-	cmds = NIL;
 	for (i = 0; i < indexInfo->ii_NumIndexKeyAttrs; i++)
 	{
 		AttrNumber	attnum = indexInfo->ii_IndexAttrNumbers[i];
@@ -249,29 +249,12 @@ index_check_primary_key(Relation heapRel,
 		attform = (Form_pg_attribute) GETSTRUCT(atttuple);
 
 		if (!attform->attnotnull)
-		{
-			/* Add a subcommand to make this one NOT NULL */
-			AlterTableCmd *cmd = makeNode(AlterTableCmd);
-
-			cmd->subtype = AT_SetNotNull;
-			cmd->name = pstrdup(NameStr(attform->attname));
-			cmds = lappend(cmds, cmd);
-		}
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("primary key column \"%s\" is not marked NOT NULL",
+							NameStr(attform->attname))));
 
 		ReleaseSysCache(atttuple);
-	}
-
-	/*
-	 * XXX: possible future improvement: when being called from ALTER TABLE,
-	 * it would be more efficient to merge this with the outer ALTER TABLE, so
-	 * as to avoid two scans.  But that seems to complicate DefineIndex's API
-	 * unduly.
-	 */
-	if (cmds)
-	{
-		EventTriggerAlterTableStart((Node *) stmt);
-		AlterTableInternal(RelationGetRelid(heapRel), cmds, true);
-		EventTriggerAlterTableEnd();
 	}
 }
 

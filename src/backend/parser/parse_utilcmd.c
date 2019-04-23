@@ -293,8 +293,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	}
 
 	/*
-	 * transformIndexConstraints wants cxt.alist to contain only index
-	 * statements, so transfer anything we already have into save_alist.
+	 * Transfer anything we already have in cxt.alist into save_alist, to keep
+	 * it separate from the output of transformIndexConstraints.  (This may
+	 * not be necessary anymore, but we'll keep doing it to preserve the
+	 * historical order of execution of the alist commands.)
 	 */
 	save_alist = cxt.alist;
 	cxt.alist = NIL;
@@ -1196,9 +1198,10 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			parent_index = index_open(parent_index_oid, AccessShareLock);
 
 			/* Build CREATE INDEX statement to recreate the parent_index */
-			index_stmt = generateClonedIndexStmt(cxt->relation, InvalidOid,
+			index_stmt = generateClonedIndexStmt(cxt->relation,
 												 parent_index,
-												 attmap, tupleDesc->natts, NULL);
+												 attmap, tupleDesc->natts,
+												 NULL);
 
 			/* Copy comment on index, if requested */
 			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
@@ -1311,13 +1314,26 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 
 /*
  * Generate an IndexStmt node using information from an already existing index
- * "source_idx", for the rel identified either by heapRel or heapRelid.
+ * "source_idx".
  *
- * Attribute numbers should be adjusted according to attmap.
+ * heapRel is stored into the IndexStmt's relation field, but we don't use it
+ * otherwise; some callers pass NULL, if they don't need it to be valid.
+ * (The target relation might not exist yet, so we mustn't try to access it.)
+ *
+ * Attribute numbers in expression Vars are adjusted according to attmap.
+ *
+ * If constraintOid isn't NULL, we store the OID of any constraint associated
+ * with the index there.
+ *
+ * Unlike transformIndexConstraint, we don't make any effort to force primary
+ * key columns to be NOT NULL.  The larger cloning process this is part of
+ * should have cloned their NOT NULL status separately (and DefineIndex will
+ * complain if that fails to happen).
  */
 IndexStmt *
-generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
-						const AttrNumber *attmap, int attmap_length, Oid *constraintOid)
+generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
+						const AttrNumber *attmap, int attmap_length,
+						Oid *constraintOid)
 {
 	Oid			source_relid = RelationGetRelid(source_idx);
 	HeapTuple	ht_idxrel;
@@ -1337,8 +1353,8 @@ generateClonedIndexStmt(RangeVar *heapRel, Oid heapRelid, Relation source_idx,
 	Datum		datum;
 	bool		isnull;
 
-	Assert((heapRel == NULL && OidIsValid(heapRelid)) ||
-		   (heapRel != NULL && !OidIsValid(heapRelid)));
+	if (constraintOid)
+		*constraintOid = InvalidOid;
 
 	/*
 	 * Fetch pg_class tuple of source index.  We can't use the copy in the
@@ -1821,6 +1837,7 @@ transformIndexConstraints(CreateStmtContext *cxt)
 {
 	IndexStmt  *index;
 	List	   *indexlist = NIL;
+	List	   *finalindexlist = NIL;
 	ListCell   *lc;
 
 	/*
@@ -1869,11 +1886,10 @@ transformIndexConstraints(CreateStmtContext *cxt)
 	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate
 	 * pre-existing indexes, too.
 	 */
-	Assert(cxt->alist == NIL);
 	if (cxt->pkey != NULL)
 	{
 		/* Make sure we keep the PKEY index in preference to others... */
-		cxt->alist = list_make1(cxt->pkey);
+		finalindexlist = list_make1(cxt->pkey);
 	}
 
 	foreach(lc, indexlist)
@@ -1883,11 +1899,11 @@ transformIndexConstraints(CreateStmtContext *cxt)
 
 		index = lfirst(lc);
 
-		/* if it's pkey, it's already in cxt->alist */
+		/* if it's pkey, it's already in finalindexlist */
 		if (index == cxt->pkey)
 			continue;
 
-		foreach(k, cxt->alist)
+		foreach(k, finalindexlist)
 		{
 			IndexStmt  *priorindex = lfirst(k);
 
@@ -1915,19 +1931,32 @@ transformIndexConstraints(CreateStmtContext *cxt)
 		}
 
 		if (keep)
-			cxt->alist = lappend(cxt->alist, index);
+			finalindexlist = lappend(finalindexlist, index);
 	}
+
+	/*
+	 * Now append all the IndexStmts to cxt->alist.  If we generated an ALTER
+	 * TABLE SET NOT NULL statement to support a primary key, it's already in
+	 * cxt->alist.
+	 */
+	cxt->alist = list_concat(cxt->alist, finalindexlist);
 }
 
 /*
  * transformIndexConstraint
  *		Transform one UNIQUE, PRIMARY KEY, or EXCLUDE constraint for
  *		transformIndexConstraints.
+ *
+ * We return an IndexStmt.  For a PRIMARY KEY constraint, we additionally
+ * produce NOT NULL constraints, either by marking ColumnDefs in cxt->columns
+ * as is_not_null or by adding an ALTER TABLE SET NOT NULL command to
+ * cxt->alist.
  */
 static IndexStmt *
 transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 {
 	IndexStmt  *index;
+	List	   *notnullcmds = NIL;
 	ListCell   *lc;
 
 	index = makeNode(IndexStmt);
@@ -2170,9 +2199,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	 * For UNIQUE and PRIMARY KEY, we just have a list of column names.
 	 *
 	 * Make sure referenced keys exist.  If we are making a PRIMARY KEY index,
-	 * also make sure they are NOT NULL, if possible. (Although we could leave
-	 * it to DefineIndex to mark the columns NOT NULL, it's more efficient to
-	 * get it right the first time.)
+	 * also make sure they are NOT NULL.
 	 */
 	else
 	{
@@ -2180,11 +2207,12 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		{
 			char	   *key = strVal(lfirst(lc));
 			bool		found = false;
+			bool		forced_not_null = false;
 			ColumnDef  *column = NULL;
 			ListCell   *columns;
 			IndexElem  *iparam;
 
-			/* Make sure referenced column exist. */
+			/* Make sure referenced column exists. */
 			foreach(columns, cxt->columns)
 			{
 				column = castNode(ColumnDef, lfirst(columns));
@@ -2196,9 +2224,18 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			}
 			if (found)
 			{
-				/* found column in the new table; force it to be NOT NULL */
-				if (constraint->contype == CONSTR_PRIMARY)
+				/*
+				 * column is defined in the new table.  For PRIMARY KEY, we
+				 * can apply the NOT NULL constraint cheaply here ... unless
+				 * the column is marked is_from_type, in which case marking it
+				 * here would be ineffective (see MergeAttributes).
+				 */
+				if (constraint->contype == CONSTR_PRIMARY &&
+					!column->is_from_type)
+				{
 					column->is_not_null = true;
+					forced_not_null = true;
+				}
 			}
 			else if (SystemAttributeByName(key) != NULL)
 			{
@@ -2242,10 +2279,11 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 							found = true;
 
 							/*
-							 * We currently have no easy way to force an
-							 * inherited column to be NOT NULL at creation, if
-							 * its parent wasn't so already. We leave it to
-							 * DefineIndex to fix things up in this case.
+							 * It's tempting to set forced_not_null if the
+							 * parent column is already NOT NULL, but that
+							 * seems unsafe because the column's NOT NULL
+							 * marking might disappear between now and
+							 * execution.  Do the runtime check to be safe.
 							 */
 							break;
 						}
@@ -2259,8 +2297,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			/*
 			 * In the ALTER TABLE case, don't complain about index keys not
 			 * created in the command; they may well exist already.
-			 * DefineIndex will complain about them if not, and will also take
-			 * care of marking them NOT NULL.
+			 * DefineIndex will complain about them if not.
 			 */
 			if (!found && !cxt->isalter)
 				ereport(ERROR,
@@ -2299,10 +2336,29 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			iparam->ordering = SORTBY_DEFAULT;
 			iparam->nulls_ordering = SORTBY_NULLS_DEFAULT;
 			index->indexParams = lappend(index->indexParams, iparam);
+
+			/*
+			 * For a primary-key column, also create an item for ALTER TABLE
+			 * SET NOT NULL if we couldn't ensure it via is_not_null above.
+			 */
+			if (constraint->contype == CONSTR_PRIMARY && !forced_not_null)
+			{
+				AlterTableCmd *notnullcmd = makeNode(AlterTableCmd);
+
+				notnullcmd->subtype = AT_SetNotNull;
+				notnullcmd->name = pstrdup(key);
+				notnullcmds = lappend(notnullcmds, notnullcmd);
+			}
 		}
 	}
 
-	/* Add included columns to index definition */
+	/*
+	 * Add included columns to index definition.  This is much like the
+	 * simple-column-name-list code above, except that we don't worry about
+	 * NOT NULL marking; included columns in a primary key should not be
+	 * forced NOT NULL.  We don't complain about duplicate columns, either,
+	 * though maybe we should?
+	 */
 	foreach(lc, constraint->including)
 	{
 		char	   *key = strVal(lfirst(lc));
@@ -2327,8 +2383,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			{
 				/*
 				 * column will be a system column in the new table, so accept
-				 * it. System columns can't ever be null, so no need to worry
-				 * about PRIMARY/NOT NULL constraint.
+				 * it.
 				 */
 				found = true;
 			}
@@ -2363,13 +2418,6 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 						if (strcmp(key, inhname) == 0)
 						{
 							found = true;
-
-							/*
-							 * We currently have no easy way to force an
-							 * inherited column to be NOT NULL at creation, if
-							 * its parent wasn't so already. We leave it to
-							 * DefineIndex to fix things up in this case.
-							 */
 							break;
 						}
 					}
@@ -2383,8 +2431,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		/*
 		 * In the ALTER TABLE case, don't complain about index keys not
 		 * created in the command; they may well exist already. DefineIndex
-		 * will complain about them if not, and will also take care of marking
-		 * them NOT NULL.
+		 * will complain about them if not.
 		 */
 		if (!found && !cxt->isalter)
 			ereport(ERROR,
@@ -2400,6 +2447,22 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		iparam->collation = NIL;
 		iparam->opclass = NIL;
 		index->indexIncludingParams = lappend(index->indexIncludingParams, iparam);
+	}
+
+	/*
+	 * If we found anything that requires run-time SET NOT NULL, build a full
+	 * ALTER TABLE command for that and add it to cxt->alist.
+	 */
+	if (notnullcmds)
+	{
+		AlterTableStmt *alterstmt = makeNode(AlterTableStmt);
+
+		alterstmt->relation = copyObject(cxt->relation);
+		alterstmt->cmds = notnullcmds;
+		alterstmt->relkind = OBJECT_TABLE;
+		alterstmt->missing_ok = false;
+
+		cxt->alist = lappend(cxt->alist, alterstmt);
 	}
 
 	return index;
@@ -3220,9 +3283,8 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	}
 
 	/*
-	 * transformIndexConstraints wants cxt.alist to contain only index
-	 * statements, so transfer anything we already have into save_alist
-	 * immediately.
+	 * Transfer anything we already have in cxt.alist into save_alist, to keep
+	 * it separate from the output of transformIndexConstraints.
 	 */
 	save_alist = cxt.alist;
 	cxt.alist = NIL;
@@ -3240,13 +3302,31 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	 */
 	foreach(l, cxt.alist)
 	{
-		IndexStmt  *idxstmt = lfirst_node(IndexStmt, l);
+		Node	   *istmt = (Node *) lfirst(l);
 
-		idxstmt = transformIndexStmt(relid, idxstmt, queryString);
-		newcmd = makeNode(AlterTableCmd);
-		newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
-		newcmd->def = (Node *) idxstmt;
-		newcmds = lappend(newcmds, newcmd);
+		/*
+		 * We assume here that cxt.alist contains only IndexStmts and possibly
+		 * ALTER TABLE SET NOT NULL statements generated from primary key
+		 * constraints.  We absorb the subcommands of the latter directly.
+		 */
+		if (IsA(istmt, IndexStmt))
+		{
+			IndexStmt  *idxstmt = (IndexStmt *) istmt;
+
+			idxstmt = transformIndexStmt(relid, idxstmt, queryString);
+			newcmd = makeNode(AlterTableCmd);
+			newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
+			newcmd->def = (Node *) idxstmt;
+			newcmds = lappend(newcmds, newcmd);
+		}
+		else if (IsA(istmt, AlterTableStmt))
+		{
+			AlterTableStmt *alterstmt = (AlterTableStmt *) istmt;
+
+			newcmds = list_concat(newcmds, alterstmt->cmds);
+		}
+		else
+			elog(ERROR, "unexpected stmt type %d", (int) nodeTag(istmt));
 	}
 	cxt.alist = NIL;
 

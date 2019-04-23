@@ -23,8 +23,7 @@ NOTICE:  DDL test: type simple, tag CREATE TABLE
 CREATE TABLE part1 PARTITION OF part FOR VALUES FROM (1) to (100);
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 ALTER TABLE part ADD PRIMARY KEY (a);
-NOTICE:  DDL test: type alter table, tag CREATE INDEX
-NOTICE:    subcommand: SET NOT NULL
-NOTICE:    subcommand: SET NOT NULL
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: SET NOT NULL
+NOTICE:    subcommand: SET NOT NULL
 NOTICE:    subcommand: ADD INDEX

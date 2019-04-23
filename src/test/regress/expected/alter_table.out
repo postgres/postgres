@@ -978,7 +978,7 @@ drop table atacc1;
 create table atacc1 ( test int );
 -- add a primary key constraint (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test1);
-ERROR:  column "test1" named in key does not exist
+ERROR:  column "test1" of relation "atacc1" does not exist
 drop table atacc1;
 -- adding a new column as primary key to a non-empty table.
 -- should fail unless the column has a non-null default value.
@@ -989,6 +989,13 @@ alter table atacc1 add column test2 int primary key;
 ERROR:  column "test2" contains null values
 -- now add a primary key column with a default (succeeds).
 alter table atacc1 add column test2 int default 0 primary key;
+drop table atacc1;
+-- this combination used to have order-of-execution problems (bug #15580)
+create table atacc1 (a int);
+insert into atacc1 values(1);
+alter table atacc1
+  add column b float8 not null default random(),
+  add primary key(a);
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int);
@@ -1404,9 +1411,9 @@ ERROR:  column "a" does not exist
 alter table atacc1 rename "........pg.dropped.1........" to x;
 ERROR:  column "........pg.dropped.1........" does not exist
 alter table atacc1 add primary key(a);
-ERROR:  column "a" named in key does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 alter table atacc1 add primary key("........pg.dropped.1........");
-ERROR:  column "........pg.dropped.1........" named in key does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 add unique(a);
 ERROR:  column "a" named in key does not exist
 alter table atacc1 add unique("........pg.dropped.1........");
@@ -3751,7 +3758,8 @@ ERROR:  cannot alter inherited column "b"
 -- cannot add/drop NOT NULL or check constraints to *only* the parent, when
 -- partitions exist
 ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
-ERROR:  cannot add constraint to only the partitioned table when partitions exist
+ERROR:  constraint must be added to child tables too
+DETAIL:  Column "b" of relation "part_2" is not already NOT NULL.
 HINT:  Do not specify the ONLY keyword.
 ALTER TABLE ONLY list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
 ERROR:  constraint must be added to child tables too

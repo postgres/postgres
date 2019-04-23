@@ -142,9 +142,9 @@ static List *on_commits = NIL;
 #define AT_PASS_ALTER_TYPE		1	/* ALTER COLUMN TYPE */
 #define AT_PASS_OLD_INDEX		2	/* re-add existing indexes */
 #define AT_PASS_OLD_CONSTR		3	/* re-add existing constraints */
-#define AT_PASS_COL_ATTRS		4	/* set other column attributes */
 /* We could support a RENAME COLUMN pass here, but not currently used */
-#define AT_PASS_ADD_COL			5	/* ADD COLUMN */
+#define AT_PASS_ADD_COL			4	/* ADD COLUMN */
+#define AT_PASS_COL_ATTRS		5	/* set other column attributes */
 #define AT_PASS_ADD_INDEX		6	/* ADD indexes */
 #define AT_PASS_ADD_CONSTR		7	/* ADD constraints, defaults */
 #define AT_PASS_MISC			8	/* other stuff */
@@ -370,9 +370,13 @@ static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
 static void add_column_collation_dependency(Oid relid, int32 attnum, Oid collid);
 static void ATPrepDropNotNull(Relation rel, bool recurse, bool recursing);
 static ObjectAddress ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode);
-static void ATPrepSetNotNull(Relation rel, bool recurse, bool recursing);
+static void ATPrepSetNotNull(List **wqueue, Relation rel,
+				 AlterTableCmd *cmd, bool recurse, bool recursing,
+				 LOCKMODE lockmode);
 static ObjectAddress ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 const char *colName, LOCKMODE lockmode);
+static void ATExecCheckNotNull(AlteredTableInfo *tab, Relation rel,
+				   const char *colName, LOCKMODE lockmode);
 static bool NotNullImpliedByRelConstraints(Relation rel, Form_pg_attribute attr);
 static bool ConstraintImpliedByRelConstraint(Relation scanrel,
 									 List *partConstraint, List *existedConstraints);
@@ -1068,7 +1072,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 												RelationGetDescr(parent),
 												gettext_noop("could not convert row type"));
 			idxstmt =
-				generateClonedIndexStmt(NULL, RelationGetRelid(rel), idxRel,
+				generateClonedIndexStmt(NULL, idxRel,
 										attmap, RelationGetDescr(rel)->natts,
 										&constraintOid);
 			DefineIndex(RelationGetRelid(rel),
@@ -3765,6 +3769,15 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
+			case AT_CheckNotNull:
+
+				/*
+				 * This only examines the table's schema; but lock must be
+				 * strong enough to prevent concurrent DROP NOT NULL.
+				 */
+				cmd_lockmode = AccessShareLock;
+				break;
+
 			default:			/* oops */
 				elog(ERROR, "unrecognized alter table type: %d",
 					 (int) cmd->subtype);
@@ -3889,15 +3902,19 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATPrepDropNotNull(rel, recurse, recursing);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
-			/* No command-specific prep needed */
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetNotNull:		/* ALTER COLUMN SET NOT NULL */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			ATPrepSetNotNull(rel, recurse, recursing);
+			/* Need command-specific recursion decision */
+			ATPrepSetNotNull(wqueue, rel, cmd, recurse, recursing, lockmode);
+			pass = AT_PASS_COL_ATTRS;
+			break;
+		case AT_CheckNotNull:	/* check column is already marked NOT NULL */
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
-			pass = AT_PASS_ADD_CONSTR;
+			pass = AT_PASS_COL_ATTRS;
 			break;
 		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
@@ -4213,6 +4230,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_SetNotNull:		/* ALTER COLUMN SET NOT NULL */
 			address = ATExecSetNotNull(tab, rel, cmd->name, lockmode);
+			break;
+		case AT_CheckNotNull:	/* check column is already marked NOT NULL */
+			ATExecCheckNotNull(tab, rel, cmd->name, lockmode);
 			break;
 		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			address = ATExecSetStatistics(rel, cmd->name, cmd->num, cmd->def, lockmode);
@@ -5966,9 +5986,6 @@ add_column_collation_dependency(Oid relid, int32 attnum, Oid collid)
 
 /*
  * ALTER TABLE ALTER COLUMN DROP NOT NULL
- *
- * Return the address of the modified column.  If the column was already
- * nullable, InvalidObjectAddress is returned.
  */
 
 static void
@@ -5990,6 +6007,11 @@ ATPrepDropNotNull(Relation rel, bool recurse, bool recursing)
 					 errhint("Do not specify the ONLY keyword.")));
 	}
 }
+
+/*
+ * Return the address of the modified column.  If the column was already
+ * nullable, InvalidObjectAddress is returned.
+ */
 static ObjectAddress
 ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 {
@@ -6116,23 +6138,33 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
  */
 
 static void
-ATPrepSetNotNull(Relation rel, bool recurse, bool recursing)
+ATPrepSetNotNull(List **wqueue, Relation rel,
+				 AlterTableCmd *cmd, bool recurse, bool recursing,
+				 LOCKMODE lockmode)
 {
 	/*
-	 * If the parent is a partitioned table, like check constraints, NOT NULL
-	 * constraints must be added to the child tables.  Complain if requested
-	 * otherwise and partitions exist.
+	 * If we're already recursing, there's nothing to do; the topmost
+	 * invocation of ATSimpleRecursion already visited all children.
 	 */
-	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		PartitionDesc partdesc = RelationGetPartitionDesc(rel);
+	if (recursing)
+		return;
 
-		if (partdesc && partdesc->nparts > 0 && !recurse && !recursing)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot add constraint to only the partitioned table when partitions exist"),
-					 errhint("Do not specify the ONLY keyword.")));
+	/*
+	 * If we have ALTER TABLE ONLY ... SET NOT NULL on a partitioned table,
+	 * apply ALTER TABLE ... CHECK NOT NULL to every child.  Otherwise, use
+	 * normal recursion logic.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
+		!recurse)
+	{
+		AlterTableCmd *newcmd = makeNode(AlterTableCmd);
+
+		newcmd->subtype = AT_CheckNotNull;
+		newcmd->name = pstrdup(cmd->name);
+		ATSimpleRecursion(wqueue, rel, newcmd, true, lockmode);
 	}
+	else
+		ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 }
 
 /*
@@ -6205,6 +6237,46 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 	table_close(attr_rel, RowExclusiveLock);
 
 	return address;
+}
+
+/*
+ * ALTER TABLE ALTER COLUMN CHECK NOT NULL
+ *
+ * This doesn't exist in the grammar, but we generate AT_CheckNotNull
+ * commands against the partitions of a partitioned table if the user
+ * writes ALTER TABLE ONLY ... SET NOT NULL on the partitioned table,
+ * or tries to create a primary key on it (which internally creates
+ * AT_SetNotNull on the partitioned table).   Such a command doesn't
+ * allow us to actually modify any partition, but we want to let it
+ * go through if the partitions are already properly marked.
+ *
+ * In future, this might need to adjust the child table's state, likely
+ * by incrementing an inheritance count for the attnotnull constraint.
+ * For now we need only check for the presence of the flag.
+ */
+static void
+ATExecCheckNotNull(AlteredTableInfo *tab, Relation rel,
+				   const char *colName, LOCKMODE lockmode)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
+
+	if (!((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("constraint must be added to child tables too"),
+				 errdetail("Column \"%s\" of relation \"%s\" is not already NOT NULL.",
+						   colName, RelationGetRelationName(rel)),
+				 errhint("Do not specify the ONLY keyword.")));
+
+	ReleaseSysCache(tuple);
 }
 
 /*
@@ -11269,6 +11341,16 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 											 NIL,
 											 con->conname);
 				}
+				else if (cmd->subtype == AT_SetNotNull)
+				{
+					/*
+					 * The parser will create AT_SetNotNull subcommands for
+					 * columns of PRIMARY KEY indexes/constraints, but we need
+					 * not do anything with them here, because the columns'
+					 * NOT NULL marks will already have been propagated into
+					 * the new table definition.
+					 */
+				}
 				else
 					elog(ERROR, "unexpected statement subtype: %d",
 						 (int) cmd->subtype);
@@ -15649,7 +15731,7 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 			IndexStmt  *stmt;
 			Oid			constraintOid;
 
-			stmt = generateClonedIndexStmt(NULL, RelationGetRelid(attachrel),
+			stmt = generateClonedIndexStmt(NULL,
 										   idxRel, attmap,
 										   RelationGetDescr(rel)->natts,
 										   &constraintOid);

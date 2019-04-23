@@ -117,6 +117,9 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_SetNotNull:
 				strtype = "SET NOT NULL";
 				break;
+			case AT_CheckNotNull:
+				strtype = "CHECK NOT NULL";
+				break;
 			case AT_SetStatistics:
 				strtype = "SET STATS";
 				break;
