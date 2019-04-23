@@ -161,8 +161,6 @@ static char *build_server_first_message(scram_state *state);
 static char *build_server_final_message(scram_state *state);
 static bool verify_client_proof(scram_state *state);
 static bool verify_final_nonce(scram_state *state);
-static bool parse_scram_verifier(const char *verifier, int *iterations,
-					 char **salt, uint8 *stored_key, uint8 *server_key);
 static void mock_scram_verifier(const char *username, int *iterations,
 					char **salt, uint8 *stored_key, uint8 *server_key);
 static bool is_scram_printable(char *p);
@@ -546,7 +544,7 @@ scram_verify_plain_password(const char *username, const char *password,
  *
  * Returns true if the SCRAM verifier has been parsed, and false otherwise.
  */
-static bool
+bool
 parse_scram_verifier(const char *verifier, int *iterations, char **salt,
 					 uint8 *stored_key, uint8 *server_key)
 {

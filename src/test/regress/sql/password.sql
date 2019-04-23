@@ -54,6 +54,16 @@ ALTER ROLE  regress_passwd4 PASSWORD 'foo';
 -- already encrypted with MD5, use as it is
 CREATE ROLE regress_passwd5 PASSWORD 'md5e73a4b11df52a6068f8b39f90be36023';
 
+-- This looks like a valid SCRAM-SHA-256 verifier, but it is not
+-- so it should be hashed with SCRAM-SHA-256.
+CREATE ROLE regress_passwd6 PASSWORD 'SCRAM-SHA-256$1234';
+-- These may look like valid MD5 verifiers, but they are not, so they
+-- should be hashed with SCRAM-SHA-256.
+-- trailing garbage at the end
+CREATE ROLE regress_passwd7 PASSWORD 'md5012345678901234567890123456789zz';
+-- invalid length
+CREATE ROLE regress_passwd8 PASSWORD 'md501234567890123456789012345678901zz';
+
 SELECT rolname, regexp_replace(rolpassword, '(SCRAM-SHA-256)\$(\d+):([a-zA-Z0-9+/=]+)\$([a-zA-Z0-9+=/]+):([a-zA-Z0-9+/=]+)', '\1$\2:<salt>$<storedkey>:<serverkey>') as rolpassword_masked
     FROM pg_authid
     WHERE rolname LIKE 'regress_passwd%'
@@ -70,6 +80,9 @@ DROP ROLE regress_passwd2;
 DROP ROLE regress_passwd3;
 DROP ROLE regress_passwd4;
 DROP ROLE regress_passwd5;
+DROP ROLE regress_passwd6;
+DROP ROLE regress_passwd7;
+DROP ROLE regress_passwd8;
 DROP ROLE regress_passwd_empty;
 
 -- all entries should have been removed
