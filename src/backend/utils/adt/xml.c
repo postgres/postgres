@@ -3857,7 +3857,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 			nodefree = (cur_copy->type == XML_DOCUMENT_NODE) ?
 				(void (*) (xmlNodePtr)) xmlFreeDoc : xmlFreeNode;
 
-			bytes = xmlNodeDump(buf, NULL, cur_copy, 0, 1);
+			bytes = xmlNodeDump(buf, NULL, cur_copy, 0, 0);
 			if (bytes == -1 || xmlerrcxt->err_occurred)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 							"could not dump node");
