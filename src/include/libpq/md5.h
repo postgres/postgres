@@ -16,10 +16,12 @@
 #ifndef PG_MD5_H
 #define PG_MD5_H
 
+#define MD5_PASSWD_CHARSET "0123456789abcdef"
 #define MD5_PASSWD_LEN	35
 
 #define isMD5(passwd)	(strncmp(passwd, "md5", 3) == 0 && \
-						 strlen(passwd) == MD5_PASSWD_LEN)
+						 strlen(passwd) == MD5_PASSWD_LEN && \
+						 strspn(passwd + 3, MD5_PASSWD_CHARSET) == MD5_PASSWD_LEN - 3)
 
 
 extern bool pg_md5_hash(const void *buff, size_t len, char *hexsum);
