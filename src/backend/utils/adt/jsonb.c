@@ -1155,7 +1155,9 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument list must have even number of elements"),
-				 errhint("The arguments of jsonb_build_object() must consist of alternating keys and values.")));
+				 /* translator: %s is a SQL function name */
+				 errhint("The arguments of %s must consist of alternating keys and values.",
+						 "jsonb_build_object()")));
 
 	memset(&result, 0, sizeof(JsonbInState));
 

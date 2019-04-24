@@ -1566,7 +1566,8 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for lower() function"),
+						 errmsg("could not determine which collation to use for %s function",
+								"lower()"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}
 			mylocale = pg_newlocale_from_collation(collid);
@@ -1688,7 +1689,8 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for upper() function"),
+						 errmsg("could not determine which collation to use for %s function",
+								"upper()"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}
 			mylocale = pg_newlocale_from_collation(collid);
@@ -1811,7 +1813,8 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for initcap() function"),
+						 errmsg("could not determine which collation to use for %s function",
+								"initcap()"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}
 			mylocale = pg_newlocale_from_collation(collid);
