@@ -1047,8 +1047,8 @@ my %tests = (
 			\QALTER TABLE ONLY dump_test.measurement ATTACH PARTITION dump_test_second_schema.measurement_y2006m2 \E
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
-		like   => { binary_upgrade => 1, },
-		unlike => {
+		like   => {
+			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
 			createdb                 => 1,
@@ -1057,13 +1057,14 @@ my %tests = (
 			exclude_test_table       => 1,
 			exclude_test_table_data  => 1,
 			no_blobs                 => 1,
-			no_privs                 => 1,
 			no_owner                 => 1,
+			no_privs                 => 1,
 			pg_dumpall_dbprivs       => 1,
 			role                     => 1,
 			schema_only              => 1,
 			section_pre_data         => 1,
 			with_oids                => 1,
+		}, unlike => {
 			only_dump_test_schema    => 1,
 			only_dump_test_table     => 1,
 			pg_dumpall_globals       => 1,
@@ -4833,7 +4834,8 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			\QCREATE TABLE dump_test_second_schema.measurement_y2006m2 PARTITION OF dump_test.measurement\E\n
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
-		like => {
+		like => {},
+		unlike => {
 			clean                    => 1,
 			clean_if_exists          => 1,
 			createdb                 => 1,
@@ -4848,8 +4850,7 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			role                     => 1,
 			schema_only              => 1,
 			section_pre_data         => 1,
-			with_oids                => 1, },
-		unlike => {
+			with_oids                => 1,
 			binary_upgrade           => 1,
 			only_dump_test_schema    => 1,
 			only_dump_test_table     => 1,
