@@ -74,6 +74,11 @@
   UPDATE</literal> clause.  However, the <literal>ON CONFLICT DO NOTHING</literal>
   clause is supported, provided a unique index inference specification
   is omitted.
+  Note also that <filename>postgres_fdw</filename> supports row movement
+  invoked by <command>UPDATE</command> statements executed on partitioned
+  tables, but it currently does not handle the case where a remote partition
+  chosen to insert a moved row into is also an <command>UPDATE</command>
+  target partition that will be updated later.
  </para>
 
  <para>
