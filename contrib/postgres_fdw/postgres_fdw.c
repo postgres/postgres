@@ -185,6 +185,10 @@ typedef struct PgFdwModifyState
 
 	/* working memory context */
 	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
+
+	/* for update row movement if subplan result rel */
+	struct PgFdwModifyState *aux_fmstate;	/* foreign-insert state, if
+											 * created */
 } PgFdwModifyState;
 
 /*
@@ -1844,8 +1848,22 @@ postgresExecForeignInsert(EState *estate,
 						  TupleTableSlot *slot,
 						  TupleTableSlot *planSlot)
 {
-	return execute_foreign_modify(estate, resultRelInfo, CMD_INSERT,
+	PgFdwModifyState *fmstate = (PgFdwModifyState *) resultRelInfo->ri_FdwState;
+	TupleTableSlot *rslot;
+
+	/*
+	 * If the fmstate has aux_fmstate set, use the aux_fmstate (see
+	 * postgresBeginForeignInsert())
+	 */
+	if (fmstate->aux_fmstate)
+		resultRelInfo->ri_FdwState = fmstate->aux_fmstate;
+	rslot = execute_foreign_modify(estate, resultRelInfo, CMD_INSERT,
 								  slot, planSlot);
+	/* Revert that change */
+	if (fmstate->aux_fmstate)
+		resultRelInfo->ri_FdwState = fmstate;
+
+	return rslot;
 }
 
 /*
@@ -1915,6 +1933,22 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	List	   *retrieved_attrs = NIL;
 	bool		doNothing = false;
 
+	/*
+	 * If the foreign table we are about to insert routed rows into is also
+	 * an UPDATE subplan result rel that will be updated later, proceeding
+	 * with the INSERT will result in the later UPDATE incorrectly modifying
+	 * those routed rows, so prevent the INSERT --- it would be nice if we
+	 * could handle this case; but for now, throw an error for safety.
+	 */
+	if (plan && plan->operation == CMD_UPDATE &&
+		(resultRelInfo->ri_usesFdwDirectModify ||
+		 resultRelInfo->ri_FdwState) &&
+		resultRelInfo > mtstate->resultRelInfo + mtstate->mt_whichplan)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot route tuples into foreign table to be updated \"%s\"",
+						RelationGetRelationName(rel))));
+
 	initStringInfo(&sql);
 
 	/* We transmit all columns that are defined in the foreign table. */
@@ -1983,7 +2017,19 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 									retrieved_attrs != NIL,
 									retrieved_attrs);
 
-	resultRelInfo->ri_FdwState = fmstate;
+	/*
+	 * If the given resultRelInfo already has PgFdwModifyState set, it means
+	 * the foreign table is an UPDATE subplan result rel; in which case, store
+	 * the resulting state into the aux_fmstate of the PgFdwModifyState.
+	 */
+	if (resultRelInfo->ri_FdwState)
+	{
+		Assert(plan && plan->operation == CMD_UPDATE);
+		Assert(resultRelInfo->ri_usesFdwDirectModify == false);
+		((PgFdwModifyState *) resultRelInfo->ri_FdwState)->aux_fmstate = fmstate;
+	}
+	else
+		resultRelInfo->ri_FdwState = fmstate;
 }
 
 /*
@@ -1997,6 +2043,13 @@ postgresEndForeignInsert(EState *estate,
 	PgFdwModifyState *fmstate = (PgFdwModifyState *) resultRelInfo->ri_FdwState;
 
 	Assert(fmstate != NULL);
+
+	/*
+	 * If the fmstate has aux_fmstate set, get the aux_fmstate (see
+	 * postgresBeginForeignInsert())
+	 */
+	if (fmstate->aux_fmstate)
+		fmstate = fmstate->aux_fmstate;
 
 	/* Destroy the execution state */
 	finish_foreign_modify(fmstate);
@@ -3481,6 +3534,9 @@ create_foreign_modify(EState *estate,
 	}
 
 	Assert(fmstate->p_nums <= n_params);
+
+	/* Initialize auxiliary state */
+	fmstate->aux_fmstate = NULL;
 
 	return fmstate;
 }

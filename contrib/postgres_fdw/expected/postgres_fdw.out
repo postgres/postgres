@@ -7734,6 +7734,137 @@ update utrtest set a = 1 where a = 2 returning *;
 (1 row)
 
 drop trigger loct_br_insert_trigger on loct;
+-- We can move rows to a foreign partition that has been updated already,
+-- but can't move rows to a foreign partition that hasn't been updated yet
+delete from utrtest;
+insert into utrtest values (1, 'foo');
+insert into utrtest values (2, 'qux');
+-- Test the former case:
+-- with a direct modification plan
+explain (verbose, costs off)
+update utrtest set a = 1 returning *;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Update on public.utrtest
+   Output: remp.a, remp.b
+   Foreign Update on public.remp
+   Update on public.locp
+   ->  Foreign Update on public.remp
+         Remote SQL: UPDATE public.loct SET a = 1 RETURNING a, b
+   ->  Seq Scan on public.locp
+         Output: 1, locp.b, locp.ctid
+(8 rows)
+
+update utrtest set a = 1 returning *;
+ a |  b  
+---+-----
+ 1 | foo
+ 1 | qux
+(2 rows)
+
+delete from utrtest;
+insert into utrtest values (1, 'foo');
+insert into utrtest values (2, 'qux');
+-- with a non-direct modification plan
+explain (verbose, costs off)
+update utrtest set a = 1 from (values (1), (2)) s(x) where a = s.x returning *;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Update on public.utrtest
+   Output: remp.a, remp.b, "*VALUES*".column1
+   Foreign Update on public.remp
+     Remote SQL: UPDATE public.loct SET a = $2 WHERE ctid = $1 RETURNING a, b
+   Update on public.locp
+   ->  Hash Join
+         Output: 1, remp.b, remp.ctid, "*VALUES*".*, "*VALUES*".column1
+         Hash Cond: (remp.a = "*VALUES*".column1)
+         ->  Foreign Scan on public.remp
+               Output: remp.b, remp.ctid, remp.a
+               Remote SQL: SELECT a, b, ctid FROM public.loct FOR UPDATE
+         ->  Hash
+               Output: "*VALUES*".*, "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     Output: "*VALUES*".*, "*VALUES*".column1
+   ->  Hash Join
+         Output: 1, locp.b, locp.ctid, "*VALUES*".*, "*VALUES*".column1
+         Hash Cond: (locp.a = "*VALUES*".column1)
+         ->  Seq Scan on public.locp
+               Output: locp.b, locp.ctid, locp.a
+         ->  Hash
+               Output: "*VALUES*".*, "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     Output: "*VALUES*".*, "*VALUES*".column1
+(24 rows)
+
+update utrtest set a = 1 from (values (1), (2)) s(x) where a = s.x returning *;
+ a |  b  | x 
+---+-----+---
+ 1 | foo | 1
+ 1 | qux | 2
+(2 rows)
+
+-- Change the definition of utrtest so that the foreign partition get updated
+-- after the local partition
+delete from utrtest;
+alter table utrtest detach partition remp;
+drop foreign table remp;
+alter table loct drop constraint loct_a_check;
+alter table loct add check (a in (3));
+create foreign table remp (a int check (a in (3)), b text) server loopback options (table_name 'loct');
+alter table utrtest attach partition remp for values in (3);
+insert into utrtest values (2, 'qux');
+insert into utrtest values (3, 'xyzzy');
+-- Test the latter case:
+-- with a direct modification plan
+explain (verbose, costs off)
+update utrtest set a = 3 returning *;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Update on public.utrtest
+   Output: locp.a, locp.b
+   Update on public.locp
+   Foreign Update on public.remp
+   ->  Seq Scan on public.locp
+         Output: 3, locp.b, locp.ctid
+   ->  Foreign Update on public.remp
+         Remote SQL: UPDATE public.loct SET a = 3 RETURNING a, b
+(8 rows)
+
+update utrtest set a = 3 returning *; -- ERROR
+ERROR:  cannot route tuples into foreign table to be updated "remp"
+-- with a non-direct modification plan
+explain (verbose, costs off)
+update utrtest set a = 3 from (values (2), (3)) s(x) where a = s.x returning *;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Update on public.utrtest
+   Output: locp.a, locp.b, "*VALUES*".column1
+   Update on public.locp
+   Foreign Update on public.remp
+     Remote SQL: UPDATE public.loct SET a = $2 WHERE ctid = $1 RETURNING a, b
+   ->  Hash Join
+         Output: 3, locp.b, locp.ctid, "*VALUES*".*, "*VALUES*".column1
+         Hash Cond: (locp.a = "*VALUES*".column1)
+         ->  Seq Scan on public.locp
+               Output: locp.b, locp.ctid, locp.a
+         ->  Hash
+               Output: "*VALUES*".*, "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     Output: "*VALUES*".*, "*VALUES*".column1
+   ->  Hash Join
+         Output: 3, remp.b, remp.ctid, "*VALUES*".*, "*VALUES*".column1
+         Hash Cond: (remp.a = "*VALUES*".column1)
+         ->  Foreign Scan on public.remp
+               Output: remp.b, remp.ctid, remp.a
+               Remote SQL: SELECT a, b, ctid FROM public.loct FOR UPDATE
+         ->  Hash
+               Output: "*VALUES*".*, "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     Output: "*VALUES*".*, "*VALUES*".column1
+(24 rows)
+
+update utrtest set a = 3 from (values (2), (3)) s(x) where a = s.x returning *; -- ERROR
+ERROR:  cannot route tuples into foreign table to be updated "remp"
 drop table utrtest;
 drop table loct;
 -- Test copy tuple routing
