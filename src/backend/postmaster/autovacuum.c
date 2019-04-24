@@ -3033,8 +3033,8 @@ relation_needs_vacanalyze(Oid relid,
 		multiForceLimit = recentMulti - multixact_freeze_max_age;
 		if (multiForceLimit < FirstMultiXactId)
 			multiForceLimit -= FirstMultiXactId;
-		force_vacuum = MultiXactIdPrecedes(classForm->relminmxid,
-										   multiForceLimit);
+		force_vacuum = MultiXactIdIsValid(classForm->relminmxid) &&
+			MultiXactIdPrecedes(classForm->relminmxid, multiForceLimit);
 	}
 	*wraparound = force_vacuum;
 

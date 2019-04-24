@@ -1313,36 +1313,61 @@ vac_update_datfrozenxid(void)
 
 		/*
 		 * Only consider relations able to hold unfrozen XIDs (anything else
-		 * should have InvalidTransactionId in relfrozenxid anyway.)
+		 * should have InvalidTransactionId in relfrozenxid anyway).
 		 */
 		if (classForm->relkind != RELKIND_RELATION &&
 			classForm->relkind != RELKIND_MATVIEW &&
 			classForm->relkind != RELKIND_TOASTVALUE)
+		{
+			Assert(!TransactionIdIsValid(classForm->relfrozenxid));
+			Assert(!MultiXactIdIsValid(classForm->relminmxid));
 			continue;
-
-		Assert(TransactionIdIsNormal(classForm->relfrozenxid));
-		Assert(MultiXactIdIsValid(classForm->relminmxid));
+		}
 
 		/*
+		 * Some table AMs might not need per-relation xid / multixid
+		 * horizons. It therefore seems reasonable to allow relfrozenxid and
+		 * relminmxid to not be set (i.e. set to their respective Invalid*Id)
+		 * independently. Thus validate and compute horizon for each only if
+		 * set.
+		 *
 		 * If things are working properly, no relation should have a
 		 * relfrozenxid or relminmxid that is "in the future".  However, such
 		 * cases have been known to arise due to bugs in pg_upgrade.  If we
 		 * see any entries that are "in the future", chicken out and don't do
-		 * anything.  This ensures we won't truncate clog before those
-		 * relations have been scanned and cleaned up.
+		 * anything.  This ensures we won't truncate clog & multixact SLRUs
+		 * before those relations have been scanned and cleaned up.
 		 */
-		if (TransactionIdPrecedes(lastSaneFrozenXid, classForm->relfrozenxid) ||
-			MultiXactIdPrecedes(lastSaneMinMulti, classForm->relminmxid))
+
+		if (TransactionIdIsValid(classForm->relfrozenxid))
 		{
-			bogus = true;
-			break;
+			Assert(TransactionIdIsNormal(classForm->relfrozenxid));
+
+			/* check for values in the future */
+			if (TransactionIdPrecedes(lastSaneFrozenXid, classForm->relfrozenxid))
+			{
+				bogus = true;
+				break;
+			}
+
+			/* determine new horizon */
+			if (TransactionIdPrecedes(classForm->relfrozenxid, newFrozenXid))
+				newFrozenXid = classForm->relfrozenxid;
 		}
 
-		if (TransactionIdPrecedes(classForm->relfrozenxid, newFrozenXid))
-			newFrozenXid = classForm->relfrozenxid;
+		if (MultiXactIdIsValid(classForm->relminmxid))
+		{
+			/* check for values in the future */
+			if (MultiXactIdPrecedes(lastSaneMinMulti, classForm->relminmxid))
+			{
+				bogus = true;
+				break;
+			}
 
-		if (MultiXactIdPrecedes(classForm->relminmxid, newMinMulti))
-			newMinMulti = classForm->relminmxid;
+			/* determine new horizon */
+			if (MultiXactIdPrecedes(classForm->relminmxid, newMinMulti))
+				newMinMulti = classForm->relminmxid;
+		}
 	}
 
 	/* we're done with pg_class */

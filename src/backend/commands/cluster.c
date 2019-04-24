@@ -870,18 +870,16 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
 	 * backwards, so take the max.
 	 */
-	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
+	if (TransactionIdIsValid(OldHeap->rd_rel->relfrozenxid) &&
+		TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
 		FreezeXid = OldHeap->rd_rel->relfrozenxid;
 
 	/*
 	 * MultiXactCutoff, similarly, shouldn't go backwards either.
 	 */
-	if (MultiXactIdPrecedes(MultiXactCutoff, OldHeap->rd_rel->relminmxid))
+	if (MultiXactIdIsValid(OldHeap->rd_rel->relminmxid) &&
+		MultiXactIdPrecedes(MultiXactCutoff, OldHeap->rd_rel->relminmxid))
 		MultiXactCutoff = OldHeap->rd_rel->relminmxid;
-
-	/* return selected values to caller */
-	*pFreezeXid = FreezeXid;
-	*pCutoffMulti = MultiXactCutoff;
 
 	/*
 	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan
@@ -915,12 +913,18 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/*
 	 * Hand of the actual copying to AM specific function, the generic code
-	 * cannot know how to deal with visibility across AMs.
+	 * cannot know how to deal with visibility across AMs. Note that this
+	 * routine is allowed to set FreezeXid / MultiXactCutoff to different
+	 * values (e.g. because the AM doesn't use freezing).
 	 */
 	table_relation_copy_for_cluster(OldHeap, NewHeap, OldIndex, use_sort,
-									OldestXmin, FreezeXid, MultiXactCutoff,
+									OldestXmin, &FreezeXid, &MultiXactCutoff,
 									&num_tuples, &tups_vacuumed,
 									&tups_recently_dead);
+
+	/* return selected values to caller, get set as relfrozenxid/minmxid */
+	*pFreezeXid = FreezeXid;
+	*pCutoffMulti = MultiXactCutoff;
 
 	/* Reset rd_toastoid just to be tidy --- it shouldn't be looked at again */
 	NewHeap->rd_toastoid = InvalidOid;
@@ -1118,9 +1122,9 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	/* set rel1's frozen Xid and minimum MultiXid */
 	if (relform1->relkind != RELKIND_INDEX)
 	{
-		Assert(TransactionIdIsNormal(frozenXid));
+		Assert(!TransactionIdIsValid(frozenXid) ||
+			   TransactionIdIsNormal(frozenXid));
 		relform1->relfrozenxid = frozenXid;
-		Assert(MultiXactIdIsValid(cutoffMulti));
 		relform1->relminmxid = cutoffMulti;
 	}
 

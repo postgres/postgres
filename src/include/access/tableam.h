@@ -452,8 +452,8 @@ typedef struct TableAmRoutine
 											  Relation OldIndex,
 											  bool use_sort,
 											  TransactionId OldestXmin,
-											  TransactionId FreezeXid,
-											  MultiXactId MultiXactCutoff,
+											  TransactionId *xid_cutoff,
+											  MultiXactId *multi_cutoff,
 											  double *num_tuples,
 											  double *tups_vacuumed,
 											  double *tups_recently_dead);
@@ -1297,32 +1297,37 @@ table_relation_copy_data(Relation rel, RelFileNode newrnode)
  * Copy data from `OldHeap` into `NewHeap`, as part of a CLUSTER or VACUUM
  * FULL.
  *
- * If `use_sort` is true, the table contents are sorted appropriate for
- * `OldIndex`; if use_sort is false and OldIndex is not InvalidOid, the data
- * is copied in that index's order; if use_sort is false and OidIndex is
- * InvalidOid, no sorting is performed.
+ * Additional Input parameters:
+ * - use_sort - if true, the table contents are sorted appropriate for
+ *   `OldIndex`; if false and OldIndex is not InvalidOid, the data is copied
+ *   in that index's order; if false and OidIndex is InvalidOid, no sorting is
+ *   performed
+ * - OidIndex - see use_sort
+ * - OldestXmin - computed by vacuum_set_xid_limits(), even when
+ *   not needed for the relation's AM
+ * - *xid_cutoff - dito
+ * - *multi_cutoff - dito
  *
- * OldestXmin, FreezeXid, MultiXactCutoff must be currently valid values for
- * the table.
- *
- * *num_tuples, *tups_vacuumed, *tups_recently_dead will contain statistics
- * computed while copying for the relation. Not all might make sense for every
- * AM.
+ * Output parameters:
+ * - *xid_cutoff - rel's new relfrozenxid value, may be invalid
+ * - *multi_cutoff - rel's new relminmxid value, may be invalid
+ * - *tups_vacuumed - stats, for logging, if appropriate for AM
+ * - *tups_recently_dead - stats, for logging, if appropriate for AM
  */
 static inline void
 table_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 								Relation OldIndex,
 								bool use_sort,
 								TransactionId OldestXmin,
-								TransactionId FreezeXid,
-								MultiXactId MultiXactCutoff,
+								TransactionId *xid_cutoff,
+								MultiXactId *multi_cutoff,
 								double *num_tuples,
 								double *tups_vacuumed,
 								double *tups_recently_dead)
 {
 	OldHeap->rd_tableam->relation_copy_for_cluster(OldHeap, NewHeap, OldIndex,
 												   use_sort, OldestXmin,
-												   FreezeXid, MultiXactCutoff,
+												   xid_cutoff, multi_cutoff,
 												   num_tuples, tups_vacuumed,
 												   tups_recently_dead);
 }
