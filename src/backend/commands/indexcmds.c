@@ -85,6 +85,7 @@ static List *ChooseIndexColumnNames(List *indexElems);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 								Oid relId, Oid oldRelId, void *arg);
 static void ReindexPartitionedIndex(Relation parentIdx);
+static void update_relispartition(Oid relationId, bool newval);
 
 /*
  * CheckIndexCompatible
@@ -2617,6 +2618,9 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 	systable_endscan(scan);
 	relation_close(pg_inherits, RowExclusiveLock);
 
+	/* set relispartition correctly on the partition */
+	update_relispartition(partRelid, OidIsValid(parentOid));
+
 	if (fix_dependencies)
 	{
 		ObjectAddress partIdx;
@@ -2653,4 +2657,24 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 		/* make our updates visible */
 		CommandCounterIncrement();
 	}
+}
+
+/*
+ * Subroutine of IndexSetParentIndex to update the relispartition flag of the
+ * given index to the given value.
+ */
+static void
+update_relispartition(Oid relationId, bool newval)
+{
+	HeapTuple	tup;
+	Relation	classRel;
+
+	classRel = heap_open(RelationRelationId, RowExclusiveLock);
+	tup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relationId));
+	Assert(((Form_pg_class) GETSTRUCT(tup))->relispartition != newval);
+	((Form_pg_class) GETSTRUCT(tup))->relispartition = newval;
+	CatalogTupleUpdate(classRel, &tup->t_self, tup);
+	heap_freetuple(tup);
+
+	heap_close(classRel, RowExclusiveLock);
 }
