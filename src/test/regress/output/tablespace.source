@@ -102,11 +102,28 @@ Partitioned index "testschema.part_a_idx"
 btree, for table "testschema.part"
 Tablespace: "regress_tblspace"
 
+-- partitioned rels cannot specify the default tablespace.  These fail:
+CREATE TABLE testschema.dflt (a int PRIMARY KEY) PARTITION BY LIST (a) TABLESPACE pg_default;
+ERROR:  cannot specify default tablespace for partitioned relations
+CREATE TABLE testschema.dflt (a int PRIMARY KEY USING INDEX TABLESPACE pg_default) PARTITION BY LIST (a);
+ERROR:  cannot specify default tablespace for partitioned relation
+SET default_tablespace TO 'pg_default';
+CREATE TABLE testschema.dflt (a int PRIMARY KEY) PARTITION BY LIST (a) TABLESPACE regress_tblspace;
+ERROR:  cannot specify default tablespace for partitioned relations
+CREATE TABLE testschema.dflt (a int PRIMARY KEY USING INDEX TABLESPACE regress_tblspace) PARTITION BY LIST (a);
+ERROR:  cannot specify default tablespace for partitioned relations
+-- but these work:
+CREATE TABLE testschema.dflt (a int PRIMARY KEY USING INDEX TABLESPACE regress_tblspace) PARTITION BY LIST (a) TABLESPACE regress_tblspace;
+SET default_tablespace TO '';
+CREATE TABLE testschema.dflt2 (a int PRIMARY KEY) PARTITION BY LIST (a);
+DROP TABLE testschema.dflt, testschema.dflt2;
 -- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
 CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
 INSERT INTO testschema.test_default_tab VALUES (1);
 CREATE INDEX test_index1 on testschema.test_default_tab (id);
 CREATE INDEX test_index2 on testschema.test_default_tab (id) TABLESPACE regress_tblspace;
+ALTER TABLE testschema.test_default_tab ADD CONSTRAINT test_index3 PRIMARY KEY (id);
+ALTER TABLE testschema.test_default_tab ADD CONSTRAINT test_index4 UNIQUE (id) USING INDEX TABLESPACE regress_tblspace;
 \d testschema.test_index1
    Index "testschema.test_index1"
  Column |  Type  | Key? | Definition 
@@ -120,6 +137,21 @@ btree, for table "testschema.test_default_tab"
 --------+--------+------+------------
  id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+   Index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index4
+   Index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 -- use a custom tablespace for default_tablespace
@@ -139,6 +171,21 @@ btree, for table "testschema.test_default_tab"
 --------+--------+------+------------
  id     | bigint | yes  | id
 btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+   Index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index4
+   Index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 SELECT * FROM testschema.test_default_tab;
@@ -162,6 +209,21 @@ btree, for table "testschema.test_default_tab"
 --------+---------+------+------------
  id     | integer | yes  | id
 btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+    Index "testschema.test_index3"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
+primary key, btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index4
+    Index "testschema.test_index4"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
+unique, btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
 SELECT * FROM testschema.test_default_tab;
@@ -189,6 +251,21 @@ btree, for table "testschema.test_default_tab"
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
+\d testschema.test_index3
+    Index "testschema.test_index3"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
+primary key, btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index4
+    Index "testschema.test_index4"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ id     | integer | yes  | id
+unique, btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
 \d testschema.test_index1
@@ -206,7 +283,208 @@ btree, for table "testschema.test_default_tab"
 btree, for table "testschema.test_default_tab"
 Tablespace: "regress_tblspace"
 
+\d testschema.test_index3
+   Index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab"
+
+\d testschema.test_index4
+   Index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab"
+Tablespace: "regress_tblspace"
+
 DROP TABLE testschema.test_default_tab;
+-- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
+-- (this time with a partitioned table)
+CREATE TABLE testschema.test_default_tab_p(id bigint, val bigint)
+    PARTITION BY LIST (id) TABLESPACE regress_tblspace;
+CREATE TABLE testschema.test_default_tab_p1 PARTITION OF testschema.test_default_tab_p
+    FOR VALUES IN (1);
+INSERT INTO testschema.test_default_tab_p VALUES (1);
+CREATE INDEX test_index1 on testschema.test_default_tab_p (val);
+CREATE INDEX test_index2 on testschema.test_default_tab_p (val) TABLESPACE regress_tblspace;
+ALTER TABLE testschema.test_default_tab_p ADD CONSTRAINT test_index3 PRIMARY KEY (id);
+ALTER TABLE testschema.test_default_tab_p ADD CONSTRAINT test_index4 UNIQUE (id) USING INDEX TABLESPACE regress_tblspace;
+\d testschema.test_index1
+Partitioned index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ val    | bigint | yes  | val
+btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index2
+Partitioned index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ val    | bigint | yes  | val
+btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+Partitioned index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index4
+Partitioned index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+-- use a custom tablespace for default_tablespace
+SET default_tablespace TO regress_tblspace;
+-- tablespace should not change if no rewrite
+ALTER TABLE testschema.test_default_tab_p ALTER val TYPE bigint;
+\d testschema.test_index1
+Partitioned index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ val    | bigint | yes  | val
+btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index2
+Partitioned index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ val    | bigint | yes  | val
+btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+Partitioned index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index4
+Partitioned index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+SELECT * FROM testschema.test_default_tab_p;
+ id | val 
+----+-----
+  1 |    
+(1 row)
+
+-- tablespace should not change even if there is an index rewrite
+ALTER TABLE testschema.test_default_tab_p ALTER val TYPE int;
+\d testschema.test_index1
+Partitioned index "testschema.test_index1"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ val    | integer | yes  | val
+btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index2
+Partitioned index "testschema.test_index2"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ val    | integer | yes  | val
+btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+Partitioned index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index4
+Partitioned index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+SELECT * FROM testschema.test_default_tab_p;
+ id | val 
+----+-----
+  1 |    
+(1 row)
+
+-- now use the default tablespace for default_tablespace
+SET default_tablespace TO '';
+-- tablespace should not change if no rewrite
+ALTER TABLE testschema.test_default_tab_p ALTER val TYPE int;
+\d testschema.test_index1
+Partitioned index "testschema.test_index1"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ val    | integer | yes  | val
+btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index2
+Partitioned index "testschema.test_index2"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ val    | integer | yes  | val
+btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+Partitioned index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index4
+Partitioned index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+-- tablespace should not change even if there is an index rewrite
+ALTER TABLE testschema.test_default_tab_p ALTER val TYPE bigint;
+\d testschema.test_index1
+Partitioned index "testschema.test_index1"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ val    | bigint | yes  | val
+btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index2
+Partitioned index "testschema.test_index2"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ val    | bigint | yes  | val
+btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_index3
+Partitioned index "testschema.test_index3"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+primary key, btree, for table "testschema.test_default_tab_p"
+
+\d testschema.test_index4
+Partitioned index "testschema.test_index4"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ id     | bigint | yes  | id
+unique, btree, for table "testschema.test_default_tab_p"
+Tablespace: "regress_tblspace"
+
+DROP TABLE testschema.test_default_tab_p;
 -- check that default_tablespace affects index additions in ALTER TABLE
 CREATE TABLE testschema.test_tab(id int) TABLESPACE regress_tblspace;
 INSERT INTO testschema.test_tab VALUES (1);
@@ -234,6 +512,62 @@ SELECT * FROM testschema.test_tab;
 ----
   1
 (1 row)
+
+DROP TABLE testschema.test_tab;
+-- check that default_tablespace is handled correctly by multi-command
+-- ALTER TABLE that includes a tablespace-preserving rewrite
+CREATE TABLE testschema.test_tab(a int, b int, c int);
+SET default_tablespace TO regress_tblspace;
+ALTER TABLE testschema.test_tab ADD CONSTRAINT test_tab_unique UNIQUE (a);
+CREATE INDEX test_tab_a_idx ON testschema.test_tab (a);
+SET default_tablespace TO '';
+CREATE INDEX test_tab_b_idx ON testschema.test_tab (b);
+\d testschema.test_tab_unique
+  Index "testschema.test_tab_unique"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ a      | integer | yes  | a
+unique, btree, for table "testschema.test_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_tab_a_idx
+  Index "testschema.test_tab_a_idx"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ a      | integer | yes  | a
+btree, for table "testschema.test_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_tab_b_idx
+  Index "testschema.test_tab_b_idx"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ b      | integer | yes  | b
+btree, for table "testschema.test_tab"
+
+ALTER TABLE testschema.test_tab ALTER b TYPE bigint, ADD UNIQUE (c);
+\d testschema.test_tab_unique
+  Index "testschema.test_tab_unique"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ a      | integer | yes  | a
+unique, btree, for table "testschema.test_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_tab_a_idx
+  Index "testschema.test_tab_a_idx"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ a      | integer | yes  | a
+btree, for table "testschema.test_tab"
+Tablespace: "regress_tblspace"
+
+\d testschema.test_tab_b_idx
+  Index "testschema.test_tab_b_idx"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ b      | bigint | yes  | b
+btree, for table "testschema.test_tab"
 
 DROP TABLE testschema.test_tab;
 -- let's try moving a table from one place to another

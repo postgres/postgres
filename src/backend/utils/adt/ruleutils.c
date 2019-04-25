@@ -1429,12 +1429,13 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			Oid			tblspc;
 
 			tblspc = get_rel_tablespace(indexrelid);
-			if (!OidIsValid(tblspc))
-				tblspc = MyDatabaseTableSpace;
-			if (isConstraint)
-				appendStringInfoString(&buf, " USING INDEX");
-			appendStringInfo(&buf, " TABLESPACE %s",
-							 quote_identifier(get_tablespace_name(tblspc)));
+			if (OidIsValid(tblspc))
+			{
+				if (isConstraint)
+					appendStringInfoString(&buf, " USING INDEX");
+				appendStringInfo(&buf, " TABLESPACE %s",
+								 quote_identifier(get_tablespace_name(tblspc)));
+			}
 		}
 
 		/*
@@ -2170,6 +2171,12 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 						pfree(options);
 					}
 
+					/*
+					 * Print the tablespace, unless it's the database default.
+					 * This is to help ALTER TABLE usage of this facility,
+					 * which needs this behavior to recreate exact catalog
+					 * state.
+					 */
 					tblspc = get_rel_tablespace(indexId);
 					if (OidIsValid(tblspc))
 						appendStringInfo(&buf, " USING INDEX TABLESPACE %s",

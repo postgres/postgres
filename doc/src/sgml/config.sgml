@@ -7356,7 +7356,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         This variable specifies the default tablespace in which to create
         objects (tables and indexes) when a <command>CREATE</command> command does
-        not explicitly specify a tablespace.
+        not explicitly specify a tablespace.  It also determines the tablespace
+        that a partitioned relation will direct future partitions to.
        </para>
 
        <para>

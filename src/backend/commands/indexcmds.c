@@ -467,8 +467,21 @@ DefineIndex(Oid relationId,
 	LOCKTAG		heaplocktag;
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
+	int			save_nestlevel = -1;
 	int			i;
 
+	/*
+	 * Some callers need us to run with an empty default_tablespace; this is a
+	 * necessary hack to be able to reproduce catalog state accurately when
+	 * recreating indexes after table-rewriting ALTER TABLE.
+	 */
+	if (stmt->reset_default_tblspc)
+	{
+		save_nestlevel = NewGUCNestLevel();
+		(void) set_config_option("default_tablespace", "",
+								 PGC_USERSET, PGC_S_SESSION,
+								 GUC_ACTION_SAVE, true, 0, false);
+	}
 
 	/*
 	 * Start progress report.  If we're building a partition, this was already
@@ -622,10 +635,15 @@ DefineIndex(Oid relationId,
 	if (stmt->tableSpace)
 	{
 		tablespaceId = get_tablespace_oid(stmt->tableSpace, false);
+		if (partitioned && tablespaceId == MyDatabaseTableSpace)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot specify default tablespace for partitioned relation")));
 	}
 	else
 	{
-		tablespaceId = GetDefaultTablespace(rel->rd_rel->relpersistence);
+		tablespaceId = GetDefaultTablespace(rel->rd_rel->relpersistence,
+											partitioned);
 		/* note InvalidOid is OK in this case */
 	}
 
@@ -979,6 +997,13 @@ DefineIndex(Oid relationId,
 					 &createdConstraintId);
 
 	ObjectAddressSet(address, RelationRelationId, indexRelationId);
+
+	/*
+	 * Revert to original default_tablespace.  Must do this before any return
+	 * from this function, but after index_create, so this is a good time.
+	 */
+	if (save_nestlevel >= 0)
+		AtEOXact_GUC(true, save_nestlevel);
 
 	if (!OidIsValid(indexRelationId))
 	{

@@ -2649,6 +2649,7 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_BOOL_FIELD(transformed);
 	WRITE_BOOL_FIELD(concurrent);
 	WRITE_BOOL_FIELD(if_not_exists);
+	WRITE_BOOL_FIELD(reset_default_tblspc);
 }
 
 static void
@@ -3491,6 +3492,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexname);
 			WRITE_STRING_FIELD(indexspace);
+			WRITE_BOOL_FIELD(reset_default_tblspc);
 			/* access_method and where_clause not currently used */
 			break;
 
@@ -3501,6 +3503,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexname);
 			WRITE_STRING_FIELD(indexspace);
+			WRITE_BOOL_FIELD(reset_default_tblspc);
 			/* access_method and where_clause not currently used */
 			break;
 
@@ -3511,6 +3514,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexname);
 			WRITE_STRING_FIELD(indexspace);
+			WRITE_BOOL_FIELD(reset_default_tblspc);
 			WRITE_STRING_FIELD(access_method);
 			WRITE_NODE_FIELD(where_clause);
 			break;

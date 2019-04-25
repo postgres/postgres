@@ -1104,7 +1104,9 @@ check_default_tablespace(char **newval, void **extra, GucSource source)
  * GetDefaultTablespace -- get the OID of the current default tablespace
  *
  * Temporary objects have different default tablespaces, hence the
- * relpersistence parameter must be specified.
+ * relpersistence parameter must be specified.  Also, for partitioned tables,
+ * we disallow specifying the database default, so that needs to be specified
+ * too.
  *
  * May return InvalidOid to indicate "use the database's default tablespace".
  *
@@ -1115,7 +1117,7 @@ check_default_tablespace(char **newval, void **extra, GucSource source)
  * default_tablespace GUC variable.
  */
 Oid
-GetDefaultTablespace(char relpersistence)
+GetDefaultTablespace(char relpersistence, bool partitioned)
 {
 	Oid			result;
 
@@ -1141,10 +1143,18 @@ GetDefaultTablespace(char relpersistence)
 
 	/*
 	 * Allow explicit specification of database's default tablespace in
-	 * default_tablespace without triggering permissions checks.
+	 * default_tablespace without triggering permissions checks.  Don't
+	 * allow specifying that when creating a partitioned table, however,
+	 * since the result is confusing.
 	 */
 	if (result == MyDatabaseTableSpace)
+	{
+		if (partitioned)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot specify default tablespace for partitioned relations")));
 		result = InvalidOid;
+	}
 	return result;
 }
 
