@@ -110,7 +110,7 @@ static const char *const skip[] = {
 
 /*
  * Report current progress status.  Parts borrowed from
- * src/bin/pg_basebackup.c.
+ * src/bin/pg_basebackup/pg_basebackup.c.
  */
 static void
 progress_report(bool force)
