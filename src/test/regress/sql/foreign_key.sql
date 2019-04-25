@@ -1657,3 +1657,13 @@ DELETE FROM pk WHERE a = 20;
 UPDATE pk SET a = 90 WHERE a = 30;
 SELECT tableoid::regclass, * FROM fk;
 DROP TABLE fk;
+
+-- test for reported bug: relispartition not set
+-- https://postgr.es/m/CA+HiwqHMsRtRYRWYTWavKJ8x14AFsv7bmAV46mYwnfD3vy8goQ@mail.gmail.com
+CREATE SCHEMA fkpart7
+  CREATE TABLE pkpart (a int) PARTITION BY LIST (a)
+  CREATE TABLE pkpart1 PARTITION OF pkpart FOR VALUES IN (1);
+ALTER TABLE fkpart7.pkpart1 ADD PRIMARY KEY (a);
+ALTER TABLE fkpart7.pkpart ADD PRIMARY KEY (a);
+CREATE TABLE fkpart7.fk (a int REFERENCES fkpart7.pkpart);
+DROP SCHEMA fkpart7 CASCADE;

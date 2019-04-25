@@ -525,8 +525,6 @@ static ObjectAddress ATExecAttachPartitionIdx(List **wqueue, Relation rel,
 static void validatePartitionedIndex(Relation partedIdx, Relation partedTbl);
 static void refuseDupeIndexAttach(Relation parentIdx, Relation partIdx,
 					  Relation partitionTbl);
-static void update_relispartition(Relation classRel, Oid relationId,
-					  bool newval);
 static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
 
@@ -15714,7 +15712,6 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 				if (OidIsValid(constraintOid))
 					ConstraintSetParentConstraint(cldConstrOid, constraintOid,
 												  RelationGetRelid(attachrel));
-				update_relispartition(NULL, cldIdxId, true);
 				found = true;
 
 				CommandCounterIncrement();
@@ -15970,7 +15967,6 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 
 		idx = index_open(idxid, AccessExclusiveLock);
 		IndexSetParentIndex(idx, InvalidOid);
-		update_relispartition(classRel, idxid, false);
 
 		/* If there's a constraint associated with the index, detach it too */
 		constrOid = get_relation_idx_constraint_oid(RelationGetRelid(partRel),
@@ -16268,7 +16264,6 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 		if (OidIsValid(constraintOid))
 			ConstraintSetParentConstraint(cldConstrId, constraintOid,
 										  RelationGetRelid(partTbl));
-		update_relispartition(NULL, partIdxId, true);
 
 		pfree(attmap);
 
@@ -16399,38 +16394,6 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 		relation_close(parentIdx, AccessExclusiveLock);
 		relation_close(parentTbl, AccessExclusiveLock);
 	}
-}
-
-/*
- * Update the relispartition flag of the given relation to the given value.
- *
- * classRel is the pg_class relation, already open and suitably locked.
- * It can be passed as NULL, in which case it's opened and closed locally.
- */
-static void
-update_relispartition(Relation classRel, Oid relationId, bool newval)
-{
-	HeapTuple	tup;
-	HeapTuple	newtup;
-	Form_pg_class classForm;
-	bool		opened = false;
-
-	if (classRel == NULL)
-	{
-		classRel = table_open(RelationRelationId, RowExclusiveLock);
-		opened = true;
-	}
-
-	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(relationId));
-	newtup = heap_copytuple(tup);
-	classForm = (Form_pg_class) GETSTRUCT(newtup);
-	classForm->relispartition = newval;
-	CatalogTupleUpdate(classRel, &tup->t_self, newtup);
-	heap_freetuple(newtup);
-	ReleaseSysCache(tup);
-
-	if (opened)
-		table_close(classRel, RowExclusiveLock);
 }
 
 /*
