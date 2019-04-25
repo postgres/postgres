@@ -68,7 +68,7 @@ rmtree(const char *path, bool rmtopdir)
 		 * This is not an academic possibility. One scenario where this
 		 * happens is when bgwriter has a pending unlink request for a file in
 		 * a database that's being dropped. In dropdb(), we call
-		 * ForgetDatabaseFsyncRequests() to flush out any such pending unlink
+		 * ForgetDatabaseSyncRequests() to flush out any such pending unlink
 		 * requests, but because that's asynchronous, it's not guaranteed that
 		 * the bgwriter receives the message in time.
 		 */

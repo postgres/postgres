@@ -137,7 +137,7 @@ typedef struct
 
 static CheckpointerShmemStruct *CheckpointerShmem;
 
-/* interval for calling AbsorbFsyncRequests in CheckpointWriteDelay */
+/* interval for calling AbsorbSyncRequests in CheckpointWriteDelay */
 #define WRITES_PER_ABSORB		1000
 
 /*

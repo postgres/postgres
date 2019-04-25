@@ -75,7 +75,7 @@ static MemoryContext pendingOpsCxt; /* context for the above  */
 static CycleCtr sync_cycle_ctr = 0;
 static CycleCtr checkpoint_cycle_ctr = 0;
 
-/* Intervals for calling AbsorbFsyncRequests */
+/* Intervals for calling AbsorbSyncRequests */
 #define FSYNCS_PER_ABSORB		10
 #define UNLINKS_PER_ABSORB		10
 
@@ -215,9 +215,9 @@ SyncPostCheckpoint(void)
 		pfree(entry);
 
 		/*
-		 * As in ProcessFsyncRequests, we don't want to stop absorbing fsync
+		 * As in ProcessSyncRequests, we don't want to stop absorbing fsync
 		 * requests for along time when there are many deletions to be done.
-		 * We can safely call AbsorbFsyncRequests() at this point in the loop
+		 * We can safely call AbsorbSyncRequests() at this point in the loop
 		 * (note it might try to delete list entries).
 		 */
 		if (--absorb_counter <= 0)
@@ -284,7 +284,7 @@ ProcessSyncRequests(void)
 	 * eventually wrap the counter around to the point where an old entry
 	 * might appear new, causing us to skip it, possibly allowing a checkpoint
 	 * to succeed that should not have.  To forestall wraparound, any time the
-	 * previous ProcessFsyncRequests() failed to complete, run through the
+	 * previous ProcessSyncRequests() failed to complete, run through the
 	 * table and forcibly set cycle_ctr = sync_cycle_ctr.
 	 *
 	 * Think not to merge this loop with the main loop, as the problem is

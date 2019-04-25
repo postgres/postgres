@@ -952,7 +952,7 @@ register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
 }
 
 /*
- * ForgetDatabaseFsyncRequests -- forget any fsyncs and unlinks for a DB
+ * ForgetDatabaseSyncRequests -- forget any fsyncs and unlinks for a DB
  */
 void
 ForgetDatabaseSyncRequests(Oid dbid)
