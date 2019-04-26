@@ -1,4 +1,4 @@
-# version 2018i
+# version 2019a
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Sun>=1 23s 0 -
@@ -707,6 +707,10 @@ R Z 1974 o - Jul 7 0 1 D
 R Z 1974 o - O 13 0 0 S
 R Z 1975 o - Ap 20 0 1 D
 R Z 1975 o - Au 31 0 0 S
+R Z 1980 o - Au 2 0 1 D
+R Z 1980 o - S 13 1 0 S
+R Z 1984 o - May 5 0 1 D
+R Z 1984 o - Au 25 1 0 S
 R Z 1985 o - Ap 14 0 1 D
 R Z 1985 o - S 15 0 0 S
 R Z 1986 o - May 18 0 1 D
@@ -1003,7 +1007,7 @@ R P 2012 o - S 21 1 0 -
 R P 2013 o - S F>=21 0 0 -
 R P 2014 2015 - O F>=21 0 0 -
 R P 2015 o - Mar lastF 24 1 S
-R P 2016 ma - Mar Sat>=22 1 1 S
+R P 2016 ma - Mar Sat>=24 1 1 S
 R P 2016 ma - O lastSat 1 0 -
 Z Asia/Gaza 2:17:52 - LMT 1900 O
 2 Z EET/EEST 1948 May 15
@@ -2801,7 +2805,7 @@ Z America/Metlakatla 15:13:42 - LMT 1867 O 19 15:44:55
 -8 u P%sT 1983 O 30 2
 -8 - PST 2015 N 1 2
 -9 u AK%sT 2018 N 4 2
--8 - PST 2019 Mar Sun>=8 3
+-8 - PST 2019 Ja 20 2
 -9 u AK%sT
 Z America/Yakutat 14:41:5 - LMT 1867 O 19 15:12:18
 -9:18:55 - LMT 1900 Au 20 12
@@ -4168,7 +4172,6 @@ Z America/Caracas -4:27:44 - LMT 1890
 -4 - -04
 Z Etc/GMT 0 - GMT
 Z Etc/UTC 0 - UTC
-Z Etc/UCT 0 - UCT
 Li Etc/GMT GMT
 Li Etc/UTC Etc/Universal
 Li Etc/UTC Etc/Zulu
@@ -4270,6 +4273,7 @@ Li Pacific/Easter Chile/EasterIsland
 Li America/Havana Cuba
 Li Africa/Cairo Egypt
 Li Europe/Dublin Eire
+Li Etc/UTC Etc/UCT
 Li Europe/London Europe/Belfast
 Li Europe/Chisinau Europe/Tiraspol
 Li Europe/London GB
@@ -4304,7 +4308,7 @@ Li Asia/Taipei ROC
 Li Asia/Seoul ROK
 Li Asia/Singapore Singapore
 Li Europe/Istanbul Turkey
-Li Etc/UCT UCT
+Li Etc/UTC UCT
 Li America/Anchorage US/Alaska
 Li America/Adak US/Aleutian
 Li America/Phoenix US/Arizona
