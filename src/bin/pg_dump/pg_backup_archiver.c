@@ -1087,10 +1087,10 @@ ArchiveEntry(Archive *AHX, CatalogId catalogId, DumpId dumpId,
 	newToc->namespace = opts->namespace ? pg_strdup(opts->namespace) : NULL;
 	newToc->tablespace = opts->tablespace ? pg_strdup(opts->tablespace) : NULL;
 	newToc->tableam = opts->tableam ? pg_strdup(opts->tableam) : NULL;
-	newToc->owner = pg_strdup(opts->owner);
+	newToc->owner = opts->owner ? pg_strdup(opts->owner) : NULL;
 	newToc->desc = pg_strdup(opts->description);
-	newToc->defn = pg_strdup(opts->createStmt);
-	newToc->dropStmt = pg_strdup(opts->dropStmt);
+	newToc->defn = opts->createStmt ? pg_strdup(opts->createStmt) : NULL;
+	newToc->dropStmt = opts->dropStmt ? pg_strdup(opts->dropStmt) : NULL;
 	newToc->copyStmt = opts->copyStmt ? pg_strdup(opts->copyStmt) : NULL;
 
 	if (opts->nDeps > 0)
@@ -3621,7 +3621,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	}
 	else
 	{
-		if (strlen(te->defn) > 0)
+		if (te->defn && strlen(te->defn) > 0)
 			ahprintf(AH, "%s\n\n", te->defn);
 	}
 
@@ -3632,7 +3632,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	 * with DROP commands must appear in one list or the other.
 	 */
 	if (!ropt->noOwner && !ropt->use_setsessauth &&
-		strlen(te->owner) > 0 && strlen(te->dropStmt) > 0)
+		te->owner && strlen(te->owner) > 0 &&
+		te->dropStmt && strlen(te->dropStmt) > 0)
 	{
 		if (strcmp(te->desc, "AGGREGATE") == 0 ||
 			strcmp(te->desc, "BLOB") == 0 ||

@@ -96,12 +96,7 @@ typedef z_stream *z_streamp;
 													 * behavior */
 #define K_VERS_1_14 MAKE_ARCHIVE_VERSION(1, 14, 0)	/* add tableam */
 
-/*
- * Current archive version number (the format we can output)
- *
- * Note: If you update the current archive version, consider
- * https://postgr.es/m/20190227123217.GA27552@alvherre.pgsql
- */
+/* Current archive version number (the format we can output) */
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 14
 #define K_VERS_REV 0
