@@ -11452,7 +11452,9 @@ TryReuseIndex(Oid oldId, IndexStmt *stmt)
 	{
 		Relation	irel = index_open(oldId, NoLock);
 
-		stmt->oldNode = irel->rd_node.relNode;
+		/* If it's a partitioned index, there is no storage to share. */
+		if (irel->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
+			stmt->oldNode = irel->rd_node.relNode;
 		index_close(irel, NoLock);
 	}
 }
