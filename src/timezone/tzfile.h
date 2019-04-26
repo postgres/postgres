@@ -27,6 +27,9 @@
 #define TZDEFAULT	"/etc/localtime"
 #define TZDEFRULES	"posixrules"
 
+
+/* See Internet RFC 8536 for more details about the following format.  */
+
 /*
  * Each file begins with. . .
  */
