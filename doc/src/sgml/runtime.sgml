@@ -229,42 +229,75 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
 
   </sect2>
 
-  <sect2 id="creating-cluster-nfs">
-   <title>Use of Network File Systems</title>
-
-   <indexterm zone="creating-cluster-nfs">
-    <primary>Network File Systems</primary>
-   </indexterm>
-   <indexterm><primary><acronym>NFS</acronym></primary><see>Network File Systems</see></indexterm>
-   <indexterm><primary>Network Attached Storage (<acronym>NAS</acronym>)</primary><see>Network File Systems</see></indexterm>
+  <sect2 id="creating-cluster-filesystem">
+   <title>File Systems</title>
 
    <para>
-    Many installations create their database clusters on network file
-    systems.  Sometimes this is done via <acronym>NFS</acronym>, or by using a
-    Network Attached Storage (<acronym>NAS</acronym>) device that uses
-    <acronym>NFS</acronym> internally.  <productname>PostgreSQL</productname> does nothing
-    special for <acronym>NFS</acronym> file systems, meaning it assumes
-    <acronym>NFS</acronym> behaves exactly like locally-connected drives.
-    If the client or server <acronym>NFS</acronym> implementation does not
-    provide standard file system semantics, this can
-    cause reliability problems (see <ulink
-    url="https://www.time-travellers.org/shane/papers/NFS_considered_harmful.html"></ulink>).
-    Specifically, delayed (asynchronous) writes to the <acronym>NFS</acronym>
-    server can cause data corruption problems.  If possible, mount the
-    <acronym>NFS</acronym> file system synchronously (without caching) to avoid
-    this hazard.  Also, soft-mounting the <acronym>NFS</acronym> file system is
-    not recommended.
+    Generally, any file system with POSIX semantics can be used for
+    PostgreSQL.  Users prefer different file systems for a variety of reasons,
+    including vendor support, performance, and familiarity.  Experience
+    suggests that, all other things being equal, one should not expect major
+    performance or behavior changes merely from switching file systems or
+    making minor file system configuration changes.
    </para>
 
-   <para>
-    Storage Area Networks (<acronym>SAN</acronym>) typically use communication
-    protocols other than <acronym>NFS</acronym>, and may or may not be subject
-    to hazards of this sort.  It's advisable to consult the vendor's
-    documentation concerning data consistency guarantees.
-    <productname>PostgreSQL</productname> cannot be more reliable than
-    the file system it's using.
-   </para>
+   <sect3 id="creating-cluster-nfs">
+    <title>NFS</title>
 
+    <indexterm zone="creating-cluster-nfs">
+     <primary>NFS</primary>
+    </indexterm>
+
+    <para>
+     It is possible to use an <acronym>NFS</acronym> file system for storing
+     the <productname>PostgreSQL</productname> data directory.
+     <productname>PostgreSQL</productname> does nothing special for
+     <acronym>NFS</acronym> file systems, meaning it assumes
+     <acronym>NFS</acronym> behaves exactly like locally-connected drives.
+     <productname>PostgreSQL</productname> does not use any functionality that
+     is known to have nonstandard behavior on <acronym>NFS</acronym>, such as
+     file locking.
+    </para>
+
+    <para>
+     The only firm requirement for using <acronym>NFS</acronym> with
+     <productname>PostgreSQL</productname> is that the file system is mounted
+     using the <literal>hard</literal> option.  With the
+     <literal>hard</literal> option, processes can <quote>hang</quote>
+     indefinitely if there are network problems, so this configuration will
+     require a careful monitoring setup.  The <literal>soft</literal> option
+     will interrupt system calls in case of network problems, but
+     <productname>PostgreSQL</productname> will not repeat system calls
+     interrupted in this way, so any such interruption will result in an I/O
+     error being reported.
+    </para>
+
+    <para>
+     It is not necessary to use the <literal>sync</literal> mount option.  The
+     behavior of the <literal>async</literal> option is sufficient, since
+     <productname>PostgreSQL</productname> issues <literal>fsync</literal>
+     calls at appropriate times to flush the write caches.  (This is analogous
+     to how it works on a local file system.)  However, it is strongly
+     recommended to use the <literal>sync</literal> export option on the NFS
+     <emphasis>server</emphasis> on systems where it exists (mainly Linux).
+     Otherwise, an <literal>fsync</literal> or equivalent on the NFS client is
+     not actually guaranteed to reach permanent storage on the server, which
+     could cause corruption similar to running with the parameter <xref
+     linkend="guc-fsync"/> off.  The defaults of these mount and export
+     options differ between vendors and versions, so it is recommended to
+     check and perhaps specify them explicitly in any case to avoid any
+     ambiguity.
+    </para>
+
+    <para>
+     In some cases, an external storage product can be accessed either via NFS
+     or a lower-level protocol such as iSCSI.  In the latter case, the storage
+     appears as a block device and any available file system can be created on
+     it.  That approach might relieve the DBA from having to deal with some of
+     the idiosyncrasies of NFS, but of course the complexity of managing
+     remote storage then happens at other levels.
+    </para>
+   </sect3>
   </sect2>
 
  </sect1>
