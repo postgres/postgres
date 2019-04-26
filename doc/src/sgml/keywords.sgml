@@ -4445,6 +4445,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>STORED</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>STRICT</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
