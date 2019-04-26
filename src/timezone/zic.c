@@ -549,7 +549,8 @@ usage(FILE *stream, int status)
 	fprintf(stream,
 			_("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -P ] \\\n"
 			  "\t[ -l localtime ] [ -p posixrules ] [ -d directory ] \\\n"
-			  "\t[ -t localtime-link ] [ -L leapseconds ] [ filename ... ]\n\n"
+			  "\t[ -t localtime-link ] [ -L leapseconds ] [ -r '[@lo][/@hi]' ] \\\n"
+			  "\t[ filename ... ]\n\n"
 			  "Report bugs to %s.\n"),
 			progname, progname, PACKAGE_BUGREPORT);
 	if (status == EXIT_SUCCESS)
@@ -581,6 +582,50 @@ change_directory(char const *dir)
 	}
 }
 
+#define TIME_T_BITS_IN_FILE 64
+
+/* The minimum and maximum values representable in a TZif file.  */
+static zic_t const min_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
+static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
+
+/* The minimum, and one less than the maximum, values specified by
+   the -r option.  These default to MIN_TIME and MAX_TIME.  */
+static zic_t lo_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
+static zic_t hi_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
+
+/* Set the time range of the output to TIMERANGE.
+   Return true if successful.  */
+static bool
+timerange_option(char *timerange)
+{
+	int64		lo = min_time,
+				hi = max_time;
+	char	   *lo_end = timerange,
+			   *hi_end;
+
+	if (*timerange == '@')
+	{
+		errno = 0;
+		lo = strtoimax(timerange + 1, &lo_end, 10);
+		if (lo_end == timerange + 1 || (lo == INTMAX_MAX && errno == ERANGE))
+			return false;
+	}
+	hi_end = lo_end;
+	if (lo_end[0] == '/' && lo_end[1] == '@')
+	{
+		errno = 0;
+		hi = strtoimax(lo_end + 2, &hi_end, 10);
+		if (hi_end == lo_end + 2 || hi == INTMAX_MIN)
+			return false;
+		hi -= !(hi == INTMAX_MAX && errno == ERANGE);
+	}
+	if (*hi_end || hi < lo || max_time < lo || hi < min_time)
+		return false;
+	lo_time = lo < min_time ? min_time : lo;
+	hi_time = max_time < hi ? max_time : hi;
+	return true;
+}
+
 static const char *psxrules;
 static const char *lcltime;
 static const char *directory;
@@ -595,6 +640,7 @@ main(int argc, char **argv)
 				k;
 	ptrdiff_t	i,
 				j;
+	bool		timerange_given = false;
 
 #ifndef WIN32
 	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
@@ -617,7 +663,7 @@ main(int argc, char **argv)
 		{
 			usage(stdout, EXIT_SUCCESS);
 		}
-	while ((c = getopt(argc, argv, "d:l:L:p:Pst:vy:")) != EOF && c != -1)
+	while ((c = getopt(argc, argv, "d:l:L:p:Pr:st:vy:")) != EOF && c != -1)
 		switch (c)
 		{
 			default:
@@ -697,6 +743,23 @@ main(int argc, char **argv)
 			case 'P':
 				print_abbrevs = true;
 				print_cutoff = time(NULL);
+				break;
+			case 'r':
+				if (timerange_given)
+				{
+					fprintf(stderr,
+							_("%s: More than one -r option specified\n"),
+							progname);
+					return EXIT_FAILURE;
+				}
+				if (!timerange_option(optarg))
+				{
+					fprintf(stderr,
+							_("%s: invalid time range: %s\n"),
+							progname, optarg);
+					return EXIT_FAILURE;
+				}
+				timerange_given = true;
 				break;
 			case 's':
 				warning(_("-s ignored"));
@@ -1003,11 +1066,6 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 		}
 	}
 }
-
-#define TIME_T_BITS_IN_FILE	64
-
-static zic_t const min_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
-static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
 
 /* Return true if NAME is a directory.  */
 static bool
@@ -1905,12 +1963,17 @@ puttzcode(const int32 val, FILE *const fp)
 }
 
 static void
-puttzcode64(const zic_t val, FILE *const fp)
+puttzcodepass(zic_t val, FILE *fp, int pass)
 {
-	char		buf[8];
+	if (pass == 1)
+		puttzcode(val, fp);
+	else
+	{
+		char		buf[8];
 
-	convert64(val, buf);
-	fwrite(buf, sizeof buf, 1, fp);
+		convert64(val, buf);
+		fwrite(buf, sizeof buf, 1, fp);
+	}
 }
 
 static int
@@ -1957,6 +2020,42 @@ swaptypes(int i, int j)
 	}
 }
 
+struct timerange
+{
+	int			defaulttype;
+	ptrdiff_t	base,
+				count;
+	int			leapbase,
+				leapcount;
+};
+
+static struct timerange
+limitrange(struct timerange r, zic_t lo, zic_t hi,
+		   zic_t const *ats, unsigned char const *types)
+{
+	while (0 < r.count && ats[r.base] < lo)
+	{
+		r.defaulttype = types[r.base];
+		r.count--;
+		r.base++;
+	}
+	while (0 < r.leapcount && trans[r.leapbase] < lo)
+	{
+		r.leapcount--;
+		r.leapbase++;
+	}
+
+	if (hi < ZIC_MAX)
+	{
+		while (0 < r.count && hi + 1 < ats[r.base + r.count - 1])
+			r.count--;
+		while (0 < r.leapcount && hi + 1 < trans[r.leapbase + r.leapcount - 1])
+			r.leapcount--;
+	}
+
+	return r;
+}
+
 static void
 writezone(const char *const name, const char *const string, char version,
 		  int defaulttype)
@@ -1964,10 +2063,6 @@ writezone(const char *const name, const char *const string, char version,
 	FILE	   *fp;
 	ptrdiff_t	i,
 				j;
-	int			leapcnt32,
-				leapi32;
-	ptrdiff_t	timecnt32,
-				timei32;
 	int			pass;
 	static const struct tzhead tzh0;
 	static struct tzhead tzh;
@@ -1983,6 +2078,9 @@ writezone(const char *const name, const char *const string, char version,
 	zic_t	   *ats = emalloc(MAXALIGN(size_product(nats, sizeof *ats + 1)));
 	void	   *typesptr = ats + nats;
 	unsigned char *types = typesptr;
+	struct timerange rangeall,
+				range32,
+				range64;
 
 	/*
 	 * Sort.
@@ -2069,35 +2167,12 @@ writezone(const char *const name, const char *const string, char version,
 		timecnt++;
 	}
 
-	/*
-	 * Figure out 32-bit-limited starts and counts.
-	 */
-	timecnt32 = timecnt;
-	timei32 = 0;
-	leapcnt32 = leapcnt;
-	leapi32 = 0;
-	while (0 < timecnt32 && PG_INT32_MAX < ats[timecnt32 - 1])
-		--timecnt32;
-	while (1 < timecnt32 && ats[timei32] < PG_INT32_MIN
-		   && ats[timei32 + 1] <= PG_INT32_MIN)
-	{
-		/*
-		 * Discard too-low transitions, except keep any last too-low
-		 * transition if no transition is exactly at PG_INT32_MIN. The kept
-		 * transition will be output as an PG_INT32_MIN "transition"
-		 * appropriate for buggy 32-bit clients that do not use time type 0
-		 * for timestamps before the first transition; see below.
-		 */
-		--timecnt32;
-		++timei32;
-	}
-	while (0 < leapcnt32 && PG_INT32_MAX < trans[leapcnt32 - 1])
-		--leapcnt32;
-	while (0 < leapcnt32 && trans[leapi32] < PG_INT32_MIN)
-	{
-		--leapcnt32;
-		++leapi32;
-	}
+	rangeall.defaulttype = defaulttype;
+	rangeall.base = rangeall.leapbase = 0;
+	rangeall.count = timecnt;
+	rangeall.leapcount = leapcnt;
+	range64 = limitrange(rangeall, lo_time, hi_time, ats, types);
+	range32 = limitrange(range64, PG_INT32_MIN, PG_INT32_MAX, ats, types);
 
 	/*
 	 * Remove old file, if any, to snap links.
@@ -2138,6 +2213,11 @@ writezone(const char *const name, const char *const string, char version,
 		int			thisleapi,
 					thisleapcnt,
 					thisleaplim;
+		int			currenttype,
+					thisdefaulttype;
+		bool		locut,
+					hicut;
+		zic_t		lo;
 		int			old0;
 		char		omittype[TZ_MAX_TYPES];
 		int			typemap[TZ_MAX_TYPES];
@@ -2149,36 +2229,79 @@ writezone(const char *const name, const char *const string, char version,
 
 		if (pass == 1)
 		{
-			thistimei = timei32;
-			thistimecnt = timecnt32;
+			/*
+			 * Arguably the default time type in the 32-bit data should be
+			 * range32.defaulttype, which is suited for timestamps just before
+			 * PG_INT32_MIN.  However, zic traditionally used the time type of
+			 * the indefinite past instead.  Internet RFC 8532 says readers
+			 * should ignore 32-bit data, so this discrepancy matters only to
+			 * obsolete readers where the traditional type might be more
+			 * appropriate even if it's "wrong".  So, use the historical zic
+			 * value, unless -r specifies a low cutoff that excludes some
+			 * 32-bit timestamps.
+			 */
+			thisdefaulttype = (lo_time <= PG_INT32_MIN
+							   ? range64.defaulttype
+							   : range32.defaulttype);
+
+			thistimei = range32.base;
+			thistimecnt = range32.count;
 			toomanytimes = thistimecnt >> 31 >> 1 != 0;
-			thisleapi = leapi32;
-			thisleapcnt = leapcnt32;
+			thisleapi = range32.leapbase;
+			thisleapcnt = range32.leapcount;
+			locut = PG_INT32_MIN < lo_time;
+			hicut = hi_time < PG_INT32_MAX;
 		}
 		else
 		{
-			thistimei = 0;
-			thistimecnt = timecnt;
+			thisdefaulttype = range64.defaulttype;
+			thistimei = range64.base;
+			thistimecnt = range64.count;
 			toomanytimes = thistimecnt >> 31 >> 31 >> 2 != 0;
-			thisleapi = 0;
-			thisleapcnt = leapcnt;
+			thisleapi = range64.leapbase;
+			thisleapcnt = range64.leapcount;
+			locut = min_time < lo_time;
+			hicut = hi_time < max_time;
 		}
 		if (toomanytimes)
 			error(_("too many transition times"));
+
+		/*
+		 * Keep the last too-low transition if no transition is exactly at LO.
+		 * The kept transition will be output as a LO "transition"; see
+		 * "Output a LO_TIME transition" below.  This is needed when the
+		 * output is truncated at the start, and is also useful when catering
+		 * to buggy 32-bit clients that do not use time type 0 for timestamps
+		 * before the first transition.
+		 */
+		if (0 < thistimei && ats[thistimei] != lo_time)
+		{
+			thistimei--;
+			thistimecnt++;
+			locut = false;
+		}
+
 		thistimelim = thistimei + thistimecnt;
 		thisleaplim = thisleapi + thisleapcnt;
+		if (thistimecnt != 0)
+		{
+			if (ats[thistimei] == lo_time)
+				locut = false;
+			if (hi_time < ZIC_MAX && ats[thistimelim - 1] == hi_time + 1)
+				hicut = false;
+		}
 		memset(omittype, true, typecnt);
-		omittype[defaulttype] = false;
+		omittype[thisdefaulttype] = false;
 		for (i = thistimei; i < thistimelim; i++)
 			omittype[types[i]] = false;
 
 		/*
-		 * Reorder types to make DEFAULTTYPE type 0. Use TYPEMAP to swap OLD0
-		 * and DEFAULTTYPE so that DEFAULTTYPE appears as type 0 in the output
-		 * instead of OLD0.  TYPEMAP also omits unused types.
+		 * Reorder types to make THISDEFAULTTYPE type 0. Use TYPEMAP to swap
+		 * OLD0 and THISDEFAULTTYPE so that THISDEFAULTTYPE appears as type 0
+		 * in the output instead of OLD0.  TYPEMAP also omits unused types.
 		 */
 		old0 = strlen(omittype);
-		swaptypes(old0, defaulttype);
+		swaptypes(old0, thisdefaulttype);
 
 #ifndef LEAVE_SOME_PRE_2011_SYSTEMS_IN_THE_LURCH
 
@@ -2239,8 +2362,8 @@ writezone(const char *const name, const char *const string, char version,
 		thistypecnt = 0;
 		for (i = old0; i < typecnt; i++)
 			if (!omittype[i])
-				typemap[i == old0 ? defaulttype
-						: i == defaulttype ? old0 : i]
+				typemap[i == old0 ? thisdefaulttype
+						: i == thisdefaulttype ? old0 : i]
 					= thistypecnt++;
 
 		for (i = 0; i < sizeof indmap / sizeof indmap[0]; ++i)
@@ -2272,7 +2395,7 @@ writezone(const char *const name, const char *const string, char version,
 		convert(thistypecnt, tzh.tzh_ttisgmtcnt);
 		convert(thistypecnt, tzh.tzh_ttisstdcnt);
 		convert(thisleapcnt, tzh.tzh_leapcnt);
-		convert(thistimecnt, tzh.tzh_timecnt);
+		convert(locut + thistimecnt + hicut, tzh.tzh_timecnt);
 		convert(thistypecnt, tzh.tzh_typecnt);
 		convert(thischarcnt, tzh.tzh_charcnt);
 		DO(tzh_magic);
@@ -2322,24 +2445,33 @@ writezone(const char *const name, const char *const string, char version,
 			}
 		}
 
-		for (i = thistimei; i < thistimelim; ++i)
-			if (pass == 1)
+		/*
+		 * Output a LO_TIME transition if needed; see limitrange. But do not
+		 * go below the minimum representable value for this pass.
+		 */
+		lo = pass == 1 && lo_time < PG_INT32_MIN ? PG_INT32_MIN : lo_time;
 
-				/*
-				 * Output an PG_INT32_MIN "transition" if appropriate; see
-				 * above.
-				 */
-				puttzcode(((ats[i] < PG_INT32_MIN) ?
-						   PG_INT32_MIN : ats[i]), fp);
-			else
-				puttzcode64(ats[i], fp);
+		if (locut)
+			puttzcodepass(lo, fp, pass);
 		for (i = thistimei; i < thistimelim; ++i)
 		{
-			unsigned char uc;
+			zic_t		at = ats[i] < lo ? lo : ats[i];
 
-			uc = typemap[types[i]];
-			fwrite(&uc, sizeof uc, 1, fp);
+			puttzcodepass(at, fp, pass);
 		}
+		if (hicut)
+			puttzcodepass(hi_time + 1, fp, pass);
+		currenttype = 0;
+		if (locut)
+			putc(currenttype, fp);
+		for (i = thistimei; i < thistimelim; ++i)
+		{
+			currenttype = typemap[types[i]];
+			putc(currenttype, fp);
+		}
+		if (hicut)
+			putc(currenttype, fp);
+
 		for (i = old0; i < typecnt; i++)
 			if (!omittype[i])
 			{
@@ -2378,10 +2510,7 @@ writezone(const char *const name, const char *const string, char version,
 			}
 			else
 				todo = trans[i];
-			if (pass == 1)
-				puttzcode(todo, fp);
-			else
-				puttzcode64(todo, fp);
+			puttzcodepass(todo, fp, pass);
 			puttzcode(corr[i], fp);
 		}
 		for (i = old0; i < typecnt; i++)
@@ -2390,7 +2519,7 @@ writezone(const char *const name, const char *const string, char version,
 		for (i = old0; i < typecnt; i++)
 			if (!omittype[i])
 				putc(ttisgmts[i], fp);
-		swaptypes(old0, defaulttype);
+		swaptypes(old0, thisdefaulttype);
 	}
 	fprintf(fp, "\n%s\n", string);
 	close_file(fp, directory, name);
@@ -2644,6 +2773,14 @@ stringzone(char *result, struct zone const *zpfirst, ptrdiff_t zonecount)
 				dstr;
 
 	result[0] = '\0';
+
+	/*
+	 * Internet RFC 8536 section 5.1 says to use an empty TZ string if future
+	 * timestamps are truncated.
+	 */
+	if (hi_time < max_time)
+		return -1;
+
 	zp = zpfirst + zonecount - 1;
 	stdrp = dstrp = NULL;
 	for (i = 0; i < zp->z_nrules; ++i)
@@ -3139,12 +3276,13 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 		xr.r_dycode = DC_DOM;
 		xr.r_dayofmonth = 1;
 		xr.r_tod = 0;
-		for (lastat = &attypes[0], i = 1; i < timecnt; i++)
+		for (lastat = attypes, i = 1; i < timecnt; i++)
 			if (attypes[i].at > lastat->at)
 				lastat = &attypes[i];
-		if (lastat->at < rpytime(&xr, max_year - 1))
+		if (!lastat || lastat->at < rpytime(&xr, max_year - 1))
 		{
-			addtt(rpytime(&xr, max_year + 1), typecnt - 1);
+			addtt(rpytime(&xr, max_year + 1),
+				  lastat ? lastat->type : defaulttype);
 			attypes[timecnt - 1].dontmerge = true;
 		}
 	}

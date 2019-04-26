@@ -44,6 +44,14 @@
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
+/* PG doesn't currently rely on <inttypes.h>, so work around strtoimax() */
+#undef strtoimax
+#ifdef HAVE_STRTOLL
+#define strtoimax strtoll
+#else
+#define strtoimax strtol
+#endif
+
 
 /*
  * Finally, some convenience items.

@@ -55,7 +55,7 @@ match properly on the old version.
 Time Zone code
 ==============
 
-The code in this directory is currently synced with tzcode release 2018g.
+The code in this directory is currently synced with tzcode release 2019a.
 There are many cosmetic (and not so cosmetic) differences from the
 original tzcode library, but diffs in the upstream version should usually
 be propagated to our version.  Here are some notes about that.
@@ -111,8 +111,10 @@ to first run the tzcode source files through a sed filter like this:
         -e 's/^([ \t]*)\*\*$/\1 */' \
         -e 's|^\*/| */|' \
         -e 's/\bregister[ \t]//g' \
+        -e 's/\bATTRIBUTE_PURE[ \t]//g' \
         -e 's/int_fast32_t/int32/g' \
         -e 's/int_fast64_t/int64/g' \
+        -e 's/intmax_t/int64/g' \
         -e 's/INT32_MIN/PG_INT32_MIN/g' \
         -e 's/INT32_MAX/PG_INT32_MAX/g' \
         -e 's/struct[ \t]+tm\b/struct pg_tm/g' \
