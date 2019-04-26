@@ -2594,6 +2594,9 @@ Branch: REL9_3_STABLE [84261eb10] 2018-10-19 17:02:26 -0400
        <para>
         This is supported by <filename>postgres_fdw</filename>
         foreign tables.
+        Since the <function>ExecForeignInsert</function> callback function
+        is called for this in a different way than it used to be,
+        foreign data wrappers must be modified to cope with this change.
        </para>
       </listitem>
 

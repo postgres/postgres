@@ -588,6 +588,14 @@ ExecForeignInsert(EState *estate,
     </para>
 
     <para>
+     Note that this function is also called when inserting routed tuples into
+     a foreign-table partition or executing <command>COPY FROM</command> on
+     a foreign table, in which case it is called in a different way than it
+     is in the <command>INSERT</command> case.  See the callback functions
+     described below that allow the FDW to support that.
+    </para>
+
+    <para>
 <programlisting>
 TupleTableSlot *
 ExecForeignUpdate(EState *estate,
@@ -741,6 +749,13 @@ BeginForeignInsert(ModifyTableState *mtstate,
     <para>
      If the <function>BeginForeignInsert</function> pointer is set to
      <literal>NULL</literal>, no action is taken for the initialization.
+    </para>
+
+    <para>
+     Note that if the FDW does not support routable foreign-table partitions
+     and/or executing <command>COPY FROM</command> on foreign tables, this
+     function or <function>ExecForeignInsert</function> subsequently called
+     must throw error as needed.
     </para>
 
     <para>
