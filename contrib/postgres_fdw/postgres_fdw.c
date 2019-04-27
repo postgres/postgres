@@ -5486,7 +5486,6 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) grouped_rel->fdw_private;
 	PathTarget *grouping_target = grouped_rel->reltarget;
 	PgFdwRelationInfo *ofpinfo;
-	List	   *aggvars;
 	ListCell   *lc;
 	int			i;
 	List	   *tlist = NIL;
@@ -5512,6 +5511,15 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	 * server.  All GROUP BY expressions will be part of the grouping target
 	 * and thus there is no need to search for them separately.  Add grouping
 	 * expressions into target list which will be passed to foreign server.
+	 *
+	 * A tricky fine point is that we must not put any expression into the
+	 * target list that is just a foreign param (that is, something that
+	 * deparse.c would conclude has to be sent to the foreign server).  If we
+	 * do, the expression will also appear in the fdw_exprs list of the plan
+	 * node, and setrefs.c will get confused and decide that the fdw_exprs
+	 * entry is actually a reference to the fdw_scan_tlist entry, resulting in
+	 * a broken plan.  Somewhat oddly, it's OK if the expression contains such
+	 * a node, as long as it's not at top level; then no match is possible.
 	 */
 	i = 0;
 	foreach(lc, grouping_target->exprs)
@@ -5533,6 +5541,13 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 				return false;
 
 			/*
+			 * If it would be a foreign param, we can't put it into the tlist,
+			 * so we have to fail.
+			 */
+			if (is_foreign_param(root, grouped_rel, expr))
+				return false;
+
+			/*
 			 * Pushable, so add to tlist.  We need to create a TLE for this
 			 * expression and apply the sortgroupref to it.  We cannot use
 			 * add_to_flat_tlist() here because that avoids making duplicate
@@ -5547,9 +5562,11 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 		else
 		{
 			/*
-			 * Non-grouping expression we need to compute.  Is it shippable?
+			 * Non-grouping expression we need to compute.  Can we ship it
+			 * as-is to the foreign server?
 			 */
-			if (is_foreign_expr(root, grouped_rel, expr))
+			if (is_foreign_expr(root, grouped_rel, expr) &&
+				!is_foreign_param(root, grouped_rel, expr))
 			{
 				/* Yes, so add to tlist as-is; OK to suppress duplicates */
 				tlist = add_to_flat_tlist(tlist, list_make1(expr));
@@ -5557,12 +5574,16 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			else
 			{
 				/* Not pushable as a whole; extract its Vars and aggregates */
+				List	   *aggvars;
+
 				aggvars = pull_var_clause((Node *) expr,
 										  PVC_INCLUDE_AGGREGATES);
 
 				/*
 				 * If any aggregate expression is not shippable, then we
-				 * cannot push down aggregation to the foreign server.
+				 * cannot push down aggregation to the foreign server.  (We
+				 * don't have to check is_foreign_param, since that certainly
+				 * won't return true for any such expression.)
 				 */
 				if (!is_foreign_expr(root, grouped_rel, (Expr *) aggvars))
 					return false;
@@ -5649,7 +5670,8 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * If aggregates within local conditions are not safe to push
 			 * down, then we cannot push down the query.  Vars are already
 			 * part of GROUP BY clause which are checked above, so no need to
-			 * access them again here.
+			 * access them again here.  Again, we need not check
+			 * is_foreign_param for a foreign aggregate.
 			 */
 			if (IsA(expr, Aggref))
 			{

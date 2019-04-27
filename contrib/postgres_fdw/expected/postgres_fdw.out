@@ -2707,6 +2707,46 @@ select sum(c1) from ft1 group by c2 having avg(c1 * (random() <= 1)::int) > 100 
                Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
 (10 rows)
 
+-- Remote aggregate in combination with a local Param (for the output
+-- of an initplan) can be trouble, per bug #15781
+explain (verbose, costs off)
+select exists(select 1 from pg_enum), sum(c1) from ft1;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Foreign Scan
+   Output: $0, (sum(ft1.c1))
+   Relations: Aggregate on (public.ft1)
+   Remote SQL: SELECT sum("C 1") FROM "S 1"."T 1"
+   InitPlan 1 (returns $0)
+     ->  Seq Scan on pg_catalog.pg_enum
+(6 rows)
+
+select exists(select 1 from pg_enum), sum(c1) from ft1;
+ exists |  sum   
+--------+--------
+ t      | 500500
+(1 row)
+
+explain (verbose, costs off)
+select exists(select 1 from pg_enum), sum(c1) from ft1 group by 1;
+                    QUERY PLAN                     
+---------------------------------------------------
+ GroupAggregate
+   Output: ($0), sum(ft1.c1)
+   Group Key: $0
+   InitPlan 1 (returns $0)
+     ->  Seq Scan on pg_catalog.pg_enum
+   ->  Foreign Scan on public.ft1
+         Output: $0, ft1.c1
+         Remote SQL: SELECT "C 1" FROM "S 1"."T 1"
+(8 rows)
+
+select exists(select 1 from pg_enum), sum(c1) from ft1 group by 1;
+ exists |  sum   
+--------+--------
+ t      | 500500
+(1 row)
+
 -- Testing ORDER BY, DISTINCT, FILTER, Ordered-sets and VARIADIC within aggregates
 -- ORDER BY within aggregate, same column used to order
 explain (verbose, costs off)
