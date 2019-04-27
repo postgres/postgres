@@ -599,7 +599,7 @@ timerange_option(char *timerange)
 	{
 		errno = 0;
 		lo = strtoimax(timerange + 1, &lo_end, 10);
-		if (lo_end == timerange + 1 || (lo == INTMAX_MAX && errno == ERANGE))
+		if (lo_end == timerange + 1 || (lo == PG_INT64_MAX && errno == ERANGE))
 			return false;
 	}
 	hi_end = lo_end;
@@ -607,9 +607,9 @@ timerange_option(char *timerange)
 	{
 		errno = 0;
 		hi = strtoimax(lo_end + 2, &hi_end, 10);
-		if (hi_end == lo_end + 2 || hi == INTMAX_MIN)
+		if (hi_end == lo_end + 2 || hi == PG_INT64_MIN)
 			return false;
-		hi -= !(hi == INTMAX_MAX && errno == ERANGE);
+		hi -= !(hi == PG_INT64_MAX && errno == ERANGE);
 	}
 	if (*hi_end || hi < lo || max_time < lo || hi < min_time)
 		return false;
