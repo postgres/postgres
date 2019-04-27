@@ -211,7 +211,7 @@
      <row>
       <entry>PL/R</entry>
       <entry>R</entry>
-      <entry><ulink url="http://www.joeconway.com/plr.html">http://www.joeconway.com/plr.html</ulink></entry>
+      <entry><ulink url="https://github.com/postgres-plr/plr">https://github.com/postgres-plr/plr</ulink></entry>
      </row>
 
      <row>
