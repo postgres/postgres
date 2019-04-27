@@ -117,6 +117,8 @@ to first run the tzcode source files through a sed filter like this:
         -e 's/intmax_t/int64/g' \
         -e 's/INT32_MIN/PG_INT32_MIN/g' \
         -e 's/INT32_MAX/PG_INT32_MAX/g' \
+        -e 's/INTMAX_MIN/PG_INT64_MIN/g' \
+        -e 's/INTMAX_MAX/PG_INT64_MAX/g' \
         -e 's/struct[ \t]+tm\b/struct pg_tm/g' \
         -e 's/\btime_t\b/pg_time_t/g' \
         -e 's/lineno/lineno_t/g' \
