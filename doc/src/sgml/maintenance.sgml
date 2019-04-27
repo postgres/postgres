@@ -869,19 +869,10 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 
   <para>
    <xref linkend="sql-reindex"/> can be used safely and easily in all cases.
-   But since the command requires an exclusive table lock, it is
-   often preferable to execute an index rebuild with a sequence of
-   creation and replacement steps.  Index types that support
-   <xref linkend="sql-createindex"/> with the <literal>CONCURRENTLY</literal>
-   option can instead be recreated that way. If that is successful and the
-   resulting index is valid, the original index can then be replaced by
-   the newly built one using a combination of <xref linkend="sql-alterindex"/>
-   and <xref linkend="sql-dropindex"/>. When an index is used to enforce
-   uniqueness or other constraints, <xref linkend="sql-altertable"/> might
-   be necessary to swap the existing constraint with one enforced by
-   the new index. Review this alternate multistep rebuild approach
-   carefully before using it as there are limitations on which
-   indexes can be reindexed this way, and errors must be handled.
+   This command requires an <literal>ACCESS EXCLUSIVE</literal> lock by
+   default, hence it is often preferable to execute it with its
+   <literal>CONCURRENTLY</literal> option which requires only a
+   <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
   </para>
  </sect1>
 
