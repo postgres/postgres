@@ -140,6 +140,9 @@ extern void classifyConditions(PlannerInfo *root,
 extern bool is_foreign_expr(PlannerInfo *root,
 				RelOptInfo *baserel,
 				Expr *expr);
+extern bool is_foreign_param(PlannerInfo *root,
+				 RelOptInfo *baserel,
+				 Expr *expr);
 extern void deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 				 Index rtindex, Relation rel,
 				 List *targetAttrs, bool doNothing, List *returningList,
