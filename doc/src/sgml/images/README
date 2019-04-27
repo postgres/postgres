@@ -59,3 +59,10 @@ Notes:
 - The width should be set to something.  This ensures that the image
   is scaled to fit the page in PDF output.  (Other widths than 100%
   might be appropriate.)
+
+- SVG images should be scalable as they will be rendered in a variety
+  of places (web, PDF, etc.) as well as in different viewports
+  (desktop, mobile, etc.). To help the images successfully scale,
+  employ a "viewBox" attribute in the SVG tag. For example,
+  to create an image with a default width and height of 400x300,
+  you would use viewBox="0.00 0.00 400.00 300.00"
