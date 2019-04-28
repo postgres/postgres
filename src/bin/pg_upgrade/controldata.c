@@ -102,12 +102,11 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_putenv("LC_MONETARY", NULL);
 	pg_putenv("LC_NUMERIC", NULL);
 	pg_putenv("LC_TIME", NULL);
-	pg_putenv("LANG",
 #ifndef WIN32
-			  NULL);
+	pg_putenv("LANG", NULL);
 #else
 	/* On Windows the default locale cannot be English, so force it */
-			  "en");
+	pg_putenv("LANG", "en");
 #endif
 	pg_putenv("LANGUAGE", NULL);
 	pg_putenv("LC_ALL", NULL);

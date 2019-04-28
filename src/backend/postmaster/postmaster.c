@@ -2371,7 +2371,11 @@ processCancelRequest(Port *port, void *pkt)
 								backendPID)));
 			return;
 		}
+#ifndef EXEC_BACKEND			/* make GNU Emacs 26.1 see brace balance */
 	}
+#else
+	}
+#endif
 
 	/* No matching backend */
 	ereport(LOG,
