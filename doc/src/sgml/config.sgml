@@ -6942,8 +6942,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         Causes each action executed by autovacuum to be logged if it ran for at
         least the specified number of milliseconds.  Setting this to zero logs
-        all autovacuum actions. Minus-one (the default) disables logging
-        autovacuum actions.  For example, if you set this to
+        all autovacuum actions. <literal>-1</literal> (the default) disables
+        logging autovacuum actions.  For example, if you set this to
         <literal>250ms</literal> then all automatic vacuums and analyzes that run
         250ms or longer will be logged.  In addition, when this parameter is
         set to any value other than <literal>-1</literal>, a message will be

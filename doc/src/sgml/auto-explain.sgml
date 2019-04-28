@@ -54,10 +54,11 @@ LOAD 'auto_explain';
      <para>
       <varname>auto_explain.log_min_duration</varname> is the minimum statement
       execution time, in milliseconds, that will cause the statement's plan to
-      be logged. Setting this to zero logs all plans. Minus-one (the default)
-      disables logging of plans.  For example, if you set it to
-      <literal>250ms</literal> then all statements that run 250ms or longer
-      will be logged. Only superusers can change this setting.
+      be logged. Setting this to <literal>0</literal> logs all plans.
+      <literal>-1</literal> (the default) disables logging of plans. For
+      example, if you set it to <literal>250ms</literal> then all statements
+      that run 250ms or longer will be logged. Only superusers can change this
+      setting.
      </para>
     </listitem>
    </varlistentry>

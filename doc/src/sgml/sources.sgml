@@ -872,7 +872,7 @@ BETTER: unrecognized node type: 42
      from a few platform dependent pieces.
     </para>
     <para>
-     A few features included in the C99 standard are, at this time, not be
+     A few features included in the C99 standard are, at this time, not
      permitted to be used in core <productname>PostgreSQL</productname>
      code. This currently includes variable length arrays, intermingled
      declarations and code, <literal>//</literal> comments, universal

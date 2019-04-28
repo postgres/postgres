@@ -811,7 +811,7 @@ BEGIN;
 INSERT INTO mytable VALUES(1);
 COMMIT;
 INSERT INTO mytable VALUES(2);
-SELCT 1/0;
+SELECT 1/0;
 </programlisting>
      then none of the statements would get run, resulting in the visible
      difference that the first <command>INSERT</command> is not committed.
@@ -1513,13 +1513,13 @@ SELCT 1/0;
     length of the result from <function>gss_wrap()</function> as a four byte
     integer in network byte order to the actual encrypted payload.  Note that
     the server will only accept encrypted packets from the client which are less
-    than 16KB; <function>gss_wrap_size_limit()</function> should be used by the
+    than 16kB; <function>gss_wrap_size_limit()</function> should be used by the
     client to determine the size of the unencrypted message which will fit
     within this limit and larger messages should be broken up into multiple
-    <function>gss_wrap()</function> calls.  Typical segments are 8KB of
-    unencrypted data, resulting in encrypted packets of slightly larger than 8KB
-    but well within the 16KB maximum.  The server can be expected to not send
-    encrypted packets of larger than 16KB to the client.  To continue after
+    <function>gss_wrap()</function> calls.  Typical segments are 8kB of
+    unencrypted data, resulting in encrypted packets of slightly larger than 8kB
+    but well within the 16kB maximum.  The server can be expected to not send
+    encrypted packets of larger than 16kB to the client.  To continue after
     <literal>N</literal>, send the usual StartupMessage and proceed without
     encryption.
    </para>
