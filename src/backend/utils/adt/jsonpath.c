@@ -499,7 +499,7 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 		case jpiNumeric:
 			appendStringInfoString(buf,
 								   DatumGetCString(DirectFunctionCall1(numeric_out,
-																	   PointerGetDatum(jspGetNumeric(v)))));
+																	   NumericGetDatum(jspGetNumeric(v)))));
 			break;
 		case jpiBool:
 			if (jspGetBool(v))

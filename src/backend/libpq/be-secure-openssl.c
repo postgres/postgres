@@ -1287,24 +1287,22 @@ ssl_protocol_version_to_openssl(int v, const char *guc_name, int loglevel)
 #ifdef TLS1_1_VERSION
 			return TLS1_1_VERSION;
 #else
-			goto error;
+			break;
 #endif
 		case PG_TLS1_2_VERSION:
 #ifdef TLS1_2_VERSION
 			return TLS1_2_VERSION;
 #else
-			goto error;
+			break;
 #endif
 		case PG_TLS1_3_VERSION:
 #ifdef TLS1_3_VERSION
 			return TLS1_3_VERSION;
 #else
-			goto error;
+			break;
 #endif
 	}
 
-error:
-	pg_attribute_unused();
 	ereport(loglevel,
 			(errmsg("%s setting %s not supported by this build",
 					guc_name,

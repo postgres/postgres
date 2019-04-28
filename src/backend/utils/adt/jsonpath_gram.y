@@ -359,7 +359,9 @@ makeItemNumeric(JsonPathString *s)
 	v = makeItemType(jpiNumeric);
 	v->value.numeric =
 		DatumGetNumeric(DirectFunctionCall3(numeric_in,
-											CStringGetDatum(s->val), 0, -1));
+											CStringGetDatum(s->val),
+											ObjectIdGetDatum(InvalidOid),
+											Int32GetDatum(-1)));
 
 	return v;
 }

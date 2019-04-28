@@ -881,7 +881,9 @@ initialize_environment(void)
 	load_resultmap();
 }
 
-pg_attribute_unused()
+#ifdef ENABLE_SSPI
+
+/* support for config_sspi_auth() */
 static const char *
 fmtHba(const char *raw)
 {
@@ -904,7 +906,6 @@ fmtHba(const char *raw)
 	return ret;
 }
 
-#ifdef ENABLE_SSPI
 /*
  * Get account and domain/realm names for the current user.  This is based on
  * pg_SSPI_recvauth().  The returned strings use static storage.
@@ -1072,7 +1073,8 @@ config_sspi_auth(const char *pgdata)
 				   accountname, domainname, fmtHba(sl->str)) >= 0);
 	CW(fclose(ident) == 0);
 }
-#endif
+
+#endif							/* ENABLE_SSPI */
 
 /*
  * Issue a command via psql, connecting to the specified database
