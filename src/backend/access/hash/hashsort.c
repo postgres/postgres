@@ -118,7 +118,7 @@ void
 _h_indexbuild(HSpool *hspool, Relation heapRel)
 {
 	IndexTuple	itup;
-	long		tups_done = 0;
+	int64		tups_done = 0;
 #ifdef USE_ASSERT_CHECKING
 	uint32		hashkey = 0;
 #endif
