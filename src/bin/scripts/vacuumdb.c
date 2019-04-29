@@ -409,30 +409,30 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	if (vacopts->disable_page_skipping && PQserverVersion(conn) < 90600)
 	{
 		PQfinish(conn);
-		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 9.6",
-					 "disable-page-skipping");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "disable-page-skipping", "9.6");
 		exit(1);
 	}
 
 	if (vacopts->skip_locked && PQserverVersion(conn) < 120000)
 	{
 		PQfinish(conn);
-		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 12",
-					 "skip-locked");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "skip-locked", "12");
 		exit(1);
 	}
 
 	if (vacopts->min_xid_age != 0 && PQserverVersion(conn) < 90600)
 	{
-		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 9.6",
-					 "--min-xid-age");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "--min-xid-age", "9.6");
 		exit(1);
 	}
 
 	if (vacopts->min_mxid_age != 0 && PQserverVersion(conn) < 90600)
 	{
-		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL 9.6",
-					 "--min-mxid-age");
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "--min-mxid-age", "9.6");
 		exit(1);
 	}
 

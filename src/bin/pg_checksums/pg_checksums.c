@@ -228,14 +228,14 @@ scan_file(const char *fn, BlockNumber segmentno)
 			/* Seek back to beginning of block */
 			if (lseek(f, -BLCKSZ, SEEK_CUR) < 0)
 			{
-				pg_log_error("seek failed for block %d in file \"%s\": %m", blockno, fn);
+				pg_log_error("seek failed for block %u in file \"%s\": %m", blockno, fn);
 				exit(1);
 			}
 
 			/* Write block with checksum */
 			if (write(f, buf.data, BLCKSZ) != BLCKSZ)
 			{
-				pg_log_error("could not update checksum of block %d in file \"%s\": %m",
+				pg_log_error("could not update checksum of block %u in file \"%s\": %m",
 							 blockno, fn);
 				exit(1);
 			}

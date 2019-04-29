@@ -901,7 +901,7 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status("Checking for tables WITH OIDs");
+	prep_status("Checking for tables WITH OIDS");
 
 	snprintf(output_path, sizeof(output_path),
 			 "tables_with_oids.txt");

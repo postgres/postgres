@@ -73,8 +73,8 @@ usage(const char *progname)
 	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
 	printf(_("      --source-server=CONNSTR    source server to synchronize with\n"));
 	printf(_("  -n, --dry-run                  stop before modifying anything\n"));
-	printf(_("  -N, --no-sync                  do not wait for changes to be written\n"));
-	printf(_("                                 safely to disk\n"));
+	printf(_("  -N, --no-sync                  do not wait for changes to be written\n"
+			 "                                 safely to disk\n"));
 	printf(_("  -P, --progress                 write progress messages\n"));
 	printf(_("      --debug                    write a lot of debug messages\n"));
 	printf(_("  -V, --version                  output version information, then exit\n"));
