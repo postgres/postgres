@@ -112,28 +112,7 @@ static struct
 static StringInfoData reply_message;
 static StringInfoData incoming_message;
 
-/*
- * About SIGTERM handling:
- *
- * We can't just exit(1) within SIGTERM signal handler, because the signal
- * might arrive in the middle of some critical operation, like while we're
- * holding a spinlock. We also can't just set a flag in signal handler and
- * check it in the main loop, because we perform some blocking operations
- * like libpqrcv_PQexec(), which can take a long time to finish.
- *
- * We use a combined approach: When WalRcvImmediateInterruptOK is true, it's
- * safe for the signal handler to elog(FATAL) immediately. Otherwise it just
- * sets got_SIGTERM flag, which is checked in the main loop when convenient.
- *
- * This is very much like what regular backends do with ImmediateInterruptOK,
- * ProcessInterrupts() etc.
- */
-static volatile bool WalRcvImmediateInterruptOK = false;
-
 /* Prototypes for private functions */
-static void ProcessWalRcvInterrupts(void);
-static void EnableWalRcvImmediateExit(void);
-static void DisableWalRcvImmediateExit(void);
 static void WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last);
 static void WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI);
 static void WalRcvDie(int code, Datum arg);
@@ -151,7 +130,20 @@ static void WalRcvShutdownHandler(SIGNAL_ARGS);
 static void WalRcvQuickDieHandler(SIGNAL_ARGS);
 
 
-static void
+/*
+ * Process any interrupts the walreceiver process may have received.
+ * This should be called any time the process's latch has become set.
+ *
+ * Currently, only SIGTERM is of interest.  We can't just exit(1) within the
+ * SIGTERM signal handler, because the signal might arrive in the middle of
+ * some critical operation, like while we're holding a spinlock.  Instead, the
+ * signal handler sets a flag variable as well as setting the process's latch.
+ * We must check the flag (by calling ProcessWalRcvInterrupts) anytime the
+ * latch has become set.  Operations that could block for a long time, such as
+ * reading from a remote server, must pay attention to the latch too; see
+ * libpqrcv_PQgetResult for example.
+ */
+void
 ProcessWalRcvInterrupts(void)
 {
 	/*
@@ -163,26 +155,12 @@ ProcessWalRcvInterrupts(void)
 
 	if (got_SIGTERM)
 	{
-		WalRcvImmediateInterruptOK = false;
 		ereport(FATAL,
 				(errcode(ERRCODE_ADMIN_SHUTDOWN),
 				 errmsg("terminating walreceiver process due to administrator command")));
 	}
 }
 
-static void
-EnableWalRcvImmediateExit(void)
-{
-	WalRcvImmediateInterruptOK = true;
-	ProcessWalRcvInterrupts();
-}
-
-static void
-DisableWalRcvImmediateExit(void)
-{
-	WalRcvImmediateInterruptOK = false;
-	ProcessWalRcvInterrupts();
-}
 
 /* Main entry point for walreceiver process */
 void
@@ -292,12 +270,10 @@ WalReceiverMain(void)
 	PG_SETMASK(&UnBlockSig);
 
 	/* Establish the connection to the primary for XLOG streaming */
-	EnableWalRcvImmediateExit();
 	wrconn = walrcv_connect(conninfo, false, cluster_name[0] ? cluster_name : "walreceiver", &err);
 	if (!wrconn)
 		ereport(ERROR,
 				(errmsg("could not connect to the primary server: %s", err)));
-	DisableWalRcvImmediateExit();
 
 	/*
 	 * Save user-visible connection string.  This clobbers the original
@@ -336,7 +312,6 @@ WalReceiverMain(void)
 		 * Check that we're connected to a valid server using the
 		 * IDENTIFY_SYSTEM replication command.
 		 */
-		EnableWalRcvImmediateExit();
 		primary_sysid = walrcv_identify_system(wrconn, &primaryTLI);
 
 		snprintf(standby_sysid, sizeof(standby_sysid), UINT64_FORMAT,
@@ -348,7 +323,6 @@ WalReceiverMain(void)
 					 errdetail("The primary's identifier is %s, the standby's identifier is %s.",
 							   primary_sysid, standby_sysid)));
 		}
-		DisableWalRcvImmediateExit();
 
 		/*
 		 * Confirm that the current timeline of the primary is the same or
@@ -509,6 +483,8 @@ WalReceiverMain(void)
 				if (rc & WL_LATCH_SET)
 				{
 					ResetLatch(walrcv->latch);
+					ProcessWalRcvInterrupts();
+
 					if (walrcv->force_reply)
 					{
 						/*
@@ -577,9 +553,7 @@ WalReceiverMain(void)
 			 * The backend finished streaming. Exit streaming COPY-mode from
 			 * our side, too.
 			 */
-			EnableWalRcvImmediateExit();
 			walrcv_endstreaming(wrconn, &primaryTLI);
-			DisableWalRcvImmediateExit();
 
 			/*
 			 * If the server had switched to a new timeline that we didn't
@@ -726,9 +700,7 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 					(errmsg("fetching timeline history file for timeline %u from primary server",
 							tli)));
 
-			EnableWalRcvImmediateExit();
 			walrcv_readtimelinehistoryfile(wrconn, tli, &fname, &content, &len);
-			DisableWalRcvImmediateExit();
 
 			/*
 			 * Check that the filename on the master matches what we
@@ -805,7 +777,7 @@ WalRcvSigUsr1Handler(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
-/* SIGTERM: set flag for main loop, or shutdown immediately if safe */
+/* SIGTERM: set flag for ProcessWalRcvInterrupts */
 static void
 WalRcvShutdownHandler(SIGNAL_ARGS)
 {
@@ -815,10 +787,6 @@ WalRcvShutdownHandler(SIGNAL_ARGS)
 
 	if (WalRcv->latch)
 		SetLatch(WalRcv->latch);
-
-	/* Don't joggle the elbow of proc_exit */
-	if (!proc_exit_inprogress && WalRcvImmediateInterruptOK)
-		ProcessWalRcvInterrupts();
 
 	errno = save_errno;
 }
