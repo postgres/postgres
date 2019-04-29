@@ -11721,7 +11721,7 @@ table2-mapping
     converting its elements into an SQL/JSON sequence before performing
     this operation. Besides, comparison operators automatically unwrap their
     operands in the lax mode, so you can compare SQL/JSON arrays
-    out-of-the-box. Arrays of size 1 are interchangeable with a singleton.
+    out-of-the-box. An array of size 1 is considered equal to its sole element.
     Automatic unwrapping is not performed only when:
     <itemizedlist>
      <listitem>
