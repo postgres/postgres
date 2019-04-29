@@ -935,6 +935,13 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 	}
 
 	free_parsestate(pstate);
+
+	/*
+	 * Make effects of commands visible, for instance so that
+	 * PreCommit_on_commit_actions() can see them (see for example bug
+	 * #15631).
+	 */
+	CommandCounterIncrement();
 }
 
 /*
