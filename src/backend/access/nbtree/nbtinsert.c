@@ -1786,7 +1786,6 @@ _bt_insert_parent(Relation rel,
 		 */
 		_bt_relbuf(rel, rbuf);
 
-		/* Check for error only after writing children */
 		if (pbuf == InvalidBuffer)
 			elog(ERROR, "failed to re-find parent key in index \"%s\" for split pages %u/%u",
 				 RelationGetRelationName(rel), bknum, rbknum);
