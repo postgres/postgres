@@ -2024,7 +2024,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 				archputs(insertStmt->data, fout);
 
 			/*
-			 * If it is zero-column table then we've aleady written the
+			 * If it is zero-column table then we've already written the
 			 * complete statement, which will mean we've disobeyed
 			 * --rows-per-insert when it's set greater than 1.  We do support
 			 * a way to make this multi-row with: SELECT UNION ALL SELECT

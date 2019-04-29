@@ -16,7 +16,7 @@ $node->start;
 #   $out: reference to a regexp list that must match stdout
 #   $err: reference to a regexp list that must match stderr
 #   $name: name of test for error messages
-#   $files: reference to filename/contents dictionnary
+#   $files: reference to filename/contents dictionary
 #   @args: further raw options or arguments
 sub pgbench
 {
