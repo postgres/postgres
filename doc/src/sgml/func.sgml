@@ -6380,7 +6380,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        <literal>to_timestamp('&nbsp;2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'YYYY MON')</literal> and
        <literal>to_timestamp('2000 - JUN', 'YYYY-MON')</literal> work, but
        <literal>to_timestamp('2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'FXYYYY MON')</literal> returns an error
-       because <function>to_timestamp</function> expects a single space only.
+       because <function>to_timestamp</function> expects only a single space.
        <literal>FX</literal> must be specified as the first item in
        the template.
       </para>
