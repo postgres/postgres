@@ -566,10 +566,14 @@ heapam_finish_bulk_insert(Relation relation, int options)
  */
 
 static void
-heapam_relation_set_new_filenode(Relation rel, char persistence,
+heapam_relation_set_new_filenode(Relation rel,
+								 const RelFileNode *newrnode,
+								 char persistence,
 								 TransactionId *freezeXid,
 								 MultiXactId *minmulti)
 {
+	SMgrRelation srel;
+
 	/*
 	 * Initialize to the minimum XID that could put tuples in the table. We
 	 * know that no xacts older than RecentXmin are still running, so that
@@ -587,7 +591,7 @@ heapam_relation_set_new_filenode(Relation rel, char persistence,
 	 */
 	*minmulti = GetOldestMultiXactId();
 
-	RelationCreateStorage(rel->rd_node, persistence);
+	srel = RelationCreateStorage(*newrnode, persistence);
 
 	/*
 	 * If required, set up an init fork for an unlogged table so that it can
@@ -598,16 +602,17 @@ heapam_relation_set_new_filenode(Relation rel, char persistence,
 	 * while replaying, for example, XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE
 	 * record. Therefore, logging is necessary even if wal_level=minimal.
 	 */
-	if (rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+	if (persistence == RELPERSISTENCE_UNLOGGED)
 	{
 		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
 			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
 			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
-		RelationOpenSmgr(rel);
-		smgrcreate(rel->rd_smgr, INIT_FORKNUM, false);
-		log_smgrcreate(&rel->rd_smgr->smgr_rnode.node, INIT_FORKNUM);
-		smgrimmedsync(rel->rd_smgr, INIT_FORKNUM);
+		smgrcreate(srel, INIT_FORKNUM, false);
+		log_smgrcreate(newrnode, INIT_FORKNUM);
+		smgrimmedsync(srel, INIT_FORKNUM);
 	}
+
+	smgrclose(srel);
 }
 
 static void
@@ -617,12 +622,20 @@ heapam_relation_nontransactional_truncate(Relation rel)
 }
 
 static void
-heapam_relation_copy_data(Relation rel, RelFileNode newrnode)
+heapam_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 {
 	SMgrRelation dstrel;
 
-	dstrel = smgropen(newrnode, rel->rd_backend);
+	dstrel = smgropen(*newrnode, rel->rd_backend);
 	RelationOpenSmgr(rel);
+
+	/*
+	 * Since we copy the file directly without looking at the shared buffers,
+	 * we'd better first flush out any pages of the source relation that are
+	 * in shared buffers.  We assume no new changes will be made while we are
+	 * holding exclusive lock on the rel.
+	 */
+	FlushRelationBuffers(rel);
 
 	/*
 	 * Create and copy all forks of the relation, and schedule unlinking of
@@ -631,7 +644,7 @@ heapam_relation_copy_data(Relation rel, RelFileNode newrnode)
 	 * NOTE: any conflict in relfilenode value will be caught in
 	 * RelationCreateStorage().
 	 */
-	RelationCreateStorage(newrnode, rel->rd_rel->relpersistence);
+	RelationCreateStorage(*newrnode, rel->rd_rel->relpersistence);
 
 	/* copy main fork */
 	RelationCopyStorage(rel->rd_smgr, dstrel, MAIN_FORKNUM,
@@ -652,7 +665,7 @@ heapam_relation_copy_data(Relation rel, RelFileNode newrnode)
 			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
 				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 				 forkNum == INIT_FORKNUM))
-				log_smgrcreate(&newrnode, forkNum);
+				log_smgrcreate(newrnode, forkNum);
 			RelationCopyStorage(rel->rd_smgr, dstrel, forkNum,
 								rel->rd_rel->relpersistence);
 		}

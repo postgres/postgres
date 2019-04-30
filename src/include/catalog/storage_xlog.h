@@ -50,7 +50,7 @@ typedef struct xl_smgr_truncate
 	int			flags;
 } xl_smgr_truncate;
 
-extern void log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum);
+extern void log_smgrcreate(const RelFileNode *rnode, ForkNumber forkNum);
 
 extern void smgr_redo(XLogReaderState *record);
 extern void smgr_desc(StringInfo buf, XLogReaderState *record);

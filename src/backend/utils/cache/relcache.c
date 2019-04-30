@@ -3440,6 +3440,7 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 	Form_pg_class classform;
 	MultiXactId minmulti = InvalidMultiXactId;
 	TransactionId freezeXid = InvalidTransactionId;
+	RelFileNode newrnode;
 
 	/* Allocate a new relfilenode */
 	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL,
@@ -3462,39 +3463,23 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 	 */
 	RelationDropStorage(relation);
 
-	/*
-	 * Now update the pg_class row.  However, if we're dealing with a mapped
-	 * index, pg_class.relfilenode doesn't change; instead we have to send the
-	 * update to the relation mapper.
-	 */
-	if (RelationIsMapped(relation))
-		RelationMapUpdateMap(RelationGetRelid(relation),
-							 newrelfilenode,
-							 relation->rd_rel->relisshared,
-							 true);
-	else
-	{
-		relation->rd_rel->relfilenode = newrelfilenode;
-		classform->relfilenode = newrelfilenode;
-	}
-
-	RelationInitPhysicalAddr(relation);
+	/* initialize new relfilenode from old relfilenode */
+	newrnode = relation->rd_node;
 
 	/*
 	 * Create storage for the main fork of the new relfilenode. If it's
 	 * table-like object, call into table AM to do so, which'll also create
 	 * the table's init fork.
 	 *
-	 * NOTE: any conflict in relfilenode value will be caught here, if
-	 * GetNewRelFileNode messes up for any reason.
+	 * NOTE: If relevant for the AM, any conflict in relfilenode value will be
+	 * caught here, if GetNewRelFileNode messes up for any reason.
 	 */
+	newrnode = relation->rd_node;
+	newrnode.relNode = newrelfilenode;
 
-	/*
-	 * Create storage for relation.
-	 */
 	switch (relation->rd_rel->relkind)
 	{
-		/* shouldn't be called for these */
+			/* shouldn't be called for these */
 		case RELKIND_VIEW:
 		case RELKIND_COMPOSITE_TYPE:
 		case RELKIND_FOREIGN_TABLE:
@@ -3505,17 +3490,35 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 
 		case RELKIND_INDEX:
 		case RELKIND_SEQUENCE:
-			RelationCreateStorage(relation->rd_node, persistence);
-			RelationOpenSmgr(relation);
+			{
+				SMgrRelation srel;
+
+				srel = RelationCreateStorage(newrnode, persistence);
+				smgrclose(srel);
+			}
 			break;
 
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
-			table_relation_set_new_filenode(relation, persistence,
+			table_relation_set_new_filenode(relation, &newrnode,
+											persistence,
 											&freezeXid, &minmulti);
 			break;
 	}
+
+	/*
+	 * However, if we're dealing with a mapped index, pg_class.relfilenode
+	 * doesn't change; instead we have to send the update to the relation
+	 * mapper.
+	 */
+	if (RelationIsMapped(relation))
+		RelationMapUpdateMap(RelationGetRelid(relation),
+							 newrelfilenode,
+							 relation->rd_rel->relisshared,
+							 false);
+	else
+		classform->relfilenode = newrelfilenode;
 
 	/* These changes are safe even for a mapped relation */
 	if (relation->rd_rel->relkind != RELKIND_SEQUENCE)

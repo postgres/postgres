@@ -75,7 +75,7 @@ static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
  * This function is transactional. The creation is WAL-logged, and if the
  * transaction aborts later on, the storage will be destroyed.
  */
-void
+SMgrRelation
 RelationCreateStorage(RelFileNode rnode, char relpersistence)
 {
 	PendingRelDelete *pending;
@@ -99,7 +99,7 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);
-			return;				/* placate compiler */
+			return NULL;				/* placate compiler */
 	}
 
 	srel = smgropen(rnode, backend);
@@ -117,13 +117,15 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 	pending->nestLevel = GetCurrentTransactionNestLevel();
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
+
+	return srel;
 }
 
 /*
  * Perform XLogInsert of an XLOG_SMGR_CREATE record to WAL.
  */
 void
-log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum)
+log_smgrcreate(const RelFileNode *rnode, ForkNumber forkNum)
 {
 	xl_smgr_create xlrec;
 
@@ -294,6 +296,10 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 
 /*
  * Copy a fork's data, block by block.
+ *
+ * Note that this requires that there is no dirty data in shared buffers. If
+ * it's possible that there are, callers need to flush those using
+ * e.g. FlushRelationBuffers(rel).
  */
 void
 RelationCopyStorage(SMgrRelation src, SMgrRelation dst,

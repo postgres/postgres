@@ -435,8 +435,9 @@ heap_create(const char *relname,
 			case RELKIND_RELATION:
 			case RELKIND_TOASTVALUE:
 			case RELKIND_MATVIEW:
-				table_relation_set_new_filenode(rel, relpersistence,
-									   relfrozenxid, relminmxid);
+				table_relation_set_new_filenode(rel, &rel->rd_node,
+												relpersistence,
+												relfrozenxid, relminmxid);
 				break;
 		}
 	}

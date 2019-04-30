@@ -12237,14 +12237,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
-	 * Since we copy the file directly without looking at the shared buffers,
-	 * we'd better first flush out any pages of the source relation that are
-	 * in shared buffers.  We assume no new changes will be made while we are
-	 * holding exclusive lock on the rel.
-	 */
-	FlushRelationBuffers(rel);
-
-	/*
 	 * Relfilenodes are not unique in databases across tablespaces, so we need
 	 * to allocate a new one in the new tablespace.
 	 */
@@ -12266,10 +12258,16 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
 			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
 			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
-		table_relation_copy_data(rel, newrnode);
+		table_relation_copy_data(rel, &newrnode);
 	}
 
-	/* update the pg_class row */
+	/*
+	 * Update the pg_class row.
+	 *
+	 * NB: This wouldn't work if ATExecSetTableSpace() were allowed to be
+	 * executed on pg_class or its indexes (the above copy wouldn't contain
+	 * the updated pg_class entry), but that's forbidden above.
+	 */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
 	rd_rel->relfilenode = newrelfilenode;
 	CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
@@ -12536,6 +12534,14 @@ index_copy_data(Relation rel, RelFileNode newrnode)
 
 	dstrel = smgropen(newrnode, rel->rd_backend);
 	RelationOpenSmgr(rel);
+
+	/*
+	 * Since we copy the file directly without looking at the shared buffers,
+	 * we'd better first flush out any pages of the source relation that are
+	 * in shared buffers.  We assume no new changes will be made while we are
+	 * holding exclusive lock on the rel.
+	 */
+	FlushRelationBuffers(rel);
 
 	/*
 	 * Create and copy all forks of the relation, and schedule unlinking of
