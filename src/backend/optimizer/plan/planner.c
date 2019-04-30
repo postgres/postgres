@@ -1513,8 +1513,9 @@ inheritance_planner(PlannerInfo *root)
 		parent_rte->securityQuals = NIL;
 
 		/*
-		 * Mark whether we're planning a query to a partitioned table or an
-		 * inheritance parent.
+		 * HACK: setting this to a value other than INHKIND_NONE signals to
+		 * relation_excluded_by_constraints() to treat the result relation as
+		 * being an appendrel member.
 		 */
 		subroot->inhTargetKind =
 			(rootRelation != 0) ? INHKIND_PARTITIONED : INHKIND_INHERITED;
