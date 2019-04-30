@@ -386,7 +386,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 		/*
 		 * If this is the first attribute, slot->tts_nvalid was 0. Therefore
-		 * reset offset to 0 to, it be from a previous execution.
+		 * also reset offset to 0, it may be from a previous execution.
 		 */
 		if (attnum == 0)
 		{
@@ -416,7 +416,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 		/*
 		 * Check for nulls if necessary. No need to take missing attributes
-		 * into account, because in case they're present the heaptuple's natts
+		 * into account, because if they're present the heaptuple's natts
 		 * would have indicated that a slot_getmissingattrs() is needed.
 		 */
 		if (!att->attnotnull)
@@ -503,13 +503,13 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			(known_alignment < 0 || known_alignment != TYPEALIGN(alignto, known_alignment)))
 		{
 			/*
-			 * When accessing a varlena field we have to "peek" to see if we
+			 * When accessing a varlena field, we have to "peek" to see if we
 			 * are looking at a pad byte or the first byte of a 1-byte-header
 			 * datum.  A zero byte must be either a pad byte, or the first
-			 * byte of a correctly aligned 4-byte length word; in either case
+			 * byte of a correctly aligned 4-byte length word; in either case,
 			 * we can align safely.  A non-zero byte must be either a 1-byte
 			 * length word, or the first byte of a correctly aligned 4-byte
-			 * length word; in either case we need not align.
+			 * length word; in either case, we need not align.
 			 */
 			if (att->attlen == -1)
 			{
@@ -603,8 +603,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		else if (att->attnotnull && attguaranteedalign && known_alignment >= 0)
 		{
 			/*
-			 * If the offset to the column was previously known a NOT NULL &
-			 * fixed width column guarantees that alignment is just the
+			 * If the offset to the column was previously known, a NOT NULL &
+			 * fixed-width column guarantees that alignment is just the
 			 * previous alignment plus column width.
 			 */
 			Assert(att->attlen > 0);
@@ -645,8 +645,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 					   LLVMBuildGEP(b, v_tts_nulls, &l_attno, 1, ""));
 
 		/*
-		 * Store datum. For byval datums copy the value, extend to Datum's
-		 * width, and store. For byref types, store pointer to data.
+		 * Store datum. For byval: datums copy the value, extend to Datum's
+		 * width, and store. For byref types: store pointer to data.
 		 */
 		if (att->attbyval)
 		{
