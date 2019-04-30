@@ -103,27 +103,27 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	funcname = llvm_expand_funcname(context, "deform");
 
 	/*
-	 * Check which columns do have to exist, so we don't have to check the
-	 * rows natts unnecessarily.
+	 * Check which columns have to exist, so we don't have to check the row's
+	 * natts unnecessarily.
 	 */
 	for (attnum = 0; attnum < desc->natts; attnum++)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, attnum);
 
 		/*
-		 * If the column is possibly missing, we can't rely on its (or
-		 * subsequent) NOT NULL constraints to indicate minimum attributes in
-		 * the tuple, so stop here.
+		 * If the column is declared NOT NULL then it must be present in every
+		 * tuple, unless there's a "missing" entry that could provide a
+		 * non-NULL value for it. That in turn guarantees that the NULL bitmap
+		 * - if there are any NULLable columns - is at least long enough to
+		 * cover columns up to attnum.
+		 *
+		 * Be paranoid and also check !attisdropped, even though the
+		 * combination of attisdropped && attnotnull combination shouldn't
+		 * exist.
 		 */
-		if (att->atthasmissing)
-			break;
-
-		/*
-		 * Column is NOT NULL and there've been no preceding missing columns,
-		 * it's guaranteed that all columns up to here exist at least in the
-		 * NULL bitmap.
-		 */
-		if (att->attnotnull)
+		if (att->attnotnull &&
+			!att->atthasmissing &&
+			!att->attisdropped)
 			guaranteed_column_number = attnum;
 	}
 
@@ -298,9 +298,12 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	}
 
 	/*
-	 * Check if's guaranteed the all the desired attributes are available in
-	 * tuple. If so, we can start deforming. If not, need to make sure to
-	 * fetch the missing columns.
+	 * Check if it is guaranteed that all the desired attributes are available
+	 * in the tuple (but still possibly NULL), by dint of either the last
+	 * to-be-deformed column being NOT NULL, or subsequent ones not accessed
+	 * here being NOT NULL.  If that's not guaranteed the tuple headers natt's
+	 * has to be checked, and missing attributes potentially have to be
+	 * fetched (using slot_getmissingattrs().
 	 */
 	if ((natts - 1) <= guaranteed_column_number)
 	{
