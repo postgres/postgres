@@ -3350,28 +3350,34 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 */
 	TransferPredicateLocksToHeapRelation(iRel);
 
+	/* Fetch info needed for index_build */
+	indexInfo = BuildIndexInfo(iRel);
+
+	/* If requested, skip checking uniqueness/exclusion constraints */
+	if (skip_constraint_checks)
+	{
+		if (indexInfo->ii_Unique || indexInfo->ii_ExclusionOps != NULL)
+			skipped_constraint = true;
+		indexInfo->ii_Unique = false;
+		indexInfo->ii_ExclusionOps = NULL;
+		indexInfo->ii_ExclusionProcs = NULL;
+		indexInfo->ii_ExclusionStrats = NULL;
+	}
+
+	/*
+	 * Build a new physical relation for the index. Need to do that before
+	 * "officially" starting the reindexing with SetReindexProcessing -
+	 * otherwise the necessary pg_class changes cannot be made with
+	 * encountering assertions.
+	 */
+	RelationSetNewRelfilenode(iRel, persistence, InvalidTransactionId,
+							  InvalidMultiXactId);
+
+	/* ensure SetReindexProcessing state isn't leaked */
 	PG_TRY();
 	{
 		/* Suppress use of the target index while rebuilding it */
 		SetReindexProcessing(heapId, indexId);
-
-		/* Fetch info needed for index_build */
-		indexInfo = BuildIndexInfo(iRel);
-
-		/* If requested, skip checking uniqueness/exclusion constraints */
-		if (skip_constraint_checks)
-		{
-			if (indexInfo->ii_Unique || indexInfo->ii_ExclusionOps != NULL)
-				skipped_constraint = true;
-			indexInfo->ii_Unique = false;
-			indexInfo->ii_ExclusionOps = NULL;
-			indexInfo->ii_ExclusionProcs = NULL;
-			indexInfo->ii_ExclusionStrats = NULL;
-		}
-
-		/* We'll build a new physical relation for the index */
-		RelationSetNewRelfilenode(iRel, persistence, InvalidTransactionId,
-								  InvalidMultiXactId);
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
