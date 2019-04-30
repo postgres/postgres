@@ -80,9 +80,15 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
 
-	/* HOT update does not require index inserts */
+	/*
+	 * HOT update does not require index inserts. But with asserts enabled we
+	 * want to check that it'd be legal to currently insert into the
+	 * table/index.
+	 */
+#ifndef USE_ASSERT_CHECKING
 	if (HeapTupleIsHeapOnly(heapTuple))
 		return;
+#endif
 
 	/*
 	 * Get information from the state structure.  Fall out if nothing to do.
@@ -104,8 +110,10 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 	for (i = 0; i < numIndexes; i++)
 	{
 		IndexInfo  *indexInfo;
+		Relation	index;
 
 		indexInfo = indexInfoArray[i];
+		index = relationDescs[i];
 
 		/* If the index is marked as read-only, ignore it */
 		if (!indexInfo->ii_ReadyForInserts)
@@ -118,7 +126,16 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		Assert(indexInfo->ii_Expressions == NIL);
 		Assert(indexInfo->ii_Predicate == NIL);
 		Assert(indexInfo->ii_ExclusionOps == NULL);
-		Assert(relationDescs[i]->rd_index->indimmediate);
+		Assert(index->rd_index->indimmediate);
+
+		/* see earlier check above */
+#ifdef USE_ASSERT_CHECKING
+		if (HeapTupleIsHeapOnly(heapTuple))
+		{
+			Assert(!ReindexIsProcessingIndex(RelationGetRelid(index)));
+			continue;
+		}
+#endif /* USE_ASSERT_CHECKING */
 
 		/*
 		 * FormIndexDatum fills in its values and isnull parameters with the

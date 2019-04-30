@@ -74,6 +74,11 @@ COMMIT;
 VACUUM FULL pg_class;
 VACUUM FULL pg_class;
 
+-- reindexing of important relations / indexes
+REINDEX TABLE pg_class;
+REINDEX INDEX pg_class_oid_index;
+REINDEX INDEX pg_class_tblspc_relfilenode_index;
+
 INSERT INTO replication_example(somedata, testcolumn1) VALUES (5, 3);
 
 BEGIN;
