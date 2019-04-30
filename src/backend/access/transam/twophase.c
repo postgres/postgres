@@ -2190,12 +2190,12 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		if (fromdisk)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("corrupted two-phase state file for transaction \"%u\"",
+					 errmsg("corrupted two-phase state file for transaction %u",
 							xid)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("corrupted two-phase state in memory for transaction \"%u\"",
+					 errmsg("corrupted two-phase state in memory for transaction %u",
 							xid)));
 	}
 

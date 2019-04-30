@@ -7689,12 +7689,14 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				fkconstraint->fk_upd_action == FKCONSTR_ACTION_CASCADE)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid ON UPDATE action for foreign key constraint containing generated column")));
+						 errmsg("invalid %s action for foreign key constraint containing generated column",
+								"ON UPDATE")));
 			if (fkconstraint->fk_del_action == FKCONSTR_ACTION_SETNULL ||
 				fkconstraint->fk_del_action == FKCONSTR_ACTION_SETDEFAULT)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid ON DELETE action for foreign key constraint containing generated column")));
+						 errmsg("invalid %s action for foreign key constraint containing generated column",
+								"ON DELETE")));
 		}
 	}
 

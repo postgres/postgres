@@ -639,7 +639,7 @@ DefineIndex(Oid relationId,
 		if (partitioned && tablespaceId == MyDatabaseTableSpace)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot specify default tablespace for partitioned relation")));
+					 errmsg("cannot specify default tablespace for partitioned relations")));
 	}
 	else
 	{

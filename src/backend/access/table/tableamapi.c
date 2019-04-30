@@ -109,8 +109,8 @@ check_default_table_access_method(char **newval, void **extra, GucSource source)
 
 	if (strlen(*newval) >= NAMEDATALEN)
 	{
-		GUC_check_errdetail("default_table_access_method is too long (maximum %d characters).",
-							NAMEDATALEN - 1);
+		GUC_check_errdetail("%s is too long (maximum %d characters).",
+							"default_table_access_method", NAMEDATALEN - 1);
 		return false;
 	}
 
@@ -131,7 +131,7 @@ check_default_table_access_method(char **newval, void **extra, GucSource source)
 			{
 				ereport(NOTICE,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("Table access method \"%s\" does not exist",
+						 errmsg("table access method \"%s\" does not exist",
 								*newval)));
 			}
 			else

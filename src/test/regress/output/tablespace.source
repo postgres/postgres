@@ -106,7 +106,7 @@ Tablespace: "regress_tblspace"
 CREATE TABLE testschema.dflt (a int PRIMARY KEY) PARTITION BY LIST (a) TABLESPACE pg_default;
 ERROR:  cannot specify default tablespace for partitioned relations
 CREATE TABLE testschema.dflt (a int PRIMARY KEY USING INDEX TABLESPACE pg_default) PARTITION BY LIST (a);
-ERROR:  cannot specify default tablespace for partitioned relation
+ERROR:  cannot specify default tablespace for partitioned relations
 SET default_tablespace TO 'pg_default';
 CREATE TABLE testschema.dflt (a int PRIMARY KEY) PARTITION BY LIST (a) TABLESPACE regress_tblspace;
 ERROR:  cannot specify default tablespace for partitioned relations

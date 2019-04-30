@@ -11639,8 +11639,8 @@ check_recovery_target_name(char **newval, void **extra, GucSource source)
 	/* Use the value of newval directly */
 	if (strlen(*newval) >= MAXFNAMELEN)
 	{
-		GUC_check_errdetail("recovery_target_name is too long (maximum %d characters).",
-							MAXFNAMELEN - 1);
+		GUC_check_errdetail("%s is too long (maximum %d characters).",
+							"recovery_target_name", MAXFNAMELEN - 1);
 		return false;
 	}
 	return true;
