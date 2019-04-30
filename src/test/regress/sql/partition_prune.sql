@@ -899,4 +899,24 @@ create table listp2_10 partition of listp2 for values in (10);
 explain (analyze, costs off, summary off, timing off)
 select * from listp where a = (select 2) and b <> 10;
 
+--
+-- check that a partition directly accessed in a query is excluded with
+-- constraint_exclusion = on
+--
+
+-- turn off partition pruning, so that it doesn't interfere
+set enable_partition_pruning to off;
+
+-- setting constraint_exclusion to 'partition' disables exclusion
+set constraint_exclusion to 'partition';
+explain (costs off) select * from listp1 where a = 2;
+explain (costs off) update listp1 set a = 1 where a = 2;
+-- constraint exclusion enabled
+set constraint_exclusion to 'on';
+explain (costs off) select * from listp1 where a = 2;
+explain (costs off) update listp1 set a = 1 where a = 2;
+
+reset constraint_exclusion;
+reset enable_partition_pruning;
+
 drop table listp;

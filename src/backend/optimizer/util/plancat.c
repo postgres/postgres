@@ -66,7 +66,9 @@ static bool infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 static List *get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
-						 bool include_notnull);
+						 bool include_noinherit,
+						 bool include_notnull,
+						 bool include_partition);
 static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 				  Relation heapRelation);
 static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
@@ -1157,15 +1159,21 @@ get_relation_data_width(Oid relid, int32 *attr_widths)
 /*
  * get_relation_constraints
  *
- * Retrieve the validated CHECK constraint expressions of the given relation.
+ * Retrieve the applicable constraint expressions of the given relation.
  *
  * Returns a List (possibly empty) of constraint expressions.  Each one
  * has been canonicalized, and its Vars are changed to have the varno
  * indicated by rel->relid.  This allows the expressions to be easily
  * compared to expressions taken from WHERE.
  *
+ * If include_noinherit is true, it's okay to include constraints that
+ * are marked NO INHERIT.
+ *
  * If include_notnull is true, "col IS NOT NULL" expressions are generated
  * and added to the result for each column that's marked attnotnull.
+ *
+ * If include_partition is true, and the relation is a partition,
+ * also include the partitioning constraints.
  *
  * Note: at present this is invoked at most once per relation per planner
  * run, and in many cases it won't be invoked at all, so there seems no
@@ -1174,7 +1182,9 @@ get_relation_data_width(Oid relid, int32 *attr_widths)
 static List *
 get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
-						 bool include_notnull)
+						 bool include_noinherit,
+						 bool include_notnull,
+						 bool include_partition)
 {
 	List	   *result = NIL;
 	Index		varno = rel->relid;
@@ -1198,9 +1208,12 @@ get_relation_constraints(PlannerInfo *root,
 
 			/*
 			 * If this constraint hasn't been fully validated yet, we must
-			 * ignore it here.
+			 * ignore it here.  Also ignore if NO INHERIT and we weren't told
+			 * that that's safe.
 			 */
 			if (!constr->check[i].ccvalid)
+				continue;
+			if (constr->check[i].ccnoinherit && !include_noinherit)
 				continue;
 
 			cexpr = stringToNode(constr->check[i].ccbin);
@@ -1266,13 +1279,9 @@ get_relation_constraints(PlannerInfo *root,
 	}
 
 	/*
-	 * Append partition predicates, if any.
-	 *
-	 * For selects, partition pruning uses the parent table's partition bound
-	 * descriptor, instead of constraint exclusion which is driven by the
-	 * individual partition's partition constraint.
+	 * Add partitioning constraints, if requested.
 	 */
-	if (enable_partition_pruning && root->parse->commandType != CMD_SELECT)
+	if (include_partition && relation->rd_rel->relispartition)
 	{
 		List	   *pcqual = RelationGetPartitionQual(relation);
 
@@ -1377,7 +1386,7 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
  *
  * Detect whether the relation need not be scanned because it has either
  * self-inconsistent restrictions, or restrictions inconsistent with the
- * relation's validated CHECK constraints.
+ * relation's applicable constraints.
  *
  * Note: this examines only rel->relid, rel->reloptkind, and
  * rel->baserestrictinfo; therefore it can be called before filling in
@@ -1387,6 +1396,9 @@ bool
 relation_excluded_by_constraints(PlannerInfo *root,
 								 RelOptInfo *rel, RangeTblEntry *rte)
 {
+	bool		include_noinherit;
+	bool		include_notnull;
+	bool		include_partition = false;
 	List	   *safe_restrictions;
 	List	   *constraint_pred;
 	List	   *safe_constraints;
@@ -1394,6 +1406,13 @@ relation_excluded_by_constraints(PlannerInfo *root,
 
 	/* As of now, constraint exclusion works only with simple relations. */
 	Assert(IS_SIMPLE_REL(rel));
+
+	/*
+	 * If there are no base restriction clauses, we have no hope of proving
+	 * anything below, so fall out quickly.
+	 */
+	if (rel->baserestrictinfo == NIL)
+		return false;
 
 	/*
 	 * Regardless of the setting of constraint_exclusion, detect
@@ -1416,6 +1435,17 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	}
 
 	/*
+	 * Partition pruning will not have been applied to an inherited target
+	 * relation, so if enable_partition_pruning is true, force consideration
+	 * of the rel's partition constraints.  (Thus constraint_exclusion will be
+	 * effectively forced 'on' for this case.  This is done better in v12.)
+	 */
+	if (enable_partition_pruning &&
+		rel->relid == root->parse->resultRelation &&
+		root->inhTargetKind != INHKIND_NONE)
+		include_partition = true;
+
+	/*
 	 * Skip further tests, depending on constraint_exclusion.
 	 */
 	switch (constraint_exclusion)
@@ -1423,15 +1453,10 @@ relation_excluded_by_constraints(PlannerInfo *root,
 		case CONSTRAINT_EXCLUSION_OFF:
 
 			/*
-			 * Don't prune if feature turned off -- except if the relation is
-			 * a partition.  While partprune.c-style partition pruning is not
-			 * yet in use for all cases (update/delete is not handled), it
-			 * would be a UI horror to use different user-visible controls
-			 * depending on such a volatile implementation detail.  Therefore,
-			 * for partitioned tables we use enable_partition_pruning to
-			 * control this behavior.
+			 * In 'off' mode, never make any further tests, except if forcing
+			 * include_partition.
 			 */
-			if (root->inhTargetKind == INHKIND_PARTITIONED)
+			if (include_partition)
 				break;
 			return false;
 
@@ -1439,17 +1464,32 @@ relation_excluded_by_constraints(PlannerInfo *root,
 
 			/*
 			 * When constraint_exclusion is set to 'partition' we only handle
-			 * OTHER_MEMBER_RELs, or BASERELs in cases where the result target
-			 * is an inheritance parent or a partitioned table.
+			 * appendrel members.  Normally, they are RELOPT_OTHER_MEMBER_REL
+			 * relations, but we also consider inherited target relations as
+			 * appendrel members for the purposes of constraint exclusion.
+			 *
+			 * In the former case, partition pruning was already applied, so
+			 * there is no need to consider the rel's partition constraints
+			 * here.  In the latter case, we already set include_partition
+			 * properly (i.e., do it if enable_partition_pruning).
 			 */
-			if ((rel->reloptkind != RELOPT_OTHER_MEMBER_REL) &&
-				!(rel->reloptkind == RELOPT_BASEREL &&
-				  root->inhTargetKind != INHKIND_NONE &&
-				  rel->relid == root->parse->resultRelation))
-				return false;
-			break;
+			if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL ||
+				(rel->relid == root->parse->resultRelation &&
+				 root->inhTargetKind != INHKIND_NONE))
+				break;			/* appendrel member, so process it */
+			return false;
 
 		case CONSTRAINT_EXCLUSION_ON:
+
+			/*
+			 * In 'on' mode, always apply constraint exclusion.  If we are
+			 * considering a baserel that is a partition (i.e., it was
+			 * directly named rather than expanded from a parent table), then
+			 * its partition constraints haven't been considered yet, so
+			 * include them in the processing here.
+			 */
+			if (rel->reloptkind == RELOPT_BASEREL)
+				include_partition = true;
 			break;				/* always try to exclude */
 	}
 
@@ -1478,24 +1518,40 @@ relation_excluded_by_constraints(PlannerInfo *root,
 		return true;
 
 	/*
-	 * Only plain relations have constraints.  In a partitioning hierarchy,
-	 * but not with regular table inheritance, it's OK to assume that any
-	 * constraints that hold for the parent also hold for every child; for
-	 * instance, table inheritance allows the parent to have constraints
-	 * marked NO INHERIT, but table partitioning does not.  We choose to check
-	 * whether the partitioning parents can be excluded here; doing so
-	 * consumes some cycles, but potentially saves us the work of excluding
-	 * each child individually.
+	 * Only plain relations have constraints, so stop here for other rtekinds.
 	 */
-	if (rte->rtekind != RTE_RELATION ||
-		(rte->inh && rte->relkind != RELKIND_PARTITIONED_TABLE))
+	if (rte->rtekind != RTE_RELATION)
 		return false;
 
 	/*
-	 * OK to fetch the constraint expressions.  Include "col IS NOT NULL"
-	 * expressions for attnotnull columns, in case we can refute those.
+	 * In a partitioning hierarchy, but not with regular table inheritance,
+	 * it's OK to assume that any constraints that hold for the parent also
+	 * hold for every child; for instance, table inheritance allows the parent
+	 * to have constraints marked NO INHERIT, but table partitioning does not.
+	 * We choose to check whether the partitioning parents can be excluded
+	 * here; doing so consumes some cycles, but potentially saves us the work
+	 * of excluding each child individually.
+	 *
+	 * This is unnecessarily stupid, but making it smarter seems out of scope
+	 * for v11.
 	 */
-	constraint_pred = get_relation_constraints(root, rte->relid, rel, true);
+	if (rte->inh && rte->relkind != RELKIND_PARTITIONED_TABLE)
+		return false;
+
+	/*
+	 * Given the above restriction, we can always include NO INHERIT and NOT
+	 * NULL constraints.
+	 */
+	include_noinherit = true;
+	include_notnull = true;
+
+	/*
+	 * Fetch the appropriate set of constraint expressions.
+	 */
+	constraint_pred = get_relation_constraints(root, rte->relid, rel,
+											   include_noinherit,
+											   include_notnull,
+											   include_partition);
 
 	/*
 	 * We do not currently enforce that CHECK constraints contain only
