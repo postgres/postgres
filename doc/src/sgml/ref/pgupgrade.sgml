@@ -382,11 +382,11 @@ NET STOP postgresql-&majorversion;
      requires that the old and new cluster data directories be in the
      same file system.  (Tablespaces and <filename>pg_wal</filename> can be on
      different file systems.)
-     The clone mode provides the same speed and disk space advantages but will
-     not leave the old cluster unusable after the upgrade.  The clone mode
-     also requires that the old and new data directories be in the same file
-     system.  The clone mode is only available on certain operating systems
-     and file systems.
+     Clone mode provides the same speed and disk space advantages but
+     does not cause the old cluster to be unusable once the new cluster
+     is started.  Clone mode also requires that the old and new data
+     directories be in the same file system.  This mode is only available
+     on certain operating systems and file systems.
     </para>
 
     <para>
