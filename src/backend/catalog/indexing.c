@@ -135,7 +135,7 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 			Assert(!ReindexIsProcessingIndex(RelationGetRelid(index)));
 			continue;
 		}
-#endif /* USE_ASSERT_CHECKING */
+#endif							/* USE_ASSERT_CHECKING */
 
 		/*
 		 * FormIndexDatum fills in its values and isnull parameters with the
@@ -150,12 +150,12 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		/*
 		 * The index AM does the rest.
 		 */
-		index_insert(relationDescs[i],	/* index relation */
+		index_insert(index,		/* index relation */
 					 values,	/* array of index Datums */
 					 isnull,	/* is-null flags */
 					 &(heapTuple->t_self),	/* tid of heap tuple */
 					 heapRelation,
-					 relationDescs[i]->rd_index->indisunique ?
+					 index->rd_index->indisunique ?
 					 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO,
 					 indexInfo);
 	}
