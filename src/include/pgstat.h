@@ -560,7 +560,7 @@ typedef union PgStat_Msg
 	PgStat_MsgResetcounter msg_resetcounter;
 	PgStat_MsgResetsharedcounter msg_resetsharedcounter;
 	PgStat_MsgResetsinglecounter msg_resetsinglecounter;
-	PgStat_MsgAutovacStart msg_autovacuum;
+	PgStat_MsgAutovacStart msg_autovacuum_start;
 	PgStat_MsgVacuum msg_vacuum;
 	PgStat_MsgAnalyze msg_analyze;
 	PgStat_MsgArchiver msg_archiver;
@@ -569,6 +569,8 @@ typedef union PgStat_Msg
 	PgStat_MsgFuncpurge msg_funcpurge;
 	PgStat_MsgRecoveryConflict msg_recoveryconflict;
 	PgStat_MsgDeadlock msg_deadlock;
+	PgStat_MsgTempFile msg_tempfile;
+	PgStat_MsgChecksumFailure msg_checksumfailure;
 } PgStat_Msg;
 
 
