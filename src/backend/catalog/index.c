@@ -3713,20 +3713,15 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		indexInfo->ii_ExclusionStrats = NULL;
 	}
 
-	/*
-	 * Build a new physical relation for the index. Need to do that before
-	 * "officially" starting the reindexing with SetReindexProcessing -
-	 * otherwise the necessary pg_class changes cannot be made with
-	 * encountering assertions.
-	 */
-	RelationSetNewRelfilenode(iRel, persistence, InvalidTransactionId,
-							  InvalidMultiXactId);
-
 	/* ensure SetReindexProcessing state isn't leaked */
 	PG_TRY();
 	{
 		/* Suppress use of the target index while rebuilding it */
 		SetReindexProcessing(heapId, indexId);
+
+		/* Create a new physical relation for the index */
+		RelationSetNewRelfilenode(iRel, persistence, InvalidTransactionId,
+								  InvalidMultiXactId);
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
@@ -3873,7 +3868,6 @@ reindex_relation(Oid relid, int flags, int options)
 	Relation	rel;
 	Oid			toast_relid;
 	List	   *indexIds;
-	bool		is_pg_class;
 	bool		result;
 
 	/*
@@ -3908,37 +3902,8 @@ reindex_relation(Oid relid, int flags, int options)
 	 */
 	indexIds = RelationGetIndexList(rel);
 
-	/*
-	 * reindex_index will attempt to update the pg_class rows for the relation
-	 * and index.  If we are processing pg_class itself, we want to make sure
-	 * that the updates do not try to insert index entries into indexes we
-	 * have not processed yet.  (When we are trying to recover from corrupted
-	 * indexes, that could easily cause a crash.) We can accomplish this
-	 * because CatalogTupleInsert/CatalogTupleUpdate will use the relcache's
-	 * index list to know which indexes to update. We just force the index
-	 * list to be only the stuff we've processed.
-	 *
-	 * It is okay to not insert entries into the indexes we have not processed
-	 * yet because all of this is transaction-safe.  If we fail partway
-	 * through, the updated rows are dead and it doesn't matter whether they
-	 * have index entries.  Also, a new pg_class index will be created with a
-	 * correct entry for its own pg_class row because we do
-	 * RelationSetNewRelfilenode() before we do index_build().
-	 *
-	 * Note that we also clear pg_class's rd_oidindex until the loop is done,
-	 * so that that index can't be accessed either.  This means we cannot
-	 * safely generate new relation OIDs while in the loop; shouldn't be a
-	 * problem.
-	 */
-	is_pg_class = (RelationGetRelid(rel) == RelationRelationId);
-
-	/* Ensure rd_indexattr is valid; see comments for RelationSetIndexList */
-	if (is_pg_class)
-		(void) RelationGetIndexAttrBitmap(rel, INDEX_ATTR_BITMAP_HOT);
-
 	PG_TRY();
 	{
-		List	   *doneIndexes;
 		ListCell   *indexId;
 		char		persistence;
 
@@ -3966,13 +3931,9 @@ reindex_relation(Oid relid, int flags, int options)
 			persistence = rel->rd_rel->relpersistence;
 
 		/* Reindex all the indexes. */
-		doneIndexes = NIL;
 		foreach(indexId, indexIds)
 		{
 			Oid			indexOid = lfirst_oid(indexId);
-
-			if (is_pg_class)
-				RelationSetIndexList(rel, doneIndexes, InvalidOid);
 
 			reindex_index(indexOid, !(flags & REINDEX_REL_CHECK_CONSTRAINTS),
 						  persistence, options);
@@ -3981,9 +3942,6 @@ reindex_relation(Oid relid, int flags, int options)
 
 			/* Index should no longer be in the pending list */
 			Assert(!ReindexIsProcessingIndex(indexOid));
-
-			if (is_pg_class)
-				doneIndexes = lappend_oid(doneIndexes, indexOid);
 		}
 	}
 	PG_CATCH();
@@ -3994,9 +3952,6 @@ reindex_relation(Oid relid, int flags, int options)
 	}
 	PG_END_TRY();
 	ResetReindexPending();
-
-	if (is_pg_class)
-		RelationSetIndexList(rel, indexIds, ClassOidIndexId);
 
 	/*
 	 * Close rel, but continue to hold the lock.
