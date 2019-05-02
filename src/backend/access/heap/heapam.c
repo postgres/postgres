@@ -6106,11 +6106,18 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 	frz->t_infomask = tuple->t_infomask;
 	frz->xmax = HeapTupleHeaderGetRawXmax(tuple);
 
-	/* Process xmin */
+	/*
+	 * Process xmin.  xmin_frozen has two slightly different meanings: in the
+	 * !XidIsNormal case, it means "the xmin doesn't need any freezing" (it's
+	 * already a permanent value), while in the block below it is set true to
+	 * mean "xmin won't need freezing after what we do to it here" (false
+	 * otherwise).  In both cases we're allowed to set totally_frozen, as far
+	 * as xmin is concerned.
+	 */
 	xid = HeapTupleHeaderGetXmin(tuple);
-	xmin_frozen = ((xid == FrozenTransactionId) ||
-				   HeapTupleHeaderXminFrozen(tuple));
-	if (TransactionIdIsNormal(xid))
+	if (!TransactionIdIsNormal(xid))
+		xmin_frozen = true;
+	else
 	{
 		if (TransactionIdPrecedes(xid, relfrozenxid))
 			ereport(ERROR,
@@ -6118,7 +6125,8 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 					 errmsg_internal("found xmin %u from before relfrozenxid %u",
 									 xid, relfrozenxid)));
 
-		if (TransactionIdPrecedes(xid, cutoff_xid))
+		xmin_frozen = TransactionIdPrecedes(xid, cutoff_xid);
+		if (xmin_frozen)
 		{
 			if (!TransactionIdDidCommit(xid))
 				ereport(ERROR,
@@ -6128,7 +6136,6 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 
 			frz->t_infomask |= HEAP_XMIN_FROZEN;
 			changed = true;
-			xmin_frozen = true;
 		}
 	}
 
