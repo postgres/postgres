@@ -1687,13 +1687,15 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 }
 
 /*
- * _bt_insert_parent() -- Insert downlink into parent after a page split.
+ * _bt_insert_parent() -- Insert downlink into parent, completing split.
  *
  * On entry, buf and rbuf are the left and right split pages, which we
- * still hold write locks on per the L&Y algorithm.  We release the
- * write locks once we have write lock on the parent page.  (Any sooner,
- * and it'd be possible for some other process to try to split or delete
- * one of these pages, and get confused because it cannot find the downlink.)
+ * still hold write locks on.  Both locks will be released here.  We
+ * release the rbuf lock once we have a write lock on the page that we
+ * intend to insert a downlink to rbuf on (i.e. buf's current parent page).
+ * The lock on buf is released at the same point as the lock on the parent
+ * page, since buf's INCOMPLETE_SPLIT flag must be cleared by the same
+ * atomic operation that completes the split by inserting a new downlink.
  *
  * stack - stack showing how we got here.  Will be NULL when splitting true
  *			root, or during concurrent root split, where we can be inefficient
@@ -1771,11 +1773,13 @@ _bt_insert_parent(Relation rel,
 		BTreeInnerTupleSetDownLink(new_item, rbknum);
 
 		/*
-		 * Find the parent buffer and get the parent page.
+		 * Re-find and write lock the parent of buf.
 		 *
-		 * Oops - if we were moved right then we need to change stack item! We
-		 * want to find parent pointing to where we are, right ?	- vadim
-		 * 05/27/97
+		 * It's possible that the location of buf's downlink has changed
+		 * since our initial _bt_search() descent.  _bt_getstackbuf() will
+		 * detect and recover from this, updating the stack, which ensures
+		 * that the new downlink will be inserted at the correct offset.
+		 * Even buf's parent may have changed.
 		 */
 		stack->bts_btentry = bknum;
 		pbuf = _bt_getstackbuf(rel, stack);
