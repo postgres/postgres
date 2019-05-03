@@ -72,8 +72,7 @@ For new features, add links to the documentation sections.
 <!--
   When beginning a new major-release series, create a new release-NN.sgml
   file, removing the previous one, and change the &-reference here.
-  Don't forget to update filelist.sgml.  Also, add a link to the on-line
-  documentation for the newly forked-off branch in the list below.
+  Don't forget to update filelist.sgml.
 
   The reason for keeping each branch's release notes in a differently-named
   file is to reduce confusion when preparing minor-release updates.
