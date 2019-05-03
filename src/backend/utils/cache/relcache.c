@@ -3058,18 +3058,6 @@ AtEOXact_cleanup(Relation relation, bool isCommit)
 	 * Likewise, reset the hint about the relfilenode being new.
 	 */
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-
-	/*
-	 * Flush any temporary index list.
-	 */
-	if (relation->rd_indexvalid == 2)
-	{
-		list_free(relation->rd_indexlist);
-		relation->rd_indexlist = NIL;
-		relation->rd_pkindex = InvalidOid;
-		relation->rd_replidindex = InvalidOid;
-		relation->rd_indexvalid = 0;
-	}
 }
 
 /*
@@ -3169,18 +3157,6 @@ AtEOSubXact_cleanup(Relation relation, bool isCommit,
 			relation->rd_newRelfilenodeSubid = parentSubid;
 		else
 			relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-	}
-
-	/*
-	 * Flush any temporary index list.
-	 */
-	if (relation->rd_indexvalid == 2)
-	{
-		list_free(relation->rd_indexlist);
-		relation->rd_indexlist = NIL;
-		relation->rd_pkindex = InvalidOid;
-		relation->rd_replidindex = InvalidOid;
-		relation->rd_indexvalid = 0;
 	}
 }
 
@@ -4337,7 +4313,7 @@ RelationGetFKeyList(Relation relation)
  * The index list is created only if someone requests it.  We scan pg_index
  * to find relevant indexes, and add the list to the relcache entry so that
  * we won't have to compute it again.  Note that shared cache inval of a
- * relcache entry will delete the old list and set rd_indexvalid to 0,
+ * relcache entry will delete the old list and set rd_indexvalid to false,
  * so that we must recompute the index list on next request.  This handles
  * creation or deletion of an index.
  *
@@ -4377,7 +4353,7 @@ RelationGetIndexList(Relation relation)
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the list. */
-	if (relation->rd_indexvalid != 0)
+	if (relation->rd_indexvalid)
 		return list_copy(relation->rd_indexlist);
 
 	/*
@@ -4448,7 +4424,7 @@ RelationGetIndexList(Relation relation)
 		relation->rd_replidindex = candidateIndex;
 	else
 		relation->rd_replidindex = InvalidOid;
-	relation->rd_indexvalid = 1;
+	relation->rd_indexvalid = true;
 	MemoryContextSwitchTo(oldcxt);
 
 	/* Don't leak the old list, if there is one */
@@ -4573,52 +4549,6 @@ insert_ordered_oid(List *list, Oid datum)
 }
 
 /*
- * RelationSetIndexList -- externally force the index list contents
- *
- * This is used to temporarily override what we think the set of valid
- * indexes is (including the presence or absence of an OID index).
- * The forcing will be valid only until transaction commit or abort.
- *
- * This should only be applied to nailed relations, because in a non-nailed
- * relation the hacked index list could be lost at any time due to SI
- * messages.  In practice it is only used on pg_class (see REINDEX).
- *
- * It is up to the caller to make sure the given list is correctly ordered.
- *
- * We deliberately do not change rd_indexattr here: even when operating
- * with a temporary partial index list, HOT-update decisions must be made
- * correctly with respect to the full index set.  It is up to the caller
- * to ensure that a correct rd_indexattr set has been cached before first
- * calling RelationSetIndexList; else a subsequent inquiry might cause a
- * wrong rd_indexattr set to get computed and cached.  Likewise, we do not
- * touch rd_keyattr, rd_pkattr or rd_idattr.
- */
-void
-RelationSetIndexList(Relation relation, List *indexIds)
-{
-	MemoryContext oldcxt;
-
-	Assert(relation->rd_isnailed);
-	/* Copy the list into the cache context (could fail for lack of mem) */
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	indexIds = list_copy(indexIds);
-	MemoryContextSwitchTo(oldcxt);
-	/* Okay to replace old list */
-	list_free(relation->rd_indexlist);
-	relation->rd_indexlist = indexIds;
-
-	/*
-	 * For the moment, assume the target rel hasn't got a pk or replica index.
-	 * We'll load them on demand in the API that wraps access to them.
-	 */
-	relation->rd_pkindex = InvalidOid;
-	relation->rd_replidindex = InvalidOid;
-	relation->rd_indexvalid = 2;	/* mark list as forced */
-	/* Flag relation as needing eoxact cleanup (to reset the list) */
-	EOXactListAdd(relation);
-}
-
-/*
  * RelationGetPrimaryKeyIndex -- get OID of the relation's primary key index
  *
  * Returns InvalidOid if there is no such index.
@@ -4628,12 +4558,12 @@ RelationGetPrimaryKeyIndex(Relation relation)
 {
 	List	   *ilist;
 
-	if (relation->rd_indexvalid == 0)
+	if (!relation->rd_indexvalid)
 	{
 		/* RelationGetIndexList does the heavy lifting. */
 		ilist = RelationGetIndexList(relation);
 		list_free(ilist);
-		Assert(relation->rd_indexvalid != 0);
+		Assert(relation->rd_indexvalid);
 	}
 
 	return relation->rd_pkindex;
@@ -4649,12 +4579,12 @@ RelationGetReplicaIndex(Relation relation)
 {
 	List	   *ilist;
 
-	if (relation->rd_indexvalid == 0)
+	if (!relation->rd_indexvalid)
 	{
 		/* RelationGetIndexList does the heavy lifting. */
 		ilist = RelationGetIndexList(relation);
 		list_free(ilist);
-		Assert(relation->rd_indexvalid != 0);
+		Assert(relation->rd_indexvalid);
 	}
 
 	return relation->rd_replidindex;
@@ -5668,9 +5598,7 @@ load_relcache_init_file(bool shared)
 			rel->rd_refcnt = 1;
 		else
 			rel->rd_refcnt = 0;
-		rel->rd_indexvalid = 0;
-		rel->rd_fkeylist = NIL;
-		rel->rd_fkeyvalid = false;
+		rel->rd_indexvalid = false;
 		rel->rd_indexlist = NIL;
 		rel->rd_pkindex = InvalidOid;
 		rel->rd_replidindex = InvalidOid;
@@ -5681,6 +5609,8 @@ load_relcache_init_file(bool shared)
 		rel->rd_pubactions = NULL;
 		rel->rd_statvalid = false;
 		rel->rd_statlist = NIL;
+		rel->rd_fkeyvalid = false;
+		rel->rd_fkeylist = NIL;
 		rel->rd_createSubid = InvalidSubTransactionId;
 		rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 		rel->rd_amcache = NULL;

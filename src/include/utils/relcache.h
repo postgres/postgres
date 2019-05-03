@@ -66,9 +66,6 @@ extern void RelationGetExclusionInfo(Relation indexRelation,
 						 Oid **procs,
 						 uint16 **strategies);
 
-extern void RelationSetIndexList(Relation relation,
-					 List *indexIds);
-
 extern void RelationInitIndexAccessInfo(Relation relation);
 
 /* caller must include pg_publication.h */
