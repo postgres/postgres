@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 use 5.8.0;
-use File::Spec::Functions qw(splitpath catpath);
 use List::Util qw(max);
 
 my @def;
@@ -11,17 +10,6 @@ my @def;
 #
 # src/tools/msvc/gendef.pl
 #
-
-sub dumpsyms
-{
-	my ($objfile, $symfile) = @_;
-	my ($symvol, $symdirs, $symbase) = splitpath($symfile);
-	my $tmpfile = catpath($symvol, $symdirs, "symbols.out");
-	system("dumpbin /symbols /out:$tmpfile $_ >NUL")
-	  && die "Could not call dumpbin";
-	rename($tmpfile, $symfile);
-	return;
-}
 
 # Given a symbol file path, loops over its contents
 # and returns a list of symbols of interest as a dictionary
@@ -177,15 +165,12 @@ print "Generating $defname.DEF from directory $ARGV[0], platform $platform\n";
 
 my %def = ();
 
-while (<$ARGV[0]/*.obj>)    ## no critic (RequireGlobFunction);
-{
-	my $objfile = $_;
-	my $symfile = $objfile;
-	$symfile =~ s/\.obj$/.sym/i;
-	dumpsyms($objfile, $symfile);
-	print ".";
-	extract_syms($symfile, \%def);
-}
+my $symfile = "$ARGV[0]/all.sym";
+my $tmpfile = "$ARGV[0]/tmp.sym";
+system("dumpbin /symbols /out:$tmpfile $ARGV[0]/*.obj >NUL")
+  && die "Could not call dumpbin";
+rename($tmpfile, $symfile);
+extract_syms($symfile, \%def);
 print "\n";
 
 writedef($deffile, $platform, \%def);
