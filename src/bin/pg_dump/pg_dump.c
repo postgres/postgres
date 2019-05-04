@@ -15874,7 +15874,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		{
 			/* With partitions there can only be one parent */
 			if (tbinfo->numParents != 1)
-				exit_horribly(NULL, "invalid number of parents %d for table \"%s\"",
+				exit_horribly(NULL, "invalid number of parents %d for table \"%s\"\n",
 					  tbinfo->numParents, tbinfo->dobj.name);
 
 			/* Perform ALTER TABLE on the parent */
