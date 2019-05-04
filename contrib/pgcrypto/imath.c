@@ -18,6 +18,7 @@
  *    - rename DEBUG to IMATH_DEBUG
  *    - replace stdint.h usage with c.h equivalents
  *    - suppress MSVC warning 4146
+ *    - add required PG_USED_FOR_ASSERTS_ONLY
  *
  * 2. Download a newer imath.c and imath.h.  Transform them like in step 1.
  *    Apply to these files the diff you saved in step 1.  Look for new lines
@@ -2587,7 +2588,7 @@ s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 		mp_digit   *t1,
 				   *t2,
 				   *t3,
-					carry;
+					carry PG_USED_FOR_ASSERTS_ONLY;
 		mp_size		at_size = size_a - bot_size;
 		mp_size		buf_size = 2 * bot_size;
 
