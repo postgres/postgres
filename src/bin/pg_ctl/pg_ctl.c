@@ -1979,7 +1979,8 @@ GetPrivilegesToDelete(HANDLE hToken)
 		return NULL;
 	}
 
-	tokenPrivs = (PTOKEN_PRIVILEGES) malloc(length);
+	tokenPrivs = (PTOKEN_PRIVILEGES) pg_malloc_extended(length,
+														MCXT_ALLOC_NO_OOM);
 	if (tokenPrivs == NULL)
 	{
 		write_stderr(_("%s: out of memory\n"), progname);

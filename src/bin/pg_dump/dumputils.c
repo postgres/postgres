@@ -481,15 +481,13 @@ parseAclItem(const char *item, const char *type,
 	char	   *slpos;
 	char	   *pos;
 
-	buf = strdup(item);
-	if (!buf)
-		return false;
+	buf = pg_strdup(item);
 
 	/* user or group name is string up to = */
 	eqpos = copyAclUserName(grantee, buf);
 	if (*eqpos != '=')
 	{
-		free(buf);
+		pg_free(buf);
 		return false;
 	}
 
@@ -501,13 +499,13 @@ parseAclItem(const char *item, const char *type,
 		slpos = copyAclUserName(grantor, slpos);
 		if (*slpos != '\0')
 		{
-			free(buf);
+			pg_free(buf);
 			return false;
 		}
 	}
 	else
 	{
-		free(buf);
+		pg_free(buf);
 		return false;
 	}
 
@@ -617,7 +615,7 @@ do { \
 			appendPQExpBuffer(privs, "(%s)", subname);
 	}
 
-	free(buf);
+	pg_free(buf);
 
 	return true;
 }

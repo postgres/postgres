@@ -200,7 +200,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		char	   *bufptr;
 		size_t		slen = strlen(comment_arg);
 
-		cmdbuf = malloc(slen * 2 + 256);
+		cmdbuf = pg_malloc_extended(slen * 2 + 256, MCXT_ALLOC_NO_OOM);
 		if (!cmdbuf)
 			return fail_lo_xact("\\lo_import", own_transaction);
 		sprintf(cmdbuf, "COMMENT ON LARGE OBJECT %u IS '", loid);

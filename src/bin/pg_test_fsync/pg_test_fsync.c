@@ -170,7 +170,7 @@ handle_args(int argc, char *argv[])
 		switch (option)
 		{
 			case 'f':
-				filename = strdup(optarg);
+				filename = pg_strdup(optarg);
 				break;
 
 			case 's':

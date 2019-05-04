@@ -247,7 +247,7 @@ identify_target_directory(XLogDumpPrivate *private, char *directory,
 	{
 		if (search_directory(directory, fname))
 		{
-			private->inpath = strdup(directory);
+			private->inpath = pg_strdup(directory);
 			return;
 		}
 
@@ -255,7 +255,7 @@ identify_target_directory(XLogDumpPrivate *private, char *directory,
 		snprintf(fpath, MAXPGPATH, "%s/%s", directory, XLOGDIR);
 		if (search_directory(fpath, fname))
 		{
-			private->inpath = strdup(fpath);
+			private->inpath = pg_strdup(fpath);
 			return;
 		}
 	}
@@ -266,13 +266,13 @@ identify_target_directory(XLogDumpPrivate *private, char *directory,
 		/* current directory */
 		if (search_directory(".", fname))
 		{
-			private->inpath = strdup(".");
+			private->inpath = pg_strdup(".");
 			return;
 		}
 		/* XLOGDIR */
 		if (search_directory(XLOGDIR, fname))
 		{
-			private->inpath = strdup(XLOGDIR);
+			private->inpath = pg_strdup(XLOGDIR);
 			return;
 		}
 
@@ -283,7 +283,7 @@ identify_target_directory(XLogDumpPrivate *private, char *directory,
 			snprintf(fpath, MAXPGPATH, "%s/%s", datadir, XLOGDIR);
 			if (search_directory(fpath, fname))
 			{
-				private->inpath = strdup(fpath);
+				private->inpath = pg_strdup(fpath);
 				return;
 			}
 		}
