@@ -325,7 +325,7 @@ main(int argc, char *argv[])
 
 	if (ControlFile->blcksz != BLCKSZ)
 	{
-		fprintf(stderr, _("%s: database cluster is not compatible.\n"),
+		fprintf(stderr, _("%s: database cluster is not compatible\n"),
 				progname);
 		fprintf(stderr, _("The database cluster was initialized with block size %u, but pg_verify_checksums was compiled with block size %u.\n"),
 				ControlFile->blcksz, BLCKSZ);
