@@ -1,6 +1,515 @@
 <!-- doc/src/sgml/release-10.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-10-8">
+  <title>Release 10.8</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2019-05-09</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 10.7.
+   For information about new features in major release 10, see
+   <xref linkend="release-10">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 10.8</title>
+
+   <para>
+    A dump/restore is not required for those running 10.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 10.6,
+    see <xref linkend="release-10-6">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Avoid catalog corruption when a temporary table with <literal>ON
+      COMMIT DROP</literal> and an identity column is created in a
+      single-statement transaction (Peter Eisentraut)
+     </para>
+
+     <para>
+      This hazard was overlooked because the case is not actually useful,
+      since the temporary table would be dropped immediately after
+      creation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crash when an EPQ recheck is performed for a partitioned query
+      result relation (Amit Langote)
+     </para>
+
+     <para>
+      This occurs when using <literal>READ COMMITTED</literal> isolation
+      level and another session has concurrently updated some of the
+      target row(s).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix behavior for an <command>UPDATE</command>
+      or <command>DELETE</command> on an inheritance tree or partitioned
+      table in which every table can be excluded (Amit Langote, Tom Lane)
+     </para>
+
+     <para>
+      In such cases, the query did not report the correct set of output
+      columns when a <literal>RETURNING</literal> clause was present, and
+      if there were any statement-level triggers that should be fired, it
+      didn't fire them.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid throwing incorrect errors for updates of temporary tables and
+      unlogged tables when a <literal>FOR ALL TABLES</literal> publication
+      exists (Peter Eisentraut)
+     </para>
+
+     <para>
+      Such tables should be ignored for publication purposes, but some
+      parts of the code failed to do so.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of explicit <literal>DEFAULT</literal> items in
+      an <command>INSERT ... VALUES</command> command with
+      multiple <literal>VALUES</literal> rows, if the target relation is
+      an updatable view (Amit Langote, Dean Rasheed)
+     </para>
+
+     <para>
+      When the updatable view has no default for the column but its
+      underlying table has one, a single-row <command>INSERT
+      ... VALUES</command> will use the underlying table's default.
+      In the multi-row case, however, NULL was always used.  Correct it to
+      act like the single-row case.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>CREATE VIEW</command> to allow zero-column views
+      (Ashutosh Sharma)
+     </para>
+
+     <para>
+      We should allow this for consistency with allowing zero-column
+      tables.  Since a table can be converted to a view, zero-column views
+      could be created even with the restriction in place, leading to
+      dump/reload failures.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add missing support for <command>CREATE TABLE IF NOT EXISTS ... AS
+      EXECUTE ...</command> (Andreas Karlsson)
+     </para>
+
+     <para>
+      The combination of <literal>IF NOT EXISTS</literal>
+      and <literal>EXECUTE</literal> should work, but the grammar omitted
+      it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that sub-<command>SELECT</command>s appearing in
+      row-level-security policy expressions are executed with the correct
+      user's permissions (Dean Rasheed)
+     </para>
+
+     <para>
+      Previously, if the table having the RLS policy was accessed via a
+      view, such checks might be executed as the user calling the view,
+      not as the view owner as they should be.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Accept XML documents as valid values of type <type>xml</type>
+      when <varname>xmloption</varname> is set
+      to <literal>content</literal>, as required by SQL:2006 and later
+      (Chapman Flack)
+     </para>
+
+     <para>
+      Previously <productname>PostgreSQL</productname> followed the
+      SQL:2003 definition, which doesn't allow this.  But that creates a
+      serious problem for dump/restore: there is no setting
+      of <varname>xmloption</varname> that will accept all valid XML data.
+      Hence, switch to the 2006 definition.
+     </para>
+
+     <para>
+      <application>pg_dump</application> is also modified to emit
+      <literal>SET xmloption = content</literal> while restoring data,
+      ensuring that dump/restore works even if the prevailing
+      setting is <literal>document</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve server's startup-time checks for whether a pre-existing
+      shared memory segment is still in use (Noah Misch)
+     </para>
+
+     <para>
+      The postmaster is now more likely to detect that there are still
+      active processes from a previous postmaster incarnation, even if
+      the <filename>postmaster.pid</filename> file has been removed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid counting parallel workers' transactions as separate
+      transactions (Haribabu Kommi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incompatibility of GIN-index WAL records (Alexander Korotkov)
+     </para>
+
+     <para>
+      A fix applied in February's minor releases was not sufficiently
+      careful about backwards compatibility, leading to problems if a
+      standby server of that vintage reads GIN page-deletion WAL records
+      generated by a primary server of a previous minor release.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash while executing a <command>SHOW</command> command
+      in a replication connection (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid memory leak when a partition's relation cache entry is rebuilt
+      (Amit Langote, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Tolerate <literal>EINVAL</literal> and <literal>ENOSYS</literal>
+      error results, where appropriate, for <function>fsync</function>
+      and <function>sync_file_range</function> calls
+      (Thomas Munro, James Sewell)
+     </para>
+
+     <para>
+      The previous change to panic on file synchronization failures turns
+      out to have been excessively paranoid for certain cases where a
+      failure is predictable and essentially means <quote>operation not
+      supported</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Report correct relation name in
+      autovacuum's <structname>pg_stat_activity</structname> display
+      during BRIN summarize operations (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>failed to build any <replaceable>N</replaceable>-way
+      joins</quote> planner failures with lateral references leading out
+      of <literal>FULL</literal> outer joins (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misplanning of queries in which a set-returning function is
+      applied to a relation that is provably empty (Tom Lane, Julien
+      Rouhaud)
+     </para>
+
+     <para>
+      In v10, this oversight only led to slightly inefficient plans, but
+      in v11 it could cause <quote>set-valued function called in context
+      that cannot accept a set</quote> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Speed up planning when there are many equality conditions and many
+      potentially-relevant foreign key constraints (David Rowley)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid O(N^2) performance issue when rolling back a transaction that
+      created many tables (Tomas Vondra)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix corner-case server crashes in dynamic shared memory
+      allocation (Thomas Munro, Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race conditions in management of dynamic shared memory
+      (Thomas Munro)
+     </para>
+     <para>
+      These could lead to <quote>dsa_area could not attach to
+      segment</quote> or <quote>cannot unpin a segment that is not
+      pinned</quote> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race condition in which a hot-standby postmaster could fail to
+      shut down after receiving a smart-shutdown request (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash
+      when <function>pg_identify_object_as_address()</function> is given
+      invalid input (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible <quote>could not access status of transaction</quote>
+      failures in <function>txid_status()</function> (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Tighten validation of encoded SCRAM-SHA-256 and MD5 passwords
+      (Jonathan Katz)
+     </para>
+
+     <para>
+      A password string that had the right initial characters could be
+      mistaken for one that is correctly hashed into SCRAM-SHA-256 or MD5
+      format.  The password would be accepted but would be unusable later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of <varname>lc_time</varname> settings that imply an
+      encoding different from the database's encoding (Juan Jos&eacute;
+      Santamar&iacute;a Flecha, Tom Lane)
+     </para>
+
+     <para>
+      Localized month or day names that include non-ASCII characters
+      previously caused unexpected errors or wrong output in such locales.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect <varname>operator_precedence_warning</varname> checks
+      involving unary minus operators (Rikard Falkeborn)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <literal>NaN</literal> as a value for floating-point server
+      parameters (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rearrange <command>REINDEX</command> processing to avoid assertion
+      failures when reindexing individual indexes
+      of <structname>pg_class</structname> (Andres Freund, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner assertion failure for parameterized dummy paths (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Insert correct test function in the result
+      of <function>SnapBuildInitialSnapshot()</function> (Antonin Houska)
+     </para>
+
+     <para>
+      No core code cares about this, but some extensions do.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix intermittent <quote>could not reattach to shared memory</quote>
+      session startup failures on Windows (Noah Misch)
+     </para>
+
+     <para>
+      A previously unrecognized source of these failures is creation of
+      thread stacks for a process's default thread pool.  Arrange for such
+      stacks to be allocated in a different memory region.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix error detection in directory scanning on Windows (Konstantin
+      Knizhnik)
+     </para>
+
+     <para>
+      Errors, such as lack of permissions to read the directory, were not
+      detected or reported correctly; instead the code silently acted as
+      though the directory were empty.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix grammar problems in <application>ecpg</application> (Tom Lane)
+     </para>
+
+     <para>
+      A missing semicolon led to mistranslation
+      of <literal>SET <replaceable>variable</replaceable> =
+      DEFAULT</literal> (but
+      not <literal>SET <replaceable>variable</replaceable> TO
+      DEFAULT</literal>) in <application>ecpg</application> programs,
+      producing syntactically invalid output that the server would reject.
+      Additionally, in a <command>DROP TYPE</command> or <command>DROP
+      DOMAIN</command> command that listed multiple type names, only the
+      first type name was actually processed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Sync <application>ecpg</application>'s syntax for <command>CREATE
+      TABLE AS</command> with the server's (Daisuke Higuchi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible buffer overruns in <application>ecpg</application>'s
+      processing of include filenames (Liu Huailing, Fei Wu)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_dump</application> recreate table partitions
+      using <command>ATTACH PARTITION</command> instead
+      of <command>CREATE TABLE ... PARTITION OF</command> (David Rowley)
+     </para>
+
+     <para>
+      This avoids various corner-case problems, notably that dump and
+      restore might unexpectedly alter a partition's column ordering.
+      It also means that a selective restore of the partition can succeed
+      even if its parent partitioned table isn't restored.
+      (The <command>ATTACH PARTITION</command> will fail of course, but
+      the partition table itself can be created and populated.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crash in <filename>contrib/postgres_fdw</filename> when a
+      query using remote grouping or aggregation has
+      a <literal>SELECT</literal>-list item that is an uncorrelated
+      sub-select, outer reference, or parameter symbol (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crash in <filename>contrib/vacuumlo</filename> if
+      an <function>lo_unlink()</function> call failed (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Sync our copy of the timezone library with IANA tzcode release 2019a
+      (Tom Lane)
+     </para>
+
+     <para>
+      This corrects a small bug in <application>zic</application> that
+      caused it to output an incorrect year-2440 transition in
+      the <literal>Africa/Casablanca</literal> zone, and adds support
+      for <application>zic</application>'s new <option>-r</option> option.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2019a for DST law changes in Palestine and Metlakatla,
+      plus historical corrections for Israel.
+     </para>
+
+     <para>
+      <literal>Etc/UCT</literal> is now a backward-compatibility link
+      to <literal>Etc/UTC</literal>, instead of being a separate zone that
+      generates the abbreviation <literal>UCT</literal>, which nowadays is
+      typically a typo.  <productname>PostgreSQL</productname> will still
+      accept <literal>UCT</literal> as an input zone abbreviation, but it
+      won't output it.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-10-7">
   <title>Release 10.7</title>
 
