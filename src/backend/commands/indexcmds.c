@@ -3451,10 +3451,11 @@ update_relispartition(Oid relationId, bool newval)
 
 	classRel = table_open(RelationRelationId, RowExclusiveLock);
 	tup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relationId));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for relation %u", relationId);
 	Assert(((Form_pg_class) GETSTRUCT(tup))->relispartition != newval);
 	((Form_pg_class) GETSTRUCT(tup))->relispartition = newval;
 	CatalogTupleUpdate(classRel, &tup->t_self, tup);
 	heap_freetuple(tup);
-
 	table_close(classRel, RowExclusiveLock);
 }
