@@ -479,7 +479,7 @@ pg_nextoid(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to call pg_nextoid")));
+				 errmsg("must be superuser to call pg_nextoid()")));
 
 	rel = table_open(reloid, RowExclusiveLock);
 	idx = index_open(idxoid, RowExclusiveLock);
@@ -487,21 +487,21 @@ pg_nextoid(PG_FUNCTION_ARGS)
 	if (!IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("pg_nextoid() can only be used on system relation")));
+				 errmsg("pg_nextoid() can only be used on system catalogs")));
 
 	if (idx->rd_index->indrelid != RelationGetRelid(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("index %s does not belong to table %s",
+				 errmsg("index \"%s\" does not belong to table \"%s\"",
 						RelationGetRelationName(idx),
 						RelationGetRelationName(rel))));
 
 	atttuple = SearchSysCacheAttName(reloid, NameStr(*attname));
 	if (!HeapTupleIsValid(atttuple))
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("attribute %s does not exists",
-						NameStr(*attname))));
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						NameStr(*attname), RelationGetRelationName(rel))));
 
 	attform = ((Form_pg_attribute) GETSTRUCT(atttuple));
 	attno = attform->attnum;
@@ -509,14 +509,14 @@ pg_nextoid(PG_FUNCTION_ARGS)
 	if (attform->atttypid != OIDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("attribute %s is not of type oid",
+				 errmsg("column \"%s\" is not of type oid",
 						NameStr(*attname))));
 
 	if (IndexRelationGetNumberOfKeyAttributes(idx) != 1 ||
 		idx->rd_index->indkey.values[0] != attno)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("index %s is not the index for attribute %s",
+				 errmsg("index \"%s\" is not the index for column \"%s\"",
 						RelationGetRelationName(idx),
 						NameStr(*attname))));
 
