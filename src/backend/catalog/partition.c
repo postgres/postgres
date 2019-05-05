@@ -164,7 +164,7 @@ index_get_partition(Relation partition, Oid indexId)
 		bool		ispartition;
 
 		tup = SearchSysCache1(RELOID, ObjectIdGetDatum(partIdx));
-		if (!tup)
+		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for relation %u", partIdx);
 		classForm = (Form_pg_class) GETSTRUCT(tup);
 		ispartition = classForm->relispartition;

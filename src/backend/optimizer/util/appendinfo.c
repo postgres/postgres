@@ -134,7 +134,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 			HeapTuple	newtup;
 
 			newtup = SearchSysCacheAttName(new_relid, attname);
-			if (!newtup)
+			if (!HeapTupleIsValid(newtup))
 				elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
 					 attname, RelationGetRelationName(newrelation));
 			new_attno = ((Form_pg_attribute) GETSTRUCT(newtup))->attnum - 1;

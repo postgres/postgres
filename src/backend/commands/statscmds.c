@@ -461,7 +461,7 @@ UpdateStatisticsForTypeChange(Oid statsOid, Oid relationOid, int attnum,
 	bool		replaces[Natts_pg_statistic_ext];
 
 	oldtup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statsOid));
-	if (!oldtup)
+	if (!HeapTupleIsValid(oldtup))
 		elog(ERROR, "cache lookup failed for statistics object %u", statsOid);
 
 	/*

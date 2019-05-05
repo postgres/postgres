@@ -130,7 +130,7 @@ pg_relation_is_publishable(PG_FUNCTION_ARGS)
 	bool		result;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
-	if (!tuple)
+	if (!HeapTupleIsValid(tuple))
 		PG_RETURN_NULL();
 	result = is_publishable_class(relid, (Form_pg_class) GETSTRUCT(tuple));
 	ReleaseSysCache(tuple);
