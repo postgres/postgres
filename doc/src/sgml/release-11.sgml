@@ -514,14 +514,15 @@ Branch: REL9_4_STABLE [ede6b1962] 2019-02-25 00:02:56 +1300
 -->
      <para>
       Tolerate <literal>EINVAL</literal> and <literal>ENOSYS</literal>
-      error results, where appropriate, for fsync calls (Thomas Munro,
-      James Sewell)
+      error results, where appropriate, for <function>fsync</function>
+      and <function>sync_file_range</function> calls
+      (Thomas Munro, James Sewell)
      </para>
 
      <para>
-      The previous change to panic on fsync failures turns out to have
-      been excessively paranoid for certain cases where a failure is
-      predictable and essentially means <quote>operation not
+      The previous change to panic on file synchronization failures turns
+      out to have been excessively paranoid for certain cases where a
+      failure is predictable and essentially means <quote>operation not
       supported</quote>.
      </para>
     </listitem>
