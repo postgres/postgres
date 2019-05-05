@@ -1057,7 +1057,7 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 
 	/* Fetch the operator definition */
 	optup = SearchSysCache1(OPEROID, ObjectIdGetDatum(member->object));
-	if (optup == NULL)
+	if (!HeapTupleIsValid(optup))
 		elog(ERROR, "cache lookup failed for operator %u", member->object);
 	opform = (Form_pg_operator) GETSTRUCT(optup);
 
@@ -1123,7 +1123,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 
 	/* Fetch the procedure definition */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(member->object));
-	if (proctup == NULL)
+	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", member->object);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 

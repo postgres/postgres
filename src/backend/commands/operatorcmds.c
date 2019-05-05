@@ -407,7 +407,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	oprId = LookupOperWithArgs(stmt->opername, false);
 	catalog = heap_open(OperatorRelationId, RowExclusiveLock);
 	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(oprId));
-	if (tup == NULL)
+	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for operator %u", oprId);
 	oprForm = (Form_pg_operator) GETSTRUCT(tup);
 
