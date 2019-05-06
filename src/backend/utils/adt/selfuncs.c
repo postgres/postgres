@@ -4560,9 +4560,16 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							{
 								/* Get index's table for permission check */
 								RangeTblEntry *rte;
+								Oid			userid;
 
 								rte = planner_rt_fetch(index->rel->relid, root);
 								Assert(rte->rtekind == RTE_RELATION);
+
+								/*
+								 * Use checkAsUser if it's set, in case we're
+								 * accessing the table via a view.
+								 */
+								userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 								/*
 								 * For simplicity, we insist on the whole
@@ -4575,7 +4582,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 								 */
 								vardata->acl_ok =
 									rte->securityQuals == NIL &&
-									(pg_class_aclcheck(rte->relid, GetUserId(),
+									(pg_class_aclcheck(rte->relid, userid,
 												 ACL_SELECT) == ACLCHECK_OK);
 							}
 							else
@@ -4638,16 +4645,21 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 
 		if (HeapTupleIsValid(vardata->statsTuple))
 		{
+			Oid			userid;
+
 			/*
 			 * Check if user has permission to read this column.  We require
 			 * all rows to be accessible, so there must be no securityQuals
-			 * from security barrier views or RLS policies.
+			 * from security barrier views or RLS policies.  Use checkAsUser
+			 * if it's set, in case we're accessing the table via a view.
 			 */
+			userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+
 			vardata->acl_ok =
 				rte->securityQuals == NIL &&
-				((pg_class_aclcheck(rte->relid, GetUserId(),
+				((pg_class_aclcheck(rte->relid, userid,
 									ACL_SELECT) == ACLCHECK_OK) ||
-				 (pg_attribute_aclcheck(rte->relid, var->varattno, GetUserId(),
+				 (pg_attribute_aclcheck(rte->relid, var->varattno, userid,
 										ACL_SELECT) == ACLCHECK_OK));
 		}
 		else
