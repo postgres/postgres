@@ -35,6 +35,28 @@
 
     <listitem>
      <para>
+      Prevent row-level security policies from being bypassed via
+      selectivity estimators (Dean Rasheed)
+     </para>
+
+     <para>
+      Some of the planner's selectivity estimators apply user-defined
+      operators to values found in <structname>pg_statistic</structname>
+      (e.g., most-common values).  A leaky operator therefore can disclose
+      some of the entries in a data column, even if the calling user lacks
+      permission to read that column.  In CVE-2017-7484 we added
+      restrictions to forestall that, but we failed to consider the
+      effects of row-level security.  A user who has SQL permission to
+      read a column, but who is forbidden to see certain rows due to RLS
+      policy, might still learn something about those rows' contents via a
+      leaky operator.  This patch further tightens the rules, allowing
+      leaky operators to be applied to statistics data only when there is
+      no relevant RLS policy.  (CVE-2019-10130)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix behavior for an <command>UPDATE</command>
       or <command>DELETE</command> on an inheritance tree or partitioned
       table in which every table can be excluded (Amit Langote, Tom Lane)
@@ -184,6 +206,23 @@
       Fix <quote>failed to build any <replaceable>N</replaceable>-way
       joins</quote> planner failures with lateral references leading out
       of <literal>FULL</literal> outer joins (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Check the appropriate user's permissions when enforcing rules about
+      letting a leaky operator see <structname>pg_statistic</structname>
+      data (Dean Rasheed)
+     </para>
+
+     <para>
+      When an underlying table is being accessed via a view, consider the
+      privileges of the view owner while deciding whether leaky operators
+      may be applied to the table's statistics data, rather than the
+      privileges of the user making the query.  This makes the planner's
+      rules about what data is visible match up with the executor's,
+      avoiding unnecessarily-poor plans.
      </para>
     </listitem>
 
