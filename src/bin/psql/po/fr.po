@@ -848,7 +848,7 @@ msgstr "\\crosstabview : la requête doit renvoyer au moins trois colonnes\n"
 #: crosstabview.c:158
 #, c-format
 msgid "\\crosstabview: vertical and horizontal headers must be different columns\n"
-msgstr "\\crosstabview : les entêtes horizontales et vertivales doivent être des colonnes dofférentes\n"
+msgstr "\\crosstabview : les entêtes horizontales et verticales doivent être des colonnes différentes\n"
 
 #: crosstabview.c:174
 #, c-format

@@ -2,20 +2,21 @@
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# Abdullah GÜLNER <agulner@gmail.com>, 2018, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-06 19:57+0000\n"
-"PO-Revision-Date: 2018-05-07 11:42+0300\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
-"Language-Team: Turkish <devrim@gunduz.org>\n"
+"POT-Creation-Date: 2019-04-11 19:16+0000\n"
+"PO-Revision-Date: 2019-04-12 15:27+0300\n"
+"Last-Translator: Abdullah Gülner>\n"
+"Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.8.7.1\n"
 
 #: plpy_cursorobject.c:101
@@ -37,19 +38,18 @@ msgstr "plan çalıştırılamadı"
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
-msgstr[0] "%d argümanının sequence'ı beklendi; %d alındı: %s"
+msgstr[0] "%d argümanın sequence'ı beklendi; %d alındı: %s"
+msgstr[1] "%d argümanın sequence'ı beklendi; %d alındı: %s"
 
 #: plpy_cursorobject.c:350
-#, fuzzy, c-format
-#| msgid "position a cursor"
+#, c-format
 msgid "iterating a closed cursor"
-msgstr "cursor'u yereştir"
+msgstr "kapalı bir imleç (closed cursor) yineleniyor (iterate)"
 
 #: plpy_cursorobject.c:358 plpy_cursorobject.c:423
-#, fuzzy, c-format
-#| msgid "aborting any active transactions"
+#, c-format
 msgid "iterating a cursor in an aborted subtransaction"
-msgstr "aktif transactionlar iptal ediliyor"
+msgstr "iptal edilen bir alt-işlemdeki (subtransaction) bir imleç (cursor) yineleniyor (iterate)"
 
 #: plpy_cursorobject.c:415
 #, c-format
@@ -408,7 +408,7 @@ msgstr "dizi dönüp tipli dönüş değeri olan fonksiyon Python sequence'ı de
 #: plpy_typeio.c:996
 #, c-format
 msgid "key \"%s\" not found in mapping"
-msgstr "\"%s\" anahtarı planlamada bulunnamadı"
+msgstr "\"%s\" anahtarı planlamada bulunamadı"
 
 #: plpy_typeio.c:997
 #, c-format
@@ -436,64 +436,63 @@ msgid "could not convert Python Unicode object to bytes"
 msgstr "Python unicode nesnesi baytlara dönüştürülemedi."
 
 #: plpy_util.c:42
-#, fuzzy, c-format
-#| msgid "could not compare Unicode strings: %m"
+#, c-format
 msgid "could not extract bytes from encoded string"
-msgstr "Unicode satırları karşılaştırılamadı: %m"
+msgstr "kodlanmış karakter dizisinden (string) baytlar çıkarılamadı (extract)"
 
-#~ msgid "PL/Python function \"%s\" could not execute plan"
-#~ msgstr "\"%s\" PL/Python fonksiyonu planı çalıştıramadı"
-
-#~ msgid "PL/Python function \"%s\" failed"
-#~ msgstr "\"%s\" PL/Python fonksiyonu başarısız oldu"
-
-#~ msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
-#~ msgstr "dönüş değeri yaratılırken \"%s\" Pl/Python fonksiyonunun içindeki Python ensnesinin dizi gösterimi yaratılamadı"
-
-#~ msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
-#~ msgstr "tetikleyici satırı düzenlerken \"%s\" PL/Python fonksiyonunun içindeki Python nesnesinin dizi gösterimi hesaplanamadı"
-
-#~ msgid "out of memory"
-#~ msgstr "yetersiz bellek"
-
-#~ msgid "PL/Python: %s"
-#~ msgstr "PL/Python: %s"
-
-#~ msgid "could not create procedure cache"
-#~ msgstr "yordam önbelleği yaratılamadı"
-
-#~ msgid "Start a new session to use a different Python major version."
-#~ msgstr "Farklı bir Python ana sürümü kullanmak için yeni bir oturum açın."
-
-#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
-#~ msgstr "Bu oturum daha önceden %d Python ana sürümünü kullandı, ve şimdi %d ana sürümünü kullanmayı deniyor."
-
-#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
-#~ msgstr "PLy_spi_execute_fetch_result içinde tanımlanamayan hata"
-
-#~ msgid "unrecognized error in PLy_spi_execute_query"
-#~ msgstr "PLy_spi_execute_query içinde tanımlanamayan hata"
-
-#~ msgid "unrecognized error in PLy_spi_execute_plan"
-#~ msgstr "PLy_spi_execute_plan içinde beklenmeyen hata"
-
-#~ msgid "unrecognized error in PLy_spi_prepare"
-#~ msgstr "PLy_spi_prepare içinde tanımlanamayan hata"
-
-#~ msgid "plpy.prepare does not support composite types"
-#~ msgstr "plpy.prepare kompozit tipleri desteklemez"
-
-#~ msgid "invalid arguments for plpy.prepare"
-#~ msgstr "plpy.prepare için geçersiz argümanlar"
-
-#~ msgid "transaction aborted"
-#~ msgstr "transaction iptal edildi"
-
-#~ msgid "PL/Python does not support conversion to arrays of row types."
-#~ msgstr "PL/Python satır tiplerinin dizilere dönüşümünü desteklemez."
+#~ msgid "PyCObject_AsVoidPtr() failed"
+#~ msgstr "PyCObject_AsVoidPtr() başarısız oldu"
 
 #~ msgid "PyCObject_FromVoidPtr() failed"
 #~ msgstr "PyCObject_FromVoidPtr() başarısız oldu"
 
-#~ msgid "PyCObject_AsVoidPtr() failed"
-#~ msgstr "PyCObject_AsVoidPtr() başarısız oldu"
+#~ msgid "PL/Python does not support conversion to arrays of row types."
+#~ msgstr "PL/Python satır tiplerinin dizilere dönüşümünü desteklemez."
+
+#~ msgid "transaction aborted"
+#~ msgstr "transaction iptal edildi"
+
+#~ msgid "invalid arguments for plpy.prepare"
+#~ msgstr "plpy.prepare için geçersiz argümanlar"
+
+#~ msgid "plpy.prepare does not support composite types"
+#~ msgstr "plpy.prepare kompozit tipleri desteklemez"
+
+#~ msgid "unrecognized error in PLy_spi_prepare"
+#~ msgstr "PLy_spi_prepare içinde tanımlanamayan hata"
+
+#~ msgid "unrecognized error in PLy_spi_execute_plan"
+#~ msgstr "PLy_spi_execute_plan içinde beklenmeyen hata"
+
+#~ msgid "unrecognized error in PLy_spi_execute_query"
+#~ msgstr "PLy_spi_execute_query içinde tanımlanamayan hata"
+
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "PLy_spi_execute_fetch_result içinde tanımlanamayan hata"
+
+#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+#~ msgstr "Bu oturum daha önceden %d Python ana sürümünü kullandı, ve şimdi %d ana sürümünü kullanmayı deniyor."
+
+#~ msgid "Start a new session to use a different Python major version."
+#~ msgstr "Farklı bir Python ana sürümü kullanmak için yeni bir oturum açın."
+
+#~ msgid "could not create procedure cache"
+#~ msgstr "yordam önbelleği yaratılamadı"
+
+#~ msgid "PL/Python: %s"
+#~ msgstr "PL/Python: %s"
+
+#~ msgid "out of memory"
+#~ msgstr "yetersiz bellek"
+
+#~ msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
+#~ msgstr "tetikleyici satırı düzenlerken \"%s\" PL/Python fonksiyonunun içindeki Python nesnesinin dizi gösterimi hesaplanamadı"
+
+#~ msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
+#~ msgstr "dönüş değeri yaratılırken \"%s\" Pl/Python fonksiyonunun içindeki Python ensnesinin dizi gösterimi yaratılamadı"
+
+#~ msgid "PL/Python function \"%s\" failed"
+#~ msgstr "\"%s\" PL/Python fonksiyonu başarısız oldu"
+
+#~ msgid "PL/Python function \"%s\" could not execute plan"
+#~ msgstr "\"%s\" PL/Python fonksiyonu planı çalıştıramadı"

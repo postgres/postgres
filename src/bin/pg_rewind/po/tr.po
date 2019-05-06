@@ -2,19 +2,20 @@
 # Copyright (C) 2018 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_rewind (PostgreSQL) package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# Abdullah Gülner <agulner@gmail.com>, 2018, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-06 20:04+0000\n"
-"PO-Revision-Date: 2018-05-07 10:57+0300\n"
+"POT-Creation-Date: 2019-04-11 19:22+0000\n"
+"PO-Revision-Date: 2019-04-12 15:06+0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: \n"
-"Language-Team: \n"
 "X-Generator: Poedit 1.8.7.1\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
@@ -628,8 +629,8 @@ msgstr "kaynak veri dizini düzgün bir şekilde kapatılmalı\n"
 
 #: pg_rewind.c:469
 #, c-format
-msgid "invalid control file"
-msgstr "geçersiz kontrol dosyası"
+msgid "invalid control file\n"
+msgstr "geçersiz kontrol dosyası\n"
 
 #: pg_rewind.c:480
 #, c-format
@@ -729,137 +730,137 @@ msgstr "geçmiş dosyasında geçersiz veri\n"
 msgid "Timeline IDs must be less than child timeline's ID.\n"
 msgstr "Zamançizelgesi ID'leri alt zaman çizelgesinin ID'lerinden küçük olmalı.\n"
 
-#: xlogreader.c:274
+#: xlogreader.c:297
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "%X/%X adresinde geçersiz kayıt offseti"
 
-#: xlogreader.c:282
+#: xlogreader.c:305
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord %X/%X tarafından talep edilmiştir"
 
-#: xlogreader.c:323 xlogreader.c:620
+#: xlogreader.c:346 xlogreader.c:643
 #, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
 msgstr "%X/%X adresinde geçersiz kayıt uzunluğu: istenen %u, alınan %u"
 
-#: xlogreader.c:338
+#: xlogreader.c:361
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "%2$X/%3$X adresinde çok büyük kayıt uzunluğu: %1$u "
 
-#: xlogreader.c:379
+#: xlogreader.c:402
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "%X/%X de contrecord bayrağı (flag) bulunmuyor"
 
-#: xlogreader.c:392
+#: xlogreader.c:415
 #, c-format
 msgid "invalid contrecord length %u at %X/%X"
 msgstr "%2$X/%3$X adresinde geçersiz %1$u contrecord uzunluğu"
 
-#: xlogreader.c:628
+#: xlogreader.c:651
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "%2$X/%3$X adresinde geçersiz resource manager ID %1$u"
 
-#: xlogreader.c:642 xlogreader.c:659
+#: xlogreader.c:665 xlogreader.c:682
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "geçersiz incorrect prev-link olan kayıt: %3$X/%4$X de %1$X/%2$X"
 
-#: xlogreader.c:696
+#: xlogreader.c:719
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "resoource manager data checksum %X/%X kaydında geçersiz"
 
-#: xlogreader.c:733
+#: xlogreader.c:756
 #, c-format
 msgid "invalid magic number %04X in log segment %s, offset %u"
 msgstr "%04X geçersiz tanıtım kodu; %s kayıt segmentinde, offset %u"
 
-#: xlogreader.c:747 xlogreader.c:798
+#: xlogreader.c:770 xlogreader.c:821
 #, c-format
 msgid "invalid info bits %04X in log segment %s, offset %u"
 msgstr "%04X geçersiz info bits; %s kayıt segmentinde, offset %u"
 
-#: xlogreader.c:773
+#: xlogreader.c:796
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
 msgstr "WAL dosyası farklı veritabanı sisteminden: WAL dosya veritabanı sistem tanımlayıcı %s, pg_control veritabanı sistem tanımlayıcı %s"
 
-#: xlogreader.c:780
+#: xlogreader.c:803
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
 msgstr "WAL dosyası farklı veritabanı sisteminden: page header'da yanlış XLOG_SEG_SIZE değeri"
 
-#: xlogreader.c:786
+#: xlogreader.c:809
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL dosyası farklı veritabanı sisteminden: page header'da yanlış XLOG_BLCKSZ değeri"
 
-#: xlogreader.c:817
+#: xlogreader.c:840
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
 msgstr "beklenmeyen pageaddr %X/%X: log segmenti %s, offset %u"
 
-#: xlogreader.c:842
+#: xlogreader.c:865
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
 msgstr "sıra dışı timeline ID %u (%u'dan sonra), bulunduğu log segmenti %s, offset %u"
 
-#: xlogreader.c:1086
+#: xlogreader.c:1109
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "%2$X/%3$X deki %1$u block_id değeri bozuk"
 
-#: xlogreader.c:1108
+#: xlogreader.c:1131
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA ayarlandı, fakat %X/%X de veri yok"
 
-#: xlogreader.c:1115
+#: xlogreader.c:1138
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA ayarlanmadı, fakat veri uzunluğu %u (%X/%X de)"
 
-#: xlogreader.c:1148
+#: xlogreader.c:1171
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE ayarlandı, fakat hole offset %u uzunluk %u  blok image uzunluğu %u (%X/%X de)"
 
-#: xlogreader.c:1164
+#: xlogreader.c:1187
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE  ayarlanmadı, fakat hole offset %u uzunluk %u (%X/%X de)"
 
-#: xlogreader.c:1179
+#: xlogreader.c:1202
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_IS_COMPRESSED ayarlandı, fakat block image uzunluğu %u (%X/%X de)"
 
-#: xlogreader.c:1194
+#: xlogreader.c:1217
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE ve BKPIMAGE_IS_COMPRESSED ayarlanmadı, fakat blok image uzunluğu %u (%X/%X de)"
 
-#: xlogreader.c:1210
+#: xlogreader.c:1233
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL ayarlandı fakat %X/%X de önceki rel yok"
 
-#: xlogreader.c:1222
+#: xlogreader.c:1245
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "%X/%X adresinde %u  block_id geçersiz"
 
-#: xlogreader.c:1302
+#: xlogreader.c:1325
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "%X/%X adresinde geçersiz uzunlukta kayıt"
 
-#: xlogreader.c:1391
+#: xlogreader.c:1414
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "%X/%X adresinde (blok %d), geçersiz compressed image"

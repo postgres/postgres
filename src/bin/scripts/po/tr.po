@@ -1,14 +1,14 @@
 # translation of pgscripts-tr.po to Turkish
 # Devrim GUNDUZ <devrim@CommandPrompt.com>, 2004, 2005, 2006, 2007.
 # Nicolai Tufar <ntufar@gmail.org>, 2005, 2006, 2007.
-# İbrahim Edib Kökdemir, 2018.
-# Abdullah G. GÜLNER, 2018.
+# İbrahim Edib Kökdemir, 2018, 2019.
+# Abdullah G. GÜLNER, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-04-20 21:53+0000\n"
-"PO-Revision-Date: 2018-04-26 11:39+0300\n"
+"POT-Creation-Date: 2019-04-11 19:22+0000\n"
+"PO-Revision-Date: 2019-04-12 15:44+0300\n"
 "Last-Translator: Abdullah G. GÜLNER\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -52,22 +52,22 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu satır)"
 msgstr[1] "(%lu satır)"
 
-#: ../../fe_utils/print.c:2914
+#: ../../fe_utils/print.c:2938
 #, c-format
 msgid "Interrupted\n"
 msgstr "kesildi\n"
 
-#: ../../fe_utils/print.c:2978
+#: ../../fe_utils/print.c:3002
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "B aşlık tablo içeriğine eklenemedi: %d kolon sayısı aşıldı.\n"
 
-#: ../../fe_utils/print.c:3018
+#: ../../fe_utils/print.c:3042
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "Hücre tablo içeriğine eklenemedi: %d olan toplan hücre sayısı açıldı.\n"
 
-#: ../../fe_utils/print.c:3267
+#: ../../fe_utils/print.c:3291
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "geçersiz çıktı biçimi (iç hata): %d"
@@ -878,34 +878,29 @@ msgid "%s: cannot reindex specific schema(s) in all databases\n"
 msgstr "%s: tüm veritabanlarındaki belirli şema(lar) tekrar indekslenemez\n"
 
 #: reindexdb.c:175
-#, fuzzy, c-format
-#| msgid "%s: cannot reindex a specific table in all databases\n"
+#, c-format
 msgid "%s: cannot reindex specific table(s) in all databases\n"
-msgstr "%s: tüm veritabanlarındaki belirli bir tablo reindex edilemez\n"
+msgstr "%s: tüm veritabanlarındaki belirli tablo(lar) tekrar indekslenemez\n"
 
 #: reindexdb.c:180
-#, fuzzy, c-format
-#| msgid "%s: cannot reindex a specific index in all databases\n"
+#, c-format
 msgid "%s: cannot reindex specific index(es) in all databases\n"
-msgstr "%s: tüm veritabanlarındaki belirli bir index reindex edilemez\n"
+msgstr "%s: tüm veritabanlarındaki belirli indeks(ler) tekrar indekslenemez\n"
 
 #: reindexdb.c:191
-#, fuzzy, c-format
-#| msgid "%s: cannot reindex a specific table and system catalogs at the same time\n"
+#, c-format
 msgid "%s: cannot reindex specific schema(s) and system catalogs at the same time\n"
-msgstr "%s: aynı anda hem belirli bir tablo hem de sistem kataloğu reindex edilemez\n"
+msgstr "%s: aynı anda hem belirli şema(lar) hem de sistem kataloğu tekrar indekslenemez\n"
 
 #: reindexdb.c:196
-#, fuzzy, c-format
-#| msgid "%s: cannot reindex a specific table and system catalogs at the same time\n"
+#, c-format
 msgid "%s: cannot reindex specific table(s) and system catalogs at the same time\n"
-msgstr "%s: aynı anda hem belirli bir tablo hem de sistem kataloğu reindex edilemez\n"
+msgstr "%s: aynı anda hem belirli tablo(lar) hem de sistem katalogları tekrar indekslenemez\n"
 
 #: reindexdb.c:201
-#, fuzzy, c-format
-#| msgid "%s: cannot reindex a specific index and system catalogs at the same time\n"
+#, c-format
 msgid "%s: cannot reindex specific index(es) and system catalogs at the same time\n"
-msgstr "%s: aynı anda hem belirli bir index hem de sistem kataloğu reindex edilemez\n"
+msgstr "%s: aynı anda hem belirli indeks(ler) hem de sistem katalogları tekrar indekslenemez\n"
 
 #: reindexdb.c:308
 #, c-format
@@ -918,10 +913,9 @@ msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "%1$s: \"%3$s\" veritabanındaki \"%2$s\" indeksinin yeniden oluşturulması başarısız: %4$s"
 
 #: reindexdb.c:314
-#, fuzzy, c-format
-#| msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
+#, c-format
 msgid "%s: reindexing of schema \"%s\" in database \"%s\" failed: %s"
-msgstr "%1$s: \"%3$s\" veritabanındaki \"%2$s\" tablosunun reindex işlemi başarısız: %4$s"
+msgstr "%1$s: \"%3$s\" veritabanındaki \"%2$s\" şemasının tekrar indeksleme işlemi başarısız: %4$s"
 
 #: reindexdb.c:317
 #, c-format
@@ -958,10 +952,9 @@ msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=VERİTABANI_ADI      yeniden indexlenecek veritabanı adı\n"
 
 #: reindexdb.c:408
-#, fuzzy, c-format
-#| msgid "  -i, --index=INDEX         recreate specific index only\n"
+#, c-format
 msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
-msgstr "  -i, --index=INDEX        sadece belirli bir indexi yeniden oluştur\n"
+msgstr "  -i, --index=INDEX        sadece belirli indeks(ler)i yeniden oluştur\n"
 
 #: reindexdb.c:410
 #, c-format
@@ -969,16 +962,14 @@ msgid "  -s, --system              reindex system catalogs\n"
 msgstr "  -s, --system             sistem kataloğunu yeniden indeksle\n"
 
 #: reindexdb.c:411
-#, fuzzy, c-format
-#| msgid "  -n, --schema=SCHEMA         dump the named schema(s) only\n"
+#, c-format
 msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
-msgstr "  -n, --schema=SCHEMA         sadece belirtilen şema veya şemaları yedekle\n"
+msgstr "  -S, --schema=ŞEMA       sadece belirtilen şema veya şemaları tekrar indeksle\n"
 
 #: reindexdb.c:412
-#, fuzzy, c-format
-#| msgid "  -t, --table=TABLE         reindex specific table only\n"
+#, c-format
 msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
-msgstr "  -t, --table=TABLO_ADI        sadece belirli bir tablonun indexlerini yeniden oluştur\n"
+msgstr "  -t, --table=TABLO_ADI        sadece belirli bir tablonun veya tabloların indekslerini yeniden oluştur\n"
 
 #: reindexdb.c:423
 #, c-format
@@ -990,21 +981,19 @@ msgstr ""
 "Ayrıntılar için bir REINDEX SQL komutunun açıklamasını okuyabilirsiniz.\n"
 
 #: vacuumdb.c:197
-#, fuzzy, c-format
-#| msgid "length for type %s must be at least 1"
+#, c-format
 msgid "%s: number of parallel jobs must be at least 1\n"
-msgstr "%s tipinin uzunluğu en az 1 olmalıdır"
+msgstr "%s: paralel iş sayısı en azından 1 olmalı\n"
 
 #: vacuumdb.c:203
 #, c-format
 msgid "%s: too many parallel jobs requested (maximum: %d)\n"
-msgstr ""
+msgstr "%s: çok fazla paralel iş talep edildi (azami: %d)\n"
 
 #: vacuumdb.c:242 vacuumdb.c:248
-#, fuzzy, c-format
-#| msgid "%s: cannot use the \"full\" option when performing only analyze\n"
+#, c-format
 msgid "%s: cannot use the \"%s\" option when performing only analyze\n"
-msgstr "%s: sadece analyze işlemi yapılırken \"full\" seçeneği kullanılamaz\n"
+msgstr "%s: sadece analyze işlemi yapılırken \"%s\" seçeneği kullanılamaz\n"
 
 #: vacuumdb.c:265
 #, c-format
@@ -1012,28 +1001,26 @@ msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s:Aynı anda tüm veritabanları ve de belirli bir tanesi vakumlanamaz\n"
 
 #: vacuumdb.c:271
-#, fuzzy, c-format
-#| msgid "%s: cannot vacuum a specific table in all databases\n"
+#, c-format
 msgid "%s: cannot vacuum specific table(s) in all databases\n"
-msgstr "%s: Tüm veritabanlarındaki belirli bir tablo vakumlanamaz.\n"
+msgstr "%s: tüm veritabanlarındaki belirli bir tablo/tablolar vakumlanamaz.\n"
 
 #: vacuumdb.c:357
 msgid "Generating minimal optimizer statistics (1 target)"
-msgstr ""
+msgstr "Minimal optimizer istatistikleri oluşturuluyor (1 hedef)"
 
 #: vacuumdb.c:358
 msgid "Generating medium optimizer statistics (10 targets)"
-msgstr ""
+msgstr "Orta ölçekte optimizer istatistikleri oluşturuluyor (10 hedef)"
 
 #: vacuumdb.c:359
 msgid "Generating default (full) optimizer statistics"
-msgstr ""
+msgstr "Varsayılan (tam) optimizer istatistikleri oluşturuluyor"
 
 #: vacuumdb.c:371
-#, fuzzy, c-format
-#| msgid "%s: clustering database \"%s\"\n"
+#, c-format
 msgid "%s: processing database \"%s\": %s\n"
-msgstr "%s: \"%s\" veritabanı cluster ediliyor\n"
+msgstr "%s: \"%s\" veritabanı üzerinde işlem yapılıyor: %s\n"
 
 #: vacuumdb.c:374
 #, c-format
@@ -1085,10 +1072,9 @@ msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    Dondurulan satır transaction bilgisi\n"
 
 #: vacuumdb.c:1001
-#, fuzzy, c-format
-#| msgid "  -j, --jobs=NUM           use this many parallel jobs to restore\n"
+#, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
-msgstr "  -j, --jobs=SAYI           gerü yükleme için belirtilen sayı kadar paralel süreç kullan\n"
+msgstr "  -j, --jobs=SAYI                  vakum için bu sayı kadar eşzamanlı bağlantı kullan \n"
 
 #: vacuumdb.c:1002
 #, c-format
@@ -1096,10 +1082,9 @@ msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     hiçbir mesaj yazma\n"
 
 #: vacuumdb.c:1003
-#, fuzzy, c-format
-#| msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+#, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
-msgstr "  -t, --table='TABLO[(KOLONLAR)]'  sadece belirli bir tabloyu vakumlar\n"
+msgstr "  -t, --table='TABLO[(KOLONLAR)]'  sadece belirli bir tabloyu / tabloları vakumlar\n"
 
 #: vacuumdb.c:1004
 #, c-format
@@ -1107,10 +1092,9 @@ msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   bolca çıktı yaz\n"
 
 #: vacuumdb.c:1005
-#, fuzzy, c-format
-#| msgid "  --version                   output version information, then exit\n"
+#, c-format
 msgid "  -V, --version                   output version information, then exit\n"
-msgstr "  --version                   sürüm bilgisini ver ve çık\n"
+msgstr "  -V, --version                   sürüm bilgisini göster, sonra çık\n"
 
 #: vacuumdb.c:1006
 #, c-format
@@ -1118,10 +1102,9 @@ msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   optimizer istatistiklerini güncelle\n"
 
 #: vacuumdb.c:1007
-#, fuzzy, c-format
-#| msgid "  -Z, --analyze-only              only update optimizer statistics\n"
+#, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
-msgstr "  -z, --analyze-only                   sadece optimizer bilgilerini güncelle\n"
+msgstr "  -Z, --analyze-only              sadece optimizer bilgilerini güncelle; vakum işlemi yok\n"
 
 #: vacuumdb.c:1008
 #, c-format
@@ -1129,12 +1112,13 @@ msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
 "                                  stages for faster results; no vacuum\n"
 msgstr ""
+"      --analyze-in-stages         daha hızlı sonuç için aşamalı olarak, sadece optimizer \n"
+"                                  istatistiklerini güncelle; vakum işlemi yok\n"
 
 #: vacuumdb.c:1010
-#, fuzzy, c-format
-#| msgid "  --help                      show this help, then exit\n"
+#, c-format
 msgid "  -?, --help                      show this help, then exit\n"
-msgstr "  --help                      bu yardımı göster ve sonra çık\n"
+msgstr "  -?, --help                      bu yardımı göster, sonra çık\n"
 
 #: vacuumdb.c:1018
 #, c-format
@@ -1145,32 +1129,17 @@ msgstr ""
 "\n"
 "Ayrıntılar için, bir SQL komutu olan VACUUM'un tanımlarını okuyun.\n"
 
-#~ msgid "Could not send cancel request: %s\n"
-#~ msgstr "İptal isteği gönderilemedi: %s\n"
+#~ msgid "  --help                       show this help, then exit\n"
+#~ msgstr "  --help                       bu yardımı göster ve çık\n"
 
-#~ msgid "  -q, --quiet                  don't write any messages\n"
-#~ msgstr "  -q, --quiet                  Hiç bir mesaj yazma\n"
+#~ msgid "  --version                    output version information, then exit\n"
+#~ msgstr "  --version                    sürüm bilgisini göster ve çık\n"
 
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s: yetersiz bellek\n"
+#~ msgid "  --help                    show this help, then exit\n"
+#~ msgstr "  --help                    bu yardımı göster ve çık\n"
 
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: geçerli kullanıcı adı alınamadı: %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: geçerli kullanıcı hakkında bilgi alınamadı: %s\n"
-
-#~ msgid "  --version                       output version information, then exit\n"
-#~ msgstr "  --version                       sürüm bilgisini göster ve çık\n"
-
-#~ msgid "  --help                          show this help, then exit\n"
-#~ msgstr "  --help                          bu yardımı göster ve çık\n"
-
-#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
-#~ msgstr "%s: sadece analyze işlemi yapıldığında \"freeze\" seçeneğini kullanamaz\n"
-
-#~ msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
-#~ msgstr "%s: %s fonksiyon, \"%s\" dilinde tanımlanmış durumda;  dil kaldırılamadı\n"
+#~ msgid "  --version                 output version information, then exit\n"
+#~ msgstr "  --version                 sürüm bilgisini göster ve çık\n"
 
 #~ msgid ""
 #~ "\n"
@@ -1181,14 +1150,29 @@ msgstr ""
 #~ "Eğer -d, -D, -r, -R, -s, -S ve ROLENAME'den birisi belirtilmezse, bunlar size\n"
 #~ "etkileşimli olarak sorulacaktır.\n"
 
-#~ msgid "  --version                 output version information, then exit\n"
-#~ msgstr "  --version                 sürüm bilgisini göster ve çık\n"
+#~ msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
+#~ msgstr "%s: %s fonksiyon, \"%s\" dilinde tanımlanmış durumda;  dil kaldırılamadı\n"
 
-#~ msgid "  --help                    show this help, then exit\n"
-#~ msgstr "  --help                    bu yardımı göster ve çık\n"
+#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
+#~ msgstr "%s: sadece analyze işlemi yapıldığında \"freeze\" seçeneğini kullanamaz\n"
 
-#~ msgid "  --version                    output version information, then exit\n"
-#~ msgstr "  --version                    sürüm bilgisini göster ve çık\n"
+#~ msgid "  --help                          show this help, then exit\n"
+#~ msgstr "  --help                          bu yardımı göster ve çık\n"
 
-#~ msgid "  --help                       show this help, then exit\n"
-#~ msgstr "  --help                       bu yardımı göster ve çık\n"
+#~ msgid "  --version                       output version information, then exit\n"
+#~ msgstr "  --version                       sürüm bilgisini göster ve çık\n"
+
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s: geçerli kullanıcı hakkında bilgi alınamadı: %s\n"
+
+#~ msgid "%s: could not get current user name: %s\n"
+#~ msgstr "%s: geçerli kullanıcı adı alınamadı: %s\n"
+
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s: yetersiz bellek\n"
+
+#~ msgid "  -q, --quiet                  don't write any messages\n"
+#~ msgstr "  -q, --quiet                  Hiç bir mesaj yazma\n"
+
+#~ msgid "Could not send cancel request: %s\n"
+#~ msgstr "İptal isteği gönderilemedi: %s\n"

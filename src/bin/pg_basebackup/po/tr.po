@@ -2,14 +2,14 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-# İbrahim EDib Kökdemir, 2018.
-# Abdullah G. Gülner, 2018.
+# İbrahim EDib Kökdemir, 2018, 2019.
+# Abdullah G. Gülner, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-04-20 21:53+0000\n"
-"PO-Revision-Date: 2018-04-27 15:34+0300\n"
+"POT-Creation-Date: 2019-04-11 19:22+0000\n"
+"PO-Revision-Date: 2019-04-12 11:44+0300\n"
 "Last-Translator: Abdullah G. Gülner\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -382,14 +382,14 @@ msgstr "%s: COPY very akışı alınamadı: %s"
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" sıkıştırılmış dosyası kapatılamadı: %s\n"
 
-#: pg_basebackup.c:989 pg_recvlogical.c:580 receivelog.c:206 receivelog.c:354
-#: receivelog.c:743
+#: pg_basebackup.c:989 pg_recvlogical.c:580 receivelog.c:208 receivelog.c:361
+#: receivelog.c:750
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyası kapatılamadı: %s\n"
 
 #: pg_basebackup.c:1000 pg_basebackup.c:1217 pg_recvlogical.c:446
-#: receivelog.c:1024
+#: receivelog.c:1031
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: COPY verisi okunamadı: %s"
@@ -440,8 +440,8 @@ msgstr "%s: sunucu sürümü %s uyumsuz\n"
 msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: temel yedek başlatılıyor, checkpoin'in tamamlanması bekleniyor\n"
 
-#: pg_basebackup.c:1698 pg_recvlogical.c:264 receivelog.c:541 receivelog.c:592
-#: receivelog.c:632 streamutil.c:286 streamutil.c:390 streamutil.c:436
+#: pg_basebackup.c:1698 pg_recvlogical.c:264 receivelog.c:548 receivelog.c:599
+#: receivelog.c:639 streamutil.c:286 streamutil.c:390 streamutil.c:436
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: \"%s\" replikasyon komutu gönderilemedi: %s"
@@ -711,7 +711,7 @@ msgstr "%s: segment %X/%X de bitirildi (%u zaman çizelgesi)\n"
 #: pg_receivexlog.c:113
 #, c-format
 msgid "%s: switched to timeline %u at %X/%X\n"
-msgstr ""
+msgstr "%1$s: %3$X/%4$X konumunda %2$u zaman çizelgesine geçildi\n"
 
 #: pg_receivexlog.c:122
 #, c-format
@@ -861,9 +861,9 @@ msgstr "  -d, --dbname=VERITABANI_ADI    bağlanılacak veritabanı adı\n"
 #: pg_recvlogical.c:129
 #, c-format
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
-msgstr ""
+msgstr "%s: %X/%X e kadar yazma, %X/%X'e kadar boşaltma (flush) için onaylama (slot %s)\n"
 
-#: pg_recvlogical.c:154 receivelog.c:407
+#: pg_recvlogical.c:154 receivelog.c:414
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: geri bildirim (feedback) paketi gönderilemedi: %s"
@@ -888,28 +888,28 @@ msgstr "%s: streaming başlatıldı\n"
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: \"%s\" kayıti dosyası açılamıyor: %s\n"
 
-#: pg_recvlogical.c:369 receivelog.c:938
+#: pg_recvlogical.c:369 receivelog.c:945
 #, c-format
 msgid "%s: invalid socket: %s"
 msgstr "%s: geçersiz soket: %s"
 
-#: pg_recvlogical.c:423 receivelog.c:960
+#: pg_recvlogical.c:423 receivelog.c:967
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: select() başarısız oldu: %s\n"
 
-#: pg_recvlogical.c:432 receivelog.c:1010
+#: pg_recvlogical.c:432 receivelog.c:1017
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: WAL stream'den veri alınamadı: %s"
 
-#: pg_recvlogical.c:473 pg_recvlogical.c:512 receivelog.c:1055
-#: receivelog.c:1122
+#: pg_recvlogical.c:473 pg_recvlogical.c:512 receivelog.c:1062
+#: receivelog.c:1129
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: streaming üst bilgisi çok küçük: %d\n"
 
-#: pg_recvlogical.c:495 receivelog.c:903
+#: pg_recvlogical.c:495 receivelog.c:910
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: tanınmayan streraming üst bilgisi (header): \"%c\"\n"
@@ -919,7 +919,7 @@ msgstr "%s: tanınmayan streraming üst bilgisi (header): \"%c\"\n"
 msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
 msgstr "%1$s: \"%3$s\" log dosyasına %2$u bayt yazılamadı: %4$s\n"
 
-#: pg_recvlogical.c:566 receivelog.c:696 receivelog.c:734
+#: pg_recvlogical.c:566 receivelog.c:703 receivelog.c:741
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: replikasyon akışında beklenmeyen sonlanma: %s"
@@ -974,8 +974,8 @@ msgstr "%s: veritabanına özel replikasyon bağlantısı kurulamadı\n"
 msgid "%s: could not create archive status file \"%s\": %s\n"
 msgstr "%s: \"%s\" arşiv durum dosyası oluşturulamadı: %s\n"
 
-#: receivelog.c:76 receivelog.c:199 receivelog.c:347 receivelog.c:833
-#: receivelog.c:1076
+#: receivelog.c:76 receivelog.c:201 receivelog.c:354 receivelog.c:840
+#: receivelog.c:1083
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyası fsync işlemi başarısız: %s\n"
@@ -995,128 +995,127 @@ msgstr "%s: \"%s\" wal log dosyasının durumu görüntülenemedi (stat): %s\n"
 msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
 msgstr "%s: \"%s\" wal log dosyası %d bayt, 0 veya %d olmalıydı\n"
 
-#: receivelog.c:153
-#, fuzzy, c-format
+#: receivelog.c:157
+#, c-format
 msgid "%s: could not pad transaction log file \"%s\": %s\n"
-msgstr "\"%s\" transaction kayıt dizini açılamıyor: %m"
+msgstr "%s: \"%s\" işlem kayıt (transaction log) dosyası doldurulamadı: %s\n"
 
-#: receivelog.c:166
-#, fuzzy, c-format
+#: receivelog.c:168
+#, c-format
 msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
-msgstr "\"%s\" lock dosyası silinemiyor: %m"
+msgstr "%s: \"%s\" işlem kayıt (transaction log) dosyasının başlangıcına ilerleme hatası : %s\n"
 
-#: receivelog.c:192
+#: receivelog.c:194
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyasınde arama pozisyonu belirlenemedi: %s\n"
 
-#: receivelog.c:225
+#: receivelog.c:227
 #, c-format
 msgid "%s: could not rename file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyasının ismi değiştirilemedi : %s\n"
 
-#: receivelog.c:232
+#: receivelog.c:234
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr "%s: \"%s%s\" isim değişikliği yapılmıyor, segment tam değil\n"
 
-#: receivelog.c:278
-#, fuzzy, c-format
-#| msgid "%s: could not open log file \"%s\": %s\n"
+#: receivelog.c:280
+#, c-format
 msgid "%s: could not open timeline history file \"%s\": %s\n"
-msgstr "%s: \"%s\" kayıti dosyası açılamıyor: %s\n"
+msgstr "%s: \"%s\" zaman çizelgesi geçmiş dosyası açılamadı: %s\n"
 
-#: receivelog.c:305
+#: receivelog.c:307
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr "%s: sunucu %u zaman çizelgesi için beklenmeyen geçmiş dosyası adı bildirdi: %s\n"
 
-#: receivelog.c:322
+#: receivelog.c:324
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: \"%s\" zaman çizelgesi geçmiş dosyası yaratılamadı: %s\n"
 
-#: receivelog.c:339
+#: receivelog.c:343
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: \"%s\" zaman çizelgesi geçmiş dosyasına yazılamadı: %s\n"
 
-#: receivelog.c:364
+#: receivelog.c:371
 #, c-format
 msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyasının ismi \"%s\" olarak değiştirilemedi : %s\n"
 
-#: receivelog.c:441
+#: receivelog.c:448
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
 msgstr "%s: uyumsuz sunucu sürümü %s; istemci %s den daha eski sunucu sürümlerinden streaming işlemini desteklemiyor\n"
 
-#: receivelog.c:451
+#: receivelog.c:458
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
 msgstr "%s: uyumsuz sunucu sürümü %s; istemci %s den daha yeni sunucu sürümlerinden streaming işlemini desteklemiyor\n"
 
-#: receivelog.c:549 streamutil.c:295 streamutil.c:334
+#: receivelog.c:556 streamutil.c:295 streamutil.c:334
 #, c-format
 msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
 msgstr "%s: sistem belirlenemedi: %d satır ve %d alan alındı, %d satır ve %d veya daha fazla alan bekleniyordu\n"
 
-#: receivelog.c:557
+#: receivelog.c:564
 #, c-format
 msgid "%s: system identifier does not match between base backup and streaming connection\n"
 msgstr "%s: system tanımlayıcısı temel yedek ve streaming bağlantısı ile eşleşmiyor\n"
 
-#: receivelog.c:565
+#: receivelog.c:572
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: başlayan zaman çizelgesi %u sunucuda mevcut değil\n"
 
-#: receivelog.c:605
+#: receivelog.c:612
 #, c-format
 msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: TIMELINE_HISTORY komutuna beklenmedik cevap; %d satır ve %d alan alındı, %d satır ve %d alan bekleniyordu\n"
 
-#: receivelog.c:677
-#, c-format
-msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
-msgstr ""
-
 #: receivelog.c:684
 #, c-format
-msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
-msgstr ""
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr "%1$s: sunucu %3$u zaman çizelgesini takiben beklenmedik sonraki zaman çizelgesi %2$u bildirdi\n"
 
-#: receivelog.c:725
+#: receivelog.c:691
+#, c-format
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr "%s: sunucu %u streaming zaman çizelgesini %X/%X de durdurdu, fakat sonraki %u zaman çizelgesinin %X/%X de başlayacağını bildirdi\n"
+
+#: receivelog.c:732
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: durma noktasından önce replikasyon akışı sonlandırıldı\n"
 
-#: receivelog.c:774
+#: receivelog.c:781
 #, c-format
 msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: zaman çizelgesi sonundan sonar beklenmedik sonuç kümesi: %d satır ve %d alan alındı, %d satır ve %d alan bekleniyordu\n"
 
-#: receivelog.c:784
+#: receivelog.c:791
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
 msgstr "%s: sonraki timeline'ın başlama noktası \"%s\" ayrıştırılamadı\n"
 
-#: receivelog.c:1141
+#: receivelog.c:1148
 #, c-format
 msgid "%s: received transaction log record for offset %u with no file open\n"
-msgstr ""
+msgstr "%s: açık dosya yokken %u offset için transaction log kaydı alındı\n"
 
-#: receivelog.c:1153
+#: receivelog.c:1160
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: %08x WAL data offset'i alındı , %08x bekleniyordu\n"
 
-#: receivelog.c:1189
+#: receivelog.c:1200
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%1$s: \"%3$s\" WAL dosyasına %2$u bayt yazılamadı: %4$s\n"
 
-#: receivelog.c:1214 receivelog.c:1255 receivelog.c:1286
+#: receivelog.c:1225 receivelog.c:1266 receivelog.c:1297
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: kopya-sonu paketi gönderilemedi: %s"
@@ -1137,8 +1136,8 @@ msgstr "%s: sunucuya bağlanılamadı: %s"
 
 #: streamutil.c:225
 #, c-format
-msgid "%s: could not clear search_path: %s\n"
-msgstr "%s: search_path temizlenemedi: %s\n"
+msgid "%s: could not clear search_path: %s"
+msgstr "%s: search_path temizlenemedi: %s"
 
 #: streamutil.c:242
 #, c-format
@@ -1148,7 +1147,7 @@ msgstr "%s: integer_datetimes için sunucu ayarı belirlenemedi\n"
 #: streamutil.c:255
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
-msgstr ""
+msgstr "%s: integer_datetimes derleme seçeneği sunucu ile eşleşmiyor\n"
 
 #: streamutil.c:402
 #, c-format
@@ -1160,17 +1159,17 @@ msgstr "%s: \"%s\" replikasyon slot'u oluşturulamadı: %d satır ve %d alan al�
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: \"%s\" replikasyon slot'u silinemedi: %d satır ve %d alan alındı,%d satır ve %d alan bekleniyordu\n"
 
-#~ msgid "%s: no start point returned from server\n"
-#~ msgstr "%s:sunucudan bir başlangıç noktası dönmedi\n"
-
-#~ msgid "%s: could not parse file mode\n"
-#~ msgstr "%s: dosya modu ayıklanamadı\n"
-
-#~ msgid "%s: could not parse file size\n"
-#~ msgstr "%s: dosya boyutu ayıklanamadı\n"
+#~ msgid "  --help                   show this help, then exit\n"
+#~ msgstr "  --help                   bu yardımı gösterir ve çıkar\n"
 
 #~ msgid "  --version                output version information, then exit\n"
 #~ msgstr "  --version                sürüm bilgisini gösterir ve çıkar\n"
 
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help                   bu yardımı gösterir ve çıkar\n"
+#~ msgid "%s: could not parse file size\n"
+#~ msgstr "%s: dosya boyutu ayıklanamadı\n"
+
+#~ msgid "%s: could not parse file mode\n"
+#~ msgstr "%s: dosya modu ayıklanamadı\n"
+
+#~ msgid "%s: no start point returned from server\n"
+#~ msgstr "%s:sunucudan bir başlangıç noktası dönmedi\n"

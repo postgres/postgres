@@ -2,15 +2,16 @@
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# Abdullah GÜLNER <agulner@gmail.com>, 2018,2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-06 19:58+0000\n"
-"PO-Revision-Date: 2018-05-07 11:36+0300\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
-"Language-Team: TR <devrim@commandprompt.com>\n"
+"POT-Creation-Date: 2019-04-11 19:17+0000\n"
+"PO-Revision-Date: 2019-04-12 15:36+0300\n"
+"Last-Translator: Abdullah Gülner>\n"
+"Language-Team: TR <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -565,17 +566,17 @@ msgstr "\"%s\" scalar bir değişken değil"
 #: pl_gram.y:1331 pl_gram.y:1525
 #, c-format
 msgid "loop variable of loop over rows must be a record or row variable or list of scalar variables"
-msgstr ""
+msgstr "Döngü satırları üzerindeki döngü değişkeni, bir kayıt veya satır değişkeni veya sayısal (scalar) değişkenlerin listesi olmalıdır"
 
 #: pl_gram.y:1365
 #, c-format
 msgid "cursor FOR loop must have only one target variable"
-msgstr ""
+msgstr "imleç (cursor) FOR döngüsünde sadece bir tane hedef değişken olabilir"
 
 #: pl_gram.y:1372
 #, c-format
 msgid "cursor FOR loop must use a bound cursor variable"
-msgstr ""
+msgstr "imleç (cursor) FOR döngüsü bir sınırlı (bound) imleç (cursor) değişkeni kullanmalı"
 
 #: pl_gram.y:1456
 #, c-format
@@ -590,12 +591,12 @@ msgstr "FOR döngü sorgusu içinde REVERSE belirtilemez"
 #: pl_gram.y:1639
 #, c-format
 msgid "loop variable of FOREACH must be a known variable or list of variables"
-msgstr ""
+msgstr "FOREACH'in döngü değişkeni bilinen bir değişken ya da değişkenlerin listesi olmalıdır"
 
 #: pl_gram.y:1680
 #, c-format
 msgid "there is no label \"%s\" attached to any block or loop enclosing this statement"
-msgstr ""
+msgstr "bu ifadeyi barındıran bir blok ya da döngüye ekli bir \"%s\" etiketi bulunmuyor"
 
 #: pl_gram.y:1688
 #, c-format
@@ -722,7 +723,7 @@ msgstr "\"%s\" CONSTANT olarak deklare edilmiş"
 #: pl_gram.y:3370 pl_gram.y:3382
 #, c-format
 msgid "record or row variable cannot be part of multiple-item INTO list"
-msgstr ""
+msgstr "kayıt veya satır değişkeni çok-ögeli INTO listesinin bir parçası olamaz"
 
 #: pl_gram.y:3427
 #, c-format
@@ -789,15 +790,15 @@ msgstr "RAISE için çok az parametre var"
 
 #: pl_handler.c:151
 msgid "Sets handling of conflicts between PL/pgSQL variable names and table column names."
-msgstr ""
+msgstr "PL/pgSQL değişken adları ve tablo sütun adları arasındaki çatışmaların ele alınmasını ayarlar."
 
 #: pl_handler.c:160
 msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."
-msgstr ""
+msgstr "INTO ... STRICT hatalarında oluşturulan hata mesajlarının DETAIL kısmındaki parametrelerle ilgili bilgileri yazdır."
 
 #: pl_handler.c:168
 msgid "Perform checks given in ASSERT statements."
-msgstr ""
+msgstr "ASSERT ifadelerinde verilen kontrolleri gerçekleştir."
 
 #: pl_handler.c:176
 msgid "List of programming constructs that should produce a warning."
@@ -819,68 +820,68 @@ msgstr "giriş sonuna %s"
 msgid "%s at or near \"%s\""
 msgstr "\"%2$s\"  yerinde %1$s"
 
-#~ msgid "unterminated dollar-quoted string"
-#~ msgstr "sonuçlandırılmamış dolar işeretiyle sınırlandırılmış satır"
-
-#~ msgid "unterminated quoted string"
-#~ msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış satır"
-
-#~ msgid "unterminated /* comment"
-#~ msgstr "/* açıklama sonlandırılmamış"
-
-#~ msgid "unterminated quoted identifier"
-#~ msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış tanım"
-
-#~ msgid "unterminated \" in identifier: %s"
-#~ msgstr "belirteçte sonlandırılmamış *\" : %s"
-
-#~ msgid "variable \"%s\" does not exist in the current block"
-#~ msgstr "\"%s\" değişkeni mevcut bloğun içinde yok"
-
-#~ msgid "expected \")\""
-#~ msgstr "\")\" bekleniyordu"
-
-#~ msgid "cannot assign to tg_argv"
-#~ msgstr "tg_argv'ye atama yapılamadı"
-
-#~ msgid "too many variables specified in SQL statement"
-#~ msgstr "SQL ifadesinde çok fazla değişken belirtilmiş"
-
-#~ msgid "expected a cursor or refcursor variable"
-#~ msgstr "cursor ya da refcursonr değişkeni beklendi"
-
-#~ msgid "syntax error at \"%s\""
-#~ msgstr "\"%s\" içinde sözdizimi hatası"
-
-#~ msgid "expected an integer variable"
-#~ msgstr "tamsayı değişken bekleniyordu"
-
-#~ msgid "function has no parameter \"%s\""
-#~ msgstr "fonksiyonun \"%s\" parametresi var"
-
-#~ msgid "Number of returned columns (%d) does not match expected column count (%d)."
-#~ msgstr "Dönen kolonların sayısı (%d) beklenen kolon sayısı (%d) ile eşleşmiyor."
-
-#~ msgid "N/A (dropped column)"
-#~ msgstr "N/A (silinmiş kolon)"
-
-#~ msgid "row \"%s.%s\" has no field \"%s\""
-#~ msgstr "\"%s.%s\" satırında \"%s\" alanı yok."
-
-#~ msgid "row \"%s\" has no field \"%s\""
-#~ msgstr "\"%s\" satırının bir alanı yok \"%s\""
-
-#~ msgid "expected \"[\""
-#~ msgstr " \"[\" bekleniyordu"
-
-#~ msgid "relation \"%s.%s\" does not exist"
-#~ msgstr "\"%s.%s\" nesnesi mevcut değil"
-
-#~ msgid "EXECUTE statement"
-#~ msgstr "EXECUTE ifadesi"
+#~ msgid "label does not exist"
+#~ msgstr "etiket bulunamadı"
 
 #~ msgid "RETURN NEXT must specify a record or row variable in function returning row"
 #~ msgstr "RETURN NEXT satır döndüren fonksiyonda kayıt ya da satır değişkeni belirtmelidir"
 
-#~ msgid "label does not exist"
-#~ msgstr "etiket bulunamadı"
+#~ msgid "EXECUTE statement"
+#~ msgstr "EXECUTE ifadesi"
+
+#~ msgid "relation \"%s.%s\" does not exist"
+#~ msgstr "\"%s.%s\" nesnesi mevcut değil"
+
+#~ msgid "expected \"[\""
+#~ msgstr " \"[\" bekleniyordu"
+
+#~ msgid "row \"%s\" has no field \"%s\""
+#~ msgstr "\"%s\" satırının bir alanı yok \"%s\""
+
+#~ msgid "row \"%s.%s\" has no field \"%s\""
+#~ msgstr "\"%s.%s\" satırında \"%s\" alanı yok."
+
+#~ msgid "N/A (dropped column)"
+#~ msgstr "N/A (silinmiş kolon)"
+
+#~ msgid "Number of returned columns (%d) does not match expected column count (%d)."
+#~ msgstr "Dönen kolonların sayısı (%d) beklenen kolon sayısı (%d) ile eşleşmiyor."
+
+#~ msgid "function has no parameter \"%s\""
+#~ msgstr "fonksiyonun \"%s\" parametresi var"
+
+#~ msgid "expected an integer variable"
+#~ msgstr "tamsayı değişken bekleniyordu"
+
+#~ msgid "syntax error at \"%s\""
+#~ msgstr "\"%s\" içinde sözdizimi hatası"
+
+#~ msgid "expected a cursor or refcursor variable"
+#~ msgstr "cursor ya da refcursonr değişkeni beklendi"
+
+#~ msgid "too many variables specified in SQL statement"
+#~ msgstr "SQL ifadesinde çok fazla değişken belirtilmiş"
+
+#~ msgid "cannot assign to tg_argv"
+#~ msgstr "tg_argv'ye atama yapılamadı"
+
+#~ msgid "expected \")\""
+#~ msgstr "\")\" bekleniyordu"
+
+#~ msgid "variable \"%s\" does not exist in the current block"
+#~ msgstr "\"%s\" değişkeni mevcut bloğun içinde yok"
+
+#~ msgid "unterminated \" in identifier: %s"
+#~ msgstr "belirteçte sonlandırılmamış *\" : %s"
+
+#~ msgid "unterminated quoted identifier"
+#~ msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış tanım"
+
+#~ msgid "unterminated /* comment"
+#~ msgstr "/* açıklama sonlandırılmamış"
+
+#~ msgid "unterminated quoted string"
+#~ msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış satır"
+
+#~ msgid "unterminated dollar-quoted string"
+#~ msgstr "sonuçlandırılmamış dolar işeretiyle sınırlandırılmış satır"
