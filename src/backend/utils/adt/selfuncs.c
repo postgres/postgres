@@ -4955,9 +4955,13 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 								 * For simplicity, we insist on the whole
 								 * table being selectable, rather than trying
 								 * to identify which column(s) the index
-								 * depends on.
+								 * depends on.  Also require all rows to be
+								 * selectable --- there must be no
+								 * securityQuals from security barrier views
+								 * or RLS policies.
 								 */
 								vardata->acl_ok =
+									rte->securityQuals == NIL &&
 									(pg_class_aclcheck(rte->relid, GetUserId(),
 													   ACL_SELECT) == ACLCHECK_OK);
 							}
@@ -5021,12 +5025,17 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 
 		if (HeapTupleIsValid(vardata->statsTuple))
 		{
-			/* check if user has permission to read this column */
+			/*
+			 * Check if user has permission to read this column.  We require
+			 * all rows to be accessible, so there must be no securityQuals
+			 * from security barrier views or RLS policies.
+			 */
 			vardata->acl_ok =
-				(pg_class_aclcheck(rte->relid, GetUserId(),
-								   ACL_SELECT) == ACLCHECK_OK) ||
-				(pg_attribute_aclcheck(rte->relid, var->varattno, GetUserId(),
-									   ACL_SELECT) == ACLCHECK_OK);
+				rte->securityQuals == NIL &&
+				((pg_class_aclcheck(rte->relid, GetUserId(),
+									ACL_SELECT) == ACLCHECK_OK) ||
+				 (pg_attribute_aclcheck(rte->relid, var->varattno, GetUserId(),
+										ACL_SELECT) == ACLCHECK_OK));
 		}
 		else
 		{
