@@ -8602,12 +8602,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
  * Normally this is always true, but it's false for dropped columns, as well
  * as those that were inherited without any local definition.  (If we print
  * such a column it will mistakenly get pg_attribute.attislocal set to true.)
- * For partitions, it's always true, because we want the partitions to be
- * created independently and ATTACH PARTITION used afterwards.
- *
- * In binary_upgrade mode, we must print all columns and fix the attislocal/
- * attisdropped state later, so as to keep control of the physical column
- * order.
+ * However, in binary_upgrade mode, we must print all such columns anyway and
+ * fix the attislocal/attisdropped state later, so as to keep control of the
+ * physical column order.
  *
  * This function exists because there are scattered nonobvious places that
  * must be kept in sync with this decision.
@@ -8617,9 +8614,7 @@ shouldPrintColumn(DumpOptions *dopt, TableInfo *tbinfo, int colno)
 {
 	if (dopt->binary_upgrade)
 		return true;
-	if (tbinfo->attisdropped[colno])
-		return false;
-	return (tbinfo->attislocal[colno] || tbinfo->ispartition);
+	return (tbinfo->attislocal[colno] && !tbinfo->attisdropped[colno]);
 }
 
 
@@ -15570,6 +15565,27 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (tbinfo->reloftype && !dopt->binary_upgrade)
 			appendPQExpBuffer(q, " OF %s", tbinfo->reloftype);
 
+		/*
+		 * If the table is a partition, dump it as such; except in the case of
+		 * a binary upgrade, we dump the table normally and attach it to the
+		 * parent afterward.
+		 */
+		if (tbinfo->ispartition && !dopt->binary_upgrade)
+		{
+			TableInfo  *parentRel = tbinfo->parents[0];
+
+			/*
+			 * With partitions, unlike inheritance, there can only be one
+			 * parent.
+			 */
+			if (tbinfo->numParents != 1)
+				fatal("invalid number of parents %d for table \"%s\"",
+							  tbinfo->numParents, tbinfo->dobj.name);
+
+			appendPQExpBuffer(q, " PARTITION OF %s",
+							  fmtQualifiedDumpable(parentRel));
+		}
+
 		if (tbinfo->relkind != RELKIND_MATVIEW)
 		{
 			/* Dump the attributes */
@@ -15598,9 +15614,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 											   (!tbinfo->inhNotNull[j] ||
 												dopt->binary_upgrade));
 
-					/* Skip column if fully defined by reloftype */
-					if (tbinfo->reloftype && !has_default && !has_notnull &&
-						!dopt->binary_upgrade)
+					/*
+					 * Skip column if fully defined by reloftype or the
+					 * partition parent.
+					 */
+					if ((tbinfo->reloftype || tbinfo->ispartition) &&
+						!has_default && !has_notnull && !dopt->binary_upgrade)
 						continue;
 
 					/* Format properly if not first attr */
@@ -15623,16 +15642,20 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						 * clean things up later.
 						 */
 						appendPQExpBufferStr(q, " INTEGER /* dummy */");
-						/* and skip to the next column */
+						/* Skip all the rest, too */
 						continue;
 					}
 
 					/*
-					 * Attribute type; print it except when creating a typed
-					 * table ('OF type_name'), but in binary-upgrade mode,
-					 * print it in that case too.
+					 * Attribute type
+					 *
+					 * In binary-upgrade mode, we always include the type. If
+					 * we aren't in binary-upgrade mode, then we skip the type
+					 * when creating a typed table ('OF type_name') or a
+					 * partition ('PARTITION OF'), since the type comes from
+					 * the parent/partitioned table.
 					 */
-					if (dopt->binary_upgrade || !tbinfo->reloftype)
+					if (dopt->binary_upgrade || (!tbinfo->reloftype && !tbinfo->ispartition))
 					{
 						appendPQExpBuffer(q, " %s",
 										  tbinfo->atttypnames[j]);
@@ -15689,20 +15712,25 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 			if (actual_atts)
 				appendPQExpBufferStr(q, "\n)");
-			else if (!(tbinfo->reloftype && !dopt->binary_upgrade))
+			else if (!((tbinfo->reloftype || tbinfo->ispartition) &&
+					   !dopt->binary_upgrade))
 			{
 				/*
-				 * No attributes? we must have a parenthesized attribute list,
-				 * even though empty, when not using the OF TYPE syntax.
+				 * We must have a parenthesized attribute list, even though
+				 * empty, when not using the OF TYPE or PARTITION OF syntax.
 				 */
 				appendPQExpBufferStr(q, " (\n)");
 			}
 
-			/*
-			 * Emit the INHERITS clause (not for partitions), except in
-			 * binary-upgrade mode.
-			 */
-			if (numParents > 0 && !tbinfo->ispartition &&
+			if (tbinfo->ispartition && !dopt->binary_upgrade)
+			{
+				appendPQExpBufferChar(q, '\n');
+				appendPQExpBufferStr(q, tbinfo->partbound);
+			}
+
+			/* Emit the INHERITS clause, except if this is a partition. */
+			if (numParents > 0 &&
+				!tbinfo->ispartition &&
 				!dopt->binary_upgrade)
 			{
 				appendPQExpBufferStr(q, "\nINHERITS (");
@@ -15875,16 +15903,30 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
 			}
 
-			if (numParents > 0 && !tbinfo->ispartition)
+			if (numParents > 0)
 			{
-				appendPQExpBufferStr(q, "\n-- For binary upgrade, set up inheritance this way.\n");
+				appendPQExpBufferStr(q, "\n-- For binary upgrade, set up inheritance and partitioning this way.\n");
 				for (k = 0; k < numParents; k++)
 				{
 					TableInfo  *parentRel = parents[k];
 
-					appendPQExpBuffer(q, "ALTER TABLE ONLY %s INHERIT %s;\n",
-									  qualrelname,
-									  fmtQualifiedDumpable(parentRel));
+					/* In the partitioning case, we alter the parent */
+					if (tbinfo->ispartition)
+						appendPQExpBuffer(q,
+										  "ALTER TABLE ONLY %s ATTACH PARTITION ",
+										  fmtQualifiedDumpable(parentRel));
+					else
+						appendPQExpBuffer(q, "ALTER TABLE ONLY %s INHERIT ",
+										  qualrelname);
+
+					/* Partition needs specifying the bounds */
+					if (tbinfo->ispartition)
+						appendPQExpBuffer(q, "%s %s;\n",
+										  qualrelname,
+										  tbinfo->partbound);
+					else
+						appendPQExpBuffer(q, "%s;\n",
+										  fmtQualifiedDumpable(parentRel));
 				}
 			}
 
@@ -15895,27 +15937,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  qualrelname,
 								  tbinfo->reloftype);
 			}
-		}
-
-		/*
-		 * For partitioned tables, emit the ATTACH PARTITION clause.  Note
-		 * that we always want to create partitions this way instead of using
-		 * CREATE TABLE .. PARTITION OF, mainly to preserve a possible column
-		 * layout discrepancy with the parent, but also to ensure it gets the
-		 * correct tablespace setting if it differs from the parent's.
-		 */
-		if (tbinfo->ispartition)
-		{
-			/* With partitions there can only be one parent */
-			if (tbinfo->numParents != 1)
-				fatal("invalid number of parents %d for table \"%s\"",
-					  tbinfo->numParents, tbinfo->dobj.name);
-
-			/* Perform ALTER TABLE on the parent */
-			appendPQExpBuffer(q,
-							  "ALTER TABLE ONLY %s ATTACH PARTITION %s %s;\n",
-							  fmtQualifiedDumpable(parents[0]),
-							  qualrelname, tbinfo->partbound);
 		}
 
 		/*

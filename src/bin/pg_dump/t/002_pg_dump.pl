@@ -733,12 +733,7 @@ my %tests = (
 			\QALTER TABLE ONLY dump_test.measurement ATTACH PARTITION dump_test_second_schema.measurement_y2006m2 \E
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
-		like => {
-			%full_runs,
-			role             => 1,
-			section_pre_data => 1,
-			binary_upgrade   => 1,
-		},
+		like => { binary_upgrade => 1, },
 	  },
 
 	'ALTER TABLE test_table CLUSTER ON test_table_pkey' => {
@@ -2327,13 +2322,12 @@ my %tests = (
 			\)\n
 			\QFOR VALUES FROM ('2006-02-01') TO ('2006-03-01');\E\n
 			/xm,
-		like   => {},
-		unlike => {
+		like => {
 			%full_runs,
 			role             => 1,
 			section_pre_data => 1,
-			binary_upgrade   => 1,
 		},
+		unlike => { binary_upgrade => 1, },
 	},
 
 	'CREATE TABLE test_fourth_table_zero_col' => {
