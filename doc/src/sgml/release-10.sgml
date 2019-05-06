@@ -443,23 +443,6 @@
 
     <listitem>
      <para>
-      Make <application>pg_dump</application> recreate table partitions
-      using <command>ATTACH PARTITION</command> instead
-      of <command>CREATE TABLE ... PARTITION OF</command> (David Rowley)
-     </para>
-
-     <para>
-      This avoids various corner-case problems, notably that dump and
-      restore might unexpectedly alter a partition's column ordering.
-      It also means that a selective restore of the partition can succeed
-      even if its parent partitioned table isn't restored.
-      (The <command>ATTACH PARTITION</command> will fail of course, but
-      the partition table itself can be created and populated.)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Avoid crash in <filename>contrib/postgres_fdw</filename> when a
       query using remote grouping or aggregation has
       a <literal>SELECT</literal>-list item that is an uncorrelated
