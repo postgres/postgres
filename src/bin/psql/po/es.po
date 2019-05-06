@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-27 22:06+0000\n"
-"PO-Revision-Date: 2016-07-12 09:12-0400\n"
+"POT-Creation-Date: 2019-04-17 22:46+0000\n"
+"PO-Revision-Date: 2019-04-20 22:55-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -251,7 +251,7 @@ msgstr "El despliegue de duración está desactivado."
 #: command.c:1449 command.c:1469 command.c:2139 command.c:2142 command.c:2145
 #: command.c:2151 command.c:2153 command.c:2161 command.c:2171 command.c:2180
 #: command.c:2194 command.c:2211 command.c:2270 common.c:75 copy.c:333
-#: copy.c:393 copy.c:408 psqlscan.l:1677 psqlscan.l:1688 psqlscan.l:1698
+#: copy.c:393 copy.c:408 psqlscan.l:1691 psqlscan.l:1702 psqlscan.l:1712
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -277,7 +277,7 @@ msgstr "Debe proveer todos los parámetros de conexión porque no existe conexi�
 
 #: command.c:1785 command.c:3136 common.c:121 common.c:418 common.c:483
 #: common.c:934 common.c:962 common.c:1059 copy.c:492 copy.c:705
-#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
+#: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1963
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2322,34 +2322,36 @@ msgstr "  \\H              cambiar modo de salida HTML (actualmente %s)\n"
 #, c-format
 msgid ""
 "  \\pset [NAME [VALUE]]   set table output option\n"
-"                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
-"                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
+"                         (NAME := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
+"                         footer|format|linestyle|null|numericlocale|pager|\n"
+"                         recordsep|recordsep_zero|tableattr|title|tuples_only})\n"
 msgstr ""
-"  \\pset NOMBRE [VALOR]  define opción de salida de tabla\n"
-"                  (NOMBRE := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
-"                  numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"
+"  \\pset [NOMBRE [VALOR]]  define opción de salida de tabla\n"
+"                  (NOMBRE := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
+"                  footer|format|linestyle|null|numericlocale|pager|recordsep|\n"
+"                  recordsep_zero|tableattr|title|tuples_only})\n"
 
-#: help.c:238
+#: help.c:239
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
 msgstr "  \\t [on|off]     mostrar sólo filas (actualmente %s)\n"
 
-#: help.c:240
+#: help.c:241
 #, c-format
 msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
 msgstr "  \\T [CADENA]     definir atributos HTML de <table>, o indefinir si es vacío\n"
 
-#: help.c:241
+#: help.c:242
 #, c-format
 msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
 msgstr "  \\x [on|off|auto] cambiar modo expandido (actualmente %s)\n"
 
-#: help.c:245
+#: help.c:246
 #, c-format
 msgid "Connection\n"
 msgstr "Conexiones\n"
 
-#: help.c:247
+#: help.c:248
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2358,7 +2360,7 @@ msgstr ""
 "  \\c[onnect] [BASE-DE-DATOS|- USUARIO|- ANFITRIÓN|- PUERTO|- | conninfo]\n"
 "                  conectar a una nueva base de datos (actual: «%s»)\n"
 
-#: help.c:251
+#: help.c:252
 #, c-format
 msgid ""
 "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
@@ -2367,84 +2369,84 @@ msgstr ""
 "  \\c[onnect] [BASE-DE-DATOS|- USUARIO|- ANFITRIÓN|- PUERTO|- | conninfo]\n"
 "                  conectar a una nueva base de datos (no hay conexión actual)\n"
 
-#: help.c:253
+#: help.c:254
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
 msgstr ""
 "  \\encoding [CODIFICACIÓN]\n"
 "                  mostrar o definir codificación del cliente\n"
 
-#: help.c:254
+#: help.c:255
 #, c-format
 msgid "  \\password [USERNAME]   securely change the password for a user\n"
 msgstr ""
 "  \\password [USUARIO]\n"
 "                  cambiar la contraseña para un usuario en forma segura\n"
 
-#: help.c:255
+#: help.c:256
 #, c-format
 msgid "  \\conninfo              display information about current connection\n"
 msgstr "  \\conninfo       despliega la información sobre la conexión actual\n"
 
-#: help.c:258
+#: help.c:259
 #, c-format
 msgid "Operating System\n"
 msgstr "Sistema Operativo\n"
 
-#: help.c:259
+#: help.c:260
 #, c-format
 msgid "  \\cd [DIR]              change the current working directory\n"
 msgstr "  \\cd [DIR]        cambiar el directorio de trabajo actual\n"
 
-#: help.c:260
+#: help.c:261
 #, c-format
 msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
 msgstr ""
 "  \\setenv NOMBRE [VALOR]\n"
 "                   definir o indefinir variable de ambiente\n"
 
-#: help.c:261
+#: help.c:262
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
 msgstr ""
 "  \\timing [on|off] mostrar tiempo de ejecución de órdenes\n"
 "                   (actualmente %s)\n"
 
-#: help.c:263
+#: help.c:264
 #, c-format
 msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
 msgstr ""
 "  \\! [ORDEN]       ejecutar orden en intérprete de órdenes (shell),\n"
 "                   o iniciar intérprete interactivo\n"
 
-#: help.c:266
+#: help.c:267
 #, c-format
 msgid "Variables\n"
 msgstr "Variables\n"
 
-#: help.c:267
+#: help.c:268
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
 msgstr "  \\prompt [TEXTO] NOMBRE  preguntar al usuario el valor de la variable\n"
 
-#: help.c:268
+#: help.c:269
 #, c-format
 msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
 msgstr ""
 "  \\set [NOMBRE [VALOR]]   definir variables internas,\n"
 "                          listar todas si no se dan parámetros\n"
 
-#: help.c:269
+#: help.c:270
 #, c-format
 msgid "  \\unset NAME            unset (delete) internal variable\n"
 msgstr "  \\unset NOMBRE           indefinir (eliminar) variable interna\n"
 
-#: help.c:272
+#: help.c:273
 #, c-format
 msgid "Large Objects\n"
 msgstr "Objetos Grandes\n"
 
-#: help.c:273
+#: help.c:274
 #, c-format
 msgid ""
 "  \\lo_export LOBOID FILE\n"
@@ -2457,11 +2459,11 @@ msgstr ""
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID   operaciones con objetos grandes\n"
 
-#: help.c:320
+#: help.c:321
 msgid "Available help:\n"
 msgstr "Ayuda disponible:\n"
 
-#: help.c:404
+#: help.c:405
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -2476,7 +2478,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:420
+#: help.c:421
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"
@@ -2559,22 +2561,22 @@ msgstr[1] "(%lu filas)"
 msgid "(No rows)\n"
 msgstr "(Sin filas)\n"
 
-#: print.c:2254
+#: print.c:2278
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrumpido\n"
 
-#: print.c:2320
+#: print.c:2344
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "No se puede agregar un encabezado al contenido de la tabla: la cantidad de columnas de %d ha sido excedida.\n"
 
-#: print.c:2360
+#: print.c:2384
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "No se puede agregar una celda al contenido de la tabla: la cantidad de celdas de %d ha sido excedida.\n"
 
-#: print.c:2586
+#: print.c:2610
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "formato de salida no válido (error interno): %d"
@@ -2584,17 +2586,17 @@ msgstr "formato de salida no válido (error interno): %d"
 msgid "skipping recursive expansion of variable \"%s\"\n"
 msgstr "saltando expansión recursiva de la variable «%s»\n"
 
-#: psqlscan.l:1604
+#: psqlscan.l:1618
 #, c-format
 msgid "unterminated quoted string\n"
 msgstr "cadena en comillas sin terminar\n"
 
-#: psqlscan.l:1704
+#: psqlscan.l:1718
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: memoria agotada\n"
 
-#: psqlscan.l:1933
+#: psqlscan.l:1947
 #, c-format
 msgid "can't escape without active connection\n"
 msgstr "no se puede escapar sin una conexión activa\n"

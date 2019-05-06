@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-27 22:06+0000\n"
+"POT-Creation-Date: 2019-04-17 22:47+0000\n"
 "PO-Revision-Date: 2014-12-16 12:13-0300\n"
 "Last-Translator: Martín Marqués <martin@2ndquadrant.com>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -443,7 +443,7 @@ msgstr "%s: no se pudo crear el archivo pg_control: %s\n"
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: no se pudo escribir el archivo pg_control: %s\n"
 
-#: pg_resetxlog.c:862 pg_resetxlog.c:1146
+#: pg_resetxlog.c:862 pg_resetxlog.c:1144
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: error de fsync: %s\n"
@@ -468,52 +468,52 @@ msgstr "%s: no se pudo cerrar el directorio «%s»: %s\n"
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: no se pudo borrar el archivo «%s»: %s\n"
 
-#: pg_resetxlog.c:1113
+#: pg_resetxlog.c:1111
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: no se pudo abrir el archivo «%s»: %s\n"
 
-#: pg_resetxlog.c:1124 pg_resetxlog.c:1138
+#: pg_resetxlog.c:1122 pg_resetxlog.c:1136
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: no se pudo escribir en el archivo «%s»: %s\n"
 
-#: pg_resetxlog.c:1192
+#: pg_resetxlog.c:1190
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
 msgstr "%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
 
-#: pg_resetxlog.c:1201
+#: pg_resetxlog.c:1199
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
 msgstr "%s: no se pudo abrir el token de proceso: código de error %lu\n"
 
-#: pg_resetxlog.c:1214
+#: pg_resetxlog.c:1212
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s: no se pudo emplazar los SIDs: código de error %lu\n"
 
-#: pg_resetxlog.c:1233
+#: pg_resetxlog.c:1231
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
 msgstr "%s: no se pudo crear el token restringido: código de error %lu\n"
 
-#: pg_resetxlog.c:1254
+#: pg_resetxlog.c:1252
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
 msgstr "%s: no se pudo iniciar el proceso para la orden «%s»: código de error %lu\n"
 
-#: pg_resetxlog.c:1286
+#: pg_resetxlog.c:1284
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
 msgstr "%s: no se pudo re-ejecutar con el token restringido: código de error %lu\n"
 
-#: pg_resetxlog.c:1301
+#: pg_resetxlog.c:1299
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
 msgstr "%s: no se pudo obtener el código de salida del subproceso»: código de error %lu\n"
 
-#: pg_resetxlog.c:1313
+#: pg_resetxlog.c:1311
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -522,7 +522,7 @@ msgstr ""
 "%s reinicia la bitácora de transacciones de PostgreSQL.\n"
 "\n"
 
-#: pg_resetxlog.c:1314
+#: pg_resetxlog.c:1312
 #, c-format
 msgid ""
 "Usage:\n"
@@ -533,64 +533,64 @@ msgstr ""
 "   %s [OPCIÓN]... DATADIR\n"
 "\n"
 
-#: pg_resetxlog.c:1315
+#: pg_resetxlog.c:1313
 #, c-format
 msgid "Options:\n"
 msgstr "Opciones:\n"
 
-#: pg_resetxlog.c:1316
+#: pg_resetxlog.c:1314
 #, c-format
 msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
 msgstr "  -e XIDEPOCH     asigna el siguiente «epoch» de ID de transacción\n"
 
-#: pg_resetxlog.c:1317
+#: pg_resetxlog.c:1315
 #, c-format
 msgid "  -f               force update to be done\n"
 msgstr "  -f              fuerza que la actualización sea hecha\n"
 
-#: pg_resetxlog.c:1318
+#: pg_resetxlog.c:1316
 #, c-format
 msgid "  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"
 msgstr ""
 "  -l XLOGFILE     fuerza una posición mínima de inicio de WAL para una\n"
 "                  nueva transacción\n"
 
-#: pg_resetxlog.c:1319
+#: pg_resetxlog.c:1317
 #, c-format
 msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
 msgstr "  -m MXID,MXID    asigna el siguiente ID de multitransacción y el más antiguo\n"
 
-#: pg_resetxlog.c:1320
+#: pg_resetxlog.c:1318
 #, c-format
 msgid "  -n               no update, just show what would be done (for testing)\n"
 msgstr "  -n              no actualiza, sólo muestra lo que va a hacer (para pruebas)\n"
 
-#: pg_resetxlog.c:1321
+#: pg_resetxlog.c:1319
 #, c-format
 msgid "  -o OID           set next OID\n"
 msgstr "  -o OID          asigna el siguiente OID\n"
 
-#: pg_resetxlog.c:1322
+#: pg_resetxlog.c:1320
 #, c-format
 msgid "  -O OFFSET        set next multitransaction offset\n"
 msgstr "  -O OFFSET       asigna la siguiente posición de multitransacción\n"
 
-#: pg_resetxlog.c:1323
+#: pg_resetxlog.c:1321
 #, c-format
 msgid "  -V, --version    output version information, then exit\n"
 msgstr "  -V, --version   muestra información de la versión, luego sale\n"
 
-#: pg_resetxlog.c:1324
+#: pg_resetxlog.c:1322
 #, c-format
 msgid "  -x XID           set next transaction ID\n"
 msgstr "  -x XID          asigna el siguiente ID de transacción\n"
 
-#: pg_resetxlog.c:1325
+#: pg_resetxlog.c:1323
 #, c-format
 msgid "  -?, --help       show this help, then exit\n"
 msgstr "  -?, --help      muestra esta ayuda, luego sale\n"
 
-#: pg_resetxlog.c:1326
+#: pg_resetxlog.c:1324
 #, c-format
 msgid ""
 "\n"
