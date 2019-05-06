@@ -35,6 +35,54 @@
 
     <listitem>
 <!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [1aebfbea8] 2019-05-06 11:38:43 +0100
+Branch: REL_11_STABLE [0027ee3c5] 2019-05-06 11:41:22 +0100
+Branch: REL_10_STABLE [940802830] 2019-05-06 11:43:09 +0100
+Branch: REL9_6_STABLE [085d64d9d] 2019-05-06 11:45:01 +0100
+Branch: REL9_5_STABLE [93c36145a] 2019-05-06 11:46:33 +0100
+-->
+     <para>
+      Prevent row-level security policies from being bypassed via
+      selectivity estimators (Dean Rasheed)
+     </para>
+
+     <para>
+      Some of the planner's selectivity estimators apply user-defined
+      operators to values found in <structname>pg_statistic</structname>
+      (e.g., most-common values).  A leaky operator therefore can disclose
+      some of the entries in a data column, even if the calling user lacks
+      permission to read that column.  In CVE-2017-7484 we added
+      restrictions to forestall that, but we failed to consider the
+      effects of row-level security.  A user who has SQL permission to
+      read a column, but who is forbidden to see certain rows due to RLS
+      policy, might still learn something about those rows' contents via a
+      leaky operator.  This patch further tightens the rules, allowing
+      leaky operators to be applied to statistics data only when there is
+      no relevant RLS policy.  (CVE-2019-10130)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [91248608a] 2019-05-06 21:44:24 +0900
+Branch: REL_11_STABLE [52635c276] 2019-05-06 21:44:39 +0900
+-->
+     <para>
+      Avoid access to already-freed memory during partition routing error
+      reports (Michael Paquier)
+     </para>
+
+     <para>
+      This mistake could lead to a crash, and in principle it might be
+      possible to use it to disclose server memory contents.
+      (CVE-2019-10129)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [c01eb619a] 2019-04-26 17:18:07 -0400
 Branch: REL_11_STABLE [02c359eed] 2019-04-26 17:18:07 -0400
@@ -587,6 +635,32 @@ Branch: REL_10_STABLE [19ff710aa] 2019-03-07 14:21:52 -0500
       In v10, this oversight only led to slightly inefficient plans, but
       in v11 it could cause <quote>set-valued function called in context
       that cannot accept a set</quote> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [a0905056f] 2019-05-06 11:54:32 +0100
+Branch: REL_11_STABLE [98dad4cd4] 2019-05-06 11:56:37 +0100
+Branch: REL_10_STABLE [ca74e3e0f] 2019-05-06 11:58:32 +0100
+Branch: REL9_6_STABLE [71185228c] 2019-05-06 12:00:00 +0100
+Branch: REL9_5_STABLE [01256815a] 2019-05-06 12:01:44 +0100
+Branch: REL9_4_STABLE [3c0999909] 2019-05-06 12:05:05 +0100
+-->
+     <para>
+      Check the appropriate user's permissions when enforcing rules about
+      letting a leaky operator see <structname>pg_statistic</structname>
+      data (Dean Rasheed)
+     </para>
+
+     <para>
+      When an underlying table is being accessed via a view, consider the
+      privileges of the view owner while deciding whether leaky operators
+      may be applied to the table's statistics data, rather than the
+      privileges of the user making the query.  This makes the planner's
+      rules about what data is visible match up with the executor's,
+      avoiding unnecessarily-poor plans.
      </para>
     </listitem>
 
