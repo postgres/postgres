@@ -60,7 +60,6 @@ test: create_misc
 test: create_operator
 test: create_index
 test: create_view
-test: reindex_catalog
 test: create_aggregate
 test: create_function_3
 test: create_cast
