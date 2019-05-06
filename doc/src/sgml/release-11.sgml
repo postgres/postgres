@@ -1053,29 +1053,6 @@ Branch: REL9_4_STABLE [12c42a543] 2019-04-11 21:06:21 +0200
 
     <listitem>
 <!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [3b23552ad] 2019-04-24 15:30:37 -0400
-Branch: REL_11_STABLE [a98c48deb] 2019-04-24 15:30:37 -0400
-Branch: REL_10_STABLE [5a191f697] 2019-04-24 15:30:37 -0400
--->
-     <para>
-      Make <application>pg_dump</application> recreate table partitions
-      using <command>ATTACH PARTITION</command> instead
-      of <command>CREATE TABLE ... PARTITION OF</command> (David Rowley)
-     </para>
-
-     <para>
-      This avoids various corner-case problems, notably that dump and
-      restore might unexpectedly alter a partition's column ordering.
-      It also means that a selective restore of the partition can succeed
-      even if its parent partitioned table isn't restored.
-      (The <command>ATTACH PARTITION</command> will fail of course, but
-      the partition table itself can be created and populated.)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [a7eadaaaa] 2019-03-18 10:34:45 +0900
 Branch: REL_11_STABLE [dcf2a0db8] 2019-03-18 10:35:01 +0900
