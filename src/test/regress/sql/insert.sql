@@ -409,6 +409,9 @@ create table mlparted5 partition of mlparted
   for values from (1, 40) to (1, 50) partition by range (c);
 create table mlparted5_ab partition of mlparted5
   for values from ('a') to ('c') partition by list (c);
+-- This partitioned table should remain with no partitions.
+create table mlparted5_cd partition of mlparted5
+  for values from ('c') to ('e') partition by list (c);
 create table mlparted5_a partition of mlparted5_ab for values in ('a');
 create table mlparted5_b (d int, b int, c text, a int);
 alter table mlparted5_ab attach partition mlparted5_b for values in ('b');
@@ -416,6 +419,8 @@ truncate mlparted;
 insert into mlparted values (1, 2, 'a', 1);
 insert into mlparted values (1, 40, 'a', 1);  -- goes to mlparted5_a
 insert into mlparted values (1, 45, 'b', 1);  -- goes to mlparted5_b
+insert into mlparted values (1, 45, 'c', 1);  -- goes to mlparted5_cd, fails
+insert into mlparted values (1, 45, 'f', 1);  -- goes to mlparted5, fails
 select tableoid::regclass, * from mlparted order by a, b, c, d;
 alter table mlparted drop d;
 truncate mlparted;
@@ -425,6 +430,8 @@ alter table mlparted drop e;
 insert into mlparted values (1, 2, 'a', 1);
 insert into mlparted values (1, 40, 'a', 1);  -- goes to mlparted5_a
 insert into mlparted values (1, 45, 'b', 1);  -- goes to mlparted5_b
+insert into mlparted values (1, 45, 'c', 1);  -- goes to mlparted5_cd, fails
+insert into mlparted values (1, 45, 'f', 1);  -- goes to mlparted5, fails
 select tableoid::regclass, * from mlparted order by a, b, c, d;
 alter table mlparted drop d;
 drop table mlparted5;
