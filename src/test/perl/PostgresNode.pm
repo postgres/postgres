@@ -1101,14 +1101,15 @@ sub get_new_node
 		# This seems like a good idea on Unixen as well, even though we don't
 		# ask the postmaster to open a TCP port on Unix.  On Non-Linux,
 		# non-Windows kernels, binding to 127.0.0.1/24 addresses other than
-		# 127.0.0.1 fails with EADDRNOTAVAIL.
+		# 127.0.0.1 might fail with EADDRNOTAVAIL.  Binding to 0.0.0.0 is
+		# unnecessary on non-Windows systems.
 		#
 		# XXX A port available now may become unavailable by the time we start
 		# the postmaster.
 		if ($found == 1)
 		{
-			foreach my $addr (qw(127.0.0.1 0.0.0.0),
-				$use_tcp ? qw(127.0.0.2 127.0.0.3) : ())
+			foreach my $addr (qw(127.0.0.1),
+				$use_tcp ? qw(127.0.0.2 127.0.0.3 0.0.0.0) : ())
 			{
 				can_bind($addr, $port) or $found = 0;
 			}
