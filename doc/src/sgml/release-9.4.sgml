@@ -161,6 +161,23 @@
 
     <listitem>
      <para>
+      Check the appropriate user's permissions when enforcing rules about
+      letting a leaky operator see <structname>pg_statistic</structname>
+      data (Dean Rasheed)
+     </para>
+
+     <para>
+      When an underlying table is being accessed via a view, consider the
+      privileges of the view owner while deciding whether leaky operators
+      may be applied to the table's statistics data, rather than the
+      privileges of the user making the query.  This makes the planner's
+      rules about what data is visible match up with the executor's,
+      avoiding unnecessarily-poor plans.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Avoid O(N^2) performance issue when rolling back a transaction that
       created many tables (Tomas Vondra)
      </para>
