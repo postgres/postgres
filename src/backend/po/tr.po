@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-10-16 20:53+0000\n"
-"PO-Revision-Date: 2018-10-24 17:21+0300\n"
+"PO-Revision-Date: 2019-03-28 15:36+0300\n"
 "Last-Translator: Abdullah GÜLNER\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -46,16 +46,14 @@ msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyası okunamadı: %s\n"
 
 #: ../common/controldata_utils.c:86
-#, fuzzy, c-format
-#| msgid "could not read file \"%s\": read %d of %zu"
+#, c-format
 msgid "could not read file \"%s\": read %d of %d"
-msgstr "\"%1$s\" dosyası okuma hatası: %3$zu nun %2$d si okundu"
+msgstr "\"%1$s\" dosyası okuma hatası, %3$d nin %2$d si okundu"
 
 #: ../common/controldata_utils.c:90
-#, fuzzy, c-format
-#| msgid "could not read file \"%s\": read %d of %zu"
+#, c-format
 msgid "%s: could not read file \"%s\": read %d of %d\n"
-msgstr "\"%1$s\" dosyası okuma hatası: %3$zu nun %2$d si okundu"
+msgstr "%1$s: \"%2$s\" dosyası okuma hatası: %4$d nin %3$d si okundu\n"
 
 #: ../common/controldata_utils.c:112
 msgid "byte ordering mismatch"
@@ -4213,7 +4211,7 @@ msgstr "\"internal\"  döndüren fonksiyonlar bu tiplerden en az bir argüman \"
 #: catalog/pg_aggregate.c:561
 #, c-format
 msgid "moving-aggregate implementation returns type %s, but plain implementation returns type %s"
-msgstr ""
+msgstr "harekteli-toplam (aggregate) uygulaması %s tipini döndürür, fakat düz uygulama %s tipini döndürür"
 
 #: catalog/pg_aggregate.c:572
 #, c-format
@@ -7913,10 +7911,9 @@ msgid "inherited relation \"%s\" is not a table or foreign table"
 msgstr "miras alınan \"%s\" nesnesi bir tablo veya uzak (foreign) tablo değildir"
 
 #: commands/tablecmds.c:1786
-#, fuzzy, c-format
-#| msgid "cannot attach a permanent relation as partition of temporary relation \"%s\""
+#, c-format
 msgid "cannot create a temporary relation as partition of permanent relation \"%s\""
-msgstr "kalıcı bir nesne \"%s\" geçici nesnesine bölümleme olarak eklenemez"
+msgstr "geçici bir nesne \"%s\" kalıcı nesnesine bölümleme olarak oluşturulamaz"
 
 #: commands/tablecmds.c:1795 commands/tablecmds.c:10986
 #, c-format
@@ -8909,10 +8906,9 @@ msgid "cannot attach inheritance parent as partition"
 msgstr "kalıt üstü (inheritance parent) bölümleme olarak eklenemez"
 
 #: commands/tablecmds.c:13536
-#, fuzzy, c-format
-#| msgid "cannot attach a permanent relation as partition of temporary relation \"%s\""
+#, c-format
 msgid "cannot attach a temporary relation as partition of permanent relation \"%s\""
-msgstr "kalıcı bir nesne \"%s\" geçici nesnesine bölümleme olarak eklenemez"
+msgstr "geçici bir nesne \"%s\" kalıcı nesnesine bölümleme olarak eklenemez"
 
 #: commands/tablecmds.c:13544
 #, c-format
@@ -10216,7 +10212,7 @@ msgstr "görünümler veri saklamadıkları için loglama durumları değiştiri
 #: commands/view.c:559
 #, c-format
 msgid "view \"%s\" will be a temporary view"
-msgstr "\"%s\" view, bir geçeci view olacaktır"
+msgstr "\"%s\" view, bir geçici view olacaktır"
 
 #: executor/execCurrent.c:78
 #, c-format
@@ -10244,24 +10240,24 @@ msgid "cursor \"%s\" is not positioned on a row"
 msgstr " \"%s\" imleci (cursor) bir satıra konumlandırılmamış"
 
 #: executor/execCurrent.c:167 executor/execCurrent.c:226 executor/execCurrent.c:238
-#, fuzzy, c-format
+#, c-format
 msgid "cursor \"%s\" is not a simply updatable scan of table \"%s\""
 msgstr "\"%s\" imleci (cursor) \"%s\" tablosunun basit güncellenebilir bir taraması (scan) değildir"
 
 #: executor/execCurrent.c:277 executor/execExprInterp.c:1889
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
-msgstr ""
+msgstr "%d parametresinin tipi (%s) planın hazırlandığı andakiyle (%s) uyuşmuyor"
 
 #: executor/execCurrent.c:289 executor/execExprInterp.c:1901
 #, c-format
 msgid "no value found for parameter %d"
-msgstr "%d parametresi içim değer bulunamadı"
+msgstr "%d parametresi için değer bulunamadı"
 
 #: executor/execExpr.c:780 parser/parse_agg.c:779
 #, c-format
 msgid "window function calls cannot be nested"
-msgstr "window fonksiyon çağırmaları içiçe olamaz"
+msgstr "window fonksiyon çağırmaları iç içe olamaz"
 
 #: executor/execExpr.c:1236
 #, c-format
@@ -11381,12 +11377,12 @@ msgstr "Nitelik bekleniyordu, fakat geçersiz karakter bulundu \"%s\"."
 #: libpq/auth-scram.c:803
 #, c-format
 msgid "client requires SCRAM channel binding, but it is not supported"
-msgstr ""
+msgstr "istemci SCRAM channel-binding gerektiriyor, fakat bu desteklenmiyor"
 
 #: libpq/auth-scram.c:808
 #, c-format
 msgid "Unexpected channel-binding flag \"%s\"."
-msgstr ""
+msgstr "Beklenmeyen channel-binding bayrağı (flag) \"%s\"."
 
 #: libpq/auth-scram.c:815
 #, c-format
@@ -11396,12 +11392,12 @@ msgstr "Virgül bekleniyordu, fakat \"%s\" karakteri bulundu."
 #: libpq/auth-scram.c:825
 #, c-format
 msgid "client uses authorization identity, but it is not supported"
-msgstr ""
+msgstr "istemci yetkilendirme kimliği kullanıyor, fakat bu desteklenmiyor"
 
 #: libpq/auth-scram.c:830
 #, c-format
 msgid "Unexpected attribute \"%s\" in client-first-message."
-msgstr ""
+msgstr "İstemci ilk mesajında beklenmeyen özellik \"%s\"."
 
 #: libpq/auth-scram.c:846
 #, c-format
@@ -11421,17 +11417,17 @@ msgstr "rastgele nonce oluşturulamadı"
 #: libpq/auth-scram.c:1048
 #, c-format
 msgid "unexpected SCRAM channel-binding attribute in client-final-message"
-msgstr ""
+msgstr "istemci son mesajında beklenmeyen SCRAM channel-binding özelliği"
 
 #: libpq/auth-scram.c:1063
 #, c-format
 msgid "Malformed proof in client-final-message."
-msgstr ""
+msgstr "İstemci son mesajında hatalı biçimlenmiş kanıt."
 
 #: libpq/auth-scram.c:1071
 #, c-format
 msgid "Garbage found at the end of client-final-message."
-msgstr ""
+msgstr "İstemci son mesajı  sonunda anlamsız değer (garbage)."
 
 #: libpq/auth.c:274
 #, c-format
@@ -11812,9 +11808,9 @@ msgid "invalid character in user name for LDAP authentication"
 msgstr "LDAP yetkilendirmesi için kullanıcı adında geçersiz karakter"
 
 #: libpq/auth.c:2487
-#, fuzzy, c-format
+#, c-format
 msgid "could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s"
-msgstr "\"%s\" kullanıcısının \"%s\" sunucusunda LDAP oturumu açma başarısız: hata kodu %d"
+msgstr "\"%2$s\" sunucusunda \"%1$s\" ldapbinddn için ilk LDAP bind gerçekleştirilemedi: %3$s"
 
 #: libpq/auth.c:2513
 #, c-format
@@ -11859,9 +11855,9 @@ msgid "LDAP login failed for user \"%s\" on server \"%s\": %s"
 msgstr "\"%s\" kullanıcısının \"%s\" sunucusunda LDAP oturumu açma başarısız: %s"
 
 #: libpq/auth.c:2633
-#, fuzzy, c-format
+#, c-format
 msgid "certificate authentication failed for user \"%s\": client certificate contains no user name"
-msgstr "\"%s\" kullanıcısının kimlik doğrulaması başarısız: geçersiz kimlik doğrulama yöntemi"
+msgstr "\"%s\" kullanıcısının sertifika kimlik doğrulaması başarısız: istemci sertifikası kullanıcı adı içermiyor"
 
 #: libpq/auth.c:2736
 #, c-format
@@ -12146,7 +12142,7 @@ msgstr "bilinmeyen SSL hata kodu: %d"
 #: libpq/be-secure-openssl.c:578
 #, c-format
 msgid "SSL certificate's common name contains embedded null"
-msgstr ""
+msgstr "SSL sertifikasının yaygın ismi embedded null içeriyor"
 
 #: libpq/be-secure-openssl.c:589
 #, c-format
@@ -12159,16 +12155,14 @@ msgid "SSL error: %s"
 msgstr "SSL hatası: %s"
 
 #: libpq/be-secure-openssl.c:909
-#, fuzzy, c-format
-#| msgid "could not open server file \"%s\": %m"
+#, c-format
 msgid "could not open DH parameters file \"%s\": %m"
-msgstr "\"%s\" sunucu dosyası açma hatası: %m"
+msgstr "\"%s\" DH parametre dosyası açma hatası: %m"
 
 #: libpq/be-secure-openssl.c:921
-#, fuzzy, c-format
-#| msgid "could not load private key file \"%s\": %s"
+#, c-format
 msgid "could not load DH parameters file: %s"
-msgstr "private key dosyası \"%s\" okunamıyor: %s"
+msgstr "DH parametre dosyası yüklenemedi: %s"
 
 #: libpq/be-secure-openssl.c:931
 #, c-format
@@ -12176,10 +12170,9 @@ msgid "invalid DH parameters: %s"
 msgstr "geçersiz DH parametreleri: %s"
 
 #: libpq/be-secure-openssl.c:939
-#, fuzzy, c-format
-#| msgid "invalid parameter list format: \"%s\""
+#, c-format
 msgid "invalid DH parameters: p is not prime"
-msgstr "geçersiz parametre liste biçimi: \"%s\""
+msgstr "geçersiz DH parametreleri: p birincil değil"
 
 #: libpq/be-secure-openssl.c:947
 #, c-format
@@ -13996,7 +13989,7 @@ msgstr ""
 #: parser/parse_cte.c:319
 #, c-format
 msgid "Cast the output of the non-recursive term to the correct type."
-msgstr ""
+msgstr "Özyinelemeli olmayan terimin çıktısını doğru tipe dönüştürün."
 
 #: parser/parse_cte.c:324
 #, c-format
@@ -14014,9 +14007,9 @@ msgid "WITH query \"%s\" has %d columns available but %d columns specified"
 msgstr "\"%s\" WITH sorgusunda %d sütun bulunmakta ancak  %d sütun belirtilmiş"
 
 #: parser/parse_cte.c:598
-#, fuzzy, c-format
+#, c-format
 msgid "mutual recursion between WITH items is not implemented"
-msgstr "NEW için rule eylemleri implement edilmemiş"
+msgstr "WITH ögeleri arasındaki karşılıklı özyineleme implement edilmemiş"
 
 #: parser/parse_cte.c:650
 #, c-format
@@ -14026,7 +14019,7 @@ msgstr "\"%s\" recursive sorgusu veri değiştiren (data modifying) ifade içerm
 #: parser/parse_cte.c:658
 #, c-format
 msgid "recursive query \"%s\" does not have the form non-recursive-term UNION [ALL] recursive-term"
-msgstr ""
+msgstr "\"%s\" özyinelemeli sorgusu özyinelemeli olmayan terim UNION [ALL] özyinelemeli terim formuna sahip değil "
 
 #: parser/parse_cte.c:702
 #, c-format
@@ -15066,18 +15059,13 @@ msgstr ""
 "PostgreSQL dokümanlarında shared memory yapılandırması hakkında daha fazla bilgi bulabilirsiniz."
 
 #: port/pg_shmem.c:214 port/sysv_shmem.c:214
-#, fuzzy, c-format
-#| msgid ""
-#| "This error does *not* mean that you have run out of disk space. It occurs either if all available shared memory IDs have been taken, in which case you need to raise the SHMMNI parameter in your kernel, or because the system's overall limit for shared memory has been reached.  If you cannot increase the shared memory limit, reduce PostgreSQL's shared memory request (currently %lu "
-#| "bytes), by reducing its shared_buffers parameter (currently %d) and/or its max_connections parameter (currently %d).\n"
-#| "The PostgreSQL documentation contains more information about shared memory configuration."
+#, c-format
 msgid ""
 "This error does *not* mean that you have run out of disk space.  It occurs either if all available shared memory IDs have been taken, in which case you need to raise the SHMMNI parameter in your kernel, or because the system's overall limit for shared memory has been reached.\n"
 "The PostgreSQL documentation contains more information about shared memory configuration."
 msgstr ""
-"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gelmiyor . Bu durum, tüm shared memory ID alınmış olduğu zamanda -- ki bu durumda SHMMNI parametresinin değerleri yükseltmelisiniz; ya da sistemin shared memory sınırına ulaşıldığı zamanda oluşur. Shared memory sınırını yükseltemezseniz, PostgreSQL sisteminin shared memory tüketimini (şu an %lu bayt) shared_buffers (şu an %d) ve/"
-"veya max_connections parametresini (şu an %d) düşürerek azaltabilirsiniz.\n"
-"PostgreSQL belgelerinde bu konu ile ilgili daha ayrıntılı açıklama ve yapılandırma hakkında bilgileri bulabilirsiniz."
+"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gel*m*iyor. Bu durum, tüm shared memory ID'leri alınmış olduğu zamanda -- ki bu durumda SHMMNI parametresinin değerleri yükseltmelisiniz; ya da sistemin shared memory sınırına ulaşıldığı zamanda oluşur.\n"
+"PostgreSQL belgeleri shared memory yapılandırması ile ilgili daha ayrıntılı bilgiler içermektedir."
 
 #: port/pg_shmem.c:505 port/sysv_shmem.c:505
 #, c-format
@@ -15085,11 +15073,9 @@ msgid "could not map anonymous shared memory: %m"
 msgstr "anonim shared memory eşlenemedi (map): %m"
 
 #: port/pg_shmem.c:507 port/sysv_shmem.c:507
-#, fuzzy, c-format
+#, c-format
 msgid "This error usually means that PostgreSQL's request for a shared memory segment exceeded available memory, swap space, or huge pages. To reduce the request size (currently %zu bytes), reduce PostgreSQL's shared memory usage, perhaps by reducing shared_buffers or max_connections."
-msgstr ""
-"Bu hata genellikle PostgreSQL'in shared kullanımı boş takas alanını aştığı zaman ortaya çıkıyor. İstenilen bellek bouytu (şu an %lu bayt) düşürmek için, PostgreSQL'in shared_buffers (şu an %d) ve/veya max_connections (şu an %d) parametrelerini düşürün.\n"
-"PostgreSQL dokümanlarında shared memory yapılandırması hakkında daha fazla bilgi bulabilirsiniz."
+msgstr "Bu hata genellikle PostgreSQL'in shared memory isteğinin kullanılabilir bellek,takas alanı veya büyük (huge) sayfaları aştığı anlamına gelir. İstek boyutunu (şu an %zu bayt) düşürmek için, belki de shared_buffers veya max_connections parametrelerini küçülterek PostgreSQL'in shared memory kullanımını azaltın."
 
 #: port/pg_shmem.c:573 port/sysv_shmem.c:573 port/win32_shmem.c:134
 #, c-format
@@ -15112,14 +15098,15 @@ msgid "Failed system call was semget(%lu, %d, 0%o)."
 msgstr "Başarısız çağrı: semget(%lu, %d, 0%o)."
 
 #: port/sysv_sema.c:128
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "This error does *not* mean that you have run out of disk space.  It occurs when either the system limit for the maximum number of semaphore sets (SEMMNI), or the system wide maximum number of semaphores (SEMMNS), would be exceeded.  You need to raise the respective kernel parameter.  Alternatively, reduce PostgreSQL's consumption of semaphores by reducing its max_connections "
 "parameter.\n"
 "The PostgreSQL documentation contains more information about configuring your system for PostgreSQL."
 msgstr ""
-"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gelmiyor. Bu durum, sistemin semaphore set (SEMMNI) veya semaphore (SEMMNS) sayı sınırlamasını aşması ile meydana gelmektedir. Belirtilen çekirdek parametrelerinin değerlerini yükseltmelisiniz.  Alternatif olarak PostgerSQL sisteminin semaphore tüketimini max_connections parametresini düşürerek azaltabilirsiniz.\n"
-"PostgreSQL dokümanları sisteminizi PostgreSQL için yapılandırma hakkında daha geniş bilgi içermektedir."
+"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gel*m*iyor. Bu durum, ya sistemin azami semaphore küme (SEMMNI) sayısı sınırı veya sistem çapında azami semaphore (SEMMNS) sayısının aşılması ile meydana gelmektedir. Belirtilen çekirdek parametrelerinin değerlerini yükseltmelisiniz.  Alternatif olarak PostgerSQL sisteminin semaphore tüketimini max_connections parametresini "
+"düşürerek azaltabilirsiniz.\n"
+"PostgreSQL belgeleri sisteminizi PostgreSQL için yapılandırma hakkında daha geniş bilgi içermektedir."
 
 #: port/sysv_sema.c:158
 #, c-format
@@ -16673,21 +16660,19 @@ msgid "could not fetch table info for table \"%s.%s\": %s"
 msgstr "\"%s.%s\" tablosu için tablo bilgisi alınamadı: %s"
 
 #: replication/logical/tablesync.c:791
-#, fuzzy, c-format
-#| msgid "could not set junction for \"%s\": %s"
+#, c-format
 msgid "could not start initial contents copy for table \"%s.%s\": %s"
-msgstr "\"%s\" için junction ayarlanamadı: %s"
+msgstr "\"%s.%s\" tablosu için ilk içerik kopyalaması başlatılamadı: %s"
 
 #: replication/logical/tablesync.c:905
-#, fuzzy, c-format
-#| msgid "could not parse transaction log location \"%s\""
+#, c-format
 msgid "table copy could not start transaction on publisher"
-msgstr "\"%s\" transaction log konumu ayrıştıramadı"
+msgstr "tablo kopyalama yayıncı (publisher) üzerinde işlemi (transaction) başlatamadı"
 
 #: replication/logical/tablesync.c:927
 #, c-format
 msgid "table copy could not finish transaction on publisher"
-msgstr ""
+msgstr "tablo kopyalama yayıncı (publisher) üzerindeki işlemi (transaction) tamamlayamadı"
 
 #: replication/logical/worker.c:304
 #, c-format
@@ -16777,7 +16762,7 @@ msgstr ""
 #: replication/logical/worker.c:1626
 #, c-format
 msgid "subscription has no replication slot set"
-msgstr ""
+msgstr "abonelik için herhangi bir replikasyon slot kümesi tanımlanmamış"
 
 #: replication/pgoutput/pgoutput.c:114
 #, c-format
@@ -16797,12 +16782,12 @@ msgstr "geçersiz publication_names sözdizimi"
 #: replication/pgoutput/pgoutput.c:180
 #, c-format
 msgid "client sent proto_version=%d but we only support protocol %d or lower"
-msgstr ""
+msgstr "istemci, proto_version=%d gönderdi fakat desteklenen protokol %d veya daha altıdır"
 
 #: replication/pgoutput/pgoutput.c:186
 #, c-format
 msgid "client sent proto_version=%d but we only support protocol %d or higher"
-msgstr ""
+msgstr "istemci, proto_version=%d gönderdi fakat desteklenen protokol %d veya daha üstüdür"
 
 #: replication/pgoutput/pgoutput.c:192
 #, c-format
@@ -17120,10 +17105,9 @@ msgid "terminating walsender process due to replication timeout"
 msgstr "replikasyon zamanaşımı dolayısıyla walsender süreci sonlandırılıyor"
 
 #: replication/walsender.c:2177
-#, fuzzy, c-format
-#| msgid "standby \"%s\" has now caught up with primary"
+#, c-format
 msgid "\"%s\" has now caught up with upstream server"
-msgstr "\"%s\" yedeği (standby) şimdi birincil sunucuyu yakaladı"
+msgstr "\"%s\" şimdi kaynak (upstream) sunucuyu yakaladı"
 
 #: replication/walsender.c:2286
 #, c-format
@@ -21598,16 +21582,14 @@ msgid "could not compare Unicode strings: %m"
 msgstr "Unicode satırları karşılaştırılamadı: %m"
 
 #: utils/adt/varlena.c:1556 utils/adt/varlena.c:2149
-#, fuzzy, c-format
-#| msgid "%s: database creation failed: %s"
+#, c-format
 msgid "collation failed: %s"
-msgstr "%s: veritabanı yaratma başarısız oldu: %s"
+msgstr "karşılaştırma (collation) başarısız oldu: %s"
 
 #: utils/adt/varlena.c:2367
-#, fuzzy, c-format
-#| msgid "%s: database creation failed: %s"
+#, c-format
 msgid "sort key generation failed: %s"
-msgstr "%s: veritabanı yaratma başarısız oldu: %s"
+msgstr "sıralama anahtarı (sort key) oluşturma başarısız oldu: %s"
 
 #: utils/adt/varlena.c:3030 utils/adt/varlena.c:3061 utils/adt/varlena.c:3096 utils/adt/varlena.c:3132
 #, c-format
@@ -21628,7 +21610,7 @@ msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış tanım"
 #: utils/adt/varlena.c:5066 utils/adt/varlena.c:5200 utils/adt/varlena.c:5321
 #, c-format
 msgid "For a single \"%%\" use \"%%%%\"."
-msgstr ""
+msgstr "Tek \"%%\" için \"%%%%\" kullanın."
 
 #: utils/adt/varlena.c:5198 utils/adt/varlena.c:5319
 #, fuzzy, c-format
@@ -21637,16 +21619,14 @@ msgid "unrecognized format() type specifier \"%c\""
 msgstr "tanımlanmayan veri tipi adı \"%s\""
 
 #: utils/adt/varlena.c:5211 utils/adt/varlena.c:5268
-#, fuzzy, c-format
-#| msgid "too few arguments on line %d"
+#, c-format
 msgid "too few arguments for format()"
-msgstr "%d. satırda yetersiz argüman sayısı"
+msgstr "format() için yetersiz sayıda argüman"
 
 #: utils/adt/varlena.c:5363 utils/adt/varlena.c:5546
-#, fuzzy, c-format
-#| msgid "input is out of range"
+#, c-format
 msgid "number is out of range"
-msgstr "giriş sıra dısışıdır"
+msgstr "sayı aralık dışındadır"
 
 #: utils/adt/varlena.c:5427 utils/adt/varlena.c:5455
 #, c-format
@@ -21867,15 +21847,14 @@ msgid "Continuing anyway, but there's something wrong."
 msgstr "Devam ediyorum, ama bu işlem yanlıştır."
 
 #: utils/cache/relcache.c:6186
-#, fuzzy, c-format
-#| msgid "could not remove file \"%s\": %m"
+#, c-format
 msgid "could not remove cache file \"%s\": %m"
-msgstr "\"%s\" dosyası silinemedi: %m"
+msgstr "\"%s\" önbellek (cache) dosyası silinemedi: %m"
 
 #: utils/cache/relmapper.c:509
 #, fuzzy, c-format
 msgid "cannot PREPARE a transaction that modified relation mapping"
-msgstr "geçeci tablolarda işlem yapmış transaction'a PREPARE yapılamaz"
+msgstr "geçici tablolarda işlem yapmış transaction'a PREPARE yapılamaz"
 
 #: utils/cache/relmapper.c:652 utils/cache/relmapper.c:754
 #, fuzzy, c-format
@@ -22019,15 +21998,15 @@ msgstr "UYARI"
 
 #: utils/error/elog.c:3633
 msgid "ERROR"
-msgstr "HATA"
+msgstr "HATA (ERROR)"
 
 #: utils/error/elog.c:3636
 msgid "FATAL"
-msgstr "ÖLÜMCÜL"
+msgstr "ÖLÜMCÜL (FATAL)"
 
 #: utils/error/elog.c:3639
 msgid "PANIC"
-msgstr "KRİTİK"
+msgstr "KRİTİK (PANIC)"
 
 #: utils/fmgr/dfmgr.c:121
 #, c-format
@@ -22060,35 +22039,34 @@ msgid "incompatible library \"%s\": version mismatch"
 msgstr "uyumsuz kütüphane \"%s\": sürüm uyuşmazlığı"
 
 #: utils/fmgr/dfmgr.c:321
-#, fuzzy, c-format
-#| msgid "Server is version %d.%d, library is version %d.%d."
+#, c-format
 msgid "Server is version %d, library is version %s."
-msgstr "Sunucu sürümü: %d.%d, kütüphane sürümü: %d.%d."
+msgstr "Sunucu sürümü: %d, kütüphane sürümü: %s."
 
 #: utils/fmgr/dfmgr.c:338
 #, c-format
 msgid "Server has FUNC_MAX_ARGS = %d, library has %d."
-msgstr ""
+msgstr "Sunucuda FUNC_MAX_ARGS = %d, kütüphanede %d."
 
 #: utils/fmgr/dfmgr.c:347
 #, c-format
 msgid "Server has INDEX_MAX_KEYS = %d, library has %d."
-msgstr ""
+msgstr "Sunucuda INDEX_MAX_KEYS = %d, kütüphanede %d."
 
 #: utils/fmgr/dfmgr.c:356
 #, c-format
 msgid "Server has NAMEDATALEN = %d, library has %d."
-msgstr ""
+msgstr "Sunucuda NAMEDATALEN = %d, kütüphanede %d."
 
 #: utils/fmgr/dfmgr.c:365
 #, c-format
 msgid "Server has FLOAT4PASSBYVAL = %s, library has %s."
-msgstr ""
+msgstr "Sunucuda FLOAT4PASSBYVAL = %s, kütüphanede %s."
 
 #: utils/fmgr/dfmgr.c:374
 #, c-format
 msgid "Server has FLOAT8PASSBYVAL = %s, library has %s."
-msgstr ""
+msgstr "Sunucuda FLOAT8PASSBYVAL = %s, kütüphanede %s."
 
 #: utils/fmgr/dfmgr.c:381
 msgid "Magic block has unexpected length or padding difference."
@@ -22125,10 +22103,9 @@ msgid "internal function \"%s\" is not in internal lookup table"
 msgstr "\"%s\" dahili fonksiyonu, dahili referans tablosunda yer almamaktadır"
 
 #: utils/fmgr/fmgr.c:399
-#, fuzzy, c-format
-#| msgid "could not find function \"%s\" in file \"%s\""
+#, c-format
 msgid "could not find function information for function \"%s\""
-msgstr "\"%2$s\" dosyasında \"%1$s\" fonksiyonu bulunamadı"
+msgstr "\"%s\" fonksiyonu için fonksiyon bilgisi bulunamadı"
 
 #: utils/fmgr/fmgr.c:401
 #, c-format
@@ -22171,9 +22148,9 @@ msgid "could not change directory to \"%s\": %m"
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi: %m"
 
 #: utils/init/miscinit.c:459 utils/misc/guc.c:6126
-#, fuzzy, c-format
+#, c-format
 msgid "cannot set parameter \"%s\" within security-restricted operation"
-msgstr "var olan bir fonksiyonun döndürme tipi değiştirilemez"
+msgstr "güvenlik-kısıtlı işlem içerisinde \"%s\" parametresi ayarlanamaz"
 
 #: utils/init/miscinit.c:520
 #, c-format
@@ -22228,7 +22205,7 @@ msgstr "\"%s\" kilit (lock) dosyası boştur"
 #: utils/init/miscinit.c:883
 #, c-format
 msgid "Either another server is starting, or the lock file is the remnant of a previous server startup crash."
-msgstr ""
+msgstr "Ya başka bir sunucu başlıyor ya da kilit dosyası önceki bir sunucu başlatma çökmesinin kalıntısı."
 
 #: utils/init/miscinit.c:930
 #, c-format
@@ -22344,10 +22321,9 @@ msgid "replication connection authorized: user=%s"
 msgstr "replikasyon bağlantısı yetkilendirilidi: kullanıcı=%s"
 
 #: utils/init/postinit.c:265
-#, fuzzy, c-format
-#| msgid "connection authorized: user=%s database=%s"
+#, c-format
 msgid "connection authorized: user=%s database=%s SSL enabled (protocol=%s, cipher=%s, compression=%s)"
-msgstr "bağlantı tanımı: kullanıcı=%s veritabanı=%s"
+msgstr "bağlantı yetkilendirildi: kullanıcı=%s veritabanı=%s SSL etkin (protokol=%s, şifre=%s, sıkıştırma=%s)"
 
 #: utils/init/postinit.c:271
 #, c-format
@@ -22599,7 +22575,7 @@ msgstr "Replikasyon"
 
 #: utils/misc/guc.c:604
 msgid "Replication / Sending Servers"
-msgstr ""
+msgstr "Replikasyon / Gönderen (sending) Sunucular"
 
 #: utils/misc/guc.c:606
 msgid "Replication / Master Server"
@@ -22818,10 +22794,10 @@ msgid "Continues processing after a checksum failure."
 msgstr "Bir sağlama (checksum) hatasından sonra işlemeye devam eder."
 
 #: utils/misc/guc.c:986
-#, fuzzy
-#| msgid "Detection of a damaged page header normally causes PostgreSQL to report an error, aborting the current transaction. Setting zero_damaged_pages to true causes the system to instead report a warning, zero out the damaged page, and continue processing. This behavior will destroy data, namely all the rows on the damaged page."
 msgid "Detection of a checksum failure normally causes PostgreSQL to report an error, aborting the current transaction. Setting ignore_checksum_failure to true causes the system to ignore the failure (but still report a warning), and continue processing. This behavior could cause crashes or other serious problems. Only has an effect if checksums are enabled."
-msgstr "Bozuk bir sayfanın algılanması genellikle PostgreSQL'in hatanın raporlaması ve geçerli transactionun durdururlmasına yol açıyor. zero_damaged_pages parametresine true atayınca, sistem bir uyarı raporlayıp, hatalı sayfayı sıfırlayıp işlemeye devam etmesine sebep oluyor. Bu davranış, bozuk sayfadaki tüm satırları silecektir."
+msgstr ""
+"Bozuk bir sayfanın tespiti genellikle PostgreSQL'in geçerli işlemi (transaction) durdurup hata mesajı vermesine yol açar. ignore_checksum_failure parametresini true olarak ayarlamak sistemin hataya aldırmadan (yine de bir uyarı raporlayarak), işlemeye devam etmesine sebep olur. Bu davranış çökmelere ve başka ciddi sorunlara sebep olabilir. Yalnızca sağlamalar (checksum) etkinse bir "
+"etkisi olur."
 
 #: utils/misc/guc.c:1000
 msgid "Continues processing past damaged page headers."
@@ -22840,10 +22816,8 @@ msgid "A page write in process during an operating system crash might be only pa
 msgstr "İşletim sistemi çöktüğü anda sayfa diske yazması işlemi gerçekleştiriyorsa, sayfa, sadece kısmen yazılmış olabilir. Dolayısıyla kurtarma sırasında WAL içinde kaydedilmiş satır değişiklikleri yetersiz olabilir. Bu seçenek, sayfaları, checkpoint işleminden sonra ilk değiştirildiğinde sadece değişikliği değil, tam sayfayı WAL loguna yazıyor böylece tam bir kurtarmaya olanak tanıyor."
 
 #: utils/misc/guc.c:1028
-#, fuzzy
-#| msgid "Writes full pages to WAL when first modified after a checkpoint."
 msgid "Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications."
-msgstr "Checkpoint sonrasında ilk değiştirildiğinde sayfayı tamamiyle WAL loguna yazıyor."
+msgstr "Bir checkpoint sonrasında ilk değiştirildiğinde-kritik olmayan değişiklikler için dahi- sayfayı tamamıyla WAL loguna yazar."
 
 #: utils/misc/guc.c:1038
 msgid "Compresses full-page writes written in WAL file."
@@ -23031,9 +23005,8 @@ msgid "Create new tables with OIDs by default."
 msgstr "Varsayılan olarak yeni tabloları OID ile oluştur."
 
 #: utils/misc/guc.c:1440
-#, fuzzy
 msgid "Start a subprocess to capture stderr output and/or csvlogs into log files."
-msgstr "stderr çıktısını günlük dosyasın kaydetmek için bir alt sürecini çalıştırıyor"
+msgstr "stderr çıktısını ve/veya csvlog'larını günlük dosyalarına kaydetmek için bir alt süreç başlat."
 
 #: utils/misc/guc.c:1449
 msgid "Truncate existing log files of same name during log rotation."
@@ -23044,13 +23017,12 @@ msgid "Emit information about resource usage in sorting."
 msgstr "Alfabetik sıralama sırasında kaynak kullanımı hakkında bilgi ver."
 
 #: utils/misc/guc.c:1474
-#, fuzzy
 msgid "Generate debugging output for synchronized scanning."
-msgstr "LISTEN ve NOTIFY için hata ayıklama çıkışını üretiyor."
+msgstr "Senkronize tarama için hata ayıklama çıktısı üret."
 
 #: utils/misc/guc.c:1489
 msgid "Enable bounded sorting using heap sort."
-msgstr ""
+msgstr "Heap sort kullanarak sınırlı sıralamayı etkinleştir."
 
 #: utils/misc/guc.c:1502
 msgid "Emit WAL-related debugging output."
@@ -23061,9 +23033,8 @@ msgid "Datetimes are integer based."
 msgstr "Datetime veri tipleri tam sayı bazlıdır"
 
 #: utils/misc/guc.c:1525
-#, fuzzy
 msgid "Sets whether Kerberos and GSSAPI user names should be treated as case-insensitive."
-msgstr "Kerberos kullanıcı adları büyük ve küçük harf duyarıl olup olmayacağını belirtiyor."
+msgstr "Kerberos ve GSSAPI kullanıcı adlarının büyük / küçük harf duyarlı olup olmayacağını belirler."
 
 #: utils/misc/guc.c:1535
 msgid "Warn about backslash escapes in ordinary string literals."
@@ -23107,17 +23078,15 @@ msgstr ""
 
 #: utils/misc/guc.c:1620
 msgid "Emit a warning for constructs that changed meaning since PostgreSQL 9.4."
-msgstr ""
+msgstr "PostgreSQL 9.4'ten bu yana anlam değiştiren yapılar (construct) için bir uyarı yayınla."
 
 #: utils/misc/guc.c:1630
 msgid "When generating SQL fragments, quote all identifiers."
 msgstr "SQL parçaları oluşturuken, bütün tanımlayıcıları (identifier) tırnak içerisine alın."
 
 #: utils/misc/guc.c:1640
-#, fuzzy
-#| msgid "Shows whether the current user is a superuser."
 msgid "Shows whether data checksums are turned on for this cluster."
-msgstr "Geçerli kullanıcının superuser olup olmadığını gösterir"
+msgstr "Bu küme üzerinde veri sağlama toplamlarının açık olup olmadığını gösterir."
 
 #: utils/misc/guc.c:1651
 msgid "Add sequence number to syslog messages to avoid duplicate suppression."
@@ -23228,9 +23197,8 @@ msgid "Sets the access permissions of the Unix-domain socket."
 msgstr "Unix-domain socket erişim haklarını ayarlıyor."
 
 #: utils/misc/guc.c:1885
-#, fuzzy
 msgid "Unix-domain sockets use the usual Unix file system permission set. The parameter value is expected to be a numeric mode specification in the form accepted by the chmod and umask system calls. (To use the customary octal format the number must start with a 0 (zero).)"
-msgstr "Unix-domain yvaları, standart Unix dosya sistemi izin altyapısını kullanıyor. Parametresi chmod ve umask sistem çağırılarının kabul edeceği biçimde numerik bir değerdir. (Sekizli sayı sistemi ile bir değer girecekseniz onu 0 (sıfır) ile başlatmalısınız.)"
+msgstr "Unix-domain yuvaları, standart Unix dosya sistemi izin altyapısını kullanıyor. Parametresi chmod ve umask sistem çağırılarının kabul edeceği biçimde numerik bir değerdir. ( Geleneksel sekizlik biçimi kullanmak için sayı 0 (sıfır) ile başlamalıdır.)"
 
 #: utils/misc/guc.c:1899
 msgid "Sets the file permissions for log files."
@@ -23316,14 +23284,12 @@ msgid "Sets the maximum number of simultaneously prepared transactions."
 msgstr "Aynı zamanda olabilecek en çok prepared transaction sayısı."
 
 #: utils/misc/guc.c:2070
-#, fuzzy
-#| msgid "Sets the maximum number of locks per transaction."
 msgid "Sets the minimum OID of tables for tracking locks."
-msgstr "Bir transaction içinde en yüksek olabilecek kilit sayısı."
+msgstr "Kilitleri takip etmek için tabloların asgari OID değerini belirler."
 
 #: utils/misc/guc.c:2071
 msgid "Is used to avoid output on system tables."
-msgstr ""
+msgstr "Sistem tablolarında çıktı oluşmasından kaçınmak için kullanılır."
 
 #: utils/misc/guc.c:2080
 msgid "Sets the OID of the table with unconditionally lock tracing."
@@ -23371,43 +23337,35 @@ msgstr ""
 
 #: utils/misc/guc.c:2178
 msgid "Sets the maximum number of locks per transaction."
-msgstr "Bir transaction içinde en yüksek olabilecek kilit sayısı."
+msgstr "Bir transaction içinde olabilecek azami kilit sayısını belirler."
 
 #: utils/misc/guc.c:2179
 msgid "The shared lock table is sized on the assumption that at most max_locks_per_transaction * max_connections distinct objects will need to be locked at any one time."
 msgstr "Bu tablonun boyutu, max_locks_per_transaction * max_connections kadar ayrı nesneye bir anda kilit uygulamaya gerektiğini göz önünde bulundurarak ayarlanır."
 
 #: utils/misc/guc.c:2190
-#, fuzzy
-#| msgid "Sets the maximum number of locks per transaction."
 msgid "Sets the maximum number of predicate locks per transaction."
-msgstr "Bir transaction içinde en yüksek olabilecek kilit sayısı."
+msgstr "Bir transaction içinde azami predicate kilit sayısını belirler."
 
 #: utils/misc/guc.c:2191
-#, fuzzy
-#| msgid "The shared lock table is sized on the assumption that at most max_locks_per_transaction * max_connections distinct objects will need to be locked at any one time."
 msgid "The shared predicate lock table is sized on the assumption that at most max_pred_locks_per_transaction * max_connections distinct objects will need to be locked at any one time."
-msgstr "Bu tablonun boyutu, max_locks_per_transaction * max_connections kadar ayrı nesneye bir anda kilit uygulamaya gerektiğini göz önünde bulundurarak ayarlanır."
+msgstr "Paylaşılan predicate kilit tablosunun boyutu, en fazla max_pred_locks_per_transaction * max_connections kadar ayrı nesnenin herhangi bir zamanda kilitlenmesi gerekeceği varsayımına göre belirlenir."
 
 #: utils/misc/guc.c:2202
-#, fuzzy
-#| msgid "Sets the maximum number of locks per transaction."
 msgid "Sets the maximum number of predicate-locked pages and tuples per relation."
-msgstr "Bir transaction içinde en yüksek olabilecek kilit sayısı."
+msgstr "Tablo başına azami predicate-kilitli sayfa ve satır sayısını belirler."
 
 #: utils/misc/guc.c:2203
 msgid "If more than this total of pages and tuples in the same relation are locked by a connection, those locks are replaced by a relation-level lock."
-msgstr ""
+msgstr "Eğer aynı tabloda bu toplamdan fazla sayfa ve satır bir bağlantı tarafından kilitlenmişse, o kilitler bir tablo-seviyesi kilidiyle değiştirilir."
 
 #: utils/misc/guc.c:2213
-#, fuzzy
-#| msgid "Sets the maximum number of locks per transaction."
 msgid "Sets the maximum number of predicate-locked tuples per page."
-msgstr "Bir transaction içinde en yüksek olabilecek kilit sayısı."
+msgstr "Sayfa başına azami predicate-kilitli satır sayısını belirler."
 
 #: utils/misc/guc.c:2214
 msgid "If more than this number of tuples on the same page are locked by a connection, those locks are replaced by a page-level lock."
-msgstr ""
+msgstr "Eğer aynı sayfada (page) bu kadardan fazla satır bir bağlantı tarafından kilitlenmişse, o kilitler bir sayfa-seviyesi kilidiyle değiştirilir."
 
 #: utils/misc/guc.c:2224
 msgid "Sets the maximum allowed time to complete client authentication."
@@ -23418,9 +23376,8 @@ msgid "Waits N seconds on connection startup before authentication."
 msgstr "İstemci kimlik doğrulamasından önce N saniye bekiyor."
 
 #: utils/misc/guc.c:2247
-#, fuzzy
 msgid "Sets the number of WAL files held for standby servers."
-msgstr "Sunucu tarafıundan kullanılacak shared memory arabellek sayısını ayarlıyor."
+msgstr "Yedek (standby) sunucular için tutulacak WAL dosyalarının sayısını ayarlıyor."
 
 #: utils/misc/guc.c:2257
 msgid "Sets the minimum size to shrink the WAL to."
@@ -23444,7 +23401,7 @@ msgstr "Checkpoint segment dosyaların dolması nedeniyle denetim noktası (chec
 
 #: utils/misc/guc.c:2304 utils/misc/guc.c:2461 utils/misc/guc.c:2488
 msgid "Number of pages after which previously performed writes are flushed to disk."
-msgstr ""
+msgstr "Öncesinde gerçekleştirilen yazma işlemlerinin diske flush edildiği sayfa sayısı."
 
 #: utils/misc/guc.c:2315
 msgid "Sets the number of disk-page buffers in shared memory for WAL."
@@ -23456,7 +23413,7 @@ msgstr "WAL writerda gerçekleştirilen WAL flush'ları arasında geçen zaman."
 
 #: utils/misc/guc.c:2337
 msgid "Amount of WAL written out by WAL writer that triggers a flush."
-msgstr ""
+msgstr "WAL writer tarafından yazılan, bir flush tetikleyecek WAL miktarı."
 
 #: utils/misc/guc.c:2349
 msgid "Sets the maximum number of simultaneously running WAL sender processes."
@@ -23499,9 +23456,8 @@ msgid "Sets the minimum execution time above which autovacuum actions will be lo
 msgstr "Autovacuum bu süreden çok zaman alırsa, eylemleri ayda alınacaktır."
 
 #: utils/misc/guc.c:2430
-#, fuzzy
 msgid "Zero prints all actions. -1 turns autovacuum logging off."
-msgstr "Sifir ise tüm eylemleri yazılacak. Varsayılan değer -1 (bu özellik kapalıdır)."
+msgstr "Sıfır tüm eylemleri yazdırır. -1 autovacuum loglamasını kapatır."
 
 #: utils/misc/guc.c:2440
 msgid "Background writer sleep time between rounds."
@@ -23513,11 +23469,11 @@ msgstr "Her seferinde background writer'in diske yazaçağı LRU sayfaların max
 
 #: utils/misc/guc.c:2474
 msgid "Number of simultaneous requests that can be handled efficiently by the disk subsystem."
-msgstr ""
+msgstr "Disk alt sistemi tarafından verimli bir şekilde işlenebilecek eşzamanlı istek sayısı."
 
 #: utils/misc/guc.c:2475
 msgid "For RAID arrays, this should be approximately the number of drive spindles in the array."
-msgstr ""
+msgstr "RAID dizileri için bu, yaklaşık olarak dizideki sürücü okuyucu kafa sayısı kadar olmalıdır."
 
 #: utils/misc/guc.c:2501
 msgid "Maximum number of concurrent worker processes."
@@ -23565,7 +23521,7 @@ msgstr "Write ahead log'u içindeki blok boyutunu gösterir."
 
 #: utils/misc/guc.c:2623
 msgid "Sets the time to wait before retrying to retrieve WAL after a failed attempt."
-msgstr ""
+msgstr "Başarısız bir girişimden sonra WAL'ı almak için tekrar denemeden önce beklenecek süreyi ayarlar."
 
 #: utils/misc/guc.c:2635
 msgid "Shows the number of pages per write ahead log segment."
@@ -23577,45 +23533,35 @@ msgstr "Autovacuum çalıştırmaları arasında bekleme zamanı."
 
 #: utils/misc/guc.c:2658
 msgid "Minimum number of tuple updates or deletes prior to vacuum."
-msgstr "Vacuum işleminin başlaması için gereken düşük tuple update veya deleta sayısı."
+msgstr "Vacuum işleminin başlaması için gereken asgari güncellenen veya silinen (update veya delete) satır sayısı."
 
 #: utils/misc/guc.c:2667
-#, fuzzy
-#| msgid "Minimum number of tuple inserts, updates or deletes prior to analyze."
 msgid "Minimum number of tuple inserts, updates, or deletes prior to analyze."
-msgstr "Analyze işleminin başlaması için gereken düşük tuple insert, update veya deleta sayısı."
+msgstr "Analyze işleminin başlaması için gereken asgari eklenen, güncellenen veya silinen (insert, update veya delete) satır sayısı."
 
 #: utils/misc/guc.c:2677
 msgid "Age at which to autovacuum a table to prevent transaction ID wraparound."
 msgstr "ID sarımı önemek için autovacuum yapılacağı yaşlılık değeri."
 
 #: utils/misc/guc.c:2688
-#, fuzzy
-#| msgid "Age at which to autovacuum a table to prevent transaction ID wraparound."
 msgid "Multixact age at which to autovacuum a table to prevent multixact wraparound."
-msgstr "ID sarımı önemek için autovacuum yapılacağı yaşlılık değeri."
+msgstr "Multixact sarımı (wraparound) önlemek için bir tabloya autovacuum yapılacak Multixact yaşı."
 
 #: utils/misc/guc.c:2698
 msgid "Sets the maximum number of simultaneously running autovacuum worker processes."
 msgstr "Aynı anda çalışacak autovacuum süreç sayısını ayarlıyor."
 
 #: utils/misc/guc.c:2708
-#, fuzzy
-#| msgid "Sets the maximum number of locks per transaction."
 msgid "Sets the maximum number of parallel processes per executor node."
-msgstr "Bir transaction içinde en yüksek olabilecek kilit sayısı."
+msgstr "Yürütücü düğüm (executor node) başına azami paralel süreç sayısını belirler."
 
 #: utils/misc/guc.c:2718
-#, fuzzy
-#| msgid "Sets the maximum number of locks per transaction."
 msgid "Sets the maximum number of parallel workers that can be active at one time."
-msgstr "Bir transaction içinde en yüksek olabilecek kilit sayısı."
+msgstr "Bir anda aktif olabilecek azami (maks.) paralel işçi sayısını ayarlar."
 
 #: utils/misc/guc.c:2728
-#, fuzzy
-#| msgid "Sets the maximum memory to be used for query workspaces."
 msgid "Sets the maximum memory to be used by each autovacuum worker process."
-msgstr "Sorgu çalışma alanları için kullanılacak en büyük bellek boyutu belirliyor."
+msgstr "Her bir oto-vakum işçi süreci tarafından kullanılacak azami (maks.) bellek boyutunu ayarlar."
 
 #: utils/misc/guc.c:2739
 msgid "Time before a snapshot is too old to read pages changed after the snapshot was taken."
@@ -23639,7 +23585,7 @@ msgstr "TCP keepalive yeniden göndermelerin arasında saniye sayısı."
 
 #: utils/misc/guc.c:2772
 msgid "SSL renegotiation is no longer supported; this can only be 0."
-msgstr ""
+msgstr "SSL renegotiation artık desteklenmiyor; bu sadece 0 olabilir."
 
 #: utils/misc/guc.c:2783
 msgid "Maximum number of TCP keepalive retransmits."
@@ -23662,22 +23608,20 @@ msgid "That is, the portion of the kernel's disk cache that will be used for Pos
 msgstr "Yani kernel'in disk cache alanının PostgreSQL veri dosyaları için kullanılacak kısmının tahmini. Bu deşer, disk page birimleriyle giriliyor, bir disk page genellikle 8 kilobayttır."
 
 #: utils/misc/guc.c:2819
-#, fuzzy
-#| msgid "Sets the maximum memory to be used for query workspaces."
 msgid "Sets the minimum amount of table data for a parallel scan."
-msgstr "Sorgu çalışma alanları için kullanılacak en büyük bellek boyutu belirliyor."
+msgstr "Paralel tarama (scan) için tablo verisinin asgari miktarını belirler."
 
 #: utils/misc/guc.c:2820
 msgid "If the planner estimates that it will read a number of table pages too small to reach this limit, a parallel scan will not be considered."
-msgstr ""
+msgstr "Eğer planlayıcı bu sınırın çok altında bir tablo sayfa sayısı okuyacağını kestirirse, bir paralel taramaya (scan) yönelmeyecektir."
 
 #: utils/misc/guc.c:2830
 msgid "Sets the minimum amount of index data for a parallel scan."
-msgstr ""
+msgstr "Bir paralel tarama için asgari (min) indeks veri miktarını ayarlar."
 
 #: utils/misc/guc.c:2831
 msgid "If the planner estimates that it will read a number of index pages too small to reach this limit, a parallel scan will not be considered."
-msgstr ""
+msgstr "Eğer planlayıcı bu sınırın çok altında bir indeks sayfa sayısı okuyacağını kestirirse, bir paralel taramaya (scan) yönelmeyecektir."
 
 #: utils/misc/guc.c:2842
 msgid "Shows the server version as an integer."
@@ -23693,7 +23637,7 @@ msgstr "Sifir, tüm dosyaları logluyor. Varsayılan değer -1 (bu özellik kapa
 
 #: utils/misc/guc.c:2864
 msgid "Sets the size reserved for pg_stat_activity.query, in bytes."
-msgstr ""
+msgstr "pg_stat_activity.query için ayrılan boyutu ayarlar (bayt olarak)."
 
 #: utils/misc/guc.c:2879
 msgid "Sets the maximum size of the pending list for GIN index."
@@ -23720,21 +23664,16 @@ msgid "Sets the planner's estimate of the cost of processing each operator or fu
 msgstr "Bir operator veya fonksiyon çağırımı yapmak için harcanacak işlem zamanı tahminini belirtiyor."
 
 #: utils/misc/guc.c:2949
-#, fuzzy
-#| msgid "Sets the planner's estimate of the cost of processing each tuple (row)."
 msgid "Sets the planner's estimate of the cost of passing each tuple (row) from worker to master backend."
-msgstr "Bir satır işlemek için harcanacak işlem zamanı tahminini belirtiyor."
+msgstr "Planlayıcının, her tuple (satır) 'ı işçi süreçten master backend'e geçirme maliyeti tahminini belirler."
 
 #: utils/misc/guc.c:2959
-#, fuzzy
-#| msgid "Sets the planner's estimate of the cost of processing each tuple (row)."
 msgid "Sets the planner's estimate of the cost of starting up worker processes for parallel query."
-msgstr "Bir satır işlemek için harcanacak işlem zamanı tahminini belirtiyor."
+msgstr "Planlayıcının, paralel sorgu için işçi süreçlerini başlatma maliyet tahminini belirler."
 
 #: utils/misc/guc.c:2970
-#, fuzzy
 msgid "Sets the planner's estimate of the fraction of a cursor's rows that will be retrieved."
-msgstr "Bir satır işlemek için harcanacak işlem zamanı tahminini belirtiyor."
+msgstr "Planlayıcının, imlecin (cursor) satırlarından getirileceklerin oranı tahminini belirler."
 
 #: utils/misc/guc.c:2981
 msgid "GEQO: selective pressure within the population."
@@ -24003,7 +23942,7 @@ msgstr "Süreç başlığında yer alan kümenin (cluster), ismini ayarlar."
 
 #: utils/misc/guc.c:3644
 msgid "Sets the WAL resource managers for which WAL consistency checks are done."
-msgstr ""
+msgstr "WAL tutarlılık kontrollerinin yapıldığı WAl kaynak yöneticilerini ayarlar."
 
 #: utils/misc/guc.c:3645
 msgid "Full-page images will be logged for all data blocks and cross-checked against the results of WAL replay."

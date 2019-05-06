@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-22 07:38+0000\n"
+"POT-Creation-Date: 2019-04-20 15:48+0000\n"
 "PO-Revision-Date: 2017-07-10 12:14-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -78,38 +78,38 @@ msgstr "la referencia a la columna «%s» es ambigua"
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Podría referirse tanto a una variable PL/pgSQL como a una columna de una tabla."
 
-#: pl_comp.c:1258 pl_comp.c:1286 pl_exec.c:4584 pl_exec.c:4913 pl_exec.c:4998
-#: pl_exec.c:5089
+#: pl_comp.c:1258 pl_comp.c:1286 pl_exec.c:4585 pl_exec.c:4914 pl_exec.c:4999
+#: pl_exec.c:5090
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "el registro «%s» no tiene un campo «%s»"
 
-#: pl_comp.c:1817
+#: pl_comp.c:1818
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "no existe la relación «%s»"
 
-#: pl_comp.c:1926
+#: pl_comp.c:1927
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "la variable «%s» tiene pseudotipo %s"
 
-#: pl_comp.c:1993
+#: pl_comp.c:1995
 #, c-format
 msgid "relation \"%s\" is not a table"
 msgstr "la relación «%s» no es una tabla"
 
-#: pl_comp.c:2153
+#: pl_comp.c:2155
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "el tipo «%s» está inconcluso"
 
-#: pl_comp.c:2247 pl_comp.c:2300
+#: pl_comp.c:2249 pl_comp.c:2302
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "no se reconoce la condición de excepción «%s»"
 
-#: pl_comp.c:2508
+#: pl_comp.c:2510
 #, c-format
 msgid "could not determine actual argument type for polymorphic function \"%s\""
 msgstr "no se pudo determinar el verdadero tipo de argumento para la función polimórfica «%s»"
@@ -245,17 +245,17 @@ msgstr "el valor BY de un ciclo FOR no puede ser null"
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "el valor BY de un ciclo FOR debe ser mayor que cero"
 
-#: pl_exec.c:2294 pl_exec.c:4085
+#: pl_exec.c:2294 pl_exec.c:4086
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "el cursor «%s» ya está en uso"
 
-#: pl_exec.c:2317 pl_exec.c:4150
+#: pl_exec.c:2317 pl_exec.c:4151
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "se dieron argumentos a un cursor sin argumentos"
 
-#: pl_exec.c:2336 pl_exec.c:4169
+#: pl_exec.c:2336 pl_exec.c:4170
 #, c-format
 msgid "arguments required for cursor"
 msgstr "se requieren argumentos para el cursor"
@@ -300,14 +300,14 @@ msgstr "no se puede usar RETURN NEXT en una función que no es SETOF"
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "se pasó un tipo incorrecto de resultado a RETURN NEXT"
 
-#: pl_exec.c:2878 pl_exec.c:4572 pl_exec.c:4880 pl_exec.c:4906 pl_exec.c:4972
-#: pl_exec.c:4991 pl_exec.c:5059 pl_exec.c:5082
+#: pl_exec.c:2878 pl_exec.c:4573 pl_exec.c:4881 pl_exec.c:4907 pl_exec.c:4973
+#: pl_exec.c:4992 pl_exec.c:5060 pl_exec.c:5083
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "el registro «%s» no ha sido asignado aún"
 
-#: pl_exec.c:2880 pl_exec.c:4574 pl_exec.c:4882 pl_exec.c:4908 pl_exec.c:4974
-#: pl_exec.c:4993 pl_exec.c:5061 pl_exec.c:5084
+#: pl_exec.c:2880 pl_exec.c:4575 pl_exec.c:4883 pl_exec.c:4909 pl_exec.c:4975
+#: pl_exec.c:4994 pl_exec.c:5062 pl_exec.c:5085
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "La estructura de fila de un registro aún no asignado no está determinado."
@@ -356,124 +356,124 @@ msgstr "%s"
 msgid "assertion failed"
 msgstr "aseveración falló"
 
-#: pl_exec.c:3583 pl_exec.c:3729 pl_exec.c:3919
+#: pl_exec.c:3583 pl_exec.c:3730 pl_exec.c:3920
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "no se puede ejecutar COPY desde/a un cliente en PL/pgSQL"
 
-#: pl_exec.c:3587 pl_exec.c:3733 pl_exec.c:3923
+#: pl_exec.c:3587 pl_exec.c:3734 pl_exec.c:3924
 #, c-format
 msgid "cannot begin/end transactions in PL/pgSQL"
 msgstr "no se pueden iniciar o terminar transacciones en PL/pgSQL"
 
-#: pl_exec.c:3588 pl_exec.c:3734 pl_exec.c:3924
+#: pl_exec.c:3588 pl_exec.c:3735 pl_exec.c:3925
 #, c-format
 msgid "Use a BEGIN block with an EXCEPTION clause instead."
 msgstr "Utilice un bloque BEGIN con una cláusula EXCEPTION."
 
-#: pl_exec.c:3757 pl_exec.c:3948
+#: pl_exec.c:3758 pl_exec.c:3949
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO es utilizado con una orden que no puede retornar datos"
 
-#: pl_exec.c:3785 pl_exec.c:3976
+#: pl_exec.c:3786 pl_exec.c:3977
 #, c-format
 msgid "query returned no rows"
 msgstr "la consulta no regresó filas"
 
-#: pl_exec.c:3804 pl_exec.c:3995
+#: pl_exec.c:3805 pl_exec.c:3996
 #, c-format
 msgid "query returned more than one row"
 msgstr "la consulta regresó más de una fila"
 
-#: pl_exec.c:3821
+#: pl_exec.c:3822
 #, c-format
 msgid "query has no destination for result data"
 msgstr "la consulta no tiene un destino para los datos de resultado"
 
-#: pl_exec.c:3822
+#: pl_exec.c:3823
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Si quiere descartar los resultados de un SELECT, utilice PERFORM."
 
-#: pl_exec.c:3855 pl_exec.c:7292
+#: pl_exec.c:3856 pl_exec.c:7318
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "el argumento de consulta a ejecutar en EXECUTE es null"
 
-#: pl_exec.c:3911
+#: pl_exec.c:3912
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "no está implementado EXECUTE de un SELECT ... INTO"
 
-#: pl_exec.c:3912
+#: pl_exec.c:3913
 #, c-format
 msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
 msgstr "Puede desear usar EXECUTE ... INTO o EXECUTE CREATE TABLE ... AS en su lugar."
 
-#: pl_exec.c:4233 pl_exec.c:4329
+#: pl_exec.c:4234 pl_exec.c:4330
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "variable cursor «%s» es null"
 
-#: pl_exec.c:4244 pl_exec.c:4340
+#: pl_exec.c:4245 pl_exec.c:4341
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "no existe el cursor «%s»"
 
-#: pl_exec.c:4257
+#: pl_exec.c:4258
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "la posición relativa o absoluta del cursor es null"
 
-#: pl_exec.c:4448
+#: pl_exec.c:4449
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "no puede asignarse un valor null a la variable «%s» que fue declarada NOT NULL"
 
-#: pl_exec.c:4517
+#: pl_exec.c:4518
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "no se puede asignar un valor no compuesto a una variable de tipo row"
 
-#: pl_exec.c:4541
+#: pl_exec.c:4542
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "no se puede asignar un valor no compuesto a una variable de tipo record"
 
-#: pl_exec.c:4661
+#: pl_exec.c:4662
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "el número de dimensiones del array (%d) excede el máximo permitido (%d)"
 
-#: pl_exec.c:4693
+#: pl_exec.c:4694
 #, c-format
 msgid "subscripted object is not an array"
 msgstr "el objeto al que se le puso un subíndice no es un array"
 
-#: pl_exec.c:4731
+#: pl_exec.c:4732
 #, c-format
 msgid "array subscript in assignment must not be null"
 msgstr "subíndice de array en asignación no puede ser null"
 
-#: pl_exec.c:5198
+#: pl_exec.c:5199
 #, c-format
 msgid "query \"%s\" did not return data"
 msgstr "la consulta «%s» no retornó datos"
 
-#: pl_exec.c:5206
+#: pl_exec.c:5207
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
 msgstr[0] "la consulta «%s» retornó %d columna"
 msgstr[1] "la consulta «%s» retornó %d columnas"
 
-#: pl_exec.c:5233
+#: pl_exec.c:5234
 #, c-format
 msgid "query \"%s\" returned more than one row"
 msgstr "la consulta «%s» retornó más de una fila"
 
-#: pl_exec.c:5301
+#: pl_exec.c:5302
 #, c-format
 msgid "query \"%s\" is not a SELECT"
 msgstr "la consulta «%s» no es una orden SELECT"

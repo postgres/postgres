@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-05 15:16+0000\n"
-"PO-Revision-Date: 2017-07-10 12:13-0400\n"
+"POT-Creation-Date: 2019-04-20 15:56+0000\n"
+"PO-Revision-Date: 2019-04-20 20:19-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -21,21 +21,26 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.0.2\n"
 
-#: ../../common/controldata_utils.c:61
+#: ../../common/controldata_utils.c:62
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: no se pudo abrir el archivo «%s» para lectura: %s\n"
 
-#: ../../common/controldata_utils.c:74
+#: ../../common/controldata_utils.c:78
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: no se pudo leer el archivo «%s»: %s\n"
 
-#: ../../common/controldata_utils.c:95
+#: ../../common/controldata_utils.c:90
+#, c-format
+msgid "%s: could not read file \"%s\": read %d of %d\n"
+msgstr "%s: no se pudo leer el archivo «%s»: leídos %d de %d\n"
+
+#: ../../common/controldata_utils.c:112
 msgid "byte ordering mismatch"
 msgstr "discordancia en orden de bytes"
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:114
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"
@@ -457,9 +462,3 @@ msgstr "Versión de sumas de verificación de datos:  %u\n"
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Nonce para autentificación simulada:        %s\n"
-
-#~ msgid "calculated CRC checksum does not match value stored in file"
-#~ msgstr "la suma de verificación calculada no coincide con el valor almacenado en el archivo"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "números de punto flotante"

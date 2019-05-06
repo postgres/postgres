@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-05 15:07+0000\n"
-"PO-Revision-Date: 2017-07-10 12:14-0400\n"
+"POT-Creation-Date: 2019-04-20 15:48+0000\n"
+"PO-Revision-Date: 2019-04-20 20:20-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -107,18 +107,3 @@ msgstr "la lista de nombres de columnas y valores contiene el nombre de columna 
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
-
-#~ msgid "module \"unknown\" not found in pltcl_modules"
-#~ msgstr "módulo «unknown» no encontrado en pltcl_modules"
-
-#~ msgid "could not load module \"unknown\": %s"
-#~ msgstr "no se pudo carga módulo «unknown»: %s"
-
-#~ msgid "unrecognized attribute \"%s\""
-#~ msgstr "atributo «%s» no reconocido"
-
-#~ msgid "out of memory"
-#~ msgstr "memoria agotada"
-
-#~ msgid "PL/Tcl functions cannot return composite types"
-#~ msgstr "las funciones PL/Tcl no pueden retornar tipos compuestos"

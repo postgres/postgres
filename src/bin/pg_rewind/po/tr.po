@@ -1,16 +1,16 @@
 # LANGUAGE message translation file for pg_rewind
 # Copyright (C) 2018 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_rewind (PostgreSQL) package.
-# Abdullah GÜLNER <agulner@gmail.com>, 2018.
+# Abdullah GÜLNER <agulner@gmail.com>, 2018, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-24 08:56+0000\n"
-"PO-Revision-Date: 2018-10-25 17:04+0300\n"
+"POT-Creation-Date: 2019-03-27 09:26+0000\n"
+"PO-Revision-Date: 2019-03-28 11:03+0300\n"
 "Last-Translator: Abdullah GÜLNER\n"
-"Language-Team: \n"
+"Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -628,8 +628,8 @@ msgstr "kaynak veri dizini düzgün bir şekilde kapatılmalı\n"
 
 #: pg_rewind.c:469
 #, c-format
-msgid "invalid control file"
-msgstr "geçersiz kontrol dosyası"
+msgid "invalid control file\n"
+msgstr "geçersiz kontrol dosyası\n"
 
 #: pg_rewind.c:480
 #, c-format
