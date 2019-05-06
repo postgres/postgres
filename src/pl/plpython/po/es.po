@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-27 21:54+0000\n"
+"POT-Creation-Date: 2019-04-17 22:34+0000\n"
 "PO-Revision-Date: 2017-08-28 11:49+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -268,27 +268,27 @@ msgstr "no se pudo desempaquetar los argumentos de plpy.elog"
 msgid "could not parse error message in plpy.elog"
 msgstr "no se pudo analizar el mensaje de error de plpy.elog"
 
-#: plpy_procedure.c:223
+#: plpy_procedure.c:221
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
 
-#: plpy_procedure.c:228
+#: plpy_procedure.c:226
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "las funciones PL/Python no pueden retornar el tipo %s"
 
-#: plpy_procedure.c:310
+#: plpy_procedure.c:308
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "la funciones PL/Python no pueden aceptar el tipo %s"
 
-#: plpy_procedure.c:408
+#: plpy_procedure.c:406
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "no se pudo compilar la función PL/Python «%s»"
 
-#: plpy_procedure.c:411
+#: plpy_procedure.c:409
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "no se pudo compilar el bloque anónimo PL/Python"

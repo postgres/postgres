@@ -5,12 +5,12 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-08 11:47+0300\n"
+"POT-Creation-Date: 2019-04-29 07:30+0300\n"
 "PO-Revision-Date: 2018-05-16 14:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -675,162 +675,162 @@ msgstr "Ошибка при завершении:\n"
 msgid "Error from TOC entry %d; %u %u %s %s %s\n"
 msgstr "Ошибка из записи оглавления %d; %u %u %s %s %s\n"
 
-#: pg_backup_archiver.c:1847
+#: pg_backup_archiver.c:1850
 #, c-format
 msgid "bad dumpId\n"
 msgstr "неверный dumpId\n"
 
-#: pg_backup_archiver.c:1868
+#: pg_backup_archiver.c:1871
 #, c-format
 msgid "bad table dumpId for TABLE DATA item\n"
 msgstr "неверный dumpId таблицы в элементе TABLE DATA\n"
 
-#: pg_backup_archiver.c:1960
+#: pg_backup_archiver.c:1963
 #, c-format
 msgid "unexpected data offset flag %d\n"
 msgstr "неожиданный флаг смещения данных: %d\n"
 
-#: pg_backup_archiver.c:1973
+#: pg_backup_archiver.c:1976
 #, c-format
 msgid "file offset in dump file is too large\n"
 msgstr "слишком большое смещение в файле вывода\n"
 
-#: pg_backup_archiver.c:2086
+#: pg_backup_archiver.c:2089
 #, c-format
 msgid "attempting to ascertain archive format\n"
 msgstr "попытка выяснить формат архива\n"
 
-#: pg_backup_archiver.c:2112 pg_backup_archiver.c:2122
+#: pg_backup_archiver.c:2115 pg_backup_archiver.c:2125
 #, c-format
 msgid "directory name too long: \"%s\"\n"
 msgstr "слишком длинное имя каталога: \"%s\"\n"
 
-#: pg_backup_archiver.c:2130
+#: pg_backup_archiver.c:2133
 #, c-format
 msgid ""
 "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not "
 "exist)\n"
 msgstr "каталог \"%s\" не похож на архивный (в нём отсутствует \"toc.dat\")\n"
 
-#: pg_backup_archiver.c:2138 pg_backup_custom.c:181 pg_backup_custom.c:770
+#: pg_backup_archiver.c:2141 pg_backup_custom.c:181 pg_backup_custom.c:770
 #: pg_backup_directory.c:214 pg_backup_directory.c:401
 #, c-format
 msgid "could not open input file \"%s\": %s\n"
 msgstr "не удалось открыть входной файл \"%s\": %s\n"
 
-#: pg_backup_archiver.c:2146 pg_backup_custom.c:188
+#: pg_backup_archiver.c:2149 pg_backup_custom.c:188
 #, c-format
 msgid "could not open input file: %s\n"
 msgstr "не удалось открыть входной файл: %s\n"
 
-#: pg_backup_archiver.c:2153
+#: pg_backup_archiver.c:2156
 #, c-format
 msgid "could not read input file: %s\n"
 msgstr "не удалось прочитать входной файл: %s\n"
 
-#: pg_backup_archiver.c:2155
+#: pg_backup_archiver.c:2158
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
 msgstr "входной файл слишком короткий (прочитано байт: %lu, ожидалось: 5)\n"
 
-#: pg_backup_archiver.c:2238
+#: pg_backup_archiver.c:2241
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql.\n"
 msgstr ""
 "входной файл похоже имеет текстовый формат. Загрузите его с помощью psql.\n"
 
-#: pg_backup_archiver.c:2244
+#: pg_backup_archiver.c:2247
 #, c-format
 msgid "input file does not appear to be a valid archive (too short?)\n"
 msgstr "входной файл не похож на архив (возможно, слишком мал?)\n"
 
-#: pg_backup_archiver.c:2250
+#: pg_backup_archiver.c:2253
 #, c-format
 msgid "input file does not appear to be a valid archive\n"
 msgstr "входной файл не похож на архив\n"
 
-#: pg_backup_archiver.c:2270
+#: pg_backup_archiver.c:2273
 #, c-format
 msgid "could not close input file: %s\n"
 msgstr "не удалось закрыть входной файл: %s\n"
 
-#: pg_backup_archiver.c:2287
+#: pg_backup_archiver.c:2290
 #, c-format
 msgid "allocating AH for %s, format %d\n"
 msgstr "выделение структуры AH для %s, формат %d\n"
 
-#: pg_backup_archiver.c:2392
+#: pg_backup_archiver.c:2395
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
 msgstr "неопознанный формат файла: \"%d\"\n"
 
-#: pg_backup_archiver.c:2548
+#: pg_backup_archiver.c:2551
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
 msgstr "ID записи %d вне диапазона - возможно повреждено оглавление\n"
 
-#: pg_backup_archiver.c:2664
+#: pg_backup_archiver.c:2667
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
 msgstr "прочитана запись оглавления %d (ID %d): %s %s\n"
 
-#: pg_backup_archiver.c:2700
+#: pg_backup_archiver.c:2703
 #, c-format
 msgid "unrecognized encoding \"%s\"\n"
 msgstr "нераспознанная кодировка \"%s\"\n"
 
-#: pg_backup_archiver.c:2705
+#: pg_backup_archiver.c:2708
 #, c-format
 msgid "invalid ENCODING item: %s\n"
 msgstr "неверный элемент ENCODING: %s\n"
 
-#: pg_backup_archiver.c:2723
+#: pg_backup_archiver.c:2726
 #, c-format
 msgid "invalid STDSTRINGS item: %s\n"
 msgstr "неверный элемент STDSTRINGS: %s\n"
 
-#: pg_backup_archiver.c:3001
+#: pg_backup_archiver.c:3007
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "не удалось переключить пользователя сессии на \"%s\": %s"
 
-#: pg_backup_archiver.c:3033
+#: pg_backup_archiver.c:3039
 #, c-format
 msgid "could not set default_with_oids: %s"
 msgstr "не удалось установить параметр default_with_oids: %s"
 
-#: pg_backup_archiver.c:3187
+#: pg_backup_archiver.c:3193
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
 msgstr "не удалось присвоить search_path значение \"%s\": %s"
 
-#: pg_backup_archiver.c:3249
+#: pg_backup_archiver.c:3255
 #, c-format
 msgid "could not set default_tablespace to %s: %s"
 msgstr "не удалось задать для default_tablespace значение %s: %s"
 
-#: pg_backup_archiver.c:3339 pg_backup_archiver.c:3529
+#: pg_backup_archiver.c:3345 pg_backup_archiver.c:3535
 #, c-format
 msgid "WARNING: don't know how to set owner for object type \"%s\"\n"
 msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: неизвестно, как назначить владельца для объекта типа \"%s\"\n"
 
-#: pg_backup_archiver.c:3615
+#: pg_backup_archiver.c:3621
 #, c-format
 msgid "did not find magic string in file header\n"
 msgstr "в файле заголовка не найдена магическая строка\n"
 
-#: pg_backup_archiver.c:3628
+#: pg_backup_archiver.c:3634
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "неподдерживаемая версия (%d.%d) в заголовке файла\n"
 
-#: pg_backup_archiver.c:3633
+#: pg_backup_archiver.c:3639
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "несоответствие размера integer (%lu)\n"
 
-#: pg_backup_archiver.c:3637
+#: pg_backup_archiver.c:3643
 #, c-format
 msgid ""
 "WARNING: archive was made on a machine with larger integers, some operations "
@@ -839,12 +839,12 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: архив был сделан на компьютере большей разрядности -- "
 "возможен сбой некоторых операций\n"
 
-#: pg_backup_archiver.c:3647
+#: pg_backup_archiver.c:3653
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "ожидаемый формат (%d) отличается от формата, указанного в файле (%d)\n"
 
-#: pg_backup_archiver.c:3663
+#: pg_backup_archiver.c:3669
 #, c-format
 msgid ""
 "WARNING: archive is compressed, but this installation does not support "
@@ -853,87 +853,87 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: архив сжат, но установленная версия не поддерживает сжатие "
 "-- данные недоступны\n"
 
-#: pg_backup_archiver.c:3681
+#: pg_backup_archiver.c:3687
 #, c-format
 msgid "WARNING: invalid creation date in header\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: неверная дата создания в заголовке\n"
 
-#: pg_backup_archiver.c:3754
+#: pg_backup_archiver.c:3760
 #, c-format
 msgid "entering restore_toc_entries_prefork\n"
 msgstr "вход в restore_toc_entries_prefork\n"
 
-#: pg_backup_archiver.c:3818
+#: pg_backup_archiver.c:3824
 #, c-format
 msgid "processing item %d %s %s\n"
 msgstr "обработка объекта %d %s %s\n"
 
-#: pg_backup_archiver.c:3872
+#: pg_backup_archiver.c:3878
 #, c-format
 msgid "entering restore_toc_entries_parallel\n"
 msgstr "вход в restore_toc_entries_parallel\n"
 
-#: pg_backup_archiver.c:3893
+#: pg_backup_archiver.c:3899
 #, c-format
 msgid "entering main parallel loop\n"
 msgstr "вход в основной параллельный цикл\n"
 
-#: pg_backup_archiver.c:3904
+#: pg_backup_archiver.c:3910
 #, c-format
 msgid "skipping item %d %s %s\n"
 msgstr "объект %d %s %s пропускается\n"
 
-#: pg_backup_archiver.c:3914
+#: pg_backup_archiver.c:3920
 #, c-format
 msgid "launching item %d %s %s\n"
 msgstr "объект %d %s %s запускается\n"
 
-#: pg_backup_archiver.c:3995
+#: pg_backup_archiver.c:4001
 #, c-format
 msgid "finished main parallel loop\n"
 msgstr "основной параллельный цикл закончен\n"
 
-#: pg_backup_archiver.c:4013
+#: pg_backup_archiver.c:4019
 #, c-format
 msgid "entering restore_toc_entries_postfork\n"
 msgstr "вход в restore_toc_entries_postfork\n"
 
-#: pg_backup_archiver.c:4033
+#: pg_backup_archiver.c:4039
 #, c-format
 msgid "processing missed item %d %s %s\n"
 msgstr "обработка пропущенного объекта %d %s %s\n"
 
-#: pg_backup_archiver.c:4210
+#: pg_backup_archiver.c:4216
 #, c-format
 msgid "no item ready\n"
 msgstr "элемент не готов\n"
 
-#: pg_backup_archiver.c:4258
+#: pg_backup_archiver.c:4264
 #, c-format
 msgid "could not find slot of finished worker\n"
 msgstr "не удалось найти слот законченного рабочего объекта\n"
 
-#: pg_backup_archiver.c:4260
+#: pg_backup_archiver.c:4266
 #, c-format
 msgid "finished item %d %s %s\n"
 msgstr "закончен объект %d %s %s\n"
 
-#: pg_backup_archiver.c:4273
+#: pg_backup_archiver.c:4279
 #, c-format
 msgid "worker process failed: exit code %d\n"
 msgstr "рабочий процесс завершился с кодом возврата %d\n"
 
-#: pg_backup_archiver.c:4435
+#: pg_backup_archiver.c:4441
 #, c-format
 msgid "transferring dependency %d -> %d to %d\n"
 msgstr "переключение зависимости %d -> %d на %d\n"
 
-#: pg_backup_archiver.c:4516
+#: pg_backup_archiver.c:4522
 #, c-format
 msgid "reducing dependencies for %d\n"
 msgstr "уменьшение зависимостей для %d\n"
 
-#: pg_backup_archiver.c:4568
+#: pg_backup_archiver.c:4574
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data\n"
 msgstr "создать таблицу \"%s\" не удалось, её данные не будут восстановлены\n"
