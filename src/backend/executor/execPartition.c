@@ -329,10 +329,6 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 		}
 	}
 
-	/* Release the tuple in the lowest parent's dedicated slot. */
-	if (myslot != slot)
-		ExecClearTuple(myslot);
-
 	/* A partition was not found. */
 	if (result < 0)
 	{
@@ -347,6 +343,10 @@ ExecFindPartition(ResultRelInfo *resultRelInfo, PartitionDispatch *pd,
 						RelationGetRelationName(rel)),
 				 val_desc ? errdetail("Partition key of the failing row contains %s.", val_desc) : 0));
 	}
+
+	/* Release the tuple in the lowest parent's dedicated slot. */
+	if (myslot != slot)
+		ExecClearTuple(myslot);
 
 	MemoryContextSwitchTo(oldcxt);
 	ecxt->ecxt_scantuple = ecxt_scantuple_old;
