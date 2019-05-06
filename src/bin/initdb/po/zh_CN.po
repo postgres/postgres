@@ -4,12 +4,12 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: initdb (PostgreSQL 9.0)\n"
+"Project-Id-Version: initdb (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-04-18 04:44+0000\n"
-"PO-Revision-Date: 2016-05-19 20:39+0800\n"
-"Last-Translator: Yuwei Peng <ywpeng@whu.edu.cn>\n"
-"Language-Team: Chinese (Simplified) <ywpeng@whu.edu.cn>\n"
+"POT-Creation-Date: 2019-04-12 17:42+0800\n"
+"PO-Revision-Date: 2019-04-12 18:38+0800\n"
+"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
+"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -64,6 +64,37 @@ msgstr "内存溢出\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "无法复制空指针 (内部错误)\n"
+
+#: ../../common/file_utils.c:82 ../../common/file_utils.c:186
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: 无法统计文件: \"%s\": %s\n"
+
+#: ../../common/file_utils.c:162
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: 无法打开目录 \"%s\": %s\n"
+
+#: ../../common/file_utils.c:198
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s: 无法读取目录 \"%s\": %s\n"
+
+#: ../../common/file_utils.c:231 ../../common/file_utils.c:291
+#: ../../common/file_utils.c:367
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: 无法打开文件 \"%s\": %s\n"
+
+#: ../../common/file_utils.c:304 ../../common/file_utils.c:376
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "%s: 无法对文件 \"%s\"进行fsync同步: %s\n"
+
+#: ../../common/file_utils.c:387
+#, c-format
+msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
+msgstr "%s: 无法把文件 \"%s\" 重命名为 \"%s\":  %s\n"
 
 #: ../../common/pgfnames.c:45
 #, c-format
@@ -125,51 +156,51 @@ msgstr "无法获取文件或目录 \"%s\"的状态: %s\n"
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "无法删除文件或目录 \"%s\": %s\n"
 
-#: ../../common/username.c:45
+#: ../../common/username.c:43
 #, c-format
 msgid "could not look up effective user ID %ld: %s"
 msgstr "无法找到有效的用户ID %ld: %s"
 
-#: ../../common/username.c:47
+#: ../../common/username.c:45
 msgid "user does not exist"
 msgstr "用户不存在"
 
-#: ../../common/username.c:62
+#: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
 msgstr "用户名查找失败：错误代码%lu"
 
-#: ../../common/wait_error.c:47
+#: ../../common/wait_error.c:45
 #, c-format
 msgid "command not executable"
 msgstr "命令无法执行"
 
-#: ../../common/wait_error.c:51
+#: ../../common/wait_error.c:49
 #, c-format
 msgid "command not found"
 msgstr "命令没有找到"
 
-#: ../../common/wait_error.c:56
+#: ../../common/wait_error.c:54
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "子进程已退出, 退出码为 %d"
 
-#: ../../common/wait_error.c:63
+#: ../../common/wait_error.c:61
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "子进程被例外(exception) 0x%X 终止"
 
-#: ../../common/wait_error.c:73
+#: ../../common/wait_error.c:71
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "子进程被信号 %s 终止"
 
-#: ../../common/wait_error.c:77
+#: ../../common/wait_error.c:75
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "子进程被信号 %d 终止"
 
-#: ../../common/wait_error.c:82
+#: ../../common/wait_error.c:80
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "子进程已退出, 未知状态 %d"
@@ -184,107 +215,82 @@ msgstr "无法为 \"%s\"设置连接: %s\n"
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "无法为\"%s\"得到连接: %s\n"
 
-#: initdb.c:349
+#: initdb.c:339
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: 内存溢出\n"
 
-#: initdb.c:459 initdb.c:1589
+#: initdb.c:495 initdb.c:1541
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: 为了读取, 无法打开文件 \"%s\": %s\n"
 
-#: initdb.c:515 initdb.c:1002 initdb.c:1030
+#: initdb.c:551 initdb.c:867 initdb.c:895
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s: 为了写, 无法打开文件 \"%s\": %s\n"
 
-#: initdb.c:523 initdb.c:531 initdb.c:1009 initdb.c:1036
+#: initdb.c:559 initdb.c:567 initdb.c:874 initdb.c:901
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: 无法写文件 \"%s\": %s\n"
 
-#: initdb.c:562
-#, c-format
-msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: 无法打开目录 \"%s\": %s\n"
-
-#: initdb.c:586 initdb.c:2334
-#, c-format
-msgid "%s: could not stat file \"%s\": %s\n"
-msgstr "%s: 无法统计文件: \"%s\": %s\n"
-
-#: initdb.c:598
-#, c-format
-msgid "%s: could not read directory \"%s\": %s\n"
-msgstr "%s: 无法读取目录 \"%s\": %s\n"
-
-#: initdb.c:631 initdb.c:690
-#, c-format
-msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: 无法打开文件 \"%s\": %s\n"
-
-#: initdb.c:702
-#, c-format
-msgid "%s: could not fsync file \"%s\": %s\n"
-msgstr "%s: 无法对文件 \"%s\"进行fsync同步: %s\n"
-
-#: initdb.c:721
+#: initdb.c:586
 #, c-format
 msgid "%s: could not execute command \"%s\": %s\n"
 msgstr "%s: 无法执行命令 \"%s\": %s\n"
 
-#: initdb.c:737
+#: initdb.c:602
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s: 删除数据目录 \"%s\"\n"
 
-#: initdb.c:740
+#: initdb.c:605
 #, c-format
 msgid "%s: failed to remove data directory\n"
 msgstr "%s: 删除数据目录失败\n"
 
-#: initdb.c:746
+#: initdb.c:611
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s: 删除数据目录 \"%s\" 的内容\n"
 
-#: initdb.c:749
+#: initdb.c:614
 #, c-format
 msgid "%s: failed to remove contents of data directory\n"
 msgstr "%s: 删除数据目录内容失败\n"
 
-#: initdb.c:755
+#: initdb.c:620
 #, c-format
-msgid "%s: removing transaction log directory \"%s\"\n"
-msgstr "%s: 正在删除事务日志文件目录 \"%s\"\n"
+msgid "%s: removing WAL directory \"%s\"\n"
+msgstr "%s: 删除WAL目录 \"%s\"\n"
 
-#: initdb.c:758
+#: initdb.c:623
 #, c-format
-msgid "%s: failed to remove transaction log directory\n"
-msgstr "%s: 删除数据目录失败\n"
+msgid "%s: failed to remove WAL directory\n"
+msgstr "%s: 删除WAL目录失败\n"
 
-#: initdb.c:764
+#: initdb.c:629
 #, c-format
-msgid "%s: removing contents of transaction log directory \"%s\"\n"
-msgstr "%s: 删除事务日志目录 \"%s\" 的内容\n"
+msgid "%s: removing contents of WAL directory \"%s\"\n"
+msgstr "%s: 删除WAL目录 \"%s\" 的内容\n"
 
-#: initdb.c:767
+#: initdb.c:632
 #, c-format
-msgid "%s: failed to remove contents of transaction log directory\n"
-msgstr "%s: 删除事务日志目录的内容失败\n"
+msgid "%s: failed to remove contents of WAL directory\n"
+msgstr "%s: 删除WAL目录内容失败\n"
 
-#: initdb.c:776
+#: initdb.c:641
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s: 在用户的要求下数据库目录 \"%s\" 不被删除\n"
 
-#: initdb.c:781
+#: initdb.c:646
 #, c-format
-msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-msgstr "%s: 在用户的要求下不删除事务日志目录 \"%s\"\n"
+msgid "%s: WAL directory \"%s\" not removed at user's request\n"
+msgstr "%s: 在用户的要求下WAL目录 \"%s\" 不被删除\n"
 
-#: initdb.c:802
+#: initdb.c:667
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -295,17 +301,17 @@ msgstr ""
 "请以服务器进程所有者的用户 (无特权) 身份\n"
 "登陆 (使用, e.g., \"su\").\n"
 
-#: initdb.c:838
+#: initdb.c:703
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" 不是一个有效的服务器编码名字\n"
 
-#: initdb.c:958
+#: initdb.c:823
 #, c-format
 msgid "%s: file \"%s\" does not exist\n"
 msgstr "%s: 文件 \"%s\" 不存在\n"
 
-#: initdb.c:960 initdb.c:969 initdb.c:979
+#: initdb.c:825 initdb.c:834 initdb.c:844
 #, c-format
 msgid ""
 "This might mean you have a corrupted installation or identified\n"
@@ -314,46 +320,46 @@ msgstr ""
 "这意味着您的安装发生了错误或\n"
 "使用 -L 选项指定了错误的路径.\n"
 
-#: initdb.c:966
+#: initdb.c:831
 #, c-format
 msgid "%s: could not access file \"%s\": %s\n"
 msgstr "%s: 无法访问文件 \"%s\": %s\n"
 
-#: initdb.c:977
+#: initdb.c:842
 #, c-format
 msgid "%s: file \"%s\" is not a regular file\n"
 msgstr "%s: 文件 \"%s\" 不是常规文件\n"
 
-#: initdb.c:1122
+#: initdb.c:990
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "选择默认最大联接数 (max_connections) ... "
 
-#: initdb.c:1152
+#: initdb.c:1020
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "选择默认共享缓冲区大小 (shared_buffers) ... "
 
-#: initdb.c:1185
+#: initdb.c:1053
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
 msgstr "选择动态共享内存实现 ......"
 
-#: initdb.c:1203
+#: initdb.c:1088
 msgid "creating configuration files ... "
 msgstr "创建配置文件 ... "
 
-#: initdb.c:1300 initdb.c:1320 initdb.c:1404 initdb.c:1420
+#: initdb.c:1242 initdb.c:1262 initdb.c:1349 initdb.c:1365
 #, c-format
 msgid "%s: could not change permissions of \"%s\": %s\n"
 msgstr "%s: 无法改变\"%s\"的权限:%s\n"
 
-#: initdb.c:1444
+#: initdb.c:1388
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "正在运行自举脚本 ..."
 
-#: initdb.c:1460
+#: initdb.c:1401
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -362,96 +368,70 @@ msgstr ""
 "%s: 输入文件 \"%s\" 不属于 PostgreSQL %s\n"
 "检查你的安装或使用 -L 选项指定正确的路径.\n"
 
-#: initdb.c:1564
+#: initdb.c:1518
 msgid "Enter new superuser password: "
 msgstr "输入新的超级用户口令: "
 
-#: initdb.c:1565
+#: initdb.c:1519
 msgid "Enter it again: "
 msgstr "再输入一遍: "
 
-#: initdb.c:1568
+#: initdb.c:1522
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "口令不匹配.\n"
 
-#: initdb.c:1596
+#: initdb.c:1548
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: 无法从文件 \"%s\" 读取口令: %s\n"
 
-#: initdb.c:1599
+#: initdb.c:1551
 #, c-format
 msgid "%s: password file \"%s\" is empty\n"
 msgstr "%s：口令文件\"%s\"为空\n"
 
-#: initdb.c:1845
-#, c-format
-msgid "%s: locale name too long, skipped: \"%s\"\n"
-msgstr "%s: 本地化名称太长, 跳过: \"%s\"\n"
-
-#: initdb.c:1870
-#, c-format
-msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
-msgstr "%s: 本地化名称带有非ASCII字符, 跳过: \"%s\"\n"
-
-# describe.c:1542
-#: initdb.c:1943
-#, c-format
-msgid "No usable system locales were found.\n"
-msgstr "没有找到可用的系统本地化名称.\n"
-
-#: initdb.c:1944
-#, c-format
-msgid "Use the option \"--debug\" to see details.\n"
-msgstr "使用选项 \"--debug\" 获取细节.\n"
-
-#: initdb.c:2317
-msgid "syncing data to disk ... "
-msgstr "同步数据到磁盘..."
-
-#: initdb.c:2411
+#: initdb.c:2133
 #, c-format
 msgid "caught signal\n"
 msgstr "捕获信号\n"
 
-#: initdb.c:2417
+#: initdb.c:2139
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "无法写到子进程: %s\n"
 
-#: initdb.c:2425
+#: initdb.c:2147
 #, c-format
 msgid "ok\n"
 msgstr "成功\n"
 
-#: initdb.c:2515
+#: initdb.c:2237
 #, c-format
 msgid "%s: setlocale() failed\n"
 msgstr "%s:setlocale()调用失败\n"
 
-#: initdb.c:2533
+#: initdb.c:2259
 #, c-format
 msgid "%s: failed to restore old locale \"%s\"\n"
 msgstr "%s: 无法恢复旧的本地化文件 \"%s\"\n"
 
-#: initdb.c:2543
+#: initdb.c:2269
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: 无效的 locale 名字 \"%s\"\n"
 
-#: initdb.c:2555
+#: initdb.c:2281
 #, c-format
-msgid ""
-"%s: invalid locale settings; check LANG and LC_* environment variables\n"
+msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
 msgstr "%s:无效的本地化设置; 请检查环境变量LANG和LC_*的值\n"
 
-#: initdb.c:2583
+#: initdb.c:2309
 #, c-format
 msgid "%s: encoding mismatch\n"
 msgstr "%s: 警告: 编码不匹配\n"
 
-#: initdb.c:2585
+#: initdb.c:2311
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -466,7 +446,7 @@ msgstr ""
 "组合类型.\n"
 "\n"
 
-#: initdb.c:2657
+#: initdb.c:2383
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -475,17 +455,17 @@ msgstr ""
 "%s 初始化一个 PostgreSQL 数据库簇.\n"
 "\n"
 
-#: initdb.c:2658
+#: initdb.c:2384
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: initdb.c:2659
+#: initdb.c:2385
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [选项]... [DATADIR]\n"
 
-#: initdb.c:2660
+#: initdb.c:2386
 #, c-format
 msgid ""
 "\n"
@@ -494,95 +474,94 @@ msgstr ""
 "\n"
 "选项:\n"
 
-#: initdb.c:2661
+#: initdb.c:2387
 #, c-format
-msgid ""
-"  -A, --auth=METHOD         default authentication method for local "
-"connections\n"
+msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METHOD         本地连接的默认认证方法\n"
 
-#: initdb.c:2662
+#: initdb.c:2388
 #, c-format
-msgid ""
-"      --auth-host=METHOD    default authentication method for local TCP/IP "
-"connections\n"
-msgstr "      --auth-host=METHOD   本地的TCP/IP连接的默认认证方法\n"
+msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
+msgstr "      --auth-host=METHOD    本地的TCP/IP连接的默认认证方法\n"
 
-#: initdb.c:2663
+#: initdb.c:2389
 #, c-format
-msgid ""
-"      --auth-local=METHOD   default authentication method for local-socket "
-"connections\n"
+msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr "      --auth-local=METHOD   本地socket连接的默认认证方法\n"
 
-#: initdb.c:2664
+#: initdb.c:2390
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr "  -D, --pgdata=DATADIR      当前数据库簇的位置\n"
 
-#: initdb.c:2665
+#: initdb.c:2391
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=ENCODING   为新数据库设置默认编码\n"
 
-#: initdb.c:2666
+#: initdb.c:2392
+#, c-format
+msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
+msgstr "  -g, --allow-group-access  允许组对数据目录进行读/执行\n"
+
+#: initdb.c:2393
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
-msgstr "      --locale=LOCALE      为新数据库设置默认语言环境\n"
+msgstr "      --locale=LOCALE       为新数据库设置默认语言环境\n"
 
-#: initdb.c:2667
+#: initdb.c:2394
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
-"                            set default locale in the respective category "
-"for\n"
+"                            set default locale in the respective category for\n"
 "                            new databases (default taken from environment)\n"
 msgstr ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
 "                            为新的数据库簇在各自的目录中分别\n"
-"                   设定缺省语言环境（默认使用环境变\n"
-"                   量)\n"
+"                            设定缺省语言环境（默认使用环境变量)\n"
 
-#: initdb.c:2671
+#: initdb.c:2398
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
-msgstr "  --no-locale               等同于 --locale=C\n"
+msgstr "      --no-locale           等同于 --locale=C\n"
 
-#: initdb.c:2672
+#: initdb.c:2399
 #, c-format
-msgid ""
-"      --pwfile=FILE         read password for the new superuser from file\n"
-msgstr "  --pwfile=文件名           对于新的超级用户从文件读取口令\n"
+msgid "      --pwfile=FILE         read password for the new superuser from file\n"
+msgstr "      --pwfile=FILE         对于新的超级用户从文件读取口令\n"
 
-#: initdb.c:2673
+#: initdb.c:2400
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
 "                            default text search configuration\n"
 msgstr ""
 "  -T, --text-search-config=CFG\n"
-"                   缺省的文本搜索配置\n"
+"                            缺省的文本搜索配置\n"
 
-#: initdb.c:2675
+#: initdb.c:2402
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME       数据库超级用户名\n"
 
-#: initdb.c:2676
+#: initdb.c:2403
 #, c-format
-msgid ""
-"  -W, --pwprompt            prompt for a password for the new superuser\n"
+msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            对于新的超级用户提示输入口令\n"
 
-#: initdb.c:2677
+#: initdb.c:2404
 #, c-format
-msgid ""
-"  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
-msgstr "  -X, --xlogdir=XLOGDIR          当前事务日志目录的位置\n"
+msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
+msgstr "  -X, --waldir=WALDIR       预写日志目录的位置\n"
 
-#: initdb.c:2678
+#: initdb.c:2405
+#, c-format
+msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
+msgstr "      --wal-segsize=SIZE    WAL段的大小（兆字节）\n"
+
+#: initdb.c:2406
 #, c-format
 msgid ""
 "\n"
@@ -591,44 +570,42 @@ msgstr ""
 "\n"
 "非普通使用选项:\n"
 
-#: initdb.c:2679
+#: initdb.c:2407
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               产生大量的除错信息\n"
 
-#: initdb.c:2680
+#: initdb.c:2408
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
-msgstr " -k, --data-checksums    使用数据页产生效验和\n"
+msgstr "  -k, --data-checksums      使用数据页产生效验和\n"
 
-#: initdb.c:2681
+#: initdb.c:2409
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              输入文件的位置\n"
 
-#: initdb.c:2682
+#: initdb.c:2410
 #, c-format
-msgid "  -n, --noclean             do not clean up after errors\n"
-msgstr "  -n, --noclean             出错后不清理\n"
+msgid "  -n, --no-clean            do not clean up after errors\n"
+msgstr "  -n, --no-clean            出错后不清理\n"
 
-#: initdb.c:2683
+#: initdb.c:2411
 #, c-format
-msgid ""
-"  -N, --nosync              do not wait for changes to be written safely to "
-"disk\n"
-msgstr "  -N, --nosync             不用等待变化安全写入磁盘\n"
+msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --no-sync             不用等待变化安全写入磁盘\n"
 
-#: initdb.c:2684
+#: initdb.c:2412
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                显示内部设置\n"
 
-#: initdb.c:2685
+#: initdb.c:2413
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
-msgstr "  -S, --sync-only          只同步数据目录\n"
+msgstr "  -S, --sync-only           只同步数据目录\n"
 
-#: initdb.c:2686
+#: initdb.c:2414
 #, c-format
 msgid ""
 "\n"
@@ -637,17 +614,17 @@ msgstr ""
 "\n"
 "其它选项:\n"
 
-#: initdb.c:2687
+#: initdb.c:2415
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             输出版本信息, 然后退出\n"
 
-#: initdb.c:2688
+#: initdb.c:2416
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                显示此帮助, 然后退出\n"
 
-#: initdb.c:2689
+#: initdb.c:2417
 #, c-format
 msgid ""
 "\n"
@@ -657,7 +634,7 @@ msgstr ""
 "\n"
 "如果没有指定数据目录, 将使用环境变量 PGDATA\n"
 
-#: initdb.c:2691
+#: initdb.c:2419
 #, c-format
 msgid ""
 "\n"
@@ -666,7 +643,7 @@ msgstr ""
 "\n"
 "报告错误至 <pgql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2699
+#: initdb.c:2427
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -676,20 +653,19 @@ msgstr ""
 "\n"
 "警告:为本地连接启动了 \"trust\" 认证.\n"
 "你可以通过编辑 pg_hba.conf 更改或你下次\n"
-"行 initdb 时使用 -A或者--auth-local和--auth-host选项.\n"
+"执行 initdb 时使用 -A或者--auth-local和--auth-host选项.\n"
 
-#: initdb.c:2721
+#: initdb.c:2449
 #, c-format
 msgid "%s: invalid authentication method \"%s\" for \"%s\" connections\n"
 msgstr "%s: 无效认证方法 \"%s\" 用于 \"%s\" 连接\n"
 
-#: initdb.c:2735
+#: initdb.c:2465
 #, c-format
-msgid ""
-"%s: must specify a password for the superuser to enable %s authentication\n"
+msgid "%s: must specify a password for the superuser to enable %s authentication\n"
 msgstr "%s: 为了启动 %s 认证, 你需要为超级用户指定一个口令\n"
 
-#: initdb.c:2762
+#: initdb.c:2493
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -702,7 +678,7 @@ msgstr ""
 "存在. 使用 -D 选项或者\n"
 "环境变量 PGDATA.\n"
 
-#: initdb.c:2800
+#: initdb.c:2531
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -713,7 +689,7 @@ msgstr ""
 "\n"
 "检查您的安装.\n"
 
-#: initdb.c:2807
+#: initdb.c:2538
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -724,17 +700,17 @@ msgstr ""
 "\n"
 "检查您的安装.\n"
 
-#: initdb.c:2826
+#: initdb.c:2557
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s: 输入文件位置必须为绝对路径\n"
 
-#: initdb.c:2845
+#: initdb.c:2574
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "数据库簇将使用本地化语言 \"%s\"进行初始化.\n"
 
-#: initdb.c:2848
+#: initdb.c:2577
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -753,22 +729,22 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2872
+#: initdb.c:2601
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
 msgstr "%s: 无法为locale(本地化语言)\"%s\"找到合适的编码\n"
 
-#: initdb.c:2874
+#: initdb.c:2603
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "带 -E 选项重新运行 %s.\n"
 
-#: initdb.c:2875 initdb.c:3498 initdb.c:3519
+#: initdb.c:2604 initdb.c:3245 initdb.c:3266
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
-#: initdb.c:2887
+#: initdb.c:2617
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -777,12 +753,12 @@ msgstr ""
 "本地化隐含的编码 \"%s\" 不允许作为服务器端的编码.\n"
 "默认的数据库编码将采用 \"%s\" 作为代替.\n"
 
-#: initdb.c:2895
+#: initdb.c:2623
 #, c-format
 msgid "%s: locale \"%s\" requires unsupported encoding \"%s\"\n"
 msgstr "%s: 本地化语言环境 \"%s\"要求使用不支持的编码\"%s\"\n"
 
-#: initdb.c:2898
+#: initdb.c:2626
 #, c-format
 msgid ""
 "Encoding \"%s\" is not allowed as a server-side encoding.\n"
@@ -791,62 +767,57 @@ msgstr ""
 "不允许将编码\"%s\"作为服务器端编码.\n"
 "使用一个不同的本地化语言环境重新运行%s.\n"
 
-#: initdb.c:2907
+#: initdb.c:2635
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "默认的数据库编码已经相应的设置为 \"%s\".\n"
 
-#: initdb.c:2978
+#: initdb.c:2705
 #, c-format
-msgid ""
-"%s: could not find suitable text search configuration for locale \"%s\"\n"
+msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
 msgstr "%s: 无法为本地化语言环境\"%s\"找到合适的文本搜索配置\n"
 
-#: initdb.c:2989
+#: initdb.c:2716
 #, c-format
-msgid ""
-"%s: warning: suitable text search configuration for locale \"%s\" is "
-"unknown\n"
+msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
 msgstr "%s: 警告: 对于本地化语言环境\"%s\"合适的文本搜索配置未知\n"
 
-#: initdb.c:2994
+#: initdb.c:2721
 #, c-format
-msgid ""
-"%s: warning: specified text search configuration \"%s\" might not match "
-"locale \"%s\"\n"
+msgid "%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"
 msgstr "%s: 警告: 所指定的文本搜索配置\"%s\"可能与本地语言环境\"%s\"不匹配\n"
 
-#: initdb.c:2999
+#: initdb.c:2726
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "缺省的文本搜索配置将会被设置到\"%s\"\n"
 
-#: initdb.c:3043 initdb.c:3129
+#: initdb.c:2770 initdb.c:2856
 #, c-format
 msgid "creating directory %s ... "
 msgstr "创建目录 %s ... "
 
-#: initdb.c:3049 initdb.c:3135 initdb.c:3203 initdb.c:3259
+#: initdb.c:2776 initdb.c:2862 initdb.c:2930 initdb.c:2992
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: 无法创建目录 \"%s\": %s\n"
 
-#: initdb.c:3061 initdb.c:3147
+#: initdb.c:2788 initdb.c:2874
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "修复已存在目录 %s 的权限 ... "
 
-#: initdb.c:3067 initdb.c:3153
+#: initdb.c:2794 initdb.c:2880
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s: 无法改变目录 \"%s\" 的权限: %s\n"
 
-#: initdb.c:3082 initdb.c:3168
+#: initdb.c:2809 initdb.c:2895
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: 目录\"%s\"已存在，但不是空的\n"
 
-#: initdb.c:3088
+#: initdb.c:2815
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
@@ -857,47 +828,45 @@ msgstr ""
 "目录 \"%s\" 或者运行带参数的 %s\n"
 "而不是 \"%s\".\n"
 
-#: initdb.c:3096 initdb.c:3181 initdb.c:3532
+#: initdb.c:2823 initdb.c:2908 initdb.c:3279
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: 无法访问目录 \"%s\": %s\n"
 
-#: initdb.c:3120
+#: initdb.c:2847
 #, c-format
-msgid "%s: transaction log directory location must be an absolute path\n"
-msgstr "%s: 事务日志目录的位置必须为绝对路径\n"
+msgid "%s: WAL directory location must be an absolute path\n"
+msgstr "%s: WAL目录的位置必须为绝对路径\n"
 
-#: initdb.c:3174
+#: initdb.c:2901
 #, c-format
 msgid ""
-"If you want to store the transaction log there, either\n"
-"remove or empty the directory \"%s\".\n"
-msgstr "如果您要存储事务日志，需要删除或者清空目录\"%s\".\n"
+"If you want to store the WAL there, either remove or empty the directory\n"
+"\"%s\".\n"
+msgstr ""
+"如果您要存储WAL日志，需要删除或者清空目录\"%s\".\n"
 
-#: initdb.c:3189
+#: initdb.c:2916
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: 无法创建符号链接 \"%s\": %s\n"
 
-#: initdb.c:3194
+#: initdb.c:2921
 #, c-format
-msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: 在这个平台上不支持使用符号链接"
+msgid "%s: symlinks are not supported on this platform\n"
+msgstr "%s: 在这个平台上不支持使用符号链接\n"
 
-#: initdb.c:3218
+#: initdb.c:2945
 #, c-format
-msgid ""
-"It contains a dot-prefixed/invisible file, perhaps due to it being a mount "
-"point.\n"
+msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point.\n"
 msgstr "它包含一个不可见的带固定点的文件，可能因为它是一个装载点。\n"
 
-#: initdb.c:3221
+#: initdb.c:2948
 #, c-format
-msgid ""
-"It contains a lost+found directory, perhaps due to it being a mount point.\n"
+msgid "It contains a lost+found directory, perhaps due to it being a mount point.\n"
 msgstr "它包含名为lost+found的目录，可能因为它是一个加载点.\n"
 
-#: initdb.c:3224
+#: initdb.c:2951
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
@@ -906,36 +875,55 @@ msgstr ""
 "不推荐将加载点作为数据目录.\n"
 "通常在加载点下边创建一个子目录.\n"
 
-#: initdb.c:3244
+#: initdb.c:2977
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "正在创建子目录 ... "
 
-#: initdb.c:3291
+#: initdb.c:3024
 msgid "performing post-bootstrap initialization ... "
 msgstr "正在执行自举后初始化 ..."
 
-#: initdb.c:3442
+#: initdb.c:3183
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "运行在除错模式中. \n"
 
-#: initdb.c:3446
+#: initdb.c:3187
 #, c-format
-msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
-msgstr "运行在 noclean 模式中. 错误将不被清理.\n"
+msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
+msgstr "运行在 no-clean 模式中. 错误将不被清理.\n"
 
-#: initdb.c:3517
+#: initdb.c:3264
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
 
-#: initdb.c:3543
+#: initdb.c:3284 initdb.c:3377
+msgid "syncing data to disk ... "
+msgstr "同步数据到磁盘..."
+
+#: initdb.c:3293
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
 msgstr "%s: 口令提示和口令文件不能同时都指定\n"
 
-#: initdb.c:3565
+#: initdb.c:3319
+#, c-format
+msgid "%s: argument of --wal-segsize must be a number\n"
+msgstr "%s：--wal-segsize的参数必须是一个数字\n"
+
+#: initdb.c:3326
+#, c-format
+msgid "%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"
+msgstr "%s:  --wal-segsize参数必须是2的幂次方（在2到1024之间）\n"
+
+#: initdb.c:3344
+#, c-format
+msgid "%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"
+msgstr "%s: 超级用户名\"%s\"是不允许的；角色名称不能以\"pg_\"开始\n"
+
+#: initdb.c:3348
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -945,17 +933,17 @@ msgstr ""
 "属于此数据库系统的文件宿主为用户 \"%s\".\n"
 "此用户也必须为服务器进程的宿主.\n"
 
-#: initdb.c:3581
+#: initdb.c:3364
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "允许生成数据页校验和.\n"
 
-#: initdb.c:3583
+#: initdb.c:3366
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "禁止为数据页生成校验和.\n"
 
-#: initdb.c:3592
+#: initdb.c:3383
 #, c-format
 msgid ""
 "\n"
@@ -966,101 +954,23 @@ msgstr ""
 "跳过同步到磁盘操作.\n"
 "如果操作系统宕机，数据目录可能会毁坏.\n"
 
-#: initdb.c:3601
+#. translator: This is a placeholder in a shell command.
+#: initdb.c:3409
+msgid "logfile"
+msgstr "logfile"
+
+#: initdb.c:3411
 #, c-format
 msgid ""
 "\n"
 "Success. You can now start the database server using:\n"
 "\n"
-"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
+"    %s\n"
 "\n"
 msgstr ""
 "\n"
 "成功。您现在可以用下面的命令开启数据库服务器：\n"
 "\n"
-"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
+"    %s\n"
 "\n"
 
-#~ msgid "user name lookup failure: %s"
-#~ msgstr "用户名查找失败: %s"
-
-#~ msgid "%s: could not to allocate SIDs: error code %lu\n"
-#~ msgstr "%s: 无法分配SID: 错误码为 %lu\n"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "无法进入目录 \"%s\""
-
-#~ msgid "creating directory %s/%s ... "
-#~ msgstr "创建目录 %s/%s ... "
-
-#~ msgid ""
-#~ "  --locale=LOCALE           initialize database cluster with given "
-#~ "locale\n"
-#~ msgstr "  --locale=LOCALE           初始化数据库簇的 locale\n"
-
-#~ msgid "enabling unlimited row size for system tables ... "
-#~ msgstr "启动不限制系统表行大小 ... "
-
-#~ msgid "%s: could not determine valid short version string\n"
-#~ msgstr "%s: 无法确定有效的短版本字符串\n"
-
-#~ msgid ""
-#~ "%s: The password file was not generated. Please report this problem.\n"
-#~ msgstr "%s: 口令文件没有生成. 请报告这个问题.\n"
-
-#~ msgid "%s: unrecognized authentication method \"%s\"\n"
-#~ msgstr "%s: 未知认证方法 \"%s\".\n"
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: 无法获取当前用户名称: %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: 无法获得当前用户的信息: %s\n"
-
-#~ msgid "copying template1 to postgres ... "
-#~ msgstr "拷贝 template1 到 template0 ... "
-
-#~ msgid "copying template1 to template0 ... "
-#~ msgstr "拷贝 template1 到 template0 ... "
-
-#~ msgid "vacuuming database template1 ... "
-#~ msgstr "清理数据库 template1 ... "
-
-#~ msgid "loading PL/pgSQL server-side language ... "
-#~ msgstr "正在装载PL/pgSQL服务器端编程语言..."
-
-#~ msgid "creating information schema ... "
-#~ msgstr "创建信息模式 ... "
-
-#~ msgid "setting privileges on built-in objects ... "
-#~ msgstr "对内建对象设置权限 ... "
-
-#~ msgid "creating dictionaries ... "
-#~ msgstr "正在创建字典 ... "
-
-#~ msgid "creating conversions ... "
-#~ msgstr "创建字符集转换 ... "
-
-#~ msgid "not supported on this platform\n"
-#~ msgstr "在此平台上不支持\n"
-
-#~ msgid "creating collations ... "
-#~ msgstr "创建(字符集)校对规则 ... "
-
-#~ msgid "loading system objects' descriptions ... "
-#~ msgstr "正在加载系统对象描述 ..."
-
-#~ msgid "creating system views ... "
-#~ msgstr "创建系统视图 ... "
-
-#~ msgid "initializing dependencies ... "
-#~ msgstr "初始化dependencies ... "
-
-#~ msgid "setting password ... "
-#~ msgstr "设置口令 ... "
-
-#~ msgid "initializing pg_authid ... "
-#~ msgstr "初始化 pg_authid ...  "
-
-#~ msgid "creating template1 database in %s/base/1 ... "
-#~ msgstr "在 %s/base/1 中创建 template1 数据库 ... "

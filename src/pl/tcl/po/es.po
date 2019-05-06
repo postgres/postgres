@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-05 15:07+0000\n"
+"POT-Creation-Date: 2019-04-26 09:37+0000\n"
 "PO-Revision-Date: 2017-07-10 12:14-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -20,51 +20,51 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.0.2\n"
 
-#: pltcl.c:459
+#: pltcl.c:466
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "función PL/Tcl a ejecutar cuando se use pltcl por primera vez."
 
-#: pltcl.c:466
+#: pltcl.c:473
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "función PL/TclU a ejecutar cuando se use pltclu por primera vez."
 
-#: pltcl.c:629
+#: pltcl.c:640
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "la función «%s» está en el lenguaje equivocado"
 
-#: pltcl.c:640
+#: pltcl.c:651
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "la función «%s» no debe ser SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:674
+#: pltcl.c:685
 #, c-format
 msgid "processing %s parameter"
 msgstr "procesando el parámetro %s"
 
-#: pltcl.c:830
+#: pltcl.c:846
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "se llamó una función que retorna un conjunto en un contexto que no puede aceptarlo"
 
-#: pltcl.c:994
+#: pltcl.c:1019
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
 
-#: pltcl.c:1263
+#: pltcl.c:1296
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "no se pudo separar el valor de retorno del disparador: %s"
 
-#: pltcl.c:1343 pltcl.c:1771
+#: pltcl.c:1376 pltcl.c:1806
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1344
+#: pltcl.c:1377
 #, c-format
 msgid ""
 "%s\n"
@@ -73,52 +73,37 @@ msgstr ""
 "%s\n"
 "en función PL/Tcl \"%s\""
 
-#: pltcl.c:1509
+#: pltcl.c:1541
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
 
-#: pltcl.c:1513
+#: pltcl.c:1545
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
 
-#: pltcl.c:1549
+#: pltcl.c:1584
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
 
-#: pltcl.c:1663
+#: pltcl.c:1698
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "no se pudo crear procedimiento interno «%s»: %s"
 
-#: pltcl.c:3100
+#: pltcl.c:3220
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "la lista de nombres de columnas y valores debe tener un número par de elementos"
 
-#: pltcl.c:3118
+#: pltcl.c:3238
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "la lista de nombres de columnas y valores contiene el nombre de columna no existente «%s»"
 
-#: pltcl.c:3125
+#: pltcl.c:3245
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
-
-#~ msgid "module \"unknown\" not found in pltcl_modules"
-#~ msgstr "módulo «unknown» no encontrado en pltcl_modules"
-
-#~ msgid "could not load module \"unknown\": %s"
-#~ msgstr "no se pudo carga módulo «unknown»: %s"
-
-#~ msgid "unrecognized attribute \"%s\""
-#~ msgstr "atributo «%s» no reconocido"
-
-#~ msgid "out of memory"
-#~ msgstr "memoria agotada"
-
-#~ msgid "PL/Tcl functions cannot return composite types"
-#~ msgstr "las funciones PL/Tcl no pueden retornar tipos compuestos"

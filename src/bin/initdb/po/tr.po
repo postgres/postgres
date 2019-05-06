@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-11-27 07:45+0000\n"
-"PO-Revision-Date: 2018-11-27 16:19+0300\n"
+"POT-Creation-Date: 2019-04-02 07:46+0000\n"
+"PO-Revision-Date: 2019-04-03 14:53+0300\n"
 "Last-Translator: Abdullah Gülner\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -547,7 +547,7 @@ msgstr "  -U, --username=NAME       veritabanı superuser kullanıcısı adı\n"
 #: initdb.c:2403
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
-msgstr "  -W, --pwprompt            yeni superuser için şifre sorar\n"
+msgstr "  -W, --pwprompt            yeni superuser için parola sorar\n"
 
 #: initdb.c:2404
 #, c-format
@@ -661,7 +661,7 @@ msgstr "%1$s: \"%3$s\"bağlantıları için geçersiz yetkilendirme yöntemi \"%
 #: initdb.c:2465
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s: %s yetkilendirmesini etkinleştirmek için superuser'a şifre atamanız gerekmektedir.\n"
+msgstr "%s: %s yetkilendirmesini etkinleştirmek için superuser'a parola atamanız gerekmektedir.\n"
 
 #: initdb.c:2493
 #, c-format
@@ -762,12 +762,12 @@ msgid ""
 "Rerun %s with a different locale selection.\n"
 msgstr ""
 "\"%s\" dil kodlaması sunucu tarafında izin verilen bir dil kodlaması değildir\n"
-" \"%s\"'i değişik bir yerel ayar (locale) ile tekrar çalıştırın.\n"
+" %s değişik bir yerel ayar (locale) ile tekrar çalıştırılmalı.\n"
 
 #: initdb.c:2635
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
-msgstr "Öntanımlı veritabanı dil kodlaması \"%s\" olarak ayarlandı.\n"
+msgstr "Öntanımlı veritabanı dil kodlaması buna göre \"%s\" olarak ayarlandı.\n"
 
 #: initdb.c:2705
 #, c-format
@@ -851,8 +851,8 @@ msgstr "%s: symbolic link \"%s\" oluşturma hatası: %s\n"
 
 #: initdb.c:2921
 #, c-format
-msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: bu platformda sembolik bağlantı desteklenmemektedir"
+msgid "%s: symlinks are not supported on this platform\n"
+msgstr "%s: bu platformda sembolik bağlantı (symlink) desteklenmemektedir\n"
 
 #: initdb.c:2945
 #, c-format
@@ -906,7 +906,7 @@ msgstr "veriyi diske senkronize etme ..."
 #: initdb.c:3293
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
-msgstr "%s: şifre promptu ve şifre dosyası birlikte belirtilemez\n"
+msgstr "%s: parola istemi (prompt) ve parola dosyası birlikte belirtilemez\n"
 
 #: initdb.c:3319
 #, c-format
@@ -976,89 +976,92 @@ msgstr ""
 "\n"
 "\n"
 
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
-
-#~ msgid "%s: unrecognized authentication method \"%s\"\n"
-#~ msgstr "%s: bilinmeyen yetkilendirme yöntemi\"%s\".\n"
-
-#~ msgid "copying template1 to postgres ... "
-#~ msgstr "template1, postgres'e kopyalanıyor ... "
-
-#~ msgid "copying template1 to template0 ... "
-#~ msgstr "template1 template0'a kopyalanıyor ... "
-
-#~ msgid "vacuuming database template1 ... "
-#~ msgstr "template1 veritabanı vakumlanıyor ... "
-
-#~ msgid "loading PL/pgSQL server-side language ... "
-#~ msgstr "PL/pgSQL sunucu tarafı dili yükleniyor ... "
-
-#~ msgid "creating information schema ... "
-#~ msgstr "information schema yaratılıyor ... "
-
-#~ msgid "setting privileges on built-in objects ... "
-#~ msgstr "gömülü nesnelerdeki izinler ayarlanıyor ... "
-
-#~ msgid "creating dictionaries ... "
-#~ msgstr "sözlükler oluşturuluyor ... "
-
-#~ msgid "creating conversions ... "
-#~ msgstr "dönüşümler yükleniyor ... "
-
-#~ msgid "not supported on this platform\n"
-#~ msgstr "bu platformda desteklenmiyor\n"
-
-#~ msgid "Use the option \"--debug\" to see details.\n"
-#~ msgstr "Ayrıntıları görmek için \"--debug\" seçeneğini kullanınız. \n"
-
-#~ msgid "No usable system locales were found.\n"
-#~ msgstr "Kullanılabilir sistem yerelleri bulunamadı. \n"
-
-#~ msgid "%s: locale name has non-ASCII characters, skipped: %s\n"
-#~ msgstr "%s:yerel adı ASCII olmayan karakterler içeriyor, atlanan: %s\n"
-
-#~ msgid "%s: locale name too long, skipped: %s\n"
-#~ msgstr "%s:yerel adı çok uzun,: %s atlandı\n"
-
-#~ msgid "creating collations ... "
-#~ msgstr "dönüşümler yükleniyor ..."
-
-#~ msgid "loading system objects' descriptions ... "
-#~ msgstr "sistem nesnelerinin açıklamaları yükleniyor ... "
-
-#~ msgid "creating system views ... "
-#~ msgstr "sistem viewları yaratılıyor ... "
-
-#~ msgid "initializing dependencies ... "
-#~ msgstr "bağlılıklar ilklendiriliyor ... "
-
-#~ msgid "setting password ... "
-#~ msgstr "şifre ayarlanıyor ... "
-
-#~ msgid "initializing pg_authid ... "
-#~ msgstr "pg_authid ilklendiriliyor ... "
-
-#~ msgid "creating template1 database in %s/base/1 ... "
-#~ msgstr "%s/base/1 içinde template1 veritabanı yaratılıyor."
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: geçerli kullanıcı adı alınamadı: %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: geçerli kullanıcı hakkında bilgi alınamadı: %s\n"
-
-#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-#~ msgstr "%s: \"%s\" transaction log dizini kullanıcının isteği üzerine silinmedi\n"
-
-#~ msgid "%s: failed to remove contents of transaction log directory\n"
-#~ msgstr "%s: transaction log dizininin içindekilerinin silme işlemini başarısız\n"
-
-#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
-#~ msgstr "%s: transaction log dizininin içindekileri siliniyor \"%s\"\n"
+#~ msgid "%s: removing transaction log directory \"%s\"\n"
+#~ msgstr "%s: transaction log dizini siliniyor \"%s\"\n"
 
 #~ msgid "%s: failed to remove transaction log directory\n"
 #~ msgstr "%s: transaction log dizini silme başarısız\n"
 
-#~ msgid "%s: removing transaction log directory \"%s\"\n"
-#~ msgstr "%s: transaction log dizini siliniyor \"%s\"\n"
+#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
+#~ msgstr "%s: transaction log dizininin içindekileri siliniyor \"%s\"\n"
+
+#~ msgid "%s: failed to remove contents of transaction log directory\n"
+#~ msgstr "%s: transaction log dizininin içindekilerinin silme işlemini başarısız\n"
+
+#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
+#~ msgstr "%s: \"%s\" transaction log dizini kullanıcının isteği üzerine silinmedi\n"
+
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s: geçerli kullanıcı hakkında bilgi alınamadı: %s\n"
+
+#~ msgid "%s: could not get current user name: %s\n"
+#~ msgstr "%s: geçerli kullanıcı adı alınamadı: %s\n"
+
+#~ msgid "creating template1 database in %s/base/1 ... "
+#~ msgstr "%s/base/1 içinde template1 veritabanı yaratılıyor."
+
+#~ msgid "initializing pg_authid ... "
+#~ msgstr "pg_authid ilklendiriliyor ... "
+
+#~ msgid "setting password ... "
+#~ msgstr "şifre ayarlanıyor ... "
+
+#~ msgid "initializing dependencies ... "
+#~ msgstr "bağlılıklar ilklendiriliyor ... "
+
+#~ msgid "creating system views ... "
+#~ msgstr "sistem viewları yaratılıyor ... "
+
+#~ msgid "loading system objects' descriptions ... "
+#~ msgstr "sistem nesnelerinin açıklamaları yükleniyor ... "
+
+#~ msgid "creating collations ... "
+#~ msgstr "dönüşümler yükleniyor ..."
+
+#~ msgid "%s: locale name too long, skipped: %s\n"
+#~ msgstr "%s:yerel adı çok uzun,: %s atlandı\n"
+
+#~ msgid "%s: locale name has non-ASCII characters, skipped: %s\n"
+#~ msgstr "%s:yerel adı ASCII olmayan karakterler içeriyor, atlanan: %s\n"
+
+#~ msgid "No usable system locales were found.\n"
+#~ msgstr "Kullanılabilir sistem yerelleri bulunamadı. \n"
+
+#~ msgid "Use the option \"--debug\" to see details.\n"
+#~ msgstr "Ayrıntıları görmek için \"--debug\" seçeneğini kullanınız. \n"
+
+#~ msgid "not supported on this platform\n"
+#~ msgstr "bu platformda desteklenmiyor\n"
+
+#~ msgid "creating conversions ... "
+#~ msgstr "dönüşümler yükleniyor ... "
+
+#~ msgid "creating dictionaries ... "
+#~ msgstr "sözlükler oluşturuluyor ... "
+
+#~ msgid "setting privileges on built-in objects ... "
+#~ msgstr "gömülü nesnelerdeki izinler ayarlanıyor ... "
+
+#~ msgid "creating information schema ... "
+#~ msgstr "information schema yaratılıyor ... "
+
+#~ msgid "loading PL/pgSQL server-side language ... "
+#~ msgstr "PL/pgSQL sunucu tarafı dili yükleniyor ... "
+
+#~ msgid "vacuuming database template1 ... "
+#~ msgstr "template1 veritabanı vakumlanıyor ... "
+
+#~ msgid "copying template1 to template0 ... "
+#~ msgstr "template1 template0'a kopyalanıyor ... "
+
+#~ msgid "copying template1 to postgres ... "
+#~ msgstr "template1, postgres'e kopyalanıyor ... "
+
+#~ msgid "%s: unrecognized authentication method \"%s\"\n"
+#~ msgstr "%s: bilinmeyen yetkilendirme yöntemi\"%s\".\n"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
+
+#~ msgid "%s: symlinks are not supported on this platform"
+#~ msgstr "%s: bu platformda sembolik bağlantı desteklenmemektedir"

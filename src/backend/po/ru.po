@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-10 17:42+0300\n"
-"PO-Revision-Date: 2019-02-08 12:58+0300\n"
+"POT-Creation-Date: 2019-02-11 20:47+0300\n"
+"PO-Revision-Date: 2019-02-11 23:19+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -181,13 +181,14 @@ msgid "could not close directory \"%s\": %s\n"
 msgstr "не удалось закрыть каталог \"%s\": %s\n"
 
 #: ../common/psprintf.c:180 ../port/path.c:630 ../port/path.c:668
-#: ../port/path.c:685 access/transam/twophase.c:1383 access/transam/xlog.c:6482
-#: lib/dshash.c:246 lib/stringinfo.c:277 libpq/auth.c:1134 libpq/auth.c:1505
-#: libpq/auth.c:1573 libpq/auth.c:2091 postmaster/bgworker.c:337
-#: postmaster/bgworker.c:907 postmaster/postmaster.c:2390
-#: postmaster/postmaster.c:2412 postmaster/postmaster.c:3979
-#: postmaster/postmaster.c:4687 postmaster/postmaster.c:4762
-#: postmaster/postmaster.c:5454 postmaster/postmaster.c:5791
+#: ../port/path.c:685 access/transam/twophase.c:1383
+#: access/transam/xlog.c:6482 lib/dshash.c:246 lib/stringinfo.c:277
+#: libpq/auth.c:1134 libpq/auth.c:1505 libpq/auth.c:1573 libpq/auth.c:2091
+#: postmaster/bgworker.c:337 postmaster/bgworker.c:907
+#: postmaster/postmaster.c:2390 postmaster/postmaster.c:2412
+#: postmaster/postmaster.c:3979 postmaster/postmaster.c:4687
+#: postmaster/postmaster.c:4762 postmaster/postmaster.c:5454
+#: postmaster/postmaster.c:5791
 #: replication/libpqwalreceiver/libpqwalreceiver.c:260
 #: replication/logical/logical.c:179 storage/buffer/localbuf.c:436
 #: storage/file/fd.c:781 storage/file/fd.c:1220 storage/file/fd.c:1381
@@ -741,11 +742,11 @@ msgstr ""
 "Это вызвано неполным разделением страницы при восстановлении после сбоя в "
 "PostgreSQL до версии 9.1."
 
-#: access/gist/gist.c:720 access/gist/gistutil.c:759 access/gist/gistutil.c:770
-#: access/gist/gistvacuum.c:261 access/hash/hashutil.c:241
-#: access/hash/hashutil.c:252 access/hash/hashutil.c:264
-#: access/hash/hashutil.c:285 access/nbtree/nbtpage.c:678
-#: access/nbtree/nbtpage.c:689
+#: access/gist/gist.c:720 access/gist/gistutil.c:759
+#: access/gist/gistutil.c:770 access/gist/gistvacuum.c:261
+#: access/hash/hashutil.c:241 access/hash/hashutil.c:252
+#: access/hash/hashutil.c:264 access/hash/hashutil.c:285
+#: access/nbtree/nbtpage.c:678 access/nbtree/nbtpage.c:689
 #, c-format
 msgid "Please REINDEX it."
 msgstr "Пожалуйста, выполните REINDEX для него."
@@ -1042,8 +1043,8 @@ msgid ""
 "Consider a function index of an MD5 hash of the value, or use full text "
 "indexing."
 msgstr ""
-"Значения, занимающие больше 1/3 страницы буфера, не могут быть "
-"индексированы.\n"
+"Значения, занимающие больше 1/3 страницы буфера, не могут быть индексированы."
+"\n"
 "Возможно, вам стоит применить индекс функции с MD5-хешем значения или "
 "полнотекстовую индексацию."
 
@@ -1713,10 +1714,9 @@ msgstr ""
 
 #: access/transam/xact.c:2308
 #, c-format
-msgid "cannot PREPARE a transaction that has operated on temporary namespace"
+msgid "cannot PREPARE a transaction that has operated on temporary objects"
 msgstr ""
-"нельзя выполнить PREPARE для транзакции, оперирующей с временным "
-"пространством имён"
+"нельзя выполнить PREPARE для транзакции, оперирующей с временными объектами"
 
 #: access/transam/xact.c:2318
 #, c-format
@@ -2232,9 +2232,9 @@ msgstr "параметр \"%s\" требует логическое значен
 msgid "parameter \"%s\" requires a temporal value"
 msgstr "параметр \"%s\" требует временное значение"
 
-#: access/transam/xlog.c:5515 catalog/dependency.c:969 catalog/dependency.c:970
-#: catalog/dependency.c:976 catalog/dependency.c:977 catalog/dependency.c:988
-#: catalog/dependency.c:989 commands/tablecmds.c:1072
+#: access/transam/xlog.c:5515 catalog/dependency.c:969
+#: catalog/dependency.c:970 catalog/dependency.c:976 catalog/dependency.c:977
+#: catalog/dependency.c:988 catalog/dependency.c:989 commands/tablecmds.c:1072
 #: commands/tablecmds.c:11297 commands/user.c:1064 commands/view.c:509
 #: libpq/auth.c:336 replication/syncrep.c:1162 storage/lmgr/deadlock.c:1139
 #: storage/lmgr/proc.c:1331 utils/adt/acl.c:5344 utils/misc/guc.c:6015
@@ -2496,8 +2496,8 @@ msgid ""
 "If you are not restoring from a backup, try removing the file \"%s/"
 "backup_label\"."
 msgstr ""
-"Если вы не восстанавливаете БД из резервной копии, попробуйте удалить файл "
-"\"%s/backup_label\"."
+"Если вы не восстанавливаете БД из резервной копии, попробуйте удалить файл \""
+"%s/backup_label\"."
 
 #: access/transam/xlog.c:6541
 #, c-format
@@ -2978,8 +2978,8 @@ msgstr ""
 #: access/transam/xlog.c:11215
 #, c-format
 msgid ""
-"pg_stop_backup still waiting for all required WAL segments to be archived "
-"(%d seconds elapsed)"
+"pg_stop_backup still waiting for all required WAL segments to be archived ("
+"%d seconds elapsed)"
 msgstr ""
 "pg_stop_backup всё ещё ждёт все требуемые сегменты WAL для архивации (прошло "
 "%d сек.)"
@@ -3062,8 +3062,8 @@ msgstr ""
 #: access/transam/xlog.c:11643
 #, c-format
 msgid ""
-"File \"%s\" was renamed to \"%s\", but file \"%s\" could not be renamed to "
-"\"%s\": %m."
+"File \"%s\" was renamed to \"%s\", but file \"%s\" could not be renamed to \""
+"%s\": %m."
 msgstr ""
 "Файл \"%s\" был переименован в \"%s\", но переименовать \"%s\" в \"%s\" не "
 "удалось: %m."
@@ -4258,8 +4258,9 @@ msgstr ""
 #: catalog/heap.c:595 commands/createas.c:204 commands/createas.c:501
 #: commands/indexcmds.c:1588 commands/tablecmds.c:14372 commands/view.c:105
 #: regex/regc_pg_locale.c:263 utils/adt/formatting.c:1536
-#: utils/adt/formatting.c:1658 utils/adt/formatting.c:1781 utils/adt/like.c:184
-#: utils/adt/selfuncs.c:5807 utils/adt/varlena.c:1416 utils/adt/varlena.c:1881
+#: utils/adt/formatting.c:1658 utils/adt/formatting.c:1781
+#: utils/adt/like.c:184 utils/adt/selfuncs.c:5807 utils/adt/varlena.c:1416
+#: utils/adt/varlena.c:1881
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
 msgstr "Задайте правило сортировки явно в предложении COLLATE."
@@ -4567,8 +4568,8 @@ msgstr "перемещать объекты в/из внутренних схе�
 msgid "cannot move objects into or out of TOAST schema"
 msgstr "перемещать объекты в/из схем TOAST нельзя"
 
-#: catalog/namespace.c:3029 commands/schemacmds.c:256 commands/schemacmds.c:334
-#: commands/tablecmds.c:1017
+#: catalog/namespace.c:3029 commands/schemacmds.c:256
+#: commands/schemacmds.c:334 commands/tablecmds.c:1017
 #, c-format
 msgid "schema \"%s\" does not exist"
 msgstr "схема \"%s\" не существует"
@@ -4623,8 +4624,8 @@ msgstr "\"%s\" - это не таблица"
 msgid "\"%s\" is not a view"
 msgstr "\"%s\" - это не представление"
 
-#: catalog/objectaddress.c:1252 commands/matview.c:172 commands/tablecmds.c:243
-#: commands/tablecmds.c:14096
+#: catalog/objectaddress.c:1252 commands/matview.c:172
+#: commands/tablecmds.c:243 commands/tablecmds.c:14096
 #, c-format
 msgid "\"%s\" is not a materialized view"
 msgstr "\"%s\" - это не материализованное представление"
@@ -5077,14 +5078,14 @@ msgid "operator family %s for access method %s"
 msgstr "семейство операторов %s для метода доступа %s"
 
 #: catalog/partition.c:180 commands/analyze.c:1514 commands/indexcmds.c:928
-#: commands/tablecmds.c:944 commands/tablecmds.c:7897 commands/tablecmds.c:9690
-#: commands/tablecmds.c:14985 commands/tablecmds.c:15514
-#: executor/execExprInterp.c:3275 executor/execMain.c:1940
-#: executor/execMain.c:2019 executor/execMain.c:2067 executor/execMain.c:2173
-#: executor/execPartition.c:462 executor/execPartition.c:522
-#: executor/execPartition.c:638 executor/execPartition.c:741
-#: executor/execPartition.c:812 executor/execPartition.c:1010
-#: executor/nodeModifyTable.c:1859
+#: commands/tablecmds.c:944 commands/tablecmds.c:7897
+#: commands/tablecmds.c:9690 commands/tablecmds.c:14985
+#: commands/tablecmds.c:15514 executor/execExprInterp.c:3275
+#: executor/execMain.c:1940 executor/execMain.c:2019 executor/execMain.c:2067
+#: executor/execMain.c:2173 executor/execPartition.c:462
+#: executor/execPartition.c:522 executor/execPartition.c:638
+#: executor/execPartition.c:741 executor/execPartition.c:812
+#: executor/execPartition.c:1010 executor/nodeModifyTable.c:1859
 msgid "could not convert row type"
 msgstr "не удалось преобразовать тип строки"
 
@@ -5225,12 +5226,12 @@ msgstr ""
 "оператор сортировки можно указать только для агрегатных функций с одним "
 "аргументом"
 
-#: catalog/pg_aggregate.c:819 commands/typecmds.c:1766 commands/typecmds.c:1817
-#: commands/typecmds.c:1848 commands/typecmds.c:1871 commands/typecmds.c:1892
-#: commands/typecmds.c:1919 commands/typecmds.c:1946 commands/typecmds.c:2023
-#: commands/typecmds.c:2065 parser/parse_func.c:408 parser/parse_func.c:437
-#: parser/parse_func.c:462 parser/parse_func.c:476 parser/parse_func.c:596
-#: parser/parse_func.c:616 parser/parse_func.c:2086
+#: catalog/pg_aggregate.c:819 commands/typecmds.c:1766
+#: commands/typecmds.c:1817 commands/typecmds.c:1848 commands/typecmds.c:1871
+#: commands/typecmds.c:1892 commands/typecmds.c:1919 commands/typecmds.c:1946
+#: commands/typecmds.c:2023 commands/typecmds.c:2065 parser/parse_func.c:408
+#: parser/parse_func.c:437 parser/parse_func.c:462 parser/parse_func.c:476
+#: parser/parse_func.c:596 parser/parse_func.c:616 parser/parse_func.c:2086
 #, c-format
 msgid "function %s does not exist"
 msgstr "функция %s не существует"
@@ -5989,8 +5990,8 @@ msgid ""
 "\"%s\": scanned %d of %u pages, containing %.0f live rows and %.0f dead "
 "rows; %d rows in sample, %.0f estimated total rows"
 msgstr ""
-"\"%s\": просканировано страниц: %d из %u, они содержат \"живых\" строк: "
-"%.0f, \"мёртвых\" строк: %.0f; строк в выборке: %d, примерное общее число "
+"\"%s\": просканировано страниц: %d из %u, они содержат \"живых\" строк: %."
+"0f, \"мёртвых\" строк: %.0f; строк в выборке: %d, примерное общее число "
 "строк: %.0f"
 
 #: commands/analyze.c:1368
@@ -6920,8 +6921,8 @@ msgid ""
 "new collation (%s) is incompatible with the collation of the template "
 "database (%s)"
 msgstr ""
-"новое правило сортировки (%s) несовместимо с правилом в шаблоне базы данных "
-"(%s)"
+"новое правило сортировки (%s) несовместимо с правилом в шаблоне базы данных ("
+"%s)"
 
 #: commands/dbcommands.c:403
 #, c-format
@@ -6938,8 +6939,8 @@ msgid ""
 "new LC_CTYPE (%s) is incompatible with the LC_CTYPE of the template database "
 "(%s)"
 msgstr ""
-"новый параметр LC_CTYPE (%s) несовместим с LC_CTYPE в шаблоне базы данных "
-"(%s)"
+"новый параметр LC_CTYPE (%s) несовместим с LC_CTYPE в шаблоне базы данных ("
+"%s)"
 
 #: commands/dbcommands.c:410
 #, c-format
@@ -7102,8 +7103,8 @@ msgid ""
 "There are %d other session(s) and %d prepared transaction(s) using the "
 "database."
 msgstr ""
-"С этой базой данных связаны другие сеансы (%d) и подготовленные транзакции "
-"(%d)."
+"С этой базой данных связаны другие сеансы (%d) и подготовленные транзакции ("
+"%d)."
 
 #: commands/dbcommands.c:1990
 #, c-format
@@ -7544,8 +7545,8 @@ msgstr "версия FROM должна отличаться от устанав�
 #: commands/extension.c:1391
 #, c-format
 msgid ""
-"extension \"%s\" has no installation script nor update path for version \"%s"
-"\""
+"extension \"%s\" has no installation script nor update path for version \""
+"%s\""
 msgstr ""
 "для расширения \"%s\" не определён путь установки или обновления для версии "
 "\"%s\""
@@ -8172,8 +8173,8 @@ msgstr ""
 msgid "cannot create indexes on temporary tables of other sessions"
 msgstr "создавать индексы во временных таблицах других сеансов нельзя"
 
-#: commands/indexcmds.c:542 commands/tablecmds.c:617 commands/tablecmds.c:11445
-#: commands/tablecmds.c:11579
+#: commands/indexcmds.c:542 commands/tablecmds.c:617
+#: commands/tablecmds.c:11445 commands/tablecmds.c:11579
 #, c-format
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr ""
@@ -8287,9 +8288,9 @@ msgstr "включаемые столбцы не поддерживают ука
 msgid "could not determine which collation to use for index expression"
 msgstr "не удалось определить правило сортировки для индексного выражения"
 
-#: commands/indexcmds.c:1595 commands/tablecmds.c:14379 commands/typecmds.c:833
-#: parser/parse_expr.c:2772 parser/parse_type.c:549 parser/parse_utilcmd.c:3392
-#: utils/adt/misc.c:681
+#: commands/indexcmds.c:1595 commands/tablecmds.c:14379
+#: commands/typecmds.c:833 parser/parse_expr.c:2772 parser/parse_type.c:549
+#: parser/parse_utilcmd.c:3392 utils/adt/misc.c:681
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "тип %s не поддерживает сортировку (COLLATION)"
@@ -8617,17 +8618,17 @@ msgstr "функция %d(%s,%s) не существует в семействе
 #: commands/opclasscmds.c:1696
 #, c-format
 msgid ""
-"operator class \"%s\" for access method \"%s\" already exists in schema \"%s"
-"\""
+"operator class \"%s\" for access method \"%s\" already exists in schema \""
+"%s\""
 msgstr ""
-"класс операторов \"%s\" для метода доступа \"%s\" уже существует в схеме \"%s"
-"\""
+"класс операторов \"%s\" для метода доступа \"%s\" уже существует в схеме \""
+"%s\""
 
 #: commands/opclasscmds.c:1719
 #, c-format
 msgid ""
-"operator family \"%s\" for access method \"%s\" already exists in schema \"%s"
-"\""
+"operator family \"%s\" for access method \"%s\" already exists in schema \""
+"%s\""
 msgstr ""
 "семейство операторов \"%s\" для метода доступа \"%s\" уже существует в схеме "
 "\"%s\""
@@ -9215,8 +9216,8 @@ msgid ""
 "could not connect to publisher when attempting to drop the replication slot "
 "\"%s\""
 msgstr ""
-"не удалось подключиться к серверу публикации для удаления слота репликации "
-"\"%s\""
+"не удалось подключиться к серверу публикации для удаления слота репликации \""
+"%s\""
 
 #: commands/subscriptioncmds.c:974 commands/subscriptioncmds.c:988
 #: replication/logical/tablesync.c:905 replication/logical/tablesync.c:927
@@ -9317,8 +9318,8 @@ msgstr ""
 "Выполните DROP MATERIALIZED VIEW для удаления материализованного "
 "представления."
 
-#: commands/tablecmds.c:247 commands/tablecmds.c:271 commands/tablecmds.c:15449
-#: parser/parse_utilcmd.c:1982
+#: commands/tablecmds.c:247 commands/tablecmds.c:271
+#: commands/tablecmds.c:15449 parser/parse_utilcmd.c:1982
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "индекс \"%s\" не существует"
@@ -9663,8 +9664,8 @@ msgstr ""
 msgid "partition constraint is violated by some row"
 msgstr "ограничение секции нарушает некоторая строка"
 
-#: commands/tablecmds.c:5007 commands/trigger.c:310 rewrite/rewriteDefine.c:266
-#: rewrite/rewriteDefine.c:919
+#: commands/tablecmds.c:5007 commands/trigger.c:310
+#: rewrite/rewriteDefine.c:266 rewrite/rewriteDefine.c:919
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\" - это не таблица и не представление"
@@ -10005,8 +10006,8 @@ msgid ""
 "cannot use ONLY for foreign key on partitioned table \"%s\" referencing "
 "relation \"%s\""
 msgstr ""
-"нельзя использовать ONLY для стороннего ключа в секционированной таблице \"%s"
-"\", ссылающегося на отношение \"%s\""
+"нельзя использовать ONLY для стороннего ключа в секционированной таблице \""
+"%s\", ссылающегося на отношение \"%s\""
 
 #: commands/tablecmds.c:7379
 #, c-format
@@ -10399,14 +10400,14 @@ msgstr "в дочерней таблице не хватает столбца \"
 #, c-format
 msgid "child table \"%s\" has different definition for check constraint \"%s\""
 msgstr ""
-"дочерняя таблица \"%s\" содержит другое определение ограничения-проверки \"%s"
-"\""
+"дочерняя таблица \"%s\" содержит другое определение ограничения-проверки \""
+"%s\""
 
 #: commands/tablecmds.c:12393
 #, c-format
 msgid ""
-"constraint \"%s\" conflicts with non-inherited constraint on child table \"%s"
-"\""
+"constraint \"%s\" conflicts with non-inherited constraint on child table \""
+"%s\""
 msgstr ""
 "ограничение \"%s\" конфликтует с ненаследуемым ограничением дочерней таблицы "
 "\"%s\""
@@ -10474,8 +10475,8 @@ msgstr ""
 #, c-format
 msgid "cannot use non-immediate index \"%s\" as replica identity"
 msgstr ""
-"для идентификации реплики нельзя использовать не непосредственный индекс \"%s"
-"\""
+"для идентификации реплики нельзя использовать не непосредственный индекс \""
+"%s\""
 
 #: commands/tablecmds.c:13071
 #, c-format
@@ -10693,16 +10694,16 @@ msgstr "подключить родитель в иерархии наследо
 msgid ""
 "cannot attach a temporary relation as partition of permanent relation \"%s\""
 msgstr ""
-"подключить временное отношение в качестве секции постоянного отношения \"%s"
-"\" нельзя"
+"подключить временное отношение в качестве секции постоянного отношения \""
+"%s\" нельзя"
 
 #: commands/tablecmds.c:14725
 #, c-format
 msgid ""
 "cannot attach a permanent relation as partition of temporary relation \"%s\""
 msgstr ""
-"подключить постоянное отношение в качестве секции временного отношения \"%s"
-"\" нельзя"
+"подключить постоянное отношение в качестве секции временного отношения \""
+"%s\" нельзя"
 
 #: commands/tablecmds.c:14733
 #, c-format
@@ -10784,8 +10785,8 @@ msgid ""
 "The index \"%s\" belongs to a constraint in table \"%s\" but no constraint "
 "exists for index \"%s\"."
 msgstr ""
-"Индекс \"%s\" принадлежит ограничению в таблице \"%s\", но для индекса \"%s"
-"\" ограничения нет."
+"Индекс \"%s\" принадлежит ограничению в таблице \"%s\", но для индекса \""
+"%s\" ограничения нет."
 
 #: commands/tablecmds.c:15602
 #, c-format
@@ -11177,9 +11178,10 @@ msgstr ""
 "Возможно, для распространения изменений в другие строки следует использовать "
 "триггер AFTER вместо BEFORE."
 
-#: commands/trigger.c:3320 executor/execMain.c:2727 executor/nodeLockRows.c:220
-#: executor/nodeModifyTable.c:225 executor/nodeModifyTable.c:769
-#: executor/nodeModifyTable.c:1257 executor/nodeModifyTable.c:1433
+#: commands/trigger.c:3320 executor/execMain.c:2727
+#: executor/nodeLockRows.c:220 executor/nodeModifyTable.c:225
+#: executor/nodeModifyTable.c:769 executor/nodeModifyTable.c:1257
+#: executor/nodeModifyTable.c:1433
 #, c-format
 msgid "could not serialize access due to concurrent update"
 msgstr "не удалось сериализовать доступ из-за параллельного изменения"
@@ -12239,8 +12241,8 @@ msgstr ""
 msgid ""
 "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr ""
-"тип параметра %d (%s) не соответствует тому, с которым подготавливался план "
-"(%s)"
+"тип параметра %d (%s) не соответствует тому, с которым подготавливался план ("
+"%s)"
 
 #: executor/execCurrent.c:292 executor/execExprInterp.c:2296
 #, c-format
@@ -12565,8 +12567,8 @@ msgstr "новая строка нарушает ограничение-пров
 #, c-format
 msgid "new row violates row-level security policy \"%s\" for table \"%s\""
 msgstr ""
-"новая строка нарушает политику защиты на уровне строк \"%s\" для таблицы \"%s"
-"\""
+"новая строка нарушает политику защиты на уровне строк \"%s\" для таблицы \""
+"%s\""
 
 #: executor/execMain.c:2208
 #, c-format
@@ -12586,8 +12588,8 @@ msgstr ""
 #: executor/execMain.c:2220
 #, c-format
 msgid ""
-"new row violates row-level security policy (USING expression) for table \"%s"
-"\""
+"new row violates row-level security policy (USING expression) for table \""
+"%s\""
 msgstr ""
 "новая строка нарушает политику защиты на уровне строк (выражение USING) для "
 "таблицы \"%s\""
@@ -13371,8 +13373,8 @@ msgstr ""
 #: libpq/auth.c:432
 #, c-format
 msgid ""
-"pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s"
-"\", %s"
+"pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \""
+"%s\", %s"
 msgstr ""
 "pg_hba.conf отвергает подключение: компьютер \"%s\", пользователь \"%s\", "
 "база данных \"%s\", %s"
@@ -13418,8 +13420,8 @@ msgstr "Получить имя компьютера из IP-адреса кли
 #: libpq/auth.c:491
 #, c-format
 msgid ""
-"no pg_hba.conf entry for replication connection from host \"%s\", user \"%s"
-"\", %s"
+"no pg_hba.conf entry for replication connection from host \"%s\", user \""
+"%s\", %s"
 msgstr ""
 "в pg_hba.conf нет записи, разрешающей подключение для репликации с "
 "компьютера \"%s\" для пользователя \"%s\", %s"
@@ -13436,15 +13438,15 @@ msgstr ""
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s"
 msgstr ""
-"в pg_hba.conf нет записи для компьютера \"%s\", пользователя \"%s\", базы "
-"\"%s\", %s"
+"в pg_hba.conf нет записи для компьютера \"%s\", пользователя \"%s\", базы \""
+"%s\", %s"
 
 #: libpq/auth.c:516
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\""
 msgstr ""
-"в pg_hba.conf нет записи для компьютера \"%s\", пользователя \"%s\", базы "
-"\"%s\""
+"в pg_hba.conf нет записи для компьютера \"%s\", пользователя \"%s\", базы \""
+"%s\""
 
 #: libpq/auth.c:669
 #, c-format
@@ -14164,8 +14166,8 @@ msgstr "Пароль пользователя \"%s\" представлен в �
 #, c-format
 msgid "authentication file token too long, skipping: \"%s\""
 msgstr ""
-"слишком длинный элемент в файле конфигурации безопасности пропускается: \"%s"
-"\""
+"слишком длинный элемент в файле конфигурации безопасности пропускается: \""
+"%s\""
 
 #: libpq/hba.c:407
 #, c-format
@@ -14385,8 +14387,8 @@ msgstr ""
 #: libpq/hba.c:1533
 #, c-format
 msgid ""
-"authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix"
-"\", or \"ldapsuffix\" to be set"
+"authentication method \"ldap\" requires argument \"ldapbasedn\", "
+"\"ldapprefix\", or \"ldapsuffix\" to be set"
 msgstr ""
 "для метода проверки подлинности \"ldap\" требуется установить аргументы "
 "\"ldapbasedn\" и \"ldapprefix\" или \"ldapsuffix\""
@@ -14410,8 +14412,8 @@ msgstr "список секретов RADIUS не может быть пусты
 #, c-format
 msgid "the number of %s (%d) must be 1 or the same as the number of %s (%d)"
 msgstr ""
-"количество элементов %s (%d) должно равняться 1 или количеству элементов %s "
-"(%d)"
+"количество элементов %s (%d) должно равняться 1 или количеству элементов %s ("
+"%d)"
 
 #: libpq/hba.c:1663
 msgid "ident, peer, gssapi, sspi, and cert"
@@ -14525,8 +14527,8 @@ msgstr ""
 #, c-format
 msgid "provided user name (%s) and authenticated user name (%s) do not match"
 msgstr ""
-"указанное имя пользователя (%s) не совпадает с именем прошедшего проверку "
-"(%s)"
+"указанное имя пользователя (%s) не совпадает с именем прошедшего проверку ("
+"%s)"
 
 #: libpq/hba.c:2902
 #, c-format
@@ -14614,8 +14616,8 @@ msgid ""
 "Is another postmaster already running on port %d? If not, remove socket file "
 "\"%s\" and retry."
 msgstr ""
-"Возможно порт %d занят другим процессом postmaster? Если нет, удалите файл "
-"\"%s\" и повторите попытку."
+"Возможно порт %d занят другим процессом postmaster? Если нет, удалите файл \""
+"%s\" и повторите попытку."
 
 #: libpq/pqcomm.c:544
 #, c-format
@@ -14969,8 +14971,8 @@ msgstr ""
 #: main/main.c:373
 #, c-format
 msgid ""
-"  DBNAME             database name (mandatory argument in bootstrapping "
-"mode)\n"
+"  DBNAME             database name (mandatory argument in bootstrapping mode)"
+"\n"
 msgstr ""
 "  ИМЯ_БД             имя базы данных (необходимо в режиме инициализации)\n"
 
@@ -17587,8 +17589,8 @@ msgid ""
 msgstr ""
 "Эта ошибка НЕ означает, что на диске нет места. Вероятнее всего, были заняты "
 "все доступные ID разделяемой памяти (в этом случае вам надо увеличить "
-"параметр SHMMNI в ядре), либо превышен предельный размер разделяемой "
-"памяти.\n"
+"параметр SHMMNI в ядре), либо превышен предельный размер разделяемой памяти."
+"\n"
 "Подробная информация о настройке разделяемой памяти содержится в "
 "документации PostgreSQL."
 
@@ -18286,8 +18288,8 @@ msgstr "%s: подходящий исполняемый файл postgres не �
 #: postmaster/postmaster.c:1478 utils/misc/tzparser.c:341
 #, c-format
 msgid ""
-"This may indicate an incomplete PostgreSQL installation, or that the file "
-"\"%s\" has been moved away from its proper location."
+"This may indicate an incomplete PostgreSQL installation, or that the file \""
+"%s\" has been moved away from its proper location."
 msgstr ""
 "Возможно, PostgreSQL установлен не полностью или файла \"%s\" нет в "
 "положенном месте."
@@ -18692,8 +18694,8 @@ msgstr "отобразить файл серверных переменных н
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr ""
-"отключить отображение файла серверных переменных не удалось (код ошибки: "
-"%lu)\n"
+"отключить отображение файла серверных переменных не удалось (код ошибки: %lu)"
+"\n"
 
 #: postmaster/postmaster.c:6210
 #, c-format
@@ -19150,8 +19152,8 @@ msgstr "в массиве должно быть чётное число элем
 #: replication/logical/logicalfuncs.c:269
 #, c-format
 msgid ""
-"logical decoding output plugin \"%s\" produces binary output, but function "
-"\"%s\" expects textual data"
+"logical decoding output plugin \"%s\" produces binary output, but function \""
+"%s\" expects textual data"
 msgstr ""
 "модуль вывода логического декодирования \"%s\" выдаёт двоичные данные, но "
 "функция \"%s\" ожидает текстовые"
@@ -19443,8 +19445,8 @@ msgstr ""
 #: replication/logical/worker.c:307
 #, c-format
 msgid ""
-"processing remote data for replication target relation \"%s.%s\" column \"%s"
-"\", remote type %s, local type %s"
+"processing remote data for replication target relation \"%s.%s\" column \""
+"%s\", remote type %s, local type %s"
 msgstr ""
 "обработка внешних данных для целевого отношения репликации \"%s.%s\" столбца "
 "\"%s\", удалённый тип %s, локальный тип %s"
@@ -20237,8 +20239,8 @@ msgstr "Элемент списка RETURNING имеет тип %s, тогда �
 #, c-format
 msgid "SELECT rule's target entry %d has different size from column \"%s\""
 msgstr ""
-"элемент %d результата правила для SELECT имеет размер, отличный от столбца "
-"\"%s\""
+"элемент %d результата правила для SELECT имеет размер, отличный от столбца \""
+"%s\""
 
 #: rewrite/rewriteDefine.c:747
 #, c-format
@@ -20644,8 +20646,8 @@ msgstr ""
 msgid ""
 "could not determine size of temporary file \"%s\" from BufFile \"%s\": %m"
 msgstr ""
-"не удалось определить размер временного файла \"%s\", входящего в BufFile "
-"\"%s\": %m"
+"не удалось определить размер временного файла \"%s\", входящего в BufFile \""
+"%s\": %m"
 
 #: storage/file/fd.c:451 storage/file/fd.c:523 storage/file/fd.c:559
 #, c-format
@@ -20880,8 +20882,8 @@ msgid ""
 "ShmemIndex entry size is wrong for data structure \"%s\": expected %zu, "
 "actual %zu"
 msgstr ""
-"размер записи ShmemIndex не соответствует структуре данных \"%s"
-"\" (ожидалось: %zu, фактически: %zu)"
+"размер записи ShmemIndex не соответствует структуре данных \"%s\" "
+"(ожидалось: %zu, фактически: %zu)"
 
 #: storage/ipc/shmem.c:453
 #, c-format
@@ -22335,8 +22337,9 @@ msgstr "разрезание массивов постоянной длины н
 #: utils/adt/arrayfuncs.c:2861 utils/adt/arrayfuncs.c:5802
 #: utils/adt/arrayfuncs.c:5828 utils/adt/arrayfuncs.c:5839
 #: utils/adt/json.c:2323 utils/adt/json.c:2398 utils/adt/jsonb.c:1282
-#: utils/adt/jsonb.c:1368 utils/adt/jsonfuncs.c:4295 utils/adt/jsonfuncs.c:4446
-#: utils/adt/jsonfuncs.c:4491 utils/adt/jsonfuncs.c:4538
+#: utils/adt/jsonb.c:1368 utils/adt/jsonfuncs.c:4295
+#: utils/adt/jsonfuncs.c:4446 utils/adt/jsonfuncs.c:4491
+#: utils/adt/jsonfuncs.c:4538
 #, c-format
 msgid "wrong number of array subscripts"
 msgstr "неверное число индексов массива"
@@ -23689,8 +23692,8 @@ msgstr "элемент массива флагов не является стр�
 #: utils/adt/jsonfuncs.c:4996 utils/adt/jsonfuncs.c:5018
 #, c-format
 msgid ""
-"Possible values are: \"string\", \"numeric\", \"boolean\", \"key\", and \"all"
-"\""
+"Possible values are: \"string\", \"numeric\", \"boolean\", \"key\", and "
+"\"all\""
 msgstr ""
 "Допустимые значения: \"string\", \"numeric\", \"boolean\", \"key\" и \"all\""
 
@@ -24100,8 +24103,8 @@ msgstr "не удалось создать локаль \"%s\": %m"
 #: utils/adt/pg_locale.c:1252
 #, c-format
 msgid ""
-"The operating system could not find any locale data for the locale name \"%s"
-"\"."
+"The operating system could not find any locale data for the locale name \""
+"%s\"."
 msgstr "Операционная система не может найти данные локали с именем \"%s\"."
 
 #: utils/adt/pg_locale.c:1353
@@ -24469,8 +24472,8 @@ msgid ""
 "update or delete on table \"%s\" violates foreign key constraint \"%s\" on "
 "table \"%s\""
 msgstr ""
-"UPDATE или DELETE в таблице \"%s\" нарушает ограничение внешнего ключа \"%s"
-"\" таблицы \"%s\""
+"UPDATE или DELETE в таблице \"%s\" нарушает ограничение внешнего ключа \""
+"%s\" таблицы \"%s\""
 
 #: utils/adt/ri_triggers.c:2785
 #, c-format
@@ -24528,14 +24531,14 @@ msgstr "неверный тип данных: %u, ожидался %u"
 msgid "improper binary format in record column %d"
 msgstr "неподходящий двоичный формат в столбце записи %d"
 
-#: utils/adt/rowtypes.c:910 utils/adt/rowtypes.c:1154 utils/adt/rowtypes.c:1413
-#: utils/adt/rowtypes.c:1657
+#: utils/adt/rowtypes.c:910 utils/adt/rowtypes.c:1154
+#: utils/adt/rowtypes.c:1413 utils/adt/rowtypes.c:1657
 #, c-format
 msgid "cannot compare dissimilar column types %s and %s at record column %d"
 msgstr "не удалось сравнить различные типы столбцов %s и %s, столбец записи %d"
 
-#: utils/adt/rowtypes.c:999 utils/adt/rowtypes.c:1225 utils/adt/rowtypes.c:1508
-#: utils/adt/rowtypes.c:1731
+#: utils/adt/rowtypes.c:999 utils/adt/rowtypes.c:1225
+#: utils/adt/rowtypes.c:1508 utils/adt/rowtypes.c:1731
 #, c-format
 msgid "cannot compare record types with different numbers of columns"
 msgstr "сравнивать типы записей с разным числом столбцов нельзя"
@@ -25213,8 +25216,8 @@ msgstr "ни префикс, ни URI пространства имён не м�
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr ""
-"не удалось зарегистрировать пространство имён XML с префиксом \"%s\" и URI "
-"\"%s\""
+"не удалось зарегистрировать пространство имён XML с префиксом \"%s\" и URI \""
+"%s\""
 
 #: utils/adt/xml.c:4312
 #, c-format
@@ -26237,8 +26240,8 @@ msgstr "Параметры для разработчиков"
 msgid ""
 "Valid units for this parameter are \"B\", \"kB\", \"MB\", \"GB\", and \"TB\"."
 msgstr ""
-"Допустимые единицы измерения для этого параметра: \"B\", \"kB\", \"MB\", \"GB"
-"\" и \"TB\"."
+"Допустимые единицы измерения для этого параметра: \"B\", \"kB\", \"MB\", "
+"\"GB\" и \"TB\"."
 
 #: utils/misc/guc.c:764
 msgid ""
@@ -28345,8 +28348,9 @@ msgid ""
 "Cannot enable \"log_statement_stats\" when \"log_parser_stats\", "
 "\"log_planner_stats\", or \"log_executor_stats\" is true."
 msgstr ""
-"Параметр \"log_statement_stats\" нельзя включить, когда \"log_parser_stats"
-"\", \"log_planner_stats\" или \"log_executor_stats\" равны true."
+"Параметр \"log_statement_stats\" нельзя включить, когда "
+"\"log_parser_stats\", \"log_planner_stats\" или \"log_executor_stats\" равны "
+"true."
 
 #: utils/misc/guc.c:10710
 #, c-format
@@ -28387,8 +28391,8 @@ msgstr "CPU: пользов.: %d.%02d с, система: %d.%02d с, прошл
 #, c-format
 msgid "query would be affected by row-level security policy for table \"%s\""
 msgstr ""
-"запрос будет ограничен политикой безопасности на уровне строк для таблицы "
-"\"%s\""
+"запрос будет ограничен политикой безопасности на уровне строк для таблицы \""
+"%s\""
 
 #: utils/misc/rls.c:129
 #, c-format
@@ -28453,8 +28457,8 @@ msgstr "краткое обозначение часового пояса \"%s\"
 #: utils/misc/tzparser.c:239
 #, c-format
 msgid ""
-"Entry in time zone file \"%s\", line %d, conflicts with entry in file \"%s"
-"\", line %d."
+"Entry in time zone file \"%s\", line %d, conflicts with entry in file \""
+"%s\", line %d."
 msgstr ""
 "Запись в файле часовых поясов \"%s\", строке %d, противоречит записи в файле "
 "\"%s\", строке %d."
@@ -29210,6 +29214,12 @@ msgstr "нестандартное использование спецсимво
 msgid "Use the escape string syntax for escapes, e.g., E'\\r\\n'."
 msgstr "Используйте для записи спецсимволов синтаксис спецстрок E'\\r\\n'."
 
+#~ msgid ""
+#~ "cannot PREPARE a transaction that has operated on temporary namespace"
+#~ msgstr ""
+#~ "нельзя выполнить PREPARE для транзакции, оперирующей с временным "
+#~ "пространством имён"
+
 #~ msgid "could not open BufFile \"%s\""
 #~ msgstr "не удалось открыть буферный файл \"%s\""
 
@@ -29464,8 +29474,8 @@ msgstr "Используйте для записи спецсимволов си
 
 #~ msgid "index row size %lu exceeds maximum %lu for index \"%s\""
 #~ msgstr ""
-#~ "размер строки индекса (%lu) больше предельного размера (%lu) (индекс \"%s"
-#~ "\")"
+#~ "размер строки индекса (%lu) больше предельного размера (%lu) (индекс \""
+#~ "%s\")"
 
 #~ msgid ""
 #~ "brin operator family \"%s\" contains function %s with invalid support "
@@ -29874,8 +29884,8 @@ msgstr "Используйте для записи спецсимволов си
 #~ "хеш-индексы не записываются в журнал, использовать их не рекомендуется"
 
 #~ msgid ""
-#~ "changing return type of function %s from \"opaque\" to \"language_handler"
-#~ "\""
+#~ "changing return type of function %s from \"opaque\" to "
+#~ "\"language_handler\""
 #~ msgstr ""
 #~ "тип возврата функции %s меняется с \"opaque\" на \"language_handler\""
 
@@ -29963,8 +29973,8 @@ msgstr "Используйте для записи спецсимволов си
 #~ "not enough shared memory for elements of data structure \"%s\" (%zu bytes "
 #~ "requested)"
 #~ msgstr ""
-#~ "недостаточно разделяемой памяти для элементов структуры данных \"%s"
-#~ "\" (запрошено байт: %zu)"
+#~ "недостаточно разделяемой памяти для элементов структуры данных \"%s\" "
+#~ "(запрошено байт: %zu)"
 
 #~ msgid "invalid input syntax for type boolean: \"%s\""
 #~ msgstr "неверное значение для логического типа: \"%s\""
@@ -30472,8 +30482,8 @@ msgstr "Используйте для записи спецсимволов си
 #~ msgstr ""
 #~ "автоматическая очистка таблицы \"%s.%s.%s\": сканирований индекса: %d\n"
 #~ "страниц удалено: %d, осталось: %d\n"
-#~ "кортежей удалено: %.0f, осталось: %.0f, мёртвых (но пока неудаляемых): "
-#~ "%.0f\n"
+#~ "кортежей удалено: %.0f, осталось: %.0f, мёртвых (но пока неудаляемых): %."
+#~ "0f\n"
 #~ "использование буфера: попаданий: %d, промахов: %d, загрязнено: %d\n"
 #~ "средняя скорость чтения: %.3f МБ/сек, средняя скорость записи: %.3f МБ/"
 #~ "сек\n"

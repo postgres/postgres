@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-25 12:45+0000\n"
+"POT-Creation-Date: 2019-04-26 09:45+0000\n"
 "PO-Revision-Date: 2017-09-25 10:46-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -45,8 +45,7 @@ msgstr[1] "Midiendo sobrecosto de lectura de reloj durante %d segundos.\n"
 #: pg_test_timing.c:102
 #, c-format
 msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
-msgstr ""
-"%s: la duración debe ser un número entero positivo (la duración es \"%d\")\n"
+msgstr "%s: la duración debe ser un número entero positivo (la duración es \"%d\")\n"
 
 #: pg_test_timing.c:140
 #, c-format

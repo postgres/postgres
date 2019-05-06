@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-01-02 21:46+0000\n"
-"PO-Revision-Date: 2019-01-03 05:58+0100\n"
+"PO-Revision-Date: 2019-04-27 14:38+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -423,17 +423,17 @@ msgstr "%s: misslyckades att återställa lokalspråk \"%s\"\n"
 #: initdb.c:2269
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s: okänt lokalnamn \"%s\".\n"
+msgstr "%s: ogiltigt lokalnamn \"%s\".\n"
 
 #: initdb.c:2281
 #, c-format
 msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
-msgstr "%s: ogiltigt språkval. Kontrollera miljövariablerna LANG, LC_*.\n"
+msgstr "%s: ogiltig lokalinställning. Kontrollera miljövariablerna LANG och LC_*.\n"
 
 #: initdb.c:2309
 #, c-format
 msgid "%s: encoding mismatch\n"
-msgstr "%s: Oförenliga teckenkodningar.\n"
+msgstr "%s: teckenkodning matchar inte.\n"
 
 #: initdb.c:2311
 #, c-format
@@ -444,11 +444,11 @@ msgid ""
 "Rerun %s and either do not specify an encoding explicitly,\n"
 "or choose a matching combination.\n"
 msgstr ""
-"Teckenkodningen du har valt (%s) och kodningen svarande\n"
-"mot lokalnamnet (%s), de passar inte ihop. Detta kan leda\n"
-"till problem för funktioner som arbetar med strängar. Detta\n"
-"undgås genom att utföra %s igen och då låta bli bli att\n"
-"sätta kodning, eller i annat fall att välja bättre teckensats.\n"
+"Teckenkodningen du har valt (%s) och teckenkodningen som\n"
+"valda lokalen använder (%s) passar inte ihop. Detta kommer leda\n"
+"till problem för funktioner som arbetar med strängar.\n"
+"Kör %s igen och låt bli ange teckenkodning eller välj\n"
+"en kombination som passar ihop.\n"
 
 #: initdb.c:2383
 #, c-format

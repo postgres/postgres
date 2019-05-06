@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-09-23 22:47+0000\n"
-"PO-Revision-Date: 2018-09-24 06:47+0200\n"
+"POT-Creation-Date: 2019-03-30 17:17+0000\n"
+"PO-Revision-Date: 2019-03-31 10:23+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: pg_verify_checksums.c:38
+#: pg_verify_checksums.c:39
 #, c-format
 msgid ""
 "%s verifies data checksums in a PostgreSQL database cluster.\n"
@@ -26,17 +26,17 @@ msgstr ""
 "%s verifierar datans kontrollsummor i ett PostgreSQL-databaskluster.\n"
 "\n"
 
-#: pg_verify_checksums.c:39
+#: pg_verify_checksums.c:40
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: pg_verify_checksums.c:40
+#: pg_verify_checksums.c:41
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [FLAGGA]... [DATAKATALOG]\n"
 
-#: pg_verify_checksums.c:41
+#: pg_verify_checksums.c:42
 #, c-format
 msgid ""
 "\n"
@@ -45,32 +45,32 @@ msgstr ""
 "\n"
 "Flaggor:\n"
 
-#: pg_verify_checksums.c:42
+#: pg_verify_checksums.c:43
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
 msgstr " [-D, --pgdata=]DATADIR  datakatalog\n"
 
-#: pg_verify_checksums.c:43
+#: pg_verify_checksums.c:44
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          mata ut utförliga meddelanden\n"
 
-#: pg_verify_checksums.c:44
+#: pg_verify_checksums.c:45
 #, c-format
 msgid "  -r RELFILENODE         check only relation with specified relfilenode\n"
 msgstr "  -r RELFILENODE         kontrollera enbart relationen med den angivna relfilenode\n"
 
-#: pg_verify_checksums.c:45
+#: pg_verify_checksums.c:46
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          visa versionsinformation, avsluta sedan\n"
 
-#: pg_verify_checksums.c:46
+#: pg_verify_checksums.c:47
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             visa den här hjälpen, avsluta sedan\n"
 
-#: pg_verify_checksums.c:47
+#: pg_verify_checksums.c:48
 #, c-format
 msgid ""
 "\n"
@@ -83,103 +83,118 @@ msgstr ""
 "PGDATA för detta syfte.\n"
 "\n"
 
-#: pg_verify_checksums.c:49
+#: pg_verify_checksums.c:50
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_verify_checksums.c:86
+#: pg_verify_checksums.c:93
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: kunde inte öppna fil \"%s\": %s\n"
 
-#: pg_verify_checksums.c:102
+#: pg_verify_checksums.c:109
 #, c-format
 msgid "%s: could not read block %u in file \"%s\": read %d of %d\n"
 msgstr "%s: kunde inte läsa block %u i fil \"%s\": läste %d av %d\n"
 
-#: pg_verify_checksums.c:116
+#: pg_verify_checksums.c:123
 #, c-format
 msgid "%s: checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X\n"
 msgstr "%s: verifiering av kontrollsumma misslyckades i fil \"%s\", block %u: beräknad kontrollsumma är %X men blocket innehåller %X\n"
 
-#: pg_verify_checksums.c:124
+#: pg_verify_checksums.c:131
 #, c-format
 msgid "%s: checksums verified in file \"%s\"\n"
 msgstr "%s: kontrollsummor verifierade i fil \"%s\"\n"
 
-#: pg_verify_checksums.c:140
+#: pg_verify_checksums.c:147
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: kunde inte öppna katalog \"%s\": %s\n"
 
-#: pg_verify_checksums.c:155
+#: pg_verify_checksums.c:175
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
 msgstr "%s: kunde ta status på filen \"%s\": %s\n"
 
-#: pg_verify_checksums.c:180
+#: pg_verify_checksums.c:203
 #, c-format
 msgid "%s: invalid segment number %d in file name \"%s\"\n"
 msgstr "%s: ogiltigt segmentnummer %d i filnamn \"%s\"\n"
 
-#: pg_verify_checksums.c:251
+#: pg_verify_checksums.c:274
 #, c-format
 msgid "%s: invalid relfilenode specification, must be numeric: %s\n"
 msgstr "%s: ogiltig relfilenode-angivelse, måste vara numerisk: %s\n"
 
-#: pg_verify_checksums.c:257 pg_verify_checksums.c:273
-#: pg_verify_checksums.c:283
+#: pg_verify_checksums.c:280 pg_verify_checksums.c:296
+#: pg_verify_checksums.c:306
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: pg_verify_checksums.c:272
+#: pg_verify_checksums.c:295
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: ingen datakatalog angiven.\n"
 
-#: pg_verify_checksums.c:281
+#: pg_verify_checksums.c:304
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
 
-#: pg_verify_checksums.c:292
+#: pg_verify_checksums.c:315
 #, c-format
 msgid "%s: pg_control CRC value is incorrect\n"
 msgstr "%s: pg_control CRC-värde är inkorrekt\n"
 
-#: pg_verify_checksums.c:299
+#: pg_verify_checksums.c:321
+#, c-format
+msgid "%s: cluster is not compatible with this version of pg_verify_checksums\n"
+msgstr "%s: klustret är inte kompatibelt med denna version av pg_verify_checksums\n"
+
+#: pg_verify_checksums.c:328
+#, c-format
+msgid "%s: database cluster is not compatible\n"
+msgstr "%s: databaskluster är inte kompatibelt\n"
+
+#: pg_verify_checksums.c:330
+#, c-format
+msgid "The database cluster was initialized with block size %u, but pg_verify_checksums was compiled with block size %u.\n"
+msgstr "Databasklustret initierades med blockstorlek %u, men pg_verify_checksums kompilerades med blockstorlek %u.\n"
+
+#: pg_verify_checksums.c:338
 #, c-format
 msgid "%s: cluster must be shut down to verify checksums\n"
 msgstr "%s: klustret måste stängas ner för att kontrollera kontrollsummor\n"
 
-#: pg_verify_checksums.c:305
+#: pg_verify_checksums.c:344
 #, c-format
 msgid "%s: data checksums are not enabled in cluster\n"
 msgstr "%s: kontrollsummor för data är inte påslaget i klustret\n"
 
-#: pg_verify_checksums.c:314
+#: pg_verify_checksums.c:353
 #, c-format
 msgid "Checksum scan completed\n"
 msgstr "Skanning efter kontrollsummor är klar\n"
 
-#: pg_verify_checksums.c:315
+#: pg_verify_checksums.c:354
 #, c-format
 msgid "Data checksum version: %d\n"
 msgstr "Version av datakontrollsummor: %d\n"
 
-#: pg_verify_checksums.c:316
+#: pg_verify_checksums.c:355
 #, c-format
 msgid "Files scanned:  %s\n"
 msgstr "Filer skannade:  %s\n"
 
-#: pg_verify_checksums.c:317
+#: pg_verify_checksums.c:356
 #, c-format
 msgid "Blocks scanned: %s\n"
 msgstr "Block skannade: %s\n"
 
-#: pg_verify_checksums.c:318
+#: pg_verify_checksums.c:357
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "Felaktiga kontrollsummor:  %s\n"

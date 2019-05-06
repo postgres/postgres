@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-22 07:45+0000\n"
+"POT-Creation-Date: 2019-04-26 09:44+0000\n"
 "PO-Revision-Date: 2017-07-10 12:13-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.7\n"
 
-#: ../../common/config_info.c:131 ../../common/config_info.c:139
-#: ../../common/config_info.c:147 ../../common/config_info.c:155
-#: ../../common/config_info.c:163 ../../common/config_info.c:171
-#: ../../common/config_info.c:179 ../../common/config_info.c:187
-#: ../../common/config_info.c:195
+#: ../../common/config_info.c:130 ../../common/config_info.c:138
+#: ../../common/config_info.c:146 ../../common/config_info.c:154
+#: ../../common/config_info.c:162 ../../common/config_info.c:170
+#: ../../common/config_info.c:178 ../../common/config_info.c:186
+#: ../../common/config_info.c:194
 msgid "not recorded"
 msgstr "no registrado"
 

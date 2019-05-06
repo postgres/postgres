@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-10 21:16+0000\n"
-"PO-Revision-Date: 2018-10-15 14:22+0300\n"
+"POT-Creation-Date: 2019-04-02 07:46+0000\n"
+"PO-Revision-Date: 2019-04-03 14:58+0300\n"
 "Last-Translator: Abdullah Gülner\n"
 "Language-Team: \n"
 "Language: tr\n"
@@ -69,7 +69,7 @@ msgstr "%s: alt-işlemden çıkış kodu alınamadı: hata kodu %lu\n"
 msgid "could not open directory \"%s\": %s\n"
 msgstr "\"%s\" dizini açılamıyor: %s\n"
 
-#: copy_fetch.c:89 filemap.c:185 filemap.c:348
+#: copy_fetch.c:89 filemap.c:188 filemap.c:349
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "\"%s\" dosyasının durumu görüntülenemedi (stat): %s\n"
@@ -194,48 +194,48 @@ msgstr "\"%s\" sembolik linki kaldırılamadı: %s\n"
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "\"%s\" dosyası okuma için açılamadı: %s\n"
 
-#: filemap.c:177
+#: filemap.c:180
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
 msgstr "kaynaktaki \"%s\" veri dosyası normal (regular) bir dosya değil\n"
 
-#: filemap.c:199
+#: filemap.c:202
 #, c-format
 msgid "\"%s\" is not a directory\n"
 msgstr "\"%s\" bir dizin değil\n"
 
-#: filemap.c:222
+#: filemap.c:225
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
 msgstr "\"%s\" bir sembolik link değil\n"
 
-#: filemap.c:234
+#: filemap.c:237
 #, c-format
 msgid "\"%s\" is not a regular file\n"
 msgstr "\"%s\" normal (regular) bir dosya değil\n"
 
-#: filemap.c:360
+#: filemap.c:361
 #, c-format
 msgid "source file list is empty\n"
 msgstr "kaynak dosya listesi boş\n"
 
-#: filemap.c:475
+#: filemap.c:476
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "\"%s\" dizini veya sembolik linki için beklenmedik sayfa değişikliği (page modification)\n"
 
-#: filemap.c:510 filemap.c:530
+#: filemap.c:511 filemap.c:531
 #, c-format
 msgid "entry \"%s\" excluded from source file list\n"
 msgstr "\"%s\" kaydı kaynak dosya listesinden hariç tutuldu\n"
 
-#: filemap.c:513 filemap.c:533
+#: filemap.c:514 filemap.c:534
 #, c-format
 msgid "entry \"%s\" excluded from target file list\n"
 msgstr "\"%s\" kaydı hedef dosya listesinden hariç tutuldu\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:664
+#: filemap.c:665
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
@@ -644,8 +644,8 @@ msgstr "kaynak veri dizini düzgün bir şekilde kapatılmalı\n"
 
 #: pg_rewind.c:482
 #, c-format
-msgid "invalid control file"
-msgstr "geçersiz kontrol dosyası"
+msgid "invalid control file\n"
+msgstr "geçersiz kontrol dosyası\n"
 
 #: pg_rewind.c:493
 #, c-format
