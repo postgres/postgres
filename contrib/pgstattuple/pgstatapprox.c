@@ -90,9 +90,6 @@ statapprox_heap(Relation rel, output_type *stat)
 		/*
 		 * If the page has only visible tuples, then we can find out the free
 		 * space from the FSM and move on.
-		 *
-		 * Note: If a relation has no FSM, GetRecordedFreeSpace() will report
-		 * zero free space.  This is fine for the purposes of approximation.
 		 */
 		if (VM_ALL_VISIBLE(rel, blkno, &vmbuffer))
 		{

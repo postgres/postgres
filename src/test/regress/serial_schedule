@@ -40,7 +40,6 @@ test: inet
 test: macaddr
 test: macaddr8
 test: tstypes
-test: fsm
 test: geometry
 test: horology
 test: regex

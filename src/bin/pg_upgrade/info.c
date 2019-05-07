@@ -200,8 +200,6 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 
 	map->old_db_oid = old_db->db_oid;
 	map->new_db_oid = new_db->db_oid;
-	map->relpages = old_rel->relpages;
-	map->relkind = old_rel->relkind;
 
 	/*
 	 * old_relfilenode might differ from pg_class.oid (and hence
@@ -420,7 +418,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	char	   *nspname = NULL;
 	char	   *relname = NULL;
 	char	   *tablespace = NULL;
-	char	   *relkind = NULL;
 	int			i_spclocation,
 				i_nspname,
 				i_relname,
@@ -428,9 +425,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 				i_indtable,
 				i_toastheap,
 				i_relfilenode,
-				i_reltablespace,
-				i_relpages,
-				i_relkind;
+				i_reltablespace;
 	char		query[QUERY_ALLOC];
 	char	   *last_namespace = NULL,
 			   *last_tablespace = NULL;
@@ -499,7 +494,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "SELECT all_rels.*, n.nspname, c.relname, "
-			 "  c.relfilenode, c.reltablespace, c.relpages, c.relkind, %s "
+			 "  c.relfilenode, c.reltablespace, %s "
 			 "FROM (SELECT * FROM regular_heap "
 			 "      UNION ALL "
 			 "      SELECT * FROM toast_heap "
@@ -530,8 +525,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	i_relname = PQfnumber(res, "relname");
 	i_relfilenode = PQfnumber(res, "relfilenode");
 	i_reltablespace = PQfnumber(res, "reltablespace");
-	i_relpages = PQfnumber(res, "relpages");
-	i_relkind = PQfnumber(res, "relkind");
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	for (relnum = 0; relnum < ntups; relnum++)
@@ -563,11 +556,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		curr->relname = pg_strdup(relname);
 
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
-		curr->relpages = atoi(PQgetvalue(res, relnum, i_relpages));
-
-		relkind = PQgetvalue(res, relnum, i_relkind);
-		curr->relkind = relkind[0];
-
 		curr->tblsp_alloc = false;
 
 		/* Is the tablespace oid non-default? */

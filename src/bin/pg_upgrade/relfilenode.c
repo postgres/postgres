@@ -14,12 +14,10 @@
 #include <sys/stat.h>
 #include "catalog/pg_class_d.h"
 #include "access/transam.h"
-#include "storage/freespace.h"
 
 
 static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace);
 static void transfer_relfile(FileNameMap *map, const char *suffix, bool vm_must_add_frozenbit);
-static bool new_cluster_needs_fsm(FileNameMap *map);
 
 
 /*
@@ -176,8 +174,7 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 				/*
 				 * Copy/link any fsm and vm files, if they exist
 				 */
-				if (new_cluster_needs_fsm(&maps[mapnum]))
-					transfer_relfile(&maps[mapnum], "_fsm", vm_must_add_frozenbit);
+				transfer_relfile(&maps[mapnum], "_fsm", vm_must_add_frozenbit);
 				if (vm_crashsafe_match)
 					transfer_relfile(&maps[mapnum], "_vm", vm_must_add_frozenbit);
 			}
@@ -280,62 +277,4 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 					linkFile(old_file, new_file, map->nspname, map->relname);
 			}
 	}
-}
-
-/*
- * new_cluster_needs_fsm()
- *
- * Return false for small heaps if we're upgrading across PG 12, the first
- * version where small heap relations don't have FSMs by default.
- */
-static bool
-new_cluster_needs_fsm(FileNameMap *map)
-{
-	char		old_primary_file[MAXPGPATH];
-	struct stat statbuf;
-
-	/* fsm/vm files added in PG 8.4 */
-	Assert(GET_MAJOR_VERSION(old_cluster.major_version) >= 804);
-
-	if (!(GET_MAJOR_VERSION(old_cluster.major_version) <= 1100 &&
-		  GET_MAJOR_VERSION(new_cluster.major_version) >= 1200))
-		return true;
-
-	/* Always transfer FSMs of non-heap relations. */
-	if (map->relkind != RELKIND_RELATION &&
-		map->relkind != RELKIND_TOASTVALUE)
-		return true;
-
-	/*
-	 * If pg_class.relpages falsely reports that the heap is above the
-	 * threshold, we will transfer a FSM when we don't need to, but this is
-	 * harmless.
-	 */
-	if (map->relpages > HEAP_FSM_CREATION_THRESHOLD)
-		return true;
-
-	/* Determine path of the primary file. */
-	snprintf(old_primary_file, sizeof(old_primary_file), "%s%s/%u/%u",
-			 map->old_tablespace,
-			 map->old_tablespace_suffix,
-			 map->old_db_oid,
-			 map->old_relfilenode);
-
-	/*
-	 * If pg_class.relpages falsely reports that the heap is below the
-	 * threshold, a FSM would be skipped when we actually need it.  To guard
-	 * against this, we verify the size of the primary file.
-	 */
-	if (stat(old_primary_file, &statbuf) != 0)
-	{
-		pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\"): %s\n",
-				 map->nspname, map->relname, old_primary_file, strerror(errno));
-
-		/* Keep compiler quiet. */
-		return false;
-	}
-	else if (statbuf.st_size > HEAP_FSM_CREATION_THRESHOLD * BLCKSZ)
-		return true;
-	else
-		return false;
 }

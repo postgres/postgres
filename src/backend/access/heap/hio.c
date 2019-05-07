@@ -246,14 +246,8 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 		 * Immediately update the bottom level of the FSM.  This has a good
 		 * chance of making this page visible to other concurrently inserting
 		 * backends, and we want that to happen without delay.
-		 *
-		 * Since we know the table will end up with extraBlocks additional
-		 * pages, we pass the final number to avoid possible unnecessary
-		 * system calls and to make sure the FSM is created when we add the
-		 * first new page.
 		 */
-		RecordPageWithFreeSpace(relation, blockNum, freespace,
-								firstBlock + extraBlocks);
+		RecordPageWithFreeSpace(relation, blockNum, freespace);
 	}
 	while (--extraBlocks > 0);
 
@@ -390,9 +384,20 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		 * We have no cached target page, so ask the FSM for an initial
 		 * target.
 		 */
-		targetBlock = GetPageWithFreeSpace(relation,
-										   len + saveFreeSpace,
-										   false);
+		targetBlock = GetPageWithFreeSpace(relation, len + saveFreeSpace);
+
+		/*
+		 * If the FSM knows nothing of the rel, try the last page before we
+		 * give up and extend.  This avoids one-tuple-per-page syndrome during
+		 * bootstrapping or in a recently-started system.
+		 */
+		if (targetBlock == InvalidBlockNumber)
+		{
+			BlockNumber nblocks = RelationGetNumberOfBlocks(relation);
+
+			if (nblocks > 0)
+				targetBlock = nblocks - 1;
+		}
 	}
 
 loop:
@@ -499,13 +504,6 @@ loop:
 		{
 			/* use this page as future insert target, too */
 			RelationSetTargetBlock(relation, targetBlock);
-
-			/*
-			 * In case we used an in-memory map of available blocks, reset it
-			 * for next use.
-			 */
-			FSMClearLocalMap();
-
 			return buffer;
 		}
 
@@ -565,12 +563,9 @@ loop:
 
 			/*
 			 * Check if some other backend has extended a block for us while
-			 * we were waiting on the lock.  We only check the FSM -- if there
-			 * isn't one we don't recheck the number of blocks.
+			 * we were waiting on the lock.
 			 */
-			targetBlock = GetPageWithFreeSpace(relation,
-											   len + saveFreeSpace,
-											   true);
+			targetBlock = GetPageWithFreeSpace(relation, len + saveFreeSpace);
 
 			/*
 			 * If some other waiter has already extended the relation, we
@@ -674,9 +669,6 @@ loop:
 	 * good bet most of the time.  So for now, don't add it to FSM yet.
 	 */
 	RelationSetTargetBlock(relation, BufferGetBlockNumber(buffer));
-
-	/* This should already be cleared by now, but make sure it is. */
-	FSMClearLocalMap();
 
 	return buffer;
 }
