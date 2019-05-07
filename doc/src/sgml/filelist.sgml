@@ -175,6 +175,7 @@
 <!ENTITY features-unsupported SYSTEM "features-unsupported.sgml">
 
 <!ENTITY errcodes-table SYSTEM "errcodes-table.sgml">
+<!ENTITY keywords-table SYSTEM "keywords-table.sgml">
 
 <!-- back matter -->
 <!ENTITY biblio     SYSTEM "biblio.sgml">
