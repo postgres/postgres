@@ -3319,6 +3319,14 @@ pgstat_read_current_status(void)
 
 	pgstat_setup_memcxt();
 
+	/*
+	 * Allocate storage for local copy of state data.  We can presume that
+	 * none of these requests overflow size_t, because we already calculated
+	 * the same values using mul_size during shmem setup.  However, with
+	 * probably-silly values of pgstat_track_activity_query_size and
+	 * max_connections, the localactivity buffer could exceed 1GB, so use
+	 * "huge" allocation for that one.
+	 */
 	localtable = (LocalPgBackendStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   sizeof(LocalPgBackendStatus) * NumBackendStatSlots);
@@ -3329,8 +3337,8 @@ pgstat_read_current_status(void)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * NumBackendStatSlots);
 	localactivity = (char *)
-		MemoryContextAlloc(pgStatLocalContext,
-						   pgstat_track_activity_query_size * NumBackendStatSlots);
+		MemoryContextAllocHuge(pgStatLocalContext,
+							   pgstat_track_activity_query_size * NumBackendStatSlots);
 #ifdef USE_SSL
 	localsslstatus = (PgBackendSSLStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
