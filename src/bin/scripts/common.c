@@ -146,9 +146,8 @@ connectDatabase(const char *dbname, const char *pghost,
 		exit(1);
 	}
 
-	if (PQserverVersion(conn) >= 70300)
-		PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
-							 progname, echo));
+	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
+						 progname, echo));
 
 	return conn;
 }
@@ -307,13 +306,6 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	PQExpBufferData sql;
 	PGresult   *res;
 	int			ntups;
-
-	/* Before 7.3, the concept of qualifying a name did not exist. */
-	if (PQserverVersion(conn) < 70300)
-	{
-		appendPQExpBufferStr(&sql, spec);
-		return;
-	}
 
 	splitTableColumnsSpec(spec, PQclientEncoding(conn), &table, &columns);
 
