@@ -470,9 +470,10 @@ jsonb_path_query_first(FunctionCallInfo fcinfo)
  * 'throwErrors' - whether we should throw suppressible errors
  * 'result' - list to store result items into
  *
- * Returns an error happens during processing or NULL on no error.
+ * Returns an error if a recoverable error happens during processing, or NULL
+ * on no error.
  *
- * Note, jsonb and jsonpath values should be avaliable and untoasted during
+ * Note, jsonb and jsonpath values should be available and untoasted during
  * work because JsonPathItem, JsonbValue and result item could have pointers
  * into input values.  If caller needs to just check if document matches
  * jsonpath, then it doesn't provide a result arg.  In this case executor
@@ -1529,7 +1530,7 @@ executeBinaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 	/*
 	 * XXX: By standard only operands of multiplicative expressions are
-	 * unwrapped.  We extend it to other binary arithmetics expressions too.
+	 * unwrapped.  We extend it to other binary arithmetic expressions too.
 	 */
 	jper = executeItemOptUnwrapResult(cxt, &elem, jb, true, &lseq);
 	if (jperIsError(jper))
