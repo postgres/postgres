@@ -1418,7 +1418,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Disabling index cleanup can speed up <command>VACUUM</command> very
       significantly, but may also lead to severely bloated indexes if table
       modifications are frequent.  The <literal>INDEX_CLEANUP</literal>
-      parameter to <xref linkend="sql-vacuum"/>, if specified, overrides
+      parameter of <xref linkend="sql-vacuum"/>, if specified, overrides
       the value of this option.
      </para>
     </listitem>
@@ -1438,7 +1438,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       autovacuum do the truncation and the disk space for
       the truncated pages is returned to the operating system.
       Note that the truncation requires <literal>ACCESS EXCLUSIVE</literal>
-      lock on the table.
+      lock on the table. The <literal>TRUNCATE</literal> parameter
+      of <xref linkend="sql-vacuum"/>, if specified, overrides the value
+      of this option.
      </para>
     </listitem>
    </varlistentry>

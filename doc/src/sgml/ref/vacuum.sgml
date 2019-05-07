@@ -33,6 +33,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     DISABLE_PAGE_SKIPPING [ <replaceable class="parameter">boolean</replaceable> ]
     SKIP_LOCKED [ <replaceable class="parameter">boolean</replaceable> ]
     INDEX_CLEANUP [ <replaceable class="parameter">boolean</replaceable> ]
+    TRUNCATE [ <replaceable class="parameter">boolean</replaceable> ]
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -199,6 +200,24 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       and the table itself will accumulate dead line pointers that cannot be
       removed until index cleanup is completed.  This option has no effect
       for tables that do not have an index and is ignored if the
+      <literal>FULL</literal> option is used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>TRUNCATE</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>VACUUM</command> should attempt to
+      truncate off any empty pages at the end of the table and allow
+      the disk space for the truncated pages to be returned to
+      the operating system. This is normally the desired behavior
+      and is the default unless the <literal>vacuum_truncate</literal>
+      option has been set to false for the table to be vacuumed.
+      Setting this option to false may be useful to avoid
+      <literal>ACCESS EXCLUSIVE</literal> lock on the table that
+      the truncation requires. This option is ignored if the
       <literal>FULL</literal> option is used.
      </para>
     </listitem>

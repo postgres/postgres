@@ -182,6 +182,8 @@ typedef struct VacuumParams
 									 * to use default */
 	VacOptTernaryValue index_cleanup;	/* Do index vacuum and cleanup,
 										* default value depends on reloptions */
+	VacOptTernaryValue truncate;	/* Truncate empty pages at the end,
+										* default value depends on reloptions */
 } VacuumParams;
 
 /* GUC parameters */
