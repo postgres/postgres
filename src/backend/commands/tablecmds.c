@@ -8184,7 +8184,7 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("foreign keys constraints are not supported on foreign tables")));
+				 errmsg("foreign key constraints are not supported on foreign tables")));
 
 	/*
 	 * If the referencing relation is a plain table, add the check triggers to
@@ -8572,7 +8572,7 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 	if (partRel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("foreign keys constraints are not supported on foreign tables")));
+				 errmsg("foreign key constraints are not supported on foreign tables")));
 
 	/*
 	 * The constraint key may differ, if the columns in the partition are
