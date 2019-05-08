@@ -92,6 +92,15 @@ static void ReindexPartitionedIndex(Relation parentIdx);
 static void update_relispartition(Oid relationId, bool newval);
 
 /*
+ * callback argument type for RangeVarCallbackForReindexIndex()
+ */
+struct ReindexIndexCallbackState
+{
+	bool        concurrent;			/* flag from statement */
+	Oid         locked_table_oid;	/* tracks previously locked table */
+};
+
+/*
  * CheckIndexCompatible
  *		Determine whether an existing index definition is compatible with a
  *		prospective index definition, such that the existing index storage
@@ -2303,8 +2312,8 @@ ChooseIndexColumnNames(List *indexElems)
 void
 ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 {
+	struct ReindexIndexCallbackState state;
 	Oid			indOid;
-	Oid			heapOid = InvalidOid;
 	Relation	irel;
 	char		persistence;
 
@@ -2313,11 +2322,13 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 	 * obtain lock on table first, to avoid deadlock hazard.  The lock level
 	 * used here must match the index lock obtained in reindex_index().
 	 */
+	state.concurrent = concurrent;
+	state.locked_table_oid = InvalidOid;
 	indOid = RangeVarGetRelidExtended(indexRelation,
 									  concurrent ? ShareUpdateExclusiveLock : AccessExclusiveLock,
 									  0,
 									  RangeVarCallbackForReindexIndex,
-									  (void *) &heapOid);
+									  &state);
 
 	/*
 	 * Obtain the current persistence of the existing index.  We already hold
@@ -2350,7 +2361,15 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 								Oid relId, Oid oldRelId, void *arg)
 {
 	char		relkind;
-	Oid		   *heapOid = (Oid *) arg;
+	struct ReindexIndexCallbackState *state = arg;
+	LOCKMODE	table_lockmode;
+
+	/*
+	 * Lock level here should match table lock in reindex_index() for
+	 * non-concurrent case and table locks used by index_concurrently_*() for
+	 * concurrent case.
+	 */
+	table_lockmode = state->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 
 	/*
 	 * If we previously locked some other index's heap, and the name we're
@@ -2359,9 +2378,8 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	 */
 	if (relId != oldRelId && OidIsValid(oldRelId))
 	{
-		/* lock level here should match reindex_index() heap lock */
-		UnlockRelationOid(*heapOid, ShareLock);
-		*heapOid = InvalidOid;
+		UnlockRelationOid(state->locked_table_oid, table_lockmode);
+		state->locked_table_oid = InvalidOid;
 	}
 
 	/* If the relation does not exist, there's nothing more to do. */
@@ -2389,14 +2407,17 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	/* Lock heap before index to avoid deadlock. */
 	if (relId != oldRelId)
 	{
+		Oid			table_oid = IndexGetRelation(relId, true);
+
 		/*
-		 * Lock level here should match reindex_index() heap lock. If the OID
-		 * isn't valid, it means the index as concurrently dropped, which is
-		 * not a problem for us; just return normally.
+		 * If the OID isn't valid, it means the index was concurrently
+		 * dropped, which is not a problem for us; just return normally.
 		 */
-		*heapOid = IndexGetRelation(relId, true);
-		if (OidIsValid(*heapOid))
-			LockRelationOid(*heapOid, ShareLock);
+		if (OidIsValid(table_oid))
+		{
+			LockRelationOid(table_oid, table_lockmode);
+			state->locked_table_oid = table_oid;
+		}
 	}
 }
 
