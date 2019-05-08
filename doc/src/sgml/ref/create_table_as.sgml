@@ -129,7 +129,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       the contents for the new table; the method needs be an access method of
       type <literal>TABLE</literal>. See <xref linkend="tableam"/> for more
       information.  If this option is not specified, the default table access
-      method is chosen for the new materialized view. See <xref
+      method is chosen for the new table. See <xref
       linkend="guc-default-table-access-method"/> for more information.
      </para>
     </listitem>
