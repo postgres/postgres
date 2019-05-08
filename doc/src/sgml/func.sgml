@@ -16793,7 +16793,8 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     for controlling and interacting with replication features.
     See <xref linkend="streaming-replication">
     and <xref linkend="streaming-replication-slots"> for information about the
-    underlying features.  Use of these functions is restricted to superusers.
+    underlying features.  Use of these functions is restricted to superusers
+    and users having <literal>REPLICATION</literal> privilege.
    </para>
 
    <para>
