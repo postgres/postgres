@@ -5887,8 +5887,7 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 											  xid, parsed->nsubxacts, parsed->subxacts, max_xid);
 
 		/*
-		 * There are no flat files that need updating, nor invalidation
-		 * messages to send or undo.
+		 * There are no invalidation messages to send or undo.
 		 */
 
 		/*
