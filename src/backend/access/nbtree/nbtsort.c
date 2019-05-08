@@ -1007,9 +1007,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		pfree(state->btps_minkey);
 
 		/*
-		 * Save a copy of the minimum key for the new page.  We have to copy
-		 * it off the old page, not the new one, in case we are not at leaf
-		 * level.
+		 * Save a copy of the high key from the old page.  It is also used as
+		 * the minimum key for the new page.
 		 */
 		state->btps_minkey = CopyIndexTuple(oitup);
 
@@ -1045,9 +1044,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	 * If the new item is the first for its page, stash a copy for later. Note
 	 * this will only happen for the first item on a level; on later pages,
 	 * the first item for a page is copied from the prior page in the code
-	 * above.  Since the minimum key for an entire level is only used as a
-	 * minus infinity downlink, and never as a high key, there is no need to
-	 * truncate away suffix attributes at this point.
+	 * above.  The minimum key for an entire level is nothing more than a
+	 * minus infinity (downlink only) pivot tuple placeholder.
 	 */
 	if (last_off == P_HIKEY)
 	{
