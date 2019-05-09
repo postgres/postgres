@@ -387,7 +387,9 @@ GetForeignUpperPaths(PlannerInfo *root,
      step.  The <literal>extra</literal> parameter provides additional details,
      currently, it is set only for <literal>UPPERREL_PARTIAL_GROUP_AGG</literal>
      or <literal>UPPERREL_GROUP_AGG</literal>, in which case it points to a
-     <literal>GroupPathExtraData</literal> structure.
+     <literal>GroupPathExtraData</literal> structure;
+     or for <literal>UPPERREL_FINAL</literal>, in which case it points to a
+     <literal>FinalPathExtraData</literal> structure.
      (Note that <structname>ForeignPath</structname> paths added
      to <literal>output_rel</literal> would typically not have any direct dependency
      on paths of the <literal>input_rel</literal>, since their processing is expected
