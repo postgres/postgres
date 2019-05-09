@@ -524,7 +524,10 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (j = 0; j < concurrentCons; j++)
 		{
 			if (!GetQueryResult((slots + j)->connection, progname))
+			{
+				failed = true;
 				goto finish;
+			}
 		}
 	}
 
