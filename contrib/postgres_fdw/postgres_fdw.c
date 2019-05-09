@@ -2842,11 +2842,17 @@ estimate_path_cost_size(PlannerInfo *root,
 		}
 		else if (IS_UPPER_REL(foreignrel))
 		{
+			RelOptInfo *outerrel = fpinfo->outerrel;
 			PgFdwRelationInfo *ofpinfo;
 			AggClauseCosts aggcosts;
 			double		input_rows;
 			int			numGroupCols;
 			double		numGroups = 1;
+
+			/* The upper relation should have its outer relation set */
+			Assert(outerrel);
+			/* and that outer relation should have its reltarget set */
+			Assert(outerrel->reltarget);
 
 			/*
 			 * This cost model is mixture of costing done for sorted and
@@ -2856,7 +2862,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			 * and all finalization and run cost are added in total_cost.
 			 */
 
-			ofpinfo = (PgFdwRelationInfo *) fpinfo->outerrel->fdw_private;
+			ofpinfo = (PgFdwRelationInfo *) outerrel->fdw_private;
 
 			/* Get rows and width from input rel */
 			input_rows = ofpinfo->rows;
@@ -2909,11 +2915,13 @@ estimate_path_cost_size(PlannerInfo *root,
 
 			/*-----
 			 * Startup cost includes:
-			 *	  1. Startup cost for underneath input relation
+			 *	  1. Startup cost for underneath input relation, adjusted for
+			 *	     tlist replacement by apply_scanjoin_target_to_paths()
 			 *	  2. Cost of performing aggregation, per cost_agg()
 			 *-----
 			 */
 			startup_cost = ofpinfo->rel_startup_cost;
+			startup_cost += outerrel->reltarget->cost.startup;
 			startup_cost += aggcosts.transCost.startup;
 			startup_cost += aggcosts.transCost.per_tuple * input_rows;
 			startup_cost += aggcosts.finalCost.startup;
@@ -2921,11 +2929,13 @@ estimate_path_cost_size(PlannerInfo *root,
 
 			/*-----
 			 * Run time cost includes:
-			 *	  1. Run time cost of underneath input relation
+			 *	  1. Run time cost of underneath input relation, adjusted for
+			 *	     tlist replacement by apply_scanjoin_target_to_paths()
 			 *	  2. Run time cost of performing aggregation, per cost_agg()
 			 *-----
 			 */
 			run_cost = ofpinfo->rel_total_cost - ofpinfo->rel_startup_cost;
+			run_cost += outerrel->reltarget->cost.per_tuple * input_rows;
 			run_cost += aggcosts.finalCost.per_tuple * numGroups;
 			run_cost += cpu_tuple_cost * numGroups;
 

@@ -7113,6 +7113,10 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	 * confused in createplan.c if they don't agree.  We must do this now so
 	 * that any append paths made in the next part will use the correct
 	 * pathtarget (cf. create_append_path).
+	 *
+	 * Note that this is also necessary if GetForeignUpperPaths() gets called
+	 * on the final scan/join relation or on any of its children, since the
+	 * FDW might look at the rel's target to create ForeignPaths.
 	 */
 	rel->reltarget = llast_node(PathTarget, scanjoin_targets);
 
