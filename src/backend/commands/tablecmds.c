@@ -12453,9 +12453,10 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 		 * Also, explicitly avoid any shared tables, temp tables, or TOAST
 		 * (TOAST will be moved with the main table).
 		 */
-		if (IsSystemNamespace(relForm->relnamespace) || relForm->relisshared ||
+		if (IsCatalogNamespace(relForm->relnamespace) ||
+			relForm->relisshared ||
 			isAnyTempNamespace(relForm->relnamespace) ||
-			relForm->relnamespace == PG_TOAST_NAMESPACE)
+			IsToastNamespace(relForm->relnamespace))
 			continue;
 
 		/* Only move the object type requested */

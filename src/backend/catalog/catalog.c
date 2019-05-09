@@ -53,15 +53,18 @@
 
 /*
  * IsSystemRelation
- *		True iff the relation is either a system catalog or toast table.
- *		By a system catalog, we mean one that created in the pg_catalog schema
- *		during initdb.  User-created relations in pg_catalog don't count as
- *		system catalogs.
+ *		True iff the relation is either a system catalog or a toast table.
+ *		See IsCatalogRelation for the exact definition of a system catalog.
  *
- *		NB: TOAST relations are considered system relations by this test
- *		for compatibility with the old IsSystemRelationName function.
- *		This is appropriate in many places but not all.  Where it's not,
- *		also check IsToastRelation or use IsCatalogRelation().
+ *		We treat toast tables of user relations as "system relations" for
+ *		protection purposes, e.g. you can't change their schemas without
+ *		special permissions.  Therefore, most uses of this function are
+ *		checking whether allow_system_table_mods restrictions apply.
+ *		For other purposes, consider whether you shouldn't be using
+ *		IsCatalogRelation instead.
+ *
+ *		This function does not perform any catalog accesses.
+ *		Some callers rely on that!
  */
 bool
 IsSystemRelation(Relation relation)
@@ -78,67 +81,74 @@ IsSystemRelation(Relation relation)
 bool
 IsSystemClass(Oid relid, Form_pg_class reltuple)
 {
-	return IsToastClass(reltuple) || IsCatalogClass(relid, reltuple);
+	/* IsCatalogRelationOid is a bit faster, so test that first */
+	return (IsCatalogRelationOid(relid) || IsToastClass(reltuple));
 }
 
 /*
  * IsCatalogRelation
- *		True iff the relation is a system catalog, or the toast table for
- *		a system catalog.  By a system catalog, we mean one that created
- *		in the pg_catalog schema during initdb.  As with IsSystemRelation(),
- *		user-created relations in pg_catalog don't count as system catalogs.
+ *		True iff the relation is a system catalog.
  *
- *		Note that IsSystemRelation() returns true for ALL toast relations,
- *		but this function returns true only for toast relations of system
- *		catalogs.
+ *		By a system catalog, we mean one that is created during the bootstrap
+ *		phase of initdb.  That includes not just the catalogs per se, but
+ *		also their indexes, and TOAST tables and indexes if any.
+ *
+ *		This function does not perform any catalog accesses.
+ *		Some callers rely on that!
  */
 bool
 IsCatalogRelation(Relation relation)
 {
-	return IsCatalogClass(RelationGetRelid(relation), relation->rd_rel);
+	return IsCatalogRelationOid(RelationGetRelid(relation));
 }
 
 /*
- * IsCatalogClass
- *		True iff the relation is a system catalog relation.
+ * IsCatalogRelationOid
+ *		True iff the relation identified by this OID is a system catalog.
  *
- * Check IsCatalogRelation() for details.
+ *		By a system catalog, we mean one that is created during the bootstrap
+ *		phase of initdb.  That includes not just the catalogs per se, but
+ *		also their indexes, and TOAST tables and indexes if any.
+ *
+ *		This function does not perform any catalog accesses.
+ *		Some callers rely on that!
  */
 bool
-IsCatalogClass(Oid relid, Form_pg_class reltuple)
+IsCatalogRelationOid(Oid relid)
 {
-	Oid			relnamespace = reltuple->relnamespace;
-
 	/*
-	 * Never consider relations outside pg_catalog/pg_toast to be catalog
-	 * relations.
-	 */
-	if (!IsSystemNamespace(relnamespace) && !IsToastNamespace(relnamespace))
-		return false;
-
-	/* ----
-	 * Check whether the oid was assigned during initdb, when creating the
-	 * initial template database. Minus the relations in information_schema
-	 * excluded above, these are integral part of the system.
-	 * We could instead check whether the relation is pinned in pg_depend, but
-	 * this is noticeably cheaper and doesn't require catalog access.
+	 * We consider a relation to be a system catalog if it has an OID that was
+	 * manually assigned or assigned by genbki.pl.  This includes all the
+	 * defined catalogs, their indexes, and their TOAST tables and indexes.
 	 *
-	 * This test is safe since even an oid wraparound will preserve this
-	 * property (cf. GetNewObjectId()) and it has the advantage that it works
-	 * correctly even if a user decides to create a relation in the pg_catalog
-	 * namespace.
-	 * ----
+	 * This rule excludes the relations in information_schema, which are not
+	 * integral to the system and can be treated the same as user relations.
+	 * (Since it's valid to drop and recreate information_schema, any rule
+	 * that did not act this way would be wrong.)
+	 *
+	 * This test is reliable since an OID wraparound will skip this range of
+	 * OIDs; see GetNewObjectId().
 	 */
-	return relid < FirstNormalObjectId;
+	return (relid < (Oid) FirstBootstrapObjectId);
 }
 
 /*
  * IsToastRelation
  *		True iff relation is a TOAST support relation (or index).
+ *
+ *		Does not perform any catalog accesses.
  */
 bool
 IsToastRelation(Relation relation)
 {
+	/*
+	 * What we actually check is whether the relation belongs to a pg_toast
+	 * namespace.  This should be equivalent because of restrictions that are
+	 * enforced elsewhere against creating user relations in, or moving
+	 * relations into/out of, a pg_toast namespace.  Notice also that this
+	 * will not say "true" for toast tables belonging to other sessions' temp
+	 * tables; we expect that other mechanisms will prevent access to those.
+	 */
 	return IsToastNamespace(RelationGetNamespace(relation));
 }
 
@@ -157,14 +167,16 @@ IsToastClass(Form_pg_class reltuple)
 }
 
 /*
- * IsSystemNamespace
+ * IsCatalogNamespace
  *		True iff namespace is pg_catalog.
+ *
+ *		Does not perform any catalog accesses.
  *
  * NOTE: the reason this isn't a macro is to avoid having to include
  * catalog/pg_namespace.h in a lot of places.
  */
 bool
-IsSystemNamespace(Oid namespaceId)
+IsCatalogNamespace(Oid namespaceId)
 {
 	return namespaceId == PG_CATALOG_NAMESPACE;
 }
@@ -173,9 +185,13 @@ IsSystemNamespace(Oid namespaceId)
  * IsToastNamespace
  *		True iff namespace is pg_toast or my temporary-toast-table namespace.
  *
+ *		Does not perform any catalog accesses.
+ *
  * Note: this will return false for temporary-toast-table namespaces belonging
  * to other backends.  Those are treated the same as other backends' regular
  * temp table namespaces, and access is prevented where appropriate.
+ * If you need to check for those, you may be able to use isAnyTempNamespace,
+ * but beware that that does involve a catalog access.
  */
 bool
 IsToastNamespace(Oid namespaceId)

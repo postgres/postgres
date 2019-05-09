@@ -2590,15 +2590,11 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			continue;
 
 		/*
-		 * Skip system tables that index_create() would reject to index
-		 * concurrently.  XXX We need the additional check for
-		 * FirstNormalObjectId to skip information_schema tables, because
-		 * IsCatalogClass() here does not cover information_schema, but the
-		 * check in index_create() will error on the TOAST tables of
-		 * information_schema tables.
+		 * Skip system tables, since index_create() would reject indexing them
+		 * concurrently (and it would likely fail if we tried).
 		 */
 		if (concurrent &&
-			(IsCatalogClass(relid, classtuple) || relid < FirstNormalObjectId))
+			IsCatalogRelationOid(relid))
 		{
 			if (!concurrent_warning)
 				ereport(WARNING,
@@ -2842,7 +2838,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 							 errmsg("concurrent reindex is not supported for shared relations")));
 
 				/* A system catalog cannot be reindexed concurrently */
-				if (IsSystemNamespace(get_rel_namespace(heapId)))
+				if (IsCatalogRelationOid(heapId))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("concurrent reindex is not supported for catalog relations")));

@@ -161,12 +161,10 @@ check_relation_privileges(Oid relOid,
 	 */
 	if (sepgsql_getenforce() > 0)
 	{
-		Oid			relnamespace = get_rel_namespace(relOid);
-
-		if (IsSystemNamespace(relnamespace) &&
-			(required & (SEPG_DB_TABLE__UPDATE |
+		if ((required & (SEPG_DB_TABLE__UPDATE |
 						 SEPG_DB_TABLE__INSERT |
-						 SEPG_DB_TABLE__DELETE)) != 0)
+						 SEPG_DB_TABLE__DELETE)) != 0 &&
+			IsCatalogRelationOid(relOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("SELinux: hardwired security policy violation")));

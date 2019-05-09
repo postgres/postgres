@@ -3316,8 +3316,8 @@ RelationBuildLocalRelation(const char *relname,
 	else
 		rel->rd_rel->relispopulated = true;
 
-	/* system relations and non-table objects don't have one */
-	if (!IsSystemNamespace(relnamespace) &&
+	/* set replica identity -- system catalogs and non-tables don't have one */
+	if (!IsCatalogNamespace(relnamespace) &&
 		(relkind == RELKIND_RELATION ||
 		 relkind == RELKIND_MATVIEW ||
 		 relkind == RELKIND_PARTITIONED_TABLE))
