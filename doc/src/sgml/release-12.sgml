@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2019-??-?? AS OF 2019-05-04</para>
+   <para>2019-??-?? AS OF 2019-05-09</para>
   </formalpara>
 
   <sect2>
@@ -60,9 +60,12 @@ Remove the special behavior of OID columns (Andres Freund, John Naylor)
 </para>
 
 <para>
-Previously, a normally-invisible OID column could be specified during table creation using WITH OIDS;  that ability has been removed. Columns can still be explicitly
-specified as type OID.  pg_dump and pg_upgrade operations on databases using WITH OIDS will need adjustment.  Many system tables now have an 'oid' column that will be
-expanded with SELECT * by default.
+Previously, a normally-invisible OID column could be specified during table
+creation using WITH OIDS;  that ability has been removed.  Columns can
+still be explicitly specified as type OID.  Operations on tables that
+have columns named 'oid' (created using WITH OIDS) will need adjustment.
+Many system tables now have an 'oid' column that will be expanded with
+SELECT * by default.
 </para>
 </listitem>
 
@@ -99,7 +102,8 @@ Move recovery.conf settings into postgresql.conf (Fujii Masao, Simon Riggs, Abhi
 </para>
 
 <para>
-recovery.conf is no longer used, and recovery.signal and standby.signal are used to switch into non-primary mode.
+recovery.conf is no longer used, and the server will not start if the
+file exists.  recovery.signal and standby.signal are now used to switch into non-primary mode.
 trigger_file has been renamed to promote_trigger_file.  The standby_mode setting has been removed.
 </para>
 </listitem>
@@ -169,6 +173,23 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
 <para>
 Improve behavior and error reporting for the line data type (Emre Hasegeli)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Andrew Gierth <rhodiumtoad@postgresql.org>
+2019-02-13 [02ddd4993] Change floating-point output format for improved perform
+-->
+
+<para>
+Avoid performing unnecessary rounding of REAL and DOUBLE PRECISION values (Andrew Gierth)
+</para>
+
+<para>
+This dramatically speeds up processing of floating-point values, though
+trailing digits are display slightly differently.  Users who wish to have output that is rounded can set
+extra_float_digits=0.
 </para>
 </listitem>
 
@@ -354,10 +375,6 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
 <para>
 Allow foreign keys to reference partitioned tables (Alvaro Herrera)
-</para>
-
-<para>
-LIMITATIONS?
 </para>
 </listitem>
 
@@ -939,36 +956,6 @@ Improve speed in converting strings to int2/int4 integers (Andres Freund)
 
 <listitem>
 <!--
-Author: Andrew Gierth <rhodiumtoad@postgresql.org>
-2019-02-13 [02ddd4993] Change floating-point output format for improved perform
--->
-
-<para>
-Avoid performing unnecessary rounding of REAL and DOUBLE PRECISION values (Andrew Gierth)
-</para>
-
-<para>
-This dramatically speeds up processing of floating-point values.  Users who wish to have output that is rounded can set extra_float_digits=0.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Amit Kapila <akapila@postgresql.org>
-2019-02-04 [b0eaa4c51] Avoid creation of the free space map for small heap rela
--->
-
-<para>
-Avoid creation of the free space map files for small table (John Naylor, Amit Kapila)
-</para>
-
-<para>
-Such files are not useful.
-</para>
-</listitem>
-
-<listitem>
-<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2018-11-07 [3fd2a7932] Provide pg_pread() and pg_pwrite() for random I/O.
 Author: Thomas Munro <tmunro@postgresql.org>
@@ -976,7 +963,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Use pread() and pwrite() for random I/O (Thomas Munro)
+Use pread() and pwrite() for random I/O (Oskari Saarenmaa, Thomas Munro)
 </para>
 
 <para>
@@ -1717,10 +1704,12 @@ MENTION ITS AFFECT ON ORDERING?
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
 2019-04-08 [119dcfad9] Add vacuum_truncate reloption.
+Author: Fujii Masao <fujii@postgresql.org>
+2019-05-08 [b84dbc8eb] Add TRUNCATE parameter to VACUUM.
 -->
 
 <para>
-Add CREATE TABLE option to prevent VACUUM from truncating trailing empty pages (Tsunakawa Takayuki)
+Add VACUUM and CREATE TABLE options to prevent VACUUM from truncating trailing empty pages (Tsunakawa Takayuki)
 </para>
 
 <para>
@@ -1910,7 +1899,7 @@ Add support for the SQL/JSON path language (Nikita Glukhov, Teodor Sigaev, Alexa
 </para>
 
 <para>
-This allows JSON values to be selected using an SQL-standard language.
+This allows execution of complex queries on JSON values using an SQL-standard language.
 </para>
 </listitem>
 
@@ -2527,7 +2516,7 @@ Author: Andres Freund <andres@anarazel.de>
 -->
 
 <para>
-Add CREATE ACCESS METHOD command to create new table types (Haribabu Kommi, Andres Freund, Alvaro Herrera, Dimitri Golgov)
+Add CREATE ACCESS METHOD command to create new table types (Haribabu Kommi, Andres Freund, Alvaro Herrera, Dimitri Dolgov)
 </para>
 </listitem>
 
@@ -2538,7 +2527,7 @@ Author: Andres Freund <andres@anarazel.de>
 -->
 
 <para>
-Specify a range of oids (9000-9999) to be used for external extensions (Andres Freund)
+Reserve a range of oids (9000-9999) to be used for external extensions (Andres Freund)
 </para>
 </listitem>
 
@@ -2685,6 +2674,8 @@ Author: Etsuro Fujita <efujita@postgresql.org>
 2018-12-04 [f8f6e4467] postgres_fdw: Improve cost and size estimation for aggre
 Author: Etsuro Fujita <efujita@postgresql.org>
 2019-01-24 [fd1afdbaf] postgres_fdw: Account for tlist eval costs in estimate_p
+Author: Etsuro Fujita <efujita@postgresql.org>
+2019-05-09 [edbcbe277] postgres_fdw: Fix cost estimation for aggregate pushdown
 -->
 
 <para>
@@ -2749,7 +2740,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Update unaccent rules with new new punctuation and symbols (Hugh Ranalli, Michael Paquier)
+Update unaccent rules with new punctuation and symbols (Hugh Ranalli, Michael Paquier)
 </para>
 </listitem>
 
