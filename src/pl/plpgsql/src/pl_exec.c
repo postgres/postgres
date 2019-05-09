@@ -6993,7 +6993,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 					if (strict_multiassignment_level)
 							ereport(strict_multiassignment_level,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("number of source and target fields in assignment do not match"),
+									 errmsg("number of source and target fields in assignment does not match"),
 									 /* translator: %s represents a name of an extra check */
 									 errdetail("%s check of %s is active.",
 											   "strict_multi_assignment",
@@ -7027,7 +7027,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 				if (anum < td_natts)
 					ereport(strict_multiassignment_level,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("number of source and target fields in assignment do not match"),
+							 errmsg("number of source and target fields in assignment does not match"),
 							 /* translator: %s represents a name of an extra check */
 							 errdetail("%s check of %s is active.",
 									   "strict_multi_assignment",
@@ -7101,7 +7101,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 				if (strict_multiassignment_level)
 						ereport(strict_multiassignment_level,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
-								 errmsg("number of source and target fields in assignment do not match"),
+								 errmsg("number of source and target fields in assignment does not match"),
 						 /* translator: %s represents a name of an extra check */
 						 errdetail("%s check of %s is active.",
 								  "strict_multi_assignment",
@@ -7127,7 +7127,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 			if (anum < td_natts)
 				ereport(strict_multiassignment_level,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("number of source and target fields in assignment do not match"),
+						 errmsg("number of source and target fields in assignment does not match"),
 						 /* translator: %s represents a name of an extra check */
 						 errdetail("%s check of %s is active.",
 								  "strict_multi_assignment",

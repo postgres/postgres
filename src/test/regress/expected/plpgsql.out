@@ -2899,10 +2899,10 @@ begin
   select 1,2,3 into x, y;
 end
 $$;
-WARNING:  number of source and target fields in assignment do not match
+WARNING:  number of source and target fields in assignment does not match
 DETAIL:  strict_multi_assignment check of extra_warnings is active.
 HINT:  Make sure the query returns the exact list of columns.
-WARNING:  number of source and target fields in assignment do not match
+WARNING:  number of source and target fields in assignment does not match
 DETAIL:  strict_multi_assignment check of extra_warnings is active.
 HINT:  Make sure the query returns the exact list of columns.
 set plpgsql.extra_errors to 'strict_multi_assignment';
@@ -2916,7 +2916,7 @@ begin
   select 1,2,3 into x, y;
 end
 $$;
-ERROR:  number of source and target fields in assignment do not match
+ERROR:  number of source and target fields in assignment does not match
 DETAIL:  strict_multi_assignment check of extra_errors is active.
 HINT:  Make sure the query returns the exact list of columns.
 CONTEXT:  PL/pgSQL function inline_code_block line 6 at SQL statement
@@ -2935,7 +2935,7 @@ begin
 end;
 $$;
 NOTICE:  ok
-ERROR:  number of source and target fields in assignment do not match
+ERROR:  number of source and target fields in assignment does not match
 DETAIL:  strict_multi_assignment check of extra_errors is active.
 HINT:  Make sure the query returns the exact list of columns.
 CONTEXT:  PL/pgSQL function inline_code_block line 8 at SQL statement
@@ -2949,7 +2949,7 @@ begin
 end;
 $$;
 NOTICE:  ok
-ERROR:  number of source and target fields in assignment do not match
+ERROR:  number of source and target fields in assignment does not match
 DETAIL:  strict_multi_assignment check of extra_errors is active.
 HINT:  Make sure the query returns the exact list of columns.
 CONTEXT:  PL/pgSQL function inline_code_block line 7 at SQL statement
@@ -2960,7 +2960,7 @@ begin
   select 1 into t; -- should fail;
 end;
 $$;
-ERROR:  number of source and target fields in assignment do not match
+ERROR:  number of source and target fields in assignment does not match
 DETAIL:  strict_multi_assignment check of extra_errors is active.
 HINT:  Make sure the query returns the exact list of columns.
 CONTEXT:  PL/pgSQL function inline_code_block line 5 at SQL statement
