@@ -64,8 +64,8 @@ Previously, a normally-invisible OID column could be specified during table
 creation using WITH OIDS;  that ability has been removed.  Columns can
 still be explicitly specified as type OID.  Operations on tables that
 have columns named 'oid' (created using WITH OIDS) will need adjustment.
-Many system tables now have an 'oid' column that will be expanded with
-SELECT * by default.
+The many system tables with such columns will now display those columns
+with SELECT * by default.
 </para>
 </listitem>
 
@@ -119,7 +119,7 @@ Do not allow multiple different recovery_target* specifications (Peter Eisentrau
 </para>
 
 <para>
-Previously multiple different recovery_target* variables could be specified, and last one specified was honored.  Now, only one can be specified, though the same one can
+Previously multiple different recovery_target* variables could be specified, and the last one specified was honored.  Now, only one can be specified, though the same one can
 be specified multiple times and the last specification is honored.
 </para>
 </listitem>
@@ -422,7 +422,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Allow ATTACH PARTITION to be performed with reduced locking requirements (Robert Haas)
+ATTACH PARTITION is now performed with reduced locking requirements (Robert Haas)
 </para>
 </listitem>
 
@@ -634,7 +634,7 @@ Have new btree indexes sort duplicate index entries in heap-storage order (Peter
 </para>
 
 <para>
-Btree indexes pg_upgraded from previous releases will not have this ordering.  This does slightly reduce the maximum length of indexed values.
+Btree indexes pg_upgraded from previous releases will not have this ordering.  This slightly reduces the maximum length of indexed values.
 </para>
 </listitem>
 
@@ -693,7 +693,7 @@ Allow CREATE STATISTICS to create most-common-value statistics for multiple colu
 </para>
 
 <para>
-This improve optimization for columns with non-uniform distributions that often appear in WHERE clauses.
+This improves optimization for columns with non-uniform distributions that often appear in WHERE clauses.
 </para>
 </listitem>
 
@@ -1005,7 +1005,7 @@ Allow logging of only a percentage of statements and transactions meeting log_mi
 </para>
 
 <para>
-The parameters log_statement_sample_rate and log_transaction_sample_rate controls this.
+The parameters log_statement_sample_rate and log_transaction_sample_rate control this.
 </para>
 </listitem>
 
@@ -1218,7 +1218,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow more comparisons with information_schema text columns use indexes (Tom Lane)
+Allow more comparisons with information_schema text columns to use indexes (Tom Lane)
 </para>
 </listitem>
 
@@ -1297,7 +1297,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Allow discovery of the LDAP server using DNS (Thomas Munro)
+Allow discovery of the LDAP server using DNS SRV records (Thomas Munro)
 </para>
 
 <para>
@@ -1489,7 +1489,7 @@ Add server variable to control the type of shared memory to use (Andres Freund)
 </para>
 
 <para>
-The variable is shared_memory_type.  It purpose is to allow selection of System V shared memory, if desired.
+The variable is shared_memory_type.  Its purpose is to allow selection of System V shared memory, if desired.
 </para>
 </listitem>
 
