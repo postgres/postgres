@@ -2743,6 +2743,12 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 				MemoryContextSwitchTo(oldcontext);
 
+				/* A system catalog cannot be reindexed concurrently */
+				if (IsCatalogRelationOid(relationOid))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot reindex a system catalog concurrently")));
+
 				/* Open relation to get its indexes */
 				heapRelation = table_open(relationOid, ShareUpdateExclusiveLock);
 
@@ -2756,13 +2762,13 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 					if (!indexRelation->rd_index->indisvalid)
 						ereport(WARNING,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot reindex concurrently invalid index \"%s.%s\", skipping",
+								 errmsg("cannot reindex invalid index \"%s.%s\" concurrently, skipping",
 										get_namespace_name(get_rel_namespace(cellOid)),
 										get_rel_name(cellOid))));
 					else if (indexRelation->rd_index->indisexclusion)
 						ereport(WARNING,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot reindex concurrently exclusion constraint index \"%s.%s\", skipping",
+								 errmsg("cannot reindex exclusion constraint index \"%s.%s\" concurrently, skipping",
 										get_namespace_name(get_rel_namespace(cellOid)),
 										get_rel_name(cellOid))));
 					else
@@ -2802,7 +2808,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 						if (!indexRelation->rd_index->indisvalid)
 							ereport(WARNING,
 									(errcode(ERRCODE_INDEX_CORRUPTED),
-									 errmsg("cannot reindex concurrently invalid index \"%s.%s\", skipping",
+									 errmsg("cannot reindex invalid index \"%s.%s\" concurrently, skipping",
 											get_namespace_name(get_rel_namespace(cellOid)),
 											get_rel_name(cellOid))));
 						else
@@ -2831,17 +2837,11 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 			{
 				Oid			heapId = IndexGetRelation(relationOid, false);
 
-				/* A shared relation cannot be reindexed concurrently */
-				if (IsSharedRelation(heapId))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("concurrent reindex is not supported for shared relations")));
-
 				/* A system catalog cannot be reindexed concurrently */
 				if (IsCatalogRelationOid(heapId))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("concurrent reindex is not supported for catalog relations")));
+							 errmsg("cannot reindex a system catalog concurrently")));
 
 				/* Save the list of relation OIDs in private context */
 				oldcontext = MemoryContextSwitchTo(private_context);
@@ -2869,7 +2869,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 			/* Return error if type of relation is not supported */
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot reindex concurrently this type of relation")));
+					 errmsg("cannot reindex this type of relation concurrently")));
 			break;
 	}
 

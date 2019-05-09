@@ -1967,7 +1967,7 @@ INSERT INTO concur_reindex_tab3 VALUES  (3, '[1,2]');
 REINDEX INDEX CONCURRENTLY  concur_reindex_tab3_c2_excl;  -- error
 ERROR:  concurrent index creation for exclusion constraints is not supported
 REINDEX TABLE CONCURRENTLY concur_reindex_tab3;  -- succeeds with warning
-WARNING:  cannot reindex concurrently exclusion constraint index "public.concur_reindex_tab3_c2_excl", skipping
+WARNING:  cannot reindex exclusion constraint index "public.concur_reindex_tab3_c2_excl" concurrently, skipping
 INSERT INTO concur_reindex_tab3 VALUES  (4, '[2,4]');
 ERROR:  conflicting key value violates exclusion constraint "concur_reindex_tab3_c2_excl"
 DETAIL:  Key (c2)=([2,5)) conflicts with existing key (c2)=([1,3)).
@@ -2092,10 +2092,15 @@ BEGIN;
 REINDEX TABLE CONCURRENTLY concur_reindex_tab;
 ERROR:  REINDEX CONCURRENTLY cannot run inside a transaction block
 COMMIT;
-REINDEX TABLE CONCURRENTLY pg_database; -- no shared relation
-ERROR:  concurrent index creation on system catalog tables is not supported
-REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relations
-ERROR:  concurrent index creation on system catalog tables is not supported
+REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relation
+ERROR:  cannot reindex a system catalog concurrently
+REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
+ERROR:  cannot reindex a system catalog concurrently
+-- These are the toast table and index of pg_authid.
+REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
+ERROR:  cannot reindex a system catalog concurrently
+REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
+ERROR:  cannot reindex a system catalog concurrently
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
 ERROR:  concurrent reindex of system catalogs is not supported
 -- Warns about catalog relations
@@ -2144,7 +2149,7 @@ DROP INDEX concur_reindex_ind5_ccnew;
 DELETE FROM concur_reindex_tab4 WHERE c1 = 1;
 -- The invalid index is not processed when running REINDEX TABLE.
 REINDEX TABLE CONCURRENTLY concur_reindex_tab4;
-WARNING:  cannot reindex concurrently invalid index "public.concur_reindex_ind5", skipping
+WARNING:  cannot reindex invalid index "public.concur_reindex_ind5" concurrently, skipping
 NOTICE:  table "concur_reindex_tab4" has no indexes
 \d concur_reindex_tab4
         Table "public.concur_reindex_tab4"

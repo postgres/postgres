@@ -838,8 +838,11 @@ DROP TABLE concur_reindex_part;
 BEGIN;
 REINDEX TABLE CONCURRENTLY concur_reindex_tab;
 COMMIT;
-REINDEX TABLE CONCURRENTLY pg_database; -- no shared relation
-REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relations
+REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relation
+REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
+-- These are the toast table and index of pg_authid.
+REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
+REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
 -- Warns about catalog relations
 REINDEX SCHEMA CONCURRENTLY pg_catalog;
