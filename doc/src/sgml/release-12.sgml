@@ -717,6 +717,21 @@ forced by specifying NOT MATERIALIZED.  Previously, CTEs were never inlined and 
 
 <listitem>
 <!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+2018-07-16 [f7cb2842b] Add plan_cache_mode setting
+-->
+
+<para>
+Allow contol over when generic plans are used for prepared statements (Pavel Stehule)
+</para>
+
+<para>
+The server variable plan_cache_mode enables this control.
+</para>
+</listitem>
+
+<listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2018-12-30 [b5415e3c2] Support parameterized TidPaths.
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -2451,6 +2466,21 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <para>
 Add --exclude-database option to pg_dumpall (Andrew Dunstan)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2018-07-13 [387a5cfb9] Add pg_dump - -on-conflict-do-nothing option.
+-->
+
+<para>
+Allow restore of INSERT statements to skip rows which would cause conflicts (Surafel Temesgen)
+</para>
+
+<para>
+The pg_dump option is --on-conflict-do-nothing.
 </para>
 </listitem>
 
