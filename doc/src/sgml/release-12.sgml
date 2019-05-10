@@ -527,7 +527,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Allow parallel query when in SERIALIZABLE ISOLATION MODE (Thomas Munro)
+Allow parallel query when in SERIALIZABLE isolation mode (Thomas Munro)
 </para>
 
 <para>
