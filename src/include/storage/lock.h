@@ -138,27 +138,13 @@ typedef uint16 LOCKMETHODID;
 typedef enum LockTagType
 {
 	LOCKTAG_RELATION,			/* whole relation */
-	/* ID info for a relation is DB OID + REL OID; DB OID = 0 if shared */
 	LOCKTAG_RELATION_EXTEND,	/* the right to extend a relation */
-	/* same ID info as RELATION */
 	LOCKTAG_PAGE,				/* one page of a relation */
-	/* ID info for a page is RELATION info + BlockNumber */
 	LOCKTAG_TUPLE,				/* one physical tuple */
-	/* ID info for a tuple is PAGE info + OffsetNumber */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
-	/* ID info for a transaction is its TransactionId */
 	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
-	/* ID info for a virtual transaction is its VirtualTransactionId */
 	LOCKTAG_SPECULATIVE_TOKEN,	/* speculative insertion Xid and token */
-	/* ID info for a transaction is its TransactionId */
 	LOCKTAG_OBJECT,				/* non-relation database object */
-	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
-
-	/*
-	 * Note: object ID has same representation as in pg_depend and
-	 * pg_description, but notice that we are constraining SUBID to 16 bits.
-	 * Also, we use DB OID = 0 for shared objects such as tablespaces.
-	 */
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
 	LOCKTAG_ADVISORY			/* advisory user locks */
 } LockTagType;
@@ -190,6 +176,8 @@ typedef struct LOCKTAG
  * the physical fields of LOCKTAG.  Use these to set up LOCKTAG values,
  * rather than accessing the fields directly.  Note multiple eval of target!
  */
+
+/* ID info for a relation is DB OID + REL OID; DB OID = 0 if shared */
 #define SET_LOCKTAG_RELATION(locktag,dboid,reloid) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
@@ -198,6 +186,7 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_RELATION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+/* same ID info as RELATION */
 #define SET_LOCKTAG_RELATION_EXTEND(locktag,dboid,reloid) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
@@ -206,6 +195,7 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_RELATION_EXTEND, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+/* ID info for a page is RELATION info + BlockNumber */
 #define SET_LOCKTAG_PAGE(locktag,dboid,reloid,blocknum) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
@@ -214,6 +204,7 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_PAGE, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+/* ID info for a tuple is PAGE info + OffsetNumber */
 #define SET_LOCKTAG_TUPLE(locktag,dboid,reloid,blocknum,offnum) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
@@ -222,6 +213,7 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_TUPLE, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+/* ID info for a transaction is its TransactionId */
 #define SET_LOCKTAG_TRANSACTION(locktag,xid) \
 	((locktag).locktag_field1 = (xid), \
 	 (locktag).locktag_field2 = 0, \
@@ -230,6 +222,7 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_TRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+/* ID info for a virtual transaction is its VirtualTransactionId */
 #define SET_LOCKTAG_VIRTUALTRANSACTION(locktag,vxid) \
 	((locktag).locktag_field1 = (vxid).backendId, \
 	 (locktag).locktag_field2 = (vxid).localTransactionId, \
@@ -238,6 +231,10 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+/*
+ * ID info for a speculative insert is TRANSACTION info +
+ * its speculative insert counter.
+ */
 #define SET_LOCKTAG_SPECULATIVE_INSERTION(locktag,xid,token) \
 	((locktag).locktag_field1 = (xid), \
 	 (locktag).locktag_field2 = (token),		\
@@ -246,6 +243,13 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_SPECULATIVE_TOKEN, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
+/*
+ * ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID
+ *
+ * Note: object ID has same representation as in pg_depend and
+ * pg_description, but notice that we are constraining SUBID to 16 bits.
+ * Also, we use DB OID = 0 for shared objects such as tablespaces.
+ */
 #define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (classoid), \
