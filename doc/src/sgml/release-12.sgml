@@ -722,11 +722,11 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 -->
 
 <para>
-Allow contol over when generic plans are used for prepared statements (Pavel Stehule)
+Allow control over when generic plans are used for prepared statements (Pavel Stehule)
 </para>
 
 <para>
-The server variable plan_cache_mode enables this control.
+This is controlled by the plan_cache_mode server variable.
 </para>
 </listitem>
 
@@ -2476,7 +2476,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Allow restore of INSERT statements to skip rows which would cause conflicts (Surafel Temesgen)
+Allow restoration of an INSERT-statement dump to skip rows which would cause conflicts (Surafel Temesgen)
 </para>
 
 <para>
