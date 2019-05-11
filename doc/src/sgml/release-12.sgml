@@ -634,7 +634,7 @@ Have new btree indexes sort duplicate index entries in heap-storage order (Peter
 </para>
 
 <para>
-Btree indexes <application>pg_upgraded</application> from previous releases will not have this ordering.  This slightly reduces the maximum length of indexed values.
+This slightly reduces the maximum-allowed length of indexed values.  Indexes <application>pg_upgraded</application> from previous releases will not have this ordering.
 </para>
 </listitem>
 
@@ -1233,7 +1233,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow more use of indexes for text columns comparisons with <structname>information_schema</structname> columns (Tom Lane)
+Allow more use of indexes for text comparisons with <structname>information_schema</structname> columns (Tom Lane)
 </para>
 </listitem>
 
