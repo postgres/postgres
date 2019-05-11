@@ -359,11 +359,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve performance of pruning many partitions (Amit Langote, David Rowley, Tom Lane, Álvaro Herrera)
+Improve performance of many operations on partitioned tables (Amit Langote, David Rowley, Tom Lane, Álvaro Herrera)
 </para>
 
 <para>
-Now thousands of partitions can be pruned efficiently.
+Also, thousands of partitions can now be pruned efficiently.
 </para>
 </listitem>
 
