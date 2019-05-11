@@ -187,9 +187,10 @@ Avoid performing unnecessary rounding of <type>REAL</type> and <type>DOUBLE PREC
 </para>
 
 <para>
-This dramatically speeds up processing of floating-point values, though
-trailing digits are display slightly differently.  Users who wish to have output that is rounded can set
-<literal>extra_float_digits=0</literal>.
+This dramatically speeds up processing of floating-point values but causes
+additional trailing digits to potentially be displayed.  Users wishing
+to have output that is rounded to match the previous behavior can set
+<literal>extra_float_digits=0</literal>, which is no longer the default.
 </para>
 </listitem>
 
