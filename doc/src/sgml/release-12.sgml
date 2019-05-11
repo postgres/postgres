@@ -566,7 +566,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Improve speed of btree index insertions (Alexander Korotkov, Peter Geoghegan)
+Improve speed of btree index insertions (Peter Geoghegan, Alexander Korotkov)
 </para>
 
 <para>
