@@ -22,6 +22,8 @@ command_ok([ $ENV{PG_REGRESS}, '--config-auth', "$tempdir/data" ],
 	'configure authentication');
 open CONF, ">>$tempdir/data/postgresql.conf";
 print CONF "fsync = off\n";
+print CONF TestLib::slurp_file($ENV{TEMP_CONFIG})
+  if defined $ENV{TEMP_CONFIG};
 if (!$windows_os)
 {
 	print CONF "listen_addresses = ''\n";

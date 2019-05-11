@@ -419,7 +419,17 @@ sub init
 	print $conf "restart_after_crash = off\n";
 	print $conf "log_statement = all\n";
 	print $conf "wal_retrieve_retry_interval = '500ms'\n";
-	print $conf "port = $port\n";
+
+	# If a setting tends to affect whether tests pass or fail, print it after
+	# TEMP_CONFIG.  Otherwise, print it before TEMP_CONFIG, thereby permitting
+	# overrides.  Settings that merely improve performance or ease debugging
+	# belong before TEMP_CONFIG.
+	print $conf TestLib::slurp_file($ENV{TEMP_CONFIG})
+	  if defined $ENV{TEMP_CONFIG};
+
+	# XXX Neutralize any stats_temp_directory in TEMP_CONFIG.  Nodes running
+	# concurrently must not share a stats_temp_directory.
+	print $conf "stats_temp_directory = 'pg_stat_tmp'\n";
 
 	if ($params{allows_streaming})
 	{
@@ -433,6 +443,7 @@ sub init
 		print $conf "max_connections = 10\n";
 	}
 
+	print $conf "port = $port\n";
 	if ($use_tcp)
 	{
 		print $conf "unix_socket_directories = ''\n";
