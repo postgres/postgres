@@ -2014,17 +2014,6 @@ The clause has no effect.
 </para>
 </listitem>
 
-<listitem>
-<!--
-Author: Joe Conway <mail@joeconway.com>
-2019-02-17 [290e3b77f] Mark pg_config() stable rather than immutable
--->
-
-<para>
-Mark <function>pg_config()</function> stable rather than immutable (Joe Conway)
-</para>
-</listitem>
-
     </itemizedlist>
 
    </sect3>
