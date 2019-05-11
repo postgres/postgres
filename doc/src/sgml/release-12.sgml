@@ -811,7 +811,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow IN comparisons with arrays to use <literal>IS NOT NULL</literal> partial indexes more frequently (Tom Lane)
+Allow IN comparisons with arrays to use <literal>IS NOT NULL</literal> partial indexes more frequently (James Coleman)
 </para>
 </listitem>
 
