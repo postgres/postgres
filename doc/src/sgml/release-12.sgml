@@ -253,6 +253,12 @@ Previously, <command>\pset format a</command> chose <literal>aligned</literal>; 
 </listitem>
 
 <listitem>
+<para>
+The maximum btree index length is now reduced by eight bytes;  a <xref linkend="sql-reindex"/> operation could potentially fail.
+</para>
+</listitem>
+
+<listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2018-12-19 [586b98fdf] Make type "name" collation-aware.
