@@ -570,7 +570,9 @@ Improve speed of btree index insertions (Alexander Korotkov, Peter Geoghegan)
 </para>
 
 <para>
- LOOKUP, INDEX CLEANUP IMPROVEMENTS?
+The new code improves the space-efficiency of page splits, reduces locking
+overhead, and gives better performance for <command>UPDATE</command>s
+and <command>DELETE</command>s on indexes with many duplicates.
 </para>
 </listitem>
 
