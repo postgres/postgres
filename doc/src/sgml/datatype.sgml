@@ -763,8 +763,8 @@ FROM generate_series(-3.5, 3.5, 1) as x;
     <note>
      <para>
       Applications that wanted precise values have historically had to set
-      <xref linkend="guc-extra-float-digits"/> to 3 obtain them. For maximum
-      compatibility between versions, they should continue to do so.
+      <xref linkend="guc-extra-float-digits"/> to 3 to obtain them. For
+      maximum compatibility between versions, they should continue to do so.
      </para>
     </note>
 
