@@ -264,7 +264,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 		if (strcmp(type, "TABLE") == 0)
 			fprintf(stderr, _("%s: reindexing of table \"%s\" in database \"%s\" failed: %s"),
 					progname, name, PQdb(conn), PQerrorMessage(conn));
-		if (strcmp(type, "INDEX") == 0)
+		else if (strcmp(type, "INDEX") == 0)
 			fprintf(stderr, _("%s: reindexing of index \"%s\" in database \"%s\" failed: %s"),
 					progname, name, PQdb(conn), PQerrorMessage(conn));
 		else
