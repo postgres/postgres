@@ -641,7 +641,7 @@ Have new btree indexes sort duplicate index entries in heap-storage order (Peter
 </para>
 
 <para>
-This slightly reduces the maximum-allowed length of indexed values.  Indexes <application>pg_upgraded</application> from previous releases will not have this ordering.
+Indexes <application>pg_upgraded</application> from previous releases will not have this ordering.
 </para>
 </listitem>
 
