@@ -632,7 +632,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
 <para>
-Have new btree indexes sort duplicate index entries in heap-storage order (Peter Geoghegan)
+Have new btree indexes sort duplicate index entries in heap-storage order (Peter Geoghegan, Heikki Linnakangas)
 </para>
 
 <para>
