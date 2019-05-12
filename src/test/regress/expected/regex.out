@@ -295,6 +295,55 @@ select regexp_matches('foo/bar/baz',
  {foo,bar,baz}
 (1 row)
 
+-- Test that greediness can be overridden by outer quantifier
+select regexp_matches('llmmmfff', '^(l*)(.*)(f*)$');
+ regexp_matches 
+----------------
+ {ll,mmmfff,""}
+(1 row)
+
+select regexp_matches('llmmmfff', '^(l*){1,1}(.*)(f*)$');
+ regexp_matches 
+----------------
+ {ll,mmmfff,""}
+(1 row)
+
+select regexp_matches('llmmmfff', '^(l*){1,1}?(.*)(f*)$');
+  regexp_matches  
+------------------
+ {"",llmmmfff,""}
+(1 row)
+
+select regexp_matches('llmmmfff', '^(l*){1,1}?(.*){1,1}?(f*)$');
+ regexp_matches 
+----------------
+ {"",llmmm,fff}
+(1 row)
+
+select regexp_matches('llmmmfff', '^(l*?)(.*)(f*)$');
+  regexp_matches  
+------------------
+ {"",llmmmfff,""}
+(1 row)
+
+select regexp_matches('llmmmfff', '^(l*?){1,1}(.*)(f*)$');
+ regexp_matches 
+----------------
+ {ll,mmmfff,""}
+(1 row)
+
+select regexp_matches('llmmmfff', '^(l*?){1,1}?(.*)(f*)$');
+  regexp_matches  
+------------------
+ {"",llmmmfff,""}
+(1 row)
+
+select regexp_matches('llmmmfff', '^(l*?){1,1}?(.*){1,1}?(f*)$');
+ regexp_matches 
+----------------
+ {"",llmmm,fff}
+(1 row)
+
 -- Test for infinite loop in cfindloop with zero-length possible match
 -- but no actual match (can only happen in the presence of backrefs)
 select 'a' ~ '$()|^\1';
