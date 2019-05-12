@@ -1046,11 +1046,16 @@ GetMessageEncoding(void)
 WCHAR *
 pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 {
+	int			msgenc = GetMessageEncoding();
 	WCHAR	   *utf16;
 	int			dstlen;
 	UINT		codepage;
 
-	codepage = pg_enc2name_tbl[GetMessageEncoding()].codepage;
+	if (msgenc == PG_SQL_ASCII)
+		/* No conversion is possible, and SQL_ASCII is never utf16. */
+		return NULL;
+
+	codepage = pg_enc2name_tbl[msgenc].codepage;
 
 	/*
 	 * Use MultiByteToWideChar directly if there is a corresponding codepage,
@@ -1075,7 +1080,7 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 		{
 			utf8 = (char *) pg_do_encoding_conversion((unsigned char *) str,
 													  len,
-													  GetMessageEncoding(),
+													  msgenc,
 													  PG_UTF8);
 			if (utf8 != str)
 				len = strlen(utf8);
