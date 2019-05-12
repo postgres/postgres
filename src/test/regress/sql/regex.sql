@@ -118,6 +118,16 @@ select regexp_matches('Programmer', '(\w)(.*?\1)', 'g');
 select regexp_matches('foo/bar/baz',
                       '^([^/]+?)(?:/([^/]+?))(?:/([^/]+?))?$', '');
 
+-- Test that greediness can be overridden by outer quantifier
+select regexp_matches('llmmmfff', '^(l*)(.*)(f*)$');
+select regexp_matches('llmmmfff', '^(l*){1,1}(.*)(f*)$');
+select regexp_matches('llmmmfff', '^(l*){1,1}?(.*)(f*)$');
+select regexp_matches('llmmmfff', '^(l*){1,1}?(.*){1,1}?(f*)$');
+select regexp_matches('llmmmfff', '^(l*?)(.*)(f*)$');
+select regexp_matches('llmmmfff', '^(l*?){1,1}(.*)(f*)$');
+select regexp_matches('llmmmfff', '^(l*?){1,1}?(.*)(f*)$');
+select regexp_matches('llmmmfff', '^(l*?){1,1}?(.*){1,1}?(f*)$');
+
 -- Test for infinite loop in cfindloop with zero-length possible match
 -- but no actual match (can only happen in the presence of backrefs)
 select 'a' ~ '$()|^\1';
