@@ -152,7 +152,7 @@ pgtls_open_client(PGconn *conn)
 bool
 pgtls_read_pending(PGconn *conn)
 {
-	return SSL_pending(conn->ssl);
+	return SSL_pending(conn->ssl) > 0;
 }
 
 /*
