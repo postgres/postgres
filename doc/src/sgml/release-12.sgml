@@ -527,41 +527,6 @@ This prevents the creation of inconsistent partition hierarchies in rare cases.
     </sect4>
 
     <sect4>
-     <title>Parallel Queries</title>
-
-     <itemizedlist>
-
-<listitem>
-<!--
-Author: Thomas Munro <tmunro@postgresql.org>
-2019-03-15 [bb16aba50] Enable parallel query with SERIALIZABLE isolation.
--->
-
-<para>
-Allow parallel query when in <link linkend="sql-set-transaction"><literal>SERIALIZABLE</literal></link> isolation mode (Thomas Munro)
-</para>
-
-<para>
-Previously, parallelism was disabled when in this mode.
-</para>
-</listitem>
-
-<listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2019-03-27 [5bde1651b] Switch function current_schema[s]() to be parallel-unsaf
--->
-
-<para>
-Prevent <link linkend="functions-info-session-table"><function>current_schema()</function></link> and <function>current_schemas()</function> from being run by parallel workers (Michael Paquier)
-</para>
-</listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
      <title>Indexes</title>
 
      <itemizedlist>
@@ -977,6 +942,21 @@ Author: Andres Freund <andres@anarazel.de>
 
 <para>
 Improve speed in converting strings to <type>int2</type>/<type>int4</type> integers (Andres Freund)
+</para>
+</listitem>
+
+<listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2019-03-15 [bb16aba50] Enable parallel query with SERIALIZABLE isolation.
+-->
+
+<para>
+Allow parallelized queries when in <link linkend="sql-set-transaction"><literal>SERIALIZABLE</literal></link> isolation mode (Thomas Munro)
+</para>
+
+<para>
+Previously, parallelism was disabled when in this mode.
 </para>
 </listitem>
 
@@ -2018,12 +1998,23 @@ The clause has no effect.
 </para>
 </listitem>
 
+<listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2019-03-27 [5bde1651b] Switch function current_schema[s]() to be parallel-unsaf
+-->
+
+<para>
+Prevent <link linkend="functions-info-session-table"><function>current_schema()</function></link> and <function>current_schemas()</function> from being run by parallel workers (Michael Paquier)
+</para>
+</listitem>
+
     </itemizedlist>
 
    </sect3>
 
    <sect3>
-    <title>Server-Side Languages</title>
+    <title><link linkend="plpgsql">PL/pgSQL</link></title>
 
     <itemizedlist>
 
@@ -2035,7 +2026,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <para>
 Allow commands and variables with the same name as commands to be used in the same
-<link linkend="plpgsql">PL/pgSQL</link> function (Tom Lane)
+PL/pgSQL function (Tom Lane)
 </para>
 
 <para>
@@ -2621,7 +2612,7 @@ Require a C99-supported compiler, and <acronym>MSVC</acronym> 2013 or later on <
    </sect3>
 
    <sect3>
-    <title>Source Code</title>
+    <title>Documentation</title>
 
      <itemizedlist>
 
