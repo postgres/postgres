@@ -91,12 +91,17 @@ check_publication_add_relation(Relation targetrel)
  * Does same checks as the above, but does not need relation to be opened
  * and also does not throw errors.
  *
- * Note this also excludes all tables with relid < FirstNormalObjectId,
+ * XXX  This also excludes all tables with relid < FirstNormalObjectId,
  * ie all tables created during initdb.  This mainly affects the preinstalled
- * information_schema.  (IsCatalogRelationOid() only excludes tables with
- * relid < FirstBootstrapObjectId, making that test rather redundant, but
- * really we should get rid of the FirstNormalObjectId test not
- * IsCatalogRelationOid.)
+ * information_schema.  IsCatalogRelationOid() only excludes tables with
+ * relid < FirstBootstrapObjectId, making that test rather redundant,
+ * but really we should get rid of the FirstNormalObjectId test not
+ * IsCatalogRelationOid.  We can't do so today because we don't want
+ * information_schema tables to be considered publishable; but this test
+ * is really inadequate for that, since the information_schema could be
+ * dropped and reloaded and then it'll be considered publishable.  The best
+ * long-term solution may be to add a "relispublishable" bool to pg_class,
+ * and depend on that instead of OID checks.
  */
 static bool
 is_publishable_class(Oid relid, Form_pg_class reltuple)
