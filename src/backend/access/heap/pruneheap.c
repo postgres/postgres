@@ -324,7 +324,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 
 
 /*
- * Prune specified item pointer or a HOT chain originating at that item.
+ * Prune specified line pointer or a HOT chain originating at line pointer.
  *
  * If the item is an index-referenced tuple (i.e. not a heap-only tuple),
  * the HOT chain is pruned by removing all DEAD tuples at the start of the HOT
@@ -454,7 +454,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		}
 
 		/*
-		 * Likewise, a dead item pointer can't be part of the chain. (We
+		 * Likewise, a dead line pointer can't be part of the chain. (We
 		 * already eliminated the case of dead root tuple outside this
 		 * function.)
 		 */
@@ -630,7 +630,7 @@ heap_prune_record_prunable(PruneState *prstate, TransactionId xid)
 		prstate->new_prune_xid = xid;
 }
 
-/* Record item pointer to be redirected */
+/* Record line pointer to be redirected */
 static void
 heap_prune_record_redirect(PruneState *prstate,
 						   OffsetNumber offnum, OffsetNumber rdoffnum)
@@ -645,7 +645,7 @@ heap_prune_record_redirect(PruneState *prstate,
 	prstate->marked[rdoffnum] = true;
 }
 
-/* Record item pointer to be marked dead */
+/* Record line pointer to be marked dead */
 static void
 heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum)
 {
@@ -656,7 +656,7 @@ heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum)
 	prstate->marked[offnum] = true;
 }
 
-/* Record item pointer to be marked unused */
+/* Record line pointer to be marked unused */
 static void
 heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
 {

@@ -2162,7 +2162,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	else
 	{
 		/*
-		 * Bitmap is lossy, so we must examine each item pointer on the page.
+		 * Bitmap is lossy, so we must examine each line pointer on the page.
 		 * But we can ignore HOT chains, since we'll check each tuple anyway.
 		 */
 		Page		dp = (Page) BufferGetPage(buffer);

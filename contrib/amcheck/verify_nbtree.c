@@ -2164,7 +2164,7 @@ invariant_l_offset(BtreeCheckState *state, BTScanInsert key,
  * Does the invariant hold that the key is less than or equal to a given upper
  * bound offset item?
  *
- * Caller should have verified that upperbound's item pointer is consistent
+ * Caller should have verified that upperbound's line pointer is consistent
  * using PageGetItemIdCareful() call.
  *
  * If this function returns false, convention is that caller throws error due
@@ -2187,7 +2187,7 @@ invariant_leq_offset(BtreeCheckState *state, BTScanInsert key,
  * Does the invariant hold that the key is strictly greater than a given lower
  * bound offset item?
  *
- * Caller should have verified that lowerbound's item pointer is consistent
+ * Caller should have verified that lowerbound's line pointer is consistent
  * using PageGetItemIdCareful() call.
  *
  * If this function returns false, convention is that caller throws error due

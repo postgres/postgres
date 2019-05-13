@@ -131,7 +131,7 @@ typedef IndexAttributeBitMapData * IndexAttributeBitMap;
  * fit on one index page.  An index tuple must have either data or a null
  * bitmap, so we can safely assume it's at least 1 byte bigger than a bare
  * IndexTupleData struct.  We arrive at the divisor because each tuple
- * must be maxaligned, and it must have an associated item pointer.
+ * must be maxaligned, and it must have an associated line pointer.
  *
  * To be index-type-independent, this does not account for any special space
  * on the page, and is thus conservative.

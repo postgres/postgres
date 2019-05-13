@@ -337,7 +337,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 							InvalidBlockNumber, InvalidOffsetNumber);
 
 	/*
-	 * We implement the move step by swapping the item pointers of the source
+	 * We implement the move step by swapping the line pointers of the source
 	 * and target tuples, then replacing the newly-source tuples with
 	 * placeholders.  This is perhaps unduly friendly with the page data
 	 * representation, but it's fast and doesn't risk page overflow when a

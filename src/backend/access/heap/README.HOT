@@ -149,8 +149,8 @@ the descendant heap-only tuple.  It is conceivable that someone prunes
 the heap-only tuple before that, and even conceivable that the line pointer
 is re-used for another purpose.  Therefore, when following a HOT chain,
 it is always necessary to be prepared for the possibility that the
-linked-to item pointer is unused, dead, or redirected; and if it is a
-normal item pointer, we still have to check that XMIN of the tuple matches
+linked-to line pointer is unused, dead, or redirected; and if it is a
+normal line pointer, we still have to check that XMIN of the tuple matches
 the XMAX of the tuple we left.  Otherwise we should assume that we have
 come to the end of the HOT chain.  Note that this sort of XMIN/XMAX
 matching is required when following ordinary update chains anyway.
@@ -171,14 +171,14 @@ bit: there can be at most one visible tuple in the chain, so we can stop
 when we find it.  This rule does not work for non-MVCC snapshots, though.)
 
 Sequential scans do not need to pay attention to the HOT links because
-they scan every item pointer on the page anyway.  The same goes for a
+they scan every line pointer on the page anyway.  The same goes for a
 bitmap heap scan with a lossy bitmap.
 
 
 Pruning
 -------
 
-HOT pruning means updating item pointers so that HOT chains are
+HOT pruning means updating line pointers so that HOT chains are
 reduced in length, by collapsing out line pointers for intermediate dead
 tuples.  Although this makes those line pointers available for re-use,
 it does not immediately make the space occupied by their tuples available.
@@ -271,7 +271,7 @@ physical tuple by eliminating an intermediate heap-only tuple or
 replacing a physical root tuple by a redirect pointer, a decrement in
 the table's number of dead tuples is reported to pgstats, which may
 postpone autovacuuming.  Note that we do not count replacing a root tuple
-by a DEAD item pointer as decrementing n_dead_tuples; we still want
+by a DEAD line pointer as decrementing n_dead_tuples; we still want
 autovacuum to run to clean up the index entries and DEAD item.
 
 This area probably needs further work ...

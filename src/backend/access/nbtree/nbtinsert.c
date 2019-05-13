@@ -1689,7 +1689,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 		 * Direct access to page is not good but faster - we should implement
 		 * some new func in page API.  Note we only store the tuples
 		 * themselves, knowing that they were inserted in item-number order
-		 * and so the item pointers can be reconstructed.  See comments for
+		 * and so the line pointers can be reconstructed.  See comments for
 		 * _bt_restore_page().
 		 */
 		XLogRegisterBufData(1,

@@ -53,14 +53,18 @@
  *
  * NOTES:
  *
- * linp1..N form an ItemId array.  ItemPointers point into this array
- * rather than pointing directly to a tuple.  Note that OffsetNumbers
+ * linp1..N form an ItemId (line pointer) array.  ItemPointers point
+ * to a physical block number and a logical offset (line pointer
+ * number) within that block/page.  Note that OffsetNumbers
  * conventionally start at 1, not 0.
  *
- * tuple1..N are added "backwards" on the page.  because a tuple's
- * ItemPointer points to its ItemId entry rather than its actual
+ * tuple1..N are added "backwards" on the page.  Since an ItemPointer
+ * offset is used to access an ItemId entry rather than an actual
  * byte-offset position, tuples can be physically shuffled on a page
- * whenever the need arises.
+ * whenever the need arises.  This indirection also keeps crash recovery
+ * relatively simple, because the low-level details of page space
+ * management can be controlled by standard buffer page code during
+ * logging, and during recovery.
  *
  * AM-generic per-page information is kept in PageHeaderData.
  *
@@ -233,7 +237,7 @@ typedef PageHeaderData *PageHeader;
 
 /*
  * PageGetContents
- *		To be used in case the page does not contain item pointers.
+ *		To be used in cases where the page does not contain line pointers.
  *
  * Note: prior to 8.3 this was not guaranteed to yield a MAXALIGN'd result.
  * Now it is.  Beware of old code that might think the offset to the contents

@@ -7163,7 +7163,7 @@ log_heap_clean(Relation reln, Buffer buffer,
 	 * arrays need not be stored too.  Note that even if all three arrays are
 	 * empty, we want to expose the buffer as a candidate for whole-page
 	 * storage, since this record type implies a defragmentation operation
-	 * even if no item pointers changed state.
+	 * even if no line pointers changed state.
 	 */
 	if (nredirected > 0)
 		XLogRegisterBufData(0, (char *) redirected,
@@ -7724,7 +7724,7 @@ heap_xlog_clean(XLogReaderState *record)
 		nunused = (end - nowunused);
 		Assert(nunused >= 0);
 
-		/* Update all item pointers per the record, and repair fragmentation */
+		/* Update all line pointers per the record, and repair fragmentation */
 		heap_page_prune_execute(buffer,
 								redirected, nredirected,
 								nowdead, ndead,
