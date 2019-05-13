@@ -253,6 +253,10 @@ Previously, <command>\pset format a</command> chose <literal>aligned</literal>; 
 </listitem>
 
 <listitem>
+<!--
+This is caused by adding the tid to the btree entry, as listed later.
+-->
+
 <para>
 The maximum btree index length is now reduced by eight bytes;  a <xref linkend="sql-reindex"/> operation could potentially fail.
 </para>
@@ -2608,7 +2612,7 @@ Author: Andres Freund <andres@anarazel.de>
 -->
 
 <para>
-Require a C99-supported compiler, and <acronym>MSCV</acronym> 2013 or later on <productname>Windows</productname> (Andres Freund)
+Require a C99-supported compiler, and <acronym>MSVC</acronym> 2013 or later on <productname>Windows</productname> (Andres Freund)
 </para>
 </listitem>
 
