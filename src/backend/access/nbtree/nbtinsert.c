@@ -49,8 +49,8 @@ static void _bt_insertonpg(Relation rel, BTScanInsert itup_key,
 			   OffsetNumber newitemoff,
 			   bool split_only_page);
 static Buffer _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf,
-		  Buffer cbuf, OffsetNumber firstright, OffsetNumber newitemoff,
-		  Size newitemsz, IndexTuple newitem, bool newitemonleft);
+		  Buffer cbuf, OffsetNumber newitemoff, Size newitemsz,
+		  IndexTuple newitem);
 static void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
 				  BTStack stack, bool is_root, bool is_only);
 static bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
@@ -943,7 +943,6 @@ _bt_insertonpg(Relation rel,
 {
 	Page		page;
 	BTPageOpaque lpageop;
-	OffsetNumber firstright = InvalidOffsetNumber;
 	Size		itemsz;
 
 	page = BufferGetPage(buf);
@@ -979,7 +978,6 @@ _bt_insertonpg(Relation rel,
 	{
 		bool		is_root = P_ISROOT(lpageop);
 		bool		is_only = P_LEFTMOST(lpageop) && P_RIGHTMOST(lpageop);
-		bool		newitemonleft;
 		Buffer		rbuf;
 
 		/*
@@ -1000,14 +998,8 @@ _bt_insertonpg(Relation rel,
 		Assert(!(P_ISLEAF(lpageop) &&
 				 BlockNumberIsValid(RelationGetTargetBlock(rel))));
 
-		/* Choose the split point */
-		firstright = _bt_findsplitloc(rel, page,
-									  newitemoff, itemsz, itup,
-									  &newitemonleft);
-
 		/* split the buffer into left and right halves */
-		rbuf = _bt_split(rel, itup_key, buf, cbuf, firstright, newitemoff,
-						 itemsz, itup, newitemonleft);
+		rbuf = _bt_split(rel, itup_key, buf, cbuf, newitemoff, itemsz, itup);
 		PredicateLockPageSplit(rel,
 							   BufferGetBlockNumber(buf),
 							   BufferGetBlockNumber(rbuf));
@@ -1211,9 +1203,8 @@ _bt_insertonpg(Relation rel,
  *	_bt_split() -- split a page in the btree.
  *
  *		On entry, buf is the page to split, and is pinned and write-locked.
- *		firstright is the item index of the first item to be moved to the
- *		new right page.  newitemoff etc. tell us about the new item that
- *		must be inserted along with the data from the old page.
+ *		newitemoff etc. tell us about the new item that must be inserted
+ *		along with the data from the original page.
  *
  *		itup_key is used for suffix truncation on leaf pages (internal
  *		page callers pass NULL).  When splitting a non-leaf page, 'cbuf'
@@ -1226,8 +1217,7 @@ _bt_insertonpg(Relation rel,
  */
 static Buffer
 _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
-		  OffsetNumber firstright, OffsetNumber newitemoff, Size newitemsz,
-		  IndexTuple newitem, bool newitemonleft)
+		  OffsetNumber newitemoff, Size newitemsz, IndexTuple newitem)
 {
 	Buffer		rbuf;
 	Page		origpage;
@@ -1246,36 +1236,67 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	IndexTuple	item;
 	OffsetNumber leftoff,
 				rightoff;
+	OffsetNumber firstright;
 	OffsetNumber maxoff;
 	OffsetNumber i;
-	bool		isleaf;
+	bool		newitemonleft,
+				isleaf;
 	IndexTuple	lefthikey;
 	int			indnatts = IndexRelationGetNumberOfAttributes(rel);
 	int			indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 
-	/* Acquire a new page to split into */
-	rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
-
 	/*
 	 * origpage is the original page to be split.  leftpage is a temporary
 	 * buffer that receives the left-sibling data, which will be copied back
-	 * into origpage on success.  rightpage is the new page that receives the
-	 * right-sibling data.  If we fail before reaching the critical section,
-	 * origpage hasn't been modified and leftpage is only workspace. In
-	 * principle we shouldn't need to worry about rightpage either, because it
-	 * hasn't been linked into the btree page structure; but to avoid leaving
-	 * possibly-confusing junk behind, we are careful to rewrite rightpage as
-	 * zeroes before throwing any error.
+	 * into origpage on success.  rightpage is the new page that will receive
+	 * the right-sibling data.
+	 *
+	 * leftpage is allocated after choosing a split point.  rightpage's new
+	 * buffer isn't acquired until after leftpage is initialized and has new
+	 * high key, the last point where splitting the page may fail (barring
+	 * corruption).  Failing before acquiring new buffer won't have lasting
+	 * consequences, since origpage won't have been modified and leftpage is
+	 * only workspace.
 	 */
 	origpage = BufferGetPage(buf);
-	leftpage = PageGetTempPage(origpage);
-	rightpage = BufferGetPage(rbuf);
-
+	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
 	origpagenumber = BufferGetBlockNumber(buf);
-	rightpagenumber = BufferGetBlockNumber(rbuf);
 
+	/*
+	 * Choose a point to split origpage at.
+	 *
+	 * A split point can be thought of as a point _between_ two existing
+	 * tuples on origpage (lastleft and firstright tuples), provided you
+	 * pretend that the new item that didn't fit is already on origpage.
+	 *
+	 * Since origpage does not actually contain newitem, the representation of
+	 * split points needs to work with two boundary cases: splits where
+	 * newitem is lastleft, and splits where newitem is firstright.
+	 * newitemonleft resolves the ambiguity that would otherwise exist when
+	 * newitemoff == firstright.  In all other cases it's clear which side of
+	 * the split every tuple goes on from context.  newitemonleft is usually
+	 * (but not always) redundant information.
+	 */
+	firstright = _bt_findsplitloc(rel, origpage, newitemoff, newitemsz,
+								  newitem, &newitemonleft);
+
+	/* Allocate temp buffer for leftpage */
+	leftpage = PageGetTempPage(origpage);
 	_bt_pageinit(leftpage, BufferGetPageSize(buf));
-	/* rightpage was already initialized by _bt_getbuf */
+	lopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
+
+	/*
+	 * leftpage won't be the root when we're done.  Also, clear the SPLIT_END
+	 * and HAS_GARBAGE flags.
+	 */
+	lopaque->btpo_flags = oopaque->btpo_flags;
+	lopaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END | BTP_HAS_GARBAGE);
+	/* set flag in leftpage indicating that rightpage has no downlink yet */
+	lopaque->btpo_flags |= BTP_INCOMPLETE_SPLIT;
+	lopaque->btpo_prev = oopaque->btpo_prev;
+	/* handle btpo_next after rightpage buffer acquired */
+	lopaque->btpo.level = oopaque->btpo.level;
+	/* handle btpo_cycleid after rightpage buffer acquired */
 
 	/*
 	 * Copy the original page's LSN into leftpage, which will become the
@@ -1283,62 +1304,12 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * examine the LSN and possibly dump it in a page image.
 	 */
 	PageSetLSN(leftpage, PageGetLSN(origpage));
-
-	/* init btree private data */
-	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
-	lopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
-	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
-
 	isleaf = P_ISLEAF(oopaque);
-
-	/* if we're splitting this page, it won't be the root when we're done */
-	/* also, clear the SPLIT_END and HAS_GARBAGE flags in both pages */
-	lopaque->btpo_flags = oopaque->btpo_flags;
-	lopaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END | BTP_HAS_GARBAGE);
-	ropaque->btpo_flags = lopaque->btpo_flags;
-	/* set flag in left page indicating that the right page has no downlink */
-	lopaque->btpo_flags |= BTP_INCOMPLETE_SPLIT;
-	lopaque->btpo_prev = oopaque->btpo_prev;
-	lopaque->btpo_next = rightpagenumber;
-	ropaque->btpo_prev = origpagenumber;
-	ropaque->btpo_next = oopaque->btpo_next;
-	lopaque->btpo.level = ropaque->btpo.level = oopaque->btpo.level;
-	/* Since we already have write-lock on both pages, ok to read cycleid */
-	lopaque->btpo_cycleid = _bt_vacuum_cycleid(rel);
-	ropaque->btpo_cycleid = lopaque->btpo_cycleid;
-
-	/*
-	 * If the page we're splitting is not the rightmost page at its level in
-	 * the tree, then the first entry on the page is the high key for the
-	 * page.  We need to copy that to the right half.  Otherwise (meaning the
-	 * rightmost page case), all the items on the right half will be user
-	 * data.
-	 */
-	rightoff = P_HIKEY;
-
-	if (!P_RIGHTMOST(oopaque))
-	{
-		itemid = PageGetItemId(origpage, P_HIKEY);
-		itemsz = ItemIdGetLength(itemid);
-		item = (IndexTuple) PageGetItem(origpage, itemid);
-		Assert(BTreeTupleGetNAtts(item, rel) > 0);
-		Assert(BTreeTupleGetNAtts(item, rel) <= indnkeyatts);
-		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
-						false, false) == InvalidOffsetNumber)
-		{
-			memset(rightpage, 0, BufferGetPageSize(rbuf));
-			elog(ERROR, "failed to add hikey to the right sibling"
-				 " while splitting block %u of index \"%s\"",
-				 origpagenumber, RelationGetRelationName(rel));
-		}
-		rightoff = OffsetNumberNext(rightoff);
-	}
 
 	/*
 	 * The "high key" for the new left page will be the first key that's going
-	 * to go into the new right page, or possibly a truncated version if this
-	 * is a leaf page split.  This might be either the existing data item at
-	 * position firstright, or the incoming tuple.
+	 * to go into the new right page, or a truncated version if this is a leaf
+	 * page split.
 	 *
 	 * The high key for the left page is formed using the first item on the
 	 * right page, which may seem to be contrary to Lehman & Yao's approach of
@@ -1360,7 +1331,6 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * tuple could be physically larger despite being opclass-equal in respect
 	 * of all attributes prior to the heap TID attribute.)
 	 */
-	leftoff = P_HIKEY;
 	if (!newitemonleft && newitemoff == firstright)
 	{
 		/* incoming tuple will become first on right page */
@@ -1416,23 +1386,91 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	else
 		lefthikey = item;
 
+	/*
+	 * Add new high key to leftpage
+	 */
+	leftoff = P_HIKEY;
+
 	Assert(BTreeTupleGetNAtts(lefthikey, rel) > 0);
 	Assert(BTreeTupleGetNAtts(lefthikey, rel) <= indnkeyatts);
 	if (PageAddItem(leftpage, (Item) lefthikey, itemsz, leftoff,
 					false, false) == InvalidOffsetNumber)
-	{
-		memset(rightpage, 0, BufferGetPageSize(rbuf));
 		elog(ERROR, "failed to add hikey to the left sibling"
 			 " while splitting block %u of index \"%s\"",
 			 origpagenumber, RelationGetRelationName(rel));
-	}
 	leftoff = OffsetNumberNext(leftoff);
 	/* be tidy */
 	if (lefthikey != item)
 		pfree(lefthikey);
 
 	/*
-	 * Now transfer all the data items to the appropriate page.
+	 * Acquire a new right page to split into, now that left page has a new
+	 * high key.  From here on, it's not okay to throw an error without
+	 * zeroing rightpage first.  This coding rule ensures that we won't
+	 * confuse future VACUUM operations, which might otherwise try to re-find
+	 * a downlink to a leftover junk page as the page undergoes deletion.
+	 *
+	 * It would be reasonable to start the critical section just after the new
+	 * rightpage buffer is acquired instead; that would allow us to avoid
+	 * leftover junk pages without bothering to zero rightpage.  We do it this
+	 * way because it avoids an unnecessary PANIC when either origpage or its
+	 * existing sibling page are corrupt.
+	 */
+	rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
+	rightpage = BufferGetPage(rbuf);
+	rightpagenumber = BufferGetBlockNumber(rbuf);
+	/* rightpage was initialized by _bt_getbuf */
+	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
+
+	/*
+	 * Finish off remaining leftpage special area fields.  They cannot be set
+	 * before both origpage (leftpage) and rightpage buffers are acquired and
+	 * locked.
+	 */
+	lopaque->btpo_next = rightpagenumber;
+	lopaque->btpo_cycleid = _bt_vacuum_cycleid(rel);
+
+	/*
+	 * rightpage won't be the root when we're done.  Also, clear the SPLIT_END
+	 * and HAS_GARBAGE flags.
+	 */
+	ropaque->btpo_flags = oopaque->btpo_flags;
+	ropaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END | BTP_HAS_GARBAGE);
+	ropaque->btpo_prev = origpagenumber;
+	ropaque->btpo_next = oopaque->btpo_next;
+	ropaque->btpo.level = oopaque->btpo.level;
+	ropaque->btpo_cycleid = lopaque->btpo_cycleid;
+
+	/*
+	 * Add new high key to rightpage where necessary.
+	 *
+	 * If the page we're splitting is not the rightmost page at its level in
+	 * the tree, then the first entry on the page is the high key from
+	 * origpage.
+	 */
+	rightoff = P_HIKEY;
+
+	if (!P_RIGHTMOST(oopaque))
+	{
+		itemid = PageGetItemId(origpage, P_HIKEY);
+		itemsz = ItemIdGetLength(itemid);
+		item = (IndexTuple) PageGetItem(origpage, itemid);
+		Assert(BTreeTupleGetNAtts(item, rel) > 0);
+		Assert(BTreeTupleGetNAtts(item, rel) <= indnkeyatts);
+		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
+						false, false) == InvalidOffsetNumber)
+		{
+			memset(rightpage, 0, BufferGetPageSize(rbuf));
+			elog(ERROR, "failed to add hikey to the right sibling"
+				 " while splitting block %u of index \"%s\"",
+				 origpagenumber, RelationGetRelationName(rel));
+		}
+		rightoff = OffsetNumberNext(rightoff);
+	}
+
+	/*
+	 * Now transfer all the data items (non-pivot tuples in isleaf case, or
+	 * additional pivot tuples in !isleaf case) to the appropriate page.
 	 *
 	 * Note: we *must* insert at least the right page's items in item-number
 	 * order, for the benefit of _bt_restore_page().
@@ -1450,6 +1488,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 		{
 			if (newitemonleft)
 			{
+				Assert(newitemoff <= firstright);
 				if (!_bt_pgaddtup(leftpage, newitemsz, newitem, leftoff))
 				{
 					memset(rightpage, 0, BufferGetPageSize(rbuf));
@@ -1461,6 +1500,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 			}
 			else
 			{
+				Assert(newitemoff >= firstright);
 				if (!_bt_pgaddtup(rightpage, newitemsz, newitem, rightoff))
 				{
 					memset(rightpage, 0, BufferGetPageSize(rbuf));
@@ -1523,7 +1563,6 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * all readers release locks on a page before trying to fetch its
 	 * neighbors.
 	 */
-
 	if (!P_RIGHTMOST(oopaque))
 	{
 		sbuf = _bt_getbuf(rel, oopaque->btpo_next, BT_WRITE);
