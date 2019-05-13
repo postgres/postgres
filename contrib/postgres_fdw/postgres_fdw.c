@@ -2598,7 +2598,7 @@ postgresExplainDirectModify(ForeignScanState *node, ExplainState *es)
  * fpextra specifies additional post-scan/join-processing steps such as the
  * final sort and the LIMIT restriction.
  *
- * The function returns the cost and size estimates in p_row, p_width,
+ * The function returns the cost and size estimates in p_rows, p_width,
  * p_startup_cost and p_total_cost variables.
  */
 static void
