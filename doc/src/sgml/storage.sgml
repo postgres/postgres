@@ -618,14 +618,14 @@ free space pointers.</entry>
 
 <row>
 <entry>ItemIdData</entry>
-<entry>Array of (offset,length) pairs pointing to the actual items.
-4 bytes per item.</entry>
+<entry>Array of item identifiers pointing to the actual items. Each
+entry is an (offset,length) pair. 4 bytes per item.</entry>
 </row>
 
 <row>
 <entry>Free space</entry>
-<entry>The unallocated space. New item pointers are allocated from the start
-of this area, new items from the end.</entry>
+<entry>The unallocated space. New item identifiers are allocated from
+the start of this area, new items from the end.</entry>
 </row>
 
 <row>
