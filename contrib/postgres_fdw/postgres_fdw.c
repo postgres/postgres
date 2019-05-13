@@ -2510,7 +2510,7 @@ postgresExplainDirectModify(ForeignScanState *node, ExplainState *es)
  * param_join_conds are the parameterization clauses with outer relations.
  * pathkeys specify the expected sort order if any for given path being costed.
  *
- * The function returns the cost and size estimates in p_row, p_width,
+ * The function returns the cost and size estimates in p_rows, p_width,
  * p_startup_cost and p_total_cost variables.
  */
 static void
