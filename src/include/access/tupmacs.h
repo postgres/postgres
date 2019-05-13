@@ -16,7 +16,9 @@
 
 
 /*
- * check to see if the ATT'th bit of an array of 8-bit bytes is set.
+ * Check a tuple's null bitmap to determine whether the attribute is null.
+ * Note that a 0 in the null bitmap indicates a null, while 1 indicates
+ * non-null.
  */
 #define att_isnull(ATT, BITS) (!((BITS)[(ATT) >> 3] & (1 << ((ATT) & 0x07))))
 
