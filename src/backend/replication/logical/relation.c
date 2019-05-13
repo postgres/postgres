@@ -425,7 +425,7 @@ logicalrep_typmap_gettypname(Oid remoteid)
 	bool		found;
 
 	/* Internal types are mapped directly. */
-	if (remoteid < FirstNormalObjectId)
+	if (remoteid < FirstGenbkiObjectId)
 	{
 		if (!get_typisdefined(remoteid))
 		{
