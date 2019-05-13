@@ -216,7 +216,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Rename command-line tool <application>pg_verify_checksums</application> to <xref linkend="app-pgchecksums"/> (Michael Paquier)
+Rename command-line tool <application>pg_verify_checksums</application> to <xref linkend="app-pgchecksums"/> (Michaël Paquier)
 </para>
 </listitem>
 
@@ -385,7 +385,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Allow <link linkend="ddl-constraints-fk">foreign keys</link> to reference partitioned tables (Alvaro Herrera)
+Allow <link linkend="ddl-constraints-fk">foreign keys</link> to reference partitioned tables (Álvaro Herrera)
 </para>
 </listitem>
 
@@ -444,7 +444,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add function <link linkend="functions-info-partition"><function>pg_partition_root()</function></link> to return top-most parent of a partition tree (Michael Paquier)
+Add function <link linkend="functions-info-partition"><function>pg_partition_root()</function></link> to return top-most parent of a partition tree (Michaël Paquier)
 </para>
 </listitem>
 
@@ -455,7 +455,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add function <link linkend="functions-info-partition"><function>pg_partition_ancestors()</function></link> to report all ancestors of a partition (Alvaro Herrera)
+Add function <link linkend="functions-info-partition"><function>pg_partition_ancestors()</function></link> to report all ancestors of a partition (Álvaro Herrera)
 </para>
 </listitem>
 
@@ -503,7 +503,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve <application>psql</application> <command>\d</command> and <command>\z</command> display of partitioned tables (Pavel Stehule, Michaël Paquier, Álvaro Herrera)
+Improve <application>psql</application> <command>\d</command> and <command>\z</command> display of partitioned tables (Pavel Stěhule, Michaël Paquier, Álvaro Herrera)
 </para>
 </listitem>
 
@@ -698,7 +698,7 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 -->
 
 <para>
-Allow control over when generic plans are used for prepared statements (Pavel Stehule)
+Allow control over when generic plans are used for prepared statements (Pavel Stěhule)
 </para>
 
 <para>
@@ -1024,7 +1024,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Report progress of <command>CREATE INDEX</command> and <command>REINDEX</command> operations (Alvaro Herrera, Peter Eisentraut)
+Report progress of <command>CREATE INDEX</command> and <command>REINDEX</command> operations (Álvaro Herrera, Peter Eisentraut)
 </para>
 
 <para>
@@ -1318,7 +1318,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Prevent <xref linkend="sql-truncate"/> from requesting a lock on tables for which it lacks permission (Michael Paquier)
+Prevent <xref linkend="sql-truncate"/> from requesting a lock on tables for which it lacks permission (Michaël Paquier)
 </para>
 
 <para>
@@ -1333,7 +1333,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Prevent <command>VACUUM</command> and <command>ANALYZE</command> from requesting a lock on tables for which it lacks permission (Michael Paquier)
+Prevent <command>VACUUM</command> and <command>ANALYZE</command> from requesting a lock on tables for which it lacks permission (Michaël Paquier)
 </para>
 
 <para>
@@ -1357,7 +1357,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add ability to enable/disable cluster checksums using <xref linkend="app-pgchecksums"/> (Michael Banck, Michael Paquier)
+Add ability to enable/disable cluster checksums using <xref linkend="app-pgchecksums"/> (Michael Banck, Michaël Paquier)
 </para>
 
 <para>
@@ -1549,7 +1549,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add function <link linkend="functions-recovery-control"><function>pg_promote()</function></link> to promote standbys to primaries (Laurenz Albe, Michael Paquier)
+Add function <link linkend="functions-recovery-control"><function>pg_promote()</function></link> to promote standbys to primaries (Laurenz Albe, Michaël Paquier)
 </para>
 
 <para>
@@ -1601,7 +1601,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Have recovery fail if a <link linkend="sql-prepare-transaction">two-phase transaction</link> status file is corrupt (Michael Paquier)
+Have recovery fail if a <link linkend="sql-prepare-transaction">two-phase transaction</link> status file is corrupt (Michaël Paquier)
 </para>
 
 <para>
@@ -1625,7 +1625,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add <xref linkend="sql-reindex"/> <literal>CONCURRENTLY</literal> to allow reindexing concurrently (Michael Paquier, Andreas Karlsson, Peter Eisentraut)
+Add <xref linkend="sql-reindex"/> <literal>CONCURRENTLY</literal> to allow reindexing concurrently (Michaël Paquier, Andreas Karlsson, Peter Eisentraut)
 </para>
 
 <para>
@@ -1975,7 +1975,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve node detection and escaping of <link linkend="functions-xml"><acronym>XML</acronym> functions</link> (Pavel Stehule, Markus Winand, Chapman Flack)
+Improve node detection and escaping of <link linkend="functions-xml"><acronym>XML</acronym> functions</link> (Pavel Stěhule, Markus Winand, Chapman Flack)
 </para>
 
 <para>
@@ -2005,7 +2005,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Prevent <link linkend="functions-info-session-table"><function>current_schema()</function></link> and <function>current_schemas()</function> from being run by parallel workers (Michael Paquier)
+Prevent <link linkend="functions-info-session-table"><function>current_schema()</function></link> and <function>current_schemas()</function> from being run by parallel workers (Michaël Paquier)
 </para>
 </listitem>
 
@@ -2041,7 +2041,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Add new optional warning and error checks to PL/pgSQL (Pavel Stehule)
+Add new optional warning and error checks to PL/pgSQL (Pavel Stěhule)
 </para>
 
 <para>
@@ -2236,7 +2236,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve tab completion of <command>CREATE TABLE, CREATE TRIGGER, CREATE EVENT TRIGGER, ANALYZE, EXPLAIN, VACUUM, ALTER TABLE, ALTER INDEX, ALTER DATABASE, ALTER INDEX ALTER COLUMN</command> (Dagfinn Ilmari Mannsåker, Tatsuro Yamada, Michael Paquier, Tom Lane, Justin Pryzby)
+Improve tab completion of <command>CREATE TABLE, CREATE TRIGGER, CREATE EVENT TRIGGER, ANALYZE, EXPLAIN, VACUUM, ALTER TABLE, ALTER INDEX, ALTER DATABASE, ALTER INDEX ALTER COLUMN</command> (Dagfinn Ilmari Mannsåker, Tatsuro Yamada, Michaël Paquier, Tom Lane, Justin Pryzby)
 </para>
 </listitem>
 
@@ -2410,7 +2410,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow <xref linkend="app-pgchecksums"/> to disable fsync operations (Michael Paquier)
+Allow <xref linkend="app-pgchecksums"/> to disable fsync operations (Michaël Paquier)
 </para>
 
 <para>
@@ -2425,7 +2425,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Allow <xref linkend="app-pgrewind"/> to disable fsync operations (Michael Paquier)
+Allow <xref linkend="app-pgrewind"/> to disable fsync operations (Michaël Paquier)
 </para>
 </listitem>
 
@@ -2541,7 +2541,7 @@ Author: Andres Freund <andres@anarazel.de>
 -->
 
 <para>
-Add <xref linkend="sql-create-access-method"/> command to create new table types (Haribabu Kommi, Andres Freund, Alvaro Herrera, Dimitri Dolgov)
+Add <xref linkend="sql-create-access-method"/> command to create new table types (Haribabu Kommi, Andres Freund, Álvaro Herrera, Dimitri Dolgov)
 </para>
 </listitem>
 
@@ -2574,7 +2574,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Remove <application>configure</application> switch <option>--disable-strong-random</option> (Michael Paquier)
+Remove <application>configure</application> switch <option>--disable-strong-random</option> (Michaël Paquier)
 </para>
 
 <para>
@@ -2765,7 +2765,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Update <application>unaccent</application> rules with new punctuation and symbols (Hugh Ranalli, Michael Paquier)
+Update <application>unaccent</application> rules with new punctuation and symbols (Hugh Ranalli, Michaël Paquier)
 </para>
 </listitem>
 
