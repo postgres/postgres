@@ -1057,7 +1057,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 
 #ifdef USE_SSL
 	/* Check for SSL library buffering read bytes */
-	if (forRead && conn->ssl_in_use && pgtls_read_pending(conn) > 0)
+	if (forRead && conn->ssl_in_use && pgtls_read_pending(conn))
 	{
 		/* short-circuit the select */
 		return 1;
