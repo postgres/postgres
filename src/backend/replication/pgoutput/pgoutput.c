@@ -302,8 +302,12 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		desc = RelationGetDescr(relation);
 
 		/*
-		 * Write out type info if needed. We do that only for user created
-		 * types.
+		 * Write out type info if needed.  We do that only for user-created
+		 * types.  We use FirstBootstrapObjectId as the cutoff, so that we only
+		 * consider objects with hand-assigned OIDs to be "built in", not for
+		 * instance any function or type defined in the information_schema.
+		 * This is important because only hand-assigned OIDs can be expected
+		 * to remain stable across major versions.
 		 */
 		for (i = 0; i < desc->natts; i++)
 		{
@@ -312,7 +316,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 			if (att->attisdropped)
 				continue;
 
-			if (att->atttypid < FirstNormalObjectId)
+			if (att->atttypid < FirstBootstrapObjectId)
 				continue;
 
 			OutputPluginPrepareWrite(ctx, false);
