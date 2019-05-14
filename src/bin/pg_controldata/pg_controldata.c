@@ -25,7 +25,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "pg_getopt.h"
 #include "getopt_long.h"
 

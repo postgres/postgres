@@ -29,7 +29,7 @@
 #include "parallel.h"
 #include "pg_backup_utils.h"
 #include "common/file_utils.h"
-#include "fe_utils/logging.h"
+
 
 /*--------
  * Routines in the format interface

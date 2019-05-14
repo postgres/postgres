@@ -59,7 +59,9 @@ OBJS_COMMON += sha2.o
 endif
 
 # A few files are currently only built for frontend, not server
-OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o file_utils.o restricted_token.o
+# (Mkvcbuild.pm has a copy of this list, too)
+OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o file_utils.o \
+	logging.o restricted_token.o
 
 # foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c
 OBJS_SHLIB = $(OBJS_FRONTEND:%.o=%_shlib.o)

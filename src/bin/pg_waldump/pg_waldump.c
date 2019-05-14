@@ -21,7 +21,7 @@
 #include "access/xlog_internal.h"
 #include "access/transam.h"
 #include "common/fe_memutils.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "getopt_long.h"
 #include "rmgrdesc.h"
 

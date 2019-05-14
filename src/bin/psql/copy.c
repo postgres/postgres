@@ -24,7 +24,7 @@
 #include "prompt.h"
 #include "stringutils.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 /*
  * parse_slash_copy

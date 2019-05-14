@@ -23,8 +23,6 @@ ifdef MAX_CONNECTIONS
 MAXCONNOPT += --max-connections=$(MAX_CONNECTIONS)
 endif
 
-LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
-
 # stuff to pass into build of pg_regress
 EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 	'-DSHELLPROG="$(SHELL)"' \
@@ -38,7 +36,7 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 
 all: pg_regress$(X)
 
-pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport submake-libpgfeutils
+pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate

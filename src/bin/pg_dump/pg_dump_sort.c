@@ -20,7 +20,6 @@
 #include "pg_dump.h"
 
 #include "catalog/pg_class_d.h"
-#include "fe_utils/logging.h"
 
 /*
  * Sort priority for database object types.

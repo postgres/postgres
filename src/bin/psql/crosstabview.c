@@ -13,7 +13,7 @@
 #include "psqlscanslash.h"
 #include "settings.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 /*
  * Value/position from the resultset that goes into the horizontal or vertical

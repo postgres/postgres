@@ -23,8 +23,8 @@
 #include "dumputils.h"
 #include "pg_backup.h"
 #include "common/file_utils.h"
+#include "common/logging.h"
 #include "fe_utils/connect.h"
-#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 /* version string we expect back from pg_dump */

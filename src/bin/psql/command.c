@@ -28,7 +28,8 @@
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
+#include "fe_utils/print.h"
 #include "fe_utils/string_utils.h"
 
 #include "common.h"
@@ -39,7 +40,6 @@
 #include "input.h"
 #include "large_obj.h"
 #include "mainloop.h"
-#include "fe_utils/print.h"
 #include "psqlscanslash.h"
 #include "settings.h"
 #include "variables.h"

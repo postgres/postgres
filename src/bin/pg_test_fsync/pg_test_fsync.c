@@ -14,7 +14,7 @@
 
 #include "getopt_long.h"
 #include "access/xlogdefs.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 
 /*

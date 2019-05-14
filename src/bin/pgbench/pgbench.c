@@ -33,8 +33,8 @@
 
 #include "postgres_fe.h"
 #include "common/int.h"
+#include "common/logging.h"
 #include "fe_utils/conditional.h"
-#include "fe_utils/logging.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "portability/instr_time.h"

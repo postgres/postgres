@@ -67,7 +67,7 @@ BACKEND_COMMON_GETTEXT_FLAGS = \
     errhint:1:c-format \
     errcontext:1:c-format
 
-FRONTEND_COMMON_GETTEXT_FILES = $(top_srcdir)/src/fe_utils/logging.c
+FRONTEND_COMMON_GETTEXT_FILES = $(top_srcdir)/src/common/logging.c
 
 FRONTEND_COMMON_GETTEXT_TRIGGERS = \
     pg_log_fatal pg_log_error pg_log_warning pg_log_info pg_log_generic:2 pg_log_generic_v:2

@@ -31,9 +31,9 @@
 
 #include "pg_regress.h"
 
+#include "common/logging.h"
 #include "common/restricted_token.h"
 #include "common/username.h"
-#include "fe_utils/logging.h"
 #include "getopt_long.h"
 #include "libpq/pqcomm.h"		/* needed for UNIXSOCK_PATH() */
 #include "pg_config_paths.h"

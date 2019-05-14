@@ -23,7 +23,7 @@
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "getopt_long.h"
 #include "pg_getopt.h"
 #include "storage/bufpage.h"

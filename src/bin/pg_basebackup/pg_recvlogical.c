@@ -25,7 +25,7 @@
 #include "access/xlog_internal.h"
 #include "common/file_perm.h"
 #include "common/fe_memutils.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "libpq/pqsignal.h"

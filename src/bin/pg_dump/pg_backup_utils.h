@@ -15,7 +15,7 @@
 #ifndef PG_BACKUP_UTILS_H
 #define PG_BACKUP_UTILS_H
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 typedef enum					/* bits returned by set_dump_section */
 {

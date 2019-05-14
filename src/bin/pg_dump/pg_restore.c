@@ -51,8 +51,6 @@
 #include "parallel.h"
 #include "pg_backup_utils.h"
 
-#include "fe_utils/logging.h"
-
 
 static void usage(const char *progname);
 

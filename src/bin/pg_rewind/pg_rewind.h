@@ -17,7 +17,7 @@
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 /* Configuration options */
 extern char *datadir_target;

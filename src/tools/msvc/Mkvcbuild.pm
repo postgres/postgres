@@ -136,12 +136,12 @@ sub mkvcbuild
 
 	our @pgcommonfrontendfiles = (
 		@pgcommonallfiles, qw(fe_memutils.c file_utils.c
-		  restricted_token.c));
+		  logging.c restricted_token.c));
 
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
 	our @pgfeutilsfiles = qw(
-	  conditional.c logging.c mbprint.c print.c psqlscan.l psqlscan.c simple_list.c string_utils.c);
+	  conditional.c mbprint.c print.c psqlscan.l psqlscan.c simple_list.c string_utils.c);
 
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');
@@ -321,7 +321,7 @@ sub mkvcbuild
 	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_ecpg->AddLibrary('ws2_32.lib');
 	$pgregress_ecpg->AddDirResourceFile('src/interfaces/ecpg/test');
-	$pgregress_ecpg->AddReference($libpgfeutils, $libpgcommon, $libpgport);
+	$pgregress_ecpg->AddReference($libpgcommon, $libpgport);
 
 	my $isolation_tester =
 	  $solution->AddProject('isolationtester', 'exe', 'misc');
@@ -347,7 +347,7 @@ sub mkvcbuild
 	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_isolation->AddLibrary('ws2_32.lib');
 	$pgregress_isolation->AddDirResourceFile('src/test/isolation');
-	$pgregress_isolation->AddReference($libpgfeutils, $libpgcommon, $libpgport);
+	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
 
 	# src/bin
 	my $D;
@@ -826,7 +826,7 @@ sub mkvcbuild
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress->AddLibrary('ws2_32.lib');
 	$pgregress->AddDirResourceFile('src/test/regress');
-	$pgregress->AddReference($libpgfeutils, $libpgcommon, $libpgport);
+	$pgregress->AddReference($libpgcommon, $libpgport);
 
 	# fix up pg_waldump once it's been set up
 	# files symlinked on Unix are copied on windows

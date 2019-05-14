@@ -19,8 +19,8 @@
 #include "postgres_fe.h"
 
 #include "psqlscanslash.h"
+#include "common/logging.h"
 #include "fe_utils/conditional.h"
-#include "fe_utils/logging.h"
 
 #include "libpq-fe.h"
 }

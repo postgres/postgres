@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  * Logging framework for frontend programs
  *
- * Copyright (c) 2018, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2019, PostgreSQL Global Development Group
  *
- * src/include/fe_utils/logging.h
+ * src/include/common/logging.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef FE_UTILS_LOGGING_H
-#define FE_UTILS_LOGGING_H
+#ifndef COMMON_LOGGING_H
+#define COMMON_LOGGING_H
 
 /*
  * Log levels are informational only.  They do not affect program flow.
@@ -92,4 +92,4 @@ void pg_log_generic_v(enum pg_log_level level, const char * pg_restrict fmt, va_
 		if (unlikely(__pg_log_level <= PG_LOG_DEBUG)) pg_log_generic(PG_LOG_DEBUG, __VA_ARGS__); \
 	} while(0)
 
-#endif	/* FE_UTILS_LOGGING_H */
+#endif	/* COMMON_LOGGING_H */

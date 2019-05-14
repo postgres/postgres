@@ -15,13 +15,11 @@ subdir = src/bin/pg_resetwal
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
-
 OBJS= pg_resetwal.o $(WIN32RES)
 
 all: pg_resetwal
 
-pg_resetwal: $(OBJS) | submake-libpgport submake-libpgfeutils
+pg_resetwal: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

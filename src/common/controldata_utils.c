@@ -29,7 +29,7 @@
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #ifdef FRONTEND
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #endif
 #include "port/pg_crc32c.h"
 

@@ -7,13 +7,11 @@ subdir = src/bin/pg_archivecleanup
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils
-
 OBJS	= pg_archivecleanup.o $(WIN32RES)
 
 all: pg_archivecleanup
 
-pg_archivecleanup: $(OBJS) | submake-libpgport submake-libpgfeutils
+pg_archivecleanup: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

@@ -14,7 +14,7 @@
 
 #include "datapagemap.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 struct datapagemap_iterator
 {

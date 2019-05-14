@@ -16,14 +16,15 @@
 
 #include "getopt_long.h"
 
+#include "common/logging.h"
+#include "fe_utils/print.h"
+
 #include "command.h"
 #include "common.h"
 #include "describe.h"
 #include "help.h"
 #include "input.h"
 #include "mainloop.h"
-#include "fe_utils/logging.h"
-#include "fe_utils/print.h"
 #include "settings.h"
 
 

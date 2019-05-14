@@ -18,7 +18,7 @@
 #include "tab-complete.h"
 #include "common.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 #ifndef WIN32
 #define PSQLHISTORY ".psql_history"

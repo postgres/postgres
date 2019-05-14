@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "common/file_utils.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 
 /* Define PG_FLUSH_DATA_WORKS if we have an implementation for pg_flush_data */

@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "common/file_perm.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "libpq-fe.h"
 #include "access/xlog_internal.h"
 #include "getopt_long.h"

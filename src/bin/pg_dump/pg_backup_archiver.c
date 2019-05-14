@@ -35,7 +35,6 @@
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
 #include "dumputils.h"
-#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 #include "libpq/libpq-fs.h"

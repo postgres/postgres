@@ -11,7 +11,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 #define DEFAULT_CONNECT_TIMEOUT "3"
 

@@ -1,9 +1,9 @@
 /*-------------------------------------------------------------------------
  * Logging framework for frontend programs
  *
- * Copyright (c) 2018, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2019, PostgreSQL Global Development Group
  *
- * src/fe_utils/logging.c
+ * src/common/logging.c
  *
  *-------------------------------------------------------------------------
  */
@@ -11,14 +11,15 @@
 
 #include <unistd.h>
 
-#include "fe_utils/logging.h"
-
-static const char *progname;
+#include "common/logging.h"
 
 enum pg_log_level __pg_log_level;
+
+static const char *progname;
 static int log_flags;
-void (*log_pre_callback)(void);
-void (*log_locus_callback)(const char **, uint64 *);
+
+static void (*log_pre_callback)(void);
+static void (*log_locus_callback)(const char **, uint64 *);
 
 static const char *sgr_error = NULL;
 static const char *sgr_warning = NULL;
@@ -146,7 +147,12 @@ pg_log_generic_v(enum pg_log_level level, const char * pg_restrict fmt, va_list 
 	Assert(fmt);
 	Assert(fmt[strlen(fmt) - 1] != '\n');
 
+	/*
+	 * Flush stdout before output to stderr, to ensure sync even when stdout
+	 * is buffered.
+	 */
 	fflush(stdout);
+
 	if (log_pre_callback)
 		log_pre_callback();
 
@@ -220,9 +226,10 @@ pg_log_generic_v(enum pg_log_level level, const char * pg_restrict fmt, va_list 
 	vsnprintf(buf, required_len, fmt, ap);
 
 	/* strip one newline, for PQerrorMessage() */
-	if (buf[required_len - 2] == '\n')
+	if (required_len >= 2 && buf[required_len - 2] == '\n')
 		buf[required_len - 2] = '\0';
 
 	fprintf(stderr, "%s\n", buf);
+
 	free(buf);
 }

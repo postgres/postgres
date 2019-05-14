@@ -14,7 +14,7 @@
 #include "prompt.h"
 #include "settings.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "mb/pg_wchar.h"
 
 

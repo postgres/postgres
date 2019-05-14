@@ -40,8 +40,8 @@
 #include "pg_upgrade.h"
 #include "catalog/pg_class_d.h"
 #include "common/file_perm.h"
+#include "common/logging.h"
 #include "common/restricted_token.h"
-#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 #ifdef HAVE_LANGINFO_H

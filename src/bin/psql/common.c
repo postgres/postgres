@@ -6,7 +6,6 @@
  * src/bin/psql/common.c
  */
 #include "postgres_fe.h"
-#include "common.h"
 
 #include <ctype.h>
 #include <limits.h>
@@ -19,15 +18,16 @@
 #include <win32.h>
 #endif
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
+#include "fe_utils/mbprint.h"
 #include "fe_utils/string_utils.h"
 #include "portability/instr_time.h"
 
-#include "settings.h"
 #include "command.h"
+#include "common.h"
 #include "copy.h"
 #include "crosstabview.h"
-#include "fe_utils/mbprint.h"
+#include "settings.h"
 
 
 static bool DescribeQuery(const char *query, double *elapsed_msec);

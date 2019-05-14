@@ -17,7 +17,7 @@
 
 #include "pg_getopt.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 #include "access/xlog_internal.h"
 

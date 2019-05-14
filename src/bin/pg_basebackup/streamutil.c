@@ -24,9 +24,9 @@
 #include "access/xlog_internal.h"
 #include "common/fe_memutils.h"
 #include "common/file_perm.h"
+#include "common/logging.h"
 #include "datatype/timestamp.h"
 #include "fe_utils/connect.h"
-#include "fe_utils/logging.h"
 #include "port/pg_bswap.h"
 #include "pqexpbuffer.h"
 

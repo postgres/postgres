@@ -26,7 +26,7 @@
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "getopt_long.h"
 #include "utils/pidfile.h"
 

@@ -11,10 +11,10 @@
  */
 #include "postgres_fe.h"
 
-#include "dumputils.h"
 #include "fe_utils/connect.h"
-#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
+
+#include "dumputils.h"
 #include "parallel.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"

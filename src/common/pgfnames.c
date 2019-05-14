@@ -23,7 +23,7 @@
 #ifndef FRONTEND
 #define pg_log_warning(...) elog(WARNING, __VA_ARGS__)
 #else
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #endif
 
 /*

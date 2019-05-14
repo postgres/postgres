@@ -27,7 +27,7 @@
 #include "libpq-fe.h"
 #include "access/xlog_internal.h"
 #include "common/file_utils.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 
 /* fd and filename for currently open WAL file */

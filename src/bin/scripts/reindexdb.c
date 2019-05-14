@@ -11,7 +11,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
 

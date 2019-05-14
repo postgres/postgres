@@ -63,7 +63,6 @@
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
 #include "fe_utils/connect.h"
-#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 

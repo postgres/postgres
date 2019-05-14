@@ -34,7 +34,7 @@
  */
 #include "postgres_fe.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 #include "fe_utils/psqlscan.h"
 
 #include "libpq-fe.h"

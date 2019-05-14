@@ -18,8 +18,8 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "common/logging.h"
 #include "fe_utils/connect.h"
-#include "fe_utils/logging.h"
 #include "fe_utils/string_utils.h"
 
 

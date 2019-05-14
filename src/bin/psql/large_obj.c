@@ -11,7 +11,7 @@
 #include "settings.h"
 #include "common.h"
 
-#include "fe_utils/logging.h"
+#include "common/logging.h"
 
 static void print_lo_result(const char *fmt,...) pg_attribute_printf(1, 2);
 
