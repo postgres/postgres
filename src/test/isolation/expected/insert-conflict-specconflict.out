@@ -1,0 +1,179 @@
+Parsed test spec with 3 sessions
+
+starting permutation: controller_locks controller_show s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_unlock_2_2 controller_show controller_unlock_1_2 controller_show
+step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
+pg_advisory_locksess           lock           
+
+               1              1              
+               1              2              
+               1              3              
+               2              1              
+               2              2              
+               2              3              
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step s1_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s1') ON CONFLICT (blurt_and_lock(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s1'; <waiting ...>
+step s2_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; <waiting ...>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
+pg_advisory_unlock
+
+t              
+step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
+pg_advisory_unlock
+
+t              
+step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
+pg_advisory_unlock
+
+t              
+step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
+pg_advisory_unlock
+
+t              
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
+pg_advisory_unlock
+
+t              
+step s2_upsert: <... completed>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+k1             inserted s2    
+step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
+pg_advisory_unlock
+
+t              
+step s1_upsert: <... completed>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+k1             inserted s2 with conflict update s1
+
+starting permutation: controller_locks controller_show s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_unlock_1_2 controller_show controller_unlock_2_2 controller_show
+step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
+pg_advisory_locksess           lock           
+
+               1              1              
+               1              2              
+               1              3              
+               2              1              
+               2              2              
+               2              3              
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step s1_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s1') ON CONFLICT (blurt_and_lock(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s1'; <waiting ...>
+step s2_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; <waiting ...>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
+pg_advisory_unlock
+
+t              
+step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
+pg_advisory_unlock
+
+t              
+step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
+pg_advisory_unlock
+
+t              
+step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
+pg_advisory_unlock
+
+t              
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
+pg_advisory_unlock
+
+t              
+step s1_upsert: <... completed>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+k1             inserted s1    
+step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
+pg_advisory_unlock
+
+t              
+step s2_upsert: <... completed>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+k1             inserted s1 with conflict update s2
+
+starting permutation: controller_locks controller_show s1_begin s2_begin s1_upsert s2_upsert controller_show controller_unlock_1_1 controller_unlock_2_1 controller_unlock_1_3 controller_unlock_2_3 controller_show controller_unlock_1_2 controller_show controller_unlock_2_2 controller_show s1_commit controller_show s2_commit controller_show
+step controller_locks: SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);
+pg_advisory_locksess           lock           
+
+               1              1              
+               1              2              
+               1              3              
+               2              1              
+               2              2              
+               2              3              
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step s1_begin: BEGIN;
+step s2_begin: BEGIN;
+step s1_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s1') ON CONFLICT (blurt_and_lock(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s1'; <waiting ...>
+step s2_upsert: INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; <waiting ...>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step controller_unlock_1_1: SELECT pg_advisory_unlock(1, 1);
+pg_advisory_unlock
+
+t              
+step controller_unlock_2_1: SELECT pg_advisory_unlock(2, 1);
+pg_advisory_unlock
+
+t              
+step controller_unlock_1_3: SELECT pg_advisory_unlock(1, 3);
+pg_advisory_unlock
+
+t              
+step controller_unlock_2_3: SELECT pg_advisory_unlock(2, 3);
+pg_advisory_unlock
+
+t              
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step controller_unlock_1_2: SELECT pg_advisory_unlock(1, 2);
+pg_advisory_unlock
+
+t              
+step s1_upsert: <... completed>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step controller_unlock_2_2: SELECT pg_advisory_unlock(2, 2);
+pg_advisory_unlock
+
+t              
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+step s1_commit: COMMIT;
+step s2_upsert: <... completed>
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+k1             inserted s1    
+step s2_commit: COMMIT;
+step controller_show: SELECT * FROM upserttest;
+key            data           
+
+k1             inserted s1 with conflict update s2
