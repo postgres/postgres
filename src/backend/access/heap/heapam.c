@@ -3587,7 +3587,7 @@ l2:
 		 * Since the new tuple is going into the same page, we might be able
 		 * to do a HOT update.  Check if any of the index columns have been
 		 * changed. If the page was already full, we may have skipped checking
-		 * for index columns. If so, HOT update is possible.
+		 * for index columns, and also can't do a HOT update.
 		 */
 		if (hot_attrs_checked && !bms_overlap(modified_attrs, hot_attrs))
 			use_hot_update = true;
