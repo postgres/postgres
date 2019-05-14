@@ -374,7 +374,9 @@ Improve performance of many operations on partitioned tables (Amit Langote, Davi
 </para>
 
 <para>
-Tables with thousands of child partitions can now be processed efficiently.
+Tables with thousands of child partitions can now be processed
+efficiently by operations that only need to touch a small number
+of partitions.
 </para>
 </listitem>
 
