@@ -215,6 +215,13 @@ typedef struct GISTInsertStack
 	 */
 	GistNSN		lsn;
 
+	/*
+	 * If set, we split the page while descending the tree to find an
+	 * insertion target. It means that we need to retry from the parent,
+	 * because the downlink of this page might no longer cover the new key.
+	 */
+	bool		retry_from_parent;
+
 	/* offset of the downlink in the parent page, that points to this page */
 	OffsetNumber downlinkoffnum;
 
