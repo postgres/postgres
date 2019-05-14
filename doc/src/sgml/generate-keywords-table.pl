@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-my @sql_versions = reverse sort ('1992', '2008', '2011');
+my @sql_versions = reverse sort ('1992', '2011', '2016');
 
 my $srcdir = $ARGV[0];
 
