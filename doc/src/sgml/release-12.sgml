@@ -2283,7 +2283,7 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 2018-10-15 [5b75a4f82] pgbench: Report errors during run better
 -->
 <para>
-Improve pgbench error reporting with clearer messages and return codes (Fabien Coelho)
+Improve pgbench error reporting with clearer messages and return codes (Peter Eisentraut)
 </para>
 </listitem>
 
