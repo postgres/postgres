@@ -29,6 +29,16 @@ B125	Routine language MUMPS			NO
 B126	Routine language Pascal			NO	
 B127	Routine language PL/I			NO	
 B128	Routine language SQL			NO	
+B200	Polymorphic table functions			NO	
+B201	More than one PTF generic table parameter			NO	
+B202	PTF Copartitioning			NO	
+B203	More than one copartition specification			NO	
+B204	PRUNE WHEN EMPTY			NO	
+B205	Pass-through columns			NO	
+B206	PTF descriptor parameters			NO	
+B207	Cross products of partitionings			NO	
+B208	PTF component procedure interface			NO	
+B209	PTF extended names			NO	
 B211	Module language Ada: VARCHAR and NUMERIC support			NO	
 B221	Routine language Ada: VARCHAR and NUMERIC support			NO	
 E011	Numeric data types			YES	
@@ -254,6 +264,7 @@ F401	Extended joined table	02	FULL OUTER JOIN	YES
 F401	Extended joined table	04	CROSS JOIN	YES	
 F402	Named column joins for LOBs, arrays, and multisets			YES	
 F403	Partitioned joined tables			NO	
+F404	Range variable for common column names			NO	
 F411	Time zone specification			YES	differences regarding literal interpretation
 F421	National character			YES	
 F431	Read-only scrollable cursors			YES	
@@ -291,6 +302,7 @@ F651	Catalog name qualifiers			YES
 F661	Simple tables			YES	
 F671	Subqueries in CHECK			NO	intentionally omitted
 F672	Retrospective check constraints			YES	
+F673	Reads SQL-data routine invocations in CHECK constraints			NO	
 F690	Collation support			YES	but no character set support
 F692	Extended collation support			YES	
 F693	SQL-session and client module collations			NO	
@@ -338,6 +350,9 @@ F864	Top-level <result offset clause> in views			YES
 F865	<offset row count> in <result offset clause>			YES	
 F866	FETCH FIRST clause: PERCENT option			NO	
 F867	FETCH FIRST clause: WITH TIES option			NO	
+R010	Row pattern recognition: FROM clause			NO	
+R020	Row pattern recognition: WINDOW clause			NO	
+R030	Row pattern recognition: full aggregate support			NO	
 S011	Distinct data types			NO	
 S011	Distinct data types	01	USER_DEFINED_TYPES view	NO	
 S023	Basic structured types			NO	
@@ -404,10 +419,10 @@ T042	Extended LOB data type support			NO
 T043	Multiplier T			NO	
 T044	Multiplier P			NO	
 T051	Row types			NO	
-T052	MAX and MIN for row types			NO	
 T053	Explicit aliases for all-fields reference			NO	
 T061	UCS support			NO	
 T071	BIGINT data type			YES	
+T076	DECFLOAT data type			NO	
 T101	Enhanced nullability determination			NO	
 T111	Updatable joins, unions, and columns			NO	
 T121	WITH (excluding RECURSIVE) in query expression			YES	
@@ -482,6 +497,9 @@ T502	Period predicates			NO
 T511	Transaction counts			NO	
 T521	Named arguments in CALL statement			YES	
 T522	Default values for IN parameters of SQL-invoked procedures			NO	supported except DEFAULT key word in invocation
+T523	Default values for INOUT parameters of SQL-invoked procedures			YES	
+T524	Named arguments in routine invocations other than a CALL statement			YES	
+T525	Default values for parameters of SQL-invoked functions			YES	
 T551	Optional key words for default syntax			YES	
 T561	Holdable locators			NO	
 T571	Array-returning external SQL-invoked functions			NO	
@@ -500,6 +518,10 @@ T618	NTH_VALUE function			NO	function exists, but some options missing
 T619	Nested window functions			NO	
 T620	WINDOW clause: GROUPS option			YES	
 T621	Enhanced numeric functions			YES	
+T622	Trigonometric functions			YES	
+T623	General logarithm functions			YES	
+T624	Common logarithm functions			YES	
+T625	LISTAGG			NO	
 T631	IN predicate with one list element			YES	
 T641	Multiple column assignment			NO	only some syntax variants supported
 T651	SQL-schema statements in SQL routines			YES	
@@ -507,6 +529,29 @@ T652	SQL-dynamic statements in SQL routines			NO
 T653	SQL-schema statements in external routines			NO	
 T654	SQL-dynamic statements in external routines			NO	
 T655	Cyclically dependent routines			YES	
+T811	Basic SQL/JSON constructor functions			NO	
+T812	SQL/JSON: JSON_OBJECTAGG			NO	
+T813	SQL/JSON: JSON_ARRAYAGG with ORDER BY			NO	
+T814	Colon in JSON_OBJECT or JSON_OBJECTAGG			NO	
+T821	Basic SQL/JSON query operators			NO	
+T822	SQL/JSON: IS JSON WITH UNIQUE KEYS predicate			NO	
+T823	SQL/JSON: PASSING clause			NO	
+T824	JSON_TABLE: specific PLAN clause			NO	
+T825	SQL/JSON: ON EMPTY and ON ERROR clauses			NO	
+T826	General value expression in ON ERROR or ON EMPTY clauses			NO	
+T827	JSON_TABLE: sibling NESTED COLUMNS clauses			NO	
+T828	JSON_QUERY			NO	
+T829	JSON_QUERY: array wrapper options			NO	
+T830	Enforcing unique keys in SQL/JSON constructor functions			NO	
+T831	SQL/JSON path language: strict mode			NO	
+T832	SQL/JSON path language: item method			NO	
+T833	SQL/JSON path language: multiple subscripts			NO	
+T834	SQL/JSON path language: wildcard member accessor			NO	
+T835	SQL/JSON path language: filter expressions			NO	
+T836	SQL/JSON path language: starts with predicate			NO	
+T837	SQL/JSON path language: regex_like predicate			NO	
+T838	JSON_TABLE: PLAN DEFAULT clause			NO	
+T839	Formatted cast of datetimes to/from character strings			NO	
 M001	Datalinks			NO	
 M002	Datalinks via SQL/CLI			NO	
 M003	Datalinks via Embedded SQL			NO	
