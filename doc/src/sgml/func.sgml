@@ -4296,19 +4296,45 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
 
    <para>
-    The <function>substring</function> function with three parameters,
-    <function>substring(<replaceable>string</replaceable> from
-    <replaceable>pattern</replaceable> for
-    <replaceable>escape-character</replaceable>)</function>, provides
-    extraction of a substring that matches an SQL
-    regular expression pattern.  As with <literal>SIMILAR TO</literal>, the
+    The <function>substring</function> function with three parameters
+    provides extraction of a substring that matches an SQL
+    regular expression pattern.  The function can be written according
+    to SQL99 syntax:
+<synopsis>
+substring(<replaceable>string</replaceable> from <replaceable>pattern</replaceable> for <replaceable>escape-character</replaceable>)
+</synopsis>
+    or as a plain three-argument function:
+<synopsis>
+substring(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>escape-character</replaceable>)
+</synopsis>
+    As with <literal>SIMILAR TO</literal>, the
     specified pattern must match the entire data string, or else the
     function fails and returns null.  To indicate the part of the
-    pattern that should be returned on success, the pattern must contain
+    pattern for which the matching data sub-string is of interest,
+    the pattern should contain
     two occurrences of the escape character followed by a double quote
     (<literal>"</literal>). <!-- " font-lock sanity -->
     The text matching the portion of the pattern
-    between these markers is returned.
+    between these separators is returned when the match is successful.
+   </para>
+
+   <para>
+    The escape-double-quote separators actually
+    divide <function>substring</function>'s pattern into three independent
+    regular expressions; for example, a vertical bar (<literal>|</literal>)
+    in any of the three sections affects only that section.  Also, the first
+    and third of these regular expressions are defined to match the smallest
+    possible amount of text, not the largest, when there is any ambiguity
+    about how much of the data string matches which pattern.  (In POSIX
+    parlance, the first and third regular expressions are forced to be
+    non-greedy.)
+   </para>
+
+   <para>
+    As an extension to the SQL standard, <productname>PostgreSQL</productname>
+    allows there to be just one escape-double-quote separator, in which case
+    the third regular expression is taken as empty; or no separators, in which
+    case the first and third regular expressions are taken as empty.
    </para>
 
    <para>
