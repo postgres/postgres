@@ -282,7 +282,7 @@ heapam_tuple_complete_speculative(Relation relation, TupleTableSlot *slot,
 	HeapTuple	tuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);
 
 	/* adjust the tuple's state accordingly */
-	if (!succeeded)
+	if (succeeded)
 		heap_finish_speculative(relation, &slot->tts_tid);
 	else
 		heap_abort_speculative(relation, &slot->tts_tid);

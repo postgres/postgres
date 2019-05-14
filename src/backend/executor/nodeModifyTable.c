@@ -556,7 +556,7 @@ ExecInsert(ModifyTableState *mtstate,
 
 			/* adjust the tuple's state accordingly */
 			table_complete_speculative(resultRelationDesc, slot,
-									   specToken, specConflict);
+									   specToken, !specConflict);
 
 			/*
 			 * Wake up anyone waiting for our decision.  They will re-check
