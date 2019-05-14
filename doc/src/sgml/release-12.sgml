@@ -411,7 +411,7 @@ Allow partitions bounds to be any expression (Kyotaro Horiguchi, Tom Lane, Amit 
 </para>
 
 <para>
-Expressions are evaluated at table partitioned table creation time.  Previously, only constants were allowed as partitions bounds.
+Expressions are evaluated at partitioned table creation time.  Previously, only constants were allowed as partitions bounds.
 </para>
 </listitem>
 
