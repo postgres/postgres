@@ -4217,11 +4217,10 @@ l2:
 	{
 		/*
 		 * Since the new tuple is going into the same page, we might be able
-		 * to do a HOT update.  Check if any of the index columns have been
-		 * changed, or if we have projection functional indexes, check whether
-		 * the old and the new values are the same.   If the page was already
-		 * full, we may have skipped checking for index columns. If so, HOT
-		 * update is possible.
+		 * to do a HOT update.  A HOT update is possible if none of the index
+		 * columns, nor columns used in projection functional indexes, have
+		 * changed.  If the page was already full, we may have skipped
+		 * checking for index columns, and also can't do a HOT update.
 		 */
 		if (hot_attrs_checked
 			&& !bms_overlap(modified_attrs, hot_attrs)
