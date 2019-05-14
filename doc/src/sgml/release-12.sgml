@@ -374,7 +374,7 @@ Improve performance of many operations on partitioned tables (Amit Langote, Davi
 </para>
 
 <para>
-Thousands of partitions can now be pruned efficiently.
+Tables with thousands of child partitions can now be processed efficiently.
 </para>
 </listitem>
 
