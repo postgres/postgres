@@ -21,7 +21,6 @@
 #include "common/file_perm.h"
 #include "file_ops.h"
 #include "filemap.h"
-#include "logging.h"
 #include "pg_rewind.h"
 
 /*

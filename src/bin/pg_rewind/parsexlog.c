@@ -15,7 +15,6 @@
 
 #include "pg_rewind.h"
 #include "filemap.h"
-#include "logging.h"
 
 #include "access/rmgr.h"
 #include "access/xlog_internal.h"

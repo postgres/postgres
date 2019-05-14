@@ -18,7 +18,6 @@
 #include "fetch.h"
 #include "file_ops.h"
 #include "filemap.h"
-#include "logging.h"
 
 #include "access/timeline.h"
 #include "access/xlog_internal.h"
@@ -28,7 +27,6 @@
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/restricted_token.h"
-#include "fe_utils/logging.h"
 #include "getopt_long.h"
 #include "storage/bufpage.h"
 
@@ -62,6 +60,11 @@ bool		do_sync = true;
 /* Target history */
 TimeLineHistoryEntry *targetHistory;
 int			targetNentries;
+
+/* Progress counters */
+uint64		fetch_size;
+uint64		fetch_done;
+
 
 static void
 usage(const char *progname)
@@ -443,6 +446,61 @@ sanityChecks(void)
 		ControlFile_source.state != DB_SHUTDOWNED &&
 		ControlFile_source.state != DB_SHUTDOWNED_IN_RECOVERY)
 		pg_fatal("source data directory must be shut down cleanly");
+}
+
+/*
+ * Print a progress report based on the fetch_size and fetch_done variables.
+ *
+ * Progress report is written at maximum once per second, unless the
+ * force parameter is set to true.
+ */
+void
+progress_report(bool force)
+{
+	static pg_time_t last_progress_report = 0;
+	int			percent;
+	char		fetch_done_str[32];
+	char		fetch_size_str[32];
+	pg_time_t	now;
+
+	if (!showprogress)
+		return;
+
+	now = time(NULL);
+	if (now == last_progress_report && !force)
+		return;					/* Max once per second */
+
+	last_progress_report = now;
+	percent = fetch_size ? (int) ((fetch_done) * 100 / fetch_size) : 0;
+
+	/*
+	 * Avoid overflowing past 100% or the full size. This may make the total
+	 * size number change as we approach the end of the backup (the estimate
+	 * will always be wrong if WAL is included), but that's better than having
+	 * the done column be bigger than the total.
+	 */
+	if (percent > 100)
+		percent = 100;
+	if (fetch_done > fetch_size)
+		fetch_size = fetch_done;
+
+	/*
+	 * Separate step to keep platform-dependent format code out of
+	 * translatable strings.  And we only test for INT64_FORMAT availability
+	 * in snprintf, not fprintf.
+	 */
+	snprintf(fetch_done_str, sizeof(fetch_done_str), INT64_FORMAT,
+			 fetch_done / 1024);
+	snprintf(fetch_size_str, sizeof(fetch_size_str), INT64_FORMAT,
+			 fetch_size / 1024);
+
+	fprintf(stderr, _("%*s/%s kB (%d%%) copied"),
+		   (int) strlen(fetch_size_str), fetch_done_str, fetch_size_str,
+		   percent);
+	if (isatty(fileno(stderr)))
+		fprintf(stderr, "\r");
+	else
+		fprintf(stderr, "\n");
 }
 
 /*

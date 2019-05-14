@@ -15,12 +15,10 @@
 
 #include "datapagemap.h"
 #include "filemap.h"
-#include "logging.h"
 #include "pg_rewind.h"
 
 #include "common/string.h"
 #include "catalog/pg_tablespace_d.h"
-#include "fe_utils/logging.h"
 #include "storage/fd.h"
 
 filemap_t  *filemap = NULL;

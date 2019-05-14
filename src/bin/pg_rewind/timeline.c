@@ -13,7 +13,6 @@
 
 #include "access/timeline.h"
 #include "access/xlog_internal.h"
-#include "fe_utils/logging.h"
 
 /*
  * This is copy-pasted from the backend readTimeLineHistory, modified to

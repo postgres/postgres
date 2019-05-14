@@ -19,12 +19,10 @@
 #include "fetch.h"
 #include "file_ops.h"
 #include "filemap.h"
-#include "logging.h"
 
 #include "libpq-fe.h"
 #include "catalog/pg_type_d.h"
 #include "fe_utils/connect.h"
-#include "fe_utils/logging.h"
 #include "port/pg_bswap.h"
 
 static PGconn *conn = NULL;

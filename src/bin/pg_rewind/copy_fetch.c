@@ -18,7 +18,6 @@
 #include "fetch.h"
 #include "file_ops.h"
 #include "filemap.h"
-#include "logging.h"
 #include "pg_rewind.h"
 
 static void recurse_dir(const char *datadir, const char *path,
