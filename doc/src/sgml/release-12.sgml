@@ -64,8 +64,8 @@ Previously, a normally-invisible <type>OID</type> column could be specified duri
 creation using <literal>WITH OIDS</literal>;  that ability has been removed.  Columns can
 still be explicitly specified as type <type>OID</type>.  Operations on tables that
 have columns named <type>OID</type> (created using <literal>WITH OIDS</literal>) will need adjustment.
-The many system tables with such columns will now display those columns
-with <command>SELECT *</command> by default.
+<command>SELECT *</command> will now output those columns for the many system tables which
+have them.  Previously, the columns had to be selected explicitly.
 </para>
 </listitem>
 
