@@ -136,6 +136,7 @@ sslfiles-clean:
 
 clean distclean maintainer-clean:
 	rm -rf tmp_check
+	rm -rf ssl/*.old ssl/new_certs_dir ssl/client*_tmp.key
 
 check:
 	$(prove_check)
