@@ -1533,7 +1533,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					/*
 					 * Mapped catalog tuple without data, emitted while
 					 * catalog table was in the process of being rewritten. We
-					 * can fail to look up the relfilenode, because the the
+					 * can fail to look up the relfilenode, because the
 					 * relmapper has no "historic" view, in contrast to normal
 					 * the normal catalog during decoding. Thus repeated
 					 * rewrites can cause a lookup failure. That's OK because

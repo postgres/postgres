@@ -593,7 +593,7 @@ typedef struct EState
 	 * and with which options.  es_jit is created on-demand when JITing is
 	 * performed.
 	 *
-	 * es_jit_combined_instr is the the combined, on demand allocated,
+	 * es_jit_combined_instr is the combined, on demand allocated,
 	 * instrumentation from all workers. The leader's instrumentation is kept
 	 * separate, and is combined on demand by ExplainPrintJITSummary().
 	 */

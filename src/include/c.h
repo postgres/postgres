@@ -1129,7 +1129,7 @@ typedef union PGAlignedXLogBlock
  * Please note IT IS NOT SAFE to cast constness away if the result will ever
  * be modified (it would be undefined behaviour). Doing so anyway can cause
  * compiler misoptimizations or runtime crashes (modifying readonly memory).
- * It is only safe to use when the the result will not be modified, but API
+ * It is only safe to use when the result will not be modified, but API
  * design or language restrictions prevent you from declaring that
  * (e.g. because a function returns both const and non-const variables).
  *

@@ -218,7 +218,7 @@ l_mcxt_switch(LLVMModuleRef mod, LLVMBuilderRef b, LLVMValueRef nc)
 }
 
 /*
- * Return pointer to the the argno'th argument nullness.
+ * Return pointer to the argno'th argument nullness.
  */
 static inline LLVMValueRef
 l_funcnullp(LLVMBuilderRef b, LLVMValueRef v_fcinfo, size_t argno)
@@ -236,7 +236,7 @@ l_funcnullp(LLVMBuilderRef b, LLVMValueRef v_fcinfo, size_t argno)
 }
 
 /*
- * Return pointer to the the argno'th argument datum.
+ * Return pointer to the argno'th argument datum.
  */
 static inline LLVMValueRef
 l_funcvaluep(LLVMBuilderRef b, LLVMValueRef v_fcinfo, size_t argno)

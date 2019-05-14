@@ -2361,7 +2361,7 @@ get_last_attnums_walker(Node *node, LastAttnumInfo *info)
  * Compute additional information for EEOP_*_FETCHSOME ops.
  *
  * The goal is to determine whether a slot is 'fixed', that is, every
- * evaluation of the the expression will have the same type of slot, with an
+ * evaluation of the expression will have the same type of slot, with an
  * equivalent descriptor.
  */
 static void
