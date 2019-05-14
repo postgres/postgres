@@ -558,11 +558,15 @@ bootstrap_signals(void)
 {
 	Assert(!IsUnderPostmaster);
 
-	/* Set up appropriately for interactive use */
-	pqsignal(SIGHUP, die);
-	pqsignal(SIGINT, die);
-	pqsignal(SIGTERM, die);
-	pqsignal(SIGQUIT, die);
+	/*
+	 * We don't actually need any non-default signal handling in bootstrap
+	 * mode; "curl up and die" is a sufficient response for all these cases.
+	 * Let's set that handling explicitly, as documentation if nothing else.
+	 */
+	pqsignal(SIGHUP, SIG_DFL);
+	pqsignal(SIGINT, SIG_DFL);
+	pqsignal(SIGTERM, SIG_DFL);
+	pqsignal(SIGQUIT, SIG_DFL);
 }
 
 /*
