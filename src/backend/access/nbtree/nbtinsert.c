@@ -926,9 +926,6 @@ _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack)
  *		inserting to a non-leaf page, 'cbuf' is the left-sibling of the page
  *		we're inserting the downlink for.  This function will clear the
  *		INCOMPLETE_SPLIT flag on it, and release the buffer.
- *
- *		The locking interactions in this code are critical.  You should
- *		grok Lehman and Yao's paper before making any changes.
  *----------
  */
 static void
