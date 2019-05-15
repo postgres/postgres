@@ -95,11 +95,17 @@ CREATE TABLE gtest1_2 () INHERITS (gtest1, gtesty);  -- error
 DROP TABLE gtesty;
 
 -- test stored update
-CREATE TABLE gtest3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 3) STORED);
-INSERT INTO gtest3 (a) VALUES (1), (2), (3);
+CREATE TABLE gtest3 (a int, b int GENERATED ALWAYS AS (a * 3) STORED);
+INSERT INTO gtest3 (a) VALUES (1), (2), (3), (NULL);
 SELECT * FROM gtest3 ORDER BY a;
 UPDATE gtest3 SET a = 22 WHERE a = 2;
 SELECT * FROM gtest3 ORDER BY a;
+
+CREATE TABLE gtest3a (a text, b text GENERATED ALWAYS AS (a || '+' || a) STORED);
+INSERT INTO gtest3a (a) VALUES ('a'), ('b'), ('c'), (NULL);
+SELECT * FROM gtest3a ORDER BY a;
+UPDATE gtest3a SET a = 'bb' WHERE a = 'b';
+SELECT * FROM gtest3a ORDER BY a;
 
 -- COPY
 TRUNCATE gtest1;

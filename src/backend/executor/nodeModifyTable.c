@@ -53,6 +53,7 @@
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -254,9 +255,6 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 	MemoryContext oldContext;
 	Datum	   *values;
 	bool	   *nulls;
-	bool	   *replaces;
-	HeapTuple	oldtuple, newtuple;
-	bool		should_free;
 
 	Assert(tupdesc->constr && tupdesc->constr->has_generated_stored);
 
@@ -294,11 +292,15 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 
 	values = palloc(sizeof(*values) * natts);
 	nulls = palloc(sizeof(*nulls) * natts);
-	replaces = palloc0(sizeof(*replaces) * natts);
+
+	slot_getallattrs(slot);
+	memcpy(nulls, slot->tts_isnull, sizeof(*nulls) * natts);
 
 	for (int i = 0; i < natts; i++)
 	{
-		if (TupleDescAttr(tupdesc, i)->attgenerated == ATTRIBUTE_GENERATED_STORED)
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+		if (attr->attgenerated == ATTRIBUTE_GENERATED_STORED)
 		{
 			ExprContext *econtext;
 			Datum		val;
@@ -311,20 +313,19 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 
 			values[i] = val;
 			nulls[i] = isnull;
-			replaces[i] = true;
+		}
+		else
+		{
+			if (!nulls[i])
+				values[i] = datumCopy(slot->tts_values[i], attr->attbyval, attr->attlen);
 		}
 	}
 
-	oldtuple = ExecFetchSlotHeapTuple(slot, true, &should_free);
-	newtuple = heap_modify_tuple(oldtuple, tupdesc, values, nulls, replaces);
-	/*
-	 * The tuple will be freed by way of the memory context - the slot might
-	 * only be cleared after the context is reset, and we'd thus potentially
-	 * double free.
-	 */
-	ExecForceStoreHeapTuple(newtuple, slot, false);
-	if (should_free)
-		heap_freetuple(oldtuple);
+	ExecClearTuple(slot);
+	memcpy(slot->tts_values, values, sizeof(*values) * natts);
+	memcpy(slot->tts_isnull, nulls, sizeof(*nulls) * natts);
+	ExecStoreVirtualTuple(slot);
+	ExecMaterializeSlot(slot);
 
 	MemoryContextSwitchTo(oldContext);
 }

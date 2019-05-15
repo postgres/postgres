@@ -226,15 +226,16 @@ NOTICE:  merging multiple inherited definitions of column "b"
 ERROR:  inherited column "b" has a generation conflict
 DROP TABLE gtesty;
 -- test stored update
-CREATE TABLE gtest3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 3) STORED);
-INSERT INTO gtest3 (a) VALUES (1), (2), (3);
+CREATE TABLE gtest3 (a int, b int GENERATED ALWAYS AS (a * 3) STORED);
+INSERT INTO gtest3 (a) VALUES (1), (2), (3), (NULL);
 SELECT * FROM gtest3 ORDER BY a;
  a | b 
 ---+---
  1 | 3
  2 | 6
  3 | 9
-(3 rows)
+   |  
+(4 rows)
 
 UPDATE gtest3 SET a = 22 WHERE a = 2;
 SELECT * FROM gtest3 ORDER BY a;
@@ -243,7 +244,29 @@ SELECT * FROM gtest3 ORDER BY a;
   1 |  3
   3 |  9
  22 | 66
-(3 rows)
+    |   
+(4 rows)
+
+CREATE TABLE gtest3a (a text, b text GENERATED ALWAYS AS (a || '+' || a) STORED);
+INSERT INTO gtest3a (a) VALUES ('a'), ('b'), ('c'), (NULL);
+SELECT * FROM gtest3a ORDER BY a;
+ a |  b  
+---+-----
+ a | a+a
+ b | b+b
+ c | c+c
+   | 
+(4 rows)
+
+UPDATE gtest3a SET a = 'bb' WHERE a = 'b';
+SELECT * FROM gtest3a ORDER BY a;
+ a  |   b   
+----+-------
+ a  | a+a
+ bb | bb+bb
+ c  | c+c
+    | 
+(4 rows)
 
 -- COPY
 TRUNCATE gtest1;
