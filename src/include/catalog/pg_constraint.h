@@ -182,19 +182,6 @@ typedef enum ConstraintCategory
 	CONSTRAINT_ASSERTION		/* for future expansion */
 } ConstraintCategory;
 
-/*
- * Used when cloning a foreign key constraint to a partition, so that the
- * caller can optionally set up a verification pass for it.
- */
-typedef struct ClonedConstraint
-{
-	Oid			relid;
-	Oid			refrelid;
-	Oid			conindid;
-	Oid			conid;
-	Constraint *constraint;
-} ClonedConstraint;
-
 
 extern Oid CreateConstraintEntry(const char *constraintName,
 					  Oid constraintNamespace,
