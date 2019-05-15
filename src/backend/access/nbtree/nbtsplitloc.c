@@ -196,11 +196,7 @@ _bt_findsplitloc(Relation rel,
 
 	/*
 	 * Scan through the data items and calculate space usage for a split at
-	 * each possible position.  We start at the first data offset rather than
-	 * the second data offset to handle the "newitemoff == first data offset"
-	 * case (any other split whose firstoldonright is the first data offset
-	 * can't be legal, though, and so won't actually end up being recorded in
-	 * first loop iteration).
+	 * each possible position
 	 */
 	olddataitemstoleft = 0;
 
@@ -214,27 +210,38 @@ _bt_findsplitloc(Relation rel,
 		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
 
 		/*
-		 * Will the new item go to left or right of split?
+		 * When item offset number is not newitemoff, neither side of the
+		 * split can be newitem.  Record a split after the previous data item
+		 * from original page, but before the current data item from original
+		 * page. (_bt_recsplitloc() will reject the split when there are no
+		 * previous data items, which we rely on.)
 		 */
-		if (offnum > newitemoff)
-			_bt_recsplitloc(&state, offnum, true, olddataitemstoleft, itemsz);
-		else if (offnum < newitemoff)
+		if (offnum < newitemoff)
 			_bt_recsplitloc(&state, offnum, false, olddataitemstoleft, itemsz);
+		else if (offnum > newitemoff)
+			_bt_recsplitloc(&state, offnum, true, olddataitemstoleft, itemsz);
 		else
 		{
-			/* may need to record a split on one or both sides of new item */
-			_bt_recsplitloc(&state, offnum, true, olddataitemstoleft, itemsz);
+			/*
+			 * Record a split after all "offnum < newitemoff" original page
+			 * data items, but before newitem
+			 */
 			_bt_recsplitloc(&state, offnum, false, olddataitemstoleft, itemsz);
+
+			/*
+			 * Record a split after newitem, but before data item from
+			 * original page at offset newitemoff/current offset
+			 */
+			_bt_recsplitloc(&state, offnum, true, olddataitemstoleft, itemsz);
 		}
 
 		olddataitemstoleft += itemsz;
 	}
 
 	/*
-	 * If the new item goes as the last item, record the split point that
-	 * leaves all the old items on the left page, and the new item on the
-	 * right page.  This is required because a split that leaves the new item
-	 * as the firstoldonright won't have been reached within the loop.
+	 * Record a split after all original page data items, but before newitem.
+	 * (Though only when it's possible that newitem will end up alone on new
+	 * right page.)
 	 */
 	Assert(olddataitemstoleft == olddataitemstotal);
 	if (newitemoff > maxoff)
