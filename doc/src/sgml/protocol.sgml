@@ -1502,7 +1502,7 @@ SELECT 1/0;
     respectively.  The frontend might close the connection at this point
     if it is dissatisfied with the response.  To continue after
     <literal>G</literal>, using the GSSAPI C bindings as discussed in RFC2744
-    or equivilant, perform a <acronym>GSSAPI</acronym> initialization by
+    or equivalent, perform a <acronym>GSSAPI</acronym> initialization by
     calling <function>gss_init_sec_context()</function> in a loop and sending
     the result to the server, starting with an empty input and then with each
     result from the server, until it returns no output.  When sending the

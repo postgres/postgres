@@ -2649,7 +2649,7 @@ openssl x509 -req -in server.csr -text -days 365 \
     default, this decision is up to the client (which means it can be
     downgraded by an attacker); see <xref linkend="auth-pg-hba-conf"/> about
     setting up the server to require the use of <acronym>GSSAPI</acronym> for
-    some or all conections.
+    some or all connections.
    </para>
 
    <para>
