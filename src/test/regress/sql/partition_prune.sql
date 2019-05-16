@@ -719,6 +719,44 @@ select * from listp where a = (select null::int);
 
 drop table listp;
 
+--
+-- check that stable query clauses are only used in run-time pruning
+--
+create table stable_qual_pruning (a timestamp) partition by range (a);
+create table stable_qual_pruning1 partition of stable_qual_pruning
+  for values from ('2000-01-01') to ('2000-02-01');
+create table stable_qual_pruning2 partition of stable_qual_pruning
+  for values from ('2000-02-01') to ('2000-03-01');
+create table stable_qual_pruning3 partition of stable_qual_pruning
+  for values from ('3000-02-01') to ('3000-03-01');
+
+-- comparison against a stable value requires run-time pruning
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning where a < localtimestamp;
+
+-- timestamp < timestamptz comparison is only stable, not immutable
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
+
+-- check ScalarArrayOp cases
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning
+  where a = any(array['2010-02-01', '2020-01-01']::timestamp[]);
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning
+  where a = any(array['2000-02-01', '2010-01-01']::timestamp[]);
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning
+  where a = any(array['2000-02-01', localtimestamp]::timestamp[]);
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning
+  where a = any(array['2010-02-01', '2020-01-01']::timestamptz[]);
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning
+  where a = any(array['2000-02-01', '2010-01-01']::timestamptz[]);
+
+drop table stable_qual_pruning;
+
 -- Ensure runtime pruning works with initplans params with boolean types
 create table boolvalues (value bool not null);
 insert into boolvalues values('t'),('f');
