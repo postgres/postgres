@@ -757,6 +757,25 @@ select * from stable_qual_pruning
 
 drop table stable_qual_pruning;
 
+--
+-- Check that pruning with composite range partitioning works correctly when
+-- it must ignore clauses for trailing keys once it has seen a clause with
+-- non-inclusive operator for an earlier key
+--
+create table mc3p (a int, b int, c int) partition by range (a, abs(b), c);
+create table mc3p0 partition of mc3p
+  for values from (0, 0, 0) to (0, maxvalue, maxvalue);
+create table mc3p1 partition of mc3p
+  for values from (1, 1, 1) to (2, minvalue, minvalue);
+create table mc3p2 partition of mc3p
+  for values from (2, minvalue, minvalue) to (3, maxvalue, maxvalue);
+insert into mc3p values (0, 1, 1), (1, 1, 1), (2, 1, 1);
+
+explain (analyze, costs off, summary off, timing off)
+select * from mc3p where a < 3 and abs(b) = 1;
+
+drop table mc3p;
+
 -- Ensure runtime pruning works with initplans params with boolean types
 create table boolvalues (value bool not null);
 insert into boolvalues values('t'),('f');

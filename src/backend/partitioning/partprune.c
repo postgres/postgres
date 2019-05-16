@@ -1185,9 +1185,6 @@ gen_prune_steps_from_opexps(PartitionScheme part_scheme,
 	List	   *opsteps = NIL;
 	List	   *btree_clauses[BTMaxStrategyNumber + 1],
 			   *hash_clauses[HTMaxStrategyNumber + 1];
-	bool		need_next_less,
-				need_next_eq,
-				need_next_greater;
 	int			i;
 
 	memset(btree_clauses, 0, sizeof(btree_clauses));
@@ -1198,9 +1195,8 @@ gen_prune_steps_from_opexps(PartitionScheme part_scheme,
 		bool		consider_next_key = true;
 
 		/*
-		 * To be useful for pruning, we must have clauses for a prefix of
-		 * partition keys in the case of range partitioning.  So, ignore
-		 * clauses for keys after this one.
+		 * For range partitioning, if we have no clauses for the current key,
+		 * we can't consider any later keys either, so we can stop here.
 		 */
 		if (part_scheme->strategy == PARTITION_STRATEGY_RANGE &&
 			clauselist == NIL)
@@ -1215,7 +1211,6 @@ gen_prune_steps_from_opexps(PartitionScheme part_scheme,
 			clauselist == NIL && !bms_is_member(i, nullkeys))
 			return NULL;
 
-		need_next_eq = need_next_less = need_next_greater = true;
 		foreach(lc, clauselist)
 		{
 			PartClauseInfo *pc = (PartClauseInfo *) lfirst(lc);
@@ -1237,7 +1232,6 @@ gen_prune_steps_from_opexps(PartitionScheme part_scheme,
 				case PARTITION_STRATEGY_RANGE:
 					{
 						PartClauseInfo *last = NULL;
-						bool		inclusive = false;
 
 						/*
 						 * Add this clause to the list of clauses to be used
@@ -1255,35 +1249,13 @@ gen_prune_steps_from_opexps(PartitionScheme part_scheme,
 								lappend(btree_clauses[pc->op_strategy], pc);
 
 						/*
-						 * We may not need the next clause if they're of
-						 * certain strategy.
+						 * We can't consider subsequent partition keys if the
+						 * clause for the current key contains a non-inclusive
+						 * operator.
 						 */
-						switch (pc->op_strategy)
-						{
-							case BTLessEqualStrategyNumber:
-								inclusive = true;
-								/* fall through */
-							case BTLessStrategyNumber:
-								if (!inclusive)
-									need_next_eq = need_next_less = false;
-								break;
-							case BTEqualStrategyNumber:
-								/* always accept clauses for the next key. */
-								break;
-							case BTGreaterEqualStrategyNumber:
-								inclusive = true;
-								/* fall through */
-							case BTGreaterStrategyNumber:
-								if (!inclusive)
-									need_next_eq = need_next_greater = false;
-								break;
-						}
-
-						/* We may want to change our mind. */
-						if (consider_next_key)
-							consider_next_key = (need_next_eq ||
-												 need_next_less ||
-												 need_next_greater);
+						if (pc->op_strategy == BTLessStrategyNumber ||
+							pc->op_strategy == BTGreaterStrategyNumber)
+							consider_next_key = false;
 						break;
 					}
 
@@ -2822,7 +2794,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 
 			/*
 			 * Look for the greatest bound that is < or <= lookup value and
-			 * set minoff to its offset.
+			 * set maxoff to its offset.
 			 */
 			off = partition_range_datum_bsearch(partsupfunc,
 												partcollation,
