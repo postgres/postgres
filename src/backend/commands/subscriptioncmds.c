@@ -185,7 +185,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized subscription parameter: %s", defel->defname)));
+					 errmsg("unrecognized subscription parameter: \"%s\"", defel->defname)));
 	}
 
 	/*
@@ -198,17 +198,21 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 		if (enabled && *enabled_given && *enabled)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("connect = false and enabled = true are mutually exclusive options")));
+			/*- translator: both %s are strings of the form "option = value" */
+					 errmsg("%s and %s are mutually exclusive options",
+							"connect = false", "enabled = true")));
 
 		if (create_slot && create_slot_given && *create_slot)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("connect = false and create_slot = true are mutually exclusive options")));
+					 errmsg("%s and %s are mutually exclusive options",
+							"connect = false", "create_slot = true")));
 
 		if (copy_data && copy_data_given && *copy_data)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("connect = false and copy_data = true are mutually exclusive options")));
+					 errmsg("%s and %s are mutually exclusive options",
+							"connect = false", "copy_data = true")));
 
 		/* Change the defaults of other options. */
 		*enabled = false;
@@ -225,22 +229,28 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 		if (enabled && *enabled_given && *enabled)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("slot_name = NONE and enabled = true are mutually exclusive options")));
+			/*- translator: both %s are strings of the form "option = value" */
+					 errmsg("%s and %s are mutually exclusive options",
+							"slot_name = NONE", "enable = true")));
 
 		if (create_slot && create_slot_given && *create_slot)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("slot_name = NONE and create_slot = true are mutually exclusive options")));
+					 errmsg("%s and %s are mutually exclusive options",
+							"slot_name = NONE", "create_slot = true")));
 
 		if (enabled && !*enabled_given && *enabled)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subscription with slot_name = NONE must also set enabled = false")));
+			/*- translator: both %s are strings of the form "option = value" */
+					 errmsg("subscription with %s must also set %s",
+							"slot_name = NONE", "enabled = false")));
 
 		if (create_slot && !create_slot_given && *create_slot)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("subscription with slot_name = NONE must also set create_slot = false")));
+					 errmsg("subscription with %s must also set %s",
+							"slot_name = NONE", "create_slot = false")));
 	}
 }
 
@@ -487,9 +497,9 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	}
 	else
 		ereport(WARNING,
-				(errmsg("tables were not subscribed, you will have to run "
-						"ALTER SUBSCRIPTION ... REFRESH PUBLICATION to "
-						"subscribe the tables")));
+		/* translator: %s is an SQL ALTER statement */
+				(errmsg("tables were not subscribed, you will have to run %s to subscribe the tables",
+						"ALTER SUBSCRIPTION ... REFRESH PUBLICATION")));
 
 	table_close(rel, RowExclusiveLock);
 
@@ -673,7 +683,8 @@ AlterSubscription(AlterSubscriptionStmt *stmt)
 					if (sub->enabled && !slotname)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("cannot set slot_name = NONE for enabled subscription")));
+								 errmsg("cannot set %s for enabled subscription",
+										"slot_name = NONE")));
 
 					if (slotname)
 						values[Anum_pg_subscription_subslotname - 1] =
@@ -981,8 +992,9 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 				(errmsg("could not connect to publisher when attempting to "
 						"drop the replication slot \"%s\"", slotname),
 				 errdetail("The error was: %s", err),
-				 errhint("Use ALTER SUBSCRIPTION ... SET (slot_name = NONE) "
-						 "to disassociate the subscription from the slot.")));
+		/* translator: %s is an SQL ALTER command */
+				 errhint("Use %s to disassociate the subscription from the slot.",
+						 "ALTER SUBSCRIPTION ... SET (slot_name = NONE)")));
 
 	PG_TRY();
 	{

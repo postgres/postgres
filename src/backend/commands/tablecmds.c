@@ -15116,14 +15116,14 @@ ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNu
 				if (strategy == PARTITION_STRATEGY_HASH)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("data type %s has no default hash operator class",
-									format_type_be(atttype)),
+							 errmsg("data type %s has no default operator class for access method \"%s\"",
+									format_type_be(atttype), "hash"),
 							 errhint("You must specify a hash operator class or define a default hash operator class for the data type.")));
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("data type %s has no default btree operator class",
-									format_type_be(atttype)),
+							 errmsg("data type %s has no default operator class for access method \"%s\"",
+									format_type_be(atttype), "btree"),
 							 errhint("You must specify a btree operator class or define a default btree operator class for the data type.")));
 
 			}

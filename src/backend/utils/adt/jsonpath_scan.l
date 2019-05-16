@@ -539,7 +539,7 @@ addUnicodeChar(int ch)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type jsonpath"),
+				 errmsg("invalid input syntax for type %s", "jsonpath"),
 				 errdetail("Unicode escape values cannot be used for code "
 						   "point values above 007F when the server encoding "
 						   "is not UTF8.")));
@@ -555,7 +555,7 @@ addUnicode(int ch, int *hi_surrogate)
 		if (*hi_surrogate != -1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type jsonpath"),
+					 errmsg("invalid input syntax for type %s", "jsonpath"),
 					 errdetail("Unicode high surrogate must not follow "
 							   "a high surrogate.")));
 		*hi_surrogate = (ch & 0x3ff) << 10;
@@ -566,7 +566,7 @@ addUnicode(int ch, int *hi_surrogate)
 		if (*hi_surrogate == -1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type jsonpath"),
+					 errmsg("invalid input syntax for type %s", "jsonpath"),
 					 errdetail("Unicode low surrogate must follow a high "
 							   "surrogate.")));
 		ch = 0x10000 + *hi_surrogate + (ch & 0x3ff);
@@ -576,7 +576,7 @@ addUnicode(int ch, int *hi_surrogate)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type jsonpath"),
+				 errmsg("invalid input syntax for type %s", "jsonpath"),
 				 errdetail("Unicode low surrogate must follow a high "
 						   "surrogate.")));
 	}
@@ -618,7 +618,7 @@ parseUnicode(char *s, int l)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type jsonpath"),
+				 errmsg("invalid input syntax for type %s", "jsonpath"),
 				 errdetail("Unicode low surrogate must follow a high "
 						   "surrogate.")));
 	}

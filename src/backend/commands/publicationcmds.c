@@ -129,7 +129,7 @@ parse_publication_options(List *options,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized publication parameter: %s", defel->defname)));
+					 errmsg("unrecognized publication parameter: \"%s\"", defel->defname)));
 	}
 }
 

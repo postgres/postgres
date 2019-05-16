@@ -1934,7 +1934,7 @@ getJsonPathVariable(JsonPathExecContext *cxt, JsonPathItem *variable,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("cannot find jsonpath variable \"%s\"",
+				 errmsg("could not find jsonpath variable \"%s\"",
 						pnstrdup(varName, varNameLength))));
 	}
 

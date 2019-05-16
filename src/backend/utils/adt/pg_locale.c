@@ -1603,7 +1603,7 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 							  buff, nbytes, &status);
 	if (U_FAILURE(status) && status != U_BUFFER_OVERFLOW_ERROR)
 		ereport(ERROR,
-				(errmsg("ucnv_toUChars failed: %s", u_errorName(status))));
+				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
 
 	*buff_uchar = palloc((len_uchar + 1) * sizeof(**buff_uchar));
 
@@ -1612,7 +1612,7 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 							  buff, nbytes, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
-				(errmsg("ucnv_toUChars failed: %s", u_errorName(status))));
+				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
 
 	return len_uchar;
 }
@@ -1641,7 +1641,8 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 								 buff_uchar, len_uchar, &status);
 	if (U_FAILURE(status) && status != U_BUFFER_OVERFLOW_ERROR)
 		ereport(ERROR,
-				(errmsg("ucnv_fromUChars failed: %s", u_errorName(status))));
+				(errmsg("%s failed: %s", "ucnv_fromUChars",
+						u_errorName(status))));
 
 	*result = palloc(len_result + 1);
 
@@ -1650,7 +1651,8 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 								 buff_uchar, len_uchar, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
-				(errmsg("ucnv_fromUChars failed: %s", u_errorName(status))));
+				(errmsg("%s failed: %s", "ucnv_fromUChars",
+						u_errorName(status))));
 
 	return len_result;
 }

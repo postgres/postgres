@@ -2028,7 +2028,7 @@ retry1:
 				continue;
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
-					 errmsg("failed to send GSSAPI negotiation response: %m)")));
+					 errmsg("failed to send GSSAPI negotiation response: %m")));
 			return STATUS_ERROR;	/* close the connection */
 		}
 
@@ -2651,11 +2651,12 @@ SIGHUP_handler(SIGNAL_ARGS)
 		/* Reload authentication config files too */
 		if (!load_hba())
 			ereport(LOG,
-					(errmsg("pg_hba.conf was not reloaded")));
+			/* translator: %s is a configuration file */
+					(errmsg("%s was not reloaded", "pg_hba.conf")));
 
 		if (!load_ident())
 			ereport(LOG,
-					(errmsg("pg_ident.conf was not reloaded")));
+					(errmsg("%s was not reloaded", "pg_ident.conf")));
 
 #ifdef USE_SSL
 		/* Reload SSL configuration as well */

@@ -179,7 +179,8 @@ jsonPathFromCstring(char *in, int len)
 	if (!jsonpath)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for jsonpath: \"%s\"", in)));
+				 errmsg("invalid input syntax for type %s: \"%s\"", "jsonpath",
+						in)));
 
 	flattenJsonPathParseItem(&buf, jsonpath->expr, 0, false);
 

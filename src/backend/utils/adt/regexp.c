@@ -423,7 +423,7 @@ parse_re_flags(pg_re_flags *flags, text *opts)
 				default:
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid regexp option: \"%c\"",
+							 errmsg("invalid regular expression option: \"%c\"",
 									opt_p[i])));
 					break;
 			}
@@ -920,7 +920,9 @@ regexp_match(PG_FUNCTION_ARGS)
 	if (re_flags.glob)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("regexp_match does not support the global option"),
+		/* translator: %s is a SQL function name */
+				 errmsg("%s does not support the \"global\" option",
+						"regexp_match()"),
 				 errhint("Use the regexp_matches function instead.")));
 
 	matchctx = setup_regexp_matches(orig_str, pattern, &re_flags,
@@ -1298,7 +1300,9 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 		if (re_flags.glob)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("regexp_split_to_table does not support the global option")));
+			/* translator: %s is a SQL function name */
+					 errmsg("%s does not support the \"global\" option",
+							"regexp_split_to_table()")));
 		/* But we find all the matches anyway */
 		re_flags.glob = true;
 
@@ -1351,7 +1355,9 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 	if (re_flags.glob)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("regexp_split_to_array does not support the global option")));
+		/* translator: %s is a SQL function name */
+				 errmsg("%s does not support the \"global\" option",
+						"regexp_split_to_array()")));
 	/* But we find all the matches anyway */
 	re_flags.glob = true;
 
