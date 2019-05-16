@@ -262,11 +262,15 @@ long as we're keeping the leaf locked.  The internal pages in the chain
 cannot acquire new children afterwards either, because the leaf page is
 marked as half-dead and won't be split.
 
-Removing the downlink to the top of the to-be-deleted chain effectively
-transfers the key space to the right sibling for all the intermediate levels
-too, in one atomic operation.  A concurrent search might still visit the
-intermediate pages, but it will move right when it reaches the half-dead page
-at the leaf level.
+Removing the downlink to the top of the to-be-deleted subtree/chain
+effectively transfers the key space to the right sibling for all the
+intermediate levels too, in one atomic operation.  A concurrent search might
+still visit the intermediate pages, but it will move right when it reaches
+the half-dead page at the leaf level.  In particular, the search will move to
+the subtree to the right of the half-dead leaf page/to-be-deleted subtree,
+since the half-dead leaf page's right sibling must be a "cousin" page, not a
+"true" sibling page (or a second cousin page when the to-be-deleted chain
+starts at leaf page's grandparent page, and so on).
 
 In the second stage, the topmost page in the chain is unlinked from its
 siblings, and the half-dead leaf page is updated to point to the next page

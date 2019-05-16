@@ -1301,17 +1301,6 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 				_bt_relbuf(rel, lbuf);
 			}
 
-			/*
-			 * Perform the same check on this internal level that
-			 * _bt_mark_page_halfdead performed on the leaf level.
-			 */
-			if (_bt_is_page_halfdead(rel, *rightsib))
-			{
-				elog(DEBUG1, "could not delete page %u because its right sibling %u is half-dead",
-					 parent, *rightsib);
-				return false;
-			}
-
 			return _bt_lock_branch_parent(rel, parent, stack->bts_parent,
 										  topparent, topoff, target, rightsib);
 		}
@@ -1621,7 +1610,17 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * parent, unless it is the only child --- in which case the parent has to
 	 * be deleted too, and the same condition applies recursively to it. We
 	 * have to check this condition all the way up before trying to delete,
-	 * and lock the final parent of the to-be-deleted branch.
+	 * and lock the final parent of the to-be-deleted subtree.
+	 *
+	 * However, we won't need to repeat the above _bt_is_page_halfdead() check
+	 * for parent/ancestor pages because of the rightmost restriction. The
+	 * leaf check will apply to a right "cousin" leaf page rather than a
+	 * simple right sibling leaf page in cases where we actually go on to
+	 * perform internal page deletion. The right cousin leaf page is
+	 * representative of the left edge of the subtree to the right of the
+	 * to-be-deleted subtree as a whole.  (Besides, internal pages are never
+	 * marked half-dead, so it isn't even possible to directly assess if an
+	 * internal page is part of some other to-be-deleted subtree.)
 	 */
 	rightsib = leafrightsib;
 	target = leafblkno;
