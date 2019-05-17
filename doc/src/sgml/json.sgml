@@ -836,17 +836,22 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
        <para>
         <literal>[<replaceable>subscript</replaceable>, ...]</literal>
        </para>
-       <para>
-        <literal>[<replaceable>subscript</replaceable> to last]</literal>
-       </para>
       </entry>
       <entry>
        <para>
-        Array element accessor. The provided numeric subscripts return the
-        corresponding array elements. The first element in an array is
-        accessed with [0]. The <literal>last</literal> keyword denotes
-        the last subscript in an array and can be used to handle arrays
-        of unknown length.
+        Array element accessor.  <literal><replaceable>subscript</replaceable></literal>
+        might be given in two forms: <literal><replaceable>expr</replaceable></literal>
+        or <literal><replaceable>lower_expr</replaceable> to <replaceable>upper_expr</replaceable></literal>.
+        The first form specifies single array element by its index.  The second
+        form specified array slice by the range of indexes.  Zero index
+        corresponds to the first array element.
+       </para>
+       <para>
+        Expression inside subscript may consititue an integer,
+        numeric expression or any other <literal>jsonpath</literal> expression
+        returning single numeric value.  The <literal>last</literal> keyword
+        can be used in the expression denoting the last subscript in an array.
+        That's helpful for handling arrays of unknown length.
        </para>
       </entry>
      </row>
