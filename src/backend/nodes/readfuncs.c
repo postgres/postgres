@@ -2388,16 +2388,13 @@ _readPartitionedRelPruneInfo(void)
 	READ_LOCALS(PartitionedRelPruneInfo);
 
 	READ_UINT_FIELD(rtindex);
-	READ_NODE_FIELD(pruning_steps);
 	READ_BITMAPSET_FIELD(present_parts);
 	READ_INT_FIELD(nparts);
-	READ_INT_FIELD(nexprs);
 	READ_INT_ARRAY(subplan_map, local_node->nparts);
 	READ_INT_ARRAY(subpart_map, local_node->nparts);
 	READ_OID_ARRAY(relid_map, local_node->nparts);
-	READ_BOOL_ARRAY(hasexecparam, local_node->nexprs);
-	READ_BOOL_FIELD(do_initial_prune);
-	READ_BOOL_FIELD(do_exec_prune);
+	READ_NODE_FIELD(initial_pruning_steps);
+	READ_NODE_FIELD(exec_pruning_steps);
 	READ_BITMAPSET_FIELD(execparamids);
 
 	READ_DONE();

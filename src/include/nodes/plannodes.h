@@ -1109,21 +1109,23 @@ typedef struct PartitionedRelPruneInfo
 {
 	NodeTag		type;
 	Index		rtindex;		/* RT index of partition rel for this level */
-	List	   *pruning_steps;	/* List of PartitionPruneStep, see below */
 	Bitmapset  *present_parts;	/* Indexes of all partitions which subplans or
-								 * subparts are present for. */
-	int			nparts;			/* Length of subplan_map[] and subpart_map[] */
-	int			nexprs;			/* Length of hasexecparam[] */
+								 * subparts are present for */
+	int			nparts;			/* Length of the following arrays: */
 	int		   *subplan_map;	/* subplan index by partition index, or -1 */
 	int		   *subpart_map;	/* subpart index by partition index, or -1 */
 	Oid		   *relid_map;		/* relation OID by partition index, or 0 */
-	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
-								 * any PARAM_EXEC Params. */
-	bool		do_initial_prune;	/* true if pruning should be performed
-									 * during executor startup. */
-	bool		do_exec_prune;	/* true if pruning should be performed during
-								 * executor run. */
-	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in pruning_steps */
+
+	/*
+	 * initial_pruning_steps shows how to prune during executor startup (i.e.,
+	 * without use of any PARAM_EXEC Params); it is NIL if no startup pruning
+	 * is required.  exec_pruning_steps shows how to prune with PARAM_EXEC
+	 * Params; it is NIL if no per-scan pruning is required.
+	 */
+	List	   *initial_pruning_steps;	/* List of PartitionPruneStep */
+	List	   *exec_pruning_steps; /* List of PartitionPruneStep */
+	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in
+								 * exec_pruning_steps */
 } PartitionedRelPruneInfo;
 
 /*

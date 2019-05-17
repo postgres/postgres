@@ -58,28 +58,30 @@ typedef struct PartitionRoutingInfo
  * PartitionedRelPruneInfo (see plannodes.h); though note that here,
  * subpart_map contains indexes into PartitionPruningData.partrelprunedata[].
  *
+ * nparts						Length of subplan_map[] and subpart_map[].
  * subplan_map					Subplan index by partition index, or -1.
  * subpart_map					Subpart index by partition index, or -1.
  * present_parts				A Bitmapset of the partition indexes that we
  *								have subplans or subparts for.
- * context						Contains the context details required to call
- *								the partition pruning code.
- * pruning_steps				List of PartitionPruneSteps used to
- *								perform the actual pruning.
- * do_initial_prune				true if pruning should be performed during
- *								executor startup (for this partitioning level).
- * do_exec_prune				true if pruning should be performed during
- *								executor run (for this partitioning level).
+ * initial_pruning_steps		List of PartitionPruneSteps used to
+ *								perform executor startup pruning.
+ * exec_pruning_steps			List of PartitionPruneSteps used to
+ *								perform per-scan pruning.
+ * initial_context				If initial_pruning_steps isn't NIL, contains
+ *								the details needed to execute those steps.
+ * exec_context					If exec_pruning_steps isn't NIL, contains
+ *								the details needed to execute those steps.
  */
 typedef struct PartitionedRelPruningData
 {
+	int			nparts;
 	int		   *subplan_map;
 	int		   *subpart_map;
 	Bitmapset  *present_parts;
-	PartitionPruneContext context;
-	List	   *pruning_steps;
-	bool		do_initial_prune;
-	bool		do_exec_prune;
+	List	   *initial_pruning_steps;
+	List	   *exec_pruning_steps;
+	PartitionPruneContext initial_context;
+	PartitionPruneContext exec_context;
 } PartitionedRelPruningData;
 
 /*

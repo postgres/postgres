@@ -1198,16 +1198,13 @@ _copyPartitionedRelPruneInfo(const PartitionedRelPruneInfo *from)
 	PartitionedRelPruneInfo *newnode = makeNode(PartitionedRelPruneInfo);
 
 	COPY_SCALAR_FIELD(rtindex);
-	COPY_NODE_FIELD(pruning_steps);
 	COPY_BITMAPSET_FIELD(present_parts);
 	COPY_SCALAR_FIELD(nparts);
-	COPY_SCALAR_FIELD(nexprs);
 	COPY_POINTER_FIELD(subplan_map, from->nparts * sizeof(int));
 	COPY_POINTER_FIELD(subpart_map, from->nparts * sizeof(int));
 	COPY_POINTER_FIELD(relid_map, from->nparts * sizeof(Oid));
-	COPY_POINTER_FIELD(hasexecparam, from->nexprs * sizeof(bool));
-	COPY_SCALAR_FIELD(do_initial_prune);
-	COPY_SCALAR_FIELD(do_exec_prune);
+	COPY_NODE_FIELD(initial_pruning_steps);
+	COPY_NODE_FIELD(exec_pruning_steps);
 	COPY_BITMAPSET_FIELD(execparamids);
 
 	return newnode;
