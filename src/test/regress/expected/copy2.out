@@ -360,12 +360,12 @@ SELECT * FROM vistest;
 COMMIT;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
-ERROR:  cannot perform FREEZE because the table was not created or truncated in the current subtransaction
+ERROR:  cannot perform COPY FREEZE because the table was not created or truncated in the current subtransaction
 BEGIN;
 TRUNCATE vistest;
 SAVEPOINT s1;
 COPY vistest FROM stdin CSV FREEZE;
-ERROR:  cannot perform FREEZE because the table was not created or truncated in the current subtransaction
+ERROR:  cannot perform COPY FREEZE because the table was not created or truncated in the current subtransaction
 COMMIT;
 BEGIN;
 INSERT INTO vistest VALUES ('z');
@@ -373,7 +373,7 @@ SAVEPOINT s1;
 TRUNCATE vistest;
 ROLLBACK TO SAVEPOINT s1;
 COPY vistest FROM stdin CSV FREEZE;
-ERROR:  cannot perform FREEZE because the table was not created or truncated in the current subtransaction
+ERROR:  cannot perform COPY FREEZE because the table was not created or truncated in the current subtransaction
 COMMIT;
 CREATE FUNCTION truncate_in_subxact() RETURNS VOID AS
 $$

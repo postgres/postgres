@@ -1,6 +1,6 @@
 --jsonpath io
 select ''::jsonpath;
-ERROR:  invalid input syntax for jsonpath: ""
+ERROR:  invalid input syntax for type jsonpath: ""
 LINE 1: select ''::jsonpath;
                ^
 select '$'::jsonpath;

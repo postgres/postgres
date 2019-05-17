@@ -486,7 +486,7 @@ select * from jsonb_path_query('{"a": 10}', '$');
 (1 row)
 
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)');
-ERROR:  cannot find jsonpath variable "value"
+ERROR:  could not find jsonpath variable "value"
 select * from jsonb_path_query('{"a": 10}', '$ ? (@.a < $value)', '1');
 ERROR:  "vars" argument is not an object
 DETAIL:  Jsonpath parameters should be encoded as key-value pairs of "vars" object.

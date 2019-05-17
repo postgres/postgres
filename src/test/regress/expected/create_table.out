@@ -418,7 +418,7 @@ ERROR:  partition key expressions cannot contain whole-row references
 CREATE TABLE partitioned (
 	a point
 ) PARTITION BY LIST (a);
-ERROR:  data type point has no default btree operator class
+ERROR:  data type point has no default operator class for access method "btree"
 HINT:  You must specify a btree operator class or define a default btree operator class for the data type.
 CREATE TABLE partitioned (
 	a point
@@ -427,7 +427,7 @@ ERROR:  operator class "point_ops" does not exist for access method "btree"
 CREATE TABLE partitioned (
 	a point
 ) PARTITION BY RANGE (a);
-ERROR:  data type point has no default btree operator class
+ERROR:  data type point has no default operator class for access method "btree"
 HINT:  You must specify a btree operator class or define a default btree operator class for the data type.
 CREATE TABLE partitioned (
 	a point

@@ -1841,7 +1841,7 @@ SELECT regexp_match('foobarbequebaz'::citext, '(BAR)(BEQUE)'::citext, 'c'::citex
 
 -- g is not allowed
 SELECT regexp_match('foobarbequebazmorebarbequetoo'::citext, '(BAR)(BEQUE)'::citext, 'g') AS "error";
-ERROR:  regexp_match does not support the global option
+ERROR:  regexp_match() does not support the "global" option
 HINT:  Use the regexp_matches function instead.
 CONTEXT:  SQL function "regexp_match" statement 1
 SELECT regexp_matches('foobarbequebaz'::citext, '(bar)(beque)') = ARRAY[ 'bar', 'beque' ] AS t;

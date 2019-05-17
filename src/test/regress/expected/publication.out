@@ -17,7 +17,7 @@ CREATE PUBLICATION testpib_ins_trunct WITH (publish = insert);
 ALTER PUBLICATION testpub_default SET (publish = update);
 -- error cases
 CREATE PUBLICATION testpub_xxx WITH (foo);
-ERROR:  unrecognized publication parameter: foo
+ERROR:  unrecognized publication parameter: "foo"
 CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
 ERROR:  unrecognized "publish" value: "cluster"
 \dRp

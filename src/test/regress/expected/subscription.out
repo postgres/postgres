@@ -53,7 +53,7 @@ ERROR:  connect = false and enabled = true are mutually exclusive options
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (connect = false, create_slot = true);
 ERROR:  connect = false and create_slot = true are mutually exclusive options
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, enabled = true);
-ERROR:  slot_name = NONE and enabled = true are mutually exclusive options
+ERROR:  slot_name = NONE and enable = true are mutually exclusive options
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, create_slot = true);
 ERROR:  slot_name = NONE and create_slot = true are mutually exclusive options
 CREATE SUBSCRIPTION testsub2 CONNECTION 'dbname=doesnotexist' PUBLICATION testpub WITH (slot_name = NONE);
@@ -89,7 +89,7 @@ ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
 ERROR:  subscription "doesnotexist" does not exist
 ALTER SUBSCRIPTION testsub SET (create_slot = false);
-ERROR:  unrecognized subscription parameter: create_slot
+ERROR:  unrecognized subscription parameter: "create_slot"
 \dRs+
                                               List of subscriptions
   Name   |           Owner           | Enabled |     Publication     | Synchronous commit |       Conninfo       

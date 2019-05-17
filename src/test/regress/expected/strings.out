@@ -437,7 +437,7 @@ SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'gi');
 
 -- invalid regexp option
 SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'z');
-ERROR:  invalid regexp option: "z"
+ERROR:  invalid regular expression option: "z"
 -- set so we can tell NULL from empty string
 \pset null '\\N'
 -- return all matches from regexp
@@ -549,7 +549,7 @@ SELECT regexp_matches(chr(10) || '1' || chr(10) || '2' || chr(10) || '3' || chr(
 
 -- give me errors
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'gz');
-ERROR:  invalid regexp option: "z"
+ERROR:  invalid regular expression option: "z"
 SELECT regexp_matches('foobarbequebaz', $re$(barbeque$re$);
 ERROR:  invalid regular expression: parentheses () not balanced
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque){2,1}$re$);
@@ -743,14 +743,14 @@ SELECT regexp_split_to_array('1','');
 
 -- errors
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'zippy') AS foo;
-ERROR:  invalid regexp option: "z"
+ERROR:  invalid regular expression option: "z"
 SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'iz');
-ERROR:  invalid regexp option: "z"
+ERROR:  invalid regular expression option: "z"
 -- global option meaningless for regexp_split
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'g') AS foo;
-ERROR:  regexp_split_to_table does not support the global option
+ERROR:  regexp_split_to_table() does not support the "global" option
 SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'g');
-ERROR:  regexp_split_to_array does not support the global option
+ERROR:  regexp_split_to_array() does not support the "global" option
 -- change NULL-display back
 \pset null ''
 -- E021-11 position expression
