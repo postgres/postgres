@@ -418,8 +418,6 @@ Author: Robert Haas <rhaas@postgresql.org>
 2019-02-21 [9eefba181] Delay lock acquisition for partitions until we route a t
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2019-03-30 [428b260f8] Speed up planning when partitions can be pruned at plan 
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-04-05 [959d00e9d] Use Append rather than MergeAppend for scanning ordered 
 -->
 
        <para>
@@ -485,6 +483,18 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
         Allow <command>CREATE TABLE</command>'s tablespace specification
         for a partitioned table to affect the tablespace of its children
         (David Rowley, Álvaro Herrera)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2019-04-05 [959d00e9d] Use Append rather than MergeAppend for scanning ordered 
+-->
+
+       <para>
+        Avoid sorting when partitions are already being scanned in the
+        necessary order (David Rowley)
        </para>
       </listitem>
 
