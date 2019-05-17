@@ -1203,6 +1203,8 @@ _copyPartitionedRelPruneInfo(const PartitionedRelPruneInfo *from)
 	COPY_SCALAR_FIELD(do_initial_prune);
 	COPY_SCALAR_FIELD(do_exec_prune);
 	COPY_BITMAPSET_FIELD(execparamids);
+	COPY_NODE_FIELD(initial_pruning_steps);
+	COPY_NODE_FIELD(exec_pruning_steps);
 
 	return newnode;
 }

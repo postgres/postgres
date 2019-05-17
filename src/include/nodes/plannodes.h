@@ -1105,20 +1105,21 @@ typedef struct PartitionedRelPruneInfo
 {
 	NodeTag		type;
 	Oid			reloid;			/* OID of partition rel for this level */
-	List	   *pruning_steps;	/* List of PartitionPruneStep, see below */
+	List	   *pruning_steps;	/* NOT USED anymore */
 	Bitmapset  *present_parts;	/* Indexes of all partitions which subplans or
 								 * subparts are present for. */
 	int			nparts;			/* Length of subplan_map[] and subpart_map[] */
-	int			nexprs;			/* Length of hasexecparam[] */
+	int			nexprs;			/* Length of hasexecparam[] (now always 0) */
 	int		   *subplan_map;	/* subplan index by partition index, or -1 */
 	int		   *subpart_map;	/* subpart index by partition index, or -1 */
-	bool	   *hasexecparam;	/* true if corresponding pruning_step contains
-								 * any PARAM_EXEC Params. */
+	bool	   *hasexecparam;	/* NOT USED anymore */
 	bool		do_initial_prune;	/* true if pruning should be performed
 									 * during executor startup. */
 	bool		do_exec_prune;	/* true if pruning should be performed during
 								 * executor run. */
-	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in pruning_steps */
+	Bitmapset  *execparamids;	/* All PARAM_EXEC Param IDs in exec_pruning_steps */
+	List	   *initial_pruning_steps;	/* List of PartitionPruneStep */
+	List	   *exec_pruning_steps;	/* List of PartitionPruneStep */
 } PartitionedRelPruneInfo;
 
 /*

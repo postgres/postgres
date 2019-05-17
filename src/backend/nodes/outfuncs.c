@@ -1052,6 +1052,8 @@ _outPartitionedRelPruneInfo(StringInfo str, const PartitionedRelPruneInfo *node)
 	WRITE_BOOL_FIELD(do_initial_prune);
 	WRITE_BOOL_FIELD(do_exec_prune);
 	WRITE_BITMAPSET_FIELD(execparamids);
+	WRITE_NODE_FIELD(initial_pruning_steps);
+	WRITE_NODE_FIELD(exec_pruning_steps);
 }
 
 static void

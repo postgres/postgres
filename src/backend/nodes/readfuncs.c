@@ -2375,6 +2375,8 @@ _readPartitionedRelPruneInfo(void)
 	READ_BOOL_FIELD(do_initial_prune);
 	READ_BOOL_FIELD(do_exec_prune);
 	READ_BITMAPSET_FIELD(execparamids);
+	READ_NODE_FIELD(initial_pruning_steps);
+	READ_NODE_FIELD(exec_pruning_steps);
 
 	READ_DONE();
 }
