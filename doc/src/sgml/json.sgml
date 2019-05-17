@@ -810,6 +810,30 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
      <row>
       <entry>
        <para>
+        <literal>.**{<replaceable>level</replaceable>}</literal>
+       </para>
+       <para>
+        <literal>.**{<replaceable>lower_level</replaceable> to
+        <replaceable>upper_level</replaceable>}</literal>
+       </para>
+       <para>
+        <literal>.**{<replaceable>lower_level</replaceable> to
+        last}</literal>
+       </para>
+      </entry>
+      <entry>
+       <para>
+        Same as <literal>.**</literal>, but with filter over nesting
+        level of JSON hierarchy.  Levels are specified as integers.
+        Zero level corresponds to current object.  This is a
+        <productname>PostgreSQL</productname> extension of the SQL/JSON
+        standard.
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <para>
         <literal>[<replaceable>subscript</replaceable>, ...]</literal>
        </para>
        <para>
