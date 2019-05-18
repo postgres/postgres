@@ -236,7 +236,7 @@ table_get_latest_tid(TableScanDesc scan, ItemPointer tid)
 						ItemPointerGetOffsetNumberNoCheck(tid),
 						RelationGetRelationName(rel))));
 
-	return tableam->tuple_get_latest_tid(scan, tid);
+	tableam->tuple_get_latest_tid(scan, tid);
 }
 
 
