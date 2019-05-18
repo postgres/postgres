@@ -426,9 +426,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        </para>
 
        <para>
-        Tables with thousands of child partitions can now be processed
-        efficiently by operations that only need to touch a small number
-        of partitions.
+        Allow tables with thousands of child partitions to be processed
+        efficiently by operations that only affect a small number of
+        partitions.
        </para>
       </listitem>
 
