@@ -309,11 +309,16 @@ typedef struct TableAmRoutine
 											TupleTableSlot *slot);
 
 	/*
+	 * Is tid valid for a scan of this relation.
+	 */
+	bool		(*tuple_tid_valid) (TableScanDesc scan,
+									ItemPointer tid);
+
+	/*
 	 * Return the latest version of the tuple at `tid`, by updating `tid` to
 	 * point at the newest version.
 	 */
-	void		(*tuple_get_latest_tid) (Relation rel,
-										 Snapshot snapshot,
+	void		(*tuple_get_latest_tid) (TableScanDesc scan,
 										 ItemPointer tid);
 
 	/*
@@ -548,10 +553,10 @@ typedef struct TableAmRoutine
 	/*
 	 * See table_relation_size().
 	 *
-	 * Note that currently a few callers use the MAIN_FORKNUM size to vet the
-	 * validity of tids (e.g. nodeTidscans.c), and others use it to figure out
-	 * the range of potentially interesting blocks (brin, analyze). The
-	 * abstraction around this will need to be improved in the near future.
+	 * Note that currently a few callers use the MAIN_FORKNUM size to figure
+	 * out the range of potentially interesting blocks (brin, analyze). It's
+	 * probable that we'll need to revise the interface for those at some
+	 * point.
 	 */
 	uint64		(*relation_size) (Relation rel, ForkNumber forkNumber);
 
@@ -986,14 +991,24 @@ table_fetch_row_version(Relation rel,
 }
 
 /*
+ * Verify that `tid` is a potentially valid tuple identifier. That doesn't
+ * mean that the pointed to row needs to exist or be visible, but that
+ * attempting to fetch the row (e.g. with table_get_latest_tid() or
+ * table_fetch_row_version()) should not error out if called with that tid.
+ *
+ * `scan` needs to have been started via table_beginscan().
+ */
+static inline bool
+table_tuple_tid_valid(TableScanDesc scan, ItemPointer tid)
+{
+	return scan->rs_rd->rd_tableam->tuple_tid_valid(scan, tid);
+}
+
+/*
  * Return the latest version of the tuple at `tid`, by updating `tid` to
  * point at the newest version.
  */
-static inline void
-table_get_latest_tid(Relation rel, Snapshot snapshot, ItemPointer tid)
-{
-	rel->rd_tableam->tuple_get_latest_tid(rel, snapshot, tid);
-}
+extern void table_get_latest_tid(TableScanDesc scan, ItemPointer tid);
 
 /*
  * Return true iff tuple in slot satisfies the snapshot.

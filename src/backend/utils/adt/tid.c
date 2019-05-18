@@ -358,6 +358,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	Relation	rel;
 	AclResult	aclresult;
 	Snapshot	snapshot;
+	TableScanDesc scan;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	if (!reloid)
@@ -380,7 +381,9 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	ItemPointerCopy(tid, result);
 
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
-	table_get_latest_tid(rel, snapshot, result);
+	scan = table_beginscan(rel, snapshot, 0, NULL);
+	table_get_latest_tid(scan, result);
+	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
 
 	table_close(rel, AccessShareLock);
@@ -398,6 +401,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	Relation	rel;
 	AclResult	aclresult;
 	Snapshot	snapshot;
+	TableScanDesc scan;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = table_openrv(relrv, AccessShareLock);
@@ -415,7 +419,9 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	ItemPointerCopy(tid, result);
 
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
-	table_get_latest_tid(rel, snapshot, result);
+	scan = table_beginscan(rel, snapshot, 0, NULL);
+	table_get_latest_tid(scan, result);
+	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
 
 	table_close(rel, AccessShareLock);

@@ -213,6 +213,33 @@ table_index_fetch_tuple_check(Relation rel,
 }
 
 
+/* ------------------------------------------------------------------------
+ * Functions for non-modifying operations on individual tuples
+ * ------------------------------------------------------------------------
+ */
+
+void
+table_get_latest_tid(TableScanDesc scan, ItemPointer tid)
+{
+	Relation rel = scan->rs_rd;
+	const TableAmRoutine *tableam = rel->rd_tableam;
+
+	/*
+	 * Since this can be called with user-supplied TID, don't trust the input
+	 * too much.
+	 */
+	if (!tableam->tuple_tid_valid(scan, tid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("tid (%u, %u) is not valid for relation for relation \"%s\"",
+						ItemPointerGetBlockNumberNoCheck(tid),
+						ItemPointerGetOffsetNumberNoCheck(tid),
+						RelationGetRelationName(rel))));
+
+	return tableam->tuple_get_latest_tid(scan, tid);
+}
+
+
 /* ----------------------------------------------------------------------------
  * Functions to make modifications a bit simpler.
  * ----------------------------------------------------------------------------

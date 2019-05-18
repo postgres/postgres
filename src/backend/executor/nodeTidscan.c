@@ -129,19 +129,23 @@ static void
 TidListEval(TidScanState *tidstate)
 {
 	ExprContext *econtext = tidstate->ss.ps.ps_ExprContext;
-	BlockNumber nblocks;
+	TableScanDesc scan;
 	ItemPointerData *tidList;
 	int			numAllocTids;
 	int			numTids;
 	ListCell   *l;
 
 	/*
-	 * We silently discard any TIDs that are out of range at the time of scan
-	 * start.  (Since we hold at least AccessShareLock on the table, it won't
-	 * be possible for someone to truncate away the blocks we intend to
-	 * visit.)
+	 * Start scan on-demand - initializing a scan isn't free (e.g. heap stats
+	 * the size of the table), so it makes sense to delay that until needed -
+	 * the node might never get executed.
 	 */
-	nblocks = RelationGetNumberOfBlocks(tidstate->ss.ss_currentRelation);
+	if (tidstate->ss.ss_currentScanDesc == NULL)
+		tidstate->ss.ss_currentScanDesc =
+			table_beginscan(tidstate->ss.ss_currentRelation,
+							tidstate->ss.ps.state->es_snapshot,
+							0, NULL);
+	scan = tidstate->ss.ss_currentScanDesc;
 
 	/*
 	 * We initialize the array with enough slots for the case that all quals
@@ -165,19 +169,27 @@ TidListEval(TidScanState *tidstate)
 				DatumGetPointer(ExecEvalExprSwitchContext(tidexpr->exprstate,
 														  econtext,
 														  &isNull));
-			if (!isNull &&
-				ItemPointerIsValid(itemptr) &&
-				ItemPointerGetBlockNumber(itemptr) < nblocks)
+			if (isNull)
+				continue;
+
+			/*
+			 * We silently discard any TIDs that the AM considers invalid
+			 * (E.g. for heap, they could be out of range at the time of scan
+			 * start.  Since we hold at least AccessShareLock on the table, it
+			 * won't be possible for someone to truncate away the blocks we
+			 * intend to visit.).
+			 */
+			if (!table_tuple_tid_valid(scan, itemptr))
+				continue;
+
+			if (numTids >= numAllocTids)
 			{
-				if (numTids >= numAllocTids)
-				{
-					numAllocTids *= 2;
-					tidList = (ItemPointerData *)
-						repalloc(tidList,
-								 numAllocTids * sizeof(ItemPointerData));
-				}
-				tidList[numTids++] = *itemptr;
+				numAllocTids *= 2;
+				tidList = (ItemPointerData *)
+					repalloc(tidList,
+							 numAllocTids * sizeof(ItemPointerData));
 			}
+			tidList[numTids++] = *itemptr;
 		}
 		else if (tidexpr->exprstate && tidexpr->isarray)
 		{
@@ -206,13 +218,15 @@ TidListEval(TidScanState *tidstate)
 			}
 			for (i = 0; i < ndatums; i++)
 			{
-				if (!ipnulls[i])
-				{
-					itemptr = (ItemPointer) DatumGetPointer(ipdatums[i]);
-					if (ItemPointerIsValid(itemptr) &&
-						ItemPointerGetBlockNumber(itemptr) < nblocks)
-						tidList[numTids++] = *itemptr;
-				}
+				if (ipnulls[i])
+					continue;
+
+				itemptr = (ItemPointer) DatumGetPointer(ipdatums[i]);
+
+				if (!table_tuple_tid_valid(scan, itemptr))
+					continue;
+
+				tidList[numTids++] = *itemptr;
 			}
 			pfree(ipdatums);
 			pfree(ipnulls);
@@ -306,6 +320,7 @@ TidNext(TidScanState *node)
 	EState	   *estate;
 	ScanDirection direction;
 	Snapshot	snapshot;
+	TableScanDesc scan;
 	Relation	heapRelation;
 	TupleTableSlot *slot;
 	ItemPointerData *tidList;
@@ -327,6 +342,7 @@ TidNext(TidScanState *node)
 	if (node->tss_TidList == NULL)
 		TidListEval(node);
 
+	scan = node->ss.ss_currentScanDesc;
 	tidList = node->tss_TidList;
 	numTids = node->tss_NumTids;
 
@@ -365,7 +381,7 @@ TidNext(TidScanState *node)
 		 * current according to our snapshot.
 		 */
 		if (node->tss_isCurrentOf)
-			table_get_latest_tid(heapRelation, snapshot, &tid);
+			table_get_latest_tid(scan, &tid);
 
 		if (table_fetch_row_version(heapRelation, &tid, snapshot, slot))
 			return slot;
@@ -442,6 +458,10 @@ ExecReScanTidScan(TidScanState *node)
 	node->tss_NumTids = 0;
 	node->tss_TidPtr = -1;
 
+	/* not really necessary, but seems good form */
+	if (node->ss.ss_currentScanDesc)
+		table_rescan(node->ss.ss_currentScanDesc, NULL);
+
 	ExecScanReScan(&node->ss);
 }
 
@@ -455,6 +475,9 @@ ExecReScanTidScan(TidScanState *node)
 void
 ExecEndTidScan(TidScanState *node)
 {
+	if (node->ss.ss_currentScanDesc)
+		table_endscan(node->ss.ss_currentScanDesc);
+
 	/*
 	 * Free the exprcontext
 	 */
