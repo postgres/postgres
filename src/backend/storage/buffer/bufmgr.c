@@ -33,6 +33,7 @@
 #include <sys/file.h>
 #include <unistd.h>
 
+#include "access/tableam.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/storage.h"
@@ -2789,14 +2790,50 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 /*
  * RelationGetNumberOfBlocksInFork
  *		Determines the current number of pages in the specified relation fork.
+ *
+ * Note that the accuracy of the result will depend on the details of the
+ * relation's storage. For builtin AMs it'll be accurate, but for external AMs
+ * it might not be.
  */
 BlockNumber
 RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(relation);
+	switch (relation->rd_rel->relkind)
+	{
+		case RELKIND_SEQUENCE:
+		case RELKIND_INDEX:
+		case RELKIND_PARTITIONED_INDEX:
+			/* Open it at the smgr level if not already done */
+			RelationOpenSmgr(relation);
 
-	return smgrnblocks(relation->rd_smgr, forkNum);
+			return smgrnblocks(relation->rd_smgr, forkNum);
+
+		case RELKIND_RELATION:
+		case RELKIND_TOASTVALUE:
+		case RELKIND_MATVIEW:
+			{
+				/*
+				 * Not every table AM uses BLCKSZ wide fixed size
+				 * blocks. Therefore tableam returns the size in bytes - but
+				 * for the purpose of this routine, we want the number of
+				 * blocks. Therefore divide, rounding up.
+				 */
+				uint64 szbytes;
+
+				szbytes = table_relation_size(relation, forkNum);
+
+				return (szbytes + (BLCKSZ - 1)) / BLCKSZ;
+			}
+		case RELKIND_VIEW:
+		case RELKIND_COMPOSITE_TYPE:
+		case RELKIND_FOREIGN_TABLE:
+		case RELKIND_PARTITIONED_TABLE:
+		default:
+			Assert(false);
+			break;
+	}
+
+	return 0;					/* keep compiler quiet */
 }
 
 /*

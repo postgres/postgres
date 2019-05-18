@@ -1975,6 +1975,31 @@ heapam_scan_get_blocks_done(HeapScanDesc hscan)
 }
 
 
+/* ------------------------------------------------------------------------
+ * Miscellaneous callbacks for the heap AM
+ * ------------------------------------------------------------------------
+ */
+
+static uint64
+heapam_relation_size(Relation rel, ForkNumber forkNumber)
+{
+	uint64		nblocks = 0;
+
+	/* Open it at the smgr level if not already done */
+	RelationOpenSmgr(rel);
+
+	/* InvalidForkNumber indicates returning the size for all forks */
+	if (forkNumber == InvalidForkNumber)
+	{
+		for (int i = 0; i < MAX_FORKNUM; i++)
+			nblocks += smgrnblocks(rel->rd_smgr, i);
+	}
+	else
+		nblocks = smgrnblocks(rel->rd_smgr, forkNumber);
+
+	return nblocks * BLCKSZ;
+}
+
 
 /* ------------------------------------------------------------------------
  * Planner related callbacks for the heap AM
@@ -2555,6 +2580,8 @@ static const TableAmRoutine heapam_methods = {
 	.scan_analyze_next_tuple = heapam_scan_analyze_next_tuple,
 	.index_build_range_scan = heapam_index_build_range_scan,
 	.index_validate_scan = heapam_index_validate_scan,
+
+	.relation_size = heapam_relation_size,
 
 	.relation_estimate_size = heapam_estimate_rel_size,
 

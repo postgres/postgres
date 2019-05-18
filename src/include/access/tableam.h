@@ -541,6 +541,22 @@ typedef struct TableAmRoutine
 
 
 	/* ------------------------------------------------------------------------
+	 * Miscellaneous functions.
+	 * ------------------------------------------------------------------------
+	 */
+
+	/*
+	 * See table_relation_size().
+	 *
+	 * Note that currently a few callers use the MAIN_FORKNUM size to vet the
+	 * validity of tids (e.g. nodeTidscans.c), and others use it to figure out
+	 * the range of potentially interesting blocks (brin, analyze). The
+	 * abstraction around this will need to be improved in the near future.
+	 */
+	uint64		(*relation_size) (Relation rel, ForkNumber forkNumber);
+
+
+	/* ------------------------------------------------------------------------
 	 * Planner related functions.
 	 * ------------------------------------------------------------------------
 	 */
@@ -550,6 +566,10 @@ typedef struct TableAmRoutine
 	 *
 	 * While block oriented, it shouldn't be too hard for an AM that doesn't
 	 * doesn't internally use blocks to convert into a usable representation.
+	 *
+	 * This differs from the relation_size callback by returning size
+	 * estimates (both relation size and tuple count) for planning purposes,
+	 * rather than returning a currently correct estimate.
 	 */
 	void		(*relation_estimate_size) (Relation rel, int32 *attr_widths,
 										   BlockNumber *pages, double *tuples,
@@ -1502,6 +1522,26 @@ table_index_validate_scan(Relation heap_rel,
 											  state);
 }
 
+
+/* ----------------------------------------------------------------------------
+ * Miscellaneous functionality
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ * Return the current size of `rel` in bytes. If `forkNumber` is
+ * InvalidForkNumber, return the relation's overall size, otherwise the size
+ * for the indicated fork.
+ *
+ * Note that the overall size might not be the equivalent of the sum of sizes
+ * for the individual forks for some AMs, e.g. because the AMs storage does
+ * not neatly map onto the builtin types of forks.
+ */
+static inline uint64
+table_relation_size(Relation rel, ForkNumber forkNumber)
+{
+	return rel->rd_tableam->relation_size(rel, forkNumber);
+}
 
 /* ----------------------------------------------------------------------------
  * Planner related functionality

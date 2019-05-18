@@ -86,6 +86,9 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->scan_analyze_next_tuple != NULL);
 	Assert(routine->index_build_range_scan != NULL);
 	Assert(routine->index_validate_scan != NULL);
+
+	Assert(routine->relation_size != NULL);
+
 	Assert(routine->relation_estimate_size != NULL);
 
 	/* optional, but one callback implies presence of hte other */
