@@ -50,13 +50,15 @@ typedef enum SnapshotType
 	SNAPSHOT_MVCC = 0,
 
 	/*-------------------------------------------------------------------------
-	 * A tuple is visible iff the tuple is valid including effects of open
-	 * transactions.
+	 * A tuple is visible iff the tuple is valid "for itself".
 	 *
 	 * Here, we consider the effects of:
-	 * - all committed and in-progress transactions (as of the current instant)
+	 * - all committed transactions (as of the current instant)
 	 * - previous commands of this transaction
 	 * - changes made by the current command
+	 *
+	 * Does _not_ include:
+	 * - in-progress transactions (as of the current instant)
 	 * -------------------------------------------------------------------------
 	 */
 	SNAPSHOT_SELF,
@@ -79,6 +81,22 @@ typedef enum SnapshotType
 	 * - all committed and in-progress transactions (as of the current instant)
 	 * - previous commands of this transaction
 	 * - changes made by the current command
+	 *
+	 * This is essentially like SNAPSHOT_SELF as far as effects of the current
+	 * transaction and committed/aborted xacts are concerned.  However, it
+	 * also includes the effects of other xacts still in progress.
+	 *
+	 * A special hack is that when a snapshot of this type is used to
+	 * determine tuple visibility, the passed-in snapshot struct is used as an
+	 * output argument to return the xids of concurrent xacts that affected
+	 * the tuple.  snapshot->xmin is set to the tuple's xmin if that is
+	 * another transaction that's still in progress; or to
+	 * InvalidTransactionId if the tuple's xmin is committed good, committed
+	 * dead, or my own xact.  Similarly for snapshot->xmax and the tuple's
+	 * xmax.  If the tuple was inserted speculatively, meaning that the
+	 * inserter might still back down on the insertion without aborting the
+	 * whole transaction, the associated token is also returned in
+	 * snapshot->speculativeToken.  See also InitDirtySnapshot().
 	 * -------------------------------------------------------------------------
 	 */
 	SNAPSHOT_DIRTY,
@@ -92,9 +110,10 @@ typedef enum SnapshotType
 
 	/*
 	 * A tuple is visible iff the tuple might be visible to some transaction;
-	 * false if it's surely dead to everyone, ie, vacuumable.
+	 * false if it's surely dead to everyone, i.e., vacuumable.
 	 *
-	 * Snapshot.xmin must have been set up with the xmin horizon to use.
+	 * For visibility checks snapshot->min must have been set up with the xmin
+	 * horizon to use.
 	 */
 	SNAPSHOT_NON_VACUUMABLE
 } SnapshotType;
