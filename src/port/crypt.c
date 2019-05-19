@@ -302,12 +302,7 @@ STATIC		prtab(char *, unsigned char *, int);
 
 #ifndef LARGEDATA
 STATIC
-permute(cp, out, p, chars_in)
-unsigned char *cp;
-C_block    *out;
-C_block    *p;
-int			chars_in;
-
+permute(unsigned char *cp, C_block *out, C_block *p, int chars_in)
 {
 	DCL_BLOCK(D, D0, D1);
 	C_block    *tp;
@@ -490,9 +485,7 @@ extern char *__bcrypt(const char *, const char *);	/* XXX */
  * followed by an encryption produced by the "key" and "setting".
  */
 char *
-crypt(key, setting)
-const char *key;
-const char *setting;
+crypt(const char *key, const char *setting)
 {
 	char	   *encp;
 	int32_t		i;
@@ -631,8 +624,7 @@ static volatile int des_ready = 0;
  * Set up the key schedule from the key.
  */
 static int
-des_setkey(key)
-const char *key;
+des_setkey(const char *key)
 {
 	DCL_BLOCK(K, K0, K1);
 	C_block    *ptabp;
@@ -664,11 +656,7 @@ const char *key;
  * compiler and machine architecture.
  */
 static int
-des_cipher(in, out, salt, num_iter)
-const char *in;
-char	   *out;
-long		salt;
-int			num_iter;
+des_cipher(const char *in, char *out, long salt, int num_iter)
 {
 	/* variables that we want in registers, most important first */
 #if defined(pdp11)
@@ -808,7 +796,7 @@ int			num_iter;
  * done at compile time, if the compiler were capable of that sort of thing.
  */
 STATIC
-init_des()
+init_des(void)
 {
 	int			i,
 				j;
@@ -973,12 +961,10 @@ init_des()
  * "perm" must be all-zeroes on entry to this routine.
  */
 STATIC
-init_perm(perm, p, chars_in, chars_out)
-C_block		perm[64 / CHUNKBITS][1 << CHUNKBITS];
-unsigned char p[64];
-int			chars_in,
-			chars_out;
-
+init_perm(C_block perm[64 / CHUNKBITS][1 << CHUNKBITS],
+		  unsigned char p[64],
+		  int chars_in,
+		  int chars_out)
 {
 	int			i,
 				j,
@@ -1005,8 +991,7 @@ int			chars_in,
  */
 #ifdef NOT_USED
 int
-setkey(key)
-const char *key;
+setkey(const char *key)
 {
 	int			i,
 				j,
@@ -1030,9 +1015,7 @@ const char *key;
  * "encrypt" routine (for backwards compatibility)
  */
 static int
-encrypt(block, flag)
-char	   *block;
-int			flag;
+encrypt(char *block, int flag)
 {
 	int			i,
 				j,
@@ -1066,11 +1049,7 @@ int			flag;
 
 #ifdef DEBUG
 STATIC
-prtab(s, t, num_rows)
-char	   *s;
-unsigned char *t;
-int			num_rows;
-
+prtab(char *s, unsigned char *t, int num_rows)
 {
 	int			i,
 				j;
