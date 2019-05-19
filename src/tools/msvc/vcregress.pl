@@ -101,6 +101,13 @@ exit 0;
 sub installcheck
 {
 	my $schedule = shift || 'serial';
+	installcheck_internal $schedule;
+	return;
+}
+
+sub installcheck_internal
+{
+	my ($schedule, @EXTRA_REGRESS_OPTS) = @_;
 	my @args = (
 		"../../../$Config/pg_regress/pg_regress",
 		"--dlpath=.",
@@ -109,6 +116,7 @@ sub installcheck
 		"--encoding=SQL_ASCII",
 		"--no-locale");
 	push(@args, $maxconn) if $maxconn;
+	push(@args, @EXTRA_REGRESS_OPTS);
 	system(@args);
 	my $status = $? >> 8;
 	exit $status if $status;
@@ -512,6 +520,14 @@ sub upgradecheck
 	$ENV{PATH} = "$bindir;$ENV{PATH}";
 	my $data = "$tmp_root/data";
 	$ENV{PGDATA} = "$data.old";
+	my $outputdir          = "$tmp_root/regress";
+	my @EXTRA_REGRESS_OPTS = ("--outputdir=$outputdir");
+	rmtree("$outputdir");
+	mkdir "$outputdir"                || die $!;
+	mkdir "$outputdir/sql"            || die $!;
+	mkdir "$outputdir/expected"       || die $!;
+	mkdir "$outputdir/testtablespace" || die $!;
+
 	my $logdir = "$topdir/src/bin/pg_upgrade/log";
 	(mkdir $logdir || die $!) unless -d $logdir;
 	print "\nRunning initdb on old cluster\n\n";
@@ -526,7 +542,7 @@ sub upgradecheck
 	generate_db('',       91, 127, '');
 
 	print "\nSetting up data for upgrading\n\n";
-	installcheck();
+	installcheck_internal('serial', @EXTRA_REGRESS_OPTS);
 
 	# now we can chdir into the source dir
 	chdir "$topdir/src/bin/pg_upgrade";
