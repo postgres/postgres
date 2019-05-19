@@ -35,13 +35,12 @@ typedef struct TableScanDescData
 	struct SnapshotData *rs_snapshot;	/* snapshot to see */
 	int			rs_nkeys;		/* number of scan keys */
 	struct ScanKeyData *rs_key; /* array of scan key descriptors */
-	bool		rs_bitmapscan;	/* true if this is really a bitmap scan */
-	bool		rs_samplescan;	/* true if this is really a sample scan */
-	bool		rs_pageatatime; /* verify visibility page-at-a-time? */
-	bool		rs_allow_strat; /* allow or disallow use of access strategy */
-	bool		rs_allow_sync;	/* allow or disallow use of syncscan */
-	bool		rs_temp_snap;	/* unregister snapshot at scan end? */
-	bool		rs_syncscan;	/* report location to syncscan logic? */
+
+	/*
+	 * Information about type and behaviour of the scan, a bitmask of members
+	 * of the ScanOptions enum (see tableam.h).
+	 */
+	uint32		rs_flags;
 
 	struct ParallelTableScanDescData *rs_parallel;	/* parallel scan
 													 * information */

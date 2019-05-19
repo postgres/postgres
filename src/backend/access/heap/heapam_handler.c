@@ -2323,7 +2323,7 @@ heapam_scan_sample_next_block(TableScanDesc scan, SampleScanState *scanstate)
 			 * a little bit backwards on every invocation, which is confusing.
 			 * We don't guarantee any specific ordering in general, though.
 			 */
-			if (scan->rs_syncscan)
+			if (scan->rs_flags & SO_ALLOW_SYNC)
 				ss_report_location(scan->rs_rd, blockno);
 
 			if (blockno == hscan->rs_startblock)
@@ -2357,7 +2357,7 @@ heapam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 	HeapScanDesc hscan = (HeapScanDesc) scan;
 	TsmRoutine *tsm = scanstate->tsmroutine;
 	BlockNumber blockno = hscan->rs_cblock;
-	bool		pagemode = scan->rs_pageatatime;
+	bool		pagemode = (scan->rs_flags & SO_ALLOW_PAGEMODE) != 0;
 
 	Page		page;
 	bool		all_visible;
@@ -2504,7 +2504,7 @@ SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 {
 	HeapScanDesc hscan = (HeapScanDesc) scan;
 
-	if (scan->rs_pageatatime)
+	if (scan->rs_flags & SO_ALLOW_PAGEMODE)
 	{
 		/*
 		 * In pageatatime mode, heapgetpage() already did visibility checks,

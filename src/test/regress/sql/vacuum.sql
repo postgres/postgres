@@ -124,6 +124,15 @@ VACUUM (SKIP_LOCKED) vactst;
 VACUUM (SKIP_LOCKED, FULL) vactst;
 ANALYZE (SKIP_LOCKED) vactst;
 
+-- ensure VACUUM and ANALYZE don't have a problem with serializable
+SET default_transaction_isolation = serializable;
+VACUUM vactst;
+ANALYZE vactst;
+RESET default_transaction_isolation;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+ANALYZE vactst;
+COMMIT;
+
 DROP TABLE vaccluster;
 DROP TABLE vactst;
 DROP TABLE vacparted;

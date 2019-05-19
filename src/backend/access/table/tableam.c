@@ -93,12 +93,13 @@ table_slot_create(Relation relation, List **reglist)
 TableScanDesc
 table_beginscan_catalog(Relation relation, int nkeys, struct ScanKeyData *key)
 {
+	uint32		flags = SO_TYPE_SEQSCAN |
+		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE | SO_TEMP_SNAPSHOT;
 	Oid			relid = RelationGetRelid(relation);
 	Snapshot	snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
 
 	return relation->rd_tableam->scan_begin(relation, snapshot, nkeys, key,
-											NULL, true, true, true, false,
-											false, true);
+											NULL, flags);
 }
 
 void
@@ -108,7 +109,7 @@ table_scan_update_snapshot(TableScanDesc scan, Snapshot snapshot)
 
 	RegisterSnapshot(snapshot);
 	scan->rs_snapshot = snapshot;
-	scan->rs_temp_snap = true;
+	scan->rs_flags |= SO_TEMP_SNAPSHOT;
 }
 
 
@@ -156,6 +157,8 @@ TableScanDesc
 table_beginscan_parallel(Relation relation, ParallelTableScanDesc parallel_scan)
 {
 	Snapshot	snapshot;
+	uint32		flags = SO_TYPE_SEQSCAN |
+		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
 
 	Assert(RelationGetRelid(relation) == parallel_scan->phs_relid);
 
@@ -165,6 +168,7 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc parallel_scan)
 		snapshot = RestoreSnapshot((char *) parallel_scan +
 								   parallel_scan->phs_snapshot_off);
 		RegisterSnapshot(snapshot);
+		flags |= SO_TEMP_SNAPSHOT;
 	}
 	else
 	{
@@ -173,9 +177,7 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc parallel_scan)
 	}
 
 	return relation->rd_tableam->scan_begin(relation, snapshot, 0, NULL,
-											parallel_scan, true, true, true,
-											false, false,
-											!parallel_scan->phs_snapshot_any);
+											parallel_scan, flags);
 }
 
 

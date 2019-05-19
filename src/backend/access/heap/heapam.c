@@ -245,8 +245,8 @@ initscan(HeapScanDesc scan, ScanKey key, bool keep_startblock)
 	if (!RelationUsesLocalBuffers(scan->rs_base.rs_rd) &&
 		scan->rs_nblocks > NBuffers / 4)
 	{
-		allow_strat = scan->rs_base.rs_allow_strat;
-		allow_sync = scan->rs_base.rs_allow_sync;
+		allow_strat = (scan->rs_base.rs_flags & SO_ALLOW_STRAT) != 0;
+		allow_sync = (scan->rs_base.rs_flags & SO_ALLOW_SYNC) != 0;
 	}
 	else
 		allow_strat = allow_sync = false;
@@ -267,7 +267,10 @@ initscan(HeapScanDesc scan, ScanKey key, bool keep_startblock)
 	if (scan->rs_base.rs_parallel != NULL)
 	{
 		/* For parallel scan, believe whatever ParallelTableScanDesc says. */
-		scan->rs_base.rs_syncscan = scan->rs_base.rs_parallel->phs_syncscan;
+		if (scan->rs_base.rs_parallel->phs_syncscan)
+			scan->rs_base.rs_flags |= SO_ALLOW_SYNC;
+		else
+			scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
 	}
 	else if (keep_startblock)
 	{
@@ -276,16 +279,19 @@ initscan(HeapScanDesc scan, ScanKey key, bool keep_startblock)
 		 * so that rewinding a cursor doesn't generate surprising results.
 		 * Reset the active syncscan setting, though.
 		 */
-		scan->rs_base.rs_syncscan = (allow_sync && synchronize_seqscans);
+		if (allow_sync && synchronize_seqscans)
+			scan->rs_base.rs_flags |= SO_ALLOW_SYNC;
+		else
+			scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
 	}
 	else if (allow_sync && synchronize_seqscans)
 	{
-		scan->rs_base.rs_syncscan = true;
+		scan->rs_base.rs_flags |= SO_ALLOW_SYNC;
 		scan->rs_startblock = ss_get_location(scan->rs_base.rs_rd, scan->rs_nblocks);
 	}
 	else
 	{
-		scan->rs_base.rs_syncscan = false;
+		scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
 		scan->rs_startblock = 0;
 	}
 
@@ -305,11 +311,11 @@ initscan(HeapScanDesc scan, ScanKey key, bool keep_startblock)
 		memcpy(scan->rs_base.rs_key, key, scan->rs_base.rs_nkeys * sizeof(ScanKeyData));
 
 	/*
-	 * Currently, we don't have a stats counter for bitmap heap scans (but the
-	 * underlying bitmap index scans will be counted) or sample scans (we only
-	 * update stats for tuple fetches there)
+	 * Currently, we only have a stats counter for sequential heap scans (but
+	 * e.g for bitmap scans the underlying bitmap index scans will be counted,
+	 * and for sample scans we update stats for tuple fetches).
 	 */
-	if (!scan->rs_base.rs_bitmapscan && !scan->rs_base.rs_samplescan)
+	if (scan->rs_base.rs_flags & SO_TYPE_SEQSCAN)
 		pgstat_count_heap_scan(scan->rs_base.rs_rd);
 }
 
@@ -325,7 +331,8 @@ heap_setscanlimits(TableScanDesc sscan, BlockNumber startBlk, BlockNumber numBlk
 	HeapScanDesc scan = (HeapScanDesc) sscan;
 
 	Assert(!scan->rs_inited);	/* else too late to change */
-	Assert(!scan->rs_base.rs_syncscan); /* else rs_startblock is significant */
+	/* else rs_startblock is significant */
+	Assert(!(scan->rs_base.rs_flags & SO_ALLOW_SYNC));
 
 	/* Check startBlk is valid (but allow case of zero blocks...) */
 	Assert(startBlk == 0 || startBlk < scan->rs_nblocks);
@@ -375,7 +382,7 @@ heapgetpage(TableScanDesc sscan, BlockNumber page)
 									   RBM_NORMAL, scan->rs_strategy);
 	scan->rs_cblock = page;
 
-	if (!scan->rs_base.rs_pageatatime)
+	if (!(scan->rs_base.rs_flags & SO_ALLOW_PAGEMODE))
 		return;
 
 	buffer = scan->rs_cbuf;
@@ -574,7 +581,7 @@ heapgettup(HeapScanDesc scan,
 			 * time, and much more likely that we'll just bollix things for
 			 * forward scanners.
 			 */
-			scan->rs_base.rs_syncscan = false;
+			scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
 			/* start from last page of the scan */
 			if (scan->rs_startblock > 0)
 				page = scan->rs_startblock - 1;
@@ -738,7 +745,7 @@ heapgettup(HeapScanDesc scan,
 			 * a little bit backwards on every invocation, which is confusing.
 			 * We don't guarantee any specific ordering in general, though.
 			 */
-			if (scan->rs_base.rs_syncscan)
+			if (scan->rs_base.rs_flags & SO_ALLOW_SYNC)
 				ss_report_location(scan->rs_base.rs_rd, page);
 		}
 
@@ -885,7 +892,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			 * time, and much more likely that we'll just bollix things for
 			 * forward scanners.
 			 */
-			scan->rs_base.rs_syncscan = false;
+			scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
 			/* start from last page of the scan */
 			if (scan->rs_startblock > 0)
 				page = scan->rs_startblock - 1;
@@ -1037,7 +1044,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			 * a little bit backwards on every invocation, which is confusing.
 			 * We don't guarantee any specific ordering in general, though.
 			 */
-			if (scan->rs_base.rs_syncscan)
+			if (scan->rs_base.rs_flags & SO_ALLOW_SYNC)
 				ss_report_location(scan->rs_base.rs_rd, page);
 		}
 
@@ -1125,12 +1132,7 @@ TableScanDesc
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key,
 			   ParallelTableScanDesc parallel_scan,
-			   bool allow_strat,
-			   bool allow_sync,
-			   bool allow_pagemode,
-			   bool is_bitmapscan,
-			   bool is_samplescan,
-			   bool temp_snap)
+			   uint32 flags)
 {
 	HeapScanDesc scan;
 
@@ -1151,33 +1153,39 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	scan->rs_base.rs_rd = relation;
 	scan->rs_base.rs_snapshot = snapshot;
 	scan->rs_base.rs_nkeys = nkeys;
-	scan->rs_base.rs_bitmapscan = is_bitmapscan;
-	scan->rs_base.rs_samplescan = is_samplescan;
-	scan->rs_strategy = NULL;	/* set in initscan */
-	scan->rs_base.rs_allow_strat = allow_strat;
-	scan->rs_base.rs_allow_sync = allow_sync;
-	scan->rs_base.rs_temp_snap = temp_snap;
+	scan->rs_base.rs_flags = flags;
 	scan->rs_base.rs_parallel = parallel_scan;
+	scan->rs_strategy = NULL;	/* set in initscan */
 
 	/*
-	 * we can use page-at-a-time mode if it's an MVCC-safe snapshot
+	 * Disable page-at-a-time mode if it's not a MVCC-safe snapshot.
 	 */
-	scan->rs_base.rs_pageatatime =
-		allow_pagemode && snapshot && IsMVCCSnapshot(snapshot);
+	if (!(snapshot && IsMVCCSnapshot(snapshot)))
+		scan->rs_base.rs_flags &= ~SO_ALLOW_PAGEMODE;
 
 	/*
-	 * For a seqscan in a serializable transaction, acquire a predicate lock
-	 * on the entire relation. This is required not only to lock all the
-	 * matching tuples, but also to conflict with new insertions into the
-	 * table. In an indexscan, we take page locks on the index pages covering
-	 * the range specified in the scan qual, but in a heap scan there is
-	 * nothing more fine-grained to lock. A bitmap scan is a different story,
-	 * there we have already scanned the index and locked the index pages
-	 * covering the predicate. But in that case we still have to lock any
-	 * matching heap tuples.
+	 * For seqscan and sample scans in a serializable transaction, acquire a
+	 * predicate lock on the entire relation. This is required not only to
+	 * lock all the matching tuples, but also to conflict with new insertions
+	 * into the table. In an indexscan, we take page locks on the index pages
+	 * covering the range specified in the scan qual, but in a heap scan there
+	 * is nothing more fine-grained to lock. A bitmap scan is a different
+	 * story, there we have already scanned the index and locked the index
+	 * pages covering the predicate. But in that case we still have to lock
+	 * any matching heap tuples. For sample scan we could optimize the locking
+	 * to be at least page-level granularity, but we'd need to add per-tuple
+	 * locking for that.
 	 */
-	if (!is_bitmapscan)
+	if (scan->rs_base.rs_flags & (SO_TYPE_SEQSCAN | SO_TYPE_SAMPLESCAN))
+	{
+		/*
+		 * Ensure a missing snapshot is noticed reliably, even if the
+		 * isolation mode means predicate locking isn't performed (and
+		 * therefore the snapshot isn't used here).
+		 */
+		Assert(snapshot);
 		PredicateLockRelation(relation, snapshot);
+	}
 
 	/* we only need to set this up once */
 	scan->rs_ctup.t_tableOid = RelationGetRelid(relation);
@@ -1204,10 +1212,21 @@ heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 
 	if (set_params)
 	{
-		scan->rs_base.rs_allow_strat = allow_strat;
-		scan->rs_base.rs_allow_sync = allow_sync;
-		scan->rs_base.rs_pageatatime =
-			allow_pagemode && IsMVCCSnapshot(scan->rs_base.rs_snapshot);
+		if (allow_strat)
+			scan->rs_base.rs_flags |= SO_ALLOW_STRAT;
+		else
+			scan->rs_base.rs_flags &= ~SO_ALLOW_STRAT;
+
+		if (allow_sync)
+			scan->rs_base.rs_flags |= SO_ALLOW_SYNC;
+		else
+			scan->rs_base.rs_flags &= ~SO_ALLOW_SYNC;
+
+		if (allow_pagemode && scan->rs_base.rs_snapshot &&
+			IsMVCCSnapshot(scan->rs_base.rs_snapshot))
+			scan->rs_base.rs_flags |= SO_ALLOW_PAGEMODE;
+		else
+			scan->rs_base.rs_flags &= ~SO_ALLOW_PAGEMODE;
 	}
 
 	/*
@@ -1246,7 +1265,7 @@ heap_endscan(TableScanDesc sscan)
 	if (scan->rs_strategy != NULL)
 		FreeAccessStrategy(scan->rs_strategy);
 
-	if (scan->rs_base.rs_temp_snap)
+	if (scan->rs_base.rs_flags & SO_TEMP_SNAPSHOT)
 		UnregisterSnapshot(scan->rs_base.rs_snapshot);
 
 	pfree(scan);
@@ -1288,7 +1307,7 @@ heap_getnext(TableScanDesc sscan, ScanDirection direction)
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
-	if (scan->rs_base.rs_pageatatime)
+	if (scan->rs_base.rs_flags & SO_ALLOW_PAGEMODE)
 		heapgettup_pagemode(scan, direction,
 							scan->rs_base.rs_nkeys, scan->rs_base.rs_key);
 	else
@@ -1335,11 +1354,10 @@ heap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot *s
 
 	HEAPAMSLOTDEBUG_1;			/* heap_getnextslot( info ) */
 
-	if (scan->rs_base.rs_pageatatime)
-		heapgettup_pagemode(scan, direction,
-							scan->rs_base.rs_nkeys, scan->rs_base.rs_key);
+	if (sscan->rs_flags & SO_ALLOW_PAGEMODE)
+		heapgettup_pagemode(scan, direction, sscan->rs_nkeys, sscan->rs_key);
 	else
-		heapgettup(scan, direction, scan->rs_base.rs_nkeys, scan->rs_base.rs_key);
+		heapgettup(scan, direction, sscan->rs_nkeys, sscan->rs_key);
 
 	if (scan->rs_ctup.t_data == NULL)
 	{

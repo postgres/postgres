@@ -110,12 +110,7 @@ typedef enum
 extern TableScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key,
 			   ParallelTableScanDesc parallel_scan,
-			   bool allow_strat,
-			   bool allow_sync,
-			   bool allow_pagemode,
-			   bool is_bitmapscan,
-			   bool is_samplescan,
-			   bool temp_snap);
+			   uint32 flags);
 extern void heap_setscanlimits(TableScanDesc scan, BlockNumber startBlk,
 				   BlockNumber endBlk);
 extern void heapgetpage(TableScanDesc scan, BlockNumber page);

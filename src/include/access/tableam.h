@@ -39,6 +39,28 @@ struct TBMIterateResult;
 struct VacuumParams;
 struct ValidateIndexState;
 
+/*
+ * Bitmask values for the flags argument to the scan_begin callback.
+ */
+typedef enum ScanOptions
+{
+	/* one of SO_TYPE_* may be specified */
+	SO_TYPE_SEQSCAN		= 1 << 0,
+	SO_TYPE_BITMAPSCAN	= 1 << 1,
+	SO_TYPE_SAMPLESCAN	= 1 << 2,
+	SO_TYPE_ANALYZE		= 1 << 3,
+
+	/* several of SO_ALLOW_* may be specified */
+	/* allow or disallow use of access strategy */
+	SO_ALLOW_STRAT		= 1 << 4,
+	/* report location to syncscan logic? */
+	SO_ALLOW_SYNC		= 1 << 5,
+	/* verify visibility page-at-a-time? */
+	SO_ALLOW_PAGEMODE	= 1 << 6,
+
+	/* unregister snapshot at scan end? */
+	SO_TEMP_SNAPSHOT	= 1 << 7
+} ScanOptions;
 
 /*
  * Result codes for table_{update,delete,lock_tuple}, and for visibility
@@ -77,7 +99,6 @@ typedef enum TM_Result
 	/* lock couldn't be acquired, action skipped. Only used by lock_tuple */
 	TM_WouldBlock
 } TM_Result;
-
 
 /*
  * When table_update, table_delete, or table_lock_tuple fail because the target
@@ -170,26 +191,17 @@ typedef struct TableAmRoutine
 	 * parallelscan_initialize(), and has to be for the same relation. Will
 	 * only be set coming from table_beginscan_parallel().
 	 *
-	 * allow_{strat, sync, pagemode} specify whether a scan strategy,
-	 * synchronized scans, or page mode may be used (although not every AM
-	 * will support those).
-	 *
-	 * is_{bitmapscan, samplescan} specify whether the scan is intended to
-	 * support those types of scans.
-	 *
-	 * if temp_snap is true, the snapshot will need to be deallocated at
-	 * scan_end.
+	 * `flags` is a bitmask indicating the type of scan (ScanOptions's
+	 * SO_TYPE_*, currently only one may be specified), options controlling
+	 * the scan's behaviour (ScanOptions's SO_ALLOW_*, several may be
+	 * specified, an AM may ignore unsupported ones) and whether the snapshot
+	 * needs to be deallocated at scan_end (ScanOptions's SO_TEMP_SNAPSHOT).
 	 */
 	TableScanDesc (*scan_begin) (Relation rel,
 								 Snapshot snapshot,
 								 int nkeys, struct ScanKeyData *key,
 								 ParallelTableScanDesc pscan,
-								 bool allow_strat,
-								 bool allow_sync,
-								 bool allow_pagemode,
-								 bool is_bitmapscan,
-								 bool is_samplescan,
-								 bool temp_snap);
+								 uint32 flags);
 
 	/*
 	 * Release resources and deallocate scan. If TableScanDesc.temp_snap,
@@ -715,8 +727,10 @@ static inline TableScanDesc
 table_beginscan(Relation rel, Snapshot snapshot,
 				int nkeys, struct ScanKeyData *key)
 {
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL,
-									   true, true, true, false, false, false);
+	uint32		flags = SO_TYPE_SEQSCAN |
+		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
+
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
 }
 
 /*
@@ -738,9 +752,14 @@ table_beginscan_strat(Relation rel, Snapshot snapshot,
 					  int nkeys, struct ScanKeyData *key,
 					  bool allow_strat, bool allow_sync)
 {
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL,
-									   allow_strat, allow_sync, true,
-									   false, false, false);
+	uint32		flags = SO_TYPE_SEQSCAN | SO_ALLOW_PAGEMODE;
+
+	if (allow_strat)
+		flags |= SO_ALLOW_STRAT;
+	if (allow_sync)
+		flags |= SO_ALLOW_SYNC;
+
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
 }
 
 /*
@@ -753,8 +772,9 @@ static inline TableScanDesc
 table_beginscan_bm(Relation rel, Snapshot snapshot,
 				   int nkeys, struct ScanKeyData *key)
 {
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL,
-									   false, false, true, true, false, false);
+	uint32		flags = SO_TYPE_BITMAPSCAN | SO_ALLOW_PAGEMODE;
+
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
 }
 
 /*
@@ -770,9 +790,16 @@ table_beginscan_sampling(Relation rel, Snapshot snapshot,
 						 bool allow_strat, bool allow_sync,
 						 bool allow_pagemode)
 {
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL,
-									   allow_strat, allow_sync, allow_pagemode,
-									   false, true, false);
+	uint32		flags = SO_TYPE_SAMPLESCAN;
+
+	if (allow_strat)
+		flags |= SO_ALLOW_STRAT;
+	if (allow_sync)
+		flags |= SO_ALLOW_SYNC;
+	if (allow_pagemode)
+		flags |= SO_ALLOW_PAGEMODE;
+
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
 }
 
 /*
@@ -783,9 +810,9 @@ table_beginscan_sampling(Relation rel, Snapshot snapshot,
 static inline TableScanDesc
 table_beginscan_analyze(Relation rel)
 {
-	return rel->rd_tableam->scan_begin(rel, NULL, 0, NULL, NULL,
-									   true, false, true,
-									   false, true, false);
+	uint32		flags = SO_TYPE_ANALYZE;
+
+	return rel->rd_tableam->scan_begin(rel, NULL, 0, NULL, NULL, flags);
 }
 
 /*
