@@ -3,51 +3,86 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More;
+use Test::More tests => 4;
 use Time::HiRes qw(usleep);
 
-if ($windows_os)
-{
-	plan skip_all => 'logrotate test not supported on Windows';
-	exit;
-}
-else
-{
-	plan tests => 1;
-}
-
-
-my $tempdir = TestLib::tempdir;
-
+# Set up node with logging collector
 my $node = get_new_node('primary');
-$node->init(allows_streaming => 1);
+$node->init();
 $node->append_conf(
 	'postgresql.conf', qq(
 logging_collector = on
-log_directory = 'log'
-log_filename = 'postgresql.log'
+lc_messages = 'C'
 ));
 
 $node->start();
 
-# Rename log file and rotate log.  Then log file should appear again.
+# Verify that log output gets to the file
 
-my $logfile = $node->data_dir . '/log/postgresql.log';
-my $old_logfile = $node->data_dir . '/log/postgresql.old';
-rename($logfile, $old_logfile);
+$node->psql('postgres', 'SELECT 1/0');
 
-$node->logrotate();
+my $current_logfiles = slurp_file($node->data_dir . '/current_logfiles');
 
-# pg_ctl logrotate doesn't wait until rotation request being completed.  So
-# we have to wait some time until log file appears.
-my $attempts = 0;
+note "current_logfiles = $current_logfiles";
+
+like($current_logfiles, qr|^stderr log/postgresql-.*log$|,
+	 'current_logfiles is sane');
+
+my $lfname = $current_logfiles;
+$lfname =~ s/^stderr //;
+chomp $lfname;
+
+# might need to retry if logging collector process is slow...
 my $max_attempts = 180 * 10;
-while (not -e $logfile and $attempts < $max_attempts)
+
+my $first_logfile;
+for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
 {
+	$first_logfile = slurp_file($node->data_dir . '/' . $lfname);
+	last if $first_logfile =~ m/division by zero/;
 	usleep(100_000);
-	$attempts++;
 }
 
-ok(-e $logfile, "log file exists");
+like($first_logfile, qr/division by zero/,
+	 'found expected log file content');
+
+# Sleep 2 seconds and ask for log rotation; this should result in
+# output into a different log file name.
+sleep(2);
+$node->logrotate();
+
+# pg_ctl logrotate doesn't wait for rotation request to be completed.
+# Allow a bit of time for it to happen.
+my $new_current_logfiles;
+for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
+{
+	$new_current_logfiles = slurp_file($node->data_dir . '/current_logfiles');
+	last if $new_current_logfiles ne $current_logfiles;
+	usleep(100_000);
+}
+
+note "now current_logfiles = $new_current_logfiles";
+
+like($new_current_logfiles, qr|^stderr log/postgresql-.*log$|,
+	 'new current_logfiles is sane');
+
+$lfname = $new_current_logfiles;
+$lfname =~ s/^stderr //;
+chomp $lfname;
+
+# Verify that log output gets to this file, too
+
+$node->psql('postgres', 'fee fi fo fum');
+
+my $second_logfile;
+for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
+{
+	$second_logfile = slurp_file($node->data_dir . '/' . $lfname);
+	last if $second_logfile =~ m/syntax error/;
+	usleep(100_000);
+}
+
+like($second_logfile, qr/syntax error/,
+	 'found expected log file content in new log file');
 
 $node->stop();
