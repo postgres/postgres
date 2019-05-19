@@ -413,7 +413,7 @@ jsonb_path_query(PG_FUNCTION_ARGS)
  *		jsonb array.
  */
 Datum
-jsonb_path_query_array(FunctionCallInfo fcinfo)
+jsonb_path_query_array(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	JsonPath   *jp = PG_GETARG_JSONPATH_P(1);
@@ -432,7 +432,7 @@ jsonb_path_query_array(FunctionCallInfo fcinfo)
  *		item.  If there are no items, NULL returned.
  */
 Datum
-jsonb_path_query_first(FunctionCallInfo fcinfo)
+jsonb_path_query_first(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	JsonPath   *jp = PG_GETARG_JSONPATH_P(1);
