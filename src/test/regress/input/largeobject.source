@@ -203,12 +203,12 @@ END;
 
 SELECT lo_export(loid, '@abs_builddir@/results/lotest.txt') FROM lotest_stash_values;
 
-\lo_import 'results/lotest.txt'
+\lo_import '@abs_builddir@/results/lotest.txt'
 
 \set newloid :LASTOID
 
 -- just make sure \lo_export does not barf
-\lo_export :newloid 'results/lotest2.txt'
+\lo_export :newloid '@abs_builddir@/results/lotest2.txt'
 
 -- This is a hack to test that export/import are reversible
 -- This uses knowledge about the inner workings of large object mechanism
@@ -223,7 +223,7 @@ TRUNCATE lotest_stash_values;
 
 \lo_unlink :newloid
 
-\lo_import 'results/lotest.txt'
+\lo_import '@abs_builddir@/results/lotest.txt'
 
 \set newloid_1 :LASTOID
 
