@@ -3216,12 +3216,7 @@ CopyFrom(CopyState cstate)
 			}
 			else
 			{
-				/*
-				 * Compute stored generated columns
-				 *
-				 * Switch memory context so that the new tuple is in the same
-				 * context as the old one.
-				 */
+				/* Compute stored generated columns */
 				if (resultRelInfo->ri_RelationDesc->rd_att->constr &&
 					resultRelInfo->ri_RelationDesc->rd_att->constr->has_generated_stored)
 					ExecComputeStoredGenerated(estate, myslot);
