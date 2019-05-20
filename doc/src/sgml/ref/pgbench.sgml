@@ -443,7 +443,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <term><option>--latency-limit=</option><replaceable>limit</replaceable></term>
       <listitem>
        <para>
-        Transaction which last more than <replaceable>limit</replaceable> milliseconds
+        Transactions that last more than <replaceable>limit</replaceable> milliseconds
         are counted and reported separately, as <firstterm>late</firstterm>.
        </para>
        <para>
