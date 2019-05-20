@@ -2907,12 +2907,6 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 
 	pertrans->aggtranstype = aggtranstype;
 
-	/* Detect how many arguments to pass to the transfn */
-	if (AGGKIND_IS_ORDERED_SET(aggref->aggkind))
-		pertrans->numTransInputs = numInputs;
-	else
-		pertrans->numTransInputs = numArguments;
-
 	/*
 	 * When combining states, we have no use at all for the aggregate
 	 * function's transfn. Instead we use the combinefn.  In this case, the
@@ -2922,6 +2916,17 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
 	{
 		Expr	   *combinefnexpr;
+		size_t		numTransArgs;
+
+		/*
+		 * When combining there's only one input, the to-be-combined added
+		 * transition value from below (this node's transition value is
+		 * counted separately).
+		 */
+		pertrans->numTransInputs = 1;
+
+		/* account for the current transition state */
+		numTransArgs = pertrans->numTransInputs + 1;
 
 		build_aggregate_combinefn_expr(aggtranstype,
 									   aggref->inputcollid,
@@ -2932,7 +2937,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 
 		InitFunctionCallInfoData(pertrans->transfn_fcinfo,
 								 &pertrans->transfn,
-								 2,
+								 numTransArgs,
 								 pertrans->aggCollation,
 								 (void *) aggstate, NULL);
 
@@ -2950,6 +2955,16 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	else
 	{
 		Expr	   *transfnexpr;
+		size_t		numTransArgs;
+
+		/* Detect how many arguments to pass to the transfn */
+		if (AGGKIND_IS_ORDERED_SET(aggref->aggkind))
+			pertrans->numTransInputs = numInputs;
+		else
+			pertrans->numTransInputs = numArguments;
+
+		/* account for the current transition state */
+		numTransArgs = pertrans->numTransInputs + 1;
 
 		/*
 		 * Set up infrastructure for calling the transfn.  Note that invtrans
@@ -2970,7 +2985,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 
 		InitFunctionCallInfoData(pertrans->transfn_fcinfo,
 								 &pertrans->transfn,
-								 pertrans->numTransInputs + 1,
+								 numTransArgs,
 								 pertrans->aggCollation,
 								 (void *) aggstate, NULL);
 
