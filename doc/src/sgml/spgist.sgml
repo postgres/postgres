@@ -134,7 +134,7 @@
  <para>
   Of the two operator classes for type <type>point</>,
   <literal>quad_point_ops</> is the default.  <literal>kd_point_ops</>
-  supports the same operators but uses a different index data structure which
+  supports the same operators but uses a different index data structure that
   may offer better performance in some applications.
  </para>
 

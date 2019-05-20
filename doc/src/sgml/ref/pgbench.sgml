@@ -349,7 +349,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--latency-limit=</option><replaceable>limit</></term>
       <listitem>
        <para>
-        Transaction which last more than <replaceable>limit</> milliseconds
+        Transactions that last more than <replaceable>limit</> milliseconds
         are counted and reported separately, as <firstterm>late</>.
        </para>
        <para>
