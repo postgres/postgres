@@ -10583,6 +10583,7 @@ vac_analyze_option_name:
 
 vac_analyze_option_arg:
 			opt_boolean_or_string					{ $$ = (Node *) makeString($1); }
+			| NumericOnly			{ $$ = (Node *) $1; }
 			| /* EMPTY */		 					{ $$ = NULL; }
 		;
 
