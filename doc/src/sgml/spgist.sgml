@@ -206,7 +206,7 @@
  <para>
   Of the two operator classes for type <type>point</type>,
   <literal>quad_point_ops</literal> is the default.  <literal>kd_point_ops</literal>
-  supports the same operators but uses a different index data structure which
+  supports the same operators but uses a different index data structure that
   may offer better performance in some applications.
  </para>
  <para>
@@ -292,9 +292,9 @@
   <function>leaf_consistent</function> additionally returns a <type>boolean</type> result.
   The methods must not modify any fields of their input structs.  In all
   cases, the output struct is initialized to zeroes before calling the
-  user-defined method.  Optional sixth method <function>compress</function>
-  accepts datum to be indexed as the only argument and returns value suitable
-  for physical storage in leaf tuple.
+  user-defined method.  The optional sixth method <function>compress</function>
+  accepts datum to be indexed as the only argument and returns a value suitable
+  for physical storage in a leaf tuple.
  </para>
 
  <para>
@@ -447,9 +447,9 @@ typedef struct spgChooseOut
        type that was to be inserted into the index.
        <structfield>leafDatum</structfield> is a value of
        <structname>spgConfigOut</structname>.<structfield>leafType</structfield>
-       type which is initially an result of method
+       type, which is initially a result of method
        <function>compress</function> applied to <structfield>datum</structfield>
-       when method <function>compress</function> is provided, or same value as
+       when method <function>compress</function> is provided, or the same value as
        <structfield>datum</structfield> otherwise.
        <structfield>leafDatum</structfield> can change at lower levels of the tree
        if the <function>choose</function> or <function>picksplit</function>
@@ -868,7 +868,7 @@ typedef struct spgLeafConsistentOut
        Converts the data item into a format suitable for physical storage in
        a leaf tuple of index page.  It accepts
        <structname>spgConfigIn</structname>.<structfield>attType</structfield>
-       value and return
+       value and returns
        <structname>spgConfigOut</structname>.<structfield>leafType</structfield>
        value.  Output value should not be toasted.
       </para>
