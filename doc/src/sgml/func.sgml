@@ -5104,18 +5104,37 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
    <para>
     Within a bracket expression, the name of a character class
     enclosed in <literal>[:</literal> and <literal>:]</literal> stands
-    for the list of all characters belonging to that class.  Standard
-    character class names are: <literal>alnum</literal>,
-    <literal>alpha</literal>, <literal>blank</literal>,
-    <literal>cntrl</literal>, <literal>digit</literal>,
-    <literal>graph</literal>, <literal>lower</literal>,
-    <literal>print</literal>, <literal>punct</literal>,
-    <literal>space</literal>, <literal>upper</literal>,
-    <literal>xdigit</literal>.  These stand for the character classes
-    defined in
-    <citerefentry><refentrytitle>ctype</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
-    A locale can provide others.  A character class cannot be used as
-    an endpoint of a range.
+    for the list of all characters belonging to that class.  A character
+    class cannot be used as an endpoint of a range.
+    The <acronym>POSIX</acronym> standard defines these character class
+    names:
+    <literal>alnum</literal> (letters and numeric digits),
+    <literal>alpha</literal> (letters),
+    <literal>blank</literal> (space and tab),
+    <literal>cntrl</literal> (control characters),
+    <literal>digit</literal> (numeric digits),
+    <literal>graph</literal> (printable characters except space),
+    <literal>lower</literal> (lower-case letters),
+    <literal>print</literal> (printable characters including space),
+    <literal>punct</literal> (punctuation),
+    <literal>space</literal> (any white space),
+    <literal>upper</literal> (upper-case letters),
+    and <literal>xdigit</literal> (hexadecimal digits).
+    The behavior of these standard character classes is generally
+    consistent across platforms for characters in the 7-bit ASCII set.
+    Whether a given non-ASCII character is considered to belong to one
+    of these classes depends on the <firstterm>collation</firstterm>
+    that is used for the regular-expression function or operator
+    (see <xref linkend="collation"/>), or by default on the
+    database's <envar>LC_CTYPE</envar> locale setting (see
+    <xref linkend="locale"/>).  The classification of non-ASCII
+    characters can vary across platforms even in similarly-named
+    locales.  (But the <literal>C</literal> locale never considers any
+    non-ASCII characters to belong to any of these classes.)
+    In addition to these standard character
+    classes, <productname>PostgreSQL</productname> defines
+    the <literal>ascii</literal> character class, which contains exactly
+    the 7-bit ASCII set.
    </para>
 
    <para>
@@ -5126,8 +5145,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
     and end of a word respectively.  A word is defined as a sequence
     of word characters that is neither preceded nor followed by word
     characters.  A word character is an <literal>alnum</literal> character (as
-    defined by
-    <citerefentry><refentrytitle>ctype</refentrytitle><manvolnum>3</manvolnum></citerefentry>)
+    defined by the <acronym>POSIX</acronym> character class described above)
     or an underscore.  This is an extension, compatible with but not
     specified by <acronym>POSIX</acronym> 1003.2, and should be used with
     caution in software intended to be portable to other systems.
