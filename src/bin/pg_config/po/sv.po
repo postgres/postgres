@@ -1,13 +1,13 @@
 # Swedish message translation file for pg_config.
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-13 23:45+0000\n"
-"PO-Revision-Date: 2017-07-20 21:37+0200\n"
+"Project-Id-Version: PostgreSQL 12\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-04-29 07:16+0000\n"
+"PO-Revision-Date: 2019-04-29 13:31+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -23,40 +23,44 @@ msgstr ""
 msgid "not recorded"
 msgstr "ej sparad"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "kunde inte identifiera aktuell katalog: %s"
+msgid "could not identify current directory: %m"
+msgstr "kunde inte identifiera aktuell katalog: %m"
 
-#: ../../common/exec.c:146
+#: ../../common/exec.c:157
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ogiltig binär \"%s\""
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:207
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "kunde inte läsa binär \"%s\""
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:215
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "kunde inte hitta en \"%s\" att köra"
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "kunde inte byta katalog till \"%s\": %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "kunde inte byta katalog till \"%s\": %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:288
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "kunde inte läsa symbolisk länk \"%s\""
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "kan inte läsa symbolisk länk \"%s\": %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:541
 #, c-format
-msgid "pclose failed: %s"
-msgstr "pclose misslyckades: %s"
+msgid "pclose failed: %m"
+msgstr "pclose misslyckades: %m"
+
+#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+msgid "out of memory"
+msgstr "slut på minne"
 
 #: pg_config.c:74
 #, c-format
@@ -229,8 +233,8 @@ msgstr ""
 
 #: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr "Rapportera buggar till <pgsql-bugs@lists.postgresql.org>.\n"
 
 #: pg_config.c:111
 #, c-format
@@ -246,3 +250,18 @@ msgstr "%s: kunde inte hitta det egna programmets körbara fil\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: ogiltigt argument: %s\n"
+
+#~ msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ msgstr "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
+
+#~ msgid "pclose failed: %s"
+#~ msgstr "pclose misslyckades: %s"
+
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "kunde inte läsa symbolisk länk \"%s\""
+
+#~ msgid "could not change directory to \"%s\": %s"
+#~ msgstr "kunde inte byta katalog till \"%s\": %s"
+
+#~ msgid "could not identify current directory: %s"
+#~ msgstr "kunde inte identifiera aktuell katalog: %s"

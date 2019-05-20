@@ -1,5 +1,5 @@
 # Swedish message translation file for initdb
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019.
 # Magnus Hagander <magnus@hagander.net>, 2007.
 # Peter Eisentraut <peter_e@gmx.net>, 2009.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
@@ -9,9 +9,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-04-28 22:16+0000\n"
-"PO-Revision-Date: 2018-04-29 12:34+0200\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-04-27 01:47+0000\n"
+"PO-Revision-Date: 2019-04-27 14:46+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -19,40 +19,61 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../../src/fe_utils/logging.c:182
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "kunde inte identifiera aktuell katalog: %s"
+msgid "fatal: "
+msgstr "fatalt: "
 
-#: ../../common/exec.c:146
+#: ../../../src/fe_utils/logging.c:189
+#, c-format
+msgid "error: "
+msgstr "fel: "
+
+#: ../../../src/fe_utils/logging.c:196
+#, c-format
+msgid "warning: "
+msgstr "varning: "
+
+#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
+#, c-format
+msgid "could not identify current directory: %m"
+msgstr "kunde inte identifiera aktuell katalog: %m"
+
+#: ../../common/exec.c:157
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ogiltig binär \"%s\""
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:207
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "kunde inte läsa binär \"%s\""
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:215
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "kunde inte hitta en \"%s\" att köra"
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "kunde inte byta katalog till \"%s\": %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "kunde inte byta katalog till \"%s\": %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:288
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "kunde inte läsa symbolisk länk \"%s\""
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "kan inte läsa symbolisk länk \"%s\": %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:541
 #, c-format
-msgid "pclose failed: %s"
-msgstr "pclose misslyckades: %s"
+msgid "pclose failed: %m"
+msgstr "pclose misslyckades: %m"
+
+#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+#: initdb.c:339
+#, c-format
+msgid "out of memory"
+msgstr "slut på minne"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -65,96 +86,86 @@ msgstr "slut på minne\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
-#: ../../common/file_utils.c:82 ../../common/file_utils.c:186
+#: ../../common/file_utils.c:81 ../../common/file_utils.c:183
 #, c-format
-msgid "%s: could not stat file \"%s\": %s\n"
-msgstr "%s: kunde ta status på filen \"%s\": %s\n"
+msgid "could not stat file \"%s\": %m"
+msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: ../../common/file_utils.c:162
+#: ../../common/file_utils.c:160 ../../common/pgfnames.c:48
 #, c-format
-msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: kunde inte öppna katalog \"%s\": %s\n"
+msgid "could not open directory \"%s\": %m"
+msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: ../../common/file_utils.c:198
+#: ../../common/file_utils.c:194 ../../common/pgfnames.c:69
 #, c-format
-msgid "%s: could not read directory \"%s\": %s\n"
-msgstr "%s: kunde inte läsa katalog \"%s\": %s\n"
+msgid "could not read directory \"%s\": %m"
+msgstr "kunde inte läsa katalog \"%s\": %m"
 
-#: ../../common/file_utils.c:231 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:367
+#: ../../common/file_utils.c:226 ../../common/file_utils.c:285
+#: ../../common/file_utils.c:359
 #, c-format
-msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: kunde inte öppna fil \"%s\": %s\n"
+msgid "could not open file \"%s\": %m"
+msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: ../../common/file_utils.c:304 ../../common/file_utils.c:376
+#: ../../common/file_utils.c:297 ../../common/file_utils.c:367
 #, c-format
-msgid "%s: could not fsync file \"%s\": %s\n"
-msgstr "%s: kunde inte utföra fsync på filen \"%s\": %s\n"
+msgid "could not fsync file \"%s\": %m"
+msgstr "kunde inte fsync:a fil \"%s\": %m"
 
-#: ../../common/file_utils.c:387
+#: ../../common/file_utils.c:377
 #, c-format
-msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
-msgstr "%s: kunde inte döpa om fil \"%s\" till \"%s\": %s\n"
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "kunde inte döpa om fil \"%s\" till \"%s\": %m"
 
-#: ../../common/pgfnames.c:45
+#: ../../common/pgfnames.c:74
 #, c-format
-msgid "could not open directory \"%s\": %s\n"
-msgstr "kunde inte öppna katalog \"%s\": %s\n"
+msgid "could not close directory \"%s\": %m"
+msgstr "kunde inte stänga katalog \"%s\": %m"
 
-#: ../../common/pgfnames.c:72
+#: ../../common/restricted_token.c:69
 #, c-format
-msgid "could not read directory \"%s\": %s\n"
-msgstr "kunde inte läsa katalog \"%s\": %s\n"
+msgid "cannot create restricted tokens on this platform"
+msgstr "kan inte skapa token för begränsad åtkomst på denna plattorm"
 
-#: ../../common/pgfnames.c:84
+#: ../../common/restricted_token.c:78
 #, c-format
-msgid "could not close directory \"%s\": %s\n"
-msgstr "kunde inte stänga katalog \"%s\": %s\n"
+msgid "could not open process token: error code %lu"
+msgstr "kunde inte öppna process-token: felkod %lu"
 
-#: ../../common/restricted_token.c:68
+#: ../../common/restricted_token.c:91
 #, c-format
-msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: VARNING: \"Restricted Token\" stöds inte av plattformen.\n"
-
-#: ../../common/restricted_token.c:77
-#, c-format
-msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: kunde inte skapa processmärke (token): felkod %lu\n"
-
-#: ../../common/restricted_token.c:90
-#, c-format
-msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: kunde inte tilldela SID: felkod %lu\n"
+msgid "could not allocate SIDs: error code %lu"
+msgstr "kunde inte allokera SID: felkod %lu"
 
 #: ../../common/restricted_token.c:110
 #, c-format
-msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: kunde inte skapa restriktivt styrmärke (token): felkod %lu\n"
+msgid "could not create restricted token: error code %lu"
+msgstr "kunde inte skapa token för begränsad åtkomst: felkod %lu"
 
-#: ../../common/restricted_token.c:132
+#: ../../common/restricted_token.c:131
 #, c-format
-msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr "%s: kunde inte starta process för kommando \"%s\": felkod %lu\n"
+msgid "could not start process for command \"%s\": error code %lu"
+msgstr "kunde inte starta process för kommando \"%s\": felkod %lu"
 
-#: ../../common/restricted_token.c:170
+#: ../../common/restricted_token.c:169
 #, c-format
-msgid "%s: could not re-execute with restricted token: error code %lu\n"
-msgstr "%s: kunde inte upprepa med restriktivt styrmärke (token): felkod %lu\n"
+msgid "could not re-execute with restricted token: error code %lu"
+msgstr "kunde inte köra igen med token för begränsad åtkomst: felkod %lu"
 
-#: ../../common/restricted_token.c:186
+#: ../../common/restricted_token.c:185
 #, c-format
-msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "%s: kunde inte utvinna statuskod för underprocess: felkod %lu\n"
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "kunde inte hämta statuskod för underprocess: felkod %lu"
 
-#: ../../common/rmtree.c:77
+#: ../../common/rmtree.c:79
 #, c-format
-msgid "could not stat file or directory \"%s\": %s\n"
-msgstr "kunde inte ta status på fil eller katalog \"%s\": %s\n"
+msgid "could not stat file or directory \"%s\": %m"
+msgstr "kunde inte ta status på fil eller katalog \"%s\": %m"
 
-#: ../../common/rmtree.c:104 ../../common/rmtree.c:121
+#: ../../common/rmtree.c:101 ../../common/rmtree.c:113
 #, c-format
-msgid "could not remove file or directory \"%s\": %s\n"
-msgstr "kunde inte ta bort fil eller katalog \"%s\": %s\n"
+msgid "could not remove file or directory \"%s\": %m"
+msgstr "kunde inte ta bort fil eller katalog \"%s\": %m"
 
 #: ../../common/username.c:43
 #, c-format
@@ -185,22 +196,17 @@ msgstr "kommandot kan ej hittas"
 msgid "child process exited with exit code %d"
 msgstr "barnprocess avslutade med kod %d"
 
-#: ../../common/wait_error.c:61
+#: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "barnprocess terminerades med avbrott 0x%X"
 
-#: ../../common/wait_error.c:71
+#: ../../common/wait_error.c:66
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "barnprocess terminerades av signal %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "barnprocess terminerades av signal %d: %s"
 
-#: ../../common/wait_error.c:75
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "barnprocess terminerades av signal %d"
-
-#: ../../common/wait_error.c:80
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
@@ -215,103 +221,101 @@ msgstr "kunde inte sätta en knutpunkt (junction) för \"%s\": %s\n"
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "kunde inte få en knutpunkt (junction) för \"%s\": %s\n"
 
-#: initdb.c:339
+#: initdb.c:495 initdb.c:1534
 #, c-format
-msgid "%s: out of memory\n"
-msgstr "%s: slut på minne\n"
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
-#: initdb.c:495 initdb.c:1538
+#: initdb.c:550 initdb.c:858 initdb.c:884
 #, c-format
-msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: kunde inte öppna fil \"%s\" för läsning: %s\n"
+msgid "could not open file \"%s\" for writing: %m"
+msgstr "kunde inte öppna fil \"%s\" för skrivning: %m"
 
-#: initdb.c:551 initdb.c:867 initdb.c:895
+#: initdb.c:557 initdb.c:564 initdb.c:864 initdb.c:889
 #, c-format
-msgid "%s: could not open file \"%s\" for writing: %s\n"
-msgstr "%s: kunde inte öppna fil \"%s\" för skrivning: %s\n"
+msgid "could not write file \"%s\": %m"
+msgstr "kunde inte skriva fil \"%s\": %m"
 
-#: initdb.c:559 initdb.c:567 initdb.c:874 initdb.c:901
+#: initdb.c:582
 #, c-format
-msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s: kunde inte skriva fil \"%s\": %s\n"
+msgid "could not execute command \"%s\": %m"
+msgstr "kunde inte köra kommandot \"%s\": %m"
 
-#: initdb.c:586
+#: initdb.c:600
 #, c-format
-msgid "%s: could not execute command \"%s\": %s\n"
-msgstr "%s: kunde inte utföra kommandot \"%s\": %s\n"
+msgid "removing data directory \"%s\""
+msgstr "tar bort datakatalog \"%s\""
 
 #: initdb.c:602
 #, c-format
-msgid "%s: removing data directory \"%s\"\n"
-msgstr "%s: tar bort datakatalog \"%s\".\n"
+msgid "failed to remove data directory"
+msgstr "misslyckades med att ta bort datakatalog"
 
-#: initdb.c:605
+#: initdb.c:606
 #, c-format
-msgid "%s: failed to remove data directory\n"
-msgstr "%s: misslyckades med att ta bort datakatalog.\n"
+msgid "removing contents of data directory \"%s\""
+msgstr "tar bort innehållet i datakatalog \"%s\""
 
-#: initdb.c:611
+#: initdb.c:609
 #, c-format
-msgid "%s: removing contents of data directory \"%s\"\n"
-msgstr "%s: tömmer innehållet i datakatalog \"%s\".\n"
+msgid "failed to remove contents of data directory"
+msgstr "misslyckades med att ta bort innehållet i datakatalogen"
 
 #: initdb.c:614
 #, c-format
-msgid "%s: failed to remove contents of data directory\n"
-msgstr "%s: misslyckades med att tömma datakatalog.\n"
+msgid "removing WAL directory \"%s\""
+msgstr "tar bort WAL-katalog \"%s\""
+
+#: initdb.c:616
+#, c-format
+msgid "failed to remove WAL directory"
+msgstr "misslyckades med att ta bort WAL-katalog"
 
 #: initdb.c:620
 #, c-format
-msgid "%s: removing WAL directory \"%s\"\n"
-msgstr "%s: tar bort WAL-katalog \"%s\"\n"
+msgid "removing contents of WAL directory \"%s\""
+msgstr "tar bort innehållet i WAL-katalog \"%s\""
 
-#: initdb.c:623
+#: initdb.c:622
 #, c-format
-msgid "%s: failed to remove WAL directory\n"
-msgstr "%s: misslyckades med att ta bort WAL-katalog.\n"
+msgid "failed to remove contents of WAL directory"
+msgstr "misslyckades med att ta bort innehållet i WAL-katalogen"
 
 #: initdb.c:629
 #, c-format
-msgid "%s: removing contents of WAL directory \"%s\"\n"
-msgstr "%s: tömmer innehållet i WAL-katalog \"%s\"\n"
+msgid "data directory \"%s\" not removed at user's request"
+msgstr "datakatalog \"%s\" är ej borttagen på användares begäran"
 
-#: initdb.c:632
+#: initdb.c:633
 #, c-format
-msgid "%s: failed to remove contents of WAL directory\n"
-msgstr "%s: misslyckades med att tömma WAL-katalog\n"
+msgid "WAL directory \"%s\" not removed at user's request"
+msgstr "WAL-katalog \"%s\" är ej borttagen på användares begäran"
 
-#: initdb.c:641
+#: initdb.c:651
 #, c-format
-msgid "%s: data directory \"%s\" not removed at user's request\n"
-msgstr "%s: Datakatalog \"%s\" ej borttagen på användares begäran.\n"
+msgid "cannot be run as root"
+msgstr "kan inte köras som root"
 
-#: initdb.c:646
-#, c-format
-msgid "%s: WAL directory \"%s\" not removed at user's request\n"
-msgstr "%s: WAL-katalog \"%s\" ej borttagen på användares begäran.\n"
-
-#: initdb.c:667
+#: initdb.c:653
 #, c-format
 msgid ""
-"%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s: kan inte köras som root\n"
 "Logga in (t.ex. med \"su\") som den (opriviligerade) användare\n"
-"vilken skall äga serverprocessen.\n"
+"som skall äga serverprocessen.\n"
 
-#: initdb.c:703
+#: initdb.c:686
 #, c-format
-msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr "%s: \"%s\" är inte en giltig teckenkodning för servern.\n"
+msgid "\"%s\" is not a valid server encoding name"
+msgstr "\"%s\" är inte en giltig teckenkodning för servern"
 
-#: initdb.c:823
+#: initdb.c:817
 #, c-format
-msgid "%s: file \"%s\" does not exist\n"
-msgstr "%s: Filen \"%s\" existerar inte.\n"
+msgid "file \"%s\" does not exist"
+msgstr "filen \"%s\" finns inte"
 
-#: initdb.c:825 initdb.c:834 initdb.c:844
+#: initdb.c:819 initdb.c:826 initdb.c:835
 #, c-format
 msgid ""
 "This might mean you have a corrupted installation or identified\n"
@@ -320,122 +324,128 @@ msgstr ""
 "Detta kan betyda att du har en korrupt installation eller att du har\n"
 "angivit felaktig katalog till flaggan -L.\n"
 
-#: initdb.c:831
+#: initdb.c:824
 #, c-format
-msgid "%s: could not access file \"%s\": %s\n"
-msgstr "%s: kunde inte komma åt filen \"%s\": %s\n"
+msgid "could not access file \"%s\": %m"
+msgstr "kunde inte komma åt filen \"%s\": %m"
 
-#: initdb.c:842
+#: initdb.c:833
 #, c-format
-msgid "%s: file \"%s\" is not a regular file\n"
-msgstr "%s: \"%s\" är inte en normal fil.\n"
+msgid "file \"%s\" is not a regular file"
+msgstr "filen \"%s\" är inte en normal fil"
+
+#: initdb.c:978
+#, c-format
+msgid "selecting dynamic shared memory implementation ... "
+msgstr "väljer mekanism för dynamiskt, delat minne ... "
 
 #: initdb.c:987
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "sätter förvalt värde för max_connections ... "
 
-#: initdb.c:1017
+#: initdb.c:1018
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "sätter förvalt värde för shared_buffers ... "
 
-#: initdb.c:1050
+#: initdb.c:1052
 #, c-format
-msgid "selecting dynamic shared memory implementation ... "
-msgstr "väljer mekanism för dynamiskt, delat minne ... "
+msgid "selecting default timezone ... "
+msgstr "sätter förvalt värde för timezone ... "
 
-#: initdb.c:1085
+#: initdb.c:1086
 msgid "creating configuration files ... "
 msgstr "skapar konfigurationsfiler ... "
 
-#: initdb.c:1239 initdb.c:1259 initdb.c:1346 initdb.c:1362
+#: initdb.c:1239 initdb.c:1258 initdb.c:1344 initdb.c:1359
 #, c-format
-msgid "%s: could not change permissions of \"%s\": %s\n"
-msgstr "%s: kunde inte ändra rättigheter på \"%s\": %s\n"
+msgid "could not change permissions of \"%s\": %m"
+msgstr "kunde inte ändra rättigheter på \"%s\": %m"
 
-#: initdb.c:1385
+#: initdb.c:1381
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "kör uppsättningsskript..."
+
+#: initdb.c:1393
+#, c-format
+msgid "input file \"%s\" does not belong to PostgreSQL %s"
+msgstr "indatafil \"%s\" tillhör inte PostgreSQL %s"
 
 # The expected string length of bki_file (for the first "%s")
 # with a standard directory "/usr/local/pgsql", is such that
 # the translated message string produces a reasonable output.
 #
-#: initdb.c:1398
+#: initdb.c:1396
 #, c-format
-msgid ""
-"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
-"Check your installation or specify the correct path using the option -L.\n"
-msgstr ""
-"%s: Indatafilen \"%s\" hör inte till PostgreSQL %s.\n"
-"Kontrollera din installation eller ange korrekt sökväg med flaggan -L.\n"
+msgid "Check your installation or specify the correct path using the option -L.\n"
+msgstr "Kontrollera din installation eller ange korrekt sökväg med flaggan -L.\n"
 
-#: initdb.c:1515
+#: initdb.c:1511
 msgid "Enter new superuser password: "
 msgstr "Mata in ett nytt lösenord för superanvändaren: "
 
-#: initdb.c:1516
+#: initdb.c:1512
 msgid "Enter it again: "
 msgstr "Mata in det igen: "
 
-#: initdb.c:1519
+#: initdb.c:1515
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Lösenorden stämde inte överens.\n"
 
-#: initdb.c:1545
+#: initdb.c:1541
 #, c-format
-msgid "%s: could not read password from file \"%s\": %s\n"
-msgstr "%s: kunde inte läsa lösenord i filen \"%s\": %s\n"
+msgid "could not read password from file \"%s\": %m"
+msgstr "kunde inte läsa lösenord i filen \"%s\": %m"
 
-#: initdb.c:1548
+#: initdb.c:1544
 #, c-format
-msgid "%s: password file \"%s\" is empty\n"
-msgstr "%s: lösenordsfilen \"%s\" är tom\n"
+msgid "password file \"%s\" is empty"
+msgstr "lösenordsfilen \"%s\" är tom"
 
-#: initdb.c:2123
+#: initdb.c:2107
 #, c-format
 msgid "caught signal\n"
 msgstr "mottog signal\n"
 
-#: initdb.c:2129
+#: initdb.c:2113
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "kunde inte skriva till barnprocess: %s\n"
 
-#: initdb.c:2137
+#: initdb.c:2121
 #, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:2227
+#: initdb.c:2211
 #, c-format
-msgid "%s: setlocale() failed\n"
-msgstr "%s: setlocale() misslyckades\n"
+msgid "setlocale() failed"
+msgstr "setlocale() misslyckades"
 
-#: initdb.c:2249
+#: initdb.c:2232
 #, c-format
-msgid "%s: failed to restore old locale \"%s\"\n"
-msgstr "%s: misslyckades att återställa lokalspråk \"%s\"\n"
+msgid "failed to restore old locale \"%s\""
+msgstr "misslyckades med att återställa gamla lokalen \"%s\""
 
-#: initdb.c:2259
+#: initdb.c:2241
 #, c-format
-msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s: okänt lokalnamn \"%s\".\n"
+msgid "invalid locale name \"%s\""
+msgstr "ogiltigt lokalnamn \"%s\""
 
-#: initdb.c:2271
+#: initdb.c:2252
 #, c-format
-msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
-msgstr "%s: ogiltigt språkval. Kontrollera miljövariablerna LANG, LC_*.\n"
+msgid "invalid locale settings; check LANG and LC_* environment variables"
+msgstr "ogiltig lokalinställning. Kontrollera miljövariablerna LANG och LC_*"
 
-#: initdb.c:2299
+#: initdb.c:2279
 #, c-format
-msgid "%s: encoding mismatch\n"
-msgstr "%s: Oförenliga teckenkodningar.\n"
+msgid "encoding mismatch"
+msgstr "teckenkodning matchar inte"
 
-#: initdb.c:2301
+#: initdb.c:2281
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -444,13 +454,13 @@ msgid ""
 "Rerun %s and either do not specify an encoding explicitly,\n"
 "or choose a matching combination.\n"
 msgstr ""
-"Teckenkodningen du har valt (%s) och kodningen svarande\n"
-"mot lokalnamnet (%s), de passar inte ihop. Detta kan leda\n"
-"till problem för funktioner som arbetar med strängar. Detta\n"
-"undgås genom att utföra %s igen och då låta bli bli att\n"
-"sätta kodning, eller i annat fall att välja bättre teckensats.\n"
+"Teckenkodningen du har valt (%s) och teckenkodningen som\n"
+"valda lokalen använder (%s) passar inte ihop. Detta kommer leda\n"
+"till problem för funktioner som arbetar med strängar.\n"
+"Kör %s igen och låt bli ange teckenkodning eller välj\n"
+"en kombination som passar ihop.\n"
 
-#: initdb.c:2373
+#: initdb.c:2353
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -459,17 +469,17 @@ msgstr ""
 "%s initierar ett databaskluster för PostgreSQL.\n"
 "\n"
 
-#: initdb.c:2374
+#: initdb.c:2354
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: initdb.c:2375
+#: initdb.c:2355
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [FLAGGA]... [DATAKATALOG]\n"
 
-#: initdb.c:2376
+#: initdb.c:2356
 #, c-format
 msgid ""
 "\n"
@@ -478,42 +488,42 @@ msgstr ""
 "\n"
 "Flaggor:\n"
 
-#: initdb.c:2377
+#: initdb.c:2357
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla förbindelser\n"
 
-#: initdb.c:2378
+#: initdb.c:2358
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
 msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-förbindelser\n"
 
-#: initdb.c:2379
+#: initdb.c:2359
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr "      --auth-local=METOD    autentiseringsmetod för förbindelser via unix-uttag\n"
 
-#: initdb.c:2380
+#: initdb.c:2360
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATAKATALOG läge för detta databaskluster\n"
 
-#: initdb.c:2381
+#: initdb.c:2361
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=KODNING    sätter teckenkodning för nya databaser\n"
 
-#: initdb.c:2382
+#: initdb.c:2362
 #, c-format
 msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
 msgstr "  -g, --allow-group-access  tillåt läs/kör för grupp på datakatalogen\n"
 
-#: initdb.c:2383
+#: initdb.c:2363
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=LOKAL        sätter standardlokal för nya databaser\n"
 
-#: initdb.c:2384
+#: initdb.c:2364
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -526,17 +536,17 @@ msgstr ""
 "                            sätter standardlokal i utvald kategori för\n"
 "                            nya databaser (förval hämtas ur omgivningen)\n"
 
-#: initdb.c:2388
+#: initdb.c:2368
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           samma som --locale=C\n"
 
-#: initdb.c:2389
+#: initdb.c:2369
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FIL          läser lösenord för superanvändare från fil\n"
 
-#: initdb.c:2390
+#: initdb.c:2370
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -545,27 +555,27 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                            standardkonfiguration för textsökning\n"
 
-#: initdb.c:2392
+#: initdb.c:2372
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAMN       namn på databasens superanvändare\n"
 
-#: initdb.c:2393
+#: initdb.c:2373
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            efterfråga lösenord för superanvändare\n"
 
-#: initdb.c:2394
+#: initdb.c:2374
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=WALDIR       katalog för write-ahead-log (WAL)\n"
 
-#: initdb.c:2395
+#: initdb.c:2375
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=STORLEK storlek på WAL-segment i megabyte\n"
 
-#: initdb.c:2396
+#: initdb.c:2376
 #, c-format
 msgid ""
 "\n"
@@ -574,42 +584,42 @@ msgstr ""
 "\n"
 "Mindre vanliga flaggor:\n"
 
-#: initdb.c:2397
+#: initdb.c:2377
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               generera massor med debug-utskrifter\n"
 
-#: initdb.c:2398
+#: initdb.c:2378
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
 msgstr "  -k, --data-checksums      använd checksummor på datablock\n"
 
-#: initdb.c:2399
+#: initdb.c:2379
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L KATALOG                katalog där indatafiler skall sökas\n"
 
-#: initdb.c:2400
+#: initdb.c:2380
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean            städa inte upp efter fel\n"
 
-#: initdb.c:2401
+#: initdb.c:2381
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync             vänta inte på att ändingar säkert skrivits till disk\n"
 
-#: initdb.c:2402
+#: initdb.c:2382
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                visa interna inställningar\n"
 
-#: initdb.c:2403
+#: initdb.c:2383
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
 msgstr "  -S, --sync-only           synkning endast av datakatalog\n"
 
-#: initdb.c:2404
+#: initdb.c:2384
 #, c-format
 msgid ""
 "\n"
@@ -618,17 +628,17 @@ msgstr ""
 "\n"
 "Andra flaggor:\n"
 
-#: initdb.c:2405
+#: initdb.c:2385
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             visa versionsinformation, avsluta sedan\n"
 
-#: initdb.c:2406
+#: initdb.c:2386
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
 
-#: initdb.c:2407
+#: initdb.c:2387
 #, c-format
 msgid ""
 "\n"
@@ -638,85 +648,72 @@ msgstr ""
 "\n"
 "Om datakatalogen inte anges så tas den från omgivningsvariabeln PGDATA.\n"
 
-#: initdb.c:2409
+#: initdb.c:2389
 #, c-format
 msgid ""
 "\n"
-"Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr ""
-"\n"
-"Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
+"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr "\nRapportera fel till <pgsql-bugs@lists.postgresql.org>.\n"
 
 #: initdb.c:2417
-msgid ""
-"\n"
-"WARNING: enabling \"trust\" authentication for local connections\n"
-"You can change this by editing pg_hba.conf or using the option -A, or\n"
-"--auth-local and --auth-host, the next time you run initdb.\n"
-msgstr ""
-"\n"
-"VARNING: Autentiseringsmetod \"trust\" är aktiv för någon uppkoppling.\n"
-"Du kan ändra detta genom att redigera \"pg_hba.conf\" eller genom att sätta\n"
-"flaggor -A eller --auth-local och --auth-host nästa gång du kör initdb.\n"
-
-#: initdb.c:2439
 #, c-format
-msgid "%s: invalid authentication method \"%s\" for \"%s\" connections\n"
-msgstr "%s: Ogiltig autentiseringsmetod \"%s\" vid förbindelseslag \"%s\".\n"
+msgid "invalid authentication method \"%s\" for \"%s\" connections"
+msgstr "ogiltig autentiseringsmetod \"%s\" för anslutning av typen \"%s\""
 
-#: initdb.c:2455
+#: initdb.c:2433
 #, c-format
-msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr ""
-"%s: Du måste ange ett lösenord för superanvändaren för att\n"
-"kunna slå på autentisering \"%s\".\n"
+msgid "must specify a password for the superuser to enable %s authentication"
+msgstr "du måste ange ett lösenord för superanvändaren för att kunna slå på autentisering %s"
 
-#: initdb.c:2483
+#: initdb.c:2460
+#, c-format
+msgid "no data directory specified"
+msgstr "ingen datakatalog angiven"
+
+#: initdb.c:2462
 #, c-format
 msgid ""
-"%s: no data directory specified\n"
 "You must identify the directory where the data for this database system\n"
 "will reside.  Do this with either the invocation option -D or the\n"
 "environment variable PGDATA.\n"
 msgstr ""
-"%s: Ingen datakatalog angiven.\n"
 "Du måste uppge den katalog där data för detta databassystem\n"
 "skall lagras. Gör det antingen med flaggan -D eller genom att\n"
 "sätta omgivningsvariabeln PGDATA.\n"
 
-#: initdb.c:2521
+#: initdb.c:2497
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
 "same directory as \"%s\".\n"
-"Check your installation.\n"
+"Check your installation."
 msgstr ""
 "Programmet \"postgres\" behövs av %s men kunde inte hittas\n"
 "i samma katalog som \"%s\".\n"
-"Kontrollera din installation.\n"
+"Kontrollera din installation."
 
-#: initdb.c:2528
+#: initdb.c:2502
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
 "but was not the same version as %s.\n"
-"Check your installation.\n"
+"Check your installation."
 msgstr ""
 "Programmet \"postgres\" hittades av \"%s\",\n"
 "men det är inte byggt i samma version som %s.\n"
-"Kontrollera din installation.\n"
+"Kontrollera din installation."
 
-#: initdb.c:2547
+#: initdb.c:2521
 #, c-format
-msgid "%s: input file location must be an absolute path\n"
-msgstr "%s: plats för indatafiler måste vara en absolut sökväg.\n"
+msgid "input file location must be an absolute path"
+msgstr "plats för indatafiler måste vara en absolut sökväg"
 
-#: initdb.c:2564
+#: initdb.c:2538
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "Databasklustret kommer att skapas med lokalnamn \"%s\".\n"
 
-#: initdb.c:2567
+#: initdb.c:2541
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -735,22 +732,22 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2591
+#: initdb.c:2565
 #, c-format
-msgid "%s: could not find suitable encoding for locale \"%s\"\n"
-msgstr "%s: kunde inte välja en lämplig kodning för lokalnamn \"%s\".\n"
+msgid "could not find suitable encoding for locale \"%s\""
+msgstr "kunde inte välja en lämplig kodning för lokal \"%s\""
 
-#: initdb.c:2593
+#: initdb.c:2567
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Upprepa %s, men nu med flaggan -E.\n"
 
-#: initdb.c:2594 initdb.c:3235 initdb.c:3256
+#: initdb.c:2568 initdb.c:3196 initdb.c:3217
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: initdb.c:2607
+#: initdb.c:2581
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -759,12 +756,12 @@ msgstr ""
 "Teckenkodning \"%s\", tagen ur lokalnamnet, är inte godtagbar för servern.\n"
 "I dess ställe sättes databasens förvalda teckenkodning till \"%s\".\n"
 
-#: initdb.c:2613
+#: initdb.c:2586
 #, c-format
-msgid "%s: locale \"%s\" requires unsupported encoding \"%s\"\n"
-msgstr "%s: Lokalnamn \"%s\" kräver otillgänglig teckenkodning \"%s\".\n"
+msgid "locale \"%s\" requires unsupported encoding \"%s\""
+msgstr "lokalen \"%s\" kräver ej supportad teckenkodning \"%s\""
 
-#: initdb.c:2616
+#: initdb.c:2589
 #, c-format
 msgid ""
 "Encoding \"%s\" is not allowed as a server-side encoding.\n"
@@ -773,59 +770,59 @@ msgstr ""
 "Teckenkodning \"%s\" är inte godtagbar för servern.\n"
 "Upprepa %s med annat lokalnamn.\n"
 
-#: initdb.c:2625
+#: initdb.c:2598
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "Förvald teckenkodning för databaser är satt till \"%s\".\n"
 
-#: initdb.c:2695
+#: initdb.c:2666
 #, c-format
 msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
 msgstr "%s: kunde inte hitta en lämplig textsökningskonfiguration för lokalnamn \"%s\".\n"
 
-#: initdb.c:2706
+#: initdb.c:2677
 #, c-format
 msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
 msgstr "%s: Varning: Ingen lämplig textsökningskonfiguration för lokalnamn \"%s\".\n"
 
-#: initdb.c:2711
+#: initdb.c:2682
 #, c-format
 msgid "%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"
 msgstr ""
 "%s: Varning: Uppgiven textsökningskonfiguration \"%s\" passar\n"
 "kanske inte till lokalnamn \"%s\".\n"
 
-#: initdb.c:2716
+#: initdb.c:2687
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Förvald textsökningskonfiguration för databaser är satt till \"%s\".\n"
 
-#: initdb.c:2760 initdb.c:2846
+#: initdb.c:2731 initdb.c:2813
 #, c-format
 msgid "creating directory %s ... "
 msgstr "skapar katalog %s ... "
 
-#: initdb.c:2766 initdb.c:2852 initdb.c:2920 initdb.c:2982
+#: initdb.c:2737 initdb.c:2819 initdb.c:2884 initdb.c:2946
 #, c-format
-msgid "%s: could not create directory \"%s\": %s\n"
-msgstr "%s: kunde inte skapa katalogen \"%s\": %s\n"
+msgid "could not create directory \"%s\": %m"
+msgstr "kunde inte skapa katalog \"%s\": %m"
 
-#: initdb.c:2778 initdb.c:2864
+#: initdb.c:2748 initdb.c:2831
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "sätter rättigheter på existerande katalog %s ... "
 
-#: initdb.c:2784 initdb.c:2870
+#: initdb.c:2754 initdb.c:2837
 #, c-format
-msgid "%s: could not change permissions of directory \"%s\": %s\n"
-msgstr "%s: kunde inte ändra rättigheter på katalogen \"%s\": %s\n"
+msgid "could not change permissions of directory \"%s\": %m"
+msgstr "kunde inte ändra rättigheter på katalogen \"%s\": %m"
 
-#: initdb.c:2799 initdb.c:2885
+#: initdb.c:2768 initdb.c:2851
 #, c-format
-msgid "%s: directory \"%s\" exists but is not empty\n"
-msgstr "%s: katalogen \"%s\" existerar men är inte tom.\n"
+msgid "directory \"%s\" exists but is not empty"
+msgstr "katalogen \"%s\" existerar men är inte tom"
 
-#: initdb.c:2805
+#: initdb.c:2773
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
@@ -836,17 +833,17 @@ msgstr ""
 "eller töm katalogen \"%s\" eller kör %s\n"
 "med annat argument än \"%s\".\n"
 
-#: initdb.c:2813 initdb.c:2898 initdb.c:3269
+#: initdb.c:2781 initdb.c:2863 initdb.c:3232
 #, c-format
-msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: kunde inte komma åt katalogen \"%s\": %s\n"
+msgid "could not access directory \"%s\": %m"
+msgstr "kunde inte komma åt katalog \"%s\": %m"
 
-#: initdb.c:2837
+#: initdb.c:2804
 #, c-format
-msgid "%s: WAL directory location must be an absolute path\n"
-msgstr "%s: WAL-katalogen måste vara en absolut sökväg.\n"
+msgid "WAL directory location must be an absolute path"
+msgstr "WAL-katalogen måste vara en absolut sökväg"
 
-#: initdb.c:2891
+#: initdb.c:2856
 #, c-format
 msgid ""
 "If you want to store the WAL there, either remove or empty the directory\n"
@@ -855,27 +852,27 @@ msgstr ""
 "Om du vill spara WAL där, antingen radera eller töm\n"
 "katalogen \"%s\".\n"
 
-#: initdb.c:2906
+#: initdb.c:2870
 #, c-format
-msgid "%s: could not create symbolic link \"%s\": %s\n"
-msgstr "%s: kunde inte skapa symbolisk länk \"%s\": %s\n"
+msgid "could not create symbolic link \"%s\": %m"
+msgstr "kan inte skapa symbolisk länk \"%s\": %m"
 
-#: initdb.c:2911
+#: initdb.c:2875
 #, c-format
-msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: symboliska länkar stöds inte på denna plattform"
+msgid "symlinks are not supported on this platform"
+msgstr "symboliska länkar stöds inte på denna plattform"
 
-#: initdb.c:2935
+#: initdb.c:2899
 #, c-format
 msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point.\n"
 msgstr "Den innehåller en gömd fil, med inledande punkt i namnet; kanske är detta en monteringspunkt.\n"
 
-#: initdb.c:2938
+#: initdb.c:2902
 #, c-format
 msgid "It contains a lost+found directory, perhaps due to it being a mount point.\n"
 msgstr "Den innehåller \"lost+found\"; kanske är detta en monteringspunkt.\n"
 
-#: initdb.c:2941
+#: initdb.c:2905
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
@@ -884,55 +881,55 @@ msgstr ""
 "Att använda en monteringspunkt som datakatalog rekommenderas inte.\n"
 "Skapa först en underkatalog under monteringspunkten.\n"
 
-#: initdb.c:2967
+#: initdb.c:2931
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "Skapar underkataloger ... "
 
-#: initdb.c:3014
+#: initdb.c:2977
 msgid "performing post-bootstrap initialization ... "
 msgstr "utför initiering efter uppstättning..."
 
-#: initdb.c:3173
+#: initdb.c:3134
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Kör i debug-läge.\n"
 
-#: initdb.c:3177
+#: initdb.c:3138
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Kör i no-clean-läge. Misstag kommer inte städas bort.\n"
 
-#: initdb.c:3254
+#: initdb.c:3215
 #, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "för många kommandoradsargument (första är \"%s\")"
 
-#: initdb.c:3274 initdb.c:3367
+#: initdb.c:3236 initdb.c:3325
 msgid "syncing data to disk ... "
 msgstr "synkar data till disk ... "
 
-#: initdb.c:3283
+#: initdb.c:3245
 #, c-format
-msgid "%s: password prompt and password file cannot be specified together\n"
-msgstr "%s: lösenordsfråga och lösenordsfil kan inte anges samtidigt.\n"
+msgid "password prompt and password file cannot be specified together"
+msgstr "lösenordsfråga och lösenordsfil kan inte anges samtidigt"
 
-#: initdb.c:3309
+#: initdb.c:3270
 #, c-format
-msgid "%s: argument of --wal-segsize must be a number\n"
-msgstr "%s: argumentet till --wal-segsize måste vara ett tal\n"
+msgid "argument of --wal-segsize must be a number"
+msgstr "argumentet till --wal-segsize måste vara ett tal"
 
-#: initdb.c:3316
+#: initdb.c:3275
 #, c-format
-msgid "%s: argument of --wal-segsize must be a power of 2 between 1 and 1024\n"
-msgstr "%s: argumentet till --wal-segsize måste vara en tvåpotens mellan 1 och 1024\n"
+msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
+msgstr "argumentet till --wal-segsize måste vara en tvåpotens mellan 1 och 1024"
 
-#: initdb.c:3334
+#: initdb.c:3292
 #, c-format
-msgid "%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"\n"
-msgstr "%s: superuser-namn \"%s\" tillåts inte; rollnamn får inte börja på \"pg_\"\n"
+msgid "superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
+msgstr "superuser-namn \"%s\" tillåts inte; rollnamn får inte börja på \"pg_\""
 
-#: initdb.c:3338
+#: initdb.c:3296
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -943,17 +940,17 @@ msgstr ""
 "Denna användare måste också vara ägare av server-processen.\n"
 "\n"
 
-#: initdb.c:3354
+#: initdb.c:3312
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "Checksummor för datablock är aktiva.\n"
 
-#: initdb.c:3356
+#: initdb.c:3314
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "Checksummor för datablock är avstängda.\n"
 
-#: initdb.c:3373
+#: initdb.c:3331
 #, c-format
 msgid ""
 "\n"
@@ -964,12 +961,26 @@ msgstr ""
 "Avstod från synkning mot lagringsmedium.\n"
 "Datakatalogen kan komma att fördärvas om operativsystemet störtar.\n"
 
+#: initdb.c:3336
+#, c-format
+msgid "enabling \"trust\" authentication for local connections"
+msgstr "slår på autentiseringsmetod \"trust\" för lokala anslutningar"
+
+#: initdb.c:3337
+#, c-format
+msgid ""
+"You can change this by editing pg_hba.conf or using the option -A, or\n"
+"--auth-local and --auth-host, the next time you run initdb.\n"
+msgstr ""
+"Du kan ändra detta genom att redigera pg_hba.conf eller genom att sätta\n"
+"flaggor -A eller --auth-local och --auth-host nästa gång du kör initdb.\n"
+
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3399
+#: initdb.c:3362
 msgid "logfile"
 msgstr "loggfil"
 
-#: initdb.c:3401
+#: initdb.c:3364
 #, c-format
 msgid ""
 "\n"
@@ -1067,3 +1078,78 @@ msgstr ""
 
 #~ msgid "%s: could not to allocate SIDs: error code %lu\n"
 #~ msgstr "%s: kunde inte tilldela SID: felkod %lu\n"
+
+#~ msgid "%s: symlinks are not supported on this platform\n"
+#~ msgstr "%s: symlänkar stöds inte på denna plattform\n"
+
+#~ msgid "%s: could not create symbolic link \"%s\": %s\n"
+#~ msgstr "%s: kunde inte skapa symbolisk länk \"%s\": %s\n"
+
+#~ msgid "%s: could not access directory \"%s\": %s\n"
+#~ msgstr "%s: kunde inte komma åt katalogen \"%s\": %s\n"
+
+#~ msgid "%s: could not create directory \"%s\": %s\n"
+#~ msgstr "%s: kunde inte skapa katalogen \"%s\": %s\n"
+
+#~ msgid "%s: invalid locale name \"%s\"\n"
+#~ msgstr "%s: okänt lokalnamn \"%s\".\n"
+
+#~ msgid "%s: failed to restore old locale \"%s\"\n"
+#~ msgstr "%s: misslyckades att återställa lokalspråk \"%s\"\n"
+
+#~ msgid "%s: could not access file \"%s\": %s\n"
+#~ msgstr "%s: kunde inte komma åt filen \"%s\": %s\n"
+
+#~ msgid "%s: file \"%s\" does not exist\n"
+#~ msgstr "%s: Filen \"%s\" existerar inte.\n"
+
+#~ msgid "%s: could not execute command \"%s\": %s\n"
+#~ msgstr "%s: kunde inte utföra kommandot \"%s\": %s\n"
+
+#~ msgid "%s: could not write file \"%s\": %s\n"
+#~ msgstr "%s: kunde inte skriva fil \"%s\": %s\n"
+
+#~ msgid "%s: could not open file \"%s\" for writing: %s\n"
+#~ msgstr "%s: kunde inte öppna fil \"%s\" för skrivning: %s\n"
+
+#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
+#~ msgstr "%s: kunde inte öppna fil \"%s\" för läsning: %s\n"
+
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s: slut på minne\n"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "barnprocess terminerades av signal %s"
+
+#~ msgid "could not stat file or directory \"%s\": %s\n"
+#~ msgstr "kunde inte ta status på fil eller katalog \"%s\": %s\n"
+
+#~ msgid "could not read directory \"%s\": %s\n"
+#~ msgstr "kunde inte läsa katalog \"%s\": %s\n"
+
+#~ msgid "could not open directory \"%s\": %s\n"
+#~ msgstr "kunde inte öppna katalog \"%s\": %s\n"
+
+#~ msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
+#~ msgstr "%s: kunde inte döpa om fil \"%s\" till \"%s\": %s\n"
+
+#~ msgid "%s: could not fsync file \"%s\": %s\n"
+#~ msgstr "%s: kunde inte utföra fsync på filen \"%s\": %s\n"
+
+#~ msgid "%s: could not open file \"%s\": %s\n"
+#~ msgstr "%s: kunde inte öppna fil \"%s\": %s\n"
+
+#~ msgid "%s: could not read directory \"%s\": %s\n"
+#~ msgstr "%s: kunde inte läsa katalog \"%s\": %s\n"
+
+#~ msgid "%s: could not open directory \"%s\": %s\n"
+#~ msgstr "%s: kunde inte öppna katalog \"%s\": %s\n"
+
+#~ msgid "%s: could not stat file \"%s\": %s\n"
+#~ msgstr "%s: kunde ta status på filen \"%s\": %s\n"
+
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "kunde inte läsa symbolisk länk \"%s\""
+
+#~ msgid "could not change directory to \"%s\": %s"
+#~ msgstr "kunde inte byta katalog till \"%s\": %s"

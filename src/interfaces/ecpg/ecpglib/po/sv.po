@@ -1,14 +1,14 @@
 # SWEDISH message translation file for ecpglib
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-08 23:08+0000\n"
-"PO-Revision-Date: 2017-09-10 11:27+0200\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-04-27 01:38+0000\n"
+"PO-Revision-Date: 2019-04-27 14:15+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>, 2017\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -20,11 +20,11 @@ msgstr ""
 msgid "empty message text"
 msgstr "tom meddelandetext"
 
-#: connect.c:401 connect.c:430 connect.c:638
+#: connect.c:403 connect.c:432 connect.c:640
 msgid "<DEFAULT>"
 msgstr "<DEFAULT>"
 
-#: descriptor.c:833 misc.c:120
+#: descriptor.c:888 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
@@ -181,18 +181,24 @@ msgstr "kunde inte ansluta till databas \"%s\" på rad %d"
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:207
 #, c-format
+msgid "The cursor is invalid on line %d"
+msgstr "Markören är ogiltig på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:214
+#, c-format
 msgid "SQL error %d on line %d"
 msgstr "SQL-fel %d på rad %d"
 
-#: error.c:254
+#: error.c:261
 msgid "the connection to the server was lost"
 msgstr "anslutningen till servern tappades"
 
-#: error.c:347
+#: error.c:354
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQL-fel: %s\n"
 
-#: execute.c:1961
+#: execute.c:2103
 msgid "<empty>"
 msgstr "<tom>"
