@@ -10065,7 +10065,7 @@ assign_xlog_sync_method(int new_sync_method, void *extra)
  * Issue appropriate kind of fsync (if any) for an XLOG output file.
  *
  * 'fd' is a file descriptor for the XLOG file to be fsync'd.
- * 'log' and 'seg' are for error reporting purposes.
+ * 'segno' is for error reporting purposes.
  */
 void
 issue_xlog_fsync(int fd, XLogSegNo segno)
