@@ -207,18 +207,16 @@ Author: Andrew Gierth <rhodiumtoad@postgresql.org>
 -->
 
      <para>
-      Avoid performing unnecessary rounding of <link
-      linkend="datatype-float"><type>REAL</type></link> and <type>DOUBLE
-      PRECISION</type> values (Andrew Gierth)
+      Improve performance by changing the default number of trailing digits
+      output for <link linkend="datatype-float"><type>REAL</type></link>
+      and <type>DOUBLE PRECISION</type> values (Andrew Gierth)
      </para>
 
      <para>
-      This dramatically speeds up processing of floating-point
-      values but causes additional trailing digits to
-      potentially be displayed.  Users wishing to have output
-      that is rounded to match the previous behavior can set <link
-      linkend="guc-extra-float-digits"><literal>extra_float_digits=0</literal></link>,
-      which is no longer the default.
+      Previously, float values were output rounded to 6 or 15 decimals
+      by default.  Now, only the number of digits required to preserve
+      the exact binary value is output.  The previous  behavior can be
+      restored by setting <xref linkend="guc-extra-float-digits"/> to zero.
      </para>
     </listitem>
 
