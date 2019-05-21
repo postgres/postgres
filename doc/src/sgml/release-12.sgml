@@ -597,12 +597,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve handling of partition dependency (Tom Lane)
-       </para>
-
-       <para>
-        This prevents the creation of inconsistent partition hierarchies
-        in rare cases.
+        Fix bugs that could cause <command>ALTER TABLE DETACH
+        PARTITION</command> to not drop objects that should be dropped,
+        such as automatically-created child indexes (Tom Lane)
        </para>
       </listitem>
 
@@ -831,28 +828,20 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2019-02-09 [1fb57af92] Create the infrastructure for planner support functions.
--->
-
-       <para>
-        Add support for <link linkend="sql-createfunction">function
-        selectivity</link> (Tom Lane)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2019-02-09 [a391ff3c3] Build out the planner support function infrastructure.
 -->
 
        <para>
-        Use the new support function capability to improve optimizer
-        estimates for some functions (Tom Lane)
+        Add support function capability to improve optimizer estimates
+        for functions (Tom Lane)
        </para>
 
        <para>
-        Specifically, improve them for
-        <function>generate_series()</function>,
+        This allows extensions to create planner support functions that
+        can provide function-specific selectivity, cost, and row-count
+        estimates that can depend on the function arguments.  Also, improve
+        in-core estimates for <function>generate_series()</function>,
         <function>unnest()</function>, and functions that return boolean
         values.
        </para>
