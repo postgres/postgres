@@ -35,8 +35,17 @@ clean distclean maintainer-clean:
 	       pg_upgrade_dump_globals.sql \
 	       pg_upgrade_dump_*.custom pg_upgrade_*.log
 
+# When $(MAKE) is present, make automatically infers that this is a
+# recursive make. which is not actually what we want here, as that
+# e.g. prevents output synchronization from working (as make thinks
+# that the subsidiary make knows how to deal with that itself, but
+# we're invoking a shell script that doesn't know). Referencing
+# $(MAKE) indirectly avoids that behaviour.
+# See https://www.gnu.org/software/make/manual/html_node/MAKE-Variable.html#MAKE-Variable
+NOTSUBMAKEMAKE=$(MAKE)
+
 check: test.sh all temp-install
-	MAKE=$(MAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $<
+	MAKE=$(NOTSUBMAKEMAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL)
 
 # installcheck is not supported because there's no meaningful way to test
 # pg_upgrade against a single already-running server
