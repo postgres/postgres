@@ -982,8 +982,6 @@ Author: Bruce Momjian <bruce@momjian.us>
 <!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2019-01-29 [36a1281f8] Separate per-batch and per-tuple memory contexts in COPY
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-2019-01-25 [9556aa01c] Use single-byte Boyer-Moore-Horspool search even with mu
 Author: Andres Freund <andres@anarazel.de>
 2019-01-26 [a9c35cf85] Change function call information to be variable length.
 -->
@@ -1517,7 +1515,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
        <para>
         Prevent <xref linkend="sql-truncate"/> from requesting a lock on
-        tables for which it lacks permission (Michaël Paquier)
+        tables for which the user lacks permission (Michaël Paquier)
        </para>
 
        <para>
@@ -1882,9 +1880,10 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
 
       <para>
-       Rather than storing a value only at row creation time, generated
-       columns are also modified during updates, and can reference other
-       table columns.
+       The content of generated columns are computed from expressions
+       (including references to other columns in the same table)
+       rather than being specified by <command>INSERT</command> or
+       <command>UPDATE</command> commands.
       </para>
      </listitem>
 
@@ -2061,7 +2060,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Allow modifications of system tables using <xref
+       Allow modifications of system table options using <xref
        linkend="sql-altertable"/> (Peter Eisentraut)
       </para>
 
@@ -2595,8 +2594,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Compute behavior based on pgbench's <option>--rate</option>
-        value more precisely (Tom Lane)
+        Improve precision of pgbench's <option>--rate</option>
+        option (Tom Lane)
        </para>
       </listitem>
 
@@ -2816,11 +2815,12 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
        <para>
-        Allow restoration of an <command>INSERT</command>-statement dump
-        to skip rows which would cause conflicts (Surafel Temesgen)
+        Allow pg_dump to emit <command>INSERT ... ON CONFLICT DO
+        NOTHING</command> (Surafel Temesgen)
        </para>
 
        <para>
+        This avoids conflict failures during restore.
         The <application>pg_dump</application> option is
         <option>--on-conflict-do-nothing</option>.
        </para>
@@ -2875,6 +2875,8 @@ Author: Andrew Dunstan <andrew@dunslane.net>
      <listitem>
 <!--
 Author: Andres Freund <andres@anarazel.de>
+2018-11-16 [4da597edf] Make TupleTableSlots extensible, finish split of
+Author: Andres Freund <andres@anarazel.de>
 2019-03-06 [8586bf7ed] tableam: introduce table AM infrastructure.
 Author: Andres Freund <andres@anarazel.de>
 2019-03-06 [3b925e905] tableam: Add pg_dump support.
@@ -2890,12 +2892,20 @@ Author: Andres Freund <andres@anarazel.de>
 2019-03-31 [73c954d24] tableam: sample scan.
 Author: Andres Freund <andres@anarazel.de>
 2019-03-31 [bfbcad478] tableam: bitmap table scan.
+existin
 -->
 
       <para>
        Add <xref linkend="sql-create-access-method"/> command to create
-       new table types (Haribabu Kommi, Andres Freund, Álvaro Herrera,
-       Dimitri Dolgov)
+       new table types (Andres Freund, Haribabu Kommi, Álvaro Herrera,
+       Alexander Korotkov, Dimitri Golgov)
+      </para>
+
+      <para>
+       This enables the development of new <link linkend="tableam">table
+       access methods</>, which can optimize storage for different
+       use-cases.  The existing <literal>heap</literal> access method
+       remains the default.
       </para>
      </listitem>
 
