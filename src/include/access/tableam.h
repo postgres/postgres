@@ -573,6 +573,16 @@ typedef struct TableAmRoutine
 	uint64		(*relation_size) (Relation rel, ForkNumber forkNumber);
 
 
+	/*
+	 * This callback should return true if the relation requires a TOAST table
+	 * and false if it does not.  It may wish to examine the relation's
+	 * tuple descriptor before making a decision, but if it uses some other
+	 * method of storing large values (or if it does not support them) it can
+	 * simply return false.
+	 */
+	bool	    (*relation_needs_toast_table) (Relation rel);
+
+
 	/* ------------------------------------------------------------------------
 	 * Planner related functions.
 	 * ------------------------------------------------------------------------
@@ -1584,6 +1594,16 @@ table_relation_size(Relation rel, ForkNumber forkNumber)
 {
 	return rel->rd_tableam->relation_size(rel, forkNumber);
 }
+
+/*
+ * table_needs_toast_table - does this relation need a toast table?
+ */
+static inline bool
+table_relation_needs_toast_table(Relation rel)
+{
+	return rel->rd_tableam->relation_needs_toast_table(rel);
+}
+
 
 /* ----------------------------------------------------------------------------
  * Planner related functionality

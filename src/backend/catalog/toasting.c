@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
@@ -386,21 +385,11 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 }
 
 /*
- * Check to see whether the table needs a TOAST table.  It does only if
- * (1) there are any toastable attributes, and (2) the maximum length
- * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
- * create a toast table for something like "f1 varchar(20)".)
+ * Check to see whether the table needs a TOAST table.
  */
 static bool
 needs_toast_table(Relation rel)
 {
-	int32		data_length = 0;
-	bool		maxlength_unknown = false;
-	bool		has_toastable_attrs = false;
-	TupleDesc	tupdesc;
-	int32		tuple_length;
-	int			i;
-
 	/*
 	 * No need to create a TOAST table for partitioned tables.
 	 */
@@ -423,39 +412,6 @@ needs_toast_table(Relation rel)
 	if (IsCatalogRelation(rel) && !IsBootstrapProcessingMode())
 		return false;
 
-	tupdesc = rel->rd_att;
-
-	for (i = 0; i < tupdesc->natts; i++)
-	{
-		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
-
-		if (att->attisdropped)
-			continue;
-		data_length = att_align_nominal(data_length, att->attalign);
-		if (att->attlen > 0)
-		{
-			/* Fixed-length types are never toastable */
-			data_length += att->attlen;
-		}
-		else
-		{
-			int32		maxlen = type_maximum_size(att->atttypid,
-												   att->atttypmod);
-
-			if (maxlen < 0)
-				maxlength_unknown = true;
-			else
-				data_length += maxlen;
-			if (att->attstorage != 'p')
-				has_toastable_attrs = true;
-		}
-	}
-	if (!has_toastable_attrs)
-		return false;			/* nothing to toast? */
-	if (maxlength_unknown)
-		return true;			/* any unlimited-length attrs? */
-	tuple_length = MAXALIGN(SizeofHeapTupleHeader +
-							BITMAPLEN(tupdesc->natts)) +
-		MAXALIGN(data_length);
-	return (tuple_length > TOAST_TUPLE_THRESHOLD);
+	/* Otherwise, let the AM decide. */
+	return table_relation_needs_toast_table(rel);
 }
