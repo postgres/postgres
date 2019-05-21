@@ -2903,7 +2903,7 @@ existin
 
       <para>
        This enables the development of new <link linkend="tableam">table
-       access methods</>, which can optimize storage for different
+       access methods</link>, which can optimize storage for different
        use-cases.  The existing <literal>heap</literal> access method
        remains the default.
       </para>
