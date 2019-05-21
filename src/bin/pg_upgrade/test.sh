@@ -70,39 +70,15 @@ export PGHOST
 # don't rely on $PWD here, as old shells don't set it
 temp_root=`pwd`/tmp_check
 
-if [ "$1" = '--install' ]; then
-	temp_install=$temp_root/install
-	bindir=$temp_install/$bindir
-	libdir=$temp_install/$libdir
-
-	"$MAKE" -s -C ../.. install DESTDIR="$temp_install"
-
-	# platform-specific magic to find the shared libraries; see pg_regress.c
-	LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
-	export LD_LIBRARY_PATH
-	DYLD_LIBRARY_PATH=$libdir:$DYLD_LIBRARY_PATH
-	export DYLD_LIBRARY_PATH
-	LIBPATH=$libdir:$LIBPATH
-	export LIBPATH
-	SHLIB_PATH=$libdir:$SHLIB_PATH
-	export SHLIB_PATH
-	PATH=$libdir:$PATH
-
-	# We need to make it use psql from our temporary installation,
-	# because otherwise the installcheck run below would try to
-	# use psql from the proper installation directory, which might
-	# be outdated or missing. But don't override anything else that's
-	# already in EXTRA_REGRESS_OPTS.
-	EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --bindir='$bindir'"
-	export EXTRA_REGRESS_OPTS
-fi
-
 : ${oldbindir=$bindir}
 
 : ${oldsrc=../../..}
 oldsrc=`cd "$oldsrc" && pwd`
 newsrc=`cd ../../.. && pwd`
 
+# While in normal cases this will already be set up, adding bindir to
+# path allows test.sh to be invoked with different versions as
+# described in ./TESTING
 PATH=$bindir:$PATH
 export PATH
 
