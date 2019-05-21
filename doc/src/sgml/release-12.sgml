@@ -2075,13 +2075,10 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Allow <type>RECORD</type> and <type>RECORD[]</type> to be specified
-       as a function <link linkend="sql-createfunction">return-value
-       record</link> (Elvis Pranskevichus)
-      </para>
-
-      <para>
-       DETAIL?
+       Allow <type>RECORD</type> and <type>RECORD[]</type> to be used
+       as column types in a query's column definition list for a <link
+       linkend="sql-createfunction">table function</link> that is declared
+       to return <type>RECORD</type> (Elvis Pranskevichus)
       </para>
      </listitem>
 
