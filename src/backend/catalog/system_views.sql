@@ -258,9 +258,10 @@ CREATE VIEW pg_publication_tables AS
         P.pubname AS pubname,
         N.nspname AS schemaname,
         C.relname AS tablename
-    FROM pg_publication P, pg_class C
-         JOIN pg_namespace N ON (N.oid = C.relnamespace)
-    WHERE C.oid IN (SELECT relid FROM pg_get_publication_tables(P.pubname));
+    FROM pg_publication P,
+         LATERAL pg_get_publication_tables(P.pubname) GPT,
+         pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)
+    WHERE C.oid = GPT.relid;
 
 CREATE VIEW pg_locks AS
     SELECT * FROM pg_lock_status() AS L;
