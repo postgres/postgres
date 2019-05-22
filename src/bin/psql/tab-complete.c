@@ -2101,6 +2101,8 @@ psql_completion(const char *text, int start, int end)
 		 */
 		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
 			COMPLETE_WITH("VERBOSE", "SKIP_LOCKED");
+		else if (TailMatches("VERBOSE|SKIP_LOCKED"))
+			COMPLETE_WITH("ON", "OFF");
 	}
 	else if (HeadMatches("ANALYZE") && TailMatches("("))
 		/* "ANALYZE (" should be caught above, so assume we want columns */

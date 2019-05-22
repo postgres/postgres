@@ -26,8 +26,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
-    VERBOSE
-    SKIP_LOCKED
+    VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
+    SKIP_LOCKED [ <replaceable class="parameter">boolean</replaceable> ]
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
@@ -91,6 +91,20 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
       ordinarily processes all partitions of specified partitioned tables,
       this option will cause <command>ANALYZE</command> to skip all
       partitions if there is a conflicting lock on the partitioned table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">boolean</replaceable></term>
+    <listitem>
+     <para>
+      Specifies whether the selected option should be turned on or off.
+      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
+      <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
+      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
+      <replaceable class="parameter">boolean</replaceable> value can also
+      be omitted, in which case <literal>TRUE</literal> is assumed.
      </para>
     </listitem>
    </varlistentry>

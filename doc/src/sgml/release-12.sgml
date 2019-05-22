@@ -1983,8 +1983,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
       <para>
-       Allow <command>VACUUM</command> to take optional boolean argument
-       specifications (Masahiko Sawada)
+       Allow <command>VACUUM</command> and <command>ANALYZE</command>
+       to take optional boolean argument specifications (Masahiko Sawada)
       </para>
      </listitem>
 
