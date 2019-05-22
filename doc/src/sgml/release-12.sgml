@@ -127,15 +127,20 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 -->
 
      <para>
-      Do not allow multiple different <link
+      Do not allow multiple conflicting <link
       linkend="runtime-config-wal-recovery-target"><varname>recovery_target</varname>*</link>
       specifications (Peter Eisentraut)
      </para>
 
      <para>
-      Previously, multiple different <varname>recovery_target</varname>*
-      variables could be specified, and the last one specified was
-      honored.  Now, only one can be specified, though the same one can
+      Specifically, only allow one of <xref
+      linkend="guc-recovery-target"/>, <xref
+      linkend="guc-recovery-target-lsn"/>,
+      <xref linkend="guc-recovery-target-name"/>,
+      <xref linkend="guc-recovery-target-time"/>, <xref
+      linkend="guc-recovery-target-xid"/>.  Previously, multiple different
+      instances of the variables above could be specified, and the last one
+      was honored.  Now, only one can be specified, though the same one can
       be specified multiple times and the last specification is honored.
      </para>
     </listitem>
