@@ -832,29 +832,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-02-09 [1fb57af92] Create the infrastructure for planner support functions.
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-02-09 [a391ff3c3] Build out the planner support function infrastructure.
--->
-
-       <para>
-        Add support function capability to improve optimizer estimates
-        for functions (Tom Lane)
-       </para>
-
-       <para>
-        This allows extensions to create planner support functions that
-        can provide function-specific selectivity, cost, and row-count
-        estimates that can depend on the function arguments.  Also, improve
-        in-core estimates for <function>generate_series()</function>,
-        <function>unnest()</function>, and functions that return boolean
-        values.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 2018-12-13 [04fe805a1] Drop no-op CoerceToDomain nodes from expressions at plan
 -->
 
@@ -2897,6 +2874,28 @@ existin
        remains the default.
       </para>
      </listitem>
+
+      <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2019-02-09 [1fb57af92] Create the infrastructure for planner support functions.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2019-02-09 [a391ff3c3] Build out the planner support function infrastructure.
+-->
+
+       <para>
+        Add support function capability to improve optimizer estimates,
+        inlining, and indexing for functions (Tom Lane)
+       </para>
+
+       <para>
+        This allows extensions to create planner support functions that
+        can provide function-specific selectivity, cost, and row-count
+        estimates that can depend on the function's arguments.  Support
+        functions can also supply simplified representations and index
+        conditions, greatly expanding optimization possibilities.
+       </para>
+      </listitem>
 
      <listitem>
 <!--
