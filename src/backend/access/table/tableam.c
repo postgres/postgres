@@ -94,7 +94,7 @@ TableScanDesc
 table_beginscan_catalog(Relation relation, int nkeys, struct ScanKeyData *key)
 {
 	uint32		flags = SO_TYPE_SEQSCAN |
-		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE | SO_TEMP_SNAPSHOT;
+	SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE | SO_TEMP_SNAPSHOT;
 	Oid			relid = RelationGetRelid(relation);
 	Snapshot	snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
 
@@ -158,7 +158,7 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc parallel_scan)
 {
 	Snapshot	snapshot;
 	uint32		flags = SO_TYPE_SEQSCAN |
-		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
+	SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
 
 	Assert(RelationGetRelid(relation) == parallel_scan->phs_relid);
 
@@ -223,7 +223,7 @@ table_index_fetch_tuple_check(Relation rel,
 void
 table_get_latest_tid(TableScanDesc scan, ItemPointer tid)
 {
-	Relation rel = scan->rs_rd;
+	Relation	rel = scan->rs_rd;
 	const TableAmRoutine *tableam = rel->rd_tableam;
 
 	/*

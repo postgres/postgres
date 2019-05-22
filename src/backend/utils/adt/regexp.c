@@ -1101,8 +1101,8 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 			/* enlarge output space if needed */
 			while (array_idx + matchctx->npatterns * 2 + 1 > array_len)
 			{
-				array_len += array_len + 1;		/* 2^n-1 => 2^(n+1)-1 */
-				if (array_len > MaxAllocSize/sizeof(int))
+				array_len += array_len + 1; /* 2^n-1 => 2^(n+1)-1 */
+				if (array_len > MaxAllocSize / sizeof(int))
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 							 errmsg("too many regular expression matches")));
@@ -1117,8 +1117,9 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 
 				for (i = 1; i <= matchctx->npatterns; i++)
 				{
-					int		so = pmatch[i].rm_so;
-					int		eo = pmatch[i].rm_eo;
+					int			so = pmatch[i].rm_so;
+					int			eo = pmatch[i].rm_eo;
+
 					matchctx->match_locs[array_idx++] = so;
 					matchctx->match_locs[array_idx++] = eo;
 					if (so >= 0 && eo >= 0 && (eo - so) > maxlen)
@@ -1127,8 +1128,9 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 			}
 			else
 			{
-				int		so = pmatch[0].rm_so;
-				int		eo = pmatch[0].rm_eo;
+				int			so = pmatch[0].rm_so;
+				int			eo = pmatch[0].rm_eo;
+
 				matchctx->match_locs[array_idx++] = so;
 				matchctx->match_locs[array_idx++] = eo;
 				if (so >= 0 && eo >= 0 && (eo - so) > maxlen)
@@ -1190,10 +1192,10 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 		 * interest.
 		 *
 		 * Worst case: assume we need the maximum size (maxlen*eml), but take
-		 * advantage of the fact that the original string length in bytes is an
-		 * upper bound on the byte length of any fetched substring (and we know
-		 * that len+1 is safe to allocate because the varlena header is longer
-		 * than 1 byte).
+		 * advantage of the fact that the original string length in bytes is
+		 * an upper bound on the byte length of any fetched substring (and we
+		 * know that len+1 is safe to allocate because the varlena header is
+		 * longer than 1 byte).
 		 */
 		if (maxsiz > orig_len)
 			conv_bufsiz = orig_len + 1;
@@ -1248,9 +1250,10 @@ build_regexp_match_result(regexp_matches_ctx *matchctx)
 		}
 		else if (buf)
 		{
-			int		len = pg_wchar2mb_with_len(matchctx->wide_str + so,
-											   buf,
-											   eo - so);
+			int			len = pg_wchar2mb_with_len(matchctx->wide_str + so,
+												   buf,
+												   eo - so);
+
 			Assert(len < bufsiz);
 			elems[i] = PointerGetDatum(cstring_to_text_with_len(buf, len));
 			nulls[i] = false;
@@ -1409,15 +1412,15 @@ build_regexp_split_result(regexp_matches_ctx *splitctx)
 
 	if (buf)
 	{
-		int		bufsiz PG_USED_FOR_ASSERTS_ONLY = splitctx->conv_bufsiz;
-		int		len;
+		int			bufsiz PG_USED_FOR_ASSERTS_ONLY = splitctx->conv_bufsiz;
+		int			len;
 
 		endpos = splitctx->match_locs[splitctx->next_match * 2];
 		if (endpos < startpos)
 			elog(ERROR, "invalid match starting position");
 		len = pg_wchar2mb_with_len(splitctx->wide_str + startpos,
 								   buf,
-								   endpos-startpos);
+								   endpos - startpos);
 		Assert(len < bufsiz);
 		return PointerGetDatum(cstring_to_text_with_len(buf, len));
 	}

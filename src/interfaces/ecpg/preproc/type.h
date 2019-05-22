@@ -145,7 +145,7 @@ struct cursor
 /* structure to store declared name */
 struct declared_name_st
 {
-	char	   *name; /* declared name */
+	char	   *name;			/* declared name */
 	struct declared_name_st *next;
 };
 

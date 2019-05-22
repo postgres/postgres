@@ -83,7 +83,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 				 errmsg("function \"%s\" must be fired for INSERT or UPDATE",
 						funcname)));
-		ItemPointerSetInvalid(&checktid);		/* keep compiler quiet */
+		ItemPointerSetInvalid(&checktid);	/* keep compiler quiet */
 	}
 
 	slot = table_slot_create(trigdata->tg_relation, NULL);
@@ -109,7 +109,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	tmptid = checktid;
 	{
 		IndexFetchTableData *scan = table_index_fetch_begin(trigdata->tg_relation);
-		bool call_again = false;
+		bool		call_again = false;
 
 		if (!table_index_fetch_tuple(scan, &tmptid, SnapshotSelf, slot,
 									 &call_again, NULL))

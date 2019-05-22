@@ -313,7 +313,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	 * and "prefer".
 	 */
 	{"gssencmode", "PGGSSENCMODE", DefaultGSSMode, NULL,
-		"GSSENC-Mode", "", 7,		/* sizeof("disable") == 7 */
+		"GSSENC-Mode", "", 7,	/* sizeof("disable") == 7 */
 	offsetof(struct pg_conn, gssencmode)},
 
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
@@ -2420,6 +2420,7 @@ keep_going:						/* We will come back to here until there is
 					getHostaddr(conn, host_addr, NI_MAXHOST);
 					if (strlen(host_addr) > 0)
 						conn->connip = strdup(host_addr);
+
 					/*
 					 * purposely ignore strdup failure; not a big problem if
 					 * it fails anyway.

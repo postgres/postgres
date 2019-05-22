@@ -88,13 +88,13 @@ void
 ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 {
 	VacuumParams params;
-	bool verbose = false;
-	bool skip_locked = false;
-	bool analyze = false;
-	bool freeze = false;
-	bool full = false;
-	bool disable_page_skipping = false;
-	ListCell	*lc;
+	bool		verbose = false;
+	bool		skip_locked = false;
+	bool		analyze = false;
+	bool		freeze = false;
+	bool		full = false;
+	bool		disable_page_skipping = false;
+	ListCell   *lc;
 
 	/* Set default value */
 	params.index_cleanup = VACOPT_TERNARY_DEFAULT;
@@ -103,7 +103,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	/* Parse options list */
 	foreach(lc, vacstmt->options)
 	{
-		DefElem	*opt = (DefElem *) lfirst(lc);
+		DefElem    *opt = (DefElem *) lfirst(lc);
 
 		/* Parse common options for VACUUM and ANALYZE */
 		if (strcmp(opt->defname, "verbose") == 0)
@@ -593,8 +593,9 @@ vacuum_open_relation(Oid relid, RangeVar *relation, int options,
 	/*
 	 * Determine the log level.
 	 *
-	 * For manual VACUUM or ANALYZE, we emit a WARNING to match the log statements
-	 * in the permission checks; otherwise, only log if the caller so requested.
+	 * For manual VACUUM or ANALYZE, we emit a WARNING to match the log
+	 * statements in the permission checks; otherwise, only log if the caller
+	 * so requested.
 	 */
 	if (!IsAutoVacuumWorkerProcess())
 		elevel = WARNING;
@@ -1328,9 +1329,9 @@ vac_update_datfrozenxid(void)
 		}
 
 		/*
-		 * Some table AMs might not need per-relation xid / multixid
-		 * horizons. It therefore seems reasonable to allow relfrozenxid and
-		 * relminmxid to not be set (i.e. set to their respective Invalid*Id)
+		 * Some table AMs might not need per-relation xid / multixid horizons.
+		 * It therefore seems reasonable to allow relfrozenxid and relminmxid
+		 * to not be set (i.e. set to their respective Invalid*Id)
 		 * independently. Thus validate and compute horizon for each only if
 		 * set.
 		 *

@@ -561,7 +561,7 @@ char *
 pg_any_to_server(const char *s, int len, int encoding)
 {
 	if (len <= 0)
-		return unconstify(char *, s);		/* empty string is always valid */
+		return unconstify(char *, s);	/* empty string is always valid */
 
 	if (encoding == DatabaseEncoding->encoding ||
 		encoding == PG_SQL_ASCII)
@@ -634,11 +634,11 @@ char *
 pg_server_to_any(const char *s, int len, int encoding)
 {
 	if (len <= 0)
-		return unconstify(char *, s);		/* empty string is always valid */
+		return unconstify(char *, s);	/* empty string is always valid */
 
 	if (encoding == DatabaseEncoding->encoding ||
 		encoding == PG_SQL_ASCII)
-		return unconstify(char *, s);		/* assume data is valid */
+		return unconstify(char *, s);	/* assume data is valid */
 
 	if (DatabaseEncoding->encoding == PG_SQL_ASCII)
 	{

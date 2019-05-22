@@ -700,10 +700,10 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 	Assert(HeapTupleIsValid(tup));
 
 	/* Build the TupleTableSlot for the given tuple */
-	ExecStoreHeapTuple(tup,			/* tuple to store */
+	ExecStoreHeapTuple(tup,		/* tuple to store */
 					   gm_state->gm_slots[reader],	/* slot in which to store
 													 * the tuple */
-					   true);		/* pfree tuple when done with it */
+					   true);	/* pfree tuple when done with it */
 
 	return true;
 }

@@ -68,10 +68,10 @@ static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
 
 static int ssl_protocol_version_to_openssl(int v, const char *guc_name,
-										   int loglevel);
+								int loglevel);
 #ifndef SSL_CTX_set_min_proto_version
-static int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
-static int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
+static int	SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
+static int	SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
 #endif
 
 
@@ -192,9 +192,10 @@ be_tls_init(bool isServerStart)
 
 	if (ssl_min_protocol_version)
 	{
-		int ssl_ver = ssl_protocol_version_to_openssl(ssl_min_protocol_version,
-													  "ssl_min_protocol_version",
-													  isServerStart ? FATAL : LOG);
+		int			ssl_ver = ssl_protocol_version_to_openssl(ssl_min_protocol_version,
+															  "ssl_min_protocol_version",
+															  isServerStart ? FATAL : LOG);
+
 		if (ssl_ver == -1)
 			goto error;
 		SSL_CTX_set_min_proto_version(context, ssl_ver);
@@ -202,9 +203,10 @@ be_tls_init(bool isServerStart)
 
 	if (ssl_max_protocol_version)
 	{
-		int ssl_ver = ssl_protocol_version_to_openssl(ssl_max_protocol_version,
-													  "ssl_max_protocol_version",
-													  isServerStart ? FATAL : LOG);
+		int			ssl_ver = ssl_protocol_version_to_openssl(ssl_max_protocol_version,
+															  "ssl_max_protocol_version",
+															  isServerStart ? FATAL : LOG);
+
 		if (ssl_ver == -1)
 			goto error;
 		SSL_CTX_set_max_proto_version(context, ssl_ver);
@@ -1150,6 +1152,7 @@ be_tls_get_peer_serial(Port *port, char *ptr, size_t len)
 		serial = X509_get_serialNumber(port->peer);
 		b = ASN1_INTEGER_to_BN(serial, NULL);
 		decimal = BN_bn2dec(b);
+
 		BN_free(b);
 		strlcpy(ptr, decimal, len);
 		OPENSSL_free(decimal);

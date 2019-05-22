@@ -1684,8 +1684,8 @@ void
 heap_get_latest_tid(TableScanDesc sscan,
 					ItemPointer tid)
 {
-	Relation relation = sscan->rs_rd;
-	Snapshot snapshot = sscan->rs_snapshot;
+	Relation	relation = sscan->rs_rd;
+	Snapshot	snapshot = sscan->rs_snapshot;
 	ItemPointerData ctid;
 	TransactionId priorXmax;
 

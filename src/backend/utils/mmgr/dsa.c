@@ -1676,6 +1676,7 @@ ensure_active_superblock(dsa_area *area, dsa_area_pool *pool,
 			return false;
 		}
 	}
+
 	/*
 	 * This shouldn't happen: get_best_segment() or make_new_segment()
 	 * promised that we can successfully allocate npages.
@@ -2267,7 +2268,7 @@ static void
 check_for_freed_segments_locked(dsa_area *area)
 {
 	size_t		freed_segment_counter;
-	int		i;
+	int			i;
 
 	Assert(LWLockHeldByMe(DSA_AREA_LOCK(area)));
 	freed_segment_counter = area->control->freed_segment_counter;

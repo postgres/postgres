@@ -1021,9 +1021,9 @@ findParentsByOid(TableInfo *self,
 				if (parent == NULL)
 				{
 					pg_log_error("failed sanity check, parent OID %u of table \"%s\" (OID %u) not found",
-							  inhinfo[i].inhparent,
-							  self->dobj.name,
-							  oid);
+								 inhinfo[i].inhparent,
+								 self->dobj.name,
+								 oid);
 					exit_nicely(1);
 				}
 				self->parents[j++] = parent;

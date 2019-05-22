@@ -553,10 +553,10 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 					const char *errmsg = gzerror(th->zFH, &errnum);
 
 					fatal("could not read from input file: %s",
-								  errnum == Z_ERRNO ? strerror(errno) : errmsg);
+						  errnum == Z_ERRNO ? strerror(errno) : errmsg);
 #else
 					fatal("could not read from input file: %s",
-								  strerror(errno));
+						  strerror(errno));
 #endif
 				}
 			}
@@ -691,7 +691,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 			if (pos1 < 6 || strncmp(te->copyStmt, "COPY ", 5) != 0 ||
 				strcmp(te->copyStmt + pos1, " FROM stdin;\n") != 0)
 				fatal("unexpected COPY statement syntax: \"%s\"",
-							  te->copyStmt);
+					  te->copyStmt);
 
 			/* Emit all but the FROM part ... */
 			ahwrite(te->copyStmt, 1, pos1, AH);
@@ -1113,7 +1113,7 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 		snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) len);
 		snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) th->fileLen);
 		fatal("actual file length (%s) does not match expected (%s)",
-					  buf1, buf2);
+			  buf1, buf2);
 	}
 
 	pad = ((len + 511) & ~511) - len;
@@ -1150,7 +1150,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) ctx->tarFHpos);
 		snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) ctx->tarNextMember);
 		pg_log_debug("moving from position %s to next member at file position %s",
-			  buf1, buf2);
+					 buf1, buf2);
 
 		while (ctx->tarFHpos < ctx->tarNextMember)
 			_tarReadRaw(AH, &c, 1, NULL, ctx->tarFH);
@@ -1188,8 +1188,8 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		id = atoi(th->targetFile);
 		if ((TocIDRequired(AH, id) & REQ_DATA) != 0)
 			fatal("restoring data out of order is not supported in this archive format: "
-						  "\"%s\" is required, but comes before \"%s\" in the archive file.",
-						  th->targetFile, filename);
+				  "\"%s\" is required, but comes before \"%s\" in the archive file.",
+				  th->targetFile, filename);
 
 		/* Header doesn't match, so read to next header */
 		len = ((th->fileLen + 511) & ~511); /* Padded length */
@@ -1234,8 +1234,8 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		if (len != 512)
 			fatal(ngettext("incomplete tar header found (%lu byte)",
 						   "incomplete tar header found (%lu bytes)",
-								   len),
-						  (unsigned long) len);
+						   len),
+				  (unsigned long) len);
 
 		/* Calc checksum */
 		chk = tarChecksum(h);
@@ -1274,7 +1274,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT, (uint64) hPos);
 		snprintf(lenbuf, sizeof(lenbuf), UINT64_FORMAT, (uint64) len);
 		pg_log_debug("TOC Entry %s at %s (length %s, checksum %d)",
-			  tag, posbuf, lenbuf, sum);
+					 tag, posbuf, lenbuf, sum);
 	}
 
 	if (chk != sum)
@@ -1284,7 +1284,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT,
 				 (uint64) ftello(ctx->tarFH));
 		fatal("corrupt tar header found in %s (expected %d, computed %d) file position %s",
-					  tag, sum, chk, posbuf);
+			  tag, sum, chk, posbuf);
 	}
 
 	th->targetFile = pg_strdup(tag);

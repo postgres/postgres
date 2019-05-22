@@ -185,7 +185,7 @@ static const char *default_timezone = NULL;
 "# allows any local user to connect as any PostgreSQL user, including\n" \
 "# the database superuser.  If you do not trust all your local users,\n" \
 "# use another authentication method.\n"
-static bool	authwarning = false;
+static bool authwarning = false;
 
 /*
  * Centralized knowledge of switches to pass to backend
@@ -2431,11 +2431,11 @@ check_need_password(const char *authmethodlocal, const char *authmethodhost)
 		!(pwprompt || pwfilename))
 	{
 		pg_log_error("must specify a password for the superuser to enable %s authentication",
-				(strcmp(authmethodlocal, "md5") == 0 ||
-				 strcmp(authmethodlocal, "password") == 0 ||
-				 strcmp(authmethodlocal, "scram-sha-256") == 0)
-				? authmethodlocal
-				: authmethodhost);
+					 (strcmp(authmethodlocal, "md5") == 0 ||
+					  strcmp(authmethodlocal, "password") == 0 ||
+					  strcmp(authmethodlocal, "scram-sha-256") == 0)
+					 ? authmethodlocal
+					 : authmethodhost);
 		exit(1);
 	}
 }
@@ -3067,8 +3067,8 @@ main(int argc, char *argv[])
 	char		pg_ctl_path[MAXPGPATH];
 
 	/*
-	 * Ensure that buffering behavior of stdout matches what it is
-	 * in interactive usage (at least on most platforms).  This prevents
+	 * Ensure that buffering behavior of stdout matches what it is in
+	 * interactive usage (at least on most platforms).  This prevents
 	 * unexpected output ordering when, eg, output is redirected to a file.
 	 * POSIX says we must do this before any other usage of these files.
 	 */

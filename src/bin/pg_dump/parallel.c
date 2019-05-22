@@ -1158,7 +1158,7 @@ parseWorkerCommand(ArchiveHandle *AH, TocEntry **te, T_Action *act,
 	}
 	else
 		fatal("unrecognized command received from master: \"%s\"",
-					  msg);
+			  msg);
 }
 
 /*
@@ -1201,7 +1201,7 @@ parseWorkerResponse(ArchiveHandle *AH, TocEntry *te,
 	}
 	else
 		fatal("invalid message received from worker: \"%s\"",
-					  msg);
+			  msg);
 
 	return status;
 }
@@ -1439,7 +1439,7 @@ ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait)
 	}
 	else
 		fatal("invalid message received from worker: \"%s\"",
-					  msg);
+			  msg);
 
 	/* Free the string returned from getMessageFromWorker */
 	free(msg);
@@ -1744,7 +1744,7 @@ pgpipe(int handles[2])
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
 	{
 		pg_log_error("pgpipe: could not create socket: error code %d",
-				  WSAGetLastError());
+					 WSAGetLastError());
 		return -1;
 	}
 
@@ -1755,21 +1755,21 @@ pgpipe(int handles[2])
 	if (bind(s, (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
 		pg_log_error("pgpipe: could not bind: error code %d",
-				  WSAGetLastError());
+					 WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
 	if (listen(s, 1) == SOCKET_ERROR)
 	{
 		pg_log_error("pgpipe: could not listen: error code %d",
-				  WSAGetLastError());
+					 WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
 	if (getsockname(s, (SOCKADDR *) &serv_addr, &len) == SOCKET_ERROR)
 	{
 		pg_log_error("pgpipe: getsockname() failed: error code %d",
-				  WSAGetLastError());
+					 WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
@@ -1780,7 +1780,7 @@ pgpipe(int handles[2])
 	if ((tmp_sock = socket(AF_INET, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
 	{
 		pg_log_error("pgpipe: could not create second socket: error code %d",
-				  WSAGetLastError());
+					 WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
@@ -1789,7 +1789,7 @@ pgpipe(int handles[2])
 	if (connect(handles[1], (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
 		pg_log_error("pgpipe: could not connect socket: error code %d",
-				  WSAGetLastError());
+					 WSAGetLastError());
 		closesocket(handles[1]);
 		handles[1] = -1;
 		closesocket(s);
@@ -1798,7 +1798,7 @@ pgpipe(int handles[2])
 	if ((tmp_sock = accept(s, (SOCKADDR *) &serv_addr, &len)) == PGINVALID_SOCKET)
 	{
 		pg_log_error("pgpipe: could not accept connection: error code %d",
-				  WSAGetLastError());
+					 WSAGetLastError());
 		closesocket(handles[1]);
 		handles[1] = -1;
 		closesocket(s);

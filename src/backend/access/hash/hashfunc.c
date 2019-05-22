@@ -246,7 +246,7 @@ hashtext(PG_FUNCTION_ARGS)
 {
 	text	   *key = PG_GETARG_TEXT_PP(0);
 	Oid			collid = PG_GET_COLLATION();
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 	Datum		result;
 
 	if (!collid)
@@ -271,7 +271,7 @@ hashtext(PG_FUNCTION_ARGS)
 			int32_t		ulen = -1;
 			UChar	   *uchar = NULL;
 			Size		bsize;
-			uint8_t	   *buf;
+			uint8_t    *buf;
 
 			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
@@ -302,7 +302,7 @@ hashtextextended(PG_FUNCTION_ARGS)
 {
 	text	   *key = PG_GETARG_TEXT_PP(0);
 	Oid			collid = PG_GET_COLLATION();
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 	Datum		result;
 
 	if (!collid)
@@ -328,7 +328,7 @@ hashtextextended(PG_FUNCTION_ARGS)
 			int32_t		ulen = -1;
 			UChar	   *uchar = NULL;
 			Size		bsize;
-			uint8_t	   *buf;
+			uint8_t    *buf;
 
 			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 

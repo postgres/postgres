@@ -146,7 +146,7 @@ typedef struct SpGistSearchItem
 
 	/* array with numberOfOrderBys entries */
 	double		distances[FLEXIBLE_ARRAY_MEMBER];
-}			SpGistSearchItem;
+} SpGistSearchItem;
 
 #define SizeOfSpGistSearchItem(n_distances) \
 	(offsetof(SpGistSearchItem, distances) + sizeof(double) * (n_distances))

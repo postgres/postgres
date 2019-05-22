@@ -548,8 +548,8 @@ RegisterSyncRequest(const FileTag *ftag, SyncRequestType type,
 	for (;;)
 	{
 		/*
-		 * Notify the checkpointer about it.  If we fail to queue a message
-		 * in retryOnError mode, we have to sleep and try again ... ugly, but
+		 * Notify the checkpointer about it.  If we fail to queue a message in
+		 * retryOnError mode, we have to sleep and try again ... ugly, but
 		 * hopefully won't happen often.
 		 *
 		 * XXX should we CHECK_FOR_INTERRUPTS in this loop?  Escaping with an

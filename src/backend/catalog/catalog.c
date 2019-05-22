@@ -476,15 +476,15 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 Datum
 pg_nextoid(PG_FUNCTION_ARGS)
 {
-	Oid		reloid = PG_GETARG_OID(0);
-	Name	attname = PG_GETARG_NAME(1);
-	Oid		idxoid = PG_GETARG_OID(2);
-	Relation rel;
-	Relation idx;
-	HeapTuple atttuple;
+	Oid			reloid = PG_GETARG_OID(0);
+	Name		attname = PG_GETARG_NAME(1);
+	Oid			idxoid = PG_GETARG_OID(2);
+	Relation	rel;
+	Relation	idx;
+	HeapTuple	atttuple;
 	Form_pg_attribute attform;
-	AttrNumber attno;
-	Oid		newoid;
+	AttrNumber	attno;
+	Oid			newoid;
 
 	/*
 	 * As this function is not intended to be used during normal running, and

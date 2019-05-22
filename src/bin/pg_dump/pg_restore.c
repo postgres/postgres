@@ -410,7 +410,7 @@ main(int argc, char **argv)
 
 			default:
 				pg_log_error("unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"",
-						  opts->formatName);
+							 opts->formatName);
 				exit_nicely(1);
 		}
 	}

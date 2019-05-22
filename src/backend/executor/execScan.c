@@ -81,7 +81,8 @@ ExecScanFetch(ScanState *node,
 
 			/* Check if it meets the access-method conditions */
 			if (!(*recheckMtd) (node, slot))
-				return ExecClearTuple(slot);	/* would not be returned by scan */
+				return ExecClearTuple(slot);	/* would not be returned by
+												 * scan */
 
 			return slot;
 		}

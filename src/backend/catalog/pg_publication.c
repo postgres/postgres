@@ -317,7 +317,7 @@ GetAllTablesPublications(void)
 	result = NIL;
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		Oid		oid = ((Form_pg_publication) GETSTRUCT(tup))->oid;
+		Oid			oid = ((Form_pg_publication) GETSTRUCT(tup))->oid;
 
 		result = lappend_oid(result, oid);
 	}

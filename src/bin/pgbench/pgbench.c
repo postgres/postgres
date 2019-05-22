@@ -217,7 +217,7 @@ bool		progress_timestamp = false; /* progress report with Unix time */
 int			nclients = 1;		/* number of clients */
 int			nthreads = 1;		/* number of threads */
 bool		is_connect;			/* establish connection for each transaction */
-bool		report_per_command;	/* report per-command latencies */
+bool		report_per_command; /* report per-command latencies */
 int			main_pid;			/* main process id used in log filename */
 
 char	   *pghost = "";
@@ -422,11 +422,11 @@ typedef struct
 
 	/*
 	 * Separate randomness for each thread. Each thread option uses its own
-	 * random state to make all of them independent of each other and therefore
-	 * deterministic at the thread level.
+	 * random state to make all of them independent of each other and
+	 * therefore deterministic at the thread level.
 	 */
 	RandomState ts_choose_rs;	/* random state for selecting a script */
-	RandomState ts_throttle_rs;	/* random state for transaction throttling */
+	RandomState ts_throttle_rs; /* random state for transaction throttling */
 	RandomState ts_sample_rs;	/* random state for log sampling */
 
 	int64		throttle_trigger;	/* previous/next throttling (us) */
@@ -777,7 +777,7 @@ invalid_syntax:
 bool
 strtodouble(const char *str, bool errorOK, double *dv)
 {
-	char *end;
+	char	   *end;
 
 	errno = 0;
 	*dv = strtod(str, &end);
@@ -1322,7 +1322,7 @@ makeVariableValue(Variable *var)
 	else if (is_an_int(var->svalue))
 	{
 		/* if it looks like an int, it must be an int without overflow */
-		int64 iv;
+		int64		iv;
 
 		if (!strtoint64(var->svalue, false, &iv))
 			return false;
@@ -2725,7 +2725,7 @@ readCommandResponse(CState *st, char *varprefix)
 
 	while (res != NULL)
 	{
-		bool	is_last;
+		bool		is_last;
 
 		/* peek at the next result to know whether the current is last */
 		next_res = PQgetResult(st->con);

@@ -25,14 +25,14 @@ static bool find_cursor(const char *, const struct connection *);
  *		others --- keep same as the parameters in ECPGdo() function
  */
 bool
-ECPGopen(const char *cursor_name,const char *prepared_name,
-		const int lineno, const int compat,const int force_indicator,
-		const char *connection_name, const bool questionmarks,
-		const int st, const char *query,...)
+ECPGopen(const char *cursor_name, const char *prepared_name,
+		 const int lineno, const int compat, const int force_indicator,
+		 const char *connection_name, const bool questionmarks,
+		 const int st, const char *query,...)
 {
 	va_list		args;
 	bool		status;
-	const char	*real_connection_name = NULL;
+	const char *real_connection_name = NULL;
 
 	if (!query)
 	{
@@ -53,8 +53,8 @@ ECPGopen(const char *cursor_name,const char *prepared_name,
 	else
 	{
 		/*
-		 * If can't get the connection name by declared name then using connection name
-		 * coming from the parameter connection_name
+		 * If can't get the connection name by declared name then using
+		 * connection name coming from the parameter connection_name
 		 */
 		real_connection_name = connection_name;
 	}
@@ -81,13 +81,13 @@ ECPGopen(const char *cursor_name,const char *prepared_name,
  */
 bool
 ECPGfetch(const char *cursor_name,
-		const int lineno, const int compat,const int force_indicator,
-		const char *connection_name, const bool questionmarks,
-		const int st, const char *query,...)
+		  const int lineno, const int compat, const int force_indicator,
+		  const char *connection_name, const bool questionmarks,
+		  const int st, const char *query,...)
 {
 	va_list		args;
 	bool		status;
-	const char	*real_connection_name = NULL;
+	const char *real_connection_name = NULL;
 
 	if (!query)
 	{
@@ -99,8 +99,8 @@ ECPGfetch(const char *cursor_name,
 	if (real_connection_name == NULL)
 	{
 		/*
-		 * If can't get the connection name by cursor name then using connection name
-		 * coming from the parameter connection_name
+		 * If can't get the connection name by cursor name then using
+		 * connection name coming from the parameter connection_name
 		 */
 		real_connection_name = connection_name;
 	}
@@ -123,13 +123,13 @@ ECPGfetch(const char *cursor_name,
  */
 bool
 ECPGclose(const char *cursor_name,
-		const int lineno, const int compat,const int force_indicator,
-		const char *connection_name, const bool questionmarks,
-		const int st, const char *query,...)
+		  const int lineno, const int compat, const int force_indicator,
+		  const char *connection_name, const bool questionmarks,
+		  const int st, const char *query,...)
 {
 	va_list		args;
 	bool		status;
-	const char	*real_connection_name = NULL;
+	const char *real_connection_name = NULL;
 	struct connection *con = NULL;
 
 	if (!query)
@@ -142,8 +142,8 @@ ECPGclose(const char *cursor_name,
 	if (real_connection_name == NULL)
 	{
 		/*
-		 * If can't get the connection name by cursor name then using connection name
-		 * coming from the parameter connection_name
+		 * If can't get the connection name by cursor name then using
+		 * connection name coming from the parameter connection_name
 		 */
 		real_connection_name = connection_name;
 	}
@@ -192,12 +192,12 @@ add_cursor(const int lineno, const char *cursor_name, const char *connection_nam
 	if (!con)
 	{
 		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
-			   connection_name ? connection_name : ecpg_gettext("NULL"));
+				   connection_name ? connection_name : ecpg_gettext("NULL"));
 		return;
 	}
 
 	/* allocate a node to store the new cursor */
-	new = (struct cursor_statement *)ecpg_alloc(sizeof(struct cursor_statement), lineno);
+	new = (struct cursor_statement *) ecpg_alloc(sizeof(struct cursor_statement), lineno);
 	if (new)
 	{
 		new->name = ecpg_strdup(cursor_name, lineno);

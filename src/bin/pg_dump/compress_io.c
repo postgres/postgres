@@ -235,7 +235,7 @@ InitCompressorZlib(CompressorState *cs, int level)
 
 	if (deflateInit(zp, level) != Z_OK)
 		fatal("could not initialize compression library: %s",
-					  zp->msg);
+			  zp->msg);
 
 	/* Just be paranoid - maybe End is called after Start, with no Write */
 	zp->next_out = (void *) cs->zlibOut;
@@ -334,7 +334,7 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 
 	if (inflateInit(zp) != Z_OK)
 		fatal("could not initialize compression library: %s",
-					  zp->msg);
+			  zp->msg);
 
 	/* no minimal chunk size for zlib */
 	while ((cnt = readF(AH, &buf, &buflen)))
@@ -586,7 +586,7 @@ cfread(void *ptr, int size, cfp *fp)
 			const char *errmsg = gzerror(fp->compressedfp, &errnum);
 
 			fatal("could not read from input file: %s",
-						  errnum == Z_ERRNO ? strerror(errno) : errmsg);
+				  errnum == Z_ERRNO ? strerror(errno) : errmsg);
 		}
 	}
 	else

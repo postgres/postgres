@@ -152,7 +152,7 @@ GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation
 {
 	if (collation && !lc_ctype_is_c(collation) && collation != DEFAULT_COLLATION_OID)
 	{
-		pg_locale_t		locale = pg_newlocale_from_collation(collation);
+		pg_locale_t locale = pg_newlocale_from_collation(collation);
 
 		if (locale && !locale->deterministic)
 			ereport(ERROR,

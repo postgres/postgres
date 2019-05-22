@@ -262,9 +262,9 @@ match_pattern_prefix(Node *leftop,
 	 * optimized equality or prefix tests use bytewise comparisons, which is
 	 * not consistent with nondeterministic collations.  The actual
 	 * pattern-matching implementation functions will later error out that
-	 * pattern-matching is not supported with nondeterministic collations.
-	 * (We could also error out here, but by doing it later we get more
-	 * precise error messages.)  (It should be possible to support at least
+	 * pattern-matching is not supported with nondeterministic collations. (We
+	 * could also error out here, but by doing it later we get more precise
+	 * error messages.)  (It should be possible to support at least
 	 * Pattern_Prefix_Exact, but no point as along as the actual
 	 * pattern-matching implementations don't support it.)
 	 *

@@ -184,7 +184,7 @@ pt_in_widget(PG_FUNCTION_ARGS)
 
 	distance = DatumGetFloat8(DirectFunctionCall2(point_distance,
 												  PointPGetDatum(point),
-											PointPGetDatum(&widget->center)));
+												  PointPGetDatum(&widget->center)));
 
 	PG_RETURN_BOOL(distance < widget->radius);
 }

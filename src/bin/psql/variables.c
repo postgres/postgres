@@ -139,7 +139,7 @@ ParseVariableBool(const char *value, const char *name, bool *result)
 		/* string is not recognized; don't clobber *result */
 		if (name)
 			pg_log_error("unrecognized value \"%s\" for \"%s\": Boolean expected",
-					   value, name);
+						 value, name);
 		valid = false;
 	}
 	return valid;
@@ -176,7 +176,7 @@ ParseVariableNum(const char *value, const char *name, int *result)
 		/* string is not recognized; don't clobber *result */
 		if (name)
 			pg_log_error("invalid value \"%s\" for \"%s\": integer expected",
-					   value, name);
+						 value, name);
 		return false;
 	}
 }
@@ -394,5 +394,5 @@ PsqlVarEnumError(const char *name, const char *value, const char *suggestions)
 {
 	pg_log_error("unrecognized value \"%s\" for \"%s\"\n"
 				 "Available values are: %s.",
-			   value, name, suggestions);
+				 value, name, suggestions);
 }

@@ -53,7 +53,7 @@ _check_database_version(ArchiveHandle *AH)
 			remoteversion > AH->public.maxRemoteVersion))
 	{
 		pg_log_error("server version: %s; %s version: %s",
-				  remoteversion_str, progname, PG_VERSION);
+					 remoteversion_str, progname, PG_VERSION);
 		fatal("aborting because of server version mismatch");
 	}
 
@@ -138,7 +138,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		newuser = requser;
 
 	pg_log_info("connecting to database \"%s\" as user \"%s\"",
-		  newdb, newuser);
+				newdb, newuser);
 
 	password = AH->savedPassword;
 
@@ -182,7 +182,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		{
 			if (!PQconnectionNeedsPassword(newConn))
 				fatal("could not reconnect to database: %s",
-							  PQerrorMessage(newConn));
+					  PQerrorMessage(newConn));
 			PQfinish(newConn);
 
 			if (password)
@@ -304,8 +304,8 @@ ConnectDatabase(Archive *AHX,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 		fatal("connection to database \"%s\" failed: %s",
-					  PQdb(AH->connection) ? PQdb(AH->connection) : "",
-					  PQerrorMessage(AH->connection));
+			  PQdb(AH->connection) ? PQdb(AH->connection) : "",
+			  PQerrorMessage(AH->connection));
 
 	/* Start strict; later phases may override this. */
 	PQclear(ExecuteSqlQueryForSingleRow((Archive *) AH,
@@ -383,7 +383,7 @@ static void
 die_on_query_failure(ArchiveHandle *AH, const char *query)
 {
 	pg_log_error("query failed: %s",
-			  PQerrorMessage(AH->connection));
+				 PQerrorMessage(AH->connection));
 	fatal("query was: %s", query);
 }
 
@@ -427,8 +427,8 @@ ExecuteSqlQueryForSingleRow(Archive *fout, const char *query)
 	if (ntups != 1)
 		fatal(ngettext("query returned %d row instead of one: %s",
 					   "query returned %d rows instead of one: %s",
-							   ntups),
-					  ntups, query);
+					   ntups),
+			  ntups, query);
 
 	return res;
 }
@@ -571,7 +571,7 @@ ExecuteSqlCommandBuf(Archive *AHX, const char *buf, size_t bufLen)
 		if (AH->pgCopyIn &&
 			PQputCopyData(AH->connection, buf, bufLen) <= 0)
 			fatal("error returned by PQputCopyData: %s",
-						  PQerrorMessage(AH->connection));
+				  PQerrorMessage(AH->connection));
 	}
 	else if (AH->outputKind == OUTPUT_OTHERDATA)
 	{
@@ -620,7 +620,7 @@ EndDBCopyMode(Archive *AHX, const char *tocEntryTag)
 
 		if (PQputCopyEnd(AH->connection, NULL) <= 0)
 			fatal("error returned by PQputCopyEnd: %s",
-						  PQerrorMessage(AH->connection));
+				  PQerrorMessage(AH->connection));
 
 		/* Check command status and return to normal libpq state */
 		res = PQgetResult(AH->connection);
@@ -632,7 +632,7 @@ EndDBCopyMode(Archive *AHX, const char *tocEntryTag)
 		/* Do this to ensure we've pumped libpq back to idle state */
 		if (PQgetResult(AH->connection) != NULL)
 			pg_log_warning("unexpected extra results during COPY of table \"%s\"",
-					  tocEntryTag);
+						   tocEntryTag);
 
 		AH->pgCopyIn = false;
 	}

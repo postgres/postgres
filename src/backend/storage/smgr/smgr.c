@@ -91,7 +91,7 @@ static const int NSmgr = lengthof(smgrsw);
  */
 static HTAB *SMgrRelationHash = NULL;
 
-static dlist_head	unowned_relns;
+static dlist_head unowned_relns;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
@@ -713,7 +713,7 @@ smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 void
 AtEOXact_SMgr(void)
 {
-	dlist_mutable_iter	iter;
+	dlist_mutable_iter iter;
 
 	/*
 	 * Zap all unowned SMgrRelations.  We rely on smgrclose() to remove each
@@ -721,8 +721,8 @@ AtEOXact_SMgr(void)
 	 */
 	dlist_foreach_modify(iter, &unowned_relns)
 	{
-		SMgrRelation	rel = dlist_container(SMgrRelationData, node,
-											  iter.cur);
+		SMgrRelation rel = dlist_container(SMgrRelationData, node,
+										   iter.cur);
 
 		Assert(rel->smgr_owner == NULL);
 

@@ -1811,11 +1811,11 @@ _bt_insert_parent(Relation rel,
 		/*
 		 * Re-find and write lock the parent of buf.
 		 *
-		 * It's possible that the location of buf's downlink has changed
-		 * since our initial _bt_search() descent.  _bt_getstackbuf() will
-		 * detect and recover from this, updating the stack, which ensures
-		 * that the new downlink will be inserted at the correct offset.
-		 * Even buf's parent may have changed.
+		 * It's possible that the location of buf's downlink has changed since
+		 * our initial _bt_search() descent.  _bt_getstackbuf() will detect
+		 * and recover from this, updating the stack, which ensures that the
+		 * new downlink will be inserted at the correct offset. Even buf's
+		 * parent may have changed.
 		 */
 		stack->bts_btentry = bknum;
 		pbuf = _bt_getstackbuf(rel, stack);

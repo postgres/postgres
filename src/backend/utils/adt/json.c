@@ -207,7 +207,7 @@ IsValidJsonNumber(const char *str, int len)
 	 */
 	if (*str == '-')
 	{
-		dummy_lex.input = unconstify(char *, str) + 1;
+		dummy_lex.input = unconstify(char *, str) +1;
 		dummy_lex.input_length = len - 1;
 	}
 	else
@@ -2192,7 +2192,7 @@ json_build_object(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument list must have even number of elements"),
-				 /* translator: %s is a SQL function name */
+		/* translator: %s is a SQL function name */
 				 errhint("The arguments of %s must consist of alternating keys and values.",
 						 "json_build_object()")));
 

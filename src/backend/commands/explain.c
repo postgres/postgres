@@ -606,7 +606,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 static void
 ExplainPrintSettings(ExplainState *es)
 {
-	int		num;
+	int			num;
 	struct config_generic **gucs;
 
 	/* bail out if information about settings not requested */
@@ -622,13 +622,13 @@ ExplainPrintSettings(ExplainState *es)
 
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-		int		i;
+		int			i;
 
 		ExplainOpenGroup("Settings", "Settings", true, es);
 
 		for (i = 0; i < num; i++)
 		{
-			char *setting;
+			char	   *setting;
 			struct config_generic *conf = gucs[i];
 
 			setting = GetConfigOptionByName(conf->name, NULL, true);
@@ -640,14 +640,14 @@ ExplainPrintSettings(ExplainState *es)
 	}
 	else
 	{
-		int		i;
-		StringInfoData	str;
+		int			i;
+		StringInfoData str;
 
 		initStringInfo(&str);
 
 		for (i = 0; i < num; i++)
 		{
-			char *setting;
+			char	   *setting;
 			struct config_generic *conf = gucs[i];
 
 			if (i > 0)
@@ -705,8 +705,8 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	ExplainNode(ps, NIL, NULL, NULL, es);
 
 	/*
-	 * If requested, include information about GUC parameters with values
-	 * that don't match the built-in defaults.
+	 * If requested, include information about GUC parameters with values that
+	 * don't match the built-in defaults.
 	 */
 	ExplainPrintSettings(es);
 }
@@ -1674,7 +1674,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				if (es->costs && es->verbose &&
 					outerPlanState(planstate)->worker_jit_instrument)
 				{
-					PlanState *child = outerPlanState(planstate);
+					PlanState  *child = outerPlanState(planstate);
 					int			n;
 					SharedJitInstrumentation *w = child->worker_jit_instrument;
 

@@ -216,7 +216,7 @@ typedef struct IndexAmRoutine
 	amcostestimate_function amcostestimate;
 	amoptions_function amoptions;
 	amproperty_function amproperty; /* can be NULL */
-	ambuildphasename_function ambuildphasename;	/* can be NULL */
+	ambuildphasename_function ambuildphasename; /* can be NULL */
 	amvalidate_function amvalidate;
 	ambeginscan_function ambeginscan;
 	amrescan_function amrescan;

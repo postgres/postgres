@@ -2138,7 +2138,7 @@ typedef struct Constraint
 	bool		is_no_inherit;	/* is constraint non-inheritable? */
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
-	char		generated_when;	/* ALWAYS or BY DEFAULT */
+	char		generated_when; /* ALWAYS or BY DEFAULT */
 	char		generated_kind; /* currently always STORED */
 
 	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
@@ -3174,7 +3174,7 @@ typedef struct ClusterStmt
 typedef struct VacuumStmt
 {
 	NodeTag		type;
-	List		*options;		/* list of DefElem nodes */
+	List	   *options;		/* list of DefElem nodes */
 	List	   *rels;			/* list of VacuumRelation, or NIL for all */
 	bool		is_vacuumcmd;	/* true for VACUUM, false for ANALYZE */
 } VacuumStmt;

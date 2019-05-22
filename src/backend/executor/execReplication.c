@@ -227,7 +227,7 @@ retry:
 static bool
 tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2)
 {
-	int         attrnum;
+	int			attrnum;
 
 	Assert(slot1->tts_tupleDescriptor->natts ==
 		   slot2->tts_tupleDescriptor->natts);
@@ -265,8 +265,8 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2)
 
 		if (!DatumGetBool(FunctionCall2Coll(&typentry->eq_opr_finfo,
 											att->attcollation,
-										slot1->tts_values[attrnum],
-										slot2->tts_values[attrnum])))
+											slot1->tts_values[attrnum],
+											slot2->tts_values[attrnum])))
 			return false;
 	}
 
@@ -406,7 +406,7 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 		resultRelInfo->ri_TrigDesc->trig_insert_before_row)
 	{
 		if (!ExecBRInsertTriggers(estate, resultRelInfo, slot))
-			skip_tuple = true;		/* "do nothing" */
+			skip_tuple = true;	/* "do nothing" */
 	}
 
 	if (!skip_tuple)
@@ -471,7 +471,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 	{
 		if (!ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
 								  tid, NULL, slot))
-			skip_tuple = true;		/* "do nothing" */
+			skip_tuple = true;	/* "do nothing" */
 	}
 
 	if (!skip_tuple)
@@ -490,7 +490,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 		if (resultRelInfo->ri_PartitionCheck)
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
-		simple_table_update(rel, tid, slot,estate->es_snapshot,
+		simple_table_update(rel, tid, slot, estate->es_snapshot,
 							&update_indexes);
 
 		if (resultRelInfo->ri_NumIndices > 0 && update_indexes)
@@ -591,8 +591,8 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 						 const char *relname)
 {
 	/*
-	 * We currently only support writing to regular tables.  However, give
-	 * a more specific error for partitioned and foreign tables.
+	 * We currently only support writing to regular tables.  However, give a
+	 * more specific error for partitioned and foreign tables.
 	 */
 	if (relkind == RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
@@ -600,14 +600,14 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
 						nspname, relname),
 				 errdetail("\"%s.%s\" is a partitioned table.",
-						nspname, relname)));
+						   nspname, relname)));
 	else if (relkind == RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
 						nspname, relname),
 				 errdetail("\"%s.%s\" is a foreign table.",
-						nspname, relname)));
+						   nspname, relname)));
 
 	if (relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -615,5 +615,5 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
 						nspname, relname),
 				 errdetail("\"%s.%s\" is not a table.",
-						nspname, relname)));
+						   nspname, relname)));
 }

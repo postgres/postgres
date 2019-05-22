@@ -653,6 +653,7 @@ hash_uint32_extended(uint32 k, uint64 seed)
 	/* report the result */
 	PG_RETURN_UINT64(((uint64) b << 32) | c);
 }
+
 /*
  * string_hash: hash function for keys that are NUL-terminated strings.
  *

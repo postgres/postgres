@@ -633,7 +633,7 @@ main(int argc, char **argv)
 	{
 		/* translator: second %s is an option name */
 		pg_log_error("%s needs a slot to be specified using --slot",
-				do_drop_slot ? "--drop-slot" : "--create-slot");
+					 do_drop_slot ? "--drop-slot" : "--create-slot");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -728,7 +728,7 @@ main(int argc, char **argv)
 	if (do_drop_slot)
 	{
 		if (verbose)
-			pg_log_info("dropping replication slot \"%s\"",	replication_slot);
+			pg_log_info("dropping replication slot \"%s\"", replication_slot);
 
 		if (!DropReplicationSlot(conn, replication_slot))
 			exit(1);

@@ -1031,9 +1031,9 @@ main(int argc, char **argv)
 		else if (!XLByteInSeg(private.startptr, segno, WalSegSz))
 		{
 			pg_log_error("start WAL location %X/%X is not inside file \"%s\"",
-					(uint32) (private.startptr >> 32),
-					(uint32) private.startptr,
-					fname);
+						 (uint32) (private.startptr >> 32),
+						 (uint32) private.startptr,
+						 fname);
 			goto bad_argument;
 		}
 
@@ -1074,9 +1074,9 @@ main(int argc, char **argv)
 			private.endptr != (segno + 1) * WalSegSz)
 		{
 			pg_log_error("end WAL location %X/%X is not inside file \"%s\"",
-					(uint32) (private.endptr >> 32),
-					(uint32) private.endptr,
-					argv[argc - 1]);
+						 (uint32) (private.endptr >> 32),
+						 (uint32) private.endptr,
+						 argv[argc - 1]);
 			goto bad_argument;
 		}
 	}

@@ -166,8 +166,8 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 		new_stack->bts_parent = stack_in;
 
 		/*
-		 * Page level 1 is lowest non-leaf page level prior to leaves.  So,
-		 * if we're on the level 1 and asked to lock leaf page in write mode,
+		 * Page level 1 is lowest non-leaf page level prior to leaves.  So, if
+		 * we're on the level 1 and asked to lock leaf page in write mode,
 		 * then lock next page in write mode, because it must be a leaf.
 		 */
 		if (opaque->btpo.level == 1 && access == BT_WRITE)
@@ -1235,7 +1235,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* Initialize remaining insertion scan key fields */
 	inskey.heapkeyspace = _bt_heapkeyspace(rel);
-	inskey.anynullkeys = false;		/* unusued */
+	inskey.anynullkeys = false; /* unused */
 	inskey.nextkey = nextkey;
 	inskey.pivotsearch = false;
 	inskey.scantid = NULL;

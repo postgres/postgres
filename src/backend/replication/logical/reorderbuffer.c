@@ -468,8 +468,8 @@ ReorderBufferReturnTupleBuf(ReorderBuffer *rb, ReorderBufferTupleBuf *tuple)
 Oid *
 ReorderBufferGetRelids(ReorderBuffer *rb, int nrelids)
 {
-	Oid	   *relids;
-	Size	alloc_len;
+	Oid		   *relids;
+	Size		alloc_len;
 
 	alloc_len = sizeof(Oid) * nrelids;
 
@@ -1327,8 +1327,8 @@ ReorderBufferBuildTupleCidHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		else
 		{
 			/*
-			 * Maybe we already saw this tuple before in this transaction,
-			 * but if so it must have the same cmin.
+			 * Maybe we already saw this tuple before in this transaction, but
+			 * if so it must have the same cmin.
 			 */
 			Assert(ent->cmin == change->data.tuplecid.cmin);
 
@@ -2464,8 +2464,8 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			}
 		case REORDER_BUFFER_CHANGE_TRUNCATE:
 			{
-				Size	size;
-				char   *data;
+				Size		size;
+				char	   *data;
 
 				/* account for the OIDs of truncated relations */
 				size = sizeof(Oid) * change->data.truncate.nrelids;
@@ -2767,7 +2767,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			/* the base struct contains all the data, easy peasy */
 		case REORDER_BUFFER_CHANGE_TRUNCATE:
 			{
-				Oid	   *relids;
+				Oid		   *relids;
 
 				relids = ReorderBufferGetRelids(rb,
 												change->data.truncate.nrelids);

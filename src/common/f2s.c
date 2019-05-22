@@ -481,10 +481,10 @@ to_chars_f(const floating_decimal_32 v, const uint32 olength, char *const result
 	else
 	{
 		/*
-		 * We can save some code later by pre-filling with zeros. We know
-		 * that there can be no more than 6 output digits in this form,
-		 * otherwise we would not choose fixed-point output. memset 8
-		 * rather than 6 bytes to let the compiler optimize it.
+		 * We can save some code later by pre-filling with zeros. We know that
+		 * there can be no more than 6 output digits in this form, otherwise
+		 * we would not choose fixed-point output. memset 8 rather than 6
+		 * bytes to let the compiler optimize it.
 		 */
 		Assert(exp < 6 && exp + olength <= 6);
 		memset(result, '0', 8);
@@ -575,8 +575,8 @@ to_chars(const floating_decimal_32 v, const bool sign, char *const result)
 
 	/*
 	 * The thresholds for fixed-point output are chosen to match printf
-	 * defaults. Beware that both the code of to_chars_f and the value
-	 * of FLOAT_SHORTEST_DECIMAL_LEN are sensitive to these thresholds.
+	 * defaults. Beware that both the code of to_chars_f and the value of
+	 * FLOAT_SHORTEST_DECIMAL_LEN are sensitive to these thresholds.
 	 */
 	if (exp >= -4 && exp < 6)
 		return to_chars_f(v, olength, result + index) + sign;

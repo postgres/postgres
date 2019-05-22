@@ -2813,12 +2813,12 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 		case RELKIND_MATVIEW:
 			{
 				/*
-				 * Not every table AM uses BLCKSZ wide fixed size
-				 * blocks. Therefore tableam returns the size in bytes - but
-				 * for the purpose of this routine, we want the number of
-				 * blocks. Therefore divide, rounding up.
+				 * Not every table AM uses BLCKSZ wide fixed size blocks.
+				 * Therefore tableam returns the size in bytes - but for the
+				 * purpose of this routine, we want the number of blocks.
+				 * Therefore divide, rounding up.
 				 */
-				uint64 szbytes;
+				uint64		szbytes;
 
 				szbytes = table_relation_size(relation, forkNum);
 

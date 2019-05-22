@@ -906,7 +906,7 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode, bool progress)
 			 */
 			if (progress)
 			{
-				PGPROC *holder = BackendIdGetProc(lockholders->backendId);
+				PGPROC	   *holder = BackendIdGetProc(lockholders->backendId);
 
 				pgstat_progress_update_param(PROGRESS_WAITFOR_CURRENT_PID,
 											 holder->pid);
@@ -925,9 +925,10 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode, bool progress)
 			PROGRESS_WAITFOR_DONE,
 			PROGRESS_WAITFOR_CURRENT_PID
 		};
-		const int64	values[] = {
+		const int64 values[] = {
 			0, 0, 0
 		};
+
 		pgstat_progress_update_multi_param(3, index, values);
 	}
 

@@ -219,7 +219,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to read files with adminpack 1.0"),
-				  /* translator: %s is a SQL function name */
+		/* translator: %s is a SQL function name */
 				  errhint("Consider using %s, which is part of core, instead.",
 						  "pg_file_read()"))));
 

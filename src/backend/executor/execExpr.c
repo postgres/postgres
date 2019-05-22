@@ -2367,10 +2367,10 @@ get_last_attnums_walker(Node *node, LastAttnumInfo *info)
 static void
 ExecComputeSlotInfo(ExprState *state, ExprEvalStep *op)
 {
-	PlanState *parent = state->parent;
+	PlanState  *parent = state->parent;
 	TupleDesc	desc = NULL;
 	const TupleTableSlotOps *tts_ops = NULL;
-	bool isfixed = false;
+	bool		isfixed = false;
 
 	if (op->d.fetch.known_desc != NULL)
 	{
@@ -3313,7 +3313,7 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
  */
 ExprState *
 ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
-					   const TupleTableSlotOps * lops, const TupleTableSlotOps * rops,
+					   const TupleTableSlotOps *lops, const TupleTableSlotOps *rops,
 					   int numCols,
 					   const AttrNumber *keyColIdx,
 					   const Oid *eqfunctions,

@@ -476,10 +476,10 @@ bms_member_index(Bitmapset *a, int x)
 	}
 
 	/*
-	 * Now add bits of the last word, but only those before the item.
-	 * We can do that by applying a mask and then using popcount again.
-	 * To get 0-based index, we want to count only preceding bits, not
-	 * the item itself, so we subtract 1.
+	 * Now add bits of the last word, but only those before the item. We can
+	 * do that by applying a mask and then using popcount again. To get
+	 * 0-based index, we want to count only preceding bits, not the item
+	 * itself, so we subtract 1.
 	 */
 	mask = ((bitmapword) 1 << bitnum) - 1;
 	result += bmw_popcount(a->words[wordnum] & mask);

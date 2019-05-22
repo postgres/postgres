@@ -24,7 +24,7 @@
 void *
 dlopen(const char *file, int mode)
 {
-	int		flags = 0;
+	int			flags = 0;
 
 	if (mode & RTLD_NOW)
 		flags |= BIND_IMMEDIATE;

@@ -485,7 +485,7 @@ static const SchemaQuery Query_for_list_of_relations = {
 static const SchemaQuery Query_for_list_of_partitioned_relations = {
 	.catname = "pg_catalog.pg_class c",
 	.selcondition = "c.relkind IN (" CppAsString2(RELKIND_PARTITIONED_TABLE)
-		", " CppAsString2(RELKIND_PARTITIONED_INDEX) ")",
+	", " CppAsString2(RELKIND_PARTITIONED_INDEX) ")",
 	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
 	.namespace = "c.relnamespace",
 	.result = "pg_catalog.quote_ident(c.relname)",
@@ -4361,7 +4361,7 @@ exec_query(const char *query)
 	{
 #ifdef NOT_USED
 		pg_log_error("tab completion query failed: %s\nQuery was:\n%s",
-				   PQerrorMessage(pset.db), query);
+					 PQerrorMessage(pset.db), query);
 #endif
 		PQclear(result);
 		result = NULL;

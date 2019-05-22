@@ -107,7 +107,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	key = palloc(offsetof(BTScanInsertData, scankeys) +
 				 sizeof(ScanKeyData) * indnkeyatts);
 	key->heapkeyspace = itup == NULL || _bt_heapkeyspace(rel);
-	key->anynullkeys = false;		/* initial assumption */
+	key->anynullkeys = false;	/* initial assumption */
 	key->nextkey = false;
 	key->pivotsearch = false;
 	key->keysz = Min(indnkeyatts, tupnatts);

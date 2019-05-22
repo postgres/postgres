@@ -199,7 +199,7 @@ psql_get_variable(const char *varname, PsqlScanQuoteType quote,
 				if (!appendShellStringNoError(&buf, value))
 				{
 					pg_log_error("shell command argument contains a newline or carriage return: \"%s\"",
-							   value);
+								 value);
 					free(buf.data);
 					return NULL;
 				}
@@ -509,7 +509,7 @@ AcceptResult(const PGresult *result)
 			default:
 				OK = false;
 				pg_log_error("unexpected PQresultStatus: %d",
-						   PQresultStatus(result));
+							 PQresultStatus(result));
 				break;
 		}
 
@@ -1278,7 +1278,7 @@ PrintQueryResults(PGresult *results)
 		default:
 			success = false;
 			pg_log_error("unexpected PQresultStatus: %d",
-					   PQresultStatus(results));
+						 PQresultStatus(results));
 			break;
 	}
 
@@ -1378,8 +1378,8 @@ SendQuery(const char *query)
 			char		sverbuf[32];
 
 			pg_log_warning("The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
+						   formatPGVersionNumber(pset.sversion, false,
+												 sverbuf, sizeof(sverbuf)));
 			on_error_rollback_warning = true;
 		}
 		else
@@ -1484,7 +1484,7 @@ SendQuery(const char *query)
 				/* PQTRANS_UNKNOWN is expected given a broken connection. */
 				if (transaction_status != PQTRANS_UNKNOWN || ConnectionUp())
 					pg_log_error("unexpected transaction status (%d)",
-							   transaction_status);
+								 transaction_status);
 				break;
 		}
 

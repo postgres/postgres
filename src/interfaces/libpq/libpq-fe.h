@@ -349,7 +349,7 @@ extern void PQinitSSL(int do_init);
 extern void PQinitOpenSSL(int do_ssl, int do_crypto);
 
 /* Return true if GSSAPI encryption is in use */
-extern int PQgssEncInUse(PGconn *conn);
+extern int	PQgssEncInUse(PGconn *conn);
 
 /* Returns GSSAPI context if GSSAPI is in use */
 extern void *PQgetgssctx(PGconn *conn);

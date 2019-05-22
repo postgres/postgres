@@ -291,7 +291,7 @@ exec_command(const char *cmd,
 		!is_branching_command(cmd))
 	{
 		pg_log_warning("\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block",
-				   cmd);
+					   cmd);
 	}
 
 	if (strcmp(cmd, "a") == 0)
@@ -551,8 +551,8 @@ exec_command_cd(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			if (!pw)
 			{
 				pg_log_error("could not get home directory for user ID %ld: %s",
-						   (long) user_id,
-						   errno ? strerror(errno) : _("user does not exist"));
+							 (long) user_id,
+							 errno ? strerror(errno) : _("user does not exist"));
 				exit(EXIT_FAILURE);
 			}
 			dir = pw->pw_dir;
@@ -1015,10 +1015,10 @@ exec_command_ef_ev(PsqlScanState scan_state, bool active_branch,
 								  sverbuf, sizeof(sverbuf));
 			if (is_func)
 				pg_log_error("The server (version %s) does not support editing function source.",
-						   sverbuf);
+							 sverbuf);
 			else
 				pg_log_error("The server (version %s) does not support editing view definitions.",
-						   sverbuf);
+							 sverbuf);
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!query_buf)
@@ -1933,7 +1933,7 @@ exec_command_prompt(PsqlScanState scan_state, bool active_branch,
 				if (!result)
 				{
 					pg_log_error("\\%s: could not read value for variable",
-							   cmd);
+								 cmd);
 					success = false;
 				}
 			}
@@ -2145,7 +2145,7 @@ exec_command_setenv(PsqlScanState scan_state, bool active_branch,
 		else if (strchr(envvar, '=') != NULL)
 		{
 			pg_log_error("\\%s: environment variable name must not contain \"=\"",
-					   cmd);
+						 cmd);
 			success = false;
 		}
 		else if (!envval)
@@ -2206,10 +2206,10 @@ exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
 								  sverbuf, sizeof(sverbuf));
 			if (is_func)
 				pg_log_error("The server (version %s) does not support showing function source.",
-						   sverbuf);
+							 sverbuf);
 			else
 				pg_log_error("The server (version %s) does not support showing view definitions.",
-						   sverbuf);
+							 sverbuf);
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!obj_desc)
@@ -3441,7 +3441,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 		if (ret == 0 || ret > MAXPGPATH)
 		{
 			pg_log_error("could not locate temporary directory: %s",
-					   !ret ? strerror(errno) : "");
+						 !ret ? strerror(errno) : "");
 			return false;
 		}
 
@@ -3761,8 +3761,8 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 					else
 					{
 						pg_log_error("\\pset: ambiguous abbreviation \"%s\" matches both \"%s\" and \"%s\"",
-								   value,
-								   formats[match_pos].name, formats[i].name);
+									 value,
+									 formats[match_pos].name, formats[i].name);
 						return false;
 					}
 				}
@@ -4694,7 +4694,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 							break;
 						default:
 							pg_log_error("\"%s.%s\" is not a view",
-									   nspname, relname);
+										 nspname, relname);
 							result = false;
 							break;
 					}

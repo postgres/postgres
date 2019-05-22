@@ -77,7 +77,7 @@ rmtree(const char *path, bool rmtopdir)
 			if (errno != ENOENT)
 			{
 				pg_log_warning("could not stat file or directory \"%s\": %m",
-					 pathbuf);
+							   pathbuf);
 				result = false;
 			}
 			continue;
@@ -99,7 +99,7 @@ rmtree(const char *path, bool rmtopdir)
 				if (errno != ENOENT)
 				{
 					pg_log_warning("could not remove file or directory \"%s\": %m",
-						 pathbuf);
+								   pathbuf);
 					result = false;
 				}
 			}
@@ -111,7 +111,7 @@ rmtree(const char *path, bool rmtopdir)
 		if (rmdir(path) != 0)
 		{
 			pg_log_warning("could not remove file or directory \"%s\": %m",
-				 path);
+						   path);
 			result = false;
 		}
 	}

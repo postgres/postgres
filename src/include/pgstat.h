@@ -541,7 +541,7 @@ typedef struct PgStat_MsgChecksumFailure
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	int			m_failurecount;
-	TimestampTz	m_failure_time;
+	TimestampTz m_failure_time;
 } PgStat_MsgChecksumFailure;
 
 

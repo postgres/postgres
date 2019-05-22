@@ -750,7 +750,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 		rclauses = lappend(rclauses, ExecInitExpr(lsecond(hclause->args),
 												  (PlanState *) hjstate));
 		rhclauses = lappend(rhclauses, ExecInitExpr(lsecond(hclause->args),
-												   innerPlanState(hjstate)));
+													innerPlanState(hjstate)));
 		hoperators = lappend_oid(hoperators, hclause->opno);
 		hcollations = lappend_oid(hcollations, hclause->inputcollid);
 	}

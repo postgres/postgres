@@ -1762,7 +1762,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 				if (junkFilter)
 				{
 					TupleTableSlot *slot =
-						MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
+					MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
 
 					*junkFilter = ExecInitJunkFilter(tlist, slot);
 				}
@@ -1929,7 +1929,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		if (junkFilter)
 		{
 			TupleTableSlot *slot =
-				MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
+			MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
 
 			*junkFilter = ExecInitJunkFilterConversion(tlist,
 													   CreateTupleDescCopy(tupdesc),

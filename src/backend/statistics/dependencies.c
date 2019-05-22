@@ -279,8 +279,8 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 	 * build an array of SortItem(s) sorted using the multi-sort support
 	 *
 	 * XXX This relies on all stats entries pointing to the same tuple
-	 * descriptor.  For now that assumption holds, but it might change in
-	 * the future for example if we support statistics on multiple tables.
+	 * descriptor.  For now that assumption holds, but it might change in the
+	 * future for example if we support statistics on multiple tables.
 	 */
 	items = build_sorted_items(numrows, &nitems, rows, stats[0]->tupDesc,
 							   mss, k, attnums_dep);
@@ -300,8 +300,8 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 	{
 		/*
 		 * Check if the group ended, which may be either because we processed
-		 * all the items (i==nitems), or because the i-th item is not equal
-		 * to the preceding one.
+		 * all the items (i==nitems), or because the i-th item is not equal to
+		 * the preceding one.
 		 */
 		if (i == nitems ||
 			multi_sort_compare_dims(0, k - 2, &items[i - 1], &items[i], mss) != 0)

@@ -1152,7 +1152,7 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 {
 	int			len1 = VARSIZE_ANY_EXHDR(t1);
 	int			len2 = VARSIZE_ANY_EXHDR(t2);
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 
 	check_collation_set(collid);
 
@@ -1723,11 +1723,11 @@ texteq(PG_FUNCTION_ARGS)
 					len2;
 
 		/*
-		 * Since we only care about equality or not-equality, we can avoid all the
-		 * expense of strcoll() here, and just do bitwise comparison.  In fact, we
-		 * don't even have to do a bitwise comparison if we can show the lengths
-		 * of the strings are unequal; which might save us from having to detoast
-		 * one or both values.
+		 * Since we only care about equality or not-equality, we can avoid all
+		 * the expense of strcoll() here, and just do bitwise comparison.  In
+		 * fact, we don't even have to do a bitwise comparison if we can show
+		 * the lengths of the strings are unequal; which might save us from
+		 * having to detoast one or both values.
 		 */
 		len1 = toast_raw_datum_size(arg1);
 		len2 = toast_raw_datum_size(arg2);
@@ -1873,7 +1873,7 @@ text_starts_with(PG_FUNCTION_ARGS)
 	Datum		arg1 = PG_GETARG_DATUM(0);
 	Datum		arg2 = PG_GETARG_DATUM(1);
 	Oid			collid = PG_GET_COLLATION();
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 	bool		result;
 	Size		len1,
 				len2;
@@ -5346,7 +5346,7 @@ text_concat_ws(PG_FUNCTION_ARGS)
 Datum
 text_left(PG_FUNCTION_ARGS)
 {
-	int		n = PG_GETARG_INT32(1);
+	int			n = PG_GETARG_INT32(1);
 
 	if (n < 0)
 	{

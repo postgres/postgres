@@ -16,10 +16,10 @@
 enum pg_log_level __pg_log_level;
 
 static const char *progname;
-static int log_flags;
+static int	log_flags;
 
-static void (*log_pre_callback)(void);
-static void (*log_locus_callback)(const char **, uint64 *);
+static void (*log_pre_callback) (void);
+static void (*log_locus_callback) (const char **, uint64 *);
 
 static const char *sgr_error = NULL;
 static const char *sgr_warning = NULL;
@@ -60,13 +60,13 @@ pg_logging_init(const char *argv0)
 
 		if (pg_colors_env)
 		{
-			char	 *colors = strdup(pg_colors_env);
+			char	   *colors = strdup(pg_colors_env);
 
 			if (colors)
 			{
 				for (char *token = strtok(colors, ":"); token; token = strtok(NULL, ":"))
 				{
-					char *e = strchr(token, '=');
+					char	   *e = strchr(token, '=');
 
 					if (e)
 					{
@@ -111,19 +111,19 @@ pg_logging_set_level(enum pg_log_level new_level)
 }
 
 void
-pg_logging_set_pre_callback(void (*cb)(void))
+pg_logging_set_pre_callback(void (*cb) (void))
 {
 	log_pre_callback = cb;
 }
 
 void
-pg_logging_set_locus_callback(void (*cb)(const char **filename, uint64 *lineno))
+pg_logging_set_locus_callback(void (*cb) (const char **filename, uint64 *lineno))
 {
 	log_locus_callback = cb;
 }
 
 void
-pg_log_generic(enum pg_log_level level, const char * pg_restrict fmt, ...)
+pg_log_generic(enum pg_log_level level, const char *pg_restrict fmt,...)
 {
 	va_list		ap;
 
@@ -133,7 +133,7 @@ pg_log_generic(enum pg_log_level level, const char * pg_restrict fmt, ...)
 }
 
 void
-pg_log_generic_v(enum pg_log_level level, const char * pg_restrict fmt, va_list ap)
+pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list ap)
 {
 	int			save_errno = errno;
 	const char *filename = NULL;

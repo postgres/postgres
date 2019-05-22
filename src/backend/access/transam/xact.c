@@ -570,9 +570,9 @@ AssignTransactionId(TransactionState s)
 
 	/*
 	 * Ensure parent(s) have XIDs, so that a child always has an XID later
-	 * than its parent.  Mustn't recurse here, or we might get a stack overflow
-	 * if we're at the bottom of a huge stack of subtransactions none of which
-	 * have XIDs yet.
+	 * than its parent.  Mustn't recurse here, or we might get a stack
+	 * overflow if we're at the bottom of a huge stack of subtransactions none
+	 * of which have XIDs yet.
 	 */
 	if (isSubXact && !FullTransactionIdIsValid(s->parent->fullTransactionId))
 	{
@@ -2868,8 +2868,8 @@ StartTransactionCommand(void)
  * just skipping the reset in StartTransaction() won't work.)
  */
 static int	save_XactIsoLevel;
-static bool	save_XactReadOnly;
-static bool	save_XactDeferrable;
+static bool save_XactReadOnly;
+static bool save_XactDeferrable;
 
 void
 SaveTransactionCharacteristics(void)
@@ -5193,7 +5193,7 @@ SerializeTransactionState(Size maxsize, char *start_address)
 		nxids = add_size(nxids, s->nChildXids);
 	}
 	Assert(SerializedTransactionStateHeaderSize + nxids * sizeof(TransactionId)
-		<= maxsize);
+		   <= maxsize);
 
 	/* Copy them to our scratch space. */
 	workspace = palloc(nxids * sizeof(TransactionId));

@@ -848,7 +848,7 @@ objectsInSchemaToOids(ObjectType objtype, List *nspnames)
 
 					while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 					{
-						Oid		oid = ((Form_pg_proc) GETSTRUCT(tuple))->oid;
+						Oid			oid = ((Form_pg_proc) GETSTRUCT(tuple))->oid;
 
 						objects = lappend_oid(objects, oid);
 					}
@@ -895,7 +895,7 @@ getRelationsInNamespace(Oid namespaceId, char relkind)
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid		oid  = ((Form_pg_class) GETSTRUCT(tuple))->oid;
+		Oid			oid = ((Form_pg_class) GETSTRUCT(tuple))->oid;
 
 		relations = lappend_oid(relations, oid);
 	}
@@ -1311,7 +1311,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	}
 	else
 	{
-		Oid		defAclOid;
+		Oid			defAclOid;
 
 		/* Prepare to insert or update pg_default_acl entry */
 		MemSet(values, 0, sizeof(values));
@@ -1384,7 +1384,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		if (isNew)
 			InvokeObjectPostCreateHook(DefaultAclRelationId, defAclOid, 0);
 		else
-			InvokeObjectPostAlterHook(DefaultAclRelationId,  defAclOid, 0);
+			InvokeObjectPostAlterHook(DefaultAclRelationId, defAclOid, 0);
 	}
 
 	if (HeapTupleIsValid(tuple))

@@ -656,7 +656,7 @@ EstimateRelationMapSpace(void)
 void
 SerializeRelationMap(Size maxSize, char *startAddress)
 {
-	SerializedActiveRelMaps	   *relmaps;
+	SerializedActiveRelMaps *relmaps;
 
 	Assert(maxSize >= EstimateRelationMapSpace());
 
@@ -673,7 +673,7 @@ SerializeRelationMap(Size maxSize, char *startAddress)
 void
 RestoreRelationMap(char *startAddress)
 {
-	SerializedActiveRelMaps	   *relmaps;
+	SerializedActiveRelMaps *relmaps;
 
 	if (active_shared_updates.num_mappings != 0 ||
 		active_local_updates.num_mappings != 0 ||

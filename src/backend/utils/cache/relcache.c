@@ -2635,9 +2635,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 			 * there should be no PartitionDirectory with a pointer to the old
 			 * entry.
 			 *
-			 * Note that newrel and relation have already been swapped, so
-			 * the "old" partition descriptor is actually the one hanging off
-			 * of newrel.
+			 * Note that newrel and relation have already been swapped, so the
+			 * "old" partition descriptor is actually the one hanging off of
+			 * newrel.
 			 */
 			MemoryContextSetParent(newrel->rd_pdcxt, relation->rd_pdcxt);
 			newrel->rd_partdesc = NULL;

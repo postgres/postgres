@@ -45,21 +45,21 @@ struct ValidateIndexState;
 typedef enum ScanOptions
 {
 	/* one of SO_TYPE_* may be specified */
-	SO_TYPE_SEQSCAN		= 1 << 0,
-	SO_TYPE_BITMAPSCAN	= 1 << 1,
-	SO_TYPE_SAMPLESCAN	= 1 << 2,
-	SO_TYPE_ANALYZE		= 1 << 3,
+	SO_TYPE_SEQSCAN = 1 << 0,
+	SO_TYPE_BITMAPSCAN = 1 << 1,
+	SO_TYPE_SAMPLESCAN = 1 << 2,
+	SO_TYPE_ANALYZE = 1 << 3,
 
 	/* several of SO_ALLOW_* may be specified */
 	/* allow or disallow use of access strategy */
-	SO_ALLOW_STRAT		= 1 << 4,
+	SO_ALLOW_STRAT = 1 << 4,
 	/* report location to syncscan logic? */
-	SO_ALLOW_SYNC		= 1 << 5,
+	SO_ALLOW_SYNC = 1 << 5,
 	/* verify visibility page-at-a-time? */
-	SO_ALLOW_PAGEMODE	= 1 << 6,
+	SO_ALLOW_PAGEMODE = 1 << 6,
 
 	/* unregister snapshot at scan end? */
-	SO_TEMP_SNAPSHOT	= 1 << 7
+	SO_TEMP_SNAPSHOT = 1 << 7
 } ScanOptions;
 
 /*
@@ -575,12 +575,12 @@ typedef struct TableAmRoutine
 
 	/*
 	 * This callback should return true if the relation requires a TOAST table
-	 * and false if it does not.  It may wish to examine the relation's
-	 * tuple descriptor before making a decision, but if it uses some other
-	 * method of storing large values (or if it does not support them) it can
-	 * simply return false.
+	 * and false if it does not.  It may wish to examine the relation's tuple
+	 * descriptor before making a decision, but if it uses some other method
+	 * of storing large values (or if it does not support them) it can simply
+	 * return false.
 	 */
-	bool	    (*relation_needs_toast_table) (Relation rel);
+	bool		(*relation_needs_toast_table) (Relation rel);
 
 
 	/* ------------------------------------------------------------------------
@@ -738,7 +738,7 @@ table_beginscan(Relation rel, Snapshot snapshot,
 				int nkeys, struct ScanKeyData *key)
 {
 	uint32		flags = SO_TYPE_SEQSCAN |
-		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
+	SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
 
 	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
 }

@@ -112,6 +112,7 @@ ArchiveEntryPtrType
 ArchiveFormat
 ArchiveHandle
 ArchiveMode
+ArchiveOpts
 ArchiverOutput
 ArchiverStage
 ArrayAnalyzeExtraData
@@ -127,8 +128,6 @@ ArrayIterator
 ArrayMapState
 ArrayMetaState
 ArrayParseState
-ArrayRef
-ArrayRefState
 ArrayType
 AsyncQueueControl
 AsyncQueueEntry
@@ -167,6 +166,8 @@ BTArrayKeyInfo
 BTBuildState
 BTCycleId
 BTIndexStat
+BTInsertState
+BTInsertStateData
 BTLeader
 BTMetaPageData
 BTOneVacInfo
@@ -176,6 +177,8 @@ BTPageOpaqueData
 BTPageStat
 BTPageState
 BTParallelScanDesc
+BTScanInsert
+BTScanInsertData
 BTScanOpaque
 BTScanOpaqueData
 BTScanPos
@@ -209,6 +212,7 @@ BeginSampleScan_function
 BernoulliSamplerData
 BgWorkerStartTime
 BgwHandleStatus
+BinaryArithmFunc
 BipartiteMatchState
 BitmapAnd
 BitmapAndPath
@@ -272,6 +276,7 @@ BufferCachePagesContext
 BufferCachePagesRec
 BufferDesc
 BufferDescPadded
+BufferHeapTupleTableSlot
 BufferLookupEnt
 BufferStrategyControl
 BufferTag
@@ -279,6 +284,7 @@ BufferUsage
 BuildAccumulator
 BuiltinScript
 BulkInsertState
+BulkInsertStateData
 CACHESIGN
 CAC_state
 CCFastEqualFN
@@ -295,8 +301,10 @@ COP
 CRITICAL_SECTION
 CRSSnapshotAction
 CState
+CTEMaterialize
 CV
 C_block
+CachedExpression
 CachedPlan
 CachedPlanSource
 CallContext
@@ -323,14 +331,13 @@ Chromosome
 CkptSortItem
 CkptTsStatus
 ClientAuthentication_hook_type
+ClientCertMode
 ClientData
 ClonePtrType
-ClonedConstraint
 ClosePortalStmt
 ClosePtrType
 Clump
 ClusterInfo
-ClusterOption
 ClusterStmt
 CmdType
 CoalesceExpr
@@ -505,6 +512,7 @@ DictSnowball
 DictSubState
 DictSyn
 DictThesaurus
+DimensionInfo
 DirectoryMethodData
 DirectoryMethodFile
 DisableTimeoutParams
@@ -655,7 +663,9 @@ FileFdwExecutionState
 FileFdwPlanState
 FileNameMap
 FileTag
+FinalPathExtraData
 FindSplitData
+FindSplitStrat
 FixedParallelExecutorState
 FixedParallelState
 FixedParamState
@@ -807,6 +817,7 @@ FuncCandidateList
 FuncDetailCode
 FuncExpr
 FuncInfo
+FuncLookupError
 Function
 FunctionCallInfo
 FunctionCallInfoBaseData
@@ -853,7 +864,6 @@ GenerationChunk
 GenerationContext
 GenerationPointer
 GenericCosts
-GenericIndexOpts
 GenericXLogState
 GeqoPrivateData
 GetForeignJoinPaths_function
@@ -891,13 +901,14 @@ GinStatsData
 GinTernaryValue
 GinTupleCollector
 GinVacuumState
-GistBDItem
 GistBufferingMode
+GistBulkDeleteResult
 GistEntryVector
 GistInetKey
 GistNSN
 GistSplitUnion
 GistSplitVector
+GistVacState
 GlobalTransaction
 GrantRoleStmt
 GrantStmt
@@ -905,6 +916,7 @@ GrantTargetType
 Group
 GroupPath
 GroupPathExtraData
+GroupResultPath
 GroupState
 GroupVarInfo
 GroupingFunc
@@ -987,6 +999,7 @@ HeapTupleData
 HeapTupleFields
 HeapTupleHeader
 HeapTupleHeaderData
+HeapTupleTableSlot
 HistControl
 HotStandbyState
 I32
@@ -1020,6 +1033,7 @@ IndexBuildCallback
 IndexBuildResult
 IndexBulkDeleteCallback
 IndexBulkDeleteResult
+IndexClause
 IndexClauseSet
 IndexElem
 IndexFetchHeapData
@@ -1030,7 +1044,6 @@ IndexOnlyScan
 IndexOnlyScanState
 IndexOptInfo
 IndexPath
-IndexQualInfo
 IndexRuntimeKeyInfo
 IndexScan
 IndexScanDesc
@@ -1057,6 +1070,7 @@ Instrumentation
 Int128AggState
 Int8TransTypeData
 IntRBTreeNode
+IntegerSet
 InternalDefaultACL
 InternalGrant
 Interval
@@ -1065,6 +1079,7 @@ InvalidationChunk
 InvalidationListHeader
 IpcMemoryId
 IpcMemoryKey
+IpcMemoryState
 IpcSemaphoreId
 IpcSemaphoreKey
 IsForeignRelUpdatable_function
@@ -1085,6 +1100,7 @@ JOBOBJECT_BASIC_LIMIT_INFORMATION
 JOBOBJECT_BASIC_UI_RESTRICTIONS
 JOBOBJECT_SECURITY_LIMIT_INFORMATION
 JitContext
+JitInstrumentation
 JitProviderCallbacks
 JitProviderCompileExprCB
 JitProviderInit
@@ -1120,9 +1136,11 @@ JsonPathGinPath
 JsonPathGinPathItem
 JsonPathItem
 JsonPathItemType
+JsonPathKeyword
 JsonPathParseItem
 JsonPathParseResult
 JsonPathPredicateCallback
+JsonPathString
 JsonSemAction
 JsonTokenType
 JsonTransformStringValuesAction
@@ -1200,6 +1218,7 @@ LWLockMinimallyPadded
 LWLockMode
 LWLockPadded
 LabelProvider
+LagTracker
 LargeObjectDesc
 LastAttnumInfo
 Latch
@@ -1210,6 +1229,7 @@ LexemeHashKey
 LexemeInfo
 LexemeKey
 LexizeData
+LibraryInfo
 Limit
 LimitPath
 LimitState
@@ -1274,6 +1294,8 @@ LogicalTape
 LogicalTapeSet
 MAGIC
 MBuf
+MCVItem
+MCVList
 MEMORY_BASIC_INFORMATION
 MINIDUMPWRITEDUMP
 MINIDUMP_TYPE
@@ -1308,8 +1330,8 @@ MinMaxExpr
 MinMaxOp
 MinimalTuple
 MinimalTupleData
+MinimalTupleTableSlot
 MinmaxOpaque
-MissingPtr
 ModifyTable
 ModifyTablePath
 ModifyTableState
@@ -1354,10 +1376,10 @@ NonEmptyRange
 Notification
 NotifyStmt
 Nsrt
-NullableDatum
 NullIfExpr
 NullTest
 NullTestType
+NullableDatum
 Numeric
 NumericAggState
 NumericDigit
@@ -1379,6 +1401,7 @@ ObjectAccessPostAlter
 ObjectAccessPostCreate
 ObjectAccessType
 ObjectAddress
+ObjectAddressAndFlags
 ObjectAddressExtra
 ObjectAddressStack
 ObjectAddresses
@@ -1430,8 +1453,11 @@ PATH
 PBOOL
 PCtxtHandle
 PFN
+PGAlignedBlock
+PGAlignedXLogBlock
 PGAsyncStatusType
 PGCALL2
+PGChecksummablePage
 PGContextVisibility
 PGEvent
 PGEventConnDestroy
@@ -1610,7 +1636,6 @@ PTEntryArray
 PTIterationArray
 PTOKEN_PRIVILEGES
 PTOKEN_USER
-PULONG
 PUTENVPROC
 PVOID
 PX_Alias
@@ -1629,7 +1654,6 @@ Pairs
 ParallelAppendState
 ParallelBitmapHeapState
 ParallelBlockTableScanDesc
-ParallelBlockTableScanDescData
 ParallelCompletionPtr
 ParallelContext
 ParallelExecutorInfo
@@ -1637,11 +1661,12 @@ ParallelHashGrowth
 ParallelHashJoinBatch
 ParallelHashJoinBatchAccessor
 ParallelHashJoinState
-ParallelTableScanDesc
-ParallelTableScanDescData
 ParallelIndexScanDesc
+ParallelReadyList
 ParallelSlot
 ParallelState
+ParallelTableScanDesc
+ParallelTableScanDescData
 ParallelWorkerContext
 ParallelWorkerInfo
 Param
@@ -1667,14 +1692,16 @@ ParserSetupHook
 ParserState
 PartClauseInfo
 PartClauseMatchStatus
+PartClauseTarget
 PartitionBoundInfo
 PartitionBoundInfoData
 PartitionBoundSpec
 PartitionCmd
 PartitionDesc
 PartitionDescData
+PartitionDirectory
+PartitionDirectoryEntry
 PartitionDispatch
-PartitionDispatchData
 PartitionElem
 PartitionHashBound
 PartitionKey
@@ -1690,9 +1717,12 @@ PartitionPruningData
 PartitionRangeBound
 PartitionRangeDatum
 PartitionRangeDatumKind
+PartitionRoutingInfo
 PartitionScheme
 PartitionSpec
 PartitionTupleRouting
+PartitionedRelPruneInfo
+PartitionedRelPruningData
 PartitionwiseAggregateType
 PasswordType
 Path
@@ -1712,6 +1742,7 @@ PerlInterpreter
 Perl_check_t
 Perl_ppaddr_t
 Permutation
+PgBackendGSSStatus
 PgBackendSSLStatus
 PgBackendStatus
 PgBenchExpr
@@ -1726,6 +1757,7 @@ PgFdwAnalyzeState
 PgFdwDirectModifyState
 PgFdwModifyState
 PgFdwOption
+PgFdwPathExtraData
 PgFdwRelationInfo
 PgFdwScanState
 PgIfAddrCallback
@@ -1741,6 +1773,7 @@ PgStat_MsgAnalyze
 PgStat_MsgArchiver
 PgStat_MsgAutovacStart
 PgStat_MsgBgWriter
+PgStat_MsgChecksumFailure
 PgStat_MsgDeadlock
 PgStat_MsgDropdb
 PgStat_MsgDummy
@@ -1811,6 +1844,7 @@ PredXactList
 PredXactListElement
 PredicateLockData
 PredicateLockTargetType
+PrepParallelRestorePtrType
 PrepareStmt
 PreparedParamsData
 PreparedStatement
@@ -1869,6 +1903,7 @@ QPRS_STATE
 QTN2QTState
 QTNode
 QUERYTYPE
+QUERY_SECURITY_CONTEXT_TOKEN_FN
 QualCost
 QualItem
 Query
@@ -1885,8 +1920,8 @@ QueryRepresentationOperand
 QuerySource
 QueueBackendStatus
 QueuePosition
-RBNode
-RBOrderControl
+RBTNode
+RBTOrderControl
 RBTree
 RBTreeIterator
 REPARSE_JUNCTION_DATA_BUFFER
@@ -1899,6 +1934,7 @@ RI_QueryKey
 RTEKind
 RWConflict
 RWConflictPoolHeader
+RandomState
 Range
 RangeBound
 RangeBox
@@ -1930,7 +1966,7 @@ RecordCacheEntry
 RecordCompareData
 RecordIOData
 RecoveryLockListsEntry
-RecoveryTargetAction
+RecoveryTargetTimeLineGoal
 RecoveryTargetType
 RectBox
 RecursionContext
@@ -1961,7 +1997,6 @@ Relation
 RelationData
 RelationPtr
 RelationSyncEntry
-RelativeTime
 RelcacheCallbackFunction
 RelfilenodeMapEntry
 RelfilenodeMapKey
@@ -2015,7 +2050,6 @@ RestoreOptions
 RestorePass
 RestrictInfo
 Result
-ResultPath
 ResultRelInfo
 ResultState
 ReturnSetInfo
@@ -2099,8 +2133,8 @@ Scan
 ScanDirection
 ScanKey
 ScanKeyData
-ScanKeyword
-ScanStackEntry
+ScanKeywordHashFunc
+ScanKeywordList
 ScanState
 ScanTypeControl
 SchemaQuery
@@ -2111,12 +2145,15 @@ SecLabelStmt
 SeenRelsEntry
 SelectStmt
 Selectivity
+SemTPadded
 SemiAntiJoinFactors
 SeqScan
 SeqScanState
 SeqTable
 SeqTableData
 SerCommitSeqNo
+SerializableXactHandle
+SerializedActiveRelMaps
 SerializedReindexState
 SerializedSnapshotData
 SerializedTransactionState
@@ -2137,6 +2174,7 @@ SetOperation
 SetOperationStmt
 SetToDefault
 SetupWorkerPtrType
+ShDependObjectInfo
 SharedBitmapState
 SharedDependencyObjectType
 SharedDependencyType
@@ -2150,6 +2188,7 @@ SharedInvalRelmapMsg
 SharedInvalSmgrMsg
 SharedInvalSnapshotMsg
 SharedInvalidationMessage
+SharedJitInstrumentation
 SharedRecordTableEntry
 SharedRecordTableKey
 SharedRecordTypmodRegistry
@@ -2232,12 +2271,14 @@ SpGistPageOpaque
 SpGistPageOpaqueData
 SpGistScanOpaque
 SpGistScanOpaqueData
+SpGistSearchItem
 SpGistState
 SpGistTypeDesc
 SpecialJoinInfo
 SpinDelayStatus
 SplitInterval
 SplitLR
+SplitPoint
 SplitVar
 SplitedPageLayout
 StackElem
@@ -2273,16 +2314,23 @@ SubTransactionId
 SubXactCallback
 SubXactCallbackItem
 SubXactEvent
+SubplanResultRelHashElem
 SubqueryScan
 SubqueryScanPath
 SubqueryScanState
+SubscriptingRef
+SubscriptingRefState
 Subscription
 SubscriptionInfo
 SubscriptionRelState
+SupportRequestCost
+SupportRequestIndexCondition
+SupportRequestRows
+SupportRequestSelectivity
+SupportRequestSimplify
 Syn
 SyncOps
 SyncRepConfigData
-SyncRequestHandler
 SyncRequestType
 SysScanDesc
 SyscacheCallbackFunction
@@ -2336,7 +2384,6 @@ TSVectorParseState
 TSVectorStat
 TState
 TStoreState
-TTOffList
 TYPCATEGORY
 T_Action
 T_WorkerStatus
@@ -2383,8 +2430,6 @@ TidPath
 TidScan
 TidScanState
 TimeADT
-TimeInterval
-TimeIntervalData
 TimeLineHistoryCmd
 TimeLineHistoryEntry
 TimeLineID
@@ -2479,6 +2524,8 @@ U32
 U8
 UChar
 UCharIterator
+UColAttribute
+UColAttributeValue
 UCollator
 UConverter
 UErrorCode
@@ -2503,6 +2550,7 @@ UserMapping
 UserOpts
 VacAttrStats
 VacAttrStatsP
+VacOptTernaryValue
 VacuumParams
 VacuumRelation
 VacuumStmt
@@ -2532,6 +2580,7 @@ ViewCheckOption
 ViewOptions
 ViewStmt
 VirtualTransactionId
+VirtualTupleTableSlot
 Vsrt
 WAITORTIMERCALLBACK
 WAIT_ORDER
@@ -2576,6 +2625,7 @@ WindowAgg
 WindowAggPath
 WindowAggState
 WindowClause
+WindowClauseSortData
 WindowDef
 WindowFunc
 WindowFuncExprState
@@ -2638,6 +2688,7 @@ XLogSource
 XLogwrtResult
 XLogwrtRqst
 XPVIV
+XPVMG
 XactCallback
 XactCallbackItem
 XactEvent
@@ -2652,8 +2703,6 @@ XmlTableBuilderData
 YYLTYPE
 YYSTYPE
 YY_BUFFER_STATE
-ZipfCache
-ZipfCell
 _SPI_connection
 _SPI_plan
 __AssignProcessToJobObject
@@ -2672,6 +2721,7 @@ allocfunc
 ambeginscan_function
 ambuild_function
 ambuildempty_function
+ambuildphasename_function
 ambulkdelete_function
 amcanreturn_function
 amcostestimate_function
@@ -2709,7 +2759,6 @@ bits16
 bits32
 bits8
 bloom_filter
-boolean
 brin_column_state
 bytea
 cached_re_str
@@ -2810,6 +2859,7 @@ file_entry_t
 file_type_t
 filemap_t
 finalize_primnode_context
+find_dependent_phvs_context
 find_expr_references_context
 fix_join_expr_context
 fix_scan_expr_context
@@ -2819,6 +2869,8 @@ float4
 float4KEY
 float8
 float8KEY
+floating_decimal_32
+floating_decimal_64
 fmAggrefPtr
 fmExprContextCallbackFunction
 fmNodePtr
@@ -2857,13 +2909,14 @@ ginxlogRecompressDataLeaf
 ginxlogSplit
 ginxlogUpdateMeta
 ginxlogVacuumDataLeafPage
+gistxlogDelete
 gistxlogPage
+gistxlogPageDelete
+gistxlogPageReuse
 gistxlogPageSplit
 gistxlogPageUpdate
 grouping_sets_data
 gseg_picksplit_item
-gss_OID
-gss_OID_desc
 gss_buffer_desc
 gss_cred_id_t
 gss_ctx_id_t
@@ -2889,6 +2942,7 @@ inet
 inetKEY
 inet_struct
 init_function
+inline_cte_walker_context
 inline_error_callback_arg
 ino_t
 inquiry
@@ -2905,6 +2959,9 @@ int64KEY
 int8
 internalPQconninfoOption
 intptr_t
+intset_internal_node
+intset_leaf_node
+intset_node
 intvKEY
 itemIdSort
 itemIdSortData
@@ -2920,6 +2977,7 @@ key_t
 lclContext
 lclTocEntry
 leafSegmentInfo
+leaf_item
 line_t
 lineno_t
 list_qsort_comparator
@@ -2959,6 +3017,8 @@ mp_int
 mp_result
 mp_sign
 mp_size
+mp_small
+mp_usmall
 mp_word
 mpz_t
 mxact
@@ -3094,10 +3154,10 @@ radius_attribute
 radius_packet
 rangeTableEntry_used_context
 rank_context
-rb_allocfunc
-rb_combiner
-rb_comparator
-rb_freefunc
+rbt_allocfunc
+rbt_combiner
+rbt_comparator
+rbt_freefunc
 reduce_outer_joins_state
 reference
 regex_arc_t
@@ -3154,7 +3214,7 @@ slist_iter
 slist_mutable_iter
 slist_node
 slock_t
-smgrid
+socket_set
 spgBulkDeleteState
 spgChooseIn
 spgChooseOut
@@ -3196,7 +3256,7 @@ stream_stop_callback
 string
 substitute_actual_parameters_context
 substitute_actual_srf_parameters_context
-substitute_multiple_relids_context
+substitute_phv_relids_context
 svtype
 symbol
 tablespaceinfo
@@ -3205,6 +3265,7 @@ teSection
 temp_tablespaces_extra
 test_function
 test_shm_mq_header
+test_spec
 text
 timeKEY
 time_t
@@ -3277,6 +3338,7 @@ walrcv_identify_system_fn
 walrcv_readtimelinehistoryfile_fn
 walrcv_receive_fn
 walrcv_send_fn
+walrcv_server_version_fn
 walrcv_startstreaming_fn
 wchar2mb_with_len_converter
 wchar_t

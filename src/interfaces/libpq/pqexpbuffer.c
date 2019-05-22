@@ -36,8 +36,9 @@
 
 /* All "broken" PQExpBuffers point to this string. */
 static const char oom_buffer[1] = "";
+
 /* Need a char * for unconstify() compatiblity */
-static const char * oom_buffer_ptr = oom_buffer;
+static const char *oom_buffer_ptr = oom_buffer;
 
 static bool appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args) pg_attribute_printf(2, 0);
 
@@ -93,7 +94,7 @@ initPQExpBuffer(PQExpBuffer str)
 	str->data = (char *) malloc(INITIAL_EXPBUFFER_SIZE);
 	if (str->data == NULL)
 	{
-		str->data = unconstify(char *, oom_buffer_ptr);	/* see comment above */
+		str->data = unconstify(char *, oom_buffer_ptr); /* see comment above */
 		str->maxlen = 0;
 		str->len = 0;
 	}
@@ -132,7 +133,7 @@ termPQExpBuffer(PQExpBuffer str)
 	if (str->data != oom_buffer)
 		free(str->data);
 	/* just for luck, make the buffer validly empty. */
-	str->data = unconstify(char *, oom_buffer_ptr);	/* see comment above */
+	str->data = unconstify(char *, oom_buffer_ptr); /* see comment above */
 	str->maxlen = 0;
 	str->len = 0;
 }

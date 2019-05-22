@@ -754,7 +754,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 			  oldAbbrevVal == newAbbrevVal &&
 			  DatumGetBool(FunctionCall2Coll(&pertrans->equalfnOne,
 											 pertrans->aggCollation,
-										 oldVal, *newVal)))))
+											 oldVal, *newVal)))))
 		{
 			/* equal to prior, so forget this one */
 			if (!pertrans->inputtypeByVal && !*isNull)

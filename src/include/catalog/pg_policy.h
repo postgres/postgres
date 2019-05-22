@@ -35,7 +35,8 @@ CATALOG(pg_policy,3256,PolicyRelationId)
 	bool		polpermissive;	/* restrictive or permissive policy */
 
 #ifdef CATALOG_VARLEN
-	Oid			polroles[1] BKI_FORCE_NOT_NULL;	/* Roles associated with policy */
+	Oid			polroles[1] BKI_FORCE_NOT_NULL; /* Roles associated with
+												 * policy */
 	pg_node_tree polqual;		/* Policy quals. */
 	pg_node_tree polwithcheck;	/* WITH CHECK quals. */
 #endif

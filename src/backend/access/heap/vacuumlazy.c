@@ -164,7 +164,7 @@ static void lazy_cleanup_index(Relation indrel,
 static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats, Buffer *vmbuffer);
 static bool should_attempt_truncation(VacuumParams *params,
-						 LVRelStats *vacrelstats);
+						  LVRelStats *vacrelstats);
 static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
 static BlockNumber count_nondeletable_pages(Relation onerel,
 						 LVRelStats *vacrelstats);
@@ -1067,9 +1067,9 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 					 * cheaper to get rid of it in the next pruning pass than
 					 * to treat it like an indexed tuple. Finally, if index
 					 * cleanup is disabled, the second heap pass will not
-					 * execute, and the tuple will not get removed, so we
-					 * must treat it like any other dead tuple that we choose
-					 * to keep.
+					 * execute, and the tuple will not get removed, so we must
+					 * treat it like any other dead tuple that we choose to
+					 * keep.
 					 *
 					 * If this were to happen for a tuple that actually needed
 					 * to be deleted, we'd be in trouble, because it'd
@@ -1087,6 +1087,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 					all_visible = false;
 					break;
 				case HEAPTUPLE_LIVE:
+
 					/*
 					 * Count it as live.  Not only is this natural, but it's
 					 * also what acquire_sample_rows() does.
@@ -1251,13 +1252,14 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			else
 			{
 				/*
-				 * Here, we have indexes but index cleanup is disabled. Instead of
-				 * vacuuming the dead tuples on the heap, we just forget them.
+				 * Here, we have indexes but index cleanup is disabled.
+				 * Instead of vacuuming the dead tuples on the heap, we just
+				 * forget them.
 				 *
 				 * Note that vacrelstats->dead_tuples could have tuples which
 				 * became dead after HOT-pruning but are not marked dead yet.
-				 * We do not process them because it's a very rare condition, and
-				 * the next vacuum will process them anyway.
+				 * We do not process them because it's a very rare condition,
+				 * and the next vacuum will process them anyway.
 				 */
 				Assert(params->index_cleanup == VACOPT_TERNARY_DISABLED);
 			}

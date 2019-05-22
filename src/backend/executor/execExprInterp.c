@@ -4038,7 +4038,7 @@ void
 ExecEvalSysVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext,
 			   TupleTableSlot *slot)
 {
-	Datum d;
+	Datum		d;
 
 	/* slot_getsysattr has sufficient defenses against bad attnums */
 	d = slot_getsysattr(slot,

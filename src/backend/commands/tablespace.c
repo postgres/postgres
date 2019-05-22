@@ -1143,9 +1143,9 @@ GetDefaultTablespace(char relpersistence, bool partitioned)
 
 	/*
 	 * Allow explicit specification of database's default tablespace in
-	 * default_tablespace without triggering permissions checks.  Don't
-	 * allow specifying that when creating a partitioned table, however,
-	 * since the result is confusing.
+	 * default_tablespace without triggering permissions checks.  Don't allow
+	 * specifying that when creating a partitioned table, however, since the
+	 * result is confusing.
 	 */
 	if (result == MyDatabaseTableSpace)
 	{

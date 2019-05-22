@@ -818,7 +818,7 @@ typedef struct WindowAgg
 	int			partNumCols;	/* number of columns in partition clause */
 	AttrNumber *partColIdx;		/* their indexes in the target list */
 	Oid		   *partOperators;	/* equality operators for partition columns */
-	Oid		   *partCollations;	/* collations for partition columns */
+	Oid		   *partCollations; /* collations for partition columns */
 	int			ordNumCols;		/* number of columns in ordering clause */
 	AttrNumber *ordColIdx;		/* their indexes in the target list */
 	Oid		   *ordOperators;	/* equality operators for ordering columns */
@@ -844,7 +844,7 @@ typedef struct Unique
 	int			numCols;		/* number of columns to check for uniqueness */
 	AttrNumber *uniqColIdx;		/* their indexes in the target list */
 	Oid		   *uniqOperators;	/* equality operators to compare with */
-	Oid		   *uniqCollations;	/* collations for equality comparisons */
+	Oid		   *uniqCollations; /* collations for equality comparisons */
 } Unique;
 
 /* ------------

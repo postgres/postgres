@@ -96,8 +96,8 @@ static void update_relispartition(Oid relationId, bool newval);
  */
 struct ReindexIndexCallbackState
 {
-	bool        concurrent;			/* flag from statement */
-	Oid         locked_table_oid;	/* tracks previously locked table */
+	bool		concurrent;		/* flag from statement */
+	Oid			locked_table_oid;	/* tracks previously locked table */
 };
 
 /*
@@ -396,7 +396,7 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
 		{
 			if (progress)
 			{
-				PGPROC *holder = BackendIdGetProc(old_snapshots[i].backendId);
+				PGPROC	   *holder = BackendIdGetProc(old_snapshots[i].backendId);
 
 				pgstat_progress_update_param(PROGRESS_WAITFOR_CURRENT_PID,
 											 holder->pid);
@@ -984,7 +984,7 @@ DefineIndex(Oid relationId,
 	 */
 	if (partitioned && stmt->relation && !stmt->relation->inh)
 	{
-		PartitionDesc	pd = RelationGetPartitionDesc(rel);
+		PartitionDesc pd = RelationGetPartitionDesc(rel);
 
 		if (pd->nparts != 0)
 			flags |= INDEX_CREATE_INVALID;
@@ -3003,7 +3003,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	/* Get a session-level lock on each table. */
 	foreach(lc, relationLocks)
 	{
-		LockRelId   *lockrelid = (LockRelId *) lfirst(lc);
+		LockRelId  *lockrelid = (LockRelId *) lfirst(lc);
 
 		LockRelationIdForSession(lockrelid, ShareUpdateExclusiveLock);
 	}
@@ -3112,8 +3112,8 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 		/*
 		 * The index is now valid in the sense that it contains all currently
-		 * interesting tuples.  But since it might not contain tuples deleted just
-		 * before the reference snap was taken, we have to wait out any
+		 * interesting tuples.  But since it might not contain tuples deleted
+		 * just before the reference snap was taken, we have to wait out any
 		 * transactions that might have older snapshots.
 		 */
 		pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
@@ -3250,7 +3250,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 	 */
 	foreach(lc, relationLocks)
 	{
-		LockRelId   *lockrelid = (LockRelId *) lfirst(lc);
+		LockRelId  *lockrelid = (LockRelId *) lfirst(lc);
 
 		UnlockRelationIdForSession(lockrelid, ShareUpdateExclusiveLock);
 	}

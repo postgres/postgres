@@ -2550,8 +2550,8 @@ AddRelationNewConstraints(Relation rel,
 		/*
 		 * If the expression is just a NULL constant, we do not bother to make
 		 * an explicit pg_attrdef entry, since the default behavior is
-		 * equivalent.  This applies to column defaults, but not for generation
-		 * expressions.
+		 * equivalent.  This applies to column defaults, but not for
+		 * generation expressions.
 		 *
 		 * Note a nonobvious property of this test: if the column is of a
 		 * domain type, what we'll get is not a bare null Const but a

@@ -90,9 +90,9 @@ struct statement
 /* structure to store declared statements */
 struct declared_statement
 {
-	char	   *name; /* declared name */
-	char		*connection_name;
-	char		*cursor_name;
+	char	   *name;			/* declared name */
+	char	   *connection_name;
+	char	   *cursor_name;
 	struct declared_statement *next;
 };
 
@@ -107,7 +107,7 @@ struct prepared_statement
 
 struct cursor_statement
 {
-	char	   *name; /*cursor name*/
+	char	   *name;			/* cursor name */
 	struct cursor_statement *next;
 };
 
@@ -204,10 +204,10 @@ struct descriptor *ecpg_find_desc(int line, const char *name);
 struct prepared_statement *ecpg_find_prepared_statement(const char *,
 							 struct connection *, struct prepared_statement **);
 
-void ecpg_update_declare_statement(const char *, const char *, const int);
-char *ecpg_get_con_name_by_declared_name(const char *);
+void		ecpg_update_declare_statement(const char *, const char *, const int);
+char	   *ecpg_get_con_name_by_declared_name(const char *);
 const char *ecpg_get_con_name_by_cursor_name(const char *);
-void ecpg_release_declared_statement(const char *);
+void		ecpg_release_declared_statement(const char *);
 
 bool ecpg_store_result(const PGresult *results, int act_field,
 				  const struct statement *stmt, struct variable *var);

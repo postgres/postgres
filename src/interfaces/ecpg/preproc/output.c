@@ -142,9 +142,9 @@ output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 		st = ECPGst_normal;
 
 	/*
-	 * In following cases, stmt is CSTRING or char_variable. They must be output directly.
-	 * - prepared_name of EXECUTE without exprlist
-	 * - execstring of EXECUTE IMMEDIATE
+	 * In following cases, stmt is CSTRING or char_variable. They must be
+	 * output directly. - prepared_name of EXECUTE without exprlist -
+	 * execstring of EXECUTE IMMEDIATE
 	 */
 	fprintf(base_yyout, "%s, ", ecpg_statement_type_name[st]);
 	if (st == ECPGst_execute || st == ECPGst_exec_immediate)
@@ -317,9 +317,9 @@ output_cursor_name(char *str)
 					j++;
 				} while (str[j] == ' ' || str[j] == '\t');
 
-				if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n'))		/* not followed by a
-																					 * newline */
-					fputs("\\\\",base_yyout);
+				if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n')) /* not followed by a
+																				 * newline */
+					fputs("\\\\", base_yyout);
 			}
 			else if (str[i] == '\r' && str[i + 1] == '\n')
 			{
@@ -362,7 +362,7 @@ output_declare_statement(char *name)
 void
 output_cursor_statement(int cursor_stmt, char *cursor_name, char *prepared_name, char *stmt, int whenever_mode, enum ECPG_statement_type st)
 {
-	switch(cursor_stmt)
+	switch (cursor_stmt)
 	{
 		case ECPGcst_open:
 			fprintf(base_yyout, "{ ECPGopen(");

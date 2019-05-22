@@ -61,7 +61,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 				 errhint("Must be superuser to create an access method.")));
 
 	/* Check if name is used */
-	amoid = GetSysCacheOid1(AMNAME,  Anum_pg_am_oid,
+	amoid = GetSysCacheOid1(AMNAME, Anum_pg_am_oid,
 							CStringGetDatum(stmt->amname));
 	if (OidIsValid(amoid))
 	{

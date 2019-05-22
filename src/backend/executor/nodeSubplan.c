@@ -684,7 +684,7 @@ execTuplesUnequal(TupleTableSlot *slot1,
 		/* Apply the type-specific equality function */
 		if (!DatumGetBool(FunctionCall2Coll(&eqfunctions[i],
 											collations[i],
-										attr1, attr2)))
+											attr1, attr2)))
 		{
 			result = true;		/* they are unequal */
 			break;

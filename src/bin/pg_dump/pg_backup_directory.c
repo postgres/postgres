@@ -348,7 +348,7 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 
 	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
 		fatal("could not write to output file: %s",
-					  get_cfp_error(ctx->dataFH));
+			  get_cfp_error(ctx->dataFH));
 
 
 	return;
@@ -452,7 +452,7 @@ _LoadBlobs(ArchiveHandle *AH)
 		/* Can't overflow because line and fname are the same length. */
 		if (sscanf(line, "%u %s\n", &oid, fname) != 2)
 			fatal("invalid line in large object TOC file \"%s\": \"%s\"",
-						  fname, line);
+				  fname, line);
 
 		StartRestoreBlob(AH, oid, AH->public.ropt->dropSchema);
 		snprintf(path, MAXPGPATH, "%s/%s", ctx->directory, fname);
@@ -461,7 +461,7 @@ _LoadBlobs(ArchiveHandle *AH)
 	}
 	if (!cfeof(ctx->blobsTocFH))
 		fatal("error reading large object TOC file \"%s\"",
-					  fname);
+			  fname);
 
 	if (cfclose(ctx->blobsTocFH) != 0)
 		fatal("could not close large object TOC file \"%s\": %m",
@@ -486,7 +486,7 @@ _WriteByte(ArchiveHandle *AH, const int i)
 
 	if (cfwrite(&c, 1, ctx->dataFH) != 1)
 		fatal("could not write to output file: %s",
-					  get_cfp_error(ctx->dataFH));
+			  get_cfp_error(ctx->dataFH));
 
 	return 1;
 }
@@ -516,7 +516,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 
 	if (cfwrite(buf, len, ctx->dataFH) != len)
 		fatal("could not write to output file: %s",
-					  get_cfp_error(ctx->dataFH));
+			  get_cfp_error(ctx->dataFH));
 
 	return;
 }

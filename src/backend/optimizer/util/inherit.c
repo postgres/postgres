@@ -311,6 +311,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	if (!root->partColsUpdated)
 		root->partColsUpdated =
 			has_partition_attrs(parentrel, parentrte->updatedCols, NULL);
+
 	/*
 	 * There shouldn't be any generated columns in the partition key.
 	 */

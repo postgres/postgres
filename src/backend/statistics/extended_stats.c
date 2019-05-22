@@ -67,7 +67,7 @@ static VacAttrStats **lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 					  int nvacatts, VacAttrStats **vacatts);
 static void statext_store(Relation pg_stext, Oid relid,
 			  MVNDistinct *ndistinct, MVDependencies *dependencies,
-			  MCVList * mcvlist, VacAttrStats **stats);
+			  MCVList *mcvlist, VacAttrStats **stats);
 
 
 /*
@@ -317,7 +317,7 @@ lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 static void
 statext_store(Relation pg_stext, Oid statOid,
 			  MVNDistinct *ndistinct, MVDependencies *dependencies,
-			  MCVList * mcv, VacAttrStats **stats)
+			  MCVList *mcv, VacAttrStats **stats)
 {
 	HeapTuple	stup,
 				oldtup;
@@ -538,9 +538,9 @@ build_attnums_array(Bitmapset *attrs, int *numattrs)
 	{
 		/*
 		 * Make sure the bitmap contains only user-defined attributes. As
-		 * bitmaps can't contain negative values, this can be violated in
-		 * two ways. Firstly, the bitmap might contain 0 as a member, and
-		 * secondly the integer value might be larger than MaxAttrNumber.
+		 * bitmaps can't contain negative values, this can be violated in two
+		 * ways. Firstly, the bitmap might contain 0 as a member, and secondly
+		 * the integer value might be larger than MaxAttrNumber.
 		 */
 		Assert(AttrNumberIsForUserDefinedAttr(j));
 		Assert(j <= MaxAttrNumber);
@@ -600,7 +600,7 @@ build_sorted_items(int numrows, int *nitems, HeapTuple *rows, TupleDesc tdesc,
 	idx = 0;
 	for (i = 0; i < numrows; i++)
 	{
-		bool	toowide = false;
+		bool		toowide = false;
 
 		items[idx].values = &values[idx * numattrs];
 		items[idx].isnull = &isnull[idx * numattrs];
@@ -608,8 +608,8 @@ build_sorted_items(int numrows, int *nitems, HeapTuple *rows, TupleDesc tdesc,
 		/* load the values/null flags from sample rows */
 		for (j = 0; j < numattrs; j++)
 		{
-			Datum	value;
-			bool	isnull;
+			Datum		value;
+			bool		isnull;
 
 			value = heap_getattr(rows[i], attnums[j], tdesc, &isnull);
 
@@ -988,7 +988,7 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 	int			listidx;
 	StatisticExtInfo *stat;
 	List	   *stat_clauses;
-	Selectivity	simple_sel,
+	Selectivity simple_sel,
 				mcv_sel,
 				mcv_basesel,
 				mcv_totalsel,
@@ -1006,9 +1006,9 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 	 * Pre-process the clauses list to extract the attnums seen in each item.
 	 * We need to determine if there's any clauses which will be useful for
 	 * selectivity estimations with extended stats. Along the way we'll record
-	 * all of the attnums for each clause in a list which we'll reference later
-	 * so we don't need to repeat the same work again. We'll also keep track of
-	 * all attnums seen.
+	 * all of the attnums for each clause in a list which we'll reference
+	 * later so we don't need to repeat the same work again. We'll also keep
+	 * track of all attnums seen.
 	 *
 	 * We also skip clauses that we already estimated using different types of
 	 * statistics (we treat them as incompatible).
@@ -1066,9 +1066,10 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 	}
 
 	/*
-	 * First compute "simple" selectivity, i.e. without the extended statistics,
-	 * and essentially assuming independence of the columns/clauses. We'll then
-	 * use the various selectivities computed from MCV list to improve it.
+	 * First compute "simple" selectivity, i.e. without the extended
+	 * statistics, and essentially assuming independence of the
+	 * columns/clauses. We'll then use the various selectivities computed from
+	 * MCV list to improve it.
 	 */
 	simple_sel = clauselist_selectivity_simple(root, stat_clauses, varRelid,
 											   jointype, sjinfo, NULL);
@@ -1105,16 +1106,16 @@ statext_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
 							   JoinType jointype, SpecialJoinInfo *sjinfo,
 							   RelOptInfo *rel, Bitmapset **estimatedclauses)
 {
-	Selectivity	sel;
+	Selectivity sel;
 
 	/* First, try estimating clauses using a multivariate MCV list. */
 	sel = statext_mcv_clauselist_selectivity(root, clauses, varRelid, jointype,
 											 sjinfo, rel, estimatedclauses);
 
 	/*
-	 * Then, apply functional dependencies on the remaining clauses by
-	 * calling dependencies_clauselist_selectivity.  Pass 'estimatedclauses'
-	 * so the function can properly skip clauses already estimated above.
+	 * Then, apply functional dependencies on the remaining clauses by calling
+	 * dependencies_clauselist_selectivity.  Pass 'estimatedclauses' so the
+	 * function can properly skip clauses already estimated above.
 	 *
 	 * The reasoning for applying dependencies last is that the more complex
 	 * stats can track more complex correlations between the attributes, and

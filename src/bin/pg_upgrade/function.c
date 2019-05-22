@@ -41,7 +41,7 @@ library_name_compare(const void *p1, const void *p2)
 		return cmp;
 	else
 		return ((const LibraryInfo *) p1)->dbnum -
-			   ((const LibraryInfo *) p2)->dbnum;
+			((const LibraryInfo *) p2)->dbnum;
 }
 
 
@@ -213,16 +213,16 @@ check_loadable_libraries(void)
 		{
 			/*
 			 * In Postgres 9.0, Python 3 support was added, and to do that, a
-			 * plpython2u language was created with library name plpython2.so as a
-			 * symbolic link to plpython.so.  In Postgres 9.1, only the
-			 * plpython2.so library was created, and both plpythonu and plpython2u
-			 * pointing to it.  For this reason, any reference to library name
-			 * "plpython" in an old PG <= 9.1 cluster must look for "plpython2" in
-			 * the new cluster.
+			 * plpython2u language was created with library name plpython2.so
+			 * as a symbolic link to plpython.so.  In Postgres 9.1, only the
+			 * plpython2.so library was created, and both plpythonu and
+			 * plpython2u pointing to it.  For this reason, any reference to
+			 * library name "plpython" in an old PG <= 9.1 cluster must look
+			 * for "plpython2" in the new cluster.
 			 *
-			 * For this case, we could check pg_pltemplate, but that only works
-			 * for languages, and does not help with function shared objects, so
-			 * we just do a general fix.
+			 * For this case, we could check pg_pltemplate, but that only
+			 * works for languages, and does not help with function shared
+			 * objects, so we just do a general fix.
 			 */
 			if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
 				strcmp(lib, "$libdir/plpython") == 0)
@@ -257,7 +257,7 @@ check_loadable_libraries(void)
 
 		if (was_load_failure)
 			fprintf(script, _("Database: %s\n"),
-				old_cluster.dbarr.dbs[os_info.libraries[libnum].dbnum].db_name);
+					old_cluster.dbarr.dbs[os_info.libraries[libnum].dbnum].db_name);
 	}
 
 	PQfinish(conn);

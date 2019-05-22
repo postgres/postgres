@@ -71,13 +71,12 @@
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
 					   bool skipjunk);
-static pg_attribute_always_inline void
-slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
+static pg_attribute_always_inline void slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 					   int natts);
 static inline void tts_buffer_heap_store_tuple(TupleTableSlot *slot,
-											   HeapTuple tuple,
-											   Buffer buffer,
-											   bool transfer_pin);
+							HeapTuple tuple,
+							Buffer buffer,
+							bool transfer_pin);
 static void tts_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, bool shouldFree);
 
 
@@ -138,7 +137,7 @@ tts_virtual_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
 	elog(ERROR, "virtual tuple table slot does not have system attributes");
 
-	return 0; /* silence compiler warnings */
+	return 0;					/* silence compiler warnings */
 }
 
 /*
@@ -164,7 +163,7 @@ tts_virtual_materialize(TupleTableSlot *slot)
 	for (int natt = 0; natt < desc->natts; natt++)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, natt);
-		Datum val;
+		Datum		val;
 
 		if (att->attbyval || slot->tts_isnull[natt])
 			continue;
@@ -200,7 +199,7 @@ tts_virtual_materialize(TupleTableSlot *slot)
 	for (int natt = 0; natt < desc->natts; natt++)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, natt);
-		Datum val;
+		Datum		val;
 
 		if (att->attbyval || slot->tts_isnull[natt])
 			continue;
@@ -210,7 +209,7 @@ tts_virtual_materialize(TupleTableSlot *slot)
 		if (att->attlen == -1 &&
 			VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(val)))
 		{
-			Size data_length;
+			Size		data_length;
 
 			/*
 			 * We want to flatten the expanded value so that the materialized
@@ -228,7 +227,7 @@ tts_virtual_materialize(TupleTableSlot *slot)
 		}
 		else
 		{
-			Size data_length = 0;
+			Size		data_length = 0;
 
 			data = (char *) att_align_nominal(data, att->attalign);
 			data_length = att_addlength_datum(data_length, att->attlen, val);
@@ -382,7 +381,7 @@ tts_heap_materialize(TupleTableSlot *slot)
 static void
 tts_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
-	HeapTuple tuple;
+	HeapTuple	tuple;
 	MemoryContext oldcontext;
 
 	oldcontext = MemoryContextSwitchTo(dstslot->tts_mcxt);
@@ -499,7 +498,7 @@ tts_minimal_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
 	elog(ERROR, "minimal tuple table slot does not have system attributes");
 
-	return 0; /* silence compiler warnings */
+	return 0;					/* silence compiler warnings */
 }
 
 static void
@@ -1077,8 +1076,10 @@ TupleTableSlot *
 MakeTupleTableSlot(TupleDesc tupleDesc,
 				   const TupleTableSlotOps *tts_ops)
 {
-	Size		basesz, allocsz;
+	Size		basesz,
+				allocsz;
 	TupleTableSlot *slot;
+
 	basesz = tts_ops->base_slot_size;
 
 	/*
@@ -1866,7 +1867,7 @@ void
 slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
 {
 	/* Check for caller errors */
-	Assert(slot->tts_nvalid < attnum); /* slot_getsomeattr checked */
+	Assert(slot->tts_nvalid < attnum);	/* slot_getsomeattr checked */
 	Assert(attnum > 0);
 
 	if (unlikely(attnum > slot->tts_tupleDescriptor->natts))
@@ -1876,8 +1877,8 @@ slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
 	slot->tts_ops->getsomeattrs(slot, attnum);
 
 	/*
-	 * If the underlying tuple doesn't have enough attributes, tuple descriptor
-	 * must have the missing attributes.
+	 * If the underlying tuple doesn't have enough attributes, tuple
+	 * descriptor must have the missing attributes.
 	 */
 	if (unlikely(slot->tts_nvalid < attnum))
 	{

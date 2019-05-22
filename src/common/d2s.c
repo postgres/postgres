@@ -671,9 +671,9 @@ to_chars_df(const floating_decimal_64 v, const uint32 olength, char *const resul
 	else
 	{
 		/*
-		 * We can save some code later by pre-filling with zeros. We know
-		 * that there can be no more than 16 output digits in this form,
-		 * otherwise we would not choose fixed-point output.
+		 * We can save some code later by pre-filling with zeros. We know that
+		 * there can be no more than 16 output digits in this form, otherwise
+		 * we would not choose fixed-point output.
 		 */
 		Assert(exp < 16 && exp + olength <= 16);
 		memset(result, '0', 16);
@@ -800,8 +800,8 @@ to_chars(floating_decimal_64 v, const bool sign, char *const result)
 
 	/*
 	 * The thresholds for fixed-point output are chosen to match printf
-	 * defaults. Beware that both the code of to_chars_df and the value
-	 * of DOUBLE_SHORTEST_DECIMAL_LEN are sensitive to these thresholds.
+	 * defaults. Beware that both the code of to_chars_df and the value of
+	 * DOUBLE_SHORTEST_DECIMAL_LEN are sensitive to these thresholds.
 	 */
 	if (exp >= -4 && exp < 15)
 		return to_chars_df(v, olength, result + index) + sign;

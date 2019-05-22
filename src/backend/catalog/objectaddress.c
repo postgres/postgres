@@ -3050,7 +3050,7 @@ getObjectDescription(const ObjectAddress *object)
 				StringInfoData opfam;
 
 				amprocDesc = table_open(AccessMethodProcedureRelationId,
-									   AccessShareLock);
+										AccessShareLock);
 
 				ScanKeyInit(&skey[0],
 							Anum_pg_amproc_oid,

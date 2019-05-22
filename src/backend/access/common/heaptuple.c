@@ -787,8 +787,8 @@ expand_tuple(HeapTuple *targetHeapTuple,
 		}
 
 		/*
-		 * Now walk the missing attributes. If there is a missing value
-		 * make space for it. Otherwise, it's going to be NULL.
+		 * Now walk the missing attributes. If there is a missing value make
+		 * space for it. Otherwise, it's going to be NULL.
 		 */
 		for (attnum = firstmissingnum;
 			 attnum < natts;

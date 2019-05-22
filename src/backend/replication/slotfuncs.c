@@ -730,11 +730,11 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 		SpinLockRelease(&src->mutex);
 
 		/*
-		 * Check if the source slot still exists and is valid. We regard it
-		 * as invalid if the type of replication slot or name has been
-		 * changed, or the restart_lsn either is invalid or has gone backward.
-		 * (The restart_lsn could go backwards if the source slot is dropped
-		 * and copied from an older slot during installation.)
+		 * Check if the source slot still exists and is valid. We regard it as
+		 * invalid if the type of replication slot or name has been changed,
+		 * or the restart_lsn either is invalid or has gone backward. (The
+		 * restart_lsn could go backwards if the source slot is dropped and
+		 * copied from an older slot during installation.)
 		 *
 		 * Since erroring out will release and drop the destination slot we
 		 * don't need to release it here.

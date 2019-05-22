@@ -1566,7 +1566,7 @@ pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
 	 */
 	if (!ndistinct_enabled || !dependencies_enabled || !mcv_enabled)
 	{
-		bool	gotone = false;
+		bool		gotone = false;
 
 		appendStringInfoString(&buf, " (");
 

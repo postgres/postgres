@@ -79,7 +79,7 @@ typedef struct TransitionCaptureState
 	 * and allow the inserting code (copy.c and nodeModifyTable.c) to provide
 	 * a slot containing the original tuple directly.
 	 */
-	TupleTableSlot	*tcs_original_insert_tuple;
+	TupleTableSlot *tcs_original_insert_tuple;
 
 	/*
 	 * Private data including the tuplestore(s) into which to insert tuples.
@@ -260,7 +260,7 @@ extern bool AfterTriggerPendingOnRel(Oid relid);
 extern bool RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 							  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
 extern bool RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
-							  TupleTableSlot *old_slot, TupleTableSlot  *new_slot);
+							  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
 extern bool RI_Initial_Check(Trigger *trigger,
 				 Relation fk_rel, Relation pk_rel);
 extern void RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel,

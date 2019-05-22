@@ -161,9 +161,9 @@ clauselist_selectivity_simple(PlannerInfo *root,
 	int			listidx;
 
 	/*
-	 * If there's exactly one clause (and it was not estimated yet), just
-	 * go directly to clause_selectivity(). None of what we might do below
-	 * is relevant.
+	 * If there's exactly one clause (and it was not estimated yet), just go
+	 * directly to clause_selectivity(). None of what we might do below is
+	 * relevant.
 	 */
 	if ((list_length(clauses) == 1) &&
 		bms_num_members(estimatedclauses) == 0)

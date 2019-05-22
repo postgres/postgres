@@ -298,10 +298,10 @@ internal_size(int *a, int len)
 	for (i = 0; i < len; i += 2)
 	{
 		if (!i || a[i] != a[i - 1]) /* do not count repeated range */
-			size += (int64)(a[i + 1]) - (int64)(a[i]) + 1;
+			size += (int64) (a[i + 1]) - (int64) (a[i]) + 1;
 	}
 
-	if (size > (int64)INT_MAX || size < (int64)INT_MIN)
+	if (size > (int64) INT_MAX || size < (int64) INT_MIN)
 		return -1;				/* overflow */
 	return (int) size;
 }

@@ -2033,7 +2033,7 @@ get_database_oid(const char *dbname, bool missing_ok)
 
 	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(dbtuple))
-		oid = ((Form_pg_database)GETSTRUCT(dbtuple))->oid;
+		oid = ((Form_pg_database) GETSTRUCT(dbtuple))->oid;
 	else
 		oid = InvalidOid;
 

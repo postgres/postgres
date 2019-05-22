@@ -72,7 +72,7 @@ extern void output_prepare_statement(char *, char *);
 extern void output_deallocate_prepare_statement(char *);
 extern void output_simple_statement(char *, int);
 extern void output_declare_statement(char *);
-extern void output_cursor_statement(int , char *, char *, char *, int , enum ECPG_statement_type);
+extern void output_cursor_statement(int, char *, char *, char *, int, enum ECPG_statement_type);
 extern char *hashline_number(void);
 extern int	base_yyparse(void);
 extern int	base_yylex(void);

@@ -339,7 +339,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 
 	InitDirtySnapshot(SnapshotDirty);
 
-	nblocks = hscan->rs_nblocks; /* # blocks to be scanned */
+	nblocks = hscan->rs_nblocks;	/* # blocks to be scanned */
 
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)

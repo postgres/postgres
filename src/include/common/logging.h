@@ -63,14 +63,14 @@ extern enum pg_log_level __pg_log_level;
  */
 #define PG_LOG_FLAG_TERSE	1
 
-void pg_logging_init(const char *argv0);
-void pg_logging_config(int new_flags);
-void pg_logging_set_level(enum pg_log_level new_level);
-void pg_logging_set_pre_callback(void (*cb)(void));
-void pg_logging_set_locus_callback(void (*cb)(const char **filename, uint64 *lineno));
+void		pg_logging_init(const char *argv0);
+void		pg_logging_config(int new_flags);
+void		pg_logging_set_level(enum pg_log_level new_level);
+void		pg_logging_set_pre_callback(void (*cb) (void));
+void		pg_logging_set_locus_callback(void (*cb) (const char **filename, uint64 *lineno));
 
-void pg_log_generic(enum pg_log_level level, const char * pg_restrict fmt, ...) pg_attribute_printf(2, 3);
-void pg_log_generic_v(enum pg_log_level level, const char * pg_restrict fmt, va_list ap) pg_attribute_printf(2, 0);
+void		pg_log_generic(enum pg_log_level level, const char *pg_restrict fmt,...) pg_attribute_printf(2, 3);
+void		pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list ap) pg_attribute_printf(2, 0);
 
 #define pg_log_fatal(...) do { \
 		if (likely(__pg_log_level <= PG_LOG_FATAL)) pg_log_generic(PG_LOG_FATAL, __VA_ARGS__); \
@@ -92,4 +92,4 @@ void pg_log_generic_v(enum pg_log_level level, const char * pg_restrict fmt, va_
 		if (unlikely(__pg_log_level <= PG_LOG_DEBUG)) pg_log_generic(PG_LOG_DEBUG, __VA_ARGS__); \
 	} while(0)
 
-#endif	/* COMMON_LOGGING_H */
+#endif							/* COMMON_LOGGING_H */

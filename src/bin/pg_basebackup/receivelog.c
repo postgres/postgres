@@ -378,8 +378,8 @@ CheckServerVersionForStreaming(PGconn *conn)
 		const char *serverver = PQparameterStatus(conn, "server_version");
 
 		pg_log_error("incompatible server version %s; client does not support streaming from server versions older than %s",
-				serverver ? serverver : "'unknown'",
-				"9.3");
+					 serverver ? serverver : "'unknown'",
+					 "9.3");
 		return false;
 	}
 	else if (serverMajor > maxServerMajor)
@@ -387,8 +387,8 @@ CheckServerVersionForStreaming(PGconn *conn)
 		const char *serverver = PQparameterStatus(conn, "server_version");
 
 		pg_log_error("incompatible server version %s; client does not support streaming from server versions newer than %s",
-				serverver ? serverver : "'unknown'",
-				PG_VERSION);
+					 serverver ? serverver : "'unknown'",
+					 PG_VERSION);
 		return false;
 	}
 	return true;
@@ -620,8 +620,8 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			if (stream->startpos > stoppos)
 			{
 				pg_log_error("server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X",
-						stream->timeline, (uint32) (stoppos >> 32), (uint32) stoppos,
-						newtimeline, (uint32) (stream->startpos >> 32), (uint32) stream->startpos);
+							 stream->timeline, (uint32) (stoppos >> 32), (uint32) stoppos,
+							 newtimeline, (uint32) (stream->startpos >> 32), (uint32) stream->startpos);
 				goto error;
 			}
 

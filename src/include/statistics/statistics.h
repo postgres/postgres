@@ -77,7 +77,7 @@ typedef struct MVDependencies
 typedef struct MCVItem
 {
 	double		frequency;		/* frequency of this combination */
-	double		base_frequency;	/* frequency if independent */
+	double		base_frequency; /* frequency if independent */
 	bool	   *isnull;			/* NULL flags */
 	Datum	   *values;			/* item values */
 } MCVItem;

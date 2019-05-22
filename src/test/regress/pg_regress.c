@@ -1802,7 +1802,7 @@ run_schedule(const char *schedule, test_function tfunc)
 			}
 			else
 			{
-				status(_("ok    ")); /* align with FAILED */
+				status(_("ok    "));	/* align with FAILED */
 				success_count++;
 			}
 
@@ -1882,7 +1882,7 @@ run_single_test(const char *test, test_function tfunc)
 	}
 	else
 	{
-		status(_("ok    ")); /* align with FAILED */
+		status(_("ok    "));	/* align with FAILED */
 		success_count++;
 	}
 

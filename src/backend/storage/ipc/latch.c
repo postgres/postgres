@@ -856,7 +856,7 @@ WaitEventAdjustEpoll(WaitEventSet *set, WaitEvent *event, int action)
 	if (rc < 0)
 		ereport(ERROR,
 				(errcode_for_socket_access(),
-				 /* translator: %s is a syscall name, such as "poll()" */
+		/* translator: %s is a syscall name, such as "poll()" */
 				 errmsg("%s failed: %m",
 						"epoll_ctl()")));
 }
@@ -1089,7 +1089,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			waiting = false;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
-					 /* translator: %s is a syscall name, such as "poll()" */
+			/* translator: %s is a syscall name, such as "poll()" */
 					 errmsg("%s failed: %m",
 							"epoll_wait()")));
 		}
@@ -1215,7 +1215,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			waiting = false;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
-					 /* translator: %s is a syscall name, such as "poll()" */
+			/* translator: %s is a syscall name, such as "poll()" */
 					 errmsg("%s failed: %m",
 							"poll()")));
 		}

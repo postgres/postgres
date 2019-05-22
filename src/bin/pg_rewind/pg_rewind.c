@@ -52,7 +52,7 @@ char	   *datadir_target = NULL;
 char	   *datadir_source = NULL;
 char	   *connstr_source = NULL;
 
-static bool	debug = false;
+static bool debug = false;
 bool		showprogress = false;
 bool		dry_run = false;
 bool		do_sync = true;
@@ -260,8 +260,8 @@ main(int argc, char **argv)
 	{
 		findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
 		pg_log_info("servers diverged at WAL location %X/%X on timeline %u",
-			   (uint32) (divergerec >> 32), (uint32) divergerec,
-			   targetHistory[lastcommontliIndex].tli);
+					(uint32) (divergerec >> 32), (uint32) divergerec,
+					targetHistory[lastcommontliIndex].tli);
 
 		/*
 		 * Check for the possibility that the target is in fact a direct
@@ -304,8 +304,8 @@ main(int argc, char **argv)
 					   lastcommontliIndex,
 					   &chkptrec, &chkpttli, &chkptredo);
 	pg_log_info("rewinding from last common checkpoint at %X/%X on timeline %u",
-		   (uint32) (chkptrec >> 32), (uint32) chkptrec,
-		   chkpttli);
+				(uint32) (chkptrec >> 32), (uint32) chkptrec,
+				chkpttli);
 
 	/*
 	 * Build the filemap, by comparing the source and target data directories.
@@ -344,8 +344,8 @@ main(int argc, char **argv)
 	if (showprogress)
 	{
 		pg_log_info("need to copy %lu MB (total source directory size is %lu MB)",
-			   (unsigned long) (filemap->fetch_size / (1024 * 1024)),
-			   (unsigned long) (filemap->total_size / (1024 * 1024)));
+					(unsigned long) (filemap->fetch_size / (1024 * 1024)),
+					(unsigned long) (filemap->total_size / (1024 * 1024)));
 
 		fetch_size = filemap->fetch_size;
 		fetch_done = 0;
@@ -495,8 +495,8 @@ progress_report(bool force)
 			 fetch_size / 1024);
 
 	fprintf(stderr, _("%*s/%s kB (%d%%) copied"),
-		   (int) strlen(fetch_size_str), fetch_done_str, fetch_size_str,
-		   percent);
+			(int) strlen(fetch_size_str), fetch_done_str, fetch_size_str,
+			percent);
 	if (isatty(fileno(stderr)))
 		fprintf(stderr, "\r");
 	else
@@ -581,8 +581,8 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 
 			entry = &history[i];
 			pg_log_debug("%d: %X/%X - %X/%X", entry->tli,
-				   (uint32) (entry->begin >> 32), (uint32) (entry->begin),
-				   (uint32) (entry->end >> 32), (uint32) (entry->end));
+						 (uint32) (entry->begin >> 32), (uint32) (entry->begin),
+						 (uint32) (entry->end >> 32), (uint32) (entry->end));
 		}
 	}
 

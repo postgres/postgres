@@ -104,7 +104,7 @@ log_locus_callback(const char **filename, uint64 *lineno)
 	if (pset.inputfile)
 	{
 		*filename = pset.inputfile;
-		*lineno =  pset.lineno;
+		*lineno = pset.lineno;
 	}
 	else
 	{

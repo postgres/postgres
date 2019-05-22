@@ -1153,8 +1153,9 @@ pgss_store(const char *query, uint64 queryId,
 		queryId = pgss_hash_string(query, query_len);
 
 		/*
-		 * If we are unlucky enough to get a hash of zero(invalid), use queryID
-		 * as 2 instead, queryID 1 is already in use for normal statements.
+		 * If we are unlucky enough to get a hash of zero(invalid), use
+		 * queryID as 2 instead, queryID 1 is already in use for normal
+		 * statements.
 		 */
 		if (queryId == UINT64CONST(0))
 			queryId = UINT64CONST(2);

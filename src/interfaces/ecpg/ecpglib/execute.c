@@ -488,11 +488,12 @@ sprintf_float_value(char *ptr, float value, const char *delim)
 		sprintf(ptr, "%.15g%s", value, delim);
 }
 
-static char*
+static char *
 convert_bytea_to_string(char *from_data, int from_len, int lineno)
 {
-	char *to_data;
-	int to_len = ecpg_hex_enc_len(from_len) + 4 + 1; /* backslash + 'x' + quote + quote */
+	char	   *to_data;
+	int			to_len = ecpg_hex_enc_len(from_len) + 4 + 1;	/* backslash + 'x' +
+																 * quote + quote */
 
 	to_data = ecpg_alloc(to_len, lineno);
 	if (!to_data)
@@ -1080,16 +1081,16 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 static void
 print_param_value(char *value, int len, int is_binary, int lineno, int nth)
 {
-	char *value_s;
-	bool malloced = false;
+	char	   *value_s;
+	bool		malloced = false;
 
 	if (value == NULL)
 		value_s = "null";
-	else if (! is_binary)
+	else if (!is_binary)
 		value_s = value;
 	else
 	{
-		value_s = ecpg_alloc(ecpg_hex_enc_len(len)+1, lineno);
+		value_s = ecpg_alloc(ecpg_hex_enc_len(len) + 1, lineno);
 		if (value_s != NULL)
 		{
 			ecpg_hex_encode(value, len, value_s);
@@ -1101,7 +1102,7 @@ print_param_value(char *value, int len, int is_binary, int lineno, int nth)
 	}
 
 	ecpg_log("ecpg_free_params on line %d: parameter %d = %s\n",
-				lineno, nth, value_s);
+			 lineno, nth, value_s);
 
 	if (malloced)
 		ecpg_free(value_s);
@@ -1116,7 +1117,7 @@ ecpg_free_params(struct statement *stmt, bool print)
 	{
 		if (print)
 			print_param_value(stmt->paramvalues[n], stmt->paramlengths[n],
-								stmt->paramformats[n], stmt->lineno, n + 1);
+							  stmt->paramformats[n], stmt->lineno, n + 1);
 		ecpg_free(stmt->paramvalues[n]);
 	}
 	ecpg_free(stmt->paramvalues);
@@ -1162,13 +1163,13 @@ insert_tobeinserted(int position, int ph_len, struct statement *stmt, char *tobe
 
 static bool
 store_input_from_desc(struct statement *stmt, struct descriptor_item *desc_item,
-						char **tobeinserted)
+					  char **tobeinserted)
 {
 	struct variable var;
 
 	/*
-	 * In case of binary data, only allocate memory and memcpy because
-	 * binary data have been already stored into desc_item->data with
+	 * In case of binary data, only allocate memory and memcpy because binary
+	 * data have been already stored into desc_item->data with
 	 * ecpg_store_input() at ECPGset_desc().
 	 */
 	if (desc_item->is_binary)
@@ -1454,7 +1455,8 @@ ecpg_build_params(struct statement *stmt)
 				stmt->statement_type == ECPGst_exec_with_exprlist)
 			{
 				/* Add double quote both side for embedding statement name. */
-				char *str = ecpg_alloc(strlen(tobeinserted) + 2 + 1, stmt->lineno);
+				char	   *str = ecpg_alloc(strlen(tobeinserted) + 2 + 1, stmt->lineno);
+
 				sprintf(str, "\"%s\"", tobeinserted);
 				ecpg_free(tobeinserted);
 				tobeinserted = str;
@@ -1471,7 +1473,8 @@ ecpg_build_params(struct statement *stmt)
 
 			if (binary_format)
 			{
-				char *p = convert_bytea_to_string(tobeinserted, binary_length, stmt->lineno);
+				char	   *p = convert_bytea_to_string(tobeinserted, binary_length, stmt->lineno);
+
 				if (!p)
 				{
 					ecpg_free_params(stmt, false);
@@ -1541,8 +1544,8 @@ ecpg_build_params(struct statement *stmt)
 	}
 
 	/*
-	 * Check if there are unmatched things left.
-	 * PREPARE AS has no parameter. Check other statement.
+	 * Check if there are unmatched things left. PREPARE AS has no parameter.
+	 * Check other statement.
 	 */
 	if (stmt->statement_type != ECPGst_prepare &&
 		next_insert(stmt->command, position, stmt->questionmarks, std_strings) >= 0)
@@ -1617,7 +1620,7 @@ ecpg_execute(struct statement *stmt)
 
 		if (stmt->statement_type == ECPGst_prepare)
 		{
-			if(! ecpg_register_prepared_stmt(stmt))
+			if (!ecpg_register_prepared_stmt(stmt))
 			{
 				ecpg_free_params(stmt, true);
 				return false;
@@ -2266,7 +2269,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 {
 	va_list		args;
 	bool		ret;
-	const char  *real_connection_name = NULL;
+	const char *real_connection_name = NULL;
 
 	real_connection_name = connection_name;
 
@@ -2283,11 +2286,11 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 		if (real_connection_name == NULL)
 		{
 			/*
-			 * If can't get the connection name by declared name then using connection name
-			 * coming from the parameter connection_name
+			 * If can't get the connection name by declared name then using
+			 * connection name coming from the parameter connection_name
 			 */
 			real_connection_name = connection_name;
-		 }
+		}
 	}
 
 	va_start(args, query);

@@ -276,9 +276,8 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 					   WAIT_EVENT_SYNC_REP);
 
 		/*
-		 * If the postmaster dies, we'll probably never get an
-		 * acknowledgment, because all the wal sender processes will exit. So
-		 * just bail out.
+		 * If the postmaster dies, we'll probably never get an acknowledgment,
+		 * because all the wal sender processes will exit. So just bail out.
 		 */
 		if (rc & WL_POSTMASTER_DEATH)
 		{

@@ -445,7 +445,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 
 				default:		/* Always have a default */
 					fatal("unrecognized data block type (%d) while searching archive",
-								  blkType);
+						  blkType);
 					break;
 			}
 			_readBlockHeader(AH, &blkType, &id);
@@ -482,7 +482,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 	/* Are we sane? */
 	if (id != te->dumpId)
 		fatal("found unexpected block ID (%d) when reading data -- expected %d",
-					  id, te->dumpId);
+			  id, te->dumpId);
 
 	switch (blkType)
 	{
@@ -496,7 +496,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 
 		default:				/* Always have a default */
 			fatal("unrecognized data block type %d while restoring archive",
-						  blkType);
+				  blkType);
 			break;
 	}
 }
@@ -910,11 +910,11 @@ _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 	int			byt;
 
 	/*
-	 * Note: if we are at EOF with a pre-1.3 input file, we'll fatal()
-	 * inside ReadInt rather than returning EOF.  It doesn't seem worth
-	 * jumping through hoops to deal with that case better, because no such
-	 * files are likely to exist in the wild: only some 7.1 development
-	 * versions of pg_dump ever generated such files.
+	 * Note: if we are at EOF with a pre-1.3 input file, we'll fatal() inside
+	 * ReadInt rather than returning EOF.  It doesn't seem worth jumping
+	 * through hoops to deal with that case better, because no such files are
+	 * likely to exist in the wild: only some 7.1 development versions of
+	 * pg_dump ever generated such files.
 	 */
 	if (AH->version < K_VERS_1_3)
 		*type = BLK_DATA;

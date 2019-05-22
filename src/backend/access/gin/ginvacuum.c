@@ -394,17 +394,17 @@ ginVacuumPostingTree(GinVacuumState *gvs, BlockNumber rootBlkno)
 		 * There is at least one empty page.  So we have to rescan the tree
 		 * deleting empty pages.
 		 */
-		Buffer				buffer;
+		Buffer		buffer;
 		DataPageDeleteStack root,
-						   *ptr,
-						   *tmp;
+				   *ptr,
+				   *tmp;
 
 		buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, rootBlkno,
 									RBM_NORMAL, gvs->strategy);
 
 		/*
-		 * Lock posting tree root for cleanup to ensure there are no concurrent
-		 * inserts.
+		 * Lock posting tree root for cleanup to ensure there are no
+		 * concurrent inserts.
 		 */
 		LockBufferForCleanup(buffer);
 

@@ -44,8 +44,8 @@ extern void ForgetDatabaseSyncRequests(Oid dbid);
 extern void DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo);
 
 /* md sync callbacks */
-extern int mdsyncfiletag(const FileTag *ftag, char *path);
-extern int mdunlinkfiletag(const FileTag *ftag, char *path);
+extern int	mdsyncfiletag(const FileTag *ftag, char *path);
+extern int	mdunlinkfiletag(const FileTag *ftag, char *path);
 extern bool mdfiletagmatches(const FileTag *ftag, const FileTag *candidate);
 
 #endif							/* MD_H */

@@ -2551,7 +2551,7 @@ EvalPlanQualSlot(EPQState *epqstate,
 
 		if (relation)
 			*slot = table_slot_create(relation,
-										 &epqstate->estate->es_tupleTable);
+									  &epqstate->estate->es_tupleTable);
 		else
 			*slot = ExecAllocTableSlot(&epqstate->estate->es_tupleTable,
 									   epqstate->origslot->tts_tupleDescriptor,

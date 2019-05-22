@@ -54,7 +54,7 @@ static char *constructConnStr(const char **keywords, const char **values);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 static void expand_dbname_patterns(PGconn *conn, SimpleStringList *patterns,
-								   SimpleStringList *names);
+					   SimpleStringList *names);
 
 static char pg_dump_bin[MAXPGPATH];
 static const char *progname;
@@ -1406,8 +1406,8 @@ expand_dbname_patterns(PGconn *conn,
 
 	/*
 	 * The loop below runs multiple SELECTs, which might sometimes result in
-	 * duplicate entries in the name list, but we don't care, since all
-	 * we're going to do is test membership of the list.
+	 * duplicate entries in the name list, but we don't care, since all we're
+	 * going to do is test membership of the list.
 	 */
 
 	for (SimpleStringListCell *cell = patterns->head; cell; cell = cell->next)

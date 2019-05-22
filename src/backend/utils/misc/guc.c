@@ -459,13 +459,13 @@ const struct config_enum_entry ssl_protocol_versions_info[] = {
 
 static struct config_enum_entry shared_memory_options[] = {
 #ifndef WIN32
-	{ "sysv", SHMEM_TYPE_SYSV, false},
+	{"sysv", SHMEM_TYPE_SYSV, false},
 #endif
 #ifndef EXEC_BACKEND
-	{ "mmap", SHMEM_TYPE_MMAP, false},
+	{"mmap", SHMEM_TYPE_MMAP, false},
 #endif
 #ifdef WIN32
-	{ "windows", SHMEM_TYPE_WINDOWS, false},
+	{"windows", SHMEM_TYPE_WINDOWS, false},
 #endif
 	{NULL, 0, false}
 };
@@ -1599,6 +1599,7 @@ static struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
+
 	/*
 	 * WITH OIDS support, and consequently default_with_oids, was removed in
 	 * PostgreSQL 12, but we tolerate the parameter being set to false to
@@ -8894,21 +8895,21 @@ ShowAllGUCConfig(DestReceiver *dest)
 struct config_generic **
 get_explain_guc_options(int *num)
 {
-	int		i;
+	int			i;
 	struct config_generic **result;
 
 	*num = 0;
 
 	/*
-	 * Allocate enough space to fit all GUC_EXPLAIN options. We may not
-	 * need all the space, but there are fairly few such options so we
-	 * don't waste a lot of memory.
+	 * Allocate enough space to fit all GUC_EXPLAIN options. We may not need
+	 * all the space, but there are fairly few such options so we don't waste
+	 * a lot of memory.
 	 */
 	result = palloc(sizeof(struct config_generic *) * num_guc_explain_variables);
 
 	for (i = 0; i < num_guc_variables; i++)
 	{
-		bool modified;
+		bool		modified;
 		struct config_generic *conf = guc_variables[i];
 
 		/* return only options visible to the user */
@@ -8927,15 +8928,17 @@ get_explain_guc_options(int *num)
 		switch (conf->vartype)
 		{
 			case PGC_BOOL:
-			{
-				struct config_bool *lconf = (struct config_bool *) conf;
-				modified = (lconf->boot_val != *(lconf->variable));
-			}
-			break;
+				{
+					struct config_bool *lconf = (struct config_bool *) conf;
+
+					modified = (lconf->boot_val != *(lconf->variable));
+				}
+				break;
 
 			case PGC_INT:
 				{
 					struct config_int *lconf = (struct config_int *) conf;
+
 					modified = (lconf->boot_val != *(lconf->variable));
 				}
 				break;
@@ -8943,6 +8946,7 @@ get_explain_guc_options(int *num)
 			case PGC_REAL:
 				{
 					struct config_real *lconf = (struct config_real *) conf;
+
 					modified = (lconf->boot_val != *(lconf->variable));
 				}
 				break;
@@ -8950,6 +8954,7 @@ get_explain_guc_options(int *num)
 			case PGC_STRING:
 				{
 					struct config_string *lconf = (struct config_string *) conf;
+
 					modified = (strcmp(lconf->boot_val, *(lconf->variable)) != 0);
 				}
 				break;
@@ -8957,6 +8962,7 @@ get_explain_guc_options(int *num)
 			case PGC_ENUM:
 				{
 					struct config_enum *lconf = (struct config_enum *) conf;
+
 					modified = (lconf->boot_val != *(lconf->variable));
 				}
 				break;

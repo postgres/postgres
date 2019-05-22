@@ -203,7 +203,7 @@ pg_popcount32_asm(uint32 word)
 {
 	uint32		res;
 
-	__asm__ __volatile__(" popcntl %1,%0\n" : "=q"(res) : "rm"(word) : "cc");
+__asm__ __volatile__(" popcntl %1,%0\n":"=q"(res):"rm"(word):"cc");
 	return (int) res;
 }
 
@@ -216,7 +216,7 @@ pg_popcount64_asm(uint64 word)
 {
 	uint64		res;
 
-	__asm__ __volatile__(" popcntq %1,%0\n" : "=q"(res) : "rm"(word) : "cc");
+__asm__ __volatile__(" popcntq %1,%0\n":"=q"(res):"rm"(word):"cc");
 	return (int) res;
 }
 

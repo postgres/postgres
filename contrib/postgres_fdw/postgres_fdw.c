@@ -1858,7 +1858,7 @@ postgresExecForeignInsert(EState *estate,
 	if (fmstate->aux_fmstate)
 		resultRelInfo->ri_FdwState = fmstate->aux_fmstate;
 	rslot = execute_foreign_modify(estate, resultRelInfo, CMD_INSERT,
-								  slot, planSlot);
+								   slot, planSlot);
 	/* Revert that change */
 	if (fmstate->aux_fmstate)
 		resultRelInfo->ri_FdwState = fmstate;
@@ -1934,11 +1934,11 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	bool		doNothing = false;
 
 	/*
-	 * If the foreign table we are about to insert routed rows into is also
-	 * an UPDATE subplan result rel that will be updated later, proceeding
-	 * with the INSERT will result in the later UPDATE incorrectly modifying
-	 * those routed rows, so prevent the INSERT --- it would be nice if we
-	 * could handle this case; but for now, throw an error for safety.
+	 * If the foreign table we are about to insert routed rows into is also an
+	 * UPDATE subplan result rel that will be updated later, proceeding with
+	 * the INSERT will result in the later UPDATE incorrectly modifying those
+	 * routed rows, so prevent the INSERT --- it would be nice if we could
+	 * handle this case; but for now, throw an error for safety.
 	 */
 	if (plan && plan->operation == CMD_UPDATE &&
 		(resultRelInfo->ri_usesFdwDirectModify ||
@@ -3169,7 +3169,7 @@ adjust_foreign_grouping_path_cost(PlannerInfo *root,
 	if (!grouping_is_sortable(root->parse->groupClause) ||
 		!pathkeys_contained_in(pathkeys, root->group_pathkeys))
 	{
-		Path		sort_path;		/* dummy for result of cost_sort */
+		Path		sort_path;	/* dummy for result of cost_sort */
 
 		cost_sort(&sort_path,
 				  root,
@@ -3191,7 +3191,7 @@ adjust_foreign_grouping_path_cost(PlannerInfo *root,
 		 * add 1/4th of that default.
 		 */
 		double		sort_multiplier = 1.0 + (DEFAULT_FDW_SORT_MULTIPLIER
- - 1.0) * 0.25;
+											 - 1.0) * 0.25;
 
 		*p_startup_cost *= sort_multiplier;
 		*p_run_cost *= sort_multiplier;
@@ -3773,6 +3773,7 @@ store_returning_result(PgFdwModifyState *fmstate,
 											fmstate->retrieved_attrs,
 											NULL,
 											fmstate->temp_cxt);
+
 		/*
 		 * The returning slot will not necessarily be suitable to store
 		 * heaptuples directly, so allow for conversion.
@@ -6059,8 +6060,8 @@ add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		/*
 		 * Grouping and aggregation are not supported with FOR UPDATE/SHARE,
 		 * so the input_rel should be a base, join, or ordered relation; and
-		 * if it's an ordered relation, its input relation should be a base
-		 * or join relation.
+		 * if it's an ordered relation, its input relation should be a base or
+		 * join relation.
 		 */
 		Assert(input_rel->reloptkind == RELOPT_BASEREL ||
 			   input_rel->reloptkind == RELOPT_JOINREL ||

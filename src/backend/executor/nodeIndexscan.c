@@ -242,7 +242,7 @@ IndexNextWithReorder(IndexScanState *node)
 								scandesc->xs_orderbynulls,
 								node) <= 0)
 			{
-				HeapTuple tuple;
+				HeapTuple	tuple;
 
 				tuple = reorderqueue_pop(node);
 

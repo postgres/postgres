@@ -145,12 +145,12 @@ typedef struct PartitionDispatchData
 	TupleTableSlot *tupslot;
 	AttrNumber *tupmap;
 	int			indexes[FLEXIBLE_ARRAY_MEMBER];
-} PartitionDispatchData;
+}			PartitionDispatchData;
 
 /* struct to hold result relations coming from UPDATE subplans */
 typedef struct SubplanResultRelHashElem
 {
-	Oid		relid;		/* hash key -- must be first */
+	Oid			relid;			/* hash key -- must be first */
 	ResultRelInfo *rri;
 } SubplanResultRelHashElem;
 
@@ -375,7 +375,7 @@ ExecFindPartition(ModifyTableState *mtstate,
 				if (proute->subplan_resultrel_htab)
 				{
 					Oid			partoid = partdesc->oids[partidx];
-					SubplanResultRelHashElem   *elem;
+					SubplanResultRelHashElem *elem;
 
 					elem = hash_search(proute->subplan_resultrel_htab,
 									   &partoid, HASH_FIND, NULL);
@@ -474,7 +474,7 @@ ExecHashSubPlanResultRelsByOid(ModifyTableState *mtstate,
 		ResultRelInfo *rri = &mtstate->resultRelInfo[i];
 		bool		found;
 		Oid			partoid = RelationGetRelid(rri->ri_RelationDesc);
-		SubplanResultRelHashElem   *elem;
+		SubplanResultRelHashElem *elem;
 
 		elem = (SubplanResultRelHashElem *)
 			hash_search(htab, &partoid, HASH_ENTER, &found);
@@ -762,9 +762,9 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				 * It's safe to reuse these from the partition root, as we
 				 * only process one tuple at a time (therefore we won't
 				 * overwrite needed data in slots), and the results of
-				 * projections are independent of the underlying
-				 * storage. Projections and where clauses themselves don't
-				 * store state / are independent of the underlying storage.
+				 * projections are independent of the underlying storage.
+				 * Projections and where clauses themselves don't store state
+				 * / are independent of the underlying storage.
 				 */
 				leaf_part_rri->ri_onConflict->oc_ProjSlot =
 					rootResultRelInfo->ri_onConflict->oc_ProjSlot;
@@ -892,7 +892,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 {
 	MemoryContext oldcxt;
 	PartitionRoutingInfo *partrouteinfo;
-	int		rri_index;
+	int			rri_index;
 
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
 
@@ -1668,16 +1668,16 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 			}
 			else
 			{
-				int		pd_idx = 0;
-				int		pp_idx;
+				int			pd_idx = 0;
+				int			pp_idx;
 
 				/*
 				 * Some new partitions have appeared since plan time, and
 				 * those are reflected in our PartitionDesc but were not
 				 * present in the one used to construct subplan_map and
 				 * subpart_map.  So we must construct new and longer arrays
-				 * where the partitions that were originally present map to the
-				 * same place, and any added indexes map to -1, as if the
+				 * where the partitions that were originally present map to
+				 * the same place, and any added indexes map to -1, as if the
 				 * new partitions had been pruned.
 				 */
 				pprune->subpart_map = palloc(sizeof(int) * partdesc->nparts);

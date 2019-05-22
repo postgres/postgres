@@ -474,6 +474,7 @@ tuple_lock_retry:
 						HeapTupleHeaderGetCmin(tuple->t_data) >= cid)
 					{
 						tmfd->xmax = priorXmax;
+
 						/*
 						 * Cmin is the problematic value, so store that. See
 						 * above.
@@ -1172,7 +1173,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 	Snapshot	snapshot;
 	bool		need_unregister_snapshot = false;
 	TransactionId OldestXmin;
-	BlockNumber	previous_blkno = InvalidBlockNumber;
+	BlockNumber previous_blkno = InvalidBlockNumber;
 	BlockNumber root_blkno = InvalidBlockNumber;
 	OffsetNumber root_offsets[MaxHeapTuplesPerPage];
 
@@ -1263,7 +1264,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 	/* Publish number of blocks to scan */
 	if (progress)
 	{
-		BlockNumber		nblocks;
+		BlockNumber nblocks;
 
 		if (hscan->rs_base.rs_parallel != NULL)
 		{
@@ -1314,7 +1315,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 		/* Report scan progress, if asked to. */
 		if (progress)
 		{
-			BlockNumber     blocks_done = heapam_scan_get_blocks_done(hscan);
+			BlockNumber blocks_done = heapam_scan_get_blocks_done(hscan);
 
 			if (blocks_done != previous_blkno)
 			{
@@ -1668,7 +1669,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 	/* Report scan progress one last time. */
 	if (progress)
 	{
-		BlockNumber		blks_done;
+		BlockNumber blks_done;
 
 		if (hscan->rs_base.rs_parallel != NULL)
 		{
@@ -1720,7 +1721,7 @@ heapam_index_validate_scan(Relation heapRelation,
 	BlockNumber root_blkno = InvalidBlockNumber;
 	OffsetNumber root_offsets[MaxHeapTuplesPerPage];
 	bool		in_index[MaxHeapTuplesPerPage];
-	BlockNumber	previous_blkno = InvalidBlockNumber;
+	BlockNumber previous_blkno = InvalidBlockNumber;
 
 	/* state variables for the merge */
 	ItemPointer indexcursor = NULL;
@@ -1955,8 +1956,8 @@ static BlockNumber
 heapam_scan_get_blocks_done(HeapScanDesc hscan)
 {
 	ParallelBlockTableScanDesc bpscan = NULL;
-	BlockNumber		startblock;
-	BlockNumber		blocks_done;
+	BlockNumber startblock;
+	BlockNumber blocks_done;
 
 	if (hscan->rs_base.rs_parallel != NULL)
 	{
@@ -1974,7 +1975,7 @@ heapam_scan_get_blocks_done(HeapScanDesc hscan)
 		blocks_done = hscan->rs_cblock - startblock;
 	else
 	{
-		BlockNumber     nblocks;
+		BlockNumber nblocks;
 
 		nblocks = bpscan != NULL ? bpscan->phs_nblocks : hscan->rs_nblocks;
 		blocks_done = nblocks - startblock +

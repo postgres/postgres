@@ -1731,7 +1731,7 @@ FileClose(File file)
 			 * see LruDelete.
 			 */
 			elog(vfdP->fdstate & FD_TEMP_FILE_LIMIT ? LOG : data_sync_elevel(LOG),
-				"could not close file \"%s\": %m", vfdP->fileName);
+				 "could not close file \"%s\": %m", vfdP->fileName);
 		}
 
 		--nfile;

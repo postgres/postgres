@@ -123,7 +123,8 @@ CleanupPriorWALFiles(void)
 			if ((IsXLogFileName(walfile) || IsPartialXLogFileName(walfile)) &&
 				strcmp(walfile + 8, exclusiveCleanupFileName + 8) < 0)
 			{
-				char		WALFilePath[MAXPGPATH * 2]; /* the file path including archive */
+				char		WALFilePath[MAXPGPATH * 2]; /* the file path
+														 * including archive */
 
 				/*
 				 * Use the original file name again now, including any

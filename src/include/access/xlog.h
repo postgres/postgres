@@ -95,7 +95,7 @@ typedef enum
 	RECOVERY_TARGET_TIMELINE_CONTROLFILE,
 	RECOVERY_TARGET_TIMELINE_LATEST,
 	RECOVERY_TARGET_TIMELINE_NUMERIC
-}			RecoveryTargetTimeLineGoal;
+} RecoveryTargetTimeLineGoal;
 
 extern XLogRecPtr ProcLastRecPtr;
 extern XLogRecPtr XactLastRecEnd;

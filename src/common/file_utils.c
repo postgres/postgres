@@ -36,7 +36,7 @@
 #define MINIMUM_VERSION_FOR_PG_WAL	100000
 
 #ifdef PG_FLUSH_DATA_WORKS
-static int pre_sync_fname(const char *fname, bool isdir);
+static int	pre_sync_fname(const char *fname, bool isdir);
 #endif
 static void walkdir(const char *path,
 		int (*action) (const char *fname, bool isdir),

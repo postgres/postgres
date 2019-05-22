@@ -453,7 +453,7 @@ typedef struct PLpgSQL_stmt
 	 * set).  This can be used by a profiler as the index for an array of
 	 * per-statement metrics.
 	 */
-	unsigned int	stmtid;
+	unsigned int stmtid;
 } PLpgSQL_stmt;
 
 /*

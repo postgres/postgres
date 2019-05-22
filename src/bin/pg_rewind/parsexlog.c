@@ -315,7 +315,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 			pg_log_error("could not read file \"%s\": %m", xlogfpath);
 		else
 			pg_log_error("could not read file \"%s\": read %d of %zu",
-				   xlogfpath, r, (Size) XLOG_BLCKSZ);
+						 xlogfpath, r, (Size) XLOG_BLCKSZ);
 
 		return -1;
 	}

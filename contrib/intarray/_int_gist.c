@@ -212,41 +212,44 @@ g_int_compress(PG_FUNCTION_ARGS)
 		 */
 		for (j = i = len - 1; i > 0 && lenr > 0; i--, j--)
 		{
-			int		r_end = dr[i];
-			int		r_start = r_end;
-			while (i > 0 && lenr > 0 && dr[i-1] == r_start - 1)
+			int			r_end = dr[i];
+			int			r_start = r_end;
+
+			while (i > 0 && lenr > 0 && dr[i - 1] == r_start - 1)
 				--r_start, --i, --lenr;
-			dr[2*j] = r_start;
-			dr[2*j+1] = r_end;
+			dr[2 * j] = r_start;
+			dr[2 * j + 1] = r_end;
 		}
 		/* just copy the rest, if any, as trivial ranges */
 		for (; i >= 0; i--, j--)
-			dr[2*j] = dr[2*j + 1] = dr[i];
+			dr[2 * j] = dr[2 * j + 1] = dr[i];
 
 		if (++j)
 		{
 			/*
 			 * shunt everything down to start at the right place
 			 */
-			memmove((void *) &dr[0], (void *) &dr[2*j], 2*(len - j) * sizeof(int32));
+			memmove((void *) &dr[0], (void *) &dr[2 * j], 2 * (len - j) * sizeof(int32));
 		}
+
 		/*
 		 * make "len" be number of array elements, not ranges
 		 */
-		len = 2*(len - j);
+		len = 2 * (len - j);
 		cand = 1;
 		while (len > MAXNUMRANGE * 2)
 		{
 			min = PG_INT64_MAX;
 			for (i = 2; i < len; i += 2)
-				if (min > ((int64)dr[i] - (int64)dr[i - 1]))
+				if (min > ((int64) dr[i] - (int64) dr[i - 1]))
 				{
-					min = ((int64)dr[i] - (int64)dr[i - 1]);
+					min = ((int64) dr[i] - (int64) dr[i - 1]);
 					cand = i;
 				}
 			memmove((void *) &dr[cand - 1], (void *) &dr[cand + 1], (len - cand - 1) * sizeof(int32));
 			len -= 2;
 		}
+
 		/*
 		 * check sparseness of result
 		 */

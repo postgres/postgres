@@ -3023,6 +3023,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 	int			len,
 				value;
 	bool		fx_mode = false;
+
 	/* number of extra skipped characters (more than given in format string) */
 	int			extra_skip = 0;
 
@@ -3049,8 +3050,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				/*
 				 * In non FX (fixed format) mode one format string space or
 				 * separator match to one space or separator in input string.
-				 * Or match nothing if there is no space or separator in
-				 * the current position of input string.
+				 * Or match nothing if there is no space or separator in the
+				 * current position of input string.
 				 */
 				extra_skip--;
 				if (isspace((unsigned char) *s) || is_separator_char(s))
@@ -3176,11 +3177,13 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 								n->key->name)));
 				break;
 			case DCH_TZH:
+
 				/*
 				 * Value of TZH might be negative.  And the issue is that we
 				 * might swallow minus sign as the separator.  So, if we have
-				 * skipped more characters than specified in the format string,
-				 * then we consider prepending last skipped minus to TZH.
+				 * skipped more characters than specified in the format
+				 * string, then we consider prepending last skipped minus to
+				 * TZH.
 				 */
 				if (*s == '+' || *s == '-' || *s == ' ')
 				{

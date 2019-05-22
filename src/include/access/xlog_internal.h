@@ -268,7 +268,7 @@ typedef enum
 	RECOVERY_TARGET_ACTION_PAUSE,
 	RECOVERY_TARGET_ACTION_PROMOTE,
 	RECOVERY_TARGET_ACTION_SHUTDOWN
-} RecoveryTargetAction;
+}			RecoveryTargetAction;
 
 /*
  * Method table for resource managers.

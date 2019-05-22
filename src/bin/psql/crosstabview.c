@@ -227,7 +227,7 @@ PrintResultsInCrosstab(const PGresult *res)
 		if (piv_columns.count > CROSSTABVIEW_MAX_COLUMNS)
 		{
 			pg_log_error("\\crosstabview: maximum number of columns (%d) exceeded",
-					   CROSSTABVIEW_MAX_COLUMNS);
+						 CROSSTABVIEW_MAX_COLUMNS);
 			goto error_return;
 		}
 
@@ -396,10 +396,10 @@ printCrosstab(const PGresult *results,
 			if (cont.cells[idx] != NULL)
 			{
 				pg_log_error("\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\"",
-						   rp->name ? rp->name :
-						   (popt.nullPrint ? popt.nullPrint : "(null)"),
-						   cp->name ? cp->name :
-						   (popt.nullPrint ? popt.nullPrint : "(null)"));
+							 rp->name ? rp->name :
+							 (popt.nullPrint ? popt.nullPrint : "(null)"),
+							 cp->name ? cp->name :
+							 (popt.nullPrint ? popt.nullPrint : "(null)"));
 				goto error;
 			}
 
@@ -644,7 +644,7 @@ indexOfColumn(char *arg, const PGresult *res)
 		if (idx < 0 || idx >= PQnfields(res))
 		{
 			pg_log_error("\\crosstabview: column number %d is out of range 1..%d",
-					   idx + 1, PQnfields(res));
+						 idx + 1, PQnfields(res));
 			return -1;
 		}
 	}

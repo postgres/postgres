@@ -218,7 +218,7 @@ typedef struct
 	int			write_head;
 	int			read_heads[NUM_SYNC_REP_WAIT_MODE];
 	WalTimeSample last_read[NUM_SYNC_REP_WAIT_MODE];
-}			LagTracker;
+} LagTracker;
 
 static LagTracker *lag_tracker;
 
@@ -1407,7 +1407,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 		sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
 
 		wakeEvents = WL_LATCH_SET | WL_EXIT_ON_PM_DEATH |
-					 WL_SOCKET_READABLE | WL_TIMEOUT;
+			WL_SOCKET_READABLE | WL_TIMEOUT;
 
 		if (pq_is_send_pending())
 			wakeEvents |= WL_SOCKET_WRITEABLE;
@@ -2255,7 +2255,7 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			int			wakeEvents;
 
 			wakeEvents = WL_LATCH_SET | WL_EXIT_ON_PM_DEATH | WL_TIMEOUT |
-						 WL_SOCKET_READABLE;
+				WL_SOCKET_READABLE;
 
 			/*
 			 * Use fresh timestamp, not last_processed, to reduce the chance

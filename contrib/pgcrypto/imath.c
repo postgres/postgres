@@ -1138,7 +1138,7 @@ mp_int_mod(mp_int a, mp_int m, mp_int c)
 }
 
 mp_result
-mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small * r)
+mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small *r)
 {
 	mpz_t		vtmp;
 	mp_digit	vbuf[MP_VALUE_DIGITS(value)];
@@ -1819,7 +1819,7 @@ mp_int_root(mp_int a, mp_small b, mp_int c)
 }
 
 mp_result
-mp_int_to_int(mp_int z, mp_small * out)
+mp_int_to_int(mp_int z, mp_small *out)
 {
 	assert(z != NULL);
 
@@ -1850,7 +1850,7 @@ mp_int_to_int(mp_int z, mp_small * out)
 }
 
 mp_result
-mp_int_to_uint(mp_int z, mp_usmall * out)
+mp_int_to_uint(mp_int z, mp_usmall *out)
 {
 	assert(z != NULL);
 

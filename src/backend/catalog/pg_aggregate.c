@@ -612,7 +612,7 @@ AggregateCreate(const char *aggName,
 
 	myself = ProcedureCreate(aggName,
 							 aggNamespace,
-							 replace, /* maybe replacement */
+							 replace,	/* maybe replacement */
 							 false, /* doesn't return a set */
 							 finaltype, /* returnType */
 							 GetUserId(),	/* proowner */
@@ -693,10 +693,9 @@ AggregateCreate(const char *aggName,
 
 		/*
 		 * If we're replacing an existing entry, we need to validate that
-		 * we're not changing anything that would break callers.
-		 * Specifically we must not change aggkind or aggnumdirectargs,
-		 * which affect how an aggregate call is treated in parse
-		 * analysis.
+		 * we're not changing anything that would break callers. Specifically
+		 * we must not change aggkind or aggnumdirectargs, which affect how an
+		 * aggregate call is treated in parse analysis.
 		 */
 		if (aggKind != oldagg->aggkind)
 			ereport(ERROR,

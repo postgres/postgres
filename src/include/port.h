@@ -508,6 +508,7 @@ extern char *inet_net_ntop(int af, const void *src, int bits,
 
 /* port/pg_strong_random.c */
 extern bool pg_strong_random(void *buf, size_t len);
+
 /*
  * pg_backend_random used to be a wrapper for pg_strong_random before
  * Postgres 12 for the backend code.

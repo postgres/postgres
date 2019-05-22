@@ -839,16 +839,16 @@ gistNewBuffer(Relation r)
 			gistcheckpage(r, buffer);
 
 			/*
-			 * Otherwise, recycle it if deleted, and too old to have any processes
-			 * interested in it.
+			 * Otherwise, recycle it if deleted, and too old to have any
+			 * processes interested in it.
 			 */
 			if (gistPageRecyclable(page))
 			{
 				/*
-				 * If we are generating WAL for Hot Standby then create a
-				 * WAL record that will allow us to conflict with queries
-				 * running on standby, in case they have snapshots older
-				 * than the page's deleteXid.
+				 * If we are generating WAL for Hot Standby then create a WAL
+				 * record that will allow us to conflict with queries running
+				 * on standby, in case they have snapshots older than the
+				 * page's deleteXid.
 				 */
 				if (XLogStandbyInfoActive() && RelationNeedsWAL(r))
 					gistXLogPageReuse(r, blkno, GistPageGetDeleteXid(page));

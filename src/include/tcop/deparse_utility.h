@@ -102,7 +102,7 @@ typedef struct CollectedCommand
 		}			defprivs;
 	}			d;
 
-	struct CollectedCommand	*parent;		/* when nested */
+	struct CollectedCommand *parent;	/* when nested */
 } CollectedCommand;
 
 #endif							/* DEPARSE_UTILITY_H */

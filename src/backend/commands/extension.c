@@ -903,9 +903,9 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 
 			t_sql = DirectFunctionCall3Coll(replace_text,
 											C_COLLATION_OID,
-										t_sql,
-										CStringGetTextDatum("@extschema@"),
-										CStringGetTextDatum(qSchemaName));
+											t_sql,
+											CStringGetTextDatum("@extschema@"),
+											CStringGetTextDatum(qSchemaName));
 		}
 
 		/*
@@ -916,9 +916,9 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 		{
 			t_sql = DirectFunctionCall3Coll(replace_text,
 											C_COLLATION_OID,
-										t_sql,
-										CStringGetTextDatum("MODULE_PATHNAME"),
-										CStringGetTextDatum(control->module_pathname));
+											t_sql,
+											CStringGetTextDatum("MODULE_PATHNAME"),
+											CStringGetTextDatum(control->module_pathname));
 		}
 
 		/* And now back to C string */

@@ -753,8 +753,8 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 			Py_DECREF(pltlevel);
 
 			/*
-			 * Note: In BEFORE trigger, stored generated columns are not computed yet,
-			 * so don't make them accessible in NEW row.
+			 * Note: In BEFORE trigger, stored generated columns are not
+			 * computed yet, so don't make them accessible in NEW row.
 			 */
 
 			if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))

@@ -1165,8 +1165,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 			 * Now the command part of the event for TG_op and data for NEW
 			 * and OLD
 			 *
-			 * Note: In BEFORE trigger, stored generated columns are not computed yet,
-			 * so don't make them accessible in NEW row.
+			 * Note: In BEFORE trigger, stored generated columns are not
+			 * computed yet, so don't make them accessible in NEW row.
 			 */
 			if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 			{

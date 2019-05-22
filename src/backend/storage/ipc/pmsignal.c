@@ -370,7 +370,7 @@ void
 PostmasterDeathSignalInit(void)
 {
 #ifdef USE_POSTMASTER_DEATH_SIGNAL
-	int 		signum = POSTMASTER_DEATH_SIGNAL;
+	int			signum = POSTMASTER_DEATH_SIGNAL;
 
 	/* Register our signal handler. */
 	pqsignal(signum, postmaster_death_handler);

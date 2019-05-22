@@ -160,7 +160,7 @@ static inline bool invariant_l_nontarget_offset(BtreeCheckState *state,
 							 OffsetNumber upperbound);
 static Page palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum);
 static inline BTScanInsert bt_mkscankey_pivotsearch(Relation rel,
-													IndexTuple itup);
+						 IndexTuple itup);
 static ItemId PageGetItemIdCareful(BtreeCheckState *state, BlockNumber block,
 					 Page page, OffsetNumber offset);
 static inline ItemPointer BTreeTupleGetHeapTIDCareful(BtreeCheckState *state,
@@ -1029,7 +1029,7 @@ bt_target_page_check(BtreeCheckState *state)
 		/* Fingerprint leaf page tuples (those that point to the heap) */
 		if (state->heapallindexed && P_ISLEAF(topaque) && !ItemIdIsDead(itemid))
 		{
-			IndexTuple		norm;
+			IndexTuple	norm;
 
 			norm = bt_normalize_tuple(state, itup);
 			bloom_add_element(state->filter, (unsigned char *) norm,
@@ -1174,7 +1174,7 @@ bt_target_page_check(BtreeCheckState *state)
 		 */
 		else if (offset == max)
 		{
-			BTScanInsert	rightkey;
+			BTScanInsert rightkey;
 
 			/* Get item in next/right page */
 			rightkey = bt_right_page_check_scankey(state);
@@ -1851,7 +1851,8 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 						  bool *isnull, bool tupleIsAlive, void *checkstate)
 {
 	BtreeCheckState *state = (BtreeCheckState *) checkstate;
-	IndexTuple	itup, norm;
+	IndexTuple	itup,
+				norm;
 
 	Assert(state->heapallindexed);
 
@@ -1931,7 +1932,7 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 
 	for (i = 0; i < tupleDescriptor->natts; i++)
 	{
-		Form_pg_attribute	att;
+		Form_pg_attribute att;
 
 		att = TupleDescAttr(tupleDescriptor, i);
 

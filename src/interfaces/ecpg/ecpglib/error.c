@@ -201,10 +201,10 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 			break;
 
 		case ECPG_INVALID_CURSOR:
-			 snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
+			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------
 				translator: this string will be truncated at 149 characters expanded.  */
-				ecpg_gettext("The cursor is invalid on line %d"),line);
+					 ecpg_gettext("The cursor is invalid on line %d"), line);
 			break;
 
 		default:

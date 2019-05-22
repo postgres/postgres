@@ -18,9 +18,10 @@
 #include "lib/stringinfo.h"
 
 #define XLOG_GIST_PAGE_UPDATE		0x00
-#define XLOG_GIST_DELETE			0x10 /* delete leaf index tuples for a page */
-#define XLOG_GIST_PAGE_REUSE		0x20 /* old page is about to be reused from
-										  * FSM */
+#define XLOG_GIST_DELETE			0x10	/* delete leaf index tuples for a
+											 * page */
+#define XLOG_GIST_PAGE_REUSE		0x20	/* old page is about to be reused
+											 * from FSM */
 #define XLOG_GIST_PAGE_SPLIT		0x30
  /* #define XLOG_GIST_INSERT_COMPLETE	 0x40 */	/* not used anymore */
  /* #define XLOG_GIST_CREATE_INDEX		 0x50 */	/* not used anymore */
@@ -83,7 +84,8 @@ typedef struct gistxlogPageSplit
 typedef struct gistxlogPageDelete
 {
 	TransactionId deleteXid;	/* last Xid which could see page in scan */
-	OffsetNumber downlinkOffset; /* Offset of downlink referencing this page */
+	OffsetNumber downlinkOffset;	/* Offset of downlink referencing this
+									 * page */
 } gistxlogPageDelete;
 
 #define SizeOfGistxlogPageDelete	(offsetof(gistxlogPageDelete, downlinkOffset) + sizeof(OffsetNumber))

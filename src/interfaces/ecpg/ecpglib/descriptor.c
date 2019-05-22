@@ -589,7 +589,7 @@ ECPGset_desc_header(int lineno, const char *desc_name, int count)
 
 static void
 set_desc_attr(struct descriptor_item *desc_item, struct variable *var,
-				char *tobeinserted)
+			  char *tobeinserted)
 {
 	if (var->type != ECPGt_bytea)
 		desc_item->is_binary = false;
@@ -603,8 +603,7 @@ set_desc_attr(struct descriptor_item *desc_item, struct variable *var,
 		desc_item->data_len = variable->len;
 	}
 
-	ecpg_free(desc_item->data); /* free() takes care of a
-								 * potential NULL value */
+	ecpg_free(desc_item->data); /* free() takes care of a potential NULL value */
 	desc_item->data = (char *) tobeinserted;
 }
 
@@ -875,8 +874,8 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 	if (real_connection_name == NULL)
 	{
 		/*
-		 * If can't get the connection name by declared name then using connection name
-		 * coming from the parameter connection_name
+		 * If can't get the connection name by declared name then using
+		 * connection name coming from the parameter connection_name
 		 */
 		real_connection_name = connection_name;
 	}

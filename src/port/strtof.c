@@ -41,9 +41,9 @@ strtof(const char *nptr, char **endptr)
 		 * Value might be in-range for double but not float.
 		 */
 		if (dresult != 0 && fresult == 0)
-			caller_errno = ERANGE;			  /* underflow */
+			caller_errno = ERANGE;	/* underflow */
 		if (!isinf(dresult) && isinf(fresult))
-			caller_errno = ERANGE;			  /* overflow */
+			caller_errno = ERANGE;	/* overflow */
 	}
 	else
 		caller_errno = errno;
@@ -78,7 +78,7 @@ pg_strtof(const char *nptr, char **endptr)
 	float		fresult;
 
 	errno = 0;
-	fresult = (strtof)(nptr, endptr);
+	fresult = (strtof) (nptr, endptr);
 	if (errno)
 	{
 		/* On error, just return the error to the caller. */
@@ -100,7 +100,8 @@ pg_strtof(const char *nptr, char **endptr)
 		/*
 		 * Try again. errno is already 0 here.
 		 */
-		double	dresult = strtod(nptr, NULL);
+		double		dresult = strtod(nptr, NULL);
+
 		if (errno)
 		{
 			/* On error, just return the error */
@@ -113,8 +114,8 @@ pg_strtof(const char *nptr, char **endptr)
 			errno = caller_errno;
 			return fresult;
 		}
-		else if ((dresult > 0 && dresult <= FLT_MIN && (float)dresult != 0.0) ||
-				 (dresult < 0 && dresult >= -FLT_MIN && (float)dresult != 0.0))
+		else if ((dresult > 0 && dresult <= FLT_MIN && (float) dresult != 0.0) ||
+				 (dresult < 0 && dresult >= -FLT_MIN && (float) dresult != 0.0))
 		{
 			/* subnormal but nonzero value */
 			errno = caller_errno;

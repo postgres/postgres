@@ -136,7 +136,8 @@ typedef enum ObjectClass
 #define PERFORM_DELETION_QUIETLY			0x0004	/* suppress notices */
 #define PERFORM_DELETION_SKIP_ORIGINAL		0x0008	/* keep original obj */
 #define PERFORM_DELETION_SKIP_EXTENSIONS	0x0010	/* keep extensions */
-#define PERFORM_DELETION_CONCURRENT_LOCK	0x0020	/* normal drop with concurrent lock mode */
+#define PERFORM_DELETION_CONCURRENT_LOCK	0x0020	/* normal drop with
+													 * concurrent lock mode */
 
 
 /* in dependency.c */
@@ -200,10 +201,10 @@ extern long changeDependencyFor(Oid classId, Oid objectId,
 					Oid newRefObjectId);
 
 extern long changeDependenciesOf(Oid classId, Oid oldObjectId,
-								 Oid newObjectId);
+					 Oid newObjectId);
 
 extern long changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
-								 Oid newRefObjectId);
+					 Oid newRefObjectId);
 
 extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 

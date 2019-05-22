@@ -53,7 +53,7 @@ extern bool datumIsEqual(Datum value1, Datum value2,
  * true if the two datums are equal, false otherwise.
  */
 extern bool datum_image_eq(Datum value1, Datum value2,
-						   bool typByVal, int typLen);
+			   bool typByVal, int typLen);
 
 /*
  * Serialize and restore datums so that we can transfer them to parallel

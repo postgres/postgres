@@ -1235,7 +1235,7 @@ GetSysCacheOid(int cacheId,
 	result = heap_getattr(tuple, oidcol,
 						  SysCache[cacheId]->cc_tupdesc,
 						  &isNull);
-	Assert(!isNull); /* columns used as oids should never be NULL */
+	Assert(!isNull);			/* columns used as oids should never be NULL */
 	ReleaseSysCache(tuple);
 	return result;
 }

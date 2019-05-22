@@ -865,6 +865,7 @@ ldelete:;
 								goto ldelete;
 
 						case TM_SelfModified:
+
 							/*
 							 * This can be reached when following an update
 							 * chain from a tuple updated by another session,
@@ -1070,7 +1071,7 @@ ExecUpdate(ModifyTableState *mtstate,
 	{
 		if (!ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
 								  tupleid, oldtuple, slot))
-			return NULL;        /* "do nothing" */
+			return NULL;		/* "do nothing" */
 	}
 
 	/* INSTEAD OF ROW UPDATE Triggers */
@@ -1079,7 +1080,7 @@ ExecUpdate(ModifyTableState *mtstate,
 	{
 		if (!ExecIRUpdateTriggers(estate, resultRelInfo,
 								  oldtuple, slot))
-			return NULL;        /* "do nothing" */
+			return NULL;		/* "do nothing" */
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
@@ -1401,6 +1402,7 @@ lreplace:;
 							return NULL;
 
 						case TM_SelfModified:
+
 							/*
 							 * This can be reached when following an update
 							 * chain from a tuple updated by another session,

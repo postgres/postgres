@@ -632,8 +632,8 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 			res = (level >= queryLen) ||
 				DatumGetBool(DirectFunctionCall2Coll(text_starts_with,
 													 PG_GET_COLLATION(),
-												 out->leafValue,
-												 PointerGetDatum(query)));
+													 out->leafValue,
+													 PointerGetDatum(query)));
 
 			if (!res)			/* no need to consider remaining conditions */
 				break;

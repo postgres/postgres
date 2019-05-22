@@ -34,7 +34,8 @@ CATALOG(pg_attrdef,2604,AttrDefaultRelationId)
 	int16		adnum;			/* attnum of attribute */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	pg_node_tree adbin BKI_FORCE_NOT_NULL;			/* nodeToString representation of default */
+	pg_node_tree adbin BKI_FORCE_NOT_NULL;	/* nodeToString representation of
+											 * default */
 #endif
 } FormData_pg_attrdef;
 

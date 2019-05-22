@@ -962,10 +962,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			 * much smaller.
 			 *
 			 * Since the truncated tuple is often smaller than the original
-			 * tuple, it cannot just be copied in place (besides, we want
-			 * to actually save space on the leaf page).  We delete the
-			 * original high key, and add our own truncated high key at the
-			 * same offset.
+			 * tuple, it cannot just be copied in place (besides, we want to
+			 * actually save space on the leaf page).  We delete the original
+			 * high key, and add our own truncated high key at the same
+			 * offset.
 			 *
 			 * Note that the page layout won't be changed very much.  oitup is
 			 * already located at the physical beginning of tuple space, so we

@@ -320,7 +320,7 @@ receiveFileChunks(const char *sql)
 		if (PQgetisnull(res, 0, 2))
 		{
 			pg_log_debug("received null value for chunk for file \"%s\", file has been deleted",
-				   filename);
+						 filename);
 			remove_target_file(filename, true);
 			pg_free(filename);
 			PQclear(res);
@@ -333,7 +333,7 @@ receiveFileChunks(const char *sql)
 		 */
 		snprintf(chunkoff_str, sizeof(chunkoff_str), INT64_FORMAT, chunkoff);
 		pg_log_debug("received chunk for file \"%s\", offset %s, size %d",
-			   filename, chunkoff_str, chunksize);
+					 filename, chunkoff_str, chunksize);
 
 		open_target_file(filename, false);
 

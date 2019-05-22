@@ -465,9 +465,9 @@ UpdateStatisticsForTypeChange(Oid statsOid, Oid relationOid, int attnum,
 		elog(ERROR, "cache lookup failed for statistics object %u", statsOid);
 
 	/*
-	 * When none of the defined statistics types contain datum values
-	 * from the table's columns then there's no need to reset the stats.
-	 * Functional dependencies and ndistinct stats should still hold true.
+	 * When none of the defined statistics types contain datum values from the
+	 * table's columns then there's no need to reset the stats. Functional
+	 * dependencies and ndistinct stats should still hold true.
 	 */
 	if (!statext_is_kind_built(oldtup, STATS_EXT_MCV))
 	{

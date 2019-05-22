@@ -38,7 +38,7 @@ typedef struct PartitionDirectoryData
 {
 	MemoryContext pdir_mcxt;
 	HTAB	   *pdir_hash;
-} PartitionDirectoryData;
+}			PartitionDirectoryData;
 
 typedef struct PartitionDirectoryEntry
 {
@@ -74,9 +74,9 @@ RelationBuildPartitionDesc(Relation rel)
 
 	/*
 	 * Get partition oids from pg_inherits.  This uses a single snapshot to
-	 * fetch the list of children, so while more children may be getting
-	 * added concurrently, whatever this function returns will be accurate
-	 * as of some well-defined point in time.
+	 * fetch the list of children, so while more children may be getting added
+	 * concurrently, whatever this function returns will be accurate as of
+	 * some well-defined point in time.
 	 */
 	inhoids = find_inheritance_children(RelationGetRelid(rel), NoLock);
 	nparts = list_length(inhoids);
@@ -122,14 +122,14 @@ RelationBuildPartitionDesc(Relation rel)
 		 *
 		 * Note that this algorithm assumes that PartitionBoundSpec we manage
 		 * to fetch is the right one -- so this is only good enough for
-		 * concurrent ATTACH PARTITION, not concurrent DETACH PARTITION
-		 * or some hypothetical operation that changes the partition bounds.
+		 * concurrent ATTACH PARTITION, not concurrent DETACH PARTITION or
+		 * some hypothetical operation that changes the partition bounds.
 		 */
 		if (boundspec == NULL)
 		{
 			Relation	pg_class;
-			SysScanDesc	scan;
-			ScanKeyData	key[1];
+			SysScanDesc scan;
+			ScanKeyData key[1];
 			Datum		datum;
 			bool		isnull;
 
@@ -301,7 +301,7 @@ PartitionDirectoryLookup(PartitionDirectory pdir, Relation rel)
 void
 DestroyPartitionDirectory(PartitionDirectory pdir)
 {
-	HASH_SEQ_STATUS	status;
+	HASH_SEQ_STATUS status;
 	PartitionDirectoryEntry *pde;
 
 	hash_seq_init(&status, pdir->pdir_hash);

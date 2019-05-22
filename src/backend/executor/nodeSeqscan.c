@@ -228,8 +228,8 @@ ExecReScanSeqScan(SeqScanState *node)
 	scan = node->ss.ss_currentScanDesc;
 
 	if (scan != NULL)
-		table_rescan(scan,	/* scan desc */
-					 NULL);	/* new scan keys */
+		table_rescan(scan,		/* scan desc */
+					 NULL);		/* new scan keys */
 
 	ExecScanReScan((ScanState *) node);
 }

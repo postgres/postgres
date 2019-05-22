@@ -121,8 +121,8 @@ free_argument(struct arguments *arg)
 	free_argument(arg->next);
 
 	/*
-	 *  Don't free variables in it because the original codes don't free it either
-	 *  variables are static structures instead of allocating
+	 * Don't free variables in it because the original codes don't free it
+	 * either variables are static structures instead of allocating
 	 */
 	free(arg);
 }
@@ -520,13 +520,13 @@ main(int argc, char *const argv[])
 			free(input_filename);
 		}
 
-		if(g_declared_list)
+		if (g_declared_list)
 		{
 			free_declared_stmt(g_declared_list);
 			g_declared_list = NULL;
 		}
 
-		if(cur)
+		if (cur)
 		{
 			free_cursor(cur);
 			cur = NULL;

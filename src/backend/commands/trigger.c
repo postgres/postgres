@@ -4245,9 +4245,9 @@ AfterTriggerExecute(EState *estate,
 		case AFTER_TRIGGER_FDW_REUSE:
 
 			/*
-			 * Store tuple in the slot so that tg_trigtuple does not
-			 * reference tuplestore memory.  (It is formally possible for the
-			 * trigger function to queue trigger events that add to the same
+			 * Store tuple in the slot so that tg_trigtuple does not reference
+			 * tuplestore memory.  (It is formally possible for the trigger
+			 * function to queue trigger events that add to the same
 			 * tuplestore, which can push other tuples out of memory.)  The
 			 * distinction is academic, because we start with a minimal tuple
 			 * that is stored as a heap tuple, constructed in different memory

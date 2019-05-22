@@ -390,7 +390,7 @@ do_copy(const char *args)
 					char	   *reason = wait_result_to_str(pclose_rc);
 
 					pg_log_error("%s: %s", options->file,
-							   reason ? reason : "");
+								 reason ? reason : "");
 					if (reason)
 						free(reason);
 				}

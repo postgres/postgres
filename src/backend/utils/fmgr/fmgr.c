@@ -554,7 +554,7 @@ static void
 record_C_func(HeapTuple procedureTuple,
 			  PGFunction user_fn, const Pg_finfo_record *inforec)
 {
-	Oid			fn_oid =  ((Form_pg_proc) GETSTRUCT(procedureTuple))->oid;
+	Oid			fn_oid = ((Form_pg_proc) GETSTRUCT(procedureTuple))->oid;
 	CFuncHashTabEntry *entry;
 	bool		found;
 

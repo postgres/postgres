@@ -218,7 +218,7 @@ mp_result	mp_int_div(mp_int a, mp_int b, mp_int q, mp_int r);
 /** Sets `q` and `*r` to the quotent and remainder of `a / value`. Division by
 	powers of 2 is detected and handled efficiently. The remainder is pinned to
 	`0 <= *r < b`. Either of `q` or `r` may be NULL. */
-mp_result	mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small * r);
+mp_result	mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small *r);
 
 /** Sets `q` and `r` to the quotient and remainder of `a / 2^p2`. This is a
 	special case for division by powers of two that is more efficient than
@@ -246,7 +246,7 @@ mp_result	mp_int_expt_full(mp_int a, mp_int b, mp_int c);
 	The remainder is pinned to `0 <= r < value`. */
 static inline
 mp_result
-mp_int_mod_value(mp_int a, mp_small value, mp_small * r)
+mp_int_mod_value(mp_int a, mp_small value, mp_small *r)
 {
 	return mp_int_div_value(a, value, 0, r);
 }
@@ -339,11 +339,11 @@ mp_int_sqrt(mp_int a, mp_int c)
 
 /** Returns `MP_OK` if `z` is representable as `mp_small`, else `MP_RANGE`.
 	If `out` is not NULL, `*out` is set to the value of `z` when `MP_OK`. */
-mp_result	mp_int_to_int(mp_int z, mp_small * out);
+mp_result	mp_int_to_int(mp_int z, mp_small *out);
 
 /** Returns `MP_OK` if `z` is representable as `mp_usmall`, or `MP_RANGE`.
 	If `out` is not NULL, `*out` is set to the value of `z` when `MP_OK`. */
-mp_result	mp_int_to_uint(mp_int z, mp_usmall * out);
+mp_result	mp_int_to_uint(mp_int z, mp_usmall *out);
 
 /** Converts `z` to a zero-terminated string of characters in the specified
 	`radix`, writing at most `limit` characters to `str` including the

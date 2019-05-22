@@ -3621,7 +3621,7 @@ create_limit_path(PlannerInfo *root, RelOptInfo *rel,
  */
 void
 adjust_limit_rows_costs(double *rows,	/* in/out parameter */
-						Cost *startup_cost,	/* in/out parameter */
+						Cost *startup_cost, /* in/out parameter */
 						Cost *total_cost,	/* in/out parameter */
 						int64 offset_est,
 						int64 count_est)

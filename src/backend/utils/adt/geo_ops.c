@@ -88,7 +88,7 @@ static int	point_inside(Point *p, int npts, Point *plist);
 static inline void line_construct(LINE *result, Point *pt, float8 m);
 static inline float8 line_sl(LINE *line);
 static inline float8 line_invsl(LINE *line);
-static bool	line_interpt_line(Point *result, LINE *l1, LINE *l2);
+static bool line_interpt_line(Point *result, LINE *l1, LINE *l2);
 static bool line_contain_point(LINE *line, Point *point);
 static float8 line_closept_point(Point *result, LINE *line, Point *pt);
 
@@ -96,10 +96,10 @@ static float8 line_closept_point(Point *result, LINE *line, Point *pt);
 static inline void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 static inline float8 lseg_sl(LSEG *lseg);
 static inline float8 lseg_invsl(LSEG *lseg);
-static bool	lseg_interpt_line(Point *result, LSEG *lseg, LINE *line);
-static bool	lseg_interpt_lseg(Point *result, LSEG *l1, LSEG *l2);
+static bool lseg_interpt_line(Point *result, LSEG *lseg, LINE *line);
+static bool lseg_interpt_lseg(Point *result, LSEG *l1, LSEG *l2);
 static int	lseg_crossing(float8 x, float8 y, float8 px, float8 py);
-static bool	lseg_contain_point(LSEG *lseg, Point *point);
+static bool lseg_contain_point(LSEG *lseg, Point *point);
 static float8 lseg_closept_point(Point *result, LSEG *lseg, Point *pt);
 static float8 lseg_closept_line(Point *result, LSEG *lseg, LINE *line);
 static float8 lseg_closept_lseg(Point *result, LSEG *on_lseg, LSEG *to_lseg);
@@ -692,9 +692,9 @@ static bool
 box_contain_box(BOX *contains_box, BOX *contained_box)
 {
 	return FPge(contains_box->high.x, contained_box->high.x) &&
-		   FPle(contains_box->low.x, contained_box->low.x) &&
-		   FPge(contains_box->high.y, contained_box->high.y) &&
-		   FPle(contains_box->low.y, contained_box->low.y);
+		FPle(contains_box->low.x, contained_box->low.x) &&
+		FPge(contains_box->high.y, contained_box->high.y) &&
+		FPle(contains_box->low.y, contained_box->low.y);
 }
 
 
@@ -2378,8 +2378,8 @@ dist_ppath(PG_FUNCTION_ARGS)
 	Assert(path->npts > 0);
 
 	/*
-	 * The distance from a point to a path is the smallest distance
-	 * from the point to any of its constituent segments.
+	 * The distance from a point to a path is the smallest distance from the
+	 * point to any of its constituent segments.
 	 */
 	for (i = 0; i < path->npts; i++)
 	{
@@ -2553,9 +2553,9 @@ lseg_interpt_line(Point *result, LSEG *lseg, LINE *line)
 	LINE		tmp;
 
 	/*
-	 * First, we promote the line segment to a line, because we know how
-	 * to find the intersection point of two lines.  If they don't have
-	 * an intersection point, we are done.
+	 * First, we promote the line segment to a line, because we know how to
+	 * find the intersection point of two lines.  If they don't have an
+	 * intersection point, we are done.
 	 */
 	line_construct(&tmp, &lseg->p[0], lseg_sl(lseg));
 	if (!line_interpt_line(&interpt, &tmp, line))
@@ -2602,8 +2602,8 @@ line_closept_point(Point *result, LINE *line, Point *point)
 	LINE		tmp;
 
 	/*
-	 * We drop a perpendicular to find the intersection point.  Ordinarily
-	 * we should always find it, but that can fail in the presence of NaN
+	 * We drop a perpendicular to find the intersection point.  Ordinarily we
+	 * should always find it, but that can fail in the presence of NaN
 	 * coordinates, and perhaps even from simple roundoff issues.
 	 */
 	line_construct(&tmp, point, line_invsl(line));
@@ -2693,8 +2693,8 @@ lseg_closept_lseg(Point *result, LSEG *on_lseg, LSEG *to_lseg)
 		return 0.0;
 
 	/*
-	 * Then, we find the closest points from the endpoints of the second
-	 * line segment, and keep the closest one.
+	 * Then, we find the closest points from the endpoints of the second line
+	 * segment, and keep the closest one.
 	 */
 	dist = lseg_closept_point(result, on_lseg, &to_lseg->p[0]);
 	d = lseg_closept_point(&point, on_lseg, &to_lseg->p[1]);
@@ -3063,7 +3063,7 @@ static bool
 box_contain_point(BOX *box, Point *point)
 {
 	return box->high.x >= point->x && box->low.x <= point->x &&
-		   box->high.y >= point->y && box->low.y <= point-> y;
+		box->high.y >= point->y && box->low.y <= point->y;
 }
 
 Datum
@@ -3150,7 +3150,7 @@ static bool
 box_contain_lseg(BOX *box, LSEG *lseg)
 {
 	return box_contain_point(box, &lseg->p[0]) &&
-		   box_contain_point(box, &lseg->p[1]);
+		box_contain_point(box, &lseg->p[1]);
 }
 
 Datum

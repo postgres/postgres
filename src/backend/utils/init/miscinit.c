@@ -592,8 +592,8 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 	AssertState(!OidIsValid(AuthenticatedUserId));
 
 	/*
-	 * Make sure syscache entries are flushed for recent catalog changes.
-	 * This allows us to find roles that were created on-the-fly during
+	 * Make sure syscache entries are flushed for recent catalog changes. This
+	 * allows us to find roles that were created on-the-fly during
 	 * authentication.
 	 */
 	AcceptInvalidationMessages();

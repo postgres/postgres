@@ -38,7 +38,7 @@ typedef struct TupleConstr
 {
 	AttrDefault *defval;		/* array */
 	ConstrCheck *check;			/* array */
-	struct AttrMissing *missing;		/* missing attributes values, NULL if none */
+	struct AttrMissing *missing;	/* missing attributes values, NULL if none */
 	uint16		num_defval;
 	uint16		num_check;
 	bool		has_not_null;
@@ -85,7 +85,7 @@ typedef struct TupleDescData
 	TupleConstr *constr;		/* constraints, or NULL if none */
 	/* attrs[N] is the description of Attribute Number N+1 */
 	FormData_pg_attribute attrs[FLEXIBLE_ARRAY_MEMBER];
-} TupleDescData;
+}			TupleDescData;
 typedef struct TupleDescData *TupleDesc;
 
 /* Accessor for the i'th attribute of tupdesc. */

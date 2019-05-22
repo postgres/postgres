@@ -687,7 +687,7 @@ pglz_compress(const char *source, int32 slen, char *dest,
  */
 int32
 pglz_decompress(const char *source, int32 slen, char *dest,
-						 int32 rawsize, bool check_complete)
+				int32 rawsize, bool check_complete)
 {
 	const unsigned char *sp;
 	const unsigned char *srcend;
@@ -759,10 +759,9 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 	}
 
 	/*
-	 * Check we decompressed the right amount.
-	 * If we are slicing, then we won't necessarily
-	 * be at the end of the source or dest buffers
-	 * when we hit a stop, so we don't test them.
+	 * Check we decompressed the right amount. If we are slicing, then we
+	 * won't necessarily be at the end of the source or dest buffers when we
+	 * hit a stop, so we don't test them.
 	 */
 	if (check_complete && (dp != destend || sp != srcend))
 		return -1;
@@ -770,5 +769,5 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 	/*
 	 * That's it.
 	 */
-	return (char*)dp - dest;
+	return (char *) dp - dest;
 }

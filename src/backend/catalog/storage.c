@@ -99,7 +99,7 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);
-			return NULL;				/* placate compiler */
+			return NULL;		/* placate compiler */
 	}
 
 	srel = smgropen(rnode, backend);

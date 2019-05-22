@@ -755,8 +755,8 @@ bpchareq(PG_FUNCTION_ARGS)
 		pg_newlocale_from_collation(collid)->deterministic)
 	{
 		/*
-		 * Since we only care about equality or not-equality, we can avoid all the
-		 * expense of strcoll() here, and just do bitwise comparison.
+		 * Since we only care about equality or not-equality, we can avoid all
+		 * the expense of strcoll() here, and just do bitwise comparison.
 		 */
 		if (len1 != len2)
 			result = false;
@@ -793,8 +793,8 @@ bpcharne(PG_FUNCTION_ARGS)
 		pg_newlocale_from_collation(collid)->deterministic)
 	{
 		/*
-		 * Since we only care about equality or not-equality, we can avoid all the
-		 * expense of strcoll() here, and just do bitwise comparison.
+		 * Since we only care about equality or not-equality, we can avoid all
+		 * the expense of strcoll() here, and just do bitwise comparison.
 		 */
 		if (len1 != len2)
 			result = true;
@@ -983,7 +983,7 @@ hashbpchar(PG_FUNCTION_ARGS)
 	Oid			collid = PG_GET_COLLATION();
 	char	   *keydata;
 	int			keylen;
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 	Datum		result;
 
 	if (!collid)
@@ -1010,7 +1010,7 @@ hashbpchar(PG_FUNCTION_ARGS)
 			int32_t		ulen = -1;
 			UChar	   *uchar = NULL;
 			Size		bsize;
-			uint8_t	   *buf;
+			uint8_t    *buf;
 
 			ulen = icu_to_uchar(&uchar, keydata, keylen);
 
@@ -1043,7 +1043,7 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 	Oid			collid = PG_GET_COLLATION();
 	char	   *keydata;
 	int			keylen;
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 	Datum		result;
 
 	if (!collid)
@@ -1071,7 +1071,7 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 			int32_t		ulen = -1;
 			UChar	   *uchar = NULL;
 			Size		bsize;
-			uint8_t	   *buf;
+			uint8_t    *buf;
 
 			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
