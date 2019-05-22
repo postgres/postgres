@@ -38,6 +38,8 @@
 /oldexec.c
 /parser
 /parser.c
+/prepareas
+/prepareas.c
 /quote
 /quote.c
 /show
