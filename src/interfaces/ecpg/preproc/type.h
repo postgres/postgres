@@ -106,6 +106,12 @@ struct prep
 	char	   *type;
 };
 
+struct exec
+{
+	char	   *name;
+	char	   *type;
+};
+
 struct this_type
 {
 	enum ECPGttype type_enum;

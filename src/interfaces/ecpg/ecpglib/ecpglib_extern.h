@@ -231,6 +231,7 @@ char	   *ecpg_prepared(const char *, struct connection *);
 bool		ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *conn);
 void		ecpg_log(const char *format,...) pg_attribute_printf(1, 2);
 bool		ecpg_auto_prepare(int, const char *, const int, char **, const char *);
+bool		ecpg_register_prepared_stmt(struct statement *);
 void		ecpg_init_sqlca(struct sqlca_t *sqlca);
 
 struct sqlda_compat *ecpg_build_compat_sqlda(int, PGresult *, int, enum COMPAT_MODE);

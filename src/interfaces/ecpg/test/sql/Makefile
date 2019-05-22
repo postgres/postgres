@@ -27,7 +27,8 @@ TESTS = array array.c \
         twophase twophase.c \
         insupd insupd.c \
 		declare declare.c \
-		bytea bytea.c
+		bytea bytea.c \
+		prepareas prepareas.c
 
 all: $(TESTS)
 

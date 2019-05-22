@@ -1,0 +1,198 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+exec sql include ../regression;
+exec sql whenever sqlerror sqlprint;
+
+static void
+check_result_of_insert(void)
+{
+	exec sql begin declare section;
+	int ivar1 = 0, ivar2 = 0;
+	exec sql end declare section;
+
+	exec sql select c1,c2 into :ivar1,:ivar2 from test;
+	printf("%d %d\n", ivar1, ivar2);
+}
+
+int main(void)
+{
+	exec sql begin declare section;
+	int ivar1 = 1, ivar2 = 2;
+	char v_include_dq_name[16], v_include_ws_name[16], v_normal_name[16], v_query[64];
+	exec sql end declare section;
+
+	strcpy(v_normal_name, "normal_name");
+	strcpy(v_include_dq_name, "include_\"_name");
+	strcpy(v_include_ws_name, "include_ _name");
+	strcpy(v_query, "insert into test values(?,?)");
+
+	/*
+	 * preparing for test
+	 */
+	exec sql connect to REGRESSDB1;
+	exec sql begin;
+	exec sql create table test (c1 int, c2 int);
+	exec sql commit work;
+	exec sql begin;
+
+	/*
+	 * Non dynamic statement
+	 */
+	exec sql truncate test;
+	printf("+++++ Test for prepnormal +++++\n");
+	printf("insert into test values(:ivar1,:ivar2)\n");
+	exec sql insert into test values(:ivar1,:ivar2);
+	check_result_of_insert();
+
+	exec sql truncate test;
+	printf("+++++ Test for execute immediate +++++\n");
+	printf("execute immediate \"insert into test values(1,2)\"\n");
+	exec sql execute immediate "insert into test values(1,2)";
+	check_result_of_insert();
+
+	/*
+	 * PREPARE FROM
+	 */
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE ident FROM CString +++++\n");
+	printf("prepare ident_name from \"insert into test values(?,?)\"\n");
+	exec sql prepare ident_name from "insert into test values(?,?)";
+	printf("execute ident_name using :ivar1,:ivar2\n");
+	exec sql execute ident_name using :ivar1,:ivar2;
+	check_result_of_insert();
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE char_variable_normal_name FROM char_variable +++++\n");
+	printf("prepare :v_normal_name from :v_query\n");
+	exec sql prepare :v_normal_name from :v_query;
+	printf("execute :v_normal_name using :ivar1,:ivar2\n");
+	exec sql execute :v_normal_name using :ivar1,:ivar2;
+	check_result_of_insert();
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE char_variable_inc_dq_name FROM char_variable +++++\n");
+	printf("prepare :v_include_dq_name from :v_query\n");
+	exec sql prepare :v_include_dq_name from :v_query;
+	printf("execute :v_include_dq_name using :ivar1,:ivar2\n");
+	exec sql execute :v_include_dq_name using :ivar1,:ivar2;
+	check_result_of_insert();
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE char_variable_inc_ws_name FROM char_variable +++++\n");
+	printf("prepare :v_include_ws_name from :v_query\n");
+	exec sql prepare :v_include_ws_name from :v_query;
+	printf("execute :v_include_ws_name using :ivar1,:ivar2\n");
+	exec sql execute :v_include_ws_name using :ivar1,:ivar2;
+	check_result_of_insert();
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE CString_inc_ws_name FROM char_variable +++++\n");
+	printf("prepare \"include_ _name\" from :v_query\n");
+	exec sql prepare "include_ _name" from :v_query;
+	printf("exec sql execute \"include_ _name\" using :ivar1,:ivar2\n");
+	exec sql execute "include_ _name" using :ivar1,:ivar2;
+	check_result_of_insert();
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE CString_normal_name FROM char_variable +++++\n");
+	printf("prepare \"norma_name\" from :v_query\n");
+	exec sql prepare "normal_name" from :v_query;
+	printf("exec sql execute \"normal_name\" using :ivar1,:ivar2\n");
+	exec sql execute "normal_name" using :ivar1,:ivar2;
+	check_result_of_insert();
+
+	/*
+	 * PREPARE AS
+	 */
+	exec sql deallocate "ident_name";
+	exec sql deallocate "normal_name";
+	exec sql deallocate "include_ _name";
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE ident(typelist) AS +++++\n");
+	printf("prepare ident_name(int,int) as insert into test values($1,$2)\n");
+	exec sql prepare ident_name(int,int) as insert into test values($1,$2);
+	printf("execute ident_name(:ivar1,:ivar2)\n");
+	exec sql execute ident_name(:ivar1,:ivar2);
+	check_result_of_insert();
+	exec sql deallocate "ident_name";
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE CString_normal_name(typelist) AS +++++\n");
+	printf("prepare \"normal_name\"(int,int) as insert into test values($1,$2)\n");
+	exec sql prepare "normal_name"(int,int) as insert into test values($1,$2);
+	printf("execute \"normal_name\"(:ivar1,:ivar2)\n");
+	exec sql execute "normal_name"(:ivar1,:ivar2);
+	check_result_of_insert();
+	exec sql deallocate "normal_name";
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE CString_include_ws_name(typelist) AS +++++\n");
+	printf("prepare \"include_ _name\"(int,int) as insert into test values($1,$2)\n");
+	exec sql prepare "include_ _name"(int,int) as insert into test values($1,$2);
+	printf("execute \"include_ _name\"(:ivar1,:ivar2)\n");
+	exec sql execute "include_ _name"(:ivar1,:ivar2);
+	check_result_of_insert();
+	exec sql deallocate "include_ _name";
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE char_variable_normal_name(typelist) AS +++++\n");
+	printf("prepare :v_normal_name(int,int) as insert into test values($1,$2)\n");
+	exec sql prepare :v_normal_name(int,int) as insert into test values($1,$2);
+	printf("execute :v_normal_name(:ivar1,:ivar2)\n");
+	exec sql execute :v_normal_name(:ivar1,:ivar2);
+	check_result_of_insert();
+	exec sql deallocate "normal_name";
+
+	exec sql truncate test;
+	printf("+++++ Test for PREPARE char_variable_include_ws_name(typelist) AS +++++\n");
+	printf("prepare :v_include_ws_name(int,int) as insert into test values($1,$2)\n");
+	exec sql prepare :v_include_ws_name(int,int) as insert into test values($1,$2);
+	printf("execute :v_include_ws_name(:ivar1,:ivar2)\n");
+	exec sql execute :v_include_ws_name(:ivar1,:ivar2);
+	check_result_of_insert();
+	exec sql deallocate "include_ _name";
+
+	exec sql truncate test;
+	printf("+++++ Test for EXECUTE :v_normal_name(const,const) +++++\n");
+	printf("prepare :v_normal_name from :v_query\n");
+	exec sql prepare :v_normal_name from :v_query;
+	printf("execute :v_normal_name(1,2)\n");
+	exec sql execute :v_normal_name(1,2);
+	check_result_of_insert();
+	exec sql deallocate "normal_name";
+
+	exec sql truncate test;
+	printf("+++++ Test for EXECUTE :v_normal_name(expr,expr) +++++\n");
+	printf("prepare :v_normal_name from :v_query\n");
+	exec sql prepare :v_normal_name from :v_query;
+	printf("execute :v_normal_name(0+1,1+1)\n");
+	exec sql execute :v_normal_name(0+1,1+1);
+	check_result_of_insert();
+	exec sql deallocate "normal_name";
+
+	exec sql truncate test;
+	printf("+++++ Test for combination PREPARE FROM and EXECUTE ident(typelist) +++++\n");
+	printf("prepare ident_name from :v_query\n");
+	exec sql prepare ident_name from :v_query;
+	printf("execute ident_name(:ivar1,:ivar2)\n");
+	exec sql execute ident_name(:ivar1,:ivar2);
+	check_result_of_insert();
+	exec sql deallocate "ident_name";
+
+	exec sql truncate test;
+	printf("+++++ Test for combination PREPARE FROM and EXECUTE CString_include_ws_name(typelist) +++++\n");
+	printf("prepare \"include_ _name\" from :v_query\n");
+	exec sql prepare "include_ _name" from :v_query;
+	printf("execute \"include_ _name\"(:ivar1,:ivar2)\n");
+	exec sql execute "include_ _name"(:ivar1,:ivar2);
+	check_result_of_insert();
+	exec sql deallocate "include_ _name";
+
+	exec sql drop table test;
+	exec sql commit work;
+
+	return 0;
+}

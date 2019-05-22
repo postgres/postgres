@@ -20,13 +20,54 @@ ECPG: stmtSelectStmt block
 ECPG: stmtUpdateStmt block
 	{ output_statement($1, 1, ECPGst_prepnormal); }
 ECPG: stmtExecuteStmt block
-	{ output_statement($1, 1, ECPGst_execute); }
-ECPG: stmtPrepareStmt block
 	{
 		if ($1.type == NULL || strlen($1.type) == 0)
-			output_prepare_statement($1.name, $1.stmt);
+			output_statement($1.name, 1, ECPGst_execute);
 		else
-			output_statement(cat_str(5, mm_strdup("prepare"), $1.name, $1.type, mm_strdup("as"), $1.stmt), 0, ECPGst_normal);
+		{
+			if ($1.name[0] != '"')
+				/* case of char_variable */
+				add_variable_to_tail(&argsinsert, find_variable($1.name), &no_indicator);
+			else
+			{
+				/* case of ecpg_ident or CSTRING */
+				char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+				char *str = mm_strdup($1.name + 1);
+
+				/* It must be cut off double quotation because new_variable() double-quotes. */
+				str[strlen(str) - 1] = '\0';
+				sprintf(length, "%d", (int) strlen(str));
+				add_variable_to_tail(&argsinsert, new_variable(str, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
+			}
+			output_statement(cat_str(3, mm_strdup("execute"), mm_strdup("$0"), $1.type), 0, ECPGst_exec_with_exprlist);
+		}
+	}
+ECPG: stmtPrepareStmt block
+	{
+		if ($1.type == NULL)
+			output_prepare_statement($1.name, $1.stmt);
+		else if (strlen($1.type) == 0)
+		{
+			char *stmt = cat_str(3, mm_strdup("\""), $1.stmt, mm_strdup("\""));
+			output_prepare_statement($1.name, stmt);
+		}
+		else
+		{
+			if ($1.name[0] != '"')
+				/* case of char_variable */
+				add_variable_to_tail(&argsinsert, find_variable($1.name), &no_indicator);
+			else
+			{
+				char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+				char *str = mm_strdup($1.name + 1);
+
+				/* It must be cut off double quotation because new_variable() double-quotes. */
+				str[strlen(str) - 1] = '\0';
+				sprintf(length, "%d", (int) strlen(str));
+				add_variable_to_tail(&argsinsert, new_variable(str, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
+			}
+			output_statement(cat_str(5, mm_strdup("prepare"), mm_strdup("$0"), $1.type, mm_strdup("as"), $1.stmt), 0, ECPGst_prepare);
+		}
 	}
 ECPG: stmtTransactionStmt block
 	{
@@ -276,11 +317,15 @@ ECPG: cursor_namename rule
 			$1 = curname;
 			$$ = $1;
 		}
+ECPG: ExplainableStmtExecuteStmt block
+	{
+		$$ = $1.name;
+	}
 ECPG: PrepareStmtPREPAREprepared_nameprep_type_clauseASPreparableStmt block
 	{
 		$$.name = $2;
 		$$.type = $3;
-		$$.stmt = cat_str(3, mm_strdup("\""), $5, mm_strdup("\""));
+		$$.stmt = $5;
 	}
 	| PREPARE prepared_name FROM execstring
 	{
@@ -289,7 +334,18 @@ ECPG: PrepareStmtPREPAREprepared_nameprep_type_clauseASPreparableStmt block
 		$$.stmt = $4;
 	}
 ECPG: ExecuteStmtEXECUTEprepared_nameexecute_param_clauseexecute_rest block
-	{ $$ = $2; }
+	{
+		$$.name = $2;
+		$$.type = $3;
+	}
+ECPG: ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEprepared_nameexecute_param_clauseopt_with_dataexecute_rest block
+	{
+		$$.name = cat_str(8,mm_strdup("create"),$2,mm_strdup("table"),$4,mm_strdup("as execute"),$7,$8,$9);
+	}
+ECPG: ExecuteStmtCREATEOptTempTABLEIF_PNOTEXISTScreate_as_targetASEXECUTEprepared_nameexecute_param_clauseopt_with_dataexecute_rest block
+	{
+		$$.name = cat_str(8,mm_strdup("create"),$2,mm_strdup("table if not exists"),$7,mm_strdup("as execute"),$10,$11,$12);
+	}
 ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectStmt block
 	{
 		struct cursor *ptr, *this;

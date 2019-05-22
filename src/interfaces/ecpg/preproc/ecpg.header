@@ -593,4 +593,5 @@ add_typedef(char *name, char *dimension, char *length, enum ECPGttype type_enum,
 	struct	fetch_desc	descriptor;
 	struct  su_symbol	struct_union;
 	struct	prep		prep;
+	struct	exec		exec;
 }

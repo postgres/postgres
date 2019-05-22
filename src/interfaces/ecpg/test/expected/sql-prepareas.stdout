@@ -1,0 +1,66 @@
++++++ Test for prepnormal +++++
+insert into test values(:ivar1,:ivar2)
+1 2
++++++ Test for execute immediate +++++
+execute immediate "insert into test values(1,2)"
+1 2
++++++ Test for PREPARE ident FROM CString +++++
+prepare ident_name from "insert into test values(?,?)"
+execute ident_name using :ivar1,:ivar2
+1 2
++++++ Test for PREPARE char_variable_normal_name FROM char_variable +++++
+prepare :v_normal_name from :v_query
+execute :v_normal_name using :ivar1,:ivar2
+1 2
++++++ Test for PREPARE char_variable_inc_dq_name FROM char_variable +++++
+prepare :v_include_dq_name from :v_query
+execute :v_include_dq_name using :ivar1,:ivar2
+1 2
++++++ Test for PREPARE char_variable_inc_ws_name FROM char_variable +++++
+prepare :v_include_ws_name from :v_query
+execute :v_include_ws_name using :ivar1,:ivar2
+1 2
++++++ Test for PREPARE CString_inc_ws_name FROM char_variable +++++
+prepare "include_ _name" from :v_query
+exec sql execute "include_ _name" using :ivar1,:ivar2
+1 2
++++++ Test for PREPARE CString_normal_name FROM char_variable +++++
+prepare "norma_name" from :v_query
+exec sql execute "normal_name" using :ivar1,:ivar2
+1 2
++++++ Test for PREPARE ident(typelist) AS +++++
+prepare ident_name(int,int) as insert into test values($1,$2)
+execute ident_name(:ivar1,:ivar2)
+1 2
++++++ Test for PREPARE CString_normal_name(typelist) AS +++++
+prepare "normal_name"(int,int) as insert into test values($1,$2)
+execute "normal_name"(:ivar1,:ivar2)
+1 2
++++++ Test for PREPARE CString_include_ws_name(typelist) AS +++++
+prepare "include_ _name"(int,int) as insert into test values($1,$2)
+execute "include_ _name"(:ivar1,:ivar2)
+1 2
++++++ Test for PREPARE char_variable_normal_name(typelist) AS +++++
+prepare :v_normal_name(int,int) as insert into test values($1,$2)
+execute :v_normal_name(:ivar1,:ivar2)
+1 2
++++++ Test for PREPARE char_variable_include_ws_name(typelist) AS +++++
+prepare :v_include_ws_name(int,int) as insert into test values($1,$2)
+execute :v_include_ws_name(:ivar1,:ivar2)
+1 2
++++++ Test for EXECUTE :v_normal_name(const,const) +++++
+prepare :v_normal_name from :v_query
+execute :v_normal_name(1,2)
+1 2
++++++ Test for EXECUTE :v_normal_name(expr,expr) +++++
+prepare :v_normal_name from :v_query
+execute :v_normal_name(0+1,1+1)
+1 2
++++++ Test for combination PREPARE FROM and EXECUTE ident(typelist) +++++
+prepare ident_name from :v_query
+execute ident_name(:ivar1,:ivar2)
+1 2
++++++ Test for combination PREPARE FROM and EXECUTE CString_include_ws_name(typelist) +++++
+prepare "include_ _name" from :v_query
+execute "include_ _name"(:ivar1,:ivar2)
+1 2
