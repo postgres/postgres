@@ -30,7 +30,7 @@ typedef struct MinmaxOpaque
 } MinmaxOpaque;
 
 static FmgrInfo *minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
-							 Oid subtype, uint16 strategynum);
+											  Oid subtype, uint16 strategynum);
 
 
 Datum

@@ -67,17 +67,17 @@ typedef struct OprCacheEntry
 
 static Oid	binary_oper_exact(List *opname, Oid arg1, Oid arg2);
 static FuncDetailCode oper_select_candidate(int nargs,
-					  Oid *input_typeids,
-					  FuncCandidateList candidates,
-					  Oid *operOid);
+											Oid *input_typeids,
+											FuncCandidateList candidates,
+											Oid *operOid);
 static const char *op_signature_string(List *op, char oprkind,
-					Oid arg1, Oid arg2);
+									   Oid arg1, Oid arg2);
 static void op_error(ParseState *pstate, List *op, char oprkind,
-		 Oid arg1, Oid arg2,
-		 FuncDetailCode fdresult, int location);
+					 Oid arg1, Oid arg2,
+					 FuncDetailCode fdresult, int location);
 static bool make_oper_cache_key(ParseState *pstate, OprCacheKey *key,
-					List *opname, Oid ltypeId, Oid rtypeId,
-					int location);
+								List *opname, Oid ltypeId, Oid rtypeId,
+								int location);
 static Oid	find_oper_cache_entry(OprCacheKey *key);
 static void make_oper_cache_entry(OprCacheKey *key, Oid opr_oid);
 static void InvalidateOprCacheCallBack(Datum arg, int cacheid, uint32 hashvalue);

@@ -84,19 +84,19 @@ typedef struct BrinTuple
 
 
 extern BrinTuple *brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno,
-				BrinMemTuple *tuple, Size *size);
+								  BrinMemTuple *tuple, Size *size);
 extern BrinTuple *brin_form_placeholder_tuple(BrinDesc *brdesc,
-							BlockNumber blkno, Size *size);
+											  BlockNumber blkno, Size *size);
 extern void brin_free_tuple(BrinTuple *tuple);
 extern BrinTuple *brin_copy_tuple(BrinTuple *tuple, Size len,
-				BrinTuple *dest, Size *destsz);
+								  BrinTuple *dest, Size *destsz);
 extern bool brin_tuples_equal(const BrinTuple *a, Size alen,
-				  const BrinTuple *b, Size blen);
+							  const BrinTuple *b, Size blen);
 
 extern BrinMemTuple *brin_new_memtuple(BrinDesc *brdesc);
 extern BrinMemTuple *brin_memtuple_initialize(BrinMemTuple *dtuple,
-						 BrinDesc *brdesc);
+											  BrinDesc *brdesc);
 extern BrinMemTuple *brin_deform_tuple(BrinDesc *brdesc,
-				  BrinTuple *tuple, BrinMemTuple *dMemtuple);
+									   BrinTuple *tuple, BrinMemTuple *dMemtuple);
 
 #endif							/* BRIN_TUPLE_H */

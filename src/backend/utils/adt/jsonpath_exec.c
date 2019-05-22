@@ -172,76 +172,76 @@ typedef JsonPathBool (*JsonPathPredicateCallback) (JsonPathItem *jsp,
 typedef Numeric (*BinaryArithmFunc) (Numeric num1, Numeric num2, bool *error);
 
 static JsonPathExecResult executeJsonPath(JsonPath *path, Jsonb *vars,
-				Jsonb *json, bool throwErrors, JsonValueList *result);
+										  Jsonb *json, bool throwErrors, JsonValueList *result);
 static JsonPathExecResult executeItem(JsonPathExecContext *cxt,
-			JsonPathItem *jsp, JsonbValue *jb, JsonValueList *found);
+									  JsonPathItem *jsp, JsonbValue *jb, JsonValueList *found);
 static JsonPathExecResult executeItemOptUnwrapTarget(JsonPathExecContext *cxt,
-						   JsonPathItem *jsp, JsonbValue *jb,
-						   JsonValueList *found, bool unwrap);
+													 JsonPathItem *jsp, JsonbValue *jb,
+													 JsonValueList *found, bool unwrap);
 static JsonPathExecResult executeItemUnwrapTargetArray(JsonPathExecContext *cxt,
-							 JsonPathItem *jsp, JsonbValue *jb,
-							 JsonValueList *found, bool unwrapElements);
+													   JsonPathItem *jsp, JsonbValue *jb,
+													   JsonValueList *found, bool unwrapElements);
 static JsonPathExecResult executeNextItem(JsonPathExecContext *cxt,
-				JsonPathItem *cur, JsonPathItem *next,
-				JsonbValue *v, JsonValueList *found, bool copy);
+										  JsonPathItem *cur, JsonPathItem *next,
+										  JsonbValue *v, JsonValueList *found, bool copy);
 static JsonPathExecResult executeItemOptUnwrapResult(
-						   JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
-						   bool unwrap, JsonValueList *found);
+													 JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
+													 bool unwrap, JsonValueList *found);
 static JsonPathExecResult executeItemOptUnwrapResultNoThrow(
-								  JsonPathExecContext *cxt, JsonPathItem *jsp,
-								  JsonbValue *jb, bool unwrap, JsonValueList *found);
+															JsonPathExecContext *cxt, JsonPathItem *jsp,
+															JsonbValue *jb, bool unwrap, JsonValueList *found);
 static JsonPathBool executeBoolItem(JsonPathExecContext *cxt,
-				JsonPathItem *jsp, JsonbValue *jb, bool canHaveNext);
+									JsonPathItem *jsp, JsonbValue *jb, bool canHaveNext);
 static JsonPathBool executeNestedBoolItem(JsonPathExecContext *cxt,
-					  JsonPathItem *jsp, JsonbValue *jb);
+										  JsonPathItem *jsp, JsonbValue *jb);
 static JsonPathExecResult executeAnyItem(JsonPathExecContext *cxt,
-			   JsonPathItem *jsp, JsonbContainer *jbc, JsonValueList *found,
-			   uint32 level, uint32 first, uint32 last,
-			   bool ignoreStructuralErrors, bool unwrapNext);
+										 JsonPathItem *jsp, JsonbContainer *jbc, JsonValueList *found,
+										 uint32 level, uint32 first, uint32 last,
+										 bool ignoreStructuralErrors, bool unwrapNext);
 static JsonPathBool executePredicate(JsonPathExecContext *cxt,
-				 JsonPathItem *pred, JsonPathItem *larg, JsonPathItem *rarg,
-				 JsonbValue *jb, bool unwrapRightArg,
-				 JsonPathPredicateCallback exec, void *param);
+									 JsonPathItem *pred, JsonPathItem *larg, JsonPathItem *rarg,
+									 JsonbValue *jb, bool unwrapRightArg,
+									 JsonPathPredicateCallback exec, void *param);
 static JsonPathExecResult executeBinaryArithmExpr(JsonPathExecContext *cxt,
-						JsonPathItem *jsp, JsonbValue *jb,
-						BinaryArithmFunc func, JsonValueList *found);
+												  JsonPathItem *jsp, JsonbValue *jb,
+												  BinaryArithmFunc func, JsonValueList *found);
 static JsonPathExecResult executeUnaryArithmExpr(JsonPathExecContext *cxt,
-					   JsonPathItem *jsp, JsonbValue *jb, PGFunction func,
-					   JsonValueList *found);
+												 JsonPathItem *jsp, JsonbValue *jb, PGFunction func,
+												 JsonValueList *found);
 static JsonPathBool executeStartsWith(JsonPathItem *jsp,
-				  JsonbValue *whole, JsonbValue *initial, void *param);
+									  JsonbValue *whole, JsonbValue *initial, void *param);
 static JsonPathBool executeLikeRegex(JsonPathItem *jsp, JsonbValue *str,
-				 JsonbValue *rarg, void *param);
+									 JsonbValue *rarg, void *param);
 static JsonPathExecResult executeNumericItemMethod(JsonPathExecContext *cxt,
-						 JsonPathItem *jsp, JsonbValue *jb, bool unwrap, PGFunction func,
-						 JsonValueList *found);
+												   JsonPathItem *jsp, JsonbValue *jb, bool unwrap, PGFunction func,
+												   JsonValueList *found);
 static JsonPathExecResult executeKeyValueMethod(JsonPathExecContext *cxt,
-					  JsonPathItem *jsp, JsonbValue *jb, JsonValueList *found);
+												JsonPathItem *jsp, JsonbValue *jb, JsonValueList *found);
 static JsonPathExecResult appendBoolResult(JsonPathExecContext *cxt,
-				 JsonPathItem *jsp, JsonValueList *found, JsonPathBool res);
+										   JsonPathItem *jsp, JsonValueList *found, JsonPathBool res);
 static void getJsonPathItem(JsonPathExecContext *cxt, JsonPathItem *item,
-				JsonbValue *value);
+							JsonbValue *value);
 static void getJsonPathVariable(JsonPathExecContext *cxt,
-					JsonPathItem *variable, Jsonb *vars, JsonbValue *value);
+								JsonPathItem *variable, Jsonb *vars, JsonbValue *value);
 static int	JsonbArraySize(JsonbValue *jb);
 static JsonPathBool executeComparison(JsonPathItem *cmp, JsonbValue *lv,
-				  JsonbValue *rv, void *p);
+									  JsonbValue *rv, void *p);
 static JsonPathBool compareItems(int32 op, JsonbValue *jb1, JsonbValue *jb2);
 static int	compareNumeric(Numeric a, Numeric b);
 static JsonbValue *copyJsonbValue(JsonbValue *src);
 static JsonPathExecResult getArrayIndex(JsonPathExecContext *cxt,
-			  JsonPathItem *jsp, JsonbValue *jb, int32 *index);
+										JsonPathItem *jsp, JsonbValue *jb, int32 *index);
 static JsonBaseObjectInfo setBaseObject(JsonPathExecContext *cxt,
-			  JsonbValue *jbv, int32 id);
+										JsonbValue *jbv, int32 id);
 static void JsonValueListAppend(JsonValueList *jvl, JsonbValue *jbv);
 static int	JsonValueListLength(const JsonValueList *jvl);
 static bool JsonValueListIsEmpty(JsonValueList *jvl);
 static JsonbValue *JsonValueListHead(JsonValueList *jvl);
 static List *JsonValueListGetList(JsonValueList *jvl);
 static void JsonValueListInitIterator(const JsonValueList *jvl,
-						  JsonValueListIterator *it);
+									  JsonValueListIterator *it);
 static JsonbValue *JsonValueListNext(const JsonValueList *jvl,
-				  JsonValueListIterator *it);
+									 JsonValueListIterator *it);
 static int	JsonbType(JsonbValue *jb);
 static JsonbValue *JsonbInitBinary(JsonbValue *jbv, Jsonb *jb);
 static int	JsonbType(JsonbValue *jb);

@@ -71,42 +71,42 @@ typedef struct PartitionRangeBound
 
 static int32 qsort_partition_hbound_cmp(const void *a, const void *b);
 static int32 qsort_partition_list_value_cmp(const void *a, const void *b,
-							   void *arg);
+											void *arg);
 static int32 qsort_partition_rbound_cmp(const void *a, const void *b,
-						   void *arg);
+										void *arg);
 static PartitionBoundInfo create_hash_bounds(PartitionBoundSpec **boundspecs,
-				   int nparts, PartitionKey key, int **mapping);
+											 int nparts, PartitionKey key, int **mapping);
 static PartitionBoundInfo create_list_bounds(PartitionBoundSpec **boundspecs,
-				   int nparts, PartitionKey key, int **mapping);
+											 int nparts, PartitionKey key, int **mapping);
 static PartitionBoundInfo create_range_bounds(PartitionBoundSpec **boundspecs,
-					int nparts, PartitionKey key, int **mapping);
+											  int nparts, PartitionKey key, int **mapping);
 static PartitionRangeBound *make_one_partition_rbound(PartitionKey key, int index,
-						  List *datums, bool lower);
+													  List *datums, bool lower);
 static int32 partition_hbound_cmp(int modulus1, int remainder1, int modulus2,
-					 int remainder2);
+								  int remainder2);
 static int32 partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
-					 Oid *partcollation, Datum *datums1,
-					 PartitionRangeDatumKind *kind1, bool lower1,
-					 PartitionRangeBound *b2);
-static int partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
-						Oid *partcollation,
-						PartitionBoundInfo boundinfo,
-						PartitionRangeBound *probe, bool *is_equal);
+								  Oid *partcollation, Datum *datums1,
+								  PartitionRangeDatumKind *kind1, bool lower1,
+								  PartitionRangeBound *b2);
+static int	partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
+									Oid *partcollation,
+									PartitionBoundInfo boundinfo,
+									PartitionRangeBound *probe, bool *is_equal);
 static int	get_partition_bound_num_indexes(PartitionBoundInfo b);
 static Expr *make_partition_op_expr(PartitionKey key, int keynum,
-					   uint16 strategy, Expr *arg1, Expr *arg2);
-static Oid get_partition_operator(PartitionKey key, int col,
-					   StrategyNumber strategy, bool *need_relabel);
+									uint16 strategy, Expr *arg1, Expr *arg2);
+static Oid	get_partition_operator(PartitionKey key, int col,
+								   StrategyNumber strategy, bool *need_relabel);
 static List *get_qual_for_hash(Relation parent, PartitionBoundSpec *spec);
 static List *get_qual_for_list(Relation parent, PartitionBoundSpec *spec);
 static List *get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
-				   bool for_default);
+								bool for_default);
 static void get_range_key_properties(PartitionKey key, int keynum,
-						 PartitionRangeDatum *ldatum,
-						 PartitionRangeDatum *udatum,
-						 ListCell **partexprs_item,
-						 Expr **keyCol,
-						 Const **lower_val, Const **upper_val);
+									 PartitionRangeDatum *ldatum,
+									 PartitionRangeDatum *udatum,
+									 ListCell **partexprs_item,
+									 Expr **keyCol,
+									 Const **lower_val, Const **upper_val);
 static List *get_range_nulltest(PartitionKey key);
 
 /*

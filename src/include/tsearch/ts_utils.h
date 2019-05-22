@@ -32,9 +32,9 @@ typedef struct TSVectorParseStateData *TSVectorParseState;
 extern TSVectorParseState init_tsvector_parser(char *input, int flags);
 extern void reset_tsvector_parser(TSVectorParseState state, char *input);
 extern bool gettoken_tsvector(TSVectorParseState state,
-				  char **token, int *len,
-				  WordEntryPos **pos, int *poslen,
-				  char **endptr);
+							  char **token, int *len,
+							  WordEntryPos **pos, int *poslen,
+							  char **endptr);
 extern void close_tsvector_parser(TSVectorParseState state);
 
 /* phrase operator begins with '<' */
@@ -62,13 +62,13 @@ typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,
 #define P_TSQ_WEB		(1 << 1)
 
 extern TSQuery parse_tsquery(char *buf,
-			  PushFunction pushval,
-			  Datum opaque,
-			  int flags);
+							 PushFunction pushval,
+							 Datum opaque,
+							 int flags);
 
 /* Functions for use by PushFunction implementations */
 extern void pushValue(TSQueryParserState state,
-		  char *strval, int lenval, int16 weight, bool prefix);
+					  char *strval, int lenval, int16 weight, bool prefix);
 extern void pushStop(TSQueryParserState state);
 extern void pushOperator(TSQueryParserState state, int8 oper, int16 distance);
 
@@ -113,7 +113,7 @@ extern void parsetext(Oid cfgId, ParsedText *prs, char *buf, int32 buflen);
  */
 
 extern void hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query,
-			char *buf, int32 buflen);
+						char *buf, int32 buflen);
 extern text *generateHeadline(HeadlineParsedText *prs);
 
 /*
@@ -190,7 +190,7 @@ typedef bool (*TSExecuteCallback) (void *arg, QueryOperand *val,
 #define TS_EXEC_PHRASE_NO_POS	(0x02)
 
 extern bool TS_execute(QueryItem *curitem, void *arg, uint32 flags,
-		   TSExecuteCallback chkcond);
+					   TSExecuteCallback chkcond);
 extern bool tsquery_requires_match(QueryItem *curitem);
 
 /*
@@ -250,6 +250,6 @@ extern void QTNClearFlags(QTNode *in, uint32 flags);
 extern bool QTNEq(QTNode *a, QTNode *b);
 extern TSQuerySign makeTSQuerySign(TSQuery a);
 extern QTNode *findsubquery(QTNode *root, QTNode *ex, QTNode *subs,
-			 bool *isfind);
+							bool *isfind);
 
 #endif							/* _PG_TS_UTILS_H_ */

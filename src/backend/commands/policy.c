@@ -48,7 +48,7 @@
 #include "utils/syscache.h"
 
 static void RangeVarCallbackForPolicy(const RangeVar *rv,
-						  Oid relid, Oid oldrelid, void *arg);
+									  Oid relid, Oid oldrelid, void *arg);
 static char parse_policy_command(const char *cmd_name);
 static Datum *policy_role_list_to_array(List *roles, int *num_roles);
 

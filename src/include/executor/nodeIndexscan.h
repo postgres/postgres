@@ -27,21 +27,21 @@ extern void ExecIndexScanEstimate(IndexScanState *node, ParallelContext *pcxt);
 extern void ExecIndexScanInitializeDSM(IndexScanState *node, ParallelContext *pcxt);
 extern void ExecIndexScanReInitializeDSM(IndexScanState *node, ParallelContext *pcxt);
 extern void ExecIndexScanInitializeWorker(IndexScanState *node,
-							  ParallelWorkerContext *pwcxt);
+										  ParallelWorkerContext *pwcxt);
 
 /*
  * These routines are exported to share code with nodeIndexonlyscan.c and
  * nodeBitmapIndexscan.c
  */
 extern void ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
-					   List *quals, bool isorderby,
-					   ScanKey *scanKeys, int *numScanKeys,
-					   IndexRuntimeKeyInfo **runtimeKeys, int *numRuntimeKeys,
-					   IndexArrayKeyInfo **arrayKeys, int *numArrayKeys);
+								   List *quals, bool isorderby,
+								   ScanKey *scanKeys, int *numScanKeys,
+								   IndexRuntimeKeyInfo **runtimeKeys, int *numRuntimeKeys,
+								   IndexArrayKeyInfo **arrayKeys, int *numArrayKeys);
 extern void ExecIndexEvalRuntimeKeys(ExprContext *econtext,
-						 IndexRuntimeKeyInfo *runtimeKeys, int numRuntimeKeys);
+									 IndexRuntimeKeyInfo *runtimeKeys, int numRuntimeKeys);
 extern bool ExecIndexEvalArrayKeys(ExprContext *econtext,
-					   IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
+								   IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
 extern bool ExecIndexAdvanceArrayKeys(IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
 
 #endif							/* NODEINDEXSCAN_H */

@@ -22,8 +22,8 @@
 
 static void usage(void);
 static void check_required_directory(char **dirpath,
-						 const char *envVarName, bool useCwd,
-						 const char *cmdLineOption, const char *description);
+									 const char *envVarName, bool useCwd,
+									 const char *cmdLineOption, const char *description);
 #define FIX_DEFAULT_READ_ONLY "-c default_transaction_read_only=false"
 
 

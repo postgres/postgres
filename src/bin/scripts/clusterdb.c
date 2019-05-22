@@ -17,13 +17,13 @@
 
 
 static void cluster_one_database(const char *dbname, bool verbose, const char *table,
-					 const char *host, const char *port,
-					 const char *username, enum trivalue prompt_password,
-					 const char *progname, bool echo);
+								 const char *host, const char *port,
+								 const char *username, enum trivalue prompt_password,
+								 const char *progname, bool echo);
 static void cluster_all_databases(bool verbose, const char *maintenance_db,
-					  const char *host, const char *port,
-					  const char *username, enum trivalue prompt_password,
-					  const char *progname, bool echo, bool quiet);
+								  const char *host, const char *port,
+								  const char *username, enum trivalue prompt_password,
+								  const char *progname, bool echo, bool quiet);
 
 static void help(const char *progname);
 

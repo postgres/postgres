@@ -26,7 +26,7 @@ typedef struct
 
 extern bool contain_agg_clause(Node *clause);
 extern void get_agg_clause_costs(PlannerInfo *root, Node *clause,
-					 AggSplit aggsplit, AggClauseCosts *costs);
+								 AggSplit aggsplit, AggClauseCosts *costs);
 
 extern bool contain_window_function(Node *clause);
 extern WindowFuncLists *find_window_functions(Node *clause, Index maxWinRef);
@@ -53,6 +53,6 @@ extern int	NumRelids(Node *clause);
 extern void CommuteOpExpr(OpExpr *clause);
 
 extern Query *inline_set_returning_function(PlannerInfo *root,
-							  RangeTblEntry *rte);
+											RangeTblEntry *rte);
 
 #endif							/* CLAUSES_H */

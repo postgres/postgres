@@ -59,12 +59,12 @@ typedef enum IndexAttrBitmapKind
 } IndexAttrBitmapKind;
 
 extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation,
-						   IndexAttrBitmapKind keyAttrs);
+											 IndexAttrBitmapKind keyAttrs);
 
 extern void RelationGetExclusionInfo(Relation indexRelation,
-						 Oid **operators,
-						 Oid **procs,
-						 uint16 **strategies);
+									 Oid **operators,
+									 Oid **procs,
+									 uint16 **strategies);
 
 extern void RelationInitIndexAccessInfo(Relation relation);
 
@@ -93,16 +93,16 @@ extern void RelationCacheInitializePhase3(void);
  * Routine to create a relcache entry for an about-to-be-created relation
  */
 extern Relation RelationBuildLocalRelation(const char *relname,
-						   Oid relnamespace,
-						   TupleDesc tupDesc,
-						   Oid relid,
-						   Oid accessmtd,
-						   Oid relfilenode,
-						   Oid reltablespace,
-						   bool shared_relation,
-						   bool mapped_relation,
-						   char relpersistence,
-						   char relkind);
+										   Oid relnamespace,
+										   TupleDesc tupDesc,
+										   Oid relid,
+										   Oid accessmtd,
+										   Oid relfilenode,
+										   Oid reltablespace,
+										   bool shared_relation,
+										   bool mapped_relation,
+										   char relpersistence,
+										   char relkind);
 
 /*
  * Routine to manage assignment of new relfilenode to a relation
@@ -122,7 +122,7 @@ extern void RelationCloseSmgrByOid(Oid relationId);
 
 extern void AtEOXact_RelationCache(bool isCommit);
 extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
-						  SubTransactionId parentSubid);
+									  SubTransactionId parentSubid);
 
 /*
  * Routines to help manage rebuilding of relcache init files

@@ -54,10 +54,10 @@ MemoryContext PortalContext = NULL;
 
 static void MemoryContextCallResetCallbacks(MemoryContext context);
 static void MemoryContextStatsInternal(MemoryContext context, int level,
-						   bool print, int max_children,
-						   MemoryContextCounters *totals);
+									   bool print, int max_children,
+									   MemoryContextCounters *totals);
 static void MemoryContextStatsPrint(MemoryContext context, void *passthru,
-						const char *stats_string);
+									const char *stats_string);
 
 /*
  * You should not do memory allocations within a critical section, because

@@ -129,7 +129,7 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
  * and used to hold all subsidiary data of finfo.
  */
 extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
-			  MemoryContext mcxt);
+						  MemoryContext mcxt);
 
 /* Convenience macro for setting the fn_expr field */
 #define fmgr_info_set_expr(expr, finfo) \
@@ -139,7 +139,7 @@ extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
  * Copy an FmgrInfo struct
  */
 extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
-			   MemoryContext destcxt);
+						   MemoryContext destcxt);
 
 extern void fmgr_symbol(Oid functionId, char **mod, char **fn);
 
@@ -229,7 +229,7 @@ extern void fmgr_symbol(Oid functionId, char **mod, char **fn);
 extern struct varlena *pg_detoast_datum(struct varlena *datum);
 extern struct varlena *pg_detoast_datum_copy(struct varlena *datum);
 extern struct varlena *pg_detoast_datum_slice(struct varlena *datum,
-					   int32 first, int32 count);
+											  int32 first, int32 count);
 extern struct varlena *pg_detoast_datum_packed(struct varlena *datum);
 
 #define PG_DETOAST_DATUM(datum) \
@@ -492,35 +492,35 @@ extern int no_such_variable
  * are allowed to be NULL.
  */
 extern Datum DirectFunctionCall1Coll(PGFunction func, Oid collation,
-						Datum arg1);
+									 Datum arg1);
 extern Datum DirectFunctionCall2Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2);
+									 Datum arg1, Datum arg2);
 extern Datum DirectFunctionCall3Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2,
-						Datum arg3);
+									 Datum arg1, Datum arg2,
+									 Datum arg3);
 extern Datum DirectFunctionCall4Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2,
-						Datum arg3, Datum arg4);
+									 Datum arg1, Datum arg2,
+									 Datum arg3, Datum arg4);
 extern Datum DirectFunctionCall5Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2,
-						Datum arg3, Datum arg4, Datum arg5);
+									 Datum arg1, Datum arg2,
+									 Datum arg3, Datum arg4, Datum arg5);
 extern Datum DirectFunctionCall6Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2,
-						Datum arg3, Datum arg4, Datum arg5,
-						Datum arg6);
+									 Datum arg1, Datum arg2,
+									 Datum arg3, Datum arg4, Datum arg5,
+									 Datum arg6);
 extern Datum DirectFunctionCall7Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2,
-						Datum arg3, Datum arg4, Datum arg5,
-						Datum arg6, Datum arg7);
+									 Datum arg1, Datum arg2,
+									 Datum arg3, Datum arg4, Datum arg5,
+									 Datum arg6, Datum arg7);
 extern Datum DirectFunctionCall8Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2,
-						Datum arg3, Datum arg4, Datum arg5,
-						Datum arg6, Datum arg7, Datum arg8);
+									 Datum arg1, Datum arg2,
+									 Datum arg3, Datum arg4, Datum arg5,
+									 Datum arg6, Datum arg7, Datum arg8);
 extern Datum DirectFunctionCall9Coll(PGFunction func, Oid collation,
-						Datum arg1, Datum arg2,
-						Datum arg3, Datum arg4, Datum arg5,
-						Datum arg6, Datum arg7, Datum arg8,
-						Datum arg9);
+									 Datum arg1, Datum arg2,
+									 Datum arg3, Datum arg4, Datum arg5,
+									 Datum arg6, Datum arg7, Datum arg8,
+									 Datum arg9);
 
 /*
  * These functions work like the DirectFunctionCall functions except that
@@ -531,9 +531,9 @@ extern Datum DirectFunctionCall9Coll(PGFunction func, Oid collation,
  * used fn_extra, unless its use is known to be compatible with the callee's.
  */
 extern Datum CallerFInfoFunctionCall1(PGFunction func, FmgrInfo *flinfo,
-						 Oid collation, Datum arg1);
+									  Oid collation, Datum arg1);
 extern Datum CallerFInfoFunctionCall2(PGFunction func, FmgrInfo *flinfo,
-						 Oid collation, Datum arg1, Datum arg2);
+									  Oid collation, Datum arg1, Datum arg2);
 
 /* These are for invocation of a previously-looked-up function with a
  * directly-computed parameter list.  Note that neither arguments nor result
@@ -541,35 +541,35 @@ extern Datum CallerFInfoFunctionCall2(PGFunction func, FmgrInfo *flinfo,
  */
 extern Datum FunctionCall0Coll(FmgrInfo *flinfo, Oid collation);
 extern Datum FunctionCall1Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1);
+							   Datum arg1);
 extern Datum FunctionCall2Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2);
+							   Datum arg1, Datum arg2);
 extern Datum FunctionCall3Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2,
-				  Datum arg3);
+							   Datum arg1, Datum arg2,
+							   Datum arg3);
 extern Datum FunctionCall4Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2,
-				  Datum arg3, Datum arg4);
+							   Datum arg1, Datum arg2,
+							   Datum arg3, Datum arg4);
 extern Datum FunctionCall5Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2,
-				  Datum arg3, Datum arg4, Datum arg5);
+							   Datum arg1, Datum arg2,
+							   Datum arg3, Datum arg4, Datum arg5);
 extern Datum FunctionCall6Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2,
-				  Datum arg3, Datum arg4, Datum arg5,
-				  Datum arg6);
+							   Datum arg1, Datum arg2,
+							   Datum arg3, Datum arg4, Datum arg5,
+							   Datum arg6);
 extern Datum FunctionCall7Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2,
-				  Datum arg3, Datum arg4, Datum arg5,
-				  Datum arg6, Datum arg7);
+							   Datum arg1, Datum arg2,
+							   Datum arg3, Datum arg4, Datum arg5,
+							   Datum arg6, Datum arg7);
 extern Datum FunctionCall8Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2,
-				  Datum arg3, Datum arg4, Datum arg5,
-				  Datum arg6, Datum arg7, Datum arg8);
+							   Datum arg1, Datum arg2,
+							   Datum arg3, Datum arg4, Datum arg5,
+							   Datum arg6, Datum arg7, Datum arg8);
 extern Datum FunctionCall9Coll(FmgrInfo *flinfo, Oid collation,
-				  Datum arg1, Datum arg2,
-				  Datum arg3, Datum arg4, Datum arg5,
-				  Datum arg6, Datum arg7, Datum arg8,
-				  Datum arg9);
+							   Datum arg1, Datum arg2,
+							   Datum arg3, Datum arg4, Datum arg5,
+							   Datum arg6, Datum arg7, Datum arg8,
+							   Datum arg9);
 
 /* These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
@@ -579,35 +579,35 @@ extern Datum FunctionCall9Coll(FmgrInfo *flinfo, Oid collation,
  */
 extern Datum OidFunctionCall0Coll(Oid functionId, Oid collation);
 extern Datum OidFunctionCall1Coll(Oid functionId, Oid collation,
-					 Datum arg1);
+								  Datum arg1);
 extern Datum OidFunctionCall2Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2);
+								  Datum arg1, Datum arg2);
 extern Datum OidFunctionCall3Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2,
-					 Datum arg3);
+								  Datum arg1, Datum arg2,
+								  Datum arg3);
 extern Datum OidFunctionCall4Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2,
-					 Datum arg3, Datum arg4);
+								  Datum arg1, Datum arg2,
+								  Datum arg3, Datum arg4);
 extern Datum OidFunctionCall5Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2,
-					 Datum arg3, Datum arg4, Datum arg5);
+								  Datum arg1, Datum arg2,
+								  Datum arg3, Datum arg4, Datum arg5);
 extern Datum OidFunctionCall6Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2,
-					 Datum arg3, Datum arg4, Datum arg5,
-					 Datum arg6);
+								  Datum arg1, Datum arg2,
+								  Datum arg3, Datum arg4, Datum arg5,
+								  Datum arg6);
 extern Datum OidFunctionCall7Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2,
-					 Datum arg3, Datum arg4, Datum arg5,
-					 Datum arg6, Datum arg7);
+								  Datum arg1, Datum arg2,
+								  Datum arg3, Datum arg4, Datum arg5,
+								  Datum arg6, Datum arg7);
 extern Datum OidFunctionCall8Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2,
-					 Datum arg3, Datum arg4, Datum arg5,
-					 Datum arg6, Datum arg7, Datum arg8);
+								  Datum arg1, Datum arg2,
+								  Datum arg3, Datum arg4, Datum arg5,
+								  Datum arg6, Datum arg7, Datum arg8);
 extern Datum OidFunctionCall9Coll(Oid functionId, Oid collation,
-					 Datum arg1, Datum arg2,
-					 Datum arg3, Datum arg4, Datum arg5,
-					 Datum arg6, Datum arg7, Datum arg8,
-					 Datum arg9);
+								  Datum arg1, Datum arg2,
+								  Datum arg3, Datum arg4, Datum arg5,
+								  Datum arg6, Datum arg7, Datum arg8,
+								  Datum arg9);
 
 /* These macros allow the collation argument to be omitted (with a default of
  * InvalidOid, ie, no collation).  They exist mostly for backwards
@@ -673,15 +673,15 @@ extern Datum OidFunctionCall9Coll(Oid functionId, Oid collation,
 
 /* Special cases for convenient invocation of datatype I/O functions. */
 extern Datum InputFunctionCall(FmgrInfo *flinfo, char *str,
-				  Oid typioparam, int32 typmod);
+							   Oid typioparam, int32 typmod);
 extern Datum OidInputFunctionCall(Oid functionId, char *str,
-					 Oid typioparam, int32 typmod);
+								  Oid typioparam, int32 typmod);
 extern char *OutputFunctionCall(FmgrInfo *flinfo, Datum val);
 extern char *OidOutputFunctionCall(Oid functionId, Datum val);
 extern Datum ReceiveFunctionCall(FmgrInfo *flinfo, fmStringInfo buf,
-					Oid typioparam, int32 typmod);
+								 Oid typioparam, int32 typmod);
 extern Datum OidReceiveFunctionCall(Oid functionId, fmStringInfo buf,
-					   Oid typioparam, int32 typmod);
+									Oid typioparam, int32 typmod);
 extern bytea *SendFunctionCall(FmgrInfo *flinfo, Datum val);
 extern bytea *OidSendFunctionCall(Oid functionId, Datum val);
 
@@ -706,7 +706,7 @@ extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
 extern char *Dynamic_library_path;
 
 extern PGFunction load_external_function(const char *filename, const char *funcname,
-					   bool signalNotFound, void **filehandle);
+										 bool signalNotFound, void **filehandle);
 extern PGFunction lookup_external_function(void *filehandle, const char *funcname);
 extern void load_file(const char *filename, bool restricted);
 extern void **find_rendezvous_variable(const char *varName);
@@ -725,14 +725,14 @@ extern void RestoreLibraryState(char *start_address);
 #define AGG_CONTEXT_AGGREGATE	1	/* regular aggregate */
 #define AGG_CONTEXT_WINDOW		2	/* window function */
 
-extern int AggCheckCallContext(FunctionCallInfo fcinfo,
-					MemoryContext *aggcontext);
+extern int	AggCheckCallContext(FunctionCallInfo fcinfo,
+								MemoryContext *aggcontext);
 extern fmAggrefPtr AggGetAggref(FunctionCallInfo fcinfo);
 extern MemoryContext AggGetTempMemoryContext(FunctionCallInfo fcinfo);
 extern bool AggStateIsShared(FunctionCallInfo fcinfo);
 extern void AggRegisterCallback(FunctionCallInfo fcinfo,
-					fmExprContextCallbackFunction func,
-					Datum arg);
+								fmExprContextCallbackFunction func,
+								Datum arg);
 
 /*
  * We allow plugin modules to hook function entry/exit.  This is intended

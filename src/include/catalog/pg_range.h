@@ -59,8 +59,8 @@ typedef FormData_pg_range *Form_pg_range;
  */
 
 extern void RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
-			Oid rangeSubOpclass, RegProcedure rangeCanonical,
-			RegProcedure rangeSubDiff);
+						Oid rangeSubOpclass, RegProcedure rangeCanonical,
+						RegProcedure rangeSubDiff);
 extern void RangeDelete(Oid rangeTypeOid);
 
 #endif							/* PG_RANGE_H */

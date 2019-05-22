@@ -317,24 +317,24 @@ flushbuffer(PrintfTarget *target)
 
 
 static bool find_arguments(const char *format, va_list args,
-			   PrintfArgValue *argvalues);
+						   PrintfArgValue *argvalues);
 static void fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
-	   int pointflag, PrintfTarget *target);
+				   int pointflag, PrintfTarget *target);
 static void fmtptr(void *value, PrintfTarget *target);
 static void fmtint(long long value, char type, int forcesign,
-	   int leftjust, int minlen, int zpad, int precision, int pointflag,
-	   PrintfTarget *target);
+				   int leftjust, int minlen, int zpad, int precision, int pointflag,
+				   PrintfTarget *target);
 static void fmtchar(int value, int leftjust, int minlen, PrintfTarget *target);
 static void fmtfloat(double value, char type, int forcesign,
-		 int leftjust, int minlen, int zpad, int precision, int pointflag,
-		 PrintfTarget *target);
+					 int leftjust, int minlen, int zpad, int precision, int pointflag,
+					 PrintfTarget *target);
 static void dostr(const char *str, int slen, PrintfTarget *target);
 static void dopr_outch(int c, PrintfTarget *target);
 static void dopr_outchmulti(int c, int slen, PrintfTarget *target);
 static int	adjust_sign(int is_negative, int forcesign, int *signvalue);
 static int	compute_padlen(int minlen, int vallen, int leftjust);
 static void leading_pad(int zpad, int signvalue, int *padlen,
-			PrintfTarget *target);
+						PrintfTarget *target);
 static void trailing_pad(int padlen, PrintfTarget *target);
 
 /*

@@ -94,37 +94,37 @@ Oid			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
 Oid			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-					Relation new_rel_desc,
-					Oid new_rel_oid,
-					Oid new_type_oid,
-					Oid reloftype,
-					Oid relowner,
-					char relkind,
-					TransactionId relfrozenxid,
-					TransactionId relminmxid,
-					Datum relacl,
-					Datum reloptions);
+								Relation new_rel_desc,
+								Oid new_rel_oid,
+								Oid new_type_oid,
+								Oid reloftype,
+								Oid relowner,
+								char relkind,
+								TransactionId relfrozenxid,
+								TransactionId relminmxid,
+								Datum relacl,
+								Datum reloptions);
 static ObjectAddress AddNewRelationType(const char *typeName,
-				   Oid typeNamespace,
-				   Oid new_rel_oid,
-				   char new_rel_kind,
-				   Oid ownerid,
-				   Oid new_row_type,
-				   Oid new_array_type);
+										Oid typeNamespace,
+										Oid new_rel_oid,
+										char new_rel_kind,
+										Oid ownerid,
+										Oid new_row_type,
+										Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
-static Oid StoreRelCheck(Relation rel, const char *ccname, Node *expr,
-			  bool is_validated, bool is_local, int inhcount,
-			  bool is_no_inherit, bool is_internal);
+static Oid	StoreRelCheck(Relation rel, const char *ccname, Node *expr,
+						  bool is_validated, bool is_local, int inhcount,
+						  bool is_no_inherit, bool is_internal);
 static void StoreConstraints(Relation rel, List *cooked_constraints,
-				 bool is_internal);
+							 bool is_internal);
 static bool MergeWithExistingConstraint(Relation rel, const char *ccname, Node *expr,
-							bool allow_merge, bool is_local,
-							bool is_initially_valid,
-							bool is_no_inherit);
+										bool allow_merge, bool is_local,
+										bool is_initially_valid,
+										bool is_no_inherit);
 static void SetRelationNumChecks(Relation rel, int numchecks);
 static Node *cookConstraint(ParseState *pstate,
-			   Node *raw_constraint,
-			   char *relname);
+							Node *raw_constraint,
+							char *relname);
 static List *insert_ordered_unique_oid(List *list, Oid datum);
 
 

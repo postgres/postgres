@@ -27,6 +27,6 @@ extern DestReceiver *CreateTupleQueueDestReceiver(shm_mq_handle *handle);
 extern TupleQueueReader *CreateTupleQueueReader(shm_mq_handle *handle);
 extern void DestroyTupleQueueReader(TupleQueueReader *reader);
 extern HeapTuple TupleQueueReaderNext(TupleQueueReader *reader,
-					 bool nowait, bool *done);
+									  bool nowait, bool *done);
 
 #endif							/* TQUEUE_H */

@@ -558,8 +558,8 @@ extern char *const pgresStatus[];
 /* === in fe-connect.c === */
 
 extern void pqDropConnection(PGconn *conn, bool flushInput);
-extern int pqPacketSend(PGconn *conn, char pack_type,
-			 const void *buf, size_t buf_len);
+extern int	pqPacketSend(PGconn *conn, char pack_type,
+						 const void *buf, size_t buf_len);
 extern bool pqGetHomeDirectory(char *buf, int bufsize);
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -590,9 +590,9 @@ extern void pqSaveErrorResult(PGconn *conn);
 extern PGresult *pqPrepareAsyncResult(PGconn *conn);
 extern void pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...) pg_attribute_printf(2, 3);
 extern void pqSaveMessageField(PGresult *res, char code,
-				   const char *value);
+							   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
-					  const char *value);
+								  const char *value);
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
 
 /* === in fe-protocol2.c === */
@@ -600,33 +600,33 @@ extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
 extern PostgresPollingStatusType pqSetenvPoll(PGconn *conn);
 
 extern char *pqBuildStartupPacket2(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption *options);
+								   const PQEnvironmentOption *options);
 extern void pqParseInput2(PGconn *conn);
 extern int	pqGetCopyData2(PGconn *conn, char **buffer, int async);
 extern int	pqGetline2(PGconn *conn, char *s, int maxlen);
 extern int	pqGetlineAsync2(PGconn *conn, char *buffer, int bufsize);
 extern int	pqEndcopy2(PGconn *conn);
 extern PGresult *pqFunctionCall2(PGconn *conn, Oid fnid,
-				int *result_buf, int *actual_result_len,
-				int result_is_int,
-				const PQArgBlock *args, int nargs);
+								 int *result_buf, int *actual_result_len,
+								 int result_is_int,
+								 const PQArgBlock *args, int nargs);
 
 /* === in fe-protocol3.c === */
 
 extern char *pqBuildStartupPacket3(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption *options);
+								   const PQEnvironmentOption *options);
 extern void pqParseInput3(PGconn *conn);
 extern int	pqGetErrorNotice3(PGconn *conn, bool isError);
 extern void pqBuildErrorMessage3(PQExpBuffer msg, const PGresult *res,
-					 PGVerbosity verbosity, PGContextVisibility show_context);
+								 PGVerbosity verbosity, PGContextVisibility show_context);
 extern int	pqGetCopyData3(PGconn *conn, char **buffer, int async);
 extern int	pqGetline3(PGconn *conn, char *s, int maxlen);
 extern int	pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize);
 extern int	pqEndcopy3(PGconn *conn);
 extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
-				int *result_buf, int *actual_result_len,
-				int result_is_int,
-				const PQArgBlock *args, int nargs);
+								 int *result_buf, int *actual_result_len,
+								 int result_is_int,
+								 const PQArgBlock *args, int nargs);
 
 /* === in fe-misc.c === */
 
@@ -652,8 +652,8 @@ extern int	pqPutMsgEnd(PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-extern int pqWaitTimed(int forRead, int forWrite, PGconn *conn,
-			time_t finish_time);
+extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn,
+						time_t finish_time);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
 
@@ -671,7 +671,7 @@ extern ssize_t pqsecure_raw_write(PGconn *, const void *ptr, size_t len);
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 extern int	pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
 extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
-				 bool got_epipe);
+							 bool got_epipe);
 #endif
 
 /* === SSL === */
@@ -752,9 +752,9 @@ extern char *pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len);
  * -1, and sets the libpq error message.
  *
  */
-extern int pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
-												int *names_examined,
-												char **first_name);
+extern int	pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
+															int *names_examined,
+															char **first_name);
 
 /* === GSSAPI === */
 

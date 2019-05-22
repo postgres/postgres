@@ -54,15 +54,15 @@ extern void init_parallel_dump_utils(void);
 
 extern bool IsEveryWorkerIdle(ParallelState *pstate);
 extern void WaitForWorkers(ArchiveHandle *AH, ParallelState *pstate,
-			   WFW_WaitOption mode);
+						   WFW_WaitOption mode);
 
 extern ParallelState *ParallelBackupStart(ArchiveHandle *AH);
 extern void DispatchJobForTocEntry(ArchiveHandle *AH,
-					   ParallelState *pstate,
-					   TocEntry *te,
-					   T_Action act,
-					   ParallelCompletionPtr callback,
-					   void *callback_data);
+								   ParallelState *pstate,
+								   TocEntry *te,
+								   T_Action act,
+								   ParallelCompletionPtr callback,
+								   void *callback_data);
 extern void ParallelBackupEnd(ArchiveHandle *AH, ParallelState *pstate);
 
 extern void set_archive_cancel_info(ArchiveHandle *AH, PGconn *conn);

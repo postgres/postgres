@@ -156,42 +156,42 @@ typedef struct SubplanResultRelHashElem
 
 
 static void ExecHashSubPlanResultRelsByOid(ModifyTableState *mtstate,
-							   PartitionTupleRouting *proute);
+										   PartitionTupleRouting *proute);
 static ResultRelInfo *ExecInitPartitionInfo(ModifyTableState *mtstate,
-					  EState *estate, PartitionTupleRouting *proute,
-					  PartitionDispatch dispatch,
-					  ResultRelInfo *rootResultRelInfo,
-					  int partidx);
+											EState *estate, PartitionTupleRouting *proute,
+											PartitionDispatch dispatch,
+											ResultRelInfo *rootResultRelInfo,
+											int partidx);
 static void ExecInitRoutingInfo(ModifyTableState *mtstate,
-					EState *estate,
-					PartitionTupleRouting *proute,
-					PartitionDispatch dispatch,
-					ResultRelInfo *partRelInfo,
-					int partidx);
+								EState *estate,
+								PartitionTupleRouting *proute,
+								PartitionDispatch dispatch,
+								ResultRelInfo *partRelInfo,
+								int partidx);
 static PartitionDispatch ExecInitPartitionDispatchInfo(EState *estate,
-							  PartitionTupleRouting *proute,
-							  Oid partoid, PartitionDispatch parent_pd, int partidx);
+													   PartitionTupleRouting *proute,
+													   Oid partoid, PartitionDispatch parent_pd, int partidx);
 static void FormPartitionKeyDatum(PartitionDispatch pd,
-					  TupleTableSlot *slot,
-					  EState *estate,
-					  Datum *values,
-					  bool *isnull);
-static int get_partition_for_tuple(PartitionDispatch pd, Datum *values,
-						bool *isnull);
+								  TupleTableSlot *slot,
+								  EState *estate,
+								  Datum *values,
+								  bool *isnull);
+static int	get_partition_for_tuple(PartitionDispatch pd, Datum *values,
+									bool *isnull);
 static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
-									 Datum *values,
-									 bool *isnull,
-									 int maxfieldlen);
+												  Datum *values,
+												  bool *isnull,
+												  int maxfieldlen);
 static List *adjust_partition_tlist(List *tlist, TupleConversionMap *map);
 static void ExecInitPruningContext(PartitionPruneContext *context,
-					   List *pruning_steps,
-					   PartitionDesc partdesc,
-					   PartitionKey partkey,
-					   PlanState *planstate);
+								   List *pruning_steps,
+								   PartitionDesc partdesc,
+								   PartitionKey partkey,
+								   PlanState *planstate);
 static void find_matching_subplans_recurse(PartitionPruningData *prunedata,
-							   PartitionedRelPruningData *pprune,
-							   bool initial_prune,
-							   Bitmapset **validsubplans);
+										   PartitionedRelPruningData *pprune,
+										   bool initial_prune,
+										   Bitmapset **validsubplans);
 
 
 /*

@@ -70,13 +70,13 @@
 
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
-					   bool skipjunk);
+										bool skipjunk);
 static pg_attribute_always_inline void slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
-					   int natts);
+															  int natts);
 static inline void tts_buffer_heap_store_tuple(TupleTableSlot *slot,
-							HeapTuple tuple,
-							Buffer buffer,
-							bool transfer_pin);
+											   HeapTuple tuple,
+											   Buffer buffer,
+											   bool transfer_pin);
 static void tts_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, bool shouldFree);
 
 

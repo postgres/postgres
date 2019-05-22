@@ -189,59 +189,59 @@ typedef struct TuplesortInstrumentation
  */
 
 extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
-					 int nkeys, AttrNumber *attNums,
-					 Oid *sortOperators, Oid *sortCollations,
-					 bool *nullsFirstFlags,
-					 int workMem, SortCoordinate coordinate,
-					 bool randomAccess);
+											int nkeys, AttrNumber *attNums,
+											Oid *sortOperators, Oid *sortCollations,
+											bool *nullsFirstFlags,
+											int workMem, SortCoordinate coordinate,
+											bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_cluster(TupleDesc tupDesc,
-						Relation indexRel, int workMem,
-						SortCoordinate coordinate, bool randomAccess);
+											   Relation indexRel, int workMem,
+											   SortCoordinate coordinate, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_index_btree(Relation heapRel,
-							Relation indexRel,
-							bool enforceUnique,
-							int workMem, SortCoordinate coordinate,
-							bool randomAccess);
+												   Relation indexRel,
+												   bool enforceUnique,
+												   int workMem, SortCoordinate coordinate,
+												   bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_index_hash(Relation heapRel,
-						   Relation indexRel,
-						   uint32 high_mask,
-						   uint32 low_mask,
-						   uint32 max_buckets,
-						   int workMem, SortCoordinate coordinate,
-						   bool randomAccess);
+												  Relation indexRel,
+												  uint32 high_mask,
+												  uint32 low_mask,
+												  uint32 max_buckets,
+												  int workMem, SortCoordinate coordinate,
+												  bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
-					  Oid sortOperator, Oid sortCollation,
-					  bool nullsFirstFlag,
-					  int workMem, SortCoordinate coordinate,
-					  bool randomAccess);
+											 Oid sortOperator, Oid sortCollation,
+											 bool nullsFirstFlag,
+											 int workMem, SortCoordinate coordinate,
+											 bool randomAccess);
 
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);
 
 extern void tuplesort_puttupleslot(Tuplesortstate *state,
-					   TupleTableSlot *slot);
+								   TupleTableSlot *slot);
 extern void tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup);
 extern void tuplesort_putindextuplevalues(Tuplesortstate *state,
-							  Relation rel, ItemPointer self,
-							  Datum *values, bool *isnull);
+										  Relation rel, ItemPointer self,
+										  Datum *values, bool *isnull);
 extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
-				   bool isNull);
+							   bool isNull);
 
 extern void tuplesort_performsort(Tuplesortstate *state);
 
 extern bool tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
-					   bool copy, TupleTableSlot *slot, Datum *abbrev);
+								   bool copy, TupleTableSlot *slot, Datum *abbrev);
 extern HeapTuple tuplesort_getheaptuple(Tuplesortstate *state, bool forward);
 extern IndexTuple tuplesort_getindextuple(Tuplesortstate *state, bool forward);
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
-				   Datum *val, bool *isNull, Datum *abbrev);
+							   Datum *val, bool *isNull, Datum *abbrev);
 
 extern bool tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples,
-					 bool forward);
+								 bool forward);
 
 extern void tuplesort_end(Tuplesortstate *state);
 
 extern void tuplesort_get_stats(Tuplesortstate *state,
-					TuplesortInstrumentation *stats);
+								TuplesortInstrumentation *stats);
 extern const char *tuplesort_method_name(TuplesortMethod m);
 extern const char *tuplesort_space_type_name(TuplesortSpaceType t);
 
@@ -249,7 +249,7 @@ extern int	tuplesort_merge_order(int64 allowedMem);
 
 extern Size tuplesort_estimate_shared(int nworkers);
 extern void tuplesort_initialize_shared(Sharedsort *shared, int nWorkers,
-							dsm_segment *seg);
+										dsm_segment *seg);
 extern void tuplesort_attach_shared(Sharedsort *shared, dsm_segment *seg);
 
 /*

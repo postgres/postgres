@@ -72,7 +72,7 @@ extern void *MemoryContextAlloc(MemoryContext context, Size size);
 extern void *MemoryContextAllocZero(MemoryContext context, Size size);
 extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
 extern void *MemoryContextAllocExtended(MemoryContext context,
-						   Size size, int flags);
+										Size size, int flags);
 
 extern void *palloc(Size size);
 extern void *palloc0(Size size);
@@ -117,7 +117,7 @@ MemoryContextSwitchTo(MemoryContext context)
 
 /* Registration of memory context reset/delete callbacks */
 extern void MemoryContextRegisterResetCallback(MemoryContext context,
-								   MemoryContextCallback *cb);
+											   MemoryContextCallback *cb);
 
 /*
  * These are like standard strdup() except the copied string is

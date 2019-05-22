@@ -269,20 +269,20 @@ extern void free_parsestate(ParseState *pstate);
 extern int	parser_errposition(ParseState *pstate, int location);
 
 extern void setup_parser_errposition_callback(ParseCallbackState *pcbstate,
-								  ParseState *pstate, int location);
+											  ParseState *pstate, int location);
 extern void cancel_parser_errposition_callback(ParseCallbackState *pcbstate);
 
 extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno,
-		 int location);
+					 int location);
 extern Oid	transformContainerType(Oid *containerType, int32 *containerTypmod);
 
 extern SubscriptingRef *transformContainerSubscripts(ParseState *pstate,
-							 Node *containerBase,
-							 Oid containerType,
-							 Oid elementType,
-							 int32 containerTypMod,
-							 List *indirection,
-							 Node *assignFrom);
+													 Node *containerBase,
+													 Oid containerType,
+													 Oid elementType,
+													 int32 containerTypMod,
+													 List *indirection,
+													 Node *assignFrom);
 extern Const *make_const(ParseState *pstate, Value *value, int location);
 
 #endif							/* PARSE_NODE_H */

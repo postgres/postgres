@@ -55,20 +55,20 @@ typedef struct
 } SystemTimeSamplerData;
 
 static void system_time_samplescangetsamplesize(PlannerInfo *root,
-									RelOptInfo *baserel,
-									List *paramexprs,
-									BlockNumber *pages,
-									double *tuples);
+												RelOptInfo *baserel,
+												List *paramexprs,
+												BlockNumber *pages,
+												double *tuples);
 static void system_time_initsamplescan(SampleScanState *node,
-						   int eflags);
+									   int eflags);
 static void system_time_beginsamplescan(SampleScanState *node,
-							Datum *params,
-							int nparams,
-							uint32 seed);
+										Datum *params,
+										int nparams,
+										uint32 seed);
 static BlockNumber system_time_nextsampleblock(SampleScanState *node, BlockNumber nblocks);
 static OffsetNumber system_time_nextsampletuple(SampleScanState *node,
-							BlockNumber blockno,
-							OffsetNumber maxoffset);
+												BlockNumber blockno,
+												OffsetNumber maxoffset);
 static uint32 random_relative_prime(uint32 n, SamplerRandomState randstate);
 
 

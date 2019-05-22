@@ -65,7 +65,7 @@ typedef struct
  * Common useful things for tsearch subsystem
  */
 extern char *get_tsearch_config_filename(const char *basename,
-							const char *extension);
+										 const char *extension);
 
 /*
  * Often useful stopword list management
@@ -77,7 +77,7 @@ typedef struct
 } StopList;
 
 extern void readstoplist(const char *fname, StopList *s,
-			 char *(*wordop) (const char *));
+						 char *(*wordop) (const char *));
 extern bool searchstoplist(StopList *s, char *key);
 
 /*

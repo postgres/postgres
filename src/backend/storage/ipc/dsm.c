@@ -98,7 +98,7 @@ static void dsm_cleanup_for_mmap(void);
 static void dsm_postmaster_shutdown(int code, Datum arg);
 static dsm_segment *dsm_create_descriptor(void);
 static bool dsm_control_segment_sane(dsm_control_header *control,
-						 Size mapped_size);
+									 Size mapped_size);
 static uint64 dsm_control_bytes_needed(uint32 nitems);
 
 /* Has this backend initialized the dynamic shared memory system yet? */

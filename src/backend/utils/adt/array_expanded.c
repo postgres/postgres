@@ -23,7 +23,7 @@
 /* "Methods" required for an expanded object */
 static Size EA_get_flat_size(ExpandedObjectHeader *eohptr);
 static void EA_flatten_into(ExpandedObjectHeader *eohptr,
-				void *result, Size allocated_size);
+							void *result, Size allocated_size);
 
 static const ExpandedObjectMethods EA_methods =
 {
@@ -33,7 +33,7 @@ static const ExpandedObjectMethods EA_methods =
 
 /* Other local functions */
 static void copy_byval_expanded_array(ExpandedArrayHeader *eah,
-						  ExpandedArrayHeader *oldeah);
+									  ExpandedArrayHeader *oldeah);
 
 
 /*

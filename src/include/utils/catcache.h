@@ -192,38 +192,38 @@ extern PGDLLIMPORT MemoryContext CacheMemoryContext;
 extern void CreateCacheMemoryContext(void);
 
 extern CatCache *InitCatCache(int id, Oid reloid, Oid indexoid,
-			 int nkeys, const int *key,
-			 int nbuckets);
+							  int nkeys, const int *key,
+							  int nbuckets);
 extern void InitCatCachePhase2(CatCache *cache, bool touch_index);
 
 extern HeapTuple SearchCatCache(CatCache *cache,
-			   Datum v1, Datum v2, Datum v3, Datum v4);
+								Datum v1, Datum v2, Datum v3, Datum v4);
 extern HeapTuple SearchCatCache1(CatCache *cache,
-				Datum v1);
+								 Datum v1);
 extern HeapTuple SearchCatCache2(CatCache *cache,
-				Datum v1, Datum v2);
+								 Datum v1, Datum v2);
 extern HeapTuple SearchCatCache3(CatCache *cache,
-				Datum v1, Datum v2, Datum v3);
+								 Datum v1, Datum v2, Datum v3);
 extern HeapTuple SearchCatCache4(CatCache *cache,
-				Datum v1, Datum v2, Datum v3, Datum v4);
+								 Datum v1, Datum v2, Datum v3, Datum v4);
 extern void ReleaseCatCache(HeapTuple tuple);
 
 extern uint32 GetCatCacheHashValue(CatCache *cache,
-					 Datum v1, Datum v2,
-					 Datum v3, Datum v4);
+								   Datum v1, Datum v2,
+								   Datum v3, Datum v4);
 
 extern CatCList *SearchCatCacheList(CatCache *cache, int nkeys,
-				   Datum v1, Datum v2,
-				   Datum v3);
+									Datum v1, Datum v2,
+									Datum v3);
 extern void ReleaseCatCacheList(CatCList *list);
 
 extern void ResetCatalogCaches(void);
 extern void CatalogCacheFlushCatalog(Oid catId);
 extern void CatCacheInvalidate(CatCache *cache, uint32 hashValue);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
-							  HeapTuple tuple,
-							  HeapTuple newtuple,
-							  void (*function) (int, uint32, Oid));
+										  HeapTuple tuple,
+										  HeapTuple newtuple,
+										  void (*function) (int, uint32, Oid));
 
 extern void PrintCatCacheLeakWarning(HeapTuple tuple);
 extern void PrintCatCacheListLeakWarning(CatCList *list);

@@ -54,7 +54,7 @@ struct bloom_filter
 static int	my_bloom_power(uint64 target_bitset_bits);
 static int	optimal_k(uint64 bitset_bits, int64 total_elems);
 static void k_hashes(bloom_filter *filter, uint32 *hashes, unsigned char *elem,
-		 size_t len);
+					 size_t len);
 static inline uint32 mod_m(uint32 a, uint64 m);
 
 /*

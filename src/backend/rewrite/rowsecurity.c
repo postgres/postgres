@@ -59,28 +59,28 @@
 #include "tcop/utility.h"
 
 static void get_policies_for_relation(Relation relation,
-						  CmdType cmd, Oid user_id,
-						  List **permissive_policies,
-						  List **restrictive_policies);
+									  CmdType cmd, Oid user_id,
+									  List **permissive_policies,
+									  List **restrictive_policies);
 
 static List *sort_policies_by_name(List *policies);
 
 static int	row_security_policy_cmp(const void *a, const void *b);
 
 static void add_security_quals(int rt_index,
-				   List *permissive_policies,
-				   List *restrictive_policies,
-				   List **securityQuals,
-				   bool *hasSubLinks);
+							   List *permissive_policies,
+							   List *restrictive_policies,
+							   List **securityQuals,
+							   bool *hasSubLinks);
 
 static void add_with_check_options(Relation rel,
-					   int rt_index,
-					   WCOKind kind,
-					   List *permissive_policies,
-					   List *restrictive_policies,
-					   List **withCheckOptions,
-					   bool *hasSubLinks,
-					   bool force_using);
+								   int rt_index,
+								   WCOKind kind,
+								   List *permissive_policies,
+								   List *restrictive_policies,
+								   List **withCheckOptions,
+								   bool *hasSubLinks,
+								   bool force_using);
 
 static bool check_role_for_policy(ArrayType *policy_roles, Oid user_id);
 

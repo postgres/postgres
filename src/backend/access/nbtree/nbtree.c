@@ -93,10 +93,10 @@ typedef struct BTParallelScanDescData *BTParallelScanDesc;
 
 
 static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
-			 IndexBulkDeleteCallback callback, void *callback_state,
-			 BTCycleId cycleid, TransactionId *oldestBtpoXact);
+						 IndexBulkDeleteCallback callback, void *callback_state,
+						 BTCycleId cycleid, TransactionId *oldestBtpoXact);
 static void btvacuumpage(BTVacState *vstate, BlockNumber blkno,
-			 BlockNumber orig_blkno);
+						 BlockNumber orig_blkno);
 
 
 /*

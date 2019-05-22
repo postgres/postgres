@@ -31,19 +31,19 @@
 #define LIKE_ABORT						(-1)
 
 
-static int SB_MatchText(const char *t, int tlen, const char *p, int plen,
-			 pg_locale_t locale, bool locale_is_c);
+static int	SB_MatchText(const char *t, int tlen, const char *p, int plen,
+						 pg_locale_t locale, bool locale_is_c);
 static text *SB_do_like_escape(text *, text *);
 
-static int MB_MatchText(const char *t, int tlen, const char *p, int plen,
-			 pg_locale_t locale, bool locale_is_c);
+static int	MB_MatchText(const char *t, int tlen, const char *p, int plen,
+						 pg_locale_t locale, bool locale_is_c);
 static text *MB_do_like_escape(text *, text *);
 
-static int UTF8_MatchText(const char *t, int tlen, const char *p, int plen,
-			   pg_locale_t locale, bool locale_is_c);
+static int	UTF8_MatchText(const char *t, int tlen, const char *p, int plen,
+						   pg_locale_t locale, bool locale_is_c);
 
-static int SB_IMatchText(const char *t, int tlen, const char *p, int plen,
-			  pg_locale_t locale, bool locale_is_c);
+static int	SB_IMatchText(const char *t, int tlen, const char *p, int plen,
+						  pg_locale_t locale, bool locale_is_c);
 
 static int	GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation);
 static int	Generic_Text_IC_like(text *str, text *pat, Oid collation);

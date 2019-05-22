@@ -26,9 +26,9 @@ extern void ExecHashJoinEstimate(HashJoinState *state, ParallelContext *pcxt);
 extern void ExecHashJoinInitializeDSM(HashJoinState *state, ParallelContext *pcxt);
 extern void ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *pcxt);
 extern void ExecHashJoinInitializeWorker(HashJoinState *state,
-							 ParallelWorkerContext *pwcxt);
+										 ParallelWorkerContext *pwcxt);
 
 extern void ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
-					  BufFile **fileptr);
+								  BufFile **fileptr);
 
 #endif							/* NODEHASHJOIN_H */

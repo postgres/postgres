@@ -40,19 +40,19 @@ extern uint64 fetch_done;
 
 /* in parsexlog.c */
 extern void extractPageMap(const char *datadir, XLogRecPtr startpoint,
-			   int tliIndex, XLogRecPtr endpoint);
+						   int tliIndex, XLogRecPtr endpoint);
 extern void findLastCheckpoint(const char *datadir, XLogRecPtr searchptr,
-				   int tliIndex,
-				   XLogRecPtr *lastchkptrec, TimeLineID *lastchkpttli,
-				   XLogRecPtr *lastchkptredo);
+							   int tliIndex,
+							   XLogRecPtr *lastchkptrec, TimeLineID *lastchkpttli,
+							   XLogRecPtr *lastchkptredo);
 extern XLogRecPtr readOneRecord(const char *datadir, XLogRecPtr ptr,
-			  int tliIndex);
+								int tliIndex);
 
 /* in pg_rewind.c */
 extern void progress_report(bool force);
 
 /* in timeline.c */
 extern TimeLineHistoryEntry *rewind_parseTimeLineHistory(char *buffer,
-							TimeLineID targetTLI, int *nentries);
+														 TimeLineID targetTLI, int *nentries);
 
 #endif							/* PG_REWIND_H */

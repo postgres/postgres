@@ -26,7 +26,7 @@ static PyObject *decimal_constructor;
 
 static PyObject *PLyObject_FromJsonbContainer(JsonbContainer *jsonb);
 static JsonbValue *PLyObject_ToJsonbValue(PyObject *obj,
-					   JsonbParseState **jsonb_state, bool is_elem);
+										  JsonbParseState **jsonb_state, bool is_elem);
 
 #if PY_MAJOR_VERSION >= 3
 typedef PyObject *(*PLyUnicode_FromStringAndSize_t)

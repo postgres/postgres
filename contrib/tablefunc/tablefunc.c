@@ -48,41 +48,41 @@ PG_MODULE_MAGIC;
 
 static HTAB *load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_crosstab_tuplestore(char *sql,
-						HTAB *crosstab_hash,
-						TupleDesc tupdesc,
-						MemoryContext per_query_ctx,
-						bool randomAccess);
+												HTAB *crosstab_hash,
+												TupleDesc tupdesc,
+												MemoryContext per_query_ctx,
+												bool randomAccess);
 static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static void compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static void get_normal_pair(float8 *x1, float8 *x2);
 static Tuplestorestate *connectby(char *relname,
-		  char *key_fld,
-		  char *parent_key_fld,
-		  char *orderby_fld,
-		  char *branch_delim,
-		  char *start_with,
-		  int max_depth,
-		  bool show_branch,
-		  bool show_serial,
-		  MemoryContext per_query_ctx,
-		  bool randomAccess,
-		  AttInMetadata *attinmeta);
+								  char *key_fld,
+								  char *parent_key_fld,
+								  char *orderby_fld,
+								  char *branch_delim,
+								  char *start_with,
+								  int max_depth,
+								  bool show_branch,
+								  bool show_serial,
+								  MemoryContext per_query_ctx,
+								  bool randomAccess,
+								  AttInMetadata *attinmeta);
 static void build_tuplestore_recursively(char *key_fld,
-							 char *parent_key_fld,
-							 char *relname,
-							 char *orderby_fld,
-							 char *branch_delim,
-							 char *start_with,
-							 char *branch,
-							 int level,
-							 int *serial,
-							 int max_depth,
-							 bool show_branch,
-							 bool show_serial,
-							 MemoryContext per_query_ctx,
-							 AttInMetadata *attinmeta,
-							 Tuplestorestate *tupstore);
+										 char *parent_key_fld,
+										 char *relname,
+										 char *orderby_fld,
+										 char *branch_delim,
+										 char *start_with,
+										 char *branch,
+										 int level,
+										 int *serial,
+										 int max_depth,
+										 bool show_branch,
+										 bool show_serial,
+										 MemoryContext per_query_ctx,
+										 AttInMetadata *attinmeta,
+										 Tuplestorestate *tupstore);
 
 typedef struct
 {

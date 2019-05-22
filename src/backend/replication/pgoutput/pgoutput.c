@@ -30,26 +30,26 @@ PG_MODULE_MAGIC;
 extern void _PG_output_plugin_init(OutputPluginCallbacks *cb);
 
 static void pgoutput_startup(LogicalDecodingContext *ctx,
-				 OutputPluginOptions *opt, bool is_init);
+							 OutputPluginOptions *opt, bool is_init);
 static void pgoutput_shutdown(LogicalDecodingContext *ctx);
 static void pgoutput_begin_txn(LogicalDecodingContext *ctx,
-				   ReorderBufferTXN *txn);
+							   ReorderBufferTXN *txn);
 static void pgoutput_commit_txn(LogicalDecodingContext *ctx,
-					ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
+								ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void pgoutput_change(LogicalDecodingContext *ctx,
-				ReorderBufferTXN *txn, Relation rel,
-				ReorderBufferChange *change);
+							ReorderBufferTXN *txn, Relation rel,
+							ReorderBufferChange *change);
 static void pgoutput_truncate(LogicalDecodingContext *ctx,
-				  ReorderBufferTXN *txn, int nrelations, Relation relations[],
-				  ReorderBufferChange *change);
+							  ReorderBufferTXN *txn, int nrelations, Relation relations[],
+							  ReorderBufferChange *change);
 static bool pgoutput_origin_filter(LogicalDecodingContext *ctx,
-					   RepOriginId origin_id);
+								   RepOriginId origin_id);
 
 static bool publications_valid;
 
 static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
-							uint32 hashvalue);
+										uint32 hashvalue);
 
 /* Entry in the map used to remember which relation schemas we sent. */
 typedef struct RelationSyncEntry
@@ -67,7 +67,7 @@ static void init_rel_sync_cache(MemoryContext decoding_context);
 static RelationSyncEntry *get_rel_sync_entry(PGOutputData *data, Oid relid);
 static void rel_sync_cache_relation_cb(Datum arg, Oid relid);
 static void rel_sync_cache_publication_cb(Datum arg, int cacheid,
-							  uint32 hashvalue);
+										  uint32 hashvalue);
 
 /*
  * Specify output plugin callbacks

@@ -135,37 +135,37 @@ typedef struct
 											 false, -1)))
 
 static RangeType *range_super_union(TypeCacheEntry *typcache, RangeType *r1,
-				  RangeType *r2);
+									RangeType *r2);
 static bool range_gist_consistent_int(TypeCacheEntry *typcache,
-						  StrategyNumber strategy, RangeType *key,
-						  Datum query);
+									  StrategyNumber strategy, RangeType *key,
+									  Datum query);
 static bool range_gist_consistent_leaf(TypeCacheEntry *typcache,
-						   StrategyNumber strategy, RangeType *key,
-						   Datum query);
+									   StrategyNumber strategy, RangeType *key,
+									   Datum query);
 static void range_gist_fallback_split(TypeCacheEntry *typcache,
-						  GistEntryVector *entryvec,
-						  GIST_SPLITVEC *v);
+									  GistEntryVector *entryvec,
+									  GIST_SPLITVEC *v);
 static void range_gist_class_split(TypeCacheEntry *typcache,
-					   GistEntryVector *entryvec,
-					   GIST_SPLITVEC *v,
-					   SplitLR *classes_groups);
+								   GistEntryVector *entryvec,
+								   GIST_SPLITVEC *v,
+								   SplitLR *classes_groups);
 static void range_gist_single_sorting_split(TypeCacheEntry *typcache,
-								GistEntryVector *entryvec,
-								GIST_SPLITVEC *v,
-								bool use_upper_bound);
+											GistEntryVector *entryvec,
+											GIST_SPLITVEC *v,
+											bool use_upper_bound);
 static void range_gist_double_sorting_split(TypeCacheEntry *typcache,
-								GistEntryVector *entryvec,
-								GIST_SPLITVEC *v);
+											GistEntryVector *entryvec,
+											GIST_SPLITVEC *v);
 static void range_gist_consider_split(ConsiderSplitContext *context,
-						  RangeBound *right_lower, int min_left_count,
-						  RangeBound *left_upper, int max_left_count);
+									  RangeBound *right_lower, int min_left_count,
+									  RangeBound *left_upper, int max_left_count);
 static int	get_gist_range_class(RangeType *range);
 static int	single_bound_cmp(const void *a, const void *b, void *arg);
 static int	interval_cmp_lower(const void *a, const void *b, void *arg);
 static int	interval_cmp_upper(const void *a, const void *b, void *arg);
 static int	common_entry_cmp(const void *i1, const void *i2);
 static float8 call_subtype_diff(TypeCacheEntry *typcache,
-				  Datum val1, Datum val2);
+								Datum val1, Datum val2);
 
 
 /* GiST query consistency check */

@@ -25,7 +25,7 @@
 
 
 static void printtup_startup(DestReceiver *self, int operation,
-				 TupleDesc typeinfo);
+							 TupleDesc typeinfo);
 static bool printtup(TupleTableSlot *slot, DestReceiver *self);
 static bool printtup_20(TupleTableSlot *slot, DestReceiver *self);
 static bool printtup_internal_20(TupleTableSlot *slot, DestReceiver *self);
@@ -33,9 +33,9 @@ static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
 static void SendRowDescriptionCols_2(StringInfo buf, TupleDesc typeinfo,
-						 List *targetlist, int16 *formats);
+									 List *targetlist, int16 *formats);
 static void SendRowDescriptionCols_3(StringInfo buf, TupleDesc typeinfo,
-						 List *targetlist, int16 *formats);
+									 List *targetlist, int16 *formats);
 
 /* ----------------------------------------------------------------
  *		printtup / debugtup support

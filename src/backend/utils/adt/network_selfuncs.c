@@ -44,33 +44,33 @@
 #define MAX_CONSIDERED_ELEMS 1024
 
 static Selectivity networkjoinsel_inner(Oid operator,
-					 VariableStatData *vardata1, VariableStatData *vardata2);
+										VariableStatData *vardata1, VariableStatData *vardata2);
 static Selectivity networkjoinsel_semi(Oid operator,
-					VariableStatData *vardata1, VariableStatData *vardata2);
+									   VariableStatData *vardata1, VariableStatData *vardata2);
 static Selectivity mcv_population(float4 *mcv_numbers, int mcv_nvalues);
 static Selectivity inet_hist_value_sel(Datum *values, int nvalues,
-					Datum constvalue, int opr_codenum);
+									   Datum constvalue, int opr_codenum);
 static Selectivity inet_mcv_join_sel(Datum *mcv1_values,
-				  float4 *mcv1_numbers, int mcv1_nvalues, Datum *mcv2_values,
-				  float4 *mcv2_numbers, int mcv2_nvalues, Oid operator);
+									 float4 *mcv1_numbers, int mcv1_nvalues, Datum *mcv2_values,
+									 float4 *mcv2_numbers, int mcv2_nvalues, Oid operator);
 static Selectivity inet_mcv_hist_sel(Datum *mcv_values, float4 *mcv_numbers,
-				  int mcv_nvalues, Datum *hist_values, int hist_nvalues,
-				  int opr_codenum);
+									 int mcv_nvalues, Datum *hist_values, int hist_nvalues,
+									 int opr_codenum);
 static Selectivity inet_hist_inclusion_join_sel(Datum *hist1_values,
-							 int hist1_nvalues,
-							 Datum *hist2_values, int hist2_nvalues,
-							 int opr_codenum);
+												int hist1_nvalues,
+												Datum *hist2_values, int hist2_nvalues,
+												int opr_codenum);
 static Selectivity inet_semi_join_sel(Datum lhs_value,
-				   bool mcv_exists, Datum *mcv_values, int mcv_nvalues,
-				   bool hist_exists, Datum *hist_values, int hist_nvalues,
-				   double hist_weight,
-				   FmgrInfo *proc, int opr_codenum);
+									  bool mcv_exists, Datum *mcv_values, int mcv_nvalues,
+									  bool hist_exists, Datum *hist_values, int hist_nvalues,
+									  double hist_weight,
+									  FmgrInfo *proc, int opr_codenum);
 static int	inet_opr_codenum(Oid operator);
 static int	inet_inclusion_cmp(inet *left, inet *right, int opr_codenum);
-static int inet_masklen_inclusion_cmp(inet *left, inet *right,
-						   int opr_codenum);
-static int inet_hist_match_divider(inet *boundary, inet *query,
-						int opr_codenum);
+static int	inet_masklen_inclusion_cmp(inet *left, inet *right,
+									   int opr_codenum);
+static int	inet_hist_match_divider(inet *boundary, inet *query,
+									int opr_codenum);
 
 /*
  * Selectivity estimation for the subnet inclusion/overlap operators

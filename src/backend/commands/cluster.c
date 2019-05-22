@@ -70,8 +70,8 @@ typedef struct
 
 static void rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose);
 static void copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-				bool verbose, bool *pSwapToastByContent,
-				TransactionId *pFreezeXid, MultiXactId *pCutoffMulti);
+							bool verbose, bool *pSwapToastByContent,
+							TransactionId *pFreezeXid, MultiXactId *pCutoffMulti);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 

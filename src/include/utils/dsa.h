@@ -103,7 +103,7 @@ extern void dsa_startup(void);
 
 extern dsa_area *dsa_create(int tranche_id);
 extern dsa_area *dsa_create_in_place(void *place, size_t size,
-					int tranche_id, dsm_segment *segment);
+									 int tranche_id, dsm_segment *segment);
 extern dsa_area *dsa_attach(dsa_handle handle);
 extern dsa_area *dsa_attach_in_place(void *place, dsm_segment *segment);
 extern void dsa_release_in_place(void *place);

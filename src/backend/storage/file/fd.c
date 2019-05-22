@@ -308,14 +308,14 @@ static int	FreeDesc(AllocateDesc *desc);
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isCommit, bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok,
-					   bool unlink_all);
+								   bool unlink_all);
 static void RemovePgTempRelationFiles(const char *tsdirname);
 static void RemovePgTempRelationFilesInDbspace(const char *dbspacedirname);
 
 static void walkdir(const char *path,
-		void (*action) (const char *fname, bool isdir, int elevel),
-		bool process_symlinks,
-		int elevel);
+					void (*action) (const char *fname, bool isdir, int elevel),
+					bool process_symlinks,
+					int elevel);
 #ifdef PG_FLUSH_DATA_WORKS
 static void pre_sync_fname(const char *fname, bool isdir, int elevel);
 #endif

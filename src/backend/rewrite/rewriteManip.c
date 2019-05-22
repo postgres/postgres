@@ -41,12 +41,12 @@ typedef struct
 } locate_windowfunc_context;
 
 static bool contain_aggs_of_level_walker(Node *node,
-							 contain_aggs_of_level_context *context);
+										 contain_aggs_of_level_context *context);
 static bool locate_agg_of_level_walker(Node *node,
-						   locate_agg_of_level_context *context);
+									   locate_agg_of_level_context *context);
 static bool contain_windowfuncs_walker(Node *node, void *context);
 static bool locate_windowfunc_walker(Node *node,
-						 locate_windowfunc_context *context);
+									 locate_windowfunc_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);

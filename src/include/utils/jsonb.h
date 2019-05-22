@@ -362,27 +362,27 @@ extern uint32 getJsonbOffset(const JsonbContainer *jc, int index);
 extern uint32 getJsonbLength(const JsonbContainer *jc, int index);
 extern int	compareJsonbContainers(JsonbContainer *a, JsonbContainer *b);
 extern JsonbValue *findJsonbValueFromContainer(JsonbContainer *sheader,
-							uint32 flags,
-							JsonbValue *key);
+											   uint32 flags,
+											   JsonbValue *key);
 extern JsonbValue *getIthJsonbValueFromContainer(JsonbContainer *sheader,
-							  uint32 i);
+												 uint32 i);
 extern JsonbValue *pushJsonbValue(JsonbParseState **pstate,
-			   JsonbIteratorToken seq, JsonbValue *jbVal);
+								  JsonbIteratorToken seq, JsonbValue *jbVal);
 extern JsonbIterator *JsonbIteratorInit(JsonbContainer *container);
 extern JsonbIteratorToken JsonbIteratorNext(JsonbIterator **it, JsonbValue *val,
-				  bool skipNested);
+											bool skipNested);
 extern Jsonb *JsonbValueToJsonb(JsonbValue *val);
 extern bool JsonbDeepContains(JsonbIterator **val,
-				  JsonbIterator **mContained);
+							  JsonbIterator **mContained);
 extern void JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash);
 extern void JsonbHashScalarValueExtended(const JsonbValue *scalarVal,
-							 uint64 *hash, uint64 seed);
+										 uint64 *hash, uint64 seed);
 
 /* jsonb.c support functions */
 extern char *JsonbToCString(StringInfo out, JsonbContainer *in,
-			   int estimated_len);
+							int estimated_len);
 extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
-					 int estimated_len);
+								  int estimated_len);
 extern bool JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res);
 extern const char *JsonbTypeName(JsonbValue *jb);
 

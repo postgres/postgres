@@ -61,21 +61,21 @@ typedef struct dshash_table_item dshash_table_item;
 
 /* Creating, sharing and destroying from hash tables. */
 extern dshash_table *dshash_create(dsa_area *area,
-			  const dshash_parameters *params,
-			  void *arg);
+								   const dshash_parameters *params,
+								   void *arg);
 extern dshash_table *dshash_attach(dsa_area *area,
-			  const dshash_parameters *params,
-			  dshash_table_handle handle,
-			  void *arg);
+								   const dshash_parameters *params,
+								   dshash_table_handle handle,
+								   void *arg);
 extern void dshash_detach(dshash_table *hash_table);
 extern dshash_table_handle dshash_get_hash_table_handle(dshash_table *hash_table);
 extern void dshash_destroy(dshash_table *hash_table);
 
 /* Finding, creating, deleting entries. */
 extern void *dshash_find(dshash_table *hash_table,
-			const void *key, bool exclusive);
+						 const void *key, bool exclusive);
 extern void *dshash_find_or_insert(dshash_table *hash_table,
-					  const void *key, bool *found);
+								   const void *key, bool *found);
 extern bool dshash_delete_key(dshash_table *hash_table, const void *key);
 extern void dshash_delete_entry(dshash_table *hash_table, void *entry);
 extern void dshash_release_lock(dshash_table *hash_table, void *entry);

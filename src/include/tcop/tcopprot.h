@@ -49,18 +49,18 @@ extern PGDLLIMPORT int log_statement;
 
 extern List *pg_parse_query(const char *query_string);
 extern List *pg_analyze_and_rewrite(RawStmt *parsetree,
-					   const char *query_string,
-					   Oid *paramTypes, int numParams,
-					   QueryEnvironment *queryEnv);
+									const char *query_string,
+									Oid *paramTypes, int numParams,
+									QueryEnvironment *queryEnv);
 extern List *pg_analyze_and_rewrite_params(RawStmt *parsetree,
-							  const char *query_string,
-							  ParserSetupHook parserSetup,
-							  void *parserSetupArg,
-							  QueryEnvironment *queryEnv);
+										   const char *query_string,
+										   ParserSetupHook parserSetup,
+										   void *parserSetupArg,
+										   QueryEnvironment *queryEnv);
 extern PlannedStmt *pg_plan_query(Query *querytree, int cursorOptions,
-			  ParamListInfo boundParams);
+								  ParamListInfo boundParams);
 extern List *pg_plan_queries(List *querytrees, int cursorOptions,
-				ParamListInfo boundParams);
+							 ParamListInfo boundParams);
 
 extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
 extern void assign_max_stack_depth(int newval, void *extra);
@@ -75,18 +75,18 @@ extern void ProcessClientReadInterrupt(bool blocked);
 extern void ProcessClientWriteInterrupt(bool blocked);
 
 extern void process_postgres_switches(int argc, char *argv[],
-						  GucContext ctx, const char **dbname);
+									  GucContext ctx, const char **dbname);
 extern void PostgresMain(int argc, char *argv[],
-			 const char *dbname,
-			 const char *username) pg_attribute_noreturn();
+						 const char *dbname,
+						 const char *username) pg_attribute_noreturn();
 extern long get_stack_depth_rlimit(void);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);
 extern int	check_log_duration(char *msec_str, bool was_logged);
 extern void set_debug_options(int debug_flag,
-				  GucContext context, GucSource source);
+							  GucContext context, GucSource source);
 extern bool set_plan_disabling_options(const char *arg,
-						   GucContext context, GucSource source);
+									   GucContext context, GucSource source);
 extern const char *get_stats_option_name(const char *arg);
 
 #endif							/* TCOPPROT_H */

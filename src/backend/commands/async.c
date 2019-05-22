@@ -387,9 +387,9 @@ static void asyncQueueFillWarning(void);
 static bool SignalBackends(void);
 static void asyncQueueReadAllNotifications(void);
 static bool asyncQueueProcessPageEntries(volatile QueuePosition *current,
-							 QueuePosition stop,
-							 char *page_buffer,
-							 Snapshot snapshot);
+										 QueuePosition stop,
+										 char *page_buffer,
+										 Snapshot snapshot);
 static void asyncQueueAdvanceTail(void);
 static void ProcessIncomingNotify(void);
 static bool AsyncExistsPendingNotify(const char *channel, const char *payload);

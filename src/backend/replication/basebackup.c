@@ -56,14 +56,14 @@ typedef struct
 
 
 static int64 sendDir(const char *path, int basepathlen, bool sizeonly,
-		List *tablespaces, bool sendtblspclinks);
+					 List *tablespaces, bool sendtblspclinks);
 static bool sendFile(const char *readfilename, const char *tarfilename,
-		 struct stat *statbuf, bool missing_ok, Oid dboid);
+					 struct stat *statbuf, bool missing_ok, Oid dboid);
 static void sendFileWithContent(const char *filename, const char *content);
 static int64 _tarWriteHeader(const char *filename, const char *linktarget,
-				struct stat *statbuf, bool sizeonly);
+							 struct stat *statbuf, bool sizeonly);
 static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
-			 bool sizeonly);
+						  bool sizeonly);
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void base_backup_cleanup(int code, Datum arg);

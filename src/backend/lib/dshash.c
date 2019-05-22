@@ -160,28 +160,28 @@ struct dshash_table
 									   hash_table->size_log2)])
 
 static void delete_item(dshash_table *hash_table,
-			dshash_table_item *item);
+						dshash_table_item *item);
 static void resize(dshash_table *hash_table, size_t new_size);
 static inline void ensure_valid_bucket_pointers(dshash_table *hash_table);
 static inline dshash_table_item *find_in_bucket(dshash_table *hash_table,
-			   const void *key,
-			   dsa_pointer item_pointer);
+												const void *key,
+												dsa_pointer item_pointer);
 static void insert_item_into_bucket(dshash_table *hash_table,
-						dsa_pointer item_pointer,
-						dshash_table_item *item,
-						dsa_pointer *bucket);
+									dsa_pointer item_pointer,
+									dshash_table_item *item,
+									dsa_pointer *bucket);
 static dshash_table_item *insert_into_bucket(dshash_table *hash_table,
-				   const void *key,
-				   dsa_pointer *bucket);
+											 const void *key,
+											 dsa_pointer *bucket);
 static bool delete_key_from_bucket(dshash_table *hash_table,
-					   const void *key,
-					   dsa_pointer *bucket_head);
+								   const void *key,
+								   dsa_pointer *bucket_head);
 static bool delete_item_from_bucket(dshash_table *hash_table,
-						dshash_table_item *item,
-						dsa_pointer *bucket_head);
+									dshash_table_item *item,
+									dsa_pointer *bucket_head);
 static inline dshash_hash hash_key(dshash_table *hash_table, const void *key);
 static inline bool equal_keys(dshash_table *hash_table,
-		   const void *a, const void *b);
+							  const void *a, const void *b);
 
 #define PARTITION_LOCK(hash_table, i)			\
 	(&(hash_table)->control->partitions[(i)].lock)

@@ -342,8 +342,8 @@ void		check_and_dump_old_cluster(bool live_check);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
 void		issue_warnings_and_set_wal_level(void);
-void output_completion_banner(char *analyze_script_file_name,
-						 char *deletion_script_file_name);
+void		output_completion_banner(char *analyze_script_file_name,
+									 char *deletion_script_file_name);
 void		check_cluster_versions(void);
 void		check_cluster_compatibility(bool live_check);
 void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
@@ -366,22 +366,22 @@ void		generate_old_dump(void);
 
 #define EXEC_PSQL_ARGS "--echo-queries --set ON_ERROR_STOP=on --no-psqlrc --dbname=template1"
 
-bool exec_prog(const char *log_file, const char *opt_log_file,
-		  bool report_error, bool exit_on_error, const char *fmt,...) pg_attribute_printf(5, 6);
+bool		exec_prog(const char *log_file, const char *opt_log_file,
+					  bool report_error, bool exit_on_error, const char *fmt,...) pg_attribute_printf(5, 6);
 void		verify_directories(void);
 bool		pid_lock_file_exists(const char *datadir);
 
 
 /* file.c */
 
-void cloneFile(const char *src, const char *dst,
-		  const char *schemaName, const char *relName);
-void copyFile(const char *src, const char *dst,
-		 const char *schemaName, const char *relName);
-void linkFile(const char *src, const char *dst,
-		 const char *schemaName, const char *relName);
-void rewriteVisibilityMap(const char *fromfile, const char *tofile,
+void		cloneFile(const char *src, const char *dst,
+					  const char *schemaName, const char *relName);
+void		copyFile(const char *src, const char *dst,
 					 const char *schemaName, const char *relName);
+void		linkFile(const char *src, const char *dst,
+					 const char *schemaName, const char *relName);
+void		rewriteVisibilityMap(const char *fromfile, const char *tofile,
+								 const char *schemaName, const char *relName);
 void		check_file_clone(void);
 void		check_hard_link(void);
 
@@ -396,11 +396,11 @@ void		check_loadable_libraries(void);
 /* info.c */
 
 FileNameMap *gen_db_file_maps(DbInfo *old_db,
-				 DbInfo *new_db, int *nmaps, const char *old_pgdata,
-				 const char *new_pgdata);
+							  DbInfo *new_db, int *nmaps, const char *old_pgdata,
+							  const char *new_pgdata);
 void		get_db_and_rel_infos(ClusterInfo *cluster);
-void print_maps(FileNameMap *maps, int n,
-		   const char *db_name);
+void		print_maps(FileNameMap *maps, int n,
+					   const char *db_name);
 
 /* option.c */
 
@@ -410,11 +410,11 @@ void		get_sock_dir(ClusterInfo *cluster, bool live_check);
 
 /* relfilenode.c */
 
-void transfer_all_new_tablespaces(DbInfoArr *old_db_arr,
-							 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata);
-void transfer_all_new_dbs(DbInfoArr *old_db_arr,
-					 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata,
-					 char *old_tablespace);
+void		transfer_all_new_tablespaces(DbInfoArr *old_db_arr,
+										 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata);
+void		transfer_all_new_dbs(DbInfoArr *old_db_arr,
+								 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata,
+								 char *old_tablespace);
 
 /* tablespace.c */
 
@@ -451,17 +451,17 @@ void		pg_putenv(const char *var, const char *val);
 
 /* version.c */
 
-void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
-										 bool check_mode);
+void		new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
+													 bool check_mode);
 void		old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
 void		old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster);
-void old_9_6_invalidate_hash_indexes(ClusterInfo *cluster,
-								bool check_mode);
+void		old_9_6_invalidate_hash_indexes(ClusterInfo *cluster,
+											bool check_mode);
 
 /* parallel.c */
-void parallel_exec_prog(const char *log_file, const char *opt_log_file,
-				   const char *fmt,...) pg_attribute_printf(3, 4);
-void parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
-							  char *old_pgdata, char *new_pgdata,
-							  char *old_tablespace);
+void		parallel_exec_prog(const char *log_file, const char *opt_log_file,
+							   const char *fmt,...) pg_attribute_printf(3, 4);
+void		parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
+										  char *old_pgdata, char *new_pgdata,
+										  char *old_tablespace);
 bool		reap_child(bool wait_for_child);

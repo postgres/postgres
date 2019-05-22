@@ -25,28 +25,28 @@
 
 
 static void make_rels_by_clause_joins(PlannerInfo *root,
-						  RelOptInfo *old_rel,
-						  ListCell *other_rels);
+									  RelOptInfo *old_rel,
+									  ListCell *other_rels);
 static void make_rels_by_clauseless_joins(PlannerInfo *root,
-							  RelOptInfo *old_rel,
-							  ListCell *other_rels);
+										  RelOptInfo *old_rel,
+										  ListCell *other_rels);
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 static bool restriction_is_constant_false(List *restrictlist,
-							  RelOptInfo *joinrel,
-							  bool only_pushed_down);
+										  RelOptInfo *joinrel,
+										  bool only_pushed_down);
 static void populate_joinrel_with_paths(PlannerInfo *root, RelOptInfo *rel1,
-							RelOptInfo *rel2, RelOptInfo *joinrel,
-							SpecialJoinInfo *sjinfo, List *restrictlist);
+										RelOptInfo *rel2, RelOptInfo *joinrel,
+										SpecialJoinInfo *sjinfo, List *restrictlist);
 static void try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1,
-					   RelOptInfo *rel2, RelOptInfo *joinrel,
-					   SpecialJoinInfo *parent_sjinfo,
-					   List *parent_restrictlist);
+								   RelOptInfo *rel2, RelOptInfo *joinrel,
+								   SpecialJoinInfo *parent_sjinfo,
+								   List *parent_restrictlist);
 static SpecialJoinInfo *build_child_join_sjinfo(PlannerInfo *root,
-						SpecialJoinInfo *parent_sjinfo,
-						Relids left_relids, Relids right_relids);
-static int match_expr_to_partition_keys(Expr *expr, RelOptInfo *rel,
-							 bool strict_op);
+												SpecialJoinInfo *parent_sjinfo,
+												Relids left_relids, Relids right_relids);
+static int	match_expr_to_partition_keys(Expr *expr, RelOptInfo *rel,
+										 bool strict_op);
 
 
 /*

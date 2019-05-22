@@ -32,14 +32,14 @@
 #include "libpq/ifaddr.h"
 #include "port/pg_bswap.h"
 
-static int range_sockaddr_AF_INET(const struct sockaddr_in *addr,
-					   const struct sockaddr_in *netaddr,
-					   const struct sockaddr_in *netmask);
+static int	range_sockaddr_AF_INET(const struct sockaddr_in *addr,
+								   const struct sockaddr_in *netaddr,
+								   const struct sockaddr_in *netmask);
 
 #ifdef HAVE_IPV6
-static int range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
-						const struct sockaddr_in6 *netaddr,
-						const struct sockaddr_in6 *netmask);
+static int	range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
+									const struct sockaddr_in6 *netaddr,
+									const struct sockaddr_in6 *netmask);
 #endif
 
 

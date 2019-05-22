@@ -99,9 +99,9 @@ typedef struct BufferAccessStrategyData
 
 /* Prototypes for internal functions */
 static BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy,
-				  uint32 *buf_state);
+									 uint32 *buf_state);
 static void AddBufferToRing(BufferAccessStrategy strategy,
-				BufferDesc *buf);
+							BufferDesc *buf);
 
 /*
  * ClockSweepTick - Helper routine for StrategyGetBuffer()

@@ -66,22 +66,22 @@ typedef void (*pgstat_page) (pgstattuple_type *, Relation, BlockNumber,
 							 BufferAccessStrategy);
 
 static Datum build_pgstattuple_type(pgstattuple_type *stat,
-					   FunctionCallInfo fcinfo);
+									FunctionCallInfo fcinfo);
 static Datum pgstat_relation(Relation rel, FunctionCallInfo fcinfo);
 static Datum pgstat_heap(Relation rel, FunctionCallInfo fcinfo);
 static void pgstat_btree_page(pgstattuple_type *stat,
-				  Relation rel, BlockNumber blkno,
-				  BufferAccessStrategy bstrategy);
+							  Relation rel, BlockNumber blkno,
+							  BufferAccessStrategy bstrategy);
 static void pgstat_hash_page(pgstattuple_type *stat,
-				 Relation rel, BlockNumber blkno,
-				 BufferAccessStrategy bstrategy);
+							 Relation rel, BlockNumber blkno,
+							 BufferAccessStrategy bstrategy);
 static void pgstat_gist_page(pgstattuple_type *stat,
-				 Relation rel, BlockNumber blkno,
-				 BufferAccessStrategy bstrategy);
+							 Relation rel, BlockNumber blkno,
+							 BufferAccessStrategy bstrategy);
 static Datum pgstat_index(Relation rel, BlockNumber start,
-			 pgstat_page pagefn, FunctionCallInfo fcinfo);
+						  pgstat_page pagefn, FunctionCallInfo fcinfo);
 static void pgstat_index_page(pgstattuple_type *stat, Page page,
-				  OffsetNumber minoff, OffsetNumber maxoff);
+							  OffsetNumber minoff, OffsetNumber maxoff);
 
 /*
  * build_pgstattuple_type -- build a pgstattuple_type tuple

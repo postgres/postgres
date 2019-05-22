@@ -88,25 +88,25 @@ static bool flatten_rtes_walker(Node *node, PlannerGlobal *glob);
 static void add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte);
 static Plan *set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset);
 static Plan *set_indexonlyscan_references(PlannerInfo *root,
-							 IndexOnlyScan *plan,
-							 int rtoffset);
+										  IndexOnlyScan *plan,
+										  int rtoffset);
 static Plan *set_subqueryscan_references(PlannerInfo *root,
-							SubqueryScan *plan,
-							int rtoffset);
+										 SubqueryScan *plan,
+										 int rtoffset);
 static bool trivial_subqueryscan(SubqueryScan *plan);
 static Plan *clean_up_removed_plan_level(Plan *parent, Plan *child);
 static void set_foreignscan_references(PlannerInfo *root,
-						   ForeignScan *fscan,
-						   int rtoffset);
+									   ForeignScan *fscan,
+									   int rtoffset);
 static void set_customscan_references(PlannerInfo *root,
-						  CustomScan *cscan,
-						  int rtoffset);
+									  CustomScan *cscan,
+									  int rtoffset);
 static Plan *set_append_references(PlannerInfo *root,
-					  Append *aplan,
-					  int rtoffset);
+								   Append *aplan,
+								   int rtoffset);
 static Plan *set_mergeappend_references(PlannerInfo *root,
-						   MergeAppend *mplan,
-						   int rtoffset);
+										MergeAppend *mplan,
+										int rtoffset);
 static Node *fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset);
 static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
 static bool fix_scan_expr_walker(Node *node, fix_scan_expr_context *context);
@@ -117,35 +117,35 @@ static Node *convert_combining_aggrefs(Node *node, void *context);
 static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
-							 indexed_tlist *itlist,
-							 Index newvarno,
-							 int rtoffset);
+										 indexed_tlist *itlist,
+										 Index newvarno,
+										 int rtoffset);
 static Var *search_indexed_tlist_for_non_var(Expr *node,
-								 indexed_tlist *itlist,
-								 Index newvarno);
+											 indexed_tlist *itlist,
+											 Index newvarno);
 static Var *search_indexed_tlist_for_sortgroupref(Expr *node,
-									  Index sortgroupref,
-									  indexed_tlist *itlist,
-									  Index newvarno);
+												  Index sortgroupref,
+												  indexed_tlist *itlist,
+												  Index newvarno);
 static List *fix_join_expr(PlannerInfo *root,
-			  List *clauses,
-			  indexed_tlist *outer_itlist,
-			  indexed_tlist *inner_itlist,
-			  Index acceptable_rel, int rtoffset);
+						   List *clauses,
+						   indexed_tlist *outer_itlist,
+						   indexed_tlist *inner_itlist,
+						   Index acceptable_rel, int rtoffset);
 static Node *fix_join_expr_mutator(Node *node,
-					  fix_join_expr_context *context);
+								   fix_join_expr_context *context);
 static Node *fix_upper_expr(PlannerInfo *root,
-			   Node *node,
-			   indexed_tlist *subplan_itlist,
-			   Index newvarno,
-			   int rtoffset);
+							Node *node,
+							indexed_tlist *subplan_itlist,
+							Index newvarno,
+							int rtoffset);
 static Node *fix_upper_expr_mutator(Node *node,
-					   fix_upper_expr_context *context);
+									fix_upper_expr_context *context);
 static List *set_returning_clause_references(PlannerInfo *root,
-								List *rlist,
-								Plan *topplan,
-								Index resultRelation,
-								int rtoffset);
+											 List *rlist,
+											 Plan *topplan,
+											 Index resultRelation,
+											 int rtoffset);
 
 
 /*****************************************************************************

@@ -112,8 +112,8 @@ extern int32_t icu_from_uchar(char **result, const UChar *buff_uchar, int32_t le
 
 /* These functions convert from/to libc's wchar_t, *not* pg_wchar_t */
 extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen,
-		   pg_locale_t locale);
+						 pg_locale_t locale);
 extern size_t char2wchar(wchar_t *to, size_t tolen,
-		   const char *from, size_t fromlen, pg_locale_t locale);
+						 const char *from, size_t fromlen, pg_locale_t locale);
 
 #endif							/* _PG_LOCALE_ */

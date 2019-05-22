@@ -154,8 +154,8 @@ static void GenerationDelete(MemoryContext context);
 static Size GenerationGetChunkSpace(MemoryContext context, void *pointer);
 static bool GenerationIsEmpty(MemoryContext context);
 static void GenerationStats(MemoryContext context,
-				MemoryStatsPrintFunc printfunc, void *passthru,
-				MemoryContextCounters *totals);
+							MemoryStatsPrintFunc printfunc, void *passthru,
+							MemoryContextCounters *totals);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void GenerationCheck(MemoryContext context);

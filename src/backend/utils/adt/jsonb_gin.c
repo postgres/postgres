@@ -155,7 +155,7 @@ static Datum make_text_key(char flag, const char *str, int len);
 static Datum make_scalar_key(const JsonbValue *scalarVal, bool is_key);
 
 static JsonPathGinNode *extract_jsp_bool_expr(JsonPathGinContext *cxt,
-					  JsonPathGinPath path, JsonPathItem *jsp, bool not);
+											  JsonPathGinPath path, JsonPathItem *jsp, bool not);
 
 
 /* Initialize GinEntries struct */

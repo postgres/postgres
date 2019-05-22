@@ -168,7 +168,7 @@ typedef struct SharedRecordTypmodRegistry SharedRecordTypmodRegistry;
 extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
 
 extern void InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
-						MemoryContext refctx, bool need_exprstate);
+									MemoryContext refctx, bool need_exprstate);
 
 extern void UpdateDomainConstraintRef(DomainConstraintRef *ref);
 
@@ -177,12 +177,12 @@ extern bool DomainHasConstraints(Oid type_id);
 extern TupleDesc lookup_rowtype_tupdesc(Oid type_id, int32 typmod);
 
 extern TupleDesc lookup_rowtype_tupdesc_noerror(Oid type_id, int32 typmod,
-							   bool noError);
+												bool noError);
 
 extern TupleDesc lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod);
 
 extern TupleDesc lookup_rowtype_tupdesc_domain(Oid type_id, int32 typmod,
-							  bool noError);
+											   bool noError);
 
 extern void assign_record_type_typmod(TupleDesc tupDesc);
 
@@ -193,7 +193,7 @@ extern int	compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2);
 extern size_t SharedRecordTypmodRegistryEstimate(void);
 
 extern void SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *,
-							   dsm_segment *segment, dsa_area *area);
+										   dsm_segment *segment, dsa_area *area);
 
 extern void SharedRecordTypmodRegistryAttach(SharedRecordTypmodRegistry *);
 

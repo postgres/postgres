@@ -302,196 +302,196 @@ struct DropRelationCallbackState
 static void truncate_check_rel(Oid relid, Form_pg_class reltuple);
 static void truncate_check_activity(Relation rel);
 static void RangeVarCallbackForTruncate(const RangeVar *relation,
-							Oid relId, Oid oldRelId, void *arg);
+										Oid relId, Oid oldRelId, void *arg);
 static List *MergeAttributes(List *schema, List *supers, char relpersistence,
-				bool is_partition, List **supconstr);
+							 bool is_partition, List **supconstr);
 static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers,
-						bool child_is_partition);
+									bool child_is_partition);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-						 int32 seqNumber, Relation inhRelation,
-						 bool child_is_partition);
+									 int32 seqNumber, Relation inhRelation,
+									 bool child_is_partition);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
-					 Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
+								 Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
-				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
-				   LOCKMODE lockmode);
+							   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
+							   LOCKMODE lockmode);
 static ObjectAddress ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
-					  bool recurse, bool recursing, LOCKMODE lockmode);
+										   bool recurse, bool recursing, LOCKMODE lockmode);
 static ObjectAddress ATExecValidateConstraint(Relation rel, char *constrName,
-						 bool recurse, bool recursing, LOCKMODE lockmode);
-static int transformColumnNameList(Oid relId, List *colList,
-						int16 *attnums, Oid *atttypids);
-static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
-						   List **attnamelist,
-						   int16 *attnums, Oid *atttypids,
-						   Oid *opclasses);
-static Oid transformFkeyCheckAttrs(Relation pkrel,
-						int numattrs, int16 *attnums,
-						Oid *opclasses);
+											  bool recurse, bool recursing, LOCKMODE lockmode);
+static int	transformColumnNameList(Oid relId, List *colList,
+									int16 *attnums, Oid *atttypids);
+static int	transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
+									   List **attnamelist,
+									   int16 *attnums, Oid *atttypids,
+									   Oid *opclasses);
+static Oid	transformFkeyCheckAttrs(Relation pkrel,
+									int numattrs, int16 *attnums,
+									Oid *opclasses);
 static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
 static CoercionPathType findFkeyCast(Oid targetTypeId, Oid sourceTypeId,
-			 Oid *funcid);
+									 Oid *funcid);
 static void validateCheckConstraint(Relation rel, HeapTuple constrtup);
 static void validateForeignKeyConstraint(char *conname,
-							 Relation rel, Relation pkrel,
-							 Oid pkindOid, Oid constraintOid);
+										 Relation rel, Relation pkrel,
+										 Oid pkindOid, Oid constraintOid);
 static void ATController(AlterTableStmt *parsetree,
-			 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
+						 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
-		  bool recurse, bool recursing, LOCKMODE lockmode);
+					  bool recurse, bool recursing, LOCKMODE lockmode);
 static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
-		  AlterTableCmd *cmd, LOCKMODE lockmode);
+					  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATRewriteTables(AlterTableStmt *parsetree,
-				List **wqueue, LOCKMODE lockmode);
+							List **wqueue, LOCKMODE lockmode);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode);
 static AlteredTableInfo *ATGetQueueEntry(List **wqueue, Relation rel);
 static void ATSimplePermissions(Relation rel, int allowed_targets);
 static void ATWrongRelkindError(Relation rel, int allowed_targets);
 static void ATSimpleRecursion(List **wqueue, Relation rel,
-				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode);
+							  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode);
 static void ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
-					  LOCKMODE lockmode);
+								  LOCKMODE lockmode);
 static List *find_typed_table_dependencies(Oid typeOid, const char *typeName,
-							  DropBehavior behavior);
+										   DropBehavior behavior);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-				bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode);
+							bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode);
 static ObjectAddress ATExecAddColumn(List **wqueue, AlteredTableInfo *tab,
-				Relation rel, ColumnDef *colDef,
-				bool recurse, bool recursing,
-				bool if_not_exists, LOCKMODE lockmode);
+									 Relation rel, ColumnDef *colDef,
+									 bool recurse, bool recursing,
+									 bool if_not_exists, LOCKMODE lockmode);
 static bool check_for_column_name_collision(Relation rel, const char *colname,
-								bool if_not_exists);
+											bool if_not_exists);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
 static void add_column_collation_dependency(Oid relid, int32 attnum, Oid collid);
 static void ATPrepDropNotNull(Relation rel, bool recurse, bool recursing);
 static ObjectAddress ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode);
 static void ATPrepSetNotNull(List **wqueue, Relation rel,
-				 AlterTableCmd *cmd, bool recurse, bool recursing,
-				 LOCKMODE lockmode);
+							 AlterTableCmd *cmd, bool recurse, bool recursing,
+							 LOCKMODE lockmode);
 static ObjectAddress ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
-				 const char *colName, LOCKMODE lockmode);
+									  const char *colName, LOCKMODE lockmode);
 static void ATExecCheckNotNull(AlteredTableInfo *tab, Relation rel,
-				   const char *colName, LOCKMODE lockmode);
+							   const char *colName, LOCKMODE lockmode);
 static bool NotNullImpliedByRelConstraints(Relation rel, Form_pg_attribute attr);
 static bool ConstraintImpliedByRelConstraint(Relation scanrel,
-								 List *partConstraint, List *existedConstraints);
+											 List *partConstraint, List *existedConstraints);
 static ObjectAddress ATExecColumnDefault(Relation rel, const char *colName,
-					Node *newDefault, LOCKMODE lockmode);
+										 Node *newDefault, LOCKMODE lockmode);
 static ObjectAddress ATExecAddIdentity(Relation rel, const char *colName,
-				  Node *def, LOCKMODE lockmode);
+									   Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecSetIdentity(Relation rel, const char *colName,
-				  Node *def, LOCKMODE lockmode);
+									   Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
 static void ATPrepSetStatistics(Relation rel, const char *colName, int16 colNum,
-					Node *newValue, LOCKMODE lockmode);
+								Node *newValue, LOCKMODE lockmode);
 static ObjectAddress ATExecSetStatistics(Relation rel, const char *colName, int16 colNum,
-					Node *newValue, LOCKMODE lockmode);
+										 Node *newValue, LOCKMODE lockmode);
 static ObjectAddress ATExecSetOptions(Relation rel, const char *colName,
-				 Node *options, bool isReset, LOCKMODE lockmode);
+									  Node *options, bool isReset, LOCKMODE lockmode);
 static ObjectAddress ATExecSetStorage(Relation rel, const char *colName,
-				 Node *newValue, LOCKMODE lockmode);
+									  Node *newValue, LOCKMODE lockmode);
 static void ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-				 AlterTableCmd *cmd, LOCKMODE lockmode);
+							 AlterTableCmd *cmd, LOCKMODE lockmode);
 static ObjectAddress ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
-				 DropBehavior behavior,
-				 bool recurse, bool recursing,
-				 bool missing_ok, LOCKMODE lockmode);
+									  DropBehavior behavior,
+									  bool recurse, bool recursing,
+									  bool missing_ok, LOCKMODE lockmode);
 static ObjectAddress ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
-			   IndexStmt *stmt, bool is_rebuild, LOCKMODE lockmode);
+									IndexStmt *stmt, bool is_rebuild, LOCKMODE lockmode);
 static ObjectAddress ATExecAddConstraint(List **wqueue,
-					AlteredTableInfo *tab, Relation rel,
-					Constraint *newConstraint, bool recurse, bool is_readd,
-					LOCKMODE lockmode);
+										 AlteredTableInfo *tab, Relation rel,
+										 Constraint *newConstraint, bool recurse, bool is_readd,
+										 LOCKMODE lockmode);
 static char *ChooseForeignKeyConstraintNameAddition(List *colnames);
 static ObjectAddress ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
-						 IndexStmt *stmt, LOCKMODE lockmode);
+											  IndexStmt *stmt, LOCKMODE lockmode);
 static ObjectAddress ATAddCheckConstraint(List **wqueue,
-					 AlteredTableInfo *tab, Relation rel,
-					 Constraint *constr,
-					 bool recurse, bool recursing, bool is_readd,
-					 LOCKMODE lockmode);
+										  AlteredTableInfo *tab, Relation rel,
+										  Constraint *constr,
+										  bool recurse, bool recursing, bool is_readd,
+										  LOCKMODE lockmode);
 static ObjectAddress ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab,
-						  Relation rel, Constraint *fkconstraint, Oid parentConstr,
-						  bool recurse, bool recursing,
-						  LOCKMODE lockmode);
+											   Relation rel, Constraint *fkconstraint, Oid parentConstr,
+											   bool recurse, bool recursing,
+											   LOCKMODE lockmode);
 static ObjectAddress addFkRecurseReferenced(List **wqueue, Constraint *fkconstraint,
-					   Relation rel, Relation pkrel, Oid indexOid, Oid parentConstr,
-					   int numfks, int16 *pkattnum, int16 *fkattnum,
-					   Oid *pfeqoperators, Oid *ppeqoperators, Oid *ffeqoperators,
-					   bool old_check_ok);
+											Relation rel, Relation pkrel, Oid indexOid, Oid parentConstr,
+											int numfks, int16 *pkattnum, int16 *fkattnum,
+											Oid *pfeqoperators, Oid *ppeqoperators, Oid *ffeqoperators,
+											bool old_check_ok);
 static void addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint,
-						Relation rel, Relation pkrel, Oid indexOid, Oid parentConstr,
-						int numfks, int16 *pkattnum, int16 *fkattnum,
-						Oid *pfeqoperators, Oid *ppeqoperators, Oid *ffeqoperators,
-						bool old_check_ok, LOCKMODE lockmode);
+									Relation rel, Relation pkrel, Oid indexOid, Oid parentConstr,
+									int numfks, int16 *pkattnum, int16 *fkattnum,
+									Oid *pfeqoperators, Oid *ppeqoperators, Oid *ffeqoperators,
+									bool old_check_ok, LOCKMODE lockmode);
 static void CloneForeignKeyConstraints(List **wqueue, Relation parentRel,
-						   Relation partitionRel);
+									   Relation partitionRel);
 static void CloneFkReferenced(Relation parentRel, Relation partitionRel);
 static void CloneFkReferencing(List **wqueue, Relation parentRel,
-				   Relation partRel);
+							   Relation partRel);
 static void createForeignKeyCheckTriggers(Oid myRelOid, Oid refRelOid,
-							  Constraint *fkconstraint, Oid constraintOid,
-							  Oid indexOid);
+										  Constraint *fkconstraint, Oid constraintOid,
+										  Oid indexOid);
 static void createForeignKeyActionTriggers(Relation rel, Oid refRelOid,
-							   Constraint *fkconstraint, Oid constraintOid,
-							   Oid indexOid);
+										   Constraint *fkconstraint, Oid constraintOid,
+										   Oid indexOid);
 static bool tryAttachPartitionForeignKey(ForeignKeyCacheInfo *fk,
-							 Oid partRelid,
-							 Oid parentConstrOid, int numfks,
-							 AttrNumber *mapped_conkey, AttrNumber *confkey,
-							 Oid *conpfeqop);
+										 Oid partRelid,
+										 Oid parentConstrOid, int numfks,
+										 AttrNumber *mapped_conkey, AttrNumber *confkey,
+										 Oid *conpfeqop);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
-					 DropBehavior behavior,
-					 bool recurse, bool recursing,
-					 bool missing_ok, LOCKMODE lockmode);
+								 DropBehavior behavior,
+								 bool recurse, bool recursing,
+								 bool missing_ok, LOCKMODE lockmode);
 static void ATPrepAlterColumnType(List **wqueue,
-					  AlteredTableInfo *tab, Relation rel,
-					  bool recurse, bool recursing,
-					  AlterTableCmd *cmd, LOCKMODE lockmode);
+								  AlteredTableInfo *tab, Relation rel,
+								  bool recurse, bool recursing,
+								  AlterTableCmd *cmd, LOCKMODE lockmode);
 static bool ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno);
 static ObjectAddress ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
-					  AlterTableCmd *cmd, LOCKMODE lockmode);
+										   AlterTableCmd *cmd, LOCKMODE lockmode);
 static ObjectAddress ATExecAlterColumnGenericOptions(Relation rel, const char *colName,
-								List *options, LOCKMODE lockmode);
+													 List *options, LOCKMODE lockmode);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab,
-					   LOCKMODE lockmode);
+								   LOCKMODE lockmode);
 static void ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId,
-					 char *cmd, List **wqueue, LOCKMODE lockmode,
-					 bool rewrite);
+								 char *cmd, List **wqueue, LOCKMODE lockmode,
+								 bool rewrite);
 static void RebuildConstraintComment(AlteredTableInfo *tab, int pass,
-						 Oid objid, Relation rel, List *domname,
-						 const char *conname);
+									 Oid objid, Relation rel, List *domname,
+									 const char *conname);
 static void TryReuseIndex(Oid oldId, IndexStmt *stmt);
 static void TryReuseForeignKey(Oid oldId, Constraint *con);
 static void change_owner_fix_column_acls(Oid relationOid,
-							 Oid oldOwnerId, Oid newOwnerId);
+										 Oid oldOwnerId, Oid newOwnerId);
 static void change_owner_recurse_to_sequences(Oid relationOid,
-								  Oid newOwnerId, LOCKMODE lockmode);
+											  Oid newOwnerId, LOCKMODE lockmode);
 static ObjectAddress ATExecClusterOn(Relation rel, const char *indexName,
-				LOCKMODE lockmode);
+									 LOCKMODE lockmode);
 static void ATExecDropCluster(Relation rel, LOCKMODE lockmode);
 static bool ATPrepChangePersistence(Relation rel, bool toLogged);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
-					const char *tablespacename, LOCKMODE lockmode);
+								const char *tablespacename, LOCKMODE lockmode);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
 static void ATExecSetTableSpaceNoStorage(Relation rel, Oid newTableSpace);
 static void ATExecSetRelOptions(Relation rel, List *defList,
-					AlterTableType operation,
-					LOCKMODE lockmode);
+								AlterTableType operation,
+								LOCKMODE lockmode);
 static void ATExecEnableDisableTrigger(Relation rel, const char *trigname,
-						   char fires_when, bool skip_system, LOCKMODE lockmode);
+									   char fires_when, bool skip_system, LOCKMODE lockmode);
 static void ATExecEnableDisableRule(Relation rel, const char *rulename,
-						char fires_when, LOCKMODE lockmode);
+									char fires_when, LOCKMODE lockmode);
 static void ATPrepAddInherit(Relation child_rel);
 static ObjectAddress ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode);
 static ObjectAddress ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode);
 static void drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid,
-					   DependencyType deptype);
+								   DependencyType deptype);
 static ObjectAddress ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode);
 static void ATExecDropOf(Relation rel, LOCKMODE lockmode);
 static void ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode);
@@ -504,27 +504,27 @@ static void index_copy_data(Relation rel, RelFileNode newrnode);
 static const char *storage_name(char c);
 
 static void RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid,
-								Oid oldRelOid, void *arg);
+											Oid oldRelOid, void *arg);
 static void RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid,
-								 Oid oldrelid, void *arg);
+											 Oid oldrelid, void *arg);
 static PartitionSpec *transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy);
 static void ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNumber *partattrs,
-					  List **partexprs, Oid *partopclass, Oid *partcollation, char strategy);
+								  List **partexprs, Oid *partopclass, Oid *partcollation, char strategy);
 static void CreateInheritance(Relation child_rel, Relation parent_rel);
 static void RemoveInheritance(Relation child_rel, Relation parent_rel);
 static ObjectAddress ATExecAttachPartition(List **wqueue, Relation rel,
-					  PartitionCmd *cmd);
+										   PartitionCmd *cmd);
 static void AttachPartitionEnsureIndexes(Relation rel, Relation attachrel);
 static void QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
-								   List *partConstraint,
-								   bool validate_default);
+											   List *partConstraint,
+											   bool validate_default);
 static void CloneRowTriggersToPartition(Relation parent, Relation partition);
 static ObjectAddress ATExecDetachPartition(Relation rel, RangeVar *name);
 static ObjectAddress ATExecAttachPartitionIdx(List **wqueue, Relation rel,
-						 RangeVar *name);
+											  RangeVar *name);
 static void validatePartitionedIndex(Relation partedIdx, Relation partedTbl);
 static void refuseDupeIndexAttach(Relation parentIdx, Relation partIdx,
-					  Relation partitionTbl);
+								  Relation partitionTbl);
 static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
 

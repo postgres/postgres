@@ -45,7 +45,7 @@
 #endif
 
 static void make_relative_path(char *ret_path, const char *target_path,
-				   const char *bin_path, const char *my_exec_path);
+							   const char *bin_path, const char *my_exec_path);
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
 

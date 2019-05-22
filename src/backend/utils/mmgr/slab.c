@@ -132,8 +132,8 @@ static void SlabDelete(MemoryContext context);
 static Size SlabGetChunkSpace(MemoryContext context, void *pointer);
 static bool SlabIsEmpty(MemoryContext context);
 static void SlabStats(MemoryContext context,
-		  MemoryStatsPrintFunc printfunc, void *passthru,
-		  MemoryContextCounters *totals);
+					  MemoryStatsPrintFunc printfunc, void *passthru,
+					  MemoryContextCounters *totals);
 #ifdef MEMORY_CONTEXT_CHECKING
 static void SlabCheck(MemoryContext context);
 #endif

@@ -105,12 +105,12 @@ static uint8 fsm_space_needed_to_cat(Size needed);
 static Size fsm_space_cat_to_avail(uint8 cat);
 
 /* workhorse functions for various operations */
-static int fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
-				   uint8 newValue, uint8 minValue);
+static int	fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
+							   uint8 newValue, uint8 minValue);
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
-				BlockNumber start, BlockNumber end,
-				bool *eof);
+							 BlockNumber start, BlockNumber end,
+							 bool *eof);
 
 
 /******** Public API ********/

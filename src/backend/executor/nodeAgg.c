@@ -242,32 +242,32 @@ static void select_current_set(AggState *aggstate, int setno, bool is_hash);
 static void initialize_phase(AggState *aggstate, int newphase);
 static TupleTableSlot *fetch_input_tuple(AggState *aggstate);
 static void initialize_aggregates(AggState *aggstate,
-					  AggStatePerGroup *pergroups,
-					  int numReset);
+								  AggStatePerGroup *pergroups,
+								  int numReset);
 static void advance_transition_function(AggState *aggstate,
-							AggStatePerTrans pertrans,
-							AggStatePerGroup pergroupstate);
+										AggStatePerTrans pertrans,
+										AggStatePerGroup pergroupstate);
 static void advance_aggregates(AggState *aggstate);
 static void process_ordered_aggregate_single(AggState *aggstate,
-								 AggStatePerTrans pertrans,
-								 AggStatePerGroup pergroupstate);
+											 AggStatePerTrans pertrans,
+											 AggStatePerGroup pergroupstate);
 static void process_ordered_aggregate_multi(AggState *aggstate,
-								AggStatePerTrans pertrans,
-								AggStatePerGroup pergroupstate);
+											AggStatePerTrans pertrans,
+											AggStatePerGroup pergroupstate);
 static void finalize_aggregate(AggState *aggstate,
-				   AggStatePerAgg peragg,
-				   AggStatePerGroup pergroupstate,
-				   Datum *resultVal, bool *resultIsNull);
+							   AggStatePerAgg peragg,
+							   AggStatePerGroup pergroupstate,
+							   Datum *resultVal, bool *resultIsNull);
 static void finalize_partialaggregate(AggState *aggstate,
-						  AggStatePerAgg peragg,
-						  AggStatePerGroup pergroupstate,
-						  Datum *resultVal, bool *resultIsNull);
+									  AggStatePerAgg peragg,
+									  AggStatePerGroup pergroupstate,
+									  Datum *resultVal, bool *resultIsNull);
 static void prepare_projection_slot(AggState *aggstate,
-						TupleTableSlot *slot,
-						int currentSet);
+									TupleTableSlot *slot,
+									int currentSet);
 static void finalize_aggregates(AggState *aggstate,
-					AggStatePerAgg peragg,
-					AggStatePerGroup pergroup);
+								AggStatePerAgg peragg,
+								AggStatePerGroup pergroup);
 static TupleTableSlot *project_aggregates(AggState *aggstate);
 static Bitmapset *find_unaggregated_cols(AggState *aggstate);
 static bool find_unaggregated_cols_walker(Node *node, Bitmapset **colnos);
@@ -279,19 +279,19 @@ static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
 static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
-						  AggState *aggstate, EState *estate,
-						  Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
-						  Oid aggserialfn, Oid aggdeserialfn,
-						  Datum initValue, bool initValueIsNull,
-						  Oid *inputTypes, int numArguments);
-static int find_compatible_peragg(Aggref *newagg, AggState *aggstate,
-					   int lastaggno, List **same_input_transnos);
-static int find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
-						 bool shareable,
-						 Oid aggtransfn, Oid aggtranstype,
-						 Oid aggserialfn, Oid aggdeserialfn,
-						 Datum initValue, bool initValueIsNull,
-						 List *transnos);
+									  AggState *aggstate, EState *estate,
+									  Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
+									  Oid aggserialfn, Oid aggdeserialfn,
+									  Datum initValue, bool initValueIsNull,
+									  Oid *inputTypes, int numArguments);
+static int	find_compatible_peragg(Aggref *newagg, AggState *aggstate,
+								   int lastaggno, List **same_input_transnos);
+static int	find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
+									 bool shareable,
+									 Oid aggtransfn, Oid aggtranstype,
+									 Oid aggserialfn, Oid aggdeserialfn,
+									 Datum initValue, bool initValueIsNull,
+									 List *transnos);
 
 
 /*

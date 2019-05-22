@@ -38,31 +38,31 @@ typedef struct JoinHashEntry
 } JoinHashEntry;
 
 static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
-					RelOptInfo *input_rel);
+								RelOptInfo *input_rel);
 static List *build_joinrel_restrictlist(PlannerInfo *root,
-						   RelOptInfo *joinrel,
-						   RelOptInfo *outer_rel,
-						   RelOptInfo *inner_rel);
+										RelOptInfo *joinrel,
+										RelOptInfo *outer_rel,
+										RelOptInfo *inner_rel);
 static void build_joinrel_joinlist(RelOptInfo *joinrel,
-					   RelOptInfo *outer_rel,
-					   RelOptInfo *inner_rel);
+								   RelOptInfo *outer_rel,
+								   RelOptInfo *inner_rel);
 static List *subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
-							  List *joininfo_list,
-							  List *new_restrictlist);
+										   List *joininfo_list,
+										   List *new_restrictlist);
 static List *subbuild_joinrel_joinlist(RelOptInfo *joinrel,
-						  List *joininfo_list,
-						  List *new_joininfo);
+									   List *joininfo_list,
+									   List *new_joininfo);
 static void set_foreign_rel_properties(RelOptInfo *joinrel,
-						   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
+									   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 static void add_join_rel(PlannerInfo *root, RelOptInfo *joinrel);
 static void build_joinrel_partition_info(RelOptInfo *joinrel,
-							 RelOptInfo *outer_rel, RelOptInfo *inner_rel,
-							 List *restrictlist, JoinType jointype);
+										 RelOptInfo *outer_rel, RelOptInfo *inner_rel,
+										 List *restrictlist, JoinType jointype);
 static void build_child_join_reltarget(PlannerInfo *root,
-						   RelOptInfo *parentrel,
-						   RelOptInfo *childrel,
-						   int nappinfos,
-						   AppendRelInfo **appinfos);
+									   RelOptInfo *parentrel,
+									   RelOptInfo *childrel,
+									   int nappinfos,
+									   AppendRelInfo **appinfos);
 
 
 /*

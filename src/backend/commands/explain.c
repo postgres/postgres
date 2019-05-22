@@ -54,79 +54,79 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 #define X_NOWHITESPACE 4
 
 static void ExplainOneQuery(Query *query, int cursorOptions,
-				IntoClause *into, ExplainState *es,
-				const char *queryString, ParamListInfo params,
-				QueryEnvironment *queryEnv);
+							IntoClause *into, ExplainState *es,
+							const char *queryString, ParamListInfo params,
+							QueryEnvironment *queryEnv);
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
-				ExplainState *es);
+							ExplainState *es);
 static double elapsed_time(instr_time *starttime);
 static bool ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used);
 static void ExplainNode(PlanState *planstate, List *ancestors,
-			const char *relationship, const char *plan_name,
-			ExplainState *es);
+						const char *relationship, const char *plan_name,
+						ExplainState *es);
 static void show_plan_tlist(PlanState *planstate, List *ancestors,
-				ExplainState *es);
+							ExplainState *es);
 static void show_expression(Node *node, const char *qlabel,
-				PlanState *planstate, List *ancestors,
-				bool useprefix, ExplainState *es);
+							PlanState *planstate, List *ancestors,
+							bool useprefix, ExplainState *es);
 static void show_qual(List *qual, const char *qlabel,
-		  PlanState *planstate, List *ancestors,
-		  bool useprefix, ExplainState *es);
+					  PlanState *planstate, List *ancestors,
+					  bool useprefix, ExplainState *es);
 static void show_scan_qual(List *qual, const char *qlabel,
-			   PlanState *planstate, List *ancestors,
-			   ExplainState *es);
+						   PlanState *planstate, List *ancestors,
+						   ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel,
-				PlanState *planstate, List *ancestors,
-				ExplainState *es);
+							PlanState *planstate, List *ancestors,
+							ExplainState *es);
 static void show_sort_keys(SortState *sortstate, List *ancestors,
-			   ExplainState *es);
+						   ExplainState *es);
 static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
-					   ExplainState *es);
+								   ExplainState *es);
 static void show_agg_keys(AggState *astate, List *ancestors,
-			  ExplainState *es);
+						  ExplainState *es);
 static void show_grouping_sets(PlanState *planstate, Agg *agg,
-				   List *ancestors, ExplainState *es);
+							   List *ancestors, ExplainState *es);
 static void show_grouping_set_keys(PlanState *planstate,
-					   Agg *aggnode, Sort *sortnode,
-					   List *context, bool useprefix,
-					   List *ancestors, ExplainState *es);
+								   Agg *aggnode, Sort *sortnode,
+								   List *context, bool useprefix,
+								   List *ancestors, ExplainState *es);
 static void show_group_keys(GroupState *gstate, List *ancestors,
-				ExplainState *es);
+							ExplainState *es);
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
-					 int nkeys, AttrNumber *keycols,
-					 Oid *sortOperators, Oid *collations, bool *nullsFirst,
-					 List *ancestors, ExplainState *es);
+								 int nkeys, AttrNumber *keycols,
+								 Oid *sortOperators, Oid *collations, bool *nullsFirst,
+								 List *ancestors, ExplainState *es);
 static void show_sortorder_options(StringInfo buf, Node *sortexpr,
-					   Oid sortOperator, Oid collation, bool nullsFirst);
+								   Oid sortOperator, Oid collation, bool nullsFirst);
 static void show_tablesample(TableSampleClause *tsc, PlanState *planstate,
-				 List *ancestors, ExplainState *es);
+							 List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_tidbitmap_info(BitmapHeapScanState *planstate,
-					ExplainState *es);
+								ExplainState *es);
 static void show_instrumentation_count(const char *qlabel, int which,
-						   PlanState *planstate, ExplainState *es);
+									   PlanState *planstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static void show_eval_params(Bitmapset *bms_params, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void show_buffer_usage(ExplainState *es, const BufferUsage *usage);
 static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
-						ExplainState *es);
+									ExplainState *es);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
 static void ExplainModifyTarget(ModifyTable *plan, ExplainState *es);
 static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
 static void show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
-					  ExplainState *es);
+								  ExplainState *es);
 static void ExplainMemberNodes(PlanState **planstates, int nsubnodes,
-				   int nplans, List *ancestors, ExplainState *es);
+							   int nplans, List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
-				const char *relationship, ExplainState *es);
+							const char *relationship, ExplainState *es);
 static void ExplainCustomChildren(CustomScanState *css,
-					  List *ancestors, ExplainState *es);
+								  List *ancestors, ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *unit,
-				const char *value, bool numeric, ExplainState *es);
+							const char *value, bool numeric, ExplainState *es);
 static void ExplainDummyGroup(const char *objtype, const char *labelname,
-				  ExplainState *es);
+							  ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
 static void ExplainJSONLineEnding(ExplainState *es);
 static void ExplainYAMLLineStarting(ExplainState *es);

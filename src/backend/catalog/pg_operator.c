@@ -38,27 +38,27 @@
 #include "utils/syscache.h"
 
 
-static Oid OperatorGet(const char *operatorName,
-			Oid operatorNamespace,
-			Oid leftObjectId,
-			Oid rightObjectId,
-			bool *defined);
+static Oid	OperatorGet(const char *operatorName,
+						Oid operatorNamespace,
+						Oid leftObjectId,
+						Oid rightObjectId,
+						bool *defined);
 
-static Oid OperatorLookup(List *operatorName,
-			   Oid leftObjectId,
-			   Oid rightObjectId,
-			   bool *defined);
+static Oid	OperatorLookup(List *operatorName,
+						   Oid leftObjectId,
+						   Oid rightObjectId,
+						   bool *defined);
 
-static Oid OperatorShellMake(const char *operatorName,
-				  Oid operatorNamespace,
-				  Oid leftTypeId,
-				  Oid rightTypeId);
+static Oid	OperatorShellMake(const char *operatorName,
+							  Oid operatorNamespace,
+							  Oid leftTypeId,
+							  Oid rightTypeId);
 
-static Oid get_other_operator(List *otherOp,
-				   Oid otherLeftTypeId, Oid otherRightTypeId,
-				   const char *operatorName, Oid operatorNamespace,
-				   Oid leftTypeId, Oid rightTypeId,
-				   bool isCommutator);
+static Oid	get_other_operator(List *otherOp,
+							   Oid otherLeftTypeId, Oid otherRightTypeId,
+							   const char *operatorName, Oid operatorNamespace,
+							   Oid leftTypeId, Oid rightTypeId,
+							   bool isCommutator);
 
 
 /*

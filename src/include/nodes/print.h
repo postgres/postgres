@@ -22,7 +22,7 @@
 extern void print(const void *obj);
 extern void pprint(const void *obj);
 extern void elog_node_display(int lev, const char *title,
-				  const void *obj, bool pretty);
+							  const void *obj, bool pretty);
 extern char *format_node_dump(const char *dump);
 extern char *pretty_format_node_dump(const char *dump);
 extern void print_rt(const List *rtable);

@@ -51,23 +51,23 @@ typedef struct
 	bool		in_agg_direct_args;
 } check_ungrouped_columns_context;
 
-static int check_agg_arguments(ParseState *pstate,
-					List *directargs,
-					List *args,
-					Expr *filter);
+static int	check_agg_arguments(ParseState *pstate,
+								List *directargs,
+								List *args,
+								Expr *filter);
 static bool check_agg_arguments_walker(Node *node,
-						   check_agg_arguments_context *context);
+									   check_agg_arguments_context *context);
 static void check_ungrouped_columns(Node *node, ParseState *pstate, Query *qry,
-						List *groupClauses, List *groupClauseVars,
-						bool have_non_var_grouping,
-						List **func_grouped_rels);
+									List *groupClauses, List *groupClauseVars,
+									bool have_non_var_grouping,
+									List **func_grouped_rels);
 static bool check_ungrouped_columns_walker(Node *node,
-							   check_ungrouped_columns_context *context);
+										   check_ungrouped_columns_context *context);
 static void finalize_grouping_exprs(Node *node, ParseState *pstate, Query *qry,
-						List *groupClauses, bool hasJoinRTEs,
-						bool have_non_var_grouping);
+									List *groupClauses, bool hasJoinRTEs,
+									bool have_non_var_grouping);
 static bool finalize_grouping_exprs_walker(Node *node,
-							   check_ungrouped_columns_context *context);
+										   check_ungrouped_columns_context *context);
 static void check_agglevels_and_constraints(ParseState *pstate, Node *expr);
 static List *expand_groupingset_node(GroupingSet *gs);
 static Node *make_agg_arg(Oid argtype, Oid argcollation);

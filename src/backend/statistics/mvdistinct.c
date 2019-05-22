@@ -37,8 +37,8 @@
 
 
 static double ndistinct_for_combination(double totalrows, int numrows,
-						  HeapTuple *rows, VacAttrStats **stats,
-						  int k, int *combination);
+										HeapTuple *rows, VacAttrStats **stats,
+										int k, int *combination);
 static double estimate_ndistinct(double totalrows, int numrows, int d, int f1);
 static int	n_choose_k(int n, int k);
 static int	num_combinations(int n);

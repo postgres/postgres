@@ -26,47 +26,47 @@ extern PGDLLIMPORT get_relation_info_hook_type get_relation_info_hook;
 
 
 extern void get_relation_info(PlannerInfo *root, Oid relationObjectId,
-				  bool inhparent, RelOptInfo *rel);
+							  bool inhparent, RelOptInfo *rel);
 
 extern List *infer_arbiter_indexes(PlannerInfo *root);
 
 extern void estimate_rel_size(Relation rel, int32 *attr_widths,
-				  BlockNumber *pages, double *tuples, double *allvisfrac);
+							  BlockNumber *pages, double *tuples, double *allvisfrac);
 
 extern int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 extern int32 get_relation_data_width(Oid relid, int32 *attr_widths);
 
 extern bool relation_excluded_by_constraints(PlannerInfo *root,
-								 RelOptInfo *rel, RangeTblEntry *rte);
+											 RelOptInfo *rel, RangeTblEntry *rte);
 
 extern List *build_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
 
 extern bool has_unique_index(RelOptInfo *rel, AttrNumber attno);
 
 extern Selectivity restriction_selectivity(PlannerInfo *root,
-						Oid operatorid,
-						List *args,
-						Oid inputcollid,
-						int varRelid);
+										   Oid operatorid,
+										   List *args,
+										   Oid inputcollid,
+										   int varRelid);
 
 extern Selectivity join_selectivity(PlannerInfo *root,
-				 Oid operatorid,
-				 List *args,
-				 Oid inputcollid,
-				 JoinType jointype,
-				 SpecialJoinInfo *sjinfo);
+									Oid operatorid,
+									List *args,
+									Oid inputcollid,
+									JoinType jointype,
+									SpecialJoinInfo *sjinfo);
 
 extern Selectivity function_selectivity(PlannerInfo *root,
-					 Oid funcid,
-					 List *args,
-					 Oid inputcollid,
-					 bool is_join,
-					 int varRelid,
-					 JoinType jointype,
-					 SpecialJoinInfo *sjinfo);
+										Oid funcid,
+										List *args,
+										Oid inputcollid,
+										bool is_join,
+										int varRelid,
+										JoinType jointype,
+										SpecialJoinInfo *sjinfo);
 
 extern void add_function_cost(PlannerInfo *root, Oid funcid, Node *node,
-				  QualCost *cost);
+							  QualCost *cost);
 
 extern double get_function_rows(PlannerInfo *root, Oid funcid, Node *node);
 

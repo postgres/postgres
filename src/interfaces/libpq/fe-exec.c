@@ -53,23 +53,23 @@ static bool static_std_strings = false;
 
 static PGEvent *dupEvents(PGEvent *events, int count, size_t *memSize);
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup,
-		   const char **errmsgp);
+					   const char **errmsgp);
 static bool PQsendQueryStart(PGconn *conn);
-static int PQsendQueryGuts(PGconn *conn,
-				const char *command,
-				const char *stmtName,
-				int nParams,
-				const Oid *paramTypes,
-				const char *const *paramValues,
-				const int *paramLengths,
-				const int *paramFormats,
-				int resultFormat);
+static int	PQsendQueryGuts(PGconn *conn,
+							const char *command,
+							const char *stmtName,
+							int nParams,
+							const Oid *paramTypes,
+							const char *const *paramValues,
+							const int *paramLengths,
+							const int *paramFormats,
+							int resultFormat);
 static void parseInput(PGconn *conn);
 static PGresult *getCopyResult(PGconn *conn, ExecStatusType copytype);
 static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
-static int PQsendDescribe(PGconn *conn, char desc_type,
-			   const char *desc_target);
+static int	PQsendDescribe(PGconn *conn, char desc_type,
+						   const char *desc_target);
 static int	check_field_number(const PGresult *res, int field_num);
 
 

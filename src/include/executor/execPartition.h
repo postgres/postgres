@@ -138,19 +138,19 @@ typedef struct PartitionPruneState
 } PartitionPruneState;
 
 extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(EState *estate,
-							   ModifyTableState *mtstate,
-							   Relation rel);
+															 ModifyTableState *mtstate,
+															 Relation rel);
 extern ResultRelInfo *ExecFindPartition(ModifyTableState *mtstate,
-				  ResultRelInfo *rootResultRelInfo,
-				  PartitionTupleRouting *proute,
-				  TupleTableSlot *slot,
-				  EState *estate);
+										ResultRelInfo *rootResultRelInfo,
+										PartitionTupleRouting *proute,
+										TupleTableSlot *slot,
+										EState *estate);
 extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
-						PartitionTupleRouting *proute);
+									PartitionTupleRouting *proute);
 extern PartitionPruneState *ExecCreatePartitionPruneState(PlanState *planstate,
-							  PartitionPruneInfo *partitionpruneinfo);
+														  PartitionPruneInfo *partitionpruneinfo);
 extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate);
 extern Bitmapset *ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate,
-								int nsubplans);
+												  int nsubplans);
 
 #endif							/* EXECPARTITION_H */

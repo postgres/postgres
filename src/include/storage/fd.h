@@ -108,7 +108,7 @@ extern int	ClosePipeStream(FILE *file);
 extern DIR *AllocateDir(const char *dirname);
 extern struct dirent *ReadDir(DIR *dir, const char *dirname);
 extern struct dirent *ReadDirExtended(DIR *dir, const char *dirname,
-				int elevel);
+									  int elevel);
 extern int	FreeDir(DIR *dir);
 
 /* Operations to allow use of a plain kernel FD, with automatic cleanup */
@@ -133,7 +133,7 @@ extern int	GetTempTablespaces(Oid *tableSpaces, int numSpaces);
 extern Oid	GetNextTempTableSpace(void);
 extern void AtEOXact_Files(bool isCommit);
 extern void AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
-				  SubTransactionId parentSubid);
+							  SubTransactionId parentSubid);
 extern void RemovePgTempFiles(void);
 extern bool looks_like_temp_rel_name(const char *name);
 

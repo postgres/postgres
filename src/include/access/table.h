@@ -22,7 +22,7 @@
 extern Relation table_open(Oid relationId, LOCKMODE lockmode);
 extern Relation table_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern Relation table_openrv_extended(const RangeVar *relation,
-					  LOCKMODE lockmode, bool missing_ok);
+									  LOCKMODE lockmode, bool missing_ok);
 extern void table_close(Relation relation, LOCKMODE lockmode);
 
 /*

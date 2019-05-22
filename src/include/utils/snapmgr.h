@@ -131,9 +131,9 @@ extern bool XactHasExportedSnapshots(void);
 extern void DeleteAllExportedSnapshotFiles(void);
 extern bool ThereAreNoPriorRegisteredSnapshots(void);
 extern TransactionId TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
-									Relation relation);
+														 Relation relation);
 extern void MaintainOldSnapshotTimeMapping(TimestampTz whenTaken,
-							   TransactionId xmin);
+										   TransactionId xmin);
 
 extern char *ExportSnapshot(Snapshot snapshot);
 

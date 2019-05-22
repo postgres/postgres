@@ -146,24 +146,24 @@ typedef struct SQLFunctionParseInfo
 /* non-export function prototypes */
 static Node *sql_fn_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *sql_fn_post_column_ref(ParseState *pstate,
-					   ColumnRef *cref, Node *var);
+									ColumnRef *cref, Node *var);
 static Node *sql_fn_make_param(SQLFunctionParseInfoPtr pinfo,
-				  int paramno, int location);
+							   int paramno, int location);
 static Node *sql_fn_resolve_param_name(SQLFunctionParseInfoPtr pinfo,
-						  const char *paramname, int location);
+									   const char *paramname, int location);
 static List *init_execution_state(List *queryTree_list,
-					 SQLFunctionCachePtr fcache,
-					 bool lazyEvalOK);
+								  SQLFunctionCachePtr fcache,
+								  bool lazyEvalOK);
 static void init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static bool postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
-					FunctionCallInfo fcinfo);
+								FunctionCallInfo fcinfo);
 static Datum postquel_get_single_result(TupleTableSlot *slot,
-						   FunctionCallInfo fcinfo,
-						   SQLFunctionCachePtr fcache,
-						   MemoryContext resultcontext);
+										FunctionCallInfo fcinfo,
+										SQLFunctionCachePtr fcache,
+										MemoryContext resultcontext);
 static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
 static void sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo);

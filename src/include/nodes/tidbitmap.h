@@ -53,8 +53,8 @@ extern void tbm_free(TIDBitmap *tbm);
 extern void tbm_free_shared_area(dsa_area *dsa, dsa_pointer dp);
 
 extern void tbm_add_tuples(TIDBitmap *tbm,
-			   const ItemPointer tids, int ntids,
-			   bool recheck);
+						   const ItemPointer tids, int ntids,
+						   bool recheck);
 extern void tbm_add_page(TIDBitmap *tbm, BlockNumber pageno);
 
 extern void tbm_union(TIDBitmap *a, const TIDBitmap *b);
@@ -69,7 +69,7 @@ extern TBMIterateResult *tbm_shared_iterate(TBMSharedIterator *iterator);
 extern void tbm_end_iterate(TBMIterator *iterator);
 extern void tbm_end_shared_iterate(TBMSharedIterator *iterator);
 extern TBMSharedIterator *tbm_attach_shared_iterate(dsa_area *dsa,
-						  dsa_pointer dp);
+													dsa_pointer dp);
 extern long tbm_calculate_entries(double maxbytes);
 
 #endif							/* TIDBITMAP_H */

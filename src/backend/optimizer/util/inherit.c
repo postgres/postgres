@@ -36,19 +36,19 @@
 
 
 static void expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
-						   RangeTblEntry *parentrte,
-						   Index parentRTindex, Relation parentrel,
-						   PlanRowMark *top_parentrc, LOCKMODE lockmode);
+									   RangeTblEntry *parentrte,
+									   Index parentRTindex, Relation parentrel,
+									   PlanRowMark *top_parentrc, LOCKMODE lockmode);
 static void expand_single_inheritance_child(PlannerInfo *root,
-								RangeTblEntry *parentrte,
-								Index parentRTindex, Relation parentrel,
-								PlanRowMark *top_parentrc, Relation childrel,
-								RangeTblEntry **childrte_p,
-								Index *childRTindex_p);
+											RangeTblEntry *parentrte,
+											Index parentRTindex, Relation parentrel,
+											PlanRowMark *top_parentrc, Relation childrel,
+											RangeTblEntry **childrte_p,
+											Index *childRTindex_p);
 static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
-					List *translated_vars);
+									  List *translated_vars);
 static void expand_appendrel_subquery(PlannerInfo *root, RelOptInfo *rel,
-						  RangeTblEntry *rte, Index rti);
+									  RangeTblEntry *rte, Index rti);
 
 
 /*

@@ -234,8 +234,8 @@ struct Tuplestorestate
 
 
 static Tuplestorestate *tuplestore_begin_common(int eflags,
-						bool interXact,
-						int maxKBytes);
+												bool interXact,
+												int maxKBytes);
 static void tuplestore_puttuple_common(Tuplestorestate *state, void *tuple);
 static void dumptuples(Tuplestorestate *state);
 static unsigned int getlen(Tuplestorestate *state, bool eofOK);

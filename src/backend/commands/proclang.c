@@ -51,8 +51,8 @@ typedef struct
 } PLTemplate;
 
 static ObjectAddress create_proc_lang(const char *languageName, bool replace,
-				 Oid languageOwner, Oid handlerOid, Oid inlineOid,
-				 Oid valOid, bool trusted);
+									  Oid languageOwner, Oid handlerOid, Oid inlineOid,
+									  Oid valOid, bool trusted);
 static PLTemplate *find_language_template(const char *languageName);
 
 /*

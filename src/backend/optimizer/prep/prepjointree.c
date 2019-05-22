@@ -61,61 +61,61 @@ typedef struct reduce_outer_joins_state
 } reduce_outer_joins_state;
 
 static Node *pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
-								  Relids *relids);
+											   Relids *relids);
 static Node *pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
-							  Node **jtlink1, Relids available_rels1,
-							  Node **jtlink2, Relids available_rels2);
+										   Node **jtlink1, Relids available_rels1,
+										   Node **jtlink2, Relids available_rels2);
 static Node *pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
-						   JoinExpr *lowest_outer_join,
-						   JoinExpr *lowest_nulling_outer_join,
-						   AppendRelInfo *containing_appendrel);
+										JoinExpr *lowest_outer_join,
+										JoinExpr *lowest_nulling_outer_join,
+										AppendRelInfo *containing_appendrel);
 static Node *pull_up_simple_subquery(PlannerInfo *root, Node *jtnode,
-						RangeTblEntry *rte,
-						JoinExpr *lowest_outer_join,
-						JoinExpr *lowest_nulling_outer_join,
-						AppendRelInfo *containing_appendrel);
+									 RangeTblEntry *rte,
+									 JoinExpr *lowest_outer_join,
+									 JoinExpr *lowest_nulling_outer_join,
+									 AppendRelInfo *containing_appendrel);
 static Node *pull_up_simple_union_all(PlannerInfo *root, Node *jtnode,
-						 RangeTblEntry *rte);
+									  RangeTblEntry *rte);
 static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
-						   int parentRTindex, Query *setOpQuery,
-						   int childRToffset);
+									   int parentRTindex, Query *setOpQuery,
+									   int childRToffset);
 static void make_setop_translation_list(Query *query, Index newvarno,
-							List **translated_vars);
+										List **translated_vars);
 static bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
-				   JoinExpr *lowest_outer_join);
+							   JoinExpr *lowest_outer_join);
 static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
-					  RangeTblEntry *rte);
+								   RangeTblEntry *rte);
 static bool is_simple_values(PlannerInfo *root, RangeTblEntry *rte);
 static bool is_simple_union_all(Query *subquery);
 static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
-							List *colTypes);
+										List *colTypes);
 static bool is_safe_append_member(Query *subquery);
 static bool jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
-									 Relids safe_upper_varnos);
+												 Relids safe_upper_varnos);
 static void replace_vars_in_jointree(Node *jtnode,
-						 pullup_replace_vars_context *context,
-						 JoinExpr *lowest_nulling_outer_join);
+									 pullup_replace_vars_context *context,
+									 JoinExpr *lowest_nulling_outer_join);
 static Node *pullup_replace_vars(Node *expr,
-					pullup_replace_vars_context *context);
+								 pullup_replace_vars_context *context);
 static Node *pullup_replace_vars_callback(Var *var,
-							 replace_rte_variables_context *context);
+										  replace_rte_variables_context *context);
 static Query *pullup_replace_vars_subquery(Query *query,
-							 pullup_replace_vars_context *context);
+										   pullup_replace_vars_context *context);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
-						 reduce_outer_joins_state *state,
-						 PlannerInfo *root,
-						 Relids nonnullable_rels,
-						 List *nonnullable_vars,
-						 List *forced_null_vars);
+									 reduce_outer_joins_state *state,
+									 PlannerInfo *root,
+									 Relids nonnullable_rels,
+									 List *nonnullable_vars,
+									 List *forced_null_vars);
 static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode);
 static int	get_result_relid(PlannerInfo *root, Node *jtnode);
 static void remove_result_refs(PlannerInfo *root, int varno, Node *newjtloc);
 static bool find_dependent_phvs(Node *node, int varno);
 static void substitute_phv_relids(Node *node,
-					  int varno, Relids subrelids);
+								  int varno, Relids subrelids);
 static void fix_append_rel_relids(List *append_rel_list, int varno,
-					  Relids subrelids);
+								  Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
 
 

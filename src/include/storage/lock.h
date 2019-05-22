@@ -527,33 +527,33 @@ extern LockMethod GetLockTagsMethodTable(const LOCKTAG *locktag);
 extern uint32 LockTagHashCode(const LOCKTAG *locktag);
 extern bool DoLockModesConflict(LOCKMODE mode1, LOCKMODE mode2);
 extern LockAcquireResult LockAcquire(const LOCKTAG *locktag,
-			LOCKMODE lockmode,
-			bool sessionLock,
-			bool dontWait);
+									 LOCKMODE lockmode,
+									 bool sessionLock,
+									 bool dontWait);
 extern LockAcquireResult LockAcquireExtended(const LOCKTAG *locktag,
-					LOCKMODE lockmode,
-					bool sessionLock,
-					bool dontWait,
-					bool reportMemoryError,
-					LOCALLOCK **locallockp);
+											 LOCKMODE lockmode,
+											 bool sessionLock,
+											 bool dontWait,
+											 bool reportMemoryError,
+											 LOCALLOCK **locallockp);
 extern void AbortStrongLockAcquire(void);
 extern void MarkLockClear(LOCALLOCK *locallock);
 extern bool LockRelease(const LOCKTAG *locktag,
-			LOCKMODE lockmode, bool sessionLock);
+						LOCKMODE lockmode, bool sessionLock);
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseSession(LOCKMETHODID lockmethodid);
 extern void LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks);
 extern void LockReassignCurrentOwner(LOCALLOCK **locallocks, int nlocks);
 extern bool LockHeldByMe(const LOCKTAG *locktag, LOCKMODE lockmode);
 extern bool LockHasWaiters(const LOCKTAG *locktag,
-			   LOCKMODE lockmode, bool sessionLock);
+						   LOCKMODE lockmode, bool sessionLock);
 extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
-				 LOCKMODE lockmode, int *countp);
+											  LOCKMODE lockmode, int *countp);
 extern void AtPrepare_Locks(void);
 extern void PostPrepare_Locks(TransactionId xid);
-extern int LockCheckConflicts(LockMethod lockMethodTable,
-				   LOCKMODE lockmode,
-				   LOCK *lock, PROCLOCK *proclock);
+extern int	LockCheckConflicts(LockMethod lockMethodTable,
+							   LOCKMODE lockmode,
+							   LOCK *lock, PROCLOCK *proclock);
 extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
 extern void GrantAwaitedLock(void);
 extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
@@ -565,21 +565,21 @@ extern xl_standby_lock *GetRunningTransactionLocks(int *nlocks);
 extern const char *GetLockmodeName(LOCKMETHODID lockmethodid, LOCKMODE mode);
 
 extern void lock_twophase_recover(TransactionId xid, uint16 info,
-					  void *recdata, uint32 len);
+								  void *recdata, uint32 len);
 extern void lock_twophase_postcommit(TransactionId xid, uint16 info,
-						 void *recdata, uint32 len);
+									 void *recdata, uint32 len);
 extern void lock_twophase_postabort(TransactionId xid, uint16 info,
-						void *recdata, uint32 len);
+									void *recdata, uint32 len);
 extern void lock_twophase_standby_recover(TransactionId xid, uint16 info,
-							  void *recdata, uint32 len);
+										  void *recdata, uint32 len);
 
 extern DeadLockState DeadLockCheck(PGPROC *proc);
 extern PGPROC *GetBlockingAutoVacuumPgproc(void);
 extern void DeadLockReport(void) pg_attribute_noreturn();
 extern void RememberSimpleDeadLock(PGPROC *proc1,
-					   LOCKMODE lockmode,
-					   LOCK *lock,
-					   PGPROC *proc2);
+								   LOCKMODE lockmode,
+								   LOCK *lock,
+								   PGPROC *proc2);
 extern void InitDeadLockChecking(void);
 
 extern int	LockWaiterCount(const LOCKTAG *locktag);

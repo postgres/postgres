@@ -18,9 +18,9 @@
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
-extern Oid CreateSchemaCommand(CreateSchemaStmt *parsetree,
-					const char *queryString,
-					int stmt_location, int stmt_len);
+extern Oid	CreateSchemaCommand(CreateSchemaStmt *parsetree,
+								const char *queryString,
+								int stmt_location, int stmt_len);
 
 extern void RemoveSchemaById(Oid schemaOid);
 

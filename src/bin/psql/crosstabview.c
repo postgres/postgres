@@ -79,13 +79,13 @@ typedef struct _avl_tree
 
 
 static bool printCrosstab(const PGresult *results,
-			  int num_columns, pivot_field *piv_columns, int field_for_columns,
-			  int num_rows, pivot_field *piv_rows, int field_for_rows,
-			  int field_for_data);
+						  int num_columns, pivot_field *piv_columns, int field_for_columns,
+						  int num_rows, pivot_field *piv_rows, int field_for_rows,
+						  int field_for_data);
 static void avlInit(avl_tree *tree);
 static void avlMergeValue(avl_tree *tree, char *name, char *sort_value);
-static int avlCollectFields(avl_tree *tree, avl_node *node,
-				 pivot_field *fields, int idx);
+static int	avlCollectFields(avl_tree *tree, avl_node *node,
+							 pivot_field *fields, int idx);
 static void avlFree(avl_tree *tree, avl_node *node);
 static void rankSort(int num_columns, pivot_field *piv_columns);
 static int	indexOfColumn(char *arg, const PGresult *res);

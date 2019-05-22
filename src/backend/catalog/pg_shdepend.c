@@ -84,23 +84,23 @@ typedef struct
 static void getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2);
 static Oid	classIdGetDbId(Oid classId);
 static void shdepChangeDep(Relation sdepRel,
-			   Oid classid, Oid objid, int32 objsubid,
-			   Oid refclassid, Oid refobjid,
-			   SharedDependencyType deptype);
+						   Oid classid, Oid objid, int32 objsubid,
+						   Oid refclassid, Oid refobjid,
+						   SharedDependencyType deptype);
 static void shdepAddDependency(Relation sdepRel,
-				   Oid classId, Oid objectId, int32 objsubId,
-				   Oid refclassId, Oid refobjId,
-				   SharedDependencyType deptype);
+							   Oid classId, Oid objectId, int32 objsubId,
+							   Oid refclassId, Oid refobjId,
+							   SharedDependencyType deptype);
 static void shdepDropDependency(Relation sdepRel,
-					Oid classId, Oid objectId, int32 objsubId,
-					bool drop_subobjects,
-					Oid refclassId, Oid refobjId,
-					SharedDependencyType deptype);
+								Oid classId, Oid objectId, int32 objsubId,
+								bool drop_subobjects,
+								Oid refclassId, Oid refobjId,
+								SharedDependencyType deptype);
 static void storeObjectDescription(StringInfo descs,
-					   SharedDependencyObjectType type,
-					   ObjectAddress *object,
-					   SharedDependencyType deptype,
-					   int count);
+								   SharedDependencyObjectType type,
+								   ObjectAddress *object,
+								   SharedDependencyType deptype,
+								   int count);
 static bool isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel);
 
 

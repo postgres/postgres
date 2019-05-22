@@ -384,7 +384,7 @@ typedef struct xl_heap_rewrite_mapping
 } xl_heap_rewrite_mapping;
 
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
-									   TransactionId *latestRemovedXid);
+												   TransactionId *latestRemovedXid);
 
 extern void heap_redo(XLogReaderState *record);
 extern void heap_desc(StringInfo buf, XLogReaderState *record);
@@ -396,25 +396,25 @@ extern const char *heap2_identify(uint8 info);
 extern void heap_xlog_logical_rewrite(XLogReaderState *r);
 
 extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
-					  TransactionId latestRemovedXid);
+										TransactionId latestRemovedXid);
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
-			   OffsetNumber *redirected, int nredirected,
-			   OffsetNumber *nowdead, int ndead,
-			   OffsetNumber *nowunused, int nunused,
-			   TransactionId latestRemovedXid);
+								 OffsetNumber *redirected, int nredirected,
+								 OffsetNumber *nowdead, int ndead,
+								 OffsetNumber *nowunused, int nunused,
+								 TransactionId latestRemovedXid);
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
-				TransactionId cutoff_xid, xl_heap_freeze_tuple *tuples,
-				int ntuples);
+								  TransactionId cutoff_xid, xl_heap_freeze_tuple *tuples,
+								  int ntuples);
 extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
-						  TransactionId relfrozenxid,
-						  TransactionId relminmxid,
-						  TransactionId cutoff_xid,
-						  TransactionId cutoff_multi,
-						  xl_heap_freeze_tuple *frz,
-						  bool *totally_frozen);
+									  TransactionId relfrozenxid,
+									  TransactionId relminmxid,
+									  TransactionId cutoff_xid,
+									  TransactionId cutoff_multi,
+									  xl_heap_freeze_tuple *frz,
+									  bool *totally_frozen);
 extern void heap_execute_freeze_tuple(HeapTupleHeader tuple,
-						  xl_heap_freeze_tuple *xlrec_tp);
+									  xl_heap_freeze_tuple *xlrec_tp);
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
-				 Buffer vm_buffer, TransactionId cutoff_xid, uint8 flags);
+								   Buffer vm_buffer, TransactionId cutoff_xid, uint8 flags);
 
 #endif							/* HEAPAM_XLOG_H */

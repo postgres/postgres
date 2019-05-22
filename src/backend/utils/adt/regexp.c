@@ -112,11 +112,11 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
 /* Local functions */
 static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
-					 pg_re_flags *flags,
-					 Oid collation,
-					 bool use_subpatterns,
-					 bool ignore_degenerate,
-					 bool fetching_unmatched);
+												pg_re_flags *flags,
+												Oid collation,
+												bool use_subpatterns,
+												bool ignore_degenerate,
+												bool fetching_unmatched);
 static ArrayType *build_regexp_match_result(regexp_matches_ctx *matchctx);
 static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
 

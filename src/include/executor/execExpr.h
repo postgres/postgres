@@ -710,58 +710,58 @@ extern void CheckExprStillValid(ExprState *state, ExprContext *econtext);
  * expression evaluation, reducing code duplication.
  */
 extern void ExecEvalFuncExprFusage(ExprState *state, ExprEvalStep *op,
-					   ExprContext *econtext);
+								   ExprContext *econtext);
 extern void ExecEvalFuncExprStrictFusage(ExprState *state, ExprEvalStep *op,
-							 ExprContext *econtext);
+										 ExprContext *econtext);
 extern void ExecEvalParamExec(ExprState *state, ExprEvalStep *op,
-				  ExprContext *econtext);
+							  ExprContext *econtext);
 extern void ExecEvalParamExtern(ExprState *state, ExprEvalStep *op,
-					ExprContext *econtext);
+								ExprContext *econtext);
 extern void ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalNextValueExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalRowNull(ExprState *state, ExprEvalStep *op,
-				ExprContext *econtext);
+							ExprContext *econtext);
 extern void ExecEvalRowNotNull(ExprState *state, ExprEvalStep *op,
-				   ExprContext *econtext);
+							   ExprContext *econtext);
 extern void ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op,
-					ExprContext *econtext);
+								ExprContext *econtext);
 extern void ExecEvalRow(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalMinMax(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op,
-					ExprContext *econtext);
+								ExprContext *econtext);
 extern void ExecEvalFieldStoreDeForm(ExprState *state, ExprEvalStep *op,
-						 ExprContext *econtext);
+									 ExprContext *econtext);
 extern void ExecEvalFieldStoreForm(ExprState *state, ExprEvalStep *op,
-					   ExprContext *econtext);
+								   ExprContext *econtext);
 extern bool ExecEvalSubscriptingRef(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalSubscriptingRefFetch(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalSubscriptingRefOld(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalSubscriptingRefAssign(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op,
-					   ExprContext *econtext);
+								   ExprContext *econtext);
 extern void ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalConstraintNotNull(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalConstraintCheck(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalGroupingFunc(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalSubPlan(ExprState *state, ExprEvalStep *op,
-				ExprContext *econtext);
+							ExprContext *econtext);
 extern void ExecEvalAlternativeSubPlan(ExprState *state, ExprEvalStep *op,
-						   ExprContext *econtext);
+									   ExprContext *econtext);
 extern void ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op,
-					ExprContext *econtext);
+								ExprContext *econtext);
 extern void ExecEvalSysVar(ExprState *state, ExprEvalStep *op,
-			   ExprContext *econtext, TupleTableSlot *slot);
+						   ExprContext *econtext, TupleTableSlot *slot);
 
 extern void ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup pergroup);
 extern Datum ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,
-					 Datum newValue, bool newValueIsNull,
-					 Datum oldValue, bool oldValueIsNull);
+								  Datum newValue, bool newValueIsNull,
+								  Datum oldValue, bool oldValueIsNull);
 extern void ExecEvalAggOrderedTransDatum(ExprState *state, ExprEvalStep *op,
-							 ExprContext *econtext);
+										 ExprContext *econtext);
 extern void ExecEvalAggOrderedTransTuple(ExprState *state, ExprEvalStep *op,
-							 ExprContext *econtext);
+										 ExprContext *econtext);
 
 #endif							/* EXEC_EXPR_H */

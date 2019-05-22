@@ -44,14 +44,14 @@
 #include "utils/rangetypes.h"
 
 static int16 getQuadrant(TypeCacheEntry *typcache, RangeType *centroid,
-			RangeType *tst);
+						 RangeType *tst);
 static int	bound_cmp(const void *a, const void *b, void *arg);
 
-static int adjacent_inner_consistent(TypeCacheEntry *typcache,
-						  RangeBound *arg, RangeBound *centroid,
-						  RangeBound *prev);
-static int adjacent_cmp_bounds(TypeCacheEntry *typcache, RangeBound *arg,
-					RangeBound *centroid);
+static int	adjacent_inner_consistent(TypeCacheEntry *typcache,
+									  RangeBound *arg, RangeBound *centroid,
+									  RangeBound *prev);
+static int	adjacent_cmp_bounds(TypeCacheEntry *typcache, RangeBound *arg,
+								RangeBound *centroid);
 
 /*
  * SP-GiST 'config' interface function.

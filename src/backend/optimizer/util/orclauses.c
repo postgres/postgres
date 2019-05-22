@@ -27,7 +27,7 @@
 static bool is_safe_restriction_clause_for(RestrictInfo *rinfo, RelOptInfo *rel);
 static Expr *extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel);
 static void consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
-					   Expr *orclause, RestrictInfo *join_or_rinfo);
+								   Expr *orclause, RestrictInfo *join_or_rinfo);
 
 
 /*

@@ -32,9 +32,9 @@ typedef struct LogicalRepRelMapEntry
 extern void logicalrep_relmap_update(LogicalRepRelation *remoterel);
 
 extern LogicalRepRelMapEntry *logicalrep_rel_open(LogicalRepRelId remoteid,
-					LOCKMODE lockmode);
+												  LOCKMODE lockmode);
 extern void logicalrep_rel_close(LogicalRepRelMapEntry *rel,
-					 LOCKMODE lockmode);
+								 LOCKMODE lockmode);
 
 extern void logicalrep_typmap_update(LogicalRepTyp *remotetyp);
 extern char *logicalrep_typmap_gettypname(Oid remoteid);

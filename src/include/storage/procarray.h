@@ -66,12 +66,12 @@ extern void ProcArrayClearTransaction(PGPROC *proc);
 extern void ProcArrayInitRecovery(TransactionId initializedUptoXID);
 extern void ProcArrayApplyRecoveryInfo(RunningTransactions running);
 extern void ProcArrayApplyXidAssignment(TransactionId topxid,
-							int nsubxids, TransactionId *subxids);
+										int nsubxids, TransactionId *subxids);
 
 extern void RecordKnownAssignedTransactionIds(TransactionId xid);
 extern void ExpireTreeKnownAssignedTransactionIds(TransactionId xid,
-									  int nsubxids, TransactionId *subxids,
-									  TransactionId max_xid);
+												  int nsubxids, TransactionId *subxids,
+												  TransactionId max_xid);
 extern void ExpireAllKnownAssignedTransactionIds(void);
 extern void ExpireOldKnownAssignedTransactionIds(TransactionId xid);
 
@@ -81,7 +81,7 @@ extern int	GetMaxSnapshotSubxidCount(void);
 extern Snapshot GetSnapshotData(Snapshot snapshot);
 
 extern bool ProcArrayInstallImportedXmin(TransactionId xmin,
-							 VirtualTransactionId *sourcevxid);
+										 VirtualTransactionId *sourcevxid);
 extern bool ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc);
 
 extern RunningTransactions GetRunningTransactionData(void);
@@ -101,8 +101,8 @@ extern int	BackendXidGetPid(TransactionId xid);
 extern bool IsBackendPid(int pid);
 
 extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
-					  bool excludeXmin0, bool allDbs, int excludeVacuum,
-					  int *nvxids);
+												   bool excludeXmin0, bool allDbs, int excludeVacuum,
+												   int *nvxids);
 extern VirtualTransactionId *GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid);
 extern pid_t CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode);
 
@@ -112,16 +112,16 @@ extern int	CountDBConnections(Oid databaseid);
 extern void CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending);
 extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
-					 int *nbackends, int *nprepared);
+								 int *nbackends, int *nprepared);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
-						  int nxids, const TransactionId *xids,
-						  TransactionId latestXid);
+									  int nxids, const TransactionId *xids,
+									  TransactionId latestXid);
 
 extern void ProcArraySetReplicationSlotXmin(TransactionId xmin,
-								TransactionId catalog_xmin, bool already_locked);
+											TransactionId catalog_xmin, bool already_locked);
 
 extern void ProcArrayGetReplicationSlotXmin(TransactionId *xmin,
-								TransactionId *catalog_xmin);
+											TransactionId *catalog_xmin);
 
 #endif							/* PROCARRAY_H */

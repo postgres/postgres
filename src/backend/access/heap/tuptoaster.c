@@ -68,20 +68,20 @@ typedef struct toast_compress_header
 
 static void toast_delete_datum(Relation rel, Datum value, bool is_speculative);
 static Datum toast_save_datum(Relation rel, Datum value,
-				 struct varlena *oldexternal, int options);
+							  struct varlena *oldexternal, int options);
 static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
 static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
 static struct varlena *toast_fetch_datum(struct varlena *attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena *attr,
-						int32 sliceoffset, int32 length);
+											   int32 sliceoffset, int32 length);
 static struct varlena *toast_decompress_datum(struct varlena *attr);
 static struct varlena *toast_decompress_datum_slice(struct varlena *attr, int32 slicelength);
-static int toast_open_indexes(Relation toastrel,
-				   LOCKMODE lock,
-				   Relation **toastidxs,
-				   int *num_indexes);
+static int	toast_open_indexes(Relation toastrel,
+							   LOCKMODE lock,
+							   Relation **toastidxs,
+							   int *num_indexes);
 static void toast_close_indexes(Relation *toastidxs, int num_indexes,
-					LOCKMODE lock);
+								LOCKMODE lock);
 static void init_toast_snapshot(Snapshot toast_snapshot);
 
 

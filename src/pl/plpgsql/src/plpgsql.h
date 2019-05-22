@@ -1212,32 +1212,32 @@ extern PLpgSQL_plugin **plpgsql_plugin_ptr;
  * Functions in pl_comp.c
  */
 extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
-				bool forValidator);
+										 bool forValidator);
 extern PLpgSQL_function *plpgsql_compile_inline(char *proc_source);
 extern void plpgsql_parser_setup(struct ParseState *pstate,
-					 PLpgSQL_expr *expr);
+								 PLpgSQL_expr *expr);
 extern bool plpgsql_parse_word(char *word1, const char *yytxt, bool lookup,
-				   PLwdatum *wdatum, PLword *word);
+							   PLwdatum *wdatum, PLword *word);
 extern bool plpgsql_parse_dblword(char *word1, char *word2,
-					  PLwdatum *wdatum, PLcword *cword);
+								  PLwdatum *wdatum, PLcword *cword);
 extern bool plpgsql_parse_tripword(char *word1, char *word2, char *word3,
-					   PLwdatum *wdatum, PLcword *cword);
+								   PLwdatum *wdatum, PLcword *cword);
 extern PLpgSQL_type *plpgsql_parse_wordtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordtype(List *idents);
 extern PLpgSQL_type *plpgsql_parse_wordrowtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordrowtype(List *idents);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod,
-					   Oid collation);
+											Oid collation);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
-					   PLpgSQL_type *dtype,
-					   bool add2namespace);
+												PLpgSQL_type *dtype,
+												bool add2namespace);
 extern PLpgSQL_rec *plpgsql_build_record(const char *refname, int lineno,
-					 PLpgSQL_type *dtype, Oid rectypeid,
-					 bool add2namespace);
+										 PLpgSQL_type *dtype, Oid rectypeid,
+										 bool add2namespace);
 extern PLpgSQL_recfield *plpgsql_build_recfield(PLpgSQL_rec *rec,
-					   const char *fldname);
-extern int plpgsql_recognize_err_condition(const char *condname,
-								bool allow_sqlstate);
+												const char *fldname);
+extern int	plpgsql_recognize_err_condition(const char *condname,
+											bool allow_sqlstate);
 extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);
 extern void plpgsql_adddatum(PLpgSQL_datum *new);
 extern int	plpgsql_add_initdatums(int **varnos);
@@ -1252,36 +1252,36 @@ extern void _PG_init(void);
  * Functions in pl_exec.c
  */
 extern Datum plpgsql_exec_function(PLpgSQL_function *func,
-					  FunctionCallInfo fcinfo,
-					  EState *simple_eval_estate,
-					  bool atomic);
+								   FunctionCallInfo fcinfo,
+								   EState *simple_eval_estate,
+								   bool atomic);
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
-					 TriggerData *trigdata);
+									  TriggerData *trigdata);
 extern void plpgsql_exec_event_trigger(PLpgSQL_function *func,
-						   EventTriggerData *trigdata);
+									   EventTriggerData *trigdata);
 extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
-				   SubTransactionId parentSubid, void *arg);
-extern Oid plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
-							PLpgSQL_datum *datum);
+							   SubTransactionId parentSubid, void *arg);
+extern Oid	plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
+										PLpgSQL_datum *datum);
 extern void plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
-								 PLpgSQL_datum *datum,
-								 Oid *typeid, int32 *typmod, Oid *collation);
+											 PLpgSQL_datum *datum,
+											 Oid *typeid, int32 *typmod, Oid *collation);
 
 /*
  * Functions for namespace handling in pl_funcs.c
  */
 extern void plpgsql_ns_init(void);
 extern void plpgsql_ns_push(const char *label,
-				PLpgSQL_label_type label_type);
+							PLpgSQL_label_type label_type);
 extern void plpgsql_ns_pop(void);
 extern PLpgSQL_nsitem *plpgsql_ns_top(void);
 extern void plpgsql_ns_additem(PLpgSQL_nsitem_type itemtype, int itemno, const char *name);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur, bool localmode,
-				  const char *name1, const char *name2,
-				  const char *name3, int *names_used);
+										 const char *name1, const char *name2,
+										 const char *name3, int *names_used);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,
-						const char *name);
+											   const char *name);
 extern PLpgSQL_nsitem *plpgsql_ns_find_nearest_loop(PLpgSQL_nsitem *ns_cur);
 
 /*
@@ -1300,10 +1300,10 @@ extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
 extern bool plpgsql_token_is_unreserved_keyword(int token);
 extern void plpgsql_append_source_text(StringInfo buf,
-						   int startlocation, int endlocation);
+									   int startlocation, int endlocation);
 extern int	plpgsql_peek(void);
 extern void plpgsql_peek2(int *tok1_p, int *tok2_p, int *tok1_loc,
-			  int *tok2_loc);
+						  int *tok2_loc);
 extern int	plpgsql_scanner_errposition(int location);
 extern void plpgsql_yyerror(const char *message) pg_attribute_noreturn();
 extern int	plpgsql_location_to_lineno(int location);

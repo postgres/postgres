@@ -123,7 +123,7 @@ get_notclausearg(const void *notclause)
 }
 
 extern bool check_functions_in_node(Node *node, check_function_callback checker,
-						void *context);
+									void *context);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
 								   void *context);

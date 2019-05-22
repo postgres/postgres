@@ -35,6 +35,6 @@ extern const TwoPhaseCallback twophase_standby_recover_callbacks[];
 
 
 extern void RegisterTwoPhaseRecord(TwoPhaseRmgrId rmid, uint16 info,
-					   const void *data, uint32 len);
+								   const void *data, uint32 len);
 
 #endif							/* TWOPHASE_RMGR_H */

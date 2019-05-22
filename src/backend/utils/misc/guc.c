@@ -141,23 +141,23 @@ char	   *GUC_check_errhint_string;
 static void do_serialize(char **destptr, Size *maxbytes, const char *fmt,...) pg_attribute_printf(3, 4);
 
 static void set_config_sourcefile(const char *name, char *sourcefile,
-					  int sourceline);
+								  int sourceline);
 static bool call_bool_check_hook(struct config_bool *conf, bool *newval,
-					 void **extra, GucSource source, int elevel);
+								 void **extra, GucSource source, int elevel);
 static bool call_int_check_hook(struct config_int *conf, int *newval,
-					void **extra, GucSource source, int elevel);
+								void **extra, GucSource source, int elevel);
 static bool call_real_check_hook(struct config_real *conf, double *newval,
-					 void **extra, GucSource source, int elevel);
+								 void **extra, GucSource source, int elevel);
 static bool call_string_check_hook(struct config_string *conf, char **newval,
-					   void **extra, GucSource source, int elevel);
+								   void **extra, GucSource source, int elevel);
 static bool call_enum_check_hook(struct config_enum *conf, int *newval,
-					 void **extra, GucSource source, int elevel);
+								 void **extra, GucSource source, int elevel);
 
 static bool check_log_destination(char **newval, void **extra, GucSource source);
 static void assign_log_destination(const char *newval, void *extra);
 
 static bool check_wal_consistency_checking(char **newval, void **extra,
-							   GucSource source);
+										   GucSource source);
 static void assign_wal_consistency_checking(const char *newval, void *extra);
 
 #ifdef HAVE_SYSLOG
@@ -218,7 +218,7 @@ static bool check_default_with_oids(bool *newval, void **extra, GucSource source
 
 /* Private functions in guc-file.l that need to be called from guc.c */
 static ConfigVariable *ProcessConfigFileInternal(GucContext context,
-						  bool applySettings, int elevel);
+												 bool applySettings, int elevel);
 
 
 /*
@@ -4602,18 +4602,18 @@ static void InitializeOneGUCOption(struct config_generic *gconf);
 static void push_old_value(struct config_generic *gconf, GucAction action);
 static void ReportGUCOption(struct config_generic *record);
 static void reapply_stacked_values(struct config_generic *variable,
-					   struct config_string *pHolder,
-					   GucStack *stack,
-					   const char *curvalue,
-					   GucContext curscontext, GucSource cursource);
+								   struct config_string *pHolder,
+								   GucStack *stack,
+								   const char *curvalue,
+								   GucContext curscontext, GucSource cursource);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic *record, bool use_units);
 static bool validate_option_array_item(const char *name, const char *value,
-						   bool skipIfNoPermissions);
+									   bool skipIfNoPermissions);
 static void write_auto_conf_file(int fd, const char *filename, ConfigVariable *head_p);
 static void replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
-						  const char *name, const char *value);
+									  const char *name, const char *value);
 
 
 /*

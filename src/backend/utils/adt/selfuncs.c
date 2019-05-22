@@ -149,55 +149,55 @@ get_index_stats_hook_type get_index_stats_hook = NULL;
 
 static double eqsel_internal(PG_FUNCTION_ARGS, bool negate);
 static double eqjoinsel_inner(Oid opfuncoid,
-				VariableStatData *vardata1, VariableStatData *vardata2,
-				double nd1, double nd2,
-				bool isdefault1, bool isdefault2,
-				AttStatsSlot *sslot1, AttStatsSlot *sslot2,
-				Form_pg_statistic stats1, Form_pg_statistic stats2,
-				bool have_mcvs1, bool have_mcvs2);
+							  VariableStatData *vardata1, VariableStatData *vardata2,
+							  double nd1, double nd2,
+							  bool isdefault1, bool isdefault2,
+							  AttStatsSlot *sslot1, AttStatsSlot *sslot2,
+							  Form_pg_statistic stats1, Form_pg_statistic stats2,
+							  bool have_mcvs1, bool have_mcvs2);
 static double eqjoinsel_semi(Oid opfuncoid,
-			   VariableStatData *vardata1, VariableStatData *vardata2,
-			   double nd1, double nd2,
-			   bool isdefault1, bool isdefault2,
-			   AttStatsSlot *sslot1, AttStatsSlot *sslot2,
-			   Form_pg_statistic stats1, Form_pg_statistic stats2,
-			   bool have_mcvs1, bool have_mcvs2,
-			   RelOptInfo *inner_rel);
+							 VariableStatData *vardata1, VariableStatData *vardata2,
+							 double nd1, double nd2,
+							 bool isdefault1, bool isdefault2,
+							 AttStatsSlot *sslot1, AttStatsSlot *sslot2,
+							 Form_pg_statistic stats1, Form_pg_statistic stats2,
+							 bool have_mcvs1, bool have_mcvs2,
+							 RelOptInfo *inner_rel);
 static bool estimate_multivariate_ndistinct(PlannerInfo *root,
-								RelOptInfo *rel, List **varinfos, double *ndistinct);
+											RelOptInfo *rel, List **varinfos, double *ndistinct);
 static bool convert_to_scalar(Datum value, Oid valuetypid, Oid collid,
-				  double *scaledvalue,
-				  Datum lobound, Datum hibound, Oid boundstypid,
-				  double *scaledlobound, double *scaledhibound);
+							  double *scaledvalue,
+							  Datum lobound, Datum hibound, Oid boundstypid,
+							  double *scaledlobound, double *scaledhibound);
 static double convert_numeric_to_scalar(Datum value, Oid typid, bool *failure);
 static void convert_string_to_scalar(char *value,
-						 double *scaledvalue,
-						 char *lobound,
-						 double *scaledlobound,
-						 char *hibound,
-						 double *scaledhibound);
+									 double *scaledvalue,
+									 char *lobound,
+									 double *scaledlobound,
+									 char *hibound,
+									 double *scaledhibound);
 static void convert_bytea_to_scalar(Datum value,
-						double *scaledvalue,
-						Datum lobound,
-						double *scaledlobound,
-						Datum hibound,
-						double *scaledhibound);
+									double *scaledvalue,
+									Datum lobound,
+									double *scaledlobound,
+									Datum hibound,
+									double *scaledhibound);
 static double convert_one_string_to_scalar(char *value,
-							 int rangelo, int rangehi);
+										   int rangelo, int rangehi);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
-							int rangelo, int rangehi);
+										  int rangelo, int rangehi);
 static char *convert_string_datum(Datum value, Oid typid, Oid collid,
-					 bool *failure);
+								  bool *failure);
 static double convert_timevalue_to_scalar(Datum value, Oid typid,
-							bool *failure);
+										  bool *failure);
 static void examine_simple_variable(PlannerInfo *root, Var *var,
-						VariableStatData *vardata);
+									VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
-				   Oid sortop, Datum *min, Datum *max);
+							   Oid sortop, Datum *min, Datum *max);
 static bool get_actual_variable_range(PlannerInfo *root,
-						  VariableStatData *vardata,
-						  Oid sortop,
-						  Datum *min, Datum *max);
+									  VariableStatData *vardata,
+									  Oid sortop,
+									  Datum *min, Datum *max);
 static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
 
 

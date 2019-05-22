@@ -50,10 +50,10 @@ typedef struct
 } parse_error_callback_arg;
 
 static void sql_function_parse_error_callback(void *arg);
-static int match_prosrc_to_query(const char *prosrc, const char *queryText,
-					  int cursorpos);
+static int	match_prosrc_to_query(const char *prosrc, const char *queryText,
+								  int cursorpos);
 static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
-						int cursorpos, int *newcursorpos);
+									int cursorpos, int *newcursorpos);
 
 
 /* ----------------------------------------------------------------

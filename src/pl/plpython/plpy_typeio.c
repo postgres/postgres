@@ -39,28 +39,28 @@ static PyObject *PLyString_FromScalar(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyObject_FromTransform(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
-						  char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
+										   char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
 static PyObject *PLyDict_FromComposite(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc, bool include_generated);
 
 /* conversion from Python objects to Datums */
 static Datum PLyObject_ToBool(PLyObToDatum *arg, PyObject *plrv,
-				 bool *isnull, bool inarray);
+							  bool *isnull, bool inarray);
 static Datum PLyObject_ToBytea(PLyObToDatum *arg, PyObject *plrv,
-				  bool *isnull, bool inarray);
+							   bool *isnull, bool inarray);
 static Datum PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
-					  bool *isnull, bool inarray);
+								   bool *isnull, bool inarray);
 static Datum PLyObject_ToScalar(PLyObToDatum *arg, PyObject *plrv,
-				   bool *isnull, bool inarray);
+								bool *isnull, bool inarray);
 static Datum PLyObject_ToDomain(PLyObToDatum *arg, PyObject *plrv,
-				   bool *isnull, bool inarray);
+								bool *isnull, bool inarray);
 static Datum PLyObject_ToTransform(PLyObToDatum *arg, PyObject *plrv,
-					  bool *isnull, bool inarray);
+								   bool *isnull, bool inarray);
 static Datum PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
-					bool *isnull, bool inarray);
+								 bool *isnull, bool inarray);
 static void PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
-							int *dims, int ndim, int dim,
-							Datum *elems, bool *nulls, int *currelem);
+										int *dims, int ndim, int dim,
+										Datum *elems, bool *nulls, int *currelem);
 
 /* conversion from Python objects to composite Datums */
 static Datum PLyString_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray);

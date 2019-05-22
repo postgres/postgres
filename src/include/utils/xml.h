@@ -58,12 +58,12 @@ extern PgXmlErrorContext *pg_xml_init(PgXmlStrictness strictness);
 extern void pg_xml_done(PgXmlErrorContext *errcxt, bool isError);
 extern bool pg_xml_error_occurred(PgXmlErrorContext *errcxt);
 extern void xml_ereport(PgXmlErrorContext *errcxt, int level, int sqlcode,
-			const char *msg);
+						const char *msg);
 
 extern xmltype *xmlconcat(List *args);
 extern xmltype *xmlelement(XmlExpr *xexpr,
-		   Datum *named_argvalue, bool *named_argnull,
-		   Datum *argvalue, bool *argnull);
+						   Datum *named_argvalue, bool *named_argnull,
+						   Datum *argvalue, bool *argnull);
 extern xmltype *xmlparse(text *data, XmlOptionType xmloption, bool preserve_whitespace);
 extern xmltype *xmlpi(const char *target, text *arg, bool arg_is_null, bool *result_is_null);
 extern xmltype *xmlroot(xmltype *data, text *version, int standalone);

@@ -56,19 +56,19 @@ typedef struct RangeIOData
 
 
 static RangeIOData *get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid,
-				  IOFuncSelector func);
+									  IOFuncSelector func);
 static char range_parse_flags(const char *flags_str);
 static void range_parse(const char *input_str, char *flags, char **lbound_str,
-			char **ubound_str);
+						char **ubound_str);
 static const char *range_parse_bound(const char *string, const char *ptr,
-				  char **bound_str, bool *infinite);
+									 char **bound_str, bool *infinite);
 static char *range_deparse(char flags, const char *lbound_str,
-			  const char *ubound_str);
+						   const char *ubound_str);
 static char *range_bound_escape(const char *value);
 static Size datum_compute_size(Size sz, Datum datum, bool typbyval,
-				   char typalign, int16 typlen, char typstorage);
+							   char typalign, int16 typlen, char typstorage);
 static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
-			char typalign, int16 typlen, char typstorage);
+						   char typalign, int16 typlen, char typstorage);
 
 
 /*

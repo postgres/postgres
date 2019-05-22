@@ -177,9 +177,9 @@ extern struct var_list *ivlist;
 
 bool		ecpg_add_mem(void *ptr, int lineno);
 
-bool ecpg_get_data(const PGresult *, int, int, int, enum ECPGttype type,
-			  enum ECPGttype, char *, char *, long, long, long,
-			  enum ARRAY_TYPE, enum COMPAT_MODE, bool);
+bool		ecpg_get_data(const PGresult *, int, int, int, enum ECPGttype type,
+						  enum ECPGttype, char *, char *, long, long, long,
+						  enum ARRAY_TYPE, enum COMPAT_MODE, bool);
 
 #ifdef ENABLE_THREAD_SAFETY
 void		ecpg_pthreads_init(void);
@@ -202,27 +202,27 @@ struct descriptor *ecpggetdescp(int, char *);
 struct descriptor *ecpg_find_desc(int line, const char *name);
 
 struct prepared_statement *ecpg_find_prepared_statement(const char *,
-							 struct connection *, struct prepared_statement **);
+														struct connection *, struct prepared_statement **);
 
 void		ecpg_update_declare_statement(const char *, const char *, const int);
 char	   *ecpg_get_con_name_by_declared_name(const char *);
 const char *ecpg_get_con_name_by_cursor_name(const char *);
 void		ecpg_release_declared_statement(const char *);
 
-bool ecpg_store_result(const PGresult *results, int act_field,
-				  const struct statement *stmt, struct variable *var);
+bool		ecpg_store_result(const PGresult *results, int act_field,
+							  const struct statement *stmt, struct variable *var);
 bool		ecpg_store_input(const int, const bool, const struct variable *, char **, bool);
 void		ecpg_free_params(struct statement *stmt, bool print);
-bool ecpg_do_prologue(int, const int, const int, const char *, const bool,
-				 enum ECPG_statement_type, const char *, va_list,
-				 struct statement **);
+bool		ecpg_do_prologue(int, const int, const int, const char *, const bool,
+							 enum ECPG_statement_type, const char *, va_list,
+							 struct statement **);
 bool		ecpg_build_params(struct statement *);
 bool		ecpg_autostart_transaction(struct statement *stmt);
 bool		ecpg_execute(struct statement *stmt);
 bool		ecpg_process_output(struct statement *, bool);
 void		ecpg_do_epilogue(struct statement *);
-bool ecpg_do(const int, const int, const int, const char *, const bool,
-		const int, const char *, va_list);
+bool		ecpg_do(const int, const int, const int, const char *, const bool,
+					const int, const char *, va_list);
 
 bool		ecpg_check_PQresult(PGresult *, int, PGconn *, enum COMPAT_MODE);
 void		ecpg_raise(int line, int code, const char *sqlstate, const char *str);

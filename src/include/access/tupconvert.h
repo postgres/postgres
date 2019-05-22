@@ -32,23 +32,23 @@ typedef struct TupleConversionMap
 
 
 extern TupleConversionMap *convert_tuples_by_position(TupleDesc indesc,
-						   TupleDesc outdesc,
-						   const char *msg);
+													  TupleDesc outdesc,
+													  const char *msg);
 
 extern TupleConversionMap *convert_tuples_by_name(TupleDesc indesc,
-					   TupleDesc outdesc,
-					   const char *msg);
+												  TupleDesc outdesc,
+												  const char *msg);
 
 extern AttrNumber *convert_tuples_by_name_map(TupleDesc indesc,
-						   TupleDesc outdesc,
-						   const char *msg);
+											  TupleDesc outdesc,
+											  const char *msg);
 extern AttrNumber *convert_tuples_by_name_map_if_req(TupleDesc indesc,
-								  TupleDesc outdesc,
-								  const char *msg);
+													 TupleDesc outdesc,
+													 const char *msg);
 
 extern HeapTuple execute_attr_map_tuple(HeapTuple tuple, TupleConversionMap *map);
 extern TupleTableSlot *execute_attr_map_slot(AttrNumber *attrMap,
-					  TupleTableSlot *in_slot, TupleTableSlot *out_slot);
+											 TupleTableSlot *in_slot, TupleTableSlot *out_slot);
 
 extern void free_conversion_map(TupleConversionMap *map);
 

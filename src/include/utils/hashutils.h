@@ -22,7 +22,7 @@
 
 extern Datum hash_any(register const unsigned char *k, register int keylen);
 extern Datum hash_any_extended(register const unsigned char *k,
-				  register int keylen, uint64 seed);
+							   register int keylen, uint64 seed);
 extern Datum hash_uint32(uint32 k);
 extern Datum hash_uint32_extended(uint32 k, uint64 seed);
 

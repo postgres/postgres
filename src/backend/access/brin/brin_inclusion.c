@@ -82,9 +82,9 @@ typedef struct InclusionOpaque
 } InclusionOpaque;
 
 static FmgrInfo *inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno,
-					   uint16 procnum);
+										uint16 procnum);
 static FmgrInfo *inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
-								Oid subtype, uint16 strategynum);
+												 Oid subtype, uint16 strategynum);
 
 
 /*

@@ -152,7 +152,7 @@ static void WriteRecoveryConf(void);
 static void BaseBackup(void);
 
 static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
-					 bool segment_finished);
+								 bool segment_finished);
 
 static const char *get_tablespace_mapping(const char *dir);
 static void tablespace_list_append(const char *arg);

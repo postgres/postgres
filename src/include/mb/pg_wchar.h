@@ -522,12 +522,12 @@ extern int	pg_valid_server_encoding_id(int encoding);
  */
 extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);
-extern int pg_encoding_mb2wchar_with_len(int encoding,
-							  const char *from, pg_wchar *to, int len);
+extern int	pg_encoding_mb2wchar_with_len(int encoding,
+										  const char *from, pg_wchar *to, int len);
 extern int	pg_wchar2mb(const pg_wchar *from, char *to);
 extern int	pg_wchar2mb_with_len(const pg_wchar *from, char *to, int len);
-extern int pg_encoding_wchar2mb_with_len(int encoding,
-							  const pg_wchar *from, char *to, int len);
+extern int	pg_encoding_wchar2mb_with_len(int encoding,
+										  const pg_wchar *from, char *to, int len);
 extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
 extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
 extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
@@ -542,8 +542,8 @@ extern int	pg_mic_mblen(const unsigned char *mbstr);
 extern int	pg_mbstrlen(const char *mbstr);
 extern int	pg_mbstrlen_with_len(const char *mbstr, int len);
 extern int	pg_mbcliplen(const char *mbstr, int len, int limit);
-extern int pg_encoding_mbcliplen(int encoding, const char *mbstr,
-					  int len, int limit);
+extern int	pg_encoding_mbcliplen(int encoding, const char *mbstr,
+								  int len, int limit);
 extern int	pg_mbcharcliplen(const char *mbstr, int len, int imit);
 extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
@@ -572,8 +572,8 @@ extern unsigned char *unicode_to_utf8(pg_wchar c, unsigned char *utf8string);
 extern pg_wchar utf8_to_unicode(const unsigned char *c);
 extern int	pg_utf_mblen(const unsigned char *);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
-						  int src_encoding,
-						  int dest_encoding);
+												int src_encoding,
+												int dest_encoding);
 
 extern char *pg_client_to_server(const char *s, int len);
 extern char *pg_server_to_client(const char *s, int len);
@@ -584,48 +584,48 @@ extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void UtfToLocal(const unsigned char *utf, int len,
-		   unsigned char *iso,
-		   const pg_mb_radix_tree *map,
-		   const pg_utf_to_local_combined *cmap, int cmapsize,
-		   utf_local_conversion_func conv_func,
-		   int encoding);
+					   unsigned char *iso,
+					   const pg_mb_radix_tree *map,
+					   const pg_utf_to_local_combined *cmap, int cmapsize,
+					   utf_local_conversion_func conv_func,
+					   int encoding);
 extern void LocalToUtf(const unsigned char *iso, int len,
-		   unsigned char *utf,
-		   const pg_mb_radix_tree *map,
-		   const pg_local_to_utf_combined *cmap, int cmapsize,
-		   utf_local_conversion_func conv_func,
-		   int encoding);
+					   unsigned char *utf,
+					   const pg_mb_radix_tree *map,
+					   const pg_local_to_utf_combined *cmap, int cmapsize,
+					   utf_local_conversion_func conv_func,
+					   int encoding);
 
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
 extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,
-				bool noError);
-extern int pg_verify_mbstr_len(int encoding, const char *mbstr, int len,
-					bool noError);
+							bool noError);
+extern int	pg_verify_mbstr_len(int encoding, const char *mbstr, int len,
+								bool noError);
 
 extern void check_encoding_conversion_args(int src_encoding,
-							   int dest_encoding,
-							   int len,
-							   int expected_src_encoding,
-							   int expected_dest_encoding);
+										   int dest_encoding,
+										   int len,
+										   int expected_src_encoding,
+										   int expected_dest_encoding);
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len) pg_attribute_noreturn();
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,
-						   const char *mbstr, int len) pg_attribute_noreturn();
+									   const char *mbstr, int len) pg_attribute_noreturn();
 
 extern void local2local(const unsigned char *l, unsigned char *p, int len,
-			int src_encoding, int dest_encoding, const unsigned char *tab);
+						int src_encoding, int dest_encoding, const unsigned char *tab);
 extern void pg_ascii2mic(const unsigned char *l, unsigned char *p, int len);
 extern void pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len);
 extern void latin2mic(const unsigned char *l, unsigned char *p, int len,
-		  int lc, int encoding);
+					  int lc, int encoding);
 extern void mic2latin(const unsigned char *mic, unsigned char *p, int len,
-		  int lc, int encoding);
+					  int lc, int encoding);
 extern void latin2mic_with_table(const unsigned char *l, unsigned char *p,
-					 int len, int lc, int encoding,
-					 const unsigned char *tab);
+								 int len, int lc, int encoding,
+								 const unsigned char *tab);
 extern void mic2latin_with_table(const unsigned char *mic, unsigned char *p,
-					 int len, int lc, int encoding,
-					 const unsigned char *tab);
+								 int len, int lc, int encoding,
+								 const unsigned char *tab);
 
 extern bool pg_utf8_islegal(const unsigned char *source, int length);
 

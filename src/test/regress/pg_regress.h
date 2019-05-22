@@ -45,8 +45,8 @@ extern char *launcher;
 extern const char *basic_diff_opts;
 extern const char *pretty_diff_opts;
 
-int regression_main(int argc, char *argv[],
-				init_function ifunc, test_function tfunc);
+int			regression_main(int argc, char *argv[],
+							init_function ifunc, test_function tfunc);
 void		add_stringlist_item(_stringlist **listhead, const char *str);
 PID_TYPE	spawn_process(const char *cmdline);
 void		replace_string(char *string, const char *replace, const char *replacement);

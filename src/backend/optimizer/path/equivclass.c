@@ -33,37 +33,37 @@
 
 
 static EquivalenceMember *add_eq_member(EquivalenceClass *ec,
-			  Expr *expr, Relids relids, Relids nullable_relids,
-			  bool is_child, Oid datatype);
+										Expr *expr, Relids relids, Relids nullable_relids,
+										bool is_child, Oid datatype);
 static void generate_base_implied_equalities_const(PlannerInfo *root,
-									   EquivalenceClass *ec);
+												   EquivalenceClass *ec);
 static void generate_base_implied_equalities_no_const(PlannerInfo *root,
-										  EquivalenceClass *ec);
+													  EquivalenceClass *ec);
 static void generate_base_implied_equalities_broken(PlannerInfo *root,
-										EquivalenceClass *ec);
+													EquivalenceClass *ec);
 static List *generate_join_implied_equalities_normal(PlannerInfo *root,
-										EquivalenceClass *ec,
-										Relids join_relids,
-										Relids outer_relids,
-										Relids inner_relids);
+													 EquivalenceClass *ec,
+													 Relids join_relids,
+													 Relids outer_relids,
+													 Relids inner_relids);
 static List *generate_join_implied_equalities_broken(PlannerInfo *root,
-										EquivalenceClass *ec,
-										Relids nominal_join_relids,
-										Relids outer_relids,
-										Relids nominal_inner_relids,
-										RelOptInfo *inner_rel);
-static Oid select_equality_operator(EquivalenceClass *ec,
-						 Oid lefttype, Oid righttype);
+													 EquivalenceClass *ec,
+													 Relids nominal_join_relids,
+													 Relids outer_relids,
+													 Relids nominal_inner_relids,
+													 RelOptInfo *inner_rel);
+static Oid	select_equality_operator(EquivalenceClass *ec,
+									 Oid lefttype, Oid righttype);
 static RestrictInfo *create_join_clause(PlannerInfo *root,
-				   EquivalenceClass *ec, Oid opno,
-				   EquivalenceMember *leftem,
-				   EquivalenceMember *rightem,
-				   EquivalenceClass *parent_ec);
+										EquivalenceClass *ec, Oid opno,
+										EquivalenceMember *leftem,
+										EquivalenceMember *rightem,
+										EquivalenceClass *parent_ec);
 static bool reconsider_outer_join_clause(PlannerInfo *root,
-							 RestrictInfo *rinfo,
-							 bool outer_on_left);
+										 RestrictInfo *rinfo,
+										 bool outer_on_left);
 static bool reconsider_full_join_clause(PlannerInfo *root,
-							RestrictInfo *rinfo);
+										RestrictInfo *rinfo);
 
 
 /*

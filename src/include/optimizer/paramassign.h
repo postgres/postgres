@@ -17,18 +17,18 @@
 
 extern Param *replace_outer_var(PlannerInfo *root, Var *var);
 extern Param *replace_outer_placeholdervar(PlannerInfo *root,
-							 PlaceHolderVar *phv);
+										   PlaceHolderVar *phv);
 extern Param *replace_outer_agg(PlannerInfo *root, Aggref *agg);
 extern Param *replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp);
 extern Param *replace_nestloop_param_var(PlannerInfo *root, Var *var);
 extern Param *replace_nestloop_param_placeholdervar(PlannerInfo *root,
-									  PlaceHolderVar *phv);
+													PlaceHolderVar *phv);
 extern void process_subquery_nestloop_params(PlannerInfo *root,
-								 List *subplan_params);
+											 List *subplan_params);
 extern List *identify_current_nestloop_params(PlannerInfo *root,
-								 Relids leftrelids);
+											  Relids leftrelids);
 extern Param *generate_new_exec_param(PlannerInfo *root, Oid paramtype,
-						int32 paramtypmod, Oid paramcollation);
+									  int32 paramtypmod, Oid paramcollation);
 extern int	assign_special_exec_param(PlannerInfo *root);
 
 #endif							/* PARAMASSIGN_H */

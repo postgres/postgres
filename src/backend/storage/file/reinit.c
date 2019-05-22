@@ -24,9 +24,9 @@
 #include "utils/memutils.h"
 
 static void ResetUnloggedRelationsInTablespaceDir(const char *tsdirname,
-									  int op);
+												  int op);
 static void ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname,
-								   int op);
+											   int op);
 
 typedef struct
 {

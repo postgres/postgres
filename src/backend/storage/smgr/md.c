@@ -119,25 +119,25 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 /* local routines */
 static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
-			 bool isRedo);
+						 bool isRedo);
 static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
-					   MdfdVec *seg);
+								   MdfdVec *seg);
 static void register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
-						BlockNumber segno);
+									BlockNumber segno);
 static void register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
-						BlockNumber segno);
+									BlockNumber segno);
 static void _fdvec_resize(SMgrRelation reln,
-			  ForkNumber forknum,
-			  int nseg);
+						  ForkNumber forknum,
+						  int nseg);
 static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
-			  BlockNumber segno);
+						   BlockNumber segno);
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forkno,
-			  BlockNumber segno, int oflags);
+							  BlockNumber segno, int oflags);
 static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forkno,
-			 BlockNumber blkno, bool skipFsync, int behavior);
+							 BlockNumber blkno, bool skipFsync, int behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
-		   MdfdVec *seg);
+							  MdfdVec *seg);
 
 
 /*

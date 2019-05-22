@@ -114,7 +114,7 @@ enum warn
 static char *_add(const char *, char *, const char *);
 static char *_conv(int, const char *, char *, const char *);
 static char *_fmt(const char *, const struct pg_tm *, char *, const char *,
-	 enum warn *);
+				  enum warn *);
 static char *_yconv(int, int, bool, bool, char *, char const *);
 
 

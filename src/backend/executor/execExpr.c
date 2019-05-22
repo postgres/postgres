@@ -57,28 +57,28 @@ typedef struct LastAttnumInfo
 
 static void ExecReadyExpr(ExprState *state);
 static void ExecInitExprRec(Expr *node, ExprState *state,
-				Datum *resv, bool *resnull);
+							Datum *resv, bool *resnull);
 static void ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args,
-			 Oid funcid, Oid inputcollid,
-			 ExprState *state);
+						 Oid funcid, Oid inputcollid,
+						 ExprState *state);
 static void ExecInitExprSlots(ExprState *state, Node *node);
 static void ExecPushExprSlots(ExprState *state, LastAttnumInfo *info);
 static bool get_last_attnums_walker(Node *node, LastAttnumInfo *info);
 static void ExecComputeSlotInfo(ExprState *state, ExprEvalStep *op);
 static void ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable,
-					ExprState *state);
+								ExprState *state);
 static void ExecInitSubscriptingRef(ExprEvalStep *scratch,
-						SubscriptingRef *sbsref,
-						ExprState *state,
-						Datum *resv, bool *resnull);
+									SubscriptingRef *sbsref,
+									ExprState *state,
+									Datum *resv, bool *resnull);
 static bool isAssignmentIndirectionExpr(Expr *expr);
 static void ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
-					   ExprState *state,
-					   Datum *resv, bool *resnull);
+								   ExprState *state,
+								   Datum *resv, bool *resnull);
 static void ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
-					  ExprEvalStep *scratch,
-					  FunctionCallInfo fcinfo, AggStatePerTrans pertrans,
-					  int transno, int setno, int setoff, bool ishash);
+								  ExprEvalStep *scratch,
+								  FunctionCallInfo fcinfo, AggStatePerTrans pertrans,
+								  int transno, int setno, int setoff, bool ishash);
 
 
 /*

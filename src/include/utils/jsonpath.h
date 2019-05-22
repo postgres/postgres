@@ -171,7 +171,7 @@ extern Numeric jspGetNumeric(JsonPathItem *v);
 extern bool jspGetBool(JsonPathItem *v);
 extern char *jspGetString(JsonPathItem *v, int32 *len);
 extern bool jspGetArraySubscript(JsonPathItem *v, JsonPathItem *from,
-					 JsonPathItem *to, int i);
+								 JsonPathItem *to, int i);
 
 extern const char *jspOperationName(JsonPathItemType type);
 

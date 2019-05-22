@@ -39,7 +39,7 @@ static stmtCacheEntry *stmtCacheEntries = NULL;
 static struct declared_statement *g_declared_list;
 
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con,
-			   struct prepared_statement *prev, struct prepared_statement *this);
+						   struct prepared_statement *prev, struct prepared_statement *this);
 static struct declared_statement *ecpg_find_declared_statement(const char *);
 static bool
 isvarchar(unsigned char c)

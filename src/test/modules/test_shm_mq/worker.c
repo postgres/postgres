@@ -29,8 +29,8 @@
 
 static void handle_sigterm(SIGNAL_ARGS);
 static void attach_to_queues(dsm_segment *seg, shm_toc *toc,
-				 int myworkernumber, shm_mq_handle **inqhp,
-				 shm_mq_handle **outqhp);
+							 int myworkernumber, shm_mq_handle **inqhp,
+							 shm_mq_handle **outqhp);
 static void copy_messages(shm_mq_handle *inqh, shm_mq_handle *outqh);
 
 /*

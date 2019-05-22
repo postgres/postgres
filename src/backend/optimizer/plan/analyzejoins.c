@@ -35,18 +35,18 @@
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
 static void remove_rel_from_query(PlannerInfo *root, int relid,
-					  Relids joinrelids);
+								  Relids joinrelids);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
 static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
-					List *clause_list);
+								List *clause_list);
 static Oid	distinct_col_search(int colno, List *colnos, List *opids);
 static bool is_innerrel_unique_for(PlannerInfo *root,
-					   Relids joinrelids,
-					   Relids outerrelids,
-					   RelOptInfo *innerrel,
-					   JoinType jointype,
-					   List *restrictlist);
+								   Relids joinrelids,
+								   Relids outerrelids,
+								   RelOptInfo *innerrel,
+								   JoinType jointype,
+								   List *restrictlist);
 
 
 /*

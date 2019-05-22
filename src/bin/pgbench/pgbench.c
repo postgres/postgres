@@ -576,12 +576,12 @@ static void setBoolValue(PgBenchValue *pv, bool bval);
 static void setIntValue(PgBenchValue *pv, int64 ival);
 static void setDoubleValue(PgBenchValue *pv, double dval);
 static bool evaluateExpr(CState *st, PgBenchExpr *expr,
-			 PgBenchValue *retval);
+						 PgBenchValue *retval);
 static ConnectionStateEnum executeMetaCommand(CState *st, instr_time *now);
 static void doLog(TState *thread, CState *st,
-	  StatsData *agg, bool skipped, double latency, double lag);
+				  StatsData *agg, bool skipped, double latency, double lag);
 static void processXactStats(TState *thread, CState *st, instr_time *now,
-				 bool skipped, StatsData *agg);
+							 bool skipped, StatsData *agg);
 static void addScript(ParsedScript script);
 static void *threadRun(void *arg);
 static void finishCon(CState *st);

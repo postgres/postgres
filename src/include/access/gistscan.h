@@ -18,7 +18,7 @@
 
 extern IndexScanDesc gistbeginscan(Relation r, int nkeys, int norderbys);
 extern void gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
-		   ScanKey orderbys, int norderbys);
+					   ScanKey orderbys, int norderbys);
 extern void gistendscan(IndexScanDesc scan);
 
 #endif							/* GISTSCAN_H */

@@ -478,9 +478,9 @@ typedef struct
 
 /* prototypes for private functions */
 static TRGM *createTrgmNFAInternal(regex_t *regex, TrgmPackedGraph **graph,
-					  MemoryContext rcontext);
+								   MemoryContext rcontext);
 static void RE_compile(regex_t *regex, text *text_re,
-		   int cflags, Oid collation);
+					   int cflags, Oid collation);
 static void getColorInfo(regex_t *regex, TrgmNFA *trgmNFA);
 static bool convertPgWchar(pg_wchar c, trgm_mb_char *result);
 static void transformGraph(TrgmNFA *trgmNFA);
@@ -489,7 +489,7 @@ static void addKey(TrgmNFA *trgmNFA, TrgmState *state, TrgmStateKey *key);
 static void addKeyToQueue(TrgmNFA *trgmNFA, TrgmStateKey *key);
 static void addArcs(TrgmNFA *trgmNFA, TrgmState *state);
 static void addArc(TrgmNFA *trgmNFA, TrgmState *state, TrgmStateKey *key,
-	   TrgmColor co, TrgmStateKey *destKey);
+				   TrgmColor co, TrgmStateKey *destKey);
 static bool validArcLabel(TrgmStateKey *key, TrgmColor co);
 static TrgmState *getState(TrgmNFA *trgmNFA, TrgmStateKey *key);
 static bool prefixContains(TrgmPrefix *prefix1, TrgmPrefix *prefix2);

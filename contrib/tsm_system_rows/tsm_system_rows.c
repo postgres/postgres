@@ -55,20 +55,20 @@ typedef struct
 } SystemRowsSamplerData;
 
 static void system_rows_samplescangetsamplesize(PlannerInfo *root,
-									RelOptInfo *baserel,
-									List *paramexprs,
-									BlockNumber *pages,
-									double *tuples);
+												RelOptInfo *baserel,
+												List *paramexprs,
+												BlockNumber *pages,
+												double *tuples);
 static void system_rows_initsamplescan(SampleScanState *node,
-						   int eflags);
+									   int eflags);
 static void system_rows_beginsamplescan(SampleScanState *node,
-							Datum *params,
-							int nparams,
-							uint32 seed);
+										Datum *params,
+										int nparams,
+										uint32 seed);
 static BlockNumber system_rows_nextsampleblock(SampleScanState *node, BlockNumber nblocks);
 static OffsetNumber system_rows_nextsampletuple(SampleScanState *node,
-							BlockNumber blockno,
-							OffsetNumber maxoffset);
+												BlockNumber blockno,
+												OffsetNumber maxoffset);
 static uint32 random_relative_prime(uint32 n, SamplerRandomState randstate);
 
 

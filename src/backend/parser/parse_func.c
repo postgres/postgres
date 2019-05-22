@@ -43,14 +43,14 @@ typedef enum
 } FuncLookupError;
 
 static void unify_hypothetical_args(ParseState *pstate,
-						List *fargs, int numAggregatedArgs,
-						Oid *actual_arg_types, Oid *declared_arg_types);
+									List *fargs, int numAggregatedArgs,
+									Oid *actual_arg_types, Oid *declared_arg_types);
 static Oid	FuncNameAsType(List *funcname);
 static Node *ParseComplexProjection(ParseState *pstate, const char *funcname,
-					   Node *first_arg, int location);
-static Oid LookupFuncNameInternal(List *funcname, int nargs,
-					   const Oid *argtypes,
-					   bool missing_ok, FuncLookupError *lookupError);
+									Node *first_arg, int location);
+static Oid	LookupFuncNameInternal(List *funcname, int nargs,
+								   const Oid *argtypes,
+								   bool missing_ok, FuncLookupError *lookupError);
 
 
 /*

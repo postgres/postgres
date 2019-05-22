@@ -77,30 +77,30 @@ typedef struct LogicalRepCommitData
 
 extern void logicalrep_write_begin(StringInfo out, ReorderBufferTXN *txn);
 extern void logicalrep_read_begin(StringInfo in,
-					  LogicalRepBeginData *begin_data);
+								  LogicalRepBeginData *begin_data);
 extern void logicalrep_write_commit(StringInfo out, ReorderBufferTXN *txn,
-						XLogRecPtr commit_lsn);
+									XLogRecPtr commit_lsn);
 extern void logicalrep_read_commit(StringInfo in,
-					   LogicalRepCommitData *commit_data);
+								   LogicalRepCommitData *commit_data);
 extern void logicalrep_write_origin(StringInfo out, const char *origin,
-						XLogRecPtr origin_lsn);
+									XLogRecPtr origin_lsn);
 extern char *logicalrep_read_origin(StringInfo in, XLogRecPtr *origin_lsn);
 extern void logicalrep_write_insert(StringInfo out, Relation rel,
-						HeapTuple newtuple);
+									HeapTuple newtuple);
 extern LogicalRepRelId logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup);
 extern void logicalrep_write_update(StringInfo out, Relation rel, HeapTuple oldtuple,
-						HeapTuple newtuple);
+									HeapTuple newtuple);
 extern LogicalRepRelId logicalrep_read_update(StringInfo in,
-					   bool *has_oldtuple, LogicalRepTupleData *oldtup,
-					   LogicalRepTupleData *newtup);
+											  bool *has_oldtuple, LogicalRepTupleData *oldtup,
+											  LogicalRepTupleData *newtup);
 extern void logicalrep_write_delete(StringInfo out, Relation rel,
-						HeapTuple oldtuple);
+									HeapTuple oldtuple);
 extern LogicalRepRelId logicalrep_read_delete(StringInfo in,
-					   LogicalRepTupleData *oldtup);
+											  LogicalRepTupleData *oldtup);
 extern void logicalrep_write_truncate(StringInfo out, int nrelids, Oid relids[],
-						  bool cascade, bool restart_seqs);
+									  bool cascade, bool restart_seqs);
 extern List *logicalrep_read_truncate(StringInfo in,
-						 bool *cascade, bool *restart_seqs);
+									  bool *cascade, bool *restart_seqs);
 extern void logicalrep_write_rel(StringInfo out, Relation rel);
 extern LogicalRepRelation *logicalrep_read_rel(StringInfo in);
 extern void logicalrep_write_typ(StringInfo out, Oid typoid);

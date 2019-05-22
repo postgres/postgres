@@ -422,45 +422,45 @@ extern void initSpGistState(SpGistState *state, Relation index);
 extern Buffer SpGistNewBuffer(Relation index);
 extern void SpGistUpdateMetaPage(Relation index);
 extern Buffer SpGistGetBuffer(Relation index, int flags,
-				int needSpace, bool *isNew);
+							  int needSpace, bool *isNew);
 extern void SpGistSetLastUsedPage(Relation index, Buffer buffer);
 extern void SpGistInitPage(Page page, uint16 f);
 extern void SpGistInitBuffer(Buffer b, uint16 f);
 extern void SpGistInitMetapage(Page page);
 extern unsigned int SpGistGetTypeSize(SpGistTypeDesc *att, Datum datum);
 extern SpGistLeafTuple spgFormLeafTuple(SpGistState *state,
-				 ItemPointer heapPtr,
-				 Datum datum, bool isnull);
+										ItemPointer heapPtr,
+										Datum datum, bool isnull);
 extern SpGistNodeTuple spgFormNodeTuple(SpGistState *state,
-				 Datum label, bool isnull);
+										Datum label, bool isnull);
 extern SpGistInnerTuple spgFormInnerTuple(SpGistState *state,
-				  bool hasPrefix, Datum prefix,
-				  int nNodes, SpGistNodeTuple *nodes);
+										  bool hasPrefix, Datum prefix,
+										  int nNodes, SpGistNodeTuple *nodes);
 extern SpGistDeadTuple spgFormDeadTuple(SpGistState *state, int tupstate,
-				 BlockNumber blkno, OffsetNumber offnum);
+										BlockNumber blkno, OffsetNumber offnum);
 extern Datum *spgExtractNodeLabels(SpGistState *state,
-					 SpGistInnerTuple innerTuple);
+								   SpGistInnerTuple innerTuple);
 extern OffsetNumber SpGistPageAddNewItem(SpGistState *state, Page page,
-					 Item item, Size size,
-					 OffsetNumber *startOffset,
-					 bool errorOK);
+										 Item item, Size size,
+										 OffsetNumber *startOffset,
+										 bool errorOK);
 extern bool spgproperty(Oid index_oid, int attno,
-			IndexAMProperty prop, const char *propname,
-			bool *res, bool *isnull);
+						IndexAMProperty prop, const char *propname,
+						bool *res, bool *isnull);
 
 /* spgdoinsert.c */
 extern void spgUpdateNodeLink(SpGistInnerTuple tup, int nodeN,
-				  BlockNumber blkno, OffsetNumber offset);
+							  BlockNumber blkno, OffsetNumber offset);
 extern void spgPageIndexMultiDelete(SpGistState *state, Page page,
-						OffsetNumber *itemnos, int nitems,
-						int firststate, int reststate,
-						BlockNumber blkno, OffsetNumber offnum);
+									OffsetNumber *itemnos, int nitems,
+									int firststate, int reststate,
+									BlockNumber blkno, OffsetNumber offnum);
 extern bool spgdoinsert(Relation index, SpGistState *state,
-			ItemPointer heapPtr, Datum datum, bool isnull);
+						ItemPointer heapPtr, Datum datum, bool isnull);
 
 /* spgproc.c */
 extern double *spg_key_orderbys_distances(Datum key, bool isLeaf,
-						   ScanKey orderbys, int norderbys);
+										  ScanKey orderbys, int norderbys);
 extern BOX *box_copy(BOX *orig);
 
 #endif							/* SPGIST_PRIVATE_H */

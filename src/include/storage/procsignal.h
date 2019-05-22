@@ -52,8 +52,8 @@ extern Size ProcSignalShmemSize(void);
 extern void ProcSignalShmemInit(void);
 
 extern void ProcSignalInit(int pss_idx);
-extern int SendProcSignal(pid_t pid, ProcSignalReason reason,
-			   BackendId backendId);
+extern int	SendProcSignal(pid_t pid, ProcSignalReason reason,
+						   BackendId backendId);
 
 extern void procsignal_sigusr1_handler(SIGNAL_ARGS);
 

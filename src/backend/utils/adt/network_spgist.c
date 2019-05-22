@@ -40,8 +40,8 @@
 
 
 static int	inet_spg_node_number(const inet *val, int commonbits);
-static int inet_spg_consistent_bitmap(const inet *prefix, int nkeys,
-						   ScanKey scankeys, bool leaf);
+static int	inet_spg_consistent_bitmap(const inet *prefix, int nkeys,
+									   ScanKey scankeys, bool leaf);
 
 /*
  * The SP-GiST configuration function

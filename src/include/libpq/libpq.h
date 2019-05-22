@@ -53,9 +53,9 @@ extern const PGDLLIMPORT PQcommMethods *PqCommMethods;
 /*
  * prototypes for functions in pqcomm.c
  */
-extern int StreamServerPort(int family, char *hostName,
-				 unsigned short portNumber, char *unixSocketDir,
-				 pgsocket ListenSocket[], int MaxListen);
+extern int	StreamServerPort(int family, char *hostName,
+							 unsigned short portNumber, char *unixSocketDir,
+							 pgsocket ListenSocket[], int MaxListen);
 extern int	StreamConnection(pgsocket server_fd, Port *port);
 extern void StreamClose(pgsocket sock);
 extern void TouchSocketFiles(void);
@@ -120,9 +120,9 @@ enum ssl_protocol_versions
 /*
  * prototypes for functions in be-secure-common.c
  */
-extern int run_ssl_passphrase_command(const char *prompt, bool is_server_start,
-						   char *buf, int size);
+extern int	run_ssl_passphrase_command(const char *prompt, bool is_server_start,
+									   char *buf, int size);
 extern bool check_ssl_key_file_permissions(const char *ssl_key_file,
-							   bool isServerStart);
+										   bool isServerStart);
 
 #endif							/* LIBPQ_H */

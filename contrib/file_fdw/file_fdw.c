@@ -117,49 +117,49 @@ PG_FUNCTION_INFO_V1(file_fdw_validator);
  * FDW callback routines
  */
 static void fileGetForeignRelSize(PlannerInfo *root,
-					  RelOptInfo *baserel,
-					  Oid foreigntableid);
+								  RelOptInfo *baserel,
+								  Oid foreigntableid);
 static void fileGetForeignPaths(PlannerInfo *root,
-					RelOptInfo *baserel,
-					Oid foreigntableid);
+								RelOptInfo *baserel,
+								Oid foreigntableid);
 static ForeignScan *fileGetForeignPlan(PlannerInfo *root,
-				   RelOptInfo *baserel,
-				   Oid foreigntableid,
-				   ForeignPath *best_path,
-				   List *tlist,
-				   List *scan_clauses,
-				   Plan *outer_plan);
+									   RelOptInfo *baserel,
+									   Oid foreigntableid,
+									   ForeignPath *best_path,
+									   List *tlist,
+									   List *scan_clauses,
+									   Plan *outer_plan);
 static void fileExplainForeignScan(ForeignScanState *node, ExplainState *es);
 static void fileBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *fileIterateForeignScan(ForeignScanState *node);
 static void fileReScanForeignScan(ForeignScanState *node);
 static void fileEndForeignScan(ForeignScanState *node);
 static bool fileAnalyzeForeignTable(Relation relation,
-						AcquireSampleRowsFunc *func,
-						BlockNumber *totalpages);
+									AcquireSampleRowsFunc *func,
+									BlockNumber *totalpages);
 static bool fileIsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
-							  RangeTblEntry *rte);
+										  RangeTblEntry *rte);
 
 /*
  * Helper functions
  */
 static bool is_valid_option(const char *option, Oid context);
 static void fileGetOptions(Oid foreigntableid,
-			   char **filename,
-			   bool *is_program,
-			   List **other_options);
+						   char **filename,
+						   bool *is_program,
+						   List **other_options);
 static List *get_file_fdw_attribute_options(Oid relid);
 static bool check_selective_binary_conversion(RelOptInfo *baserel,
-								  Oid foreigntableid,
-								  List **columns);
+											  Oid foreigntableid,
+											  List **columns);
 static void estimate_size(PlannerInfo *root, RelOptInfo *baserel,
-			  FileFdwPlanState *fdw_private);
+						  FileFdwPlanState *fdw_private);
 static void estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
-			   FileFdwPlanState *fdw_private,
-			   Cost *startup_cost, Cost *total_cost);
-static int file_acquire_sample_rows(Relation onerel, int elevel,
-						 HeapTuple *rows, int targrows,
-						 double *totalrows, double *totaldeadrows);
+						   FileFdwPlanState *fdw_private,
+						   Cost *startup_cost, Cost *total_cost);
+static int	file_acquire_sample_rows(Relation onerel, int elevel,
+									 HeapTuple *rows, int targrows,
+									 double *totalrows, double *totaldeadrows);
 
 
 /*

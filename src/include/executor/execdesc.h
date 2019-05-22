@@ -57,13 +57,13 @@ typedef struct QueryDesc
 
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
-				const char *sourceText,
-				Snapshot snapshot,
-				Snapshot crosscheck_snapshot,
-				DestReceiver *dest,
-				ParamListInfo params,
-				QueryEnvironment *queryEnv,
-				int instrument_options);
+								  const char *sourceText,
+								  Snapshot snapshot,
+								  Snapshot crosscheck_snapshot,
+								  DestReceiver *dest,
+								  ParamListInfo params,
+								  QueryEnvironment *queryEnv,
+								  int instrument_options);
 
 extern void FreeQueryDesc(QueryDesc *qdesc);
 

@@ -382,28 +382,28 @@ struct dsa_area
 	(segment_map_ptr - &area->segment_maps[0])
 
 static void init_span(dsa_area *area, dsa_pointer span_pointer,
-		  dsa_area_pool *pool, dsa_pointer start, size_t npages,
-		  uint16 size_class);
+					  dsa_area_pool *pool, dsa_pointer start, size_t npages,
+					  uint16 size_class);
 static bool transfer_first_span(dsa_area *area, dsa_area_pool *pool,
-					int fromclass, int toclass);
+								int fromclass, int toclass);
 static inline dsa_pointer alloc_object(dsa_area *area, int size_class);
 static bool ensure_active_superblock(dsa_area *area, dsa_area_pool *pool,
-						 int size_class);
+									 int size_class);
 static dsa_segment_map *get_segment_by_index(dsa_area *area,
-					 dsa_segment_index index);
+											 dsa_segment_index index);
 static void destroy_superblock(dsa_area *area, dsa_pointer span_pointer);
 static void unlink_span(dsa_area *area, dsa_area_span *span);
 static void add_span_to_fullness_class(dsa_area *area, dsa_area_span *span,
-						   dsa_pointer span_pointer, int fclass);
+									   dsa_pointer span_pointer, int fclass);
 static void unlink_segment(dsa_area *area, dsa_segment_map *segment_map);
 static dsa_segment_map *get_best_segment(dsa_area *area, size_t npages);
 static dsa_segment_map *make_new_segment(dsa_area *area, size_t requested_pages);
 static dsa_area *create_internal(void *place, size_t size,
-				int tranche_id,
-				dsm_handle control_handle,
-				dsm_segment *control_segment);
+								 int tranche_id,
+								 dsm_handle control_handle,
+								 dsm_segment *control_segment);
 static dsa_area *attach_internal(void *place, dsm_segment *segment,
-				dsa_handle handle);
+								 dsa_handle handle);
 static void check_for_freed_segments(dsa_area *area);
 static void check_for_freed_segments_locked(dsa_area *area);
 

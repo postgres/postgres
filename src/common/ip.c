@@ -39,14 +39,14 @@
 
 
 #ifdef	HAVE_UNIX_SOCKETS
-static int getaddrinfo_unix(const char *path,
-				 const struct addrinfo *hintsp,
-				 struct addrinfo **result);
+static int	getaddrinfo_unix(const char *path,
+							 const struct addrinfo *hintsp,
+							 struct addrinfo **result);
 
-static int getnameinfo_unix(const struct sockaddr_un *sa, int salen,
-				 char *node, int nodelen,
-				 char *service, int servicelen,
-				 int flags);
+static int	getnameinfo_unix(const struct sockaddr_un *sa, int salen,
+							 char *node, int nodelen,
+							 char *service, int servicelen,
+							 int flags);
 #endif
 
 

@@ -64,10 +64,10 @@ typedef struct StatExtEntry
 
 static List *fetch_statentries_for_relation(Relation pg_statext, Oid relid);
 static VacAttrStats **lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
-					  int nvacatts, VacAttrStats **vacatts);
+											int nvacatts, VacAttrStats **vacatts);
 static void statext_store(Relation pg_stext, Oid relid,
-			  MVNDistinct *ndistinct, MVDependencies *dependencies,
-			  MCVList *mcvlist, VacAttrStats **stats);
+						  MVNDistinct *ndistinct, MVDependencies *dependencies,
+						  MCVList *mcvlist, VacAttrStats **stats);
 
 
 /*

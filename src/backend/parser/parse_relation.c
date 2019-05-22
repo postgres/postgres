@@ -41,22 +41,22 @@
 #define MAX_FUZZY_DISTANCE				3
 
 static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
-						const char *refname, int location);
+											  const char *refname, int location);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
-					  int location);
+											int location);
 static void check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
-					 int location);
+								 int location);
 static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
-					 int rtindex, AttrNumber col);
+								 int rtindex, AttrNumber col);
 static void expandRelation(Oid relid, Alias *eref,
-			   int rtindex, int sublevels_up,
-			   int location, bool include_dropped,
-			   List **colnames, List **colvars);
+						   int rtindex, int sublevels_up,
+						   int location, bool include_dropped,
+						   List **colnames, List **colvars);
 static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
-				int count, int offset,
-				int rtindex, int sublevels_up,
-				int location, bool include_dropped,
-				List **colnames, List **colvars);
+							int count, int offset,
+							int rtindex, int sublevels_up,
+							int location, bool include_dropped,
+							List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
 static bool isQueryUsingTempRelation_walker(Node *node, void *context);
 

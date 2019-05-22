@@ -99,13 +99,13 @@ static Relation lock_and_open_sequence(SeqTable seq);
 static void create_seq_hashtable(void);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence_data read_seq_tuple(Relation rel,
-			   Buffer *buf, HeapTuple seqdatatuple);
+											Buffer *buf, HeapTuple seqdatatuple);
 static void init_params(ParseState *pstate, List *options, bool for_identity,
-			bool isInit,
-			Form_pg_sequence seqform,
-			Form_pg_sequence_data seqdataform,
-			bool *need_seq_rewrite,
-			List **owned_by);
+						bool isInit,
+						Form_pg_sequence seqform,
+						Form_pg_sequence_data seqdataform,
+						bool *need_seq_rewrite,
+						List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by, bool for_identity);
 

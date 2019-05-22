@@ -43,11 +43,11 @@ typedef struct
 } HashBuildState;
 
 static void hashbuildCallback(Relation index,
-				  HeapTuple htup,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive,
-				  void *state);
+							  HeapTuple htup,
+							  Datum *values,
+							  bool *isnull,
+							  bool tupleIsAlive,
+							  void *state);
 
 
 /*

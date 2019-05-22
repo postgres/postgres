@@ -51,9 +51,9 @@ static int	getNotify(PGconn *conn);
 static int	getCopyStart(PGconn *conn, ExecStatusType copytype);
 static int	getReadyForQuery(PGconn *conn);
 static void reportErrorPosition(PQExpBuffer msg, const char *query,
-					int loc, int encoding);
-static int build_startup_packet(const PGconn *conn, char *packet,
-					 const PQEnvironmentOption *options);
+								int loc, int encoding);
+static int	build_startup_packet(const PGconn *conn, char *packet,
+								 const PQEnvironmentOption *options);
 
 
 /*

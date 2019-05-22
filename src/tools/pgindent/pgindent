@@ -12,7 +12,7 @@ use IO::Handle;
 use Getopt::Long;
 
 # Update for pg_bsd_indent version
-my $INDENT_VERSION = "2.0";
+my $INDENT_VERSION = "2.1";
 
 # Our standard indent settings
 my $indent_opts =
@@ -249,22 +249,6 @@ sub post_indent
 
 	# Use a single space before '*' in function return types
 	$source =~ s!^([A-Za-z_]\S*)[ \t]+\*$!$1 *!gm;
-
-	# Move prototype names to the same line as return type.  Useful
-	# for ctags.  Indent should do this, but it does not.  It formats
-	# prototypes just like real functions.
-
-	my $ident   = qr/[a-zA-Z_][a-zA-Z_0-9]*/;
-	my $comment = qr!/\*.*\*/!;
-
-	$source =~ s!
-			(\n$ident[^(\n]*)\n                  # e.g. static void
-			(
-				$ident\(\n?                      # func_name(
-				(.*,([ \t]*$comment)?\n)*        # args b4 final ln
-				.*\);([ \t]*$comment)?$          # final line
-			)
-		!$1 . (substr($1,-1,1) eq '*' ? '' : ' ') . $2!gmxe;
 
 	return $source;
 }

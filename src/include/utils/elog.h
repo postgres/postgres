@@ -144,7 +144,7 @@
 #define TEXTDOMAIN NULL
 
 extern bool errstart(int elevel, const char *filename, int lineno,
-		 const char *funcname, const char *domain);
+					 const char *funcname, const char *domain);
 extern void errfinish(int dummy,...);
 
 extern int	errcode(int sqlerrcode);
@@ -155,20 +155,20 @@ extern int	errcode_for_socket_access(void);
 extern int	errmsg(const char *fmt,...) pg_attribute_printf(1, 2);
 extern int	errmsg_internal(const char *fmt,...) pg_attribute_printf(1, 2);
 
-extern int errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-			  unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+extern int	errmsg_plural(const char *fmt_singular, const char *fmt_plural,
+						  unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int	errdetail(const char *fmt,...) pg_attribute_printf(1, 2);
 extern int	errdetail_internal(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int	errdetail_log(const char *fmt,...) pg_attribute_printf(1, 2);
 
-extern int errdetail_log_plural(const char *fmt_singular,
-					 const char *fmt_plural,
-					 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+extern int	errdetail_log_plural(const char *fmt_singular,
+								 const char *fmt_plural,
+								 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
-extern int errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-				 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+extern int	errdetail_plural(const char *fmt_singular, const char *fmt_plural,
+							 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int	errhint(const char *fmt,...) pg_attribute_printf(1, 2);
 

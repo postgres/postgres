@@ -21,10 +21,10 @@
 #include "utils/rel.h"
 
 static void entrySplitPage(GinBtree btree, Buffer origbuf,
-			   GinBtreeStack *stack,
-			   GinBtreeEntryInsertData *insertData,
-			   BlockNumber updateblkno,
-			   Page *newlpage, Page *newrpage);
+						   GinBtreeStack *stack,
+						   GinBtreeEntryInsertData *insertData,
+						   BlockNumber updateblkno,
+						   Page *newlpage, Page *newrpage);
 
 /*
  * Form a tuple for entry tree.

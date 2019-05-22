@@ -47,18 +47,18 @@ typedef struct pg_tzenum pg_tzenum;
 
 extern struct pg_tm *pg_localtime(const pg_time_t *timep, const pg_tz *tz);
 extern struct pg_tm *pg_gmtime(const pg_time_t *timep);
-extern int pg_next_dst_boundary(const pg_time_t *timep,
-					 long int *before_gmtoff,
-					 int *before_isdst,
-					 pg_time_t *boundary,
-					 long int *after_gmtoff,
-					 int *after_isdst,
-					 const pg_tz *tz);
+extern int	pg_next_dst_boundary(const pg_time_t *timep,
+								 long int *before_gmtoff,
+								 int *before_isdst,
+								 pg_time_t *boundary,
+								 long int *after_gmtoff,
+								 int *after_isdst,
+								 const pg_tz *tz);
 extern bool pg_interpret_timezone_abbrev(const char *abbrev,
-							 const pg_time_t *timep,
-							 long int *gmtoff,
-							 int *isdst,
-							 const pg_tz *tz);
+										 const pg_time_t *timep,
+										 long int *gmtoff,
+										 int *isdst,
+										 const pg_tz *tz);
 extern bool pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff);
 extern const char *pg_get_timezone_name(pg_tz *tz);
 extern bool pg_tz_acceptable(pg_tz *tz);
@@ -66,7 +66,7 @@ extern bool pg_tz_acceptable(pg_tz *tz);
 /* these functions are in strftime.c */
 
 extern size_t pg_strftime(char *s, size_t max, const char *format,
-			const struct pg_tm *tm);
+						  const struct pg_tm *tm);
 
 /* these functions and variables are in pgtz.c */
 

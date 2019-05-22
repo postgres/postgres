@@ -75,10 +75,10 @@
 static MultiSortSupport build_mss(VacAttrStats **stats, int numattrs);
 
 static SortItem *build_distinct_groups(int numrows, SortItem *items,
-					  MultiSortSupport mss, int *ndistinct);
+									   MultiSortSupport mss, int *ndistinct);
 
-static int count_distinct_groups(int numrows, SortItem *items,
-					  MultiSortSupport mss);
+static int	count_distinct_groups(int numrows, SortItem *items,
+								  MultiSortSupport mss);
 
 /*
  * get_mincount_for_mcv_list

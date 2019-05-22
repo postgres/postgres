@@ -81,7 +81,7 @@ typedef struct
 } DECountItem;
 
 static void compute_array_stats(VacAttrStats *stats,
-					AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
+								AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
 static void prune_element_hashtable(HTAB *elements_tab, int b_current);
 static uint32 element_hash(const void *key, Size keysize);
 static int	element_match(const void *key1, const void *key2, Size keysize);

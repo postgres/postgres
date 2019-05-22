@@ -120,26 +120,26 @@ static List *objectNamesToOids(ObjectType objtype, List *objnames);
 static List *objectsInSchemaToOids(ObjectType objtype, List *nspnames);
 static List *getRelationsInNamespace(Oid namespaceId, char relkind);
 static void expand_col_privileges(List *colnames, Oid table_oid,
-					  AclMode this_privileges,
-					  AclMode *col_privileges,
-					  int num_col_privileges);
+								  AclMode this_privileges,
+								  AclMode *col_privileges,
+								  int num_col_privileges);
 static void expand_all_col_privileges(Oid table_oid, Form_pg_class classForm,
-						  AclMode this_privileges,
-						  AclMode *col_privileges,
-						  int num_col_privileges);
+									  AclMode this_privileges,
+									  AclMode *col_privileges,
+									  int num_col_privileges);
 static AclMode string_to_privilege(const char *privname);
 static const char *privilege_to_string(AclMode privilege);
 static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
-						 bool all_privs, AclMode privileges,
-						 Oid objectId, Oid grantorId,
-						 ObjectType objtype, const char *objname,
-						 AttrNumber att_number, const char *colname);
+										bool all_privs, AclMode privileges,
+										Oid objectId, Oid grantorId,
+										ObjectType objtype, const char *objname,
+										AttrNumber att_number, const char *colname);
 static AclMode pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum,
-		   Oid roleid, AclMode mask, AclMaskHow how);
+						  Oid roleid, AclMode mask, AclMaskHow how);
 static void recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
-						Acl *new_acl);
+									Acl *new_acl);
 static void recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
-							  Acl *new_acl);
+										  Acl *new_acl);
 
 
 #ifdef ACLDEBUG

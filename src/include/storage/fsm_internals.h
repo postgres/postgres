@@ -61,8 +61,8 @@ typedef FSMPageData *FSMPage;
 #define SlotsPerFSMPage LeafNodesPerPage
 
 /* Prototypes for functions in fsmpage.c */
-extern int fsm_search_avail(Buffer buf, uint8 min_cat, bool advancenext,
-				 bool exclusive_lock_held);
+extern int	fsm_search_avail(Buffer buf, uint8 min_cat, bool advancenext,
+							 bool exclusive_lock_held);
 extern uint8 fsm_get_avail(Page page, int slot);
 extern uint8 fsm_get_max_avail(Page page);
 extern bool fsm_set_avail(Page page, int slot, uint8 value);

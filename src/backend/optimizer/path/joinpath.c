@@ -40,54 +40,54 @@ set_join_pathlist_hook_type set_join_pathlist_hook = NULL;
 	(PATH_PARAM_BY_REL_SELF(path, rel) || PATH_PARAM_BY_PARENT(path, rel))
 
 static void try_partial_mergejoin_path(PlannerInfo *root,
-						   RelOptInfo *joinrel,
-						   Path *outer_path,
-						   Path *inner_path,
-						   List *pathkeys,
-						   List *mergeclauses,
-						   List *outersortkeys,
-						   List *innersortkeys,
-						   JoinType jointype,
-						   JoinPathExtraData *extra);
+									   RelOptInfo *joinrel,
+									   Path *outer_path,
+									   Path *inner_path,
+									   List *pathkeys,
+									   List *mergeclauses,
+									   List *outersortkeys,
+									   List *innersortkeys,
+									   JoinType jointype,
+									   JoinPathExtraData *extra);
 static void sort_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 JoinType jointype, JoinPathExtraData *extra);
+								 RelOptInfo *outerrel, RelOptInfo *innerrel,
+								 JoinType jointype, JoinPathExtraData *extra);
 static void match_unsorted_outer(PlannerInfo *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 JoinType jointype, JoinPathExtraData *extra);
+								 RelOptInfo *outerrel, RelOptInfo *innerrel,
+								 JoinType jointype, JoinPathExtraData *extra);
 static void consider_parallel_nestloop(PlannerInfo *root,
-						   RelOptInfo *joinrel,
-						   RelOptInfo *outerrel,
-						   RelOptInfo *innerrel,
-						   JoinType jointype,
-						   JoinPathExtraData *extra);
+									   RelOptInfo *joinrel,
+									   RelOptInfo *outerrel,
+									   RelOptInfo *innerrel,
+									   JoinType jointype,
+									   JoinPathExtraData *extra);
 static void consider_parallel_mergejoin(PlannerInfo *root,
-							RelOptInfo *joinrel,
-							RelOptInfo *outerrel,
-							RelOptInfo *innerrel,
-							JoinType jointype,
-							JoinPathExtraData *extra,
-							Path *inner_cheapest_total);
+										RelOptInfo *joinrel,
+										RelOptInfo *outerrel,
+										RelOptInfo *innerrel,
+										JoinType jointype,
+										JoinPathExtraData *extra,
+										Path *inner_cheapest_total);
 static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 JoinType jointype, JoinPathExtraData *extra);
+								 RelOptInfo *outerrel, RelOptInfo *innerrel,
+								 JoinType jointype, JoinPathExtraData *extra);
 static List *select_mergejoin_clauses(PlannerInfo *root,
-						 RelOptInfo *joinrel,
-						 RelOptInfo *outerrel,
-						 RelOptInfo *innerrel,
-						 List *restrictlist,
-						 JoinType jointype,
-						 bool *mergejoin_allowed);
+									  RelOptInfo *joinrel,
+									  RelOptInfo *outerrel,
+									  RelOptInfo *innerrel,
+									  List *restrictlist,
+									  JoinType jointype,
+									  bool *mergejoin_allowed);
 static void generate_mergejoin_paths(PlannerInfo *root,
-						 RelOptInfo *joinrel,
-						 RelOptInfo *innerrel,
-						 Path *outerpath,
-						 JoinType jointype,
-						 JoinPathExtraData *extra,
-						 bool useallclauses,
-						 Path *inner_cheapest_total,
-						 List *merge_pathkeys,
-						 bool is_partial);
+									 RelOptInfo *joinrel,
+									 RelOptInfo *innerrel,
+									 Path *outerpath,
+									 JoinType jointype,
+									 JoinPathExtraData *extra,
+									 bool useallclauses,
+									 Path *inner_cheapest_total,
+									 List *merge_pathkeys,
+									 bool is_partial);
 
 
 /*

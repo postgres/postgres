@@ -232,10 +232,10 @@ get_type(enum ECPGttype type)
    the variable (required to do array fetches of structs).
  */
 static void ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
-				  char *varcharsize,
-				  char *arrsize, const char *size, const char *prefix, int);
+							  char *varcharsize,
+							  char *arrsize, const char *size, const char *prefix, int);
 static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize,
-				  struct ECPGtype *type, struct ECPGtype *ind_type, const char *prefix, const char *ind_prefix);
+							  struct ECPGtype *type, struct ECPGtype *ind_type, const char *prefix, const char *ind_prefix);
 
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type, const int brace_level,

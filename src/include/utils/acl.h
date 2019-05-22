@@ -188,12 +188,12 @@ typedef enum
  */
 extern Acl *acldefault(ObjectType objtype, Oid ownerId);
 extern Acl *get_user_default_acl(ObjectType objtype, Oid ownerId,
-					 Oid nsp_oid);
+								 Oid nsp_oid);
 extern void recordDependencyOnNewAcl(Oid classId, Oid objectId, int32 objsubId,
-						 Oid ownerId, Acl *acl);
+									 Oid ownerId, Acl *acl);
 
 extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
-		  int modechg, Oid ownerId, DropBehavior behavior);
+					  int modechg, Oid ownerId, DropBehavior behavior);
 extern Acl *aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId);
 extern Acl *make_empty_acl(void);
 extern Acl *aclcopy(const Acl *orig_acl);
@@ -203,7 +203,7 @@ extern void aclitemsort(Acl *acl);
 extern bool aclequal(const Acl *left_acl, const Acl *right_acl);
 
 extern AclMode aclmask(const Acl *acl, Oid roleid, Oid ownerId,
-		AclMode mask, AclMaskHow how);
+					   AclMode mask, AclMaskHow how);
 extern int	aclmembers(const Acl *acl, Oid **roleids);
 
 extern bool has_privs_of_role(Oid member, Oid role);
@@ -219,8 +219,8 @@ extern HeapTuple get_rolespec_tuple(const RoleSpec *role);
 extern char *get_rolespec_name(const RoleSpec *role);
 
 extern void select_best_grantor(Oid roleId, AclMode privileges,
-					const Acl *acl, Oid ownerId,
-					Oid *grantorId, AclMode *grantOptions);
+								const Acl *acl, Oid ownerId,
+								Oid *grantorId, AclMode *grantOptions);
 
 extern void initialize_acl(void);
 
@@ -234,38 +234,38 @@ extern void RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid);
 extern void RemoveDefaultACLById(Oid defaclOid);
 
 extern AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
-					 Oid roleid, AclMode mask, AclMaskHow how);
+									Oid roleid, AclMode mask, AclMaskHow how);
 extern AclMode pg_class_aclmask(Oid table_oid, Oid roleid,
-				 AclMode mask, AclMaskHow how);
-extern AclMode pg_database_aclmask(Oid db_oid, Oid roleid,
-					AclMode mask, AclMaskHow how);
-extern AclMode pg_proc_aclmask(Oid proc_oid, Oid roleid,
-				AclMode mask, AclMaskHow how);
-extern AclMode pg_language_aclmask(Oid lang_oid, Oid roleid,
-					AclMode mask, AclMaskHow how);
-extern AclMode pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
-								AclMode mask, AclMaskHow how, Snapshot snapshot);
-extern AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
-					 AclMode mask, AclMaskHow how);
-extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
-					  AclMode mask, AclMaskHow how);
-extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 								AclMode mask, AclMaskHow how);
+extern AclMode pg_database_aclmask(Oid db_oid, Oid roleid,
+								   AclMode mask, AclMaskHow how);
+extern AclMode pg_proc_aclmask(Oid proc_oid, Oid roleid,
+							   AclMode mask, AclMaskHow how);
+extern AclMode pg_language_aclmask(Oid lang_oid, Oid roleid,
+								   AclMode mask, AclMaskHow how);
+extern AclMode pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
+											   AclMode mask, AclMaskHow how, Snapshot snapshot);
+extern AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
+									AclMode mask, AclMaskHow how);
+extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
+									 AclMode mask, AclMaskHow how);
+extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
+											   AclMode mask, AclMaskHow how);
 extern AclMode pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
-						  AclMode mask, AclMaskHow how);
+										 AclMode mask, AclMaskHow how);
 extern AclMode pg_type_aclmask(Oid type_oid, Oid roleid,
-				AclMode mask, AclMaskHow how);
+							   AclMode mask, AclMaskHow how);
 
 extern AclResult pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
-					  Oid roleid, AclMode mode);
+									   Oid roleid, AclMode mode);
 extern AclResult pg_attribute_aclcheck_all(Oid table_oid, Oid roleid,
-						  AclMode mode, AclMaskHow how);
+										   AclMode mode, AclMaskHow how);
 extern AclResult pg_class_aclcheck(Oid table_oid, Oid roleid, AclMode mode);
 extern AclResult pg_database_aclcheck(Oid db_oid, Oid roleid, AclMode mode);
 extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode);
 extern AclResult pg_language_aclcheck(Oid lang_oid, Oid roleid, AclMode mode);
 extern AclResult pg_largeobject_aclcheck_snapshot(Oid lang_oid, Oid roleid,
-								 AclMode mode, Snapshot snapshot);
+												  AclMode mode, Snapshot snapshot);
 extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode);
 extern AclResult pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode);
 extern AclResult pg_foreign_data_wrapper_aclcheck(Oid fdw_oid, Oid roleid, AclMode mode);
@@ -273,10 +273,10 @@ extern AclResult pg_foreign_server_aclcheck(Oid srv_oid, Oid roleid, AclMode mod
 extern AclResult pg_type_aclcheck(Oid type_oid, Oid roleid, AclMode mode);
 
 extern void aclcheck_error(AclResult aclerr, ObjectType objtype,
-			   const char *objectname);
+						   const char *objectname);
 
 extern void aclcheck_error_col(AclResult aclerr, ObjectType objtype,
-				   const char *objectname, const char *colname);
+							   const char *objectname, const char *colname);
 
 extern void aclcheck_error_type(AclResult aclerr, Oid typeOid);
 

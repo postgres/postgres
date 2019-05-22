@@ -77,13 +77,13 @@ ProcessUtility_hook_type ProcessUtility_hook = NULL;
 
 /* local function declarations */
 static void ProcessUtilitySlow(ParseState *pstate,
-				   PlannedStmt *pstmt,
-				   const char *queryString,
-				   ProcessUtilityContext context,
-				   ParamListInfo params,
-				   QueryEnvironment *queryEnv,
-				   DestReceiver *dest,
-				   char *completionTag);
+							   PlannedStmt *pstmt,
+							   const char *queryString,
+							   ProcessUtilityContext context,
+							   ParamListInfo params,
+							   QueryEnvironment *queryEnv,
+							   DestReceiver *dest,
+							   char *completionTag);
 static void ExecDropStmt(DropStmt *stmt, bool isTopLevel);
 
 

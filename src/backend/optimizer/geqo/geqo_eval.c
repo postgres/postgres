@@ -40,9 +40,9 @@ typedef struct
 } Clump;
 
 static List *merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump,
-			int num_gene, bool force);
+						 int num_gene, bool force);
 static bool desirable_join(PlannerInfo *root,
-			   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
+						   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 
 
 /*

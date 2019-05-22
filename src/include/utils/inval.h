@@ -36,8 +36,8 @@ extern void PostPrepare_Inval(void);
 extern void CommandEndInvalidationMessages(void);
 
 extern void CacheInvalidateHeapTuple(Relation relation,
-						 HeapTuple tuple,
-						 HeapTuple newtuple);
+									 HeapTuple tuple,
+									 HeapTuple newtuple);
 
 extern void CacheInvalidateCatalog(Oid catalogId);
 
@@ -54,11 +54,11 @@ extern void CacheInvalidateSmgr(RelFileNodeBackend rnode);
 extern void CacheInvalidateRelmap(Oid databaseId);
 
 extern void CacheRegisterSyscacheCallback(int cacheid,
-							  SyscacheCallbackFunction func,
-							  Datum arg);
+										  SyscacheCallbackFunction func,
+										  Datum arg);
 
 extern void CacheRegisterRelcacheCallback(RelcacheCallbackFunction func,
-							  Datum arg);
+										  Datum arg);
 
 extern void CallSyscacheCallbacks(int cacheid, uint32 hashvalue);
 

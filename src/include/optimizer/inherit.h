@@ -18,10 +18,10 @@
 
 
 extern void expand_inherited_rtentry(PlannerInfo *root, RelOptInfo *rel,
-						 RangeTblEntry *rte, Index rti);
+									 RangeTblEntry *rte, Index rti);
 
 extern bool apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
-					  RelOptInfo *childrel, RangeTblEntry *childRTE,
-					  AppendRelInfo *appinfo);
+								  RelOptInfo *childrel, RangeTblEntry *childRTE,
+								  AppendRelInfo *appinfo);
 
 #endif							/* INHERIT_H */

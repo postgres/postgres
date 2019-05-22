@@ -66,8 +66,8 @@
 #include <ldap.h>
 typedef struct timeval LDAP_TIMEVAL;
 #endif
-static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
-				  PQExpBuffer errorMessage);
+static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
+							  PQExpBuffer errorMessage);
 #endif
 
 #include "common/ip.h"
@@ -383,44 +383,44 @@ static void release_conn_addrinfo(PGconn *conn);
 static void sendTerminateConn(PGconn *conn);
 static PQconninfoOption *conninfo_init(PQExpBuffer errorMessage);
 static PQconninfoOption *parse_connection_string(const char *conninfo,
-						PQExpBuffer errorMessage, bool use_defaults);
+												 PQExpBuffer errorMessage, bool use_defaults);
 static int	uri_prefix_length(const char *connstr);
 static bool recognized_connection_string(const char *connstr);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
-			   PQExpBuffer errorMessage, bool use_defaults);
+										PQExpBuffer errorMessage, bool use_defaults);
 static PQconninfoOption *conninfo_array_parse(const char *const *keywords,
-					 const char *const *values, PQExpBuffer errorMessage,
-					 bool use_defaults, int expand_dbname);
+											  const char *const *values, PQExpBuffer errorMessage,
+											  bool use_defaults, int expand_dbname);
 static bool conninfo_add_defaults(PQconninfoOption *options,
-					  PQExpBuffer errorMessage);
+								  PQExpBuffer errorMessage);
 static PQconninfoOption *conninfo_uri_parse(const char *uri,
-				   PQExpBuffer errorMessage, bool use_defaults);
+											PQExpBuffer errorMessage, bool use_defaults);
 static bool conninfo_uri_parse_options(PQconninfoOption *options,
-						   const char *uri, PQExpBuffer errorMessage);
+									   const char *uri, PQExpBuffer errorMessage);
 static bool conninfo_uri_parse_params(char *params,
-						  PQconninfoOption *connOptions,
-						  PQExpBuffer errorMessage);
+									  PQconninfoOption *connOptions,
+									  PQExpBuffer errorMessage);
 static char *conninfo_uri_decode(const char *str, PQExpBuffer errorMessage);
 static bool get_hexdigit(char digit, int *value);
 static const char *conninfo_getval(PQconninfoOption *connOptions,
-				const char *keyword);
+								   const char *keyword);
 static PQconninfoOption *conninfo_storeval(PQconninfoOption *connOptions,
-				  const char *keyword, const char *value,
-				  PQExpBuffer errorMessage, bool ignoreMissing, bool uri_decode);
+										   const char *keyword, const char *value,
+										   PQExpBuffer errorMessage, bool ignoreMissing, bool uri_decode);
 static PQconninfoOption *conninfo_find(PQconninfoOption *connOptions,
-			  const char *keyword);
+									   const char *keyword);
 static void defaultNoticeReceiver(void *arg, const PGresult *res);
 static void defaultNoticeProcessor(void *arg, const char *message);
-static int parseServiceInfo(PQconninfoOption *options,
-				 PQExpBuffer errorMessage);
-static int parseServiceFile(const char *serviceFile,
-				 const char *service,
-				 PQconninfoOption *options,
-				 PQExpBuffer errorMessage,
-				 bool *group_found);
+static int	parseServiceInfo(PQconninfoOption *options,
+							 PQExpBuffer errorMessage);
+static int	parseServiceFile(const char *serviceFile,
+							 const char *service,
+							 PQconninfoOption *options,
+							 PQExpBuffer errorMessage,
+							 bool *group_found);
 static char *pwdfMatchesString(char *buf, const char *token);
 static char *passwordFromFile(const char *hostname, const char *port, const char *dbname,
-				 const char *username, const char *pgpassfile);
+							  const char *username, const char *pgpassfile);
 static void pgpassfileWarning(PGconn *conn);
 static void default_threadlock(int acquire);
 

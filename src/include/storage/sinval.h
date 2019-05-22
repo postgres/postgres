@@ -128,10 +128,10 @@ extern uint64 SharedInvalidMessageCounter;
 extern volatile sig_atomic_t catchupInterruptPending;
 
 extern void SendSharedInvalidMessages(const SharedInvalidationMessage *msgs,
-						  int n);
+									  int n);
 extern void ReceiveSharedInvalidMessages(
-							 void (*invalFunction) (SharedInvalidationMessage *msg),
-							 void (*resetFunction) (void));
+										 void (*invalFunction) (SharedInvalidationMessage *msg),
+										 void (*resetFunction) (void));
 
 /* signal handler for catchup events (PROCSIG_CATCHUP_INTERRUPT) */
 extern void HandleCatchupInterrupt(void);
@@ -143,11 +143,11 @@ extern void HandleCatchupInterrupt(void);
  */
 extern void ProcessCatchupInterrupt(void);
 
-extern int xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
-									 bool *RelcacheInitFileInval);
+extern int	xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
+												 bool *RelcacheInitFileInval);
 extern void ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
-									 int nmsgs, bool RelcacheInitFileInval,
-									 Oid dbid, Oid tsid);
+												 int nmsgs, bool RelcacheInitFileInval,
+												 Oid dbid, Oid tsid);
 
 extern void LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg);
 

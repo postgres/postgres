@@ -37,7 +37,7 @@ typedef struct
 
 static bool rank_up(WindowObject winobj);
 static Datum leadlag_common(FunctionCallInfo fcinfo,
-			   bool forward, bool withoffset, bool withdefault);
+							bool forward, bool withoffset, bool withdefault);
 
 
 /*

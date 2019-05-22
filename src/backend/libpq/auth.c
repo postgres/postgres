@@ -45,7 +45,7 @@
  *----------------------------------------------------------------
  */
 static void sendAuthRequest(Port *port, AuthRequest areq, const char *extradata,
-				int extralen);
+							int extralen);
 static void auth_failed(Port *port, int status, char *logdetail);
 static char *recv_password_packet(Port *port);
 
@@ -93,8 +93,8 @@ static int	auth_peer(hbaPort *port);
 #define PGSQL_PAM_SERVICE "postgresql"	/* Service name passed to PAM */
 
 static int	CheckPAMAuth(Port *port, const char *user, const char *password);
-static int pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
-					 struct pam_response **resp, void *appdata_ptr);
+static int	pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
+								 struct pam_response **resp, void *appdata_ptr);
 
 static struct pam_conv pam_passw_conv = {
 	&pam_passwd_conv_proc,
@@ -189,11 +189,11 @@ typedef SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 														PCtxtHandle, void **);
 static int	pg_SSPI_recvauth(Port *port);
-static int pg_SSPI_make_upn(char *accountname,
-				 size_t accountnamesize,
-				 char *domainname,
-				 size_t domainnamesize,
-				 bool update_accountname);
+static int	pg_SSPI_make_upn(char *accountname,
+							 size_t accountnamesize,
+							 char *domainname,
+							 size_t domainnamesize,
+							 bool update_accountname);
 #endif
 
 /*----------------------------------------------------------------

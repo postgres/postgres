@@ -70,10 +70,10 @@ extern bool in_remote_transaction;
 
 extern void logicalrep_worker_attach(int slot);
 extern LogicalRepWorker *logicalrep_worker_find(Oid subid, Oid relid,
-					   bool only_running);
+												bool only_running);
 extern List *logicalrep_workers_find(Oid subid, bool only_running);
 extern void logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname,
-						 Oid userid, Oid relid);
+									 Oid userid, Oid relid);
 extern void logicalrep_worker_stop(Oid subid, Oid relid);
 extern void logicalrep_worker_stop_at_commit(Oid subid, Oid relid);
 extern void logicalrep_worker_wakeup(Oid subid, Oid relid);
@@ -83,8 +83,8 @@ extern int	logicalrep_sync_worker_count(Oid subid);
 
 extern char *LogicalRepSyncTableStart(XLogRecPtr *origin_startpos);
 void		process_syncing_tables(XLogRecPtr current_lsn);
-void invalidate_syncing_table_states(Datum arg, int cacheid,
-								uint32 hashvalue);
+void		invalidate_syncing_table_states(Datum arg, int cacheid,
+											uint32 hashvalue);
 
 static inline bool
 am_tablesync_worker(void)

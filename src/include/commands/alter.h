@@ -22,14 +22,14 @@
 extern ObjectAddress ExecRenameStmt(RenameStmt *stmt);
 
 extern ObjectAddress ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt,
-						   ObjectAddress *refAddress);
+												ObjectAddress *refAddress);
 extern ObjectAddress ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
-						  ObjectAddress *oldSchemaAddr);
-extern Oid AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
-						 ObjectAddresses *objsMoved);
+											   ObjectAddress *oldSchemaAddr);
+extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
+									 ObjectAddresses *objsMoved);
 
 extern ObjectAddress ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
 extern void AlterObjectOwner_internal(Relation catalog, Oid objectId,
-						  Oid new_ownerId);
+									  Oid new_ownerId);
 
 #endif							/* ALTER_H */

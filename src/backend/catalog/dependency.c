@@ -186,36 +186,36 @@ static const Oid object_classes[] = {
 
 
 static void findDependentObjects(const ObjectAddress *object,
-					 int objflags,
-					 int flags,
-					 ObjectAddressStack *stack,
-					 ObjectAddresses *targetObjects,
-					 const ObjectAddresses *pendingObjects,
-					 Relation *depRel);
+								 int objflags,
+								 int flags,
+								 ObjectAddressStack *stack,
+								 ObjectAddresses *targetObjects,
+								 const ObjectAddresses *pendingObjects,
+								 Relation *depRel);
 static void reportDependentObjects(const ObjectAddresses *targetObjects,
-					   DropBehavior behavior,
-					   int flags,
-					   const ObjectAddress *origObject);
+								   DropBehavior behavior,
+								   int flags,
+								   const ObjectAddress *origObject);
 static void deleteOneObject(const ObjectAddress *object,
-				Relation *depRel, int32 flags);
+							Relation *depRel, int32 flags);
 static void doDeletion(const ObjectAddress *object, int flags);
 static void AcquireDeletionLock(const ObjectAddress *object, int flags);
 static void ReleaseDeletionLock(const ObjectAddress *object);
 static bool find_expr_references_walker(Node *node,
-							find_expr_references_context *context);
+										find_expr_references_context *context);
 static void eliminate_duplicate_dependencies(ObjectAddresses *addrs);
 static int	object_address_comparator(const void *a, const void *b);
 static void add_object_address(ObjectClass oclass, Oid objectId, int32 subId,
-				   ObjectAddresses *addrs);
-static void add_exact_object_address_extra(const ObjectAddress *object,
-							   const ObjectAddressExtra *extra,
 							   ObjectAddresses *addrs);
+static void add_exact_object_address_extra(const ObjectAddress *object,
+										   const ObjectAddressExtra *extra,
+										   ObjectAddresses *addrs);
 static bool object_address_present_add_flags(const ObjectAddress *object,
-								 int flags,
-								 ObjectAddresses *addrs);
+											 int flags,
+											 ObjectAddresses *addrs);
 static bool stack_address_present_add_flags(const ObjectAddress *object,
-								int flags,
-								ObjectAddressStack *stack);
+											int flags,
+											ObjectAddressStack *stack);
 static void DeleteInitPrivs(const ObjectAddress *object);
 
 

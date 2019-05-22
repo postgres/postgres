@@ -34,37 +34,37 @@
 
 
 static void markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
-					 Var *var, int levelsup);
+								 Var *var, int levelsup);
 static Node *transformAssignmentIndirection(ParseState *pstate,
-							   Node *basenode,
-							   const char *targetName,
-							   bool targetIsArray,
-							   Oid targetTypeId,
-							   int32 targetTypMod,
-							   Oid targetCollation,
-							   ListCell *indirection,
-							   Node *rhs,
-							   int location);
+											Node *basenode,
+											const char *targetName,
+											bool targetIsArray,
+											Oid targetTypeId,
+											int32 targetTypMod,
+											Oid targetCollation,
+											ListCell *indirection,
+											Node *rhs,
+											int location);
 static Node *transformAssignmentSubscripts(ParseState *pstate,
-							  Node *basenode,
-							  const char *targetName,
-							  Oid targetTypeId,
-							  int32 targetTypMod,
-							  Oid targetCollation,
-							  List *subscripts,
-							  bool isSlice,
-							  ListCell *next_indirection,
-							  Node *rhs,
-							  int location);
+										   Node *basenode,
+										   const char *targetName,
+										   Oid targetTypeId,
+										   int32 targetTypMod,
+										   Oid targetCollation,
+										   List *subscripts,
+										   bool isSlice,
+										   ListCell *next_indirection,
+										   Node *rhs,
+										   int location);
 static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
-					bool make_target_entry);
+								 bool make_target_entry);
 static List *ExpandAllTables(ParseState *pstate, int location);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
-					  bool make_target_entry, ParseExprKind exprKind);
+								   bool make_target_entry, ParseExprKind exprKind);
 static List *ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
-				  int location, bool make_target_entry);
+							   int location, bool make_target_entry);
 static List *ExpandRowReference(ParseState *pstate, Node *expr,
-				   bool make_target_entry);
+								bool make_target_entry);
 static int	FigureColnameInternal(Node *node, char **name);
 
 

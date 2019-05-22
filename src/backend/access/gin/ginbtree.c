@@ -24,10 +24,10 @@
 
 static void ginFindParents(GinBtree btree, GinBtreeStack *stack);
 static bool ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
-			   void *insertdata, BlockNumber updateblkno,
-			   Buffer childbuf, GinStatsData *buildStats);
+						   void *insertdata, BlockNumber updateblkno,
+						   Buffer childbuf, GinStatsData *buildStats);
 static void ginFinishSplit(GinBtree btree, GinBtreeStack *stack,
-			   bool freestack, GinStatsData *buildStats);
+						   bool freestack, GinStatsData *buildStats);
 
 /*
  * Lock buffer by needed method for search.

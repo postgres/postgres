@@ -211,14 +211,14 @@ static bool HasEveryWorkerTerminated(ParallelState *pstate);
 static void lockTableForWorker(ArchiveHandle *AH, TocEntry *te);
 static void WaitForCommands(ArchiveHandle *AH, int pipefd[2]);
 static bool ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate,
-				bool do_wait);
+							bool do_wait);
 static char *getMessageFromMaster(int pipefd[2]);
 static void sendMessageToMaster(int pipefd[2], const char *str);
 static int	select_loop(int maxFd, fd_set *workerset);
 static char *getMessageFromWorker(ParallelState *pstate,
-					 bool do_wait, int *worker);
+								  bool do_wait, int *worker);
 static void sendMessageToWorker(ParallelState *pstate,
-					int worker, const char *str);
+								int worker, const char *str);
 static char *readMessageFromPipe(int fd);
 
 #define messageStartsWith(msg, prefix) \

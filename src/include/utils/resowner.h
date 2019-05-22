@@ -66,19 +66,19 @@ typedef void (*ResourceReleaseCallback) (ResourceReleasePhase phase,
 
 /* generic routines */
 extern ResourceOwner ResourceOwnerCreate(ResourceOwner parent,
-					const char *name);
+										 const char *name);
 extern void ResourceOwnerRelease(ResourceOwner owner,
-					 ResourceReleasePhase phase,
-					 bool isCommit,
-					 bool isTopLevel);
+								 ResourceReleasePhase phase,
+								 bool isCommit,
+								 bool isTopLevel);
 extern void ResourceOwnerDelete(ResourceOwner owner);
 extern ResourceOwner ResourceOwnerGetParent(ResourceOwner owner);
 extern void ResourceOwnerNewParent(ResourceOwner owner,
-					   ResourceOwner newparent);
+								   ResourceOwner newparent);
 extern void RegisterResourceReleaseCallback(ResourceReleaseCallback callback,
-								void *arg);
+											void *arg);
 extern void UnregisterResourceReleaseCallback(ResourceReleaseCallback callback,
-								  void *arg);
+											  void *arg);
 extern void CreateAuxProcessResourceOwner(void);
 extern void ReleaseAuxProcessResources(bool isCommit);
 

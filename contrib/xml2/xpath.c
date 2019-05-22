@@ -41,16 +41,16 @@ typedef struct
 /* local declarations */
 
 static xmlChar *pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
-				   xmlChar *toptagname, xmlChar *septagname,
-				   xmlChar *plainsep);
+								   xmlChar *toptagname, xmlChar *septagname,
+								   xmlChar *plainsep);
 
 static text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
-					 xmlChar *septag, xmlChar *plainsep);
+								  xmlChar *septag, xmlChar *plainsep);
 
 static xmlChar *pgxml_texttoxmlchar(text *textstring);
 
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath,
-			xpath_workspace *workspace);
+									 xpath_workspace *workspace);
 
 static void cleanup_workspace(xpath_workspace *workspace);
 

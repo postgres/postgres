@@ -133,13 +133,13 @@ static RelMapFile pending_local_updates;
 
 /* non-export function prototypes */
 static void apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode,
-				 bool add_okay);
+							 bool add_okay);
 static void merge_map_updates(RelMapFile *map, const RelMapFile *updates,
-				  bool add_okay);
+							  bool add_okay);
 static void load_relmap_file(bool shared);
 static void write_relmap_file(bool shared, RelMapFile *newmap,
-				  bool write_wal, bool send_sinval, bool preserve_files,
-				  Oid dbid, Oid tsid, const char *dbpath);
+							  bool write_wal, bool send_sinval, bool preserve_files,
+							  Oid dbid, Oid tsid, const char *dbpath);
 static void perform_relmap_update(bool shared, const RelMapFile *updates);
 
 

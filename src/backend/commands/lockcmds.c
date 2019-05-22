@@ -31,7 +31,7 @@
 static void LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, Oid userid);
 static AclResult LockTableAclCheck(Oid relid, LOCKMODE lockmode, Oid userid);
 static void RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid,
-							 Oid oldrelid, void *arg);
+										 Oid oldrelid, void *arg);
 static void LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, List *ancestor_views);
 
 /*

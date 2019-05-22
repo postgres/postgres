@@ -85,16 +85,16 @@ typedef FormData_pg_operator *Form_pg_operator;
 
 
 extern ObjectAddress OperatorCreate(const char *operatorName,
-			   Oid operatorNamespace,
-			   Oid leftTypeId,
-			   Oid rightTypeId,
-			   Oid procedureId,
-			   List *commutatorName,
-			   List *negatorName,
-			   Oid restrictionId,
-			   Oid joinId,
-			   bool canMerge,
-			   bool canHash);
+									Oid operatorNamespace,
+									Oid leftTypeId,
+									Oid rightTypeId,
+									Oid procedureId,
+									List *commutatorName,
+									List *negatorName,
+									Oid restrictionId,
+									Oid joinId,
+									bool canMerge,
+									bool canHash);
 
 extern ObjectAddress makeOperatorDependencies(HeapTuple tuple, bool isUpdate);
 

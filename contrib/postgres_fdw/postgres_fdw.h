@@ -128,72 +128,72 @@ extern unsigned int GetPrepStmtNumber(PGconn *conn);
 extern PGresult *pgfdw_get_result(PGconn *conn, const char *query);
 extern PGresult *pgfdw_exec_query(PGconn *conn, const char *query);
 extern void pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
-				   bool clear, const char *sql);
+							   bool clear, const char *sql);
 
 /* in option.c */
-extern int ExtractConnectionOptions(List *defelems,
-						 const char **keywords,
-						 const char **values);
+extern int	ExtractConnectionOptions(List *defelems,
+									 const char **keywords,
+									 const char **values);
 extern List *ExtractExtensionList(const char *extensionsString,
-					 bool warnOnMissing);
+								  bool warnOnMissing);
 
 /* in deparse.c */
 extern void classifyConditions(PlannerInfo *root,
-				   RelOptInfo *baserel,
-				   List *input_conds,
-				   List **remote_conds,
-				   List **local_conds);
+							   RelOptInfo *baserel,
+							   List *input_conds,
+							   List **remote_conds,
+							   List **local_conds);
 extern bool is_foreign_expr(PlannerInfo *root,
-				RelOptInfo *baserel,
-				Expr *expr);
+							RelOptInfo *baserel,
+							Expr *expr);
 extern bool is_foreign_param(PlannerInfo *root,
-				 RelOptInfo *baserel,
-				 Expr *expr);
+							 RelOptInfo *baserel,
+							 Expr *expr);
 extern void deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
-				 Index rtindex, Relation rel,
-				 List *targetAttrs, bool doNothing,
-				 List *withCheckOptionList, List *returningList,
-				 List **retrieved_attrs);
+							 Index rtindex, Relation rel,
+							 List *targetAttrs, bool doNothing,
+							 List *withCheckOptionList, List *returningList,
+							 List **retrieved_attrs);
 extern void deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
-				 Index rtindex, Relation rel,
-				 List *targetAttrs,
-				 List *withCheckOptionList, List *returningList,
-				 List **retrieved_attrs);
+							 Index rtindex, Relation rel,
+							 List *targetAttrs,
+							 List *withCheckOptionList, List *returningList,
+							 List **retrieved_attrs);
 extern void deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
-					   Index rtindex, Relation rel,
-					   RelOptInfo *foreignrel,
-					   List *targetlist,
-					   List *targetAttrs,
-					   List *remote_conds,
-					   List **params_list,
-					   List *returningList,
-					   List **retrieved_attrs);
+								   Index rtindex, Relation rel,
+								   RelOptInfo *foreignrel,
+								   List *targetlist,
+								   List *targetAttrs,
+								   List *remote_conds,
+								   List **params_list,
+								   List *returningList,
+								   List **retrieved_attrs);
 extern void deparseDeleteSql(StringInfo buf, RangeTblEntry *rte,
-				 Index rtindex, Relation rel,
-				 List *returningList,
-				 List **retrieved_attrs);
+							 Index rtindex, Relation rel,
+							 List *returningList,
+							 List **retrieved_attrs);
 extern void deparseDirectDeleteSql(StringInfo buf, PlannerInfo *root,
-					   Index rtindex, Relation rel,
-					   RelOptInfo *foreignrel,
-					   List *remote_conds,
-					   List **params_list,
-					   List *returningList,
-					   List **retrieved_attrs);
+								   Index rtindex, Relation rel,
+								   RelOptInfo *foreignrel,
+								   List *remote_conds,
+								   List **params_list,
+								   List *returningList,
+								   List **retrieved_attrs);
 extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
-				  List **retrieved_attrs);
+							  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
 extern Expr *find_em_expr_for_input_target(PlannerInfo *root,
-							  EquivalenceClass *ec,
-							  PathTarget *target);
+										   EquivalenceClass *ec,
+										   PathTarget *target);
 extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
-						RelOptInfo *foreignrel, List *tlist,
-						List *remote_conds, List *pathkeys,
-						bool has_final_sort, bool has_limit,
-						bool is_subquery,
-						List **retrieved_attrs, List **params_list);
+									RelOptInfo *foreignrel, List *tlist,
+									List *remote_conds, List *pathkeys,
+									bool has_final_sort, bool has_limit,
+									bool is_subquery,
+									List **retrieved_attrs, List **params_list);
 extern const char *get_jointype_name(JoinType jointype);
 
 /* in shippable.c */

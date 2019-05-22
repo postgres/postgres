@@ -165,9 +165,9 @@ static bool ResourceArrayRemove(ResourceArray *resarr, Datum value);
 static bool ResourceArrayGetAny(ResourceArray *resarr, Datum *value);
 static void ResourceArrayFree(ResourceArray *resarr);
 static void ResourceOwnerReleaseInternal(ResourceOwner owner,
-							 ResourceReleasePhase phase,
-							 bool isCommit,
-							 bool isTopLevel);
+										 ResourceReleasePhase phase,
+										 bool isCommit,
+										 bool isTopLevel);
 static void ReleaseAuxProcessResourcesCallback(int code, Datum arg);
 static void PrintRelCacheLeakWarning(Relation rel);
 static void PrintPlanCacheLeakWarning(CachedPlan *plan);

@@ -43,13 +43,13 @@ typedef struct
 } PruneState;
 
 /* Local functions */
-static int heap_prune_chain(Relation relation, Buffer buffer,
-				 OffsetNumber rootoffnum,
-				 TransactionId OldestXmin,
-				 PruneState *prstate);
+static int	heap_prune_chain(Relation relation, Buffer buffer,
+							 OffsetNumber rootoffnum,
+							 TransactionId OldestXmin,
+							 PruneState *prstate);
 static void heap_prune_record_prunable(PruneState *prstate, TransactionId xid);
 static void heap_prune_record_redirect(PruneState *prstate,
-						   OffsetNumber offnum, OffsetNumber rdoffnum);
+									   OffsetNumber offnum, OffsetNumber rdoffnum);
 static void heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum);
 static void heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum);
 

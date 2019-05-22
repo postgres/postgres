@@ -35,7 +35,7 @@
 
 static Oid	get_partition_parent_worker(Relation inhRel, Oid relid);
 static void get_partition_ancestors_worker(Relation inhRel, Oid relid,
-							   List **ancestors);
+										   List **ancestors);
 
 /*
  * get_partition_parent

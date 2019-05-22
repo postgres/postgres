@@ -90,74 +90,74 @@ typedef struct ArrayIteratorData
 static bool array_isspace(char ch);
 static int	ArrayCount(const char *str, int *dim, char typdelim);
 static void ReadArrayStr(char *arrayStr, const char *origStr,
-			 int nitems, int ndim, int *dim,
-			 FmgrInfo *inputproc, Oid typioparam, int32 typmod,
-			 char typdelim,
-			 int typlen, bool typbyval, char typalign,
-			 Datum *values, bool *nulls,
-			 bool *hasnulls, int32 *nbytes);
+						 int nitems, int ndim, int *dim,
+						 FmgrInfo *inputproc, Oid typioparam, int32 typmod,
+						 char typdelim,
+						 int typlen, bool typbyval, char typalign,
+						 Datum *values, bool *nulls,
+						 bool *hasnulls, int32 *nbytes);
 static void ReadArrayBinary(StringInfo buf, int nitems,
-				FmgrInfo *receiveproc, Oid typioparam, int32 typmod,
-				int typlen, bool typbyval, char typalign,
-				Datum *values, bool *nulls,
-				bool *hasnulls, int32 *nbytes);
+							FmgrInfo *receiveproc, Oid typioparam, int32 typmod,
+							int typlen, bool typbyval, char typalign,
+							Datum *values, bool *nulls,
+							bool *hasnulls, int32 *nbytes);
 static Datum array_get_element_expanded(Datum arraydatum,
-						   int nSubscripts, int *indx,
-						   int arraytyplen,
-						   int elmlen, bool elmbyval, char elmalign,
-						   bool *isNull);
+										int nSubscripts, int *indx,
+										int arraytyplen,
+										int elmlen, bool elmbyval, char elmalign,
+										bool *isNull);
 static Datum array_set_element_expanded(Datum arraydatum,
-						   int nSubscripts, int *indx,
-						   Datum dataValue, bool isNull,
-						   int arraytyplen,
-						   int elmlen, bool elmbyval, char elmalign);
+										int nSubscripts, int *indx,
+										Datum dataValue, bool isNull,
+										int arraytyplen,
+										int elmlen, bool elmbyval, char elmalign);
 static bool array_get_isnull(const bits8 *nullbitmap, int offset);
 static void array_set_isnull(bits8 *nullbitmap, int offset, bool isNull);
 static Datum ArrayCast(char *value, bool byval, int len);
-static int ArrayCastAndSet(Datum src,
-				int typlen, bool typbyval, char typalign,
-				char *dest);
+static int	ArrayCastAndSet(Datum src,
+							int typlen, bool typbyval, char typalign,
+							char *dest);
 static char *array_seek(char *ptr, int offset, bits8 *nullbitmap, int nitems,
-		   int typlen, bool typbyval, char typalign);
-static int array_nelems_size(char *ptr, int offset, bits8 *nullbitmap,
-				  int nitems, int typlen, bool typbyval, char typalign);
-static int array_copy(char *destptr, int nitems,
-		   char *srcptr, int offset, bits8 *nullbitmap,
-		   int typlen, bool typbyval, char typalign);
-static int array_slice_size(char *arraydataptr, bits8 *arraynullsptr,
-				 int ndim, int *dim, int *lb,
-				 int *st, int *endp,
-				 int typlen, bool typbyval, char typalign);
+						int typlen, bool typbyval, char typalign);
+static int	array_nelems_size(char *ptr, int offset, bits8 *nullbitmap,
+							  int nitems, int typlen, bool typbyval, char typalign);
+static int	array_copy(char *destptr, int nitems,
+					   char *srcptr, int offset, bits8 *nullbitmap,
+					   int typlen, bool typbyval, char typalign);
+static int	array_slice_size(char *arraydataptr, bits8 *arraynullsptr,
+							 int ndim, int *dim, int *lb,
+							 int *st, int *endp,
+							 int typlen, bool typbyval, char typalign);
 static void array_extract_slice(ArrayType *newarray,
-					int ndim, int *dim, int *lb,
-					char *arraydataptr, bits8 *arraynullsptr,
-					int *st, int *endp,
-					int typlen, bool typbyval, char typalign);
+								int ndim, int *dim, int *lb,
+								char *arraydataptr, bits8 *arraynullsptr,
+								int *st, int *endp,
+								int typlen, bool typbyval, char typalign);
 static void array_insert_slice(ArrayType *destArray, ArrayType *origArray,
-				   ArrayType *srcArray,
-				   int ndim, int *dim, int *lb,
-				   int *st, int *endp,
-				   int typlen, bool typbyval, char typalign);
+							   ArrayType *srcArray,
+							   int ndim, int *dim, int *lb,
+							   int *st, int *endp,
+							   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
 static ArrayType *create_array_envelope(int ndims, int *dimv, int *lbv, int nbytes,
-					  Oid elmtype, int dataoffset);
+										Oid elmtype, int dataoffset);
 static ArrayType *array_fill_internal(ArrayType *dims, ArrayType *lbs,
-					Datum value, bool isnull, Oid elmtype,
-					FunctionCallInfo fcinfo);
+									  Datum value, bool isnull, Oid elmtype,
+									  FunctionCallInfo fcinfo);
 static ArrayType *array_replace_internal(ArrayType *array,
-					   Datum search, bool search_isnull,
-					   Datum replace, bool replace_isnull,
-					   bool remove, Oid collation,
-					   FunctionCallInfo fcinfo);
+										 Datum search, bool search_isnull,
+										 Datum replace, bool replace_isnull,
+										 bool remove, Oid collation,
+										 FunctionCallInfo fcinfo);
 static int	width_bucket_array_float8(Datum operand, ArrayType *thresholds);
-static int width_bucket_array_fixed(Datum operand,
-						 ArrayType *thresholds,
-						 Oid collation,
-						 TypeCacheEntry *typentry);
-static int width_bucket_array_variable(Datum operand,
-							ArrayType *thresholds,
-							Oid collation,
-							TypeCacheEntry *typentry);
+static int	width_bucket_array_fixed(Datum operand,
+									 ArrayType *thresholds,
+									 Oid collation,
+									 TypeCacheEntry *typentry);
+static int	width_bucket_array_variable(Datum operand,
+										ArrayType *thresholds,
+										Oid collation,
+										TypeCacheEntry *typentry);
 
 
 /*

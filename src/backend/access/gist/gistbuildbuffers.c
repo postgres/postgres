@@ -25,15 +25,15 @@
 
 static GISTNodeBufferPage *gistAllocateNewPageBuffer(GISTBuildBuffers *gfbb);
 static void gistAddLoadedBuffer(GISTBuildBuffers *gfbb,
-					GISTNodeBuffer *nodeBuffer);
+								GISTNodeBuffer *nodeBuffer);
 static void gistLoadNodeBuffer(GISTBuildBuffers *gfbb,
-				   GISTNodeBuffer *nodeBuffer);
+							   GISTNodeBuffer *nodeBuffer);
 static void gistUnloadNodeBuffer(GISTBuildBuffers *gfbb,
-					 GISTNodeBuffer *nodeBuffer);
+								 GISTNodeBuffer *nodeBuffer);
 static void gistPlaceItupToPage(GISTNodeBufferPage *pageBuffer,
-					IndexTuple item);
+								IndexTuple item);
 static void gistGetItupFromPage(GISTNodeBufferPage *pageBuffer,
-					IndexTuple *item);
+								IndexTuple *item);
 static long gistBuffersGetFreeBlock(GISTBuildBuffers *gfbb);
 static void gistBuffersReleaseBlock(GISTBuildBuffers *gfbb, long blocknum);
 

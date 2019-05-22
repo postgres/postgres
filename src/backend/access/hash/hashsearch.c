@@ -22,13 +22,13 @@
 #include "storage/predicate.h"
 
 static bool _hash_readpage(IndexScanDesc scan, Buffer *bufP,
-			   ScanDirection dir);
-static int _hash_load_qualified_items(IndexScanDesc scan, Page page,
-						   OffsetNumber offnum, ScanDirection dir);
+						   ScanDirection dir);
+static int	_hash_load_qualified_items(IndexScanDesc scan, Page page,
+									   OffsetNumber offnum, ScanDirection dir);
 static inline void _hash_saveitem(HashScanOpaque so, int itemIndex,
-			   OffsetNumber offnum, IndexTuple itup);
+								  OffsetNumber offnum, IndexTuple itup);
 static void _hash_readnext(IndexScanDesc scan, Buffer *bufp,
-			   Page *pagep, HashPageOpaque *opaquep);
+						   Page *pagep, HashPageOpaque *opaquep);
 
 /*
  *	_hash_next() -- Get the next item in a scan.

@@ -295,40 +295,40 @@ typedef struct MinimalTupleTableSlot
 
 /* in executor/execTuples.c */
 extern TupleTableSlot *MakeTupleTableSlot(TupleDesc tupleDesc,
-				   const TupleTableSlotOps *tts_ops);
+										  const TupleTableSlotOps *tts_ops);
 extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable, TupleDesc desc,
-				   const TupleTableSlotOps *tts_ops);
+										  const TupleTableSlotOps *tts_ops);
 extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc,
-						 const TupleTableSlotOps *tts_ops);
+												const TupleTableSlotOps *tts_ops);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
 extern TupleTableSlot *ExecStoreHeapTuple(HeapTuple tuple,
-				   TupleTableSlot *slot,
-				   bool shouldFree);
+										  TupleTableSlot *slot,
+										  bool shouldFree);
 extern void ExecForceStoreHeapTuple(HeapTuple tuple,
-						TupleTableSlot *slot,
-						bool shouldFree);
+									TupleTableSlot *slot,
+									bool shouldFree);
 extern TupleTableSlot *ExecStoreBufferHeapTuple(HeapTuple tuple,
-						 TupleTableSlot *slot,
-						 Buffer buffer);
+												TupleTableSlot *slot,
+												Buffer buffer);
 extern TupleTableSlot *ExecStorePinnedBufferHeapTuple(HeapTuple tuple,
-							   TupleTableSlot *slot,
-							   Buffer buffer);
+													  TupleTableSlot *slot,
+													  Buffer buffer);
 extern TupleTableSlot *ExecStoreMinimalTuple(MinimalTuple mtup,
-					  TupleTableSlot *slot,
-					  bool shouldFree);
+											 TupleTableSlot *slot,
+											 bool shouldFree);
 extern void ExecForceStoreMinimalTuple(MinimalTuple mtup, TupleTableSlot *slot,
-						   bool shouldFree);
+									   bool shouldFree);
 extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
 extern void ExecStoreHeapTupleDatum(Datum data, TupleTableSlot *slot);
 extern HeapTuple ExecFetchSlotHeapTuple(TupleTableSlot *slot, bool materialize, bool *shouldFree);
 extern MinimalTuple ExecFetchSlotMinimalTuple(TupleTableSlot *slot,
-						  bool *shouldFree);
+											  bool *shouldFree);
 extern Datum ExecFetchSlotHeapTupleDatum(TupleTableSlot *slot);
 extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
-					 int lastAttNum);
+								 int lastAttNum);
 extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
 
 

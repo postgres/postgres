@@ -57,10 +57,10 @@ struct BrinRevmap
 
 
 static BlockNumber revmap_get_blkno(BrinRevmap *revmap,
-				 BlockNumber heapBlk);
+									BlockNumber heapBlk);
 static Buffer revmap_get_buffer(BrinRevmap *revmap, BlockNumber heapBlk);
 static BlockNumber revmap_extend_and_get_blkno(BrinRevmap *revmap,
-							BlockNumber heapBlk);
+											   BlockNumber heapBlk);
 static void revmap_physical_extend(BrinRevmap *revmap);
 
 /*

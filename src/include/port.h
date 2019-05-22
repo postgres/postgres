@@ -48,7 +48,7 @@ extern char *first_dir_separator(const char *filename);
 extern char *last_dir_separator(const char *filename);
 extern char *first_path_var_separator(const char *pathlist);
 extern void join_path_components(char *ret_path,
-					 const char *head, const char *tail);
+								 const char *head, const char *tail);
 extern void canonicalize_path(char *path);
 extern void make_native_path(char *path);
 extern void cleanup_path(char *path);
@@ -104,8 +104,8 @@ extern void set_pglocale_pgservice(const char *argv0, const char *app);
 
 /* Portable way to find binaries (in exec.c) */
 extern int	find_my_exec(const char *argv0, char *retpath);
-extern int find_other_exec(const char *argv0, const char *target,
-				const char *versionstr, char *retpath);
+extern int	find_other_exec(const char *argv0, const char *target,
+							const char *versionstr, char *retpath);
 
 /* Doesn't belong here, but this is used with find_other_exec(), so... */
 #define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
@@ -214,7 +214,7 @@ extern const char *pg_strsignal(int signum);
 
 /* Portable prompt handling */
 extern void simple_prompt(const char *prompt, char *destination, size_t destlen,
-			  bool echo);
+						  bool echo);
 
 extern int	pclose_check(FILE *stream);
 
@@ -474,18 +474,18 @@ extern char *dlerror(void);
 
 /* thread.h */
 #ifndef WIN32
-extern int pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
-		   size_t buflen, struct passwd **result);
+extern int	pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+					   size_t buflen, struct passwd **result);
 #endif
 
-extern int pqGethostbyname(const char *name,
-				struct hostent *resultbuf,
-				char *buffer, size_t buflen,
-				struct hostent **result,
-				int *herrno);
+extern int	pqGethostbyname(const char *name,
+							struct hostent *resultbuf,
+							char *buffer, size_t buflen,
+							struct hostent **result,
+							int *herrno);
 
 extern void pg_qsort(void *base, size_t nel, size_t elsize,
-		 int (*cmp) (const void *, const void *));
+					 int (*cmp) (const void *, const void *));
 extern int	pg_qsort_strcmp(const void *a, const void *b);
 
 #define qsort(a,b,c,d) pg_qsort(a,b,c,d)
@@ -493,7 +493,7 @@ extern int	pg_qsort_strcmp(const void *a, const void *b);
 typedef int (*qsort_arg_comparator) (const void *a, const void *b, void *arg);
 
 extern void qsort_arg(void *base, size_t nel, size_t elsize,
-		  qsort_arg_comparator cmp, void *arg);
+					  qsort_arg_comparator cmp, void *arg);
 
 /* port/chklocale.c */
 extern int	pg_get_encoding_from_locale(const char *ctype, bool write_message);
@@ -504,7 +504,7 @@ extern int	pg_codepage_to_encoding(UINT cp);
 
 /* port/inet_net_ntop.c */
 extern char *inet_net_ntop(int af, const void *src, int bits,
-			  char *dst, size_t size);
+						   char *dst, size_t size);
 
 /* port/pg_strong_random.c */
 extern bool pg_strong_random(void *buf, size_t len);

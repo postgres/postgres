@@ -21,7 +21,7 @@
 #include "pg_rewind.h"
 
 static void recurse_dir(const char *datadir, const char *path,
-			process_file_callback_t callback);
+						process_file_callback_t callback);
 
 static void execute_pagemap(datapagemap_t *pagemap, const char *path);
 

@@ -208,12 +208,12 @@ extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);
 extern void PortalErrorCleanup(void);
 extern void AtSubCommit_Portals(SubTransactionId mySubid,
-					SubTransactionId parentSubid,
-					ResourceOwner parentXactOwner);
+								SubTransactionId parentSubid,
+								ResourceOwner parentXactOwner);
 extern void AtSubAbort_Portals(SubTransactionId mySubid,
-				   SubTransactionId parentSubid,
-				   ResourceOwner myXactOwner,
-				   ResourceOwner parentXactOwner);
+							   SubTransactionId parentSubid,
+							   ResourceOwner myXactOwner,
+							   ResourceOwner parentXactOwner);
 extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
@@ -225,11 +225,11 @@ extern void MarkPortalFailed(Portal portal);
 extern void PortalDrop(Portal portal, bool isTopCommit);
 extern Portal GetPortalByName(const char *name);
 extern void PortalDefineQuery(Portal portal,
-				  const char *prepStmtName,
-				  const char *sourceText,
-				  const char *commandTag,
-				  List *stmts,
-				  CachedPlan *cplan);
+							  const char *prepStmtName,
+							  const char *sourceText,
+							  const char *commandTag,
+							  List *stmts,
+							  CachedPlan *cplan);
 extern PlannedStmt *PortalGetPrimaryStmt(Portal portal);
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);

@@ -31,7 +31,7 @@ static bool fix_opfuncids_walker(Node *node, void *context);
 static bool planstate_walk_subplans(List *plans, bool (*walker) (),
 									void *context);
 static bool planstate_walk_members(PlanState **planstates, int nplans,
-					   bool (*walker) (), void *context);
+								   bool (*walker) (), void *context);
 
 
 /*

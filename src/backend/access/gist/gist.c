@@ -30,16 +30,16 @@
 /* non-export function prototypes */
 static void gistfixsplit(GISTInsertState *state, GISTSTATE *giststate);
 static bool gistinserttuple(GISTInsertState *state, GISTInsertStack *stack,
-				GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum);
+							GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum);
 static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
-				 GISTSTATE *giststate,
-				 IndexTuple *tuples, int ntup, OffsetNumber oldoffnum,
-				 Buffer leftchild, Buffer rightchild,
-				 bool unlockbuf, bool unlockleftchild);
+							 GISTSTATE *giststate,
+							 IndexTuple *tuples, int ntup, OffsetNumber oldoffnum,
+							 Buffer leftchild, Buffer rightchild,
+							 bool unlockbuf, bool unlockleftchild);
 static void gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
-				GISTSTATE *giststate, List *splitinfo, bool releasebuf);
+							GISTSTATE *giststate, List *splitinfo, bool releasebuf);
 static void gistprunepage(Relation rel, Page page, Buffer buffer,
-			  Relation heapRel);
+						  Relation heapRel);
 
 
 #define ROTATEDIST(d) do { \

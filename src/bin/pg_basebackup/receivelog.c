@@ -39,23 +39,23 @@ static XLogRecPtr lastFlushPosition = InvalidXLogRecPtr;
 static bool still_sending = true;	/* feedback still needs to be sent? */
 
 static PGresult *HandleCopyStream(PGconn *conn, StreamCtl *stream,
-				 XLogRecPtr *stoppos);
+								  XLogRecPtr *stoppos);
 static int	CopyStreamPoll(PGconn *conn, long timeout_ms, pgsocket stop_socket);
-static int CopyStreamReceive(PGconn *conn, long timeout, pgsocket stop_socket,
-				  char **buffer);
+static int	CopyStreamReceive(PGconn *conn, long timeout, pgsocket stop_socket,
+							  char **buffer);
 static bool ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf,
-					int len, XLogRecPtr blockpos, TimestampTz *last_status);
+								int len, XLogRecPtr blockpos, TimestampTz *last_status);
 static bool ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
-				   XLogRecPtr *blockpos);
+							   XLogRecPtr *blockpos);
 static PGresult *HandleEndOfCopyStream(PGconn *conn, StreamCtl *stream, char *copybuf,
-					  XLogRecPtr blockpos, XLogRecPtr *stoppos);
+									   XLogRecPtr blockpos, XLogRecPtr *stoppos);
 static bool CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos,
-					XLogRecPtr *stoppos);
+								XLogRecPtr *stoppos);
 static long CalculateCopyStreamSleeptime(TimestampTz now, int standby_message_timeout,
-							 TimestampTz last_status);
+										 TimestampTz last_status);
 
 static bool ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos,
-						 uint32 *timeline);
+									 uint32 *timeline);
 
 static bool
 mark_file_as_archived(StreamCtl *stream, const char *fname)

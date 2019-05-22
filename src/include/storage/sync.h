@@ -57,6 +57,6 @@ extern void ProcessSyncRequests(void);
 extern void RememberSyncRequest(const FileTag *ftag, SyncRequestType type);
 extern void EnableSyncRequestForwarding(void);
 extern bool RegisterSyncRequest(const FileTag *ftag, SyncRequestType type,
-					bool retryOnError);
+								bool retryOnError);
 
 #endif							/* SYNC_H */

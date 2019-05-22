@@ -81,16 +81,16 @@ static void do_sql_command(PGconn *conn, const char *sql);
 static void begin_remote_xact(ConnCacheEntry *entry);
 static void pgfdw_xact_callback(XactEvent event, void *arg);
 static void pgfdw_subxact_callback(SubXactEvent event,
-					   SubTransactionId mySubid,
-					   SubTransactionId parentSubid,
-					   void *arg);
+								   SubTransactionId mySubid,
+								   SubTransactionId parentSubid,
+								   void *arg);
 static void pgfdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
 static void pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry);
 static bool pgfdw_cancel_query(PGconn *conn);
 static bool pgfdw_exec_cleanup_query(PGconn *conn, const char *query,
-						 bool ignore_errors);
+									 bool ignore_errors);
 static bool pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
-						 PGresult **result);
+									 PGresult **result);
 
 
 /*

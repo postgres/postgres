@@ -19,7 +19,7 @@
  * General executor code
  */
 extern CustomScanState *ExecInitCustomScan(CustomScan *custom_scan,
-				   EState *estate, int eflags);
+										   EState *estate, int eflags);
 extern void ExecEndCustomScan(CustomScanState *node);
 
 extern void ExecReScanCustomScan(CustomScanState *node);
@@ -30,13 +30,13 @@ extern void ExecCustomRestrPos(CustomScanState *node);
  * Parallel execution support
  */
 extern void ExecCustomScanEstimate(CustomScanState *node,
-					   ParallelContext *pcxt);
+								   ParallelContext *pcxt);
 extern void ExecCustomScanInitializeDSM(CustomScanState *node,
-							ParallelContext *pcxt);
+										ParallelContext *pcxt);
 extern void ExecCustomScanReInitializeDSM(CustomScanState *node,
-							  ParallelContext *pcxt);
+										  ParallelContext *pcxt);
 extern void ExecCustomScanInitializeWorker(CustomScanState *node,
-							   ParallelWorkerContext *pwcxt);
+										   ParallelWorkerContext *pwcxt);
 extern void ExecShutdownCustomScan(CustomScanState *node);
 
 #endif							/* NODECUSTOM_H */

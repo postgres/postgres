@@ -41,8 +41,8 @@ typedef struct ItemPointerData
 
 /* If compiler understands packed and aligned pragmas, use those */
 #if defined(pg_attribute_packed) && defined(pg_attribute_aligned)
-pg_attribute_packed()
-pg_attribute_aligned(2)
+			pg_attribute_packed()
+			pg_attribute_aligned(2)
 #endif
 ItemPointerData;
 

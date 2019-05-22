@@ -33,13 +33,13 @@
 
 static void shutdown_MultiFuncCall(Datum arg);
 static TypeFuncClass internal_get_result_type(Oid funcid,
-						 Node *call_expr,
-						 ReturnSetInfo *rsinfo,
-						 Oid *resultTypeId,
-						 TupleDesc *resultTupleDesc);
+											  Node *call_expr,
+											  ReturnSetInfo *rsinfo,
+											  Oid *resultTypeId,
+											  TupleDesc *resultTupleDesc);
 static bool resolve_polymorphic_tupdesc(TupleDesc tupdesc,
-							oidvector *declared_args,
-							Node *call_expr);
+										oidvector *declared_args,
+										Node *call_expr);
 static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
 
 

@@ -178,7 +178,7 @@ extern size_t pg_regerror(int, const regex_t *, char *, size_t);
 /* regexp.c */
 extern regex_t *RE_compile_and_cache(text *text_re, int cflags, Oid collation);
 extern bool RE_compile_and_execute(text *text_re, char *dat, int dat_len,
-					   int cflags, Oid collation,
-					   int nmatch, regmatch_t *pmatch);
+								   int cflags, Oid collation,
+								   int nmatch, regmatch_t *pmatch);
 
 #endif							/* _REGEX_H_ */

@@ -106,7 +106,7 @@ extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 extern void TupleDescCopy(TupleDesc dst, TupleDesc src);
 
 extern void TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
-				   TupleDesc src, AttrNumber srcAttno);
+							   TupleDesc src, AttrNumber srcAttno);
 
 extern void FreeTupleDesc(TupleDesc tupdesc);
 
@@ -130,22 +130,22 @@ extern bool equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 extern uint32 hashTupleDesc(TupleDesc tupdesc);
 
 extern void TupleDescInitEntry(TupleDesc desc,
-				   AttrNumber attributeNumber,
-				   const char *attributeName,
-				   Oid oidtypeid,
-				   int32 typmod,
-				   int attdim);
+							   AttrNumber attributeNumber,
+							   const char *attributeName,
+							   Oid oidtypeid,
+							   int32 typmod,
+							   int attdim);
 
 extern void TupleDescInitBuiltinEntry(TupleDesc desc,
-						  AttrNumber attributeNumber,
-						  const char *attributeName,
-						  Oid oidtypeid,
-						  int32 typmod,
-						  int attdim);
+									  AttrNumber attributeNumber,
+									  const char *attributeName,
+									  Oid oidtypeid,
+									  int32 typmod,
+									  int attdim);
 
 extern void TupleDescInitEntryCollation(TupleDesc desc,
-							AttrNumber attributeNumber,
-							Oid collationid);
+										AttrNumber attributeNumber,
+										Oid collationid);
 
 extern TupleDesc BuildDescForRelation(List *schema);
 

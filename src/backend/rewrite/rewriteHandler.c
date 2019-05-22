@@ -55,30 +55,30 @@ typedef struct acquireLocksOnSubLinks_context
 } acquireLocksOnSubLinks_context;
 
 static bool acquireLocksOnSubLinks(Node *node,
-					   acquireLocksOnSubLinks_context *context);
+								   acquireLocksOnSubLinks_context *context);
 static Query *rewriteRuleAction(Query *parsetree,
-				  Query *rule_action,
-				  Node *rule_qual,
-				  int rt_index,
-				  CmdType event,
-				  bool *returning_flag);
+								Query *rule_action,
+								Node *rule_qual,
+								int rt_index,
+								CmdType event,
+								bool *returning_flag);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static List *rewriteTargetListIU(List *targetList,
-					CmdType commandType,
-					OverridingKind override,
-					Relation target_relation,
-					int result_rti);
+								 CmdType commandType,
+								 OverridingKind override,
+								 Relation target_relation,
+								 int result_rti);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
-					TargetEntry *prior_tle,
-					const char *attrName);
+										TargetEntry *prior_tle,
+										const char *attrName);
 static Node *get_assignment_input(Node *node);
 static bool rewriteValuesRTE(Query *parsetree, RangeTblEntry *rte, int rti,
-				 Relation target_relation, bool force_nulls);
+							 Relation target_relation, bool force_nulls);
 static void markQueryForLocking(Query *qry, Node *jtnode,
-					LockClauseStrength strength, LockWaitPolicy waitPolicy,
-					bool pushedDown);
+								LockClauseStrength strength, LockWaitPolicy waitPolicy,
+								bool pushedDown);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
-		   int varno, Query *parsetree, bool *hasUpdate);
+						int varno, Query *parsetree, bool *hasUpdate);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
 static bool view_has_instead_trigger(Relation view, CmdType event);
 static Bitmapset *adjust_view_column_set(Bitmapset *cols, List *targetlist);

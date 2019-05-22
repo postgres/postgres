@@ -263,7 +263,7 @@ static const TclExceptionNameMap exception_name_map[] = {
 void		_PG_init(void);
 
 static void pltcl_init_interp(pltcl_interp_desc *interp_desc,
-				  Oid prolang, bool pltrusted);
+							  Oid prolang, bool pltrusted);
 static pltcl_interp_desc *pltcl_fetch_interp(Oid prolang, bool pltrusted);
 static void call_pltcl_start_proc(Oid prolang, bool pltrusted);
 static void start_proc_error_callback(void *arg);
@@ -271,63 +271,63 @@ static void start_proc_error_callback(void *arg);
 static Datum pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
-				   bool pltrusted);
+								bool pltrusted);
 static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
-					  bool pltrusted);
+									   bool pltrusted);
 static void pltcl_event_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
-							bool pltrusted);
+										bool pltrusted);
 
 static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
-					   bool is_event_trigger,
-					   bool pltrusted);
+											   bool is_event_trigger,
+											   bool pltrusted);
 
-static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
-		   int objc, Tcl_Obj *const objv[]);
+static int	pltcl_elog(ClientData cdata, Tcl_Interp *interp,
+					   int objc, Tcl_Obj *const objv[]);
 static void pltcl_construct_errorCode(Tcl_Interp *interp, ErrorData *edata);
 static const char *pltcl_get_condition_name(int sqlstate);
-static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
-			int objc, Tcl_Obj *const objv[]);
-static int pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
-				int objc, Tcl_Obj *const objv[]);
-static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
-				 int objc, Tcl_Obj *const objv[]);
-static int pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
-				 int objc, Tcl_Obj *const objv[]);
-static int pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
-				  int objc, Tcl_Obj *const objv[]);
-static int pltcl_process_SPI_result(Tcl_Interp *interp,
-						 const char *arrayname,
-						 Tcl_Obj *loop_body,
-						 int spi_rc,
-						 SPITupleTable *tuptable,
-						 uint64 ntuples);
-static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
-				  int objc, Tcl_Obj *const objv[]);
-static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
-					   int objc, Tcl_Obj *const objv[]);
-static int pltcl_subtransaction(ClientData cdata, Tcl_Interp *interp,
-					 int objc, Tcl_Obj *const objv[]);
-static int pltcl_commit(ClientData cdata, Tcl_Interp *interp,
-			 int objc, Tcl_Obj *const objv[]);
-static int pltcl_rollback(ClientData cdata, Tcl_Interp *interp,
-			   int objc, Tcl_Obj *const objv[]);
+static int	pltcl_quote(ClientData cdata, Tcl_Interp *interp,
+						int objc, Tcl_Obj *const objv[]);
+static int	pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
+							int objc, Tcl_Obj *const objv[]);
+static int	pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
+							 int objc, Tcl_Obj *const objv[]);
+static int	pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
+							 int objc, Tcl_Obj *const objv[]);
+static int	pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
+							  int objc, Tcl_Obj *const objv[]);
+static int	pltcl_process_SPI_result(Tcl_Interp *interp,
+									 const char *arrayname,
+									 Tcl_Obj *loop_body,
+									 int spi_rc,
+									 SPITupleTable *tuptable,
+									 uint64 ntuples);
+static int	pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
+							  int objc, Tcl_Obj *const objv[]);
+static int	pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
+								   int objc, Tcl_Obj *const objv[]);
+static int	pltcl_subtransaction(ClientData cdata, Tcl_Interp *interp,
+								 int objc, Tcl_Obj *const objv[]);
+static int	pltcl_commit(ClientData cdata, Tcl_Interp *interp,
+						 int objc, Tcl_Obj *const objv[]);
+static int	pltcl_rollback(ClientData cdata, Tcl_Interp *interp,
+						   int objc, Tcl_Obj *const objv[]);
 
 static void pltcl_subtrans_begin(MemoryContext oldcontext,
-					 ResourceOwner oldowner);
+								 ResourceOwner oldowner);
 static void pltcl_subtrans_commit(MemoryContext oldcontext,
-					  ResourceOwner oldowner);
+								  ResourceOwner oldowner);
 static void pltcl_subtrans_abort(Tcl_Interp *interp,
-					 MemoryContext oldcontext,
-					 ResourceOwner oldowner);
+								 MemoryContext oldcontext,
+								 ResourceOwner oldowner);
 
 static void pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
-					   uint64 tupno, HeapTuple tuple, TupleDesc tupdesc);
+								   uint64 tupno, HeapTuple tuple, TupleDesc tupdesc);
 static Tcl_Obj *pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc, bool include_generated);
 static HeapTuple pltcl_build_tuple_result(Tcl_Interp *interp,
-						 Tcl_Obj **kvObjv, int kvObjc,
-						 pltcl_call_state *call_state);
+										  Tcl_Obj **kvObjv, int kvObjc,
+										  pltcl_call_state *call_state);
 static void pltcl_init_tuple_store(pltcl_call_state *call_state);
 
 

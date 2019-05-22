@@ -52,14 +52,14 @@ typedef struct
 } GistVacState;
 
 static void gistvacuumscan(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
-			   IndexBulkDeleteCallback callback, void *callback_state);
+						   IndexBulkDeleteCallback callback, void *callback_state);
 static void gistvacuumpage(GistVacState *vstate, BlockNumber blkno,
-			   BlockNumber orig_blkno);
+						   BlockNumber orig_blkno);
 static void gistvacuum_delete_empty_pages(IndexVacuumInfo *info,
-							  GistBulkDeleteResult *stats);
+										  GistBulkDeleteResult *stats);
 static bool gistdeletepage(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
-			   Buffer buffer, OffsetNumber downlink,
-			   Buffer leafBuffer);
+						   Buffer buffer, OffsetNumber downlink,
+						   Buffer leafBuffer);
 
 /* allocate the 'stats' struct that's kept over vacuum stages */
 static GistBulkDeleteResult *

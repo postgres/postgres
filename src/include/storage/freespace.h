@@ -22,17 +22,17 @@
 extern Size GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk);
 extern BlockNumber GetPageWithFreeSpace(Relation rel, Size spaceNeeded);
 extern BlockNumber RecordAndGetPageWithFreeSpace(Relation rel,
-							  BlockNumber oldPage,
-							  Size oldSpaceAvail,
-							  Size spaceNeeded);
+												 BlockNumber oldPage,
+												 Size oldSpaceAvail,
+												 Size spaceNeeded);
 extern void RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk,
-						Size spaceAvail);
+									Size spaceAvail);
 extern void XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
-							Size spaceAvail);
+										Size spaceAvail);
 
 extern void FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks);
 extern void FreeSpaceMapVacuum(Relation rel);
 extern void FreeSpaceMapVacuumRange(Relation rel, BlockNumber start,
-						BlockNumber end);
+									BlockNumber end);
 
 #endif							/* FREESPACE_H_ */

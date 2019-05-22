@@ -162,7 +162,7 @@ static char *build_server_final_message(scram_state *state);
 static bool verify_client_proof(scram_state *state);
 static bool verify_final_nonce(scram_state *state);
 static void mock_scram_verifier(const char *username, int *iterations,
-					char **salt, uint8 *stored_key, uint8 *server_key);
+								char **salt, uint8 *stored_key, uint8 *server_key);
 static bool is_scram_printable(char *p);
 static char *sanitize_char(char c);
 static char *sanitize_str(const char *s);

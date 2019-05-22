@@ -126,45 +126,45 @@ PG_FUNCTION_INFO_V1(bt_index_check);
 PG_FUNCTION_INFO_V1(bt_index_parent_check);
 
 static void bt_index_check_internal(Oid indrelid, bool parentcheck,
-						bool heapallindexed, bool rootdescend);
+									bool heapallindexed, bool rootdescend);
 static inline void btree_index_checkable(Relation rel);
 static void bt_check_every_level(Relation rel, Relation heaprel,
-					 bool heapkeyspace, bool readonly, bool heapallindexed,
-					 bool rootdescend);
+								 bool heapkeyspace, bool readonly, bool heapallindexed,
+								 bool rootdescend);
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
-							 BtreeLevel level);
+											   BtreeLevel level);
 static void bt_target_page_check(BtreeCheckState *state);
 static BTScanInsert bt_right_page_check_scankey(BtreeCheckState *state);
 static void bt_downlink_check(BtreeCheckState *state, BTScanInsert targetkey,
-				  BlockNumber childblock);
+							  BlockNumber childblock);
 static void bt_downlink_missing_check(BtreeCheckState *state);
 static void bt_tuple_present_callback(Relation index, HeapTuple htup,
-						  Datum *values, bool *isnull,
-						  bool tupleIsAlive, void *checkstate);
+									  Datum *values, bool *isnull,
+									  bool tupleIsAlive, void *checkstate);
 static IndexTuple bt_normalize_tuple(BtreeCheckState *state,
-				   IndexTuple itup);
+									 IndexTuple itup);
 static bool bt_rootdescend(BtreeCheckState *state, IndexTuple itup);
 static inline bool offset_is_negative_infinity(BTPageOpaque opaque,
-							OffsetNumber offset);
+											   OffsetNumber offset);
 static inline bool invariant_l_offset(BtreeCheckState *state, BTScanInsert key,
-				   OffsetNumber upperbound);
+									  OffsetNumber upperbound);
 static inline bool invariant_leq_offset(BtreeCheckState *state,
-					 BTScanInsert key,
-					 OffsetNumber upperbound);
+										BTScanInsert key,
+										OffsetNumber upperbound);
 static inline bool invariant_g_offset(BtreeCheckState *state, BTScanInsert key,
-				   OffsetNumber lowerbound);
+									  OffsetNumber lowerbound);
 static inline bool invariant_l_nontarget_offset(BtreeCheckState *state,
-							 BTScanInsert key,
-							 BlockNumber nontargetblock,
-							 Page nontarget,
-							 OffsetNumber upperbound);
+												BTScanInsert key,
+												BlockNumber nontargetblock,
+												Page nontarget,
+												OffsetNumber upperbound);
 static Page palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum);
 static inline BTScanInsert bt_mkscankey_pivotsearch(Relation rel,
-						 IndexTuple itup);
+													IndexTuple itup);
 static ItemId PageGetItemIdCareful(BtreeCheckState *state, BlockNumber block,
-					 Page page, OffsetNumber offset);
+								   Page page, OffsetNumber offset);
 static inline ItemPointer BTreeTupleGetHeapTIDCareful(BtreeCheckState *state,
-							IndexTuple itup, bool nonpivot);
+													  IndexTuple itup, bool nonpivot);
 
 /*
  * bt_index_check(index regclass, heapallindexed boolean)

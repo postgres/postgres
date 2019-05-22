@@ -18,6 +18,6 @@
 
 extern bool printsimple(TupleTableSlot *slot, DestReceiver *self);
 extern void printsimple_startup(DestReceiver *self, int operation,
-					TupleDesc tupdesc);
+								TupleDesc tupdesc);
 
 #endif							/* PRINTSIMPLE_H */

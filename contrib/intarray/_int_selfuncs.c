@@ -35,7 +35,7 @@ PG_FUNCTION_INFO_V1(_int_matchsel);
 
 
 static Selectivity int_query_opr_selec(ITEM *item, Datum *values, float4 *freqs,
-					int nmncelems, float4 minfreq);
+									   int nmncelems, float4 minfreq);
 static int	compare_val_int4(const void *a, const void *b);
 
 /*

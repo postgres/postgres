@@ -87,22 +87,22 @@ static DumpId postDataBoundId;
 
 static int	DOTypeNameCompare(const void *p1, const void *p2);
 static bool TopoSort(DumpableObject **objs,
-		 int numObjs,
-		 DumpableObject **ordering,
-		 int *nOrdering);
+					 int numObjs,
+					 DumpableObject **ordering,
+					 int *nOrdering);
 static void addHeapElement(int val, int *heap, int heapLength);
 static int	removeHeapElement(int *heap, int heapLength);
 static void findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs);
-static int findLoop(DumpableObject *obj,
-		 DumpId startPoint,
-		 bool *processed,
-		 DumpId *searchFailed,
-		 DumpableObject **workspace,
-		 int depth);
+static int	findLoop(DumpableObject *obj,
+					 DumpId startPoint,
+					 bool *processed,
+					 DumpId *searchFailed,
+					 DumpableObject **workspace,
+					 int depth);
 static void repairDependencyLoop(DumpableObject **loop,
-					 int nLoop);
+								 int nLoop);
 static void describeDumpableObject(DumpableObject *obj,
-					   char *buf, int bufsize);
+								   char *buf, int bufsize);
 
 
 /*

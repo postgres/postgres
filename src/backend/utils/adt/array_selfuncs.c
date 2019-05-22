@@ -39,27 +39,27 @@
 		DEFAULT_OVERLAP_SEL : DEFAULT_CONTAIN_SEL)
 
 static Selectivity calc_arraycontsel(VariableStatData *vardata, Datum constval,
-				  Oid elemtype, Oid operator);
+									 Oid elemtype, Oid operator);
 static Selectivity mcelem_array_selec(ArrayType *array,
-				   TypeCacheEntry *typentry,
-				   Datum *mcelem, int nmcelem,
-				   float4 *numbers, int nnumbers,
-				   float4 *hist, int nhist,
-				   Oid operator);
+									  TypeCacheEntry *typentry,
+									  Datum *mcelem, int nmcelem,
+									  float4 *numbers, int nnumbers,
+									  float4 *hist, int nhist,
+									  Oid operator);
 static Selectivity mcelem_array_contain_overlap_selec(Datum *mcelem, int nmcelem,
-								   float4 *numbers, int nnumbers,
-								   Datum *array_data, int nitems,
-								   Oid operator, TypeCacheEntry *typentry);
+													  float4 *numbers, int nnumbers,
+													  Datum *array_data, int nitems,
+													  Oid operator, TypeCacheEntry *typentry);
 static Selectivity mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
-							 float4 *numbers, int nnumbers,
-							 Datum *array_data, int nitems,
-							 float4 *hist, int nhist,
-							 Oid operator, TypeCacheEntry *typentry);
+												float4 *numbers, int nnumbers,
+												Datum *array_data, int nitems,
+												float4 *hist, int nhist,
+												Oid operator, TypeCacheEntry *typentry);
 static float *calc_hist(const float4 *hist, int nhist, int n);
 static float *calc_distr(const float *p, int n, int m, float rest);
 static int	floor_log2(uint32 n);
 static bool find_next_mcelem(Datum *mcelem, int nmcelem, Datum value,
-				 int *index, TypeCacheEntry *typentry);
+							 int *index, TypeCacheEntry *typentry);
 static int	element_compare(const void *key1, const void *key2, void *arg);
 static int	float_compare_desc(const void *key1, const void *key2);
 

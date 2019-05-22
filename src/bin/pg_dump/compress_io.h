@@ -48,9 +48,9 @@ typedef struct CompressorState CompressorState;
 
 extern CompressorState *AllocateCompressor(int compression, WriteFunc writeF);
 extern void ReadDataFromArchive(ArchiveHandle *AH, int compression,
-					ReadFunc readF);
+								ReadFunc readF);
 extern void WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
-				   const void *data, size_t dLen);
+							   const void *data, size_t dLen);
 extern void EndCompressor(ArchiveHandle *AH, CompressorState *cs);
 
 

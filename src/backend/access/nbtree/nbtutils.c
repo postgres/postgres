@@ -37,22 +37,22 @@ typedef struct BTSortArrayContext
 } BTSortArrayContext;
 
 static Datum _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
-						 StrategyNumber strat,
-						 Datum *elems, int nelems);
-static int _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
-						bool reverse,
-						Datum *elems, int nelems);
+									  StrategyNumber strat,
+									  Datum *elems, int nelems);
+static int	_bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
+									bool reverse,
+									Datum *elems, int nelems);
 static int	_bt_compare_array_elements(const void *a, const void *b, void *arg);
 static bool _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
-						 ScanKey leftarg, ScanKey rightarg,
-						 bool *result);
+									 ScanKey leftarg, ScanKey rightarg,
+									 bool *result);
 static bool _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption);
 static void _bt_mark_scankey_required(ScanKey skey);
 static bool _bt_check_rowcompare(ScanKey skey,
-					 IndexTuple tuple, int tupnatts, TupleDesc tupdesc,
-					 ScanDirection dir, bool *continuescan);
-static int _bt_keep_natts(Relation rel, IndexTuple lastleft,
-			   IndexTuple firstright, BTScanInsert itup_key);
+								 IndexTuple tuple, int tupnatts, TupleDesc tupdesc,
+								 ScanDirection dir, bool *continuescan);
+static int	_bt_keep_natts(Relation rel, IndexTuple lastleft,
+						   IndexTuple firstright, BTScanInsert itup_key);
 
 
 /*

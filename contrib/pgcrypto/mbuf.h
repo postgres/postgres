@@ -90,8 +90,8 @@ int			mbuf_free(MBuf *mbuf);
 /*
  * Push filter
  */
-int pushf_create(PushFilter **res, const PushFilterOps *ops, void *init_arg,
-			 PushFilter *next);
+int			pushf_create(PushFilter **res, const PushFilterOps *ops, void *init_arg,
+						 PushFilter *next);
 int			pushf_write(PushFilter *mp, const uint8 *data, int len);
 void		pushf_free_all(PushFilter *mp);
 void		pushf_free(PushFilter *mp);
@@ -102,11 +102,11 @@ int			pushf_create_mbuf_writer(PushFilter **mp_p, MBuf *mbuf);
 /*
  * Pull filter
  */
-int pullf_create(PullFilter **res, const PullFilterOps *ops,
-			 void *init_arg, PullFilter *src);
+int			pullf_create(PullFilter **res, const PullFilterOps *ops,
+						 void *init_arg, PullFilter *src);
 int			pullf_read(PullFilter *mp, int len, uint8 **data_p);
-int pullf_read_max(PullFilter *mp, int len,
-			   uint8 **data_p, uint8 *tmpbuf);
+int			pullf_read_max(PullFilter *mp, int len,
+						   uint8 **data_p, uint8 *tmpbuf);
 void		pullf_free(PullFilter *mp);
 int			pullf_read_fixed(PullFilter *src, int len, uint8 *dst);
 

@@ -185,38 +185,38 @@ extern void InitPlanCache(void);
 extern void ResetPlanCache(void);
 
 extern CachedPlanSource *CreateCachedPlan(struct RawStmt *raw_parse_tree,
-				 const char *query_string,
-				 const char *commandTag);
+										  const char *query_string,
+										  const char *commandTag);
 extern CachedPlanSource *CreateOneShotCachedPlan(struct RawStmt *raw_parse_tree,
-						const char *query_string,
-						const char *commandTag);
+												 const char *query_string,
+												 const char *commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,
-				   List *querytree_list,
-				   MemoryContext querytree_context,
-				   Oid *param_types,
-				   int num_params,
-				   ParserSetupHook parserSetup,
-				   void *parserSetupArg,
-				   int cursor_options,
-				   bool fixed_result);
+							   List *querytree_list,
+							   MemoryContext querytree_context,
+							   Oid *param_types,
+							   int num_params,
+							   ParserSetupHook parserSetup,
+							   void *parserSetupArg,
+							   int cursor_options,
+							   bool fixed_result);
 
 extern void SaveCachedPlan(CachedPlanSource *plansource);
 extern void DropCachedPlan(CachedPlanSource *plansource);
 
 extern void CachedPlanSetParentContext(CachedPlanSource *plansource,
-						   MemoryContext newcontext);
+									   MemoryContext newcontext);
 
 extern CachedPlanSource *CopyCachedPlan(CachedPlanSource *plansource);
 
 extern bool CachedPlanIsValid(CachedPlanSource *plansource);
 
 extern List *CachedPlanGetTargetList(CachedPlanSource *plansource,
-						QueryEnvironment *queryEnv);
+									 QueryEnvironment *queryEnv);
 
 extern CachedPlan *GetCachedPlan(CachedPlanSource *plansource,
-			  ParamListInfo boundParams,
-			  bool useResOwner,
-			  QueryEnvironment *queryEnv);
+								 ParamListInfo boundParams,
+								 bool useResOwner,
+								 QueryEnvironment *queryEnv);
 extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
 
 extern CachedExpression *GetCachedExpression(Node *expr);

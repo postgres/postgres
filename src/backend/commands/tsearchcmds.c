@@ -49,9 +49,9 @@
 
 
 static void MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
-						 HeapTuple tup, Relation relMap);
+									 HeapTuple tup, Relation relMap);
 static void DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
-						 HeapTuple tup, Relation relMap);
+									 HeapTuple tup, Relation relMap);
 
 
 /* --------------------- TS Parser commands ------------------------ */

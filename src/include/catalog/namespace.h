@@ -64,14 +64,14 @@ typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
 	RangeVarGetRelidExtended(relation, lockmode, \
 							 (missing_ok) ? RVR_MISSING_OK : 0, NULL, NULL)
 
-extern Oid RangeVarGetRelidExtended(const RangeVar *relation,
-						 LOCKMODE lockmode, uint32 flags,
-						 RangeVarGetRelidCallback callback,
-						 void *callback_arg);
+extern Oid	RangeVarGetRelidExtended(const RangeVar *relation,
+									 LOCKMODE lockmode, uint32 flags,
+									 RangeVarGetRelidCallback callback,
+									 void *callback_arg);
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);
-extern Oid RangeVarGetAndCheckCreationNamespace(RangeVar *newRelation,
-									 LOCKMODE lockmode,
-									 Oid *existing_relation_id);
+extern Oid	RangeVarGetAndCheckCreationNamespace(RangeVar *newRelation,
+												 LOCKMODE lockmode,
+												 Oid *existing_relation_id);
 extern void RangeVarAdjustRelationPersistence(RangeVar *newRelation, Oid nspid);
 extern Oid	RelnameGetRelid(const char *relname);
 extern bool RelationIsVisible(Oid relid);
@@ -80,15 +80,15 @@ extern Oid	TypenameGetTypid(const char *typname);
 extern bool TypeIsVisible(Oid typid);
 
 extern FuncCandidateList FuncnameGetCandidates(List *names,
-					  int nargs, List *argnames,
-					  bool expand_variadic,
-					  bool expand_defaults,
-					  bool missing_ok);
+											   int nargs, List *argnames,
+											   bool expand_variadic,
+											   bool expand_defaults,
+											   bool missing_ok);
 extern bool FunctionIsVisible(Oid funcid);
 
 extern Oid	OpernameGetOprid(List *names, Oid oprleft, Oid oprright);
 extern FuncCandidateList OpernameGetCandidates(List *names, char oprkind,
-					  bool missing_schema_ok);
+											   bool missing_schema_ok);
 extern bool OperatorIsVisible(Oid oprid);
 
 extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);
@@ -119,8 +119,8 @@ extern Oid	get_ts_config_oid(List *names, bool missing_ok);
 extern bool TSConfigIsVisible(Oid cfgid);
 
 extern void DeconstructQualifiedName(List *names,
-						 char **nspname_p,
-						 char **objname_p);
+									 char **nspname_p,
+									 char **objname_p);
 extern Oid	LookupNamespaceNoError(const char *nspname);
 extern Oid	LookupExplicitNamespace(const char *nspname, bool missing_ok);
 extern Oid	get_namespace_oid(const char *nspname, bool missing_ok);
@@ -141,9 +141,9 @@ extern bool isTempNamespaceInUse(Oid namespaceId);
 extern int	GetTempNamespaceBackendId(Oid namespaceId);
 extern Oid	GetTempToastNamespace(void);
 extern void GetTempNamespaceState(Oid *tempNamespaceId,
-					  Oid *tempToastNamespaceId);
+								  Oid *tempToastNamespaceId);
 extern void SetTempNamespaceState(Oid tempNamespaceId,
-					  Oid tempToastNamespaceId);
+								  Oid tempToastNamespaceId);
 extern void ResetTempTableNamespace(void);
 
 extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);
@@ -161,7 +161,7 @@ extern Oid	FindDefaultConversionProc(int32 for_encoding, int32 to_encoding);
 extern void InitializeSearchPath(void);
 extern void AtEOXact_Namespace(bool isCommit, bool parallel);
 extern void AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
-					  SubTransactionId parentSubid);
+								  SubTransactionId parentSubid);
 
 /* stuff for search_path GUC variable */
 extern char *namespace_search_path;

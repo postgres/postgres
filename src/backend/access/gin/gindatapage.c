@@ -104,20 +104,20 @@ typedef struct
 
 static ItemPointer dataLeafPageGetUncompressed(Page page, int *nitems);
 static void dataSplitPageInternal(GinBtree btree, Buffer origbuf,
-					  GinBtreeStack *stack,
-					  void *insertdata, BlockNumber updateblkno,
-					  Page *newlpage, Page *newrpage);
+								  GinBtreeStack *stack,
+								  void *insertdata, BlockNumber updateblkno,
+								  Page *newlpage, Page *newrpage);
 
 static disassembledLeaf *disassembleLeaf(Page page);
 static bool leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining);
 static bool addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems,
-			   int nNewItems);
+						   int nNewItems);
 
 static void computeLeafRecompressWALData(disassembledLeaf *leaf);
 static void dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf);
 static void dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
-						 ItemPointerData lbound, ItemPointerData rbound,
-						 Page lpage, Page rpage);
+									 ItemPointerData lbound, ItemPointerData rbound,
+									 Page lpage, Page rpage);
 
 /*
  * Read TIDs from leaf data page to single uncompressed array. The TIDs are

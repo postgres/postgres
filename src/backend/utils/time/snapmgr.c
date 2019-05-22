@@ -196,8 +196,8 @@ static ActiveSnapshotElt *OldestActiveSnapshot = NULL;
  * Currently registered Snapshots.  Ordered in a heap by xmin, so that we can
  * quickly find the one with lowest xmin, to advance our MyPgXact->xmin.
  */
-static int xmin_cmp(const pairingheap_node *a, const pairingheap_node *b,
-		 void *arg);
+static int	xmin_cmp(const pairingheap_node *a, const pairingheap_node *b,
+					 void *arg);
 
 static pairingheap RegisteredSnapshots = {&xmin_cmp, NULL, NULL};
 

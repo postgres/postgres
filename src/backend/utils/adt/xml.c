@@ -118,10 +118,10 @@ struct PgXmlErrorContext
 };
 
 static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
-				  xmlParserCtxtPtr ctxt);
+										   xmlParserCtxtPtr ctxt);
 static void xml_errorHandler(void *data, xmlErrorPtr error);
 static void xml_ereport_by_code(int level, int sqlcode,
-					const char *msg, int errcode);
+								const char *msg, int errcode);
 static void chopStringInfoNewlines(StringInfo str);
 static void appendStringInfoLineSeparator(StringInfo str);
 
@@ -137,41 +137,41 @@ static char *xml_pstrdup(const char *string);
 #endif							/* USE_LIBXMLCONTEXT */
 
 static xmlChar *xml_text2xmlChar(text *in);
-static int parse_xml_decl(const xmlChar *str, size_t *lenp,
-			   xmlChar **version, xmlChar **encoding, int *standalone);
+static int	parse_xml_decl(const xmlChar *str, size_t *lenp,
+						   xmlChar **version, xmlChar **encoding, int *standalone);
 static bool print_xml_decl(StringInfo buf, const xmlChar *version,
-			   pg_enc encoding, int standalone);
+						   pg_enc encoding, int standalone);
 static bool xml_doctype_in_content(const xmlChar *str);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
-		  bool preserve_whitespace, int encoding);
+						   bool preserve_whitespace, int encoding);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt);
-static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-					   ArrayBuildState *astate,
-					   PgXmlErrorContext *xmlerrcxt);
+static int	xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
+								   ArrayBuildState *astate,
+								   PgXmlErrorContext *xmlerrcxt);
 static xmlChar *pg_xmlCharStrndup(const char *str, size_t len);
 #endif							/* USE_LIBXML */
 
 static void xmldata_root_element_start(StringInfo result, const char *eltname,
-						   const char *xmlschema, const char *targetns,
-						   bool top_level);
+									   const char *xmlschema, const char *targetns,
+									   bool top_level);
 static void xmldata_root_element_end(StringInfo result, const char *eltname);
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
-					  const char *xmlschema, bool nulls, bool tableforest,
-					  const char *targetns, bool top_level);
+										const char *xmlschema, bool nulls, bool tableforest,
+										const char *targetns, bool top_level);
 static const char *map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid,
-						   bool nulls, bool tableforest, const char *targetns);
+											  bool nulls, bool tableforest, const char *targetns);
 static const char *map_sql_schema_to_xmlschema_types(Oid nspid,
-								  List *relid_list, bool nulls,
-								  bool tableforest, const char *targetns);
+													 List *relid_list, bool nulls,
+													 bool tableforest, const char *targetns);
 static const char *map_sql_catalog_to_xmlschema_types(List *nspid_list,
-								   bool nulls, bool tableforest,
-								   const char *targetns);
+													  bool nulls, bool tableforest,
+													  const char *targetns);
 static const char *map_sql_type_to_xml_name(Oid typeoid, int typmod);
 static const char *map_sql_typecoll_to_xmlschema_types(List *tupdesc_list);
 static const char *map_sql_type_to_xmlschema_type(Oid typeoid, int typmod);
 static void SPI_sql_row_to_xmlelement(uint64 rownum, StringInfo result,
-						  char *tablename, bool nulls, bool tableforest,
-						  const char *targetns, bool top_level);
+									  char *tablename, bool nulls, bool tableforest,
+									  const char *targetns, bool top_level);
 
 /* XMLTABLE support */
 #ifdef USE_LIBXML
@@ -195,13 +195,13 @@ typedef struct XmlTableBuilderData
 static void XmlTableInitOpaque(struct TableFuncScanState *state, int natts);
 static void XmlTableSetDocument(struct TableFuncScanState *state, Datum value);
 static void XmlTableSetNamespace(struct TableFuncScanState *state, const char *name,
-					 const char *uri);
+								 const char *uri);
 static void XmlTableSetRowFilter(struct TableFuncScanState *state, const char *path);
 static void XmlTableSetColumnFilter(struct TableFuncScanState *state,
-						const char *path, int colnum);
+									const char *path, int colnum);
 static bool XmlTableFetchRow(struct TableFuncScanState *state);
 static Datum XmlTableGetValue(struct TableFuncScanState *state, int colnum,
-				 Oid typid, int32 typmod, bool *isnull);
+							  Oid typid, int32 typmod, bool *isnull);
 static void XmlTableDestroyOpaque(struct TableFuncScanState *state);
 
 const TableFuncRoutine XmlTableRoutine =

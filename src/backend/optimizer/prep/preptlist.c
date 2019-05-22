@@ -54,7 +54,7 @@
 
 
 static List *expand_targetlist(List *tlist, int command_type,
-				  Index result_relation, Relation rel);
+							   Index result_relation, Relation rel);
 
 
 /*

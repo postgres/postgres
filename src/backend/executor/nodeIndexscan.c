@@ -60,13 +60,13 @@ static TupleTableSlot *IndexNext(IndexScanState *node);
 static TupleTableSlot *IndexNextWithReorder(IndexScanState *node);
 static void EvalOrderByExpressions(IndexScanState *node, ExprContext *econtext);
 static bool IndexRecheck(IndexScanState *node, TupleTableSlot *slot);
-static int cmp_orderbyvals(const Datum *adist, const bool *anulls,
-				const Datum *bdist, const bool *bnulls,
-				IndexScanState *node);
-static int reorderqueue_cmp(const pairingheap_node *a,
-				 const pairingheap_node *b, void *arg);
+static int	cmp_orderbyvals(const Datum *adist, const bool *anulls,
+							const Datum *bdist, const bool *bnulls,
+							IndexScanState *node);
+static int	reorderqueue_cmp(const pairingheap_node *a,
+							 const pairingheap_node *b, void *arg);
 static void reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
-				  Datum *orderbyvals, bool *orderbynulls);
+							  Datum *orderbyvals, bool *orderbynulls);
 static HeapTuple reorderqueue_pop(IndexScanState *node);
 
 

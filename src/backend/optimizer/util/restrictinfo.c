@@ -22,22 +22,22 @@
 
 
 static RestrictInfo *make_restrictinfo_internal(Expr *clause,
-						   Expr *orclause,
-						   bool is_pushed_down,
-						   bool outerjoin_delayed,
-						   bool pseudoconstant,
-						   Index security_level,
-						   Relids required_relids,
-						   Relids outer_relids,
-						   Relids nullable_relids);
+												Expr *orclause,
+												bool is_pushed_down,
+												bool outerjoin_delayed,
+												bool pseudoconstant,
+												Index security_level,
+												Relids required_relids,
+												Relids outer_relids,
+												Relids nullable_relids);
 static Expr *make_sub_restrictinfos(Expr *clause,
-					   bool is_pushed_down,
-					   bool outerjoin_delayed,
-					   bool pseudoconstant,
-					   Index security_level,
-					   Relids required_relids,
-					   Relids outer_relids,
-					   Relids nullable_relids);
+									bool is_pushed_down,
+									bool outerjoin_delayed,
+									bool pseudoconstant,
+									Index security_level,
+									Relids required_relids,
+									Relids outer_relids,
+									Relids nullable_relids);
 
 
 /*

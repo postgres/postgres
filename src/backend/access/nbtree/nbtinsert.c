@@ -32,29 +32,29 @@
 static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 
 static TransactionId _bt_check_unique(Relation rel, BTInsertState insertstate,
-				 Relation heapRel,
-				 IndexUniqueCheck checkUnique, bool *is_unique,
-				 uint32 *speculativeToken);
+									  Relation heapRel,
+									  IndexUniqueCheck checkUnique, bool *is_unique,
+									  uint32 *speculativeToken);
 static OffsetNumber _bt_findinsertloc(Relation rel,
-				  BTInsertState insertstate,
-				  bool checkingunique,
-				  BTStack stack,
-				  Relation heapRel);
+									  BTInsertState insertstate,
+									  bool checkingunique,
+									  BTStack stack,
+									  Relation heapRel);
 static void _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack);
 static void _bt_insertonpg(Relation rel, BTScanInsert itup_key,
-			   Buffer buf,
-			   Buffer cbuf,
-			   BTStack stack,
-			   IndexTuple itup,
-			   OffsetNumber newitemoff,
-			   bool split_only_page);
+						   Buffer buf,
+						   Buffer cbuf,
+						   BTStack stack,
+						   IndexTuple itup,
+						   OffsetNumber newitemoff,
+						   bool split_only_page);
 static Buffer _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf,
-		  Buffer cbuf, OffsetNumber newitemoff, Size newitemsz,
-		  IndexTuple newitem);
+						Buffer cbuf, OffsetNumber newitemoff, Size newitemsz,
+						IndexTuple newitem);
 static void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
-				  BTStack stack, bool is_root, bool is_only);
+							  BTStack stack, bool is_root, bool is_only);
 static bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
-			 OffsetNumber itup_off);
+						 OffsetNumber itup_off);
 static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
 
 /*

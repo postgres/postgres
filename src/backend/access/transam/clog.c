@@ -92,20 +92,20 @@ static int	ZeroCLOGPage(int pageno, bool writeXlog);
 static bool CLOGPagePrecedes(int page1, int page2);
 static void WriteZeroPageXlogRec(int pageno);
 static void WriteTruncateXlogRec(int pageno, TransactionId oldestXact,
-					 Oid oldestXidDb);
+								 Oid oldestXidDb);
 static void TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
-						   TransactionId *subxids, XidStatus status,
-						   XLogRecPtr lsn, int pageno,
-						   bool all_xact_same_page);
+									   TransactionId *subxids, XidStatus status,
+									   XLogRecPtr lsn, int pageno,
+									   bool all_xact_same_page);
 static void TransactionIdSetStatusBit(TransactionId xid, XidStatus status,
-						  XLogRecPtr lsn, int slotno);
+									  XLogRecPtr lsn, int slotno);
 static void set_status_by_pages(int nsubxids, TransactionId *subxids,
-					XidStatus status, XLogRecPtr lsn);
+								XidStatus status, XLogRecPtr lsn);
 static bool TransactionGroupUpdateXidStatus(TransactionId xid,
-								XidStatus status, XLogRecPtr lsn, int pageno);
+											XidStatus status, XLogRecPtr lsn, int pageno);
 static void TransactionIdSetPageStatusInternal(TransactionId xid, int nsubxids,
-								   TransactionId *subxids, XidStatus status,
-								   XLogRecPtr lsn, int pageno);
+											   TransactionId *subxids, XidStatus status,
+											   XLogRecPtr lsn, int pageno);
 
 
 /*

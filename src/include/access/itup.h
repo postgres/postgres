@@ -149,13 +149,13 @@ typedef IndexAttributeBitMapData * IndexAttributeBitMap;
 
 /* routines in indextuple.c */
 extern IndexTuple index_form_tuple(TupleDesc tupleDescriptor,
-				 Datum *values, bool *isnull);
+								   Datum *values, bool *isnull);
 extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
-					  TupleDesc tupleDesc);
+								   TupleDesc tupleDesc);
 extern void index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
-				   Datum *values, bool *isnull);
+							   Datum *values, bool *isnull);
 extern IndexTuple CopyIndexTuple(IndexTuple source);
 extern IndexTuple index_truncate_tuple(TupleDesc sourceDescriptor,
-					 IndexTuple source, int leavenatts);
+									   IndexTuple source, int leavenatts);
 
 #endif							/* ITUP_H */

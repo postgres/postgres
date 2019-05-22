@@ -41,14 +41,14 @@
 
 
 static Datum ExecHashSubPlan(SubPlanState *node,
-				ExprContext *econtext,
-				bool *isNull);
+							 ExprContext *econtext,
+							 bool *isNull);
 static Datum ExecScanSubPlan(SubPlanState *node,
-				ExprContext *econtext,
-				bool *isNull);
+							 ExprContext *econtext,
+							 bool *isNull);
 static void buildSubPlanHash(SubPlanState *node, ExprContext *econtext);
 static bool findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot,
-				 FmgrInfo *eqfunctions);
+							 FmgrInfo *eqfunctions);
 static bool slotAllNulls(TupleTableSlot *slot);
 static bool slotNoNulls(TupleTableSlot *slot);
 

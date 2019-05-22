@@ -676,7 +676,7 @@ extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 
 extern void sortDumpableObjects(DumpableObject **objs, int numObjs,
-					DumpId preBoundaryId, DumpId postBoundaryId);
+								DumpId preBoundaryId, DumpId postBoundaryId);
 extern void sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs);
 
 /*
@@ -711,19 +711,19 @@ extern TSDictInfo *getTSDictionaries(Archive *fout, int *numTSDicts);
 extern TSTemplateInfo *getTSTemplates(Archive *fout, int *numTSTemplates);
 extern TSConfigInfo *getTSConfigurations(Archive *fout, int *numTSConfigs);
 extern FdwInfo *getForeignDataWrappers(Archive *fout,
-					   int *numForeignDataWrappers);
+									   int *numForeignDataWrappers);
 extern ForeignServerInfo *getForeignServers(Archive *fout,
-				  int *numForeignServers);
+											int *numForeignServers);
 extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
 extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
-					   int numExtensions);
+								   int numExtensions);
 extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
-					   int numExtensions);
+								   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
 extern void getPublications(Archive *fout);
 extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
-					 int numTables);
+								 int numTables);
 extern void getSubscriptions(Archive *fout);
 
 #endif							/* PG_DUMP_H */

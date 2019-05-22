@@ -29,7 +29,7 @@
 
 static VarBit *bit_catenate(VarBit *arg1, VarBit *arg2);
 static VarBit *bitsubstring(VarBit *arg, int32 s, int32 l,
-			 bool length_not_specified);
+							bool length_not_specified);
 static VarBit *bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl);
 
 

@@ -16,7 +16,7 @@
 #include "utils/builtins.h"
 
 static void pg_to_ascii(unsigned char *src, unsigned char *src_end,
-			unsigned char *dest, int enc);
+						unsigned char *dest, int enc);
 static text *encode_to_ascii(text *data, int enc);
 
 

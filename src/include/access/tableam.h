@@ -748,7 +748,7 @@ table_beginscan(Relation rel, Snapshot snapshot,
  * snapshot appropriate for scanning catalog relations.
  */
 extern TableScanDesc table_beginscan_catalog(Relation rel, int nkeys,
-						struct ScanKeyData *key);
+											 struct ScanKeyData *key);
 
 /*
  * Like table_beginscan(), but table_beginscan_strat() offers an extended API
@@ -895,8 +895,8 @@ extern Size table_parallelscan_estimate(Relation rel, Snapshot snapshot);
  * individual workers attach via table_beginscan_parallel.
  */
 extern void table_parallelscan_initialize(Relation rel,
-							  ParallelTableScanDesc pscan,
-							  Snapshot snapshot);
+										  ParallelTableScanDesc pscan,
+										  Snapshot snapshot);
 
 /*
  * Begin a parallel scan. `pscan` needs to have been initialized with
@@ -906,7 +906,7 @@ extern void table_parallelscan_initialize(Relation rel,
  * Caller must hold a suitable lock on the relation.
  */
 extern TableScanDesc table_beginscan_parallel(Relation rel,
-						 ParallelTableScanDesc pscan);
+											  ParallelTableScanDesc pscan);
 
 /*
  * Restart a parallel scan.  Call this in the leader process.  Caller is
@@ -998,9 +998,9 @@ table_index_fetch_tuple(struct IndexFetchTableData *scan,
  * unique index.
  */
 extern bool table_index_fetch_tuple_check(Relation rel,
-							  ItemPointer tid,
-							  Snapshot snapshot,
-							  bool *all_dead);
+										  ItemPointer tid,
+										  Snapshot snapshot,
+										  bool *all_dead);
 
 
 /* ------------------------------------------------------------------------
@@ -1705,10 +1705,10 @@ table_scan_sample_next_tuple(TableScanDesc scan,
 
 extern void simple_table_insert(Relation rel, TupleTableSlot *slot);
 extern void simple_table_delete(Relation rel, ItemPointer tid,
-					Snapshot snapshot);
+								Snapshot snapshot);
 extern void simple_table_update(Relation rel, ItemPointer otid,
-					TupleTableSlot *slot, Snapshot snapshot,
-					bool *update_indexes);
+								TupleTableSlot *slot, Snapshot snapshot,
+								bool *update_indexes);
 
 
 /* ----------------------------------------------------------------------------
@@ -1718,13 +1718,13 @@ extern void simple_table_update(Relation rel, ItemPointer otid,
 
 extern Size table_block_parallelscan_estimate(Relation rel);
 extern Size table_block_parallelscan_initialize(Relation rel,
-									ParallelTableScanDesc pscan);
+												ParallelTableScanDesc pscan);
 extern void table_block_parallelscan_reinitialize(Relation rel,
-									  ParallelTableScanDesc pscan);
+												  ParallelTableScanDesc pscan);
 extern BlockNumber table_block_parallelscan_nextpage(Relation rel,
-								  ParallelBlockTableScanDesc pbscan);
+													 ParallelBlockTableScanDesc pbscan);
 extern void table_block_parallelscan_startblock_init(Relation rel,
-										 ParallelBlockTableScanDesc pbscan);
+													 ParallelBlockTableScanDesc pbscan);
 
 
 /* ----------------------------------------------------------------------------
@@ -1735,6 +1735,6 @@ extern void table_block_parallelscan_startblock_init(Relation rel,
 extern const TableAmRoutine *GetTableAmRoutine(Oid amhandler);
 extern const TableAmRoutine *GetHeapamTableAmRoutine(void);
 extern bool check_default_table_access_method(char **newval, void **extra,
-								  GucSource source);
+											  GucSource source);
 
 #endif							/* TABLEAM_H */

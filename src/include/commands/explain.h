@@ -64,27 +64,27 @@ extern PGDLLIMPORT explain_get_index_name_hook_type explain_get_index_name_hook;
 
 
 extern void ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
-			 ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest);
+						 ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest);
 
 extern ExplainState *NewExplainState(void);
 
 extern TupleDesc ExplainResultDesc(ExplainStmt *stmt);
 
 extern void ExplainOneUtility(Node *utilityStmt, IntoClause *into,
-				  ExplainState *es, const char *queryString,
-				  ParamListInfo params, QueryEnvironment *queryEnv);
+							  ExplainState *es, const char *queryString,
+							  ParamListInfo params, QueryEnvironment *queryEnv);
 
 extern void ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into,
-			   ExplainState *es, const char *queryString,
-			   ParamListInfo params, QueryEnvironment *queryEnv,
-			   const instr_time *planduration);
+						   ExplainState *es, const char *queryString,
+						   ParamListInfo params, QueryEnvironment *queryEnv,
+						   const instr_time *planduration);
 
 extern void ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc);
 
 extern void ExplainPrintJITSummary(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainPrintJIT(ExplainState *es, int jit_flags,
-				struct JitInstrumentation *jit_instr, int worker_i);
+							struct JitInstrumentation *jit_instr, int worker_i);
 
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
 
@@ -93,21 +93,21 @@ extern void ExplainEndOutput(ExplainState *es);
 extern void ExplainSeparatePlans(ExplainState *es);
 
 extern void ExplainPropertyList(const char *qlabel, List *data,
-					ExplainState *es);
+								ExplainState *es);
 extern void ExplainPropertyListNested(const char *qlabel, List *data,
-						  ExplainState *es);
+									  ExplainState *es);
 extern void ExplainPropertyText(const char *qlabel, const char *value,
-					ExplainState *es);
+								ExplainState *es);
 extern void ExplainPropertyInteger(const char *qlabel, const char *unit,
-					   int64 value, ExplainState *es);
+								   int64 value, ExplainState *es);
 extern void ExplainPropertyFloat(const char *qlabel, const char *unit,
-					 double value, int ndigits, ExplainState *es);
+								 double value, int ndigits, ExplainState *es);
 extern void ExplainPropertyBool(const char *qlabel, bool value,
-					ExplainState *es);
+								ExplainState *es);
 
 extern void ExplainOpenGroup(const char *objtype, const char *labelname,
-				 bool labeled, ExplainState *es);
+							 bool labeled, ExplainState *es);
 extern void ExplainCloseGroup(const char *objtype, const char *labelname,
-				  bool labeled, ExplainState *es);
+							  bool labeled, ExplainState *es);
 
 #endif							/* EXPLAIN_H */

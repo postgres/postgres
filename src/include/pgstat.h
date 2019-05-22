@@ -1262,10 +1262,10 @@ extern void pgstat_reset_single_counter(Oid objectid, PgStat_Single_Reset_Type t
 
 extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
-					 PgStat_Counter livetuples, PgStat_Counter deadtuples);
+								 PgStat_Counter livetuples, PgStat_Counter deadtuples);
 extern void pgstat_report_analyze(Relation rel,
-					  PgStat_Counter livetuples, PgStat_Counter deadtuples,
-					  bool resetcounter);
+								  PgStat_Counter livetuples, PgStat_Counter deadtuples,
+								  bool resetcounter);
 
 extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_report_deadlock(void);
@@ -1283,14 +1283,14 @@ extern const char *pgstat_get_wait_event(uint32 wait_event_info);
 extern const char *pgstat_get_wait_event_type(uint32 wait_event_info);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
-									int buflen);
+													   int buflen);
 extern const char *pgstat_get_backend_desc(BackendType backendType);
 
 extern void pgstat_progress_start_command(ProgressCommandType cmdtype,
-							  Oid relid);
+										  Oid relid);
 extern void pgstat_progress_update_param(int index, int64 val);
 extern void pgstat_progress_update_multi_param(int nparam, const int *index,
-								   const int64 *val);
+											   const int64 *val);
 extern void pgstat_progress_end_command(void);
 
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
@@ -1403,9 +1403,9 @@ extern void pgstat_count_truncate(Relation rel);
 extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);
 
 extern void pgstat_init_function_usage(FunctionCallInfo fcinfo,
-						   PgStat_FunctionCallUsage *fcu);
+									   PgStat_FunctionCallUsage *fcu);
 extern void pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu,
-						  bool finalize);
+									  bool finalize);
 
 extern void AtEOXact_PgStat(bool isCommit, bool parallel);
 extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
@@ -1414,9 +1414,9 @@ extern void AtPrepare_PgStat(void);
 extern void PostPrepare_PgStat(void);
 
 extern void pgstat_twophase_postcommit(TransactionId xid, uint16 info,
-						   void *recdata, uint32 len);
+									   void *recdata, uint32 len);
 extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
-						  void *recdata, uint32 len);
+									  void *recdata, uint32 len);
 
 extern void pgstat_send_archiver(const char *xlog, bool failed);
 extern void pgstat_send_bgwriter(void);

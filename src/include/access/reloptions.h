@@ -247,35 +247,35 @@ typedef struct
 
 extern relopt_kind add_reloption_kind(void);
 extern void add_bool_reloption(bits32 kinds, const char *name, const char *desc,
-				   bool default_val);
+							   bool default_val);
 extern void add_int_reloption(bits32 kinds, const char *name, const char *desc,
-				  int default_val, int min_val, int max_val);
+							  int default_val, int min_val, int max_val);
 extern void add_real_reloption(bits32 kinds, const char *name, const char *desc,
-				   double default_val, double min_val, double max_val);
+							   double default_val, double min_val, double max_val);
 extern void add_string_reloption(bits32 kinds, const char *name, const char *desc,
-					 const char *default_val, validate_string_relopt validator);
+								 const char *default_val, validate_string_relopt validator);
 
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
-					const char *namspace, char *validnsps[],
-					bool acceptOidsOff, bool isReset);
+								 const char *namspace, char *validnsps[],
+								 bool acceptOidsOff, bool isReset);
 extern List *untransformRelOptions(Datum options);
 extern bytea *extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
-				  amoptions_function amoptions);
+								amoptions_function amoptions);
 extern relopt_value *parseRelOptions(Datum options, bool validate,
-				relopt_kind kind, int *numrelopts);
+									 relopt_kind kind, int *numrelopts);
 extern void *allocateReloptStruct(Size base, relopt_value *options,
-					 int numoptions);
+								  int numoptions);
 extern void fillRelOptions(void *rdopts, Size basesize,
-			   relopt_value *options, int numoptions,
-			   bool validate,
-			   const relopt_parse_elt *elems, int nelems);
+						   relopt_value *options, int numoptions,
+						   bool validate,
+						   const relopt_parse_elt *elems, int nelems);
 
 extern bytea *default_reloptions(Datum reloptions, bool validate,
-				   relopt_kind kind);
+								 relopt_kind kind);
 extern bytea *heap_reloptions(char relkind, Datum reloptions, bool validate);
 extern bytea *view_reloptions(Datum reloptions, bool validate);
 extern bytea *index_reloptions(amoptions_function amoptions, Datum reloptions,
-				 bool validate);
+							   bool validate);
 extern bytea *attribute_reloptions(Datum reloptions, bool validate);
 extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
 extern LOCKMODE AlterTableGetRelOptionsLockLevel(List *defList);

@@ -131,15 +131,15 @@ static float8 dist_ppoly_internal(Point *pt, POLYGON *poly);
 
 /* Routines for encoding and decoding */
 static float8 single_decode(char *num, char **endptr_p,
-			  const char *type_name, const char *orig_string);
+							const char *type_name, const char *orig_string);
 static void single_encode(float8 x, StringInfo str);
 static void pair_decode(char *str, float8 *x, float8 *y, char **endptr_p,
-			const char *type_name, const char *orig_string);
+						const char *type_name, const char *orig_string);
 static void pair_encode(float8 x, float8 y, StringInfo str);
 static int	pair_count(char *s, char delim);
 static void path_decode(char *str, bool opentype, int npts, Point *p,
-			bool *isopen, char **endptr_p,
-			const char *type_name, const char *orig_string);
+						bool *isopen, char **endptr_p,
+						const char *type_name, const char *orig_string);
 static char *path_encode(enum path_delim path_delim, int npts, Point *pt);
 
 

@@ -22,11 +22,11 @@
 typedef struct RewriteStateData *RewriteState;
 
 extern RewriteState begin_heap_rewrite(Relation OldHeap, Relation NewHeap,
-				   TransactionId OldestXmin, TransactionId FreezeXid,
-				   MultiXactId MultiXactCutoff, bool use_wal);
+									   TransactionId OldestXmin, TransactionId FreezeXid,
+									   MultiXactId MultiXactCutoff, bool use_wal);
 extern void end_heap_rewrite(RewriteState state);
 extern void rewrite_heap_tuple(RewriteState state, HeapTuple oldTuple,
-				   HeapTuple newTuple);
+							   HeapTuple newTuple);
 extern bool rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
 
 /*

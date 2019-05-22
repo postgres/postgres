@@ -37,14 +37,14 @@
 
 
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
-					uint32 nblocks);
+								uint32 nblocks);
 static void _hash_splitbucket(Relation rel, Buffer metabuf,
-				  Bucket obucket, Bucket nbucket,
-				  Buffer obuf,
-				  Buffer nbuf,
-				  HTAB *htab,
-				  uint32 maxbucket,
-				  uint32 highmask, uint32 lowmask);
+							  Bucket obucket, Bucket nbucket,
+							  Buffer obuf,
+							  Buffer nbuf,
+							  HTAB *htab,
+							  uint32 maxbucket,
+							  uint32 highmask, uint32 lowmask);
 static void log_split_page(Relation rel, Buffer buf);
 
 

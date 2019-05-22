@@ -33,22 +33,22 @@
 
 
 static Node *coerce_type_typmod(Node *node,
-				   Oid targetTypeId, int32 targetTypMod,
-				   CoercionContext ccontext, CoercionForm cformat,
-				   int location,
-				   bool hideInputCoercion);
+								Oid targetTypeId, int32 targetTypMod,
+								CoercionContext ccontext, CoercionForm cformat,
+								int location,
+								bool hideInputCoercion);
 static void hide_coercion_node(Node *node);
 static Node *build_coercion_expression(Node *node,
-						  CoercionPathType pathtype,
-						  Oid funcId,
-						  Oid targetTypeId, int32 targetTypMod,
-						  CoercionContext ccontext, CoercionForm cformat,
-						  int location);
+									   CoercionPathType pathtype,
+									   Oid funcId,
+									   Oid targetTypeId, int32 targetTypMod,
+									   CoercionContext ccontext, CoercionForm cformat,
+									   int location);
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
-						 Oid targetTypeId,
-						 CoercionContext ccontext,
-						 CoercionForm cformat,
-						 int location);
+									  Oid targetTypeId,
+									  CoercionContext ccontext,
+									  CoercionForm cformat,
+									  int location);
 static bool is_complex_array(Oid typid);
 static bool typeIsOfTypedTable(Oid reltypeId, Oid reloftypeId);
 

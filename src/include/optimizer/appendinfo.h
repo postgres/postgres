@@ -18,18 +18,18 @@
 #include "utils/relcache.h"
 
 extern AppendRelInfo *make_append_rel_info(Relation parentrel,
-					 Relation childrel,
-					 Index parentRTindex, Index childRTindex);
+										   Relation childrel,
+										   Index parentRTindex, Index childRTindex);
 extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node,
-					   int nappinfos, AppendRelInfo **appinfos);
+									int nappinfos, AppendRelInfo **appinfos);
 extern Node *adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-								  Relids child_relids,
-								  Relids top_parent_relids);
+											   Relids child_relids,
+											   Relids top_parent_relids);
 extern Relids adjust_child_relids(Relids relids, int nappinfos,
-					AppendRelInfo **appinfos);
+								  AppendRelInfo **appinfos);
 extern Relids adjust_child_relids_multilevel(PlannerInfo *root, Relids relids,
-							   Relids child_relids, Relids top_parent_relids);
+											 Relids child_relids, Relids top_parent_relids);
 extern AppendRelInfo **find_appinfos_by_relids(PlannerInfo *root,
-						Relids relids, int *nappinfos);
+											   Relids relids, int *nappinfos);
 
 #endif							/* APPENDINFO_H */

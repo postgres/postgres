@@ -123,15 +123,15 @@ typedef struct ExecParallelInitializeDSMContext
 /* Helper functions that run in the parallel leader. */
 static char *ExecSerializePlan(Plan *plan, EState *estate);
 static bool ExecParallelEstimate(PlanState *node,
-					 ExecParallelEstimateContext *e);
+								 ExecParallelEstimateContext *e);
 static bool ExecParallelInitializeDSM(PlanState *node,
-						  ExecParallelInitializeDSMContext *d);
+									  ExecParallelInitializeDSMContext *d);
 static shm_mq_handle **ExecParallelSetupTupleQueues(ParallelContext *pcxt,
-							 bool reinitialize);
+													bool reinitialize);
 static bool ExecParallelReInitializeDSM(PlanState *planstate,
-							ParallelContext *pcxt);
+										ParallelContext *pcxt);
 static bool ExecParallelRetrieveInstrumentation(PlanState *planstate,
-									SharedExecutorInstrumentation *instrumentation);
+												SharedExecutorInstrumentation *instrumentation);
 
 /* Helper function that runs in the parallel worker. */
 static DestReceiver *ExecParallelGetReceiver(dsm_segment *seg, shm_toc *toc);

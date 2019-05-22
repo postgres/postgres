@@ -17,8 +17,8 @@
 #include "nodes/execnodes.h"
 
 extern GatherMergeState *ExecInitGatherMerge(GatherMerge *node,
-					EState *estate,
-					int eflags);
+											 EState *estate,
+											 int eflags);
 extern void ExecEndGatherMerge(GatherMergeState *node);
 extern void ExecReScanGatherMerge(GatherMergeState *node);
 extern void ExecShutdownGatherMerge(GatherMergeState *node);

@@ -57,7 +57,7 @@ extern PGPROC *shm_mq_get_sender(shm_mq *);
 
 /* Set up backend-local queue state. */
 extern shm_mq_handle *shm_mq_attach(shm_mq *mq, dsm_segment *seg,
-			  BackgroundWorkerHandle *handle);
+									BackgroundWorkerHandle *handle);
 
 /* Associate worker handle with shm_mq. */
 extern void shm_mq_set_handle(shm_mq_handle *, BackgroundWorkerHandle *);
@@ -70,11 +70,11 @@ extern shm_mq *shm_mq_get_queue(shm_mq_handle *mqh);
 
 /* Send or receive messages. */
 extern shm_mq_result shm_mq_send(shm_mq_handle *mqh,
-			Size nbytes, const void *data, bool nowait);
+								 Size nbytes, const void *data, bool nowait);
 extern shm_mq_result shm_mq_sendv(shm_mq_handle *mqh,
-			 shm_mq_iovec *iov, int iovcnt, bool nowait);
+								  shm_mq_iovec *iov, int iovcnt, bool nowait);
 extern shm_mq_result shm_mq_receive(shm_mq_handle *mqh,
-			   Size *nbytesp, void **datap, bool nowait);
+									Size *nbytesp, void **datap, bool nowait);
 
 /* Wait for our counterparty to attach to the queue. */
 extern shm_mq_result shm_mq_wait_for_attach(shm_mq_handle *mqh);

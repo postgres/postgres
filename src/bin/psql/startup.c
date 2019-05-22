@@ -81,9 +81,9 @@ struct adhoc_opts
 };
 
 static void parse_psql_options(int argc, char *argv[],
-				   struct adhoc_opts *options);
+							   struct adhoc_opts *options);
 static void simple_action_list_append(SimpleActionList *list,
-						  enum _actions action, const char *val);
+									  enum _actions action, const char *val);
 static void process_psqlrc(char *argv0);
 static void process_psqlrc_file(char *filename);
 static void showVersion(void);

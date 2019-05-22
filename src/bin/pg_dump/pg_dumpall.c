@@ -45,16 +45,16 @@ static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(const char *msg);
 static int	runPgDump(const char *dbname, const char *create_opts);
 static void buildShSecLabels(PGconn *conn,
-				 const char *catalog_name, Oid objectId,
-				 const char *objtype, const char *objname,
-				 PQExpBuffer buffer);
+							 const char *catalog_name, Oid objectId,
+							 const char *objtype, const char *objname,
+							 PQExpBuffer buffer);
 static PGconn *connectDatabase(const char *dbname, const char *connstr, const char *pghost, const char *pgport,
-				const char *pguser, trivalue prompt_password, bool fail_on_error);
+							   const char *pguser, trivalue prompt_password, bool fail_on_error);
 static char *constructConnStr(const char **keywords, const char **values);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 static void expand_dbname_patterns(PGconn *conn, SimpleStringList *patterns,
-					   SimpleStringList *names);
+								   SimpleStringList *names);
 
 static char pg_dump_bin[MAXPGPATH];
 static const char *progname;

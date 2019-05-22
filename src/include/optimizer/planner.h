@@ -38,21 +38,21 @@ extern PGDLLIMPORT create_upper_paths_hook_type create_upper_paths_hook;
 
 
 extern PlannedStmt *standard_planner(Query *parse, int cursorOptions,
-				 ParamListInfo boundParams);
+									 ParamListInfo boundParams);
 
 extern PlannerInfo *subquery_planner(PlannerGlobal *glob, Query *parse,
-				 PlannerInfo *parent_root,
-				 bool hasRecursion, double tuple_fraction);
+									 PlannerInfo *parent_root,
+									 bool hasRecursion, double tuple_fraction);
 
 extern RowMarkType select_rowmark_type(RangeTblEntry *rte,
-					LockClauseStrength strength);
+									   LockClauseStrength strength);
 
 extern bool limit_needed(Query *parse);
 
 extern void mark_partial_aggref(Aggref *agg, AggSplit aggsplit);
 
 extern Path *get_cheapest_fractional_path(RelOptInfo *rel,
-							 double tuple_fraction);
+										  double tuple_fraction);
 
 extern Expr *preprocess_phv_expression(PlannerInfo *root, Expr *expr);
 

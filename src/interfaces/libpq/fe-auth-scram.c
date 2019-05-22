@@ -65,8 +65,8 @@ static char *build_client_first_message(fe_scram_state *state);
 static char *build_client_final_message(fe_scram_state *state);
 static bool verify_server_signature(fe_scram_state *state);
 static void calculate_client_proof(fe_scram_state *state,
-					   const char *client_final_message_without_proof,
-					   uint8 *result);
+								   const char *client_final_message_without_proof,
+								   uint8 *result);
 
 /*
  * Initialize SCRAM exchange status.

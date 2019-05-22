@@ -35,95 +35,95 @@ typedef struct
 
 
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
-					 const char *schemaname,
-					 const char *refname,
-					 int location,
-					 int *sublevels_up);
+										   const char *schemaname,
+										   const char *refname,
+										   int location,
+										   int *sublevels_up);
 extern CommonTableExpr *scanNameSpaceForCTE(ParseState *pstate,
-					const char *refname,
-					Index *ctelevelsup);
+											const char *refname,
+											Index *ctelevelsup);
 extern bool scanNameSpaceForENR(ParseState *pstate, const char *refname);
 extern void checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
-						List *namespace2);
-extern int RTERangeTablePosn(ParseState *pstate,
-				  RangeTblEntry *rte,
-				  int *sublevels_up);
+									List *namespace2);
+extern int	RTERangeTablePosn(ParseState *pstate,
+							  RangeTblEntry *rte,
+							  int *sublevels_up);
 extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
-					   int varno,
-					   int sublevels_up);
+											 int varno,
+											 int sublevels_up);
 extern CommonTableExpr *GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte,
-			 int rtelevelsup);
+									 int rtelevelsup);
 extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
-				 const char *colname, int location,
-				 int fuzzy_rte_penalty, FuzzyAttrMatchState *fuzzystate);
+							  const char *colname, int location,
+							  int fuzzy_rte_penalty, FuzzyAttrMatchState *fuzzystate);
 extern Node *colNameToVar(ParseState *pstate, const char *colname, bool localonly,
-			 int location);
+						  int location);
 extern void markVarForSelectPriv(ParseState *pstate, Var *var,
-					 RangeTblEntry *rte);
+								 RangeTblEntry *rte);
 extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
-				int lockmode);
+								int lockmode);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
-				   RangeVar *relation,
-				   Alias *alias,
-				   bool inh,
-				   bool inFromCl);
+										 RangeVar *relation,
+										 Alias *alias,
+										 bool inh,
+										 bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForRelation(ParseState *pstate,
-							  Relation rel,
-							  int lockmode,
-							  Alias *alias,
-							  bool inh,
-							  bool inFromCl);
+													Relation rel,
+													int lockmode,
+													Alias *alias,
+													bool inh,
+													bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForSubquery(ParseState *pstate,
-							  Query *subquery,
-							  Alias *alias,
-							  bool lateral,
-							  bool inFromCl);
+													Query *subquery,
+													Alias *alias,
+													bool lateral,
+													bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForFunction(ParseState *pstate,
-							  List *funcnames,
-							  List *funcexprs,
-							  List *coldeflists,
-							  RangeFunction *rangefunc,
-							  bool lateral,
-							  bool inFromCl);
+													List *funcnames,
+													List *funcexprs,
+													List *coldeflists,
+													RangeFunction *rangefunc,
+													bool lateral,
+													bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForValues(ParseState *pstate,
-							List *exprs,
-							List *coltypes,
-							List *coltypmods,
-							List *colcollations,
-							Alias *alias,
-							bool lateral,
-							bool inFromCl);
+												  List *exprs,
+												  List *coltypes,
+												  List *coltypmods,
+												  List *colcollations,
+												  Alias *alias,
+												  bool lateral,
+												  bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForTableFunc(ParseState *pstate,
-							   TableFunc *tf,
-							   Alias *alias,
-							   bool lateral,
-							   bool inFromCl);
+													 TableFunc *tf,
+													 Alias *alias,
+													 bool lateral,
+													 bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
-						  List *colnames,
-						  JoinType jointype,
-						  List *aliasvars,
-						  Alias *alias,
-						  bool inFromCl);
+												List *colnames,
+												JoinType jointype,
+												List *aliasvars,
+												Alias *alias,
+												bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
-						 CommonTableExpr *cte,
-						 Index levelsup,
-						 RangeVar *rv,
-						 bool inFromCl);
+											   CommonTableExpr *cte,
+											   Index levelsup,
+											   RangeVar *rv,
+											   bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForENR(ParseState *pstate,
-						 RangeVar *rv,
-						 bool inFromCl);
+											   RangeVar *rv,
+											   bool inFromCl);
 extern bool isLockedRefname(ParseState *pstate, const char *refname);
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
-			  bool addToJoinList,
-			  bool addToRelNameSpace, bool addToVarNameSpace);
+						  bool addToJoinList,
+						  bool addToRelNameSpace, bool addToVarNameSpace);
 extern void errorMissingRTE(ParseState *pstate, RangeVar *relation) pg_attribute_noreturn();
 extern void errorMissingColumn(ParseState *pstate,
-				   const char *relname, const char *colname, int location) pg_attribute_noreturn();
+							   const char *relname, const char *colname, int location) pg_attribute_noreturn();
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
-		  int location, bool include_dropped,
-		  List **colnames, List **colvars);
+					  int location, bool include_dropped,
+					  List **colnames, List **colvars);
 extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
-			   int rtindex, int sublevels_up, int location);
+							int rtindex, int sublevels_up, int location);
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern const NameData *attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);

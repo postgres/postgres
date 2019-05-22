@@ -47,7 +47,7 @@
 
 static TupleTableSlot *IndexOnlyNext(IndexOnlyScanState *node);
 static void StoreIndexTuple(TupleTableSlot *slot, IndexTuple itup,
-				TupleDesc itupdesc);
+							TupleDesc itupdesc);
 
 
 /* ----------------------------------------------------------------

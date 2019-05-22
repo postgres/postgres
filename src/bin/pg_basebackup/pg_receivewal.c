@@ -54,7 +54,7 @@ static void close_destination_dir(DIR *dest_dir, char *dest_folder);
 static XLogRecPtr FindStreamingStart(uint32 *tli);
 static void StreamLog(void);
 static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline,
-			   bool segment_finished);
+						   bool segment_finished);
 
 static void
 disconnect_atexit(void)

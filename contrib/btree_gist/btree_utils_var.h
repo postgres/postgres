@@ -52,22 +52,22 @@ extern GBT_VARKEY *gbt_var_key_copy(const GBT_VARKEY_R *u);
 extern GISTENTRY *gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo);
 
 extern GBT_VARKEY *gbt_var_union(const GistEntryVector *entryvec, int32 *size,
-			  Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
+								 Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
 
 extern bool gbt_var_same(Datum d1, Datum d2, Oid collation,
-			 const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
+						 const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
 
 extern float *gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
-				Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
+							  Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
 
 extern bool gbt_var_consistent(GBT_VARKEY_R *key, const void *query,
-				   StrategyNumber strategy, Oid collation, bool is_leaf,
-				   const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
+							   StrategyNumber strategy, Oid collation, bool is_leaf,
+							   const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
 
 extern GIST_SPLITVEC *gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
-				  Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
+										Oid collation, const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
 
 extern void gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
-				  const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
+							  const gbtree_vinfo *tinfo, FmgrInfo *flinfo);
 
 #endif

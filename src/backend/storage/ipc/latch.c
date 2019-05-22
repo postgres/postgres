@@ -143,7 +143,7 @@ static void WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event);
 #endif
 
 static inline int WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
-					  WaitEvent *occurred_events, int nevents);
+										WaitEvent *occurred_events, int nevents);
 
 /*
  * Initialize the process-local latch infrastructure.

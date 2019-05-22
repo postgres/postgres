@@ -28,8 +28,8 @@ extern bool RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid objid);
 extern ObjectAddress CreatePolicy(CreatePolicyStmt *stmt);
 extern ObjectAddress AlterPolicy(AlterPolicyStmt *stmt);
 
-extern Oid get_relation_policy_oid(Oid relid, const char *policy_name,
-						bool missing_ok);
+extern Oid	get_relation_policy_oid(Oid relid, const char *policy_name,
+									bool missing_ok);
 
 extern ObjectAddress rename_policy(RenameStmt *stmt);
 

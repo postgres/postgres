@@ -55,8 +55,8 @@ static List *translate_sub_tlist(List *tlist, int relid);
 static int	append_total_cost_compare(const void *a, const void *b);
 static int	append_startup_cost_compare(const void *a, const void *b);
 static List *reparameterize_pathlist_by_child(PlannerInfo *root,
-								 List *pathlist,
-								 RelOptInfo *child_rel);
+											  List *pathlist,
+											  RelOptInfo *child_rel);
 
 
 /*****************************************************************************

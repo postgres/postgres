@@ -50,32 +50,32 @@ typedef struct vacuumingOptions
 
 
 static void vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
-					int stage,
-					SimpleStringList *tables,
-					const char *host, const char *port,
-					const char *username, enum trivalue prompt_password,
-					int concurrentCons,
-					const char *progname, bool echo, bool quiet);
+								int stage,
+								SimpleStringList *tables,
+								const char *host, const char *port,
+								const char *username, enum trivalue prompt_password,
+								int concurrentCons,
+								const char *progname, bool echo, bool quiet);
 
 static void vacuum_all_databases(vacuumingOptions *vacopts,
-					 bool analyze_in_stages,
-					 const char *maintenance_db,
-					 const char *host, const char *port,
-					 const char *username, enum trivalue prompt_password,
-					 int concurrentCons,
-					 const char *progname, bool echo, bool quiet);
+								 bool analyze_in_stages,
+								 const char *maintenance_db,
+								 const char *host, const char *port,
+								 const char *username, enum trivalue prompt_password,
+								 int concurrentCons,
+								 const char *progname, bool echo, bool quiet);
 
 static void prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
-					   vacuumingOptions *vacopts, const char *table);
+								   vacuumingOptions *vacopts, const char *table);
 
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
-				   const char *table, const char *progname, bool async);
+							   const char *table, const char *progname, bool async);
 
 static ParallelSlot *GetIdleSlot(ParallelSlot slots[], int numslots,
-			const char *progname);
+								 const char *progname);
 
 static bool ProcessQueryResult(PGconn *conn, PGresult *result,
-				   const char *progname);
+							   const char *progname);
 
 static bool GetQueryResult(PGconn *conn, const char *progname);
 

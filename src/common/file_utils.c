@@ -39,8 +39,8 @@
 static int	pre_sync_fname(const char *fname, bool isdir);
 #endif
 static void walkdir(const char *path,
-		int (*action) (const char *fname, bool isdir),
-		bool process_symlinks);
+					int (*action) (const char *fname, bool isdir),
+					bool process_symlinks);
 
 /*
  * Issue fsync recursively on PGDATA and all its contents.

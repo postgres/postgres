@@ -19,18 +19,18 @@
 
 extern List *QueryRewrite(Query *parsetree);
 extern void AcquireRewriteLocks(Query *parsetree,
-					bool forExecute,
-					bool forUpdatePushedDown);
+								bool forExecute,
+								bool forUpdatePushedDown);
 
 extern Node *build_column_default(Relation rel, int attrno);
 extern void rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
-					Relation target_relation);
+								Relation target_relation);
 
 extern Query *get_view_query(Relation view);
 extern const char *view_query_is_auto_updatable(Query *viewquery,
-							 bool check_cols);
-extern int relation_is_updatable(Oid reloid,
-					  bool include_triggers,
-					  Bitmapset *include_cols);
+												bool check_cols);
+extern int	relation_is_updatable(Oid reloid,
+								  bool include_triggers,
+								  Bitmapset *include_cols);
 
 #endif							/* REWRITEHANDLER_H */

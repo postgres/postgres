@@ -51,10 +51,10 @@ PG_FUNCTION_INFO_V1(pg_truncate_visibility_map);
 static TupleDesc pg_visibility_tupdesc(bool include_blkno, bool include_pd);
 static vbits *collect_visibility_data(Oid relid, bool include_pd);
 static corrupt_items *collect_corrupt_items(Oid relid, bool all_visible,
-					  bool all_frozen);
+											bool all_frozen);
 static void record_corrupt_item(corrupt_items *items, ItemPointer tid);
 static bool tuple_all_visible(HeapTuple tup, TransactionId OldestXmin,
-				  Buffer buffer);
+							  Buffer buffer);
 static void check_relation_relkind(Relation rel);
 
 /*

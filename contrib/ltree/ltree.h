@@ -155,13 +155,13 @@ Datum		ltree_textadd(PG_FUNCTION_ARGS);
 /* Util function */
 Datum		ltree_in(PG_FUNCTION_ARGS);
 
-bool ltree_execute(ITEM *curitem, void *checkval,
-			  bool calcnot, bool (*chkcond) (void *checkval, ITEM *val));
+bool		ltree_execute(ITEM *curitem, void *checkval,
+						  bool calcnot, bool (*chkcond) (void *checkval, ITEM *val));
 
 int			ltree_compare(const ltree *a, const ltree *b);
 bool		inner_isparent(const ltree *c, const ltree *p);
-bool compare_subnode(ltree_level *t, char *q, int len,
-				int (*cmpptr) (const char *, const char *, size_t), bool anyend);
+bool		compare_subnode(ltree_level *t, char *q, int len,
+							int (*cmpptr) (const char *, const char *, size_t), bool anyend);
 ltree	   *lca_inner(ltree **a, int len);
 int			ltree_strncasecmp(const char *a, const char *b, size_t s);
 

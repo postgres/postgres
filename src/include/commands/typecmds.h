@@ -33,10 +33,10 @@ extern Oid	AssignTypeArrayOid(void);
 extern ObjectAddress AlterDomainDefault(List *names, Node *defaultRaw);
 extern ObjectAddress AlterDomainNotNull(List *names, bool notNull);
 extern ObjectAddress AlterDomainAddConstraint(List *names, Node *constr,
-						 ObjectAddress *constrAddr);
+											  ObjectAddress *constrAddr);
 extern ObjectAddress AlterDomainValidateConstraint(List *names, const char *constrName);
 extern ObjectAddress AlterDomainDropConstraint(List *names, const char *constrName,
-						  DropBehavior behavior, bool missing_ok);
+											   DropBehavior behavior, bool missing_ok);
 
 extern void checkDomainOwner(HeapTuple tup);
 
@@ -47,11 +47,11 @@ extern void AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId);
 
 extern ObjectAddress AlterTypeNamespace(List *names, const char *newschema,
-				   ObjectType objecttype, Oid *oldschema);
+										ObjectType objecttype, Oid *oldschema);
 extern Oid	AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved);
-extern Oid AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
-						   bool isImplicitArray,
-						   bool errorOnTableType,
-						   ObjectAddresses *objsMoved);
+extern Oid	AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
+									   bool isImplicitArray,
+									   bool errorOnTableType,
+									   ObjectAddresses *objsMoved);
 
 #endif							/* TYPECMDS_H */

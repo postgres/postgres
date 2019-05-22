@@ -60,7 +60,7 @@ extern PGDLLIMPORT bool InitializingParallelWorker;
 #define		IsParallelWorker()		(ParallelWorkerNumber >= 0)
 
 extern ParallelContext *CreateParallelContext(const char *library_name,
-					  const char *function_name, int nworkers);
+											  const char *function_name, int nworkers);
 extern void InitializeParallelDSM(ParallelContext *pcxt);
 extern void ReinitializeParallelDSM(ParallelContext *pcxt);
 extern void LaunchParallelWorkers(ParallelContext *pcxt);

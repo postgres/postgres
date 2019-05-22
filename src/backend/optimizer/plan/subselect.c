@@ -67,19 +67,19 @@ typedef struct inline_cte_walker_context
 
 
 static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
-			  List *plan_params,
-			  SubLinkType subLinkType, int subLinkId,
-			  Node *testexpr, bool adjust_testexpr,
-			  bool unknownEqFalse);
+						   List *plan_params,
+						   SubLinkType subLinkType, int subLinkId,
+						   Node *testexpr, bool adjust_testexpr,
+						   bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
-						 List **paramIds);
+									  List **paramIds);
 static List *generate_subquery_vars(PlannerInfo *root, List *tlist,
-					   Index varno);
+									Index varno);
 static Node *convert_testexpr(PlannerInfo *root,
-				 Node *testexpr,
-				 List *subst_nodes);
+							  Node *testexpr,
+							  List *subst_nodes);
 static Node *convert_testexpr_mutator(Node *node,
-						 convert_testexpr_context *context);
+									  convert_testexpr_context *context);
 static bool subplan_is_hashable(Plan *plan);
 static bool testexpr_is_hashable(Node *testexpr);
 static bool hash_ok_operator(OpExpr *expr);
@@ -91,15 +91,15 @@ static void inline_cte(PlannerInfo *root, CommonTableExpr *cte);
 static bool inline_cte_walker(Node *node, inline_cte_walker_context *context);
 static bool simplify_EXISTS_query(PlannerInfo *root, Query *query);
 static Query *convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
-					  Node **testexpr, List **paramIds);
+									Node **testexpr, List **paramIds);
 static Node *replace_correlation_vars_mutator(Node *node, PlannerInfo *root);
 static Node *process_sublinks_mutator(Node *node,
-						 process_sublinks_context *context);
+									  process_sublinks_context *context);
 static Bitmapset *finalize_plan(PlannerInfo *root,
-			  Plan *plan,
-			  int gather_param,
-			  Bitmapset *valid_params,
-			  Bitmapset *scan_params);
+								Plan *plan,
+								int gather_param,
+								Bitmapset *valid_params,
+								Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 static bool finalize_agg_primnode(Node *node, finalize_primnode_context *context);
 

@@ -27,9 +27,9 @@
 
 
 static bool gist_box_leaf_consistent(BOX *key, BOX *query,
-						 StrategyNumber strategy);
+									 StrategyNumber strategy);
 static bool rtree_internal_consistent(BOX *key, BOX *query,
-						  StrategyNumber strategy);
+									  StrategyNumber strategy);
 
 /* Minimum accepted ratio of split */
 #define LIMIT_RATIO 0.3

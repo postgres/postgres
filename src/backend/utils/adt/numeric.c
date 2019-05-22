@@ -467,7 +467,7 @@ static void free_var(NumericVar *var);
 static void zero_var(NumericVar *var);
 
 static const char *set_var_from_str(const char *str, const char *cp,
-				 NumericVar *dest);
+									NumericVar *dest);
 static void set_var_from_num(Numeric value, NumericVar *dest);
 static void init_var_from_num(Numeric num, NumericVar *dest);
 static void set_var_from_var(const NumericVar *value, NumericVar *dest);
@@ -495,29 +495,29 @@ static int	numeric_fast_cmp(Datum x, Datum y, SortSupport ssup);
 static int	numeric_cmp_abbrev(Datum x, Datum y, SortSupport ssup);
 
 static Datum numeric_abbrev_convert_var(const NumericVar *var,
-						   NumericSortSupport *nss);
+										NumericSortSupport *nss);
 
 static int	cmp_numerics(Numeric num1, Numeric num2);
 static int	cmp_var(const NumericVar *var1, const NumericVar *var2);
-static int cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
-			   int var1weight, int var1sign,
-			   const NumericDigit *var2digits, int var2ndigits,
-			   int var2weight, int var2sign);
+static int	cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
+						   int var1weight, int var1sign,
+						   const NumericDigit *var2digits, int var2ndigits,
+						   int var2weight, int var2sign);
 static void add_var(const NumericVar *var1, const NumericVar *var2,
-		NumericVar *result);
+					NumericVar *result);
 static void sub_var(const NumericVar *var1, const NumericVar *var2,
-		NumericVar *result);
+					NumericVar *result);
 static void mul_var(const NumericVar *var1, const NumericVar *var2,
-		NumericVar *result,
-		int rscale);
+					NumericVar *result,
+					int rscale);
 static void div_var(const NumericVar *var1, const NumericVar *var2,
-		NumericVar *result,
-		int rscale, bool round);
+					NumericVar *result,
+					int rscale, bool round);
 static void div_var_fast(const NumericVar *var1, const NumericVar *var2,
-			 NumericVar *result, int rscale, bool round);
+						 NumericVar *result, int rscale, bool round);
 static int	select_div_scale(const NumericVar *var1, const NumericVar *var2);
 static void mod_var(const NumericVar *var1, const NumericVar *var2,
-		NumericVar *result);
+					NumericVar *result);
 static void ceil_var(const NumericVar *var, NumericVar *result);
 static void floor_var(const NumericVar *var, NumericVar *result);
 
@@ -526,26 +526,26 @@ static void exp_var(const NumericVar *arg, NumericVar *result, int rscale);
 static int	estimate_ln_dweight(const NumericVar *var);
 static void ln_var(const NumericVar *arg, NumericVar *result, int rscale);
 static void log_var(const NumericVar *base, const NumericVar *num,
-		NumericVar *result);
+					NumericVar *result);
 static void power_var(const NumericVar *base, const NumericVar *exp,
-		  NumericVar *result);
+					  NumericVar *result);
 static void power_var_int(const NumericVar *base, int exp, NumericVar *result,
-			  int rscale);
+						  int rscale);
 
 static int	cmp_abs(const NumericVar *var1, const NumericVar *var2);
-static int cmp_abs_common(const NumericDigit *var1digits, int var1ndigits,
-			   int var1weight,
-			   const NumericDigit *var2digits, int var2ndigits,
-			   int var2weight);
+static int	cmp_abs_common(const NumericDigit *var1digits, int var1ndigits,
+						   int var1weight,
+						   const NumericDigit *var2digits, int var2ndigits,
+						   int var2weight);
 static void add_abs(const NumericVar *var1, const NumericVar *var2,
-		NumericVar *result);
+					NumericVar *result);
 static void sub_abs(const NumericVar *var1, const NumericVar *var2,
-		NumericVar *result);
+					NumericVar *result);
 static void round_var(NumericVar *var, int rscale);
 static void trunc_var(NumericVar *var, int rscale);
 static void strip_var(NumericVar *var);
 static void compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
-			   const NumericVar *count_var, NumericVar *result_var);
+						   const NumericVar *count_var, NumericVar *result_var);
 
 static void accum_sum_add(NumericSumAccum *accum, const NumericVar *var1);
 static void accum_sum_rescale(NumericSumAccum *accum, const NumericVar *val);

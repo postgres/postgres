@@ -202,31 +202,31 @@ static GlobalTransaction MyLockedGxact = NULL;
 static bool twophaseExitRegistered = false;
 
 static void RecordTransactionCommitPrepared(TransactionId xid,
-								int nchildren,
-								TransactionId *children,
-								int nrels,
-								RelFileNode *rels,
-								int ninvalmsgs,
-								SharedInvalidationMessage *invalmsgs,
-								bool initfileinval,
-								const char *gid);
+											int nchildren,
+											TransactionId *children,
+											int nrels,
+											RelFileNode *rels,
+											int ninvalmsgs,
+											SharedInvalidationMessage *invalmsgs,
+											bool initfileinval,
+											const char *gid);
 static void RecordTransactionAbortPrepared(TransactionId xid,
-							   int nchildren,
-							   TransactionId *children,
-							   int nrels,
-							   RelFileNode *rels,
-							   const char *gid);
+										   int nchildren,
+										   TransactionId *children,
+										   int nrels,
+										   RelFileNode *rels,
+										   const char *gid);
 static void ProcessRecords(char *bufptr, TransactionId xid,
-			   const TwoPhaseCallback callbacks[]);
+						   const TwoPhaseCallback callbacks[]);
 static void RemoveGXact(GlobalTransaction gxact);
 
 static void XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len);
 static char *ProcessTwoPhaseBuffer(TransactionId xid,
-					  XLogRecPtr prepare_start_lsn,
-					  bool fromdisk, bool setParent, bool setNextXid);
+								   XLogRecPtr prepare_start_lsn,
+								   bool fromdisk, bool setParent, bool setNextXid);
 static void MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid,
-					const char *gid, TimestampTz prepared_at, Oid owner,
-					Oid databaseid);
+								const char *gid, TimestampTz prepared_at, Oid owner,
+								Oid databaseid);
 static void RemoveTwoPhaseFile(TransactionId xid, bool giveWarning);
 static void RecreateTwoPhaseFile(TransactionId xid, void *content, int len);
 

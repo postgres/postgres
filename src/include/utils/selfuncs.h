@@ -127,83 +127,83 @@ extern PGDLLIMPORT get_index_stats_hook_type get_index_stats_hook;
 /* Functions in selfuncs.c */
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,
-				 VariableStatData *vardata);
+							 VariableStatData *vardata);
 extern bool statistic_proc_security_check(VariableStatData *vardata, Oid func_oid);
 extern bool get_restriction_variable(PlannerInfo *root, List *args,
-						 int varRelid,
-						 VariableStatData *vardata, Node **other,
-						 bool *varonleft);
+									 int varRelid,
+									 VariableStatData *vardata, Node **other,
+									 bool *varonleft);
 extern void get_join_variables(PlannerInfo *root, List *args,
-				   SpecialJoinInfo *sjinfo,
-				   VariableStatData *vardata1,
-				   VariableStatData *vardata2,
-				   bool *join_is_reversed);
+							   SpecialJoinInfo *sjinfo,
+							   VariableStatData *vardata1,
+							   VariableStatData *vardata2,
+							   bool *join_is_reversed);
 extern double get_variable_numdistinct(VariableStatData *vardata,
-						 bool *isdefault);
+									   bool *isdefault);
 extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
-				Datum constval, bool varonleft,
-				double *sumcommonp);
+							  Datum constval, bool varonleft,
+							  double *sumcommonp);
 extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
-					  Datum constval, bool varonleft,
-					  int min_hist_size, int n_skip,
-					  int *hist_size);
+									Datum constval, bool varonleft,
+									int min_hist_size, int n_skip,
+									int *hist_size);
 extern double ineq_histogram_selectivity(PlannerInfo *root,
-						   VariableStatData *vardata,
-						   FmgrInfo *opproc, bool isgt, bool iseq,
-						   Datum constval, Oid consttype);
+										 VariableStatData *vardata,
+										 FmgrInfo *opproc, bool isgt, bool iseq,
+										 Datum constval, Oid consttype);
 extern double var_eq_const(VariableStatData *vardata, Oid oproid,
-			 Datum constval, bool constisnull,
-			 bool varonleft, bool negate);
+						   Datum constval, bool constisnull,
+						   bool varonleft, bool negate);
 extern double var_eq_non_const(VariableStatData *vardata, Oid oproid,
-				 Node *other,
-				 bool varonleft, bool negate);
+							   Node *other,
+							   bool varonleft, bool negate);
 
 extern Selectivity boolvarsel(PlannerInfo *root, Node *arg, int varRelid);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
-			Node *arg, int varRelid,
-			JoinType jointype, SpecialJoinInfo *sjinfo);
+							   Node *arg, int varRelid,
+							   JoinType jointype, SpecialJoinInfo *sjinfo);
 extern Selectivity nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
-			Node *arg, int varRelid,
-			JoinType jointype, SpecialJoinInfo *sjinfo);
+							   Node *arg, int varRelid,
+							   JoinType jointype, SpecialJoinInfo *sjinfo);
 extern Selectivity scalararraysel(PlannerInfo *root,
-			   ScalarArrayOpExpr *clause,
-			   bool is_join_clause,
-			   int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo);
+								  ScalarArrayOpExpr *clause,
+								  bool is_join_clause,
+								  int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo);
 extern int	estimate_array_length(Node *arrayexpr);
 extern Selectivity rowcomparesel(PlannerInfo *root,
-			  RowCompareExpr *clause,
-			  int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo);
+								 RowCompareExpr *clause,
+								 int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo);
 
 extern void mergejoinscansel(PlannerInfo *root, Node *clause,
-				 Oid opfamily, int strategy, bool nulls_first,
-				 Selectivity *leftstart, Selectivity *leftend,
-				 Selectivity *rightstart, Selectivity *rightend);
+							 Oid opfamily, int strategy, bool nulls_first,
+							 Selectivity *leftstart, Selectivity *leftend,
+							 Selectivity *rightstart, Selectivity *rightend);
 
 extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
-					double input_rows, List **pgset);
+								  double input_rows, List **pgset);
 
 extern void estimate_hash_bucket_stats(PlannerInfo *root,
-						   Node *hashkey, double nbuckets,
-						   Selectivity *mcv_freq,
-						   Selectivity *bucketsize_frac);
+									   Node *hashkey, double nbuckets,
+									   Selectivity *mcv_freq,
+									   Selectivity *bucketsize_frac);
 extern double estimate_hashagg_tablesize(Path *path,
-						   const AggClauseCosts *agg_costs,
-						   double dNumGroups);
+										 const AggClauseCosts *agg_costs,
+										 double dNumGroups);
 
 extern List *get_quals_from_indexclauses(List *indexclauses);
 extern Cost index_other_operands_eval_cost(PlannerInfo *root,
-							   List *indexquals);
+										   List *indexquals);
 extern List *add_predicate_to_index_quals(IndexOptInfo *index,
-							 List *indexQuals);
+										  List *indexQuals);
 extern void genericcostestimate(PlannerInfo *root, IndexPath *path,
-					double loop_count,
-					GenericCosts *costs);
+								double loop_count,
+								GenericCosts *costs);
 
 /* Functions in array_selfuncs.c */
 
 extern Selectivity scalararraysel_containment(PlannerInfo *root,
-						   Node *leftop, Node *rightop,
-						   Oid elemtype, bool isEquality, bool useOr,
-						   int varRelid);
+											  Node *leftop, Node *rightop,
+											  Oid elemtype, bool isEquality, bool useOr,
+											  int varRelid);
 
 #endif							/* SELFUNCS_H */

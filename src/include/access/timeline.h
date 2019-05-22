@@ -33,12 +33,12 @@ extern List *readTimeLineHistory(TimeLineID targetTLI);
 extern bool existsTimeLineHistory(TimeLineID probeTLI);
 extern TimeLineID findNewestTimeLine(TimeLineID startTLI);
 extern void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
-					 XLogRecPtr switchpoint, char *reason);
+								 XLogRecPtr switchpoint, char *reason);
 extern void writeTimeLineHistoryFile(TimeLineID tli, char *content, int size);
 extern void restoreTimeLineHistoryFiles(TimeLineID begin, TimeLineID end);
 extern bool tliInHistory(TimeLineID tli, List *expectedTLIs);
 extern TimeLineID tliOfPointInHistory(XLogRecPtr ptr, List *history);
 extern XLogRecPtr tliSwitchPoint(TimeLineID tli, List *history,
-			   TimeLineID *nextTLI);
+								 TimeLineID *nextTLI);
 
 #endif							/* TIMELINE_H */

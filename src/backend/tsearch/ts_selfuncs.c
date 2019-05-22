@@ -48,10 +48,10 @@ typedef struct
 
 static Selectivity tsquerysel(VariableStatData *vardata, Datum constval);
 static Selectivity mcelem_tsquery_selec(TSQuery query,
-					 Datum *mcelem, int nmcelem,
-					 float4 *numbers, int nnumbers);
+										Datum *mcelem, int nmcelem,
+										float4 *numbers, int nnumbers);
 static Selectivity tsquery_opr_selec(QueryItem *item, char *operand,
-				  TextFreq *lookup, int length, float4 minfreq);
+									 TextFreq *lookup, int length, float4 minfreq);
 static int	compare_lexeme_textfreq(const void *e1, const void *e2);
 
 #define tsquery_opr_selec_no_stats(query) \

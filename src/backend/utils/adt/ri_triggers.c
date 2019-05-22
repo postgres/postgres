@@ -175,27 +175,27 @@ static int	ri_constraint_cache_valid_count = 0;
  * Local function prototypes
  */
 static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
-				  TupleTableSlot *oldslot,
-				  const RI_ConstraintInfo *riinfo);
+							  TupleTableSlot *oldslot,
+							  const RI_ConstraintInfo *riinfo);
 static Datum ri_restrict(TriggerData *trigdata, bool is_no_action);
 static Datum ri_set(TriggerData *trigdata, bool is_set_null);
 static void quoteOneName(char *buffer, const char *name);
 static void quoteRelationName(char *buffer, Relation rel);
 static void ri_GenerateQual(StringInfo buf,
-				const char *sep,
-				const char *leftop, Oid leftoptype,
-				Oid opoid,
-				const char *rightop, Oid rightoptype);
+							const char *sep,
+							const char *leftop, Oid leftoptype,
+							Oid opoid,
+							const char *rightop, Oid rightoptype);
 static void ri_GenerateQualCollation(StringInfo buf, Oid collation);
-static int ri_NullCheck(TupleDesc tupdesc, TupleTableSlot *slot,
-			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
+static int	ri_NullCheck(TupleDesc tupdesc, TupleTableSlot *slot,
+						 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static void ri_BuildQueryKey(RI_QueryKey *key,
-				 const RI_ConstraintInfo *riinfo,
-				 int32 constr_queryno);
+							 const RI_ConstraintInfo *riinfo,
+							 int32 constr_queryno);
 static bool ri_KeysEqual(Relation rel, TupleTableSlot *oldslot, TupleTableSlot *newslot,
-			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
+						 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static bool ri_AttributesEqual(Oid eq_opr, Oid typeid,
-				   Datum oldvalue, Datum newvalue);
+							   Datum oldvalue, Datum newvalue);
 
 static void ri_InitHashTables(void);
 static void InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue);
@@ -204,25 +204,25 @@ static void ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan);
 static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid typeid);
 
 static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
-				int tgkind);
+							int tgkind);
 static const RI_ConstraintInfo *ri_FetchConstraintInfo(Trigger *trigger,
-					   Relation trig_rel, bool rel_is_pk);
+													   Relation trig_rel, bool rel_is_pk);
 static const RI_ConstraintInfo *ri_LoadConstraintInfo(Oid constraintOid);
 static SPIPlanPtr ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
-			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
-			 bool cache_plan);
+							   RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
+							   bool cache_plan);
 static bool ri_PerformCheck(const RI_ConstraintInfo *riinfo,
-				RI_QueryKey *qkey, SPIPlanPtr qplan,
-				Relation fk_rel, Relation pk_rel,
-				TupleTableSlot *oldslot, TupleTableSlot *newslot,
-				bool detectNewRows, int expect_OK);
+							RI_QueryKey *qkey, SPIPlanPtr qplan,
+							Relation fk_rel, Relation pk_rel,
+							TupleTableSlot *oldslot, TupleTableSlot *newslot,
+							bool detectNewRows, int expect_OK);
 static void ri_ExtractValues(Relation rel, TupleTableSlot *slot,
-				 const RI_ConstraintInfo *riinfo, bool rel_is_pk,
-				 Datum *vals, char *nulls);
+							 const RI_ConstraintInfo *riinfo, bool rel_is_pk,
+							 Datum *vals, char *nulls);
 static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
-				   Relation pk_rel, Relation fk_rel,
-				   TupleTableSlot *violatorslot, TupleDesc tupdesc,
-				   int queryno, bool partgone) pg_attribute_noreturn();
+							   Relation pk_rel, Relation fk_rel,
+							   TupleTableSlot *violatorslot, TupleDesc tupdesc,
+							   int queryno, bool partgone) pg_attribute_noreturn();
 
 
 /*

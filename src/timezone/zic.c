@@ -151,9 +151,9 @@ static zic_t oadd(zic_t t1, zic_t t2);
 static void outzone(const struct zone *zp, ptrdiff_t ntzones);
 static zic_t rpytime(const struct rule *rp, zic_t wantedy);
 static void rulesub(struct rule *rp,
-		const char *loyearp, const char *hiyearp,
-		const char *typep, const char *monthp,
-		const char *dayp, const char *timep);
+					const char *loyearp, const char *hiyearp,
+					const char *typep, const char *monthp,
+					const char *dayp, const char *timep);
 static zic_t tadd(zic_t t1, zic_t t2);
 static bool yearistype(zic_t year, const char *type);
 
@@ -304,7 +304,7 @@ struct lookup
 };
 
 static struct lookup const *byword(const char *string,
-	   const struct lookup *lp);
+								   const struct lookup *lp);
 
 static struct lookup const zi_line_codes[] = {
 	{"Rule", LC_RULE},

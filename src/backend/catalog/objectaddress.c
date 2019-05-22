@@ -761,38 +761,38 @@ const ObjectAddress InvalidObjectAddress =
 };
 
 static ObjectAddress get_object_address_unqualified(ObjectType objtype,
-							   Value *strval, bool missing_ok);
+													Value *strval, bool missing_ok);
 static ObjectAddress get_relation_by_qualified_name(ObjectType objtype,
-							   List *object, Relation *relp,
-							   LOCKMODE lockmode, bool missing_ok);
+													List *object, Relation *relp,
+													LOCKMODE lockmode, bool missing_ok);
 static ObjectAddress get_object_address_relobject(ObjectType objtype,
-							 List *object, Relation *relp, bool missing_ok);
+												  List *object, Relation *relp, bool missing_ok);
 static ObjectAddress get_object_address_attribute(ObjectType objtype,
-							 List *object, Relation *relp,
-							 LOCKMODE lockmode, bool missing_ok);
+												  List *object, Relation *relp,
+												  LOCKMODE lockmode, bool missing_ok);
 static ObjectAddress get_object_address_attrdef(ObjectType objtype,
-						   List *object, Relation *relp, LOCKMODE lockmode,
-						   bool missing_ok);
+												List *object, Relation *relp, LOCKMODE lockmode,
+												bool missing_ok);
 static ObjectAddress get_object_address_type(ObjectType objtype,
-						TypeName *typename, bool missing_ok);
+											 TypeName *typename, bool missing_ok);
 static ObjectAddress get_object_address_opcf(ObjectType objtype, List *object,
-						bool missing_ok);
+											 bool missing_ok);
 static ObjectAddress get_object_address_opf_member(ObjectType objtype,
-							  List *object, bool missing_ok);
+												   List *object, bool missing_ok);
 
 static ObjectAddress get_object_address_usermapping(List *object,
-							   bool missing_ok);
+													bool missing_ok);
 static ObjectAddress get_object_address_publication_rel(List *object,
-								   Relation *relp,
-								   bool missing_ok);
+														Relation *relp,
+														bool missing_ok);
 static ObjectAddress get_object_address_defacl(List *object,
-						  bool missing_ok);
+											   bool missing_ok);
 static const ObjectPropertyType *get_object_property_data(Oid class_id);
 
 static void getRelationDescription(StringInfo buffer, Oid relid);
 static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
 static void getRelationTypeDescription(StringInfo buffer, Oid relid,
-						   int32 objectSubId);
+									   int32 objectSubId);
 static void getProcedureTypeDescription(StringInfo buffer, Oid procid);
 static void getConstraintTypeDescription(StringInfo buffer, Oid constroid);
 static void getOpFamilyIdentity(StringInfo buffer, Oid opfid, List **object);

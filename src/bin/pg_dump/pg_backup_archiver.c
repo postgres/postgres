@@ -69,10 +69,10 @@ typedef struct _parallelReadyList
 
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
-		 const int compression, bool dosync, ArchiveMode mode,
-		 SetupWorkerPtrType setupWorkerPtr);
+							   const int compression, bool dosync, ArchiveMode mode,
+							   SetupWorkerPtrType setupWorkerPtr);
 static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
-					  ArchiveHandle *AH);
+								  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
 static char *sanitize_line(const char *str, bool want_hyphen);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
@@ -104,12 +104,12 @@ static void RestoreOutput(ArchiveHandle *AH, OutputContext savedContext);
 
 static int	restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel);
 static void restore_toc_entries_prefork(ArchiveHandle *AH,
-							TocEntry *pending_list);
+										TocEntry *pending_list);
 static void restore_toc_entries_parallel(ArchiveHandle *AH,
-							 ParallelState *pstate,
-							 TocEntry *pending_list);
+										 ParallelState *pstate,
+										 TocEntry *pending_list);
 static void restore_toc_entries_postfork(ArchiveHandle *AH,
-							 TocEntry *pending_list);
+										 TocEntry *pending_list);
 static void pending_list_header_init(TocEntry *l);
 static void pending_list_append(TocEntry *l, TocEntry *te);
 static void pending_list_remove(TocEntry *te);
@@ -120,25 +120,25 @@ static void ready_list_remove(ParallelReadyList *ready_list, int i);
 static void ready_list_sort(ParallelReadyList *ready_list);
 static int	TocEntrySizeCompare(const void *p1, const void *p2);
 static void move_to_ready_list(TocEntry *pending_list,
-				   ParallelReadyList *ready_list,
-				   RestorePass pass);
+							   ParallelReadyList *ready_list,
+							   RestorePass pass);
 static TocEntry *pop_next_work_item(ArchiveHandle *AH,
-				   ParallelReadyList *ready_list,
-				   ParallelState *pstate);
+									ParallelReadyList *ready_list,
+									ParallelState *pstate);
 static void mark_dump_job_done(ArchiveHandle *AH,
-				   TocEntry *te,
-				   int status,
-				   void *callback_data);
+							   TocEntry *te,
+							   int status,
+							   void *callback_data);
 static void mark_restore_job_done(ArchiveHandle *AH,
-					  TocEntry *te,
-					  int status,
-					  void *callback_data);
+								  TocEntry *te,
+								  int status,
+								  void *callback_data);
 static void fix_dependencies(ArchiveHandle *AH);
 static bool has_lock_conflicts(TocEntry *te1, TocEntry *te2);
 static void repoint_table_dependencies(ArchiveHandle *AH);
 static void identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te);
 static void reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
-					ParallelReadyList *ready_list);
+								ParallelReadyList *ready_list);
 static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
 static void inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te);
 

@@ -80,30 +80,30 @@ typedef struct
 static void gistInitBuffering(GISTBuildState *buildstate);
 static int	calculatePagesPerBuffer(GISTBuildState *buildstate, int levelStep);
 static void gistBuildCallback(Relation index,
-				  HeapTuple htup,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive,
-				  void *state);
+							  HeapTuple htup,
+							  Datum *values,
+							  bool *isnull,
+							  bool tupleIsAlive,
+							  void *state);
 static void gistBufferingBuildInsert(GISTBuildState *buildstate,
-						 IndexTuple itup);
+									 IndexTuple itup);
 static bool gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
-				BlockNumber startblkno, int startlevel);
+							BlockNumber startblkno, int startlevel);
 static BlockNumber gistbufferinginserttuples(GISTBuildState *buildstate,
-						  Buffer buffer, int level,
-						  IndexTuple *itup, int ntup, OffsetNumber oldoffnum,
-						  BlockNumber parentblk, OffsetNumber downlinkoffnum);
+											 Buffer buffer, int level,
+											 IndexTuple *itup, int ntup, OffsetNumber oldoffnum,
+											 BlockNumber parentblk, OffsetNumber downlinkoffnum);
 static Buffer gistBufferingFindCorrectParent(GISTBuildState *buildstate,
-							   BlockNumber childblkno, int level,
-							   BlockNumber *parentblk,
-							   OffsetNumber *downlinkoffnum);
+											 BlockNumber childblkno, int level,
+											 BlockNumber *parentblk,
+											 OffsetNumber *downlinkoffnum);
 static void gistProcessEmptyingQueue(GISTBuildState *buildstate);
 static void gistEmptyAllBuffers(GISTBuildState *buildstate);
 static int	gistGetMaxLevel(Relation index);
 
 static void gistInitParentMap(GISTBuildState *buildstate);
 static void gistMemorizeParent(GISTBuildState *buildstate, BlockNumber child,
-				   BlockNumber parent);
+							   BlockNumber parent);
 static void gistMemorizeAllDownlinks(GISTBuildState *buildstate, Buffer parent);
 static BlockNumber gistGetParent(GISTBuildState *buildstate, BlockNumber child);
 

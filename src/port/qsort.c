@@ -48,7 +48,7 @@
 
 
 static char *med3(char *a, char *b, char *c,
-	 int (*cmp) (const void *, const void *));
+				  int (*cmp) (const void *, const void *));
 static void swapfunc(char *, char *, size_t, int);
 
 /*

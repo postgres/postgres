@@ -71,39 +71,39 @@
 
 
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
-					TransactionId xid, CommandId cid, int options);
+									 TransactionId xid, CommandId cid, int options);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
-				Buffer newbuf, HeapTuple oldtup,
-				HeapTuple newtup, HeapTuple old_key_tup,
-				bool all_visible_cleared, bool new_all_visible_cleared);
+								  Buffer newbuf, HeapTuple oldtup,
+								  HeapTuple newtup, HeapTuple old_key_tup,
+								  bool all_visible_cleared, bool new_all_visible_cleared);
 static Bitmapset *HeapDetermineModifiedColumns(Relation relation,
-							 Bitmapset *interesting_cols,
-							 HeapTuple oldtup, HeapTuple newtup);
+											   Bitmapset *interesting_cols,
+											   HeapTuple oldtup, HeapTuple newtup);
 static bool heap_acquire_tuplock(Relation relation, ItemPointer tid,
-					 LockTupleMode mode, LockWaitPolicy wait_policy,
-					 bool *have_tuple_lock);
+								 LockTupleMode mode, LockWaitPolicy wait_policy,
+								 bool *have_tuple_lock);
 static void compute_new_xmax_infomask(TransactionId xmax, uint16 old_infomask,
-						  uint16 old_infomask2, TransactionId add_to_xmax,
-						  LockTupleMode mode, bool is_update,
-						  TransactionId *result_xmax, uint16 *result_infomask,
-						  uint16 *result_infomask2);
+									  uint16 old_infomask2, TransactionId add_to_xmax,
+									  LockTupleMode mode, bool is_update,
+									  TransactionId *result_xmax, uint16 *result_infomask,
+									  uint16 *result_infomask2);
 static TM_Result heap_lock_updated_tuple(Relation rel, HeapTuple tuple,
-						ItemPointer ctid, TransactionId xid,
-						LockTupleMode mode);
+										 ItemPointer ctid, TransactionId xid,
+										 LockTupleMode mode);
 static void GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
-					   uint16 *new_infomask2);
+								   uint16 *new_infomask2);
 static TransactionId MultiXactIdGetUpdateXid(TransactionId xmax,
-						uint16 t_infomask);
+											 uint16 t_infomask);
 static bool DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
-						LockTupleMode lockmode);
+									LockTupleMode lockmode);
 static void MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 infomask,
-				Relation rel, ItemPointer ctid, XLTW_Oper oper,
-				int *remaining);
+							Relation rel, ItemPointer ctid, XLTW_Oper oper,
+							int *remaining);
 static bool ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-						   uint16 infomask, Relation rel, int *remaining);
+									   uint16 infomask, Relation rel, int *remaining);
 static XLogRecPtr log_heap_new_cid(Relation relation, HeapTuple tup);
 static HeapTuple ExtractReplicaIdentity(Relation rel, HeapTuple tup, bool key_modified,
-					   bool *copy);
+										bool *copy);
 
 
 /*

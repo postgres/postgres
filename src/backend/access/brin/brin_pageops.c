@@ -34,7 +34,7 @@
 				   MAXALIGN(sizeof(BrinSpecialSpace))))
 
 static Buffer brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
-					 bool *extended);
+								   bool *extended);
 static Size br_page_get_freespace(Page page);
 static void brin_initialize_empty_new_buffer(Relation idxrel, Buffer buffer);
 

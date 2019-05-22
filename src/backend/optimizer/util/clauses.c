@@ -99,14 +99,14 @@ typedef struct
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool get_agg_clause_costs_walker(Node *node,
-							get_agg_clause_costs_context *context);
+										get_agg_clause_costs_context *context);
 static bool find_window_functions_walker(Node *node, WindowFuncLists *lists);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
 static bool max_parallel_hazard_walker(Node *node,
-						   max_parallel_hazard_context *context);
+									   max_parallel_hazard_context *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool contain_context_dependent_node(Node *clause);
 static bool contain_context_dependent_node_walker(Node *node, int *flags);
@@ -115,46 +115,46 @@ static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
 static List *find_nonnullable_vars_walker(Node *node, bool top_level);
 static bool is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK);
 static Node *eval_const_expressions_mutator(Node *node,
-							   eval_const_expressions_context *context);
+											eval_const_expressions_context *context);
 static bool contain_non_const_walker(Node *node, void *context);
 static bool ece_function_is_safe(Oid funcid,
-					 eval_const_expressions_context *context);
+								 eval_const_expressions_context *context);
 static List *simplify_or_arguments(List *args,
-					  eval_const_expressions_context *context,
-					  bool *haveNull, bool *forceTrue);
+								   eval_const_expressions_context *context,
+								   bool *haveNull, bool *forceTrue);
 static List *simplify_and_arguments(List *args,
-					   eval_const_expressions_context *context,
-					   bool *haveNull, bool *forceFalse);
+									eval_const_expressions_context *context,
+									bool *haveNull, bool *forceFalse);
 static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
-				  Oid result_type, int32 result_typmod,
-				  Oid result_collid, Oid input_collid, List **args_p,
-				  bool funcvariadic, bool process_args, bool allow_non_const,
-				  eval_const_expressions_context *context);
+							   Oid result_type, int32 result_typmod,
+							   Oid result_collid, Oid input_collid, List **args_p,
+							   bool funcvariadic, bool process_args, bool allow_non_const,
+							   eval_const_expressions_context *context);
 static List *reorder_function_arguments(List *args, HeapTuple func_tuple);
 static List *add_function_defaults(List *args, HeapTuple func_tuple);
 static List *fetch_function_defaults(HeapTuple func_tuple);
 static void recheck_cast_function_args(List *args, Oid result_type,
-						   HeapTuple func_tuple);
+									   HeapTuple func_tuple);
 static Expr *evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
-				  Oid result_collid, Oid input_collid, List *args,
-				  bool funcvariadic,
-				  HeapTuple func_tuple,
-				  eval_const_expressions_context *context);
+							   Oid result_collid, Oid input_collid, List *args,
+							   bool funcvariadic,
+							   HeapTuple func_tuple,
+							   eval_const_expressions_context *context);
 static Expr *inline_function(Oid funcid, Oid result_type, Oid result_collid,
-				Oid input_collid, List *args,
-				bool funcvariadic,
-				HeapTuple func_tuple,
-				eval_const_expressions_context *context);
+							 Oid input_collid, List *args,
+							 bool funcvariadic,
+							 HeapTuple func_tuple,
+							 eval_const_expressions_context *context);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
-							 int *usecounts);
+										  int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
-									 substitute_actual_parameters_context *context);
+												  substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
 static Query *substitute_actual_srf_parameters(Query *expr,
-								 int nargs, List *args);
+											   int nargs, List *args);
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
-										 substitute_actual_srf_parameters_context *context);
+													  substitute_actual_srf_parameters_context *context);
 static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
 
 

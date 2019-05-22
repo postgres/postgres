@@ -47,7 +47,7 @@ static HTAB *prepared_queries = NULL;
 
 static void InitQueryHashTable(void);
 static ParamListInfo EvaluateParams(PreparedStatement *pstmt, List *params,
-			   const char *queryString, EState *estate);
+									const char *queryString, EState *estate);
 static Datum build_regtype_array(Oid *param_types, int num_params);
 
 /*

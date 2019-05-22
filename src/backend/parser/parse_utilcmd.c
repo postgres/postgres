@@ -114,37 +114,37 @@ typedef struct
 
 
 static void transformColumnDefinition(CreateStmtContext *cxt,
-						  ColumnDef *column);
+									  ColumnDef *column);
 static void transformTableConstraint(CreateStmtContext *cxt,
-						 Constraint *constraint);
+									 Constraint *constraint);
 static void transformTableLikeClause(CreateStmtContext *cxt,
-						 TableLikeClause *table_like_clause);
+									 TableLikeClause *table_like_clause);
 static void transformOfType(CreateStmtContext *cxt,
-				TypeName *ofTypename);
+							TypeName *ofTypename);
 static CreateStatsStmt *generateClonedExtStatsStmt(RangeVar *heapRel,
-						   Oid heapRelid, Oid source_statsid);
+												   Oid heapRelid, Oid source_statsid);
 static List *get_collation(Oid collation, Oid actual_datatype);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
 static void transformIndexConstraints(CreateStmtContext *cxt);
 static IndexStmt *transformIndexConstraint(Constraint *constraint,
-						 CreateStmtContext *cxt);
+										   CreateStmtContext *cxt);
 static void transformExtendedStatistics(CreateStmtContext *cxt);
 static void transformFKConstraints(CreateStmtContext *cxt,
-					   bool skipValidation,
-					   bool isAddConstraint);
+								   bool skipValidation,
+								   bool isAddConstraint);
 static void transformCheckConstraints(CreateStmtContext *cxt,
-						  bool skipValidation);
+									  bool skipValidation);
 static void transformConstraintAttrs(CreateStmtContext *cxt,
-						 List *constraintList);
+									 List *constraintList);
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void setSchemaName(char *context_schema, char **stmt_schema_name);
 static void transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd);
 static List *transformPartitionRangeBounds(ParseState *pstate, List *blist,
-							  Relation parent);
+										   Relation parent);
 static void validateInfiniteBounds(ParseState *pstate, List *blist);
 static Const *transformPartitionBoundValue(ParseState *pstate, Node *con,
-							 const char *colName, Oid colType, int32 colTypmod,
-							 Oid partCollation);
+										   const char *colName, Oid colType, int32 colTypmod,
+										   Oid partCollation);
 
 
 /*

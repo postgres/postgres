@@ -141,7 +141,7 @@ NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static FILE *logfile_open(const char *filename, const char *mode,
-			 bool allow_errors);
+						  bool allow_errors);
 
 #ifdef WIN32
 static unsigned int __stdcall pipeThread(void *arg);

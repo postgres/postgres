@@ -132,86 +132,86 @@ extern Relation index_open(Oid relationId, LOCKMODE lockmode);
 extern void index_close(Relation relation, LOCKMODE lockmode);
 
 extern bool index_insert(Relation indexRelation,
-			 Datum *values, bool *isnull,
-			 ItemPointer heap_t_ctid,
-			 Relation heapRelation,
-			 IndexUniqueCheck checkUnique,
-			 struct IndexInfo *indexInfo);
+						 Datum *values, bool *isnull,
+						 ItemPointer heap_t_ctid,
+						 Relation heapRelation,
+						 IndexUniqueCheck checkUnique,
+						 struct IndexInfo *indexInfo);
 
 extern IndexScanDesc index_beginscan(Relation heapRelation,
-				Relation indexRelation,
-				Snapshot snapshot,
-				int nkeys, int norderbys);
+									 Relation indexRelation,
+									 Snapshot snapshot,
+									 int nkeys, int norderbys);
 extern IndexScanDesc index_beginscan_bitmap(Relation indexRelation,
-					   Snapshot snapshot,
-					   int nkeys);
+											Snapshot snapshot,
+											int nkeys);
 extern void index_rescan(IndexScanDesc scan,
-			 ScanKey keys, int nkeys,
-			 ScanKey orderbys, int norderbys);
+						 ScanKey keys, int nkeys,
+						 ScanKey orderbys, int norderbys);
 extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
 extern Size index_parallelscan_estimate(Relation indexrel, Snapshot snapshot);
 extern void index_parallelscan_initialize(Relation heaprel, Relation indexrel,
-							  Snapshot snapshot, ParallelIndexScanDesc target);
+										  Snapshot snapshot, ParallelIndexScanDesc target);
 extern void index_parallelrescan(IndexScanDesc scan);
 extern IndexScanDesc index_beginscan_parallel(Relation heaprel,
-						 Relation indexrel, int nkeys, int norderbys,
-						 ParallelIndexScanDesc pscan);
+											  Relation indexrel, int nkeys, int norderbys,
+											  ParallelIndexScanDesc pscan);
 extern ItemPointer index_getnext_tid(IndexScanDesc scan,
-				  ScanDirection direction);
+									 ScanDirection direction);
 struct TupleTableSlot;
 extern bool index_fetch_heap(IndexScanDesc scan, struct TupleTableSlot *slot);
 extern bool index_getnext_slot(IndexScanDesc scan, ScanDirection direction,
-				   struct TupleTableSlot *slot);
+							   struct TupleTableSlot *slot);
 extern int64 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap);
 
 extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,
-				  IndexBulkDeleteResult *stats,
-				  IndexBulkDeleteCallback callback,
-				  void *callback_state);
+												IndexBulkDeleteResult *stats,
+												IndexBulkDeleteCallback callback,
+												void *callback_state);
 extern IndexBulkDeleteResult *index_vacuum_cleanup(IndexVacuumInfo *info,
-					 IndexBulkDeleteResult *stats);
+												   IndexBulkDeleteResult *stats);
 extern bool index_can_return(Relation indexRelation, int attno);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
-				uint16 procnum);
+									uint16 procnum);
 extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
-				  uint16 procnum);
+								   uint16 procnum);
 extern void index_store_float8_orderby_distances(IndexScanDesc scan,
-									 Oid *orderByTypes, double *distances,
-									 bool recheckOrderBy);
+												 Oid *orderByTypes, double *distances,
+												 bool recheckOrderBy);
 
 /*
  * index access method support routines (in genam.c)
  */
 extern IndexScanDesc RelationGetIndexScan(Relation indexRelation,
-					 int nkeys, int norderbys);
+										  int nkeys, int norderbys);
 extern void IndexScanEnd(IndexScanDesc scan);
 extern char *BuildIndexValueDescription(Relation indexRelation,
-						   Datum *values, bool *isnull);
+										Datum *values, bool *isnull);
 extern TransactionId index_compute_xid_horizon_for_tuples(Relation irel,
-									 Relation hrel,
-									 Buffer ibuf,
-									 OffsetNumber *itemnos,
-									 int nitems);
+														  Relation hrel,
+														  Buffer ibuf,
+														  OffsetNumber *itemnos,
+														  int nitems);
 
 /*
  * heap-or-index access to system catalogs (in genam.c)
  */
 extern SysScanDesc systable_beginscan(Relation heapRelation,
-				   Oid indexId,
-				   bool indexOK,
-				   Snapshot snapshot,
-				   int nkeys, ScanKey key);
+									  Oid indexId,
+									  bool indexOK,
+									  Snapshot snapshot,
+									  int nkeys, ScanKey key);
 extern HeapTuple systable_getnext(SysScanDesc sysscan);
 extern bool systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup);
 extern void systable_endscan(SysScanDesc sysscan);
 extern SysScanDesc systable_beginscan_ordered(Relation heapRelation,
-						   Relation indexRelation,
-						   Snapshot snapshot,
-						   int nkeys, ScanKey key);
+											  Relation indexRelation,
+											  Snapshot snapshot,
+											  int nkeys, ScanKey key);
 extern HeapTuple systable_getnext_ordered(SysScanDesc sysscan,
-						 ScanDirection direction);
+										  ScanDirection direction);
 extern void systable_endscan_ordered(SysScanDesc sysscan);
 
 #endif							/* GENAM_H */

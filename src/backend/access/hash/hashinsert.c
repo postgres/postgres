@@ -24,7 +24,7 @@
 #include "storage/predicate.h"
 
 static void _hash_vacuum_one_page(Relation rel, Relation hrel,
-					  Buffer metabuf, Buffer buf);
+								  Buffer metabuf, Buffer buf);
 
 /*
  *	_hash_doinsert() -- Handle insertion of a single index tuple.

@@ -32,7 +32,7 @@
 /* "Methods" required for an expanded object */
 static Size ER_get_flat_size(ExpandedObjectHeader *eohptr);
 static void ER_flatten_into(ExpandedObjectHeader *eohptr,
-				void *result, Size allocated_size);
+							void *result, Size allocated_size);
 
 static const ExpandedObjectMethods ER_methods =
 {
@@ -45,10 +45,10 @@ static void ER_mc_callback(void *arg);
 static MemoryContext get_short_term_cxt(ExpandedRecordHeader *erh);
 static void build_dummy_expanded_header(ExpandedRecordHeader *main_erh);
 static pg_noinline void check_domain_for_new_field(ExpandedRecordHeader *erh,
-						   int fnumber,
-						   Datum newValue, bool isnull);
+												   int fnumber,
+												   Datum newValue, bool isnull);
 static pg_noinline void check_domain_for_new_tuple(ExpandedRecordHeader *erh,
-						   HeapTuple tuple);
+												   HeapTuple tuple);
 
 
 /*

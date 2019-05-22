@@ -62,22 +62,22 @@ get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
 static void get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
-						  Relation relation, bool inhparent);
+									  Relation relation, bool inhparent);
 static bool infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
-							  List *idxExprs);
+										  List *idxExprs);
 static List *get_relation_constraints(PlannerInfo *root,
-						 Oid relationObjectId, RelOptInfo *rel,
-						 bool include_noinherit,
-						 bool include_notnull,
-						 bool include_partition);
+									  Oid relationObjectId, RelOptInfo *rel,
+									  bool include_noinherit,
+									  bool include_notnull,
+									  bool include_partition);
 static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
-				  Relation heapRelation);
+							   Relation heapRelation);
 static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
 static void set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
-							Relation relation);
+										Relation relation);
 static PartitionScheme find_partition_scheme(PlannerInfo *root, Relation rel);
 static void set_baserel_partition_key_exprs(Relation relation,
-								RelOptInfo *rel);
+											RelOptInfo *rel);
 
 /*
  * get_relation_info -

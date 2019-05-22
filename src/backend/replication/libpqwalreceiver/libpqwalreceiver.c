@@ -49,35 +49,35 @@ struct WalReceiverConn
 
 /* Prototypes for interface functions */
 static WalReceiverConn *libpqrcv_connect(const char *conninfo,
-				 bool logical, const char *appname,
-				 char **err);
+										 bool logical, const char *appname,
+										 char **err);
 static void libpqrcv_check_conninfo(const char *conninfo);
 static char *libpqrcv_get_conninfo(WalReceiverConn *conn);
 static void libpqrcv_get_senderinfo(WalReceiverConn *conn,
-						char **sender_host, int *sender_port);
+									char **sender_host, int *sender_port);
 static char *libpqrcv_identify_system(WalReceiverConn *conn,
-						 TimeLineID *primary_tli);
+									  TimeLineID *primary_tli);
 static int	libpqrcv_server_version(WalReceiverConn *conn);
 static void libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
-								 TimeLineID tli, char **filename,
-								 char **content, int *len);
+											 TimeLineID tli, char **filename,
+											 char **content, int *len);
 static bool libpqrcv_startstreaming(WalReceiverConn *conn,
-						const WalRcvStreamOptions *options);
+									const WalRcvStreamOptions *options);
 static void libpqrcv_endstreaming(WalReceiverConn *conn,
-					  TimeLineID *next_tli);
-static int libpqrcv_receive(WalReceiverConn *conn, char **buffer,
-				 pgsocket *wait_fd);
+								  TimeLineID *next_tli);
+static int	libpqrcv_receive(WalReceiverConn *conn, char **buffer,
+							 pgsocket *wait_fd);
 static void libpqrcv_send(WalReceiverConn *conn, const char *buffer,
-			  int nbytes);
+						  int nbytes);
 static char *libpqrcv_create_slot(WalReceiverConn *conn,
-					 const char *slotname,
-					 bool temporary,
-					 CRSSnapshotAction snapshot_action,
-					 XLogRecPtr *lsn);
+								  const char *slotname,
+								  bool temporary,
+								  CRSSnapshotAction snapshot_action,
+								  XLogRecPtr *lsn);
 static WalRcvExecResult *libpqrcv_exec(WalReceiverConn *conn,
-			  const char *query,
-			  const int nRetTypes,
-			  const Oid *retTypes);
+									   const char *query,
+									   const int nRetTypes,
+									   const Oid *retTypes);
 static void libpqrcv_disconnect(WalReceiverConn *conn);
 
 static WalReceiverFunctionsType PQWalReceiverFunctions = {

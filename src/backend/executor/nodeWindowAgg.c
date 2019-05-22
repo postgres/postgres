@@ -158,43 +158,43 @@ typedef struct WindowStatePerAggData
 } WindowStatePerAggData;
 
 static void initialize_windowaggregate(WindowAggState *winstate,
-						   WindowStatePerFunc perfuncstate,
-						   WindowStatePerAgg peraggstate);
+									   WindowStatePerFunc perfuncstate,
+									   WindowStatePerAgg peraggstate);
 static void advance_windowaggregate(WindowAggState *winstate,
-						WindowStatePerFunc perfuncstate,
-						WindowStatePerAgg peraggstate);
+									WindowStatePerFunc perfuncstate,
+									WindowStatePerAgg peraggstate);
 static bool advance_windowaggregate_base(WindowAggState *winstate,
-							 WindowStatePerFunc perfuncstate,
-							 WindowStatePerAgg peraggstate);
+										 WindowStatePerFunc perfuncstate,
+										 WindowStatePerAgg peraggstate);
 static void finalize_windowaggregate(WindowAggState *winstate,
-						 WindowStatePerFunc perfuncstate,
-						 WindowStatePerAgg peraggstate,
-						 Datum *result, bool *isnull);
+									 WindowStatePerFunc perfuncstate,
+									 WindowStatePerAgg peraggstate,
+									 Datum *result, bool *isnull);
 
 static void eval_windowaggregates(WindowAggState *winstate);
 static void eval_windowfunction(WindowAggState *winstate,
-					WindowStatePerFunc perfuncstate,
-					Datum *result, bool *isnull);
+								WindowStatePerFunc perfuncstate,
+								Datum *result, bool *isnull);
 
 static void begin_partition(WindowAggState *winstate);
 static void spool_tuples(WindowAggState *winstate, int64 pos);
 static void release_partition(WindowAggState *winstate);
 
-static int row_is_in_frame(WindowAggState *winstate, int64 pos,
-				TupleTableSlot *slot);
+static int	row_is_in_frame(WindowAggState *winstate, int64 pos,
+							TupleTableSlot *slot);
 static void update_frameheadpos(WindowAggState *winstate);
 static void update_frametailpos(WindowAggState *winstate);
 static void update_grouptailpos(WindowAggState *winstate);
 
 static WindowStatePerAggData *initialize_peragg(WindowAggState *winstate,
-				  WindowFunc *wfunc,
-				  WindowStatePerAgg peraggstate);
+												WindowFunc *wfunc,
+												WindowStatePerAgg peraggstate);
 static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 
 static bool are_peers(WindowAggState *winstate, TupleTableSlot *slot1,
-		  TupleTableSlot *slot2);
+					  TupleTableSlot *slot2);
 static bool window_gettupleslot(WindowObject winobj, int64 pos,
-					TupleTableSlot *slot);
+								TupleTableSlot *slot);
 
 
 /*

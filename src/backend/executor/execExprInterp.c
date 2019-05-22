@@ -145,10 +145,10 @@ static void ExecInitInterpreter(void);
 static void CheckVarSlotCompatibility(TupleTableSlot *slot, int attnum, Oid vartype);
 static void CheckOpSlotCompatibility(ExprEvalStep *op, TupleTableSlot *slot);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
-				   TupleDesc *cache_field, ExprContext *econtext);
+									TupleDesc *cache_field, ExprContext *econtext);
 static void ShutdownTupleDescRef(Datum arg);
 static void ExecEvalRowNullInt(ExprState *state, ExprEvalStep *op,
-				   ExprContext *econtext, bool checkisnull);
+							   ExprContext *econtext, bool checkisnull);
 
 /* fast-path evaluation functions */
 static Datum ExecJustInnerVar(ExprState *state, ExprContext *econtext, bool *isnull);

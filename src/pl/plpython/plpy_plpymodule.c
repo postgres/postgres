@@ -29,8 +29,8 @@ HTAB	   *PLy_spi_exceptions = NULL;
 
 static void PLy_add_exceptions(PyObject *plpy);
 static PyObject *PLy_create_exception(char *name,
-					 PyObject *base, PyObject *dict,
-					 const char *modname, PyObject *mod);
+									  PyObject *base, PyObject *dict,
+									  const char *modname, PyObject *mod);
 static void PLy_generate_spi_exceptions(PyObject *mod, PyObject *base);
 
 /* module functions */
@@ -298,7 +298,7 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
  * don't confuse these with PLy_elog
  */
 static PyObject *PLy_output(volatile int level, PyObject *self,
-		   PyObject *args, PyObject *kw);
+							PyObject *args, PyObject *kw);
 
 static PyObject *
 PLy_debug(PyObject *self, PyObject *args, PyObject *kw)

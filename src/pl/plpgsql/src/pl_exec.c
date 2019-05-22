@@ -239,197 +239,197 @@ static HTAB *shared_cast_hash = NULL;
  * Local function forward declarations
  ************************************************************/
 static void coerce_function_result_tuple(PLpgSQL_execstate *estate,
-							 TupleDesc tupdesc);
+										 TupleDesc tupdesc);
 static void plpgsql_exec_error_callback(void *arg);
 static void copy_plpgsql_datums(PLpgSQL_execstate *estate,
-					PLpgSQL_function *func);
+								PLpgSQL_function *func);
 static void plpgsql_fulfill_promise(PLpgSQL_execstate *estate,
-						PLpgSQL_var *var);
+									PLpgSQL_var *var);
 static MemoryContext get_stmt_mcontext(PLpgSQL_execstate *estate);
 static void push_stmt_mcontext(PLpgSQL_execstate *estate);
 static void pop_stmt_mcontext(PLpgSQL_execstate *estate);
 
-static int exec_stmt_block(PLpgSQL_execstate *estate,
-				PLpgSQL_stmt_block *block);
-static int exec_stmts(PLpgSQL_execstate *estate,
-		   List *stmts);
-static int exec_stmt(PLpgSQL_execstate *estate,
-		  PLpgSQL_stmt *stmt);
-static int exec_stmt_assign(PLpgSQL_execstate *estate,
-				 PLpgSQL_stmt_assign *stmt);
-static int exec_stmt_perform(PLpgSQL_execstate *estate,
-				  PLpgSQL_stmt_perform *stmt);
-static int exec_stmt_call(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_call *stmt);
-static int exec_stmt_getdiag(PLpgSQL_execstate *estate,
-				  PLpgSQL_stmt_getdiag *stmt);
-static int exec_stmt_if(PLpgSQL_execstate *estate,
-			 PLpgSQL_stmt_if *stmt);
-static int exec_stmt_case(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_case *stmt);
-static int exec_stmt_loop(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_loop *stmt);
-static int exec_stmt_while(PLpgSQL_execstate *estate,
-				PLpgSQL_stmt_while *stmt);
-static int exec_stmt_fori(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_fori *stmt);
-static int exec_stmt_fors(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_fors *stmt);
-static int exec_stmt_forc(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_forc *stmt);
-static int exec_stmt_foreach_a(PLpgSQL_execstate *estate,
-					PLpgSQL_stmt_foreach_a *stmt);
-static int exec_stmt_open(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_open *stmt);
-static int exec_stmt_fetch(PLpgSQL_execstate *estate,
-				PLpgSQL_stmt_fetch *stmt);
-static int exec_stmt_close(PLpgSQL_execstate *estate,
-				PLpgSQL_stmt_close *stmt);
-static int exec_stmt_exit(PLpgSQL_execstate *estate,
-			   PLpgSQL_stmt_exit *stmt);
-static int exec_stmt_return(PLpgSQL_execstate *estate,
-				 PLpgSQL_stmt_return *stmt);
-static int exec_stmt_return_next(PLpgSQL_execstate *estate,
-					  PLpgSQL_stmt_return_next *stmt);
-static int exec_stmt_return_query(PLpgSQL_execstate *estate,
-					   PLpgSQL_stmt_return_query *stmt);
-static int exec_stmt_raise(PLpgSQL_execstate *estate,
-				PLpgSQL_stmt_raise *stmt);
-static int exec_stmt_assert(PLpgSQL_execstate *estate,
-				 PLpgSQL_stmt_assert *stmt);
-static int exec_stmt_execsql(PLpgSQL_execstate *estate,
-				  PLpgSQL_stmt_execsql *stmt);
-static int exec_stmt_dynexecute(PLpgSQL_execstate *estate,
-					 PLpgSQL_stmt_dynexecute *stmt);
-static int exec_stmt_dynfors(PLpgSQL_execstate *estate,
-				  PLpgSQL_stmt_dynfors *stmt);
-static int exec_stmt_commit(PLpgSQL_execstate *estate,
-				 PLpgSQL_stmt_commit *stmt);
-static int exec_stmt_rollback(PLpgSQL_execstate *estate,
-				   PLpgSQL_stmt_rollback *stmt);
-static int exec_stmt_set(PLpgSQL_execstate *estate,
-			  PLpgSQL_stmt_set *stmt);
+static int	exec_stmt_block(PLpgSQL_execstate *estate,
+							PLpgSQL_stmt_block *block);
+static int	exec_stmts(PLpgSQL_execstate *estate,
+					   List *stmts);
+static int	exec_stmt(PLpgSQL_execstate *estate,
+					  PLpgSQL_stmt *stmt);
+static int	exec_stmt_assign(PLpgSQL_execstate *estate,
+							 PLpgSQL_stmt_assign *stmt);
+static int	exec_stmt_perform(PLpgSQL_execstate *estate,
+							  PLpgSQL_stmt_perform *stmt);
+static int	exec_stmt_call(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_call *stmt);
+static int	exec_stmt_getdiag(PLpgSQL_execstate *estate,
+							  PLpgSQL_stmt_getdiag *stmt);
+static int	exec_stmt_if(PLpgSQL_execstate *estate,
+						 PLpgSQL_stmt_if *stmt);
+static int	exec_stmt_case(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_case *stmt);
+static int	exec_stmt_loop(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_loop *stmt);
+static int	exec_stmt_while(PLpgSQL_execstate *estate,
+							PLpgSQL_stmt_while *stmt);
+static int	exec_stmt_fori(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_fori *stmt);
+static int	exec_stmt_fors(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_fors *stmt);
+static int	exec_stmt_forc(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_forc *stmt);
+static int	exec_stmt_foreach_a(PLpgSQL_execstate *estate,
+								PLpgSQL_stmt_foreach_a *stmt);
+static int	exec_stmt_open(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_open *stmt);
+static int	exec_stmt_fetch(PLpgSQL_execstate *estate,
+							PLpgSQL_stmt_fetch *stmt);
+static int	exec_stmt_close(PLpgSQL_execstate *estate,
+							PLpgSQL_stmt_close *stmt);
+static int	exec_stmt_exit(PLpgSQL_execstate *estate,
+						   PLpgSQL_stmt_exit *stmt);
+static int	exec_stmt_return(PLpgSQL_execstate *estate,
+							 PLpgSQL_stmt_return *stmt);
+static int	exec_stmt_return_next(PLpgSQL_execstate *estate,
+								  PLpgSQL_stmt_return_next *stmt);
+static int	exec_stmt_return_query(PLpgSQL_execstate *estate,
+								   PLpgSQL_stmt_return_query *stmt);
+static int	exec_stmt_raise(PLpgSQL_execstate *estate,
+							PLpgSQL_stmt_raise *stmt);
+static int	exec_stmt_assert(PLpgSQL_execstate *estate,
+							 PLpgSQL_stmt_assert *stmt);
+static int	exec_stmt_execsql(PLpgSQL_execstate *estate,
+							  PLpgSQL_stmt_execsql *stmt);
+static int	exec_stmt_dynexecute(PLpgSQL_execstate *estate,
+								 PLpgSQL_stmt_dynexecute *stmt);
+static int	exec_stmt_dynfors(PLpgSQL_execstate *estate,
+							  PLpgSQL_stmt_dynfors *stmt);
+static int	exec_stmt_commit(PLpgSQL_execstate *estate,
+							 PLpgSQL_stmt_commit *stmt);
+static int	exec_stmt_rollback(PLpgSQL_execstate *estate,
+							   PLpgSQL_stmt_rollback *stmt);
+static int	exec_stmt_set(PLpgSQL_execstate *estate,
+						  PLpgSQL_stmt_set *stmt);
 
 static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
-					 PLpgSQL_function *func,
-					 ReturnSetInfo *rsi,
-					 EState *simple_eval_estate);
+								 PLpgSQL_function *func,
+								 ReturnSetInfo *rsi,
+								 EState *simple_eval_estate);
 static void exec_eval_cleanup(PLpgSQL_execstate *estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate *estate,
-				  PLpgSQL_expr *expr, int cursorOptions,
-				  bool keepplan);
+							  PLpgSQL_expr *expr, int cursorOptions,
+							  bool keepplan);
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
 static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
 static void exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno);
 static bool contains_target_param(Node *node, int *target_dno);
 static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
-					  PLpgSQL_expr *expr,
-					  Datum *result,
-					  bool *isNull,
-					  Oid *rettype,
-					  int32 *rettypmod);
+								  PLpgSQL_expr *expr,
+								  Datum *result,
+								  bool *isNull,
+								  Oid *rettype,
+								  int32 *rettypmod);
 
 static void exec_assign_expr(PLpgSQL_execstate *estate,
-				 PLpgSQL_datum *target,
-				 PLpgSQL_expr *expr);
+							 PLpgSQL_datum *target,
+							 PLpgSQL_expr *expr);
 static void exec_assign_c_string(PLpgSQL_execstate *estate,
-					 PLpgSQL_datum *target,
-					 const char *str);
+								 PLpgSQL_datum *target,
+								 const char *str);
 static void exec_assign_value(PLpgSQL_execstate *estate,
-				  PLpgSQL_datum *target,
-				  Datum value, bool isNull,
-				  Oid valtype, int32 valtypmod);
+							  PLpgSQL_datum *target,
+							  Datum value, bool isNull,
+							  Oid valtype, int32 valtypmod);
 static void exec_eval_datum(PLpgSQL_execstate *estate,
-				PLpgSQL_datum *datum,
-				Oid *typeid,
-				int32 *typetypmod,
-				Datum *value,
-				bool *isnull);
-static int exec_eval_integer(PLpgSQL_execstate *estate,
-				  PLpgSQL_expr *expr,
-				  bool *isNull);
+							PLpgSQL_datum *datum,
+							Oid *typeid,
+							int32 *typetypmod,
+							Datum *value,
+							bool *isnull);
+static int	exec_eval_integer(PLpgSQL_execstate *estate,
+							  PLpgSQL_expr *expr,
+							  bool *isNull);
 static bool exec_eval_boolean(PLpgSQL_execstate *estate,
-				  PLpgSQL_expr *expr,
-				  bool *isNull);
+							  PLpgSQL_expr *expr,
+							  bool *isNull);
 static Datum exec_eval_expr(PLpgSQL_execstate *estate,
-			   PLpgSQL_expr *expr,
-			   bool *isNull,
-			   Oid *rettype,
-			   int32 *rettypmod);
-static int exec_run_select(PLpgSQL_execstate *estate,
-				PLpgSQL_expr *expr, long maxtuples, Portal *portalP);
-static int exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
-			   Portal portal, bool prefetch_ok);
+							PLpgSQL_expr *expr,
+							bool *isNull,
+							Oid *rettype,
+							int32 *rettypmod);
+static int	exec_run_select(PLpgSQL_execstate *estate,
+							PLpgSQL_expr *expr, long maxtuples, Portal *portalP);
+static int	exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
+						   Portal portal, bool prefetch_ok);
 static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
-				 PLpgSQL_expr *expr);
+									  PLpgSQL_expr *expr);
 static ParamExternData *plpgsql_param_fetch(ParamListInfo params,
-					int paramid, bool speculative,
-					ParamExternData *workspace);
+											int paramid, bool speculative,
+											ParamExternData *workspace);
 static void plpgsql_param_compile(ParamListInfo params, Param *param,
-					  ExprState *state,
-					  Datum *resv, bool *resnull);
+								  ExprState *state,
+								  Datum *resv, bool *resnull);
 static void plpgsql_param_eval_var(ExprState *state, ExprEvalStep *op,
-					   ExprContext *econtext);
+								   ExprContext *econtext);
 static void plpgsql_param_eval_var_ro(ExprState *state, ExprEvalStep *op,
-						  ExprContext *econtext);
+									  ExprContext *econtext);
 static void plpgsql_param_eval_recfield(ExprState *state, ExprEvalStep *op,
-							ExprContext *econtext);
+										ExprContext *econtext);
 static void plpgsql_param_eval_generic(ExprState *state, ExprEvalStep *op,
-						   ExprContext *econtext);
+									   ExprContext *econtext);
 static void plpgsql_param_eval_generic_ro(ExprState *state, ExprEvalStep *op,
-							  ExprContext *econtext);
+										  ExprContext *econtext);
 static void exec_move_row(PLpgSQL_execstate *estate,
-			  PLpgSQL_variable *target,
-			  HeapTuple tup, TupleDesc tupdesc);
-static ExpandedRecordHeader *make_expanded_record_for_rec(PLpgSQL_execstate *estate,
-							 PLpgSQL_rec *rec,
-							 TupleDesc srctupdesc,
-							 ExpandedRecordHeader *srcerh);
-static void exec_move_row_from_fields(PLpgSQL_execstate *estate,
 						  PLpgSQL_variable *target,
-						  ExpandedRecordHeader *newerh,
-						  Datum *values, bool *nulls,
-						  TupleDesc tupdesc);
+						  HeapTuple tup, TupleDesc tupdesc);
+static ExpandedRecordHeader *make_expanded_record_for_rec(PLpgSQL_execstate *estate,
+														  PLpgSQL_rec *rec,
+														  TupleDesc srctupdesc,
+														  ExpandedRecordHeader *srcerh);
+static void exec_move_row_from_fields(PLpgSQL_execstate *estate,
+									  PLpgSQL_variable *target,
+									  ExpandedRecordHeader *newerh,
+									  Datum *values, bool *nulls,
+									  TupleDesc tupdesc);
 static bool compatible_tupdescs(TupleDesc src_tupdesc, TupleDesc dst_tupdesc);
 static HeapTuple make_tuple_from_row(PLpgSQL_execstate *estate,
-					PLpgSQL_row *row,
-					TupleDesc tupdesc);
+									 PLpgSQL_row *row,
+									 TupleDesc tupdesc);
 static TupleDesc deconstruct_composite_datum(Datum value,
-							HeapTupleData *tmptup);
+											 HeapTupleData *tmptup);
 static void exec_move_row_from_datum(PLpgSQL_execstate *estate,
-						 PLpgSQL_variable *target,
-						 Datum value);
+									 PLpgSQL_variable *target,
+									 Datum value);
 static void instantiate_empty_record_variable(PLpgSQL_execstate *estate,
-								  PLpgSQL_rec *rec);
+											  PLpgSQL_rec *rec);
 static char *convert_value_to_string(PLpgSQL_execstate *estate,
-						Datum value, Oid valtype);
+									 Datum value, Oid valtype);
 static Datum exec_cast_value(PLpgSQL_execstate *estate,
-				Datum value, bool *isnull,
-				Oid valtype, int32 valtypmod,
-				Oid reqtype, int32 reqtypmod);
+							 Datum value, bool *isnull,
+							 Oid valtype, int32 valtypmod,
+							 Oid reqtype, int32 reqtypmod);
 static plpgsql_CastHashEntry *get_cast_hashentry(PLpgSQL_execstate *estate,
-				   Oid srctype, int32 srctypmod,
-				   Oid dsttype, int32 dsttypmod);
+												 Oid srctype, int32 srctypmod,
+												 Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
 static void plpgsql_destroy_econtext(PLpgSQL_execstate *estate);
 static void assign_simple_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
-				  Datum newvalue, bool isnull, bool freeable);
+							  Datum newvalue, bool isnull, bool freeable);
 static void assign_text_var(PLpgSQL_execstate *estate, PLpgSQL_var *var,
-				const char *str);
+							const char *str);
 static void assign_record_var(PLpgSQL_execstate *estate, PLpgSQL_rec *rec,
-				  ExpandedRecordHeader *erh);
+							  ExpandedRecordHeader *erh);
 static PreparedParamsData *exec_eval_using_params(PLpgSQL_execstate *estate,
-					   List *params);
+												  List *params);
 static Portal exec_dynquery_with_params(PLpgSQL_execstate *estate,
-						  PLpgSQL_expr *dynquery, List *params,
-						  const char *portalname, int cursorOptions);
+										PLpgSQL_expr *dynquery, List *params,
+										const char *portalname, int cursorOptions);
 static char *format_expr_params(PLpgSQL_execstate *estate,
-				   const PLpgSQL_expr *expr);
+								const PLpgSQL_expr *expr);
 static char *format_preparedparamsdata(PLpgSQL_execstate *estate,
-						  const PreparedParamsData *ppd);
+									   const PreparedParamsData *ppd);
 
 
 /* ----------

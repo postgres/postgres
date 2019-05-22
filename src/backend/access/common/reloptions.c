@@ -475,7 +475,7 @@ static bool need_initialization = true;
 
 static void initialize_reloptions(void);
 static void parse_one_reloption(relopt_value *option, char *text_str,
-					int text_len, bool validate);
+								int text_len, bool validate);
 
 /*
  * initialize_reloptions

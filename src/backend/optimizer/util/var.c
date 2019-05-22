@@ -67,17 +67,17 @@ typedef struct
 } flatten_join_alias_vars_context;
 
 static bool pull_varnos_walker(Node *node,
-				   pull_varnos_context *context);
+							   pull_varnos_context *context);
 static bool pull_varattnos_walker(Node *node, pull_varattnos_context *context);
 static bool pull_vars_walker(Node *node, pull_vars_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool locate_var_of_level_walker(Node *node,
-						   locate_var_of_level_context *context);
+									   locate_var_of_level_context *context);
 static bool pull_var_clause_walker(Node *node,
-					   pull_var_clause_context *context);
+								   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
-								flatten_join_alias_vars_context *context);
+											 flatten_join_alias_vars_context *context);
 static Relids alias_relid_set(Query *query, Relids relids);
 
 

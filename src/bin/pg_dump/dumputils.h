@@ -37,33 +37,33 @@
 
 
 extern bool buildACLCommands(const char *name, const char *subname, const char *nspname,
-				 const char *type, const char *acls, const char *racls,
-				 const char *owner, const char *prefix, int remoteVersion,
-				 PQExpBuffer sql);
+							 const char *type, const char *acls, const char *racls,
+							 const char *owner, const char *prefix, int remoteVersion,
+							 PQExpBuffer sql);
 extern bool buildDefaultACLCommands(const char *type, const char *nspname,
-						const char *acls, const char *racls,
-						const char *initacls, const char *initracls,
-						const char *owner,
-						int remoteVersion,
-						PQExpBuffer sql);
+									const char *acls, const char *racls,
+									const char *initacls, const char *initracls,
+									const char *owner,
+									int remoteVersion,
+									PQExpBuffer sql);
 extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
-					 Oid objectId, PQExpBuffer sql);
+								 Oid objectId, PQExpBuffer sql);
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
-				PQExpBuffer buffer, const char *objtype, const char *objname);
+							PQExpBuffer buffer, const char *objtype, const char *objname);
 
 extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
-				PQExpBuffer init_acl_subquery, PQExpBuffer init_racl_subquery,
-				const char *acl_column, const char *acl_owner,
-				const char *obj_kind, bool binary_upgrade);
+							PQExpBuffer init_acl_subquery, PQExpBuffer init_racl_subquery,
+							const char *acl_column, const char *acl_owner,
+							const char *obj_kind, bool binary_upgrade);
 
 extern bool variable_is_guc_list_quote(const char *name);
 
 extern bool SplitGUCList(char *rawstring, char separator,
-			 char ***namelist);
+						 char ***namelist);
 
 extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
-					   const char *type, const char *name,
-					   const char *type2, const char *name2,
-					   PQExpBuffer buf);
+								   const char *type, const char *name,
+								   const char *type2, const char *name2,
+								   PQExpBuffer buf);
 
 #endif							/* DUMPUTILS_H */

@@ -811,8 +811,8 @@ parse_literal_data(PGP_Context *ctx, MBuf *dst, PullFilter *pkt)
 }
 
 /* process_data_packets and parse_compressed_data call each other */
-static int process_data_packets(PGP_Context *ctx, MBuf *dst,
-					 PullFilter *src, int allow_compr, int need_mdc);
+static int	process_data_packets(PGP_Context *ctx, MBuf *dst,
+								 PullFilter *src, int allow_compr, int need_mdc);
 
 static int
 parse_compressed_data(PGP_Context *ctx, MBuf *dst, PullFilter *pkt)

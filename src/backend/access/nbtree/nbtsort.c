@@ -273,34 +273,34 @@ typedef struct BTWriteState
 
 
 static double _bt_spools_heapscan(Relation heap, Relation index,
-					BTBuildState *buildstate, IndexInfo *indexInfo);
+								  BTBuildState *buildstate, IndexInfo *indexInfo);
 static void _bt_spooldestroy(BTSpool *btspool);
 static void _bt_spool(BTSpool *btspool, ItemPointer self,
-		  Datum *values, bool *isnull);
+					  Datum *values, bool *isnull);
 static void _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2);
 static void _bt_build_callback(Relation index, HeapTuple htup, Datum *values,
-				   bool *isnull, bool tupleIsAlive, void *state);
+							   bool *isnull, bool tupleIsAlive, void *state);
 static Page _bt_blnewpage(uint32 level);
 static BTPageState *_bt_pagestate(BTWriteState *wstate, uint32 level);
 static void _bt_slideleft(Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
-			   IndexTuple itup, OffsetNumber itup_off);
+						   IndexTuple itup, OffsetNumber itup_off);
 static void _bt_buildadd(BTWriteState *wstate, BTPageState *state,
-			 IndexTuple itup);
+						 IndexTuple itup);
 static void _bt_uppershutdown(BTWriteState *wstate, BTPageState *state);
 static void _bt_load(BTWriteState *wstate,
-		 BTSpool *btspool, BTSpool *btspool2);
+					 BTSpool *btspool, BTSpool *btspool2);
 static void _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent,
-				   int request);
+							   int request);
 static void _bt_end_parallel(BTLeader *btleader);
 static Size _bt_parallel_estimate_shared(Relation heap, Snapshot snapshot);
 static double _bt_parallel_heapscan(BTBuildState *buildstate,
-					  bool *brokenhotchain);
+									bool *brokenhotchain);
 static void _bt_leader_participate_as_worker(BTBuildState *buildstate);
 static void _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
-						   BTShared *btshared, Sharedsort *sharedsort,
-						   Sharedsort *sharedsort2, int sortmem,
-						   bool progress);
+									   BTShared *btshared, Sharedsort *sharedsort,
+									   Sharedsort *sharedsort2, int sortmem,
+									   bool progress);
 
 
 /*

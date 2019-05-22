@@ -35,15 +35,15 @@
 
 /* static function decls */
 static void init_sexpr(Oid foid, Oid input_collation, Expr *node,
-		   SetExprState *sexpr, PlanState *parent,
-		   MemoryContext sexprCxt, bool allowSRF, bool needDescForSRF);
+					   SetExprState *sexpr, PlanState *parent,
+					   MemoryContext sexprCxt, bool allowSRF, bool needDescForSRF);
 static void ShutdownSetExpr(Datum arg);
 static void ExecEvalFuncArgs(FunctionCallInfo fcinfo,
-				 List *argList, ExprContext *econtext);
+							 List *argList, ExprContext *econtext);
 static void ExecPrepareTuplestoreResult(SetExprState *sexpr,
-							ExprContext *econtext,
-							Tuplestorestate *resultStore,
-							TupleDesc resultDesc);
+										ExprContext *econtext,
+										Tuplestorestate *resultStore,
+										TupleDesc resultDesc);
 static void tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
 
 

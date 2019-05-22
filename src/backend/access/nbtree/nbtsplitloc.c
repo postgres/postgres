@@ -65,25 +65,25 @@ typedef struct
 } FindSplitData;
 
 static void _bt_recsplitloc(FindSplitData *state,
-				OffsetNumber firstoldonright, bool newitemonleft,
-				int olddataitemstoleft, Size firstoldonrightsz);
+							OffsetNumber firstoldonright, bool newitemonleft,
+							int olddataitemstoleft, Size firstoldonrightsz);
 static void _bt_deltasortsplits(FindSplitData *state, double fillfactormult,
-					bool usemult);
+								bool usemult);
 static int	_bt_splitcmp(const void *arg1, const void *arg2);
 static bool _bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
-					int leaffillfactor, bool *usemult);
+								int leaffillfactor, bool *usemult);
 static bool _bt_adjacenthtid(ItemPointer lowhtid, ItemPointer highhtid);
 static OffsetNumber _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
-				 bool *newitemonleft);
-static int _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
-			 SplitPoint *rightpage, FindSplitStrat *strategy);
+									 bool *newitemonleft);
+static int	_bt_strategy(FindSplitData *state, SplitPoint *leftpage,
+						 SplitPoint *rightpage, FindSplitStrat *strategy);
 static void _bt_interval_edges(FindSplitData *state,
-				   SplitPoint **leftinterval, SplitPoint **rightinterval);
+							   SplitPoint **leftinterval, SplitPoint **rightinterval);
 static inline int _bt_split_penalty(FindSplitData *state, SplitPoint *split);
 static inline IndexTuple _bt_split_lastleft(FindSplitData *state,
-				   SplitPoint *split);
+											SplitPoint *split);
 static inline IndexTuple _bt_split_firstright(FindSplitData *state,
-					 SplitPoint *split);
+											  SplitPoint *split);
 
 
 /*

@@ -35,11 +35,11 @@
 
 static bool validateTzEntry(tzEntry *tzentry);
 static bool splitTzLine(const char *filename, int lineno,
-			char *line, tzEntry *tzentry);
-static int addToArray(tzEntry **base, int *arraysize, int n,
-		   tzEntry *entry, bool override);
-static int ParseTzFile(const char *filename, int depth,
-			tzEntry **base, int *arraysize, int n);
+						char *line, tzEntry *tzentry);
+static int	addToArray(tzEntry **base, int *arraysize, int n,
+					   tzEntry *entry, bool override);
+static int	ParseTzFile(const char *filename, int depth,
+						tzEntry **base, int *arraysize, int n);
 
 
 /*

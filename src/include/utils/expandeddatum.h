@@ -147,11 +147,11 @@ struct ExpandedObjectHeader
 
 extern ExpandedObjectHeader *DatumGetEOHP(Datum d);
 extern void EOH_init_header(ExpandedObjectHeader *eohptr,
-				const ExpandedObjectMethods *methods,
-				MemoryContext obj_context);
+							const ExpandedObjectMethods *methods,
+							MemoryContext obj_context);
 extern Size EOH_get_flat_size(ExpandedObjectHeader *eohptr);
 extern void EOH_flatten_into(ExpandedObjectHeader *eohptr,
-				 void *result, Size allocated_size);
+							 void *result, Size allocated_size);
 extern Datum MakeExpandedObjectReadOnlyInternal(Datum d);
 extern Datum TransferExpandedObject(Datum d, MemoryContext new_parent);
 extern void DeleteExpandedObject(Datum d);

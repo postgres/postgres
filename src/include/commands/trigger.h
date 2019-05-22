@@ -158,9 +158,9 @@ extern PGDLLIMPORT int SessionReplicationRole;
 #define TRIGGER_DISABLED					'D'
 
 extern ObjectAddress CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
-			  Oid relOid, Oid refRelOid, Oid constraintOid, Oid indexOid,
-			  Oid funcoid, Oid parentTriggerOid, Node *whenClause,
-			  bool isInternal, bool in_partition);
+								   Oid relOid, Oid refRelOid, Oid constraintOid, Oid indexOid,
+								   Oid funcoid, Oid parentTriggerOid, Node *whenClause,
+								   bool isInternal, bool in_partition);
 
 extern void RemoveTriggerById(Oid trigOid);
 extern Oid	get_trigger_oid(Oid relid, const char *name, bool missing_ok);
@@ -168,7 +168,7 @@ extern Oid	get_trigger_oid(Oid relid, const char *name, bool missing_ok);
 extern ObjectAddress renametrig(RenameStmt *stmt);
 
 extern void EnableDisableTrigger(Relation rel, const char *tgname,
-					 char fires_when, bool skip_system, LOCKMODE lockmode);
+								 char fires_when, bool skip_system, LOCKMODE lockmode);
 
 extern void RelationBuildTriggers(Relation relation);
 
@@ -177,71 +177,71 @@ extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
 extern const char *FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc);
 
 extern TransitionCaptureState *MakeTransitionCaptureState(TriggerDesc *trigdesc,
-						   Oid relid, CmdType cmdType);
+														  Oid relid, CmdType cmdType);
 
 extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 
 extern void ExecBSInsertTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+								 ResultRelInfo *relinfo);
 extern void ExecASInsertTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 TransitionCaptureState *transition_capture);
+								 ResultRelInfo *relinfo,
+								 TransitionCaptureState *transition_capture);
 extern bool ExecBRInsertTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 TupleTableSlot *slot);
+								 ResultRelInfo *relinfo,
+								 TupleTableSlot *slot);
 extern void ExecARInsertTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 TupleTableSlot *slot,
-					 List *recheckIndexes,
-					 TransitionCaptureState *transition_capture);
+								 ResultRelInfo *relinfo,
+								 TupleTableSlot *slot,
+								 List *recheckIndexes,
+								 TransitionCaptureState *transition_capture);
 extern bool ExecIRInsertTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 TupleTableSlot *slot);
+								 ResultRelInfo *relinfo,
+								 TupleTableSlot *slot);
 extern void ExecBSDeleteTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+								 ResultRelInfo *relinfo);
 extern void ExecASDeleteTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 TransitionCaptureState *transition_capture);
+								 ResultRelInfo *relinfo,
+								 TransitionCaptureState *transition_capture);
 extern bool ExecBRDeleteTriggers(EState *estate,
-					 EPQState *epqstate,
-					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid,
-					 HeapTuple fdw_trigtuple,
-					 TupleTableSlot **epqslot);
+								 EPQState *epqstate,
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid,
+								 HeapTuple fdw_trigtuple,
+								 TupleTableSlot **epqslot);
 extern void ExecARDeleteTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid,
-					 HeapTuple fdw_trigtuple,
-					 TransitionCaptureState *transition_capture);
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid,
+								 HeapTuple fdw_trigtuple,
+								 TransitionCaptureState *transition_capture);
 extern bool ExecIRDeleteTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 HeapTuple trigtuple);
+								 ResultRelInfo *relinfo,
+								 HeapTuple trigtuple);
 extern void ExecBSUpdateTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+								 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 TransitionCaptureState *transition_capture);
+								 ResultRelInfo *relinfo,
+								 TransitionCaptureState *transition_capture);
 extern bool ExecBRUpdateTriggers(EState *estate,
-					 EPQState *epqstate,
-					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid,
-					 HeapTuple fdw_trigtuple,
-					 TupleTableSlot *slot);
+								 EPQState *epqstate,
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid,
+								 HeapTuple fdw_trigtuple,
+								 TupleTableSlot *slot);
 extern void ExecARUpdateTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 ItemPointer tupleid,
-					 HeapTuple fdw_trigtuple,
-					 TupleTableSlot *slot,
-					 List *recheckIndexes,
-					 TransitionCaptureState *transition_capture);
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid,
+								 HeapTuple fdw_trigtuple,
+								 TupleTableSlot *slot,
+								 List *recheckIndexes,
+								 TransitionCaptureState *transition_capture);
 extern bool ExecIRUpdateTriggers(EState *estate,
-					 ResultRelInfo *relinfo,
-					 HeapTuple trigtuple,
-					 TupleTableSlot *slot);
+								 ResultRelInfo *relinfo,
+								 HeapTuple trigtuple,
+								 TupleTableSlot *slot);
 extern void ExecBSTruncateTriggers(EState *estate,
-					   ResultRelInfo *relinfo);
+								   ResultRelInfo *relinfo);
 extern void ExecASTruncateTriggers(EState *estate,
-					   ResultRelInfo *relinfo);
+								   ResultRelInfo *relinfo);
 
 extern void AfterTriggerBeginXact(void);
 extern void AfterTriggerBeginQuery(void);
@@ -258,13 +258,13 @@ extern bool AfterTriggerPendingOnRel(Oid relid);
  * in utils/adt/ri_triggers.c
  */
 extern bool RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
-							  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
+										  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
 extern bool RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
-							  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
+										  TupleTableSlot *old_slot, TupleTableSlot *new_slot);
 extern bool RI_Initial_Check(Trigger *trigger,
-				 Relation fk_rel, Relation pk_rel);
+							 Relation fk_rel, Relation pk_rel);
 extern void RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel,
-						 Relation pk_rel);
+									 Relation pk_rel);
 
 /* result values for RI_FKey_trigger_type: */
 #define RI_TRIGGER_PK	1		/* is a trigger on the PK relation */

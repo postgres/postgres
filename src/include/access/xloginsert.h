@@ -46,17 +46,17 @@ extern void XLogEnsureRecordSpace(int nbuffers, int ndatas);
 extern void XLogRegisterData(char *data, int len);
 extern void XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags);
 extern void XLogRegisterBlock(uint8 block_id, RelFileNode *rnode,
-				  ForkNumber forknum, BlockNumber blknum, char *page,
-				  uint8 flags);
+							  ForkNumber forknum, BlockNumber blknum, char *page,
+							  uint8 flags);
 extern void XLogRegisterBufData(uint8 block_id, char *data, int len);
 extern void XLogResetInsertion(void);
 extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
 
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-			BlockNumber blk, char *page, bool page_std);
+							  BlockNumber blk, char *page, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
 extern void log_newpage_range(Relation rel, ForkNumber forkNum,
-				  BlockNumber startblk, BlockNumber endblk, bool page_std);
+							  BlockNumber startblk, BlockNumber endblk, bool page_std);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
 
 extern void InitXLogInsert(void);

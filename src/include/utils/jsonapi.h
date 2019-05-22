@@ -122,8 +122,8 @@ extern int	json_count_array_elements(JsonLexContext *lex);
  */
 extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
 extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
-							 int len,
-							 bool need_escapes);
+													int len,
+													bool need_escapes);
 
 /*
  * Utility function to check if a string is a valid JSON number.
@@ -153,13 +153,13 @@ typedef text *(*JsonTransformStringValuesAction) (void *state, char *elem_value,
 
 extern uint32 parse_jsonb_index_flags(Jsonb *jb);
 extern void iterate_jsonb_values(Jsonb *jb, uint32 flags, void *state,
-					 JsonIterateStringValuesAction action);
+								 JsonIterateStringValuesAction action);
 extern void iterate_json_values(text *json, uint32 flags, void *action_state,
-					JsonIterateStringValuesAction action);
+								JsonIterateStringValuesAction action);
 extern Jsonb *transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
-							  JsonTransformStringValuesAction transform_action);
+											JsonTransformStringValuesAction transform_action);
 extern text *transform_json_string_values(text *json, void *action_state,
-							 JsonTransformStringValuesAction transform_action);
+										  JsonTransformStringValuesAction transform_action);
 
 extern char *JsonEncodeDateTime(char *buf, Datum value, Oid typid);
 

@@ -68,11 +68,11 @@ typedef struct SubscriptionRelState
 } SubscriptionRelState;
 
 extern void AddSubscriptionRelState(Oid subid, Oid relid, char state,
-						XLogRecPtr sublsn);
+									XLogRecPtr sublsn);
 extern void UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
-						   XLogRecPtr sublsn);
+									   XLogRecPtr sublsn);
 extern char GetSubscriptionRelState(Oid subid, Oid relid,
-						XLogRecPtr *sublsn, bool missing_ok);
+									XLogRecPtr *sublsn, bool missing_ok);
 extern void RemoveSubscriptionRel(Oid subid, Oid relid);
 
 extern List *GetSubscriptionRelations(Oid subid);

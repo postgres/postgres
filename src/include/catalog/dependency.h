@@ -143,34 +143,34 @@ typedef enum ObjectClass
 /* in dependency.c */
 
 extern void performDeletion(const ObjectAddress *object,
-				DropBehavior behavior, int flags);
+							DropBehavior behavior, int flags);
 
 extern void performMultipleDeletions(const ObjectAddresses *objects,
-						 DropBehavior behavior, int flags);
+									 DropBehavior behavior, int flags);
 
 extern void recordDependencyOnExpr(const ObjectAddress *depender,
-					   Node *expr, List *rtable,
-					   DependencyType behavior);
+								   Node *expr, List *rtable,
+								   DependencyType behavior);
 
 extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
-								Node *expr, Oid relId,
-								DependencyType behavior,
-								DependencyType self_behavior,
-								bool ignore_self);
+											Node *expr, Oid relId,
+											DependencyType behavior,
+											DependencyType self_behavior,
+											bool ignore_self);
 
 extern ObjectClass getObjectClass(const ObjectAddress *object);
 
 extern ObjectAddresses *new_object_addresses(void);
 
 extern void add_exact_object_address(const ObjectAddress *object,
-						 ObjectAddresses *addrs);
+									 ObjectAddresses *addrs);
 
 extern bool object_address_present(const ObjectAddress *object,
-					   const ObjectAddresses *addrs);
+								   const ObjectAddresses *addrs);
 
 extern void record_object_address_dependencies(const ObjectAddress *depender,
-								   ObjectAddresses *referenced,
-								   DependencyType behavior);
+											   ObjectAddresses *referenced,
+											   DependencyType behavior);
 
 extern void sort_object_addresses(ObjectAddresses *addrs);
 
@@ -179,32 +179,32 @@ extern void free_object_addresses(ObjectAddresses *addrs);
 /* in pg_depend.c */
 
 extern void recordDependencyOn(const ObjectAddress *depender,
-				   const ObjectAddress *referenced,
-				   DependencyType behavior);
+							   const ObjectAddress *referenced,
+							   DependencyType behavior);
 
 extern void recordMultipleDependencies(const ObjectAddress *depender,
-						   const ObjectAddress *referenced,
-						   int nreferenced,
-						   DependencyType behavior);
+									   const ObjectAddress *referenced,
+									   int nreferenced,
+									   DependencyType behavior);
 
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object,
-								   bool isReplace);
+											   bool isReplace);
 
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
-						   bool skipExtensionDeps);
+									   bool skipExtensionDeps);
 
 extern long deleteDependencyRecordsForClass(Oid classId, Oid objectId,
-								Oid refclassId, char deptype);
+											Oid refclassId, char deptype);
 
 extern long changeDependencyFor(Oid classId, Oid objectId,
-					Oid refClassId, Oid oldRefObjectId,
-					Oid newRefObjectId);
+								Oid refClassId, Oid oldRefObjectId,
+								Oid newRefObjectId);
 
 extern long changeDependenciesOf(Oid classId, Oid oldObjectId,
-					 Oid newObjectId);
+								 Oid newObjectId);
 
 extern long changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
-					 Oid newRefObjectId);
+								 Oid newRefObjectId);
 
 extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 
@@ -221,24 +221,24 @@ extern List *get_index_ref_constraints(Oid indexId);
 /* in pg_shdepend.c */
 
 extern void recordSharedDependencyOn(ObjectAddress *depender,
-						 ObjectAddress *referenced,
-						 SharedDependencyType deptype);
+									 ObjectAddress *referenced,
+									 SharedDependencyType deptype);
 
 extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId,
-								 int32 objectSubId);
+											 int32 objectSubId);
 
 extern void recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner);
 
 extern void changeDependencyOnOwner(Oid classId, Oid objectId,
-						Oid newOwnerId);
+									Oid newOwnerId);
 
 extern void updateAclDependencies(Oid classId, Oid objectId, int32 objectSubId,
-					  Oid ownerId,
-					  int noldmembers, Oid *oldmembers,
-					  int nnewmembers, Oid *newmembers);
+								  Oid ownerId,
+								  int noldmembers, Oid *oldmembers,
+								  int nnewmembers, Oid *newmembers);
 
 extern bool checkSharedDependencies(Oid classId, Oid objectId,
-						char **detail_msg, char **detail_log_msg);
+									char **detail_msg, char **detail_log_msg);
 
 extern void shdepLockAndCheckObject(Oid classId, Oid objectId);
 

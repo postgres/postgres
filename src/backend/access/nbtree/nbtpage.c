@@ -37,12 +37,12 @@ static void _bt_cachemetadata(Relation rel, BTMetaPageData *input);
 static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
 static bool _bt_mark_page_halfdead(Relation rel, Buffer buf, BTStack stack);
 static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
-						 bool *rightsib_empty);
+									 bool *rightsib_empty);
 static bool _bt_lock_branch_parent(Relation rel, BlockNumber child,
-					   BTStack stack, Buffer *topparent, OffsetNumber *topoff,
-					   BlockNumber *target, BlockNumber *rightsib);
+								   BTStack stack, Buffer *topparent, OffsetNumber *topoff,
+								   BlockNumber *target, BlockNumber *rightsib);
 static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
-				   TransactionId latestRemovedXid);
+							   TransactionId latestRemovedXid);
 
 /*
  *	_bt_initmetapage() -- Fill a page buffer with a correct metapage image

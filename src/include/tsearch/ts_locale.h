@@ -55,7 +55,7 @@ extern char *lowerstr(const char *str);
 extern char *lowerstr_with_len(const char *str, int len);
 
 extern bool tsearch_readline_begin(tsearch_readline_state *stp,
-					   const char *filename);
+								   const char *filename);
 extern char *tsearch_readline(tsearch_readline_state *stp);
 extern void tsearch_readline_end(tsearch_readline_state *stp);
 

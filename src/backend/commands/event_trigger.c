@@ -148,15 +148,15 @@ typedef struct SQLDropObject
 } SQLDropObject;
 
 static void AlterEventTriggerOwner_internal(Relation rel,
-								HeapTuple tup,
-								Oid newOwnerId);
+											HeapTuple tup,
+											Oid newOwnerId);
 static event_trigger_command_tag_check_result check_ddl_tag(const char *tag);
 static event_trigger_command_tag_check_result check_table_rewrite_ddl_tag(
-							const char *tag);
+																		  const char *tag);
 static void error_duplicate_filter_variable(const char *defname);
 static Datum filter_list_to_array(List *filterlist);
-static Oid insert_event_trigger_tuple(const char *trigname, const char *eventname,
-						   Oid evtOwner, Oid funcoid, List *tags);
+static Oid	insert_event_trigger_tuple(const char *trigname, const char *eventname,
+									   Oid evtOwner, Oid funcoid, List *tags);
 static void validate_ddl_tags(const char *filtervar, List *taglist);
 static void validate_table_rewrite_tags(const char *filtervar, List *taglist);
 static void EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata);

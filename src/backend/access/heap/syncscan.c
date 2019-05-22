@@ -116,7 +116,7 @@ static ss_scan_locations_t *scan_locations;
 
 /* prototypes for internal functions */
 static BlockNumber ss_search(RelFileNode relfilenode,
-		  BlockNumber location, bool set);
+							 BlockNumber location, bool set);
 
 
 /*

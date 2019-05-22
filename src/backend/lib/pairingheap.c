@@ -27,9 +27,9 @@
 #include "lib/pairingheap.h"
 
 static pairingheap_node *merge(pairingheap *heap, pairingheap_node *a,
-	  pairingheap_node *b);
+							   pairingheap_node *b);
 static pairingheap_node *merge_children(pairingheap *heap,
-			   pairingheap_node *children);
+										pairingheap_node *children);
 
 /*
  * pairingheap_allocate

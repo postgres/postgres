@@ -20,15 +20,15 @@
 extern PGDLLIMPORT bool track_commit_timestamp;
 
 extern bool check_track_commit_timestamp(bool *newval, void **extra,
-							 GucSource source);
+										 GucSource source);
 
 extern void TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
-							   TransactionId *subxids, TimestampTz timestamp,
-							   RepOriginId nodeid, bool write_xlog);
+										   TransactionId *subxids, TimestampTz timestamp,
+										   RepOriginId nodeid, bool write_xlog);
 extern bool TransactionIdGetCommitTsData(TransactionId xid,
-							 TimestampTz *ts, RepOriginId *nodeid);
+										 TimestampTz *ts, RepOriginId *nodeid);
 extern TransactionId GetLatestCommitTsData(TimestampTz *ts,
-					  RepOriginId *nodeid);
+										   RepOriginId *nodeid);
 
 extern Size CommitTsShmemBuffers(void);
 extern Size CommitTsShmemSize(void);
@@ -42,7 +42,7 @@ extern void CheckPointCommitTs(void);
 extern void ExtendCommitTs(TransactionId newestXact);
 extern void TruncateCommitTs(TransactionId oldestXact);
 extern void SetCommitTsLimit(TransactionId oldestXact,
-				 TransactionId newestXact);
+							 TransactionId newestXact);
 extern void AdvanceOldestCommitTsXid(TransactionId oldestXact);
 
 /* XLOG stuff */

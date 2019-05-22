@@ -26,13 +26,13 @@ extern char *pg_get_partconstrdef_string(Oid partitionId, char *aliasname);
 
 extern char *pg_get_constraintdef_command(Oid constraintId);
 extern char *deparse_expression(Node *expr, List *dpcontext,
-				   bool forceprefix, bool showimplicit);
+								bool forceprefix, bool showimplicit);
 extern List *deparse_context_for(const char *aliasname, Oid relid);
 extern List *deparse_context_for_plan_rtable(List *rtable, List *rtable_names);
 extern List *set_deparse_context_planstate(List *dpcontext,
-							  Node *planstate, List *ancestors);
+										   Node *planstate, List *ancestors);
 extern List *select_rtable_names_for_explain(List *rtable,
-								Bitmapset *rels_used);
+											 Bitmapset *rels_used);
 extern char *generate_collation_name(Oid collid);
 extern char *get_range_partbound_string(List *bound_datums);
 

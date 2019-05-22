@@ -50,7 +50,7 @@ static EventTriggerCacheStateType EventTriggerCacheState = ETCS_NEEDS_REBUILD;
 
 static void BuildEventTriggerCache(void);
 static void InvalidateEventCacheCallback(Datum arg,
-							 int cacheid, uint32 hashvalue);
+										 int cacheid, uint32 hashvalue);
 static int	DecodeTextArrayToCString(Datum array, char ***cstringp);
 
 /*

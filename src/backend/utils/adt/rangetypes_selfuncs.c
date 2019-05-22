@@ -31,34 +31,34 @@
 #include "utils/typcache.h"
 
 static double calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
-			  RangeType *constval, Oid operator);
+							RangeType *constval, Oid operator);
 static double default_range_selectivity(Oid operator);
 static double calc_hist_selectivity(TypeCacheEntry *typcache,
-					  VariableStatData *vardata, RangeType *constval,
-					  Oid operator);
+									VariableStatData *vardata, RangeType *constval,
+									Oid operator);
 static double calc_hist_selectivity_scalar(TypeCacheEntry *typcache,
-							 RangeBound *constbound,
-							 RangeBound *hist, int hist_nvalues,
-							 bool equal);
-static int rbound_bsearch(TypeCacheEntry *typcache, RangeBound *value,
-			   RangeBound *hist, int hist_length, bool equal);
+										   RangeBound *constbound,
+										   RangeBound *hist, int hist_nvalues,
+										   bool equal);
+static int	rbound_bsearch(TypeCacheEntry *typcache, RangeBound *value,
+						   RangeBound *hist, int hist_length, bool equal);
 static float8 get_position(TypeCacheEntry *typcache, RangeBound *value,
-			 RangeBound *hist1, RangeBound *hist2);
+						   RangeBound *hist1, RangeBound *hist2);
 static float8 get_len_position(double value, double hist1, double hist2);
 static float8 get_distance(TypeCacheEntry *typcache, RangeBound *bound1,
-			 RangeBound *bound2);
-static int length_hist_bsearch(Datum *length_hist_values,
-					int length_hist_nvalues, double value, bool equal);
+						   RangeBound *bound2);
+static int	length_hist_bsearch(Datum *length_hist_values,
+								int length_hist_nvalues, double value, bool equal);
 static double calc_length_hist_frac(Datum *length_hist_values,
-					  int length_hist_nvalues, double length1, double length2, bool equal);
+									int length_hist_nvalues, double length1, double length2, bool equal);
 static double calc_hist_selectivity_contained(TypeCacheEntry *typcache,
-								RangeBound *lower, RangeBound *upper,
-								RangeBound *hist_lower, int hist_nvalues,
-								Datum *length_hist_values, int length_hist_nvalues);
+											  RangeBound *lower, RangeBound *upper,
+											  RangeBound *hist_lower, int hist_nvalues,
+											  Datum *length_hist_values, int length_hist_nvalues);
 static double calc_hist_selectivity_contains(TypeCacheEntry *typcache,
-							   RangeBound *lower, RangeBound *upper,
-							   RangeBound *hist_lower, int hist_nvalues,
-							   Datum *length_hist_values, int length_hist_nvalues);
+											 RangeBound *lower, RangeBound *upper,
+											 RangeBound *hist_lower, int hist_nvalues,
+											 Datum *length_hist_values, int length_hist_nvalues);
 
 /*
  * Returns a default selectivity estimate for given operator, when we don't

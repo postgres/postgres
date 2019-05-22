@@ -55,14 +55,14 @@
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
 static inline void BitmapDoneInitializingSharedState(
-								  ParallelBitmapHeapState *pstate);
+													 ParallelBitmapHeapState *pstate);
 static inline void BitmapAdjustPrefetchIterator(BitmapHeapScanState *node,
-							 TBMIterateResult *tbmres);
+												TBMIterateResult *tbmres);
 static inline void BitmapAdjustPrefetchTarget(BitmapHeapScanState *node);
 static inline void BitmapPrefetch(BitmapHeapScanState *node,
-			   TableScanDesc scan);
+								  TableScanDesc scan);
 static bool BitmapShouldInitializeSharedState(
-								  ParallelBitmapHeapState *pstate);
+											  ParallelBitmapHeapState *pstate);
 
 
 /* ----------------------------------------------------------------

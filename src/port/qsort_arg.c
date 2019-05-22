@@ -48,7 +48,7 @@
 
 
 static char *med3(char *a, char *b, char *c,
-	 qsort_arg_comparator cmp, void *arg);
+				  qsort_arg_comparator cmp, void *arg);
 static void swapfunc(char *, char *, size_t, int);
 
 /*

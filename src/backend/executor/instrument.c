@@ -22,7 +22,7 @@ static BufferUsage save_pgBufferUsage;
 
 static void BufferUsageAdd(BufferUsage *dst, const BufferUsage *add);
 static void BufferUsageAccumDiff(BufferUsage *dst,
-					 const BufferUsage *add, const BufferUsage *sub);
+								 const BufferUsage *add, const BufferUsage *sub);
 
 
 /* Allocate new instrumentation structure(s) */

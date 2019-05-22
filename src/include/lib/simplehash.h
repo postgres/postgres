@@ -139,7 +139,7 @@ typedef struct SH_ITERATOR
 
 /* externally visible function prototypes */
 SH_SCOPE	SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
-		  void *private_data);
+							   void *private_data);
 SH_SCOPE void SH_DESTROY(SH_TYPE * tb);
 SH_SCOPE void SH_RESET(SH_TYPE * tb);
 SH_SCOPE void SH_GROW(SH_TYPE * tb, uint32 newsize);

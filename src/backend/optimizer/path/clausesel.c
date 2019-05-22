@@ -42,9 +42,9 @@ typedef struct RangeQueryClause
 } RangeQueryClause;
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
-			   bool varonleft, bool isLTsel, Selectivity s2);
+						   bool varonleft, bool isLTsel, Selectivity s2);
 static RelOptInfo *find_single_rel_for_clauses(PlannerInfo *root,
-							List *clauses);
+											   List *clauses);
 
 /****************************************************************************
  *		ROUTINES TO COMPUTE SELECTIVITIES

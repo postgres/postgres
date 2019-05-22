@@ -263,8 +263,8 @@ static void plperl_event_trigger_handler(PG_FUNCTION_ARGS);
 static void free_plperl_function(plperl_proc_desc *prodesc);
 
 static plperl_proc_desc *compile_plperl_function(Oid fn_oid,
-						bool is_trigger,
-						bool is_event_trigger);
+												 bool is_trigger,
+												 bool is_event_trigger);
 
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc, bool include_generated);
 static SV  *plperl_hash_from_datum(Datum attr);
@@ -273,15 +273,15 @@ static SV  *split_array(plperl_array_info *info, int first, int last, int nest);
 static SV  *make_array_ref(plperl_array_info *info, int first, int last);
 static SV  *get_perl_array_ref(SV *sv);
 static Datum plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
-				   FunctionCallInfo fcinfo,
-				   FmgrInfo *finfo, Oid typioparam,
-				   bool *isnull);
+								FunctionCallInfo fcinfo,
+								FmgrInfo *finfo, Oid typioparam,
+								bool *isnull);
 static void _sv_to_datum_finfo(Oid typid, FmgrInfo *finfo, Oid *typioparam);
 static Datum plperl_array_to_datum(SV *src, Oid typid, int32 typmod);
 static void array_to_datum_internal(AV *av, ArrayBuildState *astate,
-						int *ndims, int *dims, int cur_depth,
-						Oid arraytypid, Oid elemtypid, int32 typmod,
-						FmgrInfo *finfo, Oid typioparam);
+									int *ndims, int *dims, int cur_depth,
+									Oid arraytypid, Oid elemtypid, int32 typmod,
+									FmgrInfo *finfo, Oid typioparam);
 static Datum plperl_hash_to_datum(SV *src, TupleDesc td);
 
 static void plperl_init_shared_libs(pTHX);
@@ -294,7 +294,7 @@ static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
 static void plperl_create_sub(plperl_proc_desc *desc, const char *s, Oid fn_oid);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc,
-					  FunctionCallInfo fcinfo);
+								  FunctionCallInfo fcinfo);
 static void plperl_compile_callback(void *arg);
 static void plperl_exec_callback(void *arg);
 static void plperl_inline_callback(void *arg);

@@ -271,6 +271,6 @@ ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
 extern void PrepareSortSupportComparisonShim(Oid cmpFunc, SortSupport ssup);
 extern void PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup);
 extern void PrepareSortSupportFromIndexRel(Relation indexRel, int16 strategy,
-							   SortSupport ssup);
+										   SortSupport ssup);
 
 #endif							/* SORTSUPPORT_H */

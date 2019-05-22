@@ -33,10 +33,10 @@
 static void usage(const char *progname);
 
 static void createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli,
-				  XLogRecPtr checkpointloc);
+							  XLogRecPtr checkpointloc);
 
 static void digestControlFile(ControlFileData *ControlFile, char *source,
-				  size_t size);
+							  size_t size);
 static void syncTargetDirectory(void);
 static void sanityChecks(void);
 static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);

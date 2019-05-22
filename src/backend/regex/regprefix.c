@@ -19,8 +19,8 @@
 /*
  * forward declarations
  */
-static int findprefix(struct cnfa *cnfa, struct colormap *cm,
-		   chr *string, size_t *slength);
+static int	findprefix(struct cnfa *cnfa, struct colormap *cm,
+					   chr *string, size_t *slength);
 
 
 /*

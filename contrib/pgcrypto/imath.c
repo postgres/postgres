@@ -335,19 +335,19 @@ static int	s_uvcmp(mp_int a, mp_usmall uv);
 /* Unsigned magnitude addition; assumes dc is big enough.
    Carry out is returned (no memory allocated). */
 static mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
-	   mp_size size_b);
+					   mp_size size_b);
 
 /* Unsigned magnitude subtraction.  Assumes dc is big enough. */
 static void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
-	   mp_size size_b);
+				   mp_size size_b);
 
 /* Unsigned recursive multiplication.  Assumes dc is big enough. */
-static int s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
-	   mp_size size_b);
+static int	s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
+				   mp_size size_b);
 
 /* Unsigned magnitude multiplication.  Assumes dc is big enough. */
 static void s_umul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
-	   mp_size size_b);
+				   mp_size size_b);
 
 /* Unsigned recursive squaring.  Assumes dc is big enough. */
 static int	s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a);

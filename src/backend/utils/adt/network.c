@@ -31,14 +31,14 @@
 
 static int32 network_cmp_internal(inet *a1, inet *a2);
 static List *match_network_function(Node *leftop,
-					   Node *rightop,
-					   int indexarg,
-					   Oid funcid,
-					   Oid opfamily);
+									Node *rightop,
+									int indexarg,
+									Oid funcid,
+									Oid opfamily);
 static List *match_network_subset(Node *leftop,
-					 Node *rightop,
-					 bool is_eq,
-					 Oid opfamily);
+								  Node *rightop,
+								  bool is_eq,
+								  Oid opfamily);
 static bool addressOK(unsigned char *a, int bits, int family);
 static inet *internal_inetpl(inet *ip, int64 addend);
 

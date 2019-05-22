@@ -28,7 +28,7 @@
 
 
 static int32 typenameTypeMod(ParseState *pstate, const TypeName *typeName,
-				Type typ);
+							 Type typ);
 
 
 /*

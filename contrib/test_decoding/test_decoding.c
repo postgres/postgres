@@ -39,29 +39,29 @@ typedef struct
 } TestDecodingData;
 
 static void pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
-				  bool is_init);
+							  bool is_init);
 static void pg_decode_shutdown(LogicalDecodingContext *ctx);
 static void pg_decode_begin_txn(LogicalDecodingContext *ctx,
-					ReorderBufferTXN *txn);
+								ReorderBufferTXN *txn);
 static void pg_output_begin(LogicalDecodingContext *ctx,
-				TestDecodingData *data,
-				ReorderBufferTXN *txn,
-				bool last_write);
+							TestDecodingData *data,
+							ReorderBufferTXN *txn,
+							bool last_write);
 static void pg_decode_commit_txn(LogicalDecodingContext *ctx,
-					 ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
+								 ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void pg_decode_change(LogicalDecodingContext *ctx,
-				 ReorderBufferTXN *txn, Relation rel,
-				 ReorderBufferChange *change);
+							 ReorderBufferTXN *txn, Relation rel,
+							 ReorderBufferChange *change);
 static void pg_decode_truncate(LogicalDecodingContext *ctx,
-				   ReorderBufferTXN *txn,
-				   int nrelations, Relation relations[],
-				   ReorderBufferChange *change);
+							   ReorderBufferTXN *txn,
+							   int nrelations, Relation relations[],
+							   ReorderBufferChange *change);
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
-				 RepOriginId origin_id);
+							 RepOriginId origin_id);
 static void pg_decode_message(LogicalDecodingContext *ctx,
-				  ReorderBufferTXN *txn, XLogRecPtr message_lsn,
-				  bool transactional, const char *prefix,
-				  Size sz, const char *message);
+							  ReorderBufferTXN *txn, XLogRecPtr message_lsn,
+							  bool transactional, const char *prefix,
+							  Size sz, const char *message);
 
 void
 _PG_init(void)

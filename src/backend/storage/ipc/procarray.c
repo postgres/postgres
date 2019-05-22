@@ -155,22 +155,22 @@ static void DisplayXidCache(void);
 /* Primitives for KnownAssignedXids array handling for standby */
 static void KnownAssignedXidsCompress(bool force);
 static void KnownAssignedXidsAdd(TransactionId from_xid, TransactionId to_xid,
-					 bool exclusive_lock);
+								 bool exclusive_lock);
 static bool KnownAssignedXidsSearch(TransactionId xid, bool remove);
 static bool KnownAssignedXidExists(TransactionId xid);
 static void KnownAssignedXidsRemove(TransactionId xid);
 static void KnownAssignedXidsRemoveTree(TransactionId xid, int nsubxids,
-							TransactionId *subxids);
+										TransactionId *subxids);
 static void KnownAssignedXidsRemovePreceding(TransactionId xid);
 static int	KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
-static int KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
-							   TransactionId *xmin,
-							   TransactionId xmax);
+static int	KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
+										   TransactionId *xmin,
+										   TransactionId xmax);
 static TransactionId KnownAssignedXidsGetOldestXmin(void);
 static void KnownAssignedXidsDisplay(int trace_level);
 static void KnownAssignedXidsReset(void);
 static inline void ProcArrayEndTransactionInternal(PGPROC *proc,
-								PGXACT *pgxact, TransactionId latestXid);
+												   PGXACT *pgxact, TransactionId latestXid);
 static void ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid);
 
 /*

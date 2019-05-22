@@ -31,7 +31,7 @@ typedef struct xl_logical_message
 #define SizeOfLogicalMessage	(offsetof(xl_logical_message, message))
 
 extern XLogRecPtr LogLogicalMessage(const char *prefix, const char *message,
-				  size_t size, bool transactional);
+									size_t size, bool transactional);
 
 /* RMGR API*/
 #define XLOG_LOGICAL_MESSAGE	0x00

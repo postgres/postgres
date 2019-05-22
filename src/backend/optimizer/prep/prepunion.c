@@ -47,42 +47,42 @@
 
 
 static RelOptInfo *recurse_set_operations(Node *setOp, PlannerInfo *root,
-					   List *colTypes, List *colCollations,
-					   bool junkOK,
-					   int flag, List *refnames_tlist,
-					   List **pTargetList,
-					   double *pNumGroups);
+										  List *colTypes, List *colCollations,
+										  bool junkOK,
+										  int flag, List *refnames_tlist,
+										  List **pTargetList,
+										  double *pNumGroups);
 static RelOptInfo *generate_recursion_path(SetOperationStmt *setOp,
-						PlannerInfo *root,
-						List *refnames_tlist,
-						List **pTargetList);
+										   PlannerInfo *root,
+										   List *refnames_tlist,
+										   List **pTargetList);
 static RelOptInfo *generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
-					 List *refnames_tlist,
-					 List **pTargetList);
+										List *refnames_tlist,
+										List **pTargetList);
 static RelOptInfo *generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
-						List *refnames_tlist,
-						List **pTargetList);
+										   List *refnames_tlist,
+										   List **pTargetList);
 static List *plan_union_children(PlannerInfo *root,
-					SetOperationStmt *top_union,
-					List *refnames_tlist,
-					List **tlist_list);
+								 SetOperationStmt *top_union,
+								 List *refnames_tlist,
+								 List **tlist_list);
 static Path *make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
-				  PlannerInfo *root);
+							   PlannerInfo *root);
 static void postprocess_setop_rel(PlannerInfo *root, RelOptInfo *rel);
 static bool choose_hashed_setop(PlannerInfo *root, List *groupClauses,
-					Path *input_path,
-					double dNumGroups, double dNumOutputRows,
-					const char *construct);
+								Path *input_path,
+								double dNumGroups, double dNumOutputRows,
+								const char *construct);
 static List *generate_setop_tlist(List *colTypes, List *colCollations,
-					 int flag,
-					 Index varno,
-					 bool hack_constants,
-					 List *input_tlist,
-					 List *refnames_tlist);
+								  int flag,
+								  Index varno,
+								  bool hack_constants,
+								  List *input_tlist,
+								  List *refnames_tlist);
 static List *generate_append_tlist(List *colTypes, List *colCollations,
-					  bool flag,
-					  List *input_tlists,
-					  List *refnames_tlist);
+								   bool flag,
+								   List *input_tlists,
+								   List *refnames_tlist);
 static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
 
 

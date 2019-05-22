@@ -74,13 +74,13 @@
 
 static Datum jsonPathFromCstring(char *in, int len);
 static char *jsonPathToCstring(StringInfo out, JsonPath *in,
-				  int estimated_len);
-static int flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
-						 int nestingLevel, bool insideArraySubscript);
+							   int estimated_len);
+static int	flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
+									 int nestingLevel, bool insideArraySubscript);
 static void alignStringInfoInt(StringInfo buf);
 static int32 reserveSpaceForItemPointer(StringInfo buf);
 static void printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
-				  bool printBracketes);
+							  bool printBracketes);
 static int	operationPriority(JsonPathItemType op);
 
 

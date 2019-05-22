@@ -18,7 +18,7 @@ extern bool openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe);
 extern bool setQFout(const char *fname);
 
 extern char *psql_get_variable(const char *varname, PsqlScanQuoteType quote,
-				  void *passthrough);
+							   void *passthrough);
 
 extern void NoticeProcessor(void *arg, const char *message);
 

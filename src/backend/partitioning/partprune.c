@@ -138,67 +138,67 @@ typedef struct PruneStepResult
 
 
 static List *make_partitionedrel_pruneinfo(PlannerInfo *root,
-							  RelOptInfo *parentrel,
-							  int *relid_subplan_map,
-							  List *partitioned_rels, List *prunequal,
-							  Bitmapset **matchedsubplans);
+										   RelOptInfo *parentrel,
+										   int *relid_subplan_map,
+										   List *partitioned_rels, List *prunequal,
+										   Bitmapset **matchedsubplans);
 static void gen_partprune_steps(RelOptInfo *rel, List *clauses,
-					PartClauseTarget target,
-					GeneratePruningStepsContext *context);
+								PartClauseTarget target,
+								GeneratePruningStepsContext *context);
 static List *gen_partprune_steps_internal(GeneratePruningStepsContext *context,
-							 List *clauses);
+										  List *clauses);
 static PartitionPruneStep *gen_prune_step_op(GeneratePruningStepsContext *context,
-				  StrategyNumber opstrategy, bool op_is_ne,
-				  List *exprs, List *cmpfns, Bitmapset *nullkeys);
+											 StrategyNumber opstrategy, bool op_is_ne,
+											 List *exprs, List *cmpfns, Bitmapset *nullkeys);
 static PartitionPruneStep *gen_prune_step_combine(GeneratePruningStepsContext *context,
-					   List *source_stepids,
-					   PartitionPruneCombineOp combineOp);
+												  List *source_stepids,
+												  PartitionPruneCombineOp combineOp);
 static PartitionPruneStep *gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
-							List **keyclauses, Bitmapset *nullkeys);
+													   List **keyclauses, Bitmapset *nullkeys);
 static PartClauseMatchStatus match_clause_to_partition_key(GeneratePruningStepsContext *context,
-							  Expr *clause, Expr *partkey, int partkeyidx,
-							  bool *clause_is_not_null,
-							  PartClauseInfo **pc, List **clause_steps);
+														   Expr *clause, Expr *partkey, int partkeyidx,
+														   bool *clause_is_not_null,
+														   PartClauseInfo **pc, List **clause_steps);
 static List *get_steps_using_prefix(GeneratePruningStepsContext *context,
-					   StrategyNumber step_opstrategy,
-					   bool step_op_is_ne,
-					   Expr *step_lastexpr,
-					   Oid step_lastcmpfn,
-					   int step_lastkeyno,
-					   Bitmapset *step_nullkeys,
-					   List *prefix);
+									StrategyNumber step_opstrategy,
+									bool step_op_is_ne,
+									Expr *step_lastexpr,
+									Oid step_lastcmpfn,
+									int step_lastkeyno,
+									Bitmapset *step_nullkeys,
+									List *prefix);
 static List *get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
-							   StrategyNumber step_opstrategy,
-							   bool step_op_is_ne,
-							   Expr *step_lastexpr,
-							   Oid step_lastcmpfn,
-							   int step_lastkeyno,
-							   Bitmapset *step_nullkeys,
-							   ListCell *start,
-							   List *step_exprs,
-							   List *step_cmpfns);
+											StrategyNumber step_opstrategy,
+											bool step_op_is_ne,
+											Expr *step_lastexpr,
+											Oid step_lastcmpfn,
+											int step_lastkeyno,
+											Bitmapset *step_nullkeys,
+											ListCell *start,
+											List *step_exprs,
+											List *step_cmpfns);
 static PruneStepResult *get_matching_hash_bounds(PartitionPruneContext *context,
-						 StrategyNumber opstrategy, Datum *values, int nvalues,
-						 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
+												 StrategyNumber opstrategy, Datum *values, int nvalues,
+												 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static PruneStepResult *get_matching_list_bounds(PartitionPruneContext *context,
-						 StrategyNumber opstrategy, Datum value, int nvalues,
-						 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
+												 StrategyNumber opstrategy, Datum value, int nvalues,
+												 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static PruneStepResult *get_matching_range_bounds(PartitionPruneContext *context,
-						  StrategyNumber opstrategy, Datum *values, int nvalues,
-						  FmgrInfo *partsupfunc, Bitmapset *nullkeys);
+												  StrategyNumber opstrategy, Datum *values, int nvalues,
+												  FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static Bitmapset *pull_exec_paramids(Expr *expr);
 static bool pull_exec_paramids_walker(Node *node, Bitmapset **context);
 static Bitmapset *get_partkey_exec_paramids(List *steps);
 static PruneStepResult *perform_pruning_base_step(PartitionPruneContext *context,
-						  PartitionPruneStepOp *opstep);
+												  PartitionPruneStepOp *opstep);
 static PruneStepResult *perform_pruning_combine_step(PartitionPruneContext *context,
-							 PartitionPruneStepCombine *cstep,
-							 PruneStepResult **step_results);
+													 PartitionPruneStepCombine *cstep,
+													 PruneStepResult **step_results);
 static bool match_boolean_partition_clause(Oid partopfamily, Expr *clause,
-							   Expr *partkey, Expr **outconst);
+										   Expr *partkey, Expr **outconst);
 static void partkey_datum_from_expr(PartitionPruneContext *context,
-						Expr *expr, int stateidx,
-						Datum *value, bool *isnull);
+									Expr *expr, int stateidx,
+									Datum *value, bool *isnull);
 
 
 /*

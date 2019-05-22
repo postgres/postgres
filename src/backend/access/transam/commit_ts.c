@@ -103,10 +103,10 @@ CommitTimestampShared *commitTsShared;
 bool		track_commit_timestamp;
 
 static void SetXidCommitTsInPage(TransactionId xid, int nsubxids,
-					 TransactionId *subxids, TimestampTz ts,
-					 RepOriginId nodeid, int pageno);
+								 TransactionId *subxids, TimestampTz ts,
+								 RepOriginId nodeid, int pageno);
 static void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts,
-						 RepOriginId nodeid, int slotno);
+									 RepOriginId nodeid, int slotno);
 static void error_commit_ts_disabled(void);
 static int	ZeroCommitTsPage(int pageno, bool writeXlog);
 static bool CommitTsPagePrecedes(int page1, int page2);
@@ -115,8 +115,8 @@ static void DeactivateCommitTs(void);
 static void WriteZeroPageXlogRec(int pageno);
 static void WriteTruncateXlogRec(int pageno, TransactionId oldestXid);
 static void WriteSetTimestampXlogRec(TransactionId mainxid, int nsubxids,
-						 TransactionId *subxids, TimestampTz timestamp,
-						 RepOriginId nodeid);
+									 TransactionId *subxids, TimestampTz timestamp,
+									 RepOriginId nodeid);
 
 /*
  * TransactionTreeSetCommitTsData

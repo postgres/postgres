@@ -312,7 +312,7 @@ NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_no
 
 static Oid	do_start_worker(void);
 static void launcher_determine_sleep(bool canlaunch, bool recursing,
-						 struct timeval *nap);
+									 struct timeval *nap);
 static void launch_worker(TimestampTz now);
 static List *get_database_list(void);
 static void rebuild_database_list(Oid newdb);
@@ -323,25 +323,25 @@ static void do_autovacuum(void);
 static void FreeWorkerInfo(int code, Datum arg);
 
 static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map,
-					  TupleDesc pg_class_desc,
-					  int effective_multixact_freeze_max_age);
+											TupleDesc pg_class_desc,
+											int effective_multixact_freeze_max_age);
 static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
-						  Form_pg_class classForm,
-						  PgStat_StatTabEntry *tabentry,
-						  int effective_multixact_freeze_max_age,
-						  bool *dovacuum, bool *doanalyze, bool *wraparound);
+									  Form_pg_class classForm,
+									  PgStat_StatTabEntry *tabentry,
+									  int effective_multixact_freeze_max_age,
+									  bool *dovacuum, bool *doanalyze, bool *wraparound);
 
 static void autovacuum_do_vac_analyze(autovac_table *tab,
-						  BufferAccessStrategy bstrategy);
+									  BufferAccessStrategy bstrategy);
 static AutoVacOpts *extract_autovac_opts(HeapTuple tup,
-					 TupleDesc pg_class_desc);
+										 TupleDesc pg_class_desc);
 static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
-						  PgStat_StatDBEntry *shared,
-						  PgStat_StatDBEntry *dbentry);
+													  PgStat_StatDBEntry *shared,
+													  PgStat_StatDBEntry *dbentry);
 static void perform_work_item(AutoVacuumWorkItem *workitem);
 static void autovac_report_activity(autovac_table *tab);
 static void autovac_report_workitem(AutoVacuumWorkItem *workitem,
-						const char *nspname, const char *relname);
+									const char *nspname, const char *relname);
 static void av_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr2_handler(SIGNAL_ARGS);
 static void avl_sigterm_handler(SIGNAL_ARGS);

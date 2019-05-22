@@ -99,31 +99,31 @@ typedef struct
 /* non-export function prototypes */
 static bool relationHasPrimaryKey(Relation rel);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
-						 IndexInfo *indexInfo,
-						 List *indexColNames,
-						 Oid accessMethodObjectId,
-						 Oid *collationObjectId,
-						 Oid *classObjectId);
+										  IndexInfo *indexInfo,
+										  List *indexColNames,
+										  Oid accessMethodObjectId,
+										  Oid *collationObjectId,
+										  Oid *classObjectId);
 static void InitializeAttributeOids(Relation indexRelation,
-						int numatts, Oid indexoid);
+									int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
-					Oid parentIndexId,
-					IndexInfo *indexInfo,
-					Oid *collationOids,
-					Oid *classOids,
-					int16 *coloptions,
-					bool primary,
-					bool isexclusion,
-					bool immediate,
-					bool isvalid,
-					bool isready);
+								Oid parentIndexId,
+								IndexInfo *indexInfo,
+								Oid *collationOids,
+								Oid *classOids,
+								int16 *coloptions,
+								bool primary,
+								bool isexclusion,
+								bool immediate,
+								bool isvalid,
+								bool isready);
 static void index_update_stats(Relation rel,
-				   bool hasindex,
-				   double reltuples);
+							   bool hasindex,
+							   double reltuples);
 static void IndexCheckExclusion(Relation heapRelation,
-					Relation indexRelation,
-					IndexInfo *indexInfo);
+								Relation indexRelation,
+								IndexInfo *indexInfo);
 static bool validate_index_callback(ItemPointer itemptr, void *opaque);
 static bool ReindexIsCurrentlyProcessingIndex(Oid indexOid);
 static void SetReindexProcessing(Oid heapOid, Oid indexOid);

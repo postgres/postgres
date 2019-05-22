@@ -23,14 +23,14 @@ extern PGDLLIMPORT post_parse_analyze_hook_type post_parse_analyze_hook;
 
 
 extern Query *parse_analyze(RawStmt *parseTree, const char *sourceText,
-			  Oid *paramTypes, int numParams, QueryEnvironment *queryEnv);
+							Oid *paramTypes, int numParams, QueryEnvironment *queryEnv);
 extern Query *parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
-						Oid **paramTypes, int *numParams);
+									  Oid **paramTypes, int *numParams);
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
-				  CommonTableExpr *parentCTE,
-				  bool locked_from_parent,
-				  bool resolve_unknowns);
+								CommonTableExpr *parentCTE,
+								bool locked_from_parent,
+								bool resolve_unknowns);
 
 extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
@@ -40,10 +40,10 @@ extern bool analyze_requires_snapshot(RawStmt *parseTree);
 extern const char *LCS_asString(LockClauseStrength strength);
 extern void CheckSelectLocking(Query *qry, LockClauseStrength strength);
 extern void applyLockingClause(Query *qry, Index rtindex,
-				   LockClauseStrength strength,
-				   LockWaitPolicy waitPolicy, bool pushedDown);
+							   LockClauseStrength strength,
+							   LockWaitPolicy waitPolicy, bool pushedDown);
 
 extern List *BuildOnConflictExcludedTargetlist(Relation targetrel,
-								  Index exclRelIndex);
+											   Index exclRelIndex);
 
 #endif							/* ANALYZE_H */

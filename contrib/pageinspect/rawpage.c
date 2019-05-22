@@ -33,7 +33,7 @@
 PG_MODULE_MAGIC;
 
 static bytea *get_raw_page_internal(text *relname, ForkNumber forknum,
-					  BlockNumber blkno);
+									BlockNumber blkno);
 
 
 /*

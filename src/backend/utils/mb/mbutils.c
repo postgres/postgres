@@ -86,7 +86,7 @@ static int	pending_client_encoding = PG_SQL_ASCII;
 
 /* Internal functions */
 static char *perform_default_encoding_conversion(const char *src,
-									int len, bool is_client_to_server);
+												 int len, bool is_client_to_server);
 static int	cliplen(const char *str, int len, int limit);
 
 

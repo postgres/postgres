@@ -36,7 +36,7 @@
 
 
 static char *ChooseExtendedStatisticName(const char *name1, const char *name2,
-							const char *label, Oid namespaceid);
+										 const char *label, Oid namespaceid);
 static char *ChooseExtendedStatisticNameAddition(List *exprs);
 
 

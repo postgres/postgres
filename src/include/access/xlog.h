@@ -257,8 +257,8 @@ extern CheckpointStatsData CheckpointStats;
 struct XLogRecData;
 
 extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
-				 XLogRecPtr fpw_lsn,
-				 uint8 flags);
+								   XLogRecPtr fpw_lsn,
+								   uint8 flags);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
@@ -345,11 +345,11 @@ typedef enum SessionBackupState
 } SessionBackupState;
 
 extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast,
-				   TimeLineID *starttli_p, StringInfo labelfile,
-				   List **tablespaces, StringInfo tblspcmapfile, bool infotbssize,
-				   bool needtblspcmapfile);
+									 TimeLineID *starttli_p, StringInfo labelfile,
+									 List **tablespaces, StringInfo tblspcmapfile, bool infotbssize,
+									 bool needtblspcmapfile);
 extern XLogRecPtr do_pg_stop_backup(char *labelfile, bool waitforarchive,
-				  TimeLineID *stoptli_p);
+									TimeLineID *stoptli_p);
 extern void do_pg_abort_backup(void);
 extern SessionBackupState get_backup_status(void);
 

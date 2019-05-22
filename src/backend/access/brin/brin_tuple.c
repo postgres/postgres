@@ -40,8 +40,8 @@
 
 
 static inline void brin_deconstruct_tuple(BrinDesc *brdesc,
-					   char *tp, bits8 *nullbits, bool nulls,
-					   Datum *values, bool *allnulls, bool *hasnulls);
+										  char *tp, bits8 *nullbits, bool nulls,
+										  Datum *values, bool *allnulls, bool *hasnulls);
 
 
 /*

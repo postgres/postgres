@@ -68,7 +68,7 @@ static void usage(void);
 static void StreamLogicalLog(void);
 static bool flushAndSendFeedback(PGconn *conn, TimestampTz *now);
 static void prepareToTerminate(PGconn *conn, XLogRecPtr endpos,
-				   bool keepalive, XLogRecPtr lsn);
+							   bool keepalive, XLogRecPtr lsn);
 
 static void
 usage(void)

@@ -54,21 +54,21 @@ struct HeapTupleData;
 /* in path/clausesel.c: */
 
 extern Selectivity clause_selectivity(PlannerInfo *root,
-				   Node *clause,
-				   int varRelid,
-				   JoinType jointype,
-				   SpecialJoinInfo *sjinfo);
+									  Node *clause,
+									  int varRelid,
+									  JoinType jointype,
+									  SpecialJoinInfo *sjinfo);
 extern Selectivity clauselist_selectivity_simple(PlannerInfo *root,
-							  List *clauses,
-							  int varRelid,
-							  JoinType jointype,
-							  SpecialJoinInfo *sjinfo,
-							  Bitmapset *estimatedclauses);
+												 List *clauses,
+												 int varRelid,
+												 JoinType jointype,
+												 SpecialJoinInfo *sjinfo,
+												 Bitmapset *estimatedclauses);
 extern Selectivity clauselist_selectivity(PlannerInfo *root,
-					   List *clauses,
-					   int varRelid,
-					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo);
+										  List *clauses,
+										  int varRelid,
+										  JoinType jointype,
+										  SpecialJoinInfo *sjinfo);
 
 /* in path/costsize.c: */
 
@@ -103,12 +103,12 @@ extern int	force_parallel_mode;
 extern bool parallel_leader_participation;
 
 extern struct PlannedStmt *planner(Query *parse, int cursorOptions,
-		struct ParamListInfoData *boundParams);
+								   struct ParamListInfoData *boundParams);
 
 extern Expr *expression_planner(Expr *expr);
 extern Expr *expression_planner_with_deps(Expr *expr,
-							 List **relationOids,
-							 List **invalItems);
+										  List **relationOids,
+										  List **invalItems);
 
 extern bool plan_cluster_use_sort(Oid tableOid, Oid indexOid);
 extern int	plan_create_index_workers(Oid tableOid, Oid indexOid);
@@ -116,9 +116,9 @@ extern int	plan_create_index_workers(Oid tableOid, Oid indexOid);
 /* in plan/setrefs.c: */
 
 extern void extract_query_dependencies(Node *query,
-						   List **relationOids,
-						   List **invalItems,
-						   bool *hasRowSecurity);
+									   List **relationOids,
+									   List **invalItems,
+									   bool *hasRowSecurity);
 
 /* in prep/prepqual.c: */
 
@@ -136,33 +136,33 @@ extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 
 extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
-			  Oid result_collation);
+						   Oid result_collation);
 
 extern List *expand_function_arguments(List *args, Oid result_type,
-						  struct HeapTupleData *func_tuple);
+									   struct HeapTupleData *func_tuple);
 
 /* in util/predtest.c: */
 
 extern bool predicate_implied_by(List *predicate_list, List *clause_list,
-					 bool weak);
+								 bool weak);
 extern bool predicate_refuted_by(List *predicate_list, List *clause_list,
-					 bool weak);
+								 bool weak);
 
 /* in util/tlist.c: */
 
 extern int	count_nonjunk_tlist_entries(List *tlist);
 extern TargetEntry *get_sortgroupref_tle(Index sortref,
-					 List *targetList);
+										 List *targetList);
 extern TargetEntry *get_sortgroupclause_tle(SortGroupClause *sgClause,
-						List *targetList);
+											List *targetList);
 extern Node *get_sortgroupclause_expr(SortGroupClause *sgClause,
-						 List *targetList);
+									  List *targetList);
 extern List *get_sortgrouplist_exprs(List *sgClauses,
-						List *targetList);
+									 List *targetList);
 extern SortGroupClause *get_sortgroupref_clause(Index sortref,
-						List *clauses);
+												List *clauses);
 extern SortGroupClause *get_sortgroupref_clause_noerr(Index sortref,
-							  List *clauses);
+													  List *clauses);
 
 /* in util/var.c: */
 

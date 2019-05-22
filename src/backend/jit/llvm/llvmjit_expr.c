@@ -57,12 +57,12 @@ typedef struct CompiledExprState
 static Datum ExecRunCompiledExpr(ExprState *state, ExprContext *econtext, bool *isNull);
 
 static LLVMValueRef BuildV1Call(LLVMJitContext *context, LLVMBuilderRef b,
-			LLVMModuleRef mod, FunctionCallInfo fcinfo,
-			LLVMValueRef *v_fcinfo_isnull);
+								LLVMModuleRef mod, FunctionCallInfo fcinfo,
+								LLVMValueRef *v_fcinfo_isnull);
 static void build_EvalXFunc(LLVMBuilderRef b, LLVMModuleRef mod,
-				const char *funcname,
-				LLVMValueRef v_state, LLVMValueRef v_econtext,
-				ExprEvalStep *op);
+							const char *funcname,
+							LLVMValueRef v_state, LLVMValueRef v_econtext,
+							ExprEvalStep *op);
 static LLVMValueRef create_LifetimeEnd(LLVMModuleRef mod);
 
 

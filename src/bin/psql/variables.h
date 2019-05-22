@@ -75,11 +75,11 @@ typedef struct _variable *VariableSpace;
 VariableSpace CreateVariableSpace(void);
 const char *GetVariable(VariableSpace space, const char *name);
 
-bool ParseVariableBool(const char *value, const char *name,
-				  bool *result);
+bool		ParseVariableBool(const char *value, const char *name,
+							  bool *result);
 
-bool ParseVariableNum(const char *value, const char *name,
-				 int *result);
+bool		ParseVariableNum(const char *value, const char *name,
+							 int *result);
 
 void		PrintVariables(VariableSpace space);
 
@@ -87,9 +87,9 @@ bool		SetVariable(VariableSpace space, const char *name, const char *value);
 bool		SetVariableBool(VariableSpace space, const char *name);
 bool		DeleteVariable(VariableSpace space, const char *name);
 
-void SetVariableHooks(VariableSpace space, const char *name,
-				 VariableSubstituteHook shook,
-				 VariableAssignHook ahook);
+void		SetVariableHooks(VariableSpace space, const char *name,
+							 VariableSubstituteHook shook,
+							 VariableAssignHook ahook);
 
 void		PsqlVarEnumError(const char *name, const char *value, const char *suggestions);
 

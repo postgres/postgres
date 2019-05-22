@@ -66,30 +66,30 @@ extern bool op_in_opfamily(Oid opno, Oid opfamily);
 extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);
 extern Oid	get_op_opfamily_sortfamily(Oid opno, Oid opfamily);
 extern void get_op_opfamily_properties(Oid opno, Oid opfamily, bool ordering_op,
-						   int *strategy,
-						   Oid *lefttype,
-						   Oid *righttype);
-extern Oid get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
-					int16 strategy);
+									   int *strategy,
+									   Oid *lefttype,
+									   Oid *righttype);
+extern Oid	get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
+								int16 strategy);
 extern bool get_ordering_op_properties(Oid opno,
-						   Oid *opfamily, Oid *opcintype, int16 *strategy);
+									   Oid *opfamily, Oid *opcintype, int16 *strategy);
 extern Oid	get_equality_op_for_ordering_op(Oid opno, bool *reverse);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);
 extern bool get_compatible_hash_operators(Oid opno,
-							  Oid *lhs_opno, Oid *rhs_opno);
+										  Oid *lhs_opno, Oid *rhs_opno);
 extern bool get_op_hash_functions(Oid opno,
-					  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
+								  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
 extern List *get_op_btree_interpretation(Oid opno);
 extern bool equality_ops_are_compatible(Oid opno1, Oid opno2);
-extern Oid get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
-				  int16 procnum);
+extern Oid	get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
+							  int16 procnum);
 extern char *get_attname(Oid relid, AttrNumber attnum, bool missing_ok);
 extern AttrNumber get_attnum(Oid relid, const char *attname);
 extern char get_attgenerated(Oid relid, AttrNumber attnum);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern void get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
-					  Oid *typid, int32 *typmod, Oid *collid);
+								  Oid *typid, int32 *typmod, Oid *collid);
 extern char *get_collation_name(Oid colloid);
 extern bool get_collation_isdeterministic(Oid colloid);
 extern char *get_constraint_name(Oid conoid);
@@ -97,7 +97,7 @@ extern char *get_language_name(Oid langoid, bool missing_ok);
 extern Oid	get_opclass_family(Oid opclass);
 extern Oid	get_opclass_input_type(Oid opclass);
 extern bool get_opclass_opfamily_and_input_type(Oid opclass,
-									Oid *opfamily, Oid *opcintype);
+												Oid *opfamily, Oid *opcintype);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
 extern Oid	get_op_rettype(Oid opno);
@@ -138,16 +138,16 @@ extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);
 extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);
 extern void get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
-					 char *typalign);
+								 char *typalign);
 extern Oid	getTypeIOParam(HeapTuple typeTuple);
 extern void get_type_io_data(Oid typid,
-				 IOFuncSelector which_func,
-				 int16 *typlen,
-				 bool *typbyval,
-				 char *typalign,
-				 char *typdelim,
-				 Oid *typioparam,
-				 Oid *func);
+							 IOFuncSelector which_func,
+							 int16 *typlen,
+							 bool *typbyval,
+							 char *typalign,
+							 char *typdelim,
+							 Oid *typioparam,
+							 Oid *func);
 extern char get_typstorage(Oid typid);
 extern Node *get_typdefault(Oid typid);
 extern char get_typtype(Oid typid);
@@ -155,8 +155,8 @@ extern bool type_is_rowtype(Oid typid);
 extern bool type_is_enum(Oid typid);
 extern bool type_is_range(Oid typid);
 extern void get_type_category_preferred(Oid typid,
-							char *typcategory,
-							bool *typispreferred);
+										char *typcategory,
+										bool *typispreferred);
 extern Oid	get_typ_typrelid(Oid typid);
 extern Oid	get_element_type(Oid typid);
 extern Oid	get_array_type(Oid typid);
@@ -174,7 +174,7 @@ extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);
 extern bool get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
-				 int reqkind, Oid reqop, int flags);
+							 int reqkind, Oid reqop, int flags);
 extern void free_attstatsslot(AttStatsSlot *sslot);
 extern char *get_namespace_name(Oid nspid);
 extern char *get_namespace_name_or_temp(Oid nspid);

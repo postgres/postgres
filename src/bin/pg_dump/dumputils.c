@@ -21,12 +21,12 @@
 
 
 static bool parseAclItem(const char *item, const char *type,
-			 const char *name, const char *subname, int remoteVersion,
-			 PQExpBuffer grantee, PQExpBuffer grantor,
-			 PQExpBuffer privs, PQExpBuffer privswgo);
+						 const char *name, const char *subname, int remoteVersion,
+						 PQExpBuffer grantee, PQExpBuffer grantor,
+						 PQExpBuffer privs, PQExpBuffer privswgo);
 static char *copyAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
-	   const char *subname);
+				   const char *subname);
 
 
 /*

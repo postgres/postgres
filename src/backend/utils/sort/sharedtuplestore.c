@@ -97,7 +97,7 @@ struct SharedTuplestoreAccessor
 };
 
 static void sts_filename(char *name, SharedTuplestoreAccessor *accessor,
-			 int participant);
+						 int participant);
 
 /*
  * Return the amount of shared memory required to hold SharedTuplestore for a

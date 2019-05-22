@@ -72,7 +72,7 @@ extern void AutovacuumLauncherIAm(void);
 #endif
 
 extern bool AutoVacuumRequestWork(AutoVacuumWorkItemType type,
-					  Oid relationId, BlockNumber blkno);
+								  Oid relationId, BlockNumber blkno);
 
 /* shared memory stuff */
 extern Size AutoVacuumShmemSize(void);

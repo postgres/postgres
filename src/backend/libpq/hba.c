@@ -139,16 +139,16 @@ static const char *const UserAuthName[] =
 
 
 static MemoryContext tokenize_file(const char *filename, FILE *file,
-			  List **tok_lines, int elevel);
+								   List **tok_lines, int elevel);
 static List *tokenize_inc_file(List *tokens, const char *outer_filename,
-				  const char *inc_filename, int elevel, char **err_msg);
+							   const char *inc_filename, int elevel, char **err_msg);
 static bool parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
-				   int elevel, char **err_msg);
+							   int elevel, char **err_msg);
 static bool verify_option_list_length(List *options, const char *optionname,
-						  List *masters, const char *mastername, int line_num);
+									  List *masters, const char *mastername, int line_num);
 static ArrayType *gethba_options(HbaLine *hba);
 static void fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
-			  int lineno, HbaLine *hba, const char *err_msg);
+						  int lineno, HbaLine *hba, const char *err_msg);
 static void fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc);
 
 

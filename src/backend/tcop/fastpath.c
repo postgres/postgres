@@ -57,9 +57,9 @@ struct fp_info
 
 
 static int16 parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
-					  FunctionCallInfo fcinfo);
+								   FunctionCallInfo fcinfo);
 static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
-						 FunctionCallInfo fcinfo);
+									  FunctionCallInfo fcinfo);
 
 
 /* ----------------

@@ -47,10 +47,10 @@ typedef struct XLogPageReadPrivate
 	int			tliIndex;
 } XLogPageReadPrivate;
 
-static int SimpleXLogPageRead(XLogReaderState *xlogreader,
-				   XLogRecPtr targetPagePtr,
-				   int reqLen, XLogRecPtr targetRecPtr, char *readBuf,
-				   TimeLineID *pageTLI);
+static int	SimpleXLogPageRead(XLogReaderState *xlogreader,
+							   XLogRecPtr targetPagePtr,
+							   int reqLen, XLogRecPtr targetRecPtr, char *readBuf,
+							   TimeLineID *pageTLI);
 
 /*
  * Read WAL from the datadir/pg_wal, starting from 'startpoint' on timeline

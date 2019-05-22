@@ -16,11 +16,11 @@
 
 
 static void create_rel_filename_map(const char *old_data, const char *new_data,
-						const DbInfo *old_db, const DbInfo *new_db,
-						const RelInfo *old_rel, const RelInfo *new_rel,
-						FileNameMap *map);
+									const DbInfo *old_db, const DbInfo *new_db,
+									const RelInfo *old_rel, const RelInfo *new_rel,
+									FileNameMap *map);
 static void report_unmatched_relation(const RelInfo *rel, const DbInfo *db,
-						  bool is_new_db);
+									  bool is_new_db);
 static void free_db_and_rel_infos(DbInfoArr *db_arr);
 static void get_db_infos(ClusterInfo *cluster);
 static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);

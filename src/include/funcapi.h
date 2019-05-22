@@ -154,35 +154,35 @@ typedef enum TypeFuncClass
 } TypeFuncClass;
 
 extern TypeFuncClass get_call_result_type(FunctionCallInfo fcinfo,
-					 Oid *resultTypeId,
-					 TupleDesc *resultTupleDesc);
+										  Oid *resultTypeId,
+										  TupleDesc *resultTupleDesc);
 extern TypeFuncClass get_expr_result_type(Node *expr,
-					 Oid *resultTypeId,
-					 TupleDesc *resultTupleDesc);
+										  Oid *resultTypeId,
+										  TupleDesc *resultTupleDesc);
 extern TypeFuncClass get_func_result_type(Oid functionId,
-					 Oid *resultTypeId,
-					 TupleDesc *resultTupleDesc);
+										  Oid *resultTypeId,
+										  TupleDesc *resultTupleDesc);
 
 extern TupleDesc get_expr_result_tupdesc(Node *expr, bool noError);
 
 extern bool resolve_polymorphic_argtypes(int numargs, Oid *argtypes,
-							 char *argmodes,
-							 Node *call_expr);
+										 char *argmodes,
+										 Node *call_expr);
 
-extern int get_func_arg_info(HeapTuple procTup,
-				  Oid **p_argtypes, char ***p_argnames,
-				  char **p_argmodes);
+extern int	get_func_arg_info(HeapTuple procTup,
+							  Oid **p_argtypes, char ***p_argnames,
+							  char **p_argmodes);
 
-extern int get_func_input_arg_names(Datum proargnames, Datum proargmodes,
-						 char ***arg_names);
+extern int	get_func_input_arg_names(Datum proargnames, Datum proargmodes,
+									 char ***arg_names);
 
 extern int	get_func_trftypes(HeapTuple procTup, Oid **p_trftypes);
 extern char *get_func_result_name(Oid functionId);
 
 extern TupleDesc build_function_result_tupdesc_d(char prokind,
-								Datum proallargtypes,
-								Datum proargmodes,
-								Datum proargnames);
+												 Datum proallargtypes,
+												 Datum proargmodes,
+												 Datum proargnames);
 extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
 
 
@@ -331,8 +331,8 @@ extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);
  * The return result is the number of elements stored, or -1 in the case of
  * "VARIADIC NULL".
  */
-extern int extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
-					  bool convert_unknown, Datum **values,
-					  Oid **types, bool **nulls);
+extern int	extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
+								  bool convert_unknown, Datum **values,
+								  Oid **types, bool **nulls);
 
 #endif							/* FUNCAPI_H */

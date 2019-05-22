@@ -72,7 +72,7 @@ typedef struct ExtensibleNodeMethods
 
 extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *method);
 extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *name,
-						 bool missing_ok);
+															 bool missing_ok);
 
 /*
  * Flags for custom paths, indicating what capabilities the resulting scan
@@ -155,6 +155,6 @@ typedef struct CustomExecMethods
 
 extern void RegisterCustomScanMethods(const CustomScanMethods *methods);
 extern const CustomScanMethods *GetCustomScanMethods(const char *CustomName,
-					 bool missing_ok);
+													 bool missing_ok);
 
 #endif							/* EXTENSIBLE_H */

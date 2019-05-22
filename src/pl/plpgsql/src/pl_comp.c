@@ -91,10 +91,10 @@ static const ExceptionLabelMap exception_label_map[] = {
  * ----------
  */
 static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
-		   HeapTuple procTup,
-		   PLpgSQL_function *function,
-		   PLpgSQL_func_hashkey *hashkey,
-		   bool forValidator);
+									HeapTuple procTup,
+									PLpgSQL_function *function,
+									PLpgSQL_func_hashkey *hashkey,
+									bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
 static void add_parameter_name(PLpgSQL_nsitem_type itemtype, int itemno, const char *name);
 static void add_dummy_return(PLpgSQL_function *function);
@@ -102,23 +102,23 @@ static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
 static Node *plpgsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
-				   ColumnRef *cref, bool error_if_no_field);
+								ColumnRef *cref, bool error_if_no_field);
 static Node *make_datum_param(PLpgSQL_expr *expr, int dno, int location);
 static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod, Oid collation);
 static void plpgsql_start_datums(void);
 static void plpgsql_finish_datums(PLpgSQL_function *function);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
-						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey *hashkey,
-						 bool forValidator);
+									 Form_pg_proc procStruct,
+									 PLpgSQL_func_hashkey *hashkey,
+									 bool forValidator);
 static void plpgsql_resolve_polymorphic_argtypes(int numargs,
-									 Oid *argtypes, char *argmodes,
-									 Node *call_expr, bool forValidator,
-									 const char *proname);
+												 Oid *argtypes, char *argmodes,
+												 Node *call_expr, bool forValidator,
+												 const char *proname);
 static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
 static void plpgsql_HashTableInsert(PLpgSQL_function *function,
-						PLpgSQL_func_hashkey *func_key);
+									PLpgSQL_func_hashkey *func_key);
 static void plpgsql_HashTableDelete(PLpgSQL_function *function);
 static void delete_function(PLpgSQL_function *func);
 

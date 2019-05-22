@@ -85,23 +85,23 @@ typedef struct BrinDesc
 extern BrinDesc *brin_build_desc(Relation rel);
 extern void brin_free_desc(BrinDesc *bdesc);
 extern IndexBuildResult *brinbuild(Relation heap, Relation index,
-		  struct IndexInfo *indexInfo);
+								   struct IndexInfo *indexInfo);
 extern void brinbuildempty(Relation index);
 extern bool brininsert(Relation idxRel, Datum *values, bool *nulls,
-		   ItemPointer heaptid, Relation heapRel,
-		   IndexUniqueCheck checkUnique,
-		   struct IndexInfo *indexInfo);
+					   ItemPointer heaptid, Relation heapRel,
+					   IndexUniqueCheck checkUnique,
+					   struct IndexInfo *indexInfo);
 extern IndexScanDesc brinbeginscan(Relation r, int nkeys, int norderbys);
 extern int64 bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
 extern void brinrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
-		   ScanKey orderbys, int norderbys);
+					   ScanKey orderbys, int norderbys);
 extern void brinendscan(IndexScanDesc scan);
 extern IndexBulkDeleteResult *brinbulkdelete(IndexVacuumInfo *info,
-			   IndexBulkDeleteResult *stats,
-			   IndexBulkDeleteCallback callback,
-			   void *callback_state);
+											 IndexBulkDeleteResult *stats,
+											 IndexBulkDeleteCallback callback,
+											 void *callback_state);
 extern IndexBulkDeleteResult *brinvacuumcleanup(IndexVacuumInfo *info,
-				  IndexBulkDeleteResult *stats);
+												IndexBulkDeleteResult *stats);
 extern bytea *brinoptions(Datum reloptions, bool validate);
 
 /* brin_validate.c */

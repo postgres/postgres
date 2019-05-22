@@ -159,10 +159,10 @@ struct tztry
 };
 
 static bool check_system_link_file(const char *linkname, struct tztry *tt,
-					   char *bestzonename);
+								   char *bestzonename);
 static void scan_available_timezones(char *tzdir, char *tzdirsub,
-						 struct tztry *tt,
-						 int *bestscore, char *bestzonename);
+									 struct tztry *tt,
+									 int *bestscore, char *bestzonename);
 
 
 /*

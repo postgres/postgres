@@ -44,7 +44,7 @@ extern Datum datumTransfer(Datum value, bool typByVal, int typLen);
  * XXX : See comments in the code for restrictions!
  */
 extern bool datumIsEqual(Datum value1, Datum value2,
-			 bool typByVal, int typLen);
+						 bool typByVal, int typLen);
 
 /*
  * datum_image_eq
@@ -53,16 +53,16 @@ extern bool datumIsEqual(Datum value1, Datum value2,
  * true if the two datums are equal, false otherwise.
  */
 extern bool datum_image_eq(Datum value1, Datum value2,
-			   bool typByVal, int typLen);
+						   bool typByVal, int typLen);
 
 /*
  * Serialize and restore datums so that we can transfer them to parallel
  * workers.
  */
 extern Size datumEstimateSpace(Datum value, bool isnull, bool typByVal,
-				   int typLen);
+							   int typLen);
 extern void datumSerialize(Datum value, bool isnull, bool typByVal,
-			   int typLen, char **start_address);
+						   int typLen, char **start_address);
 extern Datum datumRestore(char **start_address, bool *isnull);
 
 #endif							/* DATUM_H */

@@ -72,9 +72,9 @@ static int	nextSemaNumber;		/* next free sem num in last sema set */
 
 
 static IpcSemaphoreId InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
-						   int numSems);
+												 int numSems);
 static void IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum,
-					   int value);
+								   int value);
 static void IpcSemaphoreKill(IpcSemaphoreId semId);
 static int	IpcSemaphoreGetValue(IpcSemaphoreId semId, int semNum);
 static pid_t IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int semNum);

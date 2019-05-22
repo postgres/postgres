@@ -77,14 +77,14 @@ typedef struct ForeignTable
 
 extern ForeignServer *GetForeignServer(Oid serverid);
 extern ForeignServer *GetForeignServerExtended(Oid serverid,
-						 bits16 flags);
+											   bits16 flags);
 extern ForeignServer *GetForeignServerByName(const char *name, bool missing_ok);
 extern UserMapping *GetUserMapping(Oid userid, Oid serverid);
 extern ForeignDataWrapper *GetForeignDataWrapper(Oid fdwid);
 extern ForeignDataWrapper *GetForeignDataWrapperExtended(Oid fdwid,
-							  bits16 flags);
+														 bits16 flags);
 extern ForeignDataWrapper *GetForeignDataWrapperByName(const char *name,
-							bool missing_ok);
+													   bool missing_ok);
 extern ForeignTable *GetForeignTable(Oid relid);
 
 extern List *GetForeignColumnOptions(Oid relid, AttrNumber attnum);

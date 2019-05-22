@@ -54,9 +54,9 @@ typedef struct
 } split_pathtarget_context;
 
 static bool split_pathtarget_walker(Node *node,
-						split_pathtarget_context *context);
+									split_pathtarget_context *context);
 static void add_sp_item_to_pathtarget(PathTarget *target,
-						  split_pathtarget_item *item);
+									  split_pathtarget_item *item);
 static void add_sp_items_to_pathtarget(PathTarget *target, List *items);
 
 

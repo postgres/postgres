@@ -54,8 +54,8 @@ typedef struct VarParamState
 static Node *fixed_paramref_hook(ParseState *pstate, ParamRef *pref);
 static Node *variable_paramref_hook(ParseState *pstate, ParamRef *pref);
 static Node *variable_coerce_param_hook(ParseState *pstate, Param *param,
-						   Oid targetTypeId, int32 targetTypeMod,
-						   int location);
+										Oid targetTypeId, int32 targetTypeMod,
+										int location);
 static bool check_parameter_resolution_walker(Node *node, ParseState *pstate);
 static bool query_contains_extern_params_walker(Node *node, void *context);
 

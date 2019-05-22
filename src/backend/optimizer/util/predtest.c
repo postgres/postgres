@@ -79,9 +79,9 @@ typedef struct PredIterInfoData
 
 
 static bool predicate_implied_by_recurse(Node *clause, Node *predicate,
-							 bool weak);
+										 bool weak);
 static bool predicate_refuted_by_recurse(Node *clause, Node *predicate,
-							 bool weak);
+										 bool weak);
 static PredClass predicate_classify(Node *clause, PredIterInfo info);
 static void list_startup_fn(Node *clause, PredIterInfo info);
 static Node *list_next_fn(PredIterInfo info);
@@ -94,18 +94,18 @@ static void arrayexpr_startup_fn(Node *clause, PredIterInfo info);
 static Node *arrayexpr_next_fn(PredIterInfo info);
 static void arrayexpr_cleanup_fn(PredIterInfo info);
 static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause,
-								   bool weak);
+											   bool weak);
 static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause,
-								   bool weak);
+											   bool weak);
 static Node *extract_not_arg(Node *clause);
 static Node *extract_strong_not_arg(Node *clause);
 static bool clause_is_strict_for(Node *clause, Node *subexpr, bool allow_false);
 static bool operator_predicate_proof(Expr *predicate, Node *clause,
-						 bool refute_it, bool weak);
+									 bool refute_it, bool weak);
 static bool operator_same_subexprs_proof(Oid pred_op, Oid clause_op,
-							 bool refute_it);
+										 bool refute_it);
 static bool operator_same_subexprs_lookup(Oid pred_op, Oid clause_op,
-							  bool refute_it);
+										  bool refute_it);
 static Oid	get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it);
 static void InvalidateOprProofCacheCallBack(Datum arg, int cacheid, uint32 hashvalue);
 

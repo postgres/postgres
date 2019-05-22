@@ -67,136 +67,136 @@ extern PGDLLIMPORT bool enable_partition_pruning;
 extern PGDLLIMPORT int constraint_exclusion;
 
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
-					double index_pages, PlannerInfo *root);
+								  double index_pages, PlannerInfo *root);
 extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-			 ParamPathInfo *param_info);
+						 ParamPathInfo *param_info);
 extern void cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-				ParamPathInfo *param_info);
+							ParamPathInfo *param_info);
 extern void cost_index(IndexPath *path, PlannerInfo *root,
-		   double loop_count, bool partial_path);
+					   double loop_count, bool partial_path);
 extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  ParamPathInfo *param_info,
-					  Path *bitmapqual, double loop_count);
+								  ParamPathInfo *param_info,
+								  Path *bitmapqual, double loop_count);
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
 extern void cost_tidscan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, List *tidquals, ParamPathInfo *param_info);
+						 RelOptInfo *baserel, List *tidquals, ParamPathInfo *param_info);
 extern void cost_subqueryscan(SubqueryScanPath *path, PlannerInfo *root,
-				  RelOptInfo *baserel, ParamPathInfo *param_info);
+							  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
-				  RelOptInfo *baserel, ParamPathInfo *param_info);
+							  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_tableexprscan(Path *path, PlannerInfo *root,
-				   RelOptInfo *baserel, ParamPathInfo *param_info);
+							   RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
-				RelOptInfo *baserel, ParamPathInfo *param_info);
+							RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_tablefuncscan(Path *path, PlannerInfo *root,
-				   RelOptInfo *baserel, ParamPathInfo *param_info);
+							   RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_ctescan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, ParamPathInfo *param_info);
-extern void cost_namedtuplestorescan(Path *path, PlannerInfo *root,
 						 RelOptInfo *baserel, ParamPathInfo *param_info);
+extern void cost_namedtuplestorescan(Path *path, PlannerInfo *root,
+									 RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_resultscan(Path *path, PlannerInfo *root,
-				RelOptInfo *baserel, ParamPathInfo *param_info);
+							RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_recursive_union(Path *runion, Path *nrterm, Path *rterm);
 extern void cost_sort(Path *path, PlannerInfo *root,
-		  List *pathkeys, Cost input_cost, double tuples, int width,
-		  Cost comparison_cost, int sort_mem,
-		  double limit_tuples);
+					  List *pathkeys, Cost input_cost, double tuples, int width,
+					  Cost comparison_cost, int sort_mem,
+					  double limit_tuples);
 extern void cost_append(AppendPath *path);
 extern void cost_merge_append(Path *path, PlannerInfo *root,
-				  List *pathkeys, int n_streams,
-				  Cost input_startup_cost, Cost input_total_cost,
-				  double tuples);
+							  List *pathkeys, int n_streams,
+							  Cost input_startup_cost, Cost input_total_cost,
+							  double tuples);
 extern void cost_material(Path *path,
-			  Cost input_startup_cost, Cost input_total_cost,
-			  double tuples, int width);
+						  Cost input_startup_cost, Cost input_total_cost,
+						  double tuples, int width);
 extern void cost_agg(Path *path, PlannerInfo *root,
-		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
-		 int numGroupCols, double numGroups,
-		 List *quals,
-		 Cost input_startup_cost, Cost input_total_cost,
-		 double input_tuples);
+					 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
+					 int numGroupCols, double numGroups,
+					 List *quals,
+					 Cost input_startup_cost, Cost input_total_cost,
+					 double input_tuples);
 extern void cost_windowagg(Path *path, PlannerInfo *root,
-			   List *windowFuncs, int numPartCols, int numOrderCols,
-			   Cost input_startup_cost, Cost input_total_cost,
-			   double input_tuples);
+						   List *windowFuncs, int numPartCols, int numOrderCols,
+						   Cost input_startup_cost, Cost input_total_cost,
+						   double input_tuples);
 extern void cost_group(Path *path, PlannerInfo *root,
-		   int numGroupCols, double numGroups,
-		   List *quals,
-		   Cost input_startup_cost, Cost input_total_cost,
-		   double input_tuples);
+					   int numGroupCols, double numGroups,
+					   List *quals,
+					   Cost input_startup_cost, Cost input_total_cost,
+					   double input_tuples);
 extern void initial_cost_nestloop(PlannerInfo *root,
-					  JoinCostWorkspace *workspace,
-					  JoinType jointype,
-					  Path *outer_path, Path *inner_path,
-					  JoinPathExtraData *extra);
+								  JoinCostWorkspace *workspace,
+								  JoinType jointype,
+								  Path *outer_path, Path *inner_path,
+								  JoinPathExtraData *extra);
 extern void final_cost_nestloop(PlannerInfo *root, NestPath *path,
-					JoinCostWorkspace *workspace,
-					JoinPathExtraData *extra);
+								JoinCostWorkspace *workspace,
+								JoinPathExtraData *extra);
 extern void initial_cost_mergejoin(PlannerInfo *root,
-					   JoinCostWorkspace *workspace,
-					   JoinType jointype,
-					   List *mergeclauses,
-					   Path *outer_path, Path *inner_path,
-					   List *outersortkeys, List *innersortkeys,
-					   JoinPathExtraData *extra);
+								   JoinCostWorkspace *workspace,
+								   JoinType jointype,
+								   List *mergeclauses,
+								   Path *outer_path, Path *inner_path,
+								   List *outersortkeys, List *innersortkeys,
+								   JoinPathExtraData *extra);
 extern void final_cost_mergejoin(PlannerInfo *root, MergePath *path,
-					 JoinCostWorkspace *workspace,
-					 JoinPathExtraData *extra);
+								 JoinCostWorkspace *workspace,
+								 JoinPathExtraData *extra);
 extern void initial_cost_hashjoin(PlannerInfo *root,
-					  JoinCostWorkspace *workspace,
-					  JoinType jointype,
-					  List *hashclauses,
-					  Path *outer_path, Path *inner_path,
-					  JoinPathExtraData *extra,
-					  bool parallel_hash);
+								  JoinCostWorkspace *workspace,
+								  JoinType jointype,
+								  List *hashclauses,
+								  Path *outer_path, Path *inner_path,
+								  JoinPathExtraData *extra,
+								  bool parallel_hash);
 extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
-					JoinCostWorkspace *workspace,
-					JoinPathExtraData *extra);
+								JoinCostWorkspace *workspace,
+								JoinPathExtraData *extra);
 extern void cost_gather(GatherPath *path, PlannerInfo *root,
-			RelOptInfo *baserel, ParamPathInfo *param_info, double *rows);
+						RelOptInfo *baserel, ParamPathInfo *param_info, double *rows);
 extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
-				  RelOptInfo *rel, ParamPathInfo *param_info,
-				  Cost input_startup_cost, Cost input_total_cost,
-				  double *rows);
+							  RelOptInfo *rel, ParamPathInfo *param_info,
+							  Cost input_startup_cost, Cost input_total_cost,
+							  double *rows);
 extern void cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan);
 extern void cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root);
 extern void cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root);
 extern void compute_semi_anti_join_factors(PlannerInfo *root,
-							   RelOptInfo *joinrel,
-							   RelOptInfo *outerrel,
-							   RelOptInfo *innerrel,
-							   JoinType jointype,
-							   SpecialJoinInfo *sjinfo,
-							   List *restrictlist,
-							   SemiAntiJoinFactors *semifactors);
+										   RelOptInfo *joinrel,
+										   RelOptInfo *outerrel,
+										   RelOptInfo *innerrel,
+										   JoinType jointype,
+										   SpecialJoinInfo *sjinfo,
+										   List *restrictlist,
+										   SemiAntiJoinFactors *semifactors);
 extern void set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern double get_parameterized_baserel_size(PlannerInfo *root,
-							   RelOptInfo *rel,
-							   List *param_clauses);
+											 RelOptInfo *rel,
+											 List *param_clauses);
 extern double get_parameterized_joinrel_size(PlannerInfo *root,
-							   RelOptInfo *rel,
-							   Path *outer_path,
-							   Path *inner_path,
-							   SpecialJoinInfo *sjinfo,
-							   List *restrict_clauses);
+											 RelOptInfo *rel,
+											 Path *outer_path,
+											 Path *inner_path,
+											 SpecialJoinInfo *sjinfo,
+											 List *restrict_clauses);
 extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
-						   RelOptInfo *outer_rel,
-						   RelOptInfo *inner_rel,
-						   SpecialJoinInfo *sjinfo,
-						   List *restrictlist);
+									   RelOptInfo *outer_rel,
+									   RelOptInfo *inner_rel,
+									   SpecialJoinInfo *sjinfo,
+									   List *restrictlist);
 extern void set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_values_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel,
-					   double cte_rows);
+								   double cte_rows);
 extern void set_tablefunc_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_namedtuplestore_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_result_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_foreign_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern PathTarget *set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target);
 extern double compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
-					 Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
+								   Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
 
 #endif							/* COST_H */

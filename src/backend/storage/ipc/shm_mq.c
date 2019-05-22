@@ -144,14 +144,14 @@ struct shm_mq_handle
 
 static void shm_mq_detach_internal(shm_mq *mq);
 static shm_mq_result shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes,
-				  const void *data, bool nowait, Size *bytes_written);
+									   const void *data, bool nowait, Size *bytes_written);
 static shm_mq_result shm_mq_receive_bytes(shm_mq_handle *mqh,
-					 Size bytes_needed, bool nowait, Size *nbytesp,
-					 void **datap);
+										  Size bytes_needed, bool nowait, Size *nbytesp,
+										  void **datap);
 static bool shm_mq_counterparty_gone(shm_mq *mq,
-						 BackgroundWorkerHandle *handle);
+									 BackgroundWorkerHandle *handle);
 static bool shm_mq_wait_internal(shm_mq *mq, PGPROC **ptr,
-					 BackgroundWorkerHandle *handle);
+								 BackgroundWorkerHandle *handle);
 static void shm_mq_inc_bytes_read(shm_mq *mq, Size n);
 static void shm_mq_inc_bytes_written(shm_mq *mq, Size n);
 static void shm_mq_detach_callback(dsm_segment *seg, Datum arg);

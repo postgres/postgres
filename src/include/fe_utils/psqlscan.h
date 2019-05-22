@@ -73,13 +73,13 @@ extern void psql_scan_destroy(PsqlScanState state);
 extern void psql_scan_set_passthrough(PsqlScanState state, void *passthrough);
 
 extern void psql_scan_setup(PsqlScanState state,
-				const char *line, int line_len,
-				int encoding, bool std_strings);
+							const char *line, int line_len,
+							int encoding, bool std_strings);
 extern void psql_scan_finish(PsqlScanState state);
 
 extern PsqlScanResult psql_scan(PsqlScanState state,
-		  PQExpBuffer query_buf,
-		  promptStatus_t *prompt);
+								PQExpBuffer query_buf,
+								promptStatus_t *prompt);
 
 extern void psql_scan_reset(PsqlScanState state);
 

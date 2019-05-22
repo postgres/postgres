@@ -103,8 +103,8 @@ static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
 static void IpcMemoryDelete(int status, Datum shmId);
 static IpcMemoryState PGSharedMemoryAttach(IpcMemoryId shmId,
-					 void *attachAt,
-					 PGShmemHeader **addr);
+										   void *attachAt,
+										   PGShmemHeader **addr);
 
 
 /*

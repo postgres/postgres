@@ -34,9 +34,9 @@ extern bool IsReservedName(const char *name);
 
 extern bool IsSharedRelation(Oid relationId);
 
-extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
-				   AttrNumber oidcolumn);
-extern Oid GetNewRelFileNode(Oid reltablespace, Relation pg_class,
-				  char relpersistence);
+extern Oid	GetNewOidWithIndex(Relation relation, Oid indexId,
+							   AttrNumber oidcolumn);
+extern Oid	GetNewRelFileNode(Oid reltablespace, Relation pg_class,
+							  char relpersistence);
 
 #endif							/* CATALOG_H */

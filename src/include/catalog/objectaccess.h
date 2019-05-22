@@ -128,11 +128,11 @@ extern PGDLLIMPORT object_access_hook_type object_access_hook;
 
 /* Core code uses these functions to call the hook (see macros below). */
 extern void RunObjectPostCreateHook(Oid classId, Oid objectId, int subId,
-						bool is_internal);
+									bool is_internal);
 extern void RunObjectDropHook(Oid classId, Oid objectId, int subId,
-				  int dropflags);
+							  int dropflags);
 extern void RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
-					   Oid auxiliaryId, bool is_internal);
+								   Oid auxiliaryId, bool is_internal);
 extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation);
 extern void RunFunctionExecuteHook(Oid objectId);
 

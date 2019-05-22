@@ -32,8 +32,8 @@ pg_tz	   *log_timezone = NULL;
 
 
 static bool scan_directory_ci(const char *dirname,
-				  const char *fname, int fnamelen,
-				  char *canonname, int canonnamelen);
+							  const char *fname, int fnamelen,
+							  char *canonname, int canonnamelen);
 
 
 /*

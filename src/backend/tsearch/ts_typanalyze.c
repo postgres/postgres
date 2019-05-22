@@ -37,9 +37,9 @@ typedef struct
 } TrackItem;
 
 static void compute_tsvector_stats(VacAttrStats *stats,
-					   AnalyzeAttrFetchFunc fetchfunc,
-					   int samplerows,
-					   double totalrows);
+								   AnalyzeAttrFetchFunc fetchfunc,
+								   int samplerows,
+								   double totalrows);
 static void prune_lexemes_hashtable(HTAB *lexemes_tab, int b_current);
 static uint32 lexeme_hash(const void *key, Size keysize);
 static int	lexeme_match(const void *key1, const void *key2, Size keysize);

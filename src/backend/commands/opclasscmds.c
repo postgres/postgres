@@ -52,27 +52,27 @@
 
 
 static void AlterOpFamilyAdd(AlterOpFamilyStmt *stmt,
-				 Oid amoid, Oid opfamilyoid,
-				 int maxOpNumber, int maxProcNumber,
-				 List *items);
+							 Oid amoid, Oid opfamilyoid,
+							 int maxOpNumber, int maxProcNumber,
+							 List *items);
 static void AlterOpFamilyDrop(AlterOpFamilyStmt *stmt,
-				  Oid amoid, Oid opfamilyoid,
-				  int maxOpNumber, int maxProcNumber,
-				  List *items);
+							  Oid amoid, Oid opfamilyoid,
+							  int maxOpNumber, int maxProcNumber,
+							  List *items);
 static void processTypesSpec(List *args, Oid *lefttype, Oid *righttype);
 static void assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid);
 static void assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid);
 static void addFamilyMember(List **list, OpFamilyMember *member, bool isProc);
 static void storeOperators(List *opfamilyname, Oid amoid,
-			   Oid opfamilyoid, Oid opclassoid,
-			   List *operators, bool isAdd);
+						   Oid opfamilyoid, Oid opclassoid,
+						   List *operators, bool isAdd);
 static void storeProcedures(List *opfamilyname, Oid amoid,
-				Oid opfamilyoid, Oid opclassoid,
-				List *procedures, bool isAdd);
+							Oid opfamilyoid, Oid opclassoid,
+							List *procedures, bool isAdd);
 static void dropOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
-			  List *operators);
+						  List *operators);
 static void dropProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
-			   List *procedures);
+						   List *procedures);
 
 /*
  * OpFamilyCacheLookup

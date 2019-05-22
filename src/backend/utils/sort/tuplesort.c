@@ -589,8 +589,8 @@ struct Sharedsort
 
 
 static Tuplesortstate *tuplesort_begin_common(int workMem,
-					   SortCoordinate coordinate,
-					   bool randomAccess);
+											  SortCoordinate coordinate,
+											  bool randomAccess);
 static void puttuple_common(Tuplesortstate *state, SortTuple *tuple);
 static bool consider_abort_common(Tuplesortstate *state);
 static void inittapes(Tuplesortstate *state, bool mergeruns);
@@ -612,36 +612,36 @@ static void reversedirection(Tuplesortstate *state);
 static unsigned int getlen(Tuplesortstate *state, int tapenum, bool eofOK);
 static void markrunend(Tuplesortstate *state, int tapenum);
 static void *readtup_alloc(Tuplesortstate *state, Size tuplen);
-static int comparetup_heap(const SortTuple *a, const SortTuple *b,
-				Tuplesortstate *state);
+static int	comparetup_heap(const SortTuple *a, const SortTuple *b,
+							Tuplesortstate *state);
 static void copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_heap(Tuplesortstate *state, int tapenum,
-			  SortTuple *stup);
+						  SortTuple *stup);
 static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
-			 int tapenum, unsigned int len);
-static int comparetup_cluster(const SortTuple *a, const SortTuple *b,
-				   Tuplesortstate *state);
+						 int tapenum, unsigned int len);
+static int	comparetup_cluster(const SortTuple *a, const SortTuple *b,
+							   Tuplesortstate *state);
 static void copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_cluster(Tuplesortstate *state, int tapenum,
-				 SortTuple *stup);
+							 SortTuple *stup);
 static void readtup_cluster(Tuplesortstate *state, SortTuple *stup,
-				int tapenum, unsigned int len);
-static int comparetup_index_btree(const SortTuple *a, const SortTuple *b,
-					   Tuplesortstate *state);
-static int comparetup_index_hash(const SortTuple *a, const SortTuple *b,
-					  Tuplesortstate *state);
+							int tapenum, unsigned int len);
+static int	comparetup_index_btree(const SortTuple *a, const SortTuple *b,
+								   Tuplesortstate *state);
+static int	comparetup_index_hash(const SortTuple *a, const SortTuple *b,
+								  Tuplesortstate *state);
 static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_index(Tuplesortstate *state, int tapenum,
-			   SortTuple *stup);
+						   SortTuple *stup);
 static void readtup_index(Tuplesortstate *state, SortTuple *stup,
-			  int tapenum, unsigned int len);
-static int comparetup_datum(const SortTuple *a, const SortTuple *b,
-				 Tuplesortstate *state);
+						  int tapenum, unsigned int len);
+static int	comparetup_datum(const SortTuple *a, const SortTuple *b,
+							 Tuplesortstate *state);
 static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_datum(Tuplesortstate *state, int tapenum,
-			   SortTuple *stup);
+						   SortTuple *stup);
 static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
-			  int tapenum, unsigned int len);
+						  int tapenum, unsigned int len);
 static int	worker_get_identifier(Tuplesortstate *state);
 static void worker_freeze_result_tape(Tuplesortstate *state);
 static void worker_nomergeruns(Tuplesortstate *state);

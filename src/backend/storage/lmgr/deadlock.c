@@ -79,15 +79,15 @@ typedef struct
 static bool DeadLockCheckRecurse(PGPROC *proc);
 static int	TestConfiguration(PGPROC *startProc);
 static bool FindLockCycle(PGPROC *checkProc,
-			  EDGE *softEdges, int *nSoftEdges);
+						  EDGE *softEdges, int *nSoftEdges);
 static bool FindLockCycleRecurse(PGPROC *checkProc, int depth,
-					 EDGE *softEdges, int *nSoftEdges);
+								 EDGE *softEdges, int *nSoftEdges);
 static bool FindLockCycleRecurseMember(PGPROC *checkProc,
-						   PGPROC *checkProcLeader,
-						   int depth, EDGE *softEdges, int *nSoftEdges);
+									   PGPROC *checkProcLeader,
+									   int depth, EDGE *softEdges, int *nSoftEdges);
 static bool ExpandConstraints(EDGE *constraints, int nConstraints);
 static bool TopoSort(LOCK *lock, EDGE *constraints, int nConstraints,
-		 PGPROC **ordering);
+					 PGPROC **ordering);
 
 #ifdef DEBUG_DEADLOCK
 static void PrintLockQueue(LOCK *lock, const char *info);

@@ -75,120 +75,120 @@ typedef struct
 
 
 static void consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
-							IndexOptInfo *index,
-							IndexClauseSet *rclauseset,
-							IndexClauseSet *jclauseset,
-							IndexClauseSet *eclauseset,
-							List **bitindexpaths);
+										IndexOptInfo *index,
+										IndexClauseSet *rclauseset,
+										IndexClauseSet *jclauseset,
+										IndexClauseSet *eclauseset,
+										List **bitindexpaths);
 static void consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
-							   IndexOptInfo *index,
-							   IndexClauseSet *rclauseset,
-							   IndexClauseSet *jclauseset,
-							   IndexClauseSet *eclauseset,
-							   List **bitindexpaths,
-							   List *indexjoinclauses,
-							   int considered_clauses,
-							   List **considered_relids);
+										   IndexOptInfo *index,
+										   IndexClauseSet *rclauseset,
+										   IndexClauseSet *jclauseset,
+										   IndexClauseSet *eclauseset,
+										   List **bitindexpaths,
+										   List *indexjoinclauses,
+										   int considered_clauses,
+										   List **considered_relids);
 static void get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
-					 IndexOptInfo *index,
-					 IndexClauseSet *rclauseset,
-					 IndexClauseSet *jclauseset,
-					 IndexClauseSet *eclauseset,
-					 List **bitindexpaths,
-					 Relids relids,
-					 List **considered_relids);
+								 IndexOptInfo *index,
+								 IndexClauseSet *rclauseset,
+								 IndexClauseSet *jclauseset,
+								 IndexClauseSet *eclauseset,
+								 List **bitindexpaths,
+								 Relids relids,
+								 List **considered_relids);
 static bool eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,
-					List *indexjoinclauses);
+								List *indexjoinclauses);
 static bool bms_equal_any(Relids relids, List *relids_list);
 static void get_index_paths(PlannerInfo *root, RelOptInfo *rel,
-				IndexOptInfo *index, IndexClauseSet *clauses,
-				List **bitindexpaths);
+							IndexOptInfo *index, IndexClauseSet *clauses,
+							List **bitindexpaths);
 static List *build_index_paths(PlannerInfo *root, RelOptInfo *rel,
-				  IndexOptInfo *index, IndexClauseSet *clauses,
-				  bool useful_predicate,
-				  ScanTypeControl scantype,
-				  bool *skip_nonnative_saop,
-				  bool *skip_lower_saop);
+							   IndexOptInfo *index, IndexClauseSet *clauses,
+							   bool useful_predicate,
+							   ScanTypeControl scantype,
+							   bool *skip_nonnative_saop,
+							   bool *skip_lower_saop);
 static List *build_paths_for_OR(PlannerInfo *root, RelOptInfo *rel,
-				   List *clauses, List *other_clauses);
+								List *clauses, List *other_clauses);
 static List *generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
-						 List *clauses, List *other_clauses);
+									  List *clauses, List *other_clauses);
 static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
-				  List *paths);
+							   List *paths);
 static int	path_usage_comparator(const void *a, const void *b);
 static Cost bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel,
-					 Path *ipath);
+								 Path *ipath);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
-					List *paths);
+								List *paths);
 static PathClauseUsage *classify_index_clause_usage(Path *path,
-							List **clauselist);
+													List **clauselist);
 static Relids get_bitmap_tree_required_outer(Path *bitmapqual);
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
 static bool check_index_only(RelOptInfo *rel, IndexOptInfo *index);
 static double get_loop_count(PlannerInfo *root, Index cur_relid, Relids outer_relids);
 static double adjust_rowcount_for_semijoins(PlannerInfo *root,
-							  Index cur_relid,
-							  Index outer_relid,
-							  double rowcount);
+											Index cur_relid,
+											Index outer_relid,
+											double rowcount);
 static double approximate_joinrel_size(PlannerInfo *root, Relids relids);
 static void match_restriction_clauses_to_index(PlannerInfo *root,
+											   IndexOptInfo *index,
+											   IndexClauseSet *clauseset);
+static void match_join_clauses_to_index(PlannerInfo *root,
+										RelOptInfo *rel, IndexOptInfo *index,
+										IndexClauseSet *clauseset,
+										List **joinorclauses);
+static void match_eclass_clauses_to_index(PlannerInfo *root,
+										  IndexOptInfo *index,
+										  IndexClauseSet *clauseset);
+static void match_clauses_to_index(PlannerInfo *root,
+								   List *clauses,
 								   IndexOptInfo *index,
 								   IndexClauseSet *clauseset);
-static void match_join_clauses_to_index(PlannerInfo *root,
-							RelOptInfo *rel, IndexOptInfo *index,
-							IndexClauseSet *clauseset,
-							List **joinorclauses);
-static void match_eclass_clauses_to_index(PlannerInfo *root,
-							  IndexOptInfo *index,
-							  IndexClauseSet *clauseset);
-static void match_clauses_to_index(PlannerInfo *root,
-					   List *clauses,
-					   IndexOptInfo *index,
-					   IndexClauseSet *clauseset);
 static void match_clause_to_index(PlannerInfo *root,
-					  RestrictInfo *rinfo,
-					  IndexOptInfo *index,
-					  IndexClauseSet *clauseset);
+								  RestrictInfo *rinfo,
+								  IndexOptInfo *index,
+								  IndexClauseSet *clauseset);
 static IndexClause *match_clause_to_indexcol(PlannerInfo *root,
-						 RestrictInfo *rinfo,
-						 int indexcol,
-						 IndexOptInfo *index);
+											 RestrictInfo *rinfo,
+											 int indexcol,
+											 IndexOptInfo *index);
 static IndexClause *match_boolean_index_clause(RestrictInfo *rinfo,
-						   int indexcol, IndexOptInfo *index);
+											   int indexcol, IndexOptInfo *index);
 static IndexClause *match_opclause_to_indexcol(PlannerInfo *root,
-						   RestrictInfo *rinfo,
-						   int indexcol,
-						   IndexOptInfo *index);
+											   RestrictInfo *rinfo,
+											   int indexcol,
+											   IndexOptInfo *index);
 static IndexClause *match_funcclause_to_indexcol(PlannerInfo *root,
-							 RestrictInfo *rinfo,
-							 int indexcol,
-							 IndexOptInfo *index);
+												 RestrictInfo *rinfo,
+												 int indexcol,
+												 IndexOptInfo *index);
 static IndexClause *get_index_clause_from_support(PlannerInfo *root,
-							  RestrictInfo *rinfo,
-							  Oid funcid,
-							  int indexarg,
-							  int indexcol,
-							  IndexOptInfo *index);
+												  RestrictInfo *rinfo,
+												  Oid funcid,
+												  int indexarg,
+												  int indexcol,
+												  IndexOptInfo *index);
 static IndexClause *match_saopclause_to_indexcol(RestrictInfo *rinfo,
-							 int indexcol,
-							 IndexOptInfo *index);
+												 int indexcol,
+												 IndexOptInfo *index);
 static IndexClause *match_rowcompare_to_indexcol(RestrictInfo *rinfo,
-							 int indexcol,
-							 IndexOptInfo *index);
+												 int indexcol,
+												 IndexOptInfo *index);
 static IndexClause *expand_indexqual_rowcompare(RestrictInfo *rinfo,
-							int indexcol,
-							IndexOptInfo *index,
-							Oid expr_op,
-							bool var_on_left);
+												int indexcol,
+												IndexOptInfo *index,
+												Oid expr_op,
+												bool var_on_left);
 static void match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
-						List **orderby_clauses_p,
-						List **clause_columns_p);
+									List **orderby_clauses_p,
+									List **clause_columns_p);
 static Expr *match_clause_to_ordering_op(IndexOptInfo *index,
-							int indexcol, Expr *clause, Oid pk_opfamily);
+										 int indexcol, Expr *clause, Oid pk_opfamily);
 static bool ec_member_matches_indexcol(PlannerInfo *root, RelOptInfo *rel,
-						   EquivalenceClass *ec, EquivalenceMember *em,
-						   void *arg);
+									   EquivalenceClass *ec, EquivalenceMember *em,
+									   void *arg);
 
 
 /*

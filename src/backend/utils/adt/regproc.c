@@ -43,7 +43,7 @@
 static char *format_operator_internal(Oid operator_oid, bool force_qualify);
 static char *format_procedure_internal(Oid procedure_oid, bool force_qualify);
 static void parseNameAndArgTypes(const char *string, bool allowNone,
-					 List **names, int *nargs, Oid *argtypes);
+								 List **names, int *nargs, Oid *argtypes);
 
 
 /*****************************************************************************

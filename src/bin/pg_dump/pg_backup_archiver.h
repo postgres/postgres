@@ -424,7 +424,7 @@ typedef struct _archiveOpts
 #define ARCHIVE_OPTS(...) &(ArchiveOpts){__VA_ARGS__}
 /* Called to add a TOC entry */
 extern TocEntry *ArchiveEntry(Archive *AHX, CatalogId catalogId,
-			 DumpId dumpId, ArchiveOpts *opts);
+							  DumpId dumpId, ArchiveOpts *opts);
 
 extern void WriteTOC(ArchiveHandle *AH);
 extern void ReadTOC(ArchiveHandle *AH);

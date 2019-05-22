@@ -32,13 +32,13 @@
 
 
 static void does_not_exist_skipping(ObjectType objtype,
-						Node *object);
+									Node *object);
 static bool owningrel_does_not_exist_skipping(List *object,
-								  const char **msg, char **name);
+											  const char **msg, char **name);
 static bool schema_does_not_exist_skipping(List *object,
-							   const char **msg, char **name);
+										   const char **msg, char **name);
 static bool type_in_list_does_not_exist_skipping(List *typenames,
-									 const char **msg, char **name);
+												 const char **msg, char **name);
 
 
 /*

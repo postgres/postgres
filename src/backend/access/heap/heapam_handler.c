@@ -51,12 +51,12 @@
 
 
 static void reform_and_rewrite_tuple(HeapTuple tuple,
-						 Relation OldHeap, Relation NewHeap,
-						 Datum *values, bool *isnull, RewriteState rwstate);
+									 Relation OldHeap, Relation NewHeap,
+									 Datum *values, bool *isnull, RewriteState rwstate);
 
 static bool SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
-					   HeapTuple tuple,
-					   OffsetNumber tupoffset);
+								   HeapTuple tuple,
+								   OffsetNumber tupoffset);
 
 static BlockNumber heapam_scan_get_blocks_done(HeapScanDesc hscan);
 

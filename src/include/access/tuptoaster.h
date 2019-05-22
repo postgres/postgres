@@ -133,8 +133,8 @@ do { \
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
-					   HeapTuple newtup, HeapTuple oldtup,
-					   int options);
+										HeapTuple newtup, HeapTuple oldtup,
+										int options);
 
 /* ----------
  * toast_delete -
@@ -171,8 +171,8 @@ extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
  * ----------
  */
 extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena *attr,
-							  int32 sliceoffset,
-							  int32 slicelength);
+													 int32 sliceoffset,
+													 int32 slicelength);
 
 /* ----------
  * toast_flatten_tuple -
@@ -190,8 +190,8 @@ extern HeapTuple toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc);
  * ----------
  */
 extern Datum toast_flatten_tuple_to_datum(HeapTupleHeader tup,
-							 uint32 tup_len,
-							 TupleDesc tupleDesc);
+										  uint32 tup_len,
+										  TupleDesc tupleDesc);
 
 /* ----------
  * toast_build_flattened_tuple -
@@ -201,8 +201,8 @@ extern Datum toast_flatten_tuple_to_datum(HeapTupleHeader tup,
  * ----------
  */
 extern HeapTuple toast_build_flattened_tuple(TupleDesc tupleDesc,
-							Datum *values,
-							bool *isnull);
+											 Datum *values,
+											 bool *isnull);
 
 /* ----------
  * toast_compress_datum -
