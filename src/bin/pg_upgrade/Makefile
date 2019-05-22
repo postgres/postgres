@@ -45,7 +45,7 @@ clean distclean maintainer-clean:
 NOTSUBMAKEMAKE=$(MAKE)
 
 check: test.sh all temp-install
-	MAKE=$(NOTSUBMAKEMAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL)
+	MAKE=$(NOTSUBMAKEMAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $<
 
 # installcheck is not supported because there's no meaningful way to test
 # pg_upgrade against a single already-running server
