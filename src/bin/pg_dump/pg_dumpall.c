@@ -1349,8 +1349,13 @@ dumpCreateDB(PGconn *conn)
 	 *
 	 * See buildACLQueries() and buildACLCommands().
 	 *
+	 * The order in which privileges are in the ACL string (the order they
+	 * have been GRANT'd in, which the backend maintains) must be preserved to
+	 * ensure that GRANTs WITH GRANT OPTION and subsequent GRANTs based on
+	 * those are dumped in the correct order.
+	 *
 	 * Note that we do not support initial privileges (pg_init_privs) on
-	 * databases.
+	 * databases, so this logic cannot make use of buildACLQueries().
 	 */
 	if (server_version >= 90600)
 		printfPQExpBuffer(buf,
@@ -1359,14 +1364,26 @@ dumpCreateDB(PGconn *conn)
 						  "pg_encoding_to_char(d.encoding), "
 						  "datcollate, datctype, datfrozenxid, datminmxid, "
 						  "datistemplate, "
-						  "(SELECT pg_catalog.array_agg(acl ORDER BY acl::text COLLATE \"C\") FROM ( "
-						  "  SELECT pg_catalog.unnest(coalesce(datacl,pg_catalog.acldefault('d',datdba))) AS acl "
-						  "  EXCEPT SELECT pg_catalog.unnest(pg_catalog.acldefault('d',datdba))) as datacls)"
-						  "AS datacl, "
-						  "(SELECT pg_catalog.array_agg(acl ORDER BY acl::text COLLATE \"C\") FROM ( "
-						  "  SELECT pg_catalog.unnest(pg_catalog.acldefault('d',datdba)) AS acl "
-						  "  EXCEPT SELECT pg_catalog.unnest(coalesce(datacl,pg_catalog.acldefault('d',datdba)))) as rdatacls)"
-						  "AS rdatacl, "
+						  "(SELECT array_agg(acl ORDER BY row_n) FROM "
+						  "  (SELECT acl, row_n FROM "
+						  "     unnest(coalesce(datacl,acldefault('d',datdba))) "
+						  "     WITH ORDINALITY AS perm(acl,row_n) "
+						  "   WHERE NOT EXISTS ( "
+						  "     SELECT 1 "
+						  "     FROM unnest(acldefault('d',datdba)) "
+						  "       AS init(init_acl) "
+						  "     WHERE acl = init_acl)) AS datacls) "
+						  " AS datacl, "
+						  "(SELECT array_agg(acl ORDER BY row_n) FROM "
+						  "  (SELECT acl, row_n FROM "
+						  "     unnest(acldefault('d',datdba)) "
+						  "     WITH ORDINALITY AS initp(acl,row_n) "
+						  "   WHERE NOT EXISTS ( "
+						  "     SELECT 1 "
+						  "     FROM unnest(coalesce(datacl,acldefault('d',datdba))) "
+						  "         AS permp(orig_acl) "
+						  "     WHERE acl = orig_acl)) AS rdatacls) "
+						  " AS rdatacl, "
 						  "datconnlimit, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 						  "FROM pg_database d LEFT JOIN %s u ON (datdba = u.oid) "
