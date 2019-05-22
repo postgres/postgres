@@ -85,8 +85,9 @@ $node_master->restart;
 # Move commit timestamps across page boundaries.  Things should still
 # be able to work across restarts with those transactions committed while
 # track_commit_timestamp is disabled.
-$node_master->safe_psql('postgres',
-qq(CREATE PROCEDURE consume_xid(cnt int)
+$node_master->safe_psql(
+	'postgres',
+	qq(CREATE PROCEDURE consume_xid(cnt int)
 AS \$\$
 DECLARE
     i int;

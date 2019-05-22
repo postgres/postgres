@@ -196,8 +196,10 @@ $killme_stdin .= q[
 SELECT 1;
 ];
 ok( pump_until(
-		$killme, \$killme_stderr,
-		qr/server closed the connection unexpectedly|connection to server was lost/m),
+		$killme,
+		\$killme_stderr,
+		qr/server closed the connection unexpectedly|connection to server was lost/m
+	),
 	"psql query died successfully after SIGKILL");
 $killme->finish;
 

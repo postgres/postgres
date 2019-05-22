@@ -18,15 +18,17 @@ $node_subscriber->start;
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED)");
+	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED)"
+);
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 22) STORED)");
+	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 22) STORED)"
+);
 
 # data for initial sync
 
 $node_publisher->safe_psql('postgres',
-						   "INSERT INTO tab1 (a) VALUES (1), (2), (3)");
+	"INSERT INTO tab1 (a) VALUES (1), (2), (3)");
 
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub1 FOR ALL TABLES");
@@ -40,25 +42,21 @@ my $synced_query =
 $node_subscriber->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
-my $result = $node_subscriber->safe_psql('postgres',
-	"SELECT a, b FROM tab1");
-is($result, qq(1|22
+my $result = $node_subscriber->safe_psql('postgres', "SELECT a, b FROM tab1");
+is( $result, qq(1|22
 2|44
 3|66), 'generated columns initial sync');
 
 # data to replicate
 
-$node_publisher->safe_psql('postgres',
-	"INSERT INTO tab1 VALUES (4), (5)");
+$node_publisher->safe_psql('postgres', "INSERT INTO tab1 VALUES (4), (5)");
 
-$node_publisher->safe_psql('postgres',
-	"UPDATE tab1 SET a = 6 WHERE a = 5");
+$node_publisher->safe_psql('postgres', "UPDATE tab1 SET a = 6 WHERE a = 5");
 
 $node_publisher->wait_for_catchup('sub1');
 
-$result = $node_subscriber->safe_psql('postgres',
-	"SELECT a, b FROM tab1");
-is($result, qq(1|22
+$result = $node_subscriber->safe_psql('postgres', "SELECT a, b FROM tab1");
+is( $result, qq(1|22
 2|44
 3|66
 4|88

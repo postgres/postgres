@@ -20,7 +20,7 @@ use Getopt::Long;
 
 use File::Basename;
 use File::Spec;
-BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
+BEGIN { use lib File::Spec->rel2abs(dirname(__FILE__)); }
 
 use Catalog;
 
@@ -34,7 +34,7 @@ GetOptions(
 	'include-path:s' => \$include_path) || usage();
 
 # Sanity check arguments.
-die "No input files.\n" unless @ARGV;
+die "No input files.\n"                  unless @ARGV;
 die "--set-version must be specified.\n" unless $major_version;
 die "Invalid version string: $major_version\n"
   unless $major_version =~ /^\d+$/;
@@ -301,7 +301,7 @@ foreach my $row (@{ $catalog_data{pg_type} })
 	$typeoids{ $row->{typname} } = $row->{oid};
 
 	# for pg_attribute copies of pg_type values
-	$types{ $row->{typname} }    = $row;
+	$types{ $row->{typname} } = $row;
 }
 
 # Encoding identifier lookup.  This uses the same replacement machinery
@@ -313,7 +313,7 @@ open(my $ef, '<', $encfile) || die "$encfile: $!";
 
 # We're parsing an enum, so start with 0 and increment
 # every time we find an enum member.
-my $encid = 0;
+my $encid             = 0;
 my $collect_encodings = 0;
 while (<$ef>)
 {

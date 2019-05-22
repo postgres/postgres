@@ -30,7 +30,8 @@ $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab1 (a int PRIMARY KEY, b int)");
 
 $node_publisher->safe_psql('postgres',
-	"CREATE FUNCTION double(x int) RETURNS int IMMUTABLE LANGUAGE SQL AS 'select x * 2'");
+	"CREATE FUNCTION double(x int) RETURNS int IMMUTABLE LANGUAGE SQL AS 'select x * 2'"
+);
 
 # an index with a predicate that lends itself to constant expressions
 # evaluation
@@ -42,7 +43,8 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab1 (a int PRIMARY KEY, b int)");
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE FUNCTION double(x int) RETURNS int IMMUTABLE LANGUAGE SQL AS 'select x * 2'");
+	"CREATE FUNCTION double(x int) RETURNS int IMMUTABLE LANGUAGE SQL AS 'select x * 2'"
+);
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE INDEX ON tab1 (b) WHERE a > double(1)");
@@ -51,14 +53,14 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub1 FOR ALL TABLES");
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub1");
+	"CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub1"
+);
 
 $node_publisher->wait_for_catchup('sub1');
 
 # This would crash, first on the publisher, and then (if the publisher
 # is fixed) on the subscriber.
-$node_publisher->safe_psql('postgres',
-	"INSERT INTO tab1 VALUES (1, 2)");
+$node_publisher->safe_psql('postgres', "INSERT INTO tab1 VALUES (1, 2)");
 
 $node_publisher->wait_for_catchup('sub1');
 

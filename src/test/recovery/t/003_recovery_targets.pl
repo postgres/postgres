@@ -122,21 +122,26 @@ test_recovery_standby('LSN', 'standby_5', $node_master, \@recovery_params,
 # different one is allowed.
 
 @recovery_params = (
-   "recovery_target_name = '$recovery_name'",
-   "recovery_target_name = ''",
-   "recovery_target_time = '$recovery_time'");
+	"recovery_target_name = '$recovery_name'",
+	"recovery_target_name = ''",
+	"recovery_target_time = '$recovery_time'");
 test_recovery_standby('multiple overriding settings',
-   'standby_6', $node_master, \@recovery_params, "3000", $lsn3);
+	'standby_6', $node_master, \@recovery_params, "3000", $lsn3);
 
 my $node_standby = get_new_node('standby_7');
-$node_standby->init_from_backup($node_master, 'my_backup', has_restoring => 1);
-$node_standby->append_conf('postgresql.conf', "recovery_target_name = '$recovery_name'
+$node_standby->init_from_backup($node_master, 'my_backup',
+	has_restoring => 1);
+$node_standby->append_conf(
+	'postgresql.conf', "recovery_target_name = '$recovery_name'
 recovery_target_time = '$recovery_time'");
 
-my $res = run_log(['pg_ctl', '-D', $node_standby->data_dir,
-				   '-l', $node_standby->logfile, 'start']);
-ok(! $res, 'invalid recovery startup fails');
+my $res = run_log(
+	[
+		'pg_ctl',               '-D', $node_standby->data_dir, '-l',
+		$node_standby->logfile, 'start'
+	]);
+ok(!$res, 'invalid recovery startup fails');
 
 my $logfile = slurp_file($node_standby->logfile());
-ok ($logfile =~  qr/multiple recovery targets specified/,
+ok($logfile =~ qr/multiple recovery targets specified/,
 	'multiple conflicting settings');

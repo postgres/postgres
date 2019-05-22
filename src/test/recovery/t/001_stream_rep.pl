@@ -9,8 +9,9 @@ use Test::More tests => 32;
 my $node_master = get_new_node('master');
 # A specific role is created to perform some tests related to replication,
 # and it needs proper authentication configuration.
-$node_master->init(allows_streaming => 1,
-	auth_extra => ['--create-role', 'repl_role']);
+$node_master->init(
+	allows_streaming => 1,
+	auth_extra       => [ '--create-role', 'repl_role' ]);
 $node_master->start;
 my $backup_name = 'my_backup';
 
@@ -124,50 +125,59 @@ test_target_session_attrs($node_standby_1, $node_master, $node_standby_1,
 # role.
 note "testing SHOW commands for replication connection";
 
-$node_master->psql('postgres',"
+$node_master->psql(
+	'postgres', "
 CREATE ROLE repl_role REPLICATION LOGIN;
 GRANT pg_read_all_settings TO repl_role;");
-my $master_host = $node_master->host;
-my $master_port = $node_master->port;
+my $master_host    = $node_master->host;
+my $master_port    = $node_master->port;
 my $connstr_common = "host=$master_host port=$master_port user=repl_role";
-my $connstr_rep = "$connstr_common replication=1";
-my $connstr_db = "$connstr_common replication=database dbname=postgres";
+my $connstr_rep    = "$connstr_common replication=1";
+my $connstr_db     = "$connstr_common replication=database dbname=postgres";
 
 # Test SHOW ALL
-my ($ret, $stdout, $stderr) =
-    $node_master->psql('postgres', 'SHOW ALL;',
-		       on_error_die => 1,
-		       extra_params => [ '-d', $connstr_rep ]);
+my ($ret, $stdout, $stderr) = $node_master->psql(
+	'postgres', 'SHOW ALL;',
+	on_error_die => 1,
+	extra_params => [ '-d', $connstr_rep ]);
 ok($ret == 0, "SHOW ALL with replication role and physical replication");
-($ret, $stdout, $stderr) =
-    $node_master->psql('postgres', 'SHOW ALL;',
-		       on_error_die => 1,
-		       extra_params => [ '-d', $connstr_db ]);
+($ret, $stdout, $stderr) = $node_master->psql(
+	'postgres', 'SHOW ALL;',
+	on_error_die => 1,
+	extra_params => [ '-d', $connstr_db ]);
 ok($ret == 0, "SHOW ALL with replication role and logical replication");
 
 # Test SHOW with a user-settable parameter
-($ret, $stdout, $stderr) =
-    $node_master->psql('postgres', 'SHOW work_mem;',
-		       on_error_die => 1,
-		       extra_params => [ '-d', $connstr_rep ]);
-ok($ret == 0, "SHOW with user-settable parameter, replication role and physical replication");
-($ret, $stdout, $stderr) =
-    $node_master->psql('postgres', 'SHOW work_mem;',
-		       on_error_die => 1,
-		       extra_params => [ '-d', $connstr_db ]);
-ok($ret == 0, "SHOW with user-settable parameter, replication role and logical replication");
+($ret, $stdout, $stderr) = $node_master->psql(
+	'postgres', 'SHOW work_mem;',
+	on_error_die => 1,
+	extra_params => [ '-d', $connstr_rep ]);
+ok( $ret == 0,
+	"SHOW with user-settable parameter, replication role and physical replication"
+);
+($ret, $stdout, $stderr) = $node_master->psql(
+	'postgres', 'SHOW work_mem;',
+	on_error_die => 1,
+	extra_params => [ '-d', $connstr_db ]);
+ok( $ret == 0,
+	"SHOW with user-settable parameter, replication role and logical replication"
+);
 
 # Test SHOW with a superuser-settable parameter
-($ret, $stdout, $stderr) =
-    $node_master->psql('postgres', 'SHOW primary_conninfo;',
-		       on_error_die => 1,
-		       extra_params => [ '-d', $connstr_rep ]);
-ok($ret == 0, "SHOW with superuser-settable parameter, replication role and physical replication");
-($ret, $stdout, $stderr) =
-    $node_master->psql('postgres', 'SHOW primary_conninfo;',
-		       on_error_die => 1,
-		       extra_params => [ '-d', $connstr_db ]);
-ok($ret == 0, "SHOW with superuser-settable parameter, replication role and logical replication");
+($ret, $stdout, $stderr) = $node_master->psql(
+	'postgres', 'SHOW primary_conninfo;',
+	on_error_die => 1,
+	extra_params => [ '-d', $connstr_rep ]);
+ok( $ret == 0,
+	"SHOW with superuser-settable parameter, replication role and physical replication"
+);
+($ret, $stdout, $stderr) = $node_master->psql(
+	'postgres', 'SHOW primary_conninfo;',
+	on_error_die => 1,
+	extra_params => [ '-d', $connstr_db ]);
+ok( $ret == 0,
+	"SHOW with superuser-settable parameter, replication role and logical replication"
+);
 
 note "switching to physical replication slot";
 

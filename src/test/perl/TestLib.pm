@@ -288,7 +288,7 @@ sub check_mode_recursive
 				unless (defined($file_stat))
 				{
 					my $is_ENOENT = $!{ENOENT};
-					my $msg = "unable to stat $File::Find::name: $!";
+					my $msg       = "unable to stat $File::Find::name: $!";
 					if ($is_ENOENT)
 					{
 						warn $msg;

@@ -810,7 +810,8 @@ my %tests = (
 	},
 
 	'ALTER TABLE test_second_table OWNER TO' => {
-		regexp => qr/^\QALTER TABLE dump_test.test_second_table OWNER TO \E.+;/m,
+		regexp =>
+		  qr/^\QALTER TABLE dump_test.test_second_table OWNER TO \E.+;/m,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
@@ -2427,7 +2428,7 @@ my %tests = (
 			\QALTER INDEX dump_test.index_with_stats ALTER COLUMN 3 SET STATISTICS 500;\E\n
 			/xms,
 		like =>
-			{ %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
@@ -2900,12 +2901,12 @@ my %tests = (
 			data_only              => 1,
 			section_pre_data       => 1,
 			test_schema_plus_blobs => 1,
-			binary_upgrade => 1,
+			binary_upgrade         => 1,
 		},
 		unlike => {
-			no_blobs       => 1,
-			no_privs       => 1,
-			schema_only    => 1,
+			no_blobs    => 1,
+			no_privs    => 1,
+			schema_only => 1,
 		},
 	},
 
@@ -3116,13 +3117,13 @@ my %tests = (
 
 	'CREATE ACCESS METHOD regress_test_table_am' => {
 		create_order => 11,
-		create_sql   => 'CREATE ACCESS METHOD regress_table_am TYPE TABLE HANDLER heap_tableam_handler;',
+		create_sql =>
+		  'CREATE ACCESS METHOD regress_table_am TYPE TABLE HANDLER heap_tableam_handler;',
 		regexp => qr/^
 			\QCREATE ACCESS METHOD regress_table_am TYPE TABLE HANDLER heap_tableam_handler;\E
 			\n/xm,
 		like => {
-			%full_runs,
-			section_pre_data	=> 1,
+			%full_runs, section_pre_data => 1,
 		},
 	},
 
@@ -3134,7 +3135,7 @@ my %tests = (
 	# pretty, but seems hard to do better in this framework.
 	'CREATE TABLE regress_pg_dump_table_am' => {
 		create_order => 12,
-		create_sql => '
+		create_sql   => '
 			CREATE TABLE dump_test.regress_pg_dump_table_am_0() USING heap;
 			CREATE TABLE dump_test.regress_pg_dump_table_am_1 (col1 int) USING regress_table_am;
 			CREATE TABLE dump_test.regress_pg_dump_table_am_2() USING heap;',
@@ -3145,16 +3146,14 @@ my %tests = (
 			\n\s+\Qcol1 integer\E
 			\n\);/xm,
 		like => {
-			%full_runs,
-			%dump_test_schema_runs,
-			section_pre_data => 1,
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
 		},
-		unlike => { exclude_dump_test_schema => 1},
+		unlike => { exclude_dump_test_schema => 1 },
 	},
 
 	'CREATE MATERIALIZED VIEW regress_pg_dump_matview_am' => {
 		create_order => 13,
-		create_sql => '
+		create_sql   => '
 			CREATE MATERIALIZED VIEW dump_test.regress_pg_dump_matview_am_0 USING heap AS SELECT 1;
 			CREATE MATERIALIZED VIEW dump_test.regress_pg_dump_matview_am_1
 				USING regress_table_am AS SELECT count(*) FROM pg_class;
@@ -3167,13 +3166,10 @@ my %tests = (
 			\n\s+\QFROM pg_class\E
 			\n\s+\QWITH NO DATA;\E\n/xm,
 		like => {
-			%full_runs,
-			%dump_test_schema_runs,
-			section_pre_data => 1,
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
 		},
-		unlike => { exclude_dump_test_schema => 1},
-	}
-);
+		unlike => { exclude_dump_test_schema => 1 },
+	});
 
 #########################################
 # Create a PG instance to test actually dumping from
@@ -3330,8 +3326,7 @@ foreach my $db (sort keys %create_sql)
 command_fails_like(
 	[ 'pg_dump', '-p', "$port", 'qqq' ],
 	qr/\Qpg_dump: error: connection to database "qqq" failed: FATAL:  database "qqq" does not exist\E/,
-	'connecting to a non-existent database'
-);
+	'connecting to a non-existent database');
 
 #########################################
 # Test connecting with an unprivileged user

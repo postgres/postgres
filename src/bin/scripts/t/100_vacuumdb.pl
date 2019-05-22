@@ -96,16 +96,16 @@ $node->command_checks_all(
 	[qr/^WARNING.*cannot vacuum non-tables or special system tables/s],
 	'vacuumdb with view');
 $node->command_fails(
-	[ 'vacuumdb', '--table', 'vactable', '--min-mxid-age', '0',
-	  'postgres'],
+	[ 'vacuumdb', '--table', 'vactable', '--min-mxid-age', '0', 'postgres' ],
 	'vacuumdb --min-mxid-age with incorrect value');
 $node->command_fails(
-	[ 'vacuumdb', '--table', 'vactable', '--min-xid-age', '0',
-	  'postgres'],
+	[ 'vacuumdb', '--table', 'vactable', '--min-xid-age', '0', 'postgres' ],
 	'vacuumdb --min-xid-age with incorrect value');
 $node->issues_sql_like(
-	[ 'vacuumdb', '--table', 'vactable', '--min-mxid-age', '2147483000',
-	  'postgres'],
+	[
+		'vacuumdb',   '--table', 'vactable', '--min-mxid-age',
+		'2147483000', 'postgres'
+	],
 	qr/GREATEST.*relminmxid.*2147483000/,
 	'vacuumdb --table --min-mxid-age');
 $node->issues_sql_like(

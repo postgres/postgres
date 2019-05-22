@@ -12,7 +12,7 @@ use File::Copy;
 use File::Find ();
 use File::Path qw(rmtree);
 use File::Spec;
-BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
+BEGIN { use lib File::Spec->rel2abs(dirname(__FILE__)); }
 
 use Install qw(Install);
 
@@ -203,8 +203,8 @@ sub tap_check
 
 	# adjust the environment for just this test
 	local %ENV = %ENV;
-	$ENV{PERL5LIB}   = "$topdir/src/test/perl;$ENV{PERL5LIB}";
-	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
+	$ENV{PERL5LIB}      = "$topdir/src/test/perl;$ENV{PERL5LIB}";
+	$ENV{PG_REGRESS}    = "$topdir/$Config/pg_regress/pg_regress";
 	$ENV{REGRESS_SHLIB} = "$topdir/src/test/regress/regress.dll";
 
 	$ENV{TESTDIR} = "$dir";
@@ -404,7 +404,7 @@ sub subdircheck
 		return;
 	}
 
-	my @opts  = fetchRegressOpts();
+	my @opts = fetchRegressOpts();
 
 	# Special processing for python transform modules, see their respective
 	# Makefiles for more details regarding Python-version specific

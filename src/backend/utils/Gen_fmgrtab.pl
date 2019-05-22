@@ -203,7 +203,7 @@ $bmap{'t'} = 'true';
 $bmap{'f'} = 'false';
 my @fmgr_builtin_oid_index;
 my $last_builtin_oid = 0;
-my $fmgr_count = 0;
+my $fmgr_count       = 0;
 foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
 	print $tfh

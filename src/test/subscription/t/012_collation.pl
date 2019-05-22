@@ -16,11 +16,15 @@ else
 }
 
 my $node_publisher = get_new_node('publisher');
-$node_publisher->init(allows_streaming => 'logical', extra => [ '--locale=C', '--encoding=UTF8' ]);
+$node_publisher->init(
+	allows_streaming => 'logical',
+	extra            => [ '--locale=C', '--encoding=UTF8' ]);
 $node_publisher->start;
 
 my $node_subscriber = get_new_node('subscriber');
-$node_subscriber->init(allows_streaming => 'logical', extra => [ '--locale=C', '--encoding=UTF8' ]);
+$node_subscriber->init(
+	allows_streaming => 'logical',
+	extra            => [ '--locale=C', '--encoding=UTF8' ]);
 $node_subscriber->start;
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
@@ -36,7 +40,8 @@ my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 # full, since those have different code paths internally.
 
 $node_subscriber->safe_psql('postgres',
-	q{CREATE COLLATION ctest_nondet (provider = icu, locale = 'und', deterministic = false)});
+	q{CREATE COLLATION ctest_nondet (provider = icu, locale = 'und', deterministic = false)}
+);
 
 # table with replica identity index
 
@@ -54,8 +59,7 @@ $node_subscriber->safe_psql('postgres',
 
 # table with replica identity full
 
-$node_publisher->safe_psql('postgres',
-	q{CREATE TABLE tab2 (a text, b text)});
+$node_publisher->safe_psql('postgres', q{CREATE TABLE tab2 (a text, b text)});
 $node_publisher->safe_psql('postgres',
 	q{ALTER TABLE tab2 REPLICA IDENTITY FULL});
 
@@ -76,7 +80,8 @@ $node_publisher->safe_psql('postgres',
 	q{CREATE PUBLICATION pub1 FOR ALL TABLES});
 
 $node_subscriber->safe_psql('postgres',
-	qq{CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub1 WITH (copy_data = false)});
+	qq{CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub1 WITH (copy_data = false)}
+);
 
 $node_publisher->wait_for_catchup('sub1');
 
@@ -88,8 +93,7 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->wait_for_catchup('sub1');
 
 is($node_subscriber->safe_psql('postgres', q{SELECT b FROM tab1}),
-   qq(bar),
-  'update with primary key with nondeterministic collation');
+	qq(bar), 'update with primary key with nondeterministic collation');
 
 # test with replica identity full
 
@@ -99,5 +103,5 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->wait_for_catchup('sub1');
 
 is($node_subscriber->safe_psql('postgres', q{SELECT b FROM tab2}),
-   qq(bar),
-  'update with replica identity full with nondeterministic collation');
+	qq(bar),
+	'update with replica identity full with nondeterministic collation');

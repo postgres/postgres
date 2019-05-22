@@ -50,10 +50,9 @@ command_fails_like(
 );
 
 command_fails_like(
-	[ 'pg_restore' ],
+	['pg_restore'],
 	qr{\Qpg_restore: error: one of -d/--dbname and -f/--file must be specified\E},
-	'pg_restore: error: one of -d/--dbname and -f/--file must be specified'
-);
+	'pg_restore: error: one of -d/--dbname and -f/--file must be specified');
 
 command_fails_like(
 	[ 'pg_restore', '-s', '-a', '-f -' ],
@@ -125,7 +124,8 @@ command_fails_like(
 command_fails_like(
 	[ 'pg_dump', '--on-conflict-do-nothing' ],
 	qr/pg_dump: error: option --on-conflict-do-nothing requires option --inserts, --rows-per-insert or --column-inserts/,
-	'pg_dump: --on-conflict-do-nothing requires --inserts, --rows-per-insert, --column-inserts');
+	'pg_dump: --on-conflict-do-nothing requires --inserts, --rows-per-insert, --column-inserts'
+);
 
 # pg_dumpall command-line argument checks
 command_fails_like(
@@ -161,4 +161,5 @@ command_fails_like(
 command_fails_like(
 	[ 'pg_dumpall', '--exclude-database=foo', '--globals-only' ],
 	qr/\Qpg_dumpall: error: option --exclude-database cannot be used together with -g\/--globals-only\E/,
-	'pg_dumpall: option --exclude-database cannot be used together with -g/--globals-only');
+	'pg_dumpall: option --exclude-database cannot be used together with -g/--globals-only'
+);

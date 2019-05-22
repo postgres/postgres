@@ -518,9 +518,12 @@ sub CopySubdirFiles
 	{
 		$flist = '';
 		if ($mf =~ /^HEADERS\s*=\s*(.*)$/m) { $flist .= $1 }
-		my @modlist = ();
+		my @modlist  = ();
 		my %fmodlist = ();
-		while ($mf =~ /^HEADERS_([^\s=]+)\s*=\s*(.*)$/mg) { $fmodlist{$1} .= $2 }
+		while ($mf =~ /^HEADERS_([^\s=]+)\s*=\s*(.*)$/mg)
+		{
+			$fmodlist{$1} .= $2;
+		}
 
 		if ($mf =~ /^MODULE_big\s*=\s*(.*)$/m)
 		{
@@ -544,14 +547,13 @@ sub CopySubdirFiles
 			croak "HEADERS_$mod for unknown module in $subdir $module"
 			  unless grep { $_ eq $mod } @modlist;
 			$flist = ParseAndCleanRule($fmodlist{$mod}, $mf);
-			EnsureDirectories($target,
-							  "include", "include/server",
-							  "include/server/$moduledir",
-							  "include/server/$moduledir/$mod");
+			EnsureDirectories($target, "include", "include/server",
+				"include/server/$moduledir",
+				"include/server/$moduledir/$mod");
 			foreach my $f (split /\s+/, $flist)
 			{
 				lcopy("$subdir/$module/$f",
-					  "$target/include/server/$moduledir/$mod/" . basename($f))
+					"$target/include/server/$moduledir/$mod/" . basename($f))
 				  || croak("Could not copy file $f in $subdir $module");
 				print '.';
 			}
@@ -615,8 +617,7 @@ sub CopyIncludeFiles
 		'Public headers', $target . '/include/',
 		'src/include/',   'postgres_ext.h',
 		'pg_config.h',    'pg_config_ext.h',
-		'pg_config_os.h',
-		'pg_config_manual.h');
+		'pg_config_os.h', 'pg_config_manual.h');
 	lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
 	  || croak 'Could not copy libpq-fs.h';
 

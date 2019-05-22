@@ -34,8 +34,7 @@ my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
 
 # Also push FirstGenbkiObjectId to serve as a terminator for the last gap.
 my $FirstGenbkiObjectId =
-  Catalog::FindDefinedSymbol('access/transam.h', '..',
-	'FirstGenbkiObjectId');
+  Catalog::FindDefinedSymbol('access/transam.h', '..', 'FirstGenbkiObjectId');
 push @{$oids}, $FirstGenbkiObjectId;
 
 my $prev_oid = 0;

@@ -38,9 +38,9 @@ use lib $FindBin::RealBin;
 use PerfectHash;
 
 my $output_path = '';
-my $extern = 0;
-my $case_fold = 1;
-my $varname = 'ScanKeywords';
+my $extern      = 0;
+my $case_fold   = 1;
+my $varname     = 'ScanKeywords';
 
 GetOptions(
 	'output:s'   => \$output_path,
@@ -56,12 +56,13 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 	$output_path .= '/';
 }
 
-$kw_input_file =~ /(\w+)\.h$/ || die "Input file must be named something.h.\n";
+$kw_input_file =~ /(\w+)\.h$/
+  || die "Input file must be named something.h.\n";
 my $base_filename = $1 . '_d';
-my $kw_def_file = $output_path . $base_filename . '.h';
+my $kw_def_file   = $output_path . $base_filename . '.h';
 
-open(my $kif, '<', $kw_input_file) || die "$kw_input_file: $!\n";
-open(my $kwdef, '>', $kw_def_file) || die "$kw_def_file: $!\n";
+open(my $kif,   '<', $kw_input_file) || die "$kw_input_file: $!\n";
+open(my $kwdef, '>', $kw_def_file)   || die "$kw_def_file: $!\n";
 
 # Opening boilerplate for keyword definition header.
 printf $kwdef <<EOM, $base_filename, uc $base_filename, uc $base_filename;
@@ -116,10 +117,11 @@ if ($case_fold)
 # helpful because it provides a cheap way to reject duplicate keywords.
 # Also, insisting on sorted order ensures that code that scans the keyword
 # table linearly will see the keywords in a canonical order.
-for my $i (0..$#keywords - 1)
+for my $i (0 .. $#keywords - 1)
 {
-	die qq|The keyword "$keywords[$i + 1]" is out of order in $kw_input_file\n|
-	  if ($keywords[$i] cmp $keywords[$i + 1]) >= 0;
+	die
+	  qq|The keyword "$keywords[$i + 1]" is out of order in $kw_input_file\n|
+	  if ($keywords[$i] cmp $keywords[ $i + 1 ]) >= 0;
 }
 
 # Emit the string containing all the keywords.
@@ -133,7 +135,7 @@ print $kwdef qq|";\n\n|;
 
 printf $kwdef "static const uint16 %s_kw_offsets[] = {\n", $varname;
 
-my $offset = 0;
+my $offset  = 0;
 my $max_len = 0;
 foreach my $name (@keywords)
 {
@@ -169,11 +171,11 @@ printf $kwdef qq|static %s\n|, $f;
 
 printf $kwdef "static " if !$extern;
 printf $kwdef "const ScanKeywordList %s = {\n", $varname;
-printf $kwdef qq|\t%s_kw_string,\n|, $varname;
-printf $kwdef qq|\t%s_kw_offsets,\n|, $varname;
-printf $kwdef qq|\t%s,\n|, $funcname;
-printf $kwdef qq|\t%s_NUM_KEYWORDS,\n|, uc $varname;
-printf $kwdef qq|\t%d\n|, $max_len;
+printf $kwdef qq|\t%s_kw_string,\n|,            $varname;
+printf $kwdef qq|\t%s_kw_offsets,\n|,           $varname;
+printf $kwdef qq|\t%s,\n|,                      $funcname;
+printf $kwdef qq|\t%s_NUM_KEYWORDS,\n|,         uc $varname;
+printf $kwdef qq|\t%d\n|,                       $max_len;
 printf $kwdef "};\n\n";
 
 printf $kwdef "#endif\t\t\t\t\t\t\t/* %s_H */\n", uc $base_filename;

@@ -61,8 +61,7 @@ $node->issues_sql_like(
 	[ 'reindexdb', '--concurrently', '-S', 'public', 'postgres' ],
 	qr/statement: REINDEX SCHEMA CONCURRENTLY public;/,
 	'reindex specific schema concurrently');
-$node->command_fails(
-	[ 'reindexdb', '--concurrently', '-s', 'postgres' ],
+$node->command_fails([ 'reindexdb', '--concurrently', '-s', 'postgres' ],
 	'reindex system tables concurrently');
 $node->issues_sql_like(
 	[ 'reindexdb', '-v', '-t', 'test1', 'postgres' ],

@@ -551,12 +551,14 @@ e|{e,d}
 
 # Test a domain with a constraint backed by a SQL-language function,
 # which needs an active snapshot in order to operate.
-$node_publisher->safe_psql('postgres', "INSERT INTO tst_dom_constr VALUES (11)");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tst_dom_constr VALUES (11)");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
 $result =
-  $node_subscriber->safe_psql('postgres', "SELECT sum(a) FROM tst_dom_constr");
+  $node_subscriber->safe_psql('postgres',
+	"SELECT sum(a) FROM tst_dom_constr");
 is($result, '21', 'sql-function constraint on domain');
 
 $node_subscriber->stop('fast');

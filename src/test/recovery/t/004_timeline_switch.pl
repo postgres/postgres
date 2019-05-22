@@ -42,7 +42,9 @@ $node_master->teardown_node;
 
 # promote standby 1 using "pg_promote", switching it to a new timeline
 my $psql_out = '';
-$node_standby_1->psql('postgres', "SELECT pg_promote(wait_seconds => 300)",
+$node_standby_1->psql(
+	'postgres',
+	"SELECT pg_promote(wait_seconds => 300)",
 	stdout => \$psql_out);
 is($psql_out, 't', "promotion of standby with pg_promote");
 

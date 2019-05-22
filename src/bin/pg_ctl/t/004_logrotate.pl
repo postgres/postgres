@@ -25,8 +25,10 @@ my $current_logfiles = slurp_file($node->data_dir . '/current_logfiles');
 
 note "current_logfiles = $current_logfiles";
 
-like($current_logfiles, qr|^stderr log/postgresql-.*log$|,
-	 'current_logfiles is sane');
+like(
+	$current_logfiles,
+	qr|^stderr log/postgresql-.*log$|,
+	'current_logfiles is sane');
 
 my $lfname = $current_logfiles;
 $lfname =~ s/^stderr //;
@@ -43,8 +45,7 @@ for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
 	usleep(100_000);
 }
 
-like($first_logfile, qr/division by zero/,
-	 'found expected log file content');
+like($first_logfile, qr/division by zero/, 'found expected log file content');
 
 # Sleep 2 seconds and ask for log rotation; this should result in
 # output into a different log file name.
@@ -63,8 +64,10 @@ for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
 
 note "now current_logfiles = $new_current_logfiles";
 
-like($new_current_logfiles, qr|^stderr log/postgresql-.*log$|,
-	 'new current_logfiles is sane');
+like(
+	$new_current_logfiles,
+	qr|^stderr log/postgresql-.*log$|,
+	'new current_logfiles is sane');
 
 $lfname = $new_current_logfiles;
 $lfname =~ s/^stderr //;
@@ -82,7 +85,9 @@ for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
 	usleep(100_000);
 }
 
-like($second_logfile, qr/syntax error/,
-	 'found expected log file content in new log file');
+like(
+	$second_logfile,
+	qr/syntax error/,
+	'found expected log file content in new log file');
 
 $node->stop();

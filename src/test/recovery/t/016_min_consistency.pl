@@ -17,20 +17,20 @@ use Test::More tests => 1;
 sub find_largest_lsn
 {
 	my $blocksize = int(shift);
-	my $filename = shift;
-	my ($max_hi,$max_lo) = (0,0);
+	my $filename  = shift;
+	my ($max_hi, $max_lo) = (0, 0);
 	open(my $fh, "<:raw", $filename)
 	  or die "failed to open $filename: $!";
-	my ($buf,$len);
+	my ($buf, $len);
 	while ($len = read($fh, $buf, $blocksize))
 	{
 		$len == $blocksize
 		  or die "read only $len of $blocksize bytes from $filename";
-		my ($hi,$lo) = unpack("LL", $buf);
+		my ($hi, $lo) = unpack("LL", $buf);
 
 		if ($hi > $max_hi or ($hi == $max_hi and $lo > $max_lo))
 		{
-			($max_hi,$max_lo) = ($hi,$lo);
+			($max_hi, $max_lo) = ($hi, $lo);
 		}
 	}
 	defined($len) or die "read error on $filename: $!";
@@ -63,7 +63,8 @@ $standby->init_from_backup($primary, 'bkp', has_streaming => 1);
 $standby->start;
 
 # Create base table whose data consistency is checked.
-$primary->safe_psql('postgres', "
+$primary->safe_psql(
+	'postgres', "
 CREATE TABLE test1 (a int) WITH (fillfactor = 10);
 INSERT INTO test1 SELECT generate_series(1, 10000);");
 
@@ -74,8 +75,7 @@ $primary->safe_psql('postgres', 'CHECKPOINT;');
 $primary->safe_psql('postgres', 'UPDATE test1 SET a = a + 1;');
 
 # Wait for last record to have been replayed on the standby.
-$primary->wait_for_catchup($standby, 'replay',
-			   $primary->lsn('insert'));
+$primary->wait_for_catchup($standby, 'replay', $primary->lsn('insert'));
 
 # Fill in the standby's shared buffers with the data filled in
 # previously.
@@ -96,8 +96,7 @@ my $relfilenode = $primary->safe_psql('postgres',
 	"SELECT pg_relation_filepath('test1'::regclass);");
 
 # Wait for last record to have been replayed on the standby.
-$primary->wait_for_catchup($standby, 'replay',
-			   $primary->lsn('insert'));
+$primary->wait_for_catchup($standby, 'replay', $primary->lsn('insert'));
 
 # Issue a restart point on the standby now, which makes the checkpointer
 # update minRecoveryPoint.
@@ -115,11 +114,11 @@ $standby->stop('fast');
 # done by directly scanning the on-disk relation blocks and what
 # pg_controldata lets know.
 my $standby_data = $standby->data_dir;
-my $offline_max_lsn = find_largest_lsn($blocksize,
-				       "$standby_data/$relfilenode");
+my $offline_max_lsn =
+  find_largest_lsn($blocksize, "$standby_data/$relfilenode");
 
 # Fetch minRecoveryPoint from the control file itself
-my ($stdout, $stderr) = run_command(['pg_controldata', $standby_data]);
+my ($stdout, $stderr) = run_command([ 'pg_controldata', $standby_data ]);
 my @control_data = split("\n", $stdout);
 my $offline_recovery_lsn = undef;
 foreach (@control_data)
@@ -131,9 +130,9 @@ foreach (@control_data)
 	}
 }
 die "No minRecoveryPoint in control file found\n"
-	unless defined($offline_recovery_lsn);
+  unless defined($offline_recovery_lsn);
 
 # minRecoveryPoint should never be older than the maximum LSN for all
 # the pages on disk.
 ok($offline_recovery_lsn ge $offline_max_lsn,
-   "Check offline that table data is consistent with minRecoveryPoint");
+	"Check offline that table data is consistent with minRecoveryPoint");

@@ -269,7 +269,7 @@ sub GenerateFiles
 		"LIBPGTYPES");
 
 	chdir('src/backend/utils');
-	my $pg_proc_dat     = '../../../src/include/catalog/pg_proc.dat';
+	my $pg_proc_dat = '../../../src/include/catalog/pg_proc.dat';
 	if (   IsNewer('fmgr-stamp', 'Gen_fmgrtab.pl')
 		|| IsNewer('fmgr-stamp', '../catalog/Catalog.pm')
 		|| IsNewer('fmgr-stamp', $pg_proc_dat)
@@ -409,12 +409,12 @@ sub GenerateFiles
 		chdir('../../..');
 	}
 
-	if (IsNewer(
-			'src/common/kwlist_d.h',
-			'src/include/parser/kwlist.h'))
+	if (IsNewer('src/common/kwlist_d.h', 'src/include/parser/kwlist.h'))
 	{
 		print "Generating kwlist_d.h...\n";
-		system('perl -I src/tools src/tools/gen_keywordlist.pl --extern -o src/common src/include/parser/kwlist.h');
+		system(
+			'perl -I src/tools src/tools/gen_keywordlist.pl --extern -o src/common src/include/parser/kwlist.h'
+		);
 	}
 
 	if (IsNewer(
@@ -424,10 +424,15 @@ sub GenerateFiles
 			'src/pl/plpgsql/src/pl_unreserved_kwlist_d.h',
 			'src/pl/plpgsql/src/pl_unreserved_kwlist.h'))
 	{
-		print "Generating pl_reserved_kwlist_d.h and pl_unreserved_kwlist_d.h...\n";
+		print
+		  "Generating pl_reserved_kwlist_d.h and pl_unreserved_kwlist_d.h...\n";
 		chdir('src/pl/plpgsql/src');
-		system('perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname ReservedPLKeywords pl_reserved_kwlist.h');
-		system('perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname UnreservedPLKeywords pl_unreserved_kwlist.h');
+		system(
+			'perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname ReservedPLKeywords pl_reserved_kwlist.h'
+		);
+		system(
+			'perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname UnreservedPLKeywords pl_unreserved_kwlist.h'
+		);
 		chdir('../../../..');
 	}
 
@@ -440,8 +445,12 @@ sub GenerateFiles
 	{
 		print "Generating c_kwlist_d.h and ecpg_kwlist_d.h...\n";
 		chdir('src/interfaces/ecpg/preproc');
-		system('perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname ScanCKeywords --no-case-fold c_kwlist.h');
-		system('perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname ScanECPGKeywords ecpg_kwlist.h');
+		system(
+			'perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname ScanCKeywords --no-case-fold c_kwlist.h'
+		);
+		system(
+			'perl -I ../../../tools ../../../tools/gen_keywordlist.pl --varname ScanECPGKeywords ecpg_kwlist.h'
+		);
 		chdir('../../../..');
 	}
 
@@ -527,7 +536,9 @@ EOF
 	{
 		chdir('src/backend/catalog');
 		my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
-		system("perl genbki.pl --include-path ../../../src/include/ --set-version=$self->{majorver} $bki_srcs");
+		system(
+			"perl genbki.pl --include-path ../../../src/include/ --set-version=$self->{majorver} $bki_srcs"
+		);
 		open(my $f, '>', 'bki-stamp')
 		  || confess "Could not touch bki-stamp";
 		close($f);

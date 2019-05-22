@@ -60,14 +60,14 @@ mkdir $datadir;
 }
 
 # Control file should tell that data checksums are disabled by default.
-command_like(['pg_controldata', $datadir],
-			 qr/Data page checksum version:.*0/,
-			 'checksums are disabled in control file');
+command_like(
+	[ 'pg_controldata', $datadir ],
+	qr/Data page checksum version:.*0/,
+	'checksums are disabled in control file');
 # pg_checksums fails with checksums disabled by default.  This is
 # not part of the tests included in pg_checksums to save from
 # the creation of an extra instance.
-command_fails(
-	[ 'pg_checksums', '-D', $datadir],
+command_fails([ 'pg_checksums', '-D', $datadir ],
 	"pg_checksums fails with data checksum disabled");
 
 command_ok([ 'initdb', '-S', $datadir ], 'sync only');

@@ -39,11 +39,11 @@ my %replace_line = (
 	'ExecuteStmtEXECUTEnameexecute_param_clause' =>
 	  'EXECUTE prepared_name execute_param_clause execute_rest',
 
-	'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clauseopt_with_data' =>
-	  'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause opt_with_data execute_rest' ,
+	'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clauseopt_with_data'
+	  => 'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause opt_with_data execute_rest',
 
-	'ExecuteStmtCREATEOptTempTABLEIF_PNOTEXISTScreate_as_targetASEXECUTEnameexecute_param_clauseopt_with_data' =>
-	  'CREATE OptTemp TABLE IF_P NOT EXISTS create_as_target AS EXECUTE prepared_name execute_param_clause opt_with_data execute_rest' ,
+	'ExecuteStmtCREATEOptTempTABLEIF_PNOTEXISTScreate_as_targetASEXECUTEnameexecute_param_clauseopt_with_data'
+	  => 'CREATE OptTemp TABLE IF_P NOT EXISTS create_as_target AS EXECUTE prepared_name execute_param_clause opt_with_data execute_rest',
 
 	'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt' =>
 	  'PREPARE prepared_name prep_type_clause AS PreparableStmt');

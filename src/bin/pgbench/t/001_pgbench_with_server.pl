@@ -63,7 +63,7 @@ sub pgbench
 # makes a 5-MiB table.
 
 $node->safe_psql('postgres',
-				 'CREATE UNLOGGED TABLE insert_tbl (id serial primary key); ');
+	'CREATE UNLOGGED TABLE insert_tbl (id serial primary key); ');
 
 pgbench(
 	'--no-vacuum --client=5 --protocol=prepared --transactions=25',
@@ -286,7 +286,7 @@ pgbench(
 		qr{command=15.: double 15\b},
 		qr{command=16.: double 16\b},
 		qr{command=17.: double 17\b},
-		qr{command=20.: int 1\b},      # zipfian random
+		qr{command=20.: int 1\b},    # zipfian random
 		qr{command=21.: double -27\b},
 		qr{command=22.: double 1024\b},
 		qr{command=23.: double 1\b},
@@ -326,9 +326,9 @@ pgbench(
 		qr{command=86.: int 86\b},
 		qr{command=93.: int 93\b},
 		qr{command=95.: int 0\b},
-		qr{command=96.: int 1\b},       # :scale
-		qr{command=97.: int 0\b},       # :client_id
-		qr{command=98.: int 5432\b},    # :random_seed
+		qr{command=96.: int 1\b},                       # :scale
+		qr{command=97.: int 0\b},                       # :client_id
+		qr{command=98.: int 5432\b},                    # :random_seed
 		qr{command=99.: int -9223372036854775808\b},    # min int
 		qr{command=100.: int 9223372036854775807\b},    # max int
 	],
@@ -542,14 +542,17 @@ pgbench(
 pgbench(
 	'-t 1', 0,
 	[ qr{type: .*/001_pgbench_gset}, qr{processed: 1/1} ],
-	[   qr{command=3.: int 0\b},
+	[
+		qr{command=3.: int 0\b},
 		qr{command=5.: int 1\b},
 		qr{command=6.: int 2\b},
 		qr{command=8.: int 3\b},
 		qr{command=10.: int 4\b},
-		qr{command=12.: int 5\b} ],
+		qr{command=12.: int 5\b}
+	],
 	'pgbench gset command',
-	{   '001_pgbench_gset' => q{-- test gset
+	{
+		'001_pgbench_gset' => q{-- test gset
 -- no columns
 SELECT \gset
 -- one value
@@ -568,7 +571,8 @@ SELECT 0 AS i4, 4 AS i4 \gset
 -- work on the last SQL command under \;
 \; \; SELECT 0 AS i5 \; SELECT 5 AS i5 \; \; \gset
 \set i debug(:i5)
-} });
+}
+	});
 
 # trigger many expression errors
 my @errors = (
@@ -587,10 +591,11 @@ my @errors = (
 }
 	],
 	[
-		'sql too many args', 1, [qr{statement has too many arguments.*\b255\b}],
+		'sql too many args', 1,
+		[qr{statement has too many arguments.*\b255\b}],
 		q{-- MAX_ARGS=256 for prepared
 \set i 0
-SELECT LEAST(}.join(', ', (':i') x 256).q{)}
+SELECT LEAST(} . join(', ', (':i') x 256) . q{)}
 	],
 
 	# SHELL
@@ -609,7 +614,7 @@ SELECT LEAST(}.join(', ', (':i') x 256).q{)}
 	[
 		'shell too many args', 1, [qr{too many arguments in command "shell"}],
 		q{-- 256 arguments to \shell
-\shell echo }.join(' ', ('arg') x 255)
+\shell echo } . join(' ', ('arg') x 255)
 	],
 
 	# SET
@@ -625,11 +630,9 @@ SELECT LEAST(}.join(', ', (':i') x 256).q{)}
 		'set invalid variable name', 2,
 		[qr{invalid variable name}], q{\set . 1}
 	],
+	[ 'set division by zero', 2, [qr{division by zero}], q{\set i 1/0} ],
 	[
-		'set division by zero', 2,
-		[qr{division by zero}], q{\set i 1/0}
-	],
-	[   'set undefined variable',
+		'set undefined variable',
 		2,
 		[qr{undefined variable "nosuchvariable"}],
 		q{\set i :nosuchvariable}
@@ -646,10 +649,8 @@ SELECT LEAST(}.join(', ', (':i') x 256).q{)}
 		[qr{empty range given to random}], q{\set i random(5,3)}
 	],
 	[
-		'set random range too large',
-		2,
-		[qr{random range is too large}],
-		q{\set i random(:minint, :maxint)}
+		'set random range too large',    2,
+		[qr{random range is too large}], q{\set i random(:minint, :maxint)}
 	],
 	[
 		'set gaussian param too small',
@@ -713,16 +714,26 @@ SELECT LEAST(}.join(', ', (':i') x 256).q{)}
 	],
 
 	# SET: ARITHMETIC OVERFLOW DETECTION
-	[ 'set double to int overflow',                   2,
-		[ qr{double to int overflow for 100} ], q{\set i int(1E32)} ],
-	[ 'set bigint add overflow', 2,
-		[ qr{int add out} ], q{\set i (1<<62) + (1<<62)} ],
-	[ 'set bigint sub overflow', 2,
-		[ qr{int sub out} ], q{\set i 0 - (1<<62) - (1<<62) - (1<<62)} ],
-	[ 'set bigint mul overflow', 2,
-		[ qr{int mul out} ], q{\set i 2 * (1<<62)} ],
-	[ 'set bigint div out of range', 2,
-		[ qr{bigint div out of range} ], q{\set i :minint / -1} ],
+	[
+		'set double to int overflow',         2,
+		[qr{double to int overflow for 100}], q{\set i int(1E32)}
+	],
+	[
+		'set bigint add overflow', 2,
+		[qr{int add out}],         q{\set i (1<<62) + (1<<62)}
+	],
+	[
+		'set bigint sub overflow',
+		2, [qr{int sub out}], q{\set i 0 - (1<<62) - (1<<62) - (1<<62)}
+	],
+	[
+		'set bigint mul overflow', 2,
+		[qr{int mul out}], q{\set i 2 * (1<<62)}
+	],
+	[
+		'set bigint div out of range', 2,
+		[qr{bigint div out of range}], q{\set i :minint / -1}
+	],
 
 	# SETSHELL
 	[
@@ -759,31 +770,47 @@ SELECT LEAST(}.join(', ', (':i') x 256).q{)}
 		[qr{invalid command .* "nosuchcommand"}], q{\nosuchcommand}
 	],
 	[ 'misc empty script', 1, [qr{empty command list for script}], q{} ],
-	[   'bad boolean',                     2,
-		[qr{malformed variable.*trueXXX}], q{\set b :badtrue or true} ],
+	[
+		'bad boolean',                     2,
+		[qr{malformed variable.*trueXXX}], q{\set b :badtrue or true}
+	],
 
 	# GSET
-	[   'gset no row',                    2,
-		[qr{expected one row, got 0\b}], q{SELECT WHERE FALSE \gset} ],
+	[
+		'gset no row',                   2,
+		[qr{expected one row, got 0\b}], q{SELECT WHERE FALSE \gset}
+	],
 	[ 'gset alone', 1, [qr{gset must follow a SQL command}], q{\gset} ],
-	[   'gset no SQL',                        1,
+	[
+		'gset no SQL',                        1,
 		[qr{gset must follow a SQL command}], q{\set i +1
-\gset} ],
-	[   'gset too many arguments',                   1,
-		[qr{too many arguments}], q{SELECT 1 \gset a b} ],
-	[   'gset after gset',                        1,
-	    [qr{gset must follow a SQL command}], q{SELECT 1 AS i \gset
-\gset} ],
-	[   'gset non SELECT', 2,
+\gset}
+	],
+	[
+		'gset too many arguments', 1,
+		[qr{too many arguments}],  q{SELECT 1 \gset a b}
+	],
+	[
+		'gset after gset',                    1,
+		[qr{gset must follow a SQL command}], q{SELECT 1 AS i \gset
+\gset}
+	],
+	[
+		'gset non SELECT',
+		2,
 		[qr{expected one row, got 0}],
-		q{DROP TABLE IF EXISTS no_such_table \gset} ],
-	[   'gset bad default name', 2,
-		[qr{error storing into variable \?column\?}],
-		q{SELECT 1 \gset} ],
-	[   'gset bad name', 2,
+		q{DROP TABLE IF EXISTS no_such_table \gset}
+	],
+	[
+		'gset bad default name',                      2,
+		[qr{error storing into variable \?column\?}], q{SELECT 1 \gset}
+	],
+	[
+		'gset bad name',
+		2,
 		[qr{error storing into variable bad name!}],
-		q{SELECT 1 AS "bad name!" \gset} ],
-	);
+		q{SELECT 1 AS "bad name!" \gset}
+	],);
 
 for my $e (@errors)
 {
@@ -792,9 +819,9 @@ for my $e (@errors)
 	my $n = '001_pgbench_error_' . $name;
 	$n =~ s/ /_/g;
 	pgbench(
-		'-n -t 1 -Dfoo=bla -Dnull=null -Dtrue=true -Done=1 -Dzero=0.0 -Dbadtrue=trueXXX' .
-		' -Dmaxint=9223372036854775807 -Dminint=-9223372036854775808' .
-			($no_prepare ? '' : ' -M prepared'),
+		'-n -t 1 -Dfoo=bla -Dnull=null -Dtrue=true -Done=1 -Dzero=0.0 -Dbadtrue=trueXXX'
+		  . ' -Dmaxint=9223372036854775807 -Dminint=-9223372036854775808'
+		  . ($no_prepare ? '' : ' -M prepared'),
 		$status,
 		[ $status == 1 ? qr{^$} : qr{processed: 0/1} ],
 		$re,
@@ -869,12 +896,9 @@ my $bdir = $node->basedir;
 
 # with sampling rate
 pgbench(
-	"-n -S -t 50 -c 2 --log --sampling-rate=0.5",
-	0,
-	[ qr{select only}, qr{processed: 100/100} ],
-	[ qr{^$} ],
-	'pgbench logs',
-	undef,
+	"-n -S -t 50 -c 2 --log --sampling-rate=0.5", 0,
+	[ qr{select only}, qr{processed: 100/100} ], [qr{^$}],
+	'pgbench logs', undef,
 	"--log-prefix=$bdir/001_pgbench_log_2");
 
 check_pgbench_logs($bdir, '001_pgbench_log_2', 1, 8, 92,
@@ -882,8 +906,8 @@ check_pgbench_logs($bdir, '001_pgbench_log_2', 1, 8, 92,
 
 # check log file in some detail
 pgbench(
-	"-n -b se -t 10 -l",
-	0, [ qr{select only}, qr{processed: 10/10} ], [ qr{^$} ],
+	"-n -b se -t 10 -l", 0,
+	[ qr{select only}, qr{processed: 10/10} ], [qr{^$}],
 	'pgbench logs contents', undef,
 	"--log-prefix=$bdir/001_pgbench_log_3");
 
