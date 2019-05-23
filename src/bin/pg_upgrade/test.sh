@@ -76,6 +76,14 @@ temp_root=`pwd`/tmp_check
 oldsrc=`cd "$oldsrc" && pwd`
 newsrc=`cd ../../.. && pwd`
 
+# We need to make pg_regress use psql from the desired installation
+# (likely a temporary one), because otherwise the installcheck run
+# below would try to use psql from the proper installation directory
+# of the target version, which might be outdated or not exist. But
+# don't override anything else that's already in EXTRA_REGRESS_OPTS.
+EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --bindir='$oldbindir'"
+export EXTRA_REGRESS_OPTS
+
 # While in normal cases this will already be set up, adding bindir to
 # path allows test.sh to be invoked with different versions as
 # described in ./TESTING
