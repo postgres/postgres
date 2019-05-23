@@ -185,7 +185,7 @@ lnext:
 		if (!IsolationUsesXactSnapshot())
 			lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
 
-		test = table_lock_tuple(erm->relation, &tid, estate->es_snapshot,
+		test = table_tuple_lock(erm->relation, &tid, estate->es_snapshot,
 								markSlot, estate->es_output_cid,
 								lockmode, erm->waitPolicy,
 								lockflags,
@@ -208,7 +208,7 @@ lnext:
 				 * to fetch the updated tuple instead, but doing so would
 				 * require changing heap_update and heap_delete to not
 				 * complain about updating "invisible" tuples, which seems
-				 * pretty scary (table_lock_tuple will not complain, but few
+				 * pretty scary (table_tuple_lock will not complain, but few
 				 * callers expect TM_Invisible, and we're not one of them). So
 				 * for now, treat the tuple as deleted and do not process.
 				 */
@@ -229,7 +229,7 @@ lnext:
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				elog(ERROR, "unexpected table_lock_tuple status: %u",
+				elog(ERROR, "unexpected table_tuple_lock status: %u",
 					 test);
 				break;
 
@@ -246,7 +246,7 @@ lnext:
 				break;
 
 			default:
-				elog(ERROR, "unrecognized table_lock_tuple status: %u",
+				elog(ERROR, "unrecognized table_tuple_lock status: %u",
 					 test);
 		}
 

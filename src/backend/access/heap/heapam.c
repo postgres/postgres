@@ -1866,12 +1866,12 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  * The new tuple is stamped with current transaction ID and the specified
  * command ID.
  *
- * See table_insert for comments about most of the input flags, except that
- * this routine directly takes a tuple rather than a slot.
+ * See table_tuple_insert for comments about most of the input flags, except
+ * that this routine directly takes a tuple rather than a slot.
  *
  * There's corresponding HEAP_INSERT_ options to all the TABLE_INSERT_
  * options, and there additionally is HEAP_INSERT_SPECULATIVE which is used to
- * implement table_insert_speculative().
+ * implement table_tuple_insert_speculative().
  *
  * On return the header fields of *tup are updated to match the stored tuple;
  * in particular tup->t_self receives the actual TID where the tuple was
@@ -2444,8 +2444,8 @@ xmax_infomask_changed(uint16 new_infomask, uint16 old_infomask)
 /*
  *	heap_delete - delete a tuple
  *
- * See table_delete() for an explanation of the parameters, except that this
- * routine directly takes a tuple rather than a slot.
+ * See table_tuple_delete() for an explanation of the parameters, except that
+ * this routine directly takes a tuple rather than a slot.
  *
  * In the failure cases, the routine fills *tmfd with the tuple's t_ctid,
  * t_xmax (resolving a possible MultiXact, if necessary), and t_cmax (the last
@@ -2890,8 +2890,8 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 /*
  *	heap_update - replace a tuple
  *
- * See table_update() for an explanation of the parameters, except that this
- * routine directly takes a tuple rather than a slot.
+ * See table_tuple_update() for an explanation of the parameters, except that
+ * this routine directly takes a tuple rather than a slot.
  *
  * In the failure cases, the routine fills *tmfd with the tuple's t_ctid,
  * t_xmax (resolving a possible MultiXact, if necessary), and t_cmax (the last
@@ -3961,7 +3961,7 @@ get_mxact_status_for_lock(LockTupleMode mode, bool is_update)
  *	*buffer: set to buffer holding tuple (pinned but not locked at exit)
  *	*tmfd: filled in failure cases (see below)
  *
- * Function results are the same as the ones for table_lock_tuple().
+ * Function results are the same as the ones for table_tuple_lock().
  *
  * In the failure cases other than TM_Invisible, the routine fills
  * *tmfd with the tuple's t_ctid, t_xmax (resolving a possible MultiXact,

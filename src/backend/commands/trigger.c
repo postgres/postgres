@@ -3332,7 +3332,7 @@ GetTupleForTrigger(EState *estate,
 		 */
 		if (!IsolationUsesXactSnapshot())
 			lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
-		test = table_lock_tuple(relation, tid, estate->es_snapshot, oldslot,
+		test = table_tuple_lock(relation, tid, estate->es_snapshot, oldslot,
 								estate->es_output_cid,
 								lockmode, LockWaitBlock,
 								lockflags,
@@ -3386,7 +3386,7 @@ GetTupleForTrigger(EState *estate,
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				elog(ERROR, "unexpected table_lock_tuple status: %u", test);
+				elog(ERROR, "unexpected table_tuple_lock status: %u", test);
 				break;
 
 			case TM_Deleted:
@@ -3402,7 +3402,7 @@ GetTupleForTrigger(EState *estate,
 				break;
 
 			default:
-				elog(ERROR, "unrecognized table_lock_tuple status: %u", test);
+				elog(ERROR, "unrecognized table_tuple_lock status: %u", test);
 				return false;	/* keep compiler quiet */
 		}
 	}
@@ -3412,7 +3412,8 @@ GetTupleForTrigger(EState *estate,
 		 * We expect the tuple to be present, thus very simple error handling
 		 * suffices.
 		 */
-		if (!table_fetch_row_version(relation, tid, SnapshotAny, oldslot))
+		if (!table_tuple_fetch_row_version(relation, tid, SnapshotAny,
+										   oldslot))
 			elog(ERROR, "failed to fetch tuple for trigger");
 	}
 
@@ -4270,7 +4271,9 @@ AfterTriggerExecute(EState *estate,
 			{
 				LocTriggerData.tg_trigslot = ExecGetTriggerOldSlot(estate, relInfo);
 
-				if (!table_fetch_row_version(rel, &(event->ate_ctid1), SnapshotAny, LocTriggerData.tg_trigslot))
+				if (!table_tuple_fetch_row_version(rel, &(event->ate_ctid1),
+												   SnapshotAny,
+												   LocTriggerData.tg_trigslot))
 					elog(ERROR, "failed to fetch tuple1 for AFTER trigger");
 				LocTriggerData.tg_trigtuple =
 					ExecFetchSlotHeapTuple(LocTriggerData.tg_trigslot, false, &should_free_trig);
@@ -4287,7 +4290,9 @@ AfterTriggerExecute(EState *estate,
 			{
 				LocTriggerData.tg_newslot = ExecGetTriggerNewSlot(estate, relInfo);
 
-				if (!table_fetch_row_version(rel, &(event->ate_ctid2), SnapshotAny, LocTriggerData.tg_newslot))
+				if (!table_tuple_fetch_row_version(rel, &(event->ate_ctid2),
+												   SnapshotAny,
+												   LocTriggerData.tg_newslot))
 					elog(ERROR, "failed to fetch tuple2 for AFTER trigger");
 				LocTriggerData.tg_newtuple =
 					ExecFetchSlotHeapTuple(LocTriggerData.tg_newslot, false, &should_free_new);

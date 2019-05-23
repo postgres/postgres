@@ -381,9 +381,9 @@ TidNext(TidScanState *node)
 		 * current according to our snapshot.
 		 */
 		if (node->tss_isCurrentOf)
-			table_get_latest_tid(scan, &tid);
+			table_tuple_get_latest_tid(scan, &tid);
 
-		if (table_fetch_row_version(heapRelation, &tid, snapshot, slot))
+		if (table_tuple_fetch_row_version(heapRelation, &tid, snapshot, slot))
 			return slot;
 
 		/* Bad TID or failed snapshot qual; try next */

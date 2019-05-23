@@ -382,7 +382,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
 	scan = table_beginscan(rel, snapshot, 0, NULL);
-	table_get_latest_tid(scan, result);
+	table_tuple_get_latest_tid(scan, result);
 	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
 
@@ -420,7 +420,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
 	scan = table_beginscan(rel, snapshot, 0, NULL);
-	table_get_latest_tid(scan, result);
+	table_tuple_get_latest_tid(scan, result);
 	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
 

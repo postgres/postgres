@@ -2436,7 +2436,7 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
  * quals. For that result to be useful, typically the input tuple has to be
  * last row version (otherwise the result isn't particularly useful) and
  * locked (otherwise the result might be out of date). That's typically
- * achieved by using table_lock_tuple() with the
+ * achieved by using table_tuple_lock() with the
  * TUPLE_LOCK_FLAG_FIND_LAST_VERSION flag.
  *
  * Returns a slot containing the new candidate update/delete tuple, or
@@ -2654,9 +2654,9 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			else
 			{
 				/* ordinary table, fetch the tuple */
-				if (!table_fetch_row_version(erm->relation,
-											 (ItemPointer) DatumGetPointer(datum),
-											 SnapshotAny, slot))
+				if (!table_tuple_fetch_row_version(erm->relation,
+												   (ItemPointer) DatumGetPointer(datum),
+												   SnapshotAny, slot))
 					elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
 			}
 		}

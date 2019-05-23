@@ -173,7 +173,7 @@ retry:
 
 		PushActiveSnapshot(GetLatestSnapshot());
 
-		res = table_lock_tuple(rel, &(outslot->tts_tid), GetLatestSnapshot(),
+		res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
 							   outslot,
 							   GetCurrentCommandId(false),
 							   lockmode,
@@ -208,7 +208,7 @@ retry:
 				elog(ERROR, "attempted to lock invisible tuple");
 				break;
 			default:
-				elog(ERROR, "unexpected table_lock_tuple status: %u", res);
+				elog(ERROR, "unexpected table_tuple_lock status: %u", res);
 				break;
 		}
 	}
@@ -337,7 +337,7 @@ retry:
 
 		PushActiveSnapshot(GetLatestSnapshot());
 
-		res = table_lock_tuple(rel, &(outslot->tts_tid), GetLatestSnapshot(),
+		res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
 							   outslot,
 							   GetCurrentCommandId(false),
 							   lockmode,
@@ -372,7 +372,7 @@ retry:
 				elog(ERROR, "attempted to lock invisible tuple");
 				break;
 			default:
-				elog(ERROR, "unexpected table_lock_tuple status: %u", res);
+				elog(ERROR, "unexpected table_tuple_lock status: %u", res);
 				break;
 		}
 	}
@@ -425,7 +425,7 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 		/* OK, store the tuple and create index entries for it */
-		simple_table_insert(resultRelInfo->ri_RelationDesc, slot);
+		simple_table_tuple_insert(resultRelInfo->ri_RelationDesc, slot);
 
 		if (resultRelInfo->ri_NumIndices > 0)
 			recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL,
@@ -490,8 +490,8 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 		if (resultRelInfo->ri_PartitionCheck)
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
-		simple_table_update(rel, tid, slot, estate->es_snapshot,
-							&update_indexes);
+		simple_table_tuple_update(rel, tid, slot, estate->es_snapshot,
+								  &update_indexes);
 
 		if (resultRelInfo->ri_NumIndices > 0 && update_indexes)
 			recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL,
@@ -535,7 +535,7 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 	if (!skip_tuple)
 	{
 		/* OK, delete the tuple */
-		simple_table_delete(rel, tid, estate->es_snapshot);
+		simple_table_tuple_delete(rel, tid, estate->es_snapshot);
 
 		/* AFTER ROW DELETE Triggers */
 		ExecARDeleteTriggers(estate, resultRelInfo,

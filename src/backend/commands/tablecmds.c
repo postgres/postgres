@@ -4732,9 +4732,9 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		newrel = NULL;
 
 	/*
-	 * Prepare a BulkInsertState and options for table_insert. Because we're
-	 * building a new heap, we can skip WAL-logging and fsync it to disk at
-	 * the end instead (unless WAL-logging is required for archiving or
+	 * Prepare a BulkInsertState and options for table_tuple_insert. Because
+	 * we're building a new heap, we can skip WAL-logging and fsync it to disk
+	 * at the end instead (unless WAL-logging is required for archiving or
 	 * streaming replication). The FSM is empty too, so don't bother using it.
 	 */
 	if (newrel)
@@ -5005,7 +5005,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 			/* Write the tuple out to the new relation */
 			if (newrel)
-				table_insert(newrel, insertslot, mycid, ti_options, bistate);
+				table_tuple_insert(newrel, insertslot, mycid,
+								   ti_options, bistate);
 
 			ResetExprContext(econtext);
 
