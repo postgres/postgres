@@ -1134,19 +1134,38 @@ dumpTablespaces(PGconn *conn)
 	 *
 	 * See buildACLQueries() and buildACLCommands().
 	 *
+	 * The order in which privileges are in the ACL string (the order they
+	 * have been GRANT'd in, which the backend maintains) must be preserved to
+	 * ensure that GRANTs WITH GRANT OPTION and subsequent GRANTs based on
+	 * those are dumped in the correct order.
+	 *
 	 * Note that we do not support initial privileges (pg_init_privs) on
-	 * tablespaces.
+	 * tablespaces, so this logic cannot make use of buildACLQueries().
 	 */
 	if (server_version >= 90600)
 		res = executeQuery(conn, "SELECT oid, spcname, "
 						   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "pg_catalog.pg_tablespace_location(oid), "
-						   "(SELECT pg_catalog.array_agg(acl) FROM (SELECT pg_catalog.unnest(coalesce(spcacl,pg_catalog.acldefault('t',spcowner))) AS acl "
-						   "EXCEPT SELECT pg_catalog.unnest(pg_catalog.acldefault('t',spcowner))) as foo)"
-						   "AS spcacl,"
-						   "(SELECT pg_catalog.array_agg(acl) FROM (SELECT pg_catalog.unnest(pg_catalog.acldefault('t',spcowner)) AS acl "
-						   "EXCEPT SELECT pg_catalog.unnest(coalesce(spcacl,pg_catalog.acldefault('t',spcowner)))) as foo)"
-						   "AS rspcacl,"
+						   "(SELECT array_agg(acl ORDER BY row_n) FROM "
+						   "  (SELECT acl, row_n FROM "
+						   "     unnest(coalesce(spcacl,acldefault('t',spcowner))) "
+						   "     WITH ORDINALITY AS perm(acl,row_n) "
+						   "   WHERE NOT EXISTS ( "
+						   "     SELECT 1 "
+						   "     FROM unnest(acldefault('t',spcowner)) "
+						   "       AS init(init_acl) "
+						   "     WHERE acl = init_acl)) AS spcacls) "
+						   " AS spcacl, "
+						   "(SELECT array_agg(acl ORDER BY row_n) FROM "
+						   "  (SELECT acl, row_n FROM "
+						   "     unnest(acldefault('t',spcowner)) "
+						   "     WITH ORDINALITY AS initp(acl,row_n) "
+						   "   WHERE NOT EXISTS ( "
+						   "     SELECT 1 "
+						   "     FROM unnest(coalesce(spcacl,acldefault('t',spcowner))) "
+						   "       AS permp(orig_acl) "
+						   "     WHERE acl = orig_acl)) AS rspcacls) "
+						   " AS rspcacl, "
 						   "array_to_string(spcoptions, ', '),"
 						   "pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "
