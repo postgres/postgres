@@ -2140,3 +2140,21 @@ select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
  ba       |    0 |     1
 (2 rows)
 
+-- Make sure that generation of HashAggregate for uniqification purposes
+-- does not lead to array overflow due to unexpected duplicate hash keys
+-- see CAFeeJoKKu0u+A_A9R9316djW-YW3-+Gtgvy3ju655qRHR3jtdA@mail.gmail.com
+explain (costs off)
+  select 1 from tenk1
+   where (hundred, thousand) in (select twothousand, twothousand from onek);
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Hash Join
+   Hash Cond: (tenk1.hundred = onek.twothousand)
+   ->  Seq Scan on tenk1
+         Filter: (hundred = thousand)
+   ->  Hash
+         ->  HashAggregate
+               Group Key: onek.twothousand, onek.twothousand
+               ->  Seq Scan on onek
+(8 rows)
+
