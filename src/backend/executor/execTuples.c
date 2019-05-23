@@ -1068,7 +1068,7 @@ const TupleTableSlotOps TTSOpsBufferHeapTuple = {
  *
  *		Basic routine to make an empty TupleTableSlot of given
  *		TupleTableSlotType. If tupleDesc is specified the slot's descriptor is
- *		fixed for it's lifetime, gaining some efficiency. If that's
+ *		fixed for its lifetime, gaining some efficiency. If that's
  *		undesirable, pass NULL.
  * --------------------------------
  */

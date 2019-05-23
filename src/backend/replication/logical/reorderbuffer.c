@@ -1924,7 +1924,7 @@ ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid)
 }
 
 /*
- * Forget the contents of a transaction if we aren't interested in it's
+ * Forget the contents of a transaction if we aren't interested in its
  * contents. Needs to be first called for subtransactions and then for the
  * toplevel xid.
  *
