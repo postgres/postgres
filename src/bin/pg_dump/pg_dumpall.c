@@ -107,7 +107,6 @@ main(int argc, char *argv[])
 		{"host", required_argument, NULL, 'h'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"database", required_argument, NULL, 'l'},
-		{"oids", no_argument, NULL, 'o'},
 		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
 		{"roles-only", no_argument, NULL, 'r'},
@@ -211,7 +210,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acd:E:f:gh:l:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acd:E:f:gh:l:Op:rsS:tU:vwWx", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -250,10 +249,6 @@ main(int argc, char *argv[])
 
 			case 'l':
 				pgdb = pg_strdup(optarg);
-				break;
-
-			case 'o':
-				appendPQExpBufferStr(pgdumpopts, " -o");
 				break;
 
 			case 'O':
@@ -628,7 +623,6 @@ help(void)
 	printf(_("  -c, --clean                  clean (drop) databases before recreating\n"));
 	printf(_("  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"));
 	printf(_("  -g, --globals-only           dump only global objects, no databases\n"));
-	printf(_("  -o, --oids                   include OIDs in dump\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
 	printf(_("  -r, --roles-only             dump only roles, no databases or tablespaces\n"));
 	printf(_("  -s, --schema-only            dump only the schema, no data\n"));
