@@ -698,7 +698,7 @@ msgstr ""
 
 #: fe-misc.c:1016
 msgid "timeout expired\n"
-msgstr "upłynął limit czasu rządania\n"
+msgstr "upłynął limit czasu żądania\n"
 
 #: fe-misc.c:1061
 msgid "invalid socket\n"
