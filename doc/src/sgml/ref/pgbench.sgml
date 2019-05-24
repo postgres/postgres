@@ -1561,7 +1561,7 @@ f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
       For example, <literal>random_zipfian(1, ..., 2.5)</literal> produces
       the value <literal>1</literal> about <literal>(2/1)**2.5 =
       5.66</literal> times more frequently than <literal>2</literal>, which
-      itself is produced <literal>(3/2)*2.5 = 2.76</literal> times more
+      itself is produced <literal>(3/2)**2.5 = 2.76</literal> times more
       frequently than <literal>3</literal>, and so on.
      </para>
      <para>
