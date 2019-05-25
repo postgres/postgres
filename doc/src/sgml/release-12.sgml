@@ -157,7 +157,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
      </para>
 
      <para>
-      Specifically, <xref linkend="guc-recovery-target-time"/> now
+      Specifically, <xref linkend="guc-recovery-target-timeline"/> now
       defaults to <literal>latest</literal>.  Previously, it defaulted
       to <literal>current</literal>.
      </para>
@@ -1788,7 +1788,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Add an explicit value of <literal>current</literal> for <xref
-       linkend="guc-recovery-target-time"/> (Peter Eisentraut)
+       linkend="guc-recovery-target-timeline"/> (Peter Eisentraut)
       </para>
      </listitem>
 
