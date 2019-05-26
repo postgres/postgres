@@ -202,7 +202,7 @@
 /*
  * Uncomment (or use -DTRGM_REGEXP_DEBUG) to print debug info,
  * for exploring and debugging the algorithm implementation.
- * This produces three graph files in /tmp, in Graphviz .dot format.
+ * This produces three graph files in /tmp, in Graphviz .gv format.
  * Some progress information is also printed to postmaster stderr.
  */
 /* #define TRGM_REGEXP_DEBUG */
@@ -2187,8 +2187,8 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 	appendStringInfoString(&buf, "}\n");
 
 	{
-		/* dot -Tpng -o /tmp/source.png < /tmp/source.dot */
-		FILE	   *fp = fopen("/tmp/source.dot", "w");
+		/* dot -Tpng -o /tmp/source.png < /tmp/source.gv */
+		FILE	   *fp = fopen("/tmp/source.gv", "w");
 
 		fprintf(fp, "%s", buf.data);
 		fclose(fp);
@@ -2249,8 +2249,8 @@ printTrgmNFA(TrgmNFA *trgmNFA)
 	appendStringInfoString(&buf, "}\n");
 
 	{
-		/* dot -Tpng -o /tmp/transformed.png < /tmp/transformed.dot */
-		FILE	   *fp = fopen("/tmp/transformed.dot", "w");
+		/* dot -Tpng -o /tmp/transformed.png < /tmp/transformed.gv */
+		FILE	   *fp = fopen("/tmp/transformed.gv", "w");
 
 		fprintf(fp, "%s", buf.data);
 		fclose(fp);
@@ -2340,8 +2340,8 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 	appendStringInfoString(&buf, "}\n");
 
 	{
-		/* dot -Tpng -o /tmp/packed.png < /tmp/packed.dot */
-		FILE	   *fp = fopen("/tmp/packed.dot", "w");
+		/* dot -Tpng -o /tmp/packed.png < /tmp/packed.gv */
+		FILE	   *fp = fopen("/tmp/packed.gv", "w");
 
 		fprintf(fp, "%s", buf.data);
 		fclose(fp);

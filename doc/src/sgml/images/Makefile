@@ -11,7 +11,7 @@ DOT = dot
 
 all: $(ALL_IMAGES)
 
-%.svg: %.dot
+%.svg: %.gv
 	$(DOT) -T svg -o $@ $<
 
 %.svg: %.txt
