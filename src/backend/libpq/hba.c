@@ -1429,7 +1429,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 				 errmsg("GSSAPI encryption only supports gss, trust, or reject authentication"),
 				 errcontext("line %d of configuration file \"%s\"",
 							line_num, HbaFileName)));
-		*err_msg = "GSSAPI encryption only supports gss, trust, or reject authenticaion";
+		*err_msg = "GSSAPI encryption only supports gss, trust, or reject authentication";
 		return NULL;
 	}
 

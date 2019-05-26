@@ -506,7 +506,7 @@ float8in_internal_opt_error(char *num, char **endptr_p,
 }
 
 /*
- * Interfact to float8in_internal_opt_error() without "have_error" argument.
+ * Interface to float8in_internal_opt_error() without "have_error" argument.
  */
 double
 float8in_internal(char *num, char **endptr_p,

@@ -603,7 +603,7 @@ parseUnicode(char *s, int l)
 		{
 			while (s[++i] != '}' && i < l)
 				ch = (ch << 4) | hexval(s[i]);
-			i++;	/* ski p '}' */
+			i++;	/* skip '}' */
 		}
 		else		/* parse '\uXXXX' */
 		{

@@ -1344,7 +1344,7 @@ _bt_mark_scankey_required(ScanKey skey)
  * _bt_preprocess_keys(), above, about how this is done.
  *
  * Forward scan callers can pass a high key tuple in the hopes of having
- * us set *continuescanthat to false, and avoiding an unnecessary visit to
+ * us set *continuescan to false, and avoiding an unnecessary visit to
  * the page to the right.
  *
  * scan: index scan descriptor (containing a search-type scankey)

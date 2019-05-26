@@ -3574,7 +3574,7 @@ AlterTableGetLockLevel(List *cmds)
 
 				/*
 				 * Removing constraints can affect SELECTs that have been
-				 * optimised assuming the constraint holds true. See also
+				 * optimized assuming the constraint holds true. See also
 				 * CloneFkReferenced.
 				 */
 			case AT_DropConstraint: /* as DROP INDEX */

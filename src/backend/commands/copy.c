@@ -2934,7 +2934,7 @@ CopyFrom(CopyState cstate)
 	else if (contain_volatile_functions(cstate->whereClause))
 	{
 		/*
-		 * Can't support multi-inserts if there are any volatile funcation
+		 * Can't support multi-inserts if there are any volatile function
 		 * expressions in WHERE clause.  Similarly to the trigger case above,
 		 * such expressions may query the table we're inserting into.
 		 */

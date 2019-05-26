@@ -3556,7 +3556,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       </entry>
      </row>
      <row>
-      <entry><structfield>current_locked_pid</structfield></entry>
+      <entry><structfield>current_locker_pid</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>
         Process ID of the locker currently being waited for.

@@ -896,7 +896,7 @@ CREATE COLLATION french FROM "fr-x-icu";
      equal only if they consist of the same byte sequence.  Nondeterministic
      comparison may determine strings to be equal even if they consist of
      different bytes.  Typical situations include case-insensitive comparison,
-     accent-insensitive comparison, as well as comparion of strings in
+     accent-insensitive comparison, as well as comparison of strings in
      different Unicode normal forms.  It is up to the collation provider to
      actually implement such insensitive comparisons; the deterministic flag
      only determines whether ties are to be broken using bytewise comparison.

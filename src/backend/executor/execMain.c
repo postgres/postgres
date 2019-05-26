@@ -2432,7 +2432,7 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
  *	inputslot - tuple for processing - this can be the slot from
  *		EvalPlanQualSlot(), for the increased efficiency.
  *
- * This tests whether the tuple in inputslot still matches the relvant
+ * This tests whether the tuple in inputslot still matches the relevant
  * quals. For that result to be useful, typically the input tuple has to be
  * last row version (otherwise the result isn't particularly useful) and
  * locked (otherwise the result might be out of date). That's typically

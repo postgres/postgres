@@ -3064,7 +3064,7 @@ estimate_path_cost_size(PlannerInfo *root,
 	total_cost += cpu_tuple_cost * retrieved_rows;
 
 	/*
-	 * If we have LIMIT, we should perfer performing the restriction remotely
+	 * If we have LIMIT, we should prefer performing the restriction remotely
 	 * rather than locally, as the former avoids extra row fetches from the
 	 * remote that the latter might cause.  But since the core code doesn't
 	 * account for such fetches when estimating the costs of the local

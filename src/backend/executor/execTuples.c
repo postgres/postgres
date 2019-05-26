@@ -1602,7 +1602,7 @@ ExecStoreHeapTupleDatum(Datum data, TupleTableSlot *slot)
  * NB: If materialize is true, modifications of the returned tuple are
  * allowed. But it depends on the type of the slot whether such modifications
  * will also affect the slot's contents. While that is not the nicest
- * behaviour, all such modifcations are in the process of being removed.
+ * behaviour, all such modifications are in the process of being removed.
  */
 HeapTuple
 ExecFetchSlotHeapTuple(TupleTableSlot *slot, bool materialize, bool *shouldFree)
@@ -1645,7 +1645,7 @@ ExecFetchSlotHeapTuple(TupleTableSlot *slot, bool materialize, bool *shouldFree)
  *		tuple should be considered as read-only.
  *
  *		If that callback is not supported, it calls copy_minimal_tuple callback
- *		which is expected to return a copy of minimal tuple represnting the
+ *		which is expected to return a copy of minimal tuple representing the
  *		contents of the slot. In this case *shouldFree is set to true,
  *		indicating the caller that it should free the memory consumed by the
  *		minimal tuple. In this case the returned minimal tuple may be written

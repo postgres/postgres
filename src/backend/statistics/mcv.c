@@ -714,7 +714,7 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 				memcpy(ptr, &tmp, info[dim].typlen);
 				ptr += info[dim].typlen;
 			}
-			else if (info[dim].typlen > 0)	/* pased by reference */
+			else if (info[dim].typlen > 0)	/* passed by reference */
 			{
 				/* no special alignment needed, treated as char array */
 				memcpy(ptr, DatumGetPointer(value), info[dim].typlen);

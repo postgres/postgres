@@ -663,7 +663,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
  *		(In a !heapkeyspace index, there can be multiple pages with the same
  *		high key, where the new tuple could legitimately be placed on.  In
  *		that case, the caller passes the first page containing duplicates,
- *		just like when checkinunique=true.  If that page doesn't have enough
+ *		just like when checkingunique=true.  If that page doesn't have enough
  *		room for the new tuple, this function moves right, trying to find a
  *		legal page that does.)
  *

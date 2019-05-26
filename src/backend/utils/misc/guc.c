@@ -8968,7 +8968,7 @@ get_explain_guc_options(int *num)
 				break;
 
 			default:
-				elog(ERROR, "unexcpected GUC type: %d", conf->vartype);
+				elog(ERROR, "unexpected GUC type: %d", conf->vartype);
 		}
 
 		/* skip GUC variables that match the built-in default */

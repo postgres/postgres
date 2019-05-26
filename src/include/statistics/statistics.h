@@ -82,7 +82,7 @@ typedef struct MCVItem
 	Datum	   *values;			/* item values */
 } MCVItem;
 
-/* multivariate MCV list - essentally an array of MCV items */
+/* multivariate MCV list - essentially an array of MCV items */
 typedef struct MCVList
 {
 	uint32		magic;			/* magic constant marker */

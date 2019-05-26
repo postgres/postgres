@@ -1546,7 +1546,7 @@ CheckLogrotateSignal(void)
 }
 
 /*
- * Remove the file signaling a log rotateion request.
+ * Remove the file signaling a log rotation request.
  */
 void
 RemoveLogrotateSignalFiles(void)

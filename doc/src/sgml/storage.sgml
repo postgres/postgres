@@ -960,7 +960,7 @@ data. Empty in ordinary tables.</entry>
   (that is, <structfield>t_natts</structfield> bits altogether). In this list of bits, a
   1 bit indicates not-null, a 0 bit is a null.  When the bitmap is not
   present, all columns are assumed not-null.
-  The object ID is only present if the <firstterm>HEAP_HASOID</firstterm> bit
+  The object ID is only present if the <firstterm>HEAP_HASOID_OLD</firstterm> bit
   is set in <structfield>t_infomask</structfield>.  If present, it appears just
   before the <structfield>t_hoff</structfield> boundary.  Any padding needed to make
   <structfield>t_hoff</structfield> a MAXALIGN multiple will appear between the null

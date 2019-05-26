@@ -3131,7 +3131,7 @@ my %tests = (
 	# AM occurs. To achieve that we create a table with the standard
 	# AM, test AM, standard AM. That guarantees that there needs to be
 	# a SET interspersed.  Then use a regex that prevents interspersed
-	# SET ...; statements, followed by the exptected CREATE TABLE. Not
+	# SET ...; statements, followed by the expected CREATE TABLE. Not
 	# pretty, but seems hard to do better in this framework.
 	'CREATE TABLE regress_pg_dump_table_am' => {
 		create_order => 12,

@@ -202,7 +202,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			LLVMBuildBitCast(b,
 							 v_slot,
 							 l_ptr(StructMinimalTupleTableSlot),
-							 "minimalslotslot");
+							 "minimalslot");
 		v_slotoffp = LLVMBuildStructGEP(b, v_minimalslot, FIELDNO_MINIMALTUPLETABLESLOT_OFF, "");
 		v_tupleheaderp =
 			l_load_struct_gep(b, v_minimalslot, FIELDNO_MINIMALTUPLETABLESLOT_TUPLE,
