@@ -1454,13 +1454,21 @@ ecpg_build_params(struct statement *stmt)
 			if (stmt->statement_type == ECPGst_prepare ||
 				stmt->statement_type == ECPGst_exec_with_exprlist)
 			{
-				/* Add double quote both side for embedding statement name. */
-				char	   *str = ecpg_alloc(strlen(tobeinserted) + 2 + 1, stmt->lineno);
+				/* Need to double-quote the inserted statement name. */
+				char	   *str = ecpg_alloc(strlen(tobeinserted) + 2 + 1,
+											 stmt->lineno);
 
+				if (!str)
+				{
+					ecpg_free(tobeinserted);
+					ecpg_free_params(stmt, false);
+					return false;
+				}
 				sprintf(str, "\"%s\"", tobeinserted);
 				ecpg_free(tobeinserted);
 				tobeinserted = str;
 			}
+
 			if (!insert_tobeinserted(position, 2, stmt, tobeinserted))
 			{
 				ecpg_free_params(stmt, false);
@@ -1470,11 +1478,13 @@ ecpg_build_params(struct statement *stmt)
 		}
 		else if (stmt->statement_type == ECPGst_exec_with_exprlist)
 		{
-
 			if (binary_format)
 			{
-				char	   *p = convert_bytea_to_string(tobeinserted, binary_length, stmt->lineno);
+				char	   *p = convert_bytea_to_string(tobeinserted,
+														binary_length,
+														stmt->lineno);
 
+				ecpg_free(tobeinserted);
 				if (!p)
 				{
 					ecpg_free_params(stmt, false);
