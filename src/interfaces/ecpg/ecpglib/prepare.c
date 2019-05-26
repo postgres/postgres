@@ -85,7 +85,7 @@ ecpg_register_prepared_stmt(struct statement *stmt)
 		return false;
 
 	prep_stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
-	if (!stmt)
+	if (!prep_stmt)
 	{
 		ecpg_free(this);
 		return false;
