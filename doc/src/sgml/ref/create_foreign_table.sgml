@@ -268,8 +268,8 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     <listitem>
      <para>
       This clause creates the column as a <firstterm>generated
-      column</firstterm>.  The column cannot be written to, and when read it
-      will be computed from the specified expression.
+      column</firstterm>.  The column cannot be written to, and when read the
+      result of the specified expression will be returned.
      </para>
 
      <para>
