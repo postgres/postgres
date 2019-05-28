@@ -107,6 +107,17 @@ BASE_PGDATA=$temp_root/data
 PGDATA="$BASE_PGDATA.old"
 export PGDATA
 
+# Send installcheck outputs to a private directory.  This avoids conflict when
+# check-world runs pg_upgrade check concurrently with src/test/regress check.
+# To retrieve interesting files after a run, use pattern tmp_check/*/*.diffs.
+outputdir="$temp_root/regress"
+EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --outputdir=$outputdir"
+export EXTRA_REGRESS_OPTS
+mkdir "$outputdir"
+mkdir "$outputdir"/sql
+mkdir "$outputdir"/expected
+mkdir "$outputdir"/testtablespace
+
 logdir=`pwd`/log
 rm -rf "$logdir"
 mkdir "$logdir"
