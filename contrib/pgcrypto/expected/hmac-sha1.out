@@ -1,5 +1,5 @@
 --
--- HMAC-MD5
+-- HMAC-SHA1
 --
 SELECT encode(hmac(
 'Hi There',

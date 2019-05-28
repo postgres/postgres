@@ -1,5 +1,5 @@
 --
--- pgp_descrypt tests
+-- pgp decrypt tests
 --
 --  Checking ciphers
 select pgp_sym_decrypt(dearmor('
