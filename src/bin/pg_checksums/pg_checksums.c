@@ -136,16 +136,16 @@ progress_report(bool force)
 	/* Calculate current percentage of size done */
 	percent = total_size ? (int) ((current_size) * 100 / total_size) : 0;
 
-	snprintf(total_size_str, sizeof(total_size_str), INT64_FORMAT,
-			 total_size / (1024 * 1024));
-	snprintf(current_size_str, sizeof(current_size_str), INT64_FORMAT,
-			 current_size / (1024 * 1024));
-
 	/*
 	 * Separate step to keep platform-dependent format code out of
 	 * translatable strings.  And we only test for INT64_FORMAT availability
 	 * in snprintf, not fprintf.
 	 */
+	snprintf(total_size_str, sizeof(total_size_str), INT64_FORMAT,
+			 total_size / (1024 * 1024));
+	snprintf(current_size_str, sizeof(current_size_str), INT64_FORMAT,
+			 current_size / (1024 * 1024));
+
 	fprintf(stderr, "%*s/%s MB (%d%%) computed",
 			(int) strlen(current_size_str), current_size_str, total_size_str,
 			percent);
