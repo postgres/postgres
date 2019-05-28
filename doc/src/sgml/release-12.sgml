@@ -2611,7 +2611,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
       <para>
-       Add vacuumdb to disable waiting for locks or skipping all-visible
+       Allow vacuumdb to disable waiting for locks or skipping all-visible
        pages (Nathan Bossart)
       </para>
 
