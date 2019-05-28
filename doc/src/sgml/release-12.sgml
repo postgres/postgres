@@ -2864,7 +2864,7 @@ existin
       <para>
        Add <xref linkend="sql-create-access-method"/> command to create
        new table types (Andres Freund, Haribabu Kommi, Álvaro Herrera,
-       Alexander Korotkov, Dimitri Golgov)
+       Alexander Korotkov, Dmitry Dolgov)
       </para>
 
       <para>
