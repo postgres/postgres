@@ -534,7 +534,8 @@ sub upgradecheck
 	$ENV{PGHOST} = 'localhost';
 	$ENV{PGPORT} ||= 50432;
 	my $tmp_root = "$topdir/src/bin/pg_upgrade/tmp_check";
-	(mkdir $tmp_root || die $!) unless -d $tmp_root;
+	rmtree($tmp_root);
+	mkdir $tmp_root || die $!;
 	my $upg_tmp_install = "$tmp_root/install";    # unshared temp install
 	print "Setting up temp install\n\n";
 	Install($upg_tmp_install, "all", $config);
@@ -547,7 +548,8 @@ sub upgradecheck
 	my $data = "$tmp_root/data";
 	$ENV{PGDATA} = "$data.old";
 	my $logdir = "$topdir/src/bin/pg_upgrade/log";
-	(mkdir $logdir || die $!) unless -d $logdir;
+	rmtree($logdir);
+	mkdir $logdir || die $!;
 	print "\nRunning initdb on old cluster\n\n";
 	standard_initdb() or exit 1;
 	print "\nStarting old cluster\n\n";
