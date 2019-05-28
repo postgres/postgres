@@ -231,7 +231,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 			/*- translator: both %s are strings of the form "option = value" */
 					 errmsg("%s and %s are mutually exclusive options",
-							"slot_name = NONE", "enable = true")));
+							"slot_name = NONE", "enabled = true")));
 
 		if (create_slot && create_slot_given && *create_slot)
 			ereport(ERROR,
