@@ -66,6 +66,8 @@ export PGHOST
 
 # don't rely on $PWD here, as old shells don't set it
 temp_root=`pwd`/tmp_check
+rm -rf "$temp_root"
+mkdir "$temp_root"
 
 if [ "$1" = '--install' ]; then
 	temp_install=$temp_root/install
@@ -106,7 +108,6 @@ export PATH
 BASE_PGDATA=$temp_root/data
 PGDATA="$BASE_PGDATA.old"
 export PGDATA
-rm -rf "$BASE_PGDATA" "$PGDATA"
 
 logdir=`pwd`/log
 rm -rf "$logdir"
