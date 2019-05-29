@@ -3966,14 +3966,6 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
 
      <listitem>
       <para>
-       While primary keys are supported on partitioned tables, foreign
-       keys referencing partitioned tables are not supported.  (Foreign key
-       references from a partitioned table to some other table are supported.)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        <literal>BEFORE ROW</literal> triggers, if necessary, must be defined
        on individual partitions, not the partitioned table.
       </para>
@@ -4351,6 +4343,14 @@ ALTER TABLE measurement_y2008m02 INHERIT measurement;
         exclusive.  It is safer to create code that generates
         child tables and creates and/or modifies associated objects than
         to write each by hand.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Indexes and foreign key constraints apply to single tables and not
+        to their inheritance children, hence they have some
+        <link linkend="ddl-inherit-caveats">caveats</link> to be aware of.
        </para>
       </listitem>
 
