@@ -264,7 +264,7 @@ NextSampleTuple (SampleScanState *node,
     requests to sample missing or invisible tuples; that should not result in
     any bias in the sample.  However, if necessary, the function can use
     <literal>node-&gt;donetuples</literal> to examine how many of the tuples
-    it returned were vlaid and visible.
+    it returned were valid and visible.
    </para>
   </note>
 

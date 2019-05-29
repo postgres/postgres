@@ -57,7 +57,7 @@
 
      <row>
       <entry><link linkend="catalog-pg-am"><structname>pg_am</structname></link></entry>
-      <entry>index access methods</entry>
+      <entry>relation access methods</entry>
      </row>
 
      <row>
