@@ -901,7 +901,7 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 			offset != MAXALIGN(offset))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("corrupted line pointer: offset = %u, length = %u",
+					 errmsg("corrupted line pointer: offset = %u, size = %u",
 							offset, (unsigned int) size)));
 
 		if (nextitm < nitems && offnum == itemnos[nextitm])
