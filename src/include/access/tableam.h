@@ -33,7 +33,6 @@ extern bool synchronize_seqscans;
 
 struct BulkInsertStateData;
 struct IndexInfo;
-struct IndexBuildCallback;
 struct SampleScanState;
 struct TBMIterateResult;
 struct VacuumParams;
