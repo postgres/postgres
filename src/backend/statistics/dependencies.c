@@ -529,9 +529,7 @@ statext_dependencies_deserialize(bytea *data)
 			 dependencies->type, STATS_DEPS_TYPE_BASIC);
 
 	if (dependencies->ndeps == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("invalid zero-length item array in MVDependencies")));
+		elog(ERROR, "invalid zero-length item array in MVDependencies");
 
 	/* what minimum bytea size do we expect for those parameters */
 	min_expected_size = SizeOfDependencies +
