@@ -101,6 +101,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-f <replaceable>filenode</replaceable></option></term>
+      <term><option>--filenode=<replaceable>filenode</replaceable></option></term>
+      <listitem>
+       <para>
+        Only validate checksums in the relation with filenode
+        <replaceable>filenode</replaceable>. 
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-N</option></term>
       <term><option>--no-sync</option></term>
       <listitem>
@@ -117,31 +128,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-v</option></term>
-      <term><option>--verbose</option></term>
-      <listitem>
-       <para>
-        Enable verbose output. Lists all checked files.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-r <replaceable>relfilenode</replaceable></option></term>
-      <listitem>
-       <para>
-        Only validate checksums in the relation with specified relfilenode.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-P</option></term>
       <term><option>--progress</option></term>
       <listitem>
        <para>
         Enable progress reporting. Turning this on will deliver a progress
         report while checking or enabling checksums.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
+      <listitem>
+       <para>
+        Enable verbose output. Lists all checked files.
        </para>
       </listitem>
      </varlistentry>
