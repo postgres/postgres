@@ -1,8 +1,26 @@
 #!/bin/sh
 
 # Check all exported PostgreSQL include files for C++ compatibility.
-# Run this from the top-level source directory after performing a build.
+#
+# Argument 1 is the top-level source directory, argument 2 the
+# top-level build directory (they might be the same). If not set, they
+# default to the current directory.
+#
+# Needs to be run after all generated headers are created.
+#
 # No output if everything is OK, else compiler errors.
+
+if [ -z "$1" ];then
+    srcdir="."
+else
+    srcdir="$1"
+fi
+
+if [ -z "$2" ];then
+    builddir="$."
+else
+    builddir="$2"
+fi
 
 me=`basename $0`
 
@@ -22,7 +40,7 @@ trap 'rm -rf $tmp' 0 1 2 3 15
 # which itself contains C++ code and so won't compile with a C++
 # compiler under extern "C" linkage.
 
-for f in `find src/include src/interfaces/libpq/libpq-fe.h src/interfaces/libpq/libpq-events.h -name '*.h' -print | \
+for f in `cd "$srcdir" && find src/include src/interfaces/libpq/libpq-fe.h src/interfaces/libpq/libpq-events.h -name '*.h' -print | \
     grep -v -e ^src/include/port/ \
 	-e ^src/include/rusagestub.h -e ^src/include/regex/regerrs.h \
 	-e ^src/include/access/rmgrlist.h \
@@ -36,5 +54,7 @@ do
 	    echo '};'
 	} >$tmp/test.cpp
 
-	${CXX:-g++} -I . -I src/interfaces/libpq -I src/include -fsyntax-only -Wall -c $tmp/test.cpp
+	${CXX:-g++} -I $srcdir -I $srcdir/src/interfaces/libpq -I $srcdir/src/include \
+		    -I $builddir -I $builddir/src/interfaces/libpq -I $builddir/src/include \
+		    -fsyntax-only -Wall -c $tmp/test.cpp
 done
