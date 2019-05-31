@@ -1114,14 +1114,14 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 					for (ptr = defines; ptr != NULL; ptr2 = ptr, ptr = ptr->next)
 					{
-						if (strcmp(yytext, ptr->old) == 0)
+						if (strcmp(yytext, ptr->olddef) == 0)
 						{
 							if (ptr2 == NULL)
 								defines = ptr->next;
 							else
 								ptr2->next = ptr->next;
-							free(ptr->new);
-							free(ptr->old);
+							free(ptr->newdef);
+							free(ptr->olddef);
 							free(ptr);
 							break;
 						}
@@ -1300,8 +1300,10 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						yytext[i+1] = '\0';
 
 						for (defptr = defines;
-							 defptr != NULL && strcmp(yytext, defptr->old) != 0;
-							 defptr = defptr->next);
+							 defptr != NULL &&
+							 strcmp(yytext, defptr->olddef) != 0;
+							 defptr = defptr->next)
+							/* skip */ ;
 
 						preproc_tos++;
 						stacked_if_value[preproc_tos].else_branch = false;
@@ -1333,10 +1335,10 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 						for (ptr = defines; ptr != NULL; ptr = ptr->next)
 						{
-							 if (strcmp(old, ptr->old) == 0)
+							 if (strcmp(old, ptr->olddef) == 0)
 							 {
-								free(ptr->new);
-								ptr->new = mm_strdup(literalbuf);
+								free(ptr->newdef);
+								ptr->newdef = mm_strdup(literalbuf);
 							 }
 						}
 						if (ptr == NULL)
@@ -1344,8 +1346,8 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 							this = (struct _defines *) mm_alloc(sizeof(struct _defines));
 
 							/* initial definition */
-							this->old = old;
-							this->new = mm_strdup(literalbuf);
+							this->olddef = old;
+							this->newdef = mm_strdup(literalbuf);
 							this->next = defines;
 							this->used = NULL;
 							defines = this;
@@ -1613,7 +1615,7 @@ static bool isdefine(void)
 	/* is it a define? */
 	for (ptr = defines; ptr; ptr = ptr->next)
 	{
-		if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
+		if (strcmp(yytext, ptr->olddef) == 0 && ptr->used == NULL)
 		{
 			struct _yy_buffer *yb;
 
@@ -1626,7 +1628,7 @@ static bool isdefine(void)
 
 			ptr->used = yy_buffer = yb;
 
-			yy_scan_string(ptr->new);
+			yy_scan_string(ptr->newdef);
 			return true;
 		}
 	}

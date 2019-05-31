@@ -160,8 +160,8 @@ struct typedefs
 
 struct _defines
 {
-	char	   *old;
-	char	   *new;
+	char	   *olddef;
+	char	   *newdef;
 	int			pertinent;
 	void	   *used;
 	struct _defines *next;
