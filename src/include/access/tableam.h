@@ -1330,7 +1330,7 @@ table_finish_bulk_insert(Relation rel, int options)
  */
 
 /*
- * Create storage for `rel` in `newrode`, with persistence set to
+ * Create storage for `rel` in `newrnode`, with persistence set to
  * `persistence`.
  *
  * This is used both during relation creation and various DDL operations to
