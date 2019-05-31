@@ -6,6 +6,8 @@
 #ifndef PLPY_UTIL_H
 #define PLPY_UTIL_H
 
+#include "plpython.h"
+
 extern PyObject *PLyUnicode_Bytes(PyObject *unicode);
 extern char *PLyUnicode_AsString(PyObject *unicode);
 

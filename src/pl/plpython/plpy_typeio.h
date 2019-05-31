@@ -9,6 +9,8 @@
 #include "fmgr.h"
 #include "utils/typcache.h"
 
+#include "plpython.h"
+
 struct PLyProcedure;			/* avoid requiring plpy_procedure.h here */
 
 

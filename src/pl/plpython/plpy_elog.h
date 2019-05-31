@@ -5,6 +5,8 @@
 #ifndef PLPY_ELOG_H
 #define PLPY_ELOG_H
 
+#include "plpython.h"
+
 /* global exception classes */
 extern PyObject *PLy_exc_error;
 extern PyObject *PLy_exc_fatal;

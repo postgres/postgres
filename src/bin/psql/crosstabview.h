@@ -9,6 +9,8 @@
 #ifndef CROSSTABVIEW_H
 #define CROSSTABVIEW_H
 
+#include "libpq-fe.h"
+
 /*
  * Limit the number of output columns generated in memory by the crosstabview
  * algorithm. A new output column is added for each distinct value found in the

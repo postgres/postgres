@@ -8,6 +8,7 @@
 #include "sqlda-native.h"
 #include "sqlda-compat.h"
 #include "ecpg_config.h"
+#include "ecpgtype.h"
 
 #ifndef CHAR_BIT
 #include <limits.h>

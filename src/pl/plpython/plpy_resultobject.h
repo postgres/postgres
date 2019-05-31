@@ -7,6 +7,8 @@
 
 #include "access/tupdesc.h"
 
+#include "plpython.h"
+
 
 typedef struct PLyResultObject
 {
