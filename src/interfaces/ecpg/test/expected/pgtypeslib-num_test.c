@@ -29,7 +29,7 @@
  * print_double(x) has the same effect as printf("%g", x), but is intended
  * to produce the same formatting across all platforms.
  */
-static void
+static inline void
 print_double(double x)
 {
 #ifdef WIN32
