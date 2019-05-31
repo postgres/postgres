@@ -233,7 +233,7 @@ table_tuple_get_latest_tid(TableScanDesc scan, ItemPointer tid)
 	if (!tableam->tuple_tid_valid(scan, tid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("tid (%u, %u) is not valid for relation for relation \"%s\"",
+				 errmsg("tid (%u, %u) is not valid for relation \"%s\"",
 						ItemPointerGetBlockNumberNoCheck(tid),
 						ItemPointerGetOffsetNumberNoCheck(tid),
 						RelationGetRelationName(rel))));
