@@ -2203,7 +2203,7 @@ plpgsql_start_datums(void)
  * ----------
  */
 void
-plpgsql_adddatum(PLpgSQL_datum *new)
+plpgsql_adddatum(PLpgSQL_datum *newdatum)
 {
 	if (plpgsql_nDatums == datums_alloc)
 	{
@@ -2211,8 +2211,8 @@ plpgsql_adddatum(PLpgSQL_datum *new)
 		plpgsql_Datums = repalloc(plpgsql_Datums, sizeof(PLpgSQL_datum *) * datums_alloc);
 	}
 
-	new->dno = plpgsql_nDatums;
-	plpgsql_Datums[plpgsql_nDatums++] = new;
+	newdatum->dno = plpgsql_nDatums;
+	plpgsql_Datums[plpgsql_nDatums++] = newdatum;
 }
 
 /* ----------

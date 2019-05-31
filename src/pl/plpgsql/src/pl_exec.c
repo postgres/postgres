@@ -5552,7 +5552,7 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 void
 plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 								 PLpgSQL_datum *datum,
-								 Oid *typeid, int32 *typmod, Oid *collation)
+								 Oid *typeId, int32 *typMod, Oid *collation)
 {
 	switch (datum->dtype)
 	{
@@ -5561,8 +5561,8 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
-				*typeid = var->datatype->typoid;
-				*typmod = var->datatype->atttypmod;
+				*typeId = var->datatype->typoid;
+				*typMod = var->datatype->atttypmod;
 				*collation = var->datatype->collation;
 				break;
 			}
@@ -5574,15 +5574,15 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 				if (rec->erh == NULL || rec->rectypeid != RECORDOID)
 				{
 					/* Report variable's declared type */
-					*typeid = rec->rectypeid;
-					*typmod = -1;
+					*typeId = rec->rectypeid;
+					*typMod = -1;
 				}
 				else
 				{
 					/* Report record's actual type if declared RECORD */
-					*typeid = rec->erh->er_typeid;
+					*typeId = rec->erh->er_typeid;
 					/* do NOT return the mutable typmod of a RECORD variable */
-					*typmod = -1;
+					*typMod = -1;
 				}
 				/* composite types are never collatable */
 				*collation = InvalidOid;
@@ -5620,16 +5620,16 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 					recfield->rectupledescid = rec->erh->er_tupdesc_id;
 				}
 
-				*typeid = recfield->finfo.ftypeid;
-				*typmod = recfield->finfo.ftypmod;
+				*typeId = recfield->finfo.ftypeid;
+				*typMod = recfield->finfo.ftypmod;
 				*collation = recfield->finfo.fcollation;
 				break;
 			}
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			*typeid = InvalidOid;	/* keep compiler quiet */
-			*typmod = -1;
+			*typeId = InvalidOid;	/* keep compiler quiet */
+			*typMod = -1;
 			*collation = InvalidOid;
 			break;
 	}
