@@ -105,6 +105,8 @@ do
 
 	# regression.h is not actually C, but ECPG code.
 	test "$f" = src/interfaces/ecpg/test/regression.h && continue
+	# printf_hack.h produces "unused function" warnings.
+	test "$f" = src/interfaces/ecpg/test/printf_hack.h && continue
 
 	# pg_trace.h and utils/probes.h can include sys/sdt.h from SystemTap,
 	# which itself contains C++ code and so won't compile with a C++
