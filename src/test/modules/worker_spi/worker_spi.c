@@ -55,6 +55,7 @@ static volatile sig_atomic_t got_sigterm = false;
 /* GUC variables */
 static int	worker_spi_naptime = 10;
 static int	worker_spi_total_workers = 2;
+static char *worker_spi_database = NULL;
 
 
 typedef struct worktable
@@ -179,7 +180,7 @@ worker_spi_main(Datum main_arg)
 	BackgroundWorkerUnblockSignals();
 
 	/* Connect to our database */
-	BackgroundWorkerInitializeConnection("postgres", NULL, 0);
+	BackgroundWorkerInitializeConnection(worker_spi_database, NULL, 0);
 
 	elog(LOG, "%s initialized with %s.%s",
 		 MyBgworkerEntry->bgw_name, table->schema, table->name);
@@ -338,6 +339,15 @@ _PG_init(void)
 							NULL,
 							NULL,
 							NULL);
+
+	DefineCustomStringVariable("worker_spi.database",
+							   "Database to connect to.",
+							   NULL,
+							   &worker_spi_database,
+							   "postgres",
+							   PGC_POSTMASTER,
+							   0,
+							   NULL, NULL, NULL);
 
 	/* set up common data for all our workers */
 	memset(&worker, 0, sizeof(worker));
