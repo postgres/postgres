@@ -24,14 +24,23 @@ fi
 
 me=`basename $0`
 
+# These switches are g++ specific, you may override if necessary.
+CXXFLAGS=${CXXFLAGS:- -fsyntax-only -Wall}
+
 # Pull some info from configure's results.
 MGLOB="$builddir/src/Makefile.global"
+CPPFLAGS=`sed -n 's/^CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CXX=`sed -n 's/^CXX[ 	]*=[ 	]*//p' "$MGLOB"`
 perl_includespec=`sed -n 's/^perl_includespec[ 	]*=[ 	]*//p' "$MGLOB"`
 python_includespec=`sed -n 's/^python_includespec[ 	]*=[ 	]*//p' "$MGLOB"`
 
-# These switches are g++ specific, you may override if necessary.
-CXXFLAGS=${CXXFLAGS:- -fsyntax-only -Wall}
+# Extract any -I and -D switches from CPPFLAGS.
+# (If necessary, user can pass more switches by presetting EXTRAFLAGS.)
+for flag in $CPPFLAGS; do
+  case $flag in
+    -I*|-D*) EXTRAFLAGS="$EXTRAFLAGS $flag";;
+  esac
+done
 
 # Create temp directory.
 tmp=`mktemp -d /tmp/$me.XXXXXX`
@@ -65,11 +74,16 @@ do
 	# Likewise, these files are platform-specific, and the one
 	# relevant to our platform will be included by atomics.h.
 	test "$f" = src/include/port/atomics/arch-arm.h && continue
+	test "$f" = src/include/port/atomics/arch-hppa.h && continue
+	test "$f" = src/include/port/atomics/arch-ia64.h && continue
+	test "$f" = src/include/port/atomics/arch-ppc.h && continue
+	test "$f" = src/include/port/atomics/arch-x86.h && continue
 	test "$f" = src/include/port/atomics/fallback.h && continue
 	test "$f" = src/include/port/atomics/generic.h && continue
 	test "$f" = src/include/port/atomics/generic-acc.h && continue
 	test "$f" = src/include/port/atomics/generic-gcc.h && continue
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
+	test "$f" = src/include/port/atomics/generic-sunpro.h && continue
 	test "$f" = src/include/port/atomics/generic-xlc.h && continue
 
 	# rusagestub.h is also platform-specific, and will be included
@@ -145,6 +159,6 @@ do
 	${CXX:-g++} -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
-		$EXTRAINCLUDES $CXXFLAGS -c $tmp/test.cpp
+		$EXTRAINCLUDES $EXTRAFLAGS $CXXFLAGS -c $tmp/test.cpp
 
 done
