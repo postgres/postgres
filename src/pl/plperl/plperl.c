@@ -7,9 +7,6 @@
 
 #include "postgres.h"
 
-/* Defined by Perl */
-#undef _
-
 /* system stuff */
 #include <ctype.h>
 #include <fcntl.h>

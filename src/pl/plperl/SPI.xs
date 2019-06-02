@@ -10,9 +10,6 @@
 /* this must be first: */
 #include "postgres.h"
 
-/* Defined by Perl */
-#undef _
-
 /* perl stuff */
 #define PG_NEED_PERL_XSUB_H
 #include "plperl.h"

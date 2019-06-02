@@ -2,9 +2,6 @@
 
 #include <math.h>
 
-/* Defined by Perl */
-#undef _
-
 #include "fmgr.h"
 #include "plperl.h"
 #include "plperl_helpers.h"

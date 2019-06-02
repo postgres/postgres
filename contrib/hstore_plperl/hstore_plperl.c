@@ -1,11 +1,9 @@
 #include "postgres.h"
 
-#undef _
-
 #include "fmgr.h"
+#include "hstore/hstore.h"
 #include "plperl.h"
 #include "plperl_helpers.h"
-#include "hstore/hstore.h"
 
 PG_MODULE_MAGIC;
 
