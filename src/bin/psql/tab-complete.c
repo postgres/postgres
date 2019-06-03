@@ -41,6 +41,7 @@
 
 #include <ctype.h>
 
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_class_d.h"
 
 #include "libpq-fe.h"
@@ -823,6 +824,18 @@ static const SchemaQuery Query_for_list_of_statistics = {
 " SELECT pg_catalog.quote_ident(amname) "\
 "   FROM pg_catalog.pg_am "\
 "  WHERE substring(pg_catalog.quote_ident(amname),1,%d)='%s'"
+
+#define Query_for_list_of_index_access_methods \
+" SELECT pg_catalog.quote_ident(amname) "\
+"   FROM pg_catalog.pg_am "\
+"  WHERE substring(pg_catalog.quote_ident(amname),1,%d)='%s' AND "\
+"   amtype=" CppAsString2(AMTYPE_INDEX)
+
+#define Query_for_list_of_table_access_methods \
+" SELECT pg_catalog.quote_ident(amname) "\
+"   FROM pg_catalog.pg_am "\
+"  WHERE substring(pg_catalog.quote_ident(amname),1,%d)='%s' AND "\
+"   amtype=" CppAsString2(AMTYPE_TABLE)
 
 /* the silly-looking length condition is just to eat up the current word */
 #define Query_for_list_of_arguments \
@@ -2234,7 +2247,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("TYPE");
 	/* Complete "CREATE ACCESS METHOD <name> TYPE" */
 	else if (Matches("CREATE", "ACCESS", "METHOD", MatchAny, "TYPE"))
-		COMPLETE_WITH("INDEX");
+		COMPLETE_WITH("INDEX", "TABLE");
 	/* Complete "CREATE ACCESS METHOD <name> TYPE <type>" */
 	else if (Matches("CREATE", "ACCESS", "METHOD", MatchAny, "TYPE", MatchAny))
 		COMPLETE_WITH("HANDLER");
@@ -2322,7 +2335,7 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches("INDEX", MatchAny, MatchAny, "ON", MatchAny, "USING") ||
 			 TailMatches("INDEX", MatchAny, "ON", MatchAny, "USING") ||
 			 TailMatches("INDEX", "ON", MatchAny, "USING"))
-		COMPLETE_WITH_QUERY(Query_for_list_of_access_methods);
+		COMPLETE_WITH_QUERY(Query_for_list_of_index_access_methods);
 	else if (TailMatches("ON", MatchAny, "USING", MatchAny) &&
 			 !TailMatches("POLICY", MatchAny, MatchAny, MatchAny, MatchAny, MatchAny) &&
 			 !TailMatches("FOR", MatchAny, MatchAny, MatchAny))
@@ -2490,10 +2503,14 @@ psql_completion(const char *text, int start, int end)
 	/* Complete CREATE TABLE name (...) with supported options */
 	else if (TailMatches("CREATE", "TABLE", MatchAny, "(*)") ||
 			 TailMatches("CREATE", "UNLOGGED", "TABLE", MatchAny, "(*)"))
-		COMPLETE_WITH("INHERITS (", "PARTITION BY", "TABLESPACE", "WITH (");
+		COMPLETE_WITH("INHERITS (", "PARTITION BY", "USING", "TABLESPACE", "WITH (");
 	else if (TailMatches("CREATE", "TEMP|TEMPORARY", "TABLE", MatchAny, "(*)"))
 		COMPLETE_WITH("INHERITS (", "ON COMMIT", "PARTITION BY",
 					  "TABLESPACE", "WITH (");
+	/* Complete CREATE TABLE (...) USING with table access methods */
+	else if (TailMatches("CREATE", "TABLE", MatchAny, "(*)", "USING") ||
+			 TailMatches("CREATE", "TEMP|TEMPORARY|UNLOGGED", "TABLE", MatchAny, "(*)", "USING"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_table_access_methods);
 	/* Complete CREATE TABLE (...) WITH with storage parameters */
 	else if (TailMatches("CREATE", "TABLE", MatchAny, "(*)", "WITH", "(") ||
 			 TailMatches("CREATE", "TEMP|TEMPORARY|UNLOGGED", "TABLE", MatchAny, "(*)", "WITH", "("))
