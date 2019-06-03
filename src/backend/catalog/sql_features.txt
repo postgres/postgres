@@ -543,13 +543,13 @@ T827	JSON_TABLE: sibling NESTED COLUMNS clauses			NO
 T828	JSON_QUERY			NO	
 T829	JSON_QUERY: array wrapper options			NO	
 T830	Enforcing unique keys in SQL/JSON constructor functions			NO	
-T831	SQL/JSON path language: strict mode			NO	
-T832	SQL/JSON path language: item method			NO	
-T833	SQL/JSON path language: multiple subscripts			NO	
-T834	SQL/JSON path language: wildcard member accessor			NO	
-T835	SQL/JSON path language: filter expressions			NO	
-T836	SQL/JSON path language: starts with predicate			NO	
-T837	SQL/JSON path language: regex_like predicate			NO	
+T831	SQL/JSON path language: strict mode			YES	
+T832	SQL/JSON path language: item method			NO	datetime() not yet implemented
+T833	SQL/JSON path language: multiple subscripts			YES	
+T834	SQL/JSON path language: wildcard member accessor			YES	
+T835	SQL/JSON path language: filter expressions			YES	
+T836	SQL/JSON path language: starts with predicate			YES	
+T837	SQL/JSON path language: regex_like predicate			YES	
 T838	JSON_TABLE: PLAN DEFAULT clause			NO	
 T839	Formatted cast of datetimes to/from character strings			NO	
 M001	Datalinks			NO	
