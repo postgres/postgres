@@ -810,7 +810,7 @@ SELECT citext_pattern_ge('b'::citext, 'a'::citext) AS true;
 SELECT citext_pattern_ge('B'::citext, 'a'::citext) AS true;
 SELECT citext_pattern_ge('b'::citext, 'A'::citext) AS true;
 
--- Multi-byte tests below are diabled like the sanity tests above.
+-- Multi-byte tests below are disabled like the sanity tests above.
 -- Uncomment to run them.
 
 -- Test ~<~ and ~<=~

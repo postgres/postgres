@@ -56,7 +56,7 @@ HEADER
 print $OUTPUT
   "static const pg_unicode_test UnicodeNormalizationTests[] =\n{\n";
 
-# Helper routine to conver a space-separated list of Unicode characters to
+# Helper routine to convert a space-separated list of Unicode characters to
 # hexadecimal list format, suitable for outputting in a C array.
 sub codepoint_string_to_hex
 {

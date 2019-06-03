@@ -308,7 +308,7 @@ llvm_build_inline_plan(llvm::Module *mod)
 				 * Check whether function and all its dependencies are too
 				 * big. Dependencies already counted for other functions that
 				 * will get inlined are not counted again. While this make
-				 * things somewhat order dependant, I can't quite see a point
+				 * things somewhat order dependent, I can't quite see a point
 				 * in a different behaviour.
 				 */
 				if (running_instcount > inlineState.costLimit)

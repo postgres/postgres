@@ -5,8 +5,8 @@
  * allow a manage nested conditionals.
  *
  * It is used by:
- * - "psql" interpretor for handling \if ... \endif
- * - "pgbench" interpretor for handling \if ... \endif
+ * - "psql" interpreter for handling \if ... \endif
+ * - "pgbench" interpreter for handling \if ... \endif
  * - "pgbench" syntax checker to test for proper nesting
  *
  * The stack holds the state of enclosing conditionals (are we in

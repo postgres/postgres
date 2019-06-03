@@ -200,7 +200,7 @@ struct TupleTableSlotOps
 	 * copy needs to be palloc'd in the current memory context. The slot
 	 * itself is expected to remain unaffected. It is *not* expected to have
 	 * meaningful "system columns" in the copy. The copy is not be "owned" by
-	 * the slot i.e. the caller has to take responsibilty to free memory
+	 * the slot i.e. the caller has to take responsibility to free memory
 	 * consumed by the slot.
 	 */
 	HeapTuple	(*copy_heap_tuple) (TupleTableSlot *slot);
@@ -210,7 +210,7 @@ struct TupleTableSlotOps
 	 * The copy needs to be palloc'd in the current memory context. The slot
 	 * itself is expected to remain unaffected. It is *not* expected to have
 	 * meaningful "system columns" in the copy. The copy is not be "owned" by
-	 * the slot i.e. the caller has to take responsibilty to free memory
+	 * the slot i.e. the caller has to take responsibility to free memory
 	 * consumed by the slot.
 	 */
 	MinimalTuple (*copy_minimal_tuple) (TupleTableSlot *slot);

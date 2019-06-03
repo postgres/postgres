@@ -1015,7 +1015,7 @@ AddQual(Query *parsetree, Node *qual)
 				 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 	}
 
-	/* INTERSECT want's the original, but we need to copy - Jan */
+	/* INTERSECT wants the original, but we need to copy - Jan */
 	copy = copyObject(qual);
 
 	parsetree->jointree->quals = make_and_qual(parsetree->jointree->quals,

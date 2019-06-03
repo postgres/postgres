@@ -2937,7 +2937,7 @@ do_connect(enum trivalue reuse_previous_specification,
 		if (host && strcmp(host, PQhost(o_conn)) == 0)
 		{
 			/*
-			 * if we are targetting the same host, reuse its hostaddr for
+			 * if we are targeting the same host, reuse its hostaddr for
 			 * consistency
 			 */
 			hostaddr = PQhostaddr(o_conn);

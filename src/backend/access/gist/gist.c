@@ -1533,7 +1533,7 @@ initGISTstate(Relation index)
 	 * The truncated tupdesc for non-leaf index tuples, which doesn't contain
 	 * the INCLUDE attributes.
 	 *
-	 * It is used to form tuples during tuple adjustement and page split.
+	 * It is used to form tuples during tuple adjustment and page split.
 	 * B-tree creates shortened tuple descriptor for every truncated tuple,
 	 * because it is doing this less often: it does not have to form truncated
 	 * tuples during page split.  Also, B-tree is not adjusting tuples on

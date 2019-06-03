@@ -189,7 +189,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 			goto emsgsize;
 	}
 
-	/* Firey death and destruction unless we prefetched EOS. */
+	/* Fiery death and destruction unless we prefetched EOS. */
 	if (ch != '\0')
 		goto enoent;
 
@@ -309,7 +309,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 			goto emsgsize;
 	}
 
-	/* Firey death and destruction unless we prefetched EOS. */
+	/* Fiery death and destruction unless we prefetched EOS. */
 	if (ch != '\0')
 		goto enoent;
 

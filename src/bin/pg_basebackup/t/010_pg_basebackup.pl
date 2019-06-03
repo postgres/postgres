@@ -44,7 +44,7 @@ $node->command_fails(
 
 ok(!-d "$tempdir/backup", 'backup directory was cleaned up');
 
-# Create a backup directory that is not empty so the next commnd will fail
+# Create a backup directory that is not empty so the next command will fail
 # but leave the data directory behind
 mkdir("$tempdir/backup")
   or BAIL_OUT("unable to create $tempdir/backup");

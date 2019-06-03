@@ -202,7 +202,7 @@ WaitExceedsMaxStandbyDelay(void)
 
 	/*
 	 * Progressively increase the sleep times, but not to more than 1s, since
-	 * pg_usleep isn't interruptable on some platforms.
+	 * pg_usleep isn't interruptible on some platforms.
 	 */
 	standbyWait_us *= 2;
 	if (standbyWait_us > 1000000)

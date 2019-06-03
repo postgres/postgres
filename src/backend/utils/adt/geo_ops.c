@@ -5315,7 +5315,7 @@ lseg_crossing(float8 x, float8 y, float8 prev_x, float8 prev_y)
 				/* both non-positive so do not cross positive X-axis */
 				return 0;
 
-			/* x and y cross axises, see URL above point_inside() */
+			/* x and y cross axes, see URL above point_inside() */
 			z = float8_mi(float8_mul(float8_mi(x, prev_x), y),
 						  float8_mul(float8_mi(y, prev_y), x));
 			if (FPzero(z))

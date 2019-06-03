@@ -2362,7 +2362,7 @@ heapam_scan_sample_next_block(TableScanDesc scan, SampleScanState *scanstate)
 
 			if (blockno >= hscan->rs_nblocks)
 			{
-				/* wrap to begining of rel, might not have started at 0 */
+				/* wrap to beginning of rel, might not have started at 0 */
 				blockno = 0;
 			}
 

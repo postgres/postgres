@@ -134,7 +134,7 @@ typedef struct ExprState
  *		ExclusionOps		Per-column exclusion operators, or NULL if none
  *		ExclusionProcs		Underlying function OIDs for ExclusionOps
  *		ExclusionStrats		Opclass strategy numbers for ExclusionOps
- *		UniqueOps			Theses are like Exclusion*, but for unique indexes
+ *		UniqueOps			These are like Exclusion*, but for unique indexes
  *		UniqueProcs
  *		UniqueStrats
  *		Unique				is it a unique index?
