@@ -14,6 +14,7 @@
 
 #include <limits.h>
 
+#include "access/parallel.h"
 #include "commands/explain.h"
 #include "executor/instrument.h"
 #include "utils/guc.h"
@@ -42,18 +43,19 @@ static const struct config_enum_entry format_options[] = {
 /* Current nesting depth of ExecutorRun calls */
 static int	nesting_level = 0;
 
+/* Is the current top-level query to be sampled? */
+static bool current_query_sampled = false;
+
+#define auto_explain_enabled() \
+	(auto_explain_log_min_duration >= 0 && \
+	 (nesting_level == 0 || auto_explain_log_nested_statements) && \
+	 current_query_sampled)
+
 /* Saved hook values in case of unload */
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
-
-/* Is the current query sampled, per backend */
-static bool current_query_sampled = true;
-
-#define auto_explain_enabled() \
-	(auto_explain_log_min_duration >= 0 && \
-	 (nesting_level == 0 || auto_explain_log_nested_statements))
 
 void		_PG_init(void);
 void		_PG_fini(void);
@@ -209,14 +211,25 @@ static void
 explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	/*
-	 * For rate sampling, randomly choose top-level statement. Either all
-	 * nested statements will be explained or none will.
+	 * At the beginning of each top-level statement, decide whether we'll
+	 * sample this statement.  If nested-statement explaining is enabled,
+	 * either all nested statements will be explained or none will.
+	 *
+	 * When in a parallel worker, we should do nothing, which we can implement
+	 * cheaply by pretending we decided not to sample the current statement.
+	 * If EXPLAIN is active in the parent session, data will be collected and
+	 * reported back to the parent, and it's no business of ours to interfere.
 	 */
-	if (auto_explain_log_min_duration >= 0 && nesting_level == 0)
-		current_query_sampled = (random() < auto_explain_sample_rate *
-								 MAX_RANDOM_VALUE);
+	if (nesting_level == 0)
+	{
+		if (auto_explain_log_min_duration >= 0 && !IsParallelWorker())
+			current_query_sampled = (random() < auto_explain_sample_rate *
+									 ((double) MAX_RANDOM_VALUE + 1));
+		else
+			current_query_sampled = false;
+	}
 
-	if (auto_explain_enabled() && current_query_sampled)
+	if (auto_explain_enabled())
 	{
 		/* Enable per-node instrumentation iff log_analyze is required. */
 		if (auto_explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
@@ -235,7 +248,7 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	else
 		standard_ExecutorStart(queryDesc, eflags);
 
-	if (auto_explain_enabled() && current_query_sampled)
+	if (auto_explain_enabled())
 	{
 		/*
 		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
@@ -305,7 +318,7 @@ explain_ExecutorFinish(QueryDesc *queryDesc)
 static void
 explain_ExecutorEnd(QueryDesc *queryDesc)
 {
-	if (queryDesc->totaltime && auto_explain_enabled() && current_query_sampled)
+	if (queryDesc->totaltime && auto_explain_enabled())
 	{
 		double		msec;
 
