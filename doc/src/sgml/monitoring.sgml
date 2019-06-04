@@ -3535,6 +3535,15 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       non-concurrent <command>CREATE INDEX</command>, this is 0.</entry>
      </row>
      <row>
+      <entry><structfield>command</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>
+       The command that is running: <literal>CREATE INDEX</literal>,
+       <literal>CREATE INDEX CONCURRENTLY</literal>,
+       <literal>REINDEX</literal>, or <literal>REINDEX CONCURRENTLY</literal>.
+      </entry>
+     </row>
+     <row>
       <entry><structfield>phase</structfield></entry>
       <entry><type>text</type></entry>
       <entry>
@@ -3965,7 +3974,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><structfield>command</structfield></entry>
      <entry><type>text</type></entry>
      <entry>
-       The command that is running. Either CLUSTER or VACUUM FULL.
+      The command that is running. Either <literal>CLUSTER</literal> or <literal>VACUUM FULL</literal>.
      </entry>
     </row>
     <row>

@@ -498,8 +498,14 @@ DefineIndex(Oid relationId,
 	 * done.
 	 */
 	if (!OidIsValid(parentIndexId))
+	{
 		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
 									  relationId);
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_COMMAND,
+									 stmt->concurrent ?
+									 PROGRESS_CREATEIDX_COMMAND_CREATE_CONCURRENTLY :
+									 PROGRESS_CREATEIDX_COMMAND_CREATE);
+	}
 
 	/*
 	 * No index OID to report yet
@@ -2923,6 +2929,8 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
 									  RelationGetRelid(heapRel));
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_COMMAND,
+									 PROGRESS_CREATEIDX_COMMAND_REINDEX_CONCURRENTLY);
 		pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
 									 indexId);
 		pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,

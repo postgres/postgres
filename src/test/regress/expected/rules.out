@@ -1879,6 +1879,13 @@ pg_stat_progress_create_index| SELECT s.pid,
     d.datname,
     s.relid,
     (s.param7)::oid AS index_relid,
+        CASE s.param1
+            WHEN 1 THEN 'CREATE INDEX'::text
+            WHEN 2 THEN 'CREATE INDEX CONCURRENTLY'::text
+            WHEN 3 THEN 'REINDEX'::text
+            WHEN 4 THEN 'REINDEX CONCURRENTLY'::text
+            ELSE NULL::text
+        END AS command,
         CASE s.param10
             WHEN 0 THEN 'initializing'::text
             WHEN 1 THEN 'waiting for writers before build'::text

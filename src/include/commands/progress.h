@@ -59,6 +59,7 @@
 
 /* Progress parameters for CREATE INDEX */
 /* 3, 4 and 5 reserved for "waitfor" metrics */
+#define PROGRESS_CREATEIDX_COMMAND				0
 #define PROGRESS_CREATEIDX_INDEX_OID			6
 #define PROGRESS_CREATEIDX_ACCESS_METHOD_OID	8
 #define PROGRESS_CREATEIDX_PHASE				9	/* AM-agnostic phase # */
@@ -85,6 +86,12 @@
  */
 #define PROGRESS_CREATEIDX_SUBPHASE_INITIALIZE	1
 /* Additional phases are defined by each AM */
+
+/* Commands of PROGRESS_CREATEIDX */
+#define PROGRESS_CREATEIDX_COMMAND_CREATE			1
+#define PROGRESS_CREATEIDX_COMMAND_CREATE_CONCURRENTLY	2
+#define PROGRESS_CREATEIDX_COMMAND_REINDEX		3
+#define PROGRESS_CREATEIDX_COMMAND_REINDEX_CONCURRENTLY	4
 
 /* Lock holder wait counts */
 #define PROGRESS_WAITFOR_TOTAL					3
