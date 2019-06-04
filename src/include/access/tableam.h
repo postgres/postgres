@@ -470,8 +470,8 @@ typedef struct TableAmRoutine
 									   const RelFileNode *newrnode);
 
 	/* See table_relation_copy_for_cluster() */
-	void		(*relation_copy_for_cluster) (Relation NewHeap,
-											  Relation OldHeap,
+	void		(*relation_copy_for_cluster) (Relation NewTable,
+											  Relation OldTable,
 											  Relation OldIndex,
 											  bool use_sort,
 											  TransactionId OldestXmin,
@@ -536,9 +536,9 @@ typedef struct TableAmRoutine
 											TupleTableSlot *slot);
 
 	/* see table_index_build_range_scan for reference about parameters */
-	double		(*index_build_range_scan) (Relation heap_rel,
+	double		(*index_build_range_scan) (Relation table_rel,
 										   Relation index_rel,
-										   struct IndexInfo *index_nfo,
+										   struct IndexInfo *index_info,
 										   bool allow_sync,
 										   bool anyvisible,
 										   bool progress,
@@ -549,7 +549,7 @@ typedef struct TableAmRoutine
 										   TableScanDesc scan);
 
 	/* see table_index_validate_scan for reference about parameters */
-	void		(*index_validate_scan) (Relation heap_rel,
+	void		(*index_validate_scan) (Relation table_rel,
 										Relation index_rel,
 										struct IndexInfo *index_info,
 										Snapshot snapshot,
@@ -1377,7 +1377,7 @@ table_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 }
 
 /*
- * Copy data from `OldHeap` into `NewHeap`, as part of a CLUSTER or VACUUM
+ * Copy data from `OldTable` into `NewTable`, as part of a CLUSTER or VACUUM
  * FULL.
  *
  * Additional Input parameters:
@@ -1398,7 +1398,7 @@ table_relation_copy_data(Relation rel, const RelFileNode *newrnode)
  * - *tups_recently_dead - stats, for logging, if appropriate for AM
  */
 static inline void
-table_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
+table_relation_copy_for_cluster(Relation OldTable, Relation NewTable,
 								Relation OldIndex,
 								bool use_sort,
 								TransactionId OldestXmin,
@@ -1408,11 +1408,11 @@ table_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 								double *tups_vacuumed,
 								double *tups_recently_dead)
 {
-	OldHeap->rd_tableam->relation_copy_for_cluster(OldHeap, NewHeap, OldIndex,
-												   use_sort, OldestXmin,
-												   xid_cutoff, multi_cutoff,
-												   num_tuples, tups_vacuumed,
-												   tups_recently_dead);
+	OldTable->rd_tableam->relation_copy_for_cluster(OldTable, NewTable, OldIndex,
+													use_sort, OldestXmin,
+													xid_cutoff, multi_cutoff,
+													num_tuples, tups_vacuumed,
+													tups_recently_dead);
 }
 
 /*
@@ -1473,7 +1473,7 @@ table_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
  * table_index_build_scan - scan the table to find tuples to be indexed
  *
  * This is called back from an access-method-specific index build procedure
- * after the AM has done whatever setup it needs.  The parent heap relation
+ * after the AM has done whatever setup it needs.  The parent table relation
  * is scanned to find tuples that should be entered into the index.  Each
  * such tuple is passed to the AM's callback routine, which does the right
  * things to add it to the new index.  After we return, the AM's index
@@ -1497,26 +1497,26 @@ table_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
  * for other AMs later.
  */
 static inline double
-table_index_build_scan(Relation heap_rel,
+table_index_build_scan(Relation table_rel,
 					   Relation index_rel,
-					   struct IndexInfo *index_nfo,
+					   struct IndexInfo *index_info,
 					   bool allow_sync,
 					   bool progress,
 					   IndexBuildCallback callback,
 					   void *callback_state,
 					   TableScanDesc scan)
 {
-	return heap_rel->rd_tableam->index_build_range_scan(heap_rel,
-														index_rel,
-														index_nfo,
-														allow_sync,
-														false,
-														progress,
-														0,
-														InvalidBlockNumber,
-														callback,
-														callback_state,
-														scan);
+	return table_rel->rd_tableam->index_build_range_scan(table_rel,
+														 index_rel,
+														 index_info,
+														 allow_sync,
+														 false,
+														 progress,
+														 0,
+														 InvalidBlockNumber,
+														 callback,
+														 callback_state,
+														 scan);
 }
 
 /*
@@ -1530,9 +1530,9 @@ table_index_build_scan(Relation heap_rel,
  * transactions that are still in progress.
  */
 static inline double
-table_index_build_range_scan(Relation heap_rel,
+table_index_build_range_scan(Relation table_rel,
 							 Relation index_rel,
-							 struct IndexInfo *index_nfo,
+							 struct IndexInfo *index_info,
 							 bool allow_sync,
 							 bool anyvisible,
 							 bool progress,
@@ -1542,17 +1542,17 @@ table_index_build_range_scan(Relation heap_rel,
 							 void *callback_state,
 							 TableScanDesc scan)
 {
-	return heap_rel->rd_tableam->index_build_range_scan(heap_rel,
-														index_rel,
-														index_nfo,
-														allow_sync,
-														anyvisible,
-														progress,
-														start_blockno,
-														numblocks,
-														callback,
-														callback_state,
-														scan);
+	return table_rel->rd_tableam->index_build_range_scan(table_rel,
+														 index_rel,
+														 index_info,
+														 allow_sync,
+														 anyvisible,
+														 progress,
+														 start_blockno,
+														 numblocks,
+														 callback,
+														 callback_state,
+														 scan);
 }
 
 /*
@@ -1561,17 +1561,17 @@ table_index_build_range_scan(Relation heap_rel,
  * See validate_index() for an explanation.
  */
 static inline void
-table_index_validate_scan(Relation heap_rel,
+table_index_validate_scan(Relation table_rel,
 						  Relation index_rel,
 						  struct IndexInfo *index_info,
 						  Snapshot snapshot,
 						  struct ValidateIndexState *state)
 {
-	heap_rel->rd_tableam->index_validate_scan(heap_rel,
-											  index_rel,
-											  index_info,
-											  snapshot,
-											  state);
+	table_rel->rd_tableam->index_validate_scan(table_rel,
+											   index_rel,
+											   index_info,
+											   snapshot,
+											   state);
 }
 
 
