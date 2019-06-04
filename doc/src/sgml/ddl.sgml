@@ -3948,6 +3948,44 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      One may then drop the constraint after <command>ATTACH PARTITION</command>
      is finished, because it is no longer necessary.
     </para>
+
+    <para>
+     As explained above, it is possible to create indexes on partitioned tables
+     and they are applied automatically to the entire hierarchy.  This is very
+     convenient, as not only the existing partitions will become indexed, but
+     also any partitions that are created in the future will.  One limitation is
+     that it's not possible to use the <literal>CONCURRENTLY</literal>
+     qualifier when creating such a partitioned index.  To overcome long lock
+     times, it is possible to use <command>CREATE INDEX ON ONLY</command>
+     the partitioned table; such an index is marked invalid, and the partitions
+     do not get the index applied automatically.  The indexes on partitions can
+     be created separately using <literal>CONCURRENTLY</literal>, and later
+     <firstterm>attached</firstterm> to the index on the parent using
+     <command>ALTER INDEX .. ATTACH PARTITION</command>.  Once indexes for all
+     partitions are attached to the parent index, the parent index is marked
+     valid automatically.  Example:
+<programlisting>
+CREATE INDEX measurement_usls_idx ON ONLY measurement (unitsales);
+
+CREATE INDEX measurement_usls_200602_idx
+    ON measurement_y2006m02 (unitsales);
+ALTER INDEX measurement_usls_idx
+    ATTACH PARTITION measurement_usls_200602_idx;
+...
+</programlisting>
+
+     This technique can be used with <literal>UNIQUE</literal> and
+     <literal>PRIMARY KEY</literal> constraints too; the indexes are created
+     implicitly when the constraint is created.  Example:
+<programlisting>
+ALTER TABLE ONLY measurement ADD UNIQUE (city_id, logdate);
+
+ALTER TABLE measurement_y2006m02 ADD UNIQUE (city_id, logdate);
+ALTER INDEX measurement_city_id_logdate_key
+    ATTACH PARTITION measurement_y2006m02_city_id_logdate_key;
+...
+</programlisting>
+    </para>
    </sect3>
 
    <sect3 id="ddl-partitioning-declarative-limitations">
