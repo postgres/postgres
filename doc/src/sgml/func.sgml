@@ -12978,13 +12978,13 @@ table2-mapping
         </entry>
         <entry>
          <para>
-           <programlisting>
+<programlisting>
  jsonb_path_query
 ------------------
  2
  3
  4
-           </programlisting>
+</programlisting>
          </para>
         </entry>
        </row>
