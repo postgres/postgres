@@ -11811,6 +11811,13 @@ table2-mapping
    <sect3 id="functions-sqljson-path-operators">
    <title>SQL/JSON Path Operators and Methods</title>
 
+   <para>
+    <xref linkend="functions-sqljson-op-table"/> shows the operators and
+    methods available in <type>jsonpath</type>.  <xref
+    linkend="functions-sqljson-filter-ex-table"/> shows the available filter
+    expression elements.
+   </para>
+
    <table id="functions-sqljson-op-table">
     <title><type>jsonpath</type> Operators and Methods</title>
      <tgroup cols="5">
