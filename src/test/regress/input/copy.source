@@ -187,4 +187,17 @@ copy parted_copytest from '@abs_builddir@/results/parted_copytest.csv';
 select tableoid::regclass,count(*),sum(a) from parted_copytest
 group by tableoid order by tableoid::regclass::name;
 
+truncate table parted_copytest;
+create index on parted_copytest (b);
+drop trigger part_ins_trig on parted_copytest_a2;
+
+copy parted_copytest from stdin;
+1	1	str1
+2	2	str2
+\.
+
+-- Ensure index entries were properly added during the copy.
+select * from parted_copytest where b = 1;
+select * from parted_copytest where b = 2;
+
 drop table parted_copytest;
