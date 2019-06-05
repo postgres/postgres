@@ -806,6 +806,7 @@ usage(void)
 	printf(_("  -z, --stats[=record]   show statistics instead of records\n"
 			 "                         (optionally, show per-record statistics)\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
 }
 
 int
@@ -844,6 +845,20 @@ main(int argc, char **argv)
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_waldump"));
 	progname = get_progname(argv[0]);
 
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage();
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("pg_waldump (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
+
 	memset(&private, 0, sizeof(XLogDumpPrivate));
 	memset(&config, 0, sizeof(XLogDumpConfig));
 	memset(&stats, 0, sizeof(XLogDumpStats));
@@ -869,7 +884,7 @@ main(int argc, char **argv)
 		goto bad_argument;
 	}
 
-	while ((option = getopt_long(argc, argv, "be:?fn:p:r:s:t:Vx:z",
+	while ((option = getopt_long(argc, argv, "be:fn:p:r:s:t:x:z",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -888,10 +903,6 @@ main(int argc, char **argv)
 				break;
 			case 'f':
 				config.follow = true;
-				break;
-			case '?':
-				usage();
-				exit(EXIT_SUCCESS);
 				break;
 			case 'n':
 				if (sscanf(optarg, "%d", &config.stop_after_records) != 1)
@@ -946,10 +957,6 @@ main(int argc, char **argv)
 					pg_log_error("could not parse timeline \"%s\"", optarg);
 					goto bad_argument;
 				}
-				break;
-			case 'V':
-				puts("pg_waldump (PostgreSQL) " PG_VERSION);
-				exit(EXIT_SUCCESS);
 				break;
 			case 'x':
 				if (sscanf(optarg, "%u", &config.filter_by_xid) != 1)
