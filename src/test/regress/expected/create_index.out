@@ -1944,9 +1944,9 @@ DROP TABLE reindex_verbose;
 CREATE TABLE concur_reindex_tab (c1 int);
 -- REINDEX
 REINDEX TABLE concur_reindex_tab; -- notice
-NOTICE:  table "concur_reindex_tab" has no indexes
+NOTICE:  table "concur_reindex_tab" has no indexes to reindex
 REINDEX TABLE CONCURRENTLY concur_reindex_tab; -- notice
-NOTICE:  table "concur_reindex_tab" has no indexes
+NOTICE:  table "concur_reindex_tab" has no indexes that can be reindexed concurrently
 ALTER TABLE concur_reindex_tab ADD COLUMN c2 text; -- add toast index
 -- Normal index with integer column
 CREATE UNIQUE INDEX concur_reindex_ind1 ON concur_reindex_tab(c1);
@@ -2043,10 +2043,10 @@ ERROR:  REINDEX is not yet implemented for partitioned indexes
 -- REINDEX is a no-op for partitioned tables
 REINDEX TABLE concur_reindex_part_10;
 WARNING:  REINDEX of partitioned tables is not yet implemented, skipping "concur_reindex_part_10"
-NOTICE:  table "concur_reindex_part_10" has no indexes
+NOTICE:  table "concur_reindex_part_10" has no indexes to reindex
 REINDEX TABLE CONCURRENTLY concur_reindex_part_10;
 WARNING:  REINDEX of partitioned tables is not yet implemented, skipping "concur_reindex_part_10"
-NOTICE:  table "concur_reindex_part_10" has no indexes
+NOTICE:  table "concur_reindex_part_10" has no indexes that can be reindexed concurrently
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
              relid             |         parentrelid         | level 
@@ -2150,7 +2150,7 @@ DELETE FROM concur_reindex_tab4 WHERE c1 = 1;
 -- The invalid index is not processed when running REINDEX TABLE.
 REINDEX TABLE CONCURRENTLY concur_reindex_tab4;
 WARNING:  cannot reindex invalid index "public.concur_reindex_ind5" concurrently, skipping
-NOTICE:  table "concur_reindex_tab4" has no indexes
+NOTICE:  table "concur_reindex_tab4" has no indexes that can be reindexed concurrently
 \d concur_reindex_tab4
         Table "public.concur_reindex_tab4"
  Column |  Type   | Collation | Nullable | Default 
