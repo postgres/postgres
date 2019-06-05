@@ -2088,7 +2088,13 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					coldef->cooked_default = restdef->cooked_default;
 					coldef->constraints = restdef->constraints;
 					coldef->is_from_type = false;
-					list_delete_cell(schema, rest, prev);
+					schema = list_delete_cell(schema, rest, prev);
+
+					/*
+					 * As two elements are merged and one is removed, we
+					 * should never finish with an empty list.
+					 */
+					Assert(schema != NIL);
 				}
 				else
 					ereport(ERROR,
