@@ -146,7 +146,7 @@ progress_report(bool force)
 	snprintf(current_size_str, sizeof(current_size_str), INT64_FORMAT,
 			 current_size / (1024 * 1024));
 
-	fprintf(stderr, "%*s/%s MB (%d%%) computed",
+	fprintf(stderr, _("%*s/%s MB (%d%%) computed"),
 			(int) strlen(current_size_str), current_size_str, total_size_str,
 			percent);
 
