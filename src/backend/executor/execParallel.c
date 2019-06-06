@@ -219,7 +219,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
  * &pcxt->estimator.
  *
  * While we're at it, count the number of PlanState nodes in the tree, so
- * we know how many SharedPlanStateInstrumentation structures we need.
+ * we know how many Instrumentation structures we need.
  */
 static bool
 ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
