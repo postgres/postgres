@@ -1099,7 +1099,7 @@ UsingValue: UsingConst
 		{
 			char *length = mm_alloc(32);
 
-			sprintf(length, "%d", (int) strlen($1));
+			sprintf(length, "%zu", strlen($1));
 			add_variable_to_head(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
 		}
 		| civar { $$ = EMPTY; }
@@ -1226,7 +1226,7 @@ IntConstVar: Iconst
 		{
 			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 
-			sprintf(length, "%d", (int) strlen($1));
+			sprintf(length, "%zu", strlen($1));
 			new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = $1;
 		}
@@ -1272,7 +1272,7 @@ AllConstVar: ecpg_fconst
 		{
 			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 
-			sprintf(length, "%d", (int) strlen($1));
+			sprintf(length, "%zu", strlen($1));
 			new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = $1;
 		}
@@ -1287,7 +1287,7 @@ AllConstVar: ecpg_fconst
 			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 			char *var = cat2_str(mm_strdup("-"), $2);
 
-			sprintf(length, "%d", (int) strlen(var));
+			sprintf(length, "%zu", strlen(var));
 			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = var;
 		}
@@ -1297,7 +1297,7 @@ AllConstVar: ecpg_fconst
 			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 			char *var = cat2_str(mm_strdup("-"), $2);
 
-			sprintf(length, "%d", (int) strlen(var));
+			sprintf(length, "%zu", strlen(var));
 			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = var;
 		}
@@ -1308,7 +1308,7 @@ AllConstVar: ecpg_fconst
 			char *var = $1 + 1;
 
 			var[strlen(var) - 1] = '\0';
-			sprintf(length, "%d", (int) strlen(var));
+			sprintf(length, "%zu", strlen(var));
 			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = var;
 		}

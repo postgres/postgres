@@ -36,7 +36,7 @@ ECPG: stmtExecuteStmt block
 
 				/* It must be cut off double quotation because new_variable() double-quotes. */
 				str[strlen(str) - 1] = '\0';
-				sprintf(length, "%d", (int) strlen(str));
+				sprintf(length, "%zu", strlen(str));
 				add_variable_to_tail(&argsinsert, new_variable(str, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
 			}
 			output_statement(cat_str(3, mm_strdup("execute"), mm_strdup("$0"), $1.type), 0, ECPGst_exec_with_exprlist);
@@ -63,7 +63,7 @@ ECPG: stmtPrepareStmt block
 
 				/* It must be cut off double quotation because new_variable() double-quotes. */
 				str[strlen(str) - 1] = '\0';
-				sprintf(length, "%d", (int) strlen(str));
+				sprintf(length, "%zu", strlen(str));
 				add_variable_to_tail(&argsinsert, new_variable(str, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
 			}
 			output_statement(cat_str(5, mm_strdup("prepare"), mm_strdup("$0"), $1.type, mm_strdup("as"), $1.stmt), 0, ECPGst_prepare);
