@@ -615,6 +615,16 @@ Indexes:
     within a transaction block, but <command>CREATE INDEX CONCURRENTLY</command>
     cannot.
    </para>
+
+   <para>
+    Concurrent builds for indexes on partitioned tables are currently not
+    supported.  However, you may concurrently build the index on each
+    partition individually and then finally create the partitioned index
+    non-concurrently in order to reduce the time where writes to the
+    partitioned table will be locked out.  In this case, building the
+    partitioned index is a metadata only operation.
+   </para>
+
   </refsect2>
  </refsect1>
 
