@@ -1301,7 +1301,7 @@ heap_getnext(TableScanDesc sscan, ScanDirection direction)
 	if (unlikely(sscan->rs_rd->rd_tableam != GetHeapamTableAmRoutine()))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("only heap AM is supported")));
+				 errmsg_internal("only heap AM is supported")));
 
 	/* Note: no locking manipulations needed */
 

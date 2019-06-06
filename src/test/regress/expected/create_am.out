@@ -110,7 +110,7 @@ NOTICE:  drop cascades to index grect2ind2
 -- prevent empty values
 SET default_table_access_method = '';
 ERROR:  invalid value for parameter "default_table_access_method": ""
-DETAIL:  default_table_access_method may not be empty.
+DETAIL:  default_table_access_method cannot be empty.
 -- prevent nonexistant values
 SET default_table_access_method = 'I do not exist AM';
 ERROR:  invalid value for parameter "default_table_access_method": "I do not exist AM"

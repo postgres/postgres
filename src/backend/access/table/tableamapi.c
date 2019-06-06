@@ -106,7 +106,8 @@ check_default_table_access_method(char **newval, void **extra, GucSource source)
 {
 	if (**newval == '\0')
 	{
-		GUC_check_errdetail("default_table_access_method may not be empty.");
+		GUC_check_errdetail("%s cannot be empty.",
+							"default_table_access_method");
 		return false;
 	}
 
