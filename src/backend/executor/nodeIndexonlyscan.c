@@ -166,10 +166,10 @@ IndexOnlyNext(IndexOnlyScanState *node)
 			 * Rats, we have to visit the heap to check visibility.
 			 */
 			InstrCountTuples2(node, 1);
-			if (!index_fetch_heap(scandesc, slot))
+			if (!index_fetch_heap(scandesc, node->ioss_TableSlot))
 				continue;		/* no visible tuple, try next index entry */
 
-			ExecClearTuple(slot);
+			ExecClearTuple(node->ioss_TableSlot);
 
 			/*
 			 * Only MVCC snapshots are supported here, so there should be no
@@ -528,7 +528,17 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	 */
 	tupDesc = ExecTypeFromTL(node->indextlist);
 	ExecInitScanTupleSlot(estate, &indexstate->ss, tupDesc,
-						  table_slot_callbacks(currentRelation));
+						  &TTSOpsVirtual);
+
+	/*
+	 * We need another slot, in a format that's suitable for the table AM,
+	 * for when we need to fetch a tuple from the table for rechecking
+	 * visibility.
+	 */
+	indexstate->ioss_TableSlot =
+		ExecAllocTableSlot(&estate->es_tupleTable,
+						   RelationGetDescr(currentRelation),
+						   table_slot_callbacks(currentRelation));
 
 	/*
 	 * Initialize result type and projection info.  The node's targetlist will
