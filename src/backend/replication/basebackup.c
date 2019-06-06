@@ -106,7 +106,7 @@ static TimestampTz throttled_last;
 static XLogRecPtr startptr;
 
 /* Total number of checksum failures during base backup. */
-static int64 total_checksum_failures;
+static long long int total_checksum_failures;
 
 /* Do not verify checksums. */
 static bool noverify_checksums = false;
@@ -607,14 +607,9 @@ perform_base_backup(basebackup_options *opt)
 	if (total_checksum_failures)
 	{
 		if (total_checksum_failures > 1)
-		{
-			char		buf[64];
-
-			snprintf(buf, sizeof(buf), INT64_FORMAT, total_checksum_failures);
-
 			ereport(WARNING,
-					(errmsg("%s total checksum verification failures", buf)));
-		}
+					(errmsg("%lld total checksum verification failures", total_checksum_failures)));
+
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("checksum verification failure during base backup")));

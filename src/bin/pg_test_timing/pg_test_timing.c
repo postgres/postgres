@@ -18,7 +18,7 @@ static uint64 test_timing(int32);
 static void output(uint64 loop_count);
 
 /* record duration in powers of 2 microseconds */
-int64		histogram[32];
+long long int histogram[32];
 
 int
 main(int argc, char *argv[])
@@ -190,14 +190,8 @@ output(uint64 loop_count)
 		   Max(10, len3), header3);
 
 	for (i = 0; i <= max_bit; i++)
-	{
-		char		buf[100];
-
-		/* lame hack to work around INT64_FORMAT deficiencies */
-		snprintf(buf, sizeof(buf), INT64_FORMAT, histogram[i]);
-		printf("%*ld    %*.5f %*s\n",
+		printf("%*ld    %*.5f %*lld\n",
 			   Max(6, len1), 1l << i,
 			   Max(10, len2) - 1, (double) histogram[i] * 100 / loop_count,
-			   Max(10, len3), buf);
-	}
+			   Max(10, len3), histogram[i]);
 }

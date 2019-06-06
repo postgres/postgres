@@ -783,20 +783,10 @@ XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
 		if (state->system_identifier &&
 			longhdr->xlp_sysid != state->system_identifier)
 		{
-			char		fhdrident_str[32];
-			char		sysident_str[32];
-
-			/*
-			 * Format sysids separately to keep platform-dependent format code
-			 * out of the translatable message string.
-			 */
-			snprintf(fhdrident_str, sizeof(fhdrident_str), UINT64_FORMAT,
-					 longhdr->xlp_sysid);
-			snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
-					 state->system_identifier);
 			report_invalid_record(state,
-								  "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s",
-								  fhdrident_str, sysident_str);
+								  "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu",
+								  (unsigned long long) longhdr->xlp_sysid,
+								  (unsigned long long) state->system_identifier);
 			return false;
 		}
 		else if (longhdr->xlp_seg_size != state->wal_segment_size)
