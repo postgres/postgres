@@ -245,9 +245,9 @@ vacuumlo(const char *database, const struct _param *param)
 			PQfinish(conn);
 			if (schema != NULL)
 				PQfreemem(schema);
-			if (schema != NULL)
+			if (table != NULL)
 				PQfreemem(table);
-			if (schema != NULL)
+			if (field != NULL)
 				PQfreemem(field);
 			return -1;
 		}
