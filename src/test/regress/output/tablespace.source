@@ -61,24 +61,52 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
  foo_idx | regress_tblspace
 (1 row)
 
+--
 -- partitioned table
+--
 CREATE TABLE testschema.part (a int) PARTITION BY LIST (a);
-CREATE TABLE testschema.part12 PARTITION OF testschema.part FOR VALUES IN(1,2) PARTITION BY LIST (a) TABLESPACE regress_tblspace;
-CREATE TABLE testschema.part12_1 PARTITION OF testschema.part12 FOR VALUES IN (1);
-ALTER TABLE testschema.part12 SET TABLESPACE pg_default;
-CREATE TABLE testschema.part12_2 PARTITION OF testschema.part12 FOR VALUES IN (2);
--- Ensure part12_1 defaulted to regress_tblspace and part12_2 defaulted to pg_default.
+SET default_tablespace TO pg_global;
+CREATE TABLE testschema.part_1 PARTITION OF testschema.part FOR VALUES IN (1);
+ERROR:  only shared relations can be placed in pg_global tablespace
+RESET default_tablespace;
+CREATE TABLE testschema.part_1 PARTITION OF testschema.part FOR VALUES IN (1);
+SET default_tablespace TO regress_tblspace;
+CREATE TABLE testschema.part_2 PARTITION OF testschema.part FOR VALUES IN (2);
+SET default_tablespace TO pg_global;
+CREATE TABLE testschema.part_3 PARTITION OF testschema.part FOR VALUES IN (3);
+ERROR:  only shared relations can be placed in pg_global tablespace
+ALTER TABLE testschema.part SET TABLESPACE regress_tblspace;
+CREATE TABLE testschema.part_3 PARTITION OF testschema.part FOR VALUES IN (3);
+CREATE TABLE testschema.part_4 PARTITION OF testschema.part FOR VALUES IN (4)
+  TABLESPACE pg_default;
+CREATE TABLE testschema.part_56 PARTITION OF testschema.part FOR VALUES IN (5, 6)
+  PARTITION BY LIST (a);
+ALTER TABLE testschema.part SET TABLESPACE pg_default;
+CREATE TABLE testschema.part_78 PARTITION OF testschema.part FOR VALUES IN (7, 8)
+  PARTITION BY LIST (a);
+ERROR:  only shared relations can be placed in pg_global tablespace
+CREATE TABLE testschema.part_910 PARTITION OF testschema.part FOR VALUES IN (9, 10)
+  PARTITION BY LIST (a) TABLESPACE regress_tblspace;
+RESET default_tablespace;
+CREATE TABLE testschema.part_78 PARTITION OF testschema.part FOR VALUES IN (7, 8)
+  PARTITION BY LIST (a);
 SELECT relname, spcname FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON (c.relnamespace = n.oid)
     LEFT JOIN pg_catalog.pg_tablespace t ON c.reltablespace = t.oid
-    where c.relname LIKE 'part%' order by relname;
+    where c.relname LIKE 'part%' AND n.nspname = 'testschema' order by relname;
  relname  |     spcname      
 ----------+------------------
  part     | 
- part12   | 
- part12_1 | regress_tblspace
- part12_2 | 
-(4 rows)
+ part_1   | 
+ part_2   | regress_tblspace
+ part_3   | regress_tblspace
+ part_4   | 
+ part_56  | regress_tblspace
+ part_78  | 
+ part_910 | regress_tblspace
+(8 rows)
 
+RESET default_tablespace;
 DROP TABLE testschema.part;
 -- partitioned index
 CREATE TABLE testschema.part (a int) PARTITION BY LIST (a);

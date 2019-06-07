@@ -660,8 +660,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	}
 
 	/*
-	 * Select tablespace to use.  If not specified, use default tablespace
-	 * (which may in turn default to database's default).
+	 * Select tablespace to use: an explicitly indicated one, or (in the case
+	 * of a partitioned table) the parent's, if it has one.
 	 */
 	if (stmt->tablespacename)
 	{
@@ -682,6 +682,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		tablespaceId = get_rel_tablespace(linitial_oid(inheritOids));
 	}
 	else
+		tablespaceId = InvalidOid;
+
+	/* still nothing? use the default */
+	if (!OidIsValid(tablespaceId))
 		tablespaceId = GetDefaultTablespace(stmt->relation->relpersistence,
 											partitioned);
 
