@@ -80,7 +80,7 @@ DROP ACCESS METHOD gist2 CASCADE;
 -- prevent empty values
 SET default_table_access_method = '';
 
--- prevent nonexistant values
+-- prevent nonexistent values
 SET default_table_access_method = 'I do not exist AM';
 
 -- prevent setting it to an index AM
@@ -198,7 +198,7 @@ ORDER BY 3, 1, 2;
 -- don't want to keep those tables, nor the default
 ROLLBACK;
 
--- Third, check that we can neither create a table using a nonexistant
+-- Third, check that we can neither create a table using a nonexistent
 -- AM, nor using an index AM
 CREATE TABLE i_am_a_failure() USING "";
 CREATE TABLE i_am_a_failure() USING i_do_not_exist_am;

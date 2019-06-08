@@ -101,7 +101,7 @@ main(void)
 
 
 	/* wrong db */
-	{ ECPGconnect(__LINE__, 0, "tcp:postgresql://localhost/nonexistant" , "regress_ecpg_user1" , "connectpw" , NULL, 0); }
+	{ ECPGconnect(__LINE__, 0, "tcp:postgresql://localhost/nonexistent" , "regress_ecpg_user1" , "connectpw" , NULL, 0); }
 #line 53 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}

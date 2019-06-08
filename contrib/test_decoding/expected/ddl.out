@@ -17,8 +17,8 @@ HINT:  Replication slot names may only contain lower case letters, numbers, and 
 SELECT 'init' FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', 'frakbar');
 ERROR:  could not parse value "frakbar" for parameter "include-xids"
 CONTEXT:  slot "regression_slot", output plugin "test_decoding", in the startup callback
-SELECT 'init' FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'nonexistant-option', 'frakbar');
-ERROR:  option "nonexistant-option" = "frakbar" is unknown
+SELECT 'init' FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'nonexistent-option', 'frakbar');
+ERROR:  option "nonexistent-option" = "frakbar" is unknown
 CONTEXT:  slot "regression_slot", output plugin "test_decoding", in the startup callback
 SELECT 'init' FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', 'frakbar');
 ERROR:  could not parse value "frakbar" for parameter "include-xids"

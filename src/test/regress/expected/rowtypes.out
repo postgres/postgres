@@ -1197,9 +1197,9 @@ ERROR:  column "ctid" not found in data type compositetable
 LINE 1: SELECT (d).ctid FROM (SELECT compositetable AS d FROM compos...
                 ^
 -- accessing non-existing column in NULL datum errors out
-SELECT (NULL::compositetable).nonexistant;
-ERROR:  column "nonexistant" not found in data type compositetable
-LINE 1: SELECT (NULL::compositetable).nonexistant;
+SELECT (NULL::compositetable).nonexistent;
+ERROR:  column "nonexistent" not found in data type compositetable
+LINE 1: SELECT (NULL::compositetable).nonexistent;
                 ^
 -- existing column in a NULL composite yield NULL
 SELECT (NULL::compositetable).a;

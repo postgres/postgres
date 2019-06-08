@@ -103,7 +103,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 37 "whenever.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistant", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistent", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 39 "whenever.pgc"
@@ -127,7 +127,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	/* exec sql whenever sqlerror  do print ( \"select\" ) ; */
 #line 42 "whenever.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistant", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistent", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 43 "whenever.pgc"
@@ -151,7 +151,7 @@ if (sqlca.sqlcode < 0) print ( "select" );}
 	/* exec sql whenever sqlerror  call print2 ( ) ; */
 #line 46 "whenever.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistant", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistent", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 47 "whenever.pgc"
@@ -175,7 +175,7 @@ if (sqlca.sqlcode < 0) print2 ( );}
 	/* exec sql whenever sqlerror  continue ; */
 #line 50 "whenever.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistant", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistent", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 51 "whenever.pgc"
@@ -193,7 +193,7 @@ if (sqlca.sqlwarn[0] == 'W') warn ( );}
 	/* exec sql whenever sqlerror  goto  error ; */
 #line 54 "whenever.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistant", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from nonexistent", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 55 "whenever.pgc"

@@ -36,23 +36,23 @@ int main(void)
 	exec sql select * into :i, :c from test;
 	exec sql rollback;
 
-	exec sql select * into :i from nonexistant;
+	exec sql select * into :i from nonexistent;
 	exec sql rollback;
 
 	exec sql whenever sqlerror do print("select");
-	exec sql select * into :i from nonexistant;
+	exec sql select * into :i from nonexistent;
 	exec sql rollback;
 
 	exec sql whenever sqlerror call print2();
-	exec sql select * into :i from nonexistant;
+	exec sql select * into :i from nonexistent;
 	exec sql rollback;
 
 	exec sql whenever sqlerror continue;
-	exec sql select * into :i from nonexistant;
+	exec sql select * into :i from nonexistent;
 	exec sql rollback;
 
 	exec sql whenever sqlerror goto error;
-	exec sql select * into :i from nonexistant;
+	exec sql select * into :i from nonexistent;
 	printf("Should not be reachable\n");
 
 	error:

@@ -35,8 +35,8 @@ CREATE STATISTICS tst FROM sometab;
 ERROR:  syntax error at or near "FROM"
 LINE 1: CREATE STATISTICS tst FROM sometab;
                               ^
-CREATE STATISTICS tst ON a, b FROM nonexistant;
-ERROR:  relation "nonexistant" does not exist
+CREATE STATISTICS tst ON a, b FROM nonexistent;
+ERROR:  relation "nonexistent" does not exist
 CREATE STATISTICS tst ON a, b FROM pg_class;
 ERROR:  column "a" does not exist
 CREATE STATISTICS tst ON relname, relname, relnatts FROM pg_class;

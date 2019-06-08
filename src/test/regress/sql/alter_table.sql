@@ -973,7 +973,7 @@ delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
 
--- try removing an oid column, should succeed (as it's nonexistant)
+-- try removing an oid column, should succeed (as it's nonexistent)
 alter table atacc1 SET WITHOUT OIDS;
 
 -- try adding an oid column, should fail (not supported)
@@ -2152,7 +2152,7 @@ ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES FROM (1) TO (10);
 DROP TABLE fail_part;
 
 -- check that the table being attached exists
-ALTER TABLE list_parted ATTACH PARTITION nonexistant FOR VALUES IN (1);
+ALTER TABLE list_parted ATTACH PARTITION nonexistent FOR VALUES IN (1);
 
 -- check ownership of the source table
 CREATE ROLE regress_test_me;

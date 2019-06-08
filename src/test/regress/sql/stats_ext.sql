@@ -29,7 +29,7 @@ $$;
 CREATE STATISTICS tst;
 CREATE STATISTICS tst ON a, b;
 CREATE STATISTICS tst FROM sometab;
-CREATE STATISTICS tst ON a, b FROM nonexistant;
+CREATE STATISTICS tst ON a, b FROM nonexistent;
 CREATE STATISTICS tst ON a, b FROM pg_class;
 CREATE STATISTICS tst ON relname, relname, relnatts FROM pg_class;
 CREATE STATISTICS tst ON relnatts + relpages FROM pg_class;

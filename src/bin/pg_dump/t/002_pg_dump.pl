@@ -3340,22 +3340,22 @@ command_fails_like(
 # Test dumping a non-existent schema, table, and patterns with --strict-names
 
 command_fails_like(
-	[ 'pg_dump', '-p', "$port", '-n', 'nonexistant' ],
+	[ 'pg_dump', '-p', "$port", '-n', 'nonexistent' ],
 	qr/\Qpg_dump: error: no matching schemas were found\E/,
 	'dumping a non-existent schema');
 
 command_fails_like(
-	[ 'pg_dump', '-p', "$port", '-t', 'nonexistant' ],
+	[ 'pg_dump', '-p', "$port", '-t', 'nonexistent' ],
 	qr/\Qpg_dump: error: no matching tables were found\E/,
 	'dumping a non-existent table');
 
 command_fails_like(
-	[ 'pg_dump', '-p', "$port", '--strict-names', '-n', 'nonexistant*' ],
+	[ 'pg_dump', '-p', "$port", '--strict-names', '-n', 'nonexistent*' ],
 	qr/\Qpg_dump: error: no matching schemas were found for pattern\E/,
 	'no matching schemas');
 
 command_fails_like(
-	[ 'pg_dump', '-p', "$port", '--strict-names', '-t', 'nonexistant*' ],
+	[ 'pg_dump', '-p', "$port", '--strict-names', '-t', 'nonexistent*' ],
 	qr/\Qpg_dump: error: no matching tables were found for pattern\E/,
 	'no matching tables');
 

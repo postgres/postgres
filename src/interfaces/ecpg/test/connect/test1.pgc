@@ -50,7 +50,7 @@ exec sql end declare section;
 	exec sql disconnect;
 
 	/* wrong db */
-	exec sql connect to tcp:postgresql://localhost/nonexistant user regress_ecpg_user1 identified by connectpw;
+	exec sql connect to tcp:postgresql://localhost/nonexistent user regress_ecpg_user1 identified by connectpw;
 	exec sql disconnect;
 
 	/* wrong port */

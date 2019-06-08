@@ -70,7 +70,7 @@ exec sql end declare section;
 	exec sql disconnect main;
 
 	/* not connected */
-	exec sql disconnect nonexistant;
+	exec sql disconnect nonexistent;
 
 	return 0;
 }

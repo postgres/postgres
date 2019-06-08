@@ -486,7 +486,7 @@ SELECT (d).a, (d).b FROM (SELECT compositetable AS d FROM compositetable) s;
 SELECT (d).ctid FROM (SELECT compositetable AS d FROM compositetable) s;
 
 -- accessing non-existing column in NULL datum errors out
-SELECT (NULL::compositetable).nonexistant;
+SELECT (NULL::compositetable).nonexistent;
 -- existing column in a NULL composite yield NULL
 SELECT (NULL::compositetable).a;
 -- oids can't be accessed in composite types (error)

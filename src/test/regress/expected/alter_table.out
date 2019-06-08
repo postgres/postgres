@@ -1349,7 +1349,7 @@ delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
 ERROR:  column "bar" of relation "atacc1" does not exist
--- try removing an oid column, should succeed (as it's nonexistant)
+-- try removing an oid column, should succeed (as it's nonexistent)
 alter table atacc1 SET WITHOUT OIDS;
 -- try adding an oid column, should fail (not supported)
 alter table atacc1 SET WITH OIDS;
@@ -3432,8 +3432,8 @@ LINE 1: ...list_parted ATTACH PARTITION fail_part FOR VALUES FROM (1) T...
                                                              ^
 DROP TABLE fail_part;
 -- check that the table being attached exists
-ALTER TABLE list_parted ATTACH PARTITION nonexistant FOR VALUES IN (1);
-ERROR:  relation "nonexistant" does not exist
+ALTER TABLE list_parted ATTACH PARTITION nonexistent FOR VALUES IN (1);
+ERROR:  relation "nonexistent" does not exist
 -- check ownership of the source table
 CREATE ROLE regress_test_me;
 CREATE ROLE regress_test_not_me;

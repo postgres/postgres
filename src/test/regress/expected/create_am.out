@@ -111,7 +111,7 @@ NOTICE:  drop cascades to index grect2ind2
 SET default_table_access_method = '';
 ERROR:  invalid value for parameter "default_table_access_method": ""
 DETAIL:  default_table_access_method cannot be empty.
--- prevent nonexistant values
+-- prevent nonexistent values
 SET default_table_access_method = 'I do not exist AM';
 ERROR:  invalid value for parameter "default_table_access_method": "I do not exist AM"
 DETAIL:  Table access method "I do not exist AM" does not exist.
@@ -274,7 +274,7 @@ ORDER BY 3, 1, 2;
 
 -- don't want to keep those tables, nor the default
 ROLLBACK;
--- Third, check that we can neither create a table using a nonexistant
+-- Third, check that we can neither create a table using a nonexistent
 -- AM, nor using an index AM
 CREATE TABLE i_am_a_failure() USING "";
 ERROR:  zero-length delimited identifier at or near """"
