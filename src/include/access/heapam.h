@@ -116,8 +116,6 @@ extern void heap_setscanlimits(TableScanDesc scan, BlockNumber startBlk,
 extern void heapgetpage(TableScanDesc scan, BlockNumber page);
 extern void heap_rescan(TableScanDesc scan, ScanKey key, bool set_params,
 						bool allow_strat, bool allow_sync, bool allow_pagemode);
-extern void heap_rescan_set_params(TableScanDesc scan, ScanKey key,
-								   bool allow_strat, bool allow_sync, bool allow_pagemode);
 extern void heap_endscan(TableScanDesc scan);
 extern HeapTuple heap_getnext(TableScanDesc scan, ScanDirection direction);
 extern bool heap_getnextslot(TableScanDesc sscan,

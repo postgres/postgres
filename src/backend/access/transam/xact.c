@@ -91,8 +91,8 @@ int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
  * need to return the same answers in the parallel worker as they would have
  * in the user backend, so we need some additional bookkeeping.
  *
- * XactTopTransactionId stores the XID of our toplevel transaction, which
- * will be the same as TopTransactionState.transactionId in an ordinary
+ * XactTopFullTransactionId stores the XID of our toplevel transaction, which
+ * will be the same as TopTransactionState.fullTransactionId in an ordinary
  * backend; but in a parallel backend, which does not have the entire
  * transaction state, it will instead be copied from the backend that started
  * the parallel operation.

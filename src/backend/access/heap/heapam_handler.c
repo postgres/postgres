@@ -286,7 +286,7 @@ heapam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot,
 
 static void
 heapam_tuple_complete_speculative(Relation relation, TupleTableSlot *slot,
-								  uint32 spekToken, bool succeeded)
+								  uint32 specToken, bool succeeded)
 {
 	bool		shouldFree = true;
 	HeapTuple	tuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);

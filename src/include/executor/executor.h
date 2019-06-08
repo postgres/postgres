@@ -514,7 +514,6 @@ extern ExprContext *MakePerTupleExprContext(EState *estate);
 
 extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
-extern TupleTableSlot ExecGetResultSlot(PlanState *planstate);
 extern const TupleTableSlotOps *ExecGetResultSlotOps(PlanState *planstate,
 													 bool *isfixed);
 extern void ExecAssignProjectionInfo(PlanState *planstate,

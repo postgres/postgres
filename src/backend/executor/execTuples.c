@@ -1867,7 +1867,7 @@ void
 slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
 {
 	/* Check for caller errors */
-	Assert(slot->tts_nvalid < attnum);	/* slot_getsomeattr checked */
+	Assert(slot->tts_nvalid < attnum);	/* checked in slot_getsomeattrs */
 	Assert(attnum > 0);
 
 	if (unlikely(attnum > slot->tts_tupleDescriptor->natts))

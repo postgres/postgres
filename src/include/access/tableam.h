@@ -690,7 +690,7 @@ typedef struct TableAmRoutine
 	 * block using the TsmRoutine's NextSampleTuple() callback.
 	 *
 	 * The callback needs to perform visibility checks, and only return
-	 * visible tuples. That obviously can mean calling NextSampletuple()
+	 * visible tuples. That obviously can mean calling NextSampleTuple()
 	 * multiple times.
 	 *
 	 * The TsmRoutine interface assumes that there's a maximum offset on a
@@ -1596,7 +1596,7 @@ table_relation_size(Relation rel, ForkNumber forkNumber)
 }
 
 /*
- * table_needs_toast_table - does this relation need a toast table?
+ * table_relation_needs_toast_table - does this relation need a toast table?
  */
 static inline bool
 table_relation_needs_toast_table(Relation rel)

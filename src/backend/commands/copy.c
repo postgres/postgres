@@ -177,7 +177,6 @@ typedef struct CopyStateData
 	 */
 	AttrNumber	num_defaults;
 	FmgrInfo	oid_in_function;
-	Oid			oid_typioparam;
 	FmgrInfo   *in_functions;	/* array of input functions for each attrs */
 	Oid		   *typioparams;	/* array of element types for in_functions */
 	int		   *defmap;			/* array of default att numbers */

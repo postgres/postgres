@@ -921,7 +921,7 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 }
 
 /*
- * register_unlink() -- Schedule a file to be deleted after next checkpoint
+ * register_unlink_segment() -- Schedule a file to be deleted after next checkpoint
  */
 static void
 register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,

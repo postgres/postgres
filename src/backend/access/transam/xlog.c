@@ -314,8 +314,6 @@ static bool recoveryStopAfter;
  *
  * recoveryTargetTLI: the currently understood target timeline; changes
  *
- * recoveryTargetIsLatest: was the requested target timeline 'latest'?
- *
  * expectedTLEs: a list of TimeLineHistoryEntries for recoveryTargetTLI and the timelines of
  * its known parents, newest first (so recoveryTargetTLI is always the
  * first list member).  Only these TLIs are expected to be seen in the WAL

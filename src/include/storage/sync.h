@@ -44,7 +44,7 @@ typedef enum SyncRequestHandler
  */
 typedef struct FileTag
 {
-	int16		handler;		/* SyncRequstHandler value, saving space */
+	int16		handler;		/* SyncRequestHandler value, saving space */
 	int16		forknum;		/* ForkNumber, saving space */
 	RelFileNode rnode;
 	uint32		segno;

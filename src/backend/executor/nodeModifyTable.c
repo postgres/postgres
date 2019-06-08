@@ -2316,7 +2316,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * verify that the proposed target relations are valid and open their
 	 * indexes for insertion of new index entries.  Note we *must* set
 	 * estate->es_result_relation_info correctly while we initialize each
-	 * sub-plan; ExecContextForcesOids depends on that!
+	 * sub-plan; external modules such as FDWs may depend on that (see
+	 * contrib/postgres_fdw/postgres_fdw.c: postgresBeginDirectModify()
+	 * as one example).
 	 */
 	saved_resultRelInfo = estate->es_result_relation_info;
 

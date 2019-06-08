@@ -236,7 +236,7 @@ struct IntegerSet
 	 *
 	 * 'iter_values' is an array of integers ready to be returned to the
 	 * caller; 'iter_num_values' is the length of that array, and
-	 * 'iter_valueno' is the next index.  'iter_node' and 'item_itemno' point
+	 * 'iter_valueno' is the next index.  'iter_node' and 'iter_itemno' point
 	 * to the leaf node, and item within the leaf node, to get the next batch
 	 * of values from.
 	 *

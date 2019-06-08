@@ -581,7 +581,7 @@ test_huge_distances(void)
 		intset_add_member(intset, values[i]);
 
 	/*
-	 * Test iterset_is_member() around each of these values
+	 * Test intset_is_member() around each of these values
 	 */
 	for (int i = 0; i < num_values; i++)
 	{

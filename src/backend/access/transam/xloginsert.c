@@ -1024,7 +1024,7 @@ log_newpage_buffer(Buffer buffer, bool page_std)
 /*
  * WAL-log a range of blocks in a relation.
  *
- * An image of all pages with block numbers 'startblk' <= X < 'endblock' is
+ * An image of all pages with block numbers 'startblk' <= X < 'endblk' is
  * written to the WAL. If the range is large, this is done in multiple WAL
  * records.
  *
