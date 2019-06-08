@@ -14,7 +14,7 @@
 
 #include "postgres.h"
 
-#include "be-gssapi-common.h"
+#include "libpq/be-gssapi-common.h"
 
 /*
  * Helper function for getting all strings of a GSSAPI error (of specified

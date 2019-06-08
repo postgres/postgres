@@ -16,8 +16,8 @@
 
 #include <unistd.h>
 
-#include "be-gssapi-common.h"
 #include "libpq/auth.h"
+#include "libpq/be-gssapi-common.h"
 #include "libpq/libpq.h"
 #include "libpq/libpq-be.h"
 #include "libpq/pqformat.h"

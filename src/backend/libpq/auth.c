@@ -173,7 +173,7 @@ bool		pg_krb_caseins_users;
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_GSS
-#include "be-gssapi-common.h"
+#include "libpq/be-gssapi-common.h"
 
 static int	pg_GSS_checkauth(Port *port);
 static int	pg_GSS_recvauth(Port *port);
