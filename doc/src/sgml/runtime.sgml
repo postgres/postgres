@@ -1685,14 +1685,12 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
   <important>
    <para>
-    It is best not to use <systemitem>SIGKILL</systemitem> to shut down
-    the server.  Doing so will prevent the server from releasing
-    shared memory and semaphores, which might then have to be done
-    manually before a new server can be started.  Furthermore,
-    <systemitem>SIGKILL</systemitem> kills the <command>postgres</command>
-    process without letting it relay the signal to its subprocesses,
-    so it will be necessary to kill the individual subprocesses by hand as
-    well.
+    It is best not to use <systemitem>SIGKILL</systemitem> to shut down the
+    server.  Doing so will prevent the server from releasing shared memory and
+    semaphores.  Furthermore, <systemitem>SIGKILL</systemitem> kills
+    the <command>postgres</command> process without letting it relay the
+    signal to its subprocesses, so it might be necessary to kill the
+    individual subprocesses by hand as well.
    </para>
   </important>
 
