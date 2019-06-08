@@ -1681,12 +1681,7 @@ GenerateRecoveryConf(PGconn *conn)
 	initPQExpBuffer(&conninfo_buf);
 	for (option = connOptions; option && option->keyword; option++)
 	{
-		/*
-		 * Do not emit this setting if: - the setting is "replication",
-		 * "dbname" or "fallback_application_name", since these would be
-		 * overridden by the libpqwalreceiver module anyway. - not set or
-		 * empty.
-		 */
+		/* Omit empty settings and those libpqwalreceiver overrides. */
 		if (strcmp(option->keyword, "replication") == 0 ||
 			strcmp(option->keyword, "dbname") == 0 ||
 			strcmp(option->keyword, "fallback_application_name") == 0 ||

@@ -383,7 +383,7 @@ tas(volatile slock_t *lock)
 	register slock_t _res;
 
 	/*
-	 *	See comment in /pg/backend/port/tas/solaris_sparc.s for why this
+	 *	See comment in src/backend/port/tas/sunstudio_sparc.s for why this
 	 *	uses "ldstub", and that file uses "cas".  gcc currently generates
 	 *	sparcv7-targeted binaries, so "cas" use isn't possible.
 	 */
@@ -598,7 +598,6 @@ tas(volatile slock_t *lock)
 
 
 #if defined(__mips__) && !defined(__sgi)	/* non-SGI MIPS */
-/* Note: on SGI we use the OS' mutex ABI, see below */
 /* Note: R10000 processors require a separate SYNC */
 #define HAS_TEST_AND_SET
 

@@ -105,7 +105,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 #ifndef WIN32
 	pg_putenv("LANG", NULL);
 #else
-	/* On Windows the default locale cannot be English, so force it */
+	/* On Windows the default locale may not be English, so force it */
 	pg_putenv("LANG", "en");
 #endif
 	pg_putenv("LANGUAGE", NULL);

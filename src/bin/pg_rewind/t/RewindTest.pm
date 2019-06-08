@@ -26,11 +26,7 @@ package RewindTest;
 # still running.
 #
 # The test script can use the helper functions master_psql and standby_psql
-# to run psql against the master and standby servers, respectively. The
-# test script can also use the $connstr_master and $connstr_standby global
-# variables, which contain libpq connection strings for connecting to the
-# master and standby servers. The data directories are also available
-# in paths $test_master_datadir and $test_standby_datadir
+# to run psql against the master and standby servers, respectively.
 
 use strict;
 use warnings;

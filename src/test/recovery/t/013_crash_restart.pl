@@ -90,9 +90,9 @@ $killme_stdout = '';
 $killme_stderr = '';
 
 
-# Start longrunning query in second session, it's failure will signal
-# that crash-restart has occurred.  The initial wait for the trivial
-# select is to be sure that psql successfully connected to backend.
+# Start longrunning query in second session; its failure will signal that
+# crash-restart has occurred.  The initial wait for the trivial select is to
+# be sure that psql successfully connected to backend.
 $monitor_stdin .= q[
 SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);
@@ -171,10 +171,9 @@ ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigkill/m),
 $killme_stdout = '';
 $killme_stderr = '';
 
-# Re-start longrunning query in second session, it's failure will
-# signal that crash-restart has occurred.  The initial wait for the
-# trivial select is to be sure that psql successfully connected to
-# backend.
+# Re-start longrunning query in second session; its failure will signal that
+# crash-restart has occurred.  The initial wait for the trivial select is to
+# be sure that psql successfully connected to backend.
 $monitor_stdin .= q[
 SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);

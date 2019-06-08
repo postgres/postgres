@@ -541,8 +541,7 @@ appendShellStringNoError(PQExpBuffer buf, const char *str)
 
 /*
  * Append the given string to the buffer, with suitable quoting for passing
- * the string as a value, in a keyword/pair value in a libpq connection
- * string
+ * the string as a value in a keyword/value pair in a libpq connection string.
  */
 void
 appendConnStrVal(PQExpBuffer buf, const char *str)

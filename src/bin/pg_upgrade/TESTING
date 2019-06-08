@@ -36,7 +36,7 @@ Here are the steps needed to create a regression database dump file:
 
 1)  Create and populate the regression database in the old cluster.
     This database can be created by running 'make installcheck' from
-    src/test/regression.
+    src/test/regress.
 
 2)  Use pg_dump to dump out the regression database.  Use the new
     cluster's pg_dump on the old database to minimize whitespace

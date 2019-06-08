@@ -390,9 +390,9 @@ PGSharedMemoryAttach(IpcMemoryId shmId,
 
 	/*
 	 * Try to attach to the segment and see if it matches our data directory.
-	 * This avoids shmid-conflict problems on machines that are running
-	 * several postmasters under the same userid and port number.  (That would
-	 * not ordinarily happen in production, but it can happen during parallel
+	 * This avoids key-conflict problems on machines that are running several
+	 * postmasters under the same userid and port number.  (That would not
+	 * ordinarily happen in production, but it can happen during parallel
 	 * testing.  Since our test setups don't open any TCP ports on Unix, such
 	 * cases don't conflict otherwise.)
 	 */
