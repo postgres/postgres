@@ -753,7 +753,7 @@ psql: could not connect to server: No such file or directory
        <row>
         <entry><varname>SEMMNI</varname></entry>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</entry>
-        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + wax_wal_senders + max_worker_processes + 5) / 16)</literal> plus room for other applications</entry>
+        <entry>at least <literal>ceil((max_connections + autovacuum_max_workers + max_wal_senders + max_worker_processes + 5) / 16)</literal> plus room for other applications</entry>
        </row>
 
        <row>
