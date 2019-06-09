@@ -2139,7 +2139,6 @@ typedef struct Constraint
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
 	char		generated_when; /* ALWAYS or BY DEFAULT */
-	char		generated_kind; /* currently always STORED */
 
 	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
 	List	   *keys;			/* String nodes naming referenced key

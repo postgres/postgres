@@ -306,7 +306,6 @@ transformContainerSubscripts(ParseState *pstate,
 	bool		isSlice = false;
 	List	   *upperIndexpr = NIL;
 	List	   *lowerIndexpr = NIL;
-	List	   *indexprSlice = NIL;
 	ListCell   *idx;
 	SubscriptingRef *sbsref;
 
@@ -450,7 +449,6 @@ transformContainerSubscripts(ParseState *pstate,
 	/* refcollid will be set by parse_collate.c */
 	sbsref->refupperindexpr = upperIndexpr;
 	sbsref->reflowerindexpr = lowerIndexpr;
-	sbsref->refindexprslice = indexprSlice;
 	sbsref->refexpr = (Expr *) containerBase;
 	sbsref->refassgnexpr = (Expr *) assignFrom;
 

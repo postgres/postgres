@@ -1048,7 +1048,7 @@ _outIntoClause(StringInfo str, const IntoClause *node)
 
 	WRITE_NODE_FIELD(rel);
 	WRITE_NODE_FIELD(colNames);
-	WRITE_NODE_FIELD(accessMethod);
+	WRITE_STRING_FIELD(accessMethod);
 	WRITE_NODE_FIELD(options);
 	WRITE_ENUM_FIELD(onCommit, OnCommitAction);
 	WRITE_STRING_FIELD(tableSpaceName);
