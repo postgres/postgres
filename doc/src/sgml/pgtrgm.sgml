@@ -320,23 +320,23 @@
      </para>
     </listitem>
    </varlistentry>
-    <varlistentry id="guc-pgtrgm-word-similarity-threshold" xreflabel="pg_trgm.word_similarity_threshold">
-     <term>
-      <varname>pg_trgm.word_similarity_threshold</varname> (<type>real</type>)
-      <indexterm>
-       <primary>
-        <varname>pg_trgm.word_similarity_threshold</varname> configuration parameter
-       </primary>
-      </indexterm>
-     </term>
-     <listitem>
-      <para>
-       Sets the current word similarity threshold that is used by
-       <literal>&lt;%</literal> and <literal>%&gt;</literal> operators.  The threshold
-       must be between 0 and 1 (default is 0.6).
-      </para>
-     </listitem>
-    </varlistentry>
+   <varlistentry id="guc-pgtrgm-word-similarity-threshold" xreflabel="pg_trgm.word_similarity_threshold">
+    <term>
+     <varname>pg_trgm.word_similarity_threshold</varname> (<type>real</type>)
+     <indexterm>
+      <primary>
+       <varname>pg_trgm.word_similarity_threshold</varname> configuration parameter
+      </primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Sets the current word similarity threshold that is used by
+      <literal>&lt;%</literal> and <literal>%&gt;</literal> operators.  The threshold
+      must be between 0 and 1 (default is 0.6).
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 
