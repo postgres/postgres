@@ -65,7 +65,7 @@ _PG_init(void)
 {
 	/* Define custom GUC variables. */
 	DefineCustomRealVariable("pg_trgm.similarity_threshold",
-							 "Sets the threshold used by the %% operator.",
+							 "Sets the threshold used by the % operator.",
 							 "Valid range is 0.0 .. 1.0.",
 							 &similarity_threshold,
 							 0.3,
@@ -77,7 +77,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 	DefineCustomRealVariable("pg_trgm.word_similarity_threshold",
-							 "Sets the threshold used by the <%% operator.",
+							 "Sets the threshold used by the <% operator.",
 							 "Valid range is 0.0 .. 1.0.",
 							 &word_similarity_threshold,
 							 0.6,
@@ -89,7 +89,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 	DefineCustomRealVariable("pg_trgm.strict_word_similarity_threshold",
-							 "Sets the threshold used by the <<%% operator.",
+							 "Sets the threshold used by the <<% operator.",
 							 "Valid range is 0.0 .. 1.0.",
 							 &strict_word_similarity_threshold,
 							 0.5,
