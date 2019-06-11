@@ -38,6 +38,7 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "commands/defrem.h"
+#include "miscadmin.h"
 #include "tsearch/ts_cache.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -591,10 +592,11 @@ bool
 check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 {
 	/*
-	 * If we aren't inside a transaction, we cannot do database access so
-	 * cannot verify the config name.  Must accept it on faith.
+	 * If we aren't inside a transaction, or connected to a database, we
+	 * cannot do the catalog accesses necessary to verify the config name.
+	 * Must accept it on faith.
 	 */
-	if (IsTransactionState())
+	if (IsTransactionState() && MyDatabaseId != InvalidOid)
 	{
 		Oid			cfgId;
 		HeapTuple	tuple;
