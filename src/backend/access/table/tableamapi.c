@@ -18,6 +18,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_proc.h"
 #include "commands/defrem.h"
+#include "miscadmin.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -119,10 +120,11 @@ check_default_table_access_method(char **newval, void **extra, GucSource source)
 	}
 
 	/*
-	 * If we aren't inside a transaction, we cannot do database access so
-	 * cannot verify the name.  Must accept the value on faith.
+	 * If we aren't inside a transaction, or not connected to a database, we
+	 * cannot do the catalog access necessary to verify the method.  Must
+	 * accept the value on faith.
 	 */
-	if (IsTransactionState())
+	if (IsTransactionState() && MyDatabaseId != InvalidOid)
 	{
 		if (!OidIsValid(get_table_am_oid(*newval, true)))
 		{
