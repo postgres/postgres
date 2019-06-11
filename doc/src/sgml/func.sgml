@@ -11864,29 +11864,72 @@ table2-mapping
   </note>
 
   <note>
-    <para>
-      While the examples for the functions
-      <function>json_populate_record</function>,
-      <function>json_populate_recordset</function>,
-      <function>json_to_record</function> and
-      <function>json_to_recordset</function> use constants, the typical use
-      would be to reference a table in the <literal>FROM</literal> clause
-      and use one of its <type>json</type> or <type>jsonb</type> columns
-      as an argument to the function.  Extracted key values can then be
-      referenced in other parts of the query, like <literal>WHERE</literal>
-      clauses and target lists.  Extracting multiple values in this
-      way can improve performance over extracting them separately with
-      per-key operators.
-    </para>
+   <para>
+    The functions
+    <function>json[b]_populate_record</function>,
+    <function>json[b]_populate_recordset</function>,
+    <function>json[b]_to_record</function> and
+    <function>json[b]_to_recordset</function>
+    operate on a JSON object, or array of objects, and extract the values
+    associated with keys whose names match column names of the output row
+    type.
+    Object fields that do not correspond to any output column name are
+    ignored, and output columns that do not match any object field will be
+    filled with nulls.
+    To convert a JSON value to the SQL type of an output column, the
+    following rules are applied in sequence:
+    <itemizedlist spacing="compact">
+     <listitem>
+      <para>
+       A JSON null value is converted to a SQL null in all cases.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       If the output column is of type <type>json</type>
+       or <type>jsonb</type>, the JSON value is just reproduced exactly.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       If the output column is a composite (row) type, and the JSON value is
+       a JSON object, the fields of the object are converted to columns of
+       the output row type by recursive application of these rules.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Likewise, if the output column is an array type and the JSON value is
+       a JSON array, the elements of the JSON array are converted to elements
+       of the output array by recursive application of these rules.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Otherwise, if the JSON value is a string literal, the contents of the
+       string are fed to the input conversion function for the column's data
+       type.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Otherwise, the ordinary text representation of the JSON value is fed
+       to the input conversion function for the column's data type.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
 
-    <para>
-      JSON keys are matched to identical column names in the target
-      row type.  JSON type coercion for these functions is <quote>best
-      effort</quote> and may not result in desired values for some types.
-      JSON fields that do not appear in the target row type will be
-      omitted from the output, and target columns that do not match any
-      JSON field will simply be NULL.
-  </para>
+   <para>
+    While the examples for these functions use constants, the typical use
+    would be to reference a table in the <literal>FROM</literal> clause
+    and use one of its <type>json</type> or <type>jsonb</type> columns
+    as an argument to the function.  Extracted key values can then be
+    referenced in other parts of the query, like <literal>WHERE</literal>
+    clauses and target lists.  Extracting multiple values in this
+    way can improve performance over extracting them separately with
+    per-key operators.
+   </para>
   </note>
 
   <note>

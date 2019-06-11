@@ -2200,6 +2200,42 @@ select * from json_to_record('{"ia2": [[[1], [2], [3]]]}') as x(ia2 int4[][]);
  {{{1},{2},{3}}}
 (1 row)
 
+select * from json_to_record('{"out": {"key": 1}}') as x(out json);
+    out     
+------------
+ {"key": 1}
+(1 row)
+
+select * from json_to_record('{"out": [{"key": 1}]}') as x(out json);
+     out      
+--------------
+ [{"key": 1}]
+(1 row)
+
+select * from json_to_record('{"out": "{\"key\": 1}"}') as x(out json);
+      out       
+----------------
+ "{\"key\": 1}"
+(1 row)
+
+select * from json_to_record('{"out": {"key": 1}}') as x(out jsonb);
+    out     
+------------
+ {"key": 1}
+(1 row)
+
+select * from json_to_record('{"out": [{"key": 1}]}') as x(out jsonb);
+     out      
+--------------
+ [{"key": 1}]
+(1 row)
+
+select * from json_to_record('{"out": "{\"key\": 1}"}') as x(out jsonb);
+      out       
+----------------
+ "{\"key\": 1}"
+(1 row)
+
 -- json_strip_nulls
 select json_strip_nulls(null);
  json_strip_nulls 

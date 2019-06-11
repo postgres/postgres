@@ -681,6 +681,13 @@ select * from jsonb_to_record('{"ia2": [1, 2, 3]}') as x(ia2 int[][]);
 select * from jsonb_to_record('{"ia2": [[1, 2], [3, 4]]}') as x(ia2 int4[][]);
 select * from jsonb_to_record('{"ia2": [[[1], [2], [3]]]}') as x(ia2 int4[][]);
 
+select * from jsonb_to_record('{"out": {"key": 1}}') as x(out json);
+select * from jsonb_to_record('{"out": [{"key": 1}]}') as x(out json);
+select * from jsonb_to_record('{"out": "{\"key\": 1}"}') as x(out json);
+select * from jsonb_to_record('{"out": {"key": 1}}') as x(out jsonb);
+select * from jsonb_to_record('{"out": [{"key": 1}]}') as x(out jsonb);
+select * from jsonb_to_record('{"out": "{\"key\": 1}"}') as x(out jsonb);
+
 -- test type info caching in jsonb_populate_record()
 CREATE TEMP TABLE jsbpoptest (js jsonb);
 

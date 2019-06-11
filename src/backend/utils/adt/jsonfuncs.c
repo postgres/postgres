@@ -2762,26 +2762,7 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 
 		json = jsv->val.json.str;
 		Assert(json);
-
-		/* already done the hard work in the json case */
-		if ((typid == JSONOID || typid == JSONBOID) &&
-			jsv->val.json.type == JSON_TOKEN_STRING)
-		{
-			/*
-			 * Add quotes around string value (should be already escaped) if
-			 * converting to json/jsonb.
-			 */
-
-			if (len < 0)
-				len = strlen(json);
-
-			str = palloc(len + sizeof(char) * 3);
-			str[0] = '"';
-			memcpy(&str[1], json, len);
-			str[len + 1] = '"';
-			str[len + 2] = '\0';
-		}
-		else if (len >= 0)
+		if (len >= 0)
 		{
 			/* Need to copy non-null-terminated string */
 			str = palloc(len + 1 * sizeof(char));
@@ -2789,7 +2770,21 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv)
 			str[len] = '\0';
 		}
 		else
-			str = json;			/* null-terminated string */
+			str = json;			/* string is already null-terminated */
+
+		/* If converting to json/jsonb, make string into valid JSON literal */
+		if ((typid == JSONOID || typid == JSONBOID) &&
+			jsv->val.json.type == JSON_TOKEN_STRING)
+		{
+			StringInfoData buf;
+
+			initStringInfo(&buf);
+			escape_json(&buf, str);
+			/* free temporary buffer */
+			if (str != json)
+				pfree(str);
+			str = buf.data;
+		}
 	}
 	else
 	{
