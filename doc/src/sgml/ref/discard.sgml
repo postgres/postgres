@@ -84,15 +84,15 @@ DISCARD { ALL | PLANS | SEQUENCES | TEMPORARY | TEMP }
       Currently, this has the same effect as executing the following sequence
       of statements:
 <programlisting>
+CLOSE ALL;
 SET SESSION AUTHORIZATION DEFAULT;
 RESET ALL;
 DEALLOCATE ALL;
-CLOSE ALL;
 UNLISTEN *;
 SELECT pg_advisory_unlock_all();
 DISCARD PLANS;
-DISCARD SEQUENCES;
 DISCARD TEMP;
+DISCARD SEQUENCES;
 </programlisting></para>
     </listitem>
    </varlistentry>
