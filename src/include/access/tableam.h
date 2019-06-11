@@ -543,7 +543,7 @@ typedef struct TableAmRoutine
 										   bool anyvisible,
 										   bool progress,
 										   BlockNumber start_blockno,
-										   BlockNumber end_blockno,
+										   BlockNumber numblocks,
 										   IndexBuildCallback callback,
 										   void *callback_state,
 										   TableScanDesc scan);
