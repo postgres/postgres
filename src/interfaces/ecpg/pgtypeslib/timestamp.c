@@ -253,10 +253,6 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
-		case DTK_INVALID:
-			errno = PGTYPES_TS_BAD_TIMESTAMP;
-			return noresult;
-
 		default:
 			errno = PGTYPES_TS_BAD_TIMESTAMP;
 			return noresult;

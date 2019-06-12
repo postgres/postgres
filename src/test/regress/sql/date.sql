@@ -334,7 +334,6 @@ SELECT EXTRACT(EPOCH      FROM DATE 'infinity');    --  Infinity
 -- wrong fields from non-finite date:
 --
 SELECT EXTRACT(MICROSEC  FROM DATE 'infinity');     -- ERROR:  timestamp units "microsec" not recognized
-SELECT EXTRACT(UNDEFINED FROM DATE 'infinity');     -- ERROR:  timestamp units "undefined" not supported
 
 -- test constructors
 select make_date(2013, 7, 15);

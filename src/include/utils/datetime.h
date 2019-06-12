@@ -148,8 +148,6 @@ struct tzEntry;
 #define DTK_AGO			5
 
 #define DTK_SPECIAL		6
-#define DTK_INVALID		7
-#define DTK_CURRENT		8
 #define DTK_EARLY		9
 #define DTK_LATE		10
 #define DTK_EPOCH		11

@@ -188,14 +188,6 @@ timestamp_in(PG_FUNCTION_ARGS)
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
-		case DTK_INVALID:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"%s\" is no longer supported", str)));
-
-			TIMESTAMP_NOEND(result);
-			break;
-
 		default:
 			elog(ERROR, "unexpected dtype %d while parsing timestamp \"%s\"",
 				 dtype, str);
@@ -437,14 +429,6 @@ timestamptz_in(PG_FUNCTION_ARGS)
 
 		case DTK_EARLY:
 			TIMESTAMP_NOBEGIN(result);
-			break;
-
-		case DTK_INVALID:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"%s\" is no longer supported", str)));
-
-			TIMESTAMP_NOEND(result);
 			break;
 
 		default:
@@ -944,12 +928,6 @@ interval_in(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("interval out of range")));
-			break;
-
-		case DTK_INVALID:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"%s\" is no longer supported", str)));
 			break;
 
 		default:

@@ -138,14 +138,6 @@ date_in(PG_FUNCTION_ARGS)
 		case DTK_DATE:
 			break;
 
-		case DTK_CURRENT:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"current\" is no longer supported")));
-
-			GetCurrentDateTime(tm);
-			break;
-
 		case DTK_EPOCH:
 			GetEpochTime(tm);
 			break;

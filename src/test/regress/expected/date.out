@@ -1444,9 +1444,6 @@ SELECT EXTRACT(EPOCH      FROM DATE 'infinity');    --  Infinity
 SELECT EXTRACT(MICROSEC  FROM DATE 'infinity');     -- ERROR:  timestamp units "microsec" not recognized
 ERROR:  timestamp units "microsec" not recognized
 CONTEXT:  SQL function "date_part" statement 1
-SELECT EXTRACT(UNDEFINED FROM DATE 'infinity');     -- ERROR:  timestamp units "undefined" not supported
-ERROR:  timestamp units "undefined" not supported
-CONTEXT:  SQL function "date_part" statement 1
 -- test constructors
 select make_date(2013, 7, 15);
  make_date  
