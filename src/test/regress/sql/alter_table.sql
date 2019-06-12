@@ -1292,6 +1292,23 @@ select * from anothertab;
 
 drop table anothertab;
 
+-- Test alter table column type with constraint indexes (cf. bug #15835)
+create table anothertab(f1 int primary key, f2 int unique, f3 int, f4 int);
+alter table anothertab
+  add exclude using btree (f3 with =);
+alter table anothertab
+  add exclude using btree (f4 with =) where (f4 is not null);
+
+\d anothertab
+alter table anothertab alter column f1 type bigint;
+alter table anothertab
+  alter column f2 type bigint,
+  alter column f3 type bigint,
+  alter column f4 type bigint;
+\d anothertab
+
+drop table anothertab;
+
 create table another (f1 int, f2 text);
 
 insert into another values(1, 'one');
