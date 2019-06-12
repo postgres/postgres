@@ -96,7 +96,7 @@ typedef struct FunctionCallInfoBaseData
 } FunctionCallInfoBaseData;
 
 /*
- * Space needed for for a FunctionCallInfoBaseData struct with sufficient space
+ * Space needed for a FunctionCallInfoBaseData struct with sufficient space
  * for `nargs` arguments.
  */
 #define SizeForFunctionCallInfo(nargs) \

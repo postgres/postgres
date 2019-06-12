@@ -59,7 +59,7 @@
  * also that a virtual tuple does not have any "system columns".
  *
  * The Datum/isnull arrays of a TupleTableSlot serve double duty.  For virtual
- * slots they they are the authoritative data.  For the other builtin slots,
+ * slots they are the authoritative data.  For the other builtin slots,
  * the arrays contain data extracted from the tuple.  (In this state, any
  * pass-by-reference Datums point into the physical tuple.)  The extracted
  * information is built "lazily", ie, only as needed.  This serves to avoid

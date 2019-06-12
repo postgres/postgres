@@ -246,7 +246,7 @@ test_pattern(const test_spec *spec)
 		 * last integer that we added to the set, plus an arbitrary constant
 		 * (1000).  There's no point in probing the whole 0 - 2^64 range, if
 		 * only a small part of the integer space is used.  We would very
-		 * rarely hit hit values that are actually in the set.
+		 * rarely hit values that are actually in the set.
 		 */
 		x = (pg_lrand48() << 31) | pg_lrand48();
 		x = x % (last_int + 1000);
@@ -337,8 +337,8 @@ test_single_value(uint64 value)
 		elog(ERROR, "intset_num_entries returned " UINT64_FORMAT ", expected 1", num_entries);
 
 	/*
-	 * Test intset_is_member() at various special values, like 0 and and
-	 * maximum possible 64-bit integer, as well as the value itself.
+	 * Test intset_is_member() at various special values, like 0 and maximum
+	 * possible 64-bit integer, as well as the value itself.
 	 */
 	if (intset_is_member(intset, 0) != (value == 0))
 		elog(ERROR, "intset_is_member failed for 0");

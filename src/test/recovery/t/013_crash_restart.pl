@@ -185,7 +185,7 @@ $monitor_stderr = '';
 
 
 # kill with SIGKILL this time - we expect the backend to exit, without
-# being able to emit an error error message
+# being able to emit an error message
 $ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
 is($ret, 0, "killed process with KILL");
 

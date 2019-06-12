@@ -582,7 +582,7 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize
 {
 	/*
 	 * If offset is NULL, then this is the first recursive level. If not then
-	 * we are in a struct in a struct and the offset is used as offset.
+	 * we are in a struct and the offset is used as offset.
 	 */
 	struct ECPGstruct_member *p,
 			   *ind_p = NULL;

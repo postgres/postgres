@@ -69,7 +69,7 @@ typedef enum SnapshotType
 	SNAPSHOT_ANY,
 
 	/*
-	 * A tuple is visible iff the tuple tuple is valid as a TOAST row.
+	 * A tuple is visible iff the tuple is valid as a TOAST row.
 	 */
 	SNAPSHOT_TOAST,
 

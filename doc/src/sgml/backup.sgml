@@ -965,7 +965,7 @@ SELECT * FROM pg_stop_backup(false, true);
      backups.  Moreover, because it writes a backup_label file on the
      master, it can cause the master to fail to restart automatically after
      a crash.  On the other hand, the erroneous removal of a backup_label
-     file from a backup or standby is a common mistake which can can result
+     file from a backup or standby is a common mistake which can result
      in serious data corruption.  If it is necessary to use this method,
      the following steps may be used.
     </para>

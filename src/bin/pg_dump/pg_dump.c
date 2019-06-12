@@ -4051,8 +4051,8 @@ dumpPublicationTable(Archive *fout, PublicationRelInfo *pubrinfo)
 					  fmtQualifiedDumpable(tbinfo));
 
 	/*
-	 * There is no point in creating drop query as drop query as the drop is
-	 * done by table drop.
+	 * There is no point in creating drop query as the drop is done by table
+	 * drop.
 	 */
 	ArchiveEntry(fout, pubrinfo->dobj.catId, pubrinfo->dobj.dumpId,
 				 ARCHIVE_OPTS(.tag = tag,
