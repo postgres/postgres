@@ -769,6 +769,41 @@ View definition:
            FROM temp_view_test.tx1 tx1_1
           WHERE tx1.y1 = tx1_1.f1));
 
+-- Test aliasing of joins
+create view view_of_joins as
+select * from
+  (select * from (tbl1 cross join tbl2) same) ss,
+  (tbl3 cross join tbl4) same;
+\d+ view_of_joins
+                    View "testviewschm2.view_of_joins"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
+ b      | integer |           |          |         | plain   | 
+ c      | integer |           |          |         | plain   | 
+ d      | integer |           |          |         | plain   | 
+ e      | integer |           |          |         | plain   | 
+ f      | integer |           |          |         | plain   | 
+ g      | integer |           |          |         | plain   | 
+ h      | integer |           |          |         | plain   | 
+View definition:
+ SELECT ss.a,
+    ss.b,
+    ss.c,
+    ss.d,
+    same.e,
+    same.f,
+    same.g,
+    same.h
+   FROM ( SELECT same_1.a,
+            same_1.b,
+            same_1.c,
+            same_1.d
+           FROM (tbl1
+             CROSS JOIN tbl2) same_1) ss,
+    (tbl3
+     CROSS JOIN tbl4) same;
+
 -- Test view decompilation in the face of column addition/deletion/renaming
 create table tt2 (a int, b int, c int);
 create table tt3 (ax int8, b int2, c numeric);
@@ -1721,4 +1756,4 @@ select pg_get_ruledef(oid, true) from pg_rewrite
 DROP SCHEMA temp_view_test CASCADE;
 NOTICE:  drop cascades to 27 other objects
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 62 other objects
+NOTICE:  drop cascades to 63 other objects
