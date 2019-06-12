@@ -2295,9 +2295,31 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
 		case OBJECT_ATTRIBUTE:
-		case OBJECT_DOMCONSTRAINT:
 			if (!pg_type_ownercheck(address.objectId, roleid))
 				aclcheck_error_type(ACLCHECK_NOT_OWNER, address.objectId);
+			break;
+		case OBJECT_DOMCONSTRAINT:
+			{
+				HeapTuple	tuple;
+				Oid			contypid;
+
+				tuple = SearchSysCache1(CONSTROID,
+										ObjectIdGetDatum(address.objectId));
+				if (!HeapTupleIsValid(tuple))
+					elog(ERROR, "constraint with OID %u does not exist",
+						 address.objectId);
+
+				contypid = ((Form_pg_constraint) GETSTRUCT(tuple))->contypid;
+
+				ReleaseSysCache(tuple);
+
+				/*
+				 * Fallback to type ownership check in this case as this is
+				 * what domain constraints rely on.
+				 */
+				if (!pg_type_ownercheck(contypid, roleid))
+					aclcheck_error_type(ACLCHECK_NOT_OWNER, contypid);
+			}
 			break;
 		case OBJECT_AGGREGATE:
 		case OBJECT_FUNCTION:
