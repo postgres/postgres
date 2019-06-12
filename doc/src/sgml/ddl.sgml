@@ -4730,12 +4730,12 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    <para>
     It is also important to consider the overhead of partitioning during
     query planning and execution.  The query planner is generally able to
-    handle partition hierarchies up a few thousand partitions fairly well,
-    provided that typical queries allow the query planner to prune all but a
-    small number of partitions.  Planning times become longer and memory
+    handle partition hierarchies with up to a few thousand partitions fairly
+    well, provided that typical queries allow the query planner to prune all
+    but a small number of partitions.  Planning times become longer and memory
     consumption becomes higher when more partitions remain after the planner
     performs partition pruning.  This is particularly true for the
-    <command>UPDATE</command> and <command>DELETE</command> commands. Another
+    <command>UPDATE</command> and <command>DELETE</command> commands.  Another
     reason to be concerned about having a large number of partitions is that
     the server's memory consumption may grow significantly over a period of
     time, especially if many sessions touch large numbers of partitions.
