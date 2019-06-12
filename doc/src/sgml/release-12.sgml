@@ -518,38 +518,25 @@ Author: Robert Haas <rhaas@postgresql.org>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2019-02-08 [3677a0b26] Add pg_partition_root to display top-most parent of a pa
--->
-
-       <para>
-        Add function <link
-        linkend="functions-info-partition"><function>pg_partition_root()</function></link>
-        to return top-most parent of a partition tree (Michaël Paquier)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2019-03-04 [b96f6b194] pg_partition_ancestors
--->
-
-       <para>
-        Add function <link
-        linkend="functions-info-partition"><function>pg_partition_ancestors()</function></link>
-        to report all ancestors of a partition (Álvaro Herrera)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2018-10-30 [d5eec4eef] Add pg_partition_tree to display information about parti
 -->
 
        <para>
-        Add function <link
+        Add partition introspection functions (Michaël Paquier, Álvaro
+        Herrera, Amit Langote)
+       </para>
+
+       <para>
+        New function <link
+        linkend="functions-info-partition"><function>pg_partition_root()</function></link>
+        returns the top-most parent of a partition tree, <link
+        linkend="functions-info-partition"><function>pg_partition_ancestors()</function></link>
+        reports all ancestors of a partition, and <link
         linkend="functions-info-partition"><function>pg_partition_tree()</function></link>
-        to display information about partitions (Amit Langote)
+        displays information about partitions.
        </para>
       </listitem>
 
