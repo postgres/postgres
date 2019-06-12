@@ -611,8 +611,8 @@ getOwnedSequences(Oid relid)
 
 /*
  * get_constraint_index
- *		Given the OID of a unique or primary-key constraint, return the
- *		OID of the underlying unique index.
+ *		Given the OID of a unique, primary-key, or exclusion constraint,
+ *		return the OID of the underlying index.
  *
  * Return InvalidOid if the index couldn't be found; this suggests the
  * given OID is bogus, but we leave it to caller to decide what to do.
@@ -672,8 +672,9 @@ get_constraint_index(Oid constraintId)
 
 /*
  * get_index_constraint
- *		Given the OID of an index, return the OID of the owning unique or
- *		primary-key constraint, or InvalidOid if no such constraint.
+ *		Given the OID of an index, return the OID of the owning unique,
+ *		primary-key, or exclusion constraint, or InvalidOid if there
+ *		is no owning constraint.
  */
 Oid
 get_index_constraint(Oid indexId)
