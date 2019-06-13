@@ -2135,11 +2135,10 @@ add_child_rel_equivalences(PlannerInfo *root,
 			continue;
 
 		/*
-		 * No point in searching if parent rel not mentioned in eclass; but we
-		 * can't tell that for sure if parent rel is itself a child.
+		 * No point in searching if child's topmost parent rel is not
+		 * mentioned in eclass.
 		 */
-		if (parent_rel->reloptkind == RELOPT_BASEREL &&
-			!bms_is_subset(parent_rel->relids, cur_ec->ec_relids))
+		if (!bms_is_subset(child_rel->top_parent_relids, cur_ec->ec_relids))
 			continue;
 
 		foreach(lc2, cur_ec->ec_members)
@@ -2149,18 +2148,41 @@ add_child_rel_equivalences(PlannerInfo *root,
 			if (cur_em->em_is_const)
 				continue;		/* ignore consts here */
 
-			/* Does it reference parent_rel? */
-			if (bms_overlap(cur_em->em_relids, parent_rel->relids))
+			/*
+			 * We consider only original EC members here, not
+			 * already-transformed child members.  Otherwise, if some original
+			 * member expression references more than one appendrel, we'd get
+			 * an O(N^2) explosion of useless derived expressions for
+			 * combinations of children.
+			 */
+			if (cur_em->em_is_child)
+				continue;		/* ignore children here */
+
+			/* Does this member reference child's topmost parent rel? */
+			if (bms_overlap(cur_em->em_relids, child_rel->top_parent_relids))
 			{
 				/* Yes, generate transformed child version */
 				Expr	   *child_expr;
 				Relids		new_relids;
 				Relids		new_nullable_relids;
 
-				child_expr = (Expr *)
-					adjust_appendrel_attrs(root,
-										   (Node *) cur_em->em_expr,
-										   1, &appinfo);
+				if (parent_rel->reloptkind == RELOPT_BASEREL)
+				{
+					/* Simple single-level transformation */
+					child_expr = (Expr *)
+						adjust_appendrel_attrs(root,
+											   (Node *) cur_em->em_expr,
+											   1, &appinfo);
+				}
+				else
+				{
+					/* Must do multi-level transformation */
+					child_expr = (Expr *)
+						adjust_appendrel_attrs_multilevel(root,
+														  (Node *) cur_em->em_expr,
+														  child_rel->relids,
+														  child_rel->top_parent_relids);
+				}
 
 				/*
 				 * Transform em_relids to match.  Note we do *not* do
@@ -2169,7 +2191,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 				 * don't want the child member to be marked as constant.
 				 */
 				new_relids = bms_difference(cur_em->em_relids,
-											parent_rel->relids);
+											child_rel->top_parent_relids);
 				new_relids = bms_add_members(new_relids, child_rel->relids);
 
 				/*
@@ -2177,10 +2199,11 @@ add_child_rel_equivalences(PlannerInfo *root,
 				 * parent and child relids are singletons.
 				 */
 				new_nullable_relids = cur_em->em_nullable_relids;
-				if (bms_overlap(new_nullable_relids, parent_rel->relids))
+				if (bms_overlap(new_nullable_relids,
+								child_rel->top_parent_relids))
 				{
 					new_nullable_relids = bms_difference(new_nullable_relids,
-														 parent_rel->relids);
+														 child_rel->top_parent_relids);
 					new_nullable_relids = bms_add_members(new_nullable_relids,
 														  child_rel->relids);
 				}
