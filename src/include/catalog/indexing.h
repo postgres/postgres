@@ -186,13 +186,6 @@ DECLARE_UNIQUE_INDEX(pg_largeobject_loid_pn_index, 2683, on pg_largeobject using
 DECLARE_UNIQUE_INDEX(pg_largeobject_metadata_oid_index, 2996, on pg_largeobject_metadata using btree(oid oid_ops));
 #define LargeObjectMetadataOidIndexId	2996
 
-DECLARE_UNIQUE_INDEX(pg_statistic_ext_oid_index, 3380, on pg_statistic_ext using btree(oid oid_ops));
-#define StatisticExtOidIndexId	3380
-DECLARE_UNIQUE_INDEX(pg_statistic_ext_name_index, 3997, on pg_statistic_ext using btree(stxname name_ops, stxnamespace oid_ops));
-#define StatisticExtNameIndexId 3997
-DECLARE_INDEX(pg_statistic_ext_relid_index, 3379, on pg_statistic_ext using btree(stxrelid oid_ops));
-#define StatisticExtRelidIndexId 3379
-
 DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index, 2684, on pg_namespace using btree(nspname name_ops));
 #define NamespaceNameIndexId  2684
 DECLARE_UNIQUE_INDEX(pg_namespace_oid_index, 2685, on pg_namespace using btree(oid oid_ops));
@@ -236,6 +229,16 @@ DECLARE_INDEX(pg_shdepend_reference_index, 1233, on pg_shdepend using btree(refc
 
 DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_inh_index, 2696, on pg_statistic using btree(starelid oid_ops, staattnum int2_ops, stainherit bool_ops));
 #define StatisticRelidAttnumInhIndexId	2696
+
+DECLARE_UNIQUE_INDEX(pg_statistic_ext_oid_index, 3380, on pg_statistic_ext using btree(oid oid_ops));
+#define StatisticExtOidIndexId	3380
+DECLARE_UNIQUE_INDEX(pg_statistic_ext_name_index, 3997, on pg_statistic_ext using btree(stxname name_ops, stxnamespace oid_ops));
+#define StatisticExtNameIndexId 3997
+DECLARE_INDEX(pg_statistic_ext_relid_index, 3379, on pg_statistic_ext using btree(stxrelid oid_ops));
+#define StatisticExtRelidIndexId 3379
+
+DECLARE_UNIQUE_INDEX(pg_statistic_ext_data_stxoid_index, 3433, on pg_statistic_ext_data using btree(stxoid oid_ops));
+#define StatisticExtDataStxoidIndexId 3433
 
 DECLARE_UNIQUE_INDEX(pg_tablespace_oid_index, 2697, on pg_tablespace using btree(oid oid_ops));
 #define TablespaceOidIndexId  2697

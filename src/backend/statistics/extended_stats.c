@@ -23,6 +23,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_statistic_ext.h"
+#include "catalog/pg_statistic_ext_data.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
@@ -65,9 +66,9 @@ typedef struct StatExtEntry
 static List *fetch_statentries_for_relation(Relation pg_statext, Oid relid);
 static VacAttrStats **lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 											int nvacatts, VacAttrStats **vacatts);
-static void statext_store(Relation pg_stext, Oid relid,
+static void statext_store(Oid relid,
 						  MVNDistinct *ndistinct, MVDependencies *dependencies,
-						  MCVList *mcvlist, VacAttrStats **stats);
+						  MCVList *mcv, VacAttrStats **stats);
 
 
 /*
@@ -145,7 +146,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		}
 
 		/* store the statistics in the catalog */
-		statext_store(pg_stext, stat->statOid, ndistinct, dependencies, mcv, stats);
+		statext_store(stat->statOid, ndistinct, dependencies, mcv, stats);
 	}
 
 	table_close(pg_stext, RowExclusiveLock);
@@ -156,7 +157,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 
 /*
  * statext_is_kind_built
- *		Is this stat kind built in the given pg_statistic_ext tuple?
+ *		Is this stat kind built in the given pg_statistic_ext_data tuple?
  */
 bool
 statext_is_kind_built(HeapTuple htup, char type)
@@ -166,15 +167,15 @@ statext_is_kind_built(HeapTuple htup, char type)
 	switch (type)
 	{
 		case STATS_EXT_NDISTINCT:
-			attnum = Anum_pg_statistic_ext_stxndistinct;
+			attnum = Anum_pg_statistic_ext_data_stxdndistinct;
 			break;
 
 		case STATS_EXT_DEPENDENCIES:
-			attnum = Anum_pg_statistic_ext_stxdependencies;
+			attnum = Anum_pg_statistic_ext_data_stxddependencies;
 			break;
 
 		case STATS_EXT_MCV:
-			attnum = Anum_pg_statistic_ext_stxmcv;
+			attnum = Anum_pg_statistic_ext_data_stxdmcv;
 			break;
 
 		default:
@@ -312,70 +313,76 @@ lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 
 /*
  * statext_store
- *	Serializes the statistics and stores them into the pg_statistic_ext tuple.
+ *	Serializes the statistics and stores them into the pg_statistic_ext_data
+ *	tuple.
  */
 static void
-statext_store(Relation pg_stext, Oid statOid,
+statext_store(Oid statOid,
 			  MVNDistinct *ndistinct, MVDependencies *dependencies,
 			  MCVList *mcv, VacAttrStats **stats)
 {
 	HeapTuple	stup,
 				oldtup;
-	Datum		values[Natts_pg_statistic_ext];
-	bool		nulls[Natts_pg_statistic_ext];
-	bool		replaces[Natts_pg_statistic_ext];
+	Datum		values[Natts_pg_statistic_ext_data];
+	bool		nulls[Natts_pg_statistic_ext_data];
+	bool		replaces[Natts_pg_statistic_ext_data];
+	Relation	pg_stextdata;
 
 	memset(nulls, true, sizeof(nulls));
 	memset(replaces, false, sizeof(replaces));
 	memset(values, 0, sizeof(values));
 
 	/*
-	 * Construct a new pg_statistic_ext tuple, replacing the calculated stats.
+	 * Construct a new pg_statistic_ext_data tuple, replacing the calculated
+	 * stats.
 	 */
 	if (ndistinct != NULL)
 	{
 		bytea	   *data = statext_ndistinct_serialize(ndistinct);
 
-		nulls[Anum_pg_statistic_ext_stxndistinct - 1] = (data == NULL);
-		values[Anum_pg_statistic_ext_stxndistinct - 1] = PointerGetDatum(data);
+		nulls[Anum_pg_statistic_ext_data_stxdndistinct - 1] = (data == NULL);
+		values[Anum_pg_statistic_ext_data_stxdndistinct - 1] = PointerGetDatum(data);
 	}
 
 	if (dependencies != NULL)
 	{
 		bytea	   *data = statext_dependencies_serialize(dependencies);
 
-		nulls[Anum_pg_statistic_ext_stxdependencies - 1] = (data == NULL);
-		values[Anum_pg_statistic_ext_stxdependencies - 1] = PointerGetDatum(data);
+		nulls[Anum_pg_statistic_ext_data_stxddependencies - 1] = (data == NULL);
+		values[Anum_pg_statistic_ext_data_stxddependencies - 1] = PointerGetDatum(data);
 	}
-
 	if (mcv != NULL)
 	{
 		bytea	   *data = statext_mcv_serialize(mcv, stats);
 
-		nulls[Anum_pg_statistic_ext_stxmcv - 1] = (data == NULL);
-		values[Anum_pg_statistic_ext_stxmcv - 1] = PointerGetDatum(data);
+		nulls[Anum_pg_statistic_ext_data_stxdmcv - 1] = (data == NULL);
+		values[Anum_pg_statistic_ext_data_stxdmcv - 1] = PointerGetDatum(data);
 	}
 
 	/* always replace the value (either by bytea or NULL) */
-	replaces[Anum_pg_statistic_ext_stxndistinct - 1] = true;
-	replaces[Anum_pg_statistic_ext_stxdependencies - 1] = true;
-	replaces[Anum_pg_statistic_ext_stxmcv - 1] = true;
+	replaces[Anum_pg_statistic_ext_data_stxdndistinct - 1] = true;
+	replaces[Anum_pg_statistic_ext_data_stxddependencies - 1] = true;
+	replaces[Anum_pg_statistic_ext_data_stxdmcv - 1] = true;
 
-	/* there should already be a pg_statistic_ext tuple */
-	oldtup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statOid));
+	/* there should already be a pg_statistic_ext_data tuple */
+	oldtup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(statOid));
 	if (!HeapTupleIsValid(oldtup))
 		elog(ERROR, "cache lookup failed for statistics object %u", statOid);
 
 	/* replace it */
+	pg_stextdata = table_open(StatisticExtDataRelationId, RowExclusiveLock);
+
 	stup = heap_modify_tuple(oldtup,
-							 RelationGetDescr(pg_stext),
+							 RelationGetDescr(pg_stextdata),
 							 values,
 							 nulls,
 							 replaces);
 	ReleaseSysCache(oldtup);
-	CatalogTupleUpdate(pg_stext, &stup->t_self, stup);
+	CatalogTupleUpdate(pg_stextdata, &stup->t_self, stup);
 
 	heap_freetuple(stup);
+
+	table_close(pg_stextdata, RowExclusiveLock);
 }
 
 /* initialize multi-dimensional sort */

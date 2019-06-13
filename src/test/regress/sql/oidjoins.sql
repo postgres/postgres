@@ -493,6 +493,10 @@ SELECT	ctid, stxowner
 FROM	pg_catalog.pg_statistic_ext fk
 WHERE	stxowner != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.stxowner);
+SELECT	ctid, stxoid
+FROM	pg_catalog.pg_statistic_ext_data fk
+WHERE	stxoid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_statistic_ext pk WHERE pk.oid = fk.stxoid);
 SELECT	ctid, spcowner
 FROM	pg_catalog.pg_tablespace fk
 WHERE	spcowner != 0 AND

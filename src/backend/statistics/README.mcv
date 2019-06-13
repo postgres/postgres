@@ -86,11 +86,14 @@ So instead the MCV lists are stored in a custom data type (pg_mcv_list),
 which however makes it more difficult to inspect the contents. To make that
 easier, there's a SRF returning detailed information about the MCV lists.
 
-    SELECT m.* FROM pg_statistic_ext,
-                    pg_mcv_list_items(stxmcv) m WHERE stxname = 'stts2';
+    SELECT m.* FROM pg_statistic_ext s,
+                    pg_statistic_ext_data d,
+                    pg_mcv_list_items(stxdmcv) m
+              WHERE s.stxname = 'stts2'
+                AND d.stxoid = s.oid;
 
 It accepts one parameter - a pg_mcv_list value (which can only be obtained
-from pg_statistic_ext catalog, to defend against malicious input), and
+from pg_statistic_ext_data catalog, to defend against malicious input), and
 returns these columns:
 
     - item index (0, ..., (nitems-1))

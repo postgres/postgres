@@ -27,6 +27,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_statistic_ext.h"
+#include "catalog/pg_statistic_ext_data.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "lib/stringinfo.h"
@@ -145,12 +146,12 @@ statext_ndistinct_load(Oid mvoid)
 	Datum		ndist;
 	HeapTuple	htup;
 
-	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
+	htup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(mvoid));
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
-	ndist = SysCacheGetAttr(STATEXTOID, htup,
-							Anum_pg_statistic_ext_stxndistinct, &isnull);
+	ndist = SysCacheGetAttr(STATEXTDATASTXOID, htup,
+							Anum_pg_statistic_ext_data_stxdndistinct, &isnull);
 	if (isnull)
 		elog(ERROR,
 			 "requested statistic kind \"%c\" is not yet built for statistics object %u",

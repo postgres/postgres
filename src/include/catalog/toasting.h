@@ -70,6 +70,7 @@ DECLARE_TOAST(pg_rewrite, 2838, 2839);
 DECLARE_TOAST(pg_seclabel, 3598, 3599);
 DECLARE_TOAST(pg_statistic, 2840, 2841);
 DECLARE_TOAST(pg_statistic_ext, 3439, 3440);
+DECLARE_TOAST(pg_statistic_ext_data, 3430, 3431);
 DECLARE_TOAST(pg_trigger, 2336, 2337);
 DECLARE_TOAST(pg_ts_dict, 4169, 4170);
 DECLARE_TOAST(pg_type, 4171, 4172);

@@ -1,8 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * pg_statistic_ext.h
- *	  definition of the "extended statistics" system catalog (pg_statistic_ext)
+ *	  definition of the "extended statistics" system catalog
+ *	  (pg_statistic_ext)
  *
+ * Note that pg_statistic_ext contains the definitions of extended statistics
+ * objects, created by CREATE STATISTICS, but not the actual statistical data,
+ * created by running ANALYZE.
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -47,9 +51,6 @@ CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
 #ifdef CATALOG_VARLEN
 	char		stxkind[1] BKI_FORCE_NOT_NULL;	/* statistics kinds requested
 												 * to build */
-	pg_ndistinct stxndistinct;	/* ndistinct coefficients (serialized) */
-	pg_dependencies stxdependencies;	/* dependencies (serialized) */
-	pg_mcv_list stxmcv;			/* MCV (serialized) */
 #endif
 
 } FormData_pg_statistic_ext;

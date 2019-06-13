@@ -729,6 +729,7 @@ FormData_pg_sequence_data
 FormData_pg_shdepend
 FormData_pg_statistic
 FormData_pg_statistic_ext
+FormData_pg_statistic_ext_data
 FormData_pg_subscription
 FormData_pg_subscription_rel
 FormData_pg_tablespace
@@ -786,6 +787,7 @@ Form_pg_sequence_data
 Form_pg_shdepend
 Form_pg_statistic
 Form_pg_statistic_ext
+Form_pg_statistic_ext_data
 Form_pg_subscription
 Form_pg_subscription_rel
 Form_pg_tablespace

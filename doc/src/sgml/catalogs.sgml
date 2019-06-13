@@ -297,7 +297,12 @@
 
      <row>
       <entry><link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link></entry>
-      <entry>extended planner statistics</entry>
+      <entry>extended planner statistics (definition)</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link></entry>
+      <entry>extended planner statistics (built statistics)</entry>
      </row>
 
      <row>
@@ -6506,7 +6511,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_statistic_ext</structname>
-   holds extended planner statistics.
+   holds definitions of extended planner statistics.
    Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
    created with <xref linkend="sql-createstatistics"/>.
   </para>
@@ -6581,8 +6586,57 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </entry>
      </row>
 
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structfield>stxkind</structfield> field is filled at creation of the
+   statistics object, indicating which statistic type(s) are desired. The
+   statistics (once computed by <command>ANALYZE</command>) are stored in
+   <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
+   catalog.
+  </para>
+ </sect1>
+
+ <sect1 id="catalog-pg-statistic-ext-data">
+  <title><structname>pg_statistic_ext_data</structname></title>
+
+  <indexterm zone="catalog-pg-statistic-ext">
+   <primary>pg_statistic_ext_data</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_statistic_ext_data</structname>
+   holds data for extended planner statistics defined in <structname>pg_statistic_ext</structname>.
+   Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
+   created with <xref linkend="sql-createstatistics"/>.
+  </para>
+
+  <table>
+   <title><structname>pg_statistic_ext_data</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
      <row>
-      <entry><structfield>stxndistinct</structfield></entry>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><structfield>stxoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.oid</literal></entry>
+      <entry>Extended statistic containing the definition for this data.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stxdndistinct</structfield></entry>
       <entry><type>pg_ndistinct</type></entry>
       <entry></entry>
       <entry>
@@ -6591,7 +6645,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
-      <entry><structfield>stxdependencies</structfield></entry>
+      <entry><structfield>stxddependencies</structfield></entry>
       <entry><type>pg_dependencies</type></entry>
       <entry></entry>
       <entry>
@@ -6601,7 +6655,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
-      <entry><structfield>stxmcv</structfield></entry>
+      <entry><structfield>stxdmcv</structfield></entry>
       <entry><type>pg_mcv_list</type></entry>
       <entry></entry>
       <entry>
@@ -6614,12 +6668,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    </tgroup>
   </table>
 
-  <para>
-   The <structfield>stxkind</structfield> field is filled at creation of the
-   statistics object, indicating which statistic type(s) are desired.
-   The fields after it are initially NULL and are filled only when the
-   corresponding statistic has been computed by <command>ANALYZE</command>.
-  </para>
  </sect1>
 
  <sect1 id="catalog-pg-subscription">

@@ -62,6 +62,7 @@
 #include "catalog/pg_replication_origin.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_statistic_ext.h"
+#include "catalog/pg_statistic_ext_data.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
 #include "catalog/pg_tablespace.h"
@@ -726,6 +727,17 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		32
+	},
+	{StatisticExtDataRelationId, /* STATEXTDATASTXOID */
+		StatisticExtDataStxoidIndexId,
+		1,
+		{
+			Anum_pg_statistic_ext_data_stxoid,
+			0,
+			0,
+			0
+		},
+		4
 	},
 	{StatisticExtRelationId,	/* STATEXTNAMENSP */
 		StatisticExtNameIndexId,

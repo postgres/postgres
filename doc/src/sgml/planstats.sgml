@@ -635,8 +635,8 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
     <function>pg_mcv_list_items</function> set-returning function.
 
 <programlisting>
-SELECT m.* FROM pg_statistic_ext,
-                pg_mcv_list_items(stxmcv) m WHERE stxname = 'stts2';
+SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
+                pg_mcv_list_items(stxdmcv) m WHERE stxname = 'stts2';
  index |  values  | nulls | frequency | base_frequency 
 -------+----------+-------+-----------+----------------
      0 | {0, 0}   | {f,f} |      0.01 |         0.0001

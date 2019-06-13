@@ -144,8 +144,10 @@ CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 
 ANALYZE ndistinct;
 
-SELECT stxkind, stxndistinct
-  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
+SELECT s.stxkind, d.stxdndistinct
+  FROM pg_statistic_ext s, pg_statistic_ext_data d
+ WHERE s.stxrelid = 'ndistinct'::regclass
+   AND d.stxoid = s.oid;
 
 -- Hash Aggregate, thanks to estimates improved by the statistic
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
@@ -170,8 +172,10 @@ INSERT INTO ndistinct (a, b, c, filler1)
 
 ANALYZE ndistinct;
 
-SELECT stxkind, stxndistinct
-  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
+SELECT s.stxkind, d.stxdndistinct
+  FROM pg_statistic_ext s, pg_statistic_ext_data d
+ WHERE s.stxrelid = 'ndistinct'::regclass
+   AND d.stxoid = s.oid;
 
 -- correct esimates
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
@@ -186,8 +190,10 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, d
 
 DROP STATISTICS s10;
 
-SELECT stxkind, stxndistinct
-  FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
+SELECT s.stxkind, d.stxdndistinct
+  FROM pg_statistic_ext s, pg_statistic_ext_data d
+ WHERE s.stxrelid = 'ndistinct'::regclass
+   AND d.stxoid = s.oid;
 
 -- dropping the statistics results in under-estimates
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
@@ -335,7 +341,10 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a <= 4 AND b <
 -- check change of unrelated column type does not reset the MCV statistics
 ALTER TABLE mcv_lists ALTER COLUMN d TYPE VARCHAR(64);
 
-SELECT stxmcv IS NOT NULL FROM pg_statistic_ext WHERE stxname = 'mcv_lists_stats';
+SELECT d.stxdmcv IS NOT NULL
+  FROM pg_statistic_ext s, pg_statistic_ext_data d
+ WHERE s.stxname = 'mcv_lists_stats'
+   AND d.stxoid = s.oid;
 
 -- check change of column type resets the MCV statistics
 ALTER TABLE mcv_lists ALTER COLUMN c TYPE numeric;
@@ -378,8 +387,11 @@ TRUNCATE mcv_lists;
 INSERT INTO mcv_lists (a, b, c) SELECT 1, 2, 3 FROM generate_series(1,1000) s(i);
 ANALYZE mcv_lists;
 
-SELECT m.* FROM pg_statistic_ext,
-              pg_mcv_list_items(stxmcv) m WHERE stxname = 'mcv_lists_stats';
+SELECT m.*
+  FROM pg_statistic_ext s, pg_statistic_ext_data d,
+       pg_mcv_list_items(d.stxdmcv) m
+ WHERE s.stxname = 'mcv_lists_stats'
+   AND d.stxoid = s.oid;
 
 -- mcv with arrays
 CREATE TABLE mcv_lists_arrays (

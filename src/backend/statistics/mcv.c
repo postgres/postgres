@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_statistic_ext.h"
+#include "catalog/pg_statistic_ext_data.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
@@ -429,13 +430,13 @@ statext_mcv_load(Oid mvoid)
 	MCVList    *result;
 	bool		isnull;
 	Datum		mcvlist;
-	HeapTuple	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(mvoid));
+	HeapTuple	htup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(mvoid));
 
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
-	mcvlist = SysCacheGetAttr(STATEXTOID, htup,
-							  Anum_pg_statistic_ext_stxmcv, &isnull);
+	mcvlist = SysCacheGetAttr(STATEXTDATASTXOID, htup,
+							  Anum_pg_statistic_ext_data_stxdmcv, &isnull);
 
 	if (isnull)
 		elog(ERROR,

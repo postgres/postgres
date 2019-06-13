@@ -22427,12 +22427,12 @@ CREATE EVENT TRIGGER test_table_rewrite_oid
     The <function>pg_mcv_list_items</function> function can be used like this:
 
 <programlisting>
-SELECT m.* FROM pg_statistic_ext,
-                pg_mcv_list_items(stxmcv) m WHERE stxname = 'stts';
+SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
+                pg_mcv_list_items(stxdmcv) m WHERE stxname = 'stts';
 </programlisting>
 
      Values of the <type>pg_mcv_list</type> can be obtained only from the
-     <literal>pg_statistic_ext.stxmcv</literal> column.
+     <literal>pg_statistic_ext_data.stxdmcv</literal> column.
    </para>
   </sect2>
 
