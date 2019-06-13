@@ -2905,37 +2905,36 @@ SELECT EXTRACT(days from '80 hours'::interval);
    </table>
 
    <para>
-    Valid literal values for the <quote>true</quote> state are:
-    <simplelist>
-     <member><literal>TRUE</literal></member>
-     <member><literal>'t'</literal></member>
-     <member><literal>'true'</literal></member>
-     <member><literal>'y'</literal></member>
-     <member><literal>'yes'</literal></member>
-     <member><literal>'on'</literal></member>
-     <member><literal>'1'</literal></member>
-    </simplelist>
-    For the <quote>false</quote> state, the following values can be
-    used:
-    <simplelist>
-     <member><literal>FALSE</literal></member>
-     <member><literal>'f'</literal></member>
-     <member><literal>'false'</literal></member>
-     <member><literal>'n'</literal></member>
-     <member><literal>'no'</literal></member>
-     <member><literal>'off'</literal></member>
-     <member><literal>'0'</literal></member>
-    </simplelist>
-    Leading or trailing whitespace is ignored, and case does not matter.
-    The key words
-    <literal>TRUE</literal> and <literal>FALSE</literal> are the preferred
-    (<acronym>SQL</acronym>-compliant) usage.
+    Boolean constants can be represented in SQL queries by the SQL
+    key words <literal>TRUE</literal>, <literal>FALSE</literal>,
+    and <literal>NULL</literal>.
    </para>
 
    <para>
-    <xref linkend="datatype-boolean-example"/> shows that
-    <type>boolean</type> values are output using the letters
-    <literal>t</literal> and <literal>f</literal>.
+    The datatype input function for type <type>boolean</type> accepts these
+    string representations for the <quote>true</quote> state:
+    <simplelist>
+     <member><literal>true</literal></member>
+     <member><literal>yes</literal></member>
+     <member><literal>on</literal></member>
+     <member><literal>1</literal></member>
+    </simplelist>
+    and these representations for the <quote>false</quote> state:
+    <simplelist>
+     <member><literal>false</literal></member>
+     <member><literal>no</literal></member>
+     <member><literal>off</literal></member>
+     <member><literal>0</literal></member>
+    </simplelist>
+    Unique prefixes of these strings are also accepted, for
+    example <literal>t</literal> or <literal>n</literal>.
+    Leading or trailing whitespace is ignored, and case does not matter.
+   </para>
+
+   <para>
+    The datatype output function for type <type>boolean</type> always emits
+    either <literal>t</literal> or <literal>f</literal>, as shown in
+    <xref linkend="datatype-boolean-example"/>.
    </para>
 
    <example id="datatype-boolean-example">
@@ -2957,6 +2956,27 @@ SELECT * FROM test1 WHERE a;
  t | sic est
 </programlisting>
    </example>
+
+   <para>
+    The key words <literal>TRUE</literal> and <literal>FALSE</literal> are
+    the preferred (<acronym>SQL</acronym>-compliant) method for writing
+    Boolean constants in SQL queries.  But you can also use the string
+    representations by following the generic string-literal constant syntax
+    described in <xref linkend="sql-syntax-constants-generic"/>, for
+    example <literal>'yes'::boolean</literal>.
+   </para>
+
+   <para>
+    Note that the parser automatically understands
+    that <literal>TRUE</literal> and <literal>FALSE</literal> are of
+    type <type>boolean</type>, but this is not so
+    for <literal>NULL</literal> because that can have any type.
+    So in some contexts you might have to cast <literal>NULL</literal>
+    to <type>boolean</type> explicitly, for
+    example <literal>NULL::boolean</literal>.  Conversely, the cast can be
+    omitted from a string-literal Boolean value in contexts where the parser
+    can deduce that the literal must be of type <type>boolean</type>.
+   </para>
   </sect1>
 
   <sect1 id="datatype-enum">
