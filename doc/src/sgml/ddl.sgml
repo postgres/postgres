@@ -259,7 +259,7 @@ CREATE TABLE products (
 CREATE TABLE people (
     ...,
     height_cm numeric,
-    height_in numeric <emphasis>GENERATED ALWAYS AS (height_cm * 2.54) STORED</emphasis>
+    height_in numeric <emphasis>GENERATED ALWAYS AS (height_cm / 2.54) STORED</emphasis>
 );
 </programlisting>
    The keyword <literal>STORED</literal> must be specified to choose the
