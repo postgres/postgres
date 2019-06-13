@@ -46,6 +46,7 @@ test: update-locked-tuple
 test: propagate-lock-delete
 test: tuplelock-conflict
 test: tuplelock-update
+test: tuplelock-upgrade-no-deadlock
 test: freeze-the-dead
 test: nowait
 test: nowait-2
