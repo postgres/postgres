@@ -6373,6 +6373,28 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    about those tables that are readable by the current user.
   </para>
 
+  <para>
+   <structname>pg_statistic</structname> should not be readable by the
+   public, since even statistical information about a table's contents
+   might be considered sensitive.  (Example: minimum and maximum values
+   of a salary column might be quite interesting.)
+   <link linkend="view-pg-stats"><structname>pg_stats</structname></link>
+   is a publicly readable view on
+   <structname>pg_statistic</structname> that only exposes information
+   about those tables that are readable by the current user.
+  </para>
+
+  <para>
+   Similarly, <structname>pg_statistic_ext_data</structname> should not be
+   readable by the public, since the contents might be considered sensitive.
+   (Example: most common combination of values in columns might be quite
+   interesting.)
+   <link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link>
+   is a publicly readable view on <structname>pg_statistic_ext_data</structname>
+   (after joining with <structname>pg_statistic_ext</structname>) that only exposes
+   information about those tables and columns that are readable by the current user.
+  </para>
+
   <table>
    <title><structname>pg_statistic</structname> Columns</title>
 
@@ -8341,6 +8363,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      <row>
       <entry><link linkend="view-pg-stats"><structname>pg_stats</structname></link></entry>
       <entry>planner statistics</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link></entry>
+      <entry>extended planner statistics</entry>
      </row>
 
      <row>
@@ -10907,6 +10934,171 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        A histogram of the counts of distinct non-null element values within the
        values of the column, followed by the average number of distinct
        non-null elements.  (Null for scalar types.)
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The maximum number of entries in the array fields can be controlled on a
+   column-by-column basis using the <command>ALTER TABLE SET STATISTICS</command>
+   command, or globally by setting the
+   <xref linkend="guc-default-statistics-target"/> run-time parameter.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-stats-ext">
+  <title><structname>pg_stats_ext</structname></title>
+
+  <indexterm zone="view-pg-stats-ext">
+   <primary>pg_stats_ext</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_stats_ext</structname> provides access to
+   the information stored in the <link
+   linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>
+   and <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
+   catalogs.  This view allows access only to rows of
+   <structname>pg_statistic_ext</structname> and <structname>pg_statistic_ext_data</structname>
+   that correspond to tables the user has permission to read, and therefore
+   it is safe to allow public read access to this view.
+  </para>
+
+  <para>
+   <structname>pg_stats_ext</structname> is also designed to present the
+   information in a more readable format than the underlying catalog
+   &mdash; at the cost that its schema must be extended whenever new types
+   of extended statistics are added to <structname>pg_statistic_ext</structname>.
+  </para>
+
+  <table>
+   <title><structname>pg_stats_ext</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>Name of schema containing table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tablename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>Name of table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>statistics_schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>Name of schema containing extended statistic</entry>
+     </row>
+
+     <row>
+      <entry><structfield>statistics_name</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.stxname</literal></entry>
+      <entry>Name of extended statistics</entry>
+     </row>
+
+     <row>
+      <entry><structfield>statistics_owner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the extended statistics</entry>
+     </row>
+
+     <row>
+      <entry><structfield>attnames</structfield></entry>
+      <entry><type>name[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attname</literal></entry>
+      <entry>Names of the column the extended statistics is defined on</entry>
+     </row>
+
+     <row>
+      <entry><structfield>kinds</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Types of exdended statistics enabled for this record</entry>
+     </row>
+
+     <row>
+      <entry><structfield>n_distinct</structfield></entry>
+      <entry><type>pg_ndistinct</type></entry>
+      <entry></entry>
+      <entry>N-distinct counts for combinations of columns. If greater than
+       zero, the estimated number of distinct values in the combination.  If
+       less than zero, the negative of the number of distinct values divided
+       by the number of rows.
+       (The negated form is used when <command>ANALYZE</command> believes that
+       the number of distinct values is likely to increase as the table grows;
+       the positive form is used when the column seems to have a fixed number
+       of possible values.)  For example, -1 indicates a unique combination of
+       columns in which the number of distinct combinations is the same as the
+       number of rows.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>dependencies</structfield></entry>
+      <entry><type>pg_dependencies</type></entry>
+      <entry></entry>
+      <entry>Functional dependency statistics</entry>
+     </row>
+
+     <row>
+      <entry><structfield>most_common_vals</structfield></entry>
+      <entry><type>anyarray</type></entry>
+      <entry></entry>
+      <entry>
+       A list of the most common combinations in the columns. (Null if
+       no values seem to be more common than any others.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>most_common_val_nulls</structfield></entry>
+      <entry><type>anyarray</type></entry>
+      <entry></entry>
+      <entry>
+       A list of NULL flags for the most common combinations of values.
+       (Null when <structfield>most_common_vals</structfield> is.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>most_common_freqs</structfield></entry>
+      <entry><type>real[]</type></entry>
+      <entry></entry>
+      <entry>
+       A list of the frequencies of the most common combinations,
+       i.e., number of occurrences of each divided by total number of rows.
+       (Null when <structfield>most_common_vals</structfield> is.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>most_common_base_freqs</structfield></entry>
+      <entry><type>real[]</type></entry>
+      <entry></entry>
+      <entry>
+       A list of the base frequencies of the most common combinations,
+       i.e., product of per-value frequencies.
+       (Null when <structfield>most_common_vals</structfield> is.)
       </entry>
      </row>
     </tbody>
