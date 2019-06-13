@@ -3063,6 +3063,25 @@ SELECT * from loc1;
   2 | skidoo triggered !
 (2 rows)
 
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f1 = 10;          -- all columns should be transmitted
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Update on public.rem1
+   Remote SQL: UPDATE public.loc1 SET f1 = $2, f2 = $3 WHERE ctid = $1
+   ->  Foreign Scan on public.rem1
+         Output: 10, f2, ctid, rem1.*
+         Remote SQL: SELECT f1, f2, ctid FROM public.loc1 FOR UPDATE
+(5 rows)
+
+UPDATE rem1 set f1 = 10;
+SELECT * from loc1;
+ f1 |               f2               
+----+--------------------------------
+ 10 | skidoo triggered ! triggered !
+ 10 | skidoo triggered ! triggered !
+(2 rows)
+
 DELETE FROM rem1;
 -- Add a second trigger, to check that the changes are propagated correctly
 -- from trigger to trigger
@@ -3175,6 +3194,6 @@ NOTICE:  trig_row_after(23, skidoo) AFTER ROW INSERT ON rem1
 NOTICE:  NEW: (13,"test triggered !")
   ctid  
 --------
- (0,27)
+ (0,29)
 (1 row)
 
