@@ -1419,6 +1419,11 @@ SELECT * from loc1;
 UPDATE rem1 set f2 = 'skidoo' RETURNING f2;
 SELECT * from loc1;
 
+EXPLAIN (verbose, costs off)
+UPDATE rem1 set f1 = 10;          -- all columns should be transmitted
+UPDATE rem1 set f1 = 10;
+SELECT * from loc1;
+
 DELETE FROM rem1;
 
 -- Add a second trigger, to check that the changes are propagated correctly
