@@ -1498,7 +1498,8 @@ Author: Michael Paquier <michael@paquier.xyz>
        </para>
 
        <para>
-        This prevents unauthorized locking delays.
+        This prevents unauthorized locking, which could interfere with
+        user queries.
        </para>
       </listitem>
 
@@ -1515,7 +1516,8 @@ Author: Michael Paquier <michael@paquier.xyz>
        </para>
 
        <para>
-        This prevents unauthorized locking delays.
+        This prevents unauthorized locking, which could interfere with
+        user queries.
        </para>
       </listitem>
 
