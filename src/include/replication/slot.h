@@ -136,8 +136,8 @@ typedef struct ReplicationSlotCtlData
 /*
  * Pointers to shared memory
  */
-extern ReplicationSlotCtlData *ReplicationSlotCtl;
-extern ReplicationSlot *MyReplicationSlot;
+extern PGDLLIMPORT ReplicationSlotCtlData *ReplicationSlotCtl;
+extern PGDLLIMPORT ReplicationSlot *MyReplicationSlot;
 
 /* GUCs */
 extern PGDLLIMPORT int max_replication_slots;
