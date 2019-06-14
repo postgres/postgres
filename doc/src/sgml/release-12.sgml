@@ -2442,6 +2442,23 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 
      <listitem>
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+2019-01-31 [00d1e88d3] Add - -min-xid-age and - -min-mxid-age options to vacuumdb
+-->
+
+      <para>
+       Allow <xref linkend="app-vacuumdb"/> to select tables for vacuum
+       based on their wraparound horizon (Nathan Bossart)
+      </para>
+
+      <para>
+       The options are <option>--min-xid-age</option> and
+       <option>--min-mxid-age</option>.
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2019-04-01 [cc8d41511] Unified logging system for command-line programs
 -->
@@ -2598,23 +2615,6 @@ Author: Peter Eisentraut <peter_e@gmx.net>
     <title>Server Applications</title>
 
     <itemizedlist>
-
-     <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2019-01-31 [00d1e88d3] Add - -min-xid-age and - -min-mxid-age options to vacuumdb
--->
-
-      <para>
-       Allow <xref linkend="app-vacuumdb"/> to select tables for vacuum
-       based on their wraparound horizon (Nathan Bossart)
-      </para>
-
-      <para>
-       The options are <option>--min-xid-age</option> and
-       <option>--min-mxid-age</option>.
-      </para>
-     </listitem>
 
      <listitem>
 <!--
