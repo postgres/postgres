@@ -911,6 +911,9 @@ testdb=&gt;
         <replaceable class="parameter">host</replaceable> or
         <replaceable class="parameter">port</replaceable>
         as <literal>-</literal> is equivalent to omitting that parameter.
+        If <literal>hostaddr</literal> was specified in the original
+        connection's <structname>conninfo</structname>, that address is reused
+        for the new connection (disregarding any other host specification).
         </para>
 
         <para>

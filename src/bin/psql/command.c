@@ -2870,6 +2870,26 @@ param_is_newly_set(const char *old_val, const char *new_val)
 	return false;
 }
 
+/* return whether the connection has 'hostaddr' in its conninfo */
+static bool
+has_hostaddr(PGconn *conn)
+{
+	bool		used = false;
+	PQconninfoOption *ciopt = PQconninfo(conn);
+
+	for (PQconninfoOption *p = ciopt; p->keyword != NULL; p++)
+	{
+		if (strcmp(p->keyword, "hostaddr") == 0 && p->val != NULL)
+		{
+			used = true;
+			break;
+		}
+	}
+
+	PQconninfoFree(ciopt);
+	return used;
+}
+
 /*
  * do_connect -- handler for \connect
  *
@@ -2929,24 +2949,24 @@ do_connect(enum trivalue reuse_previous_specification,
 		port = NULL;
 	}
 
-	/* grab missing values from the old connection */
+	/*
+	 * Grab missing values from the old connection.  If we grab host (or host
+	 * is the same as before) and hostaddr was set, grab that too.
+	 */
 	if (reuse_previous)
 	{
 		if (!user)
 			user = PQuser(o_conn);
-		if (host && strcmp(host, PQhost(o_conn)) == 0)
+		if (host && strcmp(host, PQhost(o_conn)) == 0 &&
+			has_hostaddr(o_conn))
 		{
-			/*
-			 * if we are targeting the same host, reuse its hostaddr for
-			 * consistency
-			 */
 			hostaddr = PQhostaddr(o_conn);
 		}
 		if (!host)
 		{
 			host = PQhost(o_conn);
-			/* also set hostaddr for consistency */
-			hostaddr = PQhostaddr(o_conn);
+			if (has_hostaddr(o_conn))
+				hostaddr = PQhostaddr(o_conn);
 		}
 		if (!port)
 			port = PQport(o_conn);
@@ -3129,7 +3149,10 @@ do_connect(enum trivalue reuse_previous_specification,
 			char	   *host = PQhost(pset.db);
 			char	   *hostaddr = PQhostaddr(pset.db);
 
-			/* If the host is an absolute path, the connection is via socket */
+			/*
+			 * If the host is an absolute path, the connection is via socket
+			 * unless overridden by hostaddr
+			 */
 			if (is_absolute_path(host))
 			{
 				if (hostaddr && *hostaddr)

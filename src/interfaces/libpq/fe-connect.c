@@ -1536,9 +1536,7 @@ getHostaddr(PGconn *conn, char *host_addr, int host_addr_len)
 {
 	struct sockaddr_storage *addr = &conn->raddr.addr;
 
-	if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
-		strlcpy(host_addr, conn->connhost[conn->whichhost].hostaddr, host_addr_len);
-	else if (addr->ss_family == AF_INET)
+	if (addr->ss_family == AF_INET)
 	{
 		if (inet_net_ntop(AF_INET,
 						  &((struct sockaddr_in *) addr)->sin_addr.s_addr,
@@ -6463,6 +6461,10 @@ PQhost(const PGconn *conn)
 
 	if (conn->connhost != NULL)
 	{
+		/*
+		 * Return the verbatim host value provided by user, or hostaddr in its
+		 * lack.
+		 */
 		if (conn->connhost[conn->whichhost].host != NULL &&
 			conn->connhost[conn->whichhost].host[0] != '\0')
 			return conn->connhost[conn->whichhost].host;
@@ -6480,15 +6482,9 @@ PQhostaddr(const PGconn *conn)
 	if (!conn)
 		return NULL;
 
-	if (conn->connhost != NULL)
-	{
-		if (conn->connhost[conn->whichhost].hostaddr != NULL &&
-			conn->connhost[conn->whichhost].hostaddr[0] != '\0')
-			return conn->connhost[conn->whichhost].hostaddr;
-
-		if (conn->connip != NULL)
-			return conn->connip;
-	}
+	/* Return the parsed IP address */
+	if (conn->connhost != NULL && conn->connip != NULL)
+		return conn->connip;
 
 	return "";
 }
