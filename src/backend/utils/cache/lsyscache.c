@@ -1055,7 +1055,7 @@ get_opclass_input_type(Oid opclass)
 }
 
 /*
- * get_opclass_family_and_input_type
+ * get_opclass_opfamily_and_input_type
  *
  *		Returns the OID of the operator family the opclass belongs to,
  *				the OID of the datatype the opclass indexes

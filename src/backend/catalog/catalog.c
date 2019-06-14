@@ -383,7 +383,7 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
  * is also an unused OID within pg_class.  If the result is to be used only
  * as a relfilenode for an existing relation, pass NULL for pg_class.
  *
- * As with GetNewObjectIdWithIndex(), there is some theoretical risk of a race
+ * As with GetNewOidWithIndex(), there is some theoretical risk of a race
  * condition, but it doesn't seem worth worrying about.
  *
  * Note: we don't support using this in bootstrap mode.  All relations

@@ -2626,7 +2626,7 @@ CopyMultiInsertInfoNextFreeSlot(CopyMultiInsertInfo *miinfo,
 
 /*
  * Record the previously reserved TupleTableSlot that was reserved by
- * MultiInsertInfoNextFreeSlot as being consumed.
+ * CopyMultiInsertInfoNextFreeSlot as being consumed.
  */
 static inline void
 CopyMultiInsertInfoStore(CopyMultiInsertInfo *miinfo, ResultRelInfo *rri,

@@ -424,7 +424,7 @@ _bt_binsrch(Relation rel,
 
 /*
  *
- *	bt_binsrch_insert() -- Cacheable, incremental leaf page binary search.
+ *	_bt_binsrch_insert() -- Cacheable, incremental leaf page binary search.
  *
  * Like _bt_binsrch(), but with support for caching the binary search
  * bounds.  Only used during insertion, and only on the leaf page that it
