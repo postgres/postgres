@@ -835,7 +835,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve optimization of self-joins (Tom Lane)
+        Improve optimization of self-joins involving columns of type tid (Tom Lane)
        </para>
       </listitem>
 
