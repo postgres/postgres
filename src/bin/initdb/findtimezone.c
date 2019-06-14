@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "pgtz.h"
 
@@ -126,12 +127,19 @@ pg_load_tz(const char *name)
  * On most systems, we rely on trying to match the observable behavior of
  * the C library's localtime() function.  The database zone that matches
  * furthest into the past is the one to use.  Often there will be several
- * zones with identical rankings (since the Olson database assigns multiple
+ * zones with identical rankings (since the IANA database assigns multiple
  * names to many zones).  We break ties arbitrarily by preferring shorter,
  * then alphabetically earlier zone names.
  *
+ * Many modern systems use the IANA database, so if we can determine the
+ * system's idea of which zone it is using and its behavior matches our zone
+ * of the same name, we can skip the rather-expensive search through all the
+ * zones in our database.  This short-circuit path also ensures that we spell
+ * the zone name the same way the system setting does, even in the presence
+ * of multiple aliases for the same zone.
+ *
  * Win32's native knowledge about timezones appears to be too incomplete
- * and too different from the Olson database for the above matching strategy
+ * and too different from the IANA database for the above matching strategy
  * to be of any use. But there is just a limited number of timezones
  * available, so we can rely on a handmade mapping table instead.
  */
@@ -150,6 +158,8 @@ struct tztry
 	time_t		test_times[MAX_TEST_TIMES];
 };
 
+static bool check_system_link_file(const char *linkname, struct tztry *tt,
+					   char *bestzonename);
 static void scan_available_timezones(char *tzdir, char *tzdirsub,
 						 struct tztry *tt,
 						 int *bestscore, char *bestzonename);
@@ -299,12 +309,19 @@ score_timezone(const char *tzname, struct tztry *tt)
 	return i;
 }
 
+/*
+ * Test whether given zone name is a perfect match to localtime() behavior
+ */
+static bool
+perfect_timezone_match(const char *tzname, struct tztry *tt)
+{
+	return (score_timezone(tzname, tt) == tt->n_test_times);
+}
+
 
 /*
  * Try to identify a timezone name (in our terminology) that best matches the
- * observed behavior of the system timezone library.  We cannot assume that
- * the system TZ environment setting (if indeed there is one) matches our
- * terminology, so we ignore it and just look at what localtime() returns.
+ * observed behavior of the system localtime() function.
  */
 static const char *
 identify_system_timezone(void)
@@ -339,7 +356,7 @@ identify_system_timezone(void)
 	 * way of doing things, but experience has shown that system-supplied
 	 * timezone definitions are likely to have DST behavior that is right for
 	 * the recent past and not so accurate further back. Scoring in this way
-	 * allows us to recognize zones that have some commonality with the Olson
+	 * allows us to recognize zones that have some commonality with the IANA
 	 * database, without insisting on exact match. (Note: we probe Thursdays,
 	 * not Sundays, to avoid triggering DST-transition bugs in localtime
 	 * itself.)
@@ -374,7 +391,18 @@ identify_system_timezone(void)
 		tt.test_times[tt.n_test_times++] = t;
 	}
 
-	/* Search for the best-matching timezone file */
+	/*
+	 * Try to avoid the brute-force search by seeing if we can recognize the
+	 * system's timezone setting directly.
+	 *
+	 * Currently we just check /etc/localtime; there are other conventions for
+	 * this, but that seems to be the only one used on enough platforms to be
+	 * worth troubling over.
+	 */
+	if (check_system_link_file("/etc/localtime", &tt, resultbuf))
+		return resultbuf;
+
+	/* No luck, so search for the best-matching timezone file */
 	strlcpy(tmptzdir, pg_TZDIR(), sizeof(tmptzdir));
 	bestscore = -1;
 	resultbuf[0] = '\0';
@@ -383,7 +411,7 @@ identify_system_timezone(void)
 							 &bestscore, resultbuf);
 	if (bestscore > 0)
 	{
-		/* Ignore Olson's rather silly "Factory" zone; use GMT instead */
+		/* Ignore IANA's rather silly "Factory" zone; use GMT instead */
 		if (strcmp(resultbuf, "Factory") == 0)
 			return NULL;
 		return resultbuf;
@@ -472,7 +500,7 @@ identify_system_timezone(void)
 
 	/*
 	 * Did not find the timezone.  Fallback to use a GMT zone.  Note that the
-	 * Olson timezone database names the GMT-offset zones in POSIX style: plus
+	 * IANA timezone database names the GMT-offset zones in POSIX style: plus
 	 * is west of Greenwich.  It's unfortunate that this is opposite of SQL
 	 * conventions.  Should we therefore change the names? Probably not...
 	 */
@@ -484,6 +512,94 @@ identify_system_timezone(void)
 			resultbuf);
 #endif
 	return resultbuf;
+}
+
+/*
+ * Examine a system-provided symlink file to see if it tells us the timezone.
+ *
+ * Unfortunately, there is little standardization of how the system default
+ * timezone is determined in the absence of a TZ environment setting.
+ * But a common strategy is to create a symlink at a well-known place.
+ * If "linkname" identifies a readable symlink, and the tail of its contents
+ * matches a zone name we know, and the actual behavior of localtime() agrees
+ * with what we think that zone means, then we may use that zone name.
+ *
+ * We insist on a perfect behavioral match, which might not happen if the
+ * system has a different IANA database version than we do; but in that case
+ * it seems best to fall back to the brute-force search.
+ *
+ * linkname is the symlink file location to probe.
+ *
+ * tt tells about the system timezone behavior we need to match.
+ *
+ * If we successfully identify a zone name, store it in *bestzonename and
+ * return true; else return false.  bestzonename must be a buffer of length
+ * TZ_STRLEN_MAX + 1.
+ */
+static bool
+check_system_link_file(const char *linkname, struct tztry *tt,
+					   char *bestzonename)
+{
+#ifdef HAVE_READLINK
+	char		link_target[MAXPGPATH];
+	int			len;
+	const char *cur_name;
+
+	/*
+	 * Try to read the symlink.  If not there, not a symlink, etc etc, just
+	 * quietly fail; the precise reason needn't concern us.
+	 */
+	len = readlink(linkname, link_target, sizeof(link_target));
+	if (len < 0 || len >= sizeof(link_target))
+		return false;
+	link_target[len] = '\0';
+
+#ifdef DEBUG_IDENTIFY_TIMEZONE
+	fprintf(stderr, "symbolic link \"%s\" contains \"%s\"\n",
+			linkname, link_target);
+#endif
+
+	/*
+	 * The symlink is probably of the form "/path/to/zones/zone/name", or
+	 * possibly it is a relative path.  Nobody puts their zone DB directly in
+	 * the root directory, so we can definitely skip the first component; but
+	 * after that it's trial-and-error to identify which path component begins
+	 * the zone name.
+	 */
+	cur_name = link_target;
+	while (*cur_name)
+	{
+		/* Advance to next segment of path */
+		cur_name = strchr(cur_name + 1, '/');
+		if (cur_name == NULL)
+			break;
+		/* If there are consecutive slashes, skip all, as the kernel would */
+		do
+		{
+			cur_name++;
+		} while (*cur_name == '/');
+
+		/*
+		 * Test remainder of path to see if it is a matching zone name.
+		 * Relative paths might contain ".."; we needn't bother testing if the
+		 * first component is that.  Also defend against overlength names.
+		 */
+		if (*cur_name && *cur_name != '.' &&
+			strlen(cur_name) <= TZ_STRLEN_MAX &&
+			perfect_timezone_match(cur_name, tt))
+		{
+			/* Success! */
+			strcpy(bestzonename, cur_name);
+			return true;
+		}
+	}
+
+	/* Couldn't extract a matching zone name */
+	return false;
+#else
+	/* No symlinks?  Forget it */
+	return false;
+#endif
 }
 
 /*
@@ -586,7 +702,7 @@ static const struct
 	 * HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time
 	 * Zones on Windows 10 and Windows 7.
 	 *
-	 * The zones have been matched to Olson timezones by looking at the cities
+	 * The zones have been matched to IANA timezones by looking at the cities
 	 * listed in the win32 display name (in the comment here) in most cases.
 	 */
 	{
