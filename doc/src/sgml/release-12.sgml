@@ -842,6 +842,18 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
+2019-03-25 [8edd0e794] Suppress Append and MergeAppend plan nodes that have a s
+-->
+
+       <para>
+        Improve optimization of partition and <literal>UNION ALL</literal>
+        queries that have only a single child (David Rowley)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
 2018-12-13 [04fe805a1] Drop no-op CoerceToDomain nodes from expressions at plan
 -->
 
