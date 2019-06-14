@@ -1,6 +1,534 @@
 <!-- doc/src/sgml/release-11.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-11-4">
+  <title>Release 11.4</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2019-06-20</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 11.3.
+   For information about new features in major release 11, see
+   <xref linkend="release-11"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 11.4</title>
+
+   <para>
+    A dump/restore is not required for those running 11.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 11.1,
+    see <xref linkend="release-11-1"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6630ccad7] 2019-05-17 19:44:34 -0400
+Branch: REL_11_STABLE [592d5d75b] 2019-05-17 19:44:19 -0400
+Branch: master [3922f1064] 2019-05-16 16:25:43 -0400
+Branch: REL_11_STABLE [51948c4e1] 2019-05-16 16:25:43 -0400
+Branch: master [4b1fcb43d] 2019-05-16 11:58:21 -0400
+Branch: REL_11_STABLE [10c5cc4b4] 2019-05-16 11:58:22 -0400
+-->
+     <para>
+      Fix assorted errors in run-time partition pruning logic
+      (Tom Lane, Amit Langote, David Rowley)
+     </para>
+
+     <para>
+      These mistakes could lead to wrong answers in queries on partitioned
+      tables, if the comparison value used for pruning is dynamically
+      determined, or if multiple range-partitioned columns are involved in
+      pruning decisions, or if stable (not immutable) comparison operators
+      are involved.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [eaf0292c3] 2019-06-03 16:59:26 -0400
+Branch: REL_11_STABLE [601084eb1] 2019-06-03 16:59:16 -0400
+-->
+     <para>
+      Fix possible crash while trying to copy trigger definitions to a new
+      partition (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e76de8861] 2019-06-12 12:29:39 -0400
+Branch: REL_11_STABLE [0b6edb9fb] 2019-06-12 12:29:41 -0400
+Branch: REL_10_STABLE [2981e5a61] 2019-06-12 12:29:42 -0400
+Branch: REL9_6_STABLE [77d45b790] 2019-06-12 12:29:43 -0400
+Branch: REL9_5_STABLE [f7e99de95] 2019-06-12 12:29:45 -0400
+Branch: REL9_4_STABLE [9695ecf36] 2019-06-12 12:29:25 -0400
+-->
+     <para>
+      Fix failure of <command>ALTER TABLE ... ALTER COLUMN TYPE</command>
+      when the table has a partial exclusion constraint (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [ceac4505d] 2019-06-12 11:30:11 +0900
+Branch: REL_11_STABLE [fa5f3a4bc] 2019-06-12 11:30:41 +0900
+Branch: REL_10_STABLE [56a932533] 2019-06-12 11:31:00 +0900
+Branch: REL9_6_STABLE [ff1a25601] 2019-06-12 11:31:14 +0900
+Branch: REL9_5_STABLE [13f4b462d] 2019-06-12 11:31:20 +0900
+-->
+     <para>
+      Fix failure of <command>COMMENT</command> command for comments on
+      domain constraints (Daniel Gustafsson, Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Gierth <rhodiumtoad@postgresql.org>
+Branch: master [44e95b572] 2019-05-23 15:26:01 +0100
+Branch: REL_11_STABLE [f7da492dc] 2019-05-23 15:38:33 +0100
+Branch: REL_10_STABLE [99efd8d72] 2019-05-23 15:39:17 +0100
+-->
+     <para>
+      Prevent possible memory clobber when there are duplicate columns in a
+      hash aggregate's hash key list (Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [265728325] 2019-05-19 18:01:06 -0700
+Branch: REL_11_STABLE [9fea0b0e2] 2019-05-19 18:16:41 -0700
+-->
+     <para>
+      Fix incorrect argument null-ness checking during partial aggregation
+      of aggregates with zero or multiple arguments (David Rowley, Kyotaro
+      Horiguchi, Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [de87a084c] 2019-06-13 17:28:24 -0400
+Branch: REL_11_STABLE [85600b7b5] 2019-06-13 17:28:24 -0400
+Branch: REL_10_STABLE [14a91a8fc] 2019-06-13 17:28:24 -0400
+Branch: REL9_6_STABLE [cb2398d80] 2019-06-13 17:28:24 -0400
+-->
+     <para>
+      Avoid spurious deadlock failures when upgrading a tuple lock (Oleksii
+      Kliukin)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [24c19e9f6] 2019-05-09 16:53:05 -0400
+Branch: REL_11_STABLE [e7eed0baa] 2019-05-09 16:52:49 -0400
+Branch: REL_10_STABLE [946cdf9ff] 2019-05-09 16:52:49 -0400
+Branch: REL9_6_STABLE [3203714c3] 2019-05-09 16:52:49 -0400
+-->
+     <para>
+      Fix faulty generation of merge-append plans (Tom Lane)
+     </para>
+
+     <para>
+      This mistake could lead to <quote>could not find pathkey item to
+      sort</quote> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3d99a8139] 2019-06-12 19:43:08 -0400
+Branch: REL_11_STABLE [f95d8f810] 2019-06-12 19:43:09 -0400
+Branch: REL_10_STABLE [30d3df0a7] 2019-06-12 19:43:10 -0400
+Branch: REL9_6_STABLE [ad3e61b28] 2019-06-12 19:42:39 -0400
+Branch: REL9_5_STABLE [bf612fd3a] 2019-06-12 19:42:39 -0400
+Branch: REL9_4_STABLE [8ace51a6b] 2019-06-12 19:42:39 -0400
+-->
+     <para>
+      Fix incorrect printing of queries with duplicate join names
+      (Philip Dub&eacute;)
+     </para>
+
+     <para>
+      This oversight caused a dump/restore failure for views containing
+      such queries.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6f34fcbbd] 2019-06-11 13:33:22 -0400
+Branch: REL_11_STABLE [1c9034579] 2019-06-11 13:33:08 -0400
+Branch: REL_10_STABLE [b6f5689aa] 2019-06-11 13:33:08 -0400
+-->
+     <para>
+      Fix conversion of JSON string literals to JSON-type output columns
+      in <function>json_to_record()</function>
+      and <function>json_populate_record()</function> (Tom Lane)
+     </para>
+
+     <para>
+      Such cases should produce the literal as a standalone JSON value, but
+      the code misbehaved if the literal contained any characters requiring
+      escaping.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8a29ed053] 2019-05-12 18:53:38 -0400
+Branch: REL_11_STABLE [72ce7acaf] 2019-05-12 18:53:40 -0400
+Branch: REL_10_STABLE [940f64792] 2019-05-12 18:53:41 -0400
+Branch: REL9_6_STABLE [2a3dbc151] 2019-05-12 18:53:42 -0400
+Branch: REL9_5_STABLE [d6de52636] 2019-05-12 18:53:43 -0400
+Branch: REL9_4_STABLE [b1ca28e57] 2019-05-12 18:53:45 -0400
+-->
+     <para>
+      Fix misoptimization of <literal>{1,1}</literal> quantifiers in
+      regular expressions (Tom Lane)
+     </para>
+
+     <para>
+      Such quantifiers were treated as no-ops and optimized away;
+      but the documentation specifies that they impose greediness, or
+      non-greediness in the case of the non-greedy
+      variant <literal>{1,1}?</literal>, on the subexpression they're
+      attached to, and this did not happen.  The misbehavior occurred
+      only if the subexpression contained capturing parentheses or a
+      back-reference.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [9b42e7137] 2019-05-13 10:27:59 -0700
+Branch: REL_11_STABLE [bf78f50ba] 2019-05-13 10:27:57 -0700
+-->
+     <para>
+      Avoid corruption of a btree index in the unlikely case that a failure
+      occurs during key truncation during a page split (Peter Geoghegan)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [85ccb6899] 2019-05-11 21:27:29 -0400
+Branch: REL_11_STABLE [eb97242c2] 2019-05-11 21:27:13 -0400
+Branch: REL_10_STABLE [c3d113136] 2019-05-11 21:27:13 -0400
+Branch: REL9_6_STABLE [27d3394b0] 2019-05-11 21:27:13 -0400
+Branch: REL9_5_STABLE [899f943ca] 2019-05-11 21:27:13 -0400
+-->
+     <para>
+      Avoid possible failures while initializing a new
+      process's <structname>pg_stat_activity</structname> data (Tom Lane)
+     </para>
+
+     <para>
+      Certain operations that could fail, such as converting strings
+      extracted from an SSL certificate into the database encoding, were
+      being performed inside a critical section.  Failure there would
+      result in database-wide lockup due to violating the access protocol
+      for shared <structname>pg_stat_activity</structname> data.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [610747d86] 2019-05-10 14:56:41 -0400
+Branch: REL_11_STABLE [803f90ab7] 2019-05-10 14:56:41 -0400
+Branch: REL_10_STABLE [3dcf45af5] 2019-05-10 14:56:41 -0400
+Branch: REL9_6_STABLE [a73c8caea] 2019-05-10 14:56:41 -0400
+Branch: REL9_5_STABLE [91a05390c] 2019-05-10 14:56:41 -0400
+Branch: REL9_4_STABLE [b1cde67a4] 2019-05-10 14:56:41 -0400
+-->
+     <para>
+      Fix race condition in check to see whether a pre-existing shared
+      memory segment is still in use by a conflicting postmaster (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a1a789eb5] 2019-04-29 12:26:07 -0400
+Branch: REL_11_STABLE [9346d396f] 2019-06-12 17:29:48 -0400
+Branch: REL_10_STABLE [ac8f2e1ef] 2019-06-12 17:29:48 -0400
+-->
+     <para>
+      Fix unsafe coding in walreceiver's signal handler (Tom Lane)
+     </para>
+
+     <para>
+      This avoids rare problems in which the walreceiver process would
+      crash or deadlock when commanded to shut down.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [fff2a7d7b] 2019-06-10 23:34:50 -0700
+Branch: REL_11_STABLE [c01556017] 2019-06-10 23:35:38 -0700
+Branch: REL_10_STABLE [52ad5fc0a] 2019-06-10 23:36:48 -0700
+Branch: REL9_6_STABLE [b8607e15e] 2019-06-10 23:36:55 -0700
+Branch: REL9_5_STABLE [483b2d7ae] 2019-06-10 23:36:59 -0700
+Branch: REL9_4_STABLE [69f32206d] 2019-06-10 23:37:02 -0700
+-->
+     <para>
+      Avoid attempting to do database accesses for parameter checking in
+      processes that are not connected to a specific database (Vignesh C,
+      Andres Freund)
+     </para>
+
+     <para>
+      This error could result in failures like <quote>cannot read pg_class
+      without having selected a database</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ddf927fb1] 2019-05-13 10:53:19 -0400
+Branch: REL_11_STABLE [6b0e9411f] 2019-05-13 10:53:19 -0400
+Branch: REL_10_STABLE [e3bf3c0f8] 2019-05-13 10:53:19 -0400
+Branch: REL9_6_STABLE [8eaba0b93] 2019-05-13 10:53:19 -0400
+Branch: REL9_5_STABLE [0ec3d2ab2] 2019-05-13 10:53:19 -0400
+-->
+     <para>
+      Avoid possible hang in <application>libpq</application> if using SSL
+      and OpenSSL's pending-data buffer contains an exact multiple of 256
+      bytes (David Binderman)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [23bd3cec6] 2018-09-13 12:36:21 -0400
+Branch: REL_11_STABLE [995b4fe0b] 2019-06-14 11:25:13 -0400
+Branch: REL_10_STABLE [8de574aa8] 2019-06-14 11:25:13 -0400
+Branch: REL9_6_STABLE [75b0f21e1] 2019-06-14 11:25:13 -0400
+Branch: REL9_5_STABLE [77dc741a1] 2019-06-14 11:25:13 -0400
+Branch: REL9_4_STABLE [37011bcb3] 2019-06-14 11:25:13 -0400
+-->
+     <para>
+      Make <application>initdb</application> determine the operating
+      system's time zone from the <filename>/etc/localtime</filename>
+      symbolic link, if that exists (Tom Lane)
+     </para>
+
+     <para>
+      This makes <application>initdb</application> more likely to select
+      the desired time zone string when multiple identical time zones
+      exist.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [b8c6014a6] 2019-05-22 14:48:00 +0900
+Branch: REL_11_STABLE [8357a413f] 2019-05-22 14:48:14 +0900
+Branch: REL_10_STABLE [0c2a5a862] 2019-05-22 14:48:30 +0900
+Branch: REL9_6_STABLE [a21fb12e7] 2019-05-22 14:48:39 +0900
+Branch: master [156c0c2df] 2019-05-23 10:48:17 +0900
+Branch: REL_11_STABLE [a7b2fca15] 2019-05-23 10:48:24 +0900
+Branch: REL_10_STABLE [2ccebcd23] 2019-05-23 10:48:29 +0900
+Branch: REL9_6_STABLE [c82e8ba00] 2019-05-23 10:48:35 +0900
+-->
+     <para>
+      Fix ordering of <command>GRANT</command> commands emitted
+      by <application>pg_dump</application>
+      and <application>pg_dumpall</application> for databases and
+      tablespaces (Nathan Bossart, Michael Paquier)
+     </para>
+
+     <para>
+      If cascading grants had been issued, restore might fail due to
+      the <command>GRANT</command> commands being given in an order that
+      didn't respect their interdependencies.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [33a53130a] 2019-06-10 18:56:23 -0400
+Branch: REL_11_STABLE [6a781c4f5] 2019-06-10 18:56:23 -0400
+Branch: REL_10_STABLE [1eb8a5ea4] 2019-06-10 18:56:23 -0400
+-->
+     <para>
+      Make <application>pg_dump</application> recreate table partitions
+      using <command>CREATE TABLE</command> then <command>ATTACH
+      PARTITION</command>, rather than including <literal>PARTITION
+      OF</literal> in the creation command (&Aacute;lvaro Herrera, David
+      Rowley)
+     </para>
+
+     <para>
+      This avoids problems with the partition's column order possibly being
+      changed to match the parent's.  Also, a partition is now restorable
+      from the dump (as a standalone table) even if its parent table isn't
+      restored; the <command>ATTACH</command> will fail, but that can just
+      be ignored.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [e51bad8fb] 2019-05-11 13:00:54 +0900
+Branch: REL_11_STABLE [e16ab408f] 2019-05-11 13:01:07 +0900
+Branch: REL_10_STABLE [c6354e943] 2019-05-11 13:01:12 +0900
+Branch: REL9_6_STABLE [0c132d458] 2019-05-11 13:01:19 +0900
+Branch: REL9_5_STABLE [e17fba8d8] 2019-05-11 13:01:24 +0900
+Branch: REL9_4_STABLE [82ed20e15] 2019-05-11 13:01:29 +0900
+-->
+     <para>
+      Fix misleading error reports
+      from <application>reindexdb</application> (Julien Rouhaud)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [3ae3c18b3] 2019-05-09 10:29:10 +0900
+Branch: REL_11_STABLE [25f12acd5] 2019-05-09 10:29:29 +0900
+Branch: REL_10_STABLE [db8802a99] 2019-05-09 10:29:40 +0900
+Branch: REL9_6_STABLE [a9a886c6f] 2019-05-09 10:29:52 +0900
+Branch: REL9_5_STABLE [a475b1e77] 2019-05-09 10:30:08 +0900
+-->
+     <para>
+      Ensure that <application>vacuumdb</application> returns correct
+      status if an error occurs while using parallel jobs
+      (Julien Rouhaud)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2cd4e8357] 2019-06-03 18:06:04 -0400
+Branch: REL_11_STABLE [57e85fa2c] 2019-06-03 18:06:04 -0400
+Branch: REL_10_STABLE [ba38967d7] 2019-06-03 18:06:04 -0400
+Branch: REL9_6_STABLE [efa121ae6] 2019-06-03 18:06:04 -0400
+-->
+     <para>
+      Fix <filename>contrib/auto_explain</filename> to not cause problems
+      in parallel queries (Tom Lane)
+     </para>
+
+     <para>
+      Previously, a parallel worker might try to log its query even if the
+      parent query were not being logged
+      by <filename>auto_explain</filename>.  This would work sometimes, but
+      it's confusing, and in some cases it resulted in failures
+      like <quote>could not find key N in shm TOC</quote>.
+     </para>
+
+     <para>
+      Also, fix an off-by-one error that resulted in not necessarily
+      logging every query even when the sampling rate is set to 1.0.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Etsuro Fujita <efujita@postgresql.org>
+Branch: master [8b6da83d1] 2019-06-13 17:59:09 +0900
+Branch: REL_11_STABLE [214460182] 2019-06-13 17:59:11 +0900
+Branch: REL_10_STABLE [0f2b23426] 2019-06-13 17:59:12 +0900
+Branch: REL9_6_STABLE [1ade21e7f] 2019-06-13 17:59:13 +0900
+Branch: REL9_5_STABLE [eddb79705] 2019-06-13 17:59:15 +0900
+Branch: REL9_4_STABLE [1a3d9f62c] 2019-06-13 17:59:17 +0900
+-->
+     <para>
+      In <filename>contrib/postgres_fdw</filename>, account for possible
+      data modifications by local <literal>BEFORE ROW UPDATE</literal>
+      triggers (Shohei Mochizuki)
+     </para>
+
+     <para>
+      If a trigger modified a column that was otherwise not changed by the
+      <command>UPDATE</command>, the new value was not transmitted to the
+      remote server.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [d02768ddd] 2019-05-12 10:33:05 -0700
+Branch: REL_11_STABLE [4ec14e5aa] 2019-05-12 10:33:08 -0700
+Branch: REL_10_STABLE [409f5303c] 2019-05-12 10:33:08 -0700
+Branch: REL9_6_STABLE [ff7555c4f] 2019-05-12 10:33:36 -0700
+Branch: REL9_5_STABLE [9dc65bcf9] 2019-05-12 10:34:22 -0700
+Branch: REL9_4_STABLE [08e3fd96f] 2019-05-12 10:34:26 -0700
+-->
+     <para>
+      On Windows, avoid failure when the database encoding is set to
+      SQL_ASCII and we attempt to log a non-ASCII string (Noah Misch)
+     </para>
+
+     <para>
+      The code had been assuming that such strings must be in UTF-8, and
+      would throw an error if they didn't appear to be validly encoded.
+      Now, just transmit the untranslated bytes to the log.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3f61b3205] 2019-05-31 12:34:54 -0400
+Branch: REL_11_STABLE [312017fcc] 2019-05-31 12:34:54 -0400
+Branch: REL_10_STABLE [683c17b30] 2019-05-31 12:34:54 -0400
+Branch: REL9_6_STABLE [c332c94ad] 2019-05-31 12:34:55 -0400
+Branch: REL9_5_STABLE [da53e4f93] 2019-05-31 12:34:55 -0400
+Branch: REL9_4_STABLE [db5d99916] 2019-05-31 12:34:55 -0400
+-->
+     <para>
+      Make <application>PL/pgSQL</application>'s header files C++-safe
+      (George Tarasov)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-11-3">
   <title>Release 11.3</title>
 
