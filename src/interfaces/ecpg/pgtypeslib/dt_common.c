@@ -854,7 +854,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Note: the uses of %.*s in this function would be risky if the
 			 * timezone names ever contain non-ASCII characters.  However, all
-			 * TZ abbreviations in the Olson database are plain ASCII.
+			 * TZ abbreviations in the IANA database are plain ASCII.
 			 */
 
 			if (print_tz)
