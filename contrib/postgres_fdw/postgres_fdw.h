@@ -59,12 +59,17 @@ typedef struct PgFdwRelationInfo
 	/* Selectivity of join conditions */
 	Selectivity joinclause_sel;
 
-	/* Estimated size and cost for a scan or join. */
+	/* Estimated size and cost for a scan, join, or grouping/aggregation. */
 	double		rows;
 	int			width;
 	Cost		startup_cost;
 	Cost		total_cost;
-	/* Costs excluding costs for transferring data from the foreign server */
+	/*
+	 * Estimated number of rows fetched from the foreign server, and costs
+	 * excluding costs for transferring those rows from the foreign server.
+	 * These are only used by estimate_path_cost_size().
+	 */
+	double		retrieved_rows;
 	Cost		rel_startup_cost;
 	Cost		rel_total_cost;
 

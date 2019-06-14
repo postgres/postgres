@@ -661,10 +661,11 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
 
 	/*
-	 * Set cached relation costs to some negative value, so that we can detect
-	 * when they are set to some sensible costs during one (usually the first)
-	 * of the calls to estimate_path_cost_size().
+	 * Set # of retrieved rows and cached relation costs to some negative
+	 * value, so that we can detect when they are set to some sensible values,
+	 * during one (usually the first) of the calls to estimate_path_cost_size.
 	 */
+	fpinfo->retrieved_rows = -1;
 	fpinfo->rel_startup_cost = -1;
 	fpinfo->rel_total_cost = -1;
 
@@ -2623,7 +2624,6 @@ estimate_path_cost_size(PlannerInfo *root,
 	int			width;
 	Cost		startup_cost;
 	Cost		total_cost;
-	Cost		cpu_per_tuple;
 
 	/* Make sure the core code has set up the relation's reltarget */
 	Assert(foreignrel->reltarget);
@@ -2737,25 +2737,19 @@ estimate_path_cost_size(PlannerInfo *root,
 		Assert(param_join_conds == NIL);
 
 		/*
-		 * Use rows/width estimates made by set_baserel_size_estimates() for
-		 * base foreign relations and set_joinrel_size_estimates() for join
-		 * between foreign relations.
-		 */
-		rows = foreignrel->rows;
-		width = foreignrel->reltarget->width;
-
-		/* Back into an estimate of the number of retrieved rows. */
-		retrieved_rows = clamp_row_est(rows / fpinfo->local_conds_sel);
-
-		/*
 		 * We will come here again and again with different set of pathkeys or
 		 * additional post-scan/join-processing steps that caller wants to
-		 * cost.  We don't need to calculate the costs of the underlying scan,
-		 * join, or grouping each time.  Instead, use the costs if we have
-		 * cached them already.
+		 * cost.  We don't need to calculate the cost/size estimates for the
+		 * underlying scan, join, or grouping each time.  Instead, use those
+		 * estimates if we have cached them already.
 		 */
 		if (fpinfo->rel_startup_cost >= 0 && fpinfo->rel_total_cost >= 0)
 		{
+			Assert(fpinfo->retrieved_rows >= 1);
+
+			rows = fpinfo->rows;
+			retrieved_rows = fpinfo->retrieved_rows;
+			width = fpinfo->width;
 			startup_cost = fpinfo->rel_startup_cost;
 			run_cost = fpinfo->rel_total_cost - fpinfo->rel_startup_cost;
 
@@ -2785,6 +2779,10 @@ estimate_path_cost_size(PlannerInfo *root,
 			QualCost	remote_conds_cost;
 			double		nrows;
 
+			/* Use rows/width estimates made by the core code. */
+			rows = foreignrel->rows;
+			width = foreignrel->reltarget->width;
+
 			/* For join we expect inner and outer relations set */
 			Assert(fpinfo->innerrel && fpinfo->outerrel);
 
@@ -2793,7 +2791,12 @@ estimate_path_cost_size(PlannerInfo *root,
 
 			/* Estimate of number of rows in cross product */
 			nrows = fpinfo_i->rows * fpinfo_o->rows;
-			/* Clamp retrieved rows estimate to at most size of cross product */
+
+			/*
+			 * Back into an estimate of the number of retrieved rows.  Just in
+			 * case this is nuts, clamp to at most nrow.
+			 */
+			retrieved_rows = clamp_row_est(rows / fpinfo->local_conds_sel);
 			retrieved_rows = Min(retrieved_rows, nrows);
 
 			/*
@@ -2871,9 +2874,8 @@ estimate_path_cost_size(PlannerInfo *root,
 
 			ofpinfo = (PgFdwRelationInfo *) outerrel->fdw_private;
 
-			/* Get rows and width from input rel */
+			/* Get rows from input rel */
 			input_rows = ofpinfo->rows;
-			width = ofpinfo->width;
 
 			/* Collect statistics about aggregates for estimating costs. */
 			MemSet(&aggcosts, 0, sizeof(AggClauseCosts));
@@ -2919,6 +2921,9 @@ estimate_path_cost_size(PlannerInfo *root,
 			{
 				rows = retrieved_rows = numGroups;
 			}
+
+			/* Use width estimate made by the core code. */
+			width = foreignrel->reltarget->width;
 
 			/*-----
 			 * Startup cost includes:
@@ -2966,7 +2971,17 @@ estimate_path_cost_size(PlannerInfo *root,
 		}
 		else
 		{
-			/* Clamp retrieved rows estimates to at most foreignrel->tuples. */
+			Cost		cpu_per_tuple;
+
+			/* Use rows/width estimates made by set_baserel_size_estimates. */
+			rows = foreignrel->rows;
+			width = foreignrel->reltarget->width;
+
+			/*
+			 * Back into an estimate of the number of retrieved rows.  Just in
+			 * case this is nuts, clamp to at most foreignrel->tuples.
+			 */
+			retrieved_rows = clamp_row_est(rows / fpinfo->local_conds_sel);
 			retrieved_rows = Min(retrieved_rows, foreignrel->tuples);
 
 			/*
@@ -3043,18 +3058,20 @@ estimate_path_cost_size(PlannerInfo *root,
 	}
 
 	/*
-	 * Cache the costs for scans, joins, or groupings without any
-	 * parameterization, pathkeys, or additional post-scan/join-processing
-	 * steps, before adding the costs for transferring data from the foreign
-	 * server.  These costs are useful for costing remote joins involving this
-	 * relation or costing other remote operations for this relation such as
-	 * remote sorts and remote LIMIT restrictions, when the costs can not be
-	 * obtained from the foreign server.  This function will be called at
-	 * least once for every foreign relation without any parameterization,
-	 * pathkeys, or additional post-scan/join-processing steps.
+	 * Cache the retrieved rows and cost estimates for scans, joins, or
+	 * groupings without any parameterization, pathkeys, or additional
+	 * post-scan/join-processing steps, before adding the costs for
+	 * transferring data from the foreign server.  These estimates are useful
+	 * for costing remote joins involving this relation or costing other
+	 * remote operations on this relation such as remote sorts and remote
+	 * LIMIT restrictions, when the costs can not be obtained from the foreign
+	 * server.  This function will be called at least once for every foreign
+	 * relation without any parameterization, pathkeys, or additional
+	 * post-scan/join-processing steps.
 	 */
 	if (pathkeys == NIL && param_join_conds == NIL && fpextra == NULL)
 	{
+		fpinfo->retrieved_rows = retrieved_rows;
 		fpinfo->rel_startup_cost = startup_cost;
 		fpinfo->rel_total_cost = total_cost;
 	}
@@ -5157,10 +5174,11 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 		fpinfo->user = NULL;
 
 	/*
-	 * Set cached relation costs to some negative value, so that we can detect
-	 * when they are set to some sensible costs, during one (usually the
-	 * first) of the calls to estimate_path_cost_size().
+	 * Set # of retrieved rows and cached relation costs to some negative
+	 * value, so that we can detect when they are set to some sensible values,
+	 * during one (usually the first) of the calls to estimate_path_cost_size.
 	 */
+	fpinfo->retrieved_rows = -1;
 	fpinfo->rel_startup_cost = -1;
 	fpinfo->rel_total_cost = -1;
 
@@ -5708,10 +5726,11 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	fpinfo->pushdown_safe = true;
 
 	/*
-	 * Set cached relation costs to some negative value, so that we can detect
-	 * when they are set to some sensible costs, during one (usually the
-	 * first) of the calls to estimate_path_cost_size().
+	 * Set # of retrieved rows and cached relation costs to some negative
+	 * value, so that we can detect when they are set to some sensible values,
+	 * during one (usually the first) of the calls to estimate_path_cost_size.
 	 */
+	fpinfo->retrieved_rows = -1;
 	fpinfo->rel_startup_cost = -1;
 	fpinfo->rel_total_cost = -1;
 
@@ -5852,8 +5871,6 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	fpinfo->width = width;
 	fpinfo->startup_cost = startup_cost;
 	fpinfo->total_cost = total_cost;
-
-	grouped_rel->rows = fpinfo->rows;
 
 	/* Create and add foreign path to the grouping relation. */
 	grouppath = create_foreign_upper_path(root,
