@@ -4610,7 +4610,7 @@ l3:
 		uint16		infomask;
 		uint16		infomask2;
 		bool		require_sleep;
-		bool		skip_tuple_lock;
+		bool		skip_tuple_lock = false;
 		ItemPointerData t_ctid;
 
 		/* must copy state data before unlocking buffer */
@@ -4636,7 +4636,6 @@ l3:
 		if (first_time)
 		{
 			first_time = false;
-			skip_tuple_lock = false;
 
 			if (infomask & HEAP_XMAX_IS_MULTI)
 			{
