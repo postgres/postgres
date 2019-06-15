@@ -178,7 +178,7 @@ CREATE TABLE t2 (
 INSERT INTO t2 SELECT mod(i,100), mod(i,100)
                  FROM generate_series(1,1000000) s(i);
 
-CREATE STATISTICS s2 (mcv) ON (a, b) FROM t2;
+CREATE STATISTICS s2 (mcv) ON a, b FROM t2;
 
 ANALYZE t2;
 
