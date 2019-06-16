@@ -291,7 +291,7 @@ CREATE VIEW pg_stats_ext WITH (security_barrier) AS
     AND (c.relrowsecurity = false OR NOT row_security_active(c.oid));
 
 REVOKE ALL on pg_statistic_ext FROM public;
-GRANT SELECT (oid, stxrelid, stxname, stxnamespace, stxowner, stxkeys, stxkind)
+GRANT SELECT (tableoid, oid, stxrelid, stxname, stxnamespace, stxowner, stxkeys, stxkind)
     ON pg_statistic_ext TO public;
 
 CREATE VIEW pg_publication_tables AS
