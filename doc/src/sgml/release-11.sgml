@@ -232,8 +232,15 @@ Branch: master [9b42e7137] 2019-05-13 10:27:59 -0700
 Branch: REL_11_STABLE [bf78f50ba] 2019-05-13 10:27:57 -0700
 -->
      <para>
-      Avoid corruption of a btree index in the unlikely case that a failure
-      occurs during key truncation during a page split (Peter Geoghegan)
+      Avoid writing an invalid empty btree index page in the unlikely case
+      that a failure occurs while processing INCLUDEd columns during a page
+      split (Peter Geoghegan)
+     </para>
+
+     <para>
+      The invalid page would not affect normal index operations, but it
+      might cause failures in subsequent VACUUMs. If that has happened to
+      one of your indexes, recover by reindexing the index.
      </para>
     </listitem>
 
@@ -340,17 +347,39 @@ Branch: REL_10_STABLE [8de574aa8] 2019-06-14 11:25:13 -0400
 Branch: REL9_6_STABLE [75b0f21e1] 2019-06-14 11:25:13 -0400
 Branch: REL9_5_STABLE [77dc741a1] 2019-06-14 11:25:13 -0400
 Branch: REL9_4_STABLE [37011bcb3] 2019-06-14 11:25:13 -0400
+Author: Andrew Gierth <rhodiumtoad@postgresql.org>
+Branch: master [e3846a00c] 2019-06-15 18:15:23 +0100
+Branch: REL_11_STABLE [7f28fc8e9] 2019-06-15 18:16:43 +0100
+Branch: REL_10_STABLE [2913a892e] 2019-06-15 18:18:03 +0100
+Branch: REL9_6_STABLE [5f5b6667e] 2019-06-15 18:19:30 +0100
+Branch: REL9_5_STABLE [6335f8a99] 2019-06-15 18:21:41 +0100
+Branch: REL9_4_STABLE [6c66865f3] 2019-06-15 18:23:16 +0100
 -->
      <para>
-      Make <application>initdb</application> determine the operating
-      system's time zone from the <filename>/etc/localtime</filename>
-      symbolic link, if that exists (Tom Lane)
+      Improve <application>initdb</application>'s handling of multiple
+      equivalent names for the system time zone (Tom Lane, Andrew Gierth)
      </para>
 
      <para>
-      This makes <application>initdb</application> more likely to select
-      the desired time zone string when multiple identical time zones
-      exist.
+      Make <application>initdb</application> examine
+      the <filename>/etc/localtime</filename> symbolic link, if that
+      exists, to break ties between equivalent names for the system time
+      zone.  This makes <application>initdb</application> more likely to
+      select the time zone name that the user would expect when multiple
+      identical time zones exist.  It will not change the behavior
+      if <filename>/etc/localtime</filename> is not a symlink to a zone
+      data file, nor if the time zone is determined from
+      the <envar>TZ</envar> environment variable.
+     </para>
+
+     <para>
+      Separately, prefer <literal>UTC</literal> over other spellings of
+      that time zone, when neither <envar>TZ</envar>
+      nor <filename>/etc/localtime</filename> provide a hint.  This fixes
+      an annoyance introduced by <application>tzdata</application> 2019a's
+      change to make the <literal>UCT</literal> and <literal>UTC</literal>
+      zone names equivalent: <application>initdb</application> was then
+      preferring <literal>UCT</literal>, which almost nobody wants.
      </para>
     </listitem>
 
