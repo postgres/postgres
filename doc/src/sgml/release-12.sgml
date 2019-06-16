@@ -2716,24 +2716,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2018-09-13 [23bd3cec6] Attempt to identify system timezone by reading /etc/loca
--->
-
-      <para>
-       Have <xref linkend="app-initdb"/> determine the local timezone
-       from the <filename>/etc/localtime</filename> symbolic link,
-       if it exists (Tom Lane)
-      </para>
-
-      <para>
-       This is more likely to produce the desired time zone string when
-       multiple identical time zones exist.
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2019-03-23 [e0090c869] Add option -N/- -no-sync to pg_checksums
 -->
