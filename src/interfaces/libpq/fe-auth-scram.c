@@ -586,6 +586,12 @@ read_server_first_message(fe_scram_state *state, char *input)
 	state->saltlen = pg_b64_decode(encoded_salt,
 								   strlen(encoded_salt),
 								   state->salt);
+	if (state->saltlen < 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("malformed SCRAM message (invalid salt)\n"));
+		return false;
+	}
 
 	iterations_str = read_attr_value(&input, 'i', &conn->errorMessage);
 	if (iterations_str == NULL)
@@ -616,6 +622,7 @@ read_server_final_message(fe_scram_state *state, char *input)
 {
 	PGconn	   *conn = state->conn;
 	char	   *encoded_server_signature;
+	char	   *decoded_server_signature;
 	int			server_signature_len;
 
 	state->server_final_message = strdup(input);
@@ -651,15 +658,27 @@ read_server_final_message(fe_scram_state *state, char *input)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("malformed SCRAM message (garbage at end of server-final-message)\n"));
 
+	server_signature_len = pg_b64_dec_len(strlen(encoded_server_signature));
+	decoded_server_signature = malloc(server_signature_len);
+	if (!decoded_server_signature)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("out of memory\n"));
+		return false;
+	}
+
 	server_signature_len = pg_b64_decode(encoded_server_signature,
 										 strlen(encoded_server_signature),
-										 state->ServerSignature);
+										 decoded_server_signature);
 	if (server_signature_len != SCRAM_KEY_LEN)
 	{
+		free(decoded_server_signature);
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("malformed SCRAM message (invalid server signature)\n"));
 		return false;
 	}
+	memcpy(state->ServerSignature, decoded_server_signature, SCRAM_KEY_LEN);
+	free(decoded_server_signature);
 
 	return true;
 }
