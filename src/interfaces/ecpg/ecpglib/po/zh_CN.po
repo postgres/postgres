@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL 9.0)\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:40+0000\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-06-04 12:08+0000\n"
 "PO-Revision-Date: 2013-09-03 23:28-0400\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -16,158 +16,191 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: connect.c:231
+#: connect.c:237
 msgid "empty message text"
 msgstr "消息文本为空"
 
-#: connect.c:384 connect.c:413 connect.c:618
+#: connect.c:403 connect.c:432 connect.c:640
 msgid "<DEFAULT>"
 msgstr "<DEFAULT>"
 
-#: descriptor.c:807 misc.c:113
+#: descriptor.c:887 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
-#: error.c:29
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:33
 #, c-format
 msgid "no data found on line %d"
 msgstr "在第%d行上没有找到数据"
 
-#: error.c:39
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:40
 #, c-format
 msgid "out of memory on line %d"
 msgstr "在第%d行上内存用尽"
 
-#: error.c:49
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:47
 #, c-format
 msgid "unsupported type \"%s\" on line %d"
 msgstr "在第%2$d上出现不支持的类型\"%1$s\""
 
-#: error.c:59
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:54
 #, c-format
 msgid "too many arguments on line %d"
 msgstr "在第%d行上的参数多于指定的数量"
 
-#: error.c:69
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:61
 #, c-format
 msgid "too few arguments on line %d"
 msgstr "在第%d行上的参数少于指定的数量"
 
-#: error.c:79
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:68
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
 msgstr "对于整数类型的输入语法无效: \"%s\" ,在第%d行"
 
-#: error.c:89
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:75
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
 msgstr "对于无符号整数类型的输入语法无效: \"%s\" 在第%d行"
 
-#: error.c:99
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:82
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
 msgstr "对于浮点类型的输入语法无效: \"%s\"，在第%d行"
 
-#: error.c:110
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:90
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
 msgstr "对于布尔类型语法无效: \"%s\"，在第%d行上"
 
-#: error.c:118
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:95
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
 msgstr "在第%d行上无法转换布尔类型值: 大小不匹配"
 
-#: error.c:128
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:102
 #, c-format
 msgid "empty query on line %d"
 msgstr "在第%d行上查询是空的"
 
-#: error.c:138
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:109
 #, c-format
 msgid "null value without indicator on line %d"
 msgstr "在第%d行上的空值没有标志"
 
-#: error.c:148
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:116
 #, c-format
 msgid "variable does not have an array type on line %d"
 msgstr "在第%d行上的变量没有数组类型"
 
-#: error.c:158
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:123
 #, c-format
 msgid "data read from server is not an array on line %d"
 msgstr "在第%d行上从服务器读取的数据不是数组"
 
-#: error.c:168
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:130
 #, c-format
 msgid "inserting an array of variables is not supported on line %d"
 msgstr "在第%d行上不支持正在插入一个的变量数组"
 
-#: error.c:178
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:137
 #, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "在第%2$d行上连接\"%1$s\"不存在"
 
-#: error.c:188
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "在第%2$d行上没有连接到\"%1$s\"连接"
 
-#: error.c:198
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:151
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
 msgstr "在第%2$d行上的语句名称\"%1$s\"无效"
 
-#: error.c:208
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:158
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "在第%2$d行上没有找到描述符\"%1$s\""
 
-#: error.c:218
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:165
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "在第%d行上的描述符索引超出范围"
 
-#: error.c:228
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:172
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
 msgstr "在第%2$d行上出现无法识别的描述符成员\"%1$s\""
 
-#: error.c:238
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:179
 #, c-format
 msgid "variable does not have a numeric type on line %d"
 msgstr "在第%d上的变量没有数值类型"
 
-#: error.c:248
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:186
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "在第%d行上的变量没有字符类型"
 
-#: error.c:258
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:193
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "在第%d行上的事务处理中发生错误"
 
-#: error.c:268
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:200
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "在第%2$d行上无法连接数据库\"%1$s\""
 
-#: error.c:278
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:207
+#, fuzzy, c-format
+#| msgid "SQL error %d on line %d"
+msgid "The cursor is invalid on line %d"
+msgstr "在第%2$d行上的SQL命令发生错误 代码%1$d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "在第%2$d行上的SQL命令发生错误 代码%1$d"
 
 # common.c:298
-#: error.c:318
+#: error.c:261
 msgid "the connection to the server was lost"
 msgstr "与服务器的连接丢失"
 
-#: error.c:405
+#: error.c:354
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQL语句错误: %s\n"
 
-#: execute.c:1921
+#: execute.c:2187 execute.c:2194
 msgid "<empty>"
 msgstr "<空>"

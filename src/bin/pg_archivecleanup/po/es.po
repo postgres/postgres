@@ -1,34 +1,35 @@
 # Spanish message translation file for pg_archivecleanup
-# Copyright (C) 2017 PostgreSQL Global Development Group
+
+# Copyright (c) 2017-2019, PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Carlos Chapi <carlos.chapi@2ndquadrant.com>, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-02 23:47+0000\n"
-"PO-Revision-Date: 2019-04-29 08:52-0400\n"
+"POT-Creation-Date: 2019-06-06 17:15+0000\n"
+"PO-Revision-Date: 2019-06-06 17:21-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
-"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: BlackCAT 1.0\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:188
 #, c-format
 msgid "fatal: "
 msgstr "fatal: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:195
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:202
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
@@ -38,38 +39,38 @@ msgstr "precaución: "
 msgid "archive location \"%s\" does not exist"
 msgstr "ubicación de archivador «%s» no existe"
 
-#: pg_archivecleanup.c:153
+#: pg_archivecleanup.c:154
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "no se pudo eliminar el archivo «%s»: %m"
 
-#: pg_archivecleanup.c:161
+#: pg_archivecleanup.c:162
 #, c-format
 msgid "could not read archive location \"%s\": %m"
 msgstr "no se pudo leer la ubicación del archivador «%s»: %m"
 
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:165
 #, c-format
 msgid "could not close archive location \"%s\": %m"
 msgstr "no se pudo cerrar la ubicación del archivador «%s»: %m"
 
-#: pg_archivecleanup.c:168
+#: pg_archivecleanup.c:169
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "no se pudo abrir la ubicación del archivador «%s»: %m"
 
-#: pg_archivecleanup.c:241
+#: pg_archivecleanup.c:242
 #, c-format
 msgid "invalid file name argument"
 msgstr "el nombre de archivo usado como argumento no es válido"
 
-#: pg_archivecleanup.c:242 pg_archivecleanup.c:315 pg_archivecleanup.c:336
-#: pg_archivecleanup.c:348 pg_archivecleanup.c:355
+#: pg_archivecleanup.c:243 pg_archivecleanup.c:316 pg_archivecleanup.c:337
+#: pg_archivecleanup.c:349 pg_archivecleanup.c:356
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Pruebe «%s --help» para mayor información.\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:256
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
@@ -78,17 +79,17 @@ msgstr ""
 "%s elimina archivos de WAL antiguos del archivador de PostgreSQL.\n"
 "\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:257
 #, c-format
 msgid "Usage:\n"
 msgstr "Empleo:\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:258
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 msgstr "  %s [OPCIÓN].... UBICACIÓNARCHIVADOR WALMÁSANTIGUOAMANTENER\n"
 
-#: pg_archivecleanup.c:258
+#: pg_archivecleanup.c:259
 #, c-format
 msgid ""
 "\n"
@@ -97,32 +98,32 @@ msgstr ""
 "\n"
 "Opciones:\n"
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:260
 #, c-format
 msgid "  -d             generate debug output (verbose mode)\n"
 msgstr "  -d             genera salida de depuración (modo verboso)\n"
 
-#: pg_archivecleanup.c:260
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "  -n             dry run, show the names of the files that would be removed\n"
 msgstr "  -n             simulacro, muestra el nombre de los archivos que se eliminarían\n"
 
-#: pg_archivecleanup.c:261
+#: pg_archivecleanup.c:262
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
 msgstr "  -V, --version  muestra información de la versión, luego sale\n"
 
-#: pg_archivecleanup.c:262
+#: pg_archivecleanup.c:263
 #, c-format
 msgid "  -x EXT         clean up files if they have this extension\n"
 msgstr "  -x EXT         hace limpieza de archivos que tengan esta extensión\n"
 
-#: pg_archivecleanup.c:263
+#: pg_archivecleanup.c:264
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
 msgstr "  -?, --help     muestra esta ayuda, luego sale\n"
 
-#: pg_archivecleanup.c:264
+#: pg_archivecleanup.c:265
 #, c-format
 msgid ""
 "\n"
@@ -137,7 +138,7 @@ msgstr ""
 "por ej.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/servidor/directorioarchivador %%r'\n"
 
-#: pg_archivecleanup.c:269
+#: pg_archivecleanup.c:270
 #, c-format
 msgid ""
 "\n"
@@ -150,7 +151,7 @@ msgstr ""
 "por ej.\n"
 "  pg_archivecleanup /mnt/servidor/directorioarchivador 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:273
+#: pg_archivecleanup.c:274
 #, c-format
 msgid ""
 "\n"
@@ -159,17 +160,17 @@ msgstr ""
 "\n"
 "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: pg_archivecleanup.c:335
+#: pg_archivecleanup.c:336
 #, c-format
 msgid "must specify archive location"
 msgstr "debe especificar la ubicación del archivador"
 
-#: pg_archivecleanup.c:347
+#: pg_archivecleanup.c:348
 #, c-format
 msgid "must specify oldest kept WAL file"
 msgstr "debe especificar el fichero WAL más antiguo a mantener"
 
-#: pg_archivecleanup.c:354
+#: pg_archivecleanup.c:355
 #, c-format
 msgid "too many command-line arguments"
 msgstr "demasiados argumentos de línea de órdenes"

@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.0)\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-09-02 00:26+0000\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-06-04 12:13+0000\n"
 "PO-Revision-Date: 2013-09-02 13:17+0800\n"
 "Last-Translator: Xiong He <iihero@qq.com>\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -16,53 +16,58 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
-#, c-format
-msgid "could not identify current directory: %s"
+#: ../../common/config_info.c:130 ../../common/config_info.c:138
+#: ../../common/config_info.c:146 ../../common/config_info.c:154
+#: ../../common/config_info.c:162 ../../common/config_info.c:170
+#: ../../common/config_info.c:178 ../../common/config_info.c:186
+#: ../../common/config_info.c:194
+msgid "not recorded"
+msgstr "没有被记录"
+
+#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
+#, fuzzy, c-format
+#| msgid "could not identify current directory: %s"
+msgid "could not identify current directory: %m"
 msgstr "无法确认当前目录: %s"
 
 # command.c:122
-#: ../../port/exec.c:146
+#: ../../common/exec.c:157
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "无效的二进制码 \"%s\""
 
 # command.c:1103
-#: ../../port/exec.c:195
+#: ../../common/exec.c:207
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "无法读取二进制码 \"%s\""
 
-#: ../../port/exec.c:202
+#: ../../common/exec.c:215
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "未能找到一个 \"%s\" 来执行"
 
-#: ../../port/exec.c:257 ../../port/exec.c:293
+#: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
-#| msgid "could not change directory to \"%s\": %m"
-msgid "could not change directory to \"%s\": %s"
-msgstr "无法跳转到目录 \"%s\" 中: %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "无法跳转到目录 \"%s\" 中: %m"
 
-#: ../../port/exec.c:272
+#: ../../common/exec.c:288
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "无法读取符号链结 \"%s\""
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "无法读取符号链接 \"%s\": %m"
 
-#: ../../port/exec.c:523
-#, c-format
-#| msgid "query failed: %s"
-msgid "pclose failed: %s"
+#: ../../common/exec.c:541
+#, fuzzy, c-format
+#| msgid "pclose failed: %s"
+msgid "pclose failed: %m"
 msgstr "pclose调用失败: %s"
 
-#: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
-#: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
-#: pg_config.c:371
-#, c-format
-msgid "not recorded\n"
-msgstr "没有记录\n"
+#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+msgid "out of memory"
+msgstr "内存用尽"
 
-#: pg_config.c:428
+#: pg_config.c:74
 #, c-format
 msgid ""
 "\n"
@@ -73,39 +78,39 @@ msgstr ""
 "%s 提供 PostgreSQL 的安装信息.\n"
 "\n"
 
-#: pg_config.c:429
+#: pg_config.c:75
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_config.c:430
+#: pg_config.c:76
 #, c-format
 msgid ""
 "  %s [OPTION]...\n"
 "\n"
 msgstr "  %s [选项]...\n"
 
-#: pg_config.c:431
+#: pg_config.c:77
 #, c-format
 msgid "Options:\n"
 msgstr "选项:\n"
 
-#: pg_config.c:432
+#: pg_config.c:78
 #, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              显示执行文件所在位置\n"
 
-#: pg_config.c:433
+#: pg_config.c:79
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
 msgstr "  --docdir             显示文档所在位置\n"
 
-#: pg_config.c:434
+#: pg_config.c:80
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
 msgstr "  --htmldir             显示HTML文档文件所在位置\n"
 
-#: pg_config.c:435
+#: pg_config.c:81
 #, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
@@ -114,56 +119,52 @@ msgstr ""
 "  --includedir          显示客户端接口 C 头文件所在\n"
 "                        位置\n"
 
-#: pg_config.c:437
+#: pg_config.c:83
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
 msgstr "  --pkgincludedir      显示其它C语言头文件所在的位置\n"
 
-#: pg_config.c:438
+#: pg_config.c:84
 #, c-format
-msgid ""
-"  --includedir-server   show location of C header files for the server\n"
+msgid "  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   显示服务端 C 头文件所在位置\n"
 
-#: pg_config.c:439
+#: pg_config.c:85
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr "  --libdir              显示目标代码库文件所在位置\n"
 
-#: pg_config.c:440
+#: pg_config.c:86
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr "  --pkglibdir           显示动态加载库所在位置\n"
 
-#: pg_config.c:441
+#: pg_config.c:87
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
 msgstr "  --localedir           显示语言环境支持文件所在位置\n"
 
-#: pg_config.c:442
+#: pg_config.c:88
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
 msgstr "  --mandir            显示参考手册所在位置\n"
 
-#: pg_config.c:443
+#: pg_config.c:89
 #, c-format
-msgid ""
-"  --sharedir            show location of architecture-independent support "
-"files\n"
+msgid "  --sharedir            show location of architecture-independent support files\n"
 msgstr "  --sharedir              显示独立架构支持文件所在位置\n"
 
-#: pg_config.c:444
+#: pg_config.c:90
 #, c-format
-msgid ""
-"  --sysconfdir          show location of system-wide configuration files\n"
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
 msgstr "  --sysconfdir          显示系统范围的配置文件的所在位置\n"
 
-#: pg_config.c:445
+#: pg_config.c:91
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr "  --pgxs                显示扩展 makefile 所在位置\n"
 
-#: pg_config.c:446
+#: pg_config.c:92
 #, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
@@ -172,66 +173,57 @@ msgstr ""
 "  --configure           显示编译 PostgreSQL 时 \"configure\"\n"
 "                        的选项\n"
 
-#: pg_config.c:448
+#: pg_config.c:94
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
 msgstr "  --cc                   显示在创建PostgreSQL时所使用的CC值\n"
 
-#: pg_config.c:449
+#: pg_config.c:95
 #, c-format
-msgid ""
-"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cppflags            当创建PostgreSQL时显示CPPFLAGS的值\n"
 
-#: pg_config.c:450
+#: pg_config.c:96
 #, c-format
-msgid ""
-"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cflags             显示在创建PostgreSQL时所使用的CFLAG值\n"
 
-#: pg_config.c:451
+#: pg_config.c:97
 #, c-format
-msgid ""
-"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
 msgstr " --cflags_sl            当创建PostgreSQL时显示CFLAGS_SL的值\n"
 
-#: pg_config.c:452
+#: pg_config.c:98
 #, c-format
-msgid ""
-"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
 msgstr "  --ldflags             显示在创建PostgreSQL时所使用的LDFLAG值\n"
 
-#: pg_config.c:453
+#: pg_config.c:99
 #, c-format
-msgid ""
-"  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
-"built\n"
+msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
 msgstr "  --ldflags_ex          当创建PostgreSQL时显示LDFLAGS_EX的值\n"
 
-#: pg_config.c:454
+#: pg_config.c:100
 #, c-format
-msgid ""
-"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
-"built\n"
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
 msgstr "  --ldflags_sl           当创建PostgreSQL时显示LDFLAGS_SL的值\n"
 
-#: pg_config.c:455
+#: pg_config.c:101
 #, c-format
-msgid ""
-"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr "  --libs               显示在创建PostgreSQL时所使用的LIBS值\n"
 
-#: pg_config.c:456
+#: pg_config.c:102
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
 msgstr "  --version             显示PostgreSQL的版本信息\n"
 
-#: pg_config.c:457
+#: pg_config.c:103
 #, c-format
 msgid "  -?, --help            show this help, then exit\n"
 msgstr "  -?, --help            显示帮助, 然后退出\n"
 
-#: pg_config.c:458
+#: pg_config.c:104
 #, c-format
 msgid ""
 "\n"
@@ -242,65 +234,23 @@ msgstr ""
 "没有参数,将显示所有已知的成员.\n"
 "\n"
 
-#: pg_config.c:459
-#, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#: pg_config.c:105
+#, fuzzy, c-format
+#| msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
 msgstr "臭虫报告至 <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_config.c:465
+#: pg_config.c:111
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
-#: pg_config.c:504
+#: pg_config.c:153
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: 无法找到执行文件\n"
 
-#: pg_config.c:527
+#: pg_config.c:180
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: 无效参数: %s\n"
-
-#~ msgid "  --help                show this help, then exit\n"
-#~ msgstr ""
-#~ "  --help                显示此帮助信息, 然后退出\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "  %s OPTION...\n"
-#~ "\n"
-#~ msgstr ""
-#~ "  %s 选项...\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Try \"%s --help\" for more information\n"
-#~ msgstr ""
-#~ "\n"
-#~ "试用 \"%s --help\" 获取更多的信息\n"
-
-#~ msgid "%s: argument required\n"
-#~ msgstr "%s: 需要参数\n"
-
-#~ msgid "%s: could not find own executable\n"
-#~ msgstr "%s: 找不到执行文件\n"
-
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "子进程已退出, 未知状态 %d"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "子进程被信号 %d 终止"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "子进程被信号 %s 终止"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "子进程被例外(exception) 0x%X 终止"
-
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "子进程已退出, 退出码为 %d"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "无法进入目录 \"%s\""

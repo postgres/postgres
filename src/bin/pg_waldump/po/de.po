@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-14 23:46+0000\n"
+"POT-Creation-Date: 2019-06-16 18:13+0000\n"
 "PO-Revision-Date: 2019-05-15 16:52+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -190,109 +190,118 @@ msgstr ""
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             diese Hilfe anzeigen, dann beenden\n"
 
-#: pg_waldump.c:868
+#: pg_waldump.c:809
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr ""
+"\n"
+"Berichten Sie Fehler an <pgsql-bugs@lists.postgresql.org>.\n"
+
+#: pg_waldump.c:883
 #, c-format
 msgid "no arguments specified"
 msgstr "keine Argumente angegeben"
 
-#: pg_waldump.c:883
+#: pg_waldump.c:898
 #, c-format
 msgid "could not parse end WAL location \"%s\""
 msgstr "konnte WAL-Endposition »%s« nicht parsen"
 
-#: pg_waldump.c:899
+#: pg_waldump.c:910
 #, c-format
 msgid "could not parse limit \"%s\""
 msgstr "konnte Limit »%s« nicht parsen"
 
-#: pg_waldump.c:927
+#: pg_waldump.c:938
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "Resouce-Manager »%s« existiert nicht"
 
-#: pg_waldump.c:936
+#: pg_waldump.c:947
 #, c-format
 msgid "could not parse start WAL location \"%s\""
 msgstr "konnte WAL-Startposition »%s« nicht parsen"
 
-#: pg_waldump.c:946
+#: pg_waldump.c:957
 #, c-format
 msgid "could not parse timeline \"%s\""
 msgstr "konnte Zeitleiste »%s« nicht parsen"
 
-#: pg_waldump.c:957
+#: pg_waldump.c:964
 #, c-format
 msgid "could not parse \"%s\" as a transaction ID"
 msgstr "konnte »%s« nicht als gültige Transaktions-ID parsen"
 
-#: pg_waldump.c:972
+#: pg_waldump.c:979
 #, c-format
 msgid "unrecognized argument to --stats: %s"
 msgstr "unbekanntes Argument für --stats: %s"
 
-#: pg_waldump.c:985
+#: pg_waldump.c:992
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "zu viele Kommandozeilenargumente (das erste ist »%s«)"
 
-#: pg_waldump.c:995
+#: pg_waldump.c:1002
 #, c-format
 msgid "path \"%s\" could not be opened: %s"
 msgstr "Pfad »%s« konnte nicht geöffnet werden: %s"
 
-#: pg_waldump.c:1016
+#: pg_waldump.c:1023
 #, c-format
 msgid "could not open directory \"%s\": %s"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %s"
 
-#: pg_waldump.c:1023 pg_waldump.c:1054
+#: pg_waldump.c:1030 pg_waldump.c:1061
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "konnte Datei »%s« nicht öffnen"
 
-#: pg_waldump.c:1033
+#: pg_waldump.c:1040
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
 msgstr "WAL-Startposition %X/%X ist nicht innerhalb der Datei »%s«"
 
-#: pg_waldump.c:1061
+#: pg_waldump.c:1068
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG %s kommt vor STARTSEG %s"
 
-#: pg_waldump.c:1076
+#: pg_waldump.c:1083
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
 msgstr "WAL-Endposition %X/%X ist nicht innerhalb der Datei »%s«"
 
-#: pg_waldump.c:1089
+#: pg_waldump.c:1096
 #, c-format
 msgid "no start WAL location given"
 msgstr "keine WAL-Startposition angegeben"
 
-#: pg_waldump.c:1099
+#: pg_waldump.c:1106
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: pg_waldump.c:1105
+#: pg_waldump.c:1112
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "konnte keinen gültigen Datensatz nach %X/%X finden"
 
-#: pg_waldump.c:1116
+#: pg_waldump.c:1123
 #, c-format
 msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
 msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
 msgstr[0] "erster Datensatz kommt nach %X/%X, bei %X/%X, %u Byte wurde übersprungen\n"
 msgstr[1] "erster Datensatz kommt nach %X/%X, bei %X/%X, %u Bytes wurden übersprungen\n"
 
-#: pg_waldump.c:1167
+#: pg_waldump.c:1174
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "Fehler in WAL-Eintrag bei %X/%X: %s"
 
-#: pg_waldump.c:1177
+#: pg_waldump.c:1184
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"

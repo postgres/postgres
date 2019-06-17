@@ -6,170 +6,200 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-31 20:08+0000\n"
-"PO-Revision-Date: 2013-09-04 20:47-0400\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-04-26 13:38+0000\n"
+"PO-Revision-Date: 2019-06-14 10:40+0300\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: TR <devrim@gunduz.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
-#: connect.c:226
+#: connect.c:237
 msgid "empty message text"
-msgstr "Boş mesaj metni"
+msgstr "boş mesaj metni"
 
-#: connect.c:381
-#: connect.c:407
-#: connect.c:520
+#: connect.c:403 connect.c:432 connect.c:640
 msgid "<DEFAULT>"
 msgstr "<ÖNTANIMLI>"
 
-#: error.c:29
+#: descriptor.c:888 misc.c:120
+msgid "NULL"
+msgstr "NULL"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:33
 #, c-format
 msgid "no data found on line %d"
 msgstr "%d. satırda veri bulunamadı"
 
-#: error.c:39
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:40
 #, c-format
 msgid "out of memory on line %d"
 msgstr "%d. satırda yetersiz bellek"
 
-#: error.c:49
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:47
 #, c-format
 msgid "unsupported type \"%s\" on line %d"
-msgstr "\"%s\" veri tipi (%d. satırda) desteklenmiyor"
+msgstr "%2$d. satırda desteklenmeyen veri tipi \"%1$s\""
 
-#: error.c:59
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:54
 #, c-format
 msgid "too many arguments on line %d"
 msgstr "%d. satırda çok fazla argüman var"
 
-#: error.c:69
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:61
 #, c-format
 msgid "too few arguments on line %d"
 msgstr "%d. satırda yetersiz argüman sayısı"
 
-#: error.c:79
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:68
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
-msgstr "int veri tipi için geçersiz girdi sözdizimi: \"%s\",  %d. satırda"
+msgstr "%2$d. satırda int veri tipi için geçersiz girdi sözdizimi: \"%1$s\""
 
-#: error.c:89
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:75
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr "işaretsiz tamsayı veri tipi için geçersiz girdi sözdizimi: \"%s\",  %d. satırda"
+msgstr "%2$d. satırda işaretsiz tamsayı tipi için geçersiz girdi sözdizimi: \"%1$s\""
 
-#: error.c:99
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:82
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr "kayan noktalı veri tipi için geçersiz girdi sözdizimi: \"%s\",  %d. satırda"
+msgstr "%2$d. satırda kayan noktalı veri tipi için geçersiz girdi sözdizimi: \"%1$s\""
 
-#: error.c:110
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:90
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
-msgstr "boolean veri tipi için geçersiz girdi sözdizimi: \"%s\",  %d. satırda"
+msgstr "%2$d. satırda boolean veri tipi için geçersiz girdi sözdizimi: \"%1$s\""
 
-#: error.c:118
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:95
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
 msgstr "boolean değer dönüştürülemedi: boyut uyuşmazlığı, %d. satırda"
 
-#: error.c:128
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:102
 #, c-format
 msgid "empty query on line %d"
 msgstr "%d. satırda boş sorgu"
 
-#: error.c:138
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:109
 #, c-format
 msgid "null value without indicator on line %d"
 msgstr "%d. satırda belirteç olmadan null değer var"
 
-#: error.c:148
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:116
 #, c-format
 msgid "variable does not have an array type on line %d"
-msgstr "%d. satırda değişkenin bir dizi veri tipi yok"
+msgstr "%d. satırda değişkenin veri tipi dizi değil"
 
-#: error.c:158
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:123
 #, c-format
 msgid "data read from server is not an array on line %d"
 msgstr "%d. satırda sunucudan okunan veri bir dizi değil"
 
-#: error.c:168
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:130
 #, c-format
 msgid "inserting an array of variables is not supported on line %d"
-msgstr "%d. satırda değişkenlerden oluşan dizinin girilmesi desteklenmiyor"
+msgstr "%d. satırda değişkenlerden oluşan dizinin eklenmesi (insert) desteklenmiyor"
 
-#: error.c:178
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:137
 #, c-format
 msgid "connection \"%s\" does not exist on line %d"
-msgstr "\"%s\" bağlantısı  %d numaralı satırda yok"
+msgstr "%2$d numaralı satırda \"%1$s\" bağlantısı yok"
 
-#: error.c:188
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
-msgstr "\"%s\" bağlantısına %d. satırda bağlanılmıyor"
+msgstr "%2$d. satırda\"%1$s\" bağlantısına bağlanılmıyor"
 
-#: error.c:198
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:151
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
-msgstr "\"%s\" ifade adı geçersiz (%d. satırda)"
+msgstr "%2$d. satırda geçersiz ifade adı \"%1$s\""
 
-#: error.c:208
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:158
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
-msgstr "\"%s\" açıklayıcısı %d. satırda bulunamadı"
+msgstr "%2$d. satırda  tanımlayıcı \"%1$s\"  bulunamadı"
 
-#: error.c:218
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:165
 #, c-format
 msgid "descriptor index out of range on line %d"
-msgstr "%d. satırdaki açıklayıcı indexi sınırların dışında"
+msgstr "%d. satırdaki açıklayıcı indeks sınırların dışında"
 
-#: error.c:228
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:172
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
-msgstr "\"%s\" tanımsız açıklayıcı nesnesi %d. satırda tanımlanamıyor"
+msgstr "%2$d. satırda bilinmeyen tanımlayıcı öğe \"%1$s\""
 
-#: error.c:238
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:179
 #, c-format
 msgid "variable does not have a numeric type on line %d"
-msgstr "%d. satırdaki değişkenin sayısal tipi yok"
+msgstr "%d. satırdaki değişken sayısal tipte değil"
 
-#: error.c:248
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:186
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "%d. satırdaki değişkenin karakter tipi yok"
 
-#: error.c:258
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:193
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "%d. satırda tranaction'ı işlerken hata oluştu"
 
-#: error.c:268
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:200
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
-msgstr " \"%s\" veritabanına bağlanılamadı (satır no: %d)"
+msgstr "%2$d. satırda \"%1$s\" veritabanına bağlanılamadı"
 
-#: error.c:278
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:207
+#, c-format
+msgid "The cursor is invalid on line %d"
+msgstr "%d. satırda geçersiz imleç (cursor)"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
-msgstr "%d SQL hatası (%d. satırda)"
+msgstr "%2$d. satırda  SQL hatası %1$d"
 
-#: error.c:318
+#: error.c:261
 msgid "the connection to the server was lost"
 msgstr "sunucuya bağlantı kesildi"
 
-#: error.c:405
+#: error.c:354
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQL hatası: %s\n"
 
-#: execute.c:1912
+#: execute.c:2103
 msgid "<empty>"
 msgstr "<boş>"
-
-#: misc.c:113
-msgid "NULL"
-msgstr "NULL"
-

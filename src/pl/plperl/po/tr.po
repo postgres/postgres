@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-02-22 00:08+0000\n"
-"PO-Revision-Date: 2018-02-22 11:49+0300\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-04-26 13:38+0000\n"
+"PO-Revision-Date: 2019-06-13 17:04+0300\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <devrim@gunduz.org>\n"
 "Language: tr\n"
@@ -17,217 +17,220 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.7.1\n"
 
-#: plperl.c:407
+#: plperl.c:409
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
 msgstr "Doğru ise, trusted ve untrusted Perl kodları strict modda derlenecektir"
 
-#: plperl.c:421
+#: plperl.c:423
 msgid "Perl initialization code to execute when a Perl interpreter is initialized."
 msgstr "Perl yorumlayıcısı ilklendirildiğinde çalışacak Perl ilklendirme kodu."
 
-#: plperl.c:443
+#: plperl.c:445
 msgid "Perl initialization code to execute once when plperl is first used."
 msgstr "plperl ilk kez kullanıldığında çalışacak Perl ilklendirme kodu"
 
-#: plperl.c:451
+#: plperl.c:453
 msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr "plperlu ilk kez kullanıldığında çalışacak Perl ilklendirme kodu"
 
-#: plperl.c:648
+#: plperl.c:650
 #, c-format
 msgid "cannot allocate multiple Perl interpreters on this platform"
 msgstr "bu platformda birden fazla Perl interpreter ayrılamıyor"
 
-#: plperl.c:671 plperl.c:855 plperl.c:861 plperl.c:978 plperl.c:990
-#: plperl.c:1033 plperl.c:1056 plperl.c:2120 plperl.c:2230 plperl.c:2298
-#: plperl.c:2361
+#: plperl.c:673 plperl.c:857 plperl.c:863 plperl.c:980 plperl.c:992
+#: plperl.c:1035 plperl.c:1058 plperl.c:2157 plperl.c:2267 plperl.c:2335
+#: plperl.c:2398
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plperl.c:672
+#: plperl.c:674
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "PostgreSQL::InServer::SPI::bootstrap çalıştırılırken"
 
-#: plperl.c:856
+#: plperl.c:858
 #, c-format
 msgid "while parsing Perl initialization"
 msgstr "Perl ilklendirmesi ayrıştırılırken"
 
-#: plperl.c:862
+#: plperl.c:864
 #, c-format
 msgid "while running Perl initialization"
 msgstr "Perl ilklendirmesi sırasında"
 
-#: plperl.c:979
+#: plperl.c:981
 #, c-format
 msgid "while executing PLC_TRUSTED"
 msgstr " PLC_TRUSTED çalıştırılırken"
 
-#: plperl.c:991
+#: plperl.c:993
 #, c-format
 msgid "while executing utf8fix"
 msgstr "utf8fix çalıştırılırken"
 
-#: plperl.c:1034
+#: plperl.c:1036
 #, c-format
 msgid "while executing plperl.on_plperl_init"
 msgstr "plperl.on_plperl_init çalıştırılırken"
 
-#: plperl.c:1057
+#: plperl.c:1059
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
 msgstr "plperl.on_plperlu_init çalıştırılırken"
 
-#: plperl.c:1102 plperl.c:1764
+#: plperl.c:1105 plperl.c:1796
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "Perl hashi olmayan kolonu içeriyor: \"%s\""
 
-#: plperl.c:1107 plperl.c:1769
+#: plperl.c:1110 plperl.c:1801
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "\"%s\" sistem niteliği ayarlanamıyor"
 
-#: plperl.c:1195
+#: plperl.c:1198
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "dizin boyut sayısı (%d), izin verilern en yüksek değerini (%d) aşmaktadır"
 
-#: plperl.c:1207 plperl.c:1224
+#: plperl.c:1210 plperl.c:1227
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "çok boyutlu dizinler boyut sayısı kadar dizin ifade sayısına sahip olmalıdırlar"
 
-#: plperl.c:1260
+#: plperl.c:1263
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
 msgstr "Perl dizisi (array) dizi olmayan %s tipine dönüştürülemiyor"
 
-#: plperl.c:1362
+#: plperl.c:1366
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
 msgstr "Perl hash'i kompozit olmayan %s tipine dönüştürülemez"
 
-#: plperl.c:1373
+#: plperl.c:1388 plperl.c:3309
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "tip kaydı içermeyen alanda çağırılan ve kayıt döndüren fonksiyon"
 
-#: plperl.c:1388
-#, c-format
-msgid "PL/Perl function must return reference to hash or array"
-msgstr "PL/Perl fonksiyonu hash ya da dizine referans dönmelidir"
-
-#: plperl.c:1425
+#: plperl.c:1447
 #, c-format
 msgid "lookup failed for type %s"
 msgstr "%s tipi için arama (lookup) başarısız oldu"
 
-#: plperl.c:1740
+#: plperl.c:1771
 #, c-format
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} mevcut değil"
 
-#: plperl.c:1744
+#: plperl.c:1775
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} hash referansı değil"
 
-#: plperl.c:1995 plperl.c:2833
+#: plperl.c:1806
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "oluşturulan \"%s\" sütunu ayarlanamıyor"
+
+#: plperl.c:2032 plperl.c:2874
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "PL/Perl fonksiyonları %s veri tipini döndüremezler"
 
-#: plperl.c:2008 plperl.c:2875
+#: plperl.c:2045 plperl.c:2915
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "PL/Perl fonksiyonları %s tipini kabul etmez"
 
-#: plperl.c:2125
+#: plperl.c:2162
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "\"%s\" fonksiyonu derlenirken CODE referansı alınamadı"
 
-#: plperl.c:2218
+#: plperl.c:2255
 #, c-format
 msgid "didn't get a return item from function"
 msgstr "fonksiyonden dönüş (return) değeri alınamadı"
 
-#: plperl.c:2262 plperl.c:2329
+#: plperl.c:2299 plperl.c:2366
 #, c-format
 msgid "couldn't fetch $_TD"
 msgstr "$_TD getirilemedi"
 
-#: plperl.c:2286 plperl.c:2349
+#: plperl.c:2323 plperl.c:2386
 #, c-format
 msgid "didn't get a return item from trigger function"
 msgstr "trigger fonksiyonundan dönüş (return) değeri alınamadı"
 
-#: plperl.c:2406
+#: plperl.c:2447
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "set değerini kabul etmediği ortamda set değeri alan fonksiyon çağırılmış"
 
-#: plperl.c:2451
+#: plperl.c:2492
 #, c-format
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
 msgstr "se dönen PL/Perl fonksiyonu return_next kullanmalı ya da bir diziye referans dönmelidir"
 
-#: plperl.c:2572
+#: plperl.c:2613
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
 msgstr "DELETE triggerındaki değiştirilmiş satır gözardı ediliyor"
 
-#: plperl.c:2580
+#: plperl.c:2621
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "PL/Perl trigger fonksiyonun sonucu undef, \"SKIP\" ya da  \"MODIFY\" olmalıdır"
 
-#: plperl.c:2828
+#: plperl.c:2869
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "trigger fonksiyonları sadece trigger olarak çağırılabilirler"
 
-#: plperl.c:3170
+#: plperl.c:3216
 #, c-format
 msgid "query result has too many rows to fit in a Perl array"
 msgstr "sorgu sonucunda bir Perl dizisine (array) sığabilecekten çok fazla satır var"
 
-#: plperl.c:3240
+#: plperl.c:3286
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "SETOF olmayan bir fonksiyonda return_next kullanılamaz"
 
-#: plperl.c:3300
+#: plperl.c:3360
 #, c-format
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr "SETOF-composite döndüren PL/Perl fonksiyonları return_next'i hash'e referans olarak çağırmalıdır"
 
-#: plperl.c:4009
+#: plperl.c:4135
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "\"%s\" PL/Perl fonksiyonu"
 
-#: plperl.c:4021
+#: plperl.c:4147
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "\"%s\" PL/Perl fonksiyonunun derlenmesi"
 
-#: plperl.c:4030
+#: plperl.c:4156
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "PL/Perl anonim kod bloğu"
 
-#~ msgid "error from Perl function \"%s\": %s"
-#~ msgstr "Perl fonksiyonunda hata:  \"%s\": %s"
-
-#~ msgid "creation of Perl function \"%s\" failed: %s"
-#~ msgstr " \"%s\" Perl fonksiyonunun yaratılması başarısız oldu: %s"
+#~ msgid "composite-returning PL/Perl function must return reference to hash"
+#~ msgstr "composite döndüren PL/Perl fonksiyonu hash'e referans dönmelidir"
 
 #~ msgid "out of memory"
 #~ msgstr "yetersiz bellek"
 
-#~ msgid "composite-returning PL/Perl function must return reference to hash"
-#~ msgstr "composite döndüren PL/Perl fonksiyonu hash'e referans dönmelidir"
+#~ msgid "creation of Perl function \"%s\" failed: %s"
+#~ msgstr " \"%s\" Perl fonksiyonunun yaratılması başarısız oldu: %s"
+
+#~ msgid "error from Perl function \"%s\": %s"
+#~ msgstr "Perl fonksiyonunda hata:  \"%s\": %s"
+
+#~ msgid "PL/Perl function must return reference to hash or array"
+#~ msgstr "PL/Perl fonksiyonu hash ya da dizine referans dönmelidir"

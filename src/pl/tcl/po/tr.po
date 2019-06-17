@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-02-22 00:07+0000\n"
-"PO-Revision-Date: 2018-02-22 15:01+0300\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-04-26 13:38+0000\n"
+"PO-Revision-Date: 2019-06-13 17:11+0300\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: TR <devrim@commandprompt.com>\n"
 "Language: tr\n"
@@ -17,51 +17,51 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.7.1\n"
 
-#: pltcl.c:459
+#: pltcl.c:464
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "pltcl ilk sefer kullanıldığında bir kez çağrılacak PL/Tcl fonksiyonu"
 
-#: pltcl.c:466
+#: pltcl.c:471
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "pltclu ilk sefer kullanıldığında bir kez çağrılacak PL/Tclu fonksiyonu"
 
-#: pltcl.c:629
+#: pltcl.c:636
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "\"%s\" fonksiyonu yanlış dilde"
 
-#: pltcl.c:640
+#: pltcl.c:647
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "\"%s\" fonksiyonu SECURITY DEFINER olmamalı"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:674
+#: pltcl.c:681
 #, c-format
 msgid "processing %s parameter"
 msgstr "%s parametresi işleniyor"
 
-#: pltcl.c:830
+#: pltcl.c:842
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "set değerini kabul etmediği ortamda set değeri alan fonksiyon çağırılmış"
 
-#: pltcl.c:994
+#: pltcl.c:1015
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "tip kaydı içermeyen alanda çağırılan ve kayıt döndüren fonksiyon"
 
-#: pltcl.c:1263
+#: pltcl.c:1299
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "sdönüş değeri tetikleyiciden (trigger) ayrılamadı: %s"
 
-#: pltcl.c:1343 pltcl.c:1771
+#: pltcl.c:1379 pltcl.c:1809
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1344
+#: pltcl.c:1380
 #, c-format
 msgid ""
 "%s\n"
@@ -70,43 +70,48 @@ msgstr ""
 "%s\n"
 "Şu PL/Tcl fonksiyonunda: \"%s\""
 
-#: pltcl.c:1509
+#: pltcl.c:1544
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "trigger fonksiyonları sadece trigger olarak çağırılabilirler"
 
-#: pltcl.c:1513
+#: pltcl.c:1548
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl fonksiyonları %s tipini döndüremezler"
 
-#: pltcl.c:1549
+#: pltcl.c:1587
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl fonksiyonları %s veri tipini kabul etmezler"
 
-#: pltcl.c:1663
+#: pltcl.c:1701
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "\"%s\" dahili yordamı oluşturulamadı: %s"
 
-#: pltcl.c:3100
+#: pltcl.c:3208
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "sütun adı/değer listesinin çift sayıda öğesi olmalı"
 
-#: pltcl.c:3118
+#: pltcl.c:3226
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "sütun adı/değer listesi mevcut olmayan \"%s\" sütun adını içeriyor"
 
-#: pltcl.c:3125
+#: pltcl.c:3233
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "\"%s\" sistem niteliği ayarlanamaz"
 
-#~ msgid "PL/Tcl functions cannot return composite types"
-#~ msgstr "PL/Tcl fonksiyonları composit tip döndüremezler"
+#: pltcl.c:3239
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "oluşturulan \"%s\" sütunu ayarlanamıyor"
 
 #~ msgid "out of memory"
 #~ msgstr "yetersiz bellek"
+
+#~ msgid "PL/Tcl functions cannot return composite types"
+#~ msgstr "PL/Tcl fonksiyonları composit tip döndüremezler"

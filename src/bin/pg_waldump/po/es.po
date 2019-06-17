@@ -1,18 +1,18 @@
 # Spanish message translation file for pg_waldump
 #
-# Copyright (C) 2017 PostgreSQL Global Development Group
+# Copyright (c) 2017-2019, PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Carlos Chapi <carlos.chapi@2ndquadrant.com>, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-02 23:46+0000\n"
-"PO-Revision-Date: 2019-04-28 23:25-0400\n"
+"POT-Creation-Date: 2019-06-06 17:13+0000\n"
+"PO-Revision-Date: 2019-06-06 17:25-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
-"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -20,17 +20,17 @@ msgstr ""
 "X-Generator: Poedit 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:188
 #, c-format
 msgid "fatal: "
 msgstr "fatal: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:195
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:202
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
@@ -193,109 +193,118 @@ msgstr ""
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help               mostrar esta ayuda, luego salir\n"
 
-#: pg_waldump.c:868
+#: pg_waldump.c:809
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr ""
+"\n"
+"Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
+
+#: pg_waldump.c:883
 #, c-format
 msgid "no arguments specified"
 msgstr "no se especificó ningún argumento"
 
-#: pg_waldump.c:883
+#: pg_waldump.c:898
 #, c-format
 msgid "could not parse end WAL location \"%s\""
 msgstr "no se pudo interpretar la posición final de WAL «%s»"
 
-#: pg_waldump.c:899
+#: pg_waldump.c:910
 #, c-format
 msgid "could not parse limit \"%s\""
 msgstr "no se pudo interpretar el límite «%s»"
 
-#: pg_waldump.c:927
+#: pg_waldump.c:938
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "el gestor de recursos «%s» no existe"
 
-#: pg_waldump.c:936
+#: pg_waldump.c:947
 #, c-format
 msgid "could not parse start WAL location \"%s\""
 msgstr "no se pudo interpretar la posición inicial de WAL «%s»"
 
-#: pg_waldump.c:946
+#: pg_waldump.c:957
 #, c-format
 msgid "could not parse timeline \"%s\""
 msgstr "no se pudo interpretar el timeline «%s»"
 
-#: pg_waldump.c:957
+#: pg_waldump.c:964
 #, c-format
 msgid "could not parse \"%s\" as a transaction ID"
 msgstr "no se pudo interpretar «%s» como un id de transacción"
 
-#: pg_waldump.c:972
+#: pg_waldump.c:979
 #, c-format
 msgid "unrecognized argument to --stats: %s"
 msgstr "parámetro no reconocido para --stats: %s"
 
-#: pg_waldump.c:985
+#: pg_waldump.c:992
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
 
-#: pg_waldump.c:995
+#: pg_waldump.c:1002
 #, c-format
 msgid "path \"%s\" could not be opened: %s"
 msgstr "la ruta «%s» no se pudo abrir: %s"
 
-#: pg_waldump.c:1016
+#: pg_waldump.c:1023
 #, c-format
 msgid "could not open directory \"%s\": %s"
 msgstr "no se pudo abrir el directorio «%s»: %s"
 
-#: pg_waldump.c:1023 pg_waldump.c:1054
+#: pg_waldump.c:1030 pg_waldump.c:1061
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "no se pudo abrir el archivo «%s»"
 
-#: pg_waldump.c:1033
+#: pg_waldump.c:1040
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
 msgstr "la posición inicial de WAL %X/%X no está en el archivo «%s»"
 
-#: pg_waldump.c:1061
+#: pg_waldump.c:1068
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "SEGFINAL %s está antes del SEGINICIAL %s"
 
-#: pg_waldump.c:1076
+#: pg_waldump.c:1083
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
 msgstr "la posición final de WAL %X/%X no está en el archivo «%s»"
 
-#: pg_waldump.c:1089
+#: pg_waldump.c:1096
 #, c-format
 msgid "no start WAL location given"
 msgstr "no se especificó posición inicial de WAL"
 
-#: pg_waldump.c:1099
+#: pg_waldump.c:1106
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: pg_waldump.c:1105
+#: pg_waldump.c:1112
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "no se pudo encontrar un registro válido después de %X/%X"
 
-#: pg_waldump.c:1116
+#: pg_waldump.c:1123
 #, c-format
 msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
 msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
 msgstr[0] "el primer registro está ubicado después de %X/%X, en %X/%X, saltándose %u byte\n"
 msgstr[1] "el primer registro está ubicado después de %X/%X, en %X/%X, saltándose %u bytes\n"
 
-#: pg_waldump.c:1167
+#: pg_waldump.c:1174
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "error en registro de WAL en %X/%X: %s"
 
-#: pg_waldump.c:1177
+#: pg_waldump.c:1184
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Pruebe «%s --help» para mayor información.\n"

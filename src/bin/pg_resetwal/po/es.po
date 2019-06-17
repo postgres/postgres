@@ -1,6 +1,6 @@
 # Spanish message translation file for pg_resetwal
 #
-# Copyright (C) 2003-2012 PostgreSQL Global Development Group
+# Copyright (c) 2003-2019, PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Ivan Hernandez <ivanx@ciencias.unam.mx>, 2003.
@@ -10,12 +10,12 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetwal (PostgreSQL) 10\n"
+"Project-Id-Version: pg_resetwal (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-02 23:46+0000\n"
-"PO-Revision-Date: 2019-04-28 23:18-0400\n"
+"POT-Creation-Date: 2019-06-06 17:14+0000\n"
+"PO-Revision-Date: 2019-06-06 17:24-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
-"Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,17 +23,17 @@ msgstr ""
 "X-Generator: Poedit 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:188
 #, c-format
 msgid "fatal: "
 msgstr "fatal: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:195
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:202
 #, c-format
 msgid "warning: "
 msgstr "precaución: "

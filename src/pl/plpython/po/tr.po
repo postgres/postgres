@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-10 21:08+0000\n"
-"PO-Revision-Date: 2018-10-13 10:10+0300\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-04-26 13:38+0000\n"
+"PO-Revision-Date: 2019-06-13 17:10+0300\n"
 "Last-Translator: Abdullah G. Gülner <agulner@gmail.com>\n"
 "Language-Team: Turkish <devrim@gunduz.org>\n"
 "Language: tr\n"
@@ -18,163 +18,168 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.7.1\n"
 
-#: plpy_cursorobject.c:101
+#: plpy_cursorobject.c:78
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor bir sorgu ya da bir plan bekledi"
 
-#: plpy_cursorobject.c:184
+#: plpy_cursorobject.c:161
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor bir sequence'ı ikinci argüman olarak alır"
 
-#: plpy_cursorobject.c:200 plpy_spi.c:211
+#: plpy_cursorobject.c:177 plpy_spi.c:211
 #, c-format
 msgid "could not execute plan"
 msgstr "plan çalıştırılamadı"
 
-#: plpy_cursorobject.c:203 plpy_spi.c:214
+#: plpy_cursorobject.c:180 plpy_spi.c:214
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "%d argümanının sequence'ı beklendi; %d alındı: %s"
 
-#: plpy_cursorobject.c:352
+#: plpy_cursorobject.c:329
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "kapalı bir imleç (cursor) yineleniyor"
 
-#: plpy_cursorobject.c:360 plpy_cursorobject.c:426
+#: plpy_cursorobject.c:337 plpy_cursorobject.c:403
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iptal edilen bir alt-işlemdeki (subtransaction) bir cursor yineleniyor"
 
-#: plpy_cursorobject.c:418
+#: plpy_cursorobject.c:395
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "kapalı bir cursor'dan getir"
 
-#: plpy_cursorobject.c:461 plpy_spi.c:409
+#: plpy_cursorobject.c:438 plpy_spi.c:409
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "sorgu sonucundaki satır sayısı bir Python listesine sığabilecekten çok fazla "
 
-#: plpy_cursorobject.c:512
+#: plpy_cursorobject.c:490
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "iptal edilen bir alt-işlemdeki (subtransaction) bir cursor kapatılıyor"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:559
+#: plpy_elog.c:129 plpy_elog.c:130 plpy_plpymodule.c:553
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpy_exec.c:142
+#: plpy_exec.c:143
 #, c-format
 msgid "unsupported set function return mode"
 msgstr "desteklenmeyen küme fonksiyonu dönüş modu"
 
-#: plpy_exec.c:143
+#: plpy_exec.c:144
 #, c-format
 msgid "PL/Python set-returning functions only support returning one value per call."
 msgstr "PL/Python küme dönen fonksiyonları sadece her çağrı içinde bir değer döndürmeyi desteklerler"
 
-#: plpy_exec.c:156
+#: plpy_exec.c:157
 #, c-format
 msgid "returned object cannot be iterated"
 msgstr "dönen nesne yinelenemez"
 
-#: plpy_exec.c:157
+#: plpy_exec.c:158
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
 msgstr "PL/Python küme dönen fonksiyonları yinelenebilir bir nesne dönmelidir."
 
-#: plpy_exec.c:171
+#: plpy_exec.c:172
 #, c-format
 msgid "error fetching next item from iterator"
 msgstr "yineleticiden sonraki öğeyi alırken hata"
 
-#: plpy_exec.c:214
+#: plpy_exec.c:215
 #, c-format
 msgid "PL/Python procedure did not return None"
 msgstr "PL/Python prosedürü None döndürmedi"
 
-#: plpy_exec.c:218
+#: plpy_exec.c:219
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "dönüş tipi \"void\" olan PL/Python fonksiyonu None döndürmedi"
 
-#: plpy_exec.c:374 plpy_exec.c:400
+#: plpy_exec.c:375 plpy_exec.c:401
 #, c-format
 msgid "unexpected return value from trigger procedure"
 msgstr "trigger yordamından beklenmeyen dönüş değeri"
 
-#: plpy_exec.c:375
+#: plpy_exec.c:376
 #, c-format
 msgid "Expected None or a string."
 msgstr "None ya da string bekleniyordu."
 
-#: plpy_exec.c:390
+#: plpy_exec.c:391
 #, c-format
 msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr "PL/Python trigger fonksiyonu DELETE triggerında \"MODIFY\" döndürdü -- gözardı edildi"
 
-#: plpy_exec.c:401
+#: plpy_exec.c:402
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "None, \"OK\", \"SKIP\", ya da \"MODIFY\" bekleniyordu"
 
-#: plpy_exec.c:451
+#: plpy_exec.c:452
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "PyList_SetItem() bağımsız değişkenler ayarlanırken başarısız oldu"
 
-#: plpy_exec.c:455
+#: plpy_exec.c:456
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "PyDict_SetItemString() bağımsız değişkenler ayarlanırken başarısız oldu"
 
-#: plpy_exec.c:467
+#: plpy_exec.c:468
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "tip kaydı içermeyen alanda çağırılan ve kayıt döndüren fonksiyon"
 
-#: plpy_exec.c:684
+#: plpy_exec.c:685
 #, c-format
 msgid "while creating return value"
 msgstr "dönüş değeri yaratılırken"
 
-#: plpy_exec.c:909
+#: plpy_exec.c:919
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] silindi, satır düzenlenemiyor"
 
-#: plpy_exec.c:914
+#: plpy_exec.c:924
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] bir sözlük değil"
 
-#: plpy_exec.c:941
+#: plpy_exec.c:951
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "%d sıra pozisyonundaki TD[\"new\"] sözlük anahtarı dizi değil"
 
-#: plpy_exec.c:948
+#: plpy_exec.c:958
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "TD[\"new\"]  içinde bulunan \"%s\" anahtarı tetikleyen satırda bir kolon olarak bulunmuyor"
 
-#: plpy_exec.c:953
+#: plpy_exec.c:963
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "\"%s\" sistem niteliği ayarlanamıyor"
 
-#: plpy_exec.c:1011
+#: plpy_exec.c:968
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "oluşturulan \"%s\" sütunu ayarlanamıyor"
+
+#: plpy_exec.c:1026
 #, c-format
 msgid "while modifying trigger row"
 msgstr "tetikleyici satırını düzenlerken"
 
-#: plpy_exec.c:1072
+#: plpy_exec.c:1087
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "çıkış yapılmamış bir alt-işlem (subtransaction) zorla iptal ediliyor"
@@ -219,46 +224,46 @@ msgstr "\"%s\" PL/Python fonksiyonu"
 msgid "PL/Python anonymous code block"
 msgstr "PL/Python anonim kod bloğu"
 
-#: plpy_plpymodule.c:192 plpy_plpymodule.c:195
+#: plpy_plpymodule.c:186 plpy_plpymodule.c:189
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "\"plpy\" modülü alınamadı"
 
-#: plpy_plpymodule.c:210
+#: plpy_plpymodule.c:204
 #, c-format
 msgid "could not create the spiexceptions module"
 msgstr "spiexceptions modülü oluşturulamadı"
 
-#: plpy_plpymodule.c:218
+#: plpy_plpymodule.c:212
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "spiexceptions modülü eklenemedi"
 
-#: plpy_plpymodule.c:286
+#: plpy_plpymodule.c:280
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "SPI istisnaları (exception) üretilemedi"
 
-#: plpy_plpymodule.c:454
+#: plpy_plpymodule.c:448
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "plpy.elog dosyasındaki argümanlar unpack edilemedi"
 
-#: plpy_plpymodule.c:463
+#: plpy_plpymodule.c:457
 msgid "could not parse error message in plpy.elog"
 msgstr "plpy.elog dosyasındaki hata mesajı ayrıştırılamadı"
 
-#: plpy_plpymodule.c:480
+#: plpy_plpymodule.c:474
 #, c-format
 msgid "argument 'message' given by name and position"
 msgstr "ad ve konum tarafından verilen argüman 'mesajı'"
 
-#: plpy_plpymodule.c:507
+#: plpy_plpymodule.c:501
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' bu fonksiyon için geçersiz bir anahtar kelime argümanıdır"
 
-#: plpy_plpymodule.c:518 plpy_plpymodule.c:524
+#: plpy_plpymodule.c:512 plpy_plpymodule.c:518
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "geçersiz SQLSTATE kodu"
@@ -288,7 +293,7 @@ msgstr "\"%s\" PL/Python fonksiyonu derlenemedi"
 msgid "could not compile anonymous PL/Python code block"
 msgstr "anonim PL/Python kod bloğu derlenemedi"
 
-#: plpy_resultobject.c:150 plpy_resultobject.c:176 plpy_resultobject.c:202
+#: plpy_resultobject.c:121 plpy_resultobject.c:147 plpy_resultobject.c:173
 #, c-format
 msgid "command did not produce a result set"
 msgstr "komut bir sonuç kümesi üretmedi"
@@ -323,22 +328,22 @@ msgstr "SPI_execute_plan başarısız oldu: %s"
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute başarısız oldu: %s"
 
-#: plpy_subxactobject.c:122
+#: plpy_subxactobject.c:97
 #, c-format
 msgid "this subtransaction has already been entered"
 msgstr "bu alt-işleme (subtransaction) zaten girilmiş"
 
-#: plpy_subxactobject.c:128 plpy_subxactobject.c:186
+#: plpy_subxactobject.c:103 plpy_subxactobject.c:161
 #, c-format
 msgid "this subtransaction has already been exited"
 msgstr "bu alt-işlemden (subtransaction) zaten çıkılmış"
 
-#: plpy_subxactobject.c:180
+#: plpy_subxactobject.c:155
 #, c-format
 msgid "this subtransaction has not been entered"
 msgstr "bu alt-işleme (subtransaction) girilmemiş"
 
-#: plpy_subxactobject.c:192
+#: plpy_subxactobject.c:167
 #, c-format
 msgid "there is no subtransaction to exit from"
 msgstr "çıkılacak bir alt-işlem (subtransaction) yok"
@@ -358,87 +363,87 @@ msgstr "modülde Decimal niteliği yok"
 msgid "conversion from numeric to Decimal failed"
 msgstr "numeric'ten Decimal'e dönüşüm başarısız oldu"
 
-#: plpy_typeio.c:908
+#: plpy_typeio.c:915
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "Python nesnesinin bytes gösterimi yaratılamadı"
 
-#: plpy_typeio.c:1056
+#: plpy_typeio.c:1063
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "Python nesnesinin dizgi gösterimi yaratılamadı"
 
-#: plpy_typeio.c:1067
+#: plpy_typeio.c:1074
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "Python nesnesi cstring'e dönüştürülemedi: Python dizgi gösterimi null bayt içeriyor olabilir."
 
-#: plpy_typeio.c:1176
+#: plpy_typeio.c:1183
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "dizi (array) boyut sayısı izin verilen en yüksek değeri (%d) aşmaktadır"
 
-#: plpy_typeio.c:1180
+#: plpy_typeio.c:1187
 #, c-format
 msgid "could not determine sequence length for function return value"
 msgstr "fonksiyon dönüş değeri için sequence uzunluğu belirlenemedi"
 
-#: plpy_typeio.c:1183 plpy_typeio.c:1187
+#: plpy_typeio.c:1190 plpy_typeio.c:1194
 #, c-format
 msgid "array size exceeds the maximum allowed"
 msgstr "dizi (array) boyutu izin verilen en yüksek değeri aşmaktadır"
 
-#: plpy_typeio.c:1213
+#: plpy_typeio.c:1220
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "dizi dönüp tipli dönüş değeri olan fonksiyon Python sequence'ı değildir"
 
-#: plpy_typeio.c:1259
+#: plpy_typeio.c:1266
 #, c-format
 msgid "wrong length of inner sequence: has length %d, but %d was expected"
 msgstr "iç sequence'in uzunluğu yanlış: %d uzunlukta, fakat %d bekleniyordu"
 
-#: plpy_typeio.c:1261
+#: plpy_typeio.c:1268
 #, c-format
 msgid "To construct a multidimensional array, the inner sequences must all have the same length."
 msgstr "Çok boyutlu bir dizi oluşturmak için, iç sequence'lerin tamamı aynı uzunlukta olmalı."
 
-#: plpy_typeio.c:1340
+#: plpy_typeio.c:1347
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "hatalı değer: \"%s\""
 
-#: plpy_typeio.c:1341
+#: plpy_typeio.c:1348
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Sol parantez eksik."
 
-#: plpy_typeio.c:1342 plpy_typeio.c:1543
+#: plpy_typeio.c:1349 plpy_typeio.c:1550
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
 msgstr "Bir bileşik türü dizi (array) içinde döndürmek için, bileşik türü bir Python tuple, e.g., \"[('foo',)]\"."
 
-#: plpy_typeio.c:1389
+#: plpy_typeio.c:1396
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "\"%s\" anahtarı planlamada bulunnamadı"
 
-#: plpy_typeio.c:1390
+#: plpy_typeio.c:1397
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Bir kolondan Null döndürmek için, kolonun ismindeki eşleşmenin anahtarına, NONE değerini ekleyin"
 
-#: plpy_typeio.c:1443
+#: plpy_typeio.c:1450
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "Dönen sequence'in uzunluğu satırdaki kolonların sayısı ile eşleşmiyor."
 
-#: plpy_typeio.c:1541
+#: plpy_typeio.c:1548
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "\"%s\" niteliği Python nesnesinde bulunmaz"
 
-#: plpy_typeio.c:1544
+#: plpy_typeio.c:1551
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr " Bir kolondan null döndürmek için, döndürdüğünüz nesnenin, kolonun adına sahip bir özelliğinin olmasını ve bu özelliğin değerinin NONE olmasını sağlamanız gerekir"
@@ -453,80 +458,80 @@ msgstr "Python unicode nesnesi baytlara dönüştürülemedi."
 msgid "could not extract bytes from encoded string"
 msgstr "kodlanmış string den baytlar çıkarılamadı"
 
-#~ msgid "PyCObject_AsVoidPtr() failed"
-#~ msgstr "PyCObject_AsVoidPtr() başarısız oldu"
-
-#~ msgid "PyCObject_FromVoidPtr() failed"
-#~ msgstr "PyCObject_FromVoidPtr() başarısız oldu"
-
-#~ msgid "PL/Python does not support conversion to arrays of row types."
-#~ msgstr "PL/Python satır tiplerinin dizilere dönüşümünü desteklemez."
-
-#~ msgid "cannot convert multidimensional array to Python list"
-#~ msgstr "çok boyutlu dizi, Python listesine dönüştürülemedi"
-
-#~ msgid "PL/Python only supports one-dimensional arrays."
-#~ msgstr "PL/Python sadece bir boyutlu dizileri destekler."
-
-#~ msgid "plan.status takes no arguments"
-#~ msgstr "plan.status bir argüman almaz"
-
-#~ msgid "transaction aborted"
-#~ msgstr "transaction iptal edildi"
-
-#~ msgid "invalid arguments for plpy.prepare"
-#~ msgstr "plpy.prepare için geçersiz argümanlar"
-
-#~ msgid "plpy.prepare does not support composite types"
-#~ msgstr "plpy.prepare kompozit tipleri desteklemez"
-
-#~ msgid "unrecognized error in PLy_spi_prepare"
-#~ msgstr "PLy_spi_prepare içinde tanımlanamayan hata"
-
-#~ msgid "unrecognized error in PLy_spi_execute_plan"
-#~ msgstr "PLy_spi_execute_plan içinde beklenmeyen hata"
-
-#~ msgid "unrecognized error in PLy_spi_execute_query"
-#~ msgstr "PLy_spi_execute_query içinde tanımlanamayan hata"
-
-#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
-#~ msgstr "PLy_spi_execute_fetch_result içinde tanımlanamayan hata"
-
-#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
-#~ msgstr "Bu oturum daha önceden %d Python ana sürümünü kullandı, ve şimdi %d ana sürümünü kullanmayı deniyor."
-
-#~ msgid "Start a new session to use a different Python major version."
-#~ msgstr "Farklı bir Python ana sürümü kullanmak için yeni bir oturum açın."
-
-#~ msgid "could not create procedure cache"
-#~ msgstr "yordam önbelleği yaratılamadı"
-
-#~ msgid "PL/Python: %s"
-#~ msgstr "PL/Python: %s"
-
-#~ msgid "out of memory"
-#~ msgstr "yetersiz bellek"
-
-#~ msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
-#~ msgstr "tetikleyici satırı düzenlerken \"%s\" PL/Python fonksiyonunun içindeki Python nesnesinin dizi gösterimi hesaplanamadı"
-
-#~ msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
-#~ msgstr "dönüş değeri yaratılırken \"%s\" Pl/Python fonksiyonunun içindeki Python ensnesinin dizi gösterimi yaratılamadı"
-
-#~ msgid "PL/Python function \"%s\" failed"
-#~ msgstr "\"%s\" PL/Python fonksiyonu başarısız oldu"
-
-#~ msgid "PL/Python function \"%s\" could not execute plan"
-#~ msgstr "\"%s\" PL/Python fonksiyonu planı çalıştıramadı"
-
-#~ msgid "could not create new dictionary"
-#~ msgstr "Yeni sözlük yaratılamadı"
-
-#~ msgid "could not create exception \"%s\""
-#~ msgstr "\"%s\" istisnası (exception) oluşturulamadı"
+#~ msgid "could not create new dictionary while building trigger arguments"
+#~ msgstr "trigger argümanlarını oluştururken yeni sözlük yaratılamadı"
 
 #~ msgid "could not create globals"
 #~ msgstr "evrensel değerler (globals) oluşturulamadı"
 
-#~ msgid "could not create new dictionary while building trigger arguments"
-#~ msgstr "trigger argümanlarını oluştururken yeni sözlük yaratılamadı"
+#~ msgid "could not create exception \"%s\""
+#~ msgstr "\"%s\" istisnası (exception) oluşturulamadı"
+
+#~ msgid "could not create new dictionary"
+#~ msgstr "Yeni sözlük yaratılamadı"
+
+#~ msgid "PL/Python function \"%s\" could not execute plan"
+#~ msgstr "\"%s\" PL/Python fonksiyonu planı çalıştıramadı"
+
+#~ msgid "PL/Python function \"%s\" failed"
+#~ msgstr "\"%s\" PL/Python fonksiyonu başarısız oldu"
+
+#~ msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
+#~ msgstr "dönüş değeri yaratılırken \"%s\" Pl/Python fonksiyonunun içindeki Python ensnesinin dizi gösterimi yaratılamadı"
+
+#~ msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
+#~ msgstr "tetikleyici satırı düzenlerken \"%s\" PL/Python fonksiyonunun içindeki Python nesnesinin dizi gösterimi hesaplanamadı"
+
+#~ msgid "out of memory"
+#~ msgstr "yetersiz bellek"
+
+#~ msgid "PL/Python: %s"
+#~ msgstr "PL/Python: %s"
+
+#~ msgid "could not create procedure cache"
+#~ msgstr "yordam önbelleği yaratılamadı"
+
+#~ msgid "Start a new session to use a different Python major version."
+#~ msgstr "Farklı bir Python ana sürümü kullanmak için yeni bir oturum açın."
+
+#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+#~ msgstr "Bu oturum daha önceden %d Python ana sürümünü kullandı, ve şimdi %d ana sürümünü kullanmayı deniyor."
+
+#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
+#~ msgstr "PLy_spi_execute_fetch_result içinde tanımlanamayan hata"
+
+#~ msgid "unrecognized error in PLy_spi_execute_query"
+#~ msgstr "PLy_spi_execute_query içinde tanımlanamayan hata"
+
+#~ msgid "unrecognized error in PLy_spi_execute_plan"
+#~ msgstr "PLy_spi_execute_plan içinde beklenmeyen hata"
+
+#~ msgid "unrecognized error in PLy_spi_prepare"
+#~ msgstr "PLy_spi_prepare içinde tanımlanamayan hata"
+
+#~ msgid "plpy.prepare does not support composite types"
+#~ msgstr "plpy.prepare kompozit tipleri desteklemez"
+
+#~ msgid "invalid arguments for plpy.prepare"
+#~ msgstr "plpy.prepare için geçersiz argümanlar"
+
+#~ msgid "transaction aborted"
+#~ msgstr "transaction iptal edildi"
+
+#~ msgid "plan.status takes no arguments"
+#~ msgstr "plan.status bir argüman almaz"
+
+#~ msgid "PL/Python only supports one-dimensional arrays."
+#~ msgstr "PL/Python sadece bir boyutlu dizileri destekler."
+
+#~ msgid "cannot convert multidimensional array to Python list"
+#~ msgstr "çok boyutlu dizi, Python listesine dönüştürülemedi"
+
+#~ msgid "PL/Python does not support conversion to arrays of row types."
+#~ msgstr "PL/Python satır tiplerinin dizilere dönüşümünü desteklemez."
+
+#~ msgid "PyCObject_FromVoidPtr() failed"
+#~ msgstr "PyCObject_FromVoidPtr() başarısız oldu"
+
+#~ msgid "PyCObject_AsVoidPtr() failed"
+#~ msgstr "PyCObject_AsVoidPtr() başarısız oldu"
