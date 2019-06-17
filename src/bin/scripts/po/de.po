@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-05-07 00:46+0000\n"
-"PO-Revision-Date: 2018-05-06 21:20-0400\n"
+"PO-Revision-Date: 2019-05-14 15:50+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -807,7 +807,7 @@ msgstr "%s: kann nicht bestimmte Tabelle(n) und Systemkataloge gleichzeitig rein
 #: reindexdb.c:201
 #, c-format
 msgid "%s: cannot reindex specific index(es) and system catalogs at the same time\n"
-msgstr "%s: kann nicht bestimmte Index und Systemkataloge gleichzeitig reindizieren\n"
+msgstr "%s: kann nicht bestimmte Indexe und Systemkataloge gleichzeitig reindizieren\n"
 
 #: reindexdb.c:308
 #, c-format

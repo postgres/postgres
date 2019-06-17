@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-12 17:42+0800\n"
-"PO-Revision-Date: 2019-05-07 19:20+0800\n"
+"POT-Creation-Date: 2019-05-15 17:57+0800\n"
+"PO-Revision-Date: 2019-05-16 19:20+0800\n"
 "Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
 "Language: zh_CN\n"
@@ -148,37 +148,52 @@ msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
 msgid "%s: pg_control CRC value is incorrect\n"
 msgstr "%s: pg_control CRC值不正确\n"
 
-#: pg_verify_checksums.c:322
+#: pg_verify_checksums.c:321
+#, c-format
+msgid "%s: cluster is not compatible with this version of pg_verify_checksums\n"
+msgstr "%s: 集簇与pg_verify_checksums的版本不兼容\n"
+
+#: pg_verify_checksums.c:328
+#, c-format
+msgid "%s: database cluster is not compatible\n"
+msgstr "%s: 数据库群集不兼容\n"
+
+#: pg_verify_checksums.c:330
+#, c-format
+msgid "The database cluster was initialized with block size %u, but pg_verify_checksums was compiled with block size %u.\n"
+msgstr "数据库群集是用块大小%u初始化的，但是pg_verify_checksums是用块大小%u编译的.\n"
+
+#: pg_verify_checksums.c:338
 #, c-format
 msgid "%s: cluster must be shut down to verify checksums\n"
 msgstr "%s: 必须关闭群集以验证校验和\n"
 
-#: pg_verify_checksums.c:328
+#: pg_verify_checksums.c:344
 #, c-format
 msgid "%s: data checksums are not enabled in cluster\n"
 msgstr "%s: 群集中未启用数据校验和\n"
 
-#: pg_verify_checksums.c:337
+#: pg_verify_checksums.c:353
 #, c-format
 msgid "Checksum scan completed\n"
 msgstr "校验和扫描完成\n"
 
-#: pg_verify_checksums.c:338
+#: pg_verify_checksums.c:354
 #, c-format
 msgid "Data checksum version: %d\n"
 msgstr "数据校验和版本: %d\n"
 
-#: pg_verify_checksums.c:339
+#: pg_verify_checksums.c:355
 #, c-format
 msgid "Files scanned:  %s\n"
 msgstr "文件扫描完成:  %s\n"
 
-#: pg_verify_checksums.c:340
+#: pg_verify_checksums.c:356
 #, c-format
 msgid "Blocks scanned: %s\n"
 msgstr "块扫描完成: %s\n"
 
-#: pg_verify_checksums.c:341
+#: pg_verify_checksums.c:357
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "坏校验和:  %s\n"

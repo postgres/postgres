@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-11-05 08:46+0000\n"
-"PO-Revision-Date: 2018-11-05 10:00+0100\n"
+"PO-Revision-Date: 2019-05-25 19:40+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -610,7 +610,7 @@ msgstr "konnte Eintrag für ID %d nicht finden\n"
 #: pg_backup_directory.c:596
 #, c-format
 msgid "could not close TOC file: %s\n"
-msgstr "konnte Inhaltsverzeichnisdatei nicht finden: %s\n"
+msgstr "konnte Inhaltsverzeichnisdatei nicht schließen: %s\n"
 
 #: pg_backup_archiver.c:1562 pg_backup_custom.c:158 pg_backup_directory.c:336
 #: pg_backup_directory.c:582 pg_backup_directory.c:647
@@ -1246,7 +1246,7 @@ msgstr "konnte keine temporären Dateinamen erzeugen: %s\n"
 #: pg_backup_tar.c:429
 #, c-format
 msgid "could not open temporary file\n"
-msgstr "konnte komprimierte temporäre Datei nicht öffnen\n"
+msgstr "konnte temporäre Datei nicht öffnen\n"
 
 #: pg_backup_tar.c:456
 #, c-format
