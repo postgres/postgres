@@ -66,20 +66,6 @@ Branch: REL9_5_STABLE [13f4b462d] 2019-06-12 11:31:20 +0900
 
     <listitem>
 <!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [de87a084c] 2019-06-13 17:28:24 -0400
-Branch: REL_11_STABLE [85600b7b5] 2019-06-13 17:28:24 -0400
-Branch: REL_10_STABLE [14a91a8fc] 2019-06-13 17:28:24 -0400
-Branch: REL9_6_STABLE [cb2398d80] 2019-06-13 17:28:24 -0400
--->
-     <para>
-      Avoid spurious deadlock failures when upgrading a tuple lock (Oleksii
-      Kliukin)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [24c19e9f6] 2019-05-09 16:53:05 -0400
 Branch: REL_11_STABLE [e7eed0baa] 2019-05-09 16:52:49 -0400
