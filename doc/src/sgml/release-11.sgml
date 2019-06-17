@@ -35,6 +35,43 @@
 
     <listitem>
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [09ec55b93] 2019-06-17 21:48:17 +0900
+Branch: REL_11_STABLE [4c779ce32] 2019-06-17 21:48:25 +0900
+Branch: REL_10_STABLE [90adc16ea] 2019-06-17 21:48:34 +0900
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [b67421178] 2019-06-17 22:13:57 +0900
+Branch: REL_11_STABLE [27c464e42] 2019-06-17 22:14:04 +0900
+Branch: REL_10_STABLE [d72a7e4da] 2019-06-17 22:14:09 +0900
+-->
+     <para>
+      Fix buffer-overflow hazards in SCRAM verifier parsing
+      (Jonathan Katz, Heikki Linnakangas, Michael Paquier)
+     </para>
+
+     <para>
+      Any authenticated user could cause a stack-based buffer overflow by
+      changing their own password to a purpose-crafted value.  In addition
+      to the ability to crash the <productname>PostgreSQL</productname>
+      server, this could suffice for executing arbitrary code as
+      the <productname>PostgreSQL</productname> operating system account.
+     </para>
+
+     <para>
+      A similar overflow hazard existed
+      in <application>libpq</application>, which could allow a rogue
+      server to crash a client or perhaps execute arbitrary code as the
+      client's operating system account.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Alexander
+      Lakhin for reporting this problem.  (CVE-2019-10164)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [6630ccad7] 2019-05-17 19:44:34 -0400
 Branch: REL_11_STABLE [592d5d75b] 2019-05-17 19:44:19 -0400
@@ -123,20 +160,6 @@ Branch: REL_11_STABLE [9fea0b0e2] 2019-05-19 18:16:41 -0700
       Fix incorrect argument null-ness checking during partial aggregation
       of aggregates with zero or multiple arguments (David Rowley, Kyotaro
       Horiguchi, Andres Freund)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [de87a084c] 2019-06-13 17:28:24 -0400
-Branch: REL_11_STABLE [85600b7b5] 2019-06-13 17:28:24 -0400
-Branch: REL_10_STABLE [14a91a8fc] 2019-06-13 17:28:24 -0400
-Branch: REL9_6_STABLE [cb2398d80] 2019-06-13 17:28:24 -0400
--->
-     <para>
-      Avoid spurious deadlock failures when upgrading a tuple lock (Oleksii
-      Kliukin)
      </para>
     </listitem>
 
