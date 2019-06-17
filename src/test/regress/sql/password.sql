@@ -75,6 +75,21 @@ ALTER ROLE regress_passwd_empty PASSWORD 'md585939a5ce845f1a1b620742e3c659e0a';
 ALTER ROLE regress_passwd_empty PASSWORD 'SCRAM-SHA-256$4096:hpFyHTUsSWcR7O9P$LgZFIt6Oqdo27ZFKbZ2nV+vtnYM995pDh9ca6WSi120=:qVV5NeluNfUPkwm7Vqat25RjSPLkGeoZBQs6wVv+um4=';
 SELECT rolpassword FROM pg_authid WHERE rolname='regress_passwd_empty';
 
+-- Test with invalid stored and server keys.
+--
+-- The first is valid, to act as a control. The others have too long
+-- stored/server keys. They will be re-hashed.
+CREATE ROLE regress_passwd_sha_len0 PASSWORD 'SCRAM-SHA-256$4096:A6xHKoH/494E941doaPOYg==$Ky+A30sewHIH3VHQLRN9vYsuzlgNyGNKCh37dy96Rqw=:COPdlNiIkrsacU5QoxydEuOH6e/KfiipeETb/bPw8ZI=';
+CREATE ROLE regress_passwd_sha_len1 PASSWORD 'SCRAM-SHA-256$4096:A6xHKoH/494E941doaPOYg==$Ky+A30sewHIH3VHQLRN9vYsuzlgNyGNKCh37dy96RqwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=:COPdlNiIkrsacU5QoxydEuOH6e/KfiipeETb/bPw8ZI=';
+CREATE ROLE regress_passwd_sha_len2 PASSWORD 'SCRAM-SHA-256$4096:A6xHKoH/494E941doaPOYg==$Ky+A30sewHIH3VHQLRN9vYsuzlgNyGNKCh37dy96Rqw=:COPdlNiIkrsacU5QoxydEuOH6e/KfiipeETb/bPw8ZIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+
+-- Check that the invalid verifiers were re-hashed. A re-hashed verifier
+-- should not contain the original salt.
+SELECT rolname, rolpassword not like '%A6xHKoH/494E941doaPOYg==%' as is_rolpassword_rehashed
+    FROM pg_authid
+    WHERE rolname LIKE 'regress_passwd_sha_len%'
+    ORDER BY rolname;
+
 DROP ROLE regress_passwd1;
 DROP ROLE regress_passwd2;
 DROP ROLE regress_passwd3;
@@ -84,6 +99,9 @@ DROP ROLE regress_passwd6;
 DROP ROLE regress_passwd7;
 DROP ROLE regress_passwd8;
 DROP ROLE regress_passwd_empty;
+DROP ROLE regress_passwd_sha_len0;
+DROP ROLE regress_passwd_sha_len1;
+DROP ROLE regress_passwd_sha_len2;
 
 -- all entries should have been removed
 SELECT rolname, rolpassword
