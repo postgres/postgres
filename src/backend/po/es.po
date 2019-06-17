@@ -62,7 +62,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-04-18 16:28+0000\n"
-"PO-Revision-Date: 2019-04-20 22:36-0400\n"
+"PO-Revision-Date: 2019-06-12 14:11-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -19894,7 +19894,7 @@ msgstr "«%c» no es un dígito hexadecimal válido"
 #: utils/adt/varbit.c:311 utils/adt/varbit.c:627
 #, c-format
 msgid "invalid length in external bit string"
-msgstr "el largo largo no es válido en cadena de bits externa"
+msgstr "el largo no es válido en cadena de bits externa"
 
 #: utils/adt/varbit.c:489 utils/adt/varbit.c:636 utils/adt/varbit.c:731
 #, c-format
