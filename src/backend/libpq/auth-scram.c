@@ -542,6 +542,12 @@ scram_verify_plain_password(const char *username, const char *password,
 /*
  * Parse and validate format of given SCRAM verifier.
  *
+ * On success, the iteration count, salt, stored key, and server key are
+ * extracted from the verifier, and returned to the caller.  For 'stored_key'
+ * and 'server_key', the caller must pass pre-allocated buffers of size
+ * SCRAM_KEY_LEN.  Salt is returned as a base64-encoded, null-terminated
+ * string.  The buffer for the salt is palloc'd by this function.
+ *
  * Returns true if the SCRAM verifier has been parsed, and false otherwise.
  */
 bool
@@ -557,6 +563,8 @@ parse_scram_verifier(const char *verifier, int *iterations, char **salt,
 	char	   *serverkey_str;
 	int			decoded_len;
 	char	   *decoded_salt_buf;
+	char	   *decoded_stored_buf;
+	char	   *decoded_server_buf;
 
 	/*
 	 * The verifier is of form:
@@ -589,7 +597,8 @@ parse_scram_verifier(const char *verifier, int *iterations, char **salt,
 	 * although we return the encoded version to the caller.
 	 */
 	decoded_salt_buf = palloc(pg_b64_dec_len(strlen(salt_str)));
-	decoded_len = pg_b64_decode(salt_str, strlen(salt_str), decoded_salt_buf);
+	decoded_len = pg_b64_decode(salt_str, strlen(salt_str),
+								decoded_salt_buf);
 	if (decoded_len < 0)
 		goto invalid_verifier;
 	*salt = pstrdup(salt_str);
@@ -597,28 +606,38 @@ parse_scram_verifier(const char *verifier, int *iterations, char **salt,
 	/*
 	 * Decode StoredKey and ServerKey.
 	 */
-	if (pg_b64_dec_len(strlen(storedkey_str) != SCRAM_KEY_LEN))
-		goto invalid_verifier;
+	decoded_stored_buf = palloc(pg_b64_dec_len(strlen(storedkey_str)));
 	decoded_len = pg_b64_decode(storedkey_str, strlen(storedkey_str),
-								(char *) stored_key);
+								decoded_stored_buf);
 	if (decoded_len != SCRAM_KEY_LEN)
 		goto invalid_verifier;
+	memcpy(stored_key, decoded_stored_buf, SCRAM_KEY_LEN);
 
-	if (pg_b64_dec_len(strlen(serverkey_str) != SCRAM_KEY_LEN))
-		goto invalid_verifier;
+	decoded_server_buf = palloc(pg_b64_dec_len(strlen(serverkey_str)));
 	decoded_len = pg_b64_decode(serverkey_str, strlen(serverkey_str),
-								(char *) server_key);
+								decoded_server_buf);
 	if (decoded_len != SCRAM_KEY_LEN)
 		goto invalid_verifier;
+	memcpy(server_key, decoded_server_buf, SCRAM_KEY_LEN);
 
 	return true;
 
 invalid_verifier:
-	pfree(v);
 	*salt = NULL;
 	return false;
 }
 
+/*
+ * Generate plausible SCRAM verifier parameters for mock authentication.
+ *
+ * In a normal authentication, these are extracted from the verifier
+ * stored in the server.  This function generates values that look
+ * realistic, for when there is no stored verifier.
+ *
+ * Like in parse_scram_verifier(), for 'stored_key' and 'server_key', the
+ * caller must pass pre-allocated buffers of size SCRAM_KEY_LEN, and
+ * the buffer for the salt is palloc'd by this function.
+ */
 static void
 mock_scram_verifier(const char *username, int *iterations, char **salt,
 					uint8 *stored_key, uint8 *server_key)
