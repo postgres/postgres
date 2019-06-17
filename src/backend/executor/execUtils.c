@@ -642,7 +642,7 @@ ExecAssignScanType(ScanState *scanstate, TupleDesc tupDesc)
 }
 
 /* ----------------
- *		ExecCreateSlotFromOuterPlan
+ *		ExecCreateScanSlotFromOuterPlan
  * ----------------
  */
 void

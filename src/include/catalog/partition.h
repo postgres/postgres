@@ -30,6 +30,6 @@ extern bool has_partition_attrs(Relation rel, Bitmapset *attnums,
 
 extern Oid	get_default_partition_oid(Oid parentId);
 extern void update_default_partition_oid(Oid parentId, Oid defaultPartId);
-extern List *get_proposed_default_constraint(List *new_part_constaints);
+extern List *get_proposed_default_constraint(List *new_part_constraints);
 
 #endif							/* PARTITION_H */

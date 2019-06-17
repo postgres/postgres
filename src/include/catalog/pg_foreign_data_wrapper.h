@@ -41,8 +41,8 @@ CATALOG(pg_foreign_data_wrapper,2328,ForeignDataWrapperRelationId)
 } FormData_pg_foreign_data_wrapper;
 
 /* ----------------
- *		Form_pg_fdw corresponds to a pointer to a tuple with
- *		the format of pg_fdw relation.
+ *		Form_pg_foreign_data_wrapper corresponds to a pointer to a tuple with
+ *		the format of pg_foreign_data_wrapper relation.
  * ----------------
  */
 typedef FormData_pg_foreign_data_wrapper *Form_pg_foreign_data_wrapper;

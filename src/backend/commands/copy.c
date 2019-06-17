@@ -829,8 +829,8 @@ CopyLoadRawBuf(CopyState cstate)
  * input/output stream. The latter could be either stdin/stdout or a
  * socket, depending on whether we're running under Postmaster control.
  *
- * Do not allow a Postgres user without the 'pg_access_server_files' role to
- * read from or write to a file.
+ * Do not allow a Postgres user without the 'pg_read_server_files' or
+ * 'pg_write_server_files' role to read from or write to a file.
  *
  * Do not allow the copy if user doesn't have proper permission to access
  * the table or the specifically requested columns.

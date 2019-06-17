@@ -133,7 +133,7 @@ PLyObject_FromJsonbValue(JsonbValue *jsonbValue)
 }
 
 /*
- * PLyObject_FromJsonb
+ * PLyObject_FromJsonbContainer
  *
  * Transform JsonbContainer to PyObject.
  */

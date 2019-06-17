@@ -113,7 +113,7 @@ BarrierInit(Barrier *barrier, int participants)
  * too and then return.  Increments the current phase.  The caller must be
  * attached.
  *
- * While waiting, pg_stat_activity shows a wait_event_class and wait_event
+ * While waiting, pg_stat_activity shows a wait_event_type and wait_event
  * controlled by the wait_event_info passed in, which should be a value from
  * one of the WaitEventXXX enums defined in pgstat.h.
  *

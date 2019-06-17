@@ -327,7 +327,7 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 /*
  * flagInhIndexes -
- *	 Create AttachIndexInfo objects for partitioned indexes, and add
+ *	 Create IndexAttachInfo objects for partitioned indexes, and add
  *	 appropriate dependency links.
  */
 static void

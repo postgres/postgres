@@ -67,7 +67,7 @@ pg_leftmost_one_pos64(uint64 word)
 		shift -= 8;
 
 	return shift + pg_leftmost_one_pos[(word >> shift) & 255];
-#endif							/* HAVE__BUIILTIN_CLZ */
+#endif							/* HAVE__BUILTIN_CLZ */
 }
 
 /*

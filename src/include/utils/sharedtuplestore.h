@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * sharedtuplestore.h
- *	  Simple mechinism for sharing tuples between backends.
+ *	  Simple mechanism for sharing tuples between backends.
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

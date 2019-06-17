@@ -356,7 +356,7 @@ apw_load_buffers(void)
 		Oid			current_db = blkinfo[j].database;
 
 		/*
-		 * Advance the prewarm_stop_idx to the first BlockRecordInfo that does
+		 * Advance the prewarm_stop_idx to the first BlockInfoRecord that does
 		 * not belong to this database.
 		 */
 		j++;
@@ -365,7 +365,7 @@ apw_load_buffers(void)
 			if (current_db != blkinfo[j].database)
 			{
 				/*
-				 * Combine BlockRecordInfos for global objects with those of
+				 * Combine BlockInfoRecords for global objects with those of
 				 * the database.
 				 */
 				if (current_db != InvalidOid)
@@ -378,7 +378,7 @@ apw_load_buffers(void)
 
 		/*
 		 * If we reach this point with current_db == InvalidOid, then only
-		 * BlockRecordInfos belonging to global objects exist.  We can't
+		 * BlockInfoRecords belonging to global objects exist.  We can't
 		 * prewarm without a database connection, so just bail out.
 		 */
 		if (current_db == InvalidOid)

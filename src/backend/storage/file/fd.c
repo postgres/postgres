@@ -1592,7 +1592,7 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
  * If the file is inside the top-level temporary directory, its name should
  * begin with PG_TEMP_FILE_PREFIX so that it can be identified as temporary
  * and deleted at startup by RemovePgTempFiles().  Alternatively, it can be
- * inside a directory created with PathnameCreateTemporaryDir(), in which case
+ * inside a directory created with PathNameCreateTemporaryDir(), in which case
  * the prefix isn't needed.
  */
 File

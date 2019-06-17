@@ -53,7 +53,7 @@ typedef struct OkeysState
 	int			sent_count;
 } OkeysState;
 
-/* state for iterate_json_string_values function */
+/* state for iterate_json_values function */
 typedef struct IterateJsonStringValuesState
 {
 	JsonLexContext *lex;

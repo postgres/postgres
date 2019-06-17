@@ -67,7 +67,7 @@ step "s2c"	 { COMMIT; }
 # in the new partition should contain the changes made by session s2.
 permutation "s1b" "s2b" "s2u1" "s1u" "s2c" "s1c" "s1s"
 
-# Same as above, except, session s1 is waiting in GetTupleTrigger().
+# Same as above, except, session s1 is waiting in GetTupleForTrigger().
 permutation "s1b" "s2b" "s2ut1" "s1ut" "s2c" "s1c" "s1st" "s1stl"
 
 # Below two cases are similar to the above two; except that the session s1

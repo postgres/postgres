@@ -261,7 +261,7 @@ struct IntegerSet
  * Prototypes for internal functions.
  */
 static void intset_update_upper(IntegerSet *intset, int level,
-								intset_node *new_node, uint64 new_node_item);
+								intset_node *child, uint64 child_key);
 static void intset_flush_buffered_values(IntegerSet *intset);
 
 static int	intset_binsrch_uint64(uint64 value, uint64 *arr, int arr_elems,

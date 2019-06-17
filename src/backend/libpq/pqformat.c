@@ -308,7 +308,7 @@ pq_endmessage(StringInfo buf)
  *		pq_endmessage_reuse	- send the completed message to the frontend
  *
  * The data buffer is *not* freed, allowing to reuse the buffer with
- * pg_beginmessage_reuse.
+ * pq_beginmessage_reuse.
  --------------------------------
  */
 

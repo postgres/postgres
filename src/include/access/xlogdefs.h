@@ -22,7 +22,7 @@ typedef uint64 XLogRecPtr;
 
 /*
  * Zero is used indicate an invalid pointer. Bootstrap skips the first possible
- * WAL segment, initializing the first WAL page at XLOG_SEG_SIZE, so no XLOG
+ * WAL segment, initializing the first WAL page at WAL segment size, so no XLOG
  * record can begin at zero.
  */
 #define InvalidXLogRecPtr	0

@@ -3364,7 +3364,7 @@ PreventInTransactionBlock(bool isTopLevel, const char *stmtType)
 }
 
 /*
- *	WarnNoTranactionBlock
+ *	WarnNoTransactionBlock
  *	RequireTransactionBlock
  *
  *	These two functions allow for warnings or errors if a command is executed

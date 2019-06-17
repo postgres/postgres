@@ -500,7 +500,7 @@ iterate_word_similarity(int *trg2indexes,
 		word_similarity_threshold;
 
 	/*
-	 * Consider first trigram as initial lower bount for strict word
+	 * Consider first trigram as initial lower bound for strict word
 	 * similarity, or initialize it later with first trigram present for plain
 	 * word similarity.
 	 */

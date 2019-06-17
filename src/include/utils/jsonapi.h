@@ -145,7 +145,7 @@ typedef enum JsonToIndex
 	jtiAll = jtiKey | jtiString | jtiNumeric | jtiBool
 } JsonToIndex;
 
-/* an action that will be applied to each value in iterate_json(b)_vaues functions */
+/* an action that will be applied to each value in iterate_json(b)_values functions */
 typedef void (*JsonIterateStringValuesAction) (void *state, char *elem_value, int elem_len);
 
 /* an action that will be applied to each value in transform_json(b)_values functions */

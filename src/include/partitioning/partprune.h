@@ -41,7 +41,7 @@ struct RelOptInfo;
  *					subsidiary data, such as the FmgrInfos.
  * planstate		Points to the parent plan node's PlanState when called
  *					during execution; NULL when called from the planner.
- * exprstates		Array of ExprStates, indexed as per PruneCtxStateIdx; one
+ * exprstates		Array of ExprStates, indexed as per PruneCxtStateIdx; one
  *					for each partition key in each pruning step.  Allocated if
  *					planstate is non-NULL, otherwise NULL.
  */

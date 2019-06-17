@@ -22,7 +22,7 @@ endif
 PGFILEDESC = "llvmjit - JIT using LLVM"
 NAME = llvmjit
 
-# All files in this directy use LLVM.
+# All files in this directory use LLVM.
 CFLAGS += $(LLVM_CFLAGS)
 CXXFLAGS += $(LLVM_CXXFLAGS)
 override CPPFLAGS := $(LLVM_CPPFLAGS) $(CPPFLAGS)

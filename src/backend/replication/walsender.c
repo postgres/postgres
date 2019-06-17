@@ -1087,7 +1087,8 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	 * Create our decoding context, making it start at the previously ack'ed
 	 * position.
 	 *
-	 * Do this before sending CopyBoth, so that any errors are reported early.
+	 * Do this before sending a CopyBothResponse message, so that any errors
+	 * are reported early.
 	 */
 	logical_decoding_ctx =
 		CreateDecodingContext(cmd->startpoint, cmd->options, false,

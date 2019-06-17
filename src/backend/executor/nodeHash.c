@@ -1049,8 +1049,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 
 /*
  * ExecParallelHashIncreaseNumBatches
- *		Every participant attached to grow_barrier must run this function
- *		when it observes growth == PHJ_GROWTH_NEED_MORE_BATCHES.
+ *		Every participant attached to grow_batches_barrier must run this
+ *		function when it observes growth == PHJ_GROWTH_NEED_MORE_BATCHES.
  */
 static void
 ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
@@ -1106,7 +1106,7 @@ ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
 					 * The combined work_mem of all participants wasn't
 					 * enough. Therefore one batch per participant would be
 					 * approximately equivalent and would probably also be
-					 * insufficient.  So try two batches per particiant,
+					 * insufficient.  So try two batches per participant,
 					 * rounded up to a power of two.
 					 */
 					new_nbatch = 1 << my_log2(pstate->nparticipants * 2);
@@ -1674,7 +1674,7 @@ ExecHashTableInsert(HashJoinTable hashtable,
 }
 
 /*
- * ExecHashTableParallelInsert
+ * ExecParallelHashTableInsert
  *		insert a tuple into a shared hash table or shared batch tuplestore
  */
 void

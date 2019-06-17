@@ -1238,7 +1238,7 @@ shm_mq_inc_bytes_written(shm_mq *mq, Size n)
 	/*
 	 * Separate prior reads of mq_ring from the write of mq_bytes_written
 	 * which we're about to do.  Pairs with the read barrier found in
-	 * shm_mq_get_receive_bytes.
+	 * shm_mq_receive_bytes.
 	 */
 	pg_write_barrier();
 

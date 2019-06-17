@@ -230,7 +230,7 @@ const Oid fmgr_last_builtin_oid = %u;
 |, $last_builtin_oid;
 
 
-# Create fmgr_builtins_oid_index table.
+# Create fmgr_builtin_oid_index table.
 printf $tfh qq|
 const uint16 fmgr_builtin_oid_index[%u] = {
 |, $last_builtin_oid + 1;

@@ -340,7 +340,7 @@ hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 		/*
 		 * _hash_first and _hash_next handle eliminate dead index entries
-		 * whenever scan->ignored_killed_tuples is true.  Therefore, there's
+		 * whenever scan->ignore_killed_tuples is true.  Therefore, there's
 		 * nothing to do here except add the results to the TIDBitmap.
 		 */
 		tbm_add_tuples(tbm, &(currItem->heapTid), 1, true);

@@ -68,8 +68,8 @@
  * A TupleTableSlot can also be "empty", indicated by flag TTS_FLAG_EMPTY set
  * in tts_flags, holding no valid data.  This is the only valid state for a
  * freshly-created slot that has not yet had a tuple descriptor assigned to
- * it.  In this state, TTS_SHOULDFREE should not be set in tts_flag, tts_tuple
- * must be NULL, tts_buffer InvalidBuffer, and tts_nvalid zero.
+ * it.  In this state, TTS_SHOULDFREE should not be set in tts_flags, tts_tuple
+ * must be NULL and tts_nvalid zero.
  *
  * The tupleDescriptor is simply referenced, not copied, by the TupleTableSlot
  * code.  The caller of ExecSetSlotDescriptor() is responsible for providing
@@ -87,7 +87,7 @@
  * the descriptor is provided), or when a descriptor is assigned to the slot;
  * they are of length equal to the descriptor's natts.
  *
- * The TTS_FLAG_SLOW flag and tts_off are saved state for
+ * The TTS_FLAG_SLOW flag is saved state for
  * slot_deform_heap_tuple, and should not be touched by any other code.
  *----------
  */

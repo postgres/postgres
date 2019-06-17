@@ -173,7 +173,7 @@ sts_initialize(SharedTuplestore *sts, int participants,
 }
 
 /*
- * Attach to a SharedTupleStore that has been initialized by another backend,
+ * Attach to a SharedTuplestore that has been initialized by another backend,
  * so that this backend can read and write tuples.
  */
 SharedTuplestoreAccessor *

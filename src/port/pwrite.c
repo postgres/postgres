@@ -9,7 +9,7 @@
  *	  src/port/pwrite.c
  *
  * Note that this implementation changes the current file position, unlike
- * the POSIX function, so we use the name pg_write().
+ * the POSIX function, so we use the name pg_pwrite().
  *
  *-------------------------------------------------------------------------
  */

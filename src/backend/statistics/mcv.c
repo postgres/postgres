@@ -1315,7 +1315,7 @@ pg_mcv_list_in(PG_FUNCTION_ARGS)
 
 
 /*
- * pg_mcv_list_out		- output routine for type PG_MCV_LIST.
+ * pg_mcv_list_out		- output routine for type pg_mcv_list.
  *
  * MCV lists are serialized into a bytea value, so we simply call byteaout()
  * to serialize the value into text. But it'd be nice to serialize that into

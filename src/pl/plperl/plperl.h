@@ -84,7 +84,7 @@
  */
 #ifdef PG_NEED_PERL_XSUB_H
 /*
- * On Windows, port_win32.h defines macros for a lot of these same functions.
+ * On Windows, win32_port.h defines macros for a lot of these same functions.
  * To avoid compiler warnings when XSUB.h redefines them, #undef our versions.
  */
 #ifdef WIN32

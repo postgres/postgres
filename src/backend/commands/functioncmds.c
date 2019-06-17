@@ -170,7 +170,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
  * Input parameters:
  * parameters: list of FunctionParameter structs
  * languageOid: OID of function language (InvalidOid if it's CREATE AGGREGATE)
- * is_aggregate: needed only to determine error handling
+ * objtype: needed only to determine error handling and required result type
  *
  * Results are stored into output parameters.  parameterTypes must always
  * be created, but the other arrays are set to NULL if not needed.
