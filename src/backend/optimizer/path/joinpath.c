@@ -1867,9 +1867,12 @@ hash_inner_and_outer(PlannerInfo *root,
 
 			/*
 			 * Can we use a partial inner plan too, so that we can build a
-			 * shared hash table in parallel?
+			 * shared hash table in parallel?  We can't handle
+			 * JOIN_UNIQUE_INNER because we can't guarantee uniqueness.
 			 */
-			if (innerrel->partial_pathlist != NIL && enable_parallel_hash)
+			if (innerrel->partial_pathlist != NIL &&
+				save_jointype != JOIN_UNIQUE_INNER &&
+				enable_parallel_hash)
 			{
 				cheapest_partial_inner =
 					(Path *) linitial(innerrel->partial_pathlist);
