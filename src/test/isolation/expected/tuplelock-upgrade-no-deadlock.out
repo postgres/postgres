@@ -1,0 +1,195 @@
+Parsed test spec with 4 sessions
+
+starting permutation: s1_share s2_for_update s3_share s3_for_update s1_rollback s3_rollback s2_rollback
+step s1_share: select id from tlu_job where id = 1 for share;
+id             
+
+1              
+step s2_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s3_share: select id from tlu_job where id = 1 for share;
+id             
+
+1              
+step s3_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s1_rollback: rollback;
+step s3_for_update: <... completed>
+id             
+
+1              
+step s3_rollback: rollback;
+step s2_for_update: <... completed>
+id             
+
+1              
+step s2_rollback: rollback;
+
+starting permutation: s1_keyshare s2_for_update s3_keyshare s1_update s3_update s1_rollback s3_rollback s2_rollback
+step s1_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s2_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s3_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s1_update: update tlu_job set name = 'b' where id = 1;
+step s3_update: update tlu_job set name = 'c' where id = 1; <waiting ...>
+step s1_rollback: rollback;
+step s3_update: <... completed>
+step s3_rollback: rollback;
+step s2_for_update: <... completed>
+id             
+
+1              
+step s2_rollback: rollback;
+
+starting permutation: s1_keyshare s2_for_update s3_keyshare s1_update s3_update s1_commit s3_rollback s2_rollback
+step s1_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s2_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s3_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s1_update: update tlu_job set name = 'b' where id = 1;
+step s3_update: update tlu_job set name = 'c' where id = 1; <waiting ...>
+step s1_commit: commit;
+step s3_update: <... completed>
+step s3_rollback: rollback;
+step s2_for_update: <... completed>
+id             
+
+1              
+step s2_rollback: rollback;
+
+starting permutation: s1_keyshare s2_for_update s3_keyshare s3_delete s1_rollback s3_rollback s2_rollback
+step s1_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s2_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s3_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s3_delete: delete from tlu_job where id = 1; <waiting ...>
+step s1_rollback: rollback;
+step s3_delete: <... completed>
+step s3_rollback: rollback;
+step s2_for_update: <... completed>
+id             
+
+1              
+step s2_rollback: rollback;
+
+starting permutation: s1_keyshare s2_for_update s3_keyshare s3_delete s1_rollback s3_commit s2_rollback
+step s1_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s2_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s3_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s3_delete: delete from tlu_job where id = 1; <waiting ...>
+step s1_rollback: rollback;
+step s3_delete: <... completed>
+step s3_commit: commit;
+step s2_for_update: <... completed>
+id             
+
+step s2_rollback: rollback;
+
+starting permutation: s1_share s2_for_update s3_for_update s1_rollback s2_rollback s3_rollback
+step s1_share: select id from tlu_job where id = 1 for share;
+id             
+
+1              
+step s2_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s3_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s1_rollback: rollback;
+step s2_for_update: <... completed>
+id             
+
+1              
+step s2_rollback: rollback;
+step s3_for_update: <... completed>
+id             
+
+1              
+step s3_rollback: rollback;
+
+starting permutation: s1_share s2_update s3_update s1_rollback s2_rollback s3_rollback
+step s1_share: select id from tlu_job where id = 1 for share;
+id             
+
+1              
+step s2_update: update tlu_job set name = 'b' where id = 1; <waiting ...>
+step s3_update: update tlu_job set name = 'c' where id = 1; <waiting ...>
+step s1_rollback: rollback;
+step s2_update: <... completed>
+step s2_rollback: rollback;
+step s3_update: <... completed>
+step s3_rollback: rollback;
+
+starting permutation: s1_share s2_delete s3_delete s1_rollback s2_rollback s3_rollback
+step s1_share: select id from tlu_job where id = 1 for share;
+id             
+
+1              
+step s2_delete: delete from tlu_job where id = 1; <waiting ...>
+step s3_delete: delete from tlu_job where id = 1; <waiting ...>
+step s1_rollback: rollback;
+step s2_delete: <... completed>
+step s2_rollback: rollback;
+step s3_delete: <... completed>
+step s3_rollback: rollback;
+
+starting permutation: s1_keyshare s3_for_update s2_for_keyshare s1_savept_e s1_share s1_savept_f s1_fornokeyupd s2_fornokeyupd s0_begin s0_keyshare s1_rollback_f s0_keyshare s1_rollback_e s1_rollback s2_rollback s0_rollback s3_rollback
+step s1_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s3_for_update: select id from tlu_job where id = 1 for update; <waiting ...>
+step s2_for_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s1_savept_e: savepoint s1_e;
+step s1_share: select id from tlu_job where id = 1 for share;
+id             
+
+1              
+step s1_savept_f: savepoint s1_f;
+step s1_fornokeyupd: select id from tlu_job where id = 1 for no key update;
+id             
+
+1              
+step s2_fornokeyupd: select id from tlu_job where id = 1 for no key update; <waiting ...>
+step s0_begin: begin;
+step s0_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s1_rollback_f: rollback to s1_f;
+step s0_keyshare: select id from tlu_job where id = 1 for key share;
+id             
+
+1              
+step s1_rollback_e: rollback to s1_e;
+step s2_fornokeyupd: <... completed>
+id             
+
+1              
+step s1_rollback: rollback;
+step s2_rollback: rollback;
+step s0_rollback: rollback;
+step s3_for_update: <... completed>
+id             
+
+1              
+step s3_rollback: rollback;
