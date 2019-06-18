@@ -36,6 +36,16 @@ do LockTuple as well, if there is any conflict, to ensure that they don't
 starve out waiting exclusive-lockers.  However, if there is not any active
 conflict for a tuple, we don't incur any extra overhead.
 
+We make an exception to the above rule for those lockers that already hold
+some lock on a tuple and attempt to acquire a stronger one on it.  In that
+case, we skip the LockTuple() call even when there are conflicts, provided
+that the target tuple is being locked, updated or deleted by multiple sessions
+concurrently.  Failing to skip the lock would risk a deadlock, e.g., between a
+session that was first to record its weaker lock in the tuple header and would
+be waiting on the LockTuple() call to upgrade to the stronger lock level, and
+another session that has already done LockTuple() and is waiting for the first
+session transaction to release its tuple header-level lock.
+
 We provide four levels of tuple locking strength: SELECT FOR UPDATE obtains an
 exclusive lock which prevents any kind of modification of the tuple. This is
 the lock level that is implicitly taken by DELETE operations, and also by
