@@ -55,10 +55,6 @@ sub _new
 	die "Bad wal_blocksize $options->{wal_blocksize}"
 	  unless grep { $_ == $options->{wal_blocksize} }
 	  (1, 2, 4, 8, 16, 32, 64);
-	$options->{wal_segsize} = 16
-	  unless $options->{wal_segsize};      # undef or 0 means default
-	die "Bad wal_segsize $options->{wal_segsize}"
-	  unless grep { $_ == $options->{wal_segsize} } (1, 2, 4, 8, 16, 32, 64);
 
 	return $self;
 }
