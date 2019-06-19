@@ -34,7 +34,7 @@ typedef struct
 #define DECOMPOSITION_IS_INLINE(x) (((x)->dec_size_flags & DECOMP_INLINE) != 0)
 
 /* Table of Unicode codepoints and their decompositions */
-static const pg_unicode_decomposition UnicodeDecompMain[6532] =
+static const pg_unicode_decomposition UnicodeDecompMain[6582] =
 {
 	{0x00A0, 0, 1 | DECOMP_INLINE, 0x0020},
 	{0x00A8, 0, 2 | DECOMP_NO_COMPOSE, 0},	/* compatibility mapping */
@@ -700,6 +700,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x07F1, 230, 0, 0},
 	{0x07F2, 220, 0, 0},
 	{0x07F3, 230, 0, 0},
+	{0x07FD, 220, 0, 0},
 	{0x0816, 230, 0, 0},
 	{0x0817, 230, 0, 0},
 	{0x0818, 230, 0, 0},
@@ -724,6 +725,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x0859, 220, 0, 0},
 	{0x085A, 220, 0, 0},
 	{0x085B, 220, 0, 0},
+	{0x08D3, 220, 0, 0},
 	{0x08D4, 230, 0, 0},
 	{0x08D5, 230, 0, 0},
 	{0x08D6, 230, 0, 0},
@@ -791,6 +793,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x09DC, 0, 2 | DECOMP_NO_COMPOSE, 775},	/* in exclusion list */
 	{0x09DD, 0, 2 | DECOMP_NO_COMPOSE, 777},	/* in exclusion list */
 	{0x09DF, 0, 2 | DECOMP_NO_COMPOSE, 779},	/* in exclusion list */
+	{0x09FE, 230, 0, 0},
 	{0x0A33, 0, 2 | DECOMP_NO_COMPOSE, 781},	/* in exclusion list */
 	{0x0A36, 0, 2 | DECOMP_NO_COMPOSE, 783},	/* in exclusion list */
 	{0x0A3C, 7, 0, 0},
@@ -824,6 +827,8 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x0CCA, 0, 2, 819},
 	{0x0CCB, 0, 2, 821},
 	{0x0CCD, 9, 0, 0},
+	{0x0D3B, 9, 0, 0},
+	{0x0D3C, 9, 0, 0},
 	{0x0D4A, 0, 2, 823},
 	{0x0D4B, 0, 2, 825},
 	{0x0D4C, 0, 2, 827},
@@ -844,6 +849,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x0EB3, 0, 2 | DECOMP_NO_COMPOSE, 839},	/* compatibility mapping */
 	{0x0EB8, 118, 0, 0},
 	{0x0EB9, 118, 0, 0},
+	{0x0EBA, 9, 0, 0},
 	{0x0EC8, 122, 0, 0},
 	{0x0EC9, 122, 0, 0},
 	{0x0ECA, 122, 0, 0},
@@ -1139,6 +1145,10 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x1DF3, 230, 0, 0},
 	{0x1DF4, 230, 0, 0},
 	{0x1DF5, 230, 0, 0},
+	{0x1DF6, 232, 0, 0},
+	{0x1DF7, 228, 0, 0},
+	{0x1DF8, 228, 0, 0},
+	{0x1DF9, 220, 0, 0},
 	{0x1DFB, 230, 0, 0},
 	{0x1DFC, 233, 0, 0},
 	{0x1DFD, 220, 0, 0},
@@ -2702,262 +2712,263 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x32FC, 0, 1 | DECOMP_INLINE, 0x30F0},
 	{0x32FD, 0, 1 | DECOMP_INLINE, 0x30F1},
 	{0x32FE, 0, 1 | DECOMP_INLINE, 0x30F2},
-	{0x3300, 0, 4, 2803},
-	{0x3301, 0, 4, 2807},
-	{0x3302, 0, 4, 2811},
-	{0x3303, 0, 3, 2815},
-	{0x3304, 0, 4, 2818},
-	{0x3305, 0, 3, 2822},
-	{0x3306, 0, 3, 2825},
-	{0x3307, 0, 5, 2828},
-	{0x3308, 0, 4, 2833},
-	{0x3309, 0, 3, 2837},
-	{0x330A, 0, 3, 2840},
-	{0x330B, 0, 3, 2843},
-	{0x330C, 0, 4, 2846},
-	{0x330D, 0, 4, 2850},
-	{0x330E, 0, 3, 2854},
-	{0x330F, 0, 3, 2857},
-	{0x3310, 0, 2 | DECOMP_NO_COMPOSE, 2860},	/* compatibility mapping */
-	{0x3311, 0, 3, 2862},
-	{0x3312, 0, 4, 2865},
-	{0x3313, 0, 4, 2869},
-	{0x3314, 0, 2 | DECOMP_NO_COMPOSE, 2873},	/* compatibility mapping */
-	{0x3315, 0, 5, 2875},
-	{0x3316, 0, 6, 2880},
-	{0x3317, 0, 5, 2886},
-	{0x3318, 0, 3, 2891},
-	{0x3319, 0, 5, 2894},
-	{0x331A, 0, 5, 2899},
-	{0x331B, 0, 4, 2904},
-	{0x331C, 0, 3, 2908},
-	{0x331D, 0, 3, 2911},
-	{0x331E, 0, 3, 2914},
-	{0x331F, 0, 4, 2917},
-	{0x3320, 0, 5, 2921},
-	{0x3321, 0, 4, 2926},
-	{0x3322, 0, 3, 2930},
-	{0x3323, 0, 3, 2933},
-	{0x3324, 0, 3, 2936},
-	{0x3325, 0, 2 | DECOMP_NO_COMPOSE, 2939},	/* compatibility mapping */
-	{0x3326, 0, 2 | DECOMP_NO_COMPOSE, 2941},	/* compatibility mapping */
-	{0x3327, 0, 2 | DECOMP_NO_COMPOSE, 2943},	/* compatibility mapping */
-	{0x3328, 0, 2 | DECOMP_NO_COMPOSE, 2945},	/* compatibility mapping */
-	{0x3329, 0, 3, 2947},
-	{0x332A, 0, 3, 2950},
-	{0x332B, 0, 5, 2953},
-	{0x332C, 0, 3, 2958},
-	{0x332D, 0, 4, 2961},
-	{0x332E, 0, 5, 2965},
-	{0x332F, 0, 3, 2970},
-	{0x3330, 0, 2 | DECOMP_NO_COMPOSE, 2973},	/* compatibility mapping */
-	{0x3331, 0, 2 | DECOMP_NO_COMPOSE, 2975},	/* compatibility mapping */
-	{0x3332, 0, 5, 2977},
-	{0x3333, 0, 4, 2982},
-	{0x3334, 0, 5, 2986},
-	{0x3335, 0, 3, 2991},
-	{0x3336, 0, 5, 2994},
-	{0x3337, 0, 2 | DECOMP_NO_COMPOSE, 2999},	/* compatibility mapping */
-	{0x3338, 0, 3, 3001},
-	{0x3339, 0, 3, 3004},
-	{0x333A, 0, 3, 3007},
-	{0x333B, 0, 3, 3010},
-	{0x333C, 0, 3, 3013},
-	{0x333D, 0, 4, 3016},
-	{0x333E, 0, 3, 3020},
-	{0x333F, 0, 2 | DECOMP_NO_COMPOSE, 3023},	/* compatibility mapping */
-	{0x3340, 0, 3, 3025},
-	{0x3341, 0, 3, 3028},
-	{0x3342, 0, 3, 3031},
-	{0x3343, 0, 4, 3034},
-	{0x3344, 0, 3, 3038},
-	{0x3345, 0, 3, 3041},
-	{0x3346, 0, 3, 3044},
-	{0x3347, 0, 5, 3047},
-	{0x3348, 0, 4, 3052},
-	{0x3349, 0, 2 | DECOMP_NO_COMPOSE, 3056},	/* compatibility mapping */
-	{0x334A, 0, 5, 3058},
-	{0x334B, 0, 2 | DECOMP_NO_COMPOSE, 3063},	/* compatibility mapping */
-	{0x334C, 0, 4, 3065},
-	{0x334D, 0, 4, 3069},
-	{0x334E, 0, 3, 3073},
-	{0x334F, 0, 3, 3076},
-	{0x3350, 0, 3, 3079},
-	{0x3351, 0, 4, 3082},
-	{0x3352, 0, 2 | DECOMP_NO_COMPOSE, 3086},	/* compatibility mapping */
-	{0x3353, 0, 3, 3088},
-	{0x3354, 0, 4, 3091},
-	{0x3355, 0, 2 | DECOMP_NO_COMPOSE, 3095},	/* compatibility mapping */
-	{0x3356, 0, 5, 3097},
-	{0x3357, 0, 3, 3102},
-	{0x3358, 0, 2 | DECOMP_NO_COMPOSE, 3105},	/* compatibility mapping */
-	{0x3359, 0, 2 | DECOMP_NO_COMPOSE, 3107},	/* compatibility mapping */
-	{0x335A, 0, 2 | DECOMP_NO_COMPOSE, 3109},	/* compatibility mapping */
-	{0x335B, 0, 2 | DECOMP_NO_COMPOSE, 3111},	/* compatibility mapping */
-	{0x335C, 0, 2 | DECOMP_NO_COMPOSE, 3113},	/* compatibility mapping */
-	{0x335D, 0, 2 | DECOMP_NO_COMPOSE, 3115},	/* compatibility mapping */
-	{0x335E, 0, 2 | DECOMP_NO_COMPOSE, 3117},	/* compatibility mapping */
-	{0x335F, 0, 2 | DECOMP_NO_COMPOSE, 3119},	/* compatibility mapping */
-	{0x3360, 0, 2 | DECOMP_NO_COMPOSE, 3121},	/* compatibility mapping */
-	{0x3361, 0, 2 | DECOMP_NO_COMPOSE, 3123},	/* compatibility mapping */
-	{0x3362, 0, 3, 3125},
-	{0x3363, 0, 3, 3128},
-	{0x3364, 0, 3, 3131},
-	{0x3365, 0, 3, 3134},
-	{0x3366, 0, 3, 3137},
-	{0x3367, 0, 3, 3140},
-	{0x3368, 0, 3, 3143},
-	{0x3369, 0, 3, 3146},
-	{0x336A, 0, 3, 3149},
-	{0x336B, 0, 3, 3152},
-	{0x336C, 0, 3, 3155},
-	{0x336D, 0, 3, 3158},
-	{0x336E, 0, 3, 3161},
-	{0x336F, 0, 3, 3164},
-	{0x3370, 0, 3, 3167},
-	{0x3371, 0, 3, 3170},
-	{0x3372, 0, 2 | DECOMP_NO_COMPOSE, 3173},	/* compatibility mapping */
-	{0x3373, 0, 2 | DECOMP_NO_COMPOSE, 3175},	/* compatibility mapping */
-	{0x3374, 0, 3, 3177},
-	{0x3375, 0, 2 | DECOMP_NO_COMPOSE, 3180},	/* compatibility mapping */
-	{0x3376, 0, 2 | DECOMP_NO_COMPOSE, 3182},	/* compatibility mapping */
-	{0x3377, 0, 2 | DECOMP_NO_COMPOSE, 3184},	/* compatibility mapping */
-	{0x3378, 0, 3, 3186},
-	{0x3379, 0, 3, 3189},
-	{0x337A, 0, 2 | DECOMP_NO_COMPOSE, 3192},	/* compatibility mapping */
-	{0x337B, 0, 2 | DECOMP_NO_COMPOSE, 3194},	/* compatibility mapping */
-	{0x337C, 0, 2 | DECOMP_NO_COMPOSE, 3196},	/* compatibility mapping */
-	{0x337D, 0, 2 | DECOMP_NO_COMPOSE, 3198},	/* compatibility mapping */
-	{0x337E, 0, 2 | DECOMP_NO_COMPOSE, 3200},	/* compatibility mapping */
-	{0x337F, 0, 4, 3202},
-	{0x3380, 0, 2 | DECOMP_NO_COMPOSE, 3206},	/* compatibility mapping */
-	{0x3381, 0, 2 | DECOMP_NO_COMPOSE, 3208},	/* compatibility mapping */
-	{0x3382, 0, 2 | DECOMP_NO_COMPOSE, 3210},	/* compatibility mapping */
-	{0x3383, 0, 2 | DECOMP_NO_COMPOSE, 3212},	/* compatibility mapping */
-	{0x3384, 0, 2 | DECOMP_NO_COMPOSE, 3214},	/* compatibility mapping */
-	{0x3385, 0, 2 | DECOMP_NO_COMPOSE, 3216},	/* compatibility mapping */
-	{0x3386, 0, 2 | DECOMP_NO_COMPOSE, 3218},	/* compatibility mapping */
-	{0x3387, 0, 2 | DECOMP_NO_COMPOSE, 3220},	/* compatibility mapping */
-	{0x3388, 0, 3, 3222},
-	{0x3389, 0, 4, 3225},
-	{0x338A, 0, 2 | DECOMP_NO_COMPOSE, 3229},	/* compatibility mapping */
-	{0x338B, 0, 2 | DECOMP_NO_COMPOSE, 3231},	/* compatibility mapping */
-	{0x338C, 0, 2 | DECOMP_NO_COMPOSE, 3233},	/* compatibility mapping */
-	{0x338D, 0, 2 | DECOMP_NO_COMPOSE, 3235},	/* compatibility mapping */
-	{0x338E, 0, 2 | DECOMP_NO_COMPOSE, 3237},	/* compatibility mapping */
-	{0x338F, 0, 2 | DECOMP_NO_COMPOSE, 3239},	/* compatibility mapping */
-	{0x3390, 0, 2 | DECOMP_NO_COMPOSE, 3241},	/* compatibility mapping */
-	{0x3391, 0, 3, 3243},
-	{0x3392, 0, 3, 3246},
-	{0x3393, 0, 3, 3249},
-	{0x3394, 0, 3, 3252},
-	{0x3395, 0, 2 | DECOMP_NO_COMPOSE, 3255},	/* compatibility mapping */
-	{0x3396, 0, 2 | DECOMP_NO_COMPOSE, 3257},	/* compatibility mapping */
-	{0x3397, 0, 2 | DECOMP_NO_COMPOSE, 3259},	/* compatibility mapping */
-	{0x3398, 0, 2 | DECOMP_NO_COMPOSE, 3261},	/* compatibility mapping */
-	{0x3399, 0, 2 | DECOMP_NO_COMPOSE, 3263},	/* compatibility mapping */
-	{0x339A, 0, 2 | DECOMP_NO_COMPOSE, 3265},	/* compatibility mapping */
-	{0x339B, 0, 2 | DECOMP_NO_COMPOSE, 3267},	/* compatibility mapping */
-	{0x339C, 0, 2 | DECOMP_NO_COMPOSE, 3269},	/* compatibility mapping */
-	{0x339D, 0, 2 | DECOMP_NO_COMPOSE, 3271},	/* compatibility mapping */
-	{0x339E, 0, 2 | DECOMP_NO_COMPOSE, 3273},	/* compatibility mapping */
-	{0x339F, 0, 3, 3275},
-	{0x33A0, 0, 3, 3278},
-	{0x33A1, 0, 2 | DECOMP_NO_COMPOSE, 3281},	/* compatibility mapping */
-	{0x33A2, 0, 3, 3283},
-	{0x33A3, 0, 3, 3286},
-	{0x33A4, 0, 3, 3289},
-	{0x33A5, 0, 2 | DECOMP_NO_COMPOSE, 3292},	/* compatibility mapping */
-	{0x33A6, 0, 3, 3294},
-	{0x33A7, 0, 3, 3297},
-	{0x33A8, 0, 4, 3300},
-	{0x33A9, 0, 2 | DECOMP_NO_COMPOSE, 3304},	/* compatibility mapping */
-	{0x33AA, 0, 3, 3306},
-	{0x33AB, 0, 3, 3309},
-	{0x33AC, 0, 3, 3312},
-	{0x33AD, 0, 3, 3315},
-	{0x33AE, 0, 5, 3318},
-	{0x33AF, 0, 6, 3323},
-	{0x33B0, 0, 2 | DECOMP_NO_COMPOSE, 3329},	/* compatibility mapping */
-	{0x33B1, 0, 2 | DECOMP_NO_COMPOSE, 3331},	/* compatibility mapping */
-	{0x33B2, 0, 2 | DECOMP_NO_COMPOSE, 3333},	/* compatibility mapping */
-	{0x33B3, 0, 2 | DECOMP_NO_COMPOSE, 3335},	/* compatibility mapping */
-	{0x33B4, 0, 2 | DECOMP_NO_COMPOSE, 3337},	/* compatibility mapping */
-	{0x33B5, 0, 2 | DECOMP_NO_COMPOSE, 3339},	/* compatibility mapping */
-	{0x33B6, 0, 2 | DECOMP_NO_COMPOSE, 3341},	/* compatibility mapping */
-	{0x33B7, 0, 2 | DECOMP_NO_COMPOSE, 3343},	/* compatibility mapping */
-	{0x33B8, 0, 2 | DECOMP_NO_COMPOSE, 3345},	/* compatibility mapping */
-	{0x33B9, 0, 2 | DECOMP_NO_COMPOSE, 3347},	/* compatibility mapping */
-	{0x33BA, 0, 2 | DECOMP_NO_COMPOSE, 3349},	/* compatibility mapping */
-	{0x33BB, 0, 2 | DECOMP_NO_COMPOSE, 3351},	/* compatibility mapping */
-	{0x33BC, 0, 2 | DECOMP_NO_COMPOSE, 3353},	/* compatibility mapping */
-	{0x33BD, 0, 2 | DECOMP_NO_COMPOSE, 3355},	/* compatibility mapping */
-	{0x33BE, 0, 2 | DECOMP_NO_COMPOSE, 3357},	/* compatibility mapping */
-	{0x33BF, 0, 2 | DECOMP_NO_COMPOSE, 3359},	/* compatibility mapping */
-	{0x33C0, 0, 2 | DECOMP_NO_COMPOSE, 3361},	/* compatibility mapping */
-	{0x33C1, 0, 2 | DECOMP_NO_COMPOSE, 3363},	/* compatibility mapping */
-	{0x33C2, 0, 4, 3365},
-	{0x33C3, 0, 2 | DECOMP_NO_COMPOSE, 3369},	/* compatibility mapping */
-	{0x33C4, 0, 2 | DECOMP_NO_COMPOSE, 3371},	/* compatibility mapping */
-	{0x33C5, 0, 2 | DECOMP_NO_COMPOSE, 3373},	/* compatibility mapping */
-	{0x33C6, 0, 4, 3375},
-	{0x33C7, 0, 3, 3379},
-	{0x33C8, 0, 2 | DECOMP_NO_COMPOSE, 3382},	/* compatibility mapping */
-	{0x33C9, 0, 2 | DECOMP_NO_COMPOSE, 3384},	/* compatibility mapping */
-	{0x33CA, 0, 2 | DECOMP_NO_COMPOSE, 3386},	/* compatibility mapping */
-	{0x33CB, 0, 2 | DECOMP_NO_COMPOSE, 3388},	/* compatibility mapping */
-	{0x33CC, 0, 2 | DECOMP_NO_COMPOSE, 3390},	/* compatibility mapping */
-	{0x33CD, 0, 2 | DECOMP_NO_COMPOSE, 3392},	/* compatibility mapping */
-	{0x33CE, 0, 2 | DECOMP_NO_COMPOSE, 3394},	/* compatibility mapping */
-	{0x33CF, 0, 2 | DECOMP_NO_COMPOSE, 3396},	/* compatibility mapping */
-	{0x33D0, 0, 2 | DECOMP_NO_COMPOSE, 3398},	/* compatibility mapping */
-	{0x33D1, 0, 2 | DECOMP_NO_COMPOSE, 3400},	/* compatibility mapping */
-	{0x33D2, 0, 3, 3402},
-	{0x33D3, 0, 2 | DECOMP_NO_COMPOSE, 3405},	/* compatibility mapping */
-	{0x33D4, 0, 2 | DECOMP_NO_COMPOSE, 3407},	/* compatibility mapping */
-	{0x33D5, 0, 3, 3409},
-	{0x33D6, 0, 3, 3412},
-	{0x33D7, 0, 2 | DECOMP_NO_COMPOSE, 3415},	/* compatibility mapping */
-	{0x33D8, 0, 4, 3417},
-	{0x33D9, 0, 3, 3421},
-	{0x33DA, 0, 2 | DECOMP_NO_COMPOSE, 3424},	/* compatibility mapping */
-	{0x33DB, 0, 2 | DECOMP_NO_COMPOSE, 3426},	/* compatibility mapping */
-	{0x33DC, 0, 2 | DECOMP_NO_COMPOSE, 3428},	/* compatibility mapping */
-	{0x33DD, 0, 2 | DECOMP_NO_COMPOSE, 3430},	/* compatibility mapping */
-	{0x33DE, 0, 3, 3432},
-	{0x33DF, 0, 3, 3435},
-	{0x33E0, 0, 2 | DECOMP_NO_COMPOSE, 3438},	/* compatibility mapping */
-	{0x33E1, 0, 2 | DECOMP_NO_COMPOSE, 3440},	/* compatibility mapping */
-	{0x33E2, 0, 2 | DECOMP_NO_COMPOSE, 3442},	/* compatibility mapping */
-	{0x33E3, 0, 2 | DECOMP_NO_COMPOSE, 3444},	/* compatibility mapping */
-	{0x33E4, 0, 2 | DECOMP_NO_COMPOSE, 3446},	/* compatibility mapping */
-	{0x33E5, 0, 2 | DECOMP_NO_COMPOSE, 3448},	/* compatibility mapping */
-	{0x33E6, 0, 2 | DECOMP_NO_COMPOSE, 3450},	/* compatibility mapping */
-	{0x33E7, 0, 2 | DECOMP_NO_COMPOSE, 3452},	/* compatibility mapping */
-	{0x33E8, 0, 2 | DECOMP_NO_COMPOSE, 3454},	/* compatibility mapping */
-	{0x33E9, 0, 3, 3456},
-	{0x33EA, 0, 3, 3459},
-	{0x33EB, 0, 3, 3462},
-	{0x33EC, 0, 3, 3465},
-	{0x33ED, 0, 3, 3468},
-	{0x33EE, 0, 3, 3471},
-	{0x33EF, 0, 3, 3474},
-	{0x33F0, 0, 3, 3477},
-	{0x33F1, 0, 3, 3480},
-	{0x33F2, 0, 3, 3483},
-	{0x33F3, 0, 3, 3486},
-	{0x33F4, 0, 3, 3489},
-	{0x33F5, 0, 3, 3492},
-	{0x33F6, 0, 3, 3495},
-	{0x33F7, 0, 3, 3498},
-	{0x33F8, 0, 3, 3501},
-	{0x33F9, 0, 3, 3504},
-	{0x33FA, 0, 3, 3507},
-	{0x33FB, 0, 3, 3510},
-	{0x33FC, 0, 3, 3513},
-	{0x33FD, 0, 3, 3516},
-	{0x33FE, 0, 3, 3519},
-	{0x33FF, 0, 3, 3522},
+	{0x32FF, 0, 2 | DECOMP_NO_COMPOSE, 2803},	/* compatibility mapping */
+	{0x3300, 0, 4, 2805},
+	{0x3301, 0, 4, 2809},
+	{0x3302, 0, 4, 2813},
+	{0x3303, 0, 3, 2817},
+	{0x3304, 0, 4, 2820},
+	{0x3305, 0, 3, 2824},
+	{0x3306, 0, 3, 2827},
+	{0x3307, 0, 5, 2830},
+	{0x3308, 0, 4, 2835},
+	{0x3309, 0, 3, 2839},
+	{0x330A, 0, 3, 2842},
+	{0x330B, 0, 3, 2845},
+	{0x330C, 0, 4, 2848},
+	{0x330D, 0, 4, 2852},
+	{0x330E, 0, 3, 2856},
+	{0x330F, 0, 3, 2859},
+	{0x3310, 0, 2 | DECOMP_NO_COMPOSE, 2862},	/* compatibility mapping */
+	{0x3311, 0, 3, 2864},
+	{0x3312, 0, 4, 2867},
+	{0x3313, 0, 4, 2871},
+	{0x3314, 0, 2 | DECOMP_NO_COMPOSE, 2875},	/* compatibility mapping */
+	{0x3315, 0, 5, 2877},
+	{0x3316, 0, 6, 2882},
+	{0x3317, 0, 5, 2888},
+	{0x3318, 0, 3, 2893},
+	{0x3319, 0, 5, 2896},
+	{0x331A, 0, 5, 2901},
+	{0x331B, 0, 4, 2906},
+	{0x331C, 0, 3, 2910},
+	{0x331D, 0, 3, 2913},
+	{0x331E, 0, 3, 2916},
+	{0x331F, 0, 4, 2919},
+	{0x3320, 0, 5, 2923},
+	{0x3321, 0, 4, 2928},
+	{0x3322, 0, 3, 2932},
+	{0x3323, 0, 3, 2935},
+	{0x3324, 0, 3, 2938},
+	{0x3325, 0, 2 | DECOMP_NO_COMPOSE, 2941},	/* compatibility mapping */
+	{0x3326, 0, 2 | DECOMP_NO_COMPOSE, 2943},	/* compatibility mapping */
+	{0x3327, 0, 2 | DECOMP_NO_COMPOSE, 2945},	/* compatibility mapping */
+	{0x3328, 0, 2 | DECOMP_NO_COMPOSE, 2947},	/* compatibility mapping */
+	{0x3329, 0, 3, 2949},
+	{0x332A, 0, 3, 2952},
+	{0x332B, 0, 5, 2955},
+	{0x332C, 0, 3, 2960},
+	{0x332D, 0, 4, 2963},
+	{0x332E, 0, 5, 2967},
+	{0x332F, 0, 3, 2972},
+	{0x3330, 0, 2 | DECOMP_NO_COMPOSE, 2975},	/* compatibility mapping */
+	{0x3331, 0, 2 | DECOMP_NO_COMPOSE, 2977},	/* compatibility mapping */
+	{0x3332, 0, 5, 2979},
+	{0x3333, 0, 4, 2984},
+	{0x3334, 0, 5, 2988},
+	{0x3335, 0, 3, 2993},
+	{0x3336, 0, 5, 2996},
+	{0x3337, 0, 2 | DECOMP_NO_COMPOSE, 3001},	/* compatibility mapping */
+	{0x3338, 0, 3, 3003},
+	{0x3339, 0, 3, 3006},
+	{0x333A, 0, 3, 3009},
+	{0x333B, 0, 3, 3012},
+	{0x333C, 0, 3, 3015},
+	{0x333D, 0, 4, 3018},
+	{0x333E, 0, 3, 3022},
+	{0x333F, 0, 2 | DECOMP_NO_COMPOSE, 3025},	/* compatibility mapping */
+	{0x3340, 0, 3, 3027},
+	{0x3341, 0, 3, 3030},
+	{0x3342, 0, 3, 3033},
+	{0x3343, 0, 4, 3036},
+	{0x3344, 0, 3, 3040},
+	{0x3345, 0, 3, 3043},
+	{0x3346, 0, 3, 3046},
+	{0x3347, 0, 5, 3049},
+	{0x3348, 0, 4, 3054},
+	{0x3349, 0, 2 | DECOMP_NO_COMPOSE, 3058},	/* compatibility mapping */
+	{0x334A, 0, 5, 3060},
+	{0x334B, 0, 2 | DECOMP_NO_COMPOSE, 3065},	/* compatibility mapping */
+	{0x334C, 0, 4, 3067},
+	{0x334D, 0, 4, 3071},
+	{0x334E, 0, 3, 3075},
+	{0x334F, 0, 3, 3078},
+	{0x3350, 0, 3, 3081},
+	{0x3351, 0, 4, 3084},
+	{0x3352, 0, 2 | DECOMP_NO_COMPOSE, 3088},	/* compatibility mapping */
+	{0x3353, 0, 3, 3090},
+	{0x3354, 0, 4, 3093},
+	{0x3355, 0, 2 | DECOMP_NO_COMPOSE, 3097},	/* compatibility mapping */
+	{0x3356, 0, 5, 3099},
+	{0x3357, 0, 3, 3104},
+	{0x3358, 0, 2 | DECOMP_NO_COMPOSE, 3107},	/* compatibility mapping */
+	{0x3359, 0, 2 | DECOMP_NO_COMPOSE, 3109},	/* compatibility mapping */
+	{0x335A, 0, 2 | DECOMP_NO_COMPOSE, 3111},	/* compatibility mapping */
+	{0x335B, 0, 2 | DECOMP_NO_COMPOSE, 3113},	/* compatibility mapping */
+	{0x335C, 0, 2 | DECOMP_NO_COMPOSE, 3115},	/* compatibility mapping */
+	{0x335D, 0, 2 | DECOMP_NO_COMPOSE, 3117},	/* compatibility mapping */
+	{0x335E, 0, 2 | DECOMP_NO_COMPOSE, 3119},	/* compatibility mapping */
+	{0x335F, 0, 2 | DECOMP_NO_COMPOSE, 3121},	/* compatibility mapping */
+	{0x3360, 0, 2 | DECOMP_NO_COMPOSE, 3123},	/* compatibility mapping */
+	{0x3361, 0, 2 | DECOMP_NO_COMPOSE, 3125},	/* compatibility mapping */
+	{0x3362, 0, 3, 3127},
+	{0x3363, 0, 3, 3130},
+	{0x3364, 0, 3, 3133},
+	{0x3365, 0, 3, 3136},
+	{0x3366, 0, 3, 3139},
+	{0x3367, 0, 3, 3142},
+	{0x3368, 0, 3, 3145},
+	{0x3369, 0, 3, 3148},
+	{0x336A, 0, 3, 3151},
+	{0x336B, 0, 3, 3154},
+	{0x336C, 0, 3, 3157},
+	{0x336D, 0, 3, 3160},
+	{0x336E, 0, 3, 3163},
+	{0x336F, 0, 3, 3166},
+	{0x3370, 0, 3, 3169},
+	{0x3371, 0, 3, 3172},
+	{0x3372, 0, 2 | DECOMP_NO_COMPOSE, 3175},	/* compatibility mapping */
+	{0x3373, 0, 2 | DECOMP_NO_COMPOSE, 3177},	/* compatibility mapping */
+	{0x3374, 0, 3, 3179},
+	{0x3375, 0, 2 | DECOMP_NO_COMPOSE, 3182},	/* compatibility mapping */
+	{0x3376, 0, 2 | DECOMP_NO_COMPOSE, 3184},	/* compatibility mapping */
+	{0x3377, 0, 2 | DECOMP_NO_COMPOSE, 3186},	/* compatibility mapping */
+	{0x3378, 0, 3, 3188},
+	{0x3379, 0, 3, 3191},
+	{0x337A, 0, 2 | DECOMP_NO_COMPOSE, 3194},	/* compatibility mapping */
+	{0x337B, 0, 2 | DECOMP_NO_COMPOSE, 3196},	/* compatibility mapping */
+	{0x337C, 0, 2 | DECOMP_NO_COMPOSE, 3198},	/* compatibility mapping */
+	{0x337D, 0, 2 | DECOMP_NO_COMPOSE, 3200},	/* compatibility mapping */
+	{0x337E, 0, 2 | DECOMP_NO_COMPOSE, 3202},	/* compatibility mapping */
+	{0x337F, 0, 4, 3204},
+	{0x3380, 0, 2 | DECOMP_NO_COMPOSE, 3208},	/* compatibility mapping */
+	{0x3381, 0, 2 | DECOMP_NO_COMPOSE, 3210},	/* compatibility mapping */
+	{0x3382, 0, 2 | DECOMP_NO_COMPOSE, 3212},	/* compatibility mapping */
+	{0x3383, 0, 2 | DECOMP_NO_COMPOSE, 3214},	/* compatibility mapping */
+	{0x3384, 0, 2 | DECOMP_NO_COMPOSE, 3216},	/* compatibility mapping */
+	{0x3385, 0, 2 | DECOMP_NO_COMPOSE, 3218},	/* compatibility mapping */
+	{0x3386, 0, 2 | DECOMP_NO_COMPOSE, 3220},	/* compatibility mapping */
+	{0x3387, 0, 2 | DECOMP_NO_COMPOSE, 3222},	/* compatibility mapping */
+	{0x3388, 0, 3, 3224},
+	{0x3389, 0, 4, 3227},
+	{0x338A, 0, 2 | DECOMP_NO_COMPOSE, 3231},	/* compatibility mapping */
+	{0x338B, 0, 2 | DECOMP_NO_COMPOSE, 3233},	/* compatibility mapping */
+	{0x338C, 0, 2 | DECOMP_NO_COMPOSE, 3235},	/* compatibility mapping */
+	{0x338D, 0, 2 | DECOMP_NO_COMPOSE, 3237},	/* compatibility mapping */
+	{0x338E, 0, 2 | DECOMP_NO_COMPOSE, 3239},	/* compatibility mapping */
+	{0x338F, 0, 2 | DECOMP_NO_COMPOSE, 3241},	/* compatibility mapping */
+	{0x3390, 0, 2 | DECOMP_NO_COMPOSE, 3243},	/* compatibility mapping */
+	{0x3391, 0, 3, 3245},
+	{0x3392, 0, 3, 3248},
+	{0x3393, 0, 3, 3251},
+	{0x3394, 0, 3, 3254},
+	{0x3395, 0, 2 | DECOMP_NO_COMPOSE, 3257},	/* compatibility mapping */
+	{0x3396, 0, 2 | DECOMP_NO_COMPOSE, 3259},	/* compatibility mapping */
+	{0x3397, 0, 2 | DECOMP_NO_COMPOSE, 3261},	/* compatibility mapping */
+	{0x3398, 0, 2 | DECOMP_NO_COMPOSE, 3263},	/* compatibility mapping */
+	{0x3399, 0, 2 | DECOMP_NO_COMPOSE, 3265},	/* compatibility mapping */
+	{0x339A, 0, 2 | DECOMP_NO_COMPOSE, 3267},	/* compatibility mapping */
+	{0x339B, 0, 2 | DECOMP_NO_COMPOSE, 3269},	/* compatibility mapping */
+	{0x339C, 0, 2 | DECOMP_NO_COMPOSE, 3271},	/* compatibility mapping */
+	{0x339D, 0, 2 | DECOMP_NO_COMPOSE, 3273},	/* compatibility mapping */
+	{0x339E, 0, 2 | DECOMP_NO_COMPOSE, 3275},	/* compatibility mapping */
+	{0x339F, 0, 3, 3277},
+	{0x33A0, 0, 3, 3280},
+	{0x33A1, 0, 2 | DECOMP_NO_COMPOSE, 3283},	/* compatibility mapping */
+	{0x33A2, 0, 3, 3285},
+	{0x33A3, 0, 3, 3288},
+	{0x33A4, 0, 3, 3291},
+	{0x33A5, 0, 2 | DECOMP_NO_COMPOSE, 3294},	/* compatibility mapping */
+	{0x33A6, 0, 3, 3296},
+	{0x33A7, 0, 3, 3299},
+	{0x33A8, 0, 4, 3302},
+	{0x33A9, 0, 2 | DECOMP_NO_COMPOSE, 3306},	/* compatibility mapping */
+	{0x33AA, 0, 3, 3308},
+	{0x33AB, 0, 3, 3311},
+	{0x33AC, 0, 3, 3314},
+	{0x33AD, 0, 3, 3317},
+	{0x33AE, 0, 5, 3320},
+	{0x33AF, 0, 6, 3325},
+	{0x33B0, 0, 2 | DECOMP_NO_COMPOSE, 3331},	/* compatibility mapping */
+	{0x33B1, 0, 2 | DECOMP_NO_COMPOSE, 3333},	/* compatibility mapping */
+	{0x33B2, 0, 2 | DECOMP_NO_COMPOSE, 3335},	/* compatibility mapping */
+	{0x33B3, 0, 2 | DECOMP_NO_COMPOSE, 3337},	/* compatibility mapping */
+	{0x33B4, 0, 2 | DECOMP_NO_COMPOSE, 3339},	/* compatibility mapping */
+	{0x33B5, 0, 2 | DECOMP_NO_COMPOSE, 3341},	/* compatibility mapping */
+	{0x33B6, 0, 2 | DECOMP_NO_COMPOSE, 3343},	/* compatibility mapping */
+	{0x33B7, 0, 2 | DECOMP_NO_COMPOSE, 3345},	/* compatibility mapping */
+	{0x33B8, 0, 2 | DECOMP_NO_COMPOSE, 3347},	/* compatibility mapping */
+	{0x33B9, 0, 2 | DECOMP_NO_COMPOSE, 3349},	/* compatibility mapping */
+	{0x33BA, 0, 2 | DECOMP_NO_COMPOSE, 3351},	/* compatibility mapping */
+	{0x33BB, 0, 2 | DECOMP_NO_COMPOSE, 3353},	/* compatibility mapping */
+	{0x33BC, 0, 2 | DECOMP_NO_COMPOSE, 3355},	/* compatibility mapping */
+	{0x33BD, 0, 2 | DECOMP_NO_COMPOSE, 3357},	/* compatibility mapping */
+	{0x33BE, 0, 2 | DECOMP_NO_COMPOSE, 3359},	/* compatibility mapping */
+	{0x33BF, 0, 2 | DECOMP_NO_COMPOSE, 3361},	/* compatibility mapping */
+	{0x33C0, 0, 2 | DECOMP_NO_COMPOSE, 3363},	/* compatibility mapping */
+	{0x33C1, 0, 2 | DECOMP_NO_COMPOSE, 3365},	/* compatibility mapping */
+	{0x33C2, 0, 4, 3367},
+	{0x33C3, 0, 2 | DECOMP_NO_COMPOSE, 3371},	/* compatibility mapping */
+	{0x33C4, 0, 2 | DECOMP_NO_COMPOSE, 3373},	/* compatibility mapping */
+	{0x33C5, 0, 2 | DECOMP_NO_COMPOSE, 3375},	/* compatibility mapping */
+	{0x33C6, 0, 4, 3377},
+	{0x33C7, 0, 3, 3381},
+	{0x33C8, 0, 2 | DECOMP_NO_COMPOSE, 3384},	/* compatibility mapping */
+	{0x33C9, 0, 2 | DECOMP_NO_COMPOSE, 3386},	/* compatibility mapping */
+	{0x33CA, 0, 2 | DECOMP_NO_COMPOSE, 3388},	/* compatibility mapping */
+	{0x33CB, 0, 2 | DECOMP_NO_COMPOSE, 3390},	/* compatibility mapping */
+	{0x33CC, 0, 2 | DECOMP_NO_COMPOSE, 3392},	/* compatibility mapping */
+	{0x33CD, 0, 2 | DECOMP_NO_COMPOSE, 3394},	/* compatibility mapping */
+	{0x33CE, 0, 2 | DECOMP_NO_COMPOSE, 3396},	/* compatibility mapping */
+	{0x33CF, 0, 2 | DECOMP_NO_COMPOSE, 3398},	/* compatibility mapping */
+	{0x33D0, 0, 2 | DECOMP_NO_COMPOSE, 3400},	/* compatibility mapping */
+	{0x33D1, 0, 2 | DECOMP_NO_COMPOSE, 3402},	/* compatibility mapping */
+	{0x33D2, 0, 3, 3404},
+	{0x33D3, 0, 2 | DECOMP_NO_COMPOSE, 3407},	/* compatibility mapping */
+	{0x33D4, 0, 2 | DECOMP_NO_COMPOSE, 3409},	/* compatibility mapping */
+	{0x33D5, 0, 3, 3411},
+	{0x33D6, 0, 3, 3414},
+	{0x33D7, 0, 2 | DECOMP_NO_COMPOSE, 3417},	/* compatibility mapping */
+	{0x33D8, 0, 4, 3419},
+	{0x33D9, 0, 3, 3423},
+	{0x33DA, 0, 2 | DECOMP_NO_COMPOSE, 3426},	/* compatibility mapping */
+	{0x33DB, 0, 2 | DECOMP_NO_COMPOSE, 3428},	/* compatibility mapping */
+	{0x33DC, 0, 2 | DECOMP_NO_COMPOSE, 3430},	/* compatibility mapping */
+	{0x33DD, 0, 2 | DECOMP_NO_COMPOSE, 3432},	/* compatibility mapping */
+	{0x33DE, 0, 3, 3434},
+	{0x33DF, 0, 3, 3437},
+	{0x33E0, 0, 2 | DECOMP_NO_COMPOSE, 3440},	/* compatibility mapping */
+	{0x33E1, 0, 2 | DECOMP_NO_COMPOSE, 3442},	/* compatibility mapping */
+	{0x33E2, 0, 2 | DECOMP_NO_COMPOSE, 3444},	/* compatibility mapping */
+	{0x33E3, 0, 2 | DECOMP_NO_COMPOSE, 3446},	/* compatibility mapping */
+	{0x33E4, 0, 2 | DECOMP_NO_COMPOSE, 3448},	/* compatibility mapping */
+	{0x33E5, 0, 2 | DECOMP_NO_COMPOSE, 3450},	/* compatibility mapping */
+	{0x33E6, 0, 2 | DECOMP_NO_COMPOSE, 3452},	/* compatibility mapping */
+	{0x33E7, 0, 2 | DECOMP_NO_COMPOSE, 3454},	/* compatibility mapping */
+	{0x33E8, 0, 2 | DECOMP_NO_COMPOSE, 3456},	/* compatibility mapping */
+	{0x33E9, 0, 3, 3458},
+	{0x33EA, 0, 3, 3461},
+	{0x33EB, 0, 3, 3464},
+	{0x33EC, 0, 3, 3467},
+	{0x33ED, 0, 3, 3470},
+	{0x33EE, 0, 3, 3473},
+	{0x33EF, 0, 3, 3476},
+	{0x33F0, 0, 3, 3479},
+	{0x33F1, 0, 3, 3482},
+	{0x33F2, 0, 3, 3485},
+	{0x33F3, 0, 3, 3488},
+	{0x33F4, 0, 3, 3491},
+	{0x33F5, 0, 3, 3494},
+	{0x33F6, 0, 3, 3497},
+	{0x33F7, 0, 3, 3500},
+	{0x33F8, 0, 3, 3503},
+	{0x33F9, 0, 3, 3506},
+	{0x33FA, 0, 3, 3509},
+	{0x33FB, 0, 3, 3512},
+	{0x33FC, 0, 3, 3515},
+	{0x33FD, 0, 3, 3518},
+	{0x33FE, 0, 3, 3521},
+	{0x33FF, 0, 3, 3524},
 	{0xA66F, 230, 0, 0},
 	{0xA674, 230, 0, 0},
 	{0xA675, 230, 0, 0},
@@ -3371,7 +3382,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0xFA69, 0, 1 | DECOMP_INLINE, 0x97FF},
 	{0xFA6A, 0, 1 | DECOMP_INLINE, 0x983B},
 	{0xFA6B, 0, 1 | DECOMP_INLINE, 0x6075},
-	{0xFA6C, 0, 1, 3525},
+	{0xFA6C, 0, 1, 3527},
 	{0xFA6D, 0, 1 | DECOMP_INLINE, 0x8218},
 	{0xFA70, 0, 1 | DECOMP_INLINE, 0x4E26},
 	{0xFA71, 0, 1 | DECOMP_INLINE, 0x51B5},
@@ -3468,32 +3479,32 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0xFACC, 0, 1 | DECOMP_INLINE, 0x983B},
 	{0xFACD, 0, 1 | DECOMP_INLINE, 0x9B12},
 	{0xFACE, 0, 1 | DECOMP_INLINE, 0x9F9C},
-	{0xFACF, 0, 1, 3526},
-	{0xFAD0, 0, 1, 3527},
-	{0xFAD1, 0, 1, 3528},
+	{0xFACF, 0, 1, 3528},
+	{0xFAD0, 0, 1, 3529},
+	{0xFAD1, 0, 1, 3530},
 	{0xFAD2, 0, 1 | DECOMP_INLINE, 0x3B9D},
 	{0xFAD3, 0, 1 | DECOMP_INLINE, 0x4018},
 	{0xFAD4, 0, 1 | DECOMP_INLINE, 0x4039},
-	{0xFAD5, 0, 1, 3529},
-	{0xFAD6, 0, 1, 3530},
-	{0xFAD7, 0, 1, 3531},
+	{0xFAD5, 0, 1, 3531},
+	{0xFAD6, 0, 1, 3532},
+	{0xFAD7, 0, 1, 3533},
 	{0xFAD8, 0, 1 | DECOMP_INLINE, 0x9F43},
 	{0xFAD9, 0, 1 | DECOMP_INLINE, 0x9F8E},
-	{0xFB00, 0, 2 | DECOMP_NO_COMPOSE, 3532},	/* compatibility mapping */
-	{0xFB01, 0, 2 | DECOMP_NO_COMPOSE, 3534},	/* compatibility mapping */
-	{0xFB02, 0, 2 | DECOMP_NO_COMPOSE, 3536},	/* compatibility mapping */
-	{0xFB03, 0, 3, 3538},
-	{0xFB04, 0, 3, 3541},
-	{0xFB05, 0, 2 | DECOMP_NO_COMPOSE, 3544},	/* compatibility mapping */
-	{0xFB06, 0, 2 | DECOMP_NO_COMPOSE, 3546},	/* compatibility mapping */
-	{0xFB13, 0, 2 | DECOMP_NO_COMPOSE, 3548},	/* compatibility mapping */
-	{0xFB14, 0, 2 | DECOMP_NO_COMPOSE, 3550},	/* compatibility mapping */
-	{0xFB15, 0, 2 | DECOMP_NO_COMPOSE, 3552},	/* compatibility mapping */
-	{0xFB16, 0, 2 | DECOMP_NO_COMPOSE, 3554},	/* compatibility mapping */
-	{0xFB17, 0, 2 | DECOMP_NO_COMPOSE, 3556},	/* compatibility mapping */
-	{0xFB1D, 0, 2 | DECOMP_NO_COMPOSE, 3558},	/* in exclusion list */
+	{0xFB00, 0, 2 | DECOMP_NO_COMPOSE, 3534},	/* compatibility mapping */
+	{0xFB01, 0, 2 | DECOMP_NO_COMPOSE, 3536},	/* compatibility mapping */
+	{0xFB02, 0, 2 | DECOMP_NO_COMPOSE, 3538},	/* compatibility mapping */
+	{0xFB03, 0, 3, 3540},
+	{0xFB04, 0, 3, 3543},
+	{0xFB05, 0, 2 | DECOMP_NO_COMPOSE, 3546},	/* compatibility mapping */
+	{0xFB06, 0, 2 | DECOMP_NO_COMPOSE, 3548},	/* compatibility mapping */
+	{0xFB13, 0, 2 | DECOMP_NO_COMPOSE, 3550},	/* compatibility mapping */
+	{0xFB14, 0, 2 | DECOMP_NO_COMPOSE, 3552},	/* compatibility mapping */
+	{0xFB15, 0, 2 | DECOMP_NO_COMPOSE, 3554},	/* compatibility mapping */
+	{0xFB16, 0, 2 | DECOMP_NO_COMPOSE, 3556},	/* compatibility mapping */
+	{0xFB17, 0, 2 | DECOMP_NO_COMPOSE, 3558},	/* compatibility mapping */
+	{0xFB1D, 0, 2 | DECOMP_NO_COMPOSE, 3560},	/* in exclusion list */
 	{0xFB1E, 26, 0, 0},
-	{0xFB1F, 0, 2 | DECOMP_NO_COMPOSE, 3560},	/* in exclusion list */
+	{0xFB1F, 0, 2 | DECOMP_NO_COMPOSE, 3562},	/* in exclusion list */
 	{0xFB20, 0, 1 | DECOMP_INLINE, 0x05E2},
 	{0xFB21, 0, 1 | DECOMP_INLINE, 0x05D0},
 	{0xFB22, 0, 1 | DECOMP_INLINE, 0x05D3},
@@ -3504,39 +3515,39 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0xFB27, 0, 1 | DECOMP_INLINE, 0x05E8},
 	{0xFB28, 0, 1 | DECOMP_INLINE, 0x05EA},
 	{0xFB29, 0, 1 | DECOMP_INLINE, 0x002B},
-	{0xFB2A, 0, 2 | DECOMP_NO_COMPOSE, 3562},	/* in exclusion list */
-	{0xFB2B, 0, 2 | DECOMP_NO_COMPOSE, 3564},	/* in exclusion list */
-	{0xFB2C, 0, 2 | DECOMP_NO_COMPOSE, 3566},	/* in exclusion list */
-	{0xFB2D, 0, 2 | DECOMP_NO_COMPOSE, 3568},	/* in exclusion list */
-	{0xFB2E, 0, 2 | DECOMP_NO_COMPOSE, 3570},	/* in exclusion list */
-	{0xFB2F, 0, 2 | DECOMP_NO_COMPOSE, 3572},	/* in exclusion list */
-	{0xFB30, 0, 2 | DECOMP_NO_COMPOSE, 3574},	/* in exclusion list */
-	{0xFB31, 0, 2 | DECOMP_NO_COMPOSE, 3576},	/* in exclusion list */
-	{0xFB32, 0, 2 | DECOMP_NO_COMPOSE, 3578},	/* in exclusion list */
-	{0xFB33, 0, 2 | DECOMP_NO_COMPOSE, 3580},	/* in exclusion list */
-	{0xFB34, 0, 2 | DECOMP_NO_COMPOSE, 3582},	/* in exclusion list */
-	{0xFB35, 0, 2 | DECOMP_NO_COMPOSE, 3584},	/* in exclusion list */
-	{0xFB36, 0, 2 | DECOMP_NO_COMPOSE, 3586},	/* in exclusion list */
-	{0xFB38, 0, 2 | DECOMP_NO_COMPOSE, 3588},	/* in exclusion list */
-	{0xFB39, 0, 2 | DECOMP_NO_COMPOSE, 3590},	/* in exclusion list */
-	{0xFB3A, 0, 2 | DECOMP_NO_COMPOSE, 3592},	/* in exclusion list */
-	{0xFB3B, 0, 2 | DECOMP_NO_COMPOSE, 3594},	/* in exclusion list */
-	{0xFB3C, 0, 2 | DECOMP_NO_COMPOSE, 3596},	/* in exclusion list */
-	{0xFB3E, 0, 2 | DECOMP_NO_COMPOSE, 3598},	/* in exclusion list */
-	{0xFB40, 0, 2 | DECOMP_NO_COMPOSE, 3600},	/* in exclusion list */
-	{0xFB41, 0, 2 | DECOMP_NO_COMPOSE, 3602},	/* in exclusion list */
-	{0xFB43, 0, 2 | DECOMP_NO_COMPOSE, 3604},	/* in exclusion list */
-	{0xFB44, 0, 2 | DECOMP_NO_COMPOSE, 3606},	/* in exclusion list */
-	{0xFB46, 0, 2 | DECOMP_NO_COMPOSE, 3608},	/* in exclusion list */
-	{0xFB47, 0, 2 | DECOMP_NO_COMPOSE, 3610},	/* in exclusion list */
-	{0xFB48, 0, 2 | DECOMP_NO_COMPOSE, 3612},	/* in exclusion list */
-	{0xFB49, 0, 2 | DECOMP_NO_COMPOSE, 3614},	/* in exclusion list */
-	{0xFB4A, 0, 2 | DECOMP_NO_COMPOSE, 3616},	/* in exclusion list */
-	{0xFB4B, 0, 2 | DECOMP_NO_COMPOSE, 3618},	/* in exclusion list */
-	{0xFB4C, 0, 2 | DECOMP_NO_COMPOSE, 3620},	/* in exclusion list */
-	{0xFB4D, 0, 2 | DECOMP_NO_COMPOSE, 3622},	/* in exclusion list */
-	{0xFB4E, 0, 2 | DECOMP_NO_COMPOSE, 3624},	/* in exclusion list */
-	{0xFB4F, 0, 2 | DECOMP_NO_COMPOSE, 3626},	/* compatibility mapping */
+	{0xFB2A, 0, 2 | DECOMP_NO_COMPOSE, 3564},	/* in exclusion list */
+	{0xFB2B, 0, 2 | DECOMP_NO_COMPOSE, 3566},	/* in exclusion list */
+	{0xFB2C, 0, 2 | DECOMP_NO_COMPOSE, 3568},	/* in exclusion list */
+	{0xFB2D, 0, 2 | DECOMP_NO_COMPOSE, 3570},	/* in exclusion list */
+	{0xFB2E, 0, 2 | DECOMP_NO_COMPOSE, 3572},	/* in exclusion list */
+	{0xFB2F, 0, 2 | DECOMP_NO_COMPOSE, 3574},	/* in exclusion list */
+	{0xFB30, 0, 2 | DECOMP_NO_COMPOSE, 3576},	/* in exclusion list */
+	{0xFB31, 0, 2 | DECOMP_NO_COMPOSE, 3578},	/* in exclusion list */
+	{0xFB32, 0, 2 | DECOMP_NO_COMPOSE, 3580},	/* in exclusion list */
+	{0xFB33, 0, 2 | DECOMP_NO_COMPOSE, 3582},	/* in exclusion list */
+	{0xFB34, 0, 2 | DECOMP_NO_COMPOSE, 3584},	/* in exclusion list */
+	{0xFB35, 0, 2 | DECOMP_NO_COMPOSE, 3586},	/* in exclusion list */
+	{0xFB36, 0, 2 | DECOMP_NO_COMPOSE, 3588},	/* in exclusion list */
+	{0xFB38, 0, 2 | DECOMP_NO_COMPOSE, 3590},	/* in exclusion list */
+	{0xFB39, 0, 2 | DECOMP_NO_COMPOSE, 3592},	/* in exclusion list */
+	{0xFB3A, 0, 2 | DECOMP_NO_COMPOSE, 3594},	/* in exclusion list */
+	{0xFB3B, 0, 2 | DECOMP_NO_COMPOSE, 3596},	/* in exclusion list */
+	{0xFB3C, 0, 2 | DECOMP_NO_COMPOSE, 3598},	/* in exclusion list */
+	{0xFB3E, 0, 2 | DECOMP_NO_COMPOSE, 3600},	/* in exclusion list */
+	{0xFB40, 0, 2 | DECOMP_NO_COMPOSE, 3602},	/* in exclusion list */
+	{0xFB41, 0, 2 | DECOMP_NO_COMPOSE, 3604},	/* in exclusion list */
+	{0xFB43, 0, 2 | DECOMP_NO_COMPOSE, 3606},	/* in exclusion list */
+	{0xFB44, 0, 2 | DECOMP_NO_COMPOSE, 3608},	/* in exclusion list */
+	{0xFB46, 0, 2 | DECOMP_NO_COMPOSE, 3610},	/* in exclusion list */
+	{0xFB47, 0, 2 | DECOMP_NO_COMPOSE, 3612},	/* in exclusion list */
+	{0xFB48, 0, 2 | DECOMP_NO_COMPOSE, 3614},	/* in exclusion list */
+	{0xFB49, 0, 2 | DECOMP_NO_COMPOSE, 3616},	/* in exclusion list */
+	{0xFB4A, 0, 2 | DECOMP_NO_COMPOSE, 3618},	/* in exclusion list */
+	{0xFB4B, 0, 2 | DECOMP_NO_COMPOSE, 3620},	/* in exclusion list */
+	{0xFB4C, 0, 2 | DECOMP_NO_COMPOSE, 3622},	/* in exclusion list */
+	{0xFB4D, 0, 2 | DECOMP_NO_COMPOSE, 3624},	/* in exclusion list */
+	{0xFB4E, 0, 2 | DECOMP_NO_COMPOSE, 3626},	/* in exclusion list */
+	{0xFB4F, 0, 2 | DECOMP_NO_COMPOSE, 3628},	/* compatibility mapping */
 	{0xFB50, 0, 1 | DECOMP_INLINE, 0x0671},
 	{0xFB51, 0, 1 | DECOMP_INLINE, 0x0671},
 	{0xFB52, 0, 1 | DECOMP_INLINE, 0x067B},
@@ -3658,477 +3669,477 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0xFBE7, 0, 1 | DECOMP_INLINE, 0x06D0},
 	{0xFBE8, 0, 1 | DECOMP_INLINE, 0x0649},
 	{0xFBE9, 0, 1 | DECOMP_INLINE, 0x0649},
-	{0xFBEA, 0, 2 | DECOMP_NO_COMPOSE, 3628},	/* compatibility mapping */
-	{0xFBEB, 0, 2 | DECOMP_NO_COMPOSE, 3630},	/* compatibility mapping */
-	{0xFBEC, 0, 2 | DECOMP_NO_COMPOSE, 3632},	/* compatibility mapping */
-	{0xFBED, 0, 2 | DECOMP_NO_COMPOSE, 3634},	/* compatibility mapping */
-	{0xFBEE, 0, 2 | DECOMP_NO_COMPOSE, 3636},	/* compatibility mapping */
-	{0xFBEF, 0, 2 | DECOMP_NO_COMPOSE, 3638},	/* compatibility mapping */
-	{0xFBF0, 0, 2 | DECOMP_NO_COMPOSE, 3640},	/* compatibility mapping */
-	{0xFBF1, 0, 2 | DECOMP_NO_COMPOSE, 3642},	/* compatibility mapping */
-	{0xFBF2, 0, 2 | DECOMP_NO_COMPOSE, 3644},	/* compatibility mapping */
-	{0xFBF3, 0, 2 | DECOMP_NO_COMPOSE, 3646},	/* compatibility mapping */
-	{0xFBF4, 0, 2 | DECOMP_NO_COMPOSE, 3648},	/* compatibility mapping */
-	{0xFBF5, 0, 2 | DECOMP_NO_COMPOSE, 3650},	/* compatibility mapping */
-	{0xFBF6, 0, 2 | DECOMP_NO_COMPOSE, 3652},	/* compatibility mapping */
-	{0xFBF7, 0, 2 | DECOMP_NO_COMPOSE, 3654},	/* compatibility mapping */
-	{0xFBF8, 0, 2 | DECOMP_NO_COMPOSE, 3656},	/* compatibility mapping */
-	{0xFBF9, 0, 2 | DECOMP_NO_COMPOSE, 3658},	/* compatibility mapping */
-	{0xFBFA, 0, 2 | DECOMP_NO_COMPOSE, 3660},	/* compatibility mapping */
-	{0xFBFB, 0, 2 | DECOMP_NO_COMPOSE, 3662},	/* compatibility mapping */
+	{0xFBEA, 0, 2 | DECOMP_NO_COMPOSE, 3630},	/* compatibility mapping */
+	{0xFBEB, 0, 2 | DECOMP_NO_COMPOSE, 3632},	/* compatibility mapping */
+	{0xFBEC, 0, 2 | DECOMP_NO_COMPOSE, 3634},	/* compatibility mapping */
+	{0xFBED, 0, 2 | DECOMP_NO_COMPOSE, 3636},	/* compatibility mapping */
+	{0xFBEE, 0, 2 | DECOMP_NO_COMPOSE, 3638},	/* compatibility mapping */
+	{0xFBEF, 0, 2 | DECOMP_NO_COMPOSE, 3640},	/* compatibility mapping */
+	{0xFBF0, 0, 2 | DECOMP_NO_COMPOSE, 3642},	/* compatibility mapping */
+	{0xFBF1, 0, 2 | DECOMP_NO_COMPOSE, 3644},	/* compatibility mapping */
+	{0xFBF2, 0, 2 | DECOMP_NO_COMPOSE, 3646},	/* compatibility mapping */
+	{0xFBF3, 0, 2 | DECOMP_NO_COMPOSE, 3648},	/* compatibility mapping */
+	{0xFBF4, 0, 2 | DECOMP_NO_COMPOSE, 3650},	/* compatibility mapping */
+	{0xFBF5, 0, 2 | DECOMP_NO_COMPOSE, 3652},	/* compatibility mapping */
+	{0xFBF6, 0, 2 | DECOMP_NO_COMPOSE, 3654},	/* compatibility mapping */
+	{0xFBF7, 0, 2 | DECOMP_NO_COMPOSE, 3656},	/* compatibility mapping */
+	{0xFBF8, 0, 2 | DECOMP_NO_COMPOSE, 3658},	/* compatibility mapping */
+	{0xFBF9, 0, 2 | DECOMP_NO_COMPOSE, 3660},	/* compatibility mapping */
+	{0xFBFA, 0, 2 | DECOMP_NO_COMPOSE, 3662},	/* compatibility mapping */
+	{0xFBFB, 0, 2 | DECOMP_NO_COMPOSE, 3664},	/* compatibility mapping */
 	{0xFBFC, 0, 1 | DECOMP_INLINE, 0x06CC},
 	{0xFBFD, 0, 1 | DECOMP_INLINE, 0x06CC},
 	{0xFBFE, 0, 1 | DECOMP_INLINE, 0x06CC},
 	{0xFBFF, 0, 1 | DECOMP_INLINE, 0x06CC},
-	{0xFC00, 0, 2 | DECOMP_NO_COMPOSE, 3664},	/* compatibility mapping */
-	{0xFC01, 0, 2 | DECOMP_NO_COMPOSE, 3666},	/* compatibility mapping */
-	{0xFC02, 0, 2 | DECOMP_NO_COMPOSE, 3668},	/* compatibility mapping */
-	{0xFC03, 0, 2 | DECOMP_NO_COMPOSE, 3670},	/* compatibility mapping */
-	{0xFC04, 0, 2 | DECOMP_NO_COMPOSE, 3672},	/* compatibility mapping */
-	{0xFC05, 0, 2 | DECOMP_NO_COMPOSE, 3674},	/* compatibility mapping */
-	{0xFC06, 0, 2 | DECOMP_NO_COMPOSE, 3676},	/* compatibility mapping */
-	{0xFC07, 0, 2 | DECOMP_NO_COMPOSE, 3678},	/* compatibility mapping */
-	{0xFC08, 0, 2 | DECOMP_NO_COMPOSE, 3680},	/* compatibility mapping */
-	{0xFC09, 0, 2 | DECOMP_NO_COMPOSE, 3682},	/* compatibility mapping */
-	{0xFC0A, 0, 2 | DECOMP_NO_COMPOSE, 3684},	/* compatibility mapping */
-	{0xFC0B, 0, 2 | DECOMP_NO_COMPOSE, 3686},	/* compatibility mapping */
-	{0xFC0C, 0, 2 | DECOMP_NO_COMPOSE, 3688},	/* compatibility mapping */
-	{0xFC0D, 0, 2 | DECOMP_NO_COMPOSE, 3690},	/* compatibility mapping */
-	{0xFC0E, 0, 2 | DECOMP_NO_COMPOSE, 3692},	/* compatibility mapping */
-	{0xFC0F, 0, 2 | DECOMP_NO_COMPOSE, 3694},	/* compatibility mapping */
-	{0xFC10, 0, 2 | DECOMP_NO_COMPOSE, 3696},	/* compatibility mapping */
-	{0xFC11, 0, 2 | DECOMP_NO_COMPOSE, 3698},	/* compatibility mapping */
-	{0xFC12, 0, 2 | DECOMP_NO_COMPOSE, 3700},	/* compatibility mapping */
-	{0xFC13, 0, 2 | DECOMP_NO_COMPOSE, 3702},	/* compatibility mapping */
-	{0xFC14, 0, 2 | DECOMP_NO_COMPOSE, 3704},	/* compatibility mapping */
-	{0xFC15, 0, 2 | DECOMP_NO_COMPOSE, 3706},	/* compatibility mapping */
-	{0xFC16, 0, 2 | DECOMP_NO_COMPOSE, 3708},	/* compatibility mapping */
-	{0xFC17, 0, 2 | DECOMP_NO_COMPOSE, 3710},	/* compatibility mapping */
-	{0xFC18, 0, 2 | DECOMP_NO_COMPOSE, 3712},	/* compatibility mapping */
-	{0xFC19, 0, 2 | DECOMP_NO_COMPOSE, 3714},	/* compatibility mapping */
-	{0xFC1A, 0, 2 | DECOMP_NO_COMPOSE, 3716},	/* compatibility mapping */
-	{0xFC1B, 0, 2 | DECOMP_NO_COMPOSE, 3718},	/* compatibility mapping */
-	{0xFC1C, 0, 2 | DECOMP_NO_COMPOSE, 3720},	/* compatibility mapping */
-	{0xFC1D, 0, 2 | DECOMP_NO_COMPOSE, 3722},	/* compatibility mapping */
-	{0xFC1E, 0, 2 | DECOMP_NO_COMPOSE, 3724},	/* compatibility mapping */
-	{0xFC1F, 0, 2 | DECOMP_NO_COMPOSE, 3726},	/* compatibility mapping */
-	{0xFC20, 0, 2 | DECOMP_NO_COMPOSE, 3728},	/* compatibility mapping */
-	{0xFC21, 0, 2 | DECOMP_NO_COMPOSE, 3730},	/* compatibility mapping */
-	{0xFC22, 0, 2 | DECOMP_NO_COMPOSE, 3732},	/* compatibility mapping */
-	{0xFC23, 0, 2 | DECOMP_NO_COMPOSE, 3734},	/* compatibility mapping */
-	{0xFC24, 0, 2 | DECOMP_NO_COMPOSE, 3736},	/* compatibility mapping */
-	{0xFC25, 0, 2 | DECOMP_NO_COMPOSE, 3738},	/* compatibility mapping */
-	{0xFC26, 0, 2 | DECOMP_NO_COMPOSE, 3740},	/* compatibility mapping */
-	{0xFC27, 0, 2 | DECOMP_NO_COMPOSE, 3742},	/* compatibility mapping */
-	{0xFC28, 0, 2 | DECOMP_NO_COMPOSE, 3744},	/* compatibility mapping */
-	{0xFC29, 0, 2 | DECOMP_NO_COMPOSE, 3746},	/* compatibility mapping */
-	{0xFC2A, 0, 2 | DECOMP_NO_COMPOSE, 3748},	/* compatibility mapping */
-	{0xFC2B, 0, 2 | DECOMP_NO_COMPOSE, 3750},	/* compatibility mapping */
-	{0xFC2C, 0, 2 | DECOMP_NO_COMPOSE, 3752},	/* compatibility mapping */
-	{0xFC2D, 0, 2 | DECOMP_NO_COMPOSE, 3754},	/* compatibility mapping */
-	{0xFC2E, 0, 2 | DECOMP_NO_COMPOSE, 3756},	/* compatibility mapping */
-	{0xFC2F, 0, 2 | DECOMP_NO_COMPOSE, 3758},	/* compatibility mapping */
-	{0xFC30, 0, 2 | DECOMP_NO_COMPOSE, 3760},	/* compatibility mapping */
-	{0xFC31, 0, 2 | DECOMP_NO_COMPOSE, 3762},	/* compatibility mapping */
-	{0xFC32, 0, 2 | DECOMP_NO_COMPOSE, 3764},	/* compatibility mapping */
-	{0xFC33, 0, 2 | DECOMP_NO_COMPOSE, 3766},	/* compatibility mapping */
-	{0xFC34, 0, 2 | DECOMP_NO_COMPOSE, 3768},	/* compatibility mapping */
-	{0xFC35, 0, 2 | DECOMP_NO_COMPOSE, 3770},	/* compatibility mapping */
-	{0xFC36, 0, 2 | DECOMP_NO_COMPOSE, 3772},	/* compatibility mapping */
-	{0xFC37, 0, 2 | DECOMP_NO_COMPOSE, 3774},	/* compatibility mapping */
-	{0xFC38, 0, 2 | DECOMP_NO_COMPOSE, 3776},	/* compatibility mapping */
-	{0xFC39, 0, 2 | DECOMP_NO_COMPOSE, 3778},	/* compatibility mapping */
-	{0xFC3A, 0, 2 | DECOMP_NO_COMPOSE, 3780},	/* compatibility mapping */
-	{0xFC3B, 0, 2 | DECOMP_NO_COMPOSE, 3782},	/* compatibility mapping */
-	{0xFC3C, 0, 2 | DECOMP_NO_COMPOSE, 3784},	/* compatibility mapping */
-	{0xFC3D, 0, 2 | DECOMP_NO_COMPOSE, 3786},	/* compatibility mapping */
-	{0xFC3E, 0, 2 | DECOMP_NO_COMPOSE, 3788},	/* compatibility mapping */
-	{0xFC3F, 0, 2 | DECOMP_NO_COMPOSE, 3790},	/* compatibility mapping */
-	{0xFC40, 0, 2 | DECOMP_NO_COMPOSE, 3792},	/* compatibility mapping */
-	{0xFC41, 0, 2 | DECOMP_NO_COMPOSE, 3794},	/* compatibility mapping */
-	{0xFC42, 0, 2 | DECOMP_NO_COMPOSE, 3796},	/* compatibility mapping */
-	{0xFC43, 0, 2 | DECOMP_NO_COMPOSE, 3798},	/* compatibility mapping */
-	{0xFC44, 0, 2 | DECOMP_NO_COMPOSE, 3800},	/* compatibility mapping */
-	{0xFC45, 0, 2 | DECOMP_NO_COMPOSE, 3802},	/* compatibility mapping */
-	{0xFC46, 0, 2 | DECOMP_NO_COMPOSE, 3804},	/* compatibility mapping */
-	{0xFC47, 0, 2 | DECOMP_NO_COMPOSE, 3806},	/* compatibility mapping */
-	{0xFC48, 0, 2 | DECOMP_NO_COMPOSE, 3808},	/* compatibility mapping */
-	{0xFC49, 0, 2 | DECOMP_NO_COMPOSE, 3810},	/* compatibility mapping */
-	{0xFC4A, 0, 2 | DECOMP_NO_COMPOSE, 3812},	/* compatibility mapping */
-	{0xFC4B, 0, 2 | DECOMP_NO_COMPOSE, 3814},	/* compatibility mapping */
-	{0xFC4C, 0, 2 | DECOMP_NO_COMPOSE, 3816},	/* compatibility mapping */
-	{0xFC4D, 0, 2 | DECOMP_NO_COMPOSE, 3818},	/* compatibility mapping */
-	{0xFC4E, 0, 2 | DECOMP_NO_COMPOSE, 3820},	/* compatibility mapping */
-	{0xFC4F, 0, 2 | DECOMP_NO_COMPOSE, 3822},	/* compatibility mapping */
-	{0xFC50, 0, 2 | DECOMP_NO_COMPOSE, 3824},	/* compatibility mapping */
-	{0xFC51, 0, 2 | DECOMP_NO_COMPOSE, 3826},	/* compatibility mapping */
-	{0xFC52, 0, 2 | DECOMP_NO_COMPOSE, 3828},	/* compatibility mapping */
-	{0xFC53, 0, 2 | DECOMP_NO_COMPOSE, 3830},	/* compatibility mapping */
-	{0xFC54, 0, 2 | DECOMP_NO_COMPOSE, 3832},	/* compatibility mapping */
-	{0xFC55, 0, 2 | DECOMP_NO_COMPOSE, 3834},	/* compatibility mapping */
-	{0xFC56, 0, 2 | DECOMP_NO_COMPOSE, 3836},	/* compatibility mapping */
-	{0xFC57, 0, 2 | DECOMP_NO_COMPOSE, 3838},	/* compatibility mapping */
-	{0xFC58, 0, 2 | DECOMP_NO_COMPOSE, 3840},	/* compatibility mapping */
-	{0xFC59, 0, 2 | DECOMP_NO_COMPOSE, 3842},	/* compatibility mapping */
-	{0xFC5A, 0, 2 | DECOMP_NO_COMPOSE, 3844},	/* compatibility mapping */
-	{0xFC5B, 0, 2 | DECOMP_NO_COMPOSE, 3846},	/* compatibility mapping */
-	{0xFC5C, 0, 2 | DECOMP_NO_COMPOSE, 3848},	/* compatibility mapping */
-	{0xFC5D, 0, 2 | DECOMP_NO_COMPOSE, 3850},	/* compatibility mapping */
-	{0xFC5E, 0, 3, 3852},
-	{0xFC5F, 0, 3, 3855},
-	{0xFC60, 0, 3, 3858},
-	{0xFC61, 0, 3, 3861},
-	{0xFC62, 0, 3, 3864},
-	{0xFC63, 0, 3, 3867},
-	{0xFC64, 0, 2 | DECOMP_NO_COMPOSE, 3870},	/* compatibility mapping */
-	{0xFC65, 0, 2 | DECOMP_NO_COMPOSE, 3872},	/* compatibility mapping */
-	{0xFC66, 0, 2 | DECOMP_NO_COMPOSE, 3874},	/* compatibility mapping */
-	{0xFC67, 0, 2 | DECOMP_NO_COMPOSE, 3876},	/* compatibility mapping */
-	{0xFC68, 0, 2 | DECOMP_NO_COMPOSE, 3878},	/* compatibility mapping */
-	{0xFC69, 0, 2 | DECOMP_NO_COMPOSE, 3880},	/* compatibility mapping */
-	{0xFC6A, 0, 2 | DECOMP_NO_COMPOSE, 3882},	/* compatibility mapping */
-	{0xFC6B, 0, 2 | DECOMP_NO_COMPOSE, 3884},	/* compatibility mapping */
-	{0xFC6C, 0, 2 | DECOMP_NO_COMPOSE, 3886},	/* compatibility mapping */
-	{0xFC6D, 0, 2 | DECOMP_NO_COMPOSE, 3888},	/* compatibility mapping */
-	{0xFC6E, 0, 2 | DECOMP_NO_COMPOSE, 3890},	/* compatibility mapping */
-	{0xFC6F, 0, 2 | DECOMP_NO_COMPOSE, 3892},	/* compatibility mapping */
-	{0xFC70, 0, 2 | DECOMP_NO_COMPOSE, 3894},	/* compatibility mapping */
-	{0xFC71, 0, 2 | DECOMP_NO_COMPOSE, 3896},	/* compatibility mapping */
-	{0xFC72, 0, 2 | DECOMP_NO_COMPOSE, 3898},	/* compatibility mapping */
-	{0xFC73, 0, 2 | DECOMP_NO_COMPOSE, 3900},	/* compatibility mapping */
-	{0xFC74, 0, 2 | DECOMP_NO_COMPOSE, 3902},	/* compatibility mapping */
-	{0xFC75, 0, 2 | DECOMP_NO_COMPOSE, 3904},	/* compatibility mapping */
-	{0xFC76, 0, 2 | DECOMP_NO_COMPOSE, 3906},	/* compatibility mapping */
-	{0xFC77, 0, 2 | DECOMP_NO_COMPOSE, 3908},	/* compatibility mapping */
-	{0xFC78, 0, 2 | DECOMP_NO_COMPOSE, 3910},	/* compatibility mapping */
-	{0xFC79, 0, 2 | DECOMP_NO_COMPOSE, 3912},	/* compatibility mapping */
-	{0xFC7A, 0, 2 | DECOMP_NO_COMPOSE, 3914},	/* compatibility mapping */
-	{0xFC7B, 0, 2 | DECOMP_NO_COMPOSE, 3916},	/* compatibility mapping */
-	{0xFC7C, 0, 2 | DECOMP_NO_COMPOSE, 3918},	/* compatibility mapping */
-	{0xFC7D, 0, 2 | DECOMP_NO_COMPOSE, 3920},	/* compatibility mapping */
-	{0xFC7E, 0, 2 | DECOMP_NO_COMPOSE, 3922},	/* compatibility mapping */
-	{0xFC7F, 0, 2 | DECOMP_NO_COMPOSE, 3924},	/* compatibility mapping */
-	{0xFC80, 0, 2 | DECOMP_NO_COMPOSE, 3926},	/* compatibility mapping */
-	{0xFC81, 0, 2 | DECOMP_NO_COMPOSE, 3928},	/* compatibility mapping */
-	{0xFC82, 0, 2 | DECOMP_NO_COMPOSE, 3930},	/* compatibility mapping */
-	{0xFC83, 0, 2 | DECOMP_NO_COMPOSE, 3932},	/* compatibility mapping */
-	{0xFC84, 0, 2 | DECOMP_NO_COMPOSE, 3934},	/* compatibility mapping */
-	{0xFC85, 0, 2 | DECOMP_NO_COMPOSE, 3936},	/* compatibility mapping */
-	{0xFC86, 0, 2 | DECOMP_NO_COMPOSE, 3938},	/* compatibility mapping */
-	{0xFC87, 0, 2 | DECOMP_NO_COMPOSE, 3940},	/* compatibility mapping */
-	{0xFC88, 0, 2 | DECOMP_NO_COMPOSE, 3942},	/* compatibility mapping */
-	{0xFC89, 0, 2 | DECOMP_NO_COMPOSE, 3944},	/* compatibility mapping */
-	{0xFC8A, 0, 2 | DECOMP_NO_COMPOSE, 3946},	/* compatibility mapping */
-	{0xFC8B, 0, 2 | DECOMP_NO_COMPOSE, 3948},	/* compatibility mapping */
-	{0xFC8C, 0, 2 | DECOMP_NO_COMPOSE, 3950},	/* compatibility mapping */
-	{0xFC8D, 0, 2 | DECOMP_NO_COMPOSE, 3952},	/* compatibility mapping */
-	{0xFC8E, 0, 2 | DECOMP_NO_COMPOSE, 3954},	/* compatibility mapping */
-	{0xFC8F, 0, 2 | DECOMP_NO_COMPOSE, 3956},	/* compatibility mapping */
-	{0xFC90, 0, 2 | DECOMP_NO_COMPOSE, 3958},	/* compatibility mapping */
-	{0xFC91, 0, 2 | DECOMP_NO_COMPOSE, 3960},	/* compatibility mapping */
-	{0xFC92, 0, 2 | DECOMP_NO_COMPOSE, 3962},	/* compatibility mapping */
-	{0xFC93, 0, 2 | DECOMP_NO_COMPOSE, 3964},	/* compatibility mapping */
-	{0xFC94, 0, 2 | DECOMP_NO_COMPOSE, 3966},	/* compatibility mapping */
-	{0xFC95, 0, 2 | DECOMP_NO_COMPOSE, 3968},	/* compatibility mapping */
-	{0xFC96, 0, 2 | DECOMP_NO_COMPOSE, 3970},	/* compatibility mapping */
-	{0xFC97, 0, 2 | DECOMP_NO_COMPOSE, 3972},	/* compatibility mapping */
-	{0xFC98, 0, 2 | DECOMP_NO_COMPOSE, 3974},	/* compatibility mapping */
-	{0xFC99, 0, 2 | DECOMP_NO_COMPOSE, 3976},	/* compatibility mapping */
-	{0xFC9A, 0, 2 | DECOMP_NO_COMPOSE, 3978},	/* compatibility mapping */
-	{0xFC9B, 0, 2 | DECOMP_NO_COMPOSE, 3980},	/* compatibility mapping */
-	{0xFC9C, 0, 2 | DECOMP_NO_COMPOSE, 3982},	/* compatibility mapping */
-	{0xFC9D, 0, 2 | DECOMP_NO_COMPOSE, 3984},	/* compatibility mapping */
-	{0xFC9E, 0, 2 | DECOMP_NO_COMPOSE, 3986},	/* compatibility mapping */
-	{0xFC9F, 0, 2 | DECOMP_NO_COMPOSE, 3988},	/* compatibility mapping */
-	{0xFCA0, 0, 2 | DECOMP_NO_COMPOSE, 3990},	/* compatibility mapping */
-	{0xFCA1, 0, 2 | DECOMP_NO_COMPOSE, 3992},	/* compatibility mapping */
-	{0xFCA2, 0, 2 | DECOMP_NO_COMPOSE, 3994},	/* compatibility mapping */
-	{0xFCA3, 0, 2 | DECOMP_NO_COMPOSE, 3996},	/* compatibility mapping */
-	{0xFCA4, 0, 2 | DECOMP_NO_COMPOSE, 3998},	/* compatibility mapping */
-	{0xFCA5, 0, 2 | DECOMP_NO_COMPOSE, 4000},	/* compatibility mapping */
-	{0xFCA6, 0, 2 | DECOMP_NO_COMPOSE, 4002},	/* compatibility mapping */
-	{0xFCA7, 0, 2 | DECOMP_NO_COMPOSE, 4004},	/* compatibility mapping */
-	{0xFCA8, 0, 2 | DECOMP_NO_COMPOSE, 4006},	/* compatibility mapping */
-	{0xFCA9, 0, 2 | DECOMP_NO_COMPOSE, 4008},	/* compatibility mapping */
-	{0xFCAA, 0, 2 | DECOMP_NO_COMPOSE, 4010},	/* compatibility mapping */
-	{0xFCAB, 0, 2 | DECOMP_NO_COMPOSE, 4012},	/* compatibility mapping */
-	{0xFCAC, 0, 2 | DECOMP_NO_COMPOSE, 4014},	/* compatibility mapping */
-	{0xFCAD, 0, 2 | DECOMP_NO_COMPOSE, 4016},	/* compatibility mapping */
-	{0xFCAE, 0, 2 | DECOMP_NO_COMPOSE, 4018},	/* compatibility mapping */
-	{0xFCAF, 0, 2 | DECOMP_NO_COMPOSE, 4020},	/* compatibility mapping */
-	{0xFCB0, 0, 2 | DECOMP_NO_COMPOSE, 4022},	/* compatibility mapping */
-	{0xFCB1, 0, 2 | DECOMP_NO_COMPOSE, 4024},	/* compatibility mapping */
-	{0xFCB2, 0, 2 | DECOMP_NO_COMPOSE, 4026},	/* compatibility mapping */
-	{0xFCB3, 0, 2 | DECOMP_NO_COMPOSE, 4028},	/* compatibility mapping */
-	{0xFCB4, 0, 2 | DECOMP_NO_COMPOSE, 4030},	/* compatibility mapping */
-	{0xFCB5, 0, 2 | DECOMP_NO_COMPOSE, 4032},	/* compatibility mapping */
-	{0xFCB6, 0, 2 | DECOMP_NO_COMPOSE, 4034},	/* compatibility mapping */
-	{0xFCB7, 0, 2 | DECOMP_NO_COMPOSE, 4036},	/* compatibility mapping */
-	{0xFCB8, 0, 2 | DECOMP_NO_COMPOSE, 4038},	/* compatibility mapping */
-	{0xFCB9, 0, 2 | DECOMP_NO_COMPOSE, 4040},	/* compatibility mapping */
-	{0xFCBA, 0, 2 | DECOMP_NO_COMPOSE, 4042},	/* compatibility mapping */
-	{0xFCBB, 0, 2 | DECOMP_NO_COMPOSE, 4044},	/* compatibility mapping */
-	{0xFCBC, 0, 2 | DECOMP_NO_COMPOSE, 4046},	/* compatibility mapping */
-	{0xFCBD, 0, 2 | DECOMP_NO_COMPOSE, 4048},	/* compatibility mapping */
-	{0xFCBE, 0, 2 | DECOMP_NO_COMPOSE, 4050},	/* compatibility mapping */
-	{0xFCBF, 0, 2 | DECOMP_NO_COMPOSE, 4052},	/* compatibility mapping */
-	{0xFCC0, 0, 2 | DECOMP_NO_COMPOSE, 4054},	/* compatibility mapping */
-	{0xFCC1, 0, 2 | DECOMP_NO_COMPOSE, 4056},	/* compatibility mapping */
-	{0xFCC2, 0, 2 | DECOMP_NO_COMPOSE, 4058},	/* compatibility mapping */
-	{0xFCC3, 0, 2 | DECOMP_NO_COMPOSE, 4060},	/* compatibility mapping */
-	{0xFCC4, 0, 2 | DECOMP_NO_COMPOSE, 4062},	/* compatibility mapping */
-	{0xFCC5, 0, 2 | DECOMP_NO_COMPOSE, 4064},	/* compatibility mapping */
-	{0xFCC6, 0, 2 | DECOMP_NO_COMPOSE, 4066},	/* compatibility mapping */
-	{0xFCC7, 0, 2 | DECOMP_NO_COMPOSE, 4068},	/* compatibility mapping */
-	{0xFCC8, 0, 2 | DECOMP_NO_COMPOSE, 4070},	/* compatibility mapping */
-	{0xFCC9, 0, 2 | DECOMP_NO_COMPOSE, 4072},	/* compatibility mapping */
-	{0xFCCA, 0, 2 | DECOMP_NO_COMPOSE, 4074},	/* compatibility mapping */
-	{0xFCCB, 0, 2 | DECOMP_NO_COMPOSE, 4076},	/* compatibility mapping */
-	{0xFCCC, 0, 2 | DECOMP_NO_COMPOSE, 4078},	/* compatibility mapping */
-	{0xFCCD, 0, 2 | DECOMP_NO_COMPOSE, 4080},	/* compatibility mapping */
-	{0xFCCE, 0, 2 | DECOMP_NO_COMPOSE, 4082},	/* compatibility mapping */
-	{0xFCCF, 0, 2 | DECOMP_NO_COMPOSE, 4084},	/* compatibility mapping */
-	{0xFCD0, 0, 2 | DECOMP_NO_COMPOSE, 4086},	/* compatibility mapping */
-	{0xFCD1, 0, 2 | DECOMP_NO_COMPOSE, 4088},	/* compatibility mapping */
-	{0xFCD2, 0, 2 | DECOMP_NO_COMPOSE, 4090},	/* compatibility mapping */
-	{0xFCD3, 0, 2 | DECOMP_NO_COMPOSE, 4092},	/* compatibility mapping */
-	{0xFCD4, 0, 2 | DECOMP_NO_COMPOSE, 4094},	/* compatibility mapping */
-	{0xFCD5, 0, 2 | DECOMP_NO_COMPOSE, 4096},	/* compatibility mapping */
-	{0xFCD6, 0, 2 | DECOMP_NO_COMPOSE, 4098},	/* compatibility mapping */
-	{0xFCD7, 0, 2 | DECOMP_NO_COMPOSE, 4100},	/* compatibility mapping */
-	{0xFCD8, 0, 2 | DECOMP_NO_COMPOSE, 4102},	/* compatibility mapping */
-	{0xFCD9, 0, 2 | DECOMP_NO_COMPOSE, 4104},	/* compatibility mapping */
-	{0xFCDA, 0, 2 | DECOMP_NO_COMPOSE, 4106},	/* compatibility mapping */
-	{0xFCDB, 0, 2 | DECOMP_NO_COMPOSE, 4108},	/* compatibility mapping */
-	{0xFCDC, 0, 2 | DECOMP_NO_COMPOSE, 4110},	/* compatibility mapping */
-	{0xFCDD, 0, 2 | DECOMP_NO_COMPOSE, 4112},	/* compatibility mapping */
-	{0xFCDE, 0, 2 | DECOMP_NO_COMPOSE, 4114},	/* compatibility mapping */
-	{0xFCDF, 0, 2 | DECOMP_NO_COMPOSE, 4116},	/* compatibility mapping */
-	{0xFCE0, 0, 2 | DECOMP_NO_COMPOSE, 4118},	/* compatibility mapping */
-	{0xFCE1, 0, 2 | DECOMP_NO_COMPOSE, 4120},	/* compatibility mapping */
-	{0xFCE2, 0, 2 | DECOMP_NO_COMPOSE, 4122},	/* compatibility mapping */
-	{0xFCE3, 0, 2 | DECOMP_NO_COMPOSE, 4124},	/* compatibility mapping */
-	{0xFCE4, 0, 2 | DECOMP_NO_COMPOSE, 4126},	/* compatibility mapping */
-	{0xFCE5, 0, 2 | DECOMP_NO_COMPOSE, 4128},	/* compatibility mapping */
-	{0xFCE6, 0, 2 | DECOMP_NO_COMPOSE, 4130},	/* compatibility mapping */
-	{0xFCE7, 0, 2 | DECOMP_NO_COMPOSE, 4132},	/* compatibility mapping */
-	{0xFCE8, 0, 2 | DECOMP_NO_COMPOSE, 4134},	/* compatibility mapping */
-	{0xFCE9, 0, 2 | DECOMP_NO_COMPOSE, 4136},	/* compatibility mapping */
-	{0xFCEA, 0, 2 | DECOMP_NO_COMPOSE, 4138},	/* compatibility mapping */
-	{0xFCEB, 0, 2 | DECOMP_NO_COMPOSE, 4140},	/* compatibility mapping */
-	{0xFCEC, 0, 2 | DECOMP_NO_COMPOSE, 4142},	/* compatibility mapping */
-	{0xFCED, 0, 2 | DECOMP_NO_COMPOSE, 4144},	/* compatibility mapping */
-	{0xFCEE, 0, 2 | DECOMP_NO_COMPOSE, 4146},	/* compatibility mapping */
-	{0xFCEF, 0, 2 | DECOMP_NO_COMPOSE, 4148},	/* compatibility mapping */
-	{0xFCF0, 0, 2 | DECOMP_NO_COMPOSE, 4150},	/* compatibility mapping */
-	{0xFCF1, 0, 2 | DECOMP_NO_COMPOSE, 4152},	/* compatibility mapping */
-	{0xFCF2, 0, 3, 4154},
-	{0xFCF3, 0, 3, 4157},
-	{0xFCF4, 0, 3, 4160},
-	{0xFCF5, 0, 2 | DECOMP_NO_COMPOSE, 4163},	/* compatibility mapping */
-	{0xFCF6, 0, 2 | DECOMP_NO_COMPOSE, 4165},	/* compatibility mapping */
-	{0xFCF7, 0, 2 | DECOMP_NO_COMPOSE, 4167},	/* compatibility mapping */
-	{0xFCF8, 0, 2 | DECOMP_NO_COMPOSE, 4169},	/* compatibility mapping */
-	{0xFCF9, 0, 2 | DECOMP_NO_COMPOSE, 4171},	/* compatibility mapping */
-	{0xFCFA, 0, 2 | DECOMP_NO_COMPOSE, 4173},	/* compatibility mapping */
-	{0xFCFB, 0, 2 | DECOMP_NO_COMPOSE, 4175},	/* compatibility mapping */
-	{0xFCFC, 0, 2 | DECOMP_NO_COMPOSE, 4177},	/* compatibility mapping */
-	{0xFCFD, 0, 2 | DECOMP_NO_COMPOSE, 4179},	/* compatibility mapping */
-	{0xFCFE, 0, 2 | DECOMP_NO_COMPOSE, 4181},	/* compatibility mapping */
-	{0xFCFF, 0, 2 | DECOMP_NO_COMPOSE, 4183},	/* compatibility mapping */
-	{0xFD00, 0, 2 | DECOMP_NO_COMPOSE, 4185},	/* compatibility mapping */
-	{0xFD01, 0, 2 | DECOMP_NO_COMPOSE, 4187},	/* compatibility mapping */
-	{0xFD02, 0, 2 | DECOMP_NO_COMPOSE, 4189},	/* compatibility mapping */
-	{0xFD03, 0, 2 | DECOMP_NO_COMPOSE, 4191},	/* compatibility mapping */
-	{0xFD04, 0, 2 | DECOMP_NO_COMPOSE, 4193},	/* compatibility mapping */
-	{0xFD05, 0, 2 | DECOMP_NO_COMPOSE, 4195},	/* compatibility mapping */
-	{0xFD06, 0, 2 | DECOMP_NO_COMPOSE, 4197},	/* compatibility mapping */
-	{0xFD07, 0, 2 | DECOMP_NO_COMPOSE, 4199},	/* compatibility mapping */
-	{0xFD08, 0, 2 | DECOMP_NO_COMPOSE, 4201},	/* compatibility mapping */
-	{0xFD09, 0, 2 | DECOMP_NO_COMPOSE, 4203},	/* compatibility mapping */
-	{0xFD0A, 0, 2 | DECOMP_NO_COMPOSE, 4205},	/* compatibility mapping */
-	{0xFD0B, 0, 2 | DECOMP_NO_COMPOSE, 4207},	/* compatibility mapping */
-	{0xFD0C, 0, 2 | DECOMP_NO_COMPOSE, 4209},	/* compatibility mapping */
-	{0xFD0D, 0, 2 | DECOMP_NO_COMPOSE, 4211},	/* compatibility mapping */
-	{0xFD0E, 0, 2 | DECOMP_NO_COMPOSE, 4213},	/* compatibility mapping */
-	{0xFD0F, 0, 2 | DECOMP_NO_COMPOSE, 4215},	/* compatibility mapping */
-	{0xFD10, 0, 2 | DECOMP_NO_COMPOSE, 4217},	/* compatibility mapping */
-	{0xFD11, 0, 2 | DECOMP_NO_COMPOSE, 4219},	/* compatibility mapping */
-	{0xFD12, 0, 2 | DECOMP_NO_COMPOSE, 4221},	/* compatibility mapping */
-	{0xFD13, 0, 2 | DECOMP_NO_COMPOSE, 4223},	/* compatibility mapping */
-	{0xFD14, 0, 2 | DECOMP_NO_COMPOSE, 4225},	/* compatibility mapping */
-	{0xFD15, 0, 2 | DECOMP_NO_COMPOSE, 4227},	/* compatibility mapping */
-	{0xFD16, 0, 2 | DECOMP_NO_COMPOSE, 4229},	/* compatibility mapping */
-	{0xFD17, 0, 2 | DECOMP_NO_COMPOSE, 4231},	/* compatibility mapping */
-	{0xFD18, 0, 2 | DECOMP_NO_COMPOSE, 4233},	/* compatibility mapping */
-	{0xFD19, 0, 2 | DECOMP_NO_COMPOSE, 4235},	/* compatibility mapping */
-	{0xFD1A, 0, 2 | DECOMP_NO_COMPOSE, 4237},	/* compatibility mapping */
-	{0xFD1B, 0, 2 | DECOMP_NO_COMPOSE, 4239},	/* compatibility mapping */
-	{0xFD1C, 0, 2 | DECOMP_NO_COMPOSE, 4241},	/* compatibility mapping */
-	{0xFD1D, 0, 2 | DECOMP_NO_COMPOSE, 4243},	/* compatibility mapping */
-	{0xFD1E, 0, 2 | DECOMP_NO_COMPOSE, 4245},	/* compatibility mapping */
-	{0xFD1F, 0, 2 | DECOMP_NO_COMPOSE, 4247},	/* compatibility mapping */
-	{0xFD20, 0, 2 | DECOMP_NO_COMPOSE, 4249},	/* compatibility mapping */
-	{0xFD21, 0, 2 | DECOMP_NO_COMPOSE, 4251},	/* compatibility mapping */
-	{0xFD22, 0, 2 | DECOMP_NO_COMPOSE, 4253},	/* compatibility mapping */
-	{0xFD23, 0, 2 | DECOMP_NO_COMPOSE, 4255},	/* compatibility mapping */
-	{0xFD24, 0, 2 | DECOMP_NO_COMPOSE, 4257},	/* compatibility mapping */
-	{0xFD25, 0, 2 | DECOMP_NO_COMPOSE, 4259},	/* compatibility mapping */
-	{0xFD26, 0, 2 | DECOMP_NO_COMPOSE, 4261},	/* compatibility mapping */
-	{0xFD27, 0, 2 | DECOMP_NO_COMPOSE, 4263},	/* compatibility mapping */
-	{0xFD28, 0, 2 | DECOMP_NO_COMPOSE, 4265},	/* compatibility mapping */
-	{0xFD29, 0, 2 | DECOMP_NO_COMPOSE, 4267},	/* compatibility mapping */
-	{0xFD2A, 0, 2 | DECOMP_NO_COMPOSE, 4269},	/* compatibility mapping */
-	{0xFD2B, 0, 2 | DECOMP_NO_COMPOSE, 4271},	/* compatibility mapping */
-	{0xFD2C, 0, 2 | DECOMP_NO_COMPOSE, 4273},	/* compatibility mapping */
-	{0xFD2D, 0, 2 | DECOMP_NO_COMPOSE, 4275},	/* compatibility mapping */
-	{0xFD2E, 0, 2 | DECOMP_NO_COMPOSE, 4277},	/* compatibility mapping */
-	{0xFD2F, 0, 2 | DECOMP_NO_COMPOSE, 4279},	/* compatibility mapping */
-	{0xFD30, 0, 2 | DECOMP_NO_COMPOSE, 4281},	/* compatibility mapping */
-	{0xFD31, 0, 2 | DECOMP_NO_COMPOSE, 4283},	/* compatibility mapping */
-	{0xFD32, 0, 2 | DECOMP_NO_COMPOSE, 4285},	/* compatibility mapping */
-	{0xFD33, 0, 2 | DECOMP_NO_COMPOSE, 4287},	/* compatibility mapping */
-	{0xFD34, 0, 2 | DECOMP_NO_COMPOSE, 4289},	/* compatibility mapping */
-	{0xFD35, 0, 2 | DECOMP_NO_COMPOSE, 4291},	/* compatibility mapping */
-	{0xFD36, 0, 2 | DECOMP_NO_COMPOSE, 4293},	/* compatibility mapping */
-	{0xFD37, 0, 2 | DECOMP_NO_COMPOSE, 4295},	/* compatibility mapping */
-	{0xFD38, 0, 2 | DECOMP_NO_COMPOSE, 4297},	/* compatibility mapping */
-	{0xFD39, 0, 2 | DECOMP_NO_COMPOSE, 4299},	/* compatibility mapping */
-	{0xFD3A, 0, 2 | DECOMP_NO_COMPOSE, 4301},	/* compatibility mapping */
-	{0xFD3B, 0, 2 | DECOMP_NO_COMPOSE, 4303},	/* compatibility mapping */
-	{0xFD3C, 0, 2 | DECOMP_NO_COMPOSE, 4305},	/* compatibility mapping */
-	{0xFD3D, 0, 2 | DECOMP_NO_COMPOSE, 4307},	/* compatibility mapping */
-	{0xFD50, 0, 3, 4309},
-	{0xFD51, 0, 3, 4312},
-	{0xFD52, 0, 3, 4315},
-	{0xFD53, 0, 3, 4318},
-	{0xFD54, 0, 3, 4321},
-	{0xFD55, 0, 3, 4324},
-	{0xFD56, 0, 3, 4327},
-	{0xFD57, 0, 3, 4330},
-	{0xFD58, 0, 3, 4333},
-	{0xFD59, 0, 3, 4336},
-	{0xFD5A, 0, 3, 4339},
-	{0xFD5B, 0, 3, 4342},
-	{0xFD5C, 0, 3, 4345},
-	{0xFD5D, 0, 3, 4348},
-	{0xFD5E, 0, 3, 4351},
-	{0xFD5F, 0, 3, 4354},
-	{0xFD60, 0, 3, 4357},
-	{0xFD61, 0, 3, 4360},
-	{0xFD62, 0, 3, 4363},
-	{0xFD63, 0, 3, 4366},
-	{0xFD64, 0, 3, 4369},
-	{0xFD65, 0, 3, 4372},
-	{0xFD66, 0, 3, 4375},
-	{0xFD67, 0, 3, 4378},
-	{0xFD68, 0, 3, 4381},
-	{0xFD69, 0, 3, 4384},
-	{0xFD6A, 0, 3, 4387},
-	{0xFD6B, 0, 3, 4390},
-	{0xFD6C, 0, 3, 4393},
-	{0xFD6D, 0, 3, 4396},
-	{0xFD6E, 0, 3, 4399},
-	{0xFD6F, 0, 3, 4402},
-	{0xFD70, 0, 3, 4405},
-	{0xFD71, 0, 3, 4408},
-	{0xFD72, 0, 3, 4411},
-	{0xFD73, 0, 3, 4414},
-	{0xFD74, 0, 3, 4417},
-	{0xFD75, 0, 3, 4420},
-	{0xFD76, 0, 3, 4423},
-	{0xFD77, 0, 3, 4426},
-	{0xFD78, 0, 3, 4429},
-	{0xFD79, 0, 3, 4432},
-	{0xFD7A, 0, 3, 4435},
-	{0xFD7B, 0, 3, 4438},
-	{0xFD7C, 0, 3, 4441},
-	{0xFD7D, 0, 3, 4444},
-	{0xFD7E, 0, 3, 4447},
-	{0xFD7F, 0, 3, 4450},
-	{0xFD80, 0, 3, 4453},
-	{0xFD81, 0, 3, 4456},
-	{0xFD82, 0, 3, 4459},
-	{0xFD83, 0, 3, 4462},
-	{0xFD84, 0, 3, 4465},
-	{0xFD85, 0, 3, 4468},
-	{0xFD86, 0, 3, 4471},
-	{0xFD87, 0, 3, 4474},
-	{0xFD88, 0, 3, 4477},
-	{0xFD89, 0, 3, 4480},
-	{0xFD8A, 0, 3, 4483},
-	{0xFD8B, 0, 3, 4486},
-	{0xFD8C, 0, 3, 4489},
-	{0xFD8D, 0, 3, 4492},
-	{0xFD8E, 0, 3, 4495},
-	{0xFD8F, 0, 3, 4498},
-	{0xFD92, 0, 3, 4501},
-	{0xFD93, 0, 3, 4504},
-	{0xFD94, 0, 3, 4507},
-	{0xFD95, 0, 3, 4510},
-	{0xFD96, 0, 3, 4513},
-	{0xFD97, 0, 3, 4516},
-	{0xFD98, 0, 3, 4519},
-	{0xFD99, 0, 3, 4522},
-	{0xFD9A, 0, 3, 4525},
-	{0xFD9B, 0, 3, 4528},
-	{0xFD9C, 0, 3, 4531},
-	{0xFD9D, 0, 3, 4534},
-	{0xFD9E, 0, 3, 4537},
-	{0xFD9F, 0, 3, 4540},
-	{0xFDA0, 0, 3, 4543},
-	{0xFDA1, 0, 3, 4546},
-	{0xFDA2, 0, 3, 4549},
-	{0xFDA3, 0, 3, 4552},
-	{0xFDA4, 0, 3, 4555},
-	{0xFDA5, 0, 3, 4558},
-	{0xFDA6, 0, 3, 4561},
-	{0xFDA7, 0, 3, 4564},
-	{0xFDA8, 0, 3, 4567},
-	{0xFDA9, 0, 3, 4570},
-	{0xFDAA, 0, 3, 4573},
-	{0xFDAB, 0, 3, 4576},
-	{0xFDAC, 0, 3, 4579},
-	{0xFDAD, 0, 3, 4582},
-	{0xFDAE, 0, 3, 4585},
-	{0xFDAF, 0, 3, 4588},
-	{0xFDB0, 0, 3, 4591},
-	{0xFDB1, 0, 3, 4594},
-	{0xFDB2, 0, 3, 4597},
-	{0xFDB3, 0, 3, 4600},
-	{0xFDB4, 0, 3, 4603},
-	{0xFDB5, 0, 3, 4606},
-	{0xFDB6, 0, 3, 4609},
-	{0xFDB7, 0, 3, 4612},
-	{0xFDB8, 0, 3, 4615},
-	{0xFDB9, 0, 3, 4618},
-	{0xFDBA, 0, 3, 4621},
-	{0xFDBB, 0, 3, 4624},
-	{0xFDBC, 0, 3, 4627},
-	{0xFDBD, 0, 3, 4630},
-	{0xFDBE, 0, 3, 4633},
-	{0xFDBF, 0, 3, 4636},
-	{0xFDC0, 0, 3, 4639},
-	{0xFDC1, 0, 3, 4642},
-	{0xFDC2, 0, 3, 4645},
-	{0xFDC3, 0, 3, 4648},
-	{0xFDC4, 0, 3, 4651},
-	{0xFDC5, 0, 3, 4654},
-	{0xFDC6, 0, 3, 4657},
-	{0xFDC7, 0, 3, 4660},
-	{0xFDF0, 0, 3, 4663},
-	{0xFDF1, 0, 3, 4666},
-	{0xFDF2, 0, 4, 4669},
-	{0xFDF3, 0, 4, 4673},
-	{0xFDF4, 0, 4, 4677},
-	{0xFDF5, 0, 4, 4681},
-	{0xFDF6, 0, 4, 4685},
-	{0xFDF7, 0, 4, 4689},
-	{0xFDF8, 0, 4, 4693},
-	{0xFDF9, 0, 3, 4697},
-	{0xFDFA, 0, 18, 4700},
-	{0xFDFB, 0, 8, 4718},
-	{0xFDFC, 0, 4, 4726},
+	{0xFC00, 0, 2 | DECOMP_NO_COMPOSE, 3666},	/* compatibility mapping */
+	{0xFC01, 0, 2 | DECOMP_NO_COMPOSE, 3668},	/* compatibility mapping */
+	{0xFC02, 0, 2 | DECOMP_NO_COMPOSE, 3670},	/* compatibility mapping */
+	{0xFC03, 0, 2 | DECOMP_NO_COMPOSE, 3672},	/* compatibility mapping */
+	{0xFC04, 0, 2 | DECOMP_NO_COMPOSE, 3674},	/* compatibility mapping */
+	{0xFC05, 0, 2 | DECOMP_NO_COMPOSE, 3676},	/* compatibility mapping */
+	{0xFC06, 0, 2 | DECOMP_NO_COMPOSE, 3678},	/* compatibility mapping */
+	{0xFC07, 0, 2 | DECOMP_NO_COMPOSE, 3680},	/* compatibility mapping */
+	{0xFC08, 0, 2 | DECOMP_NO_COMPOSE, 3682},	/* compatibility mapping */
+	{0xFC09, 0, 2 | DECOMP_NO_COMPOSE, 3684},	/* compatibility mapping */
+	{0xFC0A, 0, 2 | DECOMP_NO_COMPOSE, 3686},	/* compatibility mapping */
+	{0xFC0B, 0, 2 | DECOMP_NO_COMPOSE, 3688},	/* compatibility mapping */
+	{0xFC0C, 0, 2 | DECOMP_NO_COMPOSE, 3690},	/* compatibility mapping */
+	{0xFC0D, 0, 2 | DECOMP_NO_COMPOSE, 3692},	/* compatibility mapping */
+	{0xFC0E, 0, 2 | DECOMP_NO_COMPOSE, 3694},	/* compatibility mapping */
+	{0xFC0F, 0, 2 | DECOMP_NO_COMPOSE, 3696},	/* compatibility mapping */
+	{0xFC10, 0, 2 | DECOMP_NO_COMPOSE, 3698},	/* compatibility mapping */
+	{0xFC11, 0, 2 | DECOMP_NO_COMPOSE, 3700},	/* compatibility mapping */
+	{0xFC12, 0, 2 | DECOMP_NO_COMPOSE, 3702},	/* compatibility mapping */
+	{0xFC13, 0, 2 | DECOMP_NO_COMPOSE, 3704},	/* compatibility mapping */
+	{0xFC14, 0, 2 | DECOMP_NO_COMPOSE, 3706},	/* compatibility mapping */
+	{0xFC15, 0, 2 | DECOMP_NO_COMPOSE, 3708},	/* compatibility mapping */
+	{0xFC16, 0, 2 | DECOMP_NO_COMPOSE, 3710},	/* compatibility mapping */
+	{0xFC17, 0, 2 | DECOMP_NO_COMPOSE, 3712},	/* compatibility mapping */
+	{0xFC18, 0, 2 | DECOMP_NO_COMPOSE, 3714},	/* compatibility mapping */
+	{0xFC19, 0, 2 | DECOMP_NO_COMPOSE, 3716},	/* compatibility mapping */
+	{0xFC1A, 0, 2 | DECOMP_NO_COMPOSE, 3718},	/* compatibility mapping */
+	{0xFC1B, 0, 2 | DECOMP_NO_COMPOSE, 3720},	/* compatibility mapping */
+	{0xFC1C, 0, 2 | DECOMP_NO_COMPOSE, 3722},	/* compatibility mapping */
+	{0xFC1D, 0, 2 | DECOMP_NO_COMPOSE, 3724},	/* compatibility mapping */
+	{0xFC1E, 0, 2 | DECOMP_NO_COMPOSE, 3726},	/* compatibility mapping */
+	{0xFC1F, 0, 2 | DECOMP_NO_COMPOSE, 3728},	/* compatibility mapping */
+	{0xFC20, 0, 2 | DECOMP_NO_COMPOSE, 3730},	/* compatibility mapping */
+	{0xFC21, 0, 2 | DECOMP_NO_COMPOSE, 3732},	/* compatibility mapping */
+	{0xFC22, 0, 2 | DECOMP_NO_COMPOSE, 3734},	/* compatibility mapping */
+	{0xFC23, 0, 2 | DECOMP_NO_COMPOSE, 3736},	/* compatibility mapping */
+	{0xFC24, 0, 2 | DECOMP_NO_COMPOSE, 3738},	/* compatibility mapping */
+	{0xFC25, 0, 2 | DECOMP_NO_COMPOSE, 3740},	/* compatibility mapping */
+	{0xFC26, 0, 2 | DECOMP_NO_COMPOSE, 3742},	/* compatibility mapping */
+	{0xFC27, 0, 2 | DECOMP_NO_COMPOSE, 3744},	/* compatibility mapping */
+	{0xFC28, 0, 2 | DECOMP_NO_COMPOSE, 3746},	/* compatibility mapping */
+	{0xFC29, 0, 2 | DECOMP_NO_COMPOSE, 3748},	/* compatibility mapping */
+	{0xFC2A, 0, 2 | DECOMP_NO_COMPOSE, 3750},	/* compatibility mapping */
+	{0xFC2B, 0, 2 | DECOMP_NO_COMPOSE, 3752},	/* compatibility mapping */
+	{0xFC2C, 0, 2 | DECOMP_NO_COMPOSE, 3754},	/* compatibility mapping */
+	{0xFC2D, 0, 2 | DECOMP_NO_COMPOSE, 3756},	/* compatibility mapping */
+	{0xFC2E, 0, 2 | DECOMP_NO_COMPOSE, 3758},	/* compatibility mapping */
+	{0xFC2F, 0, 2 | DECOMP_NO_COMPOSE, 3760},	/* compatibility mapping */
+	{0xFC30, 0, 2 | DECOMP_NO_COMPOSE, 3762},	/* compatibility mapping */
+	{0xFC31, 0, 2 | DECOMP_NO_COMPOSE, 3764},	/* compatibility mapping */
+	{0xFC32, 0, 2 | DECOMP_NO_COMPOSE, 3766},	/* compatibility mapping */
+	{0xFC33, 0, 2 | DECOMP_NO_COMPOSE, 3768},	/* compatibility mapping */
+	{0xFC34, 0, 2 | DECOMP_NO_COMPOSE, 3770},	/* compatibility mapping */
+	{0xFC35, 0, 2 | DECOMP_NO_COMPOSE, 3772},	/* compatibility mapping */
+	{0xFC36, 0, 2 | DECOMP_NO_COMPOSE, 3774},	/* compatibility mapping */
+	{0xFC37, 0, 2 | DECOMP_NO_COMPOSE, 3776},	/* compatibility mapping */
+	{0xFC38, 0, 2 | DECOMP_NO_COMPOSE, 3778},	/* compatibility mapping */
+	{0xFC39, 0, 2 | DECOMP_NO_COMPOSE, 3780},	/* compatibility mapping */
+	{0xFC3A, 0, 2 | DECOMP_NO_COMPOSE, 3782},	/* compatibility mapping */
+	{0xFC3B, 0, 2 | DECOMP_NO_COMPOSE, 3784},	/* compatibility mapping */
+	{0xFC3C, 0, 2 | DECOMP_NO_COMPOSE, 3786},	/* compatibility mapping */
+	{0xFC3D, 0, 2 | DECOMP_NO_COMPOSE, 3788},	/* compatibility mapping */
+	{0xFC3E, 0, 2 | DECOMP_NO_COMPOSE, 3790},	/* compatibility mapping */
+	{0xFC3F, 0, 2 | DECOMP_NO_COMPOSE, 3792},	/* compatibility mapping */
+	{0xFC40, 0, 2 | DECOMP_NO_COMPOSE, 3794},	/* compatibility mapping */
+	{0xFC41, 0, 2 | DECOMP_NO_COMPOSE, 3796},	/* compatibility mapping */
+	{0xFC42, 0, 2 | DECOMP_NO_COMPOSE, 3798},	/* compatibility mapping */
+	{0xFC43, 0, 2 | DECOMP_NO_COMPOSE, 3800},	/* compatibility mapping */
+	{0xFC44, 0, 2 | DECOMP_NO_COMPOSE, 3802},	/* compatibility mapping */
+	{0xFC45, 0, 2 | DECOMP_NO_COMPOSE, 3804},	/* compatibility mapping */
+	{0xFC46, 0, 2 | DECOMP_NO_COMPOSE, 3806},	/* compatibility mapping */
+	{0xFC47, 0, 2 | DECOMP_NO_COMPOSE, 3808},	/* compatibility mapping */
+	{0xFC48, 0, 2 | DECOMP_NO_COMPOSE, 3810},	/* compatibility mapping */
+	{0xFC49, 0, 2 | DECOMP_NO_COMPOSE, 3812},	/* compatibility mapping */
+	{0xFC4A, 0, 2 | DECOMP_NO_COMPOSE, 3814},	/* compatibility mapping */
+	{0xFC4B, 0, 2 | DECOMP_NO_COMPOSE, 3816},	/* compatibility mapping */
+	{0xFC4C, 0, 2 | DECOMP_NO_COMPOSE, 3818},	/* compatibility mapping */
+	{0xFC4D, 0, 2 | DECOMP_NO_COMPOSE, 3820},	/* compatibility mapping */
+	{0xFC4E, 0, 2 | DECOMP_NO_COMPOSE, 3822},	/* compatibility mapping */
+	{0xFC4F, 0, 2 | DECOMP_NO_COMPOSE, 3824},	/* compatibility mapping */
+	{0xFC50, 0, 2 | DECOMP_NO_COMPOSE, 3826},	/* compatibility mapping */
+	{0xFC51, 0, 2 | DECOMP_NO_COMPOSE, 3828},	/* compatibility mapping */
+	{0xFC52, 0, 2 | DECOMP_NO_COMPOSE, 3830},	/* compatibility mapping */
+	{0xFC53, 0, 2 | DECOMP_NO_COMPOSE, 3832},	/* compatibility mapping */
+	{0xFC54, 0, 2 | DECOMP_NO_COMPOSE, 3834},	/* compatibility mapping */
+	{0xFC55, 0, 2 | DECOMP_NO_COMPOSE, 3836},	/* compatibility mapping */
+	{0xFC56, 0, 2 | DECOMP_NO_COMPOSE, 3838},	/* compatibility mapping */
+	{0xFC57, 0, 2 | DECOMP_NO_COMPOSE, 3840},	/* compatibility mapping */
+	{0xFC58, 0, 2 | DECOMP_NO_COMPOSE, 3842},	/* compatibility mapping */
+	{0xFC59, 0, 2 | DECOMP_NO_COMPOSE, 3844},	/* compatibility mapping */
+	{0xFC5A, 0, 2 | DECOMP_NO_COMPOSE, 3846},	/* compatibility mapping */
+	{0xFC5B, 0, 2 | DECOMP_NO_COMPOSE, 3848},	/* compatibility mapping */
+	{0xFC5C, 0, 2 | DECOMP_NO_COMPOSE, 3850},	/* compatibility mapping */
+	{0xFC5D, 0, 2 | DECOMP_NO_COMPOSE, 3852},	/* compatibility mapping */
+	{0xFC5E, 0, 3, 3854},
+	{0xFC5F, 0, 3, 3857},
+	{0xFC60, 0, 3, 3860},
+	{0xFC61, 0, 3, 3863},
+	{0xFC62, 0, 3, 3866},
+	{0xFC63, 0, 3, 3869},
+	{0xFC64, 0, 2 | DECOMP_NO_COMPOSE, 3872},	/* compatibility mapping */
+	{0xFC65, 0, 2 | DECOMP_NO_COMPOSE, 3874},	/* compatibility mapping */
+	{0xFC66, 0, 2 | DECOMP_NO_COMPOSE, 3876},	/* compatibility mapping */
+	{0xFC67, 0, 2 | DECOMP_NO_COMPOSE, 3878},	/* compatibility mapping */
+	{0xFC68, 0, 2 | DECOMP_NO_COMPOSE, 3880},	/* compatibility mapping */
+	{0xFC69, 0, 2 | DECOMP_NO_COMPOSE, 3882},	/* compatibility mapping */
+	{0xFC6A, 0, 2 | DECOMP_NO_COMPOSE, 3884},	/* compatibility mapping */
+	{0xFC6B, 0, 2 | DECOMP_NO_COMPOSE, 3886},	/* compatibility mapping */
+	{0xFC6C, 0, 2 | DECOMP_NO_COMPOSE, 3888},	/* compatibility mapping */
+	{0xFC6D, 0, 2 | DECOMP_NO_COMPOSE, 3890},	/* compatibility mapping */
+	{0xFC6E, 0, 2 | DECOMP_NO_COMPOSE, 3892},	/* compatibility mapping */
+	{0xFC6F, 0, 2 | DECOMP_NO_COMPOSE, 3894},	/* compatibility mapping */
+	{0xFC70, 0, 2 | DECOMP_NO_COMPOSE, 3896},	/* compatibility mapping */
+	{0xFC71, 0, 2 | DECOMP_NO_COMPOSE, 3898},	/* compatibility mapping */
+	{0xFC72, 0, 2 | DECOMP_NO_COMPOSE, 3900},	/* compatibility mapping */
+	{0xFC73, 0, 2 | DECOMP_NO_COMPOSE, 3902},	/* compatibility mapping */
+	{0xFC74, 0, 2 | DECOMP_NO_COMPOSE, 3904},	/* compatibility mapping */
+	{0xFC75, 0, 2 | DECOMP_NO_COMPOSE, 3906},	/* compatibility mapping */
+	{0xFC76, 0, 2 | DECOMP_NO_COMPOSE, 3908},	/* compatibility mapping */
+	{0xFC77, 0, 2 | DECOMP_NO_COMPOSE, 3910},	/* compatibility mapping */
+	{0xFC78, 0, 2 | DECOMP_NO_COMPOSE, 3912},	/* compatibility mapping */
+	{0xFC79, 0, 2 | DECOMP_NO_COMPOSE, 3914},	/* compatibility mapping */
+	{0xFC7A, 0, 2 | DECOMP_NO_COMPOSE, 3916},	/* compatibility mapping */
+	{0xFC7B, 0, 2 | DECOMP_NO_COMPOSE, 3918},	/* compatibility mapping */
+	{0xFC7C, 0, 2 | DECOMP_NO_COMPOSE, 3920},	/* compatibility mapping */
+	{0xFC7D, 0, 2 | DECOMP_NO_COMPOSE, 3922},	/* compatibility mapping */
+	{0xFC7E, 0, 2 | DECOMP_NO_COMPOSE, 3924},	/* compatibility mapping */
+	{0xFC7F, 0, 2 | DECOMP_NO_COMPOSE, 3926},	/* compatibility mapping */
+	{0xFC80, 0, 2 | DECOMP_NO_COMPOSE, 3928},	/* compatibility mapping */
+	{0xFC81, 0, 2 | DECOMP_NO_COMPOSE, 3930},	/* compatibility mapping */
+	{0xFC82, 0, 2 | DECOMP_NO_COMPOSE, 3932},	/* compatibility mapping */
+	{0xFC83, 0, 2 | DECOMP_NO_COMPOSE, 3934},	/* compatibility mapping */
+	{0xFC84, 0, 2 | DECOMP_NO_COMPOSE, 3936},	/* compatibility mapping */
+	{0xFC85, 0, 2 | DECOMP_NO_COMPOSE, 3938},	/* compatibility mapping */
+	{0xFC86, 0, 2 | DECOMP_NO_COMPOSE, 3940},	/* compatibility mapping */
+	{0xFC87, 0, 2 | DECOMP_NO_COMPOSE, 3942},	/* compatibility mapping */
+	{0xFC88, 0, 2 | DECOMP_NO_COMPOSE, 3944},	/* compatibility mapping */
+	{0xFC89, 0, 2 | DECOMP_NO_COMPOSE, 3946},	/* compatibility mapping */
+	{0xFC8A, 0, 2 | DECOMP_NO_COMPOSE, 3948},	/* compatibility mapping */
+	{0xFC8B, 0, 2 | DECOMP_NO_COMPOSE, 3950},	/* compatibility mapping */
+	{0xFC8C, 0, 2 | DECOMP_NO_COMPOSE, 3952},	/* compatibility mapping */
+	{0xFC8D, 0, 2 | DECOMP_NO_COMPOSE, 3954},	/* compatibility mapping */
+	{0xFC8E, 0, 2 | DECOMP_NO_COMPOSE, 3956},	/* compatibility mapping */
+	{0xFC8F, 0, 2 | DECOMP_NO_COMPOSE, 3958},	/* compatibility mapping */
+	{0xFC90, 0, 2 | DECOMP_NO_COMPOSE, 3960},	/* compatibility mapping */
+	{0xFC91, 0, 2 | DECOMP_NO_COMPOSE, 3962},	/* compatibility mapping */
+	{0xFC92, 0, 2 | DECOMP_NO_COMPOSE, 3964},	/* compatibility mapping */
+	{0xFC93, 0, 2 | DECOMP_NO_COMPOSE, 3966},	/* compatibility mapping */
+	{0xFC94, 0, 2 | DECOMP_NO_COMPOSE, 3968},	/* compatibility mapping */
+	{0xFC95, 0, 2 | DECOMP_NO_COMPOSE, 3970},	/* compatibility mapping */
+	{0xFC96, 0, 2 | DECOMP_NO_COMPOSE, 3972},	/* compatibility mapping */
+	{0xFC97, 0, 2 | DECOMP_NO_COMPOSE, 3974},	/* compatibility mapping */
+	{0xFC98, 0, 2 | DECOMP_NO_COMPOSE, 3976},	/* compatibility mapping */
+	{0xFC99, 0, 2 | DECOMP_NO_COMPOSE, 3978},	/* compatibility mapping */
+	{0xFC9A, 0, 2 | DECOMP_NO_COMPOSE, 3980},	/* compatibility mapping */
+	{0xFC9B, 0, 2 | DECOMP_NO_COMPOSE, 3982},	/* compatibility mapping */
+	{0xFC9C, 0, 2 | DECOMP_NO_COMPOSE, 3984},	/* compatibility mapping */
+	{0xFC9D, 0, 2 | DECOMP_NO_COMPOSE, 3986},	/* compatibility mapping */
+	{0xFC9E, 0, 2 | DECOMP_NO_COMPOSE, 3988},	/* compatibility mapping */
+	{0xFC9F, 0, 2 | DECOMP_NO_COMPOSE, 3990},	/* compatibility mapping */
+	{0xFCA0, 0, 2 | DECOMP_NO_COMPOSE, 3992},	/* compatibility mapping */
+	{0xFCA1, 0, 2 | DECOMP_NO_COMPOSE, 3994},	/* compatibility mapping */
+	{0xFCA2, 0, 2 | DECOMP_NO_COMPOSE, 3996},	/* compatibility mapping */
+	{0xFCA3, 0, 2 | DECOMP_NO_COMPOSE, 3998},	/* compatibility mapping */
+	{0xFCA4, 0, 2 | DECOMP_NO_COMPOSE, 4000},	/* compatibility mapping */
+	{0xFCA5, 0, 2 | DECOMP_NO_COMPOSE, 4002},	/* compatibility mapping */
+	{0xFCA6, 0, 2 | DECOMP_NO_COMPOSE, 4004},	/* compatibility mapping */
+	{0xFCA7, 0, 2 | DECOMP_NO_COMPOSE, 4006},	/* compatibility mapping */
+	{0xFCA8, 0, 2 | DECOMP_NO_COMPOSE, 4008},	/* compatibility mapping */
+	{0xFCA9, 0, 2 | DECOMP_NO_COMPOSE, 4010},	/* compatibility mapping */
+	{0xFCAA, 0, 2 | DECOMP_NO_COMPOSE, 4012},	/* compatibility mapping */
+	{0xFCAB, 0, 2 | DECOMP_NO_COMPOSE, 4014},	/* compatibility mapping */
+	{0xFCAC, 0, 2 | DECOMP_NO_COMPOSE, 4016},	/* compatibility mapping */
+	{0xFCAD, 0, 2 | DECOMP_NO_COMPOSE, 4018},	/* compatibility mapping */
+	{0xFCAE, 0, 2 | DECOMP_NO_COMPOSE, 4020},	/* compatibility mapping */
+	{0xFCAF, 0, 2 | DECOMP_NO_COMPOSE, 4022},	/* compatibility mapping */
+	{0xFCB0, 0, 2 | DECOMP_NO_COMPOSE, 4024},	/* compatibility mapping */
+	{0xFCB1, 0, 2 | DECOMP_NO_COMPOSE, 4026},	/* compatibility mapping */
+	{0xFCB2, 0, 2 | DECOMP_NO_COMPOSE, 4028},	/* compatibility mapping */
+	{0xFCB3, 0, 2 | DECOMP_NO_COMPOSE, 4030},	/* compatibility mapping */
+	{0xFCB4, 0, 2 | DECOMP_NO_COMPOSE, 4032},	/* compatibility mapping */
+	{0xFCB5, 0, 2 | DECOMP_NO_COMPOSE, 4034},	/* compatibility mapping */
+	{0xFCB6, 0, 2 | DECOMP_NO_COMPOSE, 4036},	/* compatibility mapping */
+	{0xFCB7, 0, 2 | DECOMP_NO_COMPOSE, 4038},	/* compatibility mapping */
+	{0xFCB8, 0, 2 | DECOMP_NO_COMPOSE, 4040},	/* compatibility mapping */
+	{0xFCB9, 0, 2 | DECOMP_NO_COMPOSE, 4042},	/* compatibility mapping */
+	{0xFCBA, 0, 2 | DECOMP_NO_COMPOSE, 4044},	/* compatibility mapping */
+	{0xFCBB, 0, 2 | DECOMP_NO_COMPOSE, 4046},	/* compatibility mapping */
+	{0xFCBC, 0, 2 | DECOMP_NO_COMPOSE, 4048},	/* compatibility mapping */
+	{0xFCBD, 0, 2 | DECOMP_NO_COMPOSE, 4050},	/* compatibility mapping */
+	{0xFCBE, 0, 2 | DECOMP_NO_COMPOSE, 4052},	/* compatibility mapping */
+	{0xFCBF, 0, 2 | DECOMP_NO_COMPOSE, 4054},	/* compatibility mapping */
+	{0xFCC0, 0, 2 | DECOMP_NO_COMPOSE, 4056},	/* compatibility mapping */
+	{0xFCC1, 0, 2 | DECOMP_NO_COMPOSE, 4058},	/* compatibility mapping */
+	{0xFCC2, 0, 2 | DECOMP_NO_COMPOSE, 4060},	/* compatibility mapping */
+	{0xFCC3, 0, 2 | DECOMP_NO_COMPOSE, 4062},	/* compatibility mapping */
+	{0xFCC4, 0, 2 | DECOMP_NO_COMPOSE, 4064},	/* compatibility mapping */
+	{0xFCC5, 0, 2 | DECOMP_NO_COMPOSE, 4066},	/* compatibility mapping */
+	{0xFCC6, 0, 2 | DECOMP_NO_COMPOSE, 4068},	/* compatibility mapping */
+	{0xFCC7, 0, 2 | DECOMP_NO_COMPOSE, 4070},	/* compatibility mapping */
+	{0xFCC8, 0, 2 | DECOMP_NO_COMPOSE, 4072},	/* compatibility mapping */
+	{0xFCC9, 0, 2 | DECOMP_NO_COMPOSE, 4074},	/* compatibility mapping */
+	{0xFCCA, 0, 2 | DECOMP_NO_COMPOSE, 4076},	/* compatibility mapping */
+	{0xFCCB, 0, 2 | DECOMP_NO_COMPOSE, 4078},	/* compatibility mapping */
+	{0xFCCC, 0, 2 | DECOMP_NO_COMPOSE, 4080},	/* compatibility mapping */
+	{0xFCCD, 0, 2 | DECOMP_NO_COMPOSE, 4082},	/* compatibility mapping */
+	{0xFCCE, 0, 2 | DECOMP_NO_COMPOSE, 4084},	/* compatibility mapping */
+	{0xFCCF, 0, 2 | DECOMP_NO_COMPOSE, 4086},	/* compatibility mapping */
+	{0xFCD0, 0, 2 | DECOMP_NO_COMPOSE, 4088},	/* compatibility mapping */
+	{0xFCD1, 0, 2 | DECOMP_NO_COMPOSE, 4090},	/* compatibility mapping */
+	{0xFCD2, 0, 2 | DECOMP_NO_COMPOSE, 4092},	/* compatibility mapping */
+	{0xFCD3, 0, 2 | DECOMP_NO_COMPOSE, 4094},	/* compatibility mapping */
+	{0xFCD4, 0, 2 | DECOMP_NO_COMPOSE, 4096},	/* compatibility mapping */
+	{0xFCD5, 0, 2 | DECOMP_NO_COMPOSE, 4098},	/* compatibility mapping */
+	{0xFCD6, 0, 2 | DECOMP_NO_COMPOSE, 4100},	/* compatibility mapping */
+	{0xFCD7, 0, 2 | DECOMP_NO_COMPOSE, 4102},	/* compatibility mapping */
+	{0xFCD8, 0, 2 | DECOMP_NO_COMPOSE, 4104},	/* compatibility mapping */
+	{0xFCD9, 0, 2 | DECOMP_NO_COMPOSE, 4106},	/* compatibility mapping */
+	{0xFCDA, 0, 2 | DECOMP_NO_COMPOSE, 4108},	/* compatibility mapping */
+	{0xFCDB, 0, 2 | DECOMP_NO_COMPOSE, 4110},	/* compatibility mapping */
+	{0xFCDC, 0, 2 | DECOMP_NO_COMPOSE, 4112},	/* compatibility mapping */
+	{0xFCDD, 0, 2 | DECOMP_NO_COMPOSE, 4114},	/* compatibility mapping */
+	{0xFCDE, 0, 2 | DECOMP_NO_COMPOSE, 4116},	/* compatibility mapping */
+	{0xFCDF, 0, 2 | DECOMP_NO_COMPOSE, 4118},	/* compatibility mapping */
+	{0xFCE0, 0, 2 | DECOMP_NO_COMPOSE, 4120},	/* compatibility mapping */
+	{0xFCE1, 0, 2 | DECOMP_NO_COMPOSE, 4122},	/* compatibility mapping */
+	{0xFCE2, 0, 2 | DECOMP_NO_COMPOSE, 4124},	/* compatibility mapping */
+	{0xFCE3, 0, 2 | DECOMP_NO_COMPOSE, 4126},	/* compatibility mapping */
+	{0xFCE4, 0, 2 | DECOMP_NO_COMPOSE, 4128},	/* compatibility mapping */
+	{0xFCE5, 0, 2 | DECOMP_NO_COMPOSE, 4130},	/* compatibility mapping */
+	{0xFCE6, 0, 2 | DECOMP_NO_COMPOSE, 4132},	/* compatibility mapping */
+	{0xFCE7, 0, 2 | DECOMP_NO_COMPOSE, 4134},	/* compatibility mapping */
+	{0xFCE8, 0, 2 | DECOMP_NO_COMPOSE, 4136},	/* compatibility mapping */
+	{0xFCE9, 0, 2 | DECOMP_NO_COMPOSE, 4138},	/* compatibility mapping */
+	{0xFCEA, 0, 2 | DECOMP_NO_COMPOSE, 4140},	/* compatibility mapping */
+	{0xFCEB, 0, 2 | DECOMP_NO_COMPOSE, 4142},	/* compatibility mapping */
+	{0xFCEC, 0, 2 | DECOMP_NO_COMPOSE, 4144},	/* compatibility mapping */
+	{0xFCED, 0, 2 | DECOMP_NO_COMPOSE, 4146},	/* compatibility mapping */
+	{0xFCEE, 0, 2 | DECOMP_NO_COMPOSE, 4148},	/* compatibility mapping */
+	{0xFCEF, 0, 2 | DECOMP_NO_COMPOSE, 4150},	/* compatibility mapping */
+	{0xFCF0, 0, 2 | DECOMP_NO_COMPOSE, 4152},	/* compatibility mapping */
+	{0xFCF1, 0, 2 | DECOMP_NO_COMPOSE, 4154},	/* compatibility mapping */
+	{0xFCF2, 0, 3, 4156},
+	{0xFCF3, 0, 3, 4159},
+	{0xFCF4, 0, 3, 4162},
+	{0xFCF5, 0, 2 | DECOMP_NO_COMPOSE, 4165},	/* compatibility mapping */
+	{0xFCF6, 0, 2 | DECOMP_NO_COMPOSE, 4167},	/* compatibility mapping */
+	{0xFCF7, 0, 2 | DECOMP_NO_COMPOSE, 4169},	/* compatibility mapping */
+	{0xFCF8, 0, 2 | DECOMP_NO_COMPOSE, 4171},	/* compatibility mapping */
+	{0xFCF9, 0, 2 | DECOMP_NO_COMPOSE, 4173},	/* compatibility mapping */
+	{0xFCFA, 0, 2 | DECOMP_NO_COMPOSE, 4175},	/* compatibility mapping */
+	{0xFCFB, 0, 2 | DECOMP_NO_COMPOSE, 4177},	/* compatibility mapping */
+	{0xFCFC, 0, 2 | DECOMP_NO_COMPOSE, 4179},	/* compatibility mapping */
+	{0xFCFD, 0, 2 | DECOMP_NO_COMPOSE, 4181},	/* compatibility mapping */
+	{0xFCFE, 0, 2 | DECOMP_NO_COMPOSE, 4183},	/* compatibility mapping */
+	{0xFCFF, 0, 2 | DECOMP_NO_COMPOSE, 4185},	/* compatibility mapping */
+	{0xFD00, 0, 2 | DECOMP_NO_COMPOSE, 4187},	/* compatibility mapping */
+	{0xFD01, 0, 2 | DECOMP_NO_COMPOSE, 4189},	/* compatibility mapping */
+	{0xFD02, 0, 2 | DECOMP_NO_COMPOSE, 4191},	/* compatibility mapping */
+	{0xFD03, 0, 2 | DECOMP_NO_COMPOSE, 4193},	/* compatibility mapping */
+	{0xFD04, 0, 2 | DECOMP_NO_COMPOSE, 4195},	/* compatibility mapping */
+	{0xFD05, 0, 2 | DECOMP_NO_COMPOSE, 4197},	/* compatibility mapping */
+	{0xFD06, 0, 2 | DECOMP_NO_COMPOSE, 4199},	/* compatibility mapping */
+	{0xFD07, 0, 2 | DECOMP_NO_COMPOSE, 4201},	/* compatibility mapping */
+	{0xFD08, 0, 2 | DECOMP_NO_COMPOSE, 4203},	/* compatibility mapping */
+	{0xFD09, 0, 2 | DECOMP_NO_COMPOSE, 4205},	/* compatibility mapping */
+	{0xFD0A, 0, 2 | DECOMP_NO_COMPOSE, 4207},	/* compatibility mapping */
+	{0xFD0B, 0, 2 | DECOMP_NO_COMPOSE, 4209},	/* compatibility mapping */
+	{0xFD0C, 0, 2 | DECOMP_NO_COMPOSE, 4211},	/* compatibility mapping */
+	{0xFD0D, 0, 2 | DECOMP_NO_COMPOSE, 4213},	/* compatibility mapping */
+	{0xFD0E, 0, 2 | DECOMP_NO_COMPOSE, 4215},	/* compatibility mapping */
+	{0xFD0F, 0, 2 | DECOMP_NO_COMPOSE, 4217},	/* compatibility mapping */
+	{0xFD10, 0, 2 | DECOMP_NO_COMPOSE, 4219},	/* compatibility mapping */
+	{0xFD11, 0, 2 | DECOMP_NO_COMPOSE, 4221},	/* compatibility mapping */
+	{0xFD12, 0, 2 | DECOMP_NO_COMPOSE, 4223},	/* compatibility mapping */
+	{0xFD13, 0, 2 | DECOMP_NO_COMPOSE, 4225},	/* compatibility mapping */
+	{0xFD14, 0, 2 | DECOMP_NO_COMPOSE, 4227},	/* compatibility mapping */
+	{0xFD15, 0, 2 | DECOMP_NO_COMPOSE, 4229},	/* compatibility mapping */
+	{0xFD16, 0, 2 | DECOMP_NO_COMPOSE, 4231},	/* compatibility mapping */
+	{0xFD17, 0, 2 | DECOMP_NO_COMPOSE, 4233},	/* compatibility mapping */
+	{0xFD18, 0, 2 | DECOMP_NO_COMPOSE, 4235},	/* compatibility mapping */
+	{0xFD19, 0, 2 | DECOMP_NO_COMPOSE, 4237},	/* compatibility mapping */
+	{0xFD1A, 0, 2 | DECOMP_NO_COMPOSE, 4239},	/* compatibility mapping */
+	{0xFD1B, 0, 2 | DECOMP_NO_COMPOSE, 4241},	/* compatibility mapping */
+	{0xFD1C, 0, 2 | DECOMP_NO_COMPOSE, 4243},	/* compatibility mapping */
+	{0xFD1D, 0, 2 | DECOMP_NO_COMPOSE, 4245},	/* compatibility mapping */
+	{0xFD1E, 0, 2 | DECOMP_NO_COMPOSE, 4247},	/* compatibility mapping */
+	{0xFD1F, 0, 2 | DECOMP_NO_COMPOSE, 4249},	/* compatibility mapping */
+	{0xFD20, 0, 2 | DECOMP_NO_COMPOSE, 4251},	/* compatibility mapping */
+	{0xFD21, 0, 2 | DECOMP_NO_COMPOSE, 4253},	/* compatibility mapping */
+	{0xFD22, 0, 2 | DECOMP_NO_COMPOSE, 4255},	/* compatibility mapping */
+	{0xFD23, 0, 2 | DECOMP_NO_COMPOSE, 4257},	/* compatibility mapping */
+	{0xFD24, 0, 2 | DECOMP_NO_COMPOSE, 4259},	/* compatibility mapping */
+	{0xFD25, 0, 2 | DECOMP_NO_COMPOSE, 4261},	/* compatibility mapping */
+	{0xFD26, 0, 2 | DECOMP_NO_COMPOSE, 4263},	/* compatibility mapping */
+	{0xFD27, 0, 2 | DECOMP_NO_COMPOSE, 4265},	/* compatibility mapping */
+	{0xFD28, 0, 2 | DECOMP_NO_COMPOSE, 4267},	/* compatibility mapping */
+	{0xFD29, 0, 2 | DECOMP_NO_COMPOSE, 4269},	/* compatibility mapping */
+	{0xFD2A, 0, 2 | DECOMP_NO_COMPOSE, 4271},	/* compatibility mapping */
+	{0xFD2B, 0, 2 | DECOMP_NO_COMPOSE, 4273},	/* compatibility mapping */
+	{0xFD2C, 0, 2 | DECOMP_NO_COMPOSE, 4275},	/* compatibility mapping */
+	{0xFD2D, 0, 2 | DECOMP_NO_COMPOSE, 4277},	/* compatibility mapping */
+	{0xFD2E, 0, 2 | DECOMP_NO_COMPOSE, 4279},	/* compatibility mapping */
+	{0xFD2F, 0, 2 | DECOMP_NO_COMPOSE, 4281},	/* compatibility mapping */
+	{0xFD30, 0, 2 | DECOMP_NO_COMPOSE, 4283},	/* compatibility mapping */
+	{0xFD31, 0, 2 | DECOMP_NO_COMPOSE, 4285},	/* compatibility mapping */
+	{0xFD32, 0, 2 | DECOMP_NO_COMPOSE, 4287},	/* compatibility mapping */
+	{0xFD33, 0, 2 | DECOMP_NO_COMPOSE, 4289},	/* compatibility mapping */
+	{0xFD34, 0, 2 | DECOMP_NO_COMPOSE, 4291},	/* compatibility mapping */
+	{0xFD35, 0, 2 | DECOMP_NO_COMPOSE, 4293},	/* compatibility mapping */
+	{0xFD36, 0, 2 | DECOMP_NO_COMPOSE, 4295},	/* compatibility mapping */
+	{0xFD37, 0, 2 | DECOMP_NO_COMPOSE, 4297},	/* compatibility mapping */
+	{0xFD38, 0, 2 | DECOMP_NO_COMPOSE, 4299},	/* compatibility mapping */
+	{0xFD39, 0, 2 | DECOMP_NO_COMPOSE, 4301},	/* compatibility mapping */
+	{0xFD3A, 0, 2 | DECOMP_NO_COMPOSE, 4303},	/* compatibility mapping */
+	{0xFD3B, 0, 2 | DECOMP_NO_COMPOSE, 4305},	/* compatibility mapping */
+	{0xFD3C, 0, 2 | DECOMP_NO_COMPOSE, 4307},	/* compatibility mapping */
+	{0xFD3D, 0, 2 | DECOMP_NO_COMPOSE, 4309},	/* compatibility mapping */
+	{0xFD50, 0, 3, 4311},
+	{0xFD51, 0, 3, 4314},
+	{0xFD52, 0, 3, 4317},
+	{0xFD53, 0, 3, 4320},
+	{0xFD54, 0, 3, 4323},
+	{0xFD55, 0, 3, 4326},
+	{0xFD56, 0, 3, 4329},
+	{0xFD57, 0, 3, 4332},
+	{0xFD58, 0, 3, 4335},
+	{0xFD59, 0, 3, 4338},
+	{0xFD5A, 0, 3, 4341},
+	{0xFD5B, 0, 3, 4344},
+	{0xFD5C, 0, 3, 4347},
+	{0xFD5D, 0, 3, 4350},
+	{0xFD5E, 0, 3, 4353},
+	{0xFD5F, 0, 3, 4356},
+	{0xFD60, 0, 3, 4359},
+	{0xFD61, 0, 3, 4362},
+	{0xFD62, 0, 3, 4365},
+	{0xFD63, 0, 3, 4368},
+	{0xFD64, 0, 3, 4371},
+	{0xFD65, 0, 3, 4374},
+	{0xFD66, 0, 3, 4377},
+	{0xFD67, 0, 3, 4380},
+	{0xFD68, 0, 3, 4383},
+	{0xFD69, 0, 3, 4386},
+	{0xFD6A, 0, 3, 4389},
+	{0xFD6B, 0, 3, 4392},
+	{0xFD6C, 0, 3, 4395},
+	{0xFD6D, 0, 3, 4398},
+	{0xFD6E, 0, 3, 4401},
+	{0xFD6F, 0, 3, 4404},
+	{0xFD70, 0, 3, 4407},
+	{0xFD71, 0, 3, 4410},
+	{0xFD72, 0, 3, 4413},
+	{0xFD73, 0, 3, 4416},
+	{0xFD74, 0, 3, 4419},
+	{0xFD75, 0, 3, 4422},
+	{0xFD76, 0, 3, 4425},
+	{0xFD77, 0, 3, 4428},
+	{0xFD78, 0, 3, 4431},
+	{0xFD79, 0, 3, 4434},
+	{0xFD7A, 0, 3, 4437},
+	{0xFD7B, 0, 3, 4440},
+	{0xFD7C, 0, 3, 4443},
+	{0xFD7D, 0, 3, 4446},
+	{0xFD7E, 0, 3, 4449},
+	{0xFD7F, 0, 3, 4452},
+	{0xFD80, 0, 3, 4455},
+	{0xFD81, 0, 3, 4458},
+	{0xFD82, 0, 3, 4461},
+	{0xFD83, 0, 3, 4464},
+	{0xFD84, 0, 3, 4467},
+	{0xFD85, 0, 3, 4470},
+	{0xFD86, 0, 3, 4473},
+	{0xFD87, 0, 3, 4476},
+	{0xFD88, 0, 3, 4479},
+	{0xFD89, 0, 3, 4482},
+	{0xFD8A, 0, 3, 4485},
+	{0xFD8B, 0, 3, 4488},
+	{0xFD8C, 0, 3, 4491},
+	{0xFD8D, 0, 3, 4494},
+	{0xFD8E, 0, 3, 4497},
+	{0xFD8F, 0, 3, 4500},
+	{0xFD92, 0, 3, 4503},
+	{0xFD93, 0, 3, 4506},
+	{0xFD94, 0, 3, 4509},
+	{0xFD95, 0, 3, 4512},
+	{0xFD96, 0, 3, 4515},
+	{0xFD97, 0, 3, 4518},
+	{0xFD98, 0, 3, 4521},
+	{0xFD99, 0, 3, 4524},
+	{0xFD9A, 0, 3, 4527},
+	{0xFD9B, 0, 3, 4530},
+	{0xFD9C, 0, 3, 4533},
+	{0xFD9D, 0, 3, 4536},
+	{0xFD9E, 0, 3, 4539},
+	{0xFD9F, 0, 3, 4542},
+	{0xFDA0, 0, 3, 4545},
+	{0xFDA1, 0, 3, 4548},
+	{0xFDA2, 0, 3, 4551},
+	{0xFDA3, 0, 3, 4554},
+	{0xFDA4, 0, 3, 4557},
+	{0xFDA5, 0, 3, 4560},
+	{0xFDA6, 0, 3, 4563},
+	{0xFDA7, 0, 3, 4566},
+	{0xFDA8, 0, 3, 4569},
+	{0xFDA9, 0, 3, 4572},
+	{0xFDAA, 0, 3, 4575},
+	{0xFDAB, 0, 3, 4578},
+	{0xFDAC, 0, 3, 4581},
+	{0xFDAD, 0, 3, 4584},
+	{0xFDAE, 0, 3, 4587},
+	{0xFDAF, 0, 3, 4590},
+	{0xFDB0, 0, 3, 4593},
+	{0xFDB1, 0, 3, 4596},
+	{0xFDB2, 0, 3, 4599},
+	{0xFDB3, 0, 3, 4602},
+	{0xFDB4, 0, 3, 4605},
+	{0xFDB5, 0, 3, 4608},
+	{0xFDB6, 0, 3, 4611},
+	{0xFDB7, 0, 3, 4614},
+	{0xFDB8, 0, 3, 4617},
+	{0xFDB9, 0, 3, 4620},
+	{0xFDBA, 0, 3, 4623},
+	{0xFDBB, 0, 3, 4626},
+	{0xFDBC, 0, 3, 4629},
+	{0xFDBD, 0, 3, 4632},
+	{0xFDBE, 0, 3, 4635},
+	{0xFDBF, 0, 3, 4638},
+	{0xFDC0, 0, 3, 4641},
+	{0xFDC1, 0, 3, 4644},
+	{0xFDC2, 0, 3, 4647},
+	{0xFDC3, 0, 3, 4650},
+	{0xFDC4, 0, 3, 4653},
+	{0xFDC5, 0, 3, 4656},
+	{0xFDC6, 0, 3, 4659},
+	{0xFDC7, 0, 3, 4662},
+	{0xFDF0, 0, 3, 4665},
+	{0xFDF1, 0, 3, 4668},
+	{0xFDF2, 0, 4, 4671},
+	{0xFDF3, 0, 4, 4675},
+	{0xFDF4, 0, 4, 4679},
+	{0xFDF5, 0, 4, 4683},
+	{0xFDF6, 0, 4, 4687},
+	{0xFDF7, 0, 4, 4691},
+	{0xFDF8, 0, 4, 4695},
+	{0xFDF9, 0, 3, 4699},
+	{0xFDFA, 0, 18, 4702},
+	{0xFDFB, 0, 8, 4720},
+	{0xFDFC, 0, 4, 4728},
 	{0xFE10, 0, 1 | DECOMP_INLINE, 0x002C},
 	{0xFE11, 0, 1 | DECOMP_INLINE, 0x3001},
 	{0xFE12, 0, 1 | DECOMP_INLINE, 0x3002},
@@ -4211,20 +4222,20 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0xFE69, 0, 1 | DECOMP_INLINE, 0x0024},
 	{0xFE6A, 0, 1 | DECOMP_INLINE, 0x0025},
 	{0xFE6B, 0, 1 | DECOMP_INLINE, 0x0040},
-	{0xFE70, 0, 2 | DECOMP_NO_COMPOSE, 4730},	/* compatibility mapping */
-	{0xFE71, 0, 2 | DECOMP_NO_COMPOSE, 4732},	/* compatibility mapping */
-	{0xFE72, 0, 2 | DECOMP_NO_COMPOSE, 4734},	/* compatibility mapping */
-	{0xFE74, 0, 2 | DECOMP_NO_COMPOSE, 4736},	/* compatibility mapping */
-	{0xFE76, 0, 2 | DECOMP_NO_COMPOSE, 4738},	/* compatibility mapping */
-	{0xFE77, 0, 2 | DECOMP_NO_COMPOSE, 4740},	/* compatibility mapping */
-	{0xFE78, 0, 2 | DECOMP_NO_COMPOSE, 4742},	/* compatibility mapping */
-	{0xFE79, 0, 2 | DECOMP_NO_COMPOSE, 4744},	/* compatibility mapping */
-	{0xFE7A, 0, 2 | DECOMP_NO_COMPOSE, 4746},	/* compatibility mapping */
-	{0xFE7B, 0, 2 | DECOMP_NO_COMPOSE, 4748},	/* compatibility mapping */
-	{0xFE7C, 0, 2 | DECOMP_NO_COMPOSE, 4750},	/* compatibility mapping */
-	{0xFE7D, 0, 2 | DECOMP_NO_COMPOSE, 4752},	/* compatibility mapping */
-	{0xFE7E, 0, 2 | DECOMP_NO_COMPOSE, 4754},	/* compatibility mapping */
-	{0xFE7F, 0, 2 | DECOMP_NO_COMPOSE, 4756},	/* compatibility mapping */
+	{0xFE70, 0, 2 | DECOMP_NO_COMPOSE, 4732},	/* compatibility mapping */
+	{0xFE71, 0, 2 | DECOMP_NO_COMPOSE, 4734},	/* compatibility mapping */
+	{0xFE72, 0, 2 | DECOMP_NO_COMPOSE, 4736},	/* compatibility mapping */
+	{0xFE74, 0, 2 | DECOMP_NO_COMPOSE, 4738},	/* compatibility mapping */
+	{0xFE76, 0, 2 | DECOMP_NO_COMPOSE, 4740},	/* compatibility mapping */
+	{0xFE77, 0, 2 | DECOMP_NO_COMPOSE, 4742},	/* compatibility mapping */
+	{0xFE78, 0, 2 | DECOMP_NO_COMPOSE, 4744},	/* compatibility mapping */
+	{0xFE79, 0, 2 | DECOMP_NO_COMPOSE, 4746},	/* compatibility mapping */
+	{0xFE7A, 0, 2 | DECOMP_NO_COMPOSE, 4748},	/* compatibility mapping */
+	{0xFE7B, 0, 2 | DECOMP_NO_COMPOSE, 4750},	/* compatibility mapping */
+	{0xFE7C, 0, 2 | DECOMP_NO_COMPOSE, 4752},	/* compatibility mapping */
+	{0xFE7D, 0, 2 | DECOMP_NO_COMPOSE, 4754},	/* compatibility mapping */
+	{0xFE7E, 0, 2 | DECOMP_NO_COMPOSE, 4756},	/* compatibility mapping */
+	{0xFE7F, 0, 2 | DECOMP_NO_COMPOSE, 4758},	/* compatibility mapping */
 	{0xFE80, 0, 1 | DECOMP_INLINE, 0x0621},
 	{0xFE81, 0, 1 | DECOMP_INLINE, 0x0622},
 	{0xFE82, 0, 1 | DECOMP_INLINE, 0x0622},
@@ -4342,14 +4353,14 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0xFEF2, 0, 1 | DECOMP_INLINE, 0x064A},
 	{0xFEF3, 0, 1 | DECOMP_INLINE, 0x064A},
 	{0xFEF4, 0, 1 | DECOMP_INLINE, 0x064A},
-	{0xFEF5, 0, 2 | DECOMP_NO_COMPOSE, 4758},	/* compatibility mapping */
-	{0xFEF6, 0, 2 | DECOMP_NO_COMPOSE, 4760},	/* compatibility mapping */
-	{0xFEF7, 0, 2 | DECOMP_NO_COMPOSE, 4762},	/* compatibility mapping */
-	{0xFEF8, 0, 2 | DECOMP_NO_COMPOSE, 4764},	/* compatibility mapping */
-	{0xFEF9, 0, 2 | DECOMP_NO_COMPOSE, 4766},	/* compatibility mapping */
-	{0xFEFA, 0, 2 | DECOMP_NO_COMPOSE, 4768},	/* compatibility mapping */
-	{0xFEFB, 0, 2 | DECOMP_NO_COMPOSE, 4770},	/* compatibility mapping */
-	{0xFEFC, 0, 2 | DECOMP_NO_COMPOSE, 4772},	/* compatibility mapping */
+	{0xFEF5, 0, 2 | DECOMP_NO_COMPOSE, 4760},	/* compatibility mapping */
+	{0xFEF6, 0, 2 | DECOMP_NO_COMPOSE, 4762},	/* compatibility mapping */
+	{0xFEF7, 0, 2 | DECOMP_NO_COMPOSE, 4764},	/* compatibility mapping */
+	{0xFEF8, 0, 2 | DECOMP_NO_COMPOSE, 4766},	/* compatibility mapping */
+	{0xFEF9, 0, 2 | DECOMP_NO_COMPOSE, 4768},	/* compatibility mapping */
+	{0xFEFA, 0, 2 | DECOMP_NO_COMPOSE, 4770},	/* compatibility mapping */
+	{0xFEFB, 0, 2 | DECOMP_NO_COMPOSE, 4772},	/* compatibility mapping */
+	{0xFEFC, 0, 2 | DECOMP_NO_COMPOSE, 4774},	/* compatibility mapping */
 	{0xFF01, 0, 1 | DECOMP_INLINE, 0x0021},
 	{0xFF02, 0, 1 | DECOMP_INLINE, 0x0022},
 	{0xFF03, 0, 1 | DECOMP_INLINE, 0x0023},
@@ -4590,18 +4601,33 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x10A3F, 9, 0, 0},
 	{0x10AE5, 230, 0, 0},
 	{0x10AE6, 220, 0, 0},
+	{0x10D24, 230, 0, 0},
+	{0x10D25, 230, 0, 0},
+	{0x10D26, 230, 0, 0},
+	{0x10D27, 230, 0, 0},
+	{0x10F46, 220, 0, 0},
+	{0x10F47, 220, 0, 0},
+	{0x10F48, 230, 0, 0},
+	{0x10F49, 230, 0, 0},
+	{0x10F4A, 230, 0, 0},
+	{0x10F4B, 220, 0, 0},
+	{0x10F4C, 230, 0, 0},
+	{0x10F4D, 220, 0, 0},
+	{0x10F4E, 220, 0, 0},
+	{0x10F4F, 220, 0, 0},
+	{0x10F50, 220, 0, 0},
 	{0x11046, 9, 0, 0},
 	{0x1107F, 9, 0, 0},
-	{0x1109A, 0, 2, 4774},
-	{0x1109C, 0, 2, 4776},
-	{0x110AB, 0, 2, 4778},
+	{0x1109A, 0, 2, 4776},
+	{0x1109C, 0, 2, 4778},
+	{0x110AB, 0, 2, 4780},
 	{0x110B9, 9, 0, 0},
 	{0x110BA, 7, 0, 0},
 	{0x11100, 230, 0, 0},
 	{0x11101, 230, 0, 0},
 	{0x11102, 230, 0, 0},
-	{0x1112E, 0, 2, 4780},
-	{0x1112F, 0, 2, 4782},
+	{0x1112E, 0, 2, 4782},
+	{0x1112F, 0, 2, 4784},
 	{0x11133, 9, 0, 0},
 	{0x11134, 9, 0, 0},
 	{0x11173, 7, 0, 0},
@@ -4611,9 +4637,10 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x11236, 7, 0, 0},
 	{0x112E9, 7, 0, 0},
 	{0x112EA, 9, 0, 0},
+	{0x1133B, 7, 0, 0},
 	{0x1133C, 7, 0, 0},
-	{0x1134B, 0, 2, 4784},
-	{0x1134C, 0, 2, 4786},
+	{0x1134B, 0, 2, 4786},
+	{0x1134C, 0, 2, 4788},
 	{0x1134D, 9, 0, 0},
 	{0x11366, 230, 0, 0},
 	{0x11367, 230, 0, 0},
@@ -4629,20 +4656,31 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x11374, 230, 0, 0},
 	{0x11442, 9, 0, 0},
 	{0x11446, 7, 0, 0},
-	{0x114BB, 0, 2, 4788},
-	{0x114BC, 0, 2, 4790},
-	{0x114BE, 0, 2, 4792},
+	{0x1145E, 230, 0, 0},
+	{0x114BB, 0, 2, 4790},
+	{0x114BC, 0, 2, 4792},
+	{0x114BE, 0, 2, 4794},
 	{0x114C2, 9, 0, 0},
 	{0x114C3, 7, 0, 0},
-	{0x115BA, 0, 2, 4794},
-	{0x115BB, 0, 2, 4796},
+	{0x115BA, 0, 2, 4796},
+	{0x115BB, 0, 2, 4798},
 	{0x115BF, 9, 0, 0},
 	{0x115C0, 7, 0, 0},
 	{0x1163F, 9, 0, 0},
 	{0x116B6, 9, 0, 0},
 	{0x116B7, 7, 0, 0},
 	{0x1172B, 9, 0, 0},
+	{0x11839, 9, 0, 0},
+	{0x1183A, 7, 0, 0},
+	{0x119E0, 9, 0, 0},
+	{0x11A34, 9, 0, 0},
+	{0x11A47, 9, 0, 0},
+	{0x11A99, 9, 0, 0},
 	{0x11C3F, 9, 0, 0},
+	{0x11D42, 7, 0, 0},
+	{0x11D44, 9, 0, 0},
+	{0x11D45, 9, 0, 0},
+	{0x11D97, 9, 0, 0},
 	{0x16AF0, 1, 0, 0},
 	{0x16AF1, 1, 0, 0},
 	{0x16AF2, 1, 0, 0},
@@ -4656,13 +4694,13 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x16B35, 230, 0, 0},
 	{0x16B36, 230, 0, 0},
 	{0x1BC9E, 1, 0, 0},
-	{0x1D15E, 0, 2 | DECOMP_NO_COMPOSE, 4798},	/* in exclusion list */
-	{0x1D15F, 0, 2 | DECOMP_NO_COMPOSE, 4800},	/* in exclusion list */
-	{0x1D160, 0, 2 | DECOMP_NO_COMPOSE, 4802},	/* in exclusion list */
-	{0x1D161, 0, 2 | DECOMP_NO_COMPOSE, 4804},	/* in exclusion list */
-	{0x1D162, 0, 2 | DECOMP_NO_COMPOSE, 4806},	/* in exclusion list */
-	{0x1D163, 0, 2 | DECOMP_NO_COMPOSE, 4808},	/* in exclusion list */
-	{0x1D164, 0, 2 | DECOMP_NO_COMPOSE, 4810},	/* in exclusion list */
+	{0x1D15E, 0, 2 | DECOMP_NO_COMPOSE, 4800},	/* in exclusion list */
+	{0x1D15F, 0, 2 | DECOMP_NO_COMPOSE, 4802},	/* in exclusion list */
+	{0x1D160, 0, 2 | DECOMP_NO_COMPOSE, 4804},	/* in exclusion list */
+	{0x1D161, 0, 2 | DECOMP_NO_COMPOSE, 4806},	/* in exclusion list */
+	{0x1D162, 0, 2 | DECOMP_NO_COMPOSE, 4808},	/* in exclusion list */
+	{0x1D163, 0, 2 | DECOMP_NO_COMPOSE, 4810},	/* in exclusion list */
+	{0x1D164, 0, 2 | DECOMP_NO_COMPOSE, 4812},	/* in exclusion list */
 	{0x1D165, 216, 0, 0},
 	{0x1D166, 216, 0, 0},
 	{0x1D167, 1, 0, 0},
@@ -4693,12 +4731,12 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x1D1AB, 230, 0, 0},
 	{0x1D1AC, 230, 0, 0},
 	{0x1D1AD, 230, 0, 0},
-	{0x1D1BB, 0, 2 | DECOMP_NO_COMPOSE, 4812},	/* in exclusion list */
-	{0x1D1BC, 0, 2 | DECOMP_NO_COMPOSE, 4814},	/* in exclusion list */
-	{0x1D1BD, 0, 2 | DECOMP_NO_COMPOSE, 4816},	/* in exclusion list */
-	{0x1D1BE, 0, 2 | DECOMP_NO_COMPOSE, 4818},	/* in exclusion list */
-	{0x1D1BF, 0, 2 | DECOMP_NO_COMPOSE, 4820},	/* in exclusion list */
-	{0x1D1C0, 0, 2 | DECOMP_NO_COMPOSE, 4822},	/* in exclusion list */
+	{0x1D1BB, 0, 2 | DECOMP_NO_COMPOSE, 4814},	/* in exclusion list */
+	{0x1D1BC, 0, 2 | DECOMP_NO_COMPOSE, 4816},	/* in exclusion list */
+	{0x1D1BD, 0, 2 | DECOMP_NO_COMPOSE, 4818},	/* in exclusion list */
+	{0x1D1BE, 0, 2 | DECOMP_NO_COMPOSE, 4820},	/* in exclusion list */
+	{0x1D1BF, 0, 2 | DECOMP_NO_COMPOSE, 4822},	/* in exclusion list */
+	{0x1D1C0, 0, 2 | DECOMP_NO_COMPOSE, 4824},	/* in exclusion list */
 	{0x1D242, 230, 0, 0},
 	{0x1D243, 230, 0, 0},
 	{0x1D244, 230, 0, 0},
@@ -5736,6 +5774,17 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x1E028, 230, 0, 0},
 	{0x1E029, 230, 0, 0},
 	{0x1E02A, 230, 0, 0},
+	{0x1E130, 230, 0, 0},
+	{0x1E131, 230, 0, 0},
+	{0x1E132, 230, 0, 0},
+	{0x1E133, 230, 0, 0},
+	{0x1E134, 230, 0, 0},
+	{0x1E135, 230, 0, 0},
+	{0x1E136, 230, 0, 0},
+	{0x1E2EC, 230, 0, 0},
+	{0x1E2ED, 230, 0, 0},
+	{0x1E2EE, 230, 0, 0},
+	{0x1E2EF, 230, 0, 0},
 	{0x1E8D0, 220, 0, 0},
 	{0x1E8D1, 220, 0, 0},
 	{0x1E8D2, 220, 0, 0},
@@ -5891,48 +5940,48 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x1EEB9, 0, 1 | DECOMP_INLINE, 0x0636},
 	{0x1EEBA, 0, 1 | DECOMP_INLINE, 0x0638},
 	{0x1EEBB, 0, 1 | DECOMP_INLINE, 0x063A},
-	{0x1F100, 0, 2 | DECOMP_NO_COMPOSE, 4824},	/* compatibility mapping */
-	{0x1F101, 0, 2 | DECOMP_NO_COMPOSE, 4826},	/* compatibility mapping */
-	{0x1F102, 0, 2 | DECOMP_NO_COMPOSE, 4828},	/* compatibility mapping */
-	{0x1F103, 0, 2 | DECOMP_NO_COMPOSE, 4830},	/* compatibility mapping */
-	{0x1F104, 0, 2 | DECOMP_NO_COMPOSE, 4832},	/* compatibility mapping */
-	{0x1F105, 0, 2 | DECOMP_NO_COMPOSE, 4834},	/* compatibility mapping */
-	{0x1F106, 0, 2 | DECOMP_NO_COMPOSE, 4836},	/* compatibility mapping */
-	{0x1F107, 0, 2 | DECOMP_NO_COMPOSE, 4838},	/* compatibility mapping */
-	{0x1F108, 0, 2 | DECOMP_NO_COMPOSE, 4840},	/* compatibility mapping */
-	{0x1F109, 0, 2 | DECOMP_NO_COMPOSE, 4842},	/* compatibility mapping */
-	{0x1F10A, 0, 2 | DECOMP_NO_COMPOSE, 4844},	/* compatibility mapping */
-	{0x1F110, 0, 3, 4846},
-	{0x1F111, 0, 3, 4849},
-	{0x1F112, 0, 3, 4852},
-	{0x1F113, 0, 3, 4855},
-	{0x1F114, 0, 3, 4858},
-	{0x1F115, 0, 3, 4861},
-	{0x1F116, 0, 3, 4864},
-	{0x1F117, 0, 3, 4867},
-	{0x1F118, 0, 3, 4870},
-	{0x1F119, 0, 3, 4873},
-	{0x1F11A, 0, 3, 4876},
-	{0x1F11B, 0, 3, 4879},
-	{0x1F11C, 0, 3, 4882},
-	{0x1F11D, 0, 3, 4885},
-	{0x1F11E, 0, 3, 4888},
-	{0x1F11F, 0, 3, 4891},
-	{0x1F120, 0, 3, 4894},
-	{0x1F121, 0, 3, 4897},
-	{0x1F122, 0, 3, 4900},
-	{0x1F123, 0, 3, 4903},
-	{0x1F124, 0, 3, 4906},
-	{0x1F125, 0, 3, 4909},
-	{0x1F126, 0, 3, 4912},
-	{0x1F127, 0, 3, 4915},
-	{0x1F128, 0, 3, 4918},
-	{0x1F129, 0, 3, 4921},
-	{0x1F12A, 0, 3, 4924},
+	{0x1F100, 0, 2 | DECOMP_NO_COMPOSE, 4826},	/* compatibility mapping */
+	{0x1F101, 0, 2 | DECOMP_NO_COMPOSE, 4828},	/* compatibility mapping */
+	{0x1F102, 0, 2 | DECOMP_NO_COMPOSE, 4830},	/* compatibility mapping */
+	{0x1F103, 0, 2 | DECOMP_NO_COMPOSE, 4832},	/* compatibility mapping */
+	{0x1F104, 0, 2 | DECOMP_NO_COMPOSE, 4834},	/* compatibility mapping */
+	{0x1F105, 0, 2 | DECOMP_NO_COMPOSE, 4836},	/* compatibility mapping */
+	{0x1F106, 0, 2 | DECOMP_NO_COMPOSE, 4838},	/* compatibility mapping */
+	{0x1F107, 0, 2 | DECOMP_NO_COMPOSE, 4840},	/* compatibility mapping */
+	{0x1F108, 0, 2 | DECOMP_NO_COMPOSE, 4842},	/* compatibility mapping */
+	{0x1F109, 0, 2 | DECOMP_NO_COMPOSE, 4844},	/* compatibility mapping */
+	{0x1F10A, 0, 2 | DECOMP_NO_COMPOSE, 4846},	/* compatibility mapping */
+	{0x1F110, 0, 3, 4848},
+	{0x1F111, 0, 3, 4851},
+	{0x1F112, 0, 3, 4854},
+	{0x1F113, 0, 3, 4857},
+	{0x1F114, 0, 3, 4860},
+	{0x1F115, 0, 3, 4863},
+	{0x1F116, 0, 3, 4866},
+	{0x1F117, 0, 3, 4869},
+	{0x1F118, 0, 3, 4872},
+	{0x1F119, 0, 3, 4875},
+	{0x1F11A, 0, 3, 4878},
+	{0x1F11B, 0, 3, 4881},
+	{0x1F11C, 0, 3, 4884},
+	{0x1F11D, 0, 3, 4887},
+	{0x1F11E, 0, 3, 4890},
+	{0x1F11F, 0, 3, 4893},
+	{0x1F120, 0, 3, 4896},
+	{0x1F121, 0, 3, 4899},
+	{0x1F122, 0, 3, 4902},
+	{0x1F123, 0, 3, 4905},
+	{0x1F124, 0, 3, 4908},
+	{0x1F125, 0, 3, 4911},
+	{0x1F126, 0, 3, 4914},
+	{0x1F127, 0, 3, 4917},
+	{0x1F128, 0, 3, 4920},
+	{0x1F129, 0, 3, 4923},
+	{0x1F12A, 0, 3, 4926},
 	{0x1F12B, 0, 1 | DECOMP_INLINE, 0x0043},
 	{0x1F12C, 0, 1 | DECOMP_INLINE, 0x0052},
-	{0x1F12D, 0, 2 | DECOMP_NO_COMPOSE, 4927},	/* compatibility mapping */
-	{0x1F12E, 0, 2 | DECOMP_NO_COMPOSE, 4929},	/* compatibility mapping */
+	{0x1F12D, 0, 2 | DECOMP_NO_COMPOSE, 4929},	/* compatibility mapping */
+	{0x1F12E, 0, 2 | DECOMP_NO_COMPOSE, 4931},	/* compatibility mapping */
 	{0x1F130, 0, 1 | DECOMP_INLINE, 0x0041},
 	{0x1F131, 0, 1 | DECOMP_INLINE, 0x0042},
 	{0x1F132, 0, 1 | DECOMP_INLINE, 0x0043},
@@ -5959,17 +6008,18 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x1F147, 0, 1 | DECOMP_INLINE, 0x0058},
 	{0x1F148, 0, 1 | DECOMP_INLINE, 0x0059},
 	{0x1F149, 0, 1 | DECOMP_INLINE, 0x005A},
-	{0x1F14A, 0, 2 | DECOMP_NO_COMPOSE, 4931},	/* compatibility mapping */
-	{0x1F14B, 0, 2 | DECOMP_NO_COMPOSE, 4933},	/* compatibility mapping */
-	{0x1F14C, 0, 2 | DECOMP_NO_COMPOSE, 4935},	/* compatibility mapping */
-	{0x1F14D, 0, 2 | DECOMP_NO_COMPOSE, 4937},	/* compatibility mapping */
-	{0x1F14E, 0, 3, 4939},
-	{0x1F14F, 0, 2 | DECOMP_NO_COMPOSE, 4942},	/* compatibility mapping */
-	{0x1F16A, 0, 2 | DECOMP_NO_COMPOSE, 4944},	/* compatibility mapping */
-	{0x1F16B, 0, 2 | DECOMP_NO_COMPOSE, 4946},	/* compatibility mapping */
-	{0x1F190, 0, 2 | DECOMP_NO_COMPOSE, 4948},	/* compatibility mapping */
-	{0x1F200, 0, 2 | DECOMP_NO_COMPOSE, 4950},	/* compatibility mapping */
-	{0x1F201, 0, 2 | DECOMP_NO_COMPOSE, 4952},	/* compatibility mapping */
+	{0x1F14A, 0, 2 | DECOMP_NO_COMPOSE, 4933},	/* compatibility mapping */
+	{0x1F14B, 0, 2 | DECOMP_NO_COMPOSE, 4935},	/* compatibility mapping */
+	{0x1F14C, 0, 2 | DECOMP_NO_COMPOSE, 4937},	/* compatibility mapping */
+	{0x1F14D, 0, 2 | DECOMP_NO_COMPOSE, 4939},	/* compatibility mapping */
+	{0x1F14E, 0, 3, 4941},
+	{0x1F14F, 0, 2 | DECOMP_NO_COMPOSE, 4944},	/* compatibility mapping */
+	{0x1F16A, 0, 2 | DECOMP_NO_COMPOSE, 4946},	/* compatibility mapping */
+	{0x1F16B, 0, 2 | DECOMP_NO_COMPOSE, 4948},	/* compatibility mapping */
+	{0x1F16C, 0, 2 | DECOMP_NO_COMPOSE, 4950},	/* compatibility mapping */
+	{0x1F190, 0, 2 | DECOMP_NO_COMPOSE, 4952},	/* compatibility mapping */
+	{0x1F200, 0, 2 | DECOMP_NO_COMPOSE, 4954},	/* compatibility mapping */
+	{0x1F201, 0, 2 | DECOMP_NO_COMPOSE, 4956},	/* compatibility mapping */
 	{0x1F202, 0, 1 | DECOMP_INLINE, 0x30B5},
 	{0x1F210, 0, 1 | DECOMP_INLINE, 0x624B},
 	{0x1F211, 0, 1 | DECOMP_INLINE, 0x5B57},
@@ -6015,21 +6065,21 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x1F239, 0, 1 | DECOMP_INLINE, 0x5272},
 	{0x1F23A, 0, 1 | DECOMP_INLINE, 0x55B6},
 	{0x1F23B, 0, 1 | DECOMP_INLINE, 0x914D},
-	{0x1F240, 0, 3, 4954},
-	{0x1F241, 0, 3, 4957},
-	{0x1F242, 0, 3, 4960},
-	{0x1F243, 0, 3, 4963},
-	{0x1F244, 0, 3, 4966},
-	{0x1F245, 0, 3, 4969},
-	{0x1F246, 0, 3, 4972},
-	{0x1F247, 0, 3, 4975},
-	{0x1F248, 0, 3, 4978},
+	{0x1F240, 0, 3, 4958},
+	{0x1F241, 0, 3, 4961},
+	{0x1F242, 0, 3, 4964},
+	{0x1F243, 0, 3, 4967},
+	{0x1F244, 0, 3, 4970},
+	{0x1F245, 0, 3, 4973},
+	{0x1F246, 0, 3, 4976},
+	{0x1F247, 0, 3, 4979},
+	{0x1F248, 0, 3, 4982},
 	{0x1F250, 0, 1 | DECOMP_INLINE, 0x5F97},
 	{0x1F251, 0, 1 | DECOMP_INLINE, 0x53EF},
 	{0x2F800, 0, 1 | DECOMP_INLINE, 0x4E3D},
 	{0x2F801, 0, 1 | DECOMP_INLINE, 0x4E38},
 	{0x2F802, 0, 1 | DECOMP_INLINE, 0x4E41},
-	{0x2F803, 0, 1, 4981},
+	{0x2F803, 0, 1, 4985},
 	{0x2F804, 0, 1 | DECOMP_INLINE, 0x4F60},
 	{0x2F805, 0, 1 | DECOMP_INLINE, 0x4FAE},
 	{0x2F806, 0, 1 | DECOMP_INLINE, 0x4FBB},
@@ -6039,22 +6089,22 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F80A, 0, 1 | DECOMP_INLINE, 0x50E7},
 	{0x2F80B, 0, 1 | DECOMP_INLINE, 0x50CF},
 	{0x2F80C, 0, 1 | DECOMP_INLINE, 0x349E},
-	{0x2F80D, 0, 1, 4982},
+	{0x2F80D, 0, 1, 4986},
 	{0x2F80E, 0, 1 | DECOMP_INLINE, 0x514D},
 	{0x2F80F, 0, 1 | DECOMP_INLINE, 0x5154},
 	{0x2F810, 0, 1 | DECOMP_INLINE, 0x5164},
 	{0x2F811, 0, 1 | DECOMP_INLINE, 0x5177},
-	{0x2F812, 0, 1, 4983},
+	{0x2F812, 0, 1, 4987},
 	{0x2F813, 0, 1 | DECOMP_INLINE, 0x34B9},
 	{0x2F814, 0, 1 | DECOMP_INLINE, 0x5167},
 	{0x2F815, 0, 1 | DECOMP_INLINE, 0x518D},
-	{0x2F816, 0, 1, 4984},
+	{0x2F816, 0, 1, 4988},
 	{0x2F817, 0, 1 | DECOMP_INLINE, 0x5197},
 	{0x2F818, 0, 1 | DECOMP_INLINE, 0x51A4},
 	{0x2F819, 0, 1 | DECOMP_INLINE, 0x4ECC},
 	{0x2F81A, 0, 1 | DECOMP_INLINE, 0x51AC},
 	{0x2F81B, 0, 1 | DECOMP_INLINE, 0x51B5},
-	{0x2F81C, 0, 1, 4985},
+	{0x2F81C, 0, 1, 4989},
 	{0x2F81D, 0, 1 | DECOMP_INLINE, 0x51F5},
 	{0x2F81E, 0, 1 | DECOMP_INLINE, 0x5203},
 	{0x2F81F, 0, 1 | DECOMP_INLINE, 0x34DF},
@@ -6078,11 +6128,11 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F831, 0, 1 | DECOMP_INLINE, 0x537F},
 	{0x2F832, 0, 1 | DECOMP_INLINE, 0x537F},
 	{0x2F833, 0, 1 | DECOMP_INLINE, 0x537F},
-	{0x2F834, 0, 1, 4986},
+	{0x2F834, 0, 1, 4990},
 	{0x2F835, 0, 1 | DECOMP_INLINE, 0x7070},
 	{0x2F836, 0, 1 | DECOMP_INLINE, 0x53CA},
 	{0x2F837, 0, 1 | DECOMP_INLINE, 0x53DF},
-	{0x2F838, 0, 1, 4987},
+	{0x2F838, 0, 1, 4991},
 	{0x2F839, 0, 1 | DECOMP_INLINE, 0x53EB},
 	{0x2F83A, 0, 1 | DECOMP_INLINE, 0x53F1},
 	{0x2F83B, 0, 1 | DECOMP_INLINE, 0x5406},
@@ -6115,15 +6165,15 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F856, 0, 1 | DECOMP_INLINE, 0x5832},
 	{0x2F857, 0, 1 | DECOMP_INLINE, 0x5831},
 	{0x2F858, 0, 1 | DECOMP_INLINE, 0x58AC},
-	{0x2F859, 0, 1, 4988},
+	{0x2F859, 0, 1, 4992},
 	{0x2F85A, 0, 1 | DECOMP_INLINE, 0x58F2},
 	{0x2F85B, 0, 1 | DECOMP_INLINE, 0x58F7},
 	{0x2F85C, 0, 1 | DECOMP_INLINE, 0x5906},
 	{0x2F85D, 0, 1 | DECOMP_INLINE, 0x591A},
 	{0x2F85E, 0, 1 | DECOMP_INLINE, 0x5922},
 	{0x2F85F, 0, 1 | DECOMP_INLINE, 0x5962},
-	{0x2F860, 0, 1, 4989},
-	{0x2F861, 0, 1, 4990},
+	{0x2F860, 0, 1, 4993},
+	{0x2F861, 0, 1, 4994},
 	{0x2F862, 0, 1 | DECOMP_INLINE, 0x59EC},
 	{0x2F863, 0, 1 | DECOMP_INLINE, 0x5A1B},
 	{0x2F864, 0, 1 | DECOMP_INLINE, 0x5A27},
@@ -6134,12 +6184,12 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F869, 0, 1 | DECOMP_INLINE, 0x5B08},
 	{0x2F86A, 0, 1 | DECOMP_INLINE, 0x5B3E},
 	{0x2F86B, 0, 1 | DECOMP_INLINE, 0x5B3E},
-	{0x2F86C, 0, 1, 4991},
+	{0x2F86C, 0, 1, 4995},
 	{0x2F86D, 0, 1 | DECOMP_INLINE, 0x5BC3},
 	{0x2F86E, 0, 1 | DECOMP_INLINE, 0x5BD8},
 	{0x2F86F, 0, 1 | DECOMP_INLINE, 0x5BE7},
 	{0x2F870, 0, 1 | DECOMP_INLINE, 0x5BF3},
-	{0x2F871, 0, 1, 4992},
+	{0x2F871, 0, 1, 4996},
 	{0x2F872, 0, 1 | DECOMP_INLINE, 0x5BFF},
 	{0x2F873, 0, 1 | DECOMP_INLINE, 0x5C06},
 	{0x2F874, 0, 1 | DECOMP_INLINE, 0x5F53},
@@ -6149,9 +6199,9 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F878, 0, 1 | DECOMP_INLINE, 0x5C6E},
 	{0x2F879, 0, 1 | DECOMP_INLINE, 0x5CC0},
 	{0x2F87A, 0, 1 | DECOMP_INLINE, 0x5C8D},
-	{0x2F87B, 0, 1, 4993},
+	{0x2F87B, 0, 1, 4997},
 	{0x2F87C, 0, 1 | DECOMP_INLINE, 0x5D43},
-	{0x2F87D, 0, 1, 4994},
+	{0x2F87D, 0, 1, 4998},
 	{0x2F87E, 0, 1 | DECOMP_INLINE, 0x5D6E},
 	{0x2F87F, 0, 1 | DECOMP_INLINE, 0x5D6B},
 	{0x2F880, 0, 1 | DECOMP_INLINE, 0x5D7C},
@@ -6163,22 +6213,22 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F886, 0, 1 | DECOMP_INLINE, 0x5E3D},
 	{0x2F887, 0, 1 | DECOMP_INLINE, 0x5E69},
 	{0x2F888, 0, 1 | DECOMP_INLINE, 0x3862},
-	{0x2F889, 0, 1, 4995},
+	{0x2F889, 0, 1, 4999},
 	{0x2F88A, 0, 1 | DECOMP_INLINE, 0x387C},
 	{0x2F88B, 0, 1 | DECOMP_INLINE, 0x5EB0},
 	{0x2F88C, 0, 1 | DECOMP_INLINE, 0x5EB3},
 	{0x2F88D, 0, 1 | DECOMP_INLINE, 0x5EB6},
 	{0x2F88E, 0, 1 | DECOMP_INLINE, 0x5ECA},
-	{0x2F88F, 0, 1, 4996},
+	{0x2F88F, 0, 1, 5000},
 	{0x2F890, 0, 1 | DECOMP_INLINE, 0x5EFE},
-	{0x2F891, 0, 1, 4997},
-	{0x2F892, 0, 1, 4998},
+	{0x2F891, 0, 1, 5001},
+	{0x2F892, 0, 1, 5002},
 	{0x2F893, 0, 1 | DECOMP_INLINE, 0x8201},
 	{0x2F894, 0, 1 | DECOMP_INLINE, 0x5F22},
 	{0x2F895, 0, 1 | DECOMP_INLINE, 0x5F22},
 	{0x2F896, 0, 1 | DECOMP_INLINE, 0x38C7},
-	{0x2F897, 0, 1, 4999},
-	{0x2F898, 0, 1, 5000},
+	{0x2F897, 0, 1, 5003},
+	{0x2F898, 0, 1, 5004},
 	{0x2F899, 0, 1 | DECOMP_INLINE, 0x5F62},
 	{0x2F89A, 0, 1 | DECOMP_INLINE, 0x5F6B},
 	{0x2F89B, 0, 1 | DECOMP_INLINE, 0x38E3},
@@ -6190,7 +6240,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F8A1, 0, 1 | DECOMP_INLINE, 0x393A},
 	{0x2F8A2, 0, 1 | DECOMP_INLINE, 0x391C},
 	{0x2F8A3, 0, 1 | DECOMP_INLINE, 0x6094},
-	{0x2F8A4, 0, 1, 5001},
+	{0x2F8A4, 0, 1, 5005},
 	{0x2F8A5, 0, 1 | DECOMP_INLINE, 0x60C7},
 	{0x2F8A6, 0, 1 | DECOMP_INLINE, 0x6148},
 	{0x2F8A7, 0, 1 | DECOMP_INLINE, 0x614C},
@@ -6210,13 +6260,13 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F8B5, 0, 1 | DECOMP_INLINE, 0x62B1},
 	{0x2F8B6, 0, 1 | DECOMP_INLINE, 0x62D4},
 	{0x2F8B7, 0, 1 | DECOMP_INLINE, 0x6350},
-	{0x2F8B8, 0, 1, 5002},
+	{0x2F8B8, 0, 1, 5006},
 	{0x2F8B9, 0, 1 | DECOMP_INLINE, 0x633D},
 	{0x2F8BA, 0, 1 | DECOMP_INLINE, 0x62FC},
 	{0x2F8BB, 0, 1 | DECOMP_INLINE, 0x6368},
 	{0x2F8BC, 0, 1 | DECOMP_INLINE, 0x6383},
 	{0x2F8BD, 0, 1 | DECOMP_INLINE, 0x63E4},
-	{0x2F8BE, 0, 1, 5003},
+	{0x2F8BE, 0, 1, 5007},
 	{0x2F8BF, 0, 1 | DECOMP_INLINE, 0x6422},
 	{0x2F8C0, 0, 1 | DECOMP_INLINE, 0x63C5},
 	{0x2F8C1, 0, 1 | DECOMP_INLINE, 0x63A9},
@@ -6228,7 +6278,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F8C7, 0, 1 | DECOMP_INLINE, 0x3A6C},
 	{0x2F8C8, 0, 1 | DECOMP_INLINE, 0x654F},
 	{0x2F8C9, 0, 1 | DECOMP_INLINE, 0x656C},
-	{0x2F8CA, 0, 1, 5004},
+	{0x2F8CA, 0, 1, 5008},
 	{0x2F8CB, 0, 1 | DECOMP_INLINE, 0x65E3},
 	{0x2F8CC, 0, 1 | DECOMP_INLINE, 0x66F8},
 	{0x2F8CD, 0, 1 | DECOMP_INLINE, 0x6649},
@@ -6247,13 +6297,13 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F8DA, 0, 1 | DECOMP_INLINE, 0x6721},
 	{0x2F8DB, 0, 1 | DECOMP_INLINE, 0x675E},
 	{0x2F8DC, 0, 1 | DECOMP_INLINE, 0x6753},
-	{0x2F8DD, 0, 1, 5005},
+	{0x2F8DD, 0, 1, 5009},
 	{0x2F8DE, 0, 1 | DECOMP_INLINE, 0x3B49},
 	{0x2F8DF, 0, 1 | DECOMP_INLINE, 0x67FA},
 	{0x2F8E0, 0, 1 | DECOMP_INLINE, 0x6785},
 	{0x2F8E1, 0, 1 | DECOMP_INLINE, 0x6852},
 	{0x2F8E2, 0, 1 | DECOMP_INLINE, 0x6885},
-	{0x2F8E3, 0, 1, 5006},
+	{0x2F8E3, 0, 1, 5010},
 	{0x2F8E4, 0, 1 | DECOMP_INLINE, 0x688E},
 	{0x2F8E5, 0, 1 | DECOMP_INLINE, 0x681F},
 	{0x2F8E6, 0, 1 | DECOMP_INLINE, 0x6914},
@@ -6262,22 +6312,22 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F8E9, 0, 1 | DECOMP_INLINE, 0x69A3},
 	{0x2F8EA, 0, 1 | DECOMP_INLINE, 0x69EA},
 	{0x2F8EB, 0, 1 | DECOMP_INLINE, 0x6AA8},
-	{0x2F8EC, 0, 1, 5007},
+	{0x2F8EC, 0, 1, 5011},
 	{0x2F8ED, 0, 1 | DECOMP_INLINE, 0x6ADB},
 	{0x2F8EE, 0, 1 | DECOMP_INLINE, 0x3C18},
 	{0x2F8EF, 0, 1 | DECOMP_INLINE, 0x6B21},
-	{0x2F8F0, 0, 1, 5008},
+	{0x2F8F0, 0, 1, 5012},
 	{0x2F8F1, 0, 1 | DECOMP_INLINE, 0x6B54},
 	{0x2F8F2, 0, 1 | DECOMP_INLINE, 0x3C4E},
 	{0x2F8F3, 0, 1 | DECOMP_INLINE, 0x6B72},
 	{0x2F8F4, 0, 1 | DECOMP_INLINE, 0x6B9F},
 	{0x2F8F5, 0, 1 | DECOMP_INLINE, 0x6BBA},
 	{0x2F8F6, 0, 1 | DECOMP_INLINE, 0x6BBB},
-	{0x2F8F7, 0, 1, 5009},
-	{0x2F8F8, 0, 1, 5010},
-	{0x2F8F9, 0, 1, 5011},
+	{0x2F8F7, 0, 1, 5013},
+	{0x2F8F8, 0, 1, 5014},
+	{0x2F8F9, 0, 1, 5015},
 	{0x2F8FA, 0, 1 | DECOMP_INLINE, 0x6C4E},
-	{0x2F8FB, 0, 1, 5012},
+	{0x2F8FB, 0, 1, 5016},
 	{0x2F8FC, 0, 1 | DECOMP_INLINE, 0x6CBF},
 	{0x2F8FD, 0, 1 | DECOMP_INLINE, 0x6CCD},
 	{0x2F8FE, 0, 1 | DECOMP_INLINE, 0x6C67},
@@ -6288,18 +6338,18 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F903, 0, 1 | DECOMP_INLINE, 0x6D69},
 	{0x2F904, 0, 1 | DECOMP_INLINE, 0x6D78},
 	{0x2F905, 0, 1 | DECOMP_INLINE, 0x6D85},
-	{0x2F906, 0, 1, 5013},
+	{0x2F906, 0, 1, 5017},
 	{0x2F907, 0, 1 | DECOMP_INLINE, 0x6D34},
 	{0x2F908, 0, 1 | DECOMP_INLINE, 0x6E2F},
 	{0x2F909, 0, 1 | DECOMP_INLINE, 0x6E6E},
 	{0x2F90A, 0, 1 | DECOMP_INLINE, 0x3D33},
 	{0x2F90B, 0, 1 | DECOMP_INLINE, 0x6ECB},
 	{0x2F90C, 0, 1 | DECOMP_INLINE, 0x6EC7},
-	{0x2F90D, 0, 1, 5014},
+	{0x2F90D, 0, 1, 5018},
 	{0x2F90E, 0, 1 | DECOMP_INLINE, 0x6DF9},
 	{0x2F90F, 0, 1 | DECOMP_INLINE, 0x6F6E},
-	{0x2F910, 0, 1, 5015},
-	{0x2F911, 0, 1, 5016},
+	{0x2F910, 0, 1, 5019},
+	{0x2F911, 0, 1, 5020},
 	{0x2F912, 0, 1 | DECOMP_INLINE, 0x6FC6},
 	{0x2F913, 0, 1 | DECOMP_INLINE, 0x7039},
 	{0x2F914, 0, 1 | DECOMP_INLINE, 0x701E},
@@ -6309,19 +6359,19 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F918, 0, 1 | DECOMP_INLINE, 0x707D},
 	{0x2F919, 0, 1 | DECOMP_INLINE, 0x7077},
 	{0x2F91A, 0, 1 | DECOMP_INLINE, 0x70AD},
-	{0x2F91B, 0, 1, 5017},
+	{0x2F91B, 0, 1, 5021},
 	{0x2F91C, 0, 1 | DECOMP_INLINE, 0x7145},
-	{0x2F91D, 0, 1, 5018},
+	{0x2F91D, 0, 1, 5022},
 	{0x2F91E, 0, 1 | DECOMP_INLINE, 0x719C},
-	{0x2F91F, 0, 1, 5019},
+	{0x2F91F, 0, 1, 5023},
 	{0x2F920, 0, 1 | DECOMP_INLINE, 0x7228},
 	{0x2F921, 0, 1 | DECOMP_INLINE, 0x7235},
 	{0x2F922, 0, 1 | DECOMP_INLINE, 0x7250},
-	{0x2F923, 0, 1, 5020},
+	{0x2F923, 0, 1, 5024},
 	{0x2F924, 0, 1 | DECOMP_INLINE, 0x7280},
 	{0x2F925, 0, 1 | DECOMP_INLINE, 0x7295},
-	{0x2F926, 0, 1, 5021},
-	{0x2F927, 0, 1, 5022},
+	{0x2F926, 0, 1, 5025},
+	{0x2F927, 0, 1, 5026},
 	{0x2F928, 0, 1 | DECOMP_INLINE, 0x737A},
 	{0x2F929, 0, 1 | DECOMP_INLINE, 0x738B},
 	{0x2F92A, 0, 1 | DECOMP_INLINE, 0x3EAC},
@@ -6335,22 +6385,22 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F932, 0, 1 | DECOMP_INLINE, 0x74CA},
 	{0x2F933, 0, 1 | DECOMP_INLINE, 0x3F1B},
 	{0x2F934, 0, 1 | DECOMP_INLINE, 0x7524},
-	{0x2F935, 0, 1, 5023},
+	{0x2F935, 0, 1, 5027},
 	{0x2F936, 0, 1 | DECOMP_INLINE, 0x753E},
-	{0x2F937, 0, 1, 5024},
+	{0x2F937, 0, 1, 5028},
 	{0x2F938, 0, 1 | DECOMP_INLINE, 0x7570},
-	{0x2F939, 0, 1, 5025},
+	{0x2F939, 0, 1, 5029},
 	{0x2F93A, 0, 1 | DECOMP_INLINE, 0x7610},
-	{0x2F93B, 0, 1, 5026},
-	{0x2F93C, 0, 1, 5027},
-	{0x2F93D, 0, 1, 5028},
+	{0x2F93B, 0, 1, 5030},
+	{0x2F93C, 0, 1, 5031},
+	{0x2F93D, 0, 1, 5032},
 	{0x2F93E, 0, 1 | DECOMP_INLINE, 0x3FFC},
 	{0x2F93F, 0, 1 | DECOMP_INLINE, 0x4008},
 	{0x2F940, 0, 1 | DECOMP_INLINE, 0x76F4},
-	{0x2F941, 0, 1, 5029},
-	{0x2F942, 0, 1, 5030},
-	{0x2F943, 0, 1, 5031},
-	{0x2F944, 0, 1, 5032},
+	{0x2F941, 0, 1, 5033},
+	{0x2F942, 0, 1, 5034},
+	{0x2F943, 0, 1, 5035},
+	{0x2F944, 0, 1, 5036},
 	{0x2F945, 0, 1 | DECOMP_INLINE, 0x771E},
 	{0x2F946, 0, 1 | DECOMP_INLINE, 0x771F},
 	{0x2F947, 0, 1 | DECOMP_INLINE, 0x771F},
@@ -6359,68 +6409,68 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F94A, 0, 1 | DECOMP_INLINE, 0x778B},
 	{0x2F94B, 0, 1 | DECOMP_INLINE, 0x4046},
 	{0x2F94C, 0, 1 | DECOMP_INLINE, 0x4096},
-	{0x2F94D, 0, 1, 5033},
+	{0x2F94D, 0, 1, 5037},
 	{0x2F94E, 0, 1 | DECOMP_INLINE, 0x784E},
 	{0x2F94F, 0, 1 | DECOMP_INLINE, 0x788C},
 	{0x2F950, 0, 1 | DECOMP_INLINE, 0x78CC},
 	{0x2F951, 0, 1 | DECOMP_INLINE, 0x40E3},
-	{0x2F952, 0, 1, 5034},
+	{0x2F952, 0, 1, 5038},
 	{0x2F953, 0, 1 | DECOMP_INLINE, 0x7956},
-	{0x2F954, 0, 1, 5035},
-	{0x2F955, 0, 1, 5036},
+	{0x2F954, 0, 1, 5039},
+	{0x2F955, 0, 1, 5040},
 	{0x2F956, 0, 1 | DECOMP_INLINE, 0x798F},
 	{0x2F957, 0, 1 | DECOMP_INLINE, 0x79EB},
 	{0x2F958, 0, 1 | DECOMP_INLINE, 0x412F},
 	{0x2F959, 0, 1 | DECOMP_INLINE, 0x7A40},
 	{0x2F95A, 0, 1 | DECOMP_INLINE, 0x7A4A},
 	{0x2F95B, 0, 1 | DECOMP_INLINE, 0x7A4F},
-	{0x2F95C, 0, 1, 5037},
-	{0x2F95D, 0, 1, 5038},
-	{0x2F95E, 0, 1, 5039},
+	{0x2F95C, 0, 1, 5041},
+	{0x2F95D, 0, 1, 5042},
+	{0x2F95E, 0, 1, 5043},
 	{0x2F95F, 0, 1 | DECOMP_INLINE, 0x7AEE},
 	{0x2F960, 0, 1 | DECOMP_INLINE, 0x4202},
-	{0x2F961, 0, 1, 5040},
+	{0x2F961, 0, 1, 5044},
 	{0x2F962, 0, 1 | DECOMP_INLINE, 0x7BC6},
 	{0x2F963, 0, 1 | DECOMP_INLINE, 0x7BC9},
 	{0x2F964, 0, 1 | DECOMP_INLINE, 0x4227},
-	{0x2F965, 0, 1, 5041},
+	{0x2F965, 0, 1, 5045},
 	{0x2F966, 0, 1 | DECOMP_INLINE, 0x7CD2},
 	{0x2F967, 0, 1 | DECOMP_INLINE, 0x42A0},
 	{0x2F968, 0, 1 | DECOMP_INLINE, 0x7CE8},
 	{0x2F969, 0, 1 | DECOMP_INLINE, 0x7CE3},
 	{0x2F96A, 0, 1 | DECOMP_INLINE, 0x7D00},
-	{0x2F96B, 0, 1, 5042},
+	{0x2F96B, 0, 1, 5046},
 	{0x2F96C, 0, 1 | DECOMP_INLINE, 0x7D63},
 	{0x2F96D, 0, 1 | DECOMP_INLINE, 0x4301},
 	{0x2F96E, 0, 1 | DECOMP_INLINE, 0x7DC7},
 	{0x2F96F, 0, 1 | DECOMP_INLINE, 0x7E02},
 	{0x2F970, 0, 1 | DECOMP_INLINE, 0x7E45},
 	{0x2F971, 0, 1 | DECOMP_INLINE, 0x4334},
-	{0x2F972, 0, 1, 5043},
-	{0x2F973, 0, 1, 5044},
+	{0x2F972, 0, 1, 5047},
+	{0x2F973, 0, 1, 5048},
 	{0x2F974, 0, 1 | DECOMP_INLINE, 0x4359},
-	{0x2F975, 0, 1, 5045},
+	{0x2F975, 0, 1, 5049},
 	{0x2F976, 0, 1 | DECOMP_INLINE, 0x7F7A},
-	{0x2F977, 0, 1, 5046},
+	{0x2F977, 0, 1, 5050},
 	{0x2F978, 0, 1 | DECOMP_INLINE, 0x7F95},
 	{0x2F979, 0, 1 | DECOMP_INLINE, 0x7FFA},
 	{0x2F97A, 0, 1 | DECOMP_INLINE, 0x8005},
-	{0x2F97B, 0, 1, 5047},
-	{0x2F97C, 0, 1, 5048},
+	{0x2F97B, 0, 1, 5051},
+	{0x2F97C, 0, 1, 5052},
 	{0x2F97D, 0, 1 | DECOMP_INLINE, 0x8060},
-	{0x2F97E, 0, 1, 5049},
+	{0x2F97E, 0, 1, 5053},
 	{0x2F97F, 0, 1 | DECOMP_INLINE, 0x8070},
-	{0x2F980, 0, 1, 5050},
+	{0x2F980, 0, 1, 5054},
 	{0x2F981, 0, 1 | DECOMP_INLINE, 0x43D5},
 	{0x2F982, 0, 1 | DECOMP_INLINE, 0x80B2},
 	{0x2F983, 0, 1 | DECOMP_INLINE, 0x8103},
 	{0x2F984, 0, 1 | DECOMP_INLINE, 0x440B},
 	{0x2F985, 0, 1 | DECOMP_INLINE, 0x813E},
 	{0x2F986, 0, 1 | DECOMP_INLINE, 0x5AB5},
-	{0x2F987, 0, 1, 5051},
-	{0x2F988, 0, 1, 5052},
-	{0x2F989, 0, 1, 5053},
-	{0x2F98A, 0, 1, 5054},
+	{0x2F987, 0, 1, 5055},
+	{0x2F988, 0, 1, 5056},
+	{0x2F989, 0, 1, 5057},
+	{0x2F98A, 0, 1, 5058},
 	{0x2F98B, 0, 1 | DECOMP_INLINE, 0x8201},
 	{0x2F98C, 0, 1 | DECOMP_INLINE, 0x8204},
 	{0x2F98D, 0, 1 | DECOMP_INLINE, 0x8F9E},
@@ -6433,7 +6483,7 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F994, 0, 1 | DECOMP_INLINE, 0x82B3},
 	{0x2F995, 0, 1 | DECOMP_INLINE, 0x82BD},
 	{0x2F996, 0, 1 | DECOMP_INLINE, 0x82E6},
-	{0x2F997, 0, 1, 5055},
+	{0x2F997, 0, 1, 5059},
 	{0x2F998, 0, 1 | DECOMP_INLINE, 0x82E5},
 	{0x2F999, 0, 1 | DECOMP_INLINE, 0x831D},
 	{0x2F99A, 0, 1 | DECOMP_INLINE, 0x8363},
@@ -6446,20 +6496,20 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F9A1, 0, 1 | DECOMP_INLINE, 0x83CA},
 	{0x2F9A2, 0, 1 | DECOMP_INLINE, 0x83CC},
 	{0x2F9A3, 0, 1 | DECOMP_INLINE, 0x83DC},
-	{0x2F9A4, 0, 1, 5056},
-	{0x2F9A5, 0, 1, 5057},
-	{0x2F9A6, 0, 1, 5058},
+	{0x2F9A4, 0, 1, 5060},
+	{0x2F9A5, 0, 1, 5061},
+	{0x2F9A6, 0, 1, 5062},
 	{0x2F9A7, 0, 1 | DECOMP_INLINE, 0x452B},
 	{0x2F9A8, 0, 1 | DECOMP_INLINE, 0x84F1},
 	{0x2F9A9, 0, 1 | DECOMP_INLINE, 0x84F3},
 	{0x2F9AA, 0, 1 | DECOMP_INLINE, 0x8516},
-	{0x2F9AB, 0, 1, 5059},
+	{0x2F9AB, 0, 1, 5063},
 	{0x2F9AC, 0, 1 | DECOMP_INLINE, 0x8564},
-	{0x2F9AD, 0, 1, 5060},
+	{0x2F9AD, 0, 1, 5064},
 	{0x2F9AE, 0, 1 | DECOMP_INLINE, 0x455D},
 	{0x2F9AF, 0, 1 | DECOMP_INLINE, 0x4561},
-	{0x2F9B0, 0, 1, 5061},
-	{0x2F9B1, 0, 1, 5062},
+	{0x2F9B0, 0, 1, 5065},
+	{0x2F9B1, 0, 1, 5066},
 	{0x2F9B2, 0, 1 | DECOMP_INLINE, 0x456B},
 	{0x2F9B3, 0, 1 | DECOMP_INLINE, 0x8650},
 	{0x2F9B4, 0, 1 | DECOMP_INLINE, 0x865C},
@@ -6479,39 +6529,39 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F9C2, 0, 1 | DECOMP_INLINE, 0x45F9},
 	{0x2F9C3, 0, 1 | DECOMP_INLINE, 0x8860},
 	{0x2F9C4, 0, 1 | DECOMP_INLINE, 0x8863},
-	{0x2F9C5, 0, 1, 5063},
+	{0x2F9C5, 0, 1, 5067},
 	{0x2F9C6, 0, 1 | DECOMP_INLINE, 0x88D7},
 	{0x2F9C7, 0, 1 | DECOMP_INLINE, 0x88DE},
 	{0x2F9C8, 0, 1 | DECOMP_INLINE, 0x4635},
 	{0x2F9C9, 0, 1 | DECOMP_INLINE, 0x88FA},
 	{0x2F9CA, 0, 1 | DECOMP_INLINE, 0x34BB},
-	{0x2F9CB, 0, 1, 5064},
-	{0x2F9CC, 0, 1, 5065},
+	{0x2F9CB, 0, 1, 5068},
+	{0x2F9CC, 0, 1, 5069},
 	{0x2F9CD, 0, 1 | DECOMP_INLINE, 0x46BE},
 	{0x2F9CE, 0, 1 | DECOMP_INLINE, 0x46C7},
 	{0x2F9CF, 0, 1 | DECOMP_INLINE, 0x8AA0},
 	{0x2F9D0, 0, 1 | DECOMP_INLINE, 0x8AED},
 	{0x2F9D1, 0, 1 | DECOMP_INLINE, 0x8B8A},
 	{0x2F9D2, 0, 1 | DECOMP_INLINE, 0x8C55},
-	{0x2F9D3, 0, 1, 5066},
+	{0x2F9D3, 0, 1, 5070},
 	{0x2F9D4, 0, 1 | DECOMP_INLINE, 0x8CAB},
 	{0x2F9D5, 0, 1 | DECOMP_INLINE, 0x8CC1},
 	{0x2F9D6, 0, 1 | DECOMP_INLINE, 0x8D1B},
 	{0x2F9D7, 0, 1 | DECOMP_INLINE, 0x8D77},
-	{0x2F9D8, 0, 1, 5067},
-	{0x2F9D9, 0, 1, 5068},
+	{0x2F9D8, 0, 1, 5071},
+	{0x2F9D9, 0, 1, 5072},
 	{0x2F9DA, 0, 1 | DECOMP_INLINE, 0x8DCB},
 	{0x2F9DB, 0, 1 | DECOMP_INLINE, 0x8DBC},
 	{0x2F9DC, 0, 1 | DECOMP_INLINE, 0x8DF0},
-	{0x2F9DD, 0, 1, 5069},
+	{0x2F9DD, 0, 1, 5073},
 	{0x2F9DE, 0, 1 | DECOMP_INLINE, 0x8ED4},
 	{0x2F9DF, 0, 1 | DECOMP_INLINE, 0x8F38},
-	{0x2F9E0, 0, 1, 5070},
-	{0x2F9E1, 0, 1, 5071},
+	{0x2F9E0, 0, 1, 5074},
+	{0x2F9E1, 0, 1, 5075},
 	{0x2F9E2, 0, 1 | DECOMP_INLINE, 0x9094},
 	{0x2F9E3, 0, 1 | DECOMP_INLINE, 0x90F1},
 	{0x2F9E4, 0, 1 | DECOMP_INLINE, 0x9111},
-	{0x2F9E5, 0, 1, 5072},
+	{0x2F9E5, 0, 1, 5076},
 	{0x2F9E6, 0, 1 | DECOMP_INLINE, 0x911B},
 	{0x2F9E7, 0, 1 | DECOMP_INLINE, 0x9238},
 	{0x2F9E8, 0, 1 | DECOMP_INLINE, 0x92D7},
@@ -6519,27 +6569,27 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2F9EA, 0, 1 | DECOMP_INLINE, 0x927C},
 	{0x2F9EB, 0, 1 | DECOMP_INLINE, 0x93F9},
 	{0x2F9EC, 0, 1 | DECOMP_INLINE, 0x9415},
-	{0x2F9ED, 0, 1, 5073},
+	{0x2F9ED, 0, 1, 5077},
 	{0x2F9EE, 0, 1 | DECOMP_INLINE, 0x958B},
 	{0x2F9EF, 0, 1 | DECOMP_INLINE, 0x4995},
 	{0x2F9F0, 0, 1 | DECOMP_INLINE, 0x95B7},
-	{0x2F9F1, 0, 1, 5074},
+	{0x2F9F1, 0, 1, 5078},
 	{0x2F9F2, 0, 1 | DECOMP_INLINE, 0x49E6},
 	{0x2F9F3, 0, 1 | DECOMP_INLINE, 0x96C3},
 	{0x2F9F4, 0, 1 | DECOMP_INLINE, 0x5DB2},
 	{0x2F9F5, 0, 1 | DECOMP_INLINE, 0x9723},
-	{0x2F9F6, 0, 1, 5075},
-	{0x2F9F7, 0, 1, 5076},
+	{0x2F9F6, 0, 1, 5079},
+	{0x2F9F7, 0, 1, 5080},
 	{0x2F9F8, 0, 1 | DECOMP_INLINE, 0x4A6E},
 	{0x2F9F9, 0, 1 | DECOMP_INLINE, 0x4A76},
 	{0x2F9FA, 0, 1 | DECOMP_INLINE, 0x97E0},
-	{0x2F9FB, 0, 1, 5077},
+	{0x2F9FB, 0, 1, 5081},
 	{0x2F9FC, 0, 1 | DECOMP_INLINE, 0x4AB2},
-	{0x2F9FD, 0, 1, 5078},
+	{0x2F9FD, 0, 1, 5082},
 	{0x2F9FE, 0, 1 | DECOMP_INLINE, 0x980B},
 	{0x2F9FF, 0, 1 | DECOMP_INLINE, 0x980B},
 	{0x2FA00, 0, 1 | DECOMP_INLINE, 0x9829},
-	{0x2FA01, 0, 1, 5079},
+	{0x2FA01, 0, 1, 5083},
 	{0x2FA02, 0, 1 | DECOMP_INLINE, 0x98E2},
 	{0x2FA03, 0, 1 | DECOMP_INLINE, 0x4B33},
 	{0x2FA04, 0, 1 | DECOMP_INLINE, 0x9929},
@@ -6547,18 +6597,18 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2FA06, 0, 1 | DECOMP_INLINE, 0x99C2},
 	{0x2FA07, 0, 1 | DECOMP_INLINE, 0x99FE},
 	{0x2FA08, 0, 1 | DECOMP_INLINE, 0x4BCE},
-	{0x2FA09, 0, 1, 5080},
+	{0x2FA09, 0, 1, 5084},
 	{0x2FA0A, 0, 1 | DECOMP_INLINE, 0x9B12},
 	{0x2FA0B, 0, 1 | DECOMP_INLINE, 0x9C40},
 	{0x2FA0C, 0, 1 | DECOMP_INLINE, 0x9CFD},
 	{0x2FA0D, 0, 1 | DECOMP_INLINE, 0x4CCE},
 	{0x2FA0E, 0, 1 | DECOMP_INLINE, 0x4CED},
 	{0x2FA0F, 0, 1 | DECOMP_INLINE, 0x9D67},
-	{0x2FA10, 0, 1, 5081},
+	{0x2FA10, 0, 1, 5085},
 	{0x2FA11, 0, 1 | DECOMP_INLINE, 0x4CF8},
-	{0x2FA12, 0, 1, 5082},
-	{0x2FA13, 0, 1, 5083},
-	{0x2FA14, 0, 1, 5084},
+	{0x2FA12, 0, 1, 5086},
+	{0x2FA13, 0, 1, 5087},
+	{0x2FA14, 0, 1, 5088},
 	{0x2FA15, 0, 1 | DECOMP_INLINE, 0x9EBB},
 	{0x2FA16, 0, 1 | DECOMP_INLINE, 0x4D56},
 	{0x2FA17, 0, 1 | DECOMP_INLINE, 0x9EF9},
@@ -6567,12 +6617,12 @@ static const pg_unicode_decomposition UnicodeDecompMain[6532] =
 	{0x2FA1A, 0, 1 | DECOMP_INLINE, 0x9F0F},
 	{0x2FA1B, 0, 1 | DECOMP_INLINE, 0x9F16},
 	{0x2FA1C, 0, 1 | DECOMP_INLINE, 0x9F3B},
-	{0x2FA1D, 0, 1, 5085}
+	{0x2FA1D, 0, 1, 5089}
 
 };
 
 /* codepoints array  */
-static const uint32 UnicodeDecomp_codepoints[5086] =
+static const uint32 UnicodeDecomp_codepoints[5090] =
 {
 	 /* 0 */ 0x0020, 0x0308,
 	 /* 2 */ 0x0020, 0x0304,
@@ -7868,993 +7918,995 @@ static const uint32 UnicodeDecomp_codepoints[5086] =
 	 /* 2795 */ 0x0065, 0x0072, 0x0067,
 	 /* 2798 */ 0x0065, 0x0056,
 	 /* 2800 */ 0x004C, 0x0054, 0x0044,
-	 /* 2803 */ 0x30A2, 0x30D1, 0x30FC, 0x30C8,
-	 /* 2807 */ 0x30A2, 0x30EB, 0x30D5, 0x30A1,
-	 /* 2811 */ 0x30A2, 0x30F3, 0x30DA, 0x30A2,
-	 /* 2815 */ 0x30A2, 0x30FC, 0x30EB,
-	 /* 2818 */ 0x30A4, 0x30CB, 0x30F3, 0x30B0,
-	 /* 2822 */ 0x30A4, 0x30F3, 0x30C1,
-	 /* 2825 */ 0x30A6, 0x30A9, 0x30F3,
-	 /* 2828 */ 0x30A8, 0x30B9, 0x30AF, 0x30FC, 0x30C9,
-	 /* 2833 */ 0x30A8, 0x30FC, 0x30AB, 0x30FC,
-	 /* 2837 */ 0x30AA, 0x30F3, 0x30B9,
-	 /* 2840 */ 0x30AA, 0x30FC, 0x30E0,
-	 /* 2843 */ 0x30AB, 0x30A4, 0x30EA,
-	 /* 2846 */ 0x30AB, 0x30E9, 0x30C3, 0x30C8,
-	 /* 2850 */ 0x30AB, 0x30ED, 0x30EA, 0x30FC,
-	 /* 2854 */ 0x30AC, 0x30ED, 0x30F3,
-	 /* 2857 */ 0x30AC, 0x30F3, 0x30DE,
-	 /* 2860 */ 0x30AE, 0x30AC,
-	 /* 2862 */ 0x30AE, 0x30CB, 0x30FC,
-	 /* 2865 */ 0x30AD, 0x30E5, 0x30EA, 0x30FC,
-	 /* 2869 */ 0x30AE, 0x30EB, 0x30C0, 0x30FC,
-	 /* 2873 */ 0x30AD, 0x30ED,
-	 /* 2875 */ 0x30AD, 0x30ED, 0x30B0, 0x30E9, 0x30E0,
-	 /* 2880 */ 0x30AD, 0x30ED, 0x30E1, 0x30FC, 0x30C8, 0x30EB,
-	 /* 2886 */ 0x30AD, 0x30ED, 0x30EF, 0x30C3, 0x30C8,
-	 /* 2891 */ 0x30B0, 0x30E9, 0x30E0,
-	 /* 2894 */ 0x30B0, 0x30E9, 0x30E0, 0x30C8, 0x30F3,
-	 /* 2899 */ 0x30AF, 0x30EB, 0x30BC, 0x30A4, 0x30ED,
-	 /* 2904 */ 0x30AF, 0x30ED, 0x30FC, 0x30CD,
-	 /* 2908 */ 0x30B1, 0x30FC, 0x30B9,
-	 /* 2911 */ 0x30B3, 0x30EB, 0x30CA,
-	 /* 2914 */ 0x30B3, 0x30FC, 0x30DD,
-	 /* 2917 */ 0x30B5, 0x30A4, 0x30AF, 0x30EB,
-	 /* 2921 */ 0x30B5, 0x30F3, 0x30C1, 0x30FC, 0x30E0,
-	 /* 2926 */ 0x30B7, 0x30EA, 0x30F3, 0x30B0,
-	 /* 2930 */ 0x30BB, 0x30F3, 0x30C1,
-	 /* 2933 */ 0x30BB, 0x30F3, 0x30C8,
-	 /* 2936 */ 0x30C0, 0x30FC, 0x30B9,
-	 /* 2939 */ 0x30C7, 0x30B7,
-	 /* 2941 */ 0x30C9, 0x30EB,
-	 /* 2943 */ 0x30C8, 0x30F3,
-	 /* 2945 */ 0x30CA, 0x30CE,
-	 /* 2947 */ 0x30CE, 0x30C3, 0x30C8,
-	 /* 2950 */ 0x30CF, 0x30A4, 0x30C4,
-	 /* 2953 */ 0x30D1, 0x30FC, 0x30BB, 0x30F3, 0x30C8,
-	 /* 2958 */ 0x30D1, 0x30FC, 0x30C4,
-	 /* 2961 */ 0x30D0, 0x30FC, 0x30EC, 0x30EB,
-	 /* 2965 */ 0x30D4, 0x30A2, 0x30B9, 0x30C8, 0x30EB,
-	 /* 2970 */ 0x30D4, 0x30AF, 0x30EB,
-	 /* 2973 */ 0x30D4, 0x30B3,
-	 /* 2975 */ 0x30D3, 0x30EB,
-	 /* 2977 */ 0x30D5, 0x30A1, 0x30E9, 0x30C3, 0x30C9,
-	 /* 2982 */ 0x30D5, 0x30A3, 0x30FC, 0x30C8,
-	 /* 2986 */ 0x30D6, 0x30C3, 0x30B7, 0x30A7, 0x30EB,
-	 /* 2991 */ 0x30D5, 0x30E9, 0x30F3,
-	 /* 2994 */ 0x30D8, 0x30AF, 0x30BF, 0x30FC, 0x30EB,
-	 /* 2999 */ 0x30DA, 0x30BD,
-	 /* 3001 */ 0x30DA, 0x30CB, 0x30D2,
-	 /* 3004 */ 0x30D8, 0x30EB, 0x30C4,
-	 /* 3007 */ 0x30DA, 0x30F3, 0x30B9,
-	 /* 3010 */ 0x30DA, 0x30FC, 0x30B8,
-	 /* 3013 */ 0x30D9, 0x30FC, 0x30BF,
-	 /* 3016 */ 0x30DD, 0x30A4, 0x30F3, 0x30C8,
-	 /* 3020 */ 0x30DC, 0x30EB, 0x30C8,
-	 /* 3023 */ 0x30DB, 0x30F3,
-	 /* 3025 */ 0x30DD, 0x30F3, 0x30C9,
-	 /* 3028 */ 0x30DB, 0x30FC, 0x30EB,
-	 /* 3031 */ 0x30DB, 0x30FC, 0x30F3,
-	 /* 3034 */ 0x30DE, 0x30A4, 0x30AF, 0x30ED,
-	 /* 3038 */ 0x30DE, 0x30A4, 0x30EB,
-	 /* 3041 */ 0x30DE, 0x30C3, 0x30CF,
-	 /* 3044 */ 0x30DE, 0x30EB, 0x30AF,
-	 /* 3047 */ 0x30DE, 0x30F3, 0x30B7, 0x30E7, 0x30F3,
-	 /* 3052 */ 0x30DF, 0x30AF, 0x30ED, 0x30F3,
-	 /* 3056 */ 0x30DF, 0x30EA,
-	 /* 3058 */ 0x30DF, 0x30EA, 0x30D0, 0x30FC, 0x30EB,
-	 /* 3063 */ 0x30E1, 0x30AC,
-	 /* 3065 */ 0x30E1, 0x30AC, 0x30C8, 0x30F3,
-	 /* 3069 */ 0x30E1, 0x30FC, 0x30C8, 0x30EB,
-	 /* 3073 */ 0x30E4, 0x30FC, 0x30C9,
-	 /* 3076 */ 0x30E4, 0x30FC, 0x30EB,
-	 /* 3079 */ 0x30E6, 0x30A2, 0x30F3,
-	 /* 3082 */ 0x30EA, 0x30C3, 0x30C8, 0x30EB,
-	 /* 3086 */ 0x30EA, 0x30E9,
-	 /* 3088 */ 0x30EB, 0x30D4, 0x30FC,
-	 /* 3091 */ 0x30EB, 0x30FC, 0x30D6, 0x30EB,
-	 /* 3095 */ 0x30EC, 0x30E0,
-	 /* 3097 */ 0x30EC, 0x30F3, 0x30C8, 0x30B2, 0x30F3,
-	 /* 3102 */ 0x30EF, 0x30C3, 0x30C8,
-	 /* 3105 */ 0x0030, 0x70B9,
-	 /* 3107 */ 0x0031, 0x70B9,
-	 /* 3109 */ 0x0032, 0x70B9,
-	 /* 3111 */ 0x0033, 0x70B9,
-	 /* 3113 */ 0x0034, 0x70B9,
-	 /* 3115 */ 0x0035, 0x70B9,
-	 /* 3117 */ 0x0036, 0x70B9,
-	 /* 3119 */ 0x0037, 0x70B9,
-	 /* 3121 */ 0x0038, 0x70B9,
-	 /* 3123 */ 0x0039, 0x70B9,
-	 /* 3125 */ 0x0031, 0x0030, 0x70B9,
-	 /* 3128 */ 0x0031, 0x0031, 0x70B9,
-	 /* 3131 */ 0x0031, 0x0032, 0x70B9,
-	 /* 3134 */ 0x0031, 0x0033, 0x70B9,
-	 /* 3137 */ 0x0031, 0x0034, 0x70B9,
-	 /* 3140 */ 0x0031, 0x0035, 0x70B9,
-	 /* 3143 */ 0x0031, 0x0036, 0x70B9,
-	 /* 3146 */ 0x0031, 0x0037, 0x70B9,
-	 /* 3149 */ 0x0031, 0x0038, 0x70B9,
-	 /* 3152 */ 0x0031, 0x0039, 0x70B9,
-	 /* 3155 */ 0x0032, 0x0030, 0x70B9,
-	 /* 3158 */ 0x0032, 0x0031, 0x70B9,
-	 /* 3161 */ 0x0032, 0x0032, 0x70B9,
-	 /* 3164 */ 0x0032, 0x0033, 0x70B9,
-	 /* 3167 */ 0x0032, 0x0034, 0x70B9,
-	 /* 3170 */ 0x0068, 0x0050, 0x0061,
-	 /* 3173 */ 0x0064, 0x0061,
-	 /* 3175 */ 0x0041, 0x0055,
-	 /* 3177 */ 0x0062, 0x0061, 0x0072,
-	 /* 3180 */ 0x006F, 0x0056,
-	 /* 3182 */ 0x0070, 0x0063,
-	 /* 3184 */ 0x0064, 0x006D,
-	 /* 3186 */ 0x0064, 0x006D, 0x00B2,
-	 /* 3189 */ 0x0064, 0x006D, 0x00B3,
-	 /* 3192 */ 0x0049, 0x0055,
-	 /* 3194 */ 0x5E73, 0x6210,
-	 /* 3196 */ 0x662D, 0x548C,
-	 /* 3198 */ 0x5927, 0x6B63,
-	 /* 3200 */ 0x660E, 0x6CBB,
-	 /* 3202 */ 0x682A, 0x5F0F, 0x4F1A, 0x793E,
-	 /* 3206 */ 0x0070, 0x0041,
-	 /* 3208 */ 0x006E, 0x0041,
-	 /* 3210 */ 0x03BC, 0x0041,
-	 /* 3212 */ 0x006D, 0x0041,
-	 /* 3214 */ 0x006B, 0x0041,
-	 /* 3216 */ 0x004B, 0x0042,
-	 /* 3218 */ 0x004D, 0x0042,
-	 /* 3220 */ 0x0047, 0x0042,
-	 /* 3222 */ 0x0063, 0x0061, 0x006C,
-	 /* 3225 */ 0x006B, 0x0063, 0x0061, 0x006C,
-	 /* 3229 */ 0x0070, 0x0046,
-	 /* 3231 */ 0x006E, 0x0046,
-	 /* 3233 */ 0x03BC, 0x0046,
-	 /* 3235 */ 0x03BC, 0x0067,
-	 /* 3237 */ 0x006D, 0x0067,
-	 /* 3239 */ 0x006B, 0x0067,
-	 /* 3241 */ 0x0048, 0x007A,
-	 /* 3243 */ 0x006B, 0x0048, 0x007A,
-	 /* 3246 */ 0x004D, 0x0048, 0x007A,
-	 /* 3249 */ 0x0047, 0x0048, 0x007A,
-	 /* 3252 */ 0x0054, 0x0048, 0x007A,
-	 /* 3255 */ 0x03BC, 0x2113,
-	 /* 3257 */ 0x006D, 0x2113,
-	 /* 3259 */ 0x0064, 0x2113,
-	 /* 3261 */ 0x006B, 0x2113,
-	 /* 3263 */ 0x0066, 0x006D,
-	 /* 3265 */ 0x006E, 0x006D,
-	 /* 3267 */ 0x03BC, 0x006D,
-	 /* 3269 */ 0x006D, 0x006D,
-	 /* 3271 */ 0x0063, 0x006D,
-	 /* 3273 */ 0x006B, 0x006D,
-	 /* 3275 */ 0x006D, 0x006D, 0x00B2,
-	 /* 3278 */ 0x0063, 0x006D, 0x00B2,
-	 /* 3281 */ 0x006D, 0x00B2,
-	 /* 3283 */ 0x006B, 0x006D, 0x00B2,
-	 /* 3286 */ 0x006D, 0x006D, 0x00B3,
-	 /* 3289 */ 0x0063, 0x006D, 0x00B3,
-	 /* 3292 */ 0x006D, 0x00B3,
-	 /* 3294 */ 0x006B, 0x006D, 0x00B3,
-	 /* 3297 */ 0x006D, 0x2215, 0x0073,
-	 /* 3300 */ 0x006D, 0x2215, 0x0073, 0x00B2,
-	 /* 3304 */ 0x0050, 0x0061,
-	 /* 3306 */ 0x006B, 0x0050, 0x0061,
-	 /* 3309 */ 0x004D, 0x0050, 0x0061,
-	 /* 3312 */ 0x0047, 0x0050, 0x0061,
-	 /* 3315 */ 0x0072, 0x0061, 0x0064,
-	 /* 3318 */ 0x0072, 0x0061, 0x0064, 0x2215, 0x0073,
-	 /* 3323 */ 0x0072, 0x0061, 0x0064, 0x2215, 0x0073, 0x00B2,
-	 /* 3329 */ 0x0070, 0x0073,
-	 /* 3331 */ 0x006E, 0x0073,
-	 /* 3333 */ 0x03BC, 0x0073,
-	 /* 3335 */ 0x006D, 0x0073,
-	 /* 3337 */ 0x0070, 0x0056,
-	 /* 3339 */ 0x006E, 0x0056,
-	 /* 3341 */ 0x03BC, 0x0056,
-	 /* 3343 */ 0x006D, 0x0056,
-	 /* 3345 */ 0x006B, 0x0056,
-	 /* 3347 */ 0x004D, 0x0056,
-	 /* 3349 */ 0x0070, 0x0057,
-	 /* 3351 */ 0x006E, 0x0057,
-	 /* 3353 */ 0x03BC, 0x0057,
-	 /* 3355 */ 0x006D, 0x0057,
-	 /* 3357 */ 0x006B, 0x0057,
-	 /* 3359 */ 0x004D, 0x0057,
-	 /* 3361 */ 0x006B, 0x03A9,
-	 /* 3363 */ 0x004D, 0x03A9,
-	 /* 3365 */ 0x0061, 0x002E, 0x006D, 0x002E,
-	 /* 3369 */ 0x0042, 0x0071,
-	 /* 3371 */ 0x0063, 0x0063,
-	 /* 3373 */ 0x0063, 0x0064,
-	 /* 3375 */ 0x0043, 0x2215, 0x006B, 0x0067,
-	 /* 3379 */ 0x0043, 0x006F, 0x002E,
-	 /* 3382 */ 0x0064, 0x0042,
-	 /* 3384 */ 0x0047, 0x0079,
-	 /* 3386 */ 0x0068, 0x0061,
-	 /* 3388 */ 0x0048, 0x0050,
-	 /* 3390 */ 0x0069, 0x006E,
-	 /* 3392 */ 0x004B, 0x004B,
-	 /* 3394 */ 0x004B, 0x004D,
-	 /* 3396 */ 0x006B, 0x0074,
-	 /* 3398 */ 0x006C, 0x006D,
-	 /* 3400 */ 0x006C, 0x006E,
-	 /* 3402 */ 0x006C, 0x006F, 0x0067,
-	 /* 3405 */ 0x006C, 0x0078,
-	 /* 3407 */ 0x006D, 0x0062,
-	 /* 3409 */ 0x006D, 0x0069, 0x006C,
-	 /* 3412 */ 0x006D, 0x006F, 0x006C,
-	 /* 3415 */ 0x0050, 0x0048,
-	 /* 3417 */ 0x0070, 0x002E, 0x006D, 0x002E,
-	 /* 3421 */ 0x0050, 0x0050, 0x004D,
-	 /* 3424 */ 0x0050, 0x0052,
-	 /* 3426 */ 0x0073, 0x0072,
-	 /* 3428 */ 0x0053, 0x0076,
-	 /* 3430 */ 0x0057, 0x0062,
-	 /* 3432 */ 0x0056, 0x2215, 0x006D,
-	 /* 3435 */ 0x0041, 0x2215, 0x006D,
-	 /* 3438 */ 0x0031, 0x65E5,
-	 /* 3440 */ 0x0032, 0x65E5,
-	 /* 3442 */ 0x0033, 0x65E5,
-	 /* 3444 */ 0x0034, 0x65E5,
-	 /* 3446 */ 0x0035, 0x65E5,
-	 /* 3448 */ 0x0036, 0x65E5,
-	 /* 3450 */ 0x0037, 0x65E5,
-	 /* 3452 */ 0x0038, 0x65E5,
-	 /* 3454 */ 0x0039, 0x65E5,
-	 /* 3456 */ 0x0031, 0x0030, 0x65E5,
-	 /* 3459 */ 0x0031, 0x0031, 0x65E5,
-	 /* 3462 */ 0x0031, 0x0032, 0x65E5,
-	 /* 3465 */ 0x0031, 0x0033, 0x65E5,
-	 /* 3468 */ 0x0031, 0x0034, 0x65E5,
-	 /* 3471 */ 0x0031, 0x0035, 0x65E5,
-	 /* 3474 */ 0x0031, 0x0036, 0x65E5,
-	 /* 3477 */ 0x0031, 0x0037, 0x65E5,
-	 /* 3480 */ 0x0031, 0x0038, 0x65E5,
-	 /* 3483 */ 0x0031, 0x0039, 0x65E5,
-	 /* 3486 */ 0x0032, 0x0030, 0x65E5,
-	 /* 3489 */ 0x0032, 0x0031, 0x65E5,
-	 /* 3492 */ 0x0032, 0x0032, 0x65E5,
-	 /* 3495 */ 0x0032, 0x0033, 0x65E5,
-	 /* 3498 */ 0x0032, 0x0034, 0x65E5,
-	 /* 3501 */ 0x0032, 0x0035, 0x65E5,
-	 /* 3504 */ 0x0032, 0x0036, 0x65E5,
-	 /* 3507 */ 0x0032, 0x0037, 0x65E5,
-	 /* 3510 */ 0x0032, 0x0038, 0x65E5,
-	 /* 3513 */ 0x0032, 0x0039, 0x65E5,
-	 /* 3516 */ 0x0033, 0x0030, 0x65E5,
-	 /* 3519 */ 0x0033, 0x0031, 0x65E5,
-	 /* 3522 */ 0x0067, 0x0061, 0x006C,
-	 /* 3525 */ 0x242EE,
-	 /* 3526 */ 0x2284A,
-	 /* 3527 */ 0x22844,
-	 /* 3528 */ 0x233D5,
-	 /* 3529 */ 0x25249,
-	 /* 3530 */ 0x25CD0,
-	 /* 3531 */ 0x27ED3,
-	 /* 3532 */ 0x0066, 0x0066,
-	 /* 3534 */ 0x0066, 0x0069,
-	 /* 3536 */ 0x0066, 0x006C,
-	 /* 3538 */ 0x0066, 0x0066, 0x0069,
-	 /* 3541 */ 0x0066, 0x0066, 0x006C,
-	 /* 3544 */ 0x017F, 0x0074,
-	 /* 3546 */ 0x0073, 0x0074,
-	 /* 3548 */ 0x0574, 0x0576,
-	 /* 3550 */ 0x0574, 0x0565,
-	 /* 3552 */ 0x0574, 0x056B,
-	 /* 3554 */ 0x057E, 0x0576,
-	 /* 3556 */ 0x0574, 0x056D,
-	 /* 3558 */ 0x05D9, 0x05B4,
-	 /* 3560 */ 0x05F2, 0x05B7,
-	 /* 3562 */ 0x05E9, 0x05C1,
-	 /* 3564 */ 0x05E9, 0x05C2,
-	 /* 3566 */ 0xFB49, 0x05C1,
-	 /* 3568 */ 0xFB49, 0x05C2,
-	 /* 3570 */ 0x05D0, 0x05B7,
-	 /* 3572 */ 0x05D0, 0x05B8,
-	 /* 3574 */ 0x05D0, 0x05BC,
-	 /* 3576 */ 0x05D1, 0x05BC,
-	 /* 3578 */ 0x05D2, 0x05BC,
-	 /* 3580 */ 0x05D3, 0x05BC,
-	 /* 3582 */ 0x05D4, 0x05BC,
-	 /* 3584 */ 0x05D5, 0x05BC,
-	 /* 3586 */ 0x05D6, 0x05BC,
-	 /* 3588 */ 0x05D8, 0x05BC,
-	 /* 3590 */ 0x05D9, 0x05BC,
-	 /* 3592 */ 0x05DA, 0x05BC,
-	 /* 3594 */ 0x05DB, 0x05BC,
-	 /* 3596 */ 0x05DC, 0x05BC,
-	 /* 3598 */ 0x05DE, 0x05BC,
-	 /* 3600 */ 0x05E0, 0x05BC,
-	 /* 3602 */ 0x05E1, 0x05BC,
-	 /* 3604 */ 0x05E3, 0x05BC,
-	 /* 3606 */ 0x05E4, 0x05BC,
-	 /* 3608 */ 0x05E6, 0x05BC,
-	 /* 3610 */ 0x05E7, 0x05BC,
-	 /* 3612 */ 0x05E8, 0x05BC,
-	 /* 3614 */ 0x05E9, 0x05BC,
-	 /* 3616 */ 0x05EA, 0x05BC,
-	 /* 3618 */ 0x05D5, 0x05B9,
-	 /* 3620 */ 0x05D1, 0x05BF,
-	 /* 3622 */ 0x05DB, 0x05BF,
-	 /* 3624 */ 0x05E4, 0x05BF,
-	 /* 3626 */ 0x05D0, 0x05DC,
-	 /* 3628 */ 0x0626, 0x0627,
+	 /* 2803 */ 0x4EE4, 0x548C,
+	 /* 2805 */ 0x30A2, 0x30D1, 0x30FC, 0x30C8,
+	 /* 2809 */ 0x30A2, 0x30EB, 0x30D5, 0x30A1,
+	 /* 2813 */ 0x30A2, 0x30F3, 0x30DA, 0x30A2,
+	 /* 2817 */ 0x30A2, 0x30FC, 0x30EB,
+	 /* 2820 */ 0x30A4, 0x30CB, 0x30F3, 0x30B0,
+	 /* 2824 */ 0x30A4, 0x30F3, 0x30C1,
+	 /* 2827 */ 0x30A6, 0x30A9, 0x30F3,
+	 /* 2830 */ 0x30A8, 0x30B9, 0x30AF, 0x30FC, 0x30C9,
+	 /* 2835 */ 0x30A8, 0x30FC, 0x30AB, 0x30FC,
+	 /* 2839 */ 0x30AA, 0x30F3, 0x30B9,
+	 /* 2842 */ 0x30AA, 0x30FC, 0x30E0,
+	 /* 2845 */ 0x30AB, 0x30A4, 0x30EA,
+	 /* 2848 */ 0x30AB, 0x30E9, 0x30C3, 0x30C8,
+	 /* 2852 */ 0x30AB, 0x30ED, 0x30EA, 0x30FC,
+	 /* 2856 */ 0x30AC, 0x30ED, 0x30F3,
+	 /* 2859 */ 0x30AC, 0x30F3, 0x30DE,
+	 /* 2862 */ 0x30AE, 0x30AC,
+	 /* 2864 */ 0x30AE, 0x30CB, 0x30FC,
+	 /* 2867 */ 0x30AD, 0x30E5, 0x30EA, 0x30FC,
+	 /* 2871 */ 0x30AE, 0x30EB, 0x30C0, 0x30FC,
+	 /* 2875 */ 0x30AD, 0x30ED,
+	 /* 2877 */ 0x30AD, 0x30ED, 0x30B0, 0x30E9, 0x30E0,
+	 /* 2882 */ 0x30AD, 0x30ED, 0x30E1, 0x30FC, 0x30C8, 0x30EB,
+	 /* 2888 */ 0x30AD, 0x30ED, 0x30EF, 0x30C3, 0x30C8,
+	 /* 2893 */ 0x30B0, 0x30E9, 0x30E0,
+	 /* 2896 */ 0x30B0, 0x30E9, 0x30E0, 0x30C8, 0x30F3,
+	 /* 2901 */ 0x30AF, 0x30EB, 0x30BC, 0x30A4, 0x30ED,
+	 /* 2906 */ 0x30AF, 0x30ED, 0x30FC, 0x30CD,
+	 /* 2910 */ 0x30B1, 0x30FC, 0x30B9,
+	 /* 2913 */ 0x30B3, 0x30EB, 0x30CA,
+	 /* 2916 */ 0x30B3, 0x30FC, 0x30DD,
+	 /* 2919 */ 0x30B5, 0x30A4, 0x30AF, 0x30EB,
+	 /* 2923 */ 0x30B5, 0x30F3, 0x30C1, 0x30FC, 0x30E0,
+	 /* 2928 */ 0x30B7, 0x30EA, 0x30F3, 0x30B0,
+	 /* 2932 */ 0x30BB, 0x30F3, 0x30C1,
+	 /* 2935 */ 0x30BB, 0x30F3, 0x30C8,
+	 /* 2938 */ 0x30C0, 0x30FC, 0x30B9,
+	 /* 2941 */ 0x30C7, 0x30B7,
+	 /* 2943 */ 0x30C9, 0x30EB,
+	 /* 2945 */ 0x30C8, 0x30F3,
+	 /* 2947 */ 0x30CA, 0x30CE,
+	 /* 2949 */ 0x30CE, 0x30C3, 0x30C8,
+	 /* 2952 */ 0x30CF, 0x30A4, 0x30C4,
+	 /* 2955 */ 0x30D1, 0x30FC, 0x30BB, 0x30F3, 0x30C8,
+	 /* 2960 */ 0x30D1, 0x30FC, 0x30C4,
+	 /* 2963 */ 0x30D0, 0x30FC, 0x30EC, 0x30EB,
+	 /* 2967 */ 0x30D4, 0x30A2, 0x30B9, 0x30C8, 0x30EB,
+	 /* 2972 */ 0x30D4, 0x30AF, 0x30EB,
+	 /* 2975 */ 0x30D4, 0x30B3,
+	 /* 2977 */ 0x30D3, 0x30EB,
+	 /* 2979 */ 0x30D5, 0x30A1, 0x30E9, 0x30C3, 0x30C9,
+	 /* 2984 */ 0x30D5, 0x30A3, 0x30FC, 0x30C8,
+	 /* 2988 */ 0x30D6, 0x30C3, 0x30B7, 0x30A7, 0x30EB,
+	 /* 2993 */ 0x30D5, 0x30E9, 0x30F3,
+	 /* 2996 */ 0x30D8, 0x30AF, 0x30BF, 0x30FC, 0x30EB,
+	 /* 3001 */ 0x30DA, 0x30BD,
+	 /* 3003 */ 0x30DA, 0x30CB, 0x30D2,
+	 /* 3006 */ 0x30D8, 0x30EB, 0x30C4,
+	 /* 3009 */ 0x30DA, 0x30F3, 0x30B9,
+	 /* 3012 */ 0x30DA, 0x30FC, 0x30B8,
+	 /* 3015 */ 0x30D9, 0x30FC, 0x30BF,
+	 /* 3018 */ 0x30DD, 0x30A4, 0x30F3, 0x30C8,
+	 /* 3022 */ 0x30DC, 0x30EB, 0x30C8,
+	 /* 3025 */ 0x30DB, 0x30F3,
+	 /* 3027 */ 0x30DD, 0x30F3, 0x30C9,
+	 /* 3030 */ 0x30DB, 0x30FC, 0x30EB,
+	 /* 3033 */ 0x30DB, 0x30FC, 0x30F3,
+	 /* 3036 */ 0x30DE, 0x30A4, 0x30AF, 0x30ED,
+	 /* 3040 */ 0x30DE, 0x30A4, 0x30EB,
+	 /* 3043 */ 0x30DE, 0x30C3, 0x30CF,
+	 /* 3046 */ 0x30DE, 0x30EB, 0x30AF,
+	 /* 3049 */ 0x30DE, 0x30F3, 0x30B7, 0x30E7, 0x30F3,
+	 /* 3054 */ 0x30DF, 0x30AF, 0x30ED, 0x30F3,
+	 /* 3058 */ 0x30DF, 0x30EA,
+	 /* 3060 */ 0x30DF, 0x30EA, 0x30D0, 0x30FC, 0x30EB,
+	 /* 3065 */ 0x30E1, 0x30AC,
+	 /* 3067 */ 0x30E1, 0x30AC, 0x30C8, 0x30F3,
+	 /* 3071 */ 0x30E1, 0x30FC, 0x30C8, 0x30EB,
+	 /* 3075 */ 0x30E4, 0x30FC, 0x30C9,
+	 /* 3078 */ 0x30E4, 0x30FC, 0x30EB,
+	 /* 3081 */ 0x30E6, 0x30A2, 0x30F3,
+	 /* 3084 */ 0x30EA, 0x30C3, 0x30C8, 0x30EB,
+	 /* 3088 */ 0x30EA, 0x30E9,
+	 /* 3090 */ 0x30EB, 0x30D4, 0x30FC,
+	 /* 3093 */ 0x30EB, 0x30FC, 0x30D6, 0x30EB,
+	 /* 3097 */ 0x30EC, 0x30E0,
+	 /* 3099 */ 0x30EC, 0x30F3, 0x30C8, 0x30B2, 0x30F3,
+	 /* 3104 */ 0x30EF, 0x30C3, 0x30C8,
+	 /* 3107 */ 0x0030, 0x70B9,
+	 /* 3109 */ 0x0031, 0x70B9,
+	 /* 3111 */ 0x0032, 0x70B9,
+	 /* 3113 */ 0x0033, 0x70B9,
+	 /* 3115 */ 0x0034, 0x70B9,
+	 /* 3117 */ 0x0035, 0x70B9,
+	 /* 3119 */ 0x0036, 0x70B9,
+	 /* 3121 */ 0x0037, 0x70B9,
+	 /* 3123 */ 0x0038, 0x70B9,
+	 /* 3125 */ 0x0039, 0x70B9,
+	 /* 3127 */ 0x0031, 0x0030, 0x70B9,
+	 /* 3130 */ 0x0031, 0x0031, 0x70B9,
+	 /* 3133 */ 0x0031, 0x0032, 0x70B9,
+	 /* 3136 */ 0x0031, 0x0033, 0x70B9,
+	 /* 3139 */ 0x0031, 0x0034, 0x70B9,
+	 /* 3142 */ 0x0031, 0x0035, 0x70B9,
+	 /* 3145 */ 0x0031, 0x0036, 0x70B9,
+	 /* 3148 */ 0x0031, 0x0037, 0x70B9,
+	 /* 3151 */ 0x0031, 0x0038, 0x70B9,
+	 /* 3154 */ 0x0031, 0x0039, 0x70B9,
+	 /* 3157 */ 0x0032, 0x0030, 0x70B9,
+	 /* 3160 */ 0x0032, 0x0031, 0x70B9,
+	 /* 3163 */ 0x0032, 0x0032, 0x70B9,
+	 /* 3166 */ 0x0032, 0x0033, 0x70B9,
+	 /* 3169 */ 0x0032, 0x0034, 0x70B9,
+	 /* 3172 */ 0x0068, 0x0050, 0x0061,
+	 /* 3175 */ 0x0064, 0x0061,
+	 /* 3177 */ 0x0041, 0x0055,
+	 /* 3179 */ 0x0062, 0x0061, 0x0072,
+	 /* 3182 */ 0x006F, 0x0056,
+	 /* 3184 */ 0x0070, 0x0063,
+	 /* 3186 */ 0x0064, 0x006D,
+	 /* 3188 */ 0x0064, 0x006D, 0x00B2,
+	 /* 3191 */ 0x0064, 0x006D, 0x00B3,
+	 /* 3194 */ 0x0049, 0x0055,
+	 /* 3196 */ 0x5E73, 0x6210,
+	 /* 3198 */ 0x662D, 0x548C,
+	 /* 3200 */ 0x5927, 0x6B63,
+	 /* 3202 */ 0x660E, 0x6CBB,
+	 /* 3204 */ 0x682A, 0x5F0F, 0x4F1A, 0x793E,
+	 /* 3208 */ 0x0070, 0x0041,
+	 /* 3210 */ 0x006E, 0x0041,
+	 /* 3212 */ 0x03BC, 0x0041,
+	 /* 3214 */ 0x006D, 0x0041,
+	 /* 3216 */ 0x006B, 0x0041,
+	 /* 3218 */ 0x004B, 0x0042,
+	 /* 3220 */ 0x004D, 0x0042,
+	 /* 3222 */ 0x0047, 0x0042,
+	 /* 3224 */ 0x0063, 0x0061, 0x006C,
+	 /* 3227 */ 0x006B, 0x0063, 0x0061, 0x006C,
+	 /* 3231 */ 0x0070, 0x0046,
+	 /* 3233 */ 0x006E, 0x0046,
+	 /* 3235 */ 0x03BC, 0x0046,
+	 /* 3237 */ 0x03BC, 0x0067,
+	 /* 3239 */ 0x006D, 0x0067,
+	 /* 3241 */ 0x006B, 0x0067,
+	 /* 3243 */ 0x0048, 0x007A,
+	 /* 3245 */ 0x006B, 0x0048, 0x007A,
+	 /* 3248 */ 0x004D, 0x0048, 0x007A,
+	 /* 3251 */ 0x0047, 0x0048, 0x007A,
+	 /* 3254 */ 0x0054, 0x0048, 0x007A,
+	 /* 3257 */ 0x03BC, 0x2113,
+	 /* 3259 */ 0x006D, 0x2113,
+	 /* 3261 */ 0x0064, 0x2113,
+	 /* 3263 */ 0x006B, 0x2113,
+	 /* 3265 */ 0x0066, 0x006D,
+	 /* 3267 */ 0x006E, 0x006D,
+	 /* 3269 */ 0x03BC, 0x006D,
+	 /* 3271 */ 0x006D, 0x006D,
+	 /* 3273 */ 0x0063, 0x006D,
+	 /* 3275 */ 0x006B, 0x006D,
+	 /* 3277 */ 0x006D, 0x006D, 0x00B2,
+	 /* 3280 */ 0x0063, 0x006D, 0x00B2,
+	 /* 3283 */ 0x006D, 0x00B2,
+	 /* 3285 */ 0x006B, 0x006D, 0x00B2,
+	 /* 3288 */ 0x006D, 0x006D, 0x00B3,
+	 /* 3291 */ 0x0063, 0x006D, 0x00B3,
+	 /* 3294 */ 0x006D, 0x00B3,
+	 /* 3296 */ 0x006B, 0x006D, 0x00B3,
+	 /* 3299 */ 0x006D, 0x2215, 0x0073,
+	 /* 3302 */ 0x006D, 0x2215, 0x0073, 0x00B2,
+	 /* 3306 */ 0x0050, 0x0061,
+	 /* 3308 */ 0x006B, 0x0050, 0x0061,
+	 /* 3311 */ 0x004D, 0x0050, 0x0061,
+	 /* 3314 */ 0x0047, 0x0050, 0x0061,
+	 /* 3317 */ 0x0072, 0x0061, 0x0064,
+	 /* 3320 */ 0x0072, 0x0061, 0x0064, 0x2215, 0x0073,
+	 /* 3325 */ 0x0072, 0x0061, 0x0064, 0x2215, 0x0073, 0x00B2,
+	 /* 3331 */ 0x0070, 0x0073,
+	 /* 3333 */ 0x006E, 0x0073,
+	 /* 3335 */ 0x03BC, 0x0073,
+	 /* 3337 */ 0x006D, 0x0073,
+	 /* 3339 */ 0x0070, 0x0056,
+	 /* 3341 */ 0x006E, 0x0056,
+	 /* 3343 */ 0x03BC, 0x0056,
+	 /* 3345 */ 0x006D, 0x0056,
+	 /* 3347 */ 0x006B, 0x0056,
+	 /* 3349 */ 0x004D, 0x0056,
+	 /* 3351 */ 0x0070, 0x0057,
+	 /* 3353 */ 0x006E, 0x0057,
+	 /* 3355 */ 0x03BC, 0x0057,
+	 /* 3357 */ 0x006D, 0x0057,
+	 /* 3359 */ 0x006B, 0x0057,
+	 /* 3361 */ 0x004D, 0x0057,
+	 /* 3363 */ 0x006B, 0x03A9,
+	 /* 3365 */ 0x004D, 0x03A9,
+	 /* 3367 */ 0x0061, 0x002E, 0x006D, 0x002E,
+	 /* 3371 */ 0x0042, 0x0071,
+	 /* 3373 */ 0x0063, 0x0063,
+	 /* 3375 */ 0x0063, 0x0064,
+	 /* 3377 */ 0x0043, 0x2215, 0x006B, 0x0067,
+	 /* 3381 */ 0x0043, 0x006F, 0x002E,
+	 /* 3384 */ 0x0064, 0x0042,
+	 /* 3386 */ 0x0047, 0x0079,
+	 /* 3388 */ 0x0068, 0x0061,
+	 /* 3390 */ 0x0048, 0x0050,
+	 /* 3392 */ 0x0069, 0x006E,
+	 /* 3394 */ 0x004B, 0x004B,
+	 /* 3396 */ 0x004B, 0x004D,
+	 /* 3398 */ 0x006B, 0x0074,
+	 /* 3400 */ 0x006C, 0x006D,
+	 /* 3402 */ 0x006C, 0x006E,
+	 /* 3404 */ 0x006C, 0x006F, 0x0067,
+	 /* 3407 */ 0x006C, 0x0078,
+	 /* 3409 */ 0x006D, 0x0062,
+	 /* 3411 */ 0x006D, 0x0069, 0x006C,
+	 /* 3414 */ 0x006D, 0x006F, 0x006C,
+	 /* 3417 */ 0x0050, 0x0048,
+	 /* 3419 */ 0x0070, 0x002E, 0x006D, 0x002E,
+	 /* 3423 */ 0x0050, 0x0050, 0x004D,
+	 /* 3426 */ 0x0050, 0x0052,
+	 /* 3428 */ 0x0073, 0x0072,
+	 /* 3430 */ 0x0053, 0x0076,
+	 /* 3432 */ 0x0057, 0x0062,
+	 /* 3434 */ 0x0056, 0x2215, 0x006D,
+	 /* 3437 */ 0x0041, 0x2215, 0x006D,
+	 /* 3440 */ 0x0031, 0x65E5,
+	 /* 3442 */ 0x0032, 0x65E5,
+	 /* 3444 */ 0x0033, 0x65E5,
+	 /* 3446 */ 0x0034, 0x65E5,
+	 /* 3448 */ 0x0035, 0x65E5,
+	 /* 3450 */ 0x0036, 0x65E5,
+	 /* 3452 */ 0x0037, 0x65E5,
+	 /* 3454 */ 0x0038, 0x65E5,
+	 /* 3456 */ 0x0039, 0x65E5,
+	 /* 3458 */ 0x0031, 0x0030, 0x65E5,
+	 /* 3461 */ 0x0031, 0x0031, 0x65E5,
+	 /* 3464 */ 0x0031, 0x0032, 0x65E5,
+	 /* 3467 */ 0x0031, 0x0033, 0x65E5,
+	 /* 3470 */ 0x0031, 0x0034, 0x65E5,
+	 /* 3473 */ 0x0031, 0x0035, 0x65E5,
+	 /* 3476 */ 0x0031, 0x0036, 0x65E5,
+	 /* 3479 */ 0x0031, 0x0037, 0x65E5,
+	 /* 3482 */ 0x0031, 0x0038, 0x65E5,
+	 /* 3485 */ 0x0031, 0x0039, 0x65E5,
+	 /* 3488 */ 0x0032, 0x0030, 0x65E5,
+	 /* 3491 */ 0x0032, 0x0031, 0x65E5,
+	 /* 3494 */ 0x0032, 0x0032, 0x65E5,
+	 /* 3497 */ 0x0032, 0x0033, 0x65E5,
+	 /* 3500 */ 0x0032, 0x0034, 0x65E5,
+	 /* 3503 */ 0x0032, 0x0035, 0x65E5,
+	 /* 3506 */ 0x0032, 0x0036, 0x65E5,
+	 /* 3509 */ 0x0032, 0x0037, 0x65E5,
+	 /* 3512 */ 0x0032, 0x0038, 0x65E5,
+	 /* 3515 */ 0x0032, 0x0039, 0x65E5,
+	 /* 3518 */ 0x0033, 0x0030, 0x65E5,
+	 /* 3521 */ 0x0033, 0x0031, 0x65E5,
+	 /* 3524 */ 0x0067, 0x0061, 0x006C,
+	 /* 3527 */ 0x242EE,
+	 /* 3528 */ 0x2284A,
+	 /* 3529 */ 0x22844,
+	 /* 3530 */ 0x233D5,
+	 /* 3531 */ 0x25249,
+	 /* 3532 */ 0x25CD0,
+	 /* 3533 */ 0x27ED3,
+	 /* 3534 */ 0x0066, 0x0066,
+	 /* 3536 */ 0x0066, 0x0069,
+	 /* 3538 */ 0x0066, 0x006C,
+	 /* 3540 */ 0x0066, 0x0066, 0x0069,
+	 /* 3543 */ 0x0066, 0x0066, 0x006C,
+	 /* 3546 */ 0x017F, 0x0074,
+	 /* 3548 */ 0x0073, 0x0074,
+	 /* 3550 */ 0x0574, 0x0576,
+	 /* 3552 */ 0x0574, 0x0565,
+	 /* 3554 */ 0x0574, 0x056B,
+	 /* 3556 */ 0x057E, 0x0576,
+	 /* 3558 */ 0x0574, 0x056D,
+	 /* 3560 */ 0x05D9, 0x05B4,
+	 /* 3562 */ 0x05F2, 0x05B7,
+	 /* 3564 */ 0x05E9, 0x05C1,
+	 /* 3566 */ 0x05E9, 0x05C2,
+	 /* 3568 */ 0xFB49, 0x05C1,
+	 /* 3570 */ 0xFB49, 0x05C2,
+	 /* 3572 */ 0x05D0, 0x05B7,
+	 /* 3574 */ 0x05D0, 0x05B8,
+	 /* 3576 */ 0x05D0, 0x05BC,
+	 /* 3578 */ 0x05D1, 0x05BC,
+	 /* 3580 */ 0x05D2, 0x05BC,
+	 /* 3582 */ 0x05D3, 0x05BC,
+	 /* 3584 */ 0x05D4, 0x05BC,
+	 /* 3586 */ 0x05D5, 0x05BC,
+	 /* 3588 */ 0x05D6, 0x05BC,
+	 /* 3590 */ 0x05D8, 0x05BC,
+	 /* 3592 */ 0x05D9, 0x05BC,
+	 /* 3594 */ 0x05DA, 0x05BC,
+	 /* 3596 */ 0x05DB, 0x05BC,
+	 /* 3598 */ 0x05DC, 0x05BC,
+	 /* 3600 */ 0x05DE, 0x05BC,
+	 /* 3602 */ 0x05E0, 0x05BC,
+	 /* 3604 */ 0x05E1, 0x05BC,
+	 /* 3606 */ 0x05E3, 0x05BC,
+	 /* 3608 */ 0x05E4, 0x05BC,
+	 /* 3610 */ 0x05E6, 0x05BC,
+	 /* 3612 */ 0x05E7, 0x05BC,
+	 /* 3614 */ 0x05E8, 0x05BC,
+	 /* 3616 */ 0x05E9, 0x05BC,
+	 /* 3618 */ 0x05EA, 0x05BC,
+	 /* 3620 */ 0x05D5, 0x05B9,
+	 /* 3622 */ 0x05D1, 0x05BF,
+	 /* 3624 */ 0x05DB, 0x05BF,
+	 /* 3626 */ 0x05E4, 0x05BF,
+	 /* 3628 */ 0x05D0, 0x05DC,
 	 /* 3630 */ 0x0626, 0x0627,
-	 /* 3632 */ 0x0626, 0x06D5,
+	 /* 3632 */ 0x0626, 0x0627,
 	 /* 3634 */ 0x0626, 0x06D5,
-	 /* 3636 */ 0x0626, 0x0648,
+	 /* 3636 */ 0x0626, 0x06D5,
 	 /* 3638 */ 0x0626, 0x0648,
-	 /* 3640 */ 0x0626, 0x06C7,
+	 /* 3640 */ 0x0626, 0x0648,
 	 /* 3642 */ 0x0626, 0x06C7,
-	 /* 3644 */ 0x0626, 0x06C6,
+	 /* 3644 */ 0x0626, 0x06C7,
 	 /* 3646 */ 0x0626, 0x06C6,
-	 /* 3648 */ 0x0626, 0x06C8,
+	 /* 3648 */ 0x0626, 0x06C6,
 	 /* 3650 */ 0x0626, 0x06C8,
-	 /* 3652 */ 0x0626, 0x06D0,
+	 /* 3652 */ 0x0626, 0x06C8,
 	 /* 3654 */ 0x0626, 0x06D0,
 	 /* 3656 */ 0x0626, 0x06D0,
-	 /* 3658 */ 0x0626, 0x0649,
+	 /* 3658 */ 0x0626, 0x06D0,
 	 /* 3660 */ 0x0626, 0x0649,
 	 /* 3662 */ 0x0626, 0x0649,
-	 /* 3664 */ 0x0626, 0x062C,
-	 /* 3666 */ 0x0626, 0x062D,
-	 /* 3668 */ 0x0626, 0x0645,
-	 /* 3670 */ 0x0626, 0x0649,
-	 /* 3672 */ 0x0626, 0x064A,
-	 /* 3674 */ 0x0628, 0x062C,
-	 /* 3676 */ 0x0628, 0x062D,
-	 /* 3678 */ 0x0628, 0x062E,
-	 /* 3680 */ 0x0628, 0x0645,
-	 /* 3682 */ 0x0628, 0x0649,
-	 /* 3684 */ 0x0628, 0x064A,
-	 /* 3686 */ 0x062A, 0x062C,
-	 /* 3688 */ 0x062A, 0x062D,
-	 /* 3690 */ 0x062A, 0x062E,
-	 /* 3692 */ 0x062A, 0x0645,
-	 /* 3694 */ 0x062A, 0x0649,
-	 /* 3696 */ 0x062A, 0x064A,
-	 /* 3698 */ 0x062B, 0x062C,
-	 /* 3700 */ 0x062B, 0x0645,
-	 /* 3702 */ 0x062B, 0x0649,
-	 /* 3704 */ 0x062B, 0x064A,
-	 /* 3706 */ 0x062C, 0x062D,
-	 /* 3708 */ 0x062C, 0x0645,
-	 /* 3710 */ 0x062D, 0x062C,
-	 /* 3712 */ 0x062D, 0x0645,
-	 /* 3714 */ 0x062E, 0x062C,
-	 /* 3716 */ 0x062E, 0x062D,
-	 /* 3718 */ 0x062E, 0x0645,
-	 /* 3720 */ 0x0633, 0x062C,
-	 /* 3722 */ 0x0633, 0x062D,
-	 /* 3724 */ 0x0633, 0x062E,
-	 /* 3726 */ 0x0633, 0x0645,
-	 /* 3728 */ 0x0635, 0x062D,
-	 /* 3730 */ 0x0635, 0x0645,
-	 /* 3732 */ 0x0636, 0x062C,
-	 /* 3734 */ 0x0636, 0x062D,
-	 /* 3736 */ 0x0636, 0x062E,
-	 /* 3738 */ 0x0636, 0x0645,
-	 /* 3740 */ 0x0637, 0x062D,
-	 /* 3742 */ 0x0637, 0x0645,
-	 /* 3744 */ 0x0638, 0x0645,
-	 /* 3746 */ 0x0639, 0x062C,
-	 /* 3748 */ 0x0639, 0x0645,
-	 /* 3750 */ 0x063A, 0x062C,
-	 /* 3752 */ 0x063A, 0x0645,
-	 /* 3754 */ 0x0641, 0x062C,
-	 /* 3756 */ 0x0641, 0x062D,
-	 /* 3758 */ 0x0641, 0x062E,
-	 /* 3760 */ 0x0641, 0x0645,
-	 /* 3762 */ 0x0641, 0x0649,
-	 /* 3764 */ 0x0641, 0x064A,
-	 /* 3766 */ 0x0642, 0x062D,
-	 /* 3768 */ 0x0642, 0x0645,
-	 /* 3770 */ 0x0642, 0x0649,
-	 /* 3772 */ 0x0642, 0x064A,
-	 /* 3774 */ 0x0643, 0x0627,
-	 /* 3776 */ 0x0643, 0x062C,
-	 /* 3778 */ 0x0643, 0x062D,
-	 /* 3780 */ 0x0643, 0x062E,
-	 /* 3782 */ 0x0643, 0x0644,
-	 /* 3784 */ 0x0643, 0x0645,
-	 /* 3786 */ 0x0643, 0x0649,
-	 /* 3788 */ 0x0643, 0x064A,
-	 /* 3790 */ 0x0644, 0x062C,
-	 /* 3792 */ 0x0644, 0x062D,
-	 /* 3794 */ 0x0644, 0x062E,
-	 /* 3796 */ 0x0644, 0x0645,
-	 /* 3798 */ 0x0644, 0x0649,
-	 /* 3800 */ 0x0644, 0x064A,
-	 /* 3802 */ 0x0645, 0x062C,
-	 /* 3804 */ 0x0645, 0x062D,
-	 /* 3806 */ 0x0645, 0x062E,
-	 /* 3808 */ 0x0645, 0x0645,
-	 /* 3810 */ 0x0645, 0x0649,
-	 /* 3812 */ 0x0645, 0x064A,
-	 /* 3814 */ 0x0646, 0x062C,
-	 /* 3816 */ 0x0646, 0x062D,
-	 /* 3818 */ 0x0646, 0x062E,
-	 /* 3820 */ 0x0646, 0x0645,
-	 /* 3822 */ 0x0646, 0x0649,
-	 /* 3824 */ 0x0646, 0x064A,
-	 /* 3826 */ 0x0647, 0x062C,
-	 /* 3828 */ 0x0647, 0x0645,
-	 /* 3830 */ 0x0647, 0x0649,
-	 /* 3832 */ 0x0647, 0x064A,
-	 /* 3834 */ 0x064A, 0x062C,
-	 /* 3836 */ 0x064A, 0x062D,
-	 /* 3838 */ 0x064A, 0x062E,
-	 /* 3840 */ 0x064A, 0x0645,
-	 /* 3842 */ 0x064A, 0x0649,
-	 /* 3844 */ 0x064A, 0x064A,
-	 /* 3846 */ 0x0630, 0x0670,
-	 /* 3848 */ 0x0631, 0x0670,
-	 /* 3850 */ 0x0649, 0x0670,
-	 /* 3852 */ 0x0020, 0x064C, 0x0651,
-	 /* 3855 */ 0x0020, 0x064D, 0x0651,
-	 /* 3858 */ 0x0020, 0x064E, 0x0651,
-	 /* 3861 */ 0x0020, 0x064F, 0x0651,
-	 /* 3864 */ 0x0020, 0x0650, 0x0651,
-	 /* 3867 */ 0x0020, 0x0651, 0x0670,
-	 /* 3870 */ 0x0626, 0x0631,
-	 /* 3872 */ 0x0626, 0x0632,
-	 /* 3874 */ 0x0626, 0x0645,
-	 /* 3876 */ 0x0626, 0x0646,
-	 /* 3878 */ 0x0626, 0x0649,
-	 /* 3880 */ 0x0626, 0x064A,
-	 /* 3882 */ 0x0628, 0x0631,
-	 /* 3884 */ 0x0628, 0x0632,
-	 /* 3886 */ 0x0628, 0x0645,
-	 /* 3888 */ 0x0628, 0x0646,
-	 /* 3890 */ 0x0628, 0x0649,
-	 /* 3892 */ 0x0628, 0x064A,
-	 /* 3894 */ 0x062A, 0x0631,
-	 /* 3896 */ 0x062A, 0x0632,
-	 /* 3898 */ 0x062A, 0x0645,
-	 /* 3900 */ 0x062A, 0x0646,
-	 /* 3902 */ 0x062A, 0x0649,
-	 /* 3904 */ 0x062A, 0x064A,
-	 /* 3906 */ 0x062B, 0x0631,
-	 /* 3908 */ 0x062B, 0x0632,
-	 /* 3910 */ 0x062B, 0x0645,
-	 /* 3912 */ 0x062B, 0x0646,
-	 /* 3914 */ 0x062B, 0x0649,
-	 /* 3916 */ 0x062B, 0x064A,
-	 /* 3918 */ 0x0641, 0x0649,
-	 /* 3920 */ 0x0641, 0x064A,
-	 /* 3922 */ 0x0642, 0x0649,
-	 /* 3924 */ 0x0642, 0x064A,
-	 /* 3926 */ 0x0643, 0x0627,
-	 /* 3928 */ 0x0643, 0x0644,
-	 /* 3930 */ 0x0643, 0x0645,
-	 /* 3932 */ 0x0643, 0x0649,
-	 /* 3934 */ 0x0643, 0x064A,
-	 /* 3936 */ 0x0644, 0x0645,
-	 /* 3938 */ 0x0644, 0x0649,
-	 /* 3940 */ 0x0644, 0x064A,
-	 /* 3942 */ 0x0645, 0x0627,
-	 /* 3944 */ 0x0645, 0x0645,
-	 /* 3946 */ 0x0646, 0x0631,
-	 /* 3948 */ 0x0646, 0x0632,
-	 /* 3950 */ 0x0646, 0x0645,
-	 /* 3952 */ 0x0646, 0x0646,
-	 /* 3954 */ 0x0646, 0x0649,
-	 /* 3956 */ 0x0646, 0x064A,
-	 /* 3958 */ 0x0649, 0x0670,
-	 /* 3960 */ 0x064A, 0x0631,
-	 /* 3962 */ 0x064A, 0x0632,
-	 /* 3964 */ 0x064A, 0x0645,
-	 /* 3966 */ 0x064A, 0x0646,
-	 /* 3968 */ 0x064A, 0x0649,
-	 /* 3970 */ 0x064A, 0x064A,
-	 /* 3972 */ 0x0626, 0x062C,
-	 /* 3974 */ 0x0626, 0x062D,
-	 /* 3976 */ 0x0626, 0x062E,
-	 /* 3978 */ 0x0626, 0x0645,
-	 /* 3980 */ 0x0626, 0x0647,
-	 /* 3982 */ 0x0628, 0x062C,
-	 /* 3984 */ 0x0628, 0x062D,
-	 /* 3986 */ 0x0628, 0x062E,
-	 /* 3988 */ 0x0628, 0x0645,
-	 /* 3990 */ 0x0628, 0x0647,
-	 /* 3992 */ 0x062A, 0x062C,
-	 /* 3994 */ 0x062A, 0x062D,
-	 /* 3996 */ 0x062A, 0x062E,
-	 /* 3998 */ 0x062A, 0x0645,
-	 /* 4000 */ 0x062A, 0x0647,
-	 /* 4002 */ 0x062B, 0x0645,
-	 /* 4004 */ 0x062C, 0x062D,
-	 /* 4006 */ 0x062C, 0x0645,
-	 /* 4008 */ 0x062D, 0x062C,
-	 /* 4010 */ 0x062D, 0x0645,
-	 /* 4012 */ 0x062E, 0x062C,
-	 /* 4014 */ 0x062E, 0x0645,
-	 /* 4016 */ 0x0633, 0x062C,
-	 /* 4018 */ 0x0633, 0x062D,
-	 /* 4020 */ 0x0633, 0x062E,
-	 /* 4022 */ 0x0633, 0x0645,
-	 /* 4024 */ 0x0635, 0x062D,
-	 /* 4026 */ 0x0635, 0x062E,
-	 /* 4028 */ 0x0635, 0x0645,
-	 /* 4030 */ 0x0636, 0x062C,
-	 /* 4032 */ 0x0636, 0x062D,
-	 /* 4034 */ 0x0636, 0x062E,
-	 /* 4036 */ 0x0636, 0x0645,
-	 /* 4038 */ 0x0637, 0x062D,
-	 /* 4040 */ 0x0638, 0x0645,
-	 /* 4042 */ 0x0639, 0x062C,
-	 /* 4044 */ 0x0639, 0x0645,
-	 /* 4046 */ 0x063A, 0x062C,
-	 /* 4048 */ 0x063A, 0x0645,
-	 /* 4050 */ 0x0641, 0x062C,
-	 /* 4052 */ 0x0641, 0x062D,
-	 /* 4054 */ 0x0641, 0x062E,
-	 /* 4056 */ 0x0641, 0x0645,
-	 /* 4058 */ 0x0642, 0x062D,
-	 /* 4060 */ 0x0642, 0x0645,
-	 /* 4062 */ 0x0643, 0x062C,
-	 /* 4064 */ 0x0643, 0x062D,
-	 /* 4066 */ 0x0643, 0x062E,
-	 /* 4068 */ 0x0643, 0x0644,
-	 /* 4070 */ 0x0643, 0x0645,
-	 /* 4072 */ 0x0644, 0x062C,
-	 /* 4074 */ 0x0644, 0x062D,
-	 /* 4076 */ 0x0644, 0x062E,
-	 /* 4078 */ 0x0644, 0x0645,
-	 /* 4080 */ 0x0644, 0x0647,
-	 /* 4082 */ 0x0645, 0x062C,
-	 /* 4084 */ 0x0645, 0x062D,
-	 /* 4086 */ 0x0645, 0x062E,
-	 /* 4088 */ 0x0645, 0x0645,
-	 /* 4090 */ 0x0646, 0x062C,
-	 /* 4092 */ 0x0646, 0x062D,
-	 /* 4094 */ 0x0646, 0x062E,
-	 /* 4096 */ 0x0646, 0x0645,
-	 /* 4098 */ 0x0646, 0x0647,
-	 /* 4100 */ 0x0647, 0x062C,
-	 /* 4102 */ 0x0647, 0x0645,
-	 /* 4104 */ 0x0647, 0x0670,
-	 /* 4106 */ 0x064A, 0x062C,
-	 /* 4108 */ 0x064A, 0x062D,
-	 /* 4110 */ 0x064A, 0x062E,
-	 /* 4112 */ 0x064A, 0x0645,
-	 /* 4114 */ 0x064A, 0x0647,
-	 /* 4116 */ 0x0626, 0x0645,
-	 /* 4118 */ 0x0626, 0x0647,
-	 /* 4120 */ 0x0628, 0x0645,
-	 /* 4122 */ 0x0628, 0x0647,
-	 /* 4124 */ 0x062A, 0x0645,
-	 /* 4126 */ 0x062A, 0x0647,
-	 /* 4128 */ 0x062B, 0x0645,
-	 /* 4130 */ 0x062B, 0x0647,
-	 /* 4132 */ 0x0633, 0x0645,
-	 /* 4134 */ 0x0633, 0x0647,
-	 /* 4136 */ 0x0634, 0x0645,
-	 /* 4138 */ 0x0634, 0x0647,
-	 /* 4140 */ 0x0643, 0x0644,
-	 /* 4142 */ 0x0643, 0x0645,
-	 /* 4144 */ 0x0644, 0x0645,
-	 /* 4146 */ 0x0646, 0x0645,
-	 /* 4148 */ 0x0646, 0x0647,
-	 /* 4150 */ 0x064A, 0x0645,
-	 /* 4152 */ 0x064A, 0x0647,
-	 /* 4154 */ 0x0640, 0x064E, 0x0651,
-	 /* 4157 */ 0x0640, 0x064F, 0x0651,
-	 /* 4160 */ 0x0640, 0x0650, 0x0651,
-	 /* 4163 */ 0x0637, 0x0649,
-	 /* 4165 */ 0x0637, 0x064A,
-	 /* 4167 */ 0x0639, 0x0649,
-	 /* 4169 */ 0x0639, 0x064A,
-	 /* 4171 */ 0x063A, 0x0649,
-	 /* 4173 */ 0x063A, 0x064A,
-	 /* 4175 */ 0x0633, 0x0649,
-	 /* 4177 */ 0x0633, 0x064A,
-	 /* 4179 */ 0x0634, 0x0649,
-	 /* 4181 */ 0x0634, 0x064A,
-	 /* 4183 */ 0x062D, 0x0649,
-	 /* 4185 */ 0x062D, 0x064A,
-	 /* 4187 */ 0x062C, 0x0649,
-	 /* 4189 */ 0x062C, 0x064A,
-	 /* 4191 */ 0x062E, 0x0649,
-	 /* 4193 */ 0x062E, 0x064A,
-	 /* 4195 */ 0x0635, 0x0649,
-	 /* 4197 */ 0x0635, 0x064A,
-	 /* 4199 */ 0x0636, 0x0649,
-	 /* 4201 */ 0x0636, 0x064A,
-	 /* 4203 */ 0x0634, 0x062C,
-	 /* 4205 */ 0x0634, 0x062D,
-	 /* 4207 */ 0x0634, 0x062E,
-	 /* 4209 */ 0x0634, 0x0645,
-	 /* 4211 */ 0x0634, 0x0631,
-	 /* 4213 */ 0x0633, 0x0631,
-	 /* 4215 */ 0x0635, 0x0631,
-	 /* 4217 */ 0x0636, 0x0631,
-	 /* 4219 */ 0x0637, 0x0649,
-	 /* 4221 */ 0x0637, 0x064A,
-	 /* 4223 */ 0x0639, 0x0649,
-	 /* 4225 */ 0x0639, 0x064A,
-	 /* 4227 */ 0x063A, 0x0649,
-	 /* 4229 */ 0x063A, 0x064A,
-	 /* 4231 */ 0x0633, 0x0649,
-	 /* 4233 */ 0x0633, 0x064A,
-	 /* 4235 */ 0x0634, 0x0649,
-	 /* 4237 */ 0x0634, 0x064A,
-	 /* 4239 */ 0x062D, 0x0649,
-	 /* 4241 */ 0x062D, 0x064A,
-	 /* 4243 */ 0x062C, 0x0649,
-	 /* 4245 */ 0x062C, 0x064A,
-	 /* 4247 */ 0x062E, 0x0649,
-	 /* 4249 */ 0x062E, 0x064A,
-	 /* 4251 */ 0x0635, 0x0649,
-	 /* 4253 */ 0x0635, 0x064A,
-	 /* 4255 */ 0x0636, 0x0649,
-	 /* 4257 */ 0x0636, 0x064A,
-	 /* 4259 */ 0x0634, 0x062C,
-	 /* 4261 */ 0x0634, 0x062D,
-	 /* 4263 */ 0x0634, 0x062E,
-	 /* 4265 */ 0x0634, 0x0645,
-	 /* 4267 */ 0x0634, 0x0631,
-	 /* 4269 */ 0x0633, 0x0631,
-	 /* 4271 */ 0x0635, 0x0631,
-	 /* 4273 */ 0x0636, 0x0631,
-	 /* 4275 */ 0x0634, 0x062C,
-	 /* 4277 */ 0x0634, 0x062D,
-	 /* 4279 */ 0x0634, 0x062E,
-	 /* 4281 */ 0x0634, 0x0645,
-	 /* 4283 */ 0x0633, 0x0647,
-	 /* 4285 */ 0x0634, 0x0647,
-	 /* 4287 */ 0x0637, 0x0645,
-	 /* 4289 */ 0x0633, 0x062C,
-	 /* 4291 */ 0x0633, 0x062D,
-	 /* 4293 */ 0x0633, 0x062E,
-	 /* 4295 */ 0x0634, 0x062C,
-	 /* 4297 */ 0x0634, 0x062D,
-	 /* 4299 */ 0x0634, 0x062E,
-	 /* 4301 */ 0x0637, 0x0645,
-	 /* 4303 */ 0x0638, 0x0645,
-	 /* 4305 */ 0x0627, 0x064B,
+	 /* 3664 */ 0x0626, 0x0649,
+	 /* 3666 */ 0x0626, 0x062C,
+	 /* 3668 */ 0x0626, 0x062D,
+	 /* 3670 */ 0x0626, 0x0645,
+	 /* 3672 */ 0x0626, 0x0649,
+	 /* 3674 */ 0x0626, 0x064A,
+	 /* 3676 */ 0x0628, 0x062C,
+	 /* 3678 */ 0x0628, 0x062D,
+	 /* 3680 */ 0x0628, 0x062E,
+	 /* 3682 */ 0x0628, 0x0645,
+	 /* 3684 */ 0x0628, 0x0649,
+	 /* 3686 */ 0x0628, 0x064A,
+	 /* 3688 */ 0x062A, 0x062C,
+	 /* 3690 */ 0x062A, 0x062D,
+	 /* 3692 */ 0x062A, 0x062E,
+	 /* 3694 */ 0x062A, 0x0645,
+	 /* 3696 */ 0x062A, 0x0649,
+	 /* 3698 */ 0x062A, 0x064A,
+	 /* 3700 */ 0x062B, 0x062C,
+	 /* 3702 */ 0x062B, 0x0645,
+	 /* 3704 */ 0x062B, 0x0649,
+	 /* 3706 */ 0x062B, 0x064A,
+	 /* 3708 */ 0x062C, 0x062D,
+	 /* 3710 */ 0x062C, 0x0645,
+	 /* 3712 */ 0x062D, 0x062C,
+	 /* 3714 */ 0x062D, 0x0645,
+	 /* 3716 */ 0x062E, 0x062C,
+	 /* 3718 */ 0x062E, 0x062D,
+	 /* 3720 */ 0x062E, 0x0645,
+	 /* 3722 */ 0x0633, 0x062C,
+	 /* 3724 */ 0x0633, 0x062D,
+	 /* 3726 */ 0x0633, 0x062E,
+	 /* 3728 */ 0x0633, 0x0645,
+	 /* 3730 */ 0x0635, 0x062D,
+	 /* 3732 */ 0x0635, 0x0645,
+	 /* 3734 */ 0x0636, 0x062C,
+	 /* 3736 */ 0x0636, 0x062D,
+	 /* 3738 */ 0x0636, 0x062E,
+	 /* 3740 */ 0x0636, 0x0645,
+	 /* 3742 */ 0x0637, 0x062D,
+	 /* 3744 */ 0x0637, 0x0645,
+	 /* 3746 */ 0x0638, 0x0645,
+	 /* 3748 */ 0x0639, 0x062C,
+	 /* 3750 */ 0x0639, 0x0645,
+	 /* 3752 */ 0x063A, 0x062C,
+	 /* 3754 */ 0x063A, 0x0645,
+	 /* 3756 */ 0x0641, 0x062C,
+	 /* 3758 */ 0x0641, 0x062D,
+	 /* 3760 */ 0x0641, 0x062E,
+	 /* 3762 */ 0x0641, 0x0645,
+	 /* 3764 */ 0x0641, 0x0649,
+	 /* 3766 */ 0x0641, 0x064A,
+	 /* 3768 */ 0x0642, 0x062D,
+	 /* 3770 */ 0x0642, 0x0645,
+	 /* 3772 */ 0x0642, 0x0649,
+	 /* 3774 */ 0x0642, 0x064A,
+	 /* 3776 */ 0x0643, 0x0627,
+	 /* 3778 */ 0x0643, 0x062C,
+	 /* 3780 */ 0x0643, 0x062D,
+	 /* 3782 */ 0x0643, 0x062E,
+	 /* 3784 */ 0x0643, 0x0644,
+	 /* 3786 */ 0x0643, 0x0645,
+	 /* 3788 */ 0x0643, 0x0649,
+	 /* 3790 */ 0x0643, 0x064A,
+	 /* 3792 */ 0x0644, 0x062C,
+	 /* 3794 */ 0x0644, 0x062D,
+	 /* 3796 */ 0x0644, 0x062E,
+	 /* 3798 */ 0x0644, 0x0645,
+	 /* 3800 */ 0x0644, 0x0649,
+	 /* 3802 */ 0x0644, 0x064A,
+	 /* 3804 */ 0x0645, 0x062C,
+	 /* 3806 */ 0x0645, 0x062D,
+	 /* 3808 */ 0x0645, 0x062E,
+	 /* 3810 */ 0x0645, 0x0645,
+	 /* 3812 */ 0x0645, 0x0649,
+	 /* 3814 */ 0x0645, 0x064A,
+	 /* 3816 */ 0x0646, 0x062C,
+	 /* 3818 */ 0x0646, 0x062D,
+	 /* 3820 */ 0x0646, 0x062E,
+	 /* 3822 */ 0x0646, 0x0645,
+	 /* 3824 */ 0x0646, 0x0649,
+	 /* 3826 */ 0x0646, 0x064A,
+	 /* 3828 */ 0x0647, 0x062C,
+	 /* 3830 */ 0x0647, 0x0645,
+	 /* 3832 */ 0x0647, 0x0649,
+	 /* 3834 */ 0x0647, 0x064A,
+	 /* 3836 */ 0x064A, 0x062C,
+	 /* 3838 */ 0x064A, 0x062D,
+	 /* 3840 */ 0x064A, 0x062E,
+	 /* 3842 */ 0x064A, 0x0645,
+	 /* 3844 */ 0x064A, 0x0649,
+	 /* 3846 */ 0x064A, 0x064A,
+	 /* 3848 */ 0x0630, 0x0670,
+	 /* 3850 */ 0x0631, 0x0670,
+	 /* 3852 */ 0x0649, 0x0670,
+	 /* 3854 */ 0x0020, 0x064C, 0x0651,
+	 /* 3857 */ 0x0020, 0x064D, 0x0651,
+	 /* 3860 */ 0x0020, 0x064E, 0x0651,
+	 /* 3863 */ 0x0020, 0x064F, 0x0651,
+	 /* 3866 */ 0x0020, 0x0650, 0x0651,
+	 /* 3869 */ 0x0020, 0x0651, 0x0670,
+	 /* 3872 */ 0x0626, 0x0631,
+	 /* 3874 */ 0x0626, 0x0632,
+	 /* 3876 */ 0x0626, 0x0645,
+	 /* 3878 */ 0x0626, 0x0646,
+	 /* 3880 */ 0x0626, 0x0649,
+	 /* 3882 */ 0x0626, 0x064A,
+	 /* 3884 */ 0x0628, 0x0631,
+	 /* 3886 */ 0x0628, 0x0632,
+	 /* 3888 */ 0x0628, 0x0645,
+	 /* 3890 */ 0x0628, 0x0646,
+	 /* 3892 */ 0x0628, 0x0649,
+	 /* 3894 */ 0x0628, 0x064A,
+	 /* 3896 */ 0x062A, 0x0631,
+	 /* 3898 */ 0x062A, 0x0632,
+	 /* 3900 */ 0x062A, 0x0645,
+	 /* 3902 */ 0x062A, 0x0646,
+	 /* 3904 */ 0x062A, 0x0649,
+	 /* 3906 */ 0x062A, 0x064A,
+	 /* 3908 */ 0x062B, 0x0631,
+	 /* 3910 */ 0x062B, 0x0632,
+	 /* 3912 */ 0x062B, 0x0645,
+	 /* 3914 */ 0x062B, 0x0646,
+	 /* 3916 */ 0x062B, 0x0649,
+	 /* 3918 */ 0x062B, 0x064A,
+	 /* 3920 */ 0x0641, 0x0649,
+	 /* 3922 */ 0x0641, 0x064A,
+	 /* 3924 */ 0x0642, 0x0649,
+	 /* 3926 */ 0x0642, 0x064A,
+	 /* 3928 */ 0x0643, 0x0627,
+	 /* 3930 */ 0x0643, 0x0644,
+	 /* 3932 */ 0x0643, 0x0645,
+	 /* 3934 */ 0x0643, 0x0649,
+	 /* 3936 */ 0x0643, 0x064A,
+	 /* 3938 */ 0x0644, 0x0645,
+	 /* 3940 */ 0x0644, 0x0649,
+	 /* 3942 */ 0x0644, 0x064A,
+	 /* 3944 */ 0x0645, 0x0627,
+	 /* 3946 */ 0x0645, 0x0645,
+	 /* 3948 */ 0x0646, 0x0631,
+	 /* 3950 */ 0x0646, 0x0632,
+	 /* 3952 */ 0x0646, 0x0645,
+	 /* 3954 */ 0x0646, 0x0646,
+	 /* 3956 */ 0x0646, 0x0649,
+	 /* 3958 */ 0x0646, 0x064A,
+	 /* 3960 */ 0x0649, 0x0670,
+	 /* 3962 */ 0x064A, 0x0631,
+	 /* 3964 */ 0x064A, 0x0632,
+	 /* 3966 */ 0x064A, 0x0645,
+	 /* 3968 */ 0x064A, 0x0646,
+	 /* 3970 */ 0x064A, 0x0649,
+	 /* 3972 */ 0x064A, 0x064A,
+	 /* 3974 */ 0x0626, 0x062C,
+	 /* 3976 */ 0x0626, 0x062D,
+	 /* 3978 */ 0x0626, 0x062E,
+	 /* 3980 */ 0x0626, 0x0645,
+	 /* 3982 */ 0x0626, 0x0647,
+	 /* 3984 */ 0x0628, 0x062C,
+	 /* 3986 */ 0x0628, 0x062D,
+	 /* 3988 */ 0x0628, 0x062E,
+	 /* 3990 */ 0x0628, 0x0645,
+	 /* 3992 */ 0x0628, 0x0647,
+	 /* 3994 */ 0x062A, 0x062C,
+	 /* 3996 */ 0x062A, 0x062D,
+	 /* 3998 */ 0x062A, 0x062E,
+	 /* 4000 */ 0x062A, 0x0645,
+	 /* 4002 */ 0x062A, 0x0647,
+	 /* 4004 */ 0x062B, 0x0645,
+	 /* 4006 */ 0x062C, 0x062D,
+	 /* 4008 */ 0x062C, 0x0645,
+	 /* 4010 */ 0x062D, 0x062C,
+	 /* 4012 */ 0x062D, 0x0645,
+	 /* 4014 */ 0x062E, 0x062C,
+	 /* 4016 */ 0x062E, 0x0645,
+	 /* 4018 */ 0x0633, 0x062C,
+	 /* 4020 */ 0x0633, 0x062D,
+	 /* 4022 */ 0x0633, 0x062E,
+	 /* 4024 */ 0x0633, 0x0645,
+	 /* 4026 */ 0x0635, 0x062D,
+	 /* 4028 */ 0x0635, 0x062E,
+	 /* 4030 */ 0x0635, 0x0645,
+	 /* 4032 */ 0x0636, 0x062C,
+	 /* 4034 */ 0x0636, 0x062D,
+	 /* 4036 */ 0x0636, 0x062E,
+	 /* 4038 */ 0x0636, 0x0645,
+	 /* 4040 */ 0x0637, 0x062D,
+	 /* 4042 */ 0x0638, 0x0645,
+	 /* 4044 */ 0x0639, 0x062C,
+	 /* 4046 */ 0x0639, 0x0645,
+	 /* 4048 */ 0x063A, 0x062C,
+	 /* 4050 */ 0x063A, 0x0645,
+	 /* 4052 */ 0x0641, 0x062C,
+	 /* 4054 */ 0x0641, 0x062D,
+	 /* 4056 */ 0x0641, 0x062E,
+	 /* 4058 */ 0x0641, 0x0645,
+	 /* 4060 */ 0x0642, 0x062D,
+	 /* 4062 */ 0x0642, 0x0645,
+	 /* 4064 */ 0x0643, 0x062C,
+	 /* 4066 */ 0x0643, 0x062D,
+	 /* 4068 */ 0x0643, 0x062E,
+	 /* 4070 */ 0x0643, 0x0644,
+	 /* 4072 */ 0x0643, 0x0645,
+	 /* 4074 */ 0x0644, 0x062C,
+	 /* 4076 */ 0x0644, 0x062D,
+	 /* 4078 */ 0x0644, 0x062E,
+	 /* 4080 */ 0x0644, 0x0645,
+	 /* 4082 */ 0x0644, 0x0647,
+	 /* 4084 */ 0x0645, 0x062C,
+	 /* 4086 */ 0x0645, 0x062D,
+	 /* 4088 */ 0x0645, 0x062E,
+	 /* 4090 */ 0x0645, 0x0645,
+	 /* 4092 */ 0x0646, 0x062C,
+	 /* 4094 */ 0x0646, 0x062D,
+	 /* 4096 */ 0x0646, 0x062E,
+	 /* 4098 */ 0x0646, 0x0645,
+	 /* 4100 */ 0x0646, 0x0647,
+	 /* 4102 */ 0x0647, 0x062C,
+	 /* 4104 */ 0x0647, 0x0645,
+	 /* 4106 */ 0x0647, 0x0670,
+	 /* 4108 */ 0x064A, 0x062C,
+	 /* 4110 */ 0x064A, 0x062D,
+	 /* 4112 */ 0x064A, 0x062E,
+	 /* 4114 */ 0x064A, 0x0645,
+	 /* 4116 */ 0x064A, 0x0647,
+	 /* 4118 */ 0x0626, 0x0645,
+	 /* 4120 */ 0x0626, 0x0647,
+	 /* 4122 */ 0x0628, 0x0645,
+	 /* 4124 */ 0x0628, 0x0647,
+	 /* 4126 */ 0x062A, 0x0645,
+	 /* 4128 */ 0x062A, 0x0647,
+	 /* 4130 */ 0x062B, 0x0645,
+	 /* 4132 */ 0x062B, 0x0647,
+	 /* 4134 */ 0x0633, 0x0645,
+	 /* 4136 */ 0x0633, 0x0647,
+	 /* 4138 */ 0x0634, 0x0645,
+	 /* 4140 */ 0x0634, 0x0647,
+	 /* 4142 */ 0x0643, 0x0644,
+	 /* 4144 */ 0x0643, 0x0645,
+	 /* 4146 */ 0x0644, 0x0645,
+	 /* 4148 */ 0x0646, 0x0645,
+	 /* 4150 */ 0x0646, 0x0647,
+	 /* 4152 */ 0x064A, 0x0645,
+	 /* 4154 */ 0x064A, 0x0647,
+	 /* 4156 */ 0x0640, 0x064E, 0x0651,
+	 /* 4159 */ 0x0640, 0x064F, 0x0651,
+	 /* 4162 */ 0x0640, 0x0650, 0x0651,
+	 /* 4165 */ 0x0637, 0x0649,
+	 /* 4167 */ 0x0637, 0x064A,
+	 /* 4169 */ 0x0639, 0x0649,
+	 /* 4171 */ 0x0639, 0x064A,
+	 /* 4173 */ 0x063A, 0x0649,
+	 /* 4175 */ 0x063A, 0x064A,
+	 /* 4177 */ 0x0633, 0x0649,
+	 /* 4179 */ 0x0633, 0x064A,
+	 /* 4181 */ 0x0634, 0x0649,
+	 /* 4183 */ 0x0634, 0x064A,
+	 /* 4185 */ 0x062D, 0x0649,
+	 /* 4187 */ 0x062D, 0x064A,
+	 /* 4189 */ 0x062C, 0x0649,
+	 /* 4191 */ 0x062C, 0x064A,
+	 /* 4193 */ 0x062E, 0x0649,
+	 /* 4195 */ 0x062E, 0x064A,
+	 /* 4197 */ 0x0635, 0x0649,
+	 /* 4199 */ 0x0635, 0x064A,
+	 /* 4201 */ 0x0636, 0x0649,
+	 /* 4203 */ 0x0636, 0x064A,
+	 /* 4205 */ 0x0634, 0x062C,
+	 /* 4207 */ 0x0634, 0x062D,
+	 /* 4209 */ 0x0634, 0x062E,
+	 /* 4211 */ 0x0634, 0x0645,
+	 /* 4213 */ 0x0634, 0x0631,
+	 /* 4215 */ 0x0633, 0x0631,
+	 /* 4217 */ 0x0635, 0x0631,
+	 /* 4219 */ 0x0636, 0x0631,
+	 /* 4221 */ 0x0637, 0x0649,
+	 /* 4223 */ 0x0637, 0x064A,
+	 /* 4225 */ 0x0639, 0x0649,
+	 /* 4227 */ 0x0639, 0x064A,
+	 /* 4229 */ 0x063A, 0x0649,
+	 /* 4231 */ 0x063A, 0x064A,
+	 /* 4233 */ 0x0633, 0x0649,
+	 /* 4235 */ 0x0633, 0x064A,
+	 /* 4237 */ 0x0634, 0x0649,
+	 /* 4239 */ 0x0634, 0x064A,
+	 /* 4241 */ 0x062D, 0x0649,
+	 /* 4243 */ 0x062D, 0x064A,
+	 /* 4245 */ 0x062C, 0x0649,
+	 /* 4247 */ 0x062C, 0x064A,
+	 /* 4249 */ 0x062E, 0x0649,
+	 /* 4251 */ 0x062E, 0x064A,
+	 /* 4253 */ 0x0635, 0x0649,
+	 /* 4255 */ 0x0635, 0x064A,
+	 /* 4257 */ 0x0636, 0x0649,
+	 /* 4259 */ 0x0636, 0x064A,
+	 /* 4261 */ 0x0634, 0x062C,
+	 /* 4263 */ 0x0634, 0x062D,
+	 /* 4265 */ 0x0634, 0x062E,
+	 /* 4267 */ 0x0634, 0x0645,
+	 /* 4269 */ 0x0634, 0x0631,
+	 /* 4271 */ 0x0633, 0x0631,
+	 /* 4273 */ 0x0635, 0x0631,
+	 /* 4275 */ 0x0636, 0x0631,
+	 /* 4277 */ 0x0634, 0x062C,
+	 /* 4279 */ 0x0634, 0x062D,
+	 /* 4281 */ 0x0634, 0x062E,
+	 /* 4283 */ 0x0634, 0x0645,
+	 /* 4285 */ 0x0633, 0x0647,
+	 /* 4287 */ 0x0634, 0x0647,
+	 /* 4289 */ 0x0637, 0x0645,
+	 /* 4291 */ 0x0633, 0x062C,
+	 /* 4293 */ 0x0633, 0x062D,
+	 /* 4295 */ 0x0633, 0x062E,
+	 /* 4297 */ 0x0634, 0x062C,
+	 /* 4299 */ 0x0634, 0x062D,
+	 /* 4301 */ 0x0634, 0x062E,
+	 /* 4303 */ 0x0637, 0x0645,
+	 /* 4305 */ 0x0638, 0x0645,
 	 /* 4307 */ 0x0627, 0x064B,
-	 /* 4309 */ 0x062A, 0x062C, 0x0645,
-	 /* 4312 */ 0x062A, 0x062D, 0x062C,
-	 /* 4315 */ 0x062A, 0x062D, 0x062C,
-	 /* 4318 */ 0x062A, 0x062D, 0x0645,
-	 /* 4321 */ 0x062A, 0x062E, 0x0645,
-	 /* 4324 */ 0x062A, 0x0645, 0x062C,
-	 /* 4327 */ 0x062A, 0x0645, 0x062D,
-	 /* 4330 */ 0x062A, 0x0645, 0x062E,
-	 /* 4333 */ 0x062C, 0x0645, 0x062D,
-	 /* 4336 */ 0x062C, 0x0645, 0x062D,
-	 /* 4339 */ 0x062D, 0x0645, 0x064A,
-	 /* 4342 */ 0x062D, 0x0645, 0x0649,
-	 /* 4345 */ 0x0633, 0x062D, 0x062C,
-	 /* 4348 */ 0x0633, 0x062C, 0x062D,
-	 /* 4351 */ 0x0633, 0x062C, 0x0649,
-	 /* 4354 */ 0x0633, 0x0645, 0x062D,
-	 /* 4357 */ 0x0633, 0x0645, 0x062D,
-	 /* 4360 */ 0x0633, 0x0645, 0x062C,
-	 /* 4363 */ 0x0633, 0x0645, 0x0645,
-	 /* 4366 */ 0x0633, 0x0645, 0x0645,
-	 /* 4369 */ 0x0635, 0x062D, 0x062D,
-	 /* 4372 */ 0x0635, 0x062D, 0x062D,
-	 /* 4375 */ 0x0635, 0x0645, 0x0645,
-	 /* 4378 */ 0x0634, 0x062D, 0x0645,
-	 /* 4381 */ 0x0634, 0x062D, 0x0645,
-	 /* 4384 */ 0x0634, 0x062C, 0x064A,
-	 /* 4387 */ 0x0634, 0x0645, 0x062E,
-	 /* 4390 */ 0x0634, 0x0645, 0x062E,
-	 /* 4393 */ 0x0634, 0x0645, 0x0645,
-	 /* 4396 */ 0x0634, 0x0645, 0x0645,
-	 /* 4399 */ 0x0636, 0x062D, 0x0649,
-	 /* 4402 */ 0x0636, 0x062E, 0x0645,
-	 /* 4405 */ 0x0636, 0x062E, 0x0645,
-	 /* 4408 */ 0x0637, 0x0645, 0x062D,
-	 /* 4411 */ 0x0637, 0x0645, 0x062D,
-	 /* 4414 */ 0x0637, 0x0645, 0x0645,
-	 /* 4417 */ 0x0637, 0x0645, 0x064A,
-	 /* 4420 */ 0x0639, 0x062C, 0x0645,
-	 /* 4423 */ 0x0639, 0x0645, 0x0645,
-	 /* 4426 */ 0x0639, 0x0645, 0x0645,
-	 /* 4429 */ 0x0639, 0x0645, 0x0649,
-	 /* 4432 */ 0x063A, 0x0645, 0x0645,
-	 /* 4435 */ 0x063A, 0x0645, 0x064A,
-	 /* 4438 */ 0x063A, 0x0645, 0x0649,
-	 /* 4441 */ 0x0641, 0x062E, 0x0645,
-	 /* 4444 */ 0x0641, 0x062E, 0x0645,
-	 /* 4447 */ 0x0642, 0x0645, 0x062D,
-	 /* 4450 */ 0x0642, 0x0645, 0x0645,
-	 /* 4453 */ 0x0644, 0x062D, 0x0645,
-	 /* 4456 */ 0x0644, 0x062D, 0x064A,
-	 /* 4459 */ 0x0644, 0x062D, 0x0649,
-	 /* 4462 */ 0x0644, 0x062C, 0x062C,
-	 /* 4465 */ 0x0644, 0x062C, 0x062C,
-	 /* 4468 */ 0x0644, 0x062E, 0x0645,
-	 /* 4471 */ 0x0644, 0x062E, 0x0645,
-	 /* 4474 */ 0x0644, 0x0645, 0x062D,
-	 /* 4477 */ 0x0644, 0x0645, 0x062D,
-	 /* 4480 */ 0x0645, 0x062D, 0x062C,
-	 /* 4483 */ 0x0645, 0x062D, 0x0645,
-	 /* 4486 */ 0x0645, 0x062D, 0x064A,
-	 /* 4489 */ 0x0645, 0x062C, 0x062D,
-	 /* 4492 */ 0x0645, 0x062C, 0x0645,
-	 /* 4495 */ 0x0645, 0x062E, 0x062C,
-	 /* 4498 */ 0x0645, 0x062E, 0x0645,
-	 /* 4501 */ 0x0645, 0x062C, 0x062E,
-	 /* 4504 */ 0x0647, 0x0645, 0x062C,
-	 /* 4507 */ 0x0647, 0x0645, 0x0645,
-	 /* 4510 */ 0x0646, 0x062D, 0x0645,
-	 /* 4513 */ 0x0646, 0x062D, 0x0649,
-	 /* 4516 */ 0x0646, 0x062C, 0x0645,
-	 /* 4519 */ 0x0646, 0x062C, 0x0645,
-	 /* 4522 */ 0x0646, 0x062C, 0x0649,
-	 /* 4525 */ 0x0646, 0x0645, 0x064A,
-	 /* 4528 */ 0x0646, 0x0645, 0x0649,
-	 /* 4531 */ 0x064A, 0x0645, 0x0645,
-	 /* 4534 */ 0x064A, 0x0645, 0x0645,
-	 /* 4537 */ 0x0628, 0x062E, 0x064A,
-	 /* 4540 */ 0x062A, 0x062C, 0x064A,
-	 /* 4543 */ 0x062A, 0x062C, 0x0649,
-	 /* 4546 */ 0x062A, 0x062E, 0x064A,
-	 /* 4549 */ 0x062A, 0x062E, 0x0649,
-	 /* 4552 */ 0x062A, 0x0645, 0x064A,
-	 /* 4555 */ 0x062A, 0x0645, 0x0649,
-	 /* 4558 */ 0x062C, 0x0645, 0x064A,
-	 /* 4561 */ 0x062C, 0x062D, 0x0649,
-	 /* 4564 */ 0x062C, 0x0645, 0x0649,
-	 /* 4567 */ 0x0633, 0x062E, 0x0649,
-	 /* 4570 */ 0x0635, 0x062D, 0x064A,
-	 /* 4573 */ 0x0634, 0x062D, 0x064A,
-	 /* 4576 */ 0x0636, 0x062D, 0x064A,
-	 /* 4579 */ 0x0644, 0x062C, 0x064A,
-	 /* 4582 */ 0x0644, 0x0645, 0x064A,
-	 /* 4585 */ 0x064A, 0x062D, 0x064A,
-	 /* 4588 */ 0x064A, 0x062C, 0x064A,
-	 /* 4591 */ 0x064A, 0x0645, 0x064A,
-	 /* 4594 */ 0x0645, 0x0645, 0x064A,
-	 /* 4597 */ 0x0642, 0x0645, 0x064A,
-	 /* 4600 */ 0x0646, 0x062D, 0x064A,
-	 /* 4603 */ 0x0642, 0x0645, 0x062D,
-	 /* 4606 */ 0x0644, 0x062D, 0x0645,
-	 /* 4609 */ 0x0639, 0x0645, 0x064A,
-	 /* 4612 */ 0x0643, 0x0645, 0x064A,
-	 /* 4615 */ 0x0646, 0x062C, 0x062D,
-	 /* 4618 */ 0x0645, 0x062E, 0x064A,
-	 /* 4621 */ 0x0644, 0x062C, 0x0645,
-	 /* 4624 */ 0x0643, 0x0645, 0x0645,
-	 /* 4627 */ 0x0644, 0x062C, 0x0645,
-	 /* 4630 */ 0x0646, 0x062C, 0x062D,
-	 /* 4633 */ 0x062C, 0x062D, 0x064A,
-	 /* 4636 */ 0x062D, 0x062C, 0x064A,
-	 /* 4639 */ 0x0645, 0x062C, 0x064A,
-	 /* 4642 */ 0x0641, 0x0645, 0x064A,
-	 /* 4645 */ 0x0628, 0x062D, 0x064A,
-	 /* 4648 */ 0x0643, 0x0645, 0x0645,
-	 /* 4651 */ 0x0639, 0x062C, 0x0645,
-	 /* 4654 */ 0x0635, 0x0645, 0x0645,
-	 /* 4657 */ 0x0633, 0x062E, 0x064A,
-	 /* 4660 */ 0x0646, 0x062C, 0x064A,
-	 /* 4663 */ 0x0635, 0x0644, 0x06D2,
-	 /* 4666 */ 0x0642, 0x0644, 0x06D2,
-	 /* 4669 */ 0x0627, 0x0644, 0x0644, 0x0647,
-	 /* 4673 */ 0x0627, 0x0643, 0x0628, 0x0631,
-	 /* 4677 */ 0x0645, 0x062D, 0x0645, 0x062F,
-	 /* 4681 */ 0x0635, 0x0644, 0x0639, 0x0645,
-	 /* 4685 */ 0x0631, 0x0633, 0x0648, 0x0644,
-	 /* 4689 */ 0x0639, 0x0644, 0x064A, 0x0647,
-	 /* 4693 */ 0x0648, 0x0633, 0x0644, 0x0645,
-	 /* 4697 */ 0x0635, 0x0644, 0x0649,
-	 /* 4700 */ 0x0635, 0x0644, 0x0649, 0x0020, 0x0627, 0x0644, 0x0644, 0x0647, 0x0020, 0x0639, 0x0644, 0x064A, 0x0647, 0x0020, 0x0648, 0x0633, 0x0644, 0x0645,
-	 /* 4718 */ 0x062C, 0x0644, 0x0020, 0x062C, 0x0644, 0x0627, 0x0644, 0x0647,
-	 /* 4726 */ 0x0631, 0x06CC, 0x0627, 0x0644,
-	 /* 4730 */ 0x0020, 0x064B,
-	 /* 4732 */ 0x0640, 0x064B,
-	 /* 4734 */ 0x0020, 0x064C,
-	 /* 4736 */ 0x0020, 0x064D,
-	 /* 4738 */ 0x0020, 0x064E,
-	 /* 4740 */ 0x0640, 0x064E,
-	 /* 4742 */ 0x0020, 0x064F,
-	 /* 4744 */ 0x0640, 0x064F,
-	 /* 4746 */ 0x0020, 0x0650,
-	 /* 4748 */ 0x0640, 0x0650,
-	 /* 4750 */ 0x0020, 0x0651,
-	 /* 4752 */ 0x0640, 0x0651,
-	 /* 4754 */ 0x0020, 0x0652,
-	 /* 4756 */ 0x0640, 0x0652,
-	 /* 4758 */ 0x0644, 0x0622,
+	 /* 4309 */ 0x0627, 0x064B,
+	 /* 4311 */ 0x062A, 0x062C, 0x0645,
+	 /* 4314 */ 0x062A, 0x062D, 0x062C,
+	 /* 4317 */ 0x062A, 0x062D, 0x062C,
+	 /* 4320 */ 0x062A, 0x062D, 0x0645,
+	 /* 4323 */ 0x062A, 0x062E, 0x0645,
+	 /* 4326 */ 0x062A, 0x0645, 0x062C,
+	 /* 4329 */ 0x062A, 0x0645, 0x062D,
+	 /* 4332 */ 0x062A, 0x0645, 0x062E,
+	 /* 4335 */ 0x062C, 0x0645, 0x062D,
+	 /* 4338 */ 0x062C, 0x0645, 0x062D,
+	 /* 4341 */ 0x062D, 0x0645, 0x064A,
+	 /* 4344 */ 0x062D, 0x0645, 0x0649,
+	 /* 4347 */ 0x0633, 0x062D, 0x062C,
+	 /* 4350 */ 0x0633, 0x062C, 0x062D,
+	 /* 4353 */ 0x0633, 0x062C, 0x0649,
+	 /* 4356 */ 0x0633, 0x0645, 0x062D,
+	 /* 4359 */ 0x0633, 0x0645, 0x062D,
+	 /* 4362 */ 0x0633, 0x0645, 0x062C,
+	 /* 4365 */ 0x0633, 0x0645, 0x0645,
+	 /* 4368 */ 0x0633, 0x0645, 0x0645,
+	 /* 4371 */ 0x0635, 0x062D, 0x062D,
+	 /* 4374 */ 0x0635, 0x062D, 0x062D,
+	 /* 4377 */ 0x0635, 0x0645, 0x0645,
+	 /* 4380 */ 0x0634, 0x062D, 0x0645,
+	 /* 4383 */ 0x0634, 0x062D, 0x0645,
+	 /* 4386 */ 0x0634, 0x062C, 0x064A,
+	 /* 4389 */ 0x0634, 0x0645, 0x062E,
+	 /* 4392 */ 0x0634, 0x0645, 0x062E,
+	 /* 4395 */ 0x0634, 0x0645, 0x0645,
+	 /* 4398 */ 0x0634, 0x0645, 0x0645,
+	 /* 4401 */ 0x0636, 0x062D, 0x0649,
+	 /* 4404 */ 0x0636, 0x062E, 0x0645,
+	 /* 4407 */ 0x0636, 0x062E, 0x0645,
+	 /* 4410 */ 0x0637, 0x0645, 0x062D,
+	 /* 4413 */ 0x0637, 0x0645, 0x062D,
+	 /* 4416 */ 0x0637, 0x0645, 0x0645,
+	 /* 4419 */ 0x0637, 0x0645, 0x064A,
+	 /* 4422 */ 0x0639, 0x062C, 0x0645,
+	 /* 4425 */ 0x0639, 0x0645, 0x0645,
+	 /* 4428 */ 0x0639, 0x0645, 0x0645,
+	 /* 4431 */ 0x0639, 0x0645, 0x0649,
+	 /* 4434 */ 0x063A, 0x0645, 0x0645,
+	 /* 4437 */ 0x063A, 0x0645, 0x064A,
+	 /* 4440 */ 0x063A, 0x0645, 0x0649,
+	 /* 4443 */ 0x0641, 0x062E, 0x0645,
+	 /* 4446 */ 0x0641, 0x062E, 0x0645,
+	 /* 4449 */ 0x0642, 0x0645, 0x062D,
+	 /* 4452 */ 0x0642, 0x0645, 0x0645,
+	 /* 4455 */ 0x0644, 0x062D, 0x0645,
+	 /* 4458 */ 0x0644, 0x062D, 0x064A,
+	 /* 4461 */ 0x0644, 0x062D, 0x0649,
+	 /* 4464 */ 0x0644, 0x062C, 0x062C,
+	 /* 4467 */ 0x0644, 0x062C, 0x062C,
+	 /* 4470 */ 0x0644, 0x062E, 0x0645,
+	 /* 4473 */ 0x0644, 0x062E, 0x0645,
+	 /* 4476 */ 0x0644, 0x0645, 0x062D,
+	 /* 4479 */ 0x0644, 0x0645, 0x062D,
+	 /* 4482 */ 0x0645, 0x062D, 0x062C,
+	 /* 4485 */ 0x0645, 0x062D, 0x0645,
+	 /* 4488 */ 0x0645, 0x062D, 0x064A,
+	 /* 4491 */ 0x0645, 0x062C, 0x062D,
+	 /* 4494 */ 0x0645, 0x062C, 0x0645,
+	 /* 4497 */ 0x0645, 0x062E, 0x062C,
+	 /* 4500 */ 0x0645, 0x062E, 0x0645,
+	 /* 4503 */ 0x0645, 0x062C, 0x062E,
+	 /* 4506 */ 0x0647, 0x0645, 0x062C,
+	 /* 4509 */ 0x0647, 0x0645, 0x0645,
+	 /* 4512 */ 0x0646, 0x062D, 0x0645,
+	 /* 4515 */ 0x0646, 0x062D, 0x0649,
+	 /* 4518 */ 0x0646, 0x062C, 0x0645,
+	 /* 4521 */ 0x0646, 0x062C, 0x0645,
+	 /* 4524 */ 0x0646, 0x062C, 0x0649,
+	 /* 4527 */ 0x0646, 0x0645, 0x064A,
+	 /* 4530 */ 0x0646, 0x0645, 0x0649,
+	 /* 4533 */ 0x064A, 0x0645, 0x0645,
+	 /* 4536 */ 0x064A, 0x0645, 0x0645,
+	 /* 4539 */ 0x0628, 0x062E, 0x064A,
+	 /* 4542 */ 0x062A, 0x062C, 0x064A,
+	 /* 4545 */ 0x062A, 0x062C, 0x0649,
+	 /* 4548 */ 0x062A, 0x062E, 0x064A,
+	 /* 4551 */ 0x062A, 0x062E, 0x0649,
+	 /* 4554 */ 0x062A, 0x0645, 0x064A,
+	 /* 4557 */ 0x062A, 0x0645, 0x0649,
+	 /* 4560 */ 0x062C, 0x0645, 0x064A,
+	 /* 4563 */ 0x062C, 0x062D, 0x0649,
+	 /* 4566 */ 0x062C, 0x0645, 0x0649,
+	 /* 4569 */ 0x0633, 0x062E, 0x0649,
+	 /* 4572 */ 0x0635, 0x062D, 0x064A,
+	 /* 4575 */ 0x0634, 0x062D, 0x064A,
+	 /* 4578 */ 0x0636, 0x062D, 0x064A,
+	 /* 4581 */ 0x0644, 0x062C, 0x064A,
+	 /* 4584 */ 0x0644, 0x0645, 0x064A,
+	 /* 4587 */ 0x064A, 0x062D, 0x064A,
+	 /* 4590 */ 0x064A, 0x062C, 0x064A,
+	 /* 4593 */ 0x064A, 0x0645, 0x064A,
+	 /* 4596 */ 0x0645, 0x0645, 0x064A,
+	 /* 4599 */ 0x0642, 0x0645, 0x064A,
+	 /* 4602 */ 0x0646, 0x062D, 0x064A,
+	 /* 4605 */ 0x0642, 0x0645, 0x062D,
+	 /* 4608 */ 0x0644, 0x062D, 0x0645,
+	 /* 4611 */ 0x0639, 0x0645, 0x064A,
+	 /* 4614 */ 0x0643, 0x0645, 0x064A,
+	 /* 4617 */ 0x0646, 0x062C, 0x062D,
+	 /* 4620 */ 0x0645, 0x062E, 0x064A,
+	 /* 4623 */ 0x0644, 0x062C, 0x0645,
+	 /* 4626 */ 0x0643, 0x0645, 0x0645,
+	 /* 4629 */ 0x0644, 0x062C, 0x0645,
+	 /* 4632 */ 0x0646, 0x062C, 0x062D,
+	 /* 4635 */ 0x062C, 0x062D, 0x064A,
+	 /* 4638 */ 0x062D, 0x062C, 0x064A,
+	 /* 4641 */ 0x0645, 0x062C, 0x064A,
+	 /* 4644 */ 0x0641, 0x0645, 0x064A,
+	 /* 4647 */ 0x0628, 0x062D, 0x064A,
+	 /* 4650 */ 0x0643, 0x0645, 0x0645,
+	 /* 4653 */ 0x0639, 0x062C, 0x0645,
+	 /* 4656 */ 0x0635, 0x0645, 0x0645,
+	 /* 4659 */ 0x0633, 0x062E, 0x064A,
+	 /* 4662 */ 0x0646, 0x062C, 0x064A,
+	 /* 4665 */ 0x0635, 0x0644, 0x06D2,
+	 /* 4668 */ 0x0642, 0x0644, 0x06D2,
+	 /* 4671 */ 0x0627, 0x0644, 0x0644, 0x0647,
+	 /* 4675 */ 0x0627, 0x0643, 0x0628, 0x0631,
+	 /* 4679 */ 0x0645, 0x062D, 0x0645, 0x062F,
+	 /* 4683 */ 0x0635, 0x0644, 0x0639, 0x0645,
+	 /* 4687 */ 0x0631, 0x0633, 0x0648, 0x0644,
+	 /* 4691 */ 0x0639, 0x0644, 0x064A, 0x0647,
+	 /* 4695 */ 0x0648, 0x0633, 0x0644, 0x0645,
+	 /* 4699 */ 0x0635, 0x0644, 0x0649,
+	 /* 4702 */ 0x0635, 0x0644, 0x0649, 0x0020, 0x0627, 0x0644, 0x0644, 0x0647, 0x0020, 0x0639, 0x0644, 0x064A, 0x0647, 0x0020, 0x0648, 0x0633, 0x0644, 0x0645,
+	 /* 4720 */ 0x062C, 0x0644, 0x0020, 0x062C, 0x0644, 0x0627, 0x0644, 0x0647,
+	 /* 4728 */ 0x0631, 0x06CC, 0x0627, 0x0644,
+	 /* 4732 */ 0x0020, 0x064B,
+	 /* 4734 */ 0x0640, 0x064B,
+	 /* 4736 */ 0x0020, 0x064C,
+	 /* 4738 */ 0x0020, 0x064D,
+	 /* 4740 */ 0x0020, 0x064E,
+	 /* 4742 */ 0x0640, 0x064E,
+	 /* 4744 */ 0x0020, 0x064F,
+	 /* 4746 */ 0x0640, 0x064F,
+	 /* 4748 */ 0x0020, 0x0650,
+	 /* 4750 */ 0x0640, 0x0650,
+	 /* 4752 */ 0x0020, 0x0651,
+	 /* 4754 */ 0x0640, 0x0651,
+	 /* 4756 */ 0x0020, 0x0652,
+	 /* 4758 */ 0x0640, 0x0652,
 	 /* 4760 */ 0x0644, 0x0622,
-	 /* 4762 */ 0x0644, 0x0623,
+	 /* 4762 */ 0x0644, 0x0622,
 	 /* 4764 */ 0x0644, 0x0623,
-	 /* 4766 */ 0x0644, 0x0625,
+	 /* 4766 */ 0x0644, 0x0623,
 	 /* 4768 */ 0x0644, 0x0625,
-	 /* 4770 */ 0x0644, 0x0627,
+	 /* 4770 */ 0x0644, 0x0625,
 	 /* 4772 */ 0x0644, 0x0627,
-	 /* 4774 */ 0x11099, 0x110BA,
-	 /* 4776 */ 0x1109B, 0x110BA,
-	 /* 4778 */ 0x110A5, 0x110BA,
-	 /* 4780 */ 0x11131, 0x11127,
-	 /* 4782 */ 0x11132, 0x11127,
-	 /* 4784 */ 0x11347, 0x1133E,
-	 /* 4786 */ 0x11347, 0x11357,
-	 /* 4788 */ 0x114B9, 0x114BA,
-	 /* 4790 */ 0x114B9, 0x114B0,
-	 /* 4792 */ 0x114B9, 0x114BD,
-	 /* 4794 */ 0x115B8, 0x115AF,
-	 /* 4796 */ 0x115B9, 0x115AF,
-	 /* 4798 */ 0x1D157, 0x1D165,
-	 /* 4800 */ 0x1D158, 0x1D165,
-	 /* 4802 */ 0x1D15F, 0x1D16E,
-	 /* 4804 */ 0x1D15F, 0x1D16F,
-	 /* 4806 */ 0x1D15F, 0x1D170,
-	 /* 4808 */ 0x1D15F, 0x1D171,
-	 /* 4810 */ 0x1D15F, 0x1D172,
-	 /* 4812 */ 0x1D1B9, 0x1D165,
-	 /* 4814 */ 0x1D1BA, 0x1D165,
-	 /* 4816 */ 0x1D1BB, 0x1D16E,
-	 /* 4818 */ 0x1D1BC, 0x1D16E,
-	 /* 4820 */ 0x1D1BB, 0x1D16F,
-	 /* 4822 */ 0x1D1BC, 0x1D16F,
-	 /* 4824 */ 0x0030, 0x002E,
-	 /* 4826 */ 0x0030, 0x002C,
-	 /* 4828 */ 0x0031, 0x002C,
-	 /* 4830 */ 0x0032, 0x002C,
-	 /* 4832 */ 0x0033, 0x002C,
-	 /* 4834 */ 0x0034, 0x002C,
-	 /* 4836 */ 0x0035, 0x002C,
-	 /* 4838 */ 0x0036, 0x002C,
-	 /* 4840 */ 0x0037, 0x002C,
-	 /* 4842 */ 0x0038, 0x002C,
-	 /* 4844 */ 0x0039, 0x002C,
-	 /* 4846 */ 0x0028, 0x0041, 0x0029,
-	 /* 4849 */ 0x0028, 0x0042, 0x0029,
-	 /* 4852 */ 0x0028, 0x0043, 0x0029,
-	 /* 4855 */ 0x0028, 0x0044, 0x0029,
-	 /* 4858 */ 0x0028, 0x0045, 0x0029,
-	 /* 4861 */ 0x0028, 0x0046, 0x0029,
-	 /* 4864 */ 0x0028, 0x0047, 0x0029,
-	 /* 4867 */ 0x0028, 0x0048, 0x0029,
-	 /* 4870 */ 0x0028, 0x0049, 0x0029,
-	 /* 4873 */ 0x0028, 0x004A, 0x0029,
-	 /* 4876 */ 0x0028, 0x004B, 0x0029,
-	 /* 4879 */ 0x0028, 0x004C, 0x0029,
-	 /* 4882 */ 0x0028, 0x004D, 0x0029,
-	 /* 4885 */ 0x0028, 0x004E, 0x0029,
-	 /* 4888 */ 0x0028, 0x004F, 0x0029,
-	 /* 4891 */ 0x0028, 0x0050, 0x0029,
-	 /* 4894 */ 0x0028, 0x0051, 0x0029,
-	 /* 4897 */ 0x0028, 0x0052, 0x0029,
-	 /* 4900 */ 0x0028, 0x0053, 0x0029,
-	 /* 4903 */ 0x0028, 0x0054, 0x0029,
-	 /* 4906 */ 0x0028, 0x0055, 0x0029,
-	 /* 4909 */ 0x0028, 0x0056, 0x0029,
-	 /* 4912 */ 0x0028, 0x0057, 0x0029,
-	 /* 4915 */ 0x0028, 0x0058, 0x0029,
-	 /* 4918 */ 0x0028, 0x0059, 0x0029,
-	 /* 4921 */ 0x0028, 0x005A, 0x0029,
-	 /* 4924 */ 0x3014, 0x0053, 0x3015,
-	 /* 4927 */ 0x0043, 0x0044,
-	 /* 4929 */ 0x0057, 0x005A,
-	 /* 4931 */ 0x0048, 0x0056,
-	 /* 4933 */ 0x004D, 0x0056,
-	 /* 4935 */ 0x0053, 0x0044,
-	 /* 4937 */ 0x0053, 0x0053,
-	 /* 4939 */ 0x0050, 0x0050, 0x0056,
-	 /* 4942 */ 0x0057, 0x0043,
-	 /* 4944 */ 0x004D, 0x0043,
-	 /* 4946 */ 0x004D, 0x0044,
-	 /* 4948 */ 0x0044, 0x004A,
-	 /* 4950 */ 0x307B, 0x304B,
-	 /* 4952 */ 0x30B3, 0x30B3,
-	 /* 4954 */ 0x3014, 0x672C, 0x3015,
-	 /* 4957 */ 0x3014, 0x4E09, 0x3015,
-	 /* 4960 */ 0x3014, 0x4E8C, 0x3015,
-	 /* 4963 */ 0x3014, 0x5B89, 0x3015,
-	 /* 4966 */ 0x3014, 0x70B9, 0x3015,
-	 /* 4969 */ 0x3014, 0x6253, 0x3015,
-	 /* 4972 */ 0x3014, 0x76D7, 0x3015,
-	 /* 4975 */ 0x3014, 0x52DD, 0x3015,
-	 /* 4978 */ 0x3014, 0x6557, 0x3015,
-	 /* 4981 */ 0x20122,
-	 /* 4982 */ 0x2063A,
-	 /* 4983 */ 0x2051C,
-	 /* 4984 */ 0x2054B,
-	 /* 4985 */ 0x291DF,
-	 /* 4986 */ 0x20A2C,
-	 /* 4987 */ 0x20B63,
-	 /* 4988 */ 0x214E4,
-	 /* 4989 */ 0x216A8,
-	 /* 4990 */ 0x216EA,
-	 /* 4991 */ 0x219C8,
-	 /* 4992 */ 0x21B18,
-	 /* 4993 */ 0x21DE4,
-	 /* 4994 */ 0x21DE6,
-	 /* 4995 */ 0x22183,
-	 /* 4996 */ 0x2A392,
-	 /* 4997 */ 0x22331,
-	 /* 4998 */ 0x22331,
-	 /* 4999 */ 0x232B8,
-	 /* 5000 */ 0x261DA,
-	 /* 5001 */ 0x226D4,
-	 /* 5002 */ 0x22B0C,
-	 /* 5003 */ 0x22BF1,
-	 /* 5004 */ 0x2300A,
-	 /* 5005 */ 0x233C3,
-	 /* 5006 */ 0x2346D,
-	 /* 5007 */ 0x236A3,
-	 /* 5008 */ 0x238A7,
-	 /* 5009 */ 0x23A8D,
-	 /* 5010 */ 0x21D0B,
-	 /* 5011 */ 0x23AFA,
-	 /* 5012 */ 0x23CBC,
-	 /* 5013 */ 0x23D1E,
-	 /* 5014 */ 0x23ED1,
-	 /* 5015 */ 0x23F5E,
-	 /* 5016 */ 0x23F8E,
-	 /* 5017 */ 0x20525,
-	 /* 5018 */ 0x24263,
-	 /* 5019 */ 0x243AB,
-	 /* 5020 */ 0x24608,
-	 /* 5021 */ 0x24735,
-	 /* 5022 */ 0x24814,
-	 /* 5023 */ 0x24C36,
-	 /* 5024 */ 0x24C92,
-	 /* 5025 */ 0x2219F,
-	 /* 5026 */ 0x24FA1,
-	 /* 5027 */ 0x24FB8,
-	 /* 5028 */ 0x25044,
-	 /* 5029 */ 0x250F3,
-	 /* 5030 */ 0x250F2,
-	 /* 5031 */ 0x25119,
-	 /* 5032 */ 0x25133,
-	 /* 5033 */ 0x2541D,
-	 /* 5034 */ 0x25626,
-	 /* 5035 */ 0x2569A,
-	 /* 5036 */ 0x256C5,
-	 /* 5037 */ 0x2597C,
-	 /* 5038 */ 0x25AA7,
-	 /* 5039 */ 0x25AA7,
-	 /* 5040 */ 0x25BAB,
-	 /* 5041 */ 0x25C80,
-	 /* 5042 */ 0x25F86,
-	 /* 5043 */ 0x26228,
-	 /* 5044 */ 0x26247,
-	 /* 5045 */ 0x262D9,
-	 /* 5046 */ 0x2633E,
-	 /* 5047 */ 0x264DA,
-	 /* 5048 */ 0x26523,
-	 /* 5049 */ 0x265A8,
-	 /* 5050 */ 0x2335F,
-	 /* 5051 */ 0x267A7,
-	 /* 5052 */ 0x267B5,
-	 /* 5053 */ 0x23393,
-	 /* 5054 */ 0x2339C,
-	 /* 5055 */ 0x26B3C,
-	 /* 5056 */ 0x26C36,
-	 /* 5057 */ 0x26D6B,
-	 /* 5058 */ 0x26CD5,
-	 /* 5059 */ 0x273CA,
-	 /* 5060 */ 0x26F2C,
-	 /* 5061 */ 0x26FB1,
-	 /* 5062 */ 0x270D2,
-	 /* 5063 */ 0x27667,
-	 /* 5064 */ 0x278AE,
-	 /* 5065 */ 0x27966,
-	 /* 5066 */ 0x27CA8,
-	 /* 5067 */ 0x27F2F,
-	 /* 5068 */ 0x20804,
-	 /* 5069 */ 0x208DE,
-	 /* 5070 */ 0x285D2,
-	 /* 5071 */ 0x285ED,
-	 /* 5072 */ 0x2872E,
-	 /* 5073 */ 0x28BFA,
-	 /* 5074 */ 0x28D77,
-	 /* 5075 */ 0x29145,
-	 /* 5076 */ 0x2921A,
-	 /* 5077 */ 0x2940A,
-	 /* 5078 */ 0x29496,
-	 /* 5079 */ 0x295B6,
-	 /* 5080 */ 0x29B30,
-	 /* 5081 */ 0x2A0CE,
-	 /* 5082 */ 0x2A105,
-	 /* 5083 */ 0x2A20E,
-	 /* 5084 */ 0x2A291,
-	 /* 5085 */ 0x2A600
+	 /* 4774 */ 0x0644, 0x0627,
+	 /* 4776 */ 0x11099, 0x110BA,
+	 /* 4778 */ 0x1109B, 0x110BA,
+	 /* 4780 */ 0x110A5, 0x110BA,
+	 /* 4782 */ 0x11131, 0x11127,
+	 /* 4784 */ 0x11132, 0x11127,
+	 /* 4786 */ 0x11347, 0x1133E,
+	 /* 4788 */ 0x11347, 0x11357,
+	 /* 4790 */ 0x114B9, 0x114BA,
+	 /* 4792 */ 0x114B9, 0x114B0,
+	 /* 4794 */ 0x114B9, 0x114BD,
+	 /* 4796 */ 0x115B8, 0x115AF,
+	 /* 4798 */ 0x115B9, 0x115AF,
+	 /* 4800 */ 0x1D157, 0x1D165,
+	 /* 4802 */ 0x1D158, 0x1D165,
+	 /* 4804 */ 0x1D15F, 0x1D16E,
+	 /* 4806 */ 0x1D15F, 0x1D16F,
+	 /* 4808 */ 0x1D15F, 0x1D170,
+	 /* 4810 */ 0x1D15F, 0x1D171,
+	 /* 4812 */ 0x1D15F, 0x1D172,
+	 /* 4814 */ 0x1D1B9, 0x1D165,
+	 /* 4816 */ 0x1D1BA, 0x1D165,
+	 /* 4818 */ 0x1D1BB, 0x1D16E,
+	 /* 4820 */ 0x1D1BC, 0x1D16E,
+	 /* 4822 */ 0x1D1BB, 0x1D16F,
+	 /* 4824 */ 0x1D1BC, 0x1D16F,
+	 /* 4826 */ 0x0030, 0x002E,
+	 /* 4828 */ 0x0030, 0x002C,
+	 /* 4830 */ 0x0031, 0x002C,
+	 /* 4832 */ 0x0032, 0x002C,
+	 /* 4834 */ 0x0033, 0x002C,
+	 /* 4836 */ 0x0034, 0x002C,
+	 /* 4838 */ 0x0035, 0x002C,
+	 /* 4840 */ 0x0036, 0x002C,
+	 /* 4842 */ 0x0037, 0x002C,
+	 /* 4844 */ 0x0038, 0x002C,
+	 /* 4846 */ 0x0039, 0x002C,
+	 /* 4848 */ 0x0028, 0x0041, 0x0029,
+	 /* 4851 */ 0x0028, 0x0042, 0x0029,
+	 /* 4854 */ 0x0028, 0x0043, 0x0029,
+	 /* 4857 */ 0x0028, 0x0044, 0x0029,
+	 /* 4860 */ 0x0028, 0x0045, 0x0029,
+	 /* 4863 */ 0x0028, 0x0046, 0x0029,
+	 /* 4866 */ 0x0028, 0x0047, 0x0029,
+	 /* 4869 */ 0x0028, 0x0048, 0x0029,
+	 /* 4872 */ 0x0028, 0x0049, 0x0029,
+	 /* 4875 */ 0x0028, 0x004A, 0x0029,
+	 /* 4878 */ 0x0028, 0x004B, 0x0029,
+	 /* 4881 */ 0x0028, 0x004C, 0x0029,
+	 /* 4884 */ 0x0028, 0x004D, 0x0029,
+	 /* 4887 */ 0x0028, 0x004E, 0x0029,
+	 /* 4890 */ 0x0028, 0x004F, 0x0029,
+	 /* 4893 */ 0x0028, 0x0050, 0x0029,
+	 /* 4896 */ 0x0028, 0x0051, 0x0029,
+	 /* 4899 */ 0x0028, 0x0052, 0x0029,
+	 /* 4902 */ 0x0028, 0x0053, 0x0029,
+	 /* 4905 */ 0x0028, 0x0054, 0x0029,
+	 /* 4908 */ 0x0028, 0x0055, 0x0029,
+	 /* 4911 */ 0x0028, 0x0056, 0x0029,
+	 /* 4914 */ 0x0028, 0x0057, 0x0029,
+	 /* 4917 */ 0x0028, 0x0058, 0x0029,
+	 /* 4920 */ 0x0028, 0x0059, 0x0029,
+	 /* 4923 */ 0x0028, 0x005A, 0x0029,
+	 /* 4926 */ 0x3014, 0x0053, 0x3015,
+	 /* 4929 */ 0x0043, 0x0044,
+	 /* 4931 */ 0x0057, 0x005A,
+	 /* 4933 */ 0x0048, 0x0056,
+	 /* 4935 */ 0x004D, 0x0056,
+	 /* 4937 */ 0x0053, 0x0044,
+	 /* 4939 */ 0x0053, 0x0053,
+	 /* 4941 */ 0x0050, 0x0050, 0x0056,
+	 /* 4944 */ 0x0057, 0x0043,
+	 /* 4946 */ 0x004D, 0x0043,
+	 /* 4948 */ 0x004D, 0x0044,
+	 /* 4950 */ 0x004D, 0x0052,
+	 /* 4952 */ 0x0044, 0x004A,
+	 /* 4954 */ 0x307B, 0x304B,
+	 /* 4956 */ 0x30B3, 0x30B3,
+	 /* 4958 */ 0x3014, 0x672C, 0x3015,
+	 /* 4961 */ 0x3014, 0x4E09, 0x3015,
+	 /* 4964 */ 0x3014, 0x4E8C, 0x3015,
+	 /* 4967 */ 0x3014, 0x5B89, 0x3015,
+	 /* 4970 */ 0x3014, 0x70B9, 0x3015,
+	 /* 4973 */ 0x3014, 0x6253, 0x3015,
+	 /* 4976 */ 0x3014, 0x76D7, 0x3015,
+	 /* 4979 */ 0x3014, 0x52DD, 0x3015,
+	 /* 4982 */ 0x3014, 0x6557, 0x3015,
+	 /* 4985 */ 0x20122,
+	 /* 4986 */ 0x2063A,
+	 /* 4987 */ 0x2051C,
+	 /* 4988 */ 0x2054B,
+	 /* 4989 */ 0x291DF,
+	 /* 4990 */ 0x20A2C,
+	 /* 4991 */ 0x20B63,
+	 /* 4992 */ 0x214E4,
+	 /* 4993 */ 0x216A8,
+	 /* 4994 */ 0x216EA,
+	 /* 4995 */ 0x219C8,
+	 /* 4996 */ 0x21B18,
+	 /* 4997 */ 0x21DE4,
+	 /* 4998 */ 0x21DE6,
+	 /* 4999 */ 0x22183,
+	 /* 5000 */ 0x2A392,
+	 /* 5001 */ 0x22331,
+	 /* 5002 */ 0x22331,
+	 /* 5003 */ 0x232B8,
+	 /* 5004 */ 0x261DA,
+	 /* 5005 */ 0x226D4,
+	 /* 5006 */ 0x22B0C,
+	 /* 5007 */ 0x22BF1,
+	 /* 5008 */ 0x2300A,
+	 /* 5009 */ 0x233C3,
+	 /* 5010 */ 0x2346D,
+	 /* 5011 */ 0x236A3,
+	 /* 5012 */ 0x238A7,
+	 /* 5013 */ 0x23A8D,
+	 /* 5014 */ 0x21D0B,
+	 /* 5015 */ 0x23AFA,
+	 /* 5016 */ 0x23CBC,
+	 /* 5017 */ 0x23D1E,
+	 /* 5018 */ 0x23ED1,
+	 /* 5019 */ 0x23F5E,
+	 /* 5020 */ 0x23F8E,
+	 /* 5021 */ 0x20525,
+	 /* 5022 */ 0x24263,
+	 /* 5023 */ 0x243AB,
+	 /* 5024 */ 0x24608,
+	 /* 5025 */ 0x24735,
+	 /* 5026 */ 0x24814,
+	 /* 5027 */ 0x24C36,
+	 /* 5028 */ 0x24C92,
+	 /* 5029 */ 0x2219F,
+	 /* 5030 */ 0x24FA1,
+	 /* 5031 */ 0x24FB8,
+	 /* 5032 */ 0x25044,
+	 /* 5033 */ 0x250F3,
+	 /* 5034 */ 0x250F2,
+	 /* 5035 */ 0x25119,
+	 /* 5036 */ 0x25133,
+	 /* 5037 */ 0x2541D,
+	 /* 5038 */ 0x25626,
+	 /* 5039 */ 0x2569A,
+	 /* 5040 */ 0x256C5,
+	 /* 5041 */ 0x2597C,
+	 /* 5042 */ 0x25AA7,
+	 /* 5043 */ 0x25AA7,
+	 /* 5044 */ 0x25BAB,
+	 /* 5045 */ 0x25C80,
+	 /* 5046 */ 0x25F86,
+	 /* 5047 */ 0x26228,
+	 /* 5048 */ 0x26247,
+	 /* 5049 */ 0x262D9,
+	 /* 5050 */ 0x2633E,
+	 /* 5051 */ 0x264DA,
+	 /* 5052 */ 0x26523,
+	 /* 5053 */ 0x265A8,
+	 /* 5054 */ 0x2335F,
+	 /* 5055 */ 0x267A7,
+	 /* 5056 */ 0x267B5,
+	 /* 5057 */ 0x23393,
+	 /* 5058 */ 0x2339C,
+	 /* 5059 */ 0x26B3C,
+	 /* 5060 */ 0x26C36,
+	 /* 5061 */ 0x26D6B,
+	 /* 5062 */ 0x26CD5,
+	 /* 5063 */ 0x273CA,
+	 /* 5064 */ 0x26F2C,
+	 /* 5065 */ 0x26FB1,
+	 /* 5066 */ 0x270D2,
+	 /* 5067 */ 0x27667,
+	 /* 5068 */ 0x278AE,
+	 /* 5069 */ 0x27966,
+	 /* 5070 */ 0x27CA8,
+	 /* 5071 */ 0x27F2F,
+	 /* 5072 */ 0x20804,
+	 /* 5073 */ 0x208DE,
+	 /* 5074 */ 0x285D2,
+	 /* 5075 */ 0x285ED,
+	 /* 5076 */ 0x2872E,
+	 /* 5077 */ 0x28BFA,
+	 /* 5078 */ 0x28D77,
+	 /* 5079 */ 0x29145,
+	 /* 5080 */ 0x2921A,
+	 /* 5081 */ 0x2940A,
+	 /* 5082 */ 0x29496,
+	 /* 5083 */ 0x295B6,
+	 /* 5084 */ 0x29B30,
+	 /* 5085 */ 0x2A0CE,
+	 /* 5086 */ 0x2A105,
+	 /* 5087 */ 0x2A20E,
+	 /* 5088 */ 0x2A291,
+	 /* 5089 */ 0x2A600
 };
