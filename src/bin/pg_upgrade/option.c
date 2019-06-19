@@ -217,7 +217,7 @@ parseCommandLine(int argc, char *argv[])
 	}
 
 	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
-		pg_fatal("could not write to log file \"%s\"\n", INTERNAL_LOG_FILE);
+		pg_fatal("could not open log file \"%s\": %m\n", INTERNAL_LOG_FILE);
 
 	if (log_opts.verbose)
 		pg_log(PG_REPORT, "Running in verbose mode\n");
@@ -226,7 +226,7 @@ parseCommandLine(int argc, char *argv[])
 	for (filename = output_files; *filename != NULL; filename++)
 	{
 		if ((fp = fopen_priv(*filename, "a")) == NULL)
-			pg_fatal("could not write to log file \"%s\"\n", *filename);
+			pg_fatal("could not write to log file \"%s\": %m\n", *filename);
 
 		/* Start with newline because we might be appending to a file. */
 		fprintf(fp, "\n"

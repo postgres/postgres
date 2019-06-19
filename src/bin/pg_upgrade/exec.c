@@ -146,7 +146,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 #endif
 
 	if (log == NULL)
-		pg_fatal("could not write to log file \"%s\"\n", log_file);
+		pg_fatal("could not open log file \"%s\": %m\n", log_file);
 
 #ifdef WIN32
 	/* Are we printing "command:" before its output? */
@@ -201,7 +201,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	 * log these commands to a third file, but that just adds complexity.
 	 */
 	if ((log = fopen(log_file, "a")) == NULL)
-		pg_fatal("could not write to log file \"%s\"\n", log_file);
+		pg_fatal("could not write to log file \"%s\": %m\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
 #endif
