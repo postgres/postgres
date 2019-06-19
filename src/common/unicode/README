@@ -10,7 +10,7 @@ Generating unicode_norm_table.h
 
 1. Download the Unicode data file, UnicodeData.txt, from the Unicode
 consortium and place it to the current directory. Run the perl script
-"norm_test_generate.pl", to process it, and to generate the
+"generate-unicode_norm_table.pl", to process it, and to generate the
 "unicode_norm_table.h" file. The Makefile contains a rule to download the
 data files if they don't exist.
 
