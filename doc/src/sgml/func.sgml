@@ -12048,7 +12048,11 @@ table2-mapping
        </row>
        <row>
         <entry><literal>like_regex</literal></entry>
-        <entry>Tests pattern matching with POSIX regular expressions</entry>
+        <entry>
+          Tests pattern matching with POSIX regular expressions
+          (<xref linkend="functions-posix-regexp"/>).  Supported flags
+          are <literal>i</literal>, <literal>s</literal>, <literal>m</literal>,
+          <literal>x</literal> and <literal>q</literal>.</entry>
         <entry><literal>["abc", "abd", "aBdC", "abdacb", "babc"]</literal></entry>
         <entry><literal>$[*] ? (@ like_regex "^ab.*c" flag "i")</literal></entry>
         <entry><literal>"abc", "aBdC", "abdacb"</literal></entry>
