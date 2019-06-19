@@ -22,6 +22,10 @@ Therefore, any tool used needs to be able to produce SVG.
 This directory contains makefile rules to build SVG from common input
 formats, using some common styling.
 
+fixup-svg.xsl applies some postprocessing to the SVG files produced by
+those external tools to address assorted issues.  See comments in
+there, and adjust and expand as necessary.
+
 Both the source and the SVG output file are committed in this
 directory.  That way, we don't need all developers to have all the
 tools installed.  While we accept that there could be some gratuitous
@@ -59,10 +63,3 @@ Notes:
 - The width should be set to something.  This ensures that the image
   is scaled to fit the page in PDF output.  (Other widths than 100%
   might be appropriate.)
-
-- SVG images should be scalable as they will be rendered in a variety
-  of places (web, PDF, etc.) as well as in different viewports
-  (desktop, mobile, etc.). To help the images successfully scale,
-  employ a "viewBox" attribute in the SVG tag. For example,
-  to create an image with a default width and height of 400x300,
-  you would use viewBox="0.00 0.00 400.00 300.00"
