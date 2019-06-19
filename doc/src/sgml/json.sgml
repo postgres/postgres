@@ -733,10 +733,12 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
      </row>
      <row>
       <entry><literal>$varname</literal></entry>
-      <entry>A named variable. Its value must be set in the
-      <command>PASSING</command> clause of an SQL/JSON query function.
- <!-- TBD: See <xref linkend="sqljson-input-clause"/> -->
-      for details.
+      <entry>
+        A named variable. Its value can be set by the parameter
+        <parameter>vars</parameter> of several JSON processing functions.
+        See <xref linkend="functions-json-processing-table"/> and
+        its notes for details.
+        <!-- TODO: describe PASSING clause once implemented !-->
       </entry>
      </row>
      <row>
