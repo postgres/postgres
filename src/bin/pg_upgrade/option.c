@@ -101,9 +101,6 @@ parseCommandLine(int argc, char *argv[])
 	if (os_user_effective_id == 0)
 		pg_fatal("%s: cannot be run as root\n", os_info.progname);
 
-	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
-		pg_fatal("could not write to log file \"%s\"\n", INTERNAL_LOG_FILE);
-
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:rs:U:v",
 								 long_options, &optindex)) != -1)
 	{
@@ -205,7 +202,6 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			case 'v':
-				pg_log(PG_REPORT, "Running in verbose mode\n");
 				log_opts.verbose = true;
 				break;
 
@@ -214,11 +210,17 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			default:
-				pg_fatal("Try \"%s --help\" for more information.\n",
-						 os_info.progname);
-				break;
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+						os_info.progname);
+				exit(1);
 		}
 	}
+
+	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
+		pg_fatal("could not write to log file \"%s\"\n", INTERNAL_LOG_FILE);
+
+	if (log_opts.verbose)
+		pg_log(PG_REPORT, "Running in verbose mode\n");
 
 	/* label start of upgrade in logfiles */
 	for (filename = output_files; *filename != NULL; filename++)
