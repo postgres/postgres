@@ -98,8 +98,10 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			}
 		case XLOG_BTREE_META_CLEANUP:
 			{
-				xl_btree_metadata *xlrec = (xl_btree_metadata *) rec;
+				xl_btree_metadata *xlrec;
 
+				xlrec = (xl_btree_metadata *) XLogRecGetBlockData(record, 0,
+																  NULL);
 				appendStringInfo(buf, "oldest_btpo_xact %u; last_cleanup_num_heap_tuples: %f",
 								 xlrec->oldest_btpo_xact,
 								 xlrec->last_cleanup_num_heap_tuples);
