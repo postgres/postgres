@@ -453,6 +453,24 @@ select '$ ? (@ like_regex "pattern" flag "xsms")'::jsonpath;
  $?(@ like_regex "pattern" flag "sx")
 (1 row)
 
+select '$ ? (@ like_regex "pattern" flag "q")'::jsonpath;
+              jsonpath               
+-------------------------------------
+ $?(@ like_regex "pattern" flag "q")
+(1 row)
+
+select '$ ? (@ like_regex "pattern" flag "iq")'::jsonpath;
+               jsonpath               
+--------------------------------------
+ $?(@ like_regex "pattern" flag "iq")
+(1 row)
+
+select '$ ? (@ like_regex "pattern" flag "smixq")'::jsonpath;
+                jsonpath                
+----------------------------------------
+ $?(@ like_regex "pattern" flag "imxq")
+(1 row)
+
 select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;
 ERROR:  invalid input syntax for type jsonpath
 LINE 1: select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;

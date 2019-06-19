@@ -91,6 +91,7 @@ typedef enum JsonPathItemType
 #define JSP_REGEX_SLINE		0x02	/* s flag, single-line mode */
 #define JSP_REGEX_MLINE		0x04	/* m flag, multi-line mode */
 #define JSP_REGEX_WSPACE	0x08	/* x flag, expanded syntax */
+#define JSP_REGEX_QUOTE		0x10	/* q flag, no special characters */
 
 /*
  * Support functions to parse/construct binary value.

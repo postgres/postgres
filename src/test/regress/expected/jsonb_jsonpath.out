@@ -1622,6 +1622,42 @@ select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "
  "abdacb"
 (2 rows)
 
+select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ like_regex "a\\b" flag "q")');
+ jsonb_path_query 
+------------------
+ "a\\b"
+ "^a\\b$"
+(2 rows)
+
+select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ like_regex "a\\b" flag "")');
+ jsonb_path_query 
+------------------
+ "a\b"
+(1 row)
+
+select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ like_regex "^a\\b$" flag "q")');
+ jsonb_path_query 
+------------------
+ "^a\\b$"
+(1 row)
+
+select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ like_regex "^a\\B$" flag "q")');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ like_regex "^a\\B$" flag "iq")');
+ jsonb_path_query 
+------------------
+ "^a\\b$"
+(1 row)
+
+select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ like_regex "^a\\b$" flag "")');
+ jsonb_path_query 
+------------------
+ "a\b"
+(1 row)
+
 -- jsonpath operators
 SELECT jsonb_path_query('[{"a": 1}, {"a": 2}]', '$[*]');
  jsonb_path_query 

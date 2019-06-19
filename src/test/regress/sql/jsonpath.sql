@@ -83,6 +83,9 @@ select '$ ? (@ like_regex "pattern" flag "i")'::jsonpath;
 select '$ ? (@ like_regex "pattern" flag "is")'::jsonpath;
 select '$ ? (@ like_regex "pattern" flag "isim")'::jsonpath;
 select '$ ? (@ like_regex "pattern" flag "xsms")'::jsonpath;
+select '$ ? (@ like_regex "pattern" flag "q")'::jsonpath;
+select '$ ? (@ like_regex "pattern" flag "iq")'::jsonpath;
+select '$ ? (@ like_regex "pattern" flag "smixq")'::jsonpath;
 select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;
 
 select '$ < 1'::jsonpath;

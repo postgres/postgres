@@ -510,6 +510,14 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				v->value.like_regex.flags |= JSP_REGEX_WSPACE;
 				cflags |= REG_EXPANDED;
 				break;
+			case 'q':
+				v->value.like_regex.flags |= JSP_REGEX_QUOTE;
+				if (!(v->value.like_regex.flags & (JSP_REGEX_MLINE | JSP_REGEX_SLINE | JSP_REGEX_WSPACE)))
+				{
+					cflags &= ~REG_ADVANCED;
+					cflags |= REG_QUOTE;
+				}
+				break;
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
