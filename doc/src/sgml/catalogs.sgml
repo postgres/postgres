@@ -1730,7 +1730,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><structfield>relam</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-am"><structname>pg_am</structname></link>.oid</literal></entry>
-      <entry>If this is an index, the access method used (B-tree, hash, etc.)</entry>
+      <entry>
+       If this is a table or an index, the access method used (heap,
+       B-tree, hash, etc.)
+      </entry>
      </row>
 
      <row>
