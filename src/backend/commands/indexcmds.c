@@ -2499,7 +2499,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	if (objectKind == REINDEX_OBJECT_SYSTEM && concurrent)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("concurrent reindex of system catalogs is not supported")));
+				 errmsg("cannot reindex system catalogs concurrently")));
 
 	/*
 	 * Get OID of object to reindex, being the database currently being used
@@ -2613,7 +2613,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			if (!concurrent_warning)
 				ereport(WARNING,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("concurrent reindex is not supported for catalog relations, skipping all")));
+						 errmsg("cannot reindex system catalogs concurrently, skipping all")));
 			concurrent_warning = true;
 			continue;
 		}
@@ -2764,11 +2764,10 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 				MemoryContextSwitchTo(oldcontext);
 
-				/* A system catalog cannot be reindexed concurrently */
 				if (IsCatalogRelationOid(relationOid))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot reindex a system catalog concurrently")));
+							 errmsg("cannot reindex system catalogs concurrently")));
 
 				/* Open relation to get its indexes */
 				heapRelation = table_open(relationOid, ShareUpdateExclusiveLock);
@@ -2858,11 +2857,10 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 			{
 				Oid			heapId = IndexGetRelation(relationOid, false);
 
-				/* A system catalog cannot be reindexed concurrently */
 				if (IsCatalogRelationOid(heapId))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot reindex a system catalog concurrently")));
+							 errmsg("cannot reindex system catalogs concurrently")));
 
 				/* Save the list of relation OIDs in private context */
 				oldcontext = MemoryContextSwitchTo(private_context);

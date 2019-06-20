@@ -2093,19 +2093,19 @@ REINDEX TABLE CONCURRENTLY concur_reindex_tab;
 ERROR:  REINDEX CONCURRENTLY cannot run inside a transaction block
 COMMIT;
 REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relation
-ERROR:  cannot reindex a system catalog concurrently
+ERROR:  cannot reindex system catalogs concurrently
 REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
-ERROR:  cannot reindex a system catalog concurrently
+ERROR:  cannot reindex system catalogs concurrently
 -- These are the toast table and index of pg_authid.
 REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
-ERROR:  cannot reindex a system catalog concurrently
+ERROR:  cannot reindex system catalogs concurrently
 REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
-ERROR:  cannot reindex a system catalog concurrently
+ERROR:  cannot reindex system catalogs concurrently
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
-ERROR:  concurrent reindex of system catalogs is not supported
+ERROR:  cannot reindex system catalogs concurrently
 -- Warns about catalog relations
 REINDEX SCHEMA CONCURRENTLY pg_catalog;
-WARNING:  concurrent reindex is not supported for catalog relations, skipping all
+WARNING:  cannot reindex system catalogs concurrently, skipping all
 -- Check the relation status, there should not be invalid indexes
 \d concur_reindex_tab
          Table "public.concur_reindex_tab"
