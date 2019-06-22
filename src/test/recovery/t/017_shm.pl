@@ -12,14 +12,6 @@ use Time::HiRes qw(usleep);
 
 plan tests => 5;
 
-# See PostgresNode
-my $vfs_path = '';
-if ($Config{osname} eq 'msys')
-{
-	$vfs_path = `cd / && pwd -W`;
-	chomp $vfs_path;
-}
-
 my $tempdir = TestLib::tempdir;
 my $port;
 
@@ -103,10 +95,11 @@ log_ipcs();
 # Scenarios involving no postmaster.pid, dead postmaster, and a live backend.
 # Use a regress.c function to emulate the responsiveness of a backend working
 # through a CPU-intensive task.
+my $regress_shlib = TestLib::perl2host($ENV{REGRESS_SHLIB});
 $gnat->safe_psql('postgres', <<EOSQL);
 CREATE FUNCTION wait_pid(int)
    RETURNS void
-   AS '$vfs_path$ENV{REGRESS_SHLIB}'
+   AS '$regress_shlib'
    LANGUAGE C STRICT;
 EOSQL
 my $slow_query = 'SELECT wait_pid(pg_backend_pid())';

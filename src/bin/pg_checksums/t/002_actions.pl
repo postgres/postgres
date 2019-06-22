@@ -183,7 +183,7 @@ check_relation_corruption($node, 'corrupt1', 'pg_default');
 my $basedir        = $node->basedir;
 my $tablespace_dir = "$basedir/ts_corrupt_dir";
 mkdir($tablespace_dir);
-$tablespace_dir = TestLib::real_dir($tablespace_dir);
+$tablespace_dir = TestLib::perl2host($tablespace_dir);
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE ts_corrupt LOCATION '$tablespace_dir';");
 check_relation_corruption($node, 'corrupt2', 'ts_corrupt');
