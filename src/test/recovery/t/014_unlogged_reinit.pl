@@ -30,7 +30,7 @@ ok(-f "$pgdata/$baseUnloggedPath",        'main fork in base exists');
 
 my $tablespaceDir = TestLib::tempdir;
 
-my $realTSDir = TestLib::real_dir($tablespaceDir);
+my $realTSDir = TestLib::perl2host($tablespaceDir);
 
 $node->safe_psql('postgres', "CREATE TABLESPACE ts1 LOCATION '$realTSDir'");
 $node->safe_psql('postgres',

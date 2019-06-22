@@ -164,22 +164,37 @@ sub tempdir_short
 	return File::Temp::tempdir(CLEANUP => 1);
 }
 
-# Return the real directory for a virtual path directory under msys.
-# The directory  must exist. If it's not an existing directory or we're
-# not under msys, return the input argument unchanged.
-sub real_dir
+# Translate a Perl file name to a host file name.  Currently, this is a no-op
+# except for the case of Perl=msys and host=mingw32.  The subject need not
+# exist, but its parent directory must exist.
+sub perl2host
 {
-	my $dir = "$_[0]";
-	return $dir unless -d $dir;
-	return $dir unless $Config{osname} eq 'msys';
+	my ($subject) = @_;
+	return $subject unless $Config{osname} eq 'msys';
 	my $here = cwd;
-	chdir $dir;
+	my $leaf;
+	if (chdir $subject)
+	{
+		$leaf = '';
+	}
+	else
+	{
+		$leaf = '/' . basename $subject;
+		my $parent = dirname $subject;
+		chdir $parent or die "could not chdir \"$parent\": $!";
+	}
 
 	# this odd way of calling 'pwd -W' is the only way that seems to work.
-	$dir = qx{sh -c "pwd -W"};
+	my $dir = qx{sh -c "pwd -W"};
 	chomp $dir;
 	chdir $here;
-	return $dir;
+	return $dir . $leaf;
+}
+
+# For backward compatibility only.
+sub real_dir
+{
+	return perl2host(@_);
 }
 
 sub system_log
