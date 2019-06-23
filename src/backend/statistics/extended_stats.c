@@ -24,6 +24,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_statistic_ext_data.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
@@ -760,7 +761,8 @@ choose_best_statistics(List *stats, Bitmapset *attnums, char requiredkind)
  * attribute numbers from all compatible clauses (recursively).
  */
 static bool
-statext_is_compatible_clause_internal(Node *clause, Index relid, Bitmapset **attnums)
+statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
+									  Index relid, Bitmapset **attnums)
 {
 	/* Look inside any binary-compatible relabeling (as in examine_variable) */
 	if (IsA(clause, RelabelType))
@@ -791,6 +793,7 @@ statext_is_compatible_clause_internal(Node *clause, Index relid, Bitmapset **att
 	/* (Var op Const) or (Const op Var) */
 	if (is_opclause(clause))
 	{
+		RangeTblEntry *rte = root->simple_rte_array[relid];
 		OpExpr	   *expr = (OpExpr *) clause;
 		Var		   *var;
 		bool		varonleft = true;
@@ -833,9 +836,24 @@ statext_is_compatible_clause_internal(Node *clause, Index relid, Bitmapset **att
 				return false;
 		}
 
+		/*
+		 * If there are any securityQuals on the RTE from security barrier
+		 * views or RLS policies, then the user may not have access to all the
+		 * table's data, and we must check that the operator is leak-proof.
+		 *
+		 * If the operator is leaky, then we must ignore this clause for the
+		 * purposes of estimating with MCV lists, otherwise the operator might
+		 * reveal values from the MCV list that the user doesn't have
+		 * permission to see.
+		 */
+		if (rte->securityQuals != NIL &&
+			!get_func_leakproof(get_opcode(expr->opno)))
+			return false;
+
 		var = (varonleft) ? linitial(expr->args) : lsecond(expr->args);
 
-		return statext_is_compatible_clause_internal((Node *) var, relid, attnums);
+		return statext_is_compatible_clause_internal(root, (Node *) var,
+													 relid, attnums);
 	}
 
 	/* AND/OR/NOT clause */
@@ -866,7 +884,8 @@ statext_is_compatible_clause_internal(Node *clause, Index relid, Bitmapset **att
 			 * Had we found incompatible clause in the arguments, treat the
 			 * whole clause as incompatible.
 			 */
-			if (!statext_is_compatible_clause_internal((Node *) lfirst(lc),
+			if (!statext_is_compatible_clause_internal(root,
+													   (Node *) lfirst(lc),
 													   relid, attnums))
 				return false;
 		}
@@ -886,7 +905,8 @@ statext_is_compatible_clause_internal(Node *clause, Index relid, Bitmapset **att
 		if (!IsA(nt->arg, Var))
 			return false;
 
-		return statext_is_compatible_clause_internal((Node *) (nt->arg), relid, attnums);
+		return statext_is_compatible_clause_internal(root, (Node *) (nt->arg),
+													 relid, attnums);
 	}
 
 	return false;
@@ -909,9 +929,12 @@ statext_is_compatible_clause_internal(Node *clause, Index relid, Bitmapset **att
  * complex cases, for example (Var op Var).
  */
 static bool
-statext_is_compatible_clause(Node *clause, Index relid, Bitmapset **attnums)
+statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
+							 Bitmapset **attnums)
 {
+	RangeTblEntry *rte = root->simple_rte_array[relid];
 	RestrictInfo *rinfo = (RestrictInfo *) clause;
+	Oid			userid;
 
 	if (!IsA(rinfo, RestrictInfo))
 		return false;
@@ -924,8 +947,43 @@ statext_is_compatible_clause(Node *clause, Index relid, Bitmapset **attnums)
 	if (bms_membership(rinfo->clause_relids) != BMS_SINGLETON)
 		return false;
 
-	return statext_is_compatible_clause_internal((Node *) rinfo->clause,
-												 relid, attnums);
+	/* Check the clause and determine what attributes it references. */
+	if (!statext_is_compatible_clause_internal(root, (Node *) rinfo->clause,
+											   relid, attnums))
+		return false;
+
+	/*
+	 * Check that the user has permission to read all these attributes.  Use
+	 * checkAsUser if it's set, in case we're accessing the table via a view.
+	 */
+	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+
+	if (pg_class_aclcheck(rte->relid, userid, ACL_SELECT) != ACLCHECK_OK)
+	{
+		/* Don't have table privilege, must check individual columns */
+		if (bms_is_member(InvalidAttrNumber, *attnums))
+		{
+			/* Have a whole-row reference, must have access to all columns */
+			if (pg_attribute_aclcheck_all(rte->relid, userid, ACL_SELECT,
+										  ACLMASK_ALL) != ACLCHECK_OK)
+				return false;
+		}
+		else
+		{
+			/* Check the columns referenced by the clause */
+			int			attnum = -1;
+
+			while ((attnum = bms_next_member(*attnums, attnum)) >= 0)
+			{
+				if (pg_attribute_aclcheck(rte->relid, attnum, userid,
+										  ACL_SELECT) != ACLCHECK_OK)
+					return false;
+			}
+		}
+	}
+
+	/* If we reach here, the clause is OK */
+	return true;
 }
 
 /*
@@ -1027,7 +1085,7 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 		Bitmapset  *attnums = NULL;
 
 		if (!bms_is_member(listidx, *estimatedclauses) &&
-			statext_is_compatible_clause(clause, rel->relid, &attnums))
+			statext_is_compatible_clause(root, clause, rel->relid, &attnums))
 		{
 			list_attnums[listidx] = attnums;
 			clauses_attnums = bms_add_members(clauses_attnums, attnums);
