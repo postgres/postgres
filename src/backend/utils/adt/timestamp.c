@@ -5180,8 +5180,8 @@ TimestampTimestampTzRequiresRewrite(void)
 	long		offset;
 
 	if (pg_get_timezone_offset(session_timezone, &offset) && offset == 0)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(true);
+		return false;
+	return true;
 }
 
 /* timestamp_timestamptz()
