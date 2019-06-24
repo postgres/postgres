@@ -773,13 +773,13 @@ index_create(Relation heapRelation,
 				 errmsg("concurrent index creation on system catalog tables is not supported")));
 
 	/*
-	 * This case is currently not supported, but there's no way to ask for it
-	 * in the grammar anyway, so it can't happen.
+	 * This case is currently not supported.  There's no way to ask for it in
+	 * the grammar with CREATE INDEX, but it can happen with REINDEX.
 	 */
 	if (concurrent && is_exclusion)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg_internal("concurrent index creation for exclusion constraints is not supported")));
+				 errmsg("concurrent index creation for exclusion constraints is not supported")));
 
 	/*
 	 * We cannot allow indexing a shared relation after initdb (because
