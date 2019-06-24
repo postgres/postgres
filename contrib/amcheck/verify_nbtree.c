@@ -798,23 +798,25 @@ nextpage:
  * target page:
  *
  * - That every "real" data item is less than or equal to the high key, which
- *	 is an upper bound on the items on the pages (where there is a high key at
- *	 all -- pages that are rightmost lack one).
+ *	 is an upper bound on the items on the page.  Data items should be
+ *	 strictly less than the high key when the page is an internal page.
  *
- * - That within the page, every "real" item is less than or equal to the item
- *	 immediately to its right, if any (i.e., that the items are in order within
- *	 the page, so that the binary searches performed by index scans are sane).
+ * - That within the page, every data item is strictly less than the item
+ *	 immediately to its right, if any (i.e., that the items are in order
+ *	 within the page, so that the binary searches performed by index scans are
+ *	 sane).
  *
- * - That the last item stored on the page is less than or equal to the first
- *	 "real" data item on the page to the right (if such a first item is
+ * - That the last data item stored on the page is strictly less than the
+ *	 first data item on the page to the right (when such a first item is
  *	 available).
  *
- * - That tuples report that they have the expected number of attributes.
- *	 INCLUDE index pivot tuples should not contain non-key attributes.
+ * - Various checks on the structure of tuples themselves.  For example, check
+ *	 that non-pivot tuples have no truncated attributes.
  *
  * Furthermore, when state passed shows ShareLock held, function also checks:
  *
- * - That all child pages respect downlinks lower bound.
+ * - That all child pages respect strict lower bound from parent's pivot
+ *	 tuple.
  *
  * - That downlink to block was encountered in parent where that's expected.
  *   (Limited to heapallindexed readonly callers.)
