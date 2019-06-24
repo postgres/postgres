@@ -458,8 +458,6 @@ static ObjectAddress ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 										   AlterTableCmd *cmd, LOCKMODE lockmode);
 static void RememberConstraintForRebuilding(Oid conoid, AlteredTableInfo *tab);
 static void RememberIndexForRebuilding(Oid indoid, AlteredTableInfo *tab);
-static ObjectAddress ATExecAlterColumnGenericOptions(Relation rel, const char *colName,
-													 List *options, LOCKMODE lockmode);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab,
 								   LOCKMODE lockmode);
 static void ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId,
@@ -470,6 +468,8 @@ static void RebuildConstraintComment(AlteredTableInfo *tab, int pass,
 									 const char *conname);
 static void TryReuseIndex(Oid oldId, IndexStmt *stmt);
 static void TryReuseForeignKey(Oid oldId, Constraint *con);
+static ObjectAddress ATExecAlterColumnGenericOptions(Relation rel, const char *colName,
+													 List *options, LOCKMODE lockmode);
 static void change_owner_fix_column_acls(Oid relationOid,
 										 Oid oldOwnerId, Oid newOwnerId);
 static void change_owner_recurse_to_sequences(Oid relationOid,
@@ -11049,117 +11049,11 @@ RememberIndexForRebuilding(Oid indoid, AlteredTableInfo *tab)
 }
 
 /*
- * Returns the address of the modified column
- */
-static ObjectAddress
-ATExecAlterColumnGenericOptions(Relation rel,
-								const char *colName,
-								List *options,
-								LOCKMODE lockmode)
-{
-	Relation	ftrel;
-	Relation	attrel;
-	ForeignServer *server;
-	ForeignDataWrapper *fdw;
-	HeapTuple	tuple;
-	HeapTuple	newtuple;
-	bool		isnull;
-	Datum		repl_val[Natts_pg_attribute];
-	bool		repl_null[Natts_pg_attribute];
-	bool		repl_repl[Natts_pg_attribute];
-	Datum		datum;
-	Form_pg_foreign_table fttableform;
-	Form_pg_attribute atttableform;
-	AttrNumber	attnum;
-	ObjectAddress address;
-
-	if (options == NIL)
-		return InvalidObjectAddress;
-
-	/* First, determine FDW validator associated to the foreign table. */
-	ftrel = table_open(ForeignTableRelationId, AccessShareLock);
-	tuple = SearchSysCache1(FOREIGNTABLEREL, rel->rd_id);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign table \"%s\" does not exist",
-						RelationGetRelationName(rel))));
-	fttableform = (Form_pg_foreign_table) GETSTRUCT(tuple);
-	server = GetForeignServer(fttableform->ftserver);
-	fdw = GetForeignDataWrapper(server->fdwid);
-
-	table_close(ftrel, AccessShareLock);
-	ReleaseSysCache(tuple);
-
-	attrel = table_open(AttributeRelationId, RowExclusiveLock);
-	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column \"%s\" of relation \"%s\" does not exist",
-						colName, RelationGetRelationName(rel))));
-
-	/* Prevent them from altering a system attribute */
-	atttableform = (Form_pg_attribute) GETSTRUCT(tuple);
-	attnum = atttableform->attnum;
-	if (attnum <= 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot alter system column \"%s\"", colName)));
-
-
-	/* Initialize buffers for new tuple values */
-	memset(repl_val, 0, sizeof(repl_val));
-	memset(repl_null, false, sizeof(repl_null));
-	memset(repl_repl, false, sizeof(repl_repl));
-
-	/* Extract the current options */
-	datum = SysCacheGetAttr(ATTNAME,
-							tuple,
-							Anum_pg_attribute_attfdwoptions,
-							&isnull);
-	if (isnull)
-		datum = PointerGetDatum(NULL);
-
-	/* Transform the options */
-	datum = transformGenericOptions(AttributeRelationId,
-									datum,
-									options,
-									fdw->fdwvalidator);
-
-	if (PointerIsValid(DatumGetPointer(datum)))
-		repl_val[Anum_pg_attribute_attfdwoptions - 1] = datum;
-	else
-		repl_null[Anum_pg_attribute_attfdwoptions - 1] = true;
-
-	repl_repl[Anum_pg_attribute_attfdwoptions - 1] = true;
-
-	/* Everything looks good - update the tuple */
-
-	newtuple = heap_modify_tuple(tuple, RelationGetDescr(attrel),
-								 repl_val, repl_null, repl_repl);
-
-	CatalogTupleUpdate(attrel, &newtuple->t_self, newtuple);
-
-	InvokeObjectPostAlterHook(RelationRelationId,
-							  RelationGetRelid(rel),
-							  atttableform->attnum);
-	ObjectAddressSubSet(address, RelationRelationId,
-						RelationGetRelid(rel), attnum);
-
-	ReleaseSysCache(tuple);
-
-	table_close(attrel, RowExclusiveLock);
-
-	heap_freetuple(newtuple);
-
-	return address;
-}
-
-/*
  * Cleanup after we've finished all the ALTER TYPE operations for a
  * particular relation.  We have to drop and recreate all the indexes
- * and constraints that depend on the altered columns.
+ * and constraints that depend on the altered columns.  We do the
+ * actual dropping here, but re-creation is managed by adding work
+ * queue entries to do those steps later.
  */
 static void
 ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
@@ -11272,6 +11166,14 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 	 */
 }
 
+/*
+ * Parse the previously-saved definition string for a constraint or index
+ * against the newly-established column data type(s), and queue up the
+ * resulting command parsetrees for execution.
+ *
+ * This might fail if, for example, you have a WHERE clause that uses an
+ * operator that's not available for the new column type.
+ */
 static void
 ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 					 List **wqueue, LOCKMODE lockmode, bool rewrite)
@@ -11564,6 +11466,116 @@ TryReuseForeignKey(Oid oldId, Constraint *con)
 		con->old_conpfeqop = lcons_oid(rawarr[i], con->old_conpfeqop);
 
 	ReleaseSysCache(tup);
+}
+
+/*
+ * ALTER COLUMN .. OPTIONS ( ... )
+ *
+ * Returns the address of the modified column
+ */
+static ObjectAddress
+ATExecAlterColumnGenericOptions(Relation rel,
+								const char *colName,
+								List *options,
+								LOCKMODE lockmode)
+{
+	Relation	ftrel;
+	Relation	attrel;
+	ForeignServer *server;
+	ForeignDataWrapper *fdw;
+	HeapTuple	tuple;
+	HeapTuple	newtuple;
+	bool		isnull;
+	Datum		repl_val[Natts_pg_attribute];
+	bool		repl_null[Natts_pg_attribute];
+	bool		repl_repl[Natts_pg_attribute];
+	Datum		datum;
+	Form_pg_foreign_table fttableform;
+	Form_pg_attribute atttableform;
+	AttrNumber	attnum;
+	ObjectAddress address;
+
+	if (options == NIL)
+		return InvalidObjectAddress;
+
+	/* First, determine FDW validator associated to the foreign table. */
+	ftrel = table_open(ForeignTableRelationId, AccessShareLock);
+	tuple = SearchSysCache1(FOREIGNTABLEREL, rel->rd_id);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign table \"%s\" does not exist",
+						RelationGetRelationName(rel))));
+	fttableform = (Form_pg_foreign_table) GETSTRUCT(tuple);
+	server = GetForeignServer(fttableform->ftserver);
+	fdw = GetForeignDataWrapper(server->fdwid);
+
+	table_close(ftrel, AccessShareLock);
+	ReleaseSysCache(tuple);
+
+	attrel = table_open(AttributeRelationId, RowExclusiveLock);
+	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
+
+	/* Prevent them from altering a system attribute */
+	atttableform = (Form_pg_attribute) GETSTRUCT(tuple);
+	attnum = atttableform->attnum;
+	if (attnum <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system column \"%s\"", colName)));
+
+
+	/* Initialize buffers for new tuple values */
+	memset(repl_val, 0, sizeof(repl_val));
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
+
+	/* Extract the current options */
+	datum = SysCacheGetAttr(ATTNAME,
+							tuple,
+							Anum_pg_attribute_attfdwoptions,
+							&isnull);
+	if (isnull)
+		datum = PointerGetDatum(NULL);
+
+	/* Transform the options */
+	datum = transformGenericOptions(AttributeRelationId,
+									datum,
+									options,
+									fdw->fdwvalidator);
+
+	if (PointerIsValid(DatumGetPointer(datum)))
+		repl_val[Anum_pg_attribute_attfdwoptions - 1] = datum;
+	else
+		repl_null[Anum_pg_attribute_attfdwoptions - 1] = true;
+
+	repl_repl[Anum_pg_attribute_attfdwoptions - 1] = true;
+
+	/* Everything looks good - update the tuple */
+
+	newtuple = heap_modify_tuple(tuple, RelationGetDescr(attrel),
+								 repl_val, repl_null, repl_repl);
+
+	CatalogTupleUpdate(attrel, &newtuple->t_self, newtuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel),
+							  atttableform->attnum);
+	ObjectAddressSubSet(address, RelationRelationId,
+						RelationGetRelid(rel), attnum);
+
+	ReleaseSysCache(tuple);
+
+	table_close(attrel, RowExclusiveLock);
+
+	heap_freetuple(newtuple);
+
+	return address;
 }
 
 /*
