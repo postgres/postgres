@@ -1934,12 +1934,19 @@ select * from anothertab;
 (3 rows)
 
 drop table anothertab;
--- Test alter table column type with constraint indexes (cf. bug #15835)
-create table anothertab(f1 int primary key, f2 int unique, f3 int, f4 int);
+-- Test index handling in alter table column type (cf. bugs #15835, #15865)
+create table anothertab(f1 int primary key, f2 int unique,
+                        f3 int, f4 int, f5 int);
 alter table anothertab
   add exclude using btree (f3 with =);
 alter table anothertab
   add exclude using btree (f4 with =) where (f4 is not null);
+alter table anothertab
+  add exclude using btree (f4 with =) where (f5 > 0);
+alter table anothertab
+  add unique(f1,f4);
+create index on anothertab(f2,f3);
+create unique index on anothertab(f4);
 \d anothertab
              Table "public.anothertab"
  Column |  Type   | Collation | Nullable | Default 
@@ -1948,17 +1955,23 @@ alter table anothertab
  f2     | integer |           |          | 
  f3     | integer |           |          | 
  f4     | integer |           |          | 
+ f5     | integer |           |          | 
 Indexes:
     "anothertab_pkey" PRIMARY KEY, btree (f1)
+    "anothertab_f1_f4_key" UNIQUE CONSTRAINT, btree (f1, f4)
     "anothertab_f2_key" UNIQUE CONSTRAINT, btree (f2)
+    "anothertab_f4_idx" UNIQUE, btree (f4)
+    "anothertab_f2_f3_idx" btree (f2, f3)
     "anothertab_f3_excl" EXCLUDE USING btree (f3 WITH =)
     "anothertab_f4_excl" EXCLUDE USING btree (f4 WITH =) WHERE (f4 IS NOT NULL)
+    "anothertab_f4_excl1" EXCLUDE USING btree (f4 WITH =) WHERE (f5 > 0)
 
 alter table anothertab alter column f1 type bigint;
 alter table anothertab
   alter column f2 type bigint,
   alter column f3 type bigint,
   alter column f4 type bigint;
+alter table anothertab alter column f5 type bigint;
 \d anothertab
             Table "public.anothertab"
  Column |  Type  | Collation | Nullable | Default 
@@ -1967,11 +1980,16 @@ alter table anothertab
  f2     | bigint |           |          | 
  f3     | bigint |           |          | 
  f4     | bigint |           |          | 
+ f5     | bigint |           |          | 
 Indexes:
     "anothertab_pkey" PRIMARY KEY, btree (f1)
+    "anothertab_f1_f4_key" UNIQUE CONSTRAINT, btree (f1, f4)
     "anothertab_f2_key" UNIQUE CONSTRAINT, btree (f2)
+    "anothertab_f4_idx" UNIQUE, btree (f4)
+    "anothertab_f2_f3_idx" btree (f2, f3)
     "anothertab_f3_excl" EXCLUDE USING btree (f3 WITH =)
     "anothertab_f4_excl" EXCLUDE USING btree (f4 WITH =) WHERE (f4 IS NOT NULL)
+    "anothertab_f4_excl1" EXCLUDE USING btree (f4 WITH =) WHERE (f5 > 0)
 
 drop table anothertab;
 create table another (f1 int, f2 text);
