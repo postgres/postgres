@@ -756,3 +756,4 @@ DROP FUNCTION op_leak(int, int);
 RESET SESSION AUTHORIZATION;
 DROP VIEW priv_test_view;
 DROP TABLE priv_test_tbl;
+DROP USER regress_stats_user1;
