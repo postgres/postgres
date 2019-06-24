@@ -1416,8 +1416,7 @@ typedef struct GatherPath
 
 /*
  * GatherMergePath runs several copies of a plan in parallel and collects
- * the results, preserving their common sort order.  For gather merge, the
- * parallel leader always executes the plan too, so we don't need single_copy.
+ * the results, preserving their common sort order.
  */
 typedef struct GatherMergePath
 {
