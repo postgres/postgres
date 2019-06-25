@@ -2059,9 +2059,10 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 							 errmsg("function name \"%s\" is not unique",
 									NameListToString(funcname)),
 							 errhint("Specify the argument list to select the function unambiguously.")));
+				return InvalidOid;
 			}
-			else
-				return clist->oid;
+			/* Otherwise return the match */
+			return clist->oid;
 		}
 		else
 		{
@@ -2070,9 +2071,14 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
 						 errmsg("could not find a function named \"%s\"",
 								NameListToString(funcname))));
+			return InvalidOid;
 		}
 	}
 
+	/*
+	 * Otherwise, look for a match to the arg types.  FuncnameGetCandidates
+	 * has ensured that there's at most one match in the returned list.
+	 */
 	while (clist)
 	{
 		if (memcmp(argtypes, clist->args, nargs * sizeof(Oid)) == 0)
