@@ -1069,6 +1069,7 @@ static const char *const table_storage_parameters[] = {
 	"toast.autovacuum_vacuum_scale_factor",
 	"toast.autovacuum_vacuum_threshold",
 	"toast.log_autovacuum_min_duration",
+	"toast.vacuum_index_cleanup",
 	"toast.vacuum_truncate",
 	"toast_tuple_target",
 	"user_catalog_table",

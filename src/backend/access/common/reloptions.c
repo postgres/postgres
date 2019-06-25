@@ -144,7 +144,7 @@ static relopt_bool boolRelOpts[] =
 		{
 			"vacuum_index_cleanup",
 			"Enables index vacuuming and index cleanup",
-			RELOPT_KIND_HEAP,
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
 			ShareUpdateExclusiveLock
 		},
 		true

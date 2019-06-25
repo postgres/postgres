@@ -1406,7 +1406,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry id="reloption-vacuum-index-cleanup" xreflabel="vacuum_index_cleanup">
-    <term><literal>vacuum_index_cleanup</literal> (<type>boolean</type>)
+    <term><literal>vacuum_index_cleanup</literal>, <literal>toast.vacuum_index_cleanup</literal> (<type>boolean</type>)
     <indexterm>
      <primary><varname>vacuum_index_cleanup</varname> storage parameter</primary>
     </indexterm>
