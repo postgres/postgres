@@ -464,9 +464,6 @@
 /* Define to 1 if you have the `random' function. */
 #undef HAVE_RANDOM
 
-/* Define to 1 if you have the `RAND_OpenSSL' function. */
-#undef HAVE_RAND_OPENSSL
-
 /* Define to 1 if you have the <readline.h> header file. */
 #undef HAVE_READLINE_H
 
