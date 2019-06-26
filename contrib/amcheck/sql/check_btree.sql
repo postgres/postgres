@@ -18,10 +18,10 @@ CREATE INDEX bttest_b_idx ON bttest_b USING btree (id);
 CREATE UNIQUE INDEX bttest_multi_idx ON bttest_multi
 USING btree (id) INCLUDE (data);
 
-CREATE ROLE bttest_role;
+CREATE ROLE regress_bttest_role;
 
 -- verify permissions are checked (error due to function not callable)
-SET ROLE bttest_role;
+SET ROLE regress_bttest_role;
 SELECT bt_index_check('bttest_a_idx'::regclass);
 SELECT bt_index_parent_check('bttest_a_idx'::regclass);
 RESET ROLE;
@@ -29,11 +29,11 @@ RESET ROLE;
 -- we, intentionally, don't check relation permissions - it's useful
 -- to run this cluster-wide with a restricted account, and as tested
 -- above explicit permission has to be granted for that.
-GRANT EXECUTE ON FUNCTION bt_index_check(regclass) TO bttest_role;
-GRANT EXECUTE ON FUNCTION bt_index_parent_check(regclass) TO bttest_role;
-GRANT EXECUTE ON FUNCTION bt_index_check(regclass, boolean) TO bttest_role;
-GRANT EXECUTE ON FUNCTION bt_index_parent_check(regclass, boolean) TO bttest_role;
-SET ROLE bttest_role;
+GRANT EXECUTE ON FUNCTION bt_index_check(regclass) TO regress_bttest_role;
+GRANT EXECUTE ON FUNCTION bt_index_parent_check(regclass) TO regress_bttest_role;
+GRANT EXECUTE ON FUNCTION bt_index_check(regclass, boolean) TO regress_bttest_role;
+GRANT EXECUTE ON FUNCTION bt_index_parent_check(regclass, boolean) TO regress_bttest_role;
+SET ROLE regress_bttest_role;
 SELECT bt_index_check('bttest_a_idx');
 SELECT bt_index_parent_check('bttest_a_idx');
 RESET ROLE;
@@ -109,5 +109,5 @@ DROP TABLE bttest_b;
 DROP TABLE bttest_multi;
 DROP TABLE delete_test_table;
 DROP TABLE toast_bug;
-DROP OWNED BY bttest_role; -- permissions
-DROP ROLE bttest_role;
+DROP OWNED BY regress_bttest_role; -- permissions
+DROP ROLE regress_bttest_role;
