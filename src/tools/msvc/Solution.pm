@@ -118,6 +118,34 @@ sub copyFile
 	return;
 }
 
+# Fetch version of OpenSSL based on a parsing of the command shipped with
+# the installer this build is linking to.  This returns as result an array
+# made of the three first digits of the OpenSSL version, which is enough
+# to decide which options to apply depending on the version of OpenSSL
+# linking with.
+sub GetOpenSSLVersion
+{
+	my $self = shift;
+
+	# Attempt to get OpenSSL version and location.  This assumes that
+	# openssl.exe is in the specified directory.
+	my $opensslcmd =
+	  $self->{options}->{openssl} . "\\bin\\openssl.exe version 2>&1";
+	my $sslout = `$opensslcmd`;
+
+	$? >> 8 == 0
+	  or croak
+	  "Unable to determine OpenSSL version: The openssl.exe command wasn't found.";
+
+	if ($sslout =~ /(\d+)\.(\d+)\.(\d+)(\D)/m)
+	{
+		return ($1, $2, $3);
+	}
+
+	croak
+	  "Unable to determine OpenSSL version: The openssl.exe version could not be determined.";
+}
+
 sub GenerateFiles
 {
 	my $self = shift;
@@ -172,10 +200,9 @@ sub GenerateFiles
 		print $o "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
 		print $o "#define USE_ASSERT_CHECKING 1\n"
 		  if ($self->{options}->{asserts});
-		print $o "#define USE_LDAP 1\n"    if ($self->{options}->{ldap});
-		print $o "#define HAVE_LIBZ 1\n"   if ($self->{options}->{zlib});
-		print $o "#define USE_OPENSSL 1\n" if ($self->{options}->{openssl});
-		print $o "#define ENABLE_NLS 1\n"  if ($self->{options}->{nls});
+		print $o "#define USE_LDAP 1\n"   if ($self->{options}->{ldap});
+		print $o "#define HAVE_LIBZ 1\n"  if ($self->{options}->{zlib});
+		print $o "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
 
 		print $o "#define BLCKSZ ", 1024 * $self->{options}->{blocksize},
 		  "\n";
@@ -222,6 +249,21 @@ sub GenerateFiles
 		if ($self->{options}->{gss})
 		{
 			print $o "#define ENABLE_GSS 1\n";
+		}
+		if ($self->{options}->{openssl})
+		{
+			print $o "#define USE_OPENSSL 1\n";
+
+			my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
+
+			# More symbols are needed with OpenSSL 1.1.0 and above.
+			if ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
+			{
+				print $o "#define HAVE_ASN1_STRING_GET0_DATA 1\n";
+				print $o "#define HAVE_BIO_GET_DATA 1\n";
+				print $o "#define HAVE_BIO_METH_NEW 1\n";
+				print $o "#define HAVE_OPENSSL_INIT_SSL 1\n";
+			}
 		}
 		if ($self->{options}->{icu})
 		{
@@ -579,21 +621,70 @@ sub AddProject
 	if ($self->{options}->{openssl})
 	{
 		$proj->AddIncludeDir($self->{options}->{openssl} . '\include');
-		if (-e "$self->{options}->{openssl}/lib/VC/ssleay32MD.lib")
+		my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
+
+		# Starting at version 1.1.0 the OpenSSL installers have
+		# changed their library names from:
+		# - libeay to libcrypto
+		# - ssleay to libssl
+		if ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
 		{
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\VC\ssleay32.lib', 1);
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\VC\libeay32.lib', 1);
+			my $dbgsuffix;
+			my $libsslpath;
+			my $libcryptopath;
+
+			# The format name of the libraries is slightly
+			# different between the Win32 and Win64 platform, so
+			# adapt.
+			if (-e "$self->{options}->{openssl}/lib/VC/sslcrypto32MD.lib")
+			{
+				# Win32 here, with a debugging library set.
+				$dbgsuffix     = 1;
+				$libsslpath    = '\lib\VC\libssl32.lib';
+				$libcryptopath = '\lib\VC\libcrypto32.lib';
+			}
+			elsif (-e "$self->{options}->{openssl}/lib/VC/sslcrypto64MD.lib")
+			{
+				# Win64 here, with a debugging library set.
+				$dbgsuffix     = 1;
+				$libsslpath    = '\lib\VC\libssl64.lib';
+				$libcryptopath = '\lib\VC\libcrypto64.lib';
+			}
+			else
+			{
+				# On both Win32 and Win64 the same library
+				# names are used without a debugging context.
+				$dbgsuffix     = 0;
+				$libsslpath    = '\lib\libssl.lib';
+				$libcryptopath = '\lib\libcrypto.lib';
+			}
+
+			$proj->AddLibrary($self->{options}->{openssl} . $libsslpath,
+				$dbgsuffix);
+			$proj->AddLibrary($self->{options}->{openssl} . $libcryptopath,
+				$dbgsuffix);
 		}
 		else
 		{
-			# We don't expect the config-specific library to be here,
-			# so don't ask for it in last parameter
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\ssleay32.lib', 0);
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\libeay32.lib', 0);
+			# Choose which set of libraries to use depending on if
+			# debugging libraries are in place in the installer.
+			if (-e "$self->{options}->{openssl}/lib/VC/ssleay32MD.lib")
+			{
+				$proj->AddLibrary(
+					$self->{options}->{openssl} . '\lib\VC\ssleay32.lib', 1);
+				$proj->AddLibrary(
+					$self->{options}->{openssl} . '\lib\VC\libeay32.lib', 1);
+			}
+			else
+			{
+				# We don't expect the config-specific library
+				# to be here, so don't ask for it in last
+				# parameter.
+				$proj->AddLibrary(
+					$self->{options}->{openssl} . '\lib\ssleay32.lib', 0);
+				$proj->AddLibrary(
+					$self->{options}->{openssl} . '\lib\libeay32.lib', 0);
+			}
 		}
 	}
 	if ($self->{options}->{nls})
