@@ -1342,10 +1342,16 @@ ProcessUtilitySlow(ParseState *pstate,
 
 							if (relkind != RELKIND_RELATION &&
 								relkind != RELKIND_MATVIEW &&
-								relkind != RELKIND_PARTITIONED_TABLE)
+								relkind != RELKIND_PARTITIONED_TABLE &&
+								relkind != RELKIND_FOREIGN_TABLE)
+								elog(ERROR, "unexpected relkind \"%c\" on partition \"%s\"",
+									 relkind, stmt->relation->relname);
+
+							if (relkind == RELKIND_FOREIGN_TABLE &&
+								(stmt->unique || stmt->primary))
 								ereport(ERROR,
-										(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-										 errmsg("cannot create index on partitioned table \"%s\"",
+										(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+										 errmsg("cannot create unique index on partitioned table \"%s\"",
 												stmt->relation->relname),
 										 errdetail("Table \"%s\" contains partitions that are foreign tables.",
 												   stmt->relation->relname)));

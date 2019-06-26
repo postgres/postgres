@@ -752,10 +752,62 @@ ERROR:  foreign-data wrapper "dummy" has no handler
 CREATE TABLE lt1 (a INT) PARTITION BY RANGE (a);
 CREATE FOREIGN TABLE ft_part1
   PARTITION OF lt1 FOR VALUES FROM (0) TO (1000) SERVER s0;
-CREATE INDEX ON lt1 (a);                                        -- ERROR
-ERROR:  cannot create index on partitioned table "lt1"
+CREATE INDEX ON lt1 (a);                              -- skips partition
+CREATE UNIQUE INDEX ON lt1 (a);                                 -- ERROR
+ERROR:  cannot create unique index on partitioned table "lt1"
+DETAIL:  Table "lt1" contains partitions that are foreign tables.
+ALTER TABLE lt1 ADD PRIMARY KEY (a);                            -- ERROR
+ERROR:  cannot create unique index on partitioned table "lt1"
 DETAIL:  Table "lt1" contains partitions that are foreign tables.
 DROP TABLE lt1;
+CREATE TABLE lt1 (a INT) PARTITION BY RANGE (a);
+CREATE INDEX ON lt1 (a);
+CREATE FOREIGN TABLE ft_part1
+  PARTITION OF lt1 FOR VALUES FROM (0) TO (1000) SERVER s0;
+CREATE FOREIGN TABLE ft_part2 (a INT) SERVER s0;
+ALTER TABLE lt1 ATTACH PARTITION ft_part2 FOR VALUES FROM (1000) TO (2000);
+DROP FOREIGN TABLE ft_part1, ft_part2;
+CREATE UNIQUE INDEX ON lt1 (a);
+ALTER TABLE lt1 ADD PRIMARY KEY (a);
+CREATE FOREIGN TABLE ft_part1
+  PARTITION OF lt1 FOR VALUES FROM (0) TO (1000) SERVER s0;     -- ERROR
+ERROR:  cannot create foreign partition of partitioned table "lt1"
+DETAIL:  Table "lt1" contains indexes that are unique.
+CREATE FOREIGN TABLE ft_part2 (a INT NOT NULL) SERVER s0;
+ALTER TABLE lt1 ATTACH PARTITION ft_part2
+  FOR VALUES FROM (1000) TO (2000);                             -- ERROR
+ERROR:  cannot attach foreign table "ft_part2" as partition of partitioned table "lt1"
+DETAIL:  Table "lt1" contains unique indexes.
+DROP TABLE lt1;
+DROP FOREIGN TABLE ft_part2;
+CREATE TABLE lt1 (a INT) PARTITION BY RANGE (a);
+CREATE INDEX ON lt1 (a);
+CREATE TABLE lt1_part1
+  PARTITION OF lt1 FOR VALUES FROM (0) TO (1000)
+  PARTITION BY RANGE (a);
+CREATE FOREIGN TABLE ft_part_1_1
+  PARTITION OF lt1_part1 FOR VALUES FROM (0) TO (100) SERVER s0;
+CREATE FOREIGN TABLE ft_part_1_2 (a INT) SERVER s0;
+ALTER TABLE lt1_part1 ATTACH PARTITION ft_part_1_2 FOR VALUES FROM (100) TO (200);
+CREATE UNIQUE INDEX ON lt1 (a);
+ERROR:  cannot create unique index on partitioned table "lt1"
+DETAIL:  Table "lt1" contains partitions that are foreign tables.
+ALTER TABLE lt1 ADD PRIMARY KEY (a);
+ERROR:  cannot create unique index on partitioned table "lt1_part1"
+DETAIL:  Table "lt1_part1" contains partitions that are foreign tables.
+DROP FOREIGN TABLE ft_part_1_1, ft_part_1_2;
+CREATE UNIQUE INDEX ON lt1 (a);
+ALTER TABLE lt1 ADD PRIMARY KEY (a);
+CREATE FOREIGN TABLE ft_part_1_1
+  PARTITION OF lt1_part1 FOR VALUES FROM (0) TO (100) SERVER s0;
+ERROR:  cannot create foreign partition of partitioned table "lt1_part1"
+DETAIL:  Table "lt1_part1" contains indexes that are unique.
+CREATE FOREIGN TABLE ft_part_1_2 (a INT NOT NULL) SERVER s0;
+ALTER TABLE lt1_part1 ATTACH PARTITION ft_part_1_2 FOR VALUES FROM (100) TO (200);
+ERROR:  cannot attach foreign table "ft_part_1_2" as partition of partitioned table "lt1_part1"
+DETAIL:  Table "lt1_part1" contains unique indexes.
+DROP TABLE lt1;
+DROP FOREIGN TABLE ft_part_1_2;
 -- ALTER FOREIGN TABLE
 COMMENT ON FOREIGN TABLE ft1 IS 'foreign table';
 COMMENT ON FOREIGN TABLE ft1 IS NULL;
