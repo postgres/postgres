@@ -1048,11 +1048,11 @@ select 1/(15-unique2) from tenk1 order by unique2 limit 19;
 \unset FETCH_COUNT
 
 create schema testpart;
-create role testrole_partitioning;
+create role regress_partitioning_role;
 
-alter schema testpart owner to testrole_partitioning;
+alter schema testpart owner to regress_partitioning_role;
 
-set role to testrole_partitioning;
+set role to regress_partitioning_role;
 
 -- run test inside own schema and hide other partitions
 set search_path to testpart;
@@ -1114,4 +1114,4 @@ drop schema testpart;
 set search_path to default;
 
 set role to default;
-drop role testrole_partitioning;
+drop role regress_partitioning_role;
