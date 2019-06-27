@@ -896,12 +896,10 @@ DefineIndex(Oid relationId,
 
 			memcpy(part_oids, partdesc->oids, sizeof(Oid) * nparts);
 
-			parentDesc = CreateTupleDescCopy(RelationGetDescr(rel));
+			parentDesc = RelationGetDescr(rel);
 			opfamOids = palloc(sizeof(Oid) * numberOfKeyAttributes);
 			for (i = 0; i < numberOfKeyAttributes; i++)
 				opfamOids[i] = get_opclass_family(classObjectId[i]);
-
-			heap_close(rel, NoLock);
 
 			/*
 			 * For each partition, scan all existing indexes; if one matches
@@ -1100,13 +1098,12 @@ DefineIndex(Oid relationId,
 				heap_freetuple(newtup);
 			}
 		}
-		else
-			heap_close(rel, NoLock);
 
 		/*
 		 * Indexes on partitioned tables are not themselves built, so we're
 		 * done here.
 		 */
+		heap_close(rel, NoLock);
 		return address;
 	}
 
