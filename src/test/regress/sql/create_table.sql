@@ -856,3 +856,17 @@ create table volatile_partbound_test2 partition of volatile_partbound_test for v
 insert into volatile_partbound_test values (current_timestamp);
 select tableoid::regclass from volatile_partbound_test;
 drop table volatile_partbound_test;
+
+-- test the case where a check constraint on default partition allows
+-- to avoid scanning it when adding a new partition
+create table defcheck (a int, b int) partition by list (b);
+create table defcheck_def (a int, c int, b int);
+alter table defcheck_def drop c;
+alter table defcheck attach partition defcheck_def default;
+alter table defcheck_def add check (b <= 0 and b is not null);
+create table defcheck_1 partition of defcheck for values in (1, null);
+
+-- test that complex default partition constraints are enforced correctly
+insert into defcheck_def values (0, 0);
+create table defcheck_0 partition of defcheck for values in (0);
+drop table defcheck;
