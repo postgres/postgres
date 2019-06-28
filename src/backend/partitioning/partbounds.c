@@ -609,6 +609,13 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 		: get_qual_for_range(parent, new_spec, false);
 	def_part_constraints =
 		get_proposed_default_constraint(new_part_constraints);
+	/*
+	 * Map the Vars in the constraint expression from parent's attnos to
+	 * default_rel's.
+	 */
+	def_part_constraints =
+			map_partition_varattnos(def_part_constraints, 1, default_rel,
+									parent, NULL);
 
 	/*
 	 * If the existing constraints on the default partition imply that it will
@@ -637,7 +644,6 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 	{
 		Oid			part_relid = lfirst_oid(lc);
 		Relation	part_rel;
-		Expr	   *constr;
 		Expr	   *partition_constraint;
 		EState	   *estate;
 		HeapTuple	tuple;
@@ -653,6 +659,15 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 		if (part_relid != RelationGetRelid(default_rel))
 		{
 			part_rel = heap_open(part_relid, NoLock);
+
+			/*
+			 * Map the Vars in the constraint expression from default_rel's
+			 * the sub-partition's.
+			 */
+			partition_constraint = make_ands_explicit(def_part_constraints);
+			partition_constraint = (Expr *)
+				map_partition_varattnos((List *) partition_constraint, 1,
+										part_rel, default_rel, NULL);
 
 			/*
 			 * If the partition constraints on default partition child imply
@@ -671,7 +686,10 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 			}
 		}
 		else
+		{
 			part_rel = default_rel;
+			partition_constraint = make_ands_explicit(def_part_constraints);
+		}
 
 		/*
 		 * Only RELKIND_RELATION relations (i.e. leaf partitions) need to be
@@ -693,10 +711,6 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 		}
 
 		tupdesc = CreateTupleDescCopy(RelationGetDescr(part_rel));
-		constr = linitial(def_part_constraints);
-		partition_constraint = (Expr *)
-			map_partition_varattnos((List *) constr,
-									1, part_rel, parent, NULL);
 		estate = CreateExecutorState();
 
 		/* Build expression execution states for partition check quals */

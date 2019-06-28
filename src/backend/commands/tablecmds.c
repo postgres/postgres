@@ -14973,6 +14973,13 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 		defaultrel = heap_open(defaultPartOid, NoLock);
 		defPartConstraint =
 			get_proposed_default_constraint(partBoundConstraint);
+		/*
+		 * Map the Vars in the constraint expression from rel's attnos to
+		 * defaultrel's.
+		 */
+		defPartConstraint =
+			map_partition_varattnos(defPartConstraint,
+									1, defaultrel, rel, NULL);
 		QueuePartitionConstraintValidation(wqueue, defaultrel,
 										   defPartConstraint, true);
 
