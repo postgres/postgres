@@ -78,6 +78,7 @@
 #include "access/table.h"
 #include "access/xact.h"
 
+#include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "nodes/execnodes.h"
 
@@ -1228,6 +1229,15 @@ pg_replication_origin_create(PG_FUNCTION_ARGS)
 	replorigin_check_prerequisites(false, false);
 
 	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
+
+	/* Replication origins "pg_xxx" are reserved for internal use */
+	if (IsReservedName(name))
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("replication origin name \"%s\" is reserved",
+						name),
+				 errdetail("Origin names starting with \"pg_\" are reserved.")));
+
 	roident = replorigin_create(name);
 
 	pfree(name);
