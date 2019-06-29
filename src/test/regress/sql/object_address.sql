@@ -46,7 +46,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION prsd_lextype(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
-CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
+CREATE SUBSCRIPTION regress_addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
 CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
 
 -- test some error cases
@@ -195,7 +195,7 @@ WITH objects (type, name, args) AS (VALUES
 				('access method', '{btree}', '{}'),
 				('publication', '{addr_pub}', '{}'),
 				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
-				('subscription', '{addr_sub}', '{}'),
+				('subscription', '{regress_addr_sub}', '{}'),
 				('statistics object', '{addr_nsp, gentable_stat}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
@@ -212,7 +212,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 ---
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
 DROP PUBLICATION addr_pub;
-DROP SUBSCRIPTION addr_sub;
+DROP SUBSCRIPTION regress_addr_sub;
 
 DROP SCHEMA addr_nsp CASCADE;
 

@@ -43,7 +43,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION prsd_lextype(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
-CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
+CREATE SUBSCRIPTION regress_addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
 WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
 CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
 -- test some error cases
@@ -425,7 +425,7 @@ WITH objects (type, name, args) AS (VALUES
 				('access method', '{btree}', '{}'),
 				('publication', '{addr_pub}', '{}'),
 				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
-				('subscription', '{addr_sub}', '{}'),
+				('subscription', '{regress_addr_sub}', '{}'),
 				('statistics object', '{addr_nsp, gentable_stat}', '{}')
         )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
@@ -484,7 +484,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
- subscription              |            | addr_sub          | addr_sub                                                             | t
+ subscription              |            | regress_addr_sub  | regress_addr_sub                                                     | t
  publication               |            | addr_pub          | addr_pub                                                             | t
  publication relation      |            |                   | addr_nsp.gentable in publication addr_pub                            | t
 (49 rows)
@@ -499,7 +499,7 @@ drop cascades to foreign table genftable
 drop cascades to server integer
 drop cascades to user mapping for regress_addr_user on server integer
 DROP PUBLICATION addr_pub;
-DROP SUBSCRIPTION addr_sub;
+DROP SUBSCRIPTION regress_addr_sub;
 DROP SCHEMA addr_nsp CASCADE;
 NOTICE:  drop cascades to 14 other objects
 DETAIL:  drop cascades to text search dictionary addr_ts_dict

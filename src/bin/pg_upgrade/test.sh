@@ -159,9 +159,9 @@ dbname1=`awk 'BEGIN { for (i= 1; i < 46; i++)
 dbname1='\"\'$dbname1'\\"\\\'
 dbname2=`awk 'BEGIN { for (i = 46; i <  91; i++) printf "%c", i }' </dev/null`
 dbname3=`awk 'BEGIN { for (i = 91; i < 128; i++) printf "%c", i }' </dev/null`
-createdb "$dbname1" || createdb_status=$?
-createdb "$dbname2" || createdb_status=$?
-createdb "$dbname3" || createdb_status=$?
+createdb "regression$dbname1" || createdb_status=$?
+createdb "regression$dbname2" || createdb_status=$?
+createdb "regression$dbname3" || createdb_status=$?
 
 if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 	oldpgversion=`psql -X -A -t -d regression -c "SHOW server_version_num"`

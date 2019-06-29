@@ -40,11 +40,21 @@ SELECT r.rolname, s.srvname, m.umoptions
  ORDER BY 2;
 $$ LANGUAGE SQL;
 
+--
+-- We test creation and use of these role names to ensure that the server
+-- correctly distinguishes role keywords from quoted names that look like
+-- those keywords.  In a test environment, creation of these roles may
+-- provoke warnings, so hide the warnings by raising client_min_messages.
+--
+SET client_min_messages = ERROR;
+
 CREATE ROLE "Public";
 CREATE ROLE "None";
 CREATE ROLE "current_user";
 CREATE ROLE "session_user";
 CREATE ROLE "user";
+
+RESET client_min_messages;
 
 CREATE ROLE current_user; -- error
 CREATE ROLE current_role; -- error
