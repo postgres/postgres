@@ -308,6 +308,15 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 				 errdetail("The prefix \"pg_\" is reserved for system tablespaces.")));
 
 	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for tablespace names are violated.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (strncmp(stmt->tablespacename, "regress_", 8) != 0)
+		elog(WARNING, "tablespaces created by regression test cases should have names starting with \"regress_\"");
+#endif
+
+	/*
 	 * Check that there is no other tablespace by this name.  (The unique
 	 * index would catch this anyway, but might as well give a friendlier
 	 * message.)
@@ -956,6 +965,15 @@ RenameTableSpace(const char *oldname, const char *newname)
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable tablespace name \"%s\"", newname),
 				 errdetail("The prefix \"pg_\" is reserved for system tablespaces.")));
+
+	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for tablespace names are violated.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (strncmp(newname, "regress_", 8) != 0)
+		elog(WARNING, "tablespaces created by regression test cases should have names starting with \"regress_\"");
+#endif
 
 	/* Make sure the new name doesn't exist */
 	ScanKeyInit(&entry[0],

@@ -471,6 +471,16 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	}
 
 	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for database names are violated.  But don't complain during
+	 * initdb.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (IsUnderPostmaster && strstr(dbname, "regression") == NULL)
+		elog(WARNING, "databases created by regression test cases should have names including \"regression\"");
+#endif
+
+	/*
 	 * Check for db name conflict.  This is just to give a more friendly error
 	 * message than "unique index violation".  There's a race condition but
 	 * we're willing to accept the less friendly message in that case.
@@ -1007,6 +1017,15 @@ RenameDatabase(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to rename database")));
+
+	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for database names are violated.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (strstr(newname, "regression") == NULL)
+		elog(WARNING, "databases created by regression test cases should have names including \"regression\"");
+#endif
 
 	/*
 	 * Make sure the new name doesn't exist.  See notes for same error in

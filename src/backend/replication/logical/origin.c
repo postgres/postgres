@@ -1238,6 +1238,15 @@ pg_replication_origin_create(PG_FUNCTION_ARGS)
 						name),
 				 errdetail("Origin names starting with \"pg_\" are reserved.")));
 
+	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for replication origin names are violated.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (strncmp(name, "regress_", 8) != 0)
+		elog(WARNING, "replication origins created by regression test cases should have names starting with \"regress_\"");
+#endif
+
 	roident = replorigin_create(name);
 
 	pfree(name);

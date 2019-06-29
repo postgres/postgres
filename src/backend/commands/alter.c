@@ -274,6 +274,12 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 		if (SearchSysCacheExists2(SUBSCRIPTIONNAME, MyDatabaseId,
 								  CStringGetDatum(new_name)))
 			report_name_conflict(classId, new_name);
+
+		/* Also enforce regression testing naming rules, if enabled */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+		if (strncmp(new_name, "regress_", 8) != 0)
+			elog(WARNING, "subscriptions created by regression test cases should have names starting with \"regress_\"");
+#endif
 	}
 	else if (nameCacheId >= 0)
 	{

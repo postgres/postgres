@@ -327,6 +327,15 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 				 errdetail("Role names starting with \"pg_\" are reserved.")));
 
 	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for role names are violated.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (strncmp(stmt->role, "regress_", 8) != 0)
+		elog(WARNING, "roles created by regression test cases should have names starting with \"regress_\"");
+#endif
+
+	/*
 	 * Check the pg_authid relation to be certain the role doesn't already
 	 * exist.
 	 */
@@ -1211,6 +1220,15 @@ RenameRole(const char *oldname, const char *newname)
 				 errmsg("role name \"%s\" is reserved",
 						newname),
 				 errdetail("Role names starting with \"pg_\" are reserved.")));
+
+	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for role names are violated.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (strncmp(newname, "regress_", 8) != 0)
+		elog(WARNING, "roles created by regression test cases should have names starting with \"regress_\"");
+#endif
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists1(AUTHNAME, CStringGetDatum(newname)))

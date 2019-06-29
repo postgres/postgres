@@ -357,6 +357,15 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to create subscriptions"))));
 
+	/*
+	 * If built with appropriate switch, whine when regression-testing
+	 * conventions for subscription names are violated.
+	 */
+#ifdef ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
+	if (strncmp(stmt->subname, "regress_", 8) != 0)
+		elog(WARNING, "subscriptions created by regression test cases should have names starting with \"regress_\"");
+#endif
+
 	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 
 	/* Check if name is used */
