@@ -3255,7 +3255,6 @@ static List *
 reorder_grouping_sets(List *groupingsets, List *sortclause)
 {
 	ListCell   *lc;
-	ListCell   *lc2;
 	List	   *previous = NIL;
 	List	   *result = NIL;
 
@@ -3265,35 +3264,33 @@ reorder_grouping_sets(List *groupingsets, List *sortclause)
 		List	   *new_elems = list_difference_int(candidate, previous);
 		GroupingSetData *gs = makeNode(GroupingSetData);
 
-		if (list_length(new_elems) > 0)
+		while (list_length(sortclause) > list_length(previous) &&
+			   list_length(new_elems) > 0)
 		{
-			while (list_length(sortclause) > list_length(previous))
-			{
-				SortGroupClause *sc = list_nth(sortclause, list_length(previous));
-				int			ref = sc->tleSortGroupRef;
+			SortGroupClause *sc = list_nth(sortclause, list_length(previous));
+			int			ref = sc->tleSortGroupRef;
 
-				if (list_member_int(new_elems, ref))
-				{
-					previous = lappend_int(previous, ref);
-					new_elems = list_delete_int(new_elems, ref);
-				}
-				else
-				{
-					/* diverged from the sortclause; give up on it */
-					sortclause = NIL;
-					break;
-				}
+			if (list_member_int(new_elems, ref))
+			{
+				previous = lappend_int(previous, ref);
+				new_elems = list_delete_int(new_elems, ref);
 			}
-
-			foreach(lc2, new_elems)
+			else
 			{
-				previous = lappend_int(previous, lfirst_int(lc2));
+				/* diverged from the sortclause; give up on it */
+				sortclause = NIL;
+				break;
 			}
 		}
 
+		/*
+		 * Safe to use list_concat (which shares cells of the second arg)
+		 * because we know that new_elems does not share cells with anything.
+		 */
+		previous = list_concat(previous, new_elems);
+
 		gs->set = list_copy(previous);
 		result = lcons(gs, result);
-		list_free(new_elems);
 	}
 
 	list_free(previous);
