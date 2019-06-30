@@ -55,8 +55,9 @@ $node->init(extra =>
 # prep pg_hba.conf and pg_ident.conf
 $node->run_log(
 	[
-		$ENV{PG_REGRESS}, '--config-auth',
-		$node->data_dir,  '--create-role',
+		$ENV{PG_REGRESS},     '--config-auth',
+		$node->data_dir,      '--user',
+		$src_bootstrap_super, '--create-role',
 		"$username1,$username2,$username3,$username4"
 	]);
 $node->start;
@@ -181,8 +182,9 @@ $envar_node->init(extra =>
 $envar_node->run_log(
 	[
 		$ENV{PG_REGRESS},      '--config-auth',
-		$envar_node->data_dir, '--create-role',
-		"$dst_bootstrap_super,$restore_super"
+		$envar_node->data_dir, '--user',
+		$dst_bootstrap_super,  '--create-role',
+		$restore_super
 	]);
 $envar_node->start;
 
@@ -213,8 +215,9 @@ $cmdline_node->init(extra =>
 $cmdline_node->run_log(
 	[
 		$ENV{PG_REGRESS},        '--config-auth',
-		$cmdline_node->data_dir, '--create-role',
-		"$dst_bootstrap_super,$restore_super"
+		$cmdline_node->data_dir, '--user',
+		$dst_bootstrap_super,    '--create-role',
+		$restore_super
 	]);
 $cmdline_node->start;
 $cmdline_node->run_log(
