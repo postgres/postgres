@@ -55,7 +55,7 @@ test: create_index create_index_spgist create_view index_including index_includi
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_function_3 create_cast constraints triggers select inherit typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am hash_func errors
+test: create_aggregate create_function_3 create_cast constraints triggers select inherit typed_table vacuum drop_if_exists updatable_views roleattributes create_am hash_func errors
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
