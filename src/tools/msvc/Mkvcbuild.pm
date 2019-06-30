@@ -48,7 +48,7 @@ my @contrib_excludes = (
 	'ltree_plpython',  'pgcrypto',
 	'sepgsql',         'brin',
 	'test_extensions', 'test_pg_dump',
-	'snapshot_too_old');
+	'snapshot_too_old', 'unsafe_tests');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
