@@ -579,7 +579,6 @@ static bool assert_enabled;
 static char *recovery_target_timeline_string;
 static char *recovery_target_string;
 static char *recovery_target_xid_string;
-static char *recovery_target_time_string;
 static char *recovery_target_name_string;
 static char *recovery_target_lsn_string;
 
@@ -11572,20 +11571,20 @@ assign_recovery_target_xid(const char *newval, void *extra)
 		recoveryTarget = RECOVERY_TARGET_UNSET;
 }
 
+/*
+ * The interpretation of the recovery_target_time string can depend on the
+ * time zone setting, so we need to wait until after all GUC processing is
+ * done before we can do the final parsing of the string.  This check function
+ * only does a parsing pass to catch syntax errors, but we store the string
+ * and parse it again when we need to use it.
+ */
 static bool
 check_recovery_target_time(char **newval, void **extra, GucSource source)
 {
 	if (strcmp(*newval, "") != 0)
 	{
-		TimestampTz time;
-		TimestampTz *myextra;
-		MemoryContext oldcontext = CurrentMemoryContext;
-
 		/* reject some special values */
-		if (strcmp(*newval, "epoch") == 0 ||
-			strcmp(*newval, "infinity") == 0 ||
-			strcmp(*newval, "-infinity") == 0 ||
-			strcmp(*newval, "now") == 0 ||
+		if (strcmp(*newval, "now") == 0 ||
 			strcmp(*newval, "today") == 0 ||
 			strcmp(*newval, "tomorrow") == 0 ||
 			strcmp(*newval, "yesterday") == 0)
@@ -11593,32 +11592,38 @@ check_recovery_target_time(char **newval, void **extra, GucSource source)
 			return false;
 		}
 
-		PG_TRY();
+		/*
+		 * parse timestamp value (see also timestamptz_in())
+		 */
 		{
-			time = DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
-														   CStringGetDatum(*newval),
-														   ObjectIdGetDatum(InvalidOid),
-														   Int32GetDatum(-1)));
+			char	   *str = *newval;
+			fsec_t		fsec;
+			struct pg_tm tt,
+					   *tm = &tt;
+			int			tz;
+			int			dtype;
+			int			nf;
+			int			dterr;
+			char	   *field[MAXDATEFIELDS];
+			int			ftype[MAXDATEFIELDS];
+			char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+			TimestampTz timestamp;
+
+			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+								  field, ftype, MAXDATEFIELDS, &nf);
+			if (dterr == 0)
+				dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+			if (dterr != 0)
+				return false;
+			if (dtype !=  DTK_DATE)
+				return false;
+
+			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
+			{
+				GUC_check_errdetail("timestamp out of range: \"%s\"", str);
+				return false;
+			}
 		}
-		PG_CATCH();
-		{
-			ErrorData  *edata;
-
-			/* Save error info */
-			MemoryContextSwitchTo(oldcontext);
-			edata = CopyErrorData();
-			FlushErrorState();
-
-			/* Pass the error message */
-			GUC_check_errdetail("%s", edata->message);
-			FreeErrorData(edata);
-			return false;
-		}
-		PG_END_TRY();
-
-		myextra = (TimestampTz *) guc_malloc(ERROR, sizeof(TimestampTz));
-		*myextra = time;
-		*extra = (void *) myextra;
 	}
 	return true;
 }
@@ -11631,10 +11636,7 @@ assign_recovery_target_time(const char *newval, void *extra)
 		error_multiple_recovery_targets();
 
 	if (newval && strcmp(newval, "") != 0)
-	{
 		recoveryTarget = RECOVERY_TARGET_TIME;
-		recoveryTargetTime = *((TimestampTz *) extra);
-	}
 	else
 		recoveryTarget = RECOVERY_TARGET_UNSET;
 }
@@ -11675,33 +11677,11 @@ check_recovery_target_lsn(char **newval, void **extra, GucSource source)
 	{
 		XLogRecPtr	lsn;
 		XLogRecPtr *myextra;
-		MemoryContext oldcontext = CurrentMemoryContext;
+		bool		have_error = false;
 
-		/*
-		 * Convert the LSN string given by the user to XLogRecPtr form.
-		 */
-		PG_TRY();
-		{
-			lsn = DatumGetLSN(DirectFunctionCall3(pg_lsn_in,
-												  CStringGetDatum(*newval),
-												  ObjectIdGetDatum(InvalidOid),
-												  Int32GetDatum(-1)));
-		}
-		PG_CATCH();
-		{
-			ErrorData  *edata;
-
-			/* Save error info */
-			MemoryContextSwitchTo(oldcontext);
-			edata = CopyErrorData();
-			FlushErrorState();
-
-			/* Pass the error message */
-			GUC_check_errdetail("%s", edata->message);
-			FreeErrorData(edata);
+		lsn = pg_lsn_in_internal(*newval, &have_error);
+		if (have_error)
 			return false;
-		}
-		PG_END_TRY();
 
 		myextra = (XLogRecPtr *) guc_malloc(ERROR, sizeof(XLogRecPtr));
 		*myextra = lsn;

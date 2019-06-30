@@ -272,7 +272,8 @@ RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
 bool		recoveryTargetInclusive = true;
 int			recoveryTargetAction = RECOVERY_TARGET_ACTION_PAUSE;
 TransactionId recoveryTargetXid;
-TimestampTz recoveryTargetTime;
+char	   *recovery_target_time_string;
+static TimestampTz recoveryTargetTime;
 const char *recoveryTargetName;
 XLogRecPtr	recoveryTargetLSN;
 int			recovery_min_apply_delay = 0;
@@ -5408,6 +5409,18 @@ validateRecoveryParameters(void)
 	if (recoveryTargetAction == RECOVERY_TARGET_ACTION_PAUSE &&
 		!EnableHotStandby)
 		recoveryTargetAction = RECOVERY_TARGET_ACTION_SHUTDOWN;
+
+	/*
+	 * Final parsing of recovery_target_time string; see also
+	 * check_recovery_target_time().
+	 */
+	if (recoveryTarget == RECOVERY_TARGET_TIME)
+	{
+		recoveryTargetTime = DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
+																	 CStringGetDatum(recovery_target_time_string),
+																	 ObjectIdGetDatum(InvalidOid),
+																	 Int32GetDatum(-1)));
+	}
 
 	/*
 	 * If user specified recovery_target_timeline, validate it or compute the

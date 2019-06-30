@@ -24,4 +24,6 @@
 #define PG_GETARG_LSN(n)	 DatumGetLSN(PG_GETARG_DATUM(n))
 #define PG_RETURN_LSN(x)	 return LSNGetDatum(x)
 
+extern XLogRecPtr pg_lsn_in_internal(const char *str, bool *have_error);
+
 #endif							/* PG_LSN_H */
