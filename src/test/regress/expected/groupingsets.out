@@ -637,6 +637,19 @@ select a, b, sum(v.x)
    |   |   9
 (12 rows)
 
+-- Test reordering of grouping sets
+explain (costs off)
+select * from gstest1 group by grouping sets((a,b,v),(v)) order by v,b,a;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ GroupAggregate
+   Group Key: "*VALUES*".column3, "*VALUES*".column2, "*VALUES*".column1
+   Group Key: "*VALUES*".column3
+   ->  Sort
+         Sort Key: "*VALUES*".column3, "*VALUES*".column2, "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+(6 rows)
+
 -- Agg level check. This query should error out.
 select (select grouping(a,b) from gstest2) from gstest2 group by a,b;
 ERROR:  arguments to GROUPING must be grouping expressions of the associated query level
