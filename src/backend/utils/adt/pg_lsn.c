@@ -53,7 +53,7 @@ pg_lsn_in_internal(const char *str, bool *have_error)
 	off = (uint32) strtoul(str + len1 + 1, NULL, 16);
 	result = ((uint64) id << 32) | off;
 
-	PG_RETURN_LSN(result);
+	return result;
 }
 
 Datum
