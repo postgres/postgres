@@ -18,7 +18,7 @@
 /*
  * General executor code
  */
-extern CustomScanState *ExecInitCustomScan(CustomScan *custom_scan,
+extern CustomScanState *ExecInitCustomScan(CustomScan *cscan,
 										   EState *estate, int eflags);
 extern void ExecEndCustomScan(CustomScanState *node);
 

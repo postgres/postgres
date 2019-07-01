@@ -114,7 +114,7 @@ CheckLogicalDecodingRequirements(void)
 }
 
 /*
- * Helper function for CreateInitialDecodingContext() and
+ * Helper function for CreateInitDecodingContext() and
  * CreateDecodingContext() performing common tasks.
  */
 static LogicalDecodingContext *

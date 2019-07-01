@@ -940,7 +940,7 @@ typedef struct CaseWhen
  * We also abuse this node type for some other purposes, including:
  *	* Placeholder for the current array element value in ArrayCoerceExpr;
  *	  see build_coercion_expression().
- *	* Nested FieldStore/ArrayRef assignment expressions in INSERT/UPDATE;
+ *	* Nested FieldStore/SubscriptingRef assignment expressions in INSERT/UPDATE;
  *	  see transformAssignmentIndirection().
  *
  * The uses in CaseExpr and ArrayCoerceExpr are safe only to the extent that
@@ -950,7 +950,7 @@ typedef struct CaseWhen
  * break it.
  *
  * The nested-assignment-expression case is safe because the only node types
- * that can be above such CaseTestExprs are FieldStore and ArrayRef.
+ * that can be above such CaseTestExprs are FieldStore and SubscriptingRef.
  */
 typedef struct CaseTestExpr
 {

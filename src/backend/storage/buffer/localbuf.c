@@ -537,7 +537,7 @@ GetLocalBufferStorage(void)
 /*
  * CheckForLocalBufferLeaks - ensure this backend holds no local buffer pins
  *
- * This is just like CheckBufferLeaks(), but for local buffers.
+ * This is just like CheckForBufferLeaks(), but for local buffers.
  */
 static void
 CheckForLocalBufferLeaks(void)

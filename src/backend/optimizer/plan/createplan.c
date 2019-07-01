@@ -3911,7 +3911,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 }
 
 /*
- * create_custom_plan
+ * create_customscan_plan
  *
  * Transform a CustomPath into a Plan.
  */

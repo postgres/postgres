@@ -621,8 +621,8 @@ btparallelrescan(IndexScanDesc scan)
 
 /*
  * _bt_parallel_seize() -- Begin the process of advancing the scan to a new
- *		page.  Other scans must wait until we call bt_parallel_release() or
- *		bt_parallel_done().
+ *		page.  Other scans must wait until we call _bt_parallel_release()
+ *		or _bt_parallel_done().
  *
  * The return value is true if we successfully seized the scan and false
  * if we did not.  The latter case occurs if no pages remain for the current

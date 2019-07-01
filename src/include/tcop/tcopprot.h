@@ -9,11 +9,6 @@
  *
  * src/include/tcop/tcopprot.h
  *
- * OLD COMMENTS
- *	  This file was created so that other c files could get the two
- *	  function prototypes without having to include tcop.h which single
- *	  handedly includes the whole f*cking tree -- mer 5 Nov. 1991
- *
  *-------------------------------------------------------------------------
  */
 #ifndef TCOPPROT_H

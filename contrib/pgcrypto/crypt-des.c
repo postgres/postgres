@@ -11,7 +11,7 @@
  *	binaries of libcrypt exportable from the USA
  *
  * Adapted for FreeBSD-4.0 by Mark R V Murray
- *	this file should now *only* export crypt_des(), in order to make
+ *	this file should now *only* export px_crypt_des(), in order to make
  *	a module that can be optionally included in libcrypt.
  *
  * Redistribution and use in source and binary forms, with or without

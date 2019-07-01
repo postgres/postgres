@@ -252,7 +252,7 @@ extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
  *		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
  *		<user defined code>
  *		<if returning composite>
- *			<build TupleDesc, and perhaps AttInMetaData>
+ *			<build TupleDesc, and perhaps AttInMetadata>
  *		<endif returning composite>
  *		<user defined code>
  *		// return to original context when allocating transient memory

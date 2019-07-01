@@ -504,7 +504,7 @@ DropCachedPlan(CachedPlanSource *plansource)
 		plansource->is_saved = false;
 	}
 
-	/* Decrement generic CachePlan's refcount and drop if no longer needed */
+	/* Decrement generic CachedPlan's refcount and drop if no longer needed */
 	ReleaseGenericPlan(plansource);
 
 	/* Mark it no longer valid */

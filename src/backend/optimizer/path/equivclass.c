@@ -929,11 +929,10 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 	/*
 	 * We scan the EC members once and track the last-seen member for each
 	 * base relation.  When we see another member of the same base relation,
-	 * we generate "prev_mem = cur_mem".  This results in the minimum number
-	 * of derived clauses, but it's possible that it will fail when a
-	 * different ordering would succeed.  XXX FIXME: use a UNION-FIND
-	 * algorithm similar to the way we build merged ECs.  (Use a list-of-lists
-	 * for each rel.)
+	 * we generate "prev_em = cur_em".  This results in the minimum number of
+	 * derived clauses, but it's possible that it will fail when a different
+	 * ordering would succeed.  XXX FIXME: use a UNION-FIND algorithm similar
+	 * to the way we build merged ECs.  (Use a list-of-lists for each rel.)
 	 */
 	prev_ems = (EquivalenceMember **)
 		palloc0(root->simple_rel_array_size * sizeof(EquivalenceMember *));

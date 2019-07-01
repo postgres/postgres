@@ -226,9 +226,9 @@ BarrierAttach(Barrier *barrier)
 }
 
 /*
- * Detach from a barrier.  This may release other waiters from BarrierWait and
- * advance the phase if they were only waiting for this backend.  Return true
- * if this participant was the last to detach.
+ * Detach from a barrier.  This may release other waiters from
+ * BarrierArriveAndWait() and advance the phase if they were only waiting for
+ * this backend.  Return true if this participant was the last to detach.
  */
 bool
 BarrierDetach(Barrier *barrier)

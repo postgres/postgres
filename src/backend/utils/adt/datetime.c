@@ -3029,7 +3029,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 }
 
 
-/* ClearPgTM
+/* ClearPgTm
  *
  * Zero out a pg_tm and associated fsec_t
  */

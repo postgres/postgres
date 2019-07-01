@@ -341,7 +341,7 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 /*
  * Allocate a new page (either by recycling, or by extending the index file)
  * The returned buffer is already pinned and exclusive-locked
- * Caller is responsible for initializing the page by calling BloomInitBuffer
+ * Caller is responsible for initializing the page by calling BloomInitPage
  */
 Buffer
 BloomNewBuffer(Relation index)

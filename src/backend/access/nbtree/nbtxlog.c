@@ -181,7 +181,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, XLogReaderState *record)
 
 		if (PageAddItem(page, (Item) datapos, datalen, xlrec->offnum,
 						false, false) == InvalidOffsetNumber)
-			elog(PANIC, "btree_insert_redo: failed to add item");
+			elog(PANIC, "btree_xlog_insert: failed to add item");
 
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);

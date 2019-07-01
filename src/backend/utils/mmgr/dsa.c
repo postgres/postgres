@@ -2258,7 +2258,7 @@ check_for_freed_segments(dsa_area *area)
 }
 
 /*
- * Workhorse for check_for_free_segments(), and also used directly in path
+ * Workhorse for check_for_freed_segments(), and also used directly in path
  * where the area lock is already held.  This should be called after acquiring
  * the lock but before looking up any segment by index number, to make sure we
  * unmap any stale segments that might have previously had the same index as a

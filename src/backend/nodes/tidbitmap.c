@@ -934,7 +934,7 @@ tbm_extract_page_tuple(PagetableEntry *page, TBMIterateResult *output)
 }
 
 /*
- *	tbm_advance_schunkbit - Advance the chunkbit
+ *	tbm_advance_schunkbit - Advance the schunkbit
  */
 static inline void
 tbm_advance_schunkbit(PagetableEntry *chunk, int *schunkbitp)

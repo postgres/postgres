@@ -51,6 +51,4 @@ extern char *get_extension_name(Oid ext_oid);
 extern ObjectAddress AlterExtensionNamespace(const char *extensionName, const char *newschema,
 											 Oid *oldschema);
 
-extern void AlterExtensionOwner_oid(Oid extensionOid, Oid newOwnerId);
-
 #endif							/* EXTENSION_H */

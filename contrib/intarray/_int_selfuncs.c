@@ -43,7 +43,7 @@ static int	compare_val_int4(const void *a, const void *b);
  *
  * The default array selectivity operators for the @>, && and @< operators
  * work fine for integer arrays. However, if we tried to just use arraycontsel
- * and arracontjoinsel directly as the cost estimator functions for our
+ * and arraycontjoinsel directly as the cost estimator functions for our
  * operators, they would not work as intended, because they look at the
  * operator's OID. Our operators behave exactly like the built-in anyarray
  * versions, but we must tell the cost estimator functions which built-in

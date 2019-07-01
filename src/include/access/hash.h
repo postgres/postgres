@@ -457,7 +457,7 @@ extern void hashbucketcleanup(Relation rel, Bucket cur_bucket,
 							  BufferAccessStrategy bstrategy,
 							  uint32 maxbucket, uint32 highmask, uint32 lowmask,
 							  double *tuples_removed, double *num_index_tuples,
-							  bool bucket_has_garbage,
+							  bool split_cleanup,
 							  IndexBulkDeleteCallback callback, void *callback_state);
 
 #endif							/* HASH_H */

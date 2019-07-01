@@ -231,7 +231,7 @@ FreePageManagerGet(FreePageManager *fpm, Size npages, Size *first_page)
 
 	/*
 	 * FreePageManagerGetInternal may have set contiguous_pages_dirty.
-	 * Recompute contigous_pages if so.
+	 * Recompute contiguous_pages if so.
 	 */
 	FreePageManagerUpdateLargest(fpm);
 

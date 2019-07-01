@@ -1334,7 +1334,9 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 		return;
 	}
 
-	/* Check CreateSlot() for the reasoning of using a crit. section. */
+	/*
+	 * Check CreateSlotOnDisk() for the reasoning of using a critical section.
+	 */
 	START_CRIT_SECTION();
 
 	fsync_fname(path, false);

@@ -33,7 +33,7 @@
  * no way for them to share kernel file descriptors with other files.
  *
  * Likewise, use AllocateDir/FreeDir, not opendir/closedir, to allocate
- * open directories (DIR*), and OpenTransientFile/CloseTransient File for an
+ * open directories (DIR*), and OpenTransientFile/CloseTransientFile for an
  * unbuffered file descriptor.
  */
 #ifndef FD_H

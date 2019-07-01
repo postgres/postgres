@@ -1322,7 +1322,7 @@ array_recv(PG_FUNCTION_ARGS)
 		lBound[i] = pq_getmsgint(buf, 4);
 
 		/*
-		 * Check overflow of upper bound. (ArrayNItems() below checks that
+		 * Check overflow of upper bound. (ArrayGetNItems() below checks that
 		 * dim[i] >= 0)
 		 */
 		if (dim[i] != 0)

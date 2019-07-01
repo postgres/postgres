@@ -96,8 +96,6 @@ extern SubqueryScanPath *create_subqueryscan_path(PlannerInfo *root,
 												  List *pathkeys, Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 									  List *pathkeys, Relids required_outer);
-extern Path *create_tablexprscan_path(PlannerInfo *root, RelOptInfo *rel,
-									  List *pathkeys, Relids required_outer);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 									Relids required_outer);
 extern Path *create_tablefuncscan_path(PlannerInfo *root, RelOptInfo *rel,

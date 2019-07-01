@@ -12542,7 +12542,7 @@ SimpleTypename:
  * Note that ConstInterval is not included here since it must
  * be pushed up higher in the rules to accommodate the postfix
  * options (e.g. INTERVAL '1' YEAR). Likewise, we have to handle
- * the generic-type-name case in AExprConst to avoid premature
+ * the generic-type-name case in AexprConst to avoid premature
  * reduce/reduce conflicts against function names.
  */
 ConstTypename:

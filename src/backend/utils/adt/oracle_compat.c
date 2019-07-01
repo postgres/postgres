@@ -527,7 +527,7 @@ dotrim(const char *string, int stringlen,
  *
  * Syntax:
  *
- *	 bytea byteatrim(byta string, bytea set)
+ *	 bytea byteatrim(bytea string, bytea set)
  *
  * Purpose:
  *

@@ -980,11 +980,11 @@ process_matched_tle(TargetEntry *src_tle,
 	 *
 	 * As a further complication, the destination column might be a domain,
 	 * resulting in each assignment containing a CoerceToDomain node over a
-	 * FieldStore or ArrayRef.  These should have matching target domains,
-	 * so we strip them and reconstitute a single CoerceToDomain over the
-	 * combined FieldStore/ArrayRef nodes.  (Notice that this has the result
-	 * that the domain's checks are applied only after we do all the field or
-	 * element updates, not after each one.  This is arguably desirable.)
+	 * FieldStore or SubscriptingRef.  These should have matching target
+	 * domains, so we strip them and reconstitute a single CoerceToDomain over
+	 * the combined FieldStore/SubscriptingRef nodes.  (Notice that this has the
+	 * result that the domain's checks are applied only after we do all the
+	 * field or element updates, not after each one.  This is arguably desirable.)
 	 *----------
 	 */
 	src_expr = (Node *) src_tle->expr;

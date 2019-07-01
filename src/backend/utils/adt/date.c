@@ -1374,7 +1374,7 @@ time_scale(PG_FUNCTION_ARGS)
 
 /* AdjustTimeForTypmod()
  * Force the precision of the time value to a specified value.
- * Uses *exactly* the same code as in AdjustTimestampForTypemod()
+ * Uses *exactly* the same code as in AdjustTimestampForTypmod()
  * but we make a separate copy because those types do not
  * have a fundamental tie together but rather a coincidence of
  * implementation. - thomas

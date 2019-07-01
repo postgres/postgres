@@ -220,7 +220,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * If asked, we need to waken the bgwriter. Since we don't want to rely on
 	 * a spinlock for this we force a read from shared memory once, and then
 	 * set the latch based on that value. We need to go through that length
-	 * because otherwise bgprocno might be reset while/after we check because
+	 * because otherwise bgwprocno might be reset while/after we check because
 	 * the compiler might just reread from memory.
 	 *
 	 * This can possibly set the latch of the wrong process if the bgwriter

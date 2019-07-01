@@ -525,7 +525,7 @@ ResetBackgroundWorkerCrashTimes(void)
 		if (rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
 		{
 			/*
-			 * Workers marked BGW_NVER_RESTART shouldn't get relaunched after
+			 * Workers marked BGW_NEVER_RESTART shouldn't get relaunched after
 			 * the crash, so forget about them.  (If we wait until after the
 			 * crash to forget about them, and they are parallel workers,
 			 * parallel_terminate_count will get incremented after we've

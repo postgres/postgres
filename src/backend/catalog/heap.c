@@ -1588,9 +1588,8 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT release
 	 * until end of transaction.  (In the simple case where we are directly
-	 * dropping this column, AlterTableDropColumn already did this ... but
-	 * when cascading from a drop of some other object, we may not have any
-	 * lock.)
+	 * dropping this column, ATExecDropColumn already did this ... but when
+	 * cascading from a drop of some other object, we may not have any lock.)
 	 */
 	rel = relation_open(relid, AccessExclusiveLock);
 

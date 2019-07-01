@@ -62,7 +62,7 @@
  * A non-null entry is a pointer to a LargeObjectDesc allocated in the
  * LO private memory context "fscxt".  The cookies array itself is also
  * dynamically allocated in that context.  Its current allocated size is
- * cookies_len entries, of which any unused entries will be NULL.
+ * cookies_size entries, of which any unused entries will be NULL.
  */
 static LargeObjectDesc **cookies = NULL;
 static int	cookies_size = 0;
