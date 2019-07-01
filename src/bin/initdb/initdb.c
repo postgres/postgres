@@ -2663,8 +2663,8 @@ setup_text_search(void)
 		default_text_search_config = find_matching_ts_config(lc_ctype);
 		if (!default_text_search_config)
 		{
-			printf(_("%s: could not find suitable text search configuration for locale \"%s\"\n"),
-				   progname, lc_ctype);
+			pg_log_info("could not find suitable text search configuration for locale \"%s\"",
+						lc_ctype);
 			default_text_search_config = "simple";
 		}
 	}
@@ -2674,13 +2674,13 @@ setup_text_search(void)
 
 		if (checkmatch == NULL)
 		{
-			printf(_("%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"),
-				   progname, lc_ctype);
+			pg_log_warning("suitable text search configuration for locale \"%s\" is unknown",
+						   lc_ctype);
 		}
 		else if (strcmp(checkmatch, default_text_search_config) != 0)
 		{
-			printf(_("%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"),
-				   progname, default_text_search_config, lc_ctype);
+			pg_log_warning("specified text search configuration \"%s\" might not match locale \"%s\"",
+						   default_text_search_config, lc_ctype);
 		}
 	}
 
