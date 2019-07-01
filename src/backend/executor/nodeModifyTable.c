@@ -2317,8 +2317,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * indexes for insertion of new index entries.  Note we *must* set
 	 * estate->es_result_relation_info correctly while we initialize each
 	 * sub-plan; external modules such as FDWs may depend on that (see
-	 * contrib/postgres_fdw/postgres_fdw.c: postgresBeginDirectModify()
-	 * as one example).
+	 * contrib/postgres_fdw/postgres_fdw.c: postgresBeginDirectModify() as one
+	 * example).
 	 */
 	saved_resultRelInfo = estate->es_result_relation_info;
 

@@ -34,9 +34,9 @@ CATALOG(pg_statistic_ext_data,3429,StatisticExtDataRelationId)
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 
-	pg_ndistinct stxdndistinct;	/* ndistinct coefficients (serialized) */
+	pg_ndistinct stxdndistinct; /* ndistinct coefficients (serialized) */
 	pg_dependencies stxddependencies;	/* dependencies (serialized) */
-	pg_mcv_list stxdmcv;			/* MCV (serialized) */
+	pg_mcv_list stxdmcv;		/* MCV (serialized) */
 
 #endif
 
@@ -47,6 +47,6 @@ CATALOG(pg_statistic_ext_data,3429,StatisticExtDataRelationId)
  *		the format of pg_statistic_ext_data relation.
  * ----------------
  */
-typedef FormData_pg_statistic_ext_data *Form_pg_statistic_ext_data;
+typedef FormData_pg_statistic_ext_data * Form_pg_statistic_ext_data;
 
 #endif							/* PG_STATISTIC_EXT_DATA_H */

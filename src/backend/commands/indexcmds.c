@@ -1085,9 +1085,9 @@ DefineIndex(Oid relationId,
 				childrel = table_open(childRelid, lockmode);
 
 				/*
-				 * Don't try to create indexes on foreign tables, though.
-				 * Skip those if a regular index, or fail if trying to create
-				 * a constraint index.
+				 * Don't try to create indexes on foreign tables, though. Skip
+				 * those if a regular index, or fail if trying to create a
+				 * constraint index.
 				 */
 				if (childrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 				{
@@ -1097,7 +1097,7 @@ DefineIndex(Oid relationId,
 								 errmsg("cannot create unique index on partitioned table \"%s\"",
 										RelationGetRelationName(rel)),
 								 errdetail("Table \"%s\" contains partitions that are foreign tables.",
-										RelationGetRelationName(rel))));
+										   RelationGetRelationName(rel))));
 
 					table_close(childrel, lockmode);
 					continue;

@@ -50,6 +50,7 @@ DOING THE INDENT RUN:
 
 5) Reformat the bootstrap catalog data files:
 
+	./configure     # "make" will not work in an unconfigured tree
 	cd src/include/catalog
 	make reformat-dat-files
 	cd ../../..

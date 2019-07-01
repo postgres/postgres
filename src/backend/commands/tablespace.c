@@ -1211,8 +1211,8 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 	/*
 	 * If we aren't inside a transaction, or connected to a database, we
 	 * cannot do the catalog accesses necessary to verify the name.  Must
-	 * accept the value on faith.
-	 * Fortunately, there's then also no need to pass the data to fd.c.
+	 * accept the value on faith. Fortunately, there's then also no need to
+	 * pass the data to fd.c.
 	 */
 	if (IsTransactionState() && MyDatabaseId != InvalidOid)
 	{

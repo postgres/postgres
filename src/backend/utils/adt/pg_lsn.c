@@ -61,7 +61,7 @@ pg_lsn_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 	XLogRecPtr	result;
-	bool have_error = false;
+	bool		have_error = false;
 
 	result = pg_lsn_in_internal(str, &have_error);
 	if (have_error)

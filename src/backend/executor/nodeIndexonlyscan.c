@@ -528,9 +528,8 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 						  &TTSOpsVirtual);
 
 	/*
-	 * We need another slot, in a format that's suitable for the table AM,
-	 * for when we need to fetch a tuple from the table for rechecking
-	 * visibility.
+	 * We need another slot, in a format that's suitable for the table AM, for
+	 * when we need to fetch a tuple from the table for rechecking visibility.
 	 */
 	indexstate->ioss_TableSlot =
 		ExecAllocTableSlot(&estate->es_tupleTable,

@@ -1077,7 +1077,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 							 errmsg("cannot create foreign partition of partitioned table \"%s\"",
 									RelationGetRelationName(parent)),
 							 errdetail("Table \"%s\" contains indexes that are unique.",
-									RelationGetRelationName(parent))));
+									   RelationGetRelationName(parent))));
 				else
 				{
 					index_close(idxRel, AccessShareLock);
@@ -15682,6 +15682,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 		defaultrel = table_open(defaultPartOid, NoLock);
 		defPartConstraint =
 			get_proposed_default_constraint(partBoundConstraint);
+
 		/*
 		 * Map the Vars in the constraint expression from rel's attnos to
 		 * defaultrel's.

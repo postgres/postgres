@@ -1237,13 +1237,14 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 		: get_qual_for_range(parent, new_spec, false);
 	def_part_constraints =
 		get_proposed_default_constraint(new_part_constraints);
+
 	/*
 	 * Map the Vars in the constraint expression from parent's attnos to
 	 * default_rel's.
 	 */
 	def_part_constraints =
-			map_partition_varattnos(def_part_constraints, 1, default_rel,
-									parent, NULL);
+		map_partition_varattnos(def_part_constraints, 1, default_rel,
+								parent, NULL);
 
 	/*
 	 * If the existing constraints on the default partition imply that it will

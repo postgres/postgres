@@ -699,8 +699,9 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 			else if (score == *bestscore)
 			{
 				/* Consider how to break a tie */
-				int		namepref = (zone_name_pref(tzdirsub) -
-									zone_name_pref(bestzonename));
+				int			namepref = (zone_name_pref(tzdirsub) -
+										zone_name_pref(bestzonename));
+
 				if (namepref > 0 ||
 					(namepref == 0 &&
 					 (strlen(tzdirsub) < strlen(bestzonename) ||

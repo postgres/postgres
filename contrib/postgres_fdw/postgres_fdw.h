@@ -64,6 +64,7 @@ typedef struct PgFdwRelationInfo
 	int			width;
 	Cost		startup_cost;
 	Cost		total_cost;
+
 	/*
 	 * Estimated number of rows fetched from the foreign server, and costs
 	 * excluding costs for transferring those rows from the foreign server.
