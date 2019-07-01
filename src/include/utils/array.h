@@ -157,7 +157,10 @@ typedef struct ExpandedArrayHeader
 
 /*
  * Functions that can handle either a "flat" varlena array or an expanded
- * array use this union to work with their input.
+ * array use this union to work with their input.  Don't refer to "flt";
+ * instead, cast to ArrayType.  This struct nominally requires 8-byte
+ * alignment on 64-bit, but it's often used for an ArrayType having 4-byte
+ * alignment.  UBSan complains about referencing "flt" in such cases.
  */
 typedef union AnyArrayType
 {
@@ -311,17 +314,21 @@ typedef struct ArrayIteratorData *ArrayIterator;
  * Macros for working with AnyArrayType inputs.  Beware multiple references!
  */
 #define AARR_NDIM(a) \
-	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.ndims : ARR_NDIM(&(a)->flt))
+	(VARATT_IS_EXPANDED_HEADER(a) ? \
+	 (a)->xpn.ndims : ARR_NDIM((ArrayType *) (a)))
 #define AARR_HASNULL(a) \
 	(VARATT_IS_EXPANDED_HEADER(a) ? \
 	 ((a)->xpn.dvalues != NULL ? (a)->xpn.dnulls != NULL : ARR_HASNULL((a)->xpn.fvalue)) : \
-	 ARR_HASNULL(&(a)->flt))
+	 ARR_HASNULL((ArrayType *) (a)))
 #define AARR_ELEMTYPE(a) \
-	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.element_type : ARR_ELEMTYPE(&(a)->flt))
+	(VARATT_IS_EXPANDED_HEADER(a) ? \
+	 (a)->xpn.element_type : ARR_ELEMTYPE((ArrayType *) (a)))
 #define AARR_DIMS(a) \
-	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.dims : ARR_DIMS(&(a)->flt))
+	(VARATT_IS_EXPANDED_HEADER(a) ? \
+	 (a)->xpn.dims : ARR_DIMS((ArrayType *) (a)))
 #define AARR_LBOUND(a) \
-	(VARATT_IS_EXPANDED_HEADER(a) ? (a)->xpn.lbound : ARR_LBOUND(&(a)->flt))
+	(VARATT_IS_EXPANDED_HEADER(a) ? \
+	 (a)->xpn.lbound : ARR_LBOUND((ArrayType *) (a)))
 
 
 /*
