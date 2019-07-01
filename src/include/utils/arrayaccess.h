@@ -71,8 +71,8 @@ array_iter_setup(array_iter *it, AnyArrayType *a)
 	{
 		it->datumptr = NULL;
 		it->isnullptr = NULL;
-		it->dataptr = ARR_DATA_PTR(&a->flt);
-		it->bitmapptr = ARR_NULLBITMAP(&a->flt);
+		it->dataptr = ARR_DATA_PTR((ArrayType *) a);
+		it->bitmapptr = ARR_NULLBITMAP((ArrayType *) a);
 	}
 	it->bitmask = 1;
 }
