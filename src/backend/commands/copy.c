@@ -3369,8 +3369,6 @@ CopyFrom(CopyState cstate)
 
 	if (insertMethod != CIM_SINGLE)
 	{
-		table_finish_bulk_insert(cstate->rel, ti_options);
-
 		/* Tear down the multi-insert buffer data */
 		CopyMultiInsertInfoCleanup(&multiInsertInfo);
 	}
