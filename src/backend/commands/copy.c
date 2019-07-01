@@ -2518,8 +2518,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
  * The buffer must be flushed before cleanup.
  */
 static inline void
-CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
-							 CopyMultiInsertBuffer *buffer)
+CopyMultiInsertBufferCleanup(CopyMultiInsertBuffer *buffer)
 {
 	int			i;
 
@@ -2534,9 +2533,6 @@ CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
 	/* Since we only create slots on demand, just drop the non-null ones. */
 	for (i = 0; i < MAX_BUFFERED_TUPLES && buffer->slots[i] != NULL; i++)
 		ExecDropSingleTupleTableSlot(buffer->slots[i]);
-
-	table_finish_bulk_insert(buffer->resultRelInfo->ri_RelationDesc,
-							 miinfo->ti_options);
 
 	pfree(buffer);
 }
@@ -2589,7 +2585,7 @@ CopyMultiInsertInfoFlush(CopyMultiInsertInfo *miinfo, ResultRelInfo *curr_rri)
 			buffer = (CopyMultiInsertBuffer *) linitial(miinfo->multiInsertBuffers);
 		}
 
-		CopyMultiInsertBufferCleanup(miinfo, buffer);
+		CopyMultiInsertBufferCleanup(buffer);
 		miinfo->multiInsertBuffers = list_delete_first(miinfo->multiInsertBuffers);
 	}
 }
@@ -2603,7 +2599,7 @@ CopyMultiInsertInfoCleanup(CopyMultiInsertInfo *miinfo)
 	ListCell   *lc;
 
 	foreach(lc, miinfo->multiInsertBuffers)
-		CopyMultiInsertBufferCleanup(miinfo, lfirst(lc));
+		CopyMultiInsertBufferCleanup(lfirst(lc));
 
 	list_free(miinfo->multiInsertBuffers);
 }
@@ -3325,6 +3321,9 @@ CopyFrom(CopyState cstate)
 	{
 		if (!CopyMultiInsertInfoIsEmpty(&multiInsertInfo))
 			CopyMultiInsertInfoFlush(&multiInsertInfo, NULL);
+
+		/* Tear down the multi-insert buffer data */
+		CopyMultiInsertInfoCleanup(&multiInsertInfo);
 	}
 
 	/* Done, clean up */
@@ -3367,11 +3366,7 @@ CopyFrom(CopyState cstate)
 
 	FreeExecutorState(estate);
 
-	if (insertMethod != CIM_SINGLE)
-	{
-		/* Tear down the multi-insert buffer data */
-		CopyMultiInsertInfoCleanup(&multiInsertInfo);
-	}
+	table_finish_bulk_insert(cstate->rel, ti_options);
 
 	return processed;
 }
