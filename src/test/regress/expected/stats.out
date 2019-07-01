@@ -199,33 +199,6 @@ FROM prevstats AS pr;
  t
 (1 row)
 
--- Temporary hack to investigate whether extra vacuum/analyze is happening
-select relname, relpages, reltuples
-from pg_class
-where relname like '__star' order by relname;
- relname | relpages | reltuples 
----------+----------+-----------
- a_star  |        1 |         3
- b_star  |        1 |         4
- c_star  |        1 |         4
- d_star  |        1 |        16
- e_star  |        1 |         7
- f_star  |        1 |        16
-(6 rows)
-
-select relname, vacuum_count, analyze_count, autovacuum_count, autoanalyze_count
-from pg_stat_all_tables
-where relname like '__star' order by relname;
- relname | vacuum_count | analyze_count | autovacuum_count | autoanalyze_count 
----------+--------------+---------------+------------------+-------------------
- a_star  |            1 |             0 |                0 |                 0
- b_star  |            1 |             0 |                0 |                 0
- c_star  |            1 |             0 |                0 |                 0
- d_star  |            1 |             0 |                0 |                 0
- e_star  |            1 |             0 |                0 |                 0
- f_star  |            1 |             0 |                0 |                 0
-(6 rows)
-
 DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
 DROP TABLE prevstats;
 -- End of Stats Test
