@@ -965,30 +965,6 @@ PGAC_ARG_BOOL(with, zlib, yes,
 AC_SUBST(with_zlib)
 
 #
-# Elf
-#
-
-# Assume system is ELF if it predefines __ELF__ as 1,
-# otherwise believe host_os based default.
-case $host_os in
-    freebsd1*|freebsd2*) elf=no;;
-    freebsd3*|freebsd4*) elf=yes;;
-esac
-
-AC_EGREP_CPP(yes,
-[#if __ELF__
-  yes
-#endif
-],
-[ELF_SYS=true],
-[if test "X$elf" = "Xyes" ; then
-  ELF_SYS=true
-else
-  ELF_SYS=
-fi])
-AC_SUBST(ELF_SYS)
-
-#
 # Assignments
 #
 

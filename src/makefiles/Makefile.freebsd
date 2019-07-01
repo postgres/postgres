@@ -1,9 +1,7 @@
 AROPT = cr
 
-ifdef ELF_SYSTEM
 export_dynamic = -Wl,-export-dynamic
 rpath = -Wl,-R'$(rpathdir)'
-endif
 
 DLSUFFIX = .so
 
@@ -20,14 +18,4 @@ endef
 
 # Rule for building a shared library from a single .o file
 %.so: %.o
-ifdef ELF_SYSTEM
 	$(CC) $(CFLAGS) $< $(LDFLAGS) $(LDFLAGS_SL) -shared -o $@
-else
-	$(LD) $(LDREL) $(LDOUT) $<.obj -x $<
-	@echo building shared object $@
-	@rm -f $@.pic
-	@${AR} cq $@.pic $<.obj
-	${RANLIB} $@.pic
-	@rm -f $@
-	$(LD) -x -Bshareable -Bforcearchive -o $@ $@.pic
-endif

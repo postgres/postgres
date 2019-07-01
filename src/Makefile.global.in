@@ -506,10 +506,6 @@ host_tuple = @host@
 host_os = @host_os@
 host_cpu = @host_cpu@
 
-# This is mainly for use on FreeBSD, where we have both a.out and elf
-# systems now.  May be applicable to other systems to?
-ELF_SYSTEM= @ELF_SYS@
-
 # Backend stack size limit has to be hard-wired on Windows (it's in bytes)
 WIN32_STACK_RLIMIT=4194304
 

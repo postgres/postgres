@@ -139,57 +139,42 @@ ifeq ($(PORTNAME), darwin)
 endif
 
 ifeq ($(PORTNAME), openbsd)
-  ifdef ELF_SYSTEM
-    LINK.shared		= $(COMPILER) -shared
-    ifdef soname
-      LINK.shared	+= -Wl,-x,-soname,$(soname)
-    endif
-    BUILD.exports	= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
-    exports_file	= $(SHLIB_EXPORTS:%.txt=%.list)
-    ifneq (,$(exports_file))
-      LINK.shared	+= -Wl,--version-script=$(exports_file)
-    endif
-    SHLIB_LINK		+= -lc
-  else
-    LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
+  LINK.shared		= $(COMPILER) -shared
+  ifdef soname
+    LINK.shared		+= -Wl,-x,-soname,$(soname)
   endif
+  BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
+  ifneq (,$(exports_file))
+    LINK.shared		+= -Wl,--version-script=$(exports_file)
+  endif
+  SHLIB_LINK		+= -lc
 endif
 
 ifeq ($(PORTNAME), freebsd)
-  ifdef ELF_SYSTEM
-    ifdef SO_MAJOR_VERSION
-      shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-    endif
-    LINK.shared		= $(COMPILER) -shared
-    ifdef soname
-      LINK.shared	+= -Wl,-x,-soname,$(soname)
-    endif
-    BUILD.exports	= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
-    exports_file	= $(SHLIB_EXPORTS:%.txt=%.list)
-    ifneq (,$(exports_file))
-      LINK.shared	+= -Wl,--version-script=$(exports_file)
-    endif
-  else
-    ifdef SO_MAJOR_VERSION
-      shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    endif
-    LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
+  ifdef SO_MAJOR_VERSION
+    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  endif
+  LINK.shared		= $(COMPILER) -shared
+  ifdef soname
+    LINK.shared		+= -Wl,-x,-soname,$(soname)
+  endif
+  BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
+  ifneq (,$(exports_file))
+    LINK.shared		+= -Wl,--version-script=$(exports_file)
   endif
 endif
 
 ifeq ($(PORTNAME), netbsd)
-  ifdef ELF_SYSTEM
-    LINK.shared		= $(COMPILER) -shared
-    ifdef soname
-      LINK.shared	+= -Wl,-x,-soname,$(soname)
-    endif
-    BUILD.exports	= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
-    exports_file	= $(SHLIB_EXPORTS:%.txt=%.list)
-    ifneq (,$(exports_file))
-      LINK.shared	+= -Wl,--version-script=$(exports_file)
-    endif
-  else
-    LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
+  LINK.shared		= $(COMPILER) -shared
+  ifdef soname
+    LINK.shared		+= -Wl,-x,-soname,$(soname)
+  endif
+  BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
+  ifneq (,$(exports_file))
+    LINK.shared		+= -Wl,--version-script=$(exports_file)
   endif
 endif
 
