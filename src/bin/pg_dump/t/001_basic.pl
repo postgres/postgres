@@ -123,7 +123,7 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_dump', '--on-conflict-do-nothing' ],
-	qr/pg_dump: error: option --on-conflict-do-nothing requires option --inserts, --rows-per-insert or --column-inserts/,
+	qr/pg_dump: error: option --on-conflict-do-nothing requires option --inserts, --rows-per-insert, or --column-inserts/,
 	'pg_dump: --on-conflict-do-nothing requires --inserts, --rows-per-insert, --column-inserts'
 );
 

@@ -425,7 +425,7 @@ ProcedureCreate(const char *procedureName,
 					 : errmsg("cannot change return type of existing function"),
 
 			/*
-			 * translator: first %s is DROP FUNCTION, DROP PROCEDURE or DROP
+			 * translator: first %s is DROP FUNCTION, DROP PROCEDURE, or DROP
 			 * AGGREGATE
 			 */
 					 errhint("Use %s %s first.",
