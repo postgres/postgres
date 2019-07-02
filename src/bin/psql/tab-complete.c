@@ -3362,8 +3362,13 @@ psql_completion(const char *text, int start, int end)
 	else if (HeadMatches("ALTER", "DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER") &&
 			 TailMatches("SET", MatchAny))
 		COMPLETE_WITH("FROM CURRENT", "TO");
-	/* Suggest possible variable values */
-	else if (TailMatches("SET", MatchAny, "TO|="))
+
+	/*
+	 * Suggest possible variable values in SET variable TO|=, along with the
+	 * preceding ALTER syntaxes.
+	 */
+	else if (TailMatches("SET", MatchAny, "TO|=") &&
+			 !TailMatches("UPDATE", MatchAny, "SET", MatchAny, "TO|="))
 	{
 		/* special cased code for individual GUCs */
 		if (TailMatches("DateStyle", "TO|="))
@@ -3381,21 +3386,29 @@ psql_completion(const char *text, int start, int end)
 			/* generic, type based, GUC support */
 			char	   *guctype = get_guctype(prev2_wd);
 
-			if (guctype && strcmp(guctype, "enum") == 0)
-			{
-				char		querybuf[1024];
-
-				snprintf(querybuf, sizeof(querybuf), Query_for_enum, prev2_wd);
-				COMPLETE_WITH_QUERY(querybuf);
-			}
-			else if (guctype && strcmp(guctype, "bool") == 0)
-				COMPLETE_WITH("on", "off", "true", "false", "yes", "no",
-							  "1", "0", "DEFAULT");
-			else
-				COMPLETE_WITH("DEFAULT");
-
+			/*
+			 * Note: if we don't recognize the GUC name, it's important to not
+			 * offer any completions, as most likely we've misinterpreted the
+			 * context and this isn't a GUC-setting command at all.
+			 */
 			if (guctype)
+			{
+				if (strcmp(guctype, "enum") == 0)
+				{
+					char		querybuf[1024];
+
+					snprintf(querybuf, sizeof(querybuf),
+							 Query_for_enum, prev2_wd);
+					COMPLETE_WITH_QUERY(querybuf);
+				}
+				else if (strcmp(guctype, "bool") == 0)
+					COMPLETE_WITH("on", "off", "true", "false", "yes", "no",
+								  "1", "0", "DEFAULT");
+				else
+					COMPLETE_WITH("DEFAULT");
+
 				free(guctype);
+			}
 		}
 	}
 
