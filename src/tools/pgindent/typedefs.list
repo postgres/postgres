@@ -1981,6 +1981,7 @@ RegisNode
 RegisteredBgWorker
 ReindexObjectType
 ReindexStmt
+ReindexType
 RelFileNode
 RelFileNodeBackend
 RelIdCacheEnt
