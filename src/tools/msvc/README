@@ -4,7 +4,7 @@ MSVC build
 ==========
 
 This directory contains the tools required to build PostgreSQL using
-Microsoft Visual Studio 2005 - 2017. This builds the whole backend, not just
+Microsoft Visual Studio 2005 - 2019. This builds the whole backend, not just
 the libpq frontend library. For more information, see the documentation
 chapter "Installation on Windows" and the description below.
 
@@ -93,11 +93,12 @@ These configuration arguments are passed over to Mkvcbuild::mkvcbuild
 It does this by using VSObjectFactory::CreateSolution to create an object
 implementing the Solution interface (this could be either a VS2005Solution,
 a VS2008Solution, a VS2010Solution or a VS2012Solution or a VS2013Solution,
-or a VS2015Solution or a VS2017Solution, all in Solution.pm, depending on
-the user's build environment) and adding objects implementing the corresponding
-Project interface (VC2005Project or VC2008Project from VCBuildProject.pm or
-VC2010Project or VC2012Project or VC2013Project or VC2015Project or VC2017Project
-from MSBuildProject.pm) to it.
+or a VS2015Solution or a VS2017Solution or a VS2019Solution, all in
+Solution.pm, depending on the user's build environment) and adding objects
+implementing the corresponding Project interface (VC2005Project or
+VC2008Project from VCBuildProject.pm or VC2010Project or VC2012Project or
+VC2013Project or VC2015Project or VC2017Project or VC2019Project from
+MSBuildProject.pm) to it.
 When Solution::Save is called, the implementations of Solution and Project
 save their content in the appropriate format.
 The final step of starting the appropriate build program (msbuild or vcbuild)
