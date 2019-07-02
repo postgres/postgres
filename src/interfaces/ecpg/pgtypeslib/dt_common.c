@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "common/string.h"
 #include "pgtypeslib_extern.h"
 #include "dt.h"
 #include "pgtypes_timestamp.h"
@@ -1110,7 +1111,7 @@ DecodeNumberField(int len, char *str, int fmask,
 		for (i = 0; i < 6; i++)
 			fstr[i] = *cp != '\0' ? *cp++ : '0';
 		fstr[i] = '\0';
-		*fsec = strtol(fstr, NULL, 10);
+		*fsec = strtoint(fstr, NULL, 10);
 		*cp = '\0';
 		len = strlen(str);
 	}
@@ -1201,7 +1202,7 @@ DecodeNumber(int flen, char *str, int fmask,
 
 	*tmask = 0;
 
-	val = strtol(str, &cp, 10);
+	val = strtoint(str, &cp, 10);
 	if (cp == str)
 		return -1;
 
@@ -1437,11 +1438,11 @@ DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec)
 
 	*tmask = DTK_TIME_M;
 
-	tm->tm_hour = strtol(str, &cp, 10);
+	tm->tm_hour = strtoint(str, &cp, 10);
 	if (*cp != ':')
 		return -1;
 	str = cp + 1;
-	tm->tm_min = strtol(str, &cp, 10);
+	tm->tm_min = strtoint(str, &cp, 10);
 	if (*cp == '\0')
 	{
 		tm->tm_sec = 0;
@@ -1452,7 +1453,7 @@ DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec)
 	else
 	{
 		str = cp + 1;
-		tm->tm_sec = strtol(str, &cp, 10);
+		tm->tm_sec = strtoint(str, &cp, 10);
 		if (*cp == '\0')
 			*fsec = 0;
 		else if (*cp == '.')
@@ -1473,7 +1474,7 @@ DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec)
 			for (i = 0; i < 6; i++)
 				fstr[i] = *cp != '\0' ? *cp++ : '0';
 			fstr[i] = '\0';
-			*fsec = strtol(fstr, &cp, 10);
+			*fsec = strtoint(fstr, &cp, 10);
 			if (*cp != '\0')
 				return -1;
 		}
@@ -1505,20 +1506,20 @@ DecodeTimezone(char *str, int *tzp)
 	int			len;
 
 	/* assume leading character is "+" or "-" */
-	hr = strtol(str + 1, &cp, 10);
+	hr = strtoint(str + 1, &cp, 10);
 
 	/* explicit delimiter? */
 	if (*cp == ':')
-		min = strtol(cp + 1, &cp, 10);
+		min = strtoint(cp + 1, &cp, 10);
 	/* otherwise, might have run things together... */
 	else if (*cp == '\0' && (len = strlen(str)) > 3)
 	{
-		min = strtol(str + len - 2, &cp, 10);
+		min = strtoint(str + len - 2, &cp, 10);
 		if (min < 0 || min >= 60)
 			return -1;
 
 		*(str + len - 2) = '\0';
-		hr = strtol(str + 1, &cp, 10);
+		hr = strtoint(str + 1, &cp, 10);
 		if (hr < 0 || hr > 13)
 			return -1;
 	}
@@ -1825,7 +1826,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					if (tzp == NULL)
 						return -1;
 
-					val = strtol(field[i], &cp, 10);
+					val = strtoint(field[i], &cp, 10);
 					if (*cp != '-')
 						return -1;
 
@@ -1960,7 +1961,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					char	   *cp;
 					int			val;
 
-					val = strtol(field[i], &cp, 10);
+					val = strtoint(field[i], &cp, 10);
 
 					/*
 					 * only a few kinds are allowed to have an embedded
