@@ -19,10 +19,10 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to install <productname>Visual Studio Express 2017
+  Microsoft tools is to install <productname>Visual Studio Express 2019
   for Windows Desktop</productname> and use the included
   compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2005 to 2017</productname>.
+  <productname>Microsoft Visual C++ 2005 to 2019</productname>.
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -77,19 +77,19 @@
   <productname>Visual Studio Express</productname> or some versions of the
   <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
-  ways are to use the compilers from <productname>Visual Studio Express 2017
+  ways are to use the compilers from <productname>Visual Studio Express 2019
   for Windows Desktop</productname> or those in the <productname>Windows SDK
-  8.1</productname>, which are both free downloads from Microsoft.
+  10</productname>, which are both free downloads from Microsoft.
  </para>
 
  <para>
   Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
   32-bit PostgreSQL buils are possible with
   <productname>Visual Studio 2005</productname> to
-  <productname>Visual Studio 2017</productname> (including Express editions),
-  as well as standalone Windows SDK releases 6.0 to 8.1.
+  <productname>Visual Studio 2019</productname> (including Express editions),
+  as well as standalone Windows SDK releases 6.0 to 10.
   64-bit PostgreSQL builds are supported with
-  <productname>Microsoft Windows SDK</productname> version 6.0a to 8.1 or
+  <productname>Microsoft Windows SDK</productname> version 6.0a to 10 or
   <productname>Visual Studio 2008</productname> and above. Compilation
   is supported down to <productname>Windows XP</productname> and
   <productname>Windows Server 2003</> when building with
@@ -97,8 +97,9 @@
   <productname>Visual Studio 2013</productname>. Building with
   <productname>Visual Studio 2015</productname> is supported down to
   <productname>Windows Vista</> and <productname>Windows Server 2008</>.
-   Building with <productname>Visual Studio 2017</productname> is supported
-   down to <productname>Windows 7 SP1</> and <productname>Windows Server 2008 R2 SP1</>.
+  Building with <productname>Visual Studio 2017</productname> and
+  <productname>Visual Studio 2019</productname> is supported
+  down to <productname>Windows 7 SP1</> and <productname>Windows Server 2008 R2 SP1</>.
  </para>
 
  <para>
@@ -162,7 +163,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
       If your build environment doesn't ship with a supported version of the
       <productname>Microsoft Windows SDK</productname> it
       is recommended that you upgrade to the latest version (currently
-      version 7.1), available for download from
+      version 10), available for download from
       <ulink url="https://www.microsoft.com/download"></>.
      </para>
      <para>
