@@ -2312,7 +2312,7 @@ describeOneTableDetails(const char *schemaname,
 									 "  LEFT JOIN pg_catalog.pg_constraint con ON (conrelid = i.indrelid AND conindid = i.indexrelid AND contype IN ('p','u','x'))\n");
 			appendPQExpBuffer(&buf,
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-							  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname;",
+							  "ORDER BY i.indisprimary DESC, c2.relname;",
 							  oid);
 			result = PSQLexec(buf.data);
 			if (!result)

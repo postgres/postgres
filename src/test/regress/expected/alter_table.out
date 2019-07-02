@@ -1925,12 +1925,12 @@ create unique index on anothertab(f4);
 Indexes:
     "anothertab_pkey" PRIMARY KEY, btree (f1)
     "anothertab_f1_f4_key" UNIQUE CONSTRAINT, btree (f1, f4)
-    "anothertab_f2_key" UNIQUE CONSTRAINT, btree (f2)
-    "anothertab_f4_idx" UNIQUE, btree (f4)
     "anothertab_f2_f3_idx" btree (f2, f3)
+    "anothertab_f2_key" UNIQUE CONSTRAINT, btree (f2)
     "anothertab_f3_excl" EXCLUDE USING btree (f3 WITH =)
     "anothertab_f4_excl" EXCLUDE USING btree (f4 WITH =) WHERE (f4 IS NOT NULL)
     "anothertab_f4_excl1" EXCLUDE USING btree (f4 WITH =) WHERE (f5 > 0)
+    "anothertab_f4_idx" UNIQUE, btree (f4)
 
 alter table anothertab alter column f1 type bigint;
 alter table anothertab
@@ -1950,12 +1950,12 @@ alter table anothertab alter column f5 type bigint;
 Indexes:
     "anothertab_pkey" PRIMARY KEY, btree (f1)
     "anothertab_f1_f4_key" UNIQUE CONSTRAINT, btree (f1, f4)
-    "anothertab_f2_key" UNIQUE CONSTRAINT, btree (f2)
-    "anothertab_f4_idx" UNIQUE, btree (f4)
     "anothertab_f2_f3_idx" btree (f2, f3)
+    "anothertab_f2_key" UNIQUE CONSTRAINT, btree (f2)
     "anothertab_f3_excl" EXCLUDE USING btree (f3 WITH =)
     "anothertab_f4_excl" EXCLUDE USING btree (f4 WITH =) WHERE (f4 IS NOT NULL)
     "anothertab_f4_excl1" EXCLUDE USING btree (f4 WITH =) WHERE (f5 > 0)
+    "anothertab_f4_idx" UNIQUE, btree (f4)
 
 drop table anothertab;
 create table another (f1 int, f2 text);

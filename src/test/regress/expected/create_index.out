@@ -1374,10 +1374,10 @@ VACUUM FULL concur_heap;
  f1     | text |           |          | 
  f2     | text |           |          | 
 Indexes:
-    "concur_index2" UNIQUE, btree (f1)
-    "concur_index3" UNIQUE, btree (f2) INVALID
     "concur_heap_expr_idx" btree ((f2 || f1))
     "concur_index1" btree (f2, f1)
+    "concur_index2" UNIQUE, btree (f1)
+    "concur_index3" UNIQUE, btree (f2) INVALID
     "concur_index4" btree (f2) WHERE f1 = 'a'::text
     "concur_index5" btree (f2) WHERE f1 = 'x'::text
     "std_index" btree (f2)
@@ -1390,10 +1390,10 @@ REINDEX TABLE concur_heap;
  f1     | text |           |          | 
  f2     | text |           |          | 
 Indexes:
-    "concur_index2" UNIQUE, btree (f1)
-    "concur_index3" UNIQUE, btree (f2)
     "concur_heap_expr_idx" btree ((f2 || f1))
     "concur_index1" btree (f2, f1)
+    "concur_index2" UNIQUE, btree (f1)
+    "concur_index3" UNIQUE, btree (f2)
     "concur_index4" btree (f2) WHERE f1 = 'a'::text
     "concur_index5" btree (f2) WHERE f1 = 'x'::text
     "std_index" btree (f2)
@@ -2115,8 +2115,8 @@ WARNING:  cannot reindex system catalogs concurrently, skipping all
  c2     | text    |           |          | 
 Indexes:
     "concur_reindex_ind1" PRIMARY KEY, btree (c1)
-    "concur_reindex_ind3" UNIQUE, btree (abs(c1))
     "concur_reindex_ind2" btree (c2)
+    "concur_reindex_ind3" UNIQUE, btree (abs(c1))
     "concur_reindex_ind4" btree (c1, c1, c2)
 Referenced by:
     TABLE "concur_reindex_tab2" CONSTRAINT "concur_reindex_tab2_c1_fkey" FOREIGN KEY (c1) REFERENCES concur_reindex_tab(c1)
