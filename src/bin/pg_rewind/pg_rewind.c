@@ -555,7 +555,7 @@ getTimelineHistory(ControlFileData *controlFile, int *nentries)
 		else if (controlFile == &ControlFile_target)
 			histfile = slurpFile(datadir_target, path, NULL);
 		else
-			pg_fatal("invalid control file\n");
+			pg_fatal("invalid control file");
 
 		history = rewind_parseTimeLineHistory(histfile, tli, nentries);
 		pg_free(histfile);

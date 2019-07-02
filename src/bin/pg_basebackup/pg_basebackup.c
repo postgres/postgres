@@ -2236,7 +2236,7 @@ main(int argc, char **argv)
 					format = 't';
 				else
 				{
-					pg_log_error("invalid output format \"%s\", must be \"plain\" or \"tar\"\n",
+					pg_log_error("invalid output format \"%s\", must be \"plain\" or \"tar\"",
 								 optarg);
 					exit(1);
 				}
@@ -2308,7 +2308,7 @@ main(int argc, char **argv)
 				compresslevel = atoi(optarg);
 				if (compresslevel < 0 || compresslevel > 9)
 				{
-					pg_log_error("invalid compression level \"%s\"\n", optarg);
+					pg_log_error("invalid compression level \"%s\"", optarg);
 					exit(1);
 				}
 				break;

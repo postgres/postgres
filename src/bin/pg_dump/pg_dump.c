@@ -13484,7 +13484,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 		/* to allow dumping pg_catalog; not accepted on input */
 		appendPQExpBufferStr(q, "default");
 	else
-		fatal("unrecognized collation provider: %s\n",
+		fatal("unrecognized collation provider: %s",
 			  collprovider);
 
 	if (strcmp(PQgetvalue(res, 0, i_collisdeterministic), "f") == 0)
