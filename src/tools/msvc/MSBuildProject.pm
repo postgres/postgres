@@ -467,4 +467,29 @@ sub new
 	return $self;
 }
 
+package VC2019Project;
+
+#
+# Package that encapsulates a Visual C++ 2019 project file
+#
+
+use strict;
+use warnings;
+use base qw(MSBuildProject);
+
+no warnings qw(redefine);    ## no critic
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{vcver}           = '16.00';
+	$self->{PlatformToolset} = 'v142';
+	$self->{ToolsVersion}    = '16.0';
+
+	return $self;
+}
+
 1;
