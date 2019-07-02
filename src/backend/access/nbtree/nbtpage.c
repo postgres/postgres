@@ -266,9 +266,7 @@ _bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
  *
  *		Since the root page can move around the btree file, we have to read
  *		its location from the metadata page, and then read the root page
- *		itself.  If no root page exists yet, we have to create one.  The
- *		standard class of race conditions exists here; I think I covered
- *		them all in the intricate dance of lock requests below.
+ *		itself.  If no root page exists yet, we have to create one.
  *
  *		The access type parameter (BT_READ or BT_WRITE) controls whether
  *		a new root page will be created or not.  If access = BT_READ,
