@@ -1017,7 +1017,29 @@ explain (costs off) select * from t3 group by a,b,c;
    ->  Seq Scan on t3
 (3 rows)
 
-drop table t1;
+create temp table t1c () inherits (t1);
+-- Ensure we don't remove any columns when t1 has a child table
+explain (costs off) select * from t1 group by a,b,c,d;
+             QUERY PLAN              
+-------------------------------------
+ HashAggregate
+   Group Key: t1.a, t1.b, t1.c, t1.d
+   ->  Append
+         ->  Seq Scan on t1
+         ->  Seq Scan on t1c
+(5 rows)
+
+-- Okay to remove columns if we're only querying the parent.
+explain (costs off) select * from only t1 group by a,b,c,d;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: a, b
+   ->  Seq Scan on t1
+(3 rows)
+
+drop table t1 cascade;
+NOTICE:  drop cascades to table t1c
 drop table t2;
 drop table t3;
 --
