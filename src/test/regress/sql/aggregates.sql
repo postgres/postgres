@@ -406,9 +406,31 @@ group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.z;
 -- Cannot optimize when PK is deferrable
 explain (costs off) select * from t3 group by a,b,c;
 
-drop table t1;
+create temp table t1c () inherits (t1);
+
+-- Ensure we don't remove any columns when t1 has a child table
+explain (costs off) select * from t1 group by a,b,c,d;
+
+-- Okay to remove columns if we're only querying the parent.
+explain (costs off) select * from only t1 group by a,b,c,d;
+
+create temp table p_t1 (
+  a int,
+  b int,
+  c int,
+  d int,
+  primary key(a,b)
+) partition by list(a);
+create temp table p_t1_1 partition of p_t1 for values in(1);
+create temp table p_t1_2 partition of p_t1 for values in(2);
+
+-- Ensure we can remove non-PK columns for partitioned tables.
+explain (costs off) select * from p_t1 group by a,b,c,d;
+
+drop table t1 cascade;
 drop table t2;
 drop table t3;
+drop table p_t1;
 
 --
 -- Test combinations of DISTINCT and/or ORDER BY

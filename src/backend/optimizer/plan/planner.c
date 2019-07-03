@@ -3124,6 +3124,14 @@ remove_useless_groupby_columns(PlannerInfo *root)
 		if (rte->rtekind != RTE_RELATION)
 			continue;
 
+		/*
+		 * We must skip inheritance parent tables as some of the child rels
+		 * may cause duplicate rows.  This cannot happen with partitioned
+		 * tables, however.
+		 */
+		if (rte->inh && rte->relkind != RELKIND_PARTITIONED_TABLE)
+			continue;
+
 		/* Nothing to do unless this rel has multiple Vars in GROUP BY */
 		relattnos = groupbyattnos[relid];
 		if (bms_membership(relattnos) != BMS_MULTIPLE)
