@@ -4490,20 +4490,51 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	/* In what follows, do not risk leaking any PGresults. */
 	PG_TRY();
 	{
+		char		fetch_sql[64];
+		int			fetch_size;
+		ListCell   *lc;
+
 		res = pgfdw_exec_query(conn, sql.data);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			pgfdw_report_error(ERROR, res, conn, false, sql.data);
 		PQclear(res);
 		res = NULL;
 
+		/*
+		 * Determine the fetch size.  The default is arbitrary, but shouldn't
+		 * be enormous.
+		 */
+		fetch_size = 100;
+		foreach(lc, server->options)
+		{
+			DefElem    *def = (DefElem *) lfirst(lc);
+
+			if (strcmp(def->defname, "fetch_size") == 0)
+			{
+				fetch_size = strtol(defGetString(def), NULL, 10);
+				break;
+			}
+		}
+		foreach(lc, table->options)
+		{
+			DefElem    *def = (DefElem *) lfirst(lc);
+
+			if (strcmp(def->defname, "fetch_size") == 0)
+			{
+				fetch_size = strtol(defGetString(def), NULL, 10);
+				break;
+			}
+		}
+
+		/* Construct command to fetch rows from remote. */
+		snprintf(fetch_sql, sizeof(fetch_sql), "FETCH %d FROM c%u",
+				 fetch_size, cursor_number);
+
 		/* Retrieve and process rows a batch at a time. */
 		for (;;)
 		{
-			char		fetch_sql[64];
-			int			fetch_size;
 			int			numrows;
 			int			i;
-			ListCell   *lc;
 
 			/* Allow users to cancel long query */
 			CHECK_FOR_INTERRUPTS();
@@ -4514,33 +4545,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 			 * then just adjust rowstoskip and samplerows appropriately.
 			 */
 
-			/* The fetch size is arbitrary, but shouldn't be enormous. */
-			fetch_size = 100;
-			foreach(lc, server->options)
-			{
-				DefElem    *def = (DefElem *) lfirst(lc);
-
-				if (strcmp(def->defname, "fetch_size") == 0)
-				{
-					fetch_size = strtol(defGetString(def), NULL, 10);
-					break;
-				}
-			}
-			foreach(lc, table->options)
-			{
-				DefElem    *def = (DefElem *) lfirst(lc);
-
-				if (strcmp(def->defname, "fetch_size") == 0)
-				{
-					fetch_size = strtol(defGetString(def), NULL, 10);
-					break;
-				}
-			}
-
 			/* Fetch some rows */
-			snprintf(fetch_sql, sizeof(fetch_sql), "FETCH %d FROM c%u",
-					 fetch_size, cursor_number);
-
 			res = pgfdw_exec_query(conn, fetch_sql);
 			/* On error, report the original query, not the FETCH. */
 			if (PQresultStatus(res) != PGRES_TUPLES_OK)
