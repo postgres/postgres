@@ -441,3 +441,13 @@ begin
     d.f2 := r.b;
   end loop;
 end$$;
+
+-- check coercion of a record result to named-composite function output type
+create function compresult(int8) returns two_int8s language plpgsql as
+$$ declare r record; begin r := row($1,$1); return r; end $$;
+
+create table two_int8s_tab (f1 two_int8s);
+insert into two_int8s_tab values (compresult(42));
+-- reconnect so we lose any local knowledge of anonymous record types
+\c -
+table two_int8s_tab;
