@@ -614,9 +614,9 @@ SELECT m.*
        pg_mcv_list_items(d.stxdmcv) m
  WHERE s.stxname = 'mcv_lists_stats'
    AND d.stxoid = s.oid;
- index |  values   |  nulls  | frequency | base_frequency 
--------+-----------+---------+-----------+----------------
-     0 | {1, 2, 3} | {f,f,f} |         1 |              1
+ index | values  |  nulls  | frequency | base_frequency 
+-------+---------+---------+-----------+----------------
+     0 | {1,2,3} | {f,f,f} |         1 |              1
 (1 row)
 
 -- mcv with arrays
