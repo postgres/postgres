@@ -29,8 +29,8 @@ We choose to include the derived files in the PostgreSQL distribution
 because most installations will not have the Snowball compiler available.
 
 We are currently synced with the Snowball git commit
-1964ce688cbeca505263c8f77e16ed923296ce7a
-of 2018-06-29.
+4456b82c26c02493e8807a66f30593a98c5d2888
+of 2019-06-24.
 
 To update the PostgreSQL sources from a new Snowball version:
 
@@ -57,7 +57,7 @@ do not require any changes.
 4. Check whether any stemmer modules have been added or removed.  If so, edit
 the OBJS list in Makefile, the list of #include's in dict_snowball.c, and the
 stemmer_modules[] table in dict_snowball.c.  You might also need to change
-the LANGUAGES list in Makefile.
+the LANGUAGES list in Makefile and tsearch_config_languages in initdb.c.
 
 5. The various stopword files in stopwords/ must be downloaded
 individually from pages on the snowballstem.org website.

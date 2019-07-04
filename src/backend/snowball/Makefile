@@ -41,6 +41,7 @@ OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
 	stem_UTF_8_finnish.o \
 	stem_UTF_8_french.o \
 	stem_UTF_8_german.o \
+	stem_UTF_8_greek.o \
 	stem_UTF_8_hungarian.o \
 	stem_UTF_8_indonesian.o \
 	stem_UTF_8_irish.o \
@@ -69,6 +70,7 @@ LANGUAGES=  \
 	finnish		finnish		\
 	french		french		\
 	german		german		\
+	greek		greek		\
 	hungarian	hungarian	\
 	indonesian	indonesian	\
 	irish		irish		\

@@ -3810,6 +3810,7 @@ Parser: "pg_catalog.default"
  pg_catalog | finnish_stem    | snowball stemmer for finnish language
  pg_catalog | french_stem     | snowball stemmer for french language
  pg_catalog | german_stem     | snowball stemmer for german language
+ pg_catalog | greek_stem      | snowball stemmer for greek language
  pg_catalog | hungarian_stem  | snowball stemmer for hungarian language
  pg_catalog | indonesian_stem | snowball stemmer for indonesian language
  pg_catalog | irish_stem      | snowball stemmer for irish language

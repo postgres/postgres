@@ -716,6 +716,8 @@ static const struct tsearch_config_match tsearch_config_languages[] =
 	{"french", "French"},
 	{"german", "de"},
 	{"german", "German"},
+	{"greek", "el"},
+	{"greek", "Greek"},
 	{"hungarian", "hu"},
 	{"hungarian", "Hungarian"},
 	{"indonesian", "id"},

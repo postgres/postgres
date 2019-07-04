@@ -50,6 +50,7 @@
 #include "snowball/libstemmer/stem_UTF_8_finnish.h"
 #include "snowball/libstemmer/stem_UTF_8_french.h"
 #include "snowball/libstemmer/stem_UTF_8_german.h"
+#include "snowball/libstemmer/stem_UTF_8_greek.h"
 #include "snowball/libstemmer/stem_UTF_8_hungarian.h"
 #include "snowball/libstemmer/stem_UTF_8_indonesian.h"
 #include "snowball/libstemmer/stem_UTF_8_irish.h"
@@ -115,6 +116,7 @@ static const stemmer_module stemmer_modules[] =
 	STEMMER_MODULE(finnish, PG_UTF8, UTF_8),
 	STEMMER_MODULE(french, PG_UTF8, UTF_8),
 	STEMMER_MODULE(german, PG_UTF8, UTF_8),
+	STEMMER_MODULE(greek, PG_UTF8, UTF_8),
 	STEMMER_MODULE(hungarian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(indonesian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(irish, PG_UTF8, UTF_8),
