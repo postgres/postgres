@@ -63,24 +63,24 @@ OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
 # must come after creation of that language
 LANGUAGES=  \
 	arabic		arabic		\
-	danish		danish 		\
-	dutch 		dutch 		\
-	english 	english		\
-	finnish 	finnish		\
-	french 		french		\
-	german 		german		\
-	hungarian 	hungarian	\
+	danish		danish		\
+	dutch		dutch		\
+	english		english		\
+	finnish		finnish		\
+	french		french		\
+	german		german		\
+	hungarian	hungarian	\
 	indonesian	indonesian	\
 	irish		irish		\
-	italian 	italian		\
+	italian		italian		\
 	lithuanian	lithuanian	\
 	nepali		nepali		\
-	norwegian 	norwegian	\
-	portuguese 	portuguese	\
-	romanian 	romanian	\
-	russian 	english		\
-	spanish 	spanish		\
-	swedish 	swedish		\
+	norwegian	norwegian	\
+	portuguese	portuguese	\
+	romanian	romanian	\
+	russian		english		\
+	spanish		spanish		\
+	swedish		swedish		\
 	tamil		tamil		\
 	turkish		turkish
 
